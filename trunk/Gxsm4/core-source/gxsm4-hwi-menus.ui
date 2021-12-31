@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<interface>
+  <!-- interface-requires gtk+ 3.0 -->
+  <!-- ************************************************** -->
+  <!-- DSP MOVER CONFIG POPUP MENU -->
+
+  <menu id="hwi-mover-popup-menu">
+    <section>
+      <item>
+	<attribute name="label" translatable="yes">Configure</attribute>
+	<attribute name="action">win.dsp-mover-configure</attribute>
+      </item>
+    </section>
+  </menu>
+
+  <menu id="hwi-control-popup-menu">
+    <section>
+      <item>
+	<attribute name="label" translatable="yes">Configure</attribute>
+	<attribute name="action">win.dsp-control-configure</attribute>
+      </item>
+    </section>
+  </menu>
+
+  <menu id="hwi-generic-popup-menu">
+    <section>
+      <item>
+	<attribute name="label" translatable="yes">Configure</attribute>
+	<attribute name="action">win.generic-control-configure</attribute>
+      </item>
+    </section>
+  </menu>
+
+</interface>

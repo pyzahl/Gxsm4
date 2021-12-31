@@ -1,0 +1,12 @@
+<schemalist>
+  <schema id="org.gnome.gxsm4.pcs.plugin-libpyremote" path="/org/gnome/gxsm4/pcs/plugin-libpyremote/">
+
+    <key name="script-control" type="d">
+      <default>50</default>
+      <summary>PCS Remote-ID: 'script-control', Default/U:   50     </summary>
+      <description>pcs0000, PCS Remote-ID: 'script-control', Default/U:   50    , Adjustment PCS Name: 'script-control' </description>
+    </key>
+  </schema>
+
+</schemalist>
+

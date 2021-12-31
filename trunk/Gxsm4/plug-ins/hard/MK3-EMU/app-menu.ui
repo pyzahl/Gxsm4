@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<interface>
+  <!-- interface-requires gtk+ 3.0 -->
+  <menu id="appmenu">
+    <section>
+      <item>
+        <attribute name="label" translatable="yes">_Start</attribute>
+        <attribute name="action">app.start</attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">Sto_p</attribute>
+        <attribute name="action">app.stop</attribute>
+      </item>
+      <submenu>
+        <attribute name="label" translatable="yes">Watch</attribute>
+        <section>
+          <attribute name="id">watch-section</attribute>
+          <item>
+            <attribute name="label" translatable="yes">Magic</attribute>
+            <attribute name="action">app.watch</attribute>
+            <attribute name="target">magic</attribute>
+          </item>
+          <item>
+            <attribute name="label" translatable="yes">State</attribute>
+            <attribute name="action">app.watch</attribute>
+            <attribute name="target">state</attribute>
+          </item>
+          <item>
+            <attribute name="label" translatable="yes">Scan</attribute>
+            <attribute name="action">app.watch</attribute>
+            <attribute name="target">scan</attribute>
+          </item>
+          <item>
+            <attribute name="label" translatable="yes">Analog</attribute>
+            <attribute name="action">app.watch</attribute>
+            <attribute name="target">analog</attribute>
+          </item>
+          <item>
+            <attribute name="label" translatable="yes">Other</attribute>
+            <attribute name="action">app.watch</attribute>
+            <attribute name="target">other</attribute>
+          </item>
+	</section>
+      </submenu>
+      <item>
+        <attribute name="label" translatable="yes">_Preferences</attribute>
+        <attribute name="action">app.preferences</attribute>
+      </item>
+    </section>
+    <section>
+      <item>
+        <attribute name="label" translatable="yes">_Quit</attribute>
+        <attribute name="action">app.quit</attribute>
+      </item>
+    </section>
+  </menu>
+</interface>

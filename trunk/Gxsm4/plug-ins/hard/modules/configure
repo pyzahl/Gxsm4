@@ -1,0 +1,17 @@
+#!/bin/sh
+# Setup SymLinks
+
+if test -L pc31.c; then
+ echo File pc31.c exists and is a symbolic link, OK !
+else
+ echo creating pc31.c as a symbolic link...
+ ln -s pci32.c pc31.c
+ echo OK.
+fi
+
+echo Cleaning up...
+make clean
+echo 
+echo now ready to compile modules:
+echo do a   "make pci32.o pc31.o"   to build modules
+echo 

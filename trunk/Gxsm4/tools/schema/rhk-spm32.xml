@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+  <mime-type type="application/x-rhk-spm32">
+      <comment xml:lang="en">SPM32 image</comment>
+      <comment xml:lang="de">SPM32 Bild</comment>
+      <magic priority="50">
+      	     <match type="string" value="STiMage 3.1" offset="0"/>
+      </magic>
+      <glob pattern="*.sm2"/>
+  </mime-type>
+</mime-info>

@@ -1,0 +1,229 @@
+<schemalist>
+
+  <schema id="org.gnome.gxsm4" path="/org/gnome/gxsm4/">
+    <key name="first-start" type="b">
+      <default>true</default>
+      <summary>Indicates if gxsm was ever started on this account</summary>
+      <description>
+        If true gxsm assumes to be starting first time.
+        It may present initial user guidiances and configurations druids.
+      </description>
+    </key>
+    <key name="first-start-key" type="s">
+      <default>'key'</default>
+      <summary>first start test token</summary>
+      <description>
+        First start initialization test key.
+      </description>
+    </key>
+    <key name="splash" type="b">
+      <default>true</default>
+      <summary>show splash setting</summary>
+      <description>
+        Used to determine if the splash is to be displayed.
+      </description>
+    </key>
+    <key name="splash-timeout" type="d">
+      <default>4000.0</default>
+      <summary>splash timout</summary>
+      <description>
+        The duration the splash is displayed.
+      </description>
+    </key>
+    <key name="splash-message" type="s">
+      <default>'GSettings Splash Message for GXSM4.'</default>
+      <summary>a customizable startup message</summary>
+      <description>
+        This extra message is displayed along with the default
+	Gxsm Version information at startup in the splash window.
+      </description>
+    </key>
+    <key name="splash-message-font" type="s">
+      <default>'helvetica Bold 12'</default>
+      <summary>pango font string</summary>
+      <description>
+	Pango Font to be used for the message layout.
+      </description>
+    </key>
+  </schema>
+
+  <schema id="org.gnome.gxsm4.hardware-interfaces" path="/org/gnome/gxsm4/hardware-interfaces/">
+    <key name="hwi-count" type="i">
+      <default>0</default>
+      <summary>Indicates the number of found HwI plugins</summary>
+      <description>
+        HwI count Indicates the number of found HwI plugins -- do not alter, managed internally.
+      </description>
+    </key>
+    <key name="hwi-list" type="s">
+      <default>"N/A"</default>
+      <summary>List of loaded HwI interfaces, full class name identifier</summary>
+      <description>
+        List of full class names of found HwI plugins -- do not alter, managed internally.
+      </description>
+    </key>
+  </schema>
+
+  <schema id="org.gnome.gxsm4.gui.as" path="/org/gnome/gxsm4/gui/as/">
+    <key name="auto-save" type="b">
+      <default>false</default>
+      <summary>Indicates data should be auto-saved when a scan is finished</summary>
+      <description>
+	Auto Save: Indicates data should be auto-saved when a scan is finished
+      </description>
+    </key>
+    <key name="auto-save-basename" type="s">
+      <default>'not-set'</default>
+      <summary>Auto save base file name.</summary>
+      <description>
+	Auto save base file name. Channel/Mode ID and Counter or timestamp is added as configured.
+      </description>
+    </key>
+    <key name="auto-save-counter" type="s">
+      <default>'not-set'</default>
+      <summary>Auto save counter.</summary>
+      <description>
+	Auto save counter value.
+      </description>
+    </key>
+    <key name="auto-save-folder" type="s">
+      <default>'.'</default>
+      <summary>Path to auto save folder</summary>
+      <description>
+	Path to auto save folder. General path base setting.
+      </description>
+    </key>
+    <key name="auto-save-folder-netcdf" type="s">
+      <default>'.'</default>
+      <summary>Path to auto save folder for netcdf (.nc)</summary>
+      <description>
+	Path to auto save folder for netcdf scan data files.
+      </description>
+    </key>
+    <key name="auto-save-folder-probe" type="s">
+      <default>'.'</default>
+      <summary>Path to auto save folder for probe (.vpdata)</summary>
+      <description>
+	Path to auto save folder for probe (.vpdata) data files.
+      </description>
+    </key>
+    <key name="user-info-comment" type="s">
+      <default>'not-set'</default>
+      <summary>Free text comment.</summary>
+      <description>
+	Comment text. Any additional scan data information manually to be entered.
+      </description>
+    </key>
+  </schema>
+
+  <schema id="org.gnome.gxsm4.gui.channelselector" path="/org/gnome/gxsm4/gui/channelselector/">
+    <key name="auto-restore" type="b">
+      <default>true</default>
+      <summary>automatically restore default channel setup</summary>
+      <description>
+	Do automatically restore default channel setup at startup.
+      </description>
+    </key>
+    <key name="channel-setup-a" type="a(iii)">
+      <default>[(1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0)]</default>
+      <summary>channel configurations store A</summary>
+      <description>
+	store A. channel configuraton storage array of (View, Mode, Dir) tupels, ...
+      </description>
+    </key>
+    <key name="channel-setup-b" type="a(iii)">
+      <default>[(1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0)]</default>
+      <summary>channel configurations store B</summary>
+      <description>
+	store B. channel configuraton storage array of (View, Mode, Dir) tupels, ...
+      </description>
+    </key>
+    <key name="channel-setup-c" type="a(iii)">
+      <default>[(1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0)]</default>
+      <summary>channel configurations store C</summary>
+      <description>
+	store C. channel configuraton storage array of (View, Mode, Dir) tupels, ...
+      </description>
+    </key>
+    <key name="channel-setup-d" type="a(iii)">
+      <default>[(1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0)]</default>
+      <summary>channel configurations store Default</summary>
+      <description>
+	store Default. channel configuraton storage array of (View, Mode, Dir) tupels, ...
+      </description>
+    </key>
+  </schema>
+
+  <schema id="org.gnome.gxsm4.gui.view" path="/org/gnome/gxsm4/gui/view/">
+    <key name="sidepane-show" type="b">
+      <default>false</default>
+      <summary>show/hide scan view information side pane</summary>
+      <description>
+	true: show side pane, false: hide
+	side pane contains access to full NetCDF scan parameter list,
+	probe/scan events inspection and controls,
+	OSD configurations/object control.
+      </description>
+    </key>
+    <key name="sidepane-width" type="i">
+      <default>350</default>
+      <summary>width of side pane</summary>
+      <description>
+	sidepane width memorizing
+      </description>
+    </key>
+    <key name="view-redline" type="b">
+      <default>true</default>
+      <summary>enable red line</summary>
+      <description>
+	true: enable red line (current line profile) view [TDB -- bind to channel id]
+      </description>
+    </key>
+    <key name="view-cursor-radius" type="d">
+      <default>10</default>
+      <summary>cursor radius</summary>
+      <description>
+	cursor radius
+      </description>
+    </key>
+    <key name="view-max-number-events" type="d">
+      <default>1000</default>
+      <summary>limit # events to show in max radius</summary>
+      <description>
+	max number of events to show in max radius
+      </description>
+    </key>
+    <key name="view-arrow-size" type="d">
+      <default>25</default>
+      <summary>marker arrow size in %</summary>
+      <description>
+	marker arrow size (100 is the default marker size)
+      </description>
+    </key>
+    <key name="view-nc-raw" type="b">
+      <default>false</default>
+      <summary>enable NC raw view</summary>
+      <description>
+	NC raw listing
+      </description>
+    </key>
+    <key name="osd-enable" type="ab">
+      <default>
+	[true, false, false, false, false,  false, false, false, false, false,
+	false, false, false, false, false,  false, false, false, false, false
+        ]</default>
+      <summary>OSD controls</summary>
+      <description>
+	stores OSD info setups
+      </description>
+    </key>
+    <key name="osd-position" type="a(iii)">
+      <default> [ (0,0,0), (0,1,0) ]</default>
+      <summary>OSD positions</summary>
+      <description>
+	stores OSD info label positions
+      </description>
+    </key>
+  </schema>
+
+</schemalist>

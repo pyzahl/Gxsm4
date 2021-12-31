@@ -1,0 +1,13 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=GXSM4
+Name[de]=GXSM4
+Comment=Gnome X Scanning Microscopy and Data Analysis & Visualisation -- start in analysis mode
+Comment[de]=Gnome X Rastersonden Mikroskopie und Daten Analyse & Visualisation  -- start im Auswertemodus
+Exec=gxsm4 -h no
+Icon=/usr/local/share/icons/hicolor/scalable/apps/gxsm4-icon.svg
+Terminal=true
+Type=Application
+Categories=GTK;GNOME;Science
+X-AppInstall-Package=gxsm4
+MimeType=application/x-netcdf

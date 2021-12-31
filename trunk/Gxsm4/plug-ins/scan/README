@@ -1,0 +1,4 @@
+Here are Im- and Export Filters located!
+
+Have a look at the example_im_export PlugIn! It's im/exports a dummy .abc
+filetype and it's only available if InstrumentType is set to "SNOM".

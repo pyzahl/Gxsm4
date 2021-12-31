@@ -1,0 +1,48 @@
+; Code Composer Project File, Version 2.0 (do not modify or remove this line)
+
+[Project Settings]
+ProjectName="FB_Demo_DSP"
+ProjectDir="Z:\SRanger\TiCC-project-files\FB_spmcontrol\"
+ProjectType=Executable
+CPUFamily=TMS320C54XX
+Tool="Compiler"
+Tool="DspBiosBuilder"
+Tool="Linker"
+Config="Debug"
+Config="Release"
+
+[Source Files]
+Source="C:\Program Files\SignalRanger\Sources\AIC_Driver\AICDriver.lib"
+Source="C:\tieval21\c5400\cgtools\lib\rts.lib"
+Source="dataprocess.c"
+Source="FB_spm.c"
+Source="FB_spm_areascan.c"
+Source="FB_spm_autoapproach.c"
+Source="FB_spm_CoolRunner_puls.c"
+Source="FB_spm_offsetmove.c"
+Source="FB_spm_probe.c"
+Source="FB_spm_statemaschine.c"
+Source="feedback.asm"
+Source="feedback_linear.asm"
+Source="spm_log.asm"
+Source="vectors.asm"
+Source="FB_spm.rcp"
+
+["Compiler" Settings: "Debug"]
+Options=-g -q -as -fr"C:\tieval\tmp" -d"_DEBUG" -aw
+
+["Compiler" Settings: "Release"]
+Options=-q -o2 -fr".\Release" -ms
+
+["DspBiosBuilder" Settings: "Debug"]
+Options=-v54
+
+["DspBiosBuilder" Settings: "Release"]
+Options=-v54
+
+["Linker" Settings: "Debug"]
+Options=-x -o".\Debug\FB_spmcontrol.out" -q -stack0x200
+
+["Linker" Settings: "Release"]
+Options=-x -o".\Release\FB_spmcontrol.out" -q
+

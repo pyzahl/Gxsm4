@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+
+<!-- Created for Code Composer Studio project C:\tieval21\myprojects\FB_spmcontrol\FB_spm.pjt. Created on January 05, 2003. -->
+
+<recipe
+   version="7"
+   host="windows"
+   targets="500"
+   name="FB_spm"
+   full_path="Z:\\SRanger\\TiCC-project-files\\FB_spmcontrol\\FB_spm.rcq"
+   comment="Created for Code Composer Studio project C:\\tieval21\\myprojects\\FB_spmcontrol\\FB_spm.pjt. Created on January 05, 2003."
+   partials="0"
+   auto_inits="1"
+   data_kind_fixup="0"
+   args=".\\FB_spm.arg"
+   cmds=".\\Release.lkv,.\\FB_spm.prj"
+   mems=".\\FB_spm_SignalRanger.mem"
+   map_project_bindings="Memory Maps\\SignalRanger;All Input Files\\FB_spm"
+   strategies=".\\FB_spm.str"
+/>

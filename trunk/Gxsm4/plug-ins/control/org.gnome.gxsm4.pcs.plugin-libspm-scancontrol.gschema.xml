@@ -1,0 +1,30 @@
+<schemalist>
+  <schema id="org.gnome.gxsm4.pcs.plugin-libspm-scancontrol" path="/org/gnome/gxsm4/pcs/plugin-libspm-scancontrol/">
+
+    <key name="spmc-sls-xs" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'SPMC_SLS_Xs', Default/U: 0     </summary>
+      <description>pcs0000, PCS Remote-ID: 'SPMC_SLS_Xs', Default/U: 0    , PCS has no adjustment </description>
+    </key>
+
+    <key name="spmc-sls-xn" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'SPMC_SLS_Xn', Default/U: 0     </summary>
+      <description>pcs0000, PCS Remote-ID: 'SPMC_SLS_Xn', Default/U: 0    , PCS has no adjustment </description>
+    </key>
+
+    <key name="spmc-sls-ys" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'SPMC_SLS_Ys', Default/U: 0     </summary>
+      <description>pcs0000, PCS Remote-ID: 'SPMC_SLS_Ys', Default/U: 0    , PCS has no adjustment </description>
+    </key>
+
+    <key name="spmc-sls-yn" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'SPMC_SLS_Yn', Default/U: 0     </summary>
+      <description>pcs0000, PCS Remote-ID: 'SPMC_SLS_Yn', Default/U: 0    , PCS has no adjustment </description>
+    </key>
+  </schema>
+
+</schemalist>
+

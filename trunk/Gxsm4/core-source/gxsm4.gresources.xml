@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/org/gnome/gxsm4">
+    <file>gxsm4-styles.css</file>
+    <file preprocess="xml-stripblanks">gxsm4-menu.ui</file>
+    <file preprocess="xml-stripblanks">gxsm4-popupmenus.ui</file>
+    <file preprocess="xml-stripblanks">gxsm4-hwi-menus.ui</file>
+    <file preprocess="xml-stripblanks">gxsm4-plugin-pyremote-menu.ui</file>
+  </gresource>
+  <gresource prefix="/org/gnome/gxsm4/resources/icons/scalable/actions">
+    <file>approach-symbolic.svg</file>
+    <file>arrow-down-symbolic.svg</file>
+    <file>arrow-left-symbolic.svg</file>
+    <file>arrow-right-symbolic.svg</file>
+    <file>arrow-up-symbolic.svg</file>
+    <file>goto-center-symbolic.svg</file>
+    <file>goto-home-symbolic.svg</file>
+    <file>goto-position-symbolic.svg</file>
+    <file>gxsm-icon.svg</file>
+    <file>process-stopall-symbolic.svg</file>
+    <file>retract-symbolic.svg</file>
+    <file>seek-backward-symbolic.svg</file>
+    <file>seek-forward-symbolic.svg</file>
+    <file>seek-left-symbolic.svg</file>
+    <file>seek-right-symbolic.svg</file>
+    <file>system-busy-symbolic.svg</file>
+    <file>system-off-symbolic.svg</file>
+    <file>xymode-symbolic.svg</file>
+  </gresource>
+</gresources>

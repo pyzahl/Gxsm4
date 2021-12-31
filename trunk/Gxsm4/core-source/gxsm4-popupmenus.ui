@@ -1,0 +1,1202 @@
+<?xml version="1.0"?>
+<interface>
+  <!-- interface-requires gtk+ 3.0 -->
+  <!-- ************************************************** -->
+  <!-- 2D VIEW POPUP MENU -->
+  <menu id="view2d-menu">
+    <section>
+      <item>
+	<attribute name="label" translatable="yes">Activate</attribute>
+	<attribute name="action">win.view-activate</attribute>
+      </item>
+      <item>
+	<attribute name="label" translatable="yes">Auto Display</attribute>
+	<attribute name="action">win.view-autodisp</attribute>
+      </item>
+      <item>
+	<attribute name="label" translatable="yes">Update World Map</attribute>
+	<attribute name="action">win.view-maptoworld</attribute>
+      </item>
+      <item>
+	<attribute name="label" translatable="yes">Clear World Map</attribute>
+	<attribute name="action">win.view-clr-world</attribute>
+      </item>
+      <submenu>
+	<attribute name="label" translatable="yes">Mode</attribute>
+	<section>
+	  <attribute name="id">view-channel-mode-section</attribute>
+	  <item>
+	    <attribute name="label" translatable="yes">Active</attribute>
+	    <attribute name="action">win.view-set-active</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">On</attribute>
+	    <attribute name="action">win.view-set-on</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Math</attribute>
+	    <attribute name="action">win.view-set-math</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">X</attribute>
+	    <attribute name="action">win.view-set-x</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Off</attribute>
+	    <attribute name="action">win.view-set-off</attribute>
+	  </item>
+	</section>
+      </submenu>
+      <submenu>
+	<attribute name="label" translatable="yes">File</attribute>
+	<section>
+	  <attribute name="id">view-file-section</attribute>
+	  <item>
+	    <attribute name="label" translatable="yes">_Open here</attribute>
+	    <attribute name="action">win.view-open</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">_Save</attribute>
+	    <attribute name="action">win.view-save-auto</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">_Update</attribute>
+	    <attribute name="action">win.view-save-update</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Save _as...</attribute>
+	    <attribute name="action">win.view-save-as</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Save Image/Drawing</attribute>
+	    <attribute name="action">win.view-save-as-image</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Save Objects</attribute>
+	    <attribute name="action">win.view-save-objects</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Load Objects</attribute>
+	    <attribute name="action">win.view-load-objecs</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Get Info</attribute>
+	    <attribute name="action">win.view-get-info</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Print</attribute>
+	    <attribute name="action">win.view-print</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Close</attribute>
+	    <attribute name="action">win.view-close</attribute>
+	  </item>
+	</section>
+      </submenu>
+      <submenu>
+	<attribute name="label" translatable="yes">Edit</attribute>
+	<section>
+	  <attribute name="id">view-edit-section</attribute>
+	  <item>
+	    <attribute name="label" translatable="yes">Copy</attribute>
+	    <attribute name="action">win.copy-scan-to-new-channel</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Crop</attribute>
+	    <attribute name="action">win.crop-rect-to-new-channel</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Cpy zoom in</attribute>
+	    <attribute name="action">win.zoom-into-rect</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Cpy zoom out</attribute>
+	    <attribute name="action">win.zoom-out-of-rect</attribute>
+	  </item>
+	</section>
+      </submenu>
+      <submenu>
+	<attribute name="label" translatable="yes">View</attribute>
+	<section>
+	  <attribute name="id">view-display-mode-section</attribute>
+	  <!-- item-->
+	    <!-- attribute name="label" translatable="yes">Side Pane</attribute -->
+	    <!-- attribute name="action">win.side-pane</attribute -->
+	  <!-- /item-->
+	  <item>
+	    <attribute name="label" translatable="yes">Quick</attribute>
+	    <attribute name="action">win.view-mode</attribute>
+	    <attribute name="target">quick</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Direct</attribute>
+	    <attribute name="action">win.view-mode</attribute>
+	    <attribute name="target">direct</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Direct Hi-Lit</attribute>
+	    <attribute name="action">win.view-mode</attribute>
+	    <attribute name="target">hilit</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Plane</attribute>
+	    <attribute name="action">win.view-mode</attribute>
+	    <attribute name="target">plane</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Horizontal</attribute>
+	    <attribute name="action">win.view-mode</attribute>
+	    <attribute name="target">horizontal</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Periodic</attribute>
+	    <attribute name="action">win.view-mode</attribute>
+	    <attribute name="target">periodic</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Logarithmic</attribute>
+	    <attribute name="action">win.view-mode</attribute>
+	    <attribute name="target">log</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Differential</attribute>
+	    <attribute name="action">win.view-mode</attribute>
+	    <attribute name="target">diff</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">X linearize</attribute>
+	    <attribute name="action">win.x-linearize</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Attach Red Profile</attribute>
+	    <attribute name="action">win.attach-redline</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Red Profile</attribute>
+	    <attribute name="action">win.show-redline</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Add Blue Profile (CH+1)</attribute>
+	    <attribute name="action">win.show-blueline</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Show World</attribute>
+	    <attribute name="action">win.view-world</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Palette</attribute>
+	    <attribute name="action">win.palette-mode</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Smart Scale</attribute>
+	    <attribute name="action">win.tolerant-mode</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Native RGB</attribute>
+	    <attribute name="action">win.rgb-mode</attribute>
+	  </item>
+	  <submenu>
+	    <attribute name="label" translatable="yes">Coordinates</attribute>
+	    <section>
+	      <item>
+		<attribute name="label" translatable="yes">Absolute</attribute>
+		<attribute name="action">win.coordinate-mode</attribute>
+		<attribute name="target">absolute</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">Relative</attribute>
+		<attribute name="action">win.coordinate-mode</attribute>
+		<attribute name="target">relative</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">Pixels</attribute>
+		<attribute name="action">win.coordinate-mode</attribute>
+		<attribute name="target">pixels</attribute>
+	      </item>
+	    </section>
+	  </submenu>
+	  <item>
+	    <attribute name="label" translatable="yes">Zoom In</attribute>
+	    <attribute name="action">win.zoom-in</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Zoom Out</attribute>
+	    <attribute name="action">win.zoom-out</attribute>
+	  </item>
+	  <submenu>
+	    <attribute name="label" translatable="yes">Zoom</attribute>
+	    <section>
+	      <attribute name="id">view-zoom-section</attribute>
+	      <item>
+		<attribute name="label" translatable="yes">Auto</attribute>
+		<attribute name="action">win.fix-zoom</attribute>
+		<attribute name="target">zoomfactor-auto</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">10:1</attribute>
+		<attribute name="action">win.fix-zoom</attribute>
+		<attribute name="target">zoomfactor-10x</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">5:1</attribute>
+		<attribute name="action">win.fix-zoom</attribute>
+		<attribute name="target">zoomfactor-5x</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">4:1</attribute>
+		<attribute name="action">win.fix-zoom</attribute>
+		<attribute name="target">zoomfactor-4x</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">3:1</attribute>
+		<attribute name="action">win.fix-zoom</attribute>
+		<attribute name="target">zoomfactor-3x</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">2:1</attribute>
+		<attribute name="action">win.fix-zoom</attribute>
+		<attribute name="target">zoomfactor-2x</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">1:1</attribute>
+		<attribute name="action">win.fix-zoom</attribute>
+		<attribute name="target">zoomfactor-1x</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">1:2</attribute>
+		<attribute name="action">win.fix-zoom</attribute>
+		<attribute name="target">zoomfactor-1by2</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">1:3</attribute>
+		<attribute name="action">win.fix-zoom</attribute>
+		<attribute name="target">zoomfactor-1by3</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">1:4</attribute>
+		<attribute name="action">win.fix-zoom</attribute>
+		<attribute name="target">zoomfactor-1by4</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">1:5</attribute>
+		<attribute name="action">win.fix-zoom</attribute>
+		<attribute name="target">zoomfactor-1by5</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">1:10</attribute>
+		<attribute name="action">win.fix-zoom</attribute>
+		<attribute name="target">zoomfactor-1by10</attribute>
+	      </item>
+	    </section>
+	  </submenu>
+	</section>
+      </submenu>
+      <submenu>
+	<attribute name="label" translatable="yes">Objects</attribute>
+	<section>
+	  <attribute name="id">view-objects-section</attribute>
+	  <item>
+	    <attribute name="label" translatable="yes">Rectangle</attribute>
+	    <attribute name="action">win.object-mode</attribute>
+	    <attribute name="target">rectangle</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Point</attribute>
+	    <attribute name="action">win.object-mode</attribute>
+	    <attribute name="target">point</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Marker</attribute>
+	    <attribute name="action">win.object-mode</attribute>
+	    <attribute name="target">marker</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Line</attribute>
+	    <attribute name="action">win.object-mode</attribute>
+	    <attribute name="target">line</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Circle</attribute>
+	    <attribute name="action">win.object-mode</attribute>
+	    <attribute name="target">circle</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">PolyLine</attribute>
+	    <attribute name="action">win.object-mode</attribute>
+	    <attribute name="target">polyline</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Lattice</attribute>
+	    <attribute name="action">win.object-mode</attribute>
+	    <attribute name="target">ksys</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Parabel</attribute>
+	    <attribute name="action">win.object-mode</attribute>
+	    <attribute name="target">parabel</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Show Point</attribute>
+	    <attribute name="action">win.object-mode</attribute>
+	    <attribute name="target">point-show</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Show Line</attribute>
+	    <attribute name="action">win.object-mode</attribute>
+	    <attribute name="target">line-show</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Show Circle</attribute>
+	    <attribute name="action">win.object-mode</attribute>
+	    <attribute name="target">circle-show</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Disable</attribute>
+	    <attribute name="action">win.object-mode</attribute>
+	    <attribute name="target">disable</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Show Labels</attribute>
+	    <attribute name="action">win.show-object-lables</attribute>
+	  </item>
+	  <submenu>
+	    <attribute name="label" translatable="yes">Legend</attribute>
+	    <section>
+	      <attribute name="id">view-objects-legend-section</attribute>
+	      <item>
+		<attribute name="label" translatable="yes">Off</attribute>
+		<attribute name="action">win.show-legend-item</attribute>
+		<attribute name="target">off</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">Z Scale Bar</attribute>
+		<attribute name="action">win.show-legend-item</attribute>
+		<attribute name="target">z-scale-bar</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">Z Scale Bar and Values</attribute>
+		<attribute name="action">win.show-legend-item</attribute>
+		<attribute name="target">z-scale-bar-values</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">X Bar1 + Z Scale Bar and Values</attribute>
+		<attribute name="action">win.show-legend-item</attribute>
+		<attribute name="target">x-bar1-z-scale-bar-values</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">X Bar2 + Z Scale Bar and Values</attribute>
+		<attribute name="action">win.show-legend-item</attribute>
+		<attribute name="target">x-bar2-z-scale-bar-values</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">X Bar3 + Z Scale Bar and Values-pllref</attribute>
+		<attribute name="action">win.show-legend-item</attribute>
+		<attribute name="target">x-bar3-z-scale-bar-values-pllref</attribute>
+	      </item>
+	      <attribute name="id">view-objects-legend-section</attribute>
+	      <item>
+		<attribute name="label" translatable="yes">Overlay</attribute>
+		<attribute name="action">win.show-legend-position</attribute>
+		<attribute name="target">over</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">Below</attribute>
+		<attribute name="action">win.show-legend-position</attribute>
+		<attribute name="target">below</attribute>
+	      </item>
+	      <attribute name="id">view-objects-legend-section</attribute>
+	      <item>
+		<attribute name="label" translatable="yes">Font Small</attribute>
+		<attribute name="action">win.show-legend-size</attribute>
+		<attribute name="target">small</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">Font Large</attribute>
+		<attribute name="action">win.show-legend-size</attribute>
+		<attribute name="target">large</attribute>
+	      </item>
+	      <attribute name="id">view-objects-legend-section</attribute>
+	      <item>
+		<attribute name="label" translatable="yes">Bar Purple</attribute>
+		<attribute name="action">win.show-legend-color</attribute>
+		<attribute name="target">purple</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">Bar White</attribute>
+		<attribute name="action">win.show-legend-color</attribute>
+		<attribute name="target">white</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">Bar Black</attribute>
+		<attribute name="action">win.show-legend-color</attribute>
+		<attribute name="target">black</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">Bar Transparent</attribute>
+		<attribute name="action">win.show-legend-color</attribute>
+		<attribute name="target">alpha</attribute>
+	      </item>
+	    </section>
+	  </submenu>
+	  <item>
+	    <attribute name="label" translatable="yes">Reset Counter</attribute>
+	    <attribute name="action">win.reset-object-counter</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Show Counter</attribute>
+	    <attribute name="action">win.show-object-counter</attribute>
+	  </item>
+	  <submenu>
+	    <attribute name="label" translatable="yes">Marker Group</attribute>
+	    <section>
+	      <attribute name="id">view-marker-group-section</attribute>
+	      <item>
+		<attribute name="label" translatable="yes">Red</attribute>
+		<attribute name="action">win.set-marker-group</attribute>
+		<attribute name="target">red</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">Green</attribute>
+		<attribute name="action">win.set-marker-group</attribute>
+		<attribute name="target">green</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">Blue</attribute>
+		<attribute name="action">win.set-marker-group</attribute>
+		<attribute name="target">blue</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">Yellow</attribute>
+		<attribute name="action">win.set-marker-group</attribute>
+		<attribute name="target">yellow</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">Magenta</attribute>
+		<attribute name="action">win.set-marker-group</attribute>
+		<attribute name="target">magenta</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">Cyan</attribute>
+		<attribute name="action">win.set-marker-group</attribute>
+		<attribute name="target">cyan</attribute>
+	      </item>
+	    </section>
+	  </submenu>
+	  <submenu>
+	    <attribute name="label" translatable="yes">Local Radius</attribute>
+	    <section>
+	      <attribute name="id">view-objects-local-radius-section</attribute>
+	      <item>
+		<attribute name="label" translatable="yes">Set R=2</attribute>
+		<attribute name="action">win.set-local-radius</attribute>
+		<attribute name="target">2</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">Set R=5</attribute>
+		<attribute name="action">win.set-local-radius</attribute>
+		<attribute name="target">5</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">Set R=10</attribute>
+		<attribute name="action">win.set-local-radius</attribute>
+		<attribute name="target">10</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">Set R=20</attribute>
+		<attribute name="action">win.set-local-radius</attribute>
+		<attribute name="target">20</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">Set R=50</attribute>
+		<attribute name="action">win.set-local-radius</attribute>
+		<attribute name="target">50</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">Set R=100</attribute>
+		<attribute name="action">win.set-local-radius</attribute>
+		<attribute name="target">100</attribute>
+	      </item>
+	    </section>
+	  </submenu>
+	  <item>
+	    <attribute name="label" translatable="yes">All loc max </attribute>
+	    <attribute name="action">win.move-all-objects-loc-max</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Remove all</attribute>
+	    <attribute name="action">win.remove-all-objects</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Remove active</attribute>
+	    <attribute name="action">win.remove-active-object</attribute>
+	  </item>
+	</section>
+      </submenu>
+      <submenu>
+	<attribute name="label" translatable="yes">Events</attribute>
+	<section>
+	  <attribute name="id">view-events-section</attribute>
+	  <item>
+            <attribute name="label" translatable="yes">Open</attribute>
+            <attribute name="action">win.file-open-here</attribute>
+	  </item>
+	</section>
+	<item>
+	  <attribute name="label" translatable="yes">Show Probe</attribute>
+	  <attribute name="action">win.show-probe-events</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">Show User</attribute>
+	  <attribute name="action">win.show-user-events</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">Show Labels</attribute>
+	  <attribute name="action">win.show-event-lables</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">Verbose</attribute>
+	  <attribute name="action">win.events-verbose</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">Remove All</attribute>
+	  <attribute name="action">win.remove-all-events</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">Remove Trails</attribute>
+	  <attribute name="action">win.remove-all-trails</attribute>
+	</item>
+      </submenu>
+      <submenu>
+	<attribute name="label" translatable="yes">Sort</attribute>
+	<section>
+	  <attribute name="id">view-sort-time-elements-section</attribute>
+	  <item>
+	    <attribute name="label" translatable="yes">by Index</attribute>
+	    <attribute name="action">win.sort-time-elements</attribute>
+	    <attribute name="target">index</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">by Time</attribute>
+	    <attribute name="action">win.sort-time-elements</attribute>
+	    <attribute name="target">time</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">by Bias</attribute>
+	    <attribute name="action">win.sort-time-elements</attribute>
+	    <attribute name="target">bias</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">by ZSetPoint</attribute>
+	    <attribute name="action">win.sort-time-elements</attribute>
+	    <attribute name="target">zsetpoint</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">do Re-Index</attribute>
+	    <attribute name="action">win.sort-time-elements</attribute>
+	    <attribute name="target">reindex</attribute>
+	  </item>
+	</section>
+      </submenu>
+      <submenu>
+	<attribute name="label" translatable="yes">Actions</attribute>
+	<section>
+	  <attribute name="id">view-action-section</attribute>
+	  <item>
+	    <attribute name="label" translatable="yes">SF1</attribute>
+	    <attribute name="action">win.action</attribute>
+	    <attribute name="target">sf1</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">SF2</attribute>
+	    <attribute name="action">win.action</attribute>
+	    <attribute name="target">sf2</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">SF3</attribute>
+	    <attribute name="action">win.action</attribute>
+	    <attribute name="target">sf3</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">SF4</attribute>
+	    <attribute name="action">win.action</attribute>
+	    <attribute name="target">sf4</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">SF5</attribute>
+	    <attribute name="action">win.action</attribute>
+	    <attribute name="target">sf5</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">SF6</attribute>
+	    <attribute name="action">win.action</attribute>
+	    <attribute name="target">sf6</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">SF7</attribute>
+	    <attribute name="action">win.action</attribute>
+	    <attribute name="target">sf7</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">SF8</attribute>
+	    <attribute name="action">win.action</attribute>
+	    <attribute name="target">sf8</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">SF9</attribute>
+	    <attribute name="action">win.action</attribute>
+	    <attribute name="target">sf9</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">SF10</attribute>
+	    <attribute name="action">win.action</attribute>
+	    <attribute name="target">sf10</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">SF11</attribute>
+	    <attribute name="action">win.action</attribute>
+	    <attribute name="target">sf11</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">SF12</attribute>
+	    <attribute name="action">win.action</attribute>
+	    <attribute name="target">sf12</attribute>
+	  </item>
+	</section>
+      </submenu>
+    </section>
+  </menu>
+  <!-- ************************************************** -->
+  <!-- OBJECTS 1Point CONTEXT MENU -->
+  <menu id="vobj-ctx-menu-1p">
+    <item>
+      <attribute name="label" translatable="yes">Properties</attribute>
+      <attribute name="action">win.open-object-properties-dialog</attribute>
+    </item>
+    <item>
+      <attribute name="label" translatable="yes">Set current Offset to Point</attribute>
+      <attribute name="action">win.get-coordinates-offset</attribute>
+    </item>
+    <item>
+      <attribute name="label" translatable="yes">Global Reference Point</attribute>
+      <attribute name="action">win.get-coordinates-as-global-reference</attribute>
+    </item>
+    <item>
+      <attribute name="label" translatable="yes">Go Loc.Max.</attribute>
+      <attribute name="action">win.goto-local-max</attribute>
+    </item>
+    <item>
+      <attribute name="label" translatable="yes">Dump</attribute>
+      <attribute name="action">win.dump-object-properties</attribute>
+    </item>
+    <item>
+      <attribute name="label" translatable="yes">Remove</attribute>
+      <attribute name="action">win.remove-point-object</attribute>
+    </item>
+  </menu>
+  <!-- ************************************************** -->
+  <!-- OBJECTS 2Points CONTEXT MENU -->
+  <menu id="vobj-ctx-menu-2p">
+    <item>
+      <attribute name="label" translatable="yes">Properties</attribute>
+      <attribute name="action">win.object-properties</attribute>
+    </item>
+    <item>
+      <attribute name="label" translatable="yes">Get Coordintes</attribute>
+      <attribute name="action">win.get-coordinates</attribute>
+    </item>
+    <item>
+      <attribute name="label" translatable="yes">Go Loc.Max.</attribute>
+      <attribute name="action">win.look-for-maximum-goto</attribute>
+    </item>
+    <item>
+      <attribute name="label" translatable="yes">Add Node</attribute>
+      <attribute name="action">win.objmode-polyline-node</attribute>
+    </item>
+    <item>
+      <attribute name="label" translatable="yes">Dump</attribute>
+      <attribute name="action">win.dump-object-properties</attribute>
+    </item>
+    <item>
+      <attribute name="label" translatable="yes">Remove</attribute>
+      <attribute name="action">win.remove-line-object</attribute>
+    </item>
+  </menu>
+  <!-- ************************************************** -->
+  <!-- OBJECTS NPoints CONTEXT MENU -->
+  <menu id="vobj-ctx-menu-np">
+    <item>
+      <attribute name="label" translatable="yes">Properties</attribute>
+      <attribute name="action">win.object-properties</attribute>
+    </item>
+    <item>
+      <attribute name="label" translatable="yes">Add Node</attribute>
+      <attribute name="action">win.add-polyline-node</attribute>
+    </item>
+    <item>
+      <attribute name="label" translatable="yes">Delete Node</attribute>
+      <attribute name="action">win.delete-polyline-node</attribute>
+    </item>
+    <item>
+      <attribute name="label" translatable="yes">Dump</attribute>
+      <attribute name="action">win.dump-object-properties</attribute>
+    </item>
+    <item>
+      <attribute name="label" translatable="yes">Remove</attribute>
+      <attribute name="action">win.remove-line-object</attribute>
+    </item>
+  </menu>
+  <!-- ************************************************** -->
+  <!-- EVENT OBJECTS CONTEXT MENU -->
+  <menu id="vobj-ctx-menu-event">
+    <item>
+      <attribute name="label" translatable="yes">Properties</attribute>
+      <attribute name="action">win.object-properties</attribute>
+    </item>
+    <item>
+      <attribute name="label" translatable="yes">Set current Offset to Point</attribute>
+      <attribute name="action">win.get-coordinates-offset</attribute>
+    </item>
+    <item>
+      <attribute name="label" translatable="yes">Save Event</attribute>
+      <attribute name="action">win.save-event</attribute>
+    </item>
+    <item>
+      <attribute name="label" translatable="yes">Dump Event</attribute>
+      <attribute name="action">win.use-event-data</attribute>
+    </item>
+    <item>
+      <attribute name="label" translatable="yes">Remove Event</attribute>
+      <attribute name="action">win.event-remove</attribute>
+    </item>
+  </menu>
+  <!-- ************************************************** -->
+  <!-- VIEW 3D MENU -->
+  <menu id="view3d-menu">
+    <section>
+      <item>
+	<attribute name="label" translatable="yes">Activate</attribute>
+	<attribute name="action">win.view3d-activate</attribute>
+      </item>
+      <item>
+	<attribute name="label" translatable="yes">Auto Display</attribute>
+	<attribute name="action">win.view3d-autodisp</attribute>
+      </item>
+      <item>
+	<attribute name="label" translatable="yes">Configure GL Scene</attribute>
+	<attribute name="action">win.view3d-configure-scene</attribute>
+      </item>
+      <submenu>
+	<attribute name="label" translatable="yes">File</attribute>
+	<section>
+	  <attribute name="id">view3d-file-section</attribute>
+	  <item>
+	    <attribute name="label" translatable="yes">_Open here</attribute>
+	    <attribute name="action">win.view3d-open</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">_Save</attribute>
+	    <attribute name="action">win.view3d-save-auto</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Save _as...</attribute>
+	    <attribute name="action">win.view3d-save-as</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Save Image</attribute>
+	    <attribute name="action">win.view3d-save-as-image</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Close</attribute>
+	    <attribute name="action">win.view3d-close</attribute>
+	  </item>
+	</section>
+      </submenu>
+      <submenu>
+	<attribute name="label" translatable="yes">View Mode</attribute>
+	<section>
+	  <attribute name="id">view3d-view-mode-section</attribute>
+	  <item>
+	    <attribute name="label" translatable="yes">Quick</attribute>
+	    <attribute name="action">win.view3d-view-mode</attribute>
+	    <attribute name="target">quick</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Direct</attribute>
+	    <attribute name="action">win.view3d-view-mode</attribute>
+	    <attribute name="target">direct</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Direct Hi-Lit</attribute>
+	    <attribute name="action">win.view3d-view-mode</attribute>
+	    <attribute name="target">hilit</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Plane</attribute>
+	    <attribute name="action">win.view3d-view-mode</attribute>
+	    <attribute name="target">plane</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Horizontal</attribute>
+	    <attribute name="action">win.view3d-view-mode</attribute>
+	    <attribute name="target">horizontal</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Periodic</attribute>
+	    <attribute name="action">win.view3d-view-mode</attribute>
+	    <attribute name="target">periodic</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Logarithmic</attribute>
+	    <attribute name="action">win.view3d-view-mode</attribute>
+	    <attribute name="target">log</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Differential</attribute>
+	    <attribute name="action">win.view3d-view-mode</attribute>
+	    <attribute name="target">diff</attribute>
+	  </item>
+	</section>
+      </submenu>
+      <submenu>
+	<attribute name="label" translatable="yes">GL Options</attribute>
+	<section>
+	  <attribute name="id">view3d-gl-section</attribute>
+	  <item>
+	    <attribute name="label" translatable="yes">Render Mesh</attribute>
+	    <attribute name="action">win.view3d-gl-mesh</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Show Zero Plane</attribute>
+	    <attribute name="action">win.view3d-gl-n-zp</attribute>
+	  </item>
+	</section>
+      </submenu>
+      <item>
+	<attribute name="label" translatable="yes">Configure</attribute>
+	<attribute name="action">win.view3d-configure</attribute>
+      </item>
+      <item>
+	<attribute name="label" translatable="yes">Auto Update</attribute>
+	<attribute name="action">win.view3d-auto-update</attribute>
+      </item>
+    </section>
+  </menu>
+  <!-- ************************************************** -->
+  <!-- PROFILECONTROL POPUP MENU -->
+  <menu id="profile-popup-menu">
+    <submenu>
+      <attribute name="label" translatable="yes">File</attribute>
+      <section>
+	<attribute name="id">profile-file-section</attribute>
+	<item>
+	  <attribute name="label" translatable="yes">_Open</attribute>
+	  <attribute name="action">profile.file-open</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">_Save</attribute>
+	  <attribute name="action">profile.file-save</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">_Save Image/Drawing</attribute>
+	  <attribute name="action">profile.file-image-save</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">_Save Data</attribute>
+	  <attribute name="action">profile.file-save-data</attribute>
+	</item>
+      </section>
+    </submenu>
+    <submenu>
+      <attribute name="label" translatable="yes">Print</attribute>
+      <section>
+	<attribute name="id">profile-print-section</attribute>
+	<item>
+	  <attribute name="label" translatable="yes">Print</attribute>
+	  <attribute name="action">profile.print</attribute>
+	</item>
+      </section>
+    </submenu>
+    <submenu>
+      <attribute name="label" translatable="yes">Options</attribute>
+      <section>
+	<attribute name="id">profile-options-section</attribute>
+	<item>
+	  <attribute name="label" translatable="yes">Linregression</attribute>
+	  <attribute name="action">profile.opt-Y-linreg</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">Differential</attribute>
+	  <attribute name="action">profile.opt-Y-diff</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">Fourier</attribute>
+	  <attribute name="action">profile.opt-Y-ft</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">Auto Decimate</attribute>
+	  <attribute name="action">profile.opt-decimate</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">Lowpass off</attribute>
+	  <attribute name="action">profile.opt-Y-lowpass</attribute>
+	  <attribute name="target">lp-off</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">Lowpass 0.1%</attribute>
+	  <attribute name="action">profile.opt-Y-lowpass</attribute>
+	  <attribute name="target">lp0-1</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">Lowpass 1%</attribute>
+	  <attribute name="action">profile.opt-Y-lowpass</attribute>
+	  <attribute name="target">lp1</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">Lowpass 5%</attribute>
+	  <attribute name="action">profile.opt-Y-lowpass</attribute>
+	  <attribute name="target">lp5</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">Lowpass 10%</attribute>
+	  <attribute name="action">profile.opt-Y-lowpass</attribute>
+	  <attribute name="target">lp10</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">Lowpass 50%</attribute>
+	  <attribute name="action">profile.opt-Y-lowpass</attribute>
+	  <attribute name="target">lp50</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">Lowpass 90%</attribute>
+	  <attribute name="action">profile.opt-Y-lowpass</attribute>
+	  <attribute name="target">lp90</attribute>
+	</item>
+      </section>
+    </submenu>
+    <submenu>
+      <attribute name="label" translatable="yes">Y Scaling</attribute>
+      <section>
+	<attribute name="id">profile-file-section</attribute>
+	<item>
+	  <attribute name="label" translatable="yes">Y auto</attribute>
+	  <attribute name="action">profile.skl-Y-auto</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">Y log</attribute>
+	  <attribute name="action">profile.skl-Y-log</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">Y hold</attribute>
+	  <attribute name="action">profile.skl-Y-hold</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">Y expand</attribute>
+	  <attribute name="action">profile.skl-Y-expand</attribute>
+	</item>
+      </section>
+    </submenu>
+    <submenu>
+      <attribute name="label" translatable="yes">Cursor</attribute>
+      <section>
+	<attribute name="id">profile-cursor-section</attribute>
+	<item>
+	  <attribute name="label" translatable="yes">Cursor A</attribute>
+	  <attribute name="action">profile.cursor-A</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">Cursor B</attribute>
+	  <attribute name="action">profile.cursor-B</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">A left</attribute>
+	  <attribute name="action">profile.cursor-A-left</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">A right</attribute>
+	  <attribute name="action">profile.cursor-A-right</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">A next min</attribute>
+	  <attribute name="action">profile.cursor-A-rmin</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">A next max</attribute>
+	  <attribute name="action">profile.cursor-A-rmax</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">A prev min</attribute>
+	  <attribute name="action">profile.cursor-A-lmin</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">A prev max</attribute>
+	  <attribute name="action">profile.cursor-A-lmax</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">B left</attribute>
+	  <attribute name="action">profile.cursor-B-left</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">B right</attribute>
+	  <attribute name="action">profile.cursor-B-right</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">B next min</attribute>
+	  <attribute name="action">profile.cursor-B-rmin</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">B next max</attribute>
+	  <attribute name="action">profile.cursor-B-rmax</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">B prev min</attribute>
+	  <attribute name="action">profile.cursor-B-lmin</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">B prev max</attribute>
+	  <attribute name="action">profile.cursor-B-lmax</attribute>
+	</item>
+      </section>
+    </submenu>
+    <submenu>
+      <attribute name="label" translatable="yes">Settings</attribute>
+      <section>
+	<attribute name="id">profile-settings-section</attribute>
+	<item>
+	  <attribute name="label" translatable="yes">X grid</attribute>
+	  <attribute name="action">profile.settings-xgrid</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">Y grid</attribute>
+	  <attribute name="action">profile.settings-ygrid</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">No tics</attribute>
+	  <attribute name="action">profile.settings-notics</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">Connect</attribute>
+	  <attribute name="action">profile.settings-pathmode</attribute>
+	  <attribute name="target">connect</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">Points</attribute>
+	  <attribute name="action">profile.settings-pathmode</attribute>
+	  <attribute name="target">points</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">Impulses</attribute>
+	  <attribute name="action">profile.settings-pathmode</attribute>
+	  <attribute name="target">impulses</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">Symbols-X</attribute>
+	  <attribute name="action">profile.settings-pathmode</attribute>
+	  <attribute name="target">symbols</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">header</attribute>
+	  <attribute name="action">profile.settings-header</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">legend</attribute>
+	  <attribute name="action">profile.settings-legend</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">series tics</attribute>
+	  <attribute name="action">profile.settings-series-tics</attribute>
+	</item>
+      </section>
+    </submenu>
+  </menu>
+
+  <!-- ************************************************** -->
+  <!-- PROFILECONTROL POPUP MENU -->
+  <menu id="monitor-menu">
+    <submenu>
+      <attribute name="label" translatable="yes">File</attribute>
+      <section>
+	<attribute name="id">monitor-file-section</attribute>
+	<item>
+	  <attribute name="label" translatable="yes">_Open</attribute>
+	  <attribute name="action">win.file-open</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">_Save</attribute>
+	  <attribute name="action">win.file-save</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">_Close</attribute>
+	  <attribute name="action">win.file-close</attribute>
+	</item>
+      </section>
+    </submenu>
+    <submenu>
+      <attribute name="label" translatable="yes">Logging History</attribute>
+      <section>
+	<attribute name="id">monitor-logging-history-section</attribute>
+	<item>
+	  <attribute name="label" translatable="yes">Off</attribute>
+	  <attribute name="action">win.logging-history</attribute>
+	  <attribute name="target">off</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">10 lines</attribute>
+	  <attribute name="action">win.logging-history</attribute>
+	  <attribute name="target">max-10-lines</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">50 lines</attribute>
+	  <attribute name="action">win.logging-history</attribute>
+	  <attribute name="target">max-50-lines</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">500 lines</attribute>
+	  <attribute name="action">win.logging-history</attribute>
+	  <attribute name="target">max-500-lines</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">5000 lines</attribute>
+	  <attribute name="action">win.logging-history</attribute>
+	  <attribute name="target">max-5000-lines</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">Infinit</attribute>
+	  <attribute name="action">win.logging-history</attribute>
+	  <attribute name="target">infinit</attribute>
+	</item>
+      </section>
+    </submenu>
+    <submenu>
+      <attribute name="label" translatable="yes">Logging Level</attribute>
+      <section>
+	<attribute name="id">monitor-logging-level-section</attribute>
+	<item>
+	  <attribute name="label" translatable="yes">Off</attribute>
+	  <attribute name="action">win.logging-level</attribute>
+	  <attribute name="target">off</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">Basic</attribute>
+	  <attribute name="action">win.logging-level</attribute>
+	  <attribute name="target">basic</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">Normal</attribute>
+	  <attribute name="action">win.logging-level</attribute>
+	  <attribute name="target">normal</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">Verbose</attribute>
+	  <attribute name="action">win.logging-level</attribute>
+	  <attribute name="target">verbose</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">All</attribute>
+	  <attribute name="action">win.logging-level</attribute>
+	  <attribute name="target">all</attribute>
+	</item>
+      </section>
+    </submenu>
+  </menu>
+
+</interface>

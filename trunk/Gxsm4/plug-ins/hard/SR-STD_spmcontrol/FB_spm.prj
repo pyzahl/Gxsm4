@@ -1,0 +1,32 @@
+// *****************************************************************
+// This file contains the list of object and library files that must
+// be included in the application build and are not known to CCS.
+// This file also contains options for which there currently exists
+// no graphical method to specify.
+// You may maintain this file from any standard text editor.
+// *****************************************************************
+
+
+
+// ---------------------------------------------------------------
+// legacy linker options from the set:
+//    {-j, -b, -h, -k, -q, -t, -xm, -g} 
+// ---------------------------------------------------------------
+
+-q // Quiet (shhh!)
+
+
+// ---------------------------------------------------------------
+// object & library files interleaved with options controlling how
+// these files are found and read (-l, -i, -x, -e, -u).
+// File names/paths containing spaces must be quoted (e.g. "fast fft.obj").
+// Your recipe will be more easily moved to a different directory if you
+// make intelligent use of -l search paths, relative paths and absolute paths.
+// -i may be used to build a custom search path.
+// -l may be used to find .obj as well as .lib files.
+// ---------------------------------------------------------------
+
+-x // eXhaustive search of libraries for undefined symbols
+
+-e _c_int00 // Entry symbol
+

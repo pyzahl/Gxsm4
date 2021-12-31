@@ -1,0 +1,58 @@
+Plugin Hacking Guide          20001124PZ
+----------------------------------------
+
+Step One:
+Have a look at ./statistik/vorlage.C,
+and copy it into the best matching subdir, one of
+
+background  filter1d  filter2d  misc  statistik  transform
+
+using a new plugin name. (here: "myplugin.C")
+The file "myplugin.C" includes a quick GxsmPlugin Guide, please follow...
+
+Change into the subdir!
+
+Step Two:
+Adding your myplugin.C to the Makefile.am, located in the same directory:
+
+1.) The Makefile.am has a list of all libs to build, add "libmyplugin.la":
+
+lib_LTLIBRARIES = \
+	libhistogram.la \
+	libhistoHOP.la \
+	libspasim.la \          <=== the line before should end with "\" !!
+	libmyplugin.la          <=== add "myplugin" as here
+
+2.) add the compiler instructions like:
+
+libmyplugin_la_SOURCES = myplugin.C [mypluginhelp.C, ...]  <=== here you cann add more .C sources !!
+libmyplugin_la_LDFLAGS = -export-dynamic -avoid-version
+
+That's all to do for Makefile.am.
+
+
+Step Three:
+Build:
+
+make
+make install
+
+Test:
+Start gxsm   or call   Gxsm->Tools->Reload Plugins
+Check Plugins Description, [About, Configure] using the "Gxsm->Tools->Plugin Details" Viewer
+Test Plugins action
+
+
+Step Four:
+please publish!
+
+If you are a SF-Gxsm project member:
+sfcvs update
+sfcvs add myplugin.C ...
+sfcvf commit
+
+or send Plugin-Srcs to zahl@users.sourceforge.net
+
+---
+
+thanks, Percy Zahl

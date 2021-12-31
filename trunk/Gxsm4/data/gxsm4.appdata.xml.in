@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+GXSM3 GPL
+-->
+<component type="desktop-application"
+  xmlns="https://specifications.freedesktop.org/metainfo/1.0"
+  xmlns:xi="http://www.w3.org/2001/XInclude"
+  xmlns:its="http://www.w3.org/2005/11/its">
+  <id>gxsm3.desktop</id>
+  <metadata_license>GPL-3.0+</metadata_license>
+  <project_license>GPL-3.0+</project_license>
+  <_name>Gxsm-3.0</_name>
+  <_summary>Gnome X Scanning Microscopy Project and Data Analysis & Visualisation</_summary>
+  <description>
+    <_p>
+      The GXSM software is a powerful graphical interface for any kind
+      of 2D and up to 4D (timed and multilayered 2D mode) data
+      acquisition methods, but especially designed for SPM and
+      SPA-LEED, which are used in surface science. It includes methods
+      for 2D data (of various types: byte, short, long, double)
+      visualization and manipulation.
+    </_p>
+    <_p>
+      It can be used for STM, AFM, SNOM, SPA-LEED, but is by far not
+      limited to those! Especially in standalone mode it can perform
+      many SPM typical image manipulations and analysis tasks. Latest
+      additions enables full support of handling and on-the-fly
+      viewing image sequences and arbitrary profiling in 4 dimensions.
+    </_p>
+  </description>
+<!--
+  <screenshots>
+    <screenshot type="default">...</screenshot>
+  </screenshots>
+-->
+  <kudos>
+    <kudo>AppMenu</kudo>
+    <kudo>ModernToolkit</kudo>
+    <kudo>UserDocs</kudo>
+  </kudos>
+  <url type="homepage">http://gxsm.sourceforge.net/</url>
+  <project_group>GXSM</project_group>
+  <translation type="gettext">gxsm</translation>
+</component>
+

@@ -1,0 +1,8 @@
+#!/bin/sh
+# Script to thumbnail "uksoft2001" files
+size=`gconftool-2 -g /desktop/gnome/thumbnailers/application@x-uksoft2001/size 2> /dev/null`
+if [ x$size == x ]
+then
+    size=120
+fi
+uksoft2001topng -n --size=$size $1 $2

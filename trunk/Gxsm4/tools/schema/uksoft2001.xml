@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+  <mime-type type="application/x-uksoft2001">
+     <comment xml:lang="en">UKSOFT2001/LEEM image</comment>
+     <comment xml:lang="de">UKSOFT2001/LEEM Bild</comment>
+     <magic priority="50">
+      <match type="string" offset="0" value="UKSOFT2001"/>
+     </magic>
+  </mime-type>
+</mime-info>

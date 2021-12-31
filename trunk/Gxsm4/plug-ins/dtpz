@@ -1,0 +1,47 @@
+
+/* Please do not change the Begin/End lines of this comment section!
+ * this is a LaTeX style section used for auto generation of the PlugIn Manual 
+ * Chapter. Add a complete PlugIn documentation inbetween the Begin/End marks!
+ * All "% PlugInXXX" commentary tags are mandatory
+ * All "% OptPlugInXXX" tags are optional
+ * --------------------------------------------------------------------------------
+% BeginPlugInDocuSection
+% PlugInDocuCaption: 
+% PlugInName: 
+% PlugInAuthor: Percy Zahl
+% PlugInAuthorEmail: zahl@users.sf.net
+% PlugInMenuPath: Math/
+
+% PlugInDescription
+
+
+% PlugInUsage
+
+
+% OptPlugInSources
+The active channel is used as data source.
+
+% OptPlugInObjects
+A optional rectangle is used for data extraction...
+
+% OptPlugInDest
+The computation result is placed into an existing math channel, else into a new created math channel.
+
+%% OptPlugInConfig
+%
+
+%% OptPlugInFiles
+%Does it uses, needs, creates any files? Put info here!
+
+%% OptPlugInKnownBugs
+%
+
+%% OptPlugInNotes
+%
+
+%% OptPlugInHints
+%
+
+% EndPlugInDocuSection
+ * -------------------------------------------------------------------------------- 
+ */

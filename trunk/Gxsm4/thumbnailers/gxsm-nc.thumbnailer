@@ -1,0 +1,5 @@
+[Thumbnailer Entry]
+TryExec=nctopng
+Exec=nctopng -s %s %i %o
+#Exec=/usr/local/bin/nctopng -s %s %u %o
+MimeType=application/x-netcdf;

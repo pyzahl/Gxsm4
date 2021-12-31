@@ -1,0 +1,4 @@
+#!/bin/sh
+LC_NUMERIC=POSIX
+export LC_NUMERIC
+gxsm4 -h no

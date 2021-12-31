@@ -1,0 +1,133 @@
+<gconfschemafile>
+    <schemalist>
+
+        <schema>
+            <key>/schemas/desktop/gnome/thumbnailers/application@x-netcdf/enable</key>
+            <applyto>/desktop/gnome/thumbnailers/application@x-netcdf/enable</applyto>
+            <owner>gxsm_thumbnailer</owner>
+            <type>bool</type>
+            <default>true</default>
+            <locale name="C">
+                <short></short>
+                <long></long>
+            </locale>
+        </schema>
+
+
+        <schema>
+            <key>/schemas/desktop/gnome/thumbnailers/application@x-netcdf/command</key>
+            <applyto>/desktop/gnome/thumbnailers/application@x-netcdf/command</applyto>
+            <owner>gxsm_thumbnailer</owner>
+            <type>string</type>
+            <default>nautilus-gxsm-thumbnailer %i %o %s</default>
+            <locale name="C">
+                <short></short>
+                <long></long>
+            </locale>
+        </schema>
+
+	<schema>
+            <key>/schemas/desktop/gnome/thumbnailers/application@x-omicron-scala/enable</key>
+            <applyto>/desktop/gnome/thumbnailers/application@x-omicron-scala/enable</applyto>
+            <owner>scala_thumbnailer</owner>
+            <type>bool</type>
+            <default>true</default>
+            <locale name="C">
+                <short></short>
+                <long></long>
+            </locale>
+        </schema>
+
+
+        <schema>
+            <key>/schemas/desktop/gnome/thumbnailers/application@x-omicron-scala/command</key>
+            <applyto>/desktop/gnome/thumbnailers/application@x-omicron-scala/command</applyto>
+            <owner>scala_thumbnailer</owner>
+            <type>string</type>
+            <default>nautilus-scala-thumbnailer %i %o %s</default>
+            <locale name="C">
+                <short></short>
+                <long></long>
+            </locale>
+        </schema>
+
+	<schema>
+            <key>/schemas/desktop/gnome/thumbnailers/application@x-gme-data/enable</key>
+            <applyto>/desktop/gnome/thumbnailers/application@x-gme-data/enable</applyto>
+            <owner>gmedat_thumbnailer</owner>
+            <type>bool</type>
+            <default>true</default>
+            <locale name="C">
+                <short></short>
+                <long></long>
+            </locale>
+        </schema>
+
+
+        <schema>
+            <key>/schemas/desktop/gnome/thumbnailers/application@x-gme-data/command</key>
+            <applyto>/desktop/gnome/thumbnailers/application@x-gme-data/command</applyto>
+            <owner>gmedat_thumbnailer</owner>
+            <type>string</type>
+            <default>nautilus-gmedat-thumbnailer %i %o %s</default>
+            <locale name="C">
+                <short></short>
+                <long></long>
+            </locale>
+        </schema>
+
+
+	<schema>
+            <key>/schemas/desktop/gnome/thumbnailers/application@x-uksoft2001/enable</key>
+            <applyto>/desktop/gnome/thumbnailers/application@x-uksoft2001/enable</applyto>
+            <owner>uksoft2001_thumbnailer</owner>
+            <type>bool</type>
+            <default>true</default>
+            <locale name="C">
+                <short></short>
+                <long></long>
+            </locale>
+        </schema>
+
+
+        <schema>
+            <key>/schemas/desktop/gnome/thumbnailers/application@x-uksoft2001/command</key>
+            <applyto>/desktop/gnome/thumbnailers/application@x-uksoft2001/command</applyto>
+            <owner>uksoft2001_thumbnailer</owner>
+            <type>string</type>
+            <default>nautilus-uksoft2001-thumbnailer %i %o %s</default>
+            <locale name="C">
+                <short></short>
+                <long></long>
+            </locale>
+        </schema>
+
+
+	<schema>
+            <key>/schemas/desktop/gnome/thumbnailers/application@x-rhk-spm32/enable</key>
+            <applyto>/desktop/gnome/thumbnailers/application@x-rhk-spm32/enable</applyto>
+            <owner>rhk_thumbnailer</owner>
+            <type>bool</type>
+            <default>true</default>
+            <locale name="C">
+                <short></short>
+                <long></long>
+            </locale>
+        </schema>
+
+
+        <schema>
+            <key>/schemas/desktop/gnome/thumbnailers/application@x-rhk-spm32/command</key>
+            <applyto>/desktop/gnome/thumbnailers/application@x-rhk-spm32/command</applyto>
+            <owner>rhk_thumbnailer</owner>
+            <type>string</type>
+            <default>nautilus-rhk-spm32-thumbnailer %i %o %s</default>
+            <locale name="C">
+                <short></short>
+                <long></long>
+            </locale>
+        </schema>
+
+
+    </schemalist>
+</gconfschemafile>
