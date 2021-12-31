@@ -77,6 +77,8 @@ Pending and known issues:
 Window Position Management....  gtk4 does not provide any hands on that any more -- big convenience and usability issue 🙁
                                 any one has an idea if select (particular gnome shell) have some handles to get around this???
 
+File load vie Drag-n-Drop from filemanager: working, but currently only for single files. (new drap/drop controller)
+
 "Kill" or close scan window is disfunctional... (only hiding): need to figure out how to fix. "window-delete" signals do not exist any more.... (removed from App-Init call) 🙁
 
 Spin-Entry: Now shows the units again, but not always at startup (some defaut formatting), only after first touch... not yet sure why that is.
@@ -84,6 +86,7 @@ Spin-Entry: Now shows the units again, but not always at startup (some defaut fo
 Profile: pending mouse actions for cursors... need to port to gtk_controller (easy), subtitle management, canvas window resizing is currently disfucntional.
 
 DSP MOVER CONTROL BUTTONS: action signal problem of missing signal for "pressed". The "activate" does not do anything... I tried.
+-?> Do I now need to add event controllers to the buttons (can I??) and all that stuff to do this?
 
 All ENTRIES: added configuration menu option not yet attached and not accessible. Need to figure out how to add a custom menu entry to gtk_popovers.
              It is possible to manually edit the properties via the dconf-editor to get started.
@@ -101,7 +104,7 @@ MOVER-CONFIG-WAVEFORM icon/graph display omitted as gtk_image_new_from_surface (
   // FIX-ME GTK4 WAVE-IMAGE
   // gtk_image_set_from_surface (GTK_IMAGE (widget), surface);
 Same issue in InsetJSON...RP-PAC control for scope view (currently disabled).
-
+-?> Do I now really need to implement a full gtk_drawingarea and draw function to do this for simple singe shot draws???
 
 
 FYI:
