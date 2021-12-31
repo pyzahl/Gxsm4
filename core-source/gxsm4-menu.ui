@@ -1,0 +1,199 @@
+<?xml version="1.0"?>
+<interface>
+  <!-- interface-requires gtk+ 3.8 -->
+  <!-- ************************************************** -->
+  <!-- GXSM APPLICATION MENU -->
+  <menu id="appmenu">
+    <section>
+      <attribute name="id">appmenu-section</attribute>
+      <item>
+	<attribute name="label" translatable="yes">_Preferences</attribute>
+	<attribute name="action">app.preferences</attribute>
+      </item>
+      <item>
+	<attribute name="label" translatable="yes">_Save Geometry</attribute>
+	<attribute name="action">app.save-geometry</attribute>
+      </item>
+      <item>
+	<attribute name="label" translatable="yes">_Load Geometry</attribute>
+	<attribute name="action">app.load-geometry</attribute>
+      </item>
+      <item>
+	<attribute name="label" translatable="yes">_About</attribute>
+	<attribute name="action">app.about</attribute>
+      </item>
+      <item>
+	<attribute name="label" translatable="yes">_Quit</attribute>
+	<attribute name="action">app.quit</attribute>
+      </item>
+    </section>
+  </menu>
+  <!-- GXSM MAIN MENU BAR/MENU -->
+  <menu id="gxsm-menubar">
+    <submenu>
+      <attribute name="label" translatable="yes">_File</attribute>
+      <section>
+	<attribute name="id">file-section</attribute>
+	<item>
+	  <attribute name="label" translatable="yes">_Open</attribute>
+	  <attribute name="action">app.file-open</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">Open to _free channel</attribute>
+	  <attribute name="action">app.file-open-to-free-channel</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">_Save</attribute>
+	  <attribute name="action">app.file-save</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">_Update</attribute>
+	  <attribute name="action">app.file-update</attribute>
+	</item>
+	<submenu>
+	  <attribute name="label" translatable="yes">Open Mode</attribute>
+	  <section>
+	    <item>
+	      <attribute name="label" translatable="yes">Replace</attribute>
+	      <attribute name="action">app.file-open-mode</attribute>
+	      <attribute name="target">replace</attribute>
+	    </item>
+	    <item>
+	      <attribute name="label" translatable="yes">Append in time</attribute>
+	      <attribute name="action">app.file-open-mode</attribute>
+	      <attribute name="target">append-time</attribute>
+	    </item>
+	    <item>
+	      <attribute name="label" translatable="yes">Stitch 2D</attribute>
+	      <attribute name="action">app.file-open-mode</attribute>
+	      <attribute name="target">stitch-2d</attribute>
+	    </item>
+	  </section>
+	</submenu>
+      </section>
+      <section>
+	<submenu>
+	  <attribute name="label" translatable="yes">_Import</attribute>
+	  <section>
+	    <attribute name="id">file-import-section</attribute>
+	  </section>
+	</submenu>
+	<submenu>
+	  <attribute name="label" translatable="yes">_Export</attribute>
+	  <section>
+	    <attribute name="id">file-export-section</attribute>
+	  </section>
+	</submenu>
+      </section>
+      <section>
+	<attribute name="id">file-section-3</attribute>
+	<item>
+	  <attribute name="label" translatable="yes">_Preferences</attribute>
+	  <attribute name="action">app.preferences</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">_Save Geometry</attribute>
+	  <attribute name="action">app.save-geometry</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">_Load Geometry</attribute>
+	  <attribute name="action">app.load-geometry</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">_About</attribute>
+	  <attribute name="action">app.about</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">_Quit</attribute>
+	  <attribute name="action">app.quit</attribute>
+	</item>
+      </section>
+    </submenu>
+    <submenu>
+      <attribute name="label" translatable="yes">_Math</attribute>
+      <section>
+      <attribute name="id">math-section</attribute>
+      <submenu>
+	<attribute name="label" translatable="yes">_Convert</attribute>
+	<section>
+	  <attribute name="id">math-convert-section</attribute>
+	</section>
+      </submenu>
+      <submenu>
+	<attribute name="label" translatable="yes">_Background</attribute>
+	<section>
+	  <attribute name="id">math-background-section</attribute>
+	</section>
+      </submenu>
+      <submenu>
+	<attribute name="label" translatable="yes">_Arithmetic</attribute>
+	<section>
+	  <attribute name="id">math-arithmetic-section</attribute>
+	</section>
+      </submenu>
+      <submenu>
+	<attribute name="label" translatable="yes">Filter _1D</attribute>
+	<section>
+	  <attribute name="id">math-filter1d-section</attribute>
+	</section>
+      </submenu>
+      <submenu>
+	<attribute name="label" translatable="yes">Filter _2D</attribute>
+	<section>
+	  <attribute name="id">math-filter2d-section</attribute>
+	</section>
+      </submenu>
+      <submenu>
+	<attribute name="label" translatable="yes">Statistics</attribute>
+	<section>
+	  <attribute name="id">math-statistics-section</attribute>
+	</section>
+      </submenu>
+      <submenu>
+	<attribute name="label" translatable="yes">_Transformations</attribute>
+	<section>
+	  <attribute name="id">math-transformations-section</attribute>
+	</section>
+      </submenu>
+      <submenu>
+	<attribute name="label" translatable="yes">_Misc</attribute>
+	<section>
+	  <attribute name="id">math-misc-section</attribute>
+	</section>
+      </submenu>
+      <submenu>
+	<attribute name="label" translatable="yes">_Probe</attribute>
+	<section>
+	  <attribute name="id">math-probe-section</attribute>
+	</section>
+      </submenu>
+      </section>
+    </submenu>
+    <submenu>
+      <attribute name="label" translatable="yes">_Windows</attribute>
+      <section>
+	<attribute name="id">windows-section</attribute>
+      </section>
+    </submenu>
+    <submenu>
+      <attribute name="label" translatable="yes">_Tools</attribute>
+      <section>
+	<attribute name="id">tools-section</attribute>
+      </section>
+    </submenu>
+    <submenu>
+      <attribute name="label" translatable="yes">_Plug-Ins</attribute>
+      <section>
+	<attribute name="id">plugins-section</attribute>
+	<item>
+	  <attribute name="label" translatable="yes">uncategorized plug-ins</attribute>
+	  <attribute name="action">app.other-plugins</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">List GXSM Plug-Ins Info</attribute>
+	  <attribute name="action">app.plugins-info</attribute>
+	</item>
+      </section>
+    </submenu>  
+  </menu>
+</interface>

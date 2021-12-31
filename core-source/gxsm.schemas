@@ -1,0 +1,1116 @@
+<?xml version="1.0"?>
+<gconfschemafile>
+  <schemalist>
+    <schema>
+      <applyto>/apps/gxsm/State/Version/version</applyto>
+      <key>/schemas/apps/gxsm/State/Version/version</key>
+      <owner>gxsm</owner>
+      <type>string</type>
+      <locale name="C">
+        <default>Gxsm-2.0</default>
+        <short>Gxsm Version</short>
+        <long>Gxsm Version, Gxsm var name hint: XSM_VERSION</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Version/date</applyto>
+      <key>/schemas/apps/gxsm/State/Version/date</key>
+      <owner>gxsm</owner>
+      <type>string</type>
+      <locale name="C">
+        <default>percy@nano2, Fri Nov 15 18:47:17 MST 2002</default>
+        <short>Date of compilation</short>
+        <long>Date of compilation, Gxsm var name hint: XSM_VERDATE</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Scan/rx</applyto>
+      <key>/schemas/apps/gxsm/State/Scan/rx</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>1000</default>
+        <short>X range</short>
+        <long>X scan range [AA], Gxsm var name hint: s.rx</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Scan/ry</applyto>
+      <key>/schemas/apps/gxsm/State/Scan/ry</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>1000</default>
+        <short>X range</short>
+        <long>Y scan range [AA], Gxsm var name hint: s.ry</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Scan/rz</applyto>
+      <key>/schemas/apps/gxsm/State/Scan/rz</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>1000</default>
+        <short>Z range</short>
+        <long>Z  range [AA], Gxsm var name hint: s.rz</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Scan/dx</applyto>
+      <key>/schemas/apps/gxsm/State/Scan/dx</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>1</default>
+        <short>dx</short>
+        <long>X step width [AA], Gxsm var name hint: s.dx</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Scan/dy</applyto>
+      <key>/schemas/apps/gxsm/State/Scan/dy</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>1</default>
+        <short>dy</short>
+        <long>Y step width [AA], Gxsm var name hint: s.dy</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Scan/dz</applyto>
+      <key>/schemas/apps/gxsm/State/Scan/dz</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>1</default>
+        <short>dz</short>
+        <long>Z resolution [AA], Gxsm var name hint: s.dz</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Scan/dl</applyto>
+      <key>/schemas/apps/gxsm/State/Scan/dl</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>1</default>
+        <short>dl</short>
+        <long>data point distances [AA], Gxsm var name hint: s.dl</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Scan/alpha</applyto>
+      <key>/schemas/apps/gxsm/State/Scan/alpha</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>0</default>
+        <short>alpha</short>
+        <long>scan angle [degree], Gxsm var name hint: s.alpha</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Scan/x0</applyto>
+      <key>/schemas/apps/gxsm/State/Scan/x0</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>0</default>
+        <short>x0</short>
+        <long>scan origin in X [AA], Gxsm var name hint: s.x0</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Scan/y0</applyto>
+      <key>/schemas/apps/gxsm/State/Scan/y0</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>0</default>
+        <short>y0</short>
+        <long>scan origin in Y [AA], Gxsm var name hint: s.y0</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Scan/SPA_OrgX</applyto>
+      <key>/schemas/apps/gxsm/State/Scan/SPA_OrgX</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>0</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: s.SPA_OrgX</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Scan/SPA_OrgY</applyto>
+      <key>/schemas/apps/gxsm/State/Scan/SPA_OrgY</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>0</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: s.SPA_OrgY</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Scan/nx</applyto>
+      <key>/schemas/apps/gxsm/State/Scan/nx</key>
+      <owner>gxsm</owner>
+      <type>int</type>
+      <locale name="C">
+        <default>500</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: s.nx</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Scan/ny</applyto>
+      <key>/schemas/apps/gxsm/State/Scan/ny</key>
+      <owner>gxsm</owner>
+      <type>int</type>
+      <locale name="C">
+        <default>500</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: s.ny</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/LayerParam/value_start</applyto>
+      <key>/schemas/apps/gxsm/State/LayerParam/value_start</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>-2</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: lp.value_start</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/LayerParam/value_end</applyto>
+      <key>/schemas/apps/gxsm/State/LayerParam/value_end</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>2</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: lp.value_end</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/LayerParam/ntimes</applyto>
+      <key>/schemas/apps/gxsm/State/LayerParam/ntimes</key>
+      <owner>gxsm</owner>
+      <type>int</type>
+      <locale name="C">
+        <default>1</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: lp.ntimes</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/LayerParam/nvalues</applyto>
+      <key>/schemas/apps/gxsm/State/LayerParam/nvalues</key>
+      <owner>gxsm</owner>
+      <type>int</type>
+      <locale name="C">
+        <default>1</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: lp.nvalues</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/LayerParam/nAvg</applyto>
+      <key>/schemas/apps/gxsm/State/LayerParam/nAvg</key>
+      <owner>gxsm</owner>
+      <type>int</type>
+      <locale name="C">
+        <default>1</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: lp.nAvg</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/LayerParam/n_subsample</applyto>
+      <key>/schemas/apps/gxsm/State/LayerParam/n_subsample</key>
+      <owner>gxsm</owner>
+      <type>int</type>
+      <locale name="C">
+        <default>1</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: lp.n_subsample</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/LayerParam/gap_adj</applyto>
+      <key>/schemas/apps/gxsm/State/LayerParam/gap_adj</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>0.0</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: lp.gap_adj</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/LayerParam/ac_frq</applyto>
+      <key>/schemas/apps/gxsm/State/LayerParam/ac_frq</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>1000.0</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: lp.ac_frq</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/LayerParam/ac_amp</applyto>
+      <key>/schemas/apps/gxsm/State/LayerParam/ac_amp</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>0.005</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: lp.ac_amp</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/LayerParam/ac_phase</applyto>
+      <key>/schemas/apps/gxsm/State/LayerParam/ac_phase</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>0.0</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: lp.ac_phase</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/LayerParam/ac_mult</applyto>
+      <key>/schemas/apps/gxsm/State/LayerParam/ac_mult</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>1.0</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: lp.ac_mult</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Display/ViewFlg</applyto>
+      <key>/schemas/apps/gxsm/State/Display/ViewFlg</key>
+      <owner>gxsm</owner>
+      <type>string</type>
+      <locale name="C">
+        <default>SCAN_V_QUICK </default>
+        <short> </short>
+        <long>sorry not available yet, Gxsm var name hint: display.ViewFlg</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Display/contrast</applyto>
+      <key>/schemas/apps/gxsm/State/Display/contrast</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>0.5</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: display.contrast</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Display/bright</applyto>
+      <key>/schemas/apps/gxsm/State/Display/bright</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>32.0</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: display.bright</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Display/cpshigh</applyto>
+      <key>/schemas/apps/gxsm/State/Display/cpshigh</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>1e6</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: display.cpshigh</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Display/cpslow</applyto>
+      <key>/schemas/apps/gxsm/State/Display/cpslow</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>0.0</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: display.cpslow</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Display/vrange_z</applyto>
+      <key>/schemas/apps/gxsm/State/Display/vrange_z</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>25.0</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: display.vrange_z</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Display/voffset_z</applyto>
+      <key>/schemas/apps/gxsm/State/Display/voffset_z</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>0.0</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: display.voffset_z</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/SPM/UTunnel</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/SPM/UTunnel</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>2.0</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.UTunnel</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/SPM_Dual/UTunnel</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/SPM_Dual/UTunnel</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>2.0</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars_dual.UTunnel</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/SPM/ITunnelSoll</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/SPM/ITunnelSoll</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>0.8</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.ITunnelSoll</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/SPM_Dual/ITunnelSoll</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/SPM_Dual/ITunnelSoll</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>0.8</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars_dual.ITunnelSoll</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/SPM/SetPoint</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/SPM/SetPoint</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>-1.0</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.SetPoint</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/SPM_Dual/SetPoint</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/SPM_Dual/SetPoint</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>-1.0</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars_dual.SetPoint</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/SPM/LogOffset</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/SPM/LogOffset</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>100.0</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.LogOffset</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/SPM_Dual/LogOffset</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/SPM_Dual/LogOffset</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>100.0</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars_dual.LogOffset</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/SPM/LogSkl</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/SPM/LogSkl</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>5.0</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.LogSkl</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/SPM_Dual/LogSkl</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/SPM_Dual/LogSkl</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>5.0</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars_dual.LogSkl</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/SPM/usrCP</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/SPM/usrCP</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>0.01</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.usrCP</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/SPM_Dual/usrCP</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/SPM_Dual/usrCP</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>0.01</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars_dual.usrCP</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/SPM/usrCI</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/SPM/usrCI</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>0.01</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.usrCI</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/SPM_Dual/usrCI</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/SPM_Dual/usrCI</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>0.01</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars_dual.usrCI</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/SPM/CS</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/SPM/CS</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>1.0</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.CS</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/SPM_Dual/CS</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/SPM_Dual/CS</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>1.0</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars_dual.CS</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/SPM/Rotation</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/SPM/Rotation</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>0.0</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.Rotation</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/SPM_Dual/Rotation</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/SPM_Dual/Rotation</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>0.0</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars_dual.Rotation</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/SPM/fb_frq</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/SPM/fb_frq</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>50000</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.fb_frq</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/SPM_Dual/fb_frq</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/SPM_Dual/fb_frq</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>50000</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars_dual.fb_frq</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/SPM/fir_fg</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/SPM/fir_fg</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>3000</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.fir_fg</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/SPM_Dual/fir_fg</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/SPM_Dual/fir_fg</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>3000</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars_dual.fir_fg</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/SPM/LinLog</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/SPM/LinLog</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>0</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.LinLog</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/SPM_Dual/LinLog</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/SPM_Dual/LinLog</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>0</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars_dual.LinLog</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/SPM/LS_nx2scan</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/SPM/LS_nx2scan</key>
+      <owner>gxsm</owner>
+      <type>int</type>
+      <locale name="C">
+        <default>1</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.LS_nx2scan</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/SPM_Dual/LS_nx2scan</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/SPM_Dual/LS_nx2scan</key>
+      <owner>gxsm</owner>
+      <type>int</type>
+      <locale name="C">
+        <default>1</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars_dual.LS_nx2scan</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/SPM/LS_nx_pre</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/SPM/LS_nx_pre</key>
+      <owner>gxsm</owner>
+      <type>int</type>
+      <locale name="C">
+        <default>10</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.LS_nx_pre</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/SPM_Dual/LS_nx_pre</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/SPM_Dual/LS_nx_pre</key>
+      <owner>gxsm</owner>
+      <type>int</type>
+      <locale name="C">
+        <default>10</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars_dual.LS_nx_pre</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/SPM/LS_dnx</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/SPM/LS_dnx</key>
+      <owner>gxsm</owner>
+      <type>int</type>
+      <locale name="C">
+        <default>1</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.LS_dnx</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/SPM_Dual/LS_dnx</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/SPM_Dual/LS_dnx</key>
+      <owner>gxsm</owner>
+      <type>int</type>
+      <locale name="C">
+        <default>1</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars_dual.LS_dnx</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/SPM/LS_stepsize</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/SPM/LS_stepsize</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>5</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.LS_stepsize</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/SPM_Dual/LS_stepsize</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/SPM_Dual/LS_stepsize</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>5</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars_dual.LS_stepsize</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/SPM/LS_nRegel</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/SPM/LS_nRegel</key>
+      <owner>gxsm</owner>
+      <type>int</type>
+      <locale name="C">
+        <default>1</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.LS_nRegel</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/SPM_Dual/LS_nRegel</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/SPM_Dual/LS_nRegel</key>
+      <owner>gxsm</owner>
+      <type>int</type>
+      <locale name="C">
+        <default>1</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars_dual.LS_nRegel</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/SPM/LS_nAve</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/SPM/LS_nAve</key>
+      <owner>gxsm</owner>
+      <type>int</type>
+      <locale name="C">
+        <default>1</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.LS_nAve</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/SPM_Dual/LS_nAve</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/SPM_Dual/LS_nAve</key>
+      <owner>gxsm</owner>
+      <type>int</type>
+      <locale name="C">
+        <default>1</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars_dual.LS_nAve</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/SPM/LS_IntAve</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/SPM/LS_IntAve</key>
+      <owner>gxsm</owner>
+      <type>int</type>
+      <locale name="C">
+        <default>1</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.LS_IntAve</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/SPM_Dual/LS_IntAve</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/SPM_Dual/LS_IntAve</key>
+      <owner>gxsm</owner>
+      <type>int</type>
+      <locale name="C">
+        <default>1</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars_dual.LS_IntAve</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/SPM/MV_stepsize</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/SPM/MV_stepsize</key>
+      <owner>gxsm</owner>
+      <type>int</type>
+      <locale name="C">
+        <default>5</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.MV_stepsize</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/SPM_Dual/MV_stepsize</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/SPM_Dual/MV_stepsize</key>
+      <owner>gxsm</owner>
+      <type>int</type>
+      <locale name="C">
+        <default>5</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars_dual.MV_stepsize</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/SPM/MV_nRegel</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/SPM/MV_nRegel</key>
+      <owner>gxsm</owner>
+      <type>int</type>
+      <locale name="C">
+        <default>1</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.MV_nRegel</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/SPM_Dual/MV_nRegel</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/SPM_Dual/MV_nRegel</key>
+      <owner>gxsm</owner>
+      <type>int</type>
+      <locale name="C">
+        <default>1</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars_dual.MV_nRegel</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/Mover/MOV_Ampl</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/Mover/MOV_Ampl</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>20.0</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.MOV_Ampl</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/Mover/MOV_Speed</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/Mover/MOV_Speed</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>4.0</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.MOV_Speed</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/Mover/MOV_Steps</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/Mover/MOV_Steps</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>100.0</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.MOV_Steps</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/Mover/TIP_nSteps</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/Mover/TIP_nSteps</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>10</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.TIP_nSteps</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/Mover/TIP_Delay</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/Mover/TIP_Delay</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>0.1</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.TIP_Delay</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/Mover/TIP_DUz</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/Mover/TIP_DUz</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>5</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.TIP_DUz</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/Mover/TIP_DUzRev</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/Mover/TIP_DUzRev</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>5</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.TIP_DUzRev</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/Mover/AFM_Amp</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/Mover/AFM_Amp</key>
+      <owner>gxsm</owner>
+      <type></type>
+      <locale name="C">
+        <default></default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.AFM_Amp</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/Mover/AFM_Speed</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/Mover/AFM_Speed</key>
+      <owner>gxsm</owner>
+      <type></type>
+      <locale name="C">
+        <default></default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.AFM_Speed</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/Mover/AFM_Steps</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/Mover/AFM_Steps</key>
+      <owner>gxsm</owner>
+      <type></type>
+      <locale name="C">
+        <default></default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.AFM_Steps</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/Mover/AFM_usrAmp0</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/Mover/AFM_usrAmp0</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>3.0</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.AFM_usrAmp[0]</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/Mover/AFM_usrAmp1</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/Mover/AFM_usrAmp1</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>3.5</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.AFM_usrAmp[1]</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/Mover/AFM_usrAmp2</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/Mover/AFM_usrAmp2</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>8.0</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.AFM_usrAmp[2]</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/Mover/AFM_usrAmp3</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/Mover/AFM_usrAmp3</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>8.0</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.AFM_usrAmp[3]</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/Mover/AFM_usrSpeed0</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/Mover/AFM_usrSpeed0</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>3</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.AFM_usrSpeed[0]</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/Mover/AFM_usrSpeed1</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/Mover/AFM_usrSpeed1</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>3</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.AFM_usrSpeed[1]</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/Mover/AFM_usrSpeed2</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/Mover/AFM_usrSpeed2</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>5</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.AFM_usrSpeed[2]</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/Mover/AFM_usrSpeed3</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/Mover/AFM_usrSpeed3</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>5</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.AFM_usrSpeed[3]</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/Mover/AFM_usrSteps0</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/Mover/AFM_usrSteps0</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>10</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.AFM_usrSteps[0]</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/Mover/AFM_usrSteps1</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/Mover/AFM_usrSteps1</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>2</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.AFM_usrSteps[1]</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/Mover/AFM_usrSteps2</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/Mover/AFM_usrSteps2</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>100</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.AFM_usrSteps[2]</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/Mover/AFM_usrSteps3</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/Mover/AFM_usrSteps3</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>100</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.AFM_usrSteps[3]</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/SPA/SPA_Energy</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/SPA/SPA_Energy</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>72.0</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.SPA_Energy</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/SPA/SPA_Gatetime</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/SPA/SPA_Gatetime</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>1e-3</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.SPA_Gatetime</long>
+      </locale>
+    </schema>
+    <schema>
+      <applyto>/apps/gxsm/State/Hardparams/CCD/CCD_exptime</applyto>
+      <key>/schemas/apps/gxsm/State/Hardparams/CCD/CCD_exptime</key>
+      <owner>gxsm</owner>
+      <type>float</type>
+      <locale name="C">
+        <default>0</default>
+        <short>NA</short>
+        <long>sorry not available yet, Gxsm var name hint: hardpars.CCD_exptime</long>
+      </locale>
+    </schema>
+  </schemalist>
+</gconfschemafile>

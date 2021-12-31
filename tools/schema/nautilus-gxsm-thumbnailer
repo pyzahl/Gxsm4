@@ -1,0 +1,9 @@
+#!/bin/sh
+# Script to thumbnail gxsm-nc files
+size=gconftool-2 -g /desktop/gnome/thumbnailers/application@x-netcdf/size 2> /dev/null
+if [ x$size == x ]
+then
+    size=120
+fi
+    
+nctopng $1 $2

@@ -1,0 +1,55 @@
+%/* Gxsm - Gnome X Scanning Microscopy
+% * universal STM/AFM/SARLS/SPALEED/... controlling and
+% * data analysis software:  Documentation
+% * 
+% * Copyright (C) 1999,2000,2001 Percy Zahl
+% *
+% * Authors: Percy Zahl <zahl@users.sf.net>
+% * additional features: Andreas Klust <klust@users.sf.net>
+% * WWW Home: http://gxsm.sf.net
+% *
+% * This program is free software; you can redistribute it and/or modify
+% * it under the terms of the GNU General Public License as published by
+% * the Free Software Foundation; either version 2 of the License, or
+% * (at your option) any later version.
+% *
+% * This program is distributed in the hope that it will be useful,
+% * but WITHOUT ANY WARRANTY; without even the implied warranty of
+% * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% * GNU General Public License for more details.
+% *
+% * You should have received a copy of the GNU General Public License
+% * along with this program; if not, write to the Free Software
+% * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
+% */
+% 
+% file: PlugInClass.doc
+% this is used for automatic PlugIn manual generation, do not rename.
+% -- subdir math/filter2d --
+
+The \emph{math/filter2d} plugins are all type of math doing something
+in 2D with the data, e.g. a 2D powerspectrum or all types of 2D
+FFT-filters. But special 2D statistical analysis or geometric
+transformation filters are going into a separate sections
+\emph{math/statistics, transformations}.
+
+\subsubsection{Gxsm core 2D convolution filter support}
+
+The Gxsm core provides support for a generalized convolution, just
+providing the convolution kernel function itself.  The minimal kernel
+size is $2R+1$, it is automatically increased until non zero matrix
+elements are appearing.
+
+A convolution kernel is provided by a kernel function like this
+Gaus-Kernel:
+\[ K_{ij} = 4*e^{-\frac{i^2+j^2}{r^2}} \]
+
+The convolution itself is defined as:
+\[ Z'(n,m) = \sum_{-R \le i \le R}  \sum_{-R \le j \le R} Z(n+i,m+j) \cdot K_{i j} \]
+
+For all PlugIns using the convolution method, just the kernel will be
+documented in the following descriptions.
+
+% -- 
+
+

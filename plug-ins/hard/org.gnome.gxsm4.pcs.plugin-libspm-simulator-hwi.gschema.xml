@@ -1,0 +1,30 @@
+<schemalist>
+  <schema id="org.gnome.gxsm4.pcs.plugin-libspm-simulator-hwi" path="/org/gnome/gxsm4/pcs/plugin-libspm-simulator-hwi/">
+
+    <key name="sim-stm-speed" type="d">
+      <default>1</default>
+      <summary>PCS Remote-ID: 'sim-stm-speed', Default/U:  0.00       </summary>
+      <description>pcs0000, PCS Remote-ID: 'sim-stm-speed', Default/U:  0.00      , Adjustment PCS Name: 'sim-stm-speed' </description>
+    </key>
+
+    <key name="sim-stm-bias" type="d">
+      <default>1</default>
+      <summary>PCS Remote-ID: 'sim-stm-bias', Default/U:  0.00 V     </summary>
+      <description>pcs0000, PCS Remote-ID: 'sim-stm-bias', Default/U:  0.00 V    , Adjustment PCS Name: 'sim-stm-bias' </description>
+    </key>
+
+    <key name="sim-afm-speed" type="d">
+      <default>2</default>
+      <summary>PCS Remote-ID: 'sim-afm-speed', Default/U:  0.00       </summary>
+      <description>pcs0000, PCS Remote-ID: 'sim-afm-speed', Default/U:  0.00      , Adjustment PCS Name: 'sim-afm-speed' </description>
+    </key>
+
+    <key name="sim-afm-bias" type="d">
+      <default>2</default>
+      <summary>PCS Remote-ID: 'sim-afm-bias', Default/U:  0.00 V     </summary>
+      <description>pcs0000, PCS Remote-ID: 'sim-afm-bias', Default/U:  0.00 V    , Adjustment PCS Name: 'sim-afm-bias' </description>
+    </key>
+  </schema>
+
+</schemalist>
+

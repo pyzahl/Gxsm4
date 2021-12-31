@@ -1,0 +1,43 @@
+/* Signal Ranger 2 */
+MEMORY SignalRanger2
+   (FAMILY = c55x) {
+
+
+   SPACE memory_space PAGE 0 :
+      MMR_RESERVED(    ): o= 0x000000 e= 0x0000FF /* memory mapped registers */
+
+      /* Part of DARAM0 reserved for vectors, mailbox and kernel */
+      VECTORS     (RWX ): o= 0x000100 e= 0x0001FF
+
+      RESERVED_MAILBOX
+                  (    ): o= 0x000200 e= 0x00040F
+      RESERVED_KERNELSR2
+                  (    ): o= 0x000410 e= 0x0007FF
+
+      /* On-chip Dual Access RAM, divided into 8 blocks of 8K bytes: */
+      /* 800-1FFF, 2000-3FFF, 4000-5FFF, 6000-7FFF */
+      /* 8000-9FFF, A000-BFFF, C000-DFFF, E000-FFFF */
+      DARAM0      (RWX ): o= 0x000800 e= 0x001FFF
+
+      DARAM1      (RWX ): o= 0x002000 e= 0x003FFF
+      DARAM2      (RWX ): o= 0x004000 e= 0x005FFF
+      DARAM3      (RWX ): o= 0x006000 e= 0x007FFF
+      DARAM4      (RWX ): o= 0x008000 e= 0x009FFF
+      DARAM5      (RWX ): o= 0x00A000 e= 0x00BFFF
+      DARAM6      (RWX ): o= 0x00C000 e= 0x00DFFF
+      DARAM7      (RWX ): o= 0x00E000 e= 0x00FFFF
+
+      /* A part of off-chip Synchronous Dynamic RAM in CE0 */
+      SDRAM       (RWX ): o= 0x010000 e= 0x3FFFFF
+
+      FLASH       (RWX ): o= 0x800000 e= 0x9FFFFF /* off-chip FLASH */
+      FPGA        (RW  ): o= 0xC00000 e= 0xFFFFFF /* FPGA Mode MPNMC=1 */
+
+   SPACE IO_space PAGE 2 :
+      PERIPHERAL  (RW  ): o= 0x000000 e= 0x00A020 /* Peripheral register */
+      IOSPACE_FREE(RW  ): o= 0x00A021 e= 0x00FFFF /* Peripheral register */
+}
+
+SHARED_ADDRESSES SignalRanger2 {
+   /* none */
+}

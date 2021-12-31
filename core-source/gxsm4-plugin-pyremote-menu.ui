@@ -1,0 +1,241 @@
+<?xml version="1.0"?>
+<interface>
+  <!-- interface-requires gtk+ 3.0 -->
+  <!-- ************************************************** -->
+  <!-- DSP MOVER CONFIG POPUP MENU -->
+
+  <menu id="plugin-pyremote-file-menu">
+    <section>
+      <attribute name="id">plugin-pyremote-file-section</attribute>
+      <item>
+	<attribute name="label" translatable="yes">Use default</attribute>
+	<attribute name="action">win.pyfile-action-use</attribute>
+	<attribute name="target">gxsm4-script</attribute>
+      </item>
+      <item>
+	<attribute name="label" translatable="yes">_Open</attribute>
+	<attribute name="action">win.pyfile-open</attribute>
+      </item>
+      <item>
+	<attribute name="label" translatable="yes">_Save</attribute>
+	<attribute name="action">win.pyfile-save</attribute>
+      </item>
+      <item>
+	<attribute name="label" translatable="yes">Save _as...</attribute>
+	<attribute name="action">win.pyfile-save-as</attribute>
+      </item>
+      <submenu>
+	<attribute name="label" translatable="yes">Action Scripts</attribute>
+	<section>
+	  <attribute name="id">plugin-pyremote-file-action-sets-section</attribute>
+	  <submenu>
+	    <attribute name="label" translatable="yes">Scan Action Scripts</attribute>
+	    <section>
+	      <attribute name="id">plugin-pyremote-file-action-sets-scan-section</attribute>
+	      <item>
+		<attribute name="label" translatable="yes">Shift-F1 (default)</attribute>
+		<attribute name="action">win.pyfile-action-use</attribute>
+		<attribute name="target">sf1</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">Shift-F2</attribute>
+		<attribute name="action">win.pyfile-action-use</attribute>
+		<attribute name="target">sf2</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">Shift-F3</attribute>
+		<attribute name="action">win.pyfile-action-use</attribute>
+		<attribute name="target">sf3</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">Shift-F4</attribute>
+		<attribute name="action">win.pyfile-action-use</attribute>
+		<attribute name="target">sf4</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">Shift-F5</attribute>
+		<attribute name="action">win.pyfile-action-use</attribute>
+		<attribute name="target">sf5</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">Shift-F6</attribute>
+		<attribute name="action">win.pyfile-action-use</attribute>
+		<attribute name="target">sf6</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">Shift-F7</attribute>
+		<attribute name="action">win.pyfile-action-use</attribute>
+		<attribute name="target">sf7</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">Shift-F8</attribute>
+		<attribute name="action">win.pyfile-action-use</attribute>
+		<attribute name="target">sf8</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">Shift-F9</attribute>
+		<attribute name="action">win.pyfile-action-use</attribute>
+		<attribute name="target">sf9</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">Shift-F10</attribute>
+		<attribute name="action">win.pyfile-action-use</attribute>
+		<attribute name="target">sf10</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">Shift-F11</attribute>
+		<attribute name="action">win.pyfile-action-use</attribute>
+		<attribute name="target">sf11</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">Shift-F12</attribute>
+		<attribute name="action">win.pyfile-action-use</attribute>
+		<attribute name="target">sf12</attribute>
+	      </item>
+	    </section>
+	  </submenu>
+	  <submenu>
+	    <attribute name="label" translatable="yes">VP Init Action Scripts</attribute>
+	    <section>
+	      <attribute name="id">plugin-pyremote-file-action-sets-vp-section</attribute>
+	      <item>
+		<attribute name="label" translatable="yes">VP-STS-initial</attribute>
+		<attribute name="action">win.pyfile-action-use</attribute>
+		<attribute name="target">vp-sts-initial</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">VP-FZ-initial</attribute>
+		<attribute name="action">win.pyfile-action-use</attribute>
+		<attribute name="target">vp-fz-initial</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">VP-TS-initial</attribute>
+		<attribute name="action">win.pyfile-action-use</attribute>
+		<attribute name="target">vp-ts-initial</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">VP-TK-initial</attribute>
+		<attribute name="action">win.pyfile-action-use</attribute>
+		<attribute name="target">vp-tk-initial</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">VP-AX-initial</attribute>
+		<attribute name="action">win.pyfile-action-use</attribute>
+		<attribute name="target">vp-ax-initial</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">VP-LP-initial</attribute>
+		<attribute name="action">win.pyfile-action-use</attribute>
+		<attribute name="target">vp-lp-initial</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">VP-PL-initial</attribute>
+		<attribute name="action">win.pyfile-action-use</attribute>
+		<attribute name="target">vp-pl-initial</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">VP-GVP-initial</attribute>
+		<attribute name="action">win.pyfile-action-use</attribute>
+		<attribute name="target">vp-gvp-initial</attribute>
+	      </item>
+	    </section>
+	  </submenu>
+	  <submenu>
+	    <attribute name="label" translatable="yes">Control Script Templates</attribute>
+	    <section>
+	      <attribute name="id">plugin-pyremote-file-control-section</attribute>
+	      <item>
+		<attribute name="label" translatable="yes">Watchdog</attribute>
+		<attribute name="action">win.pyfile-action-use</attribute>
+		<attribute name="target">gxsm4-control-watchdog</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes"> Gxsm Socket Server</attribute>
+		<attribute name="action">win.pyfile-action-use</attribute>
+		<attribute name="target">gxsm4-control-gxsm-sok-server</attribute>
+	      </item>
+	    </section>
+	  </submenu>
+	  <submenu>
+	    <attribute name="label" translatable="yes">Data Analysis Script Templates</attribute>
+	    <section>
+	      <attribute name="id">plugin-pyremote-file-data-analysis-section</attribute>
+	      <item>
+		<attribute name="label" translatable="yes">Data Access</attribute>
+		<attribute name="action">win.pyfile-action-use</attribute>
+		<attribute name="target">gxsm4-data-access-template</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">CF Extract Simple</attribute>
+		<attribute name="action">win.pyfile-action-use</attribute>
+		<attribute name="target">gxsm4-data-cfextract-simple</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">CF Extract Data</attribute>
+		<attribute name="action">win.pyfile-action-use</attribute>
+		<attribute name="target">gxsm4-data-cfextract-data</attribute>
+	      </item>
+	    </section>
+	  </submenu>
+	  <submenu>
+	    <attribute name="label" translatable="yes">Animation Scripts</attribute>
+	    <section>
+	      <attribute name="id">plugin-pyremote-file-animation-section</attribute>
+	      <item>
+		<attribute name="label" translatable="yes">Animate 3D View</attribute>
+		<attribute name="action">win.pyfile-action-use</attribute>
+		<attribute name="target">gxsm4-3d-animate</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes">Movie Export</attribute>
+		<attribute name="action">win.pyfile-action-use</attribute>
+		<attribute name="target">gxsm4-movie-export</attribute>
+	      </item>
+	    </section>
+	  </submenu>
+	</section>
+      </submenu>
+      <submenu>
+	<attribute name="label" translatable="yes">Libraries</attribute>
+	<section>
+	  <attribute name="id">plugin-pyremote-file-library-section</attribute>
+	  <item>
+	    <attribute name="label" translatable="yes">Lib Utils</attribute>
+	    <attribute name="action">win.pyfile-action-use</attribute>
+	    <attribute name="target">gxsm4-lib-utils</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Lib Control</attribute>
+	    <attribute name="action">win.pyfile-action-use</attribute>
+	    <attribute name="target">gxsm4-lib-control</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Lib Scan</attribute>
+	    <attribute name="action">win.pyfile-action-use</attribute>
+	    <attribute name="target">gxsm4-lib-scan</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Lib Probe</attribute>
+	    <attribute name="action">win.pyfile-action-use</attribute>
+	    <attribute name="target">gxsm4-lib-probe</attribute>
+	  </item>
+	  <item>
+	    <attribute name="label" translatable="yes">Lib Analysis</attribute>
+	    <attribute name="action">win.pyfile-action-use</attribute>
+	    <attribute name="target">gxsm4-lib-analysis</attribute>
+	  </item>
+	</section>
+      </submenu>
+      <item>
+	<attribute name="label" translatable="yes">Configure</attribute>
+	<attribute name="action">win.pyremote-configure</attribute>
+      </item>
+      <item>
+	<attribute name="label" translatable="yes">Use help</attribute>
+	<attribute name="action">win.pyfile-action-use</attribute>
+	<attribute name="target">gxsm4-help</attribute>
+      </item>
+    </section>
+  </menu>
+
+</interface>

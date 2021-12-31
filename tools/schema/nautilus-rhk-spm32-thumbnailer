@@ -1,0 +1,9 @@
+#!/bin/sh
+# Script to thumbnail RHK SPM32 files
+size=gconftool-2 -g /desktop/gnome/thumbnailers/application@x-rhk-spm32/size 2> /dev/null
+if [ x$size == x ]
+then
+    size=120
+fi
+    
+rhkspm32topng $1 $2

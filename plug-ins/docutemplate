@@ -1,0 +1,60 @@
+
+/* Please do not change the Begin/End lines of this comment section!
+ * this is a LaTeX style section used for auto generation of the PlugIn Manual 
+ * Chapter. Add a complete PlugIn documentation inbetween the Begin/End marks!
+ * All "% PlugInXXX" commentary tags are mandatory
+ * All "% OptPlugInXXX" tags are optional
+ * --------------------------------------------------------------------------------
+% BeginPlugInDocuSection
+% PlugInDocuCaption: replace this with a intuitive and short caption!
+% PlugInName: the_plug_in_s_name_goes_here
+% PlugInAuthor: Free Willy
+% PlugInAuthorEmail: freewilly@ocean.org
+% PlugInMenuPath: Math/Misc/My PlugIn
+
+% PlugInDescription
+A brief description goes here.
+
+% PlugInUsage
+Write how to use it.
+
+% OptPlugInSection: replace this by the section caption
+all following lines until next tag are going into this section
+...
+
+% OptPlugInSubSection: replace this line by the subsection caption
+all following lines until next tag are going into this subsection
+...
+
+%% you can repeat OptPlugIn(Sub)Sections multiple times!
+
+% OptPlugInSources
+The active channel is used as data source.
+
+% OptPlugInObjects
+A optional rectangle is used for data extraction...
+
+% OptPlugInDest
+The computation result is placed into an existing math channel, else into a new created math channel.
+
+% OptPlugInConfig
+describe the configuration options of your plug in here!
+
+% OptPlugInFiles
+Does it uses, needs, creates any files? Put info here!
+
+% OptPlugInRefs
+Any references?
+
+% OptPlugInKnownBugs
+Are there known bugs? List! How to work around if not fixed?
+
+% OptPlugInNotes
+If you have any additional notes
+
+% OptPlugInHints
+Any tips and tricks?
+
+% EndPlugInDocuSection
+ * -------------------------------------------------------------------------------- 
+ */

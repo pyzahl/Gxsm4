@@ -1,0 +1,101 @@
+\begin{tabular}{|l|r|l|l|c|l|l|l|}
+Type & Dim & DSP Variable & Signal Name & Unit & Conversion Factor & Module & Signal Description \\ \hline
+SI32 & 1 & analog.in[0] &  In 0 &  V &  DSP32Qs15dot16TO\_Volt &  Analog\_IN &  ADC INPUT1 \\
+SI32 & 1 & analog.in[1] &  In 1 &  V &  DSP32Qs15dot16TO\_Volt &  Analog\_IN &  ADC INPUT2 \\
+SI32 & 1 & analog.in[2] &  In 2 &  V &  DSP32Qs15dot16TO\_Volt &  Analog\_IN &  ADC INPUT3 \\
+SI32 & 1 & analog.in[3] &  In 3 &  V &  DSP32Qs15dot16TO\_Volt &  Analog\_IN &  ADC INPUT4 \\
+SI32 & 1 & analog.in[4] &  In 4 &  V &  DSP32Qs15dot16TO\_Volt &  Analog\_IN &  ADC INPUT5 \\
+SI32 & 1 & analog.in[5] &  In 5 &  V &  DSP32Qs15dot16TO\_Volt &  Analog\_IN &  ADC INPUT6 \\
+SI32 & 1 & analog.in[6] &  In 6 &  V &  DSP32Qs15dot16TO\_Volt &  Analog\_IN &  ADC INPUT7 \\
+SI32 & 1 & analog.in[7] &  In 7 &  V &  DSP32Qs15dot16TO\_Volt &  Analog\_IN &  ADC INPUT8 \\
+SI32 & 1 & analog.counter[0] &  Counter 0 &  CNT &  1 &  Counter &  FPGA based Counter Channel 1 \\
+SI32 & 1 & analog.counter[1] &  Counter 1 &  CNT &  1 &  Counter &  FPGA based Counter Channel 2 \\
+SI32 & 1 & probe.LockIn\_0A &      LockIn A-0 &    *V &    DSP32Qs15dot16TO\_Volt &  LockIn &  LockIn A 0 (average over full periods) \\
+SI32 & 1 & probe.LockIn\_1stA &    LockIn A-1st &  *dV &   DSP32Qs15dot16TO\_Volt &  LockIn &  LockIn A 1st order \\
+SI32 & 1 & probe.LockIn\_2ndA &    LockIn A-2nd &  *ddV &  DSP32Qs15dot16TO\_Volt &  LockIn &  LockIn A 2nd oder \\
+SI32 & 1 & probe.LockIn\_0B &      LockIn B-0 &    *V &    DSP32Qs15dot16TO\_Volt &  LockIn &  LockIn B 0 (average over full periods) \\
+SI32 & 1 & probe.LockIn\_1stB &    LockIn B-1st &  *dV &   DSP32Qs15dot16TO\_Volt &  LockIn &  LockIn B 1st order \\
+SI32 & 1 & probe.LockIn\_2ndB &    LockIn B-2nd &  *ddV &  DSP32Qs15dot16TO\_Volt &  LockIn &  LockIn B 2nd order \\
+SI32 & 1 & probe.LockIn\_ref &     LockIn Ref &     V &    DSP32Qs15dot0TO\_Volt &   LockIn &  LockIn Reference Sinewave (Modulation) (Internal Reference Signal) \\
+SI32 & 1 & probe.PRB\_ACPhaseA32 & LockIn Phase A & deg &  180./(2913*CPN(16)) &    LockIn &  DSP internal LockIn PhaseA32 watch \\
+SI32 & 1 & InputFiltered &   PLL Res Out &      V &                   10./CPN(22) &  PAC &  Resonator Output Signal \\
+SI32 & 1 & SineOut0 &        PLL Exci Signal &  V &                   10./CPN(22) &  PAC &  Excitation Signal \\
+SI32 & 1 & phase &           PLL Res Ph &      deg &          180./(CPN(22)*M\_PI) &  PAC &  Resonator Phase (no LP filter) \\
+SI32 & 1 & PI\_Phase\_Out &    PLL Exci Frq &     Hz &  (150000./(CPN(29)*2.*M\_PI)) &  PAC &  Excitation Freq. (no LP filter) \\
+SI32 & 1 & amp\_estimation &  PLL Res Amp &      V &                   10./CPN(22) &  PAC &  Resonator Amp. (no LP filter) \\
+SI32 & 1 & volumeSine &      PLL Exci Amp &     V &                   10./CPN(22) &  PAC &  Excitation Amp. (no LP filter) \\
+SI32 & 1 & Filter64Out[0] &  PLL Exci Frq LP &  Hz &  (150000./(CPN(29)*2.*M\_PI)) &  PAC &  Excitation Freq. (with LP filter) \\
+SI32 & 1 & Filter64Out[1] &  PLL Res Ph LP &   deg &        (180./(CPN(29)*M\_PI)) &  PAC &  Resonator Phase (with LP filter) \\
+SI32 & 1 & Filter64Out[2] &  PLL Res Amp LP &   V &               (10./(CPN(29))) &  PAC &  Resonator Ampl. (with LP filter) \\
+SI32 & 1 & Filter64Out[3] &  PLL Exci Amp LP &  V &               (10./(CPN(29))) &  PAC &  Excitation Ampl. (with LP filter) \\
+SI32 & 1 & feedback\_mixer.FB\_IN\_processed[0] &  MIX IN 0 &  V &  DSP32Qs23dot8TO\_Volt &  Mixer &  Mixer Channel 0 processed input signal \\
+SI32 & 1 & feedback\_mixer.FB\_IN\_processed[1] &  MIX IN 1 &  V &  DSP32Qs23dot8TO\_Volt &  Mixer &  Mixer Channel 1 processed input signal \\
+SI32 & 1 & feedback\_mixer.FB\_IN\_processed[2] &  MIX IN 2 &  V &  DSP32Qs23dot8TO\_Volt &  Mixer &  Mixer Channel 2 processed input signal \\
+SI32 & 1 & feedback\_mixer.FB\_IN\_processed[3] &  MIX IN 3 &  V &  DSP32Qs23dot8TO\_Volt &  Mixer &  Mixer Channel 3 processed input signal \\
+SI32 & 1 & feedback\_mixer.channel[0] &  MIX OUT 0 &  V &  DSP32Qs23dot8TO\_Volt &  Mixer &  Mixer Channel 0 output signal \\
+SI32 & 1 & feedback\_mixer.channel[1] &  MIX OUT 1 &  V &  DSP32Qs23dot8TO\_Volt &  Mixer &  Mixer Channel 1 output signal \\
+SI32 & 1 & feedback\_mixer.channel[2] &  MIX OUT 2 &  V &  DSP32Qs23dot8TO\_Volt &  Mixer &  Mixer Channel 2 output signal \\
+SI32 & 1 & feedback\_mixer.channel[3] &  MIX OUT 3 &  V &  DSP32Qs23dot8TO\_Volt &  Mixer &  Mixer Channel 3 output signal \\
+SI32 & 1 & feedback\_mixer.delta &  MIX out delta &       V &  DSP32Qs23dot8TO\_Volt &  Mixer &  Mixer Processed Summed Error Signal (Delta) (Z-Servo Input normally) \\
+SI32 & 1 & feedback\_mixer.q\_factor15 & MIX0 qfac15 LP &   Q &        (1/(CPN(15))) &  Mixer &  Mixer Channel 0 actuall life IIR cutoff watch: q LP fg; f in Hz via: (-log (qf15 / 32767.) / (2.*M\_PI/75000.)) \\
+SI32 & 1 & analog.avg\_signal &   signal AVG-256 &  V &    DSP32Qs15dot0TO\_Volt/256. &                         RMS &  Averaged signal from Analog AVG module \\
+SI32 & 1 & analog.rms\_signal &   signal RMS-256 &  V^2 &  (DSP32Qs15dot0TO\_Volt*DSP32Qs15dot0TO\_Volt/256.) &  RMS &  RMS signal from Analog AVG module \\
+SI32 & 1 & z\_servo.control &     Z Servo &       V &  DSP32Qs15dot16TO\_Volt &  Z\_Servo &  Z-Servo output \\
+SI32 & 1 & z\_servo.neg\_control & Z Servo Neg &   V &  DSP32Qs15dot16TO\_Volt &  Z\_Servo &  -Z-Servo output \\
+SI32 & 1 & z\_servo.watch &       Z Servo Watch &  B &                   1 &  Z\_Servo &  Z-Servo status (boolean) \\
+SI32 & 1 & m\_servo.control &     M Servo &       V &  DSP32Qs15dot16TO\_Volt &  M\_Servo &  M-Servo output \\
+SI32 & 1 & m\_servo.neg\_control & M Servo Neg &   V &  DSP32Qs15dot16TO\_Volt &  M\_Servo &  -M-Servo output \\
+SI32 & 1 & m\_servo.watch &       M Servo Watch &  B &                   1 &  M\_Servo &  M-Servo statuis (boolean) \\
+SI32 & 1 & probe.Upos &  VP Bias &   V &  DSP32Qs15dot16TO\_Volt &  VP &  Bias after VP manipulations \\
+SI32 & 1 & probe.Zpos &  VP Z pos &  V &  DSP32Qs15dot16TO\_Volt &  VP &  temp Z offset generated by VP program \\
+SI32 & 1 & scan.xyz\_vec[i\_X] &  X Scan &            V &  DSP32Qs15dot16TO\_Volt &  Scan &  Scan generator: X-Scan signal \\
+SI32 & 1 & scan.xyz\_vec[i\_Y] &  Y Scan &            V &  DSP32Qs15dot16TO\_Volt &  Scan &  Scan generator: Y-Scan signal \\
+SI32 & 1 & scan.xyz\_vec[i\_Z] &  Z Scan &            V &  DSP32Qs15dot16TO\_Volt &  Scan &  Scan generator: Z-Scan signal (**unused) \\
+SI32 & 1 & scan.xy\_r\_vec[i\_X] &  X Scan Rot &       V &  DSP32Qs15dot16TO\_Volt &  Scan &  final X-Scan signal in rotated coordinates \\
+SI32 & 1 & scan.xy\_r\_vec[i\_Y] &  Y Scan Rot &       V &  DSP32Qs15dot16TO\_Volt &  Scan &  final Y-Scan signal in rotated coordinates \\
+SI32 & 1 & scan.z\_offset\_xyslope &  Z Offset from XY Slope &       V &  DSP32Qs15dot16TO\_Volt &  Scan &  Scan generator: Z-offset generated by slop compensation calculation (integrative) \\
+SI32 & 1 & scan.xyz\_gain &      XYZ Scan Gain &     X &                      1 &  Scan &  XYZ Scan Gains: bitcoded -/8/8/8 (0..255)x -- 10x all: 0x000a0a0a \\
+SI32 & 1 & move.xyz\_vec[i\_X] &  X Offset &          V &  DSP32Qs15dot16TO\_Volt &  Scan &  Offset Move generator: X-Offset signal \\
+SI32 & 1 & move.xyz\_vec[i\_Y] &  Y Offset &          V &  DSP32Qs15dot16TO\_Volt &  Scan &  Offset Move generator: Y-Offset signal \\
+SI32 & 1 & move.xyz\_vec[i\_Z] &  Z Offset &          V &  DSP32Qs15dot16TO\_Volt &  Scan &  Offset Move generator: Z-Offset signal \\
+SI32 & 1 & move.xyz\_gain &      XYZ Offset Gains &  X &                      1 &  Scan &  XYZ Offset Gains: bitcoded -/8/8/8 (0..255)x -- not yet used and fixed set to 10x (0x000a0a0a) \\
+SI32 & 1 & analog.wave[0] &  Wave X &  V &  DSP32Qs15dot0TO\_Volt &  Coarse &  Wave generator: Wave-X (coarse motions) \\
+SI32 & 1 & analog.wave[1] &  Wave Y &  V &  DSP32Qs15dot0TO\_Volt &  Coarse &  Wave generator: Wave-Y (coarse motions) \\
+SI32 & 1 & autoapp.count\_axis[0] &  Count Axis 0 &  1 &      1 &  Coarse &  Coarse Step Counter Axis 0 (X) \\
+SI32 & 1 & autoapp.count\_axis[1] &  Count Axis 1 &  1 &      1 &  Coarse &  Coarse Step Counter Axis 1 (Y) \\
+SI32 & 1 & autoapp.count\_axis[2] &  Count Axis 2 &  1 &      1 &  Coarse &  Coarse Step Counter Axis 2 (Z) \\
+SI32 & 1 & analog.bias &         Bias &         V &  DSP32Qs15dot16TO\_Volt &  Control &  DSP Bias Voltage reference following smoothly the Bias Adjuster \\
+SI32 & 1 & analog.bias\_adjust &  Bias Adjust &  V &  DSP32Qs15dot16TO\_Volt &  Control &  Bias Adjuster (Bias Voltage) setpoint given by user interface \\
+SI32 & 1 & analog.motor &        Motor &        V &  DSP32Qs15dot16TO\_Volt &  Control &  Motor Voltage (auxillary output shared with PLL excitiation if PAC processing is enabled!) \\
+SI32 & 1 & analog.noise &        Noise &         1 &                   1 &  Control &  White Noise Generator \\
+SI32 & 1 & analog.vnull &        Null-Signal &   0 &                   1 &  Control &  Null Signal used to fix any module input at Zero \\
+SI32 & 1 & probe.AC\_amp &        AC Ampl &      V &   DSP32Qs15dot0TO\_Volt &  Control &  AC Amplitude Control for Bias modulation \\
+SI32 & 1 & probe.AC\_amp\_aux &    AC Ampl Aux &  V &   DSP32Qs15dot0TO\_Volt &  Control &  AC Amplitude Control (auxillary channel or as default used for Z modulation) \\
+SI32 & 1 & probe.noise\_amp &     Noise Ampl &   V &   DSP32Qs15dot0TO\_Volt &  Control &  Noise Amplitiude Control \\
+SI32 & 1 & probe.state &         LockIn State &   X &                  1 &  Control &  LockIn Status watch \\
+SI32 & 1 & state.DSP\_time &  TIME TICKS &  s &  1./150000. &  DSP &  DSP TIME TICKS: real time DSP time based on 150kHz data processing loop for one tick. 32bit free running \\
+SI32 & 1 & feedback\_mixer.iir\_signal[0] &  IIR32 0 &  V &  DSP32Qs15dot16TO\_Volt &  DBGX\_Mixer &  Mixer processed input tap 0 32bit \\
+SI32 & 1 & feedback\_mixer.iir\_signal[1] &  IIR32 1 &  V &  DSP32Qs15dot16TO\_Volt &  DBGX\_Mixer &  Mixer processed input tap 1 32bit \\
+SI32 & 1 & feedback\_mixer.iir\_signal[2] &  IIR32 2 &  V &  DSP32Qs15dot16TO\_Volt &  DBGX\_Mixer &  Mixer processed input tap 2 32bit \\
+SI32 & 1 & feedback\_mixer.iir\_signal[3] &  IIR32 3 &  V &  DSP32Qs15dot16TO\_Volt &  DBGX\_Mixer &  Mixer processed input tap 3 32bit \\
+SI32 & 1 & analog.out[0].s &  Out 0 &  V &  DSP32Qs15dot16TO\_Volt &  Analog\_OUT &  DAC OUTPUT 1 \\
+SI32 & 1 & analog.out[1].s &  Out 1 &  V &  DSP32Qs15dot16TO\_Volt &  Analog\_OUT &  DAC OUTPUT 2 \\
+SI32 & 1 & analog.out[2].s &  Out 2 &  V &  DSP32Qs15dot16TO\_Volt &  Analog\_OUT &  DAC OUTPUT 3 \\
+SI32 & 1 & analog.out[3].s &  Out 3 &  V &  DSP32Qs15dot16TO\_Volt &  Analog\_OUT &  DAC OUTPUT 4 \\
+SI32 & 1 & analog.out[4].s &  Out 4 &  V &  DSP32Qs15dot16TO\_Volt &  Analog\_OUT &  DAC OUTPUT 5 \\
+SI32 & 1 & analog.out[5].s &  Out 5 &  V &  DSP32Qs15dot16TO\_Volt &  Analog\_OUT &  DAC OUTPUT 6 \\
+SI32 & 1 & analog.out[6].s &  Out 6 &  V &  DSP32Qs15dot16TO\_Volt &  Analog\_OUT &  DAC OUTPUT 7 \\
+SI32 & 1 & analog.out[7].s &  Out 7 &  V &  DSP32Qs15dot16TO\_Volt &  Analog\_OUT &  DAC OUTPUT 8 \\
+SI32 & 1 & analog.out[8].s &  Wave Out 8 &  V &  DSP32Qs15dot0TO\_Volt &  Analog\_OUT &  VIRTUAL OUTPUT 8 (Wave X default) \\
+SI32 & 1 & analog.out[9].s &  Wave Out 9 &  V &  DSP32Qs15dot0TO\_Volt &  Analog\_OUT &  VIRTUAL OUTPUT 9 (Wave Y default) \\
+SI32 & 1 & state.mode &          State mode &       X &  1 &  Process\_Control &  DSP statmachine status \\
+SI32 & 1 & move.pflg &           Move pflag &       X &  1 &  Process\_Control &  Offset Move generator process flag \\
+SI32 & 1 & scan.pflg &           Scan pflag &       X &  1 &  Process\_Control &  Scan generator process flag \\
+SI32 & 1 & probe.pflg &          Probe pflag &      X &  1 &  Process\_Control &  Vector Probe (VP) process flag \\
+SI32 & 1 & autoapp.pflg &        AutoApp pflag &    X &  1 &  Process\_Control &  Auto Approach process flag \\
+SI32 & 1 & CR\_generic\_io.pflg &  GenericIO pflag &  X &  1 &  Process\_Control &  Generic IO process flag \\
+SI32 & 1 & CR\_out\_pulse.pflg &   IO Pulse pflag &   X &  1 &  Process\_Control &  IO pulse generator process flag \\
+SI32 & 1 & probe.gpio\_data &     GPIO data &        X &  1 &  Process\_Control &  GPIO data-in is read via VP if GPIO READ option is enabled \\
+VI32 & 64 &  VP\_sec\_end\_buffer[0] &  "VP SecV" &   "xV" &  DSP32Qs15dot16TO\_Volt &  "VP" &  "VP section data tranfer buffer vector [64 = 8X Sec + 8CH matrix] \\
+\hline
+\end{tabular}

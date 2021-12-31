@@ -1,0 +1,705 @@
+<schemalist>
+  <enum id="org-gnome-gxsm4-gl-option-v3d-control-view-rotation-preset">
+    <value value="0" nick="Manual "/>
+    <value value="1" nick="Top "/>
+    <value value="2" nick="Front "/>
+    <value value="3" nick="Left "/>
+    <value value="4" nick="Right "/>
+    <value value="5" nick="Areal View Front "/>
+    <value value="6" nick="Scan: Auto Tip View "/>
+  </enum>
+  <enum id="org-gnome-gxsm4-gl-option-v3d-control-view-look-at">
+    <value value="0" nick="Manual "/>
+    <value value="1" nick="Tip "/>
+    <value value="2" nick="Center "/>
+  </enum>
+  <enum id="org-gnome-gxsm4-gl-option-v3d-control-view-heigh-scale-mode">
+    <value value="0" nick="Absolute Ang "/>
+    <value value="1" nick="Relative Range "/>
+  </enum>
+  <enum id="org-gnome-gxsm4-gl-option-v3d-control-view-vertex-source">
+    <value value="0" nick="Flat "/>
+    <value value="1" nick="Direct Height "/>
+    <value value="2" nick="Mode View Height "/>
+    <value value="3" nick="Channel-X "/>
+    <value value="4" nick="y-data "/>
+    <value value="5" nick="X-Slice "/>
+    <value value="6" nick="Y-Slice "/>
+    <value value="7" nick="Z-Slice "/>
+    <value value="8" nick="Volume "/>
+    <value value="9" nick="Scatter "/>
+  </enum>
+  <enum id="org-gnome-gxsm4-gl-option-v3d-control-light-sun">
+    <value value="0" nick="On "/>
+    <value value="1" nick="Off "/>
+  </enum>
+  <enum id="org-gnome-gxsm4-gl-option-v3d-control-mat-surf-color-src">
+    <value value="0" nick="Flat "/>
+    <value value="1" nick="Direct Height "/>
+    <value value="2" nick="View Mode Height "/>
+    <value value="3" nick="X-Channel "/>
+    <value value="4" nick="Y "/>
+  </enum>
+  <enum id="org-gnome-gxsm4-gl-option-v3d-control-mat-surf-shade-model">
+    <value value="0" nick="Lambertian, use Palette "/>
+    <value value="1" nick="Terrain "/>
+    <value value="2" nick="Material Color "/>
+    <value value="3" nick="Fog+Material Color "/>
+    <value value="4" nick="X Color Lambertian "/>
+    <value value="5" nick="Volume "/>
+    <value value="6" nick="Debug Shader "/>
+  </enum>
+  <enum id="org-gnome-gxsm4-gl-option-v3d-control-render-op-ortho">
+    <value value="0" nick="true "/>
+    <value value="1" nick="false "/>
+  </enum>
+
+  <schema id="org.gnome.gxsm4.gl.v3dcontrol.view" path="/org/gnome/gxsm4/gl/v3dcontrol.view/">
+    <key name="rotationx" type="d">
+      <default>0</default>
+      <summary>Rotation Angle in X [LMB + Mouse left/right]</summary>
+      <description>
+        Rotation Angle in X [LMB + Mouse left/right]
+      </description>
+    </key>
+    <key name="rotationy" type="d">
+      <default>-90</default>
+      <summary>Rotation Angle in Y [LMB + Mouse up/down]</summary>
+      <description>
+        Rotation Angle in Y [LMB + Mouse up/down]
+      </description>
+    </key>
+    <key name="rotationz" type="d">
+      <default>0</default>
+      <summary>Rotation Angle in Z</summary>
+      <description>
+        Rotation Angle in Z
+      </description>
+    </key>
+    <key name="rotationpreset" type="s">
+      <choices>
+        <choice value='Manual'/>
+        <choice value='Top'/>
+        <choice value='Front'/>
+        <choice value='Left'/>
+        <choice value='Right'/>
+        <choice value='Areal View Front'/>
+        <choice value='Scan: Auto Tip View'/>
+      </choices>
+      <default>'Manual'</default>
+      <summary>Predefined Views.
+Elevation and Distance referring to Top View Model Orientation.</summary>
+      <description>
+        Predefined Views.
+Elevation and Distance referring to Top View Model Orientation.
+      </description>
+    </key>
+    <key name="lookat" type="s">
+      <choices>
+        <choice value='Manual'/>
+        <choice value='Tip'/>
+        <choice value='Center'/>
+      </choices>
+      <default>'Center'</default>
+      <summary>Predefined Look-At Positions.</summary>
+      <description>
+        Predefined Look-At Positions.
+      </description>
+    </key>
+    <key name="translation" type="ad">
+      <default>[0,0,0]</default>
+      <summary>set translations vector X, Y, Z
+[MMB + Mouse up/down/left/right]</summary>
+      <description>
+        set translations vector X, Y, Z
+[MMB + Mouse up/down/left/right]
+      </description>
+    </key>
+    <key name="fov" type="d">
+      <default>55.0</default>
+      <summary>Field of View</summary>
+      <description>
+        Field of View
+      </description>
+    </key>
+    <key name="shift" type="d">
+      <default>0.0</default>
+      <summary>Shift: Camera GL_X Position (Shift to left/right from surface center -- in top view rotation)</summary>
+      <description>
+        Shift: Camera GL_X Position (Shift to left/right from surface center -- in top view rotation)
+      </description>
+    </key>
+    <key name="distance" type="d">
+      <default>1.5</default>
+      <summary>Distance: Camera GL_Z Position [also use Mouse Wheel] (Distance from surface center in front -- in top view rotation)</summary>
+      <description>
+        Distance: Camera GL_Z Position [also use Mouse Wheel] (Distance from surface center in front -- in top view rotation)
+      </description>
+    </key>
+    <key name="elevation" type="d">
+      <default>1.0</default>
+      <summary>Elevation: Camera GL-Y Position [RMB + Mouse up/dn] (surface normal axis, elevation above surface -- in top view rotation)</summary>
+      <description>
+        Elevation: Camera GL-Y Position [RMB + Mouse up/dn] (surface normal axis, elevation above surface -- in top view rotation)
+      </description>
+    </key>
+    <key name="heighscalemode" type="s">
+      <choices>
+        <choice value='Absolute Ang'/>
+        <choice value='Relative Range'/>
+      </choices>
+      <default>'Absolute Ang'</default>
+      <summary>Height Scaling Mode)</summary>
+      <description>
+        Height Scaling Mode)
+      </description>
+    </key>
+    <key name="hskl" type="d">
+      <default>1.0</default>
+      <summary>Height Scaling (Z scale)</summary>
+      <description>
+        Height Scaling (Z scale)
+      </description>
+    </key>
+    <key name="tskl" type="d">
+      <default>1</default>
+      <summary>Tetra Scaling (Triangle scale)</summary>
+      <description>
+        Tetra Scaling (Triangle scale)
+      </description>
+    </key>
+    <key name="sliceoffset" type="d">
+      <default>1</default>
+      <summary>Volume Slice Offset Z</summary>
+      <description>
+        Volume Slice Offset Z
+      </description>
+    </key>
+    <key name="vertexsource" type="s">
+      <choices>
+        <choice value='Flat'/>
+        <choice value='Direct Height'/>
+        <choice value='Mode View Height'/>
+        <choice value='Channel-X'/>
+        <choice value='y-data'/>
+        <choice value='X-Slice'/>
+        <choice value='Y-Slice'/>
+        <choice value='Z-Slice'/>
+        <choice value='Volume'/>
+        <choice value='Scatter'/>
+      </choices>
+      <default>'Direct Height'</default>
+      <summary>Vertex/Geometry Height Source for Surface Model or Flat Slicing/Volumetric rendering.</summary>
+      <description>
+        Vertex/Geometry Height Source for Surface Model or Flat Slicing/Volumetric rendering.
+      </description>
+    </key>
+    <key name="slicelimiter" type="ad">
+      <default>[0,1000,25,0]</default>
+      <summary>Slicing Control: 1000 slice plane cover full range [Start, Stop, Step, --]</summary>
+      <description>
+        Slicing Control: 1000 slice plane cover full range [Start, Stop, Step, --]
+      </description>
+    </key>
+  </schema>
+
+  <schema id="org.gnome.gxsm4.gl.v3dcontrol.light" path="/org/gnome/gxsm4/gl/v3dcontrol.light/">
+    <key name="globalambient" type="ad">
+      <default>[1,1,1,1]</default>
+      <summary>Global Ambient Light [red, green, blue, alpha]</summary>
+      <description>
+        Global Ambient Light [red, green, blue, alpha]
+      </description>
+    </key>
+    <key name="sun" type="s">
+      <choices>
+        <choice value='On'/>
+        <choice value='Off'/>
+      </choices>
+      <default>'On'</default>
+      <summary>Light0: switch On/Off</summary>
+      <description>
+        Light0: switch On/Off
+      </description>
+    </key>
+    <key name="light0dir" type="ad">
+      <default>[-0.2,-1.0,0.3,1]</default>
+      <summary>Sun Light Direction (Incident Vector Model Space) [dX, dY, dZ, 1]</summary>
+      <description>
+        Sun Light Direction (Incident Vector Model Space) [dX, dY, dZ, 1]
+      </description>
+    </key>
+    <key name="light0spec" type="ad">
+      <default>[1,1,1,1]</default>
+      <summary>Light0: Specular Light Color [red, green, blue, alpha]</summary>
+      <description>
+        Light0: Specular Light Color [red, green, blue, alpha]
+      </description>
+    </key>
+    <key name="tip" type="s">
+      <choices>
+        <choice value='On'/>
+        <choice value='Off'/>
+      </choices>
+      <default>'Off'</default>
+      <summary>Tip display On/Off</summary>
+      <description>
+        Tip display On/Off
+      </description>
+    </key>
+    <key name="tippos" type="ad">
+      <default>[0,0,4,3.2]</default>
+      <summary>Tip Position and Gap and scale [X-off, Y-off, Z-gap, scale]</summary>
+      <description>
+        Tip Position and Gap and scale [X-off, Y-off, Z-gap, scale]
+      </description>
+    </key>
+    <key name="tipasr" type="ad">
+      <default>[1,1,1,0]</default>
+      <summary>Tip Atoms Aspect Ratio vs X [X, Y, Z, 0]</summary>
+      <description>
+        Tip Atoms Aspect Ratio vs X [X, Y, Z, 0]
+      </description>
+    </key>
+    <key name="tipcolorfa" type="ad">
+      <default>[1,0,0,1]</default>
+      <summary>Tip Color Front Atom</summary>
+      <description>
+        Tip Color Front Atom
+      </description>
+    </key>
+    <key name="tipcolorfa1" type="ad">
+      <default>[1,1,1,1]</default>
+      <summary>Tip Color Front Atom 2 opt</summary>
+      <description>
+        Tip Color Front Atom 2 opt
+      </description>
+    </key>
+    <key name="tipcolorfa2" type="ad">
+      <default>[1,1,1,1]</default>
+      <summary>Tip Color Front Atom 3 opt</summary>
+      <description>
+        Tip Color Front Atom 3 opt
+      </description>
+    </key>
+    <key name="tipcolorap" type="ad">
+      <default>[0.5,0.5,0.5,1]</default>
+      <summary>Tip Color Apex</summary>
+      <description>
+        Tip Color Apex
+      </description>
+    </key>
+  </schema>
+
+  <schema id="org.gnome.gxsm4.gl.v3dcontrol.matsurf" path="/org/gnome/gxsm4/gl/v3dcontrol.matsurf/">
+    <key name="color" type="ad">
+      <default>[0.45,0.15,0.07,1]</default>
+      <summary>Surface Material Color:
+ Specify the material color for Flat Material Color Shader Mode.</summary>
+      <description>
+        Surface Material Color:
+ Specify the material color for Flat Material Color Shader Mode.
+      </description>
+    </key>
+    <key name="backsidecolor" type="ad">
+      <default>[0.6,0.1,0.1,1]</default>
+      <summary>Backside Surface Color</summary>
+      <description>
+        Backside Surface Color
+      </description>
+    </key>
+    <key name="diffuse" type="ad">
+      <default>[0.6,0.2,0.1,1]</default>
+      <summary>Surface Diffuse Color:
+ Specify the diffuse RGBA reflectance of the material.
+Used only in "Uniform/Material Color Mode".</summary>
+      <description>
+        Surface Diffuse Color:
+ Specify the diffuse RGBA reflectance of the material.
+Used only in "Uniform/Material Color Mode".
+      </description>
+    </key>
+    <key name="specular" type="ad">
+      <default>[1,1,0.3,1]</default>
+      <summary>Surface Specular Color:
+ Specify the specular RGBA reflectance of the material.</summary>
+      <description>
+        Surface Specular Color:
+ Specify the specular RGBA reflectance of the material.
+      </description>
+    </key>
+    <key name="shininess" type="d">
+      <default>50</default>
+      <summary>Surface Shininess</summary>
+      <description>
+        Surface Shininess
+      </description>
+    </key>
+    <key name="colorsrc" type="s">
+      <choices>
+        <choice value='Flat'/>
+        <choice value='Direct Height'/>
+        <choice value='View Mode Height'/>
+        <choice value='X-Channel'/>
+        <choice value='Y'/>
+      </choices>
+      <default>'Direct Height'</default>
+      <summary>Select Surface Color Source.</summary>
+      <description>
+        Select Surface Color Source.
+      </description>
+    </key>
+    <key name="shademodel" type="s">
+      <choices>
+        <choice value='Lambertian, use Palette'/>
+        <choice value='Terrain'/>
+        <choice value='Material Color'/>
+        <choice value='Fog+Material Color'/>
+        <choice value='X Color Lambertian'/>
+        <choice value='Volume'/>
+        <choice value='Debug Shader'/>
+      </choices>
+      <default>'Lambertian, use Palette'</default>
+      <summary>Select Surface Shading Mode.</summary>
+      <description>
+        Select Surface Shading Mode.
+      </description>
+    </key>
+    <key name="lightness" type="d">
+      <default>0.65</default>
+      <summary>Color Lightness or Exposure level -- for a typical light mix around 0.6</summary>
+      <description>
+        Color Lightness or Exposure level -- for a typical light mix around 0.6
+      </description>
+    </key>
+    <key name="coloroffset" type="d">
+      <default>0</default>
+      <summary>Color Contrast: shift color source. Default=0</summary>
+      <description>
+        Color Contrast: shift color source. Default=0
+      </description>
+    </key>
+    <key name="colorsaturation" type="d">
+      <default>1</default>
+      <summary>Color Saturation, Default=1</summary>
+      <description>
+        Color Saturation, Default=1
+      </description>
+    </key>
+    <key name="transparency" type="d">
+      <default>1</default>
+      <summary>Volume Model Transparency, Default=1</summary>
+      <description>
+        Volume Model Transparency, Default=1
+      </description>
+    </key>
+    <key name="transparencyoffset" type="d">
+      <default>0</default>
+      <summary>Volume Model Transparency Offset, Default=0</summary>
+      <description>
+        Volume Model Transparency Offset, Default=0
+      </description>
+    </key>
+    <key name="lod" type="d">
+      <default>0</default>
+      <summary>Volume Texture Level of Detail (LOD), Default=0</summary>
+      <description>
+        Volume Texture Level of Detail (LOD), Default=0
+      </description>
+    </key>
+  </schema>
+
+  <schema id="org.gnome.gxsm4.gl.v3dcontrol.annotations" path="/org/gnome/gxsm4/gl/v3dcontrol.annotations/">
+    <key name="zeroplanecolor" type="ad">
+      <default>[0.6,0.1,0.1,1]</default>
+      <summary>Zero/reference plane color</summary>
+      <description>
+        Zero/reference plane color
+      </description>
+    </key>
+    <key name="titlecolor" type="ad">
+      <default>[1.0,0.1,0.5,0.7]</default>
+      <summary>Title Color</summary>
+      <description>
+        Title Color
+      </description>
+    </key>
+    <key name="labelcolor" type="ad">
+      <default>[1.0,0.1,0.5,0.7]</default>
+      <summary>Label Color</summary>
+      <description>
+        Label Color
+      </description>
+    </key>
+    <key name="title" type="s">
+
+      <default>'GXSM-3.0 GL4.0'</default>
+      <summary>Title text</summary>
+      <description>
+        Title text
+      </description>
+    </key>
+    <key name="x-axis" type="s">
+
+      <default>'X-axis'</default>
+      <summary>Title X-axis</summary>
+      <description>
+        Title X-axis
+      </description>
+    </key>
+    <key name="y-axis" type="s">
+
+      <default>'Y-axis'</default>
+      <summary>Title Y-axis</summary>
+      <description>
+        Title Y-axis
+      </description>
+    </key>
+    <key name="z-axis" type="s">
+
+      <default>'Z-axis'</default>
+      <summary>Title Z-axis</summary>
+      <description>
+        Title Z-axis
+      </description>
+    </key>
+    <key name="showtitle" type="s">
+      <choices>
+        <choice value='On'/>
+        <choice value='Off'/>
+      </choices>
+      <default>'On'</default>
+      <summary>Annotations: Title On/Off</summary>
+      <description>
+        Annotations: Title On/Off
+      </description>
+    </key>
+    <key name="showlabels" type="s">
+      <choices>
+        <choice value='On'/>
+        <choice value='Off'/>
+      </choices>
+      <default>'On'</default>
+      <summary>Annotations: Labels On/Off</summary>
+      <description>
+        Annotations: Labels On/Off
+      </description>
+    </key>
+    <key name="showdimensions" type="s">
+      <choices>
+        <choice value='On'/>
+        <choice value='Off'/>
+      </choices>
+      <default>'On'</default>
+      <summary>Annotations: Dimensiones On/Off</summary>
+      <description>
+        Annotations: Dimensiones On/Off
+      </description>
+    </key>
+    <key name="showbearings" type="s">
+      <choices>
+        <choice value='On'/>
+        <choice value='Off'/>
+      </choices>
+      <default>'On'</default>
+      <summary>Annotations: Bearings On/Off</summary>
+      <description>
+        Annotations: Bearings On/Off
+      </description>
+    </key>
+    <key name="showzeroplanes" type="s">
+      <choices>
+        <choice value='On'/>
+        <choice value='Off'/>
+      </choices>
+      <default>'Off'</default>
+      <summary>Annotations: Zero/base plane/grid selections On/Off</summary>
+      <description>
+        Annotations: Zero/base plane/grid selections On/Off
+      </description>
+    </key>
+  </schema>
+
+  <schema id="org.gnome.gxsm4.gl.v3dcontrol.renderop" path="/org/gnome/gxsm4/gl/v3dcontrol.renderop/">
+    <key name="ortho" type="b">
+      <default>false</default>
+      <summary>enable/disable orthographic vs. prespective projection.</summary>
+      <description>
+        true GXSM OPTIONS=(false, enable/disable orthographic vs. prespective projection.)
+      </description>
+    </key>
+    <key name="tesslevel" type="d">
+      <default>12.0</default>
+      <summary>Tesseletion Level Max:
+ 32: normal, 1: no tesselation</summary>
+      <description>
+        Tesseletion Level Max:
+ 32: normal, 1: no tesselation
+      </description>
+    </key>
+    <key name="baseplanegrid" type="d">
+      <default>128.0</default>
+      <summary>Base Plane Grid Size:
+ 128: default -- max via max tesselation is this number x 64</summary>
+      <description>
+        Base Plane Grid Size:
+ 128: default -- max via max tesselation is this number x 64
+      </description>
+    </key>
+    <key name="probeatoms" type="d">
+      <default>1000.0</default>
+      <summary># Probe Atoms</summary>
+      <description>
+        # Probe Atoms
+      </description>
+    </key>
+    <key name="mesh" type="b">
+      <default>false</default>
+      <summary>enable/disable mesh mode (use mesh or solid model)</summary>
+      <description>
+        true GXSM OPTIONS=(false, enable/disable mesh mode (use mesh or solid model))
+      </description>
+    </key>
+    <key name="shadingmode" type="d">
+      <default>0.0</default>
+      <summary>Fragment Shading Mode Color Selector for Debug Shader:
+ 1: return vec4 (lightness*DiffuseColor, 1.)
+ 2: return vec4 (lightness*SpecularColor, 1.)
+ 3: return vec4 (lightness*LambertianColor, 1.)
+ 4: return lightness*color
+ 5: finalColor = applyFog (finalColor, dist, viewDir); return vec4(lightness*finalColor, 1.)
+ 6: return vec4 (mix (finalColor.xyz, nois, 0.2), 1.)
+ 7: return vec4 (nois, 1.)
+ 8: return lightness*color
+ 9: return color
+ 10: return vec4(normal*0.5+0.5, 1.0)
+ 11: return vec4(normal.y*0.5+0.5, 0.,0., 1.0)
+ 12: return vec4(normal.x*0.5+0.5, 0.,0., 1.0)
+ 13: return specular*color
+ 14: return vec4(vec3(specular,normal.y,diffuse),1.0)
+ 15: return vec4(vec3(dist/100.), 1.0)
+ 16: return specular*lightness*vec4(1)
+ 17: return vec4(vec3(lightness*(gl_FragCoord.z+transparency_offset)), 1.0f)
+ 18: return vec4(vec3(lightness*(gl_FragCoord.w+transparency_offset)), 1)
+ 19: return vec4(lightness*gl_FragCoord.w+vec4(transparency_offset))
+ default: return vec4 (lightness*finalColor, 1.)
+</summary>
+      <description>
+        Fragment Shading Mode Color Selector for Debug Shader:
+ 1: return vec4 (lightness*DiffuseColor, 1.)
+ 2: return vec4 (lightness*SpecularColor, 1.)
+ 3: return vec4 (lightness*LambertianColor, 1.)
+ 4: return lightness*color
+ 5: finalColor = applyFog (finalColor, dist, viewDir); return vec4(lightness*finalColor, 1.)
+ 6: return vec4 (mix (finalColor.xyz, nois, 0.2), 1.)
+ 7: return vec4 (nois, 1.)
+ 8: return lightness*color
+ 9: return color
+ 10: return vec4(normal*0.5+0.5, 1.0)
+ 11: return vec4(normal.y*0.5+0.5, 0.,0., 1.0)
+ 12: return vec4(normal.x*0.5+0.5, 0.,0., 1.0)
+ 13: return specular*color
+ 14: return vec4(vec3(specular,normal.y,diffuse),1.0)
+ 15: return vec4(vec3(dist/100.), 1.0)
+ 16: return specular*lightness*vec4(1)
+ 17: return vec4(vec3(lightness*(gl_FragCoord.z+transparency_offset)), 1.0f)
+ 18: return vec4(vec3(lightness*(gl_FragCoord.w+transparency_offset)), 1)
+ 19: return vec4(lightness*gl_FragCoord.w+vec4(transparency_offset))
+ default: return vec4 (lightness*finalColor, 1.)
+
+      </description>
+    </key>
+    <key name="clearcolor" type="ad">
+      <default>[0.6,0.7,0.7,1.0]</default>
+      <summary>GL Clear Color, e.g. background  [red, green, blue, alpha]</summary>
+      <description>
+        GL Clear Color, e.g. background  [red, green, blue, alpha]
+      </description>
+    </key>
+    <key name="fog" type="b">
+      <default>false</default>
+      <summary>enable/disable fog</summary>
+      <description>
+        true GXSM OPTIONS=(false, enable/disable fog)
+      </description>
+    </key>
+    <key name="fogcolor" type="ad">
+      <default>[0.6,0.7,0.7,1.0]</default>
+      <summary>Fog Color [red, green, blue, alpha].
+Fog blends a fog color with each rasterized pixel fragment's
+posttexturing color using a blending factor f. Factor f is computed in
+one of three ways (here: f=exp(-density*z)), depending on the fog
+mode. Let z be the distance in eye coordinates from the origin to the
+fragment being fogged.
+Note: you usually want to use the background (clear) color.</summary>
+      <description>
+        Fog Color [red, green, blue, alpha].
+Fog blends a fog color with each rasterized pixel fragment's
+posttexturing color using a blending factor f. Factor f is computed in
+one of three ways (here: f=exp(-density*z)), depending on the fog
+mode. Let z be the distance in eye coordinates from the origin to the
+fragment being fogged.
+Note: you usually want to use the background (clear) color.
+      </description>
+    </key>
+    <key name="fogdensity" type="d">
+      <default>0.8</default>
+      <summary>Density of fog, see fog color help!
+Effect depends on distance to object and size of object.</summary>
+      <description>
+        Density of fog, see fog color help!
+Effect depends on distance to object and size of object.
+      </description>
+    </key>
+    <key name="cull" type="b">
+      <default>true</default>
+      <summary>enable/disable cull face mode (surface back side as invisible in top view is not drawn!)
+Note: if enabled you will not see your surface,
+if you are looking from below! Normally enable for speed and reduction of artifacts</summary>
+      <description>
+        true GXSM OPTIONS=(false, enable/disable cull face mode (surface back side as invisible in top view is not drawn!)
+Note: if enabled you will not see your surface,
+if you are looking from below! Normally enable for speed and reduction of artifacts)
+      </description>
+    </key>
+    <key name="transparentslices" type="b">
+      <default>false</default>
+      <summary>enable/disable transparency for normal non voluem view/slices</summary>
+      <description>
+        true GXSM OPTIONS=(false, enable/disable transparency for normal non voluem view/slices)
+      </description>
+    </key>
+    <key name="emission" type="b">
+      <default>false</default>
+      <summary>enable/disable emission mode</summary>
+      <description>
+        true GXSM OPTIONS=(false, enable/disable emission mode)
+      </description>
+    </key>
+    <key name="zeroold" type="b">
+      <default>true</default>
+      <summary>enable/disable clear (zero) olddata in life scan update -- only good for top-down scan!)</summary>
+      <description>
+        true GXSM OPTIONS=(false, enable/disable clear (zero) olddata in life scan update -- only good for top-down scan!))
+      </description>
+    </key>
+    <key name="animationfile" type="s">
+
+      <default>'/tmp/gxsm-movie-frame%05.0f.png'</default>
+      <summary>Animation output file, must be like '/tmp/MovieFrame%05.0f.png' to indicate the index or time formatting!
+      </summary>
+      <description>
+        Animation output file, must be like '/tmp/MovieFrame%05.0f.png' to indicate the index or time formatting!
+
+      </description>
+    </key>
+    <key name="animationindex" type="d">
+      <default>0</default>
+      <summary>Animation index, set to 0 to disable, if >0 at every increment a file is saved.</summary>
+      <description>
+        Animation index, set to 0 to disable, if >0 at every increment a file is saved.
+      </description>
+    </key>
+  </schema>
+</schemalist>
+

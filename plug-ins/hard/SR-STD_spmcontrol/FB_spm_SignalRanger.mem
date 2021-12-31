@@ -1,0 +1,63 @@
+/* Signal Ranger board (TMS320C5402 with OVLY = 1).                 		
+                                                                      	
+ This is the memory description for the Signal Ranger
+ board.			
+ 										
+ The internal DSP RAM (0000h to 3FFFh) is mapped in 
+ both data and program space at startup (OVLY bit set
+ to 1)
+ 						
+ The off-chip memory (4000h to FFFFh) is 1 wait state 	
+ RAM, mapped into the data space only																		
+ There are two reserved spaces in the on-chip RAM:				
+ -	from 0100h to 02FFh is where the kernel resides.			
+ -	from 1000h to 1023h is the mail box used by
+	the kernel			
+ No data or code should be loaded into these spaces 				
+ 						                              	
+ The vectors section must reside from 0000h to 0080h				
+ Note that this is not he default location (it must	
+ be moved from the default location).			 */
+MEMORY SignalRanger
+   (FAMILY = c54x) {
+
+
+   /* from 80h to 3FFFh is On-Chip and shared with data_memory */
+   /* and also maps to the lower 16K of each external code page */
+   SPACE program_memory PAGE 0 :
+      RESERVED    (    ): o= 0x0000 e= 0x007F /* unavailable for allocation */
+      vectors     (RWX ): o= 0x0080 e= 0x00FF /* interrupt vectors */
+
+      /* Kernel - do not place code or data on top of the kernel */
+      RESERVED_2  (    ): o= 0x0100 e= 0x02FF
+
+      /* On-chip Dual Access RAM minus the mail box */
+      DARAM       (RWX ): o= 0x0300 e= 0x0FFF
+
+      /* Mail box - do not place any code in it to keep the kernel happy */
+      MailBox     (RW  ): o= 0x1000 e= 0x1022
+
+      /* On-chip Dual Access RAM (cont.) */
+      DARAM1      (RWX ): o= 0x1023 e= 0x3FFF
+
+      Expansion   (RWX ): o= 0x4000 e= 0xFFFF /* Off-chip memory */
+
+   /* from 80h to 3FFFh is On-Chip and shared with program_memory */
+   SPACE data_memory PAGE 1 :
+      regs        (RW  ): o= 0x0000 e= 0x005F /* Memory-mapped registers */
+      scratch     (RW  ): o= 0x0060 e= 0x007F /* Scratch-pad DARAM */
+      External_RAM(RW  ): o= 0x4000 e= 0xFFFF /* Off-chip memory */
+
+   SPACE IO_memory PAGE 2 :
+      peripheral  (RW  ): o= 0x0000 e= 0xFFFF /* not populated yet */
+}
+
+/* Table of address ranges vs. sets of spaces that share them. */
+/* For each entry in the table,                                */
+/* if a region's parent appears in the space set               */
+/* and the region is fully contained in the address range,     */
+/* then the region is shared with the other spaces of the set. */
+SHARED_ADDRESSES SignalRanger {
+   o= 0x80 e= 0x3FFF {program_memory,
+                      data_memory}
+}

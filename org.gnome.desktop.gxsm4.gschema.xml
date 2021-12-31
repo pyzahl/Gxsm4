@@ -1,0 +1,18 @@
+<schemalist>
+
+  <schema id="org.gnome.desktop.app-folders.folders.gxsm-tools" path="/org/gnome/desktop/app-folders/folders/gxsm-tools/">
+    <key name="apps" type="as">
+      <default>['gxsm4.desktop']</default>
+    </key>
+    <key name="categories" type="as">
+      <default>['x-netcdf','Science','GNOME','GTK','Visualization','STM','AFM','SPM']</default>
+    </key>
+    <key name="name" type="s">
+      <default>'GXSM4'</default>
+    </key>
+    <key name="translate" type="b">
+      <default>false</default>
+    </key>
+  </schema>
+  
+</schemalist>

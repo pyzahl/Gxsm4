@@ -1,0 +1,11 @@
+[Desktop Entry]
+Title=SR watches: XYZ view, Fuzzy adjust
+Name=Signal Ranger watch tools
+Name[de]=Signal Ranger watch tools
+Comment=Signal Ranger watch tools: XYZ monitor and Fuzzy adjust
+Comment[de]=Signal Ranger watch tools: XYZ monitor and Fuzzy adjust
+Exec=/usr/local/bin/sr-watches.sh
+Icon=gnome-reclevel.png
+Terminal=0
+Type=Application
+Categories=Application

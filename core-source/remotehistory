@@ -1,0 +1,53 @@
+
+cmd activate 1
+
+
+set rangex 1000
+q
+cmd quit
+
+cmd activate 1
+activate 1
+
+set xrange 1000
+set rangex 1000
+
+
+
+set rangex 1000
+set xrange 1000
+set xrange 200
+set RangeX 500
+file load /home/pzahl/Data/Colloc/Si111-022TopBgF.nc 6
+cmd menupath /View/Palette
+
+
+
+cmd quit
+
+
+
+
+
+
+
+
+
+
+nnn
+
+
+
+
+
+
+
+cmd quit
+
+file load /home/pzahl/Data/Colloc/Si111-022TopBgF.nc 0
+cmd autodisp
+menupath Math/Convert/to float
+menupath "Math/Convert/to float"
+menupath Math/Convert/to\ float
+file saveas /tmp/xx.nc 0
+cmd quit

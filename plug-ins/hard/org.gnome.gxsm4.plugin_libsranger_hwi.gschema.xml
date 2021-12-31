@@ -1,0 +1,1117 @@
+<schemalist>
+
+  <schema id="org.gnome.gxsm4.pcs.plugin-libsranger-mk2-hwi" path="/org/gnome/gxsm4/pcs/plugin-libsranger-mk2-hwi/">
+
+    <key name="d-s-p-bias" type="d">
+      <default>0.5</default>
+      <summary>PCS Remote-ID: 'DSP_Bias', Default/U:   0.5 V   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Bias', Default/U:   0.5 V  , Adjustment PCS Name: 'DSP_Bias' </description>
+    </key>
+
+    <key name="d-s-p-motor" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_Motor', Default/U:     0 V   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Motor', Default/U:     0 V  , Adjustment PCS Name: 'DSP_Motor' </description>
+    </key>
+
+    <key name="d-s-p-s-current" type="d">
+      <default>0.1</default>
+      <summary>PCS Remote-ID: 'DSP_SCurrent', Default/U:   0.1 nA   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_SCurrent', Default/U:   0.1 nA  , Adjustment PCS Name: 'DSP_SCurrent' </description>
+    </key>
+
+    <key name="d-s-p-g-current" type="d">
+      <default>0.5</default>
+      <summary>PCS Remote-ID: 'DSP_GCurrent', Default/U:   0.5     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_GCurrent', Default/U:   0.5    , Adjustment PCS Name: 'DSP_GCurrent' </description>
+    </key>
+
+    <key name="d-s-p-l-current" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_LCurrent', Default/U:     0 nA   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_LCurrent', Default/U:     0 nA  , Adjustment PCS Name: 'DSP_LCurrent' </description>
+    </key>
+
+    <key name="d-s-p-s-set-point" type="d">
+      <default>0.1</default>
+      <summary>PCS Remote-ID: 'DSP_SSetPoint', Default/U:   0.1 Hz   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_SSetPoint', Default/U:   0.1 Hz  , Adjustment PCS Name: 'DSP_SSetPoint' </description>
+    </key>
+
+    <key name="d-s-p-g-set-point" type="d">
+      <default>0.5</default>
+      <summary>PCS Remote-ID: 'DSP_GSetPoint', Default/U:   0.5     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_GSetPoint', Default/U:   0.5    , Adjustment PCS Name: 'DSP_GSetPoint' </description>
+    </key>
+
+    <key name="d-s-p-l-set-point" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_LSetPoint', Default/U:     0 nA   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_LSetPoint', Default/U:     0 nA  , Adjustment PCS Name: 'DSP_LSetPoint' </description>
+    </key>
+
+    <key name="d-s-p-mix-src2" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_MixSrc2', Default/U:     0 V   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_MixSrc2', Default/U:     0 V  , Adjustment PCS Name: 'DSP_MixSrc2' </description>
+    </key>
+
+    <key name="d-s-p-g-aux2" type="d">
+      <default>0.5</default>
+      <summary>PCS Remote-ID: 'DSP_GAux2', Default/U:   0.5     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_GAux2', Default/U:   0.5    , Adjustment PCS Name: 'DSP_GAux2' </description>
+    </key>
+
+    <key name="d-s-p-l-aux2" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_LAux2', Default/U:     0 V   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_LAux2', Default/U:     0 V  , Adjustment PCS Name: 'DSP_LAux2' </description>
+    </key>
+
+    <key name="d-s-p-mix-src3" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_MixSrc3', Default/U:     0 V   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_MixSrc3', Default/U:     0 V  , Adjustment PCS Name: 'DSP_MixSrc3' </description>
+    </key>
+
+    <key name="d-s-p-g-aux3" type="d">
+      <default>0.5</default>
+      <summary>PCS Remote-ID: 'DSP_GAux3', Default/U:   0.5     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_GAux3', Default/U:   0.5    , Adjustment PCS Name: 'DSP_GAux3' </description>
+    </key>
+
+    <key name="d-s-p-l-aux3" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_LAux3', Default/U:     0 V   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_LAux3', Default/U:     0 V  , Adjustment PCS Name: 'DSP_LAux3' </description>
+    </key>
+
+    <key name="d-s-p-c-p" type="d">
+      <default>0.007</default>
+      <summary>PCS Remote-ID: 'DSP_CP', Default/U: 0.007     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_CP', Default/U: 0.007    , Adjustment PCS Name: 'DSP_CP' </description>
+    </key>
+
+    <key name="d-s-p-c-i" type="d">
+      <default>0.004</default>
+      <summary>PCS Remote-ID: 'DSP_CI', Default/U: 0.004     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_CI', Default/U: 0.004    , Adjustment PCS Name: 'DSP_CI' </description>
+    </key>
+
+    <key name="d-s-p-move-spd" type="d">
+      <default>2000</default>
+      <summary>PCS Remote-ID: 'DSP_MoveSpd', Default/U:  2000 Å/s   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_MoveSpd', Default/U:  2000 Å/s  , Adjustment PCS Name: 'DSP_MoveSpd' </description>
+    </key>
+
+    <key name="d-s-p-scan-spd" type="d">
+      <default>2000</default>
+      <summary>PCS Remote-ID: 'DSP_ScanSpd', Default/U:  2000 Å/s   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_ScanSpd', Default/U:  2000 Å/s  , Adjustment PCS Name: 'DSP_ScanSpd' </description>
+    </key>
+
+    <key name="d-s-p-l-d-cd-x" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_LDCdX', Default/U:     0 Å/s   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_LDCdX', Default/U:     0 Å/s  , Adjustment PCS Name: 'DSP_LDCdX' </description>
+    </key>
+
+    <key name="d-s-p-l-d-cd-y" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_LDCdY', Default/U:     0 Å/s   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_LDCdY', Default/U:     0 Å/s  , Adjustment PCS Name: 'DSP_LDCdY' </description>
+    </key>
+
+    <key name="d-s-p-l-d-cd-z" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_LDCdZ', Default/U:     0 Å/s   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_LDCdZ', Default/U:     0 Å/s  , Adjustment PCS Name: 'DSP_LDCdZ' </description>
+    </key>
+
+    <key name="d-s-p-trig-xpm-a" type="d">
+      <default>-1</default>
+      <summary>PCS Remote-ID: 'DSP_Trig-Xpm-A', Default/U: -1     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Trig-Xpm-A', Default/U: -1    , Adjustment PCS Name: 'DSP_Trig-Xpm-A' </description>
+    </key>
+
+    <key name="d-s-p-bias-xp-a" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_Bias-Xp-A', Default/U:     0 V   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Bias-Xp-A', Default/U:     0 V  , Adjustment PCS Name: 'DSP_Bias-Xp-A' </description>
+    </key>
+
+    <key name="d-s-p-trig-xm-a" type="d">
+      <default>-1</default>
+      <summary>PCS Remote-ID: 'DSP_Trig-Xm-A', Default/U: -1     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Trig-Xm-A', Default/U: -1    , Adjustment PCS Name: 'DSP_Trig-Xm-A' </description>
+    </key>
+
+    <key name="d-s-p-bias-xm-a" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_Bias-Xm-A', Default/U:     0 V   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Bias-Xm-A', Default/U:     0 V  , Adjustment PCS Name: 'DSP_Bias-Xm-A' </description>
+    </key>
+
+    <key name="d-s-p-trig-xpm-b" type="d">
+      <default>-1</default>
+      <summary>PCS Remote-ID: 'DSP_Trig-Xpm-B', Default/U: -1     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Trig-Xpm-B', Default/U: -1    , Adjustment PCS Name: 'DSP_Trig-Xpm-B' </description>
+    </key>
+
+    <key name="d-s-p-bias-xp-b" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_Bias-Xp-B', Default/U:     0 V   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Bias-Xp-B', Default/U:     0 V  , Adjustment PCS Name: 'DSP_Bias-Xp-B' </description>
+    </key>
+
+    <key name="d-s-p-trig-xm-b" type="d">
+      <default>-1</default>
+      <summary>PCS Remote-ID: 'DSP_Trig-Xm-B', Default/U: -1     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Trig-Xm-B', Default/U: -1    , Adjustment PCS Name: 'DSP_Trig-Xm-B' </description>
+    </key>
+
+    <key name="d-s-p-bias-xm-b" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_Bias-Xm-B', Default/U:     0 V   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Bias-Xm-B', Default/U:     0 V  , Adjustment PCS Name: 'DSP_Bias-Xm-B' </description>
+    </key>
+
+    <key name="d-s-p-trig-xpm-c" type="d">
+      <default>-1</default>
+      <summary>PCS Remote-ID: 'DSP_Trig-Xpm-C', Default/U: -1     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Trig-Xpm-C', Default/U: -1    , Adjustment PCS Name: 'DSP_Trig-Xpm-C' </description>
+    </key>
+
+    <key name="d-s-p-bias-xp-c" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_Bias-Xp-C', Default/U:     0 V   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Bias-Xp-C', Default/U:     0 V  , Adjustment PCS Name: 'DSP_Bias-Xp-C' </description>
+    </key>
+
+    <key name="d-s-p-trig-xm-c" type="d">
+      <default>-1</default>
+      <summary>PCS Remote-ID: 'DSP_Trig-Xm-C', Default/U: -1     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Trig-Xm-C', Default/U: -1    , Adjustment PCS Name: 'DSP_Trig-Xm-C' </description>
+    </key>
+
+    <key name="d-s-p-bias-xm-c" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_Bias-Xm-C', Default/U:     0 V   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Bias-Xm-C', Default/U:     0 V  , Adjustment PCS Name: 'DSP_Bias-Xm-C' </description>
+    </key>
+
+    <key name="d-s-p-trig-xpm-d" type="d">
+      <default>-1</default>
+      <summary>PCS Remote-ID: 'DSP_Trig-Xpm-D', Default/U: -1     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Trig-Xpm-D', Default/U: -1    , Adjustment PCS Name: 'DSP_Trig-Xpm-D' </description>
+    </key>
+
+    <key name="d-s-p-bias-xp-d" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_Bias-Xp-D', Default/U:     0 V   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Bias-Xp-D', Default/U:     0 V  , Adjustment PCS Name: 'DSP_Bias-Xp-D' </description>
+    </key>
+
+    <key name="d-s-p-trig-xm-d" type="d">
+      <default>-1</default>
+      <summary>PCS Remote-ID: 'DSP_Trig-Xm-D', Default/U: -1     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Trig-Xm-D', Default/U: -1    , Adjustment PCS Name: 'DSP_Trig-Xm-D' </description>
+    </key>
+
+    <key name="d-s-p-bias-xm-d" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_Bias-Xm-D', Default/U:     0 V   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Bias-Xm-D', Default/U:     0 V  , Adjustment PCS Name: 'DSP_Bias-Xm-D' </description>
+    </key>
+
+    <key name="d-s-p-trig-xpm-e" type="d">
+      <default>-1</default>
+      <summary>PCS Remote-ID: 'DSP_Trig-Xpm-E', Default/U: -1     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Trig-Xpm-E', Default/U: -1    , Adjustment PCS Name: 'DSP_Trig-Xpm-E' </description>
+    </key>
+
+    <key name="d-s-p-set-pt-xp-e" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_SetPt-Xp-E', Default/U:     0 nA   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_SetPt-Xp-E', Default/U:     0 nA  , Adjustment PCS Name: 'DSP_SetPt-Xp-E' </description>
+    </key>
+
+    <key name="d-s-p-trig-xm-e" type="d">
+      <default>-1</default>
+      <summary>PCS Remote-ID: 'DSP_Trig-Xm-E', Default/U: -1     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Trig-Xm-E', Default/U: -1    , Adjustment PCS Name: 'DSP_Trig-Xm-E' </description>
+    </key>
+
+    <key name="d-s-p-set-pt-xm-e" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_SetPt-Xm-E', Default/U:     0 nA   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_SetPt-Xm-E', Default/U:     0 nA  , Adjustment PCS Name: 'DSP_SetPt-Xm-E' </description>
+    </key>
+
+    <key name="d-s-p-trig-xpm-f" type="d">
+      <default>-1</default>
+      <summary>PCS Remote-ID: 'DSP_Trig-Xpm-F', Default/U: -1     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Trig-Xpm-F', Default/U: -1    , Adjustment PCS Name: 'DSP_Trig-Xpm-F' </description>
+    </key>
+
+    <key name="d-s-p-set-pt-xp-f" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_SetPt-Xp-F', Default/U:     0 nA   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_SetPt-Xp-F', Default/U:     0 nA  , Adjustment PCS Name: 'DSP_SetPt-Xp-F' </description>
+    </key>
+
+    <key name="d-s-p-trig-xm-f" type="d">
+      <default>-1</default>
+      <summary>PCS Remote-ID: 'DSP_Trig-Xm-F', Default/U: -1     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Trig-Xm-F', Default/U: -1    , Adjustment PCS Name: 'DSP_Trig-Xm-F' </description>
+    </key>
+
+    <key name="d-s-p-set-pt-xm-f" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_SetPt-Xm-F', Default/U:     0 nA   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_SetPt-Xm-F', Default/U:     0 nA  , Adjustment PCS Name: 'DSP_SetPt-Xm-F' </description>
+    </key>
+
+    <key name="d-s-p-trig-xpm-g" type="d">
+      <default>-1</default>
+      <summary>PCS Remote-ID: 'DSP_Trig-Xpm-G', Default/U: -1     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Trig-Xpm-G', Default/U: -1    , Adjustment PCS Name: 'DSP_Trig-Xpm-G' </description>
+    </key>
+
+    <key name="d-s-p-set-pt-xp-g" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_SetPt-Xp-G', Default/U:     0 nA   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_SetPt-Xp-G', Default/U:     0 nA  , Adjustment PCS Name: 'DSP_SetPt-Xp-G' </description>
+    </key>
+
+    <key name="d-s-p-trig-xm-g" type="d">
+      <default>-1</default>
+      <summary>PCS Remote-ID: 'DSP_Trig-Xm-G', Default/U: -1     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Trig-Xm-G', Default/U: -1    , Adjustment PCS Name: 'DSP_Trig-Xm-G' </description>
+    </key>
+
+    <key name="d-s-p-set-pt-xm-g" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_SetPt-Xm-G', Default/U:     0 nA   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_SetPt-Xm-G', Default/U:     0 nA  , Adjustment PCS Name: 'DSP_SetPt-Xm-G' </description>
+    </key>
+
+    <key name="d-s-p-trig-xpm-h" type="d">
+      <default>-1</default>
+      <summary>PCS Remote-ID: 'DSP_Trig-Xpm-H', Default/U: -1     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Trig-Xpm-H', Default/U: -1    , Adjustment PCS Name: 'DSP_Trig-Xpm-H' </description>
+    </key>
+
+    <key name="d-s-p-set-pt-xp-h" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_SetPt-Xp-H', Default/U:     0 nA   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_SetPt-Xp-H', Default/U:     0 nA  , Adjustment PCS Name: 'DSP_SetPt-Xp-H' </description>
+    </key>
+
+    <key name="d-s-p-trig-xm-h" type="d">
+      <default>-1</default>
+      <summary>PCS Remote-ID: 'DSP_Trig-Xm-H', Default/U: -1     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Trig-Xm-H', Default/U: -1    , Adjustment PCS Name: 'DSP_Trig-Xm-H' </description>
+    </key>
+
+    <key name="d-s-p-set-pt-xm-h" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_SetPt-Xm-H', Default/U:     0 nA   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_SetPt-Xm-H', Default/U:     0 nA  , Adjustment PCS Name: 'DSP_SetPt-Xm-H' </description>
+    </key>
+
+    <key name="d-s-p-frq-ref" type="d">
+      <default>75000</default>
+      <summary>PCS Remote-ID: 'DSP_FrqRef', Default/U:  75000 Hz   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_FrqRef', Default/U:  75000 Hz  , Adjustment PCS Name: 'DSP_FrqRef' </description>
+    </key>
+
+    <key name="d-s-p-i-i-r0-fo-min" type="d">
+      <default>200</default>
+      <summary>PCS Remote-ID: 'DSP_IIR0_fo_min', Default/U: 200 Hz   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_IIR0_fo_min', Default/U: 200 Hz  , Adjustment PCS Name: 'DSP_IIR0_fo_min' </description>
+    </key>
+
+    <key name="d-s-p-i-i-r0-fo-max" type="d">
+      <default>8000</default>
+      <summary>PCS Remote-ID: 'DSP_IIR0_fo_max', Default/U: 8000 Hz   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_IIR0_fo_max', Default/U: 8000 Hz  , Adjustment PCS Name: 'DSP_IIR0_fo_max' </description>
+    </key>
+
+    <key name="d-s-p-i-crossover" type="d">
+      <default>100</default>
+      <summary>PCS Remote-ID: 'DSP_I_Crossover', Default/U: 100.0 pA   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_I_Crossover', Default/U: 100.0 pA  , Adjustment PCS Name: 'DSP_I_Crossover' </description>
+    </key>
+
+    <key name="d-s-p-i-offset" type="d">
+      <default>10</default>
+      <summary>PCS Remote-ID: 'DSP_I_Offset', Default/U: 10.0 pA   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_I_Offset', Default/U: 10.0 pA  , Adjustment PCS Name: 'DSP_I_Offset' </description>
+    </key>
+    
+    <key name="d-s-p-i-i-r1-fo" type="d">
+      <default>18000</default>
+      <summary>PCS Remote-ID: 'DSP_IIR1_fo', Default/U: 18000 Hz   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_IIR1_fo', Default/U: 18000 Hz  , Adjustment PCS Name: 'DSP_IIR1_fo' </description>
+    </key>
+
+    <key name="d-s-p-i-i-r2-fo" type="d">
+      <default>18000</default>
+      <summary>PCS Remote-ID: 'DSP_IIR2_fo', Default/U: 18000 Hz   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_IIR2_fo', Default/U: 18000 Hz  , Adjustment PCS Name: 'DSP_IIR2_fo' </description>
+    </key>
+
+    <key name="d-s-p-i-i-r3-fo" type="d">
+      <default>18000</default>
+      <summary>PCS Remote-ID: 'DSP_IIR3_fo', Default/U: 18000 Hz   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_IIR3_fo', Default/U: 18000 Hz  , Adjustment PCS Name: 'DSP_IIR3_fo' </description>
+    </key>
+
+    <key name="d-s-p-raster" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_Raster', Default/U:     0     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Raster', Default/U:     0    , Adjustment PCS Name: 'DSP_Raster' </description>
+    </key>
+
+    <key name="d-s-p-p-wait" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_PWait', Default/U:  0     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_PWait', Default/U:  0    , Adjustment PCS Name: 'DSP_PWait' </description>
+    </key>
+
+    <key name="d-s-p-dyn-zoom" type="d">
+      <default>1</default>
+      <summary>PCS Remote-ID: 'DSP_DynZoom', Default/U:     1     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_DynZoom', Default/U:     1    , Adjustment PCS Name: 'DSP_DynZoom' </description>
+    </key>
+
+    <key name="d-s-p-fast-return" type="d">
+      <default>1</default>
+      <summary>PCS Remote-ID: 'DSP_FastReturn', Default/U:     1     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_FastReturn', Default/U:     1    , Adjustment PCS Name: 'DSP_FastReturn' </description>
+    </key>
+
+    <key name="d-s-p-fwd-slow-down" type="d">
+      <default>1</default>
+      <summary>PCS Remote-ID: 'DSP_FwdSlowDown', Default/U:     1     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_FwdSlowDown', Default/U:     1    , Adjustment PCS Name: 'DSP_FwdSlowDown' </description>
+    </key>
+
+    <key name="d-s-p-x-s2nd-z-off" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_XS2ndZOff', Default/U: 0.00 Å   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_XS2ndZOff', Default/U: 0.00 Å  , Adjustment PCS Name: 'DSP_XS2ndZOff' </description>
+    </key>
+
+    <key name="d-s-p-pre-pts" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_PrePts', Default/U:     0     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_PrePts', Default/U:     0    , Adjustment PCS Name: 'DSP_PrePts' </description>
+    </key>
+
+    <key name="d-s-p-slope-x" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_SlopeX', Default/U:     0     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_SlopeX', Default/U:     0    , Adjustment PCS Name: 'DSP_SlopeX' </description>
+    </key>
+
+    <key name="d-s-p-slope-y" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_SlopeY', Default/U:     0     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_SlopeY', Default/U:     0    , Adjustment PCS Name: 'DSP_SlopeY' </description>
+    </key>
+
+    <key name="d-s-p-i-v-sections" type="d">
+      <default>1</default>
+      <summary>PCS Remote-ID: 'DSP_IV-Sections', Default/U:  1     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_IV-Sections', Default/U:  1    , Adjustment PCS Name: 'DSP_IV-Sections' </description>
+    </key>
+
+    <key name="d-s-p-i-v-start" type="d">
+      <default>-1</default>
+      <summary>PCS Remote-ID: 'DSP_IV-Start', Default/U:    -1 V   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_IV-Start', Default/U:    -1 V  , Adjustment PCS Name: 'DSP_IV-Start' </description>
+    </key>
+
+    <key name="d-s-p-i-v-end" type="d">
+      <default>1</default>
+      <summary>PCS Remote-ID: 'DSP_IV-End', Default/U:     1 V   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_IV-End', Default/U:     1 V  , Adjustment PCS Name: 'DSP_IV-End' </description>
+    </key>
+
+    <key name="d-s-p-i-v-points" type="d">
+      <default>100</default>
+      <summary>PCS Remote-ID: 'DSP_IV-Points', Default/U:   100     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_IV-Points', Default/U:   100    , Adjustment PCS Name: 'DSP_IV-Points' </description>
+    </key>
+
+    <key name="d-s-p-i-v-start-2" type="d">
+      <default>-1</default>
+      <summary>PCS Remote-ID: 'DSP_IV-Start_2', Default/U:    -1 V   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_IV-Start_2', Default/U:    -1 V  , Adjustment PCS Name: 'DSP_IV-Start_2' </description>
+    </key>
+
+    <key name="d-s-p-i-v-end-2" type="d">
+      <default>1</default>
+      <summary>PCS Remote-ID: 'DSP_IV-End_2', Default/U:     1 V   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_IV-End_2', Default/U:     1 V  , Adjustment PCS Name: 'DSP_IV-End_2' </description>
+    </key>
+
+    <key name="d-s-p-i-v-points-2" type="d">
+      <default>10</default>
+      <summary>PCS Remote-ID: 'DSP_IV-Points_2', Default/U:    10     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_IV-Points_2', Default/U:    10    , Adjustment PCS Name: 'DSP_IV-Points_2' </description>
+    </key>
+
+    <key name="d-s-p-i-v-start-3" type="d">
+      <default>-1</default>
+      <summary>PCS Remote-ID: 'DSP_IV-Start_3', Default/U:    -1 V   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_IV-Start_3', Default/U:    -1 V  , Adjustment PCS Name: 'DSP_IV-Start_3' </description>
+    </key>
+
+    <key name="d-s-p-i-v-end-3" type="d">
+      <default>1</default>
+      <summary>PCS Remote-ID: 'DSP_IV-End_3', Default/U:     1 V   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_IV-End_3', Default/U:     1 V  , Adjustment PCS Name: 'DSP_IV-End_3' </description>
+    </key>
+
+    <key name="d-s-p-i-v-points-3" type="d">
+      <default>10</default>
+      <summary>PCS Remote-ID: 'DSP_IV-Points_3', Default/U:    10     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_IV-Points_3', Default/U:    10    , Adjustment PCS Name: 'DSP_IV-Points_3' </description>
+    </key>
+
+    <key name="d-s-p-i-v-start-4" type="d">
+      <default>-1</default>
+      <summary>PCS Remote-ID: 'DSP_IV-Start_4', Default/U:    -1 V   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_IV-Start_4', Default/U:    -1 V  , Adjustment PCS Name: 'DSP_IV-Start_4' </description>
+    </key>
+
+    <key name="d-s-p-i-v-end-4" type="d">
+      <default>1</default>
+      <summary>PCS Remote-ID: 'DSP_IV-End_4', Default/U:     1 V   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_IV-End_4', Default/U:     1 V  , Adjustment PCS Name: 'DSP_IV-End_4' </description>
+    </key>
+
+    <key name="d-s-p-i-v-points-4" type="d">
+      <default>10</default>
+      <summary>PCS Remote-ID: 'DSP_IV-Points_4', Default/U:    10     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_IV-Points_4', Default/U:    10    , Adjustment PCS Name: 'DSP_IV-Points_4' </description>
+    </key>
+
+    <key name="d-s-p-i-v-start-5" type="d">
+      <default>-1</default>
+      <summary>PCS Remote-ID: 'DSP_IV-Start_5', Default/U:    -1 V   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_IV-Start_5', Default/U:    -1 V  , Adjustment PCS Name: 'DSP_IV-Start_5' </description>
+    </key>
+
+    <key name="d-s-p-i-v-end-5" type="d">
+      <default>1</default>
+      <summary>PCS Remote-ID: 'DSP_IV-End_5', Default/U:     1 V   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_IV-End_5', Default/U:     1 V  , Adjustment PCS Name: 'DSP_IV-End_5' </description>
+    </key>
+
+    <key name="d-s-p-i-v-points-5" type="d">
+      <default>10</default>
+      <summary>PCS Remote-ID: 'DSP_IV-Points_5', Default/U:    10     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_IV-Points_5', Default/U:    10    , Adjustment PCS Name: 'DSP_IV-Points_5' </description>
+    </key>
+
+    <key name="d-s-p-i-v-start-6" type="d">
+      <default>-1</default>
+      <summary>PCS Remote-ID: 'DSP_IV-Start_6', Default/U:    -1 V   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_IV-Start_6', Default/U:    -1 V  , Adjustment PCS Name: 'DSP_IV-Start_6' </description>
+    </key>
+
+    <key name="d-s-p-i-v-end-6" type="d">
+      <default>1</default>
+      <summary>PCS Remote-ID: 'DSP_IV-End_6', Default/U:     1 V   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_IV-End_6', Default/U:     1 V  , Adjustment PCS Name: 'DSP_IV-End_6' </description>
+    </key>
+
+    <key name="d-s-p-i-v-points-6" type="d">
+      <default>10</default>
+      <summary>PCS Remote-ID: 'DSP_IV-Points_6', Default/U:    10     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_IV-Points_6', Default/U:    10    , Adjustment PCS Name: 'DSP_IV-Points_6' </description>
+    </key>
+
+    <key name="d-s-p-i-v-dz" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_IV-dz', Default/U:     0 Å   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_IV-dz', Default/U:     0 Å  , Adjustment PCS Name: 'DSP_IV-dz' </description>
+    </key>
+
+    <key name="d-s-p-i-v-dz-rep" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_IV-dz-rep', Default/U:   0     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_IV-dz-rep', Default/U:   0    , Adjustment PCS Name: 'DSP_IV-dz-rep' </description>
+    </key>
+
+    <key name="d-s-p-i-v-rep" type="d">
+      <default>1</default>
+      <summary>PCS Remote-ID: 'DSP_IV-rep', Default/U:   1     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_IV-rep', Default/U:   1    , Adjustment PCS Name: 'DSP_IV-rep' </description>
+    </key>
+
+    <key name="d-s-p-i-v-slope" type="d">
+      <default>10</default>
+      <summary>PCS Remote-ID: 'DSP_IV-Slope', Default/U:    10 V/s   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_IV-Slope', Default/U:    10 V/s  , Adjustment PCS Name: 'DSP_IV-Slope' </description>
+    </key>
+
+    <key name="d-s-p-i-v-slope-ramp" type="d">
+      <default>50</default>
+      <summary>PCS Remote-ID: 'DSP_IV-Slope-Ramp', Default/U:    50 V/s   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_IV-Slope-Ramp', Default/U:    50 V/s  , Adjustment PCS Name: 'DSP_IV-Slope-Ramp' </description>
+    </key>
+
+    <key name="d-s-p-line-d-x-y" type="d">
+      <default>50</default>
+      <summary>PCS Remote-ID: 'DSP_Line-dXY', Default/U:    50 Å   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Line-dXY', Default/U:    50 Å  , Adjustment PCS Name: 'DSP_Line-dXY' </description>
+    </key>
+
+    <key name="d-s-p-line-d-y" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_Line-dY', Default/U:     0 Å   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Line-dY', Default/U:     0 Å  , Adjustment PCS Name: 'DSP_Line-dY' </description>
+    </key>
+
+    <key name="d-s-p-line-d-m" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_Line-dM', Default/U:     0 V   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Line-dM', Default/U:     0 V  , Adjustment PCS Name: 'DSP_Line-dM' </description>
+    </key>
+
+    <key name="d-s-p-i-v-line-pts" type="d">
+      <default>1</default>
+      <summary>PCS Remote-ID: 'DSP_IV-Line-Pts', Default/U:   1     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_IV-Line-Pts', Default/U:   1    , Adjustment PCS Name: 'DSP_IV-Line-Pts' </description>
+    </key>
+
+    <key name="d-s-p-i-v-line-slope" type="d">
+      <default>100</default>
+      <summary>PCS Remote-ID: 'DSP_IV-Line-slope', Default/U:   100 Å/s   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_IV-Line-slope', Default/U:   100 Å/s  , Adjustment PCS Name: 'DSP_IV-Line-slope' </description>
+    </key>
+
+    <key name="d-s-p-i-v-line-final-delay" type="d">
+      <default>1</default>
+      <summary>PCS Remote-ID: 'DSP_IV-Line-Final-Delay', Default/U:   1 s   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_IV-Line-Final-Delay', Default/U:   1 s  , Adjustment PCS Name: 'DSP_IV-Line-Final-Delay' </description>
+    </key>
+
+    <key name="d-s-p-i-v-final-delay" type="d">
+      <default>0.01</default>
+      <summary>PCS Remote-ID: 'DSP_IV-Final-Delay', Default/U:  0.01 s   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_IV-Final-Delay', Default/U:  0.01 s  , Adjustment PCS Name: 'DSP_IV-Final-Delay' </description>
+    </key>
+
+    <key name="d-s-p-i-v-recover-delay" type="d">
+      <default>0.3</default>
+      <summary>PCS Remote-ID: 'DSP_IV-Recover-Delay', Default/U:   0.3 s   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_IV-Recover-Delay', Default/U:   0.3 s  , Adjustment PCS Name: 'DSP_IV-Recover-Delay' </description>
+    </key>
+
+    <key name="d-s-p-z-start" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_Z-Start', Default/U:     0 Å   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Z-Start', Default/U:     0 Å  , Adjustment PCS Name: 'DSP_Z-Start' </description>
+    </key>
+
+    <key name="d-s-p-z-end" type="d">
+      <default>100</default>
+      <summary>PCS Remote-ID: 'DSP_Z-End', Default/U:   100 Å   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Z-End', Default/U:   100 Å  , Adjustment PCS Name: 'DSP_Z-End' </description>
+    </key>
+
+    <key name="d-s-p-z-points" type="d">
+      <default>100</default>
+      <summary>PCS Remote-ID: 'DSP_Z-Points', Default/U:   100     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Z-Points', Default/U:   100    , Adjustment PCS Name: 'DSP_Z-Points' </description>
+    </key>
+
+    <key name="d-s-p-z-rep" type="d">
+      <default>1</default>
+      <summary>PCS Remote-ID: 'DSP_Z-rep', Default/U:     1     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Z-rep', Default/U:     1    , Adjustment PCS Name: 'DSP_Z-rep' </description>
+    </key>
+
+    <key name="d-s-p-z-slope" type="d">
+      <default>100</default>
+      <summary>PCS Remote-ID: 'DSP_Z-Slope', Default/U:   100 Å/s   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Z-Slope', Default/U:   100 Å/s  , Adjustment PCS Name: 'DSP_Z-Slope' </description>
+    </key>
+
+    <key name="d-s-p-lim-val-up" type="d">
+      <default>1</default>
+      <summary>PCS Remote-ID: 'DSP_Lim-Val-Up', Default/U:     1 V   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Lim-Val-Up', Default/U:     1 V  , Adjustment PCS Name: 'DSP_Lim-Val-Up' </description>
+    </key>
+
+    <key name="d-s-p-lim-val-dn" type="d">
+      <default>1</default>
+      <summary>PCS Remote-ID: 'DSP_Lim-Val-Dn', Default/U:     1 V   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Lim-Val-Dn', Default/U:     1 V  , Adjustment PCS Name: 'DSP_Lim-Val-Dn' </description>
+    </key>
+
+    <key name="d-s-p-f-z-slope-ramp" type="d">
+      <default>100</default>
+      <summary>PCS Remote-ID: 'DSP_FZ-Slope-Ramp', Default/U:   100 Å/s   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_FZ-Slope-Ramp', Default/U:   100 Å/s  , Adjustment PCS Name: 'DSP_FZ-Slope-Ramp' </description>
+    </key>
+
+    <key name="d-s-p-f-z-final-delay" type="d">
+      <default>0.01</default>
+      <summary>PCS Remote-ID: 'DSP_FZ-Final-Delay', Default/U:  0.01 s   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_FZ-Final-Delay', Default/U:  0.01 s  , Adjustment PCS Name: 'DSP_FZ-Final-Delay' </description>
+    </key>
+
+    <key name="d-s-p-duration" type="d">
+      <default>10</default>
+      <summary>PCS Remote-ID: 'DSP_Duration', Default/U: 10.00 ms   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Duration', Default/U: 10.00 ms  , Adjustment PCS Name: 'DSP_Duration' </description>
+    </key>
+
+    <key name="d-s-p-p-l-slope" type="d">
+      <default>10000</default>
+      <summary>PCS Remote-ID: 'DSP_PL_Slope', Default/U: 1e+04 V/s   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_PL_Slope', Default/U: 1e+04 V/s  , Adjustment PCS Name: 'DSP_PL_Slope' </description>
+    </key>
+
+    <key name="d-s-p-p-l-res" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_PL_Res', Default/U: 0 ms   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_PL_Res', Default/U: 0 ms  , Adjustment PCS Name: 'DSP_PL_Res' </description>
+    </key>
+
+    <key name="d-s-p-volts" type="d">
+      <default>2</default>
+      <summary>PCS Remote-ID: 'DSP_Volts', Default/U: 2.000 V   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Volts', Default/U: 2.000 V  , Adjustment PCS Name: 'DSP_Volts' </description>
+    </key>
+
+    <key name="d-s-p-d-z" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_dZ', Default/U: 0.00 Å   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_dZ', Default/U: 0.00 Å  , Adjustment PCS Name: 'DSP_dZ' </description>
+    </key>
+
+    <key name="d-s-p-d-z-ext" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_dZ_ext', Default/U: 0.00     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_dZ_ext', Default/U: 0.00    , Adjustment PCS Name: 'DSP_dZ_ext' </description>
+    </key>
+
+    <key name="d-s-p-set-start" type="d">
+      <default>0.1</default>
+      <summary>PCS Remote-ID: 'DSP_SetStart', Default/U: 0.1000     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_SetStart', Default/U: 0.1000    , Adjustment PCS Name: 'DSP_SetStart' </description>
+    </key>
+
+    <key name="d-s-p-step" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_Step', Default/U: 0.000 V   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Step', Default/U: 0.000 V  , Adjustment PCS Name: 'DSP_Step' </description>
+    </key>
+
+    <key name="d-s-p-p-l-stepd-z" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_PL-StepdZ', Default/U: 0.000 Å   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_PL-StepdZ', Default/U: 0.000 Å  , Adjustment PCS Name: 'DSP_PL-StepdZ' </description>
+    </key>
+
+    <key name="d-s-p-p-l-initial-delay" type="d">
+      <default>0.01</default>
+      <summary>PCS Remote-ID: 'DSP_PL-Initial-Delay', Default/U:  0.01 s   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_PL-Initial-Delay', Default/U:  0.01 s  , Adjustment PCS Name: 'DSP_PL-Initial-Delay' </description>
+    </key>
+
+    <key name="d-s-p-p-l-final-delay" type="d">
+      <default>0.01</default>
+      <summary>PCS Remote-ID: 'DSP_PL-Final-Delay', Default/U:  0.01 s   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_PL-Final-Delay', Default/U:  0.01 s  , Adjustment PCS Name: 'DSP_PL-Final-Delay' </description>
+    </key>
+
+    <key name="d-s-p-p-l-repetitions" type="d">
+      <default>1</default>
+      <summary>PCS Remote-ID: 'DSP_PL-Repetitions', Default/U: 1     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_PL-Repetitions', Default/U: 1    , Adjustment PCS Name: 'DSP_PL-Repetitions' </description>
+    </key>
+
+    <key name="d-s-p-f-b-time" type="d">
+      <default>10</default>
+      <summary>PCS Remote-ID: 'DSP_FB-Time', Default/U: 10.00 ms   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_FB-Time', Default/U: 10.00 ms  , Adjustment PCS Name: 'DSP_FB-Time' </description>
+    </key>
+
+    <key name="d-s-p-trigger-volts" type="d">
+      <default>2</default>
+      <summary>PCS Remote-ID: 'DSP_Trigger-Volts', Default/U: 2.000 V   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Trigger-Volts', Default/U: 2.000 V  , Adjustment PCS Name: 'DSP_Trigger-Volts' </description>
+    </key>
+
+    <key name="d-s-p-trigger-time" type="d">
+      <default>10</default>
+      <summary>PCS Remote-ID: 'DSP_Trigger-Time', Default/U: 10.00 ms   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Trigger-Time', Default/U: 10.00 ms  , Adjustment PCS Name: 'DSP_Trigger-Time' </description>
+    </key>
+
+    <key name="d-s-p-tip-retract" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_Tip-Retract', Default/U:     0 Å   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Tip-Retract', Default/U:     0 Å  , Adjustment PCS Name: 'DSP_Tip-Retract' </description>
+    </key>
+
+    <key name="d-s-p-laser-delay" type="d">
+      <default>10</default>
+      <summary>PCS Remote-ID: 'DSP_Laser-Delay', Default/U: 10.00 ms   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Laser-Delay', Default/U: 10.00 ms  , Adjustment PCS Name: 'DSP_Laser-Delay' </description>
+    </key>
+
+    <key name="d-s-p-l-p-slope" type="d">
+      <default>10000</default>
+      <summary>PCS Remote-ID: 'DSP_LP-Slope', Default/U: 1e+04 V/s   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_LP-Slope', Default/U: 1e+04 V/s  , Adjustment PCS Name: 'DSP_LP-Slope' </description>
+    </key>
+
+    <key name="d-s-p-l-p-repetitions" type="d">
+      <default>1</default>
+      <summary>PCS Remote-ID: 'DSP_LP-Repetitions', Default/U: 1     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_LP-Repetitions', Default/U: 1    , Adjustment PCS Name: 'DSP_LP-Repetitions' </description>
+    </key>
+
+    <key name="d-s-p-s-p-duration" type="d">
+      <default>10</default>
+      <summary>PCS Remote-ID: 'DSP_SP-Duration', Default/U: 10.00 min   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_SP-Duration', Default/U: 10.00 min  , Adjustment PCS Name: 'DSP_SP-Duration' </description>
+    </key>
+
+    <key name="d-s-p-s-p-volts" type="d">
+      <default>2</default>
+      <summary>PCS Remote-ID: 'DSP_SP-Volts', Default/U: 2.000 V   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_SP-Volts', Default/U: 2.000 V  , Adjustment PCS Name: 'DSP_SP-Volts' </description>
+    </key>
+
+    <key name="d-s-p-s-p-ramp-time" type="d">
+      <default>10</default>
+      <summary>PCS Remote-ID: 'DSP_SP-Ramp-Time', Default/U: 10.00 min   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_SP-Ramp-Time', Default/U: 10.00 min  , Adjustment PCS Name: 'DSP_SP-Ramp-Time' </description>
+    </key>
+
+    <key name="d-s-p-s-p-flag-von-x" type="d">
+      <default>1</default>
+      <summary>PCS Remote-ID: 'DSP_SP-Flag-VonX', Default/U: 1.000 V   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_SP-Flag-VonX', Default/U: 1.000 V  , Adjustment PCS Name: 'DSP_SP-Flag-VonX' </description>
+    </key>
+
+    <key name="d-s-p-s-p-delay" type="d">
+      <default>0.01</default>
+      <summary>PCS Remote-ID: 'DSP_SP-Delay', Default/U: 0.01 min   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_SP-Delay', Default/U: 0.01 min  , Adjustment PCS Name: 'DSP_SP-Delay' </description>
+    </key>
+
+    <key name="d-s-p-s-p-repetitions" type="d">
+      <default>1</default>
+      <summary>PCS Remote-ID: 'DSP_SP-Repetitions', Default/U: 1     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_SP-Repetitions', Default/U: 1    , Adjustment PCS Name: 'DSP_SP-Repetitions' </description>
+    </key>
+
+    <key name="d-s-p-t-s-duration" type="d">
+      <default>1000</default>
+      <summary>PCS Remote-ID: 'DSP_TS-Duration', Default/U: 1000.00 ms   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_TS-Duration', Default/U: 1000.00 ms  , Adjustment PCS Name: 'DSP_TS-Duration' </description>
+    </key>
+
+    <key name="d-s-p-t-s-points" type="d">
+      <default>2048</default>
+      <summary>PCS Remote-ID: 'DSP_TS-Points', Default/U: 2048     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_TS-Points', Default/U: 2048    , Adjustment PCS Name: 'DSP_TS-Points' </description>
+    </key>
+
+    <key name="d-s-p-t-s-repetitions" type="d">
+      <default>1</default>
+      <summary>PCS Remote-ID: 'DSP_TS-Repetitions', Default/U: 1     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_TS-Repetitions', Default/U: 1    , Adjustment PCS Name: 'DSP_TS-Repetitions' </description>
+    </key>
+
+    <key name="d-s-p-l-m-d-u00" type="ad">
+      <default>[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]</default>
+      <summary>PCS Remote-ID: 'DSP_LM-dU44', Default/U:      0 V   </summary>
+      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'DSP_LM-dU44', Default/U:      0 V  , Adjustment PCS Name: 'DSP_LM-dU44' </description>
+    </key>
+
+    <key name="d-s-p-l-m-d-x00" type="ad">
+      <default>[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]</default>
+      <summary>PCS Remote-ID: 'DSP_LM-dX44', Default/U:      0 Å   </summary>
+      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'DSP_LM-dX44', Default/U:      0 Å  , Adjustment PCS Name: 'DSP_LM-dX44' </description>
+    </key>
+
+    <key name="d-s-p-l-m-d-y00" type="ad">
+      <default>[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]</default>
+      <summary>PCS Remote-ID: 'DSP_LM-dY44', Default/U:      0 Å   </summary>
+      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'DSP_LM-dY44', Default/U:      0 Å  , Adjustment PCS Name: 'DSP_LM-dY44' </description>
+    </key>
+
+    <key name="d-s-p-l-m-d-z00" type="ad">
+      <default>[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]</default>
+      <summary>PCS Remote-ID: 'DSP_LM-dZ44', Default/U:      0 Å   </summary>
+      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'DSP_LM-dZ44', Default/U:      0 Å  , Adjustment PCS Name: 'DSP_LM-dZ44' </description>
+    </key>
+
+    <key name="d-s-p-l-m-d-sig00" type="ad">
+      <default>[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]</default>
+      <summary>PCS Remote-ID: 'DSP_LM-dSig44', Default/U:      0 V   </summary>
+      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'DSP_LM-dSig44', Default/U:      0 V  , Adjustment PCS Name: 'DSP_LM-dSig44' </description>
+    </key>
+
+    <key name="d-s-p-l-m-dt00" type="ad">
+      <default>[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]</default>
+      <summary>PCS Remote-ID: 'DSP_LM-dt44', Default/U:     0 s   </summary>
+      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'DSP_LM-dt44', Default/U:     0 s  , Adjustment PCS Name: 'DSP_LM-dt44' </description>
+    </key>
+
+    <key name="d-s-p-l-m-n00" type="ad">
+      <default>[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]</default>
+      <summary>PCS Remote-ID: 'DSP_LM-n44', Default/U:     0     </summary>
+      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'DSP_LM-n44', Default/U:     0    , Adjustment PCS Name: 'DSP_LM-n44' </description>
+    </key>
+
+    <key name="d-s-p-l-m-data00" type="ad">
+      <default>[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]</default>
+      <summary>PCS Remote-ID: 'DSP_LM-data44', Default/U: 0000 h   </summary>
+      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'DSP_LM-data44', Default/U: 0000 h  , Adjustment PCS Name: 'DSP_LM-data44' </description>
+    </key>
+
+    <key name="d-s-p-nrep00" type="ad">
+      <default>[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]</default>
+      <summary>PCS Remote-ID: 'DSP_Nrep44', Default/U: 0     </summary>
+      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'DSP_Nrep44', Default/U: 0    , Adjustment PCS Name: 'DSP_Nrep44' </description>
+    </key>
+
+    <key name="d-s-p-p-c-j-r00" type="ad">
+      <default>[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]</default>
+      <summary>PCS Remote-ID: 'DSP_PCJR44', Default/U: 0     </summary>
+      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'DSP_PCJR44', Default/U: 0    , Adjustment PCS Name: 'DSP_PCJR44' </description>
+    </key>
+
+    <key name="d-s-p-l-m-final-delay" type="d">
+      <default>0.01</default>
+      <summary>PCS Remote-ID: 'DSP_LM-Final-Delay', Default/U:  0.01 s   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_LM-Final-Delay', Default/U:  0.01 s  , Adjustment PCS Name: 'DSP_LM-Final-Delay' </description>
+    </key>
+
+    <key name="d-s-p-g-p-i-o-lock-57" type="d">
+      <default>57</default>
+      <summary>PCS Remote-ID: 'DSP_GPIO-Lock_57', Default/U: 0057     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_GPIO-Lock_57', Default/U: 0057    , Adjustment PCS Name: 'DSP_GPIO-Lock_57' </description>
+    </key>
+
+    <key name="d-s-p-t-k-rad" type="d">
+      <default>2</default>
+      <summary>PCS Remote-ID: 'DSP_TK-rad', Default/U:      2 Å   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_TK-rad', Default/U:      2 Å  , Adjustment PCS Name: 'DSP_TK-rad' </description>
+    </key>
+
+    <key name="d-s-p-t-k-rad2" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_TK-rad2', Default/U:      0 Å   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_TK-rad2', Default/U:      0 Å  , Adjustment PCS Name: 'DSP_TK-rad2' </description>
+    </key>
+
+    <key name="d-s-p-t-k-points" type="d">
+      <default>10</default>
+      <summary>PCS Remote-ID: 'DSP_TK-Points', Default/U:    10     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_TK-Points', Default/U:    10    , Adjustment PCS Name: 'DSP_TK-Points' </description>
+    </key>
+
+    <key name="d-s-p-t-k-nodes" type="d">
+      <default>12</default>
+      <summary>PCS Remote-ID: 'DSP_TK-Nodes', Default/U:    12     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_TK-Nodes', Default/U:    12    , Adjustment PCS Name: 'DSP_TK-Nodes' </description>
+    </key>
+
+    <key name="d-s-p-t-k-reps" type="d">
+      <default>100</default>
+      <summary>PCS Remote-ID: 'DSP_TK-Reps', Default/U:   100     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_TK-Reps', Default/U:   100    , Adjustment PCS Name: 'DSP_TK-Reps' </description>
+    </key>
+
+    <key name="d-s-p-t-k-mode" type="d">
+      <default>-1</default>
+      <summary>PCS Remote-ID: 'DSP_TK-Mode', Default/U:    -1     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_TK-Mode', Default/U:    -1    , Adjustment PCS Name: 'DSP_TK-Mode' </description>
+    </key>
+
+    <key name="d-s-p-t-k-speed" type="d">
+      <default>1000</default>
+      <summary>PCS Remote-ID: 'DSP_TK-Speed', Default/U:  1000 Å/s   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_TK-Speed', Default/U:  1000 Å/s  , Adjustment PCS Name: 'DSP_TK-Speed' </description>
+    </key>
+
+    <key name="d-s-p-t-k-delay" type="d">
+      <default>1</default>
+      <summary>PCS Remote-ID: 'DSP_TK-Delay', Default/U:     1 ms   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_TK-Delay', Default/U:     1 ms  , Adjustment PCS Name: 'DSP_TK-Delay' </description>
+    </key>
+
+    <key name="d-s-p-noise-amplitude" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_Noise-Amplitude', Default/U:     0 V   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Noise-Amplitude', Default/U:     0 V  , Adjustment PCS Name: 'DSP_Noise-Amplitude' </description>
+    </key>
+
+    <key name="d-s-p-c-o-r-r-p-r-d-s-h-r" type="d">
+      <default>14</default>
+      <summary>PCS Remote-ID: 'DSP_CORRPRD-SHR', Default/U:    14     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_CORRPRD-SHR', Default/U:    14    , Adjustment PCS Name: 'DSP_CORRPRD-SHR' </description>
+    </key>
+
+    <key name="d-s-p-c-o-r-r-s-u-m-s-h-r" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_CORRSUM-SHR', Default/U:     0     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_CORRSUM-SHR', Default/U:     0    , Adjustment PCS Name: 'DSP_CORRSUM-SHR' </description>
+    </key>
+
+    <key name="d-s-p-a-c-bias-amp" type="d">
+      <default>0.02</default>
+      <summary>PCS Remote-ID: 'DSP_AC-Bias-Amp', Default/U:  0.02 V   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_AC-Bias-Amp', Default/U:  0.02 V  , Adjustment PCS Name: 'DSP_AC-Bias-Amp' </description>
+    </key>
+
+    <key name="d-s-p-a-c-z-amp" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_AC-Z-Amp', Default/U:     0 Å   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_AC-Z-Amp', Default/U:     0 Å  , Adjustment PCS Name: 'DSP_AC-Z-Amp' </description>
+    </key>
+
+    <key name="d-s-p-a-c-frequency" type="d">
+      <default>1171.88</default>
+      <summary>PCS Remote-ID: 'DSP_AC-Frequency', Default/U: 1171.88 Hz   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_AC-Frequency', Default/U: 1171.88 Hz  , Adjustment PCS Name: 'DSP_AC-Frequency' </description>
+    </key>
+
+    <key name="d-s-p-a-c-phase-a" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_AC-Phase-A', Default/U:     0 °  :A </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_AC-Phase-A', Default/U:     0 °  :A, Adjustment PCS Name: 'DSP_AC-Phase-AB' </description>
+    </key>
+
+    <key name="d-s-p-a-c-phase-b" type="d">
+      <default>90</default>
+      <summary>PCS Remote-ID: 'DSP_AC-Phase-B', Default/U:    90 °  :B </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_AC-Phase-B', Default/U:    90 °  :B, Adjustment PCS Name: 'DSP_AC-Phase-B' </description>
+    </key>
+
+    <key name="d-s-p-a-c-avg-cycles" type="d">
+      <default>32</default>
+      <summary>PCS Remote-ID: 'DSP_AC-avg-Cycles', Default/U:    32     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_AC-avg-Cycles', Default/U:    32    , Adjustment PCS Name: 'DSP_AC-avg-Cycles' </description>
+    </key>
+
+    <key name="d-s-p-a-c-phase-span" type="d">
+      <default>360</default>
+      <summary>PCS Remote-ID: 'DSP_AC-Phase-Span', Default/U:   360 °  :span </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_AC-Phase-Span', Default/U:   360 °  :span, Adjustment PCS Name: 'DSP_AC-Phase-Span' </description>
+    </key>
+
+    <key name="d-s-p-a-c-points" type="d">
+      <default>720</default>
+      <summary>PCS Remote-ID: 'DSP_AC-Points', Default/U:   720    #pts </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_AC-Points', Default/U:   720    #pts, Adjustment PCS Name: 'DSP_AC-Points' </description>
+    </key>
+
+    <key name="d-s-p-a-c-slope" type="d">
+      <default>12</default>
+      <summary>PCS Remote-ID: 'DSP_AC-Slope', Default/U:    12 °/s   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_AC-Slope', Default/U:    12 °/s  , Adjustment PCS Name: 'DSP_AC-Slope' </description>
+    </key>
+
+    <key name="d-s-p-a-c-final-delay" type="d">
+      <default>0.01</default>
+      <summary>PCS Remote-ID: 'DSP_AC-Final-Delay', Default/U:  0.01 s   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_AC-Final-Delay', Default/U:  0.01 s  , Adjustment PCS Name: 'DSP_AC-Final-Delay' </description>
+    </key>
+
+    <key name="d-s-p-a-c-repetitions" type="d">
+      <default>1</default>
+      <summary>PCS Remote-ID: 'DSP_AC-Repetitions', Default/U: 1    #reps </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_AC-Repetitions', Default/U: 1    #reps, Adjustment PCS Name: 'DSP_AC-Repetitions' </description>
+    </key>
+
+    <key name="d-s-p-a-x-v-start" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_AX_V-Start', Default/U:      0 V   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_AX_V-Start', Default/U:      0 V  , Adjustment PCS Name: 'DSP_AX_V-Start' </description>
+    </key>
+
+    <key name="d-s-p-a-x-v-end" type="d">
+      <default>1</default>
+      <summary>PCS Remote-ID: 'DSP_AX-V-End', Default/U:     10 V   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_AX-V-End', Default/U:     10 V  , Adjustment PCS Name: 'DSP_AX-V-End' </description>
+    </key>
+
+    <key name="d-s-p-a-x-rep" type="d">
+      <default>1</default>
+      <summary>PCS Remote-ID: 'DSP_AX-rep', Default/U:     1     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_AX-rep', Default/U:     1    , Adjustment PCS Name: 'DSP_AX-rep' </description>
+    </key>
+
+    <key name="d-s-p-a-x-points" type="d">
+      <default>100</default>
+      <summary>PCS Remote-ID: 'DSP_AX-Points', Default/U:   100     </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_AX-Points', Default/U:   100    , Adjustment PCS Name: 'DSP_AX-Points' </description>
+    </key>
+
+    <key name="d-s-p-a-x-v-slope" type="d">
+      <default>100</default>
+      <summary>PCS Remote-ID: 'DSP_AX-V-Slope', Default/U:    100 V/s   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_AX-V-Slope', Default/U:    100 V/s  , Adjustment PCS Name: 'DSP_AX-V-Slope' </description>
+    </key>
+
+    <key name="d-s-p-a-x-slope-ramp" type="d">
+      <default>100</default>
+      <summary>PCS Remote-ID: 'DSP_AX-Slope-Ramp', Default/U:    100 V/s   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_AX-Slope-Ramp', Default/U:    100 V/s  , Adjustment PCS Name: 'DSP_AX-Slope-Ramp' </description>
+    </key>
+
+    <key name="d-s-p-a-x-final-delay" type="d">
+      <default>0.01</default>
+      <summary>PCS Remote-ID: 'DSP_AX-Final-Delay', Default/U:   0.01 s   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_AX-Final-Delay', Default/U:   0.01 s  , Adjustment PCS Name: 'DSP_AX-Final-Delay' </description>
+    </key>
+
+    <key name="d-s-p-a-x-gate-time" type="d">
+      <default>0.001</default>
+      <summary>PCS Remote-ID: 'DSP_AX-GateTime', Default/U:    0.001 s   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_AX-GateTime', Default/U:    0.001 s  , Adjustment PCS Name: 'DSP_AX-GateTime' </description>
+    </key>
+
+    <key name="d-s-p-x-final-delay" type="d">
+      <default>0.01</default>
+      <summary>PCS Remote-ID: 'DSP_X-Final-Delay', Default/U:   0.01 s   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_X-Final-Delay', Default/U:   0.01 s  , Adjustment PCS Name: 'DSP_X-Final-Delay' </description>
+    </key>
+
+    <key name="d-s-p-z0-a-d-j-speed" type="d">
+      <default>500</default>
+      <summary>PCS Remote-ID: 'DSP_Z0ADJ_Speed', Default/U: 500.0 Å/s   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Z0ADJ_Speed', Default/U: 500.0 Å/s  , Adjustment PCS Name: 'DSP_Z0ADJ_Speed' </description>
+    </key>
+
+    <key name="d-s-p-z0-a-d-j-range" type="d">
+      <default>500</default>
+      <summary>PCS Remote-ID: 'DSP_Z0ADJ_Range', Default/U:  500 Å   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Z0ADJ_Range', Default/U:  500 Å  , Adjustment PCS Name: 'DSP_Z0ADJ_Range' </description>
+    </key>
+
+    <key name="d-s-p-z0-a-d-j-goto" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'DSP_Z0ADJ_Goto', Default/U:      0.0 Å   </summary>
+      <description>pcs0000, PCS Remote-ID: 'DSP_Z0ADJ_Goto', Default/U:      0.0 Å  , Adjustment PCS Name: 'DSP_Z0ADJ_Goto' </description>
+    </key>
+
+   </schema>
+
+</schemalist>

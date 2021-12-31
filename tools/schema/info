@@ -1,0 +1,9 @@
+run install.sh as root
+
+Note:
+Nautilus/gnome thumbnailer command-line options:
+ %u expands to the uri of the source file, %i expands to the filename of 
+ the source file (which means the script will be called on local files 
+ only), %o is the output filename, and %s is supposed to be the target 
+ thumbnail size.
+

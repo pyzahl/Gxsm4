@@ -1,0 +1,402 @@
+<schemalist>
+
+  <schema id="org.gnome.gxsm4.hwi.sranger-mk23" path="/org/gnome/gxsm4/hwi/sranger-mk23/">
+
+    <key name="window-00-tabs" type="s">
+      <default>"------------------------------"</default>
+      <summary>Window Tabs Coding</summary>
+      <description>
+	last tabs configuration
+      </description>
+    </key>
+    
+    <key name="window-01-tabs" type="s">
+      <default>"------------------------------"</default>
+      <summary>Window Tabs Coding</summary>
+      <description>
+	last tabs configuration
+      </description>
+    </key>
+    
+    <key name="dsp-fbs-vx" type="i">
+      <default>1</default>
+      <summary>Piezo Drive VX scan setting</summary>
+      <description>
+	last VX setting (combo box index)
+      </description>
+    </key>
+    <key name="dsp-fbs-vy" type="i">
+      <default>1</default>
+      <summary>Piezo Drive VY scan setting</summary>
+      <description>
+	last VY setting (combo box index)
+      </description>
+    </key>
+    <key name="dsp-fbs-vz" type="i">
+      <default>2</default>
+      <summary>Piezo Drive VZ scan setting</summary>
+      <description>
+	last VZ setting (combo box index)
+      </description>
+    </key>
+    <key name="dsp-fbs-vx0" type="i">
+      <default>4</default>
+      <summary>Piezo Drive VX offset setting</summary>
+      <description>
+	last VX offset setting (combo box index)
+      </description>
+    </key>
+    <key name="dsp-fbs-vy0" type="i">
+      <default>4</default>
+      <summary>Piezo Drive VY offset setting</summary>
+      <description>
+	last VY offset setting (combo box index)
+      </description>
+    </key>
+    <key name="dsp-fbs-vz0" type="i">
+      <default>4</default>
+      <summary>Piezo Drive VZ offset setting</summary>
+      <description>
+	last VZ offset setting (combo box index)
+      </description>
+    </key>
+
+    <key name="adv-enable-tip-return-to-center" type="b">
+      <default>true</default>
+      <summary>Remembered state of tip-return-center checkbutton</summary>
+      <description>
+	Remembered state of tip-return-to-center checkbutton -- button binds
+      </description>
+    </key>
+    <key name="adv-enable-slope-compensation" type="b">
+      <default>true</default>
+      <summary>Remembered state of slope-compensation checkbutton</summary>
+      <description>
+	Remembered state of slope compensation enabled checkbutton -- button binds
+      </description>
+    </key>
+    <key name="advanced-xxx-show" type="b">
+      <default>true</default>
+      <summary>Indicates </summary>
+      <description>
+	
+      </description>
+    </key>
+
+   <key name="probe-sources" type="i">
+      <default>16781361</default>
+      <summary>probe source channel encoding</summary>
+      <description>
+	probe source channel encoding (bit coded)
+      </description>
+    </key>
+   <key name="probe-sources-x" type="i">
+      <default>285212672</default>
+      <summary>probe X source channel encoding</summary>
+      <description>
+	probe X source channel encoding (bit coded)
+      </description>
+    </key>
+   <key name="probe-x-join" type="b">
+      <default>false</default>
+      <summary>x-joing mode</summary>
+      <description>
+	x join mode 0x3030 ??
+      </description>
+   </key>
+   <key name="probe-graph-enable-map-fill" type="b">
+      <default>true</default>
+      <summary>Enable fill between raster points</summary>
+      <description>
+	Enable to fill in between raster points if raster probe grid more than 1.
+      </description>
+   </key>
+   <key name="probe-graph-enable-add-events" type="b">
+      <default>false</default>
+      <summary>automatically add probve events</summary>
+      <description>
+	Disable to not add Probe Events to Master Scan.
+      </description>
+   </key>
+   <key name="probe-graph-enable-map-plot-events" type="b">
+      <default>false</default>
+      <summary>automatically plot profiles for mapping probe data</summary>
+      <description>
+	Automatically update plot profiles for mapping probe data at every raster point.
+	Not recommended for fast repeating probes.
+      </description>
+   </key>
+   <key name="probe-graph-enable-map-save-events" type="b">
+      <default>false</default>
+      <summary>automatically save vpdata files for mapping probe data</summary>
+      <description>
+	Automatically save vpdata files for mapping probe data at every raster point.
+	Not recommended for fast repeating probes.
+      </description>
+   </key>
+   <key name="probe-graph-matrix-window" type="b">
+      <default>true</default>
+      <summary>probe-graph-matrix-window mode</summary>
+      <description>
+	use single window to organize all probe graphs
+      </description>
+    </key>
+   <key name="probe-p-sources" type="i">
+      <default>4096</default>
+      <summary>probe plot source channel encoding</summary>
+      <description>
+	probe plot source channel encoding (bit coded)
+      </description>
+    </key>
+   <key name="probe-pavg-sources" type="i">
+      <default>0</default>
+      <summary>probe average source channel encoding</summary>
+      <description>
+	probe source average channel encoding (bit coded)
+      </description>
+    </key>
+   <key name="probe-psec-sources" type="i">
+      <default>0</default>
+      <summary>probe section source channel encoding</summary>
+      <description>
+	probe section source channel encoding (bit coded)
+      </description>
+    </key>
+
+    <key name="probe-tab-options" type="a{sv}">
+     <default>{}</default>
+      <summary>
+	dictionary for probe tabs (AC, ...)
+        containing a varant holding a array of 8 uint64 values: @t [STS,.. option-flags, auto-flags, glock-data[6]]]
+      </summary>
+      <description>
+	data
+      </description>
+    </key>
+
+    <key name="probe-lm-vector-program-matrix" type="a{sv}">
+     <default>{}</default>
+      <summary>
+	Current Program and Memos for Vector Program stores. (old/compatibility, obsolete)
+	Dict of columns { du, dx, dy, dz, ts, pn, op, da, vn, vp } each vector has N_GVP_VECTORS x ( 1 + N*stores )
+      </summary>
+      <description>
+	data
+      </description>
+    </key>
+    
+    <key name="probe-gvp-vector-program-matrix" type="a{sv}">
+     <default>{}</default>
+      <summary>
+	Current Program and Memos for Vector Program stores.
+	Dict of columns { du, dx, dy, dz, ts, pn, op, da, vn, vp } each vector has N_GVP_VECTORS x ( 1 + N*stores )
+      </summary>
+      <description>
+	data
+      </description>
+    </key>
+    
+    <!-- Configuration Settings -->
+    
+    <key name="configure-mode" type="b">
+      <default>false</default>
+      <summary>Mover Control Configure mode</summary>
+      <description>
+	GUI simplification option: Enable Mover Control Configure Mode
+      </description>
+    </key>
+
+    <key name="tab-feedback-scan" type="b">
+      <default>true</default>
+      <summary>Indicates if tab feedback and scan to be showed</summary>
+      <description>
+	GUI simplification option: Indicates tab feedback and scan to be showed
+      </description>
+    </key>
+    <key name="tab-ut" type="b">
+      <default>true</default>
+      <summary>Indicates if tab ut to be showed</summary>
+      <description>
+	GUI simplification option: Indicates tab ut to be showed
+      </description>
+    </key>
+    <key name="tab-trigger" type="b">
+      <default>false</default>
+      <summary>Indicates if tab x to be showed</summary>
+      <description>
+	GUI simplification option: Indicates tab x to be showed
+      </description>
+    </key>
+    <key name="tab-advanced" type="b">
+      <default>true</default>
+      <summary>Indicates if tab advanced to be showed</summary>
+      <description>
+	GUI simplification option: Indicates tab advanced to be showed
+      </description>
+    </key>
+    <key name="tab-sts" type="b">
+      <default>true</default>
+      <summary>Indicates if tab STS to be showed</summary>
+      <description>
+	GUI simplification option: Indicates tab STS to be showed
+      </description>
+    </key>
+    <key name="tab-z" type="b">
+      <default>false</default>
+      <summary>Indicates if tab Z to be showed</summary>
+      <description>
+	GUI simplification option: Indicates tab Z to be showed
+      </description>
+    </key>
+    <key name="tab-pl" type="b">
+      <default>false</default>
+      <summary>Indicates if tab PL to be showed</summary>
+      <description>
+	GUI simplification option: Indicates tab PL to be showed
+      </description>
+    </key>
+    <key name="tab-lp" type="b">
+      <default>false</default>
+      <summary>Indicates if tab x to be showed</summary>
+      <description>
+	GUI simplification option: Indicates tab x to be showed
+      </description>
+    </key>
+    <key name="tab-sp" type="b">
+      <default>false</default>
+      <summary>Indicates if tab SP to be showed</summary>
+      <description>
+	GUI simplification option: Indicates tab SP to be showed
+      </description>
+    </key>
+    <key name="tab-ts" type="b">
+      <default>true</default>
+      <summary>Indicates if tab TS to be showed</summary>
+      <description>
+	GUI simplification option: Indicates tab TS to be showed
+      </description>
+    </key>
+    <key name="tab-gvp" type="b">
+      <default>true</default>
+      <summary>Indicates if tab GVP (generic Vector Probe) to be showed</summary>
+      <description>
+	GUI simplification option: Indicates tab gvp (generic vector probe) to be showed
+      </description>
+    </key>
+    <key name="tab-tk" type="b">
+      <default>false</default>
+      <summary>Indicates if tab TK to be showed</summary>
+      <description>
+	GUI simplification option: Indicates tab TK to be showed
+      </description>
+    </key>
+    <key name="tab-lockin" type="b">
+      <default>true</default>
+      <summary>Indicates if tab LockIn to be showed</summary>
+      <description>
+	GUI simplification option: Indicates tab LockIn to be showed
+      </description>
+    </key>
+    <key name="tab-ax" type="b">
+      <default>false</default>
+      <summary>Indicates if tab AX to be showed</summary>
+      <description>
+	GUI simplification option: Indicates tab AX to be showed
+      </description>
+    </key>
+    <key name="tab-abort" type="b">
+      <default>false</default>
+      <summary>Indicates if tab Abort to be showed</summary>
+      <description>
+	GUI simplification option: Indicates tab Abort to be showed
+      </description>
+    </key>
+    <key name="tab-graphs" type="b">
+      <default>true</default>
+      <summary>Indicates if tab Graphs to be showed</summary>
+      <description>
+	GUI simplification option: Indicates tab Graphs to be showed
+      </description>
+    </key>
+    
+    <key name="memo-vpa" type="s">
+      <default>"--"</default>
+      <summary>VP Memo</summary>
+      <description>
+	memo string for VPA... buffers
+      </description>
+    </key>
+    <key name="memo-vpb" type="s">
+      <default>"--"</default>
+      <summary>VP Memo</summary>
+      <description>
+	memo string for VPA... buffers
+      </description>
+    </key>
+    <key name="memo-vpc" type="s">
+      <default>"--"</default>
+      <summary>VP Memo</summary>
+      <description>
+	memo string for VPA... buffers
+      </description>
+    </key>
+    <key name="memo-vpd" type="s">
+      <default>"--"</default>
+      <summary>VP Memo</summary>
+      <description>
+	memo string for VPA... buffers
+      </description>
+    </key>
+    <key name="memo-vpe" type="s">
+      <default>"--"</default>
+      <summary>VP Memo</summary>
+      <description>
+	memo string for VPA... buffers
+      </description>
+    </key>
+    <key name="memo-vpf" type="s">
+      <default>"--"</default>
+      <summary>VP Memo</summary>
+      <description>
+	memo string for VPA... buffers
+      </description>
+    </key>
+    <key name="memo-vpg" type="s">
+      <default>"--"</default>
+      <summary>VP Memo</summary>
+      <description>
+	memo string for VPA... buffers
+      </description>
+    </key>
+    <key name="memo-vph" type="s">
+      <default>"--"</default>
+      <summary>VP Memo</summary>
+      <description>
+	memo string for VPA... buffers
+      </description>
+    </key>
+    <key name="memo-vpi" type="s">
+      <default>"--"</default>
+      <summary>VP Memo</summary>
+      <description>
+	memo string for VPA... buffers
+      </description>
+    </key>
+    <key name="memo-vpj" type="s">
+      <default>"--"</default>
+      <summary>VP Memo</summary>
+      <description>
+	memo string for VPA... buffers
+      </description>
+    </key>
+    <key name="memo-vpk" type="s">
+      <default>"--"</default>
+      <summary>VP Memo</summary>
+      <description>
+	memo string for VPA... buffers
+      </description>
+    </key>
+    
+  </schema>
+
+</schemalist>

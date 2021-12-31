@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+  <mime-type type="application/x-omicron-scala">
+      <comment xml:lang="en">SCALA SPM image</comment>
+      <comment xml:lang="de">SCALA SPM Bild</comment>
+      <glob pattern="*.t[bf][0123]"/>
+  </mime-type>
+</mime-info>

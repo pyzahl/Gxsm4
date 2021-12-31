@@ -1,0 +1,34 @@
+** install the TI "cgtools-c5500" in /opt/TI/cgtools-c55 -- tested with:
+TMS320C55x Code Generation Tools Release Version 2.56 
+
+** to build the DSP binary for the MK2-A810 (strongly recommended for all SPM
+application with feedback loop) type:
+
+make clean
+make
+
+** to build a DSP binary for the MK2-Analog16 (AIC24) you can build a
+binary as well, this is less tested and not main stream:
+
+make clean
+make -f Makefile-A16
+
+
+** take the generated COFF file FB_spmcontrol.out (or ..-A16.out) to a
+MS Win based system and use the by SoftdB provided minidebugger to
+load (reflash) the DSP code. Depending on the previous FPGA
+configuration, you may need to have the correspondinf FPGA (.rbt) file
+as well. 
+
+SR2_Analog_810_V200.rbt
+
+or 
+
+SR2_Analog_16.rbt
+
+** power cycle the DSP and plug into your Linux system.
+
+** make sure the kernel module is in place and device permissions are
+configured via udev or manually via chmod for every one to read/write.
+
+** use "dmesg" command to check module messages/status

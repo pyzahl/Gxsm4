@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="550"
+   height="600"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.48.3.1 r9886"
+   sodipodi:docname="scope-frame.svg"
+   inkscape:export-filename="/home/pzahl/gxsm-sig-svn/plug-ins/hard/MK3-A810_spmcontrol/python_scripts/scope-frame.png"
+   inkscape:export-xdpi="90"
+   inkscape:export-ydpi="90">
+  <defs
+     id="defs4">
+    <filter
+       inkscape:collect="always"
+       id="filter3785"
+       color-interpolation-filters="sRGB">
+      <feGaussianBlur
+         inkscape:collect="always"
+         stdDeviation="0.79425"
+         id="feGaussianBlur3787" />
+    </filter>
+    <filter
+       inkscape:collect="always"
+       id="filter3814">
+      <feGaussianBlur
+         inkscape:collect="always"
+         stdDeviation="0.4425"
+         id="feGaussianBlur3816" />
+    </filter>
+    <filter
+       inkscape:collect="always"
+       id="filter3906">
+      <feGaussianBlur
+         inkscape:collect="always"
+         stdDeviation="0.92207813"
+         id="feGaussianBlur3908" />
+    </filter>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1.31"
+     inkscape:cx="275"
+     inkscape:cy="300"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="true"
+     inkscape:snap-global="true"
+     inkscape:snap-bbox="true"
+     inkscape:window-width="1035"
+     inkscape:window-height="988"
+     inkscape:window-x="102"
+     inkscape:window-y="34"
+     inkscape:window-maximized="0">
+    <inkscape:grid
+       type="xygrid"
+       id="grid2985"
+       empspacing="5"
+       visible="true"
+       enabled="true"
+       snapvisiblegridlinesonly="true" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0,-452.36218)">
+    <rect
+       style="fill:#c9ba88;fill-opacity:1;fill-rule:evenodd;stroke:#c9ba88;stroke-width:7;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;filter:url(#filter3814)"
+       id="rect3808"
+       width="530"
+       height="60"
+       x="10"
+       y="530"
+       transform="translate(0,452.36218)"
+       rx="7.586205" />
+    <rect
+       style="fill:#182c38;fill-opacity:1;fill-rule:evenodd;stroke:#c9ba88;filter:url(#filter3785);stroke-opacity:1;stroke-width:7;stroke-miterlimit:4;stroke-dasharray:none"
+       id="rect2987"
+       width="529.5"
+       height="529.5"
+       x="10"
+       y="462.36218"
+       rx="7.586205" />
+    <text
+       xml:space="preserve"
+       style="font-size:36px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Wrexham Script;-inkscape-font-specification:Wrexham Script"
+       x="38.931297"
+       y="567.9389"
+       id="text3818"
+       sodipodi:linespacing="125%"
+       transform="translate(0,452.36218)"><tspan
+         sodipodi:role="line"
+         id="tspan3820"
+         x="38.931297"
+         y="567.9389" /></text>
+    <text
+       xml:space="preserve"
+       style="font-size:36px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Wrexham Script;-inkscape-font-specification:Wrexham Script"
+       x="49.61832"
+       y="564.8855"
+       id="text3822"
+       sodipodi:linespacing="125%"
+       transform="translate(0,452.36218)"><tspan
+         sodipodi:role="line"
+         id="tspan3824"
+         x="49.61832"
+         y="564.8855" /></text>
+    <text
+       xml:space="preserve"
+       style="font-size:36px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#008000;fill-opacity:1;stroke:none;filter:url(#filter3906);font-family:Wrexham Script;-inkscape-font-specification:Wrexham Script;stroke-opacity:1"
+       x="20"
+       y="1032.3622"
+       id="text3826"
+       sodipodi:linespacing="125%"
+       transform="matrix(0.8579319,0,0,0.8579319,2.8391292,147.03012)"><tspan
+         sodipodi:role="line"
+         id="tspan3828"
+         x="20"
+         y="1032.3622"
+         style="font-size:36px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;font-family:Droid Sans;-inkscape-font-specification:Droid Sans;fill:#008000;stroke:none;stroke-opacity:1">GXSM</tspan></text>
+  </g>
+</svg>

@@ -1,0 +1,699 @@
+<?xml version="1.0"?>
+<!-- Used by the FB_spm recipe. Created on March 30, 2003. -->
+
+
+<strategy
+   version="6"
+   host="windows"
+   name="FB_spm"
+   full_path="Z:\\SRanger\\TiCC-project-files\\FB_spmcontrol\\FB_spm.str"
+   comment="Used by the FB_spm recipe. Created on March 30, 2003."
+   dont_expand_iterators="1"
+   size_warnings="1"
+>
+
+   <!-- CHANGE  vectors  OF  vectors.obj\.vectors  TO  TRUE -->
+   <instr
+      dont_undo="1"
+      op="48"
+      s0="All Input Files\\FB_spm\\vectors.obj\\.vectors"
+      u1="1"
+   />
+
+   <!-- CHANGE  entry  OF  rts.lib\boot.obj\.text\_c_int00  TO  TRUE -->
+   <instr
+      dont_undo="1"
+      op="1d"
+      s0="All Input Files\\FB_spm\\rts.lib\\boot.obj\\.text\\_c_int00"
+      u1="1"
+   />
+
+   <!-- NEW  child output file  OF  Output Files  WITH  full_path=.\Debug\FB_spmcontrol.out  HOLDING  map SignalRanger -->
+   <instr
+      op="27"
+      s0="Output Files"
+      s1=".\\Debug\\FB_spmcontrol.out"
+      s2="Memory Maps\\SignalRanger"
+      u3="e015a8"
+   />
+
+   <!-- CHANGE  make map file  OF  Output Files\FB_spmcontrol.out  TO  TRUE -->
+   <instr
+      op="3b"
+      s0="Output Files\\FB_spmcontrol.out"
+      u1="1"
+   />
+
+   <!-- CHANGE  alloc_kind  OF  run_view\program_memory\DARAM  TO  struct -->
+   <instr
+      op="23"
+      s0="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM"
+      u1="a"
+   />
+
+   <!-- CHANGE  auto initialization  OF  SignalRanger  TO  ROM_auto_init -->
+   <instr
+      op="4a"
+      s0="Memory Maps\\SignalRanger"
+      u1="1"
+   />
+
+   <!-- CHANGE  stack  size OF  SignalRanger  TO  0200h -->
+   <instr
+      op="4c"
+      s0="Memory Maps\\SignalRanger"
+      s1="stack"
+      u3="200"
+   />
+
+   <!-- CHANGE  heap  size OF  SignalRanger  TO  0100h -->
+   <instr
+      op="4d"
+      s0="Memory Maps\\SignalRanger"
+      s1="heap"
+      u3="100"
+   />
+
+   <!-- NEW  child output section  OF  run_view\program_memory\vectors  WITH  name=.vectors, data_kind=code  AT  end -->
+   <instr
+      op="22"
+      s0="Memory Maps\\SignalRanger\\run_view\\program_memory\\vectors"
+      s1=".vectors"
+      u2="1"
+      u3="8"
+      u5="2"
+   />
+
+   <!-- MOVE  vectors.obj\.vectors  FROM  run_view\Not Yet Placed  TO  run_view\program_memory\vectors\.vectors  AT  end -->
+   <instr
+      op="2"
+      s0="All Input Files\\FB_spm\\vectors.obj\\.vectors"
+      s1="Memory Maps\\SignalRanger\\run_view\\program_memory\\vectors\\.vectors"
+      s2="Memory Maps\\SignalRanger\\run_view\\Not Yet Placed"
+      u3="2"
+   />
+
+   <!-- NEW  child output section  OF  run_view\program_memory\DARAM  WITH  name=.text:7, data_kind=code  AT  beginning -->
+   <instr
+      op="22"
+      s0="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM"
+      s1=".text:7"
+      u2="1"
+      u3="8"
+      u5="1"
+   />
+
+   <!-- MOVE  dataprocess.obj\.text  FROM  run_view\Not Yet Placed  TO  run_view\program_memory\DARAM\.text:7  AT  end -->
+   <instr
+      op="2"
+      s0="All Input Files\\FB_spm\\dataprocess.obj\\.text"
+      s1="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM\\.text:7"
+      s2="Memory Maps\\SignalRanger\\run_view\\Not Yet Placed"
+      u3="2"
+   />
+
+   <!-- NEW  child output section  OF  run_view\program_memory\DARAM  WITH  name=.text:4, data_kind=code  AFTER  run_view\program_memory\DARAM\.text:7 -->
+   <instr
+      op="22"
+      s0="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM"
+      s1=".text:4"
+      u2="1"
+      u3="8"
+      u5="1"
+      s6="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM\\.text:7"
+   />
+
+   <!-- NEW  child output section  OF  run_view\program_memory\DARAM  WITH  name=.text:5, data_kind=code  AFTER  run_view\program_memory\DARAM\.text:4 -->
+   <instr
+      op="22"
+      s0="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM"
+      s1=".text:5"
+      u2="1"
+      u3="8"
+      u5="1"
+      s6="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM\\.text:4"
+   />
+
+   <!-- NEW  child output section  OF  run_view\program_memory\DARAM  WITH  name=.text:16, data_kind=code  AFTER  run_view\program_memory\DARAM\.text:5 -->
+   <instr
+      op="22"
+      s0="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM"
+      s1=".text:16"
+      u2="1"
+      u3="8"
+      u5="1"
+      s6="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM\\.text:5"
+   />
+
+   <!-- NEW  child output section  OF  run_view\program_memory\DARAM  WITH  name=.text:2, data_kind=code  AFTER  run_view\program_memory\DARAM\.text:16 -->
+   <instr
+      op="22"
+      s0="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM"
+      s1=".text:2"
+      u2="1"
+      u3="8"
+      u5="1"
+      s6="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM\\.text:16"
+   />
+
+   <!-- NEW  child output section  OF  run_view\program_memory\DARAM  WITH  name=.text:3, data_kind=code  AFTER  run_view\program_memory\DARAM\.text:2 -->
+   <instr
+      op="22"
+      s0="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM"
+      s1=".text:3"
+      u2="1"
+      u3="8"
+      u5="1"
+      s6="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM\\.text:2"
+   />
+
+   <!-- NEW  child output section  OF  run_view\program_memory\DARAM  WITH  name=.text:17, data_kind=code  AFTER  run_view\program_memory\DARAM\.text:3 -->
+   <instr
+      op="22"
+      s0="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM"
+      s1=".text:17"
+      u2="1"
+      u3="8"
+      u5="1"
+      s6="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM\\.text:3"
+   />
+
+   <!-- NEW  child output section  OF  run_view\program_memory\DARAM  WITH  name=.text, data_kind=code  AFTER  run_view\program_memory\DARAM\.text:17 -->
+   <instr
+      op="22"
+      s0="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM"
+      s1=".text"
+      u2="1"
+      u3="8"
+      u5="1"
+      s6="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM\\.text:17"
+   />
+
+   <!-- NEW  child output section  OF  run_view\program_memory\DARAM  WITH  name=.switch, data_kind=constants  AFTER  run_view\program_memory\DARAM\.text -->
+   <instr
+      op="22"
+      s0="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM"
+      s1=".switch"
+      u2="2"
+      u3="8"
+      u5="1"
+      s6="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM\\.text"
+   />
+
+   <!-- MOVE  FB_spm_statemaschine.obj\.switch  FROM  run_view\Not Yet Placed  TO  run_view\program_memory\DARAM\.switch  AT  end -->
+   <instr
+      op="2"
+      s0="All Input Files\\FB_spm\\FB_spm_statemaschine.obj\\.switch"
+      s1="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM\\.switch"
+      s2="Memory Maps\\SignalRanger\\run_view\\Not Yet Placed"
+      u3="2"
+   />
+
+   <!-- NEW  child output section  OF  run_view\program_memory\DARAM  WITH  name=.cinit_dmabuf_LPOLYCOEF, data_kind=constants  AFTER  run_view\program_memory\DARAM\.switch -->
+   <instr
+      op="22"
+      s0="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM"
+      s1=".cinit_dmabuf_LPOLYCOEF"
+      u2="2"
+      u3="8"
+      u5="1"
+      s6="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM\\.switch"
+   />
+
+   <!-- MOVE  .cinit  FROM  run_view\Not Yet Placed  TO  run_view\program_memory\DARAM\.cinit_dmabuf_LPOLYCOEF  AT  end -->
+   <instr
+      op="2"
+      s0="Memory Maps\\SignalRanger\\run_view\\Not Yet Placed\\.cinit"
+      s1="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM\\.cinit_dmabuf_LPOLYCOEF"
+      s2="Memory Maps\\SignalRanger\\run_view\\Not Yet Placed"
+      u3="2"
+   />
+
+   <!-- MOVE  AICDriver.lib\aicdriver.obj\dmabuf  FROM  run_view\Not Yet Placed  TO  run_view\program_memory\DARAM\.cinit_dmabuf_LPOLYCOEF  AT  end -->
+   <instr
+      op="2"
+      s0="All Input Files\\FB_spm\\AICDriver.lib\\aicdriver.obj\\dmabuf"
+      s1="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM\\.cinit_dmabuf_LPOLYCOEF"
+      s2="Memory Maps\\SignalRanger\\run_view\\Not Yet Placed"
+      u3="2"
+   />
+
+   <!-- MOVE  spm_log.obj\LPOLYCOEF  FROM  run_view\Not Yet Placed  TO  run_view\program_memory\DARAM\.cinit_dmabuf_LPOLYCOEF  AT  end -->
+   <instr
+      op="2"
+      s0="All Input Files\\FB_spm\\spm_log.obj\\LPOLYCOEF"
+      s1="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM\\.cinit_dmabuf_LPOLYCOEF"
+      s2="Memory Maps\\SignalRanger\\run_view\\Not Yet Placed"
+      u3="2"
+   />
+
+   <!-- NEW  child output section  OF  run_view\program_memory\DARAM  WITH  name=.text:6, data_kind=code  AFTER  run_view\program_memory\DARAM\.cinit_dmabuf_LPOLYCOEF -->
+   <instr
+      op="22"
+      s0="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM"
+      s1=".text:6"
+      u2="1"
+      u3="8"
+      u5="1"
+      s6="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM\\.cinit_dmabuf_LPOLYCOEF"
+   />
+
+   <!-- MOVE  rts.lib\ldiv.obj\.text  FROM  run_view\Not Yet Placed  TO  run_view\program_memory\DARAM\.text:6  AT  end -->
+   <instr
+      op="2"
+      s0="All Input Files\\FB_spm\\rts.lib\\ldiv.obj\\.text"
+      s1="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM\\.text:6"
+      s2="Memory Maps\\SignalRanger\\run_view\\Not Yet Placed"
+      u3="2"
+   />
+
+   <!-- NEW  child output section  OF  run_view\program_memory\DARAM  WITH  name=.text:8, data_kind=code  AFTER  run_view\program_memory\DARAM\.text:6 -->
+   <instr
+      op="22"
+      s0="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM"
+      s1=".text:8"
+      u2="1"
+      u3="8"
+      u5="1"
+      s6="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM\\.text:6"
+   />
+
+   <!-- NEW  child output section  OF  run_view\program_memory\DARAM  WITH  name=.text:9, data_kind=code  AFTER  run_view\program_memory\DARAM\.text:8 -->
+   <instr
+      op="22"
+      s0="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM"
+      s1=".text:9"
+      u2="1"
+      u3="8"
+      u5="1"
+      s6="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM\\.text:8"
+   />
+
+   <!-- MOVE  rts.lib\_lock.obj\.text  FROM  run_view\Not Yet Placed  TO  run_view\program_memory\DARAM\.text:9  AT  end -->
+   <instr
+      op="2"
+      s0="All Input Files\\FB_spm\\rts.lib\\_lock.obj\\.text"
+      s1="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM\\.text:9"
+      s2="Memory Maps\\SignalRanger\\run_view\\Not Yet Placed"
+      u3="2"
+   />
+
+   <!-- NEW  child output section  OF  run_view\program_memory\DARAM  WITH  name=.text:10, data_kind=code  AFTER  run_view\program_memory\DARAM\.text:9 -->
+   <instr
+      op="22"
+      s0="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM"
+      s1=".text:10"
+      u2="1"
+      u3="8"
+      u5="1"
+      s6="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM\\.text:9"
+   />
+
+   <!-- MOVE  rts.lib\boot.obj\.text  FROM  run_view\Not Yet Placed  TO  run_view\program_memory\DARAM\.text:10  AT  end -->
+   <instr
+      op="2"
+      s0="All Input Files\\FB_spm\\rts.lib\\boot.obj\\.text"
+      s1="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM\\.text:10"
+      s2="Memory Maps\\SignalRanger\\run_view\\Not Yet Placed"
+      u3="2"
+   />
+
+   <!-- NEW  child output section  OF  run_view\program_memory\DARAM  WITH  name=.bss, data_kind=variables  AFTER  run_view\program_memory\DARAM\.text:10 -->
+   <instr
+      op="22"
+      s0="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM"
+      s1=".bss"
+      u2="4"
+      u3="8"
+      u5="1"
+      s6="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM\\.text:10"
+   />
+
+   <!-- MOVE  FB_spm_autoapproach.obj\.bss  FROM  run_view\Not Yet Placed  TO  run_view\program_memory\DARAM\.bss  AT  end -->
+   <instr
+      op="2"
+      s0="All Input Files\\FB_spm\\FB_spm_autoapproach.obj\\.bss"
+      s1="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM\\.bss"
+      s2="Memory Maps\\SignalRanger\\run_view\\Not Yet Placed"
+      u3="2"
+   />
+
+   <!-- MOVE  .stack  FROM  run_view\Not Yet Placed  TO  run_view\program_memory\DARAM1  AT  end -->
+   <instr
+      op="2"
+      s0="Memory Maps\\SignalRanger\\run_view\\Not Yet Placed\\.stack"
+      s1="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM1"
+      s2="Memory Maps\\SignalRanger\\run_view\\Not Yet Placed"
+      u3="2"
+   />
+
+   <!-- CHANGE  max_size  OF  run_view\program_memory\DARAM1\.stack  TO  0200h -->
+   <instr
+      force_allocate="1"
+      op="18"
+      s0="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM1\\.stack"
+      u1="200"
+   />
+
+   <!-- ALIGN  run address of run_view\program_memory\DARAM1\.stack  TO  absolute address ==  03e00h -->
+   <instr
+      force_allocate="1"
+      op="2f"
+      s0="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM1\\.stack"
+      u1="3e00"
+      u2="ffffffff"
+   />
+
+   <!-- NEW  child output section  OF  run_view\program_memory\DARAM1  WITH  name=.bss, data_kind=variables  AT  end -->
+   <instr
+      op="22"
+      s0="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM1"
+      s1=".bss"
+      u2="4"
+      u3="8"
+      u5="2"
+   />
+
+   <!-- MOVE  FB_spm.obj\.bss  FROM  run_view\Not Yet Placed  TO  run_view\program_memory\DARAM1\.bss  AT  end -->
+   <instr
+      op="2"
+      s0="All Input Files\\FB_spm\\FB_spm.obj\\.bss"
+      s1="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM1\\.bss"
+      s2="Memory Maps\\SignalRanger\\run_view\\Not Yet Placed"
+      u3="2"
+   />
+
+   <!-- MOVE  FB_spm_probe.obj\.bss  FROM  run_view\Not Yet Placed  TO  run_view\program_memory\DARAM1\.bss  AT  end -->
+   <instr
+      op="2"
+      s0="All Input Files\\FB_spm\\FB_spm_probe.obj\\.bss"
+      s1="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM1\\.bss"
+      s2="Memory Maps\\SignalRanger\\run_view\\Not Yet Placed"
+      u3="2"
+   />
+
+   <!-- MOVE  dataprocess.obj\.bss  FROM  run_view\Not Yet Placed  TO  run_view\program_memory\DARAM1\.bss  AT  end -->
+   <instr
+      op="2"
+      s0="All Input Files\\FB_spm\\dataprocess.obj\\.bss"
+      s1="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM1\\.bss"
+      s2="Memory Maps\\SignalRanger\\run_view\\Not Yet Placed"
+      u3="2"
+   />
+
+   <!-- MOVE  AICDriver.lib\aicdriver.obj\.bss  FROM  run_view\Not Yet Placed  TO  run_view\program_memory\DARAM1\.bss  AT  end -->
+   <instr
+      op="2"
+      s0="All Input Files\\FB_spm\\AICDriver.lib\\aicdriver.obj\\.bss"
+      s1="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM1\\.bss"
+      s2="Memory Maps\\SignalRanger\\run_view\\Not Yet Placed"
+      u3="2"
+   />
+
+   <!-- MOVE  rts.lib\exit.obj\.bss  FROM  run_view\Not Yet Placed  TO  run_view\program_memory\DARAM1\.bss  AT  end -->
+   <instr
+      op="2"
+      s0="All Input Files\\FB_spm\\rts.lib\\exit.obj\\.bss"
+      s1="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM1\\.bss"
+      s2="Memory Maps\\SignalRanger\\run_view\\Not Yet Placed"
+      u3="2"
+   />
+
+   <!-- MOVE  rts.lib\_lock.obj\.bss  FROM  run_view\Not Yet Placed  TO  run_view\program_memory\DARAM1\.bss  AT  end -->
+   <instr
+      op="2"
+      s0="All Input Files\\FB_spm\\rts.lib\\_lock.obj\\.bss"
+      s1="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM1\\.bss"
+      s2="Memory Maps\\SignalRanger\\run_view\\Not Yet Placed"
+      u3="2"
+   />
+
+   <!-- NEW  child output section  OF  run_view\program_memory\DARAM1  WITH  name=.bss:2, data_kind=variables  AT  end -->
+   <instr
+      op="22"
+      s0="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM1"
+      s1=".bss:2"
+      u2="4"
+      u3="8"
+      u5="2"
+   />
+
+   <!-- MOVE  FB_spm_areascan.obj\.bss  FROM  run_view\Not Yet Placed  TO  run_view\program_memory\DARAM1\.bss:2  AT  end -->
+   <instr
+      op="2"
+      s0="All Input Files\\FB_spm\\FB_spm_areascan.obj\\.bss"
+      s1="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM1\\.bss:2"
+      s2="Memory Maps\\SignalRanger\\run_view\\Not Yet Placed"
+      u3="2"
+   />
+
+   <!-- NEW  child output section  OF  run_view\program_memory\DARAM1  WITH  name=.text, data_kind=code  AT  end -->
+   <instr
+      op="22"
+      s0="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM1"
+      s1=".text"
+      u2="1"
+      u3="8"
+      u5="2"
+   />
+
+   <!-- MOVE  FB_spm_probe.obj\.text  FROM  run_view\Not Yet Placed  TO  run_view\program_memory\DARAM1\.text  AT  end -->
+   <instr
+      op="2"
+      s0="All Input Files\\FB_spm\\FB_spm_probe.obj\\.text"
+      s1="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM1\\.text"
+      s2="Memory Maps\\SignalRanger\\run_view\\Not Yet Placed"
+      u3="2"
+   />
+
+   <!-- NEW  child output section  OF  run_view\program_memory\DARAM1  WITH  name=.text:3, data_kind=code  AT  end -->
+   <instr
+      op="22"
+      s0="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM1"
+      s1=".text:3"
+      u2="1"
+      u3="8"
+      u5="2"
+   />
+
+   <!-- MOVE  FB_spm_areascan.obj\.text  FROM  run_view\Not Yet Placed  TO  run_view\program_memory\DARAM1\.text:3  AT  end -->
+   <instr
+      op="2"
+      s0="All Input Files\\FB_spm\\FB_spm_areascan.obj\\.text"
+      s1="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM1\\.text:3"
+      s2="Memory Maps\\SignalRanger\\run_view\\Not Yet Placed"
+      u3="2"
+   />
+
+   <!-- NEW  child output section  OF  run_view\program_memory\DARAM1  WITH  name=.text:2, data_kind=code  AT  end -->
+   <instr
+      op="22"
+      s0="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM1"
+      s1=".text:2"
+      u2="1"
+      u3="8"
+      u5="2"
+   />
+
+   <!-- MOVE  AICDriver.lib\aicdriver.obj\.text  FROM  run_view\Not Yet Placed  TO  run_view\program_memory\DARAM1\.text:2  AT  end -->
+   <instr
+      op="2"
+      s0="All Input Files\\FB_spm\\AICDriver.lib\\aicdriver.obj\\.text"
+      s1="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM1\\.text:2"
+      s2="Memory Maps\\SignalRanger\\run_view\\Not Yet Placed"
+      u3="2"
+   />
+
+   <!-- MOVE  FB_spm_statemaschine.obj\.text  FROM  run_view\Not Yet Placed  TO  run_view\program_memory\DARAM1\.text:2  AT  end -->
+   <instr
+      op="2"
+      s0="All Input Files\\FB_spm\\FB_spm_statemaschine.obj\\.text"
+      s1="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM1\\.text:2"
+      s2="Memory Maps\\SignalRanger\\run_view\\Not Yet Placed"
+      u3="2"
+   />
+
+   <!-- MOVE  FB_spm_CoolRunner_puls.obj\.text  FROM  run_view\Not Yet Placed  TO  run_view\program_memory\DARAM1\.text:2  AT  end -->
+   <instr
+      op="2"
+      s0="All Input Files\\FB_spm\\FB_spm_CoolRunner_puls.obj\\.text"
+      s1="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM1\\.text:2"
+      s2="Memory Maps\\SignalRanger\\run_view\\Not Yet Placed"
+      u3="2"
+   />
+
+   <!-- MOVE  feedback.obj\.text  FROM  run_view\Not Yet Placed  TO  run_view\program_memory\DARAM1\.text:2  AT  end -->
+   <instr
+      op="2"
+      s0="All Input Files\\FB_spm\\feedback.obj\\.text"
+      s1="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM1\\.text:2"
+      s2="Memory Maps\\SignalRanger\\run_view\\Not Yet Placed"
+      u3="2"
+   />
+
+   <!-- MOVE  feedback_linear.obj\.text  FROM  run_view\Not Yet Placed  TO  run_view\program_memory\DARAM1\.text:2  AT  end -->
+   <instr
+      op="2"
+      s0="All Input Files\\FB_spm\\feedback_linear.obj\\.text"
+      s1="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM1\\.text:2"
+      s2="Memory Maps\\SignalRanger\\run_view\\Not Yet Placed"
+      u3="2"
+   />
+
+   <!-- MOVE  FB_spm_offsetmove.obj\.text  FROM  run_view\Not Yet Placed  TO  run_view\program_memory\DARAM1\.text:2  AT  end -->
+   <instr
+      op="2"
+      s0="All Input Files\\FB_spm\\FB_spm_offsetmove.obj\\.text"
+      s1="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM1\\.text:2"
+      s2="Memory Maps\\SignalRanger\\run_view\\Not Yet Placed"
+      u3="2"
+   />
+
+   <!-- MOVE  spm_log.obj\.text  FROM  run_view\Not Yet Placed  TO  run_view\program_memory\DARAM1\.text:2  AT  end -->
+   <instr
+      op="2"
+      s0="All Input Files\\FB_spm\\spm_log.obj\\.text"
+      s1="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM1\\.text:2"
+      s2="Memory Maps\\SignalRanger\\run_view\\Not Yet Placed"
+      u3="2"
+   />
+
+   <!-- NEW  child output section  OF  run_view\program_memory\DARAM1  WITH  name=.text:6, data_kind=code  AT  end -->
+   <instr
+      op="22"
+      s0="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM1"
+      s1=".text:6"
+      u2="1"
+      u3="8"
+      u5="2"
+   />
+
+   <!-- MOVE  FB_spm_autoapproach.obj\.text  FROM  run_view\Not Yet Placed  TO  run_view\program_memory\DARAM1\.text:6  AT  end -->
+   <instr
+      op="2"
+      s0="All Input Files\\FB_spm\\FB_spm_autoapproach.obj\\.text"
+      s1="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM1\\.text:6"
+      s2="Memory Maps\\SignalRanger\\run_view\\Not Yet Placed"
+      u3="2"
+   />
+
+   <!-- NEW  child output section  OF  run_view\program_memory\DARAM1  WITH  name=.text:4, data_kind=code  AT  end -->
+   <instr
+      op="22"
+      s0="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM1"
+      s1=".text:4"
+      u2="1"
+      u3="8"
+      u5="2"
+   />
+
+   <!-- MOVE  FB_spm.obj\.text  FROM  run_view\Not Yet Placed  TO  run_view\program_memory\DARAM1\.text:4  AT  end -->
+   <instr
+      op="2"
+      s0="All Input Files\\FB_spm\\FB_spm.obj\\.text"
+      s1="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM1\\.text:4"
+      s2="Memory Maps\\SignalRanger\\run_view\\Not Yet Placed"
+      u3="2"
+   />
+
+   <!-- NEW  child output section  OF  run_view\program_memory\DARAM1  WITH  name=.text:5, data_kind=code  AT  end -->
+   <instr
+      op="22"
+      s0="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM1"
+      s1=".text:5"
+      u2="1"
+      u3="8"
+      u5="2"
+   />
+
+   <!-- MOVE  rts.lib\exit.obj\.text  FROM  run_view\Not Yet Placed  TO  run_view\program_memory\DARAM1\.text:5  AT  end -->
+   <instr
+      op="2"
+      s0="All Input Files\\FB_spm\\rts.lib\\exit.obj\\.text"
+      s1="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM1\\.text:5"
+      s2="Memory Maps\\SignalRanger\\run_view\\Not Yet Placed"
+      u3="2"
+   />
+
+   <!-- NEW  child output section  OF  run_view\program_memory\DARAM1  WITH  name=.text:8, data_kind=code  AT  end -->
+   <instr
+      op="22"
+      s0="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM1"
+      s1=".text:8"
+      u2="1"
+      u3="8"
+      u5="2"
+   />
+
+   <!-- NEW  child output section  OF  run_view\program_memory\DARAM1  WITH  name=.bss:3, data_kind=variables  AT  end -->
+   <instr
+      op="22"
+      s0="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM1"
+      s1=".bss:3"
+      u2="4"
+      u3="8"
+      u5="2"
+   />
+
+   <!-- MOVE  FB_spm_statemaschine.obj\.bss  FROM  run_view\Not Yet Placed  TO  run_view\program_memory\DARAM1\.bss:3  AT  end -->
+   <instr
+      op="2"
+      s0="All Input Files\\FB_spm\\FB_spm_statemaschine.obj\\.bss"
+      s1="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM1\\.bss:3"
+      s2="Memory Maps\\SignalRanger\\run_view\\Not Yet Placed"
+      u3="2"
+   />
+
+   <!-- NEW  child output section  OF  run_view\program_memory\DARAM1  WITH  name=.switch, data_kind=constants  AT  end -->
+   <instr
+      op="22"
+      s0="Memory Maps\\SignalRanger\\run_view\\program_memory\\DARAM1"
+      s1=".switch"
+      u2="2"
+      u3="8"
+      u5="2"
+   />
+
+   <!-- NEW  child output section  OF  run_view\program_memory\Expansion  WITH  name=MagicData, data_kind=hole  AT  end -->
+   <instr
+      op="22"
+      s0="Memory Maps\\SignalRanger\\run_view\\program_memory\\Expansion"
+      s1="MagicData"
+      u3="8"
+      u5="2"
+   />
+
+   <!-- CHANGE  min_size  OF  run_view\program_memory\Expansion\MagicData  TO  020h -->
+   <instr
+      op="17"
+      s0="Memory Maps\\SignalRanger\\run_view\\program_memory\\Expansion\\MagicData"
+      u1="20"
+   />
+
+   <!-- CHANGE  max_size  OF  run_view\program_memory\Expansion\MagicData  TO  020h -->
+   <instr
+      op="18"
+      s0="Memory Maps\\SignalRanger\\run_view\\program_memory\\Expansion\\MagicData"
+      u1="20"
+   />
+
+   <!-- CHANGE  comment  OF  run_view\program_memory\Expansion\MagicData  TO  "Magic Data is placed here" -->
+   <instr
+      op="46"
+      s0="Memory Maps\\SignalRanger\\run_view\\program_memory\\Expansion\\MagicData"
+      s1="Magic Data is placed here"
+   />
+
+   <!-- CHANGE  min..max run address constraints of run_view\program_memory\Expansion\MagicData to 04000h..04020h -->
+   <instr
+      op="43"
+      s0="Memory Maps\\SignalRanger\\run_view\\program_memory\\Expansion\\MagicData"
+      u1="4000"
+      u2="4020"
+   />
+
+   <!-- END  FB_spm -->
+   <instr
+      op="0"
+   />
+</strategy>

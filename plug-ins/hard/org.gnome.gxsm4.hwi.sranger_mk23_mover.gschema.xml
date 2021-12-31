@@ -1,0 +1,82 @@
+<schemalist>
+
+  <schema id="org.gnome.gxsm4.hwi.sranger-mk23-mover" path="/org/gnome/gxsm4/hwi/sranger-mk23-mover/">
+    <key name="configure-mode" type="b">
+      <default>false</default>
+      <summary>Mover Control Configure mode</summary>
+      <description>
+	GUI simplification option: Enable Mover Control Configure Mode
+      </description>
+    </key>
+
+    <key name="mover-gpio-last" type="i">
+      <default>0</default>
+      <summary>last GPIO setting memory</summary>
+      <description>
+	last set DSP GPIO value -- needed for starting over correctly
+      </description>
+    </key>
+    <key name="mover-tab-xy" type="b">
+      <default>true</default>
+      <summary>Indicates if tab xy to be showed</summary>
+      <description>
+	GUI simplification option: Indicates tab xy to be showed
+      </description>
+    </key>
+    <key name="mover-tab-rot" type="b">
+      <default>true</default>
+      <summary>Indicates if tab rot to be showed</summary>
+      <description>
+	GUI simplification option: Indicates tab rot to be showed
+      </description>
+    </key>
+    <key name="mover-tab-psd" type="b">
+      <default>false</default>
+      <summary>Indicates if tab psd to be showed</summary>
+      <description>
+	GUI simplification option: Indicates tab psd to be showed
+      </description>
+    </key>
+    <key name="mover-tab-lens" type="b">
+      <default>false</default>
+      <summary>Indicates if tab lens to be showed</summary>
+      <description>
+	GUI simplification option: Indicates tab lens to be showed
+      </description>
+    </key> 
+    <key name="mover-tab-auto" type="b">
+      <default>true</default>
+      <summary>Indicates if tab auto to be showed</summary>
+      <description>
+	GUI simplification option: Indicates tab auto to be showed
+      </description>
+    </key>
+    <key name="mover-tab-z0" type="b">
+      <default>true</default>
+      <summary>Indicates if tab z0 to be showed</summary>
+      <description>
+	GUI simplification option: Indicates tab z0 to be showed
+      </description>
+    </key>
+    <key name="mover-tab-sm" type="b">
+      <default>false</default>
+      <summary>Indicates if tab sm to be showed</summary>
+      <description>
+	GUI simplification option: Indicates tab sm to be showed
+      </description>
+    </key>
+    <key name="mover-tab-config" type="b">
+      <default>false</default>
+      <summary>Indicates if tab config to be showed</summary>
+      <description>
+	GUI simplification option: Indicates tab config to be showed
+      </description>
+    </key>
+    <key name="mover-waveform-id" type="i">
+      <default>0</default>
+      <summary>DSP Mover Wave Form ID</summary>
+      <description>DSP Mover Wave Form ID (as of Pop Up Menu List Item) </description>
+    </key>
+  </schema>
+
+</schemalist>

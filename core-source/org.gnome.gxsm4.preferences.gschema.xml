@@ -1,0 +1,1911 @@
+<schemalist>
+  <enum id="org-gnome-gxsm4-preferences-option-instrument-type">
+    <value value="0" nick="STM "/>
+    <value value="1" nick="AFM "/>
+    <value value="2" nick="SARLS "/>
+    <value value="3" nick="SNOM "/>
+    <value value="4" nick="SPALEED "/>
+    <value value="5" nick="ELSLEED "/>
+    <value value="6" nick="CCD "/>
+    <value value="7" nick="SCMA "/>
+  </enum>
+  <enum id="org-gnome-gxsm4-preferences-option-instrument-scan-org-center">
+    <value value="0" nick="true "/>
+    <value value="1" nick="false "/>
+  </enum>
+  <enum id="org-gnome-gxsm4-preferences-option-instrument-scanner-z-polarity">
+    <value value="0" nick="positive "/>
+    <value value="1" nick="negative "/>
+  </enum>
+  <enum id="org-gnome-gxsm4-preferences-option-analog-vx-default">
+    <value value="0" nick="# 0 -> x 0"/>
+    <value value="1" nick="# 1 -> x 0"/>
+    <value value="2" nick="# 2 -> x 0"/>
+    <value value="3" nick="# 3 -> x 0"/>
+    <value value="4" nick="# 4 -> x 0"/>
+    <value value="5" nick="# 5 -> x 0"/>
+    <value value="6" nick="# 6 -> x 0"/>
+    <value value="7" nick="# 7 -> x 0"/>
+    <value value="8" nick="# 8 -> x 0"/>
+  </enum>
+  <enum id="org-gnome-gxsm4-preferences-option-data-aq-pid-src-a1-z-unit">
+    <value value="0" nick="1 "/>
+    <value value="1" nick="V "/>
+    <value value="2" nick="AA "/>
+    <value value="3" nick="nm "/>
+    <value value="4" nick="um "/>
+    <value value="5" nick="mm "/>
+    <value value="6" nick="nA "/>
+    <value value="7" nick="pA "/>
+    <value value="8" nick="nN "/>
+    <value value="9" nick="Hz "/>
+    <value value="10" nick="K "/>
+    <value value="11" nick="CPS "/>
+    <value value="12" nick="Int "/>
+    <value value="13" nick="Events "/>
+    <value value="14" nick="a.u. "/>
+  </enum>
+  <enum id="org-gnome-gxsm4-preferences-option-data-aq-pid-src-a1-z-type">
+    <value value="0" nick="BYTE "/>
+    <value value="1" nick="SHORT "/>
+    <value value="2" nick="LONG "/>
+    <value value="3" nick="ULONG "/>
+    <value value="4" nick="LLONG "/>
+    <value value="5" nick="FLOAT "/>
+    <value value="6" nick="DOUBLE "/>
+    <value value="7" nick="COMPLEX "/>
+    <value value="8" nick="RGBA "/>
+  </enum>
+  <enum id="org-gnome-gxsm4-preferences-option-user-xy-unit">
+    <value value="0" nick="AA "/>
+    <value value="1" nick="nm "/>
+    <value value="2" nick="um "/>
+    <value value="3" nick="mm "/>
+    <value value="4" nick="BZ "/>
+    <value value="5" nick="sec "/>
+    <value value="6" nick="amu "/>
+    <value value="7" nick="V "/>
+    <value value="8" nick="1 "/>
+  </enum>
+  <enum id="org-gnome-gxsm4-preferences-option-user-file-name-convention">
+    <value value="0" nick="digit "/>
+    <value value="1" nick="alpha "/>
+    <value value="2" nick="date-time "/>
+  </enum>
+  <enum id="org-gnome-gxsm4-preferences-option-user-autosave-unit">
+    <value value="0" nick="percent "/>
+    <value value="1" nick="lines "/>
+    <value value="2" nick="seconds "/>
+  </enum>
+  <enum id="org-gnome-gxsm4-preferences-option-user-slider-control-type">
+    <value value="0" nick="slider "/>
+    <value value="1" nick="mover "/>
+  </enum>
+  <enum id="org-gnome-gxsm4-preferences-option-gui-handle-type">
+    <value value="0" nick="Triangle "/>
+    <value value="1" nick="Square "/>
+  </enum>
+
+  <schema id="org.gnome.gxsm4.preferences.hardware" path="/org/gnome/gxsm4/preferences/hardware/">
+    <key name="card" type="s">
+
+      <default>'no'</default>
+      <summary>Type of Hardware Interface, choice of: 
+ no: data analysis mode (hardware disabled, simulation mode). 
+ Generic Hardware PlugIn (HwI) Selection: 
+ XXX:SPM (SPM comandset), 
+ XXX:SPA (SPA-LEED like), 
+ and others, 
+ SRanger:SPM (old SoftdB Signal Ranger DSP model MK1 (-STD/-SP2) -- obsolete, 
+ SRangerMK2:SPM (SoftdB Signal Ranger DSP model MK2 and MK3 autodetected, 
+ XXX:ccd: special ParPort CCD Cam. TC211 (CCD comandset)</summary>
+      <description>
+        Type of Hardware Interface, choice of: 
+ no: data analysis mode (hardware disabled, simulation mode). 
+ Generic Hardware PlugIn (HwI) Selection: 
+ XXX:SPM (SPM comandset), 
+ XXX:SPA (SPA-LEED like), 
+ and others, 
+ SRanger:SPM (old SoftdB Signal Ranger DSP model MK1 (-STD/-SP2) -- obsolete, 
+ SRangerMK2:SPM (SoftdB Signal Ranger DSP model MK2 and MK3 autodetected, 
+ XXX:ccd: special ParPort CCD Cam. TC211 (CCD comandset)
+      </description>
+    </key>
+    <key name="device" type="s">
+
+      <default>'/dev/sranger_mk2_0'</default>
+      <summary>DSP Character Device Path for DSP based Hardware Interfaces:
+ ignored in case of HardwareType=no
+ old Signal Ranger SP2/STD use: /dev/sranger0
+ Signal Ranger MK2 and MK3 specify the first device to start auto detecting: /dev/sranger_mk2_0
+</summary>
+      <description>
+        DSP Character Device Path for DSP based Hardware Interfaces:
+ ignored in case of HardwareType=no
+ old Signal Ranger SP2/STD use: /dev/sranger0
+ Signal Ranger MK2 and MK3 specify the first device to start auto detecting: /dev/sranger_mk2_0
+
+      </description>
+    </key>
+  </schema>
+
+  <schema id="org.gnome.gxsm4.preferences.instrument" path="/org/gnome/gxsm4/preferences/instrument/">
+    <key name="type" type="s">
+      <choices>
+        <choice value='STM'/>
+        <choice value='AFM'/>
+        <choice value='SARLS'/>
+        <choice value='SNOM'/>
+        <choice value='SPALEED'/>
+        <choice value='ELSLEED'/>
+        <choice value='CCD'/>
+        <choice value='SCMA'/>
+      </choices>
+      <default>'STM'</default>
+      <summary>Type of Instrument, choices are:
+ STM, AFM, SARLS, SPALEED, ELSLEED, CCD, SCMA</summary>
+      <description>
+        Type of Instrument, choices are:
+ STM, AFM, SARLS, SPALEED, ELSLEED, CCD, SCMA
+      </description>
+    </key>
+    <key name="name" type="s">
+
+      <default>'Quantum'</default>
+      <summary>Arbitrary Instrument Name, max. 30 chars !</summary>
+      <description>
+        Arbitrary Instrument Name, max. 30 chars !
+      </description>
+    </key>
+    <key name="worldsizenxy" type="x">
+      <default>4096</default>
+      <summary>Width and height of world map in pixles</summary>
+      <description>
+        Width and height of world map in pixles
+      </description>
+    </key>
+    <key name="x-piezo-av" type="d">
+      <default>532.0</default>
+      <summary>Unit: [Å/V] STM/AFM: X Piezo Sensitivity in Å/V</summary>
+      <description>
+        STM/AFM: X Piezo Sensitivity in Å/V
+      </description>
+    </key>
+    <key name="y-piezo-av" type="d">
+      <default>532.0</default>
+      <summary>Unit: [Å/V] STM/AFM: Y Piezo Sensitivity in Å/V</summary>
+      <description>
+        STM/AFM: Y Piezo Sensitivity in Å/V
+      </description>
+    </key>
+    <key name="z-piezo-av" type="d">
+      <default>74.0</default>
+      <summary>Unit: [Å/V] STM/AFM: Z Piezo Sensitivity in Å/V</summary>
+      <description>
+        STM/AFM: Z Piezo Sensitivity in Å/V
+      </description>
+    </key>
+    <key name="bias-gain" type="d">
+      <default>1</default>
+      <summary>Unit: [ ] STM/AFM: Bias Gain, Unit: 1 (gain between DAC-Bias-Volt and sample voltage)</summary>
+      <description>
+        STM/AFM: Bias Gain, Unit: 1 (gain between DAC-Bias-Volt and sample voltage)
+      </description>
+    </key>
+    <key name="bias-offset" type="d">
+      <default>0</default>
+      <summary>Unit: [V] STM/AFM: Bias Offset, Unit: V (offset = actual reading at DAC setting ZERO)</summary>
+      <description>
+        STM/AFM: Bias Offset, Unit: V (offset = actual reading at DAC setting ZERO)
+      </description>
+    </key>
+    <key name="nampere2volt" type="d">
+      <default>0.1</default>
+      <summary>Unit: [V/nA] STM/AFM: Tunnel Current Gain, Unit: V/nA</summary>
+      <description>
+        STM/AFM: Tunnel Current Gain, Unit: V/nA
+      </description>
+    </key>
+    <key name="currentgainmodifier" type="d">
+      <default>1.0</default>
+      <summary>Unit: [ ] STM/AFM: (temporary) Tunnel Current Scaling</summary>
+      <description>
+        STM/AFM: (temporary) Tunnel Current Scaling
+      </description>
+    </key>
+    <key name="nnewton2volt" type="d">
+      <default>1.0</default>
+      <summary>Unit: [V/nN] AFM: nano Newton to Volt calib. factor</summary>
+      <description>
+        AFM: nano Newton to Volt calib. factor
+      </description>
+    </key>
+    <key name="dhertz2volt" type="d">
+      <default>0.0</default>
+      <summary>Unit: [V/Hz] STM/AFM: delta Herz to Volt calib. factor. Set to ZERO for automatic internal PAC/PLL!</summary>
+      <description>
+        STM/AFM: delta Herz to Volt calib. factor. Set to ZERO for automatic internal PAC/PLL!
+      </description>
+    </key>
+    <key name="scanorgcenter" type="b">
+      <default>true</default>
+      <summary>bool: true=Offset is relative to center of scan, else center of top line</summary>
+      <description>
+        true GXSM OPTIONS=(false, bool: true=Offset is relative to center of scan, else center of top line)
+      </description>
+    </key>
+    <key name="scannerzpolarity" type="b">
+      <default>false</default>
+      <summary>MK3 only: select scanner Z polarity.</summary>
+      <description>
+        positive GXSM OPTIONS=(negative, MK3 only: select scanner Z polarity.)
+      </description>
+    </key>
+  </schema>
+
+  <schema id="org.gnome.gxsm4.preferences.analog" path="/org/gnome/gxsm4/preferences/analog/">
+    <key name="dig-range-in" type="d">
+      <default>32767.0</default>
+      <summary>Max AD Digital Value corresponding to Max Voltage</summary>
+      <description>
+        Max AD Digital Value corresponding to Max Voltage
+      </description>
+    </key>
+    <key name="volt-max-in" type="d">
+      <default>10.0</default>
+      <summary>Unit: [V] Max Voltage of AD [V]</summary>
+      <description>
+        Max Voltage of AD [V]
+      </description>
+    </key>
+    <key name="dig-range-out" type="d">
+      <default>32747.0</default>
+      <summary>Max DA Digital Value corresponding to Max Voltage</summary>
+      <description>
+        Max DA Digital Value corresponding to Max Voltage
+      </description>
+    </key>
+    <key name="volt-max-out" type="d">
+      <default>10.4</default>
+      <summary>Unit: [V] Max Voltage of DA [V] -- note: MK3-A810 new gen., else 10.0V.</summary>
+      <description>
+        Max Voltage of DA [V] -- note: MK3-A810 new gen., else 10.0V.
+      </description>
+    </key>
+    <key name="v1" type="d">
+      <default>1.0</default>
+      <summary>External Amplifier Gain in Position 0</summary>
+      <description>
+        External Amplifier Gain in Position 0
+      </description>
+    </key>
+    <key name="v2" type="d">
+      <default>2.0</default>
+      <summary>External Amplifier Gain in Position 1</summary>
+      <description>
+        External Amplifier Gain in Position 1
+      </description>
+    </key>
+    <key name="v3" type="d">
+      <default>5.0</default>
+      <summary>External Amplifier Gain in Position 2</summary>
+      <description>
+        External Amplifier Gain in Position 2
+      </description>
+    </key>
+    <key name="v4" type="d">
+      <default>10.0</default>
+      <summary>External Amplifier Gain in Position 3</summary>
+      <description>
+        External Amplifier Gain in Position 3
+      </description>
+    </key>
+    <key name="v5" type="d">
+      <default>15.0</default>
+      <summary>External Amplifier Gain in Position 4</summary>
+      <description>
+        External Amplifier Gain in Position 4
+      </description>
+    </key>
+    <key name="v6" type="d">
+      <default>0.1</default>
+      <summary>External Amplifier Gain in Position 5</summary>
+      <description>
+        External Amplifier Gain in Position 5
+      </description>
+    </key>
+    <key name="v7" type="d">
+      <default>0.2</default>
+      <summary>External Amplifier Gain in Position 6</summary>
+      <description>
+        External Amplifier Gain in Position 6
+      </description>
+    </key>
+    <key name="v8" type="d">
+      <default>0.3</default>
+      <summary>External Amplifier Gain in Position 7</summary>
+      <description>
+        External Amplifier Gain in Position 7
+      </description>
+    </key>
+    <key name="v9" type="d">
+      <default>0.5</default>
+      <summary>External Amplifier Gain in Position 8</summary>
+      <description>
+        External Amplifier Gain in Position 8
+      </description>
+    </key>
+    <key name="vx-default" type="x">
+      <default>1</default>
+      <summary>Default Amplifier Positionindex [0,1,2,..8] used by X-Channel</summary>
+      <description>
+        Default Amplifier Positionindex [0,1,2,..8] used by X-Channel
+      </description>
+    </key>
+    <key name="vy-default" type="x">
+      <default>1</default>
+      <summary>Default Amplifier Positionindex [0,1,2,..8] used by Y-Channel</summary>
+      <description>
+        Default Amplifier Positionindex [0,1,2,..8] used by Y-Channel
+      </description>
+    </key>
+    <key name="vz-default" type="x">
+      <default>2</default>
+      <summary>Default Amplifier Positionindex [0,1,2,..8] used by Z-Channel</summary>
+      <description>
+        Default Amplifier Positionindex [0,1,2,..8] used by Z-Channel
+      </description>
+    </key>
+    <key name="vx0-default" type="x">
+      <default>1</default>
+      <summary>Default Amplifier Positionindex [0,1,2,..8] used by X-Offset-Channel</summary>
+      <description>
+        Default Amplifier Positionindex [0,1,2,..8] used by X-Offset-Channel
+      </description>
+    </key>
+    <key name="vy0-default" type="x">
+      <default>1</default>
+      <summary>Default Amplifier Positionindex [0,1,2,..8] used by Y-Offset-Channel</summary>
+      <description>
+        Default Amplifier Positionindex [0,1,2,..8] used by Y-Offset-Channel
+      </description>
+    </key>
+    <key name="vz0-default" type="x">
+      <default>2</default>
+      <summary>Default Amplifier Positionindex [0,1,2,..8] used by Z-Offset-Channel</summary>
+      <description>
+        Default Amplifier Positionindex [0,1,2,..8] used by Z-Offset-Channel
+      </description>
+    </key>
+    <key name="analog-offset-adding" type="b">
+      <default>false</default>
+      <summary>Offset adding modus for piezo amplifier:
+choose from:
+ 'DSP offset adding': false
+ 'Analog offset adding': true</summary>
+      <description>
+        true GXSM OPTIONS=(false, Offset adding modus for piezo amplifier:
+choose from:
+ 'DSP offset adding': false
+ 'Analog offset adding': true)
+      </description>
+    </key>
+    <key name="ampmodulationgains" type="ad">
+      <default>[1.0,1.0,1.0]</default>
+      <summary>setup HV Amplifier modulation input gains -- used for Z slope compensation</summary>
+      <description>
+        setup HV Amplifier modulation input gains -- used for Z slope compensation
+      </description>
+    </key>
+  </schema>
+
+  <schema id="org.gnome.gxsm4.preferences.instrumentspa" path="/org/gnome/gxsm4/preferences/instrumentspa/">
+    <key name="xcalibv" type="d">
+      <default>10.0</default>
+      <summary>SPALEED: X Calibration factor 1V am DA => +/-10V/15V at oktopol rear/front</summary>
+      <description>
+        SPALEED: X Calibration factor 1V am DA => +/-10V/15V at oktopol rear/front
+      </description>
+    </key>
+    <key name="ycalibv" type="d">
+      <default>10.0</default>
+      <summary>SPALEED: Y Calibration factor 1V am DA => +/-10V/15V at oktopol rear/front</summary>
+      <description>
+        SPALEED: Y Calibration factor 1V am DA => +/-10V/15V at oktopol rear/front
+      </description>
+    </key>
+    <key name="energycalibvev" type="d">
+      <default>100</default>
+      <summary>Unit: [eV/V] SPA-LEED: Energy 2 Volt Factor</summary>
+      <description>
+        SPA-LEED: Energy 2 Volt Factor
+      </description>
+    </key>
+    <key name="sensitivity" type="d">
+      <default>50.0</default>
+      <summary>Unit: [BZ·sqrt(eV)/V] SPA-LEED: default Sensitivity</summary>
+      <description>
+        SPA-LEED: default Sensitivity
+      </description>
+    </key>
+    <key name="thetachgunint" type="d">
+      <default>2.5</default>
+      <summary>Unit: [°] SPA-LEED: half angle between E-gun and Channeltron in internal Geom.</summary>
+      <description>
+        SPA-LEED: half angle between E-gun and Channeltron in internal Geom.
+      </description>
+    </key>
+    <key name="thetachgunext" type="d">
+      <default>57.5</default>
+      <summary>Unit: [°] SPA-LEED: half angle between E-gun and Channeltron in external Geom.</summary>
+      <description>
+        SPA-LEED: half angle between E-gun and Channeltron in external Geom.
+      </description>
+    </key>
+  </schema>
+
+  <schema id="org.gnome.gxsm4.preferences.sample" path="/org/gnome/gxsm4/preferences/sample/">
+    <key name="layerdist" type="d">
+      <default>3.141</default>
+      <summary>Unit: [Å] SPA_LEED: Sample Layer Distance d0 [A] - used for Phase S calculations</summary>
+      <description>
+        SPA_LEED: Sample Layer Distance d0 [A] - used for Phase S calculations
+      </description>
+    </key>
+    <key name="unitlen" type="d">
+      <default>5.431</default>
+      <summary>Unit: [Å] SPA-LEED: Sample Unit Cell Length a0 [A] - used for Phase K calibration</summary>
+      <description>
+        SPA-LEED: Sample Unit Cell Length a0 [A] - used for Phase K calibration
+      </description>
+    </key>
+  </schema>
+
+  <schema id="org.gnome.gxsm4.preferences.dataaq" path="/org/gnome/gxsm4/preferences/dataaq/">
+    <key name="pidsrca1" type="s">
+
+      <default>'Topo,*'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="pidsrca1-zunit" type="s">
+      <choices>
+        <choice value='1'/>
+        <choice value='V'/>
+        <choice value='AA'/>
+        <choice value='nm'/>
+        <choice value='um'/>
+        <choice value='mm'/>
+        <choice value='nA'/>
+        <choice value='pA'/>
+        <choice value='nN'/>
+        <choice value='Hz'/>
+        <choice value='K'/>
+        <choice value='CPS'/>
+        <choice value='Int'/>
+        <choice value='Events'/>
+        <choice value='a.u.'/>
+      </choices>
+      <default>'AA'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="pidsrca1-ztype" type="s">
+      <choices>
+        <choice value='BYTE'/>
+        <choice value='SHORT'/>
+        <choice value='LONG'/>
+        <choice value='ULONG'/>
+        <choice value='LLONG'/>
+        <choice value='FLOAT'/>
+        <choice value='DOUBLE'/>
+        <choice value='COMPLEX'/>
+        <choice value='RGBA'/>
+      </choices>
+      <default>'FLOAT'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="pidsrca1z-label" type="s">
+
+      <default>'Z'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="pidsrca2" type="s">
+
+      <default>'MIX1'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="pidsrca2-zunit" type="s">
+      <choices>
+        <choice value='1'/>
+        <choice value='V'/>
+        <choice value='AA'/>
+        <choice value='nm'/>
+        <choice value='um'/>
+        <choice value='mm'/>
+        <choice value='nA'/>
+        <choice value='pA'/>
+        <choice value='nN'/>
+        <choice value='Hz'/>
+        <choice value='K'/>
+        <choice value='CPS'/>
+        <choice value='Int'/>
+        <choice value='Events'/>
+        <choice value='a.u.'/>
+      </choices>
+      <default>'V'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="pidsrca2-ztype" type="s">
+      <choices>
+        <choice value='BYTE'/>
+        <choice value='SHORT'/>
+        <choice value='LONG'/>
+        <choice value='ULONG'/>
+        <choice value='LLONG'/>
+        <choice value='FLOAT'/>
+        <choice value='DOUBLE'/>
+        <choice value='COMPLEX'/>
+        <choice value='RGBA'/>
+      </choices>
+      <default>'FLOAT'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="pidsrca2-zlabel" type="s">
+
+      <default>'U'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="pidsrca3" type="s">
+
+      <default>'MIX2'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="pidsrca3-zunit" type="s">
+      <choices>
+        <choice value='1'/>
+        <choice value='V'/>
+        <choice value='AA'/>
+        <choice value='nm'/>
+        <choice value='um'/>
+        <choice value='mm'/>
+        <choice value='nA'/>
+        <choice value='pA'/>
+        <choice value='nN'/>
+        <choice value='Hz'/>
+        <choice value='K'/>
+        <choice value='CPS'/>
+        <choice value='Int'/>
+        <choice value='Events'/>
+        <choice value='a.u.'/>
+      </choices>
+      <default>'V'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="pidsrca3-ztype" type="s">
+      <choices>
+        <choice value='BYTE'/>
+        <choice value='SHORT'/>
+        <choice value='LONG'/>
+        <choice value='ULONG'/>
+        <choice value='LLONG'/>
+        <choice value='FLOAT'/>
+        <choice value='DOUBLE'/>
+        <choice value='COMPLEX'/>
+        <choice value='RGBA'/>
+      </choices>
+      <default>'FLOAT'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="pidsrca3-zlabel" type="s">
+
+      <default>'U'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="pidsrca4" type="s">
+
+      <default>'MIX3'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="pidsrca4-zunit" type="s">
+      <choices>
+        <choice value='1'/>
+        <choice value='V'/>
+        <choice value='AA'/>
+        <choice value='nm'/>
+        <choice value='um'/>
+        <choice value='mm'/>
+        <choice value='nA'/>
+        <choice value='pA'/>
+        <choice value='nN'/>
+        <choice value='Hz'/>
+        <choice value='K'/>
+        <choice value='CPS'/>
+        <choice value='Int'/>
+        <choice value='Events'/>
+        <choice value='a.u.'/>
+      </choices>
+      <default>'V'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="pidsrca4-ztype" type="s">
+      <choices>
+        <choice value='BYTE'/>
+        <choice value='SHORT'/>
+        <choice value='LONG'/>
+        <choice value='ULONG'/>
+        <choice value='LLONG'/>
+        <choice value='FLOAT'/>
+        <choice value='DOUBLE'/>
+        <choice value='COMPLEX'/>
+        <choice value='RGBA'/>
+      </choices>
+      <default>'FLOAT'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="pidsrca4-zlabel" type="s">
+
+      <default>'U'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrca1" type="s">
+
+      <default>'ADC0-ITunnel'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrca1-zunit" type="s">
+      <choices>
+        <choice value='1'/>
+        <choice value='V'/>
+        <choice value='AA'/>
+        <choice value='nm'/>
+        <choice value='um'/>
+        <choice value='mm'/>
+        <choice value='nA'/>
+        <choice value='pA'/>
+        <choice value='nN'/>
+        <choice value='Hz'/>
+        <choice value='K'/>
+        <choice value='CPS'/>
+        <choice value='Int'/>
+        <choice value='Events'/>
+        <choice value='a.u.'/>
+      </choices>
+      <default>'nA'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrca1-ztype" type="s">
+      <choices>
+        <choice value='BYTE'/>
+        <choice value='SHORT'/>
+        <choice value='LONG'/>
+        <choice value='ULONG'/>
+        <choice value='LLONG'/>
+        <choice value='FLOAT'/>
+        <choice value='DOUBLE'/>
+        <choice value='COMPLEX'/>
+        <choice value='RGBA'/>
+      </choices>
+      <default>'FLOAT'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrca1-zlabel" type="s">
+
+      <default>'I'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrca2" type="s">
+
+      <default>'ADC1'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrca2-zunit" type="s">
+      <choices>
+        <choice value='1'/>
+        <choice value='V'/>
+        <choice value='AA'/>
+        <choice value='nm'/>
+        <choice value='um'/>
+        <choice value='mm'/>
+        <choice value='nA'/>
+        <choice value='pA'/>
+        <choice value='nN'/>
+        <choice value='Hz'/>
+        <choice value='K'/>
+        <choice value='CPS'/>
+        <choice value='Int'/>
+        <choice value='Events'/>
+        <choice value='a.u.'/>
+      </choices>
+      <default>'V'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrca2-ztype" type="s">
+      <choices>
+        <choice value='BYTE'/>
+        <choice value='SHORT'/>
+        <choice value='LONG'/>
+        <choice value='ULONG'/>
+        <choice value='LLONG'/>
+        <choice value='FLOAT'/>
+        <choice value='DOUBLE'/>
+        <choice value='COMPLEX'/>
+        <choice value='RGBA'/>
+      </choices>
+      <default>'FLOAT'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrca2-zlabel" type="s">
+
+      <default>'ADC1'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrca3" type="s">
+
+      <default>'ADC2'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrca3-zunit" type="s">
+      <choices>
+        <choice value='1'/>
+        <choice value='V'/>
+        <choice value='AA'/>
+        <choice value='nm'/>
+        <choice value='um'/>
+        <choice value='mm'/>
+        <choice value='nA'/>
+        <choice value='pA'/>
+        <choice value='nN'/>
+        <choice value='Hz'/>
+        <choice value='K'/>
+        <choice value='CPS'/>
+        <choice value='Int'/>
+        <choice value='Events'/>
+        <choice value='a.u.'/>
+      </choices>
+      <default>'V'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrca3-ztype" type="s">
+      <choices>
+        <choice value='BYTE'/>
+        <choice value='SHORT'/>
+        <choice value='LONG'/>
+        <choice value='ULONG'/>
+        <choice value='LLONG'/>
+        <choice value='FLOAT'/>
+        <choice value='DOUBLE'/>
+        <choice value='COMPLEX'/>
+        <choice value='RGBA'/>
+      </choices>
+      <default>'FLOAT'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrca3-zlabel" type="s">
+
+      <default>'ADC2'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrca4" type="s">
+
+      <default>'ADC3'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrca4-zunit" type="s">
+      <choices>
+        <choice value='1'/>
+        <choice value='V'/>
+        <choice value='AA'/>
+        <choice value='nm'/>
+        <choice value='um'/>
+        <choice value='mm'/>
+        <choice value='nA'/>
+        <choice value='pA'/>
+        <choice value='nN'/>
+        <choice value='Hz'/>
+        <choice value='K'/>
+        <choice value='CPS'/>
+        <choice value='Int'/>
+        <choice value='Events'/>
+        <choice value='a.u.'/>
+      </choices>
+      <default>'V'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrca4-ztype" type="s">
+      <choices>
+        <choice value='BYTE'/>
+        <choice value='SHORT'/>
+        <choice value='LONG'/>
+        <choice value='ULONG'/>
+        <choice value='LLONG'/>
+        <choice value='FLOAT'/>
+        <choice value='DOUBLE'/>
+        <choice value='COMPLEX'/>
+        <choice value='RGBA'/>
+      </choices>
+      <default>'FLOAT'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrca4-zlabel" type="s">
+
+      <default>'ADC3'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrcb1" type="s">
+
+      <default>'ADC4'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrcb1-zunit" type="s">
+      <choices>
+        <choice value='1'/>
+        <choice value='V'/>
+        <choice value='AA'/>
+        <choice value='nm'/>
+        <choice value='um'/>
+        <choice value='mm'/>
+        <choice value='nA'/>
+        <choice value='pA'/>
+        <choice value='nN'/>
+        <choice value='Hz'/>
+        <choice value='K'/>
+        <choice value='CPS'/>
+        <choice value='Int'/>
+        <choice value='Events'/>
+        <choice value='a.u.'/>
+      </choices>
+      <default>'V'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrcb1-ztype" type="s">
+      <choices>
+        <choice value='BYTE'/>
+        <choice value='SHORT'/>
+        <choice value='LONG'/>
+        <choice value='ULONG'/>
+        <choice value='LLONG'/>
+        <choice value='FLOAT'/>
+        <choice value='DOUBLE'/>
+        <choice value='COMPLEX'/>
+        <choice value='RGBA'/>
+      </choices>
+      <default>'FLOAT'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrcb1-zlabel" type="s">
+
+      <default>'ADC4'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrcb2" type="s">
+
+      <default>'ADC5'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrcb2-zunit" type="s">
+      <choices>
+        <choice value='1'/>
+        <choice value='V'/>
+        <choice value='AA'/>
+        <choice value='nm'/>
+        <choice value='um'/>
+        <choice value='mm'/>
+        <choice value='nA'/>
+        <choice value='pA'/>
+        <choice value='nN'/>
+        <choice value='Hz'/>
+        <choice value='K'/>
+        <choice value='CPS'/>
+        <choice value='Int'/>
+        <choice value='Events'/>
+        <choice value='a.u.'/>
+      </choices>
+      <default>'V'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrcb2-ztype" type="s">
+      <choices>
+        <choice value='BYTE'/>
+        <choice value='SHORT'/>
+        <choice value='LONG'/>
+        <choice value='ULONG'/>
+        <choice value='LLONG'/>
+        <choice value='FLOAT'/>
+        <choice value='DOUBLE'/>
+        <choice value='COMPLEX'/>
+        <choice value='RGBA'/>
+      </choices>
+      <default>'FLOAT'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrcb2-zlabel" type="s">
+
+      <default>'ADC5'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrcb3" type="s">
+
+      <default>'ADC6'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrcb3-zunit" type="s">
+      <choices>
+        <choice value='1'/>
+        <choice value='V'/>
+        <choice value='AA'/>
+        <choice value='nm'/>
+        <choice value='um'/>
+        <choice value='mm'/>
+        <choice value='nA'/>
+        <choice value='pA'/>
+        <choice value='nN'/>
+        <choice value='Hz'/>
+        <choice value='K'/>
+        <choice value='CPS'/>
+        <choice value='Int'/>
+        <choice value='Events'/>
+        <choice value='a.u.'/>
+      </choices>
+      <default>'V'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrcb3-ztype" type="s">
+      <choices>
+        <choice value='BYTE'/>
+        <choice value='SHORT'/>
+        <choice value='LONG'/>
+        <choice value='ULONG'/>
+        <choice value='LLONG'/>
+        <choice value='FLOAT'/>
+        <choice value='DOUBLE'/>
+        <choice value='COMPLEX'/>
+        <choice value='RGBA'/>
+      </choices>
+      <default>'FLOAT'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrcb3-zlabel" type="s">
+
+      <default>'ADC6'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrcb4" type="s">
+
+      <default>'ADC7'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrcb4-zunit" type="s">
+      <choices>
+        <choice value='1'/>
+        <choice value='V'/>
+        <choice value='AA'/>
+        <choice value='nm'/>
+        <choice value='um'/>
+        <choice value='mm'/>
+        <choice value='nA'/>
+        <choice value='pA'/>
+        <choice value='nN'/>
+        <choice value='Hz'/>
+        <choice value='K'/>
+        <choice value='CPS'/>
+        <choice value='Int'/>
+        <choice value='Events'/>
+        <choice value='a.u.'/>
+      </choices>
+      <default>'V'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrcb4-ztype" type="s">
+      <choices>
+        <choice value='BYTE'/>
+        <choice value='SHORT'/>
+        <choice value='LONG'/>
+        <choice value='ULONG'/>
+        <choice value='LLONG'/>
+        <choice value='FLOAT'/>
+        <choice value='DOUBLE'/>
+        <choice value='COMPLEX'/>
+        <choice value='RGBA'/>
+      </choices>
+      <default>'FLOAT'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrcb4-zlabel" type="s">
+
+      <default>'ADC7'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrcc1" type="s">
+
+      <default>'dIdV'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrcc1-zunit" type="s">
+      <choices>
+        <choice value='1'/>
+        <choice value='V'/>
+        <choice value='AA'/>
+        <choice value='nm'/>
+        <choice value='um'/>
+        <choice value='mm'/>
+        <choice value='nA'/>
+        <choice value='pA'/>
+        <choice value='nN'/>
+        <choice value='Hz'/>
+        <choice value='K'/>
+        <choice value='CPS'/>
+        <choice value='Int'/>
+        <choice value='Events'/>
+        <choice value='a.u.'/>
+      </choices>
+      <default>'a.u.'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrcc1-ztype" type="s">
+      <choices>
+        <choice value='BYTE'/>
+        <choice value='SHORT'/>
+        <choice value='LONG'/>
+        <choice value='ULONG'/>
+        <choice value='LLONG'/>
+        <choice value='FLOAT'/>
+        <choice value='DOUBLE'/>
+        <choice value='COMPLEX'/>
+        <choice value='RGBA'/>
+      </choices>
+      <default>'FLOAT'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrcc1-zlabel" type="s">
+
+      <default>'LockIn1st'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrcd1" type="s">
+
+      <default>'ddIdV'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrcd1-zunit" type="s">
+      <choices>
+        <choice value='1'/>
+        <choice value='V'/>
+        <choice value='AA'/>
+        <choice value='nm'/>
+        <choice value='um'/>
+        <choice value='mm'/>
+        <choice value='nA'/>
+        <choice value='pA'/>
+        <choice value='nN'/>
+        <choice value='Hz'/>
+        <choice value='K'/>
+        <choice value='CPS'/>
+        <choice value='Int'/>
+        <choice value='Events'/>
+        <choice value='a.u.'/>
+      </choices>
+      <default>'a.u.'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrcd1-ztype" type="s">
+      <choices>
+        <choice value='BYTE'/>
+        <choice value='SHORT'/>
+        <choice value='LONG'/>
+        <choice value='ULONG'/>
+        <choice value='LLONG'/>
+        <choice value='FLOAT'/>
+        <choice value='DOUBLE'/>
+        <choice value='COMPLEX'/>
+        <choice value='RGBA'/>
+      </choices>
+      <default>'FLOAT'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrcd1-zlabel" type="s">
+
+      <default>'LockIn2nd'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrce1" type="s">
+
+      <default>'I0-avg'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrce1-zunit" type="s">
+      <choices>
+        <choice value='1'/>
+        <choice value='V'/>
+        <choice value='AA'/>
+        <choice value='nm'/>
+        <choice value='um'/>
+        <choice value='mm'/>
+        <choice value='nA'/>
+        <choice value='pA'/>
+        <choice value='nN'/>
+        <choice value='Hz'/>
+        <choice value='K'/>
+        <choice value='CPS'/>
+        <choice value='Int'/>
+        <choice value='Events'/>
+        <choice value='a.u.'/>
+      </choices>
+      <default>'a.u.'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrce1-ztype" type="s">
+      <choices>
+        <choice value='BYTE'/>
+        <choice value='SHORT'/>
+        <choice value='LONG'/>
+        <choice value='ULONG'/>
+        <choice value='LLONG'/>
+        <choice value='FLOAT'/>
+        <choice value='DOUBLE'/>
+        <choice value='COMPLEX'/>
+        <choice value='RGBA'/>
+      </choices>
+      <default>'FLOAT'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrce1-zlabel" type="s">
+
+      <default>'LockIn0'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrcf1" type="s">
+
+      <default>'Counter'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrcf1-zunit" type="s">
+      <choices>
+        <choice value='1'/>
+        <choice value='V'/>
+        <choice value='AA'/>
+        <choice value='nm'/>
+        <choice value='um'/>
+        <choice value='mm'/>
+        <choice value='nA'/>
+        <choice value='pA'/>
+        <choice value='nN'/>
+        <choice value='Hz'/>
+        <choice value='K'/>
+        <choice value='CPS'/>
+        <choice value='Int'/>
+        <choice value='Events'/>
+        <choice value='a.u.'/>
+      </choices>
+      <default>'Events'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrcf1-ztype" type="s">
+      <choices>
+        <choice value='BYTE'/>
+        <choice value='SHORT'/>
+        <choice value='LONG'/>
+        <choice value='ULONG'/>
+        <choice value='LLONG'/>
+        <choice value='FLOAT'/>
+        <choice value='DOUBLE'/>
+        <choice value='COMPLEX'/>
+        <choice value='RGBA'/>
+      </choices>
+      <default>'FLOAT'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+    <key name="datasrcf1-zlabel" type="s">
+
+      <default>'Counts'</default>
+      <summary>See Manual, section Channelsetup</summary>
+      <description>
+        See Manual, section Channelsetup
+      </description>
+    </key>
+  </schema>
+
+  <schema id="org.gnome.gxsm4.preferences.paths" path="/org/gnome/gxsm4/preferences/paths/">
+    <key name="logfiles" type="s">
+
+      <default>'~'</default>
+      <summary>where to put logfiles</summary>
+      <description>
+        where to put logfiles
+      </description>
+    </key>
+    <key name="data" type="s">
+
+      <default>'.'</default>
+      <summary>default data path</summary>
+      <description>
+        default data path
+      </description>
+    </key>
+    <key name="remotefifo" type="s">
+
+      <default>'remote'</default>
+      <summary>path/name of remote control fifo, read cmds</summary>
+      <description>
+        path/name of remote control fifo, read cmds
+      </description>
+    </key>
+    <key name="remotefifoout" type="s">
+
+      <default>'remoteecho'</default>
+      <summary>path/name of remote control fifo, status out</summary>
+      <description>
+        path/name of remote control fifo, status out
+      </description>
+    </key>
+    <key name="pyremotefile" type="s">
+
+      <default>'remote'</default>
+      <summary>path/name of python-remote file, without path and .py suffix, must be in cwd.</summary>
+      <description>
+        path/name of python-remote file, without path and .py suffix, must be in cwd.
+      </description>
+    </key>
+    <key name="plugins" type="s">
+
+      <default>'.'</default>
+      <summary>searchpath to additional GxsmPlugins</summary>
+      <description>
+        searchpath to additional GxsmPlugins
+      </description>
+    </key>
+    <key name="gxsmpalette" type="s">
+
+      <default>'/usr/local/share/gxsm4/palette'</default>
+      <summary>searchpath to Gxsm Palette Pixmaps (1024x1 ACSII .pnm)</summary>
+      <description>
+        searchpath to Gxsm Palette Pixmaps (1024x1 ACSII .pnm)
+      </description>
+    </key>
+    <key name="userpalette" type="s">
+
+      <default>'.'</default>
+      <summary>searchpath to additional Gxsm Palette Pixmaps (1024x1 ACSII .pnm)</summary>
+      <description>
+        searchpath to additional Gxsm Palette Pixmaps (1024x1 ACSII .pnm)
+      </description>
+    </key>
+    <key name="profilexcolorspath" type="s">
+
+      <default>'profile_colors.xcolor'</default>
+      <summary>searchpath to optional list of XColors used for multiple profiles, file like rgb.txt or xcolors only)</summary>
+      <description>
+        searchpath to optional list of XColors used for multiple profiles, file like rgb.txt or xcolors only)
+      </description>
+    </key>
+  </schema>
+
+  <schema id="org.gnome.gxsm4.preferences.user" path="/org/gnome/gxsm4/preferences/user/">
+    <key name="savewindowgeometry" type="b">
+      <default>true</default>
+      <summary>bool: true=save window positions, false: do not</summary>
+      <description>
+        true GXSM OPTIONS=(false, bool: true=save window positions, false: do not)
+      </description>
+    </key>
+    <key name="xyunit" type="s">
+      <choices>
+        <choice value='AA'/>
+        <choice value='nm'/>
+        <choice value='um'/>
+        <choice value='mm'/>
+        <choice value='BZ'/>
+        <choice value='sec'/>
+        <choice value='amu'/>
+        <choice value='V'/>
+        <choice value='1'/>
+      </choices>
+      <default>'AA'</default>
+      <summary>XY Unit alias, choose one of: AA (Å), nm, um (µm), mm, BZ, sec, V, 1</summary>
+      <description>
+        XY Unit alias, choose one of: AA (Å), nm, um (µm), mm, BZ, sec, V, 1
+      </description>
+    </key>
+    <key name="hilodelta" type="x">
+      <default>2</default>
+      <summary>Gridsize used by Autodisp, e.g: 1: all Pixels are examined</summary>
+      <description>
+        Gridsize used by Autodisp, e.g: 1: all Pixels are examined
+      </description>
+    </key>
+    <key name="smarthistepsilon" type="d">
+      <default>0.05</default>
+      <summary>Smart Histogram Epsilon for hitogram evaluanted range compression (positive) or expand (negative).</summary>
+      <description>
+        Smart Histogram Epsilon for hitogram evaluanted range compression (positive) or expand (negative).
+      </description>
+    </key>
+    <key name="profileloglimit" type="d">
+      <default>1e-20</default>
+      <summary>Minimal Y value allwed in profile view in log view mode.</summary>
+      <description>
+        Minimal Y value allwed in profile view in log view mode.
+      </description>
+    </key>
+    <key name="filenameconvention" type="s">
+      <choices>
+        <choice value='digit'/>
+        <choice value='alpha'/>
+        <choice value='date-time'/>
+      </choices>
+      <default>'digit'</default>
+      <summary>File numbering mode: digit, alpha</summary>
+      <description>
+        File numbering mode: digit, alpha
+      </description>
+    </key>
+    <key name="autosaveunit" type="s">
+      <choices>
+        <choice value='percent'/>
+        <choice value='lines'/>
+        <choice value='seconds'/>
+      </choices>
+      <default>'seconds'</default>
+      <summary>Autosaveunit: Save every percent, lines, seconds</summary>
+      <description>
+        Autosaveunit: Save every percent, lines, seconds
+      </description>
+    </key>
+    <key name="autosavevalue" type="x">
+      <default>300</default>
+      <summary>Rate of Autosaves, depending on Unit.</summary>
+      <description>
+        Rate of Autosaves, depending on Unit.
+      </description>
+    </key>
+    <key name="autosaveoverwritemode" type="s">
+      <choices>
+        <choice value='true'/>
+        <choice value='false'/>
+      </choices>
+      <default>'false'</default>
+      <summary>true = Overwrite unasked during Autosave, false = ask before overwrite</summary>
+      <description>
+        true = Overwrite unasked during Autosave, false = ask before overwrite
+      </description>
+    </key>
+    <key name="loaddelay" type="x">
+      <default>10</default>
+      <summary>Delay after loading file in 1/10s:
+if zero no waiting for pending events.</summary>
+      <description>
+        Delay after loading file in 1/10s:
+if zero no waiting for pending events.
+      </description>
+    </key>
+    <key name="loadcorrectxyz" type="ad">
+      <default>[1.0,1.0,1.0,1.0]</default>
+      <summary>set NC file load XYZ scale correction factor vector [Xs, Ys, ZsTopo, Zs*]. Default: no change, set to [1,1,1,1].
+ZsTopo -- applies to Z of Topo dedicated data, Zs* to every thing else -- strongly advised to leave that at 1.XYZ scale correction factor vector [Xs, Ys, ZsTopo, Zs*]] is applied to scan scale (dx,dy,dz, rx,..) at NC-file load time once.
+This may be used to correct slight piezo calibartion deviations or temperature related scalings.
+Only on the fly applied at scan laod time. But you may save the file again, then it's applied.</summary>
+      <description>
+        set NC file load XYZ scale correction factor vector [Xs, Ys, ZsTopo, Zs*]. Default: no change, set to [1,1,1,1].
+ZsTopo -- applies to Z of Topo dedicated data, Zs* to every thing else -- strongly advised to leave that at 1.XYZ scale correction factor vector [Xs, Ys, ZsTopo, Zs*]] is applied to scan scale (dx,dy,dz, rx,..) at NC-file load time once.
+This may be used to correct slight piezo calibartion deviations or temperature related scalings.
+Only on the fly applied at scan laod time. But you may save the file again, then it's applied.
+      </description>
+    </key>
+    <key name="slidercontroltype" type="s">
+      <choices>
+        <choice value='slider'/>
+        <choice value='mover'/>
+      </choices>
+      <default>'mover'</default>
+      <summary>Slider/Approch control type:
+ slider: Omicron Box/similar, single steps via DSP's digital IO,
+ mover: Mover/Besocke via sawtooth like ramp voltages from Piezodrive</summary>
+      <description>
+        Slider/Approch control type:
+ slider: Omicron Box/similar, single steps via DSP's digital IO,
+ mover: Mover/Besocke via sawtooth like ramp voltages from Piezodrive
+      </description>
+    </key>
+    <key name="palette" type="s">
+
+      <default>'/usr/local/share/gxsm4/palette/xxsmpalette.pnm'</default>
+      <summary>Path/name of your favorite palette, (1024x1 pnm RGB Bitmap (ascii))</summary>
+      <description>
+        Path/name of your favorite palette, (1024x1 pnm RGB Bitmap (ascii))
+      </description>
+    </key>
+    <key name="griplottitle" type="s">
+
+      <default>'Gxsm Profile Plot'</default>
+      <summary>Title used in plots</summary>
+      <description>
+        Title used in plots
+      </description>
+    </key>
+    <key name="command1" type="s">
+
+      <default>'/usr/local/share/gxsm4/profileplot/gxsmplot1d-1.gri.sh'</default>
+      <summary>Path/name of your 1d profile plot file #1</summary>
+      <description>
+        Path/name of your 1d profile plot file #1
+      </description>
+    </key>
+    <key name="command2" type="s">
+
+      <default>'/usr/local/share/gxsm4/profileplot/gxsmplot1d-2.gri.sh'</default>
+      <summary>Path/name of your 1d profile plot file #2</summary>
+      <description>
+        Path/name of your 1d profile plot file #2
+      </description>
+    </key>
+    <key name="command3" type="s">
+
+      <default>'/usr/local/share/gxsm4/profileplot/gxsmplot1d-3.gri.sh'</default>
+      <summary>Path/name of your 1d profile plot file #3</summary>
+      <description>
+        Path/name of your 1d profile plot file #3
+      </description>
+    </key>
+    <key name="command4" type="s">
+
+      <default>'/usr/local/share/gxsm4/profileplot/gxsmplot1d-4.gri.sh'</default>
+      <summary>Path/name of your 1d profile plot file #4</summary>
+      <description>
+        Path/name of your 1d profile plot file #4
+      </description>
+    </key>
+    <key name="command5" type="s">
+
+      <default>'/usr/local/share/gxsm4/profileplot/gxsmplot1d-xmgrace.sh'</default>
+      <summary>Path/name of your 1d profile plot file #5</summary>
+      <description>
+        Path/name of your 1d profile plot file #5
+      </description>
+    </key>
+    <key name="command6" type="s">
+
+      <default>'/usr/local/share/gxsm4/profileplot/gxsmplot1d-matplot.py'</default>
+      <summary>Path/name of your 1d profile plot file #6</summary>
+      <description>
+        Path/name of your 1d profile plot file #6
+      </description>
+    </key>
+    <key name="x2d-gricmdfile1" type="s">
+
+      <default>'/usr/local/share/gxsm4/profileplot/gxsmplot2d-1.gri'</default>
+      <summary>Path/name of your 2d gri cmd file #1</summary>
+      <description>
+        Path/name of your 2d gri cmd file #1
+      </description>
+    </key>
+    <key name="x2d-gricmdfile2" type="s">
+
+      <default>'/usr/local/share/gxsm4/profileplot/gxsmplot2d-2.gri'</default>
+      <summary>Path/name of your 2d gri cmd file #2</summary>
+      <description>
+        Path/name of your 2d gri cmd file #2
+      </description>
+    </key>
+    <key name="x2d-gricmdfile3" type="s">
+
+      <default>'/usr/local/share/gxsm4/profileplot/gxsmplot2d-3.gri'</default>
+      <summary>Path/name of your 2d gri cmd file #3</summary>
+      <description>
+        Path/name of your 2d gri cmd file #3
+      </description>
+    </key>
+    <key name="x2d-gricmdfile4" type="s">
+
+      <default>'/usr/local/share/gxsm4/profileplot/gxsmplot2d-4.gri'</default>
+      <summary>Path/name of your 2d gri cmd file #4</summary>
+      <description>
+        Path/name of your 2d gri cmd file #4
+      </description>
+    </key>
+    <key name="profileframecolor" type="ad">
+      <default>[0.0,0.0,0.0,1.0]</default>
+      <summary>Profile Graph Color for canvas frame.</summary>
+      <description>
+        Profile Graph Color for canvas frame.
+      </description>
+    </key>
+    <key name="profilecanvascolor" type="ad">
+      <default>[1.0,1.0,1.0,1.0]</default>
+      <summary>Profile Graph Color for canvas.</summary>
+      <description>
+        Profile Graph Color for canvas.
+      </description>
+    </key>
+    <key name="profileticfont" type="s">
+
+      <default>'Unutu 11'</default>
+      <summary>Profile Graph Font for tickmarks.</summary>
+      <description>
+        Profile Graph Font for tickmarks.
+      </description>
+    </key>
+    <key name="profileticcolor" type="ad">
+      <default>[0.0,0.0,0.0,1.0]</default>
+      <summary>Profile Graph Color for ticmarks.</summary>
+      <description>
+        Profile Graph Color for ticmarks.
+      </description>
+    </key>
+    <key name="profilegridcolor" type="ad">
+      <default>[0.7,0.7,0.7,0.5]</default>
+      <summary>Profile Graph Color for XY grid lines.</summary>
+      <description>
+        Profile Graph Color for XY grid lines.
+      </description>
+    </key>
+    <key name="profilelabelfont" type="s">
+
+      <default>'Georgia 12'</default>
+      <summary>Profile Graph Font for X and Y axis labels.</summary>
+      <description>
+        Profile Graph Font for X and Y axis labels.
+      </description>
+    </key>
+    <key name="profilelabelcolor" type="ad">
+      <default>[0.0,0.0,0.0,1.0]</default>
+      <summary>Profile Graph Color for X and Y axis labels</summary>
+      <description>
+        Profile Graph Color for X and Y axis labels
+      </description>
+    </key>
+    <key name="profiletitlefont" type="s">
+
+      <default>'Georgia 14'</default>
+      <summary>Profile Graph Font for title.</summary>
+      <description>
+        Profile Graph Font for title.
+      </description>
+    </key>
+    <key name="profiletitlecolor" type="ad">
+      <default>[1.0,0.0,0.0,1.0]</default>
+      <summary>Profile Graph Color for title.</summary>
+      <description>
+        Profile Graph Color for title.
+      </description>
+    </key>
+    <key name="profilelinewidth" type="x">
+      <default>1</default>
+      <summary>Line width used for profiles (pixels)</summary>
+      <description>
+        Line width used for profiles (pixels)
+      </description>
+    </key>
+    <key name="profileorgmode" type="x">
+      <default>0</default>
+      <summary>Origin Modus for Line Profile: 0: ZeroLeft, 1: ZeroCenter, 2:PrjX, 3:PrjY</summary>
+      <description>
+        Origin Modus for Line Profile: 0: ZeroLeft, 1: ZeroCenter, 2:PrjX, 3:PrjY
+      </description>
+    </key>
+    <key name="redlinehistorycolors" type="s">
+
+      <default>'LightSalmon,salmon,red'</default>
+      <summary>Commata separated list of xcolor names like: "LightSalmon,salmon,red" </summary>
+      <description>
+        Commata separated list of xcolor names like: "LightSalmon,salmon,red" 
+      </description>
+    </key>
+    <key name="bluelinehistorycolors" type="s">
+
+      <default>'black,purple,blue'</default>
+      <summary>Commata separated list of xcolor names like: "black,purple,blue" </summary>
+      <description>
+        Commata separated list of xcolor names like: "black,purple,blue" 
+      </description>
+    </key>
+    <key name="redlinewidth" type="x">
+      <default>1</default>
+      <summary>Line width for current/last RedLine (pixels)</summary>
+      <description>
+        Line width for current/last RedLine (pixels)
+      </description>
+    </key>
+    <key name="menutooltips" type="b">
+      <default>true</default>
+      <summary>Enable Menu Tooltips: true|false</summary>
+      <description>
+        true GXSM OPTIONS=(false, Enable Menu Tooltips: true|false)
+      </description>
+    </key>
+    <key name="acceptdatk0" type="b">
+      <default>false</default>
+      <summary>Accept Dat Kennung 0x000, Attention this is a safety hole if enabled !</summary>
+      <description>
+        true GXSM OPTIONS=(false, Accept Dat Kennung 0x000, Attention this is a safety hole if enabled !)
+      </description>
+    </key>
+  </schema>
+
+  <schema id="org.gnome.gxsm4.preferences.gui" path="/org/gnome/gxsm4/preferences/gui/">
+    <key name="layerfields" type="b">
+      <default>true</default>
+      <summary>Select here, if you want use layered (3d) scans.</summary>
+      <description>
+        true GXSM OPTIONS=(false, Select here, if you want use layered (3d) scans.)
+      </description>
+    </key>
+    <key name="handletype" type="s">
+      <choices>
+        <choice value='Triangle'/>
+        <choice value='Square'/>
+      </choices>
+      <default>'Triangle'</default>
+      <summary>Select shape for object handle type</summary>
+      <description>
+        Select shape for object handle type
+      </description>
+    </key>
+    <key name="objhandleactivebgcolor" type="ad">
+      <default>[0,1,1,0.3]</default>
+      <summary>Object Handle Bg Color, active [red, green, blue, alpha]</summary>
+      <description>
+        Object Handle Bg Color, active [red, green, blue, alpha]
+      </description>
+    </key>
+    <key name="objhandleinactivebgcolor" type="ad">
+      <default>[0.6,0.6,0.6,0.3]</default>
+      <summary>Object Handle Bg Color, inactive [red, green, blue, alpha]</summary>
+      <description>
+        Object Handle Bg Color, inactive [red, green, blue, alpha]
+      </description>
+    </key>
+    <key name="handlelinewidth" type="x">
+      <default>1</default>
+      <summary>Width of handle outline in pixels</summary>
+      <description>
+        Width of handle outline in pixels
+      </description>
+    </key>
+    <key name="handlesize" type="d">
+      <default>100.0</default>
+      <summary>Percentage of default size</summary>
+      <description>
+        Percentage of default size
+      </description>
+    </key>
+    <key name="objectlinewidth" type="x">
+      <default>2</default>
+      <summary>Line width of object (connections) in pixels</summary>
+      <description>
+        Line width of object (connections) in pixels
+      </description>
+    </key>
+    <key name="objlabcolor" type="ad">
+      <default>[1,0,0,1]</default>
+      <summary>Object Label Color [red, green, blue, alpha]</summary>
+      <description>
+        Object Label Color [red, green, blue, alpha]
+      </description>
+    </key>
+    <key name="objlabfont" type="s">
+
+      <default>'Sans Bold 12'</default>
+      <summary>Select object label font.</summary>
+      <description>
+        Select object label font.
+      </description>
+    </key>
+    <key name="objelmcolor" type="ad">
+      <default>[0,0,1,1]</default>
+      <summary>Object Element Color [red, green, blue, alpha]</summary>
+      <description>
+        Object Element Color [red, green, blue, alpha]
+      </description>
+    </key>
+    <key name="objintcolor" type="ad">
+      <default>[1,0,0,1]</default>
+      <summary>Object Integration Marker Color [red, green, blue, alpha]</summary>
+      <description>
+        Object Integration Marker Color [red, green, blue, alpha]
+      </description>
+    </key>
+    <key name="osdcolor" type="ad">
+      <default>[1,0,0,1]</default>
+      <summary>OSD Text Color [red, green, blue, alpha]</summary>
+      <description>
+        OSD Text Color [red, green, blue, alpha]
+      </description>
+    </key>
+    <key name="osdfont" type="s">
+
+      <default>'Sans Bold 8'</default>
+      <summary>Select OSD text font</summary>
+      <description>
+        Select OSD text font
+      </description>
+    </key>
+  </schema>
+</schemalist>
+
