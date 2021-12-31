@@ -49,11 +49,13 @@ See the file 'INSTALL' for more detailed information.
 =============
 To be ported, recoded,pending or disfunctional features and comments:
 
-I looking a new build system MESON+Ninja for the future.
+We are also looking a new build system like MESON+Ninja for the future. But that later.
 
-simple things pending for currently not yet rewokred plugins, the simply fail to compile as of gtk4 changes, mainly those are:
+Simple things are pending or missing for currently not yet rewokred plugins, they simply fail to compile as of gtk4 changes, mainly those are:
 
-gtk_widget_show_all(X)   --> removed completely from gtk4, replace with gtk_widget_show (X) and hope all others are shown. Using my "bp" builder it's all taken care of now!
+gtk_widget_show_all(X)   --> removed completely from gtk4, replace with gtk_widget_show (X) and hope all others are shown.
+                             Make sure every manually created widget is receiving it's gtk_show_widget().
+			     Using the gxsm core "bp" builder tool it's all taken care of now!
 
 gtk_container_add...     --> gtk_xxxwidget_set_child (GTK_XXXWIDGET (W), child)   (most the time a like)
 
@@ -66,26 +68,27 @@ gtk_dialog_run()         --> no more -- see gapp_service.h for new examples and 
 GTM_MENU... stuff        --> all is based on gtk_popover_... now, see core code for ported examples.
 
 BUTTON signal names changed: the check/toggle button types and signals are changed and not mixable any more as separate objects.
+                             watch for run time GTK WARNING messages regarding ignored signals!
 
 
-Pending known key issues (beside many details):
------------------------------------------------
+Pending and known issues:
+-------------------------
 
-Window Position Management....  gtk4 does not prove any hands on that any more -- big convenience and usability issue 🙁
-                                any one has an idea if select (particular gnome shell) have some handles to ge taround this???
+Window Position Management....  gtk4 does not provide any hands on that any more -- big convenience and usability issue 🙁
+                                any one has an idea if select (particular gnome shell) have some handles to get around this???
 
-"Kill" or close scan window is disfunctional... (only hiding): need to figure out how to fix. "window-delete" signals do not exist any more.... 🙁
+"Kill" or close scan window is disfunctional... (only hiding): need to figure out how to fix. "window-delete" signals do not exist any more.... (removed from App-Init call) 🙁
 
 Spin-Entry: Now shows the units again, but not always at startup (some defaut formatting), only after first touch... not yet sure why that is.
 
-Profile: pending mouse actions for cursors... need to port to gtk_controller (easy), Subtitle management, Canvas window resizing is currently disfucntional.
+Profile: pending mouse actions for cursors... need to port to gtk_controller (easy), subtitle management, canvas window resizing is currently disfucntional.
 
 DSP MOVER CONTROL BUTTONS: action signal problem of missing signal for "pressed". The "activate" does not do anything... I tried.
 
 All ENTRIES: added configuration menu option not yet attached and not accessible. Need to figure out how to add a custom menu entry to gtk_popovers.
 
-DSP-CONTROL windows A, B -- initial TAB Drag to empty secondary window impossible (or hard??) to fidn a hook area to drop off. Work around for now:
-Manually hack config via dconf-editor:
+DSP-CONTROL windows A, B -- initial TAB Drag to empty secondary window impossible (or hard??) to find a hook area to drop off. Work around for now:
+Manually hack config via dconf-editor, then further DnD is easy and as usual again:
 
 Set for example
 /org/gnome/gxsm4/hwi/sranger-mk23/window-01-tabs = 'aclefghkmn------------------------------'
@@ -100,7 +103,6 @@ Same issue in InsetJSON...RP-PAC control for scope view (currently disabled).
 
 
 
-
 FYI:
 ----
 I disabled warning messages in configure.ac (CFLAG -w) to not get flooded by a silly issue I cannot fix and added -fpermissive.
@@ -110,8 +112,8 @@ Oh well some crap.
 much more ... to be figured out ans tested ....
 
 
-How to report bugs
-==================
+4. How to report bugs
+=====================
 
 Bugs should be reported to the GNOME bug tracking system.
 (http://bugzilla.gnome.org, product gedit). You will need to create an
@@ -138,8 +140,8 @@ In the bug report please include:
   program with the --sync command line option.
 
 
-Patches
-=======
+5. Patches
+==========
 
 Patches should also be submitted to bugzilla.gnome.org. If the patch
 fixes an existing bug, add the patch as an attachment to that bug
