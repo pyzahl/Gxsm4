@@ -86,6 +86,7 @@ Profile: pending mouse actions for cursors... need to port to gtk_controller (ea
 DSP MOVER CONTROL BUTTONS: action signal problem of missing signal for "pressed". The "activate" does not do anything... I tried.
 
 All ENTRIES: added configuration menu option not yet attached and not accessible. Need to figure out how to add a custom menu entry to gtk_popovers.
+             It is possible to manually edit the properties via the dconf-editor to get started.
 
 DSP-CONTROL windows A, B -- initial TAB Drag to empty secondary window impossible (or hard??) to find a hook area to drop off. Work around for now:
 Manually hack config via dconf-editor, then further DnD is easy and as usual again:
