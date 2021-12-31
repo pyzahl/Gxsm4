@@ -934,7 +934,10 @@ public:
 	static void ChangedWaveOut(Param_Control* pcs, gpointer data);
 	static int config_waveform (GtkWidget *widget, DSPMoverControl *dspc);
 	int configure_waveform (GtkWidget *widget);
-	gboolean draw_waveform_preview (GtkWidget *widget,  int wn);
+        static void wave_preview_draw_function (GtkDrawingArea *area, cairo_t *cr,
+                                                    int             width,
+                                                    int             height,
+                                                    DSPMoverControl *dspc);
 	static int config_output (GtkWidget *widget, DSPMoverControl *dspc);
 	static int CmdAction(GtkWidget *widget, DSPMoverControl *dspc);
 	static int StopAction(GtkWidget *widget, DSPMoverControl *dspc);

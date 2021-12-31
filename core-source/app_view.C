@@ -1656,11 +1656,11 @@ void ViewControl::AppWindowInit(const gchar *title, const gchar *sub_title){
 
 }
 
-gboolean ViewControl::canvas_draw_function (GtkDrawingArea *area,
-                                            cairo_t        *cr,
-                                            int             width,
-                                            int             height,
-                                            ViewControl *vc){
+void ViewControl::canvas_draw_function (GtkDrawingArea *area,
+                                        cairo_t        *cr,
+                                        int             width,
+                                        int             height,
+                                        ViewControl *vc){
         if (vc->destruction_in_progress)
                 return false;
 
@@ -1848,11 +1848,6 @@ gboolean ViewControl::canvas_draw_function (GtkDrawingArea *area,
 
         // update view ranges
         vc->update_view_panel ();
-
-        
-        //	XSM_DEBUG (DBG_L2,  "ViewControl:::canvas_draw_callback ********************** SCAN PAINT * DONE. *********************" );
-
-        return TRUE;
 }
 
 void ViewControl::Resize (char *title, int nx, int ny, 

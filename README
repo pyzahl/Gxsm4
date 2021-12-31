@@ -100,12 +100,6 @@ and
 /org/gnome/gxsm4/hwi/sranger-mk23/window-02-tabs = 'dijo----------------------------'
 Then start gxsm4 again.
 
-MOVER-CONFIG-WAVEFORM icon/graph display omitted as gtk_image_new_from_surface () is missing in gtk4.  🙁 To alternative be figures out for (sranger_mk3_hwi_mover.C):
-  // FIX-ME GTK4 WAVE-IMAGE
-  // gtk_image_set_from_surface (GTK_IMAGE (widget), surface);
-Same issue in InsetJSON...RP-PAC control for scope view (currently disabled).
--?> Do I now really need to implement a full gtk_drawingarea and draw function to do this for simple singe shot draws???
-
 
 FYI:
 ----

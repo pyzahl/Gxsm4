@@ -317,12 +317,12 @@ class ProfileControl : public AppBase, public LineProfile1D{
         gulong resize_cb_handler_id;
         
         static gboolean cairo_draw_profile_only_callback (cairo_t *cr, ProfileControl *pc);
-	static gboolean canvas_draw_function (GtkDrawingArea *area,
-                                              cairo_t        *cr,
-                                              int             width,
-                                              int             height,
-                                              ProfileControl *pc);
-
+	static void canvas_draw_function (GtkDrawingArea *area,
+                                          cairo_t        *cr,
+                                          int             width,
+                                          int             height,
+                                          ProfileControl *pc);
+        
 	void file_print_callback (int index, ProfileControl *pc);
 	void save_data (const gchar *fname);
 

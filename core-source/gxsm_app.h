@@ -257,7 +257,7 @@ public:
         /* Init Stuff */
         void gxsm_new_user_config (RES_ENTRY *res_def);
         static gint RemoveGxsmSplash (GtkWidget *widget, gpointer data);
-        static gboolean splash_draw_function (GtkWidget *area, cairo_t *cr, int width, int height, gpointer data);
+        static void splash_draw_function (GtkWidget *area, cairo_t *cr, int width, int height, gpointer data);
         void GxsmSplash(gdouble progress=0., const gchar *text=NULL, const gchar *info=NULL);
 
 	GtkWidget *splash_progress_bar;
