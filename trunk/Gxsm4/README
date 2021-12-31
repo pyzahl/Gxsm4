@@ -1,3 +1,8 @@
+ATTENTION:
+
+THIS IS BETA VERSION AND WORK IN PROGRESS OF Gxsm4 ported to GTK4.
+(C) PyZahl 2021-12-31
+
 General Information
 ===================
 
@@ -24,16 +29,17 @@ GXSM Web Site: http://gxsm.sf.net
 Installation
 ============
 
-gxs4 requires GTK4, GtkSourceView5, libfftw, libnetcdf, libquicktime
+Gxsm4 requires GTK4, GtkSourceView5, libfftw, libnetcdf, libquicktime, ...
 
 Simple install procedure:
 
-  % git clone ... gxsm4-src			# checkout / unpack the sources
-  % cd gxsm4-src				# change to the toplevel directory
-  % ./autogen.sh				# run the `autogen' script
-  % make					# build gedit
-  [ Become root if necessary ]
-  % make install				# install gxsm4
+svn checkout svn+ssh://zahl@svn.code.sf.net/p/gxsm/svn/trunk/Gxsm4 Gxsm4-svn
+
+./autogen.sh
+make -j16 -k
+sudo make install -j16 -k
+
+Note: there may be compile errors as of incomplete porting progress.
 
 See the file 'INSTALL' for more detailed information.
 
