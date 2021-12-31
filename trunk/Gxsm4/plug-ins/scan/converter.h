@@ -31,12 +31,12 @@
 #include <fnmatch.h>
 
 #include "config.h"
-#include "gxsm4/plugin.h"
-#include "gxsm4/dataio.h"
-#include "gxsm4/action_id.h"
-#include "gxsm4/util.h"
-#include "gxsm4/xsmtypes.h"
-#include "gxsm4/glbvars.h"
+#include "core-source/plugin.h"
+#include "core-source/dataio.h"
+#include "core-source/action_id.h"
+#include "core-source/util.h"
+#include "core-source/xsmtypes.h"
+#include "core-source/glbvars.h"
 
 #include "batch.h"
 
