@@ -47,12 +47,11 @@
 #include "core-source/action_id.h"
 #include "../common/pyremote.h"
 
-#include "dsp-pci32/xsm/xsmcmd.h"
-
 #include "sranger_mk2_hwi_control.h"
 #include "sranger_mk23common_hwi.h"
 #include "modules/sranger_mk23_ioctl.h"
 #include "MK3-A810_spmcontrol/dsp_signals.h"  
+#include "xsmcmd.h"
 
 // show OUT7 (M) Motor control options
 #define MOTOR_CONTROL

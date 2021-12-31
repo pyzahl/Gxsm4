@@ -33,9 +33,10 @@
 
 #include <locale.h>
 #include <libintl.h>
-
 #include <time.h>
 #include <iomanip>
+#include <fcntl.h>
+#include <sys/ioctl.h>
 
 #include "core-source/gxsm_app.h"
 #include "core-source/gxsm_window.h"
@@ -43,17 +44,13 @@
 #include "core-source/glbvars.h"
 #include "core-source/app_view.h"
 #include "core-source/app_vobj.h"
-#include "modules/dsp.h"
-#include <fcntl.h>
-#include <sys/ioctl.h>
-
 #include "core-source/action_id.h"
 
-#include "dsp-pci32/xsm/xsmcmd.h"
+#include "modules/dsp.h"
+#include "modules/sranger_mk2_ioctl.h"
 
 #include "sranger_mk2_hwi_control.h"
 #include "sranger_mk23common_hwi.h"
-#include "modules/sranger_mk2_ioctl.h"
 
 #include "MK3-A810_spmcontrol/dsp_signals.h"  
 

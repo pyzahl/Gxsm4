@@ -51,17 +51,12 @@
 #include <sys/ioctl.h>
 
 #include "sranger_mk3_hwi.h"
-
-
-// you may want to handle/emulate some DSP commands later...
-#include "dsp-pci32/xsm/dpramdef.h"
-#include "dsp-pci32/xsm/xsmcmd.h"
-
+#include "xsmcmd.h"
 
 // need some SRanger io-controls 
 // HAS TO BE IDENTICAL TO THE DRIVER's FILE!
 // so far the same for mk2 and mk3
-#include "../plug-ins/hard/modules/sranger_mk23_ioctl.h"
+#include "modules/sranger_mk23_ioctl.h"
 
 // SRanger data exchange structs and consts
 #include "MK3-A810_spmcontrol/FB_spm_dataexchange.h" 

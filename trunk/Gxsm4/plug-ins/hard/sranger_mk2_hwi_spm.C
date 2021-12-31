@@ -40,8 +40,7 @@
 #include <sys/ioctl.h>
 
 #include "sranger_mk2_hwi.h"
-
-#include "dsp-pci32/xsm/xsmcmd.h"
+#include "xsmcmd.h"
 
 // need some SRanger io-controls 
 // HAS TO BE IDENTICAL TO THE DRIVER's FILE!

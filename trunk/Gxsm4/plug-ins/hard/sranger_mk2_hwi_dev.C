@@ -50,10 +50,6 @@
 
 #include "sranger_mk2_hwi.h"
 
-// you may want to handle/emulate some DSP commands later...
-#include "dsp-pci32/xsm/dpramdef.h"
-#include "dsp-pci32/xsm/xsmcmd.h"
-
 
 // need some SRanger io-controls 
 // HAS TO BE IDENTICAL TO THE DRIVER's FILE!
