@@ -43,11 +43,9 @@
 
 #include "core-source/gxsm_app.h"
 #include "core-source/gxsm_window.h"
-
 #include "core-source/action_id.h"
 
-#include "dsp-pci32/xsm/xsmcmd.h"
-
+#include "xsmcmd.h"
 #include "sranger_mk2_hwi_control.h"
 #include "sranger_mk23common_hwi.h"
 #include "modules/sranger_mk2_ioctl.h"
