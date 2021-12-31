@@ -813,10 +813,11 @@ Inet_Json_External_Scandata::Inet_Json_External_Scandata ()
         // Scope Display
         bp->new_line ();
 
-        // FIX-ME GTK4 ???
-        //?? signal_graph = gtk_image_new_from_surface (NULL);
-        bp->grid_add_widget (signal_graph, 10);
-        gtk_widget_show (wid);
+        signal_graph_area = gtk_drawing_area_new ();
+        gtk_drawing_area_set_content_width (GTK_DRAWING_AREA (signal_graph_area), 128);
+        gtk_drawing_area_set_content_height (GTK_DRAWING_AREA (signal_graph_area), 4);
+        gtk_drawing_area_set_draw_func (GTK_DRAWING_AREA (signal_graph_area), graph_draw_function, this, NULL);
+        bp->grid_add_widget (signal_graph_area, 10);
         
         bp->new_line ();
 
@@ -1701,7 +1702,8 @@ void Inet_Json_External_Scandata::on_message(SoupWebsocketConnection *ws,
                 g_free (json_buffer);
 
                 self->update_monitoring_parameters();
-                self->update_graph ();
+                gtk_widget_queue_draw (self->signal_graph_area);
+
                 //self->stream_data ();
                 self->update_health ();
         }
@@ -1929,8 +1931,16 @@ double Inet_Json_External_Scandata::unwrap (int k, double phi){
         pk=k; pphi=phi;
         return (phi);
 }
- 
-void Inet_Json_External_Scandata::update_graph (){
+
+
+void Inet_Json_External_Scandata::graph_draw_function (GtkDrawingArea *area, cairo_t *cr,
+                                                              int             width,
+                                                              int             height,
+                                                              Inet_Json_External_Scandata *self){
+        self->dynamic_graph_draw_function (area, cr);
+}
+
+void Inet_Json_External_Scandata::dynamic_graph_draw_function (GtkDrawingArea *area, cairo_t *cr){
         int n=1023;
         int h=(int)scope_height_points;
         static int hist=0;
@@ -1946,25 +1956,18 @@ void Inet_Json_External_Scandata::update_graph (){
         double dB_hi   =  0.0;
         double dB_mags =  4.0;
         static int current_width=0;
-        static cairo_surface_t *surface = NULL;
         static int rs_mode=0;
-        cairo_t *cr = NULL;
-
         const int binary_BITS = 16;
         
         if (!run_scope && hist == h)
                 return;
-        if (!surface || current_width != (int)scope_width_points || h != hist){
-                if (surface){
-                        cairo_surface_finish (surface);
-                        cairo_surface_destroy (surface);
-                }
+        if (current_width != (int)scope_width_points || h != hist){
                 current_width = (int)scope_width_points;
-                surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, current_width, h);
+                gtk_drawing_area_set_content_width (area, current_width);
+                gtk_drawing_area_set_content_height (area, h);
         }
         hist=h;
         if (run_scope){
-                cr = cairo_create (surface);
                 cairo_translate (cr, 0., yr);
                 cairo_scale (cr, 1., 1.);
                 cairo_save (cr);
@@ -2480,20 +2483,9 @@ void Inet_Json_External_Scandata::update_graph (){
                                 delete binwave8bit[bit];
         } else {
                 deg_extend = 1;
-                if (cr)
-                        cairo_destroy (cr);
-                if (surface){
-                        ;// FIX-ME GTK4 ???
-                        //?? gtk_image_set_from_surface (GTK_IMAGE (signal_graph), surface);
-
-                        //cairo_surface_finish (surface);
-                        //cairo_surface_destroy (surface);
-                        //surface = NULL;
-                }
+                // minimize
+                gtk_drawing_area_set_content_width (area, 128);
+                gtk_drawing_area_set_content_height (area, 4);
+                current_width=0;
         }
-        if (cr)
-                cairo_destroy (cr);
-        if (surface)
-                ;// FIX-ME GTK4 ???
-                //?? gtk_image_set_from_surface (GTK_IMAGE (signal_graph), surface);
 }

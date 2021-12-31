@@ -305,8 +305,11 @@ public:
 	void update (); // window update (inputs, etc. -- here currently not really necessary)
         void update_monitoring_parameters ();
 
-        void update_graph ();
-
+        static void graph_draw_function (GtkDrawingArea *area, cairo_t *cr,
+                                         int             width,
+                                         int             height,
+                                         Inet_Json_External_Scandata *self);
+        void dynamic_graph_draw_function (GtkDrawingArea *area, cairo_t *cr);
         void stream_data ();
         
         static void connect_cb (GtkWidget *widget, Inet_Json_External_Scandata *self);
@@ -529,6 +532,7 @@ private:
         gboolean unwrap_phase_plot;
         double scope_width_points;
         double scope_height_points;
+        GtkWidget *signal_graph_area;
 
         GtkWidget *update_ts_widget;
         GtkWidget *update_op_widget;

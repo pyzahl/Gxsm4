@@ -1064,9 +1064,6 @@ void DSPMoverControl::create_folder (){
                                 gtk_drawing_area_set_content_height (GTK_DRAWING_AREA (wave_preview_area), 34);
                                 gtk_drawing_area_set_draw_func (GTK_DRAWING_AREA (wave_preview_area), wave_preview_draw_function, this, NULL);
                                 g_object_set_data  (G_OBJECT (wave_preview_area), "wave_ch", GINT_TO_POINTER (k));
-
-                                // FIX-ME GTK4 WAVE-IMAGE
-                                //GtkWidget *wave_preview = gtk_image_new_from_surface (NULL);
                                 mov_bp->grid_add_widget (wave_preview_area);
 
                                 mov_bp->new_line ();
@@ -1683,8 +1680,7 @@ int DSPMoverControl::configure_waveform(GtkWidget *widget){
 
         // 6 lines for waves. 7 widgets: Wave N: X, ###, Y, ###, Z, ###, wave-icon
         for (int k=0; k<nw; ++k){
-                gtk_widget_queue_draw ((GtkWidget*) g_slist_nth_data (wc, i-1));
-                //draw_waveform_preview ((GtkWidget*) g_slist_nth_data (wc, i-1), k); // wave icon
+                gtk_widget_queue_draw ((GtkWidget*) g_slist_nth_data (wc, i-1)); // update wave icon
                 for (int q=0; q<7; ++q)
                         gtk_widget_show ((GtkWidget*) g_slist_nth_data (wc, --i+6));
         }
