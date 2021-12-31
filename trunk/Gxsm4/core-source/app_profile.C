@@ -1105,10 +1105,10 @@ gboolean ProfileControl::cairo_draw_profile_only_callback (cairo_t *cr, ProfileC
         return FALSE;
 }
 
-gboolean ProfileControl::canvas_draw_function (GtkDrawingArea *area, cairo_t *cr,
-                                               int             width,
-                                               int             height,
-                                               ProfileControl *pc){
+void ProfileControl::canvas_draw_function (GtkDrawingArea *area, cairo_t *cr,
+                                           int             width,
+                                           int             height,
+                                           ProfileControl *pc){
         cairo_item **c_item;
         cairo_item_text **c_item_t;
 
@@ -1159,8 +1159,6 @@ gboolean ProfileControl::canvas_draw_function (GtkDrawingArea *area, cairo_t *cr
         
         if (pc->BBox)
                 pc->BBox->draw (cr);
-                
-        return FALSE;
 }
 
 

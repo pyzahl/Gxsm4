@@ -69,3 +69,469 @@ Fri Dec 31 00:49:30 2021 GXSM shudown : closing logging monitor, last log of ses
 Fri Dec 31 00:49:30 2021 GXSM-Vm-Status : RealTime:      1640929770017719 us     17.150 s VmSize:        1233436 kB RefCounts:  UnitObj:    206 ScanDataObj:      0 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      7 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
 Fri Dec 31 00:49:30 2021 MonitorControl : End of Session Log. Exit OK. : 
 Fri Dec 31 00:49:30 2021 GXSM-Vm-Status : RealTime:      1640929770018252 us     17.150 s VmSize:        1233436 kB RefCounts:  UnitObj:    206 ScanDataObj:      0 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      7 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:45:57 2021      Monitor : startup : 
+Fri Dec 31 10:45:57 2021 GXSM-Vm-Status : RealTime:      1640965557321702 us      0.000 s VmSize:         904976 kB RefCounts:  UnitObj:      0 ScanDataObj:      0 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:45:57 2021 MonitorControl : startup : 
+Fri Dec 31 10:45:57 2021 GXSM-Vm-Status : RealTime:      1640965557356056 us      0.034 s VmSize:         907408 kB RefCounts:  UnitObj:      0 ScanDataObj:      0 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:45:57 2021 SR-MK2/3_HwI XSM_Hardware *get_gxsm_hwi_hardware_class : Init 1 : 
+Fri Dec 31 10:45:57 2021 GXSM-Vm-Status : RealTime:      1640965557793967 us      0.472 s VmSize:         946896 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:45:57 2021 DSP Mark ID found : MK 3 : 
+Fri Dec 31 10:45:57 2021 GXSM-Vm-Status : RealTime:      1640965557794141 us      0.473 s VmSize:         946896 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:45:57 2021 HWI-DEV-MK3-I** HwI SR-MK3 : verifying MK3 FB_SPM software details. : 
+Fri Dec 31 10:45:57 2021 GXSM-Vm-Status : RealTime:      1640965557794228 us      0.473 s VmSize:         946896 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:45:57 2021 HWI-DEV-MK3 DSP-ENGINE : USB DEVICE MAPPED TI DSP : 
+Fri Dec 31 10:45:57 2021 GXSM-Vm-Status : RealTime:      1640965557794293 us      0.473 s VmSize:         946896 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:45:57 2021 HWI-DEV-MK3-I*CPU* DSP-SoftId....  : 00001002   [HwI:00001002] : 
+Fri Dec 31 10:45:57 2021 GXSM-Vm-Status : RealTime:      1640965557794479 us      0.473 s VmSize:         946896 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:45:57 2021 HWI-DEV-MK3-I*CPU* DSP-Version...  : 00004012   [HwI:00004012] : 
+Fri Dec 31 10:45:57 2021 GXSM-Vm-Status : RealTime:      1640965557794529 us      0.473 s VmSize:         946896 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:45:57 2021 HWI-DEV-MK3-I*CPU* DSP-Magic::SignalLookup at address : 0x807a12c8 : 
+Fri Dec 31 10:45:57 2021 GXSM-Vm-Status : RealTime:      1640965557794578 us      0.473 s VmSize:         946896 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:45:57 2021 MK3 HwI Intialization and DSP software verification completed : 
+SR-MK3-PLL connected at /dev/sranger_mk2_5
+DSP-SoftId : 1002 [HwI:1002]
+DSP-SoftVer: 4012 [HwI:4012]
+DSP-SoftDat: 0421 2020 [HwI:0421 2020] : 
+Fri Dec 31 10:45:57 2021 GXSM-Vm-Status : RealTime:      1640965557794626 us      0.473 s VmSize:         946896 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:45:57 2021 HwI: probing succeeded. : DSP System Ready. : 
+Fri Dec 31 10:45:57 2021 GXSM-Vm-Status : RealTime:      1640965557794720 us      0.473 s VmSize:         946896 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:45:58 2021 MK3-SIGNAL-CONFIGURATION-INFO : Probe Signal Input[0] = 14 -> LockIn B-1st : 
+Fri Dec 31 10:45:58 2021 GXSM-Vm-Status : RealTime:      1640965558776601 us      1.455 s VmSize:         988632 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:45:58 2021 MK3-SIGNAL-CONFIGURATION-INFO : Probe Signal Input[1] = 12 -> LockIn A-2nd : 
+Fri Dec 31 10:45:58 2021 GXSM-Vm-Status : RealTime:      1640965558777312 us      1.456 s VmSize:         988632 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:45:58 2021 MK3-SIGNAL-CONFIGURATION-INFO : Probe Signal Input[2] = 12 -> LockIn A-2nd : 
+Fri Dec 31 10:45:58 2021 GXSM-Vm-Status : RealTime:      1640965558777652 us      1.456 s VmSize:         988632 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:45:58 2021 MK3-SIGNAL-CONFIGURATION-INFO : Probe Signal Input[3] = 8 -> Counter 0 : 
+Fri Dec 31 10:45:58 2021 GXSM-Vm-Status : RealTime:      1640965558777920 us      1.456 s VmSize:         988632 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:45:58 2021 MK3-SIGNAL-CONFIGURATION-INFO : Probe Signal Input[4] = 95 -> GPIO data : 
+Fri Dec 31 10:45:58 2021 GXSM-Vm-Status : RealTime:      1640965558778171 us      1.457 s VmSize:         988632 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:45:58 2021 MK3-SIGNAL-CONFIGURATION-INFO : Probe Signal Input[5] = 0 -> In 0 : 
+Fri Dec 31 10:45:58 2021 GXSM-Vm-Status : RealTime:      1640965558778519 us      1.457 s VmSize:         988632 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:45:58 2021 MK3-SIGNAL-CONFIGURATION-INFO : Probe Signal Input[6] = 41 -> Z Servo Neg : 
+Fri Dec 31 10:45:58 2021 GXSM-Vm-Status : RealTime:      1640965558778781 us      1.457 s VmSize:         988632 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:45:58 2021 MK3-SIGNAL-CONFIGURATION-INFO : LockIn Signal Input[0] = 28 -> MIX IN 0 : 
+Fri Dec 31 10:45:58 2021 GXSM-Vm-Status : RealTime:      1640965558779087 us      1.457 s VmSize:         988632 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:45:58 2021 MK3-SIGNAL-CONFIGURATION-INFO : LockIn Signal Input[1] = 28 -> MIX IN 0 : 
+Fri Dec 31 10:45:58 2021 GXSM-Vm-Status : RealTime:      1640965558779396 us      1.458 s VmSize:         988632 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:45:59 2021 GXSM4 startup MK3 DSP signal verification : WARNING SITUATION FOUND! : 
+Fri Dec 31 10:45:59 2021 GXSM-Vm-Status : RealTime:      1640965559582690 us      2.261 s VmSize:         997848 kB RefCounts:  UnitObj:    149 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:45:59 2021      WARNING : Please verify your desired configuration:
+Eventual GXSM4 / DSP Offset Adding mode conflict:
+ =>  Analog/AnalogOffsetAddig = TRUE: Analog OUT0/1 (X/Y Offset signal) are to be used externally or digitally via GXSM-Link to SPD
+  and
+ =>  Found DSP signals setup for  X/Y Scan Rot + X/Y Offset.
+Please review.
+ ================================================== 
+
+ ** CURRENT MK3 OUTMIX CONFIGURATION ** 
+OUT[0] := Null-Signal + Null-Signal - Null-Signal
+OUT[1] := Null-Signal + Null-Signal - Null-Signal
+OUT[2] := Z Offset + Z Offset from XY Slope - Null-Signal
+OUT[3] := X Scan Rot + X Offset - Null-Signal
+OUT[4] := Y Scan Rot + Y Offset - Null-Signal
+OUT[5] := Z Servo Neg + LockIn Ref * AC Ampl Aux - VP Z pos
+OUT[6] := VP Bias + Null-Signal + LockIn Ref * AC Ampl
+OUT[7] := Motor + Null-Signal - Null-Signal
+Set GXSM4 Preferences as desired to avoid this message or ignore if OK/custom. : 
+Fri Dec 31 10:45:59 2021 GXSM-Vm-Status : RealTime:      1640965559582863 us      2.261 s VmSize:         997848 kB RefCounts:  UnitObj:    149 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:46:01 2021         GXSM : startup : 
+Fri Dec 31 10:46:01 2021 GXSM-Vm-Status : RealTime:      1640965561998775 us      4.677 s VmSize:        1342196 kB RefCounts:  UnitObj:    876 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:    287 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:48:59 2021 GXSM shudown : closing logging monitor, last log of session. : 
+Fri Dec 31 10:48:59 2021 GXSM-Vm-Status : RealTime:      1640965739530981 us    182.209 s VmSize:        1245772 kB RefCounts:  UnitObj:    206 ScanDataObj:      0 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      3 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:48:59 2021 MonitorControl : End of Session Log. Exit OK. : 
+Fri Dec 31 10:48:59 2021 GXSM-Vm-Status : RealTime:      1640965739531574 us    182.210 s VmSize:        1245772 kB RefCounts:  UnitObj:    206 ScanDataObj:      0 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      3 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:49:06 2021      Monitor : startup : 
+Fri Dec 31 10:49:06 2021 GXSM-Vm-Status : RealTime:      1640965746073897 us      0.000 s VmSize:         978716 kB RefCounts:  UnitObj:      0 ScanDataObj:      0 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:49:06 2021 MonitorControl : startup : 
+Fri Dec 31 10:49:06 2021 GXSM-Vm-Status : RealTime:      1640965746113183 us      0.039 s VmSize:         981156 kB RefCounts:  UnitObj:      0 ScanDataObj:      0 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:49:06 2021 SPM_SIM_HwI XSM_Hardware *get_gxsm_hwi_hardware_class : Init 1 : 
+Fri Dec 31 10:49:06 2021 GXSM-Vm-Status : RealTime:      1640965746557442 us      0.484 s VmSize:        1012596 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:49:06 2021 HwI: probing succeeded. : SPM SIM System Ready. : 
+Fri Dec 31 10:49:06 2021 GXSM-Vm-Status : RealTime:      1640965746557553 us      0.484 s VmSize:        1012596 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:49:07 2021         GXSM : startup : 
+Fri Dec 31 10:49:07 2021 GXSM-Vm-Status : RealTime:      1640965747888449 us      1.815 s VmSize:        1067064 kB RefCounts:  UnitObj:    135 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:    287 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:49:29 2021   *StartScan : xp_srcs:  1  xm_srcs:  0 : 
+Fri Dec 31 10:49:29 2021 GXSM-Vm-Status : RealTime:      1640965769720551 us     23.647 s VmSize:        1063512 kB RefCounts:  UnitObj:    156 ScanDataObj:      2 ScanObj:      1 ZData:      1 LayerInfo:     12 Mem2d:      1 Mem2dSco:      0 VObj:      0 CairoItem:    283 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:49:47 2021 Scan Progress [23] : 0:00:18 | ETA:0:07:12 | 4%    : 
+Fri Dec 31 10:49:47 2021 GXSM-Vm-Status : RealTime:      1640965787164941 us     41.091 s VmSize:        1115792 kB RefCounts:  UnitObj:    166 ScanDataObj:      3 ScanObj:      2 ZData:      2 LayerInfo:     12 Mem2d:      2 Mem2dSco:      0 VObj:      0 CairoItem:    346 ProfileObj:      1 ProfileCtrl:      1 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:49:50 2021 Scan Progress [36] : 0:00:21 | ETA:0:05:20 | 6%    : 
+Fri Dec 31 10:49:50 2021 GXSM-Vm-Status : RealTime:      1640965790111915 us     44.038 s VmSize:        1123736 kB RefCounts:  UnitObj:    166 ScanDataObj:      3 ScanObj:      2 ZData:      2 LayerInfo:     12 Mem2d:      2 Mem2dSco:      0 VObj:      0 CairoItem:    346 ProfileObj:      1 ProfileCtrl:      1 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:49:53 2021 Scan Progress [49] : 0:00:24 | ETA:0:04:24 | 8%    : 
+Fri Dec 31 10:49:53 2021 GXSM-Vm-Status : RealTime:      1640965793033690 us     46.960 s VmSize:        1125052 kB RefCounts:  UnitObj:    166 ScanDataObj:      3 ScanObj:      2 ZData:      2 LayerInfo:     12 Mem2d:      2 Mem2dSco:      0 VObj:      0 CairoItem:    346 ProfileObj:      1 ProfileCtrl:      1 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:49:55 2021   *EndOfScan : interrupted : 
+Fri Dec 31 10:49:55 2021 GXSM-Vm-Status : RealTime:      1640965795089919 us     49.016 s VmSize:        1115292 kB RefCounts:  UnitObj:    166 ScanDataObj:      3 ScanObj:      2 ZData:      2 LayerInfo:     12 Mem2d:      2 Mem2dSco:      0 VObj:      0 CairoItem:    340 ProfileObj:      1 ProfileCtrl:      1 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:50:11 2021 GXSM shudown : closing logging monitor, last log of session. : 
+Fri Dec 31 10:50:11 2021 GXSM-Vm-Status : RealTime:      1640965811751563 us     65.678 s VmSize:        1099172 kB RefCounts:  UnitObj:     90 ScanDataObj:      0 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      3 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:50:11 2021 MonitorControl : End of Session Log. Exit OK. : 
+Fri Dec 31 10:50:11 2021 GXSM-Vm-Status : RealTime:      1640965811751793 us     65.678 s VmSize:        1099172 kB RefCounts:  UnitObj:     90 ScanDataObj:      0 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      3 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:52:31 2021      Monitor : startup : 
+Fri Dec 31 10:52:31 2021 GXSM-Vm-Status : RealTime:      1640965951858736 us      0.000 s VmSize:        1126160 kB RefCounts:  UnitObj:      0 ScanDataObj:      0 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:52:31 2021 MonitorControl : startup : 
+Fri Dec 31 10:52:31 2021 GXSM-Vm-Status : RealTime:      1640965951888106 us      0.029 s VmSize:        1128596 kB RefCounts:  UnitObj:      0 ScanDataObj:      0 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:52:32 2021 SR-MK2/3_HwI XSM_Hardware *get_gxsm_hwi_hardware_class : Init 1 : 
+Fri Dec 31 10:52:32 2021 GXSM-Vm-Status : RealTime:      1640965952299675 us      0.441 s VmSize:        1143504 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:52:32 2021 DSP Mark ID found : MK 3 : 
+Fri Dec 31 10:52:32 2021 GXSM-Vm-Status : RealTime:      1640965952299852 us      0.441 s VmSize:        1143504 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:52:32 2021 HWI-DEV-MK3-I** HwI SR-MK3 : verifying MK3 FB_SPM software details. : 
+Fri Dec 31 10:52:32 2021 GXSM-Vm-Status : RealTime:      1640965952299935 us      0.441 s VmSize:        1143504 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:52:32 2021 HWI-DEV-MK3 DSP-ENGINE : USB DEVICE MAPPED TI DSP : 
+Fri Dec 31 10:52:32 2021 GXSM-Vm-Status : RealTime:      1640965952299999 us      0.441 s VmSize:        1143504 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:52:32 2021 HWI-DEV-MK3-I*CPU* DSP-SoftId....  : 00001002   [HwI:00001002] : 
+Fri Dec 31 10:52:32 2021 GXSM-Vm-Status : RealTime:      1640965952300215 us      0.442 s VmSize:        1143504 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:52:32 2021 HWI-DEV-MK3-I*CPU* DSP-Version...  : 00004012   [HwI:00004012] : 
+Fri Dec 31 10:52:32 2021 GXSM-Vm-Status : RealTime:      1640965952300282 us      0.442 s VmSize:        1143504 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:52:32 2021 HWI-DEV-MK3-I*CPU* DSP-Magic::SignalLookup at address : 0x807a12c8 : 
+Fri Dec 31 10:52:32 2021 GXSM-Vm-Status : RealTime:      1640965952300337 us      0.442 s VmSize:        1143504 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:52:32 2021 MK3 HwI Intialization and DSP software verification completed : 
+SR-MK3-PLL connected at /dev/sranger_mk2_5
+DSP-SoftId : 1002 [HwI:1002]
+DSP-SoftVer: 4012 [HwI:4012]
+DSP-SoftDat: 0421 2020 [HwI:0421 2020] : 
+Fri Dec 31 10:52:32 2021 GXSM-Vm-Status : RealTime:      1640965952300395 us      0.442 s VmSize:        1143504 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:52:32 2021 HwI: probing succeeded. : DSP System Ready. : 
+Fri Dec 31 10:52:32 2021 GXSM-Vm-Status : RealTime:      1640965952300474 us      0.442 s VmSize:        1143504 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:52:33 2021 MK3-SIGNAL-CONFIGURATION-INFO : Probe Signal Input[0] = 14 -> LockIn B-1st : 
+Fri Dec 31 10:52:33 2021 GXSM-Vm-Status : RealTime:      1640965953280919 us      1.422 s VmSize:        1185212 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:52:33 2021 MK3-SIGNAL-CONFIGURATION-INFO : Probe Signal Input[1] = 12 -> LockIn A-2nd : 
+Fri Dec 31 10:52:33 2021 GXSM-Vm-Status : RealTime:      1640965953281324 us      1.423 s VmSize:        1185212 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:52:33 2021 MK3-SIGNAL-CONFIGURATION-INFO : Probe Signal Input[2] = 12 -> LockIn A-2nd : 
+Fri Dec 31 10:52:33 2021 GXSM-Vm-Status : RealTime:      1640965953281612 us      1.423 s VmSize:        1185212 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:52:33 2021 MK3-SIGNAL-CONFIGURATION-INFO : Probe Signal Input[3] = 8 -> Counter 0 : 
+Fri Dec 31 10:52:33 2021 GXSM-Vm-Status : RealTime:      1640965953281879 us      1.423 s VmSize:        1185212 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:52:33 2021 MK3-SIGNAL-CONFIGURATION-INFO : Probe Signal Input[4] = 95 -> GPIO data : 
+Fri Dec 31 10:52:33 2021 GXSM-Vm-Status : RealTime:      1640965953282124 us      1.423 s VmSize:        1185212 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:52:33 2021 MK3-SIGNAL-CONFIGURATION-INFO : Probe Signal Input[5] = 0 -> In 0 : 
+Fri Dec 31 10:52:33 2021 GXSM-Vm-Status : RealTime:      1640965953282363 us      1.424 s VmSize:        1185212 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:52:33 2021 MK3-SIGNAL-CONFIGURATION-INFO : Probe Signal Input[6] = 41 -> Z Servo Neg : 
+Fri Dec 31 10:52:33 2021 GXSM-Vm-Status : RealTime:      1640965953282612 us      1.424 s VmSize:        1185212 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:52:33 2021 MK3-SIGNAL-CONFIGURATION-INFO : LockIn Signal Input[0] = 28 -> MIX IN 0 : 
+Fri Dec 31 10:52:33 2021 GXSM-Vm-Status : RealTime:      1640965953282872 us      1.424 s VmSize:        1185212 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:52:33 2021 MK3-SIGNAL-CONFIGURATION-INFO : LockIn Signal Input[1] = 28 -> MIX IN 0 : 
+Fri Dec 31 10:52:33 2021 GXSM-Vm-Status : RealTime:      1640965953283134 us      1.424 s VmSize:        1185212 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:52:34 2021 GXSM4 startup MK3 DSP signal verification : WARNING SITUATION FOUND! : 
+Fri Dec 31 10:52:34 2021 GXSM-Vm-Status : RealTime:      1640965954125714 us      2.267 s VmSize:        1194420 kB RefCounts:  UnitObj:    149 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:52:34 2021      WARNING : Please verify your desired configuration:
+Eventual GXSM4 / DSP Offset Adding mode conflict:
+ =>  Analog/AnalogOffsetAddig = TRUE: Analog OUT0/1 (X/Y Offset signal) are to be used externally or digitally via GXSM-Link to SPD
+  and
+ =>  Found DSP signals setup for  X/Y Scan Rot + X/Y Offset.
+Please review.
+ ================================================== 
+
+ ** CURRENT MK3 OUTMIX CONFIGURATION ** 
+OUT[0] := Null-Signal + Null-Signal - Null-Signal
+OUT[1] := Null-Signal + Null-Signal - Null-Signal
+OUT[2] := Z Offset + Z Offset from XY Slope - Null-Signal
+OUT[3] := X Scan Rot + X Offset - Null-Signal
+OUT[4] := Y Scan Rot + Y Offset - Null-Signal
+OUT[5] := Z Servo Neg + LockIn Ref * AC Ampl Aux - VP Z pos
+OUT[6] := VP Bias + Null-Signal + LockIn Ref * AC Ampl
+OUT[7] := Motor + Null-Signal - Null-Signal
+Set GXSM4 Preferences as desired to avoid this message or ignore if OK/custom. : 
+Fri Dec 31 10:52:34 2021 GXSM-Vm-Status : RealTime:      1640965954125965 us      2.267 s VmSize:        1194420 kB RefCounts:  UnitObj:    149 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:52:36 2021         GXSM : startup : 
+Fri Dec 31 10:52:36 2021 GXSM-Vm-Status : RealTime:      1640965956869220 us      5.011 s VmSize:        1342224 kB RefCounts:  UnitObj:    876 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:    287 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:53:17 2021 GXSM shudown : closing logging monitor, last log of session. : 
+Fri Dec 31 10:53:17 2021 GXSM-Vm-Status : RealTime:      1640965997521617 us     45.663 s VmSize:        1229264 kB RefCounts:  UnitObj:    206 ScanDataObj:      0 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      3 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:53:17 2021 MonitorControl : End of Session Log. Exit OK. : 
+Fri Dec 31 10:53:17 2021 GXSM-Vm-Status : RealTime:      1640965997521746 us     45.663 s VmSize:        1229264 kB RefCounts:  UnitObj:    206 ScanDataObj:      0 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      3 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:54:03 2021      Monitor : startup : 
+Fri Dec 31 10:54:03 2021 GXSM-Vm-Status : RealTime:      1640966043929059 us      0.000 s VmSize:         978704 kB RefCounts:  UnitObj:      0 ScanDataObj:      0 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:54:03 2021 MonitorControl : startup : 
+Fri Dec 31 10:54:03 2021 GXSM-Vm-Status : RealTime:      1640966043958385 us      0.029 s VmSize:         981144 kB RefCounts:  UnitObj:      0 ScanDataObj:      0 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:54:04 2021 SR-MK2/3_HwI XSM_Hardware *get_gxsm_hwi_hardware_class : Init 1 : 
+Fri Dec 31 10:54:04 2021 GXSM-Vm-Status : RealTime:      1640966044468386 us      0.539 s VmSize:         996032 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:54:04 2021 DSP Mark ID found : MK 3 : 
+Fri Dec 31 10:54:04 2021 GXSM-Vm-Status : RealTime:      1640966044468548 us      0.540 s VmSize:         996032 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:54:04 2021 HWI-DEV-MK3-I** HwI SR-MK3 : verifying MK3 FB_SPM software details. : 
+Fri Dec 31 10:54:04 2021 GXSM-Vm-Status : RealTime:      1640966044468630 us      0.540 s VmSize:         996032 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:54:04 2021 HWI-DEV-MK3 DSP-ENGINE : USB DEVICE MAPPED TI DSP : 
+Fri Dec 31 10:54:04 2021 GXSM-Vm-Status : RealTime:      1640966044468693 us      0.540 s VmSize:         996032 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:54:04 2021 HWI-DEV-MK3-I*CPU* DSP-SoftId....  : 00001002   [HwI:00001002] : 
+Fri Dec 31 10:54:04 2021 GXSM-Vm-Status : RealTime:      1640966044468926 us      0.540 s VmSize:         996032 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:54:04 2021 HWI-DEV-MK3-I*CPU* DSP-Version...  : 00004012   [HwI:00004012] : 
+Fri Dec 31 10:54:04 2021 GXSM-Vm-Status : RealTime:      1640966044468993 us      0.540 s VmSize:         996032 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:54:04 2021 HWI-DEV-MK3-I*CPU* DSP-Magic::SignalLookup at address : 0x807a12c8 : 
+Fri Dec 31 10:54:04 2021 GXSM-Vm-Status : RealTime:      1640966044469047 us      0.540 s VmSize:         996032 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:54:04 2021 MK3 HwI Intialization and DSP software verification completed : 
+SR-MK3-PLL connected at /dev/sranger_mk2_5
+DSP-SoftId : 1002 [HwI:1002]
+DSP-SoftVer: 4012 [HwI:4012]
+DSP-SoftDat: 0421 2020 [HwI:0421 2020] : 
+Fri Dec 31 10:54:04 2021 GXSM-Vm-Status : RealTime:      1640966044469096 us      0.540 s VmSize:         996032 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:54:04 2021 HwI: probing succeeded. : DSP System Ready. : 
+Fri Dec 31 10:54:04 2021 GXSM-Vm-Status : RealTime:      1640966044469179 us      0.540 s VmSize:         996032 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:54:05 2021 MK3-SIGNAL-CONFIGURATION-INFO : Probe Signal Input[0] = 14 -> LockIn B-1st : 
+Fri Dec 31 10:54:05 2021 GXSM-Vm-Status : RealTime:      1640966045570214 us      1.641 s VmSize:        1054156 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:54:05 2021 MK3-SIGNAL-CONFIGURATION-INFO : Probe Signal Input[1] = 12 -> LockIn A-2nd : 
+Fri Dec 31 10:54:05 2021 GXSM-Vm-Status : RealTime:      1640966045570598 us      1.642 s VmSize:        1054156 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:54:05 2021 MK3-SIGNAL-CONFIGURATION-INFO : Probe Signal Input[2] = 12 -> LockIn A-2nd : 
+Fri Dec 31 10:54:05 2021 GXSM-Vm-Status : RealTime:      1640966045570870 us      1.642 s VmSize:        1054156 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:54:05 2021 MK3-SIGNAL-CONFIGURATION-INFO : Probe Signal Input[3] = 8 -> Counter 0 : 
+Fri Dec 31 10:54:05 2021 GXSM-Vm-Status : RealTime:      1640966045571123 us      1.642 s VmSize:        1054156 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:54:05 2021 MK3-SIGNAL-CONFIGURATION-INFO : Probe Signal Input[4] = 95 -> GPIO data : 
+Fri Dec 31 10:54:05 2021 GXSM-Vm-Status : RealTime:      1640966045571366 us      1.642 s VmSize:        1054156 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:54:05 2021 MK3-SIGNAL-CONFIGURATION-INFO : Probe Signal Input[5] = 0 -> In 0 : 
+Fri Dec 31 10:54:05 2021 GXSM-Vm-Status : RealTime:      1640966045571607 us      1.643 s VmSize:        1054156 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:54:05 2021 MK3-SIGNAL-CONFIGURATION-INFO : Probe Signal Input[6] = 41 -> Z Servo Neg : 
+Fri Dec 31 10:54:05 2021 GXSM-Vm-Status : RealTime:      1640966045571882 us      1.643 s VmSize:        1054156 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:54:05 2021 MK3-SIGNAL-CONFIGURATION-INFO : LockIn Signal Input[0] = 28 -> MIX IN 0 : 
+Fri Dec 31 10:54:05 2021 GXSM-Vm-Status : RealTime:      1640966045572145 us      1.643 s VmSize:        1054156 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:54:05 2021 MK3-SIGNAL-CONFIGURATION-INFO : LockIn Signal Input[1] = 28 -> MIX IN 0 : 
+Fri Dec 31 10:54:05 2021 GXSM-Vm-Status : RealTime:      1640966045572404 us      1.643 s VmSize:        1054156 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:54:06 2021 GXSM4 startup MK3 DSP signal verification : WARNING SITUATION FOUND! : 
+Fri Dec 31 10:54:06 2021 GXSM-Vm-Status : RealTime:      1640966046438127 us      2.509 s VmSize:        1063368 kB RefCounts:  UnitObj:    149 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:54:06 2021      WARNING : Please verify your desired configuration:
+Eventual GXSM4 / DSP Offset Adding mode conflict:
+ =>  Analog/AnalogOffsetAddig = TRUE: Analog OUT0/1 (X/Y Offset signal) are to be used externally or digitally via GXSM-Link to SPD
+  and
+ =>  Found DSP signals setup for  X/Y Scan Rot + X/Y Offset.
+Please review.
+ ================================================== 
+
+ ** CURRENT MK3 OUTMIX CONFIGURATION ** 
+OUT[0] := Null-Signal + Null-Signal - Null-Signal
+OUT[1] := Null-Signal + Null-Signal - Null-Signal
+OUT[2] := Z Offset + Z Offset from XY Slope - Null-Signal
+OUT[3] := X Scan Rot + X Offset - Null-Signal
+OUT[4] := Y Scan Rot + Y Offset - Null-Signal
+OUT[5] := Z Servo Neg + LockIn Ref * AC Ampl Aux - VP Z pos
+OUT[6] := VP Bias + Null-Signal + LockIn Ref * AC Ampl
+OUT[7] := Motor + Null-Signal - Null-Signal
+Set GXSM4 Preferences as desired to avoid this message or ignore if OK/custom. : 
+Fri Dec 31 10:54:06 2021 GXSM-Vm-Status : RealTime:      1640966046438289 us      2.509 s VmSize:        1063368 kB RefCounts:  UnitObj:    149 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:54:09 2021         GXSM : startup : 
+Fri Dec 31 10:54:09 2021 GXSM-Vm-Status : RealTime:      1640966049277192 us      5.348 s VmSize:        1342820 kB RefCounts:  UnitObj:    876 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:    287 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:57:36 2021 ProbeVector[pc00] : (n:00751, dnx:00010, 0x0000, 0x0001, r:   0, pc:0, f:1),(dU:0.0000 mV, dxzy:0.0000, 0.0000, 0.0000 mV, dxy0:0.0000, 0.0000 mV, dP:0.0000) : 
+Fri Dec 31 10:57:36 2021 GXSM-Vm-Status : RealTime:      1640966256781270 us    212.852 s VmSize:        1310864 kB RefCounts:  UnitObj:    876 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:    283 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:57:36 2021 ProbeVector[pc01] : (n:00751, dnx:00010, 0x0000, 0x0001, r:   0, pc:0, f:0),(dU:0.0000 mV, dxzy:0.0000, 0.0000, 0.0000 mV, dxy0:0.0000, 0.0000 mV, dP:0.0000) : 
+Fri Dec 31 10:57:36 2021 GXSM-Vm-Status : RealTime:      1640966256782048 us    212.853 s VmSize:        1310864 kB RefCounts:  UnitObj:    876 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:    283 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:57:36 2021 ProbeVector[pc02] : (n:00000, dnx:00000, 0x0000, 0x0001, r:   0, pc:0, f:0),(dU:0.0000 mV, dxzy:0.0000, 0.0000, 0.0000 mV, dxy0:0.0000, 0.0000 mV, dP:0.0000) : 
+Fri Dec 31 10:57:36 2021 GXSM-Vm-Status : RealTime:      1640966256782976 us    212.854 s VmSize:        1310864 kB RefCounts:  UnitObj:    876 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:    283 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:57:36 2021 ProbeVector[pc03] : (n:00000, dnx:00000, 0x0000, 0x0001, r:   0, pc:0, f:0),(dU:0.0000 mV, dxzy:0.0000, 0.0000, 0.0000 mV, dxy0:0.0000, 0.0000 mV, dP:0.0000) : 
+Fri Dec 31 10:57:36 2021 GXSM-Vm-Status : RealTime:      1640966256783793 us    212.855 s VmSize:        1310864 kB RefCounts:  UnitObj:    876 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:    283 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:57:36 2021 ProbeVector[pc04] : (n:00000, dnx:00000, 0x0000, 0x0001, r:   0, pc:0, f:0),(dU:0.0000 mV, dxzy:0.0000, 0.0000, 0.0000 mV, dxy0:0.0000, 0.0000 mV, dP:0.0000) : 
+Fri Dec 31 10:57:36 2021 GXSM-Vm-Status : RealTime:      1640966256784682 us    212.856 s VmSize:        1310864 kB RefCounts:  UnitObj:    876 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:    283 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:57:36 2021 ProbeVector[pc05] : (n:00000, dnx:00000, 0x0000, 0x0001, r:   0, pc:0, f:0),(dU:0.0000 mV, dxzy:0.0000, 0.0000, 0.0000 mV, dxy0:0.0000, 0.0000 mV, dP:0.0000) : 
+Fri Dec 31 10:57:36 2021 GXSM-Vm-Status : RealTime:      1640966256785504 us    212.857 s VmSize:        1310864 kB RefCounts:  UnitObj:    876 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:    283 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:57:36 2021 ProbeVector[pc00] : (n:00751, dnx:00100, 0x1031, 0x0001, r:   0, pc:0, f:1),(dU:-0.0127 mV, dxzy:0.0000, 0.0000, 0.0000 mV, dxy0:0.0000, 0.0000 mV, dP:0.0000) : 
+Fri Dec 31 10:57:36 2021 GXSM-Vm-Status : RealTime:      1640966256924857 us    212.996 s VmSize:        1311216 kB RefCounts:  UnitObj:    876 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:    283 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:57:36 2021 ProbeVector[pc01] : (n:00100, dnx:03000, 0x1031, 0x0001, r:   0, pc:0, f:1),(dU:0.0064 mV, dxzy:0.0000, 0.0000, 0.0000 mV, dxy0:0.0000, 0.0000 mV, dP:0.0000) : 
+Fri Dec 31 10:57:36 2021 GXSM-Vm-Status : RealTime:      1640966256925877 us    212.997 s VmSize:        1311216 kB RefCounts:  UnitObj:    876 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:    283 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:57:36 2021 ProbeVector[pc02] : (n:00100, dnx:03000, 0x1031, 0x0001, r:   0, pc:0, f:1),(dU:-0.0064 mV, dxzy:0.0000, 0.0000, 0.0000 mV, dxy0:0.0000, 0.0000 mV, dP:0.0000) : 
+Fri Dec 31 10:57:36 2021 GXSM-Vm-Status : RealTime:      1640966256926248 us    212.997 s VmSize:        1311216 kB RefCounts:  UnitObj:    876 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:    283 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:57:36 2021 ProbeVector[pc03] : (n:00751, dnx:00100, 0x1031, 0x0001, r:   0, pc:0, f:1),(dU:0.0127 mV, dxzy:0.0000, 0.0000, 0.0000 mV, dxy0:0.0000, 0.0000 mV, dP:0.0000) : 
+Fri Dec 31 10:57:36 2021 GXSM-Vm-Status : RealTime:      1640966256926596 us    212.998 s VmSize:        1311216 kB RefCounts:  UnitObj:    876 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:    283 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:57:36 2021 ProbeVector[pc04] : (n:00751, dnx:00000, 0x1031, 0x0001, r:   0, pc:0, f:1),(dU:0.0000 mV, dxzy:0.0000, 0.0000, 0.0000 mV, dxy0:0.0000, 0.0000 mV, dP:0.0000) : 
+Fri Dec 31 10:57:36 2021 GXSM-Vm-Status : RealTime:      1640966256926972 us    212.998 s VmSize:        1311216 kB RefCounts:  UnitObj:    876 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:    283 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:57:36 2021 ProbeVector[pc05] : (n:00226, dnx:00100, 0x1031, 0x0000, r:   0, pc:0, f:1),(dU:0.0000 mV, dxzy:0.0000, 0.0000, 0.0000 mV, dxy0:0.0000, 0.0000 mV, dP:0.0000) : 
+Fri Dec 31 10:57:36 2021 GXSM-Vm-Status : RealTime:      1640966256927328 us    212.998 s VmSize:        1311216 kB RefCounts:  UnitObj:    876 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:    283 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:57:36 2021 ProbeVector[pc06] : (n:00002, dnx:00000, 0x1031, 0x0001, r:   0, pc:0, f:0),(dU:0.0000 mV, dxzy:0.0000, 0.0000, 0.0000 mV, dxy0:0.0000, 0.0000 mV, dP:0.0000) : 
+Fri Dec 31 10:57:36 2021 GXSM-Vm-Status : RealTime:      1640966256927730 us    212.999 s VmSize:        1311216 kB RefCounts:  UnitObj:    876 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:    283 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:57:36 2021 ProbeVector[pc07] : (n:00000, dnx:00000, 0x0000, 0x0001, r:   0, pc:0, f:0),(dU:0.0000 mV, dxzy:0.0000, 0.0000, 0.0000 mV, dxy0:0.0000, 0.0000 mV, dP:0.0000) : 
+Fri Dec 31 10:57:36 2021 GXSM-Vm-Status : RealTime:      1640966256928222 us    212.999 s VmSize:        1311216 kB RefCounts:  UnitObj:    876 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:    283 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:57:36 2021 ProbeVector[pc08] : (n:00000, dnx:00000, 0x0000, 0x0001, r:   0, pc:0, f:0),(dU:0.0000 mV, dxzy:0.0000, 0.0000, 0.0000 mV, dxy0:0.0000, 0.0000 mV, dP:0.0000) : 
+Fri Dec 31 10:57:36 2021 GXSM-Vm-Status : RealTime:      1640966256928593 us    213.000 s VmSize:        1311216 kB RefCounts:  UnitObj:    876 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:    283 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:57:36 2021 ProbeVector[pc09] : (n:00000, dnx:00000, 0x0000, 0x0001, r:   0, pc:0, f:0),(dU:0.0000 mV, dxzy:0.0000, 0.0000, 0.0000 mV, dxy0:0.0000, 0.0000 mV, dP:0.0000) : 
+Fri Dec 31 10:57:36 2021 GXSM-Vm-Status : RealTime:      1640966256928942 us    213.000 s VmSize:        1311216 kB RefCounts:  UnitObj:    876 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:    283 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:57:36 2021 ProbeVector[pc10] : (n:00000, dnx:00000, 0x0000, 0x0001, r:   0, pc:0, f:0),(dU:0.0000 mV, dxzy:0.0000, 0.0000, 0.0000 mV, dxy0:0.0000, 0.0000 mV, dP:0.0000) : 
+Fri Dec 31 10:57:36 2021 GXSM-Vm-Status : RealTime:      1640966256929275 us    213.000 s VmSize:        1311216 kB RefCounts:  UnitObj:    876 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:    283 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:57:36 2021 VectorProbe Execute : VP: STS : 
+Fri Dec 31 10:57:36 2021 GXSM-Vm-Status : RealTime:      1640966256929451 us    213.000 s VmSize:        1311216 kB RefCounts:  UnitObj:    876 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:    283 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 10:57:36 2021  VectorProbe : Tp=10339.75 ms, dU=1.980 V, dUs=20.00 mV, O*0x01 S*0x1101031 : 
+Fri Dec 31 10:57:36 2021 GXSM-Vm-Status : RealTime:      1640966256929509 us    213.001 s VmSize:        1311216 kB RefCounts:  UnitObj:    876 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:    283 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 11:36:39 2021   *StartScan : xp_srcs:  1  xm_srcs:  0 : 
+Fri Dec 31 11:36:39 2021 GXSM-Vm-Status : RealTime:      1640968599070195 us   2555.141 s VmSize:        1359092 kB RefCounts:  UnitObj:    957 ScanDataObj:      8 ScanObj:      7 ZData:      7 LayerInfo:     12 Mem2d:      7 Mem2dSco:      0 VObj:      0 CairoItem:    592 ProfileObj:      6 ProfileCtrl:      6 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 11:36:48 2021   *EndOfScan : interrupted : 
+Fri Dec 31 11:36:48 2021 GXSM-Vm-Status : RealTime:      1640968608342074 us   2564.413 s VmSize:        1402356 kB RefCounts:  UnitObj:    957 ScanDataObj:      8 ScanObj:      7 ZData:      7 LayerInfo:     12 Mem2d:      7 Mem2dSco:      0 VObj:      0 CairoItem:    592 ProfileObj:      6 ProfileCtrl:      6 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 11:36:52 2021   *StartScan : xp_srcs: 21  xm_srcs:  0 : 
+Fri Dec 31 11:36:52 2021 GXSM-Vm-Status : RealTime:      1640968612331752 us   2568.403 s VmSize:        1382612 kB RefCounts:  UnitObj:    978 ScanDataObj:      9 ScanObj:      8 ZData:      8 LayerInfo:     24 Mem2d:      8 Mem2dSco:      0 VObj:      0 CairoItem:    592 ProfileObj:      6 ProfileCtrl:      6 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 11:37:01 2021 Scan Progress [9] : 0:00:09 | ETA:0:08:51 | 1%  [10] Fifo: 1.1% [1.7%] 8.5bit/pix(11417,717,1,1,1) {603, 4.095Mb/s 20.000ms sleep} : 
+Fri Dec 31 11:37:01 2021 GXSM-Vm-Status : RealTime:      1640968621669749 us   2577.741 s VmSize:        1422564 kB RefCounts:  UnitObj:    978 ScanDataObj:      9 ScanObj:      8 ZData:      8 LayerInfo:     24 Mem2d:      8 Mem2dSco:      0 VObj:      0 CairoItem:    592 ProfileObj:      6 ProfileCtrl:      6 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 11:37:04 2021 Scan Progress [12] : 0:00:12 | ETA:0:09:02 | 2%  [13] Fifo: 1.1% [1.8%] 8.5bit/pix(14821,951,1,1,1) {715, 3.847Mb/s 20.000ms sleep} : 
+Fri Dec 31 11:37:04 2021 GXSM-Vm-Status : RealTime:      1640968624098777 us   2580.170 s VmSize:        1419936 kB RefCounts:  UnitObj:    978 ScanDataObj:      9 ScanObj:      8 ZData:      8 LayerInfo:     24 Mem2d:      8 Mem2dSco:      0 VObj:      0 CairoItem:    592 ProfileObj:      6 ProfileCtrl:      6 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 11:37:07 2021 Scan Progress [16] : 0:00:15 | ETA:0:08:34 | 2%  [16] Fifo: 0.7% [1.8%] 8.5bit/pix(19133,1243,1,1,1) {860, 3.647Mb/s 20.000ms sleep} : 
+Fri Dec 31 11:37:07 2021 GXSM-Vm-Status : RealTime:      1640968627220847 us   2583.292 s VmSize:        1408240 kB RefCounts:  UnitObj:    978 ScanDataObj:      9 ScanObj:      8 ZData:      8 LayerInfo:     24 Mem2d:      8 Mem2dSco:      0 VObj:      0 CairoItem:    592 ProfileObj:      6 ProfileCtrl:      6 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 11:37:10 2021 Scan Progress [20] : 0:00:18 | ETA:0:08:16 | 3%  [20] Fifo: 1.1% [1.9%] 8.5bit/pix(23680,1500,1,1,1) {1009, 3.513Mb/s 20.000ms sleep} : 
+Fri Dec 31 11:37:10 2021 GXSM-Vm-Status : RealTime:      1640968630450233 us   2586.521 s VmSize:        1408240 kB RefCounts:  UnitObj:    978 ScanDataObj:      9 ScanObj:      8 ZData:      8 LayerInfo:     24 Mem2d:      8 Mem2dSco:      0 VObj:      0 CairoItem:    592 ProfileObj:      6 ProfileCtrl:      6 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 11:37:13 2021 Scan Progress [24] : 0:00:21 | ETA:0:08:03 | 4%  [24] Fifo: 0.6% [1.9%] 8.5bit/pix(28205,1771,1,1,1) {1157, 3.421Mb/s 20.000ms sleep} : 
+Fri Dec 31 11:37:13 2021 GXSM-Vm-Status : RealTime:      1640968633643702 us   2589.715 s VmSize:        1432364 kB RefCounts:  UnitObj:    978 ScanDataObj:      9 ScanObj:      8 ZData:      8 LayerInfo:     24 Mem2d:      8 Mem2dSco:      0 VObj:      0 CairoItem:    592 ProfileObj:      6 ProfileCtrl:      6 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 11:37:16 2021 Scan Progress [27] : 0:00:24 | ETA:0:08:10 | 4%  [28] Fifo: 1.8% [1.9%] 8.5bit/pix(31614,1984,1,1,1) {1270, 3.367Mb/s 20.000ms sleep} : 
+Fri Dec 31 11:37:16 2021 GXSM-Vm-Status : RealTime:      1640968636092564 us   2592.164 s VmSize:        1429140 kB RefCounts:  UnitObj:    978 ScanDataObj:      9 ScanObj:      8 ZData:      8 LayerInfo:     24 Mem2d:      8 Mem2dSco:      0 VObj:      0 CairoItem:    592 ProfileObj:      6 ProfileCtrl:      6 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 11:37:19 2021 Scan Progress [31] : 0:00:27 | ETA:0:07:59 | 5%  [32] Fifo: 1.1% [1.9%] 8.5bit/pix(36189,2291,1,1,1) {1419, 3.311Mb/s 20.000ms sleep} : 
+Fri Dec 31 11:37:19 2021 GXSM-Vm-Status : RealTime:      1640968639308286 us   2595.379 s VmSize:        1401920 kB RefCounts:  UnitObj:    978 ScanDataObj:      9 ScanObj:      8 ZData:      8 LayerInfo:     24 Mem2d:      8 Mem2dSco:      0 VObj:      0 CairoItem:    592 ProfileObj:      6 ProfileCtrl:      6 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 11:37:22 2021 Scan Progress [35] : 0:00:30 | ETA:0:07:50 | 6%  [35] Fifo: 1.1% [1.9%] 8.5bit/pix(40615,2573,1,1,1) {1566, 3.268Mb/s 20.000ms sleep} : 
+Fri Dec 31 11:37:22 2021 GXSM-Vm-Status : RealTime:      1640968642474447 us   2598.545 s VmSize:        1408240 kB RefCounts:  UnitObj:    978 ScanDataObj:      9 ScanObj:      8 ZData:      8 LayerInfo:     24 Mem2d:      8 Mem2dSco:      0 VObj:      0 CairoItem:    592 ProfileObj:      6 ProfileCtrl:      6 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 11:37:25 2021 Scan Progress [39] : 0:00:33 | ETA:0:07:42 | 6%  [40] Fifo: 1.2% [1.9%] 8.5bit/pix(45172,2902,1,1,1) {1716, 3.232Mb/s 20.000ms sleep} : 
+Fri Dec 31 11:37:25 2021 GXSM-Vm-Status : RealTime:      1640968645717995 us   2601.789 s VmSize:        1426888 kB RefCounts:  UnitObj:    978 ScanDataObj:      9 ScanObj:      8 ZData:      8 LayerInfo:     24 Mem2d:      8 Mem2dSco:      0 VObj:      0 CairoItem:    592 ProfileObj:      6 ProfileCtrl:      6 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 11:37:28 2021 Scan Progress [42] : 0:00:36 | ETA:0:07:46 | 7%  [43] Fifo: 1.8% [1.9%] 8.5bit/pix(48488,3110,1,1,1) {1827, 3.210Mb/s 20.000ms sleep} : 
+Fri Dec 31 11:37:28 2021 GXSM-Vm-Status : RealTime:      1640968648119910 us   2604.191 s VmSize:        1394480 kB RefCounts:  UnitObj:    978 ScanDataObj:      9 ScanObj:      8 ZData:      8 LayerInfo:     24 Mem2d:      8 Mem2dSco:      0 VObj:      0 CairoItem:    592 ProfileObj:      6 ProfileCtrl:      6 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 11:37:31 2021 Scan Progress [46] : 0:00:39 | ETA:0:07:39 | 7%  [46] Fifo: 0.7% [1.9%] 8.5bit/pix(52965,3413,1,1,1) {1974, 3.185Mb/s 20.000ms sleep} : 
+Fri Dec 31 11:37:31 2021 GXSM-Vm-Status : RealTime:      1640968651287421 us   2607.358 s VmSize:        1408240 kB RefCounts:  UnitObj:    978 ScanDataObj:      9 ScanObj:      8 ZData:      8 LayerInfo:     24 Mem2d:      8 Mem2dSco:      0 VObj:      0 CairoItem:    592 ProfileObj:      6 ProfileCtrl:      6 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 11:37:34 2021 Scan Progress [50] : 0:00:42 | ETA:0:07:32 | 8%  [50] Fifo: 1.1% [1.9%] 8.5bit/pix(57504,3678,1,1,1) {2123, 3.163Mb/s 20.000ms sleep} : 
+Fri Dec 31 11:37:34 2021 GXSM-Vm-Status : RealTime:      1640968654518032 us   2610.589 s VmSize:        1408240 kB RefCounts:  UnitObj:    978 ScanDataObj:      9 ScanObj:      8 ZData:      8 LayerInfo:     24 Mem2d:      8 Mem2dSco:      0 VObj:      0 CairoItem:    592 ProfileObj:      6 ProfileCtrl:      6 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 11:37:37 2021 Scan Progress [54] : 0:00:45 | ETA:0:07:26 | 9%  [54] Fifo: 0.6% [1.9%] 8.5bit/pix(62012,3968,1,1,1) {2271, 3.145Mb/s 20.000ms sleep} : 
+Fri Dec 31 11:37:37 2021 GXSM-Vm-Status : RealTime:      1640968657704439 us   2613.775 s VmSize:        1425480 kB RefCounts:  UnitObj:    978 ScanDataObj:      9 ScanObj:      8 ZData:      8 LayerInfo:     24 Mem2d:      8 Mem2dSco:      0 VObj:      0 CairoItem:    592 ProfileObj:      6 ProfileCtrl:      6 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 11:37:40 2021 Scan Progress [57] : 0:00:48 | ETA:0:07:29 | 9%  [57] Fifo: 1.1% [2.0%] 8.5bit/pix(65405,4183,1,1,1) {2383, 3.132Mb/s 20.000ms sleep} : 
+Fri Dec 31 11:37:40 2021 GXSM-Vm-Status : RealTime:      1640968660129313 us   2616.200 s VmSize:        1408240 kB RefCounts:  UnitObj:    978 ScanDataObj:      9 ScanObj:      8 ZData:      8 LayerInfo:     24 Mem2d:      8 Mem2dSco:      0 VObj:      0 CairoItem:    592 ProfileObj:      6 ProfileCtrl:      6 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 11:37:42 2021   *EndOfScan : interrupted : 
+Fri Dec 31 11:37:42 2021 GXSM-Vm-Status : RealTime:      1640968662878525 us   2618.950 s VmSize:        1400104 kB RefCounts:  UnitObj:    978 ScanDataObj:      9 ScanObj:      8 ZData:      8 LayerInfo:     24 Mem2d:      8 Mem2dSco:      0 VObj:      0 CairoItem:    592 ProfileObj:      6 ProfileCtrl:      6 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:48:34 2021 GXSM shudown : closing logging monitor, last log of session. : 
+Fri Dec 31 13:48:34 2021 GXSM-Vm-Status : RealTime:      1640976514764902 us  10470.836 s VmSize:        1324276 kB RefCounts:  UnitObj:    206 ScanDataObj:      0 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      3 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:48:34 2021 MonitorControl : End of Session Log. Exit OK. : 
+Fri Dec 31 13:48:34 2021 GXSM-Vm-Status : RealTime:      1640976514766073 us  10470.837 s VmSize:        1324276 kB RefCounts:  UnitObj:    206 ScanDataObj:      0 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      3 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:49:43 2021      Monitor : startup : 
+Fri Dec 31 13:49:43 2021 GXSM-Vm-Status : RealTime:      1640976583257263 us      0.000 s VmSize:        1052712 kB RefCounts:  UnitObj:      0 ScanDataObj:      0 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:49:43 2021 MonitorControl : startup : 
+Fri Dec 31 13:49:43 2021 GXSM-Vm-Status : RealTime:      1640976583283354 us      0.026 s VmSize:        1054892 kB RefCounts:  UnitObj:      0 ScanDataObj:      0 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:49:43 2021 SR-MK2/3_HwI XSM_Hardware *get_gxsm_hwi_hardware_class : Init 1 : 
+Fri Dec 31 13:49:43 2021 GXSM-Vm-Status : RealTime:      1640976583702684 us      0.446 s VmSize:        1077996 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:49:43 2021 DSP Mark ID found : MK 3 : 
+Fri Dec 31 13:49:43 2021 GXSM-Vm-Status : RealTime:      1640976583702847 us      0.446 s VmSize:        1077996 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:49:43 2021 HWI-DEV-MK3-I** HwI SR-MK3 : verifying MK3 FB_SPM software details. : 
+Fri Dec 31 13:49:43 2021 GXSM-Vm-Status : RealTime:      1640976583702931 us      0.446 s VmSize:        1077996 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:49:43 2021 HWI-DEV-MK3 DSP-ENGINE : USB DEVICE MAPPED TI DSP : 
+Fri Dec 31 13:49:43 2021 GXSM-Vm-Status : RealTime:      1640976583703000 us      0.446 s VmSize:        1077996 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:49:43 2021 HWI-DEV-MK3-I*CPU* DSP-SoftId....  : 00001002   [HwI:00001002] : 
+Fri Dec 31 13:49:43 2021 GXSM-Vm-Status : RealTime:      1640976583703230 us      0.446 s VmSize:        1077996 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:49:43 2021 HWI-DEV-MK3-I*CPU* DSP-Version...  : 00004012   [HwI:00004012] : 
+Fri Dec 31 13:49:43 2021 GXSM-Vm-Status : RealTime:      1640976583703295 us      0.446 s VmSize:        1077996 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:49:43 2021 HWI-DEV-MK3-I*CPU* DSP-Magic::SignalLookup at address : 0x807a12c8 : 
+Fri Dec 31 13:49:43 2021 GXSM-Vm-Status : RealTime:      1640976583703348 us      0.446 s VmSize:        1077996 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:49:43 2021 MK3 HwI Intialization and DSP software verification completed : 
+SR-MK3-PLL connected at /dev/sranger_mk2_5
+DSP-SoftId : 1002 [HwI:1002]
+DSP-SoftVer: 4012 [HwI:4012]
+DSP-SoftDat: 0421 2020 [HwI:0421 2020] : 
+Fri Dec 31 13:49:43 2021 GXSM-Vm-Status : RealTime:      1640976583703398 us      0.446 s VmSize:        1077996 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:49:43 2021 HwI: probing succeeded. : DSP System Ready. : 
+Fri Dec 31 13:49:43 2021 GXSM-Vm-Status : RealTime:      1640976583703478 us      0.446 s VmSize:        1077996 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:49:44 2021 MK3-SIGNAL-CONFIGURATION-INFO : Probe Signal Input[0] = 14 -> LockIn B-1st : 
+Fri Dec 31 13:49:44 2021 GXSM-Vm-Status : RealTime:      1640976584843991 us      1.587 s VmSize:        1119712 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:49:44 2021 MK3-SIGNAL-CONFIGURATION-INFO : Probe Signal Input[1] = 12 -> LockIn A-2nd : 
+Fri Dec 31 13:49:44 2021 GXSM-Vm-Status : RealTime:      1640976584844395 us      1.587 s VmSize:        1119712 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:49:44 2021 MK3-SIGNAL-CONFIGURATION-INFO : Probe Signal Input[2] = 12 -> LockIn A-2nd : 
+Fri Dec 31 13:49:44 2021 GXSM-Vm-Status : RealTime:      1640976584844756 us      1.588 s VmSize:        1119712 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:49:44 2021 MK3-SIGNAL-CONFIGURATION-INFO : Probe Signal Input[3] = 8 -> Counter 0 : 
+Fri Dec 31 13:49:44 2021 GXSM-Vm-Status : RealTime:      1640976584845049 us      1.588 s VmSize:        1119712 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:49:44 2021 MK3-SIGNAL-CONFIGURATION-INFO : Probe Signal Input[4] = 95 -> GPIO data : 
+Fri Dec 31 13:49:44 2021 GXSM-Vm-Status : RealTime:      1640976584845301 us      1.588 s VmSize:        1119712 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:49:44 2021 MK3-SIGNAL-CONFIGURATION-INFO : Probe Signal Input[5] = 0 -> In 0 : 
+Fri Dec 31 13:49:44 2021 GXSM-Vm-Status : RealTime:      1640976584845569 us      1.588 s VmSize:        1119712 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:49:44 2021 MK3-SIGNAL-CONFIGURATION-INFO : Probe Signal Input[6] = 41 -> Z Servo Neg : 
+Fri Dec 31 13:49:44 2021 GXSM-Vm-Status : RealTime:      1640976584845813 us      1.589 s VmSize:        1119712 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:49:44 2021 MK3-SIGNAL-CONFIGURATION-INFO : LockIn Signal Input[0] = 28 -> MIX IN 0 : 
+Fri Dec 31 13:49:44 2021 GXSM-Vm-Status : RealTime:      1640976584846052 us      1.589 s VmSize:        1119712 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:49:44 2021 MK3-SIGNAL-CONFIGURATION-INFO : LockIn Signal Input[1] = 28 -> MIX IN 0 : 
+Fri Dec 31 13:49:44 2021 GXSM-Vm-Status : RealTime:      1640976584846299 us      1.589 s VmSize:        1119712 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:58:17 2021      Monitor : startup : 
+Fri Dec 31 13:58:17 2021 GXSM-Vm-Status : RealTime:      1640977097108406 us      0.000 s VmSize:        1052704 kB RefCounts:  UnitObj:      0 ScanDataObj:      0 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:58:17 2021 MonitorControl : startup : 
+Fri Dec 31 13:58:17 2021 GXSM-Vm-Status : RealTime:      1640977097156830 us      0.048 s VmSize:        1054888 kB RefCounts:  UnitObj:      0 ScanDataObj:      0 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:58:17 2021 SR-MK2/3_HwI XSM_Hardware *get_gxsm_hwi_hardware_class : Init 1 : 
+Fri Dec 31 13:58:17 2021 GXSM-Vm-Status : RealTime:      1640977097513191 us      0.405 s VmSize:        1094388 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:58:17 2021 DSP Mark ID found : MK 3 : 
+Fri Dec 31 13:58:17 2021 GXSM-Vm-Status : RealTime:      1640977097513386 us      0.405 s VmSize:        1094388 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:58:17 2021 HWI-DEV-MK3-I** HwI SR-MK3 : verifying MK3 FB_SPM software details. : 
+Fri Dec 31 13:58:17 2021 GXSM-Vm-Status : RealTime:      1640977097513477 us      0.405 s VmSize:        1094388 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:58:17 2021 HWI-DEV-MK3 DSP-ENGINE : USB DEVICE MAPPED TI DSP : 
+Fri Dec 31 13:58:17 2021 GXSM-Vm-Status : RealTime:      1640977097513544 us      0.405 s VmSize:        1094388 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:58:17 2021 HWI-DEV-MK3-I*CPU* DSP-SoftId....  : 00001002   [HwI:00001002] : 
+Fri Dec 31 13:58:17 2021 GXSM-Vm-Status : RealTime:      1640977097513729 us      0.405 s VmSize:        1094388 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:58:17 2021 HWI-DEV-MK3-I*CPU* DSP-Version...  : 00004012   [HwI:00004012] : 
+Fri Dec 31 13:58:17 2021 GXSM-Vm-Status : RealTime:      1640977097513785 us      0.405 s VmSize:        1094388 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:58:17 2021 HWI-DEV-MK3-I*CPU* DSP-Magic::SignalLookup at address : 0x807a12c8 : 
+Fri Dec 31 13:58:17 2021 GXSM-Vm-Status : RealTime:      1640977097513851 us      0.406 s VmSize:        1094388 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:58:17 2021 MK3 HwI Intialization and DSP software verification completed : 
+SR-MK3-PLL connected at /dev/sranger_mk2_5
+DSP-SoftId : 1002 [HwI:1002]
+DSP-SoftVer: 4012 [HwI:4012]
+DSP-SoftDat: 0421 2020 [HwI:0421 2020] : 
+Fri Dec 31 13:58:17 2021 GXSM-Vm-Status : RealTime:      1640977097513908 us      0.406 s VmSize:        1094388 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:58:17 2021 HwI: probing succeeded. : DSP System Ready. : 
+Fri Dec 31 13:58:17 2021 GXSM-Vm-Status : RealTime:      1640977097513989 us      0.406 s VmSize:        1094388 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:58:18 2021 MK3-SIGNAL-CONFIGURATION-INFO : Probe Signal Input[0] = 14 -> LockIn B-1st : 
+Fri Dec 31 13:58:18 2021 GXSM-Vm-Status : RealTime:      1640977098472189 us      1.364 s VmSize:        1119732 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:58:18 2021 MK3-SIGNAL-CONFIGURATION-INFO : Probe Signal Input[1] = 12 -> LockIn A-2nd : 
+Fri Dec 31 13:58:18 2021 GXSM-Vm-Status : RealTime:      1640977098472599 us      1.364 s VmSize:        1119732 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:58:18 2021 MK3-SIGNAL-CONFIGURATION-INFO : Probe Signal Input[2] = 12 -> LockIn A-2nd : 
+Fri Dec 31 13:58:18 2021 GXSM-Vm-Status : RealTime:      1640977098472877 us      1.365 s VmSize:        1119732 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:58:18 2021 MK3-SIGNAL-CONFIGURATION-INFO : Probe Signal Input[3] = 8 -> Counter 0 : 
+Fri Dec 31 13:58:18 2021 GXSM-Vm-Status : RealTime:      1640977098473130 us      1.365 s VmSize:        1119732 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:58:18 2021 MK3-SIGNAL-CONFIGURATION-INFO : Probe Signal Input[4] = 95 -> GPIO data : 
+Fri Dec 31 13:58:18 2021 GXSM-Vm-Status : RealTime:      1640977098473373 us      1.365 s VmSize:        1119732 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:58:18 2021 MK3-SIGNAL-CONFIGURATION-INFO : Probe Signal Input[5] = 0 -> In 0 : 
+Fri Dec 31 13:58:18 2021 GXSM-Vm-Status : RealTime:      1640977098473633 us      1.365 s VmSize:        1119732 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:58:18 2021 MK3-SIGNAL-CONFIGURATION-INFO : Probe Signal Input[6] = 41 -> Z Servo Neg : 
+Fri Dec 31 13:58:18 2021 GXSM-Vm-Status : RealTime:      1640977098473867 us      1.366 s VmSize:        1119732 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:58:18 2021 MK3-SIGNAL-CONFIGURATION-INFO : LockIn Signal Input[0] = 28 -> MIX IN 0 : 
+Fri Dec 31 13:58:18 2021 GXSM-Vm-Status : RealTime:      1640977098474179 us      1.366 s VmSize:        1119732 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:58:18 2021 MK3-SIGNAL-CONFIGURATION-INFO : LockIn Signal Input[1] = 28 -> MIX IN 0 : 
+Fri Dec 31 13:58:18 2021 GXSM-Vm-Status : RealTime:      1640977098474455 us      1.366 s VmSize:        1119732 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:59:02 2021      Monitor : startup : 
+Fri Dec 31 13:59:02 2021 GXSM-Vm-Status : RealTime:      1640977142107477 us      0.000 s VmSize:        1126432 kB RefCounts:  UnitObj:      0 ScanDataObj:      0 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:59:02 2021 MonitorControl : startup : 
+Fri Dec 31 13:59:02 2021 GXSM-Vm-Status : RealTime:      1640977142142689 us      0.035 s VmSize:        1128612 kB RefCounts:  UnitObj:      0 ScanDataObj:      0 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:59:02 2021 SR-MK2/3_HwI XSM_Hardware *get_gxsm_hwi_hardware_class : Init 1 : 
+Fri Dec 31 13:59:02 2021 GXSM-Vm-Status : RealTime:      1640977142613784 us      0.506 s VmSize:        1143488 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:59:02 2021 DSP Mark ID found : MK 3 : 
+Fri Dec 31 13:59:02 2021 GXSM-Vm-Status : RealTime:      1640977142613944 us      0.507 s VmSize:        1143488 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:59:02 2021 HWI-DEV-MK3-I** HwI SR-MK3 : verifying MK3 FB_SPM software details. : 
+Fri Dec 31 13:59:02 2021 GXSM-Vm-Status : RealTime:      1640977142614028 us      0.507 s VmSize:        1143488 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:59:02 2021 HWI-DEV-MK3 DSP-ENGINE : USB DEVICE MAPPED TI DSP : 
+Fri Dec 31 13:59:02 2021 GXSM-Vm-Status : RealTime:      1640977142614093 us      0.507 s VmSize:        1135292 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:59:02 2021 HWI-DEV-MK3-I*CPU* DSP-SoftId....  : 00001002   [HwI:00001002] : 
+Fri Dec 31 13:59:02 2021 GXSM-Vm-Status : RealTime:      1640977142614290 us      0.507 s VmSize:        1135292 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:59:02 2021 HWI-DEV-MK3-I*CPU* DSP-Version...  : 00004012   [HwI:00004012] : 
+Fri Dec 31 13:59:02 2021 GXSM-Vm-Status : RealTime:      1640977142614341 us      0.507 s VmSize:        1135292 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:59:02 2021 HWI-DEV-MK3-I*CPU* DSP-Magic::SignalLookup at address : 0x807a12c8 : 
+Fri Dec 31 13:59:02 2021 GXSM-Vm-Status : RealTime:      1640977142614388 us      0.507 s VmSize:        1135292 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:59:02 2021 MK3 HwI Intialization and DSP software verification completed : 
+SR-MK3-PLL connected at /dev/sranger_mk2_5
+DSP-SoftId : 1002 [HwI:1002]
+DSP-SoftVer: 4012 [HwI:4012]
+DSP-SoftDat: 0421 2020 [HwI:0421 2020] : 
+Fri Dec 31 13:59:02 2021 GXSM-Vm-Status : RealTime:      1640977142614437 us      0.507 s VmSize:        1135292 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:59:02 2021 HwI: probing succeeded. : DSP System Ready. : 
+Fri Dec 31 13:59:02 2021 GXSM-Vm-Status : RealTime:      1640977142614512 us      0.507 s VmSize:        1135292 kB RefCounts:  UnitObj:     52 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:59:03 2021 MK3-SIGNAL-CONFIGURATION-INFO : Probe Signal Input[0] = 14 -> LockIn B-1st : 
+Fri Dec 31 13:59:03 2021 GXSM-Vm-Status : RealTime:      1640977143738627 us      1.631 s VmSize:        1185224 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:59:03 2021 MK3-SIGNAL-CONFIGURATION-INFO : Probe Signal Input[1] = 12 -> LockIn A-2nd : 
+Fri Dec 31 13:59:03 2021 GXSM-Vm-Status : RealTime:      1640977143739018 us      1.632 s VmSize:        1185224 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:59:03 2021 MK3-SIGNAL-CONFIGURATION-INFO : Probe Signal Input[2] = 12 -> LockIn A-2nd : 
+Fri Dec 31 13:59:03 2021 GXSM-Vm-Status : RealTime:      1640977143739286 us      1.632 s VmSize:        1185224 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:59:03 2021 MK3-SIGNAL-CONFIGURATION-INFO : Probe Signal Input[3] = 8 -> Counter 0 : 
+Fri Dec 31 13:59:03 2021 GXSM-Vm-Status : RealTime:      1640977143739539 us      1.632 s VmSize:        1185224 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:59:03 2021 MK3-SIGNAL-CONFIGURATION-INFO : Probe Signal Input[4] = 95 -> GPIO data : 
+Fri Dec 31 13:59:03 2021 GXSM-Vm-Status : RealTime:      1640977143739783 us      1.632 s VmSize:        1185224 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:59:03 2021 MK3-SIGNAL-CONFIGURATION-INFO : Probe Signal Input[5] = 0 -> In 0 : 
+Fri Dec 31 13:59:03 2021 GXSM-Vm-Status : RealTime:      1640977143740078 us      1.633 s VmSize:        1185224 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:59:03 2021 MK3-SIGNAL-CONFIGURATION-INFO : Probe Signal Input[6] = 41 -> Z Servo Neg : 
+Fri Dec 31 13:59:03 2021 GXSM-Vm-Status : RealTime:      1640977143740313 us      1.633 s VmSize:        1185224 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:59:03 2021 MK3-SIGNAL-CONFIGURATION-INFO : LockIn Signal Input[0] = 28 -> MIX IN 0 : 
+Fri Dec 31 13:59:03 2021 GXSM-Vm-Status : RealTime:      1640977143740572 us      1.633 s VmSize:        1185224 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:59:03 2021 MK3-SIGNAL-CONFIGURATION-INFO : LockIn Signal Input[1] = 28 -> MIX IN 0 : 
+Fri Dec 31 13:59:03 2021 GXSM-Vm-Status : RealTime:      1640977143740823 us      1.633 s VmSize:        1185224 kB RefCounts:  UnitObj:    101 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:59:04 2021 GXSM4 startup MK3 DSP signal verification : WARNING SITUATION FOUND! : 
+Fri Dec 31 13:59:04 2021 GXSM-Vm-Status : RealTime:      1640977144557182 us      2.450 s VmSize:        1194444 kB RefCounts:  UnitObj:    149 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:59:04 2021      WARNING : Please verify your desired configuration:
+Eventual GXSM4 / DSP Offset Adding mode conflict:
+ =>  Analog/AnalogOffsetAddig = TRUE: Analog OUT0/1 (X/Y Offset signal) are to be used externally or digitally via GXSM-Link to SPD
+  and
+ =>  Found DSP signals setup for  X/Y Scan Rot + X/Y Offset.
+Please review.
+ ================================================== 
+
+ ** CURRENT MK3 OUTMIX CONFIGURATION ** 
+OUT[0] := Null-Signal + Null-Signal - Null-Signal
+OUT[1] := Null-Signal + Null-Signal - Null-Signal
+OUT[2] := Z Offset + Z Offset from XY Slope - Null-Signal
+OUT[3] := X Scan Rot + X Offset - Null-Signal
+OUT[4] := Y Scan Rot + Y Offset - Null-Signal
+OUT[5] := Z Servo + LockIn Ref * AC Ampl Aux - VP Z pos
+OUT[6] := VP Bias + Null-Signal + LockIn Ref * AC Ampl
+OUT[7] := Motor + Null-Signal - Null-Signal
+Set GXSM4 Preferences as desired to avoid this message or ignore if OK/custom. : 
+Fri Dec 31 13:59:04 2021 GXSM-Vm-Status : RealTime:      1640977144557343 us      2.450 s VmSize:        1194444 kB RefCounts:  UnitObj:    149 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:      0 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 
+Fri Dec 31 13:59:07 2021         GXSM : startup : 
+Fri Dec 31 13:59:07 2021 GXSM-Vm-Status : RealTime:      1640977147186605 us      5.079 s VmSize:        1343256 kB RefCounts:  UnitObj:    876 ScanDataObj:      1 ScanObj:      0 ZData:      0 LayerInfo:      0 Mem2d:      0 Mem2dSco:      0 VObj:      0 CairoItem:    287 ProfileObj:      0 ProfileCtrl:      0 PrbHdrArr:      0 PrbVecArr:      0 : 

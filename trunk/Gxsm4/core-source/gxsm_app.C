@@ -812,9 +812,9 @@ gint App::RemoveGxsmSplash(GtkWidget *widget, gpointer data){
 	return FALSE;
 }
 
-gboolean App::splash_draw_function (GtkWidget *area, cairo_t *cr,
-                                    int width, int height,
-                                    gpointer data){
+void App::splash_draw_function (GtkWidget *area, cairo_t *cr,
+                                int width, int height,
+                                gpointer data){
         // App *a = (App *)data;
 
         static cairo_item_text *text1 = NULL;
@@ -891,8 +891,6 @@ gboolean App::splash_draw_function (GtkWidget *area, cairo_t *cr,
         text2->draw (cr);
         text3->draw (cr);
         if (text4) text4->draw (cr);
-
-        return FALSE;
 }
 
 void App::GxsmSplash(gdouble progress, const gchar *info, const gchar* text){

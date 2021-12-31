@@ -1059,9 +1059,15 @@ void DSPMoverControl::create_folder (){
                                 g_free (wchid);
                                 g_free (wchlab);
 
+                                GtkWidget *wave_preview_area = gtk_drawing_area_new ();
+                                gtk_drawing_area_set_content_width (GTK_DRAWING_AREA (wave_preview_area), 128);
+                                gtk_drawing_area_set_content_height (GTK_DRAWING_AREA (wave_preview_area), 34);
+                                gtk_drawing_area_set_draw_func (GTK_DRAWING_AREA (wave_preview_area), wave_preview_draw_function, this, NULL);
+                                g_object_set_data  (G_OBJECT (wave_preview_area), "wave_ch", GINT_TO_POINTER (k));
+
                                 // FIX-ME GTK4 WAVE-IMAGE
                                 //GtkWidget *wave_preview = gtk_image_new_from_surface (NULL);
-                                //mov_bp->grid_add_widget (wave_preview);
+                                mov_bp->grid_add_widget (wave_preview_area);
 
                                 mov_bp->new_line ();
                         }
@@ -1677,7 +1683,8 @@ int DSPMoverControl::configure_waveform(GtkWidget *widget){
 
         // 6 lines for waves. 7 widgets: Wave N: X, ###, Y, ###, Z, ###, wave-icon
         for (int k=0; k<nw; ++k){
-                draw_waveform_preview ((GtkWidget*) g_slist_nth_data (wc, i-1), k); // wave icon
+                gtk_widget_queue_draw ((GtkWidget*) g_slist_nth_data (wc, i-1));
+                //draw_waveform_preview ((GtkWidget*) g_slist_nth_data (wc, i-1), k); // wave icon
                 for (int q=0; q<7; ++q)
                         gtk_widget_show ((GtkWidget*) g_slist_nth_data (wc, --i+6));
         }
@@ -1752,15 +1759,20 @@ int DSPMoverControl::configure_waveform(GtkWidget *widget){
         return 1;
 }
 
-gboolean DSPMoverControl::draw_waveform_preview (GtkWidget *widget, int wn){
-        int nch = create_waveform (1.,1., 1); // preview params only, full scale, 1ms equiv. points -- Fwd. -->
-        int n =  mover_param.MOV_wave_len/nch; // samples/ch
-        cairo_surface_t *surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, n+2, 34);
 
-        cairo_t *cr = cairo_create (surface);
+void DSPMoverControl::wave_preview_draw_function (GtkDrawingArea *area, cairo_t *cr,
+                                                  int             width,
+                                                  int             height,
+                                                  DSPMoverControl *dspc){
+        int wn = GPOINTER_TO_INT (g_object_get_data  (G_OBJECT (area), "wave_ch"));
+        int nch = dspc->create_waveform (1.,1., 1); // preview params only, full scale, 1ms equiv. points -- Fwd. -->
+        int n =  dspc->mover_param.MOV_wave_len/nch; // samples/ch
+        gtk_drawing_area_set_content_width (area, n+2);
+        gtk_drawing_area_set_content_height (area, 34);
+
         cairo_translate (cr, 1., 17.);
         cairo_scale (cr, 1., 1.);
-        double yr=-16./(SR_VFAC+fabs(SR_VFAC*mover_param.Wave_offset));
+        double yr=-16./(SR_VFAC+fabs(SR_VFAC*dspc->mover_param.Wave_offset));
         cairo_save (cr);
 
         cairo_item_path *wave = new cairo_item_path (2);
@@ -1774,21 +1786,15 @@ gboolean DSPMoverControl::draw_waveform_preview (GtkWidget *widget, int wn){
         wave = new cairo_item_path (n);
         wave->set_line_width (2.0);
         wave->set_stroke_rgba (CAIRO_COLOR_RED);
-        for (int k=0; k<n; ++k) wave->set_xy_fast (k,k,yr*mover_param.MOV_waveform[k*nch+wn]);
+        for (int k=0; k<n; ++k) wave->set_xy_fast (k,k,yr*dspc->mover_param.MOV_waveform[k*nch+wn]);
         wave->draw (cr);
 
-        nch = create_waveform (1.,-1., 1); // preview params only, full scale, 1ms equiv. points -- Rev. <--
+        nch = dspc->create_waveform (1.,-1., 1); // preview params only, full scale, 1ms equiv. points -- Rev. <--
         wave->set_stroke_rgba (CAIRO_COLOR_BLUE);
-        for (int k=0; k<n; ++k) wave->set_xy_fast (k,k,yr*mover_param.MOV_waveform[k*nch+wn]);
+        for (int k=0; k<n; ++k) wave->set_xy_fast (k,k,yr*dspc->mover_param.MOV_waveform[k*nch+wn]);
         wave->draw (cr);
 
         delete wave;
-
-        // FIX-ME GTK4 WAVE PREVIEW IAMGE
-        // gtk_image_set_from_surface (GTK_IMAGE (widget), surface);
-        cairo_destroy (cr);
-
-        return true;
 }
 
 void DSPMoverControl::updateAxisCounts (GtkWidget* w, int idx, int cmd){

@@ -208,11 +208,11 @@ public:
         static void osd_on_toggle_callback (GtkWidget *widget, ViewControl *vc);
         static void osd_off_toggle_callback (GtkWidget *widget, ViewControl *vc);
 
-        static gboolean canvas_draw_function (GtkDrawingArea *area,
-                                              cairo_t        *cr,
-                                              int             width,
-                                              int             height,
-                                              ViewControl *vc);
+        static void canvas_draw_function (GtkDrawingArea *area,
+                                          cairo_t        *cr,
+                                          int             width,
+                                          int             height,
+                                          ViewControl *vc);
 
         static void display_changed_hl_callback (Param_Control *pc, gpointer vc);
         static void display_changed_vr_callback (Param_Control *pc, gpointer vc);

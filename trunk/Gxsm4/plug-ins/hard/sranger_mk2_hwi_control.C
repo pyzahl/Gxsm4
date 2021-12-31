@@ -1857,7 +1857,8 @@ DSPControl::DSPControl () {
                                 g_message ("Checking Z Polarity (config=positive): OK");
                         }
                         if (!zpok){
-                                g_warning ("DSP Z Polarity is not matching GXSM4 configuration. Please correct.");
+#if 0
+                                g_warning ("DSP Z Polarity is not matching GXSM4 configuration. Correct on user response only.");
                                 if (gapp->question_yes_no (N_("Instrument Scanner Z-Polarity Verification failed.\n"
                                                               "DSP Scanner Z Polarity signal setup is not matching GXSM4 configuration in preferences.\n"
                                                               "==> Critical Advise: Correct now?"),
@@ -1868,9 +1869,15 @@ DSPControl::DSPControl () {
                                                 sranger_common_hwi->change_signal_input (sranger_common_hwi->lookup_signal_by_name("Z Servo"), DSP_SIGNAL_OUTMIX_CH5_INPUT_ID);
                                         else
                                                 sranger_common_hwi->change_signal_input (sranger_common_hwi->lookup_signal_by_name("Z Servo Neg"), DSP_SIGNAL_OUTMIX_CH5_INPUT_ID);
-                                }
-                                else
+                                } else
                                         zpok = true; // ignore on user request
+#else
+                                g_warning ("DSP Z Polarity is not matching GXSM4 configuration. Auto adjusting DSP configuration now.");
+                                if (xsmres.ScannerZPolarity)
+                                        sranger_common_hwi->change_signal_input (sranger_common_hwi->lookup_signal_by_name("Z Servo"), DSP_SIGNAL_OUTMIX_CH5_INPUT_ID);
+                                else
+                                        sranger_common_hwi->change_signal_input (sranger_common_hwi->lookup_signal_by_name("Z Servo Neg"), DSP_SIGNAL_OUTMIX_CH5_INPUT_ID);
+#endif
                         }
                 } while (!zpok);
                 
