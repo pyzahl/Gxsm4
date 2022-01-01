@@ -27,8 +27,17 @@
 
 
 #include <config.h>
-
 #include <gtk/gtk.h>
+
+#define ENABLE_GXSM_WINDOW_MANAGEMENT
+#ifdef ENABLE_GXSM_WINDOW_MANAGEMENT
+# ifdef GDK_WINDOWING_X11
+#  include <gdk/x11/gdkx.h>
+# endif
+# ifdef GDK_WINDOWING_WAYLAND
+#  include <gdk/wayland/gdkwayland.h>
+# endif
+#endif
 
 // Gxsm headers 
 #include "gxsm_app.h"
@@ -668,32 +677,6 @@ gboolean AppBase::window_close_callback (GtkWidget *widget,
         return true; // no further actions!!
 }
 
-#if 0
-gboolean AppBase::window_state_watch_callback (GtkWidget *widget,
-                                               GdkEvent  *event,
-                                               gpointer   user_data){
-        AppBase *app_w = (AppBase *)user_data;
-
-        GdkEventWindowState *ws = (GdkEventWindowState *)event;
-
-	XSM_DEBUG (DBG_L2, "AppBase::window_state_watch_callback: window_new_state=" << ws->new_window_state);
-
-        switch (ws->new_window_state){
-        case GDK_WINDOW_STATE_ICONIFIED: app_w->showstate=FALSE; break;
-        case GDK_WINDOW_STATE_MAXIMIZED: break;
-        case GDK_WINDOW_STATE_STICKY: break;
-        case GDK_WINDOW_STATE_FULLSCREEN: break;
-        case GDK_WINDOW_STATE_ABOVE: break;
-        case GDK_WINDOW_STATE_BELOW: break;
-        case GDK_WINDOW_STATE_FOCUSED: break;
-        case GDK_WINDOW_STATE_TILED: break;
-        case GDK_WINDOW_STATE_WITHDRAWN: break;
-        default: break;
-        }
-        
-        return false;
-}
-#endif
         
 void AppBase::window_action_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data){
         AppBase *app_w = (AppBase *)user_data;
@@ -807,19 +790,59 @@ void AppBase::show_auto (){
 }
 
 void AppBase::position_auto (){
+#ifdef ENABLE_GXSM_WINDOW_MANAGEMENT
         if (window_geometry)
-                if (window_geometry[WGEO_FLAG])
-                        g_message ("SORRY GTK4 can't do it -- no gtk_window_move (GTK_WINDOW (window), window_geometry[WGEO_XPOS], window_geometry[WGEO_YPOS]);");
-                        //gtk_window_move (GTK_WINDOW (window), window_geometry[WGEO_XPOS], window_geometry[WGEO_YPOS]);
+                if (window_geometry[WGEO_FLAG]){
+                        // GTK3:
+                        // gtk_window_move (GTK_WINDOW (window), window_geometry[WGEO_XPOS], window_geometry[WGEO_YPOS]);
+                        // g_message ("SORRY GTK4 can't do it -- Requested Window Position [%s: %d, %d]   -- no gtk_window_move ().", window_key, window_geometry[WGEO_XPOS], window_geometry[WGEO_YPOS]);
+                        g_message ("Requested Window Position [%s] XY %d, %d", window_key, window_geometry[WGEO_XPOS], window_geometry[WGEO_YPOS]);
+                        
+# ifdef GDK_WINDOWING_X11
+                        if (1){ //GDK_IS_X11_DISPLAY (display){
+                                Window   xw = GDK_SURFACE_XID (GDK_SURFACE (gtk_native_get_surface(GTK_NATIVE (window))));
+                                Display *xd = GDK_SURFACE_XDISPLAY (GDK_SURFACE (gtk_native_get_surface(GTK_NATIVE (window))));
+                                XMoveWindow (xd, xw, (int)window_geometry[WGEO_XPOS], (int)window_geometry[WGEO_YPOS]);
+                        } else
+# endif
+# ifdef GDK_WINDOWING_WAYLAND
+                                if (1){ // GDK_IS_WAYLAND_DISPLAY (display)){
+                                        g_message ("SORRY WAYLAND DOES NOT GIVE ANY ACCESS TO WINDOW GEOMETRY.;");
+                                } else
+                                        g_error ("Unsupported GDK backend");
+                }
+# endif
+#endif
 }
 
 void AppBase::resize_auto (){
+#ifdef ENABLE_GXSM_WINDOW_MANAGEMENT
         if (window_geometry)
                 if (window_geometry[WGEO_FLAG]){
-                        gtk_window_set_default_size (GTK_WINDOW (window), (int)window_geometry[WGEO_WIDTH], (int)window_geometry[WGEO_HEIGHT]);
-                        g_message ("SORRY GTK4 can't do it?? Window Resize [%s: %d, %d]   -- no gtk_window_resize (GTK_WINDOW (window), window_geometry[WGEO_WIDTH], window_geometry[WGEO_HEIGHT]);, gtk_window_set_default_size() ?? disfunctional ??",
-                                   window_key, window_geometry[WGEO_WIDTH], window_geometry[WGEO_HEIGHT]);
+                        // GTK3:
+                        // gtk_window_resize (GTK_WINDOW (window), (int)window_geometry[WGEO_WIDTH], (int)window_geometry[WGEO_HEIGHT]);
+
+                        // trying this... not working
+                        // gtk_window_set_default_size (GTK_WINDOW (window), (int)window_geometry[WGEO_WIDTH], (int)window_geometry[WGEO_HEIGHT]);
+
+                        // g_message ("SORRY GTK4 can't do it -- Requested Window Resize [%s: %d, %d]   -- no gtk_window_resize ().", window_key, window_geometry[WGEO_WIDTH], window_geometry[WGEO_HEIGHT]);
+                        g_message ("Requested Window Resize [%s] WH %d, %d", window_key, window_geometry[WGEO_WIDTH], window_geometry[WGEO_HEIGHT]);
+
+# ifdef GDK_WINDOWING_X11
+                        if (1){ //GDK_IS_X11_DISPLAY (display){
+                                Window   xw = GDK_SURFACE_XID (GDK_SURFACE (gtk_native_get_surface(GTK_NATIVE (window))));
+                                Display *xd = GDK_SURFACE_XDISPLAY (GDK_SURFACE (gtk_native_get_surface(GTK_NATIVE (window))));
+                                XResizeWindow (xd, xw,  (unsigned int)window_geometry[WGEO_WIDTH],  (unsigned int)window_geometry[WGEO_HEIGHT]);
+                        } else
+# endif
+# ifdef GDK_WINDOWING_WAYLAND
+                        if (1){ //GDK_IS_WAYLAND_DISPLAY (display)){
+                                g_message ("SORRY WAYLAND DOES NOT GIVE ANY ACCESS TO WINDOW GEOMETRY.;");
+                        } else
+# endif
+                                g_error ("Unsupported GDK backend");
                 }
+#endif
 }
 
 void AppBase::SaveGeometryCallback(AppBase *apb){
@@ -827,6 +850,7 @@ void AppBase::SaveGeometryCallback(AppBase *apb){
 }
 
 int AppBase::SaveGeometry(int savealways){
+#ifdef ENABLE_GXSM_WINDOW_MANAGEMENT
         if (! window_key){
                 XSM_DEBUG_ERROR (DBG_L1, "ERROR ** AppBase::SaveGeometry called with no window_key.");
                 return -1;
@@ -842,8 +866,42 @@ int AppBase::SaveGeometry(int savealways){
         window_geometry[WGEO_FLAG] = 1;
         window_geometry[WGEO_SHOW] = showstate;
         //g_message ("SORRY GTK4 can't do it -- no gtk_window_get_position (GTK_WINDOW (window), &window_geometry[WGEO_XPOS], &window_geometry[WGEO_YPOS]);");
-        //g_message ("SORRY GTK4 can't do it! -- no gtk_window_get_size (GTK_WINDOW (window), &window_geometry[WGEO_WIDTH], &window_geometry[WGEO_HEIGHT]);");
+        //g_message ("SORRY GTK4 can't do it -- no gtk_window_get_size (GTK_WINDOW (window), &window_geometry[WGEO_WIDTH], &window_geometry[WGEO_HEIGHT]);");
         //gtk_window_get_position (GTK_WINDOW (window), &window_geometry[WGEO_XPOS], &window_geometry[WGEO_YPOS]); 
+
+# ifdef GDK_WINDOWING_X11
+        if (1){ // GDK_IS_X11_DISPLAY (display){
+                Window   xw = GDK_SURFACE_XID (GDK_SURFACE (gtk_native_get_surface(GTK_NATIVE (window))));
+                Display *xd = GDK_SURFACE_XDISPLAY (GDK_SURFACE (gtk_native_get_surface(GTK_NATIVE (window))));
+                Window root;
+                int x, y;
+                unsigned int width, height;
+                unsigned int border_width;
+                unsigned int depth;
+                XGetGeometry (xd, xw, &root, &x, &y, &width, &height, &border_width, &depth);
+                window_geometry[WGEO_XPOS]=x;
+                window_geometry[WGEO_YPOS]=y;
+                window_geometry[WGEO_WIDTH]=width;
+                window_geometry[WGEO_HEIGHT]=height;
+                g_message ("Window Geometry [%s]: XY %d, %d; WH %d, %d", window_key, x, y, width, height);
+                // Status = XGetGeometry (display, d, root_return, x_return, y_return, width_return, height_return, border_width_return, depth_return)
+                //        Display *display;
+                //        Drawable d;
+                //        Window *root_return;
+                //        int *x_return, *y_return;
+                //        unsigned int *width_return, *height_return;
+                //        unsigned int *border_width_return;
+                //        unsigned int *depth_return;
+        } else
+# endif
+# ifdef GDK_WINDOWING_WAYLAND
+                if (1){ //GDK_IS_WAYLAND_DISPLAY (display)){
+                        g_message ("SORRY WAYLAND DOES NOT GIVE ANY ACCESS TO WINDOW GEOMETRY.;");
+                } else
+# endif
+                        g_error ("Unsupported GDK backend");
+
+        /* I tried... not usefull
         int dw, dh;
         gtk_window_get_default_size (GTK_WINDOW (window), &dw, &dh);
         int nw, nh;
@@ -853,11 +911,14 @@ int AppBase::SaveGeometry(int savealways){
         window_geometry[WGEO_WIDTH]=dw;
         window_geometry[WGEO_HEIGHT]=dh;
         g_message ("gtk_widget_measure [%s]: (%d %d %d, %d %d %d", window_key, dw, mw, nw, dh, mh, nh);
+        */
+        
         GVariant *storage = g_variant_new_fixed_array (g_variant_type_new ("i"), window_geometry, WGEO_SIZE, sizeof (gint32));
         g_settings_set_value (geometry_settings, window_key, storage);
   
         //g_free (storage); // ??
       
+#endif
 	return 0;
 }
 
@@ -885,9 +946,7 @@ int AppBase::LoadGeometry(){
         g_assert_cmpint (n_stores, ==, WGEO_SIZE);
 
         position_auto ();
-#if 0
         resize_auto ();
-#endif
         show_auto ();
 
 	return 0;
