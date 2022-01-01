@@ -216,7 +216,7 @@ SPM_ScanControl *spm_scancontrol = NULL;
 // windows-sectionSPM Scan Control
 // Action/SPM Scan Start/Pause/Stop + Toolbar
 
-#define REMOTE_PREFIX "SPMC_"
+#define REMOTE_PREFIX "SPMC-"
 
 static void spm_scancontrol_query(void)
 {
@@ -466,23 +466,23 @@ SPM_ScanControl::SPM_ScanControl ()
 
         //SPMC_RemoteEntryList = ec->AddEntry2RemoteList(REMOTE_PREFIX "SLS_Xs", SPMC_RemoteEntryList);
 
-        spmsc_bp->grid_add_ec ("SLS Xs", Unity, &sls_config[0], 0, 99999, ".0f", REMOTE_PREFIX "SLS_Xs");
+        spmsc_bp->grid_add_ec ("SLS Xs", Unity, &sls_config[0], 0, 99999, ".0f", REMOTE_PREFIX "sls-xs");
         g_object_set_data (G_OBJECT (bs_tmp), "SPMCONTROL_SLS_XS", spmsc_bp->input);
         g_object_set_data (G_OBJECT (slsbutton), "SLSC0", spmsc_bp->ec);
         g_object_set_data (G_OBJECT (slscheckbutton), "SLSC0", spmsc_bp->ec);
 
-        spmsc_bp->grid_add_ec ("SLS Xn", Unity, &sls_config[1], 0, 99999, ".0f", REMOTE_PREFIX "SLS_Xn");
+        spmsc_bp->grid_add_ec ("SLS Xn", Unity, &sls_config[1], 0, 99999, ".0f", REMOTE_PREFIX "sls-xn");
         g_object_set_data (G_OBJECT (bs_tmp), "SPMCONTROL_SLS_XN", spmsc_bp->input);
         g_object_set_data (G_OBJECT (slsbutton), "SLSC1", spmsc_bp->ec);
         g_object_set_data (G_OBJECT (slscheckbutton), "SLSC1", spmsc_bp->ec);
 
 	spmsc_bp->new_line ();
-        spmsc_bp->grid_add_ec ("SLS Ys", Unity, &sls_config[2], 0, 99999, ".0f", REMOTE_PREFIX "SLS_Ys");
+        spmsc_bp->grid_add_ec ("SLS Ys", Unity, &sls_config[2], 0, 99999, ".0f", REMOTE_PREFIX "sls-ys");
         g_object_set_data (G_OBJECT (bs_tmp), "SPMCONTROL_SLS_YS", spmsc_bp->input);
         g_object_set_data (G_OBJECT (slsbutton), "SLSC2", spmsc_bp->ec);
         g_object_set_data (G_OBJECT (slscheckbutton), "SLSC2", spmsc_bp->ec);
 
-        spmsc_bp->grid_add_ec ("SLS Yn", Unity, &sls_config[3], 0, 99999, ".0f", REMOTE_PREFIX "SLS_Yn");
+        spmsc_bp->grid_add_ec ("SLS Yn", Unity, &sls_config[3], 0, 99999, ".0f", REMOTE_PREFIX "sls-yn");
         g_object_set_data (G_OBJECT (bs_tmp), "SPMCONTROL_SLS_YN", spmsc_bp->input);
         g_object_set_data (G_OBJECT (slsbutton), "SLSC3", spmsc_bp->ec);
         g_object_set_data (G_OBJECT (slscheckbutton), "SLSC3", spmsc_bp->ec);
