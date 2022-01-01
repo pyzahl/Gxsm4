@@ -101,7 +101,7 @@ gxsm4_LDFLAGS = -export-dynamic $(GXSM4_LIBS)
 gxsm4_LDADD =  \
 	$(FFTW_LIBS) \
 	${libnetcdf_LIBS} \
-	-lpng -lGLEW -lGL -lz -lfreetype -licuuc
+	-lpng -lGLEW -lGL -lz -lfreetype -licuuc -lX11
 
 
 sysdir = $(datadir)/apps/System

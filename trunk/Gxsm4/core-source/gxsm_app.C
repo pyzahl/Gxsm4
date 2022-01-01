@@ -30,8 +30,7 @@
 #include <locale.h>
 #include <glib.h>
 #include <glib/gi18n.h>
-
-// #include "../pixmaps/gxsmlogo.xpm"
+#include <gtk/gtk.h>
 
 #include "gxsm_app.h"
 #include "gxsm_window.h"
@@ -44,7 +43,6 @@
 
 #include "xsmtypes.h"
 #include "surface.h"
-// #include "tips_dialog.h"
 #include "plugin_ctrl.h"
 
 extern gboolean generate_preferences_gschema;
@@ -460,6 +458,11 @@ void App::build_gxsm (Gxsm4appWindow *win){
 
         channelselector = new ChannelSelector();
 
+        g_idle_add (App::finish_system_startup_idle_callback, this);
+}
+
+void App::finish_system_startup (){
+        
   	/* Load Gxsm Plugins: additional control windows, math/filters/etc. */
         XSM_DEBUG(DBG_L2, "App::build_gxsm - Scanning for PlugIns...");
         pcs_set_current_gschema_group ("plugins");
@@ -489,6 +492,9 @@ void App::build_gxsm (Gxsm4appWindow *win){
         XSM_DEBUG (DBG_L2, "App::build_gxsm - update all entries");
         spm_update_all (-xsm->data.display.ViewFlg);
         monitorcontrol->LogEvent ("GXSM", "startup");
+
+        // update all window geometry again
+        gapp->load_app_geometry ();
         
         XSM_DEBUG(DBG_L2, "App::build_gxsm - done.");
 }
@@ -801,14 +807,16 @@ gint App::RemoveGxsmSplash(GtkWidget *widget, gpointer data){
         XSM_DEBUG_GP (DBG_L1, "App::RemoveGxsmSplash (hiding it)\n");
 
         //        gtk_widget_destroy (widget); // splash window
-        gtk_widget_hide (widget); // splash window
+        //gtk_widget_hide (widget); // splash window
 
         //      a->splash = NULL;
         //	a->splash_progress_bar = NULL;
         //      a->splash_darea = NULL;
 
-        splash_draw_function (NULL, NULL, 0,0, NULL); // destroy self
-                
+        splash_draw_function (NULL, NULL, 0,0, NULL); // clean up
+
+        gtk_popover_popdown (GTK_POPOVER (widget));
+        
 	return FALSE;
 }
 
@@ -897,8 +905,6 @@ void App::GxsmSplash(gdouble progress, const gchar *info, const gchar* text){
         GVariant *splash_timeout = g_settings_get_value (gxsm_app_settings, "splash-timeout");
 
 	if (splash_progress_bar && splash && progress > -0.2){
-                gtk_widget_show (splash); // splash window  // FIX-ME GTK4 SHOWALL
-                gtk_window_present (GTK_WINDOW (splash)); // make sure to present window
                 XSM_DEBUG_GP (DBG_L1, "App::GxsmSplash Update: %g, %s, %s \n", progress, info, text);
 		if (progress >= 0. && progress <= 1.0)
 			gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (splash_progress_bar), progress);
@@ -935,22 +941,17 @@ void App::GxsmSplash(gdouble progress, const gchar *info, const gchar* text){
         GVariant *splash_message_font = g_settings_get_value (gxsm_app_settings, "splash-message-font");
 
         if (g_variant_get_boolean (splash_display)){
-                splash = gtk_window_new ();
-                gtk_window_set_default_size (GTK_WINDOW(splash), ImgW, ImgH+20);
-                gtk_window_set_title (GTK_WINDOW(splash), "GXSM4 Startup");
-                // FIX-ME-GTK4
-                //gtk_window_set_position (GTK_WINDOW(splash), GTK_WIN_POS_CENTER);
-
+                splash = gtk_popover_new ();
                 GtkWidget *vb = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
 		gtk_widget_show (vb);
-                gtk_window_set_child (GTK_WINDOW (splash), vb);
+                gtk_popover_set_child (GTK_POPOVER (splash), vb);
 
                 splash_darea = gtk_drawing_area_new ();
-                gtk_widget_set_size_request (splash_darea, ImgW, ImgH+20);
+                gtk_drawing_area_set_content_width  (GTK_DRAWING_AREA (splash_darea), ImgW);
+                gtk_drawing_area_set_content_height (GTK_DRAWING_AREA (splash_darea), ImgH);
                 
                 if (!splash_img){ // keep for ever!
                         splash_img = gdk_pixbuf_new_from_file (PACKAGE_ICON_DIR "/gxsm4-icon.svg", NULL);
-                        //        splash_img = gdk_pixbuf_new_from_xpm_data(xxsmlogo_xpm);
                 }
                 
                 g_object_set_data( G_OBJECT (splash_darea), "splash_w", GINT_TO_POINTER (ImgW));
@@ -974,7 +975,12 @@ void App::GxsmSplash(gdouble progress, const gchar *info, const gchar* text){
 		gtk_widget_show (splash_progress_bar);
 		gtk_box_append (GTK_BOX (vb), splash_progress_bar);
 
-                gtk_widget_show (splash);
+                gtk_widget_set_parent (splash, GTK_WIDGET(app_window));
+                gtk_popover_set_has_arrow (GTK_POPOVER (splash), FALSE);
+                // FIX-ME GTK4 
+                gtk_popover_set_pointing_to (GTK_POPOVER (splash), &(GdkRectangle){ 1000-ImgW/2, 500-ImgH/2, 1, 1});
+
+                gtk_popover_popup (GTK_POPOVER (splash));
         }
 }
 

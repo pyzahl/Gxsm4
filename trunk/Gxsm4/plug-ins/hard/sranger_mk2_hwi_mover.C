@@ -1483,10 +1483,10 @@ void DSPMoverControl::create_folder (){
                                 g_object_set_data( G_OBJECT (button), "AXIS-Y", ec_axis[1]);
                                 g_object_set_data( G_OBJECT (button), "AXIS-Z", ec_axis[2]);
 #if 0
-	        		g_signal_connect (G_OBJECT (button), signal_name_button_pressed,
+	        		g_signal_connect (G_OBJECT (button), "pressed",
 	        				    G_CALLBACK (DSPMoverControl::CmdAction),
 	        				    this);
-	        		g_signal_connect (G_OBJECT (button), signal_name_button_released,
+	        		g_signal_connect (G_OBJECT (button), "released",
 	        				    G_CALLBACK (DSPMoverControl::StopAction),
 	        				    this);
 #endif
