@@ -815,9 +815,11 @@ void AppBase::position_auto (){
 
 void AppBase::resize_auto (){
         if (window_geometry)
-                if (window_geometry[WGEO_FLAG])
-                        gtk_window_set_default_size (GTK_WINDOW (window), window_geometry[WGEO_WIDTH], window_geometry[WGEO_HEIGHT]);
-        //g_message ("SORRY GTK4 can't do it -- no gtk_window_resize (GTK_WINDOW (window), window_geometry[WGEO_WIDTH], window_geometry[WGEO_HEIGHT]);");
+                if (window_geometry[WGEO_FLAG]){
+                        gtk_window_set_default_size (GTK_WINDOW (window), (int)window_geometry[WGEO_WIDTH], (int)window_geometry[WGEO_HEIGHT]);
+                        g_message ("SORRY GTK4 can't do it?? Window Resize [%s: %d, %d]   -- no gtk_window_resize (GTK_WINDOW (window), window_geometry[WGEO_WIDTH], window_geometry[WGEO_HEIGHT]);, gtk_window_set_default_size() ?? disfunctional ??",
+                                   window_key, window_geometry[WGEO_WIDTH], window_geometry[WGEO_HEIGHT]);
+                }
 }
 
 void AppBase::SaveGeometryCallback(AppBase *apb){
@@ -839,17 +841,18 @@ int AppBase::SaveGeometry(int savealways){
         
         window_geometry[WGEO_FLAG] = 1;
         window_geometry[WGEO_SHOW] = showstate;
-        g_message ("SORRY GTK4 can't do it -- no gtk_window_get_position (GTK_WINDOW (window), &window_geometry[WGEO_XPOS], &window_geometry[WGEO_YPOS]);");
+        //g_message ("SORRY GTK4 can't do it -- no gtk_window_get_position (GTK_WINDOW (window), &window_geometry[WGEO_XPOS], &window_geometry[WGEO_YPOS]);");
         //g_message ("SORRY GTK4 can't do it! -- no gtk_window_get_size (GTK_WINDOW (window), &window_geometry[WGEO_WIDTH], &window_geometry[WGEO_HEIGHT]);");
         //gtk_window_get_position (GTK_WINDOW (window), &window_geometry[WGEO_XPOS], &window_geometry[WGEO_YPOS]); 
-        //gtk_window_get_size (GTK_WINDOW (window), &window_geometry[WGEO_WIDTH], &window_geometry[WGEO_HEIGHT]);
+        int dw, dh;
+        gtk_window_get_default_size (GTK_WINDOW (window), &dw, &dh);
         int nw, nh;
         int mw, mh;
         gtk_widget_measure (GTK_WIDGET (window), GTK_ORIENTATION_HORIZONTAL, -1, &mw, &nw, NULL, NULL);
         gtk_widget_measure (GTK_WIDGET (window), GTK_ORIENTATION_VERTICAL,  -1, &mh, &nh, NULL, NULL);
-        window_geometry[WGEO_WIDTH]=nw;
-        window_geometry[WGEO_HEIGHT]=nh;
-        //g_message ("gtk_widget_measure: (%d %d , %d %d", mw, nw, mh, nh);
+        window_geometry[WGEO_WIDTH]=dw;
+        window_geometry[WGEO_HEIGHT]=dh;
+        g_message ("gtk_widget_measure [%s]: (%d %d %d, %d %d %d", window_key, dw, mw, nw, dh, mh, nh);
         GVariant *storage = g_variant_new_fixed_array (g_variant_type_new ("i"), window_geometry, WGEO_SIZE, sizeof (gint32));
         g_settings_set_value (geometry_settings, window_key, storage);
   
