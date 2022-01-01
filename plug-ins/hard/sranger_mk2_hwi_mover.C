@@ -790,14 +790,14 @@ void DSPMoverControl::create_folder (){
         mov_bp->set_no_spin ();
 
         // =======================================
-        const gchar* signal_name_button_pressed  = "clicked";  //"activate"; // "pressed" in GTK3
-        const gchar* signal_name_button_released = "released"; // "released" in GTK3
+        //const gchar* signal_name_button_pressed  = "clicked";  //"activate"; // "pressed" in GTK3
+        //const gchar* signal_name_button_released = "released"; // "released" in GTK3
         // =======================================
-
-        g_message ("MOVER: settings signals for MV control button signals: Pressed: '%s', Released: '%s'",signal_name_button_pressed, signal_name_button_released);
+        //g_message ("MOVER: settings signals for MV control button signals: Pressed: '%s', Released: '%s'",signal_name_button_pressed, signal_name_button_released);
         
         for(itab=i=0; MoverNames[i]; ++i){                
                 Gtk_EntryControl *ec_axis[3];
+                GtkGesture *gesture;
 
                 if (gapp->xsm->Inst->OffsetMode() != OFM_ANALOG_OFFSET_ADDING && i == 5) continue;
 		if (IS_SLIDER_CTRL && i < 4 ) continue;
@@ -859,12 +859,23 @@ void DSPMoverControl::create_folder (){
                         mov_bp->grid_add_widget (button = gtk_button_new_from_icon_name ("seek-backward-symbolic"));
 			g_object_set_data( G_OBJECT (button), "DSP_cmd", GINT_TO_POINTER (DSP_CMD_Z0_P));
 			g_object_set_data( G_OBJECT (button), "MoverNo", GINT_TO_POINTER (99));
+#if 0
 			g_signal_connect ( G_OBJECT (button), signal_name_button_pressed,
                                            G_CALLBACK (DSPMoverControl::CmdAction),
                                            this);
 			g_signal_connect ( G_OBJECT (button), signal_name_button_released,
                                            G_CALLBACK (DSPMoverControl::StopAction),
                                            this);
+#endif
+                        gesture = gtk_gesture_click_new ();
+			g_object_set_data( G_OBJECT (button), "DSP_cmd", GINT_TO_POINTER (DSP_CMD_Z0_P));
+			g_object_set_data( G_OBJECT (button), "MoverNo", GINT_TO_POINTER (99));
+			g_object_set_data( G_OBJECT (gesture), "Button", button);
+                        //gtk_gesture_single_set_button (GTK_GESTURE_SINGLE (gesture), 1);
+                        g_signal_connect (gesture, "pressed", G_CALLBACK (DSPMoverControl::direction_button_pressed_cb), this);
+                        g_signal_connect (gesture, "released", G_CALLBACK (DSPMoverControl::direction_button_released_cb), this);
+                        gtk_widget_add_controller (button, GTK_EVENT_CONTROLLER (gesture));
+
                         // FIX-ME GTK4 ??
 			//g_signal_connect( G_OBJECT(v_grid), "key_press_event", 
                         //                  G_CALLBACK(create_window_key_press_event_lcb), this);
@@ -886,12 +897,22 @@ void DSPMoverControl::create_folder (){
                         mov_bp->grid_add_widget (button = gtk_button_new_from_icon_name ("seek-forward-symbolic"));
 			g_object_set_data( G_OBJECT (button), "DSP_cmd", GINT_TO_POINTER (DSP_CMD_Z0_M));
 			g_object_set_data( G_OBJECT (button), "MoverNo", GINT_TO_POINTER (99));
+#if 0
 			g_signal_connect ( G_OBJECT (button), signal_name_button_pressed,
                                            G_CALLBACK (DSPMoverControl::CmdAction),
                                            this);
 			g_signal_connect ( G_OBJECT (button), signal_name_button_released,
                                            G_CALLBACK (DSPMoverControl::StopAction),
                                            this);
+#endif
+                        gesture = gtk_gesture_click_new ();
+			g_object_set_data( G_OBJECT (button), "DSP_cmd", GINT_TO_POINTER (DSP_CMD_Z0_P));
+			g_object_set_data( G_OBJECT (button), "MoverNo", GINT_TO_POINTER (99));
+			g_object_set_data( G_OBJECT (gesture), "Button", button);
+                        //gtk_gesture_single_set_button (GTK_GESTURE_SINGLE (gesture), 1);
+                        g_signal_connect (gesture, "pressed", G_CALLBACK (DSPMoverControl::direction_button_pressed_cb), this);
+                        g_signal_connect (gesture, "released", G_CALLBACK (DSPMoverControl::direction_button_released_cb), this);
+                        gtk_widget_add_controller (button, GTK_EVENT_CONTROLLER (gesture));
 
 			{ // remote hook
 				remote_action_cb *ra = g_new( remote_action_cb, 1);
@@ -1233,13 +1254,24 @@ void DSPMoverControl::create_folder (){
                                 g_object_set_data( G_OBJECT (button), "AXIS-X", ec_axis[0]);
                                 g_object_set_data( G_OBJECT (button), "AXIS-Y", ec_axis[1]);
                                 g_object_set_data( G_OBJECT (button), "AXIS-Z", ec_axis[2]);
+#if 0
 	        		g_signal_connect (G_OBJECT (button), signal_name_button_pressed,
 	        				    G_CALLBACK (DSPMoverControl::CmdAction),
 	        				    this);
 	        		g_signal_connect (G_OBJECT (button), signal_name_button_released,
 	        				    G_CALLBACK (DSPMoverControl::StopAction),
 	        				    this);
-	        		/*
+#endif
+                                gesture = gtk_gesture_click_new ();
+                                g_object_set_data( G_OBJECT (button), "DSP_cmd", GINT_TO_POINTER (DSP_CMD_Z0_P));
+                                g_object_set_data( G_OBJECT (button), "MoverNo", GINT_TO_POINTER (99));
+                                g_object_set_data( G_OBJECT (gesture), "Button", button);
+                                //gtk_gesture_single_set_button (GTK_GESTURE_SINGLE (gesture), 1);
+                                g_signal_connect (gesture, "pressed", G_CALLBACK (DSPMoverControl::direction_button_pressed_cb), this);
+                                g_signal_connect (gesture, "released", G_CALLBACK (DSPMoverControl::direction_button_released_cb), this);
+                                gtk_widget_add_controller (button, GTK_EVENT_CONTROLLER (gesture));
+
+                                /*
 	        		g_signal_connect(G_OBJECT(v_grid *** box), "key_press_event", 
 	        				   G_CALLBACK(create_window_key_press_event_lcb), this);
 	        		*/
@@ -1267,12 +1299,24 @@ void DSPMoverControl::create_folder (){
                                 g_object_set_data( G_OBJECT (button), "AXIS-X", ec_axis[0]);
                                 g_object_set_data( G_OBJECT (button), "AXIS-Y", ec_axis[1]);
                                 g_object_set_data( G_OBJECT (button), "AXIS-Z", ec_axis[2]);
+#if 0
 	        		g_signal_connect (G_OBJECT (button), signal_name_button_pressed,
 	        				    G_CALLBACK (DSPMoverControl::CmdAction),
 	        				    this);
 	        		g_signal_connect (G_OBJECT (button), signal_name_button_released,
 	        				    G_CALLBACK (DSPMoverControl::StopAction),
 	        				    this);
+#endif
+                                gesture = gtk_gesture_click_new ();
+                                g_object_set_data( G_OBJECT (button), "DSP_cmd", GINT_TO_POINTER (DSP_CMD_Z0_P));
+                                g_object_set_data( G_OBJECT (button), "MoverNo", GINT_TO_POINTER (99));
+                                g_object_set_data( G_OBJECT (gesture), "Button", button);
+                                //gtk_gesture_single_set_button (GTK_GESTURE_SINGLE (gesture), 1);
+                                g_signal_connect (gesture, "pressed", G_CALLBACK (DSPMoverControl::direction_button_pressed_cb), this);
+                                g_signal_connect (gesture, "released", G_CALLBACK (DSPMoverControl::direction_button_released_cb), this);
+                                gtk_widget_add_controller (button, GTK_EVENT_CONTROLLER (gesture));
+                              
+
 	        		/*
 	        		g_signal_connect(G_OBJECT(v_grid *** box), "key_press_event", 
 	        				   G_CALLBACK(create_window_key_press_event_lcb), this);
@@ -1312,12 +1356,24 @@ void DSPMoverControl::create_folder (){
                                 g_object_set_data( G_OBJECT (button), "AXIS-X", ec_axis[0]);
                                 g_object_set_data( G_OBJECT (button), "AXIS-Y", ec_axis[1]);
                                 g_object_set_data( G_OBJECT (button), "AXIS-Z", ec_axis[2]);
+#if 0
 				g_signal_connect (G_OBJECT (button), signal_name_button_pressed,
 						    G_CALLBACK (DSPMoverControl::CmdAction),
 						    this);
 				g_signal_connect (G_OBJECT (button), signal_name_button_released,
 						    G_CALLBACK (DSPMoverControl::StopAction),
 						    this);
+#endif
+
+                                gesture = gtk_gesture_click_new ();
+                                g_object_set_data( G_OBJECT (button), "DSP_cmd", GINT_TO_POINTER (DSP_CMD_Z0_P));
+                                g_object_set_data( G_OBJECT (button), "MoverNo", GINT_TO_POINTER (99));
+                                g_object_set_data( G_OBJECT (gesture), "Button", button);
+                                //gtk_gesture_single_set_button (GTK_GESTURE_SINGLE (gesture), 1);
+                                g_signal_connect (gesture, "pressed", G_CALLBACK (DSPMoverControl::direction_button_pressed_cb), this);
+                                g_signal_connect (gesture, "released", G_CALLBACK (DSPMoverControl::direction_button_released_cb), this);
+                                gtk_widget_add_controller (button, GTK_EVENT_CONTROLLER (gesture));
+
 				{ // pyremote hook
 					remote_action_cb *ra = g_new( remote_action_cb, 1);
 					ra -> cmd = g_strdup_printf("DSP_CMD_MOV-XM_%s",MoverNames[i]);
@@ -1341,12 +1397,22 @@ void DSPMoverControl::create_folder (){
                                 g_object_set_data( G_OBJECT (button), "AXIS-X", ec_axis[0]);
                                 g_object_set_data( G_OBJECT (button), "AXIS-Y", ec_axis[1]);
                                 g_object_set_data( G_OBJECT (button), "AXIS-Z", ec_axis[2]);
+#if 0
 				g_signal_connect (G_OBJECT (button), signal_name_button_pressed,
 						    G_CALLBACK (DSPMoverControl::CmdAction),
 						    this);
 				g_signal_connect (G_OBJECT (button), signal_name_button_released,
 						    G_CALLBACK (DSPMoverControl::StopAction),
 						    this);
+#endif
+                                gesture = gtk_gesture_click_new ();
+                                g_object_set_data( G_OBJECT (button), "DSP_cmd", GINT_TO_POINTER (DSP_CMD_Z0_P));
+                                g_object_set_data( G_OBJECT (button), "MoverNo", GINT_TO_POINTER (99));
+                                g_object_set_data( G_OBJECT (gesture), "Button", button);
+                                //gtk_gesture_single_set_button (GTK_GESTURE_SINGLE (gesture), 1);
+                                g_signal_connect (gesture, "pressed", G_CALLBACK (DSPMoverControl::direction_button_pressed_cb), this);
+                                g_signal_connect (gesture, "released", G_CALLBACK (DSPMoverControl::direction_button_released_cb), this);
+                                gtk_widget_add_controller (button, GTK_EVENT_CONTROLLER (gesture));
 
 				{ // pyremote hook
 					remote_action_cb *ra = g_new( remote_action_cb, 1);
@@ -1375,12 +1441,23 @@ void DSPMoverControl::create_folder (){
                                 g_object_set_data( G_OBJECT (button), "AXIS-X", ec_axis[0]);
                                 g_object_set_data( G_OBJECT (button), "AXIS-Y", ec_axis[1]);
                                 g_object_set_data( G_OBJECT (button), "AXIS-Z", ec_axis[2]);
+#if 0
 	        		g_signal_connect (G_OBJECT (button), signal_name_button_pressed,
 	        				    G_CALLBACK (DSPMoverControl::CmdAction),
 	        				    this);
 	        		g_signal_connect (G_OBJECT (button), signal_name_button_released,
 	        				    G_CALLBACK (DSPMoverControl::StopAction),
 	        				    this);
+#endif
+                                gesture = gtk_gesture_click_new ();
+                                g_object_set_data( G_OBJECT (button), "DSP_cmd", GINT_TO_POINTER (DSP_CMD_Z0_P));
+                                g_object_set_data( G_OBJECT (button), "MoverNo", GINT_TO_POINTER (99));
+                                g_object_set_data( G_OBJECT (gesture), "Button", button);
+                                //gtk_gesture_single_set_button (GTK_GESTURE_SINGLE (gesture), 1);
+                                g_signal_connect (gesture, "pressed", G_CALLBACK (DSPMoverControl::direction_button_pressed_cb), this);
+                                g_signal_connect (gesture, "released", G_CALLBACK (DSPMoverControl::direction_button_released_cb), this);
+                                gtk_widget_add_controller (button, GTK_EVENT_CONTROLLER (gesture));
+                                
 	        		{ // pyremote hook
 	        			remote_action_cb *ra = g_new( remote_action_cb, 1);
                                         ra -> cmd = g_strdup_printf("DSP_CMD_MOV-YM_%s",MoverNames[i]);
@@ -1405,12 +1482,23 @@ void DSPMoverControl::create_folder (){
                                 g_object_set_data( G_OBJECT (button), "AXIS-X", ec_axis[0]);
                                 g_object_set_data( G_OBJECT (button), "AXIS-Y", ec_axis[1]);
                                 g_object_set_data( G_OBJECT (button), "AXIS-Z", ec_axis[2]);
+#if 0
 	        		g_signal_connect (G_OBJECT (button), signal_name_button_pressed,
 	        				    G_CALLBACK (DSPMoverControl::CmdAction),
 	        				    this);
 	        		g_signal_connect (G_OBJECT (button), signal_name_button_released,
 	        				    G_CALLBACK (DSPMoverControl::StopAction),
 	        				    this);
+#endif
+                                gesture = gtk_gesture_click_new ();
+                                g_object_set_data( G_OBJECT (button), "DSP_cmd", GINT_TO_POINTER (DSP_CMD_Z0_P));
+                                g_object_set_data( G_OBJECT (button), "MoverNo", GINT_TO_POINTER (99));
+                                g_object_set_data( G_OBJECT (gesture), "Button", button);
+                                //gtk_gesture_single_set_button (GTK_GESTURE_SINGLE (gesture), 1);
+                                g_signal_connect (gesture, "pressed", G_CALLBACK (DSPMoverControl::direction_button_pressed_cb), this);
+                                g_signal_connect (gesture, "released", G_CALLBACK (DSPMoverControl::direction_button_released_cb), this);
+                                gtk_widget_add_controller (button, GTK_EVENT_CONTROLLER (gesture));
+
 	        		{ // pyremote hook
 	        			remote_action_cb *ra = g_new( remote_action_cb, 1);
                                         ra -> cmd = g_strdup_printf("DSP_CMD_MOV-ZM_%s", MoverNames[i]);
