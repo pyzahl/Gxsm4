@@ -190,19 +190,21 @@ public:
 
         static gint canvas_event_cb(GtkWidget *canvas, GdkEvent *event, ViewControl *vo);
 
+        // File DnD
         static gboolean on_drop (GtkDropTarget *target, const GValue  *value, double x, double y, ViewControl *vc);
-        static GdkContentProvider* drag_prepare (GtkDropTarget *source, double x, double y, ViewControl *vc);
-        static void drag_begin (GtkDragSource *source, GdkDrag *drag, ViewControl *vc);
+        // Objects Handling
         gboolean check_on_object(VObjectEvent* event);
         static void drag_motion (GtkEventControllerMotion *motion, gdouble x, gdouble y, ViewControl *vc);
-        static void drag_end (GtkDragSource *source, GdkDrag *drag, gboolean delete_data, ViewControl *vc);
-        static void drag_cancel (GtkDragSource *source, GdkDrag *drag, GdkDragCancelReason  reason, ViewControl *vc);
-        static gboolean drag_drop (GtkDropTarget *target, const GValue  *value, double x, double y, ViewControl *vc);
-
         static void pressed_cb (GtkGesture *gesture, int n_press, double x, double y, ViewControl *vc);
         static void released_cb (GtkGesture *gesture, int n_press, double x, double y, ViewControl *vc);
 
-
+#if 0   //TEST STUFF
+        static GdkContentProvider* drag_prepare (GtkDropTarget *source, double x, double y, ViewControl *vc);
+        static void drag_begin (GtkDragSource *source, GdkDrag *drag, ViewControl *vc);
+        static void drag_end (GtkDragSource *source, GdkDrag *drag, gboolean delete_data, ViewControl *vc);
+        static void drag_cancel (GtkDragSource *source, GdkDrag *drag, GdkDragCancelReason  reason, ViewControl *vc);
+        static gboolean drag_drop (GtkDropTarget *target, const GValue  *value, double x, double y, ViewControl *vc);
+#endif
         
         static void osd_check_callback (GtkWidget *widget, ViewControl *vc);
         static void osd_on_toggle_callback (GtkWidget *widget, ViewControl *vc);
@@ -302,7 +304,7 @@ private:
         int border;
         int npx,npy;
         int chno;
-        int usx,usy,side_panel_width;
+        int usx,usy;
 
         const gchar *legend_items_code;
         int legend_position_code;
