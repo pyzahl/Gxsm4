@@ -559,16 +559,11 @@ void ViewControl::tip_follow_control (gboolean follow){
 void ViewControl::setup_side_pane (gboolean show){
 	if (show){
 		gtk_widget_show (sidepane);
-		side_panel_width = 300;
-                gtk_widget_set_size_request (hpaned, usx + side_panel_width, usy);
-                gtk_paned_set_position (GTK_PANED (hpaned), usx);
 		NcDumpToWidget ncdump (scan->data.ui.name);
 		ncdump.dump (tab_ncraw, tab_info);
 	}
 	else{
 		gtk_widget_hide (sidepane);
-		side_panel_width = 0;
-                gtk_widget_set_size_request (hpaned, usx + side_panel_width, usy);
 	}
 }
 
@@ -741,7 +736,8 @@ ViewControl::ViewControl (char *title, int nx, int ny,
         gtk_drawing_area_set_draw_func      (GTK_DRAWING_AREA (canvas),
                                              G_CALLBACK (ViewControl::canvas_draw_function),
                                              this, NULL);
- 
+        // to force udpate call:   gtk_widget_queue_draw (canvas);
+
         // place canvas into scrollarea
 	XSM_DEBUG (DBG_L2,  "VC::VC container_add canvas to scrollarea" );
 	gtk_scrolled_window_set_child (GTK_SCROLLED_WINDOW (scrollarea), canvas);
@@ -758,14 +754,14 @@ ViewControl::ViewControl (char *title, int nx, int ny,
         // Actions
         obj_drag_start = false;
         pointer_coord_display = false;
-#if 1
+
         GtkEventController* motion = gtk_event_controller_motion_new ();
         g_signal_connect (motion, "motion", G_CALLBACK (drag_motion), this);
         gtk_widget_add_controller (canvas, GTK_EVENT_CONTROLLER (motion));
         g_object_set_data (G_OBJECT (canvas), "motion-controller", motion);
-#endif
 
 #if 0
+        // testing, do not need
         GtkDragSource *source = gtk_drag_source_new ();
         gtk_drag_source_set_actions (source, GDK_ACTION_COPY | GDK_ACTION_MOVE);
         g_signal_connect (source, "prepare", G_CALLBACK (drag_prepare), this);
@@ -1228,88 +1224,6 @@ gboolean ViewControl::on_drop (GtkDropTarget *target,
         return TRUE;
 }
 
-GdkContentProvider* ViewControl::drag_prepare (GtkDropTarget *source, double x, double y, ViewControl *vc){
-        GtkWidget *canvas;
-        GtkWidget *item;
-        static double mouse_pix_xy[2];
-        double zf = vc->vinfo->GetZfac();
-        int button = gtk_gesture_single_get_current_button (GTK_GESTURE_SINGLE (source));
-
-        // undo cairo image translation/scale:
-        mouse_pix_xy[0] = (x - (double)(vc->rulewidth+vc->border/zf))/zf;
-        mouse_pix_xy[1] = (y - (double)(vc->rulewidth+vc->border/zf))/zf;
-        vc->tmp_xy = mouse_pix_xy; // data for foreach
-
-        g_message ("DRAG PREPARE, PRESSED %d at %g %g [%g %g]", button, x,y, mouse_pix_xy[0], mouse_pix_xy[1]);
-        
-        canvas = gtk_event_controller_get_widget (GTK_EVENT_CONTROLLER (source));
-#if 0
-        item = gtk_widget_pick (canvas, x, y, GTK_PICK_DEFAULT);
-
-        item = gtk_widget_get_ancestor (item, canvas_item_get_type ());
-        if (!item)
-                return NULL;
-#endif
-        g_object_set_data (G_OBJECT (canvas), "dragged-item", canvas); // item
-
-#if 0        
-        if (g_object_get_data (G_OBJECT (vc->canvas), "motion-controller"))
-                gtk_widget_remove_controller (vc->canvas, GTK_EVENT_CONTROLLER (g_object_get_data (G_OBJECT (vc->canvas), "motion-controller")));
-        GtkEventController* motion = gtk_event_controller_motion_new ();
-        g_signal_connect (motion, "motion", G_CALLBACK (drag_motion), vc);
-        gtk_widget_add_controller (canvas, GTK_EVENT_CONTROLLER (motion));
-        g_object_set_data (G_OBJECT (canvas), "motion-controller", motion);
-#endif   
-        return gdk_content_provider_new_typed (GTK_TYPE_WIDGET, canvas); // item
-}
- 
-void ViewControl::drag_begin (GtkDragSource *source, GdkDrag *drag, ViewControl *vc){
-        double x,y;
-        int button = gtk_gesture_single_get_current_button (GTK_GESTURE_SINGLE (source));
-
-        g_message ("DRAG BEGIN, PRESSED %d at %g %g", button, vc->tmp_xy[0], vc->tmp_xy[1],0.,0.);
-
-        if (button != 1)
-                return TRUE;
-        
-        // 1st check if mouse on editable object
-        VObjectEvent event = { VOBJ_EV_BUTTON_1, VOBJ_EV_BUTTON_PRESS };
-
-        vc->tmp_event = &event;     // data for foreach
-        //vc->tmp_xy = mouse_pix_xy; // data for foreach
-        vc->tmp_effected = 0;
-
-        if (vc->tmp_object_op){
-                // g_print ("CANVAS EVENT: grab mode\n");
-                if (!vc->tmp_object_op->check_event (vc->tmp_event, vc->tmp_xy))
-                        vc->tmp_object_op = NULL;
-                        
-                return FALSE;
-        }
-
-        // Objects drawn manually
-        g_slist_foreach((GSList*) vc->gobjlist, (GFunc) ViewControl::check_obj_event, vc);
-
-        // Event Objects
-        g_slist_foreach((GSList*) vc->geventlist, (GFunc) ViewControl::check_obj_event, vc);
-
-        for (gsize i=0; i<OSD_MAX; ++i)
-                if (vc->osd_item[i])
-                        vc->check_obj_event (vc->osd_item[i], vc);
-
-        g_message ("DRAG BEGIN, FOUND OBJECTs %d", vc->tmp_effected);
-
-        if (vc->tmp_effected > 0) // handled by object, done. no more action here!
-                return FALSE;
-
-        //paintable = canvas_item_get_drag_icon (item);
-        //gtk_drag_source_set_icon (source, paintable, item->r, item->r);
-        //g_object_unref (paintable);
-
-        
-        return TRUE;
-}
-
 gboolean ViewControl::check_on_object(VObjectEvent* event){
         tmp_effected = 0;
         g_message ("** CHECK ON OBJECTs **");
@@ -1361,35 +1275,6 @@ void ViewControl::drag_motion (GtkEventControllerMotion *motion, gdouble x, gdou
                         return FALSE;
                 }
         }
-}
-
-void ViewControl::drag_end (GtkDragSource *source, GdkDrag *drag, gboolean delete_data, ViewControl *vc){
-
-#if 0
-        if (g_object_get_data (G_OBJECT (vc->canvas), "motion-controller")){
-                gtk_widget_remove_controller (vc->canvas, GTK_EVENT_CONTROLLER (g_object_get_data (G_OBJECT (vc->canvas), "motion-controller")));
-                g_object_set_data (G_OBJECT (vc->canvas), "motion-controller", NULL);
-        }
-#endif   
-        g_message ("DRAG END");
-        return TRUE;
-}
-
-void ViewControl::drag_cancel (GtkDragSource *source, GdkDrag *drag, GdkDragCancelReason reason, ViewControl *vc){
-
-#if 0
-        if (g_object_get_data (G_OBJECT (vc->canvas), "motion-controller")){
-                gtk_widget_remove_controller (vc->canvas, GTK_EVENT_CONTROLLER (g_object_get_data (G_OBJECT (vc->canvas), "motion-controller")));
-                g_object_set_data (G_OBJECT (vc->canvas), "motion-controller", NULL);
-        }
-#endif
-        g_message ("DRAG CANCEL");
-        return TRUE;
-}
-
-gboolean ViewControl::drag_drop (GtkDropTarget *target, const GValue  *value, double x, double y, ViewControl *vc){
-        g_message ("DRAG-DROP %g %g", x,y);
-        return TRUE;
 }
 
 void ViewControl::pressed_cb (GtkGesture *gesture, int n_press, double x, double y, ViewControl *vc){
@@ -1478,17 +1363,14 @@ void ViewControl::pressed_cb (GtkGesture *gesture, int n_press, double x, double
 
                         g_message ("DRAG BEGIN, FOUND OBJECTs %d", vc->tmp_effected);
                 }
-                if (vc->tmp_effected > 0) // handled by object, done. no more action here!
-                        break;;
 
                 // do scan window menu popup
                 gtk_popover_set_pointing_to (GTK_POPOVER (vc->v_popup_menu_cv), &(GdkRectangle){ x, y, 1, 1});
                 gtk_popover_popup (GTK_POPOVER (vc->v_popup_menu_cv));
                 break;
-        case 4: if(vc->ZoomQFkt) (*vc->ZoomQFkt)(0,1,vc->ZQFktData); break; // Zoom Out
-        case 5: if(vc->ZoomQFkt) (*vc->ZoomQFkt)(1,0,vc->ZQFktData); break; // Zoom In
+        //case 4: if(vc->ZoomQFkt) (*vc->ZoomQFkt)(0,1,vc->ZQFktData); break; // Zoom Out
+        //case 5: if(vc->ZoomQFkt) (*vc->ZoomQFkt)(1,0,vc->ZQFktData); break; // Zoom In
         }
-        return TRUE;
 }
 
 void ViewControl::released_cb (GtkGesture *gesture, int n_press, double x, double y, ViewControl *vc){
@@ -1509,13 +1391,18 @@ void ViewControl::released_cb (GtkGesture *gesture, int n_press, double x, doubl
                 } else {
                         VObjectEvent event = { VOBJ_EV_BUTTON_1, VOBJ_EV_BUTTON_RELEASE, x,y };
                         vc->tmp_event = &event;
-                        vc->obj_drag_start = vc->check_on_object (&event);
+                        // pass on and finalize dragging
+                        vc->check_on_object (&event);
+                        vc->tmp_object_op = NULL;
+                        vc->obj_drag_start = false;
                 }
                 break;
+        case 2:
+                vc->pointer_coord_display = false;
+                break;
+        case 3:
+                break;
         }
-        vc->tmp_object_op = NULL;
-        vc->obj_drag_start = false;
-        vc->pointer_coord_display = false;
 }
 
 
@@ -1861,29 +1748,25 @@ void ViewControl::Resize (char *title, int nx, int ny,
                 ximg->Resize (nx/ZoomFac,ny/ZoomFac, QuenchFac);
 	}
 
-        //	usx = MIN((nx+rulewidth+2*border), (2*gdk_screen_width()/3));
-        //        usy = MIN((int)(ny+rulewidth+2*border), (2*gdk_screen_height()/3));
-	usx = MIN((nx+rulewidth+2*border), 550);
-        usy = MIN((int)(ny+rulewidth+2*border), 550);
+        // usx = MIN((nx+rulewidth+2*border), (2*gdk_screen_width()/3));
+        // usy = MIN((int)(ny+rulewidth+2*border), (2*gdk_screen_height()/3));
+	usx = MIN((nx+rulewidth+2*border), 650);
+        usy = MIN((int)(ny+rulewidth+2*border), 650);
 	
 	if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (side_pane_control))){
                 NcDumpToWidget ncdump (scan->data.ui.name);
 		ncdump.dump (tab_ncraw, tab_info);
-                side_panel_width = 400;
                 setup_side_pane (true);
         } else {
-                side_panel_width = 0;
                 setup_side_pane (false);
         }
         
 	// refit image object into canvas
 	XSM_DEBUG (DBG_L2,  "VC::RESIZE setting window default size: " << usx << ", "<< usy );
-        gtk_widget_set_size_request (canvas, rulewidth+(nx+2*border), rulewidth+(ny+2*border));
-        gtk_widget_set_size_request (hpaned, usx+2*border+2*rulewidth+side_panel_width, usy);
-	gtk_paned_set_position (GTK_PANED (hpaned), usx+2*border+2*rulewidth);
-
-        // FIX-ME-GTK4
-        // gtk_window_resize (GTK_WINDOW (window), usx+2*border+2*rulewidth+side_panel_width, usy);
+        //gtk_widget_set_size_request (canvas, rulewidth+(nx+2*border), rulewidth+(ny+2*border));
+        gtk_drawing_area_set_content_width  (GTK_DRAWING_AREA (canvas), rulewidth+(nx+2*border));
+        gtk_drawing_area_set_content_height (GTK_DRAWING_AREA (canvas),  rulewidth+(ny+2*border));
+        // to force udpate call:   gtk_widget_queue_draw (canvas);
 
 	XSM_DEBUG (DBG_L2, "VC::RESIZE done" );
 }
@@ -4704,8 +4587,6 @@ void ViewControl::obj_event_save_callback (GSimpleAction *simple, GVariant *para
                           vo);
 }
 
-
-
 void ViewControl::update_trace (double *xy, int len){
 	double *nxy = new double[1+2*len];
 	nxy[0] = len;
@@ -4834,3 +4715,140 @@ void ViewControl::set_osd (gchar *osd_text, int pos){
 	g_free (ot);
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#if 0
+// ======================================== TEST CODE
+GdkContentProvider* ViewControl::drag_prepare (GtkDropTarget *source, double x, double y, ViewControl *vc){
+        GtkWidget *canvas;
+        GtkWidget *item;
+        static double mouse_pix_xy[2];
+        double zf = vc->vinfo->GetZfac();
+        int button = gtk_gesture_single_get_current_button (GTK_GESTURE_SINGLE (source));
+
+        // undo cairo image translation/scale:
+        mouse_pix_xy[0] = (x - (double)(vc->rulewidth+vc->border/zf))/zf;
+        mouse_pix_xy[1] = (y - (double)(vc->rulewidth+vc->border/zf))/zf;
+        vc->tmp_xy = mouse_pix_xy; // data for foreach
+
+        g_message ("DRAG PREPARE, PRESSED %d at %g %g [%g %g]", button, x,y, mouse_pix_xy[0], mouse_pix_xy[1]);
+        
+        canvas = gtk_event_controller_get_widget (GTK_EVENT_CONTROLLER (source));
+        g_object_set_data (G_OBJECT (canvas), "dragged-item", canvas); // item
+
+#if 0   // can not do this here       
+        if (g_object_get_data (G_OBJECT (vc->canvas), "motion-controller"))
+                gtk_widget_remove_controller (vc->canvas, GTK_EVENT_CONTROLLER (g_object_get_data (G_OBJECT (vc->canvas), "motion-controller")));
+        GtkEventController* motion = gtk_event_controller_motion_new ();
+        g_signal_connect (motion, "motion", G_CALLBACK (drag_motion), vc);
+        gtk_widget_add_controller (canvas, GTK_EVENT_CONTROLLER (motion));
+        g_object_set_data (G_OBJECT (canvas), "motion-controller", motion);
+#endif   
+        return gdk_content_provider_new_typed (GTK_TYPE_WIDGET, canvas); // item
+}
+ 
+void ViewControl::drag_begin (GtkDragSource *source, GdkDrag *drag, ViewControl *vc){
+        double x,y;
+        int button = gtk_gesture_single_get_current_button (GTK_GESTURE_SINGLE (source));
+
+        g_message ("DRAG BEGIN, PRESSED %d at %g %g", button, vc->tmp_xy[0], vc->tmp_xy[1],0.,0.);
+
+        if (button != 1)
+                return TRUE;
+        
+        // 1st check if mouse on editable object
+        VObjectEvent event = { VOBJ_EV_BUTTON_1, VOBJ_EV_BUTTON_PRESS };
+
+        vc->tmp_event = &event;     // data for foreach
+        //vc->tmp_xy = mouse_pix_xy; // data for foreach
+        vc->tmp_effected = 0;
+
+        if (vc->tmp_object_op){
+                // g_print ("CANVAS EVENT: grab mode\n");
+                if (!vc->tmp_object_op->check_event (vc->tmp_event, vc->tmp_xy))
+                        vc->tmp_object_op = NULL;
+                        
+                return FALSE;
+        }
+
+        // Objects drawn manually
+        g_slist_foreach((GSList*) vc->gobjlist, (GFunc) ViewControl::check_obj_event, vc);
+
+        // Event Objects
+        g_slist_foreach((GSList*) vc->geventlist, (GFunc) ViewControl::check_obj_event, vc);
+
+        for (gsize i=0; i<OSD_MAX; ++i)
+                if (vc->osd_item[i])
+                        vc->check_obj_event (vc->osd_item[i], vc);
+
+        g_message ("DRAG BEGIN, FOUND OBJECTs %d", vc->tmp_effected);
+
+        if (vc->tmp_effected > 0) // handled by object, done. no more action here!
+                return FALSE;
+
+        //paintable = canvas_item_get_drag_icon (item);
+        //gtk_drag_source_set_icon (source, paintable, item->r, item->r);
+        //g_object_unref (paintable);
+
+        
+        return TRUE;
+}
+
+void ViewControl::drag_end (GtkDragSource *source, GdkDrag *drag, gboolean delete_data, ViewControl *vc){
+
+#if 0 // no no no
+        if (g_object_get_data (G_OBJECT (vc->canvas), "motion-controller")){
+                gtk_widget_remove_controller (vc->canvas, GTK_EVENT_CONTROLLER (g_object_get_data (G_OBJECT (vc->canvas), "motion-controller")));
+                g_object_set_data (G_OBJECT (vc->canvas), "motion-controller", NULL);
+        }
+#endif   
+        g_message ("DRAG END");
+        return TRUE;
+}
+
+void ViewControl::drag_cancel (GtkDragSource *source, GdkDrag *drag, GdkDragCancelReason reason, ViewControl *vc){
+
+#if 0 // no no no 
+        if (g_object_get_data (G_OBJECT (vc->canvas), "motion-controller")){
+                gtk_widget_remove_controller (vc->canvas, GTK_EVENT_CONTROLLER (g_object_get_data (G_OBJECT (vc->canvas), "motion-controller")));
+                g_object_set_data (G_OBJECT (vc->canvas), "motion-controller", NULL);
+        }
+#endif
+        g_message ("DRAG CANCEL");
+        return TRUE;
+}
+
+gboolean ViewControl::drag_drop (GtkDropTarget *target, const GValue  *value, double x, double y, ViewControl *vc){
+        g_message ("DRAG-DROP %g %g", x,y);
+        return TRUE;
+}
+// ========================================
+#endif

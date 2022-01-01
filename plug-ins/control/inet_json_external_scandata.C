@@ -1932,7 +1932,7 @@ double Inet_Json_External_Scandata::unwrap (int k, double phi){
         return (phi);
 }
 
-
+// to force udpate call:   gtk_widget_queue_draw (self->signal_graph_area);
 void Inet_Json_External_Scandata::graph_draw_function (GtkDrawingArea *area, cairo_t *cr,
                                                               int             width,
                                                               int             height,
