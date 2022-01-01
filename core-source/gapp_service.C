@@ -832,7 +832,8 @@ void AppBase::resize_auto (){
                         if (1){ //GDK_IS_X11_DISPLAY (display){
                                 Window   xw = GDK_SURFACE_XID (GDK_SURFACE (gtk_native_get_surface(GTK_NATIVE (window))));
                                 Display *xd = GDK_SURFACE_XDISPLAY (GDK_SURFACE (gtk_native_get_surface(GTK_NATIVE (window))));
-                                XResizeWindow (xd, xw,  (unsigned int)window_geometry[WGEO_WIDTH],  (unsigned int)window_geometry[WGEO_HEIGHT]);
+                                if ((unsigned int)window_geometry[WGEO_WIDTH] > 0 && (unsigned int)window_geometry[WGEO_HEIGHT] > 0)
+                                        XResizeWindow (xd, xw,  (unsigned int)window_geometry[WGEO_WIDTH],  (unsigned int)window_geometry[WGEO_HEIGHT]);
                         } else
 # endif
 # ifdef GDK_WINDOWING_WAYLAND
