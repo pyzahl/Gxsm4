@@ -692,10 +692,12 @@ void AppBase::add_window_to_window_menu(const gchar *menu_item_label, const gcha
         // generate valid action string from menu path
         gchar *tmp = g_strconcat (menusection, "-show-", key, NULL);
         g_strdelimit (tmp, " /:", '-');
-        gchar *tmpaction = g_strconcat ( tmp, NULL);
+        gchar *tmpaction = g_strdup (tmp);
+        gchar *app_tmpaction = g_strconcat ( "app.", tmpaction, NULL);
         GSimpleAction *ti_action;
         
-        XSM_DEBUG_GP (DBG_L2, "AppBase::add_window_to_window_menu <%s>  MenuItem= %s ==> label, generated action: [%s] <%s>\n", menusection, menu_item_label, tmp, tmpaction );
+        XSM_DEBUG_GP (DBG_L2, "AppBase::add_window_to_window_menu <%s>  MenuItem= %s ==> label, generated actions: [%s] <%s>, <%s>",
+                      menusection, menu_item_label, tmp, tmpaction, app_tmpaction);
 
         if (!strcmp (menusection, "windows-section-xx")) { // add toggle -- testing, not yet working -- disabled via -xx
                 ti_action = g_simple_action_new_stateful (tmpaction,
@@ -711,7 +713,6 @@ void AppBase::add_window_to_window_menu(const gchar *menu_item_label, const gcha
 
         g_action_map_add_action (G_ACTION_MAP ( gapp->get_application ()), G_ACTION (ti_action));
 
-        gchar *app_tmpaction = g_strconcat ( "app.", tmpaction, NULL);
 
 #if 1 // pretty rewrite name
         gchar *label = g_strdelimit (g_strdup (menu_item_label), "-:._/", ' ');
@@ -723,6 +724,9 @@ void AppBase::add_window_to_window_menu(const gchar *menu_item_label, const gcha
 #else
         gchar *label = g_strdup (menu_item_label);
 #endif
+        XSM_DEBUG_GP (DBG_L2, "AppBase::add_window_to_window_menu <%s>  MenuItem= %s ==> label, generated actions: [%s] <%s>",
+                      menusection, menu_item_label, tmp, app_tmpaction);
+        
         gapp->gxsm_app_extend_menu (menusection, label, app_tmpaction);
 
         g_free (label);
@@ -732,15 +736,15 @@ void AppBase::add_window_to_window_menu(const gchar *menu_item_label, const gcha
 }
 
 int AppBase::set_window_geometry (const gchar *key, gint index, gboolean add_to_menu){
-        XSM_DEBUG_GP (DBG_L4, "AppBase::set_window_geometry and append '%s' to Windows Menu.\n", key);
+        XSM_DEBUG_GP (DBG_L4, "AppBase::set_window_geometry and append '%s' to Windows Menu.", key);
 
         if (window_key){
-                XSM_DEBUG_GP (DBG_L2, "AppBase::set_window_geometry geometry already setup. DUPLICATE WARNING append '%s' to Windows Menu already done.\n", key);
+                XSM_DEBUG_GP (DBG_L2, "AppBase::set_window_geometry geometry already setup. DUPLICATE WARNING append '%s' to Windows Menu already done.", key);
                 // remove from menu!
                 g_free (window_key);
         }
         
-        XSM_DEBUG_GP (DBG_L9, "AppBase::set_window_geometry and append '%s' to Windows Menu\n", key);
+        XSM_DEBUG_GP (DBG_L9, "AppBase::set_window_geometry and append '%s' to Windows Menu", key);
         if (index >= 0 && index <= 6) // limit for now
                 window_key = g_strdup_printf ("%s-%d", key, index);
         else if (index > 6)

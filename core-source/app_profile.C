@@ -579,8 +579,6 @@ void ProfileControl::Init(const gchar *titlestring, int ChNo, const gchar *resid
         window_w = window_h = 0;
         font_size_10 = 10.;
         
-        tmp_effected = -1;
-
 	auto_update_id = 0;
 
 	lp_gain = 0.1;
@@ -591,7 +589,8 @@ void ProfileControl::Init(const gchar *titlestring, int ChNo, const gchar *resid
 	tic_ym=0;
 
 	cursor_bound_object = NULL;
-
+        tmp_effected = 0;
+        
 	xcolors_list = NULL;
 	num_xcolors = 0;
 	xcolors_list_2 = NULL;
@@ -802,12 +801,22 @@ void ProfileControl::Init(const gchar *titlestring, int ChNo, const gchar *resid
         }
         gtk_widget_show (statusbar);
 
-        // FIX-ME-GTK4 --  REWORK   gtk_popover_menu_...
-        //**** https://devdocs.io/gtk~4.0/gtkpopovermenu#gtk-popover-menu-new-from-model
+        // hookup popup menu
         gtk_popover_set_default_widget (GTK_POPOVER (p_popup_menu), canvas);
-        //gtk_menu_attach_to_widget (GTK_MENU (p_popup_menu), canvas, NULL);
+        gtk_popover_set_child (GTK_POPOVER (p_popup_menu), canvas);
 
+        // configure getsure events
+        GtkEventController* motion = gtk_event_controller_motion_new ();
+        g_signal_connect (motion, "motion", G_CALLBACK (ProfileControl::drag_motion), this);
+        gtk_widget_add_controller (canvas, GTK_EVENT_CONTROLLER (motion));
+        g_object_set_data (G_OBJECT (canvas), "motion-controller", motion);
         g_object_set_data (G_OBJECT (canvas), "statusbar", statusbar);
+
+        GtkGesture *gesture = gtk_gesture_click_new ();
+        gtk_gesture_single_set_button (GTK_GESTURE_SINGLE (gesture), 0);
+        g_signal_connect (gesture, "pressed", G_CALLBACK (ProfileControl::pressed_cb), this);
+        g_signal_connect (gesture, "released", G_CALLBACK (ProfileControl::released_cb), this);
+        gtk_widget_add_controller (canvas, GTK_EVENT_CONTROLLER (gesture));
 
         gtk_drawing_area_set_draw_func (GTK_DRAWING_AREA (canvas),
                                         G_CALLBACK (ProfileControl::canvas_draw_function),
@@ -995,8 +1004,7 @@ void ProfileControl::AppWindowInit(const gchar *title, const gchar *sub_title){
 
         GObject *profile_popup_menu = gapp->get_profile_popup_menu ();
         p_popup_menu = gtk_popover_menu_new_from_model (G_MENU_MODEL (profile_popup_menu));
-        //p_popup_menu = gtk_menu_new_from_model (G_MENU_MODEL (profile_popup_menu));
-        //g_assert (GTK_IS_MENU (p_popup_menu));
+        p_popup_menu_cv = gtk_popover_menu_new_from_model (G_MENU_MODEL (profile_popup_menu));
 
         
         if (pc_in_window){
@@ -1022,11 +1030,11 @@ void ProfileControl::AppWindowInit(const gchar *title, const gchar *sub_title){
 
                 XSM_DEBUG (DBG_L2,  "VC::VC popup Header Buttons setup. " );
 
-#if 0
+#if 1
                 // attach full view popup menu to tool button ----------------------------------------------------
                 GtkWidget *header_menu_button = gtk_menu_button_new ();
-                //        gtk_button_set_image (GTK_BUTTON (header_menu_button), gtk_image_new_from_icon_name ("emblem-system-symbolic", tmp_toolbar_icon_size));
-                gtk_menu_button_set_popup (GTK_MENU_BUTTON (header_menu_button), p_popup_menu);
+                gtk_menu_button_set_icon_name (GTK_MENU_BUTTON (header_menu_button), "emblem-system-symbolic");
+                gtk_menu_button_set_popover (GTK_MENU_BUTTON (header_menu_button), p_popup_menu);
                 gtk_header_bar_pack_end (GTK_HEADER_BAR (header_bar), header_menu_button);
                 gtk_widget_show (header_menu_button);
 #endif
@@ -1048,7 +1056,7 @@ void ProfileControl::AppWindowInit(const gchar *title, const gchar *sub_title){
         gtk_widget_show (pc_grid);
 
         // FIX-ME-GTK4 ?!?!
-        g_signal_connect (G_OBJECT (pc_grid), "destroy", G_CALLBACK (gtk_window_destroy), &pc_grid);
+        // g_signal_connect (G_OBJECT (pc_grid), "destroy", G_CALLBACK (gtk_window_destroy), &pc_grid);
         
         resize_cb_handler_id = g_signal_connect (GTK_BOX (window), "check-resize", G_CALLBACK (ProfileControl::resize_drawing), this);
 
@@ -1162,6 +1170,140 @@ void ProfileControl::canvas_draw_function (GtkDrawingArea *area, cairo_t *cr,
 }
 
 
+void ProfileControl::pressed_cb (GtkGesture *gesture, int n_press, double x, double y, ProfileControl *pc){
+        double mouse_pix_xy[2];
+        int button = gtk_gesture_single_get_current_button (GTK_GESTURE_SINGLE (gesture));
+        g_message ("RELEASED %d #%d at %g %g", button, n_press, x,y);
+        cairo_item *items[2] = { pc->Cursor[0][1], pc->Cursor[1][1] };
+
+        // -- this must be the inverted transformation for canvas mouse coordinates into world
+        // -- see canvas_draw_callback (), cairo scale/translate +++ 
+        // ***** cairo_scale (cr, pc->pixel_size, pc->pixel_size);
+        // ***** cairo_translate (cr, 3.*pc->border, 5./4.*pc->border);
+        // undo cairo image translation/scale:
+        mouse_pix_xy[0] = ((double)x/pc->pixel_size - (double)(pc->left_border*pc->border));
+        mouse_pix_xy[1] = ((double)y/pc->pixel_size - (double)(pc->top_border*pc->border));
+        // ++++++++++++++++++++++++++++++++++++++++++++++++++
+        
+        pc->canvas2scan (mouse_pix_xy[0], mouse_pix_xy[1], mouse_pix_xy[0], mouse_pix_xy[1]);
+        
+        switch(button) {
+        case 1:
+                {
+                        DA_Event event = { EV_BUTTON_1, EV_BUTTON_PRESS, x,y };
+                        if (pc->tmp_effected >= 0){
+                                //g_message ("CANVAS EVENT cursor grab mode image-pixel XY: %g, %g\n", mouse_pix_xy[0], mouse_pix_xy[1]);
+                                pc->cursor_event (items, &event, mouse_pix_xy, pc);
+                                break;
+                        }
+                        pc->cursor_event (items, &event, mouse_pix_xy, pc);
+
+                        if (pc->tmp_effected >= 0) // handled by object, done. no more action here!
+                                break;
+                }
+                break;
+        case 2: // Show XYZ display
+                {
+                        GtkWidget *menu;
+                        GtkWidget *box;
+                        GtkWidget *item;
+                        //g_message ("M BUTTON_PRESS image-pixel XY: %g, %g\n", mouse_pix_xy[0], mouse_pix_xy[1]);
+
+                        menu = gtk_popover_new ();
+                        gtk_widget_set_parent (menu, pc->canvas);
+                        gtk_popover_set_has_arrow (GTK_POPOVER (menu), TRUE);
+                        gtk_popover_set_pointing_to (GTK_POPOVER (menu), &(GdkRectangle){ x, y, 1, 1});
+                        box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
+                        gtk_popover_set_child (GTK_POPOVER (menu), box);
+
+                        gchar *mxy = g_strdup_printf ("%g, %g", mouse_pix_xy[0], mouse_pix_xy[1]);
+                        item = gtk_button_new_with_label (mxy);
+                        g_free (mxy);
+                        gtk_button_set_has_frame (GTK_BUTTON (item), FALSE);
+                        gtk_box_append (GTK_BOX (box), item);
+
+                        gtk_popover_popup (GTK_POPOVER (menu));
+                }
+                //dragging=TRUE;
+                break;
+        case 3: // do popup
+                // g_print ("RM BUTTON_PRESS (do popup) image-pixel XY: %g, %g\n", mouse_pix_xy[0], mouse_pix_xy[1]);
+                // gtk_menu_popup_at_pointer (Menu, Event)
+
+                // do graph window menu popup
+                gtk_popover_set_pointing_to (GTK_POPOVER (pc->p_popup_menu_cv), &(GdkRectangle){ x, y, 1, 1});
+                gtk_popover_popup (GTK_POPOVER (pc->p_popup_menu_cv));
+                break;
+        }
+}
+
+void ProfileControl::released_cb (GtkGesture *gesture, int n_press, double x, double y, ProfileControl *pc){
+        double mouse_pix_xy[2];
+        int button = gtk_gesture_single_get_current_button (GTK_GESTURE_SINGLE (gesture));
+        g_message ("RELEASED %d #%d at %g %g", button, n_press, x,y);
+
+        cairo_item *items[2] = { pc->Cursor[0][1], pc->Cursor[1][1] };
+
+        // -- this must be the inverted transformation for canvas mouse coordinates into world
+        // -- see canvas_draw_callback (), cairo scale/translate +++ 
+        // ***** cairo_scale (cr, pc->pixel_size, pc->pixel_size);
+        // ***** cairo_translate (cr, 3.*pc->border, 5./4.*pc->border);
+        // undo cairo image translation/scale:
+        mouse_pix_xy[0] = ((double)x/pc->pixel_size - (double)(pc->left_border*pc->border));
+        mouse_pix_xy[1] = ((double)y/pc->pixel_size - (double)(pc->top_border*pc->border));
+        // ++++++++++++++++++++++++++++++++++++++++++++++++++
+        
+        pc->canvas2scan (mouse_pix_xy[0], mouse_pix_xy[1], mouse_pix_xy[0], mouse_pix_xy[1]);
+        
+        switch(button) {
+        case 1:
+                {
+                        DA_Event event = { EV_BUTTON_1, EV_BUTTON_RELEASE, x,y };
+                        if (pc->tmp_effected >= 0){
+                                //g_message ("CANVAS EVENT cursor grab mode image-pixel XY: %g, %g\n", mouse_pix_xy[0], mouse_pix_xy[1]);
+                                pc->cursor_event (items, &event, mouse_pix_xy, pc);
+                                break;
+                        }
+                        pc->cursor_event (items, &event, mouse_pix_xy, pc);
+
+                        if (pc->tmp_effected >= 0) // handled by object, done. no more action here!
+                                break;
+                }
+                break;
+        }
+}
+
+void ProfileControl::drag_motion (GtkEventControllerMotion *motion, gdouble x, gdouble y, ProfileControl *pc){
+        double mouse_pix_xy[2];
+        g_message ("DRAGGING %g %g", x,y);
+        cairo_item *items[2] = { pc->Cursor[0][1], pc->Cursor[1][1] };
+
+        // -- this must be the inverted transformation for canvas mouse coordinates into world
+        // -- see canvas_draw_callback (), cairo scale/translate +++ 
+        // ***** cairo_scale (cr, pc->pixel_size, pc->pixel_size);
+        // ***** cairo_translate (cr, 3.*pc->border, 5./4.*pc->border);
+        // undo cairo image translation/scale:
+        mouse_pix_xy[0] = ((double)x/pc->pixel_size - (double)(pc->left_border*pc->border));
+        mouse_pix_xy[1] = ((double)y/pc->pixel_size - (double)(pc->top_border*pc->border));
+        // ++++++++++++++++++++++++++++++++++++++++++++++++++
+        
+        pc->canvas2scan (mouse_pix_xy[0], mouse_pix_xy[1], mouse_pix_xy[0], mouse_pix_xy[1]);
+        
+        DA_Event event = { EV_BUTTON_1, EV_MOTION_NOTIFY,x,y  };
+        if (pc->tmp_effected >= 0){
+                //g_message ("CANVAS EVENT cursor grab mode image-pixel XY: %g, %g\n", mouse_pix_xy[0], mouse_pix_xy[1]);
+                pc->cursor_event (items, &event, mouse_pix_xy, pc);
+                return;
+        }
+        pc->cursor_event (items, &event, mouse_pix_xy, pc);
+
+        if (pc->tmp_effected >= 0) // handled by object, done. no more action here!
+                return;
+}
+
+   
+
+
 void ProfileControl::auto_update(int rate){ // auto update, rate in ms. Disable: rate=0
         if (rate > 0 && !auto_update_id)
 		auto_update_id = g_timeout_add (rate, (GSourceFunc) ProfileControl_auto_update_callback, this);
@@ -1198,113 +1340,9 @@ void ProfileControl::SetSize(double new_aspect){
         updateScans ();
 }
 
-#if 0
-gint ProfileControl::canvas_event_cb(GtkWidget *canvas, GdkEvent *event, ProfileControl *pc){
-	static int dragging=FALSE;
-	static GtkWidget *coordpopup=NULL;
-	static GtkWidget *coordlab=NULL;
-        double mouse_pix_xy[2];
-        cairo_item *items[2] = { pc->Cursor[0][1], pc->Cursor[1][1] };
 
-        // -- this must be the inverted transformation for canvas mouse coordinates into world
-        // -- see canvas_draw_callback (), cairo scale/translate +++ 
-        // ***** cairo_scale (cr, pc->pixel_size, pc->pixel_size);
-        // ***** cairo_translate (cr, 3.*pc->border, 5./4.*pc->border);
-        // undo cairo image translation/scale:
-        mouse_pix_xy[0] = ((double)event->button.x/pc->pixel_size - (double)(pc->left_border*pc->border));
-        mouse_pix_xy[1] = ((double)event->button.y/pc->pixel_size - (double)(pc->top_border*pc->border));
-        // ++++++++++++++++++++++++++++++++++++++++++++++++++
-        
-        pc->canvas2scan (mouse_pix_xy[0], mouse_pix_xy[1], mouse_pix_xy[0], mouse_pix_xy[1]);
-        
-        // 1st check if mouse on editable object
-        pc->tmp_event = event;     // data for foreach
-        pc->tmp_xy = mouse_pix_xy; // data for foreach
 
-        if (!dragging){ // only if not displaying coordinate info
-                if (pc->tmp_effected >= 0){
-                        //g_message ("CANVAS EVENT cursor grab mode image-pixel XY: %g, %g\n", mouse_pix_xy[0], mouse_pix_xy[1]);
-                        pc->cursor_event (items, event, mouse_pix_xy, pc);
-                        return FALSE;
-                }
-                pc->cursor_event (items, event, mouse_pix_xy, pc);
-
-                if (pc->tmp_effected >= 0) // handled by object, done. no more action here!
-                        return FALSE;
-        }
-           
-	switch (event->type) {
-	case GDK_BUTTON_PRESS:
-		switch(event->button.button) {
-		case 1: 
-			break;
-		case 2: // Show XYZ display
-                        {
-                                GtkWidget *pframe;
-                                //g_message ("M BUTTON_PRESS image-pixel XY: %g, %g\n", mouse_pix_xy[0], mouse_pix_xy[1]);
-                                gchar *mld = g_strdup_printf ("%g, %g", mouse_pix_xy[0], mouse_pix_xy[1]);
-                                coordpopup = gtk_window_new (GTK_WINDOW_POPUP);
-                                gtk_window_set_position (GTK_WINDOW (coordpopup), GTK_WIN_POS_MOUSE);
-                                gtk_box_append (GTK_BOX (coordpopup), pframe = gtk_frame_new (NULL));
-                                gtk_box_append (GTK_BOX (pframe),   coordlab = gtk_label_new (mld));
-                                gtk_widget_show_all (coordpopup);
-                                g_free(mld);
-
-                                GdkWindow* win = gtk_widget_get_parent_window(pc->canvas);
-                                GdkCursor *grab_cursor = gdk_cursor_new_from_name (gdk_display_get_default (), "cell"); // "cell" "crosshair"
-                                gdk_window_set_cursor(win, grab_cursor);
-                        }
-			dragging=TRUE;
-                        break;
-                case 3: // do popup
-                        // g_print ("RM BUTTON_PRESS (do popup) image-pixel XY: %g, %g\n", mouse_pix_xy[0], mouse_pix_xy[1]);
-                        // gtk_menu_popup_at_pointer (Menu, Event)
-
-                        MENU_AT_POINTER (GTK_MENU (pc->p_popup_menu), event);
-                        g_message (" MENU_AT_POINTER BTN3  !");
-                        break;
-		}
-		break;
-		
-	case GDK_MOTION_NOTIFY:
-                //g_message ("MOTION XY: %g, %g\n", event->button.x, event->button.y);
-		if (dragging && (event->motion.state & GDK_BUTTON2_MASK)){
-			gchar *mld =  g_strdup_printf ("%g, %g", mouse_pix_xy[0], mouse_pix_xy[1]);
-			gtk_label_set_text (GTK_LABEL (coordlab), mld);
-			g_free (mld);
-		}
-		break;
-		
-	case GDK_BUTTON_RELEASE:
-		switch(event->button.button){
-		case 2:  // remove XYZ display
-			gtk_widget_destroy (coordpopup);
-			coordpopup=NULL;
-                        {
-                                GdkWindow* win = gtk_widget_get_parent_window(pc->canvas);
-                                GdkCursor *grab_cursor = gdk_cursor_new_from_name (gdk_display_get_default (), "default");
-                                gdk_window_set_cursor(win, grab_cursor);
-                        }
-                        dragging=FALSE;
-			break;
-                case 3:
-#if 0
-                        if (pc->pc_in_window){
-                                for (guint i=0; i<G_N_ELEMENTS (win_profile_popup_entries); ++i)
-                                        g_action_map_remove_action (G_ACTION_MAP (pc->app_window), win_profile_popup_entries[i].name);
-                        }
-#endif
-                        break;
-		}
-		break;
-	default: break;
-	}
-	return FALSE;
-}
-#endif
-
-#if 0
-gint ProfileControl::cursor_event(cairo_item *items[2], GdkEvent *event, double mxy[2], ProfileControl *pc){
+gint ProfileControl::cursor_event(cairo_item *items[2], DA_Event *event, double mxy[2], ProfileControl *pc){
         double x, y;
   	static int dragging=FALSE;
         cairo_item *item = NULL;
@@ -1336,13 +1374,14 @@ gint ProfileControl::cursor_event(cairo_item *items[2], GdkEvent *event, double 
                 return false;
 
 	switch (event->type){
-        case GDK_BUTTON_PRESS:
-                switch(event->button.button){
+        case EV_BUTTON_PRESS:
+                switch(event->button){
                 case 1:
                         {
-                                GdkWindow* win = gtk_widget_get_parent_window(pc->canvas);
-                                GdkCursor *grab_cursor = gdk_cursor_new_from_name (gdk_display_get_default (), "grab");
-                                gdk_window_set_cursor(win, grab_cursor);
+                                // FIX-ME GTK4
+                                //GdkWindow* win = gtk_widget_get_parent_window(pc->canvas);
+                                //GdkCursor *grab_cursor = gdk_cursor_new_from_name (gdk_display_get_default (), "grab");
+                                //gdk_window_set_cursor(win, grab_cursor);
                         }
                         item->grab ();
                         
@@ -1354,8 +1393,8 @@ gint ProfileControl::cursor_event(cairo_item *items[2], GdkEvent *event, double 
                 }
                 break;
 		
-        case GDK_MOTION_NOTIFY:
-                if (item->is_grabbed () && dragging && (event->motion.state & GDK_BUTTON1_MASK)){
+        case EV_MOTION_NOTIFY:
+                if (item->is_grabbed () && dragging){ // && (event->motion.state & GDK_BUTTON1_MASK)){
                         //g_message (" ProfileControl::cursor_event MOTION EV [%d] to x=%g", pc->tmp_effected, mxy[0]);
                         if (pc->tmp_effected >= 0){ // make sure
                                 //g_message (" ProfileControl::cursor_event MOTION EV => MOVE CURSOR");
@@ -1364,13 +1403,14 @@ gint ProfileControl::cursor_event(cairo_item *items[2], GdkEvent *event, double 
                 }
                 break;
 		
-        case GDK_BUTTON_RELEASE:
+        case EV_BUTTON_RELEASE:
                 if (item->is_grabbed () && dragging){
                         item->ungrab ();
                         pc->tmp_effected = -1;
-                        GdkWindow* win = gtk_widget_get_parent_window(pc->canvas);
-                        GdkCursor *default_cursor = gdk_cursor_new_from_name (gdk_display_get_default (), "default");
-                        gdk_window_set_cursor(win, default_cursor);
+                        // FIX-ME GTK4
+                        //GdkWindow* win = gtk_widget_get_parent_window(pc->canvas);
+                        //GdkCursor *default_cursor = gdk_cursor_new_from_name (gdk_display_get_default (), "default");
+                        //gdk_window_set_cursor(win, default_cursor);
                 }
 
                 dragging = false;
@@ -1383,7 +1423,7 @@ gint ProfileControl::cursor_event(cairo_item *items[2], GdkEvent *event, double 
         
 	return true;
 }
-#endif
+
 
 const gchar *ProfileControl::get_xcolor (int i){
 	const gchar *sccl[] = { "red","orange","yellow",

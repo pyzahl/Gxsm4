@@ -188,7 +188,7 @@ public:
         static void save_obj(VObject *vo, ViewControl *vc){ vo->save(vc->objsavestream); };
         static void save_obj_HPGL(VObject *vo, ViewControl *vc){ vo->saveHPGL(vc->objsavestream); };
 
-        static gint canvas_event_cb(GtkWidget *canvas, GdkEvent *event, ViewControl *vo);
+        //static gint canvas_event_cb(GtkWidget *canvas, GdkEvent *event, ViewControl *vo);
 
         // File DnD
         static gboolean on_drop (GtkDropTarget *target, const GValue  *value, double x, double y, ViewControl *vc);
