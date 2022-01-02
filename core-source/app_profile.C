@@ -802,8 +802,9 @@ void ProfileControl::Init(const gchar *titlestring, int ChNo, const gchar *resid
         gtk_widget_show (statusbar);
 
         // hookup popup menu
-        gtk_popover_set_default_widget (GTK_POPOVER (p_popup_menu), canvas);
-        gtk_popover_set_child (GTK_POPOVER (p_popup_menu), canvas);
+        //gtk_popover_set_default_widget (GTK_POPOVER (p_popup_menu_cv), canvas);
+        gtk_widget_set_parent (p_popup_menu_cv, canvas);
+        //gtk_popover_set_child (GTK_POPOVER (p_popup_menu_cv), canvas);
 
         // configure getsure events
         GtkEventController* motion = gtk_event_controller_motion_new ();
@@ -1005,7 +1006,7 @@ void ProfileControl::AppWindowInit(const gchar *title, const gchar *sub_title){
         GObject *profile_popup_menu = gapp->get_profile_popup_menu ();
         p_popup_menu = gtk_popover_menu_new_from_model (G_MENU_MODEL (profile_popup_menu));
         p_popup_menu_cv = gtk_popover_menu_new_from_model (G_MENU_MODEL (profile_popup_menu));
-
+        gtk_popover_set_has_arrow (GTK_POPOVER (p_popup_menu_cv), FALSE);
         
         if (pc_in_window){
                 // g_message ("ProfileControl::AppWindowInit in external window >%s<", title);
@@ -1033,7 +1034,7 @@ void ProfileControl::AppWindowInit(const gchar *title, const gchar *sub_title){
 #if 1
                 // attach full view popup menu to tool button ----------------------------------------------------
                 GtkWidget *header_menu_button = gtk_menu_button_new ();
-                gtk_menu_button_set_icon_name (GTK_MENU_BUTTON (header_menu_button), "emblem-system-symbolic");
+                //gtk_menu_button_set_icon_name (GTK_MENU_BUTTON (header_menu_button), "emblem-system-symbolic");
                 gtk_menu_button_set_popover (GTK_MENU_BUTTON (header_menu_button), p_popup_menu);
                 gtk_header_bar_pack_end (GTK_HEADER_BAR (header_bar), header_menu_button);
                 gtk_widget_show (header_menu_button);
