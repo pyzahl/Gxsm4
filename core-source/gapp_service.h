@@ -831,15 +831,10 @@ public:
 
 	static void SaveGeometryCallback(AppBase *apb);
 
-	int SaveGeometry(int savealways=TRUE);
-	int LoadGeometry();
+	void SaveGeometry(gboolean store_to_settings=TRUE);
+	void LoadGeometry();
 
 	/* action callbacks */
-#if 0
-        static gboolean window_state_watch_callback (GtkWidget *widget,
-                                                     GdkEvent  *event,
-                                                     gpointer   user_data);
-#endif
         static gboolean window_close_callback (GtkWidget *widget,
                                                GdkEvent  *event,
                                                gpointer   user_data);
@@ -861,6 +856,25 @@ public:
 	GtkWindow* get_window() { return window; };
 	Gxsm4appWindow* get_app_window() { return app_window; };
 
+        void GetWindowSize (gint &width, gint &height){
+                static int scale=-1;
+                if (!window_geometry)
+                        window_geometry = g_new (gint32, WGEO_SIZE);
+                SaveGeometry (FALSE);
+                
+                // CHECK HI-DPI scaling factor
+                if (scale <= 0){
+                        GdkDisplay* gdk_display = gdk_display_get_default();
+                        GdkMonitor* monitor = gdk_display_get_monitor_at_surface (gdk_display,
+                                                                                  GDK_SURFACE (gtk_native_get_surface(GTK_NATIVE (window))));
+                        scale = gdk_monitor_get_scale_factor (monitor);
+                        g_message ("MONITOR HIDIP SCALE IS: %d", scale);
+                }
+                
+                width  = (gint) window_geometry[WGEO_WIDTH]/scale;
+                height = (gint) window_geometry[WGEO_HEIGHT]/scale;
+        };
+        
 protected:
 	void destroy(){ if (window) { gtk_window_destroy (GTK_WINDOW (window)); window=NULL; } nodestroy=TRUE; };
 	int nodestroy;
@@ -1154,6 +1168,13 @@ public:
         {
                 *((int *) user_data) = response;
                 gtk_window_destroy (GTK_WINDOW (dialog));
+        }
+
+        static void on_dialog_response_to_user_data_no_destroy (GtkDialog *dialog,
+                                                                int        response,
+                                                                gpointer   user_data)
+        {
+                *((int *) user_data) = response;
         }
 
 	// Value Request

@@ -854,12 +854,8 @@ void AppBase::SaveGeometryCallback(AppBase *apb){
 	apb->SaveGeometry();
 }
 
-int AppBase::SaveGeometry(int savealways){
+void AppBase::SaveGeometry(gboolean store_to_settings){
 #ifdef ENABLE_GXSM_WINDOW_MANAGEMENT
-        if (! window_key){
-                XSM_DEBUG_ERROR (DBG_L1, "ERROR ** AppBase::SaveGeometry called with no window_key.");
-                return -1;
-        }
 	XSM_DEBUG (DBG_L2, "** AppBase::SaveGeometry of " << window_key);
 
         // g_message ("AutoSave Window Geometry: %s", window_key);
@@ -906,28 +902,15 @@ int AppBase::SaveGeometry(int savealways){
 # endif
                         g_error ("Unsupported GDK backend");
 
-        /* I tried... not usefull
-        int dw, dh;
-        gtk_window_get_default_size (GTK_WINDOW (window), &dw, &dh);
-        int nw, nh;
-        int mw, mh;
-        gtk_widget_measure (GTK_WIDGET (window), GTK_ORIENTATION_HORIZONTAL, -1, &mw, &nw, NULL, NULL);
-        gtk_widget_measure (GTK_WIDGET (window), GTK_ORIENTATION_VERTICAL,  -1, &mh, &nh, NULL, NULL);
-        window_geometry[WGEO_WIDTH]=dw;
-        window_geometry[WGEO_HEIGHT]=dh;
-        g_message ("gtk_widget_measure [%s]: (%d %d %d, %d %d %d", window_key, dw, mw, nw, dh, mh, nh);
-        */
-        
-        GVariant *storage = g_variant_new_fixed_array (g_variant_type_new ("i"), window_geometry, WGEO_SIZE, sizeof (gint32));
-        g_settings_set_value (geometry_settings, window_key, storage);
-  
-        //g_free (storage); // ??
-      
+        if (store_to_settings && window_key){
+                GVariant *storage = g_variant_new_fixed_array (g_variant_type_new ("i"), window_geometry, WGEO_SIZE, sizeof (gint32));
+                g_settings_set_value (geometry_settings, window_key, storage);
+                //g_free (storage); // ??
+        }
 #endif
-	return 0;
 }
 
-int AppBase::LoadGeometry(){
+void AppBase::LoadGeometry(){
         if (!window_key){
                 XSM_DEBUG_ERROR (DBG_L1, "AppBase::LoadGeometry -- error, no window_key set.");
                 return -1;
@@ -953,6 +936,4 @@ int AppBase::LoadGeometry(){
         position_auto ();
         resize_auto ();
         show_auto ();
-
-	return 0;
 }

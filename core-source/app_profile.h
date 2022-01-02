@@ -316,6 +316,7 @@ class ProfileControl : public AppBase, public LineProfile1D{
 
 	// canvas draw
         static gboolean resize_drawing (GtkWidget *widget, ProfileControl *pc);
+        gint cur_w, cur_h;
         gulong resize_cb_handler_id;
         
         static gboolean cairo_draw_profile_only_callback (cairo_t *cr, ProfileControl *pc);

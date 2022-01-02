@@ -219,7 +219,7 @@ static void WSxM_im_export_configure(void)
 								 GTK_RESPONSE_REJECT,
 								 NULL);
 		BuildParam bp;
-		gtk_container_add (GTK_CONTAINER (gtk_dialog_get_content_area (GTK_DIALOG (dialog))), bp.grid);
+		gtk_box_append (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (dialog))), bp.grid);
 		
 		snprintf (converter, WSXM_MAXCHARS,"%s", xrm.GetStr ("converter_path", "0"));
 		GtkWidget *input = bp.grid_add_input ("Converter Path");
@@ -235,17 +235,25 @@ static void WSxM_im_export_configure(void)
                         snprintf(converter,WSXM_MAXCHARS,"/usr/local/bin/./nc2top");
 		}
                 
-		gtk_entry_set_text (GTK_ENTRY(input), converter);
+		gtk_entry_buffer_set_text (GTK_ENTRY_BUFFER (gtk_entry_get_buffer (GTK_ENTRY (input))), converter, -1);
 
-		gtk_widget_show_all (dialog);
-		gtk_dialog_run (GTK_DIALOG(dialog));
+		gtk_widget_show (dialog);
+
+                int response = GTK_RESPONSE_NONE;
+                g_signal_connect (G_OBJECT (dialog), "response", G_CALLBACK (GnomeAppService::on_dialog_response_to_user_data_no_destroy), &response);
+        
+                // FIX-ME GTK4 ??
+                // wait here on response
+                while (response == GTK_RESPONSE_NONE)
+                        while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
 		
 		bool deltemp;		
 
 		deltemp=gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(checkbox));
-		snprintf (converter,WSXM_MAXCHARS, "%s", gtk_entry_get_text(GTK_ENTRY(input)));
+		snprintf (converter,WSXM_MAXCHARS, "%s", gtk_entry_buffer_get_text (GTK_ENTRY_BUFFER (gtk_entry_get_buffer (GTK_ENTRY (input)))));
 
-		gtk_widget_destroy (dialog);
+		gtk_window_destroy (GTK_WINDOW(dialog));
+
 		xrm.Put("converter_path",converter);
 		xrm.PutBool ("remove_temp",deltemp);
 

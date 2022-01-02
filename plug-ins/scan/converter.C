@@ -494,12 +494,12 @@ void
 
 
     vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-    gtk_box_pack_start(GTK_BOX
-		       (gtk_dialog_get_content_area(GTK_DIALOG(dialog))),
-		       vbox, TRUE, TRUE, GXSM_WIDGET_PAD);
+    gtk_widget_show (vbox);
+    gtk_box_append (GTK_BOX (gtk_dialog_get_content_area(GTK_DIALOG(dialog))), vbox);
 
     // create widget for source file
     hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+    gtk_widget_show (hbox);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
     VarName = gtk_label_new(N_("Source Path"));

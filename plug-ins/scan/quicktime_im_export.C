@@ -266,7 +266,7 @@ static void quicktime_im_export_configure(void)
 								 GTK_RESPONSE_REJECT,
 								 NULL);
 		BuildParam bp;
-		gtk_container_add (GTK_CONTAINER (gtk_dialog_get_content_area (GTK_DIALOG (dialog))), bp.grid);
+		gtk_box_append (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (dialog))), bp.grid);
 
 
                 ////////
@@ -337,14 +337,22 @@ static void quicktime_im_export_configure(void)
 
 		bp.grid_add_label ("Note: Keep the Scan/OSD window on top!");
 #endif
-		gtk_widget_show_all (dialog);
-		gtk_dialog_run (GTK_DIALOG(dialog));
+
+                gtk_widget_show (dialog);
+
+                int response = GTK_RESPONSE_NONE;
+                g_signal_connect (G_OBJECT (dialog), "response", G_CALLBACK (GnomeAppService::on_dialog_response_to_user_data_no_destroy), &response);
+        
+                // FIX-ME GTK4 ??
+                // wait here on response
+                while (response == GTK_RESPONSE_NONE)
+                        while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
 
 		if (OSD_grab_flg)
-		        OSD_grab_mode = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (OSD_grab_flg));
+		        OSD_grab_mode = gtk_check_button_get_active (GTK_CHECK_BUTTON (OSD_grab_flg));
 
 		if (cont_autodisp_flg)
-		  conti_autodisp_mode = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (cont_autodisp_flg));
+		  conti_autodisp_mode = gtk_check_button_get_active (GTK_CHECK_BUTTON (cont_autodisp_flg));
 
 		if (dim_sel)
 			video_dimension = gtk_combo_box_get_active (GTK_COMBO_BOX (dim_sel));
@@ -360,7 +368,7 @@ static void quicktime_im_export_configure(void)
 			}
 		}
 
-		gtk_widget_destroy (dialog);
+                gtk_window_destroy (GTK_WINDOW (dialog));
 
 
 		xrm.Put ("file_max_index_value", max_index_value);
@@ -612,7 +620,7 @@ FIO_STATUS Quicktime_ImExportFile::Write(){
                         cairo_t *cr = cairo_create (surface);
        
                         // call draw with widget=NULL assumed external rendering and omits drawing active frame
-                        vc->canvas_draw_callback (NULL, cr, vc);
+                        vc->canvas_draw_function (NULL, cr, 0,0, vc);
         
                         cairo_status_t cstatus = cairo_status(cr);
                         if (cstatus)
