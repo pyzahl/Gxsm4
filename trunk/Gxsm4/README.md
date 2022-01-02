@@ -92,7 +92,8 @@ To be ported, recoded,pending or disfunctional features and comments:
 
 - Spin-Entry: Now shows the units again, but not always at startup (some defaut formatting), only after first touch... not yet sure why that is.
 
-- Profile: pending mouse actions for cursors... need to port to gtk_controller (easy), subtitle management, canvas window resizing is currently disfucntional.
+- Profile: ported, testing...
+
 
  -DSP MOVER CONTROL BUTTONS: action signal problem of missing signal for "pressed". The "activate" does not do anything... I tried.
     -?> Do I now need to add event controllers to the buttons (can I??) and all that stuff to do this?

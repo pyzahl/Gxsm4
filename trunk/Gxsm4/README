@@ -76,6 +76,7 @@ Pending and known issues:
 
 Window Position Management....  gtk4 does not provide any hands on that any more -- big convenience and usability issue 🙁
                                 any one has an idea if select (particular gnome shell) have some handles to get around this???
+				X11: functional via native XWindow system calls, Wayland: no fix to my knowledge
 
 File load vie Drag-n-Drop from filemanager: working, but currently only for single files. (new drap/drop controller)
 
@@ -83,7 +84,7 @@ File load vie Drag-n-Drop from filemanager: working, but currently only for sing
 
 Spin-Entry: Now shows the units again, but not always at startup (some defaut formatting), only after first touch... not yet sure why that is.
 
-Profile: pending mouse actions for cursors... need to port to gtk_controller (easy), subtitle management, canvas window resizing is currently disfucntional.
+Profile: fucntional, testing
 
 DSP MOVER CONTROL BUTTONS: action signal problem of missing signal for "pressed". The "activate" does not do anything... I tried.
 -?> Do I now need to add event controllers to the buttons (can I??) and all that stuff to do this?
