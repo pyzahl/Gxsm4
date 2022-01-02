@@ -559,12 +559,12 @@ GxsmMenuExtension *App::gxsm_app_extend_menu (const gchar *extension_point, cons
         //g_message ("GxsmMenuExtension *App::gxsm_app_extend_menu");
         if (!action || !extension_point || !menu_entry_text ){
                 //g_message ("GxsmMenuExtension *App::gxsm_app_extend_menu *** REQUEST ERROR: BAD STRING");
-                XSM_DEBUG_GW (DBG_L2, "valid action: App::gxsm_app_extend_menu  at %s : %s -> %s", extension_point, menu_entry_text, action);
+                XSM_DEBUG_GW (DBG_L2, "valid action: App::gxsm_app_extend_menu  *** ERORR: BAD REQUEST");
                 return NULL;
         }
         //	g_return_val_if_fail (extension_point != NULL, NULL);
 
-        XSM_DEBUG_GM (DBG_L2, "App::gxsm_app_extend_menu  at %s : %s -> %s", extension_point, menu_entry_text, action);
+        XSM_DEBUG_GM (DBG_L2, "App::gxsm_app_extend_menu at >%s< Entry: >%s< Action => >%s<", extension_point, menu_entry_text, action);
         //g_message ("GxsmMenuExtension *App::gxsm_app_extend_menu ***  %s : %s -> %s", extension_point, menu_entry_text, action);
         
 	/* First look in the window menu */
@@ -575,6 +575,7 @@ GxsmMenuExtension *App::gxsm_app_extend_menu (const gchar *extension_point, cons
         
 	/* otherwise look in the app menu */
 	if (section == NULL) {
+                XSM_DEBUG_GM (DBG_L2, "App::gxsm_app_extend_menu SECTION=NULL...");
                 //g_message ("App::gxsm_app_extend_menu - section search in app_menu DISABLED GTK4 PORT PENDING");
                 // FIX-ME-GTK4 what do we really need here ???
                 /*
@@ -599,7 +600,6 @@ GxsmMenuExtension *App::gxsm_app_extend_menu (const gchar *extension_point, cons
         }
         
 	if (section != NULL){
-                XSM_DEBUG_GM (DBG_L1, "App::gxsm_app_extend_menu - extending menu at <%s> + %s [%s]", extension_point, menu_entry_text, action);
                 //                priv->menu_ext = gedit_app_activatable_extend_menu (g_application, "tools-section");
                 //                item = g_menu_item_new (_("S_ort..."), "win.sort");
                 GxsmMenuExtension *menu_ext = gxsm_menu_extension_new (G_MENU (section));
@@ -616,9 +616,12 @@ GxsmMenuExtension *App::gxsm_app_extend_menu (const gchar *extension_point, cons
 #endif
                 g_object_unref (item);
 
+                XSM_DEBUG_GM (DBG_L2, "App::gxsm_app_extend_menu extend completed for >%s<.", menu_entry_text);
                 return menu_ext;
-        } else
+        } else {
+                XSM_DEBUG_GM (DBG_L2, "App::gxsm_app_extend_menu extend failed for >%s<.", menu_entry_text);
                 return NULL;
+        }
 }
 
 int App::signal_emit_toolbar_action (const gchar *action, GSimpleAction *simple){

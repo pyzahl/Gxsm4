@@ -32,6 +32,11 @@
 #include <fstream>
 #include "cairo_item.h"
 
+typedef enum { EV_BUTTON_NONE=0, EV_BUTTON_1=1, EV_BUTTON_2=2, EV_BUTTON_3=3, EV_BUTTON_WHEEL_UP=4, EV_BUTTON_WHEEL_DOWN=5 } EV_BUTTON;
+typedef enum { EV_NONE, EV_BUTTON_PRESS, EV_MOTION_NOTIFY, EV_BUTTON_RELEASE, EV_ENTER_NOTIFY, EV_LEAVE_NOTIFY } EV_TYPE;
+typedef struct { EV_BUTTON button; EV_TYPE type; gdouble x,y; } DA_Event;
+
+
 typedef struct{
 	const gchar *mitem;
 	int   msk;
@@ -309,9 +314,6 @@ class ProfileControl : public AppBase, public LineProfile1D{
 	static void cur_Brmin_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
 	static void cur_Bright_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
 
-        static gint canvas_event_cb (GtkWidget *canvas, GdkEvent *event, ProfileControl *pc);
-        static gint cursor_event (cairo_item *items[2], GdkEvent *event, double mxy[2], ProfileControl *pc);
-
 	// canvas draw
         static gboolean resize_drawing (GtkWidget *widget, ProfileControl *pc);
         gulong resize_cb_handler_id;
@@ -322,6 +324,11 @@ class ProfileControl : public AppBase, public LineProfile1D{
                                           int             width,
                                           int             height,
                                           ProfileControl *pc);
+
+        static gint cursor_event (cairo_item *items[2], DA_Event *event, double mxy[2], ProfileControl *pc);
+        static void pressed_cb (GtkGesture *gesture, int n_press, double x, double y, ProfileControl *pc);
+        static void released_cb (GtkGesture *gesture, int n_press, double x, double y, ProfileControl *pc);
+        static void drag_motion (GtkEventControllerMotion *motion, gdouble x, gdouble y, ProfileControl *pc);
         
 	void file_print_callback (int index, ProfileControl *pc);
 	void save_data (const gchar *fname);
@@ -491,6 +498,7 @@ private:
 	gchar *yticfmt;
 
         GtkWidget *p_popup_menu;
+        GtkWidget *p_popup_menu_cv;
 	GSimpleActionGroup *pc_action_group;
 
         Gxsm4appWindow *pc_in_window;
@@ -535,9 +543,8 @@ private:
 	guint auto_update_id;
 
         //----- tmp data for simple event/dragging handing
-        GdkEvent *tmp_event;
-        double   *tmp_xy;
-        int     tmp_effected; // cursor index or -1 for non
+        gboolean pointer_coord_display;
+        int tmp_effected;
 };
 
 #endif
