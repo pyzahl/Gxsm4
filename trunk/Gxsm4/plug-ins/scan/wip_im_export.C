@@ -507,21 +507,27 @@ void Wip_ImExportFile::wip_im_export_configure_select ()
 								 NULL);
 		
 
-                GtkWidget *scrolled_contents = gtk_scrolled_window_new (NULL, NULL);
+                GtkWidget *scrolled_contents = gtk_scrolled_window_new ();
                 gtk_widget_set_hexpand (scrolled_contents, TRUE);
                 gtk_widget_set_vexpand (scrolled_contents, TRUE);
 
                 gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolled_contents), 
                                                 GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 
-		gtk_container_add (GTK_CONTAINER (gtk_dialog_get_content_area (GTK_DIALOG(dialog))), scrolled_contents);
+		gtk_box_append (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG(dialog))), scrolled_contents);
 
 		GtkWidget *view = create_view_and_model ();
-                gtk_container_add (GTK_CONTAINER (scrolled_contents), view);
+                gtk_scrolled_window_set_child (GTK_SCROLLED_WINDOW (scrolled_contents), view);
 
-		gtk_widget_show_all (dialog);
-		gtk_dialog_run(GTK_DIALOG(dialog));
-		gtk_widget_destroy (dialog);
+		gtk_widget_show (dialog);
+
+                int response = GTK_RESPONSE_NONE;
+                g_signal_connect (G_OBJECT (dialog), "response", G_CALLBACK (GnomeAppService::on_dialog_response_to_user_data), &response);
+        
+                // FIX-ME GTK4 ??
+                // wait here on response
+                while (response == GTK_RESPONSE_NONE)
+                        while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
 	}
 }
 

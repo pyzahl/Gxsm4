@@ -414,8 +414,16 @@ FIO_STATUS spa4_ImExportFile::Write(){
 						    GTK_BUTTONS_OK,
 						    N_("Sorry, not yet implemented.")
 						    );
-	gtk_dialog_run (GTK_DIALOG (dialog));
-	gtk_widget_destroy (dialog);
+        gtk_widget_show (dialog);
+
+        int response = GTK_RESPONSE_NONE;
+        g_signal_connect (G_OBJECT (dialog), "response", G_CALLBACK (GnomeAppService::on_dialog_response_to_user_data), &response);
+        
+        // FIX-ME GTK4 ??
+        // wait here on response
+        while (response == GTK_RESPONSE_NONE)
+                while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
+
         return FIO_NOT_RESPONSIBLE_FOR_THAT_FILE;
 
 #if 0

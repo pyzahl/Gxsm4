@@ -578,6 +578,7 @@ void ProfileControl::Init(const gchar *titlestring, int ChNo, const gchar *resid
         set_pc_matrix_size ();
         window_w = window_h = 0;
         font_size_10 = 10.;
+        cur_w = cur_h = 0;
         
 	auto_update_id = 0;
 
@@ -1073,9 +1074,12 @@ void ProfileControl::AppWindowInit(const gchar *title, const gchar *sub_title){
 
 gboolean ProfileControl::resize_drawing (GtkWidget *widget, ProfileControl *pc){
         gint w,h;
-        // FIX-ME-GTK4
-        // gtk_window_get_size (GTK_WINDOW (pc->window), &w, &h);
+        pc->GetWindowSize (w, h);
+        if (pc->cur_w == w || pc->cur_h == h)
+                return TRUE;;
 
+        pc->cur_w=w; pc->cur_h=h;
+                
         // invert: gtk_widget_set_size_request (canvas, (int)(papixel*(aspect+3*border)), (gint)(papixel*(1.+border))+statusheight);
         // w=papixel*(aspect+3*border)       -> papixel = w/(aspect+3*border)
         // h=papixel*(1.+border)+statusheight
@@ -1090,7 +1094,7 @@ gboolean ProfileControl::resize_drawing (GtkWidget *widget, ProfileControl *pc){
                                 w -= pc->bbarwidth;
                                 h -= pc->statusheight;
                                 //g_print ("Profile Window Corrected: %d, %d\n", w,h);
-                                ap = (double)(w*(1.-3.*pc->border))/(double)(h*(1.-pc->border));
+                                ap = (double)(w*(1.-3.*pc->border))/(double)(h*(1.-2.*pc->border));
                                 //g_print ("Profile Drawing Resize: %d, %d, ap=%g\n", w,h, ap);
                                 pc->papixel = (int)(w / (ap+3*pc->border));
                         } else {
@@ -1120,6 +1124,9 @@ void ProfileControl::canvas_draw_function (GtkDrawingArea *area, cairo_t *cr,
                                            ProfileControl *pc){
         cairo_item **c_item;
         cairo_item_text **c_item_t;
+
+        // check for resize;
+        ProfileControl::resize_drawing (NULL, pc);
 
         // -- this must be inverted to transform canvas mouse coordinates
         // -- back to world in canvas_event_cb () +++ 
@@ -1174,7 +1181,7 @@ void ProfileControl::canvas_draw_function (GtkDrawingArea *area, cairo_t *cr,
 void ProfileControl::pressed_cb (GtkGesture *gesture, int n_press, double x, double y, ProfileControl *pc){
         double mouse_pix_xy[2];
         int button = gtk_gesture_single_get_current_button (GTK_GESTURE_SINGLE (gesture));
-        g_message ("RELEASED %d #%d at %g %g", button, n_press, x,y);
+        //g_message ("RELEASED %d #%d at %g %g", button, n_press, x,y);
         cairo_item *items[2] = { pc->Cursor[0][1], pc->Cursor[1][1] };
 
         // -- this must be the inverted transformation for canvas mouse coordinates into world
@@ -1184,8 +1191,6 @@ void ProfileControl::pressed_cb (GtkGesture *gesture, int n_press, double x, dou
         // undo cairo image translation/scale:
         mouse_pix_xy[0] = ((double)x/pc->pixel_size - (double)(pc->left_border*pc->border));
         mouse_pix_xy[1] = ((double)y/pc->pixel_size - (double)(pc->top_border*pc->border));
-        // ++++++++++++++++++++++++++++++++++++++++++++++++++
-        
         pc->canvas2scan (mouse_pix_xy[0], mouse_pix_xy[1], mouse_pix_xy[0], mouse_pix_xy[1]);
         
         switch(button) {
@@ -1241,7 +1246,7 @@ void ProfileControl::pressed_cb (GtkGesture *gesture, int n_press, double x, dou
 void ProfileControl::released_cb (GtkGesture *gesture, int n_press, double x, double y, ProfileControl *pc){
         double mouse_pix_xy[2];
         int button = gtk_gesture_single_get_current_button (GTK_GESTURE_SINGLE (gesture));
-        g_message ("RELEASED %d #%d at %g %g", button, n_press, x,y);
+        //g_message ("RELEASED %d #%d at %g %g", button, n_press, x,y);
 
         cairo_item *items[2] = { pc->Cursor[0][1], pc->Cursor[1][1] };
 
@@ -1252,8 +1257,6 @@ void ProfileControl::released_cb (GtkGesture *gesture, int n_press, double x, do
         // undo cairo image translation/scale:
         mouse_pix_xy[0] = ((double)x/pc->pixel_size - (double)(pc->left_border*pc->border));
         mouse_pix_xy[1] = ((double)y/pc->pixel_size - (double)(pc->top_border*pc->border));
-        // ++++++++++++++++++++++++++++++++++++++++++++++++++
-        
         pc->canvas2scan (mouse_pix_xy[0], mouse_pix_xy[1], mouse_pix_xy[0], mouse_pix_xy[1]);
         
         switch(button) {
@@ -1276,7 +1279,7 @@ void ProfileControl::released_cb (GtkGesture *gesture, int n_press, double x, do
 
 void ProfileControl::drag_motion (GtkEventControllerMotion *motion, gdouble x, gdouble y, ProfileControl *pc){
         double mouse_pix_xy[2];
-        g_message ("DRAGGING %g %g", x,y);
+        //g_message ("DRAGGING %g %g", x,y);
         cairo_item *items[2] = { pc->Cursor[0][1], pc->Cursor[1][1] };
 
         // -- this must be the inverted transformation for canvas mouse coordinates into world
@@ -1286,8 +1289,6 @@ void ProfileControl::drag_motion (GtkEventControllerMotion *motion, gdouble x, g
         // undo cairo image translation/scale:
         mouse_pix_xy[0] = ((double)x/pc->pixel_size - (double)(pc->left_border*pc->border));
         mouse_pix_xy[1] = ((double)y/pc->pixel_size - (double)(pc->top_border*pc->border));
-        // ++++++++++++++++++++++++++++++++++++++++++++++++++
-        
         pc->canvas2scan (mouse_pix_xy[0], mouse_pix_xy[1], mouse_pix_xy[0], mouse_pix_xy[1]);
         
         DA_Event event = { EV_BUTTON_1, EV_MOTION_NOTIFY,x,y  };
@@ -1333,8 +1334,10 @@ void ProfileControl::SetSize(double new_aspect){
         // calculate approx. window size -- need to est. borders. GTK3QQQ: find actual widget (button onr ight) width??
         current_geometry[0] = papixel*(aspect+3*border);
         current_geometry[1] = papixel*(1.+2*border);
-        gtk_widget_set_size_request (canvas, (int)current_geometry[0], (gint)current_geometry[1]);
-        //        gtk_widget_set_size_request (canvas, (int)(papixel*(aspect+3*border)), (gint)(papixel*(1.+border))+statusheight);
+        gtk_drawing_area_set_content_width  (GTK_DRAWING_AREA (canvas), (gint)current_geometry[0]);
+        gtk_drawing_area_set_content_height (GTK_DRAWING_AREA (canvas), (gint)current_geometry[1]);
+        // gtk_widget_set_size_request (canvas, (int)current_geometry[0], (gint)current_geometry[1]);
+        // gtk_widget_set_size_request (canvas, (int)(papixel*(aspect+3*border)), (gint)(papixel*(1.+border))+statusheight);
 
         updateFrame ();
         updateTics  (TRUE);

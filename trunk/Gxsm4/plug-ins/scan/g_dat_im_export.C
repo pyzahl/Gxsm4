@@ -315,8 +315,16 @@ FIO_STATUS Gdat_ImExportFile::import_data(const char *fname){
 						 N_("New 'dat' format [LE on BE] detected!\n"
 						    "But sorry, wrong endianess detected, "
 						    "I'm not handling this yet."));
-		gtk_dialog_run (GTK_DIALOG (dialog));
-		gtk_widget_destroy (dialog);
+                gtk_widget_show (dialog);
+                {
+                        int response = GTK_RESPONSE_NONE;
+                        g_signal_connect (G_OBJECT (dialog), "response", G_CALLBACK (GnomeAppService::on_dialog_response_to_user_data), &response);
+                
+                        // FIX-ME GTK4 ??
+                        // wait here on response
+                        while (response == GTK_RESPONSE_NONE)
+                                while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
+                }
 
 		byteswap = TRUE;
 		f.close ();
@@ -332,9 +340,16 @@ FIO_STATUS Gdat_ImExportFile::import_data(const char *fname){
 						 N_("New 'dat' format [LE on BE] detected!\n"
 						    "But sorry, wrong endianess detected, "
 						    "I'm not handling this yet."));
-		gtk_dialog_run (GTK_DIALOG (dialog));
-		gtk_widget_destroy (dialog);
-		
+		gtk_widget_show (dialog);
+                {
+                        int response = GTK_RESPONSE_NONE;
+                        g_signal_connect (G_OBJECT (dialog), "response", G_CALLBACK (GnomeAppService::on_dialog_response_to_user_data), &response);
+        
+                        // FIX-ME GTK4 ??
+                        // wait here on response
+                        while (response == GTK_RESPONSE_NONE)
+                                while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
+		}
 		byteswap = TRUE;
 		f.close ();
 		return FIO_NOT_RESPONSIBLE_FOR_THAT_FILE;

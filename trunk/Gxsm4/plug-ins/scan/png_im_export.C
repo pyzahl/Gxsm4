@@ -243,7 +243,7 @@ static void png_im_export_configure(void)
 								 GTK_RESPONSE_REJECT,
 								 NULL);
 		BuildParam bp;
-		gtk_container_add (GTK_CONTAINER (gtk_dialog_get_content_area (GTK_DIALOG (dialog))), bp.grid);
+		gtk_box_append (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (dialog))), bp.grid);
 
 		if (file_dim & FILE_DIM_V){
                         bp.grid_add_ec ("Max Index Values", png_im_export_pi.app->xsm->Unity, &max_index_value, 1., 1e6, ".0f"); bp.new_line ();
@@ -265,10 +265,15 @@ static void png_im_export_configure(void)
 		if (file_dim & FILE_DIM_VIDEO){
 		}
 
-		gtk_widget_show_all (dialog);
-		gtk_dialog_run (GTK_DIALOG(dialog));
-		gtk_widget_destroy (dialog);
+		gtk_widget_show (dialog);
 
+                int response = GTK_RESPONSE_NONE;
+                g_signal_connect (G_OBJECT (dialog), "response", G_CALLBACK (GnomeAppService::on_dialog_response_to_user_data), &response);
+        
+                // FIX-ME GTK4 ??
+                // wait here on response
+                while (response == GTK_RESPONSE_NONE)
+                        while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
 
 		xrm.Put ("file_max_index_value", max_index_value);
 		xrm.Put ("file_offset_index_value", offset_index_value);
@@ -457,10 +462,15 @@ FIO_STATUS PNG_ImExportFile::import_data(const char *fname, int index_value, int
 								    GTK_MESSAGE_INFO,
 								    GTK_BUTTONS_OK,
 								    "%s", error_msg);
-			gtk_dialog_run (GTK_DIALOG (dialog));
-			g_signal_connect_swapped (G_OBJECT (dialog), "response",
-						  G_CALLBACK (gtk_widget_destroy),
-						  G_OBJECT (dialog));
+                        gtk_widget_show (dialog);
+
+                        int response = GTK_RESPONSE_NONE;
+                        g_signal_connect (G_OBJECT (dialog), "response", G_CALLBACK (GnomeAppService::on_dialog_response_to_user_data), &response);
+        
+                        // FIX-ME GTK4 ??
+                        // wait here on response
+                        while (response == GTK_RESPONSE_NONE)
+                                while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
 		}
 		g_free (error_msg);
 		fclose (infile);
