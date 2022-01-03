@@ -20,8 +20,8 @@ dgset = dependency('gsettings-desktop-schemas')
 dx11 = dependency('X11')
 dgl = dependency('gl')
 dglew = dependency('glew')
-#dependency('netcdf', language: 'c')   # for the C NetCDF headers and libraries
-dnetcdf = dependency('netcdf', language: 'cpp') # for the C++ NetCDF headers and libraries
+dnetcdfc = dependency('netcdf', language: 'c')   # for the C NetCDF headers and libraries
+dnetcdfcpp = dependency('netcdf', language: 'cpp') # for the C++ NetCDF headers and libraries
 dpng = dependency('libpng')
 dfftw = dependency('fftw3')
 ## dlz =  dependency('libz')  # ???

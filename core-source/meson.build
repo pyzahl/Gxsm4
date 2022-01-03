@@ -1,7 +1,7 @@
 
 deps = declare_dependency(
     compile_args : ['-DTESTING', '-fpermissive', '-w'],
-    dependencies : [dgtk, dsoup, dgtksourceview, dcairo, dfreet, dgset, dnetcdf, dfftw, dxml, dpng, dgmod, dgmodexp, dx11, dgl, dglew],
+    dependencies : [dgtk, dsoup, dgtksourceview, dcairo, dfreet, dgset, dnetcdfcpp, dfftw, dxml, dpng, dgmod, dgmodexp, dx11, dgl, dglew],
     include_directories : configuration_inc,
     link_args : ['-lpng', '-lGLEW', '-lz', '-lfreetype', '-licuuc', '-export-dynamic'],
     )
