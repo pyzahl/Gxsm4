@@ -22,12 +22,12 @@ gxsm4_gdbus_src += gnome.gdbus_codegen('gxsm4-common-gschema',
 
 ## shell python3-config --ldflags  ==> , '-L/usr/lib/python3.9/config-3.9-x86_64-linux-gnu', '-L/usr/lib/x86_64-linux-gnu ', '-lcrypt', '-lpthread', '-ldl ', '-lutil'],
 
-#library('pyremote',
-#        'pyremote.cpp',
-#        dependencies : deps,
-#        install_dir: install_path,
-#        install: true,
-#)
+library('pyremote',
+        'pyremote.cpp',
+        dependencies : deps,
+        install_dir: install_path,
+        install: true,
+)
 
 library('PanView',
         'PanView.cpp',
