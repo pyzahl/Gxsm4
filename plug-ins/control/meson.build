@@ -1,6 +1,5 @@
-## run frist:  mln -s "*.C" "#1.cpp"
-
-install_path = plugin_libs_dir+'/control'
+install_path = get_option('prefix') / 'lib/gxsm4/plugins/control'
+# install_path = plugin_libs_dir+'/control'
 
 deps = declare_dependency(
     compile_args: ['-DG_LOG_DOMAIN="LibGimpModule"', '-DGIMP_MODULE_COMPILATION', '-fpermissive', '-w'],
@@ -12,7 +11,7 @@ deps = declare_dependency(
 gnome = import('gnome')
 
 # The returned source would be passed to another target
-control_gdbus_src = gnome.gdbus_codegen('gxsm4-control-gschema',
+gxsm4_gdbus_src += gnome.gdbus_codegen('gxsm4-control-gschema',
   sources: [
       'org.gnome.gxsm4.pcs.plugin-libspm-scancontrol.gschema.xml',
       'org.gnome.gxsm4.pcsadjustments.plugin-libspm-scancontrol.gschema.xml',
@@ -21,8 +20,7 @@ control_gdbus_src = gnome.gdbus_codegen('gxsm4-control-gschema',
       'org.gnome.gxsm4.inet_json_settings.gschema.xml'
       ],
   interface_prefix : 'org.gnome.',
-  namespace : 'gxsm4',
-  docbook : 'gxsm4-control-parameters'
+  namespace : 'gxsm4'
 )
 
 library('spm_scancontrol',

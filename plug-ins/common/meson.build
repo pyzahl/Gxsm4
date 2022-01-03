@@ -1,13 +1,12 @@
-## run frist:  mln -s "*.C" "#1.cpp"
-
-install_path = plugin_libs_dir+'/common'
+install_path = get_option('prefix') / 'lib/gxsm4/plugins/common'
+## install_path = plugin_libs_dir+'/common'
 
 deps = declare_dependency(
     compile_args: ['-DG_LOG_DOMAIN="LibGimpModule"', '-DGIMP_MODULE_COMPILATION', '-fpermissive', '-w'],
     dependencies : [icuuc, gtk, python, gtksourceview, cairo, freet, gset, netcdf, fftw, xml, png, gmod, gmodexp],
     include_directories : configuration_inc,
-    link_args : ['-Mmodules', '-export-dynamic', '-fno-version'],
-    )
+    link_args : ['-Mmodules', '-export-dynamic', '-fno-version']
+)
 
 gnome = import('gnome')
 
@@ -21,14 +20,14 @@ gxsm4_gdbus_src += gnome.gdbus_codegen('gxsm4-common-gschema',
   namespace : 'gxsm4'
 )
 
-##shell python3-config --ldflags
+## shell python3-config --ldflags  ==> , '-L/usr/lib/python3.9/config-3.9-x86_64-linux-gnu', '-L/usr/lib/x86_64-linux-gnu ', '-lcrypt', '-lpthread', '-ldl ', '-lutil'],
 
-library('pyremote',
-        'pyremote.cpp',
-        dependencies : deps,
-        install_dir: install_path,
-        install: true,
-)
+#library('pyremote',
+#        'pyremote.cpp',
+#        dependencies : deps,
+#        install_dir: install_path,
+#        install: true,
+#)
 
 library('PanView',
         'PanView.cpp',
