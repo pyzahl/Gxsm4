@@ -217,15 +217,6 @@ gxsm4_app_startup (GApplication *app)
 
         /* add additional stylings */
         GtkCssProvider* provider = gtk_css_provider_new();
-
-#if 0 // FIX-ME-GTK4
-        GdkDisplay* display = gdk_display_get_default();
-        GdkScreen* screen = gdk_display_get_default_screen(display);
-        
-        gtk_style_context_add_provider_for_screen(screen,
-                                                  GTK_STYLE_PROVIDER(provider),
-                                                  GTK_STYLE_PROVIDER_PRIORITY_USER);
-        #endif
         gtk_css_provider_load_from_resource (GTK_CSS_PROVIDER(provider), "/" GXSM_RES_BASE_PATH "/gxsm4-styles.css");
 
         // https://developer.gnome.org/gtk3/stable/chap-css-overview.html
