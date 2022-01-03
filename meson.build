@@ -38,8 +38,14 @@ icuuc = declare_dependency(
   ],
 )
 
+python = dependency('python3')
 # gdkpixbu = dependency('gdk-pixbuf-2.0')
 
+#GXSM4_PLUGINS_DATA_DIR = ${datarootdir}/gxsm4/plugins
+#GXSM4_PLUGINS_LIBS_DIR = ${exec_prefix}/lib/gxsm4/plugins
+
+data_dir = '/usr/local/share/gxsm4'
+plugin_libs_dir = '/usr/local/lib/gxsm4/plugins'
 
 ## Build config.h
 
@@ -52,8 +58,8 @@ conf.set('VERSION', '"'+meson.project_version()+'"')
 conf.set('GXSM_VERSION_NAME', '"GXSM4GTK4 Beta Evaluation"', description : 'GXSM version identifier screen name')
 
 ## fix-me: paths to be made auto!
-conf.set('PACKAGE_PLUGIN_DIR', '""', description : 'This is the path where gxsm plugins will be installed')
-conf.set('PACKAGE_ICON_DIR', '"/usr/local/share/gxsm4/icons"', description : 'This is the path where icons will be installed')
+conf.set('PACKAGE_PLUGIN_DIR', '"'+plugin_libs_dir+'"', description : 'This is the path where gxsm plugins will be installed')
+conf.set('PACKAGE_ICON_DIR',   '"'+data_dir+'/icons"', description : 'This is the path where icons will be installed')
 conf.set('PACKAGE_PROFILEPLOT_DIR', '"/usr/local/share/gxsm4/profileplot"', description : 'defines gxsm profileplot scripts') ## obsoleted soon
 
 

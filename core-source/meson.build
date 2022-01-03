@@ -6,31 +6,15 @@ deps = declare_dependency(
     link_args : [ '-licuuc', '-lnetcdf', '-lnetcdf_c++'],
     )
 
-### FIX ABOBE manually added libs!
-
-###
-###  We need:
-###
-###  -lpng -lGLEW -lGL -lz -lfreetype -licuuc -lX11
-###  GXSM4_LIBS = -lxml2 -Wl,--export-dynamic -lGL -lnetcdf -lfftw3 -lsoup-2.4 -Wl,--export-dynamic -lgmodule-2.0 -pthread -lgtksourceview-5 -lgtk-4 -lpangocairo-1.0 -lpango-1.0 -lharfbuzz -lgdk_pixbuf-2.0 -lcairo-gobject -lcairo -lgraphene-1.0 -lgio-2.0 -lgobject-2.0 -lglib-2.0  
-###  libnetcdf_LIBS = -lnetcdf -lnetcdf_c++
-###
-
 gnome = import('gnome')
 
 # NEED THIS:
 #    -DGNOME_ICONDIR=\""$(pixmapdir)"\"
-
 # gxsm4_LDFLAGS = -export-dynamic $(GXSM4_LIBS)
-
-# gxsm4_LDADD =  \
-#	$(FFTW_LIBS) \
-#	${libnetcdf_LIBS} \
-#	-lpng -lGLEW -lGL -lz -lfreetype -licuuc -lX11
 
 
 # The returned source would be passed to another target
-gdbus_src = gnome.gdbus_codegen('gxsm4-core-gschema',
+gxsm4_gdbus_src = gnome.gdbus_codegen('gxsm4-core-gschema',
   sources: [
       'org.gnome.gxsm4.gschema.xml',
       'org.gnome.gxsm4.window-geometry.gschema.xml',
@@ -109,6 +93,7 @@ executable(
     'xsmhard.cpp',
     'xsmmath.cpp',
     gxsm4resources,
+    gxsm4_gdbus_src,
     dependencies : deps,
     export_dynamic: true,
     install: true
