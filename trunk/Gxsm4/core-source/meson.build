@@ -1,11 +1,20 @@
 
 deps = declare_dependency(
     compile_args : ['-DTESTING', '-fpermissive', '-w'],
-    dependencies : [dgtk, dsoup, dgtksourceview, dcairo, dfreet, dgset, dnetcdfcpp, dfftw, dxml, dpng, dgmod, dgmodexp, dx11, dgl, dglew],
+    dependencies : [dgtk, dsoup, dgtksourceview, dcairo, dfreet, dgset, dnetcdfc, dnetcdfcpp, dfftw, dxml, dpng, dgmod, dgmodexp, dx11, dgl, dglew],
     include_directories : configuration_inc,
-    link_args : ['-lpng', '-lGLEW', '-lz', '-lfreetype', '-licuuc', '-export-dynamic'],
+    link_args : ['-lz', '-licuuc', '-export-dynamic', '-lnetcdf', '-lnetcdf_c++'],
     )
 
+### FIX ABOBE manually added libs!
+
+###
+###  We need:
+###
+###  -lpng -lGLEW -lGL -lz -lfreetype -licuuc -lX11
+###  GXSM4_LIBS = -lxml2 -Wl,--export-dynamic -lGL -lnetcdf -lfftw3 -lsoup-2.4 -Wl,--export-dynamic -lgmodule-2.0 -pthread -lgtksourceview-5 -lgtk-4 -lpangocairo-1.0 -lpango-1.0 -lharfbuzz -lgdk_pixbuf-2.0 -lcairo-gobject -lcairo -lgraphene-1.0 -lgio-2.0 -lgobject-2.0 -lglib-2.0  
+###  libnetcdf_LIBS = -lnetcdf -lnetcdf_c++
+###
 
 gnome = import('gnome')
 
@@ -19,50 +28,21 @@ gnome = import('gnome')
 #	${libnetcdf_LIBS} \
 #	-lpng -lGLEW -lGL -lz -lfreetype -licuuc -lX11
 
-# gsettings_SCHEMAS is a list of all the schemas you want to install
-#gsettings_SCHEMAS = \
-#	org.gnome.gxsm4.gschema.xml \
-#	org.gnome.gxsm4.window-geometry.gschema.xml \
-#	org.gnome.gxsm4.preferences.gschema.xml \
-#	org.gnome.gxsm4.gl.gschema.xml \
-#	org.gnome.gxsm4.pcs.mainwindow.gschema.xml \
-#	org.gnome.gxsm4.pcsadjustments.mainwindow.gschema.xml
-
-#schemas = (
-#    'org.gnome.gxsm4.gschema.xml',
-#    'org.gnome.gxsm4.window-geometry.gschema.xml',
-#    'org.gnome.gxsm4.preferences.gschema.xml',
-#    'org.gnome.gxsm4.gl.gschema.xml',
-#    'org.gnome.gxsm4.pcs.mainwindow.gschema.xml',
-#    'org.gnome.gxsm4.pcsadjustments.mainwindow.gschema.xml',
-#)
 
 # The returned source would be passed to another target
-#gdbus_src = gnome.gdbus_codegen('example-interface',
-#  sources: 'com.example.Sample.xml',
-#  interface_prefix : 'com.example.',
-#  namespace : 'Sample',
-#  annotations : [
-#    ['com.example.Hello()', 'org.freedesktop.DBus.Deprecated', 'true']
-#  ],
-#  docbook : 'example-interface-doc'
-#)
-#
-#executable(
-#    meson.project_name(),
-#    asschemas,
-#    dependencies: my_deps,
-#    install: true
-#)
-
-#
-# build gxsm2_resource.cpp
-# glib-compile-resources gxsm4_resources.xml --target=gxsm4_resources.cpp --generate-source
-# resource_files = $(shell glib-compile-resources --sourcedir=$(srcdir) --generate-dependencies $(srcdir)/gxsm4.gresources.xml)
-# gxsm4_resources.cpp: gxsm4.gresources.xml  $(resource_files)
-# 	$(AM_V_GEN) glib-compile-resources --target=$@ --sourcedir=$(srcdir) --generate-source --c-name gxsm4 $<
-# gxsm4_resources.h: gxsm4.gresources.xml $(resource_files)
-# 	$(AM_V_GEN) glib-compile-resources --target=$@ --sourcedir=$(srcdir) --generate-header --c-name gxsm4 $<
+gdbus_src = gnome.gdbus_codegen('example-interface',
+  sources: [
+      'org.gnome.gxsm4.gschema.xml',
+      'org.gnome.gxsm4.window-geometry.gschema.xml',
+      'org.gnome.gxsm4.preferences.gschema.xml',
+      'org.gnome.gxsm4.gl.gschema.xml',
+      'org.gnome.gxsm4.pcs.mainwindow.gschema.xml',
+      'org.gnome.gxsm4.pcsadjustments.mainwindow.gschema.xml'
+      ],
+  interface_prefix : 'org.gnome.',
+  namespace : 'gxsm4',
+  docbook : 'gxsm4-parameters'
+)
 
 gxsm4resources = gnome.compile_resources(
     'gxsm4-resources', 'gxsm4.gresources.xml',
