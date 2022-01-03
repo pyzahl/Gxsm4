@@ -1,7 +1,11 @@
 
-gxsm4_dep = declare_dependency(
-    link_args : ['-lpng', '-lGLEW', '-lGL', '-lz', '-lfreetype', '-licuuc', '-lX11', '-lnetcdf ', '-lfftw', '-export-dynamic'],
-    include_directories : [configuration_inc])
+deps = declare_dependency(
+    compile_args : ['-DTESTING', '-fpermissive', '-w'],
+    dependencies : [dgtk, dsoup, dgtksourceview, dcairo, dfreet, dgset, dnetcdf, dfftw, dxml, dpng, dgmod, dgmodexp, dx11, dgl, dglew],
+    include_directories : configuration_inc,
+    link_args : ['-lpng', '-lGLEW', '-lz', '-lfreetype', '-licuuc', '-export-dynamic'],
+    )
+
 
 gnome = import('gnome')
 
@@ -60,16 +64,15 @@ gnome = import('gnome')
 # gxsm4_resources.h: gxsm4.gresources.xml $(resource_files)
 # 	$(AM_V_GEN) glib-compile-resources --target=$@ --sourcedir=$(srcdir) --generate-header --c-name gxsm4 $<
 
-asresources = gnome.compile_resources(
-    'as-resources', 'gxsm4.gresources.xml',
-    c_name: 'as'
+gxsm4resources = gnome.compile_resources(
+    'gxsm4-resources', 'gxsm4.gresources.xml',
+    c_name: 'gxsm4'
 )
 
 executable(
     meson.project_name(),
     'app_channelselector.cpp',
     'app_monitor.cpp',
-    'app_offset.cpp',
     'app_profile.cpp',
     'app_spm.cpp',
     'app_v3dcontrol.cpp',
@@ -78,7 +81,7 @@ executable(
     'app_vobj.cpp',
     
     'cairo_item.cpp',
-    'clip.cpp',
+    'clip.c',
     'compiler.cpp',
     'csv.cpp',
     'caps.cpp',
@@ -86,9 +89,9 @@ executable(
     
     'dataio.cpp',
     'epsfutils.cpp',
-    'gnome-res.cpp',
-    'gtkmarshal.cpp',
-    'gtkmarshalers.cpp',
+    'gnome-res.c',
+    'gtkmarshal.c',
+    'gtkmarshalers.c',
     'gpl.cpp',
     
     'gxsm_main.cpp',
@@ -97,7 +100,7 @@ executable(
     'gxsm_window.cpp',
     'gapp_service.cpp',
     'gxsm_menucb.cpp',
-    'gxsm_menu-extension.cpp',
+    'gxsm_menu-extension.c',
     'gxsm_resoucetable.cpp',
     
     'instrument.cpp',
@@ -120,13 +123,12 @@ executable(
     'vpdata_read.cpp',
     'vprofile.cpp',
     'vsurf3d.cpp',
-    'vsurf3d_pref.cpp',
     'writepng.cpp',
     'xshmimg.cpp',
     'xsm.cpp',
     'xsmhard.cpp',
     'xsmmath.cpp',
-#    dependencies : [gxsm4_dep],
-    asresources,
+    gxsm4resources,
+    dependencies : deps,
     install: true
 )
