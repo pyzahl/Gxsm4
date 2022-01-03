@@ -1,4 +1,4 @@
-#subdir ('common')
+subdir ('common')
 subdir ('control')
 #subdir ('hard')
 #subdir ('math')

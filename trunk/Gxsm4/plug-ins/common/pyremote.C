@@ -3239,11 +3239,10 @@ void py_gxsm_console::create_gui ()
 	BuildParam *bp;
 	UnitObj *null_unit;
 
-#ifdef HAVE_GTKSOURCEVIEW
 	GtkSourceLanguageManager *manager;
 	GtkSourceBuffer *sourcebuffer;
 	GtkSourceLanguage *language;
-#endif
+
         PI_DEBUG(DBG_L2, "pyremote Plugin :: create_gui() -- building GUI elements.");
 
         bp = new BuildParam (v_grid, NULL, gapp->RemoteEntryList);
