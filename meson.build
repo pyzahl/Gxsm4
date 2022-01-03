@@ -41,7 +41,7 @@ icuuc = declare_dependency(
 python = dependency('python3')
 # gdkpixbu = dependency('gdk-pixbuf-2.0')
 
-absolute_data_dir = get_option('prefix')+get_option('datadir')+'/gxsm4'
+absolute_data_dir = get_option('prefix')+'/'+get_option('datadir')+'/gxsm4'
 absolute_plugin_libs_dir = get_option('prefix')+'/lib/gxsm4/plugins'
 
 ## Build config.h
