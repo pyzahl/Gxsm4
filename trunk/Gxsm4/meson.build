@@ -7,11 +7,25 @@ as_major_version = ver_arr[0]
 as_minor_version = ver_arr[1]
 as_micro_version = ver_arr[2]
 
-soup = dependency('libsoup-2.4', version : '>= 2.24')
+glib = dependency('glib-2.0')
+gio = dependency('gio-2.0')
 gtk  = dependency('gtk4', version : '>= 4.1')
+soup = dependency('libsoup-2.4', version : '>= 2.24')
 gtksourceview = dependency('gtksourceview-5', version : '>= 5.0')
+cairo = dependency('cairo-gobject')
+gset = dependency('gsettings-desktop-schemas')
+#dependency('netcdf', language: 'c')   # for the C NetCDF headers and libraries
+netcdf = dependency('netcdf', language: 'cpp') # for the C++ NetCDF headers and libraries
+gl = dependency('gl')
+fftw = dependency('fftw3')
+xml = dependency('libxml-2.0')
+gmod = dependency('gmodule-2.0')
+gmodexp = dependency('gmodule-export-2.0')
+# gdkpixbu = dependency('gdk-pixbuf-2.0')
+
 
 conf = configuration_data()
+
 # Surround the version in quotes to make it a C string
 conf.set_quoted('VERSION', as_version)
 
@@ -46,12 +60,8 @@ conf.set('AC_DEFINE_UNQUOTED(PACKAGE_PALETTE_DIR', '"/usr/local/share/gxsm4/pale
 # conf.set('PACKAGE_GL400_DIR', os.environ['MESON_INSTALL_PREFIX']+'/share/gxsm4/gl-400') # [Define gxsm package install prefix]
 conf.set('PACKAGE_GL400_DIR', '"/usr/local/share/gxsm4/gl-400"') # [Define gxsm package install prefix]
 
+#
 
-configure_file(output : 'config.h',
-               configuration : conf)
-
-cc = meson.get_compiler('cpp')
-cdata = configuration_data()
 check_headers = [
   ['HAVE_LQT_QUICKTIME_H', 'lqt/quicktime.h'],
   ['HAVE_PYTHON3_7M_PYTHON_H', 'python3.7m/python.h'],
@@ -62,14 +72,26 @@ check_headers = [
   ['HAVE_PYTHON3_9M_PYTHON_H', 'python3.9m/python.h'],
 ]
 
+cc = meson.get_compiler('cpp')
 foreach h : check_headers
   if cc.has_header(h.get(1))
-    cdata.set(h.get(0), 1)
+    conf.set(h.get(0), 1)
   endif
 endforeach
 
-#dependency('netcdf', language: 'c')   # for the C NetCDF headers and libraries
-dependency('netcdf', language: 'cpp') # for the C++ NetCDF headers and libraries
+# write config.h from conf object
+####################################
+configure_file(output : 'config.h',
+               configuration : conf)
+
+rootpath = meson.project_source_root()
+
+
+### some issue here, does not find config.h
+configuration_inc = include_directories('.')
+
+# sub dirs to build
+####################################
 
 subdir('core-source')
 #subdir('plug-ins')
