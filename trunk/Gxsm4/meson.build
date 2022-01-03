@@ -1,5 +1,7 @@
 project('gxsm4', ['c','cpp'], version : '4.0.0')
 
+cc = meson.get_compiler('cpp')
+
 as_version = meson.project_version() # set in project() below
 ver_arr = as_version.split('.')
 
@@ -9,27 +11,37 @@ as_micro_version = ver_arr[2]
 
 add_project_arguments('-DMYTEST=projname', language : 'cpp')
 
-dglib = dependency('glib-2.0')
-dgio = dependency('gio-2.0')
-dgtk  = dependency('gtk4', version : '>= 4.1')
-dsoup = dependency('libsoup-2.4', version : '>= 2.24')
-dgtksourceview = dependency('gtksourceview-5', version : '>= 5.0')
-dcairo = dependency('cairo-gobject')
-dfreet =  dependency('freetype2')
-dgset = dependency('gsettings-desktop-schemas')
-dx11 = dependency('X11')
-dgl = dependency('gl')
-dglew = dependency('glew')
-dnetcdfc = dependency('netcdf', language: 'c')   # for the C NetCDF headers and libraries
-dnetcdfcpp = dependency('netcdf', language: 'cpp') # for the C++ NetCDF headers and libraries (need both!!)
-dpng = dependency('libpng')
-dfftw = dependency('fftw3')
-## dlz =  dependency('libz')  # ???
-dxml = dependency('libxml-2.0')
-dgmod = dependency('gmodule-2.0')
-dgmodexp = dependency('gmodule-export-2.0')
-# dgdkpixbu = dependency('gdk-pixbuf-2.0')
+glib = dependency('glib-2.0')
+gio = dependency('gio-2.0')
+gtk  = dependency('gtk4', version : '>= 4.1')
+soup = dependency('libsoup-2.4', version : '>= 2.24')
+gtksourceview = dependency('gtksourceview-5', version : '>= 5.0')
+cairo = dependency('cairo-gobject')
+freet =  dependency('freetype2')
+gset = dependency('gsettings-desktop-schemas')
+x11 = dependency('X11')
+gl = dependency('gl')
+glew = dependency('glew')
+netcdf = dependency('netcdf-cxx4')   # for the C/C++ NetCDF headers and libraries
+# netcdfc = dependency('netcdf', language: 'c')   # for the C NetCDF headers and libraries
+# netcdfcpp = dependency('netcdf', language: 'cpp') # for the C++ NetCDF headers and libraries (need both!!)
+png = dependency('libpng')
+fftw = dependency('fftw3')
+xml = dependency('libxml-2.0')
+gmod = dependency('gmodule-2.0')
+gmodexp = dependency('gmodule-export-2.0')
+lz =  dependency('zlib', method : 'system')
 
+icuuc = declare_dependency(
+  dependencies: [
+    cc.find_library('icuuc'),
+  ],
+)
+
+# gdkpixbu = dependency('gdk-pixbuf-2.0')
+
+
+## Build config.h
 
 conf = configuration_data()
 
@@ -37,15 +49,15 @@ conf.set('PACKAGE', '"'+meson.project_name()+'"')
 conf.set('PACKAGE_NAME', '"'+meson.project_name()+'"')
 conf.set('GETTEXT_PACKAGE', '"'+meson.project_name()+'"')
 conf.set('VERSION', '"'+meson.project_version()+'"')
+conf.set('GXSM_VERSION_NAME', '"GXSM4GTK4 Beta Evaluation"', description : 'GXSM version identifier screen name')
 
 ## fix-me: paths to be made auto!
-conf.set('PACKAGE_PLUGIN_DIR', '"/usr/local/lib/gxsm4-plugins"', description : 'This is the path where gxsm plugins will be installed')
+conf.set('PACKAGE_PLUGIN_DIR', '""', description : 'This is the path where gxsm plugins will be installed')
 conf.set('PACKAGE_ICON_DIR', '"/usr/local/share/gxsm4/icons"', description : 'This is the path where icons will be installed')
 conf.set('PACKAGE_PROFILEPLOT_DIR', '"/usr/local/share/gxsm4/profileplot"', description : 'defines gxsm profileplot scripts') ## obsoleted soon
 
 
-
-conf.set('GXSM_VERSION_NAME', '"GXSM4GTK4 Beta Evaluation"', description : 'GXSM version identifier screen name')
+## PATHs
 conf.set('GXSM_RES_BASE_PATH_DOT',     '"org.gnome.gxsm4"', description : 'GSettings and Builder dot base path without leadiong or trailing slashes')
 conf.set('GXSM_RES_BASE_PATH',         '"org/gnome/gxsm4"', description : 'GSettings and Builder base path without leadiong or trailing slashes')
 conf.set('GXSM_RES_PREFERENCES_PATH',  '"org/gnome/gxsm4/preferences"', description : 'GSettings path for preferences')
@@ -78,23 +90,6 @@ conf.set('PACKAGE_GL400_DIR', '"/usr/local/share/gxsm4/gl-400"', description : '
 
 #
 
-check_headers = [
-  ['HAVE_LQT_QUICKTIME_H', 'lqt/quicktime.h'],
-  ['HAVE_PYTHON3_7M_PYTHON_H', 'python3.7m/python.h'],
-  ['HAVE_PYTHON3_7_PYTHON_H', 'python3.7/python.h'],
-  ['HAVE_PYTHON3_8M_PYTHON_H', 'python3.8m/python.h'],
-  ['HAVE_PYTHON3_8_PYTHON_H', 'python3.8/python.h'],
-  ['HAVE_PYTHON3_9_PYTHON_H', 'python3.9/python.h'],
-  ['HAVE_PYTHON3_9M_PYTHON_H', 'python3.9m/python.h'],
-]
-
-cc = meson.get_compiler('cpp')
-foreach h : check_headers
-  if cc.has_header(h.get(1))
-    conf.set(h.get(0), 1)
-  endif
-endforeach
-
 # write config.h from conf object
 ####################################
 configure_file(output : 'config.h',
@@ -113,7 +108,7 @@ configuration_inc = include_directories('.')
 ####################################
 
 subdir('core-source')
-#subdir('plug-ins')
+subdir('plug-ins')
 #subdir('gl-400')
 #subdir('palette')
 #subdir('thumbnailers')
