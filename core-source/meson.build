@@ -1,9 +1,9 @@
 
 deps = declare_dependency(
     compile_args : ['-DTESTING', '-fpermissive', '-w'],
-    dependencies : [dgtk, dsoup, dgtksourceview, dcairo, dfreet, dgset, dnetcdfc, dnetcdfcpp, dfftw, dxml, dpng, dgmod, dgmodexp, dx11, dgl, dglew],
+    dependencies : [icuuc, gtk, soup, gtksourceview, cairo, freet, gset, netcdf, fftw, xml, png, gmod, gmodexp, x11, gl, glew],
     include_directories : configuration_inc,
-    link_args : ['-lz', '-licuuc', '-export-dynamic', '-lnetcdf', '-lnetcdf_c++'],
+    link_args : [ '-licuuc', '-lnetcdf', '-lnetcdf_c++'],
     )
 
 ### FIX ABOBE manually added libs!
@@ -30,7 +30,7 @@ gnome = import('gnome')
 
 
 # The returned source would be passed to another target
-gdbus_src = gnome.gdbus_codegen('example-interface',
+gdbus_src = gnome.gdbus_codegen('gxsm4-core-gschema',
   sources: [
       'org.gnome.gxsm4.gschema.xml',
       'org.gnome.gxsm4.window-geometry.gschema.xml',
@@ -41,7 +41,7 @@ gdbus_src = gnome.gdbus_codegen('example-interface',
       ],
   interface_prefix : 'org.gnome.',
   namespace : 'gxsm4',
-  docbook : 'gxsm4-parameters'
+  docbook : 'gxsm4-core-parameters'
 )
 
 gxsm4resources = gnome.compile_resources(
@@ -110,5 +110,6 @@ executable(
     'xsmmath.cpp',
     gxsm4resources,
     dependencies : deps,
+    export_dynamic: true,
     install: true
 )
