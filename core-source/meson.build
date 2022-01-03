@@ -1,7 +1,7 @@
 
 gxsm4_dep = declare_dependency(
     link_args : ['-lpng', '-lGLEW', '-lGL', '-lz', '-lfreetype', '-licuuc', '-lX11', '-lnetcdf ', '-lfftw', '-export-dynamic'],
-    include_directories : include_directories('..'))
+    include_directories : [configuration_inc])
 
 gnome = import('gnome')
 
