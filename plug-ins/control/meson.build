@@ -12,7 +12,7 @@ deps = declare_dependency(
 gnome = import('gnome')
 
 # The returned source would be passed to another target
-gdbus_src = gnome.gdbus_codegen('gxsm4-control-gschema',
+control_gdbus_src = gnome.gdbus_codegen('gxsm4-control-gschema',
   sources: [
       'org.gnome.gxsm4.pcs.plugin-libspm-scancontrol.gschema.xml',
       'org.gnome.gxsm4.pcsadjustments.plugin-libspm-scancontrol.gschema.xml',

@@ -44,12 +44,17 @@ python = dependency('python3')
 #GXSM4_PLUGINS_DATA_DIR = ${datarootdir}/gxsm4/plugins
 #GXSM4_PLUGINS_LIBS_DIR = ${exec_prefix}/lib/gxsm4/plugins
 
-data_dir = '/usr/local/share/gxsm4'
-plugin_libs_dir = '/usr/local/lib/gxsm4/plugins'
+data_dir = get_option('prefix')+get_option('datadir')+'/gxsm4'
+plugin_libs_dir = get_option('prefix')+'/lib/gxsm4/plugins'
+
+## install_data('datafile.dat', install_dir : get_option('datadir') / 'progname')
 
 ## Build config.h
 
 conf = configuration_data()
+
+conf.set('__BUILD_PREFIX', '"'+get_option('prefix')+'"') # => /usr/local
+conf.set('__BUILD_DATADIR', '"'+get_option('datadir')+'"') # -> share
 
 conf.set('PACKAGE', '"'+meson.project_name()+'"')
 conf.set('PACKAGE_NAME', '"'+meson.project_name()+'"')
@@ -60,10 +65,10 @@ conf.set('GXSM_VERSION_NAME', '"GXSM4GTK4 Beta Evaluation"', description : 'GXSM
 ## fix-me: paths to be made auto!
 conf.set('PACKAGE_PLUGIN_DIR', '"'+plugin_libs_dir+'"', description : 'This is the path where gxsm plugins will be installed')
 conf.set('PACKAGE_ICON_DIR',   '"'+data_dir+'/icons"', description : 'This is the path where icons will be installed')
-conf.set('PACKAGE_PROFILEPLOT_DIR', '"/usr/local/share/gxsm4/profileplot"', description : 'defines gxsm profileplot scripts') ## obsoleted soon
+conf.set('PACKAGE_PROFILEPLOT_DIR', '"'+data_dir+'/profileplot"', description : 'defines gxsm profileplot scripts') ## obsoleted soon
 
 
-## PATHs
+## SCHEMA RES PATHs
 conf.set('GXSM_RES_BASE_PATH_DOT',     '"org.gnome.gxsm4"', description : 'GSettings and Builder dot base path without leadiong or trailing slashes')
 conf.set('GXSM_RES_BASE_PATH',         '"org/gnome/gxsm4"', description : 'GSettings and Builder base path without leadiong or trailing slashes')
 conf.set('GXSM_RES_PREFERENCES_PATH',  '"org/gnome/gxsm4/preferences"', description : 'GSettings path for preferences')
