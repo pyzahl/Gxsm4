@@ -12,14 +12,13 @@ deps = declare_dependency(
 gnome = import('gnome')
 
 # The returned source would be passed to another target
-common_gdbus_src = gnome.gdbus_codegen('gxsm4-common-gschema',
+gxsm4_gdbus_src += gnome.gdbus_codegen('gxsm4-common-gschema',
   sources: [
       'org.gnome.gxsm4.pcs.plugin-libpyremote.gschema.xml',
       'org.gnome.gxsm4.pcsadjustments.plugin-libpyremote.gschema.xml',
       ],
   interface_prefix : 'org.gnome.',
-  namespace : 'gxsm4',
-  docbook : 'gxsm4-common-parameters'
+  namespace : 'gxsm4'
 )
 
 ##shell python3-config --ldflags
