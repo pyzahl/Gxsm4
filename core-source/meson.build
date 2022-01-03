@@ -24,11 +24,10 @@ gxsm4_gdbus_src = gnome.gdbus_codegen('gxsm4-core-gschema',
       'org.gnome.gxsm4.pcsadjustments.mainwindow.gschema.xml'
       ],
   interface_prefix : 'org.gnome.',
-  namespace : 'gxsm4',
-  docbook : 'gxsm4-core-parameters'
+  namespace : 'gxsm4'
 )
 
-gxsm4resources = gnome.compile_resources(
+gxsm4_resources = gnome.compile_resources(
     'gxsm4-resources', 'gxsm4.gresources.xml',
     c_name: 'gxsm4'
 )
@@ -92,7 +91,7 @@ executable(
     'xsm.cpp',
     'xsmhard.cpp',
     'xsmmath.cpp',
-    gxsm4resources,
+    gxsm4_resources,
     gxsm4_gdbus_src,
     dependencies : deps,
     export_dynamic: true,
