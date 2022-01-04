@@ -22,7 +22,13 @@ gxsm4_gdbus_src += gnome.gdbus_codegen('gxsm4-common-gschema',
 
 ## shell python3-config --ldflags  ==> , '-L/usr/lib/python3.9/config-3.9-x86_64-linux-gnu', '-L/usr/lib/x86_64-linux-gnu ', '-lcrypt', '-lpthread', '-ldl ', '-lutil'],
 
+### NEED To DO THIS ###
 # libtool shared runtime libraries (plugins)
+#libtool: install: ranlib /usr/local/lib/gxsm4-plugins/math/libZ_usr_rescale.a
+#libtool: install: /usr/bin/install -c .libs/libabs_scan.a /usr/local/lib/gxsm4-plugins/math/libabs_scan.a
+#libtool: install: chmod 644 /usr/local/lib/gxsm4-plugins/math/libabs_scan.a
+#libtool: install: ranlib /usr/local/lib/gxsm4-plugins/math/libabs_scan.a
+#libtool: finish: PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/sbin" ldconfig -n /usr/local/lib/gxsm4-plugins/math
 
 ### not sure what to do here, nothing works:
 ## => RuntimeError: File 'plug-ins/common/libpyremote.so' could not be found

@@ -315,10 +315,9 @@ class ProfileControl : public AppBase, public LineProfile1D{
 	static void cur_Bright_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
 
 	// canvas draw
-        static gboolean resize_drawing (GtkWidget *widget, ProfileControl *pc);
-        gint cur_w, cur_h;
+        gboolean resize_drawing (double w, double h);
         gulong resize_cb_handler_id;
-        
+       
         static gboolean cairo_draw_profile_only_callback (cairo_t *cr, ProfileControl *pc);
 	static void canvas_draw_function (GtkDrawingArea *area,
                                           cairo_t        *cr,
