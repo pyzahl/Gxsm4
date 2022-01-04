@@ -1093,7 +1093,7 @@ void ProfileControl::canvas_draw_function (GtkDrawingArea *area, cairo_t *cr,
         cairo_item_text **c_item_t;
 
         // check for resize;
-        pc->resize_drawing (width, height);
+        pc->resize_drawing ((double)width, (double)height);
 
         // -- this must be inverted to transform canvas mouse coordinates
         // -- back to world in canvas_event_cb () +++ 
