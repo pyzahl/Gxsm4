@@ -463,7 +463,7 @@ private:
 
         gint   pc_nrows;
         gint   pc_ncolumns;
-        int    window_w, window_h, w_pc_nrows, w_pc_ncolumns;
+        double window_w, window_h;
 	int    statusheight;
 	int    bbarwidth;
         double font_size_10;
@@ -476,8 +476,6 @@ private:
         double pixel_size; // relation to actual physical screen pixel size
         double lw_1;    // line width corresponding to "1 pixel"
 
-        double current_geometry[2];
-        
 	double xmin, xmax, xrange;
 	double ymin, ymax, yrange;
 	double lmaxmin, lmin;

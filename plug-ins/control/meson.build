@@ -1,4 +1,4 @@
-install_path = get_option('prefix') / 'lib/gxsm4/plugins/control'
+install_path = get_option('prefix') / 'lib/gxsm4-plugins/control'
 # install_path = plugin_libs_dir+'/control'
 
 deps = declare_dependency(

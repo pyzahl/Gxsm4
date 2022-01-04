@@ -22,9 +22,15 @@ gset = dependency('gsettings-desktop-schemas')
 x11 = dependency('X11')
 gl = dependency('gl')
 glew = dependency('glew')
-netcdf = dependency('netcdf-cxx4')   # for the C/C++ NetCDF headers and libraries
+# netcdf = dependency('netcdf-cxx4')   # for the C/C++ NetCDF headers and libraries
 # netcdfc = dependency('netcdf', language: 'c')   # for the C NetCDF headers and libraries
 # netcdfcpp = dependency('netcdf', language: 'cpp') # for the C++ NetCDF headers and libraries (need both!!)
+netcdf = declare_dependency(
+    dependencies: [
+        cc.find_library('netcdf'),
+        cc.find_library('netcdf_c++'),
+    ]
+)
 png = dependency('libpng')
 fftw = dependency('fftw3')
 xml = dependency('libxml-2.0')
@@ -50,7 +56,7 @@ dl = declare_dependency(
 
 
 absolute_data_dir = get_option('prefix')+'/'+get_option('datadir')+'/gxsm4'
-absolute_plugin_libs_dir = get_option('prefix')+'/lib/gxsm4/plugins'
+absolute_plugin_libs_dir = get_option('prefix')+'/lib/gxsm4-plugins'
 
 ## Build config.h
 
