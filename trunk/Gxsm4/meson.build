@@ -1,4 +1,5 @@
 project('gxsm4', ['c','cpp'], version : '4.0.0')
+version_name = 'GXSM4GTK4 Beta Evaluation'
 
 cc = meson.get_compiler('cpp')
 
@@ -9,7 +10,8 @@ as_major_version = ver_arr[0]
 as_minor_version = ver_arr[1]
 as_micro_version = ver_arr[2]
 
-add_project_arguments('-DMYTEST=projname', language : 'cpp')
+# Dependencies: required libs
+##################################################################
 
 glib = dependency('glib-2.0')
 gio = dependency('gio-2.0')
@@ -58,7 +60,13 @@ dl = declare_dependency(
 absolute_data_dir = get_option('prefix')+'/'+get_option('datadir')+'/gxsm4'
 absolute_plugin_libs_dir = get_option('prefix')+'/lib/gxsm4-plugins'
 
+## grab some info -- not essential, can defined const
+today    = run_command('sh', '-c', 'date').stdout().strip()
+user     = run_command('sh', '-c', 'echo $USER').stdout().strip()
+hostname = run_command('sh', '-c', 'echo $HOSTNAME').stdout().strip()
+
 ## Build config.h
+################################################################################
 
 conf = configuration_data()
 
@@ -69,7 +77,11 @@ conf.set('PACKAGE', '"'+meson.project_name()+'"')
 conf.set('PACKAGE_NAME', '"'+meson.project_name()+'"')
 conf.set('GETTEXT_PACKAGE', '"'+meson.project_name()+'"')
 conf.set('VERSION', '"'+meson.project_version()+'"')
-conf.set('GXSM_VERSION_NAME', '"GXSM4GTK4 Beta Evaluation"', description : 'GXSM version identifier screen name')
+conf.set('GXSM_VERSION_NAME', '"'+version_name+'"', description : 'GXSM version identifier screen name')
+conf.set('GXSM_BUILD_DATE',   '"'+today+'"')
+conf.set('GXSM_MAJOR_VERSION', as_major_version)
+conf.set('GXSM_MINOR_VERSION', as_minor_version)
+conf.set('GXSM_MICRO_VERSION', as_micro_version)
 
 ## fix-me: paths to be made auto!
 conf.set('PACKAGE_PLUGIN_DIR', '"'+absolute_plugin_libs_dir+'"', description : 'This is the path where gxsm plugins will be installed')
@@ -87,28 +99,9 @@ conf.set('GXSM_MONITOR_VMEMORY_USAGE', '', description : 'define this for adding
 # conf.set('GXSM_ENABLE_SCAN_USER_PLUGIN_PATH', 'yes', description : 'enable scanning in user path for plugins')
 conf.set('XSM_DEBUG_OPTION', '"yes"', description : 'Global Enable/Disable of any debugging code')
 #conf.set('COMPILEDBYNAME', os.environ['USER']+'@'+os.environ['HOSTNAME']+'; `date`', description : 'GXSM user@host CC-time info string')
-conf.set('COMPILEDBYNAME', '"PyZahl@phenom -- FIX-ME in meson.build"', description : 'GXSM user@host CC-time info string')
-
-### HOW correctly to do this one???
-#dnl Set PACKAGE_PALETTE_DIR in config.h.
-#if test 'x${prefix}' = 'xNONE'; then
-#  AC_DEFINE_UNQUOTED(PACKAGE_PALETTE_DIR, '${ac_default_prefix}/share/${PACKAGE}/palette', [Define gxsm package install prefix])
-#else
-#  AC_DEFINE_UNQUOTED(PACKAGE_PALETTE_DIR, '${prefix}/share/${PACKAGE}/palette', [Define gxsm package install prefix])
-#fi
-# conf.set('AC_DEFINE_UNQUOTED(PACKAGE_PALETTE_DIR', os.environ['MESON_INSTALL_PREFIX']+'/share/gxsm4/palette', description : 'Define gxsm package install prefix]')
-conf.set('PACKAGE_PALETTE_DIR', '"/usr/local/share/gxsm4/palette"', description : 'Define gxsm package install prefix]')
-
-#dnl Set PACKAGE_GL400_DIR in config.h.
-#if test 'x${prefix}' = 'xNONE'; then
-#  AC_DEFINE_UNQUOTED(PACKAGE_GL400_DIR, '${ac_default_prefix}/share/${PACKAGE}/gl-400', [Define gxsm package install prefix])
-#else
-#  AC_DEFINE_UNQUOTED(PACKAGE_GL400_DIR, '${prefix}/share/${PACKAGE}/gl-400', [Define gxsm package install prefix])
-#fi
-# conf.set('PACKAGE_GL400_DIR', os.environ['MESON_INSTALL_PREFIX']+'/share/gxsm4/gl-400', description : 'Define gxsm package install prefix')
-conf.set('PACKAGE_GL400_DIR', '"/usr/local/share/gxsm4/gl-400"', description : 'Define gxsm package install prefix')
-
-#
+conf.set('COMPILEDBYNAME', '"'+user+'@'+hostname+' '+today+'"', description : 'GXSM user@host CC-time info string')
+conf.set('PACKAGE_PALETTE_DIR', '"'+absolute_data_dir+'/palette"', description : 'Define gxsm palette install prefix]')
+conf.set('PACKAGE_GL400_DIR', '"'+absolute_data_dir+'/gl-400"', description : 'Define gxsm GLSL code install prefix')
 
 # write config.h from conf object
 ####################################
@@ -117,12 +110,8 @@ configure_file(output : 'config.h',
 
 rootpath = meson.project_source_root()
 
-
 ### some issue here, does not find config.h
 configuration_inc = include_directories('.')
-
-## include_directories('@0@/..'.format(meson.current_build_dir()))
-
 
 # sub dirs to build
 ####################################
@@ -135,5 +124,4 @@ subdir('icons')
 
 #subdir('thumbnailers')
 #subdir('tools')
-
 #subdir('po')
