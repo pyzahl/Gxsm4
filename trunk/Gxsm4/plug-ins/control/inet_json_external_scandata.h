@@ -309,7 +309,9 @@ public:
                                          int             width,
                                          int             height,
                                          Inet_Json_External_Scandata *self);
-        void dynamic_graph_draw_function (GtkDrawingArea *area, cairo_t *cr);
+        void dynamic_graph_draw_function (GtkDrawingArea *area, cairo_t *cr,
+                                          int             width,
+                                          int             height);
         void stream_data ();
         
         static void connect_cb (GtkWidget *widget, Inet_Json_External_Scandata *self);

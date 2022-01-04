@@ -813,11 +813,19 @@ Inet_Json_External_Scandata::Inet_Json_External_Scandata ()
         // Scope Display
         bp->new_line ();
 
+	GtkWidget* scrollarea = gtk_scrolled_window_new ();
+        gtk_widget_set_hexpand (scrollarea, TRUE);
+        gtk_widget_set_vexpand (scrollarea, TRUE);
+        gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrollarea),
+					GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+        bp->grid_add_widget (scrollarea, 10);
         signal_graph_area = gtk_drawing_area_new ();
+        
         gtk_drawing_area_set_content_width (GTK_DRAWING_AREA (signal_graph_area), 128);
         gtk_drawing_area_set_content_height (GTK_DRAWING_AREA (signal_graph_area), 4);
         gtk_drawing_area_set_draw_func (GTK_DRAWING_AREA (signal_graph_area), graph_draw_function, this, NULL);
-        bp->grid_add_widget (signal_graph_area, 10);
+        //        bp->grid_add_widget (signal_graph_area, 10);
+	gtk_scrolled_window_set_child (GTK_SCROLLED_WINDOW (scrollarea), signal_graph_area);
         
         bp->new_line ();
 
@@ -936,7 +944,7 @@ Inet_Json_External_Scandata::Inet_Json_External_Scandata ()
         gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolled_window), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
         //gtk_widget_set_size_request (scrolled_window, 200, 60);
         gtk_widget_set_hexpand (scrolled_window, TRUE);
-        gtk_widget_set_vexpand (scrolled_window, TRUE);
+        gtk_widget_set_vexpand (scrolled_window, FALSE);
         gtk_scrolled_window_set_child ( GTK_SCROLLED_WINDOW (scrolled_window), text_status);
         bp->grid_add_widget (scrolled_window, 10);
         gtk_widget_show (scrolled_window);
@@ -1934,18 +1942,20 @@ double Inet_Json_External_Scandata::unwrap (int k, double phi){
 
 // to force udpate call:   gtk_widget_queue_draw (self->signal_graph_area);
 void Inet_Json_External_Scandata::graph_draw_function (GtkDrawingArea *area, cairo_t *cr,
-                                                              int             width,
-                                                              int             height,
-                                                              Inet_Json_External_Scandata *self){
-        self->dynamic_graph_draw_function (area, cr);
+                                                       int             width,
+                                                       int             height,
+                                                       Inet_Json_External_Scandata *self){
+        self->dynamic_graph_draw_function (area, cr, width, height);
 }
 
-void Inet_Json_External_Scandata::dynamic_graph_draw_function (GtkDrawingArea *area, cairo_t *cr){
+void Inet_Json_External_Scandata::dynamic_graph_draw_function (GtkDrawingArea *area, cairo_t *cr, int width, int height){
         int n=1023;
-        int h=(int)scope_height_points;
+        int h=(int)height; //scope_height_points;
         static int hist=0;
+        static int current_width=0;
         if (!run_scope)
                 h=10;
+        scope_width_points=current_width = width;
         double xs = scope_width_points/1024.;
         double xcenter = scope_width_points/2;
         double xwidcenter = scope_width_points/2;
@@ -1955,17 +1965,16 @@ void Inet_Json_External_Scandata::dynamic_graph_draw_function (GtkDrawingArea *a
         double y_hi  = yr*0.95;
         double dB_hi   =  0.0;
         double dB_mags =  4.0;
-        static int current_width=0;
         static int rs_mode=0;
         const int binary_BITS = 16;
         
         if (!run_scope && hist == h)
                 return;
-        if (current_width != (int)scope_width_points || h != hist){
-                current_width = (int)scope_width_points;
-                gtk_drawing_area_set_content_width (area, current_width);
-                gtk_drawing_area_set_content_height (area, h);
-        }
+        //if (current_width != (int)scope_width_points || h != hist){
+                //current_width = (int)scope_width_points;
+                //gtk_drawing_area_set_content_width (area, current_width);
+                //gtk_drawing_area_set_content_height (area, h);
+        //}
         hist=h;
         if (run_scope){
                 cairo_translate (cr, 0., yr);
