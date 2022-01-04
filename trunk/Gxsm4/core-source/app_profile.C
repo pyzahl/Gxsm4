@@ -1066,36 +1066,12 @@ void ProfileControl::AppWindowInit(const gchar *title, const gchar *sub_title){
 }
 
 gboolean ProfileControl::resize_drawing (double w, double h){
-                
-        // invert: gtk_widget_set_size_request (canvas, (int)(papixel*(aspect+3*border)), (gint)(papixel*(1.+border))+statusheight);
-        // w=papixel*(aspect+3*border)       -> papixel = w/(aspect+3*border)
-        // h=papixel*(1.+border)+statusheight
-
-        if (window_w != w || window_h != h || w_pc_nrows != pc_nrows || w_pc_ncolumns != pc_ncolumns){
+        if (window_w != w || window_h != h){
                 window_w = w, window_h = h;
-                w_pc_nrows = pc_nrows,  w_pc_ncolumns = pc_ncolumns;
                 if (ref_count > 0){
                         double ap;
-                        ap = (double)(w)/(double)(h);
+                        ap = w/h;
                         papixel = (int)(w/ap);
-#if 0
-                        if (!pc_in_window){
-                                // correct size down to canvas area available
-                                w -= bbarwidth;
-                                h -= statusheight;
-                                //g_print ("Profile Window Corrected: %d, %d\n", w,h);
-                                ap = (double)(w*(1.-3.*border))/(double)(h*(1.-2.*border));
-                                //g_print ("Profile Drawing Resize: %d, %d, ap=%g\n", w,h, ap);
-                                papixel = (int)(w / (ap+3*border));
-                        } else {
-                                w /= pc_ncolumns;
-                                h /= pc_nrows;
-                                if (! (mode & PROFILE_MODE_HEADER))
-                                        mode |= PROFILE_MODE_HEADER;
-                                ap = (double)(w)/(double)(h);
-                                papixel = (int)(w/ap);
-                        }
-#endif
                         SetSize (ap);
                         UpdateArea ();
                 }
@@ -1321,14 +1297,6 @@ void ProfileControl::SetSize(double new_aspect){
 
         pixel_size = (double)papixel / (3*border+pasize);
         lw_1 = 1. / pixel_size;
-
-        // calculate approx. window size -- need to est. borders. GTK3QQQ: find actual widget (button onr ight) width??
-        current_geometry[0] = papixel*(aspect+3*border);
-        current_geometry[1] = papixel*(1.+2*border);
-        //gtk_drawing_area_set_content_width  (GTK_DRAWING_AREA (canvas), (gint)current_geometry[0]);
-        //gtk_drawing_area_set_content_height (GTK_DRAWING_AREA (canvas), (gint)current_geometry[1]);
-        // gtk_widget_set_size_request (canvas, (int)current_geometry[0], (gint)current_geometry[1]);
-        // gtk_widget_set_size_request (canvas, (int)(papixel*(aspect+3*border)), (gint)(papixel*(1.+border))+statusheight);
 
         updateFrame ();
         updateTics  (TRUE);
@@ -2541,13 +2509,13 @@ void ProfileControl::file_save_image_callback_exec (GtkDialog *dialog,  int resp
                 double scaling = 1.;
 
                 if (g_strrstr (imgname,".svg")){
-                        surface = cairo_svg_surface_create (imgname, pc->current_geometry[0], pc->current_geometry[1]);
+                        surface = cairo_svg_surface_create (imgname, pc->window_w, pc->window_h);
                         cairo_svg_surface_restrict_to_version (surface, CAIRO_SVG_VERSION_1_2);
                 } else if (g_strrstr (imgname,".pdf")){
-                        surface = cairo_pdf_surface_create (imgname, pc->current_geometry[0], pc->current_geometry[1]); 
+                        surface = cairo_pdf_surface_create (imgname, pc->window_w, pc->window_h); 
                 } else {
                         scaling = 3.;
-                        surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, scaling * pc->current_geometry[0], scaling * pc->current_geometry[1]);
+                        surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, scaling * pc->window_w, scaling * pc->window_h);
                         png=1;
                 }
 
