@@ -578,7 +578,6 @@ void ProfileControl::Init(const gchar *titlestring, int ChNo, const gchar *resid
         set_pc_matrix_size ();
         window_w = window_h = 0;
         font_size_10 = 10.;
-        cur_w = cur_h = 0;
         
 	auto_update_id = 0;
 
@@ -925,10 +924,6 @@ ProfileControl::~ProfileControl ()
 
 	XSM_DEBUG (DBG_L2, "ProfileControl::~ProfileControl");
 
-        // must undo
-        // resize_cb_handler_id = g_signal_connect (GTK_CONTAINER (window), "check-resize", G_CALLBACK (ProfileControl::resize_drawing), this);
-        g_signal_handler_disconnect (GTK_BOX (window), resize_cb_handler_id);
-
 	auto_update (0);
 
         g_object_unref (pc_action_group);
@@ -1059,8 +1054,6 @@ void ProfileControl::AppWindowInit(const gchar *title, const gchar *sub_title){
 
         // FIX-ME-GTK4 ?!?!
         // g_signal_connect (G_OBJECT (pc_grid), "destroy", G_CALLBACK (gtk_window_destroy), &pc_grid);
-        
-        resize_cb_handler_id = g_signal_connect (GTK_BOX (window), "check-resize", G_CALLBACK (ProfileControl::resize_drawing), this);
 
         gtk_widget_show (GTK_WIDGET (pc_grid)); // FIX-ME GTK4 SHOWALL
 
@@ -1072,41 +1065,39 @@ void ProfileControl::AppWindowInit(const gchar *title, const gchar *sub_title){
                                          this);
 }
 
-gboolean ProfileControl::resize_drawing (GtkWidget *widget, ProfileControl *pc){
-        gint w,h;
-        pc->GetWindowSize (w, h);
-        if (pc->cur_w == w || pc->cur_h == h)
-                return TRUE;;
-
-        pc->cur_w=w; pc->cur_h=h;
+gboolean ProfileControl::resize_drawing (double w, double h){
                 
         // invert: gtk_widget_set_size_request (canvas, (int)(papixel*(aspect+3*border)), (gint)(papixel*(1.+border))+statusheight);
         // w=papixel*(aspect+3*border)       -> papixel = w/(aspect+3*border)
         // h=papixel*(1.+border)+statusheight
 
-        if (pc->window_w != w || pc->window_h != h || pc->w_pc_nrows != pc->pc_nrows || pc->w_pc_ncolumns != pc->pc_ncolumns){
-                pc->window_w = w, pc->window_h = h;
-                pc->w_pc_nrows = pc->pc_nrows,  pc->w_pc_ncolumns = pc->pc_ncolumns;
-                if (pc->ref_count > 0){
+        if (window_w != w || window_h != h || w_pc_nrows != pc_nrows || w_pc_ncolumns != pc_ncolumns){
+                window_w = w, window_h = h;
+                w_pc_nrows = pc_nrows,  w_pc_ncolumns = pc_ncolumns;
+                if (ref_count > 0){
                         double ap;
-                        if (!pc->pc_in_window){
+                        ap = (double)(w)/(double)(h);
+                        papixel = (int)(w/ap);
+#if 0
+                        if (!pc_in_window){
                                 // correct size down to canvas area available
-                                w -= pc->bbarwidth;
-                                h -= pc->statusheight;
+                                w -= bbarwidth;
+                                h -= statusheight;
                                 //g_print ("Profile Window Corrected: %d, %d\n", w,h);
-                                ap = (double)(w*(1.-3.*pc->border))/(double)(h*(1.-2.*pc->border));
+                                ap = (double)(w*(1.-3.*border))/(double)(h*(1.-2.*border));
                                 //g_print ("Profile Drawing Resize: %d, %d, ap=%g\n", w,h, ap);
-                                pc->papixel = (int)(w / (ap+3*pc->border));
+                                papixel = (int)(w / (ap+3*border));
                         } else {
-                                w /= pc->pc_ncolumns;
-                                h /= pc->pc_nrows;
-                                if (! (pc->mode & PROFILE_MODE_HEADER))
-                                        pc->mode |= PROFILE_MODE_HEADER;
+                                w /= pc_ncolumns;
+                                h /= pc_nrows;
+                                if (! (mode & PROFILE_MODE_HEADER))
+                                        mode |= PROFILE_MODE_HEADER;
                                 ap = (double)(w)/(double)(h);
-                                pc->papixel = (int)(w/ap);
+                                papixel = (int)(w/ap);
                         }
-                        pc->SetSize (ap);
-                        pc->UpdateArea ();
+#endif
+                        SetSize (ap);
+                        UpdateArea ();
                 }
         }
         return FALSE;
@@ -1126,7 +1117,7 @@ void ProfileControl::canvas_draw_function (GtkDrawingArea *area, cairo_t *cr,
         cairo_item_text **c_item_t;
 
         // check for resize;
-        ProfileControl::resize_drawing (NULL, pc);
+        pc->resize_drawing (width, height);
 
         // -- this must be inverted to transform canvas mouse coordinates
         // -- back to world in canvas_event_cb () +++ 
@@ -1334,8 +1325,8 @@ void ProfileControl::SetSize(double new_aspect){
         // calculate approx. window size -- need to est. borders. GTK3QQQ: find actual widget (button onr ight) width??
         current_geometry[0] = papixel*(aspect+3*border);
         current_geometry[1] = papixel*(1.+2*border);
-        gtk_drawing_area_set_content_width  (GTK_DRAWING_AREA (canvas), (gint)current_geometry[0]);
-        gtk_drawing_area_set_content_height (GTK_DRAWING_AREA (canvas), (gint)current_geometry[1]);
+        //gtk_drawing_area_set_content_width  (GTK_DRAWING_AREA (canvas), (gint)current_geometry[0]);
+        //gtk_drawing_area_set_content_height (GTK_DRAWING_AREA (canvas), (gint)current_geometry[1]);
         // gtk_widget_set_size_request (canvas, (int)current_geometry[0], (gint)current_geometry[1]);
         // gtk_widget_set_size_request (canvas, (int)(papixel*(aspect+3*border)), (gint)(papixel*(1.+border))+statusheight);
 
