@@ -33,13 +33,21 @@ gmodexp = dependency('gmodule-export-2.0')
 lz =  dependency('zlib', method : 'system')
 
 icuuc = declare_dependency(
-  dependencies: [
-    cc.find_library('icuuc'),
-  ],
+    dependencies: [
+        cc.find_library('icuuc'),
+    ],
 )
 
 python = dependency('python3')
 # gdkpixbu = dependency('gdk-pixbuf-2.0')
+
+## plugins do need for dynamic load lib aka "-ldl"
+dl = declare_dependency(
+    dependencies: [
+        cc.find_library('dl'),
+    ],
+)
+
 
 absolute_data_dir = get_option('prefix')+'/'+get_option('datadir')+'/gxsm4'
 absolute_plugin_libs_dir = get_option('prefix')+'/lib/gxsm4/plugins'
@@ -117,8 +125,9 @@ subdir('core-source')
 subdir('plug-ins')
 subdir('gl-400')
 subdir('palette')
+subdir('icons')
+
 #subdir('thumbnailers')
 #subdir('tools')
-subdir('icons')
 
 #subdir('po')

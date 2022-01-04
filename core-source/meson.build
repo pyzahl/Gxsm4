@@ -1,7 +1,7 @@
 
 deps = declare_dependency(
     compile_args : ['-DTESTING', '-fpermissive', '-w'],
-    dependencies : [icuuc, gtk, soup, gtksourceview, cairo, freet, gset, netcdf, fftw, xml, png, gmod, gmodexp, x11, gl, glew],
+    dependencies : [icuuc, gtk, soup, gtksourceview, cairo, freet, gset, netcdf, fftw, xml, png, gmod, gmodexp, x11, gl, glew, dl],
     include_directories : configuration_inc,
     link_args : [ '-licuuc', '-lnetcdf', '-lnetcdf_c++'],
     )
