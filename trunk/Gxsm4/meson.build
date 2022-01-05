@@ -116,7 +116,10 @@ configuration_inc = include_directories('.')
 # sub dirs to build
 ####################################
 
-subdir('core-source')
+gxsm4_gdbus_src = files()
+
+subdir('po')
+
 subdir('plug-ins')
 subdir('gl-400')
 subdir('palette')
@@ -124,4 +127,6 @@ subdir('icons')
 
 #subdir('thumbnailers')
 #subdir('tools')
-#subdir('po')
+
+subdir('core-source')
+
