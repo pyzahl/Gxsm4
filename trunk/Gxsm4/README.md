@@ -26,7 +26,7 @@ http://www.ventiotec.de/linux/GXSM-Linux.iso
 GXSM Web Site: http://gxsm.sf.net
 
 
-## 2. Installation
+## 2a. Installation
 
 Gxsm4 requires GTK4, GtkSourceView5, libfftw, libnetcdf, libquicktime, ...
 
@@ -41,6 +41,20 @@ sudo make install -j16 -k
 Note: there may be compile errors as of incomplete porting progress.
 
 See the file 'INSTALL' for more detailed information.
+
+## 2b. New build alternative: Meson buildsystem -- work in progress:
+Before getting started in every source folder run (install mmv tools)
+
+$ mln -s "*.C" "#1.cpp"
+
+The create your "builddir" in the project root folder.
+Run
+$ meson builddir
+$ cd builddir
+$ ninja
+$ ninja install
+
+Note: Currently the plugins are not completely build/failing with file not found, work in progress.
 
 
 ## 3. To-Do-List
