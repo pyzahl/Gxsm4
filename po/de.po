@@ -6,5843 +6,1569 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gxsm 1.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2003-10-10 22:44+0200\n"
+"POT-Creation-Date: 2022-01-04 20:35-0500\n"
 "PO-Revision-Date: 2000-11-02 19:28+0100\n"
 "Last-Translator: Percy Zahl <zahl@fkp.uni-hannover.de>\n"
 "Language-Team: German <de@li.org>\n"
+"Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=iso-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/app_mkicons.C:115
-#, fuzzy
-msgid "GXSM make icons"
-msgstr "Übersicht erstellen"
-
-#: src/app_mkicons.C:118
-msgid "1x1"
+#: plug-ins/common/pyremote.cpp:2573
+msgid "_CLOSE"
 msgstr ""
 
-#: src/app_mkicons.C:118
-msgid "2x3"
+#: plug-ins/common/pyremote.cpp:2973
+msgid "Open Python script"
 msgstr ""
 
-#: src/app_mkicons.C:118
-msgid "4x6"
+#: plug-ins/common/pyremote.cpp:2976 plug-ins/common/pyremote.cpp:3102
+#: plug-ins/control/NanoPlott.cpp:310 core-source/pcs.cpp:1110
+#: core-source/app_view.cpp:3376 core-source/app_view.cpp:4450
+#: core-source/surface.cpp:389 core-source/surface.cpp:713
+#: core-source/surface.cpp:771 core-source/app_profile.cpp:2310
+#: core-source/app_profile.cpp:2347 core-source/app_profile.cpp:2401
+#: core-source/app_profile.cpp:2457 core-source/app_profile.cpp:2567
+msgid "_Cancel"
 msgstr ""
 
-#: src/app_mkicons.C:118
-msgid "6x9"
-msgstr ""
-
-#: src/app_mkicons.C:133
-msgid "Source Path"
-msgstr "Datenpfad"
-
-#: src/app_mkicons.C:146 src/app_mkicons.C:170 src/app_mkicons.C:194
-#: src/app_print.C:133 src/gnome-res.c:700 plug-ins/common/listplugins.C:647
-msgid "Help"
-msgstr "Hilfe"
-
-#: src/app_mkicons.C:151
-msgid "Set to full pathname of data source directory."
-msgstr "Hier ist der absolute Pfad zu den Daten anzugeben."
-
-#: src/app_mkicons.C:157
-msgid "Selection Mask"
-msgstr "Auswahlmaske"
-
-#: src/app_mkicons.C:175
-msgid "Select subset of files via wildcard."
-msgstr "Dateiauswahl über UNIX-Wildcards"
-
-#: src/app_mkicons.C:181
-msgid "Icon Filename"
-msgstr "Ausgabedatei"
-
-#: src/app_mkicons.C:199
-msgid "Full Pathname to Iconfile, openmode is append !"
-msgstr "Absoluter Pfad/Name der Übersichtsdatei"
-
-#: src/app_mkicons.C:293
-msgid "Generating 1x1 Icon Pages !"
-msgstr "Erzeuge 1x1 Übersichtsseiten!"
-
-#: src/app_mkicons.C:298
-msgid "Generating 2x3 Icon Pages !"
-msgstr "Erzeuge 2x3 Übersichtsseiten!"
-
-#: src/app_mkicons.C:303
-msgid "Generating 4x6 Icon Pages !"
-msgstr "Erzeuge 6x9 Übersichtsseiten!"
-
-#: src/app_mkicons.C:308
-msgid "Generating 6x9 Icon Pages !"
-msgstr "Erzeuge 6x9 Übersichtsseiten!"
-
-#: src/app_monitor.C:65
-msgid "Edit:"
-msgstr "Ändern"
-
-#: src/app_print.C:99
-msgid "GXSM print"
-msgstr ""
-
-#: src/app_print.C:119
-msgid "Title"
-msgstr "Überschrift"
-
-#: src/app_print.C:138
-msgid "Title is placed above Scanimage."
-msgstr "Überschrift für den Ausdruck"
-
-#: src/app_print.C:228
-msgid "Save to file"
-msgstr "In Datei"
-
-#: src/app_print.C:244
-msgid "Print command"
-msgstr "Drucker Befehl"
-
-#: src/app_profile.C:1296 src/app_profile.C:1313
-msgid "Profile to save"
-msgstr "Profile speichern"
-
-#: src/app_profile.C:1300 src/app_profile.C:1317
-msgid "profile saved as "
-msgstr "Profile speichern unter"
-
-#: src/app_profile.C:1302 src/app_profile.C:1319
-msgid "save canceld"
-msgstr "Speichern abgebrochen"
-
-#: src/app_profilepopupdef.h:31
-msgid "Gri Plot1d 1 (lin)"
-msgstr ""
-
-#: src/app_profilepopupdef.h:31 src/app_profilepopupdef.h:33
-#: src/app_profilepopupdef.h:35 src/app_profilepopupdef.h:37
-msgid "Print via gri"
-msgstr ""
-
-#: src/app_profilepopupdef.h:33
-msgid "Gri Plot1d 2 (STScalc)"
-msgstr ""
-
-#: src/app_profilepopupdef.h:35
-msgid "Gri Plot1d 3 (log)"
-msgstr ""
-
-#: src/app_profilepopupdef.h:37
-msgid "Gri Plot1d 4"
-msgstr ""
-
-#: src/app_profilepopupdef.h:39
-msgid "xmgrace 5"
-msgstr ""
-
-#: src/app_profilepopupdef.h:39
-msgid "View via xmgrace"
-msgstr "Ansehen mit xmgrace"
-
-#: src/app_profilepopupdef.h:45
+#: plug-ins/common/pyremote.cpp:2977 core-source/surface.cpp:390
+#: core-source/app_profile.cpp:2312 core-source/app_profile.cpp:2349
+#: core-source/app_profile.cpp:2403 core-source/app_profile.cpp:2459
+#: core-source/app_profile.cpp:2569
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:16
+#: core-source-meson/gxsm4-popupmenus.ui:892
+#: core-source-meson/gxsm4-popupmenus.ui:1120
+#: core-source-meson/gxsm4-menu.ui:38
 msgid "_Open"
 msgstr ""
 
-#: src/app_profilepopupdef.h:45
-msgid "load profile"
-msgstr ""
+#: plug-ins/common/pyremote.cpp:3099
+#, fuzzy
+msgid "Save Script as"
+msgstr "Objekte speichern"
 
-#: src/app_profilepopupdef.h:47 src/app_v3dpopupdef.h:45
-#: src/app_vpopupdef.h:46 src/gxsm_menudef.h:48
+#: plug-ins/common/pyremote.cpp:3103 core-source/app_view.cpp:3377
+#: core-source/app_view.cpp:4451 core-source/surface.cpp:772
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:20
+#: core-source-meson/gxsm4-popupmenus.ui:59
+#: core-source-meson/gxsm4-popupmenus.ui:797
+#: core-source-meson/gxsm4-popupmenus.ui:896
+#: core-source-meson/gxsm4-popupmenus.ui:1124
+#: core-source-meson/gxsm4-menu.ui:46
 msgid "_Save"
 msgstr "_Speichern"
 
-#: src/app_profilepopupdef.h:47
-msgid "Save profile with automatically generated name"
+#: plug-ins/control/NanoPlott.cpp:308 core-source/gapp_service.cpp:137
+#: core-source/gapp_service.cpp:480 core-source/gapp_service.cpp:510
+#: core-source/pcs.cpp:1109 core-source/app_vobj.cpp:1100
+msgid "_OK"
 msgstr ""
 
-#: src/app_profilepopupdef.h:49 src/app_v3dpopupdef.h:47
-#: src/app_vpopupdef.h:48 src/gxsm_menudef.h:50
+#: plug-ins/control/NanoPlott.cpp:396
+msgid "Select a plot file (.plt)"
+msgstr ""
+
+#: core-source/gapp_service.cpp:138
+msgid "_CANCEL"
+msgstr ""
+
+#: core-source/surface.cpp:714
+msgid "_Select"
+msgstr ""
+
+#: core-source-meson/gxsm4-hwi-menus.ui:10
+#: core-source-meson/gxsm4-hwi-menus.ui:19
+#: core-source-meson/gxsm4-hwi-menus.ui:28
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:230
+#: core-source-meson/gxsm4-popupmenus.ui:875
+msgid "Configure"
+msgstr ""
+
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:11
+msgid "Use default"
+msgstr ""
+
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:24
+#: core-source-meson/gxsm4-popupmenus.ui:67
+#: core-source-meson/gxsm4-popupmenus.ui:801
 msgid "Save _as..."
 msgstr "Speichern unter"
 
-#: src/app_profilepopupdef.h:49
-msgid "Save profile with a new name"
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:28
+#, fuzzy
+msgid "Action Scripts"
+msgstr "Befehl"
+
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:32
+msgid "Scan Action Scripts"
 msgstr ""
 
-#: src/app_profilepopupdef.h:51
-#, fuzzy
-msgid "_Print"
-msgstr "Gxsm Drucken"
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:36
+msgid "Shift-F1 (default)"
+msgstr ""
 
-#: src/app_profilepopupdef.h:52 src/app_v3dpopupdef.h:96
-#: src/app_vpopupdef.h:152
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:41
+msgid "Shift-F2"
+msgstr ""
+
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:46
+msgid "Shift-F3"
+msgstr ""
+
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:51
+msgid "Shift-F4"
+msgstr ""
+
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:56
+msgid "Shift-F5"
+msgstr ""
+
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:61
+msgid "Shift-F6"
+msgstr ""
+
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:66
+msgid "Shift-F7"
+msgstr ""
+
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:71
+msgid "Shift-F8"
+msgstr ""
+
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:76
+msgid "Shift-F9"
+msgstr ""
+
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:81
+msgid "Shift-F10"
+msgstr ""
+
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:86
+msgid "Shift-F11"
+msgstr ""
+
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:91
+msgid "Shift-F12"
+msgstr ""
+
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:98
+msgid "VP Init Action Scripts"
+msgstr ""
+
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:102
+msgid "VP-STS-initial"
+msgstr ""
+
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:107
+msgid "VP-FZ-initial"
+msgstr ""
+
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:112
+msgid "VP-TS-initial"
+msgstr ""
+
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:117
+msgid "VP-TK-initial"
+msgstr ""
+
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:122
+msgid "VP-AX-initial"
+msgstr ""
+
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:127
+msgid "VP-LP-initial"
+msgstr ""
+
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:132
+msgid "VP-PL-initial"
+msgstr ""
+
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:137
+msgid "VP-GVP-initial"
+msgstr ""
+
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:144
+msgid "Control Script Templates"
+msgstr ""
+
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:148
+msgid "Watchdog"
+msgstr ""
+
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:153
+msgid " Gxsm Socket Server"
+msgstr ""
+
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:160
+msgid "Data Analysis Script Templates"
+msgstr ""
+
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:164
+msgid "Data Access"
+msgstr ""
+
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:169
+msgid "CF Extract Simple"
+msgstr ""
+
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:174
+msgid "CF Extract Data"
+msgstr ""
+
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:181
+msgid "Animation Scripts"
+msgstr ""
+
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:185
+msgid "Animate 3D View"
+msgstr ""
+
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:190
+msgid "Movie Export"
+msgstr ""
+
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:199
+msgid "Libraries"
+msgstr ""
+
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:203
+msgid "Lib Utils"
+msgstr ""
+
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:208
+#, fuzzy
+msgid "Lib Control"
+msgstr "Fernsteuerung..."
+
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:213
+msgid "Lib Scan"
+msgstr ""
+
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:218
+msgid "Lib Probe"
+msgstr ""
+
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:223
+msgid "Lib Analysis"
+msgstr ""
+
+#: core-source-meson/gxsm4-plugin-pyremote-menu.ui:234
+msgid "Use help"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:9
+#: core-source-meson/gxsm4-popupmenus.ui:777
 msgid "Activate"
 msgstr "Aktiviere"
 
-#: src/app_profilepopupdef.h:52
-msgid "Activate profile channel"
+#: core-source-meson/gxsm4-popupmenus.ui:13
+#: core-source-meson/gxsm4-popupmenus.ui:781
+#, fuzzy
+msgid "Auto Display"
+msgstr "Auto _Darstellung"
+
+#: core-source-meson/gxsm4-popupmenus.ui:17
+msgid "Update World Map"
 msgstr ""
 
-#: src/app_profilepopupdef.h:54 src/app_v3dpopupdef.h:52
-#: src/app_vpopupdef.h:59
-msgid "Close"
-msgstr "Schliessen"
-
-#: src/app_profilepopupdef.h:54
-msgid "Close this profile"
+#: core-source-meson/gxsm4-popupmenus.ui:21
+msgid "Clear World Map"
 msgstr ""
 
-#: src/app_profilepopupdef.h:61
-msgid "Y linregression"
-msgstr "Neigung korrigieren"
-
-#: src/app_profilepopupdef.h:61
-msgid "do lineregression on Y data"
+#: core-source-meson/gxsm4-popupmenus.ui:25
+msgid "Mode"
 msgstr ""
 
-#: src/app_profilepopupdef.h:64
-msgid "Symbols"
-msgstr "Symbole"
-
-#: src/app_profilepopupdef.h:64
-msgid "show Symbols"
-msgstr ""
-
-#: src/app_profilepopupdef.h:66
-msgid "Legend"
-msgstr "Legende"
-
-#: src/app_profilepopupdef.h:66
-msgid "show Legend"
-msgstr ""
-
-#: src/app_profilepopupdef.h:68
-msgid "Ticmarks"
-msgstr "Pos. Marken"
-
-#: src/app_profilepopupdef.h:68
-msgid "show Ticmarks -- slower"
-msgstr ""
-
-#: src/app_profilepopupdef.h:70
-msgid "no Gridlines"
-msgstr "kein Gitterlinien"
-
-#: src/app_profilepopupdef.h:76
-msgid "Y logarithmic"
-msgstr "Y logarithmisch"
-
-#: src/app_profilepopupdef.h:76
-msgid "use logarithmic y scale"
-msgstr ""
-
-#: src/app_profilepopupdef.h:80
-msgid "Y hold"
-msgstr "Y festhalten"
-
-#: src/app_profilepopupdef.h:80
-msgid "fix y range"
-msgstr ""
-
-#: src/app_profilepopupdef.h:82
-msgid "Y expand only"
-msgstr "Y nur erweitern"
-
-#: src/app_profilepopupdef.h:82
-msgid "do only expansion on y range, hold old maximal range"
-msgstr ""
-
-#: src/app_profilepopupdef.h:86
-msgid "Y auto"
-msgstr "Y anpassen"
-
-#: src/app_profilepopupdef.h:86
-msgid "Y autoscale "
-msgstr ""
-
-#: src/app_profilepopupdef.h:88
-msgid "Y upper up"
-msgstr ""
-
-#: src/app_profilepopupdef.h:88
-msgid "Y upper up "
-msgstr ""
-
-#: src/app_profilepopupdef.h:90
-msgid "Y upper down"
-msgstr ""
-
-#: src/app_profilepopupdef.h:90
-msgid "Y upper down "
-msgstr ""
-
-#: src/app_profilepopupdef.h:92
-msgid "Y lower up"
-msgstr ""
-
-#: src/app_profilepopupdef.h:92
-msgid "Y lower up "
-msgstr ""
-
-#: src/app_profilepopupdef.h:94
-msgid "Y lower down"
-msgstr ""
-
-#: src/app_profilepopupdef.h:94
-msgid "Y lower down "
-msgstr ""
-
-#: src/app_profilepopupdef.h:96
-msgid "Y zoom in"
-msgstr ""
-
-#: src/app_profilepopupdef.h:96
-msgid "Y zoom in "
-msgstr ""
-
-#: src/app_profilepopupdef.h:98
-msgid "Y zoom out"
-msgstr ""
-
-#: src/app_profilepopupdef.h:98
-msgid "Y zoom out "
-msgstr ""
-
-#: src/app_profilepopupdef.h:100
-msgid "Y set bounds"
-msgstr ""
-
-#: src/app_profilepopupdef.h:100
-msgid "manual Y set bound"
-msgstr ""
-
-#: src/app_profilepopupdef.h:106
-msgid "X auto"
-msgstr ""
-
-#: src/app_profilepopupdef.h:106
-msgid "X autoscale "
-msgstr ""
-
-#: src/app_profilepopupdef.h:108
-msgid "X set bounds"
-msgstr ""
-
-#: src/app_profilepopupdef.h:108
-msgid "manual X set bound"
-msgstr ""
-
-#: src/app_profilepopupdef.h:114
-msgid "Cursor A"
-msgstr ""
-
-#: src/app_profilepopupdef.h:114
-msgid "show cursor A"
-msgstr ""
-
-#: src/app_profilepopupdef.h:116
-msgid "Cursor B"
-msgstr ""
-
-#: src/app_profilepopupdef.h:116
-msgid "show cursor B"
-msgstr ""
-
-#: src/app_profilepopupdef.h:118
-msgid "move A left"
-msgstr ""
-
-#: src/app_profilepopupdef.h:118
-msgid "move cursor A left"
-msgstr ""
-
-#: src/app_profilepopupdef.h:120
-msgid "move A next Max"
-msgstr ""
-
-#: src/app_profilepopupdef.h:120 src/app_profilepopupdef.h:132
-msgid "find next right Maximum"
-msgstr ""
-
-#: src/app_profilepopupdef.h:122
-msgid "move A next Min"
-msgstr ""
-
-#: src/app_profilepopupdef.h:122 src/app_profilepopupdef.h:134
-msgid "find next right Minimum"
-msgstr ""
-
-#: src/app_profilepopupdef.h:124
-msgid "move A prev Max"
-msgstr ""
-
-#: src/app_profilepopupdef.h:124 src/app_profilepopupdef.h:136
-msgid "find next left Maximum"
-msgstr ""
-
-#: src/app_profilepopupdef.h:126
-msgid "move A prev Min"
-msgstr ""
-
-#: src/app_profilepopupdef.h:126 src/app_profilepopupdef.h:138
-msgid "find next left Minimum"
-msgstr ""
-
-#: src/app_profilepopupdef.h:128
-msgid "move A right"
-msgstr ""
-
-#: src/app_profilepopupdef.h:128
-msgid "move cursor A right"
-msgstr ""
-
-#: src/app_profilepopupdef.h:130
-msgid "move B left"
-msgstr ""
-
-#: src/app_profilepopupdef.h:130
-msgid "move cursor B left"
-msgstr ""
-
-#: src/app_profilepopupdef.h:132
-msgid "move B next Max"
-msgstr ""
-
-#: src/app_profilepopupdef.h:134
-msgid "move B next Min"
-msgstr ""
-
-#: src/app_profilepopupdef.h:136
-msgid "move B prev Max"
-msgstr ""
-
-#: src/app_profilepopupdef.h:138
-msgid "move B prev Min"
-msgstr ""
-
-#: src/app_profilepopupdef.h:140
-msgid "move B right"
-msgstr ""
-
-#: src/app_profilepopupdef.h:140
-msgid "move cursor B right"
-msgstr ""
-
-#: src/app_profilepopupdef.h:182 src/app_v3dpopupdef.h:100
-#: src/app_vpopupdef.h:155
-msgid "File"
-msgstr ""
-
-#: src/app_profilepopupdef.h:183
-msgid "Options"
-msgstr ""
-
-#: src/app_profilepopupdef.h:184
-msgid "Y Scaling"
-msgstr ""
-
-#: src/app_profilepopupdef.h:185
-msgid "X Scaling"
-msgstr ""
-
-#: src/app_profilepopupdef.h:186
-msgid "Cursor"
-msgstr "Zeiger"
-
-#: src/app_profilepopupdef.h:187
-msgid "Data Select"
-msgstr ""
-
-#: src/app_remote.C:405
-msgid "Remote Control"
-msgstr "Fernsteuerung"
-
-#: src/app_spm.C:1327
-msgid "Hey here is no comment yet!"
-msgstr ""
-
-#: src/app_v3dcontrol.C:230 src/app_v3dcontrol.C:231 src/app_v3dcontrol.C:232
-#: src/app_v3dcontrol.C:233 src/app_v3dcontrol.C:234 src/app_v3dpopupdef.h:101
-#: src/app_view.C:428 src/app_view.C:429 src/app_view.C:430 src/app_view.C:431
-#: src/app_view.C:432 src/app_vpopupdef.h:157 src/vsurf3d_pref.C:58
-#: src/vsurf3d_pref.C:63 src/vsurf3d_pref.C:68 src/vsurf3d_pref.C:72
-#: src/vsurf3d_pref.C:75 src/vsurf3d_pref.C:83 src/vsurf3d_pref.C:89
-#: src/vsurf3d_pref.C:95 src/vsurf3d_pref.C:101 src/vsurf3d_pref.C:106
-#: src/vsurf3d_pref.C:110
-msgid "View"
-msgstr ""
-
-#: src/app_v3dpopupdef.h:34 src/app_vpopupdef.h:35
-msgid "Off"
-msgstr "Aus"
-
-#: src/app_v3dpopupdef.h:34 src/app_vpopupdef.h:35
-msgid "kill channel"
-msgstr "lösche diesen Kanal"
-
-#: src/app_v3dpopupdef.h:35 src/app_vpopupdef.h:36
+#: core-source-meson/gxsm4-popupmenus.ui:29
 #, fuzzy
 msgid "Active"
 msgstr "Aktiv"
 
-#: src/app_v3dpopupdef.h:35 src/app_vpopupdef.h:36
-msgid "activate this channel"
-msgstr "aktiviere diesen Kanal"
-
-#: src/app_v3dpopupdef.h:36 src/app_vpopupdef.h:37
+#: core-source-meson/gxsm4-popupmenus.ui:33
 #, fuzzy
 msgid "On"
 msgstr "Ein"
 
-#: src/app_v3dpopupdef.h:36 src/app_vpopupdef.h:37
-msgid "set channel mode to On"
-msgstr "Kanal auf Ein stellen"
-
-#: src/app_v3dpopupdef.h:37 src/app_vpopupdef.h:38 src/app_vpopupdef.h:158
+#: core-source-meson/gxsm4-popupmenus.ui:37
 msgid "Math"
 msgstr ""
 
-#: src/app_v3dpopupdef.h:37 src/app_vpopupdef.h:38
-msgid "set channel mode to Math"
-msgstr "Kanal auf Math stellen"
-
-#: src/app_v3dpopupdef.h:38 src/app_vpopupdef.h:39
+#: core-source-meson/gxsm4-popupmenus.ui:41
 msgid "X"
 msgstr ""
 
-#: src/app_v3dpopupdef.h:38 src/app_vpopupdef.h:39
-msgid "set channel mode to X"
-msgstr "Kanal auf X stellen"
+#: core-source-meson/gxsm4-popupmenus.ui:45
+#: core-source-meson/gxsm4-popupmenus.ui:367
+#: core-source-meson/gxsm4-popupmenus.ui:1138
+#: core-source-meson/gxsm4-popupmenus.ui:1174
+msgid "Off"
+msgstr "Aus"
 
-#: src/app_v3dpopupdef.h:43 src/app_vpopupdef.h:44
+#: core-source-meson/gxsm4-popupmenus.ui:51
+#: core-source-meson/gxsm4-popupmenus.ui:789
+#: core-source-meson/gxsm4-popupmenus.ui:888
+#: core-source-meson/gxsm4-popupmenus.ui:1116
+msgid "File"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:55
+#: core-source-meson/gxsm4-popupmenus.ui:793
 msgid "_Open here"
 msgstr "Hier öffnen"
 
-#: src/app_v3dpopupdef.h:43 src/app_vpopupdef.h:44
-msgid "load scan into this channel"
-msgstr "Scan in diesen Kanal laden"
-
-#: src/app_v3dpopupdef.h:45 src/app_vpopupdef.h:46
-msgid "Save this scans with automatically generated name"
-msgstr "Mit automatisch erzeugtem Namen speichern"
-
-#: src/app_v3dpopupdef.h:47 src/app_vpopupdef.h:48
-msgid "Save this scan with a new name"
-msgstr "Diesen Scan unter neuem Namen speichern"
-
-#: src/app_v3dpopupdef.h:49
-msgid "Save GL view as Image..."
+#: core-source-meson/gxsm4-popupmenus.ui:63 core-source-meson/gxsm4-menu.ui:50
+msgid "_Update"
 msgstr ""
 
-#: src/app_v3dpopupdef.h:49
-msgid "Save the current 3D view as image"
+#: core-source-meson/gxsm4-popupmenus.ui:71
+msgid "Save Image/Drawing"
 msgstr ""
 
-#: src/app_v3dpopupdef.h:52 src/app_vpopupdef.h:59
-msgid "kill this scan"
-msgstr ""
-
-#: src/app_v3dpopupdef.h:58 src/app_vpopupdef.h:88
-msgid "Quick"
-msgstr ""
-
-#: src/app_v3dpopupdef.h:58 src/app_vpopupdef.h:88
-msgid "quick view"
-msgstr ""
-
-#: src/app_v3dpopupdef.h:59 src/app_vpopupdef.h:89
-msgid "Direct"
-msgstr ""
-
-#: src/app_v3dpopupdef.h:59 src/app_vpopupdef.h:89
-msgid "direct view"
-msgstr ""
-
-#: src/app_v3dpopupdef.h:60 src/app_vpopupdef.h:90
-msgid "Logarithmic"
-msgstr ""
-
-#: src/app_v3dpopupdef.h:60 src/app_vpopupdef.h:90
-msgid "logarithmic view"
-msgstr ""
-
-#: src/app_v3dpopupdef.h:61 src/app_vpopupdef.h:91
-msgid "Horizont"
-msgstr ""
-
-#: src/app_v3dpopupdef.h:61 src/app_vpopupdef.h:91
-msgid "horizontal view - subtract mean/line"
-msgstr ""
-
-#: src/app_v3dpopupdef.h:62 src/app_vpopupdef.h:92
-msgid "Periodic"
-msgstr ""
-
-#: src/app_v3dpopupdef.h:62 src/app_vpopupdef.h:92
-msgid "periodic view of greys/colors"
-msgstr ""
-
-#: src/app_v3dpopupdef.h:63 src/app_vpopupdef.h:93
-msgid "Differential"
-msgstr ""
-
-#: src/app_v3dpopupdef.h:63 src/app_vpopupdef.h:93
-msgid "differential view of greys/colors"
-msgstr ""
-
-#: src/app_v3dpopupdef.h:73 src/app_vpopupdef.h:109
-msgid "Zoom"
-msgstr ""
-
-#: src/app_v3dpopupdef.h:73
-msgid "use mouse wheel for zoom"
-msgstr ""
-
-#: src/app_v3dpopupdef.h:74
-msgid "H Scale"
-msgstr ""
-
-#: src/app_v3dpopupdef.h:74
-msgid "use mouse wheel for Height (Z) scale"
-msgstr ""
-
-#: src/app_v3dpopupdef.h:75
-msgid "Rotate X"
-msgstr ""
-
-#: src/app_v3dpopupdef.h:75
-msgid "use mouse wheel to rotate X"
-msgstr ""
-
-#: src/app_v3dpopupdef.h:76
-msgid "Rotate Y"
-msgstr ""
-
-#: src/app_v3dpopupdef.h:76
-msgid "use mouse wheel to rotate Y"
-msgstr ""
-
-#: src/app_v3dpopupdef.h:77
-msgid "Rotate Z"
-msgstr ""
-
-#: src/app_v3dpopupdef.h:77
-msgid "use mouse wheel to rotate Z"
-msgstr ""
-
-#: src/app_v3dpopupdef.h:81
-msgid "Mouse Wheel for"
-msgstr ""
-
-#: src/app_v3dpopupdef.h:87
-msgid "Zero Plane/Box"
-msgstr ""
-
-#: src/app_v3dpopupdef.h:87
-msgid "show Z=Zero plane and box"
-msgstr ""
-
-#: src/app_v3dpopupdef.h:88
-msgid "Mesh"
-msgstr ""
-
-#: src/app_v3dpopupdef.h:88
-msgid "toggle mesh/solid"
-msgstr ""
-
-#. Menuentry
-#: src/app_v3dpopupdef.h:89 plug-ins/math/filter2d/smooth.C:130
-msgid "Smooth"
-msgstr ""
-
-#: src/app_v3dpopupdef.h:89
-msgid "toggle Smooth Shading on/off"
-msgstr ""
-
-#: src/app_v3dpopupdef.h:90
-msgid "Tickmarks"
-msgstr ""
-
-#: src/app_v3dpopupdef.h:90
-msgid "toggle tickmarks on/off"
-msgstr ""
-
-#: src/app_v3dpopupdef.h:96 src/app_vpopupdef.h:152
-msgid "activate this Channel"
-msgstr ""
-
-#.  GNOMEUIINFO_ITEM_STOCK(N_("Save as..."), N_("Save the active scan with a new name"),
-#. 			 (gpointer) App::file_save_as_callback, GNOME_STOCK_MENU_SAVE_AS),
-#: src/app_v3dpopupdef.h:97 src/app_vpopupdef.h:153 src/gxsm_menudef.h:373
-msgid "AutoDisp"
-msgstr "AutoDarst"
-
-#: src/app_v3dpopupdef.h:97 src/app_vpopupdef.h:153
-msgid "autoscale Area"
-msgstr ""
-
-#: src/app_v3dpopupdef.h:98
-msgid "Update All"
-msgstr ""
-
-#: src/app_v3dpopupdef.h:98
-msgid "force apply of all settings"
-msgstr ""
-
-#: src/app_v3dpopupdef.h:99 src/app_vpopupdef.h:154
-msgid "Mode"
-msgstr ""
-
-#: src/app_v3dpopupdef.h:102
-msgid "GL Options"
-msgstr ""
-
-#: src/app_v3dpopupdef.h:103
-msgid "3D Control"
-msgstr ""
-
-#: src/app_v3dpopupdef.h:104
-msgid "Scene Setup.."
-msgstr ""
-
-#: src/app_v3dpopupdef.h:104
-msgid "Open Scene MesaGL Preferences Dialog"
-msgstr ""
-
-#: src/app_vobj.C:302
-msgid "Object Properties"
-msgstr "Objekt Eigenschaften"
-
-#: src/app_vpopupdef.h:50
-msgid "Save Image"
-msgstr ""
-
-#: src/app_vpopupdef.h:50
-msgid "save as image (gif, jpeg, png, tiff, xpm)"
-msgstr ""
-
-#: src/app_vpopupdef.h:52
+#: core-source-meson/gxsm4-popupmenus.ui:75
 msgid "Save Objects"
 msgstr "Objekte speichern"
 
-#: src/app_vpopupdef.h:52
-msgid "save objects, .plt (HPGL) or else as obj list"
-msgstr ""
-
-#: src/app_vpopupdef.h:54
+#: core-source-meson/gxsm4-popupmenus.ui:79
 msgid "Load Objects"
 msgstr "Objekte laden"
 
-#: src/app_vpopupdef.h:54
-msgid "load objects"
-msgstr "Hinzuladen von Objekten"
-
-#: src/app_vpopupdef.h:56
+#: core-source-meson/gxsm4-popupmenus.ui:83
 msgid "Get Info"
 msgstr "Zeige alle Parameter"
 
-#: src/app_vpopupdef.h:56
-msgid "show all info about this scan (NC view)"
-msgstr "Lesen aller Daten und Informationen dieses Scans (NetCDF ansehen)"
-
-#: src/app_vpopupdef.h:65
-#, fuzzy
-msgid "Copy"
-msgstr "_Kopieren"
-
-#: src/app_vpopupdef.h:65
-#, fuzzy
-msgid "copy scan to new channel"
-msgstr "Kopie in freiem/Math Kanal anlegen"
-
-#: src/app_vpopupdef.h:66
-#, fuzzy
-msgid "Crop"
-msgstr "_Ausschneiden"
-
-#: src/app_vpopupdef.h:66
-#, fuzzy
-msgid "crop rectangular area to new channel"
-msgstr "Kopie in freiem/Math Kanal anlegen"
-
-#: src/app_vpopupdef.h:67
-msgid "Cpy zoom in"
-msgstr ""
-
-#: src/app_vpopupdef.h:67
-msgid ""
-"zoom into rectangular area, put data in new channel, calculate new positions"
-msgstr ""
-
-#: src/app_vpopupdef.h:68
-msgid "Cpy zoom out"
-msgstr ""
-
-#: src/app_vpopupdef.h:68
-msgid ""
-"zoom rectangular area out, put data in new channel, calculate new positions"
-msgstr ""
-
-#: src/app_vpopupdef.h:73
-msgid "10:1"
-msgstr ""
-
-#: src/app_vpopupdef.h:73
-msgid "set zoomfactor to 10"
-msgstr ""
-
-#: src/app_vpopupdef.h:74
-msgid " 5:1"
-msgstr ""
-
-#: src/app_vpopupdef.h:74
-msgid "set zoomfactor to 5"
-msgstr ""
-
-#: src/app_vpopupdef.h:75
-msgid " 4:1"
-msgstr ""
-
-#: src/app_vpopupdef.h:75
-msgid "set zoomfactor to 4"
-msgstr ""
-
-#: src/app_vpopupdef.h:76
-msgid " 3:1"
-msgstr ""
-
-#: src/app_vpopupdef.h:76
-msgid "set zoomfactor to 3"
-msgstr ""
-
-#: src/app_vpopupdef.h:77
-msgid " 2:1"
-msgstr ""
-
-#: src/app_vpopupdef.h:77
-msgid "set zoomfactor to 2"
-msgstr ""
-
-#: src/app_vpopupdef.h:78
-msgid " 1:1"
-msgstr ""
-
-#: src/app_vpopupdef.h:78
-msgid "set zoomfactor to 1"
-msgstr ""
-
-#: src/app_vpopupdef.h:79
-msgid " 1:2"
-msgstr ""
-
-#: src/app_vpopupdef.h:79
-msgid "set zoomfactor to 1/2"
-msgstr ""
-
-#: src/app_vpopupdef.h:80
-msgid " 1:3"
-msgstr ""
-
-#: src/app_vpopupdef.h:80
-msgid "set zoomfactor to 1/3"
-msgstr ""
-
-#: src/app_vpopupdef.h:81
-msgid " 1:4"
-msgstr ""
-
-#: src/app_vpopupdef.h:81
-msgid "set zoomfactor to 1/4"
-msgstr ""
-
-#: src/app_vpopupdef.h:82
-msgid " 1:5"
-msgstr ""
-
-#: src/app_vpopupdef.h:82
-msgid "set zoomfactor to 1/5"
-msgstr ""
-
-#: src/app_vpopupdef.h:83
-msgid " 1:10"
-msgstr ""
-
-#: src/app_vpopupdef.h:83
-msgid "set zoomfactor to 1/10"
-msgstr ""
-
-#: src/app_vpopupdef.h:101
-msgid "red Profile"
-msgstr ""
-
-#: src/app_vpopupdef.h:101
-msgid "show profile of red line while scanning"
-msgstr ""
-
-#: src/app_vpopupdef.h:103 src/gxsm_menudef.h:109
-msgid "Autozoom"
-msgstr ""
-
-#: src/app_vpopupdef.h:103 src/gxsm_menudef.h:109
-msgid "enable/disable autozoom/quench"
-msgstr ""
-
-#: src/app_vpopupdef.h:104
-msgid "Palette"
-msgstr ""
-
-#: src/app_vpopupdef.h:104
-msgid "enable/disable color mode"
-msgstr ""
-
-#: src/app_vpopupdef.h:105
-msgid "Pixels"
-msgstr ""
-
-#: src/app_vpopupdef.h:105
-msgid "set unit to pixels"
-msgstr ""
-
-#: src/app_vpopupdef.h:106
-msgid "Grid"
-msgstr ""
-
-#: src/app_vpopupdef.h:106
-msgid "toggle grid overlay"
-msgstr ""
-
-#: src/app_vpopupdef.h:107
-msgid "zoom in"
-msgstr ""
-
-#: src/app_vpopupdef.h:107
-msgid "zoom in one level"
-msgstr ""
-
-#: src/app_vpopupdef.h:108
-msgid "zoom out"
-msgstr ""
-
-#: src/app_vpopupdef.h:108
-msgid "zoom out one level"
-msgstr ""
-
-#: src/app_vpopupdef.h:118
-msgid "Rectangle"
-msgstr ""
-
-#: src/app_vpopupdef.h:118
-msgid "add rectangle objects"
-msgstr ""
-
-#: src/app_vpopupdef.h:119
-#, fuzzy
-msgid "Point"
-msgstr "Punkt"
-
-#: src/app_vpopupdef.h:119
-msgid "add objects"
-msgstr ""
-
-#: src/app_vpopupdef.h:120
-msgid "Line"
-msgstr "Linie"
-
-#: src/app_vpopupdef.h:120
-msgid "add line object"
-msgstr ""
-
-#: src/app_vpopupdef.h:121
-msgid "Circle"
-msgstr "Kreis"
-
-#: src/app_vpopupdef.h:121
-msgid "add circle objects"
-msgstr ""
-
-#: src/app_vpopupdef.h:122
-msgid "PolyLine"
-msgstr "Mehrfach Linie"
-
-#: src/app_vpopupdef.h:122
-msgid "add polyline object"
-msgstr ""
-
-#: src/app_vpopupdef.h:123
-msgid "Ksys"
-msgstr ""
-
-#: src/app_vpopupdef.h:123
-msgid "add Koord.sys object"
-msgstr ""
-
-#: src/app_vpopupdef.h:124
-msgid "Parabel"
-msgstr ""
-
-#: src/app_vpopupdef.h:124
-msgid "add parabel object"
-msgstr ""
-
-#: src/app_vpopupdef.h:125
-#, fuzzy
-msgid "Show Point"
-msgstr "Zeige Punkt"
-
-#: src/app_vpopupdef.h:125
-msgid "add point object and show profile in layer dimension"
-msgstr ""
-
-#: src/app_vpopupdef.h:126
-#, fuzzy
-msgid "Show Line"
-msgstr "Zeige Linie"
-
-#: src/app_vpopupdef.h:126
-msgid "add line object and show path profile"
-msgstr ""
-
-#: src/app_vpopupdef.h:127
-#, fuzzy
-msgid "Show Circle"
-msgstr "Zeige Kreis"
-
-#: src/app_vpopupdef.h:127
-msgid "add circle objects and show path profile"
-msgstr ""
-
-#: src/app_vpopupdef.h:128
-msgid "Disable"
-msgstr "Kein Objekt"
-
-#: src/app_vpopupdef.h:128
-msgid "disable object creation"
-msgstr "keine Objekte erzeugen"
-
-#: src/app_vpopupdef.h:133
-msgid "Set R=2"
-msgstr ""
-
-#: src/app_vpopupdef.h:133 src/app_vpopupdef.h:134 src/app_vpopupdef.h:135
-#: src/app_vpopupdef.h:136 src/app_vpopupdef.h:137 src/app_vpopupdef.h:138
-msgid "set local search radius"
-msgstr ""
-
-#: src/app_vpopupdef.h:134
-msgid "Set R=5"
-msgstr ""
-
-#: src/app_vpopupdef.h:135
-msgid "Set R=10"
-msgstr ""
-
-#: src/app_vpopupdef.h:136
-msgid "Set R=20"
-msgstr ""
-
-#: src/app_vpopupdef.h:137
-msgid "Set R=50"
-msgstr ""
-
-#: src/app_vpopupdef.h:138
-msgid "Set R=100"
-msgstr ""
-
-#: src/app_vpopupdef.h:144
-msgid "Show Labels"
-msgstr ""
-
-#: src/app_vpopupdef.h:144
-msgid "show/hide object lables"
-msgstr ""
-
-#: src/app_vpopupdef.h:145
-msgid "Local Radius"
-msgstr ""
-
-#: src/app_vpopupdef.h:146
-msgid "All loc max "
-msgstr ""
-
-#: src/app_vpopupdef.h:146
-msgid "move all objects to loc. Max"
-msgstr ""
-
-#: src/app_vpopupdef.h:147
-msgid "Remove all"
-msgstr ""
-
-#: src/app_vpopupdef.h:147
-msgid "remove all objects"
-msgstr ""
-
-#: src/app_vpopupdef.h:156
-msgid "Edit"
-msgstr ""
-
-#: src/app_vpopupdef.h:159
-msgid "Objects"
-msgstr ""
-
-#: src/app_vpopupdef.h:166 src/app_vpopupdef.h:176 src/app_vpopupdef.h:185
-msgid "Remove"
-msgstr ""
-
-#: src/app_vpopupdef.h:166 src/app_vpopupdef.h:176 src/app_vpopupdef.h:185
-msgid "remove line object"
-msgstr ""
-
-#: src/app_vpopupdef.h:167 src/app_vpopupdef.h:177 src/app_vpopupdef.h:186
-msgid "Properties"
-msgstr ""
-
-#: src/app_vpopupdef.h:167 src/app_vpopupdef.h:177 src/app_vpopupdef.h:186
-msgid "open object properties dialog"
-msgstr ""
-
-#: src/app_vpopupdef.h:168
-msgid "Set current Offset to Point"
-msgstr ""
-
-#: src/app_vpopupdef.h:168
-msgid "get coordinates from this Point and set Offset in main to this position"
-msgstr ""
-
-#: src/app_vpopupdef.h:169
-msgid "Follow"
-msgstr "Folgen"
-
-#: src/app_vpopupdef.h:169
-msgid "enable/disable tip follows point"
-msgstr ""
-
-#: src/app_vpopupdef.h:170 src/app_vpopupdef.h:179
-msgid "Go Loc.Max."
-msgstr ""
-
-#: src/app_vpopupdef.h:170 src/app_vpopupdef.h:179
-msgid "look for local maximum and goto there"
-msgstr ""
-
-#: src/app_vpopupdef.h:171 src/app_vpopupdef.h:180 src/app_vpopupdef.h:189
-msgid "Dump"
-msgstr ""
-
-#: src/app_vpopupdef.h:171 src/app_vpopupdef.h:180 src/app_vpopupdef.h:189
-msgid "Dump Object's Properties"
-msgstr ""
-
-#: src/app_vpopupdef.h:178
-msgid "Get Coordintes"
-msgstr "Position übernehmen"
-
-#: src/app_vpopupdef.h:178
-msgid "get coordinates for new 1D scan"
-msgstr ""
-
-#: src/app_vpopupdef.h:187
-msgid "Add Node"
-msgstr ""
-
-#: src/app_vpopupdef.h:187
-msgid "add polyline node"
-msgstr ""
-
-#: src/app_vpopupdef.h:188
-msgid "Delete Node"
-msgstr ""
-
-#: src/app_vpopupdef.h:188
-msgid "delete polyline node"
-msgstr ""
-
-#: src/dspdev.C:111 src/dspdev.C:117 src/dspdev.C:145
-#, fuzzy
-msgid "Attention"
-msgstr "Befehl"
-
-#: src/dspdev.C:111
-msgid "ExecCmd: DSP write failed!"
-msgstr ""
-
-#: src/dspdev.C:117
-msgid "ExecCmd: Timeout, DSP write mbox failed!"
-msgstr ""
-
-#: src/dspdev.C:184
-msgid "DSP write parameters failed !"
-msgstr ""
-
-#: src/dspdev.C:185
-msgid "cause: error while writing to device."
-msgstr ""
-
-#: src/dspdev.C:195 src/dspdev.C:222
-msgid "SetParameter: DSP write mbox failed."
-msgstr ""
-
-#: src/dspdev.C:196
-msgid "cause: timeout, in scan, cmd=PCDSP_MBOX_WRITE_NOWAIT"
-msgstr ""
-
-#: src/dspdev.C:223
-msgid "cause: timeout, no scan"
-msgstr ""
-
-#: src/dspdev.C:233
-msgid ""
-"SetParameter: DSP wait for mbox empty failed. \n"
-"--  cause: timeout; write data and cmd exec OK"
-msgstr ""
-
-#: src/gxsm_app.C:86
-msgid "App::~App: Closing Application object now."
-msgstr ""
-
-#. Make the main window and binds the delete event so you can close
-#. the program from your WM
-#: src/gxsm_app.C:105
-msgid "Gxsm - STM/AFM/SPA-LEED..."
-msgstr ""
-
-#: src/gxsm_app.C:135
-msgid "Starting GXSM..."
-msgstr "Starte GXSM"
-
-#: src/gxsm_app.C:139
-msgid "Reading User Config"
-msgstr "Lese Benutzer Konfiguration"
-
-#: src/gxsm_app.C:154
-msgid "Generating Surface Object..."
-msgstr ""
-
-#: src/gxsm_app.C:210
-msgid "Scanning for GXSM Plugins..."
-msgstr ""
-
-#: src/gxsm_app.C:221
-msgid "View/Autozoom"
-msgstr ""
-
-#: src/gxsm_app.C:348
-msgid "Removing Plugins..."
-msgstr ""
-
-#: src/gxsm_app.C:354
-#, fuzzy
-msgid "Plugins removed"
-msgstr "%d Plugins geladen!"
-
-#: src/gxsm_app.C:361
-msgid ""
-"GXSM PlugIns unloaded. Reload plug-ins now?\n"
-"\n"
-"Yes: automatic plug-in selection\n"
-"All: force loading of all plug-ins\n"
-"No: do not load any plug-in,\n"
-"  call 'GXSM->Reload Plugins' again\n"
-"  to auto load plug-ins again!"
-msgstr ""
-
-#: src/gxsm_app.C:369
-msgid "All"
-msgstr ""
-
-#: src/gxsm_app.C:408
-#, c-format
-msgid "%d Plugins loaded!"
-msgstr "%d Plugins geladen!"
-
-#: src/gxsm_main.C:61
-msgid "Hardware Card: no | spm | spa | ccd | comedispm | srangerspm | rhkspm"
-msgstr ""
-
-#: src/gxsm_main.C:61 src/gxsm_main.C:63
-msgid "default"
-msgstr ""
-
-#: src/gxsm_main.C:63
-msgid "XYZ Unit: AA | nm | um | mm | BZ | sec | V | 1 "
-msgstr ""
-
-#: src/gxsm_main.C:65
-msgid "Disable default plugin loading on startup"
-msgstr ""
-
-#: src/gxsm_main.C:67
-msgid "Force to reconfigure Gxsm on startup"
-msgstr ""
-
-#: src/gxsm_main.C:69
-msgid "Forces to restore all GXSM gconf defaults on startup"
-msgstr ""
-
-#: src/gxsm_main.C:71
-msgid ""
-"Set Gxsm debug level. 0: no debug output on console, 1: normal, 2: more "
-"verbose, ...5 increased verbosity"
-msgstr ""
-
-#: src/gxsm_main.C:73
-msgid ""
-"Set Gxsm-PlugIn debug level. 0: no debug output on console, 1: normal, 2: "
-"more verbose, ...5 increased verbosity"
-msgstr ""
-
-#: src/gxsm_menucb.C:69
-msgid "DAT/NC/HDF file to load"
-msgstr ""
-
-#: src/gxsm_menucb.C:274
-msgid "No Plugins loaded!"
-msgstr "Keine Plugins geladen!"
-
-#: src/gxsm_menucb.C:285
-#, fuzzy
-msgid "Gxsm Preferences"
-msgstr "GXSM Einstellungen ändern"
-
-#: src/gxsm_menucb.C:320
-msgid ""
-"GXSM - Gnome X Scanning Microscopy\n"
-"universal STM/AFM/SARLS/SPALEED/... controlling and\n"
-"data analysis software\n"
-"\n"
-"Copyright (C) 1999-2003 Percy Zahl\n"
-"\n"
-"Authors: Percy Zahl <zahl@users.sf.net>\n"
-"additional features: Andreas Klust <klust@users.sf.net>\n"
-"WWW Home: http://gxsm.sourceforge.net\n"
-"\n"
-"This program is free software; you can redistribute it and/or modify\n"
-"it under the terms of the GNU General Public License as published by\n"
-"the Free Software Foundation; either version 2 of the License, or\n"
-"(at your option) any later version.\n"
-"\n"
-"This program is distributed in the hope that it will be useful,\n"
-"but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
-"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
-"GNU General Public License for more details.\n"
-"\n"
-"You should have received a copy of the GNU General Public License\n"
-"along with this program; if not, write to the Free Software\n"
-"Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.\n"
-"\n"
-"Online at http://www.gnu.org/copyleft/gpl.html\n"
-msgstr ""
-
-#: src/gxsm_menucb.C:371
-msgid ""
-"GXSM is a Universal Scanning Microscopy Data Aquisitation System including "
-"general 2D Data handling and transforming for Linux/X11 using a TMS320 DSP "
-"(PCI32 and Signal Ranger SP2, ...).\n"
-"\n"
-"Applications: STM, AFM, SARLS+NM, SPA-LEED\n"
-"\n"
-"Hardware: "
-msgstr ""
-
-#: src/gxsm_menucb.C:377
-msgid ""
-"\n"
-"\n"
-"Gxsm Package Version: "
-msgstr ""
-
-#: src/gxsm_menucb.C:379
-msgid ""
-"\n"
-"\n"
-"compiled by "
-msgstr ""
-
-#: src/gxsm_menucb.C:381
-msgid ""
-"\n"
-"\n"
-"GXSM-2 is based on Gxsm, Xxsm, pmstm, ..."
-msgstr ""
-
-#: src/gxsm_menucb.C:382
-msgid ""
-"\n"
-"\n"
-"The GXSM Project: http://gxsm.sourceforge.net"
-msgstr ""
-
-#: src/gxsm_menucb.C:383
-msgid ""
-"\n"
-"\n"
-"SRanger/Linux Project: http://sranger.sourceforge.net"
-msgstr ""
-
-#: src/gxsm_menucb.C:384
-msgid ""
-"\n"
-"\n"
-"More about GNOME: http://www.gnome.org"
-msgstr ""
-
-#. const gchar *Name
-#: src/gxsm_menucb.C:390
-msgid "GXSM"
-msgstr ""
-
-#. const gchar *copyrigth notice
-#: src/gxsm_menucb.C:394
-msgid ""
-"Copyright (C) 1999-2003 the Free Software Foundation,\n"
-" see Help->License for details."
-msgstr ""
-
-#: src/gxsm_menudef.h:42
-msgid "_Open ..."
-msgstr ""
-
-#: src/gxsm_menudef.h:42 src/gxsm_menudef.h:367
-msgid "Open an existing scan"
-msgstr ""
-
-#: src/gxsm_menudef.h:44
-msgid "Open to free _Channel ..."
-msgstr ""
-
-#: src/gxsm_menudef.h:44
-msgid "Open an existing scan and put it in a free Channel"
-msgstr ""
-
-#: src/gxsm_menudef.h:46
-msgid "_Browse ..."
-msgstr ""
-
-#: src/gxsm_menudef.h:46
-msgid "Open scans with browser"
-msgstr ""
-
-#: src/gxsm_menudef.h:48 src/gxsm_menudef.h:369
-msgid "Save scans with automatically generated names"
-msgstr ""
-
-#: src/gxsm_menudef.h:50
-msgid "Save the active scan with a new name"
-msgstr ""
-
-#: src/gxsm_menudef.h:54
-msgid "_Import"
-msgstr ""
-
-#: src/gxsm_menudef.h:55
-msgid "_Export"
-msgstr ""
-
-#: src/gxsm_menudef.h:60
-msgid "_Close"
-msgstr ""
-
-#: src/gxsm_menudef.h:60
-msgid "Close aktive scan"
-msgstr ""
-
-#: src/gxsm_menudef.h:62
-msgid "E_xit"
-msgstr ""
-
-#: src/gxsm_menudef.h:62 src/gxsm_menudef.h:375
-#, fuzzy
-msgid "Exit the GXSM"
-msgstr "Gxsm beenden"
-
-#: src/gxsm_menudef.h:70
-msgid "Cro_p"
-msgstr "_Ausschneiden"
-
-#: src/gxsm_menudef.h:70
-msgid "Crop the selection to new scan"
-msgstr "Rechteckmarkierung in freiem/Math Kanal laden"
-
-#: src/gxsm_menudef.h:72
-msgid "_Copy"
-msgstr "_Kopieren"
-
-#: src/gxsm_menudef.h:72
-msgid "Copy the scan to new channel"
-msgstr "Kopie in freiem/Math Kanal anlegen"
-
-#: src/gxsm_menudef.h:86
-msgid "_Start Scan"
-msgstr ""
-
-#: src/gxsm_menudef.h:86
-#, fuzzy
-msgid "Start scanning the Surface"
-msgstr "Messung starten"
-
-#: src/gxsm_menudef.h:89
-msgid "Start _Movie"
-msgstr ""
-
-#: src/gxsm_menudef.h:89
-#, fuzzy
-msgid "Start Scanning the Surface periodically"
-msgstr "Messung starten"
-
-#: src/gxsm_menudef.h:92
-#, fuzzy
-msgid "Sto_p Scan"
-msgstr "Halt"
-
-#: src/gxsm_menudef.h:92
-#, fuzzy
-msgid "Stop a running Scan"
-msgstr "Laufende Messung unterbrechen"
-
-#: src/gxsm_menudef.h:95
-msgid "_Add Scan"
-msgstr ""
-
-#: src/gxsm_menudef.h:95
-msgid "Start a Scan in Data-Add-Mode"
-msgstr ""
-
-#: src/gxsm_menudef.h:98
-msgid "Add Movie"
-msgstr ""
-
-#: src/gxsm_menudef.h:98
-msgid "Start a Movie in Data-Add-Mode"
-msgstr ""
-
-#: src/gxsm_menudef.h:107
-msgid "Auto _Display"
-msgstr "Auto _Darstellung"
-
-#: src/gxsm_menudef.h:107
-msgid "Set Display Values from Region Min/Max"
-msgstr "Darstellungsparameter aus Min/Max der Markierung berechnen"
-
-#.
-#. GNOMEUIINFO_TOGGLEITEM(N_("_Color"), N_("Enable Color Mode"),
-#. (gpointer) App::view_color_callback, NULL),
-#.
-#: src/gxsm_menudef.h:115
-msgid "_Palette"
-msgstr ""
-
-#: src/gxsm_menudef.h:115
-msgid "Enable Color Palette Mode"
-msgstr ""
-
-#: src/gxsm_menudef.h:118
-msgid "Zoom _in"
-msgstr ""
-
-#: src/gxsm_menudef.h:118
-msgid "Zoom into rectangular Area"
-msgstr ""
-
-#: src/gxsm_menudef.h:120
-msgid "Zoom _out"
-msgstr ""
-
-#: src/gxsm_menudef.h:120
-msgid "Zoom out - put whole image into rectangular Area"
-msgstr ""
-
-#: src/gxsm_menudef.h:143
-msgid "Background Tools"
-msgstr ""
-
-#: src/gxsm_menudef.h:143
-msgid "Toolbar with methods for background elemination"
-msgstr ""
-
-#: src/gxsm_menudef.h:145
-msgid "Filter 1D Tools"
-msgstr ""
-
-#: src/gxsm_menudef.h:145
-msgid "Toolbar with 1D Filters for Line optimization"
-msgstr ""
-
-#: src/gxsm_menudef.h:147
-msgid "Filter 2D Tools"
-msgstr ""
-
-#: src/gxsm_menudef.h:147
-msgid "Toolbar with 2D Filters, general purpose eg. FT, etc."
-msgstr ""
-
-#: src/gxsm_menudef.h:155
-msgid "Line Regress"
-msgstr ""
-
-#: src/gxsm_menudef.h:155
-msgid "do linear line regression"
-msgstr ""
-
-#: src/gxsm_menudef.h:156
-msgid "E Regression"
-msgstr ""
-
-#: src/gxsm_menudef.h:156
-msgid "plane regression (need rect. area)"
-msgstr ""
-
-#: src/gxsm_menudef.h:157
-msgid "Paraboloid"
-msgstr ""
-
-#: src/gxsm_menudef.h:157
-msgid "do 2D parabolic regression"
-msgstr ""
-
-#: src/gxsm_menudef.h:164 src/gxsm_menudef.h:181
-msgid "Despike"
-msgstr ""
-
-#: src/gxsm_menudef.h:164
-msgid "despike lines"
-msgstr ""
-
-#: src/gxsm_menudef.h:166 src/gxsm_menudef.h:188
-msgid "Power Spectrum"
-msgstr ""
-
-#: src/gxsm_menudef.h:166
-msgid "calc power spectrum for each line"
-msgstr ""
-
-#: src/gxsm_menudef.h:168
-msgid "FT Window"
-msgstr ""
-
-#: src/gxsm_menudef.h:168 src/gxsm_menudef.h:191
-msgid "do inverse FT of by X masked FT of scan"
-msgstr ""
-
-#: src/gxsm_menudef.h:170 src/gxsm_menudef.h:193
-msgid "FT Gaus Stop"
-msgstr ""
-
-#: src/gxsm_menudef.h:170
-msgid "IFT of 1D-Gaus (X) masked stop band of FT from scan"
-msgstr ""
-
-#: src/gxsm_menudef.h:172 src/gxsm_menudef.h:195
-msgid "FT Gaus Pass"
-msgstr ""
-
-#: src/gxsm_menudef.h:172
-msgid "IFT of 1D-Gaus (X) masked pass band of FT from scan"
-msgstr ""
-
-#: src/gxsm_menudef.h:181
-msgid "do 2D despike"
-msgstr ""
-
-#: src/gxsm_menudef.h:182
-msgid "Remove Rect"
-msgstr ""
-
-#: src/gxsm_menudef.h:182
-msgid "Remove 'bad' area"
-msgstr ""
-
-#: src/gxsm_menudef.h:183
-msgid "Line Shifts"
-msgstr ""
-
-#: src/gxsm_menudef.h:183
-msgid "Line Shifts correction"
-msgstr ""
-
-#: src/gxsm_menudef.h:184
-msgid "Line Interpol"
-msgstr ""
-
-#: src/gxsm_menudef.h:184
-msgid "interpolate marked line"
-msgstr ""
-
-#. Menuentry
-#: src/gxsm_menudef.h:187 plug-ins/math/statistik/autocorrelation.C:131
-msgid "Auto Correlation"
-msgstr ""
-
-#: src/gxsm_menudef.h:187
-msgid "do auto correlation"
-msgstr ""
-
-#: src/gxsm_menudef.h:188
-msgid "calc 2D power spektrum"
-msgstr ""
-
-#: src/gxsm_menudef.h:191
-msgid "IFT(X*(FT()))"
-msgstr ""
-
-#: src/gxsm_menudef.h:193
-msgid "IFT of 2D-Gaus (X) masked stop band of FT from scan"
-msgstr ""
-
-#: src/gxsm_menudef.h:195
-msgid "IFT of 2D-Gaus (X) masked pass band of FT from scan"
-msgstr ""
-
-#: src/gxsm_menudef.h:222
-msgid "_Convert"
-msgstr ""
-
-#: src/gxsm_menudef.h:223
-msgid "_Arithmetic"
-msgstr ""
-
-#: src/gxsm_menudef.h:224
-msgid "_Background"
-msgstr ""
-
-#: src/gxsm_menudef.h:225
-msgid "Filter _1D"
-msgstr ""
-
-#: src/gxsm_menudef.h:226
-msgid "Filter _2D"
-msgstr ""
-
-#: src/gxsm_menudef.h:227
-msgid "_Transformations"
-msgstr ""
-
-#: src/gxsm_menudef.h:228
-msgid "_Statistics"
-msgstr ""
-
-#: src/gxsm_menudef.h:229
-msgid "_Misc"
-msgstr ""
-
-#: src/gxsm_menudef.h:238
-msgid "Channelselector"
-msgstr ""
-
-#: src/gxsm_menudef.h:238
-msgid "Open the Channelselector Window"
-msgstr ""
-
-#: src/gxsm_menudef.h:241 plug-ins/control/CCDControl.C:272
-msgid "Monitor"
-msgstr "Anzeige"
-
-#: src/gxsm_menudef.h:241
-msgid "View the Logging Table"
-msgstr "Geschichtstabelle anzeigen"
-
-#: src/gxsm_menudef.h:250
-msgid "Make Icons..."
-msgstr "Übersichtsbilder..."
-
-#: src/gxsm_menudef.h:250
-msgid "Generate Iconpages"
-msgstr "Dokument mit Übersichtsbildern erzeugen"
-
-#: src/gxsm_menudef.h:252
-msgid "Remote Control..."
-msgstr "Fernsteuerung..."
-
-#: src/gxsm_menudef.h:252
-msgid "Remote Control Window"
-msgstr "Fernsteuerungskontrolle"
-
-#: src/gxsm_menudef.h:254
-msgid "Reload Plugins"
-msgstr ""
-
-#: src/gxsm_menudef.h:256
-msgid "Plugin Info"
-msgstr ""
-
-#: src/gxsm_menudef.h:256
-msgid "Show GXSM Plugin Info"
-msgstr ""
-
-#: src/gxsm_menudef.h:273 src/gxsm_menudef.h:287
-msgid "_Default"
-msgstr ""
-
-#: src/gxsm_menudef.h:273
-msgid "Save GXSM default values"
-msgstr ""
-
-#: src/gxsm_menudef.h:275 src/gxsm_menudef.h:289
-msgid "_Test"
-msgstr ""
-
-#: src/gxsm_menudef.h:275 src/gxsm_menudef.h:277 src/gxsm_menudef.h:279
-#: src/gxsm_menudef.h:281
-#, fuzzy
-msgid "Save GXSM TEST values"
-msgstr "Merke Werte"
-
-#: src/gxsm_menudef.h:277 src/gxsm_menudef.h:291
-msgid "_STM"
-msgstr ""
-
-#: src/gxsm_menudef.h:279 src/gxsm_menudef.h:293
-msgid "_Contact-AFM"
-msgstr ""
-
-#: src/gxsm_menudef.h:281 src/gxsm_menudef.h:295
-msgid "_Dynamic-AFM"
-msgstr ""
-
-#: src/gxsm_menudef.h:287
-msgid "Load GXSM default values"
-msgstr ""
-
-#: src/gxsm_menudef.h:289 src/gxsm_menudef.h:291 src/gxsm_menudef.h:293
-#: src/gxsm_menudef.h:295
-msgid "Load GXSM TEST values"
-msgstr ""
-
-#: src/gxsm_menudef.h:303
-msgid "_Preferences"
-msgstr "Einstellungen"
-
-#: src/gxsm_menudef.h:303
-#, fuzzy
-msgid "Edit GXSM preferences"
-msgstr "GXSM Einstellungen ändern"
-
-#: src/gxsm_menudef.h:305
-#, fuzzy
-msgid "_Save Preferences"
-msgstr "Einstellungen"
-
-#: src/gxsm_menudef.h:306
-#, fuzzy
-msgid "_Load Preferences"
-msgstr "Einstellungen"
-
-#: src/gxsm_menudef.h:308
-#, fuzzy
-msgid "_Save Values"
-msgstr "Merke Werte"
-
-#: src/gxsm_menudef.h:309
-msgid "_Load Values"
-msgstr ""
-
-#.  GNOMEUIINFO_HELP ("gxsm"),
-#: src/gxsm_menudef.h:320
-msgid "License"
-msgstr ""
-
-#: src/gxsm_menudef.h:320
-msgid "Show GXSM License terms (GPL)"
-msgstr ""
-
-#: src/gxsm_menudef.h:322
-msgid "Manual"
-msgstr ""
-
-#: src/gxsm_menudef.h:322
-msgid "Show GXSM Manual"
-msgstr ""
-
-#: src/gxsm_menudef.h:324
-msgid "Home"
-msgstr ""
-
-#: src/gxsm_menudef.h:324
-msgid "Show GXSM Homepage"
-msgstr ""
-
-#: src/gxsm_menudef.h:326
-#, fuzzy
-msgid "Show tip, take a tour"
-msgstr "Tip des Tages anzeigen"
-
-#: src/gxsm_menudef.h:326
-#, fuzzy
-msgid "Show tip of the day, and/or take a tour to GXSM!"
-msgstr "Tip des Tages anzeigen"
-
-#: src/gxsm_menudef.h:335
-msgid "_File"
-msgstr ""
-
-#: src/gxsm_menudef.h:336
-msgid "_Edit"
-msgstr ""
-
-#: src/gxsm_menudef.h:337
-msgid "_Action"
-msgstr "Befehl"
-
-#: src/gxsm_menudef.h:338
-msgid "_View"
-msgstr ""
-
-#: src/gxsm_menudef.h:339
-msgid "_Math"
-msgstr ""
-
-#: src/gxsm_menudef.h:340
-msgid "_Windows"
-msgstr ""
-
-#: src/gxsm_menudef.h:341
-msgid "_Tools"
-msgstr ""
-
-#: src/gxsm_menudef.h:342
-msgid "_Settings"
-msgstr ""
-
-#: src/gxsm_menudef.h:343
-msgid "_Help"
-msgstr ""
-
-#: src/gxsm_menudef.h:358
-msgid "Scan"
-msgstr ""
-
-#: src/gxsm_menudef.h:358
-msgid "Start scanning the surface"
-msgstr "Messung starten"
-
-#: src/gxsm_menudef.h:361 plug-ins/control/rhk_scancontrol.C:547
-msgid "Movie"
-msgstr ""
-
-#: src/gxsm_menudef.h:361
-#, fuzzy
-msgid "Repeat scanning the surface..."
-msgstr "Messung starten"
-
-#: src/gxsm_menudef.h:364 plug-ins/control/rhk_scancontrol.C:571
-msgid "Stop"
-msgstr "Halt"
-
-#: src/gxsm_menudef.h:364
-msgid "Stop a running scan"
-msgstr "Laufende Messung unterbrechen"
-
-#: src/gxsm_menudef.h:367
-msgid "Open"
-msgstr "Öffnen"
-
-#: src/gxsm_menudef.h:369
-msgid "Save"
-msgstr "Speichern"
-
-#: src/gxsm_menudef.h:373
-msgid "Autoscale active view, use rectange for subregion!"
-msgstr ""
-
-#: src/gxsm_menudef.h:375
-msgid "Exit"
-msgstr "Beenden"
-
-#: src/gxsm_resoucetable.C:44
-msgid "See Manual, section Channelsetup"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:45
-msgid "See Manual, section Probesetup"
-msgstr ""
-
-#. Hardware Settings
-#: src/gxsm_resoucetable.C:87 src/gxsm_resoucetable.C:101
-#: src/gxsm_resoucetable.C:113
-msgid "Hardware"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:88
-msgid ""
-"Select the type of Low-Level Interface Software and connection (device): \n"
-"\n"
-"Gxsm itself is entirely Hardware independent, it only suggests a \n"
-"command compatible device to communicate with via a kernel module. \n"
-"In case of SPM's a intelligent SPM controller is expected. \n"
-"This can be a DSP card like the PCI32 or similar running the SPM software, \n"
-"which can specially adapted to the STM, AFM, SARLS or what ever is "
-"similar. \n"
-"\n"
-"In case of SPALEED it's similar, but a special SPALEED command subset is "
-"used.\n"
-"The hardware can be a intelligent DSP card or even a simple AD/DA/counter "
-"card, \n"
-"in the second case the required controller is emulated at kernel level.\n"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:102
-msgid ""
-"Type of Hardware Controller, choice of: \n"
-" no: data analysis only (hardware disabled, simulation mode), \n"
-" spm: STM, AFM, SARLS, etc., (SPM commandset), \n"
-" srangerspm: Signal Ranger SP2 DSP controller via USB, \n"
-" rhkspm: RHK controller via network, \n"
-" comedispm: experimental SPM controller, \n"
-" spa: SPA-LEED, (SPA-LEED commandset), \n"
-" ccd: special ParPort CCD Cam. TC211 (CCD commandset)"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:114
-msgid ""
-"Special Character Device used for DSP-Control,\n"
-" default for DSP cards: \"/dev/pcdsps/tms320\" (new with devfs),\n"
-" with Kernel 2.2.x modules use \"/dev/pcdsp\"\n"
-" for Signal Ranger SP2 (usb-sranger.o) use  \"/dev/sranger0\"\n"
-" ignored in case of HardwareType=no"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:122 src/gxsm_resoucetable.C:129
-#: src/gxsm_resoucetable.C:135
-msgid "Instrument"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:123
-msgid ""
-"Setup of Instrument type. Btw. this is used to autoselect als essential Plug-"
-"Ins.\n"
-"In addition the userinterface adapts to the Instruments special needs.\n"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:130
-msgid ""
-"Type of Instrument, choices are:\n"
-" STM, AFM, SARLS, SPALEED, ELSLEED, CCD"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:136
-msgid "Arbitrary Instrument Name, max. 30 chars !"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:139 src/gxsm_resoucetable.C:149
-#: src/gxsm_resoucetable.C:154 src/gxsm_resoucetable.C:159
-#: src/gxsm_resoucetable.C:164 src/gxsm_resoucetable.C:169
-#: src/gxsm_resoucetable.C:174 src/gxsm_resoucetable.C:179
-#: src/gxsm_resoucetable.C:183 src/gxsm_resoucetable.C:189
-#: src/gxsm_resoucetable.C:198 src/gxsm_resoucetable.C:202
-#: src/gxsm_resoucetable.C:206 src/gxsm_resoucetable.C:210
-#: src/gxsm_resoucetable.C:215 src/gxsm_resoucetable.C:219
-#: src/gxsm_resoucetable.C:223 src/gxsm_resoucetable.C:227
-#: src/gxsm_resoucetable.C:231 src/gxsm_resoucetable.C:235
-#: src/gxsm_resoucetable.C:239 src/gxsm_resoucetable.C:243
-#: src/gxsm_resoucetable.C:247 src/gxsm_resoucetable.C:253
-#: src/gxsm_resoucetable.C:260 src/gxsm_resoucetable.C:267
-msgid "Inst-SPM"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:140
-msgid ""
-"SPM and IVC specific Volt to physical unit conversions:\n"
-"\n"
-"The default values are approximatly matching standard 1/2\" piezo tubes.\n"
-"\n"
-"In addition please check Section DataAq/... in Settings/Preferences for\n"
-"details about data acquisition channel setup later too and refer to manual.\n"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:150
-msgid "STM/AFM: X Piezo Sensitivity in A/V"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:155
-msgid "STM/AFM: Y Piezo Sensitivity in A/V"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:160
-msgid "STM/AFM: Z Piezo Sensitivity in A/V"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:165
-msgid ""
-"STM/AFM: Bias Gain, Unit: 1 (gain between DAC-Bias-Volt and sample voltage)"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:170
-msgid "STM/AFM: Tunnel Current Gain, Unit: V/nA"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:175
-msgid "AFM: nano Newton to Volt calib. factor"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:180
-msgid "STM/AFM: delta Herz to Volt calib. factor"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:184
-msgid ""
-"bool: true=Offset is relative to center of scan, else center of top line"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:190
-msgid ""
-"Select your default Piezodrive settings.\n"
-"\n"
-"Please have a look at the Section Analog/... in Settings/Preferences for\n"
-"details about in line and variable gain Piezodrive settings.\n"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:199
-msgid "Max AD Digital Value corresponding to Max Voltage"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:203
-msgid "Max Voltage of AD [V]"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:207
-msgid "Max DA Digital Value corresponding to Max Voltage"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:211
-msgid "Max Voltage of DA [V]"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:216
-msgid "External Amplifier Gain in Position 0"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:220
-msgid "External Amplifier Gain in Position 1"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:224
-msgid "External Amplifier Gain in Position 2"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:228
-msgid "External Amplifier Gain in Position 3"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:232
-msgid "External Amplifier Gain in Position 4"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:236
-msgid "External Amplifier Gain in Position 5"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:240
-msgid "External Amplifier Gain in Position 6"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:244
-msgid "External Amplifier Gain in Position 7"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:248
-msgid "External Amplifier Gain in Position 8"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:254
-msgid "Default Amplifier Positionindex [0,1,2,..8] used by X-Channel"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:261
-msgid "Default Amplifier Positionindex [0,1,2,..8] used by Y-Channel"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:268
-msgid "Default Amplifier Positionindex [0,1,2,..8] used by Z-Channel"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:273 src/gxsm_resoucetable.C:280
-#: src/gxsm_resoucetable.C:285 src/gxsm_resoucetable.C:290
-#: src/gxsm_resoucetable.C:295 src/gxsm_resoucetable.C:300
-#: src/gxsm_resoucetable.C:305 src/gxsm_resoucetable.C:311
-#: src/gxsm_resoucetable.C:316
-msgid "Inst-SPA"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:274
-msgid ""
-"SPA-LEED specific Volt to physical unit conversions.\n"
-"\n"
-"In addition some geometry parameters and sample properties are required.\n"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:281
-msgid ""
-"SPALEED: X Calibration factor 1V am DA => +/-10V/15V at oktopol rear/front"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:286
-msgid ""
-"SPALEED: Y Calibration factor 1V am DA => +/-10V/15V at oktopol rear/front"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:291
-msgid "SPA-LEED: Energy 2 Volt Factor"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:296
-msgid "SPA-LEED: default Sensitivity"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:301
-msgid "SPA-LEED: half angle between E-gun and Channeltron in internal Geom."
-msgstr ""
-
-#: src/gxsm_resoucetable.C:306
-msgid "SPA-LEED: half angle between E-gun and Channeltron in external Geom."
-msgstr ""
-
-#: src/gxsm_resoucetable.C:312
-msgid "SPA_LEED: Sample Layer Distance d0 [A] - used for Phase S calculations"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:317
-msgid "SPA-LEED: Sample Unit Cell Length a0 [A] - used for Phase K calibration"
-msgstr ""
-
-#. sample Channelconfiguration AFM
-#: src/gxsm_resoucetable.C:323 src/gxsm_resoucetable.C:333
-#: src/gxsm_resoucetable.C:337 src/gxsm_resoucetable.C:341
-#: src/gxsm_resoucetable.C:345 src/gxsm_resoucetable.C:348
-#: src/gxsm_resoucetable.C:352 src/gxsm_resoucetable.C:356
-#: src/gxsm_resoucetable.C:360 src/gxsm_resoucetable.C:363
-#: src/gxsm_resoucetable.C:367 src/gxsm_resoucetable.C:371
-#: src/gxsm_resoucetable.C:375 src/gxsm_resoucetable.C:378
-#: src/gxsm_resoucetable.C:382 src/gxsm_resoucetable.C:386
-#: src/gxsm_resoucetable.C:390 src/gxsm_resoucetable.C:396
-#: src/gxsm_resoucetable.C:400 src/gxsm_resoucetable.C:404
-#: src/gxsm_resoucetable.C:408 src/gxsm_resoucetable.C:411
-#: src/gxsm_resoucetable.C:415 src/gxsm_resoucetable.C:419
-#: src/gxsm_resoucetable.C:423 src/gxsm_resoucetable.C:426
-#: src/gxsm_resoucetable.C:430 src/gxsm_resoucetable.C:434
-#: src/gxsm_resoucetable.C:438 src/gxsm_resoucetable.C:441
-#: src/gxsm_resoucetable.C:445 src/gxsm_resoucetable.C:449
-#: src/gxsm_resoucetable.C:453 src/gxsm_resoucetable.C:459
-#: src/gxsm_resoucetable.C:463 src/gxsm_resoucetable.C:467
-#: src/gxsm_resoucetable.C:471 src/gxsm_resoucetable.C:474
-#: src/gxsm_resoucetable.C:478 src/gxsm_resoucetable.C:482
-#: src/gxsm_resoucetable.C:486 src/gxsm_resoucetable.C:489
-#: src/gxsm_resoucetable.C:493 src/gxsm_resoucetable.C:497
-#: src/gxsm_resoucetable.C:501 src/gxsm_resoucetable.C:504
-#: src/gxsm_resoucetable.C:508 src/gxsm_resoucetable.C:512
-#: src/gxsm_resoucetable.C:517 src/gxsm_resoucetable.C:523
-#: src/gxsm_resoucetable.C:527 src/gxsm_resoucetable.C:531
-#: src/gxsm_resoucetable.C:535 src/gxsm_resoucetable.C:538
-#: src/gxsm_resoucetable.C:542 src/gxsm_resoucetable.C:546
-msgid "DataAq"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:324
-msgid ""
-"Channel defines the variable controlled by the feedback loop:\n"
-"-> PIDSrc can be selected from ADC A1..4.\n"
-"Acquired data is the variable manipulated by the feedback loop,\n"
-"-> Z Output is always on DAC A3.\n"
-"Note: X,Y is always on DAC A0,1 and always U on A4."
-msgstr ""
-
-#: src/gxsm_resoucetable.C:391
-msgid ""
-"Source Channels for data acquisition:\n"
-"ADC A1..4"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:454
-msgid ""
-"Source Channels for data acquisition:\n"
-"ADC B1..4 (Note: PC31 only)"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:518
-msgid ""
-"Source Channels C1,D1:\n"
-"DSP generated data"
-msgstr ""
-
-#. Probe Modes Setup
-#: src/gxsm_resoucetable.C:552 src/gxsm_resoucetable.C:564
-#: src/gxsm_resoucetable.C:568 src/gxsm_resoucetable.C:572
-#: src/gxsm_resoucetable.C:576 src/gxsm_resoucetable.C:580
-#: src/gxsm_resoucetable.C:584 src/gxsm_resoucetable.C:588
-#: src/gxsm_resoucetable.C:592 src/gxsm_resoucetable.C:596
-#: src/gxsm_resoucetable.C:600 src/gxsm_resoucetable.C:604
-#: src/gxsm_resoucetable.C:608 src/gxsm_resoucetable.C:612
-#: src/gxsm_resoucetable.C:616 src/gxsm_resoucetable.C:619
-#: src/gxsm_resoucetable.C:623 src/gxsm_resoucetable.C:627
-#: src/gxsm_resoucetable.C:631 src/gxsm_resoucetable.C:635
-#: src/gxsm_resoucetable.C:639 src/gxsm_resoucetable.C:643
-#: src/gxsm_resoucetable.C:647 src/gxsm_resoucetable.C:651
-#: src/gxsm_resoucetable.C:655 src/gxsm_resoucetable.C:659
-#: src/gxsm_resoucetable.C:663 src/gxsm_resoucetable.C:667
-#: src/gxsm_resoucetable.C:671 src/gxsm_resoucetable.C:674
-#: src/gxsm_resoucetable.C:678 src/gxsm_resoucetable.C:682
-#: src/gxsm_resoucetable.C:686 src/gxsm_resoucetable.C:690
-#: src/gxsm_resoucetable.C:694 src/gxsm_resoucetable.C:698
-#: src/gxsm_resoucetable.C:702 src/gxsm_resoucetable.C:706
-#: src/gxsm_resoucetable.C:710 src/gxsm_resoucetable.C:714
-#: src/gxsm_resoucetable.C:718 src/gxsm_resoucetable.C:722
-#: src/gxsm_resoucetable.C:726 src/gxsm_resoucetable.C:729
-#: src/gxsm_resoucetable.C:733 src/gxsm_resoucetable.C:737
-#: src/gxsm_resoucetable.C:741 src/gxsm_resoucetable.C:745
-#: src/gxsm_resoucetable.C:749 src/gxsm_resoucetable.C:753
-#: src/gxsm_resoucetable.C:757 src/gxsm_resoucetable.C:761
-#: src/gxsm_resoucetable.C:765 src/gxsm_resoucetable.C:769
-#: src/gxsm_resoucetable.C:773 src/gxsm_resoucetable.C:777
-msgid "Probe"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:553
-msgid ""
-"Probe Modes Configuration:\n"
-"Name  -> FolderTab Label\n"
-"Id    -> Identifier used for parameter saving, no blancs!\n"
-"Param -> Long folder frame caption, descriptive\n"
-"Srcs  -> Data sources, bin coding 4+8 bin digits = PIDSRCs,ADC A1..4,B1..4\n"
-"Outp  -> Probe value output DAC A0..3 = 0..3\n"
-"X/Y Unit, Label, Factor, Offset: Data conversion and user units."
-msgstr ""
-
-#. Adjustments: Bounds and Steps
-#: src/gxsm_resoucetable.C:784 src/gxsm_resoucetable.C:787
-#: src/gxsm_resoucetable.C:790 src/gxsm_resoucetable.C:793
-#: src/gxsm_resoucetable.C:797 src/gxsm_resoucetable.C:801
-#: src/gxsm_resoucetable.C:805 src/gxsm_resoucetable.C:809
-#: src/gxsm_resoucetable.C:812 src/gxsm_resoucetable.C:816
-#: src/gxsm_resoucetable.C:820 src/gxsm_resoucetable.C:824
-#: src/gxsm_resoucetable.C:828 src/gxsm_resoucetable.C:831
-#: src/gxsm_resoucetable.C:835 src/gxsm_resoucetable.C:839
-#: src/gxsm_resoucetable.C:843 src/gxsm_resoucetable.C:847
-#: src/gxsm_resoucetable.C:850 src/gxsm_resoucetable.C:854
-#: src/gxsm_resoucetable.C:858 src/gxsm_resoucetable.C:862
-#: src/gxsm_resoucetable.C:866 src/gxsm_resoucetable.C:869
-#: src/gxsm_resoucetable.C:873 src/gxsm_resoucetable.C:877
-#: src/gxsm_resoucetable.C:881 src/gxsm_resoucetable.C:885
-#: src/gxsm_resoucetable.C:888 src/gxsm_resoucetable.C:892
-#: src/gxsm_resoucetable.C:896 src/gxsm_resoucetable.C:900
-#: src/gxsm_resoucetable.C:904 src/gxsm_resoucetable.C:907
-#: src/gxsm_resoucetable.C:911 src/gxsm_resoucetable.C:915
-#: src/gxsm_resoucetable.C:919 src/gxsm_resoucetable.C:923
-#: src/gxsm_resoucetable.C:926 src/gxsm_resoucetable.C:930
-#: src/gxsm_resoucetable.C:934 src/gxsm_resoucetable.C:938
-#: src/gxsm_resoucetable.C:942 src/gxsm_resoucetable.C:945
-#: src/gxsm_resoucetable.C:949 src/gxsm_resoucetable.C:953
-#: src/gxsm_resoucetable.C:957
-msgid "Adj."
-msgstr ""
-
-#: src/gxsm_resoucetable.C:784
-msgid "Y limit in log view of profile."
-msgstr ""
-
-#: src/gxsm_resoucetable.C:788
-msgid "Minimal Y value allwed in profile view in log view mode."
-msgstr ""
-
-#: src/gxsm_resoucetable.C:790
-msgid "Adjustments: configure slider bounds and stepwidth:"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:794 src/gxsm_resoucetable.C:813
-#: src/gxsm_resoucetable.C:832 src/gxsm_resoucetable.C:851
-msgid "User adjustable min max Bonds and Steps..."
-msgstr ""
-
-#: src/gxsm_resoucetable.C:798 src/gxsm_resoucetable.C:802
-#: src/gxsm_resoucetable.C:806 src/gxsm_resoucetable.C:817
-#: src/gxsm_resoucetable.C:821 src/gxsm_resoucetable.C:825
-#: src/gxsm_resoucetable.C:836 src/gxsm_resoucetable.C:840
-#: src/gxsm_resoucetable.C:844 src/gxsm_resoucetable.C:855
-#: src/gxsm_resoucetable.C:859 src/gxsm_resoucetable.C:863
-#: src/gxsm_resoucetable.C:870 src/gxsm_resoucetable.C:874
-#: src/gxsm_resoucetable.C:878 src/gxsm_resoucetable.C:882
-#: src/gxsm_resoucetable.C:889 src/gxsm_resoucetable.C:893
-#: src/gxsm_resoucetable.C:897 src/gxsm_resoucetable.C:901
-#: src/gxsm_resoucetable.C:908 src/gxsm_resoucetable.C:912
-#: src/gxsm_resoucetable.C:916 src/gxsm_resoucetable.C:920
-#: src/gxsm_resoucetable.C:927 src/gxsm_resoucetable.C:931
-#: src/gxsm_resoucetable.C:935 src/gxsm_resoucetable.C:939
-#: src/gxsm_resoucetable.C:946 src/gxsm_resoucetable.C:950
-#: src/gxsm_resoucetable.C:954 src/gxsm_resoucetable.C:958
-msgid "not available right now"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:964 src/gxsm_resoucetable.C:968
-#: src/gxsm_resoucetable.C:972 src/gxsm_resoucetable.C:976
-#: src/gxsm_resoucetable.C:980 src/gxsm_resoucetable.C:984
-#: src/gxsm_resoucetable.C:988
-msgid "Paths"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:965
-msgid "where to put logfiles"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:969
-msgid "default data path"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:973
-msgid "path/name of remote control fifo, read cmds"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:977
-msgid "path/name of remote control fifo, status out"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:981
-msgid "searchpath to additional GxsmPlugins"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:985
-msgid "searchpath to Gxsm Palette Pixmaps (1024x1 ACSII .pnm)"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:989
-msgid "searchpath to additional Gxsm Palette Pixmaps (1024x1 ACSII .pnm)"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:995 src/gxsm_resoucetable.C:1001
-#: src/gxsm_resoucetable.C:1005 src/gxsm_resoucetable.C:1009
-#: src/gxsm_resoucetable.C:1012 src/gxsm_resoucetable.C:1015
-#: src/gxsm_resoucetable.C:1021 src/gxsm_resoucetable.C:1025
-#: src/gxsm_resoucetable.C:1029 src/gxsm_resoucetable.C:1034
-#: src/gxsm_resoucetable.C:1036 src/gxsm_resoucetable.C:1041
-#: src/gxsm_resoucetable.C:1044 src/gxsm_resoucetable.C:1051
-#: src/gxsm_resoucetable.C:1055 src/gxsm_resoucetable.C:1059
-#: src/gxsm_resoucetable.C:1063 src/gxsm_resoucetable.C:1066
-#: src/gxsm_resoucetable.C:1070 src/gxsm_resoucetable.C:1074
-#: src/gxsm_resoucetable.C:1078 src/gxsm_resoucetable.C:1082
-#: src/gxsm_resoucetable.C:1086 src/gxsm_resoucetable.C:1089
-#: src/gxsm_resoucetable.C:1093 src/gxsm_resoucetable.C:1097
-#: src/gxsm_resoucetable.C:1101 src/gxsm_resoucetable.C:1105
-#: src/gxsm_resoucetable.C:1109 src/gxsm_resoucetable.C:1115
-#: src/gxsm_resoucetable.C:1120 src/gxsm_resoucetable.C:1124
-#: src/gxsm_resoucetable.C:1127 src/gxsm_resoucetable.C:1132
-msgid "User"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:996
-msgid ""
-"User interface specific adjustments.\n"
-"Have a look at the Preferences Dialog later for some more...\n"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:1002
-msgid "bool: true=save window positions, false: do not"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:1006
-msgid "XY Unit, one of: AA, nm, um, mm, BZ, sec, V, 1"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:1010
-msgid "Gridsize used by Autodisp, e.g: 1: all Pixels are examined"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:1016
-msgid "File numbering mode: digit, alpha"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:1022
-msgid "Autosaveunit: Save every percent, lines, seconds"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:1026
-msgid "Rate of Autosaves, depending on Unit."
-msgstr ""
-
-#: src/gxsm_resoucetable.C:1030
-msgid "true = Overwrite unasked during Autosave, false = ask before overwrite"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:1037
-msgid ""
-"Delay after loading file in 1/10s:\n"
-"if zero no waiting for pending events."
-msgstr ""
-
-#: src/gxsm_resoucetable.C:1045
-msgid ""
-"Slider/Approch control type:\n"
-" slider: Omicron Box/similar, single steps via DSP's digital IO,\n"
-" mover: Mover/Besocke via sawtooth like ramp voltages from Piezodrive"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:1052
-msgid "Default Title of PS-Printouts"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:1056
-msgid "Printing command, example: 'lpr -Pmyprinter', for preview use 'gv'"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:1060
-msgid "Path/name of your favorite palette, (1024x1 pnm RGB Bitmap (ascii))"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:1067
-msgid "Title use in griplots"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:1071
-msgid "Path/name of your 1d gri cmd file #1"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:1075
-msgid "Path/name of your 1d gri cmd file #2"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:1079
-msgid "Path/name of your 1d gri cmd file #3"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:1083
-msgid "Path/name of your 1d gri cmd file #4"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:1090
-msgid "Path/name of your 2d gri cmd file #1"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:1094
-msgid "Path/name of your 2d gri cmd file #2"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:1098
-msgid "Path/name of your 2d gri cmd file #3"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:1102
-msgid "Path/name of your 2d gri cmd file #4"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:1110
-msgid "Pic a font used for tickmarks of the profile view."
-msgstr ""
-
-#: src/gxsm_resoucetable.C:1116
-msgid "Pic a font used for X and Y labels of the profile view."
-msgstr ""
-
-#: src/gxsm_resoucetable.C:1121
-msgid ""
-"Origin Modus for Line Profile: 0: ZeroLeft, 1: ZeroCenter, 2:PrjX, 3:PrjY"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:1128
-msgid "Enable Menu Tooltips: true|false"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:1133
-msgid "Accept Dat Kennung 0x000, Attention this is a safety hole if enabled !"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:1137 src/gxsm_resoucetable.C:1141
-#: src/gxsm_resoucetable.C:1145 src/gxsm_resoucetable.C:1151
-#: src/gxsm_resoucetable.C:1157 src/gxsm_resoucetable.C:1162
-#: src/gxsm_resoucetable.C:1167 src/gxsm_resoucetable.C:1173
-#: src/gxsm_resoucetable.C:1179 src/gxsm_resoucetable.C:1184
-msgid "GUI"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:1138
-msgid "Select here, if you want use layered (3d) scans."
-msgstr ""
-
-#: src/gxsm_resoucetable.C:1146
-msgid "Select shape for object handle type"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:1152
-msgid "Object Handle Bg Color, active [red, green, blue, alpha]"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:1158
-msgid "Object Handle Bg Color, inactive [red, green, blue, alpha]"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:1163
-msgid "Width of handle outline in pixels"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:1168
-msgid "Line width of object (connections) in pixels"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:1174
-msgid "Object Label Color [red, green, blue, alpha]"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:1180
-msgid "Select object label font."
-msgstr ""
-
-#: src/gxsm_resoucetable.C:1185
-msgid "Enable Antialas Mode in Canvas View, transparency etc."
-msgstr ""
-
-#: src/gxsm_resoucetable.C:1275
-msgid "Configure GXSM"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:1277
-msgid "Welcome to GXSM!"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:1279
-msgid ""
-"You seem to be running GXSM for the first time.\n"
-"The following steps will set up GXSM by asking you\n"
-"about all mandatory settings.\n"
-"\n"
-"If you are going to setup a SPM, SPA-LEED or\n"
-"other 2D data acquisition Instrument, you will\n"
-"need all the calibration parameters, which will\n"
-"convert the ADC/DAC Voltages to corresponding\n"
-"physical dimension.\n"
-"\n"
-"Note: You can review and change all values later\n"
-"using the Preferences Dialog.\n"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:1295
-msgid "Congratulation"
-msgstr ""
-
-#: src/gxsm_resoucetable.C:1297
-msgid ""
-"GXSM is now ready to go!\n"
-"\n"
-"You can review and change all values later\n"
-"unsig the Preferences Dialog from Settings menu\n"
-"or starting over GXSM like:\n"
-"\"gxsm --force-configure\"\n"
-"This will not replace you previous values with the\n"
-"defaults! Instead remove \"~/.gnome/gxsm\".\n"
-"\n"
-"Have fun,\n"
-"       your GXSM developer team.\n"
-msgstr ""
-
-#. Meldungen
-#: src/meldungen.h:38 src/meldungen.h:89
-msgid "Value out of Range !"
-msgstr ""
-
-#: src/meldungen.h:39 src/meldungen.h:90
-msgid "Valid Range: "
-msgstr ""
-
-#: src/meldungen.h:40 src/meldungen.h:91
-msgid "Program Error: Fatal"
-msgstr ""
-
-#: src/meldungen.h:41 src/meldungen.h:93
-msgid "PS - Dump done !"
-msgstr ""
-
-#. Fehler
-#: src/meldungen.h:44 src/meldungen.h:125
-msgid "Fatal Error !"
-msgstr ""
-
-#: src/meldungen.h:45 src/meldungen.h:126
-msgid "Sorry !"
-msgstr ""
-
-#: src/meldungen.h:46 src/meldungen.h:129
-msgid "No more free Memory available !"
-msgstr ""
-
-#: src/meldungen.h:47 src/meldungen.h:135
-msgid "Can't read File !"
-msgstr ""
-
-#: src/meldungen.h:48 src/meldungen.h:136
-msgid "Can't write File !"
-msgstr ""
-
-#: src/meldungen.h:49 src/meldungen.h:137
-msgid "No more Diskspace !"
-msgstr ""
-
-#. Warnungen
-#: src/meldungen.h:52 src/meldungen.h:96 src/meldungen.h:100
-msgid "Warning !"
-msgstr ""
-
-#: src/meldungen.h:53 src/meldungen.h:97
-msgid "File exists !"
-msgstr ""
-
-#. Labels
-#: src/meldungen.h:56 src/plugin_ctrl.C:233 src/plugin_ctrl.C:235
-#: src/plugin_ctrl.C:237 src/plugin_ctrl.C:239 src/plugin_ctrl.C:241
-#: src/plugin_ctrl.C:243 plug-ins/common/listplugins.C:658
-#: plug-ins/common/listplugins.C:659 plug-ins/common/listplugins.C:670
-#: plug-ins/common/listplugins.C:681 plug-ins/common/listplugins.C:683
-#: plug-ins/common/listplugins.C:684
-msgid "Yes"
-msgstr "Ja"
-
-#: src/meldungen.h:57 src/plugin_ctrl.C:233 src/plugin_ctrl.C:235
-#: src/plugin_ctrl.C:237 src/plugin_ctrl.C:239 src/plugin_ctrl.C:241
-#: src/plugin_ctrl.C:243 plug-ins/common/listplugins.C:658
-#: plug-ins/common/listplugins.C:659 plug-ins/common/listplugins.C:670
-#: plug-ins/common/listplugins.C:681 plug-ins/common/listplugins.C:683
-#: plug-ins/common/listplugins.C:684
-msgid "No"
-msgstr "Nein"
-
-#: src/meldungen.h:58
-msgid "Enter"
-msgstr ""
-
-#: src/meldungen.h:59
-msgid "OK"
-msgstr ""
-
-#: src/meldungen.h:60
-msgid "Cancel"
-msgstr ""
-
-#: src/meldungen.h:61
-msgid "Overwrite"
-msgstr ""
-
-#: src/meldungen.h:62
-msgid "Retry"
-msgstr ""
-
-#. Fenster Titel
-#: src/meldungen.h:67
-msgid "Channel Selector"
-msgstr ""
-
-#: src/meldungen.h:68 plug-ins/control/DSPControl.C:187
-#: plug-ins/control/DSPControl.C:340
-msgid "DSP Control"
-msgstr ""
-
-#: src/meldungen.h:69
-msgid "Probe Control"
-msgstr ""
-
-#: src/meldungen.h:70
-msgid "Line Profile"
-msgstr ""
-
-#: src/meldungen.h:71 plug-ins/math/statistik/histogram.C:109
-msgid "Histogram"
-msgstr ""
-
-#: src/meldungen.h:72
-#, fuzzy
-msgid "Log/Monitor"
-msgstr "Anzeige"
-
-#: src/meldungen.h:73
-msgid "Optimize"
-msgstr ""
-
-#: src/meldungen.h:74
-msgid "Oszi"
-msgstr ""
-
-#: src/meldungen.h:75
+#: core-source-meson/gxsm4-popupmenus.ui:87
+#: core-source-meson/gxsm4-popupmenus.ui:910
+#: core-source-meson/gxsm4-popupmenus.ui:914
 #, fuzzy
 msgid "Print"
 msgstr "Gxsm Drucken"
 
-#: src/meldungen.h:76
-msgid "Remote"
+#: core-source-meson/gxsm4-popupmenus.ui:91
+#: core-source-meson/gxsm4-popupmenus.ui:809
+msgid "Close"
+msgstr "Schliessen"
+
+#: core-source-meson/gxsm4-popupmenus.ui:97
+msgid "Edit"
 msgstr ""
 
-#: src/meldungen.h:77
-msgid "Slider Control"
-msgstr ""
-
-#: src/meldungen.h:78
+#: core-source-meson/gxsm4-popupmenus.ui:101
 #, fuzzy
-msgid "Mover Control"
-msgstr "Fernsteuerung..."
+msgid "Copy"
+msgstr "_Kopieren"
 
-#: src/meldungen.h:79
-msgid "Background"
-msgstr ""
-
-#: src/meldungen.h:80
-msgid "1D Filter"
-msgstr ""
-
-#: src/meldungen.h:81
-msgid "2D Filter"
-msgstr ""
-
-#: src/meldungen.h:82
-msgid "Tools"
-msgstr ""
-
-#: src/meldungen.h:83
-msgid "Manual Display Crt."
-msgstr ""
-
-#: src/meldungen.h:84
-msgid "SPA--LEED"
-msgstr ""
-
-#: src/meldungen.h:85
-msgid "Anti Drift"
-msgstr ""
-
-#: src/meldungen.h:92
-msgid ""
-"I need two Points ! \n"
-"type '1' then type '2' in D2D Scan"
-msgstr ""
-
-#: src/meldungen.h:101
-msgid "Aktivate Scan before doing math operations !"
-msgstr ""
-
-#: src/meldungen.h:102
-msgid "Set Channel X before doing math operations +-X,*/Y !"
-msgstr ""
-
-#: src/meldungen.h:103
-msgid "Make sure size of Active and Channel X or Y are equal !"
-msgstr ""
-
-#: src/meldungen.h:104
-msgid "Aktivate Scan to save before doing save comand !"
-msgstr ""
-
-#: src/meldungen.h:105
-msgid "User name longer than 39 Chars, will be truncated !"
-msgstr ""
-
-#: src/meldungen.h:106
-msgid "Comment longer than 255 Chars, will be truncated !"
-msgstr ""
-
-#. Fragen
-#: src/meldungen.h:109
-msgid "Do you want to leave GXSM ?"
-msgstr ""
-
-#: src/meldungen.h:110
-msgid "Do you want to save Scans ?"
-msgstr ""
-
-#: src/meldungen.h:111
-msgid "Close window ?"
-msgstr ""
-
-#: src/meldungen.h:112
-msgid "Question"
-msgstr ""
-
-#: src/meldungen.h:113
-msgid "Really kill scan ?"
-msgstr ""
-
-#: src/meldungen.h:114
-msgid "Direct Export:"
-msgstr ""
-
-#: src/meldungen.h:115
-msgid "TGA Mapping Mode ?"
-msgstr ""
-
-#: src/meldungen.h:116
-msgid "Remote is active, kill it ?"
-msgstr ""
-
-#: src/meldungen.h:117
-msgid "Remote is now ready, start it ?"
-msgstr ""
-
-#. Fehler
-#: src/meldungen.h:120
-msgid "Error !"
-msgstr ""
-
-#: src/meldungen.h:121
-msgid "Math Operation Error !"
-msgstr ""
-
-#: src/meldungen.h:122
-msgid "No active Scan !"
-msgstr ""
-
-#: src/meldungen.h:123
-msgid "No second Source !"
-msgstr ""
-
-#: src/meldungen.h:124
-msgid "Scan sizes not equal !"
-msgstr ""
-
-#: src/meldungen.h:127
-msgid "Error copying gzipped file to /tmp/"
-msgstr ""
-
-#: src/meldungen.h:128
-msgid "Error unzipping file /tmp/"
-msgstr ""
-
-#: src/meldungen.h:130
-msgid "Data from unkown Scanmode !"
-msgstr ""
-
-#: src/meldungen.h:131
-msgid "No free Channel available, all in use !"
-msgstr ""
-
-#: src/meldungen.h:132
-msgid "No source Channel available !"
-msgstr ""
-
-#: src/meldungen.h:133
-msgid "No Enviromententry for HOME !"
-msgstr ""
-
-#: src/meldungen.h:134
-msgid "Can't read Palette !"
-msgstr ""
-
-#: src/meldungen.h:138
-msgid "No Import of CPX-Format !"
-msgstr ""
-
-#: src/meldungen.h:139
-msgid "Wrong GNU-File Type ! Please use .pgm, .byt, .sht, .flt or .dbl !"
-msgstr ""
-
-#: src/meldungen.h:140
-msgid "Hardware no more Points per Line than"
-msgstr ""
-
-#: src/meldungen.h:141
-msgid "Scan start request canceled:"
-msgstr ""
-
-#: src/meldungen.h:142
-msgid "XSM Version changed, please save values again !"
-msgstr ""
-
-#. Labels
-#: src/meldungen.h:145
-msgid "RGB-24bit"
-msgstr ""
-
-#: src/meldungen.h:146
-msgid "RG0-16bit"
-msgstr ""
-
-#: src/meldungen.h:147
-msgid "RGB-8bit"
-msgstr ""
-
-#: src/plugin_ctrl.C:219 plug-ins/common/listplugins.C:645
-msgid "(NULL): All"
-msgstr ""
-
-#: src/plugin_ctrl.C:229 src/plugin_ctrl.C:231
-msgid "--"
-msgstr ""
-
-#: src/plugin_ctrl.C:319
-msgid "Type of Plugin with "
-msgstr ""
-
-#: src/plugin_ctrl.C:321
-msgid " is not recognized, it's not attached and not usable yet."
-msgstr ""
-
-#: src/plugin_ctrl.C:329
-msgid "Plugin "
-msgstr ""
-
-#: src/plugin_ctrl.C:331
-msgid " is attached and ready to use"
-msgstr " ist geladen und verfügbar"
-
-#: src/surface.C:363
-msgid "invalid filename, load aborted."
-msgstr ""
-
-#: src/surface.C:381
-msgid "Load: Error activating channel"
-msgstr ""
-
-#: src/surface.C:395
-msgid "Load: unpacking..."
-msgstr ""
-
-#: src/surface.C:400
-#, c-format
-msgid "Could not generate temporary filename: %s\n"
-msgstr ""
-
-#: src/surface.C:411
-#, c-format
-msgid "Could not generate temporary directory: %s\n"
-msgstr ""
-
-#: src/surface.C:425
-msgid "error executing"
-msgstr ""
-
-#: src/surface.C:450
-msgid "error while unzipping"
-msgstr ""
-
-#. or call filedialog
-#: src/surface.C:643
-msgid "NC file to save"
-msgstr ""
-
-#. cancel ??
-#: src/surface.C:646
-msgid "Save aborted by user."
-msgstr ""
-
-#: src/surface.C:677
-#, c-format
-msgid "File '%s' exists, overwrite?"
-msgstr ""
-
-#: src/surface.C:682
-msgid "File exists, save aborted by user."
-msgstr ""
-
-#: src/surface.C:687
-msgid "File overwrite forced by default."
-msgstr ""
-
-#: src/surface.C:706 plug-ins/common/listplugins.C:649
-msgid "Error"
-msgstr ""
-
-#: src/surface.C:711
-msgid "Saving done "
-msgstr ""
-
-#: src/surface.C:717
-msgid "Error, not saved "
-msgstr ""
-
-#: src/tips_dialog.C:121
-msgid "gxsm_tips.txt"
-msgstr ""
-
-#: src/tips_dialog.C:133
-msgid "GXSM Tip of the Day"
-msgstr "GXSM Tip des Tages"
-
-#: src/tips_dialog.C:180
-msgid "Previous Tip"
-msgstr "Letzter Tip"
-
-#: src/tips_dialog.C:189
-msgid "Next Tip"
-msgstr "Nächster Tip"
-
-#: src/tips_dialog.C:209
+#: core-source-meson/gxsm4-popupmenus.ui:105
 #, fuzzy
-msgid "Show next time"
-msgstr "Tips weiterhin zeigen"
+msgid "Crop"
+msgstr "_Ausschneiden"
 
-#: src/tips_dialog.C:326
-msgid ""
-"Your GXSM tips file appears to be missing!\n"
-"There should be a file called gxsm_tips.txt in the\n"
-"GXSM data directory.  Please check your installation."
+#: core-source-meson/gxsm4-popupmenus.ui:109
+msgid "Cpy zoom in"
 msgstr ""
-"Die GXSM Tipsdatei scheint zu fehlen!\\n\n"
-"Es sollte eine Datei mit dem Namen gxsm_tips.txt im\\n\n"
-"GXSM Datenverzeichnis vorliegen. Bitte die Installation prüfen."
 
-#: src/vsurf3d_pref.C:59
-msgid "Rotation Angle in X"
+#: core-source-meson/gxsm4-popupmenus.ui:113
+msgid "Cpy zoom out"
 msgstr ""
 
-#: src/vsurf3d_pref.C:64
-msgid "Rotation Angle in Y"
+#: core-source-meson/gxsm4-popupmenus.ui:119
+msgid "View"
 msgstr ""
 
-#: src/vsurf3d_pref.C:69
-msgid "Rotation Angle in Z"
+#: core-source-meson/gxsm4-popupmenus.ui:127
+#: core-source-meson/gxsm4-popupmenus.ui:819
+msgid "Quick"
 msgstr ""
 
-#: src/vsurf3d_pref.C:76
-msgid ""
-"set translations vector X, Y, Z\n"
-"additional hint: use middle mouse to\n"
-"button and drag surface up/down!"
+#: core-source-meson/gxsm4-popupmenus.ui:132
+#: core-source-meson/gxsm4-popupmenus.ui:824
+msgid "Direct"
 msgstr ""
 
-#: src/vsurf3d_pref.C:84
-msgid "Field of View"
+#: core-source-meson/gxsm4-popupmenus.ui:137
+#: core-source-meson/gxsm4-popupmenus.ui:829
+msgid "Direct Hi-Lit"
 msgstr ""
 
-#: src/vsurf3d_pref.C:90
-msgid "Distance"
+#: core-source-meson/gxsm4-popupmenus.ui:142
+#: core-source-meson/gxsm4-popupmenus.ui:834
+msgid "Plane"
 msgstr ""
 
-#: src/vsurf3d_pref.C:96
-msgid "Perspective: Z far distance relative to surface width (=1))"
+#: core-source-meson/gxsm4-popupmenus.ui:147
+#: core-source-meson/gxsm4-popupmenus.ui:839
+msgid "Horizontal"
 msgstr ""
 
-#: src/vsurf3d_pref.C:102
-msgid "Perspective: Z near distance (to center of surface)\n"
+#: core-source-meson/gxsm4-popupmenus.ui:152
+#: core-source-meson/gxsm4-popupmenus.ui:844
+msgid "Periodic"
 msgstr ""
 
-#: src/vsurf3d_pref.C:111
-msgid "Height Scaling (Z scale)"
+#: core-source-meson/gxsm4-popupmenus.ui:157
+#: core-source-meson/gxsm4-popupmenus.ui:849
+msgid "Logarithmic"
 msgstr ""
 
-#: src/vsurf3d_pref.C:117 src/vsurf3d_pref.C:121 src/vsurf3d_pref.C:125
-#: src/vsurf3d_pref.C:129 src/vsurf3d_pref.C:133 src/vsurf3d_pref.C:137
-#: src/vsurf3d_pref.C:141 src/vsurf3d_pref.C:146 src/vsurf3d_pref.C:150
-#: src/vsurf3d_pref.C:154 src/vsurf3d_pref.C:158 src/vsurf3d_pref.C:162
-#: src/vsurf3d_pref.C:166 src/vsurf3d_pref.C:170 src/vsurf3d_pref.C:174
-#: src/vsurf3d_pref.C:178 src/vsurf3d_pref.C:182 src/vsurf3d_pref.C:186
-#: src/vsurf3d_pref.C:190
-msgid "Light"
+#: core-source-meson/gxsm4-popupmenus.ui:162
+#: core-source-meson/gxsm4-popupmenus.ui:854
+#: core-source-meson/gxsm4-popupmenus.ui:928
+msgid "Differential"
 msgstr ""
 
-#: src/vsurf3d_pref.C:118
-msgid "Global Ambient Light [red, green, blue, alpha]"
+#: core-source-meson/gxsm4-popupmenus.ui:167
+msgid "X linearize"
 msgstr ""
 
-#: src/vsurf3d_pref.C:126
-msgid "Light0: switch On/Off"
+#: core-source-meson/gxsm4-popupmenus.ui:171
+msgid "Attach Red Profile"
 msgstr ""
 
-#: src/vsurf3d_pref.C:130
-msgid "Light0: Position, relative to surface width (=1) [X, Y, Z, 1]"
-msgstr ""
-
-#: src/vsurf3d_pref.C:134
-msgid "Light0: Specular Light Color [red, green, blue, alpha]"
-msgstr ""
-
-#: src/vsurf3d_pref.C:138
-msgid "Light0: Diffuse Light Color [red, green, blue, alpha]"
-msgstr ""
-
-#: src/vsurf3d_pref.C:142
-msgid "Light0: Ambient Light Color [red, green, blue, alpha]"
-msgstr ""
-
-#: src/vsurf3d_pref.C:151
-msgid "Light1: switch On/Off"
-msgstr ""
-
-#: src/vsurf3d_pref.C:155
-msgid "Light1: Position, relative to surface width (=1) [X, Y, Z, 1]"
-msgstr ""
-
-#: src/vsurf3d_pref.C:159
-msgid "Light1: Specular Light Color [red, green, blue, alpha]"
-msgstr ""
-
-#: src/vsurf3d_pref.C:163
-msgid "Light1: Diffuse Light Color [red, green, blue, alpha]"
-msgstr ""
-
-#: src/vsurf3d_pref.C:167
-msgid "Light1: Ambient Light Color [red, green, blue, alpha]"
-msgstr ""
-
-#: src/vsurf3d_pref.C:175
-msgid "Light2: switch On/Off"
-msgstr ""
-
-#: src/vsurf3d_pref.C:179
-msgid "Light2: Position, relative to surface width (=1) [X, Y, Z, 0]"
-msgstr ""
-
-#: src/vsurf3d_pref.C:183
-msgid "Light2: Specular Light Color [red, green, blue, alpha]"
-msgstr ""
-
-#: src/vsurf3d_pref.C:187
-msgid "Light2: Diffuse Light Color [red, green, blue, alpha]"
-msgstr ""
-
-#: src/vsurf3d_pref.C:191
-msgid "Light2: Ambient Light Color [red, green, blue, alpha]"
-msgstr ""
-
-#: src/vsurf3d_pref.C:197 src/vsurf3d_pref.C:201 src/vsurf3d_pref.C:205
-#: src/vsurf3d_pref.C:210 src/vsurf3d_pref.C:214 src/vsurf3d_pref.C:219
-#: src/vsurf3d_pref.C:225 src/vsurf3d_pref.C:229 src/vsurf3d_pref.C:234
-#: src/vsurf3d_pref.C:240 src/vsurf3d_pref.C:247
-msgid "Surface Material"
-msgstr ""
-
-#: src/vsurf3d_pref.C:198
-msgid ""
-"Surface Ambient Color:\n"
-" Specify the ambient RGBA reflectance of the material.\n"
-"Used only in \"Uniform/Material Color Mode\"."
-msgstr ""
-
-#: src/vsurf3d_pref.C:202
-msgid ""
-"Surface Diffuse Color:\n"
-" Specify the diffuse RGBA reflectance of the material.\n"
-"Used only in \"Uniform/Material Color Mode\"."
-msgstr ""
-
-#: src/vsurf3d_pref.C:206
-msgid ""
-"Surface Specular Color:\n"
-" Specify the specular RGBA reflectance of the material."
-msgstr ""
-
-#: src/vsurf3d_pref.C:211
-msgid "Surface Shininess"
-msgstr ""
-
-#: src/vsurf3d_pref.C:220
-msgid "Select Surface Coloring Mode."
-msgstr ""
-
-#: src/vsurf3d_pref.C:226
-msgid "Select Surface Color Source."
-msgstr ""
-
-#: src/vsurf3d_pref.C:235
-msgid "Color Contrast: to scale color source"
-msgstr ""
-
-#: src/vsurf3d_pref.C:241
-msgid "Color Contrast: shift color source"
-msgstr ""
-
-#: src/vsurf3d_pref.C:248
-msgid "Color Saturation, 1=normal"
-msgstr ""
-
-#: src/vsurf3d_pref.C:254 src/vsurf3d_pref.C:258 src/vsurf3d_pref.C:262
-#: src/vsurf3d_pref.C:267
-msgid "Box Material"
-msgstr ""
-
-#: src/vsurf3d_pref.C:255
-msgid "Box Ambient [red, green, blue, alpha]"
-msgstr ""
-
-#: src/vsurf3d_pref.C:259
-msgid "Box Specular"
-msgstr ""
-
-#: src/vsurf3d_pref.C:263
-msgid "Box Diffuse"
-msgstr ""
-
-#: src/vsurf3d_pref.C:268
-msgid "Box Shininess"
-msgstr ""
-
-#: src/vsurf3d_pref.C:275 src/vsurf3d_pref.C:282 src/vsurf3d_pref.C:285
-#: src/vsurf3d_pref.C:289 src/vsurf3d_pref.C:293 src/vsurf3d_pref.C:297
-#: src/vsurf3d_pref.C:308 src/vsurf3d_pref.C:313 src/vsurf3d_pref.C:317
-#: src/vsurf3d_pref.C:323 src/vsurf3d_pref.C:330 src/vsurf3d_pref.C:338
-#: src/vsurf3d_pref.C:345 src/vsurf3d_pref.C:351 src/vsurf3d_pref.C:357
-msgid "Render Opt."
-msgstr ""
-
-#: src/vsurf3d_pref.C:276
-msgid ""
-"Quench or PreView Factor:\n"
-" 1: normal, adj to approx. optimal size dep. on viewport size, not on "
-"distance/zoom\n"
-" 0: use all grid points (slow, dep. on image size)\n"
-">1: use less (fast)"
-msgstr ""
-
-#: src/vsurf3d_pref.C:286
-msgid "GL Clear Color, e.g. background  [red, green, blue, alpha]"
-msgstr ""
-
-#: src/vsurf3d_pref.C:294
-msgid "enable/disable fog"
-msgstr ""
-
-#: src/vsurf3d_pref.C:298
-msgid ""
-"Fog Color [red, green, blue, alpha].\n"
-"Fog blends a fog color with each rasterized pixel fragment's\n"
-"posttexturing color using a blending factor f. Factor f is computed in\n"
-"one of three ways (here: f=exp(-density*z)), depending on the fog\n"
-"mode. Let z be the distance in eye coordinates from the origin to the\n"
-"fragment being fogged.\n"
-"Note: you usually want to use the background (clear) color."
-msgstr ""
-
-#: src/vsurf3d_pref.C:309
-msgid ""
-"Density of fog, see fog color help!\n"
-"Effect depends on distance to object and size of object."
-msgstr ""
-
-#: src/vsurf3d_pref.C:318
-msgid "enable/disable texture (sorry not implemented today)"
-msgstr ""
-
-#: src/vsurf3d_pref.C:324
-msgid "enable/disable mesh mode (use mesh or solid model)"
-msgstr ""
-
-#: src/vsurf3d_pref.C:331
-msgid ""
-"enable/disable cull face mode (surface back is not drawn!)\n"
-"Note: if enabled you will not see your surface,\n"
-"if you are looking from below!"
-msgstr ""
-
-#: src/vsurf3d_pref.C:339
-msgid ""
-"enable/disable Smooth Shading (GL color model is smooth or flat)\n"
-"Note: smooth shading is much slower but looks also much better."
-msgstr ""
-
-#: src/vsurf3d_pref.C:346
-msgid "enable/disable ortho mode (not implemented)"
-msgstr ""
-
-#: src/vsurf3d_pref.C:352
-msgid "enable/disable Zero Plane/Box"
-msgstr ""
-
-#: src/vsurf3d_pref.C:358
-msgid ""
-"enable/disable 3D Tickmarks drawing\n"
-" (Note: not yet available!!)"
-msgstr ""
-
-#: plug-ins/common/editnc.C:80 plug-ins/common/listplugins.C:162
-#: plug-ins/common/queryDSPinfo.C:82
-msgid "Tools/"
-msgstr ""
-
-#: plug-ins/common/editnc.C:81
-msgid "NetCDF-View"
-msgstr ""
-
-#: plug-ins/common/editnc.C:82
-msgid "List the contents of NetCDF Files"
-msgstr ""
-
-#: plug-ins/common/editnc.C:94
-msgid ""
-"Gxsm EditNc Plugin:\n"
-"EditNc is a NetCDF-Dump Utility using a dynamic generated Gtk-Window:View "
-"and (not yet) Edit NetCDF-Data Files"
-msgstr ""
-
-#: plug-ins/common/editnc.C:100
-#, c-format
-msgid "Gxsm Editnc Plugin %s"
-msgstr ""
-
-#: plug-ins/common/editnc.C:145 plug-ins/common/listplugins.C:200
-#: plug-ins/common/queryDSPinfo.C:106 plug-ins/control/CCDControl.C:196
-#: plug-ins/control/DSPControl.C:282 plug-ins/control/DSPMover.C:234
-#: plug-ins/control/DSPPeakFind.C:173 plug-ins/control/DSPProbe.C:288
-#: plug-ins/control/DriftComp.C:177 plug-ins/control/SpaLeedControl.C:186
-#: plug-ins/control/rhk_scancontrol.C:383
-#: plug-ins/math/arithmetic/add_scan.C:207
-#: plug-ins/math/arithmetic/div_scan.C:210
-#: plug-ins/math/arithmetic/invert_z.C:204
-#: plug-ins/math/arithmetic/log_z.C:205 plug-ins/math/arithmetic/max.C:205
-#: plug-ins/math/arithmetic/mul_scan.C:207
-#: plug-ins/math/arithmetic/sub_scan.C:207
-#: plug-ins/math/background/bg_z_drift.C:216
-#: plug-ins/math/background/bggamma.C:211
-#: plug-ins/math/background/parabolregress.C:225
-#: plug-ins/math/background/pass_cc.C:207
-#: plug-ins/math/background/plane3pkt.C:138
-#: plug-ins/math/background/plane_max_prop.C:227
-#: plug-ins/math/background/stop_ccr.C:207 plug-ins/math/convert/to_byte.C:205
-#: plug-ins/math/convert/to_complex.C:204
-#: plug-ins/math/convert/to_double.C:201 plug-ins/math/convert/to_float.C:201
-#: plug-ins/math/convert/to_long.C:205 plug-ins/math/convert/to_short.C:205
-#: plug-ins/math/filter1d/diff.C:201 plug-ins/math/filter1d/koehler.C:223
-#: plug-ins/math/filter1d/linear_stat_diff.C:227
-#: plug-ins/math/filter1d/repair_cs.C:125 plug-ins/math/filter2d/Tderive.C:201
-#: plug-ins/math/filter2d/curvature.C:201
-#: plug-ins/math/filter2d/local_height.C:201
-#: plug-ins/math/filter2d/smallconvol.C:134
-#: plug-ins/math/filter2d/smooth.C:207 plug-ins/math/filter2d/stat_diff.C:205
-#: plug-ins/math/misc/findlocmax.C:144 plug-ins/math/misc/psdadd.C:133
-#: plug-ins/math/misc/shape.C:208
-#: plug-ins/math/statistik/VacancyLineAnalysis.C:296
-#: plug-ins/math/statistik/autocorrelation.C:211
-#: plug-ins/math/statistik/baseinfo.C:244
-#: plug-ins/math/statistik/histoHOP.C:87
-#: plug-ins/math/statistik/histogram.C:148
-#: plug-ins/math/statistik/islandlbl.C:123
-#: plug-ins/math/statistik/polarhist.C:258
-#: plug-ins/math/statistik/slopeabs.C:223
-#: plug-ins/math/statistik/slopedir.C:224 plug-ins/math/statistik/spasim.C:163
-#: plug-ins/math/statistik/spasimkz.C:188
-#: plug-ins/math/statistik/stepcount.C:214
-#: plug-ins/math/statistik/vorlage.C:291
-#: plug-ins/math/transform/OctoCorr.C:236 plug-ins/math/transform/affine.C:140
-#: plug-ins/math/transform/flip_diagonal.C:206
-#: plug-ins/math/transform/merge_h.C:211 plug-ins/math/transform/merge_v.C:207
-#: plug-ins/math/transform/mirror_x.C:209
-#: plug-ins/math/transform/mirror_y.C:209
-#: plug-ins/math/transform/quenchscan.C:207
-#: plug-ins/math/transform/rotate.C:127
-#: plug-ins/math/transform/scalescan.C:205
-#: plug-ins/math/transform/shear_x.C:120 plug-ins/math/transform/shear_y.C:120
-#: plug-ins/math/transform/shiftarea.C:216 plug-ins/scan/nanoimport.C:158
-#: plug-ins/scan/sdfimport.C:169
-msgid "(C) 2000 the Free Software Foundation"
-msgstr ""
-
-#: plug-ins/common/editnc.C:162
-msgid "NC file to edit"
-msgstr ""
-
-#: plug-ins/common/editnc.C:322
-msgid "Edit NC File"
-msgstr ""
-
-#: plug-ins/common/listplugins.C:163
-msgid "Plugin Details"
-msgstr ""
-
-#: plug-ins/common/listplugins.C:164
-msgid "List/Configure available Gxsm Plugins"
-msgstr ""
-
-#: plug-ins/common/listplugins.C:176
-msgid ""
-"Plugin Control for Gxsm:\n"
-"\n"
-"- View Gxsm-Plugin details and status\n"
-"- Call plugins About or Configurationfunction\n"
-"Plugin written in inspiration of \"The Gimp\" - Plugin Details:\n"
-"Displays plugin detailsHelps browse the plugin menus system. You can search "
-"for plugin names, sort by name or menu location and you can view a tree "
-"representation of the plugin menus. Can also be of help to find where new "
-"plugins have installed themselves in the menuing system"
-msgstr ""
-
-#: plug-ins/common/listplugins.C:191
-#, c-format
-msgid "Gxsm Plugin Details %s"
-msgstr ""
-
-#. the dialog box
-#: plug-ins/common/listplugins.C:260
-msgid "Plugin Descriptions"
-msgstr ""
-
-#. list : list in a scrolled_win
-#: plug-ins/common/listplugins.C:312
-msgid "Menu Path"
-msgstr ""
-
-#: plug-ins/common/listplugins.C:313
-msgid "Entry"
-msgstr ""
-
-#: plug-ins/common/listplugins.C:314 plug-ins/common/listplugins.C:346
-#: plug-ins/common/listplugins.C:642
-msgid "Name"
-msgstr ""
-
-#: plug-ins/common/listplugins.C:315 plug-ins/common/listplugins.C:347
-msgid "Type"
-msgstr ""
-
-#: plug-ins/common/listplugins.C:338
-msgid "List View"
-msgstr ""
-
-#. notebook->ctree
-#: plug-ins/common/listplugins.C:345
-msgid "Menu Path/Name"
-msgstr ""
-
-#: plug-ins/common/listplugins.C:366
-msgid "Tree View"
-msgstr ""
-
-#: plug-ins/common/listplugins.C:386
-msgid "Search:"
-msgstr ""
-
-#: plug-ins/common/listplugins.C:397 plug-ins/common/listplugins.C:468
-msgid "Details >>"
-msgstr ""
-
-#: plug-ins/common/listplugins.C:458
-msgid "Details <<"
-msgstr ""
-
-#. Number of plugins
-#: plug-ins/common/listplugins.C:598
-#, c-format
-msgid "Number of Plugin Interfaces: %d"
-msgstr ""
-
-#. menu path
-#: plug-ins/common/listplugins.C:616
-msgid "Menu Path:"
-msgstr ""
-
-#. show GxsmPlugin Infos
-#: plug-ins/common/listplugins.C:641
-msgid "Plugin"
-msgstr ""
-
-#: plug-ins/common/listplugins.C:643
-msgid "Description"
-msgstr ""
-
-#: plug-ins/common/listplugins.C:644
-msgid "Category"
-msgstr ""
-
-#: plug-ins/common/listplugins.C:646
+#: core-source-meson/gxsm4-popupmenus.ui:175
 #, fuzzy
-msgid "Authors"
+msgid "Red Profile"
+msgstr "In Datei"
+
+#: core-source-meson/gxsm4-popupmenus.ui:179
+msgid "Add Blue Profile (CH+1)"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:183
+#, fuzzy
+msgid "Show World"
+msgstr "Zeige Kreis"
+
+#: core-source-meson/gxsm4-popupmenus.ui:187
+msgid "Palette"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:191
+msgid "Smart Scale"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:195
+msgid "Native RGB"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:199
+#, fuzzy
+msgid "Coordinates"
+msgstr "Position übernehmen"
+
+#: core-source-meson/gxsm4-popupmenus.ui:202
+msgid "Absolute"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:207
+msgid "Relative"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:212
+msgid "Pixels"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:219
+msgid "Zoom In"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:223
+msgid "Zoom Out"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:227
+msgid "Zoom"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:231
+#, fuzzy
+msgid "Auto"
 msgstr "AutoDarst"
 
-#: plug-ins/common/listplugins.C:648
-msgid "Info"
+#: core-source-meson/gxsm4-popupmenus.ui:236
+msgid "10:1"
 msgstr ""
 
-#: plug-ins/common/listplugins.C:650
-msgid "Status"
+#: core-source-meson/gxsm4-popupmenus.ui:241
+msgid "5:1"
 msgstr ""
 
-#: plug-ins/common/listplugins.C:658
-msgid "Init"
+#: core-source-meson/gxsm4-popupmenus.ui:246
+msgid "4:1"
 msgstr ""
 
-#: plug-ins/common/listplugins.C:659
-msgid "Query"
+#: core-source-meson/gxsm4-popupmenus.ui:251
+msgid "3:1"
 msgstr ""
 
-#: plug-ins/common/listplugins.C:662 plug-ins/common/listplugins.C:673
-msgid "Call"
+#: core-source-meson/gxsm4-popupmenus.ui:256
+msgid "2:1"
 msgstr ""
 
-#: plug-ins/common/listplugins.C:670
-msgid "About"
+#: core-source-meson/gxsm4-popupmenus.ui:261
+msgid "1:1"
 msgstr ""
 
-#: plug-ins/common/listplugins.C:681
-msgid "Configure"
+#: core-source-meson/gxsm4-popupmenus.ui:266
+msgid "1:2"
 msgstr ""
 
-#: plug-ins/common/listplugins.C:683
-msgid "Run"
+#: core-source-meson/gxsm4-popupmenus.ui:271
+msgid "1:3"
 msgstr ""
 
-#: plug-ins/common/listplugins.C:684
-msgid "Cleanup"
+#: core-source-meson/gxsm4-popupmenus.ui:276
+msgid "1:4"
 msgstr ""
 
-#: plug-ins/common/queryDSPinfo.C:83
-msgid "Hardware Info"
+#: core-source-meson/gxsm4-popupmenus.ui:281
+msgid "1:5"
 msgstr ""
 
-#: plug-ins/common/queryDSPinfo.C:84
-msgid "Ask the DSP/hardware driver to report informations"
+#: core-source-meson/gxsm4-popupmenus.ui:286
+msgid "1:10"
 msgstr ""
 
-#: plug-ins/common/queryDSPinfo.C:97
-#, c-format
-msgid "queryDSPinfo Plugin %s"
+#: core-source-meson/gxsm4-popupmenus.ui:295
+msgid "Objects"
 msgstr ""
 
-#: plug-ins/control/CCDControl.C:97 plug-ins/control/DSPControl.C:186
-#: plug-ins/control/DSPMover.C:132 plug-ins/control/DSPPeakFind.C:98
-#: plug-ins/control/DSPProbe.C:215 plug-ins/control/DriftComp.C:96
-#: plug-ins/control/NanoPlott.C:114 plug-ins/control/SpaLeedControl.C:95
-#: plug-ins/control/nano_manipulator.C:103
-#: plug-ins/control/spm_scancontrol.C:144
-#: plug-ins/control/rhk_scancontrol.C:137
-#: plug-ins/control/rhk_scancontrol.C:343
-msgid "_Windows/"
+#: core-source-meson/gxsm4-popupmenus.ui:299
+msgid "Rectangle"
 msgstr ""
 
-#: plug-ins/control/CCDControl.C:98 plug-ins/control/CCDControl.C:247
-msgid "CCD Control"
-msgstr ""
-
-#: plug-ins/control/CCDControl.C:99
-msgid "open the CCD exposure controlwindow"
-msgstr ""
-
-#: plug-ins/control/CCDControl.C:111
-msgid ""
-"Gxsm CCDControl Plugin:\n"
-"This plugin runs a control window to set CCD exposure time and monitoring "
-"control mode."
-msgstr ""
-
-#: plug-ins/control/CCDControl.C:117
-#, c-format
-msgid "Gxsm CCDControl plugin %s"
-msgstr ""
-
-#: plug-ins/control/CCDControl.C:185 plug-ins/control/DSPControl.C:271
-#: plug-ins/control/DSPMover.C:223 plug-ins/control/DSPPeakFind.C:162
-#: plug-ins/control/DSPProbe.C:277 plug-ins/control/DriftComp.C:166
-#: plug-ins/control/NanoPlott.C:195 plug-ins/control/SpaLeedControl.C:175
-#: plug-ins/control/nano_manipulator.C:171
-#: plug-ins/control/spm_scancontrol.C:329
-#: plug-ins/control/rhk_scancontrol.C:349
-#: plug-ins/math/statistik/islandlbl.C:105 plug-ins/scan/WSxM_io.C:185
-#: plug-ins/scan/example_im_export.C:188 plug-ins/scan/omicron_io.C:208
-#: plug-ins/scan/primitiveimexport.C:253
-msgid "Plugin query has attached "
-msgstr ""
-
-#: plug-ins/control/CCDControl.C:187
-msgid ": CCDControl is created."
-msgstr ""
-
-#. ========================================
-#: plug-ins/control/CCDControl.C:254
-msgid "CCD-Camera Settings"
-msgstr ""
-
-#: plug-ins/control/CCDControl.C:267
-msgid "CCD"
-msgstr ""
-
-#: plug-ins/control/DSPControl.C:188
-msgid "open the DSP feedback/scan controlwindow"
-msgstr ""
-
-#: plug-ins/control/DSPControl.C:201
-msgid ""
-"Gxsm DSPControl Plugin:\n"
-"This plugin runs a control window to set the DSP feedback and scan "
-"characteristics.\n"
-"The digital feedback can be turned on and off, All feedback constants (CP, "
-"CI, CS (slope) are controlled here.\n"
-"Via scan characteristics the digital DSP vector scan generator is programmed."
-msgstr ""
-
-#: plug-ins/control/DSPControl.C:212
-#, c-format
-msgid "Gxsm DSPControl plugin %s"
-msgstr ""
-
-#: plug-ins/control/DSPControl.C:273
-msgid ": DSPControl is created."
-msgstr ""
-
-#. ========================================
-#: plug-ins/control/DSPControl.C:347
-msgid "FB Characteristics for <-> or -> Scandir in Dual Mode"
-msgstr ""
-
-#: plug-ins/control/DSPControl.C:360
-msgid "FB Switch"
-msgstr ""
-
-#: plug-ins/control/DSPControl.C:365
-msgid "Feed Back"
-msgstr ""
-
-#: plug-ins/control/DSPControl.C:372
-msgid "Dual DSP Settings"
-msgstr ""
-
-#. ========================================
-#: plug-ins/control/DSPControl.C:419
-msgid "Scan Characteristics"
-msgstr ""
-
-#. ======================================== 2nd DSP Set in Dual Mode
-#: plug-ins/control/DSPControl.C:477
-msgid "FB and Scan Characteristics for <- Scan Dir in Dual Mode"
-msgstr ""
-
-#. ======================================== Piezo Drive / Amplifier Settings
-#: plug-ins/control/DSPControl.C:564
-msgid "Piezo Drive Settings"
-msgstr ""
-
-#: plug-ins/control/DSPMover.C:133
-msgid "DSP Mover"
-msgstr ""
-
-#: plug-ins/control/DSPMover.C:134
-msgid "open the DSP Mover controlwindow"
-msgstr ""
-
-#: plug-ins/control/DSPMover.C:146
-msgid ""
-"Gxsm DSPMover Plugin:\n"
-"This plugin runs a control window to send slider/mover motion commands to "
-"the DSP.\n"
-"There is a autoapproch control (STM/AFM: Slider and Besocke Type) an a "
-"general mover/slider motion control."
-msgstr ""
-
-#: plug-ins/control/DSPMover.C:156
-#, c-format
-msgid "Gxsm DSPMover plugin %s"
-msgstr ""
-
-#: plug-ins/control/DSPMover.C:225
-msgid ": DSPMover is created."
-msgstr ""
-
-#: plug-ins/control/DSPPeakFind.C:99
-msgid "DSP PeakFind"
-msgstr ""
-
-#: plug-ins/control/DSPPeakFind.C:100
-msgid "open the DSP Peak Finder controlwindow"
-msgstr ""
-
-#: plug-ins/control/DSPPeakFind.C:112
-msgid ""
-"Gxsm DSPPeakFind Plugin:\n"
-"This plugin runs a controls window to send general \"PeakFind-Requests\" to "
-"the DSP. PeakFindmodes are used to follow and monitorPeakintensities by SPA-"
-"LEED."
-msgstr ""
-
-#: plug-ins/control/DSPPeakFind.C:120
-#, c-format
-msgid "Gxsm DSPPeakFind plugin %s"
-msgstr ""
-
-#: plug-ins/control/DSPPeakFind.C:164
-msgid ": DSPPeakFind is created."
-msgstr ""
-
-#: plug-ins/control/DSPProbe.C:216
-msgid "DSP Probe"
-msgstr ""
-
-#: plug-ins/control/DSPProbe.C:217
-msgid "open the DSP probe controlwindow"
-msgstr ""
-
-#: plug-ins/control/DSPProbe.C:229
-msgid ""
-"Gxsm DSPProbe Plugin:\n"
-"This plugin runs a controls window to send general \"Probe-Requests\" to the "
-"DSP. Probemodes are used to run force-distance curves (AFM), or some STS "
-"(STM)."
-msgstr ""
-
-#: plug-ins/control/DSPProbe.C:237
-#, c-format
-msgid "Gxsm DSPProbe plugin %s"
-msgstr ""
-
-#: plug-ins/control/DSPProbe.C:279
-msgid ": DSPProbe is created."
-msgstr ""
-
-#: plug-ins/control/DriftComp.C:97
-msgid "Drift Comp."
-msgstr ""
-
-#: plug-ins/control/DriftComp.C:98
-msgid "open the drift compensation controlwindow"
-msgstr ""
-
-#: plug-ins/control/DriftComp.C:110
-msgid ""
-"Gxsm DriftComp Plugin:\n"
-"This plugin runs a control window to enable drift-compensation between scans "
-"(movie). Therfore a drift speed and direction can be specified.\n"
-"May be extended to inner scan corrections... PZ"
-msgstr ""
-
-#: plug-ins/control/DriftComp.C:118
-#, c-format
-msgid "Gxsm DriftComp plugin %s"
-msgstr ""
-
-#: plug-ins/control/DriftComp.C:168
-msgid ": DriftComp is created."
-msgstr ""
-
-#. ========================================
-#: plug-ins/control/DriftComp.C:242
-msgid "thermic drift"
-msgstr ""
-
-#: plug-ins/control/NanoPlott.C:115
-msgid "Nano Plotter"
-msgstr ""
-
-#: plug-ins/control/NanoPlott.C:116 plug-ins/control/nano_manipulator.C:105
-msgid "open the Nano Plotter Control"
-msgstr ""
-
-#: plug-ins/control/NanoPlott.C:128
-msgid ""
-"Gxsm NanoPlotter Plugin:\n"
-"This plugin runs a control window to do simple HPGL 'Nano Plotting'.\n"
-"\n"
-"Supported Commands are PU (PenUp) and PD (PenDown)\n"
-"to given coordinates X,Y.\n"
-"Syntax PenUp movement:   'PU X,Z;'\n"
-"Syntax PenDown movement: 'PD X,Z;'\n"
-"\n"
-"Example Plot File of a 'square plott':\n"
-"PU 0,0;\n"
-"PD 100,0;\n"
-"PD 100,100;\n"
-"PD 0,100;\n"
-"PD 0,0;\n"
-msgstr ""
-
-#: plug-ins/control/NanoPlott.C:144
-#, c-format
-msgid "Gxsm NanoPlott plugin %s"
-msgstr ""
-
-#: plug-ins/control/NanoPlott.C:197
-msgid ": NanoPlott is created."
-msgstr ""
-
-#: plug-ins/control/NanoPlott.C:206 plug-ins/control/nano_manipulator.C:182
-#: plug-ins/control/spm_scancontrol.C:361 plug-ins/scan/WSxM_io.C:215
-#: plug-ins/scan/example_im_export.C:218 plug-ins/scan/omicron_io.C:241
-#: plug-ins/scan/primitiveimexport.C:280
-msgid "(C) 2001 the Free Software Foundation"
-msgstr ""
-
-#: plug-ins/control/NanoPlott.C:296
-msgid "Settings for Move: PU X,Y;"
-msgstr ""
-
-#. ========================================
-#: plug-ins/control/NanoPlott.C:338
-msgid "Settings for Plot: PD X,Y;"
-msgstr ""
-
-#. ========================================
-#: plug-ins/control/NanoPlott.C:380
-msgid "Nano Plot Settings"
-msgstr ""
-
-#: plug-ins/control/SpaLeedControl.C:96
-msgid "SPA-LEED Ctrl"
-msgstr ""
-
-#: plug-ins/control/SpaLeedControl.C:97
-msgid "open the SPA-LEED controlwindow"
-msgstr ""
-
-#: plug-ins/control/SpaLeedControl.C:109
-msgid ""
-"Gxsm SpaLeedControl Plugin:\n"
-"This plugin runs a control window to change the SPALEED simulator settimgs."
-msgstr ""
-
-#: plug-ins/control/SpaLeedControl.C:115
-#, c-format
-msgid "Gxsm SpaLeedControl plugin %s"
-msgstr ""
-
-#: plug-ins/control/SpaLeedControl.C:177
-msgid ": SpaLeedControl is created."
-msgstr ""
-
-#: plug-ins/control/SpaLeedControl.C:251
-msgid "SPA-LEED Settings"
-msgstr ""
-
-#. ========================================
-#: plug-ins/control/SpaLeedControl.C:258
-msgid "Leybold SPA-LEED Control"
-msgstr ""
-
-#. ========================================
-#: plug-ins/control/SpaLeedControl.C:267
-msgid "Energy"
-msgstr ""
-
-#. ========================================
-#: plug-ins/control/SpaLeedControl.C:294
-msgid "Focus"
-msgstr ""
-
-#. ========================================
-#: plug-ins/control/SpaLeedControl.C:319
-msgid "Channeltron"
-msgstr ""
-
-#. ========================================
-#: plug-ins/control/SpaLeedControl.C:347
-msgid "Experiment"
-msgstr ""
-
-#: plug-ins/control/SpaLeedControl.C:371
-msgid "Epitaxy"
-msgstr ""
-
-#: plug-ins/control/nano_manipulator.C:104
-msgid "Nano Manipulator"
-msgstr ""
-
-#: plug-ins/control/nano_manipulator.C:117
-msgid "Gxsm nano_manipulator Plugin:\n"
-msgstr ""
-
-#: plug-ins/control/nano_manipulator.C:121
-#, c-format
-msgid "Gxsm nano_manipulator plugin %s"
-msgstr ""
-
-#: plug-ins/control/nano_manipulator.C:173
-msgid ": nano_manipulator is created."
-msgstr ""
-
-#: plug-ins/control/nano_manipulator.C:270
-msgid "Settings for movements"
-msgstr ""
-
-#. ========================================
-#: plug-ins/control/nano_manipulator.C:312
-msgid "Settings for actions"
-msgstr ""
-
-#. ========================================
-#: plug-ins/control/nano_manipulator.C:354
-msgid "Current Nano Manipulator Position"
-msgstr ""
-
-#: plug-ins/control/spm_scancontrol.C:145
-#: plug-ins/control/spm_scancontrol.C:314
-#: plug-ins/control/spm_scancontrol.C:443
-msgid "SPM Scan Control"
-msgstr ""
-
-#: plug-ins/control/spm_scancontrol.C:146
+#: core-source-meson/gxsm4-popupmenus.ui:304
 #, fuzzy
-msgid "open SPM Scan Control Window"
-msgstr "Fernsteuerungskontrolle"
+msgid "Point"
+msgstr "Punkt"
 
-#. Text used in Aboutbox, please update!!
-#: plug-ins/control/spm_scancontrol.C:167
-msgid ""
-"Gxsm SPM Scan Generator and Control Plugin\n"
-"\n"
-"This plugin manages the SPM scanning process\n"
-"and multichannel/layer dataaquisitation."
+#: core-source-meson/gxsm4-popupmenus.ui:309
+msgid "Marker"
 msgstr ""
 
-#: plug-ins/control/spm_scancontrol.C:175
-#, c-format
-msgid "Gxsm spm_scancontrol plugin %s"
+#: core-source-meson/gxsm4-popupmenus.ui:314
+msgid "Line"
+msgstr "Linie"
+
+#: core-source-meson/gxsm4-popupmenus.ui:319
+msgid "Circle"
+msgstr "Kreis"
+
+#: core-source-meson/gxsm4-popupmenus.ui:324
+msgid "PolyLine"
+msgstr "Mehrfach Linie"
+
+#: core-source-meson/gxsm4-popupmenus.ui:329
+msgid "Lattice"
 msgstr ""
 
-#: plug-ins/control/spm_scancontrol.C:314
-msgid "SPM Scan Control Window for advanced control"
+#: core-source-meson/gxsm4-popupmenus.ui:334
+msgid "Parabel"
 msgstr ""
 
-#: plug-ins/control/spm_scancontrol.C:323
-msgid "Windows/"
-msgstr ""
-
-#: plug-ins/control/spm_scancontrol.C:331
-#: plug-ins/control/rhk_scancontrol.C:351 plug-ins/scan/WSxM_io.C:187
-#: plug-ins/scan/example_im_export.C:190 plug-ins/scan/omicron_io.C:210
-#: plug-ins/scan/primitiveimexport.C:255
+#: core-source-meson/gxsm4-popupmenus.ui:339
 #, fuzzy
-msgid ": File IO Filters are ready to use"
-msgstr " ist geladen und verfügbar"
+msgid "Show Point"
+msgstr "Zeige Punkt"
 
-#: plug-ins/control/spm_scancontrol.C:380
-msgid "Windows/SPM Scan Control"
-msgstr ""
-
-#: plug-ins/control/rhk_scancontrol.C:138
-#: plug-ins/control/rhk_scancontrol.C:334
-msgid "RHK Scan Control"
-msgstr ""
-
-#: plug-ins/control/rhk_scancontrol.C:139
+#: core-source-meson/gxsm4-popupmenus.ui:344
 #, fuzzy
-msgid "open RHK Scan Control Window"
-msgstr "Fernsteuerungskontrolle"
+msgid "Show Line"
+msgstr "Zeige Linie"
 
-#. Text used in Aboutbox, please update!!
-#: plug-ins/control/rhk_scancontrol.C:161
-msgid ""
-"Gxsm RHK Scan Generator and Control Plugin\n"
-"\n"
-"This plugin manages the RHK scanning process\n"
-"and settings readings."
-msgstr ""
-
-#: plug-ins/control/rhk_scancontrol.C:169
-#, c-format
-msgid "Gxsm rhk_scancontrol plugin %s"
-msgstr ""
-
-#: plug-ins/control/rhk_scancontrol.C:334
-msgid "RHK Scan Control Window for advanced control"
-msgstr ""
-
-#: plug-ins/control/rhk_scancontrol.C:402
-msgid "_Windows/RHK Scan Control"
-msgstr ""
-
-#: plug-ins/control/rhk_scancontrol.C:515
+#: core-source-meson/gxsm4-popupmenus.ui:349
 #, fuzzy
-msgid "RHK Control"
-msgstr "Fernsteuerung..."
+msgid "Show Circle"
+msgstr "Zeige Kreis"
 
-#. Actions frame/vbox
-#: plug-ins/control/rhk_scancontrol.C:525
+#: core-source-meson/gxsm4-popupmenus.ui:354
+msgid "Disable"
+msgstr "Kein Objekt"
+
+#: core-source-meson/gxsm4-popupmenus.ui:359
+#: core-source-meson/gxsm4-popupmenus.ui:553
+msgid "Show Labels"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:363
+msgid "Legend"
+msgstr "Legende"
+
+#: core-source-meson/gxsm4-popupmenus.ui:372
+msgid "Z Scale Bar"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:377
+msgid "Z Scale Bar and Values"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:382
+msgid "X Bar1 + Z Scale Bar and Values"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:387
+msgid "X Bar2 + Z Scale Bar and Values"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:392
+msgid "X Bar3 + Z Scale Bar and Values-pllref"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:398
+msgid "Overlay"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:403
+msgid "Below"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:409
+msgid "Font Small"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:414
+msgid "Font Large"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:420
+msgid "Bar Purple"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:425
+msgid "Bar White"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:430
+msgid "Bar Black"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:435
+msgid "Bar Transparent"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:442
+msgid "Reset Counter"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:446
+#, fuzzy
+msgid "Show Counter"
+msgstr "Zeige Punkt"
+
+#: core-source-meson/gxsm4-popupmenus.ui:450
+msgid "Marker Group"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:454
+msgid "Red"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:459
+msgid "Green"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:464
+msgid "Blue"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:469
+#, fuzzy
+msgid "Yellow"
+msgstr "Folgen"
+
+#: core-source-meson/gxsm4-popupmenus.ui:474
+msgid "Magenta"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:479
+msgid "Cyan"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:486
+msgid "Local Radius"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:490
+msgid "Set R=2"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:495
+msgid "Set R=5"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:500
+msgid "Set R=10"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:505
+msgid "Set R=20"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:510
+msgid "Set R=50"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:515
+msgid "Set R=100"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:522
+msgid "All loc max "
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:526
+msgid "Remove all"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:530
+msgid "Remove active"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:536
+msgid "Events"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:540
+msgid "Open"
+msgstr "Öffnen"
+
+#: core-source-meson/gxsm4-popupmenus.ui:545
+#, fuzzy
+msgid "Show Probe"
+msgstr "Zeige Punkt"
+
+#: core-source-meson/gxsm4-popupmenus.ui:549
+#, fuzzy
+msgid "Show User"
+msgstr "Zeige Linie"
+
+#: core-source-meson/gxsm4-popupmenus.ui:557
+#: core-source-meson/gxsm4-popupmenus.ui:1189
+msgid "Verbose"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:561
+msgid "Remove All"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:565
+msgid "Remove Trails"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:570
+msgid "Sort"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:574
+msgid "by Index"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:579
+msgid "by Time"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:584
+msgid "by Bias"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:589
+msgid "by ZSetPoint"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:594
+msgid "do Re-Index"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:601
 #, fuzzy
 msgid "Actions"
 msgstr "Befehl"
 
-#: plug-ins/control/rhk_scancontrol.C:539
-msgid "Start"
+#: core-source-meson/gxsm4-popupmenus.ui:605
+msgid "SF1"
 msgstr ""
 
-#: plug-ins/control/rhk_scancontrol.C:555
-msgid "HS Capture"
+#: core-source-meson/gxsm4-popupmenus.ui:610
+msgid "SF2"
 msgstr ""
 
-#. 	gapp->RegisterPluginToolbarButton (G_OBJECT (button), "Toolbar_Scan_HsCapture");
-#: plug-ins/control/rhk_scancontrol.C:563
-msgid "Pause"
+#: core-source-meson/gxsm4-popupmenus.ui:615
+msgid "SF3"
 msgstr ""
 
-#. Parameters frame/vbox
-#: plug-ins/control/rhk_scancontrol.C:608
-msgid "Parameters"
+#: core-source-meson/gxsm4-popupmenus.ui:620
+msgid "SF4"
 msgstr ""
 
-#: plug-ins/control/rhk_scancontrol.C:663
-msgid "Refresh"
+#: core-source-meson/gxsm4-popupmenus.ui:625
+msgid "SF5"
 msgstr ""
 
-#: plug-ins/control/rhk_scancontrol.C:674
-msgid "Autoupdate!"
+#: core-source-meson/gxsm4-popupmenus.ui:630
+msgid "SF6"
 msgstr ""
 
-#. Menupath to position where it is appendet to
-#: plug-ins/math/arithmetic/add_scan.C:128
-#: plug-ins/math/arithmetic/div_scan.C:131
-#: plug-ins/math/arithmetic/invert_z.C:125
-#: plug-ins/math/arithmetic/log_z.C:126 plug-ins/math/arithmetic/max.C:126
-#: plug-ins/math/arithmetic/mul_scan.C:128
-#: plug-ins/math/arithmetic/sub_scan.C:128
-msgid "_Math/_Arithmetic/"
+#: core-source-meson/gxsm4-popupmenus.ui:635
+msgid "SF7"
 msgstr ""
 
-#. Menuentry
-#: plug-ins/math/arithmetic/add_scan.C:130
-msgid "Add X"
+#: core-source-meson/gxsm4-popupmenus.ui:640
+msgid "SF8"
 msgstr ""
 
-#. help text shown on menu
-#: plug-ins/math/arithmetic/add_scan.C:132
-msgid "adds active and X"
+#: core-source-meson/gxsm4-popupmenus.ui:645
+msgid "SF9"
 msgstr ""
 
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/arithmetic/add_scan.C:171
-msgid ""
-"Gxsm add_scan Plugin\n"
-"\n"
-"adds the active and X channel"
+#: core-source-meson/gxsm4-popupmenus.ui:650
+msgid "SF10"
 msgstr ""
 
-#: plug-ins/math/arithmetic/add_scan.C:177
-#, c-format
-msgid "Gxsm MathOneArg add_scan plugin %s"
+#: core-source-meson/gxsm4-popupmenus.ui:655
+msgid "SF11"
 msgstr ""
 
-#. Menuentry
-#: plug-ins/math/arithmetic/div_scan.C:133
-msgid "Div X"
+#: core-source-meson/gxsm4-popupmenus.ui:660
+msgid "SF12"
 msgstr ""
 
-#. help text shown on menu
-#: plug-ins/math/arithmetic/div_scan.C:135
-#: plug-ins/math/transform/flip_diagonal.C:131
-#: plug-ins/math/transform/mirror_x.C:134
-#: plug-ins/math/transform/mirror_y.C:134
-#: plug-ins/math/transform/quenchscan.C:132
-#: plug-ins/math/transform/scalescan.C:130
-msgid "This is a detailed help for my Plugin."
+#: core-source-meson/gxsm4-popupmenus.ui:672
+#: core-source-meson/gxsm4-popupmenus.ui:700
+#: core-source-meson/gxsm4-popupmenus.ui:728
+#: core-source-meson/gxsm4-popupmenus.ui:752
+msgid "Properties"
 msgstr ""
 
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/arithmetic/div_scan.C:174
-msgid ""
-"Gxsm div_scan Plugin\n"
-"\n"
-"Divide Active by X channel"
+#: core-source-meson/gxsm4-popupmenus.ui:676
+#: core-source-meson/gxsm4-popupmenus.ui:756
+msgid "Set current Offset to Point"
 msgstr ""
 
-#: plug-ins/math/arithmetic/div_scan.C:180
-#, c-format
-msgid "Gxsm MathOneArg div_scan plugin %s"
+#: core-source-meson/gxsm4-popupmenus.ui:680
+msgid "Global Reference Point"
 msgstr ""
 
-#. Menuentry
-#: plug-ins/math/arithmetic/invert_z.C:127
-msgid "Invert"
+#: core-source-meson/gxsm4-popupmenus.ui:684
+#: core-source-meson/gxsm4-popupmenus.ui:708
+msgid "Go Loc.Max."
 msgstr ""
 
-#. help text shown on menu
-#: plug-ins/math/arithmetic/invert_z.C:129
-msgid "Inverts Z values."
+#: core-source-meson/gxsm4-popupmenus.ui:688
+#: core-source-meson/gxsm4-popupmenus.ui:716
+#: core-source-meson/gxsm4-popupmenus.ui:740
+msgid "Dump"
 msgstr ""
 
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/arithmetic/invert_z.C:168
-msgid ""
-"Gxsm invert_z Plugin\n"
-"\n"
-"Inverts Z"
+#: core-source-meson/gxsm4-popupmenus.ui:692
+#: core-source-meson/gxsm4-popupmenus.ui:720
+#: core-source-meson/gxsm4-popupmenus.ui:744
+msgid "Remove"
 msgstr ""
 
-#: plug-ins/math/arithmetic/invert_z.C:174
-#, c-format
-msgid "Gxsm MathOneArg invert_z plugin %s"
+#: core-source-meson/gxsm4-popupmenus.ui:704
+msgid "Get Coordintes"
+msgstr "Position übernehmen"
+
+#: core-source-meson/gxsm4-popupmenus.ui:712
+#: core-source-meson/gxsm4-popupmenus.ui:732
+msgid "Add Node"
 msgstr ""
 
-#. Menuentry
-#: plug-ins/math/arithmetic/log_z.C:128
-msgid "Log"
+#: core-source-meson/gxsm4-popupmenus.ui:736
+msgid "Delete Node"
 msgstr ""
 
-#. help text shown on menu
-#: plug-ins/math/arithmetic/log_z.C:130
-msgid "applies log to all Z values"
-msgstr ""
-
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/arithmetic/log_z.C:169
-msgid ""
-"Gxsm log_z Plugin\n"
-"\n"
-"apply log Z, data is shifted to be >1 before."
-msgstr ""
-
-#: plug-ins/math/arithmetic/log_z.C:175
-#, c-format
-msgid "Gxsm MathOneArg log_z plugin %s"
-msgstr ""
-
-#. Menuentry
-#: plug-ins/math/arithmetic/max.C:128
-msgid "Max"
-msgstr ""
-
-#. help text shown on menu
-#: plug-ins/math/arithmetic/max.C:130
-msgid "max"
-msgstr ""
-
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/arithmetic/max.C:169
-msgid ""
-"Gxsm max Plugin\n"
-"\n"
-"max of two sources"
-msgstr ""
-
-#: plug-ins/math/arithmetic/max.C:175
-#, c-format
-msgid "Gxsm MathOneArg max plugin %s"
-msgstr ""
-
-#. Menuentry
-#: plug-ins/math/arithmetic/mul_scan.C:130
-msgid "Mul X"
-msgstr ""
-
-#. help text shown on menu
-#: plug-ins/math/arithmetic/mul_scan.C:132
-msgid "multiply X and active"
-msgstr ""
-
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/arithmetic/mul_scan.C:171
-msgid ""
-"Gxsm mul_scan Plugin\n"
-"\n"
-"Multiplies the active and X channel."
-msgstr ""
-
-#: plug-ins/math/arithmetic/mul_scan.C:177
-#, c-format
-msgid "Gxsm MathOneArg mul_scan plugin %s"
-msgstr ""
-
-#. Menuentry
-#: plug-ins/math/arithmetic/sub_scan.C:130
-msgid "Sub X"
-msgstr ""
-
-#. help text shown on menu
-#: plug-ins/math/arithmetic/sub_scan.C:132
-msgid "subtract X from active"
-msgstr ""
-
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/arithmetic/sub_scan.C:171
-msgid ""
-"Gxsm sub_scan Plugin\n"
-"\n"
-"Subtracts the X channel from the active channel."
-msgstr ""
-
-#: plug-ins/math/arithmetic/sub_scan.C:177
-#, c-format
-msgid "Gxsm MathOneArg sub_scan plugin %s"
-msgstr ""
-
-#. Menupath to position where it is appendet to
-#: plug-ins/math/background/bg_z_drift.C:137
-#: plug-ins/math/background/bggamma.C:126
-#: plug-ins/math/background/parabolregress.C:147
-#: plug-ins/math/background/pass_cc.C:128
-#: plug-ins/math/background/plane_max_prop.C:148
-#: plug-ins/math/background/stop_ccr.C:128
-msgid "_Math/_Background/"
-msgstr ""
-
-#. Menuentry
-#: plug-ins/math/background/bg_z_drift.C:139
-msgid "Z drift correct"
-msgstr ""
-
-#. help text shown on menu
-#: plug-ins/math/background/bg_z_drift.C:141
-msgid "Corrects a slow and smooth Z drifting using a polynominal fit."
-msgstr ""
-
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/background/bg_z_drift.C:180
-msgid ""
-"Gxsm bg_z_drift Plugin\n"
-"\n"
-"Corrects a slow and smooth Z drifting using a polynominal fit."
-msgstr ""
-
-#: plug-ins/math/background/bg_z_drift.C:186
-#, c-format
-msgid "Gxsm MathOneArg bg_z_drift plugin %s"
-msgstr ""
-
-#. Menuentry
-#: plug-ins/math/background/bggamma.C:128
-msgid "Gamma"
-msgstr ""
-
-#. help text shown on menu
-#: plug-ins/math/background/bggamma.C:130
-msgid "Apply Gammatransformation to Data"
-msgstr ""
-
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/background/bggamma.C:169
-msgid ""
-"Gxsm bggamma Plugin\n"
-"\n"
-"This Plugin does a gamma scaling of the Data:\n"
-"range/pow(range,gamma)*pow(dataval-datamin,gamma);"
-msgstr ""
-
-#: plug-ins/math/background/bggamma.C:181
-#, c-format
-msgid "Gxsm MathOneArg bggamma plugin %s"
-msgstr ""
-
-#. Menuentry
-#: plug-ins/math/background/parabolregress.C:149
-msgid "Parabola-Regression"
-msgstr ""
-
-#. help text shown on menu
-#: plug-ins/math/background/parabolregress.C:151
-msgid "Line by line 2nd order regression"
-msgstr ""
-
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/background/parabolregress.C:190
-msgid "Gxsm parabolregress Plugin\n"
-msgstr ""
-
-#: plug-ins/math/background/parabolregress.C:195
-#, c-format
-msgid "Gxsm MathOneArg parabolregress plugin %s"
-msgstr ""
-
-#. Menuentry
-#: plug-ins/math/background/pass_cc.C:130
-msgid "Pass CC"
-msgstr ""
-
-#. help text shown on menu
-#: plug-ins/math/background/pass_cc.C:132
-msgid "Pass band selection, C conj, all rectangles"
-msgstr ""
-
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/background/pass_cc.C:171
-msgid ""
-"Gxsm pass_cc Plugin\n"
-"\n"
-"Pass band selection, C conj, all rectangles"
-msgstr ""
-
-#: plug-ins/math/background/pass_cc.C:177
-#, c-format
-msgid "Gxsm MathOneArg pass_cc plugin %s"
-msgstr ""
-
-#: plug-ins/math/background/plane3pkt.C:99
-msgid "Plane 3Pkte"
-msgstr ""
-
-#: plug-ins/math/background/plane3pkt.C:100
-msgid "Plane subtraction, def. by 3 points"
-msgstr ""
-
-#: plug-ins/math/background/plane3pkt.C:116
-msgid ""
-"Gxsm Plane3pkt Plugin\n"
-"\n"
-"Abzug einer Ebene, def. by three points."
-msgstr ""
-
-#: plug-ins/math/background/plane3pkt.C:120
-#, c-format
-msgid "Gxsm MathOneArg plane3pkt plugin %s"
-msgstr ""
-
-#. Menuentry
-#: plug-ins/math/background/plane_max_prop.C:150
-msgid "Plane max prop"
-msgstr ""
-
-#. help text shown on menu
-#: plug-ins/math/background/plane_max_prop.C:152
-msgid "Calculates a max propability plane and subtracts it."
-msgstr ""
-
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/background/plane_max_prop.C:191
-msgid ""
-"Gxsm plane_max_prop Plugin\n"
-"\n"
-"Calculates a max propability plane and subtracts it."
-msgstr ""
-
-#: plug-ins/math/background/plane_max_prop.C:197
-#, c-format
-msgid "Gxsm MathOneArg plane_max_prop plugin %s"
-msgstr ""
-
-#. Menuentry
-#: plug-ins/math/background/stop_ccr.C:130
+#: core-source-meson/gxsm4-popupmenus.ui:760
 #, fuzzy
-msgid "Stop CC"
-msgstr "Halt"
+msgid "Save Event"
+msgstr "Objekte speichern"
 
-#. help text shown on menu
-#: plug-ins/math/background/stop_ccr.C:132
-msgid "Stop band zeroing, C conj., all rectangles"
+#: core-source-meson/gxsm4-popupmenus.ui:764
+msgid "Dump Event"
 msgstr ""
 
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/background/stop_ccr.C:171
-msgid ""
-"Gxsm stop_ccr Plugin\n"
-"\n"
-"Stop band zeroing, C conj., all rectangles"
-msgstr ""
-
-#: plug-ins/math/background/stop_ccr.C:177
-#, c-format
-msgid "Gxsm MathOneArg stop_ccr plugin %s"
-msgstr ""
-
-#. Menupath to position where it is appendet to
-#: plug-ins/math/convert/to_byte.C:126 plug-ins/math/convert/to_complex.C:125
-#: plug-ins/math/convert/to_double.C:122 plug-ins/math/convert/to_float.C:122
-#: plug-ins/math/convert/to_long.C:126 plug-ins/math/convert/to_short.C:126
-msgid "_Math/_Convert/"
-msgstr ""
-
-#. Menuentry
-#: plug-ins/math/convert/to_byte.C:128
-msgid "to byte"
-msgstr ""
-
-#. help text shown on menu
-#: plug-ins/math/convert/to_byte.C:130
-msgid "Converts a scan to type byte."
-msgstr ""
-
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/convert/to_byte.C:169
-msgid ""
-"Gxsm to_byte Plugin\n"
-"\n"
-"Convert to byte"
-msgstr ""
-
-#: plug-ins/math/convert/to_byte.C:175
-#, c-format
-msgid "Gxsm MathOneArg to_byte plugin %s"
-msgstr ""
-
-#. Menuentry
-#: plug-ins/math/convert/to_complex.C:127
-msgid "to complex"
-msgstr ""
-
-#. help text shown on menu
-#: plug-ins/math/convert/to_complex.C:129
-msgid "Converts a scan to type complex."
-msgstr ""
-
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/convert/to_complex.C:168
-msgid ""
-"Gxsm to_complex Plugin\n"
-"\n"
-"Convert to complex"
-msgstr ""
-
-#: plug-ins/math/convert/to_complex.C:174
-#, c-format
-msgid "Gxsm MathOneArg to_complex plugin %s"
-msgstr ""
-
-#. Menuentry
-#: plug-ins/math/convert/to_double.C:124
-msgid "to double"
-msgstr ""
-
-#. help text shown on menu
-#: plug-ins/math/convert/to_double.C:126
-msgid "Converts a scan to type double."
-msgstr ""
-
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/convert/to_double.C:165
-msgid ""
-"Gxsm to_double Plugin\n"
-"\n"
-"Convert to double"
-msgstr ""
-
-#: plug-ins/math/convert/to_double.C:171
-#, c-format
-msgid "Gxsm MathOneArg to_double plugin %s"
-msgstr ""
-
-#. Menuentry
-#: plug-ins/math/convert/to_float.C:124
-msgid "to float"
-msgstr ""
-
-#. help text shown on menu
-#: plug-ins/math/convert/to_float.C:126
-msgid "Converts a scan to type float."
-msgstr ""
-
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/convert/to_float.C:165
-msgid ""
-"Gxsm to_float Plugin\n"
-"\n"
-"Convert to float"
-msgstr ""
-
-#: plug-ins/math/convert/to_float.C:171
-#, c-format
-msgid "Gxsm MathOneArg to_float plugin %s"
-msgstr ""
-
-#. Menuentry
-#: plug-ins/math/convert/to_long.C:128
-msgid "to long"
-msgstr ""
-
-#. help text shown on menu
-#: plug-ins/math/convert/to_long.C:130
-msgid "Converts a scan to type long."
-msgstr ""
-
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/convert/to_long.C:169
-msgid ""
-"Gxsm to_long Plugin\n"
-"\n"
-"Convert to long"
-msgstr ""
-
-#: plug-ins/math/convert/to_long.C:175
-#, c-format
-msgid "Gxsm MathOneArg to_long plugin %s"
-msgstr ""
-
-#. Menuentry
-#: plug-ins/math/convert/to_short.C:128
-msgid "to short"
-msgstr ""
-
-#. help text shown on menu
-#: plug-ins/math/convert/to_short.C:130
-msgid "Converts a scan to type short."
-msgstr ""
-
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/convert/to_short.C:169
-msgid ""
-"Gxsm to_short Plugin\n"
-"\n"
-"Convert to short"
-msgstr ""
-
-#: plug-ins/math/convert/to_short.C:175
-#, c-format
-msgid "Gxsm MathOneArg to_short plugin %s"
-msgstr ""
-
-#. Menupath to position where it is appendet to
-#: plug-ins/math/filter1d/diff.C:122 plug-ins/math/filter1d/koehler.C:144
-#: plug-ins/math/filter1d/linear_stat_diff.C:148
-#: plug-ins/math/statistik/vorlage.C:200
-msgid "_Math/Filter _1D/"
-msgstr ""
-
-#. Menuentry
-#: plug-ins/math/filter1d/diff.C:124
-msgid "Diff"
-msgstr ""
-
-#. help text shown on menu
-#: plug-ins/math/filter1d/diff.C:126
-msgid "1D Differentation"
-msgstr ""
-
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/filter1d/diff.C:165
-msgid ""
-"Gxsm diff Plugin\n"
-"\n"
-"1D Differentation"
-msgstr ""
-
-#: plug-ins/math/filter1d/diff.C:171
-#, c-format
-msgid "Gxsm MathOneArg diff plugin %s"
-msgstr ""
-
-#. Menuentry
-#: plug-ins/math/filter1d/koehler.C:146
-msgid "Koehler"
-msgstr ""
-
-#. help text shown on menu
-#: plug-ins/math/filter1d/koehler.C:148
-msgid "Koehler filter"
-msgstr ""
-
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/filter1d/koehler.C:187
-msgid ""
-"Gxsm koehler Plugin\n"
-"\n"
-"This is the Koehler filter, it does 1D edge enhancement."
-msgstr ""
-
-#: plug-ins/math/filter1d/koehler.C:193
-#, c-format
-msgid "Gxsm MathOneArg koehler plugin %s"
-msgstr ""
-
-#. Menuentry
-#: plug-ins/math/filter1d/linear_stat_diff.C:150
-msgid "Lin stat diff"
-msgstr ""
-
-#. help text shown on menu
-#: plug-ins/math/filter1d/linear_stat_diff.C:152
-msgid "Linear stationary differentation"
-msgstr ""
-
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/filter1d/linear_stat_diff.C:191
-msgid ""
-"Gxsm linear_stat_diff Plugin\n"
-"\n"
-"Linear stationary differentation"
-msgstr ""
-
-#: plug-ins/math/filter1d/linear_stat_diff.C:197
-#, c-format
-msgid "Gxsm MathOneArg linear_stat_diff plugin %s"
-msgstr ""
-
-#: plug-ins/math/filter1d/repair_cs.C:86
-msgid "Repair"
-msgstr ""
-
-#: plug-ins/math/filter1d/repair_cs.C:87
-msgid "Fix buggy Scans (from special xxsm version): do column swap"
-msgstr ""
-
-#: plug-ins/math/filter1d/repair_cs.C:103
-msgid ""
-"Gxsm Repair_Cs Plugin\n"
-"\n"
-"Bug Fix for some old scans (Xxsm)."
-msgstr ""
-
-#: plug-ins/math/filter1d/repair_cs.C:107
-#, c-format
-msgid "Gxsm MathOneArg repair_cs plugin %s"
-msgstr ""
-
-#. Menupath to position where it is appendet to
-#: plug-ins/math/filter2d/Tderive.C:122 plug-ins/math/filter2d/curvature.C:122
-#: plug-ins/math/filter2d/local_height.C:122
-#: plug-ins/math/filter2d/smooth.C:128 plug-ins/math/filter2d/stat_diff.C:126
-msgid "_Math/Filter _2D/"
-msgstr ""
-
-#. Menuentry
-#: plug-ins/math/filter2d/Tderive.C:124
-msgid "T derive"
-msgstr ""
-
-#. help text shown on menu
-#: plug-ins/math/filter2d/Tderive.C:126
-msgid "2D Tderive"
-msgstr ""
-
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/filter2d/Tderive.C:165
-msgid ""
-"Gxsm Tderive Plugin\n"
-"\n"
-"2D Tderive"
-msgstr ""
-
-#: plug-ins/math/filter2d/Tderive.C:171
-#, c-format
-msgid "Gxsm MathOneArg Tderive plugin %s"
-msgstr ""
-
-#. Menuentry
-#: plug-ins/math/filter2d/curvature.C:124
-msgid "Curvature"
-msgstr ""
-
-#. help text shown on menu
-#: plug-ins/math/filter2d/curvature.C:126
-msgid "compute local curvature"
-msgstr ""
-
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/filter2d/curvature.C:165
-msgid ""
-"Gxsm curvature Plugin\n"
-"\n"
-"Computes the local curvature using convolution."
-msgstr ""
-
-#: plug-ins/math/filter2d/curvature.C:171
-#, c-format
-msgid "Gxsm MathOneArg curvature plugin %s"
-msgstr ""
-
-#. Menuentry
-#: plug-ins/math/filter2d/local_height.C:124
-msgid "Local height"
-msgstr ""
-
-#. help text shown on menu
-#: plug-ins/math/filter2d/local_height.C:126
-msgid "computes locale height using a convolution filter"
-msgstr ""
-
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/filter2d/local_height.C:165
-msgid ""
-"Gxsm local_height Plugin\n"
-"\n"
-"computes locale height using a convolution filter"
-msgstr ""
-
-#: plug-ins/math/filter2d/local_height.C:171
-#, c-format
-msgid "Gxsm MathOneArg local_height plugin %s"
-msgstr ""
-
-#: plug-ins/math/filter2d/smallconvol.C:79
-msgid "Small Convol"
-msgstr ""
-
-#: plug-ins/math/filter2d/smallconvol.C:80
-msgid "Sorry, no help for smallconvol filter!"
-msgstr ""
-
-#: plug-ins/math/filter2d/smallconvol.C:96
-msgid ""
-"Gxsm Smallconvol Plugin\n"
-"\n"
-"Matrix Convolution PlugIn."
-msgstr ""
-
-#: plug-ins/math/filter2d/smallconvol.C:100
-#, c-format
-msgid "Gxsm MathOneArg smallconvol plugin %s"
-msgstr ""
-
-#: plug-ins/math/filter2d/smallconvol.C:149
-msgid "Small Convol Kernel Setup"
-msgstr ""
-
-#. help text shown on menu
-#: plug-ins/math/filter2d/smooth.C:132
-msgid "Gaus smooth"
-msgstr ""
-
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/filter2d/smooth.C:171
-msgid ""
-"Gxsm smooth Plugin\n"
-"\n"
-"Gaus smooth using a 2D convolution."
-msgstr ""
-
-#: plug-ins/math/filter2d/smooth.C:177
-#, c-format
-msgid "Gxsm MathOneArg smooth plugin %s"
-msgstr ""
-
-#. Menuentry
-#: plug-ins/math/filter2d/stat_diff.C:128
-msgid "Stat Diff"
-msgstr ""
-
-#. help text shown on menu
-#: plug-ins/math/filter2d/stat_diff.C:130
-msgid "Stationary Differentiation"
-msgstr ""
-
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/filter2d/stat_diff.C:169
-msgid ""
-"Gxsm stat_diff Plugin\n"
-"\n"
-"Stationary Differentiation"
-msgstr ""
-
-#: plug-ins/math/filter2d/stat_diff.C:175
-#, c-format
-msgid "Gxsm MathOneArg stat_diff plugin %s"
-msgstr ""
-
-#. Menupath to position where it is appendet to
-#: plug-ins/math/misc/findlocmax.C:104 plug-ins/math/misc/layersmooth.C:125
-#: plug-ins/math/misc/psdadd.C:93 plug-ins/math/misc/shape.C:142
-#: plug-ins/math/misc/spectrocut.C:111
-msgid "_Math/_Misc/"
-msgstr ""
-
-#: plug-ins/math/misc/findlocmax.C:105
-msgid "Find Loc Max"
-msgstr ""
-
-#: plug-ins/math/misc/findlocmax.C:106
-msgid "Sorry, no help for findlocmax filter!"
-msgstr ""
-
-#: plug-ins/math/misc/findlocmax.C:122
-msgid ""
-"Gxsm Findlocmax Plugin\n"
-"\n"
-"Who has coded this one? -- PZ"
-msgstr ""
-
-#: plug-ins/math/misc/findlocmax.C:126
-#, c-format
-msgid "Gxsm MathOneArg findlocmax plugin %s"
-msgstr ""
-
-#. Menuentry
-#: plug-ins/math/misc/layersmooth.C:127
-msgid "Layersmooth"
-msgstr ""
-
-#. help text shown on menu
-#: plug-ins/math/misc/layersmooth.C:129
-msgid "Gausian smooth of al layers"
-msgstr ""
-
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/misc/layersmooth.C:164
-msgid ""
-"Gxsm Layersmooth Plugin\n"
-"\n"
-"A gausian smooth is applied to all layers."
-msgstr ""
-
-#: plug-ins/math/misc/layersmooth.C:170
-#, c-format
-msgid "Gxsm MathOneArg layersmooth plugin %s"
-msgstr ""
-
-#: plug-ins/math/misc/layersmooth.C:199 plug-ins/math/misc/spectrocut.C:185
-msgid "(C) 2002 the Free Software Foundation"
-msgstr ""
-
-#: plug-ins/math/misc/psdadd.C:94
-msgid "PSD Add"
-msgstr ""
-
-#: plug-ins/math/misc/psdadd.C:95
-msgid "Sorry, no help for psdadd filter!"
-msgstr ""
-
-#: plug-ins/math/misc/psdadd.C:111
-msgid ""
-"Gxsm Psdadd Plugin\n"
-"\n"
-"PSD Add."
-msgstr ""
-
-#: plug-ins/math/misc/psdadd.C:115
-#, c-format
-msgid "Gxsm MathTwoArg psdadd plugin %s"
-msgstr ""
-
-#. Menuentry
-#: plug-ins/math/misc/shape.C:144
+#: core-source-meson/gxsm4-popupmenus.ui:768
 #, fuzzy
-msgid "Shape"
-msgstr "Speichern"
+msgid "Remove Event"
+msgstr "Fernsteuerung"
 
-#. help text shown on menu
-#: plug-ins/math/misc/shape.C:146
-msgid "shape"
+#: core-source-meson/gxsm4-popupmenus.ui:785
+msgid "Configure GL Scene"
 msgstr ""
 
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/misc/shape.C:178
-msgid ""
-"Gxsm shape Plugin\n"
-"\n"
-"shape"
+#: core-source-meson/gxsm4-popupmenus.ui:805
+msgid "Save Image"
 msgstr ""
 
-#: plug-ins/math/misc/shape.C:184
-#, c-format
-msgid "Gxsm MathOneArg shape plugin %s"
+#: core-source-meson/gxsm4-popupmenus.ui:815
+msgid "View Mode"
 msgstr ""
 
-#. Menuentry
-#: plug-ins/math/misc/spectrocut.C:113
-msgid "Spectrocut"
+#: core-source-meson/gxsm4-popupmenus.ui:861
+msgid "GL Options"
 msgstr ""
 
-#. help text shown on menu
-#: plug-ins/math/misc/spectrocut.C:115
-msgid "cut areas marked in active scan out of X channel."
+#: core-source-meson/gxsm4-popupmenus.ui:865
+msgid "Render Mesh"
 msgstr ""
 
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/misc/spectrocut.C:150
-msgid ""
-"Gxsm Spectrocut Plugin\n"
-"\n"
-"Spectrocut Code for OneSrcArgMath"
-msgstr ""
-
-#: plug-ins/math/misc/spectrocut.C:156
-#, c-format
-msgid "Gxsm MathTwoArg spectrocut plugin %s"
-msgstr ""
-
-#. Menupath to position where it is appendet to
-#: plug-ins/math/statistik/VacancyLineAnalysis.C:215
-#: plug-ins/math/statistik/autocorrelation.C:129
-#: plug-ins/math/statistik/histoHOP.C:47
-#: plug-ins/math/statistik/histogram.C:108
-#: plug-ins/math/statistik/islandlbl.C:53
-#: plug-ins/math/statistik/polarhist.C:168
-#: plug-ins/math/statistik/slopeabs.C:136
-#: plug-ins/math/statistik/slopedir.C:137 plug-ins/math/statistik/spasim.C:115
-#: plug-ins/math/statistik/spasimkz.C:139
-#: plug-ins/math/statistik/stepcount.C:135
-msgid "_Math/_Statistics/"
-msgstr ""
-
-#. Menuentry
-#: plug-ins/math/statistik/VacancyLineAnalysis.C:217
-msgid "Vacancy Line Analysis"
-msgstr ""
-
-#. help text shown on menu
-#: plug-ins/math/statistik/VacancyLineAnalysis.C:219
-msgid ""
-"Rotate sample so vacancy lines are vertical.  Dimer size, and searching "
-"parameters can be set in  the configure dialog."
-msgstr ""
-
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/statistik/VacancyLineAnalysis.C:260
-msgid ""
-"Gxsm VacancyLineAnalysis Plugin\n"
-"\n"
-"Determines position of vacancy lines for statistical analysis"
-msgstr ""
-
-#: plug-ins/math/statistik/VacancyLineAnalysis.C:266
-#, c-format
-msgid "Gxsm MathOneArg VacancyLineAnalysis plugin %s"
-msgstr ""
-
-#: plug-ins/math/statistik/VacancyLineAnalysis.C:319
-msgid "VacancyLineAnalysis Setup"
-msgstr ""
-
-#. help text shown on menu
-#: plug-ins/math/statistik/autocorrelation.C:133
-msgid "Do a Auto-Correlation of the scan"
-msgstr ""
-
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/statistik/autocorrelation.C:172
-msgid ""
-"Gxsm autocorrelation Plugin\n"
-"\n"
-"Computes the Auto-Correlation of a scan:\n"
-"The Auto-Correlation of a scan is computed\n"
-"by FT the source Scan, setting the phase\n"
-"to zero and doing the IFT."
-msgstr ""
-
-#: plug-ins/math/statistik/autocorrelation.C:181
-#, c-format
-msgid "Gxsm MathOneArg autocorrelation plugin %s"
-msgstr ""
-
-#. Menuentry
-#: plug-ins/math/statistik/baseinfo.C:167
-msgid "Baseinfo"
-msgstr ""
-
-#. help text shown on menu
-#: plug-ins/math/statistik/baseinfo.C:169
-msgid "Basic statistic info."
-msgstr ""
-
-#. Text used in Aboutbox, please update!!a
-#: plug-ins/math/statistik/baseinfo.C:200
-msgid ""
-"Gxsm Plugin\n"
-"\n"
-"Basic statistic information."
-msgstr ""
-
-#: plug-ins/math/statistik/baseinfo.C:205
-#, c-format
-msgid "Gxsm MathOneArg baseinfo plugin %s"
-msgstr ""
-
-#. Area was
-#: plug-ins/math/statistik/baseinfo.C:407
-msgid "Area was: "
-msgstr ""
-
-#. Area
-#: plug-ins/math/statistik/baseinfo.C:416
-msgid "Area: "
-msgstr ""
-
-#. Minimum
-#: plug-ins/math/statistik/baseinfo.C:422
-msgid "Minimum: "
-msgstr ""
-
-#. Minimum-pos
-#: plug-ins/math/statistik/baseinfo.C:429
-msgid "Minimum-Pos: "
-msgstr ""
-
-#. Maximum
-#: plug-ins/math/statistik/baseinfo.C:434
-msgid "Maximum: "
-msgstr ""
-
-#. Maximum-pos
-#: plug-ins/math/statistik/baseinfo.C:439
-msgid "Maximum-Pos: "
-msgstr ""
-
-#. sum
-#: plug-ins/math/statistik/baseinfo.C:444
-msgid "Sum: "
-msgstr ""
-
-#. sumsq
-#: plug-ins/math/statistik/baseinfo.C:449
-msgid "Sum Squares: "
-msgstr ""
-
-#. ave
-#: plug-ins/math/statistik/baseinfo.C:454
-msgid "Average: "
-msgstr ""
-
-#. rms
-#: plug-ins/math/statistik/baseinfo.C:459
-msgid "rms-roughness: "
-msgstr ""
-
-#: plug-ins/math/statistik/baseinfo.C:464
-msgid "Area was: \t"
-msgstr ""
-
-#: plug-ins/math/statistik/baseinfo.C:467
-msgid "Area size: \t"
-msgstr ""
-
-#: plug-ins/math/statistik/baseinfo.C:469
-msgid "Minimum: \t"
-msgstr ""
-
-#: plug-ins/math/statistik/baseinfo.C:470
-msgid "Min Pos: \t"
-msgstr ""
-
-#: plug-ins/math/statistik/baseinfo.C:471
-msgid "Maximum: \t"
-msgstr ""
-
-#: plug-ins/math/statistik/baseinfo.C:472
-msgid "Max Pos: \t"
-msgstr ""
-
-#: plug-ins/math/statistik/baseinfo.C:474
-msgid "Sum: \t\t"
-msgstr ""
-
-#: plug-ins/math/statistik/baseinfo.C:475
-msgid "Sum Sq: \t"
-msgstr ""
-
-#: plug-ins/math/statistik/baseinfo.C:476
-msgid "Average: \t"
-msgstr ""
-
-#: plug-ins/math/statistik/baseinfo.C:477
-msgid "rms-roughness: \t"
-msgstr ""
-
-#: plug-ins/math/statistik/histoHOP.C:48
-msgid "Histo HOP"
-msgstr ""
-
-#: plug-ins/math/statistik/histoHOP.C:49
-msgid "Histo HOP Stat."
-msgstr ""
-
-#: plug-ins/math/statistik/histoHOP.C:65
-msgid ""
-"Gxsm Histohop Plugin\n"
-"\n"
-"calculates histohop."
-msgstr ""
-
-#: plug-ins/math/statistik/histoHOP.C:69
-#, c-format
-msgid "Gxsm MathOneArg histohop plugin %s"
-msgstr ""
-
-#: plug-ins/math/statistik/histogram.C:110
-msgid "calc. Z (height) Distribution"
-msgstr ""
-
-#: plug-ins/math/statistik/histogram.C:126
-msgid ""
-"Gxsm Histogram Plugin\n"
-"\n"
-"calculates Z (height) distribution / Histogram"
-msgstr ""
-
-#: plug-ins/math/statistik/histogram.C:130
-#, c-format
-msgid "Gxsm MathOneArg histogram plugin %s"
-msgstr ""
-
-#: plug-ins/math/statistik/islandlbl.C:67
-msgid ""
-"Gxsm Islandlbl Plugin:\n"
-"Perform some Statistics: Island Labeling, counting, ...\n"
-"Mathroutines by Markus Bierkandt 2000,\n"
-"Pluginsupport by Percy Zahl 2000."
-msgstr ""
-
-#: plug-ins/math/statistik/islandlbl.C:73
-#, c-format
-msgid "Gxsm MathOneArg islandlbl plugin %s"
-msgstr ""
-
-#: plug-ins/math/statistik/islandlbl.C:81
-#: plug-ins/math/statistik/islandlbl.C:268
-msgid "Step Flaten"
-msgstr ""
-
-#: plug-ins/math/statistik/islandlbl.C:81
-msgid "MB's super Step Flaten Algo"
-msgstr ""
-
-#: plug-ins/math/statistik/islandlbl.C:87
-msgid "Kill step islands"
-msgstr ""
-
-#: plug-ins/math/statistik/islandlbl.C:87
-msgid "kills and counts step islands"
-msgstr ""
-
-#: plug-ins/math/statistik/islandlbl.C:93
-msgid "IslandLabl"
-msgstr ""
-
-#: plug-ins/math/statistik/islandlbl.C:93
-msgid "MB's island labeling tool"
-msgstr ""
-
-#: plug-ins/math/statistik/islandlbl.C:107
-msgid ": StepFlaten, KillStepIslands and IslandLabl are ready to use"
-msgstr ""
-
-#: plug-ins/math/statistik/islandlbl.C:175
-msgid "Monte-Carlo Auswertung Setup"
-msgstr ""
-
-#.  old
-#.  info = gtk_label_new ("Default-Werte");
-#.  gtk_widget_show (info);
-#.  gtk_box_pack_start(GTK_BOX(vbox), info, TRUE, TRUE, GXSM_WIDGET_PAD);
-#. begin new code ... by PZ
-#: plug-ins/math/statistik/islandlbl.C:195
-msgid "Default-Werte"
-msgstr ""
-
-#. Menuentry
-#: plug-ins/math/statistik/polarhist.C:170
-msgid "Polar Histogramm"
-msgstr ""
-
-#. help text shown on menu
-#: plug-ins/math/statistik/polarhist.C:172
-msgid "from two Channels: 1.: data 2.:polar angle!"
-msgstr ""
-
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/statistik/polarhist.C:211
-msgid ""
-"Gxsm PolarHist Plugin\n"
-"\n"
-"This Plugin calculates a polar\n"
-"Histogramm of data in Src1,\n"
-"polar angle in Src2."
-msgstr ""
-
-#: plug-ins/math/statistik/polarhist.C:219
-#, c-format
-msgid "Gxsm MathOneArg PolarHist plugin %s"
-msgstr ""
-
-#: plug-ins/math/statistik/polarhist.C:275
-msgid "Polar Histogramm Setup"
-msgstr ""
-
-#. Menuentry
-#: plug-ins/math/statistik/slopeabs.C:138
-msgid "Slope Abs"
-msgstr ""
-
-#. help text shown on menu
-#: plug-ins/math/statistik/slopeabs.C:140
-msgid "Sorry, no help for SlopeAbs filter!"
-msgstr ""
-
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/statistik/slopeabs.C:179
-msgid ""
-"Gxsm SlopeAbs Plugin\n"
-"\n"
-"SlopeAbs calculates the\n"
-"absolute local Slope."
-msgstr ""
-
-#: plug-ins/math/statistik/slopeabs.C:189
-#, c-format
-msgid "Gxsm MathOneArg SlopeAbs plugin %s"
-msgstr ""
-
-#. Menuentry
-#: plug-ins/math/statistik/slopedir.C:139
-msgid "Slope Dir"
-msgstr ""
-
-#. help text shown on menu
-#: plug-ins/math/statistik/slopedir.C:141
-msgid "Sorry, no help for SlopeDir filter!"
-msgstr ""
-
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/statistik/slopedir.C:180
-msgid ""
-"Gxsm SlopeDir Plugin\n"
-"\n"
-"SlopeDir calculates the\n"
-"local Direction of Slope."
-msgstr ""
-
-#: plug-ins/math/statistik/slopedir.C:190
-#, c-format
-msgid "Gxsm MathOneArg SlopeDir plugin %s"
-msgstr ""
-
-#: plug-ins/math/statistik/spasim.C:116
-msgid "SPALEED Sim."
-msgstr ""
-
-#: plug-ins/math/statistik/spasim.C:117
-msgid "Simulate SPALEED!"
-msgstr ""
-
-#: plug-ins/math/statistik/spasim.C:133
-msgid ""
-"Gxsm Spasim Plugin\n"
-"\n"
-"This Plugin simulates a SPA-LEED measurement (WaveLenght as input)\n"
-"on the Src-Channel's Scan:\n"
-"1.) Phase Transformation, using e^(2pi i Z(x,y)/WaveLength)\n"
-"2.) 2D FT( Phase Transformed Image)\n"
-"3.) Result = |FT(\")|^2"
-msgstr ""
-
-#: plug-ins/math/statistik/spasim.C:145
-#, c-format
-msgid "Gxsm MathOneArg spasim plugin %s"
-msgstr ""
-
-#: plug-ins/math/statistik/spasimkz.C:140
-msgid "SPALEED Simkz"
-msgstr ""
-
-#: plug-ins/math/statistik/spasimkz.C:141
-msgid "Simulate SPALEED, kz-Scan!"
-msgstr ""
-
-#: plug-ins/math/statistik/spasimkz.C:157
-msgid ""
-"Gxsm Spasimkz Plugin\n"
-"\n"
-"Calculates SPALEED Profiles over S\n"
-"e.g. a kz-plot:\n"
-"For each phase S (S=2 StepHeight/WaveLength)\n"
-"a 1D FT is done for all before Phase Transformed\n"
-"Lines. All transformed lines for this phase\n"
-"are summed up and stored to the new image as Line 'S'."
-msgstr ""
-
-#: plug-ins/math/statistik/spasimkz.C:170
-#, c-format
-msgid "Gxsm MathOneArg spasimkz plugin %s"
-msgstr ""
-
-#: plug-ins/math/statistik/spasimkz.C:204
-msgid "SPA-LEED kz-Scan simulation parameters"
-msgstr ""
-
-#. Menuentry
-#: plug-ins/math/statistik/stepcount.C:137
-msgid "Stepcounter"
-msgstr ""
-
-#. help text shown on menu
-#: plug-ins/math/statistik/stepcount.C:139
-msgid "Step counter"
-msgstr ""
-
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/statistik/stepcount.C:178
-msgid ""
-"Gxsm stepcount Plugin\n"
-"\n"
-"Stepcounter"
-msgstr ""
-
-#: plug-ins/math/statistik/stepcount.C:184
-#, c-format
-msgid "Gxsm MathOneArg stepcount plugin %s"
-msgstr ""
-
-#. Menuentry
-#: plug-ins/math/statistik/vorlage.C:202
-msgid "Vorlage"
-msgstr ""
-
-#. help text shown on menu
-#: plug-ins/math/statistik/vorlage.C:204
-msgid "Sorry, no help for vorlage filter!"
-msgstr ""
-
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/statistik/vorlage.C:243
-msgid ""
-"Gxsm Vorlage Plugin\n"
-"\n"
-"Vorlage Code for OneSrcArgMath"
-msgstr ""
-
-#: plug-ins/math/statistik/vorlage.C:249
-#, c-format
-msgid "Gxsm MathOneArg vorlage plugin %s"
-msgstr ""
-
-#. Menupath to position where it is appendet to
-#: plug-ins/math/transform/OctoCorr.C:146
-#: plug-ins/math/transform/flip_diagonal.C:127
-#: plug-ins/math/transform/merge_h.C:132 plug-ins/math/transform/merge_v.C:128
-#: plug-ins/math/transform/mirror_x.C:130
-#: plug-ins/math/transform/mirror_y.C:130
-#: plug-ins/math/transform/quenchscan.C:128
-#: plug-ins/math/transform/scalescan.C:126
-#: plug-ins/math/transform/shear_x.C:80 plug-ins/math/transform/shear_y.C:80
-#: plug-ins/math/transform/shiftarea.C:137
-msgid "_Math/_Transformations/"
-msgstr ""
-
-#. Menuentry
-#: plug-ins/math/transform/OctoCorr.C:148
-msgid "OctoCorr"
-msgstr ""
-
-#. help text shown on menu
-#: plug-ins/math/transform/OctoCorr.C:150
-msgid "for SPA-LEED: to correct octopole distorsions"
-msgstr ""
-
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/transform/OctoCorr.C:189
-msgid ""
-"Gxsm OctoCorr Plugin\n"
-"\n"
-"The SPA-LEED octopole causes a cushion distorsion\n"
-"of the electron deflection.\n"
-"This pluging applies the inverse of this distorsion to\n"
-"any image.\n"
-"Input parameters are:\n"
-" Energy, Stepsize and Origin (invariant Point)\n"
-" Free parameter \"b\" (distorsion strength)\n"
-msgstr ""
-
-#: plug-ins/math/transform/OctoCorr.C:202
-#, c-format
-msgid "Gxsm MathOneArg OctoCorr plugin %s"
-msgstr ""
-
-#: plug-ins/math/transform/affine.C:101
-msgid "Affine"
-msgstr ""
-
-#: plug-ins/math/transform/affine.C:102
-msgid "Sorry, no help for affine filter!"
-msgstr ""
-
-#: plug-ins/math/transform/affine.C:118
-msgid ""
-"Gxsm Affine Plugin\n"
-"\n"
-"affine trafo."
-msgstr ""
-
-#: plug-ins/math/transform/affine.C:122
-#, c-format
-msgid "Gxsm MathOneArg affine plugin %s"
-msgstr ""
-
-#. Menuentry
-#: plug-ins/math/transform/flip_diagonal.C:129
-msgid "Flip Diagonal"
-msgstr ""
-
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/transform/flip_diagonal.C:170
-msgid ""
-"Gxsm flip_diagonal Plugin\n"
-"\n"
-"Flips an image along it's diagonale."
-msgstr ""
-
-#: plug-ins/math/transform/flip_diagonal.C:176
-#, c-format
-msgid "Gxsm MathOneArg flip_diagonal plugin %s"
-msgstr ""
-
-#. Menuentry
-#: plug-ins/math/transform/merge_h.C:134
-msgid "Merge H"
-msgstr ""
-
-#. help text shown on menu
-#: plug-ins/math/transform/merge_h.C:136
-msgid "Horizontally merge two scans."
-msgstr ""
-
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/transform/merge_h.C:175
-msgid ""
-"Gxsm merge_h Plugin\n"
-"\n"
-"Horizontally merge two scans together."
-msgstr ""
-
-#: plug-ins/math/transform/merge_h.C:181
-#, c-format
-msgid "Gxsm MathOneArg merge_h plugin %s"
-msgstr ""
-
-#. Menuentry
-#: plug-ins/math/transform/merge_v.C:130
-msgid "Merge V"
-msgstr ""
-
-#. help text shown on menu
-#: plug-ins/math/transform/merge_v.C:132
-msgid "Vertical merge"
-msgstr ""
-
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/transform/merge_v.C:171
-msgid ""
-"Gxsm merge_v Plugin\n"
-"\n"
-"Vertically merge two scan of same width."
-msgstr ""
-
-#: plug-ins/math/transform/merge_v.C:177
-#, c-format
-msgid "Gxsm MathOneArg merge_v plugin %s"
-msgstr ""
-
-#. Menuentry
-#: plug-ins/math/transform/mirror_x.C:132
-msgid "Mirror X"
-msgstr ""
-
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/transform/mirror_x.C:173
-msgid ""
-"Gxsm mirror_x Plugin\n"
-"\n"
-"Mirror scan along X."
-msgstr ""
-
-#: plug-ins/math/transform/mirror_x.C:179
-#, c-format
-msgid "Gxsm MathOneArg mirror_x plugin %s"
-msgstr ""
-
-#. Menuentry
-#: plug-ins/math/transform/mirror_y.C:132
-msgid "Mirror Y"
-msgstr ""
-
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/transform/mirror_y.C:173
-msgid ""
-"Gxsm mirror_y Plugin\n"
-"\n"
-"Mirror scan along Y."
-msgstr ""
-
-#: plug-ins/math/transform/mirror_y.C:179
-#, c-format
-msgid "Gxsm MathOneArg mirror_y plugin %s"
-msgstr ""
-
-#. Menuentry
-#: plug-ins/math/transform/quenchscan.C:130
-msgid "Quench Scan"
-msgstr ""
-
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/transform/quenchscan.C:171
-msgid ""
-"Gxsm quenchscan Plugin\n"
-"\n"
-"Down size scan by factor of two, averages 2x2 points for resulting pixel."
-msgstr ""
-
-#: plug-ins/math/transform/quenchscan.C:177
-#, c-format
-msgid "Gxsm MathOneArg quenchscan plugin %s"
-msgstr ""
-
-#: plug-ins/math/transform/rotate.C:89
-msgid "Rotate"
-msgstr ""
-
-#: plug-ins/math/transform/rotate.C:90
+#: core-source-meson/gxsm4-popupmenus.ui:869
 #, fuzzy
-msgid "Rotate selection of scan"
-msgstr "Rechteckmarkierung in freiem/Math Kanal laden"
+msgid "Show Zero Plane"
+msgstr "Zeige Kreis"
 
-#: plug-ins/math/transform/rotate.C:106
-msgid ""
-"Gxsm Rotate Math-Plugin\n"
-"\n"
-"Affine Transformation:\n"
-"Rotate selection of Scan by arb. angle."
+#: core-source-meson/gxsm4-popupmenus.ui:879
+msgid "Auto Update"
 msgstr ""
 
-#: plug-ins/math/transform/rotate.C:114
+#: core-source-meson/gxsm4-popupmenus.ui:900
+msgid "_Save Image/Drawing"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:904
+#, fuzzy
+msgid "_Save Data"
+msgstr "_Speichern"
+
+#: core-source-meson/gxsm4-popupmenus.ui:920
+msgid "Options"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:924
+#, fuzzy
+msgid "Linregression"
+msgstr "Neigung korrigieren"
+
+#: core-source-meson/gxsm4-popupmenus.ui:932
+msgid "Fourier"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:936
+#, fuzzy
+msgid "Auto Decimate"
+msgstr "Auto _Darstellung"
+
+#: core-source-meson/gxsm4-popupmenus.ui:940
+msgid "Lowpass off"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:945
+msgid "Lowpass 0.1%"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:950
+msgid "Lowpass 1%"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:955
+msgid "Lowpass 5%"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:960
+msgid "Lowpass 10%"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:965
+msgid "Lowpass 50%"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:970
+msgid "Lowpass 90%"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:977
+msgid "Y Scaling"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:981
+msgid "Y auto"
+msgstr "Y anpassen"
+
+#: core-source-meson/gxsm4-popupmenus.ui:985
+msgid "Y log"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:989
+msgid "Y hold"
+msgstr "Y festhalten"
+
+#: core-source-meson/gxsm4-popupmenus.ui:993
+#, fuzzy
+msgid "Y expand"
+msgstr "Y nur erweitern"
+
+#: core-source-meson/gxsm4-popupmenus.ui:999
+msgid "Cursor"
+msgstr "Zeiger"
+
+#: core-source-meson/gxsm4-popupmenus.ui:1003
+msgid "Cursor A"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:1007
+msgid "Cursor B"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:1011
+msgid "A left"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:1015
+msgid "A right"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:1019
+msgid "A next min"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:1023
+msgid "A next max"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:1027
+msgid "A prev min"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:1031
+msgid "A prev max"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:1035
+msgid "B left"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:1039
+msgid "B right"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:1043
+msgid "B next min"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:1047
+msgid "B next max"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:1051
+msgid "B prev min"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:1055
+msgid "B prev max"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:1061
+msgid "Settings"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:1065
+msgid "X grid"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:1069
+msgid "Y grid"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:1073
+msgid "No tics"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:1077
+msgid "Connect"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:1082
+#, fuzzy
+msgid "Points"
+msgstr "Punkt"
+
+#: core-source-meson/gxsm4-popupmenus.ui:1087
+msgid "Impulses"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:1092
+#, fuzzy
+msgid "Symbols-X"
+msgstr "Symbole"
+
+#: core-source-meson/gxsm4-popupmenus.ui:1097
+msgid "header"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:1101
+#, fuzzy
+msgid "legend"
+msgstr "Legende"
+
+#: core-source-meson/gxsm4-popupmenus.ui:1105
+msgid "series tics"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:1128
+msgid "_Close"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:1134
+msgid "Logging History"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:1143
+#, fuzzy
+msgid "10 lines"
+msgstr "kein Gitterlinien"
+
+#: core-source-meson/gxsm4-popupmenus.ui:1148
+#, fuzzy
+msgid "50 lines"
+msgstr "kein Gitterlinien"
+
+#: core-source-meson/gxsm4-popupmenus.ui:1153
+msgid "500 lines"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:1158
+msgid "5000 lines"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:1163
+msgid "Infinit"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:1170
+msgid "Logging Level"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:1179
+msgid "Basic"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:1184
+msgid "Normal"
+msgstr ""
+
+#: core-source-meson/gxsm4-popupmenus.ui:1194
+msgid "All"
+msgstr ""
+
+#: core-source-meson/gxsm4-menu.ui:10 core-source-meson/gxsm4-menu.ui:91
+msgid "_Preferences"
+msgstr "Einstellungen"
+
+#: core-source-meson/gxsm4-menu.ui:14 core-source-meson/gxsm4-menu.ui:95
+msgid "_Save Geometry"
+msgstr ""
+
+#: core-source-meson/gxsm4-menu.ui:18 core-source-meson/gxsm4-menu.ui:99
+msgid "_Load Geometry"
+msgstr ""
+
+#: core-source-meson/gxsm4-menu.ui:22 core-source-meson/gxsm4-menu.ui:103
+msgid "_About"
+msgstr ""
+
+#: core-source-meson/gxsm4-menu.ui:26 core-source-meson/gxsm4-menu.ui:107
+msgid "_Quit"
+msgstr ""
+
+#: core-source-meson/gxsm4-menu.ui:34
+msgid "_File"
+msgstr ""
+
+#: core-source-meson/gxsm4-menu.ui:42
+#, fuzzy
+msgid "Open to _free channel"
+msgstr "Kopie in freiem/Math Kanal anlegen"
+
+#: core-source-meson/gxsm4-menu.ui:54
+#, fuzzy
+msgid "Open Mode"
+msgstr "Hier öffnen"
+
+#: core-source-meson/gxsm4-menu.ui:57
+msgid "Replace"
+msgstr ""
+
+#: core-source-meson/gxsm4-menu.ui:62
+msgid "Append in time"
+msgstr ""
+
+#: core-source-meson/gxsm4-menu.ui:67
+msgid "Stitch 2D"
+msgstr ""
+
+#: core-source-meson/gxsm4-menu.ui:76
+msgid "_Import"
+msgstr ""
+
+#: core-source-meson/gxsm4-menu.ui:82
+msgid "_Export"
+msgstr ""
+
+#: core-source-meson/gxsm4-menu.ui:113
+msgid "_Math"
+msgstr ""
+
+#: core-source-meson/gxsm4-menu.ui:117
+msgid "_Convert"
+msgstr ""
+
+#: core-source-meson/gxsm4-menu.ui:123
+msgid "_Background"
+msgstr ""
+
+#: core-source-meson/gxsm4-menu.ui:129
+msgid "_Arithmetic"
+msgstr ""
+
+#: core-source-meson/gxsm4-menu.ui:135
+msgid "Filter _1D"
+msgstr ""
+
+#: core-source-meson/gxsm4-menu.ui:141
+msgid "Filter _2D"
+msgstr ""
+
+#: core-source-meson/gxsm4-menu.ui:147
+msgid "Statistics"
+msgstr ""
+
+#: core-source-meson/gxsm4-menu.ui:153
+msgid "_Transformations"
+msgstr ""
+
+#: core-source-meson/gxsm4-menu.ui:159
+msgid "_Misc"
+msgstr ""
+
+#: core-source-meson/gxsm4-menu.ui:165
+msgid "_Probe"
+msgstr ""
+
+#: core-source-meson/gxsm4-menu.ui:173
+msgid "_Windows"
+msgstr ""
+
+#: core-source-meson/gxsm4-menu.ui:179
+msgid "_Tools"
+msgstr ""
+
+#: core-source-meson/gxsm4-menu.ui:185
+msgid "_Plug-Ins"
+msgstr ""
+
+#: core-source-meson/gxsm4-menu.ui:189
+msgid "uncategorized plug-ins"
+msgstr ""
+
+#: core-source-meson/gxsm4-menu.ui:193
+msgid "List GXSM Plug-Ins Info"
+msgstr ""
+
+#, fuzzy
+#~ msgid "GXSM make icons"
+#~ msgstr "Übersicht erstellen"
+
+#~ msgid "Source Path"
+#~ msgstr "Datenpfad"
+
+#~ msgid "Help"
+#~ msgstr "Hilfe"
+
+#~ msgid "Set to full pathname of data source directory."
+#~ msgstr "Hier ist der absolute Pfad zu den Daten anzugeben."
+
+#~ msgid "Selection Mask"
+#~ msgstr "Auswahlmaske"
+
+#~ msgid "Select subset of files via wildcard."
+#~ msgstr "Dateiauswahl über UNIX-Wildcards"
+
+#~ msgid "Icon Filename"
+#~ msgstr "Ausgabedatei"
+
+#~ msgid "Full Pathname to Iconfile, openmode is append !"
+#~ msgstr "Absoluter Pfad/Name der Übersichtsdatei"
+
+#~ msgid "Generating 1x1 Icon Pages !"
+#~ msgstr "Erzeuge 1x1 Übersichtsseiten!"
+
+#~ msgid "Generating 2x3 Icon Pages !"
+#~ msgstr "Erzeuge 2x3 Übersichtsseiten!"
+
+#~ msgid "Generating 4x6 Icon Pages !"
+#~ msgstr "Erzeuge 6x9 Übersichtsseiten!"
+
+#~ msgid "Generating 6x9 Icon Pages !"
+#~ msgstr "Erzeuge 6x9 Übersichtsseiten!"
+
+#~ msgid "Edit:"
+#~ msgstr "Ändern"
+
+#~ msgid "Title"
+#~ msgstr "Überschrift"
+
+#~ msgid "Title is placed above Scanimage."
+#~ msgstr "Überschrift für den Ausdruck"
+
+#~ msgid "Print command"
+#~ msgstr "Drucker Befehl"
+
+#~ msgid "Profile to save"
+#~ msgstr "Profile speichern"
+
+#~ msgid "profile saved as "
+#~ msgstr "Profile speichern unter"
+
+#~ msgid "save canceld"
+#~ msgstr "Speichern abgebrochen"
+
+#~ msgid "View via xmgrace"
+#~ msgstr "Ansehen mit xmgrace"
+
+#, fuzzy
+#~ msgid "_Print"
+#~ msgstr "Gxsm Drucken"
+
+#~ msgid "Ticmarks"
+#~ msgstr "Pos. Marken"
+
+#~ msgid "Y logarithmic"
+#~ msgstr "Y logarithmisch"
+
+#~ msgid "kill channel"
+#~ msgstr "lösche diesen Kanal"
+
+#~ msgid "activate this channel"
+#~ msgstr "aktiviere diesen Kanal"
+
+#~ msgid "set channel mode to On"
+#~ msgstr "Kanal auf Ein stellen"
+
+#~ msgid "set channel mode to Math"
+#~ msgstr "Kanal auf Math stellen"
+
+#~ msgid "set channel mode to X"
+#~ msgstr "Kanal auf X stellen"
+
+#~ msgid "load scan into this channel"
+#~ msgstr "Scan in diesen Kanal laden"
+
+#~ msgid "Save this scans with automatically generated name"
+#~ msgstr "Mit automatisch erzeugtem Namen speichern"
+
+#~ msgid "Save this scan with a new name"
+#~ msgstr "Diesen Scan unter neuem Namen speichern"
+
+#~ msgid "Object Properties"
+#~ msgstr "Objekt Eigenschaften"
+
+#~ msgid "load objects"
+#~ msgstr "Hinzuladen von Objekten"
+
+#~ msgid "show all info about this scan (NC view)"
+#~ msgstr "Lesen aller Daten und Informationen dieses Scans (NetCDF ansehen)"
+
+#, fuzzy
+#~ msgid "crop rectangular area to new channel"
+#~ msgstr "Kopie in freiem/Math Kanal anlegen"
+
+#~ msgid "disable object creation"
+#~ msgstr "keine Objekte erzeugen"
+
+#, fuzzy
+#~ msgid "Attention"
+#~ msgstr "Befehl"
+
+#~ msgid "Starting GXSM..."
+#~ msgstr "Starte GXSM"
+
+#~ msgid "Reading User Config"
+#~ msgstr "Lese Benutzer Konfiguration"
+
+#, fuzzy
+#~ msgid "Plugins removed"
+#~ msgstr "%d Plugins geladen!"
+
 #, c-format
-msgid "Gxsm MathOneArg rotate plugin %s"
-msgstr ""
+#~ msgid "%d Plugins loaded!"
+#~ msgstr "%d Plugins geladen!"
 
-#. Menuentry
-#: plug-ins/math/transform/scalescan.C:128
-msgid "Scale Scan"
-msgstr ""
+#~ msgid "No Plugins loaded!"
+#~ msgstr "Keine Plugins geladen!"
 
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/transform/scalescan.C:169
-msgid ""
-"Gxsm scalescan Plugin\n"
-"\n"
-"Scan a scan in X and Y by a given factor."
-msgstr ""
+#, fuzzy
+#~ msgid "Gxsm Preferences"
+#~ msgstr "GXSM Einstellungen ändern"
 
-#: plug-ins/math/transform/scalescan.C:175
-#, c-format
-msgid "Gxsm MathOneArg scalescan plugin %s"
-msgstr ""
+#, fuzzy
+#~ msgid "Exit the GXSM"
+#~ msgstr "Gxsm beenden"
 
-#: plug-ins/math/transform/shear_x.C:81
-msgid "Shear X"
-msgstr ""
+#~ msgid "Cro_p"
+#~ msgstr "_Ausschneiden"
 
-#: plug-ins/math/transform/shear_x.C:82
-msgid "Sorry, no help for shear_x filter!"
-msgstr ""
+#~ msgid "Crop the selection to new scan"
+#~ msgstr "Rechteckmarkierung in freiem/Math Kanal laden"
 
-#: plug-ins/math/transform/shear_x.C:98
-msgid ""
-"Gxsm Shear_X Plugin\n"
-"\n"
-"shear scan along X."
-msgstr ""
+#~ msgid "_Copy"
+#~ msgstr "_Kopieren"
 
-#: plug-ins/math/transform/shear_x.C:102
-#, c-format
-msgid "Gxsm MathOneArg shear_x plugin %s"
-msgstr ""
+#~ msgid "Copy the scan to new channel"
+#~ msgstr "Kopie in freiem/Math Kanal anlegen"
 
-#: plug-ins/math/transform/shear_y.C:81
-msgid "Shear Y"
-msgstr ""
+#, fuzzy
+#~ msgid "Start scanning the Surface"
+#~ msgstr "Messung starten"
 
-#: plug-ins/math/transform/shear_y.C:82
-msgid "Sorry, no help for shear_y filter!"
-msgstr ""
+#, fuzzy
+#~ msgid "Start Scanning the Surface periodically"
+#~ msgstr "Messung starten"
 
-#: plug-ins/math/transform/shear_y.C:98
-msgid ""
-"Gxsm Shear_Y Plugin\n"
-"\n"
-"shear along Y axis."
-msgstr ""
+#, fuzzy
+#~ msgid "Sto_p Scan"
+#~ msgstr "Halt"
 
-#: plug-ins/math/transform/shear_y.C:102
-#, c-format
-msgid "Gxsm MathOneArg shear_y plugin %s"
-msgstr ""
+#, fuzzy
+#~ msgid "Stop a running Scan"
+#~ msgstr "Laufende Messung unterbrechen"
 
-#. Menuentry
-#: plug-ins/math/transform/shiftarea.C:139
-msgid "Shift-Area"
-msgstr ""
+#~ msgid "Set Display Values from Region Min/Max"
+#~ msgstr "Darstellungsparameter aus Min/Max der Markierung berechnen"
 
-#. help text shown on menu
-#: plug-ins/math/transform/shiftarea.C:141
-msgid "Shift area does this and that."
-msgstr ""
+#~ msgid "Monitor"
+#~ msgstr "Anzeige"
 
-#. Text used in Aboutbox, please update!!
-#: plug-ins/math/transform/shiftarea.C:180
-msgid ""
-"Gxsm shiftarea Plugin\n"
-"\n"
-"Shift area with line object."
-msgstr ""
+#~ msgid "View the Logging Table"
+#~ msgstr "Geschichtstabelle anzeigen"
 
-#: plug-ins/math/transform/shiftarea.C:186
-#, c-format
-msgid "Gxsm MathOneArg shiftarea plugin %s"
-msgstr ""
+#~ msgid "Make Icons..."
+#~ msgstr "Übersichtsbilder..."
 
-#. Description, is shown by PluginViewer (Plugin: listplugin, Tools->Plugin Details)
-#. Author(s)/* Gnome gxsm - Gnome X Scanning Microscopy
-#: plug-ins/scan/WSxM_io.C:108 plug-ins/scan/example_im_export.C:112
-#: plug-ins/scan/omicron_io.C:121 plug-ins/scan/primitiveimexport.C:187
-msgid "File/Im,Export"
-msgstr ""
+#~ msgid "Generate Iconpages"
+#~ msgstr "Dokument mit Übersichtsbildern erzeugen"
 
-#. Menupath to position where it is appendet to
-#: plug-ins/scan/WSxM_io.C:109
-msgid "WXsM"
-msgstr ""
+#~ msgid "Remote Control..."
+#~ msgstr "Fernsteuerung..."
 
-#. Menuentry
-#: plug-ins/scan/WSxM_io.C:110
-msgid "Import/Export von WSxM files"
-msgstr ""
+#~ msgid "Remote Control Window"
+#~ msgstr "Fernsteuerungskontrolle"
 
-#. Text used in Aboutbox, please update!!
-#: plug-ins/scan/WSxM_io.C:132
-msgid ""
-"Gxsm file import/export plugin for WSxM files\n"
-"\n"
-"This plugin writes in WSxM datafiles."
-msgstr ""
+#, fuzzy
+#~ msgid "Save GXSM TEST values"
+#~ msgstr "Merke Werte"
 
-#: plug-ins/scan/WSxM_io.C:139
-#, c-format
-msgid "Gxsm WSxM import/export plugin %s"
-msgstr ""
+#, fuzzy
+#~ msgid "Edit GXSM preferences"
+#~ msgstr "GXSM Einstellungen ändern"
 
-#: plug-ins/scan/WSxM_io.C:155
-msgid "WSxM Import"
-msgstr ""
+#, fuzzy
+#~ msgid "_Save Preferences"
+#~ msgstr "Einstellungen"
 
-#: plug-ins/scan/WSxM_io.C:155
-msgid "Import of the WSxM format"
-msgstr ""
+#, fuzzy
+#~ msgid "_Load Preferences"
+#~ msgstr "Einstellungen"
 
-#. Menupath to position where it is appendet to
-#: plug-ins/scan/WSxM_io.C:164 plug-ins/scan/example_im_export.C:167
-#: plug-ins/scan/nanoimport.C:98 plug-ins/scan/omicron_io.C:187
-#: plug-ins/scan/primitiveimexport.C:239 plug-ins/scan/sdfimport.C:111
-msgid "File/Import/"
-msgstr ""
+#, fuzzy
+#~ msgid "_Save Values"
+#~ msgstr "Merke Werte"
 
-#: plug-ins/scan/WSxM_io.C:170
-msgid "WSxM Export"
-msgstr ""
+#, fuzzy
+#~ msgid "Show tip, take a tour"
+#~ msgstr "Tip des Tages anzeigen"
 
-#: plug-ins/scan/WSxM_io.C:170
-msgid "Export of the WSxM format"
-msgstr ""
+#, fuzzy
+#~ msgid "Show tip of the day, and/or take a tour to GXSM!"
+#~ msgstr "Tip des Tages anzeigen"
 
-#: plug-ins/scan/WSxM_io.C:179 plug-ins/scan/example_im_export.C:182
-#: plug-ins/scan/primitiveimexport.C:250
-msgid "File/Export/"
-msgstr ""
+#~ msgid "_Action"
+#~ msgstr "Befehl"
 
-#: plug-ins/scan/WSxM_io.C:234
-msgid "File/Import/WSxM Import"
-msgstr ""
+#~ msgid "Start scanning the surface"
+#~ msgstr "Messung starten"
 
-#: plug-ins/scan/WSxM_io.C:236
-msgid "File/Export/WSxM Export"
-msgstr ""
+#, fuzzy
+#~ msgid "Repeat scanning the surface..."
+#~ msgstr "Messung starten"
 
-#: plug-ins/scan/example_im_export.C:113 plug-ins/scan/omicron_io.C:122
-#: plug-ins/scan/primitiveimexport.C:188
-msgid "..."
-msgstr ""
+#~ msgid "Stop"
+#~ msgstr "Halt"
 
-#. Text used in Aboutbox, please update!!
-#: plug-ins/scan/example_im_export.C:135
-msgid ""
-"Gxsm abc Data File Import/Export Plugin\n"
-"\n"
-"This plugin reads in abc datafiles."
-msgstr ""
+#~ msgid "Stop a running scan"
+#~ msgstr "Laufende Messung unterbrechen"
 
-#: plug-ins/scan/example_im_export.C:142
-#, c-format
-msgid "Gxsm abc_im_export plugin %s"
-msgstr ""
+#~ msgid "Save"
+#~ msgstr "Speichern"
 
-#: plug-ins/scan/example_im_export.C:158
-msgid "abc Import"
-msgstr ""
+#~ msgid "Exit"
+#~ msgstr "Beenden"
 
-#: plug-ins/scan/example_im_export.C:158
-msgid "Import of the abc format"
-msgstr ""
+#~ msgid "Yes"
+#~ msgstr "Ja"
 
-#: plug-ins/scan/example_im_export.C:173
-msgid "abc Export"
-msgstr ""
+#~ msgid "No"
+#~ msgstr "Nein"
 
-#: plug-ins/scan/example_im_export.C:173
-msgid "Export of the abc format"
-msgstr ""
+#, fuzzy
+#~ msgid "Log/Monitor"
+#~ msgstr "Anzeige"
 
-#: plug-ins/scan/example_im_export.C:237
-msgid "File/Import/abc Import"
-msgstr ""
+#, fuzzy
+#~ msgid "Mover Control"
+#~ msgstr "Fernsteuerung..."
 
-#: plug-ins/scan/example_im_export.C:239
-msgid "File/Export/abc Export"
-msgstr ""
+#~ msgid " is attached and ready to use"
+#~ msgstr " ist geladen und verfügbar"
 
-#. Menuentry
-#: plug-ins/scan/nanoimport.C:100
-msgid "Nano Scope"
-msgstr ""
+#~ msgid "GXSM Tip of the Day"
+#~ msgstr "GXSM Tip des Tages"
 
-#. help text shown on menu
-#: plug-ins/scan/nanoimport.C:102
-msgid "Import Digital NanoScope File"
-msgstr ""
+#~ msgid "Previous Tip"
+#~ msgstr "Letzter Tip"
 
-#. Text used in Aboutbox, please update!!
-#: plug-ins/scan/nanoimport.C:128
-msgid ""
-"Gxsm NanoScope Data Import Plugin\n"
-"\n"
-"This plugin reads in a orig. Data File\n"
-"from Digital Nano Scope to Gxsm."
-msgstr ""
+#~ msgid "Next Tip"
+#~ msgstr "Nächster Tip"
 
-#: plug-ins/scan/nanoimport.C:135
-#, c-format
-msgid "Gxsm MathOneArg nanoimport plugin %s"
-msgstr ""
+#, fuzzy
+#~ msgid "Show next time"
+#~ msgstr "Tips weiterhin zeigen"
 
-#. Text used in Aboutbox
-#: plug-ins/scan/omicron_io.C:147
-msgid ""
-"Gxsm data file import/export plugin\n"
-"\n"
-"This plugin reads Omicron SCALA SPM files."
-msgstr ""
+#~ msgid ""
+#~ "Your GXSM tips file appears to be missing!\n"
+#~ "There should be a file called gxsm_tips.txt in the\n"
+#~ "GXSM data directory.  Please check your installation."
+#~ msgstr ""
+#~ "Die GXSM Tipsdatei scheint zu fehlen!\\n\n"
+#~ "Es sollte eine Datei mit dem Namen gxsm_tips.txt im\\n\n"
+#~ "GXSM Datenverzeichnis vorliegen. Bitte die Installation prüfen."
 
-#: plug-ins/scan/omicron_io.C:158
-#, c-format
-msgid "Gxsm omicron_io plugin %s"
-msgstr ""
+#, fuzzy
+#~ msgid "Authors"
+#~ msgstr "AutoDarst"
 
-#: plug-ins/scan/omicron_io.C:178
-msgid "Omicron SPM Import"
-msgstr ""
+#, fuzzy
+#~ msgid "open SPM Scan Control Window"
+#~ msgstr "Fernsteuerungskontrolle"
 
-#: plug-ins/scan/omicron_io.C:178
-msgid "Import of the Omicron SPM format"
-msgstr ""
+#, fuzzy
+#~ msgid ": File IO Filters are ready to use"
+#~ msgstr " ist geladen und verfügbar"
 
-#: plug-ins/scan/omicron_io.C:270
-msgid "File/Import/Omicron SPM Import"
-msgstr ""
+#, fuzzy
+#~ msgid "open RHK Scan Control Window"
+#~ msgstr "Fernsteuerungskontrolle"
 
-#. Text used in Aboutbox, please update!!
-#: plug-ins/scan/primitiveimexport.C:210
-msgid ""
-"Gxsm primitve Data File Import/Export Plugin\n"
-"\n"
-"This plugin reads in a datafiles of various\n"
-"primitive formats:\n"
-"GNUs: .byt, .sht, .flt, .dbl, but not: .cpx\n"
-"The simple PGM format (8bit grey)\n"
-"Export only: TGA, TGA16 (for povray), TGA Color\n"
-"MATS format\n"
-".ncd (very old DI NanoScope format)"
-msgstr ""
+#, fuzzy
+#~ msgid "Stop CC"
+#~ msgstr "Halt"
 
-#: plug-ins/scan/primitiveimexport.C:223
-#, c-format
-msgid "Gxsm primitive_im_export plugin %s"
-msgstr ""
+#, fuzzy
+#~ msgid "Shape"
+#~ msgstr "Speichern"
 
-#: plug-ins/scan/primitiveimexport.C:232
-msgid "Primitive Auto Import"
-msgstr ""
-
-#: plug-ins/scan/primitiveimexport.C:232
-msgid "Automatic Import of primitive Formats: GNUs, PGM, .."
-msgstr ""
-
-#: plug-ins/scan/primitiveimexport.C:243
-msgid "Primitive Auto Export"
-msgstr ""
-
-#: plug-ins/scan/primitiveimexport.C:243
-msgid "Automatic Export of primitive Formats: GNUs, PGM, TGA, .."
-msgstr ""
-
-#: plug-ins/scan/primitiveimexport.C:299
-msgid "File/Import/Primitive Auto Import"
-msgstr ""
-
-#: plug-ins/scan/primitiveimexport.C:301
-msgid "File/Export/Primitive Auto Export"
-msgstr ""
-
-#. Menuentry
-#: plug-ins/scan/sdfimport.C:113
-msgid "SDF-import"
-msgstr ""
-
-#. help text shown on menu
-#: plug-ins/scan/sdfimport.C:115
-msgid "Import SDF File"
-msgstr ""
-
-#. Text used in Aboutbox, please update!!
-#: plug-ins/scan/sdfimport.C:141
-msgid ""
-"Gxsm SDF Data Import Plugin\n"
-"\n"
-"This plugin reads in a datafile\n"
-"in sdf-format."
-msgstr ""
-
-#: plug-ins/scan/sdfimport.C:148
-#, c-format
-msgid "Gxsm MathOneArg sdfimport plugin %s"
-msgstr ""
+#, fuzzy
+#~ msgid "Rotate selection of scan"
+#~ msgstr "Rechteckmarkierung in freiem/Math Kanal laden"
 
 #~ msgid "Gxsm Print"
 #~ msgstr "Gxsm Drucken"

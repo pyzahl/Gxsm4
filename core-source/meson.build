@@ -13,7 +13,7 @@ gnome = import('gnome')
 
 
 # The returned source would be passed to another target
-gxsm4_gdbus_src = gnome.gdbus_codegen('gxsm4-core-gschema',
+gxsm4_gdbus_src += gnome.gdbus_codegen('gxsm4-core-gschema',
   sources: [
       'org.gnome.gxsm4.gschema.xml',
       'org.gnome.gxsm4.window-geometry.gschema.xml',
