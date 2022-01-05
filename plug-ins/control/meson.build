@@ -1,51 +1,74 @@
-install_path = get_option('prefix') / 'lib/gxsm4-plugins/control'
-# install_path = plugin_libs_dir+'/control'
+plugin_cat = 'control'
+install_path = gxsm4_plugin_dir / plugin_cat
 
-deps = declare_dependency(
-    compile_args: ['-DG_LOG_DOMAIN="LibGimpModule"', '-DGIMP_MODULE_COMPILATION', '-fpermissive', '-w'],
-    dependencies : [icuuc, gtk, soup, gtksourceview, cairo, freet, gset, netcdf, fftw, xml, png, gmod, gmodexp, dl],
-    include_directories : configuration_inc,
-    link_args : ['-Mmodules', '-export-dynamic', '-fno-version'],
+plugin_list = [
+    { 'name': 'spm_scancontrol',
+      'gschemas': [  'org.gnome.gxsm4.pcs.plugin-libspm-scancontrol.gschema.xml',
+                     'org.gnome.gxsm4.pcsadjustments.plugin-libspm-scancontrol.gschema.xml' ] },
+    { 'name': 'multidim_movie_control' },
+    { 'name': 'inet_json_external_scandata', 'deps': [ soup ],
+      'gschemas': [ 'org.gnome.gxsm4.inet_json_settings.gschema.xml',
+                    'org.gnome.gxsm4.pcs.plugin-libinet-json-external-scandata.gschema.xml' ] },
+]
+
+
+
+foreach plugin : plugin_list
+  plugin_name = plugin.get('name')
+  plugin_sources = [ plugin.get('sources', plugin_name + '.cpp') ]
+  plugin_deps = plugin.get('deps', []) + all_plugin_deps
+  plugin_cflags = plugin.get('cflags', []) + all_cflags
+  plugin_schemas = plugin.get('gschemas', [])
+
+  if plugin_schemas.length() > 0
+      plugin_gdbus_src = gnome.gdbus_codegen('gxsm4-'+plugin_cat+'-'+plugin_name+'-gschema',
+        sources: plugin_schemas,
+        interface_prefix : 'org.gnome.',
+        namespace : 'gxsm4'
+    )
+  else
+      plugin_gdbus_src = [] 
+  endif
+  
+  if platform_windows
+    plugin_rc = configure_file(
+      input : gimp_plugins_rc.full_path(),
+      output: plugin_name + '.rc',
+      copy: true,
     )
 
-gnome = import('gnome')
-
-# The returned source would be passed to another target
-gxsm4_gdbus_src += gnome.gdbus_codegen('gxsm4-control-gschema',
-  sources: [
-      'org.gnome.gxsm4.pcs.plugin-libspm-scancontrol.gschema.xml',
-      'org.gnome.gxsm4.pcsadjustments.plugin-libspm-scancontrol.gschema.xml',
-      'org.gnome.gxsm4.pcs.plugin-libinet-json-external-scandata.gschema.xml',
-      'org.gnome.gxsm4.pcsadjustments.plugin-libinet-json-external-scandata.gschema.xml',
-      'org.gnome.gxsm4.inet_json_settings.gschema.xml'
+    plugin_sources += windows.compile_resources(
+      plugin_rc,
+      args: [
+        '--define', 'ORIGINALFILENAME_STR="@0@"'.format(plugin_name+'.exe'),
+        '--define', 'INTERNALNAME_STR="@0@"'    .format(plugin_name),
+        '--define', 'TOP_SRCDIR="@0@"'          .format(meson.source_root()),
       ],
-  interface_prefix : 'org.gnome.',
-  namespace : 'gxsm4'
-)
+      include_directories: [
+        rootInclude, appInclude,
+      ],
+      depends: [ gitversion_h ],
+    )
+  endif
 
-# libtool shared runtime libraries (plugins)
+  deps = declare_dependency(
+    compile_args : plugin_cflags,
+    dependencies : plugin_deps,
+    include_directories : configuration_inc,
+  )
 
-### not sure what to do here, nothing works:
-## => RuntimeError: File 'plug-ins/common/libpyremote.so' could not be found
-##    FAILED: meson-install 
+#  shared_module(plugin_name,
+  shared_library(plugin_name,
+#  executable(plugin_name,
+    plugin_sources,
+    plugin_gdbus_src,
+#    link_with : [
+#      libgxsm,
+#    ],
+    dependencies: deps,
+    link_args : all_plugin_link_args,
+    install: true,
+    install_dir: install_path
+  )
+endforeach
 
-shared_library('spm_scancontrol',
-        'spm_scancontrol.cpp',
-        dependencies : deps,
-        install_dir: install_path,
-        install: true,
-)
-
-shared_library('inet_json_external_scandata',
-        'inet_json_external_scandata.cpp', 'jsmn.c',
-        dependencies : deps,
-        install_dir: install_path,
-        install: true,
-)
-
-shared_library('multidim_movie_control',
-        'multidim_movie_control.cpp',
-        dependencies : deps,
-        install_dir: install_path,
-        install: true,
-)

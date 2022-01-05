@@ -1,24 +1,92 @@
-install_path = get_option('prefix') / 'lib/gxsm4-plugins/common'
-## install_path = plugin_libs_dir+'/common'
+plugin_cat = 'control'
+install_path = gxsm4_plugin_dir / plugin_cat
 
-deps = declare_dependency(
-    compile_args: ['-fpermissive', '-w'],
-    dependencies : [icuuc, gtk, python, gtksourceview, cairo, freet, gset, netcdf, fftw, xml, png, gmod, gmodexp, dl],
-    include_directories : configuration_inc,
-    link_args : ['-Mmodules', '-export-dynamic', '-fno-version']
-)
+plugin_list = [
+    { 'name': 'pyremote',
+      'gschemas': [
+          'org.gnome.gxsm4.pcs.plugin-libpyremote.gschema.xml',
+          'org.gnome.gxsm4.pcsadjustments.plugin-libpyremote.gschema.xml' ]},
+    { 'name': 'extra_scan_info', },
+    { 'name': 'queryDSPinfo', },
+    { 'name': 'ProbeIndicator', },
+    { 'name': 'PanView' },
+#    { 'name': 'PanView', 'deps': [ gtk, cairo, ], },
+]
 
-gnome = import('gnome')
+#if libxxx.found()
+#  plugins_list += {
+#    'name': 'pluing-wlibxxx',
+#    'deps': [ gtk3, libxxx, ],
+#  }
+#endif
 
-# The returned source would be passed to another target
-gxsm4_gdbus_src += gnome.gdbus_codegen('gxsm4-common-gschema',
-  sources: [
-      'org.gnome.gxsm4.pcs.plugin-libpyremote.gschema.xml',
-      'org.gnome.gxsm4.pcsadjustments.plugin-libpyremote.gschema.xml',
+
+
+
+foreach plugin : plugin_list
+  plugin_name = plugin.get('name')
+  plugin_sources = [ plugin.get('sources', plugin_name + '.cpp') ]
+  plugin_deps = plugin.get('deps', []) + all_plugin_deps
+  plugin_cflags = plugin.get('cflags', []) + all_cflags
+  plugin_schemas = plugin.get('gschemas', [])
+
+  if plugin_schemas.length() > 0
+      plugin_gdbus_src = gnome.gdbus_codegen('gxsm4-'+plugin_cat+'-'+plugin_name+'-gschema',
+        sources: plugin_schemas,
+        interface_prefix : 'org.gnome.',
+        namespace : 'gxsm4'
+    )
+  else
+      plugin_gdbus_src = [] 
+  endif
+  
+  if platform_windows
+    plugin_rc = configure_file(
+      input : gimp_plugins_rc.full_path(),
+      output: plugin_name + '.rc',
+      copy: true,
+    )
+
+    plugin_sources += windows.compile_resources(
+      plugin_rc,
+      args: [
+        '--define', 'ORIGINALFILENAME_STR="@0@"'.format(plugin_name+'.exe'),
+        '--define', 'INTERNALNAME_STR="@0@"'    .format(plugin_name),
+        '--define', 'TOP_SRCDIR="@0@"'          .format(meson.source_root()),
       ],
-  interface_prefix : 'org.gnome.',
-  namespace : 'gxsm4'
-)
+      include_directories: [
+        rootInclude, appInclude,
+      ],
+      depends: [ gitversion_h ],
+    )
+  endif
+
+  deps = declare_dependency(
+    compile_args : plugin_cflags,
+    dependencies : plugin_deps,
+    include_directories : configuration_inc,
+  )
+
+#  shared_module(plugin_name,
+  shared_library(plugin_name,
+#  executable(plugin_name,
+    plugin_sources,
+    plugin_gdbus_src,
+#    link_with : [
+#      libgxsm,
+#    ],
+    dependencies: deps,
+    link_args : all_plugin_link_args,
+    install: true,
+    install_dir: install_path
+  )
+endforeach
+
+
+
+
+
+
 
 ## shell python3-config --ldflags  ==> , '-L/usr/lib/python3.9/config-3.9-x86_64-linux-gnu', '-L/usr/lib/x86_64-linux-gnu ', '-lcrypt', '-lpthread', '-ldl ', '-lutil'],
 
@@ -34,38 +102,38 @@ gxsm4_gdbus_src += gnome.gdbus_codegen('gxsm4-common-gschema',
 ## => RuntimeError: File 'plug-ins/common/libpyremote.so' could not be found
 ##    FAILED: meson-install 
 
-build_target('pyremote',
-        'pyremote.cpp',
-        dependencies : deps,
-        target_type : 'shared_module',
-        install_dir: install_path,
-        install: true,
-)
-
-shared_library('PanView',
-        'PanView.cpp',
-        dependencies : deps,
-        install_dir: install_path,
-        install: true,
-)
-
-shared_module('ProbeIndicator',
-        'ProbeIndicator.cpp',
-        dependencies : deps,
-        install_dir: install_path,
-        install: true,
-)
-
-shared_library('queryDSPinfo',
-        'queryDSPinfo.cpp',
-        dependencies : deps,
-        install_dir: install_path,
-        install: true,
-)
-
-shared_library('extra_scan_info',
-        'extra_scan_info.cpp',
-        dependencies : deps,
-        install_dir: install_path,
-        install: true,
-)
+#build_target('pyremote',
+#        'pyremote.cpp',
+#        dependencies : deps,
+#        target_type : 'shared_module',
+#        install_dir: install_path,
+#        install: true,
+#)
+#
+#shared_library('PanView',
+#        'PanView.cpp',
+#        dependencies : deps,
+#        install_dir: install_path,
+#        install: true,
+#)
+#
+#shared_module('ProbeIndicator',
+#        'ProbeIndicator.cpp',
+#        dependencies : deps,
+#        install_dir: install_path,
+#        install: true,
+#)
+#
+#shared_library('queryDSPinfo',
+#        'queryDSPinfo.cpp',
+#        dependencies : deps,
+#        install_dir: install_path,
+#        install: true,
+#)
+#
+#shared_library('extra_scan_info',
+#        'extra_scan_info.cpp',
+#        dependencies : deps,
+#        install_dir: install_path,
+#        install: true,
+#)
