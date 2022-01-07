@@ -44,6 +44,7 @@
 #include "gxsm_app.h"
 #include "gxsm_window.h"
 #include "action_id.h"
+#include "surface.h"
 
 #include "xsmcmd.h"
 #include "sranger_mk2_hwi_control.h"
@@ -55,11 +56,19 @@
 #define UTF8_MU        "\302\265"
 #define UTF8_ANGSTROEM "\303\205"
 
-extern GxsmPlugin sranger_mk2_hwi_pi;
-extern DSPControl *DSPControlClass;
-extern sranger_common_hwi_dev *sranger_common_hwi; // instance of the HwI derived XSM_Hardware class
+
+
+extern "C++" {
+        extern DSPControlContainer *DSPControlContainerClass;
+        extern DSPControl *DSPControlClass;
+        extern DSPMoverControl *DSPMoverClass;
+        extern DSPPACControl *DSPPACClass;
+        extern DSPControlUserTabs *DSPControlUserTabsClass;
+        extern GxsmPlugin sranger_mk2_hwi_pi;
+        extern sranger_common_hwi_dev *sranger_common_hwi; // instance of the HwI derived XSM_Hardware class
+}
+
 DSPMoverControl *this_mover_control=NULL;	 
-extern DSPPACControl *DSPPACClass;
 
 typedef struct {
         int curve_id;
@@ -145,7 +154,7 @@ static void DSPMoverControl_Thaw_callback (gpointer x){
 		this_mover_control->thaw ();	 
 }
 
-DSPMoverControl::DSPMoverControl ()
+DSPMoverControl::DSPMoverControl (Gxsm4app *app):AppBase(app)
 {
 	XsmRescourceManager xrm("sranger_mk2_hwi_control");
 
@@ -704,7 +713,7 @@ void DSPMoverControl::configure_callback (GSimpleAction *action, GVariant *param
         }
 }
 
-void DSPMoverControl::AppWindowInit(const gchar *title){
+void DSPMoverControl::AppWindowInit(const gchar *title, const gchar *sub_title){
         if (title) { // stage 1
                 PI_DEBUG (DBG_L2, "DSPMoverControl::AppWindowInit -- header bar");
 

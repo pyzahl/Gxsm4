@@ -5,10 +5,11 @@ plugin_list = [
     { 'name': 'spm_simulator_hwi',
       'gschemas': [ 'org.gnome.gxsm4.pcsadjustments.plugin-libspm-simulator-hwi.gschema.xml' ] },
     { 'name': 'sranger_mk2_hwi',
-      'sources': [ 'sranger_mk2_hwi_control.cpp', 'sranger_mk2_hwi_dev.cpp',
-                   'sranger_mk2_hwi_eventhandling.cpp',
+      'sources': [ 'sranger_mk2_hwi_control.cpp',
                    'sranger_mk2_hwi_mover.cpp',
                    'sranger_mk2_hwi_spm.cpp',
+                   'sranger_mk2_hwi_dev.cpp',
+                   'sranger_mk2_hwi_eventhandling.cpp',
                    'sranger_mk2_hwi_vectorgen.cpp',
                    'sranger_mk3_hwi_dev.cpp',
                    'sranger_mk3_hwi_pac.cpp',
@@ -19,7 +20,7 @@ plugin_list = [
                     'org.gnome.gxsm4.pcs.plugin-libspm-simulator-hwi.gschema.xml',
                     'org.gnome.gxsm4.pcs.plugin-libsranger-mk2-hwi.gschema.xml',
                     'org.gnome.gxsm4.plugin_libsranger_hwi.gschema.xml' ] },
-    { 'name': 'tc211_ccd' },
+#    { 'name': 'tc211_ccd' },
 ]
 
 
@@ -72,7 +73,7 @@ foreach plugin : plugin_list
     plugin_gdbus_src,
     dependencies: deps,
     link_with: [ lib_global_gxsm, lib_utils_gxsm, lib_app_gxsm, lib_pcs_gxsm ],
-#    link_args : all_plugin_link_args,
+    link_args : all_plugin_link_args,
     install: true,
     install_dir: install_path
   )

@@ -41,6 +41,7 @@
 
 #include "sranger_mk2_hwi.h"
 #include "xsmcmd.h"
+#include "surface.h"
 
 // need some SRanger io-controls 
 // HAS TO BE IDENTICAL TO THE DRIVER's FILE!
@@ -59,9 +60,17 @@
 // enable debug:
 #define	SRANGER_DEBUG(S) XSM_DEBUG (DBG_L4, "sranger_mk2_hwi_spm: " << S )
 
-extern GxsmPlugin sranger_mk2_hwi_pi;
-extern DSPControl *DSPControlClass;
-extern DSPMoverControl *DSPMoverClass;
+
+extern "C++" {
+        extern DSPControlContainer *DSPControlContainerClass;
+        extern DSPControl *DSPControlClass;
+        extern DSPMoverControl *DSPMoverClass;
+        extern DSPPACControl *DSPPACClass;
+        extern DSPControlUserTabs *DSPControlUserTabsClass;
+        extern GxsmPlugin sranger_mk2_hwi_pi;
+}
+
+
 
 int gpio_monitor_out = 0;
 int gpio_monitor_in  = 0;

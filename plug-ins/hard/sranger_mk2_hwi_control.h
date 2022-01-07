@@ -303,10 +303,10 @@ class DSPControl : public AppBase{
 #define FLAG_AUTO_RUN_INITSCRIPT  0x08 // auto run init script
 
  public:
-        DSPControl ();
+        DSPControl (Gxsm4app *app);
         virtual ~DSPControl();
 
-        virtual void AppWindowInit(const gchar *title);
+        virtual void AppWindowInit(const gchar *title=NULL, const gchar *sub_title=NULL);
 
 	static void configure_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
 
@@ -912,7 +912,7 @@ protected:
 
 class DSPControlUserTabs : public AppBase{
 public:
-	DSPControlUserTabs();
+	DSPControlUserTabs(Gxsm4app *app);
 	virtual ~DSPControlUserTabs();
 };
 
@@ -921,10 +921,10 @@ class MOV_GUI_Builder;
 
 class DSPMoverControl : public AppBase{
 public:
-	DSPMoverControl();
+	DSPMoverControl(Gxsm4app *app);
 	virtual ~DSPMoverControl();
 
-        virtual void AppWindowInit(const gchar *title);
+        virtual void AppWindowInit(const gchar *title=NULL, const gchar *sub_title=NULL);
         
 	void update();
 	void updateDSP(int sliderno=-1);
@@ -985,7 +985,7 @@ class PAC_GUI_Builder;
 
 class DSPPACControl : public AppBase{
 public:
-	DSPPACControl();
+	DSPPACControl(Gxsm4app *app);
 	virtual ~DSPPACControl();
 
 	void update();

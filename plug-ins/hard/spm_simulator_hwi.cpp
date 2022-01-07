@@ -64,6 +64,7 @@
 
 #include "gxsm_app.h"
 #include "gxsm_window.h"
+#include "surface.h"
 
 
 // Define HwI PlugIn reference name here, this is what is listed later within "Preferenced Dialog"
@@ -244,7 +245,7 @@ static void spm_simulator_hwi_query(void)
 
 //      Setup Control Windows
 // ==================================================
-	SIMControlClass = new SPM_SIM_Control ();
+	SIMControlClass = new SPM_SIM_Control (main_get_gapp() -> get_app ());
         
 	spm_simulator_hwi_pi.status = g_strconcat(N_("Plugin query has attached "),
                                                   spm_simulator_hwi_pi.name, 
