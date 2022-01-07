@@ -67,12 +67,12 @@ Convenience panel for Multi Dimensional Movie Control and playback.
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
-
-#include "core-source/unit.h"
-#include "core-source/pcs.h"
-#include "core-source/glbvars.h"
-#include "plug-ins/hard/modules/ccd.h"
+#include "plugin.h"
+#include "surface.h"
+#include "unit.h"
+#include "pcs.h"
+#include "glbvars.h"
+//##include "plug-ins/hard/modules/ccd.h"
 
 
 static void Multidim_Movie_Control_about( void );
@@ -128,7 +128,7 @@ GxsmPlugin *get_gxsm_plugin_info ( void ){
 
 class Multidim_Movie_Control : public AppBase{
 public:
-	Multidim_Movie_Control();
+	Multidim_Movie_Control(Gxsm4app *app);
 	virtual ~Multidim_Movie_Control();
 
 	void update();
@@ -173,7 +173,7 @@ static void MovieControl_Thaw_callback (gpointer x){
 static void Multidim_Movie_Control_query(void)
 {
 	// new ...
-	Multidim_Movie_ControlClass = new Multidim_Movie_Control;
+	Multidim_Movie_ControlClass = new Multidim_Movie_Control (main_get_gapp() -> get_app ());
 
 	Multidim_Movie_Control_pi.app->ConnectPluginToStartScanEvent
 		( Multidim_Movie_Control_StartScan_callback );
@@ -213,22 +213,10 @@ static void Multidim_Movie_Control_StartScan_callback( gpointer ){
 	Multidim_Movie_ControlClass->update();
 }
 
-#define XSM gapp->xsm
+#define XSM main_get_gapp()->xsm
 
-Multidim_Movie_Control::Multidim_Movie_Control ()
+Multidim_Movie_Control::Multidim_Movie_Control (Gxsm4app *app):AppBase(app)
 {
-#if 0
-	GSList *EC_list=NULL;
-	Gtk_EntryControl *ec;
-
-	GtkWidget *grid;
-	GtkWidget *frame;
-	GtkWidget *input;
-	GtkWidget *label;
-	GtkWidget *button;
-	int x,y;
-	x=y=1;
-#endif	
 	stop_play_layer = TRUE;
 	stop_play_time  = TRUE;
 	frame_delay = 20.;
@@ -246,7 +234,7 @@ Multidim_Movie_Control::Multidim_Movie_Control ()
         mmc_bp->new_grid_with_frame (N_("Multi Dimensional Movie Control"));
         mmc_bp->set_no_spin (false);
         mmc_bp->grid_add_ec_with_scale (N_("Layer"), Unity, &XSM->data.display.vlayer, 0, 10, ".0f");
-        mmc_bp->set_ec_change_notice_fkt (App::spm_select_layer, gapp);
+        mmc_bp->set_ec_change_notice_fkt (App::spm_select_layer, main_get_gapp());
         mmc_bp->grid_add_button_icon_name ("media-playback-start", NULL, 1,
                                            G_CALLBACK (Multidim_Movie_Control::l_play), this);
         mmc_bp->grid_add_button_icon_name ("media-playback-stop", NULL, 1,
@@ -256,7 +244,7 @@ Multidim_Movie_Control::Multidim_Movie_Control ()
 	mmc_bp->new_line ();
 
         mmc_bp->grid_add_ec_with_scale (N_("Time"), Unity, &XSM->data.display.vframe, 0, 10, ".0f");
-        mmc_bp->set_ec_change_notice_fkt (App::spm_select_time, gapp);
+        mmc_bp->set_ec_change_notice_fkt (App::spm_select_time, main_get_gapp());
         mmc_bp->grid_add_button_icon_name ("media-playback-start", NULL, 1,
                                            G_CALLBACK (Multidim_Movie_Control::t_play), this);
         mmc_bp->grid_add_button_icon_name ("media-playback-stop", NULL, 1,
@@ -315,12 +303,12 @@ int Multidim_Movie_Control::play_layers (gpointer data){
 	l += mmc->play_direction;
 	if (l < XSM->data.s.nvalues && l >= 0){
 		XSM->data.display.vlayer = l;
-		App::spm_select_layer (NULL, gapp);
+		App::spm_select_layer (NULL, main_get_gapp());
 		if (mmc->frame_delay > 0.){
 			if ( gtk_check_button_get_active (GTK_CHECK_BUTTON (mmc->contineous_autodisp)))
-				gapp->xsm->ActiveScan->auto_display ();
+				main_get_gapp()->xsm->ActiveScan->auto_display ();
 			else
-				gapp->spm_update_all ();
+				main_get_gapp()->spm_update_all ();
 			mmc->update ();
 			if (!mmc->stop_play_layer)
 				g_timeout_add ((guint)mmc->frame_delay, Multidim_Movie_Control::play_layers, mmc);
@@ -331,7 +319,7 @@ int Multidim_Movie_Control::play_layers (gpointer data){
 	case 0: mmc->play_direction = 1; break;
 	case 1: mmc->play_direction = 1; 
 		XSM->data.display.vlayer = 0;
-		App::spm_select_layer (NULL, gapp);
+		App::spm_select_layer (NULL, main_get_gapp());
 		if (!mmc->stop_play_layer)
 			g_timeout_add ((guint)mmc->frame_delay, Multidim_Movie_Control::play_layers, mmc);
 		break;
@@ -343,7 +331,7 @@ int Multidim_Movie_Control::play_layers (gpointer data){
 	}
 
 	mmc->update ();
-	gapp->spm_update_all ();
+	main_get_gapp()->spm_update_all ();
 
 	return id;
 }
@@ -351,14 +339,14 @@ int Multidim_Movie_Control::play_layers (gpointer data){
 void Multidim_Movie_Control::l_stop (GtkWidget *w, Multidim_Movie_Control *mmc){
 	mmc->stop_play_layer = TRUE;
 	mmc->update ();
-	gapp->spm_update_all ();
+	main_get_gapp()->spm_update_all ();
 	mmc->l_play_flg = false;
 }
 void Multidim_Movie_Control::l_rewind (GtkWidget *w, Multidim_Movie_Control *mmc){
 	XSM->data.display.vlayer=0;
-	App::spm_select_layer (NULL, gapp);
+	App::spm_select_layer (NULL, main_get_gapp());
 	mmc->update ();
-	gapp->spm_update_all ();
+	main_get_gapp()->spm_update_all ();
 }
 
 void Multidim_Movie_Control::t_play (GtkWidget *w, Multidim_Movie_Control *mmc){
@@ -382,12 +370,12 @@ int Multidim_Movie_Control::play_times (gpointer data){
 	l += mmc->play_direction;
 	if (l < XSM->data.s.ntimes && l >= 0){
 		XSM->data.display.vframe = l;
-		App::spm_select_time (NULL, gapp);
+		App::spm_select_time (NULL, main_get_gapp());
 		if (mmc->frame_delay > 0.){
 			if (gtk_check_button_get_active (GTK_CHECK_BUTTON (mmc->contineous_autodisp)))
-			        gapp->xsm->ActiveScan->auto_display ();
+			        main_get_gapp()->xsm->ActiveScan->auto_display ();
 			else
-				gapp->spm_update_all ();
+				main_get_gapp()->spm_update_all ();
 			mmc->update ();
 		}
 
@@ -399,7 +387,7 @@ int Multidim_Movie_Control::play_times (gpointer data){
 	case 0: mmc->play_direction = 1; break;
 	case 1: mmc->play_direction = 1;
 		XSM->data.display.vframe = 0;
-		App::spm_select_time (NULL, gapp);
+		App::spm_select_time (NULL, main_get_gapp());
 		if (!mmc->stop_play_time)
 			g_timeout_add ((guint)mmc->frame_delay, Multidim_Movie_Control::play_times, mmc);
 		break;
@@ -410,19 +398,19 @@ int Multidim_Movie_Control::play_times (gpointer data){
 	default: break;
 	}
 	mmc->update ();
-	gapp->spm_update_all ();
+	main_get_gapp()->spm_update_all ();
 	return id;
 }
 
 void Multidim_Movie_Control::t_stop (GtkWidget *w, Multidim_Movie_Control *mmc){
 	mmc->stop_play_time = TRUE;
 	mmc->update ();
-	gapp->spm_update_all ();
+	main_get_gapp()->spm_update_all ();
 	mmc->t_play_flg = false;
 }
 void Multidim_Movie_Control::t_rewind (GtkWidget *w, Multidim_Movie_Control *mmc){
 	XSM->data.display.vframe=0;
-	App::spm_select_time (NULL, gapp);
+	App::spm_select_time (NULL, main_get_gapp());
 	mmc->update ();
-	gapp->spm_update_all ();
+	main_get_gapp()->spm_update_all ();
 }

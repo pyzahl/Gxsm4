@@ -98,10 +98,10 @@ int ProbeScan::Probe(XSM_Hardware *hw, SPM_Probe_p *prbp){
 
 	data.ui.SetTitle (prbp->resTitle);
 
-	if (strncmp (data.ui.originalname, gapp->xsm->data.ui.originalname, strlen(gapp->xsm->data.ui.originalname)))
+	if (strncmp (data.ui.originalname, main_get_gapp()->xsm->data.ui.originalname, strlen(main_get_gapp()->xsm->data.ui.originalname)))
 		count = 0;
 	gchar *s;
-	data.ui.SetOriginalName (s=g_strdup_printf("%s-%s%03d", gapp->xsm->data.ui.originalname, prbp->resName, ++count));
+	data.ui.SetOriginalName (s=g_strdup_printf("%s-%s%03d", main_get_gapp()->xsm->data.ui.originalname, prbp->resName, ++count));
 	g_free (s);
 
 	data.SetXUnit(prbp->XUnit);
@@ -139,7 +139,7 @@ int ProbeScan::Probe(XSM_Hardware *hw, SPM_Probe_p *prbp){
 	hardpar.hp[DSP_PRBDELAY   ].value = prbp->delay;
 	hardpar.hp[DSP_PRBCIVAL   ].value = prbp->CIval;
 	hardpar.hp[DSP_PRBNAVE    ].value = prbp->nAve;
-	hardpar.hp[DSP_PRBGAPADJ  ].value = prbp->GapAdj/gapp->xsm->Inst->ZResolution(); // convert to DigUnits!!!!
+	hardpar.hp[DSP_PRBGAPADJ  ].value = prbp->GapAdj/main_get_gapp()->xsm->Inst->ZResolution(); // convert to DigUnits!!!!
 	hw->SetParameter(hardpar, FALSE);
 	prbp->ACMultiplier = hardpar.hp[DSP_PRBACMULT].value;
 	prbp->ACFrq        = hardpar.hp[DSP_PRBACFRQ].value;

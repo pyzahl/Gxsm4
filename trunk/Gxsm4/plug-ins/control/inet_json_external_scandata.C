@@ -154,7 +154,7 @@ static void inet_json_external_scandata_query(void)
                                                  NULL);
 
 	PI_DEBUG (DBG_L2, "inet_json_external_scandata_query:new" );
-	inet_json_external_scandata = new Inet_Json_External_Scandata;
+	inet_json_external_scandata = new Inet_Json_External_Scandata (main_get_gapp() -> get_app ());
 
 	PI_DEBUG (DBG_L2, "inet_json_external_scandata_query:res" );
 	
@@ -221,7 +221,7 @@ static void inet_json_external_scandata_show_callback(GSimpleAction *simple, GVa
 #define dB_max_from_Q(Q) (20.*log10(1L<<((32-(Q))-1)))
 #define SETUP_dB_RANGE_from_Q(PCS, Q) { PCS->setMin(dB_min_from_Q(Q)); PCS->setMax(dB_max_from_Q(Q)); }
 
-Inet_Json_External_Scandata::Inet_Json_External_Scandata ()
+Inet_Json_External_Scandata::Inet_Json_External_Scandata (Gxsm4app *app):AppBase(app)
 {
         GtkWidget *tmp;
         GtkWidget *wid;
@@ -992,9 +992,9 @@ void Inet_Json_External_Scandata::scan_start_callback (gpointer user_data){
         //self->operation_mode = 0;
         g_message ("Inet_Json_External_Scandata::scan_start_callback");
 #if 0
-        if ((self->ch_freq=gapp->xsm->FindChan(xsmres.extchno[0])) >= 0)
+        if ((self->ch_freq=main_get_gapp()->xsm->FindChan(xsmres.extchno[0])) >= 0)
                 self->setup_scan (self->ch_freq, "X+", "Ext1-Freq", "Hz", "Freq", 1.0);
-        if ((self->ch_ampl=gapp->xsm->FindChan(xsmres.extchno[1])) >= 0)
+        if ((self->ch_ampl=main_get_gapp()->xsm->FindChan(xsmres.extchno[1])) >= 0)
                 self->setup_scan (self->ch_ampl, "X+", "Ext1-Ampl", "V", "Ampl", 1.0);
 #endif
 }
@@ -1017,57 +1017,57 @@ int Inet_Json_External_Scandata::setup_scan (int ch,
 	){
 #if 0
 	// did this scan already exists?
-	if ( ! gapp->xsm->scan[ch]){ // make a new one ?
-		gapp->xsm->scan[ch] = gapp->xsm->NewScan (gapp->xsm->ChannelView[ch], 
-							  gapp->xsm->data.display.ViewFlg, 
+	if ( ! main_get_gapp()->xsm->scan[ch]){ // make a new one ?
+		main_get_gapp()->xsm->scan[ch] = main_get_gapp()->xsm->NewScan (main_get_gapp()->xsm->ChannelView[ch], 
+							  main_get_gapp()->xsm->data.display.ViewFlg, 
 							  ch, 
-							  &gapp->xsm->data);
+							  &main_get_gapp()->xsm->data);
 		// Error ?
-		if (!gapp->xsm->scan[ch]){
+		if (!main_get_gapp()->xsm->scan[ch]){
 			XSM_SHOW_ALERT (ERR_SORRY, ERR_NOMEM,"",1);
 			return FALSE;
 		}
 	}
 
 
-	Mem2d *m=gapp->xsm->scan[ch]->mem2d;
+	Mem2d *m=main_get_gapp()->xsm->scan[ch]->mem2d;
         m->Resize (m->GetNx (), m->GetNy (), m->GetNv (), ZD_DOUBLE, false); // multilayerinfo=clean
 	
 	// Setup correct Z unit
-	UnitObj *u = gapp->xsm->MakeUnit (unit, label);
-	gapp->xsm->scan[ch]->data.SetZUnit (u);
+	UnitObj *u = main_get_gapp()->xsm->MakeUnit (unit, label);
+	main_get_gapp()->xsm->scan[ch]->data.SetZUnit (u);
 	delete u;
 		
-        gapp->xsm->scan[ch]->create (TRUE, FALSE, strchr (titleprefix, '-') ? -1.:1., gapp->xsm->hardware->IsFastScan ());
+        main_get_gapp()->xsm->scan[ch]->create (TRUE, FALSE, strchr (titleprefix, '-') ? -1.:1., main_get_gapp()->xsm->hardware->IsFastScan ());
 
 	// setup dz from instrument definition or propagated via signal definition
 	if (fabs (d2u) > 0.)
-		gapp->xsm->scan[ch]->data.s.dz = d2u;
+		main_get_gapp()->xsm->scan[ch]->data.s.dz = d2u;
 	else
-		gapp->xsm->scan[ch]->data.s.dz = gapp->xsm->Inst->ZResolution (unit);
+		main_get_gapp()->xsm->scan[ch]->data.s.dz = main_get_gapp()->xsm->Inst->ZResolution (unit);
 	
 	// set scan title, name, ... and draw it!
 
 	gchar *scantitle = NULL;
-	if (!gapp->xsm->GetMasterScan ()){
-		gapp->xsm->SetMasterScan (gapp->xsm->scan[ch]);
+	if (!main_get_gapp()->xsm->GetMasterScan ()){
+		main_get_gapp()->xsm->SetMasterScan (main_get_gapp()->xsm->scan[ch]);
 		scantitle = g_strdup_printf ("M %s %s", titleprefix, name);
 	} else {
 		scantitle = g_strdup_printf ("%s %s", titleprefix, name);
 	}
-	gapp->xsm->scan[ch]->data.ui.SetName (scantitle);
-	gapp->xsm->scan[ch]->data.ui.SetOriginalName ("unknown");
-	gapp->xsm->scan[ch]->data.ui.SetTitle (scantitle);
-	gapp->xsm->scan[ch]->data.ui.SetType (scantitle);
-	gapp->xsm->scan[ch]->data.s.xdir = strchr (titleprefix, '-') ? -1.:1.;
-	gapp->xsm->scan[ch]->data.s.ydir = gapp->xsm->data.s.ydir;
+	main_get_gapp()->xsm->scan[ch]->data.ui.SetName (scantitle);
+	main_get_gapp()->xsm->scan[ch]->data.ui.SetOriginalName ("unknown");
+	main_get_gapp()->xsm->scan[ch]->data.ui.SetTitle (scantitle);
+	main_get_gapp()->xsm->scan[ch]->data.ui.SetType (scantitle);
+	main_get_gapp()->xsm->scan[ch]->data.s.xdir = strchr (titleprefix, '-') ? -1.:1.;
+	main_get_gapp()->xsm->scan[ch]->data.s.ydir = main_get_gapp()->xsm->data.s.ydir;
 
         streampos=x=y=0; // assume top down full size
         
-	PI_DEBUG (DBG_L2, "setup_scan[" << ch << " ]: scantitle done: " << gapp->xsm->scan[ch]->data.ui.type ); 
+	PI_DEBUG (DBG_L2, "setup_scan[" << ch << " ]: scantitle done: " << main_get_gapp()->xsm->scan[ch]->data.ui.type ); 
 
 	g_free (scantitle);
-	gapp->xsm->scan[ch]->draw ();
+	main_get_gapp()->xsm->scan[ch]->draw ();
 #endif
         
 	return 0;
@@ -1876,7 +1876,7 @@ void Inet_Json_External_Scandata::stream_data (){
         int deci=16;
         int n=4;
         if (data_shr_max > 2) { //if (ch_freq >= 0 || ch_ampl >= 0){
-                double decimation = 125e6 * gapp->xsm->hardware->GetScanrate ();
+                double decimation = 125e6 * main_get_gapp()->xsm->hardware->GetScanrate ();
                 deci = (gint64)decimation;
                 if (deci > 2){
                         for (n=0; deci; ++n) deci >>= 1;
@@ -1884,7 +1884,7 @@ void Inet_Json_External_Scandata::stream_data (){
                 }
                 if (n>data_shr_max) n=data_shr_max; // limit to 24. Note: (32 bits - 8 control, may shorten control, only 3 needed)
                 deci = 1<<n;
-                //g_print ("Scan Pixel rate is %g s/pix -> Decimation %g -> %d n=%d\n", gapp->xsm->hardware->GetScanrate (), decimation, deci, n);
+                //g_print ("Scan Pixel rate is %g s/pix -> Decimation %g -> %d n=%d\n", main_get_gapp()->xsm->hardware->GetScanrate (), decimation, deci, n);
         }
         if (deci != data_decimation){
                 data_decimation = deci;
@@ -1894,19 +1894,19 @@ void Inet_Json_External_Scandata::stream_data (){
         }
 
         if (ch_freq >= 0 || ch_ampl >= 0){
-                if (x < gapp->xsm->scan[ch_freq]->mem2d->GetNx () &&
-                    y < gapp->xsm->scan[ch_freq]->mem2d->GetNy ()){
+                if (x < main_get_gapp()->xsm->scan[ch_freq]->mem2d->GetNx () &&
+                    y < main_get_gapp()->xsm->scan[ch_freq]->mem2d->GetNy ()){
                         for (int i=0; i<1000; ++i) {
                                 if (ch_freq >= 0)
-                                        gapp->xsm->scan[ch_freq]->mem2d->PutDataPkt (parameters.freq_fb_lower + pacpll_signals.signal_ch2[i], x,y);
+                                        main_get_gapp()->xsm->scan[ch_freq]->mem2d->PutDataPkt (parameters.freq_fb_lower + pacpll_signals.signal_ch2[i], x,y);
                                 if (ch_ampl >= 0)
-                                        gapp->xsm->scan[ch_ampl]->mem2d->PutDataPkt (pacpll_signals.signal_ch1[i], x,y);
+                                        main_get_gapp()->xsm->scan[ch_ampl]->mem2d->PutDataPkt (pacpll_signals.signal_ch1[i], x,y);
                                 ++x;
-                                if (x >= gapp->xsm->scan[ch_freq]->mem2d->GetNx ()) {x=0; ++y; };
-                                if (y >= gapp->xsm->scan[ch_freq]->mem2d->GetNy ()) break;
+                                if (x >= main_get_gapp()->xsm->scan[ch_freq]->mem2d->GetNx ()) {x=0; ++y; };
+                                if (y >= main_get_gapp()->xsm->scan[ch_freq]->mem2d->GetNy ()) break;
                         }
                         streampos += 1024;
-                        gapp->xsm->scan[ch_freq]->draw ();
+                        main_get_gapp()->xsm->scan[ch_freq]->draw ();
                 }
         }
 #endif

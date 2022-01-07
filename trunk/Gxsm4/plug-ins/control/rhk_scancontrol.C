@@ -269,8 +269,8 @@ public:
 
 	void SetScanDir (GtkWidget *w) {
 		scan_dir = (SCAN_DIR) ((int) g_object_get_data ( G_OBJECT (w), "SCANDIR"));
-		if (scan_dir==SCAN_XY) gapp->xsm->hardware->ExecCmd(DSP_CMD_MOVETO_X);
-		if (scan_dir==SCAN_YX) gapp->xsm->hardware->ExecCmd(DSP_CMD_MOVETO_Y);
+		if (scan_dir==SCAN_XY) main_get_gapp()->xsm->hardware->ExecCmd(DSP_CMD_MOVETO_X);
+		if (scan_dir==SCAN_YX) main_get_gapp()->xsm->hardware->ExecCmd(DSP_CMD_MOVETO_Y);
 		PI_DEBUG(DBG_L2, "SCM=" << scan_dir); };
 	void ClrScanDir (GtkWidget *w) { };
 
@@ -500,10 +500,10 @@ rhk_ScanControl::rhk_ScanControl ()
 
 	ScanData = &rhk_scancontrol_pi.app->xsm->data;
 //        dsp = &rhk_scancontrol_pi.app->xsm->data.hardpars;
-        //dsp= &gapp->xsm->data.hardpars;
+        //dsp= &main_get_gapp()->xsm->data.hardpars;
 //        scan = &rhk_scancontrol_pi.app->xsm->data.s;
-        //scan=&gapp->xsm->data.s;
-        instrument = gapp->xsm->Inst;
+        //scan=&main_get_gapp()->xsm->data.s;
+        instrument = main_get_gapp()->xsm->Inst;
 
 	AppWindowInit("RHK Scan Control");
 
@@ -547,7 +547,7 @@ rhk_ScanControl::rhk_ScanControl ()
 	g_signal_connect ( G_OBJECT (button), "pressed",
 			     G_CALLBACK (rhk_scancontrol_start_callback),
 			     this);
-	gapp->RegisterPluginToolbarButton (G_OBJECT (button), "Toolbar_Scan_Start");
+	main_get_gapp()->RegisterPluginToolbarButton (G_OBJECT (button), "Toolbar_Scan_Start");
 
 	button = gtk_button_new_with_label(N_("Movie"));
 	gtk_widget_show (button);
@@ -555,7 +555,7 @@ rhk_ScanControl::rhk_ScanControl ()
 	g_signal_connect ( G_OBJECT (button), "pressed",
 			     G_CALLBACK (rhk_scancontrol_movie_callback),
 			     this);
-	gapp->RegisterPluginToolbarButton (G_OBJECT (button), "Toolbar_Scan_Movie");
+	main_get_gapp()->RegisterPluginToolbarButton (G_OBJECT (button), "Toolbar_Scan_Movie");
 
 	button = gtk_button_new_with_label(N_("HS Capture"));
 	gtk_widget_show (button);
@@ -563,7 +563,7 @@ rhk_ScanControl::rhk_ScanControl ()
 	g_signal_connect ( G_OBJECT (button), "pressed",
 			     G_CALLBACK (rhk_scancontrol_hscapture_callback),
 			     this);
-        //	gapp->RegisterPluginToolbarButton (G_OBJECT (button), "Toolbar_Scan_HsCapture");
+        //	main_get_gapp()->RegisterPluginToolbarButton (G_OBJECT (button), "Toolbar_Scan_HsCapture");
 
 	button = gtk_button_new_with_label(N_("Pause"));
 	gtk_widget_show (button);
@@ -571,7 +571,7 @@ rhk_ScanControl::rhk_ScanControl ()
 	g_signal_connect ( G_OBJECT (button), "pressed",
 			     G_CALLBACK (rhk_scancontrol_pause_callback),
 			     this);
-	gapp->RegisterPluginToolbarButton (G_OBJECT (button), "Toolbar_Scan_Pause");
+	main_get_gapp()->RegisterPluginToolbarButton (G_OBJECT (button), "Toolbar_Scan_Pause");
 
 	button = gtk_button_new_with_label(N_("Stop"));
 	gtk_widget_show (button);
@@ -579,7 +579,7 @@ rhk_ScanControl::rhk_ScanControl ()
 	g_signal_connect ( G_OBJECT (button), "pressed",
 			     G_CALLBACK (rhk_scancontrol_stop_callback),
 			     this);
-	gapp->RegisterPluginToolbarButton (G_OBJECT (button), "Toolbar_Scan_Stop");
+	main_get_gapp()->RegisterPluginToolbarButton (G_OBJECT (button), "Toolbar_Scan_Stop");
 
 
         // 	Then, radio buttons, hbox_act2
@@ -731,10 +731,10 @@ rhk_ScanControl::~rhk_ScanControl (){
         //  XsmRescourceManager xrm("RHKScanControl");
         //  xrm.Put("SPMScanControl.Xorg", Xorg);
 
-	gapp->RegisterPluginToolbarButton (NULL, "Toolbar_Scan_Start");
- gapp->RegisterPluginToolbarButton (NULL, "Toolbar_Scan_Movie");
-	gapp->RegisterPluginToolbarButton (NULL, "Toolbar_Scan_Pause");
-	gapp->RegisterPluginToolbarButton (NULL, "Toolbar_Scan_Stop");
+	main_get_gapp()->RegisterPluginToolbarButton (NULL, "Toolbar_Scan_Start");
+ main_get_gapp()->RegisterPluginToolbarButton (NULL, "Toolbar_Scan_Movie");
+	main_get_gapp()->RegisterPluginToolbarButton (NULL, "Toolbar_Scan_Pause");
+	main_get_gapp()->RegisterPluginToolbarButton (NULL, "Toolbar_Scan_Stop");
 	// remove assigned memory
 	line = -1;
 	do_scanline (TRUE);
@@ -747,7 +747,7 @@ rhk_ScanControl::~rhk_ScanControl (){
 
 }
 
-//	gapp->xsm->hardware->SetScanMode(MEM_ADDTO);
+//	main_get_gapp()->xsm->hardware->SetScanMode(MEM_ADDTO);
 
 void rhk_ScanControl::update(){
 	g_slist_foreach((GSList*)g_object_get_data( G_OBJECT (widget), "RHKCONTROL_EC_list"),
@@ -761,13 +761,13 @@ static void rhk_scancontrol_start_callback (GtkWidget *w, void *data){
 		return;
 	time_t t; // Scan - Startzeit eintragen
 	time(&t);
-	G_FREE_STRDUP_PRINTF(gapp->xsm->data.ui.dateofscan, ctime(&t));
-	gapp->spm_update_all();
-	gapp->xsm->hardware->SetScanMode();
+	G_FREE_STRDUP_PRINTF(main_get_gapp()->xsm->data.ui.dateofscan, ctime(&t));
+	main_get_gapp()->spm_update_all();
+	main_get_gapp()->xsm->hardware->SetScanMode();
 
 	((rhk_ScanControl*)data) -> do_scan();
-	if(gapp->xsm->IsMode(MODE_AUTOSAVE))
-		gapp->xsm->save(AUTO_NAME_SAVE);
+	if(main_get_gapp()->xsm->IsMode(MODE_AUTOSAVE))
+		main_get_gapp()->xsm->save(AUTO_NAME_SAVE);
 }
 
 static void rhk_scancontrol_movie_callback (GtkWidget *w, void *data){
@@ -777,14 +777,14 @@ static void rhk_scancontrol_movie_callback (GtkWidget *w, void *data){
 	do {
 		time_t t; // Scan - Startzeit eintragen
 		time(&t);
-		G_FREE_STRDUP_PRINTF(gapp->xsm->data.ui.dateofscan, ctime(&t));
-		gapp->spm_update_all();
-		gapp->xsm->hardware->SetScanMode();
+		G_FREE_STRDUP_PRINTF(main_get_gapp()->xsm->data.ui.dateofscan, ctime(&t));
+		main_get_gapp()->spm_update_all();
+		main_get_gapp()->xsm->hardware->SetScanMode();
 
 		nostop = ((rhk_ScanControl*)data) -> do_scan();
 
-		if(gapp->xsm->IsMode(MODE_AUTOSAVE))
-			gapp->xsm->save(AUTO_NAME_SAVE);
+		if(main_get_gapp()->xsm->IsMode(MODE_AUTOSAVE))
+			main_get_gapp()->xsm->save(AUTO_NAME_SAVE);
 	} while (nostop);
 }
 
@@ -797,14 +797,14 @@ static void rhk_scancontrol_hscapture_callback (GtkWidget *w, void *data){
 	do {
 		time_t t; // Scan - Startzeit eintragen 
 		time(&t);
-		G_FREE_STRDUP_PRINTF(gapp->xsm->data.ui.dateofscan, ctime(&t));
-		gapp->spm_update_all();
-		gapp->xsm->hardware->SetScanMode();
+		G_FREE_STRDUP_PRINTF(main_get_gapp()->xsm->data.ui.dateofscan, ctime(&t));
+		main_get_gapp()->spm_update_all();
+		main_get_gapp()->xsm->hardware->SetScanMode();
 
 		nostop = ((rhk_ScanControl*)data) -> do_hscapture();
 
-		if(gapp->xsm->IsMode(MODE_AUTOSAVE))
-			gapp->xsm->save(AUTO_NAME_SAVE);
+		if(main_get_gapp()->xsm->IsMode(MODE_AUTOSAVE))
+			main_get_gapp()->xsm->save(AUTO_NAME_SAVE);
 	} while (nostop);
 }
 
@@ -884,7 +884,7 @@ int rhk_ScanControl::initialize_scan_lists (){
 		for (ipid=idaq=iprb=i=0; i < MAXSCANS; i++){
 			// PID src?  Find the first/next "Topo like" scan...
 			// (ipid counts until all PID type scans are checked)
-			for (ch = -1; (ipid < PIDCHMAX) && ((ch=gapp->xsm->FindChan(xsmres.pidchno[ipid++])) < 0););
+			for (ch = -1; (ipid < PIDCHMAX) && ((ch=main_get_gapp()->xsm->FindChan(xsmres.pidchno[ipid++])) < 0););
 
 			if(ch >= 0){ // got one!
 				PI_DEBUG (DBG_L3, "rhk_SCANCONTROL::initialize_scan_lists : Setting up XpScan - PID src found");
@@ -897,16 +897,16 @@ int rhk_ScanControl::initialize_scan_lists (){
 					    xsmres.pidsrcZlabel[ipid-1]
 					);
 				// and add to list
-				xp_scan_list = g_slist_prepend (xp_scan_list, gapp->xsm->scan[ch]);
+				xp_scan_list = g_slist_prepend (xp_scan_list, main_get_gapp()->xsm->scan[ch]);
 				// got already a master? If not used this one!
-				if (!master_scan) master_scan = gapp->xsm->scan[ch];
+				if (!master_scan) master_scan = main_get_gapp()->xsm->scan[ch];
 				// got one valid scan, so we could finish if no more... "Scan-OK"
 				sok=TRUE;
 			}
 			else{
 				// DAQ src? Find additional scans/channels to aquire...
 				// (idaq counts until all checked)
-				for(ch = -1; (idaq < DAQCHMAX) && ((ch=gapp->xsm->FindChan(xsmres.daqchno[idaq++])) < 0););
+				for(ch = -1; (idaq < DAQCHMAX) && ((ch=main_get_gapp()->xsm->FindChan(xsmres.daqchno[idaq++])) < 0););
 				if(ch >= 0){ // got one!
 					// add to xp_srcs mask... use "MUXA" (DA0..3)
 					if(idaq <= 4)
@@ -927,13 +927,13 @@ int rhk_ScanControl::initialize_scan_lists (){
 						    xsmres.daqZlabel[idaq-1]
 						);
 					// add to list...
-					xp_scan_list = g_slist_prepend (xp_scan_list, gapp->xsm->scan[ch]);
-					if (!master_scan) master_scan = gapp->xsm->scan[ch];
+					xp_scan_list = g_slist_prepend (xp_scan_list, main_get_gapp()->xsm->scan[ch]);
+					if (!master_scan) master_scan = main_get_gapp()->xsm->scan[ch];
 					sok=TRUE;
 				}
 				else{
 					// PRB src? Similar stuff for Probe type Scans...
-					for(ch = -1; (iprb < PRBMODESMAX) && ((ch=gapp->xsm->FindChan(xsmres.prbchno[iprb++])) < 0););
+					for(ch = -1; (iprb < PRBMODESMAX) && ((ch=main_get_gapp()->xsm->FindChan(xsmres.prbchno[iprb++])) < 0););
 					if(ch >= 0){
 						PI_DEBUG (DBG_L3, "rhk_SCANCONTROL::initialize_scan_lists : Setting up XpScan - PRB src found");
 
@@ -946,9 +946,9 @@ int rhk_ScanControl::initialize_scan_lists (){
 							    xsmres.prbsrcs[iprb-1], 
 							    xsmres.prboutp[iprb-1]
 							);
-						xp_prbscan_list = g_slist_prepend (xp_prbscan_list, gapp->xsm->scan[ch]);
+						xp_prbscan_list = g_slist_prepend (xp_prbscan_list, main_get_gapp()->xsm->scan[ch]);
 						// if first probe scan found, use this as probe master
-						if (!master_probescan) master_probescan = gapp->xsm->scan[ch];
+						if (!master_probescan) master_probescan = main_get_gapp()->xsm->scan[ch];
 						// note that we have to run in probe mode!
 						do_probe = TRUE;
 						sok=TRUE;
@@ -961,7 +961,7 @@ int rhk_ScanControl::initialize_scan_lists (){
 		// similar channel analysis for all XM (<-) scans... -- no probing in this direction!
 		for (ipid=idaq=i=0; i<MAXSCANS; i++){
 			// new PID src?
-			for(ch = -1; (ipid < PIDCHMAX) && ((ch=gapp->xsm->FindChan(-xsmres.pidchno[ipid++])) < 0););
+			for(ch = -1; (ipid < PIDCHMAX) && ((ch=main_get_gapp()->xsm->FindChan(-xsmres.pidchno[ipid++])) < 0););
 
 			if(ch >= 0){
 				PI_DEBUG (DBG_L3, "rhk_SCANCONTROL::initialize_scan_lists : Setting up XmScan - PID src found");
@@ -972,12 +972,12 @@ int rhk_ScanControl::initialize_scan_lists (){
 					    xsmres.pidsrcZunit[ipid-1], 
 					    xsmres.pidsrcZlabel[ipid-1]
 					);
-				xm_scan_list = g_slist_prepend (xm_scan_list, gapp->xsm->scan[ch]);
-				if (!master_scan) master_scan = gapp->xsm->scan[ch];
+				xm_scan_list = g_slist_prepend (xm_scan_list, main_get_gapp()->xsm->scan[ch]);
+				if (!master_scan) master_scan = main_get_gapp()->xsm->scan[ch];
 				sok=TRUE;
 			}
 			else{
-				for(ch = -1; (idaq < DAQCHMAX) && ((ch=gapp->xsm->FindChan(-xsmres.daqchno[idaq++])) < 0););
+				for(ch = -1; (idaq < DAQCHMAX) && ((ch=main_get_gapp()->xsm->FindChan(-xsmres.daqchno[idaq++])) < 0););
 				if(ch >= 0){
 					if(idaq <= 4)
 						xm_srcs |= MSK_MUXA(idaq-1);
@@ -994,13 +994,13 @@ int rhk_ScanControl::initialize_scan_lists (){
 						    xsmres.daqZunit[idaq-1],
 						    xsmres.daqZlabel[idaq-1]
 						);
-					xm_scan_list = g_slist_prepend (xm_scan_list, gapp->xsm->scan[ch]);
-					if (!master_scan) master_scan = gapp->xsm->scan[ch];
+					xm_scan_list = g_slist_prepend (xm_scan_list, main_get_gapp()->xsm->scan[ch]);
+					if (!master_scan) master_scan = main_get_gapp()->xsm->scan[ch];
 					sok=TRUE;
 				}
 				else{
 					// PRB src?
-					for(ch = -1; (iprb < PRBMODESMAX) && ((ch=gapp->xsm->FindChan(xsmres.prbchno[iprb++])) < 0););
+					for(ch = -1; (iprb < PRBMODESMAX) && ((ch=main_get_gapp()->xsm->FindChan(xsmres.prbchno[iprb++])) < 0););
 					if(ch >= 0){
 						PI_DEBUG (DBG_L3, "rhk_SCANCONTROL::initialize_scan_lists : Setting up XmScan - PRB src found");
 #ifdef ____NO_PRB_IN_XM_DIR____
@@ -1012,8 +1012,8 @@ int rhk_ScanControl::initialize_scan_lists (){
 							    xsmres.prbXlabel[iprb-1],
 							    TRUE
 							);
-						xm_prbscan_list = g_slist_prepend (xm_prbscan_list, gapp->xsm->scan[ch]);
-						if (!master_probescan) master_probescan = gapp->xsm->scan[ch];
+						xm_prbscan_list = g_slist_prepend (xm_prbscan_list, main_get_gapp()->xsm->scan[ch]);
+						if (!master_probescan) master_probescan = main_get_gapp()->xsm->scan[ch];
 						do_probe = FALSE; // not allowed jet!!!
 						sok=TRUE;
 #else
@@ -1028,20 +1028,20 @@ int rhk_ScanControl::initialize_scan_lists (){
 		// if no Scansrc specified -- find free channel and use pid-default ("Topo")
 		if(! sok){
 			PI_DEBUG (DBG_L3, "rhk_SCANCONTROL::initialize_scan_lists : No Srcs specified, setting up default!");
-			ch = gapp->xsm->FindChan(ID_CH_M_ACTIVE);
+			ch = main_get_gapp()->xsm->FindChan(ID_CH_M_ACTIVE);
 			if(!(ch >= 0)){
-				ch = gapp->xsm->FindChan(ID_CH_M_MATH);
+				ch = main_get_gapp()->xsm->FindChan(ID_CH_M_MATH);
 				if(!(ch >= 0))
-					ch = gapp->xsm->FindChan(ID_CH_M_OFF);
+					ch = main_get_gapp()->xsm->FindChan(ID_CH_M_OFF);
 				else{
 					scan_flag = SCAN_FLAG_RUN;
 					XSM_SHOW_ALERT(ERR_SORRY, ERR_NOFREECHAN,"",1);
 					return FALSE;
 				}
 			}
-			gapp->channelselector->SetMode(ch, xsmres.piddefault);
-			gapp->xsm->ChannelMode[ch] =  xsmres.piddefault;
-			gapp->xsm->ChannelScanMode[ch] = gapp->xsm->ChannelScanMode[ch] < 0 ? -xsmres.piddefault : xsmres.piddefault;
+			main_get_gapp()->channelselector->SetMode(ch, xsmres.piddefault);
+			main_get_gapp()->xsm->ChannelMode[ch] =  xsmres.piddefault;
+			main_get_gapp()->xsm->ChannelScanMode[ch] = main_get_gapp()->xsm->ChannelScanMode[ch] < 0 ? -xsmres.piddefault : xsmres.piddefault;
 		}
 	}while (! sok && --checks);
 
@@ -1064,59 +1064,59 @@ int rhk_ScanControl::setup_scan (int ch,
 	){
 	PI_DEBUG (DBG_L2, "setup_scan");
 	// did this scan already exists?
-	if ( ! gapp->xsm->scan[ch]){ // make a new one ?
-		gapp->xsm->scan[ch] = gapp->xsm->NewScan (gapp->xsm->ChannelView[ch],
-							  gapp->xsm->data.display.ViewFlg,
+	if ( ! main_get_gapp()->xsm->scan[ch]){ // make a new one ?
+		main_get_gapp()->xsm->scan[ch] = main_get_gapp()->xsm->NewScan (main_get_gapp()->xsm->ChannelView[ch],
+							  main_get_gapp()->xsm->data.display.ViewFlg,
 							  ch, 
-							  &gapp->xsm->data);
+							  &main_get_gapp()->xsm->data);
 		// Error ?
-		if (!gapp->xsm->scan[ch]){
+		if (!main_get_gapp()->xsm->scan[ch]){
 			XSM_SHOW_ALERT (ERR_SORRY, ERR_NOMEM,"",1);
 			return FALSE;
 		}
 	}
 
 	// Setup correct Z unit
-	UnitObj *u = gapp->xsm->MakeUnit (unit, label);
-	gapp->xsm->scan[ch]->data.SetZUnit (u);
+	UnitObj *u = main_get_gapp()->xsm->MakeUnit (unit, label);
+	main_get_gapp()->xsm->scan[ch]->data.SetZUnit (u);
 	delete u;
 
 	// Probe stuff to do?
 	if (prbsrcs){
 		PI_DEBUG (DBG_L2, "setup_scan: analyse prbsrcs=" << prbsrcs);
-		Mem2d *m=gapp->xsm->scan[ch]->mem2d;
+		Mem2d *m=main_get_gapp()->xsm->scan[ch]->mem2d;
 		m->Resize (m->GetNx (), m->GetNy (), m->GetNv (), ZD_FLOAT);
-		gapp->xsm->scan[ch]->create (TRUE, TRUE);
-		gapp->xsm->scan[ch]->data.lp.srcs  = 0;
-		gapp->xsm->scan[ch]->data.lp.nsrcs = 0;
-		gapp->xsm->scan[ch]->data.lp.outp  = prboutp;
+		main_get_gapp()->xsm->scan[ch]->create (TRUE, TRUE);
+		main_get_gapp()->xsm->scan[ch]->data.lp.srcs  = 0;
+		main_get_gapp()->xsm->scan[ch]->data.lp.nsrcs = 0;
+		main_get_gapp()->xsm->scan[ch]->data.lp.outp  = prboutp;
 		for (int k = 0; k < (int)strlen (prbsrcs); ++k)
 			if (prbsrcs[k] == '1'){
-				gapp->xsm->scan[ch]->data.lp.srcs |= 1<<k;
-				gapp->xsm->scan[ch]->data.lp.nsrcs++;
+				main_get_gapp()->xsm->scan[ch]->data.lp.srcs |= 1<<k;
+				main_get_gapp()->xsm->scan[ch]->data.lp.nsrcs++;
 			}
-		UnitObj *u = gapp->xsm->MakeUnit (vunit, vlabel);
-		gapp->xsm->scan[ch]->data.SetVUnit (u);
+		UnitObj *u = main_get_gapp()->xsm->MakeUnit (vunit, vlabel);
+		main_get_gapp()->xsm->scan[ch]->data.SetVUnit (u);
 		delete u;
-		PI_DEBUG (DBG_L2, "PRB: nsrcs=" << gapp->xsm->scan[ch]->data.lp.nsrcs
-		     << "  srcs=" << gapp->xsm->scan[ch]->data.lp.srcs
-		     << "  outp=" << gapp->xsm->scan[ch]->data.lp.outp
-		     << "  nvalues=" << gapp->xsm->scan[ch]->data.lp.nvalues);
+		PI_DEBUG (DBG_L2, "PRB: nsrcs=" << main_get_gapp()->xsm->scan[ch]->data.lp.nsrcs
+		     << "  srcs=" << main_get_gapp()->xsm->scan[ch]->data.lp.srcs
+		     << "  outp=" << main_get_gapp()->xsm->scan[ch]->data.lp.outp
+		     << "  nvalues=" << main_get_gapp()->xsm->scan[ch]->data.lp.nvalues);
 	}
 	else
-		gapp->xsm->scan[ch]->create (TRUE);
+		main_get_gapp()->xsm->scan[ch]->create (TRUE);
 
 	// setup dz from instrument definition
-	gapp->xsm->scan[ch]->data.s.dz = gapp->xsm->Inst->ZResolution (unit);
+	main_get_gapp()->xsm->scan[ch]->data.s.dz = main_get_gapp()->xsm->Inst->ZResolution (unit);
 
 	// set scan title, name, ... and draw it!
 	gchar *scantitle = g_strdup_printf ("%s %s", titleprefix, name);
-	gapp->xsm->scan[ch]->data.ui.SetName (scantitle);
-	gapp->xsm->scan[ch]->data.ui.SetOriginalName ("unknown");
-	gapp->xsm->scan[ch]->data.ui.SetTitle (scantitle);
-	gapp->xsm->scan[ch]->data.ui.SetType (scantitle);
+	main_get_gapp()->xsm->scan[ch]->data.ui.SetName (scantitle);
+	main_get_gapp()->xsm->scan[ch]->data.ui.SetOriginalName ("unknown");
+	main_get_gapp()->xsm->scan[ch]->data.ui.SetTitle (scantitle);
+	main_get_gapp()->xsm->scan[ch]->data.ui.SetType (scantitle);
 	g_free (scantitle);
-	gapp->xsm->scan[ch]->draw ();
+	main_get_gapp()->xsm->scan[ch]->draw ();
 
 	return 0;
 }
@@ -1127,17 +1127,17 @@ int rhk_ScanControl::prepare_to_start_scan (SCAN_DT_TYPE st){
 
 	scan_flag = SCAN_FLAG_RUN;
 
-	gapp->SetStatus ("Starting Scan: Ch.Setup");
-	gapp->check_events ("Scan Start Channel Setup");
+	main_get_gapp()->SetStatus ("Starting Scan: Ch.Setup");
+	main_get_gapp()->check_events ("Scan Start Channel Setup");
     
 	// update hardware parameters
 	this->updateRHK();
-	gapp->xsm->data.s.dz = gapp->xsm->Inst->ZResolution ();
-	gapp->xsm->data.hardpars.LS_dnx = R2INT (gapp->xsm->Inst->XA2Dig (gapp->xsm->data.s.dx));
-	gapp->xsm->data.hardpars.LS_nx2scan = gapp->xsm->data.s.nx;
-	gapp->xsm->data.hardpars.SPA_Length = R2INT (gapp->xsm->Inst->XA2Dig (gapp->xsm->data.s.rx));
+	main_get_gapp()->xsm->data.s.dz = main_get_gapp()->xsm->Inst->ZResolution ();
+	main_get_gapp()->xsm->data.hardpars.LS_dnx = R2INT (main_get_gapp()->xsm->Inst->XA2Dig (main_get_gapp()->xsm->data.s.dx));
+	main_get_gapp()->xsm->data.hardpars.LS_nx2scan = main_get_gapp()->xsm->data.s.nx;
+	main_get_gapp()->xsm->data.hardpars.SPA_Length = R2INT (main_get_gapp()->xsm->Inst->XA2Dig (main_get_gapp()->xsm->data.s.rx));
 
-	gapp->SignalStartScanEventToPlugins ();
+	main_get_gapp()->SignalStartScanEventToPlugins ();
 
 
 	// Init Scanobjects, do Channelsetup... some complex stuff...
@@ -1161,36 +1161,36 @@ int rhk_ScanControl::prepare_to_start_scan (SCAN_DT_TYPE st){
 	// Check Ranges/Sizes with Hardware/DSP Memory
 	switch (st){
 	case SCAN_LINESCAN:
-		if (gapp->xsm->data.s.nx*ns_xp >= gapp->xsm->hardware->GetMaxPointsPerLine ()){
+		if (main_get_gapp()->xsm->data.s.nx*ns_xp >= main_get_gapp()->xsm->hardware->GetMaxPointsPerLine ()){
 			gchar *maxtxt = g_strdup_printf ("Hardware limits points per line to\n"
 							 "%ld in total for all channels (->)!",
-							 gapp->xsm->hardware->GetMaxPointsPerLine());
+							 main_get_gapp()->xsm->hardware->GetMaxPointsPerLine());
 			XSM_SHOW_ALERT (ERR_SORRY,ERR_SCAN_CANCEL, maxtxt, 1);
 			g_free (maxtxt);
 			return -1;
 		}
-		if (gapp->xsm->data.s.nx*ns_xm >= gapp->xsm->hardware->GetMaxPointsPerLine ()){
+		if (main_get_gapp()->xsm->data.s.nx*ns_xm >= main_get_gapp()->xsm->hardware->GetMaxPointsPerLine ()){
 			gchar *maxtxt = g_strdup_printf ("Hardware limits points per line to\n"
 							 "%ld in total for all channels (<-)!",
-							 gapp->xsm->hardware->GetMaxPointsPerLine());
+							 main_get_gapp()->xsm->hardware->GetMaxPointsPerLine());
 			XSM_SHOW_ALERT (ERR_SORRY,ERR_SCAN_CANCEL, maxtxt, 1);
 			g_free (maxtxt);
 			return -1;
 		}
 		return 0;
 	case SCAN_FRAMECAPTURE:
-		if (gapp->xsm->data.s.nx*gapp->xsm->data.s.ny*ns_xp >= gapp->xsm->hardware->GetMaxPointsPerLine ()){
+		if (main_get_gapp()->xsm->data.s.nx*main_get_gapp()->xsm->data.s.ny*ns_xp >= main_get_gapp()->xsm->hardware->GetMaxPointsPerLine ()){
 			gchar *maxtxt = g_strdup_printf ("Hardware limits points per frame to\n"
 							 "%ld in total for all channels (->)!",
-							 gapp->xsm->hardware->GetMaxPointsPerLine());
+							 main_get_gapp()->xsm->hardware->GetMaxPointsPerLine());
 			XSM_SHOW_ALERT (ERR_SORRY,ERR_SCAN_CANCEL, maxtxt, 1);
 			g_free (maxtxt);
 			return -1;
 		}
-		if (gapp->xsm->data.s.nx*gapp->xsm->data.s.ny*ns_xm >= gapp->xsm->hardware->GetMaxPointsPerLine ()){
+		if (main_get_gapp()->xsm->data.s.nx*main_get_gapp()->xsm->data.s.ny*ns_xm >= main_get_gapp()->xsm->hardware->GetMaxPointsPerLine ()){
 			gchar *maxtxt = g_strdup_printf ("Hardware limits points per frame to\n"
 							 "%ld in total for all channels (<-)!",
-							 gapp->xsm->hardware->GetMaxPointsPerLine());
+							 main_get_gapp()->xsm->hardware->GetMaxPointsPerLine());
 			XSM_SHOW_ALERT (ERR_SORRY,ERR_SCAN_CANCEL, maxtxt, 1);
 			g_free (maxtxt);
 			return -1;
@@ -1267,7 +1267,7 @@ void rhk_ScanControl::do_scanline (int init){
 	if (line == -1){ // HS Capture -- Area Scan!!!
 		// do X+ Scan ?
 		if (m2d_xp)
-			gapp->xsm->hardware->ScanLineM (-1,  1, xp_srcs, m2d_xp, ix0off);
+			main_get_gapp()->xsm->hardware->ScanLineM (-1,  1, xp_srcs, m2d_xp, ix0off);
 
 		// do X- Scan ?
 		if (m2d_xm)
@@ -1280,7 +1280,7 @@ void rhk_ScanControl::do_scanline (int init){
 	// and display new Data
 	
 	if (do_probe){ // in probe mode?
-//		gapp->xsm->hardware->SetIdleFunc (NULL, NULL);
+//		main_get_gapp()->xsm->hardware->SetIdleFunc (NULL, NULL);
 		if ((line % master_probescan->data.lp.n_subsample) == 0){
 			PI_DEBUG (DBG_L2,"RHKScanPlugin: do_scanline, STS scan " << line << " SubSmp:" << master_probescan->data.lp.n_subsample);
 			// split line in segments and do each separate, then do probing, ...
@@ -1292,7 +1292,7 @@ void rhk_ScanControl::do_scanline (int init){
 				PI_DEBUG (DBG_L2,"RHKScanPlugin: do_scanline - SubSegment " << k);
 				// do probe
 				PI_DEBUG (DBG_L2,"RHKScanPlugin: do_scanline - SubSegment Probe here");
-				gapp->xsm->hardware->PauseScan2D ();
+				main_get_gapp()->xsm->hardware->PauseScan2D ();
 				run_probe (k/master_probescan->data.lp.n_subsample,
 					   line/master_probescan->data.lp.n_subsample);
 
@@ -1303,12 +1303,12 @@ void rhk_ScanControl::do_scanline (int init){
 					set_subscan (k, master_scan->data.s.nx-k);
 				else
 					set_subscan (k, master_probescan->data.lp.n_subsample);
-				gapp->xsm->hardware->ResumeScan2D ();
+				main_get_gapp()->xsm->hardware->ResumeScan2D ();
 				
 				// do X+ Scan segment?
 				if (m2d_xp){
 
-					gapp->xsm->hardware->ScanLineM(line,  1, xp_srcs, m2d_xp, k);
+					main_get_gapp()->xsm->hardware->ScanLineM(line,  1, xp_srcs, m2d_xp, k);
 				}
 			}
 
@@ -1316,40 +1316,40 @@ void rhk_ScanControl::do_scanline (int init){
 
 			line2update = line/master_probescan->data.lp.n_subsample;
 			idf_data.scan_list =  xp_prbscan_list;
-			gapp->xsm->hardware->SetIdleFunc (&IdleRefreshFunc, &idf_data);
+			main_get_gapp()->xsm->hardware->SetIdleFunc (&IdleRefreshFunc, &idf_data);
 			
 			// Reset sub line scan
-			gapp->xsm->hardware->PauseScan2D ();
+			main_get_gapp()->xsm->hardware->PauseScan2D ();
 			set_subscan ();
-			gapp->xsm->hardware->ResumeScan2D ();
+			main_get_gapp()->xsm->hardware->ResumeScan2D ();
 		}else{
 			// do full inter subgrid line
 			PI_DEBUG (DBG_L2, "RHKScanPlugin: do_scanline - SubScanmode, Scanning interline " << line);
 			// do X+ Scan?
 			if (m2d_xp){
-				gapp->xsm->hardware->ScanLineM (line,  1, xp_srcs, m2d_xp, ix0off);
+				main_get_gapp()->xsm->hardware->ScanLineM (line,  1, xp_srcs, m2d_xp, ix0off);
 				line2update = line;
 				idf_data.scan_list = xp_scan_list;
-				gapp->xsm->hardware->SetIdleFunc (&IdleRefreshFunc, &idf_data);
+				main_get_gapp()->xsm->hardware->SetIdleFunc (&IdleRefreshFunc, &idf_data);
 			}
 		}
 	}else{ // usual scan, line by line
 		// do X+ Scan?
 		if (m2d_xp){
-			gapp->xsm->hardware->ScanLineM (line,  1, xp_srcs, m2d_xp, ix0off);
+			main_get_gapp()->xsm->hardware->ScanLineM (line,  1, xp_srcs, m2d_xp, ix0off);
 			// setup idle func -- executed on next wait for data!
 			line2update = line;
 			idf_data.scan_list = xp_scan_list;
-			gapp->xsm->hardware->SetIdleFunc (&IdleRefreshFunc, &idf_data);
+			main_get_gapp()->xsm->hardware->SetIdleFunc (&IdleRefreshFunc, &idf_data);
 		}
 
 
 		// do X- Scan ?
 		if (m2d_xm){
 			line2update = line;
-			gapp->xsm->hardware->ScanLineM(line, -1, xm_srcs, m2d_xm, ix0off);
+			main_get_gapp()->xsm->hardware->ScanLineM(line, -1, xm_srcs, m2d_xm, ix0off);
 			idf_data.scan_list = xm_scan_list;
-			gapp->xsm->hardware->SetIdleFunc (&IdleRefreshFunc, &idf_data);
+			main_get_gapp()->xsm->hardware->SetIdleFunc (&IdleRefreshFunc, &idf_data);
 		} 
 	}
 
@@ -1380,13 +1380,13 @@ void rhk_ScanControl::run_probe (int ipx, int ipy){
 		hardpar.hp[DSP_PRBDELAY   ].value = 0.;
 		hardpar.hp[DSP_PRBCIVAL   ].value = 0.;
 		hardpar.hp[DSP_PRBNAVE    ].value = ps->data.lp.nAvg;
-		hardpar.hp[DSP_PRBGAPADJ  ].value = ps->data.lp.gap_adj/gapp->xsm->Inst->ZResolution(); // convert to DigUnits!!!!
+		hardpar.hp[DSP_PRBGAPADJ  ].value = ps->data.lp.gap_adj/main_get_gapp()->xsm->Inst->ZResolution(); // convert to DigUnits!!!!
 		PI_DEBUG (DBG_L2,"PRB scan: Start");
 		// set data and run probe...
-		gapp->xsm->hardware->SetParameter (hardpar, FALSE);
+		main_get_gapp()->xsm->hardware->SetParameter (hardpar, FALSE);
 		PI_DEBUG (DBG_L2,"PRB scan: ACAmp:" << ps->data.lp.ac_amp);
 		// get data
-		gapp->xsm->hardware->ReadProbeData (ps->data.lp.nsrcs, ps->data.lp.nvalues, ipx, ipy,
+		main_get_gapp()->xsm->hardware->ReadProbeData (ps->data.lp.nsrcs, ps->data.lp.nvalues, ipx, ipy,
 						    ps->mem2d, 1./ps->data.lp.ac_mult);
 	}
 }
@@ -1396,14 +1396,14 @@ void rhk_ScanControl::set_subscan (int ix0, int num){
 	ix0off = ix0;
 	if(ix0 >= 0 && num > 0){ printf("Setting subscan!!!\n");
 		if (master_probescan){
-			gapp->xsm->hardware->PutParameter(&master_probescan->data, 1);
+			main_get_gapp()->xsm->hardware->PutParameter(&master_probescan->data, 1);
 			n = master_probescan->data.hardpars.LS_nx2scan = num;
 			master_probescan->data.hardpars.LS_nx_pre = 0;
-			master_probescan->data.hardpars.SPA_Length = R2INT(gapp->xsm->Inst->XA2Dig(master_scan->data.s.rx*num/master_scan->data.s.nx));
+			master_probescan->data.hardpars.SPA_Length = R2INT(main_get_gapp()->xsm->Inst->XA2Dig(master_scan->data.s.rx*num/master_scan->data.s.nx));
 			
 		} else { PI_DEBUG (DBG_L2,"ERROR not probing"); return; }
 	} else {
-		gapp->xsm->hardware->PutParameter (&master_scan->data, 1);
+		main_get_gapp()->xsm->hardware->PutParameter (&master_scan->data, 1);
 		n = master_scan->data.s.nx;
 	}
 
@@ -1437,7 +1437,7 @@ int rhk_ScanControl::do_scan (){
 	PI_DEBUG (DBG_L2, "do_scan precheck done.");
 
 	// now freeze all scanparameters
-	gapp->spm_freeze_scanparam();
+	main_get_gapp()->spm_freeze_scanparam();
 
 	// Set Start Time, notify scans about, initialisations...
 	g_slist_foreach ((GSList*) xp_scan_list,
@@ -1445,7 +1445,7 @@ int rhk_ScanControl::do_scan (){
 	g_slist_foreach ((GSList*) xm_scan_list,
 			(GFunc) rhk_ScanControl::call_scan_start, this);
 
-	gapp->xsm->hardware->StartScan2D();
+	main_get_gapp()->xsm->hardware->StartScan2D();
 
 	line = 0;
 	do_scanline (TRUE);
@@ -1472,7 +1472,7 @@ int rhk_ScanControl::do_scan (){
 
 	{
 		gchar *muxcoding = g_strdup_printf ("xp_srcs: %2X  xm_srcs: %2X", xp_srcs, xm_srcs);
-		gapp->monitorcontrol->LogEvent ("*StartScan", muxcoding);
+		main_get_gapp()->monitorcontrol->LogEvent ("*StartScan", muxcoding);
 		g_free (muxcoding);
 	}
 
@@ -1485,13 +1485,13 @@ int rhk_ScanControl::do_scan (){
 			do_scanline ();
 			++line;
 		}
-		gapp->check_events_self();
+		main_get_gapp()->check_events_self();
 	}
 
 	// finish scan
-	gapp->xsm->hardware->EndScan2D ();
-	gapp->xsm->hardware->CallIdleFunc ();
-	gapp->xsm->hardware->SetIdleFunc (NULL, NULL);
+	main_get_gapp()->xsm->hardware->EndScan2D ();
+	main_get_gapp()->xsm->hardware->CallIdleFunc ();
+	main_get_gapp()->xsm->hardware->SetIdleFunc (NULL, NULL);
 
 	if( line < master_scan->data.s.ny && line&1)
 		line++;
@@ -1520,7 +1520,7 @@ int rhk_ScanControl::do_hscapture (){
 	}
 
 	// now freeze all scanparameters
-	gapp->spm_freeze_scanparam();
+	main_get_gapp()->spm_freeze_scanparam();
 
 	// Set Start Time, notify scans about, initialisations...
 	g_slist_foreach ((GSList*) xp_scan_list,
@@ -1528,7 +1528,7 @@ int rhk_ScanControl::do_hscapture (){
 	g_slist_foreach ((GSList*) xm_scan_list,
 			(GFunc) rhk_ScanControl::call_scan_start, this);
 
-	gapp->xsm->hardware->StartScan2D();
+	main_get_gapp()->xsm->hardware->StartScan2D();
 
 	line = 0;
 	do_scanline (TRUE);
@@ -1547,7 +1547,7 @@ int rhk_ScanControl::do_hscapture (){
 
 	{
 		gchar *muxcoding = g_strdup_printf ("xp_srcs: %2X  xm_srcs: %2X", xp_srcs, xm_srcs);
-		gapp->monitorcontrol->LogEvent ("*StartHSCapture", muxcoding);
+		main_get_gapp()->monitorcontrol->LogEvent ("*StartHSCapture", muxcoding);
 		g_free (muxcoding);
 	}
 
@@ -1555,10 +1555,10 @@ int rhk_ScanControl::do_hscapture (){
 		if (scan_flag!=SCAN_FLAG_STOP) {
 		line = -1;
 		do_scanline ();
-		gapp->check_events_self();
+		main_get_gapp()->check_events_self();
 	}
 
-	gapp->xsm->hardware->EndScan2D ();
+	main_get_gapp()->xsm->hardware->EndScan2D ();
 	line = master_scan->data.s.ny;
 	g_slist_foreach ((GSList*) xp_scan_list,
 			(GFunc) rhk_ScanControl::call_scan_stop, this);
@@ -1572,15 +1572,15 @@ int rhk_ScanControl::finish_scan (){
 	int stopped;
 	PI_DEBUG (DBG_L2, "finish_scan.");
 
-	gapp->spm_thaw_scanparam();
+	main_get_gapp()->spm_thaw_scanparam();
 
 	if ((stopped = scan_flag == SCAN_FLAG_STOP ? TRUE:FALSE)){
-		gapp->SetStatus("Scan interrupted");
-		gapp->monitorcontrol->LogEvent("*EndOfScan", "interrupted");
+		main_get_gapp()->SetStatus("Scan interrupted");
+		main_get_gapp()->monitorcontrol->LogEvent("*EndOfScan", "interrupted");
 	}
 	else{
-		gapp->SetStatus("Scan done, ready");
-		gapp->monitorcontrol->LogEvent("*EndOfScan", "OK");
+		main_get_gapp()->SetStatus("Scan done, ready");
+		main_get_gapp()->monitorcontrol->LogEvent("*EndOfScan", "OK");
 	}
 
 	free_scan_lists ();
@@ -1623,14 +1623,14 @@ double rhk_ScanControl::update_status_info (int reset){
 		if ((sse+ss) > 600){
 			char *teos = ctime(&t);
 			teos[24]=0;
-			gapp->SetStatus ("ScanTime",
+			main_get_gapp()->SetStatus ("ScanTime",
 					 tt=g_strdup_printf ("%.0f:%02.0f:%02.0f "
 							     "| ETA:%.0f:%02.0f:%02.0f | %d%%\n"
 							     "End of Scan: %s",
 							     h,m,s, he,me,se,
 							     (int)(100/n_by_lines_to_do), teos ));
 		}else
-			gapp->SetStatus ("ScanTime",
+			main_get_gapp()->SetStatus ("ScanTime",
 					 tt=g_strdup_printf ("%.0f:%02.0f:%02.0f "
 							     "| ETA:%.0f:%02.0f:%02.0f | %d%%",
 							     h,m,s, he,me,se,
@@ -1641,7 +1641,7 @@ double rhk_ScanControl::update_status_info (int reset){
 			gchar *nl;
 			if ((nl=strchr (tt, '\n'))) *nl=' '; // remove \n for logfile
 			gchar *mt = g_strdup_printf ("Scan Progress [%d]", line);
-			gapp->monitorcontrol->LogEvent (mt, tt);
+			main_get_gapp()->monitorcontrol->LogEvent (mt, tt);
 			g_free(mt);
 		}
 		g_free(tt);
@@ -1670,13 +1670,13 @@ void rhk_ScanControl::autosave_check (double sec, int initvalue){
 	      && (sec >= nextAutosaveEvent)) ){
 
 		nextAutosaveEvent += xsmres.AutosaveValue;
-		if(gapp->xsm->IsMode(MODE_AUTOSAVE)){
+		if(main_get_gapp()->xsm->IsMode(MODE_AUTOSAVE)){
 			PI_DEBUG (DBG_L2,  "Autosaveevent triggered.");
 			// check for overwritemode for autosave
 			if(!strncasecmp(xsmres.AutosaveOverwritemode, "true",2))
-				gapp->xsm->save(AUTO_NAME_PARTIAL_SAVE, NULL, -1, TRUE);
+				main_get_gapp()->xsm->save(AUTO_NAME_PARTIAL_SAVE, NULL, -1, TRUE);
 			else
-				gapp->xsm->save(AUTO_NAME_PARTIAL_SAVE, NULL, -1, FALSE);
+				main_get_gapp()->xsm->save(AUTO_NAME_PARTIAL_SAVE, NULL, -1, FALSE);
 		}
 	}
 
@@ -1695,7 +1695,7 @@ void rhk_ScanControl::updateRHK(void){
 // This is a nasty kludge. The problem is that PutParameter returns the readings in Dig, not in Angstroms,
 // as it does not know about the calibration
 // So we translate from Dig readings to Angstroms before showing the settings anywhere
-  gapp->xsm->hardware->PutParameter(ScanData, 1);
+  main_get_gapp()->xsm->hardware->PutParameter(ScanData, 1);
   
    update_rect.width = (gint)(150.0*ScanData->s.rx/32768.0);
   update_rect.height = (gint)(150.0*ScanData->s.ry/32768.0);
@@ -1726,7 +1726,7 @@ void rhk_ScanControl::updateRHK(void){
   ScanData->s.dx = ScanData->s.rx / ScanData->s.nx;
   ScanData->s.dy = ScanData->s.ry / ScanData->s.ny;
   
-  gapp->spm_update_all();
+  main_get_gapp()->spm_update_all();
   
   ec1->Set_FromValue(ScanData->s.x0);
   ec2->Set_FromValue(ScanData->s.rx);

@@ -389,7 +389,7 @@ DSPControl::DSPControl ()
 	Unity    = new UnitObj(" "," ");
 	Volt     = new UnitObj("V","V");
 	Current  = new UnitObj("nA","nA");
-	SetPtUnit = gapp->xsm->MakeUnit (xsmres.daqZunit[0], xsmres.daqZlabel[0]);
+	SetPtUnit = main_get_gapp()->xsm->MakeUnit (xsmres.daqZunit[0], xsmres.daqZlabel[0]);
 	if (strncmp (xsmres.daqZunit[0], "nN", 2) == 0) SetPtUnit->setval ("f", xsmres.nNewton2Volt);
 	if (strncmp (xsmres.daqZunit[0], "Hz", 2) == 0) SetPtUnit->setval ("f", xsmres.dHertz2Volt);
 
@@ -698,7 +698,7 @@ DSPControl::DSPControl ()
         xrm.Put("data_hardpars_dual.MV_nRegel", data_hardpars_dual.MV_nRegel);
 
 
-	g_slist_foreach(RemoteEntryList, (GFunc) remove, gapp->RemoteEntryList);
+	g_slist_foreach(RemoteEntryList, (GFunc) remove, main_get_gapp()->RemoteEntryList);
 	g_slist_free (RemoteEntryList);
 	RemoteEntryList = NULL;
 	delete Unity;

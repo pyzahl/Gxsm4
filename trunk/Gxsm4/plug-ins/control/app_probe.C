@@ -269,7 +269,7 @@ void DSPProbeControl::ChangedNotify(Param_Control* pcs, gpointer pc){
 }
 
 void DSPProbeControl::ExecCmd(int cmd){
-  gapp->xsm->hardware->ExecCmd(cmd);
+  main_get_gapp()->xsm->hardware->ExecCmd(cmd);
 }
 
 
