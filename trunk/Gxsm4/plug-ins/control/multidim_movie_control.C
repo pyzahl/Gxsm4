@@ -172,6 +172,7 @@ static void MovieControl_Thaw_callback (gpointer x){
 
 static void Multidim_Movie_Control_query(void)
 {
+        g_message ("PLUGIN: CONTROL=>Multidim_Movie_Control_query");
 	// new ...
 	Multidim_Movie_ControlClass = new Multidim_Movie_Control (main_get_gapp() -> get_app ());
 
@@ -223,6 +224,8 @@ Multidim_Movie_Control::Multidim_Movie_Control (Gxsm4app *app):AppBase(app)
 	t_play_flg = false;
 	l_play_flg = false;
 	play_direction = 1;
+
+        g_message ("PLUGIN: CONTROL=>Multidim_Movie_Control::Multidim_Movie_Control BUILDING");
 
 	Unity    = new UnitObj(" "," ");
 	Time     = new UnitObj("ms","ms");
