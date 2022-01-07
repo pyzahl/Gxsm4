@@ -31,13 +31,13 @@
 #include <glib.h>
 #include <glib/gi18n.h>
 
-#define XSM_CHECK_EVENTS        gapp->check_events()
-#define XSM_SHOW_ALERT(A,B,C,D) gapp->alert(A,B,C,D)
-#define XSM_SHOW_WARNING(A)     gapp->warning(A)
-#define XSM_SHOW_ERROR(A,B)     gapp->error(A)
-#define XSM_SHOW_MESSAGES(A)    gapp->message(A)
-#define XSM_SHOW_CHOICE(A,B,C, D, E,F,G, H)    gapp->choice(A,B,C, D, E,F,G, H)
-#define XSM_SHOW_QUESTION(A,B)    gapp->question_yes_no(A)
+#define XSM_CHECK_EVENTS        main_get_gapp ()->check_events()
+#define XSM_SHOW_ALERT(A,B,C,D) main_get_gapp ()->alert(A,B,C,D)
+#define XSM_SHOW_WARNING(A)     main_get_gapp ()->warning(A)
+#define XSM_SHOW_ERROR(A,B)     main_get_gapp ()->error(A)
+#define XSM_SHOW_MESSAGES(A)    main_get_gapp ()->message(A)
+#define XSM_SHOW_CHOICE(A,B,C, D, E,F,G, H)    main_get_gapp ()->choice(A,B,C, D, E,F,G, H)
+#define XSM_SHOW_QUESTION(A,B)    main_get_gapp ()->question_yes_no(A)
 
 
 /* Meldungen */

@@ -34,17 +34,22 @@ host_cpu_family = host_machine.cpu_family()
 if   host_cpu_family == 'x86'
   have_x86 = true
   conf.set10('ARCH_X86',    true)
+  conf.set('WORDS_BIGENDIAN', 0)
+
 elif host_cpu_family == 'x86_64'
   have_x86 = true
   conf.set10('ARCH_X86',    true)
   conf.set10('ARCH_X86_64', true)
+  conf.set('WORDS_BIGENDIAN', 0)
 elif host_cpu_family == 'ppc'
   have_ppc = true
   conf.set10('ARCH_PPC',    true)
+  conf.set('WORDS_BIGENDIAN', 1)
 elif host_cpu_family == 'ppc64'
   have_ppc = true
   conf.set10('ARCH_PPC',    true)
   conf.set10('ARCH_PPC64',  true)
+  conf.set('WORDS_BIGENDIAN', 1)
 endif
 
 
@@ -176,13 +181,20 @@ endif
 
 
 
-gxsm4_plugin_dir =  get_option('libdir') / 'gxsm4-plugins'
-gxsm4_data_dir   =  get_option('datadir') / 'gxsm4'
+gxsm4_plugin_dir = get_option('libdir') / 'gxsm4-plugins'
+gxsm4_data_dir   = get_option('datadir') / 'gxsm4'
 localedir        = get_option('datadir') / 'locale'
+
+lib_global_gxsm_name =  'lib-global-'+meson.project_name() 
+lib_utils_gxsm_name  =  'lib-utils-'+meson.project_name() 
+lib_app_gxsm_name    =  'lib-app-'+meson.project_name() 
+lib_pcs_gxsm_name    =  'lib-pcs-'+meson.project_name() 
 
 absolute_data_dir = get_option('prefix') / get_option('datadir')+'/gxsm4'
 absolute_plugin_dir = get_option('prefix') / get_option('datadir') / 'gxsm4-plugins'
- 
+
+gxsm_lib_includes = 'core-source'
+
 ## grab some info -- not essential, can defined const
 today    = run_command('sh', '-c', 'date').stdout().strip()
 user     = run_command('sh', '-c', 'echo $USER').stdout().strip()
@@ -246,7 +258,7 @@ configuration_inc = include_directories('.')
 ####################################
 
 rootInclude = include_directories('.')
-appInclude  = include_directories('core-source')
+appInclude  = include_directories(gxsm_lib_includes)
 
 
 all_cflags = ['-fpermissive', '-w']

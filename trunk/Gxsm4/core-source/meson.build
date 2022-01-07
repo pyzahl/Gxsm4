@@ -31,10 +31,54 @@ gxsm4_resources = gnome.compile_resources(
     c_name: 'gxsm4'
 )
 
-executable(
-    meson.project_name(),
+
+lib_global_gxsm = library(
+    lib_global_gxsm_name,
+    'gxsm_global.cpp',
+    'gxsm_resoucetable.cpp',
+    'util.cpp',
+    gxsm4_resources,
+    dependencies : deps,
+    install: true
+)
+
+lib_pcs_gxsm = library(
+    lib_pcs_gxsm_name,
+    'pcs.cpp',
+    dependencies : deps,
+    link_with: [ lib_global_gxsm ],
+    install: true
+)
+
+lib_utils_gxsm = library(
+    lib_utils_gxsm_name,
+    'cairo_item.cpp',
+    'clip.c',
+    'csv.cpp',
+    'caps.cpp',
+    'error.cpp',
+    'gnome-res.c',
+    'gtkmarshal.c',
+    'gtkmarshalers.c',
+    'gpl.cpp',
+    'pugixml.cpp',
+    'readpng.cpp',
+    'writepng.cpp',
+    'regress.cpp',
+
+    dependencies : deps,
+    link_with: [ lib_global_gxsm, lib_pcs_gxsm ],
+    install: true
+)
+
+
+lib_app_gxsm = library(
+    lib_app_gxsm_name,
+    'compiler.cpp',
+
+    'gapp_service.cpp',
     'app_channelselector.cpp',
-    'app_monitor.cpp',
+    'app_monitorcontrol.cpp',
     'app_profile.cpp',
     'app_spm.cpp',
     'app_v3dcontrol.cpp',
@@ -42,57 +86,46 @@ executable(
     'app_vinfo.cpp',
     'app_vobj.cpp',
     
-    'cairo_item.cpp',
-    'clip.c',
-    'compiler.cpp',
-    'csv.cpp',
-    'caps.cpp',
-    'error.cpp',
-    
     'dataio.cpp',
     'epsfutils.cpp',
-    'gnome-res.c',
-    'gtkmarshal.c',
-    'gtkmarshalers.c',
-    'gpl.cpp',
-    
-    'gxsm_main.cpp',
+   
+    'gxsm_window.cpp',
     'gxsm_app.cpp',
     'gxsm4_resources.cpp',
-    'gxsm_window.cpp',
-    'gapp_service.cpp',
     'gxsm_menucb.cpp',
     'gxsm_menu-extension.c',
-    'gxsm_resoucetable.cpp',
     
     'instrument.cpp',
     'lineprofile.cpp',
     'mem2d.cpp',
     'monitor.cpp',
-    'pcs.cpp',
     'plugin_ctrl.cpp',
-    'pugixml.cpp',
-    'readpng.cpp',
-    'regress.cpp',
     'remote.cpp',
     'scan.cpp',
     'scan_event.cpp',
     'spascan.cpp',
     'surface.cpp',
     'topographic.cpp',
-    'util.cpp',
     'view.cpp',
     'vpdata_read.cpp',
-    'vprofile.cpp',
     'vsurf3d.cpp',
-    'writepng.cpp',
     'xshmimg.cpp',
     'xsm.cpp',
     'xsmhard.cpp',
     'xsmmath.cpp',
-    gxsm4_resources,
+    dependencies : deps,
+    link_with: [ lib_global_gxsm, lib_pcs_gxsm, lib_utils_gxsm ],
+    install: true
+)
+
+
+executable(
+    meson.project_name(),
+    'gxsm_main.cpp',
+
     gxsm4_gdbus_src,
     dependencies : deps,
+    link_with: [ lib_global_gxsm, lib_utils_gxsm, lib_app_gxsm, lib_pcs_gxsm ],
     export_dynamic: true,
     install: true
 )

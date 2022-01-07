@@ -51,6 +51,7 @@
 #include "app_vinfo.h"
 #include "app_view.h"
 #include "app_vpdata_view.h"
+#include "surface.h"
 
 #include <sstream>
 using namespace std;
@@ -511,7 +512,7 @@ void NcDumpToWidget::dump ( GtkWidget *box, GtkWidget *box_selected ){
 				if ((label_att = vp->get_att("label"))){
 					NcValues *unit  = unit_att->values();
 					NcValues *label = label_att->values();
-					UnitObj *u = gapp->xsm->MakeUnit (unit->as_string(0), label->as_string(0));
+					UnitObj *u = main_get_gapp ()->xsm->MakeUnit (unit->as_string(0), label->as_string(0));
 					double tmp;
 					vp->get (&tmp);
 					value_str = u->UsrString (tmp);
@@ -582,9 +583,10 @@ void ViewControl::display_changed_sh_callback (Param_Control *pc, gpointer vc){
         ((ViewControl*)vc)->update_view_panel ();
 }
 
-ViewControl::ViewControl (char *title, int nx, int ny, 
+ViewControl::ViewControl (Gxsm4app *app,
+                          char *title, int nx, int ny, 
 			  int ChNo, Scan *sc, 
-			  int ZoomFac, int QuenchFac){
+			  int ZoomFac, int QuenchFac):AppBase(app){
 	GtkWidget *statusbar;
 	GtkWidget *scrollarea;
 	GtkWidget *base_grid, *grid;
@@ -857,7 +859,7 @@ ViewControl::ViewControl (char *title, int nx, int ny,
                                   G_CALLBACK (ViewControl::obj_circle_get_center_coords_callback), this);
         view_bp->new_line ();
 
-        view_bp->grid_add_ec ("Tau", gapp->xsm->Unity, &scan->data.display.px_shift_xy[2], -10., 10., "8g", 0.00001, 0.00001, NULL); // "ShiftTau");
+        view_bp->grid_add_ec ("Tau", main_get_gapp ()->xsm->Unity, &scan->data.display.px_shift_xy[2], -10., 10., "8g", 0.00001, 0.00001, NULL); // "ShiftTau");
         
 
         // -- Info Tab
@@ -1024,21 +1026,21 @@ ViewControl::ViewControl (char *title, int nx, int ny,
         pe_bp->new_line ();
 
         gtk_widget_set_tooltip_text (
-                                     pe_bp->grid_add_ec (N_("Ref-Weight"), gapp->xsm->Unity, &ReferenceWeight, -100., 100., ".3f", 1., 10., NULL),
+                                     pe_bp->grid_add_ec (N_("Ref-Weight"), main_get_gapp ()->xsm->Unity, &ReferenceWeight, -100., 100., ".3f", 1., 10., NULL),
                                      N_("Reference Weight (scaling factor)."));
         pe_bp->new_line ();
         gtk_widget_set_tooltip_text (
-                                     pe_bp->grid_add_ec (N_("Radius"), gapp->xsm->LenUnit ? gapp->xsm->LenUnit : gapp->xsm->X_Unit, &CursorRadius, 0., 1000000., ".1f", 10., 100., NULL),
+                                     pe_bp->grid_add_ec (N_("Radius"), main_get_gapp ()->xsm->LenUnit ? main_get_gapp ()->xsm->LenUnit : main_get_gapp ()->xsm->X_Unit, &CursorRadius, 0., 1000000., ".1f", 10., 100., NULL),
                                      N_("Click middle button to choose center for area of interest and update."));
         pe_bp->new_line ();
 
         gtk_widget_set_tooltip_text (
-                                     pe_bp->grid_add_ec (N_("Number"), gapp->xsm->Unity, &MaxNumberEvents, 0, 25000, ".0f"),
+                                     pe_bp->grid_add_ec (N_("Number"), main_get_gapp ()->xsm->Unity, &MaxNumberEvents, 0, 25000, ".0f"),
                                      N_("Click middle button to choose center for area of interest and update."));
         pe_bp->new_line ();
 
         gtk_widget_set_tooltip_text (
-                                     pe_bp->grid_add_ec (N_("Arrow-Size"), gapp->xsm->Unity, &ArrowSize, 0., 200., ".1f", 1., 10., NULL),
+                                     pe_bp->grid_add_ec (N_("Arrow-Size"), main_get_gapp ()->xsm->Unity, &ArrowSize, 0., 200., ".1f", 1., 10., NULL),
                                      N_("Click middle button to choose center for area of interest and update."));
 
         pe_bp->pop_grid ();
@@ -1169,6 +1171,9 @@ ViewControl::ViewControl (char *title, int nx, int ny,
 ViewControl::~ViewControl (){
 	XSM_DEBUG (DBG_L2,  "~ViewControl" );
 
+        g_object_unref (v_popup_menu);
+        g_object_unref (v_popup_menu_cv);
+        
         destruction_in_progress = true;
 
         g_settings_set_double (view_settings, "view-cursor-radius", CursorRadius);
@@ -1215,8 +1220,8 @@ gboolean ViewControl::on_drop (GtkDropTarget *target,
         // that we received
         if (G_VALUE_HOLDS (value, G_TYPE_FILE)){
                 g_message ("FILE DROPPED %s", g_file_get_parse_name (g_value_get_object (value)));
-        	gapp->xsm->ActivateChannel(vc->chno);
-                gapp->xsm->load(g_file_get_parse_name (g_value_get_object (value)));
+        	main_get_gapp ()->xsm->ActivateChannel(vc->chno);
+                main_get_gapp ()->xsm->load(g_file_get_parse_name (g_value_get_object (value)));
         }
         else
                 return FALSE;
@@ -1409,7 +1414,8 @@ void ViewControl::released_cb (GtkGesture *gesture, int n_press, double x, doubl
 void ViewControl::AppWindowInit(const gchar *title, const gchar *sub_title){
 	XSM_DEBUG (DBG_L2,  "ViewControl::AppWindowInit -- header bar,..." );
 
-        app_window = gxsm4_app_window_new (GXSM4_APP (gapp->get_application ()));
+        g_message ("ViewControl::AppWindowInit** <%s : %s> **", title, sub_title);
+        app_window = gxsm4_app_window_new (GXSM4_APP (main_get_gapp ()->get_application ()));
         window = GTK_WINDOW (app_window);
 
         header_bar = gtk_header_bar_new ();
@@ -1428,8 +1434,8 @@ void ViewControl::AppWindowInit(const gchar *title, const gchar *sub_title){
         
         // create window PopUp menu  ---------------------------------------------------------------------
         XSM_DEBUG (DBG_L2,  "VC::VC popup" );
-        v_popup_menu = gtk_popover_menu_new_from_model (G_MENU_MODEL (gapp->get_view2d_menu ()));
-        v_popup_menu_cv = gtk_popover_menu_new_from_model (G_MENU_MODEL (gapp->get_view2d_menu ()));
+        v_popup_menu = gtk_popover_menu_new_from_model (G_MENU_MODEL (main_get_gapp ()->get_view2d_menu ()));
+        v_popup_menu_cv = gtk_popover_menu_new_from_model (G_MENU_MODEL (main_get_gapp ()->get_view2d_menu ()));
         gtk_popover_set_has_arrow (GTK_POPOVER (v_popup_menu_cv), FALSE);
 
         XSM_DEBUG (DBG_L2,  "VC::VC popup Header Buttons setup. " );
@@ -1444,7 +1450,7 @@ void ViewControl::AppWindowInit(const gchar *title, const gchar *sub_title){
         // attach display mode section from popup menu to tool button --------------------------------
         header_menu_button = gtk_menu_button_new ();
         gtk_menu_button_set_icon_name (GTK_MENU_BUTTON (header_menu_button), "emblem-system-symbolic");
-        GMenuModel *section = find_extension_point_section (G_MENU_MODEL (gapp->get_view2d_menu ()), "view-display-mode-section");
+        GMenuModel *section = find_extension_point_section (G_MENU_MODEL (main_get_gapp ()->get_view2d_menu ()), "view-display-mode-section");
         if (section) {
                 gtk_menu_button_set_popover (GTK_MENU_BUTTON (header_menu_button), gtk_popover_menu_new_from_model (G_MENU_MODEL (section)));
                 gtk_header_bar_pack_end (GTK_HEADER_BAR (header_bar), header_menu_button);
@@ -1453,7 +1459,7 @@ void ViewControl::AppWindowInit(const gchar *title, const gchar *sub_title){
 
         // attach object section from popup menu to tool button --------------------------------
         header_menu_button = gtk_menu_button_new ();
-        section = find_extension_point_section (G_MENU_MODEL (gapp->get_view2d_menu ()), "view-objects-section");
+        section = find_extension_point_section (G_MENU_MODEL (main_get_gapp ()->get_view2d_menu ()), "view-objects-section");
         gtk_menu_button_set_icon_name (GTK_MENU_BUTTON (header_menu_button), "applications-utilities-symbolic");
         if (section) {
                 gtk_menu_button_set_popover (GTK_MENU_BUTTON (header_menu_button), gtk_popover_menu_new_from_model (G_MENU_MODEL (section)));
@@ -1463,7 +1469,7 @@ void ViewControl::AppWindowInit(const gchar *title, const gchar *sub_title){
 
         // attach channel mode section from popup menu to tool button --------------------------------
         header_menu_button = gtk_menu_button_new ();
-        section = find_extension_point_section (G_MENU_MODEL (gapp->get_view2d_menu ()), "view-channel-mode-section");
+        section = find_extension_point_section (G_MENU_MODEL (main_get_gapp ()->get_view2d_menu ()), "view-channel-mode-section");
         gtk_menu_button_set_icon_name (GTK_MENU_BUTTON (header_menu_button), "emblem-photos-symbolic");
         if (section) {
                 gtk_menu_button_set_popover (GTK_MENU_BUTTON (header_menu_button), gtk_popover_menu_new_from_model (G_MENU_MODEL (section)));
@@ -1474,7 +1480,7 @@ void ViewControl::AppWindowInit(const gchar *title, const gchar *sub_title){
         // attach file section from popup menu to tool button --------------------------------
         header_menu_button = gtk_menu_button_new ();
         gtk_menu_button_set_icon_name (GTK_MENU_BUTTON (header_menu_button), "document-open-symbolic");
-        section = find_extension_point_section (G_MENU_MODEL (gapp->get_view2d_menu ()), "view-file-section");
+        section = find_extension_point_section (G_MENU_MODEL (main_get_gapp ()->get_view2d_menu ()), "view-file-section");
         if (section) {
                 gtk_menu_button_set_popover (GTK_MENU_BUTTON (header_menu_button), gtk_popover_menu_new_from_model (G_MENU_MODEL (section)));
                 gtk_header_bar_pack_end (GTK_HEADER_BAR (header_bar), header_menu_button);
@@ -1517,8 +1523,8 @@ void ViewControl::AppWindowInit(const gchar *title, const gchar *sub_title){
 
         XSM_DEBUG (DBG_L2,  "VC::VC setup titlbar" );
 
-        SetTitle (title, sub_title);
         gtk_window_set_titlebar (GTK_WINDOW (window), header_bar);
+        SetTitle (title, sub_title);
 
         //        The “activate-default” signal -- dose NOT work
         g_signal_connect (G_OBJECT(window),
@@ -1535,9 +1541,6 @@ void ViewControl::AppWindowInit(const gchar *title, const gchar *sub_title){
         gtk_window_set_child (GTK_WINDOW (window), v_grid);
 	gtk_widget_show (v_grid); // FIX-ME GTK4 SHOWALL
 	g_object_set_data (G_OBJECT (window), "v_grid", v_grid); // was "vbox"
-
-        // g_signal_connect (G_OBJECT (window), "delete-event", G_CALLBACK (gtk_widget_hide_on_delete), NULL);
-        // g_signal_connect (G_OBJECT (window), "delete-event", G_CALLBACK (AppBase::window_close_callback), this);
 
 	gtk_widget_show (GTK_WIDGET (window)); // FIX-ME GTK4 SHOWALL
 
@@ -2083,7 +2086,7 @@ void  ViewControl::obj_event_plot_callback (GtkWidget* widget,
                                 num_plots++;
                 
                 if (!vc->EventGraphView)
-                        vc->EventGraphView = new app_vpdata_view (1, num_plots);
+                        vc->EventGraphView = new app_vpdata_view (vc->main_app, 1, num_plots);
                 else
                         vc->EventGraphView->init_vpdata_view (1, num_plots);
 
@@ -2546,8 +2549,8 @@ void ViewControl::CheckRedLine(){
 		if (vinfo->sc->BlueLineActive && RedLine){
 			int ch_next = vinfo->sc->get_channel_id ()+1;
 			if (ch_next >= 0 && ch_next < MAX_CHANNELS){
-				if (gapp->xsm->scan [ch_next])
-					RedLine->NewData_redprofile (gapp->xsm->scan [ch_next], 'b');
+				if (main_get_gapp ()->xsm->scan [ch_next])
+					RedLine->NewData_redprofile (main_get_gapp ()->xsm->scan [ch_next], 'b');
 			}
 		}
 		RedLine->UpdateArea();
@@ -2559,7 +2562,7 @@ void ViewControl::Activate_window_callback (GtkWindow *window, gpointer user_dat
         ViewControl *vc = (ViewControl *) user_data;
 
 	if (vc->chno < 0) return;
-	gapp->xsm->ActivateChannel (vc->chno);
+	main_get_gapp ()->xsm->ActivateChannel (vc->chno);
 }
 
 void ViewControl::Activate_callback (GSimpleAction *simple, GVariant *parameter,
@@ -2567,7 +2570,7 @@ void ViewControl::Activate_callback (GSimpleAction *simple, GVariant *parameter,
         ViewControl *vc = (ViewControl *) user_data;
 
 	if (vc->chno < 0) return;
-	gapp->xsm->ActivateChannel(vc->chno);
+	main_get_gapp ()->xsm->ActivateChannel(vc->chno);
 }
 
 void ViewControl::AutoDisp_callback (GSimpleAction *simple, GVariant *parameter, 
@@ -2595,40 +2598,40 @@ void ViewControl::SetOff_callback (GSimpleAction *simple, GVariant *parameter,
                                    gpointer user_data){
         ViewControl *vc = (ViewControl *) user_data;
 	if (vc->chno < 0) return;
-        gapp->xsm->SetMode(vc->chno, ID_CH_M_OFF);
+        main_get_gapp ()->xsm->SetMode(vc->chno, ID_CH_M_OFF);
 }
 void ViewControl::SetOn_callback (GSimpleAction *simple, GVariant *parameter, 
                                   gpointer user_data){
         ViewControl *vc = (ViewControl *) user_data;
 	if (vc->chno < 0) return;
-        gapp->xsm->SetMode(vc->chno, ID_CH_M_ON);
+        main_get_gapp ()->xsm->SetMode(vc->chno, ID_CH_M_ON);
 }
 void ViewControl::SetMath_callback (GSimpleAction *simple, GVariant *parameter, 
                                     gpointer user_data){
         ViewControl *vc = (ViewControl *) user_data;
 	if (vc->chno < 0) return;
-        gapp->xsm->SetMode(vc->chno, ID_CH_M_MATH);
+        main_get_gapp ()->xsm->SetMode(vc->chno, ID_CH_M_MATH);
 }
 void ViewControl::SetX_callback (GSimpleAction *simple, GVariant *parameter, 
                                  gpointer user_data){
         ViewControl *vc = (ViewControl *) user_data;
 	if (vc->chno < 0) return;
-        gapp->xsm->SetMode(vc->chno, ID_CH_M_X);
+        main_get_gapp ()->xsm->SetMode(vc->chno, ID_CH_M_X);
 }
 
 void ViewControl::view_file_openhere_callback (GSimpleAction *simple, GVariant *parameter, 
                                                gpointer user_data){
         ViewControl *vc = (ViewControl *) user_data;
 	if (vc->chno < 0) return;
-	gapp->xsm->ActivateChannel(vc->chno);
-	gapp->xsm->load();
+	main_get_gapp ()->xsm->ActivateChannel(vc->chno);
+	main_get_gapp ()->xsm->load();
 }
 
 void ViewControl::view_file_save_callback (GSimpleAction *simple, GVariant *parameter, 
                                            gpointer user_data){
         ViewControl *vc = (ViewControl *) user_data;
 	if (vc->chno < 0) return;
-	gapp->xsm->save(AUTO_NAME_SAVE, NULL, vc->chno);
+	main_get_gapp ()->xsm->save(AUTO_NAME_SAVE, NULL, vc->chno);
 }
 
 void ViewControl::view_file_update_callback (GSimpleAction *simple, GVariant *parameter, 
@@ -2642,7 +2645,7 @@ void ViewControl::view_file_saveobjects_callback (GSimpleAction *simple, GVarian
                                                   gpointer user_data){
         ViewControl *vc = (ViewControl *) user_data;
 	gchar *oname = g_strconcat(vc->scan->data.ui.basename,"-objects",NULL);
-	gchar *fname = gapp->file_dialog_save ("Save Objects or .plt or HPGL", NULL, oname);
+	gchar *fname = main_get_gapp ()->file_dialog_save ("Save Objects or .plt or HPGL", NULL, oname);
 	g_free(oname);
 	if (!fname) return;
 	vc->objsavestream.open(fname, std::ios::out);
@@ -3046,7 +3049,7 @@ void ViewControl::view_file_loadobjects_callback (GSimpleAction *simple, GVarian
 
         GtkFileFilter *filter[] = { f2, f1, f0, NULL };
         
-	gchar *fname = gapp->file_dialog_load ("Load Objects", NULL, oname, filter);
+	gchar *fname = main_get_gapp ()->file_dialog_load ("Load Objects", NULL, oname, filter);
 	g_free (oname);
 	vc->objloadstream.open (fname, std::ios::in);
 
@@ -3070,8 +3073,8 @@ void ViewControl::view_file_loadobjects_callback (GSimpleAction *simple, GVarian
                                 --natoms;
                                 VObject *vo;		
                                 atom_color = lookup_atom_color (lab, r); // r=atomic radius, may scale by "ball" factor 0.4
-                                xy[0] += gapp->xsm->data.s.sx;
-                                xy[1] += gapp->xsm->data.s.sy;
+                                xy[0] += main_get_gapp ()->xsm->data.s.sx;
+                                xy[1] += main_get_gapp ()->xsm->data.s.sy;
                                 xy[2] = xy[0]+r;
                                 xy[3] = xy[1];
                                 XSM_DEBUG(DBG_L2, "Adding Circle@xy:" << xy[0] << ", " << xy[1]
@@ -3278,7 +3281,7 @@ void ViewControl::view_file_save_as_callback (GSimpleAction *simple, GVariant *p
                                               gpointer user_data){
         ViewControl *vc = (ViewControl *) user_data;
 	if (vc->chno < 0) return;
-	gapp->xsm->save(MANUAL_SAVE_AS, NULL, vc->chno);
+	main_get_gapp ()->xsm->save(MANUAL_SAVE_AS, NULL, vc->chno);
 }
 
 
@@ -3416,9 +3419,9 @@ void ViewControl::view_file_getinfo_callback (GSimpleAction *simple, GVariant *p
         ViewControl *vc = (ViewControl *) user_data;
 	if (vc->chno < 0) return;
 
-	gapp->xsm->ActivateChannel(vc->chno);
+	main_get_gapp ()->xsm->ActivateChannel(vc->chno);
 	XSM_DEBUG(DBG_L2, vc->scan->data.ui.name );
-	gapp->CallGetNCInfoPlugin (vc->scan->data.ui.name);
+	main_get_gapp ()->CallGetNCInfoPlugin (vc->scan->data.ui.name);
 
         g_print ("Basic Scan Info and Data\n");
         g_print ("Dimensions: Nx=%d Ny=%d Nv=%d Nt=%d", vc->scan->mem2d->GetNx (), vc->scan->mem2d->GetNy (), vc->scan->mem2d->GetNv (), vc->scan->number_of_time_elements ());
@@ -3438,8 +3441,8 @@ void ViewControl::view_file_print_callback (GSimpleAction *simple, GVariant *par
         ViewControl *vc = (ViewControl *) user_data;
 	if (vc->chno < 0) return;
 
-	gapp->xsm->ActivateChannel(vc->chno);
-        //	gapp->file_print_callback(widget, NULL);
+	main_get_gapp ()->xsm->ActivateChannel(vc->chno);
+        //	main_get_gapp ()->file_print_callback(widget, NULL);
         XSM_DEBUG(DBG_L2, "VIEWCONTROL FILE PRINT CALLBACK!\n" );
 }
 
@@ -3448,20 +3451,20 @@ void ViewControl::view_file_kill_callback (GSimpleAction *simple, GVariant *para
         ViewControl *vc = (ViewControl *) user_data;
 	if (vc->chno < 0) return;
 
-	gapp->xsm->SetMode(vc->chno, ID_CH_M_OFF);
+	main_get_gapp ()->xsm->SetMode(vc->chno, ID_CH_M_OFF);
 }
 
 void ViewControl::view_edit_copy_callback (GSimpleAction *simple, GVariant *parameter, 
                                            gpointer user_data){
         ViewControl *vc = (ViewControl *) user_data;
 	if (vc->chno < 0){
-		gapp->xsm->ActivateFreeChannel ();
-		gapp->xsm->GetFromMem2d (vc->scan->mem2d);
+		main_get_gapp ()->xsm->ActivateFreeChannel ();
+		main_get_gapp ()->xsm->GetFromMem2d (vc->scan->mem2d);
 		return;
 	}
 
-	gapp->xsm->ActivateChannel(vc->chno);
-	gapp->xsm->MathOperation(CopyScan);
+	main_get_gapp ()->xsm->ActivateChannel(vc->chno);
+	main_get_gapp ()->xsm->MathOperation(CopyScan);
 }
 
 void ViewControl::view_edit_crop_callback (GSimpleAction *simple, GVariant *parameter, 
@@ -3469,8 +3472,8 @@ void ViewControl::view_edit_crop_callback (GSimpleAction *simple, GVariant *para
         ViewControl *vc = (ViewControl *) user_data;
 	if (vc->chno < 0) return;
 
-	gapp->xsm->ActivateChannel(vc->chno);
-	gapp->xsm->MathOperation(CropScan);
+	main_get_gapp ()->xsm->ActivateChannel(vc->chno);
+	main_get_gapp ()->xsm->MathOperation(CropScan);
 }
 
 void ViewControl::view_edit_zoomin_callback (GSimpleAction *simple, GVariant *parameter, 
@@ -3478,8 +3481,8 @@ void ViewControl::view_edit_zoomin_callback (GSimpleAction *simple, GVariant *pa
         ViewControl *vc = (ViewControl *) user_data;
 	if (vc->chno < 0) return;
 
-	gapp->xsm->ActivateChannel(vc->chno);
-	gapp->xsm->MathOperation(ZoomInScan);
+	main_get_gapp ()->xsm->ActivateChannel(vc->chno);
+	main_get_gapp ()->xsm->MathOperation(ZoomInScan);
 }
 
 void ViewControl::view_edit_zoomout_callback (GSimpleAction *simple, GVariant *parameter, 
@@ -3487,8 +3490,8 @@ void ViewControl::view_edit_zoomout_callback (GSimpleAction *simple, GVariant *p
         ViewControl *vc = (ViewControl *) user_data;
 	if (vc->chno < 0) return;
 
-	gapp->xsm->ActivateChannel(vc->chno);
-	gapp->xsm->MathOperation(ZoomOutScan);
+	main_get_gapp ()->xsm->ActivateChannel(vc->chno);
+	main_get_gapp ()->xsm->MathOperation(ZoomOutScan);
 }
 
 void ViewControl::view_tool_all2locmax_callback (GSimpleAction *simple, GVariant *parameter, 
@@ -3817,7 +3820,7 @@ void ViewControl::action_callback (GSimpleAction *action, GVariant *parameter, g
 
         g_message ("Action: %s", g_variant_get_string (new_state, NULL));
         gchar *tmp = g_strdup (g_variant_get_string (new_state, NULL));
-        gapp->SignalRemoteActionToPlugins (&tmp);
+        main_get_gapp ()->SignalRemoteActionToPlugins (&tmp);
         g_free (tmp);
         
         g_simple_action_set_state (action, new_state);
@@ -3843,8 +3846,8 @@ void ViewControl::view_view_set_view_mode_radio_callback (GSimpleAction *action,
         if (vc->chno < 0){
                 mode = vc->scan->GetVM ();
         } else {
-                gapp->xsm->ActivateChannel(vc->chno);
-		mode = gapp->xsm->GetVM ();
+                main_get_gapp ()->xsm->ActivateChannel(vc->chno);
+		mode = main_get_gapp ()->xsm->GetVM ();
         }
       
         if (!strcmp (g_variant_get_string (new_state, NULL), "quick")){
@@ -3871,8 +3874,8 @@ void ViewControl::view_view_set_view_mode_radio_callback (GSimpleAction *action,
    	if (vc->chno < 0){
                 vc->scan->SetVM(mode);
         } else {
-                gapp->xsm->ActivateChannel(vc->chno);
-		gapp->xsm->SetVM(mode);
+                main_get_gapp ()->xsm->ActivateChannel(vc->chno);
+		main_get_gapp ()->xsm->SetVM(mode);
         }
 #endif
         
@@ -3904,8 +3907,8 @@ void ViewControl::view_view_x_linearize_callback (GSimpleAction *action, GVarian
 		vc->scan->x_linearize (FALSE);
 	}
 	//if (vc->chno < 0) return;
-	//gapp->xsm->ActivateChannel(vc->chno);
-	//gapp->xsm->AutoDisplay();
+	//main_get_gapp ()->xsm->ActivateChannel(vc->chno);
+	//main_get_gapp ()->xsm->AutoDisplay();
         vc->scan->set_display ();
 }
 
@@ -3955,7 +3958,7 @@ void ViewControl::view_view_redline_callback (GSimpleAction *action, GVariant *p
 		if(!vc->RedLine){
                         vc->scan->Activate (); // there is some where a hidden reference request for units via GetActiveScan().
 			gchar *tmp = g_strdup_printf ("Red Line Ch%d" ,vc->scan->get_channel_id ()+1);
-			vc->RedLine = new ProfileControl(tmp, vc->scan->get_channel_id ());
+			vc->RedLine = new ProfileControl(vc->main_app, tmp, vc->scan->get_channel_id ());
                         if (vc->scan->get_channel_id () > 0)
                                 vc->RedLine->SetMode (PROFILE_MODE_XGRID | PROFILE_MODE_YGRID | PROFILE_MODE_STICS);
                         else
@@ -4012,7 +4015,7 @@ void ViewControl::view_view_world_callback (GSimpleAction *action, GVariant *par
         g_variant_unref (old_state);
 
         if (!vc->scan->show_world_map (g_variant_get_boolean (new_state))){
-		gapp->message(N_("Sorry, no world map is managed.\n Enable ScanControl:RAD mode first!"));
+		main_get_gapp ()->message(N_("Sorry, no world map is managed.\n Enable ScanControl:RAD mode first!"));
                 old_state = g_action_get_state (G_ACTION (action));
                 new_state = g_variant_new_boolean (!g_variant_get_boolean (old_state));
                 g_simple_action_set_state (action, new_state);
@@ -4040,8 +4043,8 @@ void ViewControl::view_view_tolerant_callback (GSimpleAction *action, GVariant *
         if (vc->chno < 0){
                 mode = vc->scan->GetVM ();
         } else {
-                gapp->xsm->ActivateChannel(vc->chno);
-		mode = gapp->xsm->GetVM ();
+                main_get_gapp ()->xsm->ActivateChannel(vc->chno);
+		mode = main_get_gapp ()->xsm->GetVM ();
         }
         
 	if (g_variant_get_boolean (new_state))
@@ -4052,8 +4055,8 @@ void ViewControl::view_view_tolerant_callback (GSimpleAction *action, GVariant *
    	if (vc->chno < 0){
                 vc->scan->SetVM(mode);
         } else {
-                gapp->xsm->ActivateChannel(vc->chno);
-		gapp->xsm->SetVM(mode);
+                main_get_gapp ()->xsm->ActivateChannel(vc->chno);
+		main_get_gapp ()->xsm->SetVM(mode);
         }
 }
 
@@ -4077,12 +4080,12 @@ void ViewControl::view_view_color_callback (GSimpleAction *action, GVariant *par
 
 	if (g_variant_get_boolean (new_state)){
 		vc->scan->view->color_mode  (USER_FALSE_COLOR);
-//		SET_FLAG(gapp->xsm->ZoomFlg, VIEW_PALETTE);
-//		SET_FLAG(gapp->xsm->ZoomFlg, VIEW_COLOR);
+//		SET_FLAG(main_get_gapp ()->xsm->ZoomFlg, VIEW_PALETTE);
+//		SET_FLAG(main_get_gapp ()->xsm->ZoomFlg, VIEW_COLOR);
 	}else{
 		vc->scan->view->color_mode (DEFAULT_GREY);
-//		CLR_FLAG(gapp->xsm->ZoomFlg, VIEW_PALETTE);
-//		CLR_FLAG(gapp->xsm->ZoomFlg, VIEW_COLOR);
+//		CLR_FLAG(main_get_gapp ()->xsm->ZoomFlg, VIEW_PALETTE);
+//		CLR_FLAG(main_get_gapp ()->xsm->ZoomFlg, VIEW_COLOR);
 	} 
 // 	if (vc->chno < 0) return;
 	vc->scan->set_display();
@@ -4137,8 +4140,8 @@ void ViewControl::view_view_coordinate_mode_radio_callback (GSimpleAction *actio
         } else if (!strcmp (g_variant_get_string (new_state, NULL), "pixels")){
 		vc->vinfo->SetCoordMode (SCAN_COORD_RELATIVE);
 		vc->vinfo->SetPixelUnit (TRUE);
-		vc->vinfo->ChangeXYUnit (gapp->xsm->Unity);
-		vc->vinfo->ChangeZUnit (gapp->xsm->Unity);
+		vc->vinfo->ChangeXYUnit (main_get_gapp ()->xsm->Unity);
+		vc->vinfo->ChangeZUnit (main_get_gapp ()->xsm->Unity);
         }
 
         g_simple_action_set_state (action, new_state);
@@ -4321,9 +4324,9 @@ void ViewControl::tip_follow_callback (GtkWidget *widget, gpointer user_data) {
 
 void ViewControl::scan_start_stop_callback (GtkWidget *widget, gpointer user_data){
         if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget)))
-                gapp->signal_emit_toolbar_action ("Toolbar_Scan_Start");
+                main_get_gapp ()->signal_emit_toolbar_action ("Toolbar_Scan_Start");
         else
-                gapp->signal_emit_toolbar_action ("Toolbar_Scan_Stop");
+                main_get_gapp ()->signal_emit_toolbar_action ("Toolbar_Scan_Stop");
 }
 
 void ViewControl::side_pane_action_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data) {

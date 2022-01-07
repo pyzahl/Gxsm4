@@ -32,14 +32,15 @@
 
 class V3dControl : public AppBase{
 public:
-        V3dControl(const char *title, int ChNo, Scan *scan,
+        V3dControl(Gxsm4app *app,
+                   const char *title, int ChNo, Scan *scan,
                    GCallback resize_event_cb,
                    GCallback render_event_cb,
                    GCallback realize_event_cb,
                    void *vdata);
         virtual ~V3dControl();
 
-        virtual void AppWindowInit(const gchar *title, const gchar *sub_title=NULL);
+        virtual void AppWindowInit(const gchar *title=NULL, const gchar *sub_title=NULL);
 
         static void configure_callback (GSimpleAction *action, GVariant *parameter, gpointer user_data);
         static void timer_update_callback (GSimpleAction *action, GVariant *parameter, gpointer user_data);

@@ -32,6 +32,7 @@
 #include "xsmtypes.h"
 #include "action_id.h"
 #include "glbvars.h"
+#include "surface.h"
 
 #include "app_profile.h"
 #include "app_vobj.h"
@@ -287,10 +288,10 @@ VObject::VObject(GtkWidget *Canvas, double *xy0, int npkt, int pflg, VOBJ_COORD_
                 GObject *ctx_popup=NULL;
                 
                 switch (npkt){
-                case 0:  ctx_popup = gapp->get_vobj_ctx_menu_event (); break;
-                case 1:  ctx_popup = gapp->get_vobj_ctx_menu_1p (); break;
-                case 2:  ctx_popup = gapp->get_vobj_ctx_menu_2p (); break;
-                default: ctx_popup = gapp->get_vobj_ctx_menu_np (); break;
+                case 0:  ctx_popup = main_get_gapp ()->get_vobj_ctx_menu_event (); break;
+                case 1:  ctx_popup = main_get_gapp ()->get_vobj_ctx_menu_1p (); break;
+                case 2:  ctx_popup = main_get_gapp ()->get_vobj_ctx_menu_2p (); break;
+                default: ctx_popup = main_get_gapp ()->get_vobj_ctx_menu_np (); break;
                 }
 
                 //**** https://devdocs.io/gtk~4.0/gtkpopovermenu#gtk-popover-menu-new-from-model
@@ -385,7 +386,8 @@ void VObject::show_profile (gboolean pflg){
 						 get_profile_path_dimension (),
 						 get_profile_series_dimension ()
 						 );
-		profile = new ProfileControl(proftit);
+		profile = new ProfileControl((Gxsm4app *) g_object_get_data (G_OBJECT (canvas), "MAIN_APP"), proftit);        
+
 		g_free(proftit);
 	} else {
 		if(profile){
@@ -1204,10 +1206,10 @@ void VObject::set_offset(){
 		return;
 
 	vinfo->sc->Pixel2World (R2INT (x), R2INT (y), 
-				gapp->xsm->data.s.x0, gapp->xsm->data.s.y0, 
+				main_get_gapp ()->xsm->data.s.x0, main_get_gapp ()->xsm->data.s.y0, 
 				SCAN_COORD_ABSOLUTE);
 
-	gapp->spm_update_all();
+	main_get_gapp ()->spm_update_all();
 }
 
 void VObject::set_global_ref(){
@@ -1220,18 +1222,18 @@ void VObject::set_global_ref(){
 	if (y < 0. || y >= vinfo->sc->mem2d->GetNy())
 		return;
 
-	gapp->glb_ref_point_xylt_index[0]=R2INT (x);
-	gapp->glb_ref_point_xylt_index[1]=R2INT (y);
-	gapp->glb_ref_point_xylt_index[2]=0;
-	gapp->glb_ref_point_xylt_index[3]=0;
+	main_get_gapp ()->glb_ref_point_xylt_index[0]=R2INT (x);
+	main_get_gapp ()->glb_ref_point_xylt_index[1]=R2INT (y);
+	main_get_gapp ()->glb_ref_point_xylt_index[2]=0;
+	main_get_gapp ()->glb_ref_point_xylt_index[3]=0;
 	
 	vinfo->sc->Pixel2World (R2INT (x), R2INT (y), 
-				gapp->glb_ref_point_xylt_world[0], gapp->glb_ref_point_xylt_world[1],
+				main_get_gapp ()->glb_ref_point_xylt_world[0], main_get_gapp ()->glb_ref_point_xylt_world[1],
 				SCAN_COORD_ABSOLUTE);
 
-	gapp->glb_ref_point_xylt_world[2]=0.;
+	main_get_gapp ()->glb_ref_point_xylt_world[2]=0.;
 	// calcpixeltime
-	gapp->glb_ref_point_xylt_world[3] = (double)vinfo->sc->data.s.tStart + 
+	main_get_gapp ()->glb_ref_point_xylt_world[3] = (double)vinfo->sc->data.s.tStart + 
 		(2.*vinfo->sc->mem2d->GetNx()*(vinfo->sc->data.s.ydir>0 ? y : vinfo->sc->mem2d->GetNy()-y-1) + x)
 		* vinfo->sc->data.s.pixeltime;
 
@@ -1239,15 +1241,15 @@ void VObject::set_global_ref(){
 		"SET GLOBAL REFERENCE POINT TO:\n"
 		"PixelTime assumed is: " << vinfo->sc->data.s.pixeltime << " s" << std::endl
 		  << "index XYLT = ("
-		  << gapp->glb_ref_point_xylt_index[0] << ", "
-		  << gapp->glb_ref_point_xylt_index[1] << ", "
-		  << gapp->glb_ref_point_xylt_index[2] << "*, "
-		  << gapp->glb_ref_point_xylt_index[3] << "*)\n"
+		  << main_get_gapp ()->glb_ref_point_xylt_index[0] << ", "
+		  << main_get_gapp ()->glb_ref_point_xylt_index[1] << ", "
+		  << main_get_gapp ()->glb_ref_point_xylt_index[2] << "*, "
+		  << main_get_gapp ()->glb_ref_point_xylt_index[3] << "*)\n"
 		  << "world XYLT = ("
-		  << gapp->glb_ref_point_xylt_world[0] << ", "
-		  << gapp->glb_ref_point_xylt_world[1] << ", "
-		  << gapp->glb_ref_point_xylt_world[2] << "*, "
-		  << gapp->glb_ref_point_xylt_world[3] << ")\n"
+		  << main_get_gapp ()->glb_ref_point_xylt_world[0] << ", "
+		  << main_get_gapp ()->glb_ref_point_xylt_world[1] << ", "
+		  << main_get_gapp ()->glb_ref_point_xylt_world[2] << "*, "
+		  << main_get_gapp ()->glb_ref_point_xylt_world[3] << ")\n"
 		  << std::endl;
 
 }
@@ -1270,7 +1272,7 @@ void VObject::SetUpScan(){
 
 	// new offset
 	vinfo->sc->Pixel2World (R2INT((xyq[0] + xyq[2])/2.), R2INT((xyq[1] + xyq[3])/2.),
-				gapp->xsm->data.s.x0, gapp->xsm->data.s.y0, 
+				main_get_gapp ()->xsm->data.s.x0, main_get_gapp ()->xsm->data.s.y0, 
 				SCAN_COORD_ABSOLUTE);
 
 	// calc new size
@@ -1286,15 +1288,15 @@ void VObject::SetUpScan(){
 	dx = x1-x0;
 	dy = y1-y0;
 	XSM_DEBUG (DBG_L3, "SetUpScan:" << dx << "," << dy );
-	gapp->xsm->data.s.rx = sqrt(dx*dx+dy*dy);
+	main_get_gapp ()->xsm->data.s.rx = sqrt(dx*dx+dy*dy);
 
-	gapp->xsm->data.s.nx = R2INT(Dist(0,np-1));
-	gapp->xsm->data.s.ny = 1;
-	gapp->xsm->data.s.dx = gapp->xsm->data.s.rx/(gapp->xsm->data.s.nx-1);
-	gapp->xsm->data.s.dy = gapp->xsm->data.s.dx;
-	gapp->xsm->data.s.ry = gapp->xsm->data.s.dx;
-	gapp->xsm->data.s.alpha = -Phi(dx,dy);
-	gapp->spm_update_all();
+	main_get_gapp ()->xsm->data.s.nx = R2INT(Dist(0,np-1));
+	main_get_gapp ()->xsm->data.s.ny = 1;
+	main_get_gapp ()->xsm->data.s.dx = main_get_gapp ()->xsm->data.s.rx/(main_get_gapp ()->xsm->data.s.nx-1);
+	main_get_gapp ()->xsm->data.s.dy = main_get_gapp ()->xsm->data.s.dx;
+	main_get_gapp ()->xsm->data.s.ry = main_get_gapp ()->xsm->data.s.dx;
+	main_get_gapp ()->xsm->data.s.alpha = -Phi(dx,dy);
+	main_get_gapp ()->spm_update_all();
 }
 
 void VObject::show_label_cb(GtkWidget *widget, VObject *vo){
@@ -1678,14 +1680,14 @@ void VObPoint::update_offset(){
 		return;
 
 	vinfo->sc->Pixel2World (R2INT (x), R2INT (y), 
-				gapp->xsm->data.s.x0, gapp->xsm->data.s.y0, 
+				main_get_gapp ()->xsm->data.s.x0, main_get_gapp ()->xsm->data.s.y0, 
 				SCAN_COORD_ABSOLUTE);
 
-	gapp->xsm->hardware->SetOffset
-		(R2INT (gapp->xsm->Inst->X0A2Dig (gapp->xsm->data.s.x0)),
-		 R2INT (gapp->xsm->Inst->Y0A2Dig (gapp->xsm->data.s.y0)));
+	main_get_gapp ()->xsm->hardware->SetOffset
+		(R2INT (main_get_gapp ()->xsm->Inst->X0A2Dig (main_get_gapp ()->xsm->data.s.x0)),
+		 R2INT (main_get_gapp ()->xsm->Inst->Y0A2Dig (main_get_gapp ()->xsm->data.s.y0)));
 
-	gapp->spm_update_all ();
+	main_get_gapp ()->spm_update_all ();
 }
 
 void VObPoint::update_scanposition(){
@@ -1699,15 +1701,15 @@ void VObPoint::update_scanposition(){
 		return;
 
 	vinfo->sc->Pixel2World (R2INT (x), R2INT (y), 
-				gapp->xsm->data.s.sx, gapp->xsm->data.s.sy, 
+				main_get_gapp ()->xsm->data.s.sx, main_get_gapp ()->xsm->data.s.sy, 
 				SCAN_COORD_RELATIVE);
 
-	while (gapp->xsm->hardware->MovetoXY
-               (R2INT(gapp->xsm->Inst->XA2Dig(gapp->xsm->data.s.sx)),
-                R2INT(gapp->xsm->Inst->YA2Dig(gapp->xsm->data.s.sy)))
+	while (main_get_gapp ()->xsm->hardware->MovetoXY
+               (R2INT(main_get_gapp ()->xsm->Inst->XA2Dig(main_get_gapp ()->xsm->data.s.sx)),
+                R2INT(main_get_gapp ()->xsm->Inst->YA2Dig(main_get_gapp ()->xsm->data.s.sy)))
                ); // G-IDLE ME
 
-	gapp->spm_update_all ();
+	main_get_gapp ()->spm_update_all ();
 }
 
 
@@ -3241,7 +3243,7 @@ void VObRectangle::Update(){
 	gtk_statusbar_push(GTK_STATUSBAR(statusbar), statusid, mld);
 	//vinfo->sc->PktVal=2;
 
-	gapp->xsm->MausMode(MRECTANGLE);
+	main_get_gapp ()->xsm->MausMode(MRECTANGLE);
 	g_free(mld);
 
 	Activate ();
@@ -3267,7 +3269,7 @@ void VObRectangle::SetUpScan()
 
 	// new offset
 	vinfo->sc->Pixel2World (R2INT((xyq[0] + xyq[2])/2.), R2INT((xyq[1] + xyq[3])/2.),
-				gapp->xsm->data.s.x0, gapp->xsm->data.s.y0, 
+				main_get_gapp ()->xsm->data.s.x0, main_get_gapp ()->xsm->data.s.y0, 
 				SCAN_COORD_ABSOLUTE);
 	// calc new size
 	vinfo->sc->Pixel2World (R2INT(xyq[0]), R2INT(xyq[1]),
@@ -3282,15 +3284,15 @@ void VObRectangle::SetUpScan()
 	dx = fabs(x1-x0);
 	dy = fabs(y1-y0);
 	XSM_DEBUG (DBG_L3, "SetUpScan:" << dx << "," << dy );
-	gapp->xsm->data.s.rx = dx;
-	gapp->xsm->data.s.ry = dy;
+	main_get_gapp ()->xsm->data.s.rx = dx;
+	main_get_gapp ()->xsm->data.s.ry = dy;
 
-	gapp->xsm->data.s.nx = R2INT(fabs(xyq[2]-xyq[0]));
-	gapp->xsm->data.s.ny = R2INT(fabs(xyq[3]-xyq[1]));
-	gapp->xsm->data.s.dx = gapp->xsm->data.s.rx/(gapp->xsm->data.s.nx-1);
-	gapp->xsm->data.s.dy = gapp->xsm->data.s.ry/(gapp->xsm->data.s.ny-1);
-	//gapp->xsm->data.s.alpha = -Phi(dx,dy); // leave same angle
-	gapp->spm_update_all();
+	main_get_gapp ()->xsm->data.s.nx = R2INT(fabs(xyq[2]-xyq[0]));
+	main_get_gapp ()->xsm->data.s.ny = R2INT(fabs(xyq[3]-xyq[1]));
+	main_get_gapp ()->xsm->data.s.dx = main_get_gapp ()->xsm->data.s.rx/(main_get_gapp ()->xsm->data.s.nx-1);
+	main_get_gapp ()->xsm->data.s.dy = main_get_gapp ()->xsm->data.s.ry/(main_get_gapp ()->xsm->data.s.ny-1);
+	//main_get_gapp ()->xsm->data.s.alpha = -Phi(dx,dy); // leave same angle
+	main_get_gapp ()->spm_update_all();
 }
 
 VObCircle::VObCircle(GtkWidget *canvas, double *xy0, int pflg, VOBJ_COORD_MODE cmode, const gchar *lab, double Marker_scale) 

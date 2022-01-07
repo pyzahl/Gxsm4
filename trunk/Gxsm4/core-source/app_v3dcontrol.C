@@ -44,6 +44,7 @@
 #include "app_profile.h"
 #include "app_vobj.h"
 #include "app_v3dcontrol.h"
+#include "surface.h"
 
 #include <gtk/gtk.h>
 
@@ -122,74 +123,12 @@ static GActionEntry win_v3d_gxsm_action_entries[] = {
 // V3dControl
 // ========================================
 
-void V3dControl::AppWindowInit(const gchar *title, const gchar *sub_title){
-	XSM_DEBUG(DBG_L2, "V3dControl::WidgetInit" );
-
-        app_window = gxsm4_app_window_new (GXSM4_APP (gapp->get_application ()));
-        window = GTK_WINDOW (app_window);
-
-        header_bar = gtk_header_bar_new ();
-        gtk_widget_show (header_bar);
-        // hide close, min, max window decorations
-        //gtk_header_bar_set_show_close_button (GTK_HEADER_BAR (header_bar), false);
-
-        g_action_map_add_action_entries (G_ACTION_MAP (app_window),
-                                         win_v3d_gxsm_action_entries, G_N_ELEMENTS (win_v3d_gxsm_action_entries),
-                                         this);
-
-        // create window PopUp menu  ---------------------------------------------------------------------
-        GtkWidget *file_menu = gtk_popover_menu_new_from_model (G_MENU_MODEL (gapp->get_view3d_menu ()));
-        //g_assert (GTK_IS_MENU (file_menu));
-
-        // attach popup file menu button --------------------------------
-        GtkWidget *header_menu_button = gtk_menu_button_new ();
-        gtk_menu_button_set_icon_name (GTK_MENU_BUTTON (header_menu_button), "emblem-system-symbolic");
-        gtk_menu_button_set_popover (GTK_MENU_BUTTON (header_menu_button), file_menu);
-        gtk_header_bar_pack_end (GTK_HEADER_BAR (header_bar), header_menu_button);
-        gtk_widget_show (header_menu_button);
-
-        SetTitle (title, sub_title);
-        gtk_window_set_titlebar (GTK_WINDOW (window), header_bar);
-
-        //        g_signal_connect (G_OBJECT(window),
-        //                          "delete_event",
-        //                          G_CALLBACK(App::close_scan_event_cb),
-        //                          this);
-        
-	v_grid = gtk_grid_new ();
-        gtk_widget_show (v_grid);
-        gtk_window_set_child (GTK_WINDOW (window), v_grid);
-	g_object_set_data (G_OBJECT (window), "v_grid", v_grid);
-
-	gtk_widget_show (GTK_WIDGET (window)); // FIX-ME GTK4 SHOWALL
-
-        // g_signal_connect (G_OBJECT (window), "delete-event", G_CALLBACK (gtk_widget_hide_on_delete), NULL);
-        // g_signal_connect (G_OBJECT (window), "delete-event", G_CALLBACK (AppBase::window_close_callback), this);
-
-	XSM_DEBUG(DBG_L2, "V3dControl::WidgetInit done." );
-}
-
-gboolean V3dControl::v3dview_timer_callback (gpointer data){
-        V3dControl *vc =  (V3dControl *) data;
-
-        if (!vc->au_timer)
-                return false;
-        
-        if (vc->scan->is_scanning () || vc->auto_update_mode){
-                gtk_gl_area_queue_render (GTK_GL_AREA (vc->glarea));
-                return true;
-        } else {
-                vc->au_timer = 0;
-                return false;
-        }
-        
-}
-
-V3dControl::V3dControl (const char *title, int ChNo, Scan *sc, 
+V3dControl::V3dControl (Gxsm4app *app,
+                        const char *title, int ChNo, Scan *sc, 
 			GCallback resize_event_cb,
 			GCallback render_event_cb,
 			GCallback realize_event_cb,
-			void *vdata){
+			void *vdata):AppBase(app){
 	GtkWidget *statusbar;
 
 	XSM_DEBUG(DBG_L2, "V3dControl::V3dControl" );
@@ -198,12 +137,13 @@ V3dControl::V3dControl (const char *title, int ChNo, Scan *sc,
 	scan = sc;
 	chno=ChNo;
         au_timer = 0;
-	AppWindowInit(title);
+        
+	AppWindowInit (title);
 	g_object_set_data  (G_OBJECT (window), "Ch", GINT_TO_POINTER (ChNo));
 	g_object_set_data  (G_OBJECT (window), "ChNo", GINT_TO_POINTER (ChNo+1));
 
         // FIX-ME GTK4 add new DND
-        // gapp->configure_drop_on_widget (GTK_WIDGET (window));
+        // main_get_gapp ()->configure_drop_on_widget (GTK_WIDGET (window));
         // gtk_window_set_default_size(GTK_WINDOW(window), 500, 500);
 
         glarea = gtk_gl_area_new ();
@@ -281,6 +221,64 @@ V3dControl::~V3dControl (){
 	XSM_DEBUG(DBG_L2, "~V3dControl out" );
 }
 
+
+
+
+void V3dControl::AppWindowInit(const gchar *title, const gchar *sub_title){
+	XSM_DEBUG(DBG_L2, "V3dControl::WidgetInit" );
+
+        g_message ("V3dControl::AppWindowInit** <%s : %s> **", title, sub_title);
+        app_window = gxsm4_app_window_new (GXSM4_APP (main_get_gapp ()->get_application ()));
+        window = GTK_WINDOW (app_window);
+
+        header_bar = gtk_header_bar_new ();
+        gtk_widget_show (header_bar);
+        // hide close, min, max window decorations
+        //gtk_header_bar_set_show_close_button (GTK_HEADER_BAR (header_bar), false);
+
+        g_action_map_add_action_entries (G_ACTION_MAP (app_window),
+                                         win_v3d_gxsm_action_entries, G_N_ELEMENTS (win_v3d_gxsm_action_entries),
+                                         this);
+
+        // create window PopUp menu  ---------------------------------------------------------------------
+        GtkWidget *file_menu = gtk_popover_menu_new_from_model (G_MENU_MODEL (main_get_gapp ()->get_view3d_menu ()));
+        //g_assert (GTK_IS_MENU (file_menu));
+
+        // attach popup file menu button --------------------------------
+        GtkWidget *header_menu_button = gtk_menu_button_new ();
+        gtk_menu_button_set_icon_name (GTK_MENU_BUTTON (header_menu_button), "emblem-system-symbolic");
+        gtk_menu_button_set_popover (GTK_MENU_BUTTON (header_menu_button), file_menu);
+        gtk_header_bar_pack_end (GTK_HEADER_BAR (header_bar), header_menu_button);
+        gtk_widget_show (header_menu_button);
+
+        gtk_window_set_titlebar (GTK_WINDOW (window), header_bar);
+        SetTitle (title, sub_title);
+
+	v_grid = gtk_grid_new ();
+        gtk_widget_show (v_grid);
+        gtk_window_set_child (GTK_WINDOW (window), v_grid);
+	g_object_set_data (G_OBJECT (window), "v_grid", v_grid);
+
+	gtk_widget_show (GTK_WIDGET (window)); // FIX-ME GTK4 SHOWALL
+
+	XSM_DEBUG(DBG_L2, "V3dControl::WidgetInit done." );
+}
+
+gboolean V3dControl::v3dview_timer_callback (gpointer data){
+        V3dControl *vc =  (V3dControl *) data;
+
+        if (!vc->au_timer)
+                return false;
+        
+        if (vc->scan->is_scanning () || vc->auto_update_mode){
+                gtk_gl_area_queue_render (GTK_GL_AREA (vc->glarea));
+                return true;
+        } else {
+                vc->au_timer = 0;
+                return false;
+        }
+        
+}
 
 void V3dControl::SetActive(int flg){
 	GtkWidget *statusbar = (GtkWidget*)g_object_get_data (G_OBJECT (glarea), "statusbar");
@@ -406,29 +404,29 @@ gint V3dControl::glarea_event_cb(GtkWidget *glarea, GdkEvent *event, V3dControl 
 
 void V3dControl::Activate_callback (GSimpleAction *action, GVariant *parameter, gpointer user_data){
         V3dControl *vc = (V3dControl *) user_data;
-	gapp->xsm->ActivateChannel(vc->chno);
+	main_get_gapp ()->xsm->ActivateChannel(vc->chno);
 }
 void V3dControl::SetOff_callback (GSimpleAction *action, GVariant *parameter, gpointer user_data){
         V3dControl *vc = (V3dControl *) user_data;
-	gapp->xsm->SetMode(vc->chno, ID_CH_M_OFF);
+	main_get_gapp ()->xsm->SetMode(vc->chno, ID_CH_M_OFF);
 }
 void V3dControl::SetOn_callback (GSimpleAction *action, GVariant *parameter, gpointer user_data){
         V3dControl *vc = (V3dControl *) user_data;
-	gapp->xsm->SetMode(vc->chno, ID_CH_M_ON);
+	main_get_gapp ()->xsm->SetMode(vc->chno, ID_CH_M_ON);
 }
 void V3dControl::SetMath_callback (GSimpleAction *action, GVariant *parameter, gpointer user_data){
         V3dControl *vc = (V3dControl *) user_data;
-	gapp->xsm->SetMode(vc->chno, ID_CH_M_MATH);
+	main_get_gapp ()->xsm->SetMode(vc->chno, ID_CH_M_MATH);
 }
 void V3dControl::SetX_callback (GSimpleAction *action, GVariant *parameter, gpointer user_data){
         V3dControl *vc = (V3dControl *) user_data;
-	gapp->xsm->SetMode(vc->chno, ID_CH_M_X);
+	main_get_gapp ()->xsm->SetMode(vc->chno, ID_CH_M_X);
 }
 
 void V3dControl::AutoDisp_callback (GSimpleAction *action, GVariant *parameter, gpointer user_data){
         V3dControl *vc = (V3dControl *) user_data;
-        gapp->xsm->ActivateChannel(vc->chno);
-	//gapp->xsm->AutoDisplay();
+        main_get_gapp ()->xsm->ActivateChannel(vc->chno);
+	//main_get_gapp ()->xsm->AutoDisplay();
 	((Surf3d*)g_object_get_data (G_OBJECT (vc->glarea), "vdata"))->update(0, vc->scan->mem2d->GetNy());
         //        ((Surf3d*)g_object_get_data (G_OBJECT (vc->glarea), "vdata"))->GLdrawscene(-1., true);
         gtk_gl_area_queue_render (GTK_GL_AREA (vc->glarea));
@@ -442,18 +440,18 @@ void V3dControl::apply_all_callback (GSimpleAction *action, GVariant *parameter,
 
 void V3dControl::view_file_openhere_callback (GSimpleAction *action, GVariant *parameter, gpointer user_data){
         V3dControl *vc = (V3dControl *) user_data;
-	gapp->xsm->ActivateChannel(vc->chno);
-	gapp->xsm->load();
+	main_get_gapp ()->xsm->ActivateChannel(vc->chno);
+	main_get_gapp ()->xsm->load();
 }
 
 void V3dControl::view_file_save_callback (GSimpleAction *action, GVariant *parameter, gpointer user_data){
         V3dControl *vc = (V3dControl *) user_data;
-	gapp->xsm->save(AUTO_NAME_SAVE, NULL, vc->chno);
+	main_get_gapp ()->xsm->save(AUTO_NAME_SAVE, NULL, vc->chno);
 }
 
 void V3dControl::view_file_save_as_callback (GSimpleAction *action, GVariant *parameter, gpointer user_data){
         V3dControl *vc = (V3dControl *) user_data;
-	gapp->xsm->save(MANUAL_SAVE_AS, NULL, vc->chno);
+	main_get_gapp ()->xsm->save(MANUAL_SAVE_AS, NULL, vc->chno);
 }
 
 void V3dControl::view_file_save_image_callback (GSimpleAction *action, GVariant *parameter, gpointer user_data){
@@ -474,7 +472,7 @@ void V3dControl::view_file_save_image_callback (GSimpleAction *action, GVariant 
 
         GtkFileFilter *filter[] = { fpng, f0, NULL };
                 
-        gchar *imgname = gapp->file_dialog_save ("Save GL 3D View as png file", path, suggest, filter);
+        gchar *imgname = main_get_gapp ()->file_dialog_save ("Save GL 3D View as png file", path, suggest, filter);
 	g_free (suggest);
 
 	if (imgname == NULL || strlen(imgname) < 5) 
@@ -486,14 +484,14 @@ void V3dControl::view_file_save_image_callback (GSimpleAction *action, GVariant 
 
 void V3dControl::view_file_print_callback (GSimpleAction *action, GVariant *parameter, gpointer user_data){
         V3dControl *vc = (V3dControl *) user_data;
-	gapp->xsm->ActivateChannel(vc->chno);
-	//	gapp->file_print_callback(widget, NULL);
+	main_get_gapp ()->xsm->ActivateChannel(vc->chno);
+	//	main_get_gapp ()->file_print_callback(widget, NULL);
 	XSM_DEBUG(DBG_L2, "VIEW PRINT CALLBACK!\n" );
 }
 
 void V3dControl::view_file_kill_callback (GSimpleAction *action, GVariant *parameter, gpointer user_data){
         V3dControl *vc = (V3dControl *) user_data;
-	gapp->xsm->SetMode(vc->chno, ID_CH_M_OFF);
+	main_get_gapp ()->xsm->SetMode(vc->chno, ID_CH_M_OFF);
 }
 
 void V3dControl::view_view_mode_callback (GSimpleAction *action, GVariant *parameter, gpointer user_data){
@@ -532,8 +530,8 @@ void V3dControl::view_view_mode_callback (GSimpleAction *action, GVariant *param
    	if (vc->chno < 0){
                 vc->scan->SetVM(mode);
         } else {
-                gapp->xsm->ActivateChannel(vc->chno);
-		gapp->xsm->SetVM(mode);
+                main_get_gapp ()->xsm->ActivateChannel(vc->chno);
+		main_get_gapp ()->xsm->SetVM(mode);
         }
       
         g_simple_action_set_state (action, new_state);

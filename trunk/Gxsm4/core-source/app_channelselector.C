@@ -28,13 +28,14 @@
 #include <locale.h>
 #include <libintl.h>
 
-#include "gxsm_app.h"
+#include "app_channelselector.h"
 
 #include "unit.h"
 #include "pcs.h"
 #include "xsmtypes.h"
 #include "action_id.h"
 #include "glbvars.h"
+#include "surface.h"
 
 /* Channel Menu */
 
@@ -83,7 +84,7 @@ static int NumCh = 0;
 
 static int alife = 0;
 
-ChannelSelector::ChannelSelector (int ChAnz){
+ChannelSelector::ChannelSelector (Gxsm4app *app, int ChAnz):AppBase(app){
 	GtkWidget* wid;
 	GtkWidget* dropDownMenu;
 	char txt[32];
@@ -329,8 +330,8 @@ gboolean ChannelSelector::on_drop (GtkDropTarget *target,
         // that we received
         if (G_VALUE_HOLDS (value, G_TYPE_FILE)){
                 g_message ("FILE DROPPED %s", g_file_get_parse_name (g_value_get_object (value)));
-        	gapp->xsm->ActivateChannel (GPOINTER_TO_INT (g_object_get_data  (G_OBJECT (gtk_event_controller_get_widget (GTK_EVENT_CONTROLLER (target))), "ChNo")));
-                gapp->xsm->load (g_file_get_parse_name (g_value_get_object (value)));
+        	main_get_gapp ()->xsm->ActivateChannel (GPOINTER_TO_INT (g_object_get_data  (G_OBJECT (gtk_event_controller_get_widget (GTK_EVENT_CONTROLLER (target))), "ChNo")));
+                main_get_gapp ()->xsm->load (g_file_get_parse_name (g_value_get_object (value)));
         }
         else
                 return FALSE;
@@ -362,9 +363,9 @@ void ChannelSelector::restore_callback (GtkWidget *widget, ChannelSelector *cs){
                              array[3*channel + 2]
                              );
 
-		gapp->xsm->SetView (channel, array[3*channel+0]);
-		gapp->xsm->SetMode (channel, 1+array[3*channel+1]);
-		gapp->xsm->SetSDir (channel, array[3*channel+2]);
+		main_get_gapp ()->xsm->SetView (channel, array[3*channel+0]);
+		main_get_gapp ()->xsm->SetMode (channel, 1+array[3*channel+1]);
+		main_get_gapp ()->xsm->SetSDir (channel, array[3*channel+2]);
         }
         
         return;
@@ -420,7 +421,7 @@ void ChannelSelector::choice_ChSDir_callback (GtkWidget *widget, void *data){
 
         XSM_DEBUG_GP(DBG_L3, "ChannelSelector::choice_ChSDir: CH[%d] %d\n", ch, i);
 
-	gapp->xsm->SetSDir (ch, i);
+	main_get_gapp ()->xsm->SetSDir (ch, i);
 	return;
 }
 
@@ -438,7 +439,7 @@ void ChannelSelector::choice_ChView_callback (GtkWidget *widget, void *data){
 
         XSM_DEBUG_GP(DBG_L3, "ChannelSelector::choice_ChView: CH[%d] %d\n", ch, i);
 
-	gapp->xsm->SetView (ch, i);
+	main_get_gapp ()->xsm->SetView (ch, i);
 	return;
 }
 
@@ -456,7 +457,7 @@ void ChannelSelector::choice_ChMode_callback (GtkWidget *widget, void *data){
 
         XSM_DEBUG_GP(DBG_L1, "ChannelSelector::choice_ChMode: CH[%d] %d\n", ch, i+1);
 
-	gapp->xsm->SetMode (ch, i+1); // ID_CH_M_OFF := 1 is first valid mode id
+	main_get_gapp ()->xsm->SetMode (ch, i+1); // ID_CH_M_OFF := 1 is first valid mode id
 	return;
 }
 
@@ -467,7 +468,7 @@ void ChannelSelector::choice_ChAS_callback (GtkWidget *widget, void *data){
         else
                 return;
 
-        gapp->xsm->SetChannelASflg (ch, gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)) ? 1:0);
+        main_get_gapp ()->xsm->SetChannelASflg (ch, gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)) ? 1:0);
 	return;
 }
 

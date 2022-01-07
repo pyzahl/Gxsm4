@@ -35,6 +35,8 @@
 #include "app_vinfo.h"
 #include "clip.h"
 
+#include "scan.h"
+
 ViewInfo::ViewInfo(Scan *Sc, int qf, int zf){
   Qfac = qf; Zfac = zf;
   sc=Sc; 
@@ -165,6 +167,35 @@ gchar *ViewInfo::makeXYinfo(double x, double y){
 	return pxy;
 }
 
+
+gchar *ViewInfo::makeZinfo(double data_z, const gchar *new_prec, double sub){
+        UnitObj *u = Uz();
+        UnitObj tmp(*u);
+        if (new_prec)
+                tmp.ChangePrec (new_prec);
+        return tmp.UsrString (data_z*(pixelmode ? 1. : sc->data.s.dz) - sub); 
+}
+
+double ViewInfo::getZ(double x, double y){ 
+        double mx = x*Qfac, xx;
+        double my = y*Qfac, yy;
+        xx = R2INT(mx); xx=MIN(sc->mem2d->GetNx()-1, MAX(0,xx));
+        yy = R2INT(my); yy=MIN(sc->mem2d->GetNy()-1, MAX(0,yy));
+        int ix=(int)xx, iy=(int)yy;
+        return sc->mem2d->GetDataPkt(ix,iy)*sc->data.s.dz - sc->data.s.pllref;
+}
+      
+// convert X,Y (view, mouse) to image index
+void ViewInfo::XYview2pixel(double x, double y, Point2D *p){
+        double mx = x*Qfac, xx;
+        double my = y*Qfac, yy;
+        xx = R2INT(mx); xx=MIN(sc->mem2d->GetNx()-1, MAX(0,xx));
+        yy = R2INT(my); yy=MIN(sc->mem2d->GetNy()-1, MAX(0,yy));
+        p->x = R2INT(xx);
+        p->y = R2INT(yy);
+}
+
+
 gchar *ViewInfo::makedXdYinfo(double xy1a[2], double xy2a[2]){ 
 	double dmx, dmy;
 	if(pixelmode){
@@ -223,10 +254,10 @@ gchar *ViewInfo::makeXYZinfo(double x, double y){
 		if (sc_mode == SCAN_COORD_ABSOLUTE)
 			pt = g_strdup_printf ("; %.1f s)=", ptv);
 		else{
-			double pdt = ptv-gapp->glb_ref_point_xylt_world[3];
+			double pdt = ptv-main_get_gapp ()->glb_ref_point_xylt_world[3];
 			pt = g_strdup_printf ("; %.1f s (%g, %g)" UTF8_ANGSTROEM "/s)=", pdt,
-					      (mx-gapp->glb_ref_point_xylt_world[0])/pdt,
-					      (my-gapp->glb_ref_point_xylt_world[1])/pdt
+					      (mx-main_get_gapp ()->glb_ref_point_xylt_world[0])/pdt,
+					      (my-main_get_gapp ()->glb_ref_point_xylt_world[1])/pdt
 				);
 		}
 	}

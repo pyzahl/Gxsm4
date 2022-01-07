@@ -45,15 +45,15 @@ good starting point.
 #include <config.h>
 #include <glib.h>
 #include <glib/gi18n.h>
-
 #include <iostream>
+
+#include "xsmdebug.h"
+#include "glbvars.h"
 #include "pcs.h"
 #include "util.h"
-#include "xsmdebug.h"
 #include "plugin.h"
 #include "gapp_service.h"
 #include "gnome-res.h"
-#include "glbvars.h"
 
 #define EC_INF 1e133
 
@@ -74,6 +74,24 @@ gchar *generate_pcs_adjustment_gschema_path_add_prev = NULL; // prev. schema nam
 
 gboolean pcs_adj_write_missing_schema_entry = false;
 
+gchar *current_pcs_gschema_path_group = NULL;
+
+
+// global group control atg build time
+
+const gchar* pcs_get_current_gschema_group (){
+        return current_pcs_gschema_path_group ?
+                strlen (current_pcs_gschema_path_group) > 0 ?
+                current_pcs_gschema_path_group : "core-x" : "core-y";
+}
+
+void pcs_set_current_gschema_group (const gchar *group){
+        if (current_pcs_gschema_path_group)
+                g_free (current_pcs_gschema_path_group);
+        current_pcs_gschema_path_group=g_strdup (group);
+}
+
+        
 Param_Control::Param_Control(UnitObj *U, const char *W, double *V, double VMi, double VMa, const char *p){
 	XSM_DEBUG (DBG_L8, "PCS-double:: " << *V << ", " << VMi << ", " << VMa << ", " << p);
 	unit = U->Copy ();
@@ -299,7 +317,7 @@ void Param_Control::set_refname(const gchar *ref){
         refname = g_strdup(ref);
 
         if (pc_count == 0){
-                if (generate_pcs_gschema)
+                if (main_get_generate_pcs_gschema ())
                         write_pcs_gschema ();
                 else
                         get_init_value_from_settings ();
@@ -445,6 +463,40 @@ void Param_Control::Set_Parameter(double value, int flg, int usr2base){
 		(*ChangeNoticeFkt)(this, FktData);
 }
 
+// make valid gschema key
+gchar *key_assure (const gchar *key){
+        gchar *t;
+        gchar *p, *k;
+        int nup=0;
+        for (p=(gchar*)key; *p; ++p)
+                if (g_ascii_isupper(*p))
+                        ++nup;
+
+        if (g_ascii_isalpha (*key))
+                p = t = g_strndup (key, nup + strlen (key));
+        else {
+                p = t = g_strndup (key, 1 + nup + strlen (key));
+                *p = 'x'; ++p;
+        }
+        for (k=(gchar*)key; *k; ++p, ++k){
+                *p = *k; // copy
+                if (*p == '/') *p = '-';
+                if (*p == '.') *p = '-';
+                if (*p == ' ') *p = '-';
+                if (*p == '_') *p = '-';
+                if (g_ascii_isupper (*p)){
+                        if (k == key)
+                                *p = g_ascii_tolower (*p);
+                        else{
+                                if (*(p-1) != '-' && (g_ascii_islower(*(k-1)) || g_ascii_islower(*(k+1)))) { *p = '-'; ++p; }
+                                *p = g_ascii_tolower (*k);
+                        }
+                }
+        }
+        return t;
+}
+
+        
 void Gtk_EntryControl::init_pcs_gsettings_path_and_key (){
         if (refname && gsettings_path == NULL){
                 
@@ -458,7 +510,7 @@ void Gtk_EntryControl::init_pcs_gsettings_path_and_key (){
 
 void Gtk_EntryControl::write_pcs_gschema (int array_flag){
 
-        if (generate_pcs_gschema && refname) {
+        if (main_get_generate_pcs_gschema () && refname) {
                 std::ofstream logf; logf.open ("gxsm-pcs-writer.log",  std::ios::app);
                 std::ofstream f;
                 std::ifstream fi;
@@ -1194,7 +1246,7 @@ void Gtk_EntryControl::get_pcs_configuartion (){
 
 	XSM_DEBUG (DBG_L8, "GET-PCS-ADJ: " << dotpath << "." << name);
 
-        if (generate_pcs_adj_gschema || pcs_adj_write_missing_schema_entry){
+        if (main_get_generate_pcs_adj_gschema () || pcs_adj_write_missing_schema_entry){
 
                 std::ofstream logf; logf.open ("gxsm-pcs-writer.log",  std::ios::app);
                 std::ofstream f;
@@ -1359,7 +1411,7 @@ void Gtk_EntryControl::put_pcs_configuartion (){
         if (name == NULL)
 		return;
         
-        if (generate_pcs_adj_gschema)
+        if (main_get_generate_pcs_adj_gschema ())
                 return;
      
         name = g_ascii_strdown (name, -1);
@@ -1560,7 +1612,7 @@ GSList *Gtk_EntryControl::AddEntry2RemoteList(const gchar *RefName, GSList *remo
 	gtk_widget_set_tooltip_text (entry, RefName);
 
         if (pc_count == 0){
-                if (generate_pcs_gschema)
+                if (main_get_generate_pcs_gschema ())
                         write_pcs_gschema ();
                 else
                         get_init_value_from_settings ();
@@ -1568,3 +1620,4 @@ GSList *Gtk_EntryControl::AddEntry2RemoteList(const gchar *RefName, GSList *remo
 
 	return g_slist_prepend(remotelist, this);
 }
+

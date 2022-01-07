@@ -37,12 +37,12 @@
 #include "scan.h"
 #include "xsm.h"
 
+
 #ifndef __XSMHARD_H
 #include "xsmhard.h"
 #endif
 
-// moved to PI
-//#include "xsm_mkicons.h"
+#include "gxsm_app.h"
 
 /*
  * XSM Surface Scan Object Controller
@@ -54,10 +54,13 @@ typedef enum { MANUAL_SAVE_AS, AUTO_NAME_SAVE, AUTO_NAME_PARTIAL_SAVE, CHANGE_PA
 
 #define MAXSCANS (2*MAX_SRCS_CHANNELS)
 
+class App;
+
 class ProfileControl;
+
 class Surface : public Xsm{
 public:
-        Surface ();
+        Surface (App *gapp);
         virtual ~Surface();
 
         void hide();
@@ -90,6 +93,10 @@ public:
         static void remove_profile(ProfileControl *pc, gpointer data);
         int RemoveProfile(ProfileControl *pc);
         void RemoveAllProfiles();
+
+        App* get_g_app() { return g_app; }; // App::App gxsm core application class
+        Gxsm4app* get_app() { return gxsm4app; }; // g_applicatione reference (required for all base windows)
+        void set_app(Gxsm4app *app) { gxsm4app = app; g_message ("SURFACE: set_app");  };
 
         // moved to PI
         //  void MkIcons(MkIconsData *mid);
@@ -134,7 +141,9 @@ public:
         int  StopScanFlg;
 
         gchar *default_path;
-  
+
+        App* g_app;
+        Gxsm4app *gxsm4app;
 private:  
         int redrawflg;
 };

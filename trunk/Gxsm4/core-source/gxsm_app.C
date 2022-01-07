@@ -35,7 +35,6 @@
 #include "gxsm_app.h"
 #include "gxsm_window.h"
 
-#include "version.h"
 #include "glbvars.h"
 
 #include "unit.h"
@@ -44,6 +43,7 @@
 #include "xsmtypes.h"
 #include "surface.h"
 #include "plugin_ctrl.h"
+#include "gxsm_resoucetable.h"
 
 extern gboolean generate_preferences_gschema;
 extern gboolean generate_gl_preferences_gschema;
@@ -105,15 +105,358 @@ static GActionEntry app_gxsm_action_entries[] = {
         { "quit", App::file_quit_callback, NULL, NULL, NULL }
 };
 
+
+
+
+
+static void
+add_accelerator (GApplication    *app,
+                 const gchar *action_name_and_target,
+                 const gchar *accel)
+{
+	const gchar *vaccels[] = {
+		accel,
+		NULL
+	};
+        //        PI_DEBUG_GP (DBG_L1, "add_accel for %s = %s\n", action_name_and_target, accel );
+	gtk_application_set_accels_for_action (GTK_APPLICATION (app), action_name_and_target, vaccels);
+}
+
+
+// ========================================
+// gxsm4_app_class  G-OBJECT / GTK CORE
+// ========================================
+
+/*
+ * G_APPLICATION CODE FOR GXSM4 GOBJECT
+ */
+
+struct _Gxsm4app
+{
+  GtkApplication parent;
+};
+
+struct _Gxsm4appClass
+{
+  GtkApplicationClass parent_class;
+};
+
+G_DEFINE_TYPE(Gxsm4app, gxsm4_app, GTK_TYPE_APPLICATION);
+
+static void
+gxsm4_app_init (Gxsm4app *app)
+{
+        XSM_DEBUG(DBG_L2, "gxsm4_app_init =======================================================" );
+}
+
+
+
+static void
+gxsm4_app_startup (GApplication *app)
+{
+        GtkBuilder *builder;
+        XSM_DEBUG(DBG_L2, "gxsm4_app_startup ====================================================" );
+        
+
+        G_APPLICATION_CLASS (gxsm4_app_parent_class)->startup (app);
+
+        XSM_DEBUG(DBG_L2, "gxsm4_app ** adding css styles" );
+
+        /* add additional stylings */
+        GtkCssProvider* provider = gtk_css_provider_new();
+        gtk_css_provider_load_from_resource (GTK_CSS_PROVIDER(provider), "/" GXSM_RES_BASE_PATH "/gxsm4-styles.css");
+
+        // https://developer.gnome.org/gtk3/stable/chap-css-overview.html
+        /*
+        gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(provider),
+                                        "#view-headerbar-tip-follow:checked{\n"
+                                        "    color: #dd0000;\n"
+                                        "}\n"
+                                        "\n",
+                                        -1, NULL);
+        */
+        g_object_unref(provider);
+        // GXSM core application -- NOT the G APPLCIATION/WINDOW MANAGEMENT
+        XSM_DEBUG(DBG_L2, "gxsm4 core startup" );
+       
+        XSM_DEBUG(DBG_L1, "START ** Setup dynamic preferences");
+        gxsm_init_dynamic_res ();
+        XSM_DEBUG(DBG_L1, "DONE ** Setup dynamic preferences");
+
+        XSM_DEBUG(DBG_L1, "GXSM / PlugIn debug / logging level is: " << main_get_debug_level() << " / " << main_get_pi_debug_level() << " / " << logging_level);
+
+        XSM_DEBUG(DBG_L2, "gapplication startup -- app menu installations" );
+  
+        //#define USE_COMPILED_IN_RESOURCES
+#define USE_COMPILED_IN_RESOURCES
+#ifdef USE_COMPILED_IN_RESOURCES
+        PI_DEBUG_GP (DBG_L1, "USING COMPILED IN RESCOURCES -- gxsm4-menu.ui.\n");
+        builder = gtk_builder_new_from_resource ("/" GXSM_RES_BASE_PATH "/gxsm4-menu.ui");
+#else  // testing/development
+        GError *error=NULL;
+        PI_DEBUG_GP (DBG_L1, "USING BUILDER RESCOURCES from file -- gxsm4-menu.ui.\n");
+        builder = gtk_builder_new ();
+        gtk_builder_add_from_file (builder, "gxsm4-menu.ui", &error);
+        if (error != NULL){
+                // Report error to user, and free error
+                PI_DEBUG_GP (DBG_L1, "gxsm4-menu.ui file not found: (%s) fallback to build in resource.\n", error->message);
+                g_error_free (error);
+                g_object_unref (builder);
+                builder = gtk_builder_new_from_resource ("/" GXSM_RES_BASE_PATH "/gxsm4-menu.ui");
+        }
+#endif
+        GObject *app_menu = gtk_builder_get_object (builder, "appmenu");
+        if (!app_menu)
+                PI_DEBUG_GP_ERROR (DBG_L1, "id appmenu can not be found in resource.\n");
+        else
+                ;//gtk_application_set_app_menu (GTK_APPLICATION (app), G_MENU_MODEL (app_menu)); // FIX-ME-GTK4
+
+        GObject *gxsm_menubar = gtk_builder_get_object (builder, "gxsm-menubar");
+        if (!gxsm_menubar)
+                PI_DEBUG_GP_ERROR (DBG_L1, "id gxsm_menubar can not be found in resource.\n");
+
+#define ENABLE_GXSM_MENUBAR
+#ifdef ENABLE_GXSM_MENUBAR
+
+        else
+                gtk_application_set_menubar (GTK_APPLICATION (app), G_MENU_MODEL (gxsm_menubar));
+#endif
+        
+        // g_object_unref (builder); // tryed to add a  g_object_ref (...menu) -- dose not help, keep.
+
+
+        
+     	//      add_accelerator (app, "app.new-window", "<Primary>N");
+        //	add_accelerator (app, "app.quit", "<Primary>Q");
+	add_accelerator (app, "win.view-activate", "F1");
+	add_accelerator (app, "win.view-autodisp", "F2");
+	add_accelerator (app, "win.view-maptoworld", "F4");
+	add_accelerator (app, "win.view-clr-world", "<Ctrl>F4");
+	add_accelerator (app, "win.object-mode::rectangle", "F5");
+	add_accelerator (app, "win.object-mode::point", "F6");
+	add_accelerator (app, "win.object-mode::line-show", "F7");
+	add_accelerator (app, "win.remove-all-objects", "F12");
+	add_accelerator (app, "win.event-remove", "F11"); // delete key is a problem to use
+
+	add_accelerator (app, "win.side-pane", "F9");
+
+	add_accelerator (app, "win.view-mode::direct", "<Ctrl>D");
+	add_accelerator (app, "win.view-mode::quick", "<Ctrl>Q");
+	add_accelerator (app, "win.fix-zoom::zoomfactor-1x", "Q");
+	add_accelerator (app, "win.fix-zoom::zoomfactor-2x", "<Shift>W");
+	add_accelerator (app, "win.fix-zoom::zoomfactor-1by2", "W");
+	add_accelerator (app, "win.fix-zoom::zoomfactor-auto", "<Ctrl>A");
+
+	add_accelerator (app, "win.gear-menu", "F10");
+
+	add_accelerator (app, "win.action::sf1", "<Shift>F1");
+	add_accelerator (app, "win.action::sf2", "<Shift>F2");
+	add_accelerator (app, "win.action::sf3", "<Shift>F3");
+	add_accelerator (app, "win.action::sf4", "<Shift>F4");
+	add_accelerator (app, "win.action::sf5", "<Shift>F5");
+	add_accelerator (app, "win.action::sf6", "<Shift>F6");
+	add_accelerator (app, "win.action::sf7", "<Shift>F7");
+	add_accelerator (app, "win.action::sf8", "<Shift>F8");
+	add_accelerator (app, "win.action::sf9", "<Shift>F9");
+	add_accelerator (app, "win.action::sf10", "<Shift>F10");
+	add_accelerator (app, "win.action::sf11", "<Shift>F11");
+	add_accelerator (app, "win.action::sf12", "<Shift>F12");
+ 
+        XSM_DEBUG(DBG_L1, "GXSM: create core gxsm application ************************************ gapp = new App ()");
+
+  	// Now create GxsmApplication (gapp) class:
+	// this starts at App::App() and fires up the application's initialisiation
+
+        gapp = new App (app);
+        g_object_set_data (G_OBJECT (app), "APP-MAIN", gapp);
+        gapp -> set_gxsm_main_menu (gxsm_menubar);
+        gapp -> set_gxsm_app_menu (app_menu);
+        
+        // create all later used POPUP menus and keep GObjects for later activations
+
+        XSM_DEBUG(DBG_L1, "************ GXSM: loading menu rescourses ***************");
+        
+#define USE_COMPILED_IN_RESOURCES
+#ifdef USE_COMPILED_IN_RESOURCES
+        builder = gtk_builder_new_from_resource ("/" GXSM_RES_BASE_PATH "/gxsm4-popupmenus.ui");
+#else  // testing/development
+        error=NULL;
+        builder = gtk_builder_new ();
+        gtk_builder_add_from_file (builder, "gxsm4_popupmenus.ui", &error);
+        if (error != NULL){
+                // Report error to user, and free error
+                PI_DEBUG_GP (DBG_L1, "gxsm4_appmenu.ui file not found: (%s) fallback to build in resource.\n", error->message);
+                g_error_free (error);
+                g_object_unref (builder);
+                builder = gtk_builder_new_from_resource ("/" GXSM_RES_BASE_PATH "/gxsm4_popupmenus.ui");
+        }
+#endif
+
+        XSM_DEBUG(DBG_L1, "************ GXSM: loading popup menus from rescources ***************");
+   
+        GObject *monitor_menu = gtk_builder_get_object (builder, "monitor-menu");
+        if (!monitor_menu)
+                PI_DEBUG_GP_ERROR (DBG_L1, "id view2d-menu not found in resource.\n");
+        else
+                gapp -> set_monitor_menu (monitor_menu);
+
+        GObject *view2d_menu = gtk_builder_get_object (builder, "view2d-menu");
+        if (!view2d_menu)
+                PI_DEBUG_GP_ERROR (DBG_L1, "id view2d-menu not found in resource.\n");
+        else
+                gapp -> set_view2d_menu (view2d_menu);
+
+        GObject *vobj_ctx_menu_1p = gtk_builder_get_object (builder, "vobj-ctx-menu-1p");
+        if (!vobj_ctx_menu_1p)
+                PI_DEBUG_GP_ERROR (DBG_L1, "id vobj-ctx-menu-1p  not found in resource.\n");
+        else
+                gapp -> set_vobj_ctx_menu_1p (vobj_ctx_menu_1p);
+
+        GObject *vobj_ctx_menu_2p = gtk_builder_get_object (builder, "vobj-ctx-menu-2p");
+        if (!vobj_ctx_menu_2p)
+                PI_DEBUG_GP_ERROR (DBG_L1, "id vobj-ctx-menu-2p not found in resource.\n");
+        else 
+                gapp -> set_vobj_ctx_menu_2p (vobj_ctx_menu_2p);
+
+        GObject *vobj_ctx_menu_np = gtk_builder_get_object (builder, "vobj-ctx-menu-np");
+        if (!vobj_ctx_menu_np)
+                PI_DEBUG_GP_ERROR (DBG_L1, "id vobj-ctx-menu-np not found in resource.\n");
+        else 
+                gapp -> set_vobj_ctx_menu_np (vobj_ctx_menu_np);
+
+        GObject *vobj_ctx_menu_event = gtk_builder_get_object (builder, "vobj-ctx-menu-event");
+        if (!vobj_ctx_menu_event)
+                PI_DEBUG_GP_ERROR (DBG_L1, "id vobj-ctx-menu-event not found in resource.\n");
+        else
+                gapp -> set_vobj_ctx_menu_event (vobj_ctx_menu_event);
+
+        GObject *view3d_menu = gtk_builder_get_object (builder, "view3d-menu");
+        if (!view3d_menu)
+                PI_DEBUG_GP_ERROR (DBG_L1, "id view3d-menu not found in resource.\n");
+        else
+                gapp -> set_view3d_menu (view3d_menu);
+
+        GObject *profile_popup_menu = gtk_builder_get_object (builder, "profile-popup-menu");
+        if (!profile_popup_menu)
+                PI_DEBUG_GP_ERROR (DBG_L1, "id profile-popup-menu not found in resource.\n");
+        else
+                gapp -> set_profile_popup_menu (profile_popup_menu);
+
+        XSM_DEBUG(DBG_L1, "************ GXSM: loading popup menus for hwi from rescources ***************");
+
+        builder = gtk_builder_new_from_resource ("/" GXSM_RES_BASE_PATH "/gxsm4-hwi-menus.ui");
+
+        GObject *hwi_mover_popup_menu = gtk_builder_get_object (builder, "hwi-mover-popup-menu");
+        if (!hwi_mover_popup_menu)
+                PI_DEBUG_GP_ERROR (DBG_L1, "id hwi-mover-popup-menu not found in resource.\n");
+        else
+                gapp -> set_hwi_mover_popup_menu (hwi_mover_popup_menu);
+
+        GObject *hwi_control_popup_menu = gtk_builder_get_object (builder, "hwi-control-popup-menu");
+        if (!hwi_control_popup_menu)
+                PI_DEBUG_GP_ERROR (DBG_L1, "id hwi-control-popup_menu not found in resource.\n");
+        else
+                gapp -> set_hwi_control_popup_menu (hwi_control_popup_menu);
+
+        XSM_DEBUG(DBG_L1, "************ GXSM: loading popup menus for plugins from rescources ***************");
+
+        builder = gtk_builder_new_from_resource ("/" GXSM_RES_BASE_PATH "/gxsm4-plugin-pyremote-menu.ui");
+
+        GObject *plugin_pyremote_file_menu = gtk_builder_get_object (builder, "plugin-pyremote-file-menu");
+        if (!plugin_pyremote_file_menu)
+                PI_DEBUG_GP_ERROR (DBG_L1, "id plugin-pyremote-file-menu not found in resource.\n");
+        else
+                main_get_gapp ()->set_plugin_pyremote_file_menu (plugin_pyremote_file_menu);
+
+        XSM_DEBUG(DBG_L1, "************ GXSM: startup core completed ***************");
+}
+
+static void
+gxsm4_app_activate (GApplication *app)
+{
+        Gxsm4appWindow *win;
+        XSM_DEBUG(DBG_L2, "gxsm4_app_activate ==================================================" );
+
+        if (gapp->gxsm_app_window_present ()){
+                XSM_DEBUG(DBG_L2, "gxsm4_app_activate -- presenting existing Gxsm Main Window ===================" );
+                win = gapp->get_app_window ();
+        } else {
+                win = gxsm4_app_window_new (GXSM4_APP (app));
+        } 
+        gtk_window_present (GTK_WINDOW (win));
+}
+
+static void
+gxsm4_app_open (GApplication  *app,
+                  GFile        **files,
+                  gint           n_files,
+                  const gchar   *hint)
+{
+  GList *windows;
+  Gxsm4appWindow *win;
+
+        XSM_DEBUG(DBG_L2, "gxsm4_app_open =======================================================" );
+
+        windows = gtk_application_get_windows (GTK_APPLICATION (app));
+        if (windows)
+                win = GXSM4_APP_WINDOW (windows->data);
+        else
+                win = gxsm4_app_window_new (GXSM4_APP (app));
+
+        if (load_files_as_movie)
+                main_get_gapp ()->xsm->ActivateFreeChannel();
+
+        for (gint i=0; i < n_files; ++i)
+                if (gxsm4_app_window_open (win, files[i], load_files_as_movie) == false)
+                        break;
+
+        gtk_window_present (GTK_WINDOW (win));
+}
+
+static void
+gxsm4_app_class_init (Gxsm4appClass *klass)
+{
+        XSM_DEBUG(DBG_L2, "gxsm4_app_class_init =================================================" );
+
+        G_APPLICATION_CLASS (klass)->startup = gxsm4_app_startup;
+        G_APPLICATION_CLASS (klass)->activate = gxsm4_app_activate;
+        G_APPLICATION_CLASS (klass)->open = gxsm4_app_open;
+}
+
+Gxsm4app *
+gxsm4_app_new (void)
+{
+        XSM_DEBUG(DBG_L2, "gxsm4_app_new ========================================================" );
+
+        if (gxsm_new_instance) // allow new instance, disable checks
+                return (Gxsm4app*) g_object_new (GXSM4_APP_TYPE,
+                                                 "flags", G_APPLICATION_HANDLES_OPEN,
+                                                 NULL);
+        else
+                return (Gxsm4app*) g_object_new (GXSM4_APP_TYPE,
+                                                 "application-id", GXSM_RES_BASE_PATH_DOT,
+                                                 "flags", G_APPLICATION_HANDLES_OPEN,
+                                                 NULL);
+}
+
+
+// ========================================
+// gxsm4_app_class  G-OBJECT / GTK CORE END
+// ========================================
+
+
+
+
+
         
 // ========================================
-// Application Startup Point
+// Gxsm MAIN Application Class Startup Point
 // ========================================
 
-App::App(GApplication *g_app)
+App::App(GApplication *g_app):AppBase(GXSM4_APP (g_app))
 {
         XSM_DEBUG(DBG_L2, "App::App" );
-
+        gxsm4app = GXSM4_APP (g_app);
 	g_application = g_app; // GApplication reference
 
         // gxsm base settings object
@@ -200,20 +543,24 @@ App::~App(){
 }
 
 
-void App::AppWindowInit(const gchar *title, const gchar *sub_title){
-	XSM_DEBUG (DBG_L2,  "App::WindowInit" );
+void App::MAINAppWindowInit(const gchar *title, const gchar *sub_title){
+	XSM_DEBUG (DBG_L2,  "App::MAINWindowInit" );
 
-        //        app_window = gxsm4_app_window_new (GXSM4_APP (gapp->get_application ()));
-        window = GTK_WINDOW (app_window);
-        //gtk_window_set_display (GTK_WINDOW (window),
-        //                        gtk_widget_get_display (do_widget));
-        //gtk_window_set_title (GTK_WINDOW (window), "Drag-and-Drop");
-        //gtk_window_set_default_size (GTK_WINDOW (window), 640, 480);
-        //g_object_add_weak_pointer (G_OBJECT (window), (gpointer *)&window);
+        g_message ("App::MAINAppWindowInit** <%s : %s> **", title, sub_title);
         
-        //box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
-        //gtk_window_set_child (GTK_WINDOW (window), box);
+        GList *windows = gtk_application_get_windows (GTK_APPLICATION (get_app ()));
+        g_message ("App::MAINAppWindowInit.. *** Window List: #%d", g_list_length (windows));
+        if (windows){
+                g_message ("App::MAINAppWindowInit... FOUND WINDOW");
+                app_window = GXSM4_APP_WINDOW (windows->data);
+        } else {
+                g_message ("App::MAINAppWindowInit... NEW WINDOW");
+                app_window = gxsm4_app_window_new (GXSM4_APP (get_app ()));
+        }
 
+        
+        //app_window = gxsm4_app_window_new ( get_app ());
+        window = GTK_WINDOW (app_window);
 
         GtkIconTheme *icon_theme;
         icon_theme = gtk_icon_theme_get_for_display (gtk_widget_get_display (GTK_WIDGET (window)));
@@ -221,10 +568,7 @@ void App::AppWindowInit(const gchar *title, const gchar *sub_title){
         
         header_bar = gtk_header_bar_new ();
         gtk_widget_show (header_bar);
-        //gtk_header_bar_set_show_close_button (GTK_HEADER_BAR (header_bar), true);
         gtk_header_bar_set_decoration_layout (GTK_HEADER_BAR (header_bar), "icon"); //  "icon,menu:close");
-        // "minimize, maximize, close, icon (the window icon), and menu (a menu button for the fallback app menu).
-        // "menu:minimize,maximize,close” "
                                               
         g_action_map_add_action_entries (G_ACTION_MAP (g_application),
                                          app_gxsm_action_entries, G_N_ELEMENTS (app_gxsm_action_entries),
@@ -234,8 +578,6 @@ void App::AppWindowInit(const gchar *title, const gchar *sub_title){
         XSM_DEBUG (DBG_L2,  "App::AppWindowInit main menu" );
 
         gxsm_menu = gtk_popover_menu_new_from_model (G_MENU_MODEL (get_gxsm_main_menu ()));
-        //g_assert (GTK_IS_MENU (gxsm_menu));
-
 
         XSM_DEBUG (DBG_L2,  "App GXSM main popup Header Buttons setup. " );
 
@@ -315,9 +657,6 @@ void App::AppWindowInit(const gchar *title, const gchar *sub_title){
         gtk_grid_attach (GTK_GRID (grid), appbar, 0, 10, 1, 1);
         gtk_widget_show (appbar); // FIX-ME GTK4 SHOWALL
 
-        // g_signal_connect (G_OBJECT (window), "delete-event", G_CALLBACK (gtk_widget_hide_on_delete), NULL);
-        // g_signal_connect (G_OBJECT (window), "delete-event", G_CALLBACK (AppBase::window_close_callback), this);
-
        	gtk_widget_show (GTK_WIDGET (window)); // FIX-ME GTK4 SHOWALL
 }
 
@@ -333,13 +672,10 @@ void App::build_gxsm (Gxsm4appWindow *win){
 	// manage main window geometry
         app_window = win;
         // setup core functionality header bar, grid with status bar
-        AppWindowInit ("Gxsm4", GXSM_VERSION_NAME);
-        
-        // gtk_application_window_set_show_menubar (GTK_APPLICATION_WINDOW (win), TRUE);
 
-        //        gtk_grid_attach (GTK_GRID (grid), toolbar, 0, 0, 1, 1);
-
-
+        g_message ("App::build_gxsm calling MAINAppWindowInit(%s, %s)", "*Gxsm4*", "*" GXSM_VERSION_NAME "*");
+        MAINAppWindowInit ("Gxsm4", GXSM_VERSION_NAME);
+        g_message ("App::build_gxsm BUILDING GXSM....");
         
         XSM_DEBUG(DBG_L2, "App::build_gxsm - starting up" );
         SetStatus(N_("Starting GXSM..."));
@@ -392,7 +728,7 @@ void App::build_gxsm (Gxsm4appWindow *win){
         XSM_DEBUG(DBG_L2, "App::build_gxsm - Monitor");
         pcs_set_current_gschema_group ("monitorwindow");
 
-        monitorcontrol  = new MonitorControl (logging_level);
+        monitorcontrol  = new MonitorControl ( get_app (), logging_level);
         
         /* Erzeuge und Initialise Xsm system */
 
@@ -400,8 +736,10 @@ void App::build_gxsm (Gxsm4appWindow *win){
 
         XSM_DEBUG(DBG_L2, "App::build_gxsm - xsm = new Surface" );
         SetStatus(N_("Generating Surface Object..."));
-        xsm = new Surface (); // This is the master backend (app is only passed to HwI's)
-
+        xsm = new Surface (this); // This is the master backend, channel control
+        g_object_set_data (G_OBJECT (gxsm4app), "Surface", xsm);
+        xsm -> set_app (gxsm4app);
+        
         XSM_DEBUG(DBG_L2, "App::build_gxsm_12" );
 
 
@@ -456,7 +794,7 @@ void App::build_gxsm (Gxsm4appWindow *win){
         XSM_DEBUG(DBG_L2, "App::build_gxsm - Channelselector");
         pcs_set_current_gschema_group ("channelselectorwindow");
 
-        channelselector = new ChannelSelector();
+        channelselector = new ChannelSelector (get_app ());
 
         g_idle_add (App::finish_system_startup_idle_callback, this);
 }
@@ -494,7 +832,7 @@ void App::finish_system_startup (){
         monitorcontrol->LogEvent ("GXSM", "startup");
 
         // update all window geometry again
-        gapp->load_app_geometry ();
+        load_app_geometry ();
         
         XSM_DEBUG(DBG_L2, "App::build_gxsm - done.");
 }
@@ -689,6 +1027,23 @@ void App::ConnectPluginToRemoteAction( void (*cbfkt)(gpointer) ){
 }
 
 
+gboolean App::on_drop (GtkDropTarget *target, const GValue  *value, double x, double y, gpointer data){
+        Surface *xsm = data;
+        g_message ("CH::on_drop %g %g ", x,y);
+        // Call the appropriate setter depending on the type of data
+        // that we received
+        if (G_VALUE_HOLDS (value, G_TYPE_FILE)){
+                g_message ("FILE DROPPED %s", g_file_get_parse_name (g_value_get_object (value)));
+                xsm->ActivateFreeChannel ();
+                xsm->load (g_file_get_parse_name (g_value_get_object (value)));
+        }
+        else
+                return FALSE;
+                
+        return TRUE;
+};
+
+
 void App::reload_gxsm_plugins( gint killflag ){
 	gint (*gxsm_plugin_check)(const gchar *) = Gxsm_Plugin_Check;
 	GList *PluginDirs = NULL;
@@ -728,7 +1083,7 @@ void App::reload_gxsm_plugins( gint killflag ){
         
 	if( !GxsmPlugins && killflag ){
 		XSM_DEBUG(DBG_L2, "no GXSM plugins found, done." );
-                gapp->GxsmSplash (2.0, "no GXSM PlugIns found.", "Finishing."); // this will auto remove splash after timout!
+                main_get_gapp ()->GxsmSplash (2.0, "no GXSM PlugIns found.", "Finishing."); // this will auto remove splash after timout!
 		return;
 	}
 	
@@ -785,7 +1140,7 @@ void App::reload_gxsm_plugins( gint killflag ){
 	gchar *txt = g_strdup_printf
 		(N_("%d Plugins loaded!"), GxsmPlugins->how_many());
 
-        gapp->GxsmSplash (2.0, txt, "Init and hookup completed."); // this will auto remove splash after timout!
+        main_get_gapp ()->GxsmSplash (2.0, txt, "Init and hookup completed."); // this will auto remove splash after timout!
         
         SetStatus(txt);
 	//  message((const char*)txt);

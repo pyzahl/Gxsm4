@@ -63,7 +63,7 @@ int Profiles::update(int y1, int y2){
                 return 0;
 
         if(y2 < y1){
-                if(ChanNo == gapp->xsm->ActiveChannel)
+                if(ChanNo == main_get_gapp ()->xsm->ActiveChannel)
                         profile->SetActive(TRUE);
                 else
                         profile->SetActive(FALSE);

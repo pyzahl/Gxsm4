@@ -37,6 +37,7 @@
 #include "xsmmasks.h"
 #include "glbvars.h"
 #include "scan_event.h"
+#include "surface.h"
 
 #include "bench.h"
 #include "util.h"
@@ -69,7 +70,7 @@ View::View(){
 	reset_trace();
 	abs_move_tip(0.,0.);
 
-	cmode = gapp->xsm->ZoomFlg & VIEW_PALETTE ? USER_FALSE_COLOR : DEFAULT_GREY;
+	cmode = main_get_gapp ()->xsm->ZoomFlg & VIEW_PALETTE ? USER_FALSE_COLOR : DEFAULT_GREY;
 }
 
 View::View(Scan *sc, int ChNo){
@@ -83,7 +84,7 @@ View::View(Scan *sc, int ChNo){
 	reset_trace();
 	abs_move_tip(scan->data.s.x0, scan->data.s.y0);
 
-	cmode = gapp->xsm->ZoomFlg & VIEW_PALETTE ? USER_FALSE_COLOR : DEFAULT_GREY;
+	cmode = main_get_gapp ()->xsm->ZoomFlg & VIEW_PALETTE ? USER_FALSE_COLOR : DEFAULT_GREY;
 }
 
 View::~View(){
@@ -267,7 +268,7 @@ int Grey2D::update(int y1, int y2){
 		return 0;
 
 	if (y2 < y1 && viewcontrol){
-		if (ChanNo == gapp->xsm->ActiveChannel)
+		if (ChanNo == main_get_gapp ()->xsm->ActiveChannel)
 			viewcontrol->SetActive (TRUE);
 		else
 			viewcontrol->SetActive (FALSE);
@@ -429,10 +430,10 @@ int Grey2D::draw(int zoomoverride){
 	if(!zoomoverride && !userzoom){
 		ZoomFac = 1;
 		QuenchFac = 1;
-		if(gapp->xsm->ZoomFlg & VIEW_ZOOM){
-			if(gapp->xsm->ZoomFlg & VIEW_Z400)
+		if(main_get_gapp ()->xsm->ZoomFlg & VIEW_ZOOM){
+			if(main_get_gapp ()->xsm->ZoomFlg & VIEW_Z400)
 				ZoomFac   = 400/nx;
-			if(gapp->xsm->ZoomFlg & VIEW_Z600)
+			if(main_get_gapp ()->xsm->ZoomFlg & VIEW_Z600)
 				ZoomFac   = 600/nx;
 			QuenchFac = nx/400;
       
@@ -449,7 +450,7 @@ int Grey2D::draw(int zoomoverride){
 	XPM_y = ny*ZoomFac/QuenchFac + (QuenchFac > 1 ? 1:0);
 
 	if(oXPMx != XPM_x || oXPMy != XPM_y || oQ != QuenchFac || oZ != ZoomFac 
-	   || oMC != MaxColor || (oVm & VIEW_INFO) != (gapp->xsm->ZoomFlg & VIEW_INFO) ){
+	   || oMC != MaxColor || (oVm & VIEW_INFO) != (main_get_gapp ()->xsm->ZoomFlg & VIEW_INFO) ){
 		if(!zoomoverride){
 			oXPMx=XPM_x;
 			oXPMy=XPM_y;
@@ -457,7 +458,7 @@ int Grey2D::draw(int zoomoverride){
 		oZ=ZoomFac;
 		oQ=QuenchFac;
 		oMC=MaxColor;
-		oVm=gapp->xsm->ZoomFlg;
+		oVm=main_get_gapp ()->xsm->ZoomFlg;
 		NewFlg  = 1;
 	}
 
@@ -490,14 +491,18 @@ int Grey2D::draw(int zoomoverride){
 	}
 
 	if(!viewcontrol){
+                if (!scan->get_app ()){
+                        g_warning ("ERROR Grey2D::DRAW -- invalid request: no app reference provided.");
+                        return -1;
+                }
 		XSM_DEBUG (DBG_L2, "Grey2D::draw NewVC");
-		viewcontrol =  new ViewControl(title, XPM_x , XPM_y, ChanNo, scan, ZoomFac, QuenchFac);
+		viewcontrol =  new ViewControl(scan->get_app (), title, XPM_x , XPM_y, ChanNo, scan, ZoomFac, QuenchFac);
 		viewcontrol->SetZoomQFkt(SetZF, this);
 		viewcontrol->show();
 		XImg = viewcontrol->GetXImg();
 	}
 
-	if(ChanNo == gapp->xsm->ActiveChannel)
+	if(ChanNo == main_get_gapp ()->xsm->ActiveChannel)
 		viewcontrol->SetActive(TRUE);
 	else
 		viewcontrol->SetActive(FALSE);

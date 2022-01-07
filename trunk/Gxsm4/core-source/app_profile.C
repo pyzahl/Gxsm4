@@ -36,6 +36,7 @@
 // Gxsm headers 
 #include "gxsm_app.h"
 #include "gxsm_window.h"
+#include "surface.h"
 
 #include "unit.h"
 #include "util.h"
@@ -428,6 +429,108 @@ void ProfileElement::update(GtkWidget *canvas, int id, int style){
 
 }
 
+void  ProfileElement::GetCurXYc(double *x, double *y, int i, int id){
+        if(pathitem[id])
+                pathitem[id]->get_xy (i/dec_len, *x, *y);
+}
+
+int  ProfileElement::GetCurX(double *x, double *y, int id){
+        if(pathitem[id]){
+                double xl, xr, ytmp;
+                pathitem[id]->get_xy (  0, xl, ytmp);
+                pathitem[id]->get_xy (n/dec_len-1, xr, ytmp);
+                int i = (int)(n*(*x-xl)/(xr-xl));
+                pathitem[id]->get_xy (i/dec_len, *x, *y);
+                // search:
+                //      while(*x > pn->coords[2*i] && i > 1) --i;
+                //      while(*x < pn->coords[2*i] && i < n-2) ++i;
+                return i;
+        }
+        return 0;
+}
+
+gchar * ProfileElement::GetInfo(int i, gint64 ymode){
+        double x,y;
+        x=y=0.;
+        GetCurXYc (&x, &y, i);
+        if(i<n && i>=0){
+                Scan *sc = psd_scan ? psd_scan : scan;
+                x = sc->mem2d->data->GetXLookup(i);
+                return g_strconcat("Cursor (",
+                                   scan->data.Xunit->UsrString (x),
+                                   psd_scan? "^-1, " : ", ",
+                                   psd_scan ? scan->data.Zunit->UsrString (y) :
+                                   ymode & PROFILE_MODE_YLINREG ?
+                                   scan->data.Zunit->UsrString (scan->mem2d->GetDataPktLineReg(i,yy)*scan->data.s.dz) :
+                                   scan->data.Zunit->UsrString (sc->mem2d->GetDataPkt(i,yy)*scan->data.s.dz),
+                                   ")",
+                                   NULL);
+        }
+        else
+                return g_strdup("out of scan !");
+}
+
+int ProfileElement::GetNy(){ return scan->mem2d->GetNy(); }
+void  ProfileElement::SetY(int Yy){ yy=Yy; }
+void ProfileElement::SetLastY(){ yy=scan->mem2d->GetNy()-1; }
+
+
+double  ProfileElement::GetData_dz () { return scan->data.s.dz; }
+double  ProfileElement::SetData_dz (double dz) { return scan->data.s.dz = dz; }
+
+double  ProfileElement::GetValue(int i){
+        if(i<n && i>=0){
+                if(psd_scan)
+                        return psd_scan->mem2d->GetDataPkt(i,yy)*scan->data.s.dz;
+                else
+                        return scan->mem2d->GetDataPktLineReg(i,yy)*scan->data.s.dz;
+        }
+        return 0.;
+}
+
+double  ProfileElement::GetXPos(int i){
+        if(i<n && i>=0){
+                if(psd_scan)
+                        return psd_scan->mem2d->data->GetXLookup(i);
+                else
+                        return scan->mem2d->data->GetXLookup(i);
+        }
+        return 0.;
+}
+
+int  ProfileElement::nextMax(int i, int dir, double eps){
+        if(i<n && i>=0){
+                int k;
+                double v=scan->mem2d->GetDataPktLineReg(i,yy);
+                if(v > scan->mem2d->GetDataPktLineReg(i+dir,yy)+eps){
+                        i=nextMin(i+dir,dir,eps);
+                        v=scan->mem2d->GetDataPktLineReg(i,yy);
+                }
+                for(k=i+dir; k>=0 && k<n && v < scan->mem2d->GetDataPktLineReg(k,yy)+eps; k+=dir){
+                        v=scan->mem2d->GetDataPktLineReg(k,yy);
+                }
+                k-=dir;
+                return k;
+        }
+        else return 0;
+}
+
+int  ProfileElement::nextMin(int i, int dir, double eps){
+        if(i<n && i>=0){
+                int k;
+                double v=scan->mem2d->GetDataPktLineReg(i,yy);
+                if(v < scan->mem2d->GetDataPktLineReg(i+dir,yy)-eps){
+                        i=nextMax(i+dir,dir,eps);
+                        v=scan->mem2d->GetDataPktLineReg(i,yy);
+                }
+                for(k=i+dir; k>=0 && k<n && v > scan->mem2d->GetDataPktLineReg(k,yy)-eps; k+=dir)
+                        v=scan->mem2d->GetDataPktLineReg(k,yy);
+                k-=dir;
+                return k;
+        }
+        else return 0;
+}
+
 gchar *ProfileElement::GetDeltaInfo(int i, int j, gint64 ymode){
 	double x1,y1, x2,y2, dx,dz, z1, z2, zint12, dxint12, rms12;
 	GetCurXYc (&x1, &y1, i);
@@ -502,13 +605,18 @@ gint ProfileControl_auto_update_callback (ProfileControl *pc){
 	return TRUE;
 }
 
-ProfileControl::ProfileControl (const gchar *titlestring, int ChNo){
+ProfileControl::ProfileControl (Gxsm4app *app, const gchar *titlestring, int ChNo)
+        : AppBase(app){
+        
         pc_in_window = NULL;
 	Init(titlestring, ChNo);
 	ref ();
 }
 
-ProfileControl::ProfileControl (const gchar *titlestring, int n, UnitObj *ux, UnitObj *uy, double xmin, double xmax, const gchar *resid,  Gxsm4appWindow *in_external_window) : LineProfile1D(n, ux, uy, xmin, xmax){
+ProfileControl::ProfileControl (Gxsm4app *app, const gchar *titlestring, int n, UnitObj *ux, UnitObj *uy, double xmin, double xmax, const gchar *resid,  Gxsm4appWindow *in_external_window)
+        : LineProfile1D(n, ux, uy, xmin, xmax),
+          AppBase(app){
+        
         pc_in_window = in_external_window;
 	Init(titlestring, -1, resid);
 	ref ();
@@ -529,8 +637,10 @@ ProfileControl::ProfileControl (const gchar *titlestring, int n, UnitObj *ux, Un
 	show();
 }
 
-ProfileControl::ProfileControl (const gchar *filename, const gchar *resource_id_string){
-	XSM_DEBUG (DBG_L3, "ProfileControl::ProfileControl from file" << filename );
+ProfileControl::ProfileControl (Gxsm4app *app, const gchar *filename, const gchar *resource_id_string)
+                                : AppBase(app){
+
+                                        XSM_DEBUG (DBG_L3, "ProfileControl::ProfileControl from file" << filename );
         pc_in_window = NULL;
 
 	gchar *t = g_strconcat (filename, " - Profile from File", NULL);
@@ -756,7 +866,7 @@ void ProfileControl::Init(const gchar *titlestring, int ChNo, const gchar *resid
 	g_object_set_data  (G_OBJECT (window), "Ch", GINT_TO_POINTER (chno));
 	g_object_set_data  (G_OBJECT (window), "ChNo", GINT_TO_POINTER (chno+1));
 
-        //	gapp->configure_drop_on_widget (window);
+        //	main_get_gapp ()->configure_drop_on_widget (window);
 
 	if(chno>=0)
 		g_signal_connect(G_OBJECT(window),
@@ -769,6 +879,7 @@ void ProfileControl::Init(const gchar *titlestring, int ChNo, const gchar *resid
 	XSM_DEBUG (DBG_L2, "ProfileControl::ProfileControl canvas");
 
         canvas = gtk_drawing_area_new(); // gtk3 cairo drawing-area -> "canvas"
+        g_object_set_data (G_OBJECT (canvas), "MAIN_APP", main_app);
 
 	scrollarea = gtk_scrolled_window_new ();
 
@@ -999,7 +1110,7 @@ void ProfileControl::AppWindowInit(const gchar *title, const gchar *sub_title){
         // new action group
         pc_action_group = g_simple_action_group_new ();
 
-        GObject *profile_popup_menu = gapp->get_profile_popup_menu ();
+        GObject *profile_popup_menu = main_get_gapp ()->get_profile_popup_menu ();
         p_popup_menu = gtk_popover_menu_new_from_model (G_MENU_MODEL (profile_popup_menu));
         p_popup_menu_cv = gtk_popover_menu_new_from_model (G_MENU_MODEL (profile_popup_menu));
         gtk_popover_set_has_arrow (GTK_POPOVER (p_popup_menu_cv), FALSE);
@@ -1012,13 +1123,11 @@ void ProfileControl::AppWindowInit(const gchar *title, const gchar *sub_title){
                 window = GTK_WINDOW (app_window);
                 header_bar = gtk_window_get_titlebar (GTK_WINDOW (window));
                 gtk_window_present (GTK_WINDOW (window));
-                // FIX-ME-GTK4
-                //g_signal_connect (G_OBJECT (window), "delete-event", G_CALLBACK (gtk_widget_hide_on_delete), NULL);
-
         } else {
                 // g_message ("ProfileControl::AppWindowInit create own app_window >%s<", title);
                 // create our own app_window
-                app_window = gxsm4_app_window_new (GXSM4_APP (gapp->get_application ()));
+                g_message ("ProfileControll::AppWindowInit** <%s : %s> **", title, sub_title);
+                app_window = gxsm4_app_window_new (GXSM4_APP (main_get_gapp ()->get_application ()));
                 window = GTK_WINDOW (app_window);
 
                 header_bar = gtk_header_bar_new ();
@@ -1036,18 +1145,14 @@ void ProfileControl::AppWindowInit(const gchar *title, const gchar *sub_title){
                 gtk_widget_show (header_menu_button);
 #endif
 
-                SetTitle (title, sub_title);
-                //gtk_header_bar_set_title ( GTK_HEADER_BAR (header_bar), title);
-                //gtk_header_bar_set_subtitle (GTK_HEADER_BAR  (header_bar), title);
                 gtk_window_set_titlebar (GTK_WINDOW (window), header_bar);
+                SetTitle (title, sub_title);
 
                 v_grid = gtk_grid_new ();
                 gtk_window_set_child (GTK_WINDOW (window), v_grid);
                 g_object_set_data (G_OBJECT (window), "v_grid", v_grid);
                 pc_grid = v_grid;
 
-                // g_signal_connect (G_OBJECT (window), "delete-event", G_CALLBACK (gtk_widget_hide_on_delete), NULL);
-                // g_signal_connect (G_OBJECT (window), "delete-event", G_CALLBACK (AppBase::window_close_callback), this);
                 gtk_widget_show (GTK_WIDGET (window)); // FIX-ME GTK4 SHOWALL
         }
         gtk_widget_show (pc_grid);
@@ -2294,7 +2399,7 @@ void ProfileControl::file_open_callback_exec (GtkDialog *dialog,  int response){
                 GtkFileChooser *chooser = GTK_FILE_CHOOSER (dialog);
                 g_autoptr(GFile) file = gtk_file_chooser_get_file (chooser);
                 gchar *tmp=g_file_get_parse_name (file);
-		gapp->xsm->load (tmp);
+		main_get_gapp ()->xsm->load (tmp);
                 g_free (tmp);
         }
         gtk_window_destroy (GTK_WINDOW (dialog));
@@ -2317,9 +2422,9 @@ void ProfileControl::file_open_callback (GSimpleAction *simple, GVariant *parame
                           G_CALLBACK (ProfileControl::file_open_callback_exec),
                           NULL);
 	//gchar *ffname;
-	//ffname = gapp->file_dialog_load ("Profile to load", NULL, NULL);
+	//ffname = main_get_gapp ()->file_dialog_load ("Profile to load", NULL, NULL);
 	//if (ffname)
-	//	gapp->xsm->load (ffname);
+	//	main_get_gapp ()->xsm->load (ffname);
 }
 
 void ProfileControl::file_save_callback_exec (GtkDialog *dialog,  int response, gpointer user_data){
@@ -2364,8 +2469,8 @@ void ProfileControl::file_save_callback (GSimpleAction *simple, GVariant *parame
 
         /*
 	oname = g_strconcat (pc->scan1d->data.ui.originalname, ".asc", NULL);
-	ffname = gapp->file_dialog_save (N_("Profile to save"), NULL, oname);
-	if (gapp->check_file (ffname)){
+	ffname = main_get_gapp ()->file_dialog_save (N_("Profile to save"), NULL, oname);
+	if (main_get_gapp ()->check_file (ffname)){
 		pc->save (ffname);
 		mld = g_strconcat (N_("profile saved as "), ffname, NULL);
 	}else
@@ -2420,8 +2525,8 @@ void ProfileControl::file_save_data_callback (GSimpleAction *simple, GVariant *p
 
         /*		
 	oname = g_strconcat (pc->scan1d->data.ui.originalname, ".asc", NULL);
-	ffname = gapp->file_dialog_save (N_("Profile data save as viewed"), NULL, oname);
-	if (gapp->check_file (ffname)){
+	ffname = main_get_gapp ()->file_dialog_save (N_("Profile data save as viewed"), NULL, oname);
+	if (main_get_gapp ()->check_file (ffname)){
 		pc->save_data (ffname);
 		mld = g_strconcat (N_("profile data saved as "), ffname, NULL);
 	}else
@@ -2475,8 +2580,8 @@ void ProfileControl::file_save_as_callback (GSimpleAction *simple, GVariant *par
 
         /*		
 	oname = g_strconcat (pc->scan1d->data.ui.originalname, ".asc", NULL);
-	ffname = gapp->file_dialog_save (N_("Profile to save"), NULL, oname);
-	if (gapp->check_file (ffname)){
+	ffname = main_get_gapp ()->file_dialog_save (N_("Profile to save"), NULL, oname);
+	if (main_get_gapp ()->check_file (ffname)){
 		pc->save (ffname);
 		mld = g_strconcat (N_("profile saved as "),ffname,NULL);
 	}else
@@ -2594,7 +2699,7 @@ void ProfileControl::file_save_image_callback (GSimpleAction *simple, GVariant *
         gtk_file_filter_add_pattern (fpdf, "*.pdf");
         gtk_file_chooser_add_filter (GTK_FILE_CHOOSER (chooser), fpdf);
 
-        GFile *default_file_for_saving = g_file_new_for_path (g_settings_get_string (gapp->get_as_settings (), "auto-save-folder"));
+        GFile *default_file_for_saving = g_file_new_for_path (g_settings_get_string (main_get_gapp ()->get_as_settings (), "auto-save-folder"));
         gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (chooser), default_file_for_saving, NULL);
         g_object_unref (default_file_for_saving);
         
@@ -2614,7 +2719,7 @@ void ProfileControl::file_close_callback (GSimpleAction *simple, GVariant *param
         ProfileControl *pc = (ProfileControl *) user_data;
 		
 	if (pc->ref_count == 0)
-		gapp->xsm->RemoveProfile (pc);
+		main_get_gapp ()->xsm->RemoveProfile (pc);
 	else
 		XSM_DEBUG_GP_WARNING (DBG_L1, "Sorry, cant't do this, other object depends on me!" );
 }
@@ -2718,7 +2823,7 @@ void ProfileControl::file_activate_callback (GSimpleAction *simple, GVariant *pa
                                  gpointer user_data){
         ProfileControl *pc = (ProfileControl *) user_data;
 	if (pc->chno >= 0)
-		gapp->xsm->ActivateChannel (pc->chno);
+		main_get_gapp ()->xsm->ActivateChannel (pc->chno);
 }
 
 void ProfileControl::logy_callback (GSimpleAction *action, GVariant *parameter, 
@@ -3348,12 +3453,12 @@ void ProfileControl::cur_Brmin_callback (GSimpleAction *action, GVariant *parame
 }
 
 void ProfileControl::UpdateCursorInfo (double x1, double x2, double z1, double z2){
-	if (gapp->xsm->GetActiveScan ()){
+	if (main_get_gapp ()->xsm->GetActiveScan ()){
 		if (strncmp (xlabel, "Z", 1) == 0){
-			double dz = gapp->xsm->GetActiveScan()->data.s.dz;
-			gapp->xsm->GetActiveScan()->mem2d->SetZHiLitRange (x1/dz, x2/dz);
+			double dz = main_get_gapp ()->xsm->GetActiveScan()->data.s.dz;
+			main_get_gapp ()->xsm->GetActiveScan()->mem2d->SetZHiLitRange (x1/dz, x2/dz);
 		} else
-			gapp->xsm->GetActiveScan()->mem2d->SetZHiLitRange (z1, z2);
+			main_get_gapp ()->xsm->GetActiveScan()->mem2d->SetZHiLitRange (z1, z2);
 	}
 }
 

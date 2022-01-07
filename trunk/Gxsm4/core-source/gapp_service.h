@@ -40,6 +40,7 @@
 #include "unit.h"
 #include "pcs.h"
 
+
 typedef struct _Gxsm4appWindow         Gxsm4appWindow;
 
 
@@ -78,7 +79,7 @@ typedef void (*GappBrowseFunc)(gchar *fname, gpointer user_data);
 /* Example use:
 	GtkDialogFlags flags =  (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT);
 	GtkWidget *dialog = gtk_dialog_new_with_buttons (N_("Mein Prima Dialog"),
-							 GTK_WINDOW (gapp->get_app_window ()),
+							 GTK_WINDOW (main_get_gapp ()->get_app_window ()),
 							 flags,
 							 _("_OK"),
 							 GTK_RESPONSE_ACCEPT,
@@ -782,26 +783,6 @@ private:
 
 #define MAX_PROGRESS_LEVELS 13
 
-class MyGnomeTools{
-public:
-	MyGnomeTools(){ };
-	virtual ~MyGnomeTools(){ };
-
-	static void show_info_callback (GtkWidget *widget, const char *info){
-		GtkWidget *dialog = gtk_message_dialog_new (GTK_WINDOW (widget),
-							    GTK_DIALOG_DESTROY_WITH_PARENT,
-							    GTK_MESSAGE_INFO,
-							    GTK_BUTTONS_CLOSE,
-							    "%s", info);
-		g_signal_connect_swapped (G_OBJECT (dialog), "response",
-					  G_CALLBACK (gtk_window_destroy),
-					  G_OBJECT (dialog));
-		gtk_widget_show (dialog);
-	};
-	
-	static GMenuModel *find_extension_point_section (GMenuModel  *model, const gchar *extension_point);
-};
-
 class AppBase;
 
 #ifndef GXSM_WIDGET_PAD
@@ -816,14 +797,18 @@ class AppBase;
 #define WGEO_HEIGHT 5
 #define WGEO_SIZE 6
 
-class AppBase : public MyGnomeTools{
+typedef struct _Gxsm4app       Gxsm4app;
+
+class AppBase{
 public:
-	AppBase();
+	AppBase (Gxsm4app *app);
 	virtual ~AppBase();
   
 	// Basic Setup Window/Widget
-	virtual void AppWindowInit(const gchar *title, const gchar *sub_title=NULL);
+	virtual void AppWindowInit(const gchar *title=NULL, const gchar *sub_title=NULL);
         virtual void SetTitle(const gchar *title, const gchar *sub_title=NULL);
+
+	static GMenuModel *find_extension_point_section (GMenuModel  *model, const gchar *extension_point);
 
         virtual void add_window_to_window_menu(const gchar *menu_item_label, const gchar* key);
 
@@ -879,6 +864,7 @@ protected:
 	void destroy(){ if (window) { gtk_window_destroy (GTK_WINDOW (window)); window=NULL; } nodestroy=TRUE; };
 	int nodestroy;
 
+        Gxsm4app* main_app; // MAIN GXSM4 APPLICTAION
         Gxsm4appWindow *app_window;
 	GtkWindow* window;     // main window for this object
 	GtkWidget* header_bar;
@@ -886,6 +872,8 @@ protected:
 
 private:
         GtkWidget *title_label;
+        gchar *main_title_buffer;
+        gchar *sub_title_buffer;
         GSettings *geometry_settings;
         gchar *window_key;
 
@@ -893,25 +881,10 @@ private:
         gint32 showstate;
 };
 
-class DlgBase : public MyGnomeTools{
-public:
-	DlgBase(){ runflg=FALSE; };
-	virtual ~DlgBase(){};
-
-	virtual void run()=0;
-	int running(){ return runflg; };
-
-protected:
-	void DlgStart(){ runflg=TRUE; };
-	void DlgDone(){ runflg=FALSE; };
-
-private:
-	int runflg;
-};
 
 class Scan;
 
-class GnomeAppService : public AppBase{
+class GnomeAppService{
 private:
 	GtkWidget *app;
         gboolean  thread_safe_no_gui_mode;
@@ -936,7 +909,6 @@ public:
 
 	GtkWidget *getApp(){ return app; };
 
-
         gint setup_multidimensional_data_copy (const gchar *title, Scan *src,
                                                int &ti, int &tf, int &vi, int &vf,
                                                int *tnadd=NULL, int *vnadd=NULL,
@@ -958,70 +930,64 @@ public:
 	void flash(const char *mld){
 		std::cout << "************" << mld << "************" << std::endl;
 	};
-	void warning(const char *mld){
+	void warning(const char *mld, GtkWindow *parent=NULL){
                 if (is_thread_safe_no_gui_mode()) return;
-		if(window){
-			GtkWidget *dialog = gtk_message_dialog_new_with_markup
-                                (window,
-                                 GTK_DIALOG_DESTROY_WITH_PARENT,
-                                 GTK_MESSAGE_WARNING,
-                                 GTK_BUTTONS_CLOSE,
-                                 "<span foreground='red' size='large' weight='bold'>%s</span>\n%s", N_("Warning!"),mld);
-			gtk_widget_show (dialog);
-                        //gapp->monitorcontrol->LogEvent ("Warning", mld);
+                GtkWidget *dialog = gtk_message_dialog_new_with_markup
+                        (parent,
+                         GTK_DIALOG_DESTROY_WITH_PARENT,
+                         GTK_MESSAGE_WARNING,
+                         GTK_BUTTONS_CLOSE,
+                         "<span foreground='red' size='large' weight='bold'>%s</span>\n%s", N_("Warning!"),mld);
+                gtk_widget_show (dialog);
+                //main_get_gapp ()->monitorcontrol->LogEvent ("Warning", mld);
 
-                        int response = GTK_RESPONSE_NONE;
-                        g_signal_connect (G_OBJECT (dialog), "response", G_CALLBACK (GnomeAppService::on_dialog_response_to_user_data), &response);
+                int response = GTK_RESPONSE_NONE;
+                g_signal_connect (G_OBJECT (dialog), "response", G_CALLBACK (GnomeAppService::on_dialog_response_to_user_data), &response);
                         
-                        // FIX-ME GTK4 ??
-                        // wait here on response
-                        while (response == GTK_RESPONSE_NONE)
-                                while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
-                }
+                // FIX-ME GTK4 ??
+                // wait here on response
+                while (response == GTK_RESPONSE_NONE)
+                        while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
 	};
         static gint terminate_timeout_func (gpointer data);
 	void alert(const gchar *s1, const gchar *s2, const gchar *s3, int c);
-	void errormsg(const char *mld){
+	void errormsg(const char *mld, GtkWindow *parent=NULL){
                 if (is_thread_safe_no_gui_mode()) return;
-		if(window){
-			GtkWidget *dialog = gtk_message_dialog_new_with_markup
-                                (window,
-                                 GTK_DIALOG_DESTROY_WITH_PARENT,
-                                 GTK_MESSAGE_ERROR,
-                                 GTK_BUTTONS_CLOSE,
-                                 "<span foreground='red' size='large' weight='bold'>%s</span>\n%s", N_("Error!"), mld);
+                GtkWidget *dialog = gtk_message_dialog_new_with_markup
+                        (parent,
+                         GTK_DIALOG_DESTROY_WITH_PARENT,
+                         GTK_MESSAGE_ERROR,
+                         GTK_BUTTONS_CLOSE,
+                         "<span foreground='red' size='large' weight='bold'>%s</span>\n%s", N_("Error!"), mld);
 
-			gtk_widget_show (dialog);
+                gtk_widget_show (dialog);
 
-                        int response = GTK_RESPONSE_NONE;
-                        g_signal_connect (G_OBJECT (dialog), "response", G_CALLBACK (GnomeAppService::on_dialog_response_to_user_data), &response);
+                int response = GTK_RESPONSE_NONE;
+                g_signal_connect (G_OBJECT (dialog), "response", G_CALLBACK (GnomeAppService::on_dialog_response_to_user_data), &response);
                         
-                        // FIX-ME GTK4 ??
-                        // wait here on response
-                        while (response == GTK_RESPONSE_NONE)
-                                while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
-		}
+                // FIX-ME GTK4 ??
+                // wait here on response
+                while (response == GTK_RESPONSE_NONE)
+                        while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
 	};
-	void message(const char *mld){
+	void message(const char *mld, GtkWindow *parent=NULL){
                 if (is_thread_safe_no_gui_mode()) return;
-		if(window){
-			GtkWidget *dialog = gtk_message_dialog_new_with_markup
-                                (window,
-                                 GTK_DIALOG_DESTROY_WITH_PARENT,
-                                 GTK_MESSAGE_INFO,
-                                 GTK_BUTTONS_CLOSE,
-                                 "<span foreground='blue' size='large' weight='bold'>%s</span>\n%s", N_("Info"), mld);
-			gtk_widget_show (dialog);
+                GtkWidget *dialog = gtk_message_dialog_new_with_markup
+                        (parent,
+                         GTK_DIALOG_DESTROY_WITH_PARENT,
+                         GTK_MESSAGE_INFO,
+                         GTK_BUTTONS_CLOSE,
+                         "<span foreground='blue' size='large' weight='bold'>%s</span>\n%s", N_("Info"), mld);
+                gtk_widget_show (dialog);
 
-                        int response = GTK_RESPONSE_NONE;
-                        g_signal_connect (G_OBJECT (dialog), "response", G_CALLBACK (GnomeAppService::on_dialog_response_to_user_data), &response);
+                int response = GTK_RESPONSE_NONE;
+                g_signal_connect (G_OBJECT (dialog), "response", G_CALLBACK (GnomeAppService::on_dialog_response_to_user_data), &response);
                         
-                        // FIX-ME GTK4 ??
-                        // wait here on response
-                        while (response == GTK_RESPONSE_NONE)
-                                while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
-                        //gapp->monitorcontrol->LogEvent ("Message", mld);
-		}
+                // FIX-ME GTK4 ??
+                // wait here on response
+                while (response == GTK_RESPONSE_NONE)
+                        while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
+                //main_get_gapp ()->monitorcontrol->LogEvent ("Message", mld);
 	};
         
         static void
@@ -1036,66 +1002,51 @@ public:
                 gtk_window_destroy (GTK_WINDOW (dialog));
         }
 
-	gboolean question_yes_no (const gchar *question, GtkWindow *pw=NULL, const gchar *format=NULL){ // Yes / No ?
+	gboolean question_yes_no (const gchar *question, GtkWindow *parent=NULL, const gchar *format=NULL){ // Yes / No ?
                 if (is_thread_safe_no_gui_mode()) return TRUE;
-		GtkWindow *w = pw;
-                if (w == NULL)
-			w = window;
-		if (w){
-                        dialog_action   = NULL;
-                        dialog_var      = 0;
-                        dialog_response = GTK_RESPONSE_NONE;
-			GtkWidget *dialog = gtk_message_dialog_new_with_markup
-                                (w,
-                                 GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_USE_HEADER_BAR,
-                                 GTK_MESSAGE_QUESTION,
-                                 GTK_BUTTONS_YES_NO,
-                                 format ? format : "<span foreground='blue' size='large' weight='bold'>%s</span>", question);
+                dialog_action   = NULL;
+                dialog_var      = 0;
+                dialog_response = GTK_RESPONSE_NONE;
+                GtkWidget *dialog = gtk_message_dialog_new_with_markup
+                        (parent,
+                         GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_USE_HEADER_BAR,
+                         GTK_MESSAGE_QUESTION,
+                         GTK_BUTTONS_YES_NO,
+                         format ? format : "<span foreground='blue' size='large' weight='bold'>%s</span>", question);
 
-                        gtk_dialog_set_default_response (GTK_DIALOG (dialog), GTK_RESPONSE_OK);
+                gtk_dialog_set_default_response (GTK_DIALOG (dialog), GTK_RESPONSE_OK);
 
-                        g_signal_connect (dialog, "response", G_CALLBACK (GnomeAppService::on_dialog_response), this);
-                        while (dialog_response == GTK_RESPONSE_NONE)
-                                while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
+                g_signal_connect (dialog, "response", G_CALLBACK (GnomeAppService::on_dialog_response), this);
+                while (dialog_response == GTK_RESPONSE_NONE)
+                        while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
 
-			return dialog_response == GTK_RESPONSE_YES;
-		}
-		return TRUE;
+                return dialog_response == GTK_RESPONSE_YES;
 	};
 
-	gint question_yes_no_with_action (const gchar *question, const gchar *action_label, gint &var){ // Yes / No ?
+	gint question_yes_no_with_action (const gchar *question, const gchar *action_label, gint &var, GtkWindow *parent=NULL){ // Yes / No ?
                 if (is_thread_safe_no_gui_mode()) return TRUE;
-                GtkWindow *w = window;
-		if (w){
-                        dialog_action   = NULL;
-                        dialog_var      = 0;
-                        dialog_response = GTK_RESPONSE_NONE;
-			GtkWidget *dialog = gtk_message_dialog_new_with_markup
-                                (w,
-                                 GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_USE_HEADER_BAR,
-                                 GTK_MESSAGE_QUESTION,
-                                 GTK_BUTTONS_YES_NO,
-                                 "<span foreground='blue' size='large' weight='bold'>%s</span>\n", question);
-                        dialog_action = gtk_check_button_new_with_label( N_(action_label));
-                        gtk_check_button_set_active (GTK_CHECK_BUTTON (dialog_action), var? true:false);
-                        gtk_box_append (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (dialog))), dialog_action);
+                dialog_action   = NULL;
+                dialog_var      = 0;
+                dialog_response = GTK_RESPONSE_NONE;
+                GtkWidget *dialog = gtk_message_dialog_new_with_markup
+                        (parent,
+                         GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_USE_HEADER_BAR,
+                         GTK_MESSAGE_QUESTION,
+                         GTK_BUTTONS_YES_NO,
+                         "<span foreground='blue' size='large' weight='bold'>%s</span>\n", question);
+                dialog_action = gtk_check_button_new_with_label( N_(action_label));
+                gtk_check_button_set_active (GTK_CHECK_BUTTON (dialog_action), var? true:false);
+                gtk_box_append (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (dialog))), dialog_action);
 
-                        gtk_dialog_set_default_response (GTK_DIALOG (dialog), GTK_RESPONSE_OK);
+                gtk_dialog_set_default_response (GTK_DIALOG (dialog), GTK_RESPONSE_OK);
 
-                        g_signal_connect (dialog, "response", G_CALLBACK (GnomeAppService::on_dialog_response), this);
-                        gtk_widget_show (dialog);
-                        while (dialog_response == GTK_RESPONSE_NONE)
-                                while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
+                g_signal_connect (dialog, "response", G_CALLBACK (GnomeAppService::on_dialog_response), this);
+                gtk_widget_show (dialog);
+                while (dialog_response == GTK_RESPONSE_NONE)
+                        while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
 
-                        var = dialog_var;
-			return dialog_response;
-
-                        //gint result = gtk_dialog_run (GTK_DIALOG (dialog));
-                        //var = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (action));
-			//gtk_window_destroy (dialog);
-			//return result;
-		}
-		return TRUE;
+                var = dialog_var;
+                return dialog_response;
 	};
 
 	void messages(const char *s1, const char *s2, const char *s3){

@@ -54,7 +54,7 @@ foreach plugin : plugin_list
   deps = declare_dependency(
     compile_args : plugin_cflags,
     dependencies : plugin_deps,
-    include_directories : configuration_inc,
+    include_directories : [ configuration_inc, appInclude ]
   )
 
 #  shared_module(plugin_name,

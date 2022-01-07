@@ -34,9 +34,9 @@
 
 #include "xsmtypes.h"
 #include "gapp_service.h"
-#include "scan.h"
+#include "scan_types.h"
 
-#include "gxsm_app.h"
+class Scan;
 
 class ViewInfo{
 public:
@@ -63,31 +63,11 @@ public:
         gchar *makeXYinfo(double x, double y); // X,Y
         gchar *makedXdYinfo(double xy1[2], double xy2[2]); // dX, dY
         gchar *makeXYZinfo(double x, double y); // Point: X,Y,Z
-        gchar *makeZinfo(double data_z, const gchar *new_prec=NULL, double sub=0.){
-                UnitObj *u = Uz();
-                UnitObj tmp(*u);
-                if (new_prec)
-                        tmp.ChangePrec (new_prec);
-                return tmp.UsrString (data_z*(pixelmode ? 1. : sc->data.s.dz) - sub); 
-        };
-        double getZ(double x, double y){ 
-                double mx = x*Qfac, xx;
-                double my = y*Qfac, yy;
-                xx = R2INT(mx); xx=MIN(sc->mem2d->GetNx()-1, MAX(0,xx));
-                yy = R2INT(my); yy=MIN(sc->mem2d->GetNy()-1, MAX(0,yy));
-                int ix=(int)xx, iy=(int)yy;
-                return sc->mem2d->GetDataPkt(ix,iy)*sc->data.s.dz - sc->data.s.pllref;
-        };
+        gchar *makeZinfo(double data_z, const gchar *new_prec=NULL, double sub=0.);
+        double getZ(double x, double y);
       
         // convert X,Y (view, mouse) to image index
-        void XYview2pixel(double x, double y, Point2D *p){
-                double mx = x*Qfac, xx;
-                double my = y*Qfac, yy;
-                xx = R2INT(mx); xx=MIN(sc->mem2d->GetNx()-1, MAX(0,xx));
-                yy = R2INT(my); yy=MIN(sc->mem2d->GetNy()-1, MAX(0,yy));
-                p->x = R2INT(xx);
-                p->y = R2INT(yy);
-        };
+        void XYview2pixel(double x, double y, Point2D *p);
 
         void Angstroem2W(double &x, double &y);
         void W2Angstroem(double &x, double &y);

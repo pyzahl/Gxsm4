@@ -31,6 +31,8 @@
 #include <netcdf.hh>
 // #include <netcdf>
 // using namespace netCDF;
+#include "xsm.h"
+
 
 typedef enum { 
               FIO_OK, 

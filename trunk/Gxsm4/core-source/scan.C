@@ -43,6 +43,7 @@
 int scandatacount=0;
 
 Scan::Scan(Scan *scanmaster){
+        main_app = scanmaster->main_app;
         GXSM_LOG_DATAOBJ_ACTION (GXSM_GRC_SCANOBJ, "constructor");
         GXSM_REF_OBJECT (GXSM_GRC_SCANOBJ);
 	TimeList = NULL;
@@ -70,7 +71,8 @@ Scan::Scan(Scan *scanmaster){
 }
 
 
-Scan::Scan(int vtype, int vflg, int ChNo, SCAN_DATA *vd, ZD_TYPE mtyp){
+Scan::Scan(int vtype, int vflg, int ChNo, SCAN_DATA *vd, ZD_TYPE mtyp, Gxsm4app *app){
+        main_app = app;
         GXSM_LOG_DATAOBJ_ACTION (GXSM_GRC_SCANOBJ, "constructor");
         GXSM_REF_OBJECT (GXSM_GRC_SCANOBJ);
 	TimeList = NULL;
@@ -80,7 +82,7 @@ Scan::Scan(int vtype, int vflg, int ChNo, SCAN_DATA *vd, ZD_TYPE mtyp){
 	objects_id = 0;
 	objects_list = NULL;
         world_map = NULL;
-	vdata = vd ? vd : &gapp->xsm->data;
+	vdata = vd ? vd : &main_get_gapp ()->xsm->data;
 	if(vd)
 		data.CpUnits(*vdata);
 	data.s.iyEnd=0;
@@ -516,10 +518,10 @@ void Scan::Activate(){
 	
 	GetDataSet(*vdata);
 	VFlg = data.display.ViewFlg;
-	gapp->spm_update_all(VFlg);
+	main_get_gapp ()->spm_update_all(VFlg);
 }
 
-int Scan::SetView(int vtype){ 
+int Scan::SetView(uint vtype){ 
 	if(view) delete view; // ggf. alten View löschen
 	view = NULL;
 	switch(vtype){
@@ -533,8 +535,8 @@ int Scan::SetView(int vtype){
 		return ID_CH_V_GREY;
 		break;
 	case ID_CH_V_PROFILE:
-		view = new Profiles(this, ChanNo);
-		draw();
+		//view = new Profiles(this, ChanNo);
+		//draw();
 		return ID_CH_V_PROFILE;
 		break;
 	case ID_CH_V_SURFACE:
@@ -558,7 +560,7 @@ int Scan::draw(int y1, int y2){
 		if(y1>=0) // was >0
 			view->update(y1,y2);
 		else
-			view->draw();
+			view->draw ();
 	}
 	//  else XSM_DEBUG (DBG_L2, "no view !");
 	return 0;
@@ -596,13 +598,14 @@ void Scan::update_world_map(Scan *src){
         XSM_DEBUG_GP (DBG_L1, "Scan update world map.");
         if (!world_map){
                 world_map = new Scan(ID_CH_V_NO, false, ChanNo, NULL, scan_ztype);
+                world_map -> set_main_app (get_app());
                 //Scan::Scan(int vtype, int vflg, int ChNo, SCAN_DATA *vd, ZD_TYPE mtyp){
                 world_map->data.copy(data);
                 world_map->data.s.alpha = 0.;
                 world_map->data.s.x0 = 0.;
                 world_map->data.s.y0 = 0.;
-                world_map->data.s.rx = 2*gapp->xsm->XOffsetMax(); // full accessible world range (offset)
-                world_map->data.s.ry = 2*gapp->xsm->YOffsetMax(); // full accessible world range (offset)
+                world_map->data.s.rx = 2*main_get_gapp ()->xsm->XOffsetMax(); // full accessible world range (offset)
+                world_map->data.s.ry = 2*main_get_gapp ()->xsm->YOffsetMax(); // full accessible world range (offset)
                 world_map->data.s.nx = xsmres.world_size_nxy; // set in preferences
                 world_map->data.s.ny = xsmres.world_size_nxy;
                 world_map->data.s.dx = world_map->data.s.rx/(world_map->data.s.nx-1);
@@ -763,7 +766,7 @@ void Scan::start(int l, double lv){
 #if 0
 		if (vdata){
 			vdata->ui.SetOriginalName (storage_manager.get_name ("(not saved)"));
-			gapp->ui_update();
+			main_get_gapp ()->ui_update();
 		}
 #endif
 		// clean up LayerInformation and auto add basic set
@@ -774,12 +777,12 @@ void Scan::start(int l, double lv){
 	mem2d->SetLayerDataPut (l);
 	mem2d->data->SetVLookup (l, lv);
         // mem2d->data->ResetLineInfo ();
-	mem2d->add_layer_information (new LayerInformation ("Bias", gapp->xsm->data.s.Bias, "%5.3f V"));
+	mem2d->add_layer_information (new LayerInformation ("Bias", main_get_gapp ()->xsm->data.s.Bias, "%5.3f V"));
 	mem2d->add_layer_information (new LayerInformation ("Layer", l, "%03.0f"));
 	mem2d->add_layer_information (new LayerInformation ("Name", data.ui.name));
 	mem2d->add_layer_information (new LayerInformation (data.ui.dateofscan)); // Date of scan (series) start
-	mem2d->add_layer_information (new LayerInformation ("Current", gapp->xsm->data.s.Current, "%5.2f nA"));
-	mem2d->add_layer_information (new LayerInformation ("Current", gapp->xsm->data.s.Current*1000, "%5.1f pA"));
+	mem2d->add_layer_information (new LayerInformation ("Current", main_get_gapp ()->xsm->data.s.Current, "%5.2f nA"));
+	mem2d->add_layer_information (new LayerInformation ("Current", main_get_gapp ()->xsm->data.s.Current*1000, "%5.1f pA"));
 	mem2d->add_layer_information (new LayerInformation ("Layer-Param", lv, "%5.3f [V]"));
 	mem2d->add_layer_information (new LayerInformation ("Frame-Start",ctime(&t))); // Date for frame start (now)
 	mem2d->add_layer_information (new LayerInformation ("X-size original", data.s.rx, "Rx: %5.1f \303\205"));
@@ -793,7 +796,7 @@ void Scan::start(int l, double lv){
 void Scan::stop(int StopFlg, int line){
 	data.s.tEnd = time (0);
 #if 0 // this is saving memory, but causes a lot of trouble elsewhere...
-	if (StopFlg && gapp->xsm->hardware->FreeOldData ()){
+	if (StopFlg && main_get_gapp ()->xsm->hardware->FreeOldData ()){
 		mem2d->Resize (data.s.nx, data.s.ny=line);
 		data.s.ry = data.s.ny*data.s.dy;
 		draw ();
@@ -807,7 +810,7 @@ void Scan::stop(int StopFlg, int line){
 #if 0
 	if (vdata){
 		vdata->ui.SetOriginalName ("unknown (not saved)");
-		gapp->ui_update(); // hack as long signal "changed" did not work
+		main_get_gapp ()->ui_update(); // hack as long signal "changed" did not work
 		data.ui.SetComment (vdata->ui.comment);
 	}
 #endif
@@ -945,7 +948,7 @@ int Scan::Save(gboolean overwrite, gboolean check_file_exist){
         if(g_strrstr (data.ui.originalname,"(in progress)"))
                 overwrite = true;
 
-        CpyUserEntries(gapp->xsm->data);
+        CpyUserEntries(main_get_gapp ()->xsm->data);
         
         if (check_file_exist){
                 if (g_file_test (storage_manager.get_filename(), G_FILE_TEST_EXISTS)) // | G_FILE_TEST_IS_DIR)))
@@ -962,14 +965,14 @@ int Scan::Save(gboolean overwrite, gboolean check_file_exist){
         if (Dio){
                 Dio->Write();
                 if (Dio->ioStatus()){
-                        gapp->SetStatus(N_("Error"), Dio->ioStatus());
-                        gapp->monitorcontrol->LogEvent("*Error Saving", storage_manager.get_filename());
+                        main_get_gapp ()->SetStatus(N_("Error"), Dio->ioStatus());
+                        main_get_gapp ()->monitorcontrol->LogEvent("*Error Saving", storage_manager.get_filename());
                         XSM_SHOW_ALERT(ERR_SORRY, Dio->ioStatus(), storage_manager.get_filename(),1);
                 }
                 else{
                         Saved();
-                        gapp->monitorcontrol->LogEvent("*Save", storage_manager.get_filename());
-                        gapp->SetStatus(N_("Saving done "), storage_manager.get_name());
+                        main_get_gapp ()->monitorcontrol->LogEvent("*Save", storage_manager.get_filename());
+                        main_get_gapp ()->SetStatus(N_("Saving done "), storage_manager.get_name());
                         data.ui.SetOriginalName (storage_manager.get_name ("(*saved)")); // update without path
                 }
 
@@ -995,7 +998,7 @@ int Scan::Update_ZData_NcFile(){
 	if (! nc.is_valid()){
                 g_warning("NetCDF file is not valid, please save first to update later! Trying Auto Save now...");
                 if (Save ()){ // try auto save, do not overwrite automatically
-                        GtkWidget *dialog = gtk_message_dialog_new (gapp->get_window (),
+                        GtkWidget *dialog = gtk_message_dialog_new (NULL,
                                                                     GTK_DIALOG_DESTROY_WITH_PARENT,
                                                                     GTK_MESSAGE_WARNING,
                                                                     GTK_BUTTONS_YES_NO,
@@ -1008,7 +1011,7 @@ int Scan::Update_ZData_NcFile(){
                         //int overwrite = gtk_dialog_run (GTK_DIALOG (dialog));
                         //gtk_widget_destroy (dialog);
                         if (overwrite != GTK_RESPONSE_YES){
-                                gapp->SetStatus(N_("File exists, save aborted by user."));
+                                main_get_gapp ()->SetStatus(N_("File exists, save aborted by user."));
                                 return -1; // abort
                         } else {
                                 Save (true); // force overwrite as requested
@@ -1042,8 +1045,8 @@ int Scan::Update_ZData_NcFile(){
         data.ui.SetOriginalName (storage_manager.get_name ("(in progress)"));
         
         g_message("Data in NetCDF file >%s< is now updated!", storage_manager.get_filename());
-        gapp->monitorcontrol->LogEvent("*Update", storage_manager.get_filename());
-        gapp->SetStatus(N_("Update done "), storage_manager.get_name());
+        main_get_gapp ()->monitorcontrol->LogEvent("*Update", storage_manager.get_filename());
+        main_get_gapp ()->SetStatus(N_("Update done "), storage_manager.get_name());
 
         if (data.s.ntimes == 1){
                 mem2d->data->NcPut (Data, 0, true);

@@ -32,10 +32,12 @@
 #include "gxsm_window.h"
 #include "gapp_service.h"
 #include "app_profile.h"
+#include "glbvars.h"
 
 class app_vpdata_view : public AppBase{
 public:
-        app_vpdata_view (gint num_active_xmaps, gint num_active_sources){
+        app_vpdata_view (Gxsm4app *app, gint num_active_xmaps, gint num_active_sources)
+                : AppBase(app){
                 for (int i=0; i<32; ++i) tmp_pc[i]=NULL;
                 vpdata_graph_app_window = NULL;
                 vpdata_graph_window = NULL;
@@ -53,7 +55,7 @@ public:
                         vpdata_view_destroy (); 
 
                 if (!vpdata_graph_app_window){
-                        vpdata_graph_app_window =  gxsm4_app_window_new (GXSM4_APP (gapp->get_application ()));
+                        vpdata_graph_app_window =  gxsm4_app_window_new (main_app);
                         vpdata_graph_window = GTK_WINDOW (vpdata_graph_app_window);
                         GtkWidget *header_bar = gtk_header_bar_new ();
                         gtk_widget_show (header_bar);
@@ -61,25 +63,19 @@ public:
 
                         //gtk_header_bar_set_subtitle (GTK_HEADER_BAR  (header_bar), "last plot");
                         gtk_window_set_titlebar (GTK_WINDOW (vpdata_graph_window), header_bar);
+                        SetTitle (NULL, "last plot");
 
-#if 0
-                        gtk_window_resize (GTK_WINDOW (vpdata_graph_window),
-                                           400*num_active_xmaps > 1100? 1100:400*num_active_xmaps,
-                                           200*num_active_sources > 800? 800:200*num_active_sources);
-#endif
                         vpdata_graph_grid = gtk_grid_new ();
                         g_object_set_data (G_OBJECT (vpdata_graph_window), "v_grid", vpdata_graph_grid);
                         gtk_box_append (GTK_BOX (vpdata_graph_window), vpdata_graph_grid);
                         gtk_widget_show (GTK_WIDGET (vpdata_graph_window)); // FIX-ME GTK4 SHOWALL
-                        // g_signal_connect (G_OBJECT (vpdata_graph_window), "window-state-event", G_CALLBACK (AppBase::window_state_watch_callback), this);
-                        // g_signal_connect (G_OBJECT (vpdata_graph_window), "delete-event", G_CALLBACK (AppBase::window_close_callback), this);
 
                         GtkWidget *statusbar = gtk_statusbar_new ();
                         g_object_set_data (G_OBJECT (vpdata_graph_window), "statusbar", statusbar);
                         gtk_grid_attach (GTK_GRID (vpdata_graph_grid), statusbar, 1,100, 100,1);
                         gtk_widget_show (GTK_WIDGET (statusbar)); // FIX-ME GTK4 SHOWALL
                 }
-                // gtk_header_bar_set_title ( GTK_HEADER_BAR (gtk_window_get_titlebar (vpdata_graph_window)), vp_exec_mode_name);
+                // SetTitle (vp_exec_mode_name);
         };
 
         void vpdata_view_destroy (){
@@ -101,7 +97,8 @@ public:
                 if (!pc){
                         gchar *resid = g_strdelimit (g_strconcat (xlab,ylab,NULL), " ;:()[],./?!@#$%^&*()+-=<>", '_');
 
-                        pc = new ProfileControl (title, numx, 
+                        pc = new ProfileControl (main_app,
+                                                 title, numx, 
                                                  UXaxis, UYaxis, 
                                                  xmin, xmax,
                                                  resid,

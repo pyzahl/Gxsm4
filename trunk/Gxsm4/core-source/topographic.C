@@ -41,7 +41,7 @@
 #define QSIZE1  QSIZE // Anfang
 #define QSIZE2  (QSIZE-2) // Ende
 
-TopoGraphicScan::TopoGraphicScan(int vtype, int vflg, int ChNo, SCAN_DATA *vd):Scan(vtype, vflg, ChNo, vd){
+TopoGraphicScan::TopoGraphicScan(int vtype, int vflg, int ChNo, SCAN_DATA *vd, Gxsm4app *app):Scan(vtype, vflg, ChNo, vd, ZD_SHORT, app){
 }
 
 TopoGraphicScan::~TopoGraphicScan(){

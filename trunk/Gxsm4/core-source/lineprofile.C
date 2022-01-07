@@ -31,6 +31,8 @@
 #include "glbvars.h"
 #include "action_id.h"
 #include "gxsm_monitor_vmemory_and_refcounts.h"
+#include "surface.h"
+#include "scan.h"
 
 LineProfile1D::LineProfile1D(){
         GXSM_REF_OBJECT (GXSM_GRC_PROFILEOBJ);
@@ -369,9 +371,9 @@ int LineProfile1D::load(const gchar *fname){
 					ul = g_strdup(l+10);
 				UnitObj *uobj=NULL;
 				if (ua)
-					uobj = gapp->xsm->MakeUnit (ua, ul?ul:ua);
+					uobj = main_get_gapp ()->xsm->MakeUnit (ua, ul?ul:ua);
 				else
-					uobj = gapp->xsm->MakeUnit (u, ul?ul:u);
+					uobj = main_get_gapp ()->xsm->MakeUnit (u, ul?ul:u);
 
 				scan1d->data.SetXUnit (uobj);
 				delete uobj;
@@ -394,9 +396,9 @@ int LineProfile1D::load(const gchar *fname){
 					ul = g_strdup(l+10);
 				UnitObj *uobj=NULL;
 				if (ua)
-					uobj = gapp->xsm->MakeUnit (ua, ul?ul:ua);
+					uobj = main_get_gapp ()->xsm->MakeUnit (ua, ul?ul:ua);
 				else
-					uobj = gapp->xsm->MakeUnit (u, ul?ul:u);
+					uobj = main_get_gapp ()->xsm->MakeUnit (u, ul?ul:u);
 
 				scan1d->data.SetZUnit (uobj);
 				delete uobj;

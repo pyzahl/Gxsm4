@@ -41,7 +41,7 @@
 #define QSIZE1  QSIZE // Anfang
 #define QSIZE2  (QSIZE-2) // Ende
 
-SpaScan::SpaScan(int vtype, int vflg, int ChNo, SCAN_DATA *vd):Scan(vtype, vflg, ChNo, vd, ZD_LONG){
+SpaScan::SpaScan(int vtype, int vflg, int ChNo, SCAN_DATA *vd, Gxsm4app *app):Scan(vtype, vflg, ChNo, vd, ZD_LONG, app){
 }
 
 SpaScan::~SpaScan(){
