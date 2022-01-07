@@ -194,7 +194,7 @@ Focus::Focus
   // ========================================
 
   g_object_set_data (G_OBJECT (vbox), "cps00",
-		       entry=gapp->mygtk_create_input("Cps00", vvbox, hbox));
+		       entry=main_get_gapp()->mygtk_create_input("Cps00", vvbox, hbox));
   ec = new Gtk_EntryControl(pfc->CPSUnit, "invalid range", &cps, 0, 1e7, ".0f", entry);
   g_object_set_data (G_OBJECT (vbox), "eccps00", ec);
   ec->Set_ChangeNoticeFkt(on_cps_changed, this);
@@ -217,12 +217,12 @@ Focus::Focus
 
 
   g_object_set_data (G_OBJECT (vbox), "cpshi",
-		       entry=gapp->mygtk_create_input("Cps hi", vvbox, hbox));
+		       entry=main_get_gapp()->mygtk_create_input("Cps hi", vvbox, hbox));
   ec = new Gtk_EntryControl(pfc->CPSUnit, "invalid range", &cpshi, 1, 1e7, ".0f", entry);
   g_object_set_data (G_OBJECT (vbox), "eccpshi", ec);
 
   g_object_set_data (G_OBJECT (vbox), "cpslow",
-		       entry=gapp->mygtk_create_input("Cps low", vvbox, hbox));
+		       entry=main_get_gapp()->mygtk_create_input("Cps low", vvbox, hbox));
   ec = new Gtk_EntryControl(pfc->CPSUnit, "invalid range", &cpslo, 0, 1e7, ".0f", entry);
   g_object_set_data (G_OBJECT (vbox), "eccpslo", ec);
 

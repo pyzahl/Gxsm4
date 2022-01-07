@@ -180,8 +180,8 @@ static void DSPPeakFind_about(void)
 // of remote_action_cb->{cmd, RemoteCb, widget, data}
 static void remove_from_gapp_ralist(remote_action_cb* ra, gpointer data){
 		PI_DEBUG (DBG_L2, "Remove_Remote List" );
-		gapp->RemoteActionList = g_slist_remove 
-				(gapp->RemoteActionList, ra);
+		main_get_gapp()->RemoteActionList = g_slist_remove 
+				(main_get_gapp()->RemoteActionList, ra);
 		g_free(ra->cmd);
 		g_free(ra);
 }

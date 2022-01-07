@@ -177,16 +177,16 @@ int PeakFindScan::PFrunI0(XSM_Hardware *hw, SPA_PeakFind_p *pfp){
   // Add Data to Monitor -------
   gchar *datastr=g_strdup_printf("Pf%d Xscan: %10.1f %10.1f %6.3f %6.3f",
 				 pfp->index, pfp->I0x, pfp->xI0, pfp->xxf0, pfp->xfwhm);
-  gapp->monitorcontrol->LogEvent("*ProbePFn", datastr);
+  main_get_gapp()->monitorcontrol->LogEvent("*ProbePFn", datastr);
   g_free(datastr);
 
   datastr=g_strdup_printf("Pf%d Yscan: %10.1f %10.1f %6.3f %6.3f",
 			pfp->index, pfp->I0y, pfp->yI0, pfp->yxf0, pfp->yfwhm);
-  gapp->monitorcontrol->LogEvent("*ProbePFn", datastr);
+  main_get_gapp()->monitorcontrol->LogEvent("*ProbePFn", datastr);
   g_free(datastr);
 
   datastr=g_strdup_printf("Pf%d Rate: %10.1f CPS", pfp->index, cps);
-  gapp->monitorcontrol->LogEvent("*ProbePFn", datastr);
+  main_get_gapp()->monitorcontrol->LogEvent("*ProbePFn", datastr);
   g_free(datastr);
   // ----------------------- done.
 
@@ -237,20 +237,20 @@ int PeakFindScan::PFhwrun(XSM_Hardware *hw, SPA_PeakFind_p *pfp){
     hardpar.N   = DSP_E+1;
     hardpar.Cmd = DSP_CMD_SCAN_PARAM;
     
-    hardpar.hp[DSP_X0   ].value = (double)gapp->xsm->Inst->YA2Dig(pfp->x0);
-    hardpar.hp[DSP_Y0   ].value = (double)gapp->xsm->Inst->YA2Dig(pfp->y0);
-    hardpar.hp[DSP_len  ].value = (double)gapp->xsm->Inst->YA2Dig(pfp->radius*2.);
+    hardpar.hp[DSP_X0   ].value = (double)main_get_gapp()->xsm->Inst->YA2Dig(pfp->x0);
+    hardpar.hp[DSP_Y0   ].value = (double)main_get_gapp()->xsm->Inst->YA2Dig(pfp->y0);
+    hardpar.hp[DSP_len  ].value = (double)main_get_gapp()->xsm->Inst->YA2Dig(pfp->radius*2.);
     hardpar.hp[DSP_N    ].value = pfp->npkte;
     hardpar.hp[DSP_alpha].value = 0.;
     hardpar.hp[DSP_ms   ].value = 1e3*pfp->gate;
-    hardpar.hp[DSP_E    ].value = (double)gapp->xsm->Inst->eV2V(pfp->energy);
+    hardpar.hp[DSP_E    ].value = (double)main_get_gapp()->xsm->Inst->eV2V(pfp->energy);
     hw->SetParameter(hardpar);
     
     hardpar.N   = DSP_E+1;
     hardpar.Cmd = DSP_CMD_SCAN_START;
     hardpar.hp[DSP_Y0   ].value = 0.;
-    hardpar.hp[DSP_len  ].value = (double)gapp->xsm->Inst->YA2Dig(pfp->radius*2.);
-    hardpar.hp[DSP_E    ].value = (double)gapp->xsm->Inst->eV2V(pfp->energy);
+    hardpar.hp[DSP_len  ].value = (double)main_get_gapp()->xsm->Inst->YA2Dig(pfp->radius*2.);
+    hardpar.hp[DSP_E    ].value = (double)main_get_gapp()->xsm->Inst->eV2V(pfp->energy);
     hw->SetParameter(hardpar, TRUE);
     
     hw->ReadData(linebuffer, pfp->npkte*elem_size);
@@ -262,20 +262,20 @@ int PeakFindScan::PFhwrun(XSM_Hardware *hw, SPA_PeakFind_p *pfp){
     // Y-Scan setup
     hardpar.N   = DSP_E+1;
     hardpar.Cmd = DSP_CMD_SCAN_PARAM;
-    hardpar.hp[DSP_X0   ].value = (double)gapp->xsm->Inst->YA2Dig(pfp->x0);
-    hardpar.hp[DSP_Y0   ].value = (double)gapp->xsm->Inst->YA2Dig(pfp->y0);
-    hardpar.hp[DSP_len  ].value = (double)gapp->xsm->Inst->YA2Dig(pfp->radius*2.);
+    hardpar.hp[DSP_X0   ].value = (double)main_get_gapp()->xsm->Inst->YA2Dig(pfp->x0);
+    hardpar.hp[DSP_Y0   ].value = (double)main_get_gapp()->xsm->Inst->YA2Dig(pfp->y0);
+    hardpar.hp[DSP_len  ].value = (double)main_get_gapp()->xsm->Inst->YA2Dig(pfp->radius*2.);
     hardpar.hp[DSP_N    ].value = pfp->npkte;
     hardpar.hp[DSP_alpha].value = 90.;
     hardpar.hp[DSP_ms   ].value = 1e3*pfp->gate;
-    hardpar.hp[DSP_E    ].value = (double)gapp->xsm->Inst->eV2V(pfp->energy);
+    hardpar.hp[DSP_E    ].value = (double)main_get_gapp()->xsm->Inst->eV2V(pfp->energy);
     hw->SetParameter(hardpar);
     
     hardpar.N   = DSP_E+1; 
     hardpar.Cmd = DSP_CMD_SCAN_START;
     hardpar.hp[DSP_Y0   ].value = 0.;
-    hardpar.hp[DSP_len  ].value = (double)gapp->xsm->Inst->YA2Dig(pfp->radius*2.);
-    hardpar.hp[DSP_E    ].value = (double)gapp->xsm->Inst->eV2V(pfp->energy);
+    hardpar.hp[DSP_len  ].value = (double)main_get_gapp()->xsm->Inst->YA2Dig(pfp->radius*2.);
+    hardpar.hp[DSP_E    ].value = (double)main_get_gapp()->xsm->Inst->eV2V(pfp->energy);
     hw->SetParameter(hardpar, TRUE);
     
     hw->ReadData(linebuffer, pfp->npkte*elem_size);
@@ -312,10 +312,10 @@ long PeakFindScan::PFget0d(XSM_Hardware *hw, SPA_PeakFind_p *pfp ){
     hardpar.N   = DSP_E+1;
     hardpar.Cmd = DSP_CMD_GETCNT;
   
-    hardpar.hp[DSP_X0   ].value = (double)gapp->xsm->Inst->YA2Dig(pfp->xorg);
-    hardpar.hp[DSP_Y0   ].value = (double)gapp->xsm->Inst->YA2Dig(pfp->yorg);
+    hardpar.hp[DSP_X0   ].value = (double)main_get_gapp()->xsm->Inst->YA2Dig(pfp->xorg);
+    hardpar.hp[DSP_Y0   ].value = (double)main_get_gapp()->xsm->Inst->YA2Dig(pfp->yorg);
     hardpar.hp[DSP_ms   ].value = 1e3*pfp->gate;
-    hardpar.hp[DSP_E    ].value = (double)gapp->xsm->Inst->eV2V(pfp->energy);
+    hardpar.hp[DSP_E    ].value = (double)main_get_gapp()->xsm->Inst->eV2V(pfp->energy);
     hw->SetParameter(hardpar);
     hw->ReadData(&cnt, sizeof(long));
 
@@ -331,13 +331,13 @@ int PeakFindScan::PFget2d(XSM_Hardware *hw, SPA_PeakFind_p *pfp ){
   hardpar.N   = DSP_E+1;
   hardpar.Cmd = DSP_CMD_SCAN_PARAM;
   
-  hardpar.hp[DSP_X0   ].value = (double)gapp->xsm->Inst->YA2Dig(pfp->xorg);
-  hardpar.hp[DSP_Y0   ].value = (double)gapp->xsm->Inst->YA2Dig(pfp->yorg);
-  hardpar.hp[DSP_len  ].value = (double)gapp->xsm->Inst->YA2Dig(pfp->radius*2.);
+  hardpar.hp[DSP_X0   ].value = (double)main_get_gapp()->xsm->Inst->YA2Dig(pfp->xorg);
+  hardpar.hp[DSP_Y0   ].value = (double)main_get_gapp()->xsm->Inst->YA2Dig(pfp->yorg);
+  hardpar.hp[DSP_len  ].value = (double)main_get_gapp()->xsm->Inst->YA2Dig(pfp->radius*2.);
   hardpar.hp[DSP_N    ].value = pfp->npkte;
   hardpar.hp[DSP_alpha].value = 0.;
   hardpar.hp[DSP_ms   ].value = 1e3*pfp->gate2d;
-  hardpar.hp[DSP_E    ].value = (double)gapp->xsm->Inst->eV2V(pfp->energy);
+  hardpar.hp[DSP_E    ].value = (double)main_get_gapp()->xsm->Inst->eV2V(pfp->energy);
   hw->SetParameter(hardpar);
 
   hardpar.N   = DSP_LXY+1;
@@ -351,7 +351,7 @@ int PeakFindScan::PFget2d(XSM_Hardware *hw, SPA_PeakFind_p *pfp ){
   hardpar.hp[DSP_E    ].value = 0;
   hardpar.hp[DSP_NX   ].value = pfp->npkte2d;
   hardpar.hp[DSP_NY   ].value = pfp->npkte2d;
-  hardpar.hp[DSP_LXY  ].value = (double)gapp->xsm->Inst->YA2Dig(pfp->radius*2.);
+  hardpar.hp[DSP_LXY  ].value = (double)main_get_gapp()->xsm->Inst->YA2Dig(pfp->radius*2.);
   hw->SetParameter(hardpar);
   hw->ReadData(pfp->buffer, pfp->buffersize*sizeof(long));
 

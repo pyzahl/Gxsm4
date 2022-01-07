@@ -31,6 +31,7 @@
 #define __SPM_SCANCONTROL_H
 
 #include <config.h>
+#include "surface.h"
 #include "gapp_service.h"
 
 typedef enum { SCAN_DIR_TOPDOWN, SCAN_DIR_TOPDOWN_BOTUP, SCAN_DIR_BOTUP } SCAN_DIR;
@@ -79,7 +80,7 @@ private:
 // -> AppBase provides a GtkWindow and some window handling basics used by Gxsm
 class SPM_ScanControl : public AppBase{
 public:
-	SPM_ScanControl(); // create window and setup it contents, connect buttons, register cb's...
+	SPM_ScanControl(Gxsm4app *app); // create window and setup it contents, connect buttons, register cb's...
 	virtual ~SPM_ScanControl(); // unregister cb's
 	
 	void update(); // window update (inputs, etc. -- here currently not really necessary)

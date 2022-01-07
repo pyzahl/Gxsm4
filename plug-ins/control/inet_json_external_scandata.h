@@ -241,7 +241,7 @@ JSON_signal PACPLL_JSON_signals[] = {
 class Inet_Json_External_Scandata : public AppBase{
 public:
 
-        Inet_Json_External_Scandata(); // create window and setup it contents, connect buttons, register cb's...
+        Inet_Json_External_Scandata(Gxsm4app *app); // create window and setup it contents, connect buttons, register cb's...
 	virtual ~Inet_Json_External_Scandata(); // unregister cb's
         int setup_scan (int ch, 
                         const gchar *titleprefix, 

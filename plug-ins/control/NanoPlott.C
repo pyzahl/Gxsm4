@@ -303,7 +303,7 @@ NanoPlottControl::NanoPlottControl ()
 	//	GtkDialogFlags flags =  (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT);
 	GtkDialogFlags flags =  (GtkDialogFlags) (GTK_DIALOG_DESTROY_WITH_PARENT);
 	GtkWidget *dialog = gtk_dialog_new_with_buttons (N_("Nano Plott"),
-							 GTK_WINDOW (gapp->get_app_window ()),
+							 GTK_WINDOW (main_get_gapp()->get_app_window ()),
 							 flags,
 							 _("_OK"),
 							 GTK_RESPONSE_ACCEPT,
@@ -621,7 +621,7 @@ static void check_remote_ec(Gtk_EntryControl* ec, remote_args* ra){
 
 static void set_via_remote (const gchar *arg, double value){
 	gchar *args[] = { g_strdup("set"), g_strdup (arg), g_strdup_printf ("%g", value) };
-	g_slist_foreach (gapp->RemoteEntryList, (GFunc) check_remote_ec, (gpointer)args);
+	g_slist_foreach (main_get_gapp()->RemoteEntryList, (GFunc) check_remote_ec, (gpointer)args);
 	g_free (args[0]);
 	g_free (args[1]);
 	g_free (args[2]);

@@ -271,8 +271,8 @@ void DSPPeakFindControl::addPFfolder(){
 		ra -> RemoteCb = &DSPPeakFindControl::PFcpyorg;
 		ra -> widget = button;
 		ra -> data = this;
-		gapp->RemoteActionList = g_slist_prepend
-				( gapp->RemoteActionList, ra );
+		main_get_gapp()->RemoteActionList = g_slist_prepend
+				( main_get_gapp()->RemoteActionList, ra );
 		PI_DEBUG (DBG_L2, "Adding new Remote Cmd: " << ra->cmd );
 
 		// ----------
@@ -292,8 +292,8 @@ void DSPPeakFindControl::addPFfolder(){
 		ra -> RemoteCb = & DSPPeakFindControl::PFcpyFromM;
 		ra -> widget = button;
 		ra -> data = this;
-		gapp->RemoteActionList = g_slist_prepend
-				( gapp->RemoteActionList, ra );
+		main_get_gapp()->RemoteActionList = g_slist_prepend
+				( main_get_gapp()->RemoteActionList, ra );
 		PI_DEBUG (DBG_L2, "Adding new Remote Cmd: " << ra->cmd );
 
 		// ----------
@@ -313,8 +313,8 @@ void DSPPeakFindControl::addPFfolder(){
 		ra -> RemoteCb = &DSPPeakFindControl::PFcpyToM;
 		ra -> widget = button;
 		ra -> data = this;
-		gapp->RemoteActionList = g_slist_prepend
-				( gapp->RemoteActionList, ra );
+		main_get_gapp()->RemoteActionList = g_slist_prepend
+				( main_get_gapp()->RemoteActionList, ra );
 		PI_DEBUG (DBG_L2, "Adding new Remote Cmd: " << ra->cmd );
 
 		button = gtk_toolbar_prepend_item
@@ -332,8 +332,8 @@ void DSPPeakFindControl::addPFfolder(){
 		ra -> RemoteCb = &DSPPeakFindControl::PFcpyEfromM;
 		ra -> widget = button;
 		ra -> data = this;
-		gapp->RemoteActionList = g_slist_prepend
-				( gapp->RemoteActionList, ra );
+		main_get_gapp()->RemoteActionList = g_slist_prepend
+				( main_get_gapp()->RemoteActionList, ra );
 		PI_DEBUG (DBG_L2, "Adding new Remote Cmd: " << ra->cmd );
 
 
@@ -353,8 +353,8 @@ void DSPPeakFindControl::addPFfolder(){
 		ra -> RemoteCb = &DSPPeakFindControl::CmdAction;
 		ra -> widget = button;
 		ra -> data = this;
-		gapp->RemoteActionList = g_slist_prepend
-				( gapp->RemoteActionList, ra );
+		main_get_gapp()->RemoteActionList = g_slist_prepend
+				( main_get_gapp()->RemoteActionList, ra );
 		PI_DEBUG (DBG_L2, "Adding new Remote Cmd: " << ra->cmd );
 
 		button = gtk_check_button_new_with_label ("Follow");
@@ -602,7 +602,7 @@ void DSPPeakFindControl::CmdAction(GtkWidget *widget, void *vpc){
 				g_slist_foreach(pc->PfpList, (GFunc) DSPPeakFindControl::PFreset, pc);
 				break;
 		case DSP_CMD_PRB_PFsaveNc:
-				gchar *fname = gapp->file_dialog("Save Probe Scan", NULL, NULL, "Probescan.nc", "probesave");
+				gchar *fname = main_get_gapp()->file_dialog("Save Probe Scan", NULL, NULL, "Probescan.nc", "probesave");
 				pc->pfscan->Save(fname);
 				break;
 		}
@@ -659,22 +659,22 @@ void DSPPeakFindControl::PFcpyorg(GtkWidget *widget, gpointer pc){
 
 void DSPPeakFindControl::PFcpyFromM(GtkWidget *widget, gpointer pc){
 		SPA_PeakFind_p *pfp =  (SPA_PeakFind_p*)g_object_get_data( G_OBJECT (widget), "PF_folder_pfp");
-		pfp->xorg=pfp->x0 = gapp->xsm->data.s.x0;
-		pfp->yorg=pfp->y0 = gapp->xsm->data.s.y0;
+		pfp->xorg=pfp->x0 = main_get_gapp()->xsm->data.s.x0;
+		pfp->yorg=pfp->y0 = main_get_gapp()->xsm->data.s.y0;
 		((DSPPeakFindControl*)pc)->update();
 }
 
 void DSPPeakFindControl::PFcpyEfromM(GtkWidget *widget, gpointer pc){
 		SPA_PeakFind_p *pfp =  (SPA_PeakFind_p*)g_object_get_data( G_OBJECT (widget), "PF_folder_pfp");
-		pfp->energy = gapp->xsm->data.hardpars.SPA_Energy;
+		pfp->energy = main_get_gapp()->xsm->data.hardpars.SPA_Energy;
 		((DSPPeakFindControl*)pc)->update();
 }
 
 void DSPPeakFindControl::PFcpyToM(GtkWidget *widget, gpointer pc){
 		SPA_PeakFind_p *pfp =  (SPA_PeakFind_p*)g_object_get_data( G_OBJECT (widget), "PF_folder_pfp");
-		gapp->xsm->data.s.x0 = pfp->xorg;
-		gapp->xsm->data.s.y0 = pfp->yorg;
-		gapp->spm_update_all();
+		main_get_gapp()->xsm->data.s.x0 = pfp->xorg;
+		main_get_gapp()->xsm->data.s.y0 = pfp->yorg;
+		main_get_gapp()->spm_update_all();
 }
 
 void DSPPeakFindControl::PFfollow(GtkButton *button, gpointer pc){
@@ -728,6 +728,6 @@ void DSPPeakFindControl::ChangedNotify(Param_Control* pcs, gpointer pc){
 }
 
 void DSPPeakFindControl::ExecCmd(int cmd){
-		gapp->xsm->hardware->ExecCmd(cmd);
+		main_get_gapp()->xsm->hardware->ExecCmd(cmd);
 }
 
