@@ -64,8 +64,7 @@ gxsm4_app_window_init (Gxsm4appWindow *win)
 {
         Gxsm4appWindowPrivate *priv;
         
-        XSM_DEBUG(DBG_L2, "gxsm4_app_window_init ================================================" );
-        g_message ( "gxsm4_app_window_init ================================================" );
+        XSM_DEBUG_GM (DBG_L1, "gxsm4_app_window_init ===============================================" );
 
         priv = (Gxsm4appWindowPrivate *) gxsm4_app_window_get_instance_private (win);
         priv->self = win;
@@ -75,23 +74,19 @@ gxsm4_app_window_init (Gxsm4appWindow *win)
         // NEW**REMOVED FROM HERE to gxsm_main.C
         if (main_get_gapp ()->gxsm_app_window_present ()){
                 // VIEW WINDOW
-                XSM_DEBUG(DBG_L2, "gxsm4_app_window_init ** GENERIC VIEW WINDOW =================================" );
-                g_message ( "gxsm4_app_window_init ** GENERIC VIEW WINDOW ================================================" );
+                XSM_DEBUG_GM (DBG_L1, "gxsm4_app_window_init ** GENERIC VIEW WINDOW ========================" );
         } else {
                 // THIS IS FOR THE GXSM MAIN CONTROL WINDOW
-                XSM_DEBUG(DBG_L2, "gxsm4_app_window_init ** MAIN WINDOW =================================" );
-                g_message ( "gxsm4_app_window_init ** GXSM MAIN WINDOW ================================================" );
-                
-                XSM_DEBUG(DBG_L1, "START ** GXSM GUI building");
+                XSM_DEBUG_GM (DBG_L1, "gxsm4_app_window_init ** GXSM MAIN WINDOW ===========================" );
                 main_get_gapp () -> build_gxsm (win);
-                XSM_DEBUG(DBG_L1, "DONE ** GXSM GUI building");
+                XSM_DEBUG_GM (DBG_L1, "gxsm4_app_window_init ** DONE with GXSM GUI building. ===============");
         }
 }
 
 static void
 gxsm4_app_window_dispose (GObject *object)
 {
-        g_message ( "gxsm4_app_window_dispose ================================================" );
+        XSM_DEBUG_GM (DBG_L1, "gxsm4_app_window_dispose ============================================" );
         //        Gxsm4appWindow *win;
         //        Gxsm4appWindowPrivate *priv;
 
@@ -108,7 +103,7 @@ gxsm4_app_window_dispose (GObject *object)
 Gxsm4appWindow *
 gxsm4_app_window_new (Gxsm4app *app)
 {
-        g_message ( "gxsm4_app_window_new ================================================" );
+        XSM_DEBUG_GM (DBG_L1, "gxsm4_app_window_new ================================================" );
         GList *windows = gtk_application_get_windows (GTK_APPLICATION (app));
         
 #if COMPLILE_TEST_WAYLAND
@@ -117,7 +112,7 @@ gxsm4_app_window_new (Gxsm4app *app)
         Gxsm4appWindow *window = (Gxsm4appWindow *) g_object_new (GXSM4_APP_WINDOW_TYPE, "application", app, NULL); // X11
 #endif
         windows = g_list_append (windows, window);
-        g_message ("%ul gxsm4_app_window_new *** Window List: #%d", g_get_real_time(), g_list_length (windows));
+        XSM_DEBUG_GM (DBG_L1,"gxsm4_app_window_new **** # Windows in List: 02%d,  time: %ul us", g_list_length (windows), g_get_real_time());
         return window;
 }
 
@@ -129,7 +124,7 @@ gxsm4_app_window_open (Gxsm4appWindow *win,
         gboolean ret=false;
         gchar *basename;
         basename = g_file_get_basename (file);
-        g_message ( "gxsm4_app_window_open =================>  %s  <========================", basename);
+        XSM_DEBUG_GM (DBG_L1, "gxsm4_app_window_open =================>>>  %s", basename);
 
         std::ifstream test;
         test.open (basename, std::ios::in);
@@ -137,9 +132,9 @@ gxsm4_app_window_open (Gxsm4appWindow *win,
         if (test.good ()) {
 
                 test.close ();
-                XSM_DEBUG (DBG_L2, "Attempt to load/import <" << basename << ">");
+                XSM_DEBUG (DBG_L2, "gxsm4_app_window_open ** request to open file <" << basename << ">");
                 
-                // g_message ("GXSM comandline load file <%s>", basename);
+                // XSM_DEBUG_GM (DBG_L1,"GXSM comandline load file <%s>", basename);
                 
                 if (in_active_channel){
                         main_get_gapp ()->xsm->load (basename);
@@ -160,7 +155,7 @@ gxsm4_app_window_open (Gxsm4appWindow *win,
 static void
 gxsm4_app_window_class_init (Gxsm4appWindowClass *klass)
 {
-        g_message ( "gxsm4_app_window_class_init =============================================");
+        XSM_DEBUG_GM (DBG_L1, "gxsm4_app_window_class_init =========================================");
         G_OBJECT_CLASS (klass)->dispose = gxsm4_app_window_dispose;
 
         //gtk_widget_class_set_template_from_resource (GTK_WIDGET_CLASS (class),
