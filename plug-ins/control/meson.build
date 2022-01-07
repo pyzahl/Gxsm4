@@ -6,7 +6,7 @@ plugin_list = [
       'gschemas': [  'org.gnome.gxsm4.pcs.plugin-libspm-scancontrol.gschema.xml',
                      'org.gnome.gxsm4.pcsadjustments.plugin-libspm-scancontrol.gschema.xml' ] },
     { 'name': 'multidim_movie_control' },
-    { 'name': 'inet_json_external_scandata', 'deps': [ soup ],
+    { 'name': 'inet_json_external_scandata', 'sources' : ['jsmn.cpp'], 'deps': [ soup, gsl ],
       'gschemas': [ 'org.gnome.gxsm4.inet_json_settings.gschema.xml',
                     'org.gnome.gxsm4.pcs.plugin-libinet-json-external-scandata.gschema.xml' ] },
 ]
@@ -57,14 +57,12 @@ foreach plugin : plugin_list
     include_directories : [ configuration_inc, appInclude ]
   )
 
-#  shared_module(plugin_name,
-  shared_library(plugin_name,
-#  executable(plugin_name,
+  library(plugin_name,
     plugin_sources,
     plugin_gdbus_src,
-    link_with: [ lib_global_gxsm, lib_utils_gxsm, lib_app_gxsm, lib_pcs_gxsm ],
     dependencies: deps,
-    link_args : all_plugin_link_args,
+    link_with: [ lib_global_gxsm, lib_utils_gxsm, lib_app_gxsm, lib_pcs_gxsm ],
+#    link_args : all_plugin_link_args,
     install: true,
     install_dir: install_path
   )
