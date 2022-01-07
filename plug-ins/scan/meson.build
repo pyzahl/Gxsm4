@@ -2,7 +2,7 @@ plugin_cat = 'scan'
 install_path = gxsm4_plugin_dir / plugin_cat
 
 plugin_list = [
-    { 'name': 'ascii_data_im_export', }
+    { 'name': 'ascii_data_im_export', },
     { 'name': 'sdfimport' },
     { 'name': 'bin_import' },
     { 'name': 'cube_import' },
@@ -19,9 +19,9 @@ plugin_list = [
     { 'name': 'nanoimport' },
     { 'name': 'omicron_io' },
     { 'name': 'png_im_export' },
-    { 'name': 'rhk2000_import.' },
-    { 'name': 'rhk_spm32_import.' },
-    { 'name': 'v5d_export', 'sources': ['v5d_binio', 'v5d_v5d.cpp'] },
+    { 'name': 'rhk2000_import' },
+    { 'name': 'rhk_spm32_import' },
+    { 'name': 'v5d_export', 'sources': ['v5d_binio.cpp', 'v5d_v5d.cpp'] },
     { 'name': 'WSxM_io', 'sources': ['WSxM_header.cpp'] },
 ]
 
