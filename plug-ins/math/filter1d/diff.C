@@ -73,7 +73,7 @@ into a new created math channel.
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
 #include "../../common/pyremote.h"
 
 // Plugin Prototypes
@@ -215,7 +215,7 @@ static void diff_init(void)
    ra -> RemoteCb = &diff_non_interactive;
    ra -> widget = NULL; // dummywidget;
    ra -> data = NULL;
-   gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, ra );
+   main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra );
    PI_DEBUG (DBG_L2, "diff-plugin: Adding new Remote Cmd: diff_PI");
  // remote action stuff
 }
@@ -223,7 +223,7 @@ static void diff_init(void)
 static void diff_non_interactive( GtkWidget *widget , gpointer pc )
 {
    PI_DEBUG (DBG_L2, "diff-plugin: diff is called from script.");
-   gapp->xsm->MathOperation(&diff_run_radius);
+   main_get_gapp()->xsm->MathOperation(&diff_run_radius);
    return;
 }
 
@@ -279,8 +279,8 @@ static gboolean diff_run(Scan *Src, Scan *Dest)
 {
 	if (((Src ? Src->mem2d->get_t_index ():0) == 0 && (Src ? Src->mem2d->GetLayer ():0) == 0) || !d_kernel) {
 		double r = d_radius;
-		gapp->ValueRequest("1D Convol. Filter Size", "Length", "Diff kernel size: s = 1+length",
-				   gapp->xsm->Unity, 0., Src->mem2d->GetNx()/10., ".0f", &r);
+		main_get_gapp()->ValueRequest("1D Convol. Filter Size", "Length", "Diff kernel size: s = 1+length",
+				   main_get_gapp()->xsm->Unity, 0., Src->mem2d->GetNx()/10., ".0f", &r);
 		d_radius = r;
 		if (d_kernel)
 			free (d_kernel);

@@ -69,9 +69,9 @@ According to the manual (V4.1):
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
-#include "core-source/dataio.h"
-#include "core-source/action_id.h"
+#include "plugin.h"
+#include "dataio.h"
+#include "action_id.h"
 
 using namespace std;
 
@@ -162,7 +162,7 @@ static void nanoimport_init(void)
 {
 	PI_DEBUG (DBG_L2, "Nanoimport Plugin Init" );
 	PI_DEBUG (DBG_L2, "-> connecting to load list" );
-	gapp->ConnectPluginToLoadFileEvent (nano_import_filecheck_load_callback);
+	main_get_gapp()->ConnectPluginToLoadFileEvent (nano_import_filecheck_load_callback);
 }
 
 // about-Function
@@ -223,7 +223,7 @@ FIO_STATUS NanoScopeFile::Read(xsm::open_mode mode){
 		return status=FIO_OPEN_ERR;
 
 	// Initialize with default!
-	scan->data.LoadValues(gapp->xsm->Inst, gapp->xsm->hardware);
+	scan->data.LoadValues(main_get_gapp()->xsm->Inst, main_get_gapp()->xsm->hardware);
 
 	scan->data.ui.SetName (strrchr(name,'/')?strrchr(name,'/')+1:name);
 	scan->data.ui.SetOriginalName ("--NA--");
@@ -549,25 +549,25 @@ static void nano_import_filecheck_load_callback (gpointer data){
 		return;
 		// ---------------- not working, need proper file type identification here!!!
 
-		gapp->xsm->ActivateFreeChannel();
-		NanoScopeFile NanoFile(dst = gapp->xsm->GetActiveScan(), *fn);
+		main_get_gapp()->xsm->ActivateFreeChannel();
+		NanoScopeFile NanoFile(dst = main_get_gapp()->xsm->GetActiveScan(), *fn);
 		for(int i=0; i<3; ++i){
 			if(!dst){
-				gapp->xsm->ActivateFreeChannel();
-				dst = gapp->xsm->GetActiveScan();
+				main_get_gapp()->xsm->ActivateFreeChannel();
+				dst = main_get_gapp()->xsm->GetActiveScan();
 			}
 			NanoFile.SetIndex(i);
 			NanoFile.SetScan(dst);
 			if((ret=NanoFile.Read()) != FIO_OK){ 
 				// no more data: remove allocated and unused scan now, force!
 				if(i==0) ret0 = ret;
-//				gapp->xsm->SetMode(-1, ID_CH_M_OFF, TRUE); 
+//				main_get_gapp()->xsm->SetMode(-1, ID_CH_M_OFF, TRUE); 
 				break; 
 			}
 			if(i==0) ret0 = ret;
-			gapp->xsm->ActiveScan->GetDataSet(gapp->xsm->data);
-			gapp->xsm->ActiveScan->auto_display ();
-			gapp->spm_update_all();
+			main_get_gapp()->xsm->ActiveScan->GetDataSet(main_get_gapp()->xsm->data);
+			main_get_gapp()->xsm->ActiveScan->auto_display ();
+			main_get_gapp()->spm_update_all();
 			dst->draw();
 			dst=NULL;
 			if(! NanoFile.MultiImage() ) break;
@@ -578,16 +578,16 @@ static void nano_import_filecheck_load_callback (gpointer data){
 			if (ret != FIO_NOT_RESPONSIBLE_FOR_THAT_FILE)
 				*fn=NULL;
 			// no more data: remove allocated and unused scan now, force!
-//			gapp->xsm->SetMode(-1, ID_CH_M_OFF, TRUE); 
+//			main_get_gapp()->xsm->SetMode(-1, ID_CH_M_OFF, TRUE); 
 			PI_DEBUG (DBG_L2, "Read Error " << ((int)ret) << "!!!!!!!!" );
 		}else{
 			// got it!
 			*fn=NULL;
 			// Now update
 
-			gapp->xsm->ActiveScan->GetDataSet(gapp->xsm->data);
-			gapp->xsm->ActiveScan->auto_display ();
-			gapp->spm_update_all();
+			main_get_gapp()->xsm->ActiveScan->GetDataSet(main_get_gapp()->xsm->data);
+			main_get_gapp()->xsm->ActiveScan->auto_display ();
+			main_get_gapp()->spm_update_all();
 			dst->draw();
 		}
 	}else{
@@ -599,27 +599,27 @@ static void nano_import_filecheck_load_callback (gpointer data){
 static void nanoimport_run(GtkWidget *w, void *data)
 {
 	Scan *dst;
-	gchar *nfname = gapp->file_dialog("NanoScope file to load", NULL, 
+	gchar *nfname = main_get_gapp()->file_dialog("NanoScope file to load", NULL, 
 					  "*", NULL, "NanoImport");
 	if( !nfname ) return;
 
-	gapp->xsm->ActivateFreeChannel();
-	NanoScopeFile NanoFile(dst = gapp->xsm->GetActiveScan(), nfname);
+	main_get_gapp()->xsm->ActivateFreeChannel();
+	NanoScopeFile NanoFile(dst = main_get_gapp()->xsm->GetActiveScan(), nfname);
 	for(int i=0; i<3; ++i){
 		if(!dst){
-			gapp->xsm->ActivateFreeChannel();
-			dst = gapp->xsm->GetActiveScan();
+			main_get_gapp()->xsm->ActivateFreeChannel();
+			dst = main_get_gapp()->xsm->GetActiveScan();
 		}
 		NanoFile.SetIndex(i);
 		NanoFile.SetScan(dst);
 		if(NanoFile.Read() != FIO_OK){ 
 			// no more data: remove allocated and unused scan now, force!
-//			gapp->xsm->SetMode(-1, ID_CH_M_OFF, TRUE); 
+//			main_get_gapp()->xsm->SetMode(-1, ID_CH_M_OFF, TRUE); 
 			break; 
 		}
-		gapp->xsm->ActiveScan->GetDataSet(gapp->xsm->data);
-		gapp->xsm->ActiveScan->auto_display ();
-		gapp->spm_update_all();
+		main_get_gapp()->xsm->ActiveScan->GetDataSet(main_get_gapp()->xsm->data);
+		main_get_gapp()->xsm->ActiveScan->auto_display ();
+		main_get_gapp()->spm_update_all();
 		dst->draw();
 		dst=NULL;
 		if(! NanoFile.MultiImage() ) break;

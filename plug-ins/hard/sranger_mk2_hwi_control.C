@@ -36,15 +36,15 @@
 
 #include <time.h>
 
-#include "core-source/glbvars.h"
+#include "glbvars.h"
 #include "modules/dsp.h"
 #include <fcntl.h>
 #include <sys/ioctl.h>
 
-#include "core-source/gxsm_app.h"
-#include "core-source/gxsm_window.h"
+#include "gxsm_app.h"
+#include "gxsm_window.h"
 
-#include "core-source/action_id.h"
+#include "action_id.h"
 #include "../common/pyremote.h"
 
 #include "sranger_mk2_hwi_control.h"
@@ -405,7 +405,7 @@ public:
                 ra -> data = cb_data;                                      
 
                 
-                gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, ra ); 
+                main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra ); 
                 PI_DEBUG (DBG_L2, "Adding new Remote Cmd: " << ra->cmd ); 
                                                                         
                 // ==================================================
@@ -650,7 +650,7 @@ void DSPControl::AppWindowInit(const gchar *title){
         if (title) { // stage 1
                 PI_DEBUG (DBG_L2, "DSPControl::AppWindowInit -- header bar");
 
-                app_window = gxsm4_app_window_new (GXSM4_APP (gapp->get_application ()));
+                app_window = gxsm4_app_window_new (GXSM4_APP (main_get_gapp()->get_application ()));
                 window = GTK_WINDOW (app_window);
 
                 header_bar = gtk_header_bar_new ();
@@ -681,7 +681,7 @@ void DSPControl::AppWindowInit(const gchar *title){
                                                  this);
 
                 // create window PopUp menu  ---------------------------------------------------------------------
-                dspc_popup_menu = gtk_popover_menu_new_from_model (G_MENU_MODEL (gapp->get_hwi_control_popup_menu ()));
+                dspc_popup_menu = gtk_popover_menu_new_from_model (G_MENU_MODEL (main_get_gapp()->get_hwi_control_popup_menu ()));
 
                 // attach popup menu configuration to tool button --------------------------------
                 GtkWidget *header_menu_button = gtk_menu_button_new ();
@@ -1057,7 +1057,7 @@ DSPControl::DSPControl () {
 	// init to "1V/V"
 	for (int i=0; i<4; ++i)
 		mix_unit2volt_factor[i] = 1.;
-	mix_unit2volt_factor[0] = gapp->xsm->Inst->nAmpere2V (1.);
+	mix_unit2volt_factor[0] = main_get_gapp()->xsm->Inst->nAmpere2V (1.);
     
 	// M-Servo Module
 	xrm.Get ("m_servo_cp", &m_servo[SERVO_CP], "0.0");
@@ -1300,7 +1300,7 @@ DSPControl::DSPControl () {
                         //double f = s*32768.*256./10.;
                         //gchar *txt = g_strdup_printf ("Mixer Signal Input[%d] = %d -> %s in %s, scale=%g, dim=%d, scale from Volts to unit: %g", jj, mix_fbsource[jj], l ? l : "?E?", u ? u : "?E?", s, d, f);
                         //PI_DEBUG_GP (DBG_L1, "%s\n", txt);
-                        //gapp->monitorcontrol->LogEvent ("MK3-SIGNAL-CONFIGURATION-INFO", txt);
+                        //main_get_gapp()->monitorcontrol->LogEvent ("MK3-SIGNAL-CONFIGURATION-INFO", txt);
                         //g_free (txt);
                         
                         // INIT mix_unit2volt_factor[] -- updated in signal change in choice_mixsource_callback()
@@ -1318,14 +1318,14 @@ DSPControl::DSPControl () {
                         const gchar *l = sranger_common_hwi->lookup_dsp_signal_managed (probe_source[jj])->label;
                         gchar *txt = g_strdup_printf ("Probe Signal Input[%d] = %d -> %s", jj, probe_source[jj], l ? l : "?E?");
                         PI_DEBUG_GP (DBG_L1, "%s\n", txt);
-                        gapp->monitorcontrol->LogEvent ("MK3-SIGNAL-CONFIGURATION-INFO", txt);
+                        main_get_gapp()->monitorcontrol->LogEvent ("MK3-SIGNAL-CONFIGURATION-INFO", txt);
                         g_free (txt);
                 }
                 for (int jj=0; jj<2; ++jj){
                         const gchar *l = sranger_common_hwi->lookup_dsp_signal_managed (lockin_input[jj])->label;
                         gchar *txt = g_strdup_printf ("LockIn Signal Input[%d] = %d -> %s", jj, lockin_input[jj], l ? : "?E?"); 
                         PI_DEBUG_GP (DBG_L1, "%s\n", txt);
-                        gapp->monitorcontrol->LogEvent ("MK3-SIGNAL-CONFIGURATION-INFO", txt);
+                        main_get_gapp()->monitorcontrol->LogEvent ("MK3-SIGNAL-CONFIGURATION-INFO", txt);
                         g_free (txt);
                 }
         }                        
@@ -1623,7 +1623,7 @@ DSPControl::DSPControl () {
         const gchar *PDR_gain_label[6] = { "VX", "VY", "VZ", "VX0", "VY0", "VZ0" };
         const gchar *PDR_gain_key[6] = { "vx", "vy", "vz", "vx0", "vy0", "vz0" };
 	for(j=0; j<6; j++) {
-		if (j == 3 && gapp->xsm->Inst->OffsetMode () == OFM_DSP_OFFSET_ADDING)
+		if (j == 3 && main_get_gapp()->xsm->Inst->OffsetMode () == OFM_DSP_OFFSET_ADDING)
                         break;
 
                 if (j == 3){
@@ -1859,7 +1859,7 @@ DSPControl::DSPControl () {
                         if (!zpok){
 #if 0
                                 g_warning ("DSP Z Polarity is not matching GXSM4 configuration. Correct on user response only.");
-                                if (gapp->question_yes_no (N_("Instrument Scanner Z-Polarity Verification failed.\n"
+                                if (main_get_gapp()->question_yes_no (N_("Instrument Scanner Z-Polarity Verification failed.\n"
                                                               "DSP Scanner Z Polarity signal setup is not matching GXSM4 configuration in preferences.\n"
                                                               "==> Critical Advise: Correct now?"),
                                                            NULL,
@@ -1890,8 +1890,8 @@ DSPControl::DSPControl () {
 		int dsp_offset_adding = ox && oy;
 
 		// verify DSP configuration with GXSM4 settings compatibility as good as possible (may be OK as more complicated special OK scenario possible)
-		if ( (   gapp->xsm->Inst->OffsetMode() == OFM_ANALOG_OFFSET_ADDING &&  dsp_offset_adding) // GXSM4  expects external/analog but DSP SET TO ADD OFFSETS?
-		     || (gapp->xsm->Inst->OffsetMode() != OFM_ANALOG_OFFSET_ADDING && !dsp_offset_adding) // GXSM4 expects internal DSP but DSP SET NOT TO ADD OFFSETS?
+		if ( (   main_get_gapp()->xsm->Inst->OffsetMode() == OFM_ANALOG_OFFSET_ADDING &&  dsp_offset_adding) // GXSM4  expects external/analog but DSP SET TO ADD OFFSETS?
+		     || (main_get_gapp()->xsm->Inst->OffsetMode() != OFM_ANALOG_OFFSET_ADDING && !dsp_offset_adding) // GXSM4 expects internal DSP but DSP SET NOT TO ADD OFFSETS?
 		     || !ns[3][2] // suspicious if any one set (custom/unsual) -- just as a warning check and cause message!
 		     || sranger_common_hwi->dsp_signal_lookup_managed[ch_si[3][3]].label
 		     || sranger_common_hwi->dsp_signal_lookup_managed[ch_si[3][4]].label
@@ -1910,7 +1910,7 @@ DSPControl::DSPControl () {
 						      "\n ================================================== \n"
 						      "%s"
 						      "\nSet GXSM4 Preferences as desired to avoid this message or ignore if OK/custom.",
-						      gapp->xsm->Inst->OffsetMode() == OFM_ANALOG_OFFSET_ADDING ?
+						      main_get_gapp()->xsm->Inst->OffsetMode() == OFM_ANALOG_OFFSET_ADDING ?
 						      "Analog/AnalogOffsetAddig = TRUE: Analog OUT0/1 (X/Y Offset signal) are to be used externally or digitally via GXSM-Link to SPD"
 						      : "Analog/AnalogOffsetAddig = FALSE: internal (DSP) X/Y Offset signals should be added digitally to X/Y Scan Rot.",
 						      dsp_offset_adding ?
@@ -1919,35 +1919,35 @@ DSPControl::DSPControl () {
 						      outconfig
 						      );
 
-			gapp->alert (N_("Warning"), N_("GXSM4->InstSPM Offset settings verification with DSP settings failed"), msg, 1);
-                        gapp->monitorcontrol->LogEvent ("GXSM4 startup MK3 DSP signal verification", "WARNING SITUATION FOUND!");
-                        gapp->monitorcontrol->LogEvent ("WARNING", msg);
+			main_get_gapp()->alert (N_("Warning"), N_("GXSM4->InstSPM Offset settings verification with DSP settings failed"), msg, 1);
+                        main_get_gapp()->monitorcontrol->LogEvent ("GXSM4 startup MK3 DSP signal verification", "WARNING SITUATION FOUND!");
+                        main_get_gapp()->monitorcontrol->LogEvent ("WARNING", msg);
 			g_free (msg);
 		} else {
-			gapp->message (N_(outconfig));
-                        gapp->monitorcontrol->LogEvent ("GXSM4 startup MK3 DSP signal verification", "NORMAL");
-                        gapp->monitorcontrol->LogEvent ("INFORMATION", outconfig);
+			main_get_gapp()->message (N_(outconfig));
+                        main_get_gapp()->monitorcontrol->LogEvent ("GXSM4 startup MK3 DSP signal verification", "NORMAL");
+                        main_get_gapp()->monitorcontrol->LogEvent ("INFORMATION", outconfig);
                 }
                 
 		PI_DEBUG (DBG_L1, outconfig);
 		g_free (outconfig);
 
-	} else if (gapp->xsm->Inst->OffsetMode() == OFM_ANALOG_OFFSET_ADDING && (dsp_state_mode & MD_OFFSETADDING ? 1:0)
-		   || gapp->xsm->Inst->OffsetMode() != OFM_ANALOG_OFFSET_ADDING && (dsp_state_mode & MD_OFFSETADDING ? 0:1)
+	} else if (main_get_gapp()->xsm->Inst->OffsetMode() == OFM_ANALOG_OFFSET_ADDING && (dsp_state_mode & MD_OFFSETADDING ? 1:0)
+		   || main_get_gapp()->xsm->Inst->OffsetMode() != OFM_ANALOG_OFFSET_ADDING && (dsp_state_mode & MD_OFFSETADDING ? 0:1)
 		   ) {
 		gchar *msg = g_strdup_printf ("Please check and adjust:"
 					      "\nGXSM4 is set for Offset Adding: %s"
 					      "\nMK2-A810 DSP is configured for: %s"
 					      "\nSee DSP Control->Advanced Folder for DSP reconfiguration of this,"
 					      "\nelse set GXSM4 Preferences as desired..",
-					      gapp->xsm->Inst->OffsetMode() == OFM_ANALOG_OFFSET_ADDING ? "Analog via DAC0/1":"digital (DSP), offset outputs not used!",
+					      main_get_gapp()->xsm->Inst->OffsetMode() == OFM_ANALOG_OFFSET_ADDING ? "Analog via DAC0/1":"digital (DSP), offset outputs not used!",
 					      dsp_state_mode & MD_OFFSETADDING ? "digital adding":"external/analog adding of ADC0/1_o to ADC3/4_s" );
-		gapp->alert (N_("Warning"), N_("GXSM4->InstSPM Offset settings verification with DSP settings failed"), msg, 1);
-                gapp->monitorcontrol->LogEvent ("GXSM4 startup MK2 DSP configuration verification", "WARNING SITUATION FOUND!");
-                gapp->monitorcontrol->LogEvent ("WARNING", msg);
+		main_get_gapp()->alert (N_("Warning"), N_("GXSM4->InstSPM Offset settings verification with DSP settings failed"), msg, 1);
+                main_get_gapp()->monitorcontrol->LogEvent ("GXSM4 startup MK2 DSP configuration verification", "WARNING SITUATION FOUND!");
+                main_get_gapp()->monitorcontrol->LogEvent ("WARNING", msg);
 		g_free (msg);
 	} else {
-                gapp->monitorcontrol->LogEvent ("GXSM4 startup MK2 DSP configuration verification", "NORMAL");
+                main_get_gapp()->monitorcontrol->LogEvent ("GXSM4 startup MK2 DSP configuration verification", "NORMAL");
         }
 
 	// ========================================
@@ -2630,7 +2630,7 @@ DSPControl::DSPControl () {
                 ra -> RemoteCb = (void (*)(GtkWidget*, void*))callback_GVP_store_vp;
                 ra -> widget = dsp_bp->button;
                 ra -> data = this;
-                gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, ra );
+                main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra );
                 PI_DEBUG (DBG_L2, "Adding new Remote Cmd: " << ra->cmd ); 
 
                 // CSS
@@ -2650,7 +2650,7 @@ DSPControl::DSPControl () {
                 ra -> RemoteCb = (void (*)(GtkWidget*, void*))callback_GVP_restore_vp;
                 ra -> widget = dsp_bp->button;
                 ra -> data = this;
-                gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, ra );
+                main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra );
                 PI_DEBUG (DBG_L2, "Adding new Remote Cmd: " << ra->cmd ); 
                 
                 // CSS
@@ -3544,7 +3544,7 @@ void DSPControl::save_values (NcFile *ncf){
 	sranger_mk2_hwi_ncaddvar (ncf, MK2ID"XSM_Inst_YResolution", "0", "FYI only::SRanger/XSM: Instrument Y Resolution (=1DAC * VY in Ang)", "YRes", sranger_mk2_hwi_pi.app->xsm->Inst->YResolution ());
 	sranger_mk2_hwi_ncaddvar (ncf, MK2ID"XSM_Inst_ZResolution", "0", "FYI only::SRanger/XSM: Instrument Z Resolution (=1DAC * VZ in Ang)", "ZRes", sranger_mk2_hwi_pi.app->xsm->Inst->ZResolution ());
 
-	if (gapp->xsm->Inst->OffsetMode() == OFM_ANALOG_OFFSET_ADDING){
+	if (main_get_gapp()->xsm->Inst->OffsetMode() == OFM_ANALOG_OFFSET_ADDING){
 		sranger_mk2_hwi_ncaddvar (ncf, MK2ID"XSM_Inst_VX0", "1", "FYI only::SRanger/XSM: Instrument VX0 (XOffset-gain setting for analog offset adding only)", 
 					  "VX0", sranger_mk2_hwi_pi.app->xsm->Inst->VX0 ());
 		sranger_mk2_hwi_ncaddvar (ncf, MK2ID"XSM_Inst_VY0", "1", "FYI only::SRanger/XSM: Instrument VY0 (YOffset-gain setting for analog offset adding only)", 
@@ -3584,7 +3584,7 @@ void DSPControl::load_values (NcFile *ncf){
 	// Values will also be written in old style DSP Control window for the reason of backwards compatibility
 	// OK -- but will be obsoleted and removed at any later point -- PZ
 	NC_GET_VARIABLE ("sranger_mk2_hwi_bias", &bias);
-	NC_GET_VARIABLE ("sranger_mk2_hwi_bias", &gapp->xsm->data.s.Bias);
+	NC_GET_VARIABLE ("sranger_mk2_hwi_bias", &main_get_gapp()->xsm->data.s.Bias);
         NC_GET_VARIABLE ("sranger_mk2_hwi_set_point1", &mix_set_point[1]);
         NC_GET_VARIABLE ("sranger_mk2_hwi_set_point0", &mix_set_point[0]);
 
@@ -3638,7 +3638,7 @@ void DSPControl::recalculate_dsp_scan_speed_parameters (gint32 &dsp_scan_dnx, gi
 	double fs_dy = frac * sranger_mk2_hwi_pi.app->xsm->Inst->YA2Dig (scan_speed_x_requested) / frq_ref;
 	
  	if ((frac * sranger_common_hwi->Dx / fs_dx) > (1<<15) || (frac * sranger_common_hwi->Dy / fs_dx) > (1<<15)){
-                gapp->message (N_("WARNING:\n"
+                main_get_gapp()->message (N_("WARNING:\n"
                                   "recalculate_dsp_scan_parameters:\n"
                                   "requested/resulting scan speed is too slow.\n"
                                   "Reaching 1<<15 steps inbetween!\n"
@@ -3781,10 +3781,10 @@ void DSPControl::updateDSP(int FbFlg){
         }
         
 // mirror basic parameters to GXSM4 main -- obsolete this soon?
-	gapp->xsm->data.s.Bias = bias;
-	gapp->xsm->data.s.SetPoint = mix_set_point[1];
-	gapp->xsm->data.s.Current = mix_set_point[0];
-	gapp->xsm->data.s.SetPoint = zpos_ref;
+	main_get_gapp()->xsm->data.s.Bias = bias;
+	main_get_gapp()->xsm->data.s.SetPoint = mix_set_point[1];
+	main_get_gapp()->xsm->data.s.Current = mix_set_point[0];
+	main_get_gapp()->xsm->data.s.SetPoint = zpos_ref;
 
 	switch(FbFlg){
 	case DSP_FB_ON: sranger_common_hwi->ExecCmd(DSP_CMD_START); break;
@@ -3805,11 +3805,11 @@ void DSPControl::updateDSP(int FbFlg){
 
 	// Update LDC?
 	if (gtk_check_button_get_active (GTK_CHECK_BUTTON (LDC_status))){
-		gapp->spm_freeze_scanparam(1);
+		main_get_gapp()->spm_freeze_scanparam(1);
 		sranger_common_hwi->set_ldc (dxdt, dydt, dzdt);
 		ldc_flag = 1;
 	} else if (ldc_flag){
-		gapp->spm_thaw_scanparam(1);
+		main_get_gapp()->spm_thaw_scanparam(1);
 		sranger_common_hwi->set_ldc ();
 		ldc_flag = 0;
 	}
@@ -3922,8 +3922,8 @@ void DSPControl::ChangedNotify(Param_Control* pcs, gpointer dspc){
 
 void DSPControl::update_zpos_readings(){
         double zp,a,b;
-        gapp->xsm->hardware->RTQuery ("z", zp, a, b);
-        gchar *info = g_strdup_printf (" (%g Ang)", gapp->xsm->Inst->V2ZAng(zp));
+        main_get_gapp()->xsm->hardware->RTQuery ("z", zp, a, b);
+        gchar *info = g_strdup_printf (" (%g Ang)", main_get_gapp()->xsm->Inst->V2ZAng(zp));
         ZPos_ec->set_info (info);
         ZPos_ec->Put_Value ();
         g_free (info);
@@ -3932,7 +3932,7 @@ void DSPControl::update_zpos_readings(){
 }
 
 guint DSPControl::refresh_zpos_readings(DSPControl *dspc){ 
-	if (gapp->xsm->hardware->IsSuspendWatches ())
+	if (main_get_gapp()->xsm->hardware->IsSuspendWatches ())
 		return TRUE;
 
 	dspc->update_zpos_readings ();
@@ -4061,7 +4061,7 @@ int DSPControl::check_vp_in_progress (const gchar *extra_info){
 	
                 GtkDialogFlags flags =  (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT);
                 GtkWidget *dialog = gtk_dialog_new_with_buttons (N_("Attention -- VP or Scan in progress"),
-                                                                 GTK_WINDOW (gapp->get_app_window ()),
+                                                                 GTK_WINDOW (main_get_gapp()->get_app_window ()),
 								 flags,
                                                                  _("_OK"),
                                                                  GTK_RESPONSE_ACCEPT,
@@ -4148,7 +4148,7 @@ int DSPControl::Probing_exec_IV_callback( GtkWidget *widget, DSPControl *dspc){
 
         if (dspc->IV_auto_flags & FLAG_AUTO_RUN_INITSCRIPT){
                 gchar *tmp = g_strdup ("vp-sts-initial");
-                gapp->SignalRemoteActionToPlugins (&tmp);
+                main_get_gapp()->SignalRemoteActionToPlugins (&tmp);
                 g_free (tmp);
         }
         
@@ -4189,7 +4189,7 @@ int DSPControl::Probing_exec_FZ_callback( GtkWidget *widget, DSPControl *dspc){
 
         if (dspc->FZ_auto_flags & FLAG_AUTO_RUN_INITSCRIPT){
                 gchar *tmp = g_strdup ("vp-fz-initial");
-                gapp->SignalRemoteActionToPlugins (&tmp);
+                main_get_gapp()->SignalRemoteActionToPlugins (&tmp);
                 g_free (tmp);
         }
 
@@ -4232,7 +4232,7 @@ int DSPControl::Probing_exec_PL_callback( GtkWidget *widget, DSPControl *dspc){
 
         if (dspc->PL_auto_flags & FLAG_AUTO_RUN_INITSCRIPT){
                 gchar *tmp = g_strdup ("vp-pl-initial");
-                gapp->SignalRemoteActionToPlugins (&tmp);
+                main_get_gapp()->SignalRemoteActionToPlugins (&tmp);
                 g_free (tmp);
         }
         
@@ -4276,7 +4276,7 @@ int DSPControl::Probing_exec_LP_callback( GtkWidget *widget, DSPControl *dspc){
 
         if (dspc->LP_auto_flags & FLAG_AUTO_RUN_INITSCRIPT){
                 gchar *tmp = g_strdup ("vp-lp-initial");
-                gapp->SignalRemoteActionToPlugins (&tmp);
+                main_get_gapp()->SignalRemoteActionToPlugins (&tmp);
                 g_free (tmp);
         }
 
@@ -4356,7 +4356,7 @@ int DSPControl::Probing_exec_TS_callback( GtkWidget *widget, DSPControl *dspc){
 
         if (dspc->TS_auto_flags & FLAG_AUTO_RUN_INITSCRIPT){
                 gchar *tmp = g_strdup ("vp-ts-initial");
-                gapp->SignalRemoteActionToPlugins (&tmp);
+                main_get_gapp()->SignalRemoteActionToPlugins (&tmp);
                 g_free (tmp);
         }
 
@@ -4401,7 +4401,7 @@ int DSPControl::Probing_exec_GVP_callback( GtkWidget *widget, DSPControl *dspc){
 
         if (dspc->GVP_auto_flags & FLAG_AUTO_RUN_INITSCRIPT){
                 gchar *tmp = g_strdup ("vp-gvp-initial");
-                gapp->SignalRemoteActionToPlugins (&tmp);
+                main_get_gapp()->SignalRemoteActionToPlugins (&tmp);
                 g_free (tmp);
         }
       
@@ -4445,7 +4445,7 @@ int DSPControl::Probing_exec_TK_callback( GtkWidget *widget, DSPControl *dspc){
 
         if (dspc->TK_auto_flags & FLAG_AUTO_RUN_INITSCRIPT){
                 gchar *tmp = g_strdup ("vp-tk-initial");
-                gapp->SignalRemoteActionToPlugins (&tmp);
+                main_get_gapp()->SignalRemoteActionToPlugins (&tmp);
                 g_free (tmp);
         }
 
@@ -4491,7 +4491,7 @@ int DSPControl::Probing_exec_AX_callback( GtkWidget *widget, DSPControl *dspc){
 
         if (dspc->AX_auto_flags & FLAG_AUTO_RUN_INITSCRIPT){
                 gchar *tmp = g_strdup ("vp-ax-initial");
-                gapp->SignalRemoteActionToPlugins (&tmp);
+                main_get_gapp()->SignalRemoteActionToPlugins (&tmp);
                 g_free (tmp);
         }
 
@@ -4656,7 +4656,7 @@ int DSPControl::choice_mixsource_callback (GtkWidget *widget, DSPControl *dspc){
 	PI_DEBUG_GP (DBG_L3, "MIX-a\n");
 	// manage unit -- TDB
 	dspc->mix_unit2volt_factor[mix_ch] = 1.;
-	dspc->mix_unit2volt_factor[0] = gapp->xsm->Inst->nAmpere2V (1.);
+	dspc->mix_unit2volt_factor[0] = main_get_gapp()->xsm->Inst->nAmpere2V (1.);
 
         if (mix_ch > 1){
                 // !strncmp (sranger_common_hwi->dsp_signal_lookup_managed[signal].label, "PLL ", 4)){
@@ -4705,14 +4705,14 @@ int DSPControl::choice_mixsource_callback (GtkWidget *widget, DSPControl *dspc){
 	if (mix_ch == 0){
                 gchar *tmp = g_strdup_printf ("Mix-%s-ITunnel", sranger_common_hwi->dsp_signal_lookup_managed[signal].label);
               PI_DEBUG_GP (DBG_L3, "MIX[0] =>> %s\n", tmp);
-	      gapp->channelselector->SetModeChannelSignal (6+3, tmp, tmp, // "nA", 1.);  //-- fix ??? -- adjusting signal lookup at startup now!
+	      main_get_gapp()->channelselector->SetModeChannelSignal (6+3, tmp, tmp, // "nA", 1.);  //-- fix ??? -- adjusting signal lookup at startup now!
                                                            sranger_common_hwi->dsp_signal_lookup_managed[signal].unit,
                                                            sranger_common_hwi->dsp_signal_lookup_managed[signal].scale*scale_extra);
 	      g_free (tmp);
 	} else {
 	      gchar *tmp = g_strdup_printf ("Mix-%s", sranger_common_hwi->dsp_signal_lookup_managed[signal].label);
               PI_DEBUG_GP (DBG_L3, "MIX[%d) ->> >> %s\n", mix_ch, tmp);
-	      gapp->channelselector->SetModeChannelSignal (6+mix_ch-1, tmp, tmp,
+	      main_get_gapp()->channelselector->SetModeChannelSignal (6+mix_ch-1, tmp, tmp,
                                                            sranger_common_hwi->dsp_signal_lookup_managed[signal].unit,
                                                            sranger_common_hwi->dsp_signal_lookup_managed[signal].scale*scale_extra
                                                            );
@@ -4755,14 +4755,14 @@ void DSPControl::update_sourcesignals_from_DSP_callback (){
                                    sranger_common_hwi->lookup_dsp_signal_managed (si)->scale/(10.0/(32767.*(1<<16)))
                                    );
 		        gchar *tmp = g_strdup_printf ("Mix-%s-ITunnel", sranger_common_hwi->lookup_dsp_signal_managed (si)->label);
-			gapp->channelselector->SetModeChannelSignal(6+3, tmp, tmp, // fix: ?? "nA", 1. ); // now adjusted for IN0 at startup in DSP signal table
+			main_get_gapp()->channelselector->SetModeChannelSignal(6+3, tmp, tmp, // fix: ?? "nA", 1. ); // now adjusted for IN0 at startup in DSP signal table
 								    sranger_common_hwi->lookup_dsp_signal_managed (si)->unit,
 								    sranger_common_hwi->lookup_dsp_signal_managed (si)->scale*scale_extra
 								    );
 			g_free (tmp);
 		} else {
 		        gchar *tmp = g_strdup_printf ("Mix-%s", sranger_common_hwi->lookup_dsp_signal_managed (si)->label);
-			gapp->channelselector->SetModeChannelSignal(6+i-1, tmp, tmp,
+			main_get_gapp()->channelselector->SetModeChannelSignal(6+i-1, tmp, tmp,
 								    sranger_common_hwi->lookup_dsp_signal_managed (si)->unit,
 								    sranger_common_hwi->lookup_dsp_signal_managed (si)->scale*scale_extra
 								    );
@@ -4784,7 +4784,7 @@ void DSPControl::update_sourcesignals_from_DSP_callback (){
 						     ? sranger_common_hwi->dsp_signal_lookup_managed[sranger_common_hwi->query_module_signal_input(DSP_SIGNAL_VECPROBE0_INPUT_ID+vj)].label
 						     : vjfixedlab[vj-4]
 						     );
-			gapp->channelselector->SetModeChannelSignal(17+i, tmp, tmp, 
+			main_get_gapp()->channelselector->SetModeChannelSignal(17+i, tmp, tmp, 
 								    sranger_common_hwi->dsp_signal_lookup_managed[sranger_common_hwi->query_module_signal_input(DSP_SIGNAL_VECPROBE0_INPUT_ID+vj)].unit,
 								    sranger_common_hwi->dsp_signal_lookup_managed[sranger_common_hwi->query_module_signal_input(DSP_SIGNAL_VECPROBE0_INPUT_ID+vj)].scale
 								    );
@@ -4811,7 +4811,7 @@ void DSPControl::update_sourcesignals_from_DSP_callback (){
 
 			g_free(tmp);
 		} else
-			gapp->channelselector->SetModeChannelSignal(17+i,
+			main_get_gapp()->channelselector->SetModeChannelSignal(17+i,
 								    sranger_common_hwi->lookup_dsp_signal_managed (si)->label,
 								    sranger_common_hwi->lookup_dsp_signal_managed (si)->label,
 								    sranger_common_hwi->lookup_dsp_signal_managed (si)->unit,
@@ -4854,7 +4854,7 @@ int DSPControl::choice_scansource_callback (GtkWidget *widget, DSPControl *dspc)
 					     ? sranger_common_hwi->dsp_signal_lookup_managed[sranger_common_hwi->query_module_signal_input(DSP_SIGNAL_VECPROBE0_INPUT_ID+vj)].label
 					     : vjfixedlab[vj-4]
 					     );
-		gapp->channelselector->SetModeChannelSignal(17+channel, tmp, tmp, 
+		main_get_gapp()->channelselector->SetModeChannelSignal(17+channel, tmp, tmp, 
 							    sranger_common_hwi->dsp_signal_lookup_managed[sranger_common_hwi->query_module_signal_input(DSP_SIGNAL_VECPROBE0_INPUT_ID+vj)].unit,
 							    sranger_common_hwi->dsp_signal_lookup_managed[sranger_common_hwi->query_module_signal_input(DSP_SIGNAL_VECPROBE0_INPUT_ID+vj)].scale
 							    );
@@ -4879,7 +4879,7 @@ int DSPControl::choice_scansource_callback (GtkWidget *widget, DSPControl *dspc)
 
 		g_free(tmp);
 	} else
-	        gapp->channelselector->SetModeChannelSignal(17+channel, 
+	        main_get_gapp()->channelselector->SetModeChannelSignal(17+channel, 
 							    sranger_common_hwi->lookup_dsp_signal_managed (si)->label,
 							    sranger_common_hwi->lookup_dsp_signal_managed (si)->label,
 							    sranger_common_hwi->lookup_dsp_signal_managed (si)->unit,
@@ -4982,27 +4982,27 @@ int DSPControl::choice_Ampl_callback (GtkWidget *widget, DSPControl *dspc){
 	gint j = GPOINTER_TO_INT (g_object_get_data( G_OBJECT (widget), "chindex"));
 	switch(j){
 	case 0: sranger_mk2_hwi_pi.app->xsm->Inst->VX(i);
-		if (gapp->xsm->Inst->OffsetMode() == OFM_DSP_OFFSET_ADDING)
+		if (main_get_gapp()->xsm->Inst->OffsetMode() == OFM_DSP_OFFSET_ADDING)
 			sranger_mk2_hwi_pi.app->xsm->Inst->VX0(i);
 		break;
 	case 1: sranger_mk2_hwi_pi.app->xsm->Inst->VY(i);
-		if (gapp->xsm->Inst->OffsetMode() == OFM_DSP_OFFSET_ADDING)
+		if (main_get_gapp()->xsm->Inst->OffsetMode() == OFM_DSP_OFFSET_ADDING)
 			sranger_mk2_hwi_pi.app->xsm->Inst->VY0(i);
 		break;
 	case 2: sranger_mk2_hwi_pi.app->xsm->Inst->VZ(i); 
-		if (gapp->xsm->Inst->OffsetMode() == OFM_DSP_OFFSET_ADDING)
+		if (main_get_gapp()->xsm->Inst->OffsetMode() == OFM_DSP_OFFSET_ADDING)
 			sranger_mk2_hwi_pi.app->xsm->Inst->VZ0(i); 
 		break;
 	case 3:
-		if (gapp->xsm->Inst->OffsetMode() == OFM_ANALOG_OFFSET_ADDING)
+		if (main_get_gapp()->xsm->Inst->OffsetMode() == OFM_ANALOG_OFFSET_ADDING)
 			sranger_mk2_hwi_pi.app->xsm->Inst->VX0(i);
 		break;
 	case 4:
-		if (gapp->xsm->Inst->OffsetMode() == OFM_ANALOG_OFFSET_ADDING)
+		if (main_get_gapp()->xsm->Inst->OffsetMode() == OFM_ANALOG_OFFSET_ADDING)
 			sranger_mk2_hwi_pi.app->xsm->Inst->VY0(i);
 		break;
 	case 5:
-		if (gapp->xsm->Inst->OffsetMode() == OFM_ANALOG_OFFSET_ADDING)
+		if (main_get_gapp()->xsm->Inst->OffsetMode() == OFM_ANALOG_OFFSET_ADDING)
 			sranger_mk2_hwi_pi.app->xsm->Inst->VZ0(i);
 		break;
 	}

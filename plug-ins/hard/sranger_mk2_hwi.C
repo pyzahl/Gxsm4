@@ -178,11 +178,11 @@ of the signal magnitude $|\mbox{I}_n|$ according to:
 % CODE snipets for ref.
 % 	// IIR self adaptive filter parameters
 % 	double ca,cb;
-% 	double Ic = gapp->xsm->Inst->VoltIn2Dig (gapp->xsm->Inst->nAmpere2V (1e-3*IIR_I_crossover)); // given in pA
+% 	double Ic = main_get_gapp()->xsm->Inst->VoltIn2Dig (main_get_gapp()->xsm->Inst->nAmpere2V (1e-3*IIR_I_crossover)); // given in pA
 % 	dsp_feedback.ca_q15   = sranger_mk2_hwi_hardware->float_2_sranger_q15 (ca=exp(-2.*M_PI*IIR_f0_max/75000.));
 % 	dsp_feedback.cb_Ic    = (DSP_LONG) (32767. * (cb = IIR_f0_min/IIR_f0_max * Ic));
 % 	dsp_feedback.I_cross  = (int)Ic; 
-% 	dsp_feedback.I_offset = 1+(int)(gapp->xsm->Inst->VoltIn2Dig (gapp->xsm->Inst->nAmpere2V (1e-3*LOG_I_offset))); // given in pA
+% 	dsp_feedback.I_offset = 1+(int)(main_get_gapp()->xsm->Inst->VoltIn2Dig (main_get_gapp()->xsm->Inst->nAmpere2V (1e-3*LOG_I_offset))); // given in pA
 % ... dataprocess...
 % 	if (feedback.I_cross > 0){
 % 		// IIR self adaptive
@@ -1516,9 +1516,9 @@ Special features and behaviors to be documented here!
 #include <sys/ioctl.h>
 
 #include "config.h"
-#include "core-source/plugin.h"
-#include "core-source/xsmhard.h"
-#include "core-source/glbvars.h"
+#include "plugin.h"
+#include "xsmhard.h"
+#include "glbvars.h"
 
 // Define HwI PlugIn reference name here, this is what is listed later within "Preferenced Dialog"
 // i.e. the string selected for "Hardware/Card"!
@@ -1673,7 +1673,7 @@ GxsmPlugin *get_gxsm_plugin_info ( void ){
 XSM_Hardware *get_gxsm_hwi_hardware_class ( void *data ) {
         gchar *tmp;
         g_message ("HWI-DEV-MK2/3: Initialization and DSP verification.");
-        gapp->monitorcontrol->LogEvent (THIS_HWI_PREFIX " XSM_Hardware *get_gxsm_hwi_hardware_class", "Init 1");
+        main_get_gapp()->monitorcontrol->LogEvent (THIS_HWI_PREFIX " XSM_Hardware *get_gxsm_hwi_hardware_class", "Init 1");
 	PI_DEBUG_GP (DBG_L1, THIS_HWI_PREFIX " XSM_Hardware *get_gxsm_hwi_hardware_class:\n"
                      " -> SR-MK2/3 HardwareInterface                        * Init 1\n");
 	sranger_mk2_hwi_configure_string = g_strdup ((gchar*)data);
@@ -1690,7 +1690,7 @@ XSM_Hardware *get_gxsm_hwi_hardware_class ( void *data ) {
                      " -> DSP Mark ID found: MK %d\n", sranger_common_hwi -> get_mark_id());
 
                 tmp = g_strdup_printf ("MK %d", sranger_common_hwi -> get_mark_id());
-                gapp->monitorcontrol->LogEvent ("DSP Mark ID found", tmp); g_free (tmp);
+                main_get_gapp()->monitorcontrol->LogEvent ("DSP Mark ID found", tmp); g_free (tmp);
                 
                 if (sranger_common_hwi->get_mark_id () != 2){ // no MK2 found
 			PI_DEBUG_GP (DBG_L1,
@@ -1712,7 +1712,7 @@ XSM_Hardware *get_gxsm_hwi_hardware_class ( void *data ) {
 					PI_DEBUG_GP (DBG_L1, " -> E01 -- DSP auto detection failed, no MK3 or MK2 found.\n");
 					g_warning (" HwI Initialization error: -> E01 -- DSP auto detection failed, no MK3 or MK2 found.\n"
                                                    " Make sure DSP is plugged in and powered. Check kernel module and permissions.\n");
-                                        gapp->monitorcontrol->LogEvent ("E01 -- DSP auto detection failed, no MK3 or MK2 found.", " ??? ");
+                                        main_get_gapp()->monitorcontrol->LogEvent ("E01 -- DSP auto detection failed, no MK3 or MK2 found.", " ??? ");
 					exit (0);
 					return NULL;
 				}
@@ -1736,7 +1736,7 @@ XSM_Hardware *get_gxsm_hwi_hardware_class ( void *data ) {
 	
         g_message ("HWI-DEV-MK2/3: auto probing succeeded: MK%d DSP identified and ready.", sranger_common_hwi -> get_mark_id ());
 	PI_DEBUG_GP (DBG_L1, " -> probing succeeded: MK%d identified.\n", sranger_common_hwi -> get_mark_id ());
-        gapp->monitorcontrol->LogEvent ("HwI: probing succeeded.", "DSP System Ready.");
+        main_get_gapp()->monitorcontrol->LogEvent ("HwI: probing succeeded.", "DSP System Ready.");
 	return sranger_common_hwi;
 }
 

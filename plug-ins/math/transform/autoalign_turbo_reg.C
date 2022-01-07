@@ -74,7 +74,7 @@
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
 
 #include "autoalign_turbo_reg.h"
 

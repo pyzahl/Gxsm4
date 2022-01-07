@@ -78,7 +78,7 @@ The computation result is placed into an existing math channel, else into a new 
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
 
 // Plugin Prototypes
 static void mirror_y_init( void );

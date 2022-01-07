@@ -271,7 +271,7 @@ gxsm4_gdbus_src = files()
 
 subdir('po')
 subdir('core-source')
-# subdir('plug-ins')   ## still not figure how to build the .so plugin files with libtool ???
+subdir('plug-ins')   ## still not figure how to build the .so plugin files with libtool ???
 subdir('gl-400')
 subdir('palette')
 subdir('icons')

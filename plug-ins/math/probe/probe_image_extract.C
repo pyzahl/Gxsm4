@@ -68,7 +68,7 @@ zero the user is not prompted!
 #include <glib.h>
 #include <math.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
 
 
 static void cancel_callback (GtkWidget *widget, int *status);
@@ -765,13 +765,13 @@ static gboolean probe_image_extract_run(Scan *Src, Scan *Dest)
 		}
 	}
 	
-//	gapp->progress_info_new ("Converting Probe Data...", 1);
-	gapp->progress_info_new ("Converting Probe Data...", 1, GCallback (cancel_callback), &status);
-	gapp->progress_info_set_bar_fraction (0., 1);
-	gapp->progress_info_set_bar_text (" ", 1);
-//	gapp->progress_info_add_info ("Info test text");
-//	gapp->progress_info_set_bar_fraction (0., 2);
-//	gapp->progress_info_set_bar_text ("0 %% ", 2);
+//	main_get_gapp()->progress_info_new ("Converting Probe Data...", 1);
+	main_get_gapp()->progress_info_new ("Converting Probe Data...", 1, GCallback (cancel_callback), &status);
+	main_get_gapp()->progress_info_set_bar_fraction (0., 1);
+	main_get_gapp()->progress_info_set_bar_text (" ", 1);
+//	main_get_gapp()->progress_info_add_info ("Info test text");
+//	main_get_gapp()->progress_info_set_bar_fraction (0., 2);
+//	main_get_gapp()->progress_info_set_bar_text ("0 %% ", 2);
 /*
   std::cout << "Total rows: " << Dest->mem2d->GetNy () << std::endl;
   std::cout << "Total columns: " << Dest->mem2d->GetNx () << std::endl;
@@ -841,15 +841,15 @@ static gboolean probe_image_extract_run(Scan *Src, Scan *Dest)
 		if (psum > psum_mx)
 			psum_mx = psum;
 		gchar *tmp = g_strdup_printf("%i %%", (int)(100.*psum_mx/MAX_JOB/progress_max_job));
-		gapp->progress_info_set_bar_text (tmp, 1);
+		main_get_gapp()->progress_info_set_bar_text (tmp, 1);
 		g_free (tmp);
-		gapp->check_events ();
+		main_get_gapp()->check_events ();
 	} while (job >= 0);
 
 	std::cout << "PI:run ** finishing up jobs." << std::endl;
 
-	gapp->progress_info_set_bar_text ("finishing up jobs", 1);
-	gapp->check_events ();
+	main_get_gapp()->progress_info_set_bar_text ("finishing up jobs", 1);
+	main_get_gapp()->check_events ();
 
 	for (int jobno=0; jobno < MAX_JOB; ++jobno)
 		g_thread_join (tpi[jobno]);
@@ -859,7 +859,7 @@ static gboolean probe_image_extract_run(Scan *Src, Scan *Dest)
 	delete [] matrix;
         if (cache)
                 g_free (cache);
-	gapp->progress_info_close ();
+	main_get_gapp()->progress_info_close ();
 	return MATH_OK;
 }
 

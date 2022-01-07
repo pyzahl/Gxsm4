@@ -65,10 +65,10 @@ Registers itself for loading files with the filename suffix ".std".
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
-#include "core-source/dataio.h"
-#include "core-source/action_id.h"
-#include "core-source/util.h"
+#include "plugin.h"
+#include "dataio.h"
+#include "action_id.h"
+#include "util.h"
 
 #ifndef WORDS_BIGENDIAN 
 #define WORDS_BIGENDIAN 0
@@ -507,7 +507,7 @@ FIO_STATUS UK2k_ImExportFile::spmReadPar(const gchar *fname, const gchar *fsuffi
 	dz/=16384;
 	PI_DEBUG (DBG_L2, "UK2k z unit: nm" );
 	PI_DEBUG (DBG_L2, "UK2k dz:" << dz );
-	UnitObj *zu = gapp->xsm->MakeUnit ("nm","nm");
+	UnitObj *zu = main_get_gapp()->xsm->MakeUnit ("nm","nm");
 	scan->data.s.dz = zu->Usr2Base(dz);
 	scan->data.SetZUnit(zu);
 	delete zu;
@@ -574,10 +574,10 @@ static void UK2k_import_filecheck_load_callback (gpointer data ){
 		PI_DEBUG (DBG_L2, "Check File: UK2k_import_filecheck_load_callback called with >"
 		     << *fn << "<" );
 
-		Scan *dst = gapp->xsm->GetActiveScan();
+		Scan *dst = main_get_gapp()->xsm->GetActiveScan();
 		if(!dst){
-			gapp->xsm->ActivateFreeChannel();
-			dst = gapp->xsm->GetActiveScan();
+			main_get_gapp()->xsm->ActivateFreeChannel();
+			dst = main_get_gapp()->xsm->GetActiveScan();
 		}
 		UK2k_ImExportFile fileobj (dst, *fn);
 
@@ -590,14 +590,14 @@ static void UK2k_import_filecheck_load_callback (gpointer data ){
 			} else 
 				PI_DEBUG (DBG_L2, "UK2k: Not a UK2k file!" );
 			// no more data: remove allocated and unused scan now, force!
-//			gapp->xsm->SetMode(-1, ID_CH_M_OFF, TRUE);
+//			main_get_gapp()->xsm->SetMode(-1, ID_CH_M_OFF, TRUE);
 		}else{
 			// got it!
 			*fn=NULL;
 
 			// Now update gxsm main window data fields
-			gapp->xsm->ActiveScan->GetDataSet(gapp->xsm->data);
-			gapp->spm_update_all();
+			main_get_gapp()->xsm->ActiveScan->GetDataSet(main_get_gapp()->xsm->data);
+			main_get_gapp()->spm_update_all();
 			dst->draw();
 		}
 	}else{
@@ -612,7 +612,7 @@ static void UK2k_import_filecheck_load_callback (gpointer data ){
 //		PI_DEBUG (DBG_L2, "Check File: UK2k_import_filecheck_save_callback called with >"
 //		     << *fn << "<" );
 
-//		UK2k_ImExportFile fileobj (src = gapp->xsm->GetActiveScan(), *fn);
+//		UK2k_ImExportFile fileobj (src = main_get_gapp()->xsm->GetActiveScan(), *fn);
 
 //		FIO_STATUS ret;
 //		ret = fileobj.Write();
@@ -637,8 +637,8 @@ static void UK2k_import_import_callback (GSimpleAction *simple, GVariant *parame
 //				  "known extensions: std, stp, STD, STP",
 	gchar **help = g_strsplit (UK2k_import_pi.help, ",", 2);
 	gchar *dlgid = g_strconcat (UK2k_import_pi.name, "-import\n", UK2k_import_pi.info, NULL);
-	gchar *fn = gapp->file_dialog_load (help[0], NULL, file_mask, NULL);
-	//	gchar *fn = gapp->file_dialog("UK2k Import", NULL,
+	gchar *fn = main_get_gapp()->file_dialog_load (help[0], NULL, file_mask, NULL);
+	//	gchar *fn = main_get_gapp()->file_dialog("UK2k Import", NULL,
 	//				  "*.std",
 	//				  NULL, "UK2k-Import");
 	if (fn){
@@ -653,8 +653,8 @@ static void UK2k_import_export_callback (GSimpleAction *simple, GVariant *parame
 //				      "known extensions: std, stp, STD, STP",
 //	gchar **help = g_strsplit (UK2k_import_pi.help, ",", 2);
 //	gchar *dlgid = g_strconcat (UK2k_import_pi.name, "-import\n", UK2k_import_pi.info, NULL);
-//  *** gchar *fn = gapp->file_dialog_save (help[1], NULL, file_mask, NULL);
-//	gchar *fn = gapp->file_dialog("UK2k Export", NULL,
+//  *** gchar *fn = main_get_gapp()->file_dialog_save (help[1], NULL, file_mask, NULL);
+//	gchar *fn = main_get_gapp()->file_dialog("UK2k Export", NULL,
 //				      "*.std",
 //				      "","UK2k-Export");
 

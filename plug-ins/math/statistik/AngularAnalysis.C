@@ -101,7 +101,7 @@ Call \GxsmMenu{Math/Statistics/Angular Analysis}.
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
 
 // Plugin Prototypes
 static void AngularAnalysis_init( void );
@@ -407,7 +407,7 @@ static gboolean AngularAnalysis_run(Scan *Src, Scan *Dest)
 	for(int line=FacetRadius; line<Src->mem2d->GetNy()-FacetRadius; ++line){
 		gchar *mld = g_strdup_printf("Calculating Angular Dist: %d/%d", 
 					     line, Dest->data.s.ny);
-		gapp->SetStatus(mld); 
+		main_get_gapp()->SetStatus(mld); 
 		g_free(mld);
 		SET_PROGRESS((double)line/(double)Dest->data.s.ny);
 		for(int row=FacetRadius; row<Src->mem2d->GetNx()-FacetRadius; ++row){

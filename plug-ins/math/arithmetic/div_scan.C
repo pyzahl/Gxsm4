@@ -79,7 +79,7 @@ is kept unchanged.
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
 
 // Plugin Prototypes
 static void div_scan_init( void );

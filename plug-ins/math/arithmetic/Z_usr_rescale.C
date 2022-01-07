@@ -82,7 +82,7 @@ into a new created math channel. The result is of type \GxsmEmph{float}.
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
 
 
 
@@ -243,7 +243,7 @@ static gboolean Z_usr_rescale_run(Scan *Src, Scan *Dest)
 	double factor[Dest->mem2d->GetNv ()];
 	double offset[Dest->mem2d->GetNv ()];
 
-	const gchar *fname = gapp->file_dialog("Usr Linear Z Rescale Coefficients"," ","*","","Z_usr_rescale");
+	const gchar *fname = main_get_gapp()->file_dialog("Usr Linear Z Rescale Coefficients"," ","*","","Z_usr_rescale");
 	if (fname == NULL) return MATH_OK;
 
 	skltab.open (fname, std::ios::in);

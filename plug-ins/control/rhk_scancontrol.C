@@ -89,13 +89,13 @@
 //#include <gdk>
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
-#include "core-source/unit.h"
-#include "core-source/pcs.h"
-#include "core-source/xsmtypes.h"
-#include "core-source/glbvars.h"
-#include "core-source/action_id.h"
-#include "core-source/instrument.h"
+#include "plugin.h"
+#include "unit.h"
+#include "pcs.h"
+#include "xsmtypes.h"
+#include "glbvars.h"
+#include "action_id.h"
+#include "instrument.h"
 #include "include/dsp-pci32/xsm/xsmcmd.h"
 
 typedef enum SCAN_DIR { SCAN_XY, SCAN_YX };

@@ -125,8 +125,8 @@ This plugin is under construction.
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
-#include "core-source/app_profile.h"
+#include "plugin.h"
+#include "app_profile.h"
 
 // Plugin Prototypes
 static void timedomfftfilter_init( void );
@@ -287,11 +287,11 @@ static gboolean timedomfftfilter_run(Scan *Src1, Scan *Src2, Scan *Dest)
 		return MATH_SIZEERR;
 	}
 
-	gapp->progress_info_new ("Time Domain FFT Band Filter", 1);
-	gapp->progress_info_set_bar_fraction (0.);
-	gapp->progress_info_set_bar_text ("Step");
+	main_get_gapp()->progress_info_new ("Time Domain FFT Band Filter", 1);
+	main_get_gapp()->progress_info_set_bar_fraction (0.);
+	main_get_gapp()->progress_info_set_bar_text ("Step");
 
-	gapp->progress_info_set_bar_fraction (0.1);
+	main_get_gapp()->progress_info_set_bar_fraction (0.1);
 
 	int length = Src1->mem2d->GetNx() * 2 * Src1->mem2d->GetNy();
 	int xlen  = length/2+1;
@@ -332,7 +332,7 @@ static gboolean timedomfftfilter_run(Scan *Src1, Scan *Src2, Scan *Dest)
 		for (int col=0; col < Src2->mem2d->GetNx(); col++)
 			in[ti++] = Src2->mem2d->GetDataPkt(col,line);
 	}
-	gapp->progress_info_set_bar_fraction (0.2);
+	main_get_gapp()->progress_info_set_bar_fraction (0.2);
 
 	std::ofstream f;
 	f.open("/tmp/timedom.asc", std::ios::out | std::ios::trunc);
@@ -341,7 +341,7 @@ static gboolean timedomfftfilter_run(Scan *Src1, Scan *Src2, Scan *Dest)
 	f.close ();
 
 	std::cout << "tdom plan fwd" << std::endl;
-	gapp->progress_info_set_bar_fraction (0.22);
+	main_get_gapp()->progress_info_set_bar_fraction (0.22);
 
 	// create plan for in-place forward transform
 	fftw_plan plan    = fftw_plan_dft_r2c_1d (length, out, dat, FFTW_ESTIMATE);
@@ -352,13 +352,13 @@ static gboolean timedomfftfilter_run(Scan *Src1, Scan *Src2, Scan *Dest)
 	}
 
 	std::cout << "tdom exec fwd" << std::endl;
-	gapp->progress_info_set_bar_fraction (0.24);
+	main_get_gapp()->progress_info_set_bar_fraction (0.24);
 
 	// compute 1D transform using in-place fourier transform
 	fftw_execute (plan);
 
 	std::cout << "tdom dump spec" << std::endl;
-	gapp->progress_info_set_bar_fraction (0.4);
+	main_get_gapp()->progress_info_set_bar_fraction (0.4);
 
 	UnitObj *ipix = new UnitObj("1","1","g","inv pixel");
 	ipix->SetAlias ("Unity");
@@ -391,16 +391,16 @@ static gboolean timedomfftfilter_run(Scan *Src1, Scan *Src2, Scan *Dest)
 	timedomfftfilter_pi.app->xsm->AddProfile (pc); // give it to Surface, it takes care about removing it...
 	pc->unref (); // nothing depends on it, so decrement refcount
 
-	gapp->progress_info_set_bar_fraction (0.45);
+	main_get_gapp()->progress_info_set_bar_fraction (0.45);
 
 
 	double stopbc = 6400.;
-	gapp->ValueRequest("Filter stop band center", "inv-pixel", "Stop Band Position",
-			   gapp->xsm->Unity, 0., 1e6,".0f", &stopbc);
+	main_get_gapp()->ValueRequest("Filter stop band center", "inv-pixel", "Stop Band Position",
+			   main_get_gapp()->xsm->Unity, 0., 1e6,".0f", &stopbc);
 
 	double bandw2 = 2500.;
-	gapp->ValueRequest("Filter stop band width/2", "inv-pixel", "Stop Band half width",
-			   gapp->xsm->Unity, 0., 1e5,".0f", &bandw2);
+	main_get_gapp()->ValueRequest("Filter stop band width/2", "inv-pixel", "Stop Band half width",
+			   main_get_gapp()->xsm->Unity, 0., 1e5,".0f", &bandw2);
 
 
 
@@ -425,7 +425,7 @@ static gboolean timedomfftfilter_run(Scan *Src1, Scan *Src2, Scan *Dest)
 	}
 	f.close ();
 
-	gapp->progress_info_set_bar_fraction (0.5);
+	main_get_gapp()->progress_info_set_bar_fraction (0.5);
 	std::cout << "tdom aply filter plan" << std::endl;
 
 	// destroy plan
@@ -439,13 +439,13 @@ static gboolean timedomfftfilter_run(Scan *Src1, Scan *Src2, Scan *Dest)
 		return MATH_LIB_ERR;
 	}
 
-	gapp->progress_info_set_bar_fraction (0.6);
+	main_get_gapp()->progress_info_set_bar_fraction (0.6);
 	std::cout << "tdom exec rev" << std::endl;
 
 	// compute 2D transform using in-place fourier transform
 	fftw_execute (plan);
 
-	gapp->progress_info_set_bar_fraction (0.8);
+	main_get_gapp()->progress_info_set_bar_fraction (0.8);
 	std::cout << "tdom gen img" << std::endl;
 
 	// convert complex data to image
@@ -461,7 +461,7 @@ static gboolean timedomfftfilter_run(Scan *Src1, Scan *Src2, Scan *Dest)
 		}
 	}
 
-	gapp->progress_info_set_bar_fraction (1.);
+	main_get_gapp()->progress_info_set_bar_fraction (1.);
 
 	// destroy plan
 	fftw_destroy_plan(plan); 
@@ -469,7 +469,7 @@ static gboolean timedomfftfilter_run(Scan *Src1, Scan *Src2, Scan *Dest)
 	// free real/complex data memory
 	fftw_free (dat);
 
-	gapp->progress_info_close ();
+	main_get_gapp()->progress_info_close ();
 
 	return MATH_OK;
 }

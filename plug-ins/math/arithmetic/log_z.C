@@ -74,7 +74,7 @@ into a new created math channel. The result is of type \GxsmEmph{float}.
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
 
 // Plugin Prototypes
 static void log_z_init( void );

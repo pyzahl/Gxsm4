@@ -56,9 +56,9 @@ may be possible. Stay tuned.)
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
 #include "epsfutils.h"
-#include "core-source/glbvars.h"
+#include "glbvars.h"
 #include "printer.h"
 #include "pyremote.h"
 #include "mkicons.h"
@@ -206,8 +206,8 @@ PIPrintPSData::PIPrintPSData(){
 
 	PI_DEBUG (DBG_L4, "PIPrintPSData::PIPrintPSData()");
 
-	if( gapp->xsm->ActiveScan ){
-		tmp = g_strdup(gapp->xsm->ActiveScan->data.ui.name);
+	if( main_get_gapp()->xsm->ActiveScan ){
+		tmp = g_strdup(main_get_gapp()->xsm->ActiveScan->data.ui.name);
 		if(strrchr(tmp, '.') > tmp){
 			*(p = strrchr(tmp, '.')) = 0;
 			fname  = g_strconcat(tmp, ".ps", NULL);
@@ -533,7 +533,7 @@ static void printer_init(void)
    ra -> RemoteCb = &printer_run_non_interactive;
    ra -> widget = dummywidget;
    ra -> data = NULL;
-   gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, ra );
+   main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra );
    PI_DEBUG (DBG_L2, "printer-plugin: Adding new Remote Cmd: print_PI");
  // remote action stuff
 }
@@ -621,7 +621,7 @@ void PIPrintPS(PIPrintPSData *ppsd){
 	gchar *fname;
 	Scan *ActiveScan;
 	GError *printer_failure;
-	ActiveScan = gapp->xsm->GetActiveScan();
+	ActiveScan = main_get_gapp()->xsm->GetActiveScan();
 	
 	if(!ActiveScan)
 		XSM_SHOW_ALERT(ERR_SORRY, ERR_NOACTIVESCAN,HINT_ACTIVATESCAN,1);

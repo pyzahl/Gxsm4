@@ -61,7 +61,7 @@ using namespace std;
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
 
 static void editnc_about( void );
 static void editnc_run(GtkWidget *w, void *data);
@@ -121,7 +121,7 @@ public:
 		static void apply_info_callback(GtkDialog * dialog, gint button_number, DumpableNcFile *dnc);
 
 		static void show_info_callback (GtkWidget *widget, gchar *message){
-			gapp->message (message);
+			main_get_gapp()->message (message);
 		};
 		static void free_info_elem(gpointer txt, gpointer data){ g_free((gchar*) txt); };
 
@@ -182,7 +182,7 @@ static void editnc_showfile(gchar *filename)
 static void editnc_init( void ){
 		PI_DEBUG (DBG_L2, "editnc_init" );
 		//  editnc_pi.app->ConnectPluginToGetNCInfoEvent (editnc_showfile);
-		gapp->ConnectPluginToGetNCInfoEvent (editnc_showfile);
+		main_get_gapp()->ConnectPluginToGetNCInfoEvent (editnc_showfile);
 }
 
 static void editnc_cleanup( void ){
@@ -286,7 +286,7 @@ void DumpableNcFile::apply_info_callback(GtkDialog * dialog, gint button_number,
 			dnc->dumpall();
 			break;
 		case 1: 
-			gapp->message ("Sorry, no write back until now !");
+			main_get_gapp()->message ("Sorry, no write back until now !");
 			break;
 		case 2: 
 			gtk_dialog_close(dialog); 

@@ -70,7 +70,7 @@ into a new created math channel.
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
 
 // Plugin Prototypes
 static void to_float_init( void );
@@ -240,14 +240,14 @@ static gboolean to_float_run(Scan *Src, Scan *Dest)
 		if (tf < 0) tf = 0;
 		vf=Src->mem2d->GetNv ()-1;
 
-		gapp->progress_info_new ("Multidimenssional Conversion", 1);
-		gapp->progress_info_set_bar_fraction (0., 1);
-		gapp->progress_info_set_bar_text ("Time", 1);
+		main_get_gapp()->progress_info_new ("Multidimenssional Conversion", 1);
+		main_get_gapp()->progress_info_set_bar_fraction (0., 1);
+		main_get_gapp()->progress_info_set_bar_text ("Time", 1);
 		
 		int ntimes_tmp = tf-ti+1;
 		for (int time_index=ti; time_index <= tf; ++time_index){
 			Mem2d *m = Src->mem2d_time_element (time_index);
-			gapp->progress_info_set_bar_fraction ((gdouble)(time_index-ti)/(gdouble)ntimes_tmp, 1);
+			main_get_gapp()->progress_info_set_bar_fraction ((gdouble)(time_index-ti)/(gdouble)ntimes_tmp, 1);
 
 			//			Dest->mem2d->copy(m, -1, -1, vi, vf);
 			
@@ -268,7 +268,7 @@ static gboolean to_float_run(Scan *Src, Scan *Dest)
 		Dest->data.s.ntimes = ntimes_tmp;
 		Dest->data.s.nvalues=Dest->mem2d->GetNv ();
 
-		gapp->progress_info_close ();
+		main_get_gapp()->progress_info_close ();
 		Dest->retrieve_time_element (0);
 		Dest->mem2d->SetLayer(0);
 	}

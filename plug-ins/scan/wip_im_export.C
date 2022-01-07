@@ -55,13 +55,13 @@ The plug-in is called by \GxsmMenu{File/Import/WIP}.
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
-#include "core-source/dataio.h"
-#include "core-source/action_id.h"
-#include "core-source/util.h"
-#include "core-source/xsmtypes.h"
-#include "core-source/glbvars.h"
-#include "core-source/gapp_service.h"
+#include "plugin.h"
+#include "dataio.h"
+#include "action_id.h"
+#include "util.h"
+#include "xsmtypes.h"
+#include "glbvars.h"
+#include "gapp_service.h"
 
 // custom includes go here
 // -- START EDIT --
@@ -834,10 +834,10 @@ static void wip_im_export_filecheck_load_callback (gpointer data ){
 	if (*fn){
 		PI_DEBUG (DBG_L2, "checking for WIP file type >" << *fn << "<" );
 
-		Scan *dst = gapp->xsm->GetActiveScan();
+		Scan *dst = main_get_gapp()->xsm->GetActiveScan();
 		if(!dst){ 
-			gapp->xsm->ActivateFreeChannel();
-			dst = gapp->xsm->GetActiveScan();
+			main_get_gapp()->xsm->ActivateFreeChannel();
+			dst = main_get_gapp()->xsm->GetActiveScan();
 		}
 		Wip_ImExportFile fileobj (dst, *fn);
 
@@ -847,15 +847,15 @@ static void wip_im_export_filecheck_load_callback (gpointer data ){
 			if (ret != FIO_NOT_RESPONSIBLE_FOR_THAT_FILE)
 				*fn=NULL;
 			// no more data: remove allocated and unused scan now, force!
-                        //			gapp->xsm->SetMode(-1, ID_CH_M_OFF, TRUE); 
+                        //			main_get_gapp()->xsm->SetMode(-1, ID_CH_M_OFF, TRUE); 
 			PI_DEBUG (DBG_L2, "Read Error " << ((int)ret) );
 		}else{
 			// got it!
 			*fn=NULL;
 
 			// Now update gxsm main window data fields
-			gapp->xsm->ActiveScan->GetDataSet(gapp->xsm->data);
-			gapp->spm_update_all();
+			main_get_gapp()->xsm->ActiveScan->GetDataSet(main_get_gapp()->xsm->data);
+			main_get_gapp()->spm_update_all();
 			dst->draw();
 		}
 	}else{
@@ -869,7 +869,7 @@ static void wip_im_export_filecheck_save_callback (gpointer data ){
 		Scan *src;
 		PI_DEBUG (DBG_L2, "Saving/(checking) >" << *fn << "<" );
 
-		Wip_ImExportFile fileobj (src = gapp->xsm->GetActiveScan(), *fn);
+		Wip_ImExportFile fileobj (src = main_get_gapp()->xsm->GetActiveScan(), *fn);
 
 		FIO_STATUS ret;
 		ret = fileobj.Write(); 
@@ -893,7 +893,7 @@ static void wip_im_export_filecheck_save_callback (gpointer data ){
 static void wip_im_export_import_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data){
 	gchar **help = g_strsplit (wip_im_export_pi.help, ",", 2);
 	gchar *dlgid = g_strconcat (wip_im_export_pi.name, "-import\n", wip_im_export_pi.info, NULL);
-	gchar *fn = gapp->file_dialog_load (help[0], NULL, file_mask, NULL);
+	gchar *fn = main_get_gapp()->file_dialog_load (help[0], NULL, file_mask, NULL);
 	g_strfreev (help); 
 	g_free (dlgid);
 	if (fn){
@@ -905,7 +905,7 @@ static void wip_im_export_import_callback (GSimpleAction *simple, GVariant *para
 static void wip_im_export_export_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data){
 	gchar **help = g_strsplit (wip_im_export_pi.help, ",", 2);
 	gchar *dlgid = g_strconcat (wip_im_export_pi.name, "-export\n", wip_im_export_pi.info, NULL);
-	gchar *fn = gapp->file_dialog_save (help[1], NULL, file_mask, NULL);
+	gchar *fn = main_get_gapp()->file_dialog_save (help[1], NULL, file_mask, NULL);
 	g_strfreev (help); 
 	g_free (dlgid);
 	if (fn){

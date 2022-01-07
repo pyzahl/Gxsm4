@@ -74,7 +74,7 @@ into a new created math channel.
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
 #include "../../common/pyremote.h"
 
 // Plugin Prototypes
@@ -208,7 +208,7 @@ static void edge_init(void)
   ra -> RemoteCb = &edge_non_interactive;
   ra -> widget = dummywidget;
   ra -> data = NULL;
-  gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, ra );
+  main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra );
   PI_DEBUG (DBG_L2, "edge-plugin: Adding new Remote Cmd: edge_PI");
 // remote action stuff
 }
@@ -221,7 +221,7 @@ static void edge_non_interactive( GtkWidget *widget , gpointer pc )
 //  cout << "pc: " << ((gchar**)pc)[2] << endl;
 //  cout << "pc: " << atof(((gchar**)pc)[2]) << endl;
 
-  gapp->xsm->MathOperation(&edge_run_radius);
+  main_get_gapp()->xsm->MathOperation(&edge_run_radius);
   return;
 
 }
@@ -406,8 +406,8 @@ void setup_multidimensional_data_copy (const gchar *title, Scan *src, int &ti, i
 static gboolean edge_run___for_all_vt(Scan *Src, Scan *Dest)
 {
 	double r = 5.;    // Get Radius
-	gapp->ValueRequest("2D Convol. Filter Size", "Radius", "Edge kernel size: s = 1+radius  LoG detect sigma=r/2",
-			   gapp->xsm->Unity, 0., Src->mem2d->GetNx()/10., ".0f", &r);
+	main_get_gapp()->ValueRequest("2D Convol. Filter Size", "Radius", "Edge kernel size: s = 1+radius  LoG detect sigma=r/2",
+			   main_get_gapp()->xsm->Unity, 0., Src->mem2d->GetNx()/10., ".0f", &r);
 
 	int    s = 1+(int)(r + .9); // calc. approx Matrix Radius
 	MemEdgeKrn krn(r,r, s,s); // Setup Kernelobject
@@ -428,18 +428,18 @@ static gboolean edge_run___for_all_vt(Scan *Src, Scan *Dest)
 			setup_multidimensional_data_copy ("Multidimensional Edge", Src, ti, tf, vi, vf);
 		} while (ti > tf || vi > vf);
 
-		gapp->progress_info_new ("Multidimenssional Edge", 2);
-		gapp->progress_info_set_bar_fraction (0., 1);
-		gapp->progress_info_set_bar_fraction (0., 2);
-		gapp->progress_info_set_bar_text ("Time", 1);
-		gapp->progress_info_set_bar_text ("Value", 2);
+		main_get_gapp()->progress_info_new ("Multidimenssional Edge", 2);
+		main_get_gapp()->progress_info_set_bar_fraction (0., 1);
+		main_get_gapp()->progress_info_set_bar_fraction (0., 2);
+		main_get_gapp()->progress_info_set_bar_text ("Time", 1);
+		main_get_gapp()->progress_info_set_bar_text ("Value", 2);
 	}
 
 	int ntimes_tmp = tf-ti+1;
 	for (int time_index=ti; time_index <= tf; ++time_index){
 		Mem2d *m = Src->mem2d_time_element (time_index);
 		if (multidim)
-			gapp->progress_info_set_bar_fraction ((gdouble)(time_index-ti)/(gdouble)ntimes_tmp, 1);
+			main_get_gapp()->progress_info_set_bar_fraction ((gdouble)(time_index-ti)/(gdouble)ntimes_tmp, 1);
 
                 // testing
                 m->data->replace (0., zero_replace_value);
@@ -459,7 +459,7 @@ static gboolean edge_run___for_all_vt(Scan *Src, Scan *Dest)
 	Dest->data.s.nvalues=Dest->mem2d->GetNv ();
 
 	if (multidim){
-		gapp->progress_info_close ();
+		main_get_gapp()->progress_info_close ();
 		Dest->retrieve_time_element (0);
 		Dest->mem2d->SetLayer(0);
 	}
@@ -484,13 +484,13 @@ static gboolean edge_run(Scan *Src, Scan *Dest)
 
                 const gchar* config_label[6] = { "Radius", "Adaptive Threashold", "Background f0", "Zero Replace Mode", "Krn Sigma", NULL };
                 const gchar* config_info[5]  = { "Edge Kernel Radius. Convol Matrix[2R+2, 2R+1]", "Adaptive Threashold Value", "Replace Background (0) by f0", "Zero Replace none: 0, by value:1, auto:2", "Kernel Sigma x r/2" };
-                UnitObj *config_units[5] { gapp->xsm->Unity,  gapp->xsm->data.Zunit, gapp->xsm->data.Zunit, gapp->xsm->Unity, gapp->xsm->Unity,};
+                UnitObj *config_units[5] { main_get_gapp()->xsm->Unity,  main_get_gapp()->xsm->data.Zunit, main_get_gapp()->xsm->data.Zunit, main_get_gapp()->xsm->Unity, main_get_gapp()->xsm->Unity,};
                 double config_minv[5] = { 0., -1e10, -1e10, 0., -10.};
                 double config_maxv[5] = { Src->mem2d->GetNx()/10., 1e10, 1e10, 10., 10. };
                 const gchar* config_fmt[5]  = { ".0f", "g", "g", "g", "g" };
                 double *config_values[5] = { &edge_radius, &adaptive_threashold, &zero_replace_value, &zero_replace_mode, &krn_sigma };    // Radius, Adaptive Threashold, Mode
 
-                gapp->ValueRequestList ("Edge Filter Configuration",
+                main_get_gapp()->ValueRequestList ("Edge Filter Configuration",
                                         config_label, config_info, config_units,
                                         config_minv, config_maxv, config_fmt,
                                         config_values
@@ -534,16 +534,16 @@ static gboolean edge_run_radius(Scan *Src, Scan *Dest)
 {
 	// equals edge-run except ValueRequest
 	double r = 5.0;    // Get Radius
-	gapp->ValueRequest("2D Convol. Filter Setup", "Radius", "Edge kernel size: s = 1+radius  LoG detect sigma=r/2",
-			   gapp->xsm->Unity, 0., Src->mem2d->GetNx()/10., ".0f", &r);
+	main_get_gapp()->ValueRequest("2D Convol. Filter Setup", "Radius", "Edge kernel size: s = 1+radius  LoG detect sigma=r/2",
+			   main_get_gapp()->xsm->Unity, 0., Src->mem2d->GetNx()/10., ".0f", &r);
 
 	double r_adaptive_min = r;    // Get Radius
-	gapp->ValueRequest("2D Convol. Filter Setup", "Radius Adaptive Min", "Edge kernel size: s = 1+radius  LoG detect sigma=r/2",
-			   gapp->xsm->Unity, 0., Src->mem2d->GetNx()/10., ".0f", &r_adaptive_min);
+	main_get_gapp()->ValueRequest("2D Convol. Filter Setup", "Radius Adaptive Min", "Edge kernel size: s = 1+radius  LoG detect sigma=r/2",
+			   main_get_gapp()->xsm->Unity, 0., Src->mem2d->GetNx()/10., ".0f", &r_adaptive_min);
 
 	double adaptive_threashold = 0.1;    // Get Radius
-	gapp->ValueRequest("2D Convol. Filter Setup", "Threashold", "adaptive threashold",
-			   gapp->xsm->Unity, 0., Src->mem2d->GetNx()/10., ".0f", &adaptive_threashold);
+	main_get_gapp()->ValueRequest("2D Convol. Filter Setup", "Threashold", "adaptive threashold",
+			   main_get_gapp()->xsm->Unity, 0., Src->mem2d->GetNx()/10., ".0f", &adaptive_threashold);
 
         if (zero_replace_value > 0.)
                 Src->mem2d->data->replace (0., zero_replace_value, 0.01);

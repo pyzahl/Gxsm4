@@ -70,18 +70,18 @@ pnglib documentation: \GxsmWebLink{www.libpng.org/pub/png/libpng-manual.html}
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
-#include "core-source/dataio.h"
-#include "core-source/action_id.h"
-#include "core-source/util.h"
-#include "core-source/xsmtypes.h"
-#include "core-source/glbvars.h"
+#include "plugin.h"
+#include "dataio.h"
+#include "action_id.h"
+#include "util.h"
+#include "xsmtypes.h"
+#include "glbvars.h"
 
 // custom includes go here
 // -- START EDIT --
 #include "png.h"        /* libpng header; includes zlib.h */
-#include "core-source/readpng.h"    /* typedefs, common macros, public prototypes */
-#include "core-source/writepng.h"    /* typedefs, common macros, public prototypes */
+#include "readpng.h"    /* typedefs, common macros, public prototypes */
+#include "writepng.h"    /* typedefs, common macros, public prototypes */
 // -- END EDIT --
 
 // enable std namespace
@@ -235,7 +235,7 @@ static void png_im_export_configure(void)
 
 		GtkDialogFlags flags =  (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT);
 		GtkWidget *dialog = gtk_dialog_new_with_buttons (N_("PNG Multi Image Import"),
-								 GTK_WINDOW (gapp->get_app_window ()),
+								 GTK_WINDOW (main_get_gapp()->get_app_window ()),
 								 flags,
 								 _("_OK"),
 								 GTK_RESPONSE_ACCEPT,
@@ -348,13 +348,13 @@ FIO_STATUS PNG_ImExportFile::Read(xsm::open_mode mode){
 		int index_time=0;
 		ret=FIO_OK;
 		png_im_export_configure ();
-		gapp->progress_info_new ("PNG Multi Image Import", 2);
-		gapp->progress_info_set_bar_fraction (0., 1);
-		gapp->progress_info_set_bar_fraction (0., 2);
-		gapp->progress_info_set_bar_text (fname, 1);
+		main_get_gapp()->progress_info_new ("PNG Multi Image Import", 2);
+		main_get_gapp()->progress_info_set_bar_fraction (0., 1);
+		main_get_gapp()->progress_info_set_bar_fraction (0., 2);
+		main_get_gapp()->progress_info_set_bar_text (fname, 1);
 		do {
 			int index_value=0;
-			gapp->progress_info_set_bar_fraction ((gdouble)index_time/(gdouble)max_index_time, 1);
+			main_get_gapp()->progress_info_set_bar_fraction ((gdouble)index_time/(gdouble)max_index_time, 1);
 			do {
 				gchar *fname_expand=NULL;
 				ifstream f;
@@ -362,13 +362,13 @@ FIO_STATUS PNG_ImExportFile::Read(xsm::open_mode mode){
 				fname_expand = g_strdup_printf (fname, index_time*step_index_time+offset_index_time);
 				max_index_value = 1;
 
-				gapp->progress_info_set_bar_fraction ((gdouble)(index_value+1)/(gdouble)max_index_value, 2);
-				gapp->progress_info_set_bar_text (fname_expand, 2);
+				main_get_gapp()->progress_info_set_bar_fraction ((gdouble)(index_value+1)/(gdouble)max_index_value, 2);
+				main_get_gapp()->progress_info_set_bar_text (fname_expand, 2);
 				f.open(fname_expand, ios::in);
 				if(!f.good()){
 					cout << "PNG::: ERROR while processing file >" << fname_expand << "< -- Multi Image Import Aborted." << endl;
 					PI_DEBUG (DBG_L2, "Error at file open. File not good/readable.");
-					gapp->progress_info_close ();
+					main_get_gapp()->progress_info_close ();
 					return status=FIO_OPEN_ERR;
 				}
 				f.close();
@@ -385,7 +385,7 @@ FIO_STATUS PNG_ImExportFile::Read(xsm::open_mode mode){
 			++index_time;
 
 		} while (ret == FIO_OK && index_time < max_index_time);
-		gapp->progress_info_close ();
+		main_get_gapp()->progress_info_close ();
 		scan->retrieve_time_element (0);
 		scan->SetVM(SCAN_V_DIRECT);
 		return ret;
@@ -642,7 +642,7 @@ FIO_STATUS PNG_ImExportFile::Write(){
 			int maxcol=1024;
 			unsigned char tgapal[1024][3];
 
-			if (gapp->xsm->ZoomFlg & VIEW_PALETTE){
+			if (main_get_gapp()->xsm->ZoomFlg & VIEW_PALETTE){
 				cpal.open(xsmres.Palette, ios::in);
 				PI_DEBUG (DBG_L2, "Using Palette: " << xsmres.Palette );
 				if(cpal.good()){
@@ -737,10 +737,10 @@ static void png_im_export_filecheck_load_callback (gpointer data ){
 	if (*fn){
 		PI_DEBUG (DBG_L2, "checking >" << *fn << "<" );
 
-		Scan *dst = gapp->xsm->GetActiveScan();
+		Scan *dst = main_get_gapp()->xsm->GetActiveScan();
 		if(!dst){ 
-			gapp->xsm->ActivateFreeChannel();
-			dst = gapp->xsm->GetActiveScan();
+			main_get_gapp()->xsm->ActivateFreeChannel();
+			dst = main_get_gapp()->xsm->GetActiveScan();
 		}
 		PNG_ImExportFile fileobj (dst, *fn);
 
@@ -750,15 +750,15 @@ static void png_im_export_filecheck_load_callback (gpointer data ){
 			if (ret != FIO_NOT_RESPONSIBLE_FOR_THAT_FILE)
 				*fn=NULL;
 			// no more data: remove allocated and unused scan now, force!
-                        //			gapp->xsm->SetMode(-1, ID_CH_M_OFF, TRUE); 
+                        //			main_get_gapp()->xsm->SetMode(-1, ID_CH_M_OFF, TRUE); 
 			PI_DEBUG (DBG_L2, "Read Error " << ((int)ret) );
 		}else{
 			// got it!
 			*fn=NULL;
 
 			// Now update gxsm main window data fields
-			gapp->xsm->ActiveScan->GetDataSet(gapp->xsm->data);
-			gapp->spm_update_all();
+			main_get_gapp()->xsm->ActiveScan->GetDataSet(main_get_gapp()->xsm->data);
+			main_get_gapp()->spm_update_all();
 			dst->draw();
 		}
 	}else{
@@ -772,7 +772,7 @@ static void png_im_export_filecheck_save_callback (gpointer data ){
 		Scan *src;
 		PI_DEBUG (DBG_L2, "Saving/(checking) >" << *fn << "<" );
 
-		PNG_ImExportFile fileobj (src = gapp->xsm->GetActiveScan(), *fn);
+		PNG_ImExportFile fileobj (src = main_get_gapp()->xsm->GetActiveScan(), *fn);
 
 		FIO_STATUS ret;
 		ret = fileobj.Write(); 
@@ -796,7 +796,7 @@ static void png_im_export_filecheck_save_callback (gpointer data ){
 static void png_im_export_import_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data){
 	gchar **help = g_strsplit (png_im_export_pi.help, ",", 2);
 	gchar *dlgid = g_strconcat (png_im_export_pi.name, "-import", NULL);
-	gchar *fn = gapp->file_dialog_load (help[0], NULL, file_mask, NULL);
+	gchar *fn = main_get_gapp()->file_dialog_load (help[0], NULL, file_mask, NULL);
 	g_strfreev (help); 
 	g_free (dlgid);
 	if (fn){
@@ -808,7 +808,7 @@ static void png_im_export_import_callback (GSimpleAction *simple, GVariant *para
 static void png_im_export_export_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data){
 	gchar **help = g_strsplit (png_im_export_pi.help, ",", 2);
 	gchar *dlgid = g_strconcat (png_im_export_pi.name, "-export", NULL);
-	gchar *fn = gapp->file_dialog_save (help[1], NULL, file_mask, NULL);
+	gchar *fn = main_get_gapp()->file_dialog_save (help[1], NULL, file_mask, NULL);
 	g_strfreev (help); 
 	g_free (dlgid);
 	if (fn){

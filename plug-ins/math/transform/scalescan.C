@@ -74,7 +74,7 @@ The computation result is placed into an existing math channel, else into a new 
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
 
 // Plugin Prototypes
 static void scalescan_init( void );
@@ -232,11 +232,11 @@ static gboolean scalescan_run(Scan *Src, Scan *Dest)
 	long col, line;
 	double sx=1., sy=1.;
 
-	gapp->ValueRequest("Enter Value", "Xfactor", "Factor to scale X (>1 strech, <1 shrink).",
-			   gapp->xsm->Unity, 0.01, 100., ".2f", &sx);
+	main_get_gapp()->ValueRequest("Enter Value", "Xfactor", "Factor to scale X (>1 strech, <1 shrink).",
+			   main_get_gapp()->xsm->Unity, 0.01, 100., ".2f", &sx);
 
-	gapp->ValueRequest("Enter Value", "Yfactor", "Factor to scale Y (>1 strech, <1 shrink).",
-			   gapp->xsm->Unity, 0.01, 100., ".2f", &sy);
+	main_get_gapp()->ValueRequest("Enter Value", "Yfactor", "Factor to scale Y (>1 strech, <1 shrink).",
+			   main_get_gapp()->xsm->Unity, 0.01, 100., ".2f", &sy);
 
 	Dest->data.s.nx = (int)((double)Src->mem2d->GetNx()*sx) & ~1;
 	Dest->data.s.dx = Src->data.s.dx/sx;

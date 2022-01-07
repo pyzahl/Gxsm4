@@ -34,7 +34,7 @@
 #include <libintl.h>
 
 
-#include "core-source/glbvars.h"
+#include "glbvars.h"
 #include "modules/dsp.h"
 #include <fcntl.h>
 #include <sys/ioctl.h>
@@ -180,14 +180,14 @@ gint sranger_mk2_hwi_spm::RTQuery (const gchar *property, double &val1, double &
         
 	if (*property == 'z'){
 
-		val1 =  gapp->xsm->Inst->VZ() * gapp->xsm->Inst->Dig2VoltOut((double)dsp_analog.z_scan);
-		val2 =  gapp->xsm->Inst->VX() * gapp->xsm->Inst->Dig2VoltOut((double)dsp_analog.x_scan);
-		val3 =  gapp->xsm->Inst->VY() * gapp->xsm->Inst->Dig2VoltOut((double)dsp_analog.y_scan);
+		val1 =  main_get_gapp()->xsm->Inst->VZ() * main_get_gapp()->xsm->Inst->Dig2VoltOut((double)dsp_analog.z_scan);
+		val2 =  main_get_gapp()->xsm->Inst->VX() * main_get_gapp()->xsm->Inst->Dig2VoltOut((double)dsp_analog.x_scan);
+		val3 =  main_get_gapp()->xsm->Inst->VY() * main_get_gapp()->xsm->Inst->Dig2VoltOut((double)dsp_analog.y_scan);
 		
-		if (gapp->xsm->Inst->OffsetMode () == OFM_ANALOG_OFFSET_ADDING){
-//			val1 +=  gapp->xsm->Inst->VZ0() * gapp->xsm->Inst->Dig2VoltOut((double)dsp_analog.z_offset);
-			val2 +=  gapp->xsm->Inst->VX0() * gapp->xsm->Inst->Dig2VoltOut((double)dsp_analog.x_offset);
-			val3 +=  gapp->xsm->Inst->VY0() * gapp->xsm->Inst->Dig2VoltOut((double)dsp_analog.y_offset);
+		if (main_get_gapp()->xsm->Inst->OffsetMode () == OFM_ANALOG_OFFSET_ADDING){
+//			val1 +=  main_get_gapp()->xsm->Inst->VZ0() * main_get_gapp()->xsm->Inst->Dig2VoltOut((double)dsp_analog.z_offset);
+			val2 +=  main_get_gapp()->xsm->Inst->VX0() * main_get_gapp()->xsm->Inst->Dig2VoltOut((double)dsp_analog.x_offset);
+			val3 +=  main_get_gapp()->xsm->Inst->VY0() * main_get_gapp()->xsm->Inst->Dig2VoltOut((double)dsp_analog.y_offset);
 		}
 		ok=TRUE;
 		return TRUE;
@@ -195,23 +195,23 @@ gint sranger_mk2_hwi_spm::RTQuery (const gchar *property, double &val1, double &
         // ZXY in Angstroem
         if (*property == 'R'){
                 // ZXY Volts after Piezoamp -- without analog offset -> Dig -> ZXY in Angstroem
-		val1 = gapp->xsm->Inst->V2ZAng (gapp->xsm->Inst->VZ() * gapp->xsm->Inst->Dig2VoltOut((double)dsp_analog.z_scan));
-		val2 = gapp->xsm->Inst->V2XAng (gapp->xsm->Inst->VX() * gapp->xsm->Inst->Dig2VoltOut((double)dsp_analog.x_scan));
-                val3 = gapp->xsm->Inst->V2YAng (gapp->xsm->Inst->VY() * gapp->xsm->Inst->Dig2VoltOut((double)dsp_analog.y_scan));
+		val1 = main_get_gapp()->xsm->Inst->V2ZAng (main_get_gapp()->xsm->Inst->VZ() * main_get_gapp()->xsm->Inst->Dig2VoltOut((double)dsp_analog.z_scan));
+		val2 = main_get_gapp()->xsm->Inst->V2XAng (main_get_gapp()->xsm->Inst->VX() * main_get_gapp()->xsm->Inst->Dig2VoltOut((double)dsp_analog.x_scan));
+                val3 = main_get_gapp()->xsm->Inst->V2YAng (main_get_gapp()->xsm->Inst->VY() * main_get_gapp()->xsm->Inst->Dig2VoltOut((double)dsp_analog.y_scan));
 		return TRUE;
         }
 
 	if (*property == 'o'){
 		// read/convert and return offset
 		// NEED to request 'z' property first, then this is valid and up-to-date!!!!
-		if (gapp->xsm->Inst->OffsetMode () == OFM_ANALOG_OFFSET_ADDING){
-			val1 =  gapp->xsm->Inst->VZ0() * gapp->xsm->Inst->Dig2VoltOut((double)dsp_analog.z_offset);
-			val2 =  gapp->xsm->Inst->VX0() * gapp->xsm->Inst->Dig2VoltOut((double)dsp_analog.x_offset);
-			val3 =  gapp->xsm->Inst->VY0() * gapp->xsm->Inst->Dig2VoltOut((double)dsp_analog.y_offset);
+		if (main_get_gapp()->xsm->Inst->OffsetMode () == OFM_ANALOG_OFFSET_ADDING){
+			val1 =  main_get_gapp()->xsm->Inst->VZ0() * main_get_gapp()->xsm->Inst->Dig2VoltOut((double)dsp_analog.z_offset);
+			val2 =  main_get_gapp()->xsm->Inst->VX0() * main_get_gapp()->xsm->Inst->Dig2VoltOut((double)dsp_analog.x_offset);
+			val3 =  main_get_gapp()->xsm->Inst->VY0() * main_get_gapp()->xsm->Inst->Dig2VoltOut((double)dsp_analog.y_offset);
 		} else {
-			val1 =  gapp->xsm->Inst->VZ() * gapp->xsm->Inst->Dig2VoltOut((double)dsp_analog.z_offset);
-			val2 =  gapp->xsm->Inst->VX() * gapp->xsm->Inst->Dig2VoltOut((double)dsp_analog.x_offset);
-			val3 =  gapp->xsm->Inst->VY() * gapp->xsm->Inst->Dig2VoltOut((double)dsp_analog.y_offset);
+			val1 =  main_get_gapp()->xsm->Inst->VZ() * main_get_gapp()->xsm->Inst->Dig2VoltOut((double)dsp_analog.z_offset);
+			val2 =  main_get_gapp()->xsm->Inst->VX() * main_get_gapp()->xsm->Inst->Dig2VoltOut((double)dsp_analog.x_offset);
+			val3 =  main_get_gapp()->xsm->Inst->VY() * main_get_gapp()->xsm->Inst->Dig2VoltOut((double)dsp_analog.y_offset);
 		}
 		
 		return ok;
@@ -227,14 +227,14 @@ gint sranger_mk2_hwi_spm::RTQuery (const gchar *property, double &val1, double &
 		CONV_32 (dsp_move.xyz_vec[i_Y]);
 		CONV_32 (dsp_move.xyz_vec[i_Z]);
 		CONV_16 (dsp_move.pflg);
-		if (gapp->xsm->Inst->OffsetMode () == OFM_ANALOG_OFFSET_ADDING){
-			val1 =  gapp->xsm->Inst->VZ0() * gapp->xsm->Inst->Dig2VoltOut((double)dsp_move.xyz_vec[i_Z]/65536.);
-			val2 =  gapp->xsm->Inst->VX0() * gapp->xsm->Inst->Dig2VoltOut((double)dsp_move.xyz_vec[i_X]/65536.);
-			val3 =  gapp->xsm->Inst->VY0() * gapp->xsm->Inst->Dig2VoltOut((double)dsp_move.xyz_vec[i_Y]/65536.);
+		if (main_get_gapp()->xsm->Inst->OffsetMode () == OFM_ANALOG_OFFSET_ADDING){
+			val1 =  main_get_gapp()->xsm->Inst->VZ0() * main_get_gapp()->xsm->Inst->Dig2VoltOut((double)dsp_move.xyz_vec[i_Z]/65536.);
+			val2 =  main_get_gapp()->xsm->Inst->VX0() * main_get_gapp()->xsm->Inst->Dig2VoltOut((double)dsp_move.xyz_vec[i_X]/65536.);
+			val3 =  main_get_gapp()->xsm->Inst->VY0() * main_get_gapp()->xsm->Inst->Dig2VoltOut((double)dsp_move.xyz_vec[i_Y]/65536.);
 		} else {
-			val1 =  gapp->xsm->Inst->VZ() * gapp->xsm->Inst->Dig2VoltOut((double)dsp_move.xyz_vec[i_Z]/65536.);
-			val2 =  gapp->xsm->Inst->VX() * gapp->xsm->Inst->Dig2VoltOut((double)dsp_move.xyz_vec[i_X]/65536.);
-			val3 =  gapp->xsm->Inst->VY() * gapp->xsm->Inst->Dig2VoltOut((double)dsp_move.xyz_vec[i_Y]/65536.);
+			val1 =  main_get_gapp()->xsm->Inst->VZ() * main_get_gapp()->xsm->Inst->Dig2VoltOut((double)dsp_move.xyz_vec[i_Z]/65536.);
+			val2 =  main_get_gapp()->xsm->Inst->VX() * main_get_gapp()->xsm->Inst->Dig2VoltOut((double)dsp_move.xyz_vec[i_X]/65536.);
+			val3 =  main_get_gapp()->xsm->Inst->VY() * main_get_gapp()->xsm->Inst->Dig2VoltOut((double)dsp_move.xyz_vec[i_Y]/65536.);
 		}
 		return ok;
 	}
@@ -268,9 +268,9 @@ gint sranger_mk2_hwi_spm::RTQuery (const gchar *property, double &val1, double &
 			val1 = -log ((double)dsp_feedback_watch.q_factor15 / 32767.) / (2.*M_PI/75000.); // f0 in Hz
 		else
 			val1 = 75000.; // FBW
-//		val2 = gapp->xsm->Inst->Dig2VoltIn (dsp_analog_in.adc[5]) / gapp->xsm->Inst->nAmpere2V(1.); // actual nA reading    xxxx V  * 0.1nA/V
-		val2 = (double)dsp_feedback_watch.I_avg/256. * gapp->xsm->Inst->Dig2VoltIn (1) / gapp->xsm->Inst->nAmpere2V(1.); // actual nA reading    xxxx V  * 0.1nA/V
-		val3 = sqrt((double)dsp_feedback_watch.I_rms/256.) * gapp->xsm->Inst->Dig2VoltIn (1) / gapp->xsm->Inst->nAmpere2V(1.); // actual nA RMS reading    xxxx V  * 0.1nA/V
+//		val2 = main_get_gapp()->xsm->Inst->Dig2VoltIn (dsp_analog_in.adc[5]) / main_get_gapp()->xsm->Inst->nAmpere2V(1.); // actual nA reading    xxxx V  * 0.1nA/V
+		val2 = (double)dsp_feedback_watch.I_avg/256. * main_get_gapp()->xsm->Inst->Dig2VoltIn (1) / main_get_gapp()->xsm->Inst->nAmpere2V(1.); // actual nA reading    xxxx V  * 0.1nA/V
+		val3 = sqrt((double)dsp_feedback_watch.I_rms/256.) * main_get_gapp()->xsm->Inst->Dig2VoltIn (1) / main_get_gapp()->xsm->Inst->nAmpere2V(1.); // actual nA RMS reading    xxxx V  * 0.1nA/V
 		return TRUE;
 	}
 
@@ -614,8 +614,8 @@ inverse off      27
 		return TRUE;
         }
         if (*property == 'P'){
-                val1 = (double)(dsp_scan.xyz_vec[0] / (dsp_scan.fs_dx * dsp_scan.dnx) + (gapp->xsm->data.s.nx/2 - 1) + 1);
-                val2 = (double)(-dsp_scan.xyz_vec[1] / (dsp_scan.fs_dy * dsp_scan.dny) + (gapp->xsm->data.s.ny/2 - 1) + 1);
+                val1 = (double)(dsp_scan.xyz_vec[0] / (dsp_scan.fs_dx * dsp_scan.dnx) + (main_get_gapp()->xsm->data.s.nx/2 - 1) + 1);
+                val2 = (double)(-dsp_scan.xyz_vec[1] / (dsp_scan.fs_dy * dsp_scan.dny) + (main_get_gapp()->xsm->data.s.ny/2 - 1) + 1);
                 val3 = (double)dsp_scan.xyz_vec[2] / (1<<16);
 		return TRUE;
         }
@@ -1044,7 +1044,7 @@ gboolean sranger_mk2_hwi_spm::tip_to_origin(double x, double y){
         case 0:
                 // make sure no conflicts
                 if (! RTQuery_clear_to_move_tip ()){
-                        gapp->monitorcontrol->LogEvent ("MovetoSXY", "Instrument is busy with VP or conflciting task: skipping requst.", 3);
+                        main_get_gapp()->monitorcontrol->LogEvent ("MovetoSXY", "Instrument is busy with VP or conflciting task: skipping requst.", 3);
                         g_warning ("sranger_mk3_hwi_spm::tip_to_origin -- Instrument is busy with VP or conflciting task. Skipping.");
                         return FALSE;
                 }
@@ -1054,7 +1054,7 @@ gboolean sranger_mk2_hwi_spm::tip_to_origin(double x, double y){
                 sr_read  (dsp, &dsp_scan, sizeof (dsp_scan));
                 CONV_16 (dsp_scan.pflg);
                 if (dsp_scan.pflg){
-                        gapp->monitorcontrol->LogEvent ("MovetoSXY", "tip_to_origin is busy (scanning/moving in progress): skipping.", 3);
+                        main_get_gapp()->monitorcontrol->LogEvent ("MovetoSXY", "tip_to_origin is busy (scanning/moving in progress): skipping.", 3);
                         g_warning ("sranger_mk2_hwi_spm::tip_to_origin -- scanning!  [%x] -- skipping.", dsp_scan.pflg);
                         return FALSE;
                 }
@@ -1063,7 +1063,7 @@ gboolean sranger_mk2_hwi_spm::tip_to_origin(double x, double y){
                 sr_read  (dsp, &dsp_probe, sizeof (dsp_probe));
                 CONV_16 (dsp_probe.pflg);
                 if (dsp_probe.pflg){
-                        gapp->monitorcontrol->LogEvent ("MovetoSXY", "tip_to_origin is busy (probe active): skipping.", 3);
+                        main_get_gapp()->monitorcontrol->LogEvent ("MovetoSXY", "tip_to_origin is busy (probe active): skipping.", 3);
                         g_warning ("sranger_mk2_hwi_spm::tip_to_origin -- probe active!  [%x] -- skipping.", dsp_probe.pflg);
                         return FALSE;
                 }
@@ -1240,7 +1240,7 @@ gboolean sranger_mk2_hwi_spm::EndScan2D(){
                 if (DSPControlClass->center_return_flag){
                         if (tip_to_origin (tip_pos[0], tip_pos[1])){
                                 //g_print ("Call: Tip to origin. ");
-                                //gapp->check_events ("Moving Tip to Marker / Scan Origin.");
+                                //main_get_gapp()->check_events ("Moving Tip to Marker / Scan Origin.");
                                 return TRUE;
                         } else {
                                 state = 4;
@@ -1302,9 +1302,9 @@ void sranger_mk2_hwi_spm::UpdateScanGainMirror (){
 	CONV_16 (dsp_scan.pflg);
         // Update XYZ Scan Gains: bitcoded -/8/8/8 (0..255)x -- not yet used and fixed set to 10x (0x000a0a0a) -- also:	DSP_SIG Offset XYZ_gain
         dsp_scan.xyz_gain = long_2_sranger_long ((long)( 0
-                                                         | ((((long)round(gapp->xsm->Inst->VX()))&0xff) << 16)
-                                                         | ((((long)round(gapp->xsm->Inst->VY()))&0xff) << 8)
-                                                         | ((((long)round(gapp->xsm->Inst->VZ()))&0xff))));
+                                                         | ((((long)round(main_get_gapp()->xsm->Inst->VX()))&0xff) << 16)
+                                                         | ((((long)round(main_get_gapp()->xsm->Inst->VY()))&0xff) << 8)
+                                                         | ((((long)round(main_get_gapp()->xsm->Inst->VZ()))&0xff))));
 
         lseek (dsp, magic_data.scan, SRANGER_MK23_SEEK_DATA_SPACE | SRANGER_MK23_SEEK_ATOMIC);
         sr_write (dsp, &dsp_scan, 2<<1); // only start/stop!
@@ -1313,9 +1313,9 @@ void sranger_mk2_hwi_spm::UpdateScanGainMirror (){
 	sr_read (dsp, &dsp_move, sizeof (dsp_move)); 
         // Update XYZ Offset Gains: bitcoded -/8/8/8 (0..255)x -- not yet used and fixed set to 10x (0x000a0a0a) -- also:	DSP_SIG Offset XYZ_gain
         dsp_move.xyz_gain = long_2_sranger_long ((long)( 0
-                                                         | ((((long)round(gapp->xsm->Inst->VX0()))&0xff) << 16)
-                                                         | ((((long)round(gapp->xsm->Inst->VY0()))&0xff) << 8)
-                                                         | ((((long)round(gapp->xsm->Inst->VZ0()))&0xff))));
+                                                         | ((((long)round(main_get_gapp()->xsm->Inst->VX0()))&0xff) << 16)
+                                                         | ((((long)round(main_get_gapp()->xsm->Inst->VY0()))&0xff) << 8)
+                                                         | ((((long)round(main_get_gapp()->xsm->Inst->VZ0()))&0xff))));
 	lseek (dsp, magic_data.move, SRANGER_MK23_SEEK_DATA_SPACE | SRANGER_MK23_SEEK_ATOMIC);
 	sr_write (dsp, &dsp_move, MAX_WRITE_MOVE<<2);
 #endif
@@ -1371,7 +1371,7 @@ gboolean sranger_mk2_hwi_spm::MovetoXY(double x, double y){
                 if (ScanningFlg == 0){
                         if (x != old_x || y != old_y){
                                 gchar *tmp=g_strdup_printf ("%10.4f %10.4f requested", x/(1<<16), y/(1<<16));
-                                gapp->monitorcontrol->LogEvent ("MovetoSXY", tmp, 3);
+                                main_get_gapp()->monitorcontrol->LogEvent ("MovetoSXY", tmp, 3);
                                 g_free (tmp);
                                 const double Q16 = 1<<16;
                                 old_x = x;
@@ -1664,7 +1664,7 @@ gboolean sranger_mk2_hwi_spm::ScanLineM(int yindex, int xdir, int lssrcs, Mem2d 
 
 		// slope
 		recalculate_dsp_scan_slope_parameters (); // adjusts dsp_scan.fs_dx, dsp_scan.fs_dy, dsp_scan.fm_dz0x, dsp_scan.fm_dz0y);
-		gapp->xsm->data.s.pixeltime = (double)dsp_scan.dnx/DSPControlClass->frq_ref;
+		main_get_gapp()->xsm->data.s.pixeltime = (double)dsp_scan.dnx/DSPControlClass->frq_ref;
 
 		// convert to DSP
 		if (ixy_sub[1] > 0)

@@ -70,13 +70,13 @@ DnD and URL drops are not tested.
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
-#include "core-source/dataio.h"
-#include "core-source/glbvars.h"
+#include "plugin.h"
+#include "dataio.h"
+#include "glbvars.h"
 #include "WSxM_header.h"                // File distributed with WSxM to make header of data file
 
 // includes obviously not longer needed, 15.11.2009 Thorsten Wagner (STM)
-//#include "core-source/action_id.h"
+//#include "action_id.h"
 //#include <linux/coff.h>
 //#include "plug-ins/hard/sranger_hwi.h"
 //#include <netcdf.hh>                    // used to read additional data from original file
@@ -211,7 +211,7 @@ static void WSxM_im_export_configure(void)
 		GtkWidget *checkbox;
 		GtkDialogFlags flags =  (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT);
 		GtkWidget *dialog = gtk_dialog_new_with_buttons (N_("WSxM Import/Export Plugin Configuration"),
-								 GTK_WINDOW (gapp->get_app_window ()),
+								 GTK_WINDOW (main_get_gapp()->get_app_window ()),
 								 flags,
 								 _("_OK"),
 								 GTK_RESPONSE_ACCEPT,
@@ -479,7 +479,7 @@ FIO_STATUS WSxM_ImExportFile::Write(){
 	if(strlen(name)>0)
 		fname = (const char*)name;
 	else
-		fname = gapp->file_dialog("File Export: WSxM type"," ","*.top","","WSxM write");
+		fname = main_get_gapp()->file_dialog("File Export: WSxM type"," ","*.top","","WSxM write");
 	if (fname == NULL) return FIO_NO_NAME;
 
 	// check if we like to handle this
@@ -665,10 +665,10 @@ static void WSxM_im_export_filecheck_load_callback (gpointer data ){
 		PI_DEBUG (DBG_L2, "Check File: WSxM_im_export_filecheck_load_callback called with >"
                           << *fn << "<" );
 
-		Scan *dst = gapp->xsm->GetActiveScan();
+		Scan *dst = main_get_gapp()->xsm->GetActiveScan();
 		if(!dst){ 
-			gapp->xsm->ActivateFreeChannel();
-			dst = gapp->xsm->GetActiveScan();
+			main_get_gapp()->xsm->ActivateFreeChannel();
+			dst = main_get_gapp()->xsm->GetActiveScan();
 		}
 		WSxM_ImExportFile fileobj (dst, *fn);
 
@@ -678,15 +678,15 @@ static void WSxM_im_export_filecheck_load_callback (gpointer data ){
 			if (ret != FIO_NOT_RESPONSIBLE_FOR_THAT_FILE)
 				*fn=NULL;
 			// no more data: remove allocated and unused scan now, force!
-                        //			gapp->xsm->SetMode(-1, ID_CH_M_OFF, TRUE); 
+                        //			main_get_gapp()->xsm->SetMode(-1, ID_CH_M_OFF, TRUE); 
 			PI_DEBUG (DBG_L2, "Read Error " << ((int)ret) << "!!!!!!!!" );
 		}else{
 			// got it!
 			*fn=NULL;
 
 			// Now update gxsm main window data fields
-			gapp->xsm->ActiveScan->GetDataSet(gapp->xsm->data);
-			gapp->spm_update_all();
+			main_get_gapp()->xsm->ActiveScan->GetDataSet(main_get_gapp()->xsm->data);
+			main_get_gapp()->spm_update_all();
 			dst->draw();
 		}
 	}else{
@@ -701,7 +701,7 @@ static void WSxM_im_export_filecheck_save_callback (gpointer data ){
 		PI_DEBUG (DBG_L2, "Check File: WSxM_im_export_filecheck_save_callback called with >"
                           << *fn << "<" );
 
-		WSxM_ImExportFile fileobj (src = gapp->xsm->GetActiveScan(), *fn);
+		WSxM_ImExportFile fileobj (src = main_get_gapp()->xsm->GetActiveScan(), *fn);
 
 		FIO_STATUS ret;
 		ret = fileobj.Write(); 
@@ -725,7 +725,7 @@ static void WSxM_im_export_filecheck_save_callback (gpointer data ){
 static void WSxM_im_export_import_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data){
 	gchar **help = g_strsplit (WSxM_im_export_pi.help, ",", 2);
 	gchar *dlgid = g_strconcat (WSxM_im_export_pi.name, "-import", NULL);
-	gchar *fn = gapp->file_dialog_load (help[0], NULL, file_mask, NULL);
+	gchar *fn = main_get_gapp()->file_dialog_load (help[0], NULL, file_mask, NULL);
 	g_strfreev (help); 
 	g_free (dlgid);
 	if (fn){
@@ -737,7 +737,7 @@ static void WSxM_im_export_import_callback (GSimpleAction *simple, GVariant *par
 static void WSxM_im_export_export_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data){
 	gchar **help = g_strsplit (WSxM_im_export_pi.help, ",", 2);
 	gchar *dlgid = g_strconcat (WSxM_im_export_pi.name, "-export", NULL);
-	gchar *fn = gapp->file_dialog_save (help[1], NULL, file_mask, NULL);
+	gchar *fn = main_get_gapp()->file_dialog_save (help[1], NULL, file_mask, NULL);
 	g_strfreev (help); 
 	g_free (dlgid);
 	if (fn){

@@ -78,7 +78,7 @@ convolutions, it's faster!
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
 #include "../../common/pyremote.h"
 
 // Plugin Prototypes
@@ -207,7 +207,7 @@ static void smooth_init(void)
   ra -> RemoteCb = &smooth_non_interactive;
   ra -> widget = dummywidget;
   ra -> data = NULL;
-  gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, ra );
+  main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra );
   PI_DEBUG (DBG_L2, "smooth-plugin: Adding new Remote Cmd: smooth_PI");
 // remote action stuff
 }
@@ -220,7 +220,7 @@ static void smooth_non_interactive( GtkWidget *widget , gpointer pc )
 //  cout << "pc: " << ((gchar**)pc)[2] << endl;
 //  cout << "pc: " << atof(((gchar**)pc)[2]) << endl;
 
-  gapp->xsm->MathOperation(&smooth_run_radius);
+  main_get_gapp()->xsm->MathOperation(&smooth_run_radius);
   return;
 
 }
@@ -339,8 +339,8 @@ void setup_multidimensional_data_copy (const gchar *title, Scan *src, int &ti, i
 static gboolean smooth_run___for_all_vt(Scan *Src, Scan *Dest)
 {
 	double r = 5.;    // Get Radius
-	gapp->ValueRequest("2D Convol. Filter Size", "Radius", "Smooth kernel size: s = 1+radius",
-			   gapp->xsm->Unity, 0., Src->mem2d->GetNx()/10., ".0f", &r);
+	main_get_gapp()->ValueRequest("2D Convol. Filter Size", "Radius", "Smooth kernel size: s = 1+radius",
+			   main_get_gapp()->xsm->Unity, 0., Src->mem2d->GetNx()/10., ".0f", &r);
 
 	int    s = 1+(int)(r + .9); // calc. approx Matrix Radius
 	MemSmoothKrn krn(r,r, s,s); // Setup Kernelobject
@@ -363,18 +363,18 @@ static gboolean smooth_run___for_all_vt(Scan *Src, Scan *Dest)
 			setup_multidimensional_data_copy ("Multidimensional Smooth", Src, ti, tf, vi, vf);
 		} while (ti > tf || vi > vf);
 
-		gapp->progress_info_new ("Multidimenssional Smooth", 2);
-		gapp->progress_info_set_bar_fraction (0., 1);
-		gapp->progress_info_set_bar_fraction (0., 2);
-		gapp->progress_info_set_bar_text ("Time", 1);
-		gapp->progress_info_set_bar_text ("Value", 2);
+		main_get_gapp()->progress_info_new ("Multidimenssional Smooth", 2);
+		main_get_gapp()->progress_info_set_bar_fraction (0., 1);
+		main_get_gapp()->progress_info_set_bar_fraction (0., 2);
+		main_get_gapp()->progress_info_set_bar_text ("Time", 1);
+		main_get_gapp()->progress_info_set_bar_text ("Value", 2);
 	}
 
 	int ntimes_tmp = tf-ti+1;
 	for (int time_index=ti; time_index <= tf; ++time_index){
 		Mem2d *m = Src->mem2d_time_element (time_index);
 		if (multidim)
-			gapp->progress_info_set_bar_fraction ((gdouble)(time_index-ti)/(gdouble)ntimes_tmp, 1);
+			main_get_gapp()->progress_info_set_bar_fraction ((gdouble)(time_index-ti)/(gdouble)ntimes_tmp, 1);
 
 		Dest->mem2d->Resize (m->GetNx (), m->GetNy (), vf-vi+1, m->GetTyp());
 		for (int v_index = vi; v_index <= vf; ++v_index){
@@ -391,7 +391,7 @@ static gboolean smooth_run___for_all_vt(Scan *Src, Scan *Dest)
 	Dest->data.s.nvalues=Dest->mem2d->GetNv ();
 
 	if (multidim){
-		gapp->progress_info_close ();
+		main_get_gapp()->progress_info_close ();
 		Dest->retrieve_time_element (0);
 		Dest->mem2d->SetLayer(0);
 	}
@@ -410,8 +410,8 @@ static gboolean smooth_run(Scan *Src, Scan *Dest)
 // check for multi dim calls, make sure not to ask user for paramters for every layer or time step!
 	if (((Src ? Src->mem2d->get_t_index ():0) == 0 && (Src ? Src->mem2d->GetLayer ():0) == 0) || !smooth_kernel) {
 		double r = smooth_radius;    // Get Radius
-		gapp->ValueRequest("2D Convol. Filter Size", "Radius", "Smooth kernel size: s = 1+radius",
-				   gapp->xsm->Unity, 0., Src->mem2d->GetNx()/10., ".0f", &r);
+		main_get_gapp()->ValueRequest("2D Convol. Filter Size", "Radius", "Smooth kernel size: s = 1+radius",
+				   main_get_gapp()->xsm->Unity, 0., Src->mem2d->GetNx()/10., ".0f", &r);
 		smooth_radius = r;
 		if (smooth_kernel)
 			free (smooth_kernel);

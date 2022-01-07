@@ -79,11 +79,11 @@ Exporting data in the Scala SPM format is not yet implemented.
 #include <locale.h>
 
 #include "config.h"
-#include "core-source/plugin.h"
-#include "core-source/dataio.h"
-#include "core-source/action_id.h"
-#include "core-source/mem2d.h"
-#include "core-source/unit.h"
+#include "plugin.h"
+#include "dataio.h"
+#include "action_id.h"
+#include "mem2d.h"
+#include "unit.h"
 
 #ifndef WORDS_BIGENDIAN
 # define WORDS_BIGENDIAN 0
@@ -527,11 +527,11 @@ FIO_STATUS Omicron_SPM_ImExportFile::spmReadPar(const gchar *fname, const gchar 
         if(!f.good())
                 return FIO_OPEN_ERR;  
 
-        UnitObj *xu = gapp->xsm->MakeUnit ("nm", "X");
+        UnitObj *xu = main_get_gapp()->xsm->MakeUnit ("nm", "X");
         scan->data.SetXUnit(xu);
         delete xu;
 
-        UnitObj *yu = gapp->xsm->MakeUnit ("nm", "Y");
+        UnitObj *yu = main_get_gapp()->xsm->MakeUnit ("nm", "Y");
         scan->data.SetYUnit(yu);
         delete yu;
 
@@ -693,7 +693,7 @@ FIO_STATUS Omicron_SPM_ImExportFile::spmReadPar(const gchar *fname, const gchar 
                                 }
 
                                 PI_DEBUG (DBG_L2, " z unit: " << zunit );
-                                UnitObj *zu = gapp->xsm->MakeUnit (zunit, zlabel);
+                                UnitObj *zu = main_get_gapp()->xsm->MakeUnit (zunit, zlabel);
                                 scan->data.SetZUnit(zu);
                                 delete zu;
                         }
@@ -738,7 +738,7 @@ FIO_STATUS Omicron_SPM_ImExportFile::spmReadPar(const gchar *fname, const gchar 
                                 scan->data.s.nvalues = nv;
 	
                                 PI_DEBUG (DBG_L2, " zunit: " << zunit );
-                                UnitObj *zu = gapp->xsm->MakeUnit (zunit, "I");
+                                UnitObj *zu = main_get_gapp()->xsm->MakeUnit (zunit, "I");
                                 scan->data.SetZUnit(zu);
                                 scan->data.s.dz = zu->Usr2Base(ds);	  
                                 delete zu;
@@ -837,10 +837,10 @@ static void omicron_io_filecheck_load_callback (gpointer data){
                 PI_DEBUG (DBG_L2, "Check File: omicron_io_filecheck_load_callback called with >"
                           << *fn << "<" );
     
-                Scan *dst = gapp->xsm->GetActiveScan();
+                Scan *dst = main_get_gapp()->xsm->GetActiveScan();
                 if(!dst){ 
-                        gapp->xsm->ActivateFreeChannel();
-                        dst = gapp->xsm->GetActiveScan();
+                        main_get_gapp()->xsm->ActivateFreeChannel();
+                        dst = main_get_gapp()->xsm->GetActiveScan();
                 }
                 Omicron_SPM_ImExportFile fileobj (dst, *fn);
     
@@ -854,15 +854,15 @@ static void omicron_io_filecheck_load_callback (gpointer data){
                                 PI_DEBUG (DBG_L2, "No Omicron Scala File!" );
                         }
                         // no more data: remove allocated and unused scan now, force!
-                        //	    gapp->xsm->SetMode(-1, ID_CH_M_OFF, TRUE); 
+                        //	    main_get_gapp()->xsm->SetMode(-1, ID_CH_M_OFF, TRUE); 
                 }else{
                         // got it!
                         *fn=NULL;
       
                         // Now update gxsm main window data fields
-                        gapp->xsm->ActiveScan->GetDataSet(gapp->xsm->data);
-                        gapp->xsm->ActiveScan->auto_display ();
-                        gapp->spm_update_all();
+                        main_get_gapp()->xsm->ActiveScan->GetDataSet(main_get_gapp()->xsm->data);
+                        main_get_gapp()->xsm->ActiveScan->auto_display ();
+                        main_get_gapp()->spm_update_all();
                         dst->draw();
                 }
         }else{
@@ -879,7 +879,7 @@ static void omicron_io_filecheck_save_callback ( gpointer data ){
                 PI_DEBUG (DBG_L2, "Check File: omicron_io_filecheck_save_callback called with >"
                           << *fn << "<" );
     
-                Omicron_SPM_ImExportFile fileobj (src = gapp->xsm->GetActiveScan(), *fn);
+                Omicron_SPM_ImExportFile fileobj (src = main_get_gapp()->xsm->GetActiveScan(), *fn);
     
                 FIO_STATUS ret;
                 ret = fileobj.Write(); 
@@ -903,7 +903,7 @@ static void omicron_io_filecheck_save_callback ( gpointer data ){
 
 static void omicron_io_import_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data)
 {
-        gchar *fn = gapp->file_dialog_load ("Omicron SPM Import", NULL, "*.*", NULL);
+        gchar *fn = main_get_gapp()->file_dialog_load ("Omicron SPM Import", NULL, "*.*", NULL);
   
         if (fn){
                 PI_DEBUG (DBG_L2, "FLDLG-IM::" << fn );
@@ -915,7 +915,7 @@ static void omicron_io_import_callback (GSimpleAction *simple, GVariant *paramet
 
 // static void omicron_io_export_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data)
 // {
-//   gchar *fn = gapp->file_dialog("Omicron SPM Export", NULL,
+//   gchar *fn = main_get_gapp()->file_dialog("Omicron SPM Export", NULL,
 // 				"*.*",
 // 				"","SPM-Export");
   

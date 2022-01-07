@@ -41,9 +41,9 @@
 #include <iostream>   // for cout
 #include <sstream>    // for istringstream
 
-#include "core-source/glbvars.h"
-#include "core-source/xsmtypes.h"
-#include "core-source/xsmdebug.h"
+#include "glbvars.h"
+#include "xsmtypes.h"
+#include "xsmdebug.h"
 
 #include <fcntl.h>
 #include <sys/types.h>
@@ -101,8 +101,8 @@ extern DSPPACControl *DSPPACClass;
 #define FR_FIFO_FORCE_RESET 3
 
 #define CONST_DSP_F16 65536.
-#define VOLT2AIC(U)   (int)(gapp->xsm->Inst->VoltOut2Dig (gapp->xsm->Inst->BiasV2V (U)))
-#define DVOLT2AIC(U)  (int)(gapp->xsm->Inst->VoltOut2Dig ((U)/gapp->xsm->Inst->BiasGainV2V ()))
+#define VOLT2AIC(U)   (int)(main_get_gapp()->xsm->Inst->VoltOut2Dig (main_get_gapp()->xsm->Inst->BiasV2V (U)))
+#define DVOLT2AIC(U)  (int)(main_get_gapp()->xsm->Inst->VoltOut2Dig ((U)/main_get_gapp()->xsm->Inst->BiasGainV2V ()))
 
 
 #define CPN(N) ((double)(1LL<<(N))-1.)
@@ -124,7 +124,7 @@ sranger_mk3_hwi_dev::sranger_mk3_hwi_dev(){
         gchar *tmp;
 	g_message ("HWI-DEV-MK3-I** HwI SR-MK3: verifying MK3 FB_SPM software details.");
 	PI_DEBUG_GP (DBG_L1, " -> HWI-DEV-MK3-I** HwI SR-MK3: verifying MK3 FB_SPM software details.\n");
-        gapp->monitorcontrol->LogEvent ("HWI-DEV-MK3-I** HwI SR-MK3", "verifying MK3 FB_SPM software details.");
+        main_get_gapp()->monitorcontrol->LogEvent ("HWI-DEV-MK3-I** HwI SR-MK3", "verifying MK3 FB_SPM software details.");
 	AIC_max_points = 1<<15; // SR-AIC resolution is limiting...
 	fifo_read_thread = NULL;
 	probe_fifo_read_thread = NULL;
@@ -182,8 +182,8 @@ sranger_mk3_hwi_dev::sranger_mk3_hwi_dev(){
 						   "-> that the SR-MK2/3 is powered on\n"
 						   "Start 'gxsm4 -h no' to change the device path/name.",
 						   xsmres.DSPDev);
-			gapp->alert (N_("No Hardware"), N_("Open Device failed."), productid, 1);
-                        gapp->monitorcontrol->LogEvent (N_("No Hardware"), N_("Open Device failed."));
+			main_get_gapp()->alert (N_("No Hardware"), N_("Open Device failed."), productid, 1);
+                        main_get_gapp()->monitorcontrol->LogEvent (N_("No Hardware"), N_("Open Device failed."));
 			exit (-1);
 			return;
 		}
@@ -199,7 +199,7 @@ sranger_mk3_hwi_dev::sranger_mk3_hwi_dev(){
                                                       << "Device: " << xsmres.DSPDev);
                                         g_free (productid);
                                         productid=g_strdup_printf ("Device used: %s\n Start 'gxsm4 -h no' to correct the problem.", xsmres.DSPDev);
-                                        gapp->alert (N_("Unkonwn Hardware"), N_("Query Vendor ID failed."), productid, 1);
+                                        main_get_gapp()->alert (N_("Unkonwn Hardware"), N_("Query Vendor ID failed."), productid, 1);
                                         PI_DEBUG_GP (DBG_L4, "HWI-DEV-MK3-E02-- unkown hardware, vendor ID mismatch.\n");
                                         close (dsp);
                                         dsp = 0;
@@ -211,7 +211,7 @@ sranger_mk3_hwi_dev::sranger_mk3_hwi_dev(){
                                                       << "Device: " << xsmres.DSPDev);
                                         g_free (productid);
                                         productid=g_strdup_printf ("Device used: %s\n Start 'gxsm4 -h no' to correct the problem.", xsmres.DSPDev);
-                                        gapp->alert (N_("Unkonwn Hardware"), N_("Query Product ID failed."), productid, 1);
+                                        main_get_gapp()->alert (N_("Unkonwn Hardware"), N_("Query Product ID failed."), productid, 1);
                                         PI_DEBUG_GP (DBG_L4, "HWI-DEV-MK3-E03-- unkown hardware, product ID mismatch.\n");
                                         close (dsp);
                                         dsp = 0;
@@ -222,7 +222,7 @@ sranger_mk3_hwi_dev::sranger_mk3_hwi_dev(){
 			        g_free (productid);
 				if (vendor == 0x0a59 && product == 0x0101){
 				        productid=g_strdup ("Vendor/Product: B.Paillard, Signal Ranger STD");
-					gapp->alert (N_("Wrong Hardware detected"), N_("No MK2 found."), productid, 1);
+					main_get_gapp()->alert (N_("Wrong Hardware detected"), N_("No MK2 found."), productid, 1);
 					PI_DEBUG_GP (DBG_L4, "HWI-DEV-MK3-E04-- wrong hardware: SR-STD, please use SR-SP2/STD HwI.\n");
 					target = SR_HWI_TARGET_C54;
 					close (dsp);
@@ -232,7 +232,7 @@ sranger_mk3_hwi_dev::sranger_mk3_hwi_dev(){
 				}
 				else if (vendor == 0x0a59 && product == 0x0103){
 				        productid=g_strdup ("Vendor/Product: B.Paillard, Signal Ranger SP2");
-					gapp-> alert (N_("Wrong Hardware detected"), N_("No MK2 found."), productid, 1);
+					main_get_gapp()-> alert (N_("Wrong Hardware detected"), N_("No MK2 found."), productid, 1);
 					PI_DEBUG_GP (DBG_L4, "HWI-DEV-MK3-E05-- wrong hardware: SR-SP2, please use SR-SP2/STD HwI.\n");
 					target =  SR_HWI_TARGET_C54;
 					close (dsp);
@@ -265,7 +265,7 @@ sranger_mk3_hwi_dev::sranger_mk3_hwi_dev(){
 					sranger_mark_id = 3;
 				}else{
 				        productid=g_strdup ("Vendor/Product: B.Paillard, unkown version!");
-					gapp->alert (N_("Unkonwn Hardware detected"), N_("No Signal Ranger found."), productid, 1);
+					main_get_gapp()->alert (N_("Unkonwn Hardware detected"), N_("No Signal Ranger found."), productid, 1);
 					PI_DEBUG_GP (DBG_L4, "HWI-DEV-MK3-E06-- SR-MK?? 1612:%s found -- not supported.\n", productid);
 					close (dsp);
 					dsp=0;
@@ -277,12 +277,12 @@ sranger_mk3_hwi_dev::sranger_mk3_hwi_dev(){
 
 				// now read magic struct data
                                 if (product == 0xf103){ // shm dsp emu (mmapped emulator)
-                                        gapp->monitorcontrol->LogEvent ("HWI-DEV-MK3 DSP-ENGINE","MMAPPED DSP EMULATOR IDENTIFIED");
+                                        main_get_gapp()->monitorcontrol->LogEvent ("HWI-DEV-MK3 DSP-ENGINE","MMAPPED DSP EMULATOR IDENTIFIED");
                                         PI_DEBUG_GP (DBG_L4, "HWI-DEV-MK3 DSP-ENGINE: MMAPPED DSP EMULATOR IDENTIFIED");
                                         // DSP EMU MAGIC IS MAPPED TO BEGINNING (adr=0) OF DSP MMAPPER BUFFER 
                                         lseek (dsp, 0, SRANGER_MK23_SEEK_DATA_SPACE | SRANGER_MK23_SEEK_ATOMIC);
 				} else {
-                                        gapp->monitorcontrol->LogEvent ("HWI-DEV-MK3 DSP-ENGINE","USB DEVICE MAPPED TI DSP");
+                                        main_get_gapp()->monitorcontrol->LogEvent ("HWI-DEV-MK3 DSP-ENGINE","USB DEVICE MAPPED TI DSP");
                                         PI_DEBUG_GP (DBG_L4, "HWI-DEV-MK3 DSP-ENGINE: USB DEVICE MAPPED TI DSP");
                                         lseek (dsp, FB_SPM_MAGIC_ADR, SRANGER_MK23_SEEK_DATA_SPACE | SRANGER_MK23_SEEK_ATOMIC);
                                 }
@@ -305,15 +305,15 @@ sranger_mk3_hwi_dev::sranger_mk3_hwi_dev(){
 					return;
 				}
 				tmp = g_strdup_printf ("%08x   [HwI:%08x]", magic_data.dsp_soft_id, FB_SPM_SOFT_ID);
-                                gapp->monitorcontrol->LogEvent ("HWI-DEV-MK3-I*CPU* DSP-SoftId.... ", tmp);
+                                main_get_gapp()->monitorcontrol->LogEvent ("HWI-DEV-MK3-I*CPU* DSP-SoftId.... ", tmp);
 				PI_DEBUG_GP (DBG_L4, "HWI-DEV-MK3-I*CPU* DSP-SoftId...: %s\n", tmp); g_free (tmp);
 
 				tmp = g_strdup_printf ("%08x   [HwI:%08x]", magic_data.version, FB_SPM_VERSION);
-                                gapp->monitorcontrol->LogEvent ("HWI-DEV-MK3-I*CPU* DSP-Version... ", tmp);
+                                main_get_gapp()->monitorcontrol->LogEvent ("HWI-DEV-MK3-I*CPU* DSP-Version... ", tmp);
 				PI_DEBUG_GP (DBG_L4, "HWI-DEV-MK3-I*CPU* DSP-Version..: %s\n", tmp); g_free (tmp);
 
 				tmp = g_strdup_printf ("0x%08x", magic_data.signal_lookup);
-				gapp->monitorcontrol->LogEvent ("HWI-DEV-MK3-I*CPU* DSP-Magic::SignalLookup at address", tmp);
+				main_get_gapp()->monitorcontrol->LogEvent ("HWI-DEV-MK3-I*CPU* DSP-Magic::SignalLookup at address", tmp);
 				PI_DEBUG_GP (DBG_L4, "HWI-DEV-MK3-I*CPU* DSP-Magic::SignalLookup: %s\n", tmp); g_free (tmp);
                                 
 				if (FB_SPM_VERSION != magic_data.version || 
@@ -331,9 +331,9 @@ sranger_mk3_hwi_dev::sranger_mk3_hwi_dev(){
 									 swap_flg, target);
                                         SRANGER_DEBUG ("Signal Ranger FB_SPM soft Version mismatch\n" << details);
 					PI_DEBUG_GP (DBG_L4, "HWI-DEV-MK3-VW01-- DSP software version mismatch warning.\n%s\n", details);
-					gapp->alert (N_("Critical Warning:"), N_("Signal Ranger MK3 FB_SPM software version mismatch detected! Exiting required."), details,
+					main_get_gapp()->alert (N_("Critical Warning:"), N_("Signal Ranger MK3 FB_SPM software version mismatch detected! Exiting required."), details,
                                                      developer_option == 0 ? 20 : 5);
-                                        gapp->monitorcontrol->LogEvent ("Critical: Signal Ranger MK3 FB_SPM soft Version mismatch:\n", details);
+                                        main_get_gapp()->monitorcontrol->LogEvent ("Critical: Signal Ranger MK3 FB_SPM soft Version mismatch:\n", details);
                                         g_critical ("Signal Ranger MK3 FB_SPM soft Version mismatch:\n%s", details);
 					g_free (details);
 
@@ -355,7 +355,7 @@ sranger_mk3_hwi_dev::sranger_mk3_hwi_dev(){
                                                                             magic_data.mmdd, magic_data.year, FB_SPM_DATE_MMDD, FB_SPM_DATE_YEAR
                                                                             );
                                         
-                                        gapp->monitorcontrol->LogEvent ("MK3 HwI Intialization and DSP software verification completed", InfoString);
+                                        main_get_gapp()->monitorcontrol->LogEvent ("MK3 HwI Intialization and DSP software verification completed", InfoString);
                                         g_free (InfoString);
                                 }
                                 
@@ -431,7 +431,7 @@ sranger_mk3_hwi_dev::sranger_mk3_hwi_dev(){
 
 		if (f){
 			g_string_append_printf (details, "\n\nPLEASE VERIFY YOUR PREFERENCES!");
-			gapp->alert (N_("Warning"), N_("MK3-A810/PLL DataAq Preferences Setup Verification"), details->str, 1);
+			main_get_gapp()->alert (N_("Warning"), N_("MK3-A810/PLL DataAq Preferences Setup Verification"), details->str, 1);
 			PI_DEBUG_GP (DBG_L4, "HWI-DEV-MK3-WW00A-- configuration/preferences mismatch with current hardware setup -- please adjust.\n");
 		}
 		g_string_free(details, TRUE); 
@@ -2199,11 +2199,11 @@ void sranger_mk3_hwi_dev::write_dsp_feedback (
 	for (int i=0; i<4; ++i){
                 
 		if (i==0){ // TUNNEL-CURRENT dedicated channel
-			dsp_feedback_mixer.setpoint[i] = (int)(round(256.*gapp->xsm->Inst->VoltIn2Dig (gapp->xsm->Inst->nAmpere2V (set_point[i])))); // Q23
-                        dsp_feedback_mixer.level[i]    = (int)(round(256.*gapp->xsm->Inst->VoltIn2Dig (factor[i]*level[i])));
+			dsp_feedback_mixer.setpoint[i] = (int)(round(256.*main_get_gapp()->xsm->Inst->VoltIn2Dig (main_get_gapp()->xsm->Inst->nAmpere2V (set_point[i])))); // Q23
+                        dsp_feedback_mixer.level[i]    = (int)(round(256.*main_get_gapp()->xsm->Inst->VoltIn2Dig (factor[i]*level[i])));
                 }else{
                         if (i==1){ // PLL-FREQ dedicated channel, INTERNAL PAC if Hertz2V is set to 0 in SPM settings -- 
-                                if (gapp->xsm->Inst->dHertz2V(1.) == 0.0){ // INTERNAL PAC/PLL
+                                if (main_get_gapp()->xsm->Inst->dHertz2V(1.) == 0.0){ // INTERNAL PAC/PLL
                                         if (pllref > 0.0) // use MK3 PAC-PLL
                                                 dsp_feedback_mixer.setpoint[i] = (int)round((CPN(29)*2.*M_PI/150000.)*(set_point[i]+pllref)); // Q32 bit raw for PAC signal
                                         else{ // use McBSP based (RP) hi-speed PAC-PLL
@@ -2218,28 +2218,28 @@ void sranger_mk3_hwi_dev::write_dsp_feedback (
                                                            << " DSP-setpoint[1] = " << dsp_feedback_mixer.setpoint[i]
                                                            );
                                 } else {
-                                        dsp_feedback_mixer.setpoint[i] = (int)round(256.*round(gapp->xsm->Inst->VoltIn2Dig (gapp->xsm->Inst->dHertz2V (set_point[i])))); // Q23
+                                        dsp_feedback_mixer.setpoint[i] = (int)round(256.*round(main_get_gapp()->xsm->Inst->VoltIn2Dig (main_get_gapp()->xsm->Inst->dHertz2V (set_point[i])))); // Q23
                                         SRANGER_DEBUG_SIG (
                                                            "MIX[1]:"
-                                                           << " dHz2Volt = " << gapp->xsm->Inst->dHertz2V(1.) << "Hz/Volt"
+                                                           << " dHz2Volt = " << main_get_gapp()->xsm->Inst->dHertz2V(1.) << "Hz/Volt"
                                                            << " setpoint = " << set_point[i] << "Hz"
-                                                           << " setpoint volt   = " << gapp->xsm->Inst->dHertz2V (set_point[i]) << "V"
+                                                           << " setpoint volt   = " << main_get_gapp()->xsm->Inst->dHertz2V (set_point[i]) << "V"
                                                            << " DSP-setpoint[1] = " << dsp_feedback_mixer.setpoint[i] 
                                                            );
                                 }
-                                dsp_feedback_mixer.level[i]    = (int)(round(256.*gapp->xsm->Inst->VoltIn2Dig (factor[i]*level[i])));
+                                dsp_feedback_mixer.level[i]    = (int)(round(256.*main_get_gapp()->xsm->Inst->VoltIn2Dig (factor[i]*level[i])));
                         } else {
                                 // general purpose In-N signal "Volt" or accordign to dsp_signal table
-                                //dsp_feedback_mixer.setpoint[i] = (int)(round(256.*gapp->xsm->Inst->VoltIn2Dig (factor[i]*set_point[i]))); // In0-7 Q23
+                                //dsp_feedback_mixer.setpoint[i] = (int)(round(256.*main_get_gapp()->xsm->Inst->VoltIn2Dig (factor[i]*set_point[i]))); // In0-7 Q23
                                 dsp_feedback_mixer.setpoint[i] = (int)(round(factor[i]*set_point[i])); // native signal (32bit)
                                 dsp_feedback_mixer.level[i]    = (int)(round(factor[i]*level[i]));
                         }
                 }
-                //dsp_feedback_mixer.level[i]    = (int)(round(256.*gapp->xsm->Inst->VoltIn2Dig (factor[i]*level[i])));
+                //dsp_feedback_mixer.level[i]    = (int)(round(256.*main_get_gapp()->xsm->Inst->VoltIn2Dig (factor[i]*level[i])));
 		dsp_feedback_mixer.gain[i]     = float_2_sranger_q15 (gain[i]);
 		dsp_feedback_mixer.mode[i]     = transform_mode[i];
 		dsp_feedback_mixer.iir_ca_q15[i] = float_2_sranger_q15 (exp (-2.*M_PI*IIR_f0_max[i]/75000.));
-		dsp_feedback_mixer.Z_setpoint   = (int)(round((1<<16)*gapp->xsm->Inst->ZA2Dig (setpoint_zpos))); // new ZPos reference for FUZZY-LOG CONST HEIGHT MODE
+		dsp_feedback_mixer.Z_setpoint   = (int)(round((1<<16)*main_get_gapp()->xsm->Inst->ZA2Dig (setpoint_zpos))); // new ZPos reference for FUZZY-LOG CONST HEIGHT MODE
                 SRANGER_DEBUG_SIG (
                                " DSP-setpoint[" << i << "] = " << dsp_feedback_mixer.setpoint[i]
                                );
@@ -2250,12 +2250,12 @@ void sranger_mk3_hwi_dev::write_dsp_feedback (
 
 	// IIR self adaptive filter parameters for MIX0 channel, MIX1..3 IIR only -- assuming current
 	double ca,cb;
-	double Ic = gapp->xsm->Inst->VoltIn2Dig (gapp->xsm->Inst->nAmpere2V (1e-3*IIR_I_crossover)); // given in pA
+	double Ic = main_get_gapp()->xsm->Inst->VoltIn2Dig (main_get_gapp()->xsm->Inst->nAmpere2V (1e-3*IIR_I_crossover)); // given in pA
 	ca = exp (-2.*M_PI*IIR_f0_max[0]/75000.);
 
 	dsp_feedback_mixer.cb_Ic    = (DSP_INT32) (32767. * (cb = IIR_f0_min/IIR_f0_max[0] * Ic));
 	dsp_feedback_mixer.I_cross  = (int)Ic; 
-	dsp_feedback_mixer.I_offset = (int)(round(256.*gapp->xsm->Inst->VoltIn2Dig (gapp->xsm->Inst->nAmpere2V (1e-3*LOG_I_offset)))); // given in pA -- MK3: Q23
+	dsp_feedback_mixer.I_offset = (int)(round(256.*main_get_gapp()->xsm->Inst->VoltIn2Dig (main_get_gapp()->xsm->Inst->nAmpere2V (1e-3*LOG_I_offset)))); // given in pA -- MK3: Q23
 
 	if (!IIR_flag)
 		dsp_feedback_mixer.I_cross = 0; // disable IIR!
@@ -2281,7 +2281,7 @@ void sranger_mk3_hwi_dev::write_dsp_feedback (
 
 	// Motor Servo:
 #if 1
-	dsp_m_servo.setpoint = float_2_sranger_q31 (gapp->xsm->Inst->VoltIn2Dig (m_servo[0]));
+	dsp_m_servo.setpoint = float_2_sranger_q31 (main_get_gapp()->xsm->Inst->VoltIn2Dig (m_servo[0]));
 #else
 #define McBSP_FREQ_CONVERSION (125000000./17592186044415.) // 125MHz / ((1<<44)-1)
         g_print("M Servo McBSPConv: Frq Set=%g  %d\n", m_servo[0], (gint32)(m_servo[0]/McBSP_FREQ_CONVERSION));
@@ -2401,11 +2401,11 @@ void sranger_mk3_hwi_dev::read_dsp_analog (){
 void sranger_mk3_hwi_dev::write_dsp_analog (double bias[4], double motor){
 	read_dsp_analog ();
 
-	dsp_analog.bias[0]  = (gint32)round (CONST_DSP_F16*gapp->xsm->Inst->VoltOut2Dig (gapp->xsm->Inst->BiasV2Vabs (bias[0])));
-	dsp_analog.bias[1]  = (gint32)round (CONST_DSP_F16*gapp->xsm->Inst->VoltOut2Dig (gapp->xsm->Inst->BiasV2Vabs (bias[1])));
-	dsp_analog.bias[2]  = (gint32)round (CONST_DSP_F16*gapp->xsm->Inst->VoltOut2Dig (gapp->xsm->Inst->BiasV2Vabs (bias[2])));
-	dsp_analog.bias[3]  = (gint32)round (CONST_DSP_F16*gapp->xsm->Inst->VoltOut2Dig (gapp->xsm->Inst->BiasV2Vabs (bias[3])));
-	dsp_analog.motor = (gint32)round (CONST_DSP_F16*gapp->xsm->Inst->VoltOut2Dig (gapp->xsm->Inst->BiasV2Vabs (motor)));
+	dsp_analog.bias[0]  = (gint32)round (CONST_DSP_F16*main_get_gapp()->xsm->Inst->VoltOut2Dig (main_get_gapp()->xsm->Inst->BiasV2Vabs (bias[0])));
+	dsp_analog.bias[1]  = (gint32)round (CONST_DSP_F16*main_get_gapp()->xsm->Inst->VoltOut2Dig (main_get_gapp()->xsm->Inst->BiasV2Vabs (bias[1])));
+	dsp_analog.bias[2]  = (gint32)round (CONST_DSP_F16*main_get_gapp()->xsm->Inst->VoltOut2Dig (main_get_gapp()->xsm->Inst->BiasV2Vabs (bias[2])));
+	dsp_analog.bias[3]  = (gint32)round (CONST_DSP_F16*main_get_gapp()->xsm->Inst->VoltOut2Dig (main_get_gapp()->xsm->Inst->BiasV2Vabs (bias[3])));
+	dsp_analog.motor = (gint32)round (CONST_DSP_F16*main_get_gapp()->xsm->Inst->VoltOut2Dig (main_get_gapp()->xsm->Inst->BiasV2Vabs (motor)));
 
 	// only "bias" and "motor" is touched here!
 
@@ -2516,8 +2516,8 @@ void sranger_mk3_hwi_dev::read_dsp_lockin (double AC_amp[4], double &AC_frq, dou
                        );
 
 	// update, reconvert
-	AC_amp[0] = gapp->xsm->Inst->Dig2VoltOut ((double)dsp_probe.AC_amp) * gapp->xsm->Inst->BiasGainV2V ();
-	AC_amp[1] = gapp->xsm->Inst->Dig2ZA (dsp_probe.AC_amp_aux);
+	AC_amp[0] = main_get_gapp()->xsm->Inst->Dig2VoltOut ((double)dsp_probe.AC_amp) * main_get_gapp()->xsm->Inst->BiasGainV2V ();
+	AC_amp[1] = main_get_gapp()->xsm->Inst->Dig2ZA (dsp_probe.AC_amp_aux);
 	AC_frq = dsp_probe.AC_frq;
 	if (AC_frq < 32)
  		AC_frq = 150000./512.*AC_frq;
@@ -2587,8 +2587,8 @@ void sranger_mk3_hwi_dev::write_dsp_lockin_probe_final (double AC_amp[4], double
                        "VECPROBE_LIMITER up,dn  : (" << (VP_lim_val[0]*lvs) << ", " << (VP_lim_val[1]*lvs) << ")"
                        );
 
-	//	dsp_probe.LIM_up = (gint32)round (CONST_DSP_F16*gapp->xsm->Inst->VoltOut2Dig (VP_lim_val));
-	//	dsp_probe.LIM_dn = (gint32)round (CONST_DSP_F16*gapp->xsm->Inst->VoltOut2Dig (VP_lim_val));
+	//	dsp_probe.LIM_up = (gint32)round (CONST_DSP_F16*main_get_gapp()->xsm->Inst->VoltOut2Dig (VP_lim_val));
+	//	dsp_probe.LIM_dn = (gint32)round (CONST_DSP_F16*main_get_gapp()->xsm->Inst->VoltOut2Dig (VP_lim_val));
 
 	// ==> setup signal, point to user var, setup user var
 	//	DSP_INT32_P   limiter_updn[2]; /**<: limiter value signal upper, lower =WR */
@@ -2598,7 +2598,7 @@ void sranger_mk3_hwi_dev::write_dsp_lockin_probe_final (double AC_amp[4], double
  
 
 	dsp_probe.AC_amp = DVOLT2AIC (AC_amp[0]);
-	dsp_probe.AC_amp_aux = gapp->xsm->Inst->ZA2Dig (AC_amp[1]);
+	dsp_probe.AC_amp_aux = main_get_gapp()->xsm->Inst->ZA2Dig (AC_amp[1]);
 	dsp_probe.AC_frq = (int) (AC_frq); // DSP selects dicrete AC Freq. out of 75000/(128/N) N=1,2,4,8
 	dsp_probe.AC_phaseA = (int)round(AC_phaseA*16.);
 	dsp_probe.AC_phaseB = (int)round(AC_phaseB*16.);
@@ -2726,7 +2726,7 @@ void sranger_mk3_hwi_dev::write_dsp_vector (int index, PROBE_VECTOR_GENERIC *__d
                                                       "Auto adjusting.\n"
                                                       "Hint: adjust slope/speed/points/time.",
                                                       index, dsp_vector.n, dsp_vector.dnx );
-                        gapp->warning (msg);
+                        main_get_gapp()->warning (msg);
                         g_free (msg);
                         if (dsp_vector.dnx < 0) dsp_vector.dnx = 0;
                         if (dsp_vector.dnx > 32767) dsp_vector.dnx = 32767;
@@ -3436,7 +3436,7 @@ int sranger_mk3_hwi_dev::write_pll (PAC_control &pll, PLL_GROUP group, int enabl
 			double ci = 20. * log10 (1.7357e-10 * pll.auto_set_BW_Phase*pll.auto_set_BW_Phase);
 
                         gchar *msg = g_strdup_printf ("Auto Set Phase: CP=%g dB, CI=%g dB", cp, ci);
-                        if (gapp->question_yes_no (msg)){
+                        if (main_get_gapp()->question_yes_no (msg)){
 				pll.cp_gain_Phase = cp;
 				pll.ci_gain_Phase = ci;
 			}
@@ -3507,7 +3507,7 @@ behavior of the controller.
 			double cp = 20. * log10 (0.08045   * Q*Fc / (gainres*F0));
 			double ci = 20. * log10 (8.4243e-7 * Q*Fc*Fc / (gainres*F0));
                         gchar *msg = g_strdup_printf ("Auto Set Amp: CP=%g dB, CI=%g dB", cp, ci);
-                        if (gapp->question_yes_no (msg)){
+                        if (main_get_gapp()->question_yes_no (msg)){
 				pll.cp_gain_Amp = cp;
 				pll.ci_gain_Amp = ci;
 			}
@@ -3719,15 +3719,15 @@ int sranger_mk3_hwi_dev::read_signal_lookup (){
 		dsp_signal_lookup_managed[i].dim   = dsp_signal_lookup[i].dim;
 		dsp_signal_lookup_managed[i].label = g_strdup(dsp_signal_lookup[i].label);
                 if (i==0){ // IN0 dedicated to tunnel current via IVC
-                        // g_print ("1nA to Volt=%g  1pA to Volt=%g",gapp->xsm->Inst->nAmpere2V (1.),gapp->xsm->Inst->nAmpere2V (1e-3));
-                        if (gapp->xsm->Inst->nAmpere2V (1.) > 1.){
+                        // g_print ("1nA to Volt=%g  1pA to Volt=%g",main_get_gapp()->xsm->Inst->nAmpere2V (1.),main_get_gapp()->xsm->Inst->nAmpere2V (1e-3));
+                        if (main_get_gapp()->xsm->Inst->nAmpere2V (1.) > 1.){
                                 dsp_signal_lookup_managed[i].unit  = g_strdup("pA"); // use pA scale
                                 dsp_signal_lookup_managed[i].scale = dsp_signal_lookup[i].scale; // -> Volts
-                                dsp_signal_lookup_managed[i].scale /= gapp->xsm->Inst->nAmpere2V (1); // values are always in nA
+                                dsp_signal_lookup_managed[i].scale /= main_get_gapp()->xsm->Inst->nAmpere2V (1); // values are always in nA
                         } else {
                                 dsp_signal_lookup_managed[i].unit  = g_strdup("nA");
                                 dsp_signal_lookup_managed[i].scale = dsp_signal_lookup[i].scale; // -> Volts
-                                dsp_signal_lookup_managed[i].scale /= gapp->xsm->Inst->nAmpere2V (1.); // nA
+                                dsp_signal_lookup_managed[i].scale /= main_get_gapp()->xsm->Inst->nAmpere2V (1.); // nA
                         }
                 } else {
                         dsp_signal_lookup_managed[i].unit  = g_strdup(dsp_signal_lookup[i].unit);

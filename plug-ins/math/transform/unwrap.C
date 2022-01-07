@@ -77,7 +77,7 @@ The active channel is used as data source.
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
 
 // Plugin Prototypes
 static void unwrap_init( void );

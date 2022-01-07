@@ -84,8 +84,8 @@ into a new created math channel.
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
-#include "core-source/regress.h"
+#include "plugin.h"
+#include "regress.h"
 
 // Plugin Prototypes
 static void bg_z_drift_init( void );
@@ -266,8 +266,8 @@ static gboolean bg_z_drift_run(Scan *Src, Scan *Dest)
 	}
 
 	UsrOrder=5.;
-	gapp->ValueRequest("Enter Value", "Order", "I need the order of regression polynom.",
-			   gapp->xsm->Unity, 2., 13., ".0f", &UsrOrder);
+	main_get_gapp()->ValueRequest("Enter Value", "Order", "I need the order of regression polynom.",
+			   main_get_gapp()->xsm->Unity, 2., 13., ".0f", &UsrOrder);
   
 	order = (int)UsrOrder; if(order < 2 || order > 13) order=3;
 	StatInp s(order, YProfileX, YProfile, Src->mem2d->GetNy()); 

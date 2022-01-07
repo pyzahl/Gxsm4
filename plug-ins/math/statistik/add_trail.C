@@ -73,7 +73,7 @@ into a new created math channel.
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
 
 // Plugin Prototypes
 static void add_trail_init( void );
@@ -241,7 +241,7 @@ static gboolean add_trail_run(Scan *Src, Scan *Dest)
 //			Dest->mem2d->data->Zmul(-1., col, line);
 
 	std::ifstream objloadstream;
-	gchar *fname = gapp->file_dialog ("Load Trail from vpdata", NULL, NULL, " ", "load trail from vpdata");
+	gchar *fname = main_get_gapp()->file_dialog ("Load Trail from vpdata", NULL, NULL, " ", "load trail from vpdata");
 	objloadstream.open (fname, std::ios::in);
 
 	int count=0;
@@ -300,7 +300,7 @@ static gboolean add_trail_run(Scan *Src, Scan *Dest)
 
 	std::cout << "Trails added from " << count << " tracking points. Out of scan range: " << count_off << std::endl;
 	gchar *m = g_strdup_printf ("Trails added from %d tracking points.\nOut of scan range: %d", count, count_off);
-	gapp->message (m);
+	main_get_gapp()->message (m);
 	g_free (m);
 
 	return MATH_OK;

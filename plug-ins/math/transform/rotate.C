@@ -70,7 +70,7 @@ zero the user is not prompted for a rotation angle!
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
 
 static void rotate_about( void );
 static void rotate_configuration( void );

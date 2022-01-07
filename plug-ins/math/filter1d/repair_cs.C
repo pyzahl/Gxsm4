@@ -65,7 +65,7 @@ The computation result is placed into an existing math channel, else into a new 
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
 
 static void repair_cs_init( void );
 static void repair_cs_about( void );

@@ -166,7 +166,7 @@ you present or publish results that are based on it.
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
 
 #include "autoalign_stack_reg.h"
 

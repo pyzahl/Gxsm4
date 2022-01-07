@@ -268,7 +268,7 @@ void gxsm_TC211_CCD::ScanLineM(int yindex, int xdir, int muxmode, Mem2d *Mob[MAX
 				for(int i=0; i<CCD_Xpixel && i < Mob[0]->GetNx (); i++)
 					Mob[0]->PutDataPkt ((double)ioctl (ccd, CCD_CMD_GETPIXEL,0), i, j);
 				if(!(j%32))
-					gapp->check_events();
+					main_get_gapp()->check_events();
 			}
 		return;
 	}
@@ -281,7 +281,7 @@ void gxsm_TC211_CCD::ScanLineM(int yindex, int xdir, int muxmode, Mem2d *Mob[MAX
 			Mob[0]->PutDataPkt((double)ioctl(ccd, CCD_CMD_GETPIXEL,0),i,yindex);
 
 	if(!(yindex%32))
-		gapp->check_events();
+		main_get_gapp()->check_events();
 }
 
 

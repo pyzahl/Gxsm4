@@ -142,11 +142,11 @@
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
-#include "core-source/dataio.h"
-#include "core-source/action_id.h"
-#include "core-source/util.h"
-#include "core-source/glbvars.h"
+#include "plugin.h"
+#include "dataio.h"
+#include "action_id.h"
+#include "util.h"
+#include "glbvars.h"
 #include "batch.h"
 #include "g_dat_types.h"
 #include "fileio.c"
@@ -289,7 +289,7 @@ static void multidim_im_export_configure(void)
 
 		GtkDialogFlags flags =  (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT);
 		GtkWidget *dialog = gtk_dialog_new_with_buttons (N_("Primitive Image Data Im-/Export"),
-								 GTK_WINDOW (gapp->get_app_window ()),
+								 GTK_WINDOW (main_get_gapp()->get_app_window ()),
 								 flags,
 								 _("_OK"),
 								 GTK_RESPONSE_ACCEPT,
@@ -437,13 +437,13 @@ FIO_STATUS PrimitiveImExportFile::Read(xsm::open_mode mode){
 		int index_time=0;
 		ret=FIO_OK;
 		multidim_im_export_configure ();
-		gapp->progress_info_new ("PRIM.XXX Multi Image Import", 2);
-		gapp->progress_info_set_bar_fraction (0., 1);
-		gapp->progress_info_set_bar_fraction (0., 2);
-		gapp->progress_info_set_bar_text (fname, 1);
+		main_get_gapp()->progress_info_new ("PRIM.XXX Multi Image Import", 2);
+		main_get_gapp()->progress_info_set_bar_fraction (0., 1);
+		main_get_gapp()->progress_info_set_bar_fraction (0., 2);
+		main_get_gapp()->progress_info_set_bar_text (fname, 1);
 		do {
 			int index_value=0;
-			gapp->progress_info_set_bar_fraction ((gdouble)index_time/(gdouble)max_index_time, 1);
+			main_get_gapp()->progress_info_set_bar_fraction ((gdouble)index_time/(gdouble)max_index_time, 1);
 			do {
 				gchar *fname_expand=NULL;
 				ifstream f;
@@ -454,13 +454,13 @@ FIO_STATUS PrimitiveImExportFile::Read(xsm::open_mode mode){
 					fname_expand = g_strdup_printf (fname, 
 									index_time*step_index_time+offset_index_time,
 									index_value*step_index_value+offset_index_value);
-				gapp->progress_info_set_bar_fraction ((gdouble)(index_value+1)/(gdouble)max_index_value, 2);
-				gapp->progress_info_set_bar_text (fname_expand, 2);
+				main_get_gapp()->progress_info_set_bar_fraction ((gdouble)(index_value+1)/(gdouble)max_index_value, 2);
+				main_get_gapp()->progress_info_set_bar_text (fname_expand, 2);
 				f.open(fname_expand, ios::in);
 				if(!f.good()){
 					cout << "PRIM.XXX::: ERROR while processing file >" << fname_expand << "< -- Multi Image Import Aborted." << endl;
 					PI_DEBUG (DBG_L2, "Error at file open. File not good/readable.");
-					gapp->progress_info_close ();
+					main_get_gapp()->progress_info_close ();
 					return status=FIO_OPEN_ERR;
 				}
 				f.close();
@@ -490,7 +490,7 @@ FIO_STATUS PrimitiveImExportFile::Read(xsm::open_mode mode){
 			++index_time;
 
 		} while (ret == FIO_OK && index_time < max_index_time);
-		gapp->progress_info_close ();
+		main_get_gapp()->progress_info_close ();
 		scan->retrieve_time_element (0);
 		scan->SetVM(SCAN_V_DIRECT);
 		return ret;
@@ -1012,13 +1012,13 @@ FIO_STATUS PrimitiveImExportFile::matsRead(const char *fname, int index_value, i
                 return FIO_OPEN_ERR;
         
         double num=256.;
-        gapp->ValueRequest("Enter X Size", "# X-Point", "Number of Points in X Direction for Matsfile",
-                           gapp->xsm->Unity, 2., 4096., ".0f", &num);
+        main_get_gapp()->ValueRequest("Enter X Size", "# X-Point", "Number of Points in X Direction for Matsfile",
+                           main_get_gapp()->xsm->Unity, 2., 4096., ".0f", &num);
         scan->data.s.nx=(int)num;
         
         num=128.;
-        gapp->ValueRequest("Enter Y Size", "# Y-Point", "Number of Points in Y Direction for Matsfile",
-                           gapp->xsm->Unity, 2., 4096., ".0f", &num);
+        main_get_gapp()->ValueRequest("Enter Y Size", "# Y-Point", "Number of Points in Y Direction for Matsfile",
+                           main_get_gapp()->xsm->Unity, 2., 4096., ".0f", &num);
         scan->data.s.ny=(int)num;
         
         
@@ -1108,7 +1108,7 @@ FIO_STATUS PrimitiveImExportFile::Write(){
 	if(strlen(name)>0)
 		fname = (const char*)name;
 	else
-		fname = gapp->file_dialog("File Export: all GNU, PGM, TGA"," ","*.[FfBbDdSsCcPpTt][LlYyAaHhPpBbGg][TtXxLlMmAa]","","gnuwrite");
+		fname = main_get_gapp()->file_dialog("File Export: all GNU, PGM, TGA"," ","*.[FfBbDdSsCcPpTt][LlYyAaHhPpBbGg][TtXxLlMmAa]","","gnuwrite");
 	if (fname == NULL) return FIO_NO_NAME;
 	if (strncmp(fname+strlen(fname)-4,".sht",4) == 0)
 		ft=SHTFIL, PixSize=sizeof(short);
@@ -1336,10 +1336,10 @@ static void primitive_im_export_filecheck_load_callback (gpointer data ){
                 PI_DEBUG (DBG_L2, "Check File: primitive_im_export_filecheck_load_callback called with >"
 			  << *fn << "<" );
 
-                Scan *dst = gapp->xsm->GetActiveScan();
+                Scan *dst = main_get_gapp()->xsm->GetActiveScan();
                 if(!dst){ 
-                        gapp->xsm->ActivateFreeChannel();
-                        dst = gapp->xsm->GetActiveScan();
+                        main_get_gapp()->xsm->ActivateFreeChannel();
+                        dst = main_get_gapp()->xsm->GetActiveScan();
                 }
                 PrimitiveImExportFile fileobj (dst, *fn);
 
@@ -1349,15 +1349,15 @@ static void primitive_im_export_filecheck_load_callback (gpointer data ){
                         if (ret != FIO_NOT_RESPONSIBLE_FOR_THAT_FILE)
                                 *fn=NULL;
                         // no more data: remove allocated and unused scan now, force!
-//                        gapp->xsm->SetMode(-1, ID_CH_M_OFF, TRUE); 
+//                        main_get_gapp()->xsm->SetMode(-1, ID_CH_M_OFF, TRUE); 
                         PI_DEBUG (DBG_L2, "primitive_im_export_filecheck_load: Read Error " << ((int)ret) << "!!!!!!!!" );
                 }else{
                         // got it!
                         *fn=NULL;
                         // Now update
 
-                        dst->GetDataSet(gapp->xsm->data);
-                        gapp->spm_update_all();
+                        dst->GetDataSet(main_get_gapp()->xsm->data);
+                        main_get_gapp()->spm_update_all();
                         dst->draw();
                         PI_DEBUG (DBG_L2, "primitive_im_export_filecheck_load: got it!" );
                 }
@@ -1373,7 +1373,7 @@ static void primitive_im_export_filecheck_save_callback (gpointer data ){
                 PI_DEBUG (DBG_L2, "Check File: primitive_im_export_filecheck_save_callback called with >"
 			  << *fn << "<" );
 
-                PrimitiveImExportFile fileobj (src = gapp->xsm->GetActiveScan(), *fn);
+                PrimitiveImExportFile fileobj (src = main_get_gapp()->xsm->GetActiveScan(), *fn);
 
                 FIO_STATUS ret;
                 ret = fileobj.Write(); 
@@ -1396,7 +1396,7 @@ static void primitive_im_export_filecheck_save_callback (gpointer data ){
 
 static void primitive_im_export_import_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data){
 //                                "known extensions: pgm h16 nsc d2d dat sht byt flt dbl",
-        gchar *fn = gapp->file_dialog_load ("Primitive Auto Import", NULL,
+        gchar *fn = main_get_gapp()->file_dialog_load ("Primitive Auto Import", NULL,
 					    "*.[PpHhNnDdSsBbFf][Gg1Ss2AaHhYyLlBb][Mm6CcDdTtLl]", 
 					    NULL);
 	if (fn){
@@ -1408,7 +1408,7 @@ static void primitive_im_export_import_callback (GSimpleAction *simple, GVariant
 
 static void primitive_im_export_export_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data){
 //                                    "known extensions: pgm tga dat sht byt flt dbl",
-        gchar *fn = gapp->file_dialog_save ("Primitive Auto Export", NULL,
+        gchar *fn = main_get_gapp()->file_dialog_save ("Primitive Auto Export", NULL,
 					    "*.[PpTtDdSsBbFf][GgAaHhYyLlBb][MmAaTtLl]",
 					    NULL);
 	if (fn){

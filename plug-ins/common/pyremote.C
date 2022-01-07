@@ -562,20 +562,20 @@ to the community. The GXSM-Forums always welcome input.
 #include "pyremote.h"
 #include "pyscript_templates.h"
 #include "pyscript_templates_script_libs.h"
-#include "core-source/plugin.h"
-#include "core-source/gnome-res.h"
+#include "plugin.h"
+#include "gnome-res.h"
 
 #include <Python.h>
 
 #include <sys/types.h>
 #include <signal.h>
 
-#include "core-source/action_id.h"
-#include "core-source/xsmtypes.h"
+#include "action_id.h"
+#include "xsmtypes.h"
 
 #include "config.h"
-#include "core-source/plugin.h"
-#include "core-source/glbvars.h"
+#include "plugin.h"
+#include "glbvars.h"
 
 #include "glib/gstdio.h"
 
@@ -584,13 +584,15 @@ to the community. The GXSM-Forums always welcome input.
 
 #include <gtksourceview/gtksource.h>
 
-#include "core-source/gapp_service.h"
-#include "core-source/xsm.h"
-#include "core-source/unit.h"
-#include "core-source/pcs.h"
+#include "gapp_service.h"
+#include "xsm.h"
+#include "unit.h"
+#include "pcs.h"
 
-#include "core-source/gxsm_app.h"
-#include "core-source/app_view.h"
+#include "gxsm_app.h"
+#include "gxsm_window.h"
+#include "app_view.h"
+#include "surface.h"
 
  // Fill in the GxsmPlugin Description here
 GxsmPlugin pyremote_pi = {
@@ -700,7 +702,7 @@ static PyGxsmModuleInfo py_gxsm_module;
 
 class py_gxsm_console : public AppBase{
 public:
-	py_gxsm_console (){
+	py_gxsm_console (Gxsm4app *app):AppBase(app){
                 script_filename = NULL;
                 gui_ready = false;
                 user_script_running = 0;
@@ -709,7 +711,7 @@ public:
         };
 	virtual ~py_gxsm_console ();
         
-        void AppWindowInit(const gchar *title);
+        virtual void AppWindowInit(const gchar *title, const gchar *sub_title=NULL);
 	
         void initialize(void);
         PyObject* run_string(const char *cmd, int type, PyObject *g, PyObject *l);
@@ -758,14 +760,14 @@ public:
                                                                  tmp_script_filename,
                                                                  err->message);
                                 append (message);
-                                gapp->warning (message);
+                                main_get_gapp()->warning (message);
                                 g_free(message);
                         }
                 } else {
                         gchar *message = g_strdup_printf("Action script/library %s not yet defined.\nPlease define action script using the python console.", tmp_script_filename);
                         g_message ("%s", message);
                         append(message);
-                        gapp->warning (message);
+                        main_get_gapp()->warning (message);
                         g_free(message);
                 }
                 g_free (tmp_script_filename);
@@ -996,11 +998,11 @@ static PyObject* remote_help(PyObject *self, PyObject *args);
 */
 static PyObject* remote_listr(PyObject *self, PyObject *args)
 {
-	int slen = g_slist_length( gapp->RemoteEntryList ); // How many entries?
+	int slen = g_slist_length( main_get_gapp()->RemoteEntryList ); // How many entries?
 
 	// This will be our return object with as many slots as input list has:
 	PyObject *ret = PyTuple_New(slen);
-	GSList* tmp = gapp->RemoteEntryList;
+	GSList* tmp = main_get_gapp()->RemoteEntryList;
 	for (int n=0; n<slen; n++){
                 Gtk_EntryControl* ec = (Gtk_EntryControl*)tmp->data; // Look at data item in GSList.
                 PyTuple_SetItem(ret, n, PyUnicode_FromString(ec->get_refname())); // Add Refname to Return-list
@@ -1012,11 +1014,11 @@ static PyObject* remote_listr(PyObject *self, PyObject *args)
 
 static PyObject* remote_lista(PyObject *self, PyObject *args)
 {
-	int slen = g_slist_length( gapp->RemoteActionList ); // How many entries?
+	int slen = g_slist_length( main_get_gapp()->RemoteActionList ); // How many entries?
 
 	// This will be our return object with as many slots as input list has:
 	PyObject *ret = PyTuple_New(slen);
-	GSList* tmp = gapp->RemoteActionList;
+	GSList* tmp = main_get_gapp()->RemoteActionList;
 	for (int n=0; n<slen; n++){
                 remote_action_cb* ra = (remote_action_cb*)tmp->data; // Look at data item in GSList.
                 PyTuple_SetItem(ret, n, PyUnicode_FromString(ra->cmd)); // Add Refname to Return-list
@@ -1035,11 +1037,11 @@ static PyObject* remote_gets(PyObject *self, PyObject *args)
 		return Py_BuildValue("i", -1);
 
 	int parameterlen = strlen(parameter);
-	int slen = g_slist_length( gapp->RemoteEntryList );
+	int slen = g_slist_length( main_get_gapp()->RemoteEntryList );
 
 	gchar *ret = NULL;
 
-	GSList* tmp = gapp->RemoteEntryList;
+	GSList* tmp = main_get_gapp()->RemoteEntryList;
 	for (int n=0; n<slen; n++)
 		{
 			Gtk_EntryControl* ec = (Gtk_EntryControl*)tmp->data;
@@ -1077,7 +1079,7 @@ static PyObject* remote_get(PyObject *self, PyObject *args)
 	gchar *list[] = {(gchar *)"get", parameter, NULL};
 	ra.arglist = list;
 
-	g_slist_foreach(gapp->RemoteEntryList, (GFunc) Check_ec, (gpointer)&ra);
+	g_slist_foreach(main_get_gapp()->RemoteEntryList, (GFunc) Check_ec, (gpointer)&ra);
 	PI_DEBUG(DBG_L2, parameter << " query result: " << ra.qvalue );
 
         if (ra.qstr)
@@ -1102,10 +1104,10 @@ static PyObject* remote_set(PyObject *self, PyObject *args)
 	ra.arglist = list;
 
         // check PCS entries
-	g_slist_foreach (gapp->RemoteEntryList, (GFunc) Check_ec, (gpointer)&ra);
+	g_slist_foreach (main_get_gapp()->RemoteEntryList, (GFunc) Check_ec, (gpointer)&ra);
 
         // check current active/open CONFIGURE elements
-	g_slist_foreach (gapp->RemoteConfigureList, (GFunc) Check_conf, (gpointer)&ra);
+	g_slist_foreach (main_get_gapp()->RemoteConfigureList, (GFunc) Check_conf, (gpointer)&ra);
 
 	return Py_BuildValue("i", 0);
 }
@@ -1124,7 +1126,7 @@ static PyObject* remote_action(PyObject *self, PyObject *args)
 
 	gchar *line3[] ={(char *)"action", parameter, value};
 
-	g_slist_foreach(gapp->RemoteActionList, (GFunc) CbAction_ra, (gpointer)line3);
+	g_slist_foreach(main_get_gapp()->RemoteActionList, (GFunc) CbAction_ra, (gpointer)line3);
 
 	return Py_BuildValue("i", 0);
 }
@@ -1152,7 +1154,7 @@ static PyObject* remote_rtquery(PyObject *self, PyObject *args)
 		return Py_BuildValue("i", -1);
 
 	double u,v,w;
-	gapp->xsm->hardware->RTQuery (parameter, u,v,w);
+	main_get_gapp()->xsm->hardware->RTQuery (parameter, u,v,w);
 
 	return Py_BuildValue("fff", u,v,w);
 }
@@ -1163,7 +1165,7 @@ static PyObject* remote_y_current(PyObject *self, PyObject *args)
 	PI_DEBUG(DBG_L2, "pyremote: y_current ") ;
 	//gchar *parameter;
 
-	gint y = gapp->xsm->hardware->RTQuery ();
+	gint y = main_get_gapp()->xsm->hardware->RTQuery ();
 
 	return Py_BuildValue("i", y);
 }
@@ -1179,17 +1181,17 @@ static PyObject* remote_moveto_scan_xy(PyObject *self, PyObject *args)
 
 	PI_DEBUG(DBG_L2, x << ", " << y );
 
-        if (x >= -gapp->xsm->data.s.rx/2 && x <= gapp->xsm->data.s.rx/2 &&
-            y >= -gapp->xsm->data.s.ry/2 && y <= gapp->xsm->data.s.ry/2){
+        if (x >= -main_get_gapp()->xsm->data.s.rx/2 && x <= main_get_gapp()->xsm->data.s.rx/2 &&
+            y >= -main_get_gapp()->xsm->data.s.ry/2 && y <= main_get_gapp()->xsm->data.s.ry/2){
         
-                gapp->xsm->data.s.sx = x;
-                gapp->xsm->data.s.sy = y;
+                main_get_gapp()->xsm->data.s.sx = x;
+                main_get_gapp()->xsm->data.s.sy = y;
 
-                gapp->xsm->hardware->MovetoXY
-                        (R2INT(gapp->xsm->Inst->XA2Dig(gapp->xsm->data.s.sx)),
-                         R2INT(gapp->xsm->Inst->YA2Dig(gapp->xsm->data.s.sy)));
+                main_get_gapp()->xsm->hardware->MovetoXY
+                        (R2INT(main_get_gapp()->xsm->Inst->XA2Dig(main_get_gapp()->xsm->data.s.sx)),
+                         R2INT(main_get_gapp()->xsm->Inst->YA2Dig(main_get_gapp()->xsm->data.s.sy)));
 
-                gapp->spm_update_all ();
+                main_get_gapp()->spm_update_all ();
         
                 return Py_BuildValue("i", 0);
         } else {
@@ -1206,7 +1208,7 @@ static PyObject* remote_moveto_scan_xy(PyObject *self, PyObject *args)
 static PyObject* remote_startscan(PyObject *self, PyObject *args)
 {
 	PI_DEBUG(DBG_L2, "pyremote: Starting scan");
-        gapp->signal_emit_toolbar_action ("Toolbar_Scan_Start");
+        main_get_gapp()->signal_emit_toolbar_action ("Toolbar_Scan_Start");
 	return Py_BuildValue("i", 0);
 }
 
@@ -1243,9 +1245,9 @@ static PyObject* remote_createscan(PyObject *self, PyObject *args)
         
 
 	//Scan *dst;
-	//gapp->xsm->ActivateFreeChannel();
-	//dst = gapp->xsm->GetActiveScan();
-	Scan *dst = gapp->xsm->GetScanChannel (ch);
+	//main_get_gapp()->xsm->ActivateFreeChannel();
+	//dst = main_get_gapp()->xsm->GetActiveScan();
+	Scan *dst = main_get_gapp()->xsm->GetScanChannel (ch);
 
         if (dst){
                 g_message ("Resize");
@@ -1306,7 +1308,7 @@ static PyObject* remote_createscan(PyObject *self, PyObject *args)
                 } else
                         dst->free_time_elements ();
                 
-                gapp->spm_update_all();
+                main_get_gapp()->spm_update_all();
                 dst->draw();
 
                 if (rf)
@@ -1359,10 +1361,10 @@ static PyObject *remote_createscanf(PyObject * self, PyObject * args)
 	//if (PyObject_AsWriteBuffer(the_array, (void **) &pbuf, (Py_ssize_t*)&blen))
 	//	return Py_BuildValue("i", -1);
 	//Scan *dst;
-	//gapp->xsm->ActivateFreeChannel();
-	//dst = gapp->xsm->GetActiveScan();
+	//main_get_gapp()->xsm->ActivateFreeChannel();
+	//dst = main_get_gapp()->xsm->GetActiveScan();
 
-	Scan *dst = gapp->xsm->GetScanChannel (ch);
+	Scan *dst = main_get_gapp()->xsm->GetScanChannel (ch);
         if (dst){
         
                 dst->mem2d->Resize (sizex, sizey, sizev, ZD_FLOAT);
@@ -1419,7 +1421,7 @@ static PyObject *remote_createscanf(PyObject * self, PyObject * args)
                 } else
                         dst->free_time_elements ();
 
-                gapp->spm_update_all();
+                main_get_gapp()->spm_update_all();
                 dst->draw();
                 dst = NULL;
 
@@ -1445,10 +1447,10 @@ static PyObject* remote_set_scan_unit(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "lsss", &ch, &udim, &unitid, &ulabel))
 		return Py_BuildValue("i", -1);
 
-	Scan *dst = gapp->xsm->GetScanChannel (ch);
+	Scan *dst = main_get_gapp()->xsm->GetScanChannel (ch);
         if (dst){
        
-                UnitObj *u = gapp->xsm->MakeUnit (unitid, ulabel);
+                UnitObj *u = main_get_gapp()->xsm->MakeUnit (unitid, ulabel);
                 g_message ("Set Scan Unit %c [%s] in %s", udim[0], u->Label(), u->Symbol());
                 switch (udim[0]){
                 case 'x': case 'X':
@@ -1485,7 +1487,7 @@ static PyObject* remote_set_scan_lookup(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "lsdd", &ch, &udim, &start, &end))
 		return Py_BuildValue("i", -1);
 
-	Scan *dst = gapp->xsm->GetScanChannel (ch);
+	Scan *dst = main_get_gapp()->xsm->GetScanChannel (ch);
         if (dst){
        
                 switch (udim[0]){
@@ -1516,7 +1518,7 @@ static PyObject* remote_getgeometry(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple (args, "l", &ch))
 		return Py_BuildValue("ddddd", 0., 0., 0., 0., 0.);
 
-	Scan *src = gapp->xsm->GetScanChannel (ch);
+	Scan *src = main_get_gapp()->xsm->GetScanChannel (ch);
         if (src)
                 return Py_BuildValue("ddddd", src->data.s.rx, src->data.s.ry, src->data.s.x0, src->data.s.y0, src->data.s.alpha);
         else
@@ -1532,7 +1534,7 @@ static PyObject* remote_getdifferentials(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple (args, "l", &ch))
 		return Py_BuildValue("dddd", 0., 0., 0., 0.);
 
-	Scan *src = gapp->xsm->GetScanChannel (ch);
+	Scan *src = main_get_gapp()->xsm->GetScanChannel (ch);
         if (src)
                 return Py_BuildValue("dddd", src->data.s.dx, src->data.s.dy, src->data.s.dz, src->data.s.dl);
         else
@@ -1548,7 +1550,7 @@ static PyObject* remote_getdimensions(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple (args, "l", &ch))
 		return Py_BuildValue("llll", -1, -1, -1, -1);
 
-	Scan *src = gapp->xsm->GetScanChannel (ch);
+	Scan *src = main_get_gapp()->xsm->GetScanChannel (ch);
         if (src)
                 return Py_BuildValue("llll", src->mem2d->GetNx (), src->mem2d->GetNy (), src->mem2d->GetNv (), src->number_of_time_elements ());
         else
@@ -1565,7 +1567,7 @@ static PyObject* remote_getdatapkt(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple (args, "ldddd", &ch, &x, &y, &v, &t))
 		return Py_BuildValue("d", 0.);
 
-	Scan *src = gapp->xsm->GetScanChannel (ch);
+	Scan *src = main_get_gapp()->xsm->GetScanChannel (ch);
         if (src)
                 if (t > 0.)
                         return Py_BuildValue("d", src->mem2d->GetDataPktInterpol (x,y,v, src, (int)(t)));
@@ -1585,7 +1587,7 @@ static PyObject* remote_putdatapkt(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple (args, "dlllll", &value, &ch, &x, &y, &v, &t))
 		return Py_BuildValue("i", -1);
 
-	Scan *dst = gapp->xsm->GetScanChannel (ch);
+	Scan *dst = main_get_gapp()->xsm->GetScanChannel (ch);
         if (dst){
                 dst->mem2d->PutDataPkt (value, x,y,v);
                 return Py_BuildValue("i", 0);
@@ -1605,7 +1607,7 @@ static PyObject* remote_getslice(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple (args, "lll", &ch, &v, &t))
 		return Py_BuildValue("i", -1);
 
-	Scan *src = gapp->xsm->GetScanChannel (ch);
+	Scan *src = main_get_gapp()->xsm->GetScanChannel (ch);
         if (src){
                 g_message ("remote_getslice -- Complete Me!! N/A");
 
@@ -1626,7 +1628,7 @@ static PyObject* remote_get_x_lookup(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple (args, "ll", &ch, &i))
 		return Py_BuildValue("d", 0.);
 
-	Scan *src = gapp->xsm->GetScanChannel (ch);
+	Scan *src = main_get_gapp()->xsm->GetScanChannel (ch);
         if (src)
                 return Py_BuildValue("d", src->mem2d->data->GetXLookup(i));
         else
@@ -1642,7 +1644,7 @@ static PyObject* remote_get_y_lookup(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple (args, "ll", &ch, &i))
 		return Py_BuildValue("d", 0.);
 
-	Scan *src = gapp->xsm->GetScanChannel (ch);
+	Scan *src = main_get_gapp()->xsm->GetScanChannel (ch);
         if (src)
                 return Py_BuildValue("d", src->mem2d->data->GetYLookup(i));
         else
@@ -1658,7 +1660,7 @@ static PyObject* remote_get_v_lookup(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple (args, "ll", &ch, &i))
 		return Py_BuildValue("d", 0.);
 
-	Scan *src = gapp->xsm->GetScanChannel (ch);
+	Scan *src = main_get_gapp()->xsm->GetScanChannel (ch);
         if (src)
                 return Py_BuildValue("d", src->mem2d->data->GetVLookup(i));
         else
@@ -1676,7 +1678,7 @@ static PyObject* remote_set_x_lookup(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple (args, "lld", &ch, &i, &v))
 		return Py_BuildValue("d", 0.);
 
-	Scan *src = gapp->xsm->GetScanChannel (ch);
+	Scan *src = main_get_gapp()->xsm->GetScanChannel (ch);
         if (src){
                 src->mem2d->data->SetXLookup(i, v);
                 return Py_BuildValue("d", src->mem2d->data->GetXLookup(i));
@@ -1694,7 +1696,7 @@ static PyObject* remote_set_y_lookup(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple (args, "lld", &ch, &i, &v))
 		return Py_BuildValue("d", 0.);
 
-	Scan *src = gapp->xsm->GetScanChannel (ch);
+	Scan *src = main_get_gapp()->xsm->GetScanChannel (ch);
         if (src){
                 src->mem2d->data->SetYLookup(i, v);
                 return Py_BuildValue("d", src->mem2d->data->GetYLookup(i));
@@ -1712,7 +1714,7 @@ static PyObject* remote_set_v_lookup(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple (args, "lld", &ch, &i, &v))
 		return Py_BuildValue("d", 0.);
 
-	Scan *src = gapp->xsm->GetScanChannel (ch);
+	Scan *src = main_get_gapp()->xsm->GetScanChannel (ch);
         if (src){
                 src->mem2d->data->SetVLookup(i, v);
                 return Py_BuildValue("d", src->mem2d->data->GetVLookup(i));
@@ -1730,7 +1732,7 @@ static PyObject* remote_getobject(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple (args, "ll", &ch, &nth))
 		return Py_BuildValue("s", "Invalid Parameters. [ll]: ch, nth");
 
-	Scan *src = gapp->xsm->GetScanChannel (ch);
+	Scan *src = main_get_gapp()->xsm->GetScanChannel (ch);
         if (src){
                 int n_obj = src->number_of_object ();
                 if (nth < n_obj){
@@ -1769,7 +1771,7 @@ static PyObject* remote_addmobject(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple (args, "lslll", &ch, &id, &grp, &x, &y))
 		return Py_BuildValue("s", "Invalid Parameters. [ll]: ch, nth");
 
-	Scan *src = gapp->xsm->GetScanChannel (ch);
+	Scan *src = main_get_gapp()->xsm->GetScanChannel (ch);
         if (grp < 0 || grp > 6) grp=0; // silently set 0 if out of range
         
         if (src->view->Get_ViewControl ()){
@@ -1796,7 +1798,7 @@ static PyObject* remote_addmobject(PyObject *self, PyObject *args)
 static PyObject* remote_stopscan(PyObject *self, PyObject *args)
 {
 	PI_DEBUG(DBG_L2, "pyremote: Stopping scan");
-	gapp->signal_emit_toolbar_action ("Toolbar_Scan_Stop");
+	main_get_gapp()->signal_emit_toolbar_action ("Toolbar_Scan_Stop");
 	return Py_BuildValue("i", 0);
 }
 
@@ -1804,8 +1806,8 @@ static PyObject* remote_waitscan(PyObject *self, PyObject *args)
 {
 	PI_DEBUG(DBG_L2, "pyremote: wait scan");
         double x,y,z;
-	if( gapp->xsm->hardware->RTQuery ("W",x,y,z) )
-                return Py_BuildValue("i", gapp->xsm->hardware->RTQuery () ); // return current y_index of scan
+	if( main_get_gapp()->xsm->hardware->RTQuery ("W",x,y,z) )
+                return Py_BuildValue("i", main_get_gapp()->xsm->hardware->RTQuery () ); // return current y_index of scan
         else
                 return Py_BuildValue("i", -1); // no scan in progress
 }
@@ -1813,14 +1815,14 @@ static PyObject* remote_waitscan(PyObject *self, PyObject *args)
 static PyObject* remote_scaninit(PyObject *self, PyObject *args)
 {
 	PI_DEBUG(DBG_L2, "pyremote: Initializing scan");
-	gapp->signal_emit_toolbar_action ("Toolbar_Scan_Init");
+	main_get_gapp()->signal_emit_toolbar_action ("Toolbar_Scan_Init");
 	return Py_BuildValue("i", 0);
 }
 
 static PyObject* remote_scanupdate(PyObject *self, PyObject *args)
 {
 	PI_DEBUG(DBG_L2, "pyremote: Updating scan (hardware)");
-	gapp->signal_emit_toolbar_action ("Toolbar_Scan_UpdateParam");
+	main_get_gapp()->signal_emit_toolbar_action ("Toolbar_Scan_UpdateParam");
 	return Py_BuildValue("i", 0);
 }
 
@@ -1835,8 +1837,8 @@ static PyObject* remote_scanylookup(PyObject *self, PyObject *args)
 	if(value1 && value2){
 		gchar *cmd = NULL;
 		cmd = g_strdup_printf ("2 %d %g", value1, value2);
-		gapp->PutPluginData (cmd);
-		gapp->signal_emit_toolbar_action ("Toolbar_Scan_SetYLookup");
+		main_get_gapp()->PutPluginData (cmd);
+		main_get_gapp()->signal_emit_toolbar_action ("Toolbar_Scan_SetYLookup");
 		g_free (cmd);
 	}
 	return Py_BuildValue("i", 0);
@@ -1857,14 +1859,14 @@ static PyObject* remote_scanline(PyObject *self, PyObject *args)
 					       value1,
 					       value2,
 					       value3);
-			gapp->PutPluginData (cmd);
-			gapp->signal_emit_toolbar_action ("Toolbar_Scan_Partial_Line");
+			main_get_gapp()->PutPluginData (cmd);
+			main_get_gapp()->signal_emit_toolbar_action ("Toolbar_Scan_Partial_Line");
 		}
 		else{
 			cmd = g_strdup_printf ("d %d",
 					       value1);
-			gapp->PutPluginData (cmd);
-			gapp->signal_emit_toolbar_action ("Toolbar_Scan_Line");
+			main_get_gapp()->PutPluginData (cmd);
+			main_get_gapp()->signal_emit_toolbar_action ("Toolbar_Scan_Line");
 		}
 		g_free (cmd);
 	}
@@ -1878,25 +1880,25 @@ static PyObject* remote_scanline(PyObject *self, PyObject *args)
 static PyObject* remote_autosave(PyObject *self, PyObject *args)
 {
 	PI_DEBUG(DBG_L2, "pyremote: Save All/Update");
-        gapp->enter_thread_safe_no_gui_mode();
-        gapp->auto_save_scans ();
-        gapp->exit_thread_safe_no_gui_mode();
-	return Py_BuildValue("i", (long)gapp->xsm->hardware->RTQuery ());
+        main_get_gapp()->enter_thread_safe_no_gui_mode();
+        main_get_gapp()->auto_save_scans ();
+        main_get_gapp()->exit_thread_safe_no_gui_mode();
+	return Py_BuildValue("i", (long)main_get_gapp()->xsm->hardware->RTQuery ());
 }
 
 static PyObject* remote_autoupdate(PyObject *self, PyObject *args)
 {
 	PI_DEBUG(DBG_L2, "pyremote: Save All/Update");
-        gapp->enter_thread_safe_no_gui_mode();
-        gapp->auto_update_scans ();
-        gapp->exit_thread_safe_no_gui_mode();
-	return Py_BuildValue("i", (long)gapp->xsm->hardware->RTQuery ());
+        main_get_gapp()->enter_thread_safe_no_gui_mode();
+        main_get_gapp()->auto_update_scans ();
+        main_get_gapp()->exit_thread_safe_no_gui_mode();
+	return Py_BuildValue("i", (long)main_get_gapp()->xsm->hardware->RTQuery ());
 }
 
 static PyObject* remote_save(PyObject *self, PyObject *args)
 {
 	PI_DEBUG(DBG_L2, "pyremote: Save");
-	gapp->xsm->save(MANUAL_SAVE_AS, NULL, -1, TRUE);
+	main_get_gapp()->xsm->save(MANUAL_SAVE_AS, NULL, -1, TRUE);
 	return Py_BuildValue("i", 0);
 }
 
@@ -1908,8 +1910,8 @@ static PyObject* remote_saveas(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "ls", &channel, &fname))
 		return Py_BuildValue("i", -1);
 	if (fname){
-		gapp->xsm->save (MANUAL_SAVE_AS, fname, channel, TRUE);
-		//gapp->xsm->save(TRUE, fname, channel);
+		main_get_gapp()->xsm->save (MANUAL_SAVE_AS, fname, channel, TRUE);
+		//main_get_gapp()->xsm->save(TRUE, fname, channel);
 	} else return Py_BuildValue("i", -1);
 	return Py_BuildValue("i", 0);
 }
@@ -1922,8 +1924,8 @@ static PyObject* remote_load(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "ls", &channel, &fname))
 		return Py_BuildValue("i", -1);
 	if (fname){
-		gapp->xsm->ActivateChannel (channel);
-		gapp->xsm->load (fname);
+		main_get_gapp()->xsm->ActivateChannel (channel);
+		main_get_gapp()->xsm->load (fname);
 	} else return Py_BuildValue("i", -1);
 	return Py_BuildValue("i", 0);
 }
@@ -1936,8 +1938,8 @@ static PyObject* remote_import(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "ls", &channel, &fname))
 		return Py_BuildValue("i", -1);
 	if (fname){
-		gapp->xsm->ActivateChannel (channel);
-		gapp->xsm->load (fname);
+		main_get_gapp()->xsm->ActivateChannel (channel);
+		main_get_gapp()->xsm->load (fname);
 	} else return Py_BuildValue("i", -1);
 	return Py_BuildValue("i", 0);
 }
@@ -1950,8 +1952,8 @@ static PyObject* remote_export(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "ls", &channel, &fname))
 		return Py_BuildValue("i", -1);
 	if (fname){
-		gapp->xsm->ActivateChannel (channel);
-		gapp->xsm->gnuexport (fname);
+		main_get_gapp()->xsm->ActivateChannel (channel);
+		main_get_gapp()->xsm->gnuexport (fname);
 	} else return Py_BuildValue("i", -1);
 	return Py_BuildValue("i", 0);
 }
@@ -1968,17 +1970,17 @@ static PyObject* remote_save_drawing (PyObject *self, PyObject *args)
 		return Py_BuildValue("i", -1);
 
         if (fname){
-		gapp->xsm->ActivateChannel (channel);
-                ViewControl* vc = gapp->xsm->GetActiveScan()->view->Get_ViewControl();
+		main_get_gapp()->xsm->ActivateChannel (channel);
+                ViewControl* vc = main_get_gapp()->xsm->GetActiveScan()->view->Get_ViewControl();
 
                 if (!vc) return Py_BuildValue("i", -1);
                 
-                gapp->xsm->data.display.vlayer = layer_index;
-                gapp->xsm->data.display.vframe = time_index;
+                main_get_gapp()->xsm->data.display.vlayer = layer_index;
+                main_get_gapp()->xsm->data.display.vframe = time_index;
                 App::spm_select_layer (NULL, gapp);
                 App::spm_select_time (NULL, gapp);
                 
-                gapp->xsm->GetActiveScan()->mem2d_time_element (time_index)->SetLayer (layer_index);
+                main_get_gapp()->xsm->GetActiveScan()->mem2d_time_element (time_index)->SetLayer (layer_index);
                 vc->view_file_save_drawing (fname);
                 
 	} else return Py_BuildValue("i", -1);
@@ -1999,14 +2001,14 @@ static PyObject* remote_set_view_indices (PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "lll", &channel, &time_index, &layer_index))
 		return Py_BuildValue("i", -1);
 
-        gapp->xsm->ActivateChannel (channel);
+        main_get_gapp()->xsm->ActivateChannel (channel);
 
-        gapp->xsm->data.display.vlayer = layer_index;
-        gapp->xsm->data.display.vframe = time_index;
+        main_get_gapp()->xsm->data.display.vlayer = layer_index;
+        main_get_gapp()->xsm->data.display.vframe = time_index;
         App::spm_select_layer (NULL, gapp);
         App::spm_select_time (NULL, gapp);
 
-        gapp->xsm->GetActiveScan()->mem2d_time_element (time_index)->SetLayer (layer_index);
+        main_get_gapp()->xsm->GetActiveScan()->mem2d_time_element (time_index)->SetLayer (layer_index);
 	return Py_BuildValue("i", 0);
 }
 
@@ -2014,8 +2016,8 @@ static PyObject* remote_set_view_indices (PyObject *self, PyObject *args)
 static PyObject* remote_autodisplay(PyObject *self, PyObject *args)
 {
 	PI_DEBUG(DBG_L2, "pyremote: Autodisplay");
-        if (gapp->xsm->ActiveScan)
-                gapp->xsm->ActiveScan->auto_display();
+        if (main_get_gapp()->xsm->ActiveScan)
+                main_get_gapp()->xsm->ActiveScan->auto_display();
         else
                 return Py_BuildValue("i", -1);
         return Py_BuildValue("i", 0);
@@ -2028,8 +2030,8 @@ static PyObject* remote_chfname(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "l", &channel))
 		return Py_BuildValue("i", -1);
         int ch=channel;
-        if (gapp->xsm->GetScanChannel(ch))
-                return Py_BuildValue ("s", gapp->xsm->GetScanChannel (ch)->storage_manager.get_filename());
+        if (main_get_gapp()->xsm->GetScanChannel(ch))
+                return Py_BuildValue ("s", main_get_gapp()->xsm->GetScanChannel (ch)->storage_manager.get_filename());
         else
                 return Py_BuildValue ("s", "EE: invalid channel");
 }
@@ -2040,7 +2042,7 @@ static PyObject* remote_chmodea(PyObject *self, PyObject *args)
 	long channel = 0;
 	if (!PyArg_ParseTuple(args, "l", &channel))
 		return Py_BuildValue("i", -1);
-	return Py_BuildValue ("i", gapp->xsm->ActivateChannel ((int)channel));
+	return Py_BuildValue ("i", main_get_gapp()->xsm->ActivateChannel ((int)channel));
 
 }
 
@@ -2050,7 +2052,7 @@ static PyObject* remote_chmodex(PyObject *self, PyObject *args)
 	long channel = 0;
 	if (!PyArg_ParseTuple(args, "l", &channel))
 		return Py_BuildValue("i", -1);
-	return Py_BuildValue ("i", gapp->xsm->SetMode ((int)channel, ID_CH_M_X));
+	return Py_BuildValue ("i", main_get_gapp()->xsm->SetMode ((int)channel, ID_CH_M_X));
 }
 
 static PyObject* remote_chmodem(PyObject *self, PyObject *args)
@@ -2060,7 +2062,7 @@ static PyObject* remote_chmodem(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "l", &channel))
 		return Py_BuildValue("i", -1);
 	PI_DEBUG(DBG_L2,  channel );
-	return Py_BuildValue ("i", gapp->xsm->SetMode ((int)channel, ID_CH_M_MATH));
+	return Py_BuildValue ("i", main_get_gapp()->xsm->SetMode ((int)channel, ID_CH_M_MATH));
 }
 
 static PyObject* remote_chmoden(PyObject *self, PyObject *args)
@@ -2070,7 +2072,7 @@ static PyObject* remote_chmoden(PyObject *self, PyObject *args)
 	long mode = 0;
 	if (!PyArg_ParseTuple(args, "ll", &channel, &mode))
 		return Py_BuildValue("i", -1);
-        return Py_BuildValue ("i", gapp->xsm->SetMode ((int)channel, ID_CH_M_X+mode));
+        return Py_BuildValue ("i", main_get_gapp()->xsm->SetMode ((int)channel, ID_CH_M_X+mode));
 }
 
 static PyObject* remote_chmodeno(PyObject *self, PyObject *args)
@@ -2079,7 +2081,7 @@ static PyObject* remote_chmodeno(PyObject *self, PyObject *args)
 	long channel = 0;
 	if (!PyArg_ParseTuple(args, "l", &channel))
 		return Py_BuildValue("i", -1);
-	return Py_BuildValue ("i", gapp->xsm->SetView ((int)channel, ID_CH_V_NO));
+	return Py_BuildValue ("i", main_get_gapp()->xsm->SetView ((int)channel, ID_CH_V_NO));
 }
 
 static PyObject* remote_chview1d(PyObject *self, PyObject *args)
@@ -2088,7 +2090,7 @@ static PyObject* remote_chview1d(PyObject *self, PyObject *args)
 	long channel = 0;
 	if (!PyArg_ParseTuple(args, "l", &channel))
 		return Py_BuildValue("i", -1);
-	return Py_BuildValue ("i", gapp->xsm->SetView (channel, ID_CH_V_PROFILE));
+	return Py_BuildValue ("i", main_get_gapp()->xsm->SetView (channel, ID_CH_V_PROFILE));
 }
 
 static PyObject* remote_chview2d(PyObject *self, PyObject *args)
@@ -2097,7 +2099,7 @@ static PyObject* remote_chview2d(PyObject *self, PyObject *args)
 	long channel = 0;
 	if (!PyArg_ParseTuple(args, "l", &channel))
 		return Py_BuildValue("i", -1);
-	return Py_BuildValue ("i", gapp->xsm->SetView ((int)channel, ID_CH_V_GREY));
+	return Py_BuildValue ("i", main_get_gapp()->xsm->SetView ((int)channel, ID_CH_V_GREY));
 }
 
 static PyObject* remote_chview3d(PyObject *self, PyObject *args)
@@ -2106,27 +2108,27 @@ static PyObject* remote_chview3d(PyObject *self, PyObject *args)
 	long channel = 0;
 	if (!PyArg_ParseTuple(args, "l", &channel))
 		return Py_BuildValue("i", -1);
-	return Py_BuildValue ("i", gapp->xsm->SetView ((int)channel, ID_CH_V_SURFACE));
+	return Py_BuildValue ("i", main_get_gapp()->xsm->SetView ((int)channel, ID_CH_V_SURFACE));
 }
 
 static PyObject* remote_quick(PyObject *self, PyObject *args)
 {
 	PI_DEBUG(DBG_L2, "pyremote: Quick");
-	gapp->xsm->SetVM(SCAN_V_QUICK);
+	main_get_gapp()->xsm->SetVM(SCAN_V_QUICK);
 	return Py_BuildValue("i", 0);
 }
 
 static PyObject* remote_direct(PyObject *self, PyObject *args)
 {
 	PI_DEBUG(DBG_L2, "pyremote: Direkt");
-	gapp->xsm->SetVM(SCAN_V_DIRECT);
+	main_get_gapp()->xsm->SetVM(SCAN_V_DIRECT);
 	return Py_BuildValue("i", 0);
 }
 
 static PyObject* remote_log(PyObject *self, PyObject *args)
 {
 	PI_DEBUG(DBG_L2, "pyremote: Log");
-	gapp->xsm->SetVM(SCAN_V_LOG);
+	main_get_gapp()->xsm->SetVM(SCAN_V_LOG);
 	return Py_BuildValue("i", 0);
 }
 
@@ -2141,29 +2143,29 @@ static PyObject* remote_log(PyObject *self, PyObject *args)
 static PyObject* remote_unitbz(PyObject *self, PyObject *args)
 {
 	PI_DEBUG(DBG_L2, "pyremote: unitbz");
-	gapp->xsm->SetModeFlg(MODE_BZUNIT);
-	gapp->xsm->ClrModeFlg(MODE_VOLTUNIT);
+	main_get_gapp()->xsm->SetModeFlg(MODE_BZUNIT);
+	main_get_gapp()->xsm->ClrModeFlg(MODE_VOLTUNIT);
 	return Py_BuildValue("i", 0);
 }
 static PyObject* remote_unitvolt(PyObject *self, PyObject *args)
 {
 	PI_DEBUG(DBG_L2, "pyremote: unitvolt");
-	gapp->xsm->SetModeFlg(MODE_VOLTUNIT);
-	gapp->xsm->ClrModeFlg(MODE_BZUNIT);
+	main_get_gapp()->xsm->SetModeFlg(MODE_VOLTUNIT);
+	main_get_gapp()->xsm->ClrModeFlg(MODE_BZUNIT);
 	return Py_BuildValue("i", 0);
 }
 static PyObject* remote_unitev(PyObject *self, PyObject *args)
 {
 	PI_DEBUG(DBG_L2, "pyremote: unitev");
-	gapp->xsm->SetModeFlg(MODE_ENERGY_EV);
-	gapp->xsm->ClrModeFlg(MODE_ENERGY_S);
+	main_get_gapp()->xsm->SetModeFlg(MODE_ENERGY_EV);
+	main_get_gapp()->xsm->ClrModeFlg(MODE_ENERGY_S);
 	return Py_BuildValue("i", 0);
 }
 static PyObject* remote_units(PyObject *self, PyObject *args)
 {
 	PI_DEBUG(DBG_L2, "pyremote: units");
-	gapp->xsm->SetModeFlg(MODE_ENERGY_S);
-	gapp->xsm->ClrModeFlg(MODE_ENERGY_EV);
+	main_get_gapp()->xsm->SetModeFlg(MODE_ENERGY_S);
+	main_get_gapp()->xsm->ClrModeFlg(MODE_ENERGY_EV);
 	return Py_BuildValue("i", 0);
 }
 
@@ -2196,9 +2198,9 @@ static PyObject* remote_logev(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "s", &zeile))
 		return Py_BuildValue("i", -1);
 	if(zeile){
-		gapp->monitorcontrol->LogEvent((char *)"RemoteLogEv", zeile);
+		main_get_gapp()->monitorcontrol->LogEvent((char *)"RemoteLogEv", zeile);
 	}else{
-		gapp->monitorcontrol->LogEvent((char *)"RemoteLogEv", (char *)"--");
+		main_get_gapp()->monitorcontrol->LogEvent((char *)"RemoteLogEv", (char *)"--");
 	}
 	return Py_BuildValue("i", 0);
 }
@@ -2213,13 +2215,13 @@ static PyObject* remote_progress_info(PyObject *self, PyObject *args)
 		return Py_BuildValue("i", -1);
 	if(info){
                 if (d < 0.)
-                        gapp->progress_info_new (info, 1);
+                        main_get_gapp()->progress_info_new (info, 1);
                 else {
-                        gapp->progress_info_set_bar_fraction (d, 1);
-                        gapp->progress_info_set_bar_text (info, 1);
+                        main_get_gapp()->progress_info_set_bar_fraction (d, 1);
+                        main_get_gapp()->progress_info_set_bar_text (info, 1);
                 }
                 if (d > 1.){
-                        gapp->progress_info_close ();
+                        main_get_gapp()->progress_info_close ();
                 }
 	}else{
                 return Py_BuildValue("i", -1);
@@ -2237,9 +2239,9 @@ static PyObject* remote_add_layer_information(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "sl", &info, &layer))
 		return Py_BuildValue("i", -1);
 	PI_DEBUG(DBG_L2, info << " to layer info, lv=" << layer );
-        if (gapp->xsm->ActiveScan)
-                if(info && layer>=0 && layer<gapp->xsm->GetActiveScan() -> mem2d->GetNv())
-                        gapp->xsm->GetActiveScan() -> mem2d->add_layer_information ((int)layer, new LayerInformation (info));
+        if (main_get_gapp()->xsm->ActiveScan)
+                if(info && layer>=0 && layer<main_get_gapp()->xsm->GetActiveScan() -> mem2d->GetNv())
+                        main_get_gapp()->xsm->GetActiveScan() -> mem2d->add_layer_information ((int)layer, new LayerInformation (info));
 	return Py_BuildValue("i", 0);
 }
 
@@ -2252,7 +2254,7 @@ static PyObject* remote_da0(PyObject *self, PyObject *args)
 		return Py_BuildValue("i", -1);
 	if (channel){
 		PI_DEBUG(DBG_L2, "Commented out.");
-		//gapp->xsm->hardware->SetAnalog("da-name", channel);
+		//main_get_gapp()->xsm->hardware->SetAnalog("da-name", channel);
 	}
 	return Py_BuildValue("i", 0);
 }
@@ -2273,7 +2275,7 @@ static PyObject* remote_signal_emit(PyObject *self, PyObject *args)
         //        g_message ("pyremote::remote_signal_emit get g_action_map: %s", gm ? "OK":"??");
 
         GAction *ga = g_action_map_lookup_action (gm, action);
-        //        GAction *ga = g_action_map_lookup_action (G_ACTION_MAP (gapp->getApp ()), action);
+        //        GAction *ga = g_action_map_lookup_action (G_ACTION_MAP (main_get_gapp()->getApp ()), action);
         //	g_message ("pyremote::remote_signal_emit g_action_map_lookup_action: %s -> %s", action, ga?"OK":"??");
 
         if (ga){
@@ -2755,7 +2757,7 @@ gchar *py_gxsm_console::pre_parse_script (const gchar *script, int *n_lines, int
                                                  );
                 g_warning ("%s", message);
                 append(message);
-                gapp->warning (message);
+                main_get_gapp()->warning (message);
                 g_free(message);
 
                 g_free (parsed_script);
@@ -2812,7 +2814,7 @@ gchar *py_gxsm_console::pre_parse_script (const gchar *script, int *n_lines, int
                                                                          );
                                         g_message ("%s", message);
                                         append(message);
-                                        gapp->warning (message);
+                                        main_get_gapp()->warning (message);
                                         g_free(message);
                                 }
                         } else {
@@ -2825,7 +2827,7 @@ gchar *py_gxsm_console::pre_parse_script (const gchar *script, int *n_lines, int
                                                                  lines[0]);
                                 g_message ("%s", message);
                                 append(message);
-                                gapp->warning (message);
+                                main_get_gapp()->warning (message);
                                 g_free(message);
                         }
                 } else {
@@ -3149,20 +3151,18 @@ static GActionEntry win_py_gxsm_action_entries[] = {
 	{ "pyremote-configure", py_gxsm_console::configure_callback, NULL, NULL, NULL },
 };
 
-void py_gxsm_console::AppWindowInit(const gchar *title){
+void py_gxsm_console::AppWindowInit(const gchar *title, const gchar *sub_title){
 
         PI_DEBUG(DBG_L2, "pyremote Plugin :: AppWindoInit() -- building Console AppWindow.");
 
         //        SET_PCS_GROUP("plugin_libpyremote");
         //        gsettings = g_settings_new (GXSM_RES_BASE_PATH_DOT".plugin.common.libpyremote");
 
-        app_window = gxsm4_app_window_new (GXSM4_APP (gapp->get_application ()));
+        app_window = gxsm4_app_window_new (GXSM4_APP (main_get_gapp()->get_application ()));
         window = GTK_WINDOW (app_window);
 
         header_bar = gtk_header_bar_new ();
         gtk_widget_show (header_bar);
-        // hide close, min, max window decorations
-        //gtk_header_bar_set_show_close_button (GTK_HEADER_BAR (header_bar), false);
 
         g_action_map_add_action_entries (G_ACTION_MAP (app_window),
                                          win_py_gxsm_action_entries, G_N_ELEMENTS (win_py_gxsm_action_entries),
@@ -3170,7 +3170,7 @@ void py_gxsm_console::AppWindowInit(const gchar *title){
 	PI_DEBUG (DBG_L2,  "pyremote Plugin :: setup file menu" );
 
         // create window PopUp menu  ---------------------------------------------------------------------
-        file_menu = gtk_popover_menu_new_from_model (G_MENU_MODEL (gapp->get_plugin_pyremote_file_menu ()));
+        file_menu = gtk_popover_menu_new_from_model (G_MENU_MODEL (main_get_gapp()->get_plugin_pyremote_file_menu ()));
         //g_assert (GTK_IS_MENU (file_menu));
 
         // attach popup file menu button --------------------------------
@@ -3245,7 +3245,7 @@ void py_gxsm_console::create_gui ()
 
         PI_DEBUG(DBG_L2, "pyremote Plugin :: create_gui() -- building GUI elements.");
 
-        bp = new BuildParam (v_grid, NULL, gapp->RemoteEntryList);
+        bp = new BuildParam (v_grid, NULL, main_get_gapp()->RemoteEntryList);
         
 	// create static structure;
 	exec_value = 50.0; // mid value
@@ -3331,7 +3331,7 @@ void py_gxsm_console::create_gui ()
 	null_unit = new UnitObj(" "," ");
 	bp->grid_add_ec ("Script Control", null_unit, &exec_value, 0.0, 100.0, "4g", 1., 10., "script-control");
 
-        gapp->RemoteEntryList = bp->get_remote_list_head ();
+        main_get_gapp()->RemoteEntryList = bp->get_remote_list_head ();
 
 	g_signal_connect(entry_input, "activate",
 			 G_CALLBACK(py_gxsm_console::command_execute), this);
@@ -3491,9 +3491,9 @@ static void pyremote_init(void)
 	}
 
 	if (!py_gxsm_remote_console){
-		py_gxsm_remote_console = new py_gxsm_console ();
+		py_gxsm_remote_console = new py_gxsm_console (main_get_gapp() -> get_app ());
 	
-                gapp->ConnectPluginToRemoteAction (run_action_script_callback);
+                main_get_gapp()->ConnectPluginToRemoteAction (run_action_script_callback);
         }
 
         py_gxsm_remote_console->run();
@@ -3518,7 +3518,7 @@ void pyremote_run( GtkWidget *w, void *data ){
 
         // check if we are created -- should be.
         if (!py_gxsm_remote_console)
-		py_gxsm_remote_console = new py_gxsm_console ();
+		py_gxsm_remote_console = new py_gxsm_console (main_get_gapp() -> get_app ());
 
 	PI_DEBUG(DBG_L2, "pyremote Plugin Run: Console-Run");
 	py_gxsm_remote_console->run();

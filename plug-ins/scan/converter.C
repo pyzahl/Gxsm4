@@ -330,12 +330,12 @@ void converter::ConvertDir(converterData * work_it,
 
 void converter::DoConvert(gchar * pathname, gchar * outputname)
 {
-    if (gapp->xsm->ActivateFreeChannel()) {
+    if (main_get_gapp()->xsm->ActivateFreeChannel()) {
 	PI_DEBUG(DBG_L2, "Nc2top Error: finding Free Channel");
 	return;
     }
 
-    gint Ch = gapp->xsm->FindChan(ID_CH_M_ACTIVE);
+    gint Ch = main_get_gapp()->xsm->FindChan(ID_CH_M_ACTIVE);
 
     if ((Ch = readToAct(pathname)) < 0)
 	PI_DEBUG(DBG_L2,
@@ -351,7 +351,7 @@ void converter::DoConvert(gchar * pathname, gchar * outputname)
 		     "failed");
     }
 
-    gapp->xsm->SetMode(Ch, ID_CH_M_OFF, TRUE);
+    main_get_gapp()->xsm->SetMode(Ch, ID_CH_M_OFF, TRUE);
 }
 
 
@@ -362,12 +362,12 @@ gint converter::readToAct(gchar * fname)
     Dataio *Dio = NULL;
     gint ret = -1;
 
-    ActiveScan = gapp->xsm->GetActiveScan();
-    ret = gapp->xsm->FindChan(ID_CH_M_ACTIVE);
+    ActiveScan = main_get_gapp()->xsm->GetActiveScan();
+    ret = main_get_gapp()->xsm->FindChan(ID_CH_M_ACTIVE);
 
     // check if something else (no NetCDF)
     if (!(strstr(fname, ".nc") || strstr(fname, ".NC"))) {
-	gapp->xsm->gnuimport(fname);
+	main_get_gapp()->xsm->gnuimport(fname);
 	return ret;
     } else {
 	if (!strncasecmp(fname + strlen(fname) - 3, ".nc", 3))
@@ -382,9 +382,9 @@ gint converter::readToAct(gchar * fname)
 	}
 	delete Dio;
 
-	ActiveScan->GetDataSet(gapp->xsm->data);
+	ActiveScan->GetDataSet(main_get_gapp()->xsm->data);
 	// refresh all Parameter and draw Scan
-	gapp->spm_update_all();
+	main_get_gapp()->spm_update_all();
 	ActiveScan->draw();
 
 	return ret;
@@ -397,13 +397,13 @@ gint converter::writeFromCh(gint Ch, gchar * fname)
 
     if (!(strstr(fname, ".nc") || strstr(fname, ".NC"))) {
 	//Make sure We are using the right channel
-	if (gapp->xsm->FindChan(ID_CH_M_ACTIVE) != Ch)
-	    gapp->xsm->ActivateChannel(Ch);
+	if (main_get_gapp()->xsm->FindChan(ID_CH_M_ACTIVE) != Ch)
+	    main_get_gapp()->xsm->ActivateChannel(Ch);
 
-	ret = gapp->xsm->gnuexport(fname);
+	ret = main_get_gapp()->xsm->gnuexport(fname);
 	return ret;
     } else {
-	ret = gapp->xsm->save(AUTO_NAME_SAVE, fname, Ch, true);
+	ret = main_get_gapp()->xsm->save(AUTO_NAME_SAVE, fname, Ch, true);
 	return ret;
     }
 

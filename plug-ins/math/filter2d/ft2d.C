@@ -105,7 +105,7 @@ transformation after (background) stopp and/or pass operations.
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
 
 // Plugin Prototypes
 static void ft2d_init( void );

@@ -100,8 +100,8 @@ Activate source channel.
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
-#include "core-source/app_profile.h"
+#include "plugin.h"
+#include "app_profile.h"
 
 
 // Plugin Prototypes

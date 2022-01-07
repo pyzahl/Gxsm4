@@ -57,13 +57,13 @@
 #include <sys/ioctl.h>
 
 #include "config.h"
-#include "core-source/plugin.h"
-#include "core-source/xsmhard.h"
-#include "core-source/glbvars.h"
+#include "plugin.h"
+#include "xsmhard.h"
+#include "glbvars.h"
 
 
-#include "core-source/gxsm_app.h"
-#include "core-source/gxsm_window.h"
+#include "gxsm_app.h"
+#include "gxsm_window.h"
 
 
 // Define HwI PlugIn reference name here, this is what is listed later within "Preferenced Dialog"
@@ -197,14 +197,14 @@ GxsmPlugin *get_gxsm_plugin_info ( void ){
 // Essential Plugin Function!!
 XSM_Hardware *get_gxsm_hwi_hardware_class ( void *data ) {
         gchar *tmp;
-        gapp->monitorcontrol->LogEvent (THIS_HWI_PREFIX " XSM_Hardware *get_gxsm_hwi_hardware_class", "Init 1");
+        main_get_gapp()->monitorcontrol->LogEvent (THIS_HWI_PREFIX " XSM_Hardware *get_gxsm_hwi_hardware_class", "Init 1");
 
 	spm_simulator_hwi_configure_string = g_strdup ((gchar*)data);
 
 	// probe for harware here...
 	spmsim_hwi = new spm_simulator_hwi_dev ();
 	
-        gapp->monitorcontrol->LogEvent ("HwI: probing succeeded.", "SPM SIM System Ready.");
+        main_get_gapp()->monitorcontrol->LogEvent ("HwI: probing succeeded.", "SPM SIM System Ready.");
 	return spmsim_hwi;
 }
 
@@ -344,7 +344,7 @@ void SPM_SIM_Control::AppWindowInit(const gchar *title){
         if (title) { // stage 1
                 PI_DEBUG (DBG_L2, "SPMSIMControl::AppWindowInit -- header bar");
 
-                app_window = gxsm4_app_window_new (GXSM4_APP (gapp->get_application ()));
+                app_window = gxsm4_app_window_new (GXSM4_APP (main_get_gapp()->get_application ()));
                 window = GTK_WINDOW (app_window);
 
                 header_bar = gtk_header_bar_new ();
@@ -372,7 +372,7 @@ void SPM_SIM_Control::AppWindowInit(const gchar *title){
                                                  this);
 
                 // create window PopUp menu  ---------------------------------------------------------------------
-                GtkWidget *mc_popup_menu = gtk_popover_menu_new_from_model (G_MENU_MODEL (gapp->get_hwi_mover_popup_menu ())); // fix me -- reusuing same menu def (from DSP MOVER)
+                GtkWidget *mc_popup_menu = gtk_popover_menu_new_from_model (G_MENU_MODEL (main_get_gapp()->get_hwi_mover_popup_menu ())); // fix me -- reusuing same menu def (from DSP MOVER)
 
                 // attach popup menu configuration to tool button --------------------------------
                 GtkWidget *header_menu_button = gtk_menu_button_new ();
@@ -394,27 +394,27 @@ int SPM_SIM_Control::choice_Ampl_callback (GtkWidget *widget, SPM_SIM_Control *s
 	gint j = GPOINTER_TO_INT (g_object_get_data( G_OBJECT (widget), "chindex"));
 	switch(j){
 	case 0: spm_simulator_hwi_pi.app->xsm->Inst->VX(i);
-		if (gapp->xsm->Inst->OffsetMode() == OFM_DSP_OFFSET_ADDING)
+		if (main_get_gapp()->xsm->Inst->OffsetMode() == OFM_DSP_OFFSET_ADDING)
 			spm_simulator_hwi_pi.app->xsm->Inst->VX0(i);
 		break;
 	case 1: spm_simulator_hwi_pi.app->xsm->Inst->VY(i);
-		if (gapp->xsm->Inst->OffsetMode() == OFM_DSP_OFFSET_ADDING)
+		if (main_get_gapp()->xsm->Inst->OffsetMode() == OFM_DSP_OFFSET_ADDING)
 			spm_simulator_hwi_pi.app->xsm->Inst->VY0(i);
 		break;
 	case 2: spm_simulator_hwi_pi.app->xsm->Inst->VZ(i); 
-		if (gapp->xsm->Inst->OffsetMode() == OFM_DSP_OFFSET_ADDING)
+		if (main_get_gapp()->xsm->Inst->OffsetMode() == OFM_DSP_OFFSET_ADDING)
 			spm_simulator_hwi_pi.app->xsm->Inst->VZ0(i); 
 		break;
 	case 3:
-		if (gapp->xsm->Inst->OffsetMode() == OFM_ANALOG_OFFSET_ADDING)
+		if (main_get_gapp()->xsm->Inst->OffsetMode() == OFM_ANALOG_OFFSET_ADDING)
 			spm_simulator_hwi_pi.app->xsm->Inst->VX0(i);
 		break;
 	case 4:
-		if (gapp->xsm->Inst->OffsetMode() == OFM_ANALOG_OFFSET_ADDING)
+		if (main_get_gapp()->xsm->Inst->OffsetMode() == OFM_ANALOG_OFFSET_ADDING)
 			spm_simulator_hwi_pi.app->xsm->Inst->VY0(i);
 		break;
 	case 5:
-		if (gapp->xsm->Inst->OffsetMode() == OFM_ANALOG_OFFSET_ADDING)
+		if (main_get_gapp()->xsm->Inst->OffsetMode() == OFM_ANALOG_OFFSET_ADDING)
 			spm_simulator_hwi_pi.app->xsm->Inst->VZ0(i);
 		break;
 	}
@@ -511,7 +511,7 @@ void SPM_SIM_Control::create_folder (){
                         const gchar *PDR_gain_label[6] = { "VX", "VY", "VZ", "VX0", "VY0", "VZ0" };
                         const gchar *PDR_gain_key[6] = { "vx", "vy", "vz", "vx0", "vy0", "vz0" };
                         for(int j=0; j<6; j++) {
-                                if (j == 3 && gapp->xsm->Inst->OffsetMode () == OFM_DSP_OFFSET_ADDING)
+                                if (j == 3 && main_get_gapp()->xsm->Inst->OffsetMode () == OFM_DSP_OFFSET_ADDING)
                                         break;
 
                                 gtk_label_set_width_chars (GTK_LABEL (bp->grid_add_label (PDR_gain_label[j])), 6);
@@ -740,35 +740,35 @@ double spm_simulator_hwi_dev::simulate_value (int xi, int yi, int ch){
         static feature_blob blb[N_blobs];
         static feature_molecule mol[N_molecules];
         static feature_lattice lat;
-        static double fz = 1./gapp->xsm->Inst->Dig2ZA(1);
+        static double fz = 1./main_get_gapp()->xsm->Inst->Dig2ZA(1);
 
         double x = xi*Dx-Dx*Nx/2; // x in DAC units
         double y = (Ny-yi-1)*Dy-Dy*Ny/2; // y in DAC units, i=0 is top line, i=Ny is bottom line
 
         // Please Note:
-        // spm_simulator_hwi_pi.app->xsm->... and gapp->xsm->...
+        // spm_simulator_hwi_pi.app->xsm->... and main_get_gapp()->xsm->...
         // are identical pointers to the main g-application (gapp) class and it is made availabe vie the plugin descriptor
         // in case the global gapp is not exported or used in the plugin. And either one may be used to access core settings.
         
-        x = gapp->xsm->Inst->Dig2XA ((long)round(x)); // convert to anstroems for model using instrument class, use Scan Gains
-        y = gapp->xsm->Inst->Dig2YA ((long)round(y)); // convert to anstroems for model
+        x = main_get_gapp()->xsm->Inst->Dig2XA ((long)round(x)); // convert to anstroems for model using instrument class, use Scan Gains
+        y = main_get_gapp()->xsm->Inst->Dig2YA ((long)round(y)); // convert to anstroems for model
 
-        x += 1.5*g_random_double_range (-gapp->xsm->Inst->Dig2XA(2), gapp->xsm->Inst->Dig2XA(2));
-        y += 1.5*g_random_double_range (-gapp->xsm->Inst->Dig2YA(2), gapp->xsm->Inst->Dig2YA(2));
+        x += 1.5*g_random_double_range (-main_get_gapp()->xsm->Inst->Dig2XA(2), main_get_gapp()->xsm->Inst->Dig2XA(2));
+        y += 1.5*g_random_double_range (-main_get_gapp()->xsm->Inst->Dig2YA(2), main_get_gapp()->xsm->Inst->Dig2YA(2));
         
         //g_print ("XY: %g %g  [%g %g %d %d]",x,y, Dx,Dy, xi,yi);
         
         invTransform (&x, &y); // apply rotation! Use invTransform for simualtion.
-        x += gapp->xsm->Inst->Dig2X0A (x0); // use Offset Gains
-        y += gapp->xsm->Inst->Dig2Y0A (y0);
+        x += main_get_gapp()->xsm->Inst->Dig2X0A (x0); // use Offset Gains
+        y += main_get_gapp()->xsm->Inst->Dig2Y0A (y0);
 
         //g_print ("XYR0: %g %g",x,y);
 
         // use template landscape is scan loaded to CH11 !!
-        if (gapp->xsm->scan[10]){
+        if (main_get_gapp()->xsm->scan[10]){
                 double ix,iy;
-                gapp->xsm->scan[10]->World2Pixel  (x, y, ix,iy);
-                return gapp->xsm->scan[10]->data.s.dz * gapp->xsm->scan[10]->mem2d->GetDataPktInterpol (ix,iy);
+                main_get_gapp()->xsm->scan[10]->World2Pixel  (x, y, ix,iy);
+                return main_get_gapp()->xsm->scan[10]->data.s.dz * main_get_gapp()->xsm->scan[10]->mem2d->GetDataPktInterpol (ix,iy);
         }
 
         double z=0.0;
@@ -937,7 +937,7 @@ gboolean spm_simulator_hwi_dev::ScanLineM(int yindex, int xdir, int muxmode,
 		ydir = yindex == 0 ? 1 : -1; // scan top-down or bottom-up ?
 
                 // may compute and set if available
-		// gapp->xsm->data.s.pixeltime = (double)dsp_scan.dnx/SamplingFreq;
+		// main_get_gapp()->xsm->data.s.pixeltime = (double)dsp_scan.dnx/SamplingFreq;
 
                 // setup hardware for scan here and
                 // start g-thread for data transfer now
@@ -996,9 +996,9 @@ gint spm_simulator_hwi_dev::RTQuery (const gchar *property, double &val1, double
                 double x = (double)(data_x_index-Nx/2)*Dx;
                 double y = (double)(Ny/2-data_y_index)*Dy;
                 Transform (&x, &y); // apply rotation!
-		val1 =  gapp->xsm->Inst->VZ() * data_z_value;
-		val2 =  gapp->xsm->Inst->VX() * (x + x0 ) * 10/32768; // assume "internal" non analog offset adding here (same gain)
-                val3 =  gapp->xsm->Inst->VY() * (y + y0 ) * 10/32768;
+		val1 =  main_get_gapp()->xsm->Inst->VZ() * data_z_value;
+		val2 =  main_get_gapp()->xsm->Inst->VX() * (x + x0 ) * 10/32768; // assume "internal" non analog offset adding here (same gain)
+                val3 =  main_get_gapp()->xsm->Inst->VY() * (y + y0 ) * 10/32768;
 		return TRUE;
 	}
 
@@ -1006,14 +1006,14 @@ gint spm_simulator_hwi_dev::RTQuery (const gchar *property, double &val1, double
 		// read/convert and return offset
 		// NEED to request 'z' property first, then this is valid and up-to-date!!!!
                 // no offset simulated
-		if (gapp->xsm->Inst->OffsetMode () == OFM_ANALOG_OFFSET_ADDING){
-			val1 =  gapp->xsm->Inst->VZ0() * 0.;
-			val2 =  gapp->xsm->Inst->VX0() * x0*10/32768;
-			val3 =  gapp->xsm->Inst->VY0() * y0*10/32768;
+		if (main_get_gapp()->xsm->Inst->OffsetMode () == OFM_ANALOG_OFFSET_ADDING){
+			val1 =  main_get_gapp()->xsm->Inst->VZ0() * 0.;
+			val2 =  main_get_gapp()->xsm->Inst->VX0() * x0*10/32768;
+			val3 =  main_get_gapp()->xsm->Inst->VY0() * y0*10/32768;
 		} else {
-			val1 =  gapp->xsm->Inst->VZ() * 0.;
-			val2 =  gapp->xsm->Inst->VX() * x0*10/32768;
-			val3 =  gapp->xsm->Inst->VY() * y0*10/32768;
+			val1 =  main_get_gapp()->xsm->Inst->VZ() * 0.;
+			val2 =  main_get_gapp()->xsm->Inst->VX() * x0*10/32768;
+			val3 =  main_get_gapp()->xsm->Inst->VY() * y0*10/32768;
 		}
 		
 		return TRUE;
@@ -1022,16 +1022,16 @@ gint spm_simulator_hwi_dev::RTQuery (const gchar *property, double &val1, double
         // ZXY in Angstroem
         if (*property == 'R'){
                 // ZXY Volts after Piezoamp -- without analog offset -> Dig -> ZXY in Angstroem
-		val1 = gapp->xsm->Inst->V2ZAng (gapp->xsm->Inst->VZ() * data_z_value);
-		val2 = gapp->xsm->Inst->V2XAng (gapp->xsm->Inst->VX() * (double)(data_x_index-Nx/2)*Dx)*10/32768;
-                val3 = gapp->xsm->Inst->V2YAng (gapp->xsm->Inst->VY() * (double)(Ny/2-data_y_index/2)*Dy)*10/32768;
+		val1 = main_get_gapp()->xsm->Inst->V2ZAng (main_get_gapp()->xsm->Inst->VZ() * data_z_value);
+		val2 = main_get_gapp()->xsm->Inst->V2XAng (main_get_gapp()->xsm->Inst->VX() * (double)(data_x_index-Nx/2)*Dx)*10/32768;
+                val3 = main_get_gapp()->xsm->Inst->V2YAng (main_get_gapp()->xsm->Inst->VY() * (double)(Ny/2-data_y_index/2)*Dy)*10/32768;
 		return TRUE;
         }
 
         if (*property == 'f'){
                 val1 = 0.; // qf - DSPPACClass->pll.Reference[0]; // Freq Shift
-		val2 = sim_current / gapp->xsm->Inst->nAmpere2V(1.); // actual nA reading    xxxx V  * 0.1nA/V
-		val3 = sim_current / gapp->xsm->Inst->nAmpere2V(1.); // actual nA RMS reading    xxxx V  * 0.1nA/V -- N/A for simulation
+		val2 = sim_current / main_get_gapp()->xsm->Inst->nAmpere2V(1.); // actual nA reading    xxxx V  * 0.1nA/V
+		val3 = sim_current / main_get_gapp()->xsm->Inst->nAmpere2V(1.); // actual nA RMS reading    xxxx V  * 0.1nA/V -- N/A for simulation
 		return TRUE;
 	}
 
@@ -1069,8 +1069,8 @@ gint spm_simulator_hwi_dev::RTQuery (const gchar *property, double &val1, double
 	}
 
         if (*property == 'p'){ // SCAN DATA INDEX, CENTERED range: +/- NX/2, +/-NY/2
-                val1 = (double)( data_x_index - (gapp->xsm->data.s.nx/2 - 1) + 1);
-                val2 = (double)(-data_y_index + (gapp->xsm->data.s.ny/2 - 1) + 1);
+                val1 = (double)( data_x_index - (main_get_gapp()->xsm->data.s.nx/2 - 1) + 1);
+                val2 = (double)(-data_y_index + (main_get_gapp()->xsm->data.s.ny/2 - 1) + 1);
                 val3 = (double)data_z_value;
 		return TRUE;
         }

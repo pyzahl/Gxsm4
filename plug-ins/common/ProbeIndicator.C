@@ -116,12 +116,13 @@ MK3 only.
  * -------------------------------------------------------------------------------- 
  */
 #include "config.h"
-#include "core-source/plugin.h"
-#include "core-source/glbvars.h"
-#include "core-source/xsmtypes.h"
+#include "plugin.h"
+#include "glbvars.h"
+#include "xsmtypes.h"
 
-#include "core-source/gxsm_app.h"
-#include "core-source/gxsm_window.h"
+#include "gxsm_app.h"
+#include "gxsm_window.h"
+#include "surface.h"
 
 #include "ProbeIndicator.h"
 
@@ -262,7 +263,7 @@ static void ProbeIndicator_query(void)
         }
 #endif
         
-	HUD_Window = new ProbeIndicator(); // ProbeIndicator(ProbeIndicator_pi.app->getApp());
+	HUD_Window = new ProbeIndicator (main_get_gapp() -> get_app ()); // ProbeIndicator(ProbeIndicator_pi.app->getApp());
 	ProbeIndicator_pi.app->ConnectPluginToSPMRangeEvent (ProbeIndicator_refresh_callback);
 	HUD_Window->start ();
 
@@ -316,10 +317,10 @@ static void ProbeIndicator_cleanup(void)
 }
 
 static gint ProbeIndicator_tip_refresh_callback (ProbeIndicator *pv){
-	if (!gapp->xsm->hardware)
+	if (!main_get_gapp()->xsm->hardware)
 		return TRUE;
 
-	if (gapp->xsm->hardware->IsSuspendWatches ())
+	if (main_get_gapp()->xsm->hardware->IsSuspendWatches ())
 		return TRUE;
 
 	if (pv){
@@ -448,7 +449,7 @@ GtkWidget *ProbeIndicator::signal_input_signal_options (gint channel, gint prese
 #endif
 
 
-ProbeIndicator::ProbeIndicator (){ 
+ProbeIndicator::ProbeIndicator (Gxsm4app *app):AppBase(app){ 
         hud_size = 150;
 	timer_id = 0;
 	probe = NULL;
@@ -646,10 +647,10 @@ ProbeIndicator::~ProbeIndicator (){
 	PI_DEBUG (DBG_L4, "ProbeIndicator::~ProbeIndicator () -- done.");
 }
 
-void ProbeIndicator::AppWindowInit(const gchar *title){
+void ProbeIndicator::AppWindowInit(const gchar *title, const gchar *subtitle){
         PI_DEBUG (DBG_L2, "ProbeIndicator::AppWindowInit -- header bar");
 
-        app_window = gxsm4_app_window_new (GXSM4_APP (gapp->get_application ()));
+        app_window = gxsm4_app_window_new (GXSM4_APP (main_get_gapp()->get_application ()));
         window = GTK_WINDOW (app_window);
 
 	gtk_window_set_default_size (GTK_WINDOW(window), 2*hud_size, 2*hud_size);
@@ -657,8 +658,6 @@ void ProbeIndicator::AppWindowInit(const gchar *title){
 	gtk_widget_set_opacity (GTK_WIDGET(window), 1.0);
 	gtk_window_set_resizable (GTK_WINDOW(window), FALSE);
 	gtk_window_set_decorated (GTK_WINDOW(window), FALSE);
-	//gtk_window_set_keep_above (GTK_WINDOW(window), TRUE);
-	//gtk_window_stick (GTK_WINDOW(window));
         
 	v_grid = gtk_grid_new ();
         gtk_window_set_child (GTK_WINDOW (window), v_grid);
@@ -694,7 +693,7 @@ gint ProbeIndicator::canvas_event_cb(GtkWidget *canvas, GdkEvent *event, ProbeIn
 		switch(event->button.button) {
 		case 1:
                         //g_object_set_data (G_OBJECT(canvas), "preset_xy", preset);
-                        //gapp->offset_to_preset_callback (canvas, gapp);
+                        //main_get_gapp()->offset_to_preset_callback (canvas, gapp);
                         g_message ("ProbeIndicator Button1 Pressed at XY=%g, %g",  mouse_pix_xy[0], mouse_pix_xy[1]);
                 }
                 break;
@@ -770,13 +769,13 @@ gint ProbeIndicator::refresh(){
         if (busy) return FALSE; // skip this one, busy
 
 	double x,y,z,q,Ilg, Ilgmp, Ilgmi;
-        double max_z = xsmres.AnalogVMaxOut*gapp->xsm->Inst->VZ();
+        double max_z = xsmres.AnalogVMaxOut*main_get_gapp()->xsm->Inst->VZ();
 
         busy = TRUE;
 	x=y=z=q=0.;
         
-        if (gapp->xsm->hardware)
-                gapp->xsm->hardware->RTQuery ("zxy", z, x, y); // get tip position in volts
+        if (main_get_gapp()->xsm->hardware)
+                main_get_gapp()->xsm->hardware->RTQuery ("zxy", z, x, y); // get tip position in volts
         else {
                 busy = FALSE;
                 return FALSE;
@@ -788,21 +787,21 @@ gint ProbeIndicator::refresh(){
         else
                 probe->set_mark_color (tip, CAIRO_COLOR_RED_ID);
 
-	if (gapp->xsm->hardware){
+	if (main_get_gapp()->xsm->hardware){
 		//double x0,y0,z0;
 #if 0
-		if (gapp->xsm->hardware->RTQuery ("O", z0, x0, y0)){ // get HR Offset
+		if (main_get_gapp()->xsm->hardware->RTQuery ("O", z0, x0, y0)){ // get HR Offset
 			gchar *tmp = NULL;
 			tmp = g_strdup_printf ("Offset Z0: %7.3f " UTF8_ANGSTROEM
                                                "\nXY0: %7.3f " UTF8_ANGSTROEM
                                                ", %7.3f " UTF8_ANGSTROEM
 					       "\nXYs: %7.3f " UTF8_ANGSTROEM
                                                ", %7.3f " UTF8_ANGSTROEM,
-					       gapp->xsm->Inst->V2ZAng(z0),
-					       gapp->xsm->Inst->V2XAng(x0),
-					       gapp->xsm->Inst->V2YAng(y0),
-					       gapp->xsm->Inst->V2XAng(x),
-					       gapp->xsm->Inst->V2YAng(y));
+					       main_get_gapp()->xsm->Inst->V2ZAng(z0),
+					       main_get_gapp()->xsm->Inst->V2XAng(x0),
+					       main_get_gapp()->xsm->Inst->V2YAng(y0),
+					       main_get_gapp()->xsm->Inst->V2XAng(x),
+					       main_get_gapp()->xsm->Inst->V2YAng(y));
                         infoXY0->set_text (tmp);
                         //infoXY0->queue_update (canvas);
 			g_free (tmp);
@@ -829,7 +828,7 @@ gint ProbeIndicator::refresh(){
 #endif
 
                 // Life Paramater Info
-		gapp->xsm->hardware->RTQuery ("f0I", x, y, q); // get f0, I -- val1,2,3=[fo,Iav,Irms]
+		main_get_gapp()->xsm->hardware->RTQuery ("f0I", x, y, q); // get f0, I -- val1,2,3=[fo,Iav,Irms]
 
                 // Freq
                 if (fabs(x) < 200.){
@@ -852,16 +851,16 @@ gint ProbeIndicator::refresh(){
                 probe->set_indicator_val (ineg,  100.0, y < 0.? -25.*Ilg : 0.);
 
                 if (modes & SCOPE_ON){
-                        gapp->xsm->hardware->RTQuery ("S1", SCOPE_N+1, &scope[0][0]); // RT Query S1
-                        gapp->xsm->hardware->RTQuery ("S2", SCOPE_N+1, &scope[1][0]); // RT Query S2
+                        main_get_gapp()->xsm->hardware->RTQuery ("S1", SCOPE_N+1, &scope[0][0]); // RT Query S1
+                        main_get_gapp()->xsm->hardware->RTQuery ("S2", SCOPE_N+1, &scope[1][0]); // RT Query S2
                         if (modes & SCOPE_RECORD){
-                                gapp->xsm->hardware->RTQuery ("R3", SCOPE_N+1, &scopedec[0][0]); // RT Query S1 dec, record
-                                gapp->xsm->hardware->RTQuery ("R4", SCOPE_N+1, &scopedec[1][0]); // RT Query S2 dec, record
+                                main_get_gapp()->xsm->hardware->RTQuery ("R3", SCOPE_N+1, &scopedec[0][0]); // RT Query S1 dec, record
+                                main_get_gapp()->xsm->hardware->RTQuery ("R4", SCOPE_N+1, &scopedec[1][0]); // RT Query S2 dec, record
                         } else {
-                                gapp->xsm->hardware->RTQuery ("D3", SCOPE_N+1, &scopedec[0][0]); // RT Query S1 dec
-                                gapp->xsm->hardware->RTQuery ("D4", SCOPE_N+1, &scopedec[1][0]); // RT Query S2 dec
+                                main_get_gapp()->xsm->hardware->RTQuery ("D3", SCOPE_N+1, &scopedec[0][0]); // RT Query S1 dec
+                                main_get_gapp()->xsm->hardware->RTQuery ("D4", SCOPE_N+1, &scopedec[1][0]); // RT Query S2 dec
                         }
-                        gapp->xsm->hardware->RTQuery ("T",  SCOPE_N+1, NULL); // RT Query, Trigger next
+                        main_get_gapp()->xsm->hardware->RTQuery ("T",  SCOPE_N+1, NULL); // RT Query, Trigger next
                 
                         gfloat xmax, xmin;
                         dec=SCOPE_N/128;
@@ -897,8 +896,8 @@ gint ProbeIndicator::refresh(){
                         xrms = sqrt(xrms);
                         scope_max[0] = 0.9*scope_max[0] + 0.1*xmax;
                         scope_min[0] = 0.9*scope_min[0] + 0.1*xmin;
-                        Ilgmp = log10 (fabs(1000.*scope_max[0]/dec / gapp->xsm->Inst->nAmpere2V(1.)) + 1.0);
-                        Ilgmi = log10 (fabs(1000.*scope_min[0]/dec / gapp->xsm->Inst->nAmpere2V(1.)) + 1.0);
+                        Ilgmp = log10 (fabs(1000.*scope_max[0]/dec / main_get_gapp()->xsm->Inst->nAmpere2V(1.)) + 1.0);
+                        Ilgmi = log10 (fabs(1000.*scope_min[0]/dec / main_get_gapp()->xsm->Inst->nAmpere2V(1.)) + 1.0);
                         double upper=25.*(scope_max[0] > 0.? Ilgmp : -Ilgmp);
                         double lower=25.*(scope_min[0] > 0.? Ilgmi : -Ilgmi);
                         probe->set_indicator_val (ipos2, 100.+upper, lower-upper);
@@ -960,7 +959,7 @@ gint ProbeIndicator::refresh(){
 
                 
                         // Plot Signal2 (designed for Current (or may use dFreq) or MIX-IN-0, decimated DSP reat time scrolled view FULL-BW and :256 @ 4096->128
-                        xmax=xmin = gapp->xsm->Inst->V2ZAng (scope[1][0]); // in Ang
+                        xmax=xmin = main_get_gapp()->xsm->Inst->V2ZAng (scope[1][0]); // in Ang
                         xc = 0.5*(scope_max[1]+scope_min[1]); // center
                         xr = scope_max[1]-scope_min[1]; // range
                         for(i=k=0; i<128; ++i){
@@ -970,7 +969,7 @@ gint ProbeIndicator::refresh(){
                                         x += scope[1][k];
                                 
                                 x /= dec;
-                                x = gapp->xsm->Inst->V2ZAng(x); // Z in Ang
+                                x = main_get_gapp()->xsm->Inst->V2ZAng(x); // Z in Ang
 
                                 if (i <= 64) // shift so center is current (where the tip is), lhs = now to -T1/2, rhs: older (-T1/2..-T)
                                         xdec = scopedec[1][(i+64)*SCOPE_VIEW_DEC-1]; // simple decimated data stream, in V
@@ -986,7 +985,7 @@ gint ProbeIndicator::refresh(){
                                 horizon[1]->set_xy (i, i-64., 64.*(x-xc)/16.); // xr is too jumpy ... fixed 2A/div (+/-16A on grid)
                                 horizon[5]->set_xy (i, i-64, 100.*xdec/max_z); // decimated rolling signal, full scale (max z range matching tip marker)
                                 //g_print ("decZ %d %g  fBW: %g   xc: %g xdec: %g V, max_z: %g V\n",i,
-                                //         gapp->xsm->Inst->V2ZAng(scopedec[1][k]), gapp->xsm->Inst->V2ZAng(scope[1][k]), xc, xdec, max_z);
+                                //         main_get_gapp()->xsm->Inst->V2ZAng(scopedec[1][k]), main_get_gapp()->xsm->Inst->V2ZAng(scope[1][k]), xc, xdec, max_z);
 
                         }
                         // update smoothly
@@ -1006,34 +1005,34 @@ gint ProbeIndicator::refresh(){
                         gchar *tmp = NULL;
                         double yy = 0.;
                         if (modes & SCOPE_ON){
-                                y = xavg/gapp->xsm->Inst->nAmpere2V(1.);
-                                yy = xrms/gapp->xsm->Inst->nAmpere2V(1.);
+                                y = xavg/main_get_gapp()->xsm->Inst->nAmpere2V(1.);
+                                yy = xrms/main_get_gapp()->xsm->Inst->nAmpere2V(1.);
                         }
                         if (modes & SCOPE_INFOPLUS){
                                 if (fabs(y) < 0.25)
                                         tmp = g_strdup_printf ("I: %8.1f (%.2f) pA\ndF: %8.1f Hz\nZ: %8.4f" UTF8_ANGSTROEM "\nI: %.2f : %.2f pA\nZ: %.2f : %.2f " UTF8_ANGSTROEM,
-                                                               y*1000., yy*1000., x, gapp->xsm->Inst->V2ZAng(z),
-                                                               scope_min[0]/dec/gapp->xsm->Inst->nAmpere2V(1.)*1000., scope_max[0]/dec/gapp->xsm->Inst->nAmpere2V(1.)*1000.,
+                                                               y*1000., yy*1000., x, main_get_gapp()->xsm->Inst->V2ZAng(z),
+                                                               scope_min[0]/dec/main_get_gapp()->xsm->Inst->nAmpere2V(1.)*1000., scope_max[0]/dec/main_get_gapp()->xsm->Inst->nAmpere2V(1.)*1000.,
                                                                scope_min[1], scope_max[1]
                                                                );
                                 else
                                         tmp = g_strdup_printf ("I: %8.1f (%.2f) nA\ndF: %8.1f Hz\nZ: %8.4f" UTF8_ANGSTROEM "\nI: %.2f : %.2f nA\nZ: %.2f : %.2f " UTF8_ANGSTROEM,
-                                                               y, yy, x, gapp->xsm->Inst->V2ZAng(z),
-                                                               scope_min[0]/dec/gapp->xsm->Inst->nAmpere2V(1.), scope_max[0]/dec/gapp->xsm->Inst->nAmpere2V(1.),
+                                                               y, yy, x, main_get_gapp()->xsm->Inst->V2ZAng(z),
+                                                               scope_min[0]/dec/main_get_gapp()->xsm->Inst->nAmpere2V(1.), scope_max[0]/dec/main_get_gapp()->xsm->Inst->nAmpere2V(1.),
                                                                scope_min[1], scope_max[1]
                                                                );
                                 //tmp = g_strdup_printf ("I: %8.4f nA\ndF: %8.1f Hz\nZ: %8.4f" UTF8_ANGSTROEM,
-                                //                               y, x); //  "\n%g:%g", gapp->xsm->Inst->V2ZAng(z), scope_min[0]/dec,scope_max[0]/dec);
+                                //                               y, x); //  "\n%g:%g", main_get_gapp()->xsm->Inst->V2ZAng(z), scope_min[0]/dec,scope_max[0]/dec);
 
                                 // query and print to terminal DSP task list
                                 double a,b,c;
-                                gapp->xsm->hardware->RTQuery ("S", a, b, c); // get DST RT statemachine status info, with termial process list dump option on
+                                main_get_gapp()->xsm->hardware->RTQuery ("S", a, b, c); // get DST RT statemachine status info, with termial process list dump option on
 
                         } else {
                                 if (fabs(y) < 0.25)
-                                        tmp = g_strdup_printf ("I: %8.1f pA\ndF: %8.1f Hz\nZ: %8.4f" UTF8_ANGSTROEM, y*1000., x, gapp->xsm->Inst->V2ZAng(z));
+                                        tmp = g_strdup_printf ("I: %8.1f pA\ndF: %8.1f Hz\nZ: %8.4f" UTF8_ANGSTROEM, y*1000., x, main_get_gapp()->xsm->Inst->V2ZAng(z));
                                 else
-                                        tmp = g_strdup_printf ("I: %8.4f nA\ndF: %8.1f Hz\nZ: %8.4f" UTF8_ANGSTROEM, y, x, gapp->xsm->Inst->V2ZAng(z));
+                                        tmp = g_strdup_printf ("I: %8.4f nA\ndF: %8.1f Hz\nZ: %8.4f" UTF8_ANGSTROEM, y, x, main_get_gapp()->xsm->Inst->V2ZAng(z));
                         }
                         info->set_text (tmp);
                         g_free (tmp);

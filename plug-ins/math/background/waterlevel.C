@@ -94,7 +94,7 @@ This plug-in is still under construction!
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
 
 // Plugin Prototypes
 static void waterlevel_init( void );
@@ -252,8 +252,8 @@ static void waterlevel_cleanup(void)
 static gboolean waterlevel_run(Scan *Src, Scan *Dest)
 {
 	if ((Src ? Src->mem2d->get_t_index ():0) < 1 && (Src ? Src->mem2d->GetLayer ():0) < 2){
-		gapp->ValueRequest("Waterlevel", "Level", "Set waterlevel",
-				   gapp->xsm->Unity, -1e4, 1e4, ".0f", &waterlevel);
+		main_get_gapp()->ValueRequest("Waterlevel", "Level", "Set waterlevel",
+				   main_get_gapp()->xsm->Unity, -1e4, 1e4, ".0f", &waterlevel);
 		if (!Src || !Dest)
 			return 0;
 	}

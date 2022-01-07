@@ -243,11 +243,11 @@ gboolean IslandLabl(MATHOPPARAMS){
   if (inter==1){
     // Eingabe der Randbedingungen
     gchar *txt1 = g_strdup_printf("Periodische RB: ohne(-1), x+y(0), x(1)");
-    gapp->ValueRequest("Enter Value", "RB", txt1, gapp->xsm->Unity, -1., 1., "g", &d_pr);
+    main_get_gapp()->ValueRequest("Enter Value", "RB", txt1, main_get_gapp()->xsm->Unity, -1., 1., "g", &d_pr);
     g_free(txt1); 
     // Eingabe der Stepamounts (wegen Unterbindung Bindung über Stufen)
     gchar *txt2 = g_strdup_printf("Stufenanzahl des Orginal-Substrates");
-    gapp->ValueRequest("Enter Value", "sa", txt2, gapp->xsm->Unity, 0.,512., "g", &d_sa);
+    main_get_gapp()->ValueRequest("Enter Value", "sa", txt2, main_get_gapp()->xsm->Unity, 0.,512., "g", &d_sa);
     g_free(txt2); 
   }
   sa= (int) d_sa;
@@ -397,7 +397,7 @@ gboolean StepFlaten(MATHOPPARAMS){
   if (inter==1){
   // Eingabe der Stepamounts
   gchar *txt = g_strdup_printf("Stepamount: ");
-  gapp->ValueRequest("Enter Value", "Stepamount", txt, gapp->xsm->Unity, 1., 512., "g", &d_sa);
+  main_get_gapp()->ValueRequest("Enter Value", "Stepamount", txt, main_get_gapp()->xsm->Unity, 1., 512., "g", &d_sa);
   g_free(txt); 
   }
   sa= (int) d_sa;
@@ -453,11 +453,11 @@ gboolean KillStepIslands(MATHOPPARAMS){
   if (inter==1){
   // Eingabe der Randbedingungen
   gchar *txt1 = g_strdup_printf("Periodische RB: ohne(-1), x+y(0), x(1)");
-  gapp->ValueRequest("Enter Value", "RB", txt1, gapp->xsm->Unity, -1., 1., "g", &d_pr);
+  main_get_gapp()->ValueRequest("Enter Value", "RB", txt1, main_get_gapp()->xsm->Unity, -1., 1., "g", &d_pr);
   g_free(txt1); 
   // Eingabe der Stepamounts
   gchar *txt2 = g_strdup_printf("Stepamount: ");
-  gapp->ValueRequest("Enter Value", "Stepamount", txt2, gapp->xsm->Unity, 1., 256., "g", &d_sa);
+  main_get_gapp()->ValueRequest("Enter Value", "Stepamount", txt2, main_get_gapp()->xsm->Unity, 1., 256., "g", &d_sa);
   g_free(txt2); 
   }
   sa= (int) d_sa;

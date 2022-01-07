@@ -103,7 +103,7 @@ This plugin is under construction.
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
 
 // Plugin Prototypes
 static void ift2d_init( void );
