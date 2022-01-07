@@ -34,21 +34,10 @@ Simple install procedure:
 
 svn checkout svn+ssh://zahl@svn.code.sf.net/p/gxsm/svn/trunk/Gxsm4 Gxsm4-svn
 
-./autogen.sh
-make -j16 -k
-sudo make install -j16 -k
+## New build tool: Meson buildsystem -- work in progress:
 
-Note: there may be compile errors as of incomplete porting progress.
-
-See the file 'INSTALL' for more detailed information.
-
-## 2b. New build alternative: Meson buildsystem -- work in progress:
-Before getting started in every source folder run (install mmv tools)
-
-$ mln -s "*.C" "#1.cpp"
-
-The create your "builddir" in the project root folder.
-Run
+First create your "builddir" in the project root folder.
+Then run
 $ meson builddir
 $ cd builddir
 $ ninja
