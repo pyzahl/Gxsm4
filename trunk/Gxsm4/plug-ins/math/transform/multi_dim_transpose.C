@@ -100,7 +100,7 @@ Activate a channel and run it.
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
 
 // Plugin Prototypes
 static void multi_dim_transpose_init( void );
@@ -255,11 +255,11 @@ static void multi_dim_transpose_cleanup(void)
 // run-Function
  static gboolean multi_dim_transpose_run(Scan *Src, Scan *Dest)
 {
-	gapp->progress_info_new ("Transposing", 2); // setup an progress indicator
-	gapp->progress_info_set_bar_fraction (0., 1);
-	gapp->progress_info_set_bar_fraction (0., 2);
-	gapp->progress_info_set_bar_text ("Time", 1);
-	gapp->progress_info_set_bar_text ("Value", 2);
+	main_get_gapp()->progress_info_new ("Transposing", 2); // setup an progress indicator
+	main_get_gapp()->progress_info_set_bar_fraction (0., 1);
+	main_get_gapp()->progress_info_set_bar_fraction (0., 2);
+	main_get_gapp()->progress_info_set_bar_text ("Time", 1);
+	main_get_gapp()->progress_info_set_bar_text ("Value", 2);
 
 	// number of time frames stored
 	int n_times  = Src->number_of_time_elements ();
@@ -271,10 +271,10 @@ static void multi_dim_transpose_cleanup(void)
 	// running indices are of source, dest are transposed in time and value
 	for (int layer_index=0; layer_index < n_layers; ++layer_index){
 		double frame_time=0.;
-		gapp->progress_info_set_bar_fraction ((gdouble)(layer_index+1)/(gdouble)n_layers, 2);
+		main_get_gapp()->progress_info_set_bar_fraction ((gdouble)(layer_index+1)/(gdouble)n_layers, 2);
 
 		for (int time_index=0; time_index < n_times; ++time_index){
-			gapp->progress_info_set_bar_fraction ((gdouble)(time_index+1)/(gdouble)n_times, 1);
+			main_get_gapp()->progress_info_set_bar_fraction ((gdouble)(time_index+1)/(gdouble)n_times, 1);
 
 			std::cout << "T:" << time_index << " V:" << layer_index << std::endl;
 
@@ -307,11 +307,11 @@ static void multi_dim_transpose_cleanup(void)
 //	Dest->data.s.ntimes  = n_times;
 	Dest->data.s.nvalues = Dest->mem2d->GetNv ();
 	
-	gapp->progress_info_close ();
+	main_get_gapp()->progress_info_close ();
 	Dest->retrieve_time_element (0);
 	Dest->mem2d->SetLayer(0);
 
-	gapp->progress_info_close (); // close progress indicator
+	main_get_gapp()->progress_info_close (); // close progress indicator
 	return MATH_OK;
 }
 

@@ -36,14 +36,14 @@
 
 #include <time.h>
 
-#include "core-source/glbvars.h"
+#include "glbvars.h"
 #include "modules/dsp.h"
 #include <fcntl.h>
 #include <sys/ioctl.h>
 
-#include "core-source/gxsm_app.h"
-#include "core-source/gxsm_window.h"
-#include "core-source/action_id.h"
+#include "gxsm_app.h"
+#include "gxsm_window.h"
+#include "action_id.h"
 
 #include "xsmcmd.h"
 #include "sranger_mk2_hwi_control.h"
@@ -708,7 +708,7 @@ void DSPMoverControl::AppWindowInit(const gchar *title){
         if (title) { // stage 1
                 PI_DEBUG (DBG_L2, "DSPMoverControl::AppWindowInit -- header bar");
 
-                app_window = gxsm4_app_window_new (GXSM4_APP (gapp->get_application ()));
+                app_window = gxsm4_app_window_new (GXSM4_APP (main_get_gapp()->get_application ()));
                 window = GTK_WINDOW (app_window);
 
                 header_bar = gtk_header_bar_new ();
@@ -735,7 +735,7 @@ void DSPMoverControl::AppWindowInit(const gchar *title){
                                                  this);
 
                 // create window PopUp menu  ---------------------------------------------------------------------
-                mc_popup_menu = gtk_popover_menu_new_from_model (G_MENU_MODEL (gapp->get_hwi_mover_popup_menu ()));
+                mc_popup_menu = gtk_popover_menu_new_from_model (G_MENU_MODEL (main_get_gapp()->get_hwi_mover_popup_menu ()));
 
                 // attach popup menu configuration to tool button --------------------------------
                 GtkWidget *header_menu_button = gtk_menu_button_new ();
@@ -799,7 +799,7 @@ void DSPMoverControl::create_folder (){
                 Gtk_EntryControl *ec_axis[3];
                 GtkGesture *gesture;
 
-                if (gapp->xsm->Inst->OffsetMode() != OFM_ANALOG_OFFSET_ADDING && i == 5) continue;
+                if (main_get_gapp()->xsm->Inst->OffsetMode() != OFM_ANALOG_OFFSET_ADDING && i == 5) continue;
 		if (IS_SLIDER_CTRL && i < 4 ) continue;
 		PI_DEBUG (DBG_L2, "DSPMoverControl::Mover:" << MoverNames[i]);
 
@@ -849,7 +849,7 @@ void DSPMoverControl::create_folder (){
 				ra -> RemoteCb = (void (*)(GtkWidget*, void*))DSPMoverControl::CmdAction;
 				ra -> widget = button;
 				ra -> data = this;
-				gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, ra );
+				main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra );
 				gchar *help = g_strconcat ("Remote example: action (\"", ra->cmd, "\"", NULL);
 				gtk_widget_set_tooltip_text (button, help);
 			}
@@ -886,7 +886,7 @@ void DSPMoverControl::create_folder (){
 				ra -> RemoteCb = (void (*)(GtkWidget*, void*))DSPMoverControl::CmdAction;
 				ra -> widget = button;
 				ra -> data = this;
-				gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, ra );
+				main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra );
 				gchar *help = g_strconcat ("Remote example: action (\"", ra->cmd, "\"", NULL);
 				gtk_widget_set_tooltip_text (button, help);
 			}
@@ -920,7 +920,7 @@ void DSPMoverControl::create_folder (){
 				ra -> RemoteCb = (void (*)(GtkWidget*, void*))DSPMoverControl::CmdAction;
 				ra -> widget = button;
 				ra -> data = this;
-				gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, ra );
+				main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra );
 				gchar *help = g_strconcat ("Remote example: action (\"", ra->cmd, "\"", NULL);
 				gtk_widget_set_tooltip_text (button, help);
 			}
@@ -939,7 +939,7 @@ void DSPMoverControl::create_folder (){
 				ra -> RemoteCb = (void (*)(GtkWidget*, void*))DSPMoverControl::CmdAction;
 				ra -> widget = button;
 				ra -> data = this;
-				gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, ra );
+				main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra );
 				gchar *help = g_strconcat ("Remote example: action (\"", ra->cmd, "\"", NULL);
 				gtk_widget_set_tooltip_text (button, help);
 			}
@@ -958,7 +958,7 @@ void DSPMoverControl::create_folder (){
 				ra -> RemoteCb = (void (*)(GtkWidget*, void*))DSPMoverControl::CmdAction;
 				ra -> widget = button;
 				ra -> data = this;
-				gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, ra );
+				main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra );
 				gchar *help = g_strconcat ("Remote example: action (\"", ra->cmd, "\"", NULL);
 				gtk_widget_set_tooltip_text (button, help);
 			}
@@ -977,7 +977,7 @@ void DSPMoverControl::create_folder (){
 				ra -> RemoteCb = (void (*)(GtkWidget*, void*))DSPMoverControl::CmdAction;
 				ra -> widget = button;
 				ra -> data = this;
-				gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, ra );
+				main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra );
 				gchar *help = g_strconcat ("Remote example: action (\"", ra->cmd, "\"", NULL);
 				gtk_widget_set_tooltip_text (button, help);
 			}
@@ -1281,7 +1281,7 @@ void DSPMoverControl::create_folder (){
 	        			ra -> RemoteCb = (void (*)(GtkWidget*, void*))DSPMoverControl::CmdAction;
 	        			ra -> widget = button;
 	        			ra -> data = this;
-	        			gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, ra );
+	        			main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra );
 	        			gchar *help = g_strconcat ("Remote example: action (\"", ra->cmd, "\"", NULL);
 	        			gtk_widget_set_tooltip_text (button, help);
 	        		}
@@ -1327,7 +1327,7 @@ void DSPMoverControl::create_folder (){
 	        			ra -> RemoteCb = (void (*)(GtkWidget*, void*))DSPMoverControl::CmdAction;
 	        			ra -> widget = button;
 	        			ra -> data = this;
-	        			gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, ra );
+	        			main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra );
 	        			gchar *help = g_strconcat ("Remote example: action (\"", ra->cmd, "\"", NULL);
 	        			gtk_widget_set_tooltip_text (button, help);
 	        		}
@@ -1380,7 +1380,7 @@ void DSPMoverControl::create_folder (){
 					ra -> RemoteCb = (void (*)(GtkWidget*, void*))DSPMoverControl::CmdAction;
 					ra -> widget = button;
 					ra -> data = this;
-					gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, ra );
+					main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra );
 					gchar *help = g_strconcat ("Remote example: action (\"", ra->cmd, "\"", NULL);
 					gtk_widget_set_tooltip_text (button, help);
 				}
@@ -1420,7 +1420,7 @@ void DSPMoverControl::create_folder (){
 					ra -> RemoteCb = (void (*)(GtkWidget*, void*))DSPMoverControl::CmdAction;
 					ra -> widget = button;
 					ra -> data = this;
-					gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, ra );
+					main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra );
 					gchar *help = g_strconcat ("Remote example: action (\"", ra->cmd, "\"", NULL);
 					gtk_widget_set_tooltip_text (button, help);
 				}
@@ -1464,7 +1464,7 @@ void DSPMoverControl::create_folder (){
 	        			ra -> RemoteCb = (void (*)(GtkWidget*, void*))DSPMoverControl::CmdAction;
 	        			ra -> widget = button;
 	        			ra -> data = this;
-	        			gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, ra );
+	        			main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra );
 	        			gchar *help = g_strconcat ("Remote example: action (\"", ra->cmd, "\"", NULL);
 	        			gtk_widget_set_tooltip_text (button, help);
 	        		}
@@ -1505,7 +1505,7 @@ void DSPMoverControl::create_folder (){
 	        			ra -> RemoteCb = (void (*)(GtkWidget*, void*))DSPMoverControl::CmdAction;
 	        			ra -> widget = button;
 	        			ra -> data = this;
-	        			gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, ra );
+	        			main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra );
 	        			gchar *help = g_strconcat ("Remote example: action (\"", ra->cmd, "\"", NULL);
 	        			gtk_widget_set_tooltip_text (button, help);
 	        		}
@@ -1544,7 +1544,7 @@ void DSPMoverControl::create_folder (){
 				ra -> RemoteCb = (void (*)(GtkWidget*, void*))DSPMoverControl::CmdAction;
 				ra -> widget = button;
 				ra -> data = this;
-				gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, ra );
+				main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra );
 				gchar *help = g_strconcat ("Remote example: action (\"", ra->cmd, "\"", NULL);
 				gtk_widget_set_tooltip_text (button, help);
 			}
@@ -1568,7 +1568,7 @@ void DSPMoverControl::create_folder (){
 				ra -> RemoteCb = (void (*)(GtkWidget*, void*))DSPMoverControl::CmdAction;
 				ra -> widget = button;
 				ra -> data = this;
-				gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, ra );
+				main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra );
 				gchar *help = g_strconcat ("Remote example: action (\"", ra->cmd, "\"", NULL);
 				gtk_widget_set_tooltip_text (button, help);
 			}
@@ -1611,7 +1611,7 @@ void DSPMoverControl::create_folder (){
 				ra -> RemoteCb = (void (*)(GtkWidget*, void*))DSPMoverControl::CmdAction;
 				ra -> widget = button;
 				ra -> data = this;
-				gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, ra );
+				main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra );
 				gchar *help = g_strconcat ("Remote example: action (\"", ra->cmd, "\"", NULL);
 				gtk_widget_set_tooltip_text (button, help);
 			}
@@ -1634,7 +1634,7 @@ void DSPMoverControl::create_folder (){
 				ra -> RemoteCb = (void (*)(GtkWidget*, void*))DSPMoverControl::CmdAction;
 				ra -> widget = button;
 				ra -> data = this;
-				gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, ra );
+				main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra );
 				gchar *help = g_strconcat ("Remote example: action (\"", ra->cmd, "\"", NULL);
 				gtk_widget_set_tooltip_text (button, help);
 			}

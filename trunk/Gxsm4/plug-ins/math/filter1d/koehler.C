@@ -92,7 +92,7 @@ A similar effect (on a limited lenght) is used the the differential view now on 
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
 
 // Plugin Prototypes
 static void koehler_init( void );

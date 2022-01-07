@@ -64,7 +64,7 @@ foreach plugin : plugin_list
   deps = declare_dependency(
     compile_args : plugin_cflags,
     dependencies : plugin_deps,
-    include_directories : configuration_inc,
+    include_directories : [ configuration_inc, appInclude ]
   )
 
 #  shared_module(plugin_name,
@@ -72,9 +72,7 @@ foreach plugin : plugin_list
 #  executable(plugin_name,
     plugin_sources,
     plugin_gdbus_src,
-#    link_with : [
-#      libgxsm,
-#    ],
+    link_with: [ lib_global_gxsm, lib_utils_gxsm, lib_app_gxsm, lib_pcs_gxsm ],
     dependencies: deps,
     link_args : all_plugin_link_args,
     install: true,

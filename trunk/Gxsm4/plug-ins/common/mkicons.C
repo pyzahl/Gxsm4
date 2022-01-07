@@ -51,13 +51,13 @@ This plugin helps you printing several nc-images on one page.
 #include <dirent.h>
 #include <fnmatch.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
 #include "epsfutils.h"
-#include "core-source/glbvars.h"
+#include "glbvars.h"
 #include "mkicons.h"
 #include "pyremote.h"
 
-#include "core-source/action_id.h" 
+#include "action_id.h" 
 // wegen ID_CH_*
 
 // Plugin Prototypes
@@ -531,23 +531,23 @@ void MkIconsPI(MkIconsPIData *mid){
   	struct dirent **namelist;
   	int n;
   	double hi0,lo0;
-  	lo0=gapp->xsm->data.display.cpslow;
-  	hi0=gapp->xsm->data.display.cpshigh;
+  	lo0=main_get_gapp()->xsm->data.display.cpslow;
+  	hi0=main_get_gapp()->xsm->data.display.cpshigh;
   
   	// auto activate Channel or use active one
-  	if(!gapp->xsm->ActiveScan){
+  	if(!main_get_gapp()->xsm->ActiveScan){
   		int Ch;
-  		if((Ch=gapp->xsm->FindChan(ID_CH_M_OFF)) < 0){
+  		if((Ch=main_get_gapp()->xsm->FindChan(ID_CH_M_OFF)) < 0){
   			XSM_SHOW_ALERT(ERR_SORRY, ERR_NOFREECHAN,"for Mk Icons",1);
   			return;
   		}
-  		if(gapp->xsm->ActivateChannel(Ch))
+  		if(main_get_gapp()->xsm->ActivateChannel(Ch))
   			return;
-  		gapp->xsm->ActiveScan->create();
+  		main_get_gapp()->xsm->ActiveScan->create();
   	}
-  	gapp->xsm->ActiveScan->CpyDataSet(gapp->xsm->data);
+  	main_get_gapp()->xsm->ActiveScan->CpyDataSet(main_get_gapp()->xsm->data);
   
-  	if(mid->nix && gapp->xsm->ActiveScan){
+  	if(mid->nix && main_get_gapp()->xsm->ActiveScan){
   		int redres;
   		const double dpifac=72.*6./300.; // 72.dpi grey bei 300dpi Auflösung und 6in nutzbarer Breite
   		// calculate needed resolution
@@ -584,14 +584,14 @@ void MkIconsPI(MkIconsPIData *mid){
   				// Load
   				sprintf(fname,"%s/%s",mid->pathname,namelist[n]->d_name);
   				PI_DEBUG (DBG_L2, "Icon: " << namelist[n]->d_name);
-  				gapp->xsm->load(fname);
+  				main_get_gapp()->xsm->load(fname);
   	
-  				Original = gapp->xsm->ActiveScan;
+  				Original = main_get_gapp()->xsm->ActiveScan;
   				G_FREE_STRDUP_PRINTF(Original->data.ui.name, "%s", namelist[n]->d_name); // ohne Pfad !!
   	
-  				Icon = gapp->xsm->NewScan(0, gapp->xsm->data.display.ViewFlg, 0, &gapp->xsm->data);
+  				Icon = main_get_gapp()->xsm->NewScan(0, main_get_gapp()->xsm->data.display.ViewFlg, 0, &main_get_gapp()->xsm->data);
   				Icon->create();
-  				TmpSc = gapp->xsm->NewScan(0, gapp->xsm->data.display.ViewFlg, 0, &gapp->xsm->data);
+  				TmpSc = main_get_gapp()->xsm->NewScan(0, main_get_gapp()->xsm->data.display.ViewFlg, 0, &main_get_gapp()->xsm->data);
   				TmpSc->create();
   
   				// Copy all data
@@ -669,7 +669,7 @@ void MkIconsPI(MkIconsPIData *mid){
   					double eps=0.1;
   					PI_DEBUG (DBG_L2,  "doing Skl ..." );
   					// Excange Icon <=> TmpSc
-  					HlpSc = gapp->xsm->ActiveScan; gapp->xsm->ActiveScan = Icon; 
+  					HlpSc = main_get_gapp()->xsm->ActiveScan; main_get_gapp()->xsm->ActiveScan = Icon; 
   					if(mid->options[MkIconOpt_AutoSkl] == '1') eps=0.05; 
   					if(mid->options[MkIconOpt_AutoSkl] == '2') eps=0.20; 
   					if(mid->options[MkIconOpt_AutoSkl] == '3') eps=0.30; 
@@ -681,18 +681,18 @@ void MkIconsPI(MkIconsPIData *mid){
   					Icon->mem2d->AutoHistogrammEvalMode (&Icon->Pkt2d[0], &Icon->Pkt2d[1]);
   					// AutoDisplay();
   					Icon->PktVal=0;
-  					gapp->xsm->ActiveScan = HlpSc;
+  					main_get_gapp()->xsm->ActiveScan = HlpSc;
   					PI_DEBUG (DBG_L2,  "AutoSkl - Icon :" << "nx:" << Icon->data.s.nx << " GetNx:" << Icon->mem2d->GetNx() );
-  					Original->data.display.contrast = gapp->xsm->data.display.contrast;
-  					Original->data.display.bright   = gapp->xsm->data.display.bright;
+  					Original->data.display.contrast = main_get_gapp()->xsm->data.display.contrast;
+  					Original->data.display.bright   = main_get_gapp()->xsm->data.display.bright;
   					PI_DEBUG (DBG_L2, "Contrast=" << Original->data.display.contrast);
   				}
   				if(mid->options[MkIconOpt_Scaling] == 'c'){
-  					PI_DEBUG (DBG_L2,  "doing manual Cps hi=" << hi0 << " ... lo=" << lo0 << " Gate=" << gapp->xsm->data.display.cnttime);
+  					PI_DEBUG (DBG_L2,  "doing manual Cps hi=" << hi0 << " ... lo=" << lo0 << " Gate=" << main_get_gapp()->xsm->data.display.cnttime);
   					// Excange Icon <=> TmpSc
-  					HlpSc = gapp->xsm->ActiveScan; gapp->xsm->ActiveScan = Icon; 
-					gapp->xsm->AutoDisplay(hi0*gapp->xsm->data.display.cnttime, lo0*gapp->xsm->data.display.cnttime);
-  					gapp->xsm->ActiveScan = HlpSc;
+  					HlpSc = main_get_gapp()->xsm->ActiveScan; main_get_gapp()->xsm->ActiveScan = Icon; 
+					main_get_gapp()->xsm->AutoDisplay(hi0*main_get_gapp()->xsm->data.display.cnttime, lo0*main_get_gapp()->xsm->data.display.cnttime);
+  					main_get_gapp()->xsm->ActiveScan = HlpSc;
   	  
   				}
   
@@ -707,14 +707,14 @@ void MkIconsPI(MkIconsPIData *mid){
   				epsf->putsize(Original);
   				epsf->putframe();
   				epsf->putticks(Original);
-  				//	  epsf->putbar(gapp->xsm->ActiveScan);
-  				//	  epsf->putmore(gapp->xsm->ActiveScan, title);
+  				//	  epsf->putbar(main_get_gapp()->xsm->ActiveScan);
+  				//	  epsf->putmore(main_get_gapp()->xsm->ActiveScan, title);
   				//	  epsf->putgrey(Original, Icon->mem2d, options[MkIconOpt_ELReg] == 'a', FALSE);
   				PI_DEBUG (DBG_L2,  "-Original:" << "nx:" << Original->data.s.nx << " GetNx:" << Original->mem2d->GetNx() );
   				PI_DEBUG (DBG_L2,  "-Icon    :" << "nx:" << Icon->data.s.nx << " GetNx:" << Icon->mem2d->GetNx() );
   				// [5] "Scaling": -a
   
-  				//	gapp->check_events();
+  				//	main_get_gapp()->check_events();
   
   				epsf->putgrey(Original, Icon->mem2d, mid->options[MkIconOpt_Scaling] == 'a', FALSE);
   				epsf->endimage();

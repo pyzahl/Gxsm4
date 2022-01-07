@@ -83,7 +83,7 @@ Is there interest in a more general approach?
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
 
 // Plugin Prototypes
 static void stepcount_init( void );

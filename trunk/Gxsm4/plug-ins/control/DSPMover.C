@@ -114,7 +114,7 @@ Control!
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
 
 static void DSPMover_about( void );
 static void DSPMover_query( void );
@@ -161,12 +161,12 @@ GxsmPlugin *get_gxsm_plugin_info ( void ){
 }
 
 
-#include "core-source/gxsm_app.h"
+#include "gxsm_app.h"
 
-#include "core-source/unit.h"
-#include "core-source/pcs.h"
-#include "core-source/xsmtypes.h"
-#include "core-source/glbvars.h"
+#include "unit.h"
+#include "pcs.h"
+#include "xsmtypes.h"
+#include "glbvars.h"
 
 #include "include/dsp-pci32/xsm/xsmcmd.h"
 

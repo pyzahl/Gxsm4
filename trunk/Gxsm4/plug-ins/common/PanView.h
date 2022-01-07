@@ -54,10 +54,10 @@ public:
 	const int WYS = 2*WINDOW_SIZE+17;
 
 
-        PanView ();
+        PanView (Gxsm4app *app);
         virtual ~PanView();
 
-        void AppWindowInit(const gchar *title);
+        void AppWindowInit(const gchar *title, const gchar *sub_title=NULL);
 
         static gboolean canvas_draw_function (GtkDrawingArea *area,
                                               cairo_t        *cr,

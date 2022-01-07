@@ -93,13 +93,13 @@ present, it is assumed to be the Layer (Value) dimension.
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
-#include "core-source/dataio.h"
-#include "core-source/action_id.h"
-#include "core-source/util.h"
-#include "core-source/xsmtypes.h"
-#include "core-source/glbvars.h"
-#include "core-source/gapp_service.h"
+#include "plugin.h"
+#include "dataio.h"
+#include "action_id.h"
+#include "util.h"
+#include "xsmtypes.h"
+#include "glbvars.h"
+#include "gapp_service.h"
 
 // custom includes go here
 // -- START EDIT --
@@ -357,7 +357,7 @@ static void uksoft2001_im_export_configure(void)
 
 		GtkDialogFlags flags =  (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT);
 		GtkWidget *dialog = gtk_dialog_new_with_buttons (N_("UKSoft 2001 Multi Image Import"),
-								 GTK_WINDOW (gapp->get_app_window ()),
+								 GTK_WINDOW (main_get_gapp()->get_app_window ()),
 								 flags,
 								 _("_OK"),
 								 GTK_RESPONSE_ACCEPT,
@@ -489,13 +489,13 @@ FIO_STATUS Uksoft2001_ImExportFile::Read(xsm::open_mode mode){
 		int index_time=0;
 		ret=FIO_OK;
 		uksoft2001_im_export_configure ();
-		gapp->progress_info_new ("UKSOFT 2001 Multi CCD Data Import", 2);
-		gapp->progress_info_set_bar_fraction (0., 1);
-		gapp->progress_info_set_bar_fraction (0., 2);
-		gapp->progress_info_set_bar_text (fname, 1);
+		main_get_gapp()->progress_info_new ("UKSOFT 2001 Multi CCD Data Import", 2);
+		main_get_gapp()->progress_info_set_bar_fraction (0., 1);
+		main_get_gapp()->progress_info_set_bar_fraction (0., 2);
+		main_get_gapp()->progress_info_set_bar_text (fname, 1);
 		do {
 			int index_value=0;
-			gapp->progress_info_set_bar_fraction ((gdouble)index_time/(gdouble)max_index_time, 1);
+			main_get_gapp()->progress_info_set_bar_fraction ((gdouble)index_time/(gdouble)max_index_time, 1);
 			do {
 				gchar *fname_expand=NULL;
 				ifstream f;
@@ -506,13 +506,13 @@ FIO_STATUS Uksoft2001_ImExportFile::Read(xsm::open_mode mode){
 					fname_expand = g_strdup_printf (fname, 
 									index_time*step_index_time+offset_index_time,
 									index_value*step_index_value+offset_index_value);
-				gapp->progress_info_set_bar_fraction ((gdouble)(index_value+1)/(gdouble)max_index_value, 2);
-				gapp->progress_info_set_bar_text (fname_expand, 2);
+				main_get_gapp()->progress_info_set_bar_fraction ((gdouble)(index_value+1)/(gdouble)max_index_value, 2);
+				main_get_gapp()->progress_info_set_bar_text (fname_expand, 2);
 				f.open(fname_expand, ios::in);
 				if(!f.good()){
 					cout << "UKSOFT::: ERROR while processing file >" << fname_expand << "< -- Multi File Import Aborted." << endl;
 					PI_DEBUG (DBG_L2, "Error at file open. File not good/readable.");
-					gapp->progress_info_close ();
+					main_get_gapp()->progress_info_close ();
 					return status=FIO_OPEN_ERR;
 				}
 				f.close();
@@ -530,7 +530,7 @@ FIO_STATUS Uksoft2001_ImExportFile::Read(xsm::open_mode mode){
 			++index_time;
 
 		} while (ret == FIO_OK && index_time < max_index_time);
-		gapp->progress_info_close ();
+		main_get_gapp()->progress_info_close ();
 		scan->retrieve_time_element (0);
 		scan->SetVM(SCAN_V_DIRECT);
 		return ret;
@@ -641,8 +641,8 @@ FIO_STATUS Uksoft2001_ImExportFile::import_data(const char *fname, int index_val
 		video=1;
 		uksoft2001_im_export_configure ();
 		max_index_value = 1;
-		gapp->progress_info_new ("UKSOFT 2001 CCD Video Import", 1);
-		gapp->progress_info_set_bar_text (fname, 1);
+		main_get_gapp()->progress_info_new ("UKSOFT 2001 CCD Video Import", 1);
+		main_get_gapp()->progress_info_set_bar_text (fname, 1);
 		uks_fileheader.NrImages = max_index_time;
 		skip = step_index_time-1;
 	}
@@ -650,7 +650,7 @@ FIO_STATUS Uksoft2001_ImExportFile::import_data(const char *fname, int index_val
 	for (image_number = 0; image_number < uks_fileheader.NrImages && f.good(); ++image_number){
 
 		if (video)
-			gapp->progress_info_set_bar_fraction ((gdouble)(image_number+1)/(gdouble)max_index_time, 1);
+			main_get_gapp()->progress_info_set_bar_fraction ((gdouble)(image_number+1)/(gdouble)max_index_time, 1);
 
 		if (uks_fileheader.version < 5){
 			f.read((char*)&uks_imageheader_lsv5, sizeof(uks_imageheader_lsv5)); // read image header
@@ -1117,7 +1117,7 @@ FIO_STATUS Uksoft2001_ImExportFile::import_data(const char *fname, int index_val
 	f.close ();
 
 	if (video){
-		gapp->progress_info_close ();
+		main_get_gapp()->progress_info_close ();
 		scan->retrieve_time_element (0);
 	}
 
@@ -1141,10 +1141,10 @@ static void uksoft2001_im_export_filecheck_load_callback (gpointer data ){
 	if (*fn){
 		PI_DEBUG (DBG_L2, "checking for uksoft2001 file type >" << *fn << "<" );
 
-		Scan *dst = gapp->xsm->GetActiveScan();
+		Scan *dst = main_get_gapp()->xsm->GetActiveScan();
 		if(!dst){ 
-			gapp->xsm->ActivateFreeChannel();
-			dst = gapp->xsm->GetActiveScan();
+			main_get_gapp()->xsm->ActivateFreeChannel();
+			dst = main_get_gapp()->xsm->GetActiveScan();
 		}
 		Uksoft2001_ImExportFile fileobj (dst, *fn);
 
@@ -1154,15 +1154,15 @@ static void uksoft2001_im_export_filecheck_load_callback (gpointer data ){
 			if (ret != FIO_NOT_RESPONSIBLE_FOR_THAT_FILE)
 				*fn=NULL;
 			// no more data: remove allocated and unused scan now, force!
-//			gapp->xsm->SetMode(-1, ID_CH_M_OFF, TRUE); 
+//			main_get_gapp()->xsm->SetMode(-1, ID_CH_M_OFF, TRUE); 
 			PI_DEBUG (DBG_L2, "Read Error " << ((int)ret) );
 		}else{
 			// got it!
 			*fn=NULL;
 
 			// Now update gxsm main window data fields
-			gapp->xsm->ActiveScan->GetDataSet(gapp->xsm->data);
-			gapp->spm_update_all();
+			main_get_gapp()->xsm->ActiveScan->GetDataSet(main_get_gapp()->xsm->data);
+			main_get_gapp()->spm_update_all();
 			dst->draw();
 		}
 	}else{
@@ -1176,7 +1176,7 @@ static void uksoft2001_im_export_filecheck_save_callback (gpointer data ){
 		Scan *src;
 		PI_DEBUG (DBG_L2, "Saving/(checking) >" << *fn << "<" );
 
-		Uksoft2001_ImExportFile fileobj (src = gapp->xsm->GetActiveScan(), *fn);
+		Uksoft2001_ImExportFile fileobj (src = main_get_gapp()->xsm->GetActiveScan(), *fn);
 
 		FIO_STATUS ret;
 		ret = fileobj.Write(); 
@@ -1222,7 +1222,7 @@ static void uksoft2001_im_export_import_callback (GSimpleAction *simple, GVarian
 
         GtkFileFilter *filter[] = { f3, f2, f1, f0, NULL };
         
-        gchar *fn = gapp->file_dialog_load (help[0], NULL, file_mask, filter);
+        gchar *fn = main_get_gapp()->file_dialog_load (help[0], NULL, file_mask, filter);
 	g_strfreev (help); 
 	g_free (dlgid);
 	if (fn){
@@ -1234,7 +1234,7 @@ static void uksoft2001_im_export_import_callback (GSimpleAction *simple, GVarian
 static void uksoft2001_im_export_export_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data){
 	gchar **help = g_strsplit (uksoft2001_im_export_pi.help, ",", 2);
 	gchar *dlgid = g_strconcat (uksoft2001_im_export_pi.name, "-export", NULL);
-	gchar *fn = gapp->file_dialog_save (help[1], NULL, file_mask, NULL);
+	gchar *fn = main_get_gapp()->file_dialog_save (help[1], NULL, file_mask, NULL);
 	g_strfreev (help); 
 	g_free (dlgid);
        	if (fn){

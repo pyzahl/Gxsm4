@@ -86,12 +86,13 @@
  * -------------------------------------------------------------------------------- 
  */
 #include "config.h"
-#include "core-source/plugin.h"
-#include "core-source/glbvars.h"
-#include "core-source/xsmtypes.h"
+#include "plugin.h"
+#include "glbvars.h"
+#include "xsmtypes.h"
 
-#include "core-source/gxsm_app.h"
-#include "core-source/gxsm_window.h"
+#include "gxsm_app.h"
+#include "gxsm_window.h"
+#include "surface.h"
 
 #include "PanView.h"
 
@@ -242,7 +243,7 @@ static void PanView_query(void)
         }
 #endif
    
-	Pan_Window = new PanView(); // PanView(PanView_pi.app->getApp());
+	Pan_Window = new PanView (main_get_gapp() -> get_app ()); // PanView(PanView_pi.app->getApp());
 	PanView_pi.app->ConnectPluginToSPMRangeEvent (PanView_refresh_callback);
 	Pan_Window->start_tip_monitor ();
 
@@ -304,10 +305,10 @@ static void PanView_cleanup(void)
 static gint PanView_tip_refresh_callback (PanView *pv){
 	if (!PanView_valid) return FALSE;
 
-	if (!gapp->xsm->hardware)
+	if (!main_get_gapp()->xsm->hardware)
 		return TRUE;
 
-	if (gapp->xsm->hardware->IsSuspendWatches ())
+	if (main_get_gapp()->xsm->hardware->IsSuspendWatches ())
 		return TRUE;
 
 	if (pv){
@@ -321,7 +322,7 @@ static gint PanView_tip_refresh_callback (PanView *pv){
 }
 
 
-PanView ::  PanView (){
+PanView::PanView (Gxsm4app *app):AppBase(app){
  	int i;
 
 	pan_area = NULL;
@@ -463,11 +464,11 @@ PanView::~PanView (){
 	PI_DEBUG (DBG_L4, "PanView::~PanView () -- done.");
 }
 
-void PanView::AppWindowInit(const gchar *title){
+void PanView::AppWindowInit(const gchar *title, const gchar *sub_title){
         PI_DEBUG (DBG_L2, "PanView::AppWindowInit -- header bar");
         g_message("PanView::AppWindowInit -- header bar");
 
-        app_window = gxsm4_app_window_new (GXSM4_APP (gapp->get_application ()));
+        app_window = gxsm4_app_window_new (GXSM4_APP (main_get_gapp()->get_application ()));
         window = GTK_WINDOW (app_window);
 
 	gtk_window_set_default_size (GTK_WINDOW(window), WXS+12, WYS+2);
@@ -475,8 +476,6 @@ void PanView::AppWindowInit(const gchar *title){
 	gtk_widget_set_opacity (GTK_WIDGET(window), 0.75);
 	gtk_window_set_resizable (GTK_WINDOW(window), FALSE);
 	gtk_window_set_decorated (GTK_WINDOW(window), FALSE);
-	//gtk_window_set_keep_above (GTK_WINDOW(window), TRUE);
-	//gtk_window_stick (GTK_WINDOW(window));
         
 	v_grid = gtk_grid_new ();
         gtk_window_set_child (GTK_WINDOW (window), v_grid);
@@ -525,7 +524,7 @@ gint PanView::canvas_event_cb(GtkWidget *canvas, GdkEvent *event, PanView *pv){
                         preset[1] = j-(N_PRESETS-1)/2;
                         preset[2] = N_PRESETS/2.0;
                         g_object_set_data (G_OBJECT(canvas), "preset_xy", preset);
-                        gapp->offset_to_preset_callback (canvas, gapp);
+                        main_get_gapp()->offset_to_preset_callback (canvas, gapp);
                         // g_message ("PanView Button1 Pressed at XY=%g, %g => %d, %d",  mouse_pix_xy[0], mouse_pix_xy[1], i,j );
 			break;
                 }
@@ -645,32 +644,32 @@ void PanView::stop_tip_monitor (){
 void PanView::update_expanded_scan_limits (){
 	// This should give the maximum voltage after the HV-Amp
 
-	max_x =    xsmres.AnalogVMaxOut*gapp->xsm->Inst->VX();
-	min_x =   -xsmres.AnalogVMaxOut*gapp->xsm->Inst->VX();
-	max_y =	   xsmres.AnalogVMaxOut*gapp->xsm->Inst->VY();
-	min_y =   -xsmres.AnalogVMaxOut*gapp->xsm->Inst->VY();
-	max_z =	   xsmres.AnalogVMaxOut*gapp->xsm->Inst->VZ();
-	min_z =   -xsmres.AnalogVMaxOut*gapp->xsm->Inst->VZ();
+	max_x =    xsmres.AnalogVMaxOut*main_get_gapp()->xsm->Inst->VX();
+	min_x =   -xsmres.AnalogVMaxOut*main_get_gapp()->xsm->Inst->VX();
+	max_y =	   xsmres.AnalogVMaxOut*main_get_gapp()->xsm->Inst->VY();
+	min_y =   -xsmres.AnalogVMaxOut*main_get_gapp()->xsm->Inst->VY();
+	max_z =	   xsmres.AnalogVMaxOut*main_get_gapp()->xsm->Inst->VZ();
+	min_z =   -xsmres.AnalogVMaxOut*main_get_gapp()->xsm->Inst->VZ();
 
-	xsr = xsmres.AnalogVMaxOut*gapp->xsm->Inst->VX();
-	x0r = xsmres.AnalogVMaxOut*gapp->xsm->Inst->VX();
-	ysr = xsmres.AnalogVMaxOut*gapp->xsm->Inst->VY();
-	y0r = xsmres.AnalogVMaxOut*gapp->xsm->Inst->VY();
-	zsr = xsmres.AnalogVMaxOut*gapp->xsm->Inst->VZ();
-	z0r = xsmres.AnalogVMaxOut*gapp->xsm->Inst->VZ();
+	xsr = xsmres.AnalogVMaxOut*main_get_gapp()->xsm->Inst->VX();
+	x0r = xsmres.AnalogVMaxOut*main_get_gapp()->xsm->Inst->VX();
+	ysr = xsmres.AnalogVMaxOut*main_get_gapp()->xsm->Inst->VY();
+	y0r = xsmres.AnalogVMaxOut*main_get_gapp()->xsm->Inst->VY();
+	zsr = xsmres.AnalogVMaxOut*main_get_gapp()->xsm->Inst->VZ();
+	z0r = xsmres.AnalogVMaxOut*main_get_gapp()->xsm->Inst->VZ();
 
 	// expand if analog offset adding is used 
 	// --> but that's not all, more to do:
 	// ** check scan range if rotated
-	if (gapp->xsm->Inst->OffsetMode() == OFM_ANALOG_OFFSET_ADDING){
-		max_x +=    xsmres.AnalogVMaxOut*gapp->xsm->Inst->VX0();
-		min_x -=    xsmres.AnalogVMaxOut*gapp->xsm->Inst->VX0();
-		max_y +=    xsmres.AnalogVMaxOut*gapp->xsm->Inst->VY0();
-		min_y -=    xsmres.AnalogVMaxOut*gapp->xsm->Inst->VY0();
+	if (main_get_gapp()->xsm->Inst->OffsetMode() == OFM_ANALOG_OFFSET_ADDING){
+		max_x +=    xsmres.AnalogVMaxOut*main_get_gapp()->xsm->Inst->VX0();
+		min_x -=    xsmres.AnalogVMaxOut*main_get_gapp()->xsm->Inst->VX0();
+		max_y +=    xsmres.AnalogVMaxOut*main_get_gapp()->xsm->Inst->VY0();
+		min_y -=    xsmres.AnalogVMaxOut*main_get_gapp()->xsm->Inst->VY0();
 
-		x0r = xsmres.AnalogVMaxOut*gapp->xsm->Inst->VX0();
-		y0r = xsmres.AnalogVMaxOut*gapp->xsm->Inst->VY0();
-		z0r = xsmres.AnalogVMaxOut*gapp->xsm->Inst->VZ0();
+		x0r = xsmres.AnalogVMaxOut*main_get_gapp()->xsm->Inst->VX0();
+		y0r = xsmres.AnalogVMaxOut*main_get_gapp()->xsm->Inst->VY0();
+		z0r = xsmres.AnalogVMaxOut*main_get_gapp()->xsm->Inst->VZ0();
 
 		if (pan_area){
 			pan_area->set_xy (0,  x0r,  y0r);
@@ -706,8 +705,8 @@ void PanView :: tip_refresh()
 	if (!PanView_valid) return;
 
         // ** I'll fix this sub-routine to return the correct x/y/z volated including added offsets if used!
-        if (gapp->xsm->hardware)
-                gapp->xsm->hardware->RTQuery ("zxy", z, x, y); // get tip position in volts
+        if (main_get_gapp()->xsm->hardware)
+                main_get_gapp()->xsm->hardware->RTQuery ("zxy", z, x, y); // get tip position in volts
         else 
                 return;
 
@@ -781,10 +780,10 @@ void PanView :: tip_refresh()
         //tip_marker_z->set_fill_rgba (1., finish () ? 0.:1., 0., 1.);
 	tip_marker_z->queue_update (canvas); // schedule update
 	
-	if (gapp->xsm->hardware){
+	if (main_get_gapp()->xsm->hardware){
 		double x0,y0,z0;
                 x0=y0=z0=0.0;
-		if (gapp->xsm->hardware->RTQuery ("O", z0, x0, y0)){ // get HR Offset
+		if (main_get_gapp()->xsm->hardware->RTQuery ("O", z0, x0, y0)){ // get HR Offset
                         //g_print ("PanView O: %g %g %g\n", z0,x0,y0);
 			gchar *tmp = NULL;
 			tmp = g_strdup_printf ("Offset Z0: %7.3f " UTF8_ANGSTROEM
@@ -792,11 +791,11 @@ void PanView :: tip_refresh()
                                                ", %7.3f " UTF8_ANGSTROEM
 					       "\nXYs: %7.3f " UTF8_ANGSTROEM
                                                ", %7.3f " UTF8_ANGSTROEM,
-					       gapp->xsm->Inst->V2ZAng(z0),
-					       gapp->xsm->Inst->V2XAng(x0),
-					       gapp->xsm->Inst->V2YAng(y0),
-					       gapp->xsm->Inst->V2XAng(x),
-					       gapp->xsm->Inst->V2YAng(y));
+					       main_get_gapp()->xsm->Inst->V2ZAng(z0),
+					       main_get_gapp()->xsm->Inst->V2XAng(x0),
+					       main_get_gapp()->xsm->Inst->V2YAng(y0),
+					       main_get_gapp()->xsm->Inst->V2XAng(x),
+					       main_get_gapp()->xsm->Inst->V2YAng(y));
                         infoXY0->set_text (tmp);
                         infoXY0->queue_update (canvas);
 			g_free (tmp);
@@ -823,16 +822,16 @@ void PanView :: tip_refresh()
 
                 // Life Paramater Info
                 x=y=q=0.0;
-		gapp->xsm->hardware->RTQuery ("f0I", x, y, q); // get f0, I -- val1,2,3=[fo,Iav,Irms]
+		main_get_gapp()->xsm->hardware->RTQuery ("f0I", x, y, q); // get f0, I -- val1,2,3=[fo,Iav,Irms]
                 //g_print ("PanView f0I: %g %g %g\n", x,y,q);
                 Ilg = log10 (fabs(y) + 1.0);
 		
 		gchar *tmp = NULL;
 
                 if (fabs(y) < 0.25)
-                        tmp = g_strdup_printf ("I: %8.1f pA\ndF: %8.1f Hz\nZ: %8.4f" UTF8_ANGSTROEM, y*1000., x, gapp->xsm->Inst->V2ZAng(z));
+                        tmp = g_strdup_printf ("I: %8.1f pA\ndF: %8.1f Hz\nZ: %8.4f" UTF8_ANGSTROEM, y*1000., x, main_get_gapp()->xsm->Inst->V2ZAng(z));
                 else
-                        tmp = g_strdup_printf ("I: %8.4f nA\ndF: %8.1f Hz\nZ: %8.4f" UTF8_ANGSTROEM, y, x, gapp->xsm->Inst->V2ZAng(z));
+                        tmp = g_strdup_printf ("I: %8.4f nA\ndF: %8.1f Hz\nZ: %8.4f" UTF8_ANGSTROEM, y, x, main_get_gapp()->xsm->Inst->V2ZAng(z));
 
                 info->set_text (tmp);
                 info->queue_update (canvas);
@@ -841,7 +840,7 @@ void PanView :: tip_refresh()
 
 		// DSP RT Status update
                 x=y=q=0.0;
-		gapp->xsm->hardware->RTQuery ("status", x, y, q); // status code in x
+		main_get_gapp()->xsm->hardware->RTQuery ("status", x, y, q); // status code in x
                 //g_print ("PanView status: %g %g %g\n", x,y,q);
 		int status = (int)(x);
 
@@ -857,7 +856,7 @@ void PanView :: tip_refresh()
                                                  0x1000, 0x1000, 0x1000,
                                                  -1 };
 
-                gapp->set_dsp_scan_in_progress (status & 6 ? true : false);
+                main_get_gapp()->set_dsp_scan_in_progress (status & 6 ? true : false);
                 
                 for (int i=0; status_id[i]>=0; ++i){
                         const double w=WXS/2./12.;
@@ -920,7 +919,7 @@ void PanView :: tip_refresh()
                                                                             CAIRO_COLOR_GREEN : CAIRO_COLOR_RED);
 		// DSP RT GPIO update
                 x=y=q=0.0;
-		gapp->xsm->hardware->RTQuery ("iomirror", x, y, q); // status code in x
+		main_get_gapp()->xsm->hardware->RTQuery ("iomirror", x, y, q); // status code in x
                 //g_print ("PanView iomonitor: %g %g %g\n", x,y,q);
 		int gpio_out = (int)(x);
 		int gpio_in  = (int)(y);
@@ -963,17 +962,17 @@ void PanView :: refresh()
 
 	/*fill in the corners of the scanning area*/
 	if (IS_SPALEED_CTRL||xsmres.ScanOrgCenter){ // Origin is middle of scan
-		point[0][0] = -0.5*gapp->xsm->data.s.nx*gapp->xsm->data.s.dx/xsmres.XPiezoAV;	
-		point[0][1] = +0.5*gapp->xsm->data.s.ny*gapp->xsm->data.s.dy/xsmres.YPiezoAV;
+		point[0][0] = -0.5*main_get_gapp()->xsm->data.s.nx*main_get_gapp()->xsm->data.s.dx/xsmres.XPiezoAV;	
+		point[0][1] = +0.5*main_get_gapp()->xsm->data.s.ny*main_get_gapp()->xsm->data.s.dy/xsmres.YPiezoAV;
 		 
 		point[1][0] = -1*point[0][0];        point[1][1] = +1*point[0][1];
 		point[2][0] = -1*point[0][0];        point[2][1] = -1*point[0][1];
 		point[3][0] = +1*point[0][0];        point[3][1] = -1*point[0][1];
 	}
 	else{                                       // Origin is center of top line
-		point[0][0] =-0.5*gapp->xsm->data.s.nx*gapp->xsm->data.s.dx/xsmres.XPiezoAV;	point[0][1] = 0;
+		point[0][0] =-0.5*main_get_gapp()->xsm->data.s.nx*main_get_gapp()->xsm->data.s.dx/xsmres.XPiezoAV;	point[0][1] = 0;
 		point[1][0] = -1*point[0][0];        point[1][1] = 0;
-		point[2][0] = -1*point[0][0];        point[2][1] = -gapp->xsm->data.s.ny*gapp->xsm->data.s.dy/xsmres.YPiezoAV;
+		point[2][0] = -1*point[0][0];        point[2][1] = -main_get_gapp()->xsm->data.s.ny*main_get_gapp()->xsm->data.s.dy/xsmres.YPiezoAV;
 		point[3][0] = +1*point[0][0];        point[3][1] = +1*point[2][1];
 	}
 	PI_DEBUG (DBG_L2, "Original coordinates: \t"<< 
@@ -983,13 +982,13 @@ void PanView :: refresh()
 		  point[3][0]<<","<<point[3][1] );
 
 	/*read the parameters from the control*/
-	y_offset = gapp->xsm->data.s.y0/xsmres.YPiezoAV;
-	x_offset = gapp->xsm->data.s.x0/xsmres.XPiezoAV;
-	alpha	= gapp->xsm->data.s.alpha;	
+	y_offset = main_get_gapp()->xsm->data.s.y0/xsmres.YPiezoAV;
+	x_offset = main_get_gapp()->xsm->data.s.x0/xsmres.XPiezoAV;
+	alpha	= main_get_gapp()->xsm->data.s.alpha;	
 
 #if PRE_AREA
 	/* this are the edges of the scan area plus the prescan */
-	double w = 2*gapp->xsm->data.s.dx*gapp->xsm->data.hardpars.LS_nx_pre/xsmres.XPiezoAV;
+	double w = 2*main_get_gapp()->xsm->data.s.dx*main_get_gapp()->xsm->data.hardpars.LS_nx_pre/xsmres.XPiezoAV;
 	pre_point[0][0] = point[0][0]-w; pre_point[0][1] = point [0][1];
 	pre_point[1][0] = point[1][0]+w; pre_point[1][1] = point [1][1];
 	pre_point[2][0] = point[2][0]+w; pre_point[2][1] = point [2][1];

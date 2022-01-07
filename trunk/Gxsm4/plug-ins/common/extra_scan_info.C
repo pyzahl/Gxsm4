@@ -59,7 +59,9 @@ Works automatic if loaded.
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
+#include "glbvars.h"
+#include "surface.h"
 
 using namespace std;
 
@@ -165,7 +167,7 @@ static void extra_scan_info_run(GtkWidget *w, void *data){
 	f_info.close ();
 	PI_DEBUG (DBG_L4, gs_info->str);
 
-	gapp->message (gs_info->str);
+	main_get_gapp()->message (gs_info->str);
 
 	g_string_free(gs_info, TRUE);
 }

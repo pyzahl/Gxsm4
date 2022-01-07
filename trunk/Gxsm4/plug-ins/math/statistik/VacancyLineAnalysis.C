@@ -152,8 +152,8 @@ possible.
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
-#include "core-source/app_profile.h"
+#include "plugin.h"
+#include "app_profile.h"
 
 
 typedef struct {
@@ -604,7 +604,7 @@ static void VacancyLineAnalysis_cleanup(void)
 // *********************************************************************************
 // OutPut data to a choosen file in Angstroms
      /*
-     gchar *file_name = gapp->file_dialog("asc Export", NULL,
+     gchar *file_name = main_get_gapp()->file_dialog("asc Export", NULL,
                                           "*.asc", 
                                           "", "asc-Export");
 
@@ -629,7 +629,7 @@ static void VacancyLineAnalysis_cleanup(void)
 // *********************************************************************************
 // OutPut data to a choosen file in Pixels
 
-     gchar *file_name = gapp->file_dialog("asc Export", NULL,
+     gchar *file_name = main_get_gapp()->file_dialog("asc Export", NULL,
                                           "*.asc", 
                                           "", "asc-Export");
 

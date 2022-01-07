@@ -61,7 +61,10 @@ And it works with the kernel DSP emulation modules!
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
+
+#include "glbvars.h"
+#include "surface.h"
 
 // ========================================
 // Gxsm PlugIn Setup Part
@@ -115,7 +118,7 @@ static void queryDSPinfo_about(void){
 }
 
 static void queryDSPinfo_run(GtkWidget *w, void *data){
-  gapp->message (queryDSPinfo_pi.app->xsm->hardware->get_info ());
+  main_get_gapp()->message (queryDSPinfo_pi.app->xsm->hardware->get_info ());
 }
 
 static void queryDSPinfo_cleanup( void ){

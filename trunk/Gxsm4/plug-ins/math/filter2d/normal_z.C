@@ -74,7 +74,7 @@ into a new created math channel.
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
 #include "../../common/pyremote.h"
 
 // Plugin Prototypes
@@ -201,7 +201,7 @@ static void normal_z_init(void)
   ra -> RemoteCb = &normal_z_non_interactive;
   ra -> widget = dummywidget;
   ra -> data = NULL;
-  gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, ra );
+  main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra );
   PI_DEBUG (DBG_L2, "normal_z-plugin: Adding new Remote Cmd: normal_z_PI");
 // remote action stuff
 }
@@ -214,7 +214,7 @@ static void normal_z_non_interactive( GtkWidget *widget , gpointer pc )
 //  cout << "pc: " << ((gchar**)pc)[2] << endl;
 //  cout << "pc: " << atof(((gchar**)pc)[2]) << endl;
 
-  gapp->xsm->MathOperation(&normal_z_run);
+  main_get_gapp()->xsm->MathOperation(&normal_z_run);
   return;
 
 }
@@ -347,8 +347,8 @@ void execute_filter_y (Mem2d *in, Mem2d *out){
 static gboolean normal_z_run___for_all_vt(Scan *Src, Scan *Dest)
 {
         //double r = 5.;    // Get Radius
-	//gapp->ValueRequest("2D Convol. Filter Size", "Radius", "Normal_Z kernel size: s = 1+radius",
-	//		   gapp->xsm->Unity, 0., Src->mem2d->GetNx()/10., ".0f", &r);
+	//main_get_gapp()->ValueRequest("2D Convol. Filter Size", "Radius", "Normal_Z kernel size: s = 1+radius",
+	//		   main_get_gapp()->xsm->Unity, 0., Src->mem2d->GetNx()/10., ".0f", &r);
 
 	//int    s = 1+(int)(r + .9); // calc. approx Matrix Radius
 	//MemNormal_ZKrn krn(r,r, s,s); // Setup Kernelobject
@@ -371,18 +371,18 @@ static gboolean normal_z_run___for_all_vt(Scan *Src, Scan *Dest)
 			setup_multidimensional_data_copy ("Multidimensional Normal_Z", Src, ti, tf, vi, vf);
 		} while (ti > tf || vi > vf);
 
-		gapp->progress_info_new ("Multidimenssional Normal_Z", 2);
-		gapp->progress_info_set_bar_fraction (0., 1);
-		gapp->progress_info_set_bar_fraction (0., 2);
-		gapp->progress_info_set_bar_text ("Time", 1);
-		gapp->progress_info_set_bar_text ("Value", 2);
+		main_get_gapp()->progress_info_new ("Multidimenssional Normal_Z", 2);
+		main_get_gapp()->progress_info_set_bar_fraction (0., 1);
+		main_get_gapp()->progress_info_set_bar_fraction (0., 2);
+		main_get_gapp()->progress_info_set_bar_text ("Time", 1);
+		main_get_gapp()->progress_info_set_bar_text ("Value", 2);
 	}
 
 	int ntimes_tmp = tf-ti+1;
 	for (int time_index=ti; time_index <= tf; ++time_index){
 		Mem2d *m = Src->mem2d_time_element (time_index);
 		if (multidim)
-			gapp->progress_info_set_bar_fraction ((gdouble)(time_index-ti)/(gdouble)ntimes_tmp, 1);
+			main_get_gapp()->progress_info_set_bar_fraction ((gdouble)(time_index-ti)/(gdouble)ntimes_tmp, 1);
 
 		Dest->mem2d->Resize (m->GetNx (), m->GetNy (), 3*(vf-vi+1), m->GetTyp());
 		int vv=0;
@@ -403,7 +403,7 @@ static gboolean normal_z_run___for_all_vt(Scan *Src, Scan *Dest)
 	Dest->data.s.nvalues=Dest->mem2d->GetNv ();
 
 	if (multidim){
-		gapp->progress_info_close ();
+		main_get_gapp()->progress_info_close ();
 		Dest->retrieve_time_element (0);
 		Dest->mem2d->SetLayer(0);
 	}
@@ -419,8 +419,8 @@ static gboolean normal_z_run(Scan *Src, Scan *Dest)
 // check for multi dim calls, make sure not to ask user for paramters for every layer or time step!
         if (((Src ? Src->mem2d->get_t_index ():0) == 0 && (Src ? Src->mem2d->GetLayer ():0) == 0)) {
 	        //double r = normal_z_radius;    // Get Radius
-		//gapp->ValueRequest("Filter Size", "Radius", "size",
-		//		   gapp->xsm->Unity, 0., Src->mem2d->GetNx()/10., ".0f", &r);
+		//main_get_gapp()->ValueRequest("Filter Size", "Radius", "size",
+		//		   main_get_gapp()->xsm->Unity, 0., Src->mem2d->GetNx()/10., ".0f", &r);
 		//normal_z_radius = r;
 
 		if (!Src || !Dest)

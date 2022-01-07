@@ -73,7 +73,7 @@ figure out more about this piece of code.
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
 
 static void psdadd_init( void );
 static void psdadd_about( void );

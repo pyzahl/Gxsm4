@@ -62,13 +62,13 @@ RP data streaming
 #include <zlib.h>
 
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
 
-#include "core-source/unit.h"
-#include "core-source/pcs.h"
-#include "core-source/xsmtypes.h"
-#include "core-source/glbvars.h"
-#include "core-source/action_id.h"
+#include "unit.h"
+#include "pcs.h"
+#include "xsmtypes.h"
+#include "glbvars.h"
+#include "action_id.h"
 
 #include "plug-ins/control/inet_json_external_scandata.h"
 #include "plug-ins/control/resonance_fit.h"

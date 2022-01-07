@@ -78,9 +78,9 @@ implemented. Please set Radius in Layer Dim to zero!
 #include <gtk/gtk.h>
 #include <string.h>
 #include "config.h"
-#include "core-source/plugin.h"
-#include "core-source/scan.h"
-#include "core-source/xsmmath.h"
+#include "plugin.h"
+#include "scan.h"
+#include "xsmmath.h"
  
 using namespace std;
 
@@ -242,11 +242,11 @@ static gboolean layersmooth_run(Scan *Src, Scan *Dest)
 {
 	double rxy = 3.;    // Get Radius
 	double rv  = 0.;    // Get Radius
-	gapp->ValueRequest ("2D Convol. Filter Size", "Radius in XY Dim", "Smooth kernel size: s = 1+radius",
-			    gapp->xsm->Unity, 0., Src->mem2d->GetNx()/10., ".0f", &rxy);
+	main_get_gapp()->ValueRequest ("2D Convol. Filter Size", "Radius in XY Dim", "Smooth kernel size: s = 1+radius",
+			    main_get_gapp()->xsm->Unity, 0., Src->mem2d->GetNx()/10., ".0f", &rxy);
 	
-	gapp->ValueRequest ("2D Convol. Filter Size", "Radius in Layer Dim", "Smooth kernel size: s = 1+radius",
-			    gapp->xsm->Unity, 0., Src->mem2d->GetNv()/10., ".0f", &rv);
+	main_get_gapp()->ValueRequest ("2D Convol. Filter Size", "Radius in Layer Dim", "Smooth kernel size: s = 1+radius",
+			    main_get_gapp()->xsm->Unity, 0., Src->mem2d->GetNv()/10., ".0f", &rv);
 	
 	Dest->mem2d->Resize (Src->mem2d->GetNx(), Src->mem2d->GetNy(), Src->mem2d->GetNv());
 

@@ -85,11 +85,11 @@ The computation result of matching threasholds is placed into an new math channe
 #include <math.h>
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
-#include "core-source/action_id.h"
-#include "core-source/app_profile.h"
-#include "core-source/view.h"
-#include "core-source/app_view.h"
+#include "plugin.h"
+#include "action_id.h"
+#include "app_profile.h"
+#include "view.h"
+#include "app_view.h"
 
 using namespace cv;
 
@@ -330,9 +330,9 @@ static gboolean opencvrecenter_run(Scan *Src, Scan *SrcRef, Scan *Dest)
                         vo->show_label (s);
                         vo->remake_node_markers ();
 
-                        gapp->xsm->data.s.x0 = xy[0];
-                        gapp->xsm->data.s.y0 = xy[1];
-                        gapp->spm_offset_check (NULL, gapp);
+                        main_get_gapp()->xsm->data.s.x0 = xy[0];
+                        main_get_gapp()->xsm->data.s.y0 = xy[1];
+                        main_get_gapp()->spm_offset_check (NULL, gapp);
                 }
 	}
 	

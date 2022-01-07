@@ -56,10 +56,10 @@ Registers itself for loading files with the filename suffix ".Stm".
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
-#include "core-source/dataio.h"
-#include "core-source/action_id.h"
-#include "core-source/util.h"
+#include "plugin.h"
+#include "dataio.h"
+#include "action_id.h"
+#include "util.h"
 
 #include <sstream>
 
@@ -572,7 +572,7 @@ FIO_STATUS rhk200_ImExportFile::rhkRead(const char *fname){
 	scan->data.s.y0 = offset_sensitivity[1][0]*offset[1];
 	scan->data.s.alpha = angle;
 	double dz=gain/32768.0;
-	UnitObj *zu = gapp->xsm->MakeUnit ("nm","nm");
+	UnitObj *zu = main_get_gapp()->xsm->MakeUnit ("nm","nm");
         scan->data.s.dz = zu->Usr2Base(dz);
         scan->data.SetZUnit(zu);
         delete zu;
@@ -616,10 +616,10 @@ static void rhk200_im_export_filecheck_load_callback (gpointer data ){
 	if (*fn){
 		PI_DEBUG (DBG_L2, "checking for rhk2000 file type>" << *fn << "<" );
 
-		Scan *dst = gapp->xsm->GetActiveScan();
+		Scan *dst = main_get_gapp()->xsm->GetActiveScan();
 		if(!dst){ 
-			gapp->xsm->ActivateFreeChannel();
-			dst = gapp->xsm->GetActiveScan();
+			main_get_gapp()->xsm->ActivateFreeChannel();
+			dst = main_get_gapp()->xsm->GetActiveScan();
 		}
 
 		rhk200_ImExportFile fileobj (dst, *fn);
@@ -630,15 +630,15 @@ static void rhk200_im_export_filecheck_load_callback (gpointer data ){
 			if (ret != FIO_NOT_RESPONSIBLE_FOR_THAT_FILE)
 				*fn=NULL;
 			// no more data: remove allocated and unused scan now, force!
-//			gapp->xsm->SetMode(-1, ID_CH_M_OFF, TRUE); 
+//			main_get_gapp()->xsm->SetMode(-1, ID_CH_M_OFF, TRUE); 
 			PI_DEBUG (DBG_L2, "Read Error " << ((int)ret) );
 		}else{
 			// got it!
 			*fn=NULL;
 
 			// Now update gxsm main window data fields
-			gapp->xsm->ActiveScan->GetDataSet(gapp->xsm->data);
-			gapp->spm_update_all();
+			main_get_gapp()->xsm->ActiveScan->GetDataSet(main_get_gapp()->xsm->data);
+			main_get_gapp()->spm_update_all();
 			dst->draw();
 		}
 	}else{
@@ -651,7 +651,7 @@ static void rhk200_im_export_filecheck_load_callback (gpointer data ){
 
 static void rhk200_im_export_import_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data){
 //				  "known extensions: pgm h16 nsc d2d dat sht byt flt dbl",
-	gchar *fn = gapp->file_dialog("RHK STM-200 Import", NULL,
+	gchar *fn = main_get_gapp()->file_dialog("RHK STM-200 Import", NULL,
 				  "*.Stm", 
 				  NULL, "RHK STM-200 Import");
 

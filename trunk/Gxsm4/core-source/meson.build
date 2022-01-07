@@ -122,7 +122,6 @@ lib_app_gxsm = library(
 executable(
     meson.project_name(),
     'gxsm_main.cpp',
-
     gxsm4_gdbus_src,
     dependencies : deps,
     link_with: [ lib_global_gxsm, lib_utils_gxsm, lib_app_gxsm, lib_pcs_gxsm ],

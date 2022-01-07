@@ -133,7 +133,7 @@
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
 
 
 using namespace std;
@@ -282,9 +282,9 @@ void dump_button_callback( GtkWidget *widget, gpointer data)
 void comment_button_callback( GtkWidget *widget, gpointer data)
 {
         // Add info to comment-field.
-        gapp->xsm->data.ui.comment = g_strconcat( gapp->xsm->data.ui.comment, (const gchar*)info.str().c_str(), NULL);
+        main_get_gapp()->xsm->data.ui.comment = g_strconcat( main_get_gapp()->xsm->data.ui.comment, (const gchar*)info.str().c_str(), NULL);
         // Update textfield on screen.
-        gapp->spm_update_all();
+        main_get_gapp()->spm_update_all();
 }
 
 

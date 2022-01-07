@@ -83,7 +83,7 @@ figure out more about this piece of code.
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
  
 using namespace std;
 
@@ -220,7 +220,7 @@ public:
 
                 GtkDialogFlags flags =  (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT);
                 dialog = gtk_dialog_new_with_buttons (N_("Find Local Max Kernel Setup"),
-                                                      GTK_WINDOW (gapp->get_app_window ()),
+                                                      GTK_WINDOW (main_get_gapp()->get_app_window ()),
                                                       flags,
                                                       _("_OK"),
                                                       GTK_RESPONSE_ACCEPT,
@@ -232,13 +232,13 @@ public:
                 bp.set_error_text ("Value not allowed.");
                 bp.input_nx = 5;
 
-		bp.grid_add_ec_with_scale ("kx",   gapp->xsm->Unity, &kx,    0.,   100., ".0f", 1.,  4.);
+		bp.grid_add_ec_with_scale ("kx",   main_get_gapp()->xsm->Unity, &kx,    0.,   100., ".0f", 1.,  4.);
                 bp.new_line ();
-		bp.grid_add_ec_with_scale ("ky",   gapp->xsm->Unity, &ky,    0.,   100., ".0f", 1.,  4.);
+		bp.grid_add_ec_with_scale ("ky",   main_get_gapp()->xsm->Unity, &ky,    0.,   100., ".0f", 1.,  4.);
                 bp.new_line ();
-		bp.grid_add_ec_with_scale ("kz",   gapp->xsm->Unity, &kz,    0.,   100., ".0f", 1.,  4.);
+		bp.grid_add_ec_with_scale ("kz",   main_get_gapp()->xsm->Unity, &kz,    0.,   100., ".0f", 1.,  4.);
                 bp.new_line ();
-		bp.grid_add_ec_with_scale ("treshold", gapp->xsm->Unity, &trs, 0., 1e10, ".3f", 1.,  4.);
+		bp.grid_add_ec_with_scale ("treshold", main_get_gapp()->xsm->Unity, &trs, 0., 1e10, ".3f", 1.,  4.);
                 bp.new_line ();
 		
                 bp.grid_add_label ("Mode", NULL, 1, 1.0);
@@ -267,7 +267,7 @@ public:
 		bp.grid_add_widget (chooser, 5);
                 bp.new_line ();
 
-		bp.grid_add_ec_with_scale ("Max Thread #",   gapp->xsm->Unity, &max_threads,    1.,   64., ".0f", 1.,  4.);
+		bp.grid_add_ec_with_scale ("Max Thread #",   main_get_gapp()->xsm->Unity, &max_threads,    1.,   64., ".0f", 1.,  4.);
                 bp.new_line ();
                         
                 gtk_widget_show_all (dialog);

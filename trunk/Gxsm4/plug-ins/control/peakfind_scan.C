@@ -28,15 +28,15 @@
 
 #include "app_peakfind.h"
 
-#include "core-source/regress.h"
-#include "core-source/scan.h"
-#include "core-source/dataio.h"
+#include "regress.h"
+#include "scan.h"
+#include "dataio.h"
 
-#include "core-source/surface.h"
-#include "core-source/glbvars.h"
-#include "core-source/xsmtypes.h"
+#include "surface.h"
+#include "glbvars.h"
+#include "xsmtypes.h"
 
-#include "core-source/action_id.h"
+#include "action_id.h"
 
 // #define COPY_PFSCANS_TO_PROFILEVIEW
 

@@ -118,7 +118,7 @@ Docu not finished jet, PlugIn makes Gxsm unstable after usage -- work in progres
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
 
 // Plugin Prototypes
 static void PolarHist_init( void );
@@ -273,7 +273,7 @@ static void PolarHist_configure(void)
 {
 	GtkDialogFlags flags =  (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT);
 	GtkWidget *dialog = gtk_dialog_new_with_buttons (N_("Polar Histogramm Setup"),
-							 GTK_WINDOW (gapp->get_app_window ()),
+							 GTK_WINDOW (main_get_gapp()->get_app_window ()),
 							 flags,
 							 _("_OK"),
 							 GTK_RESPONSE_ACCEPT,

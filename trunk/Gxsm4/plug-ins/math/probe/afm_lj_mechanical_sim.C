@@ -101,8 +101,8 @@ The PlugIn configurator...
 #include <glib.h>
 #include <math.h>
 #include "config.h"
-#include "core-source/plugin.h"
-#include "core-source/vectorutil.h"
+#include "plugin.h"
+#include "vectorutil.h"
 
 #ifdef USE_NLOPT
 #include <nlopt.hpp>
@@ -176,7 +176,7 @@ GxsmMathNoSrcOneDestPlugin *get_gxsm_math_no_src_one_dest_plugin_info( void ) {
 static void afm_lj_mechanical_sim_about( void )
 {
 	const gchar *authors[] = {afm_lj_mechanical_sim_pi.authors, NULL};
-	gtk_show_about_dialog (GTK_WINDOW (gapp->get_app_window ()), 
+	gtk_show_about_dialog (GTK_WINDOW (main_get_gapp()->get_app_window ()), 
 			       "program-name", afm_lj_mechanical_sim_pi.name,
 			       "version", VERSION,
 			       "license", GTK_LICENSE_GPL_3_0,
@@ -226,7 +226,7 @@ GxsmMathOneSrcPlugin *get_gxsm_math_one_src_plugin_info( void ) {
 static void afm_lj_mechanical_sim_about( void )
 {
 	const gchar *authors[] = {afm_lj_mechanical_sim_pi.authors, NULL};
-	gtk_show_about_dialog (NULL, //GTK_WINDOW (gapp->get_app_window ()), 
+	gtk_show_about_dialog (NULL, //GTK_WINDOW (main_get_gapp()->get_app_window ()), 
 			       "program-name", afm_lj_mechanical_sim_pi.name,
 			       "version", VERSION,
                                //			       "license", GTK_LICENSE_GPL_3_0,
@@ -1669,7 +1669,7 @@ public:
 
                 GtkDialogFlags flags =  (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT);
                 dialog = gtk_dialog_new_with_buttons (N_("AFM Simulation Settings for Force Probe Path Tracing"),
-                                                      GTK_WINDOW (gapp->get_app_window ()),
+                                                      GTK_WINDOW (main_get_gapp()->get_app_window ()),
                                                       flags,
                                                       _("_OK"),
                                                       GTK_RESPONSE_ACCEPT,
@@ -1680,12 +1680,12 @@ public:
                 gtk_container_add (GTK_CONTAINER (gtk_dialog_get_content_area (GTK_DIALOG (dialog))), bp.grid);
                 bp.set_error_text ("Value not allowed.");
                 bp.input_nx = 1;
-                bp.grid_add_ec ("Z initial",   gapp->xsm->Z_Unit, &zi,     0.,   100., ".2f", 0.1,  1.);
-		bp.grid_add_ec ("Z-final",     gapp->xsm->Z_Unit, &zf,     0.,   100., ".2f", 0.1,  1.);
-                bp.grid_add_ec ("Z step",      gapp->xsm->Z_Unit, &dz,     0.,    10., ".3f", 0.1,  1.);
+                bp.grid_add_ec ("Z initial",   main_get_gapp()->xsm->Z_Unit, &zi,     0.,   100., ".2f", 0.1,  1.);
+		bp.grid_add_ec ("Z-final",     main_get_gapp()->xsm->Z_Unit, &zf,     0.,   100., ".2f", 0.1,  1.);
+                bp.grid_add_ec ("Z step",      main_get_gapp()->xsm->Z_Unit, &dz,     0.,    10., ".3f", 0.1,  1.);
                 bp.new_line ();
                 bp.grid_add_ec ("NL-OPT precision", meVA, &precision,   0.,     1., "g", 0.00001,  0.0001);
-                bp.grid_add_ec ("NL-OPT maxiter",   gapp->xsm->Unity, &maxiter,     0.,  1000., "g", 1.,  10.);
+                bp.grid_add_ec ("NL-OPT maxiter",   main_get_gapp()->xsm->Unity, &maxiter,     0.,  1000., "g", 1.,  10.);
                 bp.grid_add_ec ("Max. FZ",   pnewton, &fzmax,     0.,  10000., "g", 1.,  10.);
                 bp.new_line ();
 
@@ -1796,13 +1796,13 @@ public:
                 bp.new_line ();
 
                 bp.input_nx = 5;
-                bp.grid_add_ec_with_scale ("Initial Probe below Aplex (0=auto)",  gapp->xsm->Z_Unit, &initial_probe_below_apex,  -20.,  20., ".3f", 0.1,  1.);
+                bp.grid_add_ec_with_scale ("Initial Probe below Aplex (0=auto)",  main_get_gapp()->xsm->Z_Unit, &initial_probe_below_apex,  -20.,  20., ".3f", 0.1,  1.);
                 bp.new_line ();
                 bp.grid_add_ec_with_scale ("Probe Charge",   pcharge,  &probe_charge,  -2.,    2., ".3f", 0.01,  0.1);
                 bp.new_line ();
-                bp.grid_add_ec_with_scale ("Charge Scaling", gapp->xsm->Unity, &charge_scaling,     -100.,  100., ".3f", 0.1,  1.);
+                bp.grid_add_ec_with_scale ("Charge Scaling", main_get_gapp()->xsm->Unity, &charge_scaling,     -100.,  100., ".3f", 0.1,  1.);
                 bp.new_line ();
-		bp.grid_add_ec_with_scale ("Max Thread #",   gapp->xsm->Unity, &max_threads,    1.,   64., ".0f", 1.,  4.);
+		bp.grid_add_ec_with_scale ("Max Thread #",   main_get_gapp()->xsm->Unity, &max_threads,    1.,   64., ".0f", 1.,  4.);
                 bp.new_line ();
 
                 bp.grid_add_label ("Progress Detail", NULL, 1, 1.0);
@@ -1849,7 +1849,7 @@ public:
 
                 GtkDialogFlags flags =  (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT);
                 dialog = gtk_dialog_new_with_buttons (N_("AFM Simulation Settings for Force Probe Path Tracing"),
-                                                      NULL, // GTK_WINDOW (gapp->get_app_window ()),
+                                                      NULL, // GTK_WINDOW (main_get_gapp()->get_app_window ()),
                                                       flags,
                                                       GTK_STOCK_OK,
 						      GTK_RESPONSE_ACCEPT,
@@ -1870,15 +1870,15 @@ public:
 
 		//	ADD_EC_WITH_SCALE(LABEL, UNIT, ERROR_TEXT, VAR, LO, HI, FMT, STEP, PAGE, CALLBACK);
                 ++y; x=1;
-                ADD_EC_WITH_SCALE(N_("Z initial"),   gapp->xsm->Z_Unit, "Value not allowed.", &zi,     0.,   100., ".2f", 0.1,  1., NULL);
+                ADD_EC_WITH_SCALE(N_("Z initial"),   main_get_gapp()->xsm->Z_Unit, "Value not allowed.", &zi,     0.,   100., ".2f", 0.1,  1., NULL);
                 ++y; x=1;
-		ADD_EC_WITH_SCALE(N_("Z-final"),     gapp->xsm->Z_Unit, "Value not allowed.", &zf,     0.,   100., ".2f", 0.1,  1., NULL);
+		ADD_EC_WITH_SCALE(N_("Z-final"),     main_get_gapp()->xsm->Z_Unit, "Value not allowed.", &zf,     0.,   100., ".2f", 0.1,  1., NULL);
                 ++y; x=1;
-                APP_EC(N_("Z step"),      gapp->xsm->Z_Unit, "Value not allowed.", &dz,     0.,    10., ".3f", 0.1,  1., NULL);
+                APP_EC(N_("Z step"),      main_get_gapp()->xsm->Z_Unit, "Value not allowed.", &dz,     0.,    10., ".3f", 0.1,  1., NULL);
                 ++y; x=1;
                 ADD_EC(N_("NL-OPT precision"), meVA, "Value not allowed.", &precision,   0.,     1., "g", 0.00001,  0.0001, NULL);
                 ++y; x=1;
-                APP_EC(N_("NL-OPT maxiter"),   gapp->xsm->Unity, "Value not allowed.", &maxiter,     0.,  1000., "g", 1.,  10., NULL);
+                APP_EC(N_("NL-OPT maxiter"),   main_get_gapp()->xsm->Unity, "Value not allowed.", &maxiter,     0.,  1000., "g", 1.,  10., NULL);
                 ++y; x=1;
 
                 ++y; x=1;
@@ -1985,14 +1985,14 @@ public:
                 //		gtk_grid_attach (GTK_GRID (grid), choice, x++, y, 15,1);
 
                 ++y; x=1;
-                ADD_EC(N_("Initial Probe below Aplex (0=auto)"),      gapp->xsm->Z_Unit, "Value not allowed.", &initial_probe_below_apex,  -20.,  20., ".3f", 0.1,  1., NULL);
+                ADD_EC(N_("Initial Probe below Aplex (0=auto)"),      main_get_gapp()->xsm->Z_Unit, "Value not allowed.", &initial_probe_below_apex,  -20.,  20., ".3f", 0.1,  1., NULL);
                ++y; x=1;
                ADD_EC(N_("Probe Charge"),      pcharge, "Value not allowed.", &probe_charge,  -2.,    2., ".3f", 0.01,  0.1, NULL);
 
                 ++y; x=1;
-                APP_EC(N_("Charge Scaling"),      gapp->xsm->Unity, "Value not allowed.", &charge_scaling,     -100.,  100., ".3f", 0.1,  1., NULL);
+                APP_EC(N_("Charge Scaling"),      main_get_gapp()->xsm->Unity, "Value not allowed.", &charge_scaling,     -100.,  100., ".3f", 0.1,  1., NULL);
                 ++y; x=1;
-		ADD_EC(N_("Max Thread #"),      gapp->xsm->Unity, "Value not allowed.", &max_threads,    1.,   64., ".0f", 1.,  4., NULL);
+		ADD_EC(N_("Max Thread #"),      main_get_gapp()->xsm->Unity, "Value not allowed.", &max_threads,    1.,   64., ".0f", 1.,  4., NULL);
 
                 ++y; x=1;
                 label = gtk_label_new (N_("Progress Detail"));	
@@ -3021,7 +3021,7 @@ void image_run (Scan *Dest, double z, double dz, int time_index, double precisio
         }
         
         // std::cout << "Waiting for all threads to complete." << std::endl;
-        gapp->check_events ();
+        main_get_gapp()->check_events ();
         
         if (progress_detail)
                 if (!strncmp (progress_detail, "Basic", 5))
@@ -3032,11 +3032,11 @@ void image_run (Scan *Dest, double z, double dz, int time_index, double precisio
                                 for (int jobno=0; jobno < max_jobs; ++jobno){
                                         if (job[jobno].job >= 0)
                                                 running++;
-                                        gapp->progress_info_set_bar_fraction (job[jobno].progress, 2);
+                                        main_get_gapp()->progress_info_set_bar_fraction (job[jobno].progress, 2);
                                         gchar *info = g_strdup_printf ("Job %d", jobno+1);
-                                        gapp->progress_info_set_bar_text (info, 2);
+                                        main_get_gapp()->progress_info_set_bar_text (info, 2);
                                         g_free (info);
-                                        gapp->check_events ();
+                                        main_get_gapp()->check_events ();
                                 }
                         }
                 else if (!strncmp (progress_detail, "Job Detail", 10))
@@ -3045,11 +3045,11 @@ void image_run (Scan *Dest, double z, double dz, int time_index, double precisio
                                 for (int jobno=0; jobno < max_jobs; ++jobno){
                                         if (job[jobno].job >= 0)
                                                 running++;
-                                        gapp->progress_info_set_bar_fraction (job[jobno].progress, jobno+2);
+                                        main_get_gapp()->progress_info_set_bar_fraction (job[jobno].progress, jobno+2);
                                         gchar *info = g_strdup_printf ("Job %d", jobno+1);
-                                        gapp->progress_info_set_bar_text (info, jobno+2);
+                                        main_get_gapp()->progress_info_set_bar_text (info, jobno+2);
                                         g_free (info);
-                                        gapp->check_events ();
+                                        main_get_gapp()->check_events ();
                                 }
                         }
         
@@ -3143,11 +3143,11 @@ static gboolean afm_lj_mechanical_sim_run(Scan *Src, Scan *Dest)
         // delete Dest->data.TimeUnit;
         // UTF8_ANGSTROEM "\303\205"
         // UnitObj *tmp_unit = new UnitObj("\303\205","\303\205", "g", "Z");
-        UnitObj *tmp_unit =  gapp->xsm->MakeUnit ("AA", "Z");
+        UnitObj *tmp_unit =  main_get_gapp()->xsm->MakeUnit ("AA", "Z");
 	Dest->data.SetTimeUnit (tmp_unit);
         delete tmp_unit;
 
-        tmp_unit =  gapp->xsm->MakeUnit ("Hz", "Frq. Shift");
+        tmp_unit =  main_get_gapp()->xsm->MakeUnit ("Hz", "Frq. Shift");
 	Dest->data.SetZUnit (tmp_unit);
         delete tmp_unit;
         
@@ -3246,19 +3246,19 @@ static gboolean afm_lj_mechanical_sim_run(Scan *Src, Scan *Dest)
         if (progress_detail){
                 std::cout << "Progress: >>" << progress_detail << "<<" << std::endl;
                 if (!strncmp (progress_detail, "Job Detail", 10))
-                        gapp->progress_info_new ("NC-AFM Simulation", 1+(int)max_threads, GCallback (cancel_callback), &stop_flag, false);
+                        main_get_gapp()->progress_info_new ("NC-AFM Simulation", 1+(int)max_threads, GCallback (cancel_callback), &stop_flag, false);
                 else if (!strncmp (progress_detail, "Basic", 5))
-                        gapp->progress_info_new ("NC-AFM Simulation", 1, GCallback (cancel_callback), &stop_flag, false);
+                        main_get_gapp()->progress_info_new ("NC-AFM Simulation", 1, GCallback (cancel_callback), &stop_flag, false);
                 else
-                        gapp->progress_info_new ("NC-AFM Simulation", 2, GCallback (cancel_callback), &stop_flag, false);
+                        main_get_gapp()->progress_info_new ("NC-AFM Simulation", 2, GCallback (cancel_callback), &stop_flag, false);
         } else {
-                gapp->progress_info_new ("NC-AFM Simulation", 2, GCallback (cancel_callback), &stop_flag, false);
+                main_get_gapp()->progress_info_new ("NC-AFM Simulation", 2, GCallback (cancel_callback), &stop_flag, false);
         }
 
-	gapp->progress_info_set_bar_fraction (0., 1);
+	main_get_gapp()->progress_info_set_bar_fraction (0., 1);
 
         gchar *info = g_strdup_printf ("Z=%g " UTF8_ANGSTROEM, zi);
-        gapp->progress_info_set_bar_text (info, 1);
+        main_get_gapp()->progress_info_set_bar_text (info, 1);
         g_free (info);
 
         // cleanup if previously filled in time space
@@ -3351,9 +3351,9 @@ static gboolean afm_lj_mechanical_sim_run(Scan *Src, Scan *Dest)
                 Dest->mem2d->SetLayer (FREQ_SHIFT_FIXED_L);
                 
                 // set progress info
-                gapp->progress_info_set_bar_fraction ((z-zf)/(zi-zf), 1);
+                main_get_gapp()->progress_info_set_bar_fraction ((z-zf)/(zi-zf), 1);
                 info = g_strdup_printf ("pass1 ff Z=%g " UTF8_ANGSTROEM, z);
-                gapp->progress_info_set_bar_text (info, 1);
+                main_get_gapp()->progress_info_set_bar_text (info, 1);
                 g_free (info);
 
                 // run z slice pass 1 -- static field calculation or brute force nl-opt on exact L-J (more comp. intense) forces, etc.
@@ -3364,9 +3364,9 @@ static gboolean afm_lj_mechanical_sim_run(Scan *Src, Scan *Dest)
         if (calc_mode == MODE_IPF_NL_OPT){
                 for (ti=1,z=zi-dz; z>zf+dz && !stop_flag; z-=dz){
                         Dest->retrieve_time_element (ti);
-                        gapp->progress_info_set_bar_fraction ((z-zf)/(zi-zf), 1);
+                        main_get_gapp()->progress_info_set_bar_fraction ((z-zf)/(zi-zf), 1);
                         info = g_strdup_printf ("pass2 OPT Z=%g " UTF8_ANGSTROEM, z);
-                        gapp->progress_info_set_bar_text (info, 1);
+                        main_get_gapp()->progress_info_set_bar_text (info, 1);
                         g_free (info);
                         // run z slice for pass 2 using pre computed force/gradient fields, interpolated
                         image_run (Dest, z, dz, ti++, precision, (int)maxiter, model, stop_flag, calc_mode, 1, (int)max_threads, progress_detail);
@@ -3377,7 +3377,7 @@ static gboolean afm_lj_mechanical_sim_run(Scan *Src, Scan *Dest)
         if (stop_flag)
                 info_stream << "** Job canceld at z= " << z << "\n";
 
-	gapp->progress_info_set_bar_text ("finishing up jobs", 1);
+	main_get_gapp()->progress_info_set_bar_text ("finishing up jobs", 1);
 
         time_t te = time (0);
         info_stream << "End Time = " << te << "\n";
@@ -3386,7 +3386,7 @@ static gboolean afm_lj_mechanical_sim_run(Scan *Src, Scan *Dest)
 
 	Dest->data.ui.SetComment ((const gchar*)info_stream.str().c_str());
 
-	gapp->check_events ();
+	main_get_gapp()->check_events ();
 
  	std::cout << "PI:run ** cleaning up." << std::endl;
 
@@ -3397,7 +3397,7 @@ static gboolean afm_lj_mechanical_sim_run(Scan *Src, Scan *Dest)
  	Dest->retrieve_time_element (0);
 	Dest->mem2d->SetLayer(0);
 
-        gapp->progress_info_close ();
+        main_get_gapp()->progress_info_close ();
 
 	return MATH_OK;
 }

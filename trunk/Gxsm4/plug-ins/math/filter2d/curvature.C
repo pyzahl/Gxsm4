@@ -70,7 +70,7 @@ into a new created math channel.
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
 
 // Plugin Prototypes
 static void curvature_init( void );
@@ -272,8 +272,8 @@ static gboolean curvature_run(Scan *Src, Scan *Dest)
 // check for multi dim calls, make sure not to ask user for paramters for every layer or time step!
 	if (((Src ? Src->mem2d->get_t_index ():0) == 0 && (Src ? Src->mem2d->GetLayer ():0) == 0) || !c_kernel) {
 		double r = c_radius;    // Get Radius
-		gapp->ValueRequest("2D Convol. Filter Size", "Radius", "Curvature kernel size: s = 1+radius",
-				   gapp->xsm->Unity, 0., Src->mem2d->GetNx()/10., ".0f", &r);
+		main_get_gapp()->ValueRequest("2D Convol. Filter Size", "Radius", "Curvature kernel size: s = 1+radius",
+				   main_get_gapp()->xsm->Unity, 0., Src->mem2d->GetNx()/10., ".0f", &r);
 		c_radius = r;
 		if (c_kernel)
 			free (c_kernel);

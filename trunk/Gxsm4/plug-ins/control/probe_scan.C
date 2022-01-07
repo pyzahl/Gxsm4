@@ -29,15 +29,15 @@
 #include <config.h>
 
 #include "probe_scan.h"
-#include "core-source/regress.h"
-#include "core-source/scan.h"
-#include "core-source/dataio.h"
+#include "regress.h"
+#include "scan.h"
+#include "dataio.h"
 
-#include "core-source/surface.h"
-#include "core-source/glbvars.h"
-#include "core-source/xsmtypes.h"
+#include "surface.h"
+#include "glbvars.h"
+#include "xsmtypes.h"
 
-#include "core-source/action_id.h"
+#include "action_id.h"
 
 #define L_NULL  0
 #define L_START 1

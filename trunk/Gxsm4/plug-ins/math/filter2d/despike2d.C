@@ -61,7 +61,7 @@ into a new created math channel.
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
 
 // Plugin Prototypes
 static void despike2d_init( void );
@@ -254,7 +254,7 @@ public:
 
                 GtkDialogFlags flags =  (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT);
                 dialog = gtk_dialog_new_with_buttons (N_("Despike Filter Setup"),
-                                                      GTK_WINDOW (gapp->get_app_window ()),
+                                                      GTK_WINDOW (main_get_gapp()->get_app_window ()),
                                                       flags,
                                                       _("_OK"),
                                                       GTK_RESPONSE_ACCEPT,
@@ -266,9 +266,9 @@ public:
                 bp.set_error_text ("Value not allowed.");
                 bp.input_nx = 5;
 
-		bp.grid_add_ec_with_scale ("kernel X #px",   gapp->xsm->Unity, &nx,    3.,   32., ".0f", 1.,  4.);
+		bp.grid_add_ec_with_scale ("kernel X #px",   main_get_gapp()->xsm->Unity, &nx,    3.,   32., ".0f", 1.,  4.);
                 bp.new_line ();
-		bp.grid_add_ec_with_scale ("kernel Y #px",   gapp->xsm->Unity, &ny,    3.,   32., ".0f", 1.,  4.);
+		bp.grid_add_ec_with_scale ("kernel Y #px",   main_get_gapp()->xsm->Unity, &ny,    3.,   32., ".0f", 1.,  4.);
                 bp.new_line ();
 		
                 bp.grid_add_label ("Mode", NULL, 1, 1.0);
@@ -280,7 +280,7 @@ public:
 		bp.grid_add_widget (choice, 5);
 		gtk_combo_box_set_active (GTK_COMBO_BOX (choice), 0);
 
-		bp.grid_add_ec_with_scale ("Max Thread #",   gapp->xsm->Unity, &max_threads,    1.,   32., ".0f", 1.,  4.);
+		bp.grid_add_ec_with_scale ("Max Thread #",   main_get_gapp()->xsm->Unity, &max_threads,    1.,   32., ".0f", 1.,  4.);
                 bp.new_line ();
                         
                 gtk_widget_show (dialog);
@@ -522,19 +522,19 @@ static void cancel_callback (GtkWidget *widget, int *status){
 			tf=Src->number_of_time_elements ()-1;
 			if (tf < 0) tf = 0;
 			vf=Src->mem2d->GetNv ()-1;
-			gapp->setup_multidimensional_data_copy ("Multidimensional Despike2d", Src, ti, tf, vi, vf);
+			main_get_gapp()->setup_multidimensional_data_copy ("Multidimensional Despike2d", Src, ti, tf, vi, vf);
 		} while (ti > tf || vi > vf);
 
-		gapp->progress_info_new ("Multidimenssional Despike2d", 2);
-		gapp->progress_info_set_bar_fraction (0., 1);
-		gapp->progress_info_set_bar_fraction (0., 2);
-		gapp->progress_info_set_bar_text ("Time", 1);
-		gapp->progress_info_set_bar_text ("Value", 2);
+		main_get_gapp()->progress_info_new ("Multidimenssional Despike2d", 2);
+		main_get_gapp()->progress_info_set_bar_fraction (0., 1);
+		main_get_gapp()->progress_info_set_bar_fraction (0., 2);
+		main_get_gapp()->progress_info_set_bar_text ("Time", 1);
+		main_get_gapp()->progress_info_set_bar_text ("Value", 2);
 	}
 
-	gapp->progress_info_new (mode, 1, GCallback (cancel_callback), &status);
-	gapp->progress_info_set_bar_fraction (0., 1);
-	gapp->progress_info_set_bar_text (" ", 1);
+	main_get_gapp()->progress_info_new (mode, 1, GCallback (cancel_callback), &status);
+	main_get_gapp()->progress_info_set_bar_fraction (0., 1);
+	main_get_gapp()->progress_info_set_bar_text (" ", 1);
 
 	#define MAX_JOB 32
 	DESPIKE_Job_Env despike_job[MAX_JOB];
@@ -546,7 +546,7 @@ static void cancel_callback (GtkWidget *widget, int *status){
 	for (int time_index=ti; time_index <= tf; ++time_index){
 		Mem2d *m = Src->mem2d_time_element (time_index);
 		if (multidim)
-			gapp->progress_info_set_bar_fraction ((gdouble)(time_index-ti)/(gdouble)ntimes_tmp, 1);
+			main_get_gapp()->progress_info_set_bar_fraction ((gdouble)(time_index-ti)/(gdouble)ntimes_tmp, 1);
 
 		Dest->mem2d->Resize (m->GetNx (), m->GetNy (), vf-vi+1, m->GetTyp());
 
@@ -611,15 +611,15 @@ static void cancel_callback (GtkWidget *widget, int *status){
                         if (psum > psum_mx)
                                 psum_mx = psum;
                         gchar *tmp = g_strdup_printf("%i %%", (int)(100.*psum_mx/max_job/progress_max_job));
-                        gapp->progress_info_set_bar_text (tmp, 1);
+                        main_get_gapp()->progress_info_set_bar_text (tmp, 1);
                         g_free (tmp);
-                        gapp->check_events ();
+                        main_get_gapp()->check_events ();
                 } while (job >= 0);
 
                 std::cout << "DESPIKE:run ** finishing up jobs." << std::endl;
 
-                gapp->progress_info_set_bar_text ("finishing up jobs", 1);
-                gapp->check_events ();
+                main_get_gapp()->progress_info_set_bar_text ("finishing up jobs", 1);
+                main_get_gapp()->check_events ();
 
                 for (int jobno=0; jobno < max_job; ++jobno)
                         g_thread_join (tpi[jobno]);
@@ -632,7 +632,7 @@ static void cancel_callback (GtkWidget *widget, int *status){
 
 	std::cout << "DESPIKE:run ** cleaning up." << std::endl;
 
-	gapp->progress_info_close ();
+	main_get_gapp()->progress_info_close ();
 
         
 	Dest->data.s.ntimes = ntimes_tmp;
@@ -642,7 +642,7 @@ static void cancel_callback (GtkWidget *widget, int *status){
         Dest->mem2d->copy_layer_information (Src->mem2d);
 
 	if (multidim){
-		gapp->progress_info_close ();
+		main_get_gapp()->progress_info_close ();
 		Dest->retrieve_time_element (0);
 		Dest->mem2d->SetLayer(0);
 	}

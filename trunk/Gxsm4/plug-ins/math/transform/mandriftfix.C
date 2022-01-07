@@ -102,7 +102,7 @@ Figure out the drift inbetween frames in pixels in X and Y dimension to compensa
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
 
 // Plugin Prototypes
 static void mandriftfix_init( void );
@@ -315,11 +315,11 @@ static gboolean mandriftfix_run(Scan *Src, Scan *Dest)
 	// For more math-access methods have a look at xsmmath.C
 	// simple example for 1sourced Mathoperation: Source is taken and 100 added.
 
-	gapp->progress_info_new ("Manual Drift Fix", 2);
-	gapp->progress_info_set_bar_fraction (0., 1);
-	gapp->progress_info_set_bar_fraction (0., 2);
-	gapp->progress_info_set_bar_text ("Time", 1);
-	gapp->progress_info_set_bar_text ("Value", 2);
+	main_get_gapp()->progress_info_new ("Manual Drift Fix", 2);
+	main_get_gapp()->progress_info_set_bar_fraction (0., 1);
+	main_get_gapp()->progress_info_set_bar_fraction (0., 2);
+	main_get_gapp()->progress_info_set_bar_text ("Time", 1);
+	main_get_gapp()->progress_info_set_bar_text ("Value", 2);
 
 	// number of time frames stored
 	int n_times = Src->number_of_time_elements ();
@@ -344,14 +344,14 @@ static gboolean mandriftfix_run(Scan *Src, Scan *Dest)
 	
 	// go for it....
 	for(int time=0; time < n_times; ++time){ // time loop
-		gapp->progress_info_set_bar_fraction ((gdouble)time/(gdouble)n_times, 1);
+		main_get_gapp()->progress_info_set_bar_fraction ((gdouble)time/(gdouble)n_times, 1);
 
 		// get time frame to work on
 		double real_time = Src->retrieve_time_element (time);
 
 		int n_values = Dest->mem2d->GetNv ();
 		for(int value=0; value < n_values; ++value){ // value loop
-			gapp->progress_info_set_bar_fraction ((gdouble)value/(gdouble)n_values, 2);
+			main_get_gapp()->progress_info_set_bar_fraction ((gdouble)value/(gdouble)n_values, 2);
 
 			Src->mem2d->SetLayer(value);
 			Dest->mem2d->SetLayer(value);
@@ -376,7 +376,7 @@ static gboolean mandriftfix_run(Scan *Src, Scan *Dest)
 		}
 	}
 
-	gapp->progress_info_close ();
+	main_get_gapp()->progress_info_close ();
 
 	return MATH_OK; // done OK.
 }

@@ -103,10 +103,10 @@ Only import direction is implemented.
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
-#include "core-source/dataio.h"
-#include "core-source/action_id.h"
-#include "core-source/util.h"
+#include "plugin.h"
+#include "dataio.h"
+#include "action_id.h"
+#include "util.h"
 #include "batch.h"
 #include "fileio.c"
 
@@ -385,15 +385,15 @@ FIO_STATUS ascii_ImExportFile::import(const char *fname){
 	//  scan->data.display.voffset_z = 0; // View Offset Z in base ZUnits
 	//  scan->AutoDisplay([...]); // may be used too...
   
-	UnitObj *u = gapp->xsm->MakeUnit ("um", "X");
+	UnitObj *u = main_get_gapp()->xsm->MakeUnit ("um", "X");
 	scan->data.SetXUnit(u);
 	delete u;
 
-	u = gapp->xsm->MakeUnit ("um", "Y");
+	u = main_get_gapp()->xsm->MakeUnit ("um", "Y");
 	scan->data.SetYUnit(u);
 	delete u;
 
-	u = gapp->xsm->MakeUnit ("um", "Z");
+	u = main_get_gapp()->xsm->MakeUnit ("um", "Z");
 	scan->data.SetZUnit(u);
 	delete u;
 
@@ -478,7 +478,7 @@ FIO_STATUS ascii_ImExportFile::Write(){
 	if(strlen(name)>0)
 		fname = (const char*)name;
 	else
-		fname = gapp->file_dialog("File Export: ASCII"," ",file_mask,"","ASCII write");
+		fname = main_get_gapp()->file_dialog("File Export: ASCII"," ",file_mask,"","ASCII write");
 	if (fname == NULL) return FIO_NO_NAME;
 
 	// check if we like to handle this
@@ -512,10 +512,10 @@ static void ascii_data_im_export_filecheck_load_callback (gpointer data ){
 			  "Check File: ascii_data_im_export_filecheck_load_callback called with >"
 			  << *fn << "<" );
 
-		Scan *dst = gapp->xsm->GetActiveScan();
+		Scan *dst = main_get_gapp()->xsm->GetActiveScan();
 		if(!dst){ 
-			gapp->xsm->ActivateFreeChannel();
-			dst = gapp->xsm->GetActiveScan();
+			main_get_gapp()->xsm->ActivateFreeChannel();
+			dst = main_get_gapp()->xsm->GetActiveScan();
 		}
 		ascii_ImExportFile fileobj (dst, *fn);
 
@@ -525,15 +525,15 @@ static void ascii_data_im_export_filecheck_load_callback (gpointer data ){
 			if (ret != FIO_NOT_RESPONSIBLE_FOR_THAT_FILE)
 				*fn=NULL;
 			// no more data: remove allocated and unused scan now, force!
-//			gapp->xsm->SetMode(-1, ID_CH_M_OFF, TRUE); 
+//			main_get_gapp()->xsm->SetMode(-1, ID_CH_M_OFF, TRUE); 
 			PI_DEBUG (DBG_L2, "Read Error " << ((int)ret) << "!!!!!!!!" );
 		}else{
 			// got it!
 			*fn=NULL;
 
 			// Now update gxsm main window data fields
-			gapp->xsm->ActiveScan->GetDataSet(gapp->xsm->data);
-			gapp->spm_update_all();
+			main_get_gapp()->xsm->ActiveScan->GetDataSet(main_get_gapp()->xsm->data);
+			main_get_gapp()->spm_update_all();
 			dst->draw();
 		}
 	}else{
@@ -549,7 +549,7 @@ static void ascii_data_im_export_filecheck_save_callback (gpointer data ){
 			  "Check File: ascii_data_im_export_filecheck_save_callback called with >"
 			  << *fn << "<" );
 
-		ascii_ImExportFile fileobj (src = gapp->xsm->GetActiveScan(), *fn);
+		ascii_ImExportFile fileobj (src = main_get_gapp()->xsm->GetActiveScan(), *fn);
 
 		FIO_STATUS ret;
 		ret = fileobj.Write(); 
@@ -573,7 +573,7 @@ static void ascii_data_im_export_filecheck_save_callback (gpointer data ){
 static void ascii_data_im_export_import_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data){
 	gchar **help = g_strsplit (ascii_data_im_export_pi.help, ",", 2);
 	gchar *dlgid = g_strconcat (ascii_data_im_export_pi.name, "-import", NULL);
-	gchar *fn = gapp->file_dialog_load (help[0], NULL, file_mask, NULL);
+	gchar *fn = main_get_gapp()->file_dialog_load (help[0], NULL, file_mask, NULL);
 	g_strfreev (help); 
 	g_free (dlgid);
 	if (fn){
@@ -585,7 +585,7 @@ static void ascii_data_im_export_import_callback (GSimpleAction *simple, GVarian
 static void ascii_data_im_export_export_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data){
 	gchar **help = g_strsplit (ascii_data_im_export_pi.help, ",", 2);
 	gchar *dlgid = g_strconcat (ascii_data_im_export_pi.name, "-export", NULL);
-	gchar *fn = gapp->file_dialog_save (help[1], NULL, file_mask, NULL);
+	gchar *fn = main_get_gapp()->file_dialog_save (help[1], NULL, file_mask, NULL);
 	g_strfreev (help); 
 	g_free (dlgid);
 	if (fn){

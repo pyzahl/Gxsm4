@@ -75,9 +75,9 @@ The scaling of the data, especially in Z direction is not well tested.
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
-#include "core-source/dataio.h"
-//#include "core-source/action_id.h" // should not be needed, 15.11.2009 Thorsten Wagner (STM)
+#include "plugin.h"
+#include "dataio.h"
+//#include "action_id.h" // should not be needed, 15.11.2009 Thorsten Wagner (STM)
 
 using namespace std;
 
@@ -309,22 +309,22 @@ FIO_STATUS SDFFile::Read(xsm::open_mode mode){
 static void sdfimport_run(GtkWidget *w, void *data)
 {
     Scan *dst;
-    gchar *nfname = gapp->file_dialog("sdf-file to load", NULL, 
+    gchar *nfname = main_get_gapp()->file_dialog("sdf-file to load", NULL, 
 				      "*.sdf", NULL, "sdf-Import");
     if( !nfname ) return;
 
-    gapp->xsm->ActivateFreeChannel();
-    SDFFile sdfFile(dst = gapp->xsm->GetActiveScan(), nfname);
+    main_get_gapp()->xsm->ActivateFreeChannel();
+    SDFFile sdfFile(dst = main_get_gapp()->xsm->GetActiveScan(), nfname);
 
     if(!dst){ 
-      gapp->xsm->ActivateFreeChannel();
-      dst = gapp->xsm->GetActiveScan();
+      main_get_gapp()->xsm->ActivateFreeChannel();
+      dst = main_get_gapp()->xsm->GetActiveScan();
     }
     if(sdfFile.Read() != FIO_OK){ 
       // no more data: remove allocated and unused scan now, force!
-//      gapp->xsm->SetMode(-1, ID_CH_M_OFF, TRUE); 
+//      main_get_gapp()->xsm->SetMode(-1, ID_CH_M_OFF, TRUE); 
     }
-    gapp->spm_update_all();
+    main_get_gapp()->spm_update_all();
     dst->draw();
     dst=NULL;
 }

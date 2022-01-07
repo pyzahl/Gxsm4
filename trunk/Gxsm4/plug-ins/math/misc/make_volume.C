@@ -69,7 +69,7 @@ into a new created math channel. The result is of type \GxsmEmph{float}.
 #include <math.h>
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
 
 // Plugin Prototypes
 static void make_volume_init( void );

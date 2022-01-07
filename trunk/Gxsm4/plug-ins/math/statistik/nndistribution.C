@@ -88,9 +88,9 @@ Find out what happenes with more or less bins!
 #include <math.h>
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
-#include "core-source/action_id.h"
-#include "core-source/app_profile.h"
+#include "plugin.h"
+#include "action_id.h"
+#include "app_profile.h"
 
 static void nndistribution_init( void );
 static void nndistribution_about( void );

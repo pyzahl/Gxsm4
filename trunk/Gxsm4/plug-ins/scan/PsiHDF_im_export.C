@@ -55,10 +55,10 @@ Not yet tested, porting to GXSM-2 in progress..
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
-#include "core-source/dataio.h"
-#include "core-source/action_id.h"
-#include "core-source/util.h"
+#include "plugin.h"
+#include "dataio.h"
+#include "action_id.h"
+#include "util.h"
 #include "batch.h"
 #include "fileio.c"
 #include "psihdf.h"
@@ -437,7 +437,7 @@ FIO_STATUS PsiHDF_ImExportFile::Write(){
 	if(strlen(name)>0)
 		fname = (const char*)name;
 	else
-		fname = gapp->file_dialog("File Export: PsiHDF"," ","*.hdf","","PsiHDF write");
+		fname = main_get_gapp()->file_dialog("File Export: PsiHDF"," ","*.hdf","","PsiHDF write");
 	if (fname == NULL) return FIO_NO_NAME;
 
 	// check if we like to handle this
@@ -492,13 +492,13 @@ FIO_STATUS PsiHDF_ImExportFile::Write(){
 	Kopf.nx[pcnt] = scan->data.s.nx;
 	Kopf.ny[pcnt] = scan->data.s.ny;
 	//* ....->Inst wird nur wegen dat-Type ben\F6tigt .... :=(
- Kopf.dx[pcnt] = R2INT(scan->data.s.dx/gapp->xsm->Inst->XResolution());
-	Kopf.dy[pcnt] = R2INT(scan->data.s.dy/gapp->xsm->Inst->YResolution());
-	Kopf.x_Offset[pcnt] = R2INT(scan->data.s.x0/gapp->xsm->Inst->XResolution());
-	Kopf.y_Offset[pcnt] = R2INT(scan->data.s.y0/gapp->xsm->Inst->XResolution());
-	Kopf.DAtoAng_X = gapp->xsm->Inst->XResolution();
-	Kopf.DAtoAng_Y = gapp->xsm->Inst->YResolution();
-	Kopf.DAtoAng_Z = gapp->xsm->Inst->ZResolution();
+ Kopf.dx[pcnt] = R2INT(scan->data.s.dx/main_get_gapp()->xsm->Inst->XResolution());
+	Kopf.dy[pcnt] = R2INT(scan->data.s.dy/main_get_gapp()->xsm->Inst->YResolution());
+	Kopf.x_Offset[pcnt] = R2INT(scan->data.s.x0/main_get_gapp()->xsm->Inst->XResolution());
+	Kopf.y_Offset[pcnt] = R2INT(scan->data.s.y0/main_get_gapp()->xsm->Inst->XResolution());
+	Kopf.DAtoAng_X = main_get_gapp()->xsm->Inst->XResolution();
+	Kopf.DAtoAng_Y = main_get_gapp()->xsm->Inst->YResolution();
+	Kopf.DAtoAng_Z = main_get_gapp()->xsm->Inst->ZResolution();
 	Kopf.Rotation  = (short)(rint(scan->data.s.alpha));
 	Kopf.brightfac = scan->data.display.bright;
 	Kopf.greyfac   = VRangeZ_to_Contrast (scan->data.display.vrange_z, scan->data.s.dz);
@@ -540,10 +540,10 @@ static void PsiHDF_im_export_filecheck_load_callback (gpointer data ){
 			  "Check File: PsiHDF_im_export_filecheck_load_callback called with >"
 			  << *fn << "<" );
 
-		Scan *dst = gapp->xsm->GetActiveScan();
+		Scan *dst = main_get_gapp()->xsm->GetActiveScan();
 		if(!dst){ 
-			gapp->xsm->ActivateFreeChannel();
-			dst = gapp->xsm->GetActiveScan();
+			main_get_gapp()->xsm->ActivateFreeChannel();
+			dst = main_get_gapp()->xsm->GetActiveScan();
 		}
 		PsiHDF_ImExportFile fileobj (dst, *fn);
 
@@ -553,15 +553,15 @@ static void PsiHDF_im_export_filecheck_load_callback (gpointer data ){
 			if (ret != FIO_NOT_RESPONSIBLE_FOR_THAT_FILE)
 				*fn=NULL;
 			// no more data: remove allocated and unused scan now, force!
-//			gapp->xsm->SetMode(-1, ID_CH_M_OFF, TRUE); 
+//			main_get_gapp()->xsm->SetMode(-1, ID_CH_M_OFF, TRUE); 
 			PI_DEBUG (DBG_L2, "Read Error " << ((int)ret) << "!!!!!!!!" );
 		}else{
 			// got it!
 			*fn=NULL;
 
 			// Now update gxsm main window data fields
-			gapp->xsm->ActiveScan->GetDataSet(gapp->xsm->data);
-			gapp->spm_update_all();
+			main_get_gapp()->xsm->ActiveScan->GetDataSet(main_get_gapp()->xsm->data);
+			main_get_gapp()->spm_update_all();
 			dst->draw();
 		}
 	}else{
@@ -577,7 +577,7 @@ static void PsiHDF_im_export_filecheck_save_callback (gpointer data ){
 			  "Check File: PsiHDF_im_export_filecheck_save_callback called with >"
 			  << *fn << "<" );
 
-		PsiHDF_ImExportFile fileobj (src = gapp->xsm->GetActiveScan(), *fn);
+		PsiHDF_ImExportFile fileobj (src = main_get_gapp()->xsm->GetActiveScan(), *fn);
 
 		FIO_STATUS ret;
 		ret = fileobj.Write(); 
@@ -601,7 +601,7 @@ static void PsiHDF_im_export_filecheck_save_callback (gpointer data ){
 static void PsiHDF_im_export_import_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data){
 	gchar **help = g_strsplit (PsiHDF_im_export_pi.help, ",", 2);
 	gchar *dlgid = g_strconcat (PsiHDF_im_export_pi.name, "-import", NULL);
-	gchar *fn = gapp->file_dialog(help[0], NULL, file_mask, NULL, dlgid);
+	gchar *fn = main_get_gapp()->file_dialog(help[0], NULL, file_mask, NULL, dlgid);
 	g_strfreev (help); 
 	g_free (dlgid);
 	PsiHDF_im_export_filecheck_load_callback (&fn );
@@ -610,7 +610,7 @@ static void PsiHDF_im_export_import_callback (GSimpleAction *simple, GVariant *p
 static void PsiHDF_im_export_export_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data){
 	gchar **help = g_strsplit (PsiHDF_im_export_pi.help, ",", 2);
 	gchar *dlgid = g_strconcat (PsiHDF_im_export_pi.name, "-export", NULL);
-	gchar *fn = gapp->file_dialog(help[1], NULL, file_mask, NULL, dlgid);
+	gchar *fn = main_get_gapp()->file_dialog(help[1], NULL, file_mask, NULL, dlgid);
 	g_strfreev (help); 
 	g_free (dlgid);
 	PsiHDF_im_export_filecheck_save_callback (&fn );

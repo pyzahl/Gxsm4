@@ -279,10 +279,10 @@ private:
 
 class ProbeIndicator : public AppBase{
 public:
-        ProbeIndicator ();
+        ProbeIndicator (Gxsm4app *app);
         virtual ~ProbeIndicator();
 
-        void AppWindowInit(const gchar *title);
+        virtual void AppWindowInit(const gchar *title=NULL, const gchar *sub_title=NULL);
 
         GtkWidget *signal_input_signal_options (gint channel, gint preset, gpointer ref);
         

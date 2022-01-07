@@ -26,8 +26,8 @@
 % PlugInModuleIgnore
 */
 
-#include "core-source/unit.h"
-#include "core-source/pcs.h"
+#include "unit.h"
+#include "pcs.h"
 #include "app_databox.h"
 
 #define DEFAULT_BOXWIDTH 2

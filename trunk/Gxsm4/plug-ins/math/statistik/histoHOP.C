@@ -27,7 +27,7 @@
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
 
 static void histohop_init( void );
 static void histohop_about( void );
@@ -226,7 +226,7 @@ gboolean F2D_HistoHOP::exec(MATHOPPARAMS)
   // threshold:
   //* PZ: es wäre schön hier NICHT ...Inst-> verwenden zu müssen... 
   //* PZ: tut´s nicht auch data.s... ?
-  SHT lim = (SHT)(gapp->xsm->Inst->XA2Dig(1000) / gapp->xsm->Inst->ZA2Dig(1000) * thres);
+  SHT lim = (SHT)(main_get_gapp()->xsm->Inst->XA2Dig(1000) / main_get_gapp()->xsm->Inst->ZA2Dig(1000) * thres);
 
   // compute derivative in x-direction, store derivative in Dest
   // (StatDiff filter)

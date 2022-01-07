@@ -67,7 +67,7 @@ Call \GxsmMenu{Math/Convert/make test}.
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
 
 // Plugin Prototypes
 static void make_test_init( void );
@@ -269,9 +269,9 @@ static gboolean make_test_run(Scan *Src, Scan *Dest)
 				       make_test_pi.app->xsm->Unity, 
 				       0., 10., ".0f", &lat_tr);
 
-	gapp->progress_info_new ("MkLatticePot", 1);
-	gapp->progress_info_set_bar_fraction (0., 1);
-	gapp->progress_info_set_bar_text ("X", 1);
+	main_get_gapp()->progress_info_new ("MkLatticePot", 1);
+	main_get_gapp()->progress_info_set_bar_fraction (0., 1);
+	main_get_gapp()->progress_info_set_bar_text ("X", 1);
 
 
  	Dest->mem2d->Resize (Src->data.s.nx, Src->data.s.ny, 20, ZD_FLOAT);
@@ -292,7 +292,7 @@ static gboolean make_test_run(Scan *Src, Scan *Dest)
 
 	double dri = Dest->mem2d->data->GetXLookup (1)-Dest->mem2d->data->GetXLookup (0);
 	for (int i=0; i<Dest->mem2d->GetNx (); ++i){
-		gapp->progress_info_set_bar_fraction ((double)i/(double)Dest->mem2d->GetNx (), 1);
+		main_get_gapp()->progress_info_set_bar_fraction ((double)i/(double)Dest->mem2d->GetNx (), 1);
 		for (int j=0; j<Dest->mem2d->GetNy (); ++j){
 			double F=0.;
 			double u,v;
@@ -348,7 +348,7 @@ static gboolean make_test_run(Scan *Src, Scan *Dest)
 			}
 #endif
 
-	gapp->progress_info_close ();
+	main_get_gapp()->progress_info_close ();
 
 	return MATH_OK;
 }

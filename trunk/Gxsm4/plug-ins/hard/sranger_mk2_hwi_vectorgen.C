@@ -37,8 +37,8 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 
-#include "core-source/glbvars.h"
-#include "core-source/action_id.h"
+#include "glbvars.h"
+#include "action_id.h"
 #include "modules/dsp.h"
 
 #include "sranger_mk2_hwi_control.h"
@@ -59,8 +59,8 @@ void DSPControl::read_dsp_probe (){
 
 // some needfull macros to get some readable code
 #define CONST_DSP_F16 65536.
-#define VOLT2AIC(U)   (int)(gapp->xsm->Inst->VoltOut2Dig (gapp->xsm->Inst->BiasV2V (U)))
-#define DVOLT2AIC(U)  (int)(gapp->xsm->Inst->VoltOut2Dig ((U)/gapp->xsm->Inst->BiasGainV2V ()))
+#define VOLT2AIC(U)   (int)(main_get_gapp()->xsm->Inst->VoltOut2Dig (main_get_gapp()->xsm->Inst->BiasV2V (U)))
+#define DVOLT2AIC(U)  (int)(main_get_gapp()->xsm->Inst->VoltOut2Dig ((U)/main_get_gapp()->xsm->Inst->BiasGainV2V ()))
 
 
 
@@ -114,14 +114,14 @@ double DSPControl::make_Vdz_vector (double Ui, double Uf, double dZ, int n, doub
 	dsp_vector.repetitions = 0;
 	dsp_vector.ptr_next = 0x0;
 	dsp_vector.ptr_final = flags & MAKE_VEC_FLAG_END ? 0:1; // VPC relative branch to next vector
-	dsp_vector.f_du = flags & MAKE_VEC_FLAG_VHOLD ? 0 : (gint32)round (CONST_DSP_F16*gapp->xsm->Inst->VoltOut2Dig ((Uf-Ui)/gapp->xsm->Inst->BiasGainV2V ())/(steps));
-	dsp_vector.f_dz = (gint32)round (CONST_DSP_F16*gapp->xsm->Inst->ZA2Dig (dZ/(steps)));
+	dsp_vector.f_du = flags & MAKE_VEC_FLAG_VHOLD ? 0 : (gint32)round (CONST_DSP_F16*main_get_gapp()->xsm->Inst->VoltOut2Dig ((Uf-Ui)/main_get_gapp()->xsm->Inst->BiasGainV2V ())/(steps));
+	dsp_vector.f_dz = (gint32)round (CONST_DSP_F16*main_get_gapp()->xsm->Inst->ZA2Dig (dZ/(steps)));
 	dsp_vector.f_dx = 0;
 	dsp_vector.f_dy = 0;
 	dsp_vector.f_dx0 = 0;
 	dsp_vector.f_dy0 = 0;
 	dsp_vector.f_dphi = 0;
-	return gapp->xsm->Inst->V2BiasV (gapp->xsm->Inst->Dig2VoltOut (VOLT2AIC(Ui) + (double)dsp_vector.f_du*steps/CONST_DSP_F16));
+	return main_get_gapp()->xsm->Inst->V2BiasV (main_get_gapp()->xsm->Inst->Dig2VoltOut (VOLT2AIC(Ui) + (double)dsp_vector.f_du*steps/CONST_DSP_F16));
 }	
 
 // Copy of Vdz above, but the du steps were used for dx0
@@ -143,14 +143,14 @@ double DSPControl::make_Vdx0_vector (double Ui, double Uf, double dZ, int n, dou
 	dsp_vector.repetitions = 0;
 	dsp_vector.ptr_next = 0x0;
         dsp_vector.ptr_final = flags & MAKE_VEC_FLAG_END ? 0:1; // VPC relative branch to next vector
-        dsp_vector.f_dx0 = flags & MAKE_VEC_FLAG_VHOLD ? 0 : (gint32)round (CONST_DSP_F16*gapp->xsm->Inst->VoltOut2Dig ((Uf-Ui)/gapp->xsm->Inst->BiasGainV2V ())/(steps)); // !!!!!x ????
-        dsp_vector.f_dz = (gint32)round (CONST_DSP_F16*gapp->xsm->Inst->ZA2Dig (dZ/(steps)));
+        dsp_vector.f_dx0 = flags & MAKE_VEC_FLAG_VHOLD ? 0 : (gint32)round (CONST_DSP_F16*main_get_gapp()->xsm->Inst->VoltOut2Dig ((Uf-Ui)/main_get_gapp()->xsm->Inst->BiasGainV2V ())/(steps)); // !!!!!x ????
+        dsp_vector.f_dz = (gint32)round (CONST_DSP_F16*main_get_gapp()->xsm->Inst->ZA2Dig (dZ/(steps)));
         dsp_vector.f_dx = 0;
         dsp_vector.f_dy = 0;
         dsp_vector.f_du = 0;
         dsp_vector.f_dy0 = 0;
         dsp_vector.f_dphi = 0;
-        return gapp->xsm->Inst->V2BiasV (gapp->xsm->Inst->Dig2VoltOut (VOLT2AIC(Ui) + (double)dsp_vector.f_du*steps/CONST_DSP_F16));
+        return main_get_gapp()->xsm->Inst->V2BiasV (main_get_gapp()->xsm->Inst->Dig2VoltOut (VOLT2AIC(Ui) + (double)dsp_vector.f_du*steps/CONST_DSP_F16));
 }       
 
 // Copy of Vdz above, but the du steps were used for dx0
@@ -172,14 +172,14 @@ double DSPControl::make_dx0_vector (double X0i, double X0f, int n, double slope,
 	dsp_vector.repetitions = 0;
 	dsp_vector.ptr_next = 0x0;
         dsp_vector.ptr_final = flags & MAKE_VEC_FLAG_END ? 0:1; // VPC relative branch to next vector
-        dsp_vector.f_dx0 = flags & MAKE_VEC_FLAG_VHOLD ? 0 : (gint32)round (CONST_DSP_F16*gapp->xsm->Inst->VoltOut2Dig (X0f-X0i)/(steps));
+        dsp_vector.f_dx0 = flags & MAKE_VEC_FLAG_VHOLD ? 0 : (gint32)round (CONST_DSP_F16*main_get_gapp()->xsm->Inst->VoltOut2Dig (X0f-X0i)/(steps));
         dsp_vector.f_dz = 0;
         dsp_vector.f_dx = 0;
         dsp_vector.f_dy = 0;
         dsp_vector.f_du = 0;
         dsp_vector.f_dy0 = 0;
         dsp_vector.f_dphi = 0;
-        return gapp->xsm->Inst->V2BiasV (gapp->xsm->Inst->Dig2VoltOut (VOLT2AIC(X0i) + (double)dsp_vector.f_dx0*steps/CONST_DSP_F16));
+        return main_get_gapp()->xsm->Inst->V2BiasV (main_get_gapp()->xsm->Inst->Dig2VoltOut (VOLT2AIC(X0i) + (double)dsp_vector.f_dx0*steps/CONST_DSP_F16));
 }       
 
 // make dZ/dX/dY vector from n point (if > 2, else automatic n) and (dX,dY,dZ) slope
@@ -203,14 +203,14 @@ double DSPControl::make_ZXYramp_vector (double dZ, double dX, double dY, int n, 
 	dsp_vector.ptr_next = 0x0;
 	dsp_vector.ptr_final = flags & MAKE_VEC_FLAG_END ? 0:1; // VPC relative branch to next vector
 	dsp_vector.f_du = 0;
-	dsp_vector.f_dx = (gint32)round (dsp_vector.n > 1 ? (CONST_DSP_F16*gapp->xsm->Inst->XA2Dig (dX) / steps) : 0);
-	dsp_vector.f_dy = (gint32)round (dsp_vector.n > 1 ? (CONST_DSP_F16*gapp->xsm->Inst->YA2Dig (dY) / steps) : 0);
-	dsp_vector.f_dz = (gint32)round (dsp_vector.n > 1 ? (CONST_DSP_F16*gapp->xsm->Inst->ZA2Dig (dZ) / steps) : 0);
+	dsp_vector.f_dx = (gint32)round (dsp_vector.n > 1 ? (CONST_DSP_F16*main_get_gapp()->xsm->Inst->XA2Dig (dX) / steps) : 0);
+	dsp_vector.f_dy = (gint32)round (dsp_vector.n > 1 ? (CONST_DSP_F16*main_get_gapp()->xsm->Inst->YA2Dig (dY) / steps) : 0);
+	dsp_vector.f_dz = (gint32)round (dsp_vector.n > 1 ? (CONST_DSP_F16*main_get_gapp()->xsm->Inst->ZA2Dig (dZ) / steps) : 0);
 	dsp_vector.f_dx0 = 0;
 	dsp_vector.f_dy0 = 0;
 	dsp_vector.f_dphi = 0;
 
-	return gapp->xsm->Inst->Dig2ZA ((long)round ((double)dsp_vector.f_dz*steps/CONST_DSP_F16));
+	return main_get_gapp()->xsm->Inst->Dig2ZA ((long)round ((double)dsp_vector.f_dz*steps/CONST_DSP_F16));
 }
 
 // make dU/dZ/dX/dY vector for n points and ts time per segment
@@ -232,15 +232,15 @@ double DSPControl::make_UZXYramp_vector (double dU, double dZ, double dX, double
 	dsp_vector.ptr_next = ptr_next;
 	dsp_vector.ptr_final = flags & MAKE_VEC_FLAG_END ? 0:1; // VPC relative branch to next vector
 
-	dsp_vector.f_du = (gint32)round (dsp_vector.n > 1 ? (CONST_DSP_F16*gapp->xsm->Inst->VoltOut2Dig (dU/gapp->xsm->Inst->BiasGainV2V ())/(steps)) : 0);
-	dsp_vector.f_dx = (gint32)round (dsp_vector.n > 1 ? (CONST_DSP_F16*gapp->xsm->Inst->XA2Dig (dX) / steps) : 0);
-	dsp_vector.f_dy = (gint32)round (dsp_vector.n > 1 ? (CONST_DSP_F16*gapp->xsm->Inst->YA2Dig (dY) / steps) : 0);
-	dsp_vector.f_dz = (gint32)round (dsp_vector.n > 1 ? (CONST_DSP_F16*gapp->xsm->Inst->ZA2Dig (dZ) / steps) : 0);
-	dsp_vector.f_dx0 = (gint32)round (dsp_vector.n > 1 ? (CONST_DSP_F16*gapp->xsm->Inst->ZA2Dig (dSig1) / steps) : 0);
-	dsp_vector.f_dy0 = (gint32)round (dsp_vector.n > 1 ? (CONST_DSP_F16*gapp->xsm->Inst->ZA2Dig (dSig2) / steps) : 0);
+	dsp_vector.f_du = (gint32)round (dsp_vector.n > 1 ? (CONST_DSP_F16*main_get_gapp()->xsm->Inst->VoltOut2Dig (dU/main_get_gapp()->xsm->Inst->BiasGainV2V ())/(steps)) : 0);
+	dsp_vector.f_dx = (gint32)round (dsp_vector.n > 1 ? (CONST_DSP_F16*main_get_gapp()->xsm->Inst->XA2Dig (dX) / steps) : 0);
+	dsp_vector.f_dy = (gint32)round (dsp_vector.n > 1 ? (CONST_DSP_F16*main_get_gapp()->xsm->Inst->YA2Dig (dY) / steps) : 0);
+	dsp_vector.f_dz = (gint32)round (dsp_vector.n > 1 ? (CONST_DSP_F16*main_get_gapp()->xsm->Inst->ZA2Dig (dZ) / steps) : 0);
+	dsp_vector.f_dx0 = (gint32)round (dsp_vector.n > 1 ? (CONST_DSP_F16*main_get_gapp()->xsm->Inst->ZA2Dig (dSig1) / steps) : 0);
+	dsp_vector.f_dy0 = (gint32)round (dsp_vector.n > 1 ? (CONST_DSP_F16*main_get_gapp()->xsm->Inst->ZA2Dig (dSig2) / steps) : 0);
 	dsp_vector.f_dphi = 0;
 
-	return gapp->xsm->Inst->Dig2ZA ((long)round ((double)dsp_vector.f_dz*steps/CONST_DSP_F16));
+	return main_get_gapp()->xsm->Inst->Dig2ZA ((long)round ((double)dsp_vector.f_dz*steps/CONST_DSP_F16));
 }
 
 
@@ -529,8 +529,8 @@ void DSPControl::write_dsp_probe (int start, pv_mode pvm){
 				write_dsp_vector (vector_index++);
 			
 				// info of real values set
-				dU_IV   = gapp->xsm->Inst->V2BiasV (gapp->xsm->Inst->Dig2VoltOut ((long double)dsp_vector.f_du*(long double)(dsp_vector.n-1)*(long double)(dsp_vector.dnx ? dsp_vector.dnx+1 : 1)/CONST_DSP_F16));
-				dU_step = gapp->xsm->Inst->V2BiasV (gapp->xsm->Inst->Dig2VoltOut ((long double)dsp_vector.f_du*(long double)(dsp_vector.dnx ? dsp_vector.dnx+1 : 1)/CONST_DSP_F16));
+				dU_IV   = main_get_gapp()->xsm->Inst->V2BiasV (main_get_gapp()->xsm->Inst->Dig2VoltOut ((long double)dsp_vector.f_du*(long double)(dsp_vector.n-1)*(long double)(dsp_vector.dnx ? dsp_vector.dnx+1 : 1)/CONST_DSP_F16));
+				dU_step = main_get_gapp()->xsm->Inst->V2BiasV (main_get_gapp()->xsm->Inst->Dig2VoltOut ((long double)dsp_vector.f_du*(long double)(dsp_vector.dnx ? dsp_vector.dnx+1 : 1)/CONST_DSP_F16));
 			
 				// add vector for reverse return ramp? -- Force return path if dz != 0
 				if (IV_option_flags & FLAG_DUAL) {
@@ -626,7 +626,7 @@ void DSPControl::write_dsp_probe (int start, pv_mode pvm){
 			make_ZXYramp_vector (0., IV_dx/(IV_dxy_points-1), IV_dy/(IV_dxy_points-1), 100, IV_dxy_slope, 
 					     ramp_sources, options, vp_duration, MAKE_VEC_FLAG_RAMP);
 
-			dsp_vector.f_dphi = (gint32)round (CONST_DSP_F16*gapp->xsm->Inst->VoltOut2Dig (IV_dM/gapp->xsm->Inst->BiasGainV2V ()));
+			dsp_vector.f_dphi = (gint32)round (CONST_DSP_F16*main_get_gapp()->xsm->Inst->VoltOut2Dig (IV_dM/main_get_gapp()->xsm->Inst->BiasGainV2V ()));
 
 			write_dsp_vector (vector_index++);
 			make_delay_vector (IV_dxy_delay, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_RAMP);
@@ -654,7 +654,7 @@ void DSPControl::write_dsp_probe (int start, pv_mode pvm){
 
                 if (probe_trigger_raster_points_user > 0 && write_vector_mode != PV_MODE_NONE){
                         double T_probe_cycle   = 1e3 * (double)vp_duration/frq_ref; // Time of full probe cycle in ms
-                        double T_raster2raster = 1e3 * gapp->xsm->data.s.rx / (gapp->xsm->data.s.nx/probe_trigger_raster_points_user) / scan_speed_x; // Time inbetween raster points in ms
+                        double T_raster2raster = 1e3 * main_get_gapp()->xsm->data.s.rx / (main_get_gapp()->xsm->data.s.nx/probe_trigger_raster_points_user) / scan_speed_x; // Time inbetween raster points in ms
                         info = g_strdup_printf ("Tp=%.2f ms, Tr=%.2f ms, Td=%.2f ms", T_probe_cycle, T_raster2raster, T_raster2raster - T_probe_cycle);
                 } else
                         info = g_strdup_printf ("Tp=%.2f ms, dU=%.3f V, dUs=%.2f mV, O*0x%02x S*0x%06x", 
@@ -751,7 +751,7 @@ void DSPControl::write_dsp_probe (int start, pv_mode pvm){
 
 		if (probe_trigger_raster_points_user > 0 && write_vector_mode != PV_MODE_NONE){
                         double T_probe_cycle   = 1e3 * (double)vp_duration/frq_ref; // Time of full probe cycle in ms
-                        double T_raster2raster = 1e3 * gapp->xsm->data.s.rx / (gapp->xsm->data.s.nx/probe_trigger_raster_points_user) / scan_speed_x; // Time inbetween raster points in ms
+                        double T_raster2raster = 1e3 * main_get_gapp()->xsm->data.s.rx / (main_get_gapp()->xsm->data.s.nx/probe_trigger_raster_points_user) / scan_speed_x; // Time inbetween raster points in ms
                         info = g_strdup_printf ("Tp=%.2f ms, Tr=%.2f ms, Td=%.2f ms", T_probe_cycle, T_raster2raster, T_raster2raster - T_probe_cycle);
 		} else
                         info = g_strdup_printf ("Tp=%.2f ms", 
@@ -1275,8 +1275,8 @@ void DSPControl::write_dsp_probe (int start, pv_mode pvm){
 
 	if (start){
                 g_message ("Executing Vector Probe Now! Mode: %s", vp_exec_mode_name);
-		gapp->monitorcontrol->LogEvent ("VectorProbe Execute", vp_exec_mode_name);
-		gapp->monitorcontrol->LogEvent ("VectorProbe", info, 2);
+		main_get_gapp()->monitorcontrol->LogEvent ("VectorProbe Execute", vp_exec_mode_name);
+		main_get_gapp()->monitorcontrol->LogEvent ("VectorProbe", info, 2);
 	}
 
         g_free (info);
@@ -1289,7 +1289,7 @@ void DSPControl::write_dsp_probe (int start, pv_mode pvm){
                                    g_strdup_printf ("%.4f", PL_remote_set_value), 
                                    NULL
                 };
-                g_slist_foreach(gapp->RemoteEntryList, (GFunc) via_remote_list_Check_ec, (gpointer)line3);
+                g_slist_foreach(main_get_gapp()->RemoteEntryList, (GFunc) via_remote_list_Check_ec, (gpointer)line3);
                 for (int k=0; line3[k]; ++k) g_free (line3[k]);
 	}
 
@@ -1345,7 +1345,7 @@ void DSPControl::write_dsp_vector (int index){
 					      dsp_vector.f_dphi / CONST_DSP_F16
                                               );
 
-		gapp->monitorcontrol->LogEvent (pvi, pvd, 2);
+		main_get_gapp()->monitorcontrol->LogEvent (pvi, pvd, 2);
 		g_free (pvi);
 		g_free (pvd);
 	}

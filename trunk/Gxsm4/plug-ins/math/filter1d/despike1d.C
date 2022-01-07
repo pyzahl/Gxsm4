@@ -61,7 +61,7 @@ into a new created math channel.
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
 
 // Plugin Prototypes
 static void despike1d_init( void );
@@ -240,21 +240,21 @@ static void despike1d_cleanup(void)
 			tf=Src->number_of_time_elements ()-1;
 			if (tf < 0) tf = 0;
 			vf=Src->mem2d->GetNv ()-1;
-			gapp->setup_multidimensional_data_copy ("Multidimensional Despike1d", Src, ti, tf, vi, vf);
+			main_get_gapp()->setup_multidimensional_data_copy ("Multidimensional Despike1d", Src, ti, tf, vi, vf);
 		} while (ti > tf || vi > vf);
 
-		gapp->progress_info_new ("Multidimenssional Despike1d", 2);
-		gapp->progress_info_set_bar_fraction (0., 1);
-		gapp->progress_info_set_bar_fraction (0., 2);
-		gapp->progress_info_set_bar_text ("Time", 1);
-		gapp->progress_info_set_bar_text ("Value", 2);
+		main_get_gapp()->progress_info_new ("Multidimenssional Despike1d", 2);
+		main_get_gapp()->progress_info_set_bar_fraction (0., 1);
+		main_get_gapp()->progress_info_set_bar_fraction (0., 2);
+		main_get_gapp()->progress_info_set_bar_text ("Time", 1);
+		main_get_gapp()->progress_info_set_bar_text ("Value", 2);
 	}
 
 	int ntimes_tmp = tf-ti+1;
 	for (int time_index=ti; time_index <= tf; ++time_index){
 		Mem2d *m = Src->mem2d_time_element (time_index);
 		if (multidim)
-			gapp->progress_info_set_bar_fraction ((gdouble)(time_index-ti)/(gdouble)ntimes_tmp, 1);
+			main_get_gapp()->progress_info_set_bar_fraction ((gdouble)(time_index-ti)/(gdouble)ntimes_tmp, 1);
 
 		Dest->mem2d->Resize (m->GetNx (), m->GetNy (), vf-vi+1, m->GetTyp());
 		for (int v_index = vi; v_index <= vf; ++v_index){
@@ -312,7 +312,7 @@ static void despike1d_cleanup(void)
 	Dest->data.s.nvalues=Dest->mem2d->GetNv ();
 
 	if (multidim){
-		gapp->progress_info_close ();
+		main_get_gapp()->progress_info_close ();
 		Dest->retrieve_time_element (0);
 		Dest->mem2d->SetLayer(0);
 	}

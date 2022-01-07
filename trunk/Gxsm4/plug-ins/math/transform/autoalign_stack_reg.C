@@ -76,7 +76,7 @@
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
 
 #include "autoalign_stack_reg.h"
 #include "autoalign_turbo_reg.h"
@@ -408,13 +408,13 @@ void  StackReg::run (Scan *Src, Scan *Dest) {
 	}
 
 	stop_flg = false;
-	gapp->progress_info_new ("Auto aligning", 3, G_CALLBACK (StackReg::cancel_callback), this);
-	gapp->progress_info_set_bar_fraction (0., 1);
-	gapp->progress_info_set_bar_fraction (0., 2);
-	gapp->progress_info_set_bar_fraction (0., 3);
-	gapp->progress_info_set_bar_text ("Time", 1);
-	gapp->progress_info_set_bar_text ("Value-1", 2);
-	gapp->progress_info_set_bar_text ("Value-2", 3);
+	main_get_gapp()->progress_info_new ("Auto aligning", 3, G_CALLBACK (StackReg::cancel_callback), this);
+	main_get_gapp()->progress_info_set_bar_fraction (0., 1);
+	main_get_gapp()->progress_info_set_bar_fraction (0., 2);
+	main_get_gapp()->progress_info_set_bar_fraction (0., 3);
+	main_get_gapp()->progress_info_set_bar_text ("Time", 1);
+	main_get_gapp()->progress_info_set_bar_text ("Value-1", 2);
+	main_get_gapp()->progress_info_set_bar_text ("Value-2", 3);
 
 	switch (target_mode){
 	case TARGET_TIME: {
@@ -427,7 +427,7 @@ void  StackReg::run (Scan *Src, Scan *Dest) {
 	
 		DEBUG_COUT( "*** time_target .......: " << time_target << std::endl);
 
-		gapp->progress_info_set_bar_fraction ((gdouble)time_target/(gdouble)n_times, 1);
+		main_get_gapp()->progress_info_set_bar_fraction ((gdouble)time_target/(gdouble)n_times, 1);
 		double real_time = Src->retrieve_time_element (time_target);	
 
 		DEBUG_COUT( "*** master time_target element index= : " << time_target << std::endl);
@@ -490,9 +490,9 @@ void  StackReg::run (Scan *Src, Scan *Dest) {
 		do {
 			if (progress < (prepend_job.progress + append_job.progress)){
 				progress = prepend_job.progress + append_job.progress;
-				gapp->progress_info_set_bar_fraction ((gdouble)progress/(gdouble)n_times, 1);
+				main_get_gapp()->progress_info_set_bar_fraction ((gdouble)progress/(gdouble)n_times, 1);
 			} else
-				gapp->check_events ();
+				main_get_gapp()->check_events ();
 		} while (prepend_job.job >= 0 || append_job.job >= 0);
 
 		g_thread_join (thread_prepend);
@@ -518,7 +518,7 @@ void  StackReg::run (Scan *Src, Scan *Dest) {
 		DEBUG_COUT( "*** time_target ....: " << time_target << std::endl);
 		DEBUG_COUT( "*** layer_target....: " << layer_target << std::endl);
 
-		gapp->progress_info_set_bar_fraction ((gdouble)time_target/(gdouble)n_times, 1);
+		main_get_gapp()->progress_info_set_bar_fraction ((gdouble)time_target/(gdouble)n_times, 1);
 		double real_time = Src->retrieve_time_element (time_target);	
 
 		DEBUG_COUT( "*** time element index= (Master Time Target): " << time_target << std::endl);
@@ -575,21 +575,21 @@ void  StackReg::run (Scan *Src, Scan *Dest) {
 				double t = (double)(clock () - t0)/(double)(CLOCKS_PER_SEC);
 				progress = prepend_job.progress + append_job.progress;
 				gchar *tmp = g_strdup_printf ("Time %d+%d of %d, %gFps", prepend_job.progress, append_job.progress, n_times, t/(progress*n_values));
-				gapp->progress_info_set_bar_text (tmp, 1);
+				main_get_gapp()->progress_info_set_bar_text (tmp, 1);
 				g_free (tmp);
-				gapp->progress_info_set_bar_fraction ((gdouble)progress/(gdouble)n_times, 1);
+				main_get_gapp()->progress_info_set_bar_fraction ((gdouble)progress/(gdouble)n_times, 1);
 			} else if (progress_v != (prepend_job.progress_v + append_job.progress_v)){
 				progress_v = prepend_job.progress_v + append_job.progress_v;
 				gchar *tmp = g_strdup_printf ("Value-1 %d of %d", prepend_job.progress_v, n_values);
-				gapp->progress_info_set_bar_text (tmp, 2);
+				main_get_gapp()->progress_info_set_bar_text (tmp, 2);
 				g_free (tmp);
-				gapp->progress_info_set_bar_fraction ((gdouble)prepend_job.progress_v/(gdouble)n_values, 2);
+				main_get_gapp()->progress_info_set_bar_fraction ((gdouble)prepend_job.progress_v/(gdouble)n_values, 2);
 				tmp = g_strdup_printf ("Value-2 %d of %d", append_job.progress_v, n_values);
-				gapp->progress_info_set_bar_text (tmp, 3);
+				main_get_gapp()->progress_info_set_bar_text (tmp, 3);
 				g_free (tmp);
-				gapp->progress_info_set_bar_fraction ((gdouble)append_job.progress_v/(gdouble)n_values, 3);
+				main_get_gapp()->progress_info_set_bar_fraction ((gdouble)append_job.progress_v/(gdouble)n_values, 3);
 			} else
-				gapp->check_events ();
+				main_get_gapp()->check_events ();
 		} while (prepend_job.job >= 0 || append_job.job >= 0);
 
 		g_thread_join (thread_prepend);
@@ -613,7 +613,7 @@ void  StackReg::run (Scan *Src, Scan *Dest) {
 	
 		// go for it....
 		for(int time=0; time < n_times && !stop_flg; ++time){ // time loop
-			gapp->progress_info_set_bar_fraction ((gdouble)time/(gdouble)n_times, 1);
+			main_get_gapp()->progress_info_set_bar_fraction ((gdouble)time/(gdouble)n_times, 1);
 
 			// get time frame to work on
 //			double real_time = Src->retrieve_time_element (time);
@@ -621,7 +621,7 @@ void  StackReg::run (Scan *Src, Scan *Dest) {
 
 			int n_values = Dest->mem2d->GetNv ();
 			for(int value=0; value < n_values; ++value){ // value loop
-				gapp->progress_info_set_bar_fraction ((gdouble)value/(gdouble)n_values, 2);
+				main_get_gapp()->progress_info_set_bar_fraction ((gdouble)value/(gdouble)n_values, 2);
 
 //				Src->mem2d->SetLayer(value);
 				Src->mem2d->SetLayer(0);
@@ -651,7 +651,7 @@ void  StackReg::run (Scan *Src, Scan *Dest) {
 	default: break;
 	}
 
-	gapp->progress_info_close ();
+	main_get_gapp()->progress_info_close ();
 
 	delete anchorPoints;
 }
@@ -716,10 +716,10 @@ void StackReg::registerLayers (Mem2d* source, int sv, Mem2d* destination, int dv
 		do {
 			if (progress_sum < (progress_1 + progress_2)){
 				progress_sum = progress_1 + progress_2;
-				gapp->progress_info_set_bar_fraction ((gdouble)progress_1/(gdouble)n_values, 2);
-				gapp->progress_info_set_bar_fraction ((gdouble)progress_2/(gdouble)n_values, 3);
+				main_get_gapp()->progress_info_set_bar_fraction ((gdouble)progress_1/(gdouble)n_values, 2);
+				main_get_gapp()->progress_info_set_bar_fraction ((gdouble)progress_2/(gdouble)n_values, 3);
 			} else
-				gapp->check_events ();
+				main_get_gapp()->check_events ();
 		} while (job1.job >= 0 || job2.job >= 0);
 	}
 	

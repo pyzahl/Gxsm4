@@ -101,7 +101,7 @@ The active and X marked channels are used as data sources.
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
 
 // Plugin Prototypes
 static void movieconcat_init( void );
@@ -275,7 +275,7 @@ static gboolean movieconcat_run(Scan *Src1, Scan *Src2, Scan *Dest)
 		tf1=Src1->number_of_time_elements ()-1;
 		vf1=Src1->mem2d->GetNv ()-1;
 		if(Dest != Src1)
-                        if (gapp->setup_multidimensional_data_copy ("Movie concat Src1 section", Src1, ti1, tf1, vi1, vf1) == GTK_RESPONSE_CANCEL)
+                        if (main_get_gapp()->setup_multidimensional_data_copy ("Movie concat Src1 section", Src1, ti1, tf1, vi1, vf1) == GTK_RESPONSE_CANCEL)
 				return MATH_OK;
 	} while (ti1 > tf1 || vi1 > vf1);
 	
@@ -285,7 +285,7 @@ static gboolean movieconcat_run(Scan *Src1, Scan *Src2, Scan *Dest)
 		tf2=Src2->number_of_time_elements ()-1;
 		vf2=Src2->mem2d->GetNv ()-1;
 		if(Dest != Src1)
-                        if (gapp->setup_multidimensional_data_copy ("Movie concat Src2 section", Src2, ti2, tf2, vi2, vf2) == GTK_RESPONSE_CANCEL)
+                        if (main_get_gapp()->setup_multidimensional_data_copy ("Movie concat Src2 section", Src2, ti2, tf2, vi2, vf2) == GTK_RESPONSE_CANCEL)
 				return MATH_OK;
 	} while (ti2 > tf2 || vi2 > vf2 || (vf2-vi2) != (vf1-vi1));
 	
@@ -294,9 +294,9 @@ static gboolean movieconcat_run(Scan *Src1, Scan *Src2, Scan *Dest)
 	int n_times_src2 = tf2-ti2+1;
 
 //	setup an progress indicator
-	gapp->progress_info_new ("Multidimenssional Concatenating Copy", 1);
-	gapp->progress_info_set_bar_fraction (0., 1);
-	gapp->progress_info_set_bar_text ("Time", 1);
+	main_get_gapp()->progress_info_new ("Multidimenssional Concatenating Copy", 1);
+	main_get_gapp()->progress_info_set_bar_fraction (0., 1);
+	main_get_gapp()->progress_info_set_bar_text ("Time", 1);
 		
 	// resize Dest to match Src
 	Dest->mem2d->Resize (Src1->mem2d->GetNx (), Src1->mem2d->GetNy (), vf1-vi1+1, ZD_IDENT);
@@ -306,7 +306,7 @@ static gboolean movieconcat_run(Scan *Src1, Scan *Src2, Scan *Dest)
 	std::cout << "Appending from Src1: " << ti1 << " ... " << tf1 << std::endl;
 	for (int time_index=ti1; time_index <= tf1; ++time_index){
 		Mem2d *m = Src1->mem2d_time_element (time_index);
-		gapp->progress_info_set_bar_fraction ((gdouble)(time_index-ti1+1)/(gdouble)ntimes_tmp, 1);
+		main_get_gapp()->progress_info_set_bar_fraction ((gdouble)(time_index-ti1+1)/(gdouble)ntimes_tmp, 1);
 		if(Dest != Src1){
 			std::cout << "Appending from Src1: " << time_index << " #Layers:" << m->GetNv () << std::endl;
 			Dest->mem2d->copy(m, -1, -1, vi1, vf1);
@@ -316,7 +316,7 @@ static gboolean movieconcat_run(Scan *Src1, Scan *Src2, Scan *Dest)
 	std::cout << "Appending from Src2: " << ti2 << " ... " << tf2 << std::endl;
 	for (int time_index=ti2; time_index <= tf2; ++time_index){
 		Mem2d *m = Src2->mem2d_time_element (time_index);
-		gapp->progress_info_set_bar_fraction ((gdouble)(time_index-ti2+tf1-ti1+1)/(gdouble)ntimes_tmp, 1);
+		main_get_gapp()->progress_info_set_bar_fraction ((gdouble)(time_index-ti2+tf1-ti1+1)/(gdouble)ntimes_tmp, 1);
 		std::cout << "Appending from Src2: " << time_index << " #Layers:" << m->GetNv () << std::endl;
 		Dest->mem2d->copy(m, -1, -1, vi2, vf2);
 		Dest->append_current_to_time_elements (time_index-ti2+tf1-ti1+1, m->get_frame_time (0));
@@ -325,7 +325,7 @@ static gboolean movieconcat_run(Scan *Src1, Scan *Src2, Scan *Dest)
 	Dest->data.s.ntimes = ntimes_tmp;
 	Dest->data.s.nvalues=Dest->mem2d->GetNv ();
 	
-	gapp->progress_info_close ();
+	main_get_gapp()->progress_info_close ();
 	Dest->retrieve_time_element (0);
 	Dest->mem2d->SetLayer(0);
 

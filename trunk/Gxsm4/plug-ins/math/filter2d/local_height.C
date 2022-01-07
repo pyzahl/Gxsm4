@@ -70,7 +70,7 @@ into a new created math channel.
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
 
 // Plugin Prototypes
 static void local_height_init( void );
@@ -273,8 +273,8 @@ static gboolean local_height_run(Scan *Src, Scan *Dest)
 // check for multi dim calls, make sure not to ask user for paramters for every layer or time step!
 	if (((Src ? Src->mem2d->get_t_index ():0) == 0 && (Src ? Src->mem2d->GetLayer ():0) == 0) || !lh_kernel) {
 		double r = lh_radius;    // Get Radius
-		gapp->ValueRequest("2D Convol. Filter Size", "Radius", "Local Height kernel size: s = 1+radius",
-				   gapp->xsm->Unity, 0., Src->mem2d->GetNx()/10., ".0f", &r);
+		main_get_gapp()->ValueRequest("2D Convol. Filter Size", "Radius", "Local Height kernel size: s = 1+radius",
+				   main_get_gapp()->xsm->Unity, 0., Src->mem2d->GetNx()/10., ".0f", &r);
 		lh_radius = r;
 		if (lh_kernel)
 			free (lh_kernel);

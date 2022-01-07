@@ -27,10 +27,10 @@
 */
 
 #include <gtk/gtk.h>
-#include "core-source/glbvars.h"
-#include "core-source/util.h"
-#include "core-source/pcs.h"
-#include "core-source/unit.h"
+#include "glbvars.h"
+#include "util.h"
+#include "pcs.h"
+#include "unit.h"
 
 #include <math.h>
 

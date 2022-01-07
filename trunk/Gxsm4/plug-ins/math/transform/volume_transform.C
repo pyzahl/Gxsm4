@@ -97,7 +97,7 @@ Activate a channel and run it. Needs volumetric data, i.e. a set of images in la
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
 
 // Plugin Prototypes
 static void volume_transform_init( void );
@@ -307,11 +307,11 @@ double transform_kernel (double x, double y, double v, double m[5]){
 // run-Function
 static gboolean volume_transform_run(Scan *Src, Scan *Dest)
 {
-	gapp->progress_info_new ("Rotating Volumetric Data", 2); // setup an progress indicator
-	gapp->progress_info_set_bar_fraction (0., 1);
-	gapp->progress_info_set_bar_fraction (0., 2);
-	gapp->progress_info_set_bar_text ("Time", 1);
-	gapp->progress_info_set_bar_text ("Value", 2);
+	main_get_gapp()->progress_info_new ("Rotating Volumetric Data", 2); // setup an progress indicator
+	main_get_gapp()->progress_info_set_bar_fraction (0., 1);
+	main_get_gapp()->progress_info_set_bar_fraction (0., 2);
+	main_get_gapp()->progress_info_set_bar_text ("Time", 1);
+	main_get_gapp()->progress_info_set_bar_text ("Value", 2);
 
 	// number of time frames stored
 	int n_times  = Src->number_of_time_elements ();
@@ -328,11 +328,11 @@ static gboolean volume_transform_run(Scan *Src, Scan *Dest)
 	Dest->mem2d->Resize (Src->mem2d->GetNx (), Src->mem2d->GetNy (), n_layers, ZD_IDENT);
 
 	for (int time_index=0; time_index < n_times; ++time_index){
-		gapp->progress_info_set_bar_fraction ((gdouble)(time_index+1)/(gdouble)n_times, 1);
+		main_get_gapp()->progress_info_set_bar_fraction ((gdouble)(time_index+1)/(gdouble)n_times, 1);
 		Mem2d *ms = Src->mem2d_time_element (time_index);
 
 		for (int layer_index=0; layer_index < n_layers; ++layer_index){
-			gapp->progress_info_set_bar_fraction ((gdouble)(layer_index+1)/(gdouble)n_layers, 2);
+			main_get_gapp()->progress_info_set_bar_fraction ((gdouble)(layer_index+1)/(gdouble)n_layers, 2);
 			std::cout << "T:" << time_index << " V:" << layer_index << std::endl;
 
 			ms->data->SetLayer (layer_index);
@@ -366,11 +366,11 @@ static gboolean volume_transform_run(Scan *Src, Scan *Dest)
 //	Dest->data.s.ntimes  = n_times;
 	Dest->data.s.nvalues = Dest->mem2d->GetNv ();
 	
-	gapp->progress_info_close ();
+	main_get_gapp()->progress_info_close ();
 	Dest->retrieve_time_element (0);
 	Dest->mem2d->SetLayer(0);
 
-	gapp->progress_info_close (); // close progress indicator
+	main_get_gapp()->progress_info_close (); // close progress indicator
 	return MATH_OK;
 }
 

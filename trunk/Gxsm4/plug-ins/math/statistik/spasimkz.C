@@ -121,7 +121,7 @@ parameters (1 will ask, 0 not).
 
 #include <gtk/gtk.h>
 #include "config.h"
-#include "core-source/plugin.h"
+#include "plugin.h"
 
 static void spasimkz_init( void );
 static void spasimkz_about( void );
@@ -201,7 +201,7 @@ static void spasimkz_configure(void)
 {
         GtkDialogFlags flags =  (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT);
 	GtkWidget *dialog = gtk_dialog_new_with_buttons (N_("SPA-LEED kz-Scan simulation parameters"),
-							 GTK_WINDOW (gapp->get_app_window ()),
+							 GTK_WINDOW (main_get_gapp()->get_app_window ()),
 							 flags,
 							 _("_OK"),
 							 GTK_RESPONSE_ACCEPT,
@@ -278,7 +278,7 @@ static gboolean spasimkz_run(Scan *Src, Scan *Dest)
         for(i=0, S=PhaseStart; i<Dest->data.s.ny; S+=PhaseStep, ++i){
                 gchar *mld = g_strdup_printf("SIMKZ: %d/%d S=%5.2f", 
                                              i, Dest->data.s.ny, S);
-                gapp->SetStatus(mld); 
+                main_get_gapp()->SetStatus(mld); 
                 g_free(mld);
                 SET_PROGRESS((gfloat)i/(gfloat)Dest->data.s.ny);
 

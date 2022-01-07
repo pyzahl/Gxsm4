@@ -38,13 +38,13 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 
-#include "core-source/gxsm_app.h"
-#include "core-source/gxsm_window.h"
+#include "gxsm_app.h"
+#include "gxsm_window.h"
 
-#include "core-source/glbvars.h"
-#include "core-source/app_view.h"
-#include "core-source/app_vobj.h"
-#include "core-source/action_id.h"
+#include "glbvars.h"
+#include "app_view.h"
+#include "app_vobj.h"
+#include "action_id.h"
 
 #include "modules/dsp.h"
 #include "modules/sranger_mk2_ioctl.h"
@@ -70,11 +70,11 @@ gfloat color_yellow[4]  = { 1., 1., 0., 1.0 };
 #define SRV2     (2.05/32767.)
 #define SRV10    (10.0/32767.)
 #define PhaseFac (1./16.)
-#define BiasFac  (gapp->xsm->Inst->Dig2VoltOut (1.) * gapp->xsm->Inst->BiasGainV2V ())
-#define BiasOffset (gapp->xsm->Inst->Dig2VoltOut (1.) * gapp->xsm->Inst->BiasV2V (0.))
-#define ZAngFac  (gapp->xsm->Inst->Dig2ZA (1))
-#define XAngFac  (gapp->xsm->Inst->Dig2XA (1))
-#define YAngFac  (gapp->xsm->Inst->Dig2YA (1))
+#define BiasFac  (main_get_gapp()->xsm->Inst->Dig2VoltOut (1.) * main_get_gapp()->xsm->Inst->BiasGainV2V ())
+#define BiasOffset (main_get_gapp()->xsm->Inst->Dig2VoltOut (1.) * main_get_gapp()->xsm->Inst->BiasV2V (0.))
+#define ZAngFac  (main_get_gapp()->xsm->Inst->Dig2ZA (1))
+#define XAngFac  (main_get_gapp()->xsm->Inst->Dig2XA (1))
+#define YAngFac  (main_get_gapp()->xsm->Inst->Dig2YA (1))
 
 #define MAX_NUM_CHANNELS 26
 
@@ -134,7 +134,7 @@ const char* DSPControl::vp_label_lookup(int i){
 
 const char* DSPControl::vp_unit_lookup(int i){
         if (i==0) // IN0 dedicated for tunnel current
-                if (gapp->xsm->Inst->nAmpere2V (1.) > 1.)
+                if (main_get_gapp()->xsm->Inst->nAmpere2V (1.) > 1.)
                         return "pA"; // sranger_common_hwi->lookup_signal_unit_by_index (0); // must be a unscaled unit here
                 else
                         return "nA"; // sranger_common_hwi->lookup_signal_unit_by_index (0); // must be a unscaled unit here
@@ -158,10 +158,10 @@ double DSPControl::vp_scale_lookup(int i){
 	};
 
         if (i==0) // IN0 dedicated for tunnel current
-                if (gapp->xsm->Inst->nAmpere2V (1.) > 1.)
-                        return  DAC2Ulookup[0]/gapp->xsm->Inst->nAmpere2V (1e-3); // choose pA
+                if (main_get_gapp()->xsm->Inst->nAmpere2V (1.) > 1.)
+                        return  DAC2Ulookup[0]/main_get_gapp()->xsm->Inst->nAmpere2V (1e-3); // choose pA
                 else
-                        return  DAC2Ulookup[0]/gapp->xsm->Inst->nAmpere2V (1.); // nA
+                        return  DAC2Ulookup[0]/main_get_gapp()->xsm->Inst->nAmpere2V (1.); // nA
 	if (i > 11 && i < 16){
 		int k=i-12;
 		if (vp_input_id_cache[k] < 0)
@@ -182,7 +182,7 @@ int DSPControl::Probing_event_setup_scan (int ch,
                                           double d2u,
                                           int nvalues
 	){
-	Mem2d *m=gapp->xsm->scan[ch]->mem2d;
+	Mem2d *m=main_get_gapp()->xsm->scan[ch]->mem2d;
         g_message ("0 ch[%d] Nxy: %d, %d Nv:%d sls[%d,%d, %d,%d]",
                    ch,
                    m->data->GetNx (),
@@ -193,7 +193,7 @@ int DSPControl::Probing_event_setup_scan (int ch,
                    );
         //m->Resize (m->GetNx (), m->GetNy (), nvalues, ZD_DOUBLE, false); // multilayerinfo=clean
 	
-        gapp->xsm->scan[ch]->create (TRUE, FALSE, strchr (titleprefix, '-') ? -1.:1., gapp->xsm->hardware->IsFastScan (), ZD_DOUBLE, true, false, true );
+        main_get_gapp()->xsm->scan[ch]->create (TRUE, FALSE, strchr (titleprefix, '-') ? -1.:1., main_get_gapp()->xsm->hardware->IsFastScan (), ZD_DOUBLE, true, false, true );
         
         g_message ("C ch[%d] Nxy: %d, %d Nv:%d sls[%d,%d, %d,%d]",
                    ch,
@@ -204,7 +204,7 @@ int DSPControl::Probing_event_setup_scan (int ch,
                    m->data->GetY0Sub(), m->data->GetNySub()
                    );
  
-        gapp->xsm->scan[ch]->data.s.nvalues = nvalues;
+        main_get_gapp()->xsm->scan[ch]->data.s.nvalues = nvalues;
         m->Resize (m->GetNx (), m->GetNy (), nvalues, ZD_IDENT, false); // multilayerinfo=clean
         m->data->MkVLookup(0, nvalues-1);
 
@@ -218,35 +218,35 @@ int DSPControl::Probing_event_setup_scan (int ch,
                    );
 
        // Setup correct Z unit
-	UnitObj *u = gapp->xsm->MakeUnit (unit, label);
-	gapp->xsm->scan[ch]->data.SetZUnit (u);
+	UnitObj *u = main_get_gapp()->xsm->MakeUnit (unit, label);
+	main_get_gapp()->xsm->scan[ch]->data.SetZUnit (u);
 	delete u;
 
 	// setup dz from instrument definition or propagated via signal definition
-        gapp->xsm->scan[ch]->data.s.dz = d2u;
+        main_get_gapp()->xsm->scan[ch]->data.s.dz = d2u;
 	
 	// set scan title, name, ... and draw it!
 
 	gchar *scantitle = NULL;
         scantitle = g_strdup_printf ("%s %s", titleprefix, name);
 	
-	gapp->xsm->scan[ch]->data.ui.SetName (scantitle);
-	gapp->xsm->scan[ch]->data.ui.SetTitle (scantitle);
-	gapp->xsm->scan[ch]->data.ui.SetType (scantitle);
-	gapp->xsm->scan[ch]->data.s.xdir = strchr (titleprefix, '-') ? -1.:1.;
-	gapp->xsm->scan[ch]->data.s.ydir = gapp->xsm->data.s.ydir;
+	main_get_gapp()->xsm->scan[ch]->data.ui.SetName (scantitle);
+	main_get_gapp()->xsm->scan[ch]->data.ui.SetTitle (scantitle);
+	main_get_gapp()->xsm->scan[ch]->data.ui.SetType (scantitle);
+	main_get_gapp()->xsm->scan[ch]->data.s.xdir = strchr (titleprefix, '-') ? -1.:1.;
+	main_get_gapp()->xsm->scan[ch]->data.s.ydir = main_get_gapp()->xsm->data.s.ydir;
 
-        gapp->xsm->scan[ch]->storage_manager.set_type (scantitle);
-        gapp->xsm->scan[ch]->storage_manager.set_basename (gapp->xsm->data.ui.basename); // from GXSM Main GUI
-        gapp->xsm->scan[ch]->storage_manager.set_dataset_counter (gapp->xsm->GetFileCounter ());   // from GXSM Main GUI
-        gapp->xsm->scan[ch]->storage_manager.set_path (g_settings_get_string (gapp->get_as_settings (), "auto-save-folder"));   // from GXSM Main GUI
-        gapp->xsm->scan[ch]->data.ui.SetOriginalName (gapp->xsm->scan[ch]->storage_manager.get_name ("(not saved)"));
+        main_get_gapp()->xsm->scan[ch]->storage_manager.set_type (scantitle);
+        main_get_gapp()->xsm->scan[ch]->storage_manager.set_basename (main_get_gapp()->xsm->data.ui.basename); // from GXSM Main GUI
+        main_get_gapp()->xsm->scan[ch]->storage_manager.set_dataset_counter (main_get_gapp()->xsm->GetFileCounter ());   // from GXSM Main GUI
+        main_get_gapp()->xsm->scan[ch]->storage_manager.set_path (g_settings_get_string (main_get_gapp()->get_as_settings (), "auto-save-folder"));   // from GXSM Main GUI
+        main_get_gapp()->xsm->scan[ch]->data.ui.SetOriginalName (main_get_gapp()->xsm->scan[ch]->storage_manager.get_name ("(not saved)"));
         
-	PI_DEBUG (DBG_L2, "setup_scan[" << ch << " ]: scantitle done: " << gapp->xsm->scan[ch]->data.ui.type ); 
+	PI_DEBUG (DBG_L2, "setup_scan[" << ch << " ]: scantitle done: " << main_get_gapp()->xsm->scan[ch]->data.ui.type ); 
 
-        gapp->channelselector->SetInfo (ch, scantitle);
-        //gapp->channelselector->SetInfo (ch, gapp->xsm->scan[ch]->storage_manager.get_name()); // testing
-	gapp->xsm->scan[ch]->draw ();
+        main_get_gapp()->channelselector->SetInfo (ch, scantitle);
+        //main_get_gapp()->channelselector->SetInfo (ch, main_get_gapp()->xsm->scan[ch]->storage_manager.get_name()); // testing
+	main_get_gapp()->xsm->scan[ch]->draw ();
 
 	g_free (scantitle);
 
@@ -273,7 +273,7 @@ int DSPControl::Probing_eventcheck_callback( GtkWidget *widget, DSPControl *dspc
                 garr_hdr = dspc->pop_probehdr_arrays ();
                 ++popped;
                 
-                if (gapp->xsm->FindChan(xsmres.extchno[0], ID_CH_D_P) >= 0){ // mapi=0 must be selected!
+                if (main_get_gapp()->xsm->FindChan(xsmres.extchno[0], ID_CH_D_P) >= 0){ // mapi=0 must be selected!
                         // find chunksize (total # data sources)
                         int chunksize = 0;
                         GPtrArray *glabarray = g_ptr_array_new ();
@@ -304,12 +304,12 @@ int DSPControl::Probing_eventcheck_callback( GtkWidget *widget, DSPControl *dspc
                         int xiD=-1, yiD=-1;
                         for(int mapi=0; mapi < EXTCHMAX; ++mapi){
                                 int map=0;
-                                int chmap=gapp->xsm->FindChan(xsmres.extchno[mapi], ID_CH_D_P);
+                                int chmap=main_get_gapp()->xsm->FindChan(xsmres.extchno[mapi], ID_CH_D_P);
                                 if (chmap < 0) // check if any DataMap channel is setup
                                         continue;
                         
-                                int nx=gapp->xsm->scan[chmap]->mem2d->GetNx ();
-                                int ny=gapp->xsm->scan[chmap]->mem2d->GetNy ();
+                                int nx=main_get_gapp()->xsm->scan[chmap]->mem2d->GetNx ();
+                                int ny=main_get_gapp()->xsm->scan[chmap]->mem2d->GetNy ();
                         
                                 // locate 1st,... probe src# to map
                                 ++src;
@@ -346,17 +346,17 @@ int DSPControl::Probing_eventcheck_callback( GtkWidget *widget, DSPControl *dspc
                                                                    g_array_index (garr_hdr[PROBEDATA_ARRAY_U], double, i),
                                                                    g_array_index (garr_hdr[PROBEDATA_ARRAY_SEC], double, i));
 #endif
-                                                        if (gapp->xsm->scan[chmap]->mem2d->data->GetNxSub()){
+                                                        if (main_get_gapp()->xsm->scan[chmap]->mem2d->data->GetNxSub()){
 #if 1
                                                                 g_message ("CH[%d] HDR ixy: %d, %d   sls[%d,%d, %d,%d]", chmap,
                                                                            (int)g_array_index (garr_hdr[PROBEDATA_ARRAY_X0], double, i),
                                                                            (int)g_array_index (garr_hdr[PROBEDATA_ARRAY_Y0], double, i),
-                                                                           gapp->xsm->scan[chmap]->mem2d->data->GetX0Sub(), gapp->xsm->scan[chmap]->mem2d->data->GetNxSub(),
-                                                                           gapp->xsm->scan[chmap]->mem2d->data->GetY0Sub(), gapp->xsm->scan[chmap]->mem2d->data->GetNySub()
+                                                                           main_get_gapp()->xsm->scan[chmap]->mem2d->data->GetX0Sub(), main_get_gapp()->xsm->scan[chmap]->mem2d->data->GetNxSub(),
+                                                                           main_get_gapp()->xsm->scan[chmap]->mem2d->data->GetY0Sub(), main_get_gapp()->xsm->scan[chmap]->mem2d->data->GetNySub()
                                                                            );
 #endif
-                                                                xip = gapp->xsm->scan[chmap]->mem2d->data->GetNxSub()-1 - g_array_index (garr_hdr[PROBEDATA_ARRAY_X0], double, i);
-                                                                yip = gapp->xsm->scan[chmap]->mem2d->data->GetNySub()-1 - g_array_index (garr_hdr[PROBEDATA_ARRAY_Y0], double, i);
+                                                                xip = main_get_gapp()->xsm->scan[chmap]->mem2d->data->GetNxSub()-1 - g_array_index (garr_hdr[PROBEDATA_ARRAY_X0], double, i);
+                                                                yip = main_get_gapp()->xsm->scan[chmap]->mem2d->data->GetNySub()-1 - g_array_index (garr_hdr[PROBEDATA_ARRAY_Y0], double, i);
                                                         } else {
                                                                 xip = nx-1 - g_array_index (garr_hdr[PROBEDATA_ARRAY_X0], double, i);
                                                                 yip = ny-1 - g_array_index (garr_hdr[PROBEDATA_ARRAY_Y0], double, i);
@@ -376,7 +376,7 @@ int DSPControl::Probing_eventcheck_callback( GtkWidget *widget, DSPControl *dspc
                                                 } else {
                                                         xip = xlast+xdelta; yip=yiD;
                                                         g_message ("XYdsp: probe HDR N/A -- projecting x to %d", xip);
-                                                        if (xip >= gapp->xsm->scan[chmap]->mem2d->GetNx ()){
+                                                        if (xip >= main_get_gapp()->xsm->scan[chmap]->mem2d->GetNx ()){
                                                                 g_message ("XYdsp: probe HDR N/A, project out of range -- dropping point");
                                                                 xip=-1;
                                                                 mapi = EXTCHMAX;
@@ -385,7 +385,7 @@ int DSPControl::Probing_eventcheck_callback( GtkWidget *widget, DSPControl *dspc
                                                 }
                                         
                                                 // check and limit ranges
-                                                if (xip < 0 || yip < 0 || xip >= gapp->xsm->scan[chmap]->mem2d->GetNx () || yip >= gapp->xsm->scan[chmap]->mem2d->GetNy ()){
+                                                if (xip < 0 || yip < 0 || xip >= main_get_gapp()->xsm->scan[chmap]->mem2d->GetNx () || yip >= main_get_gapp()->xsm->scan[chmap]->mem2d->GetNy ()){
                                                         g_message ("Warning: Coordinates (%d, %d) out of scan range. Dropping point.", xip, yip);
                                                         xip=-1;
                                                         mapi = EXTCHMAX;
@@ -394,7 +394,7 @@ int DSPControl::Probing_eventcheck_callback( GtkWidget *widget, DSPControl *dspc
                                         }
 
                                         // sanity check adn trigger initial final setup -- need to resize scan map?
-                                        if (gapp->xsm->scan[chmap]->data.s.dz < 0.){
+                                        if (main_get_gapp()->xsm->scan[chmap]->data.s.dz < 0.){
                                                 gchar *id = g_strconcat ("Map-", (const gchar*)g_ptr_array_index (glabarray,  mapi),
                                                                          "(", Xsrc<0?"index":(gpointer) dspc->vp_label_lookup (Xsrc),
                                                                          Xsrc<0?"i":(gpointer) dspc->vp_unit_lookup (Xsrc), ")",
@@ -410,22 +410,22 @@ int DSPControl::Probing_eventcheck_callback( GtkWidget *widget, DSPControl *dspc
                                                            );
                                                 Xsrc_lookup_end = -1;
                                                 g_free (id);
-                                                //gapp->xsm->scan[chmap]->mem2d->add_layer_information (new LayerInformation ("Bias", gapp->xsm->data.s.Bias, "%5.3f V"));
-                                                //gapp->xsm->scan[chmap]->mem2d->add_layer_information (new LayerInformation ("Layer", l, "%03.0f"));
+                                                //main_get_gapp()->xsm->scan[chmap]->mem2d->add_layer_information (new LayerInformation ("Bias", main_get_gapp()->xsm->data.s.Bias, "%5.3f V"));
+                                                //main_get_gapp()->xsm->scan[chmap]->mem2d->add_layer_information (new LayerInformation ("Layer", l, "%03.0f"));
 
                                                 
                                         }
                       
-                                        if (dspc->last_probe_data_index !=  gapp->xsm->scan[chmap]->mem2d->GetNv ()){ // auto n-values range adjust
-                                                gapp->xsm->scan[chmap]->mem2d->Resize (gapp->xsm->scan[chmap]->mem2d->GetNx (), gapp->xsm->scan[chmap]->mem2d->GetNy (),
+                                        if (dspc->last_probe_data_index !=  main_get_gapp()->xsm->scan[chmap]->mem2d->GetNv ()){ // auto n-values range adjust
+                                                main_get_gapp()->xsm->scan[chmap]->mem2d->Resize (main_get_gapp()->xsm->scan[chmap]->mem2d->GetNx (), main_get_gapp()->xsm->scan[chmap]->mem2d->GetNy (),
                                                                                        dspc->last_probe_data_index, ZD_DOUBLE, false);
                                                 g_message ("Resize was required ** ch[%d] Nxy: %d, %d Nv:%d sls[%d,%d, %d,%d]",
                                                            chmap,
-                                                           gapp->xsm->scan[chmap]->mem2d->GetNx (),
-                                                           gapp->xsm->scan[chmap]->mem2d->GetNy (),
-                                                           gapp->xsm->scan[chmap]->mem2d->GetNv (),
-                                                           gapp->xsm->scan[chmap]->mem2d->data->GetX0Sub(), gapp->xsm->scan[chmap]->mem2d->data->GetNxSub(),
-                                                           gapp->xsm->scan[chmap]->mem2d->data->GetY0Sub(), gapp->xsm->scan[chmap]->mem2d->data->GetNySub()
+                                                           main_get_gapp()->xsm->scan[chmap]->mem2d->GetNx (),
+                                                           main_get_gapp()->xsm->scan[chmap]->mem2d->GetNy (),
+                                                           main_get_gapp()->xsm->scan[chmap]->mem2d->GetNv (),
+                                                           main_get_gapp()->xsm->scan[chmap]->mem2d->data->GetX0Sub(), main_get_gapp()->xsm->scan[chmap]->mem2d->data->GetNxSub(),
+                                                           main_get_gapp()->xsm->scan[chmap]->mem2d->data->GetY0Sub(), main_get_gapp()->xsm->scan[chmap]->mem2d->data->GetNySub()
                                                            );
                                         }
                                         // remap probe data data to scan mem2d buffer
@@ -443,16 +443,16 @@ int DSPControl::Probing_eventcheck_callback( GtkWidget *widget, DSPControl *dspc
                                                 int x=xip+rf+k;
                                                 for (int l=0; l<nl; ++l){
                                                         int y=yip+tf+l;
-                                                        if (x < 0 || y < 0 || x >= gapp->xsm->scan[chmap]->mem2d->GetNx () || y >= gapp->xsm->scan[chmap]->mem2d->GetNy ())
+                                                        if (x < 0 || y < 0 || x >= main_get_gapp()->xsm->scan[chmap]->mem2d->GetNx () || y >= main_get_gapp()->xsm->scan[chmap]->mem2d->GetNy ())
                                                                 continue;
                                                         for (int i = 0; i < dspc->last_probe_data_index; i++){
-                                                                gapp->xsm->scan[chmap]->mem2d->PutDataPkt_ixy_sub (dspc->vp_scale_lookup (src) * g_array_index (garr [expdi_lookup[src]], double, i), x,y,i);
+                                                                main_get_gapp()->xsm->scan[chmap]->mem2d->PutDataPkt_ixy_sub (dspc->vp_scale_lookup (src) * g_array_index (garr [expdi_lookup[src]], double, i), x,y,i);
                                                                 if (Xsrc >= 0 && Xsrc_lookup_end < i){ // update with X lookup
-                                                                        gapp->xsm->scan[chmap]->mem2d->SetLayer (i);
-                                                                        gapp->xsm->scan[chmap]->mem2d->data->SetVLookup(i, dspc->vp_scale_lookup (Xsrc) * g_array_index (garr [expdi_lookup[Xsrc]], double, i)); // update X lookup
+                                                                        main_get_gapp()->xsm->scan[chmap]->mem2d->SetLayer (i);
+                                                                        main_get_gapp()->xsm->scan[chmap]->mem2d->data->SetVLookup(i, dspc->vp_scale_lookup (Xsrc) * g_array_index (garr [expdi_lookup[Xsrc]], double, i)); // update X lookup
                                                                         gchar *lpl = g_strdup_printf ("Layer-Param %s", (const gchar*)dspc->vp_label_lookup (Xsrc));
                                                                         gchar *lpu = g_strdup_printf ("%%5.3f %s", (const gchar*)dspc->vp_unit_lookup (Xsrc));
-                                                                        gapp->xsm->scan[chmap]->mem2d->add_layer_information (new LayerInformation (lpl,
+                                                                        main_get_gapp()->xsm->scan[chmap]->mem2d->add_layer_information (new LayerInformation (lpl,
                                                                                                                                                     dspc->vp_scale_lookup (Xsrc) * g_array_index (garr [expdi_lookup[Xsrc]], double, i),
                                                                                                                                                     lpu));
                                                                         g_free (lpl);
@@ -464,9 +464,9 @@ int DSPControl::Probing_eventcheck_callback( GtkWidget *widget, DSPControl *dspc
                                                 }
                                         }
                                         if (Xsrc < 0) // no X lookup, make index matching lookup
-                                                gapp->xsm->scan[chmap]->mem2d->data->MkVLookup(0, dspc->last_probe_data_index-1); // use index
+                                                main_get_gapp()->xsm->scan[chmap]->mem2d->data->MkVLookup(0, dspc->last_probe_data_index-1); // use index
                                 
-                                        gapp->xsm->scan[chmap]->draw ();
+                                        main_get_gapp()->xsm->scan[chmap]->draw ();
                                 } // endif map
                         } // for mappi
                         
@@ -480,16 +480,16 @@ int DSPControl::Probing_eventcheck_callback( GtkWidget *widget, DSPControl *dspc
                 // attach event to active channel, if one exists -- not for DSP raster mode only manual/script mode ----------------
                 // *****************************************************************************************************************
                 if ( g_settings_get_boolean (dspc->hwi_settings, "probe-graph-enable-add-events")
-                     && gapp->xsm->MasterScan){
+                     && main_get_gapp()->xsm->MasterScan){
                         ScanEvent *se = NULL;
                         double wx, wy;
-                        gapp->xsm->MasterScan->Pixel2World (xip+gapp->xsm->MasterScan->mem2d->data->GetX0Sub(),
-                                                            yip+gapp->xsm->MasterScan->mem2d->data->GetY0Sub(),
+                        main_get_gapp()->xsm->MasterScan->Pixel2World (xip+main_get_gapp()->xsm->MasterScan->mem2d->data->GetX0Sub(),
+                                                            yip+main_get_gapp()->xsm->MasterScan->mem2d->data->GetY0Sub(),
                                                             wx,wy); // with SLS offset
                         se = new ScanEvent (wx,wy,
-                                            gapp->xsm->Inst->Dig2ZA ((long) round (g_array_index (garr [PROBEDATA_ARRAY_ZS], double, 0)))
+                                            main_get_gapp()->xsm->Inst->Dig2ZA ((long) round (g_array_index (garr [PROBEDATA_ARRAY_ZS], double, 0)))
                                             );
-                        gapp->xsm->MasterScan->mem2d->AttachScanEvent (se);
+                        main_get_gapp()->xsm->MasterScan->mem2d->AttachScanEvent (se);
                         
                         // if we have attached an scan event, so fill it with data now
                         if (se){
@@ -536,9 +536,9 @@ int DSPControl::Probing_eventcheck_callback( GtkWidget *widget, DSPControl *dspc
 	XSM_DEBUG_PG("DBG-M4");
 
 	if (popped > 0)
-		if (gapp->xsm->MasterScan){
-                        gapp->xsm->MasterScan->draw ();
-			gapp->xsm->MasterScan->view->update_events ();
+		if (main_get_gapp()->xsm->MasterScan){
+                        main_get_gapp()->xsm->MasterScan->draw ();
+			main_get_gapp()->xsm->MasterScan->view->update_events ();
                 }
 
         XSM_DEBUG_PG("DBG-M5");
@@ -575,7 +575,7 @@ void DSPControl::probedata_visualize (GArray *probedata_x, GArray *probedata_y, 
         }
         
         if (GrMatWin && !vpg_window){
-                vpg_app_window =  gxsm4_app_window_new (GXSM4_APP (gapp->get_application ()));
+                vpg_app_window =  gxsm4_app_window_new (GXSM4_APP (main_get_gapp()->get_application ()));
                 vpg_window = GTK_WINDOW (vpg_app_window);
                 GtkWidget *header_bar = gtk_header_bar_new ();
                 gtk_widget_show (header_bar);
@@ -812,20 +812,20 @@ int DSPControl::Probing_graph_callback( GtkWidget *widget, DSPControl *dspc, int
 	XSM_DEBUG_PG ("Probing_graph_callback MasterScan? Add Ev." );
 
 	ScanEvent *se = NULL;
-	if (gapp->xsm->MasterScan && finish_flag){
+	if (main_get_gapp()->xsm->MasterScan && finish_flag){
 		// find first section header and take this X,Y coordinates as reference -- start of probe event
 		XSM_DEBUG_PG ("Probing_graph_callback MasterScan: adding Ev." );
 		int sec = 0;
                 int j=0;
                 //g_message ("Creating SE *** %d %d %d", j, sec, dspc->current_probe_data_index);
                 se = new ScanEvent (
-                                    gapp->xsm->Inst->Dig2X0A ((long) round (g_array_index (dspc->garray_probedata [PROBEDATA_ARRAY_X0], double, j)))
-                                    + gapp->xsm->Inst->Dig2XA ((long) round (g_array_index (dspc->garray_probedata [PROBEDATA_ARRAY_XS], double, j))),
-                                    gapp->xsm->Inst->Dig2Y0A ((long) round (g_array_index (dspc->garray_probedata [PROBEDATA_ARRAY_Y0], double, j)))
-                                    + gapp->xsm->Inst->Dig2YA ((long) round (g_array_index (dspc->garray_probedata [PROBEDATA_ARRAY_YS], double, j))),
-                                    gapp->xsm->Inst->Dig2ZA ((long) round ( g_array_index (dspc->garray_probedata [PROBEDATA_ARRAY_ZS], double, j)))
+                                    main_get_gapp()->xsm->Inst->Dig2X0A ((long) round (g_array_index (dspc->garray_probedata [PROBEDATA_ARRAY_X0], double, j)))
+                                    + main_get_gapp()->xsm->Inst->Dig2XA ((long) round (g_array_index (dspc->garray_probedata [PROBEDATA_ARRAY_XS], double, j))),
+                                    main_get_gapp()->xsm->Inst->Dig2Y0A ((long) round (g_array_index (dspc->garray_probedata [PROBEDATA_ARRAY_Y0], double, j)))
+                                    + main_get_gapp()->xsm->Inst->Dig2YA ((long) round (g_array_index (dspc->garray_probedata [PROBEDATA_ARRAY_YS], double, j))),
+                                    main_get_gapp()->xsm->Inst->Dig2ZA ((long) round ( g_array_index (dspc->garray_probedata [PROBEDATA_ARRAY_ZS], double, j)))
                                     );
-                gapp->xsm->MasterScan->mem2d->AttachScanEvent (se);
+                main_get_gapp()->xsm->MasterScan->mem2d->AttachScanEvent (se);
 
                 // for all sections add probe event!!!
                 XSM_DEBUG_PG ("Probing_graph_callback ScanEvent-update/add" );
@@ -866,7 +866,7 @@ int DSPControl::Probing_graph_callback( GtkWidget *widget, DSPControl *dspc, int
                 //g_ptr_array_free (glabarray, TRUE); // passed to PE
                 //g_ptr_array_free (gsymarray, TRUE); // passed to PE
 
-                gapp->xsm->MasterScan->view->update_events ();
+                main_get_gapp()->xsm->MasterScan->view->update_events ();
                 XSM_DEBUG_PG ("Probing_graph_callback have ScanEvent?" );
 	}
 
@@ -972,8 +972,8 @@ int DSPControl::Probing_save_callback( GtkWidget *widget, DSPControl *dspc){
 
 	gchar *fntmp = g_strdup_printf ("%s/%s%03d-VP%03d-%s.vpdata", 
 					// path, 
-					g_settings_get_string (gapp->get_as_settings (), "auto-save-folder-probe"), 
-					gapp->xsm->data.ui.basename, gapp->xsm->GetFileCounter(), gapp->xsm->GetNextVPFileCounter(), "VP");
+					g_settings_get_string (main_get_gapp()->get_as_settings (), "auto-save-folder-probe"), 
+					main_get_gapp()->xsm->data.ui.basename, main_get_gapp()->xsm->GetFileCounter(), main_get_gapp()->xsm->GetNextVPFileCounter(), "VP");
 	// g_free (path);
 
 	time_t t;
@@ -982,32 +982,32 @@ int DSPControl::Probing_save_callback( GtkWidget *widget, DSPControl *dspc){
 	f.open (fntmp);
 
 	int ix=-999999, iy=-999999;
-	if (gapp->xsm->MasterScan){
-		gapp->xsm->MasterScan->World2Pixel (gapp->xsm->data.s.x0, gapp->xsm->data.s.y0, ix, iy, SCAN_COORD_ABSOLUTE);
+	if (main_get_gapp()->xsm->MasterScan){
+		main_get_gapp()->xsm->MasterScan->World2Pixel (main_get_gapp()->xsm->data.s.x0, main_get_gapp()->xsm->data.s.y0, ix, iy, SCAN_COORD_ABSOLUTE);
 	}
 // better, get realtime DSP position readings for XY0 now if available:
 
 	double x0=0.;
 	double y0=0.;
 	double z0=0.;
-	if (gapp->xsm->hardware->RTQuery ("O", z0, x0, y0)){ // get HR Offset
+	if (main_get_gapp()->xsm->hardware->RTQuery ("O", z0, x0, y0)){ // get HR Offset
 //		gchar *tmp = NULL;
 //		tmp = g_strdup_printf ("Offset Z0: %7.3f "UTF8_ANGSTROEM"\nXY0: %7.3f "UTF8_ANGSTROEM", %7.3f "UTF8_ANGSTROEM
 //				       "\nXYs: %7.3f "UTF8_ANGSTROEM", %7.3f "UTF8_ANGSTROEM,
-//				       gapp->xsm->Inst->V2ZAng(z0),
-//				       gapp->xsm->Inst->V2XAng(x0),
-//				       gapp->xsm->Inst->V2YAng(y0),
-//				       gapp->xsm->Inst->V2XAng(x),
-//				       gapp->xsm->Inst->V2YAng(y));
-		x0 = gapp->xsm->Inst->V2XAng(x0);
-		y0 = gapp->xsm->Inst->V2YAng(y0);
-		if (gapp->xsm->MasterScan){
-			gapp->xsm->MasterScan->World2Pixel (x0, y0, ix, iy, SCAN_COORD_ABSOLUTE);
+//				       main_get_gapp()->xsm->Inst->V2ZAng(z0),
+//				       main_get_gapp()->xsm->Inst->V2XAng(x0),
+//				       main_get_gapp()->xsm->Inst->V2YAng(y0),
+//				       main_get_gapp()->xsm->Inst->V2XAng(x),
+//				       main_get_gapp()->xsm->Inst->V2YAng(y));
+		x0 = main_get_gapp()->xsm->Inst->V2XAng(x0);
+		y0 = main_get_gapp()->xsm->Inst->V2YAng(y0);
+		if (main_get_gapp()->xsm->MasterScan){
+			main_get_gapp()->xsm->MasterScan->World2Pixel (x0, y0, ix, iy, SCAN_COORD_ABSOLUTE);
 		}
 	} else {
-		if (gapp->xsm->MasterScan){
-			x0 = gapp->xsm->data.s.x0;
-			y0 = gapp->xsm->data.s.y0;
+		if (main_get_gapp()->xsm->MasterScan){
+			x0 = main_get_gapp()->xsm->data.s.x0;
+			y0 = main_get_gapp()->xsm->data.s.y0;
 		}
 	}
         f.precision (12);
@@ -1018,11 +1018,11 @@ int DSPControl::Probing_save_callback( GtkWidget *widget, DSPControl *dspc){
 	f << "# GXSM-Main-Offset       :: X0=" <<  x0 << " Ang" <<  "  Y0=" << y0 << " Ang" 
 	  << ", iX0=" << ix << " Pix iX0=" << iy << " Pix"
 	  << std::endl;
-        if (gapp->xsm->MasterScan)
+        if (main_get_gapp()->xsm->MasterScan)
                 f << "# DSP SCANCOORD POSITION :: DSP-XSpos=" 
-                  << (((int)g_array_index (dspc->garray_probe_hdrlist[PROBEDATA_ARRAY_XS], double, 0)<<16)/dspc->mirror_dsp_scan_dx32 + gapp->xsm->MasterScan->data.s.nx/2 - 1)
+                  << (((int)g_array_index (dspc->garray_probe_hdrlist[PROBEDATA_ARRAY_XS], double, 0)<<16)/dspc->mirror_dsp_scan_dx32 + main_get_gapp()->xsm->MasterScan->data.s.nx/2 - 1)
                   << " DSP-YSpos=" 
-                  << ((gapp->xsm->MasterScan->data.s.nx/2 - 1) - ((int)g_array_index (dspc->garray_probe_hdrlist[PROBEDATA_ARRAY_YS], double, 0)<<16)/dspc->mirror_dsp_scan_dy32)
+                  << ((main_get_gapp()->xsm->MasterScan->data.s.nx/2 - 1) - ((int)g_array_index (dspc->garray_probe_hdrlist[PROBEDATA_ARRAY_YS], double, 0)<<16)/dspc->mirror_dsp_scan_dy32)
                   << " CENTER-DSP-XSpos=" 
                   << (((int)g_array_index (dspc->garray_probe_hdrlist[PROBEDATA_ARRAY_XS], double, 0)<<16)/dspc->mirror_dsp_scan_dx32)
                   << " CENTER-DSP-YSpos=" 
@@ -1040,7 +1040,7 @@ int DSPControl::Probing_save_callback( GtkWidget *widget, DSPControl *dspc){
 	  << " AC_avg_cycles=" << dspc->AC_lockin_avg_cycels
 	  << " " << std::endl; 
 
-	gchar *tmp = g_strdup(gapp->xsm->data.ui.comment);
+	gchar *tmp = g_strdup(main_get_gapp()->xsm->data.ui.comment);
 	gchar *cr;
 	while (cr=strchr (tmp, 0x0d))
 		*cr = ' ';
@@ -1420,7 +1420,7 @@ void DSPControl::dump_probe_hdr(){
 #endif
 		t0 = val[0];
 
-		if (val[4] == 0 && gapp->xsm->MasterScan){
+		if (val[4] == 0 && main_get_gapp()->xsm->MasterScan){
 			if (val[0] < 1.){ // TIME = 0 at start, initialize
 				for(int i=0; i<VP_TRAIL_LEN; ++i)
 					vp_trail[i]=NULL;
@@ -1434,24 +1434,24 @@ void DSPControl::dump_probe_hdr(){
 				s2 = 999999.;
 
 			// only put new marker/update/rotate if more than a pixel moved!
-			if (s2 > 2.*gapp->xsm->MasterScan->data.s.dx*gapp->xsm->MasterScan->data.s.dx+gapp->xsm->MasterScan->data.s.dy*gapp->xsm->MasterScan->data.s.dy){
+			if (s2 > 2.*main_get_gapp()->xsm->MasterScan->data.s.dx*main_get_gapp()->xsm->MasterScan->data.s.dx+main_get_gapp()->xsm->MasterScan->data.s.dy*main_get_gapp()->xsm->MasterScan->data.s.dy){
 				gchar *info = g_strdup_printf ("TrkPt# %d %.1fms", i, val[0]*1e3/frq_ref);
 				double xyz[3] = {
-					gapp->xsm->Inst->Dig2XA ((long) round (val[1]))
-					+ gapp->xsm->Inst->Dig2X0A ((long) round ( g_array_index (garray_probe_hdrlist[PROBEDATA_ARRAY_X0], double, i))),
-					gapp->xsm->Inst->Dig2YA ((long) round (val[2]))
-					+ gapp->xsm->Inst->Dig2Y0A ((long) round ( g_array_index (garray_probe_hdrlist[PROBEDATA_ARRAY_Y0], double, i))),
-					gapp->xsm->Inst->Dig2ZA ((long) round (val[3]))
+					main_get_gapp()->xsm->Inst->Dig2XA ((long) round (val[1]))
+					+ main_get_gapp()->xsm->Inst->Dig2X0A ((long) round ( g_array_index (garray_probe_hdrlist[PROBEDATA_ARRAY_X0], double, i))),
+					main_get_gapp()->xsm->Inst->Dig2YA ((long) round (val[2]))
+					+ main_get_gapp()->xsm->Inst->Dig2Y0A ((long) round ( g_array_index (garray_probe_hdrlist[PROBEDATA_ARRAY_Y0], double, i))),
+					main_get_gapp()->xsm->Inst->Dig2ZA ((long) round (val[3]))
 				};
 				
 				x=val[1];
 				y=val[2];
 
 				// add simple Marker ------------------------------------- moving trail/tail mode
-				if (gapp->xsm->MasterScan->view->Get_ViewControl()){ // if view available, add markers
+				if (main_get_gapp()->xsm->MasterScan->view->Get_ViewControl()){ // if view available, add markers
 					double xy[2] = {xyz[0], xyz[1]};
 					if (vp_trail_n < VP_TRAIL_LEN){
-						ViewControl *vc = gapp->xsm->MasterScan->view->Get_ViewControl();
+						ViewControl *vc = main_get_gapp()->xsm->MasterScan->view->Get_ViewControl();
 						VObEvent *vp;
 						if (vp_trail_n == 0)
 							vc->RemoveIndicators ();
@@ -1478,7 +1478,7 @@ void DSPControl::dump_probe_hdr(){
 					}
 //				std::cout << "Marker at " << xy[0] << ", " << xy[1] << " " << info << std::endl;
 				}
-				gapp->xsm->MasterScan->view->update_events ();
+				main_get_gapp()->xsm->MasterScan->view->update_events ();
 			}
 		}
 	}

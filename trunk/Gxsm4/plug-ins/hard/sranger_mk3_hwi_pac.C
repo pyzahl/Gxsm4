@@ -67,7 +67,7 @@
 
 #include <time.h>
 
-#include "core-source/glbvars.h"
+#include "glbvars.h"
 #include "modules/dsp.h"
 #include <fcntl.h>
 #include <sys/ioctl.h>
@@ -863,7 +863,7 @@ void DSPPACControl::create_folder (){
 }
 
 guint DSPPACControl::refresh_readings(DSPPACControl *dspc){ 
-	if (gapp->xsm->hardware->IsSuspendWatches ())
+	if (main_get_gapp()->xsm->hardware->IsSuspendWatches ())
 		return TRUE;
 
 	dspc->update_readings ();
@@ -1066,7 +1066,7 @@ int DSPPACControl::controller_callback (GtkWidget *widget, DSPPACControl *dspc){
 
 void DSPPACControl::copy_ref_freq_to_ref_callback (Param_Control* pcs, DSPPACControl *dspc){
         gchar *msg = g_strdup_printf ("Copy res. freq. %g", dspc->pll.Filter64Out[F64_Excitation]);
-        gapp->monitorcontrol->LogEvent ("DSPPACControl", msg);
+        main_get_gapp()->monitorcontrol->LogEvent ("DSPPACControl", msg);
         dspc->pll.FSineHz      = dspc->pll.Filter64Out[F64_Excitation];
         dspc->pll.Reference[0] = dspc->pll.Filter64Out[F64_Excitation];
 	g_slist_foreach
