@@ -60,8 +60,8 @@ extern "C++" {
 
 /*  __PRETTY_FUNCTION__  */
 /* GXSM core debugging messages */
-#define XSM_DEBUG_GM(L, DBGTXT, ARGS...)         do { if(main_get_debug_level() > L) g_message ( DBGTXT ); } while(0)
-#define XSM_DEBUG_GW(L, DBGTXT, ARGS...)         do { if(main_get_debug_level() > L) g_warning ( DBGTXT ); } while(0)
+#define XSM_DEBUG_GM(L, ARGS...)         do { if(main_get_debug_level() > L) g_message ( ARGS ); } while(0)
+#define XSM_DEBUG_GW(L, ARGS...)         do { if(main_get_debug_level() > L) g_warning ( ARGS ); } while(0)
 #define XSM_DEBUG(L, DBGTXT)         do { if(main_get_debug_level() > L) MSG_OUT << "** (" << __FILE__ << ": " << __FUNCTION__ << ") Gxsm-DEBUG-MESSAGE **: " << NEWLINE << " - " << DBGTXT << NEWLINE; } while(0)
 #define XSM_DEBUG_PLAIN(L, DBGTXT)   do { if(main_get_debug_level() > L) MSG_OUT << DBGTXT ; } while(0)
 #define XSM_DEBUG_WARNING(L, DBGTXT) do { if(main_get_debug_level() > L) MSG_OUT << "** (" << __FILE__ << ": " << __FUNCTION__ << ") Gxsm-WARNING **: " << NEWLINE << " - " << DBGTXT << NEWLINE; } while(0)

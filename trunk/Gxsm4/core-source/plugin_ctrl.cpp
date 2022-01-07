@@ -11,7 +11,7 @@
  * WWW Home: http://gxsm.sf.net
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU General Public License as pub1lished by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
@@ -130,7 +130,7 @@ void plugin_ctrl::scan_for_pi(gchar *dirname){
 	struct stat statbuf;
 
 	XSM_DEBUG (DBG_L3, "Scanning for GXSM plugins in " << dirname);
-        XSM_DEBUG_GP (DBG_L2, "plugin_ctrl::scan_for_pi -- scanning gxsm plugins in: " PACKAGE_PLUGIN_DIR "\%s\n", dirname);
+        XSM_DEBUG_GP (DBG_L2, "plugin_ctrl::scan_for_pi -- scanning gxsm plugins in: " PACKAGE_PLUGIN_DIR "\%s", dirname);
         
 	dir = opendir(dirname);
 	if (!dir)
@@ -139,7 +139,7 @@ void plugin_ctrl::scan_for_pi(gchar *dirname){
 	while ((ent = readdir(dir)) != NULL)
 	{
 		filename = g_strdup_printf("%s/%s", dirname, ent->d_name);
-                XSM_DEBUG_GP (DBG_L2, "plugin_ctrl::scan_for_pi -- scanning file for gxsm plugin: " PACKAGE_PLUGIN_DIR "/ [%s] / [%s] {%s}\n", dirname, ent->d_name, filename);
+                XSM_DEBUG_GP (DBG_L3, "plugin_ctrl::scan_for_pi -- scanning file for gxsm plugin: " PACKAGE_PLUGIN_DIR "/ [%s] / [%s] {%s}", dirname, ent->d_name, filename);
                 
 		if (!stat(filename, &statbuf) && S_ISREG(statbuf.st_mode) &&
 		    (ext = strrchr(ent->d_name, '.')) != NULL){
@@ -159,64 +159,60 @@ void plugin_ctrl::add_pi(const gchar *filename, const gchar *name){
 	GModule *gxsm_module;
 	GxsmPlugin *(*gpi) (void);
 
-	XSM_DEBUG (DBG_L3, "Checking Plugin: " << filename );
-	XSM_DEBUG_GP (DBG_L2, "plugin_ctrl::add_pi -- Checking Plugin: %s\n", filename );
+	XSM_DEBUG_GM (DBG_L2, "plugin_ctrl::add_pi ** Checking Plugin: %s", filename );
 
         gchar *pcs_settings_key=NULL;
-        { // set gsettings schema path derived from pi filename
-                XSM_DEBUG_GP (DBG_L2, "plugin_ctrl::add_pi -- SET_PCS_GROUP from %s\n", name );
+        {       // set gsettings schema path derived from pi filename
+                XSM_DEBUG_GM (DBG_L2, "plugin_ctrl::add_pi ** SET_PCS_GROUP from %s", name );
                 gchar *tmp = g_strdup (name);
-                pcs_set_current_gschema_group ("plugins-unspecified");
                 if ((ext = strrchr(tmp, '.')) != NULL){
                         *ext = 0;
                         gchar *tmp2 = g_strdelimit (g_strdup (tmp), ". _", '-');
                         gchar *plugin_key = g_ascii_strdown (tmp2, -1);
                         g_free (tmp2);
                         pcs_settings_key = g_strdup_printf ("plugin-%s", plugin_key); 
-                        XSM_DEBUG_GP (DBG_L2, "plugin_ctrl::add_pi -- SET_PCS_GROUP = '%s'\n", pcs_settings_key );
+                        XSM_DEBUG_GM (DBG_L2, "plugin_ctrl::add_pi ** SET_PCS_GROUP, SETTINGS KEY = '%s'", pcs_settings_key );
                         pcs_set_current_gschema_group (pcs_settings_key);
                         g_free (plugin_key);
+                } else {
+                        pcs_set_current_gschema_group ("plugins-unspecified"); // set fallback just in case
                 }
                 g_free (tmp);
         }
 
         
+        XSM_DEBUG_GM (DBG_L1, "plugin_ctrl::add_pi ** g_module_open: %s", filename );
 	if ((gxsm_module = g_module_open (filename, G_MODULE_BIND_LAZY)) != NULL)
 	{
-		XSM_DEBUG (DBG_L3, "  g_module_open OK... checking symbol 'get_gxsm_plugin_info'");
-                XSM_DEBUG_GP (DBG_L2, "plugin_ctrl::add_pi -- g_module open OK: %s\n", filename );
+		XSM_DEBUG_GM (DBG_L1, "plugin_ctrl::add_pi ** g_module_open OK... checking for symbol 'get_gxsm_plugin_info'");
 		// gcc 2.95:  "get_gxsm_plugin_info__Fv"
 		// gcc 3.3:   "_Z20get_gxsm_plugin_infov"
 		if (g_module_symbol (gxsm_module, "_Z20""get_gxsm_plugin_info" GXSM_PI_VOID_SUFFIX, (gpointer*)&gpi))
 		{
-                        XSM_DEBUG_GP (DBG_L2, "plugin_ctrl::add_pi -- PI entry/description table found: %s\n", filename );
+                        XSM_DEBUG_GM (DBG_L1, "plugin_ctrl::add_pi ** PI entry/description table g_module_symbol found: %s", filename );
 			GxsmPlugin *p = gpi();
 			ok = TRUE;
 			if(Check && p -> category){
-                                XSM_DEBUG_GP (DBG_L2, "plugin_ctrl::add_pi -- Check category: [%s] %s\n", p -> category, filename );
+                                XSM_DEBUG_GM (DBG_L1, "plugin_ctrl::add_pi ** Check category: [%s] %s", p -> category, filename );
 				ok = Check( p -> category );
                         }
                         if(ok){
 				p->module   = gxsm_module;
 				p->filename = g_strdup_printf("%s|%s", filename, pcs_settings_key);
 				plugins = g_list_prepend(plugins, p);
-				XSM_DEBUG (DBG_L3, "  ==> " << filename << " added." );
-                                XSM_DEBUG_GP (DBG_L2, "plugin_ctrl::add_pi -- OK, added: %s\n", filename );
-                                XSM_DEBUG_GM (DBG_L1, "plugin_ctrl::add_pi -- loaded plugin: %s", filename );
+                                XSM_DEBUG_GM (DBG_L1, "plugin_ctrl::add_pi ** success: loaded plugin: %s", filename );
 			}else{
-				XSM_DEBUG (DBG_L3, "  ==> " << filename << " is OK,\n  but not loaded: Category does not match." );
-                                XSM_DEBUG_GP (DBG_L2, "plugin_ctrl::add_pi -- OK, but not added (no category match): %s\n", filename );
+                                XSM_DEBUG_GM (DBG_L1, "plugin_ctrl::add_pi ** load success, but skipped due to no category match (OK) for: %s", filename );
 				g_module_close(gxsm_module);
 			}
 		}
 		else{
-                        XSM_DEBUG_GP_ERROR (DBG_L2, "plugin_ctrl.C: plugin_ctrl::add_pi -- reference symbol not found, no valid GXSM plugin. : %s [%s] -- skipping.\n", filename, g_module_error () );
-                        XSM_DEBUG_GW (DBG_EVER, "plugin_ctrl::add_pi -- reference symbol not found, no valid GXSM plugin. : %s [%s] -- skipping.\n", filename, g_module_error () );
+                        XSM_DEBUG_GW (DBG_EVER, "plugin_ctrl::add_pi ** reference symbol not found, no valid GXSM plugin. : %s [%s] -- skipping.", filename, g_module_error () );
 			g_module_close(gxsm_module);
 		}
 	}
 	else{
-		XSM_DEBUG_GP_ERROR (DBG_L1, "Failed loading PlugIn <%s>: %s", filename, g_module_error () );
+		XSM_DEBUG_GW (DBG_EVER, "Failed loading PlugIn <%s>: %s", filename, g_module_error () );
 	}
 
         g_free (pcs_settings_key);
