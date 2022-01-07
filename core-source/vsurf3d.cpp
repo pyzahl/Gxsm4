@@ -65,7 +65,7 @@
 #include <gtk/gtk.h>
 #include "action_id.h"
 
-#include "vsurf3d_pref.C"
+#include "vsurf3d_pref.cpp"
 #include "surface.h"
 
 #include "xsmdebug.h"
