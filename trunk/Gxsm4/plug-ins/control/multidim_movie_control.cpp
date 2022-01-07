@@ -172,7 +172,7 @@ static void MovieControl_Thaw_callback (gpointer x){
 
 static void Multidim_Movie_Control_query(void)
 {
-        g_message ("PLUGIN: CONTROL=>Multidim_Movie_Control_query");
+        PI_DEBUG_GM (DBG_L2, "PLUGIN: CONTROL=>Multidim_Movie_Control_query");
 	// new ...
 	Multidim_Movie_ControlClass = new Multidim_Movie_Control (main_get_gapp() -> get_app ());
 
@@ -199,7 +199,7 @@ static void Multidim_Movie_Control_about(void)
 }
 
 static void Multidim_Movie_Control_cleanup( void ){
-	PI_DEBUG (DBG_L2, "Multidim_Movie_Control Plugin Cleanup" );
+	PI_DEBUG_GM (DBG_L2, "Multidim_Movie_Control Plugin Cleanup" );
 	// delete ...
 	if( Multidim_Movie_ControlClass )
 		delete Multidim_Movie_ControlClass ;
@@ -225,7 +225,7 @@ Multidim_Movie_Control::Multidim_Movie_Control (Gxsm4app *app):AppBase(app)
 	l_play_flg = false;
 	play_direction = 1;
 
-        g_message ("PLUGIN: CONTROL=>Multidim_Movie_Control::Multidim_Movie_Control BUILDING");
+        PI_DEBUG_GM (DBG_L2, "PLUGIN: CONTROL=>Multidim_Movie_Control::Multidim_Movie_Control BUILDING");
 
 	Unity    = new UnitObj(" "," ");
 	Time     = new UnitObj("ms","ms");
