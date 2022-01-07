@@ -72,8 +72,6 @@ Convenience panel for Multi Dimensional Movie Control and playback.
 #include "unit.h"
 #include "pcs.h"
 #include "glbvars.h"
-//##include "plug-ins/hard/modules/ccd.h"
-
 
 static void Multidim_Movie_Control_about( void );
 static void Multidim_Movie_Control_query( void );

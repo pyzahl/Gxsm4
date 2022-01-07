@@ -1525,9 +1525,6 @@ Special features and behaviors to be documented here!
 #define THIS_HWI_PLUGIN_NAME "SRangerMK2:SPM"
 #define THIS_HWI_PREFIX      "SR-MK2/3_HwI"
 
-//extern int debug_level;
-//extern int force_gxsm_defaults;
-
 
 // Plugin Prototypes
 static void sranger_mk2_hwi_init( void );
@@ -2045,4 +2042,3 @@ static void sranger_mk2_hwi_cleanup(void)
 	
         PI_DEBUG (DBG_L4, THIS_HWI_PREFIX "::sranger_mk2_hwi_cleanup -- Done.");
 }
-
