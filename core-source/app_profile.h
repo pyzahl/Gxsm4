@@ -31,6 +31,10 @@
 #include <iostream>
 #include <fstream>
 #include "cairo_item.h"
+#include "lineprofile.h"
+#include "gapp_service.h"
+#include "app_vobj.h"
+#include "scan.h"
 
 typedef enum { EV_BUTTON_NONE=0, EV_BUTTON_1=1, EV_BUTTON_2=2, EV_BUTTON_3=3, EV_BUTTON_WHEEL_UP=4, EV_BUTTON_WHEEL_DOWN=5 } EV_BUTTON;
 typedef enum { EV_NONE, EV_BUTTON_PRESS, EV_MOTION_NOTIFY, EV_BUTTON_RELEASE, EV_ENTER_NOTIFY, EV_LEAVE_NOTIFY } EV_TYPE;
@@ -92,10 +96,10 @@ class ProfileElement{
 
         void calc_decimation (gint64 ymode);
         void get_decimation (gint &dl, gint &nd) { dl=dec_len; nd=n_dec; };
-	int GetNy(){ return scan->mem2d->GetNy(); };
-	void SetY(int Yy=0){ yy=Yy; };
-	void SetLastY(){ yy=scan->mem2d->GetNy()-1; };
-	void SetMode(long Mode);
+	inline int GetNy();
+	inline void SetY(int Yy=0);
+	inline void SetLastY();
+	inline void SetMode(long Mode);
         gint64 GetMode() { return mode; };
 	void SetOptions(long Flg);
   
@@ -104,102 +108,17 @@ class ProfileElement{
         void   stream_set (std::ofstream &ofs, int id=0);
 	void   update (GtkWidget *canvas, int id=0, int style=CAIRO_LINE_SOLID);
 
-	void GetCurXYc(double *x, double *y, int i, int id=0){
-		if(pathitem[id])
-			pathitem[id]->get_xy (i/dec_len, *x, *y);
-        };
+	inline void GetCurXYc(double *x, double *y, int i, int id=0);
+	inline int GetCurX(double *x, double *y, int id=0);
 
-	int GetCurX(double *x, double *y, int id=0){
-		if(pathitem[id]){
-			double xl, xr, ytmp;
-			pathitem[id]->get_xy (  0, xl, ytmp);
-			pathitem[id]->get_xy (n/dec_len-1, xr, ytmp);
-			int i = (int)(n*(*x-xl)/(xr-xl));
-			pathitem[id]->get_xy (i/dec_len, *x, *y);
-			// search:
-			//      while(*x > pn->coords[2*i] && i > 1) --i;
-			//      while(*x < pn->coords[2*i] && i < n-2) ++i;
-			return i;
-		}
-		return 0;
-	};
+	gchar *GetInfo(int i, gint64 ymode=0);
+        inline double GetData_dz ();
+        double SetData_dz (double dz);
+	inline double GetValue(int i);
+	inline double GetXPos(int i);
 
-	gchar *GetInfo(int i, gint64 ymode=0){
-		double x,y;
-		x=y=0.;
-		GetCurXYc (&x, &y, i);
-		if(i<n && i>=0){
-			Scan *sc = psd_scan ? psd_scan : scan;
-			x = sc->mem2d->data->GetXLookup(i);
-			return g_strconcat("Cursor (",
-					   scan->data.Xunit->UsrString (x),
-					   psd_scan? "^-1, " : ", ",
-					   psd_scan ? scan->data.Zunit->UsrString (y) :
-					   ymode & PROFILE_MODE_YLINREG ?
-					   scan->data.Zunit->UsrString (scan->mem2d->GetDataPktLineReg(i,yy)*scan->data.s.dz) :
-					   scan->data.Zunit->UsrString (sc->mem2d->GetDataPkt(i,yy)*scan->data.s.dz),
-					   ")",
-					   NULL);
-		}
-		else
-			return g_strdup("out of scan !");
-	};
-
-        double GetData_dz () { return scan->data.s.dz; };
-        double SetData_dz (double dz) { return scan->data.s.dz = dz; };
-        
-	double GetValue(int i){
-		if(i<n && i>=0){
-			if(psd_scan)
-				return psd_scan->mem2d->GetDataPkt(i,yy)*scan->data.s.dz;
-			else
-				return scan->mem2d->GetDataPktLineReg(i,yy)*scan->data.s.dz;
-		}
-		return 0.;
-	};
-
-	double GetXPos(int i){
-		if(i<n && i>=0){
-			if(psd_scan)
-				return psd_scan->mem2d->data->GetXLookup(i);
-			else
-				return scan->mem2d->data->GetXLookup(i);
-		}
-		return 0.;
-	};
-
-	int nextMax(int i, int dir, double eps=1.){
-		if(i<n && i>=0){
-			int k;
-			double v=scan->mem2d->GetDataPktLineReg(i,yy);
-			if(v > scan->mem2d->GetDataPktLineReg(i+dir,yy)+eps){
-				i=nextMin(i+dir,dir,eps);
-				v=scan->mem2d->GetDataPktLineReg(i,yy);
-			}
-			for(k=i+dir; k>=0 && k<n && v < scan->mem2d->GetDataPktLineReg(k,yy)+eps; k+=dir){
-				v=scan->mem2d->GetDataPktLineReg(k,yy);
-			}
-			k-=dir;
-			return k;
-		}
-		else return 0;
-	};
-
-	int nextMin(int i, int dir, double eps=1.){
-		if(i<n && i>=0){
-			int k;
-			double v=scan->mem2d->GetDataPktLineReg(i,yy);
-			if(v < scan->mem2d->GetDataPktLineReg(i+dir,yy)-eps){
-				i=nextMax(i+dir,dir,eps);
-				v=scan->mem2d->GetDataPktLineReg(i,yy);
-			}
-			for(k=i+dir; k>=0 && k<n && v > scan->mem2d->GetDataPktLineReg(k,yy)-eps; k+=dir)
-				v=scan->mem2d->GetDataPktLineReg(k,yy);
-			k-=dir;
-			return k;
-		}
-		else return 0;
-	};
+	int nextMax(int i, int dir, double eps=1.);
+	int nextMin(int i, int dir, double eps=1.);
 
 	gchar *GetDeltaInfo(int i, int j, gint64 ymode=0);
 	Scan *get_scan () { return scan; };
@@ -227,12 +146,12 @@ class ProfileElement{
 class ProfileControl : public AppBase, public LineProfile1D{
 
  public:
-	ProfileControl (const gchar *titlestring=NULL, int ChNo=-1);
-	ProfileControl (const gchar *titlestring, int n, UnitObj *ux, UnitObj *uy, double xmin=0., double xmax=1.,
+	ProfileControl (Gxsm4app *app, const gchar *titlestring=NULL, int ChNo=-1);
+	ProfileControl (Gxsm4app *app, const gchar *titlestring, int n, UnitObj *ux, UnitObj *uy, double xmin=0., double xmax=1.,
                         const gchar *resid=NULL, Gxsm4appWindow *in_external_window=NULL);
-	ProfileControl (const gchar *filename, const gchar *resource_id_string);
+	ProfileControl (Gxsm4app *app, const gchar *filename, const gchar *resource_id_string);
 	~ProfileControl ();
-        virtual void AppWindowInit (const gchar *title, const gchar *sub_title=NULL);
+        virtual void AppWindowInit (const gchar *title=NULL, const gchar *sub_title=NULL);
 
         GtkWidget *widget_cb, *widget_xr_ab;
         GtkWidget *get_pc_grid () { return pc_grid; };

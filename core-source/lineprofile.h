@@ -1,3 +1,5 @@
+/* -*- Mode: C++; indent-tabs-mode: nil; c-basic-offset: 8 c-style: "K&R" -*- */
+
 /* Gxsm - Gnome X Scanning Microscopy
  * universal STM/AFM/SARLS/SPALEED/... controlling and
  * data analysis software
@@ -36,8 +38,12 @@
 #include <cmath>
 #include <cstring>
 
-#include "scan.h"
-#include "app_vobj.h"
+#include <gtk/gtk.h>
+
+
+class Scan;
+class UnitObj;
+class VObject;
 
 /*
  * LineProfile Class

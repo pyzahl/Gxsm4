@@ -45,56 +45,80 @@
 
 /* please use only these functions for debugging outputs! */
 
-extern int logging_level;
+extern "C++" {
+
+  extern int logging_level;
 
 #ifdef XSM_DEBUG_OPTION
- extern int debug_level;
- extern int pi_debug_level;
+  extern int main_get_debug_level ();
+  extern int mein_get_pi_debug_level ();
 
+  
 # define MSG_OUT std::cerr  /* normal messages -- found std::cout is not working proper from some point?!?!?*/
 # define ERR_OUT std::cerr  /* error messages */
 # define NEWLINE std::endl  /* new line/end line code, force buffer flush */
 
 /*  __PRETTY_FUNCTION__  */
 /* GXSM core debugging messages */
-#define XSM_DEBUG_GM(L, DBGTXT, ARGS...)         do { if(debug_level > L) g_message ( DBGTXT ); } while(0)
-#define XSM_DEBUG_GW(L, DBGTXT, ARGS...)         do { if(debug_level > L) g_warning ( DBGTXT ); } while(0)
- #define XSM_DEBUG(L, DBGTXT)         do { if(debug_level > L) MSG_OUT << "** (" << __FILE__ << ": " << __FUNCTION__ << ") Gxsm-DEBUG-MESSAGE **: " << NEWLINE << " - " << DBGTXT << NEWLINE; } while(0)
- #define XSM_DEBUG_PLAIN(L, DBGTXT)   do { if(debug_level > L) MSG_OUT << DBGTXT ; } while(0)
- #define XSM_DEBUG_WARNING(L, DBGTXT) do { if(debug_level > L) MSG_OUT << "** (" << __FILE__ << ": " << __FUNCTION__ << ") Gxsm-WARNING **: " << NEWLINE << " - " << DBGTXT << NEWLINE; } while(0)
- #define XSM_DEBUG_ERROR(L, DBGTXT)   do { if(debug_level > L) ERR_OUT << "** (" << __FILE__ << ": " << __FUNCTION__ << ") Gxsm-ERROR **:" << NEWLINE << " - " << DBGTXT << NEWLINE; } while(0)
+#define XSM_DEBUG_GM(L, DBGTXT, ARGS...)         do { if(main_get_debug_level() > L) g_message ( DBGTXT ); } while(0)
+#define XSM_DEBUG_GW(L, DBGTXT, ARGS...)         do { if(main_get_debug_level() > L) g_warning ( DBGTXT ); } while(0)
+#define XSM_DEBUG(L, DBGTXT)         do { if(main_get_debug_level() > L) MSG_OUT << "** (" << __FILE__ << ": " << __FUNCTION__ << ") Gxsm-DEBUG-MESSAGE **: " << NEWLINE << " - " << DBGTXT << NEWLINE; } while(0)
+#define XSM_DEBUG_PLAIN(L, DBGTXT)   do { if(main_get_debug_level() > L) MSG_OUT << DBGTXT ; } while(0)
+#define XSM_DEBUG_WARNING(L, DBGTXT) do { if(main_get_debug_level() > L) MSG_OUT << "** (" << __FILE__ << ": " << __FUNCTION__ << ") Gxsm-WARNING **: " << NEWLINE << " - " << DBGTXT << NEWLINE; } while(0)
+#define XSM_DEBUG_ERROR(L, DBGTXT)   do { if(main_get_debug_level() > L) ERR_OUT << "** (" << __FILE__ << ": " << __FUNCTION__ << ") Gxsm-ERROR **:" << NEWLINE << " - " << DBGTXT << NEWLINE; } while(0)
 
- #define XSM_DEBUG_GP(L, ARGS...)  do { if(debug_level > L) g_message (ARGS); } while(0)
- #define XSM_DEBUG_GP_WARNING(L, ARGS...)  do { if(debug_level > L) g_warning (ARGS); } while(0)
- #define XSM_DEBUG_GP_ERROR(L, ARGS...)  do { if(debug_level > L) g_error (ARGS); } while(0)
+#define XSM_DEBUG_GP(L, ARGS...)  do { if(main_get_debug_level() > L) g_message (ARGS); } while(0)
+#define XSM_DEBUG_GP_WARNING(L, ARGS...)  do { if(main_get_debug_level() > L) g_warning (ARGS); } while(0)
+#define XSM_DEBUG_GP_ERROR(L, ARGS...)  do { if(main_get_debug_level() > L) g_error (ARGS); } while(0)
 
-/* GXSM-PlugIn debugging messages */
- #define PI_DEBUG(L, DBGTXT)          do { if(pi_debug_level > L) MSG_OUT << "** (" << __FILE__ << ": " << __FUNCTION__ << ") Gxsm-PlugIn-DEBUG-MESSAGE **: " << NEWLINE << " - " << DBGTXT << NEWLINE; } while(0)
- #define PI_DEBUG_PLAIN(L, DBGTXT)    do { if(pi_debug_level > L) MSG_OUT << DBGTXT ; } while(0)
- #define PI_DEBUG_WARNING(L, DBGTXT)  do { if(pi_debug_level > L) MSG_OUT << "** (" << __FILE__ << ": " << __FUNCTION__ << ") Gxsm-PlugIn-WARNING **: " << NEWLINE << " - " << DBGTXT << NEWLINE; } while(0)
- #define PI_DEBUG_ERROR(L, DBGTXT)    do { if(pi_debug_level > L) ERR_OUT << "** (" << __FILE__ << ": " << __FUNCTION__ << ") Gxsm-PlugIn-ERROR **:" << NEWLINE << " - " << DBGTXT << NEWLINE; } while(0)
+  /* GXSM-PlugIn debugging messages */
+#define PI_DEBUG(L, DBGTXT)          do { if(main_get_pi_debug_level() > L) MSG_OUT << "** (" << __FILE__ << ": " << __FUNCTION__ << ") Gxsm-PlugIn-DEBUG-MESSAGE **: " << NEWLINE << " - " << DBGTXT << NEWLINE; } while(0)
+#define PI_DEBUG_PLAIN(L, DBGTXT)    do { if(main_get_pi_debug_level() > L) MSG_OUT << DBGTXT ; } while(0)
+#define PI_DEBUG_WARNING(L, DBGTXT)  do { if(main_get_pi_debug_level() > L) MSG_OUT << "** (" << __FILE__ << ": " << __FUNCTION__ << ") Gxsm-PlugIn-WARNING **: " << NEWLINE << " - " << DBGTXT << NEWLINE; } while(0)
+#define PI_DEBUG_ERROR(L, DBGTXT)    do { if(main_get_pi_debug_level() > L) ERR_OUT << "** (" << __FILE__ << ": " << __FUNCTION__ << ") Gxsm-PlugIn-ERROR **:" << NEWLINE << " - " << DBGTXT << NEWLINE; } while(0)
 
- #define PI_DEBUG_GP(L, ARGS...)  do { if(pi_debug_level > L) g_message (ARGS); } while(0)
- #define PI_DEBUG_GP_WARNING(L, ARGS...)  do { if(pi_debug_level > L) g_warning (ARGS); } while(0)
- #define PI_DEBUG_GP_ERROR(L, ARGS...)  do { if(pi_debug_level > L) g_error (ARGS); } while(0)
+#define PI_DEBUG_GP(L, ARGS...)  do { if(main_get_pi_debug_level() > L) g_message (ARGS); } while(0)
+#define PI_DEBUG_GP_WARNING(L, ARGS...)  do { if(main_get_pi_debug_level() > L) g_warning (ARGS); } while(0)
+#define PI_DEBUG_GP_ERROR(L, ARGS...)  do { if(main_get_pi_debug_level() > L) g_error (ARGS); } while(0)
+
+  // #define XSM_HWI_DEBUG(L, DBGTXT) std::cout << "** (" << __FILE__ << ": " << __FUNCTION__ << ") Gxsm-HwI-DEBUG-MESSAGE **: " << std::endl << " - " << DBGTXT << std::endl
+#define XSM_HWI_DEBUG_ERROR(L, DBGTXT)         do { if(main_get_debug_level() > L) std::cerr << "** (" << __FILE__ << ": " << __FUNCTION__ << ") Gxsm-ERROR-MESSAGE **: " << NEWLINE << " - " << DBGTXT << NEWLINE; } while(0)
+#define XSM_HWI_DEBUG(L, DBGTXT)         do { if(main_get_debug_level() > L) std::cout << "** (" << __FILE__ << ": " << __FUNCTION__ << ") Gxsm-DEBUG-MESSAGE **: " << NEWLINE << " - " << DBGTXT << NEWLINE; } while(0)
 
 #else
 
-/* Dummy Macros to fully disable any debugging code */
- #define XSM_DEBUG(L, DBGTXT) ;
- #define XSM_DEBUG_PLAIN(L, DBGTXT) ;
- #define XSM_DEBUG_WARNING(L, DBGTXT) ;
- #define XSM_DEBUG_ERROR(L, DBGTXT) ;
- #define XSM_DEBUG_GP(L, ARGS...)
 
- #define PI_DEBUG(L, DBGTXT) ;
- #define PI_DEBUG_PLAIN(L, DBGTXT) ;
- #define PI_DEBUG_WARNING(L, DBGTXT) ;
- #define PI_DEBUG_ERROR(L, DBGTXT) ;
- #define PI_DEBUG_GP(L, ARGS...) ;
+  /* Dummy Macros to fully disable any debugging code */
+#define XSM_DEBUG_GM(L, DBGTXT, ARGS...) do{}while(0)
+#define XSM_DEBUG_GW(L, DBGTXT, ARGS...) do{}while(0)
+#define XSM_DEBUG(L, DBGTXT) do{}while(0)
+#define XSM_DEBUG_PLAIN(L, DBGTXT) do{}while(0)
+#define XSM_DEBUG_WARNING(L, DBGTXT) do{}while(0)
+#define XSM_DEBUG_ERROR(L, DBGTXT) do{}while(0)
+
+#define XSM_DEBUG_GP(L, ARGS...) do{}while(0)
+#define XSM_DEBUG_GP_WARNING(L, ARGS...) do{}while(0)
+#define XSM_DEBUG_GP_ERROR(L, ARGS...) do{}while(0)
+
+  /* GXSM-PlugIn debugging messages */
+#define PI_DEBUG(L, DBGTXT) do{}while(0)
+#define PI_DEBUG_PLAIN(L, DBGTXT) do{}while(0)
+#define PI_DEBUG_WARNING(L, DBGTXT) do{}while(0)
+#define PI_DEBUG_ERROR(L, DBGTXT) do{}while(0)
+
+#define PI_DEBUG_GP(L, ARGS...) do{}while(0)
+#define PI_DEBUG_GP_WARNING(L, ARGS...) do{}while(0)
+#define PI_DEBUG_GP_ERROR(L, ARGS...) do{}while(0)
+
+#define XSM_HWI_DEBUG_ERROR(L, DBGTXT) do {} while(0)
+#define XSM_HWI_DEBUG(L, DBGTXT) do {} while(0)
+
 #endif
 
+} // extern C++
+
 #endif
+
 
 /* END */
 

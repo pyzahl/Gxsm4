@@ -37,6 +37,8 @@ class V3dControl;
 
 #include "mem2d.h"
 #include "xshmimg.h"
+#include "gxsm_app.h"
+
 #include <stdlib.h>
 
 #include <glm/vec3.hpp>
@@ -192,24 +194,6 @@ private:
         ViewControl *viewcontrol;
         ShmImage2D *XImg;
 };
-
-
-class Profiles  : public View{
-public:
-        Profiles();
-        Profiles(Scan *sc, int ChNo);
-        virtual ~Profiles();
-
-        virtual void hide();
-        virtual int draw(int zoomoverride=FALSE);
-        virtual int update(int y1, int y2);
-        virtual void ZoomIn(){};
-        virtual void ZoomOut(){};
-
-private:  
-        ProfileControl *profile;
-};
-
 
 typedef struct{
 	float trans[3];

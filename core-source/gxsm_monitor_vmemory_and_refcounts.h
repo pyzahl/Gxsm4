@@ -51,8 +51,8 @@ extern const gchar *grc_name[];
 #endif
 
 #ifdef GXSM_MONITOR_VMEMORY_USAGE
-#define GXSM_LOG_DATAOBJ_ACTION(ID, WHAT) gapp->monitorcontrol->LogEvent(grc_name[ID], WHAT, 4);
-#define GXSM_LOG_ANY_ACTION(ID, WHAT) gapp->monitorcontrol->LogEvent(ID, WHAT, 4);
+#define GXSM_LOG_DATAOBJ_ACTION(ID, WHAT) main_get_gapp ()->monitorcontrol->LogEvent(grc_name[ID], WHAT, 4);
+#define GXSM_LOG_ANY_ACTION(ID, WHAT) main_get_gapp ()->monitorcontrol->LogEvent(ID, WHAT, 4);
 #define GXSM_REF_OBJECT(ID)   ++global_ref_counter[ID];
 #define GXSM_UNREF_OBJECT(ID) --global_ref_counter[ID];
 #else

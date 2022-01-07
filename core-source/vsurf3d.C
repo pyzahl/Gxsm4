@@ -66,6 +66,7 @@
 #include "action_id.h"
 
 #include "vsurf3d_pref.C"
+#include "surface.h"
 
 #include "xsmdebug.h"
 
@@ -533,7 +534,7 @@ public:
                 // fix me -- find out how to get path or install own??
                 if (Validated && FT_New_Face(ft, "/usr/share/fonts/truetype/freefont/FreeSans.ttf", 0, &face)) {
                         g_warning ("Could not open font /usr/share/fonts/truetype/freefont/FreeSans.ttf. -- No GL text rendering.");
-                        gapp->warning ("Could not open font /usr/share/fonts/truetype/freefont/FreeSans.ttf.\n"
+                        main_get_gapp ()->warning ("Could not open font /usr/share/fonts/truetype/freefont/FreeSans.ttf.\n"
                                        "No OpenGL text rendering via FreeType library.\n"
                                        "Please install the 'fonts-freefont-ttf' package.");
                         Validated = false;
@@ -1913,7 +1914,7 @@ Surf3d::~Surf3d(){
 
         self = NULL;
 
-        gapp->remove_configure_object_from_remote_list (v3dControl_pref_dlg);
+        main_get_gapp ()->remove_configure_object_from_remote_list (v3dControl_pref_dlg);
 
         if (v3dControl_pref_dlg)
                 gnome_res_destroy (v3dControl_pref_dlg);
@@ -2016,10 +2017,10 @@ void Surf3d::GetXYZScale (float *s, gboolean z_scale_abs){
 // XYZ ormalized to GL box +/- 0.5
 double Surf3d::GetXYZNormalized(float *r, gboolean z_scale_abs){
         double x,y,z, zmin; 
-        gapp->xsm->hardware->RTQuery ("R", z, x, y); // in Ang, absolute
-        gapp->xsm->hardware->invTransform (&x, &y);
+        main_get_gapp ()->xsm->hardware->RTQuery ("R", z, x, y); // in Ang, absolute
+        main_get_gapp ()->xsm->hardware->invTransform (&x, &y);
         zmin = scan->data.s.dz * scan->mem2d->data->zmin;
-        // zmin = gapp->xsm->Inst->Dig2ZA (scan->mem2d->data->zmin);
+        // zmin = main_get_gapp ()->xsm->Inst->Dig2ZA (scan->mem2d->data->zmin);
         // g_message ("GetXYZ RTQuery: Z=%f X=%f Y=%f", z,x,y);
         x /= scan->data.s.rx; // Ang
         y /= scan->data.s.ry;
@@ -2029,20 +2030,20 @@ double Surf3d::GetXYZNormalized(float *r, gboolean z_scale_abs){
                 r[2] = (z-zmin) / scan->data.s.rx; // normalize to x scale
         else
                 r[2] = (z-zmin) / (scan->data.s.dz * scan->mem2d->data->zrange);
-                // r[2] = (z-zmin) / gapp->xsm->Inst->Dig2ZA (scan->mem2d->data->zrange);
+                // r[2] = (z-zmin) / main_get_gapp ()->xsm->Inst->Dig2ZA (scan->mem2d->data->zrange);
         return z;
 }
 
 // Current in nA
 double Surf3d::GetCurrent(){
         double v1,v2,v3;
-        gapp->xsm->hardware->RTQuery ("f", v1, v2, v3);
+        main_get_gapp ()->xsm->hardware->RTQuery ("f", v1, v2, v3);
         return v2;
 }
 // dF in Hz
 double Surf3d::GetForce(){
         double v1,v2,v3;
-        gapp->xsm->hardware->RTQuery ("f", v1, v2, v3);
+        main_get_gapp ()->xsm->hardware->RTQuery ("f", v1, v2, v3);
         return v1;
 }
 
@@ -2145,7 +2146,7 @@ void Surf3d::GLvarinit(){
 	gnome_res_set_auto_apply (v3dControl_pref_dlg, TRUE);
 	gnome_res_set_height (v3dControl_pref_dlg, 700);
 	gnome_res_read_user_config (v3dControl_pref_dlg);
-        gapp->add_configure_object_to_remote_list (v3dControl_pref_dlg);
+        main_get_gapp ()->add_configure_object_to_remote_list (v3dControl_pref_dlg);
 }
 
 void Surf3d::GLupdate (void* data){
@@ -2250,7 +2251,7 @@ gboolean Surf3d::check_dimension_changed(){
                                          "     check: %s for .glsl files.", getDataDirectory().c_str());
 
                                 g_critical ("%s", message);
-                                gapp->warning (message);
+                                main_get_gapp ()->warning (message);
                                 g_free (message);
 
                                 delete gl_tess;
@@ -2277,14 +2278,14 @@ void Surf3d::create_surface_buffer(){
 	}
 
         mem2d_x=NULL;
-        int ChSrcX=gapp->xsm->FindChan (ID_CH_M_X);
+        int ChSrcX=main_get_gapp ()->xsm->FindChan (ID_CH_M_X);
         if (ChSrcX >= 0){
-                if(gapp->xsm->scan[ChSrcX])
-                        mem2d_x = gapp->xsm->scan[ChSrcX]->mem2d;
+                if(main_get_gapp ()->xsm->scan[ChSrcX])
+                        mem2d_x = main_get_gapp ()->xsm->scan[ChSrcX]->mem2d;
 
         } else
-                if(gapp->xsm->scan[0])
-                        mem2d_x = gapp->xsm->scan[0]->mem2d;
+                if(main_get_gapp ()->xsm->scan[0])
+                        mem2d_x = main_get_gapp ()->xsm->scan[0]->mem2d;
 
 	XPM_x = scan->mem2d->GetNx();
 	XPM_y = scan->mem2d->GetNy();
@@ -2304,8 +2305,8 @@ void Surf3d::create_surface_buffer(){
 
 	XSM_DEBUG (GL_DEBUG_L3, "Surf3d::create_surface_buffer  ** computing surface and normals");
         // grab and prepare data buffers
-        if (gapp->xsm->scan[0])
-                gapp->xsm->scan[0]->mem2d->data->update_ranges (0);
+        if (main_get_gapp ()->xsm->scan[0])
+                main_get_gapp ()->xsm->scan[0]->mem2d->data->update_ranges (0);
 
         scan->mem2d->data->update_ranges (0);
         for(int v=0; v<scan->mem2d->GetNv(); ++v)
@@ -2426,7 +2427,7 @@ double Surf3d::HeightSkl(double x){
                 v3dControl_pref_dlg->block = TRUE;
                 gnome_res_update_all (v3dControl_pref_dlg);
                 v3dControl_pref_dlg->block = FALSE;
-                draw();
+                draw(NULL);
         }
 	return GLv_data.hskl; 
 }
@@ -2636,7 +2637,7 @@ void realize_vsurf3d_cb (GtkGLArea *area, Surf3d *s){
                          "     check: %s for .glsl files.", getDataDirectory().c_str());
 
                 g_critical ("%s",message);
-                gapp->warning (message);
+                main_get_gapp ()->warning (message);
                 g_free (message);
 
                 delete s->gl_tess;
@@ -2686,19 +2687,25 @@ render_vsurf3d_cb (GtkGLArea *area, GdkGLContext *context, Surf3d *s)
 int Surf3d::draw(int zoomoverride){
 
 	XSM_DEBUG (GL_DEBUG_L2, "SURF3D:::DRAW");
-
+ 
 	if (!scan->mem2d) { 
 		XSM_DEBUG (GL_DEBUG_L2, "Surf3d: no mem2d !"); 
 		return 1; 
 	}
 	
-	if ( !v3dcontrol )
-		v3dcontrol = new V3dControl ("3D Surface View (using GL/GPU)", ChanNo, scan,
+	if ( !v3dcontrol ){
+                if (!scan->get_app ()){
+                        g_warning ("ERROR Grey2D::DRAW -- invalid request: no app reference provided.");
+                        return -1;
+                }
+
+		v3dcontrol = new V3dControl (scan->get_app (),
+                                             "3D Surface View (using GL/GPU)", ChanNo, scan,
 					     G_CALLBACK (resize_vsurf3d_cb),
 					     G_CALLBACK (render_vsurf3d_cb),
                                              G_CALLBACK (realize_vsurf3d_cb),
 					     self);
-
+        }
         v3dcontrol->rerender_scene ();
         
 	return 0;

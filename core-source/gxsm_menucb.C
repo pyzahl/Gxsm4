@@ -35,10 +35,10 @@
 
 #include "dataio.h"
 #include "util.h"
-#include "version.h"
 #include "glbvars.h"
 
 #include "gxsm_resoucetable.h"
+#include "surface.h"
 
 #include "action_id.h"
 
@@ -48,14 +48,14 @@
 
 void App::file_open_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data){
 	if(!gapp) return;
-	gapp->xsm->load();
+	main_get_gapp ()->xsm->load();
 	return;
 }
 
 void App::file_open_in_new_window_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data){
 	if(!gapp) return;
-	if(!gapp->xsm->ActivateFreeChannel())
-		gapp->xsm->load();
+	if(!main_get_gapp ()->xsm->ActivateFreeChannel())
+		main_get_gapp ()->xsm->load();
 	return;
 }
 
@@ -68,11 +68,11 @@ void App::file_open_mode_callback (GSimpleAction *action, GVariant *parameter, g
         new_state = g_variant_new_string (g_variant_get_string (parameter, NULL));
                 
         if (!strcmp (g_variant_get_string (new_state, NULL), "replace")){
-                gapp->xsm->file_open_mode = xsm::open_mode::replace;
+                main_get_gapp ()->xsm->file_open_mode = xsm::open_mode::replace;
         } else if (!strcmp (g_variant_get_string (new_state, NULL), "append-time")){
-                gapp->xsm->file_open_mode = xsm::open_mode::append_time;
+                main_get_gapp ()->xsm->file_open_mode = xsm::open_mode::append_time;
         } else if (!strcmp (g_variant_get_string (new_state, NULL), "stitch-2d")){
-                gapp->xsm->file_open_mode = xsm::open_mode::stitch_2d;
+                main_get_gapp ()->xsm->file_open_mode = xsm::open_mode::stitch_2d;
         } else g_warning ("App::file_open_mode_callback -- unhandled action.");
       
         g_simple_action_set_state (action, new_state);
@@ -100,14 +100,14 @@ void App::browse_callback(gchar *selection, App* ap){
 
 void App::file_set_datapath_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data){
 	if(!gapp) return;
-	gapp->xsm->save (CHANGE_PATH_ONLY);
+	main_get_gapp ()->xsm->save (CHANGE_PATH_ONLY);
 	return;
 }
 
 void App::file_set_probepath_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data){
 	XsmRescourceManager xrm("FilingPathMemory");
 	gchar *path = xrm.GetStr ("Probe_DataSavePath", xsmres.DataPath);
-	gchar *newpath = gapp->file_dialog_load (N_("Select path for probe data files"), path, NULL);
+	gchar *newpath = main_get_gapp ()->file_dialog_load (N_("Select path for probe data files"), path, NULL);
 
 	g_free (path);
 	if (newpath){
@@ -122,15 +122,15 @@ void App::auto_save_scans (){ // auto save or update scan(s) in progress or comp
 
         // use new auto safe
         int maxcounter_until_ask = xsm->GetFileCounter()+100;
- 	for (GSList* tmp = gapp->xsm->GetActiveScanList(); tmp; tmp = g_slist_next (tmp)){ // for all current scans in progress or completed last
+ 	for (GSList* tmp = main_get_gapp ()->xsm->GetActiveScanList(); tmp; tmp = g_slist_next (tmp)){ // for all current scans in progress or completed last
                 if (((Scan*)tmp->data)->get_channel_id () >= 0){
-                        if (gapp->xsm->ChannelASflag[((Scan*)tmp->data)->get_channel_id ()]){ // if maked for autos save (AS)
+                        if (main_get_gapp ()->xsm->ChannelASflag[((Scan*)tmp->data)->get_channel_id ()]){ // if maked for autos save (AS)
                                 // full save, no user interaction -- no overwrite, but auto couter advance until clear to go. But with prev. updated file, do overwrite!
-                                while (((Scan*)tmp->data)->Save (gapp->auto_update_all)){
+                                while (((Scan*)tmp->data)->Save (main_get_gapp ()->auto_update_all)){
                                         xsm->FileCounterInc (); // try next counter
-                                        if (!gapp->is_thread_safe_no_gui_mode())
+                                        if (!main_get_gapp ()->is_thread_safe_no_gui_mode())
                                                 spm_update_all();
-                                        for (GSList* tmpAdjustCounter = gapp->xsm->GetActiveScanList(); tmpAdjustCounter; tmpAdjustCounter = g_slist_next (tmpAdjustCounter))
+                                        for (GSList* tmpAdjustCounter = main_get_gapp ()->xsm->GetActiveScanList(); tmpAdjustCounter; tmpAdjustCounter = g_slist_next (tmpAdjustCounter))
                                                 ((Scan*)tmpAdjustCounter->data)->storage_manager.set_dataset_counter (xsm->GetFileCounter ());
                                         // may add a safety bail out??? Even should end some time....?
                                         if (xsm->GetFileCounter () >= maxcounter_until_ask){
@@ -143,36 +143,36 @@ void App::auto_save_scans (){ // auto save or update scan(s) in progress or comp
                         }
                 }
         }
-        if (!gapp->is_thread_safe_no_gui_mode())
+        if (!main_get_gapp ()->is_thread_safe_no_gui_mode())
                 spm_update_all();
 }
 
 void App::auto_update_scans (){ // auto save or update scan(s) in progress or completed.
 	if(!gapp) return;
 
-	for (GSList* tmp = gapp->xsm->GetActiveScanList(); tmp; tmp = g_slist_next (tmp)) // for all current scans in progress or completed last
+	for (GSList* tmp = main_get_gapp ()->xsm->GetActiveScanList(); tmp; tmp = g_slist_next (tmp)) // for all current scans in progress or completed last
 		if (((Scan*)tmp->data)->get_channel_id () >= 0)
-                        if (gapp->xsm->ChannelASflag[((Scan*)tmp->data)->get_channel_id ()]) // if maked for autos save (AS)
+                        if (main_get_gapp ()->xsm->ChannelASflag[((Scan*)tmp->data)->get_channel_id ()]) // if maked for autos save (AS)
                                 ((Scan*)tmp->data)->Update_ZData_NcFile ();
 
-        gapp->set_toolbar_autosave_button (true);
+        main_get_gapp ()->set_toolbar_autosave_button (true);
         return;
 }
 
 void App::file_save_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data){
 	if(!gapp) return;
 
-        if (gapp->auto_update_all){
-                gapp->auto_update_scans ();
+        if (main_get_gapp ()->auto_update_all){
+                main_get_gapp ()->auto_update_scans ();
                 return;
         }
 
         int i=0;
-	for (GSList* tmp = gapp->xsm->GetActiveScanList(); tmp; tmp = g_slist_next (tmp)){ // for all current scans in progress or completed last
+	for (GSList* tmp = main_get_gapp ()->xsm->GetActiveScanList(); tmp; tmp = g_slist_next (tmp)){ // for all current scans in progress or completed last
 		if (((Scan*)tmp->data)->get_channel_id () >= 0){
-                        if (gapp->xsm->ChannelASflag[((Scan*)tmp->data)->get_channel_id ()]){ // if maked for autos save (AS)
+                        if (main_get_gapp ()->xsm->ChannelASflag[((Scan*)tmp->data)->get_channel_id ()]){ // if maked for autos save (AS)
                                 if (((Scan*)tmp->data)->Save ()){ // returns -1 if file exists and does nothing, else it's saved (or error)
-                                        GtkWidget *dialog = gtk_message_dialog_new (gapp->get_window (),
+                                        GtkWidget *dialog = gtk_message_dialog_new (main_get_gapp ()->get_window (),
                                                                                     GTK_DIALOG_DESTROY_WITH_PARENT,
                                                                                     GTK_MESSAGE_WARNING,
                                                                                     GTK_BUTTONS_YES_NO,
@@ -191,13 +191,13 @@ void App::file_save_callback (GSimpleAction *simple, GVariant *parameter, gpoint
 
                                         switch (overwrite){
                                         case GTK_RESPONSE_NO:
-                                                gapp->SetStatus(N_("File exists, save aborted by user."));
+                                                main_get_gapp ()->SetStatus(N_("File exists, save aborted by user."));
                                                 continue; // skip!
                                         case GTK_RESPONSE_YES:
                                                 ((Scan*)tmp->data)->Save (true); // force overwrite
                                                 break;
                                         case GTK_RESPONSE_APPLY:
-                                                gapp->auto_save_scans ();
+                                                main_get_gapp ()->auto_save_scans ();
                                                 break;
                                         }
                                 }
@@ -207,19 +207,19 @@ void App::file_save_callback (GSimpleAction *simple, GVariant *parameter, gpoint
         }
 
         // FIX-ME-GTK4 GTK_TOOL_BUTTON
-        gapp->tool_button_save_all = GTK_WIDGET (g_object_get_data (G_OBJECT (simple), "toolbar_button"));
-        gapp->set_toolbar_autosave_button (true);
+        main_get_gapp ()->tool_button_save_all = GTK_WIDGET (g_object_get_data (G_OBJECT (simple), "toolbar_button"));
+        main_get_gapp ()->set_toolbar_autosave_button (true);
 	return;
 }
 
 void App::set_toolbar_autosave_button (gboolean update_mode){
         if (tool_button_save_all){
                 if (update_mode){
-                        if (!gapp->is_thread_safe_no_gui_mode())
+                        if (!main_get_gapp ()->is_thread_safe_no_gui_mode())
                                 gtk_button_set_icon_name (GTK_BUTTON (tool_button_save_all), "view-refresh-symbolic");
                         auto_update_all = true;
                 }else{
-                        if (!gapp->is_thread_safe_no_gui_mode())
+                        if (!main_get_gapp ()->is_thread_safe_no_gui_mode())
                                 gtk_button_set_icon_name (GTK_BUTTON (tool_button_save_all), "document-save-symbolic");
                         auto_update_all = false;
                 }
@@ -228,28 +228,28 @@ void App::set_toolbar_autosave_button (gboolean update_mode){
         
 void App::file_update_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data){
 	if(!gapp) return;
-        gapp->auto_update_scans ();
+        main_get_gapp ()->auto_update_scans ();
 	return;
 }
 
 void App::file_save_as_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data){
 	if(!gapp) return;
-	gapp->xsm->save(MANUAL_SAVE_AS);
+	main_get_gapp ()->xsm->save(MANUAL_SAVE_AS);
 	return;
 }
 
 void App::file_print_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data){
 #if 0
-	if (gapp->PluginCallPrinter)
-		(*gapp->PluginCallPrinter) (widget, data);
+	if (main_get_gapp ()->PluginCallPrinter)
+		(*main_get_gapp ()->PluginCallPrinter) (widget, data);
 	else
-		gapp->message(N_("Sorry, no 'Printer' plugin loaded!"));
+		main_get_gapp ()->message(N_("Sorry, no 'Printer' plugin loaded!"));
 #endif
 	return;
 }
 
 void App::file_close_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data){
-	//  gapp->xsm->??
+	//  main_get_gapp ()->xsm->??
 	return;
 }
 
@@ -258,9 +258,9 @@ void App::file_quit_callback (GSimpleAction *simple, GVariant *parameter, gpoint
         gint r=true;
 	if(!gapp) return;
 
-	if (gapp->question_yes_no_with_action (Q_WANTQUIT, "Save Window Geometry", r) == GTK_RESPONSE_YES){
+	if (main_get_gapp ()->question_yes_no_with_action (Q_WANTQUIT, "Save Window Geometry", r) == GTK_RESPONSE_YES){
                 if (r)
-                        gapp->save_app_geometry ();
+                        main_get_gapp ()->save_app_geometry ();
 
                 GApplication *application = (GApplication *) user_data;
                 delete gapp;
@@ -280,7 +280,7 @@ void App::action_toolbar_callback (GSimpleAction *simple, GVariant *parameter, g
         }
         if (!gapp) return;
 
-        gapp->signal_emit_toolbar_action (action, simple);
+        main_get_gapp ()->signal_emit_toolbar_action (action, simple);
         return;
 }
 
@@ -299,58 +299,58 @@ typedef gboolean  (*M2Op)(MATH2OPPARAMS);
 #define M_2OP(f)                   ((M2Op) (f))
 
 void App::math_onearg_nodest_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data){ // gboolean (*MOp)(MATHOPPARAMSNODEST)
-        gapp->xsm->MathOperationNoDest (M_OPND (g_object_get_data (G_OBJECT (simple), "plugin_MOp")));
+        main_get_gapp ()->xsm->MathOperationNoDest (M_OPND (g_object_get_data (G_OBJECT (simple), "plugin_MOp")));
 	return;
 }
 
 void App::math_onearg_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data){ // gboolean (*MOp)(MATHOPPARAMS)){
-        gapp->xsm->MathOperation (M_OP (g_object_get_data (G_OBJECT (simple), "plugin_MOp")));
+        main_get_gapp ()->xsm->MathOperation (M_OP (g_object_get_data (G_OBJECT (simple), "plugin_MOp")));
 	return;
 }
 
 void App::math_onearg_dest_only_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data){ // gboolean (*MOpDO)(MATHOPPARAMDONLY)){
-        gapp->xsm->MathOperationS (M_OPDO (g_object_get_data (G_OBJECT (simple), "plugin_MOp")));
+        main_get_gapp ()->xsm->MathOperationS (M_OPDO (g_object_get_data (G_OBJECT (simple), "plugin_MOp")));
 	return;
 }
 
 void App::math_onearg_for_all_vt_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data){ // gboolean (*MOp)(MATHOPPARAMS)){
-	gapp->xsm->MathOperation_for_all_vt (M_OP (g_object_get_data (G_OBJECT (simple), "plugin_MOp")));
+	main_get_gapp ()->xsm->MathOperation_for_all_vt (M_OP (g_object_get_data (G_OBJECT (simple), "plugin_MOp")));
         return;
 }
 
 void App::math_twoarg_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data){ //  gboolean (*MOp)(MATH2OPPARAMS)){
-	gapp->xsm->MathOperationX (M_2OP (g_object_get_data (G_OBJECT (simple), "plugin_MOp")), ID_CH_M_X, TRUE);
+	main_get_gapp ()->xsm->MathOperationX (M_2OP (g_object_get_data (G_OBJECT (simple), "plugin_MOp")), ID_CH_M_X, TRUE);
 	return;
 }
 
 void App::math_twoarg_no_same_size_check_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data){ // gboolean (*MOp)(MATH2OPPARAMS)){
-	gapp->xsm->MathOperationX (M_2OP (g_object_get_data (G_OBJECT (simple), "plugin_MOp")), ID_CH_M_X, FALSE);
+	main_get_gapp ()->xsm->MathOperationX (M_2OP (g_object_get_data (G_OBJECT (simple), "plugin_MOp")), ID_CH_M_X, FALSE);
 	return;
 }
 
 /* Tools ================================================== */
 
 void App::tools_monitor_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data){
-	gapp->monitorcontrol->show();
+	main_get_gapp ()->monitorcontrol->show();
 	return;
 }
 
 void App::tools_chanselwin_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data){
-	gapp->channelselector->show();
+	main_get_gapp ()->channelselector->show();
 	return;
 }
 
 void App::tools_plugin_reload_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data){
-	gapp->reload_gxsm_plugins();
+	main_get_gapp ()->reload_gxsm_plugins();
 	return;
 }
 
 void App::tools_plugin_info_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data){
 	if(gapp){
-		if(gapp->GxsmPlugins)
-			gapp->GxsmPlugins->view_pi_info();
+		if(main_get_gapp ()->GxsmPlugins)
+			main_get_gapp ()->GxsmPlugins->view_pi_info();
 		else
-			gapp->message(N_("No Plugins loaded!"));
+			main_get_gapp ()->message(N_("No Plugins loaded!"));
 	}
 	return;
 }
@@ -376,11 +376,11 @@ void App::options_preferences_callback (GSimpleAction *simple, GVariant *paramet
 }
 
 void App::save_geometry_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data){
-        gapp->save_app_geometry ();
+        main_get_gapp ()->save_app_geometry ();
 }
 
 void App::load_geometry_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data){
-        gapp->load_app_geometry ();
+        main_get_gapp ()->load_app_geometry ();
 }
 
 /* Help ================================================== */
@@ -407,7 +407,7 @@ void App::help_about_callback (GSimpleAction *simple, GVariant *parameter, gpoin
 	};
 	
 #ifdef XSM_DEBUG_OPTION
-	gchar *dbg_lvl_tmp = g_strdup_printf ("\n\nGXSM / PlugIn debug level is: %d/%d", debug_level, pi_debug_level);
+	gchar *dbg_lvl_tmp = g_strdup_printf ("\n\nGXSM / PlugIn debug level is: %d/%d", main_get_debug_level (), main_get_pi_debug_level ());
 #else
 	gchar *dbg_lvl_tmp = g_strdup_printf ("\n\nGXSM debug support is disabled.");
 #endif
@@ -416,7 +416,7 @@ void App::help_about_callback (GSimpleAction *simple, GVariant *parameter, gpoin
 		(N_("GXSM is a Universal Scanning Probe Micoscopy Data Aquisitation and Visulaization System."
 		   "\nBuild for GTK4."
 		   "\n\nHardware: "),
-		 gapp->xsm->hardware->Info(0),
+		 main_get_gapp ()->xsm->hardware->Info(0),
 		 dbg_lvl_tmp,
 		 N_("\n\ncompiled by "),
 		 COMPILEDBYNAME,
@@ -446,7 +446,7 @@ void App::help_about_callback (GSimpleAction *simple, GVariant *parameter, gpoin
 /* Diverse CallBack Handler */
 
 gint App::close_scan_event_cb(GtkWidget *window){
-	if(gapp->xsm->SetMode ((long) GPOINTER_TO_INT (g_object_get_data (G_OBJECT (window), "Ch")), ID_CH_M_OFF))
+	if(main_get_gapp ()->xsm->SetMode ((long) GPOINTER_TO_INT (g_object_get_data (G_OBJECT (window), "Ch")), ID_CH_M_OFF))
 		return FALSE;
 	else
 		return TRUE;

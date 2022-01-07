@@ -37,16 +37,19 @@
 #include "gxsm_menu-extension.h"
 #include "gapp_service.h"
 #include "pcs.h"
-#include "surface.h"
 #include "monitor.h"
+#include "app_profile.h"
+#include "app_monitorcontrol.h"
+#include "app_channelselector.h"
 #include "lineprofile.h"
 
 #include "xsmmath.h"
 #include "xsm_limits.h"
 
 #include "app_vobj.h"
-
 #include "plugin_ctrl.h"
+
+class Surface;
 
 /*
  * G_APPLICATION CODE FOR GXSM4 GOBJECT
@@ -60,81 +63,25 @@ typedef struct _Gxsm4appWindow         Gxsm4appWindow;
 typedef struct _Gxsm4app       Gxsm4app;
 typedef struct _Gxsm4appClass  Gxsm4appClass;
 
-
 GType         gxsm4_app_get_type    (void);
 Gxsm4app     *gxsm4_app_new         (void);
 
 /* ***************** */
 
+
 /* Client Windows... */
 class RemoteControl;
 class gxsm_plugins;
-
-class ChannelSelector : public AppBase{
-public:
-        ChannelSelector(int ChAnz=MAX_CHANNELS);
-        virtual ~ChannelSelector(){
-                delete [] ChSDirWidget;
-                delete [] ChModeWidget;
-                delete [] ChViewWidget;
-                delete [] ChInfoWidget;
-                g_clear_object (&ch_settings);
-        };
-        static gboolean on_drop (GtkDropTarget *target, const GValue  *value, double x, double y, gpointer data);
-        
-        void SetSDir(int Channel, int Dir);
-        void SetMode(int Channel, int Mode);
-        void SetView(int Channel, int View);
-        void SetInfo(int Channel, const gchar *info);
-
-        void SetModeChannelSignal(int mode_id, const gchar* signal_name, const gchar* signal_label, const gchar *signal_unit, double d2unit = 1.0);
-
-        static void choice_ChView_callback (GtkWidget *widget, void *data);
-        static void choice_ChMode_callback (GtkWidget *widget, void *data);
-        static void choice_ChSDir_callback (GtkWidget *widget, void *data);
-        static void choice_ChAS_callback (GtkWidget *widget, void *data);
-        static void restore_callback (GtkWidget *widget, ChannelSelector *cs);
-        static void store_callback (GtkWidget *widget, ChannelSelector *cs); 
-
-private:
-        GtkWidget **ChSDirWidget;
-        GtkWidget **ChModeWidget;
-        GtkWidget **ChViewWidget;
-        GtkWidget **ChInfoWidget;
-        GtkWidget **RestoreWidget;
-
-        GSettings *ch_settings;
-};
-
-class MonitorControl : public AppBase, Monitor{
-public:
-        MonitorControl (gint loglevel=2, gint maxlines=500);
-        virtual ~MonitorControl();
-        virtual void AppWindowInit(const gchar *title, const gchar *sub_title=NULL);
-
-        static void file_open_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
-        static void file_save_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
-        static void file_close_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);        
-        static void set_logging_history_radio_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);        
-        static void set_logging_level_radio_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);        
-        virtual void LogEvent(const gchar *Action, const gchar *Entry, gint level=1);
-
-        void set_max_lines (gint ml) { max_lines = ml; };
-private:
-        gint          max_lines;
-        GtkWidget     *log_view;
-	GtkTextBuffer *log_buf;
-        GtkTextMark   *text_end_mark;
-};
+class AppBase;
 
 /* App. Main Window */
 
-class App : public GnomeAppService {
+class App : public GnomeAppService, AppBase {
 public:
         App (GApplication *g_app);
         virtual ~App ();
 
-        virtual void AppWindowInit(const gchar *title, const gchar *sub_title=NULL);
+        void MAINAppWindowInit(const gchar *title=NULL, const gchar *sub_title=NULL);
         void build_gxsm (Gxsm4appWindow *win);
 
         static gboolean finish_system_startup_idle_callback (App *self) { self-> finish_system_startup (); return FALSE; };
@@ -204,22 +151,7 @@ public:
         void set_dsp_scan_in_progress (gboolean flg);
         
 
-        static gboolean on_drop (GtkDropTarget *target, const GValue  *value, double x, double y, gpointer data)
-        {
-                Surface *xsm = data;
-                g_message ("CH::on_drop %g %g ", x,y);
-                // Call the appropriate setter depending on the type of data
-                // that we received
-                if (G_VALUE_HOLDS (value, G_TYPE_FILE)){
-                        g_message ("FILE DROPPED %s", g_file_get_parse_name (g_value_get_object (value)));
-                        xsm->ActivateFreeChannel ();
-                        xsm->load (g_file_get_parse_name (g_value_get_object (value)));
-                }
-                else
-                        return FALSE;
-                
-                return TRUE;
-        };
+        static gboolean on_drop (GtkDropTarget *target, const GValue  *value, double x, double y, gpointer data);
 
         /* Status Handling */
 
@@ -279,6 +211,10 @@ public:
         GtkWidget* ui_control;
         GtkWidget* as_control;
 
+        ProfileControl* new_profile_control(const gchar *filename, const gchar *id){
+                return new ProfileControl ( GXSM4_APP (g_application), filename, id);
+        };
+        
         void spa_update();
         void spa_setdata();
 
@@ -423,7 +359,7 @@ public:
         };
 
         GApplication *get_application () { return g_application; };
-        //        GtkWidget    *get_app_window  () { return app_window; };
+        Gxsm4appWindow *get_app_window  () { return app_window; };
         gboolean gxsm_app_window_present () { return app_window ? true : false; };
 
         GObject *get_gxsm_main_menu () { return gxsm_main_menu; };
@@ -461,6 +397,8 @@ public:
 
         GSettings *get_as_settings () { return as_settings; };
 
+        Gxsm4app* get_app() { return gxsm4app; };
+
 protected:
         GList *PluginNotifyOnSPMRange;
         GList *PluginNotifyOnStartScan;
@@ -476,7 +414,8 @@ protected:
 
 private:
         /* Gxsm Application */
-        GApplication *g_application;
+        GApplication* g_application;
+        Gxsm4app*  gxsm4app;
         GtkWidget* appbar;
         guint      appbar_ctx_id;
         GtkWidget *gxsm_menu;
@@ -507,10 +446,9 @@ private:
         gchar *DataStack;
 
 public:
+        Gxsm4appWindow *app_window;
         int glb_ref_point_xylt_index[4];
         double glb_ref_point_xylt_world[4];
 };
-
-extern App *gapp;
 
 #endif

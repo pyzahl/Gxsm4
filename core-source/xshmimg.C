@@ -32,6 +32,7 @@
 
 #include "xshmimg.h"
 #include "util.h"
+#include "surface.h"
 
 #include "glbvars.h"
 
@@ -172,7 +173,7 @@ void ShmImage2D::draw_callback (cairo_t *cr, gboolean draw_red_line, gboolean dr
         }
         if (draw_tip){
                 double x,y,z;
-                gapp->xsm->hardware->RTQuery ("P", x,y,z);
+                main_get_gapp ()->xsm->hardware->RTQuery ("P", x,y,z);
                 //g_message ("PXYZ: %g %g %g", x,y,z);
 
                 x *= ZoomFac;

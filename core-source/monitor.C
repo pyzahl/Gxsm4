@@ -35,14 +35,10 @@
 #include "xsmdebug.h"
 #include "gxsm_monitor_vmemory_and_refcounts.h"
 
+extern "C++" {
 
 #ifdef GXSM_MONITOR_VMEMORY_USAGE
-gint global_ref_counter[32] = {
-        0,0,0,0, 0,0,0,0,
-        0,0,0,0, 0,0,0,0,
-        0,0,0,0, 0,0,0,0,
-        0,0,0,0, 0,0,0,0
-};
+extern gint global_ref_counter[];
 
 const gchar *grc_name[] = {
         "UnitObj",
@@ -210,5 +206,7 @@ gint Monitor::AppLine(){
         }
         return 0;
 }
+        
+} // extern C++
 
 // END

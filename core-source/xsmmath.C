@@ -30,6 +30,7 @@
 #include "xsmmath.h"
 #include "xsmtypes.h"
 #include "glbvars.h"
+#include "surface.h"
 
 #include "bench.h"
 #include "regress.h"
@@ -206,17 +207,17 @@ gboolean CopyScan(MATHOPPARAMS){
 			tf=Src->number_of_time_elements ()-1;
 			if (tf < 0) tf = 0;
 			vf=Src->mem2d->GetNv ()-1;
-			gapp->setup_multidimensional_data_copy ("Multidimensional Copy", Src, ti, tf, vi, vf, &tnadd, &vnadd);
+			main_get_gapp ()->setup_multidimensional_data_copy ("Multidimensional Copy", Src, ti, tf, vi, vf, &tnadd, &vnadd);
 		} while (ti > tf || vi > vf || tnadd<1 || vnadd<1);
 
-		gapp->progress_info_new ("Multidimenssional Copy", 1);
-		gapp->progress_info_set_bar_fraction (0., 1);
-		gapp->progress_info_set_bar_text ("Time", 1);
+		main_get_gapp ()->progress_info_new ("Multidimenssional Copy", 1);
+		main_get_gapp ()->progress_info_set_bar_fraction (0., 1);
+		main_get_gapp ()->progress_info_set_bar_text ("Time", 1);
 		
 		int ntimes_tmp = tf-ti+1;
 		for (int time_index=ti; time_index <= tf; ++time_index){
 			Mem2d *m = Src->mem2d_time_element (time_index);
-			gapp->progress_info_set_bar_fraction ((gdouble)(time_index-ti)/(gdouble)ntimes_tmp, 1);
+			main_get_gapp ()->progress_info_set_bar_fraction ((gdouble)(time_index-ti)/(gdouble)ntimes_tmp, 1);
 			Dest->mem2d->copy(m, -1, -1, vi, vf, -1, -1, true);
 			if (tnadd > 1 || vnadd > 1){
 				for (int time_index_ahead = time_index; time_index_ahead < time_index+tnadd; ++time_index_ahead){
@@ -247,7 +248,7 @@ gboolean CopyScan(MATHOPPARAMS){
 		Dest->data.s.ntimes = ntimes_tmp;
 		Dest->data.s.nvalues=Dest->mem2d->GetNv ();
 
-		gapp->progress_info_close ();
+		main_get_gapp ()->progress_info_close ();
 		Dest->retrieve_time_element (0);
 		Dest->mem2d->SetLayer(0);
 	}
@@ -267,7 +268,7 @@ gboolean CropScan(MATHOPPARAMS){
 		return MATH_SELECTIONERR;
 	}
 
-	if(gapp->xsm->MausMode() != MRECTANGLE && gapp->xsm->MausMode() != MCIRCLE)
+	if(main_get_gapp ()->xsm->MausMode() != MRECTANGLE && main_get_gapp ()->xsm->MausMode() != MCIRCLE)
 		return MATH_SELECTIONERR;
 
 	Dest->mem2d->Resize (msr.xSize, msr.ySize);
@@ -299,7 +300,7 @@ gboolean CropScan(MATHOPPARAMS){
 		int ti,tf, vi,vf;
 		int xyc[4];
 
-		if (gapp->xsm->MausMode() == MCIRCLE){ // crop circle
+		if (main_get_gapp ()->xsm->MausMode() == MCIRCLE){ // crop circle
 			Radius = (int)round (sqrt ((double)msr.Radius2)); 
 			Dest->data.s.nx = 2*Radius;
 			Dest->data.s.ny = 2*Radius;
@@ -318,20 +319,20 @@ gboolean CropScan(MATHOPPARAMS){
 			tf=Src->number_of_time_elements ()-1;
 			if (tf < 0) tf = 0;
 			vf=Src->mem2d->GetNv ()-1;
-			gapp->setup_multidimensional_data_copy ("Multidimensional Crop", Src, ti, tf, vi, vf, NULL, NULL, xyc, TRUE);
+			main_get_gapp ()->setup_multidimensional_data_copy ("Multidimensional Crop", Src, ti, tf, vi, vf, NULL, NULL, xyc, TRUE);
 		} while (ti > tf || vi > vf || xyc[0] >= xyc[2] || xyc[1] >= xyc[3]);
 			
-		gapp->progress_info_new ("Multidimenssional Crop", 1);
-		gapp->progress_info_set_bar_fraction (0., 1);
-		gapp->progress_info_set_bar_text ("Time", 1);
+		main_get_gapp ()->progress_info_new ("Multidimenssional Crop", 1);
+		main_get_gapp ()->progress_info_set_bar_fraction (0., 1);
+		main_get_gapp ()->progress_info_set_bar_text ("Time", 1);
 			
 		int ntimes_tmp = tf-ti+1;
 		for (int time_index=ti; time_index <= tf; ++time_index){
 			Mem2d *m = Src->mem2d_time_element (time_index);
-			gapp->progress_info_set_bar_fraction ((gdouble)(time_index-ti)/(gdouble)ntimes_tmp, 1);
+			main_get_gapp ()->progress_info_set_bar_fraction ((gdouble)(time_index-ti)/(gdouble)ntimes_tmp, 1);
 			Dest->mem2d->copy(m, xyc[0], xyc[1], vi, vf, xyc[2]-xyc[0]+1, xyc[3]-xyc[1]+1, true);
 
-			if (gapp->xsm->MausMode() == MCIRCLE){ // crop circle
+			if (main_get_gapp ()->xsm->MausMode() == MCIRCLE){ // crop circle
 				double r2 = Radius * Radius;
 
 				// Adapt to next possible value  
@@ -352,7 +353,7 @@ gboolean CropScan(MATHOPPARAMS){
 		Dest->data.s.ntimes = ntimes_tmp;
 		Dest->data.s.nvalues=Dest->mem2d->GetNv ();
 			
-		gapp->progress_info_close ();
+		main_get_gapp ()->progress_info_close ();
 		Dest->retrieve_time_element (0);
 		Dest->mem2d->SetLayer(0);
 	}
@@ -626,21 +627,21 @@ gboolean BgLin1DScan(MATHOPPARAMS){
 			tf=Src->number_of_time_elements ()-1;
 			if (tf < 0) tf = 0;
 			vf=Src->mem2d->GetNv ()-1;
-			gapp->setup_multidimensional_data_copy ("Multidimensional Line Regression", Src, ti, tf, vi, vf);
+			main_get_gapp ()->setup_multidimensional_data_copy ("Multidimensional Line Regression", Src, ti, tf, vi, vf);
 		} while (ti > tf || vi > vf);
 
-		gapp->progress_info_new ("Multidimenssional Plane Regression", 2);
-		gapp->progress_info_set_bar_fraction (0., 1);
-		gapp->progress_info_set_bar_fraction (0., 2);
-		gapp->progress_info_set_bar_text ("Time", 1);
-		gapp->progress_info_set_bar_text ("Value", 2);
+		main_get_gapp ()->progress_info_new ("Multidimenssional Plane Regression", 2);
+		main_get_gapp ()->progress_info_set_bar_fraction (0., 1);
+		main_get_gapp ()->progress_info_set_bar_fraction (0., 2);
+		main_get_gapp ()->progress_info_set_bar_text ("Time", 1);
+		main_get_gapp ()->progress_info_set_bar_text ("Value", 2);
 	}
 
 	int ntimes_tmp = tf-ti+1;
 	for (int time_index=ti; time_index <= tf; ++time_index){
 		Mem2d *m = Src->mem2d_time_element (time_index);
 		if (multidim)
-			gapp->progress_info_set_bar_fraction ((gdouble)(time_index-ti)/(gdouble)ntimes_tmp, 1);
+			main_get_gapp ()->progress_info_set_bar_fraction ((gdouble)(time_index-ti)/(gdouble)ntimes_tmp, 1);
 
 		Dest->mem2d->Resize (Src->mem2d->GetNx (), Src->mem2d->GetNy (), vf-vi+1, Src->mem2d->GetTyp());
 		for (int v_index = vi; v_index <= vf; ++v_index){
@@ -661,7 +662,7 @@ gboolean BgLin1DScan(MATHOPPARAMS){
 	Dest->data.s.nvalues=Dest->mem2d->GetNv ();
 
 	if (multidim){
-		gapp->progress_info_close ();
+		main_get_gapp ()->progress_info_close ();
 		Dest->retrieve_time_element (0);
 		Dest->mem2d->SetLayer(0);
 	}
@@ -698,21 +699,21 @@ gboolean BgERegress(MATHOPPARAMS){
 			tf=Src->number_of_time_elements ()-1;
 			if (tf < 0) tf = 0;
 			vf=Src->mem2d->GetNv ()-1;
-			gapp->setup_multidimensional_data_copy ("Multidimensional Plane Regression", Src, ti, tf, vi, vf);
+			main_get_gapp ()->setup_multidimensional_data_copy ("Multidimensional Plane Regression", Src, ti, tf, vi, vf);
 		} while (ti > tf || vi > vf);
 
-		gapp->progress_info_new ("Multidimenssional Plane Regression", 2);
-		gapp->progress_info_set_bar_fraction (0., 1);
-		gapp->progress_info_set_bar_fraction (0., 2);
-		gapp->progress_info_set_bar_text ("Time", 1);
-		gapp->progress_info_set_bar_text ("Value", 2);
+		main_get_gapp ()->progress_info_new ("Multidimenssional Plane Regression", 2);
+		main_get_gapp ()->progress_info_set_bar_fraction (0., 1);
+		main_get_gapp ()->progress_info_set_bar_fraction (0., 2);
+		main_get_gapp ()->progress_info_set_bar_text ("Time", 1);
+		main_get_gapp ()->progress_info_set_bar_text ("Value", 2);
 	}
 
 	int ntimes_tmp = tf-ti+1;
 	for (int time_index=ti; time_index <= tf; ++time_index){
 		Mem2d *m = Src->mem2d_time_element (time_index);
 		if (multidim)
-			gapp->progress_info_set_bar_fraction ((gdouble)(time_index-ti)/(gdouble)ntimes_tmp, 1);
+			main_get_gapp ()->progress_info_set_bar_fraction ((gdouble)(time_index-ti)/(gdouble)ntimes_tmp, 1);
 
 		Dest->mem2d->Resize (m->GetNx (), m->GetNy (), vf-vi+1, m->GetTyp());
 		for (int v_index = vi; v_index <= vf; ++v_index){
@@ -771,7 +772,7 @@ gboolean BgERegress(MATHOPPARAMS){
 	Dest->data.s.nvalues=Dest->mem2d->GetNv ();
 
 	if (multidim){
-		gapp->progress_info_close ();
+		main_get_gapp ()->progress_info_close ();
 		Dest->retrieve_time_element (0);
 		Dest->mem2d->SetLayer(0);
 	}
@@ -937,21 +938,21 @@ gboolean F1D_Despike(MATHOPPARAMS){
 			tf=Src->number_of_time_elements ()-1;
 			if (tf < 0) tf = 0;
 			vf=Src->mem2d->GetNv ()-1;
-			gapp->setup_multidimensional_data_copy ("Multidimensional 1D Despike", Src, ti, tf, vi, vf);
+			main_get_gapp ()->setup_multidimensional_data_copy ("Multidimensional 1D Despike", Src, ti, tf, vi, vf);
 		} while (ti > tf || vi > vf);
 
-		gapp->progress_info_new ("Multidimenssional Plane Regression", 2);
-		gapp->progress_info_set_bar_fraction (0., 1);
-		gapp->progress_info_set_bar_fraction (0., 2);
-		gapp->progress_info_set_bar_text ("Time", 1);
-		gapp->progress_info_set_bar_text ("Value", 2);
+		main_get_gapp ()->progress_info_new ("Multidimenssional Plane Regression", 2);
+		main_get_gapp ()->progress_info_set_bar_fraction (0., 1);
+		main_get_gapp ()->progress_info_set_bar_fraction (0., 2);
+		main_get_gapp ()->progress_info_set_bar_text ("Time", 1);
+		main_get_gapp ()->progress_info_set_bar_text ("Value", 2);
 	}
 
 	int ntimes_tmp = tf-ti+1;
 	for (int time_index=ti; time_index <= tf; ++time_index){
 		Mem2d *m = Src->mem2d_time_element (time_index);
 		if (multidim)
-			gapp->progress_info_set_bar_fraction ((gdouble)(time_index-ti)/(gdouble)ntimes_tmp, 1);
+			main_get_gapp ()->progress_info_set_bar_fraction ((gdouble)(time_index-ti)/(gdouble)ntimes_tmp, 1);
 
 		Dest->mem2d->Resize (m->GetNx (), m->GetNy (), vf-vi+1, m->GetTyp());
 		for (int v_index = vi; v_index <= vf; ++v_index){
@@ -1005,7 +1006,7 @@ gboolean F1D_Despike(MATHOPPARAMS){
 	Dest->data.s.nvalues=Dest->mem2d->GetNv ();
 
 	if (multidim){
-		gapp->progress_info_close ();
+		main_get_gapp ()->progress_info_close ();
 		Dest->retrieve_time_element (0);
 		Dest->mem2d->SetLayer(0);
 	}
@@ -1135,21 +1136,21 @@ gboolean F2D_Despike(MATHOPPARAMS){
 			tf=Src->number_of_time_elements ()-1;
 			if (tf < 0) tf = 0;
 			vf=Src->mem2d->GetNv ()-1;
-			gapp->setup_multidimensional_data_copy ("Multidimensional 2D Despike", Src, ti, tf, vi, vf);
+			main_get_gapp ()->setup_multidimensional_data_copy ("Multidimensional 2D Despike", Src, ti, tf, vi, vf);
 		} while (ti > tf || vi > vf);
 
-		gapp->progress_info_new ("Multidimenssional Plane Regression", 2);
-		gapp->progress_info_set_bar_fraction (0., 1);
-		gapp->progress_info_set_bar_fraction (0., 2);
-		gapp->progress_info_set_bar_text ("Time", 1);
-		gapp->progress_info_set_bar_text ("Value", 2);
+		main_get_gapp ()->progress_info_new ("Multidimenssional Plane Regression", 2);
+		main_get_gapp ()->progress_info_set_bar_fraction (0., 1);
+		main_get_gapp ()->progress_info_set_bar_fraction (0., 2);
+		main_get_gapp ()->progress_info_set_bar_text ("Time", 1);
+		main_get_gapp ()->progress_info_set_bar_text ("Value", 2);
 	}
 
 	int ntimes_tmp = tf-ti+1;
 	for (int time_index=ti; time_index <= tf; ++time_index){
 		Mem2d *m = Src->mem2d_time_element (time_index);
 		if (multidim)
-			gapp->progress_info_set_bar_fraction ((gdouble)(time_index-ti)/(gdouble)ntimes_tmp, 1);
+			main_get_gapp ()->progress_info_set_bar_fraction ((gdouble)(time_index-ti)/(gdouble)ntimes_tmp, 1);
 
 		Dest->mem2d->Resize (m->GetNx (), m->GetNy (), vf-vi+1, m->GetTyp());
 		for (int v_index = vi; v_index <= vf; ++v_index){
@@ -1183,7 +1184,7 @@ gboolean F2D_Despike(MATHOPPARAMS){
 	Dest->data.s.nvalues=Dest->mem2d->GetNv ();
 
 	if (multidim){
-		gapp->progress_info_close ();
+		main_get_gapp ()->progress_info_close ();
 		Dest->retrieve_time_element (0);
 		Dest->mem2d->SetLayer(0);
 	}
@@ -1215,9 +1216,9 @@ extern gboolean F2D_LineInterpol(MATHOPPARAMS)
 	Dest->mem2d->CopyFrom(Src->mem2d, 0,0, 0,0, Dest->mem2d->GetNx(),Dest->mem2d->GetNy());
 	
 	if (fabs(msr.yBottom - msr.yTop) > 3.){
-		gapp->ValueRequest("Enter Value", "Z threshold (DAC units)", 
+		main_get_gapp ()->ValueRequest("Enter Value", "Z threshold (DAC units)", 
 				   "max allowed Z variation withing marked width",
-				   gapp->xsm->Unity, 
+				   main_get_gapp ()->xsm->Unity, 
 				   0., 10000., ".0f", &threashold);
 	}
 	

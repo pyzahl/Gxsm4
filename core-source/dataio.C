@@ -37,10 +37,11 @@
 #include "xsmdebug.h"
 #include "glbvars.h" // because of Inst->... using only dat type.
 #include "util.h"
+#include "surface.h"
 
 
 #include "dataio.h"
-#include "plug-ins/control/spm_scancontrol.h"
+// #include "plug-ins/control/spm_scancontrol.h" // ????
 
 double Contrast_to_VRangeZ (double contrast, double dz){
 	return 64.*dz/contrast;
@@ -103,11 +104,11 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
 	if (! nc.is_valid())
 		return status = FIO_OPEN_ERR;
 
-	gapp->progress_info_new ("NetCDF Read Progress", 2);
-	gapp->progress_info_set_bar_fraction (0., 1);
-	gapp->progress_info_set_bar_text (name, 1);
-	gapp->SetStatus (N_("Loading... "), name);
-        gapp->monitorcontrol->LogEvent(N_("Loading... "), name);
+	main_get_gapp ()->progress_info_new ("NetCDF Read Progress", 2);
+	main_get_gapp ()->progress_info_set_bar_fraction (0., 1);
+	main_get_gapp ()->progress_info_set_bar_text (name, 1);
+	main_get_gapp ()->SetStatus (N_("Loading... "), name);
+        main_get_gapp ()->monitorcontrol->LogEvent(N_("Loading... "), name);
         
 	switch (mode){
 	case xsm::open_mode::replace: scan->free_time_elements (); break;
@@ -120,31 +121,31 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
 	NcVar *Data = NULL;
 	if(! ( Data = nc.get_var("H")) ){ // not standart "SHORT" Topo Scan ?
 		if( ( Data = nc.get_var("Intensity") ) ) // Diffract Scan "LONG" ?
-			gapp->progress_info_set_bar_text ("H: Type LONG", 2),
+			main_get_gapp ()->progress_info_set_bar_text ("H: Type LONG", 2),
 			zdata_typ=ZD_LONG; // used by "Intensity" -- diffraction counts
 		else
 			if( ( Data = nc.get_var("FloatField") ) ) // Float ?
-				gapp->progress_info_set_bar_text ("H: Type FLOAT", 2),
+				main_get_gapp ()->progress_info_set_bar_text ("H: Type FLOAT", 2),
 				zdata_typ=ZD_FLOAT;
 			else
 				if( ( Data = nc.get_var("DoubleField") ) ) // Double ?
-					gapp->progress_info_set_bar_text ("H: Type DOUBLE", 2),
+					main_get_gapp ()->progress_info_set_bar_text ("H: Type DOUBLE", 2),
 					zdata_typ=ZD_DOUBLE;
 				else
 					if( ( Data = nc.get_var("ByteField") ) ) // Byte ?
-						gapp->progress_info_set_bar_text ("H: Type BYTE", 2),
+						main_get_gapp ()->progress_info_set_bar_text ("H: Type BYTE", 2),
 						zdata_typ=ZD_BYTE;
 					else
 						if( ( Data = nc.get_var("ComplexDoubleField") ) ) // Complex ?
-							gapp->progress_info_set_bar_text ("H: Type COMPLEX", 2),
+							main_get_gapp ()->progress_info_set_bar_text ("H: Type COMPLEX", 2),
 							zdata_typ=ZD_COMPLEX;
 						else
 							if( ( Data = nc.get_var("RGBA_ByteField") ) ) // RGBA Byte ?
-								gapp->progress_info_set_bar_text ("H: Type RGBA", 2),
+								main_get_gapp ()->progress_info_set_bar_text ("H: Type RGBA", 2),
 								zdata_typ=ZD_RGBA;
 
-		gapp->progress_info_set_bar_text ("H: Type SHORT", 2);
-		gapp->progress_info_set_bar_fraction (0., 2);
+		main_get_gapp ()->progress_info_set_bar_text ("H: Type SHORT", 2);
+		main_get_gapp ()->progress_info_set_bar_fraction (0., 2);
 	}
   
 	if(! Data){ // fremdes NetCDF File, search for 2D Data
@@ -152,7 +153,7 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
 		const char *types[] = {"","byte","char","short","long","float","double"};
 		NcVar *vp;
 
-		gapp->progress_info_set_bar_text ("Other NetCDF Data", 2);
+		main_get_gapp ()->progress_info_set_bar_text ("Other NetCDF Data", 2);
 
 		XSM_DEBUG(DBG_L2, "Searching for 2D Data in alien NetCDF..." );
 		for(n = 0; (vp = nc.get_var(n)) && !flg; n++) {
@@ -237,8 +238,8 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
 	}
 
 
-	gapp->progress_info_set_bar_text ("Image Data", 2);
-	gapp->progress_info_set_bar_fraction (0.25, 1);
+	main_get_gapp ()->progress_info_set_bar_text ("Image Data", 2);
+	main_get_gapp ()->progress_info_set_bar_fraction (0.25, 1);
 
 //#define MINIMAL_READ_NC_1ST_TIME_LAYER_ONLY
 #ifndef MINIMAL_READ_NC_1ST_TIME_LAYER_ONLY
@@ -259,7 +260,7 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
 	scan->data.s.nx = dimxd->size();
 
 
-	gapp->progress_info_set_bar_fraction (0., 2);
+	main_get_gapp ()->progress_info_set_bar_fraction (0., 2);
 
 	scan->mem2d->Resize(scan->data.s.nx, scan->data.s.ny, scan->data.s.nvalues, zdata_typ);
 
@@ -272,7 +273,7 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
 	scan->mem2d->start_read_layer_information (&nc, &ncv_d, &ncv_f, &ncv_fo, &ncv_v);
 
 	for (int time_index=0; time_index < ntimes_tmp; ++time_index){
-		gapp->progress_info_set_bar_fraction ((gdouble)time_index/(gdouble)scan->data.s.ntimes, 2);
+		main_get_gapp ()->progress_info_set_bar_fraction ((gdouble)time_index/(gdouble)scan->data.s.ntimes, 2);
 
 		scan->mem2d->data->NcGet (Data, time_index);
 		scan->data.s.ntimes = ntimes_tmp;
@@ -357,7 +358,7 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
 				scan->mem2d->add_layer_information (new LayerInformation ("SetPoint", scan->data.s.SetPoint, "%5.2f V"));
 			else{
 				scan->mem2d->add_layer_information (new LayerInformation ("Current", scan->data.s.Current, "%5.2f nA"));
-                                scan->mem2d->add_layer_information (new LayerInformation ("Current", gapp->xsm->data.s.Current*1000, "%5.1f pA"));
+                                scan->mem2d->add_layer_information (new LayerInformation ("Current", main_get_gapp ()->xsm->data.s.Current*1000, "%5.1f pA"));
                         }
 		}
 
@@ -373,8 +374,8 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
 		}
 	}
 
-	gapp->progress_info_set_bar_text ("Variables", 2);
-	gapp->progress_info_set_bar_fraction (0.25, 1);
+	main_get_gapp ()->progress_info_set_bar_text ("Variables", 2);
+	main_get_gapp ()->progress_info_set_bar_fraction (0.25, 1);
 
 	NcAtt *unit_att = NULL;
 	NcAtt *label_att = NULL;
@@ -383,7 +384,7 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
 		if ((label_att = nc.get_var("time")->get_att("label"))){
 			NcValues *unit  = unit_att->values();
 			NcValues *label = label_att->values();
-			UnitObj *u = gapp->xsm->MakeUnit (unit->as_string(0), label->as_string(0));
+			UnitObj *u = main_get_gapp ()->xsm->MakeUnit (unit->as_string(0), label->as_string(0));
 			scan->data.SetTimeUnit(u);
 			delete unit;
 			delete label;
@@ -399,7 +400,7 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
 		if ((label_att = nc.get_var("value")->get_att("label"))){
 			NcValues *unit  = unit_att->values();
 			NcValues *label = label_att->values();
-			UnitObj *u = gapp->xsm->MakeUnit (unit->as_string(0), label->as_string(0));
+			UnitObj *u = main_get_gapp ()->xsm->MakeUnit (unit->as_string(0), label->as_string(0));
 			scan->data.SetVUnit(u);
 			delete unit;
 			delete label;
@@ -416,7 +417,7 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
 		if ((label_att = nc.get_var("rangex")->get_att("label"))){
 			NcValues *unit  = unit_att->values();
 			NcValues *label = label_att->values();
-			UnitObj *u = gapp->xsm->MakeUnit (unit->as_string(0), label->as_string(0));
+			UnitObj *u = main_get_gapp ()->xsm->MakeUnit (unit->as_string(0), label->as_string(0));
 			scan->data.SetXUnit(u);
 			delete unit;
 			delete label;
@@ -432,7 +433,7 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
 		if ((label_att = nc.get_var("rangey")->get_att("label"))){
 			NcValues *unit  = unit_att->values();
 			NcValues *label = label_att->values();
-			UnitObj *u = gapp->xsm->MakeUnit (unit->as_string(0), label->as_string(0));
+			UnitObj *u = main_get_gapp ()->xsm->MakeUnit (unit->as_string(0), label->as_string(0));
 			scan->data.SetYUnit(u);
 			delete unit;
 			delete label;
@@ -475,7 +476,7 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
 		if ((label_att = nc.get_var("rangez")->get_att("label"))){
 			NcValues *unit  = unit_att->values();
 			NcValues *label = label_att->values();
-			UnitObj *u = gapp->xsm->MakeUnit (unit->as_string(0), label->as_string(0));
+			UnitObj *u = main_get_gapp ()->xsm->MakeUnit (unit->as_string(0), label->as_string(0));
 			scan->data.SetZUnit(u);
 			delete unit;
 			delete label;
@@ -572,14 +573,14 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
 	//  if(nc.get_var("")) nc.get_var("")->get(&scan->data.hardpars.);
 
 	// load attached Events, if any
-	gapp->progress_info_set_bar_fraction (0.5, 1);
-	gapp->progress_info_set_bar_text ("Events", 2);
+	main_get_gapp ()->progress_info_set_bar_fraction (0.5, 1);
+	main_get_gapp ()->progress_info_set_bar_text ("Events", 2);
 	scan->mem2d->LoadScanEvents (&nc);
 
 	// Signal PlugIns
-	gapp->progress_info_set_bar_fraction (0.75, 1);
-	gapp->progress_info_set_bar_text ("Plugin Data", 2);
-	gapp->SignalCDFLoadEventToPlugins (&nc);
+	main_get_gapp ()->progress_info_set_bar_fraction (0.75, 1);
+	main_get_gapp ()->progress_info_set_bar_text ("Plugin Data", 2);
+	main_get_gapp ()->SignalCDFLoadEventToPlugins (&nc);
 	
 	// try to recover some common defaults data and add to OSD (old sranger)
 	NC_GET_VARIABLE ("sranger_hwi_bias", &scan->data.s.Bias);
@@ -599,9 +600,9 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
         //g_message ("NetCDF read: sranger_mk2_hwi_pll_reference = %g Hz", scan->data.s.pllref);
         
 #endif
-	gapp->progress_info_set_bar_text ("Finishing", 2);
-	gapp->progress_info_set_bar_fraction (1., 1);
-	gapp->progress_info_close ();
+	main_get_gapp ()->progress_info_set_bar_text ("Finishing", 2);
+	main_get_gapp ()->progress_info_set_bar_fraction (1., 1);
+	main_get_gapp ()->progress_info_close ();
 	return status = FIO_OK; 
 }
 
@@ -632,10 +633,10 @@ FIO_STATUS NetCDF::Write(){
 	if (! nc.is_valid())
 		return status = FIO_OPEN_ERR;
 
-	gapp->progress_info_new ("NetCDF Write Progress",2);
-	gapp->progress_info_set_bar_fraction (0., 1);
-	gapp->progress_info_set_bar_text (name, 1);
-	gapp->progress_info_set_bar_fraction (0., 2);
+	main_get_gapp ()->progress_info_new ("NetCDF Write Progress",2);
+	main_get_gapp ()->progress_info_set_bar_fraction (0., 1);
+	main_get_gapp ()->progress_info_set_bar_text (name, 1);
+	main_get_gapp ()->progress_info_set_bar_fraction (0., 2);
 
 	XSM_DEBUG (DBG_L2, "NetCDF::Write-> open OK");
 
@@ -885,9 +886,9 @@ FIO_STATUS NetCDF::Write(){
 	XSM_DEBUG (DBG_L2, "NetCDF::Write-> NcPut Data");
 	XSM_DEBUG (DBG_L2, "NC write: " << timed->size() << "x" << valued->size() << "x" << dimxd->size() << "x" << dimyd->size());
   
-	gapp->progress_info_set_bar_text ("Image Data", 2);
-	gapp->progress_info_set_bar_fraction (0.25, 1);
-	gapp->progress_info_set_bar_fraction (0., 2);
+	main_get_gapp ()->progress_info_set_bar_text ("Image Data", 2);
+	main_get_gapp ()->progress_info_set_bar_fraction (0.25, 1);
+	main_get_gapp ()->progress_info_set_bar_fraction (0., 2);
 	if (scan->data.s.ntimes == 1){
 		double timearr[] = { (double)(scan->data.s.tEnd-scan->data.s.tStart) };
 		scan->mem2d->data->NcPut (Data);
@@ -898,12 +899,12 @@ FIO_STATUS NetCDF::Write(){
 			time->set_cur (time_index);
 			double ref_time = scan->mem2d_time_element(time_index)->get_frame_time ();
 			time->put (&ref_time, 1);
-			gapp->progress_info_set_bar_fraction ((gdouble)time_index/(gdouble)scan->data.s.ntimes, 2);
+			main_get_gapp ()->progress_info_set_bar_fraction ((gdouble)time_index/(gdouble)scan->data.s.ntimes, 2);
 		}
 
 
-	gapp->progress_info_set_bar_text ("Look-Ups", 2);
-	gapp->progress_info_set_bar_fraction (0.5, 1);
+	main_get_gapp ()->progress_info_set_bar_text ("Look-Ups", 2);
+	main_get_gapp ()->progress_info_set_bar_fraction (0.5, 1);
 
 	float *valuearr = new float[valued->size()];
 	if(!valuearr)
@@ -939,8 +940,8 @@ FIO_STATUS NetCDF::Write(){
 	dimy->put(dimsy, dimyd->size());
 	delete [] dimsy;
 
-	gapp->progress_info_set_bar_text ("Scan-Parameter", 2);
-	gapp->progress_info_set_bar_fraction (0.6, 1);
+	main_get_gapp ()->progress_info_set_bar_text ("Scan-Parameter", 2);
+	main_get_gapp ()->progress_info_set_bar_fraction (0.6, 1);
 
 	XSM_DEBUG (DBG_L2, "NetCDF::Write-> NcPut Vars...");
 	char* s = ctime(&scan->data.s.tStart);
@@ -994,8 +995,8 @@ FIO_STATUS NetCDF::Write(){
 	if(spaorgx  ) spaorgx ->put( &scan->data.s.SPA_OrgX );
 	if(spaorgy  ) spaorgy ->put( &scan->data.s.SPA_OrgY );
 
-	gapp->progress_info_set_bar_text ("Scan-Events", 2);
-	gapp->progress_info_set_bar_fraction (0.7, 1);
+	main_get_gapp ()->progress_info_set_bar_text ("Scan-Events", 2);
+	main_get_gapp ()->progress_info_set_bar_fraction (0.7, 1);
 
 	// write attached Events, if any
 	scan->mem2d->WriteScanEvents (&nc);
@@ -1008,9 +1009,9 @@ FIO_STATUS NetCDF::Write(){
 		int mdli=1;
 		int mdliv=1;
 		int nt=1;
-		gapp->progress_info_set_bar_text ("LayerInformation", 2);
-		gapp->progress_info_set_bar_fraction (0.8, 1);
-		gapp->progress_info_set_bar_fraction (0.1, 2);
+		main_get_gapp ()->progress_info_set_bar_text ("LayerInformation", 2);
+		main_get_gapp ()->progress_info_set_bar_fraction (0.8, 1);
+		main_get_gapp ()->progress_info_set_bar_fraction (0.1, 2);
 		// pass one, eval max dimensions -- NetCDF requires rectangual shape over all dimensions
 		if (scan->data.s.ntimes > 1){
 			nt = scan->data.s.ntimes;
@@ -1019,7 +1020,7 @@ FIO_STATUS NetCDF::Write(){
 		} else
 			scan->mem2d->eval_max_sizes_layer_information (&mdd, &mdf, &mdfo, &mdli, &mdliv);
 
-		gapp->progress_info_set_bar_fraction (0.2, 2);
+		main_get_gapp ()->progress_info_set_bar_fraction (0.2, 2);
 		if (mdd>1){
 			NcVar* ncv_d=NULL;
 			NcVar* ncv_f=NULL;
@@ -1030,7 +1031,7 @@ FIO_STATUS NetCDF::Write(){
 			if (nt > 1)
 				for (int time_index=0; time_index<nt; ++time_index){
 					scan->mem2d_time_element(time_index)->store_layer_information (ncv_d, ncv_f, ncv_fo, ncv_v, time_index);
-					gapp->progress_info_set_bar_fraction (0.2+0.8*((double)time_index/nt), 2);
+					main_get_gapp ()->progress_info_set_bar_fraction (0.2+0.8*((double)time_index/nt), 2);
 				}
 			else
 				scan->mem2d->store_layer_information (ncv_d, ncv_f, ncv_fo, ncv_v, 0);
@@ -1038,14 +1039,14 @@ FIO_STATUS NetCDF::Write(){
 	}
 
 	// Signal PlugIns
-	gapp->progress_info_set_bar_text ("PlugIn-Data", 2);
-	gapp->progress_info_set_bar_fraction (0.9, 1);
-	gapp->progress_info_set_bar_fraction (0., 2);
+	main_get_gapp ()->progress_info_set_bar_text ("PlugIn-Data", 2);
+	main_get_gapp ()->progress_info_set_bar_fraction (0.9, 1);
+	main_get_gapp ()->progress_info_set_bar_fraction (0., 2);
 
-	gapp->SignalCDFSaveEventToPlugins (&nc);
+	main_get_gapp ()->SignalCDFSaveEventToPlugins (&nc);
 
-	gapp->progress_info_set_bar_text ("Finishing", 2);
-	gapp->progress_info_set_bar_fraction (1.0, 1);
+	main_get_gapp ()->progress_info_set_bar_text ("Finishing", 2);
+	main_get_gapp ()->progress_info_set_bar_fraction (1.0, 1);
 
 	// close of nc takes place in destructor
 	scan->draw ();
@@ -1055,7 +1056,7 @@ FIO_STATUS NetCDF::Write(){
 		return status = FIO_WRITE_ERR;
 
 
-	gapp->progress_info_close ();
+	main_get_gapp ()->progress_info_close ();
 
 	return status = FIO_OK; 
 }

@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include "gxsm_window.h"
 #include "app_vpdata_view.h"
+#include "view.h"
 
 #define VPDATA_SKIP_LAST_TWO
 
@@ -44,7 +45,7 @@ ProfileControl *tmp_pc[32] = {
 app_vpdata_view *vpdata_graph_view = NULL;
 
 
-int vpdata_read (const gchar *fname, Scan *active_scan){
+int vpdata_read (Gxsm4app *app, const gchar *fname, Scan *active_scan){
 	gchar l[1100];
 	std::ifstream f;
 
@@ -215,7 +216,7 @@ int vpdata_read (const gchar *fname, Scan *active_scan){
                         g_print("num_sets=%d\n", num_sets);
 
                         if (!vpdata_graph_view)
-                                vpdata_graph_view = new app_vpdata_view (1, num_sets-1);
+                                vpdata_graph_view = new app_vpdata_view (app, 1, num_sets-1);
                         else
                                 vpdata_graph_view->init_vpdata_view (1, num_sets-1);
 

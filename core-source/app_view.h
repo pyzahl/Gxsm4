@@ -29,6 +29,10 @@
 #ifndef APP_VIEW_H
 #define APP_VIEW_H
 
+#include "xshmimg.h"
+#include "gapp_service.h"
+#include "view.h"
+
 #define OB_MARKER_SCALE (xsmres.HandleSize/100./vc->vinfo->GetZfac())
 
 class Mem2d;
@@ -37,12 +41,12 @@ class app_vpdata_view;
 
 class ViewControl : public AppBase{
 public:
-        ViewControl(char *title, int nx, int ny, int ChNo, Scan *scan=NULL, int ZoomFac=1, int QuenchFac=1);
+        ViewControl(Gxsm4app *app, char *title, int nx, int ny, int ChNo, Scan *scan=NULL, int ZoomFac=1, int QuenchFac=1);
         virtual ~ViewControl();
 
         void Resize(char *title, int nx, int ny, int ChNo, Scan *scan=NULL, int ZoomFac=1, int QuenchFac=1);
 
-        virtual void AppWindowInit(const gchar *title, const gchar *sub_title=NULL);
+        virtual void AppWindowInit(const gchar *title=NULL, const gchar *sub_title=NULL);
 
         static void view_file_openhere_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
         static void view_file_save_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
@@ -172,8 +176,7 @@ public:
         static void obj_label_off(VObject *vo, ViewControl *vc){ vo->show_label(false); };
         static void remove_obj(VObject *vo, ViewControl *vc){ 
                 if (vc->tmp_object_op == vo){
-                        if (debug_level > 2)
-                                gapp->message ("Ilya don't do that!");
+                        main_get_gapp ()->message ("Ilya don't do that!");
                         vc->tmp_object_op = NULL;
                 }
                 vc->scan->del_object (vo);

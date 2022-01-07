@@ -31,12 +31,13 @@
 #define __SPM_SCANCONTROL_H
 
 #include <config.h>
+#include "gapp_service.h"
 
 typedef enum { SCAN_DIR_TOPDOWN, SCAN_DIR_TOPDOWN_BOTUP, SCAN_DIR_BOTUP } SCAN_DIR;
 typedef enum { SCAN_FLAG_READY, SCAN_FLAG_STOP,  SCAN_FLAG_PAUSE,  SCAN_FLAG_RUN } SCAN_FLAG;
 typedef enum { SCAN_LINESCAN, SCAN_FRAMECAPTURE } SCAN_DT_TYPE;
 
-class MultiVoltEntry : public AppBase{
+class MultiVoltEntry{
 public:
 	MultiVoltEntry (BuildParam *bp, UnitObj *Volt, int i, double v=0.) { 
 		value = v; 

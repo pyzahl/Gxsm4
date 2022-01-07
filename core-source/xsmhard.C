@@ -25,12 +25,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#include <math.h>
 #include <locale.h>
 #include <libintl.h>
 
-
 #include "glbvars.h"
-#include <math.h>
+#include "surface.h"
 
 
 /* ============================================================
@@ -87,9 +87,9 @@ gint XSM_Hardware::RTQuery (const gchar *property, double &val1, double &val2, d
         
         if (*property == 'z'){ // "zxy"
                 Simulate (0);
-		val1 = gapp->xsm->Inst->VZ() * gapp->xsm->Inst->Dig2VoltOut (sim_xyzS [2]/gapp->xsm->Inst->ZResolution());
-                val2 = gapp->xsm->Inst->VX() * gapp->xsm->Inst->Dig2VoltOut (sim_xyzS [0]/gapp->xsm->Inst->XResolution());
-		val3 = gapp->xsm->Inst->VY() * gapp->xsm->Inst->Dig2VoltOut (sim_xyzS [1]/gapp->xsm->Inst->YResolution());
+		val1 = main_get_gapp ()->xsm->Inst->VZ() * main_get_gapp ()->xsm->Inst->Dig2VoltOut (sim_xyzS [2]/main_get_gapp ()->xsm->Inst->ZResolution());
+                val2 = main_get_gapp ()->xsm->Inst->VX() * main_get_gapp ()->xsm->Inst->Dig2VoltOut (sim_xyzS [0]/main_get_gapp ()->xsm->Inst->XResolution());
+		val3 = main_get_gapp ()->xsm->Inst->VY() * main_get_gapp ()->xsm->Inst->Dig2VoltOut (sim_xyzS [1]/main_get_gapp ()->xsm->Inst->YResolution());
 		return TRUE;
 	}
 
@@ -105,14 +105,14 @@ gint XSM_Hardware::RTQuery (const gchar *property, double &val1, double &val2, d
 	if (*property == 'o' || *property == 'O'){ // "O" z0,x0,y0
 		// read/convert and return offset
 		// NEED to request 'z' property first, then this is valid and up-to-date!!!!
-		if (gapp->xsm->Inst->OffsetMode () == OFM_ANALOG_OFFSET_ADDING){
-			val1 =  gapp->xsm->Inst->VZ0() * gapp->xsm->Inst->Dig2VoltOut (sim_xyz0 [2]);
-			val2 =  gapp->xsm->Inst->VX0() * gapp->xsm->Inst->Dig2VoltOut (sim_xyz0 [0]);
-                        val3 =  gapp->xsm->Inst->VY0() * gapp->xsm->Inst->Dig2VoltOut (sim_xyz0 [1]);
+		if (main_get_gapp ()->xsm->Inst->OffsetMode () == OFM_ANALOG_OFFSET_ADDING){
+			val1 =  main_get_gapp ()->xsm->Inst->VZ0() * main_get_gapp ()->xsm->Inst->Dig2VoltOut (sim_xyz0 [2]);
+			val2 =  main_get_gapp ()->xsm->Inst->VX0() * main_get_gapp ()->xsm->Inst->Dig2VoltOut (sim_xyz0 [0]);
+                        val3 =  main_get_gapp ()->xsm->Inst->VY0() * main_get_gapp ()->xsm->Inst->Dig2VoltOut (sim_xyz0 [1]);
 		} else {
-			val1 =  gapp->xsm->Inst->VZ() * gapp->xsm->Inst->Dig2VoltOut (sim_xyz0 [2]);
-			val2 =  gapp->xsm->Inst->VX() * gapp->xsm->Inst->Dig2VoltOut (sim_xyz0 [0]);
-			val3 =  gapp->xsm->Inst->VY() * gapp->xsm->Inst->Dig2VoltOut (sim_xyz0 [1]);
+			val1 =  main_get_gapp ()->xsm->Inst->VZ() * main_get_gapp ()->xsm->Inst->Dig2VoltOut (sim_xyz0 [2]);
+			val2 =  main_get_gapp ()->xsm->Inst->VX() * main_get_gapp ()->xsm->Inst->Dig2VoltOut (sim_xyz0 [0]);
+			val3 =  main_get_gapp ()->xsm->Inst->VY() * main_get_gapp ()->xsm->Inst->Dig2VoltOut (sim_xyz0 [1]);
 		}
 		
 		return TRUE;
@@ -160,7 +160,7 @@ void XSM_Hardware::add_user_event_now (const gchar *message_id, const gchar *inf
 	static ScanEvent *se = NULL;
 	static double xy[3] = { 0.,0.,0. };
 
-	if (!gapp->xsm->MasterScan)
+	if (!main_get_gapp ()->xsm->MasterScan)
 		return;
 
 	if (!addflag)
@@ -168,12 +168,12 @@ void XSM_Hardware::add_user_event_now (const gchar *message_id, const gchar *inf
 
 	if (!se){
 		RTQuery ("z", xy[2], xy[0], xy[1]); // read Z,X,Y life position from DSP
-		xy[0] = gapp->xsm->Inst->V2XAng (xy[0]);
-		xy[1] = gapp->xsm->Inst->V2YAng (xy[1]);
-		xy[2] = gapp->xsm->Inst->V2ZAng (xy[2]);
+		xy[0] = main_get_gapp ()->xsm->Inst->V2XAng (xy[0]);
+		xy[1] = main_get_gapp ()->xsm->Inst->V2YAng (xy[1]);
+		xy[2] = main_get_gapp ()->xsm->Inst->V2ZAng (xy[2]);
 		
-		se = new ScanEvent (xy[0], xy[1], gapp->xsm->MasterScan->mem2d->GetLayer(), gapp->xsm->MasterScan->mem2d->get_t_index(), xy[2]);
-		gapp->xsm->MasterScan->mem2d->AttachScanEvent (se);
+		se = new ScanEvent (xy[0], xy[1], main_get_gapp ()->xsm->MasterScan->mem2d->GetLayer(), main_get_gapp ()->xsm->MasterScan->mem2d->get_t_index(), xy[2]);
+		main_get_gapp ()->xsm->MasterScan->mem2d->AttachScanEvent (se);
 	}
 	
 	// message_id string format: "parameter_adjust_id:: [unit] ...". unique parameter identifier no white spc, etc. only alphanum. aka "Bias_Adjust"
@@ -183,16 +183,16 @@ void XSM_Hardware::add_user_event_now (const gchar *message_id, const gchar *inf
 	ue->add (value[0], value[1]); // "Z", pre, now
 	se->add_event (ue);
 	
-	if (gapp->xsm->MasterScan)
-		if (gapp->xsm->MasterScan->view)
-			gapp->xsm->MasterScan->view->update_events ();
+	if (main_get_gapp ()->xsm->MasterScan)
+		if (main_get_gapp ()->xsm->MasterScan->view)
+			main_get_gapp ()->xsm->MasterScan->view->update_events ();
 }	
 
 
 gboolean XSM_Hardware::SetOffset(double x, double y){
 	XSM_DEBUG (DBG_L4, "HARD: Offset " << x << ", " << y);
-	sim_xyz0[0] = gapp->xsm->Inst->X0Resolution()*x;
-	sim_xyz0[1] = gapp->xsm->Inst->Y0Resolution()*y;
+	sim_xyz0[0] = main_get_gapp ()->xsm->Inst->X0Resolution()*x;
+	sim_xyz0[1] = main_get_gapp ()->xsm->Inst->Y0Resolution()*y;
 	sim_xyz0[2] = 0.;
 
         sim_mode = 1 | 16;
@@ -272,8 +272,8 @@ gboolean XSM_Hardware::MovetoXY(double x, double y){
 
 	XSM_DEBUG (DBG_L4, "HARD: MOVXY: " << rx << ", " << ry);
 
-	sim_xyzS[0] = gapp->xsm->Inst->XResolution()*x;
-	sim_xyzS[1] = gapp->xsm->Inst->YResolution()*y;
+	sim_xyzS[0] = main_get_gapp ()->xsm->Inst->XResolution()*x;
+	sim_xyzS[1] = main_get_gapp ()->xsm->Inst->YResolution()*y;
 
 	// g_message ("XSMHARD: MovetoXY: DA=[%g, %g] XY-Ang=[%g, %g] ",rx,ry, sim_xyzS[0],sim_xyzS[1]);
 
@@ -305,7 +305,7 @@ gboolean XSM_Hardware::ScanLineM(int yindex, int xdir, int muxmode, Mem2d *Mob[M
                 x = x0 + i*Dx*xdir;
                 y = y0;
                 MovetoXY (x,y);
-                Line.PutDataPkt (gapp->xsm->Inst->ZA2Dig(Simulate (muxmode)), i, 0);
+                Line.PutDataPkt (main_get_gapp ()->xsm->Inst->ZA2Dig(Simulate (muxmode)), i, 0);
                 //g_message ("ScanLine Simulation: DA=[%g, %g] XY-Ang=[%g, %g] ",x,y, sim_xyzS[0],sim_xyzS[1]);
         }
         rx = x0;
@@ -387,9 +387,9 @@ double hexgrid_smooth(double *xy){
         double a0 = (3.14/r2);
         double zf = a0/6;
 
-        r[0]=xy[0]/a0*2*M_PI + norm_noise () * 2*gapp->xsm->Inst->XResolution();
-        r[1]=xy[1]/a0*2*M_PI + norm_noise () * 2*gapp->xsm->Inst->YResolution();
-        return zf * Steps(xy[0], xy[1]) + zf*sin(r[0])*cos(r[1]) + norm_noise () * 2*gapp->xsm->Inst->ZResolution();
+        r[0]=xy[0]/a0*2*M_PI + norm_noise () * 2*main_get_gapp ()->xsm->Inst->XResolution();
+        r[1]=xy[1]/a0*2*M_PI + norm_noise () * 2*main_get_gapp ()->xsm->Inst->YResolution();
+        return zf * Steps(xy[0], xy[1]) + zf*sin(r[0])*cos(r[1]) + norm_noise () * 2*main_get_gapp ()->xsm->Inst->ZResolution();
 
         // return xy[1]+xy[0];
         // return sin (r[0]+sin(r[1]*r2))*cos(r[1]+cos(r[0]*r2));
@@ -398,15 +398,15 @@ double hexgrid_smooth(double *xy){
 
 // Dummy Bild
 double XSM_Hardware::Simulate (int muxmode){
-        if (gapp->xsm->scan[10]){
+        if (main_get_gapp ()->xsm->scan[10]){
                 double ix,iy;
-                gapp->xsm->scan[10]->World2Pixel  (sim_xyz0[0]+sim_xyzS[0], sim_xyz0[1]+sim_xyzS[1], ix,iy);
-                return sim_xyzS[2] =  gapp->xsm->scan[10]->data.s.dz * gapp->xsm->scan[10]->mem2d->GetDataPktInterpol (ix,iy);
+                main_get_gapp ()->xsm->scan[10]->World2Pixel  (sim_xyz0[0]+sim_xyzS[0], sim_xyz0[1]+sim_xyzS[1], ix,iy);
+                return sim_xyzS[2] =  main_get_gapp ()->xsm->scan[10]->data.s.dz * main_get_gapp ()->xsm->scan[10]->mem2d->GetDataPktInterpol (ix,iy);
         }
         
         if(IS_SPALEED_CTRL){
-                double x = sim_xyzS[0]/gapp->xsm->Inst->XResolution();
-                double y = sim_xyzS[1]/gapp->xsm->Inst->YResolution();
+                double x = sim_xyzS[0]/main_get_gapp ()->xsm->Inst->XResolution();
+                double y = sim_xyzS[1]/main_get_gapp ()->xsm->Inst->YResolution();
                 x/=32767./10;
                 y/=32767./10; // jetzt x,y in Volt am DA
                 sim_xyzS[2] = Lorenz(x,y)+Gaus(x,y)

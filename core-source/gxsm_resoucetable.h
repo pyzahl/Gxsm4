@@ -28,18 +28,14 @@
 #ifndef __GXSM_RESOUCETABLE_H__
 #define __GXSM_RESOUCETABLE_H__
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
+extern "C++" {
 
-void gxsm_init_dynamic_res ();
-void gxsm_search_for_palette ();
-void gxsm_search_for_HwI ();
-void gxsm_check_new_user_config ();
+  void gxsm_init_dynamic_res ();
+  void gxsm_search_for_palette ();
+  void gxsm_search_for_HwI ();
+  void gxsm_check_new_user_config ();
 
-#ifdef __cplusplus
 }
-#endif /* __cplusplus */
 
 
 #endif /* __GXSM_RESOUCETABLE_H__ */

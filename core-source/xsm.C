@@ -49,50 +49,11 @@
 
 GSettings *settings_hwi_interfaces = NULL;
 
-// Alles wird auf dies Basiseinheit "1A" bezogen - nur User I/O in nicht A !!
-UnitsTable XsmUnitsTable[] = {
-	// Id (used in preferences), Units Symbol, Units Symbol (ps-Version), scale factor, precision1, precision2
-	{ "AA", UTF8_ANGSTROEM,   "Ang",    1e0, ".1f", ".3f" }, // UFT-8 Ang did not work // PS: "\305"
-	{ "nm", "nm",  "nm",     10e0, ".1f", ".3f" },
-	{ "um", UTF8_MU"m",  "um",     10e3, ".1f", ".3f" }, // PS: "\265m"
-	{ "mm", "mm",  "mm",     10e6, ".1f", ".3f" },
-	{ "BZ", "%BZ", "BZ",     1e0, ".1f", ".2f" },
-	{ "sec","\"",  "\"",      1e0, ".1f", ".2f" },
-	{ "V",  "V",   "V",       1e0, ".2f", ".3f" },
-	{ "mV", "mV",  "mV",      1e-3, ".2f", ".3f" },
-	{ "V",  "*V", "V",      1e0, ".2f", ".3f" },
-	{ "*dV", "*dV","dV",     1e0, ".2f", ".3f" },
-	{ "*ddV", "*ddV","ddV",  1e0, ".2f", ".3f" },
-	{ "*V2", "V2", "V2",       1e0, ".2f", ".3f" },
-	{ "1",  " ",   " ",       1e0, ".3f", ".4f" },
-	{ "0",  " ",   " ",       1e0, ".3f", ".4f" },
-	{ "B",  "Bool",   "Bool", 1e0, ".3f", ".4f" },
-	{ "X",  "X",   "X",       1e0, ".3f", ".4f" },
-	{ "xV",  "xV",   "xV",    1e0, ".3f", ".4f" },
-	{ "deg", UTF8_DEGREE, "deg",       1e0, ".3f", ".4f" },
-	{ "Amp", "A",  "A",       1e9, "g", "g" },
-	{ "nA", "nA",  "nA",      1e0, ".2f", ".3f" },
-	{ "pA", "pA",  "pA",      1e-3, ".1f", ".2f" },
-	{ "nN", "nN",  "nN",      1e0, ".2f", ".3f" },
-	{ "Hz", "Hz",  "Hz",      1e0, ".2f", ".3f" },
-	{ "mHz", "mHz",  "mHz",   1e-3, ".2f", ".3f" },
-	{ "K",  "K",   "K",       1e0, ".2f", ".3f" },
-	{ "amu","amu", "amu",     1e0, ".1f", ".2f" },
-	{ "CPS","Cps", "Cps",     1e0, ".1f", ".2f" },
-	{ "CNT","CNT", "CNT",     1e0, ".1f", ".2f" },
-	{ "Int","Int", "Int",     1e0, ".1f", ".2f" },
-	{ "A/s","A/s", "A/s",     1e0, ".2f", ".3f" },
-	{ "s","s", "s",           1e0, ".2f", ".3f" },
-	{ "ms","ms", "ms",        1e0, ".2f", ".3f" },
-	{ NULL, NULL, NULL,       0e0, NULL, NULL }
-};
-
-
 
 /* Main XSM Object */
 
 Xsm::Xsm(){
-        gapp->monitorcontrol->LogEvent("Xsm object", "constructor", 3);
+        main_get_gapp ()->monitorcontrol->LogEvent("Xsm object", "constructor", 3);
 
 	// check for Cmd-Line override
 	if(xsmres.UnitCmd)
@@ -198,12 +159,12 @@ Xsm::Xsm(){
 	data.EnergyUnit = EnergyUnit->Copy ();
 
 	XSM_DEBUG (DBG_L2, "Xsm::Xsm : Init done");
-        gapp->monitorcontrol->LogEvent("Xsm object", "destructor completed", 3);
+        main_get_gapp ()->monitorcontrol->LogEvent("Xsm object", "destructor completed", 3);
 }
 
 Xsm::~Xsm(){
 	XSM_DEBUG (DBG_L2, "Xsm::~Xsm deleting unit objects");
-        gapp->monitorcontrol->LogEvent("Xsm object", "destructor", 3);
+        main_get_gapp ()->monitorcontrol->LogEvent("Xsm object", "destructor", 3);
         
 	if(LenUnit)
 		delete LenUnit;
@@ -238,7 +199,7 @@ Xsm::~Xsm(){
 	Inst=NULL;
 
 	XSM_DEBUG (DBG_L2, "Xsm::~Xsm done.");
-        gapp->monitorcontrol->LogEvent("Xsm object", "destructor complete", 3);
+        main_get_gapp ()->monitorcontrol->LogEvent("Xsm object", "destructor complete", 3);
 }
 
 
@@ -298,11 +259,11 @@ void Xsm::UpdateUnits(){
 	return; // PZ 20070202 - disabled it.
 	if(IsMode(MODE_BZUNIT) && X_Unit != BZ_Unit){
 		X_Unit = Y_Unit = BZ_Unit;
-		gapp->spm_update_all();
+		main_get_gapp ()->spm_update_all();
 	}else
 		if(IsMode(MODE_VOLTUNIT) && X_Unit != VoltUnit){
 			X_Unit = Y_Unit = VoltUnit;
-			gapp->spm_update_all();
+			main_get_gapp ()->spm_update_all();
 		}
 }
 

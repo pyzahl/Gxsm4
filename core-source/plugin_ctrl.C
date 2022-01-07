@@ -32,10 +32,10 @@
 #include <cstring>
 #include <cstdlib>
 
-// #include <unistd.h>
 #include <dirent.h>
 #include <gmodule.h>
 
+#include "glbvars.h"
 #include "plugin_ctrl.h"
 
 // #define XSM_DEBUG(L, DBGTXT) std::cout << "** (" << __FILE__ << ": " << __FUNCTION__ << ") Gxsm-DEBUG-MESSAGE **: " << std::endl << " - " << DBGTXT << std::endl
@@ -78,11 +78,11 @@ plugin_ctrl::plugin_ctrl(GList *pi_dirlist, gint (*check) (const gchar *), const
 	// Scan for Plugins
         gchar *six = g_strdup_printf ("Scanning %s PlugIns.", splash_info?splash_info : "GXSM");
 
-	gapp->GxsmSplash (-0.1, six, " ... ");
+	main_get_gapp ()->GxsmSplash (-0.1, six, " ... ");
 	XSM_DEBUG (DBG_L3, six);
 
         while(node){
-		gapp->GxsmSplash ((gdouble)pi_total/file_count, six, (gchar *) node->data);
+		main_get_gapp ()->GxsmSplash ((gdouble)pi_total/file_count, six, (gchar *) node->data);
 		scan_for_pi((gchar *) node->data);
 		node = node->next;
 		++pi_total;
@@ -91,14 +91,14 @@ plugin_ctrl::plugin_ctrl(GList *pi_dirlist, gint (*check) (const gchar *), const
 
 	// Init Plugins
         six = g_strdup_printf ("Initializing %s PlugIns.", splash_info?splash_info : "GXSM");
-	gapp->GxsmSplash (0.0, six, " --- ");
+	main_get_gapp ()->GxsmSplash (0.0, six, " --- ");
 	XSM_DEBUG (DBG_L3, six);
 	node = plugins;
         
         gint pi_count = g_list_length (node);
 
 	while(node){
-		gapp->GxsmSplash ((gdouble)pi_num/pi_count, six, (gchar *)((GxsmPlugin *)node->data)->filename);
+		main_get_gapp ()->GxsmSplash ((gdouble)pi_num/pi_count, six, (gchar *)((GxsmPlugin *)node->data)->filename);
 		init_pi((void *) node->data);
 		node = node->next;
 		++pi_num;
@@ -230,8 +230,8 @@ void plugin_ctrl::init_pi(void *pi){
 	p = (GxsmPlugin *) pi;
         //	if (p) {
         //                XSM_DEBUG_GP (DBG_L2, "INIT_PI:: %s", p->filename);
-        //		gapp->GxsmSplash ((gdouble)pi_num/(gdouble)pi_total, p->filename);
-        //		gapp->SetStatus (p->filename);
+        //		main_get_gapp ()->GxsmSplash ((gdouble)pi_num/(gdouble)pi_total, p->filename);
+        //		main_get_gapp ()->SetStatus (p->filename);
         //		gdk_flush ();
         //	}
 	if (p && p->init)
@@ -250,7 +250,7 @@ void plugin_ctrl::cleanup_pi(void *pi){
 	p = (GxsmPlugin *) pi;
 //	if (p) {
 //		XSM_DEBUG_GP (DBG_L2, "CLEANUP_PI:: %s", p->filename);
-//		gapp->SetStatus (p->filename);
+//		main_get_gapp ()->SetStatus (p->filename);
 //		gdk_flush ();
 //	}
 	if (p && p->cleanup)
@@ -289,7 +289,7 @@ void plugin_ctrl::view_pi_info(){
 
         GtkFileFilter *filter[] = { f1, f2, NULL };
 
-	gchar *pi_status_file = gapp->file_dialog_load ("HTML PlugIn status file to save", ".", 
+	gchar *pi_status_file = main_get_gapp ()->file_dialog_load ("HTML PlugIn status file to save", ".", 
                                                         "/tmp/gxsm_plugins.html",
                                                         filter
                                                         );
@@ -399,7 +399,7 @@ static void app_auto_hookup_menu_to_plugin_callback (App *app, const gchar *menu
                 gchar *app_tmpaction = g_strconcat ( "app.", tmpaction, NULL);
 
                 // attach to menu, fallback to plugins menu
-                gapp->gxsm_app_extend_menu (menusection, label, app_tmpaction);
+                main_get_gapp ()->gxsm_app_extend_menu (menusection, label, app_tmpaction);
                 g_free (app_tmpaction);
         }
         
@@ -600,10 +600,6 @@ gxsm_plugins::~gxsm_plugins(){
 //
 // ----------------------------------------------------------------------
 
-// #define XSM_HWI_DEBUG(L, DBGTXT) std::cout << "** (" << __FILE__ << ": " << __FUNCTION__ << ") Gxsm-HwI-DEBUG-MESSAGE **: " << std::endl << " - " << DBGTXT << std::endl
-
-#define XSM_HWI_DEBUG_ERROR(L, DBGTXT)         do { if(debug_level > L) std::cerr << "** (" << __FILE__ << ": " << __FUNCTION__ << ") Gxsm-ERROR-MESSAGE **: " << NEWLINE << " - " << DBGTXT << NEWLINE; } while(0)
-#define XSM_HWI_DEBUG(L, DBGTXT)         do { if(debug_level > L) std::cout << "** (" << __FILE__ << ": " << __FUNCTION__ << ") Gxsm-DEBUG-MESSAGE **: " << NEWLINE << " - " << DBGTXT << NEWLINE; } while(0)
 
 #define GXSM_HWI_TYPE_MANGLE_NAME GXSM_PI_VOID_PREFIX "27" "get_gxsm_hwi_hardware_class" GXSM_PI_VOIDP_SUFFIX
 
@@ -618,7 +614,7 @@ gxsm_hwi_plugins::gxsm_hwi_plugins (GList *pi_dirlist, gint (*check)(const gchar
 	// Init Gxsm Plugins, attach to menu
 	XSM_HWI_DEBUG (DBG_L3, "Setting up GXSM HwI Plugin(s)");
 
-	gapp->GxsmSplash (-0.1, "Setting up GXSM HwI Plugin(s)", " ... ");
+	main_get_gapp ()->GxsmSplash (-0.1, "Setting up GXSM HwI Plugin(s)", " ... ");
 
 	XSM_DEBUG_GP (DBG_L2, "gxsm_hwi_plugins::gxsm_hwi_plugins -- Setting up GXSM HwI Plugin(s)\n");
 	node = plugins;
@@ -632,7 +628,7 @@ gxsm_hwi_plugins::gxsm_hwi_plugins (GList *pi_dirlist, gint (*check)(const gchar
 		XSM_HWI_DEBUG (DBG_L3, "Asking HwI-PI for XSM_Hardware class reference :: " << p->name);
                 XSM_DEBUG_GP (DBG_L2, "gxsm_hwi_plugins::gxsm_hwi_plugins -- Asking HwI-PI for XSM_Hardware class reference :: %s\n", p->name);
 
-                gapp->GxsmSplash (-0.1, "Setting up GXSM HwI Plugin(s), checking:", p->name);
+                main_get_gapp ()->GxsmSplash (-0.1, "Setting up GXSM HwI Plugin(s), checking:", p->name);
 
 		if (g_module_symbol (p->module, GXSM_HWI_TYPE_MANGLE_NAME, (gpointer*)&gpi)){
 			if (p->status) g_free(p->status);

@@ -63,8 +63,11 @@ const gchar *MathErrString[] = {
 
 
 
-Surface::Surface() : Xsm(){
-	StopScanFlg= TRUE;
+Surface::Surface(App *gapp) : Xsm(){
+        gxsm4app = NULL;
+        g_app = gapp; // main application base class
+
+        StopScanFlg= TRUE;
 	ActiveScan = NULL;
 	MasterScan = NULL;
 	ActiveChannel = 0;
@@ -114,9 +117,9 @@ int Surface::AddProfile(gchar *filename){
 	if(!ActiveScan){
 		CleanupProfiles ();
 		ProfileList = g_slist_prepend (ProfileList,
-					       new ProfileControl (filename, "ProfileFromFile"));
+					       g_app->new_profile_control (filename, "ProfileFromFile"));
 	} else {
-		vpdata_read(filename, ActiveScan);
+		vpdata_read (get_app (), filename, ActiveScan);
 	}
 	return 0;
 }
@@ -265,9 +268,9 @@ Scan* Surface::NewScan(int vtype, int vflg, int ChNo, SCAN_DATA *vd){
 // ToDo: needs to be more flexible in future...
 
 	if (!strncasecmp (xsmres.InstrumentType, "SPALEED",7))
-		return ( new SpaScan (vtype, vflg, ChNo, vd));  // data type is ZD_LONG
+		return ( new SpaScan (vtype, vflg, ChNo, vd, get_app()));  // data type is ZD_LONG
 	else
-		return ( new TopoGraphicScan (vtype, vflg, ChNo, vd)); // data type is ZD_SHORT
+		return ( new TopoGraphicScan (vtype, vflg, ChNo, vd, get_app())); // data type is ZD_SHORT
 }
 
 int Surface::ActivateFreeChannel(){
@@ -315,6 +318,7 @@ int Surface::ActivateChannel(int NewActiveChannel){
 
 	// neuen Scan anlegen
 	scan[ActiveChannel] = NewScan(ChannelView[ActiveChannel], data.display.ViewFlg, ActiveChannel, &data);
+        scan[ActiveChannel] -> set_main_app (get_app());
 
 	// Fehler ?
 	if(!scan[ActiveChannel]){
@@ -384,7 +388,7 @@ int Surface::load(const char *rname){
 	// File Dialog ?
 	if(! rname){
 		GtkWidget *chooser = gtk_file_chooser_dialog_new ("NC/asc/vpdata file to load",
-                                                                  gapp->get_window (), 
+                                                                  NULL, 
 								  GTK_FILE_CHOOSER_ACTION_OPEN,
 								  _("_Cancel"), GTK_RESPONSE_CANCEL,
 								  _("_Open"), GTK_RESPONSE_ACCEPT,
@@ -708,7 +712,7 @@ int Surface::save(AUTO_SAVE_MODE automode, char *rname, int chidx, int forceOver
                 default_path = g_strdup (g_settings_get_string (gapp->get_as_settings (), "auto-save-folder"));
                 if (automode == CHANGE_PATH_ONLY){
 			GtkWidget *chooser = gtk_file_chooser_dialog_new ("Select path for data files",
-                                                                          gapp->get_window (), 
+                                                                          NULL, 
 									  GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,
 									  _("_Cancel"), GTK_RESPONSE_CANCEL,
 									  _("_Select"), GTK_RESPONSE_ACCEPT,
@@ -766,7 +770,7 @@ int Surface::save(AUTO_SAVE_MODE automode, char *rname, int chidx, int forceOver
                         ffname = rname;
                 } else {
                         GtkWidget *chooser = gtk_file_chooser_dialog_new ("NC file to save", 
-                                                                          gapp->get_window (),
+                                                                          NULL,
                                                                           GTK_FILE_CHOOSER_ACTION_SAVE,
                                                                           _("_Cancel"), GTK_RESPONSE_CANCEL,
                                                                           _("_Save"), GTK_RESPONSE_ACCEPT,
@@ -833,7 +837,7 @@ int Surface::save(AUTO_SAVE_MODE automode, char *rname, int chidx, int forceOver
                 if (g_file_test (fname, G_FILE_TEST_EXISTS)){
                         // Check overwrite on save?
                         if(forceOverwrite == FALSE){
-                                GtkWidget *dialog = gtk_message_dialog_new (gapp->get_window (),
+                                GtkWidget *dialog = gtk_message_dialog_new (NULL,
                                                                             GTK_DIALOG_DESTROY_WITH_PARENT,
                                                                             GTK_MESSAGE_WARNING,
                                                                             GTK_BUTTONS_YES_NO,
@@ -1345,6 +1349,7 @@ void Surface::MathOperation(gboolean (*MOp)(MATHOPPARAMS)){
                                 XSM_SHOW_ALERT(ERR_SORRY, ERR_NOMEM,"",1);
                                 return;
                         }
+                        scan[ChDest] -> set_main_app (get_app());
                 }
                 // Parameter bernehmen, Groesse einstellen, etc.
                 scan[ChDest]->create();
@@ -1398,6 +1403,7 @@ void Surface::MathOperationS(gboolean (*MOp)(MATHOPPARAMDONLY)){
                         XSM_SHOW_ALERT(ERR_SORRY, ERR_NOMEM,"",1);
                         return;
                 }
+                scan[ChDest] -> set_main_app (get_app());
         }
 
 	// Parameter bernehmen, Groesse einstellen, etc.
@@ -1451,6 +1457,7 @@ void Surface::MathOperation_for_all_vt(gboolean (*MOp)(MATHOPPARAMS)){
 				XSM_SHOW_ALERT(ERR_SORRY, ERR_NOMEM,"",1);
 				return;
 			}
+                        scan[ChDest] -> set_main_app (get_app());
 		}
 		// Parameter bernehmen, Groesse einstellen, etc.
 		scan[ChDest]->create();
@@ -1578,6 +1585,7 @@ void Surface::MathOperationX(gboolean (*MOp)(MATH2OPPARAMS), int IdSrc2, gboolea
 					XSM_SHOW_ALERT(ERR_SORRY, ERR_NOMEM,"",1);
 					return;
 				}
+                                scan[ChDest] -> set_main_app (get_app());
 			}
 			// Parameter bernehmen, Groee einstellen, etc.
 			scan[ChDest]->create();

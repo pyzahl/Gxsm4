@@ -28,12 +28,9 @@
  * Project: Gxsm
  */
 
-#include "gxsm_app.h"
+#include "app_monitorcontrol.h"
+#include "glbvars.h"
 #include "gxsm_window.h"
-
-#include "unit.h"
-#include "pcs.h"
-#include "xsmtypes.h"
 
 typedef struct{
   const gchar *label;
@@ -62,8 +59,7 @@ static GActionEntry win_monitor_entries[] = {
         { "logging-level", MonitorControl::set_logging_level_radio_callback, "s", "'normal'", NULL },
 };
 
-MonitorControl::MonitorControl (gint loglevel, gint maxlines):Monitor(loglevel)
-{
+MonitorControl::MonitorControl (Gxsm4app *app, gint loglevel, gint maxlines):Monitor(loglevel), AppBase(app){
         set_max_lines (maxlines);
 
         AppWindowInit (N_("GXSM Activity Monitor and Logbook"));
@@ -101,7 +97,8 @@ MonitorControl::~MonitorControl (){
 void MonitorControl::AppWindowInit(const gchar *title, const gchar *sub_title){
 	XSM_DEBUG (DBG_L2,  "MonitorControl::AppWindowInit -- header bar,..." );
 
-        app_window = gxsm4_app_window_new (GXSM4_APP (gapp->get_application ()));
+        g_message ("MonitorControl::AppWindowInit** <%s : %s> **", title, sub_title);
+        app_window = gxsm4_app_window_new (main_app);
         window = GTK_WINDOW (app_window);
 
         header_bar = gtk_header_bar_new ();
@@ -112,9 +109,9 @@ void MonitorControl::AppWindowInit(const gchar *title, const gchar *sub_title){
         g_action_map_add_action_entries (G_ACTION_MAP (app_window),
                                          win_monitor_entries, G_N_ELEMENTS (win_monitor_entries),
                                          this);
-        //GtkWidget *monitor_menu = gtk_menu_new_from_model (G_MENU_MODEL (gapp->get_monitor_menu ()));
+        //GtkWidget *monitor_menu = gtk_menu_new_from_model (G_MENU_MODEL (main_get_gapp ()->get_monitor_menu ()));
         //g_assert (GTK_IS_MENU (monitor_menu));
-        GtkWidget *monitor_menu = gtk_popover_menu_new_from_model (G_MENU_MODEL (gapp->get_monitor_menu ()));
+        GtkWidget *monitor_menu = gtk_popover_menu_new_from_model (G_MENU_MODEL (main_get_gapp ()->get_monitor_menu ()));
 
 	// GtkIconSize tmp_toolbar_icon_size = GTK_ICON_SIZE_LARGE_TOOLBAR;
       
@@ -125,17 +122,11 @@ void MonitorControl::AppWindowInit(const gchar *title, const gchar *sub_title){
         gtk_widget_show (header_menu_button);
 
         SetTitle (title, sub_title);
-        // gtk_header_bar_set_title ( GTK_HEADER_BAR (header_bar), title);
-        // gtk_header_bar_set_subtitle (GTK_HEADER_BAR  (header_bar), title);
         gtk_window_set_titlebar (GTK_WINDOW (window), header_bar);
 
 	v_grid = gtk_grid_new ();
         gtk_window_set_child (GTK_WINDOW (window), v_grid);
 	g_object_set_data (G_OBJECT (window), "v_grid", v_grid);
-
-        // FIX-ME-GTK4
-        //g_signal_connect (G_OBJECT (window), "delete-event", G_CALLBACK (gtk_widget_hide_on_delete), NULL);
-        // g_signal_connect (G_OBJECT (window), "delete-event", G_CALLBACK (AppBase::window_close_callback), this);
 
 	gtk_widget_show (GTK_WIDGET (window)); // FIX-ME GTK4 SHOWALL
 
@@ -151,7 +142,7 @@ void MonitorControl::file_save_callback (GSimpleAction *action, GVariant *parame
         MonitorControl *mc = (MonitorControl *) user_data;
 
         std::ofstream f;
-        gchar *fname = gapp->file_dialog_save ("Save Monitor Log Buffer", NULL, NULL);
+        gchar *fname = main_get_gapp ()->file_dialog_save ("Save Monitor Log Buffer", NULL, NULL);
 
         f.open (fname, std::ios::out);
 

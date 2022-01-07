@@ -36,11 +36,12 @@
 #include "xsmtypes.h"
 #include <gtk/gtk.h>
 #include "glbvars.h"
+#include "surface.h"
 
 void callback_view( GtkWidget *widget, gpointer data ){
         XSM_DEBUG(DBG_L3, "cb_view");
         if (gapp && gtk_check_button_get_active (GTK_CHECK_BUTTON (widget))) 
-                gapp->xsm->SetVM((long)data);
+                main_get_gapp ()->xsm->SetVM((long)data);
 }
 
 void cbtext( GtkEditable *widget, App *ap ){
@@ -50,36 +51,36 @@ void cbtext( GtkEditable *widget, App *ap ){
 
 void cbbasename( GtkWidget *widget, App *ap ){
         //g_print ("xxxxxxxxxxxxxxxxxxx cbbasename new  %s\n",gtk_entry_buffer_get_text (GTK_ENTRY_BUFFER (gtk_entry_get_buffer (GTK_ENTRY (widget)))));
-        //g_print ("xxxxxxxxxxxxxxxxxxx cbbasename old %s\n",gapp->xsm->data.ui.basename );
-        gapp->xsm->data.ui.SetBaseName (gtk_entry_buffer_get_text (GTK_ENTRY_BUFFER (gtk_entry_get_buffer (GTK_ENTRY (widget)))));
+        //g_print ("xxxxxxxxxxxxxxxxxxx cbbasename old %s\n",main_get_gapp ()->xsm->data.ui.basename );
+        main_get_gapp ()->xsm->data.ui.SetBaseName (gtk_entry_buffer_get_text (GTK_ENTRY_BUFFER (gtk_entry_get_buffer (GTK_ENTRY (widget)))));
         // ap->as_setdata();
 }
 
 
 void make_freeze_selected (){
-        if (G_IS_OBJECT (gapp->spm_control)){
-                if (gapp->xsm->IsMode (MODE_SETRANGE)){
-                        ((Gtk_EntryControl*)g_object_get_data (G_OBJECT (gapp->spm_control), "EC_Rx"))->Freeze ();
-                        ((Gtk_EntryControl*)g_object_get_data (G_OBJECT (gapp->spm_control), "EC_Rx"))->Freeze ();
-                        ((Gtk_EntryControl*)g_object_get_data (G_OBJECT (gapp->spm_control), "EC_Ry"))->Freeze ();
-                        ((Gtk_EntryControl*)g_object_get_data (G_OBJECT (gapp->spm_control), "EC_Stx"))->Thaw ();
-                        ((Gtk_EntryControl*)g_object_get_data (G_OBJECT (gapp->spm_control), "EC_Sty"))->Thaw ();
-                        ((Gtk_EntryControl*)g_object_get_data (G_OBJECT (gapp->spm_control), "EC_Pnx"))->Thaw ();
-                        ((Gtk_EntryControl*)g_object_get_data (G_OBJECT (gapp->spm_control), "EC_Pny"))->Thaw ();
-                } else if (gapp->xsm->IsMode (MODE_SETSTEPS)){
-                        ((Gtk_EntryControl*)g_object_get_data (G_OBJECT (gapp->spm_control), "EC_Rx"))->Thaw ();
-                        ((Gtk_EntryControl*)g_object_get_data (G_OBJECT (gapp->spm_control), "EC_Ry"))->Thaw ();
-                        ((Gtk_EntryControl*)g_object_get_data (G_OBJECT (gapp->spm_control), "EC_Stx"))->Freeze ();
-                        ((Gtk_EntryControl*)g_object_get_data (G_OBJECT (gapp->spm_control), "EC_Sty"))->Freeze ();
-                        ((Gtk_EntryControl*)g_object_get_data (G_OBJECT (gapp->spm_control), "EC_Pnx"))->Thaw ();
-                        ((Gtk_EntryControl*)g_object_get_data (G_OBJECT (gapp->spm_control), "EC_Pny"))->Thaw ();
-                } else if (gapp->xsm->IsMode (MODE_SETPOINTS)){
-                        ((Gtk_EntryControl*)g_object_get_data (G_OBJECT (gapp->spm_control), "EC_Rx"))->Thaw ();
-                        ((Gtk_EntryControl*)g_object_get_data (G_OBJECT (gapp->spm_control), "EC_Ry"))->Thaw ();
-                        ((Gtk_EntryControl*)g_object_get_data (G_OBJECT (gapp->spm_control), "EC_Stx"))->Thaw ();
-                        ((Gtk_EntryControl*)g_object_get_data (G_OBJECT (gapp->spm_control), "EC_Sty"))->Thaw ();
-                        ((Gtk_EntryControl*)g_object_get_data (G_OBJECT (gapp->spm_control), "EC_Pnx"))->Freeze ();
-                        ((Gtk_EntryControl*)g_object_get_data (G_OBJECT (gapp->spm_control), "EC_Pny"))->Freeze ();
+        if (G_IS_OBJECT (main_get_gapp ()->spm_control)){
+                if (main_get_gapp ()->xsm->IsMode (MODE_SETRANGE)){
+                        ((Gtk_EntryControl*)g_object_get_data (G_OBJECT (main_get_gapp ()->spm_control), "EC_Rx"))->Freeze ();
+                        ((Gtk_EntryControl*)g_object_get_data (G_OBJECT (main_get_gapp ()->spm_control), "EC_Rx"))->Freeze ();
+                        ((Gtk_EntryControl*)g_object_get_data (G_OBJECT (main_get_gapp ()->spm_control), "EC_Ry"))->Freeze ();
+                        ((Gtk_EntryControl*)g_object_get_data (G_OBJECT (main_get_gapp ()->spm_control), "EC_Stx"))->Thaw ();
+                        ((Gtk_EntryControl*)g_object_get_data (G_OBJECT (main_get_gapp ()->spm_control), "EC_Sty"))->Thaw ();
+                        ((Gtk_EntryControl*)g_object_get_data (G_OBJECT (main_get_gapp ()->spm_control), "EC_Pnx"))->Thaw ();
+                        ((Gtk_EntryControl*)g_object_get_data (G_OBJECT (main_get_gapp ()->spm_control), "EC_Pny"))->Thaw ();
+                } else if (main_get_gapp ()->xsm->IsMode (MODE_SETSTEPS)){
+                        ((Gtk_EntryControl*)g_object_get_data (G_OBJECT (main_get_gapp ()->spm_control), "EC_Rx"))->Thaw ();
+                        ((Gtk_EntryControl*)g_object_get_data (G_OBJECT (main_get_gapp ()->spm_control), "EC_Ry"))->Thaw ();
+                        ((Gtk_EntryControl*)g_object_get_data (G_OBJECT (main_get_gapp ()->spm_control), "EC_Stx"))->Freeze ();
+                        ((Gtk_EntryControl*)g_object_get_data (G_OBJECT (main_get_gapp ()->spm_control), "EC_Sty"))->Freeze ();
+                        ((Gtk_EntryControl*)g_object_get_data (G_OBJECT (main_get_gapp ()->spm_control), "EC_Pnx"))->Thaw ();
+                        ((Gtk_EntryControl*)g_object_get_data (G_OBJECT (main_get_gapp ()->spm_control), "EC_Pny"))->Thaw ();
+                } else if (main_get_gapp ()->xsm->IsMode (MODE_SETPOINTS)){
+                        ((Gtk_EntryControl*)g_object_get_data (G_OBJECT (main_get_gapp ()->spm_control), "EC_Rx"))->Thaw ();
+                        ((Gtk_EntryControl*)g_object_get_data (G_OBJECT (main_get_gapp ()->spm_control), "EC_Ry"))->Thaw ();
+                        ((Gtk_EntryControl*)g_object_get_data (G_OBJECT (main_get_gapp ()->spm_control), "EC_Stx"))->Thaw ();
+                        ((Gtk_EntryControl*)g_object_get_data (G_OBJECT (main_get_gapp ()->spm_control), "EC_Sty"))->Thaw ();
+                        ((Gtk_EntryControl*)g_object_get_data (G_OBJECT (main_get_gapp ()->spm_control), "EC_Pnx"))->Freeze ();
+                        ((Gtk_EntryControl*)g_object_get_data (G_OBJECT (main_get_gapp ()->spm_control), "EC_Pny"))->Freeze ();
                 }
         }
 }
@@ -87,14 +88,14 @@ void make_freeze_selected (){
 void cb_setmode( GtkWidget *widget, int data ){
         XSM_DEBUG(DBG_L3, "cb_setmode");
         if (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget))) 
-                gapp->xsm->SetModeFlg(data);
+                main_get_gapp ()->xsm->SetModeFlg(data);
         else
-                gapp->xsm->ClrModeFlg(data);
+                main_get_gapp ()->xsm->ClrModeFlg(data);
 	
         if(IS_SPALEED_CTRL){
-                gapp->spa_mode_switch_check();
-                gapp->spa_SeV_unit_switch_check();
-                gapp->spm_update_all();
+                main_get_gapp ()->spa_mode_switch_check();
+                main_get_gapp ()->spa_SeV_unit_switch_check();
+                main_get_gapp ()->spm_update_all();
         }
 
         make_freeze_selected ();
@@ -330,7 +331,7 @@ void App::spm_nlayer_update(Param_Control* pcs, gpointer app){
 
 void App::spm_select_layer(Param_Control* pcs, gpointer app){
         gchar *valtxt = NULL;
-        int i3d = gapp->xsm->data.display.vlayer;
+        int i3d = main_get_gapp ()->xsm->data.display.vlayer;
         if (i3d < 0) 
                 i3d = 0;
 
@@ -374,7 +375,7 @@ void App::spm_select_layer(Param_Control* pcs, gpointer app){
 
 void App::spm_select_time(Param_Control* pcs, gpointer app){
         gchar *valtxt = NULL;
-        int i4d = gapp->xsm->data.display.vframe;
+        int i4d = main_get_gapp ()->xsm->data.display.vframe;
         if (i4d < 0) 
                 i4d = 0;
 
@@ -464,22 +465,22 @@ void App::spa_gate_check(Param_Control* pcs, gpointer app){
 
 void App::spa_SeV_unit_switch_check(){
         static int lastmode=MODE_ENERGY_EV;
-        if(gapp->xsm->IsMode(MODE_ENERGY_EV)){
+        if(main_get_gapp ()->xsm->IsMode(MODE_ENERGY_EV)){
                 if(lastmode == MODE_ENERGY_EV) return;
                 lastmode = MODE_ENERGY_EV;
-                ((Gtk_EntryControl *) g_object_get_data( G_OBJECT (spm_control), "SPA_Energy"))->changeUnit(gapp->xsm->EnergyUnit);
+                ((Gtk_EntryControl *) g_object_get_data( G_OBJECT (spm_control), "SPA_Energy"))->changeUnit(main_get_gapp ()->xsm->EnergyUnit);
         }else{
                 if(lastmode == MODE_ENERGY_S) return;
                 lastmode = MODE_ENERGY_S;
-                ((Gtk_EntryControl *) g_object_get_data( G_OBJECT (spm_control), "SPA_Energy"))->changeUnit(gapp->xsm->YSUnit);
+                ((Gtk_EntryControl *) g_object_get_data( G_OBJECT (spm_control), "SPA_Energy"))->changeUnit(main_get_gapp ()->xsm->YSUnit);
         }
 }
 
 void App::recalc_volt_from_new_Energy(double* x, double *Eneu){
-        BZUnit BZEnew(*gapp->xsm->BZ_Unit);
+        BZUnit BZEnew(*main_get_gapp ()->xsm->BZ_Unit);
         BZEnew.SetE(*Eneu);
         // convert: from Volt(Eold) to BZ to Volt(Enew):
-        *x = BZEnew.Usr2Base(gapp->xsm->BZ_Unit->Base2Usr(*x));
+        *x = BZEnew.Usr2Base(main_get_gapp ()->xsm->BZ_Unit->Base2Usr(*x));
 }
 
 
@@ -490,26 +491,26 @@ void App::spa_switch_unit(Param_Control* pcs, gpointer data){
 void App::spa_mode_switch_check(){
         static int lastmode=MODE_VOLTUNIT;
 	
-        if(gapp->xsm->IsMode(MODE_BZUNIT)){
+        if(main_get_gapp ()->xsm->IsMode(MODE_BZUNIT)){
                 if(lastmode == MODE_BZUNIT) return;
                 lastmode = MODE_BZUNIT;
-                //  gapp->xsm->BZ_Unit->SetE(data->hardpars.SPA_Energy);
+                //  main_get_gapp ()->xsm->BZ_Unit->SetE(data->hardpars.SPA_Energy);
                 XSM_DEBUG(DBG_L3,  "mode switch check: recalc BZ from Volt"  );
                 g_slist_foreach (
                                  (GSList*)g_object_get_data (
-                                                             G_OBJECT (gapp->spm_control), 
+                                                             G_OBJECT (main_get_gapp ()->spm_control), 
                                                              "SPA_EnergyDependEC_list"),
-                                 (GFunc) App::spa_switch_unit, gapp->xsm->BZ_Unit);
-                gapp->spm_update_all();
+                                 (GFunc) App::spa_switch_unit, main_get_gapp ()->xsm->BZ_Unit);
+                main_get_gapp ()->spm_update_all();
         }else{
                 if(lastmode == MODE_VOLTUNIT) return;
                 lastmode = MODE_VOLTUNIT;
                 XSM_DEBUG(DBG_L3,  "mode switch check: recalc Volt from BZ" );
                 g_slist_foreach (
                                  (GSList*)g_object_get_data (
-                                                             G_OBJECT (gapp->spm_control), 
+                                                             G_OBJECT (main_get_gapp ()->spm_control), 
                                                              "SPA_EnergyDependEC_list"),
-                                 (GFunc) App::spa_switch_unit, gapp->xsm->VoltUnit);
+                                 (GFunc) App::spa_switch_unit, main_get_gapp ()->xsm->VoltUnit);
         }
         spm_range_check(NULL, gapp);
 }
@@ -676,8 +677,8 @@ GtkWidget* App::create_spm_control (){
                              -360., 360., "6g", 1., 15.,
                              "Rotation");
 
-        if (gapp->xsm->hardware)
-                if (!gapp->xsm->hardware->RotateStepwise (0)) // test for delta rotation availability
+        if (main_get_gapp ()->xsm->hardware)
+                if (!main_get_gapp ()->xsm->hardware->RotateStepwise (0)) // test for delta rotation availability
                         EC_ScanFix_list = g_slist_prepend( EC_ScanFix_list, spm_bp->ec); // no life/while scanning rotation!
 
         GtkWidget *preset_button = spm_bp->grid_add_button
@@ -867,11 +868,11 @@ void App::spm_update_all(int Vflg){
         if(!spm_control) return;
         XSM_DEBUG(DBG_L3, "------ App::spm_update_all -------");
         if(gapp){
-                gapp->xsm->Inst->update_piezosensitivity (xsmres); // piezo, current, ... conversion are buffered, must update
+                main_get_gapp ()->xsm->Inst->update_piezosensitivity (xsmres); // piezo, current, ... conversion are buffered, must update
 
-                gapp->xsm->SetRedraw(FALSE); // suppress redraw on each displayrelevat field, do redraw only once at end !
+                main_get_gapp ()->xsm->SetRedraw(FALSE); // suppress redraw on each displayrelevat field, do redraw only once at end !
 		
-                gapp->xsm->data.UpdateUnits();
+                main_get_gapp ()->xsm->data.UpdateUnits();
 
                 g_slist_foreach (
                                  (GSList*)g_object_get_data (
@@ -912,7 +913,7 @@ void App::spm_update_all(int Vflg){
                 gtk_check_button_set_active (tb, TRUE);
         
         if(gapp)
-                gapp->xsm->SetRedraw(); // Enable redraw and do one redraw !
+                main_get_gapp ()->xsm->SetRedraw(); // Enable redraw and do one redraw !
 	
         ui_update();
         as_update();

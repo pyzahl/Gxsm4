@@ -28,6 +28,6 @@
 #ifndef __VPDATA_READ_H
 #define __VPDATA_READ_H
 
-int vpdata_read (const gchar *fname, Scan *active_scan);
+int vpdata_read (Gxsm4app *app, const gchar *fname, Scan *active_scan);
 
 #endif // __VPDATA_READ_H

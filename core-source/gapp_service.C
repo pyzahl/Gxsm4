@@ -49,90 +49,15 @@
 
 
 // ============================================================
-// MyGnomeTools
-// ============================================================
-
-
-
-GMenuModel *MyGnomeTools::find_extension_point_section (GMenuModel  *model,
-                                                        const gchar *extension_point)
-{
-        const gint dbg=0;
-        gint i, n_items;
-        GMenuModel *section = NULL;
-
-        if (model == NULL)
-                return NULL;
-
-        if (dbg > 0) g_print ("MyGnomeTools::find_extension_point_section '%s' in menu.\n", extension_point);
-
-        n_items = g_menu_model_get_n_items (model);
-
-        if (dbg > 0) g_print ("MyGnomeTools::find_extension_point_section n_items=%d\n", n_items);
-
-        for (i = 0; i < n_items && !section; i++) {
-                gchar *id = NULL;
-                
-                gboolean ret=g_menu_model_get_item_attribute (model, i, "id", "s", &id);
-                if (dbg > 0) g_print ("MyGnomeTools::find_extension_point_section i=%d  id: %s %s\n", i, id, ret?"YES":"NO");
-                if (id) { g_free (id); } id = NULL;
-                gboolean retx1=g_menu_model_get_item_attribute (model, i, "name", "s", &id);
-                if (dbg > 0) g_print ("MyGnomeTools::find_extension_point_section i=%d name: %s %s\n", i, id, retx1?"YES":"NO");
-                if (id) { g_free (id); } id = NULL;
-                gboolean retx2=g_menu_model_get_item_attribute (model, i, "label", "s", &id);
-                if (dbg > 0) g_print ("MyGnomeTools::find_extension_point_section i=%d label: %s %s\n", i, id, retx2?"YES":"NO");
-                if (id) { g_free (id); } id = NULL;
-
-
-                if (ret){
-                        if (g_menu_model_get_item_attribute (model, i, "id", "s", &id) &&
-                            strcmp (id, extension_point) == 0) {
-                                section = g_menu_model_get_item_link (model, i, G_MENU_LINK_SECTION); 
-                                if (id) g_free (id);
-                                return section;
-                        }
-                }
-                
-                GMenuModel *subsection;
-                GMenuModel *submenu;
-                gint j, j_items;
-                
-                if (dbg > 0) g_print ("MyGnomeTools::find_extension_point_section subsecton lookup\n");
-
-                subsection = g_menu_model_get_item_link (model, i, G_MENU_LINK_SECTION);
-                if (subsection == NULL){ // try here:
-                        submenu = g_menu_model_get_item_link (model, i, G_MENU_LINK_SUBMENU);
-                        if (submenu)
-                                section = find_extension_point_section (submenu, extension_point);
-                } else {
-                        //                        if (subsection) {
-                        j_items = g_menu_model_get_n_items (subsection);
-                        if (dbg > 0) g_print ("MyGnomeTools::find_extension_point_section subsecton lookup -- j_items=%d\n", j_items);
-                        
-                        for (j = 0; j < j_items && !section; j++) {
-                                if (dbg > 0) g_print ("MyGnomeTools::find_extension_point_section submenu lookup -- j_items=%d\n", j);
-                                submenu = g_menu_model_get_item_link (subsection, j, G_MENU_LINK_SUBMENU);
-                                if (submenu)
-                                        section = find_extension_point_section (submenu, extension_point);
-                        }
-                }
-        }
-
-        return section;
-}
-
-
-// ============================================================
 // GnomeAppService
 // ============================================================
-
 
 gint GnomeAppService::setup_multidimensional_data_copy (const gchar *title, Scan *src, int &ti, int &tf, int &vi, int &vf,
                                                         int *tnadd, int *vnadd, int *crop_window_xy, gboolean crop){
 	UnitObj *Pixel = new UnitObj("Pix","Pix");
 	UnitObj *Unity = new UnitObj(" "," ");
 	GtkWidget *dialog = gtk_dialog_new_with_buttons (N_(title),
-							 window, 
+							 NULL, 
 							 (GtkDialogFlags)(GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
 							 _("_OK"), GTK_RESPONSE_ACCEPT,
 							 _("_CANCEL"), GTK_RESPONSE_CANCEL,
@@ -198,7 +123,7 @@ int GnomeAppService::dialog(const char *title, const char *content,
         dialog_var      = 0;
         dialog_response = GTK_RESPONSE_NONE;
 	GtkWidget *dialog = gtk_dialog_new_with_buttons (N_(title),
-							 window,
+							 NULL,
 							 (GtkDialogFlags)(GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
 							 N_(b1), 1,
 							 N_(b2), 2,
@@ -231,7 +156,7 @@ GtkWidget* GnomeAppService::progress_info_new (const gchar *title, gint levels, 
 	if (!progress_dialog){
                 new_dialog=true;
                 progress_dialog = gtk_dialog_new_with_buttons (N_(title?title:"Progress"),
-                                                               gapp->get_window (), 
+                                                               NULL,
                                                                (GtkDialogFlags)((modal ? GTK_DIALOG_MODAL:0) | GTK_DIALOG_DESTROY_WITH_PARENT),
                                                                NULL, NULL, NULL);
                 //_("_Cancel"),
@@ -372,7 +297,7 @@ gchar *GnomeAppService::file_dialog_save (const gchar *title,
                                           GtkFileFilter **filter
                                           ){
         GtkWidget *chooser = gtk_file_chooser_dialog_new (title,
-                                                          window, // parent_window,
+                                                          NULL,
                                                           GTK_FILE_CHOOSER_ACTION_SAVE,
                                                           N_("_Cancel"), GTK_RESPONSE_CANCEL,
                                                           N_("_Save"), GTK_RESPONSE_ACCEPT,
@@ -412,7 +337,7 @@ gchar *GnomeAppService::file_dialog_load (const gchar *title,
                                           GtkFileFilter **filter
                                           ){
         GtkWidget *chooser = gtk_file_chooser_dialog_new (title,
-                                                          window, // parent_window,
+                                                          NULL,
                                                           GTK_FILE_CHOOSER_ACTION_OPEN,
                                                           N_("_Cancel"), GTK_RESPONSE_CANCEL,
                                                           N_("_Load"), GTK_RESPONSE_ACCEPT,
@@ -475,7 +400,7 @@ void GnomeAppService::ValueRequest(const gchar *title, const gchar *label, const
 				   UnitObj *uobj, double minv, double maxv, const gchar *vfmt,
 				   double *value){
 	GtkWidget *dialog = gtk_dialog_new_with_buttons (N_(title),
-							 window,
+							 NULL,
 							 (GtkDialogFlags)(GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
 							 _("_OK"), GTK_RESPONSE_ACCEPT,
 							 NULL);
@@ -505,7 +430,7 @@ void GnomeAppService::ValueRequestList (const gchar *title,
                                         double *value[]){
 
 	GtkWidget *dialog = gtk_dialog_new_with_buttons (N_(title),
-							 window,
+							 NULL,
 							 (GtkDialogFlags)(GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
 							 _("_OK"), GTK_RESPONSE_ACCEPT,
 							 NULL);
@@ -555,27 +480,25 @@ gint GnomeAppService::terminate_timeout_func (gpointer data){
 
 void GnomeAppService::alert(const gchar *s1, const gchar *s2, const gchar *s3, int c){
         if (is_thread_safe_no_gui_mode()) return;
-        if(window){
-                GtkWidget *dialog = gtk_message_dialog_new_with_markup (window,
-                                                                        GTK_DIALOG_DESTROY_WITH_PARENT,
-                                                                        GTK_MESSAGE_WARNING,
-                                                                        GTK_BUTTONS_CLOSE,
-                                                                        "<span foreground='red' size='large' weight='bold'>%s</span>\n%s\n%s", s1, s2, s3);
-                g_signal_connect_swapped (G_OBJECT (dialog), "response",
-                                          G_CALLBACK (gtk_window_destroy),
-                                          G_OBJECT (dialog));
+        GtkWidget *dialog = gtk_message_dialog_new_with_markup (NULL,
+                                                                GTK_DIALOG_DESTROY_WITH_PARENT,
+                                                                GTK_MESSAGE_WARNING,
+                                                                GTK_BUTTONS_CLOSE,
+                                                                "<span foreground='red' size='large' weight='bold'>%s</span>\n%s\n%s", s1, s2, s3);
+        g_signal_connect_swapped (G_OBJECT (dialog), "response",
+                                  G_CALLBACK (gtk_window_destroy),
+                                  G_OBJECT (dialog));
 
-                gtk_widget_show (dialog);
+        gtk_widget_show (dialog);
 
-                if (c > 5){
-                        g_message ("adding timeout for forced exit");
-                        g_object_set_data (G_OBJECT (dialog), "SM", (gpointer)g_strdup_printf ("<span foreground='red' size='large' weight='bold'>%s</span>\n%s\n%s", s1, s2, s3));
-                        g_object_set_data (G_OBJECT (dialog), "CM", GINT_TO_POINTER (c));
-                        g_timeout_add ((guint)1000, 
-                                       (GSourceFunc) GnomeAppService::terminate_timeout_func, 
-                                       dialog
-                                       );
-                }
+        if (c > 5){
+                g_message ("adding timeout for forced exit");
+                g_object_set_data (G_OBJECT (dialog), "SM", (gpointer)g_strdup_printf ("<span foreground='red' size='large' weight='bold'>%s</span>\n%s\n%s", s1, s2, s3));
+                g_object_set_data (G_OBJECT (dialog), "CM", GINT_TO_POINTER (c));
+                g_timeout_add ((guint)1000, 
+                               (GSourceFunc) GnomeAppService::terminate_timeout_func, 
+                               dialog
+                               );
         }
 }
 
@@ -584,8 +507,13 @@ void GnomeAppService::alert(const gchar *s1, const gchar *s2, const gchar *s3, i
 // AppBase
 // ============================================================
 
-AppBase::AppBase(){ 
+AppBase::AppBase (Gxsm4app *app){ 
 	XSM_DEBUG(DBG_L2, "AppBase" ); 
+
+        main_app = app;
+        main_title_buffer = g_strdup ("AppBase: Main Window title is not set.");
+        sub_title_buffer = NULL;
+
         app_window = NULL;
         window = NULL;
 	window_key=NULL;
@@ -594,13 +522,14 @@ AppBase::AppBase(){
 	nodestroy=FALSE;
         title_label = NULL;
         geometry_settings=g_settings_new (GXSM_RES_BASE_PATH_DOT".window-geometry");
+       
 }
 
 AppBase::~AppBase(){ 
 	XSM_DEBUG (DBG_L2, "AppBase::~AppBase destructor for window '" << (window_key?window_key:"--") << "'."); 
 
-        if (gapp)
-                gapp->remove_appwindow_from_list (this); // remove self from list
+        if (g_object_get_data (G_OBJECT (main_app), "APP-MAIN"))
+                ((App*)g_object_get_data (G_OBJECT (main_app), "APP-MAIN")) -> remove_appwindow_from_list (this); // remove self from list
         
 	if(!nodestroy){
 		XSM_DEBUG_GP (DBG_L2, "~AppBase -- calling widget destroy for window '%s'.",  (window_key?window_key:"--")); 
@@ -617,7 +546,15 @@ AppBase::~AppBase(){
 }
 
 void AppBase::SetTitle(const gchar *title, const gchar *sub_title){
+        if (title){
+                g_free (main_title_buffer);
+                main_title_buffer = g_strdup (title);
+        }
         if (sub_title){
+                g_free (sub_title_buffer);
+                sub_title_buffer = g_strdup (sub_title);
+        }
+        if (sub_title_buffer){
                 if (!title_label){
                         title_label = gtk_label_new (NULL);
                         gtk_label_set_single_line_mode (GTK_LABEL (title_label), false);
@@ -629,19 +566,20 @@ void AppBase::SetTitle(const gchar *title, const gchar *sub_title){
                         "<span size='large' weight='bold'>\%s</span>\n"
                         "<span size='small' weight='bold'>\%s</span>";
                 char *markup;
-                markup = g_markup_printf_escaped (format1, title?title:"", sub_title);
+                markup = g_markup_printf_escaped (format1, main_title_buffer?main_title_buffer:"", sub_title_buffer?sub_title_buffer:"");
                 gtk_label_set_markup (GTK_LABEL (title_label), markup);
                 g_free (markup);
         }
         else
-                if (title)
-                        gtk_window_set_title (GTK_WINDOW (window), title);
+                if (main_title_buffer)
+                        gtk_window_set_title (GTK_WINDOW (window), main_title_buffer);
 }
 
 void AppBase::AppWindowInit(const gchar *title, const gchar *sub_title){
 	XSM_DEBUG(DBG_L2, "AppBase::WidgetInit: " << title );
 
-        app_window =  gxsm4_app_window_new (GXSM4_APP (gapp->get_application ()));    // gtk_application_window_new (GTK_APPLICATION (gapp->get_application ()));
+        g_message ("AppBase::AppWindowInit <%s : %s>", title, sub_title);
+        app_window =  gxsm4_app_window_new (main_app);
         window = GTK_WINDOW (app_window);
 
         //window = GTK_WINDOW (gtk_window_new (GTK_WINDOW_TOPLEVEL));
@@ -651,20 +589,17 @@ void AppBase::AppWindowInit(const gchar *title, const gchar *sub_title){
         // gtk_header_bar_set_show_close_button (GTK_HEADER_BAR (header_bar), true);
         // gtk_header_bar_pack_end (GTK_HEADER_BAR (header_bar), GtkWidget *child);
 
-        SetTitle (title, sub_title);
         gtk_window_set_titlebar (GTK_WINDOW (window), header_bar);
+        SetTitle (title, sub_title);
 
 	v_grid = gtk_grid_new ();
 	g_object_set_data (G_OBJECT (window), "v_grid", v_grid);
         gtk_window_set_child (GTK_WINDOW (window), v_grid);
 	gtk_widget_show (GTK_WIDGET (v_grid)); // FIX-ME GTK4 SHOWALL
 
-        //g_signal_connect (G_OBJECT (window), "window-state-event", G_CALLBACK (AppBase::window_state_watch_callback), this);
-        // g_signal_connect (G_OBJECT (window), "delete-event", G_CALLBACK (AppBase::window_close_callback), this);
-        //  g_signal_connect (G_OBJECT (window), "delete-event", G_CALLBACK (gtk_widget_hide_on_delete), NULL);
-
         // FIX-ME GTK4
         gtk_widget_show (GTK_WIDGET (window));
+
 }
 
 gboolean AppBase::window_close_callback (GtkWidget *widget,
@@ -683,6 +618,73 @@ void AppBase::window_action_callback (GSimpleAction *simple, GVariant *parameter
         app_w->show ();
 }
 
+GMenuModel *AppBase::find_extension_point_section (GMenuModel  *model,
+                                                   const gchar *extension_point)
+{
+        const gint dbg=0;
+        gint i, n_items;
+        GMenuModel *section = NULL;
+
+        if (model == NULL)
+                return NULL;
+
+        if (dbg > 0) g_print ("MyGnomeTools::find_extension_point_section '%s' in menu.\n", extension_point);
+
+        n_items = g_menu_model_get_n_items (model);
+
+        if (dbg > 0) g_print ("MyGnomeTools::find_extension_point_section n_items=%d\n", n_items);
+
+        for (i = 0; i < n_items && !section; i++) {
+                gchar *id = NULL;
+                
+                gboolean ret=g_menu_model_get_item_attribute (model, i, "id", "s", &id);
+                if (dbg > 0) g_print ("MyGnomeTools::find_extension_point_section i=%d  id: %s %s\n", i, id, ret?"YES":"NO");
+                if (id) { g_free (id); } id = NULL;
+                gboolean retx1=g_menu_model_get_item_attribute (model, i, "name", "s", &id);
+                if (dbg > 0) g_print ("MyGnomeTools::find_extension_point_section i=%d name: %s %s\n", i, id, retx1?"YES":"NO");
+                if (id) { g_free (id); } id = NULL;
+                gboolean retx2=g_menu_model_get_item_attribute (model, i, "label", "s", &id);
+                if (dbg > 0) g_print ("MyGnomeTools::find_extension_point_section i=%d label: %s %s\n", i, id, retx2?"YES":"NO");
+                if (id) { g_free (id); } id = NULL;
+
+
+                if (ret){
+                        if (g_menu_model_get_item_attribute (model, i, "id", "s", &id) &&
+                            strcmp (id, extension_point) == 0) {
+                                section = g_menu_model_get_item_link (model, i, G_MENU_LINK_SECTION); 
+                                if (id) g_free (id);
+                                return section;
+                        }
+                }
+                
+                GMenuModel *subsection;
+                GMenuModel *submenu;
+                gint j, j_items;
+                
+                if (dbg > 0) g_print ("MyGnomeTools::find_extension_point_section subsecton lookup\n");
+
+                subsection = g_menu_model_get_item_link (model, i, G_MENU_LINK_SECTION);
+                if (subsection == NULL){ // try here:
+                        submenu = g_menu_model_get_item_link (model, i, G_MENU_LINK_SUBMENU);
+                        if (submenu)
+                                section = find_extension_point_section (submenu, extension_point);
+                } else {
+                        //                        if (subsection) {
+                        j_items = g_menu_model_get_n_items (subsection);
+                        if (dbg > 0) g_print ("MyGnomeTools::find_extension_point_section subsecton lookup -- j_items=%d\n", j_items);
+                        
+                        for (j = 0; j < j_items && !section; j++) {
+                                if (dbg > 0) g_print ("MyGnomeTools::find_extension_point_section submenu lookup -- j_items=%d\n", j);
+                                submenu = g_menu_model_get_item_link (subsection, j, G_MENU_LINK_SUBMENU);
+                                if (submenu)
+                                        section = find_extension_point_section (submenu, extension_point);
+                        }
+                }
+        }
+
+        return section;
+}
+
 void AppBase::add_window_to_window_menu(const gchar *menu_item_label, const gchar* key){
         const gchar *menusection = "windows-section";
         
@@ -696,14 +698,14 @@ void AppBase::add_window_to_window_menu(const gchar *menu_item_label, const gcha
         gchar *app_tmpaction = g_strconcat ( "app.", tmpaction, NULL);
         GSimpleAction *ti_action;
         
-        XSM_DEBUG_GP (DBG_L2, "AppBase::add_window_to_window_menu <%s>  MenuItem= %s ==> label, generated actions: [%s] <%s>, <%s>",
-                      menusection, menu_item_label, tmp, tmpaction, app_tmpaction);
+        //XSM_DEBUG_GP (DBG_L2, "AppBase::add_window_to_window_menu <%s>  MenuItem= %s ==> label, generated actions: [%s] <%s>, <%s>",
+        //              menusection, menu_item_label, tmp, tmpaction, app_tmpaction);
 
         if (!strcmp (menusection, "windows-section-xx")) { // add toggle -- testing, not yet working -- disabled via -xx
                 ti_action = g_simple_action_new_stateful (tmpaction,
                                                           G_VARIANT_TYPE_BOOLEAN,
                                                           g_variant_new_boolean (true));
-                g_signal_connect (ti_action, "toggled", G_CALLBACK (AppBase::window_action_callback), this); // GTK_APPLICATION ( gapp->get_application ()));
+                g_signal_connect (ti_action, "toggled", G_CALLBACK (AppBase::window_action_callback), this); // GTK_APPLICATION ( main_get_gapp ()->get_application ()));
         } else {
                 ti_action = g_simple_action_new (tmpaction, NULL);
                 g_signal_connect (ti_action, "activate", G_CALLBACK (AppBase::window_action_callback), this);
@@ -711,7 +713,7 @@ void AppBase::add_window_to_window_menu(const gchar *menu_item_label, const gcha
         
         g_object_set_data (G_OBJECT (ti_action), "AppBase", this);
 
-        g_action_map_add_action (G_ACTION_MAP ( gapp->get_application ()), G_ACTION (ti_action));
+        g_action_map_add_action (G_ACTION_MAP ( main_get_gapp ()->get_application ()), G_ACTION (ti_action));
 
 
 #if 1 // pretty rewrite name
@@ -724,10 +726,10 @@ void AppBase::add_window_to_window_menu(const gchar *menu_item_label, const gcha
 #else
         gchar *label = g_strdup (menu_item_label);
 #endif
-        XSM_DEBUG_GP (DBG_L2, "AppBase::add_window_to_window_menu <%s>  MenuItem= %s ==> label, generated actions: [%s] <%s>",
-                      menusection, menu_item_label, tmp, app_tmpaction);
+        //XSM_DEBUG_GP (DBG_L2, "AppBase::add_window_to_window_menu <%s>  MenuItem= %s ==> label, generated actions: [%s] <%s>",
+        //              menusection, menu_item_label, tmp, app_tmpaction);
         
-        gapp->gxsm_app_extend_menu (menusection, label, app_tmpaction);
+        main_get_gapp ()->gxsm_app_extend_menu (menusection, label, app_tmpaction);
 
         g_free (label);
         g_free (app_tmpaction);
@@ -761,8 +763,8 @@ int AppBase::set_window_geometry (const gchar *key, gint index, gboolean add_to_
         if (add_to_menu)
                 add_window_to_window_menu (window_key, window_key);
 
-        if (gapp)
-                gapp->add_appwindow_to_list (this); // add self to gapp globale list
+        if (g_object_get_data (G_OBJECT (main_app), "APP-MAIN"))
+                ((App*)g_object_get_data (G_OBJECT (main_app), "APP-MAIN")) -> add_appwindow_to_list (this); // add self to gapp globale list
 
         XSM_DEBUG_GP (DBG_L9, "AppBase::set_window_geometry and append '%s' to Windows Menu -- done.\n", window_key);
 	return 0;
@@ -800,7 +802,7 @@ void AppBase::position_auto (){
                         // GTK3:
                         // gtk_window_move (GTK_WINDOW (window), window_geometry[WGEO_XPOS], window_geometry[WGEO_YPOS]);
                         // g_message ("SORRY GTK4 can't do it -- Requested Window Position [%s: %d, %d]   -- no gtk_window_move ().", window_key, window_geometry[WGEO_XPOS], window_geometry[WGEO_YPOS]);
-                        //g_message ("Requested Window Position [%s] XY %d, %d", window_key, window_geometry[WGEO_XPOS], window_geometry[WGEO_YPOS]);
+                        g_message ("Requested Window Position [%s] XY %d, %d", window_key, window_geometry[WGEO_XPOS], window_geometry[WGEO_YPOS]);
                         
 # ifdef GDK_WINDOWING_X11
                         if (1){ //GDK_IS_X11_DISPLAY (display){
@@ -830,7 +832,7 @@ void AppBase::resize_auto (){
                         // gtk_window_set_default_size (GTK_WINDOW (window), (int)window_geometry[WGEO_WIDTH], (int)window_geometry[WGEO_HEIGHT]);
 
                         // g_message ("SORRY GTK4 can't do it -- Requested Window Resize [%s: %d, %d]   -- no gtk_window_resize ().", window_key, window_geometry[WGEO_WIDTH], window_geometry[WGEO_HEIGHT]);
-                        //g_message ("Requested Window Resize [%s] WH %d, %d", window_key, window_geometry[WGEO_WIDTH], window_geometry[WGEO_HEIGHT]);
+                        g_message ("Requested Window Resize [%s] WH %d, %d", window_key, window_geometry[WGEO_WIDTH], window_geometry[WGEO_HEIGHT]);
 
 # ifdef GDK_WINDOWING_X11
                         if (1){ //GDK_IS_X11_DISPLAY (display){
@@ -884,7 +886,7 @@ void AppBase::SaveGeometry(gboolean store_to_settings){
                 window_geometry[WGEO_YPOS]=y;
                 window_geometry[WGEO_WIDTH]=width;
                 window_geometry[WGEO_HEIGHT]=height;
-                //g_message ("Window Geometry [%s]: XY %d, %d; WH %d, %d", window_key, x, y, width, height);
+                g_message ("Window Geometry [%s]: XY %d, %d; WH %d, %d", window_key, x, y, width, height);
                 // Status = XGetGeometry (display, d, root_return, x_return, y_return, width_return, height_return, border_width_return, depth_return)
                 //        Display *display;
                 //        Drawable d;
@@ -936,4 +938,5 @@ void AppBase::LoadGeometry(){
         position_auto ();
         resize_auto ();
         show_auto ();
+
 }

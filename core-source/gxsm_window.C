@@ -29,8 +29,11 @@
 #include <iostream>
 #include <fstream>
 
+
 #include "gxsm_app.h"
 #include "gxsm_window.h"
+#include "glbvars.h"
+#include "surface.h"
 
 struct _Gxsm4appWindow
 {
@@ -46,32 +49,41 @@ typedef struct _Gxsm4appWindowPrivate Gxsm4appWindowPrivate;
 
 struct _Gxsm4appWindowPrivate
 {
+        Gxsm4appWindow *self;
         GSettings *settings;
         GtkWidget *stack;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE(Gxsm4appWindow, gxsm4_app_window, GTK_TYPE_APPLICATION_WINDOW);
 
+// GXSM4_APP_WINDOW
+// ================================================================================        
+        
 static void
 gxsm4_app_window_init (Gxsm4appWindow *win)
 {
-        //        Gxsm4appWindowPrivate *priv;
-
+        Gxsm4appWindowPrivate *priv;
+        
         XSM_DEBUG(DBG_L2, "gxsm4_app_window_init ================================================" );
+        g_message ( "gxsm4_app_window_init ================================================" );
 
-        //        priv = (Gxsm4appWindowPrivate *) gxsm4_app_window_get_instance_private (win);
+        priv = (Gxsm4appWindowPrivate *) gxsm4_app_window_get_instance_private (win);
+        priv->self = win;
+        
         // no template in use currently
         // gtk_widget_init_template (GTK_WIDGET (win));
-
-        if (gapp->gxsm_app_window_present ()){
+        // NEW**REMOVED FROM HERE to gxsm_main.C
+        if (main_get_gapp ()->gxsm_app_window_present ()){
                 // VIEW WINDOW
                 XSM_DEBUG(DBG_L2, "gxsm4_app_window_init ** GENERIC VIEW WINDOW =================================" );
+                g_message ( "gxsm4_app_window_init ** GENERIC VIEW WINDOW ================================================" );
         } else {
                 // THIS IS FOR THE GXSM MAIN CONTROL WINDOW
                 XSM_DEBUG(DBG_L2, "gxsm4_app_window_init ** MAIN WINDOW =================================" );
+                g_message ( "gxsm4_app_window_init ** GXSM MAIN WINDOW ================================================" );
                 
                 XSM_DEBUG(DBG_L1, "START ** GXSM GUI building");
-                gapp->build_gxsm (win);
+                main_get_gapp () -> build_gxsm (win);
                 XSM_DEBUG(DBG_L1, "DONE ** GXSM GUI building");
         }
 }
@@ -79,6 +91,7 @@ gxsm4_app_window_init (Gxsm4appWindow *win)
 static void
 gxsm4_app_window_dispose (GObject *object)
 {
+        g_message ( "gxsm4_app_window_dispose ================================================" );
         //        Gxsm4appWindow *win;
         //        Gxsm4appWindowPrivate *priv;
 
@@ -90,29 +103,22 @@ gxsm4_app_window_dispose (GObject *object)
         G_OBJECT_CLASS (gxsm4_app_window_parent_class)->dispose (object);
 }
 
-static void
-gxsm4_app_window_class_init (Gxsm4appWindowClass *klass)
-{
-        G_OBJECT_CLASS (klass)->dispose = gxsm4_app_window_dispose;
-
-        //gtk_widget_class_set_template_from_resource (GTK_WIDGET_CLASS (class),
-        //                                             "/"GXSM_RES_BASE_PATH"/window.ui");
-
-        //  gtk_widget_class_bind_template_child_private (GTK_WIDGET_CLASS (class), Gxsm4appWindow, gears);
-
-}
-
-
 //#define COMPLILE_TEST_WAYLAND 1
 
 Gxsm4appWindow *
 gxsm4_app_window_new (Gxsm4app *app)
 {
+        g_message ( "gxsm4_app_window_new ================================================" );
+        GList *windows = gtk_application_get_windows (GTK_APPLICATION (app));
+        
 #if COMPLILE_TEST_WAYLAND
-        return (Gxsm4appWindow *) g_object_new (GXSM4_APP_WINDOW_TYPE, "application", app, gdk_get_default_root_window ()); // WAYLAND
+        Gxsm4appWindow *window = (Gxsm4appWindow *) g_object_new (GXSM4_APP_WINDOW_TYPE, "application", app, gdk_get_default_root_window ()); // WAYLAND
 #else
-        return (Gxsm4appWindow *) g_object_new (GXSM4_APP_WINDOW_TYPE, "application", app, NULL); // X11
+        Gxsm4appWindow *window = (Gxsm4appWindow *) g_object_new (GXSM4_APP_WINDOW_TYPE, "application", app, NULL); // X11
 #endif
+        windows = g_list_append (windows, window);
+        g_message ("%ul gxsm4_app_window_new *** Window List: #%d", g_get_real_time(), g_list_length (windows));
+        return window;
 }
 
 gboolean
@@ -123,6 +129,7 @@ gxsm4_app_window_open (Gxsm4appWindow *win,
         gboolean ret=false;
         gchar *basename;
         basename = g_file_get_basename (file);
+        g_message ( "gxsm4_app_window_open =================>  %s  <========================", basename);
 
         std::ifstream test;
         test.open (basename, std::ios::in);
@@ -135,13 +142,30 @@ gxsm4_app_window_open (Gxsm4appWindow *win,
                 // g_message ("GXSM comandline load file <%s>", basename);
                 
                 if (in_active_channel){
-                        gapp->xsm->load (basename);
+                        main_get_gapp ()->xsm->load (basename);
                         ret=true;
-                } else if (!gapp->xsm->ActivateFreeChannel()){ // returns 1 on error/no channel
-                        gapp->xsm->load (basename);
+                } else if (!main_get_gapp ()->xsm->ActivateFreeChannel()){ // returns 1 on error/no channel
+                        main_get_gapp ()->xsm->load (basename);
                         ret=true;
                 }
         }
         g_free (basename);
         return ret;
+}
+
+
+// GXSM4_APP_WINDOW_CLASS
+// ================================================================================
+        
+static void
+gxsm4_app_window_class_init (Gxsm4appWindowClass *klass)
+{
+        g_message ( "gxsm4_app_window_class_init =============================================");
+        G_OBJECT_CLASS (klass)->dispose = gxsm4_app_window_dispose;
+
+        //gtk_widget_class_set_template_from_resource (GTK_WIDGET_CLASS (class),
+        //                                             "/"GXSM_RES_BASE_PATH"/window.ui");
+
+        //  gtk_widget_class_bind_template_child_private (GTK_WIDGET_CLASS (class), Gxsm4appWindow, gears);
+
 }

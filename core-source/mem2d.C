@@ -31,15 +31,15 @@
 
 #include <config.h>
 
-#include "mem2d.h"
 #include "glbvars.h"
+#include "mem2d.h"
 #include "clip.h"
 #include "gxsm_monitor_vmemory_and_refcounts.h"
 
 #define UTF8_DEGREE "\302\260"
 
 // used to set progressbar of main window (P: 0..1)
-#define SET_PROGRESS(P) { gapp->SetProgress((gfloat)(P)); while (gtk_events_pending()) gtk_main_iteration(); }
+#define SET_PROGRESS(P) { main_get_gapp ()->SetProgress((gfloat)(P)); while (gtk_events_pending()) gtk_main_iteration(); }
 
 // #define	XSM_DEBUG(A,B) std::cout << B << std::endl
 
@@ -406,7 +406,7 @@ gpointer TZData<ZTYP>::NcDataUpdate_thread (void *env){
                                 self->Li[liy].SetStored();
                         }
                         //                if (y==0 && (v%10) == 0)
-                        //                        gapp->progress_info_set_bar_fraction ((gdouble)v/nv, 2);
+                        //                        main_get_gapp ()->progress_info_set_bar_fraction ((gdouble)v/nv, 2);
                 }
 	}
         if (e.update) g_message ("NcVar updated at %d lines x values", count);
@@ -438,7 +438,7 @@ void TZData<ZTYP>::NcPut(NcVar *ncfield, int time_index, gboolean update){
                                 Li[liy].SetStored();
                         }
                         //                if (y==0 && (v%10) == 0)
-                        //                        gapp->progress_info_set_bar_fraction ((gdouble)v/nv, 2);
+                        //                        main_get_gapp ()->progress_info_set_bar_fraction ((gdouble)v/nv, 2);
                 }
 	}
         if (update) g_message ("NcVar updated at %d lines x values", count);
@@ -469,7 +469,7 @@ void TZData<ZTYP>::NcPut(NcVar *ncfield, int time_index, gboolean update){
                 }
                 yy = (double)y/(double)ny;
                 if (ceil(yy) - ceil(yy2) > 1.)
-                        gapp->progress_info_set_bar_fraction (yy2=yy, 2);
+                        main_get_gapp ()->progress_info_set_bar_fraction (yy2=yy, 2);
         }
 }
 #endif
@@ -486,7 +486,7 @@ void TZData<ZTYP>::NcGet(NcVar *ncfield, int time_index){
 		}
 		yy = (double)y/(double)ny;
 		if (ceil(yy) - ceil(yy2) > 1.)
-			gapp->progress_info_set_bar_fraction (yy2=yy, 2);
+			main_get_gapp ()->progress_info_set_bar_fraction (yy2=yy, 2);
 	}
 }
 
@@ -865,10 +865,12 @@ void Mem2d::copy(Mem2d *m, int x0, int y0, int vi, int vf, int nx, int ny, gbool
 }
 
 void Mem2d::evl_remove(gpointer entry, gpointer from){
-        if(debug_level > 2){
+#if 0
+        if (main_get_debug_level() > 2){
                 g_message ("Removing Event:");
                 ((ScanEvent*)entry) -> print ();
         }
+#endif
 	delete (ScanEvent*)entry;
 }
 
@@ -1003,7 +1005,7 @@ int Mem2d::WriteScanEvents (NcFile *ncf){
 				p_dim_samples =  pe->get_chunk_size ();
 				ProbeEventsList = g_slist_prepend (ProbeEventsList, e=new Event (e, se, pe, p_dim_sets, p_dim_samples));
 				
-				gapp->progress_info_set_bar_pulse (2);
+				main_get_gapp ()->progress_info_set_bar_pulse (2);
 			  }
 			break;
 			case 'U': // "User" Event, just store away
@@ -1014,7 +1016,7 @@ int Mem2d::WriteScanEvents (NcFile *ncf){
 // rebuild new ordered list with UEs, to be sorted by User Event message_id (what)
 				for (int i=0; i<ue->get_num_sets (); ++i)
 					UserEventsList = g_slist_prepend (UserEventsList, new UserEntry (ue, i, se));
-				gapp->progress_info_set_bar_pulse (2);
+				main_get_gapp ()->progress_info_set_bar_pulse (2);
 // old
 //			        ue->store_event_to_nc (ncf, ++u_index, se);
 //
@@ -1058,7 +1060,7 @@ int Mem2d::WriteScanEvents (NcFile *ncf){
 			pel = g_slist_next (pel);
 
 			sip += 1.;
-			gapp->progress_info_set_bar_fraction (sip/sil, 2);
+			main_get_gapp ()->progress_info_set_bar_fraction (sip/sil, 2);
 		}
 
 		// free ProbeEventsList and Elements!
@@ -1110,7 +1112,7 @@ int Mem2d::WriteScanEvents (NcFile *ncf){
 
 			// skip forward n to next
 			sip += n;
-			gapp->progress_info_set_bar_fraction (sip/sil, 2);
+			main_get_gapp ()->progress_info_set_bar_fraction (sip/sil, 2);
 		}
 
 		// free ProbeEventsList and Elements!
@@ -1137,7 +1139,7 @@ int Mem2d::LoadScanEvents (NcFile *ncf){
 			if (se){
 				se->add_event (pe);
 				AttachScanEvent (se);
-				gapp->progress_info_set_bar_fraction ((double)count/(gdouble)limit, 2);
+				main_get_gapp ()->progress_info_set_bar_fraction ((double)count/(gdouble)limit, 2);
 			} else break;
 		}
 		if (!se) 
@@ -2858,13 +2860,13 @@ gboolean MemDigiFilter::Convolve(Mem2d *Src, Mem2d *Dest){
         int stop_flag = 0;
         int max_jobs = g_get_num_processors (); // default concurrency for multi threadded computation, # CPU's/cores
         
-        gapp->progress_info_new ("DigiFilter Convolute", 1+(int)max_jobs, GCallback (cancel_callback), &stop_flag, false);
-        gapp->progress_info_set_bar_fraction (0.1, 2);
-        gapp->progress_info_set_bar_text ("Setup", 2);
+        main_get_gapp ()->progress_info_new ("DigiFilter Convolute", 1+(int)max_jobs, GCallback (cancel_callback), &stop_flag, false);
+        main_get_gapp ()->progress_info_set_bar_fraction (0.1, 2);
+        main_get_gapp ()->progress_info_set_bar_text ("Setup", 2);
 
         InitializeKernel ();
         
-        gapp->progress_info_set_bar_fraction (0.3, 2);
+        main_get_gapp ()->progress_info_set_bar_fraction (0.3, 2);
         
         if(Src->data->GetNx()<1 && Src->data->GetNy()<1)
                 return FALSE;
@@ -2885,7 +2887,7 @@ gboolean MemDigiFilter::Convolve(Mem2d *Src, Mem2d *Dest){
                         x.data->Z(Src->data->Z(nn-1,i),j+ns+nn,i+ms); // data[i+ms][j+ns+nn] = Src->data[i][nn-1];
                 }
 
-        gapp->progress_info_set_bar_fraction (0.4, 2);
+        main_get_gapp ()->progress_info_set_bar_fraction (0.4, 2);
 
         // edge top / bottom and oberserve shift
         for(i=0;i<ms;i++){
@@ -2895,7 +2897,7 @@ gboolean MemDigiFilter::Convolve(Mem2d *Src, Mem2d *Dest){
         } 
         x.data->CopyFrom(Src->data, 0,mm-2, ns,mm+ms-1 ,nn, 1, true);
         
-        gapp->progress_info_set_bar_fraction (0.5, 2);
+        main_get_gapp ()->progress_info_set_bar_fraction (0.5, 2);
 
         // corners
         for(i=0;i<ms;i++)
@@ -2905,7 +2907,7 @@ gboolean MemDigiFilter::Convolve(Mem2d *Src, Mem2d *Dest){
                         x.data->Z(Src->data->Z(i0,mm-1), j,mm+ms+i);
                         x.data->Z(Src->data->Z(nn-1,mm-1), nn+ns+j,mm+ms+i);
                 }
-        gapp->progress_info_set_bar_fraction (0.8, 2);
+        main_get_gapp ()->progress_info_set_bar_fraction (0.8, 2);
 
 // #define SAVECONVOLSRC
 #ifdef  SAVECONVOLSRC
@@ -2939,14 +2941,14 @@ gboolean MemDigiFilter::Convolve(Mem2d *Src, Mem2d *Dest){
 
         if (max_jobs < 2){
 
-                gapp->progress_info_set_bar_text ("Convolution", 2);
+                main_get_gapp ()->progress_info_set_bar_text ("Convolution", 2);
 
                 // old single cpu convole code, using incremetal ZData access
                 // -- note: this is NOT thread save, pointer stored/adjusted in zdata, only single access at a time!
                 gint pcent=0;
                 for(int ii=0; ii<mm; ++ii){
                         if(pcent < 100*ii/mm ){
-                                gapp->progress_info_set_bar_fraction ((gfloat)ii/(gfloat)mm, 2);
+                                main_get_gapp ()->progress_info_set_bar_fraction ((gfloat)ii/(gfloat)mm, 2);
                                 //SET_PROGRESS((gfloat)ii/(gfloat)mm);
                                 if (stop_flag)
                                         break;
@@ -2998,9 +3000,9 @@ gboolean MemDigiFilter::Convolve(Mem2d *Src, Mem2d *Dest){
                         for (int jobno=0; jobno < max_jobs; ++jobno){
                                 if (job[jobno].job >= 0)
                                         running++;
-                                gapp->progress_info_set_bar_fraction (job[jobno].progress, jobno+2);
+                                main_get_gapp ()->progress_info_set_bar_fraction (job[jobno].progress, jobno+2);
                                 gchar *info = g_strdup_printf ("ConvJob %d", jobno+1);
-                                gapp->progress_info_set_bar_text (info, jobno+2);
+                                main_get_gapp ()->progress_info_set_bar_text (info, jobno+2);
                                 g_free (info);
                         }
                 }
@@ -3014,7 +3016,7 @@ gboolean MemDigiFilter::Convolve(Mem2d *Src, Mem2d *Dest){
         Dest->data->CopyLookups (Src->data);
         Dest->copy_layer_information (Src);
         
-        gapp->progress_info_close ();
+        main_get_gapp ()->progress_info_close ();
      
         return TRUE;  
 }

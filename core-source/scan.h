@@ -42,7 +42,7 @@
 #endif
 
 #ifndef __VIEW_H
-#include "view.h"
+//#include "view.h"
 #endif
 
 #ifndef __MEM2D_H
@@ -52,6 +52,10 @@
 #ifndef __SCAN_OBJECT_DATA_H
 #include "scan_object_data.h"
 #endif
+
+#include "gnome-res.h"
+#include "scan_types.h"
+#include "gxsm_window.h"
 
 /*
  * XSM Surface Scan Basis-Objekt:
@@ -63,35 +67,6 @@
 #define IS_SAVED  1
 #define IS_NEW    2
 #define IS_FRESH  3
-
-// this is the type of the current active object...
-// we need to get rid of this...
-typedef enum { 
-        MNONE,
-        MPOINT,
-        MLINE,
-        MRECTANGLE,
-        MPOLYLINE,
-        MPARABEL,
-        MCIRCLE,
-        MTRACE,
-        MEVENT,
-        MKSYS
-} OBJECT_TYPE;
-
-// Scan Coordinate System Modes
-typedef enum {
-	SCAN_COORD_ABSOLUTE, // absolute world coordinates, including offset and rotation
-	SCAN_COORD_RELATIVE  // relative world coordinates, no offset, no rotation (in local scan coords)
-} SCAN_COORD_MODE;
- 
-typedef struct {
-	int       index;
-	double    time;
-	int       refcount;
-	Mem2d     *mem2d;
-	SCAN_DATA *sdata;
-} TimeElementOfScan;
 
 class StorageManager{
 public:
@@ -171,7 +146,7 @@ private:
 class Scan{
 public:
 	Scan(Scan *scanmaster);
-	Scan(int vtype=0, int vflg=0, int ChNo=-1, SCAN_DATA *vd=NULL, ZD_TYPE mtyp=ZD_SHORT);
+	Scan(int vtype=0, int vflg=0, int ChNo=-1, SCAN_DATA *vd=NULL, ZD_TYPE mtyp=ZD_SHORT, Gxsm4app *app=NULL);
 	virtual ~Scan();
 	
 	virtual void hide();
@@ -199,8 +174,10 @@ public:
 	void CpyDataSet(SCAN_DATA &src);
 	void GetDataSet(SCAN_DATA &dst);
 	
-	int SetView(int vtype=0);
+	int SetView(uint vtype=0);
 	//void AutoDisplay(double hi=0., double lo=0., int Delta=4, double sm_eps=0.05);
+        void set_main_app (Gxsm4app *app=NULL) { Gxsm4app *main_app = app; g_message ("Scan:: got main app ref.");};
+        Gxsm4app* get_app () { return main_app; };
 
 	void determine_display(int Delta=4, double sm_eps=0.05);
 	void auto_display();
@@ -305,6 +282,8 @@ public:
         gchar *storage_path;
         gchar *storage_basename;
         gchar *storage_name;
+
+        Gxsm4app *main_app;
 };
 
 /*
@@ -314,7 +293,7 @@ public:
 
 class TopoGraphicScan : public Scan{
 public:
-	TopoGraphicScan(int vtype=0, int vflg=0, int ChNo=-1, SCAN_DATA *vd=0);
+	TopoGraphicScan(int vtype=0, int vflg=0, int ChNo=-1, SCAN_DATA *vd=0, Gxsm4app *app=NULL);
 	virtual ~TopoGraphicScan();
   
 private:  
@@ -329,7 +308,7 @@ private:
 
 class SpaScan : public Scan{
 public:
-	SpaScan(int vtype=0, int vflg=0, int ChNo=-1, SCAN_DATA *vd=0);
+	SpaScan(int vtype=0, int vflg=0, int ChNo=-1, SCAN_DATA *vd=0, Gxsm4app *app=NULL);
 	virtual ~SpaScan();
   
 private:  
