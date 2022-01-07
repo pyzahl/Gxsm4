@@ -2,10 +2,11 @@ plugin_cat = 'control'
 install_path = gxsm4_plugin_dir / plugin_cat
 
 plugin_list = [
-    { 'name': 'pyremote',
-      'gschemas': [
-          'org.gnome.gxsm4.pcs.plugin-libpyremote.gschema.xml',
-          'org.gnome.gxsm4.pcsadjustments.plugin-libpyremote.gschema.xml' ]},
+#    { 'name': 'pyremote',
+#      'deps': [python, gtksourceview],
+#      'gschemas': [
+#          'org.gnome.gxsm4.pcs.plugin-libpyremote.gschema.xml',
+#          'org.gnome.gxsm4.pcsadjustments.plugin-libpyremote.gschema.xml' ]},
     { 'name': 'extra_scan_info', },
     { 'name': 'queryDSPinfo', },
     { 'name': 'ProbeIndicator', },
@@ -26,7 +27,7 @@ plugin_list = [
 foreach plugin : plugin_list
   plugin_name = plugin.get('name')
   plugin_sources = [ plugin.get('sources', plugin_name + '.cpp') ]
-  plugin_deps = plugin.get('deps', []) + all_plugin_deps
+  plugin_deps = all_plugin_deps + plugin.get('deps', [])
   plugin_cflags = plugin.get('cflags', []) + all_cflags
   plugin_schemas = plugin.get('gschemas', [])
 
@@ -67,14 +68,12 @@ foreach plugin : plugin_list
     include_directories : [ configuration_inc, appInclude ]
   )
 
-#  shared_module(plugin_name,
-  shared_library(plugin_name,
-#  executable(plugin_name,
+  library(plugin_name,
     plugin_sources,
     plugin_gdbus_src,
     link_with: [ lib_global_gxsm, lib_utils_gxsm, lib_app_gxsm, lib_pcs_gxsm ],
     dependencies: deps,
-    link_args : all_plugin_link_args,
+#    link_args : all_plugin_link_args,
     install: true,
     install_dir: install_path
   )

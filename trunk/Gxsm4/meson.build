@@ -114,7 +114,6 @@ glib = dependency('glib-2.0')
 gio  = dependency('gio-2.0')
 gtk  = dependency('gtk4', version : '>= 4.1')
 soup = dependency('libsoup-2.4', version : '>= 2.24')
-gtksourceview = dependency('gtksourceview-5', version : '>= 5.0')
 cairo = dependency('cairo-gobject')
 #cairo = dependency('cairo')
 freet = dependency('freetype2')
@@ -144,7 +143,12 @@ lz    = dependency('zlib', method : 'system')
 
 icuuc = cc.find_library('icuuc')
 
-python = dependency('python3')
+# inet-json... for fitting
+gsl   = dependency(['gsl', 'gslcblas'])
+
+# for pyremote...
+gtksourceview = dependency('gtksourceview-5', version : '>= 5.0')
+python = dependency(['python3'])
 # gdkpixbu = dependency('gdk-pixbuf-2.0')
 
 ## plugins do need for dynamic load lib aka "-ldl"
@@ -263,7 +267,7 @@ appInclude  = include_directories(gxsm_lib_includes)
 
 all_cflags = ['-fpermissive', '-w']
 all_plugin_cflags = ['-fpermissive', '-w']
-all_plugin_deps = [icuuc, gtk, python, gtksourceview, cairo, freet, gset, netcdf, fftw, xml, png, gmod, gmodexp, dl]
+all_plugin_deps = [icuuc, gtk, cairo, freet, gset, netcdf, fftw, xml, png, gmod, gmodexp, dl]
 all_plugin_link_args = ['-Mmodules', '-export-dynamic', '-fno-version']
 
 

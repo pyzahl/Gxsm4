@@ -1,7 +1,7 @@
 
 deps = declare_dependency(
     compile_args : all_cflags,
-    dependencies : [icuuc, gtk, soup, gtksourceview, cairo, freet, gset, netcdf, fftw, xml, png, gmod, gmodexp, x11, gl, glew],
+    dependencies : [icuuc, gtk, soup, cairo, freet, gset, netcdf, fftw, xml, png, gmod, gmodexp, x11, gl, glew],
     include_directories : configuration_inc,
 )
 
