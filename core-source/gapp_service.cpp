@@ -510,7 +510,7 @@ void GnomeAppService::alert(const gchar *s1, const gchar *s2, const gchar *s3, i
 AppBase::AppBase (Gxsm4app *app){ 
 	XSM_DEBUG(DBG_L2, "AppBase" ); 
 
-        main_app = app;
+        gxsm4app = app;
         main_title_buffer = g_strdup ("AppBase: Main Window title is not set.");
         sub_title_buffer = NULL;
 
@@ -528,8 +528,8 @@ AppBase::AppBase (Gxsm4app *app){
 AppBase::~AppBase(){ 
 	XSM_DEBUG (DBG_L2, "AppBase::~AppBase destructor for window '" << (window_key?window_key:"--") << "'."); 
 
-        if (g_object_get_data (G_OBJECT (main_app), "APP-MAIN"))
-                ((App*)g_object_get_data (G_OBJECT (main_app), "APP-MAIN")) -> remove_appwindow_from_list (this); // remove self from list
+        if (g_object_get_data (G_OBJECT (gxsm4app), "APP-MAIN"))
+                ((App*)g_object_get_data (G_OBJECT (gxsm4app), "APP-MAIN")) -> remove_appwindow_from_list (this); // remove self from list
         
 	if(!nodestroy){
 		XSM_DEBUG_GP (DBG_L2, "~AppBase -- calling widget destroy for window '%s'.",  (window_key?window_key:"--")); 
@@ -579,7 +579,7 @@ void AppBase::AppWindowInit(const gchar *title, const gchar *sub_title){
 	XSM_DEBUG(DBG_L2, "AppBase::WidgetInit: " << title );
 
         g_message ("AppBase::AppWindowInit <%s : %s>", title, sub_title);
-        app_window =  gxsm4_app_window_new (main_app);
+        app_window =  gxsm4_app_window_new (gxsm4app);
         window = GTK_WINDOW (app_window);
 
         //window = GTK_WINDOW (gtk_window_new (GTK_WINDOW_TOPLEVEL));
@@ -763,8 +763,8 @@ int AppBase::set_window_geometry (const gchar *key, gint index, gboolean add_to_
         if (add_to_menu)
                 add_window_to_window_menu (window_key, window_key);
 
-        if (g_object_get_data (G_OBJECT (main_app), "APP-MAIN"))
-                ((App*)g_object_get_data (G_OBJECT (main_app), "APP-MAIN")) -> add_appwindow_to_list (this); // add self to gapp globale list
+        if (g_object_get_data (G_OBJECT (gxsm4app), "APP-MAIN"))
+                ((App*)g_object_get_data (G_OBJECT (gxsm4app), "APP-MAIN")) -> add_appwindow_to_list (this); // add self to gapp globale list
 
         XSM_DEBUG_GP (DBG_L9, "AppBase::set_window_geometry and append '%s' to Windows Menu -- done.\n", window_key);
 	return 0;

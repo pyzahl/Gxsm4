@@ -864,7 +864,7 @@ protected:
 	void destroy(){ if (window) { gtk_window_destroy (GTK_WINDOW (window)); window=NULL; } nodestroy=TRUE; };
 	int nodestroy;
 
-        Gxsm4app* main_app; // MAIN GXSM4 APPLICTAION
+        Gxsm4app* gxsm4app; // MAIN GXSM4 APPLICTAION
         Gxsm4appWindow *app_window;
 	GtkWindow* window;     // main window for this object
 	GtkWidget* header_bar;

@@ -43,7 +43,7 @@
 int scandatacount=0;
 
 Scan::Scan(Scan *scanmaster){
-        main_app = scanmaster->main_app;
+        gxsm4app = scanmaster->gxsm4app;
         GXSM_LOG_DATAOBJ_ACTION (GXSM_GRC_SCANOBJ, "constructor");
         GXSM_REF_OBJECT (GXSM_GRC_SCANOBJ);
 	TimeList = NULL;
@@ -72,7 +72,7 @@ Scan::Scan(Scan *scanmaster){
 
 
 Scan::Scan(int vtype, int vflg, int ChNo, SCAN_DATA *vd, ZD_TYPE mtyp, Gxsm4app *app){
-        main_app = app;
+        gxsm4app = app;
         GXSM_LOG_DATAOBJ_ACTION (GXSM_GRC_SCANOBJ, "constructor");
         GXSM_REF_OBJECT (GXSM_GRC_SCANOBJ);
 	TimeList = NULL;

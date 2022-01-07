@@ -2086,7 +2086,7 @@ void  ViewControl::obj_event_plot_callback (GtkWidget* widget,
                                 num_plots++;
                 
                 if (!vc->EventGraphView)
-                        vc->EventGraphView = new app_vpdata_view (vc->main_app, 1, num_plots);
+                        vc->EventGraphView = new app_vpdata_view (vc->gxsm4app, 1, num_plots);
                 else
                         vc->EventGraphView->init_vpdata_view (1, num_plots);
 
@@ -3958,7 +3958,7 @@ void ViewControl::view_view_redline_callback (GSimpleAction *action, GVariant *p
 		if(!vc->RedLine){
                         vc->scan->Activate (); // there is some where a hidden reference request for units via GetActiveScan().
 			gchar *tmp = g_strdup_printf ("Red Line Ch%d" ,vc->scan->get_channel_id ()+1);
-			vc->RedLine = new ProfileControl(vc->main_app, tmp, vc->scan->get_channel_id ());
+			vc->RedLine = new ProfileControl(vc->gxsm4app, tmp, vc->scan->get_channel_id ());
                         if (vc->scan->get_channel_id () > 0)
                                 vc->RedLine->SetMode (PROFILE_MODE_XGRID | PROFILE_MODE_YGRID | PROFILE_MODE_STICS);
                         else

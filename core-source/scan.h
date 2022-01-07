@@ -176,8 +176,8 @@ public:
 	
 	int SetView(uint vtype=0);
 	//void AutoDisplay(double hi=0., double lo=0., int Delta=4, double sm_eps=0.05);
-        void set_main_app (Gxsm4app *app=NULL) { Gxsm4app *main_app = app; g_message ("Scan:: got main app ref.");};
-        Gxsm4app* get_app () { return main_app; };
+        void set_main_app (Gxsm4app *app=NULL) { gxsm4app = app; g_message ("Scan:: got main app ref.");};
+        Gxsm4app* get_app () { return gxsm4app; };
 
 	void determine_display(int Delta=4, double sm_eps=0.05);
 	void auto_display();
@@ -283,7 +283,7 @@ public:
         gchar *storage_basename;
         gchar *storage_name;
 
-        Gxsm4app *main_app;
+        Gxsm4app *gxsm4app;
 };
 
 /*

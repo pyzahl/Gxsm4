@@ -55,7 +55,7 @@ public:
                         vpdata_view_destroy (); 
 
                 if (!vpdata_graph_app_window){
-                        vpdata_graph_app_window =  gxsm4_app_window_new (main_app);
+                        vpdata_graph_app_window =  gxsm4_app_window_new (gxsm4app);
                         vpdata_graph_window = GTK_WINDOW (vpdata_graph_app_window);
                         GtkWidget *header_bar = gtk_header_bar_new ();
                         gtk_widget_show (header_bar);
@@ -97,7 +97,7 @@ public:
                 if (!pc){
                         gchar *resid = g_strdelimit (g_strconcat (xlab,ylab,NULL), " ;:()[],./?!@#$%^&*()+-=<>", '_');
 
-                        pc = new ProfileControl (main_app,
+                        pc = new ProfileControl (gxsm4app,
                                                  title, numx, 
                                                  UXaxis, UYaxis, 
                                                  xmin, xmax,
