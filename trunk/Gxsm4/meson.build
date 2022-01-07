@@ -195,7 +195,7 @@ lib_app_gxsm_name    =  'lib-app-'+meson.project_name()
 lib_pcs_gxsm_name    =  'lib-pcs-'+meson.project_name() 
 
 absolute_data_dir = get_option('prefix') / get_option('datadir')+'/gxsm4'
-absolute_plugin_dir = get_option('prefix') / get_option('datadir') / 'gxsm4-plugins'
+absolute_plugin_dir = get_option('prefix') / get_option('libdir') / 'gxsm4-plugins'
 
 gxsm_lib_includes = 'core-source'
 
