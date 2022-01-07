@@ -40,6 +40,8 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 
+#include "surface.h"
+
 #include "sranger_mk3_hwi.h"
 #include "xsmcmd.h"
 
@@ -59,10 +61,17 @@
 // enable debug:
 #define	SRANGER_DEBUG(S) XSM_DEBUG (DBG_L4, "sranger_mk3_hwi_spm: " << S )
 
-extern GxsmPlugin sranger_mk2_hwi_pi;
-extern DSPControl *DSPControlClass;
-extern DSPMoverControl *DSPMoverClass;
-extern DSPPACControl *DSPPACClass;
+
+
+
+extern "C++" {
+        extern DSPControlContainer *DSPControlContainerClass;
+        extern DSPControl *DSPControlClass;
+        extern DSPMoverControl *DSPMoverClass;
+        extern DSPPACControl *DSPPACClass;
+        extern DSPControlUserTabs *DSPControlUserTabsClass;
+        extern GxsmPlugin sranger_mk2_hwi_pi;
+}
 
 int gpio3_monitor_out = 0;
 int gpio3_monitor_in  = 0;

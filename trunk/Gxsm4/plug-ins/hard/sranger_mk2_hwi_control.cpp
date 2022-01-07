@@ -43,6 +43,7 @@
 
 #include "gxsm_app.h"
 #include "gxsm_window.h"
+#include "surface.h"
 
 #include "action_id.h"
 #include "../common/pyremote.h"
@@ -61,11 +62,6 @@
 #define UTF8_MU        "\302\265"
 #define UTF8_ANGSTROEM "\303\205"
 
-extern GxsmPlugin sranger_mk2_hwi_pi;
-extern sranger_common_hwi_dev *sranger_common_hwi; // instance of the HwI derived XSM_Hardware class
-extern DSPControlContainer *DSPControlContainerClass;
-extern DSPPACControl *DSPPACClass;
-
 #define X_SOURCE_MSK 0x10000000 // select for X-mapping
 #define P_SOURCE_MSK 0x20000000 // select for plotting
 #define A_SOURCE_MSK 0x40000000 // select for Avg plotting
@@ -75,6 +71,18 @@ extern DSPPACControl *DSPPACClass;
 #define GVP_SHIFT_DN -1
 
 #define REMOTE_PREFIX "dsp-"
+
+
+extern "C++" {
+        extern DSPControlContainer *DSPControlContainerClass;
+        extern DSPControl *DSPControlClass;
+        extern DSPMoverControl *DSPMoverClass;
+        extern DSPPACControl *DSPPACClass;
+        extern DSPControlUserTabs *DSPControlUserTabsClass;
+        extern GxsmPlugin sranger_mk2_hwi_pi;
+        extern sranger_common_hwi_dev *sranger_common_hwi; // instance of the HwI derived XSM_Hardware class
+}
+
 
 class DSP_GUI_Builder : public BuildParam{
 	friend class sranger_mk2_hwi_dev;
@@ -470,12 +478,15 @@ public:
 
 #define OUT_OF_RANGE N_("Value out of range!")
 
-DSPControlUserTabs::DSPControlUserTabs ()
+DSPControlUserTabs::DSPControlUserTabs (Gxsm4app *app):AppBase(app)
 {
         GtkWidget *notebook;
         GtkWidget *grid_base;
 
-	gchar *tmp = g_strdup_printf ("SR DSP Control %s %s [%s]", (DSPPACClass)? "MK3-PLL/A810":"MK2/A810", N_("User Tabs"), xsmres.DSPDev);
+	gchar *tmp = g_strdup_printf ("SR DSP Control %s %s [%s]",
+                                      (DSPPACClass)? "MK3-PLL/A810":"MK2/A810",
+                                      N_("User Tabs"), xsmres.DSPDev);
+
         PI_DEBUG (DBG_L5, "DSPControlUserTabs::DSPControlUserTabs");
 
 	AppWindowInit (tmp);
@@ -491,7 +502,7 @@ DSPControlUserTabs::DSPControlUserTabs ()
 
 DSPControlUserTabs::~DSPControlUserTabs ()
 {
-        PI_DEBUG (DBG_L5, "DSPControlUserTabs::~DSPControlUserTabs"); // PI_DEBUG_GP (DBG_L4, "%s \n",__FUNCTION__);
+        PI_DEBUG (DBG_L5, "DSPControlUserTabs::~DSPControlUserTabs");
 }
 
 
@@ -646,7 +657,7 @@ void DSPControl::configure_callback (GSimpleAction *action, GVariant *parameter,
         }
 }
 
-void DSPControl::AppWindowInit(const gchar *title){
+void DSPControl::AppWindowInit(const gchar *title, const gchar *sub_title){
         if (title) { // stage 1
                 PI_DEBUG (DBG_L2, "DSPControl::AppWindowInit -- header bar");
 
@@ -911,7 +922,7 @@ void DSPControl::set_tab_settings (const gchar *tab_key, guint64 option_flags, g
 
 // Achtung: Remote is not released :=(
 // DSP-Param sollten lokal werden...
-DSPControl::DSPControl () {
+DSPControl::DSPControl (Gxsm4app *app):AppBase(app) {
         int i,j;
 	AmpIndex  AmpI;
 	GSList *multi_IVsec_list=NULL;

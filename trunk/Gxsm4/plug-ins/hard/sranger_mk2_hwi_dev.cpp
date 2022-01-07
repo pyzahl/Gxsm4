@@ -47,6 +47,7 @@
 #include "glbvars.h"
 #include "xsmtypes.h"
 #include "xsmdebug.h"
+#include "surface.h"
 
 #include "sranger_mk2_hwi.h"
 
@@ -70,11 +71,11 @@
 #define VOLT2AIC(U)   (int)(main_get_gapp()->xsm->Inst->VoltOut2Dig (main_get_gapp()->xsm->Inst->BiasV2V (U)))
 #define DVOLT2AIC(U)  (int)(main_get_gapp()->xsm->Inst->VoltOut2Dig ((U)/main_get_gapp()->xsm->Inst->BiasGainV2V ()))
 
-extern int developer_option;
-extern int pi_debug_level;
 
-extern DSPControl *DSPControlClass;
-extern GxsmPlugin sranger_mk2_hwi_pi;
+extern "C++" {
+        extern DSPControl *DSPControlClass;
+        extern GxsmPlugin sranger_mk2_hwi_pi;
+}
 
 // some thread states
 

@@ -1525,8 +1525,8 @@ Special features and behaviors to be documented here!
 #define THIS_HWI_PLUGIN_NAME "SRangerMK2:SPM"
 #define THIS_HWI_PREFIX      "SR-MK2/3_HwI"
 
-extern int debug_level;
-extern int force_gxsm_defaults;
+//extern int debug_level;
+//extern int force_gxsm_defaults;
 
 
 // Plugin Prototypes
@@ -1559,59 +1559,68 @@ GxsmPluginMenuCallbackList *get_gxsm_plugin_menu_callback_list ( void ) {
 	return &sranger_mk2_hwi_menu_callback_list;
 }
 
-// Fill in the GxsmPlugin Description here
-GxsmPlugin sranger_mk2_hwi_pi = {
-	NULL,                   // filled in and used by Gxsm, don't touch !
-	NULL,                   // filled in and used by Gxsm, don't touch !
-	0,                      // filled in and used by Gxsm, don't touch !
-	NULL,                   // The Gxsm-App Class Ref.pointer (called "gapp" in Gxsm) is 
-	// filled in here by Gxsm on Plugin load, 
-	// just after init() is called !!!
-	// ----------------------------------------------------------------------
-	// Plugins Name, CodeStly is like: Name-M1S|M2S-BG|F1D|F2D|ST|TR|Misc
-	"sranger_mk2_hwi-"
-	"HW-INT-1S-SHORT",
-	// Plugin's Category - used to autodecide on Pluginloading or ignoring
-	// In this case of Hardware-Interface-Plugin here is the interface-name required
-	// this is the string selected for "Hardware/Card"!
-	THIS_HWI_PLUGIN_NAME,
-	// Description, is shown by PluginViewer (Plugin: listplugin, Tools->Plugin Details)
-	g_strdup ("SRanger MK2/3 hardware interface."),
-	// Author(s)
-	"Percy Zahl",
-	// Menupath to position where it is appendet to -- not used by HwI PIs
-	"windows-section,windows-section,windows-section,windows-section",
-	// Menuentry -- not used by HwI PIs
-	N_("SPM Control,SPM Control Tabs..,Mover Control,PAC Control"),
-	// help text shown on menu
-	N_("This is the " THIS_HWI_PLUGIN_NAME " - GXSM Hardware Interface."),
-	// more info...
-	"N/A",
-	NULL,          // error msg, plugin may put error status msg here later
-	NULL,          // Plugin Status, managed by Gxsm, plugin may manipulate it too
-	// init-function pointer, can be "NULL", 
-	// called if present at plugin load
-	sranger_mk2_hwi_init,  
-	// query-function pointer, can be "NULL", 
-	// called if present after plugin init to let plugin manage it install itself
-	sranger_mk2_hwi_query, // query can be used (otherwise set to NULL) to install
-	// additional control dialog in the GXSM menu
-	// about-function, can be "NULL"
-	// can be called by "Plugin Details"
-	sranger_mk2_hwi_about,
-	// configure-function, can be "NULL"
-	// can be called by "Plugin Details"
-	sranger_mk2_hwi_configure,
-	// run-function, can be "NULL", if non-Zero and no query defined, 
-	// it is called on menupath->"plugin"
-	NULL, // run should be "NULL" for Gxsm-Math-Plugin !!!
-	// cleanup-function, can be "NULL"
-	// called if present at plugin removal
-	NULL,   // direct menu entry callback1 or NULL
-	NULL,   // direct menu entry callback2 or NULL
-	sranger_mk2_hwi_cleanup // plugin cleanup callback or NULL
-};
+extern "C++" {
+        
+        DSPControlContainer *DSPControlContainerClass = NULL;
+        DSPControl *DSPControlClass = NULL;
+        DSPMoverControl *DSPMoverClass = NULL;
+        DSPPACControl *DSPPACClass = NULL;
+        DSPControlUserTabs *DSPControlUserTabsClass = NULL;
+        sranger_common_hwi_dev *sranger_common_hwi = NULL; // instance of the HwI derived XSM_Hardware class
 
+        // Fill in the GxsmPlugin Description here
+        GxsmPlugin sranger_mk2_hwi_pi = {
+                NULL,                   // filled in and used by Gxsm, don't touch !
+                NULL,                   // filled in and used by Gxsm, don't touch !
+                0,                      // filled in and used by Gxsm, don't touch !
+                NULL,                   // The Gxsm-App Class Ref.pointer (called "gapp" in Gxsm) is 
+                // filled in here by Gxsm on Plugin load, 
+                // just after init() is called !!!
+                // ----------------------------------------------------------------------
+                // Plugins Name, CodeStly is like: Name-M1S|M2S-BG|F1D|F2D|ST|TR|Misc
+                "sranger_mk2_hwi-"
+                "HW-INT-1S-SHORT",
+                // Plugin's Category - used to autodecide on Pluginloading or ignoring
+                // In this case of Hardware-Interface-Plugin here is the interface-name required
+                // this is the string selected for "Hardware/Card"!
+                THIS_HWI_PLUGIN_NAME,
+                // Description, is shown by PluginViewer (Plugin: listplugin, Tools->Plugin Details)
+                g_strdup ("SRanger MK2/3 hardware interface."),
+                // Author(s)
+                "Percy Zahl",
+                // Menupath to position where it is appendet to -- not used by HwI PIs
+                "windows-section,windows-section,windows-section,windows-section",
+                // Menuentry -- not used by HwI PIs
+                N_("SPM Control,SPM Control Tabs..,Mover Control,PAC Control"),
+                // help text shown on menu
+                N_("This is the " THIS_HWI_PLUGIN_NAME " - GXSM Hardware Interface."),
+                // more info...
+                "N/A",
+                NULL,          // error msg, plugin may put error status msg here later
+                NULL,          // Plugin Status, managed by Gxsm, plugin may manipulate it too
+                // init-function pointer, can be "NULL", 
+                // called if present at plugin load
+                sranger_mk2_hwi_init,  
+                // query-function pointer, can be "NULL", 
+                // called if present after plugin init to let plugin manage it install itself
+                sranger_mk2_hwi_query, // query can be used (otherwise set to NULL) to install
+                // additional control dialog in the GXSM menu
+                // about-function, can be "NULL"
+                // can be called by "Plugin Details"
+                sranger_mk2_hwi_about,
+                // configure-function, can be "NULL"
+                // can be called by "Plugin Details"
+                sranger_mk2_hwi_configure,
+                // run-function, can be "NULL", if non-Zero and no query defined, 
+                // it is called on menupath->"plugin"
+                NULL, // run should be "NULL" for Gxsm-Math-Plugin !!!
+                // cleanup-function, can be "NULL"
+                // called if present at plugin removal
+                NULL,   // direct menu entry callback1 or NULL
+                NULL,   // direct menu entry callback2 or NULL
+                sranger_mk2_hwi_cleanup // plugin cleanup callback or NULL
+        };
+}
 
 // Text used in Aboutbox, please update!!
 static const char *about_text = N_("GXSM sranger_mk2_hwi Plugin\n\n"
@@ -1631,7 +1640,6 @@ static const char *about_text = N_("GXSM sranger_mk2_hwi Plugin\n\n"
 // #define PI_DEBUG(L, DBGTXT) std::cout << "** (" << __FILE__ << ": " << __FUNCTION__ << ") Gxsm-PI-DEBUG-MESSAGE **: " << std::endl << " - " << DBGTXT << std::endl
 
 gchar *sranger_mk2_hwi_configure_string = NULL;   // name of the currently in GXSM configured HwI (Hardware/Card)
-sranger_common_hwi_dev *sranger_common_hwi = NULL; // instance of the HwI derived XSM_Hardware class
 
 const gchar *DSPControl_menupath  = "windows-section";
 const gchar *DSPControl_menuentry = N_("SR-DSP Control");
@@ -1646,11 +1654,6 @@ const gchar *DSPMover_menuhelp  = N_("open the SR-DSP mover control window");
 const gchar *DSPPAC_menuentry = N_("SR-DSP PAC");
 const gchar *DSPPAC_menuhelp  = N_("open the SR-DSP Phase/Amplitude Convergent Detector control window");
 
-DSPControlContainer *DSPControlContainerClass = NULL;
-DSPControl *DSPControlClass = NULL;
-DSPMoverControl *DSPMoverClass = NULL;
-DSPPACControl *DSPPACClass = NULL;
-DSPControlUserTabs *DSPControlUserTabsClass = NULL;
 
 static void DSPControl_StartScan_callback ( gpointer );
 

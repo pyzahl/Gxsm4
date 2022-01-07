@@ -44,6 +44,7 @@
 #include "glbvars.h"
 #include "xsmtypes.h"
 #include "xsmdebug.h"
+#include "surface.h"
 
 #include <fcntl.h>
 #include <sys/types.h>

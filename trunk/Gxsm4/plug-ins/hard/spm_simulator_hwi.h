@@ -76,7 +76,7 @@ public:
 // GUI for hardware/simulator specific controls
 class SPM_SIM_Control : public AppBase{
 public:
-        SPM_SIM_Control(){
+        SPM_SIM_Control(Gxsm4app *app):AppBase(app){
                 // need to create according xml recource files for this to make work....
                 hwi_settings = g_settings_new (GXSM_RES_BASE_PATH_DOT".hwi.spm-sim-control");
                 Unity    = new UnitObj(" "," ");

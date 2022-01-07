@@ -41,6 +41,8 @@
 #include "action_id.h"
 #include "modules/dsp.h"
 
+#include "surface.h"
+
 #include "sranger_mk2_hwi_control.h"
 #include "sranger_mk23common_hwi.h"
 #include "modules/sranger_mk2_ioctl.h"

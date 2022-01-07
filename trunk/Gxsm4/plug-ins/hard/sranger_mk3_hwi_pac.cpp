@@ -72,6 +72,8 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 
+#include "surface.h"
+
 #include "sranger_mk2_hwi_control.h"
 #include "sranger_mk23common_hwi.h"
 #include "modules/sranger_mk2_ioctl.h"
@@ -127,7 +129,7 @@ public:
         GSList *config_checkbutton_list;
 };
 
-DSPPACControl::DSPPACControl ()
+DSPPACControl::DSPPACControl (Gxsm4app *app):AppBase(app)
 {
 	gint coldstart = FALSE;
 	XsmRescourceManager xrm("sranger_mk2_hwi_control");

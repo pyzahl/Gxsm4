@@ -46,6 +46,8 @@
 #include "app_vobj.h"
 #include "action_id.h"
 
+#include "surface.h"
+
 #include "modules/dsp.h"
 #include "modules/sranger_mk2_ioctl.h"
 
@@ -637,7 +639,8 @@ void DSPControl::probedata_visualize (GArray *probedata_x, GArray *probedata_y, 
 		XSM_DEBUG_PG("DBG-M VIS c2  " << title << " xr= " << xmin << " .. " << xmax << " " << ylab);
                 gchar *resid = g_strdelimit (g_strconcat (xlab,ylab,NULL), " ;:()[],./?!@#$%^&*()+-=<>", '_');
 
-		pc = new ProfileControl (title, current_i, 
+		pc = new ProfileControl (main_get_gapp() -> get_app (),
+                                         title, current_i, 
                                          UXaxis, UYaxis, 
                                          xmin, xmax,
                                          resid,
@@ -749,7 +752,8 @@ void DSPControl::probedata_visualize (GArray *probedata_x, GArray *probedata_y, 
 		if (!pc_av){
 			XSM_DEBUG_PG ("Probing_graph_callback Visualization -- new pc_av" );
 			gchar   *title  = g_strdup_printf ("Vector Probe, Channel: %s %s", ylab, (vis_PlotAvg & plot_msk)?"averaged":"cur. section");
-			pc_av = new ProfileControl (title, spectra_index+1, 
+			pc_av = new ProfileControl (main_get_gapp() -> get_app (),
+                                                    title, spectra_index+1, 
 						    UXaxis, UYaxis, xmin, xmax, ylab);
 			pc_av->scan1d->mem2d->Resize (spectra_index+1, join_same_x ? nas:1);
 			pc_av->SetTitle (title);
