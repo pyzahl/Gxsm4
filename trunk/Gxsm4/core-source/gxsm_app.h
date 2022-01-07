@@ -78,10 +78,10 @@ class AppBase;
 
 class App : public GnomeAppService, AppBase {
 public:
-        App (GApplication *g_app);
+        App (Gxsm4app *g_app);
         virtual ~App ();
 
-        void MAINAppWindowInit(const gchar *title=NULL, const gchar *sub_title=NULL);
+        void MAINAppWindowInit(Gxsm4appWindow* win, const gchar *title=NULL, const gchar *sub_title=NULL);
         void build_gxsm (Gxsm4appWindow *win);
 
         static gboolean finish_system_startup_idle_callback (App *self) { self-> finish_system_startup (); return FALSE; };
@@ -212,7 +212,7 @@ public:
         GtkWidget* as_control;
 
         ProfileControl* new_profile_control(const gchar *filename, const gchar *id){
-                return new ProfileControl ( GXSM4_APP (g_application), filename, id);
+                return new ProfileControl (gxsm4app, filename, id);
         };
         
         void spa_update();
@@ -358,7 +358,7 @@ public:
                 SignalEventToPlugins( PluginRemoteAction, actionid ); 
         };
 
-        GApplication *get_application () { return g_application; };
+        Gxsm4app *get_application () { return gxsm4app; };
         Gxsm4appWindow *get_app_window  () { return app_window; };
         gboolean gxsm_app_window_present () { return app_window ? true : false; };
 
@@ -414,8 +414,6 @@ protected:
 
 private:
         /* Gxsm Application */
-        GApplication* g_application;
-        Gxsm4app*  gxsm4app;
         GtkWidget* appbar;
         guint      appbar_ctx_id;
         GtkWidget *gxsm_menu;

@@ -879,7 +879,7 @@ void ProfileControl::Init(const gchar *titlestring, int ChNo, const gchar *resid
 	XSM_DEBUG (DBG_L2, "ProfileControl::ProfileControl canvas");
 
         canvas = gtk_drawing_area_new(); // gtk3 cairo drawing-area -> "canvas"
-        g_object_set_data (G_OBJECT (canvas), "MAIN_APP", main_app);
+        g_object_set_data (G_OBJECT (canvas), "MAIN_APP", gxsm4app);
 
 	scrollarea = gtk_scrolled_window_new ();
 

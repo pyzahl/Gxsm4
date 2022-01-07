@@ -267,7 +267,7 @@ gxsm4_app_startup (GApplication *app)
   	// Now create GxsmApplication (gapp) class:
 	// this starts at App::App() and fires up the application's initialisiation
 
-        gapp = new App (app);
+        gapp = new App (GXSM4_APP (app));
         g_object_set_data (G_OBJECT (app), "APP-MAIN", gapp);
         gapp -> set_gxsm_main_menu (gxsm_menubar);
         gapp -> set_gxsm_app_menu (app_menu);
@@ -453,11 +453,9 @@ gxsm4_app_new (void)
 // Gxsm MAIN Application Class Startup Point
 // ========================================
 
-App::App(GApplication *g_app):AppBase(GXSM4_APP (g_app))
+App::App(Gxsm4app *gxsm4_app):AppBase(gxsm4_app)
 {
         XSM_DEBUG(DBG_L2, "App::App" );
-        gxsm4app = GXSM4_APP (g_app);
-	g_application = g_app; // GApplication reference
 
         // gxsm base settings object
         gxsm_app_settings = g_settings_new (GXSM_RES_BASE_PATH_DOT);
@@ -543,16 +541,14 @@ App::~App(){
 }
 
 
-void App::MAINAppWindowInit(const gchar *title, const gchar *sub_title){
+void App::MAINAppWindowInit(Gxsm4appWindow* win, const gchar *title, const gchar *sub_title){
 	XSM_DEBUG (DBG_L2,  "App::MAINWindowInit" );
 
         g_message ("App::MAINAppWindowInit** <%s : %s> **", title, sub_title);
         
-        GList *windows = gtk_application_get_windows (GTK_APPLICATION (get_app ()));
-        g_message ("App::MAINAppWindowInit.. *** Window List: #%d", g_list_length (windows));
-        if (windows){
-                g_message ("App::MAINAppWindowInit... FOUND WINDOW");
-                app_window = GXSM4_APP_WINDOW (windows->data);
+        if (win){
+                g_message ("App::MAINAppWindowInit... GOT WINDOW");
+                app_window = win;;
         } else {
                 g_message ("App::MAINAppWindowInit... NEW WINDOW");
                 app_window = gxsm4_app_window_new (GXSM4_APP (get_app ()));
@@ -570,7 +566,7 @@ void App::MAINAppWindowInit(const gchar *title, const gchar *sub_title){
         gtk_widget_show (header_bar);
         gtk_header_bar_set_decoration_layout (GTK_HEADER_BAR (header_bar), "icon"); //  "icon,menu:close");
                                               
-        g_action_map_add_action_entries (G_ACTION_MAP (g_application),
+        g_action_map_add_action_entries (G_ACTION_MAP (gxsm4app),
                                          app_gxsm_action_entries, G_N_ELEMENTS (app_gxsm_action_entries),
                                          this);
 
@@ -607,12 +603,12 @@ void App::MAINAppWindowInit(const gchar *title, const gchar *sub_title){
                 GSimpleAction *ti_action = g_simple_action_new (gai->gaction.name, NULL);
                 // GSimpleAction *ti_action = g_simple_action_new_stateful (gai->gaction.name, NULL, g_variant_new_boolean (FALSE));
                 // g_simple_action_set_enabled (ti_action, TRUE);
-                g_signal_connect (ti_action, "activate", G_CALLBACK (gai->gaction.activate), g_application);
+                g_signal_connect (ti_action, "activate", G_CALLBACK (gai->gaction.activate), gxsm4app);
                 if (gai->toolbar_action){
                         g_object_set_data (G_OBJECT (ti_action), "toolbar_action", (gpointer) gai->toolbar_action);
                         XSM_DEBUG(DBG_L2, "........ adding toolbar_action = " << gai->toolbar_action);
                 }
-                g_action_map_add_action (G_ACTION_MAP (g_application), G_ACTION (ti_action));
+                g_action_map_add_action (G_ACTION_MAP (gxsm4app), G_ACTION (ti_action));
 
                 if (gai->label){
                         XSM_DEBUG(DBG_L2, "........ adding toolbutton = " << gai->label);
@@ -674,7 +670,7 @@ void App::build_gxsm (Gxsm4appWindow *win){
         // setup core functionality header bar, grid with status bar
 
         g_message ("App::build_gxsm calling MAINAppWindowInit(%s, %s)", "*Gxsm4*", "*" GXSM_VERSION_NAME "*");
-        MAINAppWindowInit ("Gxsm4", GXSM_VERSION_NAME);
+        MAINAppWindowInit (win, "Gxsm4", GXSM_VERSION_NAME);
         g_message ("App::build_gxsm BUILDING GXSM....");
         
         XSM_DEBUG(DBG_L2, "App::build_gxsm - starting up" );
@@ -925,7 +921,7 @@ GxsmMenuExtension *App::gxsm_app_extend_menu (const gchar *extension_point, cons
 
                 
                 //                g_print ("App::gxsm_app_extend_menu - looking for app menu...\n");
-                model = gtk_application_get_app_menu (GTK_APPLICATION (g_application));
+                model = gtk_application_get_app_menu (GTK_APPLICATION (gxsm4app));
                 
                 if (model != NULL)
                         section = find_extension_point_section (model, extension_point);
@@ -938,7 +934,7 @@ GxsmMenuExtension *App::gxsm_app_extend_menu (const gchar *extension_point, cons
         }
         
 	if (section != NULL){
-                //                priv->menu_ext = gedit_app_activatable_extend_menu (g_application, "tools-section");
+                //                priv->menu_ext = gedit_app_activatable_extend_menu (gxsm4app, "tools-section");
                 //                item = g_menu_item_new (_("S_ort..."), "win.sort");
                 GxsmMenuExtension *menu_ext = gxsm_menu_extension_new (G_MENU (section));
                 GMenuItem *item = g_menu_item_new (menu_entry_text, action);
@@ -1263,7 +1259,7 @@ void App::GxsmSplash(gdouble progress, const gchar *info, const gchar* text){
         GVariant *splash_timeout = g_settings_get_value (gxsm_app_settings, "splash-timeout");
 
 	if (splash_progress_bar && splash && progress > -0.2){
-                XSM_DEBUG_GP (DBG_L1, "App::GxsmSplash Update: %g, %s, %s \n", progress, info, text);
+                XSM_DEBUG_GM (DBG_L1, "App::GxsmSplash Update: %g, %s, %s", progress, info, text);
 		if (progress >= 0. && progress <= 1.0)
 			gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (splash_progress_bar), progress);
 		else
@@ -1278,12 +1274,11 @@ void App::GxsmSplash(gdouble progress, const gchar *info, const gchar* text){
                 gtk_widget_queue_draw (splash_darea);
 
                 if (progress > 1.1){
-                        XSM_DEBUG_GP (DBG_L1, "App::GxsmSplash Update [%g] -- schedule remove in %d ms \n", progress, (guint)g_variant_get_double (splash_timeout));
+                        XSM_DEBUG_GM (DBG_L1, "App::GxsmSplash Update [%g] -- schedule remove in %d ms", progress, (guint)g_variant_get_double (splash_timeout));
                         g_timeout_add ((guint)g_variant_get_double (splash_timeout), 
                                        (GSourceFunc) App::RemoveGxsmSplash, 
                                        splash);
                 }
-                // check_events ();
                 return;
 	}
         

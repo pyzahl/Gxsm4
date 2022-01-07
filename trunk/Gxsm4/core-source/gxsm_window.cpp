@@ -64,7 +64,6 @@ static void
 gxsm4_app_window_init (Gxsm4appWindow *window)
 {
         Gxsm4appWindowPrivate *priv;
-        
         XSM_DEBUG_GM (DBG_L1, "gxsm4_app_window_init ===============================================" );
 
         priv = (Gxsm4appWindowPrivate *) gxsm4_app_window_get_instance_private (window);
@@ -89,6 +88,9 @@ gxsm4_app_window_dispose (GObject *object)
 {
         XSM_DEBUG_GM (DBG_L1, "gxsm4_app_window_dispose ============================================" );
         Gxsm4appWindowPrivate *priv = (Gxsm4appWindowPrivate *) gxsm4_app_window_get_instance_private (GXSM4_APP_WINDOW (object));
+
+        // FIX-ME !!
+        
         //GList *windows = gtk_application_get_windows (GTK_APPLICATION (priv->gxsm4app));
         //Gxsm4appWindow *window = priv->self;
         //windows = g_list_remove (windows, window);
@@ -102,11 +104,10 @@ gxsm4_app_window_dispose (GObject *object)
 Gxsm4appWindow *
 gxsm4_app_window_new (Gxsm4app *app)
 {
-        XSM_DEBUG_GM (DBG_L1, "gxsm4_app_window_new ================================================" );
+        XSM_DEBUG_GM (DBG_L1, "gxsm4_app_window_new ================================================");
         GList *windows = gtk_application_get_windows (GTK_APPLICATION (app));
         //Gxsm4appWindowPrivate *priv = (Gxsm4appWindowPrivate *) gxsm4_app_window_get_instance_private (GXSM4_APP_WINDOW (app));
         //priv->gxsm4app = app;
-
         
 #if COMPLILE_TEST_WAYLAND
         Gxsm4appWindow *window = (Gxsm4appWindow *) g_object_new (GXSM4_APP_WINDOW_TYPE, "application", app, gdk_get_default_root_window ()); // WAYLAND
@@ -115,6 +116,11 @@ gxsm4_app_window_new (Gxsm4app *app)
 #endif
         windows = g_list_append (windows, window);
         XSM_DEBUG_GM (DBG_L1,"gxsm4_app_window_new **** # Windows in List: %u,  time: %ul us", g_list_length (windows), g_get_real_time());
+#if 0
+        gchar* tmp = g_strdup_printf ("W# %u", g_list_length (windows));
+        GtkWidget *lab = gtk_label_new (tmp);
+        gtk_window_set_child (GTK_WINDOW(window), lab);
+#endif
         return window;
 }
 
