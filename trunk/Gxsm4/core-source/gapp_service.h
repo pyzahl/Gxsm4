@@ -820,9 +820,7 @@ public:
 	void LoadGeometry();
 
 	/* action callbacks */
-        static gboolean window_close_callback (GtkWidget *widget,
-                                               GdkEvent  *event,
-                                               gpointer   user_data);
+        static gboolean window_close_callback (GtkWidget *widget, AppBase *self);
   
         static void window_action_callback (GSimpleAction *simple,
                                             GVariant *parameter,

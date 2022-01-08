@@ -582,6 +582,7 @@ void AppBase::AppWindowInit(const gchar *title, const gchar *sub_title){
         app_window =  gxsm4_app_window_new (gxsm4app);
         window = GTK_WINDOW (app_window);
 
+        
         //window = GTK_WINDOW (gtk_window_new (GTK_WINDOW_TOPLEVEL));
         header_bar = gtk_header_bar_new ();
         gtk_widget_show (header_bar);
@@ -602,13 +603,8 @@ void AppBase::AppWindowInit(const gchar *title, const gchar *sub_title){
 
 }
 
-gboolean AppBase::window_close_callback (GtkWidget *widget,
-                                         GdkEvent  *event,
-                                         gpointer   user_data){
-        AppBase *app_w = (AppBase *)user_data;
-        // dop NOT close/destrry, just minimize/hide!
-        app_w->hide ();
-
+gboolean AppBase::window_close_callback (GtkWidget *widget, AppBase *self){
+        self->hide ();
         return true; // no further actions!!
 }
 
@@ -705,7 +701,8 @@ void AppBase::add_window_to_window_menu(const gchar *menu_item_label, const gcha
                 ti_action = g_simple_action_new_stateful (tmpaction,
                                                           G_VARIANT_TYPE_BOOLEAN,
                                                           g_variant_new_boolean (true));
-                g_signal_connect (ti_action, "toggled", G_CALLBACK (AppBase::window_action_callback), this); // GTK_APPLICATION ( main_get_gapp ()->get_application ()));
+                g_signal_connect (ti_action, "toggled", G_CALLBACK (AppBase::window_action_callback), this);
+                // GTK_APPLICATION ( main_get_gapp ()->get_application ()));
         } else {
                 ti_action = g_simple_action_new (tmpaction, NULL);
                 g_signal_connect (ti_action, "activate", G_CALLBACK (AppBase::window_action_callback), this);
@@ -771,15 +768,12 @@ int AppBase::set_window_geometry (const gchar *key, gint index, gboolean add_to_
 }
 
 void AppBase::hide (){
+        gtk_widget_hide (GTK_WIDGET (window));
         showstate=FALSE;
-        //GTK4-FIX-ME
-        //gtk_window_iconify (window);
 }
 
 void AppBase::show (){
-        //GTK4-FIX-ME
-        //gtk_window_deiconify (window);
-        //gtk_window_present (window);
+        gtk_widget_show (GTK_WIDGET (window));
         showstate=TRUE;
         position_auto ();
         resize_auto ();
@@ -789,10 +783,12 @@ void AppBase::show_auto (){
         if (window_geometry){
                 if (window_geometry[WGEO_FLAG] && window_geometry[WGEO_SHOW]){
                         show ();
-                } else
+                } else {
                         hide ();
-        } else
+                }
+        } else {
                 hide ();
+        }
 }
 
 void AppBase::position_auto (){
@@ -918,6 +914,8 @@ void AppBase::LoadGeometry(){
                 return -1;
         }
 	XSM_DEBUG (DBG_L2, "AppBase::LoadGeometry -- Load Geometry for window " << window_key );
+
+        g_signal_connect (window, "close-request",  G_CALLBACK (AppBase::window_close_callback), this);
 
         // g_message ("AutoLoad Window Geometry: %s", window_key);
 
