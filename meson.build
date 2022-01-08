@@ -154,6 +154,11 @@ python = dependency(['python3'])
 ## plugins do need for dynamic load lib aka "-ldl"
 dl   = platform_windows ? no_dep : cc.find_library('dl')
 
+## OpenCV for feature match, etc. plugins:  old: -lopencv_core -lopencv_highgui -lopencv_features2d -lopencv_objdetect
+opencv = dependency('opencv4')
+
+## export quicktime movie plugin
+quicktime = dependency('libquicktime')
 
 ################################################################################
 # Check if Pango is built with a recent fontconfig

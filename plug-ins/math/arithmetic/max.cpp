@@ -76,6 +76,8 @@ into a new created math channel.
 #include "config.h"
 #include "plugin.h"
 
+#include "glbvars.h"
+
 // Plugin Prototypes
 static void max_init( void );
 static void max_about( void );

@@ -80,6 +80,8 @@ convolutions, it's faster!
 #include "config.h"
 #include "plugin.h"
 #include "../../common/pyremote.h"
+#include "glbvars.h"
+#include "surface.h"
 
 // Plugin Prototypes
 static void smooth_init( void );

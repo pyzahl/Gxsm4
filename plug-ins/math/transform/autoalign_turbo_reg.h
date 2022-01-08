@@ -80,6 +80,9 @@
 #include "config.h"
 #include "core-source/plugin.h"
 #include "autoalign_vector_types.h"
+#include "glbvars.h"
+#include "surface.h"
+
 
 extern GxsmPlugin autoalign_pi;
 

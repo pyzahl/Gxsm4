@@ -67,7 +67,10 @@ the X channel.  The plug-in is called via \GxsmMenu{Math/Misc/Spectrocut}.
 #include "plugin.h"
 #include "scan.h"
 #include "xsmmath.h"
- 
+#include "glbvars.h"
+#include "surface.h"
+
+
 using namespace std;
 
 

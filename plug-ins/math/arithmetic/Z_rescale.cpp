@@ -78,6 +78,8 @@ into a new created math channel. The result is of type \GxsmEmph{float}.
 #include <gtk/gtk.h>
 #include "config.h"
 #include "plugin.h"
+#include "glbvars.h"
+#include "surface.h"
 
 // Plugin Prototypes
 static void Z_rescale_init( void );

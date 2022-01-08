@@ -80,6 +80,7 @@ is kept unchanged.
 #include <gtk/gtk.h>
 #include "config.h"
 #include "plugin.h"
+#include "glbvars.h"
 
 // Plugin Prototypes
 static void div_scan_init( void );

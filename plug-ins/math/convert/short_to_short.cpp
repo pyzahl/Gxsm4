@@ -74,6 +74,8 @@ This is a special temporary hack, only loaded if Instrument is set to SNOM.
 #include <gtk/gtk.h>
 #include "config.h"
 #include "plugin.h"
+#include "glbvars.h"
+#include "surface.h"
 
 // Plugin Prototypes
 static void short_to_short_init( void );

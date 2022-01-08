@@ -62,6 +62,8 @@ Not yet tested.
 #include "util.h"
 #include "batch.h"
 #include "fileio.c"
+#include "glbvars.h"
+#include "surface.h"
 
 #ifndef WORDS_BIGENDIAN
 # define WORDS_BIGENDIAN 0

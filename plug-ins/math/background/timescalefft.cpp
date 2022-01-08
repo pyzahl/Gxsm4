@@ -102,6 +102,8 @@ Activate source channel.
 #include "config.h"
 #include "plugin.h"
 #include "app_profile.h"
+#include "glbvars.h"
+#include "surface.h"
 
 
 // Plugin Prototypes
@@ -296,7 +298,8 @@ static void timescalefft_cleanup(void)
 	PixU->SetAlias ("Pixel");
 
 	gchar *txt = g_strdup_printf ("Time Domain of Scan");
-	ProfileControl *pc = new ProfileControl (txt, 
+	ProfileControl *pc = new ProfileControl (main_get_gapp() -> get_app (),
+						 txt, 
 						 points, 
 						 PixU, Src->data.Zunit,
 						 0, points-1, "TDS");

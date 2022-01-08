@@ -86,6 +86,8 @@ shifted lower part, connected.
 #include <gtk/gtk.h>
 #include "config.h"
 #include "plugin.h"
+#include "glbvars.h"
+#include "surface.h"
 
 // Plugin Prototypes
 static void shiftarea_init( void );

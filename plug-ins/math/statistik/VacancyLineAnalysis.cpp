@@ -154,6 +154,8 @@ possible.
 #include "config.h"
 #include "plugin.h"
 #include "app_profile.h"
+#include "glbvars.h"
+#include "surface.h"
 
 
 typedef struct {
@@ -324,7 +326,7 @@ static void VacancyLineAnalysis_configure(void)
 						   GTK_RESPONSE_CANCEL,
 						   NULL);
   BuildParam bp;
-  gtk_container_add (GTK_CONTAINER (gtk_dialog_get_content_area (GTK_DIALOG (dialog))), bp.grid);
+  gtk_box_append (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (dialog))), bp.grid);
  
   bp.grid_add_label ("Enter Analysis Information");
   bp.new_line ();
@@ -338,9 +340,15 @@ static void VacancyLineAnalysis_configure(void)
  
   gtk_widget_show(dialog);
 
-  gint result = gtk_dialog_run (GTK_DIALOG (dialog));
-  gtk_widget_destroy (dialog);
-  //  return result == GTK_RESPONSE_OK ? 1 : 0;
+  int response = GTK_RESPONSE_NONE;
+  g_signal_connect (G_OBJECT (dialog), "response", G_CALLBACK (GnomeAppService::on_dialog_response_to_user_data), &response);
+  
+  // FIX-ME GTK4 ??
+  // wait here on response
+  while (response == GTK_RESPONSE_NONE)
+    while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
+  
+  return response == GTK_RESPONSE_OK ? 1 : 0;
 }
 
 
@@ -767,7 +775,8 @@ static void VacancyLineAnalysis_cleanup(void)
              gchar *txt;
              txt= g_strdup_printf ("Vacancy_Line_Spacing_Histogram");
 
-             ProfileControl *pc2 = new ProfileControl (txt, 
+             ProfileControl *pc2 = new ProfileControl (main_get_gapp() -> get_app (),
+						       txt, 
                                                        n_bins, 
                                                        Src->data.Xunit, Events, 
                                                        min_spacing*dx, max_spacing*dx);

@@ -176,7 +176,7 @@ static void external_convert_callback(GSimpleAction * simple,
 				      GVariant * parameter,
 				      gpointer user_data)
 {
-    external_converter_Control *Popup = new external_converter_Control();
+    external_converter_Control *Popup = new external_converter_Control (main_get_gapp() -> get_app ());
     PI_DEBUG(DBG_L2, "External Converter dialog will open");
     Popup->run();
     PI_DEBUG(DBG_L2, "External Converter dialog has returned");
@@ -350,7 +350,7 @@ return;
 gint file_error(GtkWindow * window, const gchar * err_msg,
 		const gchar * dir);
 
-external_converter_Control::external_converter_Control()
+external_converter_Control::external_converter_Control(Gxsm4app *app):AppBase(app)
 {
     PI_DEBUG(DBG_L2, "Generating external_converter_control object!");
     frontenddata =

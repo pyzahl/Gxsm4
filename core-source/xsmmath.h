@@ -62,7 +62,7 @@
 #include "scan.h"
 
 // used to set progressbar of main window (P: 0..1)
-#define SET_PROGRESS(P) { main_get_gapp ()->SetProgress((gfloat)(P)); while (gtk_events_pending()) gtk_main_iteration(); }
+#define SET_PROGRESS(P) { main_get_gapp ()->SetProgress((gfloat)(P)); while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE); }
 
 #define SHTRANGE   32765
 #define ZEROVALUE  0.

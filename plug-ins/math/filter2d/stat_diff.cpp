@@ -75,6 +75,8 @@ Crashes Gxsm -- pending to fix.
 #include <gtk/gtk.h>
 #include "config.h"
 #include "plugin.h"
+#include "glbvars.h"
+#include "surface.h"
 
 // Plugin Prototypes
 static void stat_diff_init( void );

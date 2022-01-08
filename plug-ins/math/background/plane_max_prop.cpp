@@ -97,6 +97,8 @@ right for some still not found reason.
 #include <gtk/gtk.h>
 #include "config.h"
 #include "plugin.h"
+#include "glbvars.h"
+#include "surface.h"
 
 // Plugin Prototypes
 static void plane_max_prop_init( void );

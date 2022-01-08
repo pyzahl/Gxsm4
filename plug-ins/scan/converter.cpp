@@ -684,19 +684,25 @@ file_error(GtkWindow * window, const gchar * err_msg, const gchar * dir)
 					GTK_BUTTONS_YES_NO, "%s", buffer);
 	gtk_window_set_title(GTK_WINDOW(dialog), err_msg);
 
+        gtk_widget_show (dialog);
 
-	if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_YES) {
+        int response = GTK_RESPONSE_NONE;
+        g_signal_connect (G_OBJECT (dialog), "response", G_CALLBACK (GnomeAppService::on_dialog_response_to_user_data), &response);
+        
+        // FIX-ME GTK4 ??
+        // wait here on response
+        while (response == GTK_RESPONSE_NONE)
+                while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
+        
+	if (response == GTK_RESPONSE_YES) {
 	    printf("create\n");
 	    if (mkdir(dir, UMASK)) {
 		PI_DEBUG(DBG_L2, "Error: creating the directory");
-		gtk_widget_destroy(dialog);
 		return 1;
 	    }
-	    gtk_widget_destroy(dialog);
 	    return 0;
 	} else {
 	    PI_DEBUG(DBG_L2, "Aborting ..." << err_msg);
-	    gtk_widget_destroy(dialog);
 	    return 1;
 	}
     }
@@ -707,9 +713,16 @@ file_error(GtkWindow * window, const gchar * err_msg, const gchar * dir)
 					GTK_MESSAGE_ERROR,
 					GTK_BUTTONS_OK, "%s", err_msg);
 	gtk_window_set_title(GTK_WINDOW(dialog), "Error");
-	gtk_dialog_run(GTK_DIALOG(dialog));
-	gtk_widget_destroy(dialog);
 
+        gtk_widget_show (dialog);
+
+        int response = GTK_RESPONSE_NONE;
+        g_signal_connect (G_OBJECT (dialog), "response", G_CALLBACK (GnomeAppService::on_dialog_response_to_user_data), &response);
+        
+        // FIX-ME GTK4 ??
+        // wait here on response
+        while (response == GTK_RESPONSE_NONE)
+                while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
 	PI_DEBUG(DBG_L2, "Aborting ... " << err_msg);
 
 	return 1;

@@ -6,14 +6,14 @@ plugin_list = [
     { 'name': 'sdfimport' },
     { 'name': 'bin_import' },
     { 'name': 'cube_import' },
-    { 'name': 'external_converter' },
-    { 'name': 'converter' },
+    # { 'name': 'external_converter' }, ## did gxsm lib related ports, few GTK4 ports pending, missing show_info_callbcak ?!?!?
+    # { 'name': 'converter' }, ## few GTK4 port pending, missing show_info_callback ?!?!?
     { 'name': 'primitiveimexport' },
     { 'name': 'PsiHDF_im_export' },
     { 'name': 'spa4_d2d_im_export' },
     { 'name': 'uksoft2001_im_export' },
     { 'name': 'wip_im_export' },
-    { 'name': 'quicktime_im_export' },
+    { 'name': 'quicktime_im_export', 'deps' : [quicktime] },
     { 'name': 'g_dat_im_export' },
     { 'name': 'gmeyer_im_export' },
     { 'name': 'nanoimport' },

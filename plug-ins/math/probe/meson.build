@@ -2,7 +2,7 @@ plugin_cat = 'probe'
 install_path = gxsm4_plugin_dir / plugin_cat
 
 plugin_list = [
-    { 'name': 'afm_lj_mechanical_sim' },
+#    { 'name': 'afm_lj_mechanical_sim' },
     { 'name': 'probe_image_extract' },
 ]
 

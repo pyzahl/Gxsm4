@@ -73,6 +73,8 @@
 #include "config.h"
 #include "plugin.h"
 #include "xsmmath.h"
+#include "glbvars.h"
+#include "surface.h"
 
 #define UTF8_ANGSTROEM "\303\205"
 

@@ -134,6 +134,8 @@
 #include <gtk/gtk.h>
 #include "config.h"
 #include "plugin.h"
+#include "glbvars.h"
+#include "surface.h"
 
 
 using namespace std;
@@ -531,8 +533,15 @@ static gboolean baseinfo_run(Scan *Src)
         g_signal_connect (G_OBJECT (button3), "clicked",
                           G_CALLBACK (comment_button_callback), NULL);
 
-        gtk_widget_show_all (dialog);
-        gtk_dialog_run (GTK_DIALOG (dialog));
+        gtk_widget_show (dialog);
+        
+        int response = GTK_RESPONSE_NONE;
+        g_signal_connect (G_OBJECT (dialog), "response", G_CALLBACK (GnomeAppService::on_dialog_response_to_user_data), &response);
+        
+        // FIX-ME GTK4 ??
+        // wait here on response
+        while (response == GTK_RESPONSE_NONE)
+                while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
 
         info << N_("Area was: \t") 
              << "\t(" << left << "," << top << ")-(" << right-1 << "," << bottom-1 << ")"   

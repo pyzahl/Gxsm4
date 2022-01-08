@@ -72,6 +72,8 @@ According to the manual (V4.1):
 #include "plugin.h"
 #include "dataio.h"
 #include "action_id.h"
+#include "glbvars.h"
+#include "surface.h"
 
 using namespace std;
 

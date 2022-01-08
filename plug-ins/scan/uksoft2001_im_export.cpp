@@ -99,6 +99,7 @@ present, it is assumed to be the Layer (Value) dimension.
 #include "util.h"
 #include "xsmtypes.h"
 #include "glbvars.h"
+#include "surface.h"
 #include "gapp_service.h"
 
 // custom includes go here

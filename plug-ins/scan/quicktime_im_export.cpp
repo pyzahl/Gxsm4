@@ -72,6 +72,8 @@ This seams to depend on the system and libquicktime version used, so please try 
 #include "glbvars.h"
 #include "gapp_service.h"
 #include "app_view.h"
+#include "glbvars.h"
+#include "surface.h"
 
 // custom includes go here
 #include "lqt/quicktime.h"

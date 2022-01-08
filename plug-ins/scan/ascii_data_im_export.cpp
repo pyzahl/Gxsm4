@@ -109,6 +109,8 @@ Only import direction is implemented.
 #include "util.h"
 #include "batch.h"
 #include "fileio.c"
+#include "glbvars.h"
+#include "surface.h"
 
 using namespace std;
 

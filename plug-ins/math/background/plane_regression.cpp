@@ -104,6 +104,8 @@ Hacking Version only.
 #include <gtk/gtk.h>
 #include "config.h"
 #include "plugin.h"
+#include "glbvars.h"
+#include "surface.h"
 
 // Plugin Prototypes
 static void plane_regression_init( void );

@@ -62,6 +62,7 @@ into a new created math channel.
 #include <gtk/gtk.h>
 #include "config.h"
 #include "plugin.h"
+#include "glbvars.h"
 
 // Plugin Prototypes
 static void lineregression_init( void );

@@ -3,9 +3,7 @@ install_path = gxsm4_plugin_dir / plugin_cat
 
 plugin_list = [
     { 'name': 'affine' },
-    { 'name': 'autoalign' },
-    { 'name': 'autoalign_stack_reg' },
-    { 'name': 'autoalign_turbo_reg' },
+#    { 'name': 'autoalign', 'sourcves': ['autoalign_stack_reg', 'autoalign_turbo_reg'], 'deps': [opencv] }, ## some internal undef refs remaining...  
     { 'name': 'flip_diagonal' },
     { 'name': 'mandriftfix' },
     { 'name': 'merge_h' },

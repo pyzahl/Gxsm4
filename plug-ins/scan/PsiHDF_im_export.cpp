@@ -62,6 +62,8 @@ Not yet tested, porting to GXSM-2 in progress..
 #include "batch.h"
 #include "fileio.c"
 #include "psihdf.h"
+#include "glbvars.h"
+#include "surface.h"
 
 using namespace std;
 

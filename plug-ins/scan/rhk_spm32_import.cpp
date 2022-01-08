@@ -63,16 +63,19 @@ spectroscopy data.
 
 
 
+#include <stdio.h>
+#include <time.h>
+#include <math.h>
+#include <string.h>
+
 #include <gtk/gtk.h>
 #include "config.h"
 #include "plugin.h"
 #include "dataio.h"
 #include "action_id.h"
+#include "glbvars.h"
+#include "surface.h"
 
-#include <stdio.h>
-#include <time.h>
-#include <math.h>
-#include <string.h>
 
 using namespace std;
 

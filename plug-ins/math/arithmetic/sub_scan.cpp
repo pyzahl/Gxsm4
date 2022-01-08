@@ -77,6 +77,7 @@ Both scans are required to have the same size in pixels.
 #include <gtk/gtk.h>
 #include "config.h"
 #include "plugin.h"
+#include "glbvars.h"
 
 // Plugin Prototypes
 static void sub_scan_init( void );

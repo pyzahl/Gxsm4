@@ -102,6 +102,9 @@ The active and X marked channels are used as data sources.
 #include <gtk/gtk.h>
 #include "config.h"
 #include "plugin.h"
+#include "glbvars.h"
+#include "surface.h"
+
 
 // Plugin Prototypes
 static void movieconcat_init( void );

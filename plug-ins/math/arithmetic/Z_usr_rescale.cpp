@@ -83,7 +83,7 @@ into a new created math channel. The result is of type \GxsmEmph{float}.
 #include <gtk/gtk.h>
 #include "config.h"
 #include "plugin.h"
-
+#include "glbvars.h"
 
 
 // Plugin Prototypes
