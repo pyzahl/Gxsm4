@@ -4,11 +4,9 @@ install_path = gxsm4_plugin_dir / plugin_cat
 plugin_list = [
     { 'name': 'spm_simulator_hwi',
       'gschemas': [ 'org.gnome.gxsm4.pcsadjustments.plugin-libspm-simulator-hwi.gschema.xml' ] },
-    ]
-
-XXXplugin_list = [
     { 'name': 'sranger_mk2_hwi',
-      'sources': [ 'sranger_mk2_hwi_control.cpp',
+      'sources': [ 'sranger_mk2_hwi.cpp',
+                   'sranger_mk2_hwi_control.cpp',
                    'sranger_mk2_hwi_mover.cpp',
                    'sranger_mk2_hwi_spm.cpp',
                    'sranger_mk2_hwi_dev.cpp',

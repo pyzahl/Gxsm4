@@ -339,7 +339,7 @@ class DSPControl : public AppBase{
 
 	void update();
         void updateDSP(int FbFlg=-1);
-	void update_trigger (gboolean flg);
+	//void update_trigger (gboolean flg);
 
 	double GetUserParam (gint n, gchar *id);
 	gint SetUserParam (gint n, gchar *id, double value);

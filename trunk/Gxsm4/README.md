@@ -59,8 +59,6 @@ To be ported, recoded,pending or disfunctional features and comments:
 
   - PanView: no actions yet, need to add controllers
 
-  - MK2/3 HwI plugin: currently does not link as issues with undef references exported for main plugin C-file, solution TDB
-   
   - gtk_widget_show_all(X)   --> removed completely from gtk4, replace
    with gtk_widget_show (X) and hope all others are shown.
                                 Make sure every manually created widget is receiving it's gtk_show_widget().
