@@ -129,8 +129,8 @@ void plugin_ctrl::scan_for_pi(gchar *dirname){
 	struct dirent *ent;
 	struct stat statbuf;
 
-	XSM_DEBUG (DBG_L3, "Scanning for GXSM plugins in " << dirname);
-        XSM_DEBUG_GP (DBG_L2, "plugin_ctrl::scan_for_pi -- scanning gxsm plugins in: " PACKAGE_PLUGIN_DIR "\%s", dirname);
+	XSM_DEBUG_GP (DBG_L3, "plugin_ctrl::scan_for_pi ** scanning for gxsm plugins in PACKAGE_PLUGIN_DIR=%s ", PACKAGE_PLUGIN_DIR);
+        XSM_DEBUG_GP (DBG_L2, "plugin_ctrl::scan_for_pi ** scanning for gxsm plugins in: %s", dirname);
         
 	dir = opendir(dirname);
 	if (!dir)
@@ -139,7 +139,7 @@ void plugin_ctrl::scan_for_pi(gchar *dirname){
 	while ((ent = readdir(dir)) != NULL)
 	{
 		filename = g_strdup_printf("%s/%s", dirname, ent->d_name);
-                XSM_DEBUG_GP (DBG_L3, "plugin_ctrl::scan_for_pi -- scanning file for gxsm plugin: " PACKAGE_PLUGIN_DIR "/ [%s] / [%s] {%s}", dirname, ent->d_name, filename);
+                XSM_DEBUG_GP (DBG_L3, "plugin_ctrl::scan_for_pi ** scanning file for gxsm plugin: %s/%s  [%s]", dirname, ent->d_name, filename);
                 
 		if (!stat(filename, &statbuf) && S_ISREG(statbuf.st_mode) &&
 		    (ext = strrchr(ent->d_name, '.')) != NULL){
