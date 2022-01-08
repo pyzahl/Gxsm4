@@ -114,6 +114,9 @@ gxsm4_app_window_new (Gxsm4app *app)
 #else
         Gxsm4appWindow *window = (Gxsm4appWindow *) g_object_new (GXSM4_APP_WINDOW_TYPE, "application", app, NULL); // X11
 #endif
+        // change destroy on closs button to hide
+        gtk_window_set_hide_on_close (GTK_WINDOW (window), true);
+     
         windows = g_list_append (windows, window);
         XSM_DEBUG_GM (DBG_L1,"gxsm4_app_window_new **** # Windows in List: %u,  time: %ul us", g_list_length (windows), g_get_real_time());
 #if 0
