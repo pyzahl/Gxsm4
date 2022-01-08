@@ -51,11 +51,15 @@ Note: Currently the plugins are not completely build/failing with file not found
 To be ported, recoded,pending or disfunctional features and comments:
 
  - We are also looking a new build system like MESON+Ninja for the
-   future. But that later.
+   future. Done! Ported to all new Meson&Ninja. Removed old automake infrastructure.
    
-  - Simple things are pending or missing for currently not yet rewokred
-   plugins, they simply fail to compile as of gtk4 changes, mainly those
-   are:
+  - All plugins are ported now and require testing. A very few have pending GTK4 issues and need attemtion (commented out from build).
+
+  - noted some pending GTK4 widget layout issues.
+
+  - PanView: no actions yet, need to add controllers
+
+  - MK2/3 HwI plugin: currently does not link as issues with undef references exported for main plugin C-file, solution TDB
    
   - gtk_widget_show_all(X)   --> removed completely from gtk4, replace
    with gtk_widget_show (X) and hope all others are shown.
@@ -74,10 +78,7 @@ To be ported, recoded,pending or disfunctional features and comments:
    (G_OBJECT (as_control), "basename"))))));
    
  - gtk_dialog_run()         --> no more -- see gapp_service.h for new
-   examples and work arounds!
-   
-  - GTM_MENU... stuff        --> all is based on gtk_popover_... now, see
-   core code for ported examples.
+   examples and work arounds! All done.
    
   - BUTTON signal names changed: the check/toggle button types and
    signals are changed and not mixable any more as separate objects.
@@ -99,7 +100,7 @@ To be ported, recoded,pending or disfunctional features and comments:
 
 
  -DSP MOVER CONTROL BUTTONS: action signal problem of missing signal for "pressed". The "activate" does not do anything... I tried.
-    -?> Do I now need to add event controllers to the buttons (can I??) and all that stuff to do this?
+    -?> Do I now need to add event controllers (does not work either, did tested (bug??) to the buttons (can I??) and all that stuff to do this?
 
  - All ENTRIES: added configuration menu option not yet attached and not accessible. Need to figure out how to add a custom menu entry to gtk_popovers.
              It is possible to manually edit the properties via the dconf-editor to get started.
