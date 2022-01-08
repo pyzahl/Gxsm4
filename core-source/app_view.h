@@ -59,6 +59,7 @@ public:
         static void view_file_getinfo_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
         static void view_file_print_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
         static void view_file_kill_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
+        static gboolean view_window_close_callback (GtkWidget *widget, ViewControl *vc);
         static void view_edit_copy_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
         static void view_edit_crop_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
         static void view_edit_zoomin_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);

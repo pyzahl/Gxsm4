@@ -2587,7 +2587,7 @@ void py_gxsm_console::show_stderr(const gchar *str)
         gtk_widget_show (dialog);
 
         int response = GTK_RESPONSE_NONE;
-        g_signal_connect (G_OBJECT (dialog), "response", G_CALLBACK (GnomeAppService::on_dialog_response), &response);
+        g_signal_connect (G_OBJECT (dialog), "response", G_CALLBACK (GnomeAppService::on_dialog_response_to_user_data), &response);
                         
         // FIX-ME GTK4 ??
         // wait here on response
