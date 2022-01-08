@@ -1520,6 +1520,12 @@ Special features and behaviors to be documented here!
 #include "xsmhard.h"
 #include "glbvars.h"
 
+#include "sranger_mk23common_hwi.h"
+#include "sranger_mk2_hwi_control.h"
+#include "sranger_mk2_hwi.h"
+#include "sranger_mk3_hwi.h"
+
+
 // Define HwI PlugIn reference name here, this is what is listed later within "Preferenced Dialog"
 // i.e. the string selected for "Hardware/Card"!
 #define THIS_HWI_PLUGIN_NAME "SRangerMK2:SPM"
@@ -1624,11 +1630,6 @@ static const char *about_text = N_("GXSM sranger_mk2_hwi Plugin\n\n"
                                    "Signal Ranger MK2 Hardware Interface for SPM.");
 
 /* Here we go... */
-
-#include "sranger_mk23common_hwi.h"
-#include "sranger_mk2_hwi_control.h"
-#include "sranger_mk2_hwi.h"
-#include "sranger_mk3_hwi.h"
 
 /*
  * PI global
@@ -1823,14 +1824,14 @@ void DSPControlContainer::realize (){
         
 	if (sranger_common_hwi) // probe for PAC lib/PLL capability
 		if (sranger_common_hwi->check_pac() != -1){
-			DSPPACClass = new DSPPACControl;
+			DSPPACClass = new DSPPACControl (main_get_gapp() -> get_app ());
 		}
 
 //	SR DSP Control Window
 // ==================================================
 
         PI_DEBUG_GP (DBG_L4, THIS_HWI_PREFIX"::sranger_mk2_hwi DSPControlContainer::Realize -- add DSPControl window\n");
-	DSPControlClass = new DSPControl;
+	DSPControlClass = new DSPControl (main_get_gapp() -> get_app ());
 	sranger_mk2_hwi_pi.app->ConnectPluginToStartScanEvent (DSPControl_StartScan_callback);
 
         PI_DEBUG_GP (DBG_L4, THIS_HWI_PREFIX"::sranger_mk2_hwi DSPControlContainer::Realize ConnectPluginToCDFSaveEvent\n");	
@@ -1842,12 +1843,12 @@ void DSPControlContainer::realize (){
 //      User Tabs Window (blanc)
 // ==================================================
         PI_DEBUG_GP (DBG_L4, THIS_HWI_PREFIX"::sranger_mk2_hwi DSPControlContainer::Realize -- add DSPControl User Tabs window\n");
-	DSPControlUserTabsClass = new DSPControlUserTabs;
+	DSPControlUserTabsClass = new DSPControlUserTabs (main_get_gapp() -> get_app ());
 
 //	SR DSP Mover Control Window
 // ==================================================
         PI_DEBUG_GP (DBG_L4, THIS_HWI_PREFIX"::sranger_mk2_hwi DSPControlContainer::Realize -- add DSPMover Control window\n");
-	DSPMoverClass = new DSPMoverControl;
+	DSPMoverClass = new DSPMoverControl (main_get_gapp() -> get_app ());
 
 	PI_DEBUG (DBG_L4, THIS_HWI_PREFIX "::sranger_mk2_hwi_query:: populate tabs now...\n");
 

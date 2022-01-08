@@ -4008,11 +4008,13 @@ int DSPControl::set_clr_mode_callback( GtkWidget *widget, gpointer mask){
 	return 0;
 }
 
+/*
 int DSPControl::se_auto_trigger_callback(GtkWidget *widget, DSPControl *dspc){
         PI_DEBUG_GP (DBG_L4, "%s \n",__FUNCTION__);
 	dspc->update_trigger (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)));
 	return 0;
 }
+*/
 
 int DSPControl::ldc_callback(GtkWidget *widget, DSPControl *dspc){
         PI_DEBUG_GP (DBG_L4, "%s \n",__FUNCTION__);
