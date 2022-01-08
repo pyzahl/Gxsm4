@@ -1417,6 +1417,7 @@ void ViewControl::AppWindowInit(const gchar *title, const gchar *sub_title){
         g_message ("ViewControl::AppWindowInit** <%s : %s> **", title, sub_title);
         app_window = gxsm4_app_window_new (GXSM4_APP (main_get_gapp ()->get_application ()));
         window = GTK_WINDOW (app_window);
+        g_signal_connect (window, "close-request",  G_CALLBACK (ViewControl::view_window_close_callback), this);
 
         header_bar = gtk_header_bar_new ();
         gtk_widget_show (header_bar);
@@ -3452,6 +3453,12 @@ void ViewControl::view_file_kill_callback (GSimpleAction *simple, GVariant *para
 	if (vc->chno < 0) return;
 
 	main_get_gapp ()->xsm->SetMode(vc->chno, ID_CH_M_OFF);
+}
+
+gboolean ViewControl::view_window_close_callback (GtkWidget *widget, ViewControl *vc){
+        g_message ("ViewControl::view_window_close_callback CH%d", vc->chno);
+        if (vc->chno < 0) return;
+        main_get_gapp ()->xsm->SetMode(vc->chno, ID_CH_M_OFF);
 }
 
 void ViewControl::view_edit_copy_callback (GSimpleAction *simple, GVariant *parameter, 

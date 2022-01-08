@@ -56,7 +56,6 @@ lib_utils_gxsm = library(
     'clip.c',
     'csv.cpp',
     'caps.cpp',
-    'error.cpp',
     'gnome-res.c',
     'gtkmarshal.c',
     'gtkmarshalers.c',

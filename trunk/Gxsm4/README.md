@@ -112,6 +112,8 @@ and
 /org/gnome/gxsm4/hwi/sranger-mk23/window-02-tabs = 'dijo----------------------------'
 Then start gxsm4 again.
 
+Save Profile as Drawing=pdf -> crash
+
 
 ## FYI:
 ----

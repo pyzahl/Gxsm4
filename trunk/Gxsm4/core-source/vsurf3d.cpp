@@ -38,6 +38,7 @@
 // C String
 #include <cstdio>
 #include <cstring>
+#include <cassert>
 
 // FreeType headers
 #include <ft2build.h>
@@ -69,6 +70,10 @@
 #include "surface.h"
 
 #include "xsmdebug.h"
+
+
+#include "glbvars.h"
+
 
 //#define __GXSM_PY_DEVEL
 #ifdef __GXSM_PY_DEVEL
@@ -280,11 +285,11 @@ public:
                         glDeleteVertexArrays(1, &VertexArrayName);
                         glDeleteBuffers(1, &IndexBufferName);
                         glDeleteBuffers(1, &ArrayBufferName);
-                        checkError("make_plane::~delete");
+                        Surf3d::checkError("make_plane::~delete");
                 }
         };
         gboolean init_buffer (){
-                checkError("make_plane:: init_buffer");
+                Surf3d::checkError("make_plane:: init_buffer");
 		if (!Validated) return false;
 
                 glGenBuffers(1, &ArrayBufferName);
@@ -299,19 +304,19 @@ public:
                 glBufferData(GL_ELEMENT_ARRAY_BUFFER, IndicesObjectSize, indices, GL_STATIC_DRAW);
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-                return Validated && checkError("make_plane:: init_buffer");
+                return Validated && Surf3d::checkError("make_plane:: init_buffer");
         };
 
         gboolean update_vertex_buffer (){
                 glBindBuffer (GL_ARRAY_BUFFER, ArrayBufferName);
                 glBufferSubData (GL_ARRAY_BUFFER, 0, VertexObjectSize, vertex);
                 glBindBuffer(GL_ARRAY_BUFFER, 0);
-                return Validated && checkError("make_plane:: update_vertex_buffer");
+                return Validated && Surf3d::checkError("make_plane:: update_vertex_buffer");
         };
         
         gboolean init_vao (){
                 g_message ("base_plane init_vao");
-                checkError("make_plane::init_vao");
+                Surf3d::checkError("make_plane::init_vao");
 		if (!Validated) return false;
 
                 // Build a vertex array object
@@ -327,7 +332,7 @@ public:
 
                 g_message ("base_plane init_vao end");
 
-                return Validated && checkError("make_plane::init_vao");
+                return Validated && Surf3d::checkError("make_plane::init_vao");
         };
         gboolean init_textures(glm::vec4 *displacement_data, glm::vec4 *palette_data, GLsizei num_pal_entries=GXSM_GPU_PALETTE_ENTRIES, GLint lod=0) {
 		if (!Validated) return false;
@@ -388,7 +393,7 @@ public:
                 // unbind
                 glBindTexture (GL_TEXTURE_2D, 0);
 
-                return Validated && checkError("make_plane::init_textures");
+                return Validated && Surf3d::checkError("make_plane::init_textures");
         };
         // update height mapping data
         gboolean update_displacement_data (glm::vec4 *displacement_data, GLint line, GLsizei num_lines=1) { 
@@ -396,7 +401,7 @@ public:
 
                 glTextureSubImage2D (TesselationTextureName[0], 0, 0, line, numx, num_lines, GL_RGBA, GL_FLOAT, &displacement_data[line*numx]);
 
-		return checkError("make_plane::update_textures displacement");
+		return Surf3d::checkError("make_plane::update_textures displacement");
         };
 
         // update volume data
@@ -406,7 +411,7 @@ public:
                 if (numv > 1 && v < numv)
                         glTextureSubImage3D (TesselationTextureName[2], 0,  0, line, v, numx, num_lines, 1, GL_RGBA, GL_FLOAT, &displacement_data[line*numx + numx*numy*v]);
                 
-		return checkError("make_plane::update_textures volume");
+		return Surf3d::checkError("make_plane::update_textures volume");
         };
 
         // update palette lookup data
@@ -415,7 +420,7 @@ public:
 
                 glTextureSubImage1D (TesselationTextureName[1], 0, 0, num_pal_entries, GL_RGBA, GL_FLOAT, &palette_data[0]);
 
-		return checkError("make_plane::update_texture palette");
+		return Surf3d::checkError("make_plane::update_texture palette");
         };
         
         gboolean draw (){
@@ -427,14 +432,14 @@ public:
                 glBindBuffer (GL_ARRAY_BUFFER, ArrayBufferName);
                 glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, IndexBufferName);
                 glPatchParameteri (GL_PATCH_VERTICES, 4);
-                checkError("make_plane::draw bindbuff");
+                Surf3d::checkError("make_plane::draw bindbuff");
 
                 glBindTexture (GL_TEXTURE_2D, TesselationTextureName[0]);
                 glBindTexture (GL_TEXTURE_1D, TesselationTextureName[1]);
-                checkError("make_plane::draw tex0,1");
+                Surf3d::checkError("make_plane::draw tex0,1");
                 if (numv>1)
                         glBindTexture(GL_TEXTURE_3D, TesselationTextureName[2]);
-                checkError("make_plane::draw tex2");
+                Surf3d::checkError("make_plane::draw tex2");
                 
                 glDrawElements (GL_PATCHES, IndicesCount, GL_UNSIGNED_INT, 0);
 
@@ -442,7 +447,7 @@ public:
                 glBindBuffer (GL_ARRAY_BUFFER, 0);
                 glBindVertexArray (0);
 
-                return Validated && checkError("make_plane::draw");
+                return Validated && Surf3d::checkError("make_plane::draw");
         };
         
         // make plane
@@ -548,18 +553,18 @@ public:
                         Validated = init_texture ();
                 }
                 
-                checkError("text_plane::init");
+                Surf3d::checkError("text_plane::init");
                 g_message ("text_plane:: init object completed");
         };
         ~text_plane (){
 		if (Validated){
                         glDeleteTextures(1, &TextTextureName);
                         glDeleteVertexArrays(1, &VertexArrayName);
-                        checkError("text_plane::~delete");
+                        Surf3d::checkError("text_plane::~delete");
                 }
         };
         gboolean init_texture (){
-                checkError("text_plane:: init_buffer");
+                Surf3d::checkError("text_plane:: init_buffer");
 		if (!Validated) return false;
 
                 glUseProgram (S3D_ProgramName);
@@ -578,11 +583,11 @@ public:
                 glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
                 glBindTexture (GL_TEXTURE_2D, 0);
                
-                return Validated && checkError("text_plane:: init_buffer completed");
+                return Validated && Surf3d::checkError("text_plane:: init_buffer completed");
         };
         gboolean init_vao (){
                 g_message ("base_plane init_vao");
-                checkError("make_plane::init_vao");
+                Surf3d::checkError("make_plane::init_vao");
 		if (!Validated) return false;
 
                 // Build a vertex array object
@@ -595,7 +600,7 @@ public:
                 glVertexAttribPointer(semantic::s3d_text::TEXCOORD, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec4)+sizeof(glm::vec2), BUFFER_OFFSET(sizeof(glm::vec4)));
                 glBindBuffer (GL_ARRAY_BUFFER, 0);
 
-                return Validated && checkError("make_plane::init_vao");
+                return Validated && Surf3d::checkError("make_plane::init_vao");
         };
         gboolean draw (const char *text, glm::vec3 pos, glm::vec3 ex, glm::vec3 ey, glm::vec4 color=glm::vec4(1.0,0.1,0.5,0.7)) {
  		if (!Validated) return false;
@@ -622,7 +627,7 @@ public:
                 glEnableVertexAttribArray (semantic::s3d_text::POSITION);
                 glEnableVertexAttribArray (semantic::s3d_text::TEXCOORD);
 
-                checkError("make_plane::draw start");
+                Surf3d::checkError("make_plane::draw start");
 
                 // FreeType uses Unicode as glyph index; so we have to convert string from UTF8 to Unicode(UTF32)
                 int utf16_buf_size = strlen(text) + 1; // +1 for the last '\0'
@@ -692,7 +697,7 @@ public:
 
                 glDisable (GL_BLEND);
                 
-                return Validated && checkError("text_plane::draw end");
+                return Validated && Surf3d::checkError("text_plane::draw end");
         };
 private:        
         bool Validated;
@@ -726,7 +731,7 @@ public:
                 Validated = init_buffer ();
                 Validated = init_texture ();
 
-                checkError("icosahedron::init");
+                Surf3d::checkError("icosahedron::init");
                 g_message ("icosahedron:: init object completed");
         };
         ~icosahedron (){
@@ -737,11 +742,11 @@ public:
                         glDeleteBuffers(1, &ArrayBufferName);
                         glDeleteBuffers(1, &LatticeBufferName);
                         //glDeleteTextures(1, &TextTextureName);
-                        checkError("icosahedron::~delete");
+                        Surf3d::checkError("icosahedron::~delete");
                 }
         };
         gboolean init_buffer (){
-                checkError("make_plane:: init_buffer");
+                Surf3d::checkError("make_plane:: init_buffer");
 		if (!Validated) return false;
 
                 VertexCount =  12;
@@ -846,26 +851,26 @@ public:
                 glVertexAttribDivisor (semantic::ico::LATTICE, 1); // instancing
                 glBindBuffer(GL_ARRAY_BUFFER, 0);
  
-                return Validated && checkError("make_plane:: init_buffer");
+                return Validated && Surf3d::checkError("make_plane:: init_buffer");
         };
         gboolean init_texture (){
-                checkError("icosahedron:: init_texture");
+                Surf3d::checkError("icosahedron:: init_texture");
 		if (!Validated) return false;
 
                 //glUseProgram (S3D_ProgramName);
               
-                return Validated && checkError("text_plane:: init_buffer completed");
+                return Validated && Surf3d::checkError("text_plane:: init_buffer completed");
         };
         gboolean init_vao (){
                 g_message ("icosahedron init_vao");
-                checkError("icosahedron::init_vao");
+                Surf3d::checkError("icosahedron::init_vao");
 		if (!Validated) return false;
 
                 // Build a vertex array object
                 glGenVertexArrays(1, &VertexArrayName);
                 glBindVertexArray(VertexArrayName);
 
-                return Validated && checkError("make_plane::init_vao");
+                return Validated && Surf3d::checkError("make_plane::init_vao");
         };
         // vec4: (x,y,z, scale)
         gboolean draw (glm::vec4 pos, glm::vec4 scale, glm::vec4 color[4], gfloat tesslevel=2.) {
@@ -896,7 +901,7 @@ public:
                 glBindBuffer (GL_ARRAY_BUFFER, 0);
                 glBindVertexArray (0);
 
-                return Validated && checkError("icosahedron::draw end");
+                return Validated && Surf3d::checkError("icosahedron::draw end");
         };
 private:
         glf::vertex_v1i *indices;
@@ -1085,7 +1090,7 @@ private:
                         Uniform_lod_factor    = glGetUniformLocation (Tesselation_ProgramName, "lod_factor");  // float
                         Uniform_tess_level    = glGetUniformLocation (Tesselation_ProgramName, "tess_level");  // float
 
-                        checkError("initProgram -- Tesselation_ProgramName: get uniform variable references...");
+                        Surf3d::checkError("initProgram -- Tesselation_ProgramName: get uniform variable references...");
 
                         Uniform_IcoTess_TessLevelInner = glGetUniformLocation (IcoTess_ProgramName, "TessLevelInner");
                         Uniform_IcoTess_TessLevelOuter = glGetUniformLocation (IcoTess_ProgramName, "TessLevelOuter");
@@ -1096,7 +1101,7 @@ private:
                         Uniform_TipPosition  = glGetUniformLocation (IcoTess_ProgramName, "TipPosition");
                         Uniform_TipColor     = glGetUniformLocation (IcoTess_ProgramName, "TipColor");
 
-                        checkError("initProgram -- IcoTess_ProgramName: get uniform variable references...");
+                        Surf3d::checkError("initProgram -- IcoTess_ProgramName: get uniform variable references...");
 
                         // get shaderFunction references
                         // Specifies the shader stage from which to query for subroutine uniform index. shadertype must be one of GL_VERTEX_SHADER, GL_TESS_CONTROL_SHADER, GL_TESS_EVALUATION_SHADER, GL_GEOMETRY_SHADER or GL_FRAGMENT_SHADER.
@@ -1132,11 +1137,11 @@ private:
                         Uniform_shadeLambertianMaterialColorFog = glGetSubroutineIndex (Tesselation_ProgramName, GL_FRAGMENT_SHADER, "shadeLambertianMaterialColorFog" );
                         Uniform_shadeVolume       = glGetSubroutineIndex (Tesselation_ProgramName, GL_FRAGMENT_SHADER, "shadeVolume" );
 
-                        checkError("initProgram -- get uniform subroutine references...");
+                        Surf3d::checkError("initProgram -- get uniform subroutine references...");
 		}
 
                 if (Validated)
-                        return Validated && checkError("initProgram");
+                        return Validated && Surf3d::checkError("initProgram");
 
 		return Validated;
 	};
@@ -1202,13 +1207,13 @@ private:
                         g_warning ("initBuffer -- Uninitialized surface data.");
                 }
 
-		return checkError("initBuffer");
+		return Surf3d::checkError("initBuffer");
 	};
 
         bool initObjects() {
 		if (!Validated) return false;
 
-		checkError("initObjects");
+		Surf3d::checkError("initObjects");
 		if (!Validated) return false;
 
                 if (!text_vao)
@@ -1217,7 +1222,7 @@ private:
                 if (!ico_vao)
                         ico_vao = new icosahedron ((GLsizei)s->GLv_data.probe_atoms);
                 
-		return checkError("initText Plane VAO");
+		return Surf3d::checkError("initText Plane VAO");
         };
         
         static void GLMessageHandler (GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const GLvoid* userParam) { 
@@ -1232,7 +1237,7 @@ private:
                 glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
                 glDebugMessageCallbackARB ((GLDEBUGPROCARB)&GLMessageHandler, NULL);
 
-                return checkError("initDebugOutput");
+                return Surf3d::checkError("initDebugOutput");
         };
 
 public:
@@ -1283,7 +1288,7 @@ public:
                         Validated = initObjects();
                 
                 if (Validated)
-                        return Validated && checkError("begin");
+                        return Validated && Surf3d::checkError("begin");
 
                 return Validated;
 	};
@@ -1313,7 +1318,7 @@ public:
                         S3D_ProgramName = 0;
                         IcoTess_ProgramName = 0;
                 }
-		return checkError("end");
+		return Surf3d::checkError("end");
 	};
 
         // used for height mapping
@@ -1462,7 +1467,7 @@ public:
                 glUniform1f (Uniform_lod_factor, 4.0);
                 glUniform1f (Uniform_tess_level, s->GLv_data.tess_level);
                
-                checkError ("render -- set Uniforms, Blocks");
+                Surf3d::checkError ("render -- set Uniforms, Blocks");
 
                 // Specifies the shader stage from which to query for subroutine uniform index. shadertype must be one of GL_VERTEX_SHADER, GL_TESS_CONTROL_SHADER, GL_TESS_EVALUATION_SHADER, GL_GEOMETRY_SHADER or GL_FRAGMENT_SHADER.
 
@@ -1495,7 +1500,7 @@ public:
                         break;
                 }
 
-                checkError ("render -- configure vertex_source");
+                Surf3d::checkError ("render -- configure vertex_source");
 
                 switch (s->GLv_data.ColorSrc[0]){
                 case 'F': Uniform_evaluation_setup[1] = Uniform_evaluationColorFlat; break;
@@ -1508,7 +1513,7 @@ public:
                 Uniform_evaluation_setup[2] = Uniform_evaluation_vertex_XZplane;
                 glUniformSubroutinesuiv (GL_TESS_EVALUATION_SHADER, 3, Uniform_evaluation_setup);
 
-                checkError ("render -- configure color_source");
+                Surf3d::checkError ("render -- configure color_source");
                 
                 switch (s->GLv_data.ShadeModel[0]){
                 case 'L': glUniformSubroutinesuiv (GL_FRAGMENT_SHADER, 1, &Uniform_shadeLambertian); break;
@@ -1520,7 +1525,7 @@ public:
 		case 'D': glUniformSubroutinesuiv (GL_FRAGMENT_SHADER, 1, &Uniform_shadeDebugMode); break;
                 default: glUniformSubroutinesuiv (GL_FRAGMENT_SHADER, 1, &Uniform_shadeLambertian); break;
                 }
-                checkError ("render -- configure shader");
+                Surf3d::checkError ("render -- configure shader");
 
 
                 if (s->GLv_data.TransparentSlices){
@@ -1625,7 +1630,7 @@ public:
 
                 glDisable (GL_BLEND); 
 
-                checkError ("render -- done data plane(s)");
+                Surf3d::checkError ("render -- done data plane(s)");
 
                 
                 // Gimmicks ========================================
@@ -1633,7 +1638,7 @@ public:
                 GLfloat tz=0.;
                 if (ico_vao && s->GLv_data.tip_display[1] == 'n'){
 #define MAKE_GLM_VEC4XS(V,X) glm::vec4(V[0],V[2],V[1],X)
-                        checkError ("render -- draw ico");
+                        Surf3d::checkError ("render -- draw ico");
                         glm::vec4 c[4] = {
                                 MAKE_GLM_VEC3(s->GLv_data.tip_colors[0]),
                                 MAKE_GLM_VEC3(s->GLv_data.tip_colors[1]),
@@ -1658,7 +1663,7 @@ public:
                         g_message ("Actual Tip Scale    = X%g Y%g Z%g   scale: %g %g %g", tip_scaling.x, tip_scaling.y, tip_scaling.z, scale[0], scale[1], scale[2]);
                 }
 
-                checkError ("render -- done gimmick ico_vao (tip)");
+                Surf3d::checkError ("render -- done gimmick ico_vao (tip)");
                 
                 // Annotations, Labels, ...
 #define MAKE_GLM_VEC3X(V) glm::vec3(V[0],V[1],V[2])
@@ -1666,7 +1671,7 @@ public:
                                  s->GLv_data.anno_show_axis_labels[1] == 'n' ||
                                  s->GLv_data.anno_show_axis_dimensions[1] == 'n' ||
                                  s->GLv_data.anno_show_bearings[1] == 'n')){
-                        checkError ("render -- draw text");
+                        Surf3d::checkError ("render -- draw text");
                         glm::vec3 ex=glm::vec3 (0.1,0,0);
                         glm::vec3 ey=glm::vec3 (0,0.1,0);
                         glm::vec3 ez=glm::vec3 (0,0,0.1);
@@ -1733,7 +1738,7 @@ public:
                         }
                 }
 
-                checkError ("render -- done gimmick ico_vao (tip)");
+                Surf3d::checkError ("render -- done gimmick ico_vao (tip)");
 
                 // draw zero planes
                 if (s->GLv_data.anno_show_zero_planes[1] == 'n'){
@@ -1780,7 +1785,7 @@ public:
                         surface_plane->draw ();
                 }
                
-		return checkError("render done -- zero planes. End render.");
+		return Surf3d::checkError("render done -- zero planes. End render.");
 	};
 
         void resize (gint w, gint h){
@@ -2717,3 +2722,89 @@ void Surf3d::preferences(){
 	if (v3dControl_pref_dlg)
 		gnome_res_run_change_user_config (v3dControl_pref_dlg, "GL Scene Setup");
 }
+
+
+
+
+
+
+
+
+
+
+
+bool Surf3d::checkError(const char* Title)
+{
+	int Error;
+	if((Error = glGetError()) != GL_NO_ERROR)
+	{
+		std::string ErrorString;
+		switch(Error)
+		{
+		case GL_INVALID_ENUM:
+			ErrorString = "GL_INVALID_ENUM";
+			break;
+		case GL_INVALID_VALUE:
+			ErrorString = "GL_INVALID_VALUE";
+			break;
+		case GL_INVALID_OPERATION:
+			ErrorString = "GL_INVALID_OPERATION";
+			break;
+		case GL_INVALID_FRAMEBUFFER_OPERATION:
+			ErrorString = "GL_INVALID_FRAMEBUFFER_OPERATION";
+			break;
+		case GL_OUT_OF_MEMORY:
+			ErrorString = "GL_OUT_OF_MEMORY";
+			break;
+		default:
+			ErrorString = "UNKNOWN";
+			break;
+		}
+		
+		gchar *message = g_strdup_printf ("OpenGL Error (%s) at %s\n", ErrorString.c_str(), Title);
+		g_critical ("%s", message);
+		//main_get_gapp () -> warning (message);
+		g_free (message);
+
+		if (0){
+			fprintf(stdout, "OpenGL Error(%s): %s\n", ErrorString.c_str(), Title);
+			assert(0);
+		}
+	}
+	return Error == GL_NO_ERROR;
+}
+
+inline bool Surf3d::checkFramebuffer(GLuint FramebufferName)
+{
+	GLenum Status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	switch(Status)
+	{
+	case GL_FRAMEBUFFER_UNDEFINED:
+		fprintf(stdout, "OpenGL Error(%s)\n", "GL_FRAMEBUFFER_UNDEFINED");
+		break;
+	case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
+		fprintf(stdout, "OpenGL Error(%s)\n", "GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT");
+		break;
+	case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
+		fprintf(stdout, "OpenGL Error(%s)\n", "GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT");
+		break;
+	case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER:
+		fprintf(stdout, "OpenGL Error(%s)\n", "GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER");
+		break;
+	case GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER:
+		fprintf(stdout, "OpenGL Error(%s)\n", "GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER");
+		break;
+	case GL_FRAMEBUFFER_UNSUPPORTED:
+		fprintf(stdout, "OpenGL Error(%s)\n", "GL_FRAMEBUFFER_UNSUPPORTED");
+		break;
+	case GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE:
+		fprintf(stdout, "OpenGL Error(%s)\n", "GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE");
+		break;
+	case GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS:
+		fprintf(stdout, "OpenGL Error(%s)\n", "GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS");
+		break;
+	}
+
+	return Status != GL_FRAMEBUFFER_COMPLETE;
+}
+

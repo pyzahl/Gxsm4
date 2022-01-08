@@ -28,10 +28,8 @@
 #ifndef __VIEW_H
 #define __VIEW_H
 
-class ScanEvent;
-class ViewControl;
-class ProfileControl;
-class V3dControl;
+#include <GL/glew.h>
+#include <GL/gl.h>
 
 #include "gnome-res.h"
 
@@ -49,6 +47,14 @@ class V3dControl;
 #define TOPO_MINSIZE      400 // Default Wert
 
 #define NUM_TRACE_VALUES 4
+
+class ScanEvent;
+class ViewControl;
+class ProfileControl;
+class V3dControl;
+
+
+
 typedef struct{
 	double x,y,z;
 	double v[NUM_TRACE_VALUES];
@@ -332,7 +338,8 @@ public:
         void preferences();
         gboolean is_ready() { return (size > 0 && QuenchFac > 0 && scan != NULL && XPM_x > 1 && XPM_y > 1);  };
 
-private: 
+private:
+
         void PutPointMode(int k, int j, int v=-1);
         void ReadPalette(char *name);
 
@@ -354,6 +361,9 @@ private:
         glm::vec4 ColorLookup[GXSM_GPU_PALETTE_ENTRIES];
         
 public:
+        static inline bool checkFramebuffer(GLuint FramebufferName);
+        static inline bool checkError(const char* Title);
+
         void create_surface_buffer ();
         void set_gl_data ();
         gboolean check_dimension_changed();
