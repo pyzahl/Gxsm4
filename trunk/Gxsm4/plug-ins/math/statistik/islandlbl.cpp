@@ -29,6 +29,8 @@
 #include "config.h"
 #include "plugin.h"
 #include "stdio.h"
+#include "glbvars.h"
+#include "surface.h"
 
 #include "mathilbl.h"
 

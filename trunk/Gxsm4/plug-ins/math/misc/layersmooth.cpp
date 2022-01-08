@@ -81,7 +81,9 @@ implemented. Please set Radius in Layer Dim to zero!
 #include "plugin.h"
 #include "scan.h"
 #include "xsmmath.h"
- 
+#include "glbvars.h"
+#include "surface.h"
+
 using namespace std;
 
 

@@ -109,6 +109,8 @@ Input the desired threashold value.
 #include <gtk/gtk.h>
 #include "config.h"
 #include "plugin.h"
+#include "glbvars.h"
+#include "surface.h"
 
 // Plugin Prototypes
 static void removelineshifts_init( void );

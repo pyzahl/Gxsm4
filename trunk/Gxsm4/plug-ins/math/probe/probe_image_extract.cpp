@@ -69,6 +69,8 @@ zero the user is not prompted!
 #include <math.h>
 #include "config.h"
 #include "plugin.h"
+#include "glbvars.h"
+#include "surface.h"
 
 
 static void cancel_callback (GtkWidget *widget, int *status);
@@ -206,7 +208,7 @@ void pe_ChangeIndex (GtkSpinButton *spinner, double *index){
 
 class Dialog : public AppBase{
 public:
-  Dialog (ProbeEntry* defaultprobe, gchar **Source1, gchar **Source2, double *index, double *qc, double *ref_i, double norm_i[2], double *bg_sub, double *verbose_level, double remap[4], double NSets){
+        Dialog (ProbeEntry* defaultprobe, gchar **Source1, gchar **Source2, double *index, double *qc, double *ref_i, double norm_i[2], double *bg_sub, double *verbose_level, double remap[4], double NSets, Gxsm4app *app):AppBase(app){
 
 		GtkWidget *dialog;
 		GtkWidget *source1_combo;
@@ -240,7 +242,7 @@ public:
 						      _("_OK"), GTK_RESPONSE_ACCEPT,
 						      NULL);
 		BuildParam bp;
-		gtk_container_add (GTK_CONTAINER (gtk_dialog_get_content_area (GTK_DIALOG (dialog))), bp.grid);
+		gtk_box_append (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (dialog))), bp.grid);
 		
 		bp.grid_add_label ("Source for layer:");
 		source1_combo = gtk_combo_box_text_new ();
@@ -294,11 +296,16 @@ public:
 		bp.grid_add_ec_with_scale ("\nRemap step:", Unity, &(remap[2]), -1e10, 1e10, "g", 0.01,  1.); bp.new_line ();
 		bp.grid_add_ec_with_scale ("\nRemap default:", Unity, &(remap[3]), -1e10, 1e10, "g", 0.01,  1.); bp.new_line ();
 		bp.grid_add_ec_with_scale ("\nVerbose Level 0..10", Unity, &(*verbose_level), 0., 10., ".0f", 1.0,  1.); bp.new_line ();
+                
+                gtk_widget_show (dialog);
 
-		gtk_widget_show_all (dialog);
-		
-		gtk_dialog_run(GTK_DIALOG(dialog));
-		gtk_widget_destroy (dialog);
+                int response = GTK_RESPONSE_NONE;
+                g_signal_connect (G_OBJECT (dialog), "response", G_CALLBACK (GnomeAppService::on_dialog_response_to_user_data), &response);
+                
+                // FIX-ME GTK4 ??
+                // wait here on response
+                while (response == GTK_RESPONSE_NONE)
+                        while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
 
 		*ref_i     = round (*ref_i);
 		norm_i[0] = round (norm_i[0]);
@@ -553,7 +560,9 @@ static gboolean probe_image_extract_run(Scan *Src, Scan *Dest)
 	for (int k=0; k<2; ++k)
 		norm_i[k] = (norm_i[k] < -1 || norm_i[k] >= NSets) ? -1. : norm_i[k];
 	
-        Dialog *dlg = new Dialog (defaultprobe, &Source1, &Source2, &index, &qc, &ref_i, norm_i, &bg_sub, &verbose_level, remap, NSets);  // Asks for channels to use
+        Dialog *dlg = new Dialog (defaultprobe, &Source1, &Source2, &index, &qc, &ref_i, norm_i, &bg_sub, &verbose_level,
+                                  remap, NSets,
+                                  main_get_gapp() -> get_app ());  // Asks for channels to use
 	vb = (int)verbose_level;
 
 	// if no valid channel is found for Source1, we will use a numerator #

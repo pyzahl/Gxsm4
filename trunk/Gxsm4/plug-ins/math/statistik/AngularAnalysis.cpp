@@ -102,6 +102,8 @@ Call \GxsmMenu{Math/Statistics/Angular Analysis}.
 #include <gtk/gtk.h>
 #include "config.h"
 #include "plugin.h"
+#include "glbvars.h"
+#include "surface.h"
 
 // Plugin Prototypes
 static void AngularAnalysis_init( void );
@@ -261,7 +263,7 @@ static void AngularAnalysis_configure(void)
 						   GTK_RESPONSE_CANCEL,
 						   NULL);
   BuildParam bp;
-  gtk_container_add (GTK_CONTAINER (gtk_dialog_get_content_area (GTK_DIALOG (dialog))), bp.grid);
+  gtk_box_append (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (dialog))), bp.grid);
  
   bp.grid_add_label ("Polar Histogramm Setup");
   bp.new_line ();
@@ -296,12 +298,18 @@ static void AngularAnalysis_configure(void)
   bp.grid_add_ec ("Vmode 1=cir,2=rect", AngularAnalysis_pi.app->xsm->Unity, 
 		  &Vmode,
 		  0., 10., ".0f");
+  
+  gtk_widget_show (dialog);
 
-  gtk_widget_show(dialog);
+  int response = GTK_RESPONSE_NONE;
+  g_signal_connect (G_OBJECT (dialog), "response", G_CALLBACK (GnomeAppService::on_dialog_response_to_user_data), &response);
+  
+  // FIX-ME GTK4 ??
+  // wait here on response
+  while (response == GTK_RESPONSE_NONE)
+    while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
 
-  gint result = gtk_dialog_run (GTK_DIALOG (dialog));
-  gtk_widget_destroy (dialog);
-  //  return result == GTK_RESPONSE_OK ? 1 : 0;
+  return response == GTK_RESPONSE_OK ? 1 : 0;
 } 
 
 // cleanup-Function

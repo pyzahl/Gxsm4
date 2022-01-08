@@ -95,6 +95,8 @@ This plug-in is still under construction!
 #include <gtk/gtk.h>
 #include "config.h"
 #include "plugin.h"
+#include "glbvars.h"
+#include "surface.h"
 
 // Plugin Prototypes
 static void waterlevel_init( void );

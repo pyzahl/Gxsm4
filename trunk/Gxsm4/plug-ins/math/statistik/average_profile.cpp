@@ -103,6 +103,8 @@ Compute the average X profile of all scanlines.
 #include "plugin.h"
 #include "action_id.h"
 #include "app_profile.h"
+#include "glbvars.h"
+#include "surface.h"
 
 // Plugin Prototypes
 static void average_profile_init( void );
@@ -230,7 +232,8 @@ static void average_profile_cleanup(void)
  static gboolean average_profile_run(Scan *Src)
 {
 	gchar *txt = g_strdup_printf ("Average X Profile of %d lines", Src->mem2d->GetNy ());
-	ProfileControl *pc = new ProfileControl (txt, 
+	ProfileControl *pc = new ProfileControl (main_get_gapp() -> get_app (),
+						 txt, 
 						 Src->mem2d->GetNx (), 
 						 Src->data.Xunit, Src->data.Zunit, 
 						 Src->mem2d->data->GetXLookup(0), Src->mem2d->data->GetXLookup( Src->mem2d->GetNx ()-1), "XavProfile");

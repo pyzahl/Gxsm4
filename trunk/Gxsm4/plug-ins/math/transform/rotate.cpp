@@ -71,6 +71,8 @@ zero the user is not prompted for a rotation angle!
 #include <gtk/gtk.h>
 #include "config.h"
 #include "plugin.h"
+#include "glbvars.h"
+#include "surface.h"
 
 static void rotate_about( void );
 static void rotate_configuration( void );

@@ -147,6 +147,8 @@
 #include "action_id.h"
 #include "util.h"
 #include "glbvars.h"
+#include "surface.h"
+
 #include "batch.h"
 #include "g_dat_types.h"
 #include "fileio.c"

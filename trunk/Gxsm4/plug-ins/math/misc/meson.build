@@ -2,7 +2,7 @@ plugin_cat = 'misc'
 install_path = gxsm4_plugin_dir / plugin_cat
 
 plugin_list = [
-    { 'name': 'findlocmax' },
+#    { 'name': 'findlocmax' }, ## needs GTK4 porting
     { 'name': 'layersmooth' },
     { 'name': 'make_volume' },
     { 'name': 'minzlayer' },

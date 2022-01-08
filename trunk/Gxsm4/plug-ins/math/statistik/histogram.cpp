@@ -89,6 +89,8 @@ Find out what happenes with more or less bins!
 #include "plugin.h"
 #include "action_id.h"
 #include "app_profile.h"
+#include "glbvars.h"
+#include "surface.h"
 
 static void histogram_init( void );
 static void histogram_about( void );
@@ -214,7 +216,8 @@ static gboolean histogram_run(Scan *Src)
 	dz_norm   = 1./bin_width;
 
 	txt = g_strdup_printf ("Histogram of %d bins, %g width", bin_num, bin_width);
-	ProfileControl *pc = new ProfileControl (txt, 
+	ProfileControl *pc = new ProfileControl (main_get_gapp() -> get_app (),
+						 txt, 
 						 bin_num, 
 						 Src->data.Zunit, Events, 
 						 low, high, "Histogram");

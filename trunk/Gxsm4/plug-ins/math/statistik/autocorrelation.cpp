@@ -77,6 +77,8 @@ found at the image center and not at all four edges.
 #include "config.h"
 #include "plugin.h"
 #include "xsmmath.h"
+#include "glbvars.h"
+#include "surface.h"
 
 #define UTF8_ANGSTROEM "\303\205"
 
@@ -315,24 +317,23 @@ static void autocorrelation_cleanup(void)
 	/* Create the widgets */
 	label = gtk_label_new (message);
 	
-	/* Ensure that the dialog box is destroyed when the user responds. */
-	g_signal_connect_swapped (dialog,
-				  "response",			    
-				  G_CALLBACK (gtk_widget_destroy),
-				  dialog);
-	
-
 	/* Add the label, and show everything we've added to the dialog. */
 
-//	gtk_container_add (GTK_CONTAINER (GTK_DIALOG(dialog)->vbox),
-//			   image);
-	gtk_container_add (GTK_CONTAINER (gtk_dialog_get_content_area (GTK_DIALOG(dialog))),
-			   label);
+	gtk_box_append (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG(dialog))),
+			label);
 
-	gtk_container_add (GTK_CONTAINER (gtk_dialog_get_content_area (GTK_DIALOG(dialog))),
-			   wmenu);
-	gtk_widget_show_all (dialog);
-	gtk_dialog_run (GTK_DIALOG (dialog));
+	gtk_box_append (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG(dialog))),
+			wmenu);
+	gtk_widget_show (dialog);
+
+	int response = GTK_RESPONSE_NONE;
+	g_signal_connect (G_OBJECT (dialog), "response", G_CALLBACK (GnomeAppService::on_dialog_response_to_user_data), &response);
+        
+	// FIX-ME GTK4 ??
+	// wait here on response
+	while (response == GTK_RESPONSE_NONE)
+	  while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
+
 	
 	std::cout << "Window Type is: " << window_type << std::endl;
 

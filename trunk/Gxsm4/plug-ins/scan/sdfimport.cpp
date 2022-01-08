@@ -79,6 +79,10 @@ The scaling of the data, especially in Z direction is not well tested.
 #include "dataio.h"
 //#include "action_id.h" // should not be needed, 15.11.2009 Thorsten Wagner (STM)
 
+#include "glbvars.h"
+#include "surface.h"
+
+
 using namespace std;
 
 // Plugin Prototypes

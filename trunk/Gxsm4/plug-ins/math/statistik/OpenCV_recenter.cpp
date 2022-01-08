@@ -88,6 +88,9 @@ The computation result of matching threasholds is placed into an new math channe
 #include "plugin.h"
 #include "action_id.h"
 #include "app_profile.h"
+#include "glbvars.h"
+#include "surface.h"
+
 #include "view.h"
 #include "app_view.h"
 
@@ -187,7 +190,7 @@ void setup_opencv_recenter (const gchar *title, Scan *src, double &threshold, in
                                                          _("_OK"), GTK_RESPONSE_ACCEPT,
 							 NULL); 
 	BuildParam bp;
-        gtk_container_add (GTK_CONTAINER (gtk_dialog_get_content_area (GTK_DIALOG (dialog))), bp.grid);
+        gtk_box_append (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (dialog))), bp.grid);
         bp.grid_add_label ("Recentering Method id's, see for details\n"
 			   "http://docs.opencv.org/modules/imgproc/doc/object_detection.html\n"
 			   "CV_TM_SQDIFF        =0,\n"
@@ -204,10 +207,15 @@ void setup_opencv_recenter (const gchar *title, Scan *src, double &threshold, in
 	bp.grid_add_ec ("limit for max # markers", Unity, &max_markers, 0, 50000, ".0f"); bp.new_line ();
 	bp.grid_add_ec ("marker group", Unity, &i_mg, 0, 5, ".0f"); bp.new_line ();
 
-	gtk_widget_show_all (dialog);
-	gtk_dialog_run (GTK_DIALOG(dialog));
+	gtk_widget_show (dialog);
 
-	gtk_widget_destroy (dialog);
+        int response = GTK_RESPONSE_NONE;
+        g_signal_connect (G_OBJECT (dialog), "response", G_CALLBACK (GnomeAppService::on_dialog_response_to_user_data), &response);
+        
+        // FIX-ME GTK4 ??
+        // wait here on response
+        while (response == GTK_RESPONSE_NONE)
+                while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
 
 	delete Pixel;
 	delete Unity;	
@@ -330,9 +338,9 @@ static gboolean opencvrecenter_run(Scan *Src, Scan *SrcRef, Scan *Dest)
                         vo->show_label (s);
                         vo->remake_node_markers ();
 
-                        main_get_gapp()->xsm->data.s.x0 = xy[0];
-                        main_get_gapp()->xsm->data.s.y0 = xy[1];
-                        main_get_gapp()->spm_offset_check (NULL, gapp);
+                        main_get_gapp () -> xsm->data.s.x0 = xy[0];
+                        main_get_gapp () -> xsm->data.s.y0 = xy[1];
+                        main_get_gapp () -> spm_offset_check (NULL, main_get_gapp ());
                 }
 	}
 	

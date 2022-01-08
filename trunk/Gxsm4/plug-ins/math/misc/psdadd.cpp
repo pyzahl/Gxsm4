@@ -74,6 +74,8 @@ figure out more about this piece of code.
 #include <gtk/gtk.h>
 #include "config.h"
 #include "plugin.h"
+#include "glbvars.h"
+#include "surface.h"
 
 static void psdadd_init( void );
 static void psdadd_about( void );

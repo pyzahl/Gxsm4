@@ -84,7 +84,9 @@ figure out more about this piece of code.
 #include <gtk/gtk.h>
 #include "config.h"
 #include "plugin.h"
- 
+#include "glbvars.h"
+#include "surface.h"
+
 using namespace std;
 
 
@@ -269,15 +271,23 @@ public:
 
 		bp.grid_add_ec_with_scale ("Max Thread #",   main_get_gapp()->xsm->Unity, &max_threads,    1.,   64., ".0f", 1.,  4.);
                 bp.new_line ();
+
+                gtk_widget_show (dialog);
+
+                int response = GTK_RESPONSE_NONE;
+                g_signal_connect (G_OBJECT (dialog), "response", G_CALLBACK (GnomeAppService::on_dialog_response_to_user_data), &response);
                         
+                // FIX-ME GTK4 ??
+                // wait here on response
+                while (response == GTK_RESPONSE_NONE)
+                        while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
+
                 gtk_widget_show_all (dialog);
                 
-		gint r=gtk_dialog_run(GTK_DIALOG(dialog));
-		gtk_widget_destroy (dialog);
               
                 //delete meVA;
 
-                if (r == GTK_RESPONSE_REJECT){
+                if (response == GTK_RESPONSE_REJECT){
                         *mode = g_strdup ("NONE");
                 }
         }

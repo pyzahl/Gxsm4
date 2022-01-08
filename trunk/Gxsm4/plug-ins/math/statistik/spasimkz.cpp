@@ -122,6 +122,8 @@ parameters (1 will ask, 0 not).
 #include <gtk/gtk.h>
 #include "config.h"
 #include "plugin.h"
+#include "glbvars.h"
+#include "surface.h"
 
 static void spasimkz_init( void );
 static void spasimkz_about( void );
@@ -209,7 +211,7 @@ static void spasimkz_configure(void)
 							 GTK_RESPONSE_REJECT,
 							 NULL);
 	BuildParam bp;
-	gtk_container_add (GTK_CONTAINER (gtk_dialog_get_content_area (GTK_DIALOG (dialog))), bp.grid);
+	gtk_box_append (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (dialog))), bp.grid);
 
 	bp.grid_add_label ("SPA-LEED kz-Scan simulation parameters"); bp.new_line ();
         bp.grid_add_ec ("Step Height", spasimkz_pi.app->xsm->Z_Unit, 
@@ -235,11 +237,16 @@ static void spasimkz_configure(void)
                         0., 1., ".0f");
 
 
-        gtk_widget_show_all (dialog);
+        gtk_widget_show (dialog);
+        int response = GTK_RESPONSE_NONE;
+        g_signal_connect (G_OBJECT (dialog), "response", G_CALLBACK (GnomeAppService::on_dialog_response_to_user_data), &response);
+        
+        // FIX-ME GTK4 ??
+        // wait here on response
+        while (response == GTK_RESPONSE_NONE)
+                while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
 
-        gint result = gtk_dialog_run (GTK_DIALOG (dialog));
-        gtk_widget_destroy (dialog);
-        //  return result == GTK_RESPONSE_OK ? 1 : 0;
+        return response == GTK_RESPONSE_OK;
 } 
 
 static void spasimkz_cleanup(void)

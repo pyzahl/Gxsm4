@@ -76,6 +76,7 @@ pnglib documentation: \GxsmWebLink{www.libpng.org/pub/png/libpng-manual.html}
 #include "util.h"
 #include "xsmtypes.h"
 #include "glbvars.h"
+#include "surface.h"
 
 // custom includes go here
 // -- START EDIT --

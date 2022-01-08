@@ -127,6 +127,8 @@ This plugin is under construction.
 #include "config.h"
 #include "plugin.h"
 #include "app_profile.h"
+#include "glbvars.h"
+#include "surface.h"
 
 // Plugin Prototypes
 static void timedomfftfilter_init( void );
@@ -364,7 +366,8 @@ static gboolean timedomfftfilter_run(Scan *Src1, Scan *Src2, Scan *Dest)
 	ipix->SetAlias ("Unity");
 
 	std::cout << "tdom new pc" << std::endl;
-	ProfileControl *pc = new ProfileControl ("Time Spectrum of Scan, display cut off at length/10", 
+	ProfileControl *pc = new ProfileControl (main_get_gapp() -> get_app (),
+						 "Time Spectrum of Scan, display cut off at length/10", 
 						 length/2/10, 
 						 ipix, Src1->data.Zunit,
 						 0., length/2/10., "ScanTimeSpectrum");

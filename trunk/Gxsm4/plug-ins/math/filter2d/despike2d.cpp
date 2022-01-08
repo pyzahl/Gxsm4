@@ -62,6 +62,8 @@ into a new created math channel.
 #include <gtk/gtk.h>
 #include "config.h"
 #include "plugin.h"
+#include "glbvars.h"
+#include "surface.h"
 
 // Plugin Prototypes
 static void despike2d_init( void );
@@ -243,8 +245,8 @@ on_dialog_response (GtkDialog *dialog,
 class despike_setup : public AppBase{
 public:
 	despike_setup (double &nx, double &ny, gchararray *mode,
-                       double &max_threads
-                ){
+                       double &max_threads,
+                       Gxsm4app *app):AppBase(app){
 
 		GtkWidget *dialog;
                 GtkWidget *choice;
@@ -512,7 +514,7 @@ static void cancel_callback (GtkWidget *widget, int *status){
         int max_job=8;
         gchararray mode = NULL;
                 
-	despike_setup (Mn, Mm, &mode, max_threads);
+	despike_setup (Mn, Mm, &mode, max_threads, main_get_gapp() -> get_app ());
         max_job=(int)max_threads;
 
 	if (Src->data.s.ntimes != 1 || Src->mem2d->GetNv () != 1){

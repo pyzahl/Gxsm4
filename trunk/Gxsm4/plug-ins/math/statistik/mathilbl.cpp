@@ -51,6 +51,8 @@
 #include "mathilbl.h"
 
 #include <math.h>
+#include "glbvars.h"
+#include "surface.h"
 
 
 // Inselstatistiken.... MB

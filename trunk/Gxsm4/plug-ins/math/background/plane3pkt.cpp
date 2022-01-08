@@ -76,6 +76,8 @@ into a new created math channel.
 #include <gtk/gtk.h>
 #include "config.h"
 #include "plugin.h"
+#include "glbvars.h"
+#include "surface.h"
 
 #define LL_DEBUG(STR) PI_DEBUG (DBG_L2, "bg_3pkte_run:: " << STR << std::endl);
 //#define LL_DEBUG(STR)

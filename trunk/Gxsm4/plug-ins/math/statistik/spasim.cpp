@@ -96,6 +96,8 @@ also for correct step heights, if applicable.
 #include <gtk/gtk.h>
 #include "config.h"
 #include "plugin.h"
+#include "glbvars.h"
+#include "surface.h"
 
 static void spasim_init( void );
 static void spasim_about( void );

@@ -63,6 +63,8 @@ Not yet tested.
 #include "action_id.h"
 #include "util.h"
 #include "xsmtypes.h"
+#include "glbvars.h"
+#include "surface.h"
 
 // custom includes go here
 // -- START EDIT --

@@ -91,6 +91,8 @@ Find out what happenes with more or less bins!
 #include "plugin.h"
 #include "action_id.h"
 #include "app_profile.h"
+#include "glbvars.h"
+#include "surface.h"
 
 static void nndistribution_init( void );
 static void nndistribution_about( void );
@@ -341,7 +343,8 @@ static gboolean nndistribution_run(Scan *Src)
 						      bin_num, 
 						      Src->data.Xunit->UsrString (bin_width));
 		
-			ProfileControl *pc = new ProfileControl (txt, 
+			ProfileControl *pc = new ProfileControl (main_get_gapp() -> get_app (),
+								 txt, 
 								 bin_num, 
 								 Src->data.Zunit, Events, 
 								 low, high, "NN-distribution");

@@ -62,6 +62,8 @@ The plug-in is called by \GxsmMenu{File/Import/WIP}.
 #include "xsmtypes.h"
 #include "glbvars.h"
 #include "gapp_service.h"
+#include "glbvars.h"
+#include "surface.h"
 
 // custom includes go here
 // -- START EDIT --

@@ -60,6 +60,8 @@ Registers itself for loading files with the filename suffix ".Stm".
 #include "dataio.h"
 #include "action_id.h"
 #include "util.h"
+#include "glbvars.h"
+#include "surface.h"
 
 #include <sstream>
 

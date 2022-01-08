@@ -86,6 +86,8 @@ into a new created math channel.
 #include "config.h"
 #include "plugin.h"
 #include "regress.h"
+#include "glbvars.h"
+#include "surface.h"
 
 // Plugin Prototypes
 static void bg_z_drift_init( void );

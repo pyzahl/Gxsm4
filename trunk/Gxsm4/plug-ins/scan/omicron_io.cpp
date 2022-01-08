@@ -84,6 +84,8 @@ Exporting data in the Scala SPM format is not yet implemented.
 #include "action_id.h"
 #include "mem2d.h"
 #include "unit.h"
+#include "glbvars.h"
+#include "surface.h"
 
 #ifndef WORDS_BIGENDIAN
 # define WORDS_BIGENDIAN 0

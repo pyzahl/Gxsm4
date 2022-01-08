@@ -103,6 +103,9 @@ Figure out the drift inbetween frames in pixels in X and Y dimension to compensa
 #include <gtk/gtk.h>
 #include "config.h"
 #include "plugin.h"
+#include "glbvars.h"
+#include "surface.h"
+
 
 // Plugin Prototypes
 static void mandriftfix_init( void );

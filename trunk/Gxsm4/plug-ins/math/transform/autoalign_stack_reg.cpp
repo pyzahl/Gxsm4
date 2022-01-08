@@ -77,6 +77,8 @@
 #include <gtk/gtk.h>
 #include "config.h"
 #include "plugin.h"
+#include "glbvars.h"
+#include "surface.h"
 
 #include "autoalign_stack_reg.h"
 #include "autoalign_turbo_reg.h"
