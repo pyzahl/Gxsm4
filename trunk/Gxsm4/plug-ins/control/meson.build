@@ -12,7 +12,6 @@ plugin_list = [
 ]
 
 
-
 foreach plugin : plugin_list
   plugin_name = plugin.get('name')
   plugin_sources = [ plugin.get('sources', plugin_name + '.cpp') ]
@@ -62,7 +61,6 @@ foreach plugin : plugin_list
     plugin_gdbus_src,
     dependencies: deps,
     link_with: [ lib_global_gxsm, lib_utils_gxsm, lib_app_gxsm, lib_pcs_gxsm ],
-#    link_args : all_plugin_link_args,
     install: true,
     install_dir: install_path
   )

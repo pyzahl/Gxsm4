@@ -21,7 +21,7 @@ plugin_list = [
                     'org.gnome.gxsm4.pcs.plugin-libspm-simulator-hwi.gschema.xml',
                     'org.gnome.gxsm4.pcs.plugin-libsranger-mk2-hwi.gschema.xml',
                     'org.gnome.gxsm4.plugin_libsranger_hwi.gschema.xml' ] },
-#    { 'name': 'tc211_ccd' },
+#    { 'name': 'tc211_ccd' }, ## may be port that some day
 ]
 
 
@@ -74,7 +74,6 @@ foreach plugin : plugin_list
     plugin_gdbus_src,
     dependencies: deps,
     link_with: [ lib_global_gxsm, lib_utils_gxsm, lib_app_gxsm, lib_pcs_gxsm ],
-#    link_args : all_plugin_link_args,
     install: true,
     install_dir: install_path
   )
