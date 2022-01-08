@@ -1,4 +1,4 @@
-plugin_cat = 'statsitik'
+plugin_cat = 'math' # statsitik
 install_path = gxsm4_plugin_dir / plugin_cat
 
 plugin_list = [

@@ -1,4 +1,4 @@
-plugin_cat = 'convert'
+plugin_cat = 'math' # convert
 install_path = gxsm4_plugin_dir / plugin_cat
 
 plugin_list = [

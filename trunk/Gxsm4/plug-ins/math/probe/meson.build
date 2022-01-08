@@ -1,4 +1,4 @@
-plugin_cat = 'probe'
+plugin_cat = 'math' # probe
 install_path = gxsm4_plugin_dir / plugin_cat
 
 plugin_list = [

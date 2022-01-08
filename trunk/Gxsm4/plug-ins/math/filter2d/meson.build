@@ -1,4 +1,4 @@
-plugin_cat = 'filter2d'
+plugin_cat = 'math' # filter2d
 install_path = gxsm4_plugin_dir / plugin_cat
 
 plugin_list = [

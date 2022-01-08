@@ -1,4 +1,4 @@
-plugin_cat = 'misc'
+plugin_cat = 'math' # misc
 install_path = gxsm4_plugin_dir / plugin_cat
 
 plugin_list = [
