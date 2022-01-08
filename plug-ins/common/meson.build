@@ -2,26 +2,16 @@ plugin_cat = 'control'
 install_path = gxsm4_plugin_dir / plugin_cat
 
 plugin_list = [
-#    { 'name': 'pyremote',
-#      'deps': [python, gtksourceview],
-#      'gschemas': [
-#          'org.gnome.gxsm4.pcs.plugin-libpyremote.gschema.xml',
-#          'org.gnome.gxsm4.pcsadjustments.plugin-libpyremote.gschema.xml' ]},
+    { 'name': 'pyremote',
+      'deps': [python, gtksourceview],
+      'gschemas': [
+          'org.gnome.gxsm4.pcs.plugin-libpyremote.gschema.xml',
+          'org.gnome.gxsm4.pcsadjustments.plugin-libpyremote.gschema.xml' ]},
     { 'name': 'extra_scan_info', },
     { 'name': 'queryDSPinfo', },
     { 'name': 'ProbeIndicator', },
     { 'name': 'PanView' },
-#    { 'name': 'PanView', 'deps': [ gtk, cairo, ], },
 ]
-
-#if libxxx.found()
-#  plugins_list += {
-#    'name': 'pluing-wlibxxx',
-#    'deps': [ gtk3, libxxx, ],
-#  }
-#endif
-
-
 
 
 foreach plugin : plugin_list
@@ -73,7 +63,6 @@ foreach plugin : plugin_list
     plugin_gdbus_src,
     link_with: [ lib_global_gxsm, lib_utils_gxsm, lib_app_gxsm, lib_pcs_gxsm ],
     dependencies: deps,
-#    link_args : all_plugin_link_args,
     install: true,
     install_dir: install_path
   )

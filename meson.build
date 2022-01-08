@@ -148,7 +148,7 @@ gsl   = dependency(['gsl', 'gslcblas'])
 
 # for pyremote...
 gtksourceview = dependency('gtksourceview-5', version : '>= 5.0')
-python = dependency(['python3'])
+python = dependency(['python3-embed'])
 # gdkpixbu = dependency('gdk-pixbuf-2.0')
 
 ## plugins do need for dynamic load lib aka "-ldl"
