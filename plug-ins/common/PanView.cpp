@@ -107,7 +107,6 @@ static void PanView_configure (void);
 static void PanView_cleanup (void);
 
 PanView *Pan_Window = NULL;
-gboolean refresh_function(GtkWidget *w, GdkEvent *event, void *data);
 
 gboolean PanView_valid = FALSE;
 
@@ -361,25 +360,26 @@ PanView::PanView (Gxsm4app *app):AppBase(app){
 	// Cairo: gtk drawing area
 	canvas = gtk_drawing_area_new(); // gtk3 cairo drawing-area -> "canvas"
 
-#if 0
-        gtk_widget_add_events (canvas,
-                               GDK_BUTTON_PRESS_MASK
-                               | GDK_ENTER_NOTIFY_MASK      
-                               | GDK_LEAVE_NOTIFY_MASK  
-                               | GDK_POINTER_MOTION_MASK
-                               );
-
-        /* Event signals */
-        g_signal_connect (G_OBJECT (canvas), "event",
-                          G_CALLBACK (PanView::canvas_event_cb), this);
-#endif
         gtk_drawing_area_set_content_width  (GTK_DRAWING_AREA (canvas), WXS+24);
         gtk_drawing_area_set_content_height (GTK_DRAWING_AREA (canvas), WXS+24);
 
         gtk_drawing_area_set_draw_func (GTK_DRAWING_AREA (canvas),
                                         G_CALLBACK (PanView::canvas_draw_function),
                                         this, NULL);
-		
+
+
+        // mouse gestures/clicks
+        GtkGesture *gesture = gtk_gesture_click_new ();
+        gtk_gesture_single_set_button (GTK_GESTURE_SINGLE (gesture), 0);
+        g_signal_connect (gesture, "released", G_CALLBACK (released_cb), this);
+        gtk_widget_add_controller (canvas, GTK_EVENT_CONTROLLER (gesture));
+
+        GtkEventController* motion = gtk_event_controller_motion_new ();
+        g_signal_connect (motion, "enter", G_CALLBACK (motion_enter_cb), this);
+        g_signal_connect (motion, "motion", G_CALLBACK (motion_cb), this);
+        g_signal_connect (motion, "leave", G_CALLBACK (motion_leave_cb), this);
+        gtk_widget_add_controller (canvas, GTK_EVENT_CONTROLLER (motion));
+        
 	gtk_widget_show (canvas);
 	gtk_grid_attach (GTK_GRID (v_grid), canvas, 1,1, 10,10);
 
@@ -486,77 +486,66 @@ void PanView::AppWindowInit(const gchar *title, const gchar *sub_title){
 	set_window_geometry ("pan-view");
 }
 
-// FIX-ME GTK4
-#if 0
-gint PanView::canvas_event_cb(GtkWidget *canvas, GdkEvent *event, PanView *pv){
-	//static int dragging=FALSE;
-	//static GtkWidget *coordpopup=NULL;
-	//static GtkWidget *coordlab=NULL;
-        static int pi=-1;
-        static int pj=-1;
+void PanView::determine_ij_patch (gdouble x, gdouble y, int &i, int &j){
         double mouse_pix_xy[2];
-        static double preset[3];
-        
         //---------------------------------------------------------
 	// cairo_translate (cr, 12.+pv->WXS/2., 12.+pv->WYS/2.);
         // scale to volate range
 	// cairo_scale (cr, 0.5*pv->WXS/pv->max_x, -0.5*pv->WYS/pv->max_y);
 
         // undo cairo image translation/scale:
-        mouse_pix_xy[0] = (event->button.x - (double)(12+pv->WXS/2.))/( 0.5*pv->WXS/pv->max_x);
-        mouse_pix_xy[1] = (event->button.y - (double)(12+pv->WYS/2.))/( 0.5*pv->WYS/pv->max_y);
+        mouse_pix_xy[0] = (x - (double)(12+WXS/2.))/( 0.5*WXS/max_x);
+        mouse_pix_xy[1] = (y - (double)(12+WYS/2.))/( 0.5*WYS/max_y);
    
-        double pxw=(2*pv->x0r)/N_PRESETS;
-        double pyw=(2*pv->y0r)/N_PRESETS;
+        double pxw=(2*x0r)/N_PRESETS;
+        double pyw=(2*y0r)/N_PRESETS;
 
-        int i = (int)((mouse_pix_xy[0]+pv->x0r)/pxw);
-        int j = (N_PRESETS-1)-(int)((mouse_pix_xy[1]+pv->y0r)/pyw);
+        i = (int)((mouse_pix_xy[0]+x0r)/pxw);
+        j = (N_PRESETS-1)-(int)((mouse_pix_xy[1]+y0r)/pyw);
         if (i < 0 || i > (N_PRESETS-1))
                 i=j=-1;
         if (j < 0 || j > (N_PRESETS-1))
                 i=j=-1;
-
-        switch (event->type) {
-	case GDK_BUTTON_PRESS:
-		switch(event->button.button) {
-		case 1:
-                        preset[0] = i-(N_PRESETS-1)/2;
-                        preset[1] = j-(N_PRESETS-1)/2;
-                        preset[2] = N_PRESETS/2.0;
-                        g_object_set_data (G_OBJECT(canvas), "preset_xy", preset);
-                        main_get_gapp()->offset_to_preset_callback (canvas, gapp);
-                        // g_message ("PanView Button1 Pressed at XY=%g, %g => %d, %d",  mouse_pix_xy[0], mouse_pix_xy[1], i,j );
-			break;
-                }
-                break;
-		
-	case GDK_MOTION_NOTIFY:
-                if (pi != i || pj != j){
-                        if (pi>=0 && pj>=0){
-                                pv->pos_preset_box[pi][pj]->set_fill_rgba (0,0,0,0.1);
-                                pi=pj=-1;
-                        }
-                        
-                        if (i>=0 && j>=0){
-                                pv->pos_preset_box[i][j]->set_fill_rgba (1,0,0,0.3);
-                                pi=i; pj=j;
-                        }
-                        // g_message ("PanView XY=%g, %g => %d, %d",  mouse_pix_xy[0], mouse_pix_xy[1], i,j);
-                }
-		break;
-		
-	case GDK_ENTER_NOTIFY:
-                pv->show_preset_grid = true;
-		break;
-	case GDK_LEAVE_NOTIFY:
-                pv->show_preset_grid = false;
-                break;
-		
-	default: break;
-	}
-	return FALSE;
 }
-#endif
+
+void PanView::motion_enter_cb (GtkEventControllerMotion *motion, gdouble x, gdouble y, PanView *pv){
+        pv->show_preset_grid = true;
+}
+
+void PanView::motion_cb (GtkEventControllerMotion *motion, gdouble x, gdouble y, PanView *pv){
+        static int pi=-1;
+        static int pj=-1;
+        int i,j;
+        pv->determine_ij_patch (x,y, i,j);
+        if (pi != i || pj != j){
+                if (pi>=0 && pj>=0){
+                        pv->pos_preset_box[pi][pj]->set_fill_rgba (0,0,0,0.1);
+                        pi=pj=-1;
+                }
+                        
+                if (i>=0 && j>=0){
+                        pv->pos_preset_box[i][j]->set_fill_rgba (1,0,0,0.3);
+                        pi=i; pj=j;
+                }
+                // g_message ("PanView XY=%g, %g => %d, %d",  mouse_pix_xy[0], mouse_pix_xy[1], i,j);
+        }
+}
+
+void PanView::motion_leave_cb (GtkEventControllerMotion *motion, gdouble x, gdouble y, PanView *pv){
+        pv->show_preset_grid = false;
+}
+
+void PanView::released_cb (GtkGesture *gesture, int n_press, double x, double y, PanView *pv){
+        static double preset[3];
+        int i,j;
+        pv->determine_ij_patch (x,y, i,j);
+        preset[0] = i-(N_PRESETS-1)/2;
+        preset[1] = j-(N_PRESETS-1)/2;
+        preset[2] = N_PRESETS/2.0;
+        g_object_set_data (G_OBJECT(pv->canvas), "preset_xy", preset);
+        main_get_gapp()->offset_to_preset_callback (pv->canvas, gapp);
+        // g_message ("PanView Button1 Pressed at XY=%g, %g => %d, %d",  mouse_pix_xy[0], mouse_pix_xy[1], i,j );
+}
 
 gboolean PanView::canvas_draw_function (GtkDrawingArea *area,
                                         cairo_t        *cr,

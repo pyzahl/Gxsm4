@@ -294,7 +294,7 @@ void App::offset_to_preset_callback(GtkWidget* w, gpointer app){
          if (!((App*)app)->spm_control)
                  return;
  
-         if (gtk_check_button_get_active (GTK_CHECK_BUTTON (g_object_get_data (G_OBJECT((((App*)app)->spm_control)), "offset_lock_button"))))
+         if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (g_object_get_data (G_OBJECT((((App*)app)->spm_control)), "offset_lock_button"))))
                  return;
 
          double *xy = (double*)g_object_get_data (G_OBJECT(w), "preset_xy"); // [ preset box ix, iy (0,0=center), +/-# presets ]

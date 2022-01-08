@@ -64,7 +64,11 @@ public:
                                               int             width,
                                               int             height,
                                               PanView *pv);
-        // static gint canvas_event_cb(GtkWidget *canvas, GdkEvent *event, PanView *pv);
+        void determine_ij_patch (gdouble x, gdouble y, int &i, int &j);
+        static void motion_cb (GtkEventControllerMotion *motion, gdouble x, gdouble y, PanView *pv);
+        static void motion_enter_cb (GtkEventControllerMotion *motion, gdouble x, gdouble y, PanView *pv);
+        static void motion_leave_cb (GtkEventControllerMotion *motion, gdouble x, gdouble y, PanView *pv);
+        static void released_cb (GtkGesture *gesture, int n_press, double x, double y, PanView *pv);
         
         void show() {
                 gtk_widget_show (panwindow);
