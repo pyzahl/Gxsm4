@@ -3566,6 +3566,8 @@ void ViewControl::view_tool_legend_radio_callback (GSimpleAction *action, GVaria
         
         g_simple_action_set_state (action, new_state);
         g_variant_unref (old_state);
+
+        gtk_widget_queue_draw (vc->canvas);
 }
 
 void ViewControl::view_tool_legend_position_radio_callback (GSimpleAction *action, GVariant *parameter, gpointer user_data){
@@ -3602,6 +3604,8 @@ void ViewControl::view_tool_legend_position_radio_callback (GSimpleAction *actio
         
         g_simple_action_set_state (action, new_state);
         g_variant_unref (old_state);
+
+        gtk_widget_queue_draw (vc->canvas);
 }
 
 void ViewControl::view_tool_marker_group_radio_callback (GSimpleAction *action, GVariant *parameter, gpointer user_data) { 
