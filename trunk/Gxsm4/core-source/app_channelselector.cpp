@@ -27,6 +27,7 @@
 
 #include <locale.h>
 #include <libintl.h>
+#include <gdk/gdk.h>
 
 #include "app_channelselector.h"
 
@@ -175,7 +176,8 @@ ChannelSelector::ChannelSelector (Gxsm4app *app, int ChAnz):AppBase(app){
 
         // create channels and add to grid
         //GType types[2] = { GDK_TYPE_FILE_LIST, G_TYPE_FILE }; // does not work
-        GType types[1] = { G_TYPE_FILE };
+        // GType types[1] = { G_TYPE_FILE };
+        GType types[] = { GDK_TYPE_FILE_LIST };
         GtkDropTarget *target;
         for(i=1; i<=ChAnz; i++){
 		sprintf(txt,"% 2d", i);
@@ -318,10 +320,13 @@ ChannelSelector::ChannelSelector (Gxsm4app *app, int ChAnz):AppBase(app){
 	set_window_geometry ("channel-selector");
 }
 
-static void file_open_gfunc (GSList *l,  ChannelSelector *ch){
-        g_message ("Processing ");
-        g_message ("%s, ", g_file_get_parse_name (l->data));
-        main_get_gapp () -> xsm->load (g_file_get_parse_name (l->data));
+static void file_open_gfunc (GFile *gf,  gpointer *data){
+        int channel = GPOINTER_TO_INT (data);
+        gchar *fn = g_file_get_parse_name (gf);
+        g_message ("Loading File %s, ", fn);
+        main_get_gapp () -> xsm->ActivateChannel (channel);
+        main_get_gapp () -> xsm->load (fn);
+        g_free (fn);
 }
                 
 gboolean ChannelSelector::on_drop (GtkDropTarget *target,
@@ -333,7 +338,7 @@ gboolean ChannelSelector::on_drop (GtkDropTarget *target,
         ChannelSelector *ch = data;
 
 
-        g_message ("CH::on_drop %g %g", x,y);
+        //g_message ("CH::on_drop %g %g", x,y);
 
         //gsize *n;
         //GType* types = gtk_drop_target_get_gtypes (target, n);
@@ -341,17 +346,20 @@ gboolean ChannelSelector::on_drop (GtkDropTarget *target,
         
         // Call the appropriate setter depending on the type of data
         // that we received
-#if 0
-        if (G_VALUE_HOLDS (value, GDK_TYPE_FILE_LIST)){
-                main_get_gapp ()->xsm->ActivateChannel (GPOINTER_TO_INT (g_object_get_data  (G_OBJECT (gtk_event_controller_get_widget (GTK_EVENT_CONTROLLER (target))), "ChNo")));
+        //gchar * strVal = g_strdup_value_contents (value);
+        //g_message ("target gvalue: %s\n", strVal);
+        //free (strVal);
+        if (G_VALUE_HOLDS (value, G_TYPE_BOXED)){
+                int channel = GPOINTER_TO_INT (g_object_get_data  (G_OBJECT (gtk_event_controller_get_widget (GTK_EVENT_CONTROLLER (target))), "ChNo"));
+                main_get_gapp () -> xsm->ActivateChannel (channel);
                 g_message ("FILE LIST DROPPED... ");
-                g_slist_foreach (gdk_file_list_get_files (g_value_get_object (value)), file_open_gfunc, ch);
-        } else
-#endif
-                if (G_VALUE_HOLDS (value, G_TYPE_FILE)){
-                g_message ("FILE DROPPED %s", g_file_get_parse_name (g_value_get_object (value)));
-        	main_get_gapp ()->xsm->ActivateChannel (GPOINTER_TO_INT (g_object_get_data  (G_OBJECT (gtk_event_controller_get_widget (GTK_EVENT_CONTROLLER (target))), "ChNo")));
-                main_get_gapp ()->xsm->load (g_file_get_parse_name (g_value_get_object (value)));
+                g_slist_foreach (g_value_get_boxed (value), file_open_gfunc, GINT_TO_POINTER (channel));
+        } else if (G_VALUE_HOLDS (value, G_TYPE_FILE)){
+                gchar *fn = g_file_get_parse_name (g_value_get_object (value));
+                g_message ("FILE DROPPED %s", fn);
+                main_get_gapp () -> xsm->ActivateChannel (GPOINTER_TO_INT (g_object_get_data  (G_OBJECT (gtk_event_controller_get_widget (GTK_EVENT_CONTROLLER (target))), "ChNo")));
+                main_get_gapp () -> xsm->load (fn);
+                g_free (fn);
         }
         else
                 return FALSE;
