@@ -174,6 +174,7 @@ ChannelSelector::ChannelSelector (Gxsm4app *app, int ChAnz):AppBase(app){
         gtk_widget_show (wid); // FIX-ME GTK4 SHOWALL
 
         // create channels and add to grid
+        //GType types[2] = { GDK_TYPE_FILE_LIST, G_TYPE_FILE }; // does not work
         GType types[1] = { G_TYPE_FILE };
         GtkDropTarget *target;
         for(i=1; i<=ChAnz; i++){
@@ -317,6 +318,12 @@ ChannelSelector::ChannelSelector (Gxsm4app *app, int ChAnz):AppBase(app){
 	set_window_geometry ("channel-selector");
 }
 
+static void file_open_gfunc (GSList *l,  ChannelSelector *ch){
+        g_message ("Processing ");
+        g_message ("%s, ", g_file_get_parse_name (l->data));
+        main_get_gapp () -> xsm->load (g_file_get_parse_name (l->data));
+}
+                
 gboolean ChannelSelector::on_drop (GtkDropTarget *target,
                                    const GValue  *value,
                                    double         x,
@@ -325,10 +332,23 @@ gboolean ChannelSelector::on_drop (GtkDropTarget *target,
 {
         ChannelSelector *ch = data;
 
-        g_message ("CH::on_drop %g %g ", x,y);
+
+        g_message ("CH::on_drop %g %g", x,y);
+
+        //gsize *n;
+        //GType* types = gtk_drop_target_get_gtypes (target, n);
+        //g_message ("CH::on_drop %g %g #%d", x,y, (int)(*n));
+        
         // Call the appropriate setter depending on the type of data
         // that we received
-        if (G_VALUE_HOLDS (value, G_TYPE_FILE)){
+#if 0
+        if (G_VALUE_HOLDS (value, GDK_TYPE_FILE_LIST)){
+                main_get_gapp ()->xsm->ActivateChannel (GPOINTER_TO_INT (g_object_get_data  (G_OBJECT (gtk_event_controller_get_widget (GTK_EVENT_CONTROLLER (target))), "ChNo")));
+                g_message ("FILE LIST DROPPED... ");
+                g_slist_foreach (gdk_file_list_get_files (g_value_get_object (value)), file_open_gfunc, ch);
+        } else
+#endif
+                if (G_VALUE_HOLDS (value, G_TYPE_FILE)){
                 g_message ("FILE DROPPED %s", g_file_get_parse_name (g_value_get_object (value)));
         	main_get_gapp ()->xsm->ActivateChannel (GPOINTER_TO_INT (g_object_get_data  (G_OBJECT (gtk_event_controller_get_widget (GTK_EVENT_CONTROLLER (target))), "ChNo")));
                 main_get_gapp ()->xsm->load (g_file_get_parse_name (g_value_get_object (value)));
