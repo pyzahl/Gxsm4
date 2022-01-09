@@ -750,7 +750,7 @@ ViewControl::ViewControl (Gxsm4app *app,
         // This widget accepts two types of drop types: GFile objects
         GType types[1] = { G_TYPE_FILE };
         gtk_drop_target_set_gtypes (target, types, G_N_ELEMENTS (types));
-        g_signal_connect (target, "drop", G_CALLBACK (on_drop), this);
+        g_signal_connect (target, "drop", G_CALLBACK (AppBase::gapp_load_on_drop_files), this);
         gtk_widget_add_controller (canvas, GTK_EVENT_CONTROLLER (target));
 
         // Actions
@@ -1206,27 +1206,6 @@ ViewControl::~ViewControl (){
 	delete vinfo;
 
         g_clear_object (&view_settings);
-}
-
-
-gboolean ViewControl::on_drop (GtkDropTarget *target,
-                               const GValue  *value,
-                               double         x,
-                               double         y,
-                               ViewControl *vc)
-{
-        g_message ("VS::on_drop %g %g ", x,y);
-        // Call the appropriate setter depending on the type of data
-        // that we received
-        if (G_VALUE_HOLDS (value, G_TYPE_FILE)){
-                g_message ("FILE DROPPED %s", g_file_get_parse_name (g_value_get_object (value)));
-        	main_get_gapp ()->xsm->ActivateChannel(vc->chno);
-                main_get_gapp ()->xsm->load(g_file_get_parse_name (g_value_get_object (value)));
-        }
-        else
-                return FALSE;
-        
-        return TRUE;
 }
 
 gboolean ViewControl::check_on_object(VObjectEvent* event){

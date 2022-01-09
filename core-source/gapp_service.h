@@ -825,8 +825,12 @@ public:
         static void window_action_callback (GSimpleAction *simple,
                                             GVariant *parameter,
                                             gpointer user_data);
+
+        // File DnD Support
+        static void drop_list_file_open_gfunc (GFile *gf,  gpointer *data);
+        static gboolean gapp_load_on_drop_files (GtkDropTarget *target, const GValue  *value, double x, double y, gpointer data);
         
-	/* window actions */
+	// window actions
 	void hide ();
 	void show ();
 	void show_auto ();
@@ -1010,7 +1014,7 @@ public:
                 else
                         return file_dialog_load (title, path, name);
         };
-        
+
 	// Value Request
 	void ValueRequest(const gchar *title, const gchar *label, const gchar *infotxt, 
 			  UnitObj *u, double minv, double maxv, const gchar *vfmt,

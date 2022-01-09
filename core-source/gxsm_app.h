@@ -150,9 +150,6 @@ public:
 
         void set_dsp_scan_in_progress (gboolean flg);
         
-
-        static gboolean on_drop (GtkDropTarget *target, const GValue  *value, double x, double y, gpointer data);
-
         /* Status Handling */
 
         void SetStatus(const gchar *mld, const gchar *val=NULL){

@@ -188,7 +188,7 @@ ChannelSelector::ChannelSelector (Gxsm4app *app, int ChAnz):AppBase(app){
                 gtk_widget_show (wid); // FIX-ME GTK4 SHOWALL
                 target = gtk_drop_target_new (G_TYPE_INVALID, GDK_ACTION_COPY);
                 gtk_drop_target_set_gtypes (target, types, G_N_ELEMENTS (types));
-                g_signal_connect (target, "drop", G_CALLBACK (on_drop), this);
+                g_signal_connect (target, "drop", G_CALLBACK (AppBase::gapp_load_on_drop_files), this);
                 gtk_widget_add_controller (GTK_WIDGET (wid), GTK_EVENT_CONTROLLER (target));
 
 		/* View */
@@ -199,7 +199,7 @@ ChannelSelector::ChannelSelector (Gxsm4app *app, int ChAnz):AppBase(app){
                 gtk_widget_show (wid); // FIX-ME GTK4 SHOWALL
                 target = gtk_drop_target_new (G_TYPE_INVALID, GDK_ACTION_COPY);
                 gtk_drop_target_set_gtypes (target, types, G_N_ELEMENTS (types));
-                g_signal_connect (target, "drop", G_CALLBACK (on_drop), this);
+                g_signal_connect (target, "drop", G_CALLBACK (AppBase::gapp_load_on_drop_files), this);
                 gtk_widget_add_controller (GTK_WIDGET (wid), GTK_EVENT_CONTROLLER (target));
 
 		// Add Channel View Modes
@@ -220,7 +220,7 @@ ChannelSelector::ChannelSelector (Gxsm4app *app, int ChAnz):AppBase(app){
                 gtk_widget_show (wid); // FIX-ME GTK4 SHOWALL
                 target = gtk_drop_target_new (G_TYPE_INVALID, GDK_ACTION_COPY);
                 gtk_drop_target_set_gtypes (target, types, G_N_ELEMENTS (types));
-                g_signal_connect (target, "drop", G_CALLBACK (on_drop), this);
+                g_signal_connect (target, "drop", G_CALLBACK (AppBase::gapp_load_on_drop_files), this);
                 gtk_widget_add_controller (GTK_WIDGET (wid), GTK_EVENT_CONTROLLER (target));
 
                 // g_print ("ChannelSelector::ChannelSelector 8 MD [%d]\n",i);
@@ -318,53 +318,6 @@ ChannelSelector::ChannelSelector (Gxsm4app *app, int ChAnz):AppBase(app){
         alife = 1;
 
 	set_window_geometry ("channel-selector");
-}
-
-static void file_open_gfunc (GFile *gf,  gpointer *data){
-        int channel = GPOINTER_TO_INT (data);
-        gchar *fn = g_file_get_parse_name (gf);
-        g_message ("Loading File %s, ", fn);
-        main_get_gapp () -> xsm->ActivateChannel (channel);
-        main_get_gapp () -> xsm->load (fn);
-        g_free (fn);
-}
-                
-gboolean ChannelSelector::on_drop (GtkDropTarget *target,
-                                   const GValue  *value,
-                                   double         x,
-                                   double         y,
-                                   gpointer       data)
-{
-        ChannelSelector *ch = data;
-
-
-        //g_message ("CH::on_drop %g %g", x,y);
-
-        //gsize *n;
-        //GType* types = gtk_drop_target_get_gtypes (target, n);
-        //g_message ("CH::on_drop %g %g #%d", x,y, (int)(*n));
-        
-        // Call the appropriate setter depending on the type of data
-        // that we received
-        //gchar * strVal = g_strdup_value_contents (value);
-        //g_message ("target gvalue: %s\n", strVal);
-        //free (strVal);
-        if (G_VALUE_HOLDS (value, G_TYPE_BOXED)){
-                int channel = GPOINTER_TO_INT (g_object_get_data  (G_OBJECT (gtk_event_controller_get_widget (GTK_EVENT_CONTROLLER (target))), "ChNo"));
-                main_get_gapp () -> xsm->ActivateChannel (channel);
-                g_message ("FILE LIST DROPPED... ");
-                g_slist_foreach (g_value_get_boxed (value), file_open_gfunc, GINT_TO_POINTER (channel));
-        } else if (G_VALUE_HOLDS (value, G_TYPE_FILE)){
-                gchar *fn = g_file_get_parse_name (g_value_get_object (value));
-                g_message ("FILE DROPPED %s", fn);
-                main_get_gapp () -> xsm->ActivateChannel (GPOINTER_TO_INT (g_object_get_data  (G_OBJECT (gtk_event_controller_get_widget (GTK_EVENT_CONTROLLER (target))), "ChNo")));
-                main_get_gapp () -> xsm->load (fn);
-                g_free (fn);
-        }
-        else
-                return FALSE;
-        
-        return TRUE;
 }
 
 void ChannelSelector::restore_callback (GtkWidget *widget, ChannelSelector *cs){

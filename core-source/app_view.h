@@ -194,8 +194,6 @@ public:
 
         //static gint canvas_event_cb(GtkWidget *canvas, GdkEvent *event, ViewControl *vo);
 
-        // File DnD
-        static gboolean on_drop (GtkDropTarget *target, const GValue  *value, double x, double y, ViewControl *vc);
         // Objects Handling
         gboolean check_on_object(VObjectEvent* event);
         static void drag_motion (GtkEventControllerMotion *motion, gdouble x, gdouble y, ViewControl *vc);

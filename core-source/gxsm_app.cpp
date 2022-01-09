@@ -744,7 +744,7 @@ void App::build_gxsm (Gxsm4appWindow *win){
         GType types[1] = { G_TYPE_FILE };
         GtkDropTarget *target = gtk_drop_target_new (G_TYPE_INVALID, GDK_ACTION_COPY);
         gtk_drop_target_set_gtypes (target, types, G_N_ELEMENTS (types));
-        g_signal_connect (target, "drop", G_CALLBACK (on_drop), xsm);
+        g_signal_connect (target, "drop", G_CALLBACK (AppBase::gapp_load_on_drop_files), xsm);
         gtk_widget_add_controller (GTK_WIDGET (app_window), GTK_EVENT_CONTROLLER (target));
 
 
@@ -1021,24 +1021,6 @@ void App::ConnectPluginToGetNCInfoEvent( void (*cbfkt)(gchar *filename ) ){
 void App::ConnectPluginToRemoteAction( void (*cbfkt)(gpointer) ){
 	PluginRemoteAction = g_list_prepend(PluginRemoteAction, (gpointer) cbfkt);
 }
-
-
-gboolean App::on_drop (GtkDropTarget *target, const GValue  *value, double x, double y, gpointer data){
-        Surface *xsm = data;
-        g_message ("CH::on_drop %g %g ", x,y);
-        // Call the appropriate setter depending on the type of data
-        // that we received
-        if (G_VALUE_HOLDS (value, G_TYPE_FILE)){
-                g_message ("FILE DROPPED %s", g_file_get_parse_name (g_value_get_object (value)));
-                xsm->ActivateFreeChannel ();
-                xsm->load (g_file_get_parse_name (g_value_get_object (value)));
-        }
-        else
-                return FALSE;
-                
-        return TRUE;
-};
-
 
 void App::reload_gxsm_plugins( gint killflag ){
 	gint (*gxsm_plugin_check)(const gchar *) = Gxsm_Plugin_Check;
