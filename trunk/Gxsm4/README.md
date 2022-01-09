@@ -48,39 +48,7 @@ Note: Currently the plugins are not completely build/failing with file not found
 
 ## 3. To-Do-List
 
-To be ported, recoded,pending or disfunctional features and comments:
-
- - We are also looking a new build system like MESON+Ninja for the
-   future. Done! Ported to all new Meson&Ninja. Removed old automake infrastructure.
-   
-  - All plugins are ported now and require testing. A very few have pending GTK4 issues and need attemtion (commented out from build).
-
-  - noted some pending GTK4 widget layout issues.
-
-  - PanView: no actions yet, need to add controllers
-
-  - gtk_widget_show_all(X)   --> removed completely from gtk4, replace
-   with gtk_widget_show (X) and hope all others are shown.
-                                Make sure every manually created widget is receiving it's gtk_show_widget().
-   			     Using the gxsm core "bp" builder tool it's all taken care of now!
-   
-  - gtk_container_add...     --> gtk_xxxwidget_set_child (GTK_XXXWIDGET
-   (W), child)   (most the time a like)
-   
-  - gtk_entry_set/get_text() -->
-  - gtk_enter_buffer_set/get(gtk_entry_get_buffer (GTK_ENTRY (entry)))
-   examples:   gtk_entry_buffer_set_text (GTK_ENTRY_BUFFER
-   (gtk_entry_get_buffer (GTK_ENTRY (g_object_get_data( G_OBJECT
-   (as_control), "originalname"))))   text = gtk_entry_buffer_get_text
-   (GTK_ENTRY_BUFFER (gtk_entry_get_buffer (GTK_ENTRY (g_object_get_data
-   (G_OBJECT (as_control), "basename"))))));
-   
- - gtk_dialog_run()         --> no more -- see gapp_service.h for new
-   examples and work arounds! All done.
-   
-  - BUTTON signal names changed: the check/toggle button types and
-   signals are changed and not mixable any more as separate objects.
-                                watch for run time GTK WARNING messages regarding ignored signals!
+- Testing testing testing
 
 ## 4. Pending and known issues:
 
@@ -90,11 +58,7 @@ To be ported, recoded,pending or disfunctional features and comments:
   
 - File load vie Drag-n-Drop from filemanager: working, but currently only for single files. (new drap/drop controller)
 
-- "Kill" or close scan window is disfunctional... (only hiding): need to figure out how to fix. "window-delete" signals do not exist any more.... (removed from App-Init call) 🙁
-
 - Spin-Entry: Now shows the units again, but not always at startup (some defaut formatting), only after first touch... not yet sure why that is.
-
-- Profile: ported, testing...
 
 
  -DSP MOVER CONTROL BUTTONS: action signal problem of missing signal for "pressed". The "activate" does not do anything... I tried.
