@@ -240,14 +240,14 @@ Grey2D::Grey2D(Scan *sc, int ChNo):View(sc, ChNo){
 	XImg = NULL;
 	oMC=oZ=oQ=oXPMx=oXPMy=oVm=0;
 	viewcontrol=NULL;
-	userzoom = FALSE;
+	userzoom = USER_ZOOM_AUTO;
 }
 
 Grey2D::Grey2D():View(){
 	oMC=oZ=oQ=oXPMx=oXPMy=oVm=0;
 	XImg = NULL;
 	viewcontrol=NULL;
-	userzoom = FALSE;
+	userzoom = USER_ZOOM_AUTO;
 }
 
 Grey2D::~Grey2D(){
@@ -359,8 +359,6 @@ void Grey2D::update_event_info(ScanEvent* se){
                 viewcontrol->update_event_panel (se);
 }
 
-
-
 void Grey2D::ZoomIn(){
 	if(QuenchFac>1)
 		--QuenchFac;
@@ -379,7 +377,12 @@ void Grey2D::ZoomOut(){
 
 int Grey2D::SetZF(int zf, int qf, Grey2D *p){
         if (!zf && !qf){
-                p->userzoom = FALSE;
+                p->userzoom = USER_ZOOM_AUTO;
+                p->draw();
+                return 0;
+        }
+        if (zf==1 && !qf){
+                p->userzoom = USER_ZOOM_WIDTH;
                 p->draw();
                 return 0;
         }
@@ -393,7 +396,7 @@ int Grey2D::SetZF(int zf, int qf, Grey2D *p){
 	}
 	p->ZoomFac = zf;
 	p->QuenchFac = qf;
-	p->userzoom = TRUE;
+	p->userzoom = USER_ZOOM_FIXED;
 	p->draw();
 	return 0;
 }

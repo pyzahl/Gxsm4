@@ -154,6 +154,7 @@ static GActionEntry win_view_popup_entries[] = {
         { "zoom-in", ViewControl::view_view_zoom_out_callback, NULL, NULL, NULL },
         { "zoom-out", ViewControl::view_view_zoom_in_callback, NULL, NULL, NULL },
         { "fix-zoom", ViewControl::view_view_zoom_fix_radio_callback, "s", "'zoomfactor-auto'", NULL },
+        { "fitwidth-zoom", ViewControl::view_view_zoom_fix_radio_callback, "s", "'zoomfactor-fitwidth'", NULL },
         { "object-mode", ViewControl::view_object_mode_radio_callback, "s", "'rectangle'", NULL },
         { "show-object-lables", ViewControl::view_tool_labels_callback, NULL, "false", NULL },
         { "show-legend-item", ViewControl::view_tool_legend_radio_callback, "s", "'off'", NULL },
@@ -1534,9 +1535,15 @@ void ViewControl::canvas_draw_function (GtkDrawingArea *area,
         if (vc->destruction_in_progress)
                 return false;
 
-        XSM_DEBUG (DBG_L2,  "ViewControl:::canvas_draw_callback ********************** SCAN DRAW *********************" );
-
-        double zf = vc->vinfo->GetZfac();
+        int qf    = vc->vinfo->GetQfac ();
+        double zf = vc->vinfo->GetZfac ();
+        if (vc->vinfo->get_userzoommode () == USER_ZOOM_WIDTH){
+                zf = (double)width / (double)(vc->rulewidth+2*vc->border/zf+vc->npx);
+                vc->vinfo->SetQfZf (qf, zf);
+                zf = vc->vinfo->GetZfac (); // check
+        }
+                 
+        XSM_DEBUG_GM (DBG_L3,  "ViewControl:::canvas_draw_callback ********************** SCAN DRAW, ZOOM [M%d]: %g : %d, DA-WIDTH: %d, NPX: %d *********************", vc->vinfo->get_userzoommode(), zf, qf, width, vc->npx);
 
         if (area){
                 vc->ximg->set_translate_offset (vc->rulewidth+vc->border/zf, vc->rulewidth+vc->border/zf);
@@ -4174,8 +4181,12 @@ void ViewControl::view_view_zoom_fix_radio_callback (GSimpleAction *action, GVar
                       g_variant_get_string (old_state, NULL),
                       g_variant_get_string (new_state, NULL));
 
+        vc->vinfo->SetUserZoom (USER_ZOOM_AUTO);
         if (!strcmp (g_variant_get_string (new_state, NULL), "zoomfactor-auto")){
                 if(vc->ZoomQFkt) (*vc->ZoomQFkt)(0,0, vc->ZQFktData); // auto
+        } else if (!strcmp (g_variant_get_string (new_state, NULL), "zoomfactor-fitwidth")){
+                if(vc->ZoomQFkt) (*vc->ZoomQFkt)(1,0,vc->ZQFktData);
+                vc->vinfo->SetUserZoom (USER_ZOOM_WIDTH);
         } else if (!strcmp (g_variant_get_string (new_state, NULL), "zoomfactor-10x")){
                 if(vc->ZoomQFkt) (*vc->ZoomQFkt)(10,1,vc->ZQFktData);
         } else if (!strcmp (g_variant_get_string (new_state, NULL), "zoomfactor-5x")){

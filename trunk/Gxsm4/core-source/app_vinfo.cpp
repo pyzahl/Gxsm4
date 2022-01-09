@@ -37,11 +37,12 @@
 
 #include "scan.h"
 
-ViewInfo::ViewInfo(Scan *Sc, int qf, int zf){
+ViewInfo::ViewInfo(Scan *Sc, int qf, double zf){
   Qfac = qf; Zfac = zf;
   sc=Sc; 
   ux=uy=uz=NULL; // use "Scan" Units
-
+  userzoommode=0;
+  
   EnableTimeDisplay (FALSE);
   SetPixelUnit (FALSE);
   SetCoordMode ();

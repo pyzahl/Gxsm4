@@ -233,6 +233,11 @@
 		<attribute name="target">zoomfactor-auto</attribute>
 	      </item>
 	      <item>
+		<attribute name="label" translatable="yes">Fit Width</attribute>
+		<attribute name="action">win.fix-zoom</attribute>
+		<attribute name="target">zoomfactor-fitwidth</attribute>
+	      </item>
+	      <item>
 		<attribute name="label" translatable="yes">10:1</attribute>
 		<attribute name="action">win.fix-zoom</attribute>
 		<attribute name="target">zoomfactor-10x</attribute>

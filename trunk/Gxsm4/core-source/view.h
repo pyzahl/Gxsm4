@@ -53,7 +53,9 @@ class ViewControl;
 class ProfileControl;
 class V3dControl;
 
-
+#define USER_ZOOM_AUTO    0
+#define USER_ZOOM_FIXED   1
+#define USER_ZOOM_WIDTH   2
 
 typedef struct{
 	double x,y,z;

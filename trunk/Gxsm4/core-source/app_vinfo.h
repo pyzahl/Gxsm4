@@ -40,13 +40,14 @@ class Scan;
 
 class ViewInfo{
 public:
-        ViewInfo(Scan *Sc, int qf, int zf);
+        ViewInfo(Scan *Sc, int qf, double zf);
         virtual ~ViewInfo(){};
   
-        void SetQfZf (int qf, int zf){
+        void SetQfZf (int qf, double zf){
                 Qfac = qf; Zfac=zf;
         };
-  
+
+        void SetUserZoom(int userzoom=0){ userzoommode = userzoom; };
         void EnableTimeDisplay(int flag=TRUE){ showtime=flag; };
         void SetPixelUnit(int flag=TRUE){ pixelmode=flag; };
         void SetCoordMode(SCAN_COORD_MODE scm=SCAN_COORD_ABSOLUTE){ sc_mode=scm; };
@@ -73,8 +74,9 @@ public:
         void W2Angstroem(double &x, double &y);
         double AngstroemXRel2W(double x);
 
+        int get_userzoommode() { return userzoommode; };
         int GetQfac() { return Qfac; };
-        int GetZfac() { return Zfac; };
+        double GetZfac() { return Zfac; };
 
         UnitObj *Ux();
         UnitObj *Uy();
@@ -85,7 +87,9 @@ private:
         UnitObj *ux;
         UnitObj *uy;
         UnitObj *uz;
-        int Qfac, Zfac;
+        int Qfac;
+        double Zfac;
+        int userzoommode;
         int pixelmode;
         int showtime;
         SCAN_COORD_MODE sc_mode;
