@@ -13,18 +13,20 @@ plugin_list = [
     { 'name': 'spa4_d2d_im_export' },
     { 'name': 'uksoft2001_im_export' },
     { 'name': 'wip_im_export' },
-    { 'name': 'quicktime_im_export', 'deps' : [quicktime] },
     { 'name': 'g_dat_im_export' },
     { 'name': 'gmeyer_im_export' },
     { 'name': 'nanoimport' },
     { 'name': 'omicron_io' },
     { 'name': 'png_im_export' },
     { 'name': 'rhk2000_import' },
-    { 'name': 'rhk_spm32_import' },
     { 'name': 'v5d_export', 'sources': ['v5d_binio.cpp', 'v5d_v5d.cpp'] },
+    { 'name': 'rhk_spm32_import' },
     { 'name': 'WSxM_io', 'sources': ['WSxM_header.cpp'] },
 ]
 
+if quicktime.found()
+    plugin_list += [ { 'name': 'quicktime_im_export', 'deps' : [quicktime] }, ]
+endif
 
 foreach plugin : plugin_list
   plugin_name = plugin.get('name')

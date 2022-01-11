@@ -102,10 +102,6 @@ Surface::~Surface(){
 		}
 }
 
-void Surface::hide(){;}
-
-int Surface::draw(){ return 0; }
-
 void Surface::CleanupProfiles(){
 	g_slist_foreach ((GSList*) DelProfileList, 
 			 (GFunc) Surface::remove_profile, this);

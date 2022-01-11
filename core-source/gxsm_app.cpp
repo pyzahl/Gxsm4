@@ -45,9 +45,9 @@
 #include "plugin_ctrl.h"
 #include "gxsm_resoucetable.h"
 
-extern gboolean generate_preferences_gschema;
-extern gboolean generate_gl_preferences_gschema;
-void surf3d_write_schema (); // in vsurf3d.C
+//extern gboolean generate_preferences_gschema;
+//xtern gboolean generate_gl_preferences_gschema;
+//void surf3d_write_schema (); // in vsurf3d.C
 
 
 typedef struct { 
@@ -127,6 +127,7 @@ add_accelerator (GApplication    *app,
 // gxsm4_app_class  G-OBJECT / GTK CORE
 // ========================================
 
+
 /*
  * G_APPLICATION CODE FOR GXSM4 GOBJECT
  */
@@ -142,6 +143,7 @@ struct _Gxsm4appClass
 };
 
 G_DEFINE_TYPE(Gxsm4app, gxsm4_app, GTK_TYPE_APPLICATION);
+
 
 static void
 gxsm4_app_init (Gxsm4app *app)
@@ -406,9 +408,11 @@ gxsm4_app_open (GApplication  *app,
         else
                 win = gxsm4_app_window_new (GXSM4_APP (app));
 
+#if 0
         if (load_files_as_movie)
                 main_get_gapp ()->xsm->ActivateFreeChannel();
-
+#endif
+        
         for (gint i=0; i < n_files; ++i)
                 if (gxsm4_app_window_open (win, files[i], load_files_as_movie) == false)
                         break;
@@ -701,11 +705,14 @@ void App::build_gxsm (Gxsm4appWindow *win){
 
                 exit (0);
         }
+
+#if 0 // DEVELOPER OPTIONS, SPECIAL BUILD
         if (generate_gl_preferences_gschema) {
                 surf3d_write_schema ();
                 exit (0);
         }
-                
+#endif
+        
         gnome_res_read_user_config (pref);
         XSM_DEBUG(DBG_L2, "App::build_gxsm - destroy preferences object" );
 	gnome_res_destroy (pref);

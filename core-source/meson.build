@@ -1,7 +1,7 @@
 
 deps = declare_dependency(
     compile_args : all_cflags,
-    dependencies : [icuuc, gtk, soup, cairo, freet, gset, netcdf, fftw, xml, png, gmod, gmodexp, x11, gl, glew],
+    dependencies : [icuuc, gtk, soup, cairo, freet, gset, netcdf, fftw, xml, png, gmod, gmodexp, x11],
     include_directories : configuration_inc,
 )
 
@@ -55,12 +55,10 @@ lib_utils_gxsm = library(
     'cairo_item.cpp',
     'clip.c',
     'csv.cpp',
-    'caps.cpp',
     'gnome-res.c',
     'gtkmarshal.c',
     'gtkmarshalers.c',
     'gpl.cpp',
-    'pugixml.cpp',
     'readpng.cpp',
     'writepng.cpp',
     'regress.cpp',
@@ -70,35 +68,72 @@ lib_utils_gxsm = library(
     install: true
 )
 
+# lib_gxsm_core = library(
+#     lib_gxsm_core_name,
+#     'instrument.cpp',
+#     'mem2d.cpp',
+#     'lineprofile.cpp',
+#     'monitor.cpp',
+#     'remote.cpp',
+#     'scan.cpp',
+#     'scan_event.cpp',
+#     'spascan.cpp',
+#     'surface.cpp',
+#     'topographic.cpp',
+#     'view.cpp',
+#     'vpdata_read.cpp',
+#     'xshmimg.cpp',
+#     'xsm.cpp',
+#     'xsmhard.cpp',
+#     'xsmmath.cpp',
+#     dependencies : deps,
+#     link_with: [ lib_global_gxsm, lib_pcs_gxsm, lib_utils_gxsm ],
+#     install: true
+# )
+# 
+# lib_app_v3d_gxsm = library(
+#     lib_app_v3d_gxsm_name,
+#     'app_v3dcontrol.cpp',
+#     'vsurf3d.cpp',
+# #    'pugixml.cpp',
+#     'caps.cpp',
+#     'compiler.cpp',
+#     dependencies : [deps, gl],
+#     link_with: [ lib_global_gxsm, lib_pcs_gxsm, lib_utils_gxsm, lib_gxsm_core ],
+#     install: true
+# )
 
 lib_app_gxsm = library(
     lib_app_gxsm_name,
-    'compiler.cpp',
-
+    'gxsm_app.cpp',
+    'gxsm_window.cpp',
     'gapp_service.cpp',
     'app_channelselector.cpp',
     'app_monitorcontrol.cpp',
     'app_profile.cpp',
     'app_spm.cpp',
-    'app_v3dcontrol.cpp',
     'app_view.cpp',
     'app_vinfo.cpp',
     'app_vobj.cpp',
     
+    'app_v3dcontrol.cpp',
+    'vsurf3d.cpp',
+#    'pugixml.cpp',
+    'caps.cpp',
+    'compiler.cpp',
+
+    'plugin_ctrl.cpp',
     'dataio.cpp',
     'epsfutils.cpp',
    
-    'gxsm_window.cpp',
-    'gxsm_app.cpp',
     'gxsm4_resources.cpp',
     'gxsm_menucb.cpp',
     'gxsm_menu-extension.c',
     
     'instrument.cpp',
-    'lineprofile.cpp',
     'mem2d.cpp',
+    'lineprofile.cpp',
     'monitor.cpp',
-    'plugin_ctrl.cpp',
     'remote.cpp',
     'scan.cpp',
     'scan_event.cpp',
@@ -107,23 +142,24 @@ lib_app_gxsm = library(
     'topographic.cpp',
     'view.cpp',
     'vpdata_read.cpp',
-    'vsurf3d.cpp',
     'xshmimg.cpp',
     'xsm.cpp',
     'xsmhard.cpp',
     'xsmmath.cpp',
-    dependencies : deps,
-    link_with: [ lib_global_gxsm, lib_pcs_gxsm, lib_utils_gxsm ],
+
+
+
+    dependencies : [ deps, gl, glew ],
+    link_with: [ lib_global_gxsm, lib_pcs_gxsm, lib_utils_gxsm ], ##, lib_gxsm_core, lib_app_v3d_gxsm  ],
     install: true
 )
-
 
 executable(
     meson.project_name(),
     'gxsm_main.cpp',
     gxsm4_gdbus_src,
     dependencies : deps,
-    link_with: [ lib_global_gxsm, lib_utils_gxsm, lib_app_gxsm, lib_pcs_gxsm ],
+    link_with: [ lib_global_gxsm, lib_utils_gxsm, lib_app_gxsm, lib_pcs_gxsm], #, lib_gxsm_core, lib_app_v3d_gxsm ],
     export_dynamic: true,
     install: true
 )

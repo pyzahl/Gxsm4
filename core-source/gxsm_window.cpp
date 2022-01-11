@@ -146,7 +146,7 @@ gxsm4_app_window_open (Gxsm4appWindow *win,
                 XSM_DEBUG (DBG_L2, "gxsm4_app_window_open ** request to open file <" << basename << ">");
                 
                 // XSM_DEBUG_GM (DBG_L1,"GXSM comandline load file <%s>", basename);
-                
+#if 0                
                 if (in_active_channel){
                         main_get_gapp ()->xsm->load (basename);
                         ret=true;
@@ -154,6 +154,7 @@ gxsm4_app_window_open (Gxsm4appWindow *win,
                         main_get_gapp ()->xsm->load (basename);
                         ret=true;
                 }
+#endif
         }
         g_free (basename);
         return ret;

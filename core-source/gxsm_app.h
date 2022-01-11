@@ -49,6 +49,8 @@
 #include "app_vobj.h"
 #include "plugin_ctrl.h"
 
+#include "gxsm_app.h"
+
 class Surface;
 
 /*
@@ -62,6 +64,7 @@ typedef struct _Gxsm4appWindow         Gxsm4appWindow;
 
 typedef struct _Gxsm4app       Gxsm4app;
 typedef struct _Gxsm4appClass  Gxsm4appClass;
+
 
 GType         gxsm4_app_get_type    (void);
 Gxsm4app     *gxsm4_app_new         (void);

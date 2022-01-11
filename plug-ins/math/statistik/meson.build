@@ -13,8 +13,6 @@ plugin_list = [
 #    { 'name': 'islandlbl' }, ## needs GTK4 porting
     { 'name': 'mathilbl' },
     { 'name': 'nndistribution' },
-    { 'name': 'OpenCV_match', 'deps': [opencv] },
-    { 'name': 'OpenCV_recenter', 'deps': [opencv]  },
     { 'name': 'polarhist' },
     { 'name': 'slopeabs' },
     { 'name': 'slopedir' },
@@ -24,6 +22,13 @@ plugin_list = [
     { 'name': 'VacancyLineAnalysis' },
 #    { 'name': 'vorlage' },
 ]
+
+if opencv.found()
+    plugin_list += [    { 'name': 'OpenCV_match', 'deps': [opencv] },
+                        { 'name': 'OpenCV_recenter', 'deps': [opencv]  },
+                    ]
+endif
+    
 
 
 foreach plugin : plugin_list

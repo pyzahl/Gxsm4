@@ -63,8 +63,6 @@ public:
         Surface (App *gapp);
         virtual ~Surface();
 
-        void hide();
-        int draw();
         static void load_exec(GtkDialog *dialog,  int response, gpointer user_data);
         int load(const char *rname=NULL);
         static void save_new_path_exec(GtkDialog *dialog,  int response, gpointer user_data);
