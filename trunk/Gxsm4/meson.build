@@ -123,7 +123,7 @@ gl    = dependency(['gl'], required : false)
 #glew  = dependency(['glew'], required : false) ## work perfect for local Debian Testing build, not recognized via flatpak 
 glew  = cc.find_library('GLEW')   ## required : false)  ## well, still required, compile will fails with missing GL/gl.h/glm.h.....
 
-build_gxsm_view3d = false
+build_gxsm_view3d = true
 if gl.found() and glew.found() and build_gxsm_view3d
     conf.set('ENABLE_3DVIEW_HAVE_GL_GLEW', 1)
 else
@@ -155,8 +155,6 @@ icuuc = cc.find_library('icuuc')
 # inet-json... for fitting
 gsl   = dependency('gsl', required : false)
 ##        dependency('gslcblas', required : false)
-
-build_gxsm_view3d = false
 
 if gsl.found()
   conf.set('ENABLE_FITTING_HAVE_GSL', 1)
