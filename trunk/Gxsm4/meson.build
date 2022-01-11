@@ -120,12 +120,13 @@ freet = dependency('freetype2')
 gset  = dependency('gsettings-desktop-schemas')
 x11   = dependency('x11')
 gl    = dependency(['gl'], required : false)
-glew  = dependency(['glew'], required : false)
-if gl.found() and glew.found()
-  conf.set('ENABLE_3DVIEW_HAVE_GL_GLEW', 1)
-else
-  conf.set('ENABLE_3DVIEW_HAVE_GL_GLEW', 0)
-endif
+#glew  = dependency(['glew'], required : false)
+glew  = cc.find_library('GLEW')   ## required : false)  ## well, still required, compile will fail -- woring on this...
+# if gl.found() and glew.found()
+conf.set('ENABLE_3DVIEW_HAVE_GL_GLEW', 1)
+# else
+#  conf.set('ENABLE_3DVIEW_HAVE_GL_GLEW', 0)
+# endif
 
 # netcdf = dependency('netcdf-cxx4')   # for the C/C++ NetCDF headers and libraries, new but incopatible w older version and gxsm
 # netcdfc = dependency('netcdf', language: 'c')   # for the C NetCDF headers and libraries
