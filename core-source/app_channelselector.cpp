@@ -44,8 +44,9 @@ static const char* choice_ChView[] =
 	{ 
 		"No",
 		"Grey 2D",
+#if ENABLE_3DVIEW_HAVE_GL_GLEW
 		"Surface 3D",
-		"Profile 1D",
+#endif
 		0
 	};
 

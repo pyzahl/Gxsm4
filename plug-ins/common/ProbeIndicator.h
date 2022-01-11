@@ -26,7 +26,7 @@
 
 #include <gtk/gtk.h>
 #include <math.h>
-#include "core-source/cairo_item.h"
+#include "cairo_item.h"
 
 # include <complex>
 # include <fftw3.h>

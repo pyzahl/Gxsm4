@@ -1,5 +1,5 @@
 # Load scan support object from library
-# GXSM_USE_LIBRARY <gxsm3-lib-scan>
+# GXSM_USE_LIBRARY <gxsm4-lib-scan>
 
 ## GXSM PyRemote socket server script
 

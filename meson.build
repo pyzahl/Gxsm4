@@ -120,13 +120,15 @@ freet = dependency('freetype2')
 gset  = dependency('gsettings-desktop-schemas')
 x11   = dependency('x11')
 gl    = dependency(['gl'], required : false)
-#glew  = dependency(['glew'], required : false)
-glew  = cc.find_library('GLEW')   ## required : false)  ## well, still required, compile will fail -- woring on this...
-# if gl.found() and glew.found()
-conf.set('ENABLE_3DVIEW_HAVE_GL_GLEW', 1)
-# else
-#  conf.set('ENABLE_3DVIEW_HAVE_GL_GLEW', 0)
-# endif
+#glew  = dependency(['glew'], required : false) ## work perfect for local Debian Testing build, not recognized via flatpak 
+glew  = cc.find_library('GLEW')   ## required : false)  ## well, still required, compile will fails with missing GL/gl.h/glm.h.....
+
+build_gxsm_view3d = false
+if gl.found() and glew.found() and build_gxsm_view3d
+    conf.set('ENABLE_3DVIEW_HAVE_GL_GLEW', 1)
+else
+    conf.set('ENABLE_3DVIEW_HAVE_GL_GLEW', 0)
+endif
 
 # netcdf = dependency('netcdf-cxx4')   # for the C/C++ NetCDF headers and libraries, new but incopatible w older version and gxsm
 # netcdfc = dependency('netcdf', language: 'c')   # for the C NetCDF headers and libraries
@@ -154,6 +156,8 @@ icuuc = cc.find_library('icuuc')
 gsl   = dependency('gsl', required : false)
 ##        dependency('gslcblas', required : false)
 
+build_gxsm_view3d = false
+
 if gsl.found()
   conf.set('ENABLE_FITTING_HAVE_GSL', 1)
 else
@@ -170,7 +174,7 @@ dl   = platform_windows ? no_dep : cc.find_library('dl')
 
 ## OpenCV for feature match, etc. plugins:  old: -lopencv_core -lopencv_highgui -lopencv_features2d -lopencv_objdetect
 opencv = dependency('opencv4', required : false)
-if gsl.found()
+if opencv.found()
   conf.set('ENABLE_FEATUREMATCH_HAVE_OPENCV', 1)
 else
   conf.set('ENABLE_FEATUREMATCH_HAVE_OPENCV', 0)
@@ -222,8 +226,6 @@ localedir        = get_option('datadir') / 'locale'
 lib_global_gxsm_name  =  'lib-global-'+meson.project_name() 
 lib_pcs_gxsm_name     =  'lib-pcs-'+meson.project_name() 
 lib_utils_gxsm_name   =  'lib-utils-'+meson.project_name() 
-lib_app_v3d_gxsm_name =  'lib-app-v3d-'+meson.project_name() 
-lib_gxsm_core_name    =  'lib-gxsm-core-'+meson.project_name() 
 lib_app_gxsm_name     =  'lib-app-'+meson.project_name() 
 
 absolute_data_dir = get_option('prefix') / get_option('datadir')+'/gxsm4'
@@ -256,6 +258,8 @@ conf.set_quoted('GXSM_BUILD_DATE',   today)
 conf.set('GXSM_MAJOR_VERSION', as_major_version)
 conf.set('GXSM_MINOR_VERSION', as_minor_version)
 conf.set('GXSM_MICRO_VERSION', as_micro_version)
+
+conf.set('USE_MAIN_GET_APP_IN_MEM2D_FOR_PROGRESS', 1)
 
 ## for Gxsm plugin autodetection (installed location)
 conf.set_quoted('PACKAGE_PLUGIN_DIR', absolute_plugin_dir, description : 'This is the path where gxsm plugins will be installed')

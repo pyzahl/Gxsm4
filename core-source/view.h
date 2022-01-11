@@ -28,8 +28,14 @@
 #ifndef __VIEW_H
 #define __VIEW_H
 
+
+#if ENABLE_3DVIEW_HAVE_GL_GLEW
+
 #include <GL/glew.h>
 #include <GL/gl.h>
+
+#endif
+
 
 #include "gnome-res.h"
 
@@ -202,6 +208,9 @@ private:
         ViewControl *viewcontrol;
         ShmImage2D *XImg;
 };
+
+
+#if ENABLE_3DVIEW_HAVE_GL_GLEW
 
 typedef struct{
 	float trans[3];
@@ -383,6 +392,7 @@ public:
 private:
         V3dControl *v3dcontrol;
 };
+#endif
 
 #endif
 

@@ -2212,7 +2212,7 @@ class Application(Gtk.Application):
                                        #documenters = ["--"],
                                        copyright="GPL",
                                        website="http://www.gxsm.sf.net",
-                                       logo=GdkPixbuf.Pixbuf.new_from_file_at_scale("./gxsm3-icon.svg", 200,200, True),
+                                       logo=GdkPixbuf.Pixbuf.new_from_file_at_scale("./gxsm4-icon.svg", 200,200, True),
                                        )
         about_dialog.set_copyright(
             "Copyright \xc2\xa9 2019 Percy Zahl.\n"
