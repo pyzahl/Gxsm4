@@ -28,12 +28,11 @@
 #ifndef __VIEW_H
 #define __VIEW_H
 
+#include "config.h"
 
 #if ENABLE_3DVIEW_HAVE_GL_GLEW
-
 #include <GL/glew.h>
 #include <GL/gl.h>
-
 #endif
 
 

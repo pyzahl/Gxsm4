@@ -107,14 +107,17 @@ app_gxsm_sources = [
     'xsmmath.cpp',
     ]
 
-
-if build_gxsm_view3d
+if gl.found() and glew.found() and build_gxsm_view3d
     app_gxsm_sources += [
         'app_v3dcontrol.cpp',
         'vsurf3d.cpp',
         'caps.cpp',
         'compiler.cpp',
     ]
+#    warning ('GXSM is linked with GL-3DView:')
+#    warning (app_gxsm_sources)
+else
+    warning ('GXSM is linked without GL-3DView (v3dcontrol, vsurf3d, caps, compiler)')
 endif
 
 
