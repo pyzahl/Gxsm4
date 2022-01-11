@@ -978,19 +978,6 @@ int Surface::gnuexport(const char *rname){
 }
 
 Scan* Surface::GetActiveScan(){
-#if 0 // cleanup -- old, not sure why...                       
-	int Ch;
-	if (!ActiveScan){
-                return NULL;
-		if ((Ch=FindChan (ID_CH_M_OFF)) < 0){
-			XSM_SHOW_ALERT(ERR_SORRY, ERR_NOFREECHAN,"",1);
-			return NULL;
-		}
-		if (ActivateChannel (Ch)){
-			return NULL;
-		}
-	}
-#endif
 	return ActiveScan;
 }
 

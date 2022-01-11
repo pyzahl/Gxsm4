@@ -68,42 +68,7 @@ lib_utils_gxsm = library(
     install: true
 )
 
-# lib_gxsm_core = library(
-#     lib_gxsm_core_name,
-#     'instrument.cpp',
-#     'mem2d.cpp',
-#     'lineprofile.cpp',
-#     'monitor.cpp',
-#     'remote.cpp',
-#     'scan.cpp',
-#     'scan_event.cpp',
-#     'spascan.cpp',
-#     'surface.cpp',
-#     'topographic.cpp',
-#     'view.cpp',
-#     'vpdata_read.cpp',
-#     'xshmimg.cpp',
-#     'xsm.cpp',
-#     'xsmhard.cpp',
-#     'xsmmath.cpp',
-#     dependencies : deps,
-#     link_with: [ lib_global_gxsm, lib_pcs_gxsm, lib_utils_gxsm ],
-#     install: true
-# )
-# 
-# lib_app_v3d_gxsm = library(
-#     lib_app_v3d_gxsm_name,
-#     'app_v3dcontrol.cpp',
-#     'vsurf3d.cpp',
-# #    'pugixml.cpp',
-#     'caps.cpp',
-#     'compiler.cpp',
-#     dependencies : [deps, gl],
-#     link_with: [ lib_global_gxsm, lib_pcs_gxsm, lib_utils_gxsm, lib_gxsm_core ],
-#     install: true
-# )
-
-lib_app_gxsm = library(
+app_gxsm_sources = [
     lib_app_gxsm_name,
     'gxsm_app.cpp',
     'gxsm_window.cpp',
@@ -116,12 +81,6 @@ lib_app_gxsm = library(
     'app_vinfo.cpp',
     'app_vobj.cpp',
     
-    'app_v3dcontrol.cpp',
-    'vsurf3d.cpp',
-#    'pugixml.cpp',
-    'caps.cpp',
-    'compiler.cpp',
-
     'plugin_ctrl.cpp',
     'dataio.cpp',
     'epsfutils.cpp',
@@ -146,11 +105,23 @@ lib_app_gxsm = library(
     'xsm.cpp',
     'xsmhard.cpp',
     'xsmmath.cpp',
+    ]
 
 
+if build_gxsm_view3d
+    app_gxsm_sources += [
+        'app_v3dcontrol.cpp',
+        'vsurf3d.cpp',
+        'caps.cpp',
+        'compiler.cpp',
+    ]
+endif
 
+
+lib_app_gxsm = library(
+    app_gxsm_sources,
     dependencies : [ deps, gl, glew ],
-    link_with: [ lib_global_gxsm, lib_pcs_gxsm, lib_utils_gxsm ], ##, lib_gxsm_core, lib_app_v3d_gxsm  ],
+    link_with: [ lib_global_gxsm, lib_pcs_gxsm, lib_utils_gxsm ],
     install: true
 )
 
@@ -159,7 +130,7 @@ executable(
     'gxsm_main.cpp',
     gxsm4_gdbus_src,
     dependencies : deps,
-    link_with: [ lib_global_gxsm, lib_utils_gxsm, lib_app_gxsm, lib_pcs_gxsm], #, lib_gxsm_core, lib_app_v3d_gxsm ],
+    link_with: [ lib_global_gxsm, lib_utils_gxsm, lib_app_gxsm, lib_pcs_gxsm],
     export_dynamic: true,
     install: true
 )

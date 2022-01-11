@@ -534,16 +534,13 @@ int Scan::SetView(uint vtype){
 		draw();
 		return ID_CH_V_GREY;
 		break;
-	case ID_CH_V_PROFILE:
-		//view = new Profiles(this, ChanNo);
-		//draw();
-		return ID_CH_V_PROFILE;
-		break;
 	case ID_CH_V_SURFACE:
 		//    return ID_CH_V_NO; // just disable
+#if ENABLE_3DVIEW_HAVE_GL_GLEW
 		view = new Surf3d(this, ChanNo);
 		SetVM();
 		draw();
+#endif
 		return ID_CH_V_SURFACE;
 		break;
 	default:    

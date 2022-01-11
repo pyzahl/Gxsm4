@@ -486,7 +486,7 @@ void TZData<ZTYP>::NcGet(NcVar *ncfield, int time_index){
 		}
 		yy = (double)y/(double)ny;
 		if (ceil(yy) - ceil(yy2) > 1.)
-#if 0
+#if USE_MAIN_GET_APP_IN_MEM2D_FOR_PROGRESS
 			main_get_gapp ()->progress_info_set_bar_fraction (yy2=yy, 2);
 #else
                         yy2=yy;
@@ -1008,7 +1008,7 @@ int Mem2d::WriteScanEvents (NcFile *ncf){
 				p_dim_sets =  pe->get_num_sets ();
 				p_dim_samples =  pe->get_chunk_size ();
 				ProbeEventsList = g_slist_prepend (ProbeEventsList, e=new Event (e, se, pe, p_dim_sets, p_dim_samples));
-#if 0				
+#if USE_MAIN_GET_APP_IN_MEM2D_FOR_PROGRESS			
 				main_get_gapp ()->progress_info_set_bar_pulse (2);
 #endif
 			  }
@@ -1021,7 +1021,7 @@ int Mem2d::WriteScanEvents (NcFile *ncf){
 // rebuild new ordered list with UEs, to be sorted by User Event message_id (what)
 				for (int i=0; i<ue->get_num_sets (); ++i)
 					UserEventsList = g_slist_prepend (UserEventsList, new UserEntry (ue, i, se));
-#if 0
+#if USE_MAIN_GET_APP_IN_MEM2D_FOR_PROGRESS
 				main_get_gapp ()->progress_info_set_bar_pulse (2);
 #endif
 			  }
@@ -1143,7 +1143,7 @@ int Mem2d::LoadScanEvents (NcFile *ncf){
 			if (se){
 				se->add_event (pe);
 				AttachScanEvent (se);
-#if 0				
+#if USE_MAIN_GET_APP_IN_MEM2D_FOR_PROGRESS				
 				main_get_gapp ()->progress_info_set_bar_fraction ((double)count/(gdouble)limit, 2);
 #endif
 			} else break;
@@ -2866,14 +2866,14 @@ gboolean MemDigiFilter::Convolve(Mem2d *Src, Mem2d *Dest){
         int stop_flag = 0;
         int max_jobs = g_get_num_processors (); // default concurrency for multi threadded computation, # CPU's/cores
 
-#if 0
+#if USE_MAIN_GET_APP_IN_MEM2D_FOR_PROGRESS
         main_get_gapp ()->progress_info_new ("DigiFilter Convolute", 1+(int)max_jobs, GCallback (cancel_callback), &stop_flag, false);
         main_get_gapp ()->progress_info_set_bar_fraction (0.1, 2);
         main_get_gapp ()->progress_info_set_bar_text ("Setup", 2);
 #endif
         InitializeKernel ();
 
-#if 0
+#if USE_MAIN_GET_APP_IN_MEM2D_FOR_PROGRESS
         main_get_gapp ()->progress_info_set_bar_fraction (0.3, 2);
 #endif        
         if(Src->data->GetNx()<1 && Src->data->GetNy()<1)
@@ -2894,7 +2894,7 @@ gboolean MemDigiFilter::Convolve(Mem2d *Src, Mem2d *Dest){
                         x.data->Z(Src->data->Z(i0,i),   j,      i+ms); // data[i+ms][j]       = Src->data[i][0];
                         x.data->Z(Src->data->Z(nn-1,i),j+ns+nn,i+ms); // data[i+ms][j+ns+nn] = Src->data[i][nn-1];
                 }
-#if 0
+#if USE_MAIN_GET_APP_IN_MEM2D_FOR_PROGRESS
         main_get_gapp ()->progress_info_set_bar_fraction (0.4, 2);
 #endif
         // edge top / bottom and oberserve shift
@@ -2915,7 +2915,7 @@ gboolean MemDigiFilter::Convolve(Mem2d *Src, Mem2d *Dest){
                         x.data->Z(Src->data->Z(i0,mm-1), j,mm+ms+i);
                         x.data->Z(Src->data->Z(nn-1,mm-1), nn+ns+j,mm+ms+i);
                 }
-#if 0
+#if USE_MAIN_GET_APP_IN_MEM2D_FOR_PROGRESS
         main_get_gapp ()->progress_info_set_bar_fraction (0.8, 2);
 #endif
         
