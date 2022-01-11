@@ -1,15 +1,21 @@
 plugin_cat = 'control'
 install_path = gxsm4_plugin_dir / plugin_cat
 
+
 plugin_list = [
     { 'name': 'spm_scancontrol',
       'gschemas': [  'org.gnome.gxsm4.pcs.plugin-libspm-scancontrol.gschema.xml',
                      'org.gnome.gxsm4.pcsadjustments.plugin-libspm-scancontrol.gschema.xml' ] },
     { 'name': 'multidim_movie_control' },
+]
+
+if gsl.found() and soup.found()
+plugin_list += [
     { 'name': 'inet_json_external_scandata', 'sources' : ['jsmn.cpp'], 'deps': [ soup, gsl ],
       'gschemas': [ 'org.gnome.gxsm4.inet_json_settings.gschema.xml',
                     'org.gnome.gxsm4.pcs.plugin-libinet-json-external-scandata.gschema.xml' ] },
-]
+    ]
+endif
 
 
 foreach plugin : plugin_list

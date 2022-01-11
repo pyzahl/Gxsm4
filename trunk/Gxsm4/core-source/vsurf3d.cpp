@@ -81,7 +81,7 @@
 //#define GLSL_DEV_DIR "/home/percy/SVN/Gxsm-3.0/gl-400/"
 #endif
 
-
+#if ENABLE_3DVIEW_HAVE_GL_GLEW
 
 // ------------------------------------------------------------
 // glm, gli, GL support includes
@@ -90,6 +90,8 @@
 
 #define GL_DEBUG_L2 0
 #define GL_DEBUG_L3 1
+
+#endif // HAVE_GLEW
 
 // ------------------------------------------------------------
 // gschema creator for from internal recources
@@ -109,6 +111,8 @@ void surf3d_write_schema (){
 	gnome_res_destroy (gl_pref);
 }
 
+
+#if ENABLE_3DVIEW_HAVE_GL_GLEW
 
 // ------------------------------------------------------------
 // glsl data and code locations
@@ -1889,6 +1893,7 @@ private:
 };
 
 
+#endif // HAVE_GLEW
 
 // ------------------------------------------------------------
 // Class Surf3d -- derived form generic GXSM view class

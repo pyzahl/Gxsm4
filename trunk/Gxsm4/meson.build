@@ -118,17 +118,22 @@ cairo = dependency('cairo-gobject')
 #cairo = dependency('cairo')
 freet = dependency('freetype2')
 gset  = dependency('gsettings-desktop-schemas')
-x11   = dependency('X11')
-gl    = dependency('gl')
-glew  = dependency('glew')
+x11   = dependency('x11')
+gl    = dependency(['gl'], required : false)
+glew  = dependency(['glew'], required : false)
+if gl.found() and glew.found()
+  conf.set('ENABLE_3DVIEW_HAVE_GL_GLEW', 1)
+else
+  conf.set('ENABLE_3DVIEW_HAVE_GL_GLEW', 0)
+endif
 
-# netcdf = dependency('netcdf-cxx4')   # for the C/C++ NetCDF headers and libraries
+# netcdf = dependency('netcdf-cxx4')   # for the C/C++ NetCDF headers and libraries, new but incopatible w older version and gxsm
 # netcdfc = dependency('netcdf', language: 'c')   # for the C NetCDF headers and libraries
 # netcdfcpp = dependency('netcdf', language: 'cpp') # for the C++ NetCDF headers and libraries (need both!!)
 netcdf = declare_dependency(
     dependencies: [
-        cc.find_library('netcdf'),
-        cc.find_library('netcdf_c++'),
+        cc.find_library('netcdf'),      ## OK
+        cc.find_library('netcdf_c++'),  ## need this 3.2 legacy verion, use this local in Debain Testing
     ]
 )
 
@@ -139,12 +144,20 @@ fftw  = dependency('fftw3')
 xml   = dependency('libxml-2.0')
 gmod  = dependency('gmodule-2.0')
 gmodexp = dependency('gmodule-export-2.0')
-lz    = dependency('zlib', method : 'system')
+#lz    = dependency('zlib', method : 'system')
+lz    = cc.find_library('z')
 
 icuuc = cc.find_library('icuuc')
 
 # inet-json... for fitting
-gsl   = dependency(['gsl', 'gslcblas'])
+gsl   = dependency('gsl', required : false)
+##        dependency('gslcblas', required : false)
+
+if gsl.found()
+  conf.set('ENABLE_FITTING_HAVE_GSL', 1)
+else
+  conf.set('ENABLE_FITTING_HAVE_GSL', 0)
+endif
 
 # for pyremote...
 gtksourceview = dependency('gtksourceview-5', version : '>= 5.0')
@@ -155,10 +168,21 @@ python = dependency(['python3-embed'])
 dl   = platform_windows ? no_dep : cc.find_library('dl')
 
 ## OpenCV for feature match, etc. plugins:  old: -lopencv_core -lopencv_highgui -lopencv_features2d -lopencv_objdetect
-opencv = dependency('opencv4')
+opencv = dependency('opencv4', required : false)
+if gsl.found()
+  conf.set('ENABLE_FEATUREMATCH_HAVE_OPENCV', 1)
+else
+  conf.set('ENABLE_FEATUREMATCH_HAVE_OPENCV', 0)
+endif
 
 ## export quicktime movie plugin
-quicktime = dependency('libquicktime')
+quicktime = dependency('libquicktime', required : false)
+if quicktime.found()
+  conf.set('ENABLE_MOVIEEXPORT_HAVE_QT', 1)
+else
+  conf.set('ENABLE_MOVIEEXPORT_HAVE_QT', 0)
+endif
+
 
 ################################################################################
 # Check if Pango is built with a recent fontconfig
@@ -194,10 +218,12 @@ gxsm4_plugin_dir = get_option('libdir') / 'gxsm4-plugins'
 gxsm4_data_dir   = get_option('datadir') / 'gxsm4'
 localedir        = get_option('datadir') / 'locale'
 
-lib_global_gxsm_name =  'lib-global-'+meson.project_name() 
-lib_utils_gxsm_name  =  'lib-utils-'+meson.project_name() 
-lib_app_gxsm_name    =  'lib-app-'+meson.project_name() 
-lib_pcs_gxsm_name    =  'lib-pcs-'+meson.project_name() 
+lib_global_gxsm_name  =  'lib-global-'+meson.project_name() 
+lib_pcs_gxsm_name     =  'lib-pcs-'+meson.project_name() 
+lib_utils_gxsm_name   =  'lib-utils-'+meson.project_name() 
+lib_app_v3d_gxsm_name =  'lib-app-v3d-'+meson.project_name() 
+lib_gxsm_core_name    =  'lib-gxsm-core-'+meson.project_name() 
+lib_app_gxsm_name     =  'lib-app-'+meson.project_name() 
 
 absolute_data_dir = get_option('prefix') / get_option('datadir')+'/gxsm4'
 absolute_plugin_dir = get_option('prefix') / get_option('libdir') / 'gxsm4-plugins'

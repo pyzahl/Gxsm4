@@ -784,7 +784,6 @@ void AppBase::add_window_to_window_menu(const gchar *menu_item_label, const gcha
                                                           G_VARIANT_TYPE_BOOLEAN,
                                                           g_variant_new_boolean (true));
                 g_signal_connect (ti_action, "toggled", G_CALLBACK (AppBase::window_action_callback), this);
-                // GTK_APPLICATION ( main_get_gapp ()->get_application ()));
         } else {
                 ti_action = g_simple_action_new (tmpaction, NULL);
                 g_signal_connect (ti_action, "activate", G_CALLBACK (AppBase::window_action_callback), this);
