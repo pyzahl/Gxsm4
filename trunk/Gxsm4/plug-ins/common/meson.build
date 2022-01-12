@@ -2,18 +2,22 @@ plugin_cat = 'control'
 install_path = gxsm4_plugin_dir / plugin_cat
 
 plugin_list = [
-    { 'name': 'pyremote',
-      'deps': [python, gtksourceview],
-      'gschemas': [
-          'org.gnome.gxsm4.pcs.plugin-libpyremote.gschema.xml',
-          'org.gnome.gxsm4.pcsadjustments.plugin-libpyremote.gschema.xml' ]},
     { 'name': 'extra_scan_info', },
     { 'name': 'queryDSPinfo', },
     { 'name': 'ProbeIndicator', },
     { 'name': 'PanView' },
 ]
 
-
+if python.found() and gtksourceview.found()
+    plugin_list += [
+    { 'name': 'pyremote',
+      'deps': [python, gtksourceview],
+      'gschemas': [
+          'org.gnome.gxsm4.pcs.plugin-libpyremote.gschema.xml',
+          'org.gnome.gxsm4.pcsadjustments.plugin-libpyremote.gschema.xml' ]},
+    ]
+endif
+    
 foreach plugin : plugin_list
   plugin_name = plugin.get('name')
   plugin_sources = [ plugin.get('sources', plugin_name + '.cpp') ]
