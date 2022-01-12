@@ -748,14 +748,15 @@ ViewControl::ViewControl (Gxsm4app *app,
 	gtk_scrolled_window_set_child (GTK_SCROLLED_WINDOW (scrollarea), canvas);
         gtk_widget_show (canvas);
 
-        // DnD Files
-        GtkDropTarget *target = gtk_drop_target_new (G_TYPE_INVALID, GDK_ACTION_COPY);
-        // This widget accepts two types of drop types: GFile objects
-        GType types[1] = { G_TYPE_FILE };
-        gtk_drop_target_set_gtypes (target, types, G_N_ELEMENTS (types));
-        g_signal_connect (target, "drop", G_CALLBACK (AppBase::gapp_load_on_drop_files), this);
-        gtk_widget_add_controller (canvas, GTK_EVENT_CONTROLLER (target));
-
+        if (ChNo >= 0){
+                // DnD Files
+                GtkDropTarget *target = gtk_drop_target_new (G_TYPE_INVALID, GDK_ACTION_COPY);
+                // This widget accepts two types of drop types: GFile objects
+                GType types[] = { GDK_TYPE_FILE_LIST }; // appect multiple file to add as movie
+                gtk_drop_target_set_gtypes (target, types, G_N_ELEMENTS (types));
+                g_signal_connect (target, "drop", G_CALLBACK (AppBase::gapp_load_on_drop_files), GINT_TO_POINTER (ChNo));
+                gtk_widget_add_controller (canvas, GTK_EVENT_CONTROLLER (target));
+        }
         // Actions
         obj_drag_start = false;
         pointer_coord_display = false;

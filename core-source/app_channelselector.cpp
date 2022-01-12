@@ -176,7 +176,6 @@ ChannelSelector::ChannelSelector (Gxsm4app *app, int ChAnz):AppBase(app){
         gtk_widget_show (wid); // FIX-ME GTK4 SHOWALL
 
         // create channels and add to grid
-        //GType types[2] = { GDK_TYPE_FILE_LIST, G_TYPE_FILE }; // does not work
         // GType types[1] = { G_TYPE_FILE };
         GType types[] = { GDK_TYPE_FILE_LIST };
         GtkDropTarget *target;
@@ -189,7 +188,7 @@ ChannelSelector::ChannelSelector (Gxsm4app *app, int ChAnz):AppBase(app){
                 gtk_widget_show (wid); // FIX-ME GTK4 SHOWALL
                 target = gtk_drop_target_new (G_TYPE_INVALID, GDK_ACTION_COPY);
                 gtk_drop_target_set_gtypes (target, types, G_N_ELEMENTS (types));
-                g_signal_connect (target, "drop", G_CALLBACK (AppBase::gapp_load_on_drop_files), this);
+                g_signal_connect (target, "drop", G_CALLBACK (AppBase::gapp_load_on_drop_files), GINT_TO_POINTER (i-1));
                 gtk_widget_add_controller (GTK_WIDGET (wid), GTK_EVENT_CONTROLLER (target));
 
 		/* View */
@@ -200,7 +199,7 @@ ChannelSelector::ChannelSelector (Gxsm4app *app, int ChAnz):AppBase(app){
                 gtk_widget_show (wid); // FIX-ME GTK4 SHOWALL
                 target = gtk_drop_target_new (G_TYPE_INVALID, GDK_ACTION_COPY);
                 gtk_drop_target_set_gtypes (target, types, G_N_ELEMENTS (types));
-                g_signal_connect (target, "drop", G_CALLBACK (AppBase::gapp_load_on_drop_files), this);
+                g_signal_connect (target, "drop", G_CALLBACK (AppBase::gapp_load_on_drop_files), GINT_TO_POINTER (i-1));
                 gtk_widget_add_controller (GTK_WIDGET (wid), GTK_EVENT_CONTROLLER (target));
 
 		// Add Channel View Modes
@@ -221,7 +220,7 @@ ChannelSelector::ChannelSelector (Gxsm4app *app, int ChAnz):AppBase(app){
                 gtk_widget_show (wid); // FIX-ME GTK4 SHOWALL
                 target = gtk_drop_target_new (G_TYPE_INVALID, GDK_ACTION_COPY);
                 gtk_drop_target_set_gtypes (target, types, G_N_ELEMENTS (types));
-                g_signal_connect (target, "drop", G_CALLBACK (AppBase::gapp_load_on_drop_files), this);
+                g_signal_connect (target, "drop", G_CALLBACK (AppBase::gapp_load_on_drop_files), GINT_TO_POINTER (i-1));
                 gtk_widget_add_controller (GTK_WIDGET (wid), GTK_EVENT_CONTROLLER (target));
 
                 // g_print ("ChannelSelector::ChannelSelector 8 MD [%d]\n",i);

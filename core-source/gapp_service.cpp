@@ -1024,28 +1024,32 @@ void AppBase::LoadGeometry(){
 
 
 void AppBase::drop_list_file_open_gfunc (GFile *gf,  gpointer *data){
-        int channel = GPOINTER_TO_INT (data);
+        //int channel = GPOINTER_TO_INT (data);
         gchar *fn = g_file_get_parse_name (gf);
         g_message ("Loading File %s, ", fn);
-        main_get_gapp () -> xsm->ActivateChannel (channel);
+        //main_get_gapp () -> xsm->ActivateChannel (channel);
         main_get_gapp () -> xsm->load (fn);
         g_free (fn);
 }
                 
 gboolean AppBase::gapp_load_on_drop_files (GtkDropTarget *target, const GValue  *value, double x, double y, gpointer data){
-        ChannelSelector *ch = data;
         // Call the appropriate setter depending on the type of data
         // that we received
         // gchar * strVal = g_strdup_value_contents (value); g_message ("target gvalue: %s\n", strVal); free (strVal);
-        if (G_VALUE_HOLDS (value, G_TYPE_BOXED)){
-                int channel = GPOINTER_TO_INT (g_object_get_data  (G_OBJECT (gtk_event_controller_get_widget (GTK_EVENT_CONTROLLER (target))), "ChNo"));
+        int channel = GPOINTER_TO_INT (data);
+        if (channel >= 0 && channel < 99){
                 main_get_gapp () -> xsm->ActivateChannel (channel);
+        }else{
+                channel = 0;
+                main_get_gapp () -> xsm->ActivateFreeChannel ();
+        }
+        
+        if (G_VALUE_HOLDS (value, G_TYPE_BOXED)){
                 g_message ("FILE LIST DROPPED... ");
                 g_slist_foreach (g_value_get_boxed (value), AppBase::drop_list_file_open_gfunc, GINT_TO_POINTER (channel));
         } else if (G_VALUE_HOLDS (value, G_TYPE_FILE)){
                 gchar *fn = g_file_get_parse_name (g_value_get_object (value));
                 g_message ("FILE DROPPED %s", fn);
-                main_get_gapp () -> xsm->ActivateChannel (GPOINTER_TO_INT (g_object_get_data  (G_OBJECT (gtk_event_controller_get_widget (GTK_EVENT_CONTROLLER (target))), "ChNo")));
                 main_get_gapp () -> xsm->load (fn);
                 g_free (fn);
         }
