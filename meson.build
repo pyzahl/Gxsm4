@@ -123,7 +123,7 @@ gl    = dependency(['gl'], required : false)
 #glew  = dependency(['glew'], required : false) ## work perfect for local Debian Testing build, not recognized via flatpak 
 glew  = cc.find_library('GLEW')   ## required : false)  ## well, still required, compile will fails with missing GL/gl.h/glm.h.....
 
-build_gxsm_view3d = true
+build_gxsm_view3d = false
 if gl.found() and glew.found() and build_gxsm_view3d
     conf.set('ENABLE_3DVIEW_HAVE_GL_GLEW', 1)
 else
@@ -162,10 +162,10 @@ else
   conf.set('ENABLE_FITTING_HAVE_GSL', 0)
 endif
 
-# for pyremote...
-gtksourceview = dependency('gtksourceview-5', version : '>= 5.0')
-python = dependency(['python3-embed'])
-# gdkpixbu = dependency('gdk-pixbuf-2.0')
+# for pyremote plugin...
+gtksourceview = dependency('gtksourceview-5', version : '>= 5.0', required : false)
+python = dependency(['python3-embed'], required : false)
+# gdkpixbu = dependency('gdk-pixbuf-2.0') ## default part of gtk4
 
 ## plugins do need for dynamic load lib aka "-ldl"
 dl   = platform_windows ? no_dep : cc.find_library('dl')
