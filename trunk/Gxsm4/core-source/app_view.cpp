@@ -597,6 +597,8 @@ ViewControl::ViewControl (Gxsm4app *app,
 	GtkWidget *notebook;
 	GtkWidget *scrolled_window;
 
+        set_nodestroy ();
+        
         current_vobject = NULL;
         destruction_in_progress = false;
         tip_follow_flag = false;
@@ -1170,22 +1172,26 @@ ViewControl::ViewControl (Gxsm4app *app,
 }
 
 ViewControl::~ViewControl (){
-	XSM_DEBUG (DBG_L2,  "~ViewControl" );
+	XSM_DEBUG (DBG_L2,  "ViewControl::~ViewControl -- destroy" );
 
-        g_object_unref (v_popup_menu);
-        g_object_unref (v_popup_menu_cv);
+	XSM_DEBUG (DBG_L4,  "ViewControl::~ViewControl -- unref menus" );
+        //g_object_unref (v_popup_menu);
+        //g_object_unref (v_popup_menu_cv);
         
         destruction_in_progress = true;
 
+	XSM_DEBUG (DBG_L4,  "ViewControl::~ViewControl -- store Ev settings" );
         g_settings_set_double (view_settings, "view-cursor-radius", CursorRadius);
         g_settings_set_double (view_settings, "view-max-number-events", MaxNumberEvents);
         g_settings_set_double (view_settings, "view-cursor-radius", ArrowSize);
  
+	XSM_DEBUG (DBG_L4,  "ViewControl::~ViewControl -- remove objects" );
 	RemoveObjects();
 
 	if(RedLine)
 		delete RedLine;
 
+	XSM_DEBUG (DBG_L4,  "ViewControl::~ViewControl -- delete Ev Plots, Objects, ..." );
         for (int l=0; l<4; ++l)
                 if (EventPlot[l])
                         delete EventPlot[l];
@@ -1199,6 +1205,7 @@ ViewControl::~ViewControl (){
 
 	RemoveIndicators();
 
+	XSM_DEBUG (DBG_L4,  "ViewControl::~ViewControl -- delete BP" );
         delete view_bp;
         delete pe_bp;
         delete ue_bp;
@@ -1206,19 +1213,24 @@ ViewControl::~ViewControl (){
 	delete ximg;
 	delete vinfo;
 
-        g_clear_object (&view_settings);
+        //g_clear_object (&view_settings);
+
+        unset_nodestroy ();
+        destroy ();
+        
+	XSM_DEBUG (DBG_L4,  "ViewControl::~ViewControl -- destroy completed." );
 }
 
 gboolean ViewControl::check_on_object(VObjectEvent* event){
         tmp_effected = 0;
-        g_message ("** CHECK ON OBJECTs **");
+        XSM_DEBUG_GP (DBG_L5, "** CHECK ON OBJECTs **");
 
         if (tmp_object_op){
-                g_message ("**-- in grab mode --");
+                XSM_DEBUG_GP (DBG_L5, "**-- in grab mode --");
                 if (!tmp_object_op->check_event (event, tmp_xy))
                         tmp_object_op = NULL;
                         
-                g_message ("**-- CHECK ON OBJECT RETURN --");
+                XSM_DEBUG_GP (DBG_L5, "**-- CHECK ON OBJECT RETURN --");
                 return tmp_effected > 0;
         }
 
@@ -1232,7 +1244,7 @@ gboolean ViewControl::check_on_object(VObjectEvent* event){
                 if (osd_item[i])
                         check_obj_event (osd_item[i], this);
 
-        g_message ("** #FOUND OBJECTs at XY: %d", tmp_effected);
+        XSM_DEBUG_GP (DBG_L5, "** #FOUND OBJECTs at XY: %d", tmp_effected);
         return tmp_effected > 0;
 }
 
@@ -1245,7 +1257,7 @@ void ViewControl::drag_motion (GtkEventControllerMotion *motion, gdouble x, gdou
         vc->tmp_xy = mouse_pix_xy; // data for foreach
 
         if (vc->obj_drag_start){
-                g_message ("DRAG MOTION xy(%g %g)", x,y);
+                 XSM_DEBUG_GP (DBG_L5, "DRAG MOTION xy(%g %g)", x,y);
                         // 1st check if mouse on editable object
 
                 VObjectEvent event = { VOBJ_EV_BUTTON_1, VOBJ_EV_MOTION_NOTIFY,x,y  };
@@ -1253,7 +1265,7 @@ void ViewControl::drag_motion (GtkEventControllerMotion *motion, gdouble x, gdou
                 vc->tmp_event = &event;     // data for foreach
                 vc->check_on_object (&event);
 
-                g_message ("DRAG BEGIN, FOUND OBJECTs %d", vc->tmp_effected);
+                XSM_DEBUG_GP (DBG_L5, "DRAG BEGIN, FOUND OBJECTs %d", vc->tmp_effected);
 
                 if (vc->tmp_effected > 0){ // handled by object, done. no more action here!
                         vc->obj_drag_start = false;
@@ -1266,7 +1278,7 @@ void ViewControl::pressed_cb (GtkGesture *gesture, int n_press, double x, double
         static double mouse_pix_xy[2];
         double zf = vc->vinfo->GetZfac();
         int button = gtk_gesture_single_get_current_button (GTK_GESTURE_SINGLE (gesture));
-        g_message ("PRESSED %d #%d at %g %g", button, n_press, x,y);
+        XSM_DEBUG_GP (DBG_L5, "PRESSED %d #%d at %g %g", button, n_press, x,y);
 
         // undo cairo image translation/scale:
         mouse_pix_xy[0] = (x - (double)(vc->rulewidth+vc->border/zf))/zf;
@@ -1280,7 +1292,7 @@ void ViewControl::pressed_cb (GtkGesture *gesture, int n_press, double x, double
                         vc->tmp_event = &event;
                         vc->obj_drag_start = vc->check_on_object (&event);
 
-                        g_message ("PRESSED BTN1 ... SETTING DRAG START = %s", vc->obj_drag_start?"TRUE":"FALSE");
+                        XSM_DEBUG_GP (DBG_L5, "PRESSED BTN1 ... SETTING DRAG START = %s", vc->obj_drag_start?"TRUE":"FALSE");
                         // 1st check if mouse on editable object
 
                 }
@@ -1346,7 +1358,7 @@ void ViewControl::pressed_cb (GtkGesture *gesture, int n_press, double x, double
                                 if (vc->osd_item[i])
                                         vc->check_obj_event (vc->osd_item[i], vc);
 
-                        g_message ("DRAG BEGIN, FOUND OBJECTs %d", vc->tmp_effected);
+                        XSM_DEBUG_GP (DBG_L5, "DRAG BEGIN, FOUND OBJECTs %d", vc->tmp_effected);
                 }
 
                 // do scan window menu popup
@@ -1361,7 +1373,7 @@ void ViewControl::pressed_cb (GtkGesture *gesture, int n_press, double x, double
 void ViewControl::released_cb (GtkGesture *gesture, int n_press, double x, double y, ViewControl *vc){
         double mouse_pix_xy[2];
         int button = gtk_gesture_single_get_current_button (GTK_GESTURE_SINGLE (gesture));
-        g_message ("RELEASED %d #%d at %g %g  DSF: %d", button, n_press, x,y, vc->obj_drag_start);
+        XSM_DEBUG_GP (DBG_L5, "RELEASED %d #%d at %g %g  DSF: %d", button, n_press, x,y, vc->obj_drag_start);
 
         // undo cairo image translation/scale:
         double zf = vc->vinfo->GetZfac();
@@ -1392,9 +1404,7 @@ void ViewControl::released_cb (GtkGesture *gesture, int n_press, double x, doubl
 
 
 void ViewControl::AppWindowInit(const gchar *title, const gchar *sub_title){
-	XSM_DEBUG (DBG_L2,  "ViewControl::AppWindowInit -- header bar,..." );
-
-        g_message ("ViewControl::AppWindowInit** <%s : %s> **", title, sub_title);
+        XSM_DEBUG_GM (DBG_L2, "ViewControl::AppWindowInit** <%s : %s> **", title, sub_title);
         app_window = gxsm4_app_window_new (GXSM4_APP (main_get_gapp ()->get_application ()));
         window = GTK_WINDOW (app_window);
         g_signal_connect (window, "close-request",  G_CALLBACK (ViewControl::view_window_close_callback), this);
@@ -1844,7 +1854,7 @@ void ViewControl::add_event_obj(ScanEvent *se, ViewControl *vc)
 
 void ViewControl::RemoveEventObjects (VObject *vo){
 // unsets object flag and delete obj!
-        g_message ("ViewControl::RemoveEventObjects: %s ", vo? "single":"all");
+        XSM_DEBUG_GM (DBG_L4, "ViewControl::RemoveEventObjects: %s ", vo? "single":"all");
 
         if (greference_eventlist){
                 g_slist_free (greference_eventlist);
@@ -2332,7 +2342,7 @@ void  ViewControl::obj_event_plot_callback (GtkWidget* widget,
                                 
                                 vc->EventPlot[l]->scan1d->mem2d->Resize (num_count, num_nn);
                                 int i_dec=0;
-                                g_message ("num_count %d, nn %d, [Y nn_dec %d, X nn_mul %d] num_nn %d", num_count, nn, nn_dec, nn_mul, num_nn);
+                                XSM_DEBUG_GM (DBG_L2, "num_count %d, nn %d, [Y nn_dec %d, X nn_mul %d] num_nn %d", num_count, nn, nn_dec, nn_mul, num_nn);
                                 for(int i = 0; i < nn && i_dec < num_nn; i+=nn_dec, ++i_dec){
                                         ev = all;
                                         //g_message ("AddScan %d %d", i, i_dec);
@@ -2393,7 +2403,7 @@ void  ViewControl::obj_event_plot_callback (GtkWidget* widget,
                                                                         vc->EventPlot[l]->scan1d->mem2d->data->SetXLookup (ecount, proj_coord);
                                                                         vc->EventPlot[l]->scan1d->mem2d->data->SetYLookup (i_dec, pe->get (i, xi));
                                                                 } else {
-                                                                        g_message ("count out of range: %d %d", ecount, num_count);
+                                                                        XSM_DEBUG_GW (DBG_L1, "count out of range: %d %d", ecount, num_count);
                                                                 }
                                                                 ++ecount;
                                                         }
@@ -2434,7 +2444,7 @@ void  ViewControl::obj_event_plot_callback (GtkWidget* widget,
                                                 if (dy > ymax-y) dy = ymax-y;
                                         ev = g_slist_next (ev);
                                 }
-                                g_message ("MAP: #%d [%g %g] .. [%g %g] @ [%g %g]", count, xmin,ymin, xmax,ymax, dx,dy);
+                                XSM_DEBUG_GM (DBG_L1, "MAP: #%d [%g %g] .. [%g %g] @ [%g %g]", count, xmin,ymin, xmax,ymax, dx,dy);
                                 
                                 vc->EventPlot[l]->RemoveScans ();
 
@@ -2689,7 +2699,7 @@ int GetIArray (gchar *line, int *c, int count){
                 if (p[k]){
                         c[i] = atoi (p[k++]);
                 }else{
-                        g_warning ("Error reading Int Array at [%d].",i);
+                        XSM_DEBUG_GW (DBG_L1, "Error reading Int Array at [%d].",i);
                         g_strfreev (p);
                         return -1;
                 }
@@ -2704,7 +2714,7 @@ void GetColor (gchar *line, const gchar *tag, gfloat *c){
 		p0 += strlen(tag);
 
                 if (GetFArray (p0, c, 4))
-                        g_message ("Error reading color %s.", tag);
+                        XSM_DEBUG_GW (DBG_L1, "Error reading color %s.", tag);
 	}
 }
 
@@ -2738,7 +2748,7 @@ gfloat GetNumber (gchar *line, const gchar *tag){
 		p0 += strlen(tag);
                 gfloat x[1] = {0.};
                 if (GetFArray (p0, x, 1))
-                        g_message("Error reading Number %s",tag);
+                        XSM_DEBUG_GW (DBG_L1, "Error reading Number %s",tag);
                 return x[0];
 	}
 	return 0.;
@@ -3445,9 +3455,9 @@ void ViewControl::view_file_kill_callback (GSimpleAction *simple, GVariant *para
 }
 
 gboolean ViewControl::view_window_close_callback (GtkWidget *widget, ViewControl *vc){
-        g_message ("ViewControl::view_window_close_callback CH%d", vc->chno);
+        XSM_DEBUG_GM (DBG_L2, "ViewControl::view_window_close_callback CH%d", vc->chno);
         if (vc->chno < 0) return;
-        main_get_gapp ()->xsm->SetMode(vc->chno, ID_CH_M_OFF);
+        main_get_gapp ()->xsm->SetMode(vc->chno, ID_CH_M_OFF); // initiate destroy after "KILL" user verify
 }
 
 void ViewControl::view_edit_copy_callback (GSimpleAction *simple, GVariant *parameter, 

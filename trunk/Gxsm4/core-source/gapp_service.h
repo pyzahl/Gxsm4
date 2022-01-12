@@ -861,9 +861,12 @@ public:
                 width  = (gint) window_geometry[WGEO_WIDTH]/scale;
                 height = (gint) window_geometry[WGEO_HEIGHT]/scale;
         };
-        
+
+        void set_nodestroy(){ nodestroy=TRUE; };
+        void unset_nodestroy(){ nodestroy=FALSE; };
+
 protected:
-	void destroy(){ if (window) { gtk_window_destroy (GTK_WINDOW (window)); window=NULL; } nodestroy=TRUE; };
+        void destroy(){ if (window) { gtk_window_destroy (GTK_WINDOW (window)); window=NULL; } nodestroy=TRUE; };
 	int nodestroy;
 
         Gxsm4app* gxsm4app; // MAIN GXSM4 APPLICTAION

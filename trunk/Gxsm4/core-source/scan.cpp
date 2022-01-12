@@ -106,6 +106,7 @@ Scan::Scan(int vtype, int vflg, int ChNo, SCAN_DATA *vd, ZD_TYPE mtyp, Gxsm4app 
 }
 
 Scan::~Scan(){
+        XSM_DEBUG (DBG_L2, "Scan::~Scan ** closing...");
 	if(State==NOT_SAVED)
 		;
   	if(view) delete view; // ggf. alten View löschen
@@ -113,8 +114,10 @@ Scan::~Scan(){
 
 	free_time_elements ();
 
+        XSM_DEBUG (DBG_L2, "Scan::~Scan ** delete Mem2D");
 	delete mem2d; // MemObj. löschen
 
+        XSM_DEBUG (DBG_L2, "Scan::~Scan ** unref all objects");
 	destroy_all_objects ();
         GXSM_UNREF_OBJECT (GXSM_GRC_SCANOBJ);
         GXSM_LOG_DATAOBJ_ACTION (GXSM_GRC_SCANOBJ, "destructor");
@@ -122,6 +125,7 @@ Scan::~Scan(){
         if (world_map)
                 delete world_map;
 
+        XSM_DEBUG (DBG_L2, "Scan::~Scan ** completed.");
 }
 
 int Scan::free_time_elements (){

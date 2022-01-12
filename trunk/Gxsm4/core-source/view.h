@@ -83,7 +83,6 @@ public:
         View(Scan *sc, int ChNo);
         virtual ~View();
 
-        virtual void hide();
         virtual ViewControl* Get_ViewControl () { return NULL; };
 
         virtual int draw(int zoomoverride=FALSE);
@@ -171,7 +170,6 @@ public:
         virtual ~Grey2D();
         virtual ViewControl* Get_ViewControl () { return viewcontrol; };
 
-        virtual void hide();
         virtual int draw(int zoomoverride=FALSE);
         virtual int update(int y1, int y2);
         virtual void add_object(int type, gpointer data);
@@ -311,7 +309,6 @@ public:
         virtual ~Surf3d();
 
         void end_gl ();
-        virtual void hide();
         virtual int draw(int zoomoverride=FALSE);
         virtual int update(int y1, int y2);
         virtual void ZoomIn(){};

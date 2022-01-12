@@ -88,12 +88,7 @@ View::View(Scan *sc, int ChNo){
 }
 
 View::~View(){
-	XSM_DEBUG (DBG_L2, "View::~View");
-	hide();
-}
-
-void View::hide(){
-	XSM_DEBUG (DBG_L2, "View::hide");
+	XSM_DEBUG (DBG_L2, "View::~View -- destroy");
 }
 
 void View::update_mxyz_from_points (){
@@ -251,12 +246,7 @@ Grey2D::Grey2D():View(){
 }
 
 Grey2D::~Grey2D(){
-	XSM_DEBUG (DBG_L2, "Grey2D::~");
-	hide();
-}
-
-void Grey2D::hide(){
-	XSM_DEBUG (DBG_L2, "Grey2D::hide");
+	XSM_DEBUG (DBG_L2, "Grey2D::~Grey2D -- destroy");
 	if(viewcontrol)
 		delete viewcontrol;
 	viewcontrol=NULL;

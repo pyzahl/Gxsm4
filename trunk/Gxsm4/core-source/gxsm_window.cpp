@@ -91,11 +91,12 @@ gxsm4_app_window_dispose (GObject *object)
 
         // FIX-ME !!
         
-        //GList *windows = gtk_application_get_windows (GTK_APPLICATION (priv->gxsm4app));
-        //Gxsm4appWindow *window = priv->self;
-        //windows = g_list_remove (windows, window);
+        GList *windows = gtk_application_get_windows (GTK_APPLICATION (priv->gxsm4app));
+        Gxsm4appWindow *window = priv->self;
+        windows = g_list_remove (windows, window);
+        XSM_DEBUG_GM (DBG_L4,"gxsm4_app_window_dispose **** # Windows in List: %u,  time: %ul us", g_list_length (windows), g_get_real_time());
         g_clear_object (&priv->settings);
-        //XSM_DEBUG_GM (DBG_L1,"gxsm4_app_window_dispose **** # Windows in List: %u,  time: %ul us", g_list_length (windows), g_get_real_time());
+        XSM_DEBUG_GM (DBG_L4,"gxsm4_app_window_dispose **** dispose object");
         G_OBJECT_CLASS (gxsm4_app_window_parent_class)->dispose (object);
 }
 
