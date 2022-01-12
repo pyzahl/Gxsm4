@@ -150,7 +150,7 @@ int main (int argc, char **argv)
 
         pcs_set_current_gschema_group ("core-init");
 
-        GXSM_STARTUP_MESSAGE_VERBOSE ("GXSM4 g_option_context_new for comand line option parsing");
+        GXSM_STARTUP_MESSAGE_VERBOSE ("GXSM4 g_option_context_new for command line option parsing");
 
         GOptionContext *context = g_option_context_new ("List of loadable file(s) .nc, ...");
         g_option_context_add_main_entries (context, gxsm_options, GETTEXT_PACKAGE);
@@ -161,11 +161,11 @@ int main (int argc, char **argv)
 
         if (!g_option_context_parse (context, &argc, &argv, &error)){
                 GXSM_STARTUP_MESSAGE_VERBOSE ("GXSM4 option parse failed.");
-                g_error ("GXSM4 comand line option parsing failed: %s", error->message);
+                g_error ("GXSM4 command line option parsing failed: %s", error->message);
                 exit (1);
         } else {
                 GXSM_STARTUP_MESSAGE_VERBOSE ("GXSM4 option parse RESULTS:");
-                GXSM_STARTUP_MESSAGE_VERBOSE ("GXSM4 comandline option parsing results:");
+                GXSM_STARTUP_MESSAGE_VERBOSE ("GXSM4 commandline option parsing results:");
                 GXSM_STARTUP_MESSAGE_VERBOSE ("=> xsmres.HardwareTypeCmd = %s", xsmres.HardwareTypeCmd);
                 GXSM_STARTUP_MESSAGE_VERBOSE ("=> xsmres.DSPDevCmd  .... = %s", xsmres.DSPDevCmd);
                 GXSM_STARTUP_MESSAGE_VERBOSE ("=> xsmres.UnitCmd ....... = %s", xsmres.UnitCmd);

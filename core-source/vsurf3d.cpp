@@ -1928,7 +1928,10 @@ Surf3d::~Surf3d(){
 
         if (v3dControl_pref_dlg)
                 gnome_res_destroy (v3dControl_pref_dlg);
-        hide();
+
+        if (v3dcontrol)
+		delete v3dcontrol;
+	v3dcontrol = NULL;
 
         delete_surface_buffer ();
         g_free (v3dControl_pref_def);
@@ -1941,13 +1944,6 @@ void  Surf3d::end_gl () {
         gl_tess = NULL;
 #endif
 }        
-
-void Surf3d::hide(){
-	if (v3dcontrol)
-		delete v3dcontrol;
-	v3dcontrol = NULL;
-	XSM_DEBUG (GL_DEBUG_L2, "Surf3d::hide");
-}
 
 void Surf3d::SaveImagePNG(GtkGLArea *glarea, const gchar *fname_png){
 	mainprog_info minfo;

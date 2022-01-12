@@ -148,7 +148,7 @@ G_DEFINE_TYPE(Gxsm4app, gxsm4_app, GTK_TYPE_APPLICATION);
 static void
 gxsm4_app_init (Gxsm4app *app)
 {
-        XSM_DEBUG(DBG_L2, "gxsm4_app_init =======================================================" );
+        XSM_DEBUG(DBG_L2, "gxsm4_app_init -- nothing to do here =================================" );
 }
 
 
@@ -248,9 +248,9 @@ gxsm4_app_startup (GApplication *app)
 	add_accelerator (app, "win.fix-zoom::zoomfactor-2x", "<Shift>W");
 	add_accelerator (app, "win.fix-zoom::zoomfactor-1by2", "W");
 	add_accelerator (app, "win.fix-zoom::zoomfactor-fitwidth", "<Ctrl>W");
-	add_accelerator (app, "win.zoom-in", "+");
-	add_accelerator (app, "win.zoom-in", "=");
-	add_accelerator (app, "win.zoom-out", "-");
+	add_accelerator (app, "win.zoom-in", "<Ctrl>=");
+	add_accelerator (app, "win.zoom-in", "<Ctrl>+");
+	add_accelerator (app, "win.zoom-out", "<Ctrl>-");
 
 	add_accelerator (app, "win.gear-menu", "F10");
 
@@ -428,6 +428,8 @@ gxsm4_app_class_init (Gxsm4appClass *klass)
         G_APPLICATION_CLASS (klass)->startup = gxsm4_app_startup;
         G_APPLICATION_CLASS (klass)->activate = gxsm4_app_activate;
         G_APPLICATION_CLASS (klass)->open = gxsm4_app_open;
+
+        XSM_DEBUG(DBG_L2, "gxsm4_app_class_init complete =================================================" );
 }
 
 Gxsm4app *

@@ -80,7 +80,7 @@ public:
 
         void vpdata_view_destroy (){
                 if (!vpdata_gr_matrix_view && vpdata_graph_app_window){
-                        gtk_window_destroy (GTK_WINDOW (vpdata_graph_app_window));
+                        //gtk_window_destroy (GTK_WINDOW (vpdata_graph_app_window)); // destoys with AppBase
                         vpdata_graph_app_window = NULL;
                         vpdata_graph_window = NULL;
                         vpdata_graph_grid = NULL;

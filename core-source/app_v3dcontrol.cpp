@@ -217,7 +217,6 @@ V3dControl::~V3dControl (){
         ((Surf3d*)g_object_get_data (G_OBJECT (glarea), "vdata"))->end_gl () ;
         
 	XSM_DEBUG(DBG_L2, "~V3dControl in" );
-	gtk_window_destroy (GTK_WINDOW (glarea));
 	XSM_DEBUG(DBG_L2, "~V3dControl out" );
 }
 

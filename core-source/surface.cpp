@@ -224,12 +224,14 @@ int Surface::SetMode(int Channel, int choice, int force){
 					}
 					if (MasterScan == scan[Channel]) // remove reference!!!
 						MasterScan = NULL;
+                                        XSM_DEBUG (DBG_L2, "Surface::SetMode: OFF confirmed -- delete scan in CH" << Channel);
 					delete scan[Channel];
 					scan[Channel] = NULL;
 					ChannelScanMode[Channel] = choice;
                                         gapp->channelselector->SetInfo (Channel, "-");
 
 				}else{ // locked and in used ...
+                                        XSM_DEBUG (DBG_L2, "Surface::SetMode: OFF aborted -- setting CH" << Channel << " to ON.");
 					ChannelMode[Channel] = ID_CH_M_ON;
 					ChannelScanMode[Channel] = ID_CH_M_ON;
 				}
