@@ -221,6 +221,8 @@ gxsm4_plugin_dir = get_option('libdir') / 'gxsm4-plugins'
 gxsm4_data_dir   = get_option('datadir') / 'gxsm4'
 localedir        = get_option('datadir') / 'locale'
 
+schemas_dir      = get_option('prefix') / get_option('datadir') / 'glib-2.0' / 'schemas'
+
 lib_global_gxsm_name  =  'lib-global-'+meson.project_name() 
 lib_pcs_gxsm_name     =  'lib-pcs-'+meson.project_name() 
 lib_utils_gxsm_name   =  'lib-utils-'+meson.project_name() 
