@@ -6,6 +6,7 @@ plugin_list = [
     { 'name': 'probe_image_extract' },
 ]
 
+settings_schemas_list = []
 
 foreach plugin : plugin_list
   plugin_name = plugin.get('name')
@@ -13,6 +14,7 @@ foreach plugin : plugin_list
   plugin_deps = plugin.get('deps', []) + all_plugin_deps
   plugin_cflags = plugin.get('cflags', []) + all_cflags
   plugin_schemas = plugin.get('gschemas', [])
+  settings_schemas_list += plugin_schemas
 
   if plugin_schemas.length() > 0
       plugin_gdbus_src = gnome.gdbus_codegen('gxsm4-'+plugin_cat+'-'+plugin_name+'-gschema',
@@ -26,7 +28,7 @@ foreach plugin : plugin_list
   
   if platform_windows
     plugin_rc = configure_file(
-      input : gimp_plugins_rc.full_path(),
+      input : gxsm_plugins_rc.full_path(),
       output: plugin_name + '.rc',
       copy: true,
     )
@@ -60,5 +62,10 @@ foreach plugin : plugin_list
     install: true,
     install_dir: install_path
   )
+
 endforeach
 
+if plugin_schemas.length() > 0
+      gnome.compile_schemas(depend_files: files(settings_schemas_list))
+      meson.add_install_script('glib-compile-schemas', schemas_dir)
+endif

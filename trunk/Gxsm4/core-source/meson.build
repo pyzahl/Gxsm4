@@ -12,18 +12,20 @@ gnome = import('gnome')
 # gxsm4_LDFLAGS = -export-dynamic $(GXSM4_LIBS)
 
 
-# The returned source would be passed to another target
-gxsm4_gdbus_src += gnome.gdbus_codegen('gxsm4-core-gschema',
-  sources: [
+gxsm4_settings_schemas = [
       'org.gnome.gxsm4.gschema.xml',
       'org.gnome.gxsm4.window-geometry.gschema.xml',
       'org.gnome.gxsm4.preferences.gschema.xml',
       'org.gnome.gxsm4.gl.gschema.xml',
       'org.gnome.gxsm4.pcs.mainwindow.gschema.xml',
       'org.gnome.gxsm4.pcsadjustments.mainwindow.gschema.xml'
-      ],
-  interface_prefix : 'org.gnome.',
-  namespace : 'gxsm4'
+      ]
+
+# The returned source would be passed to another target
+gxsm4_gdbus_src += gnome.gdbus_codegen('gxsm4-core-gschema',
+                                       sources: gxsm4_settings_schemas,
+                                       interface_prefix : 'org.gnome.',
+                                       namespace : 'gxsm4'
 )
 
 gxsm4_resources = gnome.compile_resources(
@@ -137,3 +139,7 @@ executable(
     export_dynamic: true,
     install: true
 )
+
+gnome.compile_schemas(depend_files: files(gxsm4_settings_schemas))
+
+meson.add_install_script('glib-compile-schemas', schemas_dir)
