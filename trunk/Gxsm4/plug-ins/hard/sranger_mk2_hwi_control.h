@@ -941,12 +941,20 @@ public:
 	static int config_output (GtkWidget *widget, DSPMoverControl *dspc);
 	static int CmdAction(GtkWidget *widget, DSPMoverControl *dspc);
         static void direction_button_pressed_cb (GtkGesture *gesture, int n_press, double x, double y, DSPMoverControl *dspc){
-                g_message ("PRESSED");
+                g_message ("PRESSED,  CMD=%d", GPOINTER_TO_INT (g_object_get_data(g_object_get_data( G_OBJECT (gesture), "Button"), "DSP_cmd")));
                 dspc->CmdAction (g_object_get_data( G_OBJECT (gesture), "Button"), dspc);
         };
+        static void direction_button_stopped_cb (GtkGesture *gesture, DSPMoverControl *dspc){
+                g_message ("STOPPED,  CMD=%d", GPOINTER_TO_INT (g_object_get_data(g_object_get_data( G_OBJECT (gesture), "Button"), "DSP_cmd")));
+                //dspc->CmdAction (g_object_get_data( G_OBJECT (gesture), "Button"), dspc);
+        };
         static void direction_button_released_cb (GtkGesture *gesture, int n_press, double x, double y, DSPMoverControl *dspc){
-                g_message ("RELEASED");
+                g_message ("RELEASED, CMD=%d", GPOINTER_TO_INT (g_object_get_data(g_object_get_data( G_OBJECT (gesture), "Button"), "DSP_cmd")));
                 dspc->StopAction (g_object_get_data( G_OBJECT (gesture), "Button"), dspc);
+        };
+        static void direction_button_clicked_cb (GtkWidget *button, DSPMoverControl *dspc){
+                g_message ("CLICKED, CMD=%d", GPOINTER_TO_INT (g_object_get_data(G_OBJECT (button), "DSP_cmd")));
+                dspc->StopAction (button, dspc);
         };
 	static int StopAction(GtkWidget *widget, DSPMoverControl *dspc);
         static int RampspeedUpdate(GtkWidget *widget, DSPMoverControl *dspc);
