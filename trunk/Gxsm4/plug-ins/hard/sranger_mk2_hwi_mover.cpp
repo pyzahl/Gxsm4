@@ -819,14 +819,6 @@ void DSPMoverControl::create_folder (){
         mov_bp->set_input_width_chars (10);
         mov_bp->set_no_spin ();
 
-        // =======================================
-        //const gchar* signal_name_button_pressed  = "pressed";  //"activate"; // "pressed" in GTK3
-        //const gchar* signal_name_button_released = "clicked"; // "released" in GTK3
-        #define signal_name_button_pressed   "pressed"
-        #define signal_name_button_released  "clicked"
-        // =======================================
-        //g_message ("MOVER: settings signals for MV control button signals: Pressed: '%s', Released: '%s'",signal_name_button_pressed, signal_name_button_released);
-        
         for(itab=i=0; MoverNames[i]; ++i){                
                 Gtk_EntryControl *ec_axis[3];
                 GtkGesture *gesture;
@@ -888,28 +880,16 @@ void DSPMoverControl::create_folder (){
 
                         // UP arrow (back)
 			mov_bp->set_xy (3,11);
-                        mov_bp->grid_add_widget (button = gtk_button_new_from_icon_name ("seek-backward-symbolic"));
+                        mov_bp->grid_add_fire_icon_button (
+                                                           "seek-backward-symbolic",
+                                                           "seek-forward-symbolic",
+                                                           "seek-left-symbolic",
+                                                           DSPMoverControl::CmdAction, this,
+                                                           DSPMoverControl::StopAction, this);
+                        button = mov_bp->icon;
+                        //mov_bp->grid_add_widget (button = gtk_button_new_from_icon_name ("seek-backward-symbolic"));
 			g_object_set_data( G_OBJECT (button), "DSP_cmd", GINT_TO_POINTER (DSP_CMD_Z0_P));
 			g_object_set_data( G_OBJECT (button), "MoverNo", GINT_TO_POINTER (99));
-#if 0
-			g_signal_connect ( G_OBJECT (button), signal_name_button_pressed,
-                                           G_CALLBACK (DSPMoverControl::CmdAction),
-                                           this);
-			g_signal_connect ( G_OBJECT (button), signal_name_button_released,
-                                           G_CALLBACK (DSPMoverControl::StopAction),
-                                           this);
-#endif
-                        gesture = gtk_gesture_click_new ();
-			g_object_set_data( G_OBJECT (gesture), "Button", button);
-                        //gtk_gesture_single_set_button (GTK_GESTURE_SINGLE (gesture), 1);
-                        g_signal_connect (gesture, "pressed", G_CALLBACK (DSPMoverControl::direction_button_pressed_cb), this);
-                        g_signal_connect (gesture, "stopped", G_CALLBACK (DSPMoverControl::direction_button_stopped_cb), this);
-                        g_signal_connect (button, "clicked", G_CALLBACK (DSPMoverControl::direction_button_clicked_cb), this);
-                        gtk_widget_add_controller (gtk_button_get_child (GTK_BUTTON (button)), GTK_EVENT_CONTROLLER (gesture));
-
-                        // FIX-ME GTK4 ??
-			//g_signal_connect( G_OBJECT(v_grid), "key_press_event", 
-                        //                  G_CALLBACK(create_window_key_press_event_lcb), this);
 
 			{ // remote hook
 				remote_action_cb *ra = g_new( remote_action_cb, 1);
@@ -922,6 +902,8 @@ void DSPMoverControl::create_folder (){
 				gtk_widget_set_tooltip_text (button, help);
 			}
 
+			#define signal_name_button_pressed "pressed"
+			#define signal_name_button_released "released"
 
 			// DOWN arrow (forward)
 			mov_bp->set_xy (3,13);
