@@ -881,9 +881,7 @@ void DSPMoverControl::create_folder (){
                         // UP arrow (back)
 			mov_bp->set_xy (3,11);
                         mov_bp->grid_add_fire_icon_button (
-                                                           "seek-backward-symbolic",
-                                                           "seek-forward-symbolic",
-                                                           "seek-left-symbolic",
+                                                           "arrow-up-symbolic",
                                                            DSPMoverControl::CmdAction, this,
                                                            DSPMoverControl::StopAction, this);
                         button = mov_bp->icon;
@@ -891,7 +889,20 @@ void DSPMoverControl::create_folder (){
 			g_object_set_data( G_OBJECT (button), "DSP_cmd", GINT_TO_POINTER (DSP_CMD_Z0_P));
 			g_object_set_data( G_OBJECT (button), "MoverNo", GINT_TO_POINTER (99));
 
-			{ // remote hook
+#if 0
+			#define signal_name_button_pressed "pressed"
+			#define signal_name_button_released "released"
+                        mov_bp->grid_add_widget (button = gtk_button_new_from_icon_name ("seek-backward-symbolic"));
+			g_object_set_data( G_OBJECT (button), "DSP_cmd", GINT_TO_POINTER (DSP_CMD_Z0_M));
+			g_object_set_data( G_OBJECT (button), "MoverNo", GINT_TO_POINTER (99));
+			g_signal_connect ( G_OBJECT (button), signal_name_button_pressed,
+                                           G_CALLBACK (DSPMoverControl::CmdAction),
+                                           this);
+			g_signal_connect ( G_OBJECT (button), signal_name_button_released,
+                                           G_CALLBACK (DSPMoverControl::StopAction),
+                                           this);
+#endif
+			{ // remote hook -- may be trouble?? TDB
 				remote_action_cb *ra = g_new( remote_action_cb, 1);
 				ra -> cmd = g_strdup_printf("DSP_CMD_UP_Z0");
 				ra -> RemoteCb = (void (*)(GtkWidget*, void*))DSPMoverControl::CmdAction;
@@ -902,45 +913,27 @@ void DSPMoverControl::create_folder (){
 				gtk_widget_set_tooltip_text (button, help);
 			}
 
-			#define signal_name_button_pressed "pressed"
-			#define signal_name_button_released "released"
 
 			// DOWN arrow (forward)
 			mov_bp->set_xy (3,13);
+                        mov_bp->grid_add_fire_icon_button (
+                                                           "arrow-down-symbolic",
+                                                           DSPMoverControl::CmdAction, this,
+                                                           DSPMoverControl::StopAction, this);
+                        button = mov_bp->icon;
+			g_object_set_data( G_OBJECT (button), "DSP_cmd", GINT_TO_POINTER (DSP_CMD_Z0_M));
+			g_object_set_data( G_OBJECT (button), "MoverNo", GINT_TO_POINTER (99));
+                        
+#if 0
                         mov_bp->grid_add_widget (button = gtk_button_new_from_icon_name ("seek-forward-symbolic"));
 			g_object_set_data( G_OBJECT (button), "DSP_cmd", GINT_TO_POINTER (DSP_CMD_Z0_M));
 			g_object_set_data( G_OBJECT (button), "MoverNo", GINT_TO_POINTER (99));
-#if 0
 			g_signal_connect ( G_OBJECT (button), signal_name_button_pressed,
                                            G_CALLBACK (DSPMoverControl::CmdAction),
                                            this);
 			g_signal_connect ( G_OBJECT (button), signal_name_button_released,
                                            G_CALLBACK (DSPMoverControl::StopAction),
                                            this);
-#endif
-                        gesture = gtk_gesture_click_new ();
-			g_object_set_data( G_OBJECT (gesture), "Button", button);
-                        g_signal_connect (gesture, "pressed", G_CALLBACK (DSPMoverControl::direction_button_pressed_cb), this);
-                        g_signal_connect (gesture, "stopped", G_CALLBACK (DSPMoverControl::direction_button_stopped_cb), this);
-                        g_signal_connect (button, "clicked", G_CALLBACK (DSPMoverControl::direction_button_clicked_cb), this);
-			g_signal_connect ( G_OBJECT (button), signal_name_button_released,
-                                           G_CALLBACK (DSPMoverControl::StopAction),
-                                           this);
-                        gtk_widget_add_controller (gtk_button_get_child (GTK_BUTTON (button)), GTK_EVENT_CONTROLLER (gesture));
-
-#if 0 // SIGNAL TEST BUTTON, need cb's above
-                        GtkWidget *pushwid = gtk_button_new_from_icon_name ("media-seek-forward-symbolic");
-			mov_bp->set_xy (-2,13);
-                        mov_bp->grid_add_widget (pushwid);
-                        gesture = gtk_gesture_click_new ();
-                        g_signal_connect (gesture, "pressed", G_CALLBACK (wid_gnxyu_test), "PRESSED");
-                        g_signal_connect (gesture, "released", G_CALLBACK (wid_gnxyu_test), "RELEASED");
-                        g_signal_connect (gesture, "stopped", G_CALLBACK (wid_gu_test), "STOPPED");
-                        g_signal_connect (pushwid, "clicked", G_CALLBACK (wid_wu_test), "CLICKED");
-                        if (gtk_button_get_child (GTK_BUTTON (pushwid))){
-                                g_message ("TEST CHILD OK");
-                                gtk_widget_add_controller (gtk_button_get_child (GTK_BUTTON (pushwid)), GTK_EVENT_CONTROLLER (gesture));
-                        }
 #endif
                         
 			{ // remote hook
@@ -1277,7 +1270,12 @@ void DSPMoverControl::create_folder (){
                         {
                                 // UP
 	        		mov_bp->set_xy (3,1);
-                                mov_bp->grid_add_widget (button = gtk_button_new_from_icon_name ("seek-backward-symbolic"));
+                                mov_bp->grid_add_fire_icon_button (
+                                                                   "arrow-up-symbolic",
+                                                                   DSPMoverControl::CmdAction, this,
+                                                                   DSPMoverControl::StopAction, this);
+                                button = mov_bp->icon;
+                                //mov_bp->grid_add_widget (button = gtk_button_new_from_icon_name ("seek-backward-symbolic"));
 	        		g_object_set_data( G_OBJECT (button), "DSP_cmd", GINT_TO_POINTER (DSP_CMD_AFM_MOV_YP));
 	        		g_object_set_data( G_OBJECT (button), "MoverNo", GINT_TO_POINTER (i));
                                 g_object_set_data( G_OBJECT (button), "AXIS-X", ec_axis[0]);
@@ -1291,12 +1289,6 @@ void DSPMoverControl::create_folder (){
 	        				    G_CALLBACK (DSPMoverControl::StopAction),
 	        				    this);
 #endif
-                                gesture = gtk_gesture_click_new ();
-                                g_object_set_data( G_OBJECT (gesture), "Button", button);
-                                g_signal_connect (gesture, "pressed", G_CALLBACK (DSPMoverControl::direction_button_pressed_cb), this);
-                                g_signal_connect (gesture, "stopped", G_CALLBACK (DSPMoverControl::direction_button_stopped_cb), this);
-                                g_signal_connect (button, "clicked", G_CALLBACK (DSPMoverControl::direction_button_clicked_cb), this);
-                                gtk_widget_add_controller (gtk_button_get_child (GTK_BUTTON (button)), GTK_EVENT_CONTROLLER (gesture));
 
                                 /*
 	        		g_signal_connect(G_OBJECT(v_grid *** box), "key_press_event", 
@@ -1320,7 +1312,12 @@ void DSPMoverControl::create_folder (){
                         {
                                 // UP
 	        		mov_bp->set_xy (3,1);
-                                mov_bp->grid_add_widget (button = gtk_button_new_from_icon_name ("seek-backward-symbolic"));
+                                mov_bp->grid_add_fire_icon_button (
+                                                                   "arrow-up-symbolic",
+                                                                   DSPMoverControl::CmdAction, this,
+                                                                   DSPMoverControl::StopAction, this);
+                                button = mov_bp->icon;
+                                //mov_bp->grid_add_widget (button = gtk_button_new_from_icon_name ("seek-backward-symbolic"));
 	        		g_object_set_data( G_OBJECT (button), "DSP_cmd", GINT_TO_POINTER (DSP_CMD_AFM_MOV_ZP));
 	        		g_object_set_data( G_OBJECT (button), "MoverNo", GINT_TO_POINTER (i));
                                 g_object_set_data( G_OBJECT (button), "AXIS-X", ec_axis[0]);
@@ -1334,12 +1331,6 @@ void DSPMoverControl::create_folder (){
 	        				    G_CALLBACK (DSPMoverControl::StopAction),
 	        				    this);
 #endif
-                                gesture = gtk_gesture_click_new ();
-                                g_object_set_data( G_OBJECT (gesture), "Button", button);
-                                g_signal_connect (gesture, "pressed", G_CALLBACK (DSPMoverControl::direction_button_pressed_cb), this);
-                                g_signal_connect (gesture, "stopped", G_CALLBACK (DSPMoverControl::direction_button_stopped_cb), this);
-                                g_signal_connect (button, "clicked", G_CALLBACK (DSPMoverControl::direction_button_clicked_cb), this);
-                                gtk_widget_add_controller (gtk_button_get_child (GTK_BUTTON (button)), GTK_EVENT_CONTROLLER (gesture));                             
 
 	        		/*
 	        		g_signal_connect(G_OBJECT(v_grid *** box), "key_press_event", 
@@ -1374,7 +1365,12 @@ void DSPMoverControl::create_folder (){
 			if (i!=6 && i!=4) {
 				// LEFT
                                 mov_bp->set_xy (2,2);
-                                mov_bp->grid_add_widget (button = gtk_button_new_from_icon_name ("seek-left-symbolic"));
+                                mov_bp->grid_add_fire_icon_button (
+                                                                   "arrow-left-symbolic",
+                                                                   DSPMoverControl::CmdAction, this,
+                                                                   DSPMoverControl::StopAction, this);
+                                button = mov_bp->icon;
+                                //mov_bp->grid_add_widget (button = gtk_button_new_from_icon_name ("seek-left-symbolic"));
 				g_object_set_data( G_OBJECT (button), "DSP_cmd", GINT_TO_POINTER (DSP_CMD_AFM_MOV_XM));
 				g_object_set_data( G_OBJECT (button), "MoverNo", GINT_TO_POINTER (i));
                                 g_object_set_data( G_OBJECT (button), "AXIS-X", ec_axis[0]);
@@ -1388,13 +1384,6 @@ void DSPMoverControl::create_folder (){
 						    G_CALLBACK (DSPMoverControl::StopAction),
 						    this);
 #endif
-
-                                gesture = gtk_gesture_click_new ();
-                                g_object_set_data( G_OBJECT (gesture), "Button", button);
-                                g_signal_connect (gesture, "pressed", G_CALLBACK (DSPMoverControl::direction_button_pressed_cb), this);
-                                g_signal_connect (gesture, "stopped", G_CALLBACK (DSPMoverControl::direction_button_stopped_cb), this);
-                                g_signal_connect (button, "clicked", G_CALLBACK (DSPMoverControl::direction_button_clicked_cb), this);
-                                gtk_widget_add_controller (gtk_button_get_child (GTK_BUTTON (button)), GTK_EVENT_CONTROLLER (gesture));                             
 
 				{ // pyremote hook
 					remote_action_cb *ra = g_new( remote_action_cb, 1);
@@ -1411,9 +1400,14 @@ void DSPMoverControl::create_folder (){
 	//                                  GTK_ACCEL_VISIBLE);
 
 				// RIGHT
-                                // button = gtk_button_new_from_icon_name ("seek-right-symbolic");
                                 mov_bp->set_xy (4,2);
-                                mov_bp->grid_add_widget (button = gtk_button_new_from_icon_name ("media-seek-forward-symbolic"));
+                                mov_bp->grid_add_fire_icon_button (
+                                                                   "arrow-right-symbolic",
+                                                                   DSPMoverControl::CmdAction, this,
+                                                                   DSPMoverControl::StopAction, this);
+                                // button = gtk_button_new_from_icon_name ("seek-right-symbolic");
+                                button = mov_bp->icon;
+                                //mov_bp->grid_add_widget (button = gtk_button_new_from_icon_name ("media-seek-right-symbolic"));
 				g_object_set_data( G_OBJECT (button), "DSP_cmd", GINT_TO_POINTER (DSP_CMD_AFM_MOV_XP));
 				g_object_set_data( G_OBJECT (button), "MoverNo", GINT_TO_POINTER (i));
                                 g_object_set_data( G_OBJECT (button), "AXIS-X", ec_axis[0]);
@@ -1427,12 +1421,6 @@ void DSPMoverControl::create_folder (){
 						    G_CALLBACK (DSPMoverControl::StopAction),
 						    this);
 #endif
-                                gesture = gtk_gesture_click_new ();
-                                g_object_set_data( G_OBJECT (gesture), "Button", button);
-                                g_signal_connect (gesture, "pressed", G_CALLBACK (DSPMoverControl::direction_button_pressed_cb), this);
-                                g_signal_connect (gesture, "stopped", G_CALLBACK (DSPMoverControl::direction_button_stopped_cb), this);
-                                g_signal_connect (button, "clicked", G_CALLBACK (DSPMoverControl::direction_button_clicked_cb), this);
-                                gtk_widget_add_controller (gtk_button_get_child (GTK_BUTTON (button)), GTK_EVENT_CONTROLLER (gesture));                             
 
 				{ // pyremote hook
 					remote_action_cb *ra = g_new( remote_action_cb, 1);
@@ -1455,7 +1443,12 @@ void DSPMoverControl::create_folder (){
                         {
         			// DOWN
                                 mov_bp->set_xy (3,3);
-                                mov_bp->grid_add_widget (button = gtk_button_new_from_icon_name ("seek-forward-symbolic"));
+                                mov_bp->grid_add_fire_icon_button (
+                                                                   "arrow-down-symbolic",
+                                                                   DSPMoverControl::CmdAction, this,
+                                                                   DSPMoverControl::StopAction, this);
+                                button = mov_bp->icon;
+                                //mov_bp->grid_add_widget (button = gtk_button_new_from_icon_name ("seek-forward-symbolic"));
 	        		g_object_set_data( G_OBJECT (button), "DSP_cmd", GINT_TO_POINTER (DSP_CMD_AFM_MOV_YM));
 	        		g_object_set_data( G_OBJECT (button), "MoverNo", GINT_TO_POINTER (i));
                                 g_object_set_data( G_OBJECT (button), "AXIS-X", ec_axis[0]);
@@ -1469,12 +1462,6 @@ void DSPMoverControl::create_folder (){
 	        				    G_CALLBACK (DSPMoverControl::StopAction),
 	        				    this);
 #endif
-                                gesture = gtk_gesture_click_new ();
-                                g_object_set_data( G_OBJECT (gesture), "Button", button);
-                                g_signal_connect (gesture, "pressed", G_CALLBACK (DSPMoverControl::direction_button_pressed_cb), this);
-                                g_signal_connect (gesture, "stopped", G_CALLBACK (DSPMoverControl::direction_button_stopped_cb), this);
-                                g_signal_connect (button, "clicked", G_CALLBACK (DSPMoverControl::direction_button_clicked_cb), this);
-                                gtk_widget_add_controller (gtk_button_get_child (GTK_BUTTON (button)), GTK_EVENT_CONTROLLER (gesture));                             
                                 
 	        		{ // pyremote hook
 	        			remote_action_cb *ra = g_new( remote_action_cb, 1);
@@ -1494,7 +1481,12 @@ void DSPMoverControl::create_folder (){
                         {
         			// DOWN
                                 mov_bp->set_xy (3,3);
-                                mov_bp->grid_add_widget (button = gtk_button_new_from_icon_name ("seek-forward-symbolic"));
+                                mov_bp->grid_add_fire_icon_button (
+                                                                   "arrow-down-symbolic",
+                                                                   DSPMoverControl::CmdAction, this,
+                                                                   DSPMoverControl::StopAction, this);
+                                button = mov_bp->icon;
+                                //mov_bp->grid_add_widget (button = gtk_button_new_from_icon_name ("seek-forward-symbolic"));
 	        		g_object_set_data( G_OBJECT (button), "DSP_cmd", GINT_TO_POINTER (DSP_CMD_AFM_MOV_ZM));
 	        		g_object_set_data( G_OBJECT (button), "MoverNo", GINT_TO_POINTER (i));
                                 g_object_set_data( G_OBJECT (button), "AXIS-X", ec_axis[0]);
@@ -1508,12 +1500,6 @@ void DSPMoverControl::create_folder (){
 	        				    G_CALLBACK (DSPMoverControl::StopAction),
 	        				    this);
 #endif
-                                gesture = gtk_gesture_click_new ();
-                                g_object_set_data( G_OBJECT (gesture), "Button", button);
-                                g_signal_connect (gesture, "pressed", G_CALLBACK (DSPMoverControl::direction_button_pressed_cb), this);
-                                g_signal_connect (gesture, "stopped", G_CALLBACK (DSPMoverControl::direction_button_stopped_cb), this);
-                                g_signal_connect (button, "clicked", G_CALLBACK (DSPMoverControl::direction_button_clicked_cb), this);
-                                gtk_widget_add_controller (gtk_button_get_child (GTK_BUTTON (button)), GTK_EVENT_CONTROLLER (gesture));                             
 
 	        		{ // pyremote hook
 	        			remote_action_cb *ra = g_new( remote_action_cb, 1);

@@ -569,7 +569,7 @@ class BuildParam{
                                             user_data);
                         }
                 }
-                //g_message ("Fire Button:  Pressed %s at (%g,%g)", (const gchar*)user_data, x,y);
+                g_message ("Fire Button:  Pressed (%g,%g) [%s]", x,y, g_object_get_data( G_OBJECT (gesture), "icon-pressed"));
         };
 
         static void
@@ -585,7 +585,7 @@ class BuildParam{
                                              user_data);
                         }
                 }
-                //g_message ("Fire Button: Released (%g,%g)", x,y);
+                g_message ("Fire Button:  Released (%g,%g) [%s]", x,y, g_object_get_data( G_OBJECT (gesture), "icon-normal"));
         };
 
         static void
@@ -594,7 +594,7 @@ class BuildParam{
                 if (g_object_get_data( G_OBJECT (motion), "icon"))
                         gtk_image_set_from_icon_name (GTK_IMAGE (G_OBJECT (g_object_get_data( G_OBJECT (motion), "icon"))),
                                                       g_object_get_data( G_OBJECT (motion), "icon-enter"));
-                //g_message ("Fire Button: Focus Enter (%g,%g)", x,y);
+                g_message ("Fire Button: Focus Enter (%g,%g)  [%s]", x,y, g_object_get_data( G_OBJECT (motion), "icon-enter"));
         };
 
         static void
@@ -603,14 +603,12 @@ class BuildParam{
                 if (g_object_get_data( G_OBJECT (motion), "icon"))
                         gtk_image_set_from_icon_name (GTK_IMAGE (G_OBJECT (g_object_get_data( G_OBJECT (motion), "icon"))),
                                                       g_object_get_data( G_OBJECT (motion), "icon-normal"));
-                //g_message ("Fire Button: Focus Leave (%g,%g)", x,y);
+                g_message ("Fire Button: Focus Leave (%g,%g) [%s]", x,y, g_object_get_data( G_OBJECT (motion), "icon-normal"));
         };
 
 
         
-        GtkWidget* grid_add_fire_icon_button (const gchar* icon_name_normal,
-                                              const gchar* icon_name_enter,
-                                              const gchar* icon_name_pressed,
+        GtkWidget* grid_add_fire_icon_button (const gchar* icon_name,
                                               GCallback pressed_cb=NULL, gpointer pressed_cb_data=NULL,
                                               GCallback released_cb=NULL, gpointer released_cb_data=NULL,
                                               const char *tooltip=NULL,
@@ -618,14 +616,15 @@ class BuildParam{
                 GtkWidget *f = gtk_frame_new (NULL);
                 icon = g_object_new (GTK_TYPE_IMAGE,
                                      "accessible-role", GTK_ACCESSIBLE_ROLE_PRESENTATION,
-                                     "icon-name", icon_name_normal,
+                                     "icon-name", icon_name,
                                      NULL);
                 gtk_widget_set_valign (icon, GTK_ALIGN_CENTER);
                 gtk_frame_set_child (GTK_FRAME (f), icon);
                 
                 GtkGesture *gesture = gtk_gesture_click_new ();
                 g_object_set_data( G_OBJECT (gesture), "icon", icon);
-                g_object_set_data( G_OBJECT (gesture), "icon-normal", icon_name_normal);
+                g_object_set_data( G_OBJECT (gesture), "icon-normal", icon_name);
+                gchar *icon_name_pressed = g_strconcat ("double-", icon_name, NULL);
                 g_object_set_data( G_OBJECT (gesture), "icon-pressed", icon_name_pressed);
                 g_object_set_data( G_OBJECT (gesture), "icon-pressed-cb", pressed_cb);
                 g_object_set_data( G_OBJECT (gesture), "icon-released-cb", released_cb);
@@ -635,8 +634,8 @@ class BuildParam{
                 gtk_widget_add_controller (icon, GTK_EVENT_CONTROLLER (gesture));
 
                 GtkEventController *motion = gtk_event_controller_motion_new ();
-                g_object_set_data( G_OBJECT (motion), "icon-normal", icon_name_normal);
-                g_object_set_data( G_OBJECT (motion), "icon-enter", icon_name_enter);
+                g_object_set_data( G_OBJECT (motion), "icon-normal", icon_name);
+                g_object_set_data( G_OBJECT (motion), "icon-enter", icon_name_pressed); //enter); // testing
                 g_object_set_data( G_OBJECT (motion), "icon", icon);
                 g_signal_connect (motion, "enter", G_CALLBACK (fire_icon_motion_enter_cb), NULL);
                 //g_signal_connect (motion, "motion", G_CALLBACK (fire_icon_motion_cb), NULL);

@@ -287,6 +287,8 @@ class Gtk_EntryControl : public Param_Control{
 	};
 
 	static gint update_callback(GtkEditable *editable, void *data);
+        static void entry_focus_leave_callback (GtkEventController *controller, gpointer self);
+
 	static void adjustment_callback (GtkAdjustment *adj, Gtk_EntryControl *gpcs);
         static void pcs_adjustment_configure_response_callback (GtkDialog *dialog, int response, gpointer user_data);
 	void pcs_adjustment_configure ();

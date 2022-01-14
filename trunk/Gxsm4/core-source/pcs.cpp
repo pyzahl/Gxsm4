@@ -1114,6 +1114,13 @@ gint Gtk_EntryControl::update_callback(GtkEditable *editable, void *data){
 	return FALSE;
 }
 
+void Gtk_EntryControl::entry_focus_leave_callback (GtkEventController *controller, gpointer self)
+{
+        update_callback(self, NULL);
+        g_message ("ENTRY OUT-OF-FOCUS, buffer: %s", gtk_entry_buffer_get_text (gtk_entry_get_buffer (GTK_ENTRY (self))));
+}
+
+
 void Gtk_EntryControl::pcs_adjustment_configure_response_callback (GtkDialog *dialog, int response, gpointer user_data){
         Gtk_EntryControl *ec = (Gtk_EntryControl *) user_data;
         {
@@ -1590,11 +1597,9 @@ void Gtk_EntryControl::InitRegisterCb(double AdjStep, double AdjPage, double Adj
                 af_update_handler_id[0] = g_signal_connect (G_OBJECT (entry), "activate",
                                                             G_CALLBACK (&Gtk_EntryControl::update_callback),
                                                             (gpointer) NULL);
-                // Fix-ME GTK4
-                // :focus-out-event  ---> GtkEventControllerFocus
-                //af_update_handler_id[1] = g_signal_connect (G_OBJECT (entry), "focus_out_event",
-                //                                            G_CALLBACK (&Gtk_EntryControl::update_callback),
-                //                                            (gpointer) NULL);
+                GtkEventController *focus = gtk_event_controller_focus_new ();
+                af_update_handler_id[1] = g_signal_connect (focus, "leave", G_CALLBACK (&Gtk_EntryControl::entry_focus_leave_callback), entry);
+                gtk_widget_add_controller (entry, GTK_EVENT_CONTROLLER (focus));
         }
         
         XSM_DEBUG (DBG_L8, "InitRegisterCb -- put value");
