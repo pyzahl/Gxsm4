@@ -554,6 +554,106 @@ class BuildParam{
                 return button;
         };
 
+
+
+        static void
+        fire_icon_pressed (GtkGesture *gesture, int n_press, double x, double y, gpointer user_data)
+        {
+                if (g_object_get_data( G_OBJECT (gesture), "icon")){
+                        gtk_image_set_from_icon_name (GTK_IMAGE (G_OBJECT (g_object_get_data( G_OBJECT (gesture), "icon"))),
+                                                      g_object_get_data( G_OBJECT (gesture), "icon-pressed"));
+                        if (g_object_get_data( G_OBJECT (gesture), "icon-pressed-cb")){
+                                void (*pressed)(GtkWidget*, gpointer);
+                                pressed = g_object_get_data( G_OBJECT (gesture), "icon-pressed-cb");
+                                (*pressed) (g_object_get_data( G_OBJECT (gesture), "icon"),
+                                            user_data);
+                        }
+                }
+                //g_message ("Fire Button:  Pressed %s at (%g,%g)", (const gchar*)user_data, x,y);
+        };
+
+        static void
+        fire_icon_released (GtkGesture *gesture, int n_press, double x, double y, gpointer user_data)
+        {
+                if (g_object_get_data( G_OBJECT (gesture), "icon")){
+                        gtk_image_set_from_icon_name (GTK_IMAGE (G_OBJECT (g_object_get_data( G_OBJECT (gesture), "icon"))),
+                                                      g_object_get_data( G_OBJECT (gesture), "icon-normal"));
+                        if (g_object_get_data( G_OBJECT (gesture), "icon-released-cb")){
+                                void (*released)(GtkWidget*, gpointer);
+                                released = g_object_get_data( G_OBJECT (gesture), "icon-released-cb");
+                                (*released) (g_object_get_data( G_OBJECT (gesture), "icon"),
+                                             user_data);
+                        }
+                }
+                //g_message ("Fire Button: Released (%g,%g)", x,y);
+        };
+
+        static void
+        fire_icon_motion_enter_cb (GtkEventControllerMotion *motion, gdouble x, gdouble y, gpointer user_data)
+        {
+                if (g_object_get_data( G_OBJECT (motion), "icon"))
+                        gtk_image_set_from_icon_name (GTK_IMAGE (G_OBJECT (g_object_get_data( G_OBJECT (motion), "icon"))),
+                                                      g_object_get_data( G_OBJECT (motion), "icon-enter"));
+                //g_message ("Fire Button: Focus Enter (%g,%g)", x,y);
+        };
+
+        static void
+        fire_icon_motion_leave_cb (GtkEventControllerMotion *motion, gdouble x, gdouble y, gpointer user_data)
+        {
+                if (g_object_get_data( G_OBJECT (motion), "icon"))
+                        gtk_image_set_from_icon_name (GTK_IMAGE (G_OBJECT (g_object_get_data( G_OBJECT (motion), "icon"))),
+                                                      g_object_get_data( G_OBJECT (motion), "icon-normal"));
+                //g_message ("Fire Button: Focus Leave (%g,%g)", x,y);
+        };
+
+
+        
+        GtkWidget* grid_add_fire_icon_button (const gchar* icon_name_normal,
+                                              const gchar* icon_name_enter,
+                                              const gchar* icon_name_pressed,
+                                              GCallback pressed_cb=NULL, gpointer pressed_cb_data=NULL,
+                                              GCallback released_cb=NULL, gpointer released_cb_data=NULL,
+                                              const char *tooltip=NULL,
+                                              int bwx=1){
+                GtkWidget *f = gtk_frame_new (NULL);
+                icon = g_object_new (GTK_TYPE_IMAGE,
+                                     "accessible-role", GTK_ACCESSIBLE_ROLE_PRESENTATION,
+                                     "icon-name", icon_name_normal,
+                                     NULL);
+                gtk_widget_set_valign (icon, GTK_ALIGN_CENTER);
+                gtk_frame_set_child (GTK_FRAME (f), icon);
+                
+                GtkGesture *gesture = gtk_gesture_click_new ();
+                g_object_set_data( G_OBJECT (gesture), "icon", icon);
+                g_object_set_data( G_OBJECT (gesture), "icon-normal", icon_name_normal);
+                g_object_set_data( G_OBJECT (gesture), "icon-pressed", icon_name_pressed);
+                g_object_set_data( G_OBJECT (gesture), "icon-pressed-cb", pressed_cb);
+                g_object_set_data( G_OBJECT (gesture), "icon-released-cb", released_cb);
+                gtk_gesture_single_set_button (GTK_GESTURE_SINGLE (gesture), GDK_BUTTON_PRIMARY);
+                g_signal_connect (gesture, "pressed", G_CALLBACK (fire_icon_pressed), pressed_cb_data);
+                g_signal_connect (gesture, "released", G_CALLBACK (fire_icon_released), released_cb_data);
+                gtk_widget_add_controller (icon, GTK_EVENT_CONTROLLER (gesture));
+
+                GtkEventController *motion = gtk_event_controller_motion_new ();
+                g_object_set_data( G_OBJECT (motion), "icon-normal", icon_name_normal);
+                g_object_set_data( G_OBJECT (motion), "icon-enter", icon_name_enter);
+                g_object_set_data( G_OBJECT (motion), "icon", icon);
+                g_signal_connect (motion, "enter", G_CALLBACK (fire_icon_motion_enter_cb), NULL);
+                //g_signal_connect (motion, "motion", G_CALLBACK (fire_icon_motion_cb), NULL);
+                g_signal_connect (motion, "leave", G_CALLBACK (fire_icon_motion_leave_cb), NULL);
+                gtk_widget_add_controller (icon, GTK_EVENT_CONTROLLER (motion));
+
+                if (tooltip)
+                        gtk_widget_set_tooltip_text (icon, tooltip);
+
+                grid_add_widget (f, bwx);
+                return button;
+        };
+
+
+
+
+        
         GtkWidget* grid_add_check_button_gint32 (const gchar* labeltxt, const char *tooltip=NULL, int bwx=1,
                                                  GCallback cb=NULL, gpointer data=NULL, gint32 source=0, gint32 mask=-1){
                 button = gtk_check_button_new_with_label (N_(labeltxt));
@@ -764,6 +864,7 @@ class BuildParam{
         GtkWidget *frame;
         GtkWidget *label;
         GtkWidget *button;
+        GtkWidget *icon;
         GtkWidget *radiobutton;
         GtkWidget *input;
         GtkWidget *spin;
