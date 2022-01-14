@@ -56,15 +56,8 @@ Note: Currently the plugins are not completely build/failing with file not found
 		- X11: works again via native X11 calls...
 		- Wayland: likely never a solution ever as Wayland dose not give access at all to window's positioning. But please educate me if I am wrong.
   
-- File load vie Drag-n-Drop from filemanager: working, but currently only for single files. (new drap/drop controller)
 
-- Spin-Entry: Now shows the units again, but not always at startup (some defaut formatting), only after first touch... not yet sure why that is.
-
-
- -DSP MOVER CONTROL BUTTONS: action signal problem of missing signal for "pressed". The "activate" does not do anything... I tried.
-    -?> Do I now need to add event controllers (does not work either, did tested (bug??) to the buttons (can I??) and all that stuff to do this?
-
- - All ENTRIES: added configuration menu option not yet attached and not accessible. Need to figure out how to add a custom menu entry to gtk_popovers.
+- All ENTRIES: added configuration menu option not yet attached and not accessible. Need to figure out how to add a custom menu entry to gtk_popovers.
              It is possible to manually edit the properties via the dconf-editor to get started.
 
 - DSP-CONTROL windows A, B -- initial TAB Drag to empty secondary window impossible (or hard??) to find a hook area to drop off. Work around for now:
