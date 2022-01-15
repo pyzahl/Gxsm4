@@ -607,6 +607,21 @@ class BuildParam{
         };
 
 
+        GtkWidget* grid_add_icon (const gchar* icon_name, gboolean has_frame=false, int bwx=1){
+                icon = g_object_new (GTK_TYPE_IMAGE,
+                                     "accessible-role", GTK_ACCESSIBLE_ROLE_PRESENTATION,
+                                     "icon-name", icon_name,
+                                     NULL);
+                gtk_widget_set_valign (icon, GTK_ALIGN_CENTER);
+                if (has_frame){
+                        GtkWidget *f = gtk_frame_new (NULL);
+                        gtk_frame_set_child (GTK_FRAME (f), icon);
+                        grid_add_widget (f, bwx);
+                } else {
+                        grid_add_widget (icon, bwx);
+                }
+                return icon;
+        };
         
         GtkWidget* grid_add_fire_icon_button (const gchar* icon_name,
                                               GCallback pressed_cb=NULL, gpointer pressed_cb_data=NULL,
@@ -646,7 +661,7 @@ class BuildParam{
                         gtk_widget_set_tooltip_text (icon, tooltip);
 
                 grid_add_widget (f, bwx);
-                return button;
+                return icon;
         };
 
 

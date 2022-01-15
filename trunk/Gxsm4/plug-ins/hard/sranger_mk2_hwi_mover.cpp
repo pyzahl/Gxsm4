@@ -1257,6 +1257,14 @@ void DSPMoverControl::create_folder (){
 		// Direction Buttons
 
 		if( IS_MOVER_CTRL ){
+                        if (i!=4){
+                                mov_bp->set_xy (1,1);
+                                mov_bp->push_grid ();
+                                mov_bp->new_grid_with_frame (NULL, 5,3);
+                                gtk_grid_set_row_homogeneous (GTK_GRID (mov_bp->grid), true);
+                                gtk_grid_set_column_homogeneous (GTK_GRID (mov_bp->grid), true);
+                        }
+                        
 			// STOP
 			mov_bp->set_xy (3,2);
                         mov_bp->grid_add_widget (button = gtk_button_new_from_icon_name ("process-stopall-symbolic"));
@@ -1266,6 +1274,7 @@ void DSPMoverControl::create_folder (){
 			g_signal_connect (G_OBJECT (button), "clicked",
 					    G_CALLBACK (DSPMoverControl::StopAction),
 					    this);
+
                         if (i!=4)
                         {
                                 // UP
@@ -1363,13 +1372,19 @@ void DSPMoverControl::create_folder (){
 			}
 
 			if (i!=6 && i!=4) {
-				// LEFT
+                                //mov_bp->set_xy (2,1);
+                                //mov_bp->grid_add_icon ("process-stopall-symbolic");
+                                //mov_bp->set_xy (4,3);
+                                //mov_bp->grid_add_icon ("process-stopall-symbolic");
+
+                                // LEFT
                                 mov_bp->set_xy (2,2);
                                 mov_bp->grid_add_fire_icon_button (
                                                                    "arrow-left-symbolic",
                                                                    DSPMoverControl::CmdAction, this,
                                                                    DSPMoverControl::StopAction, this);
                                 button = mov_bp->icon;
+                                
                                 //mov_bp->grid_add_widget (button = gtk_button_new_from_icon_name ("seek-left-symbolic"));
 				g_object_set_data( G_OBJECT (button), "DSP_cmd", GINT_TO_POINTER (DSP_CMD_AFM_MOV_XM));
 				g_object_set_data( G_OBJECT (button), "MoverNo", GINT_TO_POINTER (i));
@@ -1517,6 +1532,9 @@ void DSPMoverControl::create_folder (){
 //                                  GTK_ACCEL_VISIBLE);
 
     
+                        if (i!=4){
+                                mov_bp->pop_grid ();
+                        }
 		}
     
 		if(i==4){
