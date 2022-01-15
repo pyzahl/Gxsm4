@@ -11,6 +11,7 @@ install_data(
         'double-arrow-left-symbolic.svg',
         'double-arrow-right-symbolic.svg',
         'double-arrow-up-symbolic.svg',
+        'dummy-symbolic.svg',
         'edit-delete-symbolic.svg',
         'goto-center-symbolic.svg',
         'goto-home-symbolic.svg',
@@ -36,5 +37,6 @@ install_data(
         'window-close-symbolic.svg',
         'xymode-symbolic.svg',
     ],
-    install_dir : get_option('datadir') / 'gxsm4/icons'
+#    install_dir : get_option('datadir') / 'gxsm4/icons'
+    install_dir : get_option('datadir') / 'icons' / 'hicolor' / 'scalable' / 'apps'
 )
