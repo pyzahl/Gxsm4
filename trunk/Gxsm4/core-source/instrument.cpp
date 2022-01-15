@@ -83,8 +83,8 @@ void XSM_Instrument::update_piezosensitivity (XSMRESOURCES &xsmres, double temp)
 		zPsens = xsmres.ZPiezoAV;
 	}
 
-	XSM_DEBUG_GP (DBG_L1, "XSM_Instrument::update_piezosensitivity ** xsmres.X/Y/ZPiezoAV = %g, %g, %g Ang/V", xPsens, yPsens, zPsens);
-	XSM_DEBUG_GP (DBG_L1, "XSM_Instrument::update_piezosensitivity ** xsmres.DigRangeOut  = %ld", DigRangeOut);
+	XSM_DEBUG_GM (DBG_L1, "XSM_Instrument::update_piezosensitivity ** xsmres.X/Y/ZPiezoAV = %g, %g, %g Ang/V", xPsens, yPsens, zPsens);
+	XSM_DEBUG_GM (DBG_L1, "XSM_Instrument::update_piezosensitivity ** xsmres.DigRangeOut  = %ld", DigRangeOut);
 
 	xR = AnalogVMaxOut*xPsens;
 	yR = AnalogVMaxOut*yPsens;
@@ -104,7 +104,7 @@ void XSM_Instrument::update_piezosensitivity (XSMRESOURCES &xsmres, double temp)
 	eV2Volt      = (double)xsmres.EnergyCalibVeV;
 
    
-	XSM_DEBUG_GP (DBG_L1, "XSM_Instrument::update_piezosensitivity ** xsmres.BiasGain     = %g", BiasGain);
+	XSM_DEBUG_GM (DBG_L1, "XSM_Instrument::update_piezosensitivity ** xsmres.BiasGain     = %g", BiasGain);
 }
 
 double XSM_Instrument::temperature (double diode_volts){

@@ -80,9 +80,12 @@ plugin_ctrl::plugin_ctrl(GList *pi_dirlist, gint (*check) (const gchar *), const
 
 	main_get_gapp ()->GxsmSplash (-0.1, six, " ... ");
 	XSM_DEBUG (DBG_L3, six);
+        while(g_main_context_pending (NULL)) g_main_context_iteration(NULL, FALSE); // CHECK MAIN EVENTS
 
         while(node){
 		main_get_gapp ()->GxsmSplash ((gdouble)pi_total/file_count, six, (gchar *) node->data);
+                while(g_main_context_pending (NULL)) g_main_context_iteration(NULL, FALSE); // CHECK MAIN EVENTS
+                
 		scan_for_pi((gchar *) node->data);
 		node = node->next;
 		++pi_total;
@@ -92,13 +95,17 @@ plugin_ctrl::plugin_ctrl(GList *pi_dirlist, gint (*check) (const gchar *), const
 	// Init Plugins
         six = g_strdup_printf ("Initializing %s PlugIns.", splash_info?splash_info : "GXSM");
 	main_get_gapp ()->GxsmSplash (0.0, six, " --- ");
-	XSM_DEBUG (DBG_L3, six);
+        while(g_main_context_pending (NULL)) g_main_context_iteration(NULL, FALSE); // CHECK MAIN EVENTS
+
+        XSM_DEBUG (DBG_L3, six);
 	node = plugins;
         
         gint pi_count = g_list_length (node);
 
 	while(node){
 		main_get_gapp ()->GxsmSplash ((gdouble)pi_num/pi_count, six, (gchar *)((GxsmPlugin *)node->data)->filename);
+                while(g_main_context_pending (NULL)) g_main_context_iteration(NULL, FALSE); // CHECK MAIN EVENTS
+
 		init_pi((void *) node->data);
 		node = node->next;
 		++pi_num;
@@ -129,8 +136,8 @@ void plugin_ctrl::scan_for_pi(gchar *dirname){
 	struct dirent *ent;
 	struct stat statbuf;
 
-	XSM_DEBUG_GP (DBG_L3, "plugin_ctrl::scan_for_pi ** scanning for gxsm plugins in PACKAGE_PLUGIN_DIR=%s ", PACKAGE_PLUGIN_DIR);
-        XSM_DEBUG_GP (DBG_L2, "plugin_ctrl::scan_for_pi ** scanning for gxsm plugins in: %s", dirname);
+	XSM_DEBUG_GM (DBG_L3, "plugin_ctrl::scan_for_pi ** scanning for gxsm plugins in PACKAGE_PLUGIN_DIR=%s ", PACKAGE_PLUGIN_DIR);
+        XSM_DEBUG_GM (DBG_L2, "plugin_ctrl::scan_for_pi ** scanning for gxsm plugins in: %s", dirname);
         
 	dir = opendir(dirname);
 	if (!dir)
@@ -139,7 +146,7 @@ void plugin_ctrl::scan_for_pi(gchar *dirname){
 	while ((ent = readdir(dir)) != NULL)
 	{
 		filename = g_strdup_printf("%s/%s", dirname, ent->d_name);
-                XSM_DEBUG_GP (DBG_L3, "plugin_ctrl::scan_for_pi ** scanning file for gxsm plugin: %s/%s  [%s]", dirname, ent->d_name, filename);
+                XSM_DEBUG_GM (DBG_L3, "plugin_ctrl::scan_for_pi ** scanning file for gxsm plugin: %s/%s  [%s]", dirname, ent->d_name, filename);
                 
 		if (!stat(filename, &statbuf) && S_ISREG(statbuf.st_mode) &&
 		    (ext = strrchr(ent->d_name, '.')) != NULL){
@@ -382,7 +389,7 @@ static void app_auto_hookup_menu_to_plugin_callback (App *app, const gchar *menu
                       menusection, label, tmp, tmpaction);
 
         if (!strcmp (menusection, "windows-section")){
-                XSM_DEBUG_GP (DBG_L1, "app_auto_hookup_menu_to_plugin_callback: *** Skipping Section Windows-Menu. Handled by AppBase automatically.");
+                XSM_DEBUG_GM (DBG_L1, "app_auto_hookup_menu_to_plugin_callback: *** Skipping Section Windows-Menu. Handled by AppBase automatically.");
         } else {
                 ti_action = g_simple_action_new (tmpaction, NULL);
                 g_signal_connect (ti_action, "activate", gc, GTK_APPLICATION ( app->get_application ()));
@@ -430,6 +437,9 @@ gxsm_plugins::gxsm_plugins(App *app, GList *pi_dirlist, gint (*check)(const gcha
 	node = plugins;
 
 	while(node) {
+
+                while(g_main_context_pending (NULL)) g_main_context_iteration(NULL, FALSE); // CHECK MAIN EVENTS
+                
 		p = (GxsmPlugin *) node->data;
 		// Set Application pointer
 		p->app = app;
