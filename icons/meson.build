@@ -1,8 +1,5 @@
 install_data(
     sources: [
-        'gxsm4-icon.svg',
-        'gxsm4-splash.svg',
-        'gxsm-icon.svg',
         'approach-symbolic.svg',
         'arrow-down-symbolic.svg',
         'arrow-left-symbolic.svg',
@@ -38,6 +35,14 @@ install_data(
         'window-close-symbolic.svg',
         'xymode-symbolic.svg',
     ],
-#    install_dir : get_option('datadir') / 'gxsm4/icons'
     install_dir : get_option('datadir') / 'icons' / 'hicolor' / 'scalable' / 'apps'
+)
+
+install_data(
+    sources: [
+        'gxsm4-icon.svg',
+        'gxsm4-splash.svg',
+        'gxsm-icon.svg',
+    ],
+    install_dir : get_option('datadir') / 'gxsm4' / 'icons'
 )

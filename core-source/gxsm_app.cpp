@@ -563,7 +563,6 @@ void App::MAINAppWindowInit(Gxsm4appWindow* win, const gchar *title, const gchar
                 app_window = gxsm4_app_window_new (GXSM4_APP (get_app ()));
         }
 
-        
         //app_window = gxsm4_app_window_new ( get_app ());
         window = GTK_WINDOW (app_window);
 
@@ -607,7 +606,7 @@ void App::MAINAppWindowInit(Gxsm4appWindow* win, const gchar *title, const gchar
         // load, populate toolbar and setup all application actions
 
         for (GXSM_ACTION_INFO *gai=&main_actions[0]; gai->gaction.name; ++gai){
-                XSM_DEBUG (DBG_L2, "GXSM MAIN TOOLBAR SETUP -- adding action = " << gai->gaction.name << " ** ceck:" << g_action_name_is_valid (gai->gaction.name));
+                XSM_DEBUG (DBG_L3, "GXSM MAIN TOOLBAR SETUP -- adding action = " << gai->gaction.name << " ** check:" << g_action_name_is_valid (gai->gaction.name));
 
                 GSimpleAction *ti_action = g_simple_action_new (gai->gaction.name, NULL);
                 // GSimpleAction *ti_action = g_simple_action_new_stateful (gai->gaction.name, NULL, g_variant_new_boolean (FALSE));
@@ -615,12 +614,12 @@ void App::MAINAppWindowInit(Gxsm4appWindow* win, const gchar *title, const gchar
                 g_signal_connect (ti_action, "activate", G_CALLBACK (gai->gaction.activate), gxsm4app);
                 if (gai->toolbar_action){
                         g_object_set_data (G_OBJECT (ti_action), "toolbar_action", (gpointer) gai->toolbar_action);
-                        XSM_DEBUG(DBG_L2, "........ adding toolbar_action = " << gai->toolbar_action);
+                        XSM_DEBUG(DBG_L3, "........ adding toolbar_action = " << gai->toolbar_action);
                 }
                 g_action_map_add_action (G_ACTION_MAP (gxsm4app), G_ACTION (ti_action));
 
                 if (gai->label){
-                        XSM_DEBUG(DBG_L2, "........ adding toolbutton = " << gai->label);
+                        XSM_DEBUG(DBG_L3, "........ adding toolbutton = " << gai->label);
 
                         /* B) Create a button for the action, with a stock image */
 
@@ -669,8 +668,7 @@ void App::build_gxsm (Gxsm4appWindow *win){
         //        const gchar *quit_accels[2] = { "<Ctrl>Q", NULL };
 
 	xsmres.gxsm4_ready = false;
-        
-        XSM_DEBUG(DBG_L2, "App::build_gxsm_1" );
+        XSM_DEBUG(DBG_L2, "App::build_gxsm ================================================================" );
 
         pcs_set_current_gschema_group ("core");
 
@@ -681,6 +679,9 @@ void App::build_gxsm (Gxsm4appWindow *win){
         g_message ("App::build_gxsm calling MAINAppWindowInit(%s, %s)", "*Gxsm4*", "*" GXSM_VERSION_NAME "*");
         MAINAppWindowInit (win, "Gxsm4", GXSM_VERSION_NAME);
         g_message ("App::build_gxsm BUILDING GXSM....");
+
+        /* Now able to bring up Splash and Startup Info window */
+        GxsmSplash (-1.0, "GXSM Startup.", "Initializing Windows and Modules."); // this will auto remove splash after timout!
         
         XSM_DEBUG(DBG_L2, "App::build_gxsm - starting up" );
         SetStatus(N_("Starting GXSM..."));
@@ -721,128 +722,141 @@ void App::build_gxsm (Gxsm4appWindow *win){
 
         set_window_geometry    ("main");
         
-        XSM_DEBUG(DBG_L2, "App::build_gxsm_10" );
-	
-	if(xsmres.HardwareTypeCmd)
-		strcpy(xsmres.HardwareType, xsmres.HardwareTypeCmd);
-	if(xsmres.DSPDevCmd)
-		strcpy(xsmres.DSPDev, xsmres.DSPDevCmd);
-
-	XSM_DEBUG (DBG_L1,  "DSPDev :" << xsmres.DSPDev );
-	XSM_DEBUG (DBG_L1,  "DSPType:" << xsmres.HardwareType );
-
-        ClearStatus();
-
-        XSM_DEBUG(DBG_L2, "App::build_gxsm - Monitor");
-        pcs_set_current_gschema_group ("monitorwindow");
-
-        monitorcontrol  = new MonitorControl ( get_app (), logging_level);
-        
-        /* Erzeuge und Initialise Xsm system */
-
-        pcs_set_current_gschema_group ("corehwi");
-
-        XSM_DEBUG(DBG_L2, "App::build_gxsm - xsm = new Surface" );
-        SetStatus(N_("Generating Surface Object..."));
-        xsm = new Surface (this); // This is the master backend, channel control
-        g_object_set_data (G_OBJECT (gxsm4app), "Surface", xsm);
-        xsm -> set_app (gxsm4app);
-        
-        XSM_DEBUG(DBG_L2, "App::build_gxsm_12" );
-
-
-	/* Enable DND to accept file Drops */
-        XSM_DEBUG(DBG_L2, "App::build_gxsm - DnD setup" );
-        GType types[1] = { G_TYPE_FILE }; // single file only
-        GtkDropTarget *target = gtk_drop_target_new (G_TYPE_INVALID, GDK_ACTION_COPY);
-        gtk_drop_target_set_gtypes (target, types, G_N_ELEMENTS (types));
-        g_signal_connect (target, "drop", G_CALLBACK (AppBase::gapp_load_on_drop_files), GINT_TO_POINTER (999)); // <= auto open in free channel
-        gtk_widget_add_controller (GTK_WIDGET (app_window), GTK_EVENT_CONTROLLER (target));
-
-
-        /* Attach more Elements... to main window */
-
-        XSM_DEBUG(DBG_L2, "App::build_gxsm_15" );
-
-	/* fill in Gxsm main control elements SPM + AS + UI */
-	xsm->SetModeFlg (MODE_SETSTEPS);
-
-        XSM_DEBUG(DBG_L2, "App::build_gxsm - attach control elements SPM+AS+UI" );
-
-        pcs_set_current_gschema_group ("mainwindow");
-
-	if(IS_SPALEED_CTRL)
-		// SPALEED Controls
-		spm_control  = create_spa_control ();
-	else
-		// SPM Controls
-		spm_control  = create_spm_control ();
-
-        gtk_grid_attach (GTK_GRID (grid), spm_control, 0, 1, 1, 1);
-        gtk_widget_show (spm_control);
-
-        XSM_DEBUG(DBG_L2, "App::build_gxsm_16" );
-
-	// Auto Save Control
-        XSM_DEBUG(DBG_L2, "App::build_gxsm - AS control" );
-        as_control   = create_as_control ();
-        gtk_grid_attach (GTK_GRID (grid), as_control, 0, 2, 1, 1);
-        gtk_widget_show (as_control); // FIX-ME GTK4 SHOWALL
-
-	// User Info Control
-        XSM_DEBUG(DBG_L2, "App::build_gxsm - UI control" );
-        ui_control   = create_ui_control ();
-        gtk_grid_attach (GTK_GRID (grid), ui_control, 0, 3, 1, 1);
-        gtk_widget_show (ui_control); // FIX-ME GTK4 SHOWALL
-
-	gtk_widget_show (GTK_WIDGET (window)); // FIX-ME GTK4 SHOWALL
-
-        /* create default control windows */
-        
-        XSM_DEBUG(DBG_L2, "App::build_gxsm - Channelselector");
-        pcs_set_current_gschema_group ("channelselectorwindow");
-
-        channelselector = new ChannelSelector (get_app ());
-
+        XSM_DEBUG(DBG_L2,
+                  "App::build_gxsm - finished with main window.\n"
+                  "... Initiating loading modules: g_idle_add (App::finish_system_startup_idle_callback)." );
         g_idle_add (App::finish_system_startup_idle_callback, this);
 }
 
-void App::finish_system_startup (){
-        
-  	/* Load Gxsm Plugins: additional control windows, math/filters/etc. */
-        XSM_DEBUG(DBG_L2, "App::build_gxsm - Scanning for PlugIns...");
-        pcs_set_current_gschema_group ("plugins");
-        // SetStatus(N_("Scanning for GXSM Plugins..."));
-	if( !xsmres.disableplugins )
-		reload_gxsm_plugins();
+gboolean App::finish_system_startup (){
+        static int startup_stage=0;
 
-	/* call hook to update gxsm setting from hardware as desired */
-        XSM_DEBUG(DBG_L2, "App::build_gxsm - call xsmhard->update_gxsm_configurations");
+        ++startup_stage;
+        XSM_DEBUG_GM (DBG_L2, "**** IDLE FUNC: App::build_gxsm ==> App::finish_system_startup, stage=%2d  *****", startup_stage);
 
-        if (xsm->hardware)
-                xsm->hardware->update_gxsm_configurations ();
-        else{
-                XSM_DEBUG(DBG_L2, "App::build_gxsm - no call: xsm->hardware invalid.");
+        switch (startup_stage){
+        case 1:
+                ClearStatus();
+                XSM_DEBUG(DBG_L2, "IDLE... App::build_gxsm - Monitor");
+                pcs_set_current_gschema_group ("monitorwindow");
+                monitorcontrol  = new MonitorControl ( get_app (), logging_level);
+                return true;
+        case 2:
+                XSM_DEBUG(DBG_L2, "IDLE... App::build_gxsm - start detecting Hardware configuration");
+                if(xsmres.HardwareTypeCmd)
+                        strcpy(xsmres.HardwareType, xsmres.HardwareTypeCmd);
+                if(xsmres.DSPDevCmd)
+                        strcpy(xsmres.DSPDev, xsmres.DSPDevCmd);
+
+                XSM_DEBUG (DBG_L1,  "DSPDev :" << xsmres.DSPDev );
+                XSM_DEBUG (DBG_L1,  "DSPType:" << xsmres.HardwareType );
+
+                /* Erzeuge und Initialise Xsm system */
+
+                pcs_set_current_gschema_group ("corehwi");
+
+                XSM_DEBUG(DBG_L2, "IDLE... App::build_gxsm - xsm = new Surface" );
+                SetStatus(N_("Generating Surface Object..."));
+                return true;
+        case 3:
+                XSM_DEBUG(DBG_L2, "IDLE... App::build_gxsm - Surface manager (aka Scan Channel Management)");
+                xsm = new Surface (this); // This is the master backend, channel control
+                g_object_set_data (G_OBJECT (gxsm4app), "Surface", xsm);
+                xsm -> set_app (gxsm4app);
+                return true;
+        case 4:
+                XSM_DEBUG(DBG_L2, "IDLE... App::build_gxsm - Setup DnD on Main Window");
+                /* Enable DND to accept file Drops */
+                XSM_DEBUG(DBG_L2, "App::build_gxsm - DnD setup" );
+                {
+                        GType types[1] = { G_TYPE_FILE }; // single file only
+                        GtkDropTarget *target = gtk_drop_target_new (G_TYPE_INVALID, GDK_ACTION_COPY);
+                        gtk_drop_target_set_gtypes (target, types, G_N_ELEMENTS (types));
+                        g_signal_connect (target, "drop", G_CALLBACK (AppBase::gapp_load_on_drop_files), GINT_TO_POINTER (999)); // <= auto open in free channel
+                        gtk_widget_add_controller (GTK_WIDGET (app_window), GTK_EVENT_CONTROLLER (target));
+                }
+                return true;
+        case 5:
+                XSM_DEBUG(DBG_L2, "IDLE... App::build_gxsm - Adding Main Scan Geometry Controls");
+                /* fill in Gxsm main control elements SPM + AS + UI */
+                xsm->SetModeFlg (MODE_SETSTEPS);
+
+                pcs_set_current_gschema_group ("mainwindow");
+
+                if(IS_SPALEED_CTRL)
+                        // SPALEED Controls
+                        spm_control  = create_spa_control ();
+                else
+                        // SPM Controls
+                        spm_control  = create_spm_control ();
+
+                gtk_grid_attach (GTK_GRID (grid), spm_control, 0, 1, 1, 1);
+                gtk_widget_show (spm_control);
+                return true;
+        case 6:
+                XSM_DEBUG(DBG_L2, "IDLE... App::build_gxsm - AS Controls");
+                // Auto Save Control
+                as_control   = create_as_control ();
+                gtk_grid_attach (GTK_GRID (grid), as_control, 0, 2, 1, 1);
+                gtk_widget_show (as_control); // FIX-ME GTK4 SHOWALL
+                return true;
+        case 7:
+                XSM_DEBUG(DBG_L2, "IDLE... App::build_gxsm - UI Controls");
+                // User Info Control
+                ui_control   = create_ui_control ();
+                gtk_grid_attach (GTK_GRID (grid), ui_control, 0, 3, 1, 1);
+                gtk_widget_show (ui_control);
+                gtk_widget_show (GTK_WIDGET (window));
+                return true;
+        case 8:
+                XSM_DEBUG(DBG_L2, "IDLE... App::build_gxsm - Building Channelselector");
+                pcs_set_current_gschema_group ("channelselectorwindow");
+                channelselector = new ChannelSelector (get_app ());
+                return true;
+        case 9:
+                XSM_DEBUG(DBG_L2, "IDLE... App::build_gxsm - Scanning and loading GXSM PlugIns");
+                pcs_set_current_gschema_group ("plugins");
+                SetStatus(N_("Scanning for GXSM Plugins..."));
+                if( !xsmres.disableplugins )
+                        reload_gxsm_plugins();
+                return true;
+        case 10:
+                XSM_DEBUG(DBG_L2, "IDLE... App::build_gxsm - Update Gxsm Settings from Configurations");
+
+                /* call hook to update gxsm setting from hardware as desired */
+                XSM_DEBUG(DBG_L3, "    ... App::build_gxsm - call xsmhard->update_gxsm_configurations");
+
+                if (xsm->hardware)
+                        xsm->hardware->update_gxsm_configurations ();
+                else{
+                        XSM_DEBUG(DBG_L2, "App::build_gxsm - no call: xsm->hardware invalid.");
+                }
+                return true;
+        case 11:
+                XSM_DEBUG(DBG_L2, "IDLE... App::build_gxsm - adding HwI Info to Log");
+
+                pcs_set_current_gschema_group ("post-build-error-path");
+                monitorcontrol->LogEvent ("Hardware Information", xsm->hardware->get_info ());
+                xsmres.gxsm4_ready = true;
+                SetStatus(N_("Ready."));
+                return true;
+        case 12:
+                XSM_DEBUG(DBG_L2, "IDLE... App::build_gxsm - Update all Entries.");
+                spm_update_all (-xsm->data.display.ViewFlg);
+                monitorcontrol->LogEvent ("GXSM", "startup");
+                return true;
+        case 13:
+                XSM_DEBUG(DBG_L2, "IDLE... App::build_gxsm - Reposition all window to stored Window Geometry (X11)");
+                load_app_geometry ();
+                return true;
+        case 14:
+                XSM_DEBUG(DBG_L2, "App::build_gxsm - done.");
+                return true;
+        default:
+                break;
         }
-
-        pcs_set_current_gschema_group ("post-build-error-path");
-
-
-        // monitorcontrol->LogEvent ("Hardware Information", xsm->hardware->get_info ());
-
-	xsmres.gxsm4_ready = true;
-        SetStatus(N_("Ready."));
-
         
-        /* Update all fields */
-        XSM_DEBUG (DBG_L2, "App::build_gxsm - update all entries");
-        spm_update_all (-xsm->data.display.ViewFlg);
-        monitorcontrol->LogEvent ("GXSM", "startup");
-
-        // update all window geometry again
-        load_app_geometry ();
-        
-        XSM_DEBUG(DBG_L2, "App::build_gxsm - done.");
+        return false; // if reaching this line -- never returns, IDLE is done.
 }
 
 // Plugin handling
@@ -1073,7 +1087,7 @@ void App::reload_gxsm_plugins( gint killflag ){
         
 	if( !GxsmPlugins && killflag ){
 		XSM_DEBUG(DBG_L2, "no GXSM plugins found, done." );
-                main_get_gapp ()->GxsmSplash (2.0, "no GXSM PlugIns found.", "Finishing."); // this will auto remove splash after timout!
+                GxsmSplash (2.0, "no GXSM PlugIns found.", "Finishing."); // this will auto remove splash after timout!
 		return;
 	}
 	
@@ -1096,6 +1110,7 @@ void App::reload_gxsm_plugins( gint killflag ){
 	xsm->reload_hardware_interface (killflag ? NULL:this);
 
         GxsmSplash(0.01, "Looking for GXSM PlugIns", " ... ");
+        while(g_main_context_pending (NULL)) g_main_context_iteration(NULL, FALSE); // CHECK MAIN EVENTS
 	
 	// Make plugin search dir list
 	PluginDirs = g_list_prepend
@@ -1118,7 +1133,7 @@ void App::reload_gxsm_plugins( gint killflag ){
 	
 
 	GxsmPlugins = new gxsm_plugins(this, PluginDirs, gxsm_plugin_check);
-	
+
 	// and remove list
 	GList *node = PluginDirs;
 	while(node){
@@ -1130,7 +1145,7 @@ void App::reload_gxsm_plugins( gint killflag ){
 	gchar *txt = g_strdup_printf
 		(N_("%d Plugins loaded!"), GxsmPlugins->how_many());
 
-        main_get_gapp ()->GxsmSplash (2.0, txt, "Init and hookup completed."); // this will auto remove splash after timout!
+        GxsmSplash (1.0, txt, "Init and hookup completed."); // this will auto remove splash after timout!
         
         SetStatus(txt);
 	//  message((const char*)txt);
@@ -1149,21 +1164,22 @@ void App::SignalEventToPlugins( GList *PluginNotifyList, gpointer data ){
 // Gxsm Splash
 // ========================================
 
-gint App::RemoveGxsmSplash(GtkWidget *widget, gpointer data){
-        // App *a = (App *)data;
+gint App::GxsmSplashRemove(gpointer data){
+        App *a = (App *)data;
+        GVariant *splash_timeout = g_settings_get_value (a->gxsm_app_settings, "splash-timeout");
+        static gdouble time = g_variant_get_double (splash_timeout);
 
+        time -= 500.0;
+        if (time > 0.){
+                a->GxsmSplash ((gdouble)time/(gdouble)g_variant_get_double (splash_timeout), NULL, "Init and module hookups completed.");
+                return TRUE;
+        }
+        
         XSM_DEBUG_GP (DBG_L1, "App::RemoveGxsmSplash (hiding it)\n");
-
-        //        gtk_widget_destroy (widget); // splash window
-        //gtk_widget_hide (widget); // splash window
-
-        //      a->splash = NULL;
-        //	a->splash_progress_bar = NULL;
-        //      a->splash_darea = NULL;
 
         splash_draw_function (NULL, NULL, 0,0, NULL); // clean up
 
-        gtk_popover_popdown (GTK_POPOVER (widget));
+        gtk_popover_popdown (GTK_POPOVER (a->splash));
         
 	return FALSE;
 }
@@ -1203,12 +1219,12 @@ void App::splash_draw_function (GtkWidget *area, cairo_t *cr,
                 text2->set_font_face_size ("Ununtu", 18.);
                 text2->set_stroke_rgba (1.0, 0.8, 0.8, 1.);
 
-                text3 = new  cairo_item_text (w/2., h-20., (const gchar*) g_object_get_data( G_OBJECT (area), "splash_message"));
+                text3 = new  cairo_item_text (w/2., h-50., (const gchar*) g_object_get_data( G_OBJECT (area), "splash_message"));
                 text3->set_stroke_rgba (0.6, 1.0, 0.1, 1.);
                 text3->set_pango_font ((const gchar*) g_object_get_data( G_OBJECT (area), "splash_message_font"));
 
                 if (g_object_get_data( G_OBJECT (area), "splash_info_text")){
-                        text4 = new  cairo_item_text (w/2., h+10., (const gchar*) g_object_get_data( G_OBJECT (area), "splash_info_text"));
+                        text4 = new  cairo_item_text (w/2., h-20., (const gchar*) g_object_get_data( G_OBJECT (area), "splash_info_text"));
                         text4->set_font_face_size ("Ununtu", 12.);
                         text4->set_stroke_rgba (0.6, 1.0, 1.0, 1.);
                 }
@@ -1250,6 +1266,9 @@ void App::splash_draw_function (GtkWidget *area, cairo_t *cr,
 }
 
 void App::GxsmSplash(gdouble progress, const gchar *info, const gchar* text){
+        static gboolean run=true;
+        static gchar* priv_info = NULL;
+        static gchar* priv_text = NULL;
         GVariant *splash_timeout = g_settings_get_value (gxsm_app_settings, "splash-timeout");
 
 	if (splash_progress_bar && splash && progress > -0.2){
@@ -1259,19 +1278,24 @@ void App::GxsmSplash(gdouble progress, const gchar *info, const gchar* text){
 		else
 			gtk_progress_bar_pulse (GTK_PROGRESS_BAR (splash_progress_bar));
 		if (text){
-                        g_object_set_data( G_OBJECT (splash_darea), "splash_progress_text", (gpointer) text);
-			gtk_progress_bar_set_text (GTK_PROGRESS_BAR (splash_progress_bar), text);
+                        g_free (priv_text);
+                        priv_text = g_strdup (text);
+                        g_object_set_data( G_OBJECT (splash_darea), "splash_progress_text", (gpointer) priv_text);
+			gtk_progress_bar_set_text (GTK_PROGRESS_BAR (splash_progress_bar), priv_text);
 		}
 		if (info && splash_darea){
-                        g_object_set_data( G_OBJECT (splash_darea), "splash_info_text", (gpointer) info);
+                        g_free (priv_info);
+                        priv_info = g_strdup (info);
+                        g_object_set_data( G_OBJECT (splash_darea), "splash_info_text", (gpointer) priv_info);
                 }
                 gtk_widget_queue_draw (splash_darea);
 
-                if (progress > 1.1){
+                if (progress >= 1.0 && run){
+                        run = false;
                         XSM_DEBUG_GM (DBG_L1, "App::GxsmSplash Update [%g] -- schedule remove in %d ms", progress, (guint)g_variant_get_double (splash_timeout));
-                        g_timeout_add ((guint)g_variant_get_double (splash_timeout), 
-                                       (GSourceFunc) App::RemoveGxsmSplash, 
-                                       splash);
+                        g_timeout_add (500, // (guint)g_variant_get_double (splash_timeout), 
+                                       (GSourceFunc) App::GxsmSplashRemove,
+                                       this);
                 }
                 return;
 	}
@@ -1280,8 +1304,8 @@ void App::GxsmSplash(gdouble progress, const gchar *info, const gchar* text){
 
         // const gint ImgW = atoi(xxsmlogo_xpm[0]);
         // const gint ImgH = atoi(xxsmlogo_xpm[0]+4);
-        const gint ImgW = 320;
-        const gint ImgH = 320;
+        const gint ImgW = 321;
+        const gint ImgH = 364;
 
         GVariant *splash_display = g_settings_get_value (gxsm_app_settings, "splash");
         GVariant *splash_message = g_settings_get_value (gxsm_app_settings, "splash-message");
@@ -1298,7 +1322,7 @@ void App::GxsmSplash(gdouble progress, const gchar *info, const gchar* text){
                 gtk_drawing_area_set_content_height (GTK_DRAWING_AREA (splash_darea), ImgH);
                 
                 if (!splash_img){ // keep for ever!
-                        splash_img = gdk_pixbuf_new_from_file (PACKAGE_ICON_DIR "/gxsm4-icon.svg", NULL);
+                        splash_img = gdk_pixbuf_new_from_file (PACKAGE_ICON_DIR "/gxsm4-splash.svg", NULL);
                 }
                 
                 g_object_set_data( G_OBJECT (splash_darea), "splash_w", GINT_TO_POINTER (ImgW));
@@ -1324,6 +1348,7 @@ void App::GxsmSplash(gdouble progress, const gchar *info, const gchar* text){
 
                 gtk_widget_set_parent (splash, GTK_WIDGET(app_window));
                 gtk_popover_set_has_arrow (GTK_POPOVER (splash), FALSE);
+
                 // FIX-ME GTK4 
                 gtk_popover_set_pointing_to (GTK_POPOVER (splash), &(GdkRectangle){ 1000-ImgW/2, 500-ImgH/2, 1, 1});
 

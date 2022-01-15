@@ -492,7 +492,7 @@ void VObject::SetUpPos(VOBJ_COORD_MODE cmode, int node){
 }
 
 void VObject::draw (cairo_t *cr){
-        // g_message ("DBG: VObject::draw name=%s, label=%s, show=%d, osd=%d", name, object_label ? object_label->get_text() : "N/A", show_flag, label_osd_style);
+        // XSM_DEBUG_GM (DBG_L3, "DBG: VObject::draw name=%s, label=%s, show=%d, osd=%d", name, object_label ? object_label->get_text() : "N/A", show_flag, label_osd_style);
         if (show_flag){ // master show/hide for all
                 //  g_print ("vobj::draw %s at %g %g\n", name, xy[0], xy[1]);
                 if (!label_osd_style)
@@ -592,7 +592,7 @@ void VObject::set_color_to_custom (gfloat fillcolor[4], gfloat outlinecolor[4]){
 }
 
 void VObject::Activate (){
-        //        g_message ("app_vobj.C: VObject::Activate  canvas=0x%x", canvas);
+        //        XSM_DEBUG_GM (DBG_L3, "app_vobj.C: VObject::Activate  canvas=0x%x", canvas);
         if (!G_IS_OBJECT (canvas)){
                 g_error ("app_vobj.C: VObject::Activate  ERROR, canvas is no G_OBJECT.");
                 PI_DEBUG_GP_ERROR (DBG_L1, "app_vobj.C: VObject::Activate  ERROR, canvas is no G_OBJECT.");
@@ -1331,7 +1331,7 @@ void VObject::show_label(gboolean flg){
                 object_label->set_stroke_rgba (&custom_label_color);
 
 #if 0
-                g_message ("VObject show label {%s} F:%s Crgba:%g %g %g %g SPC:%s XY(%g,%g)",
+                XSM_DEBUG_GM (DBG_L3, "VObject show label {%s} F:%s Crgba:%g %g %g %g SPC:%s XY(%g,%g)",
                            text,custom_label_font,
                            custom_label_color.red,custom_label_color.green,custom_label_color.blue,custom_label_color.alpha,
                            is_spacetime ()?"on":"off",
@@ -1418,20 +1418,20 @@ gboolean VObject::check_event(VObjectEvent *event, double mxy[2]){
                                 item = object_label;
         }
 
-        g_message ("CHECK_EVENT_VOBJ, ITEM %s at %g %g", item?"found":"not found",x,y);
+        XSM_DEBUG_GM (DBG_L3, "CHECK_EVENT_VOBJ, ITEM %s at %g %g", item?"found":"not found",x,y);
         if (!item)
                 return false;
         
-        g_message ("CHECK_EVENT_VOBJ TYPE");
+        XSM_DEBUG_GM (DBG_L3, "CHECK_EVENT_VOBJ TYPE");
 	switch (event->type){
         case VOBJ_EV_BUTTON_PRESS:
-                g_message ("CHECK_EVENT_VOBJ, BTN PRESSED");
+                XSM_DEBUG_GM (DBG_L3, "CHECK_EVENT_VOBJ, BTN PRESSED");
                 switch(event->button){
                 case VOBJ_EV_BUTTON_1:
                         x = item_x;
                         y = item_y;
 
-                        g_message ("CHECK_EVENT_VOBJ, BTN1 PRESSED on ITEM at %g %g", x,y);
+                        XSM_DEBUG_GM (DBG_L3, "CHECK_EVENT_VOBJ, BTN1 PRESSED on ITEM at %g %g", x,y);
    
                         touched_item  = item;
                         touched_xy[0] = item_x;
@@ -1462,7 +1462,7 @@ gboolean VObject::check_event(VObjectEvent *event, double mxy[2]){
                 break;
 		
         case VOBJ_EV_MOTION_NOTIFY:
-                g_message ("CHECK_EVENT_VOBJ, MOTION");
+                XSM_DEBUG_GM (DBG_L3, "CHECK_EVENT_VOBJ, MOTION");
                 if (!lock && item->is_grabbed ()){ //FIX-ME ... && dragging && (event->motion.state & VOBJ_BUTTON1_MASK)){
                         new_x = item_x;
                         new_y = item_y;
@@ -2285,7 +2285,7 @@ void VObKsys::opt_adjust_xy (int k, double d){
                         double phi=atan2(dy,dx);
                         double r=sqrt(dx*dx+dy*dy);
                         m_phi = phi*180.0/M_PI;
-                        //g_message ("phi=%g", phi*180.0/M_PI);
+                        //XSM_DEBUG_GM (DBG_L3, "phi=%g", phi*180.0/M_PI);
                         double c=cos(phi+d);
                         double s=sin(phi+d);
                         xy[0] = xy[2] + r*c;
@@ -2319,7 +2319,7 @@ void VObKsys::dump_param (){
         double score;
 
         if (!bonds || n_bonds<1){
-                g_message ("no bond info to dump.");
+                XSM_DEBUG_GM (DBG_L3, "no bond info to dump.");
                 return;
         }
         for (int i=0; i<n_info; ++i){
@@ -2484,7 +2484,7 @@ void VObKsys::calc_grid(){
                         j = 0;
 
                         if (m_verbose)
-                                g_message ("** BKF **");
+                                XSM_DEBUG_GM (DBG_L3, "** BKF **");
                         
                         // r1, r2, p1, p2, p3, p4
 
@@ -2659,7 +2659,7 @@ void VObKsys::calc_grid(){
                         if (enable_scoring){
                                 total_score = score/24;
                                 if (m_verbose)
-                                        g_message ("Total Bond Score = %.3f Hz", total_score);
+                                        XSM_DEBUG_GM (DBG_L3, "Total Bond Score = %.3f Hz", total_score);
                         }
                         
                         bonds->show ();
@@ -2707,7 +2707,7 @@ void VObKsys::calc_grid(){
                                 info = g_new0 (cairo_item_text*, n_info);
                         }
                         j=0;
-                        g_message ("**Updating Coronene Ksys Object**%s, %s (%g,%g)**", name, text, xy[2], xy[3]);
+                        XSM_DEBUG_GM (DBG_L3, "**Updating Coronene Ksys Object**%s, %s (%g,%g)**", name, text, xy[2], xy[3]);
                         for (int phii=0; phii<6; ++phii){
                                 double ri = sqrt(rx[0]*rx[0]+rx[1]*rx[1]);
                                 double x,y;
@@ -2766,7 +2766,7 @@ void VObKsys::calc_grid(){
                         if (enable_scoring){
                                 total_score = score/(5*6);
                                 if (m_verbose)
-                                        g_message ("Total Bond Score = %.3f Hz", total_score);
+                                        XSM_DEBUG_GM (DBG_L3, "Total Bond Score = %.3f Hz", total_score);
                         }
                         
                         bonds->show ();
@@ -2885,7 +2885,7 @@ void VObKsys::calc_grid(){
                         if (enable_scoring){
                                 for (int i=0; i<j; i+=2)
                                         score += score_bond (bonds,i,i+1, 2);
-                                g_message ("Score = %.3f Hz", score/(j/2));
+                                XSM_DEBUG_GM (DBG_L3, "Score = %.3f Hz", score/(j/2));
                         }
                         bonds->show ();
                         bonds->set_stroke_rgba (&custom_element_b_color);

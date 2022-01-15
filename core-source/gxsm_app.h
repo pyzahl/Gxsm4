@@ -87,8 +87,8 @@ public:
         void MAINAppWindowInit(Gxsm4appWindow* win, const gchar *title=NULL, const gchar *sub_title=NULL);
         void build_gxsm (Gxsm4appWindow *win);
 
-        static gboolean finish_system_startup_idle_callback (App *self) { self-> finish_system_startup (); return FALSE; };
-        void finish_system_startup ();
+        static gboolean finish_system_startup_idle_callback (App *self) { return self-> finish_system_startup (); }; // ret=FALSE => finished
+        gboolean finish_system_startup ();
         
         /* Menu - callbacks */
         static void file_open_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
@@ -191,7 +191,7 @@ public:
 
         /* Init Stuff */
         void gxsm_new_user_config (RES_ENTRY *res_def);
-        static gint RemoveGxsmSplash (GtkWidget *widget, gpointer data);
+        static gint GxsmSplashRemove (gpointer data);
         static void splash_draw_function (GtkWidget *area, cairo_t *cr, int width, int height, gpointer data);
         void GxsmSplash(gdouble progress=0., const gchar *text=NULL, const gchar *info=NULL);
 
