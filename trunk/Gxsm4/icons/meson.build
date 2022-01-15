@@ -1,6 +1,7 @@
 install_data(
     sources: [
         'gxsm4-icon.svg',
+        'gxsm4-splash.svg',
         'gxsm-icon.svg',
         'approach-symbolic.svg',
         'arrow-down-symbolic.svg',
