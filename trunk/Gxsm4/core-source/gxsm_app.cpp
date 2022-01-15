@@ -248,9 +248,9 @@ gxsm4_app_startup (GApplication *app)
 	add_accelerator (app, "win.fix-zoom::zoomfactor-2x", "<Shift>W");
 	add_accelerator (app, "win.fix-zoom::zoomfactor-1by2", "W");
 	add_accelerator (app, "win.fix-zoom::zoomfactor-fitwidth", "<Ctrl>W");
-	add_accelerator (app, "win.zoom-in", "<Ctrl>=");
-	add_accelerator (app, "win.zoom-in", "<Ctrl>+");
-	add_accelerator (app, "win.zoom-out", "<Ctrl>-");
+        //	add_accelerator (app, "win.zoom-in", "<Ctrl>=");
+        //	add_accelerator (app, "win.zoom-in", "<Ctrl>+");
+        //	add_accelerator (app, "win.zoom-out", "<Ctrl>-");
 
 	add_accelerator (app, "win.gear-menu", "F10");
 

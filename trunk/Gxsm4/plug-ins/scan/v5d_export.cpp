@@ -62,7 +62,9 @@ Not yet tested.
 #include "dataio.h"
 #include "action_id.h"
 #include "util.h"
+#include "glbvars.h"
 #include "xsmtypes.h"
+#include "surface.h"
 
 // custom includes go here
 // -- START EDIT --

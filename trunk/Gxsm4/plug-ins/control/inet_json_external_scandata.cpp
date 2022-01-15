@@ -179,7 +179,7 @@ static void inet_json_external_scandata_init(void)
   PI_DEBUG (DBG_L2, "inet_json_external_scandata Plugin Init" );
 }
 
-// about-Function
+// about-Function 
 static void inet_json_external_scandata_about(void)
 {
         const gchar *authors[] = { inet_json_external_scandata_pi.authors, NULL};

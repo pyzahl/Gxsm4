@@ -4,7 +4,6 @@ install_path = gxsm4_plugin_dir / plugin_cat
 plugin_list = [
     { 'name': 'curvature' },
     { 'name': 'despike2d' },
-    { 'name': 'DocOnlyLineInterpol' },
     { 'name': 'edge' },
     { 'name': 'ft2d' },
     { 'name': 'ift2d' },
@@ -15,7 +14,6 @@ plugin_list = [
     { 'name': 'smooth' },
     { 'name': 'stat_diff' },
     { 'name': 'Tderive' },
-#    { 'name': 'template' },
 ]
 
 settings_schemas_list = []

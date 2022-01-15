@@ -2930,6 +2930,7 @@ void py_gxsm_console::open_file_callback_exec (GtkDialog *dialog,  int response,
                         gchar *tmp_file_name = g_file_get_parse_name (file);
                         pygc->set_script_filename (tmp_file_name);
                         g_free (tmp_file_name);
+                        gtk_window_destroy (GTK_WINDOW (dialog));
                 }
                 else {
                         /* this is a bit of a kludge, so i want to ensure that using the set
@@ -2964,7 +2965,6 @@ void py_gxsm_console::open_file_callback_exec (GtkDialog *dialog,  int response,
                         pygc->fail = false;
                 }
         }
-        gtk_window_destroy (GTK_WINDOW (dialog));
 }
 
 void py_gxsm_console::open_file_callback (GSimpleAction *action, GVariant *parameter, gpointer user_data)
