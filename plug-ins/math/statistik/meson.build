@@ -10,8 +10,7 @@ plugin_list = [
     { 'name': 'crosscorrelation' },
     { 'name': 'histogram' },
     { 'name': 'histoHOP' },
-#    { 'name': 'islandlbl' }, ## needs GTK4 porting
-    { 'name': 'mathilbl' },
+#    { 'name': 'islandlbl', 'sources': [ 'islandlbl.cpp', 'mathilbl.cpp' ] },
     { 'name': 'nndistribution' },
     { 'name': 'polarhist' },
     { 'name': 'slopeabs' },

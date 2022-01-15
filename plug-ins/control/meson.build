@@ -11,7 +11,7 @@ plugin_list = [
 
 if gsl.found() and soup.found()
     plugin_list += [
-    { 'name': 'inet_json_external_scandata', 'sources' : ['jsmn.cpp'], 'deps': [ soup, gsl ],
+    { 'name': 'inet_json_external_scandata', 'sources' : ['inet_json_external_scandata.cpp', 'jsmn.cpp'], 'deps': [ soup, gsl ],
       'gschemas': [ 'org.gnome.gxsm4.inet_json_settings.gschema.xml',
                     'org.gnome.gxsm4.pcs.plugin-libinet-json-external-scandata.gschema.xml' ] },
     ]

@@ -20,7 +20,8 @@ plugin_list = [
                     'org.gnome.gxsm4.pcsadjustments.plugin-libsranger-mk2-hwi.gschema.xml',
                     'org.gnome.gxsm4.pcs.plugin-libspm-simulator-hwi.gschema.xml',
                     'org.gnome.gxsm4.pcs.plugin-libsranger-mk2-hwi.gschema.xml',
-                    'org.gnome.gxsm4.plugin_libsranger_hwi.gschema.xml' ] },
+#                    'org.gnome.gxsm4.plugin_libsranger_hwi.gschema.xml'
+                   ] },
 #    { 'name': 'tc211_ccd' }, ## may be port that some day
 ]
 

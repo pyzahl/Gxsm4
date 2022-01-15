@@ -19,9 +19,9 @@ plugin_list = [
     { 'name': 'omicron_io' },
     { 'name': 'png_im_export' },
     { 'name': 'rhk2000_import' },
-    { 'name': 'v5d_export', 'sources': ['v5d_binio.cpp', 'v5d_v5d.cpp'] },
+    { 'name': 'v5d_export', 'sources': ['v5d_export.cpp', 'v5d_binio.cpp', 'v5d_v5d.cpp'] },
     { 'name': 'rhk_spm32_import' },
-    { 'name': 'WSxM_io', 'sources': ['WSxM_header.cpp'] },
+    { 'name': 'WSxM_io', 'sources': ['WSxM_io.cpp', 'WSxM_header.cpp'] },
 ]
 
 if quicktime.found()

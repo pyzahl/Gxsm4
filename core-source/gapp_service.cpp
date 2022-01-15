@@ -616,7 +616,7 @@ AppBase::~AppBase(){
         
 	if(!nodestroy){
 		XSM_DEBUG_GP (DBG_L2, "~AppBase -- calling widget destroy for window '%s'.",  (window_key?window_key:"--")); 
-                gtk_window_destroy (window); // final destory
+                //gtk_window_destroy (window); // final destory
 	}
         
         if (window_key)

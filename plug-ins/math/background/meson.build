@@ -4,8 +4,6 @@ install_path = gxsm4_plugin_dir / plugin_cat
 plugin_list = [
     { 'name': 'bggamma' },
     { 'name': 'bg_z_drift' },
-    { 'name': 'DocOnlyEregress' },
-    { 'name': 'DocOnlyLineRegress' },
     { 'name': 'lineregression' },
     { 'name': 'mulconst' },
     { 'name': 'parabolregress' },

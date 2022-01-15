@@ -73,7 +73,10 @@ DnD and URL drops are not tested.
 #include "plugin.h"
 #include "dataio.h"
 #include "glbvars.h"
-#include "WSxM_header.h"                // File distributed with WSxM to make header of data file
+#include "xsmtypes.h"
+#include "surface.h"
+
+#include "WSxM_header.h"                // File distributed with WSxM to make header of data 
 
 // includes obviously not longer needed, 15.11.2009 Thorsten Wagner (STM)
 //#include "action_id.h"
