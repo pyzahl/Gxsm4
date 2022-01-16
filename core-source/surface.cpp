@@ -358,10 +358,10 @@ void Surface::load_exec (GtkDialog *dialog,  int response, gpointer user_data){
         if (response == GTK_RESPONSE_ACCEPT){
                 GtkFileChooser *chooser = GTK_FILE_CHOOSER (dialog);
                 g_autoptr(GFile) file = gtk_file_chooser_get_file (chooser);
-                // filename = gtk_file_chooser_get_filename (chooser);
                 gchar *tmp=g_file_get_parse_name (file);
 		s->load (tmp);
                 g_free (tmp);
+                g_object_unref (file);
         }
         gtk_window_destroy (GTK_WINDOW (dialog));
 }
@@ -393,6 +393,7 @@ int Surface::load(const char *rname){
 								  NULL);
                 GFile *gf=g_file_new_for_path (path);
 		gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (chooser), gf, NULL);
+                g_object_unref (gf);
 
 		GtkFileFilter *nc_filter = gtk_file_filter_new ();
 		gtk_file_filter_set_name (nc_filter, "NetCDF");
@@ -403,6 +404,7 @@ int Surface::load(const char *rname){
 		gtk_file_filter_add_pattern (nc_filter, "*.hdf");
 		gtk_file_filter_add_pattern (nc_filter, "*.HDF");
 		gtk_file_chooser_add_filter (GTK_FILE_CHOOSER (chooser), nc_filter);
+                g_object_unref (nc_filter);
 
                 GtkFileFilter *vp_filter = gtk_file_filter_new ();
 		gtk_file_filter_set_name (vp_filter, "VPdata");
@@ -410,34 +412,26 @@ int Surface::load(const char *rname){
 		gtk_file_filter_add_pattern (vp_filter, "*.vpdata");
 		gtk_file_filter_add_pattern (vp_filter, "*.VPdata");
 		gtk_file_chooser_add_filter (GTK_FILE_CHOOSER (chooser), vp_filter);
+                g_object_unref (vp_filter);
 
                 GtkFileFilter *x_filter = gtk_file_filter_new ();
 		gtk_file_filter_set_name (x_filter, "DAT");
 		gtk_file_filter_add_pattern (x_filter, "*.dat");
 		gtk_file_filter_add_pattern (x_filter, "*.DAT");
 		gtk_file_chooser_add_filter (GTK_FILE_CHOOSER (chooser), x_filter);
+                g_object_unref (x_filter);
 
                 GtkFileFilter *all_filter = gtk_file_filter_new ();
 		gtk_file_filter_set_name (all_filter, "All");
 		gtk_file_filter_add_pattern (all_filter, "*");
 		gtk_file_chooser_add_filter (GTK_FILE_CHOOSER (chooser), all_filter);
-
+                g_object_unref (all_filter);
+                
                 gtk_widget_show (chooser);
                 g_signal_connect (chooser, "response",
                                   G_CALLBACK (Surface::load_exec),
                                   this);
-                //g_free (gf);
                 return 1;
-		//if (gtk_dialog_run (GTK_DIALOG (chooser)) == GTK_RESPONSE_ACCEPT){
-		//	ffname = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (chooser));
-		//}			
-		//gtk_widget_destroy (chooser);
-
-		//if (! ffname){
-		//	gapp->SetStatus("load aborted.");
-		//	return 1;
-		//}
-		//fname = ffname;
 	}else{
 		if(!strrchr(rname, '/'))
 			fname = g_strconcat("./",rname,NULL);

@@ -1517,18 +1517,7 @@ void ViewControl::AppWindowInit(const gchar *title, const gchar *sub_title){
 
         gtk_window_set_titlebar (GTK_WINDOW (window), header_bar);
         SetTitle (title, sub_title);
-
-        //        The “activate-default” signal -- dose NOT work
-        g_signal_connect (G_OBJECT(window),
-                          "activate-default",
-                          G_CALLBACK (ViewControl::Activate_window_callback),
-                          this);
-                
-        g_signal_connect (G_OBJECT(window),
-                          "delete_event",
-                          G_CALLBACK(App::close_scan_event_cb),
-                          this);
-        
+               
 	v_grid = gtk_grid_new ();
         gtk_window_set_child (GTK_WINDOW (window), v_grid);
 	gtk_widget_show (v_grid); // FIX-ME GTK4 SHOWALL
@@ -3980,8 +3969,9 @@ void ViewControl::view_view_redline_callback (GSimpleAction *action, GVariant *p
 	}else{
 		vc->scan->RedLineActive=FALSE;
 		if(vc->RedLine && !vc->scan->BlueLineActive){
-			delete vc->RedLine;
+                        ProfileControl *tmp = vc->RedLine;
 			vc->RedLine=NULL;
+			delete vc->RedLine;
 		}
 	}
 }

@@ -29,7 +29,6 @@
 #include <config.h>
 #include <gtk/gtk.h>
 
-#define ENABLE_GXSM_WINDOW_MANAGEMENT
 #ifdef ENABLE_GXSM_WINDOW_MANAGEMENT
 # ifdef GDK_WINDOWING_X11
 #  include <gdk/x11/gdkx.h>
@@ -591,7 +590,7 @@ void GnomeAppService::alert(const gchar *s1, const gchar *s2, const gchar *s3, i
 // ============================================================
 
 AppBase::AppBase (Gxsm4app *app){ 
-	XSM_DEBUG(DBG_L2, "AppBase" ); 
+	XSM_DEBUG_GM(DBG_L3, "AppBase::AppBase" ); 
 
         gxsm4app = app;
         main_title_buffer = g_strdup ("AppBase: Main Window title is not set.");
@@ -609,13 +608,13 @@ AppBase::AppBase (Gxsm4app *app){
 }
 
 AppBase::~AppBase(){ 
-	XSM_DEBUG (DBG_L2, "AppBase::~AppBase destructor for window '" << (window_key?window_key:"--") << "'."); 
+	XSM_DEBUG (DBG_L3, "AppBase::~AppBase destructor for '" << (window_key?window_key:"--") << "'."); 
 
         if (g_object_get_data (G_OBJECT (gxsm4app), "APP-MAIN"))
                 ((App*)g_object_get_data (G_OBJECT (gxsm4app), "APP-MAIN")) -> remove_appwindow_from_list (this); // remove self from list
         
 	if(!nodestroy){
-		XSM_DEBUG_GP (DBG_L2, "~AppBase -- calling widget destroy for window '%s'.",  (window_key?window_key:"--")); 
+		XSM_DEBUG_GP (DBG_L3, "~AppBase -- destroy window '%s'. [DISABLED HERE HANDLED AT BASE]",  (window_key?window_key:"--")); 
                 //gtk_window_destroy (window); // final destory
 	}
         
@@ -625,8 +624,7 @@ AppBase::~AppBase(){
         if (window_geometry)
                 g_free (window_geometry);
 
-	XSM_DEBUG (DBG_L2, "AppBase::~AppBase done. ** CALLING DESTROY WINDOW **" );
-
+	XSM_DEBUG_GM (DBG_L3, "AppBase::~AppBase done." );
 }
 
 void AppBase::SetTitle(const gchar *title, const gchar *sub_title){
@@ -660,9 +658,7 @@ void AppBase::SetTitle(const gchar *title, const gchar *sub_title){
 }
 
 void AppBase::AppWindowInit(const gchar *title, const gchar *sub_title){
-	XSM_DEBUG(DBG_L2, "AppBase::WidgetInit: " << title );
-
-        g_message ("AppBase::AppWindowInit <%s : %s>", title, sub_title);
+	XSM_DEBUG_GM (DBG_L2, "AppBase::WidgetInit: %s [%s]", title, sub_title?sub_title:"N/A");
         app_window =  gxsm4_app_window_new (gxsm4app);
         window = GTK_WINDOW (app_window);
 
@@ -708,23 +704,23 @@ GMenuModel *AppBase::find_extension_point_section (GMenuModel  *model,
         if (model == NULL)
                 return NULL;
 
-        if (dbg > 0) g_print ("MyGnomeTools::find_extension_point_section '%s' in menu.\n", extension_point);
+        XSM_DEBUG_GM (DBG_L4, "MyGnomeTools::find_extension_point_section '%s' in menu.", extension_point);
 
         n_items = g_menu_model_get_n_items (model);
 
-        if (dbg > 0) g_print ("MyGnomeTools::find_extension_point_section n_items=%d\n", n_items);
+        XSM_DEBUG_GM (DBG_L4, "MyGnomeTools::find_extension_point_section n_items=%d", n_items);
 
         for (i = 0; i < n_items && !section; i++) {
                 gchar *id = NULL;
                 
                 gboolean ret=g_menu_model_get_item_attribute (model, i, "id", "s", &id);
-                if (dbg > 0) g_print ("MyGnomeTools::find_extension_point_section i=%d  id: %s %s\n", i, id, ret?"YES":"NO");
+                XSM_DEBUG_GM (DBG_L4, "MyGnomeTools::find_extension_point_section i=%d  id: %s %s", i, id, ret?"YES":"NO");
                 if (id) { g_free (id); } id = NULL;
                 gboolean retx1=g_menu_model_get_item_attribute (model, i, "name", "s", &id);
-                if (dbg > 0) g_print ("MyGnomeTools::find_extension_point_section i=%d name: %s %s\n", i, id, retx1?"YES":"NO");
+                XSM_DEBUG_GM (DBG_L4, "MyGnomeTools::find_extension_point_section i=%d name: %s %s", i, id, retx1?"YES":"NO");
                 if (id) { g_free (id); } id = NULL;
                 gboolean retx2=g_menu_model_get_item_attribute (model, i, "label", "s", &id);
-                if (dbg > 0) g_print ("MyGnomeTools::find_extension_point_section i=%d label: %s %s\n", i, id, retx2?"YES":"NO");
+                XSM_DEBUG_GM (DBG_L4, "MyGnomeTools::find_extension_point_section i=%d label: %s %s", i, id, retx2?"YES":"NO");
                 if (id) { g_free (id); } id = NULL;
 
 
@@ -741,7 +737,7 @@ GMenuModel *AppBase::find_extension_point_section (GMenuModel  *model,
                 GMenuModel *submenu;
                 gint j, j_items;
                 
-                if (dbg > 0) g_print ("MyGnomeTools::find_extension_point_section subsecton lookup\n");
+                XSM_DEBUG_GM (DBG_L4, "MyGnomeTools::find_extension_point_section subsecton lookup");
 
                 subsection = g_menu_model_get_item_link (model, i, G_MENU_LINK_SECTION);
                 if (subsection == NULL){ // try here:
@@ -751,10 +747,10 @@ GMenuModel *AppBase::find_extension_point_section (GMenuModel  *model,
                 } else {
                         //                        if (subsection) {
                         j_items = g_menu_model_get_n_items (subsection);
-                        if (dbg > 0) g_print ("MyGnomeTools::find_extension_point_section subsecton lookup -- j_items=%d\n", j_items);
+                        XSM_DEBUG_GM (DBG_L4, "MyGnomeTools::find_extension_point_section subsecton lookup -- j_items=%d", j_items);
                         
                         for (j = 0; j < j_items && !section; j++) {
-                                if (dbg > 0) g_print ("MyGnomeTools::find_extension_point_section submenu lookup -- j_items=%d\n", j);
+                                XSM_DEBUG_GM (DBG_L4, "MyGnomeTools::find_extension_point_section submenu lookup -- j_items=%d", j);
                                 submenu = g_menu_model_get_item_link (subsection, j, G_MENU_LINK_SUBMENU);
                                 if (submenu)
                                         section = find_extension_point_section (submenu, extension_point);
@@ -778,8 +774,8 @@ void AppBase::add_window_to_window_menu(const gchar *menu_item_label, const gcha
         gchar *app_tmpaction = g_strconcat ( "app.", tmpaction, NULL);
         GSimpleAction *ti_action;
         
-        //XSM_DEBUG_GP (DBG_L2, "AppBase::add_window_to_window_menu <%s>  MenuItem= %s ==> label, generated actions: [%s] <%s>, <%s>",
-        //              menusection, menu_item_label, tmp, tmpaction, app_tmpaction);
+        XSM_DEBUG_GM (DBG_L3, "AppBase::add_window_to_window_menu <%s>  MenuItem= %s ==> label, generated actions: [%s] <%s>, <%s>",
+                      menusection, menu_item_label, tmp, tmpaction, app_tmpaction);
 
         if (!strcmp (menusection, "windows-section-xx")) { // add toggle -- testing, not yet working -- disabled via -xx
                 ti_action = g_simple_action_new_stateful (tmpaction,
@@ -806,8 +802,8 @@ void AppBase::add_window_to_window_menu(const gchar *menu_item_label, const gcha
 #else
         gchar *label = g_strdup (menu_item_label);
 #endif
-        //XSM_DEBUG_GP (DBG_L2, "AppBase::add_window_to_window_menu <%s>  MenuItem= %s ==> label, generated actions: [%s] <%s>",
-        //              menusection, menu_item_label, tmp, app_tmpaction);
+        XSM_DEBUG_GP (DBG_L3, "AppBase::add_window_to_window_menu <%s>  MenuItem= %s ==> label, generated actions: [%s] <%s>",
+                      menusection, menu_item_label, tmp, app_tmpaction);
         
         main_get_gapp ()->gxsm_app_extend_menu (menusection, label, app_tmpaction);
 
@@ -818,15 +814,15 @@ void AppBase::add_window_to_window_menu(const gchar *menu_item_label, const gcha
 }
 
 int AppBase::set_window_geometry (const gchar *key, gint index, gboolean add_to_menu){
-        XSM_DEBUG_GP (DBG_L4, "AppBase::set_window_geometry and append '%s' to Windows Menu.", key);
+        XSM_DEBUG_GM (DBG_L4, "AppBase::set_window_geometry and append '%s' to Windows Menu.", key);
 
         if (window_key){
-                XSM_DEBUG_GP (DBG_L2, "AppBase::set_window_geometry geometry already setup. DUPLICATE WARNING append '%s' to Windows Menu already done.", key);
+                XSM_DEBUG_GM (DBG_L2, "AppBase::set_window_geometry geometry already setup. DUPLICATE WARNING append '%s' to Windows Menu already done.", key);
                 // remove from menu!
                 g_free (window_key);
         }
         
-        XSM_DEBUG_GP (DBG_L9, "AppBase::set_window_geometry and append '%s' to Windows Menu", key);
+        XSM_DEBUG_GM (DBG_L9, "AppBase::set_window_geometry and append '%s' to Windows Menu", key);
         if (index >= 0 && index <= 6) // limit for now
                 window_key = g_strdup_printf ("%s-%d", key, index);
         else if (index > 6)
@@ -897,6 +893,8 @@ void AppBase::position_auto (){
                                         g_error ("Unsupported GDK backend");
                 }
 # endif
+#else
+        XSM_DEBUG_GM (DBG_L2, "AppBase::position_auto ** ENABLE_GXSM_WINDOW_MANAGEMENT is disabled.");
 #endif
 }
 
@@ -928,6 +926,8 @@ void AppBase::resize_auto (){
 # endif
                                 g_error ("Unsupported GDK backend");
                 }
+#else
+        XSM_DEBUG_GM (DBG_L2, "AppBase::resize_auto ** ENABLE_GXSM_WINDOW_MANAGEMENT is disabled.");
 #endif
 }
 
@@ -936,8 +936,8 @@ void AppBase::SaveGeometryCallback(AppBase *apb){
 }
 
 void AppBase::SaveGeometry(gboolean store_to_settings){
+	XSM_DEBUG_GM (DBG_L2, "** AppBase::SaveGeometry for %s", window_key);
 #ifdef ENABLE_GXSM_WINDOW_MANAGEMENT
-	XSM_DEBUG (DBG_L2, "** AppBase::SaveGeometry of " << window_key);
 
         // g_message ("AutoSave Window Geometry: %s", window_key);
 
@@ -988,6 +988,8 @@ void AppBase::SaveGeometry(gboolean store_to_settings){
                 g_settings_set_value (geometry_settings, window_key, storage);
                 //g_free (storage); // ??
         }
+#else
+        XSM_DEBUG_GM (DBG_L2, "AppBase::save_geometry ** ENABLE_GXSM_WINDOW_MANAGEMENT is disabled.");
 #endif
 }
 
@@ -1000,8 +1002,6 @@ void AppBase::LoadGeometry(){
 
         g_signal_connect (window, "close-request",  G_CALLBACK (AppBase::window_close_callback), this);
 
-        // g_message ("AutoLoad Window Geometry: %s", window_key);
-
         gsize n_stores;
 
         GVariant *storage = g_settings_get_value (geometry_settings, window_key);
@@ -1012,14 +1012,13 @@ void AppBase::LoadGeometry(){
 
         memcpy (window_geometry, tmp, WGEO_SIZE*sizeof (gint32));
 
-        // g_free (storage); // ??
+        g_variant_unref (storage);
 
         g_assert_cmpint (n_stores, ==, WGEO_SIZE);
 
         position_auto ();
         resize_auto ();
         show_auto ();
-
 }
 
 

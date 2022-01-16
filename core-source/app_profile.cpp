@@ -592,6 +592,7 @@ gchar *ProfileElement::GetDeltaInfo(int i, int j, gint64 ymode){
 
 // ========================================
 
+
 gint ProfileControl_auto_update_callback (ProfileControl *pc){
 	if (! pc->get_auto_update_id ()) 
 		return FALSE;
@@ -620,10 +621,7 @@ ProfileControl::ProfileControl (Gxsm4app *app, const gchar *titlestring, int n, 
         pc_in_window = in_external_window;
 	Init(titlestring, -1, resid);
 	ref ();
-	g_signal_connect(G_OBJECT(window),
-                         "delete_event",
-                         G_CALLBACK (ProfileControl::file_close_callback),
-                         this);
+
 	gchar *tmp;
 	SetXlabel (tmp = scan1d->data.Xunit->MakeLongLabel());
 	g_free (tmp);
@@ -646,11 +644,6 @@ ProfileControl::ProfileControl (Gxsm4app *app, const gchar *filename, const gcha
 	gchar *t = g_strconcat (filename, " - Profile from File", NULL);
 	Init (t, -1, resource_id_string);
 	g_free (t);
-
-	g_signal_connect (G_OBJECT (window),
-                          "delete_event",
-                          G_CALLBACK (ProfileControl::file_close_callback),
-                          this);
 
 	XSM_DEBUG (DBG_L3, "ProfileControl::ProfileControl from file - Init done, loading data");
 
@@ -868,12 +861,10 @@ void ProfileControl::Init(const gchar *titlestring, int ChNo, const gchar *resid
 
         //	main_get_gapp ()->configure_drop_on_widget (window);
 
-	if(chno>=0)
-		g_signal_connect(G_OBJECT(window),
-                                 "delete_event",
-                                 G_CALLBACK(App::close_scan_event_cb),
-                                 this);
-
+	if(chno>=0 && !pc_in_window){
+                XSM_DEBUG_GM (DBG_L2, "ProfileControl::ProfileControl connecting close-request for profile chno %", chno);
+                g_signal_connect (window, "close-request",  G_CALLBACK (App::close_scan_event_cb), this);
+        }
 	// New Scrollarea
 
 	XSM_DEBUG (DBG_L2, "ProfileControl::ProfileControl canvas");
@@ -1085,19 +1076,20 @@ ProfileControl::~ProfileControl ()
 
         if (pc_in_window){
                 // destroy grid and widgets, unref app_window and window
-                if (pc_grid){\
+                if (pc_grid){
                         // FIX-ME GTK4
-                        g_message ("FIX-ME-GTK4 unref grid: ProfileControl::~ProfileControl");
-                        //gtk_window_destroy (GTK_WINDOW (pc_grid));
+                        XSM_DEBUG_GM (DBG_L3, "ProfileControl::~ProfileControl ** pc-in-window: FIX-ME-GTK4 ??unref grid??");
                         pc_grid = NULL;
                 }
                 app_window = NULL;
                 window = NULL;
+        } else {
+                XSM_DEBUG_GM (DBG_L2, "ProfileControl::~ProfileControl ** destroy window **");
+                gtk_window_destroy (GTK_WINDOW (window));
         }
 
         GXSM_UNREF_OBJECT (GXSM_GRC_PROFILECTRL);
-        XSM_DEBUG (DBG_L2, "done.");
-       
+        XSM_DEBUG_GM (DBG_L2, "ProfileControl::~ProfileControl done.");
 }
 
 
@@ -2718,10 +2710,11 @@ void ProfileControl::file_close_callback (GSimpleAction *simple, GVariant *param
                                  gpointer user_data){
         ProfileControl *pc = (ProfileControl *) user_data;
 		
+        XSM_DEBUG_GM (DBG_L2, "ProfileControl::file_close_callback RefCount=%d", pc->ref_count);
 	if (pc->ref_count == 0)
 		main_get_gapp ()->xsm->RemoveProfile (pc);
 	else
-		XSM_DEBUG_GP_WARNING (DBG_L1, "Sorry, cant't do this, other object depends on me!" );
+		XSM_DEBUG_GW (DBG_L1, "ProfileControl::file_close_callback: Sorry, cant't do this, other object depends on me!" );
 }
 
 void ProfileControl::file_print1_callback (GSimpleAction *simple, GVariant *parameter, 

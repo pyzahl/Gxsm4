@@ -1171,11 +1171,13 @@ gint App::GxsmSplashRemove(gpointer data){
 
         time -= 500.0;
         if (time > 0.){
-                a->GxsmSplash ((gdouble)time/(gdouble)g_variant_get_double (splash_timeout), NULL, "Init and module hookups completed.");
+                a->GxsmSplash ((gdouble)time/(gdouble)g_variant_get_double (splash_timeout),
+                               NULL,
+                               "** Init and module hookups are completed -- closing Splash count down **");
                 return TRUE;
         }
         
-        XSM_DEBUG_GP (DBG_L1, "App::RemoveGxsmSplash (hiding it)\n");
+        XSM_DEBUG_GM (DBG_L3, "App::RemoveGxsmSplash ** popover popdown **\n");
 
         splash_draw_function (NULL, NULL, 0,0, NULL); // clean up
 
@@ -1203,7 +1205,7 @@ void App::splash_draw_function (GtkWidget *area, cairo_t *cr,
                 return true;
         }
         
-        XSM_DEBUG_GP (DBG_L1, "App::splash_draw_callback: %s, %s \n",
+        XSM_DEBUG_GM (DBG_L3, "App::splash_draw_callback: %s, %s \n",
                  (const gchar*) g_object_get_data( G_OBJECT (area), "splash_progress_text"),
                  (const gchar*) g_object_get_data( G_OBJECT (area), "splash_info_text"));
         
@@ -1272,7 +1274,7 @@ void App::GxsmSplash(gdouble progress, const gchar *info, const gchar* text){
         GVariant *splash_timeout = g_settings_get_value (gxsm_app_settings, "splash-timeout");
 
 	if (splash_progress_bar && splash && progress > -0.2){
-                XSM_DEBUG_GM (DBG_L1, "App::GxsmSplash Update: %g, %s, %s", progress, info, text);
+                XSM_DEBUG_GM (DBG_L3, "App::GxsmSplash Update: %.1f%%, %s, %s", 100*progress, info, text);
 		if (progress >= 0. && progress <= 1.0)
 			gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (splash_progress_bar), progress);
 		else
@@ -1292,7 +1294,7 @@ void App::GxsmSplash(gdouble progress, const gchar *info, const gchar* text){
 
                 if (progress >= 1.0 && run){
                         run = false;
-                        XSM_DEBUG_GM (DBG_L1, "App::GxsmSplash Update [%g] -- schedule remove in %d ms", progress, (guint)g_variant_get_double (splash_timeout));
+                        XSM_DEBUG_GM (DBG_L2, "App::GxsmSplash Update [%g] -- schedule remove in %d ms", progress, (guint)g_variant_get_double (splash_timeout));
                         g_timeout_add (500, // (guint)g_variant_get_double (splash_timeout), 
                                        (GSourceFunc) App::GxsmSplashRemove,
                                        this);
@@ -1300,7 +1302,7 @@ void App::GxsmSplash(gdouble progress, const gchar *info, const gchar* text){
                 return;
 	}
         
-        XSM_DEBUG_GP (DBG_L1, "App::GxsmSplash Build: %s, %s \n", info, text);
+        XSM_DEBUG_GM (DBG_L2, "App::GxsmSplash Build: %s, %s \n", info, text);
 
         // const gint ImgW = atoi(xxsmlogo_xpm[0]);
         // const gint ImgH = atoi(xxsmlogo_xpm[0]+4);

@@ -313,6 +313,7 @@ VObject::~VObject(){
 
 	if(profile) 
 		delete profile;
+        
 	profile=NULL;
 
         destroy_properties_bp ();
@@ -356,20 +357,16 @@ VObject::~VObject(){
 }
 
 void VObject::show_profile_cb (GtkWidget *widget, VObject *vo){
-        if (widget){
-                vo->show_profile (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget)));
-        }
+        if (widget)
+                vo->show_profile (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)));
         else 
                 vo->show_profile ();
-
-        // rebuild
-        vo->destroy_properties_bp ();
-        vo->build_properties_view ();
+        vo->Update ();
 }
 
 void VObject::show_profile (gboolean pflg){
 	if(pflg){
-		if (profile)
+		if (profile) // already exists, done
 			return;
 		if (np == 1){
 			set_profile_path_dimension (MEM2D_DIM_LAYER);
@@ -378,7 +375,7 @@ void VObject::show_profile (gboolean pflg){
 			set_profile_path_dimension (MEM2D_DIM_XY);
 			set_profile_series_dimension (MEM2D_DIM_LAYER);
 		}
-
+                // create new
 		gchar *proftit = g_strdup_printf("%s Profile from Ch%d : w%g:d%d:i%d", 
 						 np>1 ? "Path":"Slice", 
 						 1 + GPOINTER_TO_INT (g_object_get_data (G_OBJECT (canvas), "Ch")),
@@ -387,10 +384,11 @@ void VObject::show_profile (gboolean pflg){
 						 get_profile_series_dimension ()
 						 );
 		profile = new ProfileControl((Gxsm4app *) g_object_get_data (G_OBJECT (canvas), "MAIN_APP"), proftit);        
-
 		g_free(proftit);
-	} else {
-		if(profile){
+
+	} else { // clenanup
+
+                if(profile){
 			delete profile;
 			profile = NULL;
 		}
@@ -1058,14 +1056,16 @@ void VObject::build_properties_view (gboolean add){
 }
 
 void VObject::properties_callback (GtkDialog *dialog,  int response, gpointer user_data){
+	XSM_DEBUG ( DBG_L4, "VObject::properties_callback ... pressed OK");
         VObject *vc = (VObject *) user_data;
         //{} while ((obj_type_id () == O_LINE) && (get_profile_series_dimension () == get_profile_path_dimension ())); 
 
         // I clean up here, make sure destructor is called.
-        g_object_ref (vc->properties_bp->grid);
-        gtk_box_remove (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (dialog))), vc->properties_bp->grid);
-        gtk_window_destroy (GTK_WINDOW (dialog));
+        g_object_ref (vc->properties_bp->grid); // KEEP ME! this is hooked to side pane when object is active
+        gtk_box_remove (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (dialog))), GTK_WIDGET (vc->properties_bp->grid));
         delete (vc->properties_bp);
+	XSM_DEBUG ( DBG_L4, "VObject::properties_callback ... calling destroy dialog.");
+        gtk_window_destroy (GTK_WINDOW (dialog));
         
         vc->properties_bp = NULL;
 
