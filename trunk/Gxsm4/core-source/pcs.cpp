@@ -1007,7 +1007,7 @@ void Gtk_EntryControl::ShowInfo (const char *header, const char *text){
 
 	++total_message_count_int;
 	if (++total_message_count > 6){
-		g_warning ("Repeting Messag(es) '%s' suppressed. count: %d", text, total_message_count);
+		XSM_DEBUG_GW (-1, "Gtk_EntryControl::ShowInfo *** Repeting Messag(es) '%s' suppressed. count: %d", text, total_message_count);
 		--total_message_count;
 		return;
 	}
@@ -1026,7 +1026,7 @@ void Gtk_EntryControl::ShowInfo (const char *header, const char *text){
                                           G_OBJECT (dialog));
                 gtk_widget_show (dialog);
         } else {
-                g_warning ("WHILE GXSM4 STARTUP: %s %s --> auto continue.", header, text);
+                XSM_DEBUG_GW (-1, "Gtk_EntryControl::ShowInfo *** WHILE GXSM4 STARTUP: %s %s ... auto continue.", header, text);
         }
         
         --total_message_count;

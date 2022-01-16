@@ -279,6 +279,10 @@ conf.set('GXSM_MONITOR_VMEMORY_USAGE', '', description : 'define this for adding
 
 # conf.set('GXSM_ENABLE_SCAN_USER_PLUGIN_PATH', 'yes', description : 'enable scanning in user path for plugins')
 conf.set_quoted('XSM_DEBUG_OPTION', 'yes', description : 'Global Enable/Disable of any debugging code')
+
+# X11 only: window geometry management by Gxsm: auto store/restore position and size. DO NOT SET (comment out) to disable!
+conf.set('ENABLE_GXSM_WINDOW_MANAGEMENT', 1)
+
 #conf.set('COMPILEDBYNAME', os.environ['USER']+'@'+os.environ['HOSTNAME']+'; `date`', description : 'GXSM user@host CC-time info string')
 conf.set_quoted('COMPILEDBYNAME', user+'@'+hostname+' '+today, description : 'GXSM user@host CC-time info string')
 conf.set_quoted('PACKAGE_PALETTE_DIR', absolute_data_dir+'/palette', description : 'Define gxsm palette install prefix]')

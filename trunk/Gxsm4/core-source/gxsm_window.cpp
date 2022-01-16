@@ -89,10 +89,18 @@ gxsm4_app_window_dispose (GObject *object)
         XSM_DEBUG_GM (DBG_L1, "gxsm4_app_window_dispose ============================================" );
         Gxsm4appWindowPrivate *priv = (Gxsm4appWindowPrivate *) gxsm4_app_window_get_instance_private (GXSM4_APP_WINDOW (object));
 
+        XSM_DEBUG_GM (DBG_L1, "gxsm4_app_window_dispose ============================================ >> PRIV: %s", priv? "OK":"ERROR");
         // FIX-ME !!
+        if (!priv) return;
         
         GList *windows = gtk_application_get_windows (GTK_APPLICATION (priv->gxsm4app));
+        XSM_DEBUG_GM (DBG_L1, "gxsm4_app_window_dispose ============================================ >> WINDOWS: %s", windows? "OK":"ERROR");
+        if (!windows) return;
+        
         Gxsm4appWindow *window = priv->self;
+        XSM_DEBUG_GM (DBG_L1, "gxsm4_app_window_dispose ============================================ >> WINDOW: %s", window? "OK":"ERROR");
+        if (!window) return;
+        
         windows = g_list_remove (windows, window);
         XSM_DEBUG_GM (DBG_L4,"gxsm4_app_window_dispose **** # Windows in List: %u,  time: %ul us", g_list_length (windows), g_get_real_time());
         g_clear_object (&priv->settings);

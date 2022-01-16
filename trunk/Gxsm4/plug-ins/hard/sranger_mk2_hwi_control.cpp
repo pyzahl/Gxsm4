@@ -3219,10 +3219,9 @@ static void remove(gpointer entry, gpointer from) {
 }
 
 DSPControl::~DSPControl (){
-        // g_message ("DSPControl::~DSPContro -- store values");
+        PI_DEBUG_GM (DBG_L4, "DSPControl::~DSPContro -- store values");
         // this does not function here any more ????!!!!
 	// ### store_values ();
-        // g_message ("DSPControl::~DSPContro -- store values done.");
 
 	GUI_ready = FALSE;
 
@@ -3257,11 +3256,11 @@ DSPControl::~DSPControl (){
 
         delete dsp_bp;
 
-        // g_message ("DSPControl::~DSPContro -- unref data done.");
+        PI_DEBUG_GM (DBG_L4, "DSPControl::~DSPContro -- unref data done.");
         
         g_clear_object (&hwi_settings);
 
-        // g_message ("DSPControl::~DSPContro -- clear hwi_settings done.");
+        PI_DEBUG_GM (DBG_L4, "DSPControl::~DSPContro -- clear hwi_settings done.");
 }
 
 void DSPControl::store_values (){
@@ -3286,18 +3285,16 @@ void DSPControl::store_values (){
         set_tab_settings ("AB", ABORT_option_flags, ABORT_auto_flags, ABORT_glock_data);
 
         GVP_store_vp ("LM_set_last"); // last in view
-        // g_message ("DSPControl::store_values complete.");
+        PI_DEBUG_GM (DBG_L3, "DSPControl::store_values complete.");
 }
 
 void DSPControl::GVP_store_vp (const gchar *key){
-	// g_message ("GVP-VP store memo key=%s", key);
-	PI_DEBUG_GP (DBG_L2, "GVP-VP store to memo %s\n", key);
-	g_message ( "GVP-VP store to memo %s\n", key);
+	PI_DEBUG_GM (DBG_L3, "GVP-VP store to memo %s", key);
         GVariant *v = g_settings_get_value (hwi_settings, "probe-gvp-vector-program-matrix");
         //GVariant *v = g_settings_get_value (hwi_settings, "probe-lm-vector-program-matrix");
         GVariantDict *dict = g_variant_dict_new (v);
         if (!dict){
-                PI_DEBUG_GP (DBG_L2, "ERROR: DSPControl::GVP_store_vp -- can't read dictionary 'probe-gvp-vector-program-matrix' a{sv}.\n");
+                PI_DEBUG_GW (DBG_L1, "ERROR: DSPControl::GVP_store_vp -- can't read dictionary 'probe-gvp-vector-program-matrix' a{sv}.");
                 return;
         }
 
@@ -3329,7 +3326,7 @@ void DSPControl::GVP_store_vp (const gchar *key){
 
                 if (g_variant_dict_contains (dict, m_vckey)){
                         if (!g_variant_dict_remove (dict, m_vckey)){
-                                PI_DEBUG_GP (DBG_L2, "ERROR: DSPControl::GVP_store_vp -- key '%s' found, but removal failed.\n", m_vckey);
+                                PI_DEBUG_GW (DBG_L1, "ERROR: DSPControl::GVP_store_vp -- key '%s' found, but removal failed.", m_vckey);
                                 g_free (m_vckey);
                                 return;
                         }
