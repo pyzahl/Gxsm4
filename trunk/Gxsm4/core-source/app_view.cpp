@@ -1405,7 +1405,7 @@ void ViewControl::released_cb (GtkGesture *gesture, int n_press, double x, doubl
 
 
 void ViewControl::AppWindowInit(const gchar *title, const gchar *sub_title){
-        XSM_DEBUG_GM (DBG_L2, "ViewControl::AppWindowInit** <%s : %s> **", title, sub_title);
+        XSM_DEBUG_GM (DBG_L2, "ViewControl::AppWindowInit** <%s : %s> **", title, sub_title?sub_title:"N/A");
         app_window = gxsm4_app_window_new (GXSM4_APP (main_get_gapp ()->get_application ()));
         window = GTK_WINDOW (app_window);
         g_signal_connect (window, "close-request",  G_CALLBACK (ViewControl::view_window_close_callback), this);

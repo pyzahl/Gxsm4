@@ -94,7 +94,7 @@ public:
 
         App* get_g_app() { return g_app; }; // App::App gxsm core application class
         Gxsm4app* get_app() { return gxsm4app; }; // g_applicatione reference (required for all base windows)
-        void set_app(Gxsm4app *app) { gxsm4app = app; g_message ("SURFACE: set_app");  };
+        void set_app(Gxsm4app *app) { gxsm4app = app; };
 
         // moved to PI
         //  void MkIcons(MkIconsData *mid);

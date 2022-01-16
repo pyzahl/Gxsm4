@@ -551,23 +551,22 @@ App::~App(){
 
 
 void App::MAINAppWindowInit(Gxsm4appWindow* win, const gchar *title, const gchar *sub_title){
-	XSM_DEBUG (DBG_L2,  "App::MAINWindowInit" );
-
-        g_message ("App::MAINAppWindowInit** <%s : %s> **", title, sub_title);
+        XSM_DEBUG_GM (DBG_L2, "App::MAINAppWindowInit** <%s : %s> **", title, sub_title?sub_title:"N/A");
         
         if (win){
-                g_message ("App::MAINAppWindowInit... GOT WINDOW");
+                XSM_DEBUG_GM (DBG_L3, "App::MAINAppWindowInit... GOT WINDOW");
                 app_window = win;;
         } else {
-                g_message ("App::MAINAppWindowInit... NEW WINDOW");
+                XSM_DEBUG_GM (DBG_L3, "App::MAINAppWindowInit... NEW WINDOW");
                 app_window = gxsm4_app_window_new (GXSM4_APP (get_app ()));
         }
 
-        //app_window = gxsm4_app_window_new ( get_app ());
         window = GTK_WINDOW (app_window);
 
         GtkIconTheme *icon_theme;
         icon_theme = gtk_icon_theme_get_for_display (gtk_widget_get_display (GTK_WIDGET (window)));
+        // FIX-ME ??? CHECK.
+        XSM_DEBUG_GM (DBG_L1, "App::MAINAppWindowInit... [FIX-ME??] gtk_icon_theme_add_resource_path set to (fix): ", "/org/gnome/gxsm4/resources/icons");
         gtk_icon_theme_add_resource_path (icon_theme, "/org/gnome/gxsm4/resources/icons");
         
         header_bar = gtk_header_bar_new ();
@@ -579,11 +578,11 @@ void App::MAINAppWindowInit(Gxsm4appWindow* win, const gchar *title, const gchar
                                          this);
 
         // create window PopUp menu  ---------------------------------------------------------------------
-        XSM_DEBUG (DBG_L2,  "App::AppWindowInit main menu" );
+        XSM_DEBUG_GM (DBG_L3,  "App::AppWindowInit main menu" );
 
         gxsm_menu = gtk_popover_menu_new_from_model (G_MENU_MODEL (get_gxsm_main_menu ()));
 
-        XSM_DEBUG (DBG_L2,  "App GXSM main popup Header Buttons setup. " );
+        XSM_DEBUG_GM (DBG_L3,  "App GXSM main popup Header Buttons setup. " );
 
         // attach full view popup menu to tool button ----------------------------------------------------
         GtkWidget *header_menu_button = gtk_menu_button_new ();
@@ -600,7 +599,7 @@ void App::MAINAppWindowInit(Gxsm4appWindow* win, const gchar *title, const gchar
                 gtk_header_bar_pack_end (GTK_HEADER_BAR (header_bar), header_menu_button);
         }
 
-        XSM_DEBUG (DBG_L2,  "App GXSM main popup Header Buttons setup. C TOOLBAR POPULATE " );
+        XSM_DEBUG (DBG_L3,  "App GXSM main popup Header Buttons setup. C TOOLBAR POPULATE " );
 
         // Create GXSM main action bar buttons and configure special toolbar_callback type actions
         // load, populate toolbar and setup all application actions
@@ -676,9 +675,9 @@ void App::build_gxsm (Gxsm4appWindow *win){
         app_window = win;
         // setup core functionality header bar, grid with status bar
 
-        g_message ("App::build_gxsm calling MAINAppWindowInit(%s, %s)", "*Gxsm4*", "*" GXSM_VERSION_NAME "*");
+        XSM_DEBUG_GM (DBG_L3, "App::build_gxsm calling MAINAppWindowInit(%s, %s)", "*Gxsm4*", "*" GXSM_VERSION_NAME "*");
         MAINAppWindowInit (win, "Gxsm4", GXSM_VERSION_NAME);
-        g_message ("App::build_gxsm BUILDING GXSM....");
+        XSM_DEBUG_GM (DBG_L3, "App::build_gxsm building GXSM core app ...");
 
         /* Now able to bring up Splash and Startup Info window */
         GxsmSplash (-1.0, "GXSM Startup.", "Initializing Windows and Modules."); // this will auto remove splash after timout!
@@ -722,9 +721,12 @@ void App::build_gxsm (Gxsm4appWindow *win){
 
         set_window_geometry    ("main");
         
-        XSM_DEBUG(DBG_L2,
-                  "App::build_gxsm - finished with main window.\n"
-                  "... Initiating loading modules: g_idle_add (App::finish_system_startup_idle_callback)." );
+        XSM_DEBUG (DBG_L3,
+                   "App::build_gxsm - finished with main window.\n"
+                   "... loading and initiating modules via g_idle_add:\n"
+                   "... App::finish_system_startup_idle_callback\n"
+                   "... executes in stages while apllication main loop is operational." );
+        
         g_idle_add (App::finish_system_startup_idle_callback, this);
 }
 

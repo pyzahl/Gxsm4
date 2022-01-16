@@ -658,17 +658,12 @@ void AppBase::SetTitle(const gchar *title, const gchar *sub_title){
 }
 
 void AppBase::AppWindowInit(const gchar *title, const gchar *sub_title){
-	XSM_DEBUG_GM (DBG_L2, "AppBase::WidgetInit: %s [%s]", title, sub_title?sub_title:"N/A");
+	XSM_DEBUG_GM (DBG_L2, "AppBase::WindowInit: <%s : %s>", title, sub_title?sub_title:"N/A");
         app_window =  gxsm4_app_window_new (gxsm4app);
         window = GTK_WINDOW (app_window);
 
-        
-        //window = GTK_WINDOW (gtk_window_new (GTK_WINDOW_TOPLEVEL));
         header_bar = gtk_header_bar_new ();
         gtk_widget_show (header_bar);
-
-        // gtk_header_bar_set_show_close_button (GTK_HEADER_BAR (header_bar), true);
-        // gtk_header_bar_pack_end (GTK_HEADER_BAR (header_bar), GtkWidget *child);
 
         gtk_window_set_titlebar (GTK_WINDOW (window), header_bar);
         SetTitle (title, sub_title);
@@ -678,9 +673,7 @@ void AppBase::AppWindowInit(const gchar *title, const gchar *sub_title){
         gtk_window_set_child (GTK_WINDOW (window), v_grid);
 	gtk_widget_show (GTK_WIDGET (v_grid)); // FIX-ME GTK4 SHOWALL
 
-        // FIX-ME GTK4
         gtk_widget_show (GTK_WIDGET (window));
-
 }
 
 gboolean AppBase::window_close_callback (GtkWidget *widget, AppBase *self){

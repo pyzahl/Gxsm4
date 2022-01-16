@@ -93,7 +93,7 @@ ZData::~ZData(){
 void ZData::ResetLineInfo(){
 	if(Li) delete [] Li;
 	Li=new LineInfo[ny*nv]; 
-        g_message ("ZData::ResetLineInfo %d, %d",nv, ny);
+        XSM_DEBUG_GM (DBG_L2, "ZData::ResetLineInfo %d, %d",nv, ny);
 }
 
 int ZData::ZResize(int Nx, int Ny, int Nv){ 
@@ -409,7 +409,7 @@ gpointer TZData<ZTYP>::NcDataUpdate_thread (void *env){
                         //                        main_get_gapp ()->progress_info_set_bar_fraction ((gdouble)v/nv, 2);
                 }
 	}
-        if (e.update) g_message ("NcVar updated at %d lines x values", count);
+        if (e.update) XSM_DEBUG_GM (DBG_L1,  "NcVar updated at %d lines x values", count);
         return NULL;
 }
 
@@ -441,7 +441,7 @@ void TZData<ZTYP>::NcPut(NcVar *ncfield, int time_index, gboolean update){
                         //                        main_get_gapp ()->progress_info_set_bar_fraction ((gdouble)v/nv, 2);
                 }
 	}
-        if (update) g_message ("NcVar updated at %d lines x values", count);
+        if (update) XSM_DEBUG_GM (DBG_L1, "NcVar updated at %d lines x values", count);
 #endif
 }
 

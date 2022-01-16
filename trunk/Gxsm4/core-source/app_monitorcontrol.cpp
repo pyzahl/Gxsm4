@@ -95,9 +95,7 @@ MonitorControl::~MonitorControl (){
 
 
 void MonitorControl::AppWindowInit(const gchar *title, const gchar *sub_title){
-	XSM_DEBUG (DBG_L2,  "MonitorControl::AppWindowInit -- header bar,..." );
-
-        g_message ("MonitorControl::AppWindowInit** <%s : %s> **", title, sub_title);
+        XSM_DEBUG_GM (DBG_L1, "MonitorControl::AppWindowInit** <%s : %s> **", title, sub_title?sub_title:"N/A");
         app_window = gxsm4_app_window_new (gxsm4app);
         window = GTK_WINDOW (app_window);
 

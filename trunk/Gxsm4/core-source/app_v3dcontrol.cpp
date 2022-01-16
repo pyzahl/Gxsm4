@@ -224,9 +224,8 @@ V3dControl::~V3dControl (){
 
 
 void V3dControl::AppWindowInit(const gchar *title, const gchar *sub_title){
-	XSM_DEBUG(DBG_L2, "V3dControl::WidgetInit" );
+	XSM_DEBUG (DBG_L1,  "V3dControl::AppWindowInit** <%s : %s>", title, sub_title?sub_title:"N/A");
 
-        g_message ("V3dControl::AppWindowInit** <%s : %s> **", title, sub_title);
         app_window = gxsm4_app_window_new (GXSM4_APP (main_get_gapp ()->get_application ()));
         window = GTK_WINDOW (app_window);
 
