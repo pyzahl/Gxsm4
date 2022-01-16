@@ -1499,7 +1499,8 @@ void App::ui_update(){
                                            xsm->data.ui.dateofscan,
                                            -1);
         }
-        XSM_DEBUG(0, "ui.comment updated from data: " << xsm->data.ui.comment);
+                            //--------------------------------------------------------------------------------
+        XSM_DEBUG_GM(DBG_L1, "App::ui_update** ui.comment updated from data ==================================\n%s", xsm->data.ui.comment);
         //  g_slist_foreach(g_object_get_data( G_OBJECT (ui_control), "UI_EC_list"),
         //		  (GFunc) App::update_ec, NULL);
 }

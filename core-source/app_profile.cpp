@@ -1094,11 +1094,7 @@ ProfileControl::~ProfileControl ()
 
 
 void ProfileControl::AppWindowInit(const gchar *title, const gchar *sub_title){
-	XSM_DEBUG (DBG_L2,  "ViewControl::WidgetInit" );
-
-        // create window PopUp menu  ---------------------------------------------------------------------
-        XSM_DEBUG (DBG_L2,  "VC::VC popup" );
-
+	XSM_DEBUG_GM (DBG_L1,  "ViewControl::AppWindowInit** <%s : %s>", title, sub_title?sub_title:"N/A");
         // new action group
         pc_action_group = g_simple_action_group_new ();
 
@@ -1108,7 +1104,7 @@ void ProfileControl::AppWindowInit(const gchar *title, const gchar *sub_title){
         gtk_popover_set_has_arrow (GTK_POPOVER (p_popup_menu_cv), FALSE);
         
         if (pc_in_window){
-                // g_message ("ProfileControl::AppWindowInit in external window >%s<", title);
+                XSM_DEBUG (DBG_L3,  "ProfileControl::AppWindowInit** ... in external window");
                 // get app_window and window
                 pc_grid = gtk_grid_new ();
                 app_window = pc_in_window;
@@ -1116,17 +1112,12 @@ void ProfileControl::AppWindowInit(const gchar *title, const gchar *sub_title){
                 header_bar = gtk_window_get_titlebar (GTK_WINDOW (window));
                 gtk_window_present (GTK_WINDOW (window));
         } else {
-                // g_message ("ProfileControl::AppWindowInit create own app_window >%s<", title);
-                // create our own app_window
-                g_message ("ProfileControll::AppWindowInit** <%s : %s> **", title, sub_title);
+                XSM_DEBUG (DBG_L3,  "ProfileControl::AppWindowInit** ... in window");
                 app_window = gxsm4_app_window_new (GXSM4_APP (main_get_gapp ()->get_application ()));
                 window = GTK_WINDOW (app_window);
 
                 header_bar = gtk_header_bar_new ();
                 gtk_widget_show (header_bar);
-                //gtk_header_bar_set_show_close_button (GTK_HEADER_BAR (header_bar), true);
-
-                XSM_DEBUG (DBG_L2,  "VC::VC popup Header Buttons setup. " );
 
 #if 1
                 // attach full view popup menu to tool button ----------------------------------------------------
@@ -1617,7 +1608,7 @@ void ProfileControl::update_elem(ProfileElement *pe, ProfileControl *pc){
 // sc==NULL => jump to Line line in last scan
 gint ProfileControl::NewData_redprofile(Scan* sc, int redblue){
 	if (lock){
-                g_message ("ProfileControl::NewData_redprofile *** Object is Locked, skipping.");
+                XSM_DEBUG (DBG_L1, "ProfileControl::NewData_redprofile *** Object is Locked, skipping.");
 		return TRUE; // auto load balancing, low priority
 	}
 	// lock object
@@ -1658,7 +1649,7 @@ gint ProfileControl::NewData(Scan* sc, int line, int cpyscan, VObject *vo, gbool
 	gchar *txt;
 
 	if (lock){
-		g_message ("ProfileControl::NewData *** Object is Locked, skipping.");
+		XSM_DEBUG_GM (DBG_L1,  "ProfileControl::NewData *** Object is Locked, skipping.");
 		return TRUE; // auto load balancing, low priority
 	}
 	// lock object
@@ -2126,7 +2117,7 @@ gint ProfileControl::updateTics (gboolean force)
 void ProfileControl::UpdateArea ()
 {
 	if (lock){
-		g_message ("ProfileControl::UpdateArea -- scans/profile draw is locked/busy: skipping update.");
+		XSM_DEBUG_GM (DBG_L1, "ProfileControl::UpdateArea -- scans/profile draw is locked/busy: skipping update.");
 		return; // avoid attempts to draw while scan data is updated
 	}
 

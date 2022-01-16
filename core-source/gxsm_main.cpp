@@ -133,16 +133,18 @@ static const GOptionEntry gxsm_options[] =
 
 #define GXSM_STARTUP_VERBOSE
 #ifdef GXSM_STARTUP_VERBOSE
-# define GXSM_STARTUP_MESSAGE_VERBOSE(ARGS...) g_message (ARGS)
+# define GXSM_STARTUP_MESSAGE_VERBOSE00(ARGS...) g_message (ARGS) 
 #else
-# define GXSM_STARTUP_MESSAGE_VERBOSE(ARGS...) ;
+# define GXSM_STARTUP_MESSAGE_VERBOSE00(ARGS...) ;
 #endif
+
+# define GXSM_STARTUP_MESSAGE_VERBOSE(ARGS...) if (debug_level>0) g_message (ARGS) 
 
 int main (int argc, char **argv)
 {
         GError *error = NULL;
 
-        GXSM_STARTUP_MESSAGE_VERBOSE ("GXSM4 main enter argc=%d", argc);
+        GXSM_STARTUP_MESSAGE_VERBOSE00 ("GXSM4 main enter argc=%d", argc);
 
 #ifdef GXSM_GLOBAL_MEMCHECK
         mtrace(); /* Starts the recording of memory allocations and releases */
@@ -150,17 +152,17 @@ int main (int argc, char **argv)
 
         pcs_set_current_gschema_group ("core-init");
 
-        GXSM_STARTUP_MESSAGE_VERBOSE ("GXSM4 g_option_context_new for command line option parsing");
+        GXSM_STARTUP_MESSAGE_VERBOSE00 ("GXSM4 g_option_context_new for command line option parsing");
 
         GOptionContext *context = g_option_context_new ("List of loadable file(s) .nc, ...");
         g_option_context_add_main_entries (context, gxsm_options, GETTEXT_PACKAGE);
         //FIX-ME-GTK4 ok to ignore?
         //g_option_context_add_group (context, gtk_get_option_group (TRUE));
 
-        GXSM_STARTUP_MESSAGE_VERBOSE ("GXSM4 attempting g_option_context_parse on arguments.");
+        GXSM_STARTUP_MESSAGE_VERBOSE00 ("GXSM4 attempting g_option_context_parse on arguments.");
 
         if (!g_option_context_parse (context, &argc, &argv, &error)){
-                GXSM_STARTUP_MESSAGE_VERBOSE ("GXSM4 option parse failed.");
+                GXSM_STARTUP_MESSAGE_VERBOSE00 ("GXSM4 option parse failed.");
                 g_error ("GXSM4 command line option parsing failed: %s", error->message);
                 exit (1);
         } else {
