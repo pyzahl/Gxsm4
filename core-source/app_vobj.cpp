@@ -316,6 +316,9 @@ VObject::~VObject(){
         
 	profile=NULL;
 
+        if (properties_bp)
+                g_object_unref (GTK_GRID (properties_bp->grid));
+
         destroy_properties_bp ();
 	delete Pixel;
 	delete Unity;
