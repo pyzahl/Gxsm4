@@ -1218,7 +1218,7 @@ ViewControl::~ViewControl (){
 
         unset_nodestroy ();
         destroy ();
-        
+
 	XSM_DEBUG (DBG_L4,  "ViewControl::~ViewControl -- destroy completed." );
 }
 
@@ -1524,7 +1524,6 @@ void ViewControl::AppWindowInit(const gchar *title, const gchar *sub_title){
 	g_object_set_data (G_OBJECT (window), "v_grid", v_grid); // was "vbox"
 
 	gtk_widget_show (GTK_WIDGET (window)); // FIX-ME GTK4 SHOWALL
-
 }
 
 void ViewControl::canvas_draw_function (GtkDrawingArea *area,
