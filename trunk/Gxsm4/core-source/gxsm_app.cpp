@@ -1354,7 +1354,7 @@ void App::GxsmSplash(gdouble progress, const gchar *info, const gchar* text){
                 gtk_popover_set_has_arrow (GTK_POPOVER (splash), FALSE);
 
                 // FIX-ME GTK4 
-                gtk_popover_set_pointing_to (GTK_POPOVER (splash), &(GdkRectangle){ 1000-ImgW/2, 500-ImgH/2, 1, 1});
+                //gtk_popover_set_pointing_to (GTK_POPOVER (splash), &(GdkRectangle){ 1000-ImgW/2, 500-ImgH/2, 1, 1});
 
                 gtk_popover_popup (GTK_POPOVER (splash));
         }

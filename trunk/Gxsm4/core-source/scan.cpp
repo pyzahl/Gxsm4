@@ -68,6 +68,8 @@ Scan::Scan(Scan *scanmaster){
 	X_linearize=scanmaster->X_linearize;
         for(int i=0; i<4; ++i) ixy_sub[i]=0;
 	State = IS_FRESH;
+        last_line_updated = -1;
+        last_line_updated_time = 0;
 }
 
 

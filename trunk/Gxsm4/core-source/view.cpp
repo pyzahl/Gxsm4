@@ -263,6 +263,7 @@ int Grey2D::update(int y1, int y2){
 		else
 			viewcontrol->SetActive (FALSE);
 
+                //XSM_DEBUG_GM (DBG_L3,  "Grey2D::update** A");
 		if (scan->ixy_sub[1]>0)
                         XImg->ShowSubPic(scan->ixy_sub[0]/QuenchFac, y1/QuenchFac,scan->ixy_sub[1]/QuenchFac,(y2+QuenchFac-y1-1)/QuenchFac, scan->ixy_sub[2]/QuenchFac, scan->ixy_sub[3]/QuenchFac);
                 else
@@ -309,6 +310,7 @@ int Grey2D::update(int y1, int y2){
 								m->GetDataVMode (k,j));
 			}
 
+                //XSM_DEBUG_GM (DBG_L3,  "Grey2D::update** B");
 		if (scan->ixy_sub[1]>0)
                         XImg->ShowSubPic(scan->ixy_sub[0]/QuenchFac, y1/QuenchFac,scan->ixy_sub[1]/QuenchFac,(y2+QuenchFac-y1-1)/QuenchFac, scan->ixy_sub[2]/QuenchFac, scan->ixy_sub[3]/QuenchFac);
                 else
