@@ -1755,9 +1755,10 @@ void ViewControl::Resize (char *title, int nx, int ny,
 	XSM_DEBUG (DBG_L2,  "VC::RESIZE setting window default size: " << usx << ", "<< usy );
         //gtk_widget_set_size_request (canvas, rulewidth+(nx+2*border), rulewidth+(ny+2*border));
         // CHECK-ME NEW
+
         if (QuenchFac > 1){
                 gtk_drawing_area_set_content_width  (GTK_DRAWING_AREA (canvas), rulewidth+(nx+2*border));
-                gtk_drawing_area_set_content_height (GTK_DRAWING_AREA (canvas),  rulewidth+(ny+2*border));
+                gtk_drawing_area_set_content_height (GTK_DRAWING_AREA (canvas), rulewidth+(ny+2*border));
         }
         // to force udpate call:   gtk_widget_queue_draw (canvas);
 
@@ -3971,7 +3972,7 @@ void ViewControl::view_view_redline_callback (GSimpleAction *action, GVariant *p
 		if(vc->RedLine && !vc->scan->BlueLineActive){
                         ProfileControl *tmp = vc->RedLine;
 			vc->RedLine=NULL;
-			delete vc->RedLine;
+			delete tmp;
 		}
 	}
 }

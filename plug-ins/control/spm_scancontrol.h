@@ -170,7 +170,10 @@ public:
 	static void call_scan_draw_line (Scan* sc, gpointer data){
 		gint y_realtime = gapp->xsm->hardware->RTQuery ();
 		gint y_update = ((SPM_ScanControl*)data)->line2update;
-//		std::cout << __func__ << " y_realtime=" << y_realtime << " y_update=" << y_update << std::endl;
+                // "Tip" and data aupdate frequency control/limit
+                if (sc->get_last_line_updated() == y_update && sc->get_last_line_updated_time_delta () < 200000) return;
+                sc->set_last_line_updated(y_update);
+		// std::cout << __func__ << " y_realtime=" << y_realtime << " y_update=" << y_update << std::endl;
 		if (y_realtime >= 0 && fabs ((double)(y_realtime-y_update)) < 2)
 			sc->draw ( y_update, y_update+1); // force line only refresh ### y,y+1
 		else

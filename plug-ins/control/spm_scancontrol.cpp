@@ -1560,7 +1560,7 @@ gboolean SPM_ScanControl::do_scanline (int init){
         }
         
         if (idf_data.scan_list) IdleRefreshFunc (&idf_data);
-        main_get_gapp()->check_events_self();
+        // FIX-ME    main_get_gapp()->check_events_self();
         return TRUE;
 }
 

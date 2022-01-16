@@ -151,6 +151,12 @@ public:
 	
 	virtual void hide();
 	virtual int draw(int y1=-1, int y2=-2);
+
+        // for view update management
+        void set_last_line_updated(int line) { last_line_updated = line; last_line_updated_time = g_get_monotonic_time (); };
+        int get_last_line_updated() { return last_line_updated; };
+        gint64 get_last_line_updated_time_delta() { return g_get_monotonic_time () - last_line_updated_time; }; // us
+
 	void update_world_map (Scan *src=NULL);
 	void clear_world_map ();
       
@@ -262,6 +268,8 @@ public:
 	gboolean show_world_map (gboolean flg);
 	
  private:
+        int last_line_updated;
+        gint64 last_line_updated_time;
 	double t0_ref;
 	
 	int VFlg;

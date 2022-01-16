@@ -148,10 +148,13 @@ void ShmImage2D::saveimage(gchar *name){
 }
 
 void ShmImage2D::draw_callback (cairo_t *cr, gboolean draw_red_line, gboolean draw_sls_box, gboolean draw_tip){
+        //XSM_DEBUG_GM (DBG_L3,  "ShmImage2D::draw_callback** set pixbuf");
+
 	gdk_cairo_set_source_pixbuf (cr, gdk_pixbuf, 0., 0.);
 	cairo_paint(cr);
         
         if (draw_red_line){
+                //XSM_DEBUG_GM (DBG_L3,  "ShmImage2D::draw_callback** draw red line");
                 cairo_set_line_width (cr, ZoomFac);
                 cairo_set_source_rgb (cr, 1.0, 0.0, 0.0); // red
                 cairo_move_to (cr, red_line_points[0], red_line_points[1]);
@@ -161,6 +164,7 @@ void ShmImage2D::draw_callback (cairo_t *cr, gboolean draw_red_line, gboolean dr
 
         if (draw_sls_box){
                 if (red_box_extends[3] > 0){
+                        //XSM_DEBUG_GM (DBG_L3,  "ShmImage2D::draw_callback** draw sls box");
                         cairo_set_line_width (cr, 1.5*ZoomFac);
                         cairo_set_source_rgba (cr, 1.0, 1.0, 0.0, 0.5); // yellow alpha 50%
                         cairo_move_to (cr, red_box_extends[0], red_box_extends[2]);
@@ -173,6 +177,7 @@ void ShmImage2D::draw_callback (cairo_t *cr, gboolean draw_red_line, gboolean dr
         }
         if (draw_tip){
                 double x,y,z;
+                //XSM_DEBUG_GM (DBG_L3,  "ShmImage2D::draw_callback** draw tip");
                 main_get_gapp ()->xsm->hardware->RTQuery ("P", x,y,z);
                 //g_message ("PXYZ: %g %g %g", x,y,z);
 
@@ -269,7 +274,7 @@ void ShmImage2D::ShowSubPic (int xs, int ys, int w, int h, int ytop, int yn){
 
 void ShmImage2D::update_bbox(int y1, int y2){
         
-	// gtk_widget_queue_draw_area (imgarea, tr_xy[0], tr_xy[1]+y1*ZoomFac-1, tr_xy[0]+(width-1)*ZoomFac, tr_xy[1]+y2*ZoomFac+1);
+	// FIX-ME ??? gtk_widget_queue_draw_area (imgarea, tr_xy[0], tr_xy[1]+y1*ZoomFac-1, tr_xy[0]+(width-1)*ZoomFac, tr_xy[1]+y2*ZoomFac+1);
         gtk_widget_queue_draw (imgarea);
 }
 
