@@ -567,11 +567,11 @@ void GnomeAppService::alert(const gchar *s1, const gchar *s2, const gchar *s3, i
                                                                 GTK_MESSAGE_WARNING,
                                                                 GTK_BUTTONS_CLOSE,
                                                                 "<span foreground='red' size='large' weight='bold'>%s</span>\n%s\n%s", s1, s2, s3);
-        g_signal_connect_swapped (G_OBJECT (dialog), "response",
-                                  G_CALLBACK (gtk_window_destroy),
-                                  G_OBJECT (dialog));
 
         gtk_widget_show (dialog);
+
+        int response = GTK_RESPONSE_NONE;
+        g_signal_connect (dialog, "response", G_CALLBACK (GnomeAppService::on_dialog_response_to_user_data), &response);
 
         if (c > 5){
                 g_message ("adding timeout for forced exit");
@@ -582,6 +582,12 @@ void GnomeAppService::alert(const gchar *s1, const gchar *s2, const gchar *s3, i
                                dialog
                                );
         }
+
+        // FIX-ME GTK4 ??
+        // wait here on response
+        while (response == GTK_RESPONSE_NONE)
+                while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
+
 }
 
 
