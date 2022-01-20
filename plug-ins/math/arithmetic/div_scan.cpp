@@ -235,7 +235,6 @@ static void div_scan_cleanup(void)
 // run-Function
 static gboolean div_scan_run(Scan *Src1, Scan *Src2, Scan *Dest)
 {
-	int merr=0;
 	double divisor;
 
 	const double eps = 1e-8;

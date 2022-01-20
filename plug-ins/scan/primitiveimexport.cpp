@@ -930,6 +930,7 @@ FIO_STATUS PrimitiveImExportFile::nscRead(const char *fname, int index_value, in
 			zmag = atof(&line[18]);
 		}
 	}
+        g_message("PrimitiveImExportFile::nscRead zmag=%g", zmag);
 	fclose(f);
 
 	if(!(buf = g_new(short, npix = scan->data.s.nx*scan->data.s.ny)))

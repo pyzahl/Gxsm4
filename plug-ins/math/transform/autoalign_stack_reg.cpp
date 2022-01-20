@@ -448,7 +448,7 @@ void  StackReg::run (Scan *Src, Scan *Dest) {
 		reset_shift_vectors();
 
 		Mem2d* target_initial = Dest->mem2d;
-		Mem2d* target = target_initial;
+		//Mem2d* target = target_initial;
 
 		Align_Job_Env prepend_job;
 		prepend_job.this_stack_reg = this;
@@ -601,10 +601,10 @@ void  StackReg::run (Scan *Src, Scan *Dest) {
 	}
 	case TARGET_TEST: { // test image shift generator
 		// artifical drift parameters
-		double d_tau=5.;
-		double tcx=0.02;
-		double tcy=0.01;
-		double oszns=3.;
+		//double d_tau=5.;
+		//double tcx=0.02;
+		//double tcy=0.01;
+		//double oszns=3.;
 		double drift_x, drift_y;
 
 		// number of time frames stored
@@ -736,7 +736,7 @@ void StackReg::registerLayers (Mem2d* source, int sv, Mem2d* destination, int dv
 void pv (const gchar* vn, Vector_d& v){
 	double ss=0.;
 	DEBUG_COUT( (vn?vn:"   ") << " [ ");
-	for (int k = 0; k < v.size(); k++) {
+	for (int k = 0; k < (int)v.size(); k++) {
 		DEBUG_COUT( v[k] << ' ');
 		ss += v[k]*v[k];
 	}
@@ -744,7 +744,7 @@ void pv (const gchar* vn, Vector_d& v){
 }
 void pm (const gchar* mn, Matrix_d& m){
 	DEBUG_COUT( mn << " [\n");
-	for (int k = 0; k < m.size(); k++)
+	for (int k = 0; k < (int)m.size(); k++)
 		pv (NULL, m[k]);
 	DEBUG_COUT("]\n");
 }
@@ -827,7 +827,7 @@ void StackReg::registerSlice (
 	}
 
 // ************* advanced mode w checks
-	if (shiftVectorsLast[job]->size () != np){
+	if ((int)shiftVectorsLast[job]->size () != np){
 		shiftVectorsLast[job]->resize (np);
 		shiftVectorsLast_d[job]->resize (np);
 	}

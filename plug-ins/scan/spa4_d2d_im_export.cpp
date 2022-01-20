@@ -65,11 +65,6 @@ Not yet tested.
 #include "glbvars.h"
 #include "surface.h"
 
-#ifndef WORDS_BIGENDIAN
-# define WORDS_BIGENDIAN 0
-#else
-# define WORDS_BIGENDIAN 1
-#endif
 
 using namespace std;
 

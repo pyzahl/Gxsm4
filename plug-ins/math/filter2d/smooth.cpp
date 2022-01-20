@@ -336,9 +336,9 @@ void setup_multidimensional_data_copy (const gchar *title, Scan *src, int &ti, i
 	delete Unity;	
 }
 
-
+#if 0
 // run-Function
-static gboolean smooth_run___for_all_vt(Scan *Src, Scan *Dest)
+static gboolean smooth_run(Scan *Src, Scan *Dest) // for all vt
 {
 	double r = 5.;    // Get Radius
 	main_get_gapp()->ValueRequest("2D Convol. Filter Size", "Radius", "Smooth kernel size: s = 1+radius",
@@ -402,7 +402,7 @@ static gboolean smooth_run___for_all_vt(Scan *Src, Scan *Dest)
 	return MATH_OK;
 }
 
-
+#else
 
 
 // run-Function -- may gets called for all layers and time if multi dim scan data is present!
@@ -430,7 +430,7 @@ static gboolean smooth_run(Scan *Src, Scan *Dest)
 	return MATH_OK;
 }
 
-
+#endif
 
 static gboolean smooth_run_radius(Scan *Src, Scan *Dest)
 {

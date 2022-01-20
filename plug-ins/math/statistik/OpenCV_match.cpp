@@ -330,7 +330,6 @@ static gboolean opencvmatch_run(Scan *Src, Scan *Dest)
 	}
 
 	// now mark features in Src Scan using Marker Objects, avoid duplicated in a radius "r=4 pix (object_radius)"
-	gchar *tmp;
 	int count=0;
 	for (int i=0; i<img_result.rows; ++i){
 		for (int j=0; j<img_result.cols; ++j){

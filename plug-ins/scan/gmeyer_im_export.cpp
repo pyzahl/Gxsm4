@@ -582,8 +582,7 @@ FIO_STATUS gmeyer_ImExportFile::import(const char *fname){
 	g_string_append_printf (FileList, "Original Filename: %s\n", fname);
 	g_string_append (FileList, "Original GME File Header follows:\n");
 	
-	int dxi=0, dyi=0;
-	int chan=1, channels=1;
+	int channels=1;
 	double gx=1., gy=1., gz=1.;
 	double pzAV_x=1., pzAV_y=1., pzAV_z=1.;
 
@@ -601,10 +600,12 @@ FIO_STATUS gmeyer_ImExportFile::import(const char *fname){
 			break;
 		if (strncmp (line, "Titel / Titel=", 14) == 0)
 			;
+                #if 0
 		if (strncmp (line, "Delta X / Delta X [Dac]=", 24) == 0)
 			dxi = atoi (&line[24]);
 		if (strncmp (line, "Delta Y / Delta Y [Dac]=", 24) == 0)
 			dyi = atoi (&line[24]);
+                #endif
 		if (strncmp (line, "Num.X / Num.X=", 14) == 0)
 			scan->data.s.nx = atoi (&line[14]);
 		if (strncmp (line, "Num.Y / Num.Y=", 14) == 0)
@@ -629,8 +630,10 @@ FIO_STATUS gmeyer_ImExportFile::import(const char *fname){
 			; // = atof (&line[28]);
 		if (strncmp (line, "Gainpreamp / GainPre 10^=", 29) == 0)
 			; // = atof (&line[29]);
+                #if 0
 		if (strncmp (line, "Chan(1,2,4) / Chan(1,2,4)=", 26) == 0)
 			chan = atoi (&line[26]);
+                #endif
 		if (strncmp (line, "Scanrotoffx / OffsetX=", 22) == 0)
 			scan->data.s.x0 = atof (&line[22]);
 		if (strncmp (line, "Scanrotoffy / OffsetY=", 22) == 0)

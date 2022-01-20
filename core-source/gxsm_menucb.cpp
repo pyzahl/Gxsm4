@@ -385,7 +385,7 @@ void App::load_geometry_callback (GSimpleAction *simple, GVariant *parameter, gp
 
 /* Help ================================================== */
 void App::help_about_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data){
-        App *app = user_data;
+        App *app = (App*)user_data;
 	gchar *message;
 	const gchar *authors[] = {
 		/* Here should be your names */
@@ -412,17 +412,27 @@ void App::help_about_callback (GSimpleAction *simple, GVariant *parameter, gpoin
 	gchar *dbg_lvl_tmp = g_strdup_printf ("\n\nGXSM debug support is disabled.");
 #endif
 
+        gchar *hw_info_stripped = g_strdup (main_get_gapp ()->xsm->hardware->Info(0));
+        gchar *p=hw_info_stripped;
+
+        g_message ("HWInfo:\n%s", hw_info_stripped);
+        
+        for (int line=0; line<10 && *p; ++line, ++p)
+                while (*p && *p != '\n') ++p;
+        
+        *p = 0; // terminate here
+        
 	message = g_strconcat
 		(N_("GXSM is a Universal Scanning Probe Micoscopy Data Aquisitation and Visulaization System."
 		   "\nBuild for GTK4."
 		   "\n\nHardware: "),
-		 main_get_gapp ()->xsm->hardware->Info(0),
+		 hw_info_stripped, "\n[...] (see terminal for more)\n",
 		 dbg_lvl_tmp,
 		 N_("\n\ncompiled by "),
 		 COMPILEDBYNAME,
-		 N_("\n\nGXSM4 evolved from Gxsm-3.., Xxsm, pmstm in 1997."),
+		 N_("\n\nGXSM4 evolved from Gxsm-3.0,2.0, Xxsm, pmstm in 1997."),
 		 NULL);
-
+        g_free (hw_info_stripped);
 	g_free (dbg_lvl_tmp);
 
 	gtk_show_about_dialog (GTK_WINDOW (app->app_window),

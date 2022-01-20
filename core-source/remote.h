@@ -41,70 +41,70 @@
 enum REMOTE_TYP { REMO_ACTION, REMO_MENUACTION, REMO_SETENTRY, REMO_CBACTION, REMO_ENDLIST };
 
 typedef struct {
-    gchar  *cmd;
-    void (*RemoteCb)(GtkWidget *widget , gpointer data);
-    GtkWidget *widget;
-    gpointer data;
+        gchar  *cmd;
+        void (*RemoteCb)(GtkWidget *widget , gpointer data);
+        GtkWidget *widget;
+        gpointer data;
 } remote_action_cb;
 
 typedef struct {
-  char     *cmd;
-  int      (*CmdFkt)(CMDFKTARGS);
-  gpointer data;
+        char     *cmd;
+        int      (*CmdFkt)(CMDFKTARGS);
+        gpointer data;
 } remote_cmd;
 
 typedef struct {
-  REMOTE_TYP typ;
-  char       *verb;
-  remote_cmd *cmd_list;
+        REMOTE_TYP typ;
+        char       *verb;
+        remote_cmd *cmd_list;
 } remote_verb;
 
 class remote{
 public:
-  remote();
-  virtual ~remote();
+        remote();
+        virtual ~remote();
 
-  void rcopen(gchar *crtlfifo, gchar *statfifo=NULL);
-  void rcclose();
+        void rcopen(gchar *crtlfifo, gchar *statfifo=NULL);
+        void rcclose();
 
-  int writestatus(gchar *mld);
-  gboolean readfifo(GIOChannel *src);
-  virtual int eval(char *cmdstr);
+        int writestatus(gchar *mld);
+        gboolean readfifo(GIOChannel *src);
+        virtual int eval(gchar *cmdstr);
 
-  void wait(gint w){ waitflg=w; };
-  gint waiting(){ return waitflg; };
-  virtual void waitfkt(){};
+        void wait(gint w){ waitflg=w; };
+        gint waiting(){ return waitflg; };
+        virtual void waitfkt(){};
 protected:
-  gint remotefifo;
-  gint statusfifo;
+        gint remotefifo;
+        gint statusfifo;
 private:
-  gint waitflg;
+        gint waitflg;
 };
 
 class remote_crtl : public remote{
 public:
-  remote_crtl(remote_verb *rvlist);
-  virtual ~remote_crtl();
+        remote_crtl(remote_verb *rvlist);
+        virtual ~remote_crtl();
 
-  virtual int eval(char *cmdstr);
-  virtual int addcmd(gchar **cmdargvlist)=0;
-  virtual int checkentry(gchar **cmdargvlist)=0;
-  virtual int checkactions(gchar **cmdargvlist)=0;
-  virtual void waitfkt(){};
+        virtual int eval(gchar *cmdstr);
+        virtual int addcmd(gchar **cmdargvlist)=0;
+        virtual int checkentry(gchar **cmdargvlist)=0;
+        virtual int checkactions(gchar **cmdargvlist)=0;
+        virtual void waitfkt(){};
 
-  void senderror(char *errstr);
-  void sendcmd(char *cmd, char *arg, gchar **arglist);
-  void quit();
+        void senderror(const char *errstr);
+        void sendcmd(const char *cmd, char *arg, gchar **arglist);
+        void quit();
 
-  int ExecAction(gchar **arglist);
+        int ExecAction(gchar **arglist);
 
 protected:
 private:
-  int FindFktExec(char *cmd, char *arg, gchar **arglist);
+        int FindFktExec(const gchar *cmd, const gchar *arg, gchar **arglist);
 
-  remote_verb *rlist;
-  remote_cmd *rfkt;
-  char *rarg;
+        remote_verb *rlist;
+        remote_cmd *rfkt;
+        char *rarg;
 };
 
 #endif

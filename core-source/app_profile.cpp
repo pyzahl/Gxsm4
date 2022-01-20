@@ -475,7 +475,7 @@ void  ProfileElement::SetY(int Yy){ yy=Yy; }
 void ProfileElement::SetLastY(){ yy=scan->mem2d->GetNy()-1; }
 
 
-double  ProfileElement::GetData_dz () { return scan->data.s.dz; }
+//double  ProfileElement::GetData_dz () { return scan->data.s.dz; }
 double  ProfileElement::SetData_dz (double dz) { return scan->data.s.dz = dz; }
 
 double  ProfileElement::GetValue(int i){
@@ -615,8 +615,7 @@ ProfileControl::ProfileControl (Gxsm4app *app, const gchar *titlestring, int ChN
 }
 
 ProfileControl::ProfileControl (Gxsm4app *app, const gchar *titlestring, int n, UnitObj *ux, UnitObj *uy, double xmin, double xmax, const gchar *resid,  Gxsm4appWindow *in_external_window)
-        : LineProfile1D(n, ux, uy, xmin, xmax),
-          AppBase(app){
+        : AppBase(app), LineProfile1D(n, ux, uy, xmin, xmax){
         
         pc_in_window = in_external_window;
 	Init(titlestring, -1, resid);
@@ -862,7 +861,7 @@ void ProfileControl::Init(const gchar *titlestring, int ChNo, const gchar *resid
         //	main_get_gapp ()->configure_drop_on_widget (window);
 
 	if(chno>=0 && !pc_in_window){
-                XSM_DEBUG_GM (DBG_L2, "ProfileControl::ProfileControl connecting close-request for profile chno %", chno);
+                XSM_DEBUG_GM (DBG_L2, "ProfileControl::ProfileControl connecting close-request for profile chno %d", chno);
                 g_signal_connect (window, "close-request",  G_CALLBACK (App::close_scan_event_cb), this);
         }
 	// New Scrollarea
@@ -922,7 +921,7 @@ void ProfileControl::Init(const gchar *titlestring, int ChNo, const gchar *resid
         gtk_widget_add_controller (canvas, GTK_EVENT_CONTROLLER (gesture));
 
         gtk_drawing_area_set_draw_func (GTK_DRAWING_AREA (canvas),
-                                        G_CALLBACK (ProfileControl::canvas_draw_function),
+                                       GtkDrawingAreaDrawFunc (ProfileControl::canvas_draw_function),
                                         this, NULL);
 	SetSize();
 
@@ -1273,7 +1272,7 @@ void ProfileControl::pressed_cb (GtkGesture *gesture, int n_press, double x, dou
                         menu = gtk_popover_new ();
                         gtk_widget_set_parent (menu, pc->canvas);
                         gtk_popover_set_has_arrow (GTK_POPOVER (menu), TRUE);
-                        gtk_popover_set_pointing_to (GTK_POPOVER (menu), &(GdkRectangle){ x, y, 1, 1});
+                        gtk_popover_set_pointing_to (GTK_POPOVER (menu), &(GdkRectangle){ (int)x, (int)y, 1, 1});
                         box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
                         gtk_popover_set_child (GTK_POPOVER (menu), box);
 
@@ -1292,7 +1291,7 @@ void ProfileControl::pressed_cb (GtkGesture *gesture, int n_press, double x, dou
                 // gtk_menu_popup_at_pointer (Menu, Event)
 
                 // do graph window menu popup
-                gtk_popover_set_pointing_to (GTK_POPOVER (pc->p_popup_menu_cv), &(GdkRectangle){ x, y, 1, 1});
+                gtk_popover_set_pointing_to (GTK_POPOVER (pc->p_popup_menu_cv), &(GdkRectangle){ (int)x, (int)y, 1, 1});
                 gtk_popover_popup (GTK_POPOVER (pc->p_popup_menu_cv));
                 break;
         }
@@ -2537,8 +2536,7 @@ void ProfileControl::file_save_as_callback (GSimpleAction *simple, GVariant *par
                                  gpointer user_data){
         ProfileControl *pc = (ProfileControl *) user_data;
 
-	gchar *ffname;
-	gchar *mld, *oname;
+	gchar *oname;
         GtkWidget *chooser = gtk_file_chooser_dialog_new ("Save-as Profile",
                                                           pc->window, // parent_window
                                                           GTK_FILE_CHOOSER_ACTION_SAVE,

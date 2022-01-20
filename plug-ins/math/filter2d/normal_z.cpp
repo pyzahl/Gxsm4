@@ -344,9 +344,9 @@ void execute_filter_y (Mem2d *in, Mem2d *out){
     }
 }
 
-
+#if 0
 // run-Function
-static gboolean normal_z_run___for_all_vt(Scan *Src, Scan *Dest)
+static gboolean normal_z_run(Scan *Src, Scan *Dest) // for all values, times
 {
         //double r = 5.;    // Get Radius
 	//main_get_gapp()->ValueRequest("2D Convol. Filter Size", "Radius", "Normal_Z kernel size: s = 1+radius",
@@ -414,6 +414,8 @@ static gboolean normal_z_run___for_all_vt(Scan *Src, Scan *Dest)
 	return MATH_OK;
 }
 
+#else
+
 // run-Function -- may gets called for all layers and time if multi dim scan data is present!
 static gboolean normal_z_run(Scan *Src, Scan *Dest)
 {
@@ -442,4 +444,4 @@ static gboolean normal_z_run(Scan *Src, Scan *Dest)
 	return MATH_OK;
 }
 
-
+#endif

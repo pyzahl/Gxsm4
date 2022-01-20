@@ -323,14 +323,13 @@ int DSPMoverControl::create_waveform (double amp, double duration, int space){
                      );        
 
         int    imax = mover_param.MOV_wave_len-channels;
-        int    imax1 = mover_param.MOV_wave_len-channels;
 	double kn = (double)mover_param.MOV_wave_len;
 	double n = kn / channels;
 	double n2 = n/2.;
 	double t=0.;
 
         double phase = mover_param.inch_worm_phase/360.;
-        int   iphase = (int)(phase*kn);
+        //int   iphase = (int)(phase*kn);
 
 	switch (mover_param.MOV_waveform_id){
 	case MOV_WAVE_SAWTOOTH:
@@ -777,14 +776,8 @@ wid_gu_test (GtkGesture *gesture, gpointer user_data)
 #endif
 
 void DSPMoverControl::create_folder (){
-	GSList *EC_list=NULL;
-
-	Gtk_EntryControl *ec;
-	GtkWidget *tg, *fg, *fg2, *frame_param, *frame_param2;
-	GtkWidget *input;
 	GtkWidget *notebook;
-	GtkWidget *MoverCrtl;
-	GtkWidget *button, *img, *lab;
+	GtkWidget *button;
         // FIX-ME GTK4
 	//GtkAccelGroup *accel_group=NULL;
 
@@ -811,7 +804,6 @@ void DSPMoverControl::create_folder (){
 	const char *mover_tab_key[] = { "mover-tab-xy", "mover-tab-rot", "mover-tab-psd", "mover-tab-lens", "mover-tab-auto", "mover-tab-sm", "mover-tab-z0", "mover-tab-config", NULL};
 	const char *pcs_tab_remote_key_prefix[] = { "dspmover-xy-", "dspmover-rot-", "dspmover-psd-", "dspmover-lens-", "dspmover-auto-", "dspmover-sm-", "dspmover-z0-", "dspmover-config-", NULL};
 
-	Gtk_EntryControl *Ampl, *Spd, *Stp, *GPIO_on, *GPIO_off, *GPIO_reset, *GPIO_scan, *GPIO_dir, *Wave_out0, *Wave_out1;
 	int i,itab;
 
         mov_bp = new MOV_GUI_Builder (v_grid);
@@ -821,7 +813,6 @@ void DSPMoverControl::create_folder (){
 
         for(itab=i=0; MoverNames[i]; ++i){                
                 Gtk_EntryControl *ec_axis[3];
-                GtkGesture *gesture;
 
                 if (main_get_gapp()->xsm->Inst->OffsetMode() != OFM_ANALOG_OFFSET_ADDING && i == 5) continue;
 		if (IS_SLIDER_CTRL && i < 4 ) continue;
@@ -882,8 +873,8 @@ void DSPMoverControl::create_folder (){
 			mov_bp->set_xy (3,11);
                         mov_bp->grid_add_fire_icon_button (
                                                            "arrow-up-symbolic",
-                                                           DSPMoverControl::CmdAction, this,
-                                                           DSPMoverControl::StopAction, this);
+                                                           GCallback (DSPMoverControl::CmdAction), this,
+                                                           GCallback (DSPMoverControl::StopAction), this);
                         button = mov_bp->icon;
                         //mov_bp->grid_add_widget (button = gtk_button_new_from_icon_name ("seek-backward-symbolic"));
 			g_object_set_data( G_OBJECT (button), "DSP_cmd", GINT_TO_POINTER (DSP_CMD_Z0_P));
@@ -918,8 +909,8 @@ void DSPMoverControl::create_folder (){
 			mov_bp->set_xy (3,13);
                         mov_bp->grid_add_fire_icon_button (
                                                            "arrow-down-symbolic",
-                                                           DSPMoverControl::CmdAction, this,
-                                                           DSPMoverControl::StopAction, this);
+                                                           GCallback (DSPMoverControl::CmdAction), this,
+                                                           GCallback (DSPMoverControl::StopAction), this);
                         button = mov_bp->icon;
 			g_object_set_data( G_OBJECT (button), "DSP_cmd", GINT_TO_POINTER (DSP_CMD_Z0_M));
 			g_object_set_data( G_OBJECT (button), "MoverNo", GINT_TO_POINTER (99));
@@ -1105,7 +1096,9 @@ void DSPMoverControl::create_folder (){
                                 GtkWidget *wave_preview_area = gtk_drawing_area_new ();
                                 gtk_drawing_area_set_content_width (GTK_DRAWING_AREA (wave_preview_area), 128);
                                 gtk_drawing_area_set_content_height (GTK_DRAWING_AREA (wave_preview_area), 34);
-                                gtk_drawing_area_set_draw_func (GTK_DRAWING_AREA (wave_preview_area), wave_preview_draw_function, this, NULL);
+                                gtk_drawing_area_set_draw_func (GTK_DRAWING_AREA (wave_preview_area),
+                                                                GtkDrawingAreaDrawFunc (wave_preview_draw_function),
+                                                                this, NULL);
                                 g_object_set_data  (G_OBJECT (wave_preview_area), "wave_ch", GINT_TO_POINTER (k));
                                 mov_bp->grid_add_widget (wave_preview_area);
 
@@ -1281,8 +1274,8 @@ void DSPMoverControl::create_folder (){
 	        		mov_bp->set_xy (3,1);
                                 mov_bp->grid_add_fire_icon_button (
                                                                    "arrow-up-symbolic",
-                                                                   DSPMoverControl::CmdAction, this,
-                                                                   DSPMoverControl::StopAction, this);
+                                                                   GCallback (DSPMoverControl::CmdAction), this,
+                                                                   GCallback (DSPMoverControl::StopAction), this);
                                 button = mov_bp->icon;
                                 //mov_bp->grid_add_widget (button = gtk_button_new_from_icon_name ("seek-backward-symbolic"));
 	        		g_object_set_data( G_OBJECT (button), "DSP_cmd", GINT_TO_POINTER (DSP_CMD_AFM_MOV_YP));
@@ -1323,8 +1316,8 @@ void DSPMoverControl::create_folder (){
 	        		mov_bp->set_xy (3,1);
                                 mov_bp->grid_add_fire_icon_button (
                                                                    "arrow-up-symbolic",
-                                                                   DSPMoverControl::CmdAction, this,
-                                                                   DSPMoverControl::StopAction, this);
+                                                                   GCallback (DSPMoverControl::CmdAction), this,
+                                                                   GCallback (DSPMoverControl::StopAction), this);
                                 button = mov_bp->icon;
                                 //mov_bp->grid_add_widget (button = gtk_button_new_from_icon_name ("seek-backward-symbolic"));
 	        		g_object_set_data( G_OBJECT (button), "DSP_cmd", GINT_TO_POINTER (DSP_CMD_AFM_MOV_ZP));
@@ -1381,8 +1374,8 @@ void DSPMoverControl::create_folder (){
                                 mov_bp->set_xy (2,2);
                                 mov_bp->grid_add_fire_icon_button (
                                                                    "arrow-left-symbolic",
-                                                                   DSPMoverControl::CmdAction, this,
-                                                                   DSPMoverControl::StopAction, this);
+                                                                   GCallback (DSPMoverControl::CmdAction), this,
+                                                                   GCallback (DSPMoverControl::StopAction), this);
                                 button = mov_bp->icon;
                                 
                                 //mov_bp->grid_add_widget (button = gtk_button_new_from_icon_name ("seek-left-symbolic"));
@@ -1418,8 +1411,8 @@ void DSPMoverControl::create_folder (){
                                 mov_bp->set_xy (4,2);
                                 mov_bp->grid_add_fire_icon_button (
                                                                    "arrow-right-symbolic",
-                                                                   DSPMoverControl::CmdAction, this,
-                                                                   DSPMoverControl::StopAction, this);
+                                                                   GCallback (DSPMoverControl::CmdAction), this,
+                                                                   GCallback (DSPMoverControl::StopAction), this);
                                 // button = gtk_button_new_from_icon_name ("seek-right-symbolic");
                                 button = mov_bp->icon;
                                 //mov_bp->grid_add_widget (button = gtk_button_new_from_icon_name ("media-seek-right-symbolic"));
@@ -1460,8 +1453,8 @@ void DSPMoverControl::create_folder (){
                                 mov_bp->set_xy (3,3);
                                 mov_bp->grid_add_fire_icon_button (
                                                                    "arrow-down-symbolic",
-                                                                   DSPMoverControl::CmdAction, this,
-                                                                   DSPMoverControl::StopAction, this);
+                                                                   GCallback (DSPMoverControl::CmdAction), this,
+                                                                   GCallback (DSPMoverControl::StopAction), this);
                                 button = mov_bp->icon;
                                 //mov_bp->grid_add_widget (button = gtk_button_new_from_icon_name ("seek-forward-symbolic"));
 	        		g_object_set_data( G_OBJECT (button), "DSP_cmd", GINT_TO_POINTER (DSP_CMD_AFM_MOV_YM));
@@ -1498,8 +1491,8 @@ void DSPMoverControl::create_folder (){
                                 mov_bp->set_xy (3,3);
                                 mov_bp->grid_add_fire_icon_button (
                                                                    "arrow-down-symbolic",
-                                                                   DSPMoverControl::CmdAction, this,
-                                                                   DSPMoverControl::StopAction, this);
+                                                                   GCallback (DSPMoverControl::CmdAction), this,
+                                                                   GCallback (DSPMoverControl::StopAction), this);
                                 button = mov_bp->icon;
                                 //mov_bp->grid_add_widget (button = gtk_button_new_from_icon_name ("seek-forward-symbolic"));
 	        		g_object_set_data( G_OBJECT (button), "DSP_cmd", GINT_TO_POINTER (DSP_CMD_AFM_MOV_ZM));
@@ -1744,7 +1737,7 @@ void DSPMoverControl::updateDSP(int sliderno){
 			        ExecCmd(DSP_CMD_GPIO_SETUP);
 			}
 		} else if ( mover_param.GPIO_tmp2 ){ // invert action unmask special bit from value
-		        if ( mover_param.AFM_GPIO_setting != mover_param.AFM_GPIO_usr_setting[sliderno] | mover_param.GPIO_tmp2 ){
+		        if ( mover_param.AFM_GPIO_setting != (mover_param.AFM_GPIO_usr_setting[sliderno] | mover_param.GPIO_tmp2 )){
 			        mover_param.AFM_GPIO_setting = mover_param.AFM_GPIO_usr_setting[sliderno];
 				ExecCmd(DSP_CMD_GPIO_SETUP);
 				mover_param.AFM_GPIO_setting = mover_param.AFM_GPIO_usr_setting[sliderno] | mover_param.GPIO_tmp2;

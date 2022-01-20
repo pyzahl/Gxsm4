@@ -51,7 +51,7 @@ extern "C++" {
 
 #ifdef XSM_DEBUG_OPTION
   extern int main_get_debug_level ();
-  extern int mein_get_pi_debug_level ();
+  extern int main_get_pi_debug_level ();
 
   
 # define MSG_OUT std::cerr  /* normal messages -- found std::cout is not working proper from some point?!?!?*/
@@ -80,7 +80,6 @@ extern "C++" {
 #define PI_DEBUG_ERROR(L, DBGTXT)    do { if(main_get_pi_debug_level() > L) ERR_OUT << "** (" << __FILE__ << ": " << __FUNCTION__ << ") Gxsm-PlugIn-ERROR **:" << NEWLINE << " - " << DBGTXT << NEWLINE; } while(0)
 
 #define PI_DEBUG_GP(L, ARGS...)  do { if(main_get_pi_debug_level() > L) g_print (ARGS); } while(0)
-#define PI_DEBUG_GM(L, ARGS...)  do { if(main_get_pi_debug_level() > L) g_message (ARGS); } while(0)
 #define PI_DEBUG_GP_WARNING(L, ARGS...)  do { if(main_get_pi_debug_level() > L) g_warning (ARGS); } while(0)
 #define PI_DEBUG_GP_ERROR(L, ARGS...)  do { if(main_get_pi_debug_level() > L) g_error (ARGS); } while(0)
 

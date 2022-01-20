@@ -112,7 +112,7 @@ class ProfileElement{
 	inline int GetCurX(double *x, double *y, int id=0);
 
 	gchar *GetInfo(int i, gint64 ymode=0);
-        inline double GetData_dz ();
+        //inline double GetData_dz ();
         double SetData_dz (double dz);
 	inline double GetValue(int i);
 	inline double GetXPos(int i);
@@ -280,7 +280,7 @@ class ProfileControl : public AppBase, public LineProfile1D{
 
 	void SetActive(int flg);
 
-        double GetData_dz () { return last_pe->GetData_dz (); };
+        //double GetData_dz () { return last_pe->GetData_dz (); };
         double SetData_dz (double dz) { return last_pe->SetData_dz (dz); };
 
 	void SetYrange(double y1, double y2);

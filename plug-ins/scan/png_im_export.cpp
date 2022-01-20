@@ -413,12 +413,12 @@ FIO_STATUS PNG_ImExportFile::Read(xsm::open_mode mode){
 
 FIO_STATUS PNG_ImExportFile::import_data(const char *fname, int index_value, int index_time){
 	FILE *infile;
-	double display_exponent;
+	double display_exponent=0.;
 	ulg image_width, image_height, image_rowbytes;
 	int image_channels;
 	int rc;
 	
-	gboolean byteswap = FALSE;
+	//gboolean byteswap = FALSE;
 
 	// Checking resposibility for this file as good as possible, use
 	// extension(s) (most simple), magic numbers, etc.
@@ -542,14 +542,14 @@ FIO_STATUS PNG_ImExportFile::import_data(const char *fname, int index_value, int
 	uch *image_data = readpng_get_image(display_exponent, &image_channels, &image_rowbytes);
 
 	uch *src;
-	ulg lastrow, row;
+	ulg row;
 	uch r, g, b, a;
 	ulg red, green, blue;
 
-        for (lastrow = row = 0;  row < image_height;  ++row) {
+        for (row = 0;  row < image_height;  ++row) {
 		src = image_data + row*image_rowbytes;
 		if (image_channels == 3) {
-			for (int i = 0; i < image_width; ++i) {
+			for (int i = 0; i < (int)image_width; ++i) {
 				red   = *src++;
 				green = *src++;
 				blue  = *src++;
@@ -559,7 +559,7 @@ FIO_STATUS PNG_ImExportFile::import_data(const char *fname, int index_value, int
 				scan->mem2d->PutDataPkt (0.3*red + 0.59*green + 0.11*blue, i, row, 3);
 			}
 		} else  /* if (image_channels == 4) */ {
-			for (int i = 0; i < image_width; ++i) {
+			for (int i = 0; i < (int)image_width; ++i) {
 				r = *src++;
 				g = *src++;
 				b = *src++;
@@ -580,7 +580,6 @@ FIO_STATUS PNG_ImExportFile::import_data(const char *fname, int index_value, int
 }
 
 FIO_STATUS PNG_ImExportFile::Write(){
-	int pcnt=0;
 	mainprog_info minfo;
 	unsigned char **rgb;
 	Mem2d *m = NULL;
