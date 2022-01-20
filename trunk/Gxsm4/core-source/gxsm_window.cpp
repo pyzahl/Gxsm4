@@ -102,7 +102,7 @@ gxsm4_app_window_dispose (GObject *object)
         if (!window) return;
         
         windows = g_list_remove (windows, window);
-        XSM_DEBUG_GM (DBG_L4,"gxsm4_app_window_dispose **** # Windows in List: %u,  time: %ul us", g_list_length (windows), g_get_real_time());
+        XSM_DEBUG_GM (DBG_L4,"gxsm4_app_window_dispose **** # Windows in List: %ul,  time: %ld us", g_list_length (windows), g_get_real_time());
         g_clear_object (&priv->settings);
         XSM_DEBUG_GM (DBG_L4,"gxsm4_app_window_dispose **** dispose object");
         G_OBJECT_CLASS (gxsm4_app_window_parent_class)->dispose (object);
@@ -127,7 +127,7 @@ gxsm4_app_window_new (Gxsm4app *app)
         gtk_window_set_hide_on_close (GTK_WINDOW (window), true);
      
         windows = g_list_append (windows, window);
-        XSM_DEBUG_GM (DBG_L1,"gxsm4_app_window_new **** # Windows in List: %u,  time: %ul us", g_list_length (windows), g_get_real_time());
+        XSM_DEBUG_GM (DBG_L1,"gxsm4_app_window_new **** # Windows in List: %ul,  time: %ld us", g_list_length (windows), g_get_real_time());
 #if 0
         gchar* tmp = g_strdup_printf ("W# %u", g_list_length (windows));
         GtkWidget *lab = gtk_label_new (tmp);

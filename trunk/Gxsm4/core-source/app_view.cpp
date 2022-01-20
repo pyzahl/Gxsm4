@@ -1344,7 +1344,7 @@ void ViewControl::pressed_cb (GtkGesture *gesture, int n_press, double x, double
                                 if (!vc->tmp_object_op->check_event (vc->tmp_event, vc->tmp_xy))
                                         vc->tmp_object_op = NULL;
                         
-                                return FALSE;
+                                return;
                         }
 
                         // Objects drawn manually
@@ -1383,7 +1383,7 @@ void ViewControl::released_cb (GtkGesture *gesture, int n_press, double x, doubl
         case 1: 
                 if(vc->AddObjFkt && !vc->obj_drag_start){
                         g_object_set_data (G_OBJECT (vc->canvas), "mouse_pix_xy", (gpointer) mouse_pix_xy);
-                        (*vc->AddObjFkt)(NULL, vc); return TRUE; // Add Obj
+                        (*vc->AddObjFkt)(NULL, vc); return; // Add Obj
                 } else {
                         VObjectEvent event = { VOBJ_EV_BUTTON_1, VOBJ_EV_BUTTON_RELEASE, x,y };
                         vc->tmp_event = &event;
@@ -1530,7 +1530,7 @@ void ViewControl::canvas_draw_function (GtkDrawingArea *area,
                                         int             height,
                                         ViewControl *vc){
         if (vc->destruction_in_progress)
-                return false;
+                return;
 
         int qf    = vc->vinfo->GetQfac ();
         double zf = vc->vinfo->GetZfac ();
@@ -3339,7 +3339,6 @@ void ViewControl::view_file_saveimage_callback (GSimpleAction *simple, GVariant 
                                                 gpointer user_data){
         ViewControl *vc = (ViewControl *) user_data;
 
-	gchar *imgname;
         gchar *s_value = vc->scan->data.Vunit->UsrString (vc->scan->mem2d->data->GetVLookup (vc->scan->mem2d->GetLayer ()), UNIT_SM_PS);
         gchar *s_time = vc->scan->data.TimeUnit->UsrString (vc->scan->mem2d->get_frame_time (), UNIT_SM_PS);
         gchar *s_vrange = vc->scan->data.Zunit->UsrString (vc->scan->data.display.vrange_z, UNIT_SM_PS);
@@ -3357,7 +3356,6 @@ void ViewControl::view_file_saveimage_callback (GSimpleAction *simple, GVariant 
         gchar *suggest1 = g_strdelimit (suggest0, " ", '_');
         gchar *name = g_path_get_basename (suggest1);
         gchar *path = g_path_get_dirname (suggest1);
-        gchar *suggest;
 
         // FIX-ME pending cleanups g-free's...
         
@@ -3444,7 +3442,7 @@ void ViewControl::view_file_kill_callback (GSimpleAction *simple, GVariant *para
 
 gboolean ViewControl::view_window_close_callback (GtkWidget *widget, ViewControl *vc){
         XSM_DEBUG_GM (DBG_L2, "ViewControl::view_window_close_callback CH%d", vc->chno);
-        if (vc->chno < 0) return;
+        if (vc->chno < 0) return FALSE;
         main_get_gapp ()->xsm->SetMode(vc->chno, ID_CH_M_OFF); // initiate destroy after "KILL" user verify
 }
 

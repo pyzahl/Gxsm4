@@ -2426,8 +2426,7 @@ void ProfileControl::file_save_callback (GSimpleAction *simple, GVariant *parame
                                  gpointer user_data){
         ProfileControl *pc = (ProfileControl *) user_data;
 
-	gchar *ffname;
-	gchar *mld, *oname;
+	gchar *oname;
         GtkWidget *chooser = gtk_file_chooser_dialog_new ("Save Profile",
                                                           pc->window, // parent_window
                                                           GTK_FILE_CHOOSER_ACTION_SAVE,
@@ -2480,8 +2479,7 @@ void ProfileControl::file_save_data_callback (GSimpleAction *simple, GVariant *p
                                  gpointer user_data){
         ProfileControl *pc = (ProfileControl *) user_data;
 
-	gchar *ffname;
-	gchar *mld, *oname;
+	gchar *oname;
         GtkWidget *chooser = gtk_file_chooser_dialog_new ("Save Data as Viewed",
                                                           pc->window, // parent_window
                                                           GTK_FILE_CHOOSER_ACTION_SAVE,

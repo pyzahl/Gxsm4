@@ -566,7 +566,7 @@ void App::MAINAppWindowInit(Gxsm4appWindow* win, const gchar *title, const gchar
         GtkIconTheme *icon_theme;
         icon_theme = gtk_icon_theme_get_for_display (gtk_widget_get_display (GTK_WIDGET (window)));
         // FIX-ME ??? CHECK.
-        XSM_DEBUG_GM (DBG_L1, "App::MAINAppWindowInit... [FIX-ME??] gtk_icon_theme_add_resource_path set to (fix): ", "/org/gnome/gxsm4/resources/icons");
+        XSM_DEBUG_GM (DBG_L1, "App::MAINAppWindowInit... [FIX-ME??] gtk_icon_theme_add_resource_path set to (fix): %s ", "/org/gnome/gxsm4/resources/icons");
         gtk_icon_theme_add_resource_path (icon_theme, "/org/gnome/gxsm4/resources/icons");
         
         header_bar = gtk_header_bar_new ();
@@ -727,7 +727,7 @@ void App::build_gxsm (Gxsm4appWindow *win){
                    "... App::finish_system_startup_idle_callback\n"
                    "... executes in stages while apllication main loop is operational." );
         
-        g_idle_add (App::finish_system_startup_idle_callback, this);
+        g_idle_add (GSourceFunc(App::finish_system_startup_idle_callback), this);
 }
 
 gboolean App::finish_system_startup (){
@@ -915,7 +915,6 @@ gint App::Gxsm_Plugin_Check (const gchar *category){
 
 GxsmMenuExtension *App::gxsm_app_extend_menu (const gchar *extension_point, const gchar *menu_entry_text, const gchar *action)
 {
-	GMenuModel *model;
 	GMenuModel *section;
 
         //g_message ("GxsmMenuExtension *App::gxsm_app_extend_menu");
@@ -1204,7 +1203,7 @@ void App::splash_draw_function (GtkWidget *area, cairo_t *cr,
                 if (text2) { delete text2; text2=NULL; }
                 if (text3) { delete text3; text3=NULL; }
                 if (text4) { delete text4; text4=NULL; }
-                return true;
+                return;
         }
         
         XSM_DEBUG_GM (DBG_L3, "App::splash_draw_callback: %s, %s \n",
@@ -1338,7 +1337,7 @@ void App::GxsmSplash(gdouble progress, const gchar *info, const gchar* text){
                 g_object_set_data( G_OBJECT (splash_darea), "splash_message_font", (gpointer) g_variant_get_string (splash_message_font, NULL));
 
                 gtk_drawing_area_set_draw_func (GTK_DRAWING_AREA (splash_darea),
-                                                G_CALLBACK (App::splash_draw_function),
+                                                GtkDrawingAreaDrawFunc (G_CALLBACK (App::splash_draw_function)),
                                                 this, NULL);
                 
                 gtk_box_append (GTK_BOX (vb), splash_darea);
