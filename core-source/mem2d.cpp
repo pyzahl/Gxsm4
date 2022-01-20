@@ -38,12 +38,6 @@
 
 #define UTF8_DEGREE "\302\260"
 
-// used to set progressbar of main window (P: 0..1)
-#define SET_PROGRESS(P) { main_get_gapp ()->SetProgress((gfloat)(P)); while (gtk_events_pending()) gtk_main_iteration(); }
-
-// #define	XSM_DEBUG(A,B) std::cout << B << std::endl
-
-
 #define SAVECONVOLKERN
 //#define SAVECONVOLSRC
 

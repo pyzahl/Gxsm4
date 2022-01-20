@@ -995,7 +995,7 @@ void AppBase::SaveGeometry(gboolean store_to_settings){
 void AppBase::LoadGeometry(){
         if (!window_key){
                 XSM_DEBUG_ERROR (DBG_L1, "AppBase::LoadGeometry -- error, no window_key set.");
-                return -1;
+                return;
         }
 	XSM_DEBUG (DBG_L2, "AppBase::LoadGeometry -- Load Geometry for window " << window_key );
 
