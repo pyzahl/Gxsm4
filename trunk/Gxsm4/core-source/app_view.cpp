@@ -739,7 +739,7 @@ ViewControl::ViewControl (Gxsm4app *app,
         gtk_drawing_area_set_content_width  (GTK_DRAWING_AREA (canvas), 100);
         gtk_drawing_area_set_content_height (GTK_DRAWING_AREA (canvas), 100);
         gtk_drawing_area_set_draw_func      (GTK_DRAWING_AREA (canvas),
-                                             G_CALLBACK (ViewControl::canvas_draw_function),
+                                             GtkDrawingAreaDrawFunc (ViewControl::canvas_draw_function),
                                              this, NULL);
         // to force udpate call:   gtk_widget_queue_draw (canvas);
 
@@ -792,7 +792,6 @@ ViewControl::ViewControl (Gxsm4app *app,
 
 	// -- Side-Info-Pane Notebook --
         // ==================================================
-        gint notebook_tab_index=0;
 	notebook = gtk_notebook_new ();
 	gtk_widget_show (notebook);
 	gtk_notebook_set_tab_pos (GTK_NOTEBOOK (notebook), GTK_POS_RIGHT);
@@ -1270,7 +1269,6 @@ void ViewControl::drag_motion (GtkEventControllerMotion *motion, gdouble x, gdou
 
                 if (vc->tmp_effected > 0){ // handled by object, done. no more action here!
                         vc->obj_drag_start = false;
-                        return FALSE;
                 }
         }
 }

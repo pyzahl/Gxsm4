@@ -59,7 +59,7 @@ static GActionEntry win_monitor_entries[] = {
         { "logging-level", MonitorControl::set_logging_level_radio_callback, "s", "'normal'", NULL },
 };
 
-MonitorControl::MonitorControl (Gxsm4app *app, gint loglevel, gint maxlines):Monitor(loglevel), AppBase(app){
+MonitorControl::MonitorControl (Gxsm4app *app, gint loglevel, gint maxlines):AppBase(app),Monitor(loglevel){
         set_max_lines (maxlines);
 
         AppWindowInit (N_("GXSM Activity Monitor and Logbook"));

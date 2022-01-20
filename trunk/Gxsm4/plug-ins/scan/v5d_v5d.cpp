@@ -207,7 +207,7 @@ static off_t ltell( int f )
    return lseek( f, 0, SEEK_CUR );
 }
 
-
+#if 0
 /*
  * Copy up to maxlen characters from src to dst stopping upon whitespace
  * in src.  Terminate dst with null character.
@@ -224,9 +224,9 @@ static int copy_string2( char *dst, const char *src, int maxlen )
    }
    return strlen(dst);
 }
+#endif
 
-
-
+#if 0
 /*
  * Copy up to maxlen characters from src to dst stopping upon whitespace
  * in src.  Terminate dst with null character.
@@ -247,7 +247,7 @@ static int copy_string( char *dst, const char *src, int maxlen )
    }
    return i;
 }
-
+#endif
 
 
 /*

@@ -558,31 +558,21 @@ to the community. The GXSM-Forums always welcome input.
  * --------------------------------------------------------------------------------
  */
 
-#include "config.h"
-#include "pyremote.h"
-#include "pyscript_templates.h"
-#include "pyscript_templates_script_libs.h"
-#include "plugin.h"
-#include "gnome-res.h"
-
 #include <Python.h>
-
 #include <sys/types.h>
 #include <signal.h>
+#include "glib/gstdio.h"
 
+#include <gtksourceview/gtksource.h>
+
+#include "config.h"
+#include "glbvars.h"
+#include "plugin.h"
+#include "gnome-res.h"
 #include "action_id.h"
 #include "xsmtypes.h"
 
-#include "config.h"
-#include "plugin.h"
-#include "glbvars.h"
 
-#include "glib/gstdio.h"
-
-//#include "app_remote.h"
-#include "pyremote.h"
-
-#include <gtksourceview/gtksource.h>
 
 #include "gapp_service.h"
 #include "xsm.h"
@@ -593,6 +583,18 @@ to the community. The GXSM-Forums always welcome input.
 #include "gxsm_window.h"
 #include "app_view.h"
 #include "surface.h"
+
+#include "pyremote.h"
+
+#include "pyscript_templates.h"
+#include "pyscript_templates_script_libs.h"
+
+// Plugin Prototypes
+static void pyremote_init( void );
+static void pyremote_about( void );
+static void pyremote_configure( void );
+static void pyremote_cleanup( void );
+static void pyremote_run(GtkWidget *w, void *data);
 
  // Fill in the GxsmPlugin Description here
 GxsmPlugin pyremote_pi = {
@@ -641,7 +643,7 @@ GxsmPlugin pyremote_pi = {
 	  NULL, // direct menu entry callback2 or NULL
 
 	  pyremote_cleanup
-	  };
+};
 
 class py_gxsm_console;
 
@@ -2555,14 +2557,6 @@ PyObject* py_gxsm_console::run_string(const char *cmd, int type, PyObject *g, Py
 		PyErr_Print();
 	}
 	return ret;
-}
-
-static void on_dialog_response (GtkDialog *dialog,
-                                int        response,
-                                gpointer   user_data)
-{
-        *((int *) user_data) = response;
-        gtk_window_destroy (GTK_WINDOW (dialog));
 }
 
 

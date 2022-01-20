@@ -246,7 +246,6 @@ static void spasimkz_configure(void)
         while (response == GTK_RESPONSE_NONE)
                 while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
 
-        return response == GTK_RESPONSE_OK;
 } 
 
 static void spasimkz_cleanup(void)

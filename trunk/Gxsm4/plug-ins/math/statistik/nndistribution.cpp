@@ -179,7 +179,6 @@ static void nndistribution_cleanup(void)
 int build_marker_list(Scan *Src, scan_object_data **&objects, const gchar *type)
 {
 	int i;
-	int num_pkte=0;
 	int n_obj = Src->number_of_object ();
 
 	int tn = strlen (type);
@@ -238,7 +237,7 @@ int build_marker_list(Scan *Src, scan_object_data **&objects, const gchar *type)
 static gboolean nndistribution_run(Scan *Src)
 {
 	PI_DEBUG (DBG_L2, "NN Distribution");
-	double high, low, rrange, dr, bin_width, dr_norm;
+	double high, low, rrange, bin_width, dr_norm;
 	int    bin_num;
 
 	const gchar *marker_group[] = { 

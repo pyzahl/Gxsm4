@@ -231,7 +231,7 @@ static void log_z_cleanup(void)
 static gboolean log_z_run(Scan *Src, Scan *Dest)
 {
 	int line, col;
-	double hi,lo,fac;
+	//double hi,lo,fac;
 
 	Dest->mem2d->Resize (Dest->data.s.nx, Dest->data.s.ny, Dest->mem2d->GetNv (), ZD_FLOAT);
 

@@ -319,7 +319,6 @@ static void PolarHist_configure(void)
         while (response == GTK_RESPONSE_NONE)
                 while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
 
-        return response == GTK_RESPONSE_OK;
 } 
 
 // cleanup-Function
@@ -358,11 +357,11 @@ static gboolean PolarHist_run(Scan *Src, Scan *Dest)
 #define GetNumValPhi(V,P)  Num[PolSlices*(V) + (P)]
 #define IncNumValPhi(V,P)  ++Num[PolSlices*(V) + (P)]
 	long *Num = new long[PolSlices * DataChannels];
-	memset(Num, 0, sizeof(Num));
+	memset((void *)Num, 0, sizeof(Num));
 
 	// Autorange?
-	if((DataStart == 0. && DataEnd == 0.) | DataStart > DataEnd)
-		Src1->mem2d->HiLo(&DataEnd, &DataStart, FALSE, NULL, NULL, 1);
+	if((DataStart == 0. && DataEnd == 0.) || DataStart > DataEnd)
+		Src1->mem2d->HiLo (&DataEnd, &DataStart, FALSE, NULL, NULL, 1);
 
 	double DataRange = DataEnd - DataStart;
 	double SliceAng  = 360./(double)PolSlices;

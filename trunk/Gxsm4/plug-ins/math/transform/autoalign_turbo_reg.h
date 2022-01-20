@@ -162,7 +162,7 @@ public:
 	void pv_d (const gchar* vn, Vector_d& v){
 		if (PB_VERBOSE<3) return;
 		cout << (vn?vn:"   ") << " [ ";
-		for (int k = 0; k < v.size(); k++) {
+		for (int k = 0; k < (int)v.size(); k++) {
 			cout << v[k] << ' ';
 		}
 		cout << "]\n";
@@ -171,7 +171,7 @@ public:
 	void pm_d (const gchar* mn, Matrix_d& m){
 		if (PB_VERBOSE<3) return;
 		cout << mn << " [\n";
-		for (int k = 0; k < m.size(); k++)
+		for (int k = 0; k < (int)m.size(); k++)
 			pv_d (NULL, m[k]);
 		cout << "]\n";
 	};
@@ -179,7 +179,7 @@ public:
 	void pv_i (const gchar* vn, Vector_i& v){
 		if (PB_VERBOSE<3) return;
 		cout << (vn?vn:"   ") << " [ ";
-		for (int k = 0; k < v.size(); k++) {
+		for (int k = 0; k < (int)v.size(); k++) {
 			cout << v[k] << ' ';
 		}
 		cout << "]\n";
@@ -188,7 +188,7 @@ public:
 	void pm_i (const gchar* mn, Matrix_i& m){
 		if (PB_VERBOSE<3) return;
 		cout << mn << " [\n";
-		for (int k = 0; k < m.size(); k++)
+		for (int k = 0; k < (int)m.size(); k++)
 			pv_i (NULL, m[k]);
 		cout << "]\n";
 	};
@@ -196,7 +196,7 @@ public:
 	void pv_b (const gchar* vn, Vector_b& v){
 		if (PB_VERBOSE<3) return;
 		cout << (vn?vn:"   ") << " [ ";
-		for (int k = 0; k < v.size(); k++) {
+		for (int k = 0; k < (int)v.size(); k++) {
 			cout << (v[k]?"1":"0");
 		}
 		cout << "]\n";
@@ -205,7 +205,7 @@ public:
 	void pm_b (const gchar* mn, Matrix_b& m){
 		if (PB_VERBOSE<3) return;
 		cout << mn << " [\n";
-		for (int k = 0; k < m.size(); k++)
+		for (int k = 0; k < (int)m.size(); k++)
 			pv_i (NULL, m[k]);
 		cout << "]\n";
 	};
@@ -399,6 +399,7 @@ public:
 			}
 			break;
 		}
+		default: break;
 		}
 	};
 
@@ -810,9 +811,9 @@ private:
 		Vector_d& result
 		){
 		result.resize (matrix.size ());
-		for (int i = 0; (i < matrix.size ()); i++) {
+		for (int i = 0; (i < (int)matrix.size ()); i++) {
 			result[i] = 0.0;
-			for (int j = 0; (j < vector.size ()); j++) {
+			for (int j = 0; (j < (int)vector.size ()); j++) {
 				result[i] += matrix[i][j] * vector[j];
 			}
 		}

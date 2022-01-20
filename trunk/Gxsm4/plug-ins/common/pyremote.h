@@ -32,25 +32,13 @@
 #define PYREMOTE__H
 
 #include <gtk/gtk.h>
-#include <math.h>
-#include "cairo_item.h"
-
-#include "gxsm_app.h"
-#include "gxsm_window.h"
 
 struct remote_action_cb {
-    const gchar  *cmd;
-    void (*RemoteCb)(GtkWidget *widget , void* data);
-    GtkWidget *widget;
-    gpointer data;
+        const gchar  *cmd;
+        void (*RemoteCb)(GtkWidget *widget , void* data);
+        GtkWidget *widget;
+        gpointer data;
 };
-
-// Plugin Prototypes
-static void pyremote_init( void );
-static void pyremote_about( void );
-static void pyremote_configure( void );
-static void pyremote_cleanup( void );
-static void pyremote_run(GtkWidget *w, void *data);
 
 #endif
 

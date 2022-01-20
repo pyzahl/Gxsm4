@@ -350,7 +350,7 @@ void DSPPACControl::create_folder (){
 	GSList *EC_amp_freeze_list=NULL;
 	GSList *EC_phase_freeze_list=NULL;
 
-	GtkWidget *frame_param, *wid, *menu, *menuitem;
+	GtkWidget *wid;
         gint    clip_index;
 
 	AppWindowInit("Phase/Amplitude Convergent Detector Control");
@@ -1051,7 +1051,7 @@ int DSPPACControl::controller_callback (GtkWidget *widget, DSPPACControl *dspc){
 	        sranger_common_hwi->write_dsp_state((gtk_check_button_get_active (GTK_CHECK_BUTTON (widget))) ? MD_PLL:-MD_PLL);
 		break;
         case 200: // Ampl Ctrl Adaptive
-	        if (((DSPPACControl*)dspc)->pll.ctrlmode_Amp_adaptive = gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)))
+	        if ((((DSPPACControl*)dspc)->pll.ctrlmode_Amp_adaptive = gtk_check_button_get_active (GTK_CHECK_BUTTON (widget))))
                         g_slist_foreach
 				( (GSList*) g_object_get_data( G_OBJECT (widget), "ADA-LIST"),
 				  (GFunc) gtk_widget_show, NULL

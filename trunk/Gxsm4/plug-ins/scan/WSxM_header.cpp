@@ -152,11 +152,12 @@ int HeaderWrite(WSxM_HEADER * pHeader, FILE * pFile)
 	    if ((strcmp(pHeader->tszTitles[j], pHeader->tszTitles[j + 1]) >
 		 0)
 		||
-		(strcmp(pHeader->tszTitles[j], pHeader->tszTitles[j + 1])
-		 == 0)
-		&&
-		(strcmp(pHeader->tszLabels[j], pHeader->tszLabels[j + 1]) >
-		 0)) {
+		( (strcmp(pHeader->tszTitles[j], pHeader->tszTitles[j + 1])
+		   == 0)
+		  &&
+		  (strcmp(pHeader->tszLabels[j], pHeader->tszLabels[j + 1]) >
+		   0))
+		){
 		/* the element j is bigger than j+1 one so we swap them    */
 		/* we must swap the elements j and j+1 in the three arrays */
 
@@ -234,11 +235,12 @@ int HeaderWrite(WSxM_HEADER * pHeader, FILE * pFile, const char * cType)
 	    if ((strcmp(pHeader->tszTitles[j], pHeader->tszTitles[j + 1]) >
 		 0)
 		||
-		(strcmp(pHeader->tszTitles[j], pHeader->tszTitles[j + 1])
-		 == 0)
-		&&
-		(strcmp(pHeader->tszLabels[j], pHeader->tszLabels[j + 1]) >
-		 0)) {
+		((strcmp(pHeader->tszTitles[j], pHeader->tszTitles[j + 1])
+		  == 0)
+		 &&
+		 (strcmp(pHeader->tszLabels[j], pHeader->tszLabels[j + 1]) >
+		  0))
+		){
 		/* the element j is bigger than j+1 one so we swap them    */
 		/* we must swap the elements j and j+1 in the three arrays */
 

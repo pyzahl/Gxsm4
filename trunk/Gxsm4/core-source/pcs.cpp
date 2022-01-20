@@ -1116,7 +1116,7 @@ gint Gtk_EntryControl::update_callback(GtkEditable *editable, void *data){
 
 void Gtk_EntryControl::entry_focus_leave_callback (GtkEventController *controller, gpointer self)
 {
-        update_callback(self, NULL);
+        update_callback (GTK_EDITABLE (self), NULL);
         g_message ("ENTRY OUT-OF-FOCUS, buffer: %s", gtk_entry_buffer_get_text (gtk_entry_get_buffer (GTK_ENTRY (self))));
 }
 
