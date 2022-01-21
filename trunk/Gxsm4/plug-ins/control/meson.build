@@ -13,7 +13,8 @@ if gsl.found() and soup.found()
     plugin_list += [
     { 'name': 'inet_json_external_scandata', 'sources' : ['inet_json_external_scandata.cpp', 'jsmn.cpp'], 'deps': [ soup, gsl ],
       'gschemas': [ 'org.gnome.gxsm4.inet_json_settings.gschema.xml',
-                    'org.gnome.gxsm4.pcs.plugin-libinet-json-external-scandata.gschema.xml' ] },
+                    'org.gnome.gxsm4.pcs.plugin-libinet-json-external-scandata.gschema.xml',
+		    'org.gnome.gxsm4.pcsadjustments.plugin-libinet-json-external-scandata.gschema.xml' ] },
     ]
 endif
 
@@ -78,3 +79,9 @@ if plugin_schemas.length() > 0
       gnome.compile_schemas(depend_files: files(settings_schemas_list))
       meson.add_install_script('glib-compile-schemas', schemas_dir)
 endif
+
+
+install_data(
+    sources: settings_schemas_list,
+    install_dir : schemas_dir
+)

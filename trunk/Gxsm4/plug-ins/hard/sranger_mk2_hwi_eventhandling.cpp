@@ -135,11 +135,12 @@ const char* DSPControl::vp_label_lookup(int i){
 }
 
 const char* DSPControl::vp_unit_lookup(int i){
-        if (i==0) // IN0 dedicated for tunnel current
+        if (i==0){ // IN0 dedicated for tunnel current
                 if (main_get_gapp()->xsm->Inst->nAmpere2V (1.) > 1.)
                         return "pA"; // sranger_common_hwi->lookup_signal_unit_by_index (0); // must be a unscaled unit here
                 else
                         return "nA"; // sranger_common_hwi->lookup_signal_unit_by_index (0); // must be a unscaled unit here
+        }
 	if (i > 11 && i < 16){
 		int k=i-12;
 		if (vp_input_id_cache[k] < 0)
@@ -1228,7 +1229,7 @@ void DSPControl::free_probedata_array_set (GArray** garr, DSPControl *dc){
         if (!garr) return;
 	dc->pv_lock = TRUE;
 	for (int i=0; i<NUM_PROBEDATA_ARRAYS; ++i)
-		g_array_free (garr[i], TRUE);
+		g_array_unref (garr[i]);
 	dc->pv_lock = FALSE;
 
         GXSM_UNREF_OBJECT(GXSM_GRC_PRBVEC);      
@@ -1238,7 +1239,7 @@ void DSPControl::free_probehdr_array_set (GArray** garr, DSPControl *dc){
         if (!garr) return;
 	dc->pv_lock = TRUE;
  	for (int i=0; i<NUM_PROBEDATA_ARRAYS; ++i)
-                g_array_free (garr[i], TRUE);
+                g_array_unref (garr[i]);
 	dc->pv_lock = FALSE;
 
         GXSM_UNREF_OBJECT(GXSM_GRC_PRBHDR);

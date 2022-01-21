@@ -143,3 +143,8 @@ executable(
 gnome.compile_schemas(depend_files: files(gxsm4_settings_schemas))
 
 meson.add_install_script('glib-compile-schemas', schemas_dir)
+
+install_data(
+    sources: gxsm4_settings_schemas,
+    install_dir : schemas_dir
+)
