@@ -316,9 +316,11 @@ VObject::~VObject(){
         
 	profile=NULL;
 
-        if (properties_bp)
+        if (properties_bp){
+                gtk_widget_unparent (properties_bp->grid);
                 g_object_unref (GTK_GRID (properties_bp->grid));
-
+        }
+        
         destroy_properties_bp ();
 	delete Pixel;
 	delete Unity;
@@ -1116,8 +1118,9 @@ void VObject::properties(){
 
 void  VObject::destroy_properties_bp (){
         if (properties_bp){ // clean up
-                g_object_ref (properties_bp->grid);
-                gtk_grid_remove_row (GTK_GRID (((ViewControl*)g_object_get_data (G_OBJECT (canvas), "ViewControl"))->side_pane_tab_objects), 1);
+                gtk_widget_unparent (properties_bp->grid);
+                //g_object_ref (properties_bp->grid);
+                //gtk_grid_remove_row (GTK_GRID (((ViewControl*)g_object_get_data (G_OBJECT (canvas), "ViewControl"))->side_pane_tab_objects), 1);
                 delete properties_bp;
                 properties_bp = NULL;
         }
@@ -1455,7 +1458,7 @@ gboolean VObject::check_event(VObjectEvent *event, double mxy[2]){
                         touched_xy[1] = item_y;
                         g_object_set_data (G_OBJECT (canvas), "VObject", this);
                         // FIX-ME-GTK4 x,y!!
-                        gtk_popover_set_pointing_to (GTK_POPOVER (obj_popup_menu), &(GdkRectangle){ event->x, event->y, 1, 1});
+                        gtk_popover_set_pointing_to (GTK_POPOVER (obj_popup_menu), &(GdkRectangle){ (int)event->x, (int)event->y, 1, 1});
                         gtk_popover_popup (GTK_POPOVER (obj_popup_menu));
                         break;
 

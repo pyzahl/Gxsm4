@@ -376,7 +376,6 @@ int Surface::load(const char *rname){
 
 	gchar *cname = NULL;
 	gchar *fname = NULL;
-	gchar *ffname = NULL;
 
 	XSM_DEBUG (DBG_L2, "load: " << rname);
 	// default path from resources

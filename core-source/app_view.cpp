@@ -224,6 +224,8 @@ public:
                 gtk_widget_show (dialog);
 	};
 	void cleanup (GtkWidget *box){
+                XSM_DEBUG_GM (DBG_L1, "NcDumpToWidge::cleanup **");
+                if (!box) return;
 		g_slist_foreach (
                                  (GSList*) g_object_get_data (
                                                               G_OBJECT (box), "info_list" ), 
@@ -231,8 +233,7 @@ public:
                                  NULL
                                  );
                 // FIX-ME-GTK4 or OK ???
-                g_message ("FIX-ME-GTK4 unref grid: NcDumpToWidget::cleanup");
-                //gtk_window_destroy (GTK_WINDOW (box));
+                XSM_DEBUG_GM (DBG_L1, "NcDumpToWidge::cleanup FIX-ME-GTK4 >>detach grid, wipe contents<<");
 #if 0
 		g_list_foreach (
                                 gtk_container_get_children ( GTK_CONTAINER (box)),
@@ -253,19 +254,19 @@ public:
                 // ==> <key name="view-nc-raw" type="b">
                 // GTK3QQQ GSettings!!!!!!!! Tuple List ???
                 // XsmRescourceManager xrm("App_View_NCraw");
-                // gtk_check_button_set_active (GTK_TOGGLE_BUTTON (tog), xrm.GetBool (varname, FALSE) ? 1:0);
-		g_signal_connect (tog, "toggled", G_CALLBACK(NcDumpToWidget::varshow_toggel_cb), g_strdup(varname));
+                //gtk_check_button_set_active (GTK_CHECK_BUTTON (tog), xrm.GetBool (varname, FALSE) ? 1:0);
 
-                // FIX-ME-GTK4 / CHECK-ME!!!
-                //GtkLabel *l=GTK_LABEL (g_list_first (gtk_container_get_children (GTK_CONTAINER (tog)))->data);
-                GtkLabel *l=GTK_LABEL (gtk_widget_get_first_child (tog));
-                
-                gtk_label_set_ellipsize (l, PANGO_ELLIPSIZE_START); // or.._END
-                gtk_label_set_width_chars (l, 20);
-                gtk_label_set_xalign (l, 1.0);
-
-                gtk_widget_set_tooltip_text (tog, varname);
-
+                // to be ported
+		//g_signal_connect (tog, "toggled", G_CALLBACK(NcDumpToWidget::varshow_toggel_cb), g_strdup(varname));
+                GtkLabel *l=GTK_LABEL (gtk_widget_get_last_child (tog));
+                if (l){
+                        //XSM_DEBUG_GM (DBG_L1, "NcDumpToWidge::setup_toggle... %s", varname);
+                        gtk_label_set_ellipsize (l, PANGO_ELLIPSIZE_START); // or.._END
+                        gtk_label_set_width_chars (l, 20);
+                        gtk_label_set_xalign (l, 1.0);
+                        
+                        gtk_widget_set_tooltip_text (tog, varname);
+                }
 		gtk_widget_show (tog);
 	};
 
@@ -288,10 +289,12 @@ void NcDumpToWidget::dump ( GtkWidget *box, GtkWidget *box_selected ){
         int grid_row=0;
         int grid_row_s=0;
         
+        XSM_DEBUG_GM (DBG_L3, "NcDumpToWidge::dump **");
 	// cleanup old contents if exists
         cleanup (box_selected);
         cleanup (box);
 
+        XSM_DEBUG_GM (DBG_L3, "NcDumpToWidge::dump ** new grid...");
 	grid = gtk_grid_new ();
 	gtk_scrolled_window_set_child (GTK_SCROLLED_WINDOW (box), grid);
         gtk_widget_show (box);
@@ -357,6 +360,8 @@ void NcDumpToWidget::dump ( GtkWidget *box, GtkWidget *box_selected ){
 
 		NcDim* dim = get_dim(n);
 		gchar *dimname = g_strconcat("Dim_",(gchar*)dim->name(), NULL);
+
+                XSM_DEBUG_GM (DBG_L3, "NcDumpToWidge::dump ** dimvar: %s", dimname);
 
 		VarName = gtk_check_button_new_with_label (dimname);
 		setup_toggle (VarName, dimname);
@@ -427,7 +432,10 @@ void NcDumpToWidget::dump ( GtkWidget *box, GtkWidget *box_selected ){
 //		gchar *vardef = g_strconcat(types[vp->type()], " ", (gchar*)vp->name(), vdims, NULL);
 		gchar *vardef = g_strconcat((gchar*)vp->name(), vdims, NULL);
 		g_free(vdims);
-		VarName = gtk_check_button_new_with_label (vardef);
+
+                XSM_DEBUG_GM (DBG_L3, "NcDumpToWidge::dump ** variable: %s", vardef);
+
+                VarName = gtk_check_button_new_with_label (vardef);
 		setup_toggle (VarName, (gchar*)vp->name());
 //		std::cout << vardef << std::endl;
 		g_free(vardef);
@@ -3440,9 +3448,9 @@ void ViewControl::view_file_kill_callback (GSimpleAction *simple, GVariant *para
 	main_get_gapp ()->xsm->SetMode(vc->chno, ID_CH_M_OFF);
 }
 
-gboolean ViewControl::view_window_close_callback (GtkWidget *widget, ViewControl *vc){
+void ViewControl::view_window_close_callback (GtkWidget *widget, ViewControl *vc){
         XSM_DEBUG_GM (DBG_L2, "ViewControl::view_window_close_callback CH%d", vc->chno);
-        if (vc->chno < 0) return FALSE;
+        if (vc->chno < 0) return;
         main_get_gapp ()->xsm->SetMode(vc->chno, ID_CH_M_OFF); // initiate destroy after "KILL" user verify
 }
 

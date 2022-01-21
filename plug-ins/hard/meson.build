@@ -3,7 +3,8 @@ install_path = gxsm4_plugin_dir / plugin_cat
 
 plugin_list = [
     { 'name': 'spm_simulator_hwi',
-      'gschemas': [ 'org.gnome.gxsm4.pcsadjustments.plugin-libspm-simulator-hwi.gschema.xml' ] },
+      'gschemas': [ 'org.gnome.gxsm4.pcsadjustments.plugin-libspm-simulator-hwi.gschema.xml',
+                    'org.gnome.gxsm4.pcs.plugin-libspm-simulator-hwi.gschema.xml' ] },
     { 'name': 'sranger_mk2_hwi',
       'sources': [ 'sranger_mk2_hwi.cpp',
                    'sranger_mk2_hwi_control.cpp',
@@ -17,10 +18,8 @@ plugin_list = [
                    'sranger_mk3_hwi_spm.cpp' ],
       'gschemas': [ 'org.gnome.gxsm4.hwi.sranger_mk23.gschema.xml',
                     'org.gnome.gxsm4.hwi.sranger_mk23_mover.gschema.xml',
-                    'org.gnome.gxsm4.pcsadjustments.plugin-libsranger-mk2-hwi.gschema.xml',
-                    'org.gnome.gxsm4.pcs.plugin-libspm-simulator-hwi.gschema.xml',
                     'org.gnome.gxsm4.pcs.plugin-libsranger-mk2-hwi.gschema.xml',
-#                    'org.gnome.gxsm4.plugin_libsranger_hwi.gschema.xml'
+                    'org.gnome.gxsm4.pcsadjustments.plugin-libsranger-mk2-hwi.gschema.xml'
                    ] },
 #    { 'name': 'tc211_ccd' }, ## may be port that some day
 ]
@@ -86,3 +85,9 @@ if plugin_schemas.length() > 0
       gnome.compile_schemas(depend_files: files(settings_schemas_list))
       meson.add_install_script('glib-compile-schemas', schemas_dir)
 endif
+
+
+install_data(
+    sources: settings_schemas_list,
+    install_dir : schemas_dir
+)

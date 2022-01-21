@@ -76,3 +76,9 @@ if plugin_schemas.length() > 0
       meson.add_install_script('glib-compile-schemas', schemas_dir)
 endif
 
+
+
+install_data(
+    sources: settings_schemas_list,
+    install_dir : schemas_dir
+)

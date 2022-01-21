@@ -74,8 +74,7 @@ ProbeEntry::ProbeEntry (const gchar *Name, time_t Time, GPtrArray *Labels, GPtrA
 ProbeEntry::ProbeEntry (const gchar *Name, NcFile *ncf, int p_index, NcVar* &evdata_var, NcVar* &evcoords_var, ScanEvent* &se, int num, int &count, ProbeEntry *pe) : EventEntry (Name, 0){ 
 	gchar *tmp;
 
-	XSM_DEBUG (DBG_L6, "ProbeEntry::ProbeEntry -- Scan NC-File for Entry" << p_index);
-//	std::cout << "ProbeEntry::ProbeEntry -- Scan NC-File for Entry #" << p_index << " :" << num << std::endl;
+	XSM_DEBUG_GP (DBG_L4, "ProbeEntry::ProbeEntry ** Scan NC-File for Entry [%d] #%d", p_index, num);
 
 	se = NULL;
 
@@ -88,21 +87,25 @@ ProbeEntry::ProbeEntry (const gchar *Name, NcFile *ncf, int p_index, NcVar* &evd
 		unitssymbols = NULL;
 
 		tmp = g_strdup_printf ("Event_Probe_%05d_coords", p_index);
-		std::cout << " ProbeEntry::ProbeEntry scanning for #" << p_index << " :" << tmp << std::endl;
+		XSM_DEBUG_GP (DBG_L4, "ProbeEntry::ProbeEntry ... scanning for ev set [%s]", tmp);
 		evcoords_var = ncf->get_var(tmp); 
 		g_free (tmp);
 
 		// found that Event_Probe, else return?
-		if (!evcoords_var) // not OK?
+		if (!evcoords_var){ // not OK?
+                        XSM_DEBUG_GP (DBG_L4, "ProbeEntry::ProbeEntry ... not present, done.");
 			return;
+                }
 
 		tmp = g_strdup_printf ("Event_Probe_%05d_data", p_index); 
-		std::cout << " ProbeEntry::ProbeEntry scanning for #" << p_index << " :" << tmp << std::endl;
+		XSM_DEBUG_GP (DBG_L1, "ProbeEntry::ProbeEntry ... scanning for ev set [%s]", tmp);
 		evdata_var = ncf->get_var(tmp); 
 		g_free (tmp);
 
-		if (!evdata_var) // not OK?
+		if (!evdata_var){ // not OK?
+                        XSM_DEBUG_GP (DBG_L4, "ProbeEntry::ProbeEntry ... not present, done.");
 			return;
+                }
 
 		// got it now.
 		count      = evdata_var->get_dim(0)->size ();
@@ -165,10 +168,12 @@ ProbeEntry::ProbeEntry (const gchar *Name, NcFile *ncf, int p_index, NcVar* &evd
 }
 
 ProbeEntry::~ProbeEntry (){ 
-	XSM_DEBUG (DBG_L6, "ProbeEntry::~ProbeEntry");
-	g_array_free (data, TRUE);
-	g_ptr_array_free (labels, TRUE);
-	g_ptr_array_free (unitssymbols, TRUE);
+	XSM_DEBUG (DBG_L1, "ProbeEntry::~ProbeEntry");
+        if (data){
+                g_array_unref (data);
+                g_ptr_array_unref (labels);
+                g_ptr_array_unref (unitssymbols);
+        }
 }
 
 const gchar *ProbeEntry::get_label (int j){ 
@@ -475,7 +480,7 @@ UserEntry::UserEntry (const gchar *Name, NcFile *ncf, const gchar *Message_id, S
 UserEntry::~UserEntry (){ 
 	XSM_DEBUG (DBG_L6, "UserEntry::~UserEntry");
 	if (data)
-		g_ptr_array_free (data, TRUE);
+		g_ptr_array_unref (data);
 	if (message_id)
 		g_free (message_id);
 	if (info)

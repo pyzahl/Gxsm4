@@ -1676,7 +1676,7 @@ gboolean sranger_mk3_hwi_spm::ScanLineM(int yindex, int xdir, int lssrcs, Mem2d 
 		dsp_scan.nx = Nx; // num datapoints in X to take
 		dsp_scan.ny = Ny-1; // num datapoints in Y to take
 
-                g_print ("sranger_mk3_hwi_spm::ScanLineM INIT (yindex=%d [fifo-y=%d], xdir=%d, ydir=%d, lssrcs=%x\n", yindex, fifo_data_y_index, xdir, ydir, lssrcs);
+                PI_DEBUG_GP (DBG_L2, "sranger_mk3_hwi_spm::ScanLineM ** INIT (yindex=%d [fifo-y=%d], xdir=%d, ydir=%d, lssrcs=%x", yindex, fifo_data_y_index, xdir, ydir, lssrcs);
 		ydir = yindex == 0 ? 1 : -1; // top-down / bottom-up ?
 	
 		recalculate_dsp_scan_speed_parameters (); // adjusts dsp_scan.dnx, ....!
