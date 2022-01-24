@@ -997,7 +997,7 @@ void AppBase::LoadGeometry(){
                 XSM_DEBUG_ERROR (DBG_L1, "AppBase::LoadGeometry -- error, no window_key set.");
                 return;
         }
-	XSM_DEBUG (DBG_L2, "AppBase::LoadGeometry -- Load Geometry for window " << window_key );
+	XSM_DEBUG_GM (DBG_L2, "AppBase::LoadGeometry ** Load Geometry for window ** %s **", window_key );
 
         g_signal_connect (window, "close-request",  G_CALLBACK (AppBase::window_close_callback), this);
 
