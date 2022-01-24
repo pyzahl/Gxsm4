@@ -7,9 +7,9 @@
     "finish-args" : [
         "--share=network",
         "--share=ipc",
-        "--socket=x11",
+	"--socket=fallback-x11",
+	"--socket=wayland",
 	"--filesystem=host",
-	"--filesystem=/app/share/glib-2.0/schemas",
 	"--socket=pulseaudio",
 	"--device=all"
     ],
@@ -108,14 +108,7 @@
                     "type"   : "svn",
                     "url"    : "https://svn.code.sf.net/p/gxsm/svn/trunk/Gxsm4"
                 }
-            ],
-            "post-install": [
-		"glib-compile-schemas /app/usr/share/glib-2.0/schemas"
             ]
         }
-    ],
-    "build-options" : {
-        "env" : {
-        }
-    }
+    ]
 }
