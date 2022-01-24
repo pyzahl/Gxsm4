@@ -750,8 +750,8 @@ gboolean App::finish_system_startup (){
                 if(xsmres.DSPDevCmd)
                         strcpy(xsmres.DSPDev, xsmres.DSPDevCmd);
 
-                XSM_DEBUG_GM  (DBG_L1,  "DSPDev :" << xsmres.DSPDev );
-                XSM_DEBUG_GM  (DBG_L1,  "DSPType:" << xsmres.HardwareType );
+                XSM_DEBUG_GM  (DBG_L1,  "DSPDev : %s", xsmres.DSPDev );
+                XSM_DEBUG_GM  (DBG_L1,  "DSPType: %s", xsmres.HardwareType );
 
                 /* Erzeuge und Initialise Xsm system */
 
@@ -994,10 +994,10 @@ int App::signal_emit_toolbar_action (const gchar *action, GSimpleAction *simple)
                 if (simple)
                         g_object_set_data (G_OBJECT (w), "simple-action", (gpointer)simple);
                 g_signal_emit_by_name (G_OBJECT (w), "clicked" );
-                XSM_DEBUG(DBG_L2, "Toolbar Plugin for action \"" << action << "\" action requested by program." );
+                XSM_DEBUG_GM (DBG_L2, "Toolbar Plugin for action \"%s\" action requested by program.", action );
                 return 0;
         }
-        XSM_DEBUG(DBG_L2, "no Toolbar Plugin \"" << action << "\" Registerd!" );
+        XSM_DEBUG_GM (DBG_L2, "no Toolbar Plugin \"%s\" Registerd!", actions );
         return -1;
 }
 
