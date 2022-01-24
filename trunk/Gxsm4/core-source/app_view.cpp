@@ -1339,6 +1339,9 @@ void ViewControl::pressed_cb (GtkGesture *gesture, int n_press, double x, double
                 break;
         case 3: // check for object properties/action popup
                 {
+                        vc->tmp_object_op = NULL;
+                        vc->obj_drag_start = false;
+
                         // 1st check if mouse on editable object
                         VObjectEvent event = { VOBJ_EV_BUTTON_3, VOBJ_EV_BUTTON_PRESS, x,y };
                         vc->pointer_coord_display = true;
@@ -1367,10 +1370,6 @@ void ViewControl::pressed_cb (GtkGesture *gesture, int n_press, double x, double
 
                         XSM_DEBUG_GP (DBG_L5, "DRAG BEGIN, FOUND OBJECTs %d", vc->tmp_effected);
                 }
-
-                // do scan window menu popup
-                gtk_popover_set_pointing_to (GTK_POPOVER (vc->v_popup_menu_cv), &(GdkRectangle){ x, y, 1, 1});
-                gtk_popover_popup (GTK_POPOVER (vc->v_popup_menu_cv));
                 break;
         //case 4: if(vc->ZoomQFkt) (*vc->ZoomQFkt)(0,1,vc->ZQFktData); break; // Zoom Out
         //case 5: if(vc->ZoomQFkt) (*vc->ZoomQFkt)(1,0,vc->ZQFktData); break; // Zoom In
@@ -1387,6 +1386,7 @@ void ViewControl::released_cb (GtkGesture *gesture, int n_press, double x, doubl
         mouse_pix_xy[0] = (x - (double)(vc->rulewidth+vc->border/zf))/zf;
         mouse_pix_xy[1] = (y - (double)(vc->rulewidth+vc->border/zf))/zf;
 
+        
         switch (button) {
         case 1: 
                 if(vc->AddObjFkt && !vc->obj_drag_start){
@@ -1404,7 +1404,49 @@ void ViewControl::released_cb (GtkGesture *gesture, int n_press, double x, doubl
         case 2:
                 vc->pointer_coord_display = false;
                 break;
-        case 3:
+        case 3: // check for object properties/action popup
+                {
+                        // 1st check if mouse on editable object
+                        VObjectEvent event = { VOBJ_EV_BUTTON_3, VOBJ_EV_BUTTON_RELEASE, x,y };
+                        vc->pointer_coord_display = false;
+
+                        // cancel all drag activity
+                        vc->tmp_object_op = NULL;
+                        vc->obj_drag_start = false;
+                        
+                        vc->tmp_event = &event;     // data for foreach
+                        //vc->tmp_xy = mouse_pix_xy; // data for foreach
+                        vc->tmp_effected = 0;
+
+                        if (vc->tmp_object_op){
+                                // g_print ("CANVAS EVENT: grab mode\n");
+                                if (!vc->tmp_object_op->check_event (vc->tmp_event, vc->tmp_xy))
+                                        vc->tmp_object_op = NULL;
+                                else
+                                        return; // object context menup popup
+                        }
+
+                        // Objects drawn manually
+                        g_slist_foreach((GSList*) vc->gobjlist, (GFunc) ViewControl::check_obj_event, vc);
+                        if (vc->tmp_effected>0)
+                                return; // object context menup popup
+
+                        // Event Objects
+                        g_slist_foreach((GSList*) vc->geventlist, (GFunc) ViewControl::check_obj_event, vc);
+                        if (vc->tmp_effected>0)
+                                return; // object context menup popup
+
+                        for (gsize i=0; i<OSD_MAX; ++i)
+                                if (vc->osd_item[i]){
+                                        vc->check_obj_event (vc->osd_item[i], vc);
+                                        if (vc->tmp_effected>0)
+                                                return; // object context menup popup
+                                }
+
+                }
+                // do scan window menu popup
+                gtk_popover_set_pointing_to (GTK_POPOVER (vc->v_popup_menu_cv), &(GdkRectangle){ x, y, 1, 1});
+                gtk_popover_popup (GTK_POPOVER (vc->v_popup_menu_cv));
                 break;
         }
 }
