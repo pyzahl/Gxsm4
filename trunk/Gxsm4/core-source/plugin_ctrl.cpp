@@ -166,7 +166,7 @@ void plugin_ctrl::add_pi(const gchar *filename, const gchar *name){
 	GModule *gxsm_module;
 	GxsmPlugin *(*gpi) (void);
 
-	XSM_DEBUG_GM (DBG_L2, "plugin_ctrl::add_pi ** Checking Plugin: %s", filename );
+	XSM_DEBUG_GM (DBG_L3, "plugin_ctrl::add_pi ** Checking Plugin: %s", filename );
 
         gchar *pcs_settings_key=NULL;
         {       // set gsettings schema path derived from pi filename
@@ -188,19 +188,19 @@ void plugin_ctrl::add_pi(const gchar *filename, const gchar *name){
         }
 
         
-        XSM_DEBUG_GM (DBG_L1, "plugin_ctrl::add_pi ** g_module_open: %s", filename );
+        XSM_DEBUG_GM (DBG_L3, "plugin_ctrl::add_pi ** g_module_open: %s", filename );
 	if ((gxsm_module = g_module_open (filename, G_MODULE_BIND_LAZY)) != NULL)
 	{
-		XSM_DEBUG_GM (DBG_L1, "plugin_ctrl::add_pi ** g_module_open OK... checking for symbol 'get_gxsm_plugin_info'");
+		XSM_DEBUG_GM (DBG_L3, "plugin_ctrl::add_pi ** g_module_open OK... checking for symbol 'get_gxsm_plugin_info'");
 		// gcc 2.95:  "get_gxsm_plugin_info__Fv"
 		// gcc 3.3:   "_Z20get_gxsm_plugin_infov"
 		if (g_module_symbol (gxsm_module, "_Z20""get_gxsm_plugin_info" GXSM_PI_VOID_SUFFIX, (gpointer*)&gpi))
 		{
-                        XSM_DEBUG_GM (DBG_L1, "plugin_ctrl::add_pi ** PI entry/description table g_module_symbol found: %s", filename );
+                        XSM_DEBUG_GM (DBG_L3, "plugin_ctrl::add_pi ** PI entry/description table g_module_symbol found: %s", filename );
 			GxsmPlugin *p = gpi();
 			ok = TRUE;
 			if(Check && p -> category){
-                                XSM_DEBUG_GM (DBG_L1, "plugin_ctrl::add_pi ** Check category: [%s] %s", p -> category, filename );
+                                XSM_DEBUG_GM (DBG_L3, "plugin_ctrl::add_pi ** Check category: [%s] %s", p -> category, filename );
 				ok = Check( p -> category );
                         }
                         if(ok){
@@ -241,7 +241,7 @@ void plugin_ctrl::init_pi(void *pi){
 	{
                 gchar **k=g_strsplit_set (p->filename,"|",2);
                 pcs_set_current_gschema_group (k[1]);
-                XSM_DEBUG_GP (DBG_L2, "plugin_ctrl::init_pi -- current pcs gschema group = '%s'\n", k[1] );
+                XSM_DEBUG_GP (DBG_L3, "plugin_ctrl::init_pi -- current pcs gschema group = '%s'\n", k[1] );
                 g_strfreev(k);
 		p->init();
 	}
@@ -385,11 +385,11 @@ static void app_auto_hookup_menu_to_plugin_callback (App *app, const gchar *menu
         gchar *tmpaction = g_strconcat ( tmp, NULL);
         GSimpleAction *ti_action;
         
-        XSM_DEBUG_GM (DBG_L1, "app_auto_hookup_menu_to_plugin_callback: Plugin Menu Path requested <%s>  MenuItem= %s ==> label, generated action: [%s] <%s>",
+        XSM_DEBUG_GM (DBG_L3, "app_auto_hookup_menu_to_plugin_callback: Plugin Menu Path requested <%s>  MenuItem= %s ==> label, generated action: [%s] <%s>",
                       menusection, label, tmp, tmpaction);
 
         if (!strcmp (menusection, "windows-section")){
-                XSM_DEBUG_GM (DBG_L1, "app_auto_hookup_menu_to_plugin_callback: *** Skipping Section Windows-Menu. Handled by AppBase automatically.");
+                XSM_DEBUG_GM (DBG_L3, "app_auto_hookup_menu_to_plugin_callback: *** Skipping Section Windows-Menu. Handled by AppBase automatically.");
         } else {
                 ti_action = g_simple_action_new (tmpaction, NULL);
                 g_signal_connect (ti_action, "activate", gc, GTK_APPLICATION ( app->get_application ()));

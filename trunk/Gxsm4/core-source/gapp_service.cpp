@@ -876,7 +876,7 @@ void AppBase::position_auto (){
                         // GTK3:
                         // gtk_window_move (GTK_WINDOW (window), window_geometry[WGEO_XPOS], window_geometry[WGEO_YPOS]);
                         // g_message ("SORRY GTK4 can't do it -- Requested Window Position [%s: %d, %d]   -- no gtk_window_move ().", window_key, window_geometry[WGEO_XPOS], window_geometry[WGEO_YPOS]);
-                        // g_message ("Requested Window Position [%s] XY %d, %d", window_key, window_geometry[WGEO_XPOS], window_geometry[WGEO_YPOS]);
+                        XSM_DEBUG_GM (DBG_L1, "AppBase::position_auto ** Requested Window Position [%s] XY %d, %d", window_key, window_geometry[WGEO_XPOS], window_geometry[WGEO_YPOS]);
                         
 # ifdef GDK_WINDOWING_X11
                         if (1){ //GDK_IS_X11_DISPLAY (display){
@@ -908,7 +908,7 @@ void AppBase::resize_auto (){
                         // gtk_window_set_default_size (GTK_WINDOW (window), (int)window_geometry[WGEO_WIDTH], (int)window_geometry[WGEO_HEIGHT]);
 
                         // g_message ("SORRY GTK4 can't do it -- Requested Window Resize [%s: %d, %d]   -- no gtk_window_resize ().", window_key, window_geometry[WGEO_WIDTH], window_geometry[WGEO_HEIGHT]);
-                        // g_message ("Requested Window Resize [%s] WH %d, %d", window_key, window_geometry[WGEO_WIDTH], window_geometry[WGEO_HEIGHT]);
+                         XSM_DEBUG_GM (DBG_L1, "AppBase::resize_auto ** Requested Window Resize [%s] WH %d, %d", window_key, window_geometry[WGEO_WIDTH], window_geometry[WGEO_HEIGHT]);
 
 # ifdef GDK_WINDOWING_X11
                         if (1){ //GDK_IS_X11_DISPLAY (display){
