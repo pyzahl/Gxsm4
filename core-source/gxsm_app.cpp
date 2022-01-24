@@ -997,7 +997,7 @@ int App::signal_emit_toolbar_action (const gchar *action, GSimpleAction *simple)
                 XSM_DEBUG_GM (DBG_L2, "Toolbar Plugin for action \"%s\" action requested by program.", action );
                 return 0;
         }
-        XSM_DEBUG_GM (DBG_L2, "no Toolbar Plugin \"%s\" Registerd!", actions );
+        XSM_DEBUG_GM (DBG_L2, "no Toolbar Plugin \"%s\" Registerd!", action );
         return -1;
 }
 
