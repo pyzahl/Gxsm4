@@ -739,37 +739,37 @@ gboolean App::finish_system_startup (){
         switch (startup_stage){
         case 1:
                 ClearStatus();
-                XSM_DEBUG(DBG_L2, "IDLE... App::build_gxsm - Monitor");
+                XSM_DEBUG_GM (DBG_L2, "IDLE... App::build_gxsm - Monitor");
                 pcs_set_current_gschema_group ("monitorwindow");
                 monitorcontrol  = new MonitorControl ( get_app (), logging_level);
                 return true;
         case 2:
-                XSM_DEBUG(DBG_L2, "IDLE... App::build_gxsm - start detecting Hardware configuration");
+                XSM_DEBUG_GM (DBG_L2, "IDLE... App::build_gxsm - start detecting Hardware configuration");
                 if(xsmres.HardwareTypeCmd)
                         strcpy(xsmres.HardwareType, xsmres.HardwareTypeCmd);
                 if(xsmres.DSPDevCmd)
                         strcpy(xsmres.DSPDev, xsmres.DSPDevCmd);
 
-                XSM_DEBUG (DBG_L1,  "DSPDev :" << xsmres.DSPDev );
-                XSM_DEBUG (DBG_L1,  "DSPType:" << xsmres.HardwareType );
+                XSM_DEBUG_GM  (DBG_L1,  "DSPDev :" << xsmres.DSPDev );
+                XSM_DEBUG_GM  (DBG_L1,  "DSPType:" << xsmres.HardwareType );
 
                 /* Erzeuge und Initialise Xsm system */
 
                 pcs_set_current_gschema_group ("corehwi");
 
-                XSM_DEBUG(DBG_L2, "IDLE... App::build_gxsm - xsm = new Surface" );
+                XSM_DEBUG_GM (DBG_L2, "IDLE... App::build_gxsm - xsm = new Surface" );
                 SetStatus(N_("Generating Surface Object..."));
                 return true;
         case 3:
-                XSM_DEBUG(DBG_L2, "IDLE... App::build_gxsm - Surface manager (aka Scan Channel Management)");
+                XSM_DEBUG_GM (DBG_L2, "IDLE... App::build_gxsm - Surface manager (aka Scan Channel Management)");
                 xsm = new Surface (this); // This is the master backend, channel control
                 g_object_set_data (G_OBJECT (gxsm4app), "Surface", xsm);
                 xsm -> set_app (gxsm4app);
                 return true;
         case 4:
-                XSM_DEBUG(DBG_L2, "IDLE... App::build_gxsm - Setup DnD on Main Window");
+                XSM_DEBUG_GM (DBG_L2, "IDLE... App::build_gxsm - Setup DnD on Main Window");
                 /* Enable DND to accept file Drops */
-                XSM_DEBUG(DBG_L2, "App::build_gxsm - DnD setup" );
+                XSM_DEBUG_GM (DBG_L2, "App::build_gxsm - DnD setup" );
                 {
                         GType types[1] = { G_TYPE_FILE }; // single file only
                         GtkDropTarget *target = gtk_drop_target_new (G_TYPE_INVALID, GDK_ACTION_COPY);
@@ -779,7 +779,7 @@ gboolean App::finish_system_startup (){
                 }
                 return true;
         case 5:
-                XSM_DEBUG(DBG_L2, "IDLE... App::build_gxsm - Adding Main Scan Geometry Controls");
+                XSM_DEBUG_GM (DBG_L2, "IDLE... App::build_gxsm - Adding Main Scan Geometry Controls");
                 /* fill in Gxsm main control elements SPM + AS + UI */
                 xsm->SetModeFlg (MODE_SETSTEPS);
 
@@ -796,14 +796,14 @@ gboolean App::finish_system_startup (){
                 gtk_widget_show (spm_control);
                 return true;
         case 6:
-                XSM_DEBUG(DBG_L2, "IDLE... App::build_gxsm - AS Controls");
+                XSM_DEBUG_GM (DBG_L2, "IDLE... App::build_gxsm - AS Controls");
                 // Auto Save Control
                 as_control   = create_as_control ();
                 gtk_grid_attach (GTK_GRID (grid), as_control, 0, 2, 1, 1);
                 gtk_widget_show (as_control); // FIX-ME GTK4 SHOWALL
                 return true;
         case 7:
-                XSM_DEBUG(DBG_L2, "IDLE... App::build_gxsm - UI Controls");
+                XSM_DEBUG_GM (DBG_L2, "IDLE... App::build_gxsm - UI Controls");
                 // User Info Control
                 ui_control   = create_ui_control ();
                 gtk_grid_attach (GTK_GRID (grid), ui_control, 0, 3, 1, 1);
@@ -811,31 +811,31 @@ gboolean App::finish_system_startup (){
                 gtk_widget_show (GTK_WIDGET (window));
                 return true;
         case 8:
-                XSM_DEBUG(DBG_L2, "IDLE... App::build_gxsm - Building Channelselector");
+                XSM_DEBUG_GM (DBG_L2, "IDLE... App::build_gxsm - Building Channelselector");
                 pcs_set_current_gschema_group ("channelselectorwindow");
                 channelselector = new ChannelSelector (get_app ());
                 return true;
         case 9:
-                XSM_DEBUG(DBG_L2, "IDLE... App::build_gxsm - Scanning and loading GXSM PlugIns");
+                XSM_DEBUG_GM (DBG_L2, "IDLE... App::build_gxsm - Scanning and loading GXSM PlugIns");
                 pcs_set_current_gschema_group ("plugins");
                 SetStatus(N_("Scanning for GXSM Plugins..."));
                 if( !xsmres.disableplugins )
                         reload_gxsm_plugins();
                 return true;
         case 10:
-                XSM_DEBUG(DBG_L2, "IDLE... App::build_gxsm - Update Gxsm Settings from Configurations");
+                XSM_DEBUG_GM (DBG_L2, "IDLE... App::build_gxsm - Update Gxsm Settings from Configurations");
 
                 /* call hook to update gxsm setting from hardware as desired */
-                XSM_DEBUG(DBG_L3, "    ... App::build_gxsm - call xsmhard->update_gxsm_configurations");
+                XSM_DEBUG_GM (DBG_L3, "    ... App::build_gxsm - call xsmhard->update_gxsm_configurations");
 
                 if (xsm->hardware)
                         xsm->hardware->update_gxsm_configurations ();
                 else{
-                        XSM_DEBUG(DBG_L2, "App::build_gxsm - no call: xsm->hardware invalid.");
+                        XSM_DEBUG_GM (DBG_L2, "App::build_gxsm - no call: xsm->hardware invalid.");
                 }
                 return true;
         case 11:
-                XSM_DEBUG(DBG_L2, "IDLE... App::build_gxsm - adding HwI Info to Log");
+                XSM_DEBUG_GM (DBG_L2, "IDLE... App::build_gxsm - adding HwI Info to Log");
 
                 pcs_set_current_gschema_group ("post-build-error-path");
                 monitorcontrol->LogEvent ("Hardware Information", xsm->hardware->get_info ());
@@ -843,16 +843,19 @@ gboolean App::finish_system_startup (){
                 SetStatus(N_("Ready."));
                 return true;
         case 12:
-                XSM_DEBUG(DBG_L2, "IDLE... App::build_gxsm - Update all Entries.");
+                XSM_DEBUG_GM (DBG_L2, "IDLE... App::build_gxsm - Update all Entries.");
                 spm_update_all (-xsm->data.display.ViewFlg);
                 monitorcontrol->LogEvent ("GXSM", "startup");
                 return true;
         case 13:
-                XSM_DEBUG(DBG_L2, "IDLE... App::build_gxsm - Reposition all window to stored Window Geometry (X11)");
-                load_app_geometry ();
+                XSM_DEBUG_GM (DBG_L2, "IDLE... App::build_gxsm - Reposition all window to stored Window Geometry (X11)");
+                if (!geometry_management_off)
+                        load_app_geometry ();
+                else
+                        XSM_DEBUG_GM (DBG_L1, "IDLE... App::build_gxsm - ...Restore Window Geometry is disabled. No action.");
                 return true;
         case 14:
-                XSM_DEBUG(DBG_L2, "App::build_gxsm - done.");
+                XSM_DEBUG_GM (DBG_L2, "App::build_gxsm - done.");
                 return true;
         default:
                 break;

@@ -92,6 +92,7 @@ extern "C++" {
         int logging_level = 2;
         int developer_option = 0;
         int pi_debug_level = 0;
+        int geometry_management_off = 0;
 
         gboolean force_gxsm_defaults = false;
         gboolean load_files_as_movie = false;

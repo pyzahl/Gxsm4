@@ -51,7 +51,8 @@ extern "C++" {
         extern int logging_level;
         extern int developer_option;
         extern int pi_debug_level;
-
+        extern int geometry_management_off;
+        
         extern gboolean force_gxsm_defaults;
         extern gboolean load_files_as_movie;
         extern gboolean gxsm_new_instance;

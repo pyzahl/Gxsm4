@@ -85,6 +85,10 @@ static const GOptionEntry gxsm_options[] =
           N_("Disable default plugin loading on startup"), NULL
         },
         
+	{ "disable-geometry-management", 'g', G_OPTION_FLAG_NONE, G_OPTION_ARG_INT, &geometry_management_off,
+          N_("Disable Gxsm Window Geometry load/restore on startup"), NULL
+        },
+        
 	{ "force-configure", 0, G_OPTION_FLAG_NONE, G_OPTION_ARG_NONE, &xsmres.force_config,
           N_("Force to reconfigure Gxsm on startup"), NULL
         },
