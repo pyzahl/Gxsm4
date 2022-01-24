@@ -1452,16 +1452,7 @@ gboolean VObject::check_event(VObjectEvent *event, double mxy[2]){
                         break;
 
                 case VOBJ_EV_BUTTON_2:
-                case VOBJ_EV_BUTTON_3:
-                        touched_item  = item;
-                        touched_xy[0] = item_x;
-                        touched_xy[1] = item_y;
-                        g_object_set_data (G_OBJECT (canvas), "VObject", this);
-                        // FIX-ME-GTK4 x,y!!
-                        gtk_popover_set_pointing_to (GTK_POPOVER (obj_popup_menu), &(GdkRectangle){ (int)event->x, (int)event->y, 1, 1});
-                        gtk_popover_popup (GTK_POPOVER (obj_popup_menu));
                         break;
-
                 default:
                         break;
                 }
@@ -1509,6 +1500,22 @@ gboolean VObject::check_event(VObjectEvent *event, double mxy[2]){
                         item->ungrab ();
 
                 dragging_active = dragging = false;
+
+                switch(event->button){
+                case VOBJ_EV_BUTTON_1:
+                        break;
+                case VOBJ_EV_BUTTON_2:
+                        break;
+                case VOBJ_EV_BUTTON_3:
+                        touched_item  = item;
+                        touched_xy[0] = item_x;
+                        touched_xy[1] = item_y;
+                        g_object_set_data (G_OBJECT (canvas), "VObject", this);
+                        // FIX-ME-GTK4 x,y!!
+                        gtk_popover_set_pointing_to (GTK_POPOVER (obj_popup_menu), &(GdkRectangle){ (int)event->x, (int)event->y, 1, 1});
+                        gtk_popover_popup (GTK_POPOVER (obj_popup_menu));
+                        return true;
+                }
                 return false;
 
 #if 0

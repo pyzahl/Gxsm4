@@ -305,7 +305,7 @@ rootInclude = include_directories('.')
 appInclude  = include_directories(gxsm_lib_includes)
 
 
-all_cflags = ['-fpermissive']
+all_cflags = ['-fpermissive', '-O3', '-w']
 #all_cflags = ['-fpermissive', '-w']
 all_plugin_cflags = ['-fpermissive', '-w']
 all_plugin_deps = [icuuc, gtk, cairo, freet, gset, netcdf, fftw, xml, png, gmod, gmodexp, dl]
