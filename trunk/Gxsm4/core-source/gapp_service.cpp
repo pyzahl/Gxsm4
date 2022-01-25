@@ -858,15 +858,13 @@ void AppBase::show (){
 }
 
 void AppBase::show_auto (){
-        if (window_geometry){
-                if (window_geometry[WGEO_FLAG] && window_geometry[WGEO_SHOW]){
-                        show ();
-                } else {
-                        hide ();
-                }
-        } else {
+        if (!window_geometry) return;
+	XSM_DEBUG_GM (DBG_L2, "AppBase::show_auto ****** Show/Hide window ** %s **", window_key );
+        
+        if (window_geometry[WGEO_FLAG] && window_geometry[WGEO_SHOW])
+                show ();
+        else
                 hide ();
-        }
 }
 
 void AppBase::position_auto (){
@@ -876,8 +874,7 @@ void AppBase::position_auto (){
                         // GTK3:
                         // gtk_window_move (GTK_WINDOW (window), window_geometry[WGEO_XPOS], window_geometry[WGEO_YPOS]);
                         // g_message ("SORRY GTK4 can't do it -- Requested Window Position [%s: %d, %d]   -- no gtk_window_move ().", window_key, window_geometry[WGEO_XPOS], window_geometry[WGEO_YPOS]);
-                        XSM_DEBUG_GM (DBG_L1, "AppBase::position_auto ** Requested Window Position [%s] XY %d, %d", window_key, window_geometry[WGEO_XPOS], window_geometry[WGEO_YPOS]);
-                        
+                        XSM_DEBUG_GM (DBG_L1, "AppBase::position_auto ** Requested Window Position ** %s ** XY (%d, %d)", window_key, window_geometry[WGEO_XPOS], window_geometry[WGEO_YPOS]);
 # ifdef GDK_WINDOWING_X11
                         if (1){ //GDK_IS_X11_DISPLAY (display){
                                 Window   xw = GDK_SURFACE_XID (GDK_SURFACE (gtk_native_get_surface(GTK_NATIVE (window))));
@@ -908,8 +905,7 @@ void AppBase::resize_auto (){
                         // gtk_window_set_default_size (GTK_WINDOW (window), (int)window_geometry[WGEO_WIDTH], (int)window_geometry[WGEO_HEIGHT]);
 
                         // g_message ("SORRY GTK4 can't do it -- Requested Window Resize [%s: %d, %d]   -- no gtk_window_resize ().", window_key, window_geometry[WGEO_WIDTH], window_geometry[WGEO_HEIGHT]);
-                         XSM_DEBUG_GM (DBG_L1, "AppBase::resize_auto ** Requested Window Resize [%s] WH %d, %d", window_key, window_geometry[WGEO_WIDTH], window_geometry[WGEO_HEIGHT]);
-
+                         XSM_DEBUG_GM (DBG_L1, "AppBase::resize_auto **** Requested Window Resize   ** %s ** WH (%d, %d)", window_key, window_geometry[WGEO_WIDTH], window_geometry[WGEO_HEIGHT]);
 # ifdef GDK_WINDOWING_X11
                         if (1){ //GDK_IS_X11_DISPLAY (display){
                                 Window   xw = GDK_SURFACE_XID (GDK_SURFACE (gtk_native_get_surface(GTK_NATIVE (window))));
@@ -935,7 +931,7 @@ void AppBase::SaveGeometryCallback(AppBase *apb){
 }
 
 void AppBase::SaveGeometry(gboolean store_to_settings){
-	XSM_DEBUG_GM (DBG_L2, "** AppBase::SaveGeometry for %s", window_key);
+	XSM_DEBUG_GM (DBG_L2, "AppBase::SaveGeometry *** for window ** %s **", window_key);
 #ifdef ENABLE_GXSM_WINDOW_MANAGEMENT
 
         // g_message ("AutoSave Window Geometry: %s", window_key);
@@ -994,10 +990,10 @@ void AppBase::SaveGeometry(gboolean store_to_settings){
 
 void AppBase::LoadGeometry(){
         if (!window_key){
-                XSM_DEBUG_ERROR (DBG_L1, "AppBase::LoadGeometry -- error, no window_key set.");
+                XSM_DEBUG_ERROR (DBG_L1, "AppBase::LoadGeometry ... error, no window_key set.");
                 return;
         }
-	XSM_DEBUG_GM (DBG_L2, "AppBase::LoadGeometry ** Load Geometry for window ** %s **", window_key );
+	XSM_DEBUG_GM (DBG_L2, "AppBase::LoadGeometry *** Load Geometry for window  ** %s **", window_key );
 
         g_signal_connect (window, "close-request",  G_CALLBACK (AppBase::window_close_callback), this);
 
@@ -1017,7 +1013,11 @@ void AppBase::LoadGeometry(){
 
         position_auto ();
         resize_auto ();
-        show_auto ();
+
+        if (strcmp (window_key, "main"))
+                show_auto ();
+        else
+                XSM_DEBUG_GM (DBG_L2, "AppBase::LoadGeometry ... MAIN window: show=always");
 }
 
 
