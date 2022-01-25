@@ -414,6 +414,7 @@ void App::help_about_callback (GSimpleAction *simple, GVariant *parameter, gpoin
 
         gchar *hw_info_stripped = g_strdup (main_get_gapp ()->xsm->hardware->Info(0));
         gchar *p=hw_info_stripped;
+        gchar *dirs=NULL;
 
         g_message ("HWInfo:\n%s", hw_info_stripped);
         
@@ -421,6 +422,23 @@ void App::help_about_callback (GSimpleAction *simple, GVariant *parameter, gpoin
                 while (*p && *p != '\n') ++p;
         
         *p = 0; // terminate here
+
+        if (main_get_debug_level () > 1)
+                dirs = g_strconcat(
+                                   "\nGXSM_RES_BASE_PATH_DOT:\n", GXSM_RES_BASE_PATH_DOT,
+                                   "\nBINDIR:\n", M__BINDIR,
+                                   "\nBUILD_DATADIR:\n", M__BUILD_DATADIR,
+                                   "\nBUILD_PREFIX:\n", M__BUILD_PREFIX,
+                                   "\nDATAROOTDIR:\n", M__DATAROOTDIR,
+                                   "\nINFODIR:\n", M__INFODIR,
+                                   "\nLIBDIR:\n", M__LIBDIR,
+                                   "\nPACKAGE_GL400_DIR:\n", PACKAGE_GL400_DIR,
+                                   "\nPACKAGE_ICON_DIR:\n", PACKAGE_ICON_DIR,
+                                   "\nPACKAGE_PALETTE_DIR:\n", PACKAGE_PALETTE_DIR,
+                                   "\nPACKAGE_PLUGIN_DIR:\n", PACKAGE_PLUGIN_DIR,
+                                   "\nPACKAGE_PROFILEPLOT_DIR:\n", PACKAGE_PROFILEPLOT_DIR,
+                                   "\n\n",
+                                   NULL);
         
 	message = g_strconcat
 		(N_("GXSM is a Universal Scanning Probe Micoscopy Data Aquisitation and Visulaization System."
@@ -430,11 +448,14 @@ void App::help_about_callback (GSimpleAction *simple, GVariant *parameter, gpoin
 		 dbg_lvl_tmp,
 		 N_("\n\ncompiled by "),
 		 COMPILEDBYNAME,
+		 dirs ? N_("\n\nCONFIGURED PATHs:") : "\n",
+		 dirs ? dirs : "\n",
 		 N_("\n\nGXSM4 evolved from Gxsm-3.0,2.0, Xxsm, pmstm in 1997."),
 		 NULL);
         g_free (hw_info_stripped);
 	g_free (dbg_lvl_tmp);
-
+        if (dirs) g_free (dirs);
+        
 	gtk_show_about_dialog (GTK_WINDOW (app->app_window),
 			       "program-name", "GXSM4",
 			       "version", VERSION " \"" GXSM_VERSION_NAME "\"",
