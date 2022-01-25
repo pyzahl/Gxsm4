@@ -9,7 +9,7 @@
       </description>
     </key>
     <key name="main" type="ai">
-      <default>[0,0, 0,0,0,0]</default>
+      <default>[0,1, 0,0,0,0]</default>
       <summary>show/hide state, option, X,Y, H,W</summary>
       <description>geometry</description>
     </key>
