@@ -77,6 +77,7 @@ public:
 
 	sranger_mk3_hwi_dev();
 	virtual ~sranger_mk3_hwi_dev();
+        virtual gboolean dsp_device_status() { return dsp ? true:false; };
 
 	virtual int update_gxsm_configurations (){
 		// update resources from signals

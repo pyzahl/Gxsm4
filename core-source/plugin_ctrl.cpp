@@ -615,56 +615,57 @@ gxsm_hwi_plugins::gxsm_hwi_plugins (GList *pi_dirlist, gint (*check)(const gchar
 	GxsmPlugin *p;
 	void *(*gpi) (void *);
 	
+	XSM_DEBUG_GM (DBG_L1, "gxsm_hwi_plugins::gxsm_hwi_plugins ** Setting up GXSM HwI Plugin(s)");
+
 	xsm_hwi_class = NULL;	
 
 	// Init Gxsm Plugins, attach to menu
-	XSM_HWI_DEBUG (DBG_L3, "Setting up GXSM HwI Plugin(s)");
-
 	main_get_gapp ()->GxsmSplash (-0.1, "Setting up GXSM HwI Plugin(s)", " ... ");
 
-	XSM_DEBUG_GP (DBG_L2, "gxsm_hwi_plugins::gxsm_hwi_plugins -- Setting up GXSM HwI Plugin(s)\n");
 	node = plugins;
 	if (!node){
-		XSM_HWI_DEBUG (DBG_L3, "No GXSM HwI Plugin(s) found!!");
-                XSM_DEBUG_GP (DBG_L2, "gxsm_hwi_plugins::gxsm_hwi_plugins -- No GXSM HwI Plugin(s) found!!\n");
+                XSM_DEBUG_GM (DBG_L2, "gxsm_hwi_plugins::gxsm_hwi_plugins -- No GXSM HwI Plugin(s) found!!\n");
 	}
 	while(node){
+                gboolean get_gxsm_hwi_hardware_class_result = false;
+
 		p = (GxsmPlugin *) node->data;
 		p->app = app; // referenced for HwI PIs (to attach menuentries, etc.)
-		XSM_HWI_DEBUG (DBG_L3, "Asking HwI-PI for XSM_Hardware class reference :: " << p->name);
-                XSM_DEBUG_GP (DBG_L2, "gxsm_hwi_plugins::gxsm_hwi_plugins -- Asking HwI-PI for XSM_Hardware class reference :: %s\n", p->name);
+                XSM_DEBUG_GM (DBG_L2, "gxsm_hwi_plugins::gxsm_hwi_plugins -- Asking HwI-PI for XSM_Hardware class reference :: %s\n", p->name);
 
                 main_get_gapp ()->GxsmSplash (-0.1, "Setting up GXSM HwI Plugin(s), checking:", p->name);
 
 		if (g_module_symbol (p->module, GXSM_HWI_TYPE_MANGLE_NAME, (gpointer*)&gpi)){
 			if (p->status) g_free(p->status);
-			if ((xsm_hwi_class = (XSM_Hardware*) gpi ((void*) fulltype)))
+			if ((xsm_hwi_class = (XSM_Hardware*) gpi ((void*) fulltype))){
+                                get_gxsm_hwi_hardware_class_result = true;
 				p->status = g_strconcat ("HwI <", fulltype ? fulltype:"NULL", "> is selected.", NULL);
-			else
+                        } else {
 				p->status = g_strconcat ("HwI class request error: <", fulltype ? fulltype:"NULL", "> not available.", NULL);
-			XSM_HWI_DEBUG (DBG_L3, "Status: '" << p->status << "' :: " << p->name);
+                        }
+			XSM_DEBUG_GM (DBG_L1, "gxsm_hwi_plugins::gxsm_hwi_plugins ... HwI Class Status: %s :: %s", p->status, p->name);
 		}
 
-		// if plugins query is defined, its called to install itself
-		XSM_HWI_DEBUG (DBG_L3, "Looking for Query/Selfinstall of HwI PI :: " << p->name);
-		if( p->query ){
-                        XSM_DEBUG (DBG_L3, "Plugin: " << p->name << "->query -- install. ");
-                        gchar **k=g_strsplit_set (p->filename,"|",2);
-                        pcs_set_current_gschema_group (k[1]);
-                        XSM_DEBUG_GP (DBG_L2, "plugin_ctrl::init_pi -- SET_PCS_GROUP = '%s'\n", k[1] );
-                        g_strfreev(k);
-
-			p->query();
-		}
-		else{
-			XSM_HWI_DEBUG (DBG_L3, "No Query/Selfinstall func. of HwI PI :: " << p->name);
-		}
-
-		XSM_HWI_DEBUG (DBG_L2, " loaded HwI PI (OK) :: " << p->name);
+                if (get_gxsm_hwi_hardware_class_result && xsm_hwi_class){
+                        // if plugins query is defined, its called to install itself
+                        XSM_DEBUG_GM (DBG_L3, "Looking for Query/Selfinstall of HwI PI :: %s", p->name);
+                        if( p->query ){
+                                XSM_DEBUG_GM (DBG_L3, "Plugin: (%s)->query -- install. ", p->name);
+                                gchar **k=g_strsplit_set (p->filename,"|",2);
+                                pcs_set_current_gschema_group (k[1]);
+                                XSM_DEBUG_GP (DBG_L3, "plugin_ctrl::init_pi -- SET_PCS_GROUP = '%s'", k[1] );
+                                g_strfreev(k);
+                                p->query();
+                        }
+                        else{
+                                XSM_DEBUG_GW (DBG_L3, "No Query/Selfinstall func. of HwI PI :: %s", p->name);
+                        }
+                        XSM_DEBUG_GM (DBG_L1, "gxsm_hwi_plugins::gxsm_hwi_plugins ... loaded HwI PI :: %s", p->name);
+                }
 		node = node->next;
-		if (node){
-			p = (GxsmPlugin *) node->data;
-			XSM_HWI_DEBUG_ERROR (DBG_L3, "Also attempt to load HwI PI :: " << p->name);
+		if (node && get_gxsm_hwi_hardware_class_result){
+                        p = (GxsmPlugin *) node->data;
+			XSM_DEBUG_GW (DBG_L1, "ERROR: Attempt to load multiple HwI PI :: %s", p->name);
 			break;
 		}
 	}

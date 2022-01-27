@@ -123,8 +123,7 @@ gpointer ProbeFifoReadFunction3 (void *ptr_sr, int dspdev);
  */
 sranger_mk3_hwi_dev::sranger_mk3_hwi_dev(){
         gchar *tmp;
-	g_message ("HWI-DEV-MK3-I** HwI SR-MK3: verifying MK3 FB_SPM software details.");
-	PI_DEBUG_GP (DBG_L1, " -> HWI-DEV-MK3-I** HwI SR-MK3: verifying MK3 FB_SPM software details.\n");
+	PI_DEBUG_GM (DBG_L1, " -> HWI-DEV-MK3-I** HwI SR-MK3: verifying MK3 FB_SPM software details.");
         main_get_gapp()->monitorcontrol->LogEvent ("HWI-DEV-MK3-I** HwI SR-MK3", "verifying MK3 FB_SPM software details.");
 	AIC_max_points = 1<<15; // SR-AIC resolution is limiting...
 	fifo_read_thread = NULL;
@@ -158,34 +157,28 @@ sranger_mk3_hwi_dev::sranger_mk3_hwi_dev(){
                         srdev_index_start = 8; // no more, try just this
                 else
                         sprintf (xsmres.DSPDev,"/dev/sranger_mk2_%d", srdev_index_start); // override
-                PI_DEBUG_GP (DBG_L1, " -> Looking for MK3 up and running GXSM compatible FB_spmcontrol DSP code starting at %s.\n", xsmres.DSPDev);
+                PI_DEBUG_GM (DBG_L1, " -> Looking for MK3 up and running GXSM compatible FB_spmcontrol DSP code starting at %s.", xsmres.DSPDev);
 	  
 		if((dsp = open (xsmres.DSPDev, O_RDWR)) <= 0){
-		        PI_DEBUG_GP (DBG_L1, " -> HWI-DEV-MK3 E01-- can not open device >%s<, please check permissions. \nError: %s\n", 
+		        PI_DEBUG_GM (DBG_L1, " -> HWI-DEV-MK3 E01-- can not open device >%s<, please check permissions. Error: %s", 
                                      xsmres.DSPDev, strerror(errno));
 			dsp = 0;
 			if (++srdev_index_start < 8){
-				PI_DEBUG_GP (DBG_L1, " -> HWI-DEV-MK3 MSG01 -- Continue searching for next device...\n");
+				PI_DEBUG_GM (DBG_L1, " -> HWI-DEV-MK3 MSG01 -- Continue searching for next device...");
 				continue;
 			}
-			SRANGER_ERROR(
-				      "Can´t open <" << xsmres.DSPDev << ">, reason: " << strerror(errno) << std::endl
-				      << "please make sure:" << std::endl
-				      << "-> that the device exists and has proper access rights" << std::endl
-				      << "-> that the kernel module loaded" << std::endl
-				      << "-> the USB connection to SignalRanger" << std::endl
-				      << "-> that the SR-MK2/3 is powered on");
-			productid=g_strdup_printf ("Device used: %s\n\n"
+			productid=g_strdup_printf ("SR-MK3 search: Last device checked: %s\n\n"
 						   "Make sure:\n"
 						   "-> that the device exists and has proper access rights\n"
 						   "-> that the kernel module loaded (try 'dmesg')\n"
 						   "-> the USB connection to SignalRanger is OK\n"
 						   "-> that the SR-MK2/3 is powered on\n"
-						   "Start 'gxsm4 -h no' to change the device path/name.",
+						   "Use 'gxsm4 -h no' to skip hardware loading or reconfigure Hardware/Card to 'no'.\n"
+                                                   "Note: Launching Gxsm now without hardware connection.",
 						   xsmres.DSPDev);
 			main_get_gapp()->alert (N_("No Hardware"), N_("Open Device failed."), productid, 1);
                         main_get_gapp()->monitorcontrol->LogEvent (N_("No Hardware"), N_("Open Device failed."));
-			exit (-1);
+			// exit (-1);
 			return;
 		}
 		else{
@@ -201,7 +194,7 @@ sranger_mk3_hwi_dev::sranger_mk3_hwi_dev(){
                                         g_free (productid);
                                         productid=g_strdup_printf ("Device used: %s\n Start 'gxsm4 -h no' to correct the problem.", xsmres.DSPDev);
                                         main_get_gapp()->alert (N_("Unkonwn Hardware"), N_("Query Vendor ID failed."), productid, 1);
-                                        PI_DEBUG_GP (DBG_L4, "HWI-DEV-MK3-E02-- unkown hardware, vendor ID mismatch.\n");
+                                        PI_DEBUG_GM (DBG_L4, "HWI-DEV-MK3-E02-- unkown hardware, vendor ID mismatch.");
                                         close (dsp);
                                         dsp = 0;
                                         exit (-1);
@@ -213,7 +206,7 @@ sranger_mk3_hwi_dev::sranger_mk3_hwi_dev(){
                                         g_free (productid);
                                         productid=g_strdup_printf ("Device used: %s\n Start 'gxsm4 -h no' to correct the problem.", xsmres.DSPDev);
                                         main_get_gapp()->alert (N_("Unkonwn Hardware"), N_("Query Product ID failed."), productid, 1);
-                                        PI_DEBUG_GP (DBG_L4, "HWI-DEV-MK3-E03-- unkown hardware, product ID mismatch.\n");
+                                        PI_DEBUG_GM (DBG_L4, "HWI-DEV-MK3-E03-- unkown hardware, product ID mismatch.");
                                         close (dsp);
                                         dsp = 0;
                                         return;
@@ -224,7 +217,7 @@ sranger_mk3_hwi_dev::sranger_mk3_hwi_dev(){
 				if (vendor == 0x0a59 && product == 0x0101){
 				        productid=g_strdup ("Vendor/Product: B.Paillard, Signal Ranger STD");
 					main_get_gapp()->alert (N_("Wrong Hardware detected"), N_("No MK2 found."), productid, 1);
-					PI_DEBUG_GP (DBG_L4, "HWI-DEV-MK3-E04-- wrong hardware: SR-STD, please use SR-SP2/STD HwI.\n");
+					PI_DEBUG_GM (DBG_L4, "HWI-DEV-MK3-E04-- wrong hardware: SR-STD, please use SR-SP2/STD HwI.");
 					target = SR_HWI_TARGET_C54;
 					close (dsp);
 					dsp=0;
@@ -234,7 +227,7 @@ sranger_mk3_hwi_dev::sranger_mk3_hwi_dev(){
 				else if (vendor == 0x0a59 && product == 0x0103){
 				        productid=g_strdup ("Vendor/Product: B.Paillard, Signal Ranger SP2");
 					main_get_gapp()-> alert (N_("Wrong Hardware detected"), N_("No MK2 found."), productid, 1);
-					PI_DEBUG_GP (DBG_L4, "HWI-DEV-MK3-E05-- wrong hardware: SR-SP2, please use SR-SP2/STD HwI.\n");
+					PI_DEBUG_GM (DBG_L4, "HWI-DEV-MK3-E05-- wrong hardware: SR-SP2, please use SR-SP2/STD HwI.");
 					target =  SR_HWI_TARGET_C54;
 					close (dsp);
 					dsp=0;
@@ -242,44 +235,44 @@ sranger_mk3_hwi_dev::sranger_mk3_hwi_dev(){
 					return;
 				}else if (vendor == 0x1612 && product == 0x0100){
 				        productid=g_strdup ("Vendor/Product: B.Paillard, Signal Ranger MK2 (1612:0100)");
-					PI_DEBUG_GP (DBG_L4, "HWI-DEV-MK3-I01-- SR-MK2 1612:0100 found (autoprobe continue).\n");
+					PI_DEBUG_GM (DBG_L4, "HWI-DEV-MK3-I01-- SR-MK2 1612:0100 found (autoprobe continue).");
 					target = SR_HWI_TARGET_C55;
 					close (dsp);
 					dsp=0;
 					return;
 				}else if (vendor == 0x1612 && product == 0x0101){
 				        productid=g_strdup ("Vendor/Product: B.Paillard, Signal Ranger MK2-NG (1612:0101)");
-					PI_DEBUG_GP (DBG_L4, "HWI-DEV-MK3-I02-- SR-MK2-NG 1612:0101 found (autoprobe continue).\n");
+					PI_DEBUG_GM (DBG_L4, "HWI-DEV-MK3-I02-- SR-MK2-NG 1612:0101 found (autoprobe continue).");
 					target = SR_HWI_TARGET_C55;
 					close (dsp);
 					dsp=0;
 					return;
 				}else if (vendor == 0x1612 && product == 0x0103){
 				        productid=g_strdup ("Vendor/Product: B.Paillard, Signal Ranger MK3 (1612:0103)");
-					PI_DEBUG_GP (DBG_L4, "HWI-DEV-MK3-I03-- SR-MK3-NG 1612:0103 found -- OK, taking it.\n");
+					PI_DEBUG_GM (DBG_L4, "HWI-DEV-MK3-I03-- SR-MK3-NG 1612:0103 found -- OK, taking it.");
 					target = SR_HWI_TARGET_C55;
 					sranger_mark_id = 3;
 				}else if (vendor == 0x1612 && product == 0xf103){
 				        productid=g_strdup ("Vendor/Product: GXSM4-EMU, Signal Ranger MK3 EMU (1612:F103)");
-					PI_DEBUG_GP (DBG_L4, "HWI-DEV-MK3-SHMEMU-I03-- SR-MK3-NG-EMU 1612:F103 found -- OK, taking it.\n");
+					PI_DEBUG_GM (DBG_L4, "HWI-DEV-MK3-SHMEMU-I03-- SR-MK3-NG-EMU 1612:F103 found -- OK, taking it.");
 					target = SR_HWI_TARGET_C55;
 					sranger_mark_id = 3;
 				}else{
 				        productid=g_strdup ("Vendor/Product: B.Paillard, unkown version!");
 					main_get_gapp()->alert (N_("Unkonwn Hardware detected"), N_("No Signal Ranger found."), productid, 1);
-					PI_DEBUG_GP (DBG_L4, "HWI-DEV-MK3-E06-- SR-MK?? 1612:%s found -- not supported.\n", productid);
+					PI_DEBUG_GM (DBG_L4, "HWI-DEV-MK3-E06-- SR-MK?? 1612:%s found -- not supported.", productid);
 					close (dsp);
 					dsp=0;
 					return;
 				}
 				
-				PI_DEBUG_GP (DBG_L4, "HWI-DEV-MK3-I** reading DSP magic informations and code version.\n");
+				PI_DEBUG_GM (DBG_L4, "HWI-DEV-MK3-I** reading DSP magic informations and code version.");
 
 
 				// now read magic struct data
                                 if (product == 0xf103){ // shm dsp emu (mmapped emulator)
                                         main_get_gapp()->monitorcontrol->LogEvent ("HWI-DEV-MK3 DSP-ENGINE","MMAPPED DSP EMULATOR IDENTIFIED");
-                                        PI_DEBUG_GP (DBG_L4, "HWI-DEV-MK3 DSP-ENGINE: MMAPPED DSP EMULATOR IDENTIFIED");
+                                        PI_DEBUG_GM (DBG_L4, "HWI-DEV-MK3 DSP-ENGINE: MMAPPED DSP EMULATOR IDENTIFIED");
                                         // DSP EMU MAGIC IS MAPPED TO BEGINNING (adr=0) OF DSP MMAPPER BUFFER 
                                         lseek (dsp, 0, SRANGER_MK23_SEEK_DATA_SPACE | SRANGER_MK23_SEEK_ATOMIC);
 				} else {
@@ -292,12 +285,12 @@ sranger_mk3_hwi_dev::sranger_mk3_hwi_dev(){
 				//lseek (dsp, FB_SPM_MAGIC_ADR, SRANGER_MK23_SEEK_DATA_SPACE | SRANGER_MK23_SEEK_ATOMIC);
 				sr_read (dsp, &magic_data, sizeof (magic_data)); 
 				swap_flg = 0;
-				PI_DEBUG_GP (DBG_L4, "HWI-DEV-MK3-I*CPU* DSP-MAGIC  : %08x   [M:%08x]\n", magic_data.magic, FB_SPM_MAGIC);
+				PI_DEBUG_GP (DBG_L4, "HWI-DEV-MK3-I*CPU* DSP-MAGIC  : %08x   [M:%08x]", magic_data.magic, FB_SPM_MAGIC);
 				if (magic_data.magic != FB_SPM_MAGIC){
 				        close (dsp);
 					dsp=0;
 					SRANGER_DEBUG ("Wrong Magic");
-					PI_DEBUG_GP (DBG_L4, "HWI-DEV-MK3-I** weird endianess of host (PPC?) not support yet.\n");
+					PI_DEBUG_GM (DBG_L4, "HWI-DEV-MK3-I** weird endianess of host (PPC?) not support yet.");
 
 					++srdev_index_start;
 					if (srdev_index_start < 8)
@@ -307,15 +300,15 @@ sranger_mk3_hwi_dev::sranger_mk3_hwi_dev(){
 				}
 				tmp = g_strdup_printf ("%08x   [HwI:%08x]", magic_data.dsp_soft_id, FB_SPM_SOFT_ID);
                                 main_get_gapp()->monitorcontrol->LogEvent ("HWI-DEV-MK3-I*CPU* DSP-SoftId.... ", tmp);
-				PI_DEBUG_GP (DBG_L4, "HWI-DEV-MK3-I*CPU* DSP-SoftId...: %s\n", tmp); g_free (tmp);
+				PI_DEBUG_GM (DBG_L4, "HWI-DEV-MK3-I*CPU* DSP-SoftId...: %s", tmp); g_free (tmp);
 
 				tmp = g_strdup_printf ("%08x   [HwI:%08x]", magic_data.version, FB_SPM_VERSION);
                                 main_get_gapp()->monitorcontrol->LogEvent ("HWI-DEV-MK3-I*CPU* DSP-Version... ", tmp);
-				PI_DEBUG_GP (DBG_L4, "HWI-DEV-MK3-I*CPU* DSP-Version..: %s\n", tmp); g_free (tmp);
+				PI_DEBUG_GM (DBG_L4, "HWI-DEV-MK3-I*CPU* DSP-Version..: %s", tmp); g_free (tmp);
 
 				tmp = g_strdup_printf ("0x%08x", magic_data.signal_lookup);
 				main_get_gapp()->monitorcontrol->LogEvent ("HWI-DEV-MK3-I*CPU* DSP-Magic::SignalLookup at address", tmp);
-				PI_DEBUG_GP (DBG_L4, "HWI-DEV-MK3-I*CPU* DSP-Magic::SignalLookup: %s\n", tmp); g_free (tmp);
+				PI_DEBUG_GM (DBG_L4, "HWI-DEV-MK3-I*CPU* DSP-Magic::SignalLookup: %s", tmp); g_free (tmp);
                                 
 				if (FB_SPM_VERSION != magic_data.version || 
 				    FB_SPM_SOFT_ID != magic_data.dsp_soft_id){
@@ -331,7 +324,7 @@ sranger_mk3_hwi_dev::sranger_mk3_hwi_dev(){
 									 FB_SPM_VERSION & 0xff,
 									 swap_flg, target);
                                         SRANGER_DEBUG ("Signal Ranger FB_SPM soft Version mismatch\n" << details);
-					PI_DEBUG_GP (DBG_L4, "HWI-DEV-MK3-VW01-- DSP software version mismatch warning.\n%s\n", details);
+					PI_DEBUG_GM (DBG_L4, "HWI-DEV-MK3-VW01-- DSP software version mismatch warning.%s\n", details);
 					main_get_gapp()->alert (N_("Critical Warning:"), N_("Signal Ranger MK3 FB_SPM software version mismatch detected! Exiting required."), details,
                                                      developer_option == 0 ? 20 : 5);
                                         main_get_gapp()->monitorcontrol->LogEvent ("Critical: Signal Ranger MK3 FB_SPM soft Version mismatch:\n", details);
@@ -363,23 +356,23 @@ sranger_mk3_hwi_dev::sranger_mk3_hwi_dev(){
 				// open some more DSP connections, used by threads
 				if((thread_dsp = open (xsmres.DSPDev, O_RDWR)) <= 0){
 				        SRANGER_ERROR ("cannot open thread SR connection, trying to continue...");
-					PI_DEBUG_GP (DBG_L4, "HWI-DEV-MK3-OTE01-- open multi dev error, can not generate thread DSP link.\n");
+					PI_DEBUG_GM (DBG_L4, "HWI-DEV-MK3-OTE01-- open multi dev error, can not generate thread DSP link.");
 					thread_dsp = 0;
 				}
 				// testing...
 				if((probe_thread_dsp = open (xsmres.DSPDev, O_RDWR)) <= 0){
 				        SRANGER_ERROR ("cannot open probe thread SR connection, trying to continue...");
-					PI_DEBUG_GP (DBG_L4, "HWI-DEV-MK3-OTE02-- open multi dev error, can not generate probe DSP link.\n");
+					PI_DEBUG_GM (DBG_L4, "HWI-DEV-MK3-OTE02-- open multi dev error, can not generate probe DSP link.");
 					probe_thread_dsp = 0;
 				}
 				if((dsp_alternative = open (xsmres.DSPDev, O_RDWR)) <= 0){
 				        SRANGER_ERROR ("cannot open alternative SR connection, trying to continue...");
-					PI_DEBUG_GP (DBG_L4, "HWI-DEV-MK3-OTE03-- open multi dev error, can not generate alternate DSP link.\n");
+					PI_DEBUG_GM (DBG_L4, "HWI-DEV-MK3-OTE03-- open multi dev error, can not generate alternate DSP link.");
 					dsp_alternative = 0;
 				}
 			}else{
 			        SRANGER_ERROR ("unkown vendor, exiting");
-				PI_DEBUG_GP (DBG_L4, "HWI-DEV-MK3-E07-- Unkown Device Vendor ID.\n");
+				PI_DEBUG_GM (DBG_L4, "HWI-DEV-MK3-E07-- Unkown Device Vendor ID.");
 				close (dsp);
 				dsp = 0;
 				return;
@@ -433,7 +426,7 @@ sranger_mk3_hwi_dev::sranger_mk3_hwi_dev(){
 		if (f){
 			g_string_append_printf (details, "\n\nPLEASE VERIFY YOUR PREFERENCES!");
 			main_get_gapp()->alert (N_("Warning"), N_("MK3-A810/PLL DataAq Preferences Setup Verification"), details->str, 1);
-			PI_DEBUG_GP (DBG_L4, "HWI-DEV-MK3-WW00A-- configuration/preferences mismatch with current hardware setup -- please adjust.\n");
+			PI_DEBUG_GM (DBG_L4, "HWI-DEV-MK3-WW00A-- configuration/preferences mismatch with current hardware setup -- please adjust.");
 		}
 		g_string_free(details, TRUE); 
 		details=NULL;
@@ -563,7 +556,7 @@ gint32 sranger_mk3_hwi_dev::long_2_sranger_long (gint32 x){
 int sranger_mk3_hwi_dev::start_fifo_read (int y_start, 
 				  int num_srcs0, int num_srcs1, int num_srcs2, int num_srcs3, 
 				  Mem2d **Mob0, Mem2d **Mob1, Mem2d **Mob2, Mem2d **Mob3){
-	PI_DEBUG_GP (DBG_L4, "IMAGE DATA FIFO READ STARTUP\n");
+	PI_DEBUG_GM (DBG_L4, "IMAGE DATA FIFO READ STARTUP");
 	if (num_srcs0 || num_srcs1 || num_srcs2 || num_srcs3){
 		fifo_data_num_srcs[0] = num_srcs0;
 		fifo_data_num_srcs[1] = num_srcs1;
@@ -575,7 +568,7 @@ int sranger_mk3_hwi_dev::start_fifo_read (int y_start,
 		fifo_data_Mobp[3] = Mob3;
 		fifo_data_y_index = y_start; // if > 0, scan dir is "bottom-up"
 
-		PI_DEBUG_GP (DBG_L4, "IMAGE DATA FIFO READ::THREAD CREATE\n");
+		PI_DEBUG_GM (DBG_L4, "IMAGE DATA FIFO READ::THREAD CREATE");
                 PI_DEBUG_PLAIN (DBG_L2,
                                 "IMAGE DATA FIFO READ::ELSE... Source="  << DSPControlClass->Source <<
                                 ", vis_Source=" << DSPControlClass->vis_Source
@@ -584,7 +577,7 @@ int sranger_mk3_hwi_dev::start_fifo_read (int y_start,
 		fifo_read_thread = g_thread_new ("FifoReadThread3", FifoReadThread3, this);
 
 		if (DSPControlClass->probe_trigger_raster_points > 0){
-			PI_DEBUG_GP (DBG_L4, "IMAGE DATA FIFO READ::PROBE FIFO READ THREAD FORCE RESET+INIT\n");
+			PI_DEBUG_GM (DBG_L4, "IMAGE DATA FIFO READ::PROBE FIFO READ THREAD FORCE RESET+INIT");
 			DSPControlClass->probe_trigger_single_shot = 0;
 			ReadProbeFifo (thread_dsp, FR_FIFO_FORCE_RESET); // reset FIFO
 			ReadProbeFifo (thread_dsp, FR_INIT); // init
@@ -592,7 +585,7 @@ int sranger_mk3_hwi_dev::start_fifo_read (int y_start,
 	}
 	else{
 		if (DSPControlClass->vis_Source & 0xffff){
-			PI_DEBUG_GP (DBG_L4, "IMAGE DATA FIFO READ::CREATE PROBE FIFO READ THREAD\n");
+			PI_DEBUG_GM (DBG_L4, "IMAGE DATA FIFO READ::CREATE PROBE FIFO READ THREAD");
 			probe_fifo_read_thread = g_thread_new ("ProbeFifoReadThread3", ProbeFifoReadThread3, this);
 		}
 	}
@@ -719,7 +712,7 @@ int sranger_mk3_hwi_dev::ReadLineFromFifo (int y_index){
 		check_and_swap (dsp_fifo.r_position);
 		check_and_swap (dsp_fifo.w_position);
 		readfifo_status = 1;
-		PI_DEBUG_GP (DBG_L4, "FIFO STATUS: r=%04x w=%04x\n",dsp_fifo.r_position, dsp_fifo.w_position);
+		PI_DEBUG_GM (DBG_L4, "FIFO STATUS: r=%04x w=%04x",dsp_fifo.r_position, dsp_fifo.w_position);
 	}
 
 	{
@@ -741,7 +734,7 @@ int sranger_mk3_hwi_dev::ReadLineFromFifo (int y_index){
 							ProbeFifoReadFunction3 (this, thread_dsp);
 		
 						// Get all and empty fifo
-//						SRANGER_DEBUG_GP(".");
+//						SRANGER_DEBUG_GM(".");
 //						Seek for ATOMIC read
 //						lseek (thread_dsp, magic_data.datafifo, SRANGER_MK23_SEEK_DATA_SPACE | SRANGER_MK23_SEEK_ATOMIC);
 
@@ -757,7 +750,7 @@ int sranger_mk3_hwi_dev::ReadLineFromFifo (int y_index){
 						wpos_tmp = dsp_fifo.w_position;
 						
 						if (dsp_fifo.w_position > 0x1000 || dsp_fifo.length > 0x1000)
-							PI_DEBUG_GP (DBG_L4, "FIFO STATUS READ ERROR. DATA_FIFO_MK3=\n"
+							PI_DEBUG_GP (DBG_L4, "FIFO STATUS READ ERROR. DATA_FIFO_MK3="
                                                                      "rpos=%08x wpos=%08x fill=%08x stall=%08x length=%08x\n", 
                                                                      dsp_fifo.r_position, dsp_fifo.w_position, dsp_fifo.fill, dsp_fifo.stall, dsp_fifo.length);
 
@@ -781,7 +774,7 @@ int sranger_mk3_hwi_dev::ReadLineFromFifo (int y_index){
 //#define FIFO_DBG
 #ifdef FIFO_DBG
 						if (wpos_tmp > dsp_fifo.length){
-							PI_DEBUG_GP (DBG_L4, "FIFO LOOPING: w=%04x (%d) r=%04x (%d) fill=%04x (%d)  L=%x %d\n",
+							PI_DEBUG_GM (DBG_L4, "FIFO LOOPING: w=%04x (%d) r=%04x (%d) fill=%04x (%d)  L=%x %d",
 								 dsp_fifo.w_position, dsp_fifo.w_position, 
 								 dsp_fifo.r_position, dsp_fifo.r_position,
 								 fifo_fill, fifo_fill, dsp_fifo.length, dsp_fifo.length);
@@ -804,8 +797,8 @@ int sranger_mk3_hwi_dev::ReadLineFromFifo (int y_index){
 										   1e-3*(double)fifo_read_sleep_us
 							);
 #ifdef FIFO_DBG
-//						PI_DEBUG_GP (DBG_L4, AddStatusString);
-						PI_DEBUG_GP (DBG_L4, "fifo buffer read #=%04d, w-r=%04x, dir=%d Stats: %s\n", fifo_reads, dsp_fifo.w_position - dsp_fifo.r_position, dir, AddStatusString);
+//						PI_DEBUG_GM (DBG_L4, AddStatusString);
+						PI_DEBUG_GP (DBG_L4, "fifo buffer read #=%04d, w-r=%04x, dir=%d Stats: %s", fifo_reads, dsp_fifo.w_position - dsp_fifo.r_position, dir, AddStatusString);
 #endif
 					}
 				}
@@ -847,7 +840,7 @@ void Xdumpbuffer3(unsigned char *buffer, int size, int i0){
 	int i,j,in;
 	in=size;
 	for(i=i0; i<in; i+=16){
-		SRANGER_DEBUG_GP("W %06X:",(i>>1)&DATAFIFO_MASK);
+		SRANGER_DEBUG_GP("W %06X:\n",(i>>1)&DATAFIFO_MASK);
 		for(j=0; (j<16) && (i+j)<size; j++){
 			SRANGER_DEBUG_GP(" %02x",buffer[(((i>>1)&DATAFIFO_MASK)<<1) + j]);
                 }
@@ -859,7 +852,7 @@ void Xdumpbuffer3(unsigned char *buffer, int size, int i0){
 				SRANGER_DEBUG_GP(".");
                         }
                 }
-		SRANGER_DEBUG_GP("\n");
+		SRANGER_DEBUG_GP("");
 	}
 }
 
@@ -1134,11 +1127,11 @@ int sranger_mk3_hwi_dev::FifoRead (int start, int end, int &xi, int num_srcs, in
  // -- DSP pads at end of scan with full 32-bit 3F00000000 x MAX_CHANNELS -- so packed record is never longer than this:
 	const int max_length = ((5*(num_srcs+2))>>1);
 
-//	PI_DEBUG_GP (DBG_L4, "FIFO read attempt: FIFO BUFFER [start=%x :: end=%x]):\n", start, end);
+//	PI_DEBUG_GM (DBG_L4, "FIFO read attempt: FIFO BUFFER [start=%x :: end=%x]):", start, end);
 //	Xdumpbuffer3 ((unsigned char*)fifo_l, (end+16)<<1, start<<1);
 
 	if (end > 0x4000 || start > 0x4000 || len > 0x4000){
-		PI_DEBUG_GP (DBG_L4, "FIFO read ERROR ranges out of range:\n( xi=%d numsrcs=%d, len=%d [start=%x :: end=%x]):\n", xi, num_srcs, len, start, end);
+		PI_DEBUG_GM (DBG_L4, "FIFO read ERROR ranges out of range:( xi=%d numsrcs=%d, len=%d [start=%x :: end=%x]):\n", xi, num_srcs, len, start, end);
 		return -1;
 	}
 
@@ -1154,7 +1147,7 @@ int sranger_mk3_hwi_dev::FifoRead (int start, int end, int &xi, int num_srcs, in
 	if (fifo_block == 0) yindexy3=0;
 	++fifo_block;
 
-//	PI_DEBUG_GP (DBG_L4, "FIFO read[%6d]( xi=%d numsrcs=%d, len=%d FIFO BUFFER CIRC [start=%x.%d :: end=%x]):\n", fifo_block, xi, num_srcs, len, start, bz_byte_pos, end);
+//	PI_DEBUG_GM (DBG_L4, "FIFO read[%6d]( xi=%d numsrcs=%d, len=%d FIFO BUFFER CIRC [start=%x.%d :: end=%x]):", fifo_block, xi, num_srcs, len, start, bz_byte_pos, end);
 	
 
 
@@ -1192,8 +1185,8 @@ int sranger_mk3_hwi_dev::FifoRead (int start, int end, int &xi, int num_srcs, in
 
 #if 0
 		if (fi == 0){
-			PI_DEBUG_GP (DBG_L4, "FIFO top of buffer at fi=0x%04x / count=%d\n-------- Fifo Debug:\n", fi, count);
-			PI_DEBUG_GP (DBG_L4, "FIFO read[%6d]( xi=%d numsrcs=%d, len=%d FIFO BUFFER CIRC [start=%x.%d :: end=%x]):\n", fifo_block, xi, num_srcs, len, start, bz_byte_pos, end);
+			PI_DEBUG_GM (DBG_L4, "FIFO top of buffer at fi=0x%04x / count=%d-------- Fifo Debug:\n", fi, count);
+			PI_DEBUG_GM (DBG_L4, "FIFO read[%6d]( xi=%d numsrcs=%d, len=%d FIFO BUFFER CIRC [start=%x.%d :: end=%x]):", fifo_block, xi, num_srcs, len, start, bz_byte_pos, end);
 			Xdumpbuffer3 ((unsigned char*)fifo_l, (end+16)<<1, start<<1);
 		}
 #endif
@@ -1202,8 +1195,8 @@ int sranger_mk3_hwi_dev::FifoRead (int start, int end, int &xi, int num_srcs, in
 
 		for (int i=0; i<(num_f+num_l); ++i){
 			if (fi >= (end+max_length)){
-				PI_DEBUG_GP (DBG_L4, "ERROR buffer valid range overrun: i of num_f=%d fi=%4x, x=%d, y=%d\n-------- Fifo Debug:\n", i, fi, xindexx3, yindexy3);
-				PI_DEBUG_GP (DBG_L4, "FIFO read[%6d]( xi=%d numsrcs=%d, len=%d FIFO BUFFER CIRC [start=%x.%d :: end=%x]):\n", fifo_block, xi, num_srcs, len, start, bz_byte_pos, end);
+				PI_DEBUG_GM (DBG_L4, "ERROR buffer valid range overrun: i of num_f=%d fi=%4x, x=%d, y=%d-------- Fifo Debug:\n", i, fi, xindexx3, yindexy3);
+				PI_DEBUG_GM (DBG_L4, "FIFO read[%6d]( xi=%d numsrcs=%d, len=%d FIFO BUFFER CIRC [start=%x.%d :: end=%x]):", fifo_block, xi, num_srcs, len, start, bz_byte_pos, end);
 				Xdumpbuffer3 ((unsigned char*)fifo_l, (end+16)<<1, start<<1);
 				return count;
 			}
@@ -1216,17 +1209,17 @@ int sranger_mk3_hwi_dev::FifoRead (int start, int end, int &xi, int num_srcs, in
 					bz_dsp_srcs = (x >> 16) & 0xffff;
 					bz_scale = 1./(double)bz_dsp_ns;
 					--i;
-//				PI_DEBUG_GP (DBG_L4, "FIFO read: START_PACKAGE! ns=%d, srcs=%4x\n", bz_dsp_ns, bz_dsp_srcs);
+//				PI_DEBUG_GM (DBG_L4, "FIFO read: START_PACKAGE! ns=%d, srcs=%4x", bz_dsp_ns, bz_dsp_srcs);
 					continue;
 				case 0x3f:
-					PI_DEBUG_GP (DBG_L4, "FIFO read: AS 0x3F END MARK DETECTED (should not get there, ERROR?)\n-------- Fifo Debug:\n");
-					PI_DEBUG_GP (DBG_L4, "FIFO read[%6d]( xi=%d numsrcs=%d, len=%d FIFO BUFFER CIRC [start=%x.%d :: end=%x]):\n", fifo_block, xi, num_srcs, len, start, bz_byte_pos, end);
+					PI_DEBUG_GM (DBG_L4, "FIFO read: AS 0x3F END MARK DETECTED (should not get there, ERROR?)-------- Fifo Debug:\n");
+					PI_DEBUG_GM (DBG_L4, "FIFO read[%6d]( xi=%d numsrcs=%d, len=%d FIFO BUFFER CIRC [start=%x.%d :: end=%x]):", fifo_block, xi, num_srcs, len, start, bz_byte_pos, end);
 					Xdumpbuffer3 ((unsigned char*)fifo_l, (end+16)<<1, start<<1);
 					return count;
 					break;
 				default:
-					PI_DEBUG_GP (DBG_L4, "FIFO read: 32 Bit Unkown Package MARK %2x DETECTED at fi=0x%04x / count=%d (ERROR?)\n-------- Fifo Debug:\n", bz_push_mode, fi, count);
-					PI_DEBUG_GP (DBG_L4, "FIFO read[%6d]( xi=%d numsrcs=%d, len=%d FIFO BUFFER CIRC [start=%x.%d :: end=%x]):\n", fifo_block, xi, num_srcs, len, start, bz_byte_pos, end);
+					PI_DEBUG_GM (DBG_L4, "FIFO read: 32 Bit Unkown Package MARK %2x DETECTED at fi=0x%04x / count=%d (ERROR?)-------- Fifo Debug:\n", bz_push_mode, fi, count);
+					PI_DEBUG_GM (DBG_L4, "FIFO read[%6d]( xi=%d numsrcs=%d, len=%d FIFO BUFFER CIRC [start=%x.%d :: end=%x]):", fifo_block, xi, num_srcs, len, start, bz_byte_pos, end);
 					Xdumpbuffer3 ((unsigned char*)fifo_l, (end+16)<<1, start<<1);
 					return count;
 					break;
@@ -1282,12 +1275,12 @@ int sranger_mk3_hwi_dev::FifoRead (int start, int end, int &xi, int num_srcs, in
 #endif
 
 #if 0
-	PI_DEBUG_GP (DBG_L4, "FIFO read done[y=%d]. Count=%x.%d\n", yindexy3, count, bz_byte_pos);
+	PI_DEBUG_GM (DBG_L4, "FIFO read done[y=%d]. Count=%x.%d", yindexy3, count, bz_byte_pos);
 	for (int j=0; j<num_f; ++j){
-		PI_DEBUG_GP (DBG_L4, "Buffer[%d,xi#%d]={",j,xi);
+		PI_DEBUG_GM (DBG_L4, "Buffer[%d,xi#%d]={",j,xi);
 		for (int i=0; i<xi; ++i)
 			PI_DEBUG_GP (DBG_L4, "%g,",buffer_f[i+j*len]);
-		PI_DEBUG_GP (DBG_L4, "}\n");
+		PI_DEBUG_GP (DBG_L4, "}");
 	}
 #endif
 	return count;
@@ -1315,7 +1308,7 @@ LNG sranger_mk3_hwi_dev::bz_unpack (int i, DSP_UINT32 *fifo_l, int &fi, int &cou
 	default: bits = bits_mark[(x.ul & 0x000000C0UL)>> 6]; break;
 	}
 	
-//	PI_DEBUG_GP (DBG_L4, "BZ_UNPACK(%6x,%6d) [%4d, %4d, %d] bits=%2d @ pos=%d x.ul=%08x ",fi,count,xindexx3, yindexy3, i, bits, bz_byte_pos, x.ul);
+//	PI_DEBUG_GM (DBG_L4, "BZ_UNPACK(%6x,%6d) [%4d, %4d, %d] bits=%2d @ pos=%d x.ul=%08x ",fi,count,xindexx3, yindexy3, i, bits, bz_byte_pos, x.ul);
 	switch (bits){
 	case 26: // 8 bit package, 6 bit data
 		++bz_statistics[0];
@@ -1413,7 +1406,7 @@ LNG sranger_mk3_hwi_dev::bz_unpack (int i, DSP_UINT32 *fifo_l, int &fi, int &cou
 	testindex++;
 #else
 
-//	PI_DEBUG_GP (DBG_L4, "[bzp=%02x] delta.l=%08x (%6g) N[%d] ==> %08x = %6g\n", bz_push_mode, delta.l, (double)delta.l, _norm(delta.l), bz_last[i], (double)bz_last[i]);
+//	PI_DEBUG_GP (DBG_L4, "[bzp=%02x] delta.l=%08x (%6g) N[%d] ==> %08x = %6g", bz_push_mode, delta.l, (double)delta.l, _norm(delta.l), bz_last[i], (double)bz_last[i]);
 
 #endif
 
@@ -2314,9 +2307,9 @@ void sranger_mk3_hwi_dev::recalculate_dsp_scan_speed_parameters () {
 	double tmp;
 	DSPControlClass->recalculate_dsp_scan_speed_parameters (tmp_dnx, tmp_dny, tmp_fs_dx, tmp_fs_dy, tmp_nx_pre, tmp_fast_return);
 	
-	PI_DEBUG_GP (DBG_L4, "*** recalculated DSP scan speed parameters [MK3-Pro] ***\n");
-	PI_DEBUG_GP (DBG_L4, "sizeof dsp_scan   %d B\n", (int) sizeof (dsp_scan));
-	PI_DEBUG_GP (DBG_L4, "sizeof scan.fs_dx %d B\n", (int) sizeof (dsp_scan.fs_dx));
+	PI_DEBUG_GM (DBG_L4, "*** recalculated DSP scan speed parameters [MK3-Pro] ***");
+	PI_DEBUG_GM (DBG_L4, "sizeof dsp_scan   %d B", (int) sizeof (dsp_scan));
+	PI_DEBUG_GM (DBG_L4, "sizeof scan.fs_dx %d B", (int) sizeof (dsp_scan.fs_dx));
 
 	dsp_scan.fs_dx  = (DSP_INT32)tmp_fs_dx;
 	dsp_scan.fs_dy  = (DSP_INT32)tmp_fs_dy;
@@ -2325,10 +2318,10 @@ void sranger_mk3_hwi_dev::recalculate_dsp_scan_speed_parameters () {
 	dsp_scan.nx_pre = (DSP_INT32)tmp_nx_pre;
 	dsp_scan.fast_return = (DSP_INT32)tmp_fast_return;
 	tmp = 1000. + 3. * ( fabs ((double)dsp_scan.fs_dx*(double)dsp_scan.fm_dz0_xy_vec[i_X]) + fabs((double)dsp_scan.fs_dy*(double)dsp_scan.fm_dz0_xy_vec[i_Y]) )/2147483648.; // =1<<31
-	PI_DEBUG_GP (DBG_L4, "Z-Slope-Max 3x (real): %g \n", tmp);
+	PI_DEBUG_GM (DBG_L4, "Z-Slope-Max 3x (real): %g ", tmp);
 	if (tmp > 67108864.)
 		tmp = 67108864.; // 1<<26
-	PI_DEBUG_GP (DBG_L4, "Z-Slope-Max (real, lim): %g \n", tmp);
+	PI_DEBUG_GM (DBG_L4, "Z-Slope-Max (real, lim): %g ", tmp);
 	dsp_scan.z_slope_max = (DSP_INT32)(tmp);
 	
 	dsp_scan.Zoff_2nd_xp = tmp_sRe = 0;
@@ -2343,20 +2336,20 @@ void sranger_mk3_hwi_dev::recalculate_dsp_scan_speed_parameters () {
 		deltasIm = round (CPN(31) * sin (2.*M_PI/Num));
 		dsp_scan.Zoff_2nd_xp = tmp_sRe = (int)deltasRe; // shared variables, no 2nd line mode in fast scan!
 		dsp_scan.Zoff_2nd_xm = tmp_sIm = (int)deltasIm;
-		PI_DEBUG_GP (DBG_L4, "DNX*NX*2+DNY......** %12.2f \n", Num);
-		PI_DEBUG_GP (DBG_L4, "deltasRe..........** %d \n",dsp_scan.Zoff_2nd_xp);
-		PI_DEBUG_GP (DBG_L4, "deltasIm..........** %d \n",dsp_scan.Zoff_2nd_xm);
+		PI_DEBUG_GM (DBG_L4, "DNX*NX*2+DNY......** %12.2f ", Num);
+		PI_DEBUG_GM (DBG_L4, "deltasRe..........** %d ",dsp_scan.Zoff_2nd_xp);
+		PI_DEBUG_GM (DBG_L4, "deltasIm..........** %d ",dsp_scan.Zoff_2nd_xm);
 	}
 
-	PI_DEBUG_GP (DBG_L4, "x,y slope....** %d, %d \n", dsp_scan.fm_dz0_xy_vec[i_X], dsp_scan.fm_dz0_xy_vec[i_Y]);
-	PI_DEBUG_GP (DBG_L4, "z_slope_max..** %d \n", dsp_scan.z_slope_max);
-	PI_DEBUG_GP (DBG_L4, "FSdX.........** %d \n", dsp_scan.fs_dx);
-	PI_DEBUG_GP (DBG_L4, "FSdY.........** %d \n", dsp_scan.fs_dy);
-	PI_DEBUG_GP (DBG_L4, "DNX..........** %d \n", dsp_scan.dnx);
-	PI_DEBUG_GP (DBG_L4, "DNY..........** %d \n", dsp_scan.dny);
-	PI_DEBUG_GP (DBG_L4, "NX...........** %d \n", (int)Nx);
-	PI_DEBUG_GP (DBG_L4, "NY...........** %d \n", (int)Ny);
-	PI_DEBUG_GP (DBG_L4, "NXPre........** %d \n", dsp_scan.nx_pre);
+	PI_DEBUG_GM (DBG_L4, "x,y slope....** %d, %d ", dsp_scan.fm_dz0_xy_vec[i_X], dsp_scan.fm_dz0_xy_vec[i_Y]);
+	PI_DEBUG_GM (DBG_L4, "z_slope_max..** %d ", dsp_scan.z_slope_max);
+	PI_DEBUG_GM (DBG_L4, "FSdX.........** %d ", dsp_scan.fs_dx);
+	PI_DEBUG_GM (DBG_L4, "FSdY.........** %d ", dsp_scan.fs_dy);
+	PI_DEBUG_GM (DBG_L4, "DNX..........** %d ", dsp_scan.dnx);
+	PI_DEBUG_GM (DBG_L4, "DNY..........** %d ", dsp_scan.dny);
+	PI_DEBUG_GM (DBG_L4, "NX...........** %d ", (int)Nx);
+	PI_DEBUG_GM (DBG_L4, "NY...........** %d ", (int)Ny);
+	PI_DEBUG_GM (DBG_L4, "NXPre........** %d ", dsp_scan.nx_pre);
 
 }
 
@@ -2368,16 +2361,16 @@ void sranger_mk3_hwi_dev::recalculate_dsp_scan_slope_parameters () {
 								dsp_scan.fm_dz0_xy_vec[i_X], dsp_scan.fm_dz0_xy_vec[i_Y],
 								swx, swy);
 
-	PI_DEBUG_GP (DBG_L4, "*** recalculated DSP slope parameters ***\n");
+	PI_DEBUG_GM (DBG_L4, "*** recalculated DSP slope parameters ***");
 
-	PI_DEBUG_GP (DBG_L4, "FM_dz0x......** %d\n", dsp_scan.fm_dz0_xy_vec[i_X]);
-	PI_DEBUG_GP (DBG_L4, "FM_dz0y......** %d\n", dsp_scan.fm_dz0_xy_vec[i_Y]);
+	PI_DEBUG_GM (DBG_L4, "FM_dz0x......** %d", dsp_scan.fm_dz0_xy_vec[i_X]);
+	PI_DEBUG_GM (DBG_L4, "FM_dz0y......** %d", dsp_scan.fm_dz0_xy_vec[i_Y]);
 
 	tmp = 1000. + 3. * ( fabs ((double)dsp_scan.fs_dx*(double)dsp_scan.fm_dz0_xy_vec[i_X]) + fabs((double)dsp_scan.fs_dy*(double)dsp_scan.fm_dz0_xy_vec[i_Y]) )/2147483648.; // =1<<31
-	PI_DEBUG_GP (DBG_L4, "Z-Slope-Max 3x (real): %g \n", tmp);
+	PI_DEBUG_GM (DBG_L4, "Z-Slope-Max 3x (real): %g ", tmp);
 	if (tmp > 67108864.)
 		tmp = 67108864.; // 1<<26
-	PI_DEBUG_GP (DBG_L4, "Z-Slope-Max (real, lim): %g \n", tmp);
+	PI_DEBUG_GM (DBG_L4, "Z-Slope-Max (real, lim): %g ", tmp);
 	dsp_scan.z_slope_max = (DSP_INT32)(tmp);
 
 }
@@ -2803,7 +2796,7 @@ void sranger_mk3_hwi_dev::write_dsp_abort_probe () {
 
 int sranger_mk3_hwi_dev::read_pll_symbols (){
 
-	PI_DEBUG_GP (DBG_L4, "sranger_mk3_hwi_dev::read_pll_symbols\n");
+	PI_DEBUG_GM (DBG_L4, "sranger_mk3_hwi_dev::read_pll_symbols");
 	lseek (dsp, magic_data.PLL_lookup, SRANGER_MK23_SEEK_DATA_SPACE | SRANGER_MK23_SEEK_ATOMIC);
 	sr_read (dsp, &dsp_pll, sizeof (dsp_pll)); 
 
@@ -2865,7 +2858,7 @@ int sranger_mk3_hwi_dev::read_pll_symbols (){
 	return 0;
 } // returns 0 if PLL capability available, else -1
 
-// #define PAC_DEBUGL0_PRINT(format,args...) { SRANGER_DEBUG_GP(format,##args); }
+// #define PAC_DEBUGL0_PRINT(format,args...) { SRANGER_DEBUG_GM(format,##args); }
 #define PAC_DEBUGL0_PRINT(format,args...) {;}
 
 //#define PAC_DEBUGLR_PRINT(format,args...) { SRANGER_DEBUG_GP(format,##args); }
@@ -2882,7 +2875,7 @@ double sranger_mk3_hwi_dev::read_pll_variable32 (gint64 address){
 	lseek (dsp, address, SRANGER_MK23_SEEK_DATA_SPACE | SRANGER_MK23_SEEK_ATOMIC);
 	sr_read (dsp, &x, sizeof (x)); 
 	CONV_32 (x);
-	PAC_DEBUGL0_PRINT ("sranger_mk3_hwi_dev::read_variable32[0x%06x] = %d\n", address, x);
+	PAC_DEBUGL0_PRINT ("sranger_mk3_hwi_dev::read_variable32[0x%06x] = %d", address, x);
 	return (double)x;
 }
 
@@ -3639,7 +3632,7 @@ double sranger_mk3_hwi_dev::lookup_signal_scale_by_index(int i){
 int sranger_mk3_hwi_dev::change_signal_input(int signal_index, gint32 input_id, gint32 voffset){
 	gint32 si = signal_index | (voffset >= 0 && voffset < dsp_signal_lookup_managed[signal_index].dim ? voffset<<16 : 0); 
 	SIGNAL_MANAGE sm = { input_id, si, 0, 0 }; // for read/write control part of signal_monitor only
-	PI_DEBUG_GP (DBG_L3, "sranger_mk3_hwi_dev::change_module_signal_input\n");
+	PI_DEBUG_GM (DBG_L3, "sranger_mk3_hwi_dev::change_module_signal_input");
 
 	CONV_32 (sm.mindex);
 	CONV_32 (sm.signal_id);     
@@ -3648,7 +3641,7 @@ int sranger_mk3_hwi_dev::change_signal_input(int signal_index, gint32 input_id, 
 	lseek (dsp, magic_data.signal_monitor, SRANGER_MK23_SEEK_DATA_SPACE | SRANGER_MK23_SEEK_ATOMIC);
 	sr_write (dsp, &sm, sizeof (sm)); 
 
-	PI_DEBUG_GP (DBG_L3, "sranger_mk3_hwi_dev::change_module_signal_input done: [%d,%d,0x%x,0x%x]\n",
+	PI_DEBUG_GM (DBG_L3, "sranger_mk3_hwi_dev::change_module_signal_input done: [%d,%d,0x%x,0x%x]",
                      sm.mindex,sm.signal_id,sm.act_address_input_set,sm.act_address_signal);
 	return 0;
 }
@@ -3657,7 +3650,7 @@ int sranger_mk3_hwi_dev::query_module_signal_input(gint32 input_id){
         int mode=0;
         int ret;
 	SIGNAL_MANAGE sm = { input_id, -1, 0, 0 }; // for read/write control part of signal_monitor only
-	PI_DEBUG_GP (DBG_L4, "sranger_mk3_hwi_dev::query_module_signal_input_config\n");
+	PI_DEBUG_GM (DBG_L4, "sranger_mk3_hwi_dev::query_module_signal_input_config");
 
 	CONV_32 (sm.mindex);
 	CONV_32 (sm.signal_id);     
@@ -3710,7 +3703,7 @@ int sranger_mk3_hwi_dev::read_signal_lookup (){
 	off_t adr;
 	struct{ DSP_INT32_P p; } dsp_signal_list[NUM_SIGNALS];
 	adr = magic_data.signal_lookup; 
-	PI_DEBUG_GP (DBG_L4, "sranger_mk3_hwi_dev::read_signal_lookup at 0x%08x size=%lu\n", adr, sizeof (dsp_signal_list));
+	PI_DEBUG_GM (DBG_L4, "sranger_mk3_hwi_dev::read_signal_lookup at 0x%08x size=%lu", adr, sizeof (dsp_signal_list));
 	lseek (dsp, adr, SRANGER_MK23_SEEK_DATA_SPACE | SRANGER_MK23_SEEK_ATOMIC);
 	sr_read (dsp, &dsp_signal_list, sizeof (dsp_signal_list)); 
 
@@ -3827,14 +3820,14 @@ int sranger_mk3_hwi_dev::read_actual_module_configuration (){
 	for (int i=0; mod_input_list[i].id; ++i){
 		int si = query_module_signal_input (mod_input_list[i].id);
 		if (si >= 0 && si < NUM_SIGNALS){
-                        PI_DEBUG_GP (DBG_L2, "INPUT %s (%04X) is set to %s\n",
+                        PI_DEBUG_GM (DBG_L2, "INPUT %s (%04X) is set to %s",
                                      mod_input_list[i].name, mod_input_list[i].id,
                                      dsp_signal_lookup_managed[si].label );
 		} else {
                         if (si == SIGNAL_INPUT_DISABLED)
-                                PI_DEBUG_GP (DBG_L2, "INPUT %s (%04X) is DISABLED\n", mod_input_list[i].name, mod_input_list[i].id);
+                                PI_DEBUG_GM (DBG_L2, "INPUT %s (%04X) is DISABLED", mod_input_list[i].name, mod_input_list[i].id);
                         else
-                                PI_DEBUG_GP (DBG_L2, "INPUT %s (%04X) -- ERROR DETECTED\n", mod_input_list[i].name, mod_input_list[i].id);
+                                PI_DEBUG_GM (DBG_L2, "INPUT %s (%04X) -- ERROR DETECTED", mod_input_list[i].name, mod_input_list[i].id);
 		}
 	}
 

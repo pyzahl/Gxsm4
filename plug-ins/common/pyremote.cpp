@@ -1816,7 +1816,7 @@ static PyObject* remote_waitscan(PyObject *self, PyObject *args)
 
 static PyObject* remote_scaninit(PyObject *self, PyObject *args)
 {
-	PI_DEBUG(DBG_L2, "pyremote: Initializing scan");
+	PI_DEBUG_GM (DBG_L2, "pyremote: Initializing scan");
 	main_get_gapp()->signal_emit_toolbar_action ("Toolbar_Scan_Init");
 	return Py_BuildValue("i", 0);
 }
@@ -2518,30 +2518,30 @@ static PyObject* PyInit_Redirection(void)
 
 void py_gxsm_console::initialize(void)
 {
-	PI_DEBUG(DBG_L1, "pyremote Plugin :: py_gxsm_console::initialize()");
+	PI_DEBUG_GM (DBG_L1, "pyremote Plugin :: py_gxsm_console::initialize **");
 
 	if (!Py_IsInitialized()) {
-		PI_DEBUG (DBG_L1, "** Initializing Python interpreter, loading gxsm module and stdout redirection helper **");
-                PI_DEBUG (DBG_L1, "pyremote Plugin :: initialize -- PyImport_Append");
+		PI_DEBUG_GM (DBG_L1, "** Initializing Python interpreter, loading gxsm module and stdout redirection helper **");
+                PI_DEBUG_GM (DBG_L1, "pyremote Plugin :: initialize -- PyImport_Append");
                 // g_print ("pyremote Plugin :: initialize -- PyImport_Append\n");
                 PyImport_AppendInittab ("gxsm", &PyInit_Gxsm);
                 PyImport_AppendInittab ("redirection", &PyInit_Redirection);
 
-                PI_DEBUG (DBG_L2, "pyremote Plugin :: initialize --  PyInitializeEx(0)");
+                PI_DEBUG_GM (DBG_L2, "pyremote Plugin :: initialize --  PyInitializeEx(0)");
                 // g_print ("pyremote Plugin :: initialize -- PyInitializeEx(0)\n");
 		// Do not register signal handlers -- i.e. do not "crash" gxsm on errors!
                 Py_InitializeEx (0);
 
-		PI_DEBUG (DBG_L2, "pyremote Plugin :: initialize -- ImportModule gxsm");
+		PI_DEBUG_GM (DBG_L2, "pyremote Plugin :: initialize -- ImportModule gxsm");
                 // g_print ("pyremote Plugin :: initialize -- ImportModule gxsm\n");
                 py_gxsm_module.module = PyImport_ImportModule("gxsm");
                 PyImport_ImportModule("redirection");
 
-                PI_DEBUG (DBG_L2, "pyremote Plugin :: initialize -- AddModule main\n");
+                PI_DEBUG_GM (DBG_L2, "pyremote Plugin :: initialize -- AddModule main\n");
                 // g_print ("pyremote Plugin :: initialize -- AddModule main\n");
 		py_gxsm_module.main_module = PyImport_AddModule("__main__");
                 
-		PI_DEBUG (DBG_L2, "Get dict");
+		PI_DEBUG_GM (DBG_L2, "Get dict");
                 // g_print ("pyremote Plugin :: initialize -- GetDict");
 		py_gxsm_module.dict = PyModule_GetDict (py_gxsm_module.module);
 
