@@ -163,7 +163,7 @@ Xsm::Xsm(){
 }
 
 Xsm::~Xsm(){
-	XSM_DEBUG (DBG_L2, "Xsm::~Xsm deleting unit objects");
+	XSM_DEBUG (DBG_L2, "Xsm::~Xsm ** deleting unit objects");
         main_get_gapp ()->monitorcontrol->LogEvent("Xsm object", "destructor", 3);
         
 	if(LenUnit)
@@ -185,7 +185,7 @@ Xsm::~Xsm(){
 	delete ArcUnit;
 	delete Unity;
 
-	XSM_DEBUG (DBG_L2, "Xsm::~Xsm delete hardware");
+	XSM_DEBUG (DBG_L2, "Xsm::~Xsm ... delete hardware");
 	if (HwI_plugins) {
 		if (!HwI_plugins -> get_xsm_hwi_class () && hardware)
 			delete hardware; // remove build-in default base XSM-Hardware!
@@ -198,13 +198,13 @@ Xsm::~Xsm(){
 	delete Inst;
 	Inst=NULL;
 
-	XSM_DEBUG (DBG_L2, "Xsm::~Xsm done.");
+	XSM_DEBUG_GM (DBG_L2, "Xsm::~Xsm ... done.");
         main_get_gapp ()->monitorcontrol->LogEvent("Xsm object", "destructor complete", 3);
 }
 
 
 void Xsm::reload_hardware_interface (App *app){
-        XSM_DEBUG (DBG_L1, "Xsm::reload_hardware_interface");
+        XSM_DEBUG_GM (DBG_L1, "Xsm::reload_hardware_interface ** %s **", HwI_plugins?"unloading HwI":"scanning for HwI plugins and loading");
 	// cleanup
 	if (HwI_plugins) {
 		if (!HwI_plugins -> get_xsm_hwi_class () && hardware)
@@ -217,23 +217,25 @@ void Xsm::reload_hardware_interface (App *app){
 	HwI_plugins = NULL;
 	hardware=NULL;
 
-        XSM_DEBUG (DBG_L1, "Xsm::reload_hardware_interface -- reloading");
-
 	// cleanup only?
-	if (!app) return;
-
-        XSM_DEBUG (DBG_L1, "Xsm::reload_hardware_interface -- check for HwI");
+	if (!app){
+                XSM_DEBUG_GM (DBG_L1, "Xsm::reload_hardware_interface ... EXIT ONLY");
+                return;
+        }
+        XSM_DEBUG_GM (DBG_L1, "Xsm::reload_hardware_interface ... HwI %s", hardware?"reloading":"loading");
         
 	// Check for HwI PIs
 	if(!hardware)
 		hardware = HwI_Plugin_Load (app);
 
-        XSM_DEBUG (DBG_L1, "Xsm::reload_hardware_interface -- check for hardware interface OK");
+        XSM_DEBUG_GM (DBG_L1, "Xsm::reload_hardware_interface ... %s", hardware?"OK":"ERROR: HwI load/hardware connect failure");
 
-	if(!hardware) // still no Hardware Interface ?
+	if(!hardware){ // still no Hardware Interface ?
 		hardware = new XSM_Hardware; // Erzeuge Hardware Simulations Objekt
+                XSM_DEBUG_GM (DBG_L1, "Xsm::reload_hardware_interface ... %s", hardware?"Dummy Hardware Base Class activated":"ERROR HwI Base");
+        }
 
-        XSM_DEBUG (DBG_L1, "Xsm::reload_hardware_interface -- done.");
+        XSM_DEBUG_GM (DBG_L1, "Xsm::reload_hardware_interface ... done.");
 }
 
 UnitObj *Xsm::MakeUnit(const gchar *alias, const gchar *label){
@@ -282,7 +284,7 @@ gint Xsm::HwI_Plugin_Check (const gchar *category){
 	if( ! category ) 
 		return ret;
 
-        XSM_DEBUG_GP (DBG_L1, "Xsm::HwI_Plugin_Check -- %s\n", category);
+        XSM_DEBUG_GM (DBG_L1, "Xsm::HwI_Plugin_Check ** %s\n", category);
         
 
 	// HwI category convention for single and multiple subclass support:
@@ -309,7 +311,7 @@ gint Xsm::HwI_Plugin_Check (const gchar *category){
                 i = g_settings_get_int (settings_hwi_interfaces, "hwi-count");
                 hwilist = g_settings_get_string (settings_hwi_interfaces, "hwi-list");
 
-                XSM_DEBUG_GP (DBG_L1, "Xsm::HwI_Plugin_Check -- [HWI count=%d, list='%s']  %s\n", i, hwilist, category);
+                XSM_DEBUG_GM (DBG_L1, "Xsm::HwI_Plugin_Check .. [HWI count=%d, list='%s']  %s\n", i, hwilist, category);
 
                 ++i;
 
@@ -321,7 +323,7 @@ gint Xsm::HwI_Plugin_Check (const gchar *category){
                 } else 
                         hwilist = g_strdup (fullclass);
 
-                XSM_DEBUG_GP (DBG_L1, "Xsm::HwI_Plugin_Check -- [HWI count=%d list='%s']  %s\n", i, hwilist, category);
+                XSM_DEBUG_GM (DBG_L1, "Xsm::HwI_Plugin_Check .. [HWI count=%d list='%s']  %s\n", i, hwilist, category);
                 
 		if ( !strcmp (xsmres.HardwareType, fullclass) ) // match?
 			ret = TRUE;
@@ -349,7 +351,7 @@ XSM_Hardware* Xsm::HwI_Plugin_Load (App* app){
         
 	gint (*hwi_type_check_func)(const gchar *) =  HwI_Plugin_Check;
 	GList *PluginDirs = NULL;
-	XSM_DEBUG(DBG_L2, "Load/select GXSM HwI plugin(s)" );
+	XSM_DEBUG_GM (DBG_L2, "Xsm::HwI_Plugin_Load ** Load/select GXSM HwI plugin(s)" );
 	
 	// Make plugin search dir list
 	PluginDirs = g_list_prepend

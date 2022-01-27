@@ -961,6 +961,7 @@ GxsmMenuExtension *App::gxsm_app_extend_menu (const gchar *extension_point, cons
 	if (section == NULL){ // try last resort fallback to fixed plugin-section 
                 XSM_DEBUG_GW (DBG_EVER, "App::gxsm_app_extend_menu - failed to locate extension point '%s', fallback to PlugIn menu...", extension_point);
                 section = find_extension_point_section (G_MENU_MODEL (get_gxsm_main_menu ()), "plugins-section");
+                XSM_DEBUG_GM (DBG_EVER, "App::gxsm_app_extend_menu - fallback to PlugIn menu... %s", section?"OK":"ERROR");
         }
         
 	if (section != NULL){
@@ -1055,7 +1056,7 @@ void App::ConnectPluginToRemoteAction( void (*cbfkt)(gpointer) ){
 void App::reload_gxsm_plugins( gint killflag ){
 	gint (*gxsm_plugin_check)(const gchar *) = Gxsm_Plugin_Check;
 	GList *PluginDirs = NULL;
-	XSM_DEBUG(DBG_L2, "Remove/Reload Gxsm plugins" );
+	XSM_DEBUG_GM (DBG_L2, " App::reload_gxsm_plugins ** Load/Remove&Reload Gxsm Plug-Ins" );
 
 	
 	if( PluginNotifyOnSPMRange ){
@@ -1090,7 +1091,7 @@ void App::reload_gxsm_plugins( gint killflag ){
 	PluginCallGetNCInfo = NULL;
         
 	if( !GxsmPlugins && killflag ){
-		XSM_DEBUG(DBG_L2, "no GXSM plugins found, done." );
+		XSM_DEBUG_GM (DBG_L2, "no GXSM plugins found, done." );
                 GxsmSplash (2.0, "no GXSM PlugIns found.", "Finishing."); // this will auto remove splash after timout!
 		return;
 	}
@@ -1105,7 +1106,7 @@ void App::reload_gxsm_plugins( gint killflag ){
 			return;
 		}
 		
-		XSM_DEBUG(DBG_L2, "Plugins removed" );
+		XSM_DEBUG_GM (DBG_L2, "Plugins removed" );
 		SetStatus(N_("Plugins removed"));
 
 	}

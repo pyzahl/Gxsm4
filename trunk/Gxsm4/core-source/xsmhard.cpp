@@ -303,7 +303,7 @@ gboolean XSM_Hardware::ScanLineM(int yindex, int xdir, int muxmode, Mem2d *Mob[M
         y0 = ry;
         for(int i=ixy_sub[0]; i < (ixy_sub[1]>0 ? ixy_sub[1]:Nx); i++){
                 x = x0 + i*Dx*xdir;
-                y = y0;
+                y = y0 + yindex*Dy;
                 MovetoXY (x,y);
                 Line.PutDataPkt (main_get_gapp ()->xsm->Inst->ZA2Dig(Simulate (muxmode)), i, 0);
                 //g_message ("ScanLine Simulation: DA=[%g, %g] XY-Ang=[%g, %g] ",x,y, sim_xyzS[0],sim_xyzS[1]);

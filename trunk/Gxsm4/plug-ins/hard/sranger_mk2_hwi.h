@@ -1,3 +1,5 @@
+/* -*- Mode: C++; indent-tabs-mode: nil; c-basic-offset: 8 c-style: "K&R" -*- */
+
 /* Gxsm - Gnome X Scanning Microscopy
  * universal STM/AFM/SARLS/SPALEED/... controlling and
  * data analysis software
@@ -22,8 +24,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
  */
-
-/* -*- Mode: C++; indent-tabs-mode: nil; c-basic-offset: 8 c-style: "K&R" -*- */
 
 #ifndef __SRANGER_MK2_HWI_H
 #define __SRANGER_MK2_HWI_H
@@ -70,6 +70,8 @@ public:
 	sranger_mk2_hwi_dev();
 	virtual ~sranger_mk2_hwi_dev();
 
+        virtual gboolean dsp_device_status() { return false; };
+  
 	virtual int update_gxsm_configurations (){
 		// update resources from signals
 		DSPControlClass->update_sourcesignals_from_DSP_callback ();
@@ -282,6 +284,7 @@ class sranger_mk2_hwi_spm : public sranger_mk2_hwi_dev{
  public:
 	sranger_mk2_hwi_spm();
 	virtual ~sranger_mk2_hwi_spm();
+        virtual gboolean dsp_device_status() { return dsp ? true:false; };
 
 	/* Hardware realtime monitoring -- all optional */
 	/* default properties are

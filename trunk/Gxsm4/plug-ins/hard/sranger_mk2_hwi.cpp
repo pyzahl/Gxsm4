@@ -1673,70 +1673,61 @@ GxsmPlugin *get_gxsm_plugin_info ( void ){
 // Essential Plugin Function!!
 XSM_Hardware *get_gxsm_hwi_hardware_class ( void *data ) {
         gchar *tmp;
-        g_message ("HWI-DEV-MK2/3: Initialization and DSP verification.");
+        PI_DEBUG_GM (DBG_L1, "XSM_Hardware *get_gxsm_hwi_hardware_class ** HWI-DEV-MK2/3: Initialization and DSP verification.");
         main_get_gapp()->monitorcontrol->LogEvent (THIS_HWI_PREFIX " XSM_Hardware *get_gxsm_hwi_hardware_class", "Init 1");
-	PI_DEBUG_GP (DBG_L1, THIS_HWI_PREFIX " XSM_Hardware *get_gxsm_hwi_hardware_class:\n"
-                     " -> SR-MK2/3 HardwareInterface                        * Init 1\n");
+	PI_DEBUG_GM (DBG_L1, THIS_HWI_PREFIX "... XSM_Hardware *get_gxsm_hwi_hardware_class");
+        PI_DEBUG_GM (DBG_L3, " -> SR-MK2/3 HardwareInterface                        * Init 1");
 	sranger_mk2_hwi_configure_string = g_strdup ((gchar*)data);
-	PI_DEBUG_GP (DBG_L1,
-                     " -> sranger_mk2/3_hwi HardwareInterface               * Init 2\n");
-	// probe for MK2
+	PI_DEBUG_GM (DBG_L3, " -> sranger_mk2/3_hwi HardwareInterface               * Init 2");
+	// probe for MK2, then MK3
 	sranger_common_hwi = new sranger_mk2_hwi_spm ();
-	PI_DEBUG_GP (DBG_L1,
-                     " -> sranger_mk2/3_hwi HardwareInterface common        * Init 3\n");
+	PI_DEBUG_GM (DBG_L3, " -> sranger_mk2/3_hwi HardwareInterface common        * Init 3");
+
 	if (sranger_common_hwi){
-                PI_DEBUG_GP (DBG_L1,
-                     " -> sranger_mk2/3_hwi HardwareInterface probing MK2.. * Init 4\n");
-                PI_DEBUG_GP (DBG_L1,
-                     " -> DSP Mark ID found: MK %d\n", sranger_common_hwi -> get_mark_id());
+                PI_DEBUG_GM (DBG_L1, " -> sranger_mk2/3_hwi HardwareInterface probing for MK2...");
+                PI_DEBUG_GM (DBG_L1, " -> DSP Mark ID found: SR-MK%d", sranger_common_hwi -> get_mark_id());
 
                 tmp = g_strdup_printf ("MK %d", sranger_common_hwi -> get_mark_id());
                 main_get_gapp()->monitorcontrol->LogEvent ("DSP Mark ID found", tmp); g_free (tmp);
                 
                 if (sranger_common_hwi->get_mark_id () != 2){ // no MK2 found
-			PI_DEBUG_GP (DBG_L1,
-                                     "    ... not a MK2 DSP\n");
+			PI_DEBUG_GM (DBG_L1, "    ... as this not a SR-MK2 DSP, reassigning ...");
 			delete sranger_common_hwi;
+                        sranger_common_hwi = NULL;
 			// probe for MK3
-			PI_DEBUG_GP (DBG_L1,
-                                     "    ... probing for MK3 DSP and software details.\n");
+			PI_DEBUG_GM (DBG_L1, "    ... probing for SR-MK3 DSP and software details.");
 			sranger_common_hwi = new sranger_mk3_hwi_spm ();
-			PI_DEBUG_GP (DBG_L3,
-                                     "    ... verifying.\n");
+			if (!sranger_common_hwi){
+				PI_DEBUG_GW (DBG_L1, " -> ERROR not a MK3 SPMCONTROL -- HwI common init failed.");
+				// exit (0); // -- no force exit here -- testing
+				return NULL;
+                        }
 			if (sranger_common_hwi){
-                                PI_DEBUG_GP (DBG_L3, "    ... verify 1.\n");
 				if (sranger_common_hwi->get_mark_id() != 3){ // no MK3 found
-                                        PI_DEBUG_GP (DBG_L1,
-                                      "    ... MK3 test failed. :(");
+                                        PI_DEBUG_GW (DBG_L1, " -> SR-MARK3 test failed.");
 					delete sranger_common_hwi;
 					sranger_common_hwi = NULL;
-					PI_DEBUG_GP (DBG_L1, " -> E01 -- DSP auto detection failed, no MK3 or MK2 found.\n");
+					PI_DEBUG_GW (DBG_L1, " -> ERROR -- DSP auto detection failed, no MK3 or MK2 found.\n");
 					g_warning (" HwI Initialization error: -> E01 -- DSP auto detection failed, no MK3 or MK2 found.\n"
                                                    " Make sure DSP is plugged in and powered. Check kernel module and permissions.\n");
-                                        main_get_gapp()->monitorcontrol->LogEvent ("E01 -- DSP auto detection failed, no MK3 or MK2 found.", " ??? ");
-					exit (0);
+                                        main_get_gapp()->monitorcontrol->LogEvent ("ERROR: DSP auto detection failed, no MK3 or MK2 found.", " ??? ");
+					// exit (0); // -- no force exit here -- testing
 					return NULL;
 				}
-                                PI_DEBUG_GP (DBG_L3, "    ... verify 2.\n");
-			} else {
-				PI_DEBUG_GP (DBG_L1, " -> E02 -- HwI common init failed.\n");
-                                g_warning (" HwI Init failed with E02.");
-				exit (0);
-				return NULL;
 			}
-                        PI_DEBUG_GP (DBG_L3, "    ... verify 3.\n");
+                        if (!sranger_common_hwi -> dsp_device_status()){
+                                PI_DEBUG_GM (DBG_L1, "XSM_Hardware *get_gxsm_hwi_hardware_class ... HWI-DEV-MK2/3: Open HwI Device Failed.");
+                                return NULL;
+                        }
 		}
-                PI_DEBUG_GP (DBG_L3, "    ... verify 4.\n");
+                PI_DEBUG_GM (DBG_L3, "    MK2/3 SPMCONTROL PRESENT: verify OK.");
 	} else {
-		PI_DEBUG_GP (DBG_L1, " -> E03 -- failed, no MK3 or MK2 found.\n");
+		PI_DEBUG_GM (DBG_L1, " -> ERROR: no MK3 or MK2 found.");
                 g_critical ("HWI-DEV-MK2/3: HwI Init failed with E03.");
-		exit (0);
+		// exit (0); // -- no force exit here -- testing
 		return NULL;
 	}
-        PI_DEBUG_GP (DBG_L2, "    ... verify 5.\n");
-	
-        g_message ("HWI-DEV-MK2/3: auto probing succeeded: MK%d DSP identified and ready.", sranger_common_hwi -> get_mark_id ());
-	PI_DEBUG_GP (DBG_L1, " -> probing succeeded: MK%d identified.\n", sranger_common_hwi -> get_mark_id ());
+        PI_DEBUG_GM (DBG_EVER, "HWI-DEV-MK2/3: auto probing succeeded: MK%d DSP SPMCONTROL identified and ready.", sranger_common_hwi -> get_mark_id ());
         main_get_gapp()->monitorcontrol->LogEvent ("HwI: probing succeeded.", "DSP System Ready.");
 	return sranger_common_hwi;
 }
@@ -1744,7 +1735,7 @@ XSM_Hardware *get_gxsm_hwi_hardware_class ( void *data ) {
 // init-Function
 static void sranger_mk2_hwi_init(void)
 {
-	PI_DEBUG (DBG_L2, "sranger_mk2_hwi Plugin Init");
+	PI_DEBUG_GM (DBG_L2, "sranger_mk2_hwi Plugin Init");
 	sranger_common_hwi = NULL;
 }
 
@@ -1765,7 +1756,7 @@ static void sranger_mk2_hwi_about(void)
 // configure-Function
 static void sranger_mk2_hwi_configure(void)
 {
-	PI_DEBUG (DBG_L2, "sranger_mk2_hwi Plugin HwI-Configure");
+	PI_DEBUG_GM (DBG_L2, "sranger_mk2_hwi Plugin HwI-Configure");
 	if(sranger_mk2_hwi_pi.app)
 		sranger_mk2_hwi_pi.app->message("sranger_mk2_hwi Plugin Configuration");
 }
@@ -1773,16 +1764,16 @@ static void sranger_mk2_hwi_configure(void)
 // query-Function
 static void sranger_mk2_hwi_query(void)
 {
-	PI_DEBUG_GP (DBG_L1, THIS_HWI_PREFIX "::sranger_mk2_hwi_query:: PAC check... ");
+	PI_DEBUG_GM (DBG_L1, THIS_HWI_PREFIX "::sranger_mk2_hwi_query:: PAC check... ");
 	if (sranger_common_hwi){ // probe for PAC lib/PLL capability
 		if (sranger_common_hwi->check_pac() != -1){
-			PI_DEBUG_GP (DBG_L1, " HwI and PLL cap. present, adding PAC control.");
+			PI_DEBUG_GM (DBG_L1, " HwI and PLL cap. present, adding PAC control.");
 			sranger_mk2_hwi_menu_callback_list.n = 4; // adjust to include PAC menu entry
 		} else {
-			PI_DEBUG_GP (DBG_L1, " HwI OK, no PLL capability detected.");
+			PI_DEBUG_GM (DBG_L1, " HwI OK, no PLL capability detected.");
 		}
 	} else {
-		PI_DEBUG_GP (DBG_L1, " no valid HwI.");
+		PI_DEBUG_GM (DBG_L1, " no valid HwI.");
 	}
 
 
@@ -1820,7 +1811,7 @@ void DSPControlContainer::realize (){
 //	SR DSP PAC Control Window
 // ==================================================
 
-        PI_DEBUG_GP (DBG_L4, THIS_HWI_PREFIX"::sranger_mk2_hwi DSPControlContainer::Realize -- check and add PAC window\n");
+        PI_DEBUG_GM (DBG_L3, THIS_HWI_PREFIX"::sranger_mk2_hwi DSPControlContainer::Realize -- check and add PAC window");
         
 	if (sranger_common_hwi) // probe for PAC lib/PLL capability
 		if (sranger_common_hwi->check_pac() != -1){
@@ -1830,11 +1821,11 @@ void DSPControlContainer::realize (){
 //	SR DSP Control Window
 // ==================================================
 
-        PI_DEBUG_GP (DBG_L4, THIS_HWI_PREFIX"::sranger_mk2_hwi DSPControlContainer::Realize -- add DSPControl window\n");
+        PI_DEBUG_GM (DBG_L4, THIS_HWI_PREFIX"::sranger_mk2_hwi DSPControlContainer::Realize -- add DSPControl window");
 	DSPControlClass = new DSPControl (main_get_gapp() -> get_app ());
 	sranger_mk2_hwi_pi.app->ConnectPluginToStartScanEvent (DSPControl_StartScan_callback);
 
-        PI_DEBUG_GP (DBG_L4, THIS_HWI_PREFIX"::sranger_mk2_hwi DSPControlContainer::Realize ConnectPluginToCDFSaveEvent\n");	
+        PI_DEBUG_GM (DBG_L4, THIS_HWI_PREFIX"::sranger_mk2_hwi DSPControlContainer::Realize ConnectPluginToCDFSaveEvent");	
 // connect to GXSM nc-fileio
         
 	sranger_mk2_hwi_pi.app->ConnectPluginToCDFSaveEvent (DSPControl_SaveValues_callback);
@@ -1842,12 +1833,12 @@ void DSPControlContainer::realize (){
 
 //      User Tabs Window (blanc)
 // ==================================================
-        PI_DEBUG_GP (DBG_L4, THIS_HWI_PREFIX"::sranger_mk2_hwi DSPControlContainer::Realize -- add DSPControl User Tabs window\n");
+        PI_DEBUG_GM (DBG_L4, THIS_HWI_PREFIX"::sranger_mk2_hwi DSPControlContainer::Realize -- add DSPControl User Tabs window");
 	DSPControlUserTabsClass = new DSPControlUserTabs (main_get_gapp() -> get_app ());
 
 //	SR DSP Mover Control Window
 // ==================================================
-        PI_DEBUG_GP (DBG_L4, THIS_HWI_PREFIX"::sranger_mk2_hwi DSPControlContainer::Realize -- add DSPMover Control window\n");
+        PI_DEBUG_GM (DBG_L4, THIS_HWI_PREFIX"::sranger_mk2_hwi DSPControlContainer::Realize -- add DSPMover Control window");
 	DSPMoverClass = new DSPMoverControl (main_get_gapp() -> get_app ());
 
 	PI_DEBUG (DBG_L4, THIS_HWI_PREFIX "::sranger_mk2_hwi_query:: populate tabs now...\n");
@@ -1987,7 +1978,7 @@ static void DSPPAC_show_callback (GSimpleAction *simple, GVariant *parameter, gp
 }
 
 static void DSPControl_StartScan_callback( gpointer ){
-	PI_DEBUG_GP (DBG_L1, THIS_HWI_PREFIX "::DSPControl_StartScan_callback");
+	PI_DEBUG_GM (DBG_L1, THIS_HWI_PREFIX "::DSPControl_StartScan_callback");
 	if ( DSPControlClass )
 		DSPControlClass->update();
 }
@@ -2008,7 +1999,7 @@ static void DSPControl_LoadValues_callback ( gpointer ncf ){
 // cleanup-Function
 static void sranger_mk2_hwi_cleanup(void)
 {
-	PI_DEBUG (DBG_L4, THIS_HWI_PREFIX "::sranger_mk2_hwi_cleanup -- Plugin Cleanup, -- Menu [disabled]\n");
+	PI_DEBUG (DBG_L4, THIS_HWI_PREFIX "::sranger_mk2_hwi_cleanup -- Plugin Cleanup, -- Menu [disabled]");
 #if 0
 	gchar *mp = g_strconcat(DSPControl_menupath, DSPControl_menuentry, NULL);
 	gnome_app_remove_menus (GNOME_APP( sranger_mk2_hwi_pi.app->getApp() ), mp, 1);

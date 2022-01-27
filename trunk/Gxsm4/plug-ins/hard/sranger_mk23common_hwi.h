@@ -78,6 +78,7 @@ public:
 
 	sranger_common_hwi_dev() { sranger_mark_id = -2; }; // pure virtual
 	virtual ~sranger_common_hwi_dev() {};
+        virtual gboolean dsp_device_status() { return false; };
 
 	virtual int update_gxsm_configurations () { return 0; };
 

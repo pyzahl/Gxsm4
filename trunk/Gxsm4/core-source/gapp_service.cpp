@@ -703,23 +703,23 @@ GMenuModel *AppBase::find_extension_point_section (GMenuModel  *model,
         if (model == NULL)
                 return NULL;
 
-        XSM_DEBUG_GM (DBG_L4, "MyGnomeTools::find_extension_point_section '%s' in menu.", extension_point);
+        XSM_DEBUG_GM (DBG_L7, "MyGnomeTools::find_extension_point_section '%s' in menu.", extension_point);
 
         n_items = g_menu_model_get_n_items (model);
 
-        XSM_DEBUG_GM (DBG_L4, "MyGnomeTools::find_extension_point_section n_items=%d", n_items);
+        XSM_DEBUG_GM (DBG_L9, "MyGnomeTools::find_extension_point_section n_items=%d", n_items);
 
         for (i = 0; i < n_items && !section; i++) {
                 gchar *id = NULL;
                 
                 gboolean ret=g_menu_model_get_item_attribute (model, i, "id", "s", &id);
-                XSM_DEBUG_GM (DBG_L4, "MyGnomeTools::find_extension_point_section i=%d  id: %s %s", i, id, ret?"YES":"NO");
+                XSM_DEBUG_GM (DBG_L9, "MyGnomeTools::find_extension_point_section i=%d  id: %s %s", i, id, ret?"YES":"NO");
                 if (id) { g_free (id); } id = NULL;
                 gboolean retx1=g_menu_model_get_item_attribute (model, i, "name", "s", &id);
-                XSM_DEBUG_GM (DBG_L4, "MyGnomeTools::find_extension_point_section i=%d name: %s %s", i, id, retx1?"YES":"NO");
+                XSM_DEBUG_GM (DBG_L9, "MyGnomeTools::find_extension_point_section i=%d name: %s %s", i, id, retx1?"YES":"NO");
                 if (id) { g_free (id); } id = NULL;
                 gboolean retx2=g_menu_model_get_item_attribute (model, i, "label", "s", &id);
-                XSM_DEBUG_GM (DBG_L4, "MyGnomeTools::find_extension_point_section i=%d label: %s %s", i, id, retx2?"YES":"NO");
+                XSM_DEBUG_GM (DBG_L9, "MyGnomeTools::find_extension_point_section i=%d label: %s %s", i, id, retx2?"YES":"NO");
                 if (id) { g_free (id); } id = NULL;
 
 
@@ -728,6 +728,7 @@ GMenuModel *AppBase::find_extension_point_section (GMenuModel  *model,
                             strcmp (id, extension_point) == 0) {
                                 section = g_menu_model_get_item_link (model, i, G_MENU_LINK_SECTION); 
                                 if (id) g_free (id);
+                                XSM_DEBUG_GM (DBG_L7, "MyGnomeTools::find_extension_point_section ... %s", section?"OK":"INSERT FAILED");
                                 return section;
                         }
                 }
@@ -736,7 +737,7 @@ GMenuModel *AppBase::find_extension_point_section (GMenuModel  *model,
                 GMenuModel *submenu;
                 gint j, j_items;
                 
-                XSM_DEBUG_GM (DBG_L4, "MyGnomeTools::find_extension_point_section subsecton lookup");
+                XSM_DEBUG_GM (DBG_L9, "MyGnomeTools::find_extension_point_section subsecton lookup");
 
                 subsection = g_menu_model_get_item_link (model, i, G_MENU_LINK_SECTION);
                 if (subsection == NULL){ // try here:
@@ -746,10 +747,10 @@ GMenuModel *AppBase::find_extension_point_section (GMenuModel  *model,
                 } else {
                         //                        if (subsection) {
                         j_items = g_menu_model_get_n_items (subsection);
-                        XSM_DEBUG_GM (DBG_L4, "MyGnomeTools::find_extension_point_section subsecton lookup -- j_items=%d", j_items);
+                        XSM_DEBUG_GM (DBG_L9, "MyGnomeTools::find_extension_point_section subsecton lookup -- j_items=%d", j_items);
                         
                         for (j = 0; j < j_items && !section; j++) {
-                                XSM_DEBUG_GM (DBG_L4, "MyGnomeTools::find_extension_point_section submenu lookup -- j_items=%d", j);
+                                XSM_DEBUG_GM (DBG_L9, "MyGnomeTools::find_extension_point_section submenu lookup -- j_items=%d", j);
                                 submenu = g_menu_model_get_item_link (subsection, j, G_MENU_LINK_SUBMENU);
                                 if (submenu)
                                         section = find_extension_point_section (submenu, extension_point);
@@ -757,6 +758,7 @@ GMenuModel *AppBase::find_extension_point_section (GMenuModel  *model,
                 }
         }
 
+        XSM_DEBUG_GM (DBG_L7, "MyGnomeTools::find_extension_point_section ... %s", section?"OK":"INSERT FAILED");
         return section;
 }
 
@@ -773,7 +775,7 @@ void AppBase::add_window_to_window_menu(const gchar *menu_item_label, const gcha
         gchar *app_tmpaction = g_strconcat ( "app.", tmpaction, NULL);
         GSimpleAction *ti_action;
         
-        XSM_DEBUG_GM (DBG_L3, "AppBase::add_window_to_window_menu <%s>  MenuItem= %s ==> label, generated actions: [%s] <%s>, <%s>",
+        XSM_DEBUG_GM (DBG_L5, "AppBase::add_window_to_window_menu <%s>  MenuItem= %s ==> label, generated actions: [%s] <%s>, <%s>",
                       menusection, menu_item_label, tmp, tmpaction, app_tmpaction);
 
         if (!strcmp (menusection, "windows-section-xx")) { // add toggle -- testing, not yet working -- disabled via -xx
@@ -801,7 +803,7 @@ void AppBase::add_window_to_window_menu(const gchar *menu_item_label, const gcha
 #else
         gchar *label = g_strdup (menu_item_label);
 #endif
-        XSM_DEBUG_GP (DBG_L3, "AppBase::add_window_to_window_menu <%s>  MenuItem= %s ==> label, generated actions: [%s] <%s>",
+        XSM_DEBUG_GM (DBG_L3, "AppBase::add_window_to_window_menu <%s>  MenuItem= %s ==> label, generated actions: [%s] <%s>",
                       menusection, menu_item_label, tmp, app_tmpaction);
         
         main_get_gapp ()->gxsm_app_extend_menu (menusection, label, app_tmpaction);
@@ -813,15 +815,14 @@ void AppBase::add_window_to_window_menu(const gchar *menu_item_label, const gcha
 }
 
 int AppBase::set_window_geometry (const gchar *key, gint index, gboolean add_to_menu){
-        XSM_DEBUG_GM (DBG_L4, "AppBase::set_window_geometry and append '%s' to Windows Menu.", key);
+        XSM_DEBUG_GM (DBG_L3, "AppBase::set_window_geometry ** setup and append '%s' to Windows Menu.", key?key:"!! window key N/A !!");
 
         if (window_key){
-                XSM_DEBUG_GM (DBG_L2, "AppBase::set_window_geometry geometry already setup. DUPLICATE WARNING append '%s' to Windows Menu already done.", key);
+                XSM_DEBUG_GM (DBG_L2, "AppBase::set_window_geometry ... geometry already setup. DUPLICATE WARNING append '%s' to Windows Menu already done.", key);
                 // remove from menu!
                 g_free (window_key);
         }
         
-        XSM_DEBUG_GM (DBG_L9, "AppBase::set_window_geometry and append '%s' to Windows Menu", key);
         if (index >= 0 && index <= 6) // limit for now
                 window_key = g_strdup_printf ("%s-%d", key, index);
         else if (index > 6)
@@ -829,11 +830,11 @@ int AppBase::set_window_geometry (const gchar *key, gint index, gboolean add_to_
         else
                 window_key = g_strdup (key);
 
-        XSM_DEBUG_GP (DBG_L9, "AppBase::set_window_geometry and append '%s' to Windows Menu -- cpy2.\n", window_key);
+        XSM_DEBUG_GM (DBG_L5, "AppBase::set_window_geometry ... load geometry");
 
 	LoadGeometry ();
 
-        XSM_DEBUG_GP (DBG_L9, "AppBase::set_window_geometry and append '%s' to Windows Menu -- add to menu.\n", window_key);
+        XSM_DEBUG_GM (DBG_L5, "AppBase::set_window_geometry ... add to menu");
 
         if (add_to_menu)
                 add_window_to_window_menu (window_key, window_key);
@@ -841,7 +842,7 @@ int AppBase::set_window_geometry (const gchar *key, gint index, gboolean add_to_
         if (g_object_get_data (G_OBJECT (gxsm4app), "APP-MAIN"))
                 ((App*)g_object_get_data (G_OBJECT (gxsm4app), "APP-MAIN")) -> add_appwindow_to_list (this); // add self to gapp globale list
 
-        XSM_DEBUG_GP (DBG_L9, "AppBase::set_window_geometry and append '%s' to Windows Menu -- done.\n", window_key);
+        XSM_DEBUG_GM (DBG_L5, "AppBase::set_window_geometry ... done.");
 	return 0;
 }
 
