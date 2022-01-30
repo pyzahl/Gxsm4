@@ -761,7 +761,7 @@ public:
                                            gpointer task_data,
                                            GCancellable *cancellable);
         
-        const char* run_command(const gchar *cmd, int mode, gboolean run_in_thread=false);
+        const char* run_command(const gchar *cmd, int mode);
 
         void push_message_async (const gchar *msg){
                 if (msg)
@@ -2905,7 +2905,7 @@ void py_gxsm_console::PyRun_GAsyncReadyCallback (GObject *source_object,
 }
 
 
-const gchar* py_gxsm_console::run_command(const gchar *cmd, int mode, gboolean run_in_thread)
+const gchar* py_gxsm_console::run_command(const gchar *cmd, int mode)
 {
 	if (!cmd) {
 		g_warning("No command.");
@@ -2915,7 +2915,7 @@ const gchar* py_gxsm_console::run_command(const gchar *cmd, int mode, gboolean r
         PyErr_Clear(); // clear any previous error or interrupts set
 
         g_idle_add (pop_message_list_to_console, this); // keeps running and watching for async console data to display
-        if (run_in_thread && !run_data.cmd){
+        if (!run_data.cmd){
                 PI_DEBUG_GM (DBG_L2, "pyremote Plugin :: py_gxsm_console::run_command *** starting console IDLE message pop job.");
                 run_data.cmd = g_strdup (cmd);
                 run_data.mode = mode;
@@ -2929,17 +2929,7 @@ const gchar* py_gxsm_console::run_command(const gchar *cmd, int mode, gboolean r
                 PI_DEBUG_GM (DBG_L2, "pyremote Plugin :: py_gxsm_console::run_command thread fired up");
                 return NULL;
         } else {
-                PyObject* ret = PyRun_String(cmd,
-                                             mode,
-                                             dictionary,
-                                             dictionary);
-        
-                push_message_async (ret ?
-                                    "\n<<< PyRun user script (in main) finished. <<<\n" :
-                                    "\n<<< PyRun user script (in main) run raised an exeption. <<<\n");
-                push_message_async (NULL); // terminate IDLE push task
-                if (!ret) PyErr_Print();
-                return (ret ? "OK" : "PyRun Script raised an exeption.");
+                return "Busy";
         }
 }
 
@@ -3096,7 +3086,7 @@ void py_gxsm_console::run_file(GtkButton *btn, gpointer user_data)
                 
                 pygc->push_message_async (N_("\n>>> Executing parsed script >>>\n"));
                 pygc->user_script_running++;
-                output = pygc->run_command (script, Py_file_input, true);
+                output = pygc->run_command (script, Py_file_input);
                 g_free(script);
         }
 }
