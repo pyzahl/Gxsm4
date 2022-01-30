@@ -702,6 +702,14 @@ typedef struct {
 
 static PyGxsmModuleInfo py_gxsm_module;
 
+
+typedef struct {
+        const gchar *cmd;
+        int mode;
+        PyObject *dictionary;
+        PyObject *ret;
+} PyRunThreadData;
+
 class py_gxsm_console : public AppBase{
 public:
 	py_gxsm_console (Gxsm4app *app):AppBase(app){
@@ -709,7 +717,13 @@ public:
                 gui_ready = false;
                 user_script_running = 0;
                 action_script_running = 0;
+                run_data.cmd = NULL;
+                run_data.mode = 0;
+                run_data.dictionary = NULL;
+                run_data.ret  = NULL;
+                message_list  = NULL;
                 initialize ();
+
         };
 	virtual ~py_gxsm_console ();
         
@@ -722,7 +736,34 @@ public:
         void destroy_environment(PyObject *d, gboolean show_errors);
         PyObject* create_environment(const gchar *filename, gboolean show_errors);
 
-        const char* run_command(const gchar *cmd, int mode);
+        static void PyRun_GAsyncReadyCallback (GObject *source_object,
+                                               GAsyncResult *res,
+                                               gpointer user_data);
+
+        static void PyRun_GTaskThreadFunc (GTask *task,
+                                           gpointer source_object,
+                                           gpointer task_data,
+                                           GCancellable *cancellable);
+        
+        const char* run_command(const gchar *cmd, int mode, gboolean run_in_thread=false);
+
+        void push_message_async (const gchar *msg){
+                message_list = g_slist_prepend (message_list, g_strdup(msg));
+        }
+
+        static gboolean pop_message_list_to_console (gpointer user_data){
+                py_gxsm_console *pygc = (py_gxsm_console*) user_data;
+                if (!pygc->message_list) return true;
+                GSList* last = g_slist_last (pygc->message_list);
+                if (!last) return true;
+                if (last -> data)  {
+                        pygc->append (last -> data);
+                        g_free (last -> data);
+                }
+                pygc->message_list = g_slist_delete_link (pygc->message_list, last);
+                return true;
+        }
+
         void append (const gchar *msg);
 
         gchar *pre_parse_script (const gchar *script, int *n_lines=NULL, int r=0); // parse script for gxsm lib include statements
@@ -934,6 +975,8 @@ public:
         void fix_eols_to_unix (gchar *text);
 
 private:
+        PyRunThreadData run_data;
+        GSList *message_list;
         gboolean gui_ready;
         gint user_script_running;
         gint action_script_running;
@@ -948,6 +991,7 @@ private:
         PyObject *std_err;
         PyObject *dictionary;
         GtkWidget *console_output;
+        GtkTextMark *console_mark_end;
         GtkWidget *console_file_content;
         gchar *script_filename;
         gboolean query_filename;
@@ -2464,7 +2508,7 @@ static PyObject* redirection_stdoutredirect(PyObject *self, PyObject *args)
 
         g_print ("%s", string);
         if (py_gxsm_remote_console)
-                py_gxsm_remote_console->append (string);
+                py_gxsm_remote_console->push_message_async (string);
 
         Py_INCREF(Py_None);
         return Py_None;
@@ -2677,7 +2721,35 @@ void py_gxsm_console::kill(GtkToggleButton *btn, gpointer user_data)
         }
 }
 
-const gchar* py_gxsm_console::run_command(const gchar *cmd, int mode)
+void py_gxsm_console::PyRun_GTaskThreadFunc (GTask *task,
+                                             gpointer source_object,
+                                             gpointer task_data,
+                                             GCancellable *cancellable){
+        PyRunThreadData *s = (PyRunThreadData*) task_data;
+        g_message ("py_gxsm_console::PyRun_GTaskThreadFunc");
+        s->ret = PyRun_String(s->cmd,
+                              s->mode,
+                              s->dictionary,
+                              s->dictionary);
+        g_free (s->cmd);
+        s->cmd = NULL;
+        g_message ("py_gxsm_console::PyRun_GTaskThreadFunc done");
+}
+        
+void py_gxsm_console::PyRun_GAsyncReadyCallback (GObject *source_object,
+                                                 GAsyncResult *res,
+                                                 gpointer user_data){
+        g_message ("py_gxsm_console::PyRun_GAsyncReadyCallback");
+	py_gxsm_console *pygc = (py_gxsm_console *)user_data;
+        if (!pygc->run_data.ret) PyErr_Print();
+        --pygc->user_script_running;
+        pygc->append (pygc->run_data.ret ? "OK" : "PyRun Script raised an exeption.");
+        pygc->append (N_("\n<<< User script (task ready) finished.\n"));
+        g_message ("py_gxsm_console::PyRun_GAsyncReadyCallback done");
+}
+
+
+const gchar* py_gxsm_console::run_command(const gchar *cmd, int mode, gboolean run_in_thread)
 {
 	if (!cmd) {
 		g_warning("No command.");
@@ -2685,53 +2757,41 @@ const gchar* py_gxsm_console::run_command(const gchar *cmd, int mode)
 	}
 
         PyErr_Clear(); // clear any previous error or interrupts set
+
+        if (run_in_thread && !run_data.cmd){
+                g_message ("py_gxsm_console::run_command");
+                run_data.cmd = g_strdup (cmd);
+                run_data.mode = mode;
+                run_data.dictionary = dictionary;
+                run_data.ret  = NULL;
+                GTask *pyrun_task = g_task_new (NULL,
+                                                NULL,
+                                                PyRun_GAsyncReadyCallback, this);
+                g_task_set_task_data (pyrun_task, &run_data, NULL);
+                g_task_run_in_thread (pyrun_task, PyRun_GTaskThreadFunc);
+                g_message ("py_gxsm_console::run_command thread fired up");
+                return NULL;
+        } else {
+                PyObject* ret = PyRun_String(cmd,
+                                             mode,
+                                             dictionary,
+                                             dictionary);
         
-	PyObject* ret = PyRun_String(cmd,
-                                     mode,
-                                     dictionary,
-                                     dictionary);
-        
-        if (!ret) PyErr_Print();
-        return (ret ? "OK" : "PyRun Script raised an exeption.");
+                if (!ret) PyErr_Print();
+                return (ret ? "OK" : "PyRun Script raised an exeption.");
+        }
 }
 
 void py_gxsm_console::append (const gchar *msg)
 {
-	GtkTextBuffer *console_buf;
-	GtkTextIter start_iter, end_iter;
-	GtkTextView *textview;
-	GString *output;
-	GtkTextMark *end_mark;
-
-	if (!msg) {
-		g_warning("No message to append");
-		return;
-	}
-
-	// read string which contain last command output
-	textview = GTK_TEXT_VIEW(console_output);
-	console_buf = gtk_text_view_get_buffer(textview);
-	gtk_text_buffer_get_bounds(console_buf, &start_iter, &end_iter);
-
-	// get output widget content
-	output = g_string_new(gtk_text_buffer_get_text(console_buf,
-						       &start_iter, &end_iter,
-						       FALSE));
-
-	// append input line
-	output = g_string_append(output, msg);
-	gtk_text_buffer_set_text(console_buf, output->str, -1);
-	g_string_free(output, TRUE);
-
-	// scroll to end
-	gtk_text_buffer_get_end_iter(console_buf, &end_iter);
-	end_mark = gtk_text_buffer_create_mark(console_buf, "cursor", &end_iter,
-					       FALSE);
-	g_object_ref(end_mark);
-	gtk_text_view_scroll_to_mark(GTK_TEXT_VIEW(console_output),
-				     end_mark, 0.0, FALSE, 0.0, 0.0);
-	g_object_unref(end_mark);
-
+	if (!msg) return;
+        GtkTextBuffer *text_buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (console_output));
+        GtkTextIter text_iter_end;
+        gtk_text_buffer_get_end_iter (text_buffer, &text_iter_end);
+        gtk_text_buffer_insert (text_buffer, &text_iter_end, msg, -1);
+        gtk_text_view_scroll_to_mark (GTK_TEXT_VIEW (console_output),
+                                      console_mark_end,
+                                      0., FALSE, 0., 0.);
 }
 
 // simple parser to include script library.
@@ -2875,10 +2935,7 @@ void py_gxsm_console::run_file(GtkButton *btn, gpointer user_data)
                 
                 pygc->append (N_("\n>>> Executing parsed script now.\n"));
                 pygc->user_script_running++;
-                output = pygc->run_command (script, Py_file_input);
-                --pygc->user_script_running;
-                pygc->append(output);
-                pygc->append (N_("\n<<< User script finished.\n"));
+                output = pygc->run_command (script, Py_file_input, true);
                 g_free(script);
         }
 }
@@ -3217,7 +3274,13 @@ void py_gxsm_console::AppWindowInit(const gchar *title, const gchar *sub_title){
         PI_DEBUG(DBG_L2, "pyremote Plugin :: AppWindoInit() -- Console AppWindow ready.");
 
         set_window_geometry ("python-console");
- }
+
+        g_idle_add (pop_message_list_to_console, this); // keeps running and watching for async console data to display
+
+        push_message_async ("TEST push_message_async 1\n");
+        push_message_async ("TEST push_message_async 2\n");
+        push_message_async ("TEST push_message_async 3\n");
+}
 
 
 
@@ -3276,8 +3339,18 @@ void py_gxsm_console::create_gui ()
 
 	// console output
 	console_output = gtk_text_view_new();
-	output_textview = GTK_TEXT_VIEW(console_output);
-	gtk_scrolled_window_set_child (GTK_SCROLLED_WINDOW (console_scrolledwin), console_output);
+	output_textview = GTK_TEXT_VIEW (console_output);
+        /* create an auto-updating 'always at end' marker to scroll */
+        GtkTextBuffer *text_buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (console_output));
+        GtkTextIter text_iter_end;
+        gtk_text_buffer_get_end_iter (text_buffer, &text_iter_end);
+
+        console_mark_end = gtk_text_buffer_create_mark (text_buffer,
+                                                        NULL,
+                                                        &text_iter_end,
+                                                        FALSE);
+
+        gtk_scrolled_window_set_child (GTK_SCROLLED_WINDOW (console_scrolledwin), console_output);
         gtk_widget_show (console_output);
 	gtk_text_view_set_editable(output_textview, FALSE);
 
