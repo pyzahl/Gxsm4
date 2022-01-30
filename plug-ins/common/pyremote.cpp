@@ -710,6 +710,22 @@ typedef struct {
         PyObject *ret;
 } PyRunThreadData;
 
+
+static GMutex mutex;
+#define WAIT_JOIN_MAIN {gboolean tmp; do{ usleep (10000); g_mutex_lock (&mutex); tmp=idle_data.wait_join; g_mutex_unlock (&mutex); }while(tmp);}
+#define UNSET_WAIT_JOIN_MAIN g_mutex_lock (&mutex); idle_data->wait_join=false; g_mutex_unlock (&mutex)
+
+
+typedef struct {
+        remote_args ra;
+        const gchar *string;
+        PyObject *self;
+        PyObject *args;
+        gint ret;
+        gboolean wait_join;
+} IDLE_from_thread_data;
+
+
 class py_gxsm_console : public AppBase{
 public:
 	py_gxsm_console (Gxsm4app *app):AppBase(app){
@@ -1014,7 +1030,7 @@ private:
 
 /* stolen from app_remote.C */
 static void Check_ec(Gtk_EntryControl* ec, remote_args* ra){
-	ec->CheckRemoteCmd (ra);
+	ec->CheckRemoteCmd (ra); // only reading PCS is thread safe!
 };
 
 static void Check_conf(GnomeResPreferences* grp, remote_args* ra){
@@ -1141,34 +1157,63 @@ static PyObject* remote_get(PyObject *self, PyObject *args)
                 return Py_BuildValue("f", ra.qvalue);
 }
 
+static gboolean main_context_set_entry_from_thread (gpointer user_data){
+        IDLE_from_thread_data *idle_data = (IDLE_from_thread_data *) user_data;
+        // NOT THREAD SAFE GUI OPERATION TRIGGER HERE
+        
+	PI_DEBUG_GM (DBG_L2, "pyremote: main_context_set_entry_from_thread start %s %s %s", idle_data->ra.arglist[0], idle_data->ra.arglist[1], idle_data->ra.arglist[2] );
+        // check PCS entries
+	g_slist_foreach (main_get_gapp()->RemoteEntryList, (GFunc) Check_ec, (gpointer)&(idle_data->ra));
+
+        // check current active/open CONFIGURE elements
+	g_slist_foreach (main_get_gapp()->RemoteConfigureList, (GFunc) Check_conf, (gpointer)&(idle_data->ra));
+
+	PI_DEBUG_GM (DBG_L2, "pyremote: main_context_set_entry_from_thread end");
+        UNSET_WAIT_JOIN_MAIN;
+        
+        return G_SOURCE_REMOVE;
+}
+
 static PyObject* remote_set(PyObject *self, PyObject *args)
 {
 	PI_DEBUG(DBG_L2, "pyremote: Setting ");
-	remote_args ra;
 	gchar *parameter, *value;
-
+        IDLE_from_thread_data idle_data;
+ 
 	if (!PyArg_ParseTuple(args, "ss", &parameter, &value))
 		return Py_BuildValue("i", -1);
 
-	PI_DEBUG(DBG_L2, parameter << " to " << value );
+	PI_DEBUG_GM (DBG_L2, "%s to %s", parameter, value );
 
-	ra.qvalue = 0.;
+	idle_data.ra.qvalue = 0.;
 	gchar *list[] = { (char *)"set", parameter, value, NULL };
-	ra.arglist = list;
+	idle_data.ra.arglist = list;
+	idle_data.wait_join = true;
 
-        // check PCS entries
-	g_slist_foreach (main_get_gapp()->RemoteEntryList, (GFunc) Check_ec, (gpointer)&ra);
-
-        // check current active/open CONFIGURE elements
-	g_slist_foreach (main_get_gapp()->RemoteConfigureList, (GFunc) Check_conf, (gpointer)&ra);
+	PI_DEBUG_GM (DBG_L2, "IDLE START" );
+        g_idle_add (main_context_set_entry_from_thread, (gpointer)&idle_data);
+	PI_DEBUG_GM (DBG_L2, "IDLE WAIT JOIN" );
+        WAIT_JOIN_MAIN;
+	PI_DEBUG_GM (DBG_L2, "IDLE DONE" );
 
 	return Py_BuildValue("i", 0);
+}
+
+static gboolean main_context_action_from_thread (gpointer user_data){
+        IDLE_from_thread_data *idle_data = (IDLE_from_thread_data *) user_data;
+        // NOT THREAD SAFE GUI OPERATION TRIGGER HERE
+        
+	g_slist_foreach(main_get_gapp()->RemoteActionList, (GFunc) CbAction_ra, (gpointer)&(idle_data -> ra.arglist));
+
+        UNSET_WAIT_JOIN_MAIN;
+        return G_SOURCE_REMOVE;
 }
 
 static PyObject* remote_action(PyObject *self, PyObject *args)
 {
 	PI_DEBUG(DBG_L2, "pyremote: Action ") ;
 	gchar *parameter, *value = (char *)"5.0";
+        IDLE_from_thread_data idle_data;
 
 	if (!PyArg_ParseTuple(args, "s|s", &parameter, &value))
 		return Py_BuildValue("i", -1);
@@ -1177,9 +1222,12 @@ static PyObject* remote_action(PyObject *self, PyObject *args)
 
 	PI_DEBUG(DBG_L2, "value:" << value);
 
-	gchar *line3[] ={(char *)"action", parameter, value};
+	gchar *list[] = {(char *)"action", parameter, value, NULL};
+	idle_data.ra.arglist = list;
+	idle_data.wait_join = true;
 
-	g_slist_foreach(main_get_gapp()->RemoteActionList, (GFunc) CbAction_ra, (gpointer)line3);
+        g_idle_add (main_context_action_from_thread, (gpointer)&idle_data);
+        WAIT_JOIN_MAIN;
 
 	return Py_BuildValue("i", 0);
 }
@@ -1223,6 +1271,20 @@ static PyObject* remote_y_current(PyObject *self, PyObject *args)
 	return Py_BuildValue("i", y);
 }
 
+static gboolean main_context_remote_moveto_scan_xy_from_thread (gpointer user_data){
+        IDLE_from_thread_data *idle_data = (IDLE_from_thread_data *) user_data;
+        // NOT THREAD SAFE GUI OPERATION TRIGGER HERE
+
+        main_get_gapp()->xsm->hardware->MovetoXY
+                (R2INT(main_get_gapp()->xsm->Inst->XA2Dig(main_get_gapp()->xsm->data.s.sx)),
+                 R2INT(main_get_gapp()->xsm->Inst->YA2Dig(main_get_gapp()->xsm->data.s.sy)));
+        
+        main_get_gapp()->spm_update_all ();
+
+        UNSET_WAIT_JOIN_MAIN;
+        return G_SOURCE_REMOVE;
+}
+
 static PyObject* remote_moveto_scan_xy(PyObject *self, PyObject *args)
 {
 	PI_DEBUG(DBG_L2, "pyremote: Moveto Scan XY ");
@@ -1240,11 +1302,10 @@ static PyObject* remote_moveto_scan_xy(PyObject *self, PyObject *args)
                 main_get_gapp()->xsm->data.s.sx = x;
                 main_get_gapp()->xsm->data.s.sy = y;
 
-                main_get_gapp()->xsm->hardware->MovetoXY
-                        (R2INT(main_get_gapp()->xsm->Inst->XA2Dig(main_get_gapp()->xsm->data.s.sx)),
-                         R2INT(main_get_gapp()->xsm->Inst->YA2Dig(main_get_gapp()->xsm->data.s.sy)));
-
-                main_get_gapp()->spm_update_all ();
+                IDLE_from_thread_data idle_data;
+                idle_data.wait_join = true;
+                g_idle_add (main_context_remote_moveto_scan_xy_from_thread, (gpointer)&idle_data);
+                WAIT_JOIN_MAIN;
         
                 return Py_BuildValue("i", 0);
         } else {
@@ -1258,41 +1319,59 @@ static PyObject* remote_moveto_scan_xy(PyObject *self, PyObject *args)
 // BLOCK II -- scan actions
 ///////////////////////////////////////////////////////////////
 
+static gboolean main_context_emit_toolbar_action_from_thread (gpointer user_data){
+        IDLE_from_thread_data *idle_data = (IDLE_from_thread_data *) user_data;
+        // NOT THREAD SAFE GUI OPERATION TRIGGER HERE
+
+        main_get_gapp()->signal_emit_toolbar_action (idle_data->string);
+
+        UNSET_WAIT_JOIN_MAIN;
+        return G_SOURCE_REMOVE;
+}
+
 static PyObject* remote_startscan(PyObject *self, PyObject *args)
 {
-	PI_DEBUG(DBG_L2, "pyremote: Starting scan");
-        main_get_gapp()->signal_emit_toolbar_action ("Toolbar_Scan_Start");
+	PI_DEBUG_GM (DBG_L2, "pyremote: Starting scan");
+        IDLE_from_thread_data idle_data;
+        idle_data.string = "Toolbar_Scan_Start";
+        idle_data.wait_join = true;
+        g_idle_add (main_context_emit_toolbar_action_from_thread, (gpointer)&idle_data);
+        WAIT_JOIN_MAIN;
 	return Py_BuildValue("i", 0);
 }
 
-static PyObject* remote_createscan(PyObject *self, PyObject *args)
-{
-	PI_DEBUG(DBG_L2, "pyremote: Creating scan");
+static gboolean main_context_createscan_from_thread (gpointer user_data){
+        IDLE_from_thread_data *idle_data = (IDLE_from_thread_data *) user_data;
 
+        // NOT THREAD SAFE GUI OPERATION TRIGGER HERE
         long ch;
 	long sizex, sizey, sizev;
 	double rangex, rangey;
 	PyObject *obj;
         long append=0;
 
+        idle_data->ret = -1;
+        
         sizev=1; // try xyv
-	if(!PyArg_ParseTuple(args, "llllddOl", &ch, &sizex, &sizey, &sizev, &rangex, &rangey, &obj, &append)){
-                //sizev=1;
-                //if(!PyArg_ParseTuple(args, "lllddO", &ch, &sizex, &sizey, &rangex, &rangey, &obj)) // try xy only
-                        return Py_BuildValue("i", -1);
+	if(!PyArg_ParseTuple (idle_data->args, "llllddOl", &ch, &sizex, &sizey, &sizev, &rangex, &rangey, &obj, &append)){
+                UNSET_WAIT_JOIN_MAIN;
+                return G_SOURCE_REMOVE;
         }
         g_message ("Create Scan: %ld x %ld [x %ld], size %g x %g Ang from python array, append=%ld",sizex, sizey, sizev, rangex, rangey, append);
 
         Py_buffer view;
         gboolean rf=false;
         if (PyObject_CheckBuffer (obj)){
-                if (PyObject_GetBuffer (obj, &view, PyBUF_SIMPLE))
-                        return Py_BuildValue ("i", -1);
+                if (PyObject_GetBuffer (obj, &view, PyBUF_SIMPLE)){
+                        UNSET_WAIT_JOIN_MAIN;
+                        return G_SOURCE_REMOVE;
+                }
                 rf=true;
         }
-        if ( (long unsigned int)(view.len / sizeof(long)) != (long unsigned int)(sizex*sizey*sizev) ) {
+        if ( (long unsigned int)(view.len / sizeof(long)) != (long unsigned int)(sizex*sizey*sizev) ){
                 g_message ("Create Scan: ERROR array len=%ld does not match nx x ny=%ld", view.len / sizeof(long), sizex*sizey);
-                return Py_BuildValue("i", -1);
+                UNSET_WAIT_JOIN_MAIN;
+                return G_SOURCE_REMOVE;
         }
         g_message ("Create Scan: array len=%ld OK.", view.len / sizeof(long));
         
@@ -1367,20 +1446,37 @@ static PyObject* remote_createscan(PyObject *self, PyObject *args)
                 if (rf)
                         PyBuffer_Release (&view);
 
-                return Py_BuildValue("i", 0);
+                idle_data->ret = 0;
+                UNSET_WAIT_JOIN_MAIN;
+                return G_SOURCE_REMOVE;
         }
 
         if (rf)
                 PyBuffer_Release (&view);
+        
+        UNSET_WAIT_JOIN_MAIN;
+        return G_SOURCE_REMOVE;
+}
 
-        return Py_BuildValue("i", -1);
+static PyObject* remote_createscan(PyObject *self, PyObject *args)
+{
+	PI_DEBUG_GM (DBG_L2, "pyremote: Creating scan");
+        IDLE_from_thread_data idle_data;
+        idle_data.self = self;
+        idle_data.args = args;
+        idle_data.wait_join = true;
+
+        g_idle_add (main_context_createscan_from_thread, (gpointer)&idle_data);
+        WAIT_JOIN_MAIN;
+
+        return Py_BuildValue("i", idle_data.ret);
 }
 
 ///////////////////////////////////////////////////////////////
+static gboolean main_context_createscanf_from_thread (gpointer user_data){
+        IDLE_from_thread_data *idle_data = (IDLE_from_thread_data *) user_data;
 
-static PyObject *remote_createscanf(PyObject * self, PyObject * args)
-{
-	PI_DEBUG(DBG_L2, "pyremote: Creating scanf");
+        // NOT THREAD SAFE GUI OPERATION TRIGGER HERE
 
 	PyObject *obj;
 
@@ -1389,11 +1485,12 @@ static PyObject *remote_createscanf(PyObject * self, PyObject * args)
 	double rangex, rangey;
         long append=0;
 
+        idle_data->ret = -1;
+
         sizev=1; // try xyv
-	if(!PyArg_ParseTuple(args, "llllddOl", &ch, &sizex, &sizey, &sizev, &rangex, &rangey, &obj, &append)){
-                //sizev=1;
-                //if(!PyArg_ParseTuple(args, "lllddO", &ch, &sizex, &sizey, &rangex, &rangey, &obj)) // try xy only
-                        return Py_BuildValue("i", -1);
+	if(!PyArg_ParseTuple (idle_data->args, "llllddOl", &ch, &sizex, &sizey, &sizev, &rangex, &rangey, &obj, &append)){
+                UNSET_WAIT_JOIN_MAIN;
+                return G_SOURCE_REMOVE;
         }
         g_message ("Create Scan Float: %ld x %ld [x %ld], size %g x %g Ang from python array, append=%ld",sizex, sizey, sizev, rangex, rangey, append);
 
@@ -1401,13 +1498,16 @@ static PyObject *remote_createscanf(PyObject * self, PyObject * args)
         gboolean rf=false;
 
         if (PyObject_CheckBuffer (obj)){
-                if (PyObject_GetBuffer (obj, &view, PyBUF_SIMPLE))
-                        return Py_BuildValue ("i", -1);
+                if (PyObject_GetBuffer (obj, &view, PyBUF_SIMPLE)){
+                        UNSET_WAIT_JOIN_MAIN;
+                        return G_SOURCE_REMOVE;
+                }
                 rf=true;
         }
 	if ( (long unsigned int)(view.len / sizeof(float)) != (long unsigned int)(sizex*sizey*sizev) ) {
                 g_message ("Create Scan: ERROR array len=%ld does not match nx x ny=%ld", view.len / sizeof(float), sizex*sizey);
-		return Py_BuildValue("i", -1);
+                UNSET_WAIT_JOIN_MAIN;
+                return G_SOURCE_REMOVE;
 	}
         g_message ("Create Scan: array len=%ld OK.", view.len / sizeof(float));
         
@@ -1481,13 +1581,31 @@ static PyObject *remote_createscanf(PyObject * self, PyObject * args)
                 if (rf)
                         PyBuffer_Release (&view);
 
-                return Py_BuildValue("i", 0);
+                idle_data->ret = 0;
+                UNSET_WAIT_JOIN_MAIN;
+                return G_SOURCE_REMOVE;
         }
         
         if (rf)
                 PyBuffer_Release (&view);
 
-        return Py_BuildValue("i", -1);
+        UNSET_WAIT_JOIN_MAIN;
+        return G_SOURCE_REMOVE;
+}
+
+
+static PyObject *remote_createscanf(PyObject * self, PyObject * args)
+{
+	PI_DEBUG(DBG_L2, "pyremote: Creating scanf");
+        IDLE_from_thread_data idle_data;
+        idle_data.self = self;
+        idle_data.args = args;
+        idle_data.wait_join = true;
+
+        g_idle_add (main_context_createscanf_from_thread, (gpointer)&idle_data);
+        WAIT_JOIN_MAIN;
+
+        return Py_BuildValue("i", idle_data.ret);
 }
 
 static PyObject* remote_set_scan_unit(PyObject *self, PyObject *args)
@@ -1851,7 +1969,11 @@ static PyObject* remote_addmobject(PyObject *self, PyObject *args)
 static PyObject* remote_stopscan(PyObject *self, PyObject *args)
 {
 	PI_DEBUG(DBG_L2, "pyremote: Stopping scan");
-	main_get_gapp()->signal_emit_toolbar_action ("Toolbar_Scan_Stop");
+        IDLE_from_thread_data idle_data;
+        idle_data.string = "Toolbar_Scan_Stop";
+        idle_data.wait_join = true;
+        g_idle_add (main_context_emit_toolbar_action_from_thread, (gpointer)&idle_data);
+        WAIT_JOIN_MAIN;
 	return Py_BuildValue("i", 0);
 }
 
@@ -1868,14 +1990,22 @@ static PyObject* remote_waitscan(PyObject *self, PyObject *args)
 static PyObject* remote_scaninit(PyObject *self, PyObject *args)
 {
 	PI_DEBUG_GM (DBG_L2, "pyremote: Initializing scan");
-	main_get_gapp()->signal_emit_toolbar_action ("Toolbar_Scan_Init");
+        IDLE_from_thread_data idle_data;
+        idle_data.string = "Toolbar_Scan_Init";
+        idle_data.wait_join = true;
+        g_idle_add (main_context_emit_toolbar_action_from_thread, (gpointer)&idle_data);
+        WAIT_JOIN_MAIN;
 	return Py_BuildValue("i", 0);
 }
 
 static PyObject* remote_scanupdate(PyObject *self, PyObject *args)
 {
 	PI_DEBUG(DBG_L2, "pyremote: Updating scan (hardware)");
-	main_get_gapp()->signal_emit_toolbar_action ("Toolbar_Scan_UpdateParam");
+        IDLE_from_thread_data idle_data;
+        idle_data.string = "Toolbar_Scan_UpdateParam";
+        idle_data.wait_join = true;
+        g_idle_add (main_context_emit_toolbar_action_from_thread, (gpointer)&idle_data);
+        WAIT_JOIN_MAIN;
 	return Py_BuildValue("i", 0);
 }
 
@@ -1913,13 +2043,23 @@ static PyObject* remote_scanline(PyObject *self, PyObject *args)
 					       value2,
 					       value3);
 			main_get_gapp()->PutPluginData (cmd);
-			main_get_gapp()->signal_emit_toolbar_action ("Toolbar_Scan_Partial_Line");
+			//main_get_gapp()->signal_emit_toolbar_action ("Toolbar_Scan_Partial_Line");
+                        IDLE_from_thread_data idle_data;
+                        idle_data.string = "Toolbar_Scan_Partial_Line";
+                        idle_data.wait_join = true;
+                        g_idle_add (main_context_emit_toolbar_action_from_thread, (gpointer)&idle_data);
+                        WAIT_JOIN_MAIN;
 		}
 		else{
 			cmd = g_strdup_printf ("d %d",
 					       value1);
 			main_get_gapp()->PutPluginData (cmd);
-			main_get_gapp()->signal_emit_toolbar_action ("Toolbar_Scan_Line");
+			//main_get_gapp()->signal_emit_toolbar_action ("Toolbar_Scan_Line");
+                        IDLE_from_thread_data idle_data;
+                        idle_data.string = "Toolbar_Scan_Line";
+                        idle_data.wait_join = true;
+                        g_idle_add (main_context_emit_toolbar_action_from_thread, (gpointer)&idle_data);
+                        WAIT_JOIN_MAIN;
 		}
 		g_free (cmd);
 	}
