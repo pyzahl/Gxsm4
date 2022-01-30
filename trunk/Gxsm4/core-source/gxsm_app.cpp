@@ -734,7 +734,7 @@ gboolean App::finish_system_startup (){
         static int startup_stage=0;
 
         ++startup_stage;
-        XSM_DEBUG_GM (DBG_L2, "**** IDLE FUNC: App::build_gxsm ==> App::finish_system_startup, stage=%2d  *****", startup_stage);
+        XSM_DEBUG_GM (DBG_L2, "**** IDLE FUNC: App::finish_system_startup (build_gxsm) stage=%2d  *****", startup_stage);
 
         switch (startup_stage){
         case 1:
@@ -861,6 +861,7 @@ gboolean App::finish_system_startup (){
                 break;
         }
         
+        XSM_DEBUG_GM (DBG_L3, "**** IDLE FUNC: App::finish_system_startup job done. Returning false.");
         return false; // if reaching this line -- never returns, IDLE is done.
 }
 

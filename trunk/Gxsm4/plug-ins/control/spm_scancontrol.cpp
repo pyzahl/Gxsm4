@@ -191,6 +191,7 @@ static const char *about_text = N_("Gxsm SPM Scan Generator and Control Plugin\n
 // Symbol "get_gxsm_plugin_info" is resolved by dlsym from Gxsm, used to get Plugin's info!! 
 // Essential Plugin Function!!
 GxsmPlugin *get_gxsm_plugin_info ( void ){ 
+        PI_DEBUG_GM (DBG_L2, "SPM_ScanControl - get_gxsm_plugin_info");
 	spm_scancontrol_pi.description = g_strdup_printf(N_("Gxsm spm_scancontrol plugin %s"), VERSION);
 	return &spm_scancontrol_pi; 
 }
@@ -227,14 +228,14 @@ static void spm_scancontrol_query(void)
                                                  N_(": File IO Filters are ready to use"),
                                                  NULL);
 	
-	PI_DEBUG (DBG_L2, "spm_scancontrol_query:new" );
+	PI_DEBUG_GM (DBG_L2, "spm_scancontrol_query:new" );
 	spm_scancontrol = new SPM_ScanControl (main_get_gapp() -> get_app ());
 	
-	PI_DEBUG (DBG_L2, "spm_scancontrol_query:res" );
+	PI_DEBUG_GM (DBG_L2, "spm_scancontrol_query:res" );
 	
 	spm_scancontrol_pi.app->ConnectPluginToCDFSaveEvent (spm_scancontrol_SaveValues_callback);
 
-	PI_DEBUG (DBG_L2, "spm_scancontrol_query:done" );
+	PI_DEBUG_GM (DBG_L2, "spm_scancontrol_query:done" );
 }
 
 static void spm_scancontrol_SaveValues_callback ( gpointer gp_ncf ){
@@ -261,7 +262,7 @@ static void spm_scancontrol_SaveValues_callback ( gpointer gp_ncf ){
 // init-Function
 static void spm_scancontrol_init(void)
 {
-  PI_DEBUG (DBG_L2, "spm_scancontrol Plugin Init" );
+  PI_DEBUG_GM (DBG_L2, "spm_scancontrol Plugin Init" );
 }
 
 // about-Function
@@ -296,7 +297,7 @@ static void spm_scancontrol_cleanup(void)
 }
 
 static void spm_scancontrol_show_callback(GSimpleAction *simple, GVariant *parameter, gpointer user_data){
-	PI_DEBUG (DBG_L2, "spm_scancontrol Plugin : show" );
+	PI_DEBUG_GM (DBG_L2, "spm_scancontrol Plugin : show" );
 	if( spm_scancontrol )
 		spm_scancontrol->show();
 }
@@ -332,7 +333,7 @@ SPM_ScanControl::SPM_ScanControl (Gxsm4app *app):AppBase(app)
         
 	XsmRescourceManager xrm("SPMScanControl");
 
-	PI_DEBUG (DBG_L2, "spm_scancontrol Plugin : building interface" );
+	PI_DEBUG_GM (DBG_L2, "spm_scancontrol Plugin : building interface" );
 
 	master_scan      = NULL;
 	master_probescan = NULL;
@@ -369,7 +370,7 @@ SPM_ScanControl::SPM_ScanControl (Gxsm4app *app):AppBase(app)
 	multi_volt_list   = NULL;
 
 // SPM Scan Control Window Title
-	PI_DEBUG (DBG_L8, "spm_scancontrol Plugin : building interface -- AppWindowInit" );
+	PI_DEBUG_GM (DBG_L2, "spm_scancontrol Plugin : building interface -- AppWindowInit" );
 	AppWindowInit("SPM Scan Control");
         spmsc_bp = new BuildParam (v_grid);
         gtk_widget_show (v_grid);
@@ -521,7 +522,7 @@ SPM_ScanControl::SPM_ScanControl (Gxsm4app *app):AppBase(app)
         // save List away...
 	g_object_set_data( G_OBJECT (window), "SPMCONTROL_EC_list", spmsc_bp->get_ec_list_head ());
         
-	PI_DEBUG (DBG_L2, "spm_scancontrol Plugin : interface done." );
+	PI_DEBUG_GM (DBG_L2, "spm_scancontrol Plugin : interface done." );
 
         set_window_geometry ("spm-scan-control");
 }
@@ -543,7 +544,7 @@ void SPM_ScanControl::compute_mvolt_list (GtkWidget *grid) {
 	
 	double dv = (mv_end - mv_start) / (multi_volt_number-1);
 
-	PI_DEBUG (DBG_L2, "spm_scancontrol Plugin : compute_mvolt_list" );
+	PI_DEBUG_GM (DBG_L2, "spm_scancontrol Plugin : compute_mvolt_list" );
 
 	l = g_slist_length(multi_volt_list);
 	for (i=0; i<multi_volt_number; ++i){
@@ -580,7 +581,7 @@ void SPM_ScanControl::compute_mvolt_list (GtkWidget *grid) {
 
 	gtk_widget_show (grid);
 
-	PI_DEBUG (DBG_L2, "spm_scancontrol Plugin : compute_mvolt_list done." );
+	PI_DEBUG_GM (DBG_L2, "spm_scancontrol Plugin : compute_mvolt_list done." );
 
 }
 
@@ -588,7 +589,7 @@ SPM_ScanControl::~SPM_ScanControl (){
 
 	XsmRescourceManager xrm("SPMScanControl");
 
-	PI_DEBUG (DBG_L2, "SPM_ScanControl save resources and clean up");
+	PI_DEBUG_GM (DBG_L2, "SPM_ScanControl save resources and clean up");
 
 	xrm.Put("RepeatFlg", RepeatMode ());
 	xrm.Put("MultiVoltFlg", MultiVoltMode ());
@@ -733,7 +734,7 @@ gboolean SPM_ScanControl::spm_scancontrol_run_scans_task (gpointer data){
         case 11:
                 main_get_gapp()->xsm->data.s.nvalues = 1;
 		time(&t);
-		PI_DEBUG (DBG_L2, "SPM_ScanControl - movie frame time: " << t);
+		PI_DEBUG_GM (DBG_L2, "SPM_ScanControl - movie frame time: %ul ", t);
 
 		((SPM_ScanControl*)data) -> keep_multi_layer_info = FALSE;
 		main_get_gapp()->xsm->data.ui.SetDateOfScanNow();
