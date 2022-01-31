@@ -2615,7 +2615,7 @@ static PyObject* remote_sleep(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "d", &d))
 		return Py_BuildValue("i", -1);
 	if (d>0.){ // d in 1/10s
-                usleep ((seconds_t)round(d*1e5)); // now in a thread and can simply sleep here!
+                usleep ((useconds_t)round(d*1e5)); // now in a thread and can simply sleep here!
 		// sleep_ms((int)(round(d*100)));
 	}
 	return Py_BuildValue("i", 0);
