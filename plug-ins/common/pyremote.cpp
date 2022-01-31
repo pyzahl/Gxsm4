@@ -1987,10 +1987,16 @@ static PyObject* remote_waitscan(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple (args, "l", &block)){
                 usleep(50000);
                 if( main_get_gapp()->xsm->hardware->RTQuery ("W",x,y,z) )
+                        if (block){
+                                PI_DEBUG(DBG_L2, "pyremote: wait scan -- blocking until ready.");
+                                while( main_get_gapp()->xsm->hardware->RTQuery ("W",x,y,z) )
+                                        usleep(100000);
+                        }
                         return Py_BuildValue("i", main_get_gapp()->xsm->hardware->RTQuery () ); // return current y_index of scan
                 else
                         return Py_BuildValue("i", -1); // no scan in progress
         } else {
+                PI_DEBUG(DBG_L2, "pyremote: wait scan -- default: blocking until ready.");
                 while( main_get_gapp()->xsm->hardware->RTQuery ("W",x,y,z) )
                         usleep(100000);
         }
@@ -2677,7 +2683,7 @@ static PyMethodDef GxsmPyMethods[] = {
         
 	{"startscan", remote_startscan, METH_VARARGS, "Start Scan."},
 	{"stopscan", remote_stopscan, METH_VARARGS, "Stop Scan."},
-	{"waitscan", remote_waitscan, METH_VARARGS, "Wait Scan."},
+	{"waitscan", remote_waitscan, METH_VARARGS, "Wait Scan. ret=gxsm.waitscan(blocking=true). ret=-1: no scan in progress, else current line index."},
 	{"scaninit", remote_scaninit, METH_VARARGS, "Scaninit."},
 	{"scanupdate", remote_scanupdate, METH_VARARGS, "Scanupdate."},
 	{"scanylookup", remote_scanylookup, METH_VARARGS, "Scanylookup."},
