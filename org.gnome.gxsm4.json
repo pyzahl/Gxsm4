@@ -101,6 +101,17 @@
             ]
         },
         {
+            "name" : "gtksourceview",
+            "buildsystem" : "meson",
+            "sources" : [
+                {
+		    "type"   : "git",
+		    "url"    : "https://gitlab.gnome.org/pyzahl/gtksourceview.git",
+		    "branch" : "master"
+                }
+            ]
+        },
+        {
             "name" : "gxsm4",
             "builddir" : true,
             "buildsystem" : "meson",
