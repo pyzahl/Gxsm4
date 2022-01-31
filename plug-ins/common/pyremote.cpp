@@ -3750,12 +3750,12 @@ void py_gxsm_console::run()
 	script_filename = g_strdup_printf("%s.py", xsmres.PyremoteFile);
 	query_filename = false;
 
-	PI_DEBUG_GM(DBG_L1, "Pyremote console opening " << script_filename);
+	PI_DEBUG_GM(DBG_L1, "Pyremote console opening >%s< ", script_filename);
 	open_file_callback (NULL, NULL, this);
 
 	// put some small sommand example if no file is found
 	if (fail) {
-                PI_DEBUG(DBG_L1, "Pyremote console opening " << script_filename << " failed. Generating example.");
+                PI_DEBUG(DBG_L1, "Pyremote console opening failed. Generating example.");
 		query_filename = false;
 		write_example_file();
 		script_filename = g_strdup(example_filename);
