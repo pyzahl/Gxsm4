@@ -3013,7 +3013,7 @@ void py_gxsm_console::PyRun_GTaskThreadFunc (GTask *task,
 }
 
 
-gointer py_gxsm_console::PyRun_GThreadFunc (gpointer data){
+gpointer py_gxsm_console::PyRun_GThreadFunc (gpointer data){
         PyRunThreadData *s = (PyRunThreadData*) data;
         PI_DEBUG_GM (DBG_L2, "pyremote Plugin :: py_gxsm_console::PyRun_GThreadFunc");
         s->ret = PyRun_String(s->cmd,
