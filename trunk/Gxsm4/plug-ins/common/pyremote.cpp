@@ -3314,7 +3314,7 @@ void py_gxsm_console::open_action_script_callback (GSimpleAction *action, GVaria
         old_state = g_action_get_state (G_ACTION (action));
         new_state = g_variant_new_string (g_variant_get_string (parameter, NULL));
                 
-        XSM_DEBUG_GP (DBG_L1, "py_gxsm_console open_file action %s activated, state changes from %s to %s\n",
+        PI_DEBUG_GP (DBG_L1, "py_gxsm_console open_file action %s activated, state changes from %s to %s\n",
                       g_action_get_name (G_ACTION (action)),
                       g_variant_get_string (old_state, NULL),
                       g_variant_get_string (new_state, NULL));
@@ -3388,13 +3388,17 @@ void py_gxsm_console::save_file_as_callback_exec (GtkDialog *dialog,  int respon
 {
 	py_gxsm_console *pygc = (py_gxsm_console *)user_data;
         if (response == GTK_RESPONSE_ACCEPT){
+                PI_DEBUG_GP (DBG_L1, "py_gxsm_console::save_file_as_callback_exec");
                 GtkFileChooser *chooser = GTK_FILE_CHOOSER (dialog);
                 g_autoptr(GFile) file = gtk_file_chooser_get_file (chooser);
+                PI_DEBUG_GP (DBG_L1, "py_gxsm_console::save_file_as_callback_exec A");
                 g_free (pygc->script_filename);
                 gchar *tmp_file_name = g_file_get_parse_name (file);
+                PI_DEBUG_GP (DBG_L1, "py_gxsm_console::save_file_as_callback_exec B >%s<", tmp_file_name);
                 pygc->set_script_filename (tmp_file_name);
                 g_free (tmp_file_name);
 		// pygc->script_filename = g_file_get_parse_name (file);
+                PI_DEBUG_GP (DBG_L1, "py_gxsm_console::save_file_as_callback_exec C save");
 		pygc->save_file_callback (NULL, NULL, user_data);
 	}
         gtk_window_destroy (GTK_WINDOW (dialog));
