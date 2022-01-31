@@ -714,7 +714,7 @@ typedef struct {
 
 
 static GMutex mutex;
-#define WAIT_JOIN_MAIN {gboolean tmp; do{ usleep (10000); g_mutex_lock (&mutex); tmp=idle_data.wait_join; g_mutex_unlock (&mutex); }while(tmp);}
+#define WAIT_JOIN_MAIN {gboolean tmp; do{ g_usleep (10000); g_mutex_lock (&mutex); tmp=idle_data.wait_join; g_mutex_unlock (&mutex); }while(tmp);}
 #define UNSET_WAIT_JOIN_MAIN g_mutex_lock (&mutex); idle_data->wait_join=false; g_mutex_unlock (&mutex)
 
 
@@ -1985,12 +1985,12 @@ static PyObject* remote_waitscan(PyObject *self, PyObject *args)
         long block = 0;
 	PI_DEBUG(DBG_L2, "pyremote: wait scan");
 	if (!PyArg_ParseTuple (args, "l", &block)){
-                usleep(50000);
+                g_usleep(50000);
                 if( main_get_gapp()->xsm->hardware->RTQuery ("W",x,y,z) ){
                         if (block){
-                                PI_DEBUG(DBG_L2, "pyremote: wait scan -- blocking until ready.");
+                                PI_DEBUG(DBG_L2, "pyremote: wait scan (block=%d)-- blocking until ready.", (int) block);
                                 while( main_get_gapp()->xsm->hardware->RTQuery ("W",x,y,z) )
-                                        usleep(100000);
+                                        g_usleep(100000);
                         }
                         return Py_BuildValue("i", main_get_gapp()->xsm->hardware->RTQuery () ); // return current y_index of scan
                 }else
@@ -1998,7 +1998,7 @@ static PyObject* remote_waitscan(PyObject *self, PyObject *args)
         } else {
                 PI_DEBUG(DBG_L2, "pyremote: wait scan -- default: blocking until ready.");
                 while( main_get_gapp()->xsm->hardware->RTQuery ("W",x,y,z) )
-                        usleep(100000);
+                        g_usleep(100000);
         }
 }
 
@@ -2628,7 +2628,7 @@ static PyObject* remote_sleep(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "d", &d))
 		return Py_BuildValue("i", -1);
 	if (d>0.){ // d in 1/10s
-                usleep ((useconds_t)round(d*1e5)); // now in a thread and can simply sleep here!
+                g_usleep ((useconds_t)round(d*1e5)); // now in a thread and can simply sleep here!
 		// sleep_ms((int)(round(d*100)));
 	}
 	return Py_BuildValue("i", 0);
