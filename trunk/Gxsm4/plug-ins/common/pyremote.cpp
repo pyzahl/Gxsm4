@@ -3023,12 +3023,12 @@ gpointer py_gxsm_console::PyRun_GThreadFunc (gpointer data){
         g_free (s->cmd);
         s->cmd = NULL;
         PI_DEBUG_GM (DBG_L2, "pyremote Plugin :: py_gxsm_console::PyRun_GThreadFunc PyRun completed");
-        if (!s.ret) PyErr_Print();
+        if (!s->ret) PyErr_Print();
         --pygc->user_script_running;
-        s.pygc->push_message_async (s.ret ?
+        s->pygc->push_message_async (s->ret ?
                                     "\n<<< PyRun user script (as thread) finished. <<<\n" :
                                     "\n<<< PyRun user script (as thread) run raised an exeption. <<<\n");
-        s.pygc->push_message_async (NULL); // terminate IDLE push task
+        s->pygc->push_message_async (NULL); // terminate IDLE push task
         PI_DEBUG_GM (DBG_L2, "pyremote Plugin :: py_gxsm_console::PyRun_GThreadFunc finished.");
         return NULL;
 }
