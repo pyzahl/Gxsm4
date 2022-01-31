@@ -1981,10 +1981,10 @@ static PyObject* remote_stopscan(PyObject *self, PyObject *args)
 
 static PyObject* remote_waitscan(PyObject *self, PyObject *args)
 {
+        double x,y,z;
         long block = 0;
 	PI_DEBUG(DBG_L2, "pyremote: wait scan");
 	if (!PyArg_ParseTuple (args, "l", &block)){
-                double x,y,z;
                 usleep(50000);
                 if( main_get_gapp()->xsm->hardware->RTQuery ("W",x,y,z) )
                         return Py_BuildValue("i", main_get_gapp()->xsm->hardware->RTQuery () ); // return current y_index of scan
