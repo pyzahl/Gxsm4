@@ -170,7 +170,7 @@ python = dependency(['python3-embed'], required : false)
 ## plugins do need for dynamic load lib aka "-ldl"
 dl   = platform_windows ? no_dep : cc.find_library('dl')
 
-## OpenCV for feature match, etc. plugins:  old: -lopencv_core -lopencv_highgui -lopencv_features2d -lopencv_objdetect
+## OpenCV for libOpenCV_match, ... needs:  -lopencv_core -lopencv_features2d -lopencv_highgui -lopencv_objdetect -lopencv_imgproc
 opencv = dependency('opencv4', required : false)
 if opencv.found()
   conf.set('ENABLE_FEATUREMATCH_HAVE_OPENCV', 1)
