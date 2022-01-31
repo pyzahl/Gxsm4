@@ -558,12 +558,14 @@ to the community. The GXSM-Forums always welcome input.
  * --------------------------------------------------------------------------------
  */
 
+#include <gtk/gtk.h>
+#include <gtksourceview/gtksource.h>
+
 #include <Python.h>
 #include <sys/types.h>
 #include <signal.h>
-#include "glib/gstdio.h"
 
-#include <gtksourceview/gtksource.h>
+#include "glib/gstdio.h"
 
 #include "config.h"
 #include "glbvars.h"
