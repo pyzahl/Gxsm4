@@ -1986,14 +1986,14 @@ static PyObject* remote_waitscan(PyObject *self, PyObject *args)
 	PI_DEBUG(DBG_L2, "pyremote: wait scan");
 	if (!PyArg_ParseTuple (args, "l", &block)){
                 usleep(50000);
-                if( main_get_gapp()->xsm->hardware->RTQuery ("W",x,y,z) )
+                if( main_get_gapp()->xsm->hardware->RTQuery ("W",x,y,z) ){
                         if (block){
                                 PI_DEBUG(DBG_L2, "pyremote: wait scan -- blocking until ready.");
                                 while( main_get_gapp()->xsm->hardware->RTQuery ("W",x,y,z) )
                                         usleep(100000);
                         }
                         return Py_BuildValue("i", main_get_gapp()->xsm->hardware->RTQuery () ); // return current y_index of scan
-                else
+                }else
                         return Py_BuildValue("i", -1); // no scan in progress
         } else {
                 PI_DEBUG(DBG_L2, "pyremote: wait scan -- default: blocking until ready.");
