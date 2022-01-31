@@ -695,24 +695,23 @@ static void pyremote_configure(void)
 	}
 }
 
-class py_gxsm_console;
-
 typedef struct {
         GList *plugins;
         PyObject *module;
         PyObject *dict;
         PyObject *main_module;
-        py_gxsm_console *pygc;
 } PyGxsmModuleInfo;
 
 static PyGxsmModuleInfo py_gxsm_module;
 
 
+class py_gxsm_console;
 typedef struct {
         const gchar *cmd;
         int mode;
         PyObject *dictionary;
         PyObject *ret;
+        py_gxsm_console *pygc;
 } PyRunThreadData;
 
 
@@ -3014,7 +3013,7 @@ void py_gxsm_console::PyRun_GTaskThreadFunc (GTask *task,
 }
 
 
-void py_gxsm_console::PyRun_GThreadFunc (gpointer data){
+gointer py_gxsm_console::PyRun_GThreadFunc (gpointer data){
         PyRunThreadData *s = (PyRunThreadData*) data;
         PI_DEBUG_GM (DBG_L2, "pyremote Plugin :: py_gxsm_console::PyRun_GThreadFunc");
         s->ret = PyRun_String(s->cmd,
@@ -3031,6 +3030,7 @@ void py_gxsm_console::PyRun_GThreadFunc (gpointer data){
                                     "\n<<< PyRun user script (as thread) run raised an exeption. <<<\n");
         s.pygc->push_message_async (NULL); // terminate IDLE push task
         PI_DEBUG_GM (DBG_L2, "pyremote Plugin :: py_gxsm_console::PyRun_GThreadFunc finished.");
+        return NULL;
 }
 
 void py_gxsm_console::PyRun_GAsyncReadyCallback (GObject *source_object,
