@@ -3024,7 +3024,7 @@ gpointer py_gxsm_console::PyRun_GThreadFunc (gpointer data){
         s->cmd = NULL;
         PI_DEBUG_GM (DBG_L2, "pyremote Plugin :: py_gxsm_console::PyRun_GThreadFunc PyRun completed");
         if (!s->ret) PyErr_Print();
-        --pygc->user_script_running;
+        --s->pygc->user_script_running;
         s->pygc->push_message_async (s->ret ?
                                     "\n<<< PyRun user script (as thread) finished. <<<\n" :
                                     "\n<<< PyRun user script (as thread) run raised an exeption. <<<\n");
