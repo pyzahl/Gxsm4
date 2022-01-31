@@ -1983,12 +1983,12 @@ static PyObject* remote_waitscan(PyObject *self, PyObject *args)
 {
         double x,y,z;
         long block = 0;
-	PI_DEBUG(DBG_L2, "pyremote: wait scan");
+	PI_DEBUG_GM (DBG_L2, "pyremote: wait scan");
 	if (!PyArg_ParseTuple (args, "l", &block)){
                 g_usleep(50000);
                 if( main_get_gapp()->xsm->hardware->RTQuery ("W",x,y,z) ){
                         if (block){
-                                PI_DEBUG(DBG_L2, "pyremote: wait scan (block=%d)-- blocking until ready.", (int) block);
+                                PI_DEBUG_GM (DBG_L2, "pyremote: wait scan (block=%d)-- blocking until ready.", (int) block);
                                 while( main_get_gapp()->xsm->hardware->RTQuery ("W",x,y,z) )
                                         g_usleep(100000);
                         }
@@ -1996,7 +1996,7 @@ static PyObject* remote_waitscan(PyObject *self, PyObject *args)
                 }else
                         return Py_BuildValue("i", -1); // no scan in progress
         } else {
-                PI_DEBUG(DBG_L2, "pyremote: wait scan -- default: blocking until ready.");
+                PI_DEBUG_GM (DBG_L2, "pyremote: wait scan -- default: blocking until ready.");
                 while( main_get_gapp()->xsm->hardware->RTQuery ("W",x,y,z) )
                         g_usleep(100000);
         }
@@ -2758,7 +2758,7 @@ int ok_button_callback( GtkWidget *widget, gpointer data)
 }
 
 py_gxsm_console::~py_gxsm_console (){
-        PI_DEBUG(DBG_L2, "Pyremote Plugin: destructor. Calls: Py_FinalizeEx()");
+        PI_DEBUG_GM(DBG_L2, "Pyremote Plugin: destructor. Calls: Py_FinalizeEx()");
         Py_FinalizeEx();
 }
 
@@ -2812,14 +2812,14 @@ static struct PyModuleDef gxsm_module_def = {
 
 static PyObject* PyInit_Gxsm(void)
 {
-        PI_DEBUG (DBG_L1, "** PyInit_Gxsm => PyModuleCreate gxsm\n");
+        PI_DEBUG_GM (DBG_L1, "** PyInit_Gxsm => PyModuleCreate gxsm\n");
         // g_print ("** PyInit_Gxsm => PyModuleCreate gxsm\n");
         return PyModule_Create (&gxsm_module_def);
 }
 
 static PyObject* PyInit_Redirection(void)
 {
-        PI_DEBUG (DBG_L1, "** PyInit_Redirection => PyModuleCreate redirection\n");
+        PI_DEBUG_GM (DBG_L1, "** PyInit_Redirection => PyModuleCreate redirection\n");
         // g_print ("** PyInit_Redirection => PyModuleCreate redirection\n");
         return PyModule_Create (&redirection_module_def);
 }
@@ -2986,7 +2986,7 @@ void py_gxsm_console::kill(GtkToggleButton *btn, gpointer user_data)
                 pygc->append (N_("\n*** SCRIPT KILL: Setting PyErr Interrupt to abort script.\n"));
         
                 //Py_AddPendingCall(-1);
-                PI_DEBUG (DBG_L2,  "trying to kill interpreter");
+                PI_DEBUG_GM (DBG_L2,  "trying to kill interpreter");
                 PyErr_SetInterrupt();
         } else {
                 pygc->append (N_("\n*** SCRIPT KILL: No user script is currently running.\n"));
@@ -3471,7 +3471,7 @@ static GActionEntry win_py_gxsm_action_entries[] = {
 
 void py_gxsm_console::AppWindowInit(const gchar *title, const gchar *sub_title){
 
-        PI_DEBUG(DBG_L2, "pyremote Plugin :: AppWindoInit() -- building Console AppWindow.");
+        PI_DEBUG_GM (DBG_L2, "pyremote Plugin :: AppWindoInit() -- building Console AppWindow.");
 
         //        SET_PCS_GROUP("plugin_libpyremote");
         //        gsettings = g_settings_new (GXSM_RES_BASE_PATH_DOT".plugin.common.libpyremote");
@@ -3485,7 +3485,6 @@ void py_gxsm_console::AppWindowInit(const gchar *title, const gchar *sub_title){
         g_action_map_add_action_entries (G_ACTION_MAP (app_window),
                                          win_py_gxsm_action_entries, G_N_ELEMENTS (win_py_gxsm_action_entries),
                                          this);
-	PI_DEBUG (DBG_L2,  "pyremote Plugin :: setup file menu" );
 
         // create window PopUp menu  ---------------------------------------------------------------------
         file_menu = gtk_popover_menu_new_from_model (G_MENU_MODEL (main_get_gapp()->get_plugin_pyremote_file_menu ()));
@@ -3498,8 +3497,6 @@ void py_gxsm_console::AppWindowInit(const gchar *title, const gchar *sub_title){
         gtk_header_bar_pack_end (GTK_HEADER_BAR (header_bar), header_menu_button);
         gtk_widget_show (header_menu_button);
 
-	PI_DEBUG (DBG_L2,  "pyremote Plugin ::  header button" );
-       
         // attach execute action buttons --------------------------------
         GtkWidget *header_action_button = gtk_button_new ();
         gtk_button_set_icon_name (GTK_BUTTON (header_action_button), "system-run-symbolic");
@@ -3522,8 +3519,6 @@ void py_gxsm_console::AppWindowInit(const gchar *title, const gchar *sub_title){
 	g_signal_connect (header_action_button, "clicked", G_CALLBACK(py_gxsm_console::kill), this);
 	gtk_widget_set_tooltip_text (header_action_button, N_("Abort Script"));
 
-	PI_DEBUG (DBG_L2,  "pyremote Plugin :: setup titlbar" );
-
         SetTitle (title, "no script file name.");
         gtk_window_set_titlebar (GTK_WINDOW (window), header_bar);
 
@@ -3534,15 +3529,15 @@ void py_gxsm_console::AppWindowInit(const gchar *title, const gchar *sub_title){
 
 	gtk_widget_show (GTK_WIDGET (window));
 
-        PI_DEBUG(DBG_L2, "pyremote Plugin :: AppWindoInit() -- building Console AppWindow -- calling GUI builder.");
+        PI_DEBUG_GM (DBG_L2, "pyremote Plugin :: AppWindoInit() -- building Console AppWindow -- calling GUI builder.");
         create_gui ();
 
         gui_ready = true;
-        PI_DEBUG(DBG_L2, "pyremote Plugin :: AppWindoInit() -- Console AppWindow ready.");
+        PI_DEBUG_GM(DBG_L2, "pyremote Plugin :: AppWindoInit() -- Console AppWindow ready.");
 
         set_window_geometry ("python-console");
 
-        PI_DEBUG(DBG_L2, "pyremote Plugin :: AppWindoInit() -- done.");
+        PI_DEBUG_GM(DBG_L2, "pyremote Plugin :: AppWindoInit() -- done.");
 }
 
 
@@ -3563,16 +3558,12 @@ void py_gxsm_console::create_gui ()
 	GtkSourceBuffer *sourcebuffer;
 	GtkSourceLanguage *language;
 
-        PI_DEBUG(DBG_L2, "pyremote Plugin :: create_gui() -- building GUI elements.");
+        PI_DEBUG_GM(DBG_L2, "pyremote Plugin :: create_gui() -- building GUI elements.");
 
         bp = new BuildParam (v_grid, NULL, main_get_gapp()->RemoteEntryList);
         
 	// create static structure;
 	exec_value = 50.0; // mid value
-
-	// create GUI
-
-        PI_DEBUG(DBG_L2, "pyremote Plugin :: create_gui() -- building GUI elements..");
 
 	// window
 	vpaned = gtk_paned_new (GTK_ORIENTATION_VERTICAL);
@@ -3597,8 +3588,6 @@ void py_gxsm_console::create_gui ()
 
 	gtk_paned_set_end_child (GTK_PANED(vpaned), console_scrolledwin);
 	gtk_widget_show (console_scrolledwin);
-
-        PI_DEBUG(DBG_L2, "pyremote Plugin :: create_gui() -- building GUI elements...");
 
 	// console output
 	console_output = gtk_text_view_new();
@@ -3636,7 +3625,6 @@ void py_gxsm_console::create_gui ()
 	file_textview = GTK_TEXT_VIEW(console_file_content);
 #endif
 
-        PI_DEBUG(DBG_L2, "pyremote Plugin :: create_gui() -- building GUI elements....");
 	// set font
 	//font_desc = pango_font_description_from_string ("Monospace 8");
 	//gtk_widget_override_font (console_file_content, font_desc);
@@ -3666,14 +3654,12 @@ void py_gxsm_console::create_gui ()
 	g_signal_connect(entry_input, "activate",
 			 G_CALLBACK(py_gxsm_console::command_execute), this);
         
-        PI_DEBUG(DBG_L2, "pyremote Plugin :: console_create_gui() -- building GUI elements.... hooking up");
-
 	gtk_text_view_set_wrap_mode (output_textview, GTK_WRAP_WORD_CHAR);
 
         // FIX-ME GTK4 show all
         gtk_widget_show (v_grid);
 
-        PI_DEBUG(DBG_L2, "pyremote Plugin :: console_create_gui() -- building GUI elements.... completed.");
+        PI_DEBUG_GM(DBG_L2, "pyremote Plugin :: console_create_gui() -- building GUI elements.... completed.");
 }
 
 
@@ -3728,15 +3714,13 @@ void py_gxsm_console::run()
 {
 	PyObject *d;
 
-	PI_DEBUG(DBG_L2, "pyremote Plugin :: console_run()");
+	PI_DEBUG_GM(DBG_L2, "pyremote Plugin :: console_run()");
 
         // are we up already? just make sure to (re) present window, else create
         if (gui_ready){
-                PI_DEBUG(DBG_L2, "pyremote Plugin :: console_run() -- GUI is ready, presenting again.");
                 gtk_window_present (GTK_WINDOW(window));
 		return;
 	} else {
-                PI_DEBUG(DBG_L2, "pyremote Plugin :: console_run() -- building GUI now...");
 		AppWindowInit (pyremote_pi.help);
         }
 
@@ -3753,7 +3737,7 @@ void py_gxsm_console::run()
 		return;
 	}
 
-	PI_DEBUG(DBG_L2, "pyremote Plugin :: console_run() run_string to import gxsm module.");
+	PI_DEBUG_GM(DBG_L2, "pyremote Plugin :: console_run() run_string to import gxsm module.");
 
 	run_string("import gxsm\n",
         	   Py_file_input,
@@ -3766,7 +3750,7 @@ void py_gxsm_console::run()
 	script_filename = g_strdup_printf("%s.py", xsmres.PyremoteFile);
 	query_filename = false;
 
-	PI_DEBUG(DBG_L1, "Pyremote console opening " << script_filename);
+	PI_DEBUG_GM(DBG_L1, "Pyremote console opening " << script_filename);
 	open_file_callback (NULL, NULL, this);
 
 	// put some small sommand example if no file is found
@@ -3778,7 +3762,7 @@ void py_gxsm_console::run()
 		open_file_callback (NULL, NULL, this);
 	}
 
-        PI_DEBUG(DBG_L2, "pyremote Plugin :: console_run() -- startup finished and ready. Standing by.");
+        PI_DEBUG_GM(DBG_L2, "pyremote Plugin :: console_run() -- startup finished and ready. Standing by.");
 }
 
 void py_gxsm_console::command_execute(GtkEntry *entry, gpointer user_data)
@@ -3813,10 +3797,10 @@ static void pyremote_init(void)
 {
 	/* Python will search for remote.py in the directories, defined
 	   by PYTHONPATH. */
-	PI_DEBUG(DBG_L2, "pyremote Plugin Init");
+	PI_DEBUG_GM(DBG_L2, "pyremote Plugin Init");
 	if (!getenv("PYTHONPATH")){
-		PI_DEBUG(DBG_L2, "pyremote: PYTHONPATH is not set.");
-		PI_DEBUG(DBG_L2, "pyremote: Setting to '.'");
+		PI_DEBUG_GM(DBG_L2, "pyremote: PYTHONPATH is not set.");
+		PI_DEBUG_GM(DBG_L2, "pyremote: Setting to '.'");
 		setenv("PYTHONPATH", ".", 0);
 	}
 
@@ -3833,23 +3817,23 @@ static void pyremote_init(void)
 // cleanup-Function
 static void pyremote_cleanup(void)
 {
-	PI_DEBUG(DBG_L2, "Pyremote Plugin Cleanup");
+	PI_DEBUG_GM(DBG_L2, "Pyremote Plugin Cleanup");
 	if (py_gxsm_remote_console){
-                PI_DEBUG(DBG_L2, "Pyremote Plugin: savinggeometry forced now.");
+                PI_DEBUG(DBG_L3, "Pyremote Plugin: savinggeometry forced now.");
                 py_gxsm_remote_console->SaveGeometry (); // some what needed and now it running the destruictor also. Weird.
-                PI_DEBUG(DBG_L2, "Pyremote Plugin: closing up remote control console: delete py_gxsm_remote_console.");
+                PI_DEBUG(DBG_L3, "Pyremote Plugin: closing up remote control console: delete py_gxsm_remote_console.");
 		delete py_gxsm_remote_console;
         }
         py_gxsm_remote_console = NULL;
 }
 
 void pyremote_run( GtkWidget *w, void *data ){
-	PI_DEBUG(DBG_L2, "pyremote Plugin Run Console.");
+	PI_DEBUG_GM(DBG_L2, "pyremote Plugin Run Console.");
 
         // check if we are created -- should be.
         if (!py_gxsm_remote_console)
 		py_gxsm_remote_console = new py_gxsm_console (main_get_gapp() -> get_app ());
 
-	PI_DEBUG(DBG_L2, "pyremote Plugin Run: Console-Run");
+	PI_DEBUG_GM(DBG_L2, "pyremote Plugin Run: Console-Run");
 	py_gxsm_remote_console->run();
 }
