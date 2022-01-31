@@ -101,6 +101,17 @@
             ]
         },
         {
+            "name" : "gsl",
+            "buildsystem" : "cmake",
+            "sources" : [
+                {
+		    "type"   : "git",
+		    "url"    : "https://github.com/ampl/gsl.git",
+		    "branch" : "master"
+                }
+            ]
+        },
+        {
             "name" : "gtksourceview",
             "buildsystem" : "meson",
             "sources" : [
