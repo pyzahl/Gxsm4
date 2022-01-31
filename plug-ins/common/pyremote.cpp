@@ -695,11 +695,14 @@ static void pyremote_configure(void)
 	}
 }
 
+class py_gxsm_console;
+
 typedef struct {
         GList *plugins;
         PyObject *module;
         PyObject *dict;
         PyObject *main_module;
+        py_gxsm_console *pygc;
 } PyGxsmModuleInfo;
 
 static PyGxsmModuleInfo py_gxsm_module;
@@ -762,6 +765,8 @@ public:
                                            gpointer source_object,
                                            gpointer task_data,
                                            GCancellable *cancellable);
+        
+        static gpointer PyRun_GThreadFunc (gpointer data);
         
         const char* run_command(const gchar *cmd, int mode);
 
@@ -3007,11 +3012,31 @@ void py_gxsm_console::PyRun_GTaskThreadFunc (GTask *task,
         s->cmd = NULL;
         PI_DEBUG_GM (DBG_L2, "pyremote Plugin :: py_gxsm_console::PyRun_GTaskThreadFunc done");
 }
-        
+
+
+void py_gxsm_console::PyRun_GThreadFunc (gpointer data){
+        PyRunThreadData *s = (PyRunThreadData*) data;
+        PI_DEBUG_GM (DBG_L2, "pyremote Plugin :: py_gxsm_console::PyRun_GThreadFunc");
+        s->ret = PyRun_String(s->cmd,
+                              s->mode,
+                              s->dictionary,
+                              s->dictionary);
+        g_free (s->cmd);
+        s->cmd = NULL;
+        PI_DEBUG_GM (DBG_L2, "pyremote Plugin :: py_gxsm_console::PyRun_GThreadFunc PyRun completed");
+        if (!s.ret) PyErr_Print();
+        --pygc->user_script_running;
+        s.pygc->push_message_async (s.ret ?
+                                    "\n<<< PyRun user script (as thread) finished. <<<\n" :
+                                    "\n<<< PyRun user script (as thread) run raised an exeption. <<<\n");
+        s.pygc->push_message_async (NULL); // terminate IDLE push task
+        PI_DEBUG_GM (DBG_L2, "pyremote Plugin :: py_gxsm_console::PyRun_GThreadFunc finished.");
+}
+
 void py_gxsm_console::PyRun_GAsyncReadyCallback (GObject *source_object,
                                                  GAsyncResult *res,
                                                  gpointer user_data){
-       PI_DEBUG_GM (DBG_L2, "pyremote Plugin :: py_gxsm_console::PyRun_GAsyncReadyCallback");
+        PI_DEBUG_GM (DBG_L2, "pyremote Plugin :: py_gxsm_console::PyRun_GAsyncReadyCallback");
 	py_gxsm_console *pygc = (py_gxsm_console *)user_data;
         if (!pygc->run_data.ret) PyErr_Print();
         --pygc->user_script_running;
@@ -3039,11 +3064,16 @@ const gchar* py_gxsm_console::run_command(const gchar *cmd, int mode)
                 run_data.mode = mode;
                 run_data.dictionary = dictionary;
                 run_data.ret  = NULL;
+                run_data.pygc = this;
+#if 1
+                g_thread_new (NULL, PyRun_GThreadFunc, &run_data);
+#else
                 GTask *pyrun_task = g_task_new (NULL,
                                                 NULL,
                                                 PyRun_GAsyncReadyCallback, this);
                 g_task_set_task_data (pyrun_task, &run_data, NULL);
                 g_task_run_in_thread (pyrun_task, PyRun_GTaskThreadFunc);
+#endif
                 PI_DEBUG_GM (DBG_L2, "pyremote Plugin :: py_gxsm_console::run_command thread fired up");
                 return NULL;
         } else {
