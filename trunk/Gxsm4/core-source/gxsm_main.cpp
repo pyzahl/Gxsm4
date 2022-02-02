@@ -148,7 +148,7 @@ int main (int argc, char **argv)
 {
         GError *error = NULL;
 
-        GXSM_STARTUP_MESSAGE_VERBOSE00 ("GXSM4 main enter argc=%d", argc);
+        //GXSM_STARTUP_MESSAGE_VERBOSE00 ("GXSM4 main: argc=%d", argc);
 
 #ifdef GXSM_GLOBAL_MEMCHECK
         mtrace(); /* Starts the recording of memory allocations and releases */
@@ -156,14 +156,14 @@ int main (int argc, char **argv)
 
         pcs_set_current_gschema_group ("core-init");
 
-        GXSM_STARTUP_MESSAGE_VERBOSE00 ("GXSM4 g_option_context_new for command line option parsing");
+        //GXSM_STARTUP_MESSAGE_VERBOSE00 ("GXSM4 g_option_context_new for command line option parsing");
 
         GOptionContext *context = g_option_context_new ("List of loadable file(s) .nc, ...");
         g_option_context_add_main_entries (context, gxsm_options, GETTEXT_PACKAGE);
         //FIX-ME-GTK4 ok to ignore?
         //g_option_context_add_group (context, gtk_get_option_group (TRUE));
 
-        GXSM_STARTUP_MESSAGE_VERBOSE00 ("GXSM4 attempting g_option_context_parse on arguments.");
+        //GXSM_STARTUP_MESSAGE_VERBOSE00 ("GXSM4 attempting g_option_context_parse on arguments.");
 
         if (!g_option_context_parse (context, &argc, &argv, &error)){
                 GXSM_STARTUP_MESSAGE_VERBOSE00 ("GXSM4 option parse failed.");

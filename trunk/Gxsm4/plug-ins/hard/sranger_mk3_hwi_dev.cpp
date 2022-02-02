@@ -129,6 +129,8 @@ sranger_mk3_hwi_dev::sranger_mk3_hwi_dev(){
 	fifo_read_thread = NULL;
 	probe_fifo_read_thread = NULL;
 	probe_fifo_thread_active = FALSE;
+        g_mutex_init (&RTQmutex);
+
 	thread_dsp = 0;
 	productid = g_strdup ("not yet identified");
 	swap_flg = 0;
