@@ -98,7 +98,7 @@ public:
 	virtual gint RTQuery (const gchar *property, double &val1, double &val2, double &val3) { return FALSE; };
 	virtual gint RTQuery (const gchar *property, gchar **val) { return FALSE; };
 
-	virtual gint RTQuery () { return fifo_data_y_index + subscan_data_y_index_offset; }; // actual progress on scan -- y-index mirror from FIFO read
+	virtual gint RTQuery () { int yi=0; g_mutex_lock (&RTQmutex); yi=fifo_data_y_index + subscan_data_y_index_offset; g_mutex_unlock (&RTQmutex); return yi; }; // actual progress on scan -- y-index mirror from FIFO read
 
 	virtual double GetUserParam (gint n, gchar *id=NULL);
 	virtual gint   SetUserParam (gint n, gchar *id=NULL, double value=0.);
@@ -238,6 +238,7 @@ protected:
 	int swap_flg;
 
 private:
+        GMutex RTQmutex;
 	GThread *fifo_read_thread;
 	GThread *probe_fifo_read_thread;
 	int FifoRead (int start, int end, int &xi, int num_srcs, int len, float *buffer_f, SHT *fifo_w, LNG *fifo_l);

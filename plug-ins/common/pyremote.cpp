@@ -743,7 +743,7 @@ public:
                 run_data.ret  = NULL;
                 message_list  = NULL;
                 initialize ();
-
+                g_mutex_init (&mutex);
         };
 	virtual ~py_gxsm_console ();
         
@@ -3760,8 +3760,7 @@ void py_gxsm_console::run()
 
         append("Welcome to the PyRemote Control for GXSM: Python Version is ");
         append(Py_GetVersion());
-
-        
+              
 	script_filename = NULL;
         fail = false;
 	// create new environment
@@ -3796,6 +3795,15 @@ void py_gxsm_console::run()
 		open_file_callback (NULL, NULL, this);
 	}
 
+        append("\n\n");
+        append("WARNING: ================================================================================\n");
+        append("WARNING: GXSM4 experimental work in progress: embedded python running in it's own thread.\n");
+        append("WARNING: Not all gxsm.functions are yet ported or verified and checked for been thread save.\n");
+        append("WARNING: Basic fucntion like gxsm.set, .get, action and few more are already made safe and OK.\n");
+        append("WARNING: Currently under evaluation and experimental is the gxsm.sleep and .waitscan\n");
+        append("WARNING: functions do cause not yet understood stalls if gtk/GUI updating idle function.\n");
+        append("WARNING: ================================================================================\n\n");
+        
         PI_DEBUG_GM(DBG_L2, "pyremote Plugin :: console_run() -- startup finished and ready. Standing by.");
 }
 
