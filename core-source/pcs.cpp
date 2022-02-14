@@ -180,6 +180,8 @@ Param_Control::~Param_Control(){
 }
 
 void Param_Control::Init(){
+	Current_Dval = -9e999; // internal buffer
+
 	set_exclude ();
 	color = NULL;
 	warn_color[0] = NULL;
@@ -299,6 +301,8 @@ double Param_Control::Get_dValue(){
 }
 
 void Param_Control::Set_dValue(double nVal){
+	Current_Dval = nVal; // internal buffer
+
 	if(Dval)
 		*Dval = nVal;
 	else
@@ -372,6 +376,9 @@ gboolean Param_Control::Set_FromValue(double nVal){
         if (StringVal)
                 return false;
 
+        if (nVal == Current_Dval)
+                return false;
+        
 	new_value = nVal;
 	if(nVal <= vMax && nVal >= vMin){
 		if(nVal >= vMax_warn || nVal <= vMin_warn){

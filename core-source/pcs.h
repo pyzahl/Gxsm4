@@ -206,6 +206,7 @@ class Param_Control{
 
  private:
 	//one of these holds the value of the object. Use Set_dValue() or Get_dValue()
+	double Current_Dval;
 	double *Dval;
 	unsigned long *ULval;
 	int    *Ival;
