@@ -2347,13 +2347,29 @@ static PyObject* remote_set_view_indices (PyObject *self, PyObject *args)
 }
 
 
+
+static gboolean main_context_autodisplay_from_thread (gpointer user_data){
+        IDLE_from_thread_data *idle_data = (IDLE_from_thread_data *) user_data;
+        // NOT THREAD SAFE GUI OPERATION TRIGGER HERE
+        main_get_gapp()->enter_thread_safe_no_gui_mode();
+        main_get_gapp()->xsm->ActiveScan->auto_display();
+        main_get_gapp()->exit_thread_safe_no_gui_mode();
+        
+        UNSET_WAIT_JOIN_MAIN;
+        return G_SOURCE_REMOVE;
+}
+
+
 static PyObject* remote_autodisplay(PyObject *self, PyObject *args)
 {
 	PI_DEBUG(DBG_L2, "pyremote: Autodisplay");
-        if (main_get_gapp()->xsm->ActiveScan)
-                main_get_gapp()->xsm->ActiveScan->auto_display();
-        else
+        if (!main_get_gapp()->xsm->ActiveScan)
                 return Py_BuildValue("i", -1);
+
+        IDLE_from_thread_data idle_data;
+        idle_data.wait_join = true;
+        g_idle_add (main_context_autodisplay_from_thread, (gpointer)&idle_data);
+        WAIT_JOIN_MAIN;
         return Py_BuildValue("i", 0);
 }
 
