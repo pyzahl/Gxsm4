@@ -653,7 +653,8 @@ static void spm_scancontrol_start_callback (GtkWidget *w, void *data){
         ((SPM_ScanControl*)data) -> SetMovieMode (FALSE);
 
         ((SPM_ScanControl*)data) -> wdata = w;
-        g_idle_add (SPM_ScanControl::spm_scancontrol_run_scans_task, data);
+        g_timeout_add (100, SPM_ScanControl::spm_scancontrol_run_scans_task, data);
+        //g_idle_add (SPM_ScanControl::spm_scancontrol_run_scans_task, data);
 }
 
 gboolean SPM_ScanControl::spm_scancontrol_run_scans_task (gpointer data){
