@@ -657,7 +657,8 @@ static void spm_scancontrol_start_callback (GtkWidget *w, void *data){
         //g_idle_add (SPM_ScanControl::spm_scancontrol_run_scans_task, data);
 
         g_idle_add_full (//G_PRIORITY_DEFAULT_IDLE  // =200
-                         G_PRIORITY_HIGH_IDLE,    // =100
+                         //G_PRIORITY_HIGH_IDLE,    // =100
+                         199,
                          SPM_ScanControl::spm_scancontrol_run_scans_task,
                          data,
                          NULL
