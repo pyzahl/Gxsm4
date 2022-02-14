@@ -715,7 +715,7 @@ typedef struct {
 } PyRunThreadData;
 
 
-static GMutex *g_list_mutex;
+static GMutex g_list_mutex;
 
 static GMutex mutex;
 #define WAIT_JOIN_MAIN {gboolean tmp; do{ g_usleep (10000); g_mutex_lock (&mutex); tmp=idle_data.wait_join; g_mutex_unlock (&mutex); }while(tmp);}
@@ -772,36 +772,36 @@ public:
         const char* run_command(const gchar *cmd, int mode);
 
         void push_message_async (const gchar *msg){
-                g_mutex_lock(g_list_mutex);
+                g_mutex_lock (&g_list_mutex);
                 if (msg)
                         message_list = g_slist_prepend (message_list, g_strdup(msg));
                 else
                         message_list = g_slist_prepend (message_list, NULL); // push self terminate IDLE task mark
-                g_mutex_unlock(g_list_mutex);
+                g_mutex_unlock (&g_list_mutex);
         }
 
         static gboolean pop_message_list_to_console (gpointer user_data){
                 py_gxsm_console *pygc = (py_gxsm_console*) user_data;
 
-                g_mutex_lock(g_list_mutex);
+                g_mutex_lock (&g_list_mutex);
                 if (!pygc->message_list){
-                        g_mutex_unlock(g_list_mutex);
+                        g_mutex_unlock (&g_list_mutex);
                         return true;
                 }
                 GSList* last = g_slist_last (pygc->message_list);
                 if (!last){
-                        g_mutex_unlock(g_list_mutex);
+                        g_mutex_unlock (&g_list_mutex);
                         return true;
                 }
                 if (last -> data)  {
                         pygc->append (last -> data);
                         g_free (last -> data);
                         pygc->message_list = g_slist_delete_link (pygc->message_list, last);
-                        g_mutex_unlock(g_list_mutex);
+                        g_mutex_unlock (&g_list_mutex);
                         return true;
                 } else { // NULL data mark found
                         pygc->message_list = g_slist_delete_link (pygc->message_list, last);
-                        g_mutex_unlock(g_list_mutex);
+                        g_mutex_unlock (&g_list_mutex);
                         pygc->append ("--END IDLE--");
                         return false; // finish IDLE task
                 }
