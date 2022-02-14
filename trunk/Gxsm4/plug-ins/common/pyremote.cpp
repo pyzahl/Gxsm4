@@ -715,6 +715,8 @@ typedef struct {
 } PyRunThreadData;
 
 
+static GMutex *g_list_mutex;
+
 static GMutex mutex;
 #define WAIT_JOIN_MAIN {gboolean tmp; do{ g_usleep (10000); g_mutex_lock (&mutex); tmp=idle_data.wait_join; g_mutex_unlock (&mutex); }while(tmp);}
 #define UNSET_WAIT_JOIN_MAIN g_mutex_lock (&mutex); idle_data->wait_join=false; g_mutex_unlock (&mutex)
@@ -770,24 +772,36 @@ public:
         const char* run_command(const gchar *cmd, int mode);
 
         void push_message_async (const gchar *msg){
+                g_mutex_lock(g_list_mutex);
                 if (msg)
                         message_list = g_slist_prepend (message_list, g_strdup(msg));
                 else
                         message_list = g_slist_prepend (message_list, NULL); // push self terminate IDLE task mark
+                g_mutex_unlock(g_list_mutex);
         }
 
         static gboolean pop_message_list_to_console (gpointer user_data){
                 py_gxsm_console *pygc = (py_gxsm_console*) user_data;
-                if (!pygc->message_list) return true;
+
+                g_mutex_lock(g_list_mutex);
+                if (!pygc->message_list){
+                        g_mutex_unlock(g_list_mutex);
+                        return true;
+                }
                 GSList* last = g_slist_last (pygc->message_list);
-                if (!last) return true;
+                if (!last){
+                        g_mutex_unlock(g_list_mutex);
+                        return true;
+                }
                 if (last -> data)  {
                         pygc->append (last -> data);
                         g_free (last -> data);
                         pygc->message_list = g_slist_delete_link (pygc->message_list, last);
+                        g_mutex_unlock(g_list_mutex);
                         return true;
                 } else { // NULL data mark found
                         pygc->message_list = g_slist_delete_link (pygc->message_list, last);
+                        g_mutex_unlock(g_list_mutex);
                         pygc->append ("--END IDLE--");
                         return false; // finish IDLE task
                 }
@@ -1329,6 +1343,7 @@ static gboolean main_context_emit_toolbar_action_from_thread (gpointer user_data
         IDLE_from_thread_data *idle_data = (IDLE_from_thread_data *) user_data;
         // NOT THREAD SAFE GUI OPERATION TRIGGER HERE
 
+	PI_DEBUG_GM (DBG_L2, "pyremote: main_context_emit_toolbar_action  >%s<", idle_data->string);
         main_get_gapp()->signal_emit_toolbar_action (idle_data->string);
 
         UNSET_WAIT_JOIN_MAIN;
@@ -1342,7 +1357,9 @@ static PyObject* remote_startscan(PyObject *self, PyObject *args)
         idle_data.string = "Toolbar_Scan_Start";
         idle_data.wait_join = true;
         g_idle_add (main_context_emit_toolbar_action_from_thread, (gpointer)&idle_data);
+	PI_DEBUG_GM (DBG_L2, "pyremote: startscan idle job initiated");
         WAIT_JOIN_MAIN;
+	PI_DEBUG_GM (DBG_L2, "pyremote: startscan idle job completed");
 	return Py_BuildValue("i", 0);
 }
 
