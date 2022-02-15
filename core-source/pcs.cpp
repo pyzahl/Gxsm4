@@ -843,7 +843,7 @@ void Gtk_EntryControl::Put_Value(){
 
         if(main_get_debug_level() > DBG_L1){
                 gint64 tmp = g_get_monotonic_time ();
-                XSM_DEBUG_GM (DBG_L1, "PCS::Put_Value [%s] {%s} = %g, dt=%d, time=%d", refname?refname:"--", txt,  Get_dValue(), tmp-task_t_last, tmp);
+                XSM_DEBUG_GM (DBG_L1, "START ** PCS::Put_Value [%s] {%s} = %g, dt=%d, time=%d", refname?refname:"--", txt,  Get_dValue(), tmp-task_t_last, tmp);
                 task_t_last = tmp; 
         }
 
@@ -870,6 +870,13 @@ void Gtk_EntryControl::Put_Value(){
         g_message ("PCS:put_value [%s] usrs='%s'", refname?refname:"--", txt);
 #endif
         g_free (txt);
+
+
+        {
+                gint64 tmp = g_get_monotonic_time ();
+                XSM_DEBUG_GM (DBG_L1, "111 **** PCS::Put_Value [%s] {%s} = %g, dt=%d, time=%d", refname?refname:"--", txt,  Get_dValue(), tmp-task_t_last, tmp);
+        }
+
         
         if (GTK_IS_ENTRY (entry)){
                 if (color) {
@@ -897,6 +904,11 @@ void Gtk_EntryControl::Put_Value(){
                 }
         }
         
+        {
+                gint64 tmp = g_get_monotonic_time ();
+                XSM_DEBUG_GM (DBG_L1, "222 **** PCS::Put_Value [%s] {%s} = %g, dt=%d, time=%d", refname?refname:"--", txt,  Get_dValue(), tmp-task_t_last, tmp);
+        }
+
 #if 0 // old GTK2 -- this was easier I have to say
 	if (color) {
 		GdkRGBA bgc;
@@ -932,6 +944,10 @@ void Gtk_EntryControl::Put_Value(){
         if (af_update_handler_id[0]){
                 g_signal_handler_unblock (G_OBJECT (entry), af_update_handler_id[0]);
                 //g_signal_handler_unblock (G_OBJECT (entry), af_update_handler_id[1]);
+        }
+        {
+                gint64 tmp = g_get_monotonic_time ();
+                XSM_DEBUG_GM (DBG_L1, "END **** PCS::Put_Value [%s] {%s} = %g, dt=%d, time=%d", refname?refname:"--", txt,  Get_dValue(), tmp-task_t_last, tmp);
         }
 }
 
@@ -990,6 +1006,7 @@ void Gtk_EntryControl::Set_Parameter(double Value=0., int flg=FALSE, int usr2bas
                 if(ChangeNoticeFkt)
                         (*ChangeNoticeFkt)(this, FktData);
         }
+
 }
 
 void Gtk_EntryControl::Set_NewValue (gboolean set_new_value){
