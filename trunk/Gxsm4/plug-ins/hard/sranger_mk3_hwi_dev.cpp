@@ -573,7 +573,7 @@ int sranger_mk3_hwi_dev::start_fifo_read (int y_start,
 		PI_DEBUG_GM (DBG_L4, "IMAGE DATA FIFO READ::THREAD CREATE");
                 PI_DEBUG_PLAIN (DBG_L2,
                                 "IMAGE DATA FIFO READ::ELSE... Source="  << DSPControlClass->Source <<
-                                ", vis_Source=" << DSPControlClass->vis_Source
+                                ", vis_Source=" << DSPControlClass->vis_Source << endl
                                 );
 
 		fifo_read_thread = g_thread_new ("FifoReadThread3", FifoReadThread3, this);
