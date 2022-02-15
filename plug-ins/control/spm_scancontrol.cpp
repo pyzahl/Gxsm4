@@ -671,11 +671,13 @@ gboolean SPM_ScanControl::spm_scancontrol_run_scans_task (gpointer data){
 	static guint i=0, l=0;
         static gpointer ss_action = NULL;
         static time_t t0, t; // Scan - Startzeit eintragen 
+        static gint64 task_t_last=g_get_monotonic_time ();
+        gint64 tmp;
         
         GtkWidget *w = ((SPM_ScanControl*)data) -> wdata;
 
-        PI_DEBUG_GM (DBG_L3, "SPM_SCANCONTROL::spm_scancontrol_run_scans_task time=%0d, runmode=%d", g_get_monotonic_time (), runmode);
-
+        PI_DEBUG_GM (DBG_L3, "SPM_SCANCONTROL::spm_scancontrol_run_scans_task dt=%d, time=%d, runmode=%d", tmp-(task_t_last=tmp), tmp = g_get_monotonic_time (), runmode);
+        
         //g_message ("SCAN RUN %d", runmode);
         switch (runmode){
         case 0: 
