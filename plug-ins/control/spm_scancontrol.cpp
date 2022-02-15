@@ -655,15 +655,6 @@ static void spm_scancontrol_start_callback (GtkWidget *w, void *data){
         ((SPM_ScanControl*)data) -> wdata = w;
         //g_timeout_add (100, SPM_ScanControl::spm_scancontrol_run_scans_task, data);
         g_idle_add (SPM_ScanControl::spm_scancontrol_run_scans_task, data);
-#if 0
-        g_idle_add_full (G_PRIORITY_DEFAULT_IDLE,  // =200
-                         //G_PRIORITY_HIGH_IDLE,    // =100
-                         //150,
-                         SPM_ScanControl::spm_scancontrol_run_scans_task,
-                         data,
-                         NULL
-                         );
-#endif
 }
 
 gboolean SPM_ScanControl::spm_scancontrol_run_scans_task (gpointer data){
@@ -672,12 +663,14 @@ gboolean SPM_ScanControl::spm_scancontrol_run_scans_task (gpointer data){
         static gpointer ss_action = NULL;
         static time_t t0, t; // Scan - Startzeit eintragen 
         static gint64 task_t_last=g_get_monotonic_time ();
-        gint64 tmp;
+
+        if(main_get_pi_debug_level() > DBG_L3){
+                gint64 tmp = g_get_monotonic_time ();
+                PI_DEBUG_GM (DBG_L3, "SPM_SCANCONTROL::spm_scancontrol_run_scans_task dt=%d, time=%d, runmode=%d", tmp-task_t_last, tmp, runmode);
+                task_t_last = tmp; 
+        }
         
         GtkWidget *w = ((SPM_ScanControl*)data) -> wdata;
-
-        PI_DEBUG_GM (DBG_L3, "SPM_SCANCONTROL::spm_scancontrol_run_scans_task dt=%d, time=%d, runmode=%d", tmp-(task_t_last=tmp), tmp = g_get_monotonic_time (), runmode);
-        
         //g_message ("SCAN RUN %d", runmode);
         switch (runmode){
         case 0: 
