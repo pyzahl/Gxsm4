@@ -778,6 +778,7 @@ public:
                 else
                         message_list = g_slist_prepend (message_list, NULL); // push self terminate IDLE task mark
                 g_mutex_unlock (&g_list_mutex);
+                g_idle_add (pop_message_list_to_console, this); // keeps running and watching for async console data to display
         }
 
         static gboolean pop_message_list_to_console (gpointer user_data){
@@ -786,24 +787,24 @@ public:
                 g_mutex_lock (&g_list_mutex);
                 if (!pygc->message_list){
                         g_mutex_unlock (&g_list_mutex);
-                        return true;
+                        return G_SOURCE_REMOVE;
                 }
                 GSList* last = g_slist_last (pygc->message_list);
                 if (!last){
                         g_mutex_unlock (&g_list_mutex);
-                        return true;
+                        return G_SOURCE_REMOVE;
                 }
                 if (last -> data)  {
                         pygc->append (last -> data);
                         g_free (last -> data);
                         pygc->message_list = g_slist_delete_link (pygc->message_list, last);
                         g_mutex_unlock (&g_list_mutex);
-                        return true;
+                        return G_SOURCE_REMOVE;
                 } else { // NULL data mark found
                         pygc->message_list = g_slist_delete_link (pygc->message_list, last);
                         g_mutex_unlock (&g_list_mutex);
                         pygc->append ("--END IDLE--");
-                        return false; // finish IDLE task
+                        return G_SOURCE_REMOVE; // finish IDLE task
                 }
         }
 
@@ -2901,7 +2902,6 @@ void py_gxsm_console::initialize(void)
 }
 
 PyObject* py_gxsm_console::run_string(const char *cmd, int type, PyObject *g, PyObject *l) {
-        g_idle_add (pop_message_list_to_console, this); // keeps running and watching for async console data to display
         push_message_async ("\n<<< Python interpreter started. <<<\n");
         push_message_async (cmd);
 	PyObject *ret = PyRun_String(cmd, type, g, l);
@@ -3094,7 +3094,6 @@ const gchar* py_gxsm_console::run_command(const gchar *cmd, int mode)
 
         PyErr_Clear(); // clear any previous error or interrupts set
 
-        g_idle_add (pop_message_list_to_console, this); // keeps running and watching for async console data to display
         if (!run_data.cmd){
                 PI_DEBUG_GM (DBG_L2, "pyremote Plugin :: py_gxsm_console::run_command *** starting console IDLE message pop job.");
                 run_data.cmd = g_strdup (cmd);
