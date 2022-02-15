@@ -674,6 +674,8 @@ gboolean SPM_ScanControl::spm_scancontrol_run_scans_task (gpointer data){
         
         GtkWidget *w = ((SPM_ScanControl*)data) -> wdata;
 
+        PI_DEBUG_GM (DBG_L3, "SPM_SCANCONTROL::spm_scancontrol_run_scans_task time=%0d, runmode=%d", g_get_monotonic_time (), runmode);
+
         //g_message ("SCAN RUN %d", runmode);
         switch (runmode){
         case 0: 
@@ -1406,6 +1408,8 @@ gboolean SPM_ScanControl::do_scanline (int init){
 	static IdleRefreshFuncData idf_data;
         static int scanning_task_section=0;
 
+        PI_DEBUG_GM (DBG_L3, "SPM_SCANCONTROL::do_scanline init=%d, scanning_task_section=%d", init, scanning_task_section);
+        
 	// if first time called/first line, do some local (static vars) initializations here!
 	if (init){
 		int num; 
@@ -1571,7 +1575,7 @@ gboolean SPM_ScanControl::do_scanline (int init){
         }
         
         if (idf_data.scan_list) IdleRefreshFunc (&idf_data);
-        main_get_gapp()->check_events_self();
+        // main_get_gapp()->check_events_self(); // FIX ME -- obsolete?
         return TRUE;
 }
 
@@ -1747,6 +1751,7 @@ gboolean SPM_ScanControl::scanning_control_finish (){
 gboolean SPM_ScanControl::scanning_task (gpointer spc){
 
         //g_print ("\n** ST_stage=%d\n", ((SPM_ScanControl *)spc)->scanning_task_stage);
+        PI_DEBUG_GM (DBG_L3, "SPM_SCANCONTROL::scanning_task scanning_task_stage=%d", ((SPM_ScanControl *)spc)->scanning_task_stage);
                 
         switch (((SPM_ScanControl *)spc)->scanning_task_stage){
         case 0 : return G_SOURCE_REMOVE;
