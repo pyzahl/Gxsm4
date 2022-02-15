@@ -839,13 +839,14 @@ void Gtk_EntryControl::Put_Value(){
         static time_t t0, t; // Scan - Startzeit eintragen 
         static gint64 task_t_last=g_get_monotonic_time ();
 
+	gchar *txt = Get_UsrString ();
+
         if(main_get_debug_level() > DBG_L1){
                 gint64 tmp = g_get_monotonic_time ();
-                PI_DEBUG_GM (DBG_L1, "PCS::Put_Value [%s] = %g, dt=%d, time=%d", refname?refname:"--", txt,  Get_dValue(), tmp-task_t_last, tmp);
+                XSM_DEBUG_GM (DBG_L1, "PCS::Put_Value [%s] {%s} = %g, dt=%d, time=%d", refname?refname:"--", txt,  Get_dValue(), tmp-task_t_last, tmp);
                 task_t_last = tmp; 
         }
 
-	gchar *txt = Get_UsrString ();
 
         if (af_update_handler_id[0]){
                 g_signal_handler_block (G_OBJECT (entry), af_update_handler_id[0]);
