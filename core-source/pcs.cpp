@@ -840,7 +840,7 @@ void Gtk_EntryControl::Put_Value(){
         static time_t t0, t; // Scan - Startzeit eintragen 
 	gchar *txt = Get_UsrString ();
 
-#define DEBUG_PCS_PERF
+        // #define DEBUG_PCS_PERF
 #ifdef DEBUG_PCS_PERF
         static gint64 task_t_last=g_get_monotonic_time ();
         {
