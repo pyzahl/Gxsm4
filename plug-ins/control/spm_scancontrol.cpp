@@ -655,15 +655,15 @@ static void spm_scancontrol_start_callback (GtkWidget *w, void *data){
         ((SPM_ScanControl*)data) -> wdata = w;
         //g_timeout_add (100, SPM_ScanControl::spm_scancontrol_run_scans_task, data);
         //g_idle_add (SPM_ScanControl::spm_scancontrol_run_scans_task, data);
-
-        g_idle_add_full (//G_PRIORITY_DEFAULT_IDLE  // =200
+#if 1
+        g_idle_add_full (G_PRIORITY_DEFAULT_IDLE,  // =200
                          //G_PRIORITY_HIGH_IDLE,    // =100
-                         150,
+                         //150,
                          SPM_ScanControl::spm_scancontrol_run_scans_task,
                          data,
                          NULL
                          );
-
+#endif
 }
 
 gboolean SPM_ScanControl::spm_scancontrol_run_scans_task (gpointer data){
