@@ -835,17 +835,20 @@ void Gtk_EntryControl::adjustment_callback(GtkAdjustment *adj, Gtk_EntryControl 
         //g_message ("PCS:adj-cb.... end.");
 }
 
+
 void Gtk_EntryControl::Put_Value(){
         static time_t t0, t; // Scan - Startzeit eintragen 
-        static gint64 task_t_last=g_get_monotonic_time ();
-
 	gchar *txt = Get_UsrString ();
 
-        if(main_get_debug_level() > DBG_L1){
+#define DEBUG_PCS_PERF
+#ifdef DEBUG_PCS_PERF
+        static gint64 task_t_last=g_get_monotonic_time ();
+        {
                 gint64 tmp = g_get_monotonic_time ();
                 XSM_DEBUG_GM (DBG_L1, "START ** PCS::Put_Value [%s] {%s} = %g, dt=%d, time=%d", refname?refname:"--", txt,  Get_dValue(), tmp-task_t_last, tmp);
-                task_t_last = tmp; 
-        }
+                task_t_last = tmp;
+        } 
+#endif
 
 
         if (af_update_handler_id[0]){
@@ -872,10 +875,12 @@ void Gtk_EntryControl::Put_Value(){
         g_free (txt);
 
 
+#ifdef DEBUG_PCS_PERF
         {
                 gint64 tmp = g_get_monotonic_time ();
-                XSM_DEBUG_GM (DBG_L1, "111 **** PCS::Put_Value [%s] {%s} = %g, dt=%d, time=%d", refname?refname:"--", txt,  Get_dValue(), tmp-task_t_last, tmp);
+                XSM_DEBUG_GM (DBG_L1, "111 **** PCS::Put_Value [%s] dt=%d, time=%d", refname?refname:"--", tmp-task_t_last, tmp);
         }
+#endif
 
         
         if (GTK_IS_ENTRY (entry)){
@@ -904,10 +909,12 @@ void Gtk_EntryControl::Put_Value(){
                 }
         }
         
+#ifdef DEBUG_PCS_PERF
         {
                 gint64 tmp = g_get_monotonic_time ();
-                XSM_DEBUG_GM (DBG_L1, "222 **** PCS::Put_Value [%s] {%s} = %g, dt=%d, time=%d", refname?refname:"--", txt,  Get_dValue(), tmp-task_t_last, tmp);
+                XSM_DEBUG_GM (DBG_L1, "111 **** PCS::Put_Value [%s] dt=%d, time=%d", refname?refname:"--", tmp-task_t_last, tmp);
         }
+#endif
 
 #if 0 // old GTK2 -- this was easier I have to say
 	if (color) {
@@ -945,10 +952,13 @@ void Gtk_EntryControl::Put_Value(){
                 g_signal_handler_unblock (G_OBJECT (entry), af_update_handler_id[0]);
                 //g_signal_handler_unblock (G_OBJECT (entry), af_update_handler_id[1]);
         }
+
+#ifdef DEBUG_PCS_PERF
         {
                 gint64 tmp = g_get_monotonic_time ();
-                XSM_DEBUG_GM (DBG_L1, "END **** PCS::Put_Value [%s] {%s} = %g, dt=%d, time=%d", refname?refname:"--", txt,  Get_dValue(), tmp-task_t_last, tmp);
+                XSM_DEBUG_GM (DBG_L1, "END **** PCS::Put_Value [%s] dt=%d, time=%d", refname?refname:"--", tmp-task_t_last, tmp);
         }
+#endif
 }
 
 void Gtk_EntryControl::Set_Parameter(double Value=0., int flg=FALSE, int usr2base=FALSE){
