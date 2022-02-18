@@ -581,7 +581,12 @@ sys.stdout.write ('* Set Script Control >  0 to keep server alife! 0 will exit.\
 sys.stdout.write ('* Set Script Control == 1 for idle markings...\n')
 sys.stdout.write ('* Set Script Control == 2 for silence.\n')
 sys.stdout.write ('* Set Script Control >  2 minial sleep, WARNIGN: GUI may be sluggish.\n')
+sys.stdout.write ('* Set Script Control == 4 fast (recommended for new threadded pyremote).\n')
 sys.stdout.write ("************************************************************\n\n")
+
+gxsm.set ("script-control", '4')
+
+sys.stdout.write ('*** Set Script Control ==  0 to terminate server. ***\n\n')
 
 ## message processing
 
