@@ -396,6 +396,7 @@ public:
         GObject *set_plugin_pyremote_file_menu (GObject *o=NULL) { if (o) { plugin_pyremote_file_menu=o; g_object_ref (o); } return plugin_pyremote_file_menu; };
 
         GSettings *get_as_settings () { return as_settings; };
+        GSettings *get_app_settings () { return gxsm_app_settings; };
 
         Gxsm4app* get_app() { return gxsm4app; };
 
