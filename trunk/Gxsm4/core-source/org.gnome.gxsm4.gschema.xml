@@ -45,6 +45,13 @@
 	Pango Font to be used for the message layout.
       </description>
     </key>
+    <key name="scan-update-interval" type="i">
+      <default>50</default>
+      <summary>scan image update interval in ms</summary>
+      <description>
+        used in spm_scancontrol: image update rate while scanning.
+      </description>
+    </key>
   </schema>
 
   <schema id="org.gnome.gxsm4.hardware-interfaces" path="/org/gnome/gxsm4/hardware-interfaces/">
