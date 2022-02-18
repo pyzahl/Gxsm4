@@ -3829,11 +3829,8 @@ void py_gxsm_console::run()
 
         append("\n\n");
         append("WARNING: ================================================================================\n");
-        append("WARNING: GXSM4 experimental work in progress: embedded python running in it's own thread.\n");
-        append("WARNING: Not all gxsm.functions are yet ported or verified and checked for been thread save.\n");
-        append("WARNING: Basic fucntion like gxsm.set, .get, action and few more are already made safe and OK.\n");
-        append("WARNING: Currently under evaluation and experimental is the gxsm.sleep and .waitscan\n");
-        append("WARNING: functions do cause not yet understood stalls if gtk/GUI updating idle function.\n");
+        append("WARNING: GXSM4 beta work in progress: embedded python running in it's own thread.\n");
+        append("WARNING: pending compete testing of a few less used python functions and thead save validation. \n");
         append("WARNING: ================================================================================\n\n");
         
         PI_DEBUG_GM(DBG_L2, "pyremote Plugin :: console_run() -- startup finished and ready. Standing by.");
