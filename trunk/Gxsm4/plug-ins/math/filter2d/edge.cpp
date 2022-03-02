@@ -473,6 +473,102 @@ static gboolean edge_run___for_all_vt(Scan *Src, Scan *Dest)
 #endif
 
 
+static gboolean edge_run(Scan *Src, Scan *Dest)
+{
+  //	edge_run_radius(Src, Dest);
+  //	return MATH_OK;
+
+// check for multi dim calls, make sure not to ask user for paramters for every layer or time step!
+        static gboolean ask_configure = true;
+        static double ask_again = 1.0;
+        ask_again = ask_configure ? 1.0 : 0.0; 
+	if ((Src->mem2d->get_t_index () == 0 && Src->mem2d->GetLayer () == 0) || !edge_kernel || !ada_kernel || ask_configure) {
+
+                g_message("edge_run for ti=%d, vi=%d", Src->mem2d->get_t_index (), Src->mem2d->GetLayer ());
+
+                const gchar* config_label[7] = { "Radius", "Adaptive Threashold", "Background f0", "Zero Replace Mode", "Krn Sigma", "Ask Again", NULL };
+                const gchar* config_info[6]  = { "Edge Kernel Radius. Convol Matrix[2R+2, 2R+1]", "Adaptive Threashold Value", "Replace Background (0) by f0", "Zero Replace none: 0, by value:1, auto:2", "Kernel Sigma x r/2", "Ask for filter setup again" };
+                UnitObj *config_units[6] { gapp->xsm->Unity,  gapp->xsm->data.Zunit, gapp->xsm->data.Zunit, gapp->xsm->Unity, gapp->xsm->Unity, gapp->xsm->Unity};
+                double config_minv[6] = { 0., -1e10, -1e10, 0., -10., -1};
+                double config_maxv[6] = { Src->mem2d->GetNx()/10., 1e10, 1e10, 10., 10., 1 };
+                const gchar* config_fmt[6]  = { ".0f", "g", "g", "g", "g", ".0f" };
+                double *config_values[6] = { &edge_radius, &adaptive_threashold, &zero_replace_value, &zero_replace_mode, &krn_sigma, &ask_again };    // Radius, Adaptive Threashold, Mode
+
+                gapp->ValueRequestList ("Edge Filter Configuration",
+                                        config_label, config_info, config_units,
+                                        config_minv, config_maxv, config_fmt,
+                                        config_values
+                                        );
+
+                ask_configure = ask_again != 0.0 ? true : false; 
+
+		if (edge_kernel)
+			free (edge_kernel);
+
+		if (ada_kernel)
+			free (ada_kernel);
+                
+                g_message ("Setup MemAdaptiveTestKrn");
+		int    s = 1+(int)(edge_radius + .9); // calc. approx Matrix Radius
+		ada_kernel = new MemAdaptiveTestKrn (edge_radius,edge_radius, s,s); // calc. convol adaptive test kernel
+                ada_kernel->set_kname ("gxsm_edge_ada_kernel");
+                ada_kernel->InitializeKernel ();
+
+                g_message ("Setup MemAdaptiveCoreKrn");
+	edge_kernel = new MemEdgeKrn (edge_radius,edge_radius, s,s, ada_kernel, adaptive_threashold/Src->data.s.dz, krn_sigma); // calc. convol kernel
+                edge_kernel->set_kname ("gxsm_edge_edge_log_kernel");
+                edge_kernel->InitializeKernel ();
+ 
+                g_message ("Setup Kernel Completed, Executing Convolve");
+
+		if (!Src || !Dest)
+			return 0;
+	}	
+
+        if (zero_replace_mode > 1.5)
+                Src->mem2d->data->replace (0., -2e8, 0.01);
+        if (zero_replace_mode > 0.5)
+                Src->mem2d->data->replace (0., zero_replace_value/Src->data.s.dz, 0.01);
+
+	MOUSERECT msr;
+	MkMausSelect (Src, &msr, Src->mem2d->GetNx(), Src->mem2d->GetNy());
+	if( msr.xSize  > 2 && msr.ySize > 2 && gapp->xsm->MausMode() == MRECTANGLE){
+                Dest->data.copy (Src->data);
+
+                Dest->mem2d->Resize (msr.xSize, msr.ySize);
+                Dest->data.s.nx = msr.xSize;
+                Dest->data.s.ny = msr.ySize;
+                Dest->data.s.x0 += (msr.xLeft + msr.xSize/2 - Src->data.s.nx/2)*Src->data.s.dx;
+                if (Src->data.orgmode == SCAN_ORG_CENTER)
+                        Dest->data.s.y0 -= (msr.yTop + msr.ySize/2 - Src->data.s.ny/2)*Src->data.s.dy;
+                else
+                        Dest->data.s.y0 -= msr.yTop*Src->data.s.dy;
+
+                // Adapt to next possible value  
+                Dest->data.s.rx = Dest->mem2d->GetNx () * Dest->data.s.dx;
+                Dest->data.s.ry = Dest->mem2d->GetNy () * Dest->data.s.dy;
+    
+
+                g_message ("CROP: SRC(%d,%d, %d, %d)",
+                           Src->data.s.nx, Src->data.s.ny, Src->data.s.nvalues, Src->data.s.ntimes);
+                g_message ("CROP: NEW(%d,%d) = from [(%d,%d) : (%d,%d)]",
+                           Dest->data.s.nx, Dest->data.s.ny,
+                           msr.xLeft, msr.yTop,
+                           msr.xRight, msr.yBottom);
+        
+                Mem2d tmp (Dest->mem2d);
+                tmp.CopyFrom (Src->mem2d, msr.xLeft,msr.yTop,
+                              0,0, tmp.GetNx (), tmp.GetNy ());
+                edge_kernel->Convolve (&tmp, Dest->mem2d); // do convolution
+        } else {
+                
+                edge_kernel->Convolve (Src->mem2d, Dest->mem2d); // do convolution
+        }
+	return MATH_OK;
+}
+
+
+#if 0
 
 // run-Function -- may gets called for all layers and time if multi dim scan data is present!
 static gboolean edge_run(Scan *Src, Scan *Dest)
@@ -531,7 +627,7 @@ static gboolean edge_run(Scan *Src, Scan *Dest)
 	return MATH_OK;
 }
 
-
+#endif
 
 static gboolean edge_run_radius(Scan *Src, Scan *Dest)
 {
