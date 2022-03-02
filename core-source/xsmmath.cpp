@@ -261,7 +261,7 @@ gboolean CropScan(MATHOPPARAMS){
 	XSM_DEBUG (DBG_L3, "Crop Scan");
 
 	Dest->data.copy (Src->data);
-	MkMausSelect (Src, &msr, Dest->mem2d->GetNx(), Dest->mem2d->GetNy());
+	MkMausSelect (Src, &msr, Src->mem2d->GetNx(), Src->mem2d->GetNy());
     
 	if( msr.xSize  < 1 || msr.ySize < 1){
 		XSM_DEBUG (DBG_L3, "Crop:" << msr.xSize << " " << msr.ySize);

@@ -268,7 +268,7 @@ Scan* Surface::NewScan(int vtype, int vflg, int ChNo, SCAN_DATA *vd){
 	if (!strncasecmp (xsmres.InstrumentType, "SPALEED",7))
 		return ( new SpaScan (vtype, vflg, ChNo, vd, get_app()));  // data type is ZD_LONG
 	else
-		return ( new TopoGraphicScan (vtype, vflg, ChNo, vd, get_app())); // data type is ZD_SHORT
+		return ( new TopoGraphicScan (vtype, vflg, ChNo, vd, ZD_FLOAT, get_app())); // data type is ZD_SHORT
 }
 
 int Surface::ActivateFreeChannel(){
