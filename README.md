@@ -1,6 +1,6 @@
 ## **ATTENTION:**
 
-**THIS IS A BETA VERSION AND WORK IN PROGRESS of Gxsm4 ported to GTK4.**
+**THIS IS A BETA VERSION AND WORK IN PROGRESS of Gxsm4 ported to GTK4 from Gxsm-3.0 on SF (gxsm.sf.net).**
 See details of pending / not functional parts below in section 3.
 (C) PyZahl 2021-12-31
 
@@ -17,8 +17,8 @@ DSP hardware and provided also Open Source Code for all the low level
 signal processing tasks and instrument controls in a most flexible and
 adaptable manner.
 
-All latest stable software is available
-via SVN (Gxsm4) and GIT (gxsm4-beta) only
+All latest stable software is available now via GIT:
+(Gxsm4 Beta currently) https://github.com/pyzahl/Gxsm4
 
 or Live Demo/Install CD:
 http://www.ventiotec.de/linux/GXSM-Linux.iso
