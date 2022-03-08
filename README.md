@@ -55,10 +55,12 @@ Note: Currently the plugins are not completely build/failing with file not found
 - Window Position Management....  gtk4 does not provide any hands on that any more -- big convenience and usability issue 🙁
 		- X11: works again via native X11 calls...
 		- Wayland: likely never a solution ever as Wayland dose not give access at all to window's positioning. But please educate me if I am wrong.
-  
+		- 
+- GL3D Scan View Mode: currently disabled. Port pending.
 
 - All ENTRIES: added configuration menu option not yet attached and not accessible. Need to figure out how to add a custom menu entry to gtk_popovers.
              It is possible to manually edit the properties via the dconf-editor to get started.
+	     Some thing seams slow here at build and update, or has post idel latency.
 
 - DSP-CONTROL windows A, B -- initial TAB Drag to empty secondary window impossible (or hard??) to find a hook area to drop off. Work around for now:
 Manually hack config via dconf-editor, then further DnD is easy and as usual again:
