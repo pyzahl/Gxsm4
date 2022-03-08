@@ -128,8 +128,9 @@
             "buildsystem" : "meson",
             "sources" : [
                 {
-                    "type"   : "svn",
-                    "url"    : "https://svn.code.sf.net/p/gxsm/svn/trunk/Gxsm4"
+                    "type"   : "git",
+                    "url"    : "https://github.com/pyzahl/Gxsm4.git",
+		    "branch" : "master"
                 }
             ]
         }
