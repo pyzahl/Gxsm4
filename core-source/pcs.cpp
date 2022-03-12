@@ -1564,31 +1564,6 @@ ec_pcs_adjustment_configure (GtkWidget *menuitem, Gtk_EntryControl *gpcs){
 	gpcs->pcs_adjustment_configure ();
 }
 
-// FIX-ME-GTK4 ... popover menu ...
-#if 0
-static void 
-ec_pcs_populate_popup (GtkEntry *entry, GtkMenu *menu, Gtk_EntryControl* gpcs){
-	GtkWidget *menuitem;
-
-	menuitem = gtk_separator_menu_item_new ();
-	gtk_menu_shell_append (GTK_MENU_SHELL (menu), menuitem);
-	gtk_widget_show (menuitem);
-
-	gchar *cfg_label = g_strconcat ("Configure",
-					" ",
-					g_object_get_data( G_OBJECT (entry), 
-                                                           "Adjustment_PCS_Name"),
-					NULL);
-
-	menuitem = gtk_menu_item_new_with_label (cfg_label);
-	g_signal_connect (menuitem, "activate",
-			  G_CALLBACK (ec_pcs_adjustment_configure), gpcs);
-
-	gtk_menu_shell_append (GTK_MENU_SHELL (menu), menuitem);
-	gtk_widget_show (menuitem);
-}
-#endif
-
 void Gtk_EntryControl::InitRegisterCb(double AdjStep, double AdjPage, double AdjProg){
         af_update_handler_id[0] = af_update_handler_id[1] = 0;
         ec_io_handler_id[0] = ec_io_handler_id[1] = 0;
@@ -1614,13 +1589,24 @@ void Gtk_EntryControl::InitRegisterCb(double AdjStep, double AdjPage, double Adj
 	if(fabs (AdjStep) > 1e-22 && get_count () <= 1){ // only master
                 XSM_DEBUG (DBG_L8, "InitRegisterCb -- hookup config menuitem");
 
-                // FIX-ME-GTK4
-#if 0
-                --> gtk_entry_set_extra_menu()
-                g_signal_connect (G_OBJECT (entry), "populate_popup",
-                                  G_CALLBACK (&ec_pcs_populate_popup),
-                                  (gpointer) this);
-#endif
+                // FIX-ME-GTK4 -- TESTING
+                gchar *cfg_label = g_strconcat ("Configure",
+                                                " ",
+                                                g_object_get_data( G_OBJECT (entry), 
+                                                                   "Adjustment_PCS_Name"),
+                                                NULL);
+                GMenu *menu = g_menu_new ();
+                GMenuItem *menu_item_config = g_menu_item_new (cfg_label, NULL);
+                //g_signal_connect (menu_item_config, "activate",
+                //                  G_CALLBACK (ec_pcs_adjustment_configure), this);
+                g_menu_append_item (menu, menu_item_config);
+		if (GTK_IS_SPIN_BUTTON (entry))
+                        ; //  gtk_spin_button_set_extra_menu (GTK_ENTRY (entry), G_MENU_MODEL (menu)); // need equivalent function for spin button!!
+                else
+                        gtk_entry_set_extra_menu (GTK_ENTRY (entry), G_MENU_MODEL (menu));
+                g_object_unref (menu_item_config);
+                // TESTING
+                
                 adj = gtk_adjustment_new( Get_dValue (), vMin, vMax, step, page, 0);
 
                 adjcb_handler_id = g_signal_connect (G_OBJECT (adj), "value_changed",
