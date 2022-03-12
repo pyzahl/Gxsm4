@@ -1223,8 +1223,20 @@ static PyObject* remote_set(PyObject *self, PyObject *args)
 static gboolean main_context_action_from_thread (gpointer user_data){
         IDLE_from_thread_data *idle_data = (IDLE_from_thread_data *) user_data;
         // NOT THREAD SAFE GUI OPERATION TRIGGER HERE
-        
-	g_slist_foreach(main_get_gapp()->RemoteActionList, (GFunc) CbAction_ra, (gpointer)&(idle_data -> ra.arglist));
+	gchar *parameter;
+        gchar *value;
+        idle_data->ret = -1;
+
+	if (!PyArg_ParseTuple(idle_data->args, "s|s", &parameter, &value)){
+                UNSET_WAIT_JOIN_MAIN;
+                return G_SOURCE_REMOVE;
+        }
+
+	PI_DEBUG(DBG_L2, "pyremote Action ** idle cb: value:" << parameter << ", " << value );
+
+	gchar *list[] = {(char *)"action", parameter, value, NULL};
+	g_slist_foreach(gapp->RemoteActionList, (GFunc) CbAction_ra, (gpointer)list);
+        idle_data->ret = 0;
 
         UNSET_WAIT_JOIN_MAIN;
         return G_SOURCE_REMOVE;
@@ -1233,24 +1245,13 @@ static gboolean main_context_action_from_thread (gpointer user_data){
 static PyObject* remote_action(PyObject *self, PyObject *args)
 {
 	PI_DEBUG(DBG_L2, "pyremote: Action ") ;
-	gchar *parameter, *value = (char *)"5.0";
         IDLE_from_thread_data idle_data;
-
-	if (!PyArg_ParseTuple(args, "s|s", &parameter, &value))
-		return Py_BuildValue("i", -1);
-
-	PI_DEBUG(DBG_L2, parameter );
-
-	PI_DEBUG(DBG_L2, "value:" << value);
-
-	gchar *list[] = {(char *)"action", parameter, value, NULL};
-	idle_data.ra.arglist = list;
-	idle_data.wait_join = true;
-
+        idle_data.self = self;
+        idle_data.args = args;
+        idle_data.wait_join = true;
         g_idle_add (main_context_action_from_thread, (gpointer)&idle_data);
         WAIT_JOIN_MAIN;
-
-	return Py_BuildValue("i", 0);
+        return Py_BuildValue("i", idle_data.ret);
 }
 
 // asks HwI via RTQuery for real time watches -- depends on HwI and it's capabilities/availabel options
