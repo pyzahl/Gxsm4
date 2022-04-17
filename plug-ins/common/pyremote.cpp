@@ -712,6 +712,7 @@ typedef struct {
         PyObject *dictionary;
         PyObject *ret;
         py_gxsm_console *pygc;
+        PyThreadState *py_state_save;
 } PyRunThreadData;
 
 
@@ -729,6 +730,9 @@ typedef struct {
         PyObject *args;
         gint ret;
         gboolean wait_join;
+        double vec[4];
+        gint64 i64;
+        gchar  c;
 } IDLE_from_thread_data;
 
 
@@ -1254,6 +1258,40 @@ static PyObject* remote_action(PyObject *self, PyObject *args)
         return Py_BuildValue("i", idle_data.ret);
 }
 
+
+static gboolean main_context_idle_rtquery (gpointer user_data){
+        IDLE_from_thread_data *idle_data = (IDLE_from_thread_data *) user_data;
+        // NOT THREAD SAFE GUI OPERATIONS
+
+	double u,v,w;
+	gint64 ret = gapp->xsm->hardware->RTQuery ( idle_data->string, u,v,w);
+        idle_data->vec[0]=u;
+        idle_data->vec[1]=v;
+        idle_data->vec[2]=w;
+        idle_data->i64=ret;
+        idle_data->ret = 0;
+
+        UNSET_WAIT_JOIN_MAIN;
+        return G_SOURCE_REMOVE;
+}
+
+static gint64 idle_rtquery(const gchar *m, double &x, double &y, double &z)
+{
+	PI_DEBUG(DBG_L2, "IDLE RTQuery ") ;
+        IDLE_from_thread_data idle_data;
+        idle_data.string = m;
+        idle_data.wait_join = true;
+        g_idle_add (main_context_idle_rtquery, (gpointer)&idle_data);
+        WAIT_JOIN_MAIN;
+
+        x=idle_data.vec[0];
+        y=idle_data.vec[1];
+        z=idle_data.vec[2];
+        return idle_data.i64;
+}
+
+
+
 // asks HwI via RTQuery for real time watches -- depends on HwI and it's capabilities/availabel options
 /* Hardware realtime monitoring -- all optional */
 /* default properties are
@@ -1268,18 +1306,47 @@ static PyObject* remote_action(PyObject *self, PyObject *args)
  * "i" -> GPIO watch -- speudo real time, may be chached by GXSM: out, in, dir  [mk2/3]
  * "U" -> current bias
  */
+
+static gboolean main_context_rtquery_from_thread (gpointer user_data){
+        IDLE_from_thread_data *idle_data = (IDLE_from_thread_data *) user_data;
+        // NOT THREAD SAFE GUI OPERATION TRIGGER HERE
+	gchar *parameter=NULL;
+        idle_data->ret = -1;
+
+	if (!PyArg_ParseTuple(idle_data->args, "s", &parameter)){
+                UNSET_WAIT_JOIN_MAIN;
+                return G_SOURCE_REMOVE;
+        }
+
+	double u,v,w;
+	gint64 ret = gapp->xsm->hardware->RTQuery (parameter, u,v,w);
+        idle_data->c=parameter[0];
+        idle_data->vec[0]=u;
+        idle_data->vec[1]=v;
+        idle_data->vec[2]=w;
+        idle_data->i64=ret;
+        idle_data->ret = 0;
+
+        UNSET_WAIT_JOIN_MAIN;
+        return G_SOURCE_REMOVE;
+}
+
 static PyObject* remote_rtquery(PyObject *self, PyObject *args)
 {
 	PI_DEBUG(DBG_L2, "pyremote: RTQuery ") ;
-	gchar *parameter;
+        IDLE_from_thread_data idle_data;
+        idle_data.self = self;
+        idle_data.args = args;
+        idle_data.wait_join = true;
+        g_idle_add (main_context_rtquery_from_thread, (gpointer)&idle_data);
+        WAIT_JOIN_MAIN;
 
-	if (!PyArg_ParseTuple(args, "s", &parameter))
-		return Py_BuildValue("i", -1);
-
-	double u,v,w;
-	main_get_gapp()->xsm->hardware->RTQuery (parameter, u,v,w);
-
-	return Py_BuildValue("fff", u,v,w);
+        if (idle_data.c == 'm'){
+                static char uu[10] = { 0,0,0,0, 0,0,0,0, 0,0};
+                strncpy ((char*) uu, (char*)&idle_data.i64, 8);
+                return Py_BuildValue("fffs", idle_data.vec[0], idle_data.vec[1], idle_data.vec[2], uu);
+        } else
+                return Py_BuildValue("fff",  idle_data.vec[0], idle_data.vec[1], idle_data.vec[2]);
 }
 
 // asks HwI via RTQuery for real time watches -- depends on HwI and it's capabilities/availabel options
@@ -1953,14 +2020,90 @@ static PyObject* remote_getobject(PyObject *self, PyObject *args)
         return Py_BuildValue("s", "None");
 }
 
+
+
+static gboolean main_context_getobject_action_from_thread (gpointer user_data){
+        IDLE_from_thread_data *idle_data = (IDLE_from_thread_data *) user_data;
+        // NOT THREAD SAFE GUI OPERATION TRIGGER HERE
+	long ch;
+        gchar *objnameid;
+        gchar *action;
+        idle_data->ret = -1;
+        
+	if (!PyArg_ParseTuple (idle_data->args, "lss", &ch, &objnameid, &action)){
+                UNSET_WAIT_JOIN_MAIN;
+                return G_SOURCE_REMOVE;
+        }
+
+	Scan *src =gapp->xsm->GetScanChannel (ch);
+        if (src){
+                int n_obj = src->number_of_object ();
+                for (int i=0; i < n_obj; ++i){
+                        scan_object_data *obj_data = src->get_object_data (i);
+                        if (obj_data){
+                                if (!strcmp (action, "REMOVE-ALL")){
+                                        if (!strncmp (obj_data->get_name (), objnameid, strlen(objnameid))){ // part match?
+                                                ViewControl *vc = src->view->Get_ViewControl ();
+                                                vc->remove_object ((VObject *)obj_data, vc);
+                                                n_obj = src->number_of_object ();
+                                                --i;
+                                                idle_data->ret = 0;
+                                                continue;
+                                        }
+                                }
+                                if (!strcmp (obj_data->get_name (), objnameid)){ // match?
+                                        if (!strcmp (action, "GET-COORDS")){
+                                                obj_data->SetUpScan ();
+                                                idle_data->ret = 0;
+                                        }
+                                        else if (!strcmp (action, "SET-OFFSET")){
+                                                obj_data->set_offset ();
+                                                idle_data->ret = 0;
+                                        }
+                                        else if (!strncmp (action, "SET-LABEL-TO:",13)){
+                                                obj_data->set_object_label (&action[13]);
+                                                idle_data->ret = 0;
+                                        }
+                                        else if (!strcmp (action, "REMOVE")){
+                                                ViewControl *vc = src->view->Get_ViewControl ();
+                                                vc->remove_object ((VObject *)obj_data, vc);
+                                                idle_data->ret = 0;
+                                        }
+                                        UNSET_WAIT_JOIN_MAIN;
+                                        return G_SOURCE_REMOVE;
+                                }
+                        }
+                }
+        }
+        UNSET_WAIT_JOIN_MAIN;
+        return G_SOURCE_REMOVE;
+}
+
+static PyObject* remote_getobject_action(PyObject *self, PyObject *args)
+{
+	PI_DEBUG(DBG_L2, "pyremote:getobject_getcoords_setup_scan");
+        IDLE_from_thread_data idle_data;
+        idle_data.self = self;
+        idle_data.args = args;
+        idle_data.wait_join = true;
+        g_idle_add (main_context_getobject_action_from_thread, (gpointer)&idle_data);
+        WAIT_JOIN_MAIN;
+        if (idle_data.ret)
+                return Py_BuildValue("s", "Invalid Parameters. [lls]: ch, objname-id, action=[GET_COORDS, SET-OFFSET, SET-LABEL-TO:{LABEL}, REMOVE]");
+        else 
+                return Py_BuildValue("s", "OK");
+
+}
+
 static gboolean main_context_addmobject_from_thread (gpointer user_data){
         IDLE_from_thread_data *idle_data = (IDLE_from_thread_data *) user_data;
         // NOT THREAD SAFE GUI OPERATION TRIGGER HERE
 	long ch,grp,x,y;
+        double size = 1.0;
         gchar *id;
         idle_data->ret = -1;
         
-	if (!PyArg_ParseTuple (idle_data->args, "lslll", &ch, &id, &grp, &x, &y)){
+	if (!PyArg_ParseTuple (idle_data->args, "lsllld", &ch, &id, &grp, &x, &y, &size)){
 		//return Py_BuildValue("s", "Invalid Parameters. [ll]: ch, nth");
                 UNSET_WAIT_JOIN_MAIN;
                 return G_SOURCE_REMOVE;
@@ -1970,29 +2113,109 @@ static gboolean main_context_addmobject_from_thread (gpointer user_data){
 		"*Marker:red", "*Marker:green", "*Marker:blue", "*Marker:yellow", "*Marker:cyan", "*Marker:magenta",  
 		NULL };
 	PI_DEBUG(DBG_L2, "pyremote:putobject");
-
-	Scan *src =main_get_gapp()->xsm->GetScanChannel (ch);
-        if (grp < 0 || grp > 6) grp=0; // silently set 0 if out of range
-        
-        if (src->view->Get_ViewControl ()){
+      
+	Scan *src =gapp->xsm->GetScanChannel (ch);
+        if (!strncmp(id,"Rectangle",9)){
+                VObject *vo;
+                double xy[4];
+                gfloat c[4] = { 1.,0.,0.,1.};
+                int spc[2][2] = {{0,0},{0,0}};
+                int sp00[2] = {1,1};
+                src->Pixel2World ((int)round(x-size/2), (int)round(y-size/2), xy[0], xy[1]);
+                src->Pixel2World ((int)round(x+size/2), (int)round(y+size/2), xy[2], xy[3]);
+                (src->view->Get_ViewControl ())->AddObject (vo = new VObRectangle ((src->view->Get_ViewControl ())->canvas, xy, FALSE, VOBJ_COORD_ABSOLUT, id, 1.0));
+                vo->set_obj_name (id);
+                vo->set_custom_label_font ("Sans Bold 12");
+                vo->set_custom_label_color (c);
+                if (grp>0){
+                        gfloat fillcolor[4];
+                        gfloat outlinecolor[4];
+                        for(int j=0; j<4; j++){
+                                int sh = 24-(8*j);
+                                fillcolor[j] = outlinecolor[j] = (gfloat)((grp&(0xff << sh) >> sh)) / 256.;
+                        }
+                        outlinecolor[3] = 0.0;
+                        vo->set_color_to_custom (fillcolor, outlinecolor);
+                }
+                vo->set_on_spacetime  (sp00[0] ? FALSE:TRUE, spc[0]);
+                vo->set_off_spacetime (sp00[1] ? FALSE:TRUE, spc[1]);
+                vo->show_label (true);
+                vo->lock_object (true);
+                vo->remake_node_markers ();
+        } else if (!strncmp(id,"Point",5)){
                 VObject *vo;
                 double xy[2];
                 gfloat c[4] = { 1.,0.,0.,1.};
                 int spc[2][2] = {{0,0},{0,0}};
                 int sp00[2] = {1,1};
-                int s = 0;
                 src->Pixel2World ((int)round(x), (int)round(y), xy[0], xy[1]);
-                gchar *lab = g_strdup_printf ("M%s",id);
-                (src->view->Get_ViewControl ())->AddObject (vo = new VObPoint ((src->view->Get_ViewControl ())->canvas, xy, FALSE, VOBJ_COORD_ABSOLUT, lab, 1.));
+                (src->view->Get_ViewControl ())->AddObject (vo = new VObPoint ((src->view->Get_ViewControl ())->canvas, xy, FALSE, VOBJ_COORD_ABSOLUT, id, 1.0));
+                vo->set_obj_name (id);
+                vo->set_custom_label_font ("Sans Bold 12");
+                vo->set_custom_label_color (c);
+                if (grp>0){
+                        gfloat fillcolor[4];
+                        gfloat outlinecolor[4];
+                        for(int j=0; j<4; j++){
+                                int sh = 24-(8*j);
+                                fillcolor[j] = outlinecolor[j] = (gfloat)((grp&(0xff << sh) >> sh)) / 256.;
+                        }
+                        outlinecolor[3] = 0.0;
+                        vo->set_color_to_custom (fillcolor, outlinecolor);
+                }
+                vo->set_on_spacetime  (sp00[0] ? FALSE:TRUE, spc[0]);
+                vo->set_off_spacetime (sp00[1] ? FALSE:TRUE, spc[1]);
+                vo->show_label (true);
+                vo->lock_object (true);
+                vo->remake_node_markers ();
+        } else if (grp == -1 || !strncmp(id,"xy",2)){
+                if (size < 0. || size > 10.) size = 1.0;
+                grp = 5;
+                VObject *vo;
+                double xy[2];
+                gfloat c[4] = { 1.,0.,0.,1.};
+                int spc[2][2] = {{0,0},{0,0}};
+                int sp00[2] = {1,1};
+                double px,py,pz;
+                // gapp->xsm->hardware->RTQuery ("P", px, py, pz); // get Tip Position in pixels
+                idle_rtquery ("P", px, py, pz); // get Tip Position in pixels
+                src->Pixel2World ((int)round(px), (int)round(py), xy[0], xy[1]);
+                gchar *lab = g_strdup_printf ("M%s XYZ=%g,%g,%g",id, px,py,pz);
+                (src->view->Get_ViewControl ())->AddObject (vo = new VObPoint ((src->view->Get_ViewControl ())->canvas, xy, FALSE, VOBJ_COORD_ABSOLUT, lab, size));
+                g_free (lab);
                 vo->set_obj_name (marker_group[grp]);
                 vo->set_custom_label_font ("Sans Bold 12");
                 vo->set_custom_label_color (c);
                 vo->set_on_spacetime  (sp00[0] ? FALSE:TRUE, spc[0]);
                 vo->set_off_spacetime (sp00[1] ? FALSE:TRUE, spc[1]);
-                vo->show_label (s);
+                vo->show_label (true);
+                vo->lock_object (true);
                 vo->remake_node_markers ();
-        }
+        } else {
+                if (size < 0. || size > 10.) size = 1.0;
 
+                if (grp < 0 || grp > 6) grp=0; // silently set 0 if out of range
+        
+                if (src->view->Get_ViewControl ()){
+                        VObject *vo;
+                        double xy[2];
+                        gfloat c[4] = { 1.,0.,0.,1.};
+                        int spc[2][2] = {{0,0},{0,0}};
+                        int sp00[2] = {1,1};
+                        src->Pixel2World ((int)round(x), (int)round(y), xy[0], xy[1]);
+                        gchar *lab = g_strdup_printf ("M%s",id);
+                        (src->view->Get_ViewControl ())->AddObject (vo = new VObPoint ((src->view->Get_ViewControl ())->canvas, xy, FALSE, VOBJ_COORD_ABSOLUT, lab, size));
+                        g_free (lab);
+                        vo->set_obj_name (marker_group[grp]);
+                        vo->set_custom_label_font ("Sans Bold 12");
+                        vo->set_custom_label_color (c);
+                        vo->set_on_spacetime  (sp00[0] ? FALSE:TRUE, spc[0]);
+                        vo->set_off_spacetime (sp00[1] ? FALSE:TRUE, spc[1]);
+                        vo->show_label (true);
+                        vo->lock_object (true);
+                        vo->remake_node_markers ();
+                }
+        }
         idle_data->ret = 0;
        
         UNSET_WAIT_JOIN_MAIN;
@@ -2030,26 +2253,27 @@ static PyObject* remote_waitscan(PyObject *self, PyObject *args)
         double x,y,z;
         long block = 0;
 	PI_DEBUG_GM (DBG_L2, "pyremote: wait scan");
-	if (!PyArg_ParseTuple (args, "l", &block)){
+	if (PyArg_ParseTuple (args, "l", &block)){
                 g_usleep(50000);
-                if( main_get_gapp()->xsm->hardware->RTQuery ("W",x,y,z) ){
+                if(idle_rtquery ("W",x,y,z) ){
                         if (block){
                                 PI_DEBUG_GM (DBG_L2, "pyremote: wait scan (block=%d)-- blocking until ready.", (int) block);
-                                while( main_get_gapp()->xsm->hardware->RTQuery ("W",x,y,z) ){
-                                        PI_DEBUG_GM (DBG_L2, "pyremote: wait scan blocking, line = %d", main_get_gapp()->xsm->hardware->RTQuery () );
+                                while(idle_rtquery ("W",x,y,z) ){
+                                        PI_DEBUG_GM (DBG_L2, "pyremote: wait scan blocking, line = %d",gapp->xsm->hardware->RTQuery () );
                                         g_usleep(100000);
                                 }
                         }
-                        return Py_BuildValue("i", main_get_gapp()->xsm->hardware->RTQuery () ); // return current y_index of scan
+                        return Py_BuildValue("i",gapp->xsm->hardware->RTQuery () ); // return current y_index of scan
                 }else
                         return Py_BuildValue("i", -1); // no scan in progress
         } else {
                 PI_DEBUG_GM (DBG_L2, "pyremote: wait scan -- default: blocking until ready.");
-                while( main_get_gapp()->xsm->hardware->RTQuery ("W",x,y,z) ){
+                while(idle_rtquery ("W",x,y,z) ){
                         g_usleep(100000);
-                        PI_DEBUG_GM (DBG_L2, "pyremote: wait scan, default: block, line = %d", main_get_gapp()->xsm->hardware->RTQuery () );
+                        PI_DEBUG_GM (DBG_L2, "pyremote: wait scan, default: block, line = %d",gapp->xsm->hardware->RTQuery () );
                 }
         }
+        return Py_BuildValue("i", -1); // no scan in progress
 }
 
 static PyObject* remote_scaninit(PyObject *self, PyObject *args)
@@ -2499,9 +2723,13 @@ static PyObject* remote_chfname(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "l", &channel))
 		return Py_BuildValue("i", -1);
         int ch=channel;
-        if (main_get_gapp()->xsm->GetScanChannel(ch)){
+        if (ch >= 100) ch -= 100;
+        if (gapp->xsm->GetScanChannel(ch)){
                 const gchar *tmp = gapp->xsm->GetScanChannel (ch)->storage_manager.get_filename();
-                return Py_BuildValue ("s", tmp ? tmp : gapp->xsm->GetScanChannel (ch)->data.ui.originalname);
+                if (channel >= 100)
+                        return Py_BuildValue ("s", tmp ? tmp : gapp->xsm->GetScanChannel (ch)->data.ui.originalname);
+                else
+                        return Py_BuildValue ("s", tmp ? tmp : gapp->xsm->GetScanChannel (ch)->data.ui.name);
         } else
                 return Py_BuildValue ("s", "EE: invalid channel");
 }
@@ -3072,8 +3300,8 @@ static PyMethodDef GxsmPyMethods[] = {
 	{"set_y_lookup", remote_set_y_lookup, METH_VARARGS, "Set Scan Data index to world mapping: y=gxsm.get_y_lookup (ch, i, v)"},
 	{"set_v_lookup", remote_set_v_lookup, METH_VARARGS, "Set Scan Data index to world mapping: v=gxsm.get_v_lookup (ch, i, v)"},
 	{"get_object", remote_getobject, METH_VARARGS, "Get Object Coordinates: [type, x,y,..]=gxsm.get_object (ch, n)"},
-	{"add_marker_object", remote_addmobject, METH_VARARGS, "Put Marker Object at Coordinates: gxsm.add_marker_object (ch, label, mgrp=0..5, x,y)"},
-        
+	{"add_marker_object", remote_addmobject, METH_VARARGS, "Put Marker/Rectangle Object at pixel coordinates or current tip pos (id='xy'|grp=-1, 'Rectangle[id]|grp=-2, 'Point[id]'): gxsm.add_marker_object (ch, label=str|'xy'|'Rectangle-id', mgrp=0..5|-1, x=ix,y=iy, size)"},
+        {"marker_getobject_action", remote_getobject_action, METH_VARARGS, "Marker/Rectangle Object Action: gxsm.marker_getobject_action (ch, objnameid, action='REMOVE'|'REMOVE-ALL'|'GET_COORDS'|'SET-OFFSET')"},
 	{"startscan", remote_startscan, METH_VARARGS, "Start Scan."},
 	{"stopscan", remote_stopscan, METH_VARARGS, "Stop Scan."},
 	{"waitscan", remote_waitscan, METH_VARARGS, "Wait Scan. ret=gxsm.waitscan(blocking=true). ret=-1: no scan in progress, else current line index."},
@@ -3234,6 +3462,10 @@ void py_gxsm_console::initialize(void)
                 // g_print ("pyremote Plugin :: initialize -- PyInitializeEx(0)\n");
 		// Do not register signal handlers -- i.e. do not "crash" gxsm on errors!
                 Py_InitializeEx (0);
+                //if (!PyEval_ThreadsInitialized())
+                //        PyEval_InitThreads();
+                //PyEval_InitThreads(); obsolete in 3.7
+                //PyEval_ReleaseLock();
 
 		PI_DEBUG_GM (DBG_L2, "pyremote Plugin :: initialize -- ImportModule gxsm");
                 // g_print ("pyremote Plugin :: initialize -- ImportModule gxsm\n");
@@ -3248,6 +3480,9 @@ void py_gxsm_console::initialize(void)
                 // g_print ("pyremote Plugin :: initialize -- GetDict");
 		py_gxsm_module.dict = PyModule_GetDict (py_gxsm_module.module);
 
+                //PyGILState_STATE py_state = PyGILState_Ensure();
+                //PyGILState_Release (py_state);
+
         } else {
 		g_message ("Python interpreter already initialized.");
 	}
@@ -3256,7 +3491,11 @@ void py_gxsm_console::initialize(void)
 PyObject* py_gxsm_console::run_string(const char *cmd, int type, PyObject *g, PyObject *l) {
         push_message_async ("\n<<< Python interpreter started. <<<\n");
         push_message_async (cmd);
+
+        PyGILState_STATE py_state = PyGILState_Ensure();
 	PyObject *ret = PyRun_String(cmd, type, g, l);
+        PyGILState_Release (py_state);
+
         push_message_async (ret ?
                             "\n<<< Python interpreter finished processing string. <<<\n" :
                             "\n<<< Python interpreter completed with Exception/Error. <<<\n");
@@ -3381,30 +3620,49 @@ void py_gxsm_console::kill(GtkToggleButton *btn, gpointer user_data)
                 //Py_AddPendingCall(-1);
                 PI_DEBUG_GM (DBG_L2,  "trying to kill interpreter");
                 PyErr_SetInterrupt();
+#if 0
+                PyGILState_STATE state = PyGILState_Ensure();    
+                int r = Py_AddPendingCall(&Stop, NULL); // inject our Stop routine
+                PyErr_SetInterrupt ();
+                g_message ("Py_AddPendingCall -> %d", r);
+                PyGILState_Release(state);
+
+                //PyErr_SetInterruptEx (SIGINT);
+                //PyErr_CheckSignals();
+                //PyErr_SetString(PyExc_KeyboardInterrupt, "Abort");
+#endif           
         } else {
                 pygc->append (N_("\n*** SCRIPT KILL: No user script is currently running.\n"));
         }
 }
 
+#if 0
 void py_gxsm_console::PyRun_GTaskThreadFunc (GTask *task,
                                              gpointer source_object,
                                              gpointer task_data,
                                              GCancellable *cancellable){
         PyRunThreadData *s = (PyRunThreadData*) task_data;
         PI_DEBUG_GM (DBG_L2, "pyremote Plugin :: py_gxsm_console::PyRun_GTaskThreadFunc");
+
+        PyGILState_STATE py_state = PyGILState_Ensure();
         s->ret = PyRun_String(s->cmd,
                               s->mode,
                               s->dictionary,
                               s->dictionary);
+        PyGILState_Release (py_state);
+        PyEval_RestoreThread(s->py_state_save);
+
         g_free (s->cmd);
         s->cmd = NULL;
         PI_DEBUG_GM (DBG_L2, "pyremote Plugin :: py_gxsm_console::PyRun_GTaskThreadFunc done");
 }
-
+#endif
 
 gpointer py_gxsm_console::PyRun_GThreadFunc (gpointer data){
         PyRunThreadData *s = (PyRunThreadData*) data;
         PI_DEBUG_GM (DBG_L2, "pyremote Plugin :: py_gxsm_console::PyRun_GThreadFunc");
+
+        PyGILState_STATE py_state = PyGILState_Ensure();
         s->ret = PyRun_String(s->cmd,
                               s->mode,
                               s->dictionary,
@@ -3419,6 +3677,10 @@ gpointer py_gxsm_console::PyRun_GThreadFunc (gpointer data){
                                     "\n<<< PyRun user script (as thread) run raised an exeption. <<<\n");
         s->pygc->push_message_async (NULL); // terminate IDLE push task
         PI_DEBUG_GM (DBG_L2, "pyremote Plugin :: py_gxsm_console::PyRun_GThreadFunc finished.");
+
+        PyGILState_Release (py_state);
+        PyEval_RestoreThread(s->py_state_save);
+
         return NULL;
 }
 
@@ -3427,7 +3689,11 @@ void py_gxsm_console::PyRun_GAsyncReadyCallback (GObject *source_object,
                                                  gpointer user_data){
         PI_DEBUG_GM (DBG_L2, "pyremote Plugin :: py_gxsm_console::PyRun_GAsyncReadyCallback");
 	py_gxsm_console *pygc = (py_gxsm_console *)user_data;
+
+        PyGILState_STATE py_state = PyGILState_Ensure();
         if (!pygc->run_data.ret) PyErr_Print();
+        PyGILState_Release (py_state);
+
         --pygc->user_script_running;
         pygc->push_message_async (pygc->run_data.ret ?
                                   "\n<<< PyRun user script (as thread) finished. <<<\n" :
@@ -3454,6 +3720,7 @@ const gchar* py_gxsm_console::run_command(const gchar *cmd, int mode)
                 run_data.ret  = NULL;
                 run_data.pygc = this;
 #if 1
+                run_data.py_state_save = PyEval_SaveThread();
                 g_thread_new (NULL, PyRun_GThreadFunc, &run_data);
 #else
                 GTask *pyrun_task = g_task_new (NULL,

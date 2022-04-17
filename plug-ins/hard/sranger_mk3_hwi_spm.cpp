@@ -130,6 +130,8 @@ sranger_mk3_hwi_spm::~sranger_mk3_hwi_spm(){
  "p" :                X,Y Scan/Probe Coords in Pixel, 0,0 is center, DSP Scan Coords
  "P" :                X,Y Scan/Probe Coords in Pixel, 0,0 is top le
 ft [indices]
+ "M" :                Mix-IN1, 2, 3
+ "mNN" :              MonitorSignal[NN] -- Monitor Singals at index SigMon[NN]: [Scaled Signal in Unit, raw signal, scale, ret=unit-string] (NN = 00 ... 22), 99: reload signal mapping
  */
 
 gint sranger_mk3_hwi_spm::RTQuery (const gchar *property, double &val1, double &val2, double &val3){
@@ -192,6 +194,35 @@ gint sranger_mk3_hwi_spm::RTQuery (const gchar *property, double &val1, double &
 // get signal monitor signal and convert to defined base unit + GXSM level MaxVolt correction (1.00x or 1.04x)
 #define S_MONV(I) (main_get_gapp()->xsm->Inst->Dig2VoltOut(3276.7) * lookup_signal_scale_by_index (signal_id[I]) * dsp_sig_mon.signal[I])
 #define S_MON(I)  (lookup_signal_scale_by_index (signal_id[I]) * dsp_sig_mon.signal[I])
+
+	if (*property == 'M'){
+		val1 =  S_MON (1);
+		val2 =  S_MON (2);
+		val3 =  S_MON (3);
+		ok=TRUE;
+		return TRUE;
+        }
+        
+        if (*property == 'm'){
+                int monitor_index=0;
+                if (property[1]){
+                        monitor_index = atoi(&property[1]);
+                        if (monitor_index == 99) // force monitor signal table reread
+                                for (int iid=0; iid<30; iid++)
+                                         signal_id[iid] = query_module_signal_input (DSP_SIGNAL_MONITOR_INPUT_BASE_ID + iid);
+                        if (monitor_index < 0 || monitor_index > 30) // if invalid index? then fall back
+                                monitor_index = 0;
+
+                }
+                val1 = lookup_signal_scale_by_index (signal_id[monitor_index]) * dsp_sig_mon.signal[monitor_index];
+                val2 = dsp_sig_mon.signal[monitor_index];
+                val3 = lookup_signal_scale_by_index (signal_id[monitor_index]);
+                ok=TRUE;
+                const gchar *u = lookup_signal_unit_by_index (signal_id[monitor_index]);
+                gint64 unitchars;
+                strncpy ((char*)&unitchars, u, 8);
+                return unitchars;
+        }
 
 	if (*property == 'z'){
 		val1 =  main_get_gapp()->xsm->Inst->VZ() * S_MONV (6);
