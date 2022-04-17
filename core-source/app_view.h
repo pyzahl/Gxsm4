@@ -175,12 +175,16 @@ public:
         };
         static void obj_label_on(VObject *vo, ViewControl *vc){ vo->show_label(true); };
         static void obj_label_off(VObject *vo, ViewControl *vc){ vo->show_label(false); };
-        static void remove_obj(VObject *vo, ViewControl *vc){ 
+        static void delete_object(VObject *vo, ViewControl *vc){  // renamed function
                 if (vc->tmp_object_op == vo){
-                        main_get_gapp ()->message ("Ilya don't do that!");
+                        gapp->message ("Ilya don't do that!");
                         vc->tmp_object_op = NULL;
                 }
                 vc->scan->del_object (vo);
+        };
+        static void remove_object(VObject *vo, ViewControl *vc){
+                vc->gobjlist = g_slist_remove((GSList*) vc->gobjlist, vo); // remove from list
+                vc->delete_object(vo, vc); // delete it
         };
         static void unflag_scan_event_and_remove_obj(VObject *vo, ViewControl *vc){ 
                 vo->get_scan_event () -> flag = FALSE;

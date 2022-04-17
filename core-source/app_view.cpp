@@ -1836,7 +1836,7 @@ void ViewControl::AddIndicator(VObject *vo){
 }
 
 void ViewControl::RemoveIndicators(){
-	g_slist_foreach((GSList*) gindicatorlist, (GFunc) ViewControl::remove_obj, this);
+	g_slist_foreach((GSList*) gindicatorlist, (GFunc) ViewControl::delete_object, this);
 	g_slist_free(gindicatorlist);
 	gindicatorlist = NULL;
 }
@@ -2537,7 +2537,7 @@ void ViewControl::CheckAllObjectsLabels(gboolean flg){
 }
 
 void ViewControl::RemoveObjects(){
-	g_slist_foreach((GSList*) gobjlist, (GFunc) ViewControl::remove_obj, this);
+	g_slist_foreach((GSList*) gobjlist, (GFunc) ViewControl::delete_object, this);
 	g_slist_free(gobjlist);
 	gobjlist = NULL;
 
@@ -3556,7 +3556,7 @@ void ViewControl::view_tool_remove_active_callback (GSimpleAction *simple, GVari
                         return;
                 
                 vc->gobjlist = g_slist_remove((GSList*) vc->gobjlist, vc->current_vobject);
-                vc->remove_obj (vc->current_vobject, vc);
+                vc->delete_object (vc->current_vobject, vc);
                 vc->current_vobject = NULL;
                 global_current_vobject = vc->current_vobject;
         }
@@ -4334,9 +4334,9 @@ void ViewControl::obj_remove_callback (GSimpleAction *simple, GVariant *paramete
 
         if (vo->get_osd_style ())
                 return;
-        
-	vc->gobjlist = g_slist_remove((GSList*) vc->gobjlist, vo);
-	vc->remove_obj(vo, vc);
+
+        vc->remove_object(vo, vc);
+
 }
 
 void ViewControl::obj_properties_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data){
