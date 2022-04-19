@@ -6,6 +6,56 @@
       <summary>PCS Remote-ID: 'script-control', Default/U:   50     </summary>
       <description>pcs0000, PCS Remote-ID: 'script-control', Default/U:   50    , Adjustment PCS Name: 'script-control' </description>
     </key>
+    <key name="py-sc01" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'py-sc01', Default/U:   0     </summary>
+      <description>pcs0000, PCS Remote-ID: 'py-sc01', Default/U:   0    , Adjustment PCS Name: 'py-sc01' </description>
+    </key>
+    <key name="py-sc02" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'py-sc02', Default/U:   0     </summary>
+      <description>pcs0000, PCS Remote-ID: 'py-sc02', Default/U:   0    , Adjustment PCS Name: 'py-sc02' </description>
+    </key>
+    <key name="py-sc03" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'py-sc03', Default/U:   0     </summary>
+      <description>pcs0000, PCS Remote-ID: 'py-sc03', Default/U:   0    , Adjustment PCS Name: 'py-sc03' </description>
+    </key>
+    <key name="py-sc04" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'py-sc04', Default/U:   0     </summary>
+      <description>pcs0000, PCS Remote-ID: 'py-sc04', Default/U:   0    , Adjustment PCS Name: 'py-sc04' </description>
+    </key>
+    <key name="py-sc05" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'py-sc05', Default/U:   0     </summary>
+      <description>pcs0000, PCS Remote-ID: 'py-sc05', Default/U:   0    , Adjustment PCS Name: 'py-sc05' </description>
+    </key>
+    <key name="py-sc06" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'py-sc06', Default/U:   0     </summary>
+      <description>pcs0000, PCS Remote-ID: 'py-sc06', Default/U:   0    , Adjustment PCS Name: 'py-sc06' </description>
+    </key>
+    <key name="py-sc07" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'py-sc07', Default/U:   0     </summary>
+      <description>pcs0000, PCS Remote-ID: 'py-sc07', Default/U:   0    , Adjustment PCS Name: 'py-sc07' </description>
+    </key>
+    <key name="py-sc08" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'py-sc08', Default/U:   0     </summary>
+      <description>pcs0000, PCS Remote-ID: 'py-sc08', Default/U:   0    , Adjustment PCS Name: 'py-sc08' </description>
+    </key>
+    <key name="py-sc09" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'py-sc09', Default/U:   0     </summary>
+      <description>pcs0000, PCS Remote-ID: 'py-sc09', Default/U:   0    , Adjustment PCS Name: 'py-sc09' </description>
+    </key>
+    <key name="py-sc10" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'py-sc10', Default/U:   0     </summary>
+      <description>pcs0000, PCS Remote-ID: 'py-sc10', Default/U:   0    , Adjustment PCS Name: 'py-sc10' </description>
+    </key>
   </schema>
 
 </schemalist>

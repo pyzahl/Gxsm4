@@ -562,6 +562,12 @@ to the community. The GXSM-Forums always welcome input.
 #include <gtksourceview/gtksource.h>
 
 #include <Python.h>
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+#include "numpy/arrayobject.h"
+#include "numpy/ndarraytypes.h"
+#include "numpy/ndarrayobject.h"
+#include "numpy/arrayobject.h"
+
 #include <sys/types.h>
 #include <signal.h>
 
@@ -590,6 +596,9 @@ to the community. The GXSM-Forums always welcome input.
 
 #include "pyscript_templates.h"
 #include "pyscript_templates_script_libs.h"
+
+// number of script control EC's -- but must manually match schemata in .xml files!
+#define NUM_SCV 10
 
 // Plugin Prototypes
 static void pyremote_init( void );
@@ -1022,6 +1031,17 @@ public:
 
         void fix_eols_to_unix (gchar *text);
 
+
+        gboolean set_sc_label (const gchar *id, const gchar *l){
+                // *id = g_strdup_printf ("py-sc%02d",i+1);
+                if (strlen(id) < 7) return false;
+                int i = atoi(&id[5]);
+                if (i>0 && i <= NUM_SCV){
+                        gtk_label_set_text (GTK_LABEL(sc_label[i-1]) ,l);
+                        return true;
+                } else return false;
+        };
+        
 private:
         PyRunThreadData run_data;
         GSList *message_list;
@@ -1045,6 +1065,8 @@ private:
         gboolean query_filename;
         gboolean fail;
         gdouble exec_value;
+        gdouble sc_value[NUM_SCV];
+        GtkWidget *sc_label[NUM_SCV];
 };
 
 
@@ -1863,19 +1885,34 @@ static PyObject* remote_putdatapkt(PyObject *self, PyObject *args)
 static PyObject* remote_getslice(PyObject *self, PyObject *args)
 {
 	PI_DEBUG(DBG_L2, "pyremote: getslice");
-	long ch,v,t;
+	long ch,v,t,yi,yn;
 
 	//PyObject *obj;
         
-	if (!PyArg_ParseTuple (args, "lll", &ch, &v, &t))
+	if (!PyArg_ParseTuple (args, "lllll", &ch, &v, &t, &yi, &yn))
 		return Py_BuildValue("i", -1);
 
-	Scan *src = main_get_gapp()->xsm->GetScanChannel (ch);
-        if (src){
-                g_message ("remote_getslice -- Complete Me!! N/A");
+	Scan *src =gapp->xsm->GetScanChannel (ch);
+        if (src && (yi+yn) <= src->mem2d->GetNy()){
+                g_message ("remote_getslice from mem2d scan data in (dz scaled to unit) CH%d, Ys=%d Yf=%d", (int)ch, (int)yi, (int)(yi+yn));
 
-                //src->mem2d->GetDataPkt (x,y,v);
-                return Py_BuildValue("i", 0);
+                // PyObject* PyArray_SimpleNewFromData(int nd, npy_intp const* dims, int typenum, void* data);
+                // PyObject *PyArray_FromDimsAndData(int n_dimensions, int dimensions[n_dimensions], int item_type, char *data);
+                npy_intp dims[2]; 
+                dims[0] = yn;
+                dims[1] = src->mem2d->GetNx ();
+                g_message ("Creating PyArray: shape %d , %d", dims[0], dims[1]);
+                double *darr2 = (double*) malloc(sizeof(double) * dims[0]*dims[1]);
+                double *dp=darr2;
+                int yf = yi+yn;
+
+                for (int y=yi; y<yf; ++y)
+                        for (int x=0; x<dims[1]; ++x)
+                                *dp++ = src->mem2d->data->Z(x,y)*src->data.s.dz;
+                
+                PyObject* pyarr = PyArray_SimpleNewFromData(2, dims, NPY_DOUBLE, (void*)darr2);
+                PyArray_ENABLEFLAGS((PyArrayObject*) pyarr, NPY_ARRAY_OWNDATA);
+                return Py_BuildValue("O", pyarr); // Python code will receive the array as numpy array.
         } else
 		return Py_BuildValue("i", -1);
 
@@ -3255,6 +3292,33 @@ static PyObject* remote_sleep(PyObject *self, PyObject *args)
 	return Py_BuildValue("i", 0);
 }
 
+
+static gboolean main_context_set_sc_label_from_thread (gpointer user_data){
+        IDLE_from_thread_data *idle_data = (IDLE_from_thread_data *) user_data;
+	gchar *id, *label;
+
+	if (!PyArg_ParseTuple(idle_data->args, "ss", &id, &label)){
+                UNSET_WAIT_JOIN_MAIN;
+                return G_SOURCE_REMOVE;
+        }
+        if (py_gxsm_remote_console)
+                py_gxsm_remote_console->set_sc_label (id, label);
+        
+        UNSET_WAIT_JOIN_MAIN;
+        return G_SOURCE_REMOVE;
+}
+
+static PyObject* remote_set_sc_label(PyObject *self, PyObject *args)
+{
+        IDLE_from_thread_data idle_data;
+        idle_data.self = self;
+        idle_data.args = args;
+        idle_data.wait_join = true;
+        g_idle_add (main_context_set_sc_label_from_thread, (gpointer)&idle_data);
+        WAIT_JOIN_MAIN;
+	return Py_BuildValue("i", idle_data.ret);
+}
+
 ///////////////////////////////////////////////////////////
 /*
 PyMethodDef
@@ -3292,7 +3356,7 @@ static PyMethodDef GxsmPyMethods[] = {
 	{"get_dimensions", remote_getdimensions, METH_VARARGS, "Get Scan Dimensions: [nx,ny,nv,nt]=gxsm.get_dimensions (ch)"},
 	{"get_data_pkt", remote_getdatapkt, METH_VARARGS, "Get Data Value at point: value=gxsm.get_data_pkt (ch, x, y, v, t)"},
 	{"put_data_pkt", remote_putdatapkt, METH_VARARGS, "Put Data Value to point: gxsm.put_data_pkt (value, ch, x, y, v, t)"},
-	{"get_slice", remote_getslice, METH_VARARGS, "Get Slice/Image: [nx,ny,array]=gxsm.get_slice (ch, v, t)"},
+	{"get_slice", remote_getslice, METH_VARARGS, "Get Image Data Slice (Lines) from Scan in channel ch, yi ... yi+yn: [nx,ny,array]=gxsm.get_slice (ch, v, t, yi, yn)"},
 	{"get_x_lookup", remote_get_x_lookup, METH_VARARGS, "Get Scan Data index to world mapping: x=gxsm.get_x_lookup (ch, i)"},
 	{"get_y_lookup", remote_get_y_lookup, METH_VARARGS, "Get Scan Data index to world mapping: y=gxsm.get_y_lookup (ch, i)"},
 	{"get_v_lookup", remote_get_v_lookup, METH_VARARGS, "Get Scan Data index to world mapping: v=gxsm.get_v_lookup (ch, i)"},
@@ -3351,6 +3415,7 @@ static PyMethodDef GxsmPyMethods[] = {
 	{"da0", remote_da0, METH_VARARGS, "Da0. -- N/A for SRanger"},
 	{"signal_emit", remote_signal_emit, METH_VARARGS, "Action-String. "},
 	{"sleep", remote_sleep, METH_VARARGS, "Sleep N/10s: gxsm.sleep (N) "},
+	{"set_sc_label", remote_set_sc_label, METH_VARARGS, "Set PyRemote SC label: gxsm.set_sc_label (id [1..8],'value as string')"},
 
 	{NULL, NULL, 0, NULL}
 };
@@ -3462,6 +3527,13 @@ void py_gxsm_console::initialize(void)
                 // g_print ("pyremote Plugin :: initialize -- PyInitializeEx(0)\n");
 		// Do not register signal handlers -- i.e. do not "crash" gxsm on errors!
                 Py_InitializeEx (0);
+
+                //import_array(); // returns a value
+                if (_import_array() < 0) {
+                        PI_DEBUG_GM (DBG_L1, "pyremote Plugin :: initialize -- ImportModule gxsm, import array failed.");
+                        PyErr_Print(); PyErr_SetString(PyExc_ImportError, "numpy.core.multiarray failed to import");
+                }
+                
                 //if (!PyEval_ThreadsInitialized())
                 //        PyEval_InitThreads();
                 //PyEval_InitThreads(); obsolete in 3.7
@@ -4230,13 +4302,14 @@ void py_gxsm_console::AppWindowInit(const gchar *title, const gchar *sub_title){
 
 void py_gxsm_console::create_gui ()
 {
-	GtkWidget *console_scrolledwin, *file_scrolledwin, *vpaned, *frame;
+	GtkWidget *console_scrolledwin, *file_scrolledwin, *vpaned, *hpaned_scpane, *frame, *sc_grid;
 	GtkWidget *entry_input;
 
 	GtkTextView *file_textview, *output_textview;
 	//PangoFontDescription *font_desc;
         
 	BuildParam *bp;
+	BuildParam *bp_sc;
 	UnitObj *null_unit;
 
 	GtkSourceLanguageManager *manager;
@@ -4245,17 +4318,31 @@ void py_gxsm_console::create_gui ()
 
         PI_DEBUG_GM(DBG_L2, "pyremote Plugin :: create_gui() -- building GUI elements.");
 
+        sc_grid = gtk_grid_new ();
+
         bp = new BuildParam (v_grid, NULL, main_get_gapp()->RemoteEntryList);
         
 	// create static structure;
 	exec_value = 50.0; // mid value
 
 	// window
+        hpaned_scpane = gtk_paned_new (GTK_ORIENTATION_HORIZONTAL);
+        gtk_widget_set_vexpand (hpaned_scpane, TRUE);
+        gtk_widget_set_hexpand (hpaned_scpane, TRUE);
+        bp->grid_add_widget (hpaned_scpane, 100);
+	gtk_widget_show (hpaned_scpane);
+        bp->grid_add_widget (hpaned_scpane, 100);
+
+        
 	vpaned = gtk_paned_new (GTK_ORIENTATION_VERTICAL);
         gtk_widget_set_hexpand (vpaned, TRUE);
         gtk_widget_set_vexpand (vpaned, TRUE);
 	gtk_widget_show (vpaned);
-        bp->grid_add_widget (vpaned, 100);
+        //bp->grid_add_widget (vpaned, 100);
+
+	gtk_paned_set_start_child (GTK_PANED(hpaned_scpane), vpaned);
+	gtk_paned_set_end_child (GTK_PANED(hpaned_scpane), sc_grid);
+
         bp->new_line ();
 
 	file_scrolledwin = gtk_scrolled_window_new();
@@ -4320,8 +4407,6 @@ void py_gxsm_console::create_gui ()
         gtk_widget_show (console_file_content);
 	gtk_text_view_set_editable (file_textview, TRUE);
 
-	gtk_paned_set_position (GTK_PANED(vpaned), 300);
-
 	frame = gtk_frame_new (N_("Command"));
 	entry_input = gtk_entry_new ();
 	gtk_frame_set_child (GTK_FRAME (frame), entry_input);
@@ -4336,13 +4421,29 @@ void py_gxsm_console::create_gui ()
 
         main_get_gapp()->RemoteEntryList = bp->get_remote_list_head ();
 
+        bp_sc = new BuildParam (sc_grid, NULL, gapp->RemoteEntryList);
+        for(int i=0; i<NUM_SCV; ++i){
+                sc_value[i] = 0.0;
+                gchar *l = g_strdup_printf ("SC%d",i+1);
+                gchar *id = g_strdup_printf ("py-sc%02d",i+1);
+                bp_sc->grid_add_ec (l, null_unit, &sc_value[i], -1e10, 1e10, "g", 1., 10., id);
+                sc_label[i] = bp_sc->label;
+                g_free (l);
+                g_free (id);
+                bp_sc->new_line ();
+        }
+        gapp->RemoteEntryList = bp_sc->get_remote_list_head ();
+        
 	g_signal_connect(entry_input, "activate",
 			 G_CALLBACK(py_gxsm_console::command_execute), this);
         
 	gtk_text_view_set_wrap_mode (output_textview, GTK_WRAP_WORD_CHAR);
 
-        // FIX-ME GTK4 show all
         gtk_widget_show (v_grid);
+
+        //gtk_paned_set_position (GTK_PANED(vpaned), 50);
+	//gtk_paned_set_position (GTK_PANED(vpaned), -1); // 1:1 -- unset default
+	gtk_paned_set_position (GTK_PANED(hpaned_scpane), 300);
 
         PI_DEBUG_GM(DBG_L2, "pyremote Plugin :: console_create_gui() -- building GUI elements.... completed.");
 }

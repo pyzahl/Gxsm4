@@ -6,6 +6,56 @@
       <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'script-control' </summary>
       <description>Configuration for GXSM Entry with ID 'script-control'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
     </key>
+    <key name="py-sc01" type="ad">
+      <default>[1e100, -1e100, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'py-sc01' </summary>
+      <description>Configuration for GXSM Entry with ID 'py-sc01'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+    <key name="py-sc02" type="ad">
+      <default>[1e100, -1e100, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'py-sc02' </summary>
+      <description>Configuration for GXSM Entry with ID 'py-sc01'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+    <key name="py-sc03" type="ad">
+      <default>[1e100, -1e100, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'py-sc03' </summary>
+      <description>Configuration for GXSM Entry with ID 'py-sc01'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+    <key name="py-sc04" type="ad">
+      <default>[1e100, -1e100, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'py-sc04' </summary>
+      <description>Configuration for GXSM Entry with ID 'py-sc01'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+    <key name="py-sc05" type="ad">
+      <default>[1e100, -1e100, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'py-sc05' </summary>
+      <description>Configuration for GXSM Entry with ID 'py-sc01'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+    <key name="py-sc06" type="ad">
+      <default>[1e100, -1e100, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'py-sc06' </summary>
+      <description>Configuration for GXSM Entry with ID 'py-sc01'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+    <key name="py-sc07" type="ad">
+      <default>[1e100, -1e100, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'py-sc07' </summary>
+      <description>Configuration for GXSM Entry with ID 'py-sc01'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+    <key name="py-sc08" type="ad">
+      <default>[1e100, -1e100, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'py-sc08' </summary>
+      <description>Configuration for GXSM Entry with ID 'py-sc01'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+    <key name="py-sc09" type="ad">
+      <default>[1e100, -1e100, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'py-sc09 </summary>
+      <description>Configuration for GXSM Entry with ID 'py-sc09. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+    <key name="py-sc10" type="ad">
+      <default>[1e100, -1e100, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'py-sc10 </summary>
+      <description>Configuration for GXSM Entry with ID 'py-sc10'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
   </schema>
 
 </schemalist>
