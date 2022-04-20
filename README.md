@@ -1,6 +1,8 @@
 ## **ATTENTION:**
 
 **THIS IS A BETA VERSION AND WORK IN PROGRESS of Gxsm4 ported to GTK4 from Gxsm-3.0 on SF (gxsm.sf.net).**
+There are minor gtk4 related issues and shortcomings at this time
+and this version is for evaluation and future migration readyness.
 See details of pending / not functional parts below in section 3.
 (C) PyZahl 2021-12-31
 
