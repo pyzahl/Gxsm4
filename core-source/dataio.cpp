@@ -241,17 +241,17 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
 	main_get_gapp ()->progress_info_set_bar_text ("Image Data", 2);
 	main_get_gapp ()->progress_info_set_bar_fraction (0.25, 1);
 
-//#define MINIMAL_READ_NC_1ST_TIME_LAYER_ONLY
-#ifndef MINIMAL_READ_NC_1ST_TIME_LAYER_ONLY
 	NcDim *timed = Data->get_dim(0);
-	scan->data.s.ntimes  = timed->size();
+        if (timed)
+                scan->data.s.ntimes  = timed->size();
+        else
+                scan->data.s.ntimes  = 1;
 
 	NcDim *valued = Data->get_dim(1);
-	scan->data.s.nvalues = valued->size();
-#else
-	scan->data.s.ntimes  = 1;
-	scan->data.s.nvalues = 1;
-#endif
+        if (valued)
+                scan->data.s.nvalues = valued->size();
+        else
+                scan->data.s.ntimes  = 1;
 
 	NcDim *dimyd = Data->get_dim(2);
 	scan->data.s.ny = dimyd->size();
@@ -502,25 +502,31 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
 
         //#define MINIMAL_READ_NC
 #ifndef MINIMAL_READ_NC
-        //g_message ("NetCDF read optional informations");
+        g_message ("NetCDF read optional informations");
 
-        NcVar *comment = nc.get_var("comment"); 
-	G_NEWSIZE(scan->data.ui.comment, 1+comment->get_dim(0)->size());
-	memset (scan->data.ui.comment, 0, 1+comment->get_dim(0)->size());
-	comment->get(scan->data.ui.comment, comment->get_dim(0)->size());
+        NcVar *comment = nc.get_var("comment");
+        if (comment){
+                G_NEWSIZE(scan->data.ui.comment, 1+comment->get_dim(0)->size());
+                memset (scan->data.ui.comment, 0, 1+comment->get_dim(0)->size());
+                comment->get(scan->data.ui.comment, comment->get_dim(0)->size());
+        }
 
         NcVar *type = nc.get_var("type"); 
-	G_NEWSIZE(scan->data.ui.type, 1+type->get_dim(0)->size());
-	memset (scan->data.ui.type, 0, 1+type->get_dim(0)->size());
-	type->get(scan->data.ui.type, type->get_dim(0)->size());
-
-        NcVar *username = nc.get_var("username"); 
-	G_NEWSIZE(scan->data.ui.user, username->get_dim(0)->size());
-	username->get(scan->data.ui.user, username->get_dim(0)->size());
-
-	NcVar *dateofscan = nc.get_var("dateofscan"); 
-	G_NEWSIZE(scan->data.ui.dateofscan, dateofscan->get_dim(0)->size());
-	dateofscan->get(scan->data.ui.dateofscan, dateofscan->get_dim(0)->size());
+        if (type){
+                G_NEWSIZE(scan->data.ui.type, 1+type->get_dim(0)->size());
+                memset (scan->data.ui.type, 0, 1+type->get_dim(0)->size());
+                type->get(scan->data.ui.type, type->get_dim(0)->size());
+        }
+        NcVar *username = nc.get_var("username");
+        if (username){
+                G_NEWSIZE(scan->data.ui.user, username->get_dim(0)->size());
+                username->get(scan->data.ui.user, username->get_dim(0)->size());
+        }
+	NcVar *dateofscan = nc.get_var("dateofscan");
+        if(dateofscan){
+                G_NEWSIZE(scan->data.ui.dateofscan, dateofscan->get_dim(0)->size());
+                dateofscan->get(scan->data.ui.dateofscan, dateofscan->get_dim(0)->size());
+        }
 
 	if(nc.get_var("t_start")) nc.get_var("t_start")->get(&scan->data.s.tStart);
 	if(nc.get_var("t_end")) nc.get_var("t_end")->get(&scan->data.s.tEnd);
