@@ -64,16 +64,25 @@ Note: Currently the plugins are not completely build/failing with file not found
              It is possible to manually edit the properties via the dconf-editor to get started.
 	     Some thing seams slow here at build and update, or has post idel latency.
 
+- known GTK4 shortcomings so far noted: 
+  - Long popup/down selection lists, items out of "screen limits" are not sccessible, no/missing scrolling feature, etc.. No idea yet how to make this work right.
+  - Rendering in cairo fall back mode (when using X11 export via ssh -X for example) is very slow -- some where around a magnitude (10x) slow! What makes remote work nearly impossible. However, varies a lot by "fetaure" used. Menu pop ups are very slow, take long to appear. GUI initial  build (many entries, etc.) takes a long time.
+  - press/release signals not available for simple button widget. Work around assigning handlers does not work as expected. Work for a canvas "home made" button. Non perfec tbu tworkable workaround currently used: Arrow icons on button widget accept press and release events. (Needed for Mover Controls: "fire wave signal on DSP when pressed" direction buttons.
+
+- Pending back/forward sync or porting from gxsm3: idle callbacks for Tip Move and related vs. blocking or singel shot. Address pending minor random but rare move issue with initiating a scan.
+- Pending odd behavior for object move/edit in some situations. (Workaround: remove all, start over)
+- Pending: some hot keys are non functional
+
 - DSP-CONTROL windows A, B -- initial TAB Drag to empty secondary window impossible (or hard??) to find a hook area to drop off. Work around for now:
 Manually hack config via dconf-editor, then further DnD is easy and as usual again:
-   
-   Set for example
+
+  - Set for example
 /org/gnome/gxsm4/hwi/sranger-mk23/window-01-tabs = 'aclefghkmn------------------------------'
 and
 /org/gnome/gxsm4/hwi/sranger-mk23/window-02-tabs = 'dijo----------------------------'
 Then start gxsm4 again.
 
-Save Profile as Drawing=pdf -> crash
+ - Save Profile as Drawing=pdf -> crash
 
 
 ## FYI:
