@@ -22,7 +22,7 @@ adaptable manner.
 All latest stable software is available now via GIT:
 (Gxsm4 Beta currently) https://github.com/pyzahl/Gxsm4
 
-or Live Demo/Install CD:
+or Live Demo/Install CD (with GXSM3):
 http://www.ventiotec.de/linux/GXSM-Linux.iso
 
 GXSM Web Site: http://gxsm.sf.net
@@ -34,12 +34,12 @@ Gxsm4 requires GTK4, GtkSourceView5, libfftw, libnetcdf, libquicktime, ...
 
 Simple install procedure:
 
-svn checkout svn+ssh://zahl@svn.code.sf.net/p/gxsm/svn/trunk/Gxsm4 Gxsm4-svn
+git clone https://github.com/pyzahl/Gxsm4 Gxsm4-git
 
 ## New build tool: Meson buildsystem -- work in progress:
 
 First create your "builddir" in the project root folder.
-Then run
+Then run in the folder Gxsm4-git
 $ meson builddir
 $ cd builddir
 $ ninja
