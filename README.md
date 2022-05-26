@@ -40,11 +40,12 @@ git clone https://github.com/pyzahl/Gxsm4 Gxsm4-git
 
 First create your "builddir" in the project root folder.
 Then run in the folder Gxsm4-git
-$ meson builddir
-$ cd builddir
-$ ninja
-$ ninja install
-
+``` 
+ $ meson builddir
+ $ cd builddir
+ $ ninja
+ $ ninja install
+```
 Note: Currently the plugins are not completely build/failing with file not found, work in progress.
 
 
