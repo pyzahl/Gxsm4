@@ -1,4 +1,4 @@
-## **ATTENTION:**
+# **ATTENTION:**
 
 **THIS IS A BETA VERSION AND WORK IN PROGRESS of Gxsm4 ported to GTK4 from Gxsm-3.0 on SF (gxsm.sf.net).**
 There are minor gtk4 related issues and shortcomings at this time
@@ -6,18 +6,11 @@ and this version is for evaluation and future migration readyness.
 See details of pending / not functional parts below in section 3.
 (C) PyZahl 2021-12-31
 
-## 1. General Information
+# 1. General Information
 
-GXSM -- Gnome X Scanning Microscopy: A multi-channel image and
-vector-probe data acquisition and visualization system designed for
-SPM techniques (STM,AFM..), but also SPA-LEED. A plug-in interface
-allows any user add-on data-processing and special hardware and
-instrument support.
+GXSM -- Gnome X Scanning Microscopy: A multi-channel image and vector-probe data acquisition and visualization system designed for SPM techniques (STM,AFM..). A plug-in interface allows any user add-on data-processing and special hardware and instrument support.
 
-Based on several hardware options it supports a commercially available
-DSP hardware and provided also Open Source Code for all the low level
-signal processing tasks and instrument controls in a most flexible and
-adaptable manner.
+Based on several hardware options it supports a commercially available DSP hardware (see https://www.softdb.com/scanning-probe-microscopy/) and provided also open source code for all the low level signal processing tasks and instrument controls in a most flexible and adaptable manner.
 
 All latest stable software is available now via GIT:
 (Gxsm4 Beta currently) https://github.com/pyzahl/Gxsm4
@@ -27,28 +20,51 @@ http://www.ventiotec.de/linux/GXSM-Linux.iso
 
 GXSM Web Site: http://gxsm.sf.net
 
+# 2. Installation
 
-## 2a. Installation
+Gxsm4 requires GTK4, GtkSourceView5, libfftw, libnetcdf, libquicktime, ... Therefore, please install a recent linux distribution like debian or ubuntu (> 22.04 LTS)
 
-Gxsm4 requires GTK4, GtkSourceView5, libfftw, libnetcdf, libquicktime, ...
-
-Simple install procedure:
-
-git clone https://github.com/pyzahl/Gxsm4 Gxsm4-git
-
-## New build tool: Meson buildsystem -- work in progress:
+To obtain a copy of the source code, please run in a terminal:  
+``` 
+ $ git clone https://github.com/pyzahl/Gxsm4 gxsm4-git
+``` 
+## a) New build tool: Meson buildsystem -- work in progress:
 
 First create your "builddir" in the project root folder.
 Then run in the folder Gxsm4-git
 ``` 
  $ meson builddir
  $ cd builddir
- $ ninja
- $ ninja install
+ $ meson compile
+ $ meson install
 ```
-Note: Currently the plugins are not completely build/failing with file not found, work in progress.
+Here, "meson compile" is just calling "ninja".
 
+To uninstall call in the buildir
+``` 
+ninja uninstall
+```
 
+## b) New package tool: Flatpak -- work in progress:
+
+Install flatpak and flathub
+``` 
+ $ sudo apt install flatpak -y
+ $ sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+```
+Install the gnome sdk within your flatpak enviroment:
+``` 
+ $ mkdir flatpak
+ $ flatpak install flathub org.gnome.Sdk//41 org.gnome.Platform//41
+```
+
+Now install and run GXSM4 (assuming that the json-file/source is in the folder gxsm4-git
+``` 
+ $ flatpak-builder flaatpak gxsm4-git/org.gnome.gxsm4.json
+ $ flatpak-builder --user --install --force-clean flatpak gxsm4-git/org.gnome.gxsm4.json
+ $ flatpak run org.gnome.gxsm4
+```
+ 
 ## 3. To-Do-List
 
 - Testing testing testing
@@ -139,4 +155,3 @@ mailing list. See also the file 'HACKING' for more detailed information.
 
 
   *The gxsm team.*
-
