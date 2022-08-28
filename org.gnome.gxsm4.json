@@ -26,6 +26,10 @@
         "*.a"
     ],
     "modules" : [
+      	"pypi-dependencies.json",
+      	{
+      	  "name": "other-modules"
+      	},
 	{
             "name": "glew",
             "no-autogen": true,
@@ -74,7 +78,7 @@
                 {
 		    "type"   : "git",
 		    "url"    : "https://github.com/HDFGroup/hdf5.git",
-		    "branch" : "master"
+		    "branch" : "hdf5_1_12"
                 }
             ]
         },
