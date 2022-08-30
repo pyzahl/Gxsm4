@@ -54,14 +54,13 @@ Install flatpak and flathub
 ```
 Install the gnome sdk within your flatpak enviroment:
 ``` 
- $ mkdir flatpak
  $ flatpak install flathub org.gnome.Sdk//41 org.gnome.Platform//41
 ```
 
 Now install and run GXSM4 (assuming that the json-file/source is in the folder gxsm4-git
 ``` 
- $ flatpak-builder flaatpak gxsm4-git/org.gnome.gxsm4.json
- $ flatpak-builder --user --install --force-clean flatpak gxsm4-git/org.gnome.gxsm4.json
+ $ mkdir flatpak_builddir
+ $ flatpak-builder --user --install --force-clean flatpak_builddir gxsm4-git/org.gnome.gxsm4.json
  $ flatpak run org.gnome.gxsm4
 ```
  
