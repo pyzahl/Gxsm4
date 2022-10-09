@@ -11,7 +11,8 @@ plugin_list = [
 if python.found() and gtksourceview.found()
     plugin_list += [
     { 'name': 'pyremote',
-      'deps': [python, gtksourceview],
+      'deps': [ python, gtksourceview ],
+      'include-directories' : [ inc_np ], 
       'gschemas': [
           'org.gnome.gxsm4.pcs.plugin-libpyremote.gschema.xml',
           'org.gnome.gxsm4.pcsadjustments.plugin-libpyremote.gschema.xml' ]},
@@ -62,7 +63,7 @@ foreach plugin : plugin_list
   deps = declare_dependency(
     compile_args : plugin_cflags,
     dependencies : plugin_deps,
-    include_directories : [ configuration_inc, appInclude ]
+    include_directories : [ configuration_inc, appInclude, plugin.get('include-directories', []) ]
   )
 
   library(plugin_name,
