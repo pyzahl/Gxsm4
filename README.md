@@ -61,7 +61,7 @@ Now install and run GXSM4 (assuming that the json-file/source is in the folder g
 ``` 
  $ mkdir flatpak_builddir
  $ flatpak-builder --user --install --force-clean flatpak_builddir gxsm4-git/org.gnome.gxsm4.json
- $ flatpak run org.gnome.gxsm4
+ $ flatpak run org.gnome.Gxsm4
 ```
  
 ## 3. To-Do-List
