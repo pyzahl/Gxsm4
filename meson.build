@@ -164,7 +164,13 @@ endif
 
 # for pyremote plugin...
 gtksourceview = dependency('gtksourceview-5', version : '>= 5.0', required : false)
-python = dependency(['python3-embed'], required : false)
+python_install = pythonmod.find_installation('python3')
+python = python_install.dependency(embed : true, required : false)
+message(python_install.path())
+message(python_install.get_install_dir())
+incdir_numpy = run_command(python_install, ['-c', 'import os; os.chdir(".."); import numpy; print(numpy.get_include())'], check : true).stdout().strip()
+message(incdir_numpy)
+inc_np = include_directories(incdir_numpy)
 # gdkpixbu = dependency('gdk-pixbuf-2.0') ## default part of gtk4
 
 ## plugins do need for dynamic load lib aka "-ldl"
