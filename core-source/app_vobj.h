@@ -279,10 +279,8 @@ class VObject : public scan_object_data{
 			}
 		} else { // but -1, ... -np-1 is in pixels!
 			i = -i-1;
-			if (i<np){ 
-				x=xy[2*i] * vinfo->GetQfac (); 
-				y=xy[2*i+1] * vinfo->GetQfac (); 
-			}
+			if (i<np)
+                                vinfo->dIndex_from_BitmapPix (x,y, (double)xy[2*i], (double)xy[2*i+1]);
 		} 
 	};
         virtual void get_xy_i_pixel2d (int i, Point2D *p){

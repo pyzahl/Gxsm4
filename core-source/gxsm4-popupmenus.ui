@@ -168,6 +168,10 @@
 	    <attribute name="action">win.x-linearize</attribute>
 	  </item>
 	  <item>
+	    <attribute name="label" translatable="yes">Use Aspect Range</attribute>
+	    <attribute name="action">win.aspect-range</attribute>
+	  </item>
+	  <item>
 	    <attribute name="label" translatable="yes">Attach Red Profile</attribute>
 	    <attribute name="action">win.attach-redline</attribute>
 	  </item>

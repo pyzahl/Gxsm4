@@ -234,6 +234,11 @@ gint sranger_mk3_hwi_spm::RTQuery (const gchar *property, double &val1, double &
 			val2 +=  main_get_gapp()->xsm->Inst->VX0() * S_MONV (16);
 			val3 +=  main_get_gapp()->xsm->Inst->VY0() * S_MONV (17);
 		}
+
+                if (xsmres.ScannerZPolarity==1){ // if set to pos, invert Z so Gxsm internally Z is always equivalent to ZPol = Neg
+                        val1 = -val1;
+                }
+                
 		ok=TRUE;
 		return TRUE;
 	}

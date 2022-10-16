@@ -67,7 +67,7 @@ public:
         void PutPixel(unsigned long x, unsigned long y, unsigned long val);
         void PutPixel_RGB(unsigned long x, unsigned long y, unsigned long r, unsigned long g, unsigned long b);
 
-        void draw_callback (cairo_t *cr, gboolean draw_red_line=true, gboolean draw_sls_box=true, gboolean draw_tip=false);
+        void draw_callback (cairo_t *cr, gboolean draw_red_line=true, gboolean draw_sls_box=true, gboolean draw_tip=false, double asp_ypx=1.0);
         void ShowPic ();
         void ShowSubPic (int xs, int ys, int w, int h, int ytop=0, int yn=0);
         void update_bbox (int y1, int y2);

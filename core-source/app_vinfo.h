@@ -74,9 +74,14 @@ public:
         void W2Angstroem(double &x, double &y);
         double AngstroemXRel2W(double x);
 
+        void dIndex_from_BitmapPix (double &ix, double &iy, double bx, double by);
+        void BitmapPix_from_dIndex (double &bx, double &by, double ix, double iy);
+        
         int get_userzoommode() { return userzoommode; };
         int GetQfac() { return Qfac; };
         double GetZfac() { return Zfac; };
+
+        void SetAS_PixY(double ratio=1.0) { as_pixy = ratio; };
 
         UnitObj *Ux();
         UnitObj *Uy();
@@ -89,6 +94,7 @@ private:
         UnitObj *uz;
         int Qfac;
         double Zfac;
+        double as_pixy;
         int userzoommode;
         int pixelmode;
         int showtime;

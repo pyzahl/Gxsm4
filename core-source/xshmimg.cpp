@@ -147,18 +147,23 @@ void ShmImage2D::MkPalette(const char *name){
 void ShmImage2D::saveimage(gchar *name){
 }
 
-void ShmImage2D::draw_callback (cairo_t *cr, gboolean draw_red_line, gboolean draw_sls_box, gboolean draw_tip){
+void ShmImage2D::draw_callback (cairo_t *cr, gboolean draw_red_line, gboolean draw_sls_box, gboolean draw_tip, double asp_ypx){
         //XSM_DEBUG_GM (DBG_L3,  "ShmImage2D::draw_callback** set pixbuf");
-
-	gdk_cairo_set_source_pixbuf (cr, gdk_pixbuf, 0., 0.);
+        if (fabs( asp_ypx - 1.0) > 0.01){
+                GdkPixbuf* tmp_pixbuf = gdk_pixbuf_scale_simple (gdk_pixbuf, width, int(height*asp_ypx), GDK_INTERP_BILINEAR);
+                gdk_cairo_set_source_pixbuf (cr, tmp_pixbuf, 0., 0.);
+                g_object_unref (tmp_pixbuf);
+        } else {
+                gdk_cairo_set_source_pixbuf (cr, gdk_pixbuf, 0., 0.);
+        }
 	cairo_paint(cr);
         
         if (draw_red_line){
                 //XSM_DEBUG_GM (DBG_L3,  "ShmImage2D::draw_callback** draw red line");
                 cairo_set_line_width (cr, ZoomFac);
                 cairo_set_source_rgb (cr, 1.0, 0.0, 0.0); // red
-                cairo_move_to (cr, red_line_points[0], red_line_points[1]);
-                cairo_line_to (cr, red_line_points[2], red_line_points[3]);
+                cairo_move_to (cr, red_line_points[0], asp_ypx*red_line_points[1]);
+                cairo_line_to (cr, red_line_points[2], asp_ypx*red_line_points[3]);
                 cairo_stroke (cr);
         }
 
@@ -167,11 +172,11 @@ void ShmImage2D::draw_callback (cairo_t *cr, gboolean draw_red_line, gboolean dr
                         //XSM_DEBUG_GM (DBG_L3,  "ShmImage2D::draw_callback** draw sls box");
                         cairo_set_line_width (cr, 1.5*ZoomFac);
                         cairo_set_source_rgba (cr, 1.0, 1.0, 0.0, 0.5); // yellow alpha 50%
-                        cairo_move_to (cr, red_box_extends[0], red_box_extends[2]);
-                        cairo_line_to (cr, red_box_extends[0]+red_box_extends[1], red_box_extends[2]);
-                        cairo_line_to (cr, red_box_extends[0]+red_box_extends[1], red_box_extends[2]+red_box_extends[3]);
-                        cairo_line_to (cr, red_box_extends[0], red_box_extends[2]+red_box_extends[3]);
-                        cairo_line_to (cr, red_box_extends[0], red_box_extends[2]);
+                        cairo_move_to (cr, red_box_extends[0],  asp_ypx*red_box_extends[2]);
+                        cairo_line_to (cr, red_box_extends[0]+red_box_extends[1],  asp_ypx*red_box_extends[2]);
+                        cairo_line_to (cr, red_box_extends[0]+red_box_extends[1],  asp_ypx*(red_box_extends[2]+red_box_extends[3]));
+                        cairo_line_to (cr, red_box_extends[0],  asp_ypx*(red_box_extends[2]+red_box_extends[3]));
+                        cairo_line_to (cr, red_box_extends[0],  asp_ypx*red_box_extends[2]);
                         cairo_stroke (cr);
                 }
         }
@@ -185,7 +190,9 @@ void ShmImage2D::draw_callback (cairo_t *cr, gboolean draw_red_line, gboolean dr
                 y *= ZoomFac;
                 x /= QuenchFac;
                 y /= QuenchFac;
-                
+
+                y*=asp_ypx;
+ 
                 cairo_save (cr);
                 cairo_translate (cr, x, y-2*14.);
                 cairo_scale (cr, 2.,2.);

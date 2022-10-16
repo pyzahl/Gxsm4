@@ -87,6 +87,7 @@ public:
         //
         static void view_view_set_view_mode_radio_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
         static void view_view_x_linearize_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
+        static void view_view_aspect_range_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
         static void view_view_attach_redline_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
         static void view_view_redline_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
         static void view_view_blueline_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);

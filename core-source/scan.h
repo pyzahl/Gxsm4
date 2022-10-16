@@ -258,6 +258,9 @@ public:
 	void dump_object_data (int i) { ((scan_object_data*) g_slist_nth_data(objects_list, i)) -> dump (); };
 	int get_channel_id () { return ChanNo; };
 
+        void aspect_range (int f) { view_asp_range=f; };
+        int aspect_range () { return view_asp_range; };
+
 	void x_linearize (int f) { X_linearize=f; };
 	int x_linearize () { return X_linearize; };
 
@@ -278,6 +281,7 @@ public:
 	int Running;
 	//int numpkt2d;
 	int refcount;
+        int view_asp_range;
 	int X_linearize;
 	gdouble scan_direction;
 	ZD_TYPE scan_ztype;

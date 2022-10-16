@@ -1203,8 +1203,7 @@ gboolean VObject::is_spacetime (){
 
 void VObject::set_offset(){
 	double x,y;
-	x = xy[0]*vinfo->GetQfac();
-	y = xy[1]*vinfo->GetQfac();
+        vinfo->dIndex_from_BitmapPix (x,y, (double)xy[0], (double)xy[1]);
 
 	if (x < 0. || x >= vinfo->sc->mem2d->GetNx())
 		return;
@@ -1220,8 +1219,7 @@ void VObject::set_offset(){
 
 void VObject::set_global_ref(){
 	double x,y;
-	x = xy[0]*vinfo->GetQfac();
-	y = xy[1]*vinfo->GetQfac();
+        vinfo->dIndex_from_BitmapPix (x,y, (double)xy[0], (double)xy[1]);
 
 	if (x < 0. || x >= vinfo->sc->mem2d->GetNx())
 		return;
@@ -1264,10 +1262,8 @@ void VObject::SetUpScan(){
 	double x0,y0,x1,y1,dx,dy;
 	double xyq[4];
 
-	xyq[0] = xy[0]*vinfo->GetQfac();
-	xyq[1] = xy[1]*vinfo->GetQfac();
-	xyq[2] = xy[2*(np-1)]*vinfo->GetQfac();
-	xyq[3] = xy[2*(np-1)+1]*vinfo->GetQfac();
+        vinfo->dIndex_from_BitmapPix (xyq[0],xyq[1], (double)xy[0], (double)xy[1]);
+        vinfo->dIndex_from_BitmapPix (xyq[2],xyq[3], (double)xy[2*(np-1)], (double)xy[2*(np-1)+1]);
 
 	if(xyq[0]<0. || xyq[0] >= vinfo->sc->mem2d->GetNx() ||
 	   xyq[2]<0. || xyq[2] >= vinfo->sc->mem2d->GetNx())
@@ -1684,8 +1680,7 @@ void VObPoint::follow_off(){
 
 void VObPoint::update_offset(){
 	double x,y;
-	x = (double)xy[0]*vinfo->GetQfac ();
-	y = (double)xy[1]*vinfo->GetQfac ();
+        vinfo->dIndex_from_BitmapPix (x,y, (double)xy[0], (double)xy[1]);
 
 	if (x < 0. || x >= vinfo->sc->mem2d->GetNx ())
 		return;
@@ -1705,8 +1700,7 @@ void VObPoint::update_offset(){
 
 void VObPoint::update_scanposition(){
 	double x,y;
-	x = (double)xy[0]*vinfo->GetQfac ();
-	y = (double)xy[1]*vinfo->GetQfac ();
+        vinfo->dIndex_from_BitmapPix (x,y, (double)xy[0], (double)xy[1]);
 
 	if (x < 0. || x >= vinfo->sc->mem2d->GetNx ())
 		return;
@@ -3268,11 +3262,9 @@ void VObRectangle::SetUpScan()
 	double x0,y0,x1,y1,dx,dy;
 	double xyq[4];
 
-	xyq[0] = xy[0]*vinfo->GetQfac();
-	xyq[1] = xy[1]*vinfo->GetQfac();
-	xyq[2] = xy[2]*vinfo->GetQfac();
-	xyq[3] = xy[3]*vinfo->GetQfac();
-	
+        vinfo->dIndex_from_BitmapPix (xyq[0],xyq[1], (double)xy[0], (double)xy[1]);
+        vinfo->dIndex_from_BitmapPix (xyq[2],xyq[3], (double)xy[2], (double)xy[3]);
+
 	/* abort if center of rectangle is outside current scan window
 	 * it seems Pixel2World does not handle that as i would expect
 	 */

@@ -66,6 +66,7 @@ Scan::Scan(Scan *scanmaster){
 	VFlg  = scanmaster->VFlg;
 	ChanNo= scanmaster->ChanNo;
 	X_linearize=scanmaster->X_linearize;
+	view_asp_range=scanmaster->view_asp_range;
         for(int i=0; i<4; ++i) ixy_sub[i]=0;
 	State = IS_FRESH;
         last_line_updated = -1;
@@ -104,6 +105,7 @@ Scan::Scan(int vtype, int vflg, int ChNo, SCAN_DATA *vd, ZD_TYPE mtyp, Gxsm4app 
 		SetView(vtype);
 	SetVM(vflg, vdata);
 	X_linearize=FALSE;
+        view_asp_range=FALSE;
         for(int i=0; i<4; ++i) ixy_sub[i]=0;
 }
 

@@ -358,6 +358,9 @@ gboolean CropScan(MATHOPPARAMS){
 		Dest->mem2d->SetLayer(0);
 	}
 
+        Dest->mem2d->data->CopyLookups (Src->mem2d->data, msr.xLeft,msr.yTop);
+        Dest->mem2d->copy_layer_information (Src->mem2d);
+        
 	return MATH_OK;
 }
 
