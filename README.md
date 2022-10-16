@@ -1,4 +1,4 @@
-## **ATTENTION:**
+# **ATTENTION:**
 
 **THIS IS A BETA VERSION AND WORK IN PROGRESS of Gxsm4 ported to GTK4 from Gxsm-3.0 on SF (gxsm.sf.net).**
 There are minor gtk4 related issues and shortcomings at this time
@@ -6,48 +6,64 @@ and this version is for evaluation and future migration readyness.
 See details of pending / not functional parts below in section 3.
 (C) PyZahl 2021-12-31
 
-## 1. General Information
+# 1. General Information
 
-GXSM -- Gnome X Scanning Microscopy: A multi-channel image and
-vector-probe data acquisition and visualization system designed for
-SPM techniques (STM,AFM..), but also SPA-LEED. A plug-in interface
-allows any user add-on data-processing and special hardware and
-instrument support.
+GXSM -- Gnome X Scanning Microscopy: A multi-channel image and vector-probe data acquisition and visualization system designed for SPM techniques (STM,AFM..). A plug-in interface allows any user add-on data-processing and special hardware and instrument support.
 
-Based on several hardware options it supports a commercially available
-DSP hardware and provided also Open Source Code for all the low level
-signal processing tasks and instrument controls in a most flexible and
-adaptable manner.
+Based on several hardware options it supports a commercially available DSP hardware (see https://www.softdb.com/scanning-probe-microscopy/) and provided also open source code for all the low level signal processing tasks and instrument controls in a most flexible and adaptable manner.
 
 All latest stable software is available now via GIT:
 (Gxsm4 Beta currently) https://github.com/pyzahl/Gxsm4
 
-or Live Demo/Install CD:
+or Live Demo/Install CD (with GXSM3):
 http://www.ventiotec.de/linux/GXSM-Linux.iso
 
 GXSM Web Site: http://gxsm.sf.net
 
+# 2. Installation
 
-## 2a. Installation
+Gxsm4 requires GTK4, GtkSourceView5, libfftw, libnetcdf, libquicktime, ... Therefore, please install a recent linux distribution like debian or ubuntu (> 22.04 LTS)
 
-Gxsm4 requires GTK4, GtkSourceView5, libfftw, libnetcdf, libquicktime, ...
-
-Simple install procedure:
-
-svn checkout svn+ssh://zahl@svn.code.sf.net/p/gxsm/svn/trunk/Gxsm4 Gxsm4-svn
-
-## New build tool: Meson buildsystem -- work in progress:
+To obtain a copy of the source code, please run in a terminal:  
+``` 
+ $ git clone https://github.com/pyzahl/Gxsm4 gxsm4-git
+``` 
+## a) New build tool: Meson buildsystem -- work in progress:
 
 First create your "builddir" in the project root folder.
-Then run
-$ meson builddir
-$ cd builddir
-$ ninja
-$ ninja install
+Then run in the folder Gxsm4-git
+``` 
+ $ meson builddir
+ $ cd builddir
+ $ meson compile
+ $ meson install
+```
+Here, "meson compile" is just calling "ninja".
 
-Note: Currently the plugins are not completely build/failing with file not found, work in progress.
+To uninstall call in the buildir
+``` 
+ninja uninstall
+```
 
+## b) New package tool: Flatpak -- work in progress:
 
+Install flatpak and flathub
+``` 
+ $ sudo apt install flatpak -y
+ $ sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+```
+Install the gnome sdk within your flatpak enviroment:
+``` 
+ $ flatpak install flathub org.gnome.Sdk//41 org.gnome.Platform//41
+```
+
+Now install and run GXSM4 (assuming that the json-file/source is in the folder gxsm4-git
+``` 
+ $ mkdir flatpak_builddir
+ $ flatpak-builder --user --install --force-clean flatpak_builddir gxsm4-git/org.gnome.gxsm4.json
+ $ flatpak run org.gnome.Gxsm4
+```
+ 
 ## 3. To-Do-List
 
 - Testing testing testing
@@ -64,16 +80,25 @@ Note: Currently the plugins are not completely build/failing with file not found
              It is possible to manually edit the properties via the dconf-editor to get started.
 	     Some thing seams slow here at build and update, or has post idel latency.
 
+- known GTK4 shortcomings so far noted: 
+  - Long popup/down selection lists, items out of "screen limits" are not sccessible, no/missing scrolling feature, etc.. No idea yet how to make this work right.
+  - Rendering in cairo fall back mode (when using X11 export via ssh -X for example) is very slow -- some where around a magnitude (10x) slow! What makes remote work nearly impossible. However, varies a lot by "fetaure" used. Menu pop ups are very slow, take long to appear. GUI initial  build (many entries, etc.) takes a long time.
+  - press/release signals not available for simple button widget. Work around assigning handlers does not work as expected. Work for a canvas "home made" button. Non perfec tbu tworkable workaround currently used: Arrow icons on button widget accept press and release events. (Needed for Mover Controls: "fire wave signal on DSP when pressed" direction buttons.
+
+- Pending back/forward sync or porting from gxsm3: idle callbacks for Tip Move and related vs. blocking or singel shot. Address pending minor random but rare move issue with initiating a scan.
+- Pending odd behavior for object move/edit in some situations. (Workaround: remove all, start over)
+- Pending: some hot keys are non functional
+
 - DSP-CONTROL windows A, B -- initial TAB Drag to empty secondary window impossible (or hard??) to find a hook area to drop off. Work around for now:
 Manually hack config via dconf-editor, then further DnD is easy and as usual again:
-   
-   Set for example
+
+  - Set for example
 /org/gnome/gxsm4/hwi/sranger-mk23/window-01-tabs = 'aclefghkmn------------------------------'
 and
 /org/gnome/gxsm4/hwi/sranger-mk23/window-02-tabs = 'dijo----------------------------'
 Then start gxsm4 again.
 
-Save Profile as Drawing=pdf -> crash
+ - Save Profile as Drawing=pdf -> crash
 
 
 ## FYI:
@@ -129,4 +154,3 @@ mailing list. See also the file 'HACKING' for more detailed information.
 
 
   *The gxsm team.*
-
