@@ -410,6 +410,9 @@ Inet_Json_External_Scandata::Inet_Json_External_Scandata (Gxsm4app *app):AppBase
         bp->new_line ();
         bp->grid_add_check_button ( N_("Use LockIn Mode*"), "Use LockIn Mode.\n*: Must use PAC/LockIn FPGA bit code\n instead of Dual PAC FPGA bit code.", 2,
                                     G_CALLBACK (Inet_Json_External_Scandata::select_pac_lck_amplitude), this);
+        bp->new_line ();
+        bp->grid_add_check_button ( N_("Pulse Control"), "Show Pulse Controller", 2,
+                                    G_CALLBACK (Inet_Json_External_Scandata::show_pulse_control), this);
 
         bp->pop_grid ();
 
@@ -470,7 +473,7 @@ Inet_Json_External_Scandata::Inet_Json_External_Scandata (Gxsm4app *app):AppBase
         bp->new_line ();
         bp->grid_add_check_button ( N_("Use LockIn Mode"), "Use LockIn Mode", 2,
                                     G_CALLBACK (Inet_Json_External_Scandata::select_pac_lck_phase), this);
-        bp->grid_add_check_button ( N_("dFreq Control"), "Show delta Frequencu Controller", 2,
+        bp->grid_add_check_button ( N_("dFreq Control"), "Show delta Frequency Controller", 2,
                                     G_CALLBACK (Inet_Json_External_Scandata::show_dF_control), this);
 
         bp->pop_grid ();
@@ -519,6 +522,69 @@ Inet_Json_External_Scandata::Inet_Json_External_Scandata (Gxsm4app *app):AppBase
                                     G_CALLBACK (Inet_Json_External_Scandata::dfreq_controller), this);
         bp->grid_add_check_button ( N_("Invert"), "Invert Dfreq Controller Gain. Normally positive.", 2,
                                     G_CALLBACK (Inet_Json_External_Scandata::dfreq_controller_invert), this);
+
+        // =======================================
+        bp->pop_grid ();
+        
+        bp->new_grid_with_frame ("Pulse Former");
+        pulse_control_frame = bp->frame;
+        parameters.pulse_form_bias0 = 0;
+        parameters.pulse_form_bias1 = 0;
+        parameters.pulse_form_phase0 = 0;
+        parameters.pulse_form_phase1 = 0;
+        parameters.pulse_form_width0 = 0.1;
+        parameters.pulse_form_width1 = 0.1;
+        parameters.pulse_form_width0if = 0.5;
+        parameters.pulse_form_width1if = 0.5;
+        parameters.pulse_form_height0 = 200.;
+        parameters.pulse_form_height1 = -200.;
+        parameters.pulse_form_height0if = -40.;
+        parameters.pulse_form_height1if = 40.;
+        parameters.pulse_form_shapex = 1.;
+        parameters.pulse_form_shapexif = 1.;
+        parameters.pulse_form_shapexw = 0.;
+        parameters.pulse_form_shapexwif = 0.;
+        parameters.pulse_form_enable = false;
+        bp->set_no_spin (false);
+        bp->set_input_width_chars (6);
+        bp->set_default_ec_change_notice_fkt (Inet_Json_External_Scandata::pulse_form_parameter_changed, this);
+        GtkWidget *inputMB = bp->grid_add_ec ("Bias", mVolt, &parameters.pulse_form_bias0, 0.0, 180.0, "5g", 0.1, 1.0, "PULSE-FORM-BIAS0");
+        GtkWidget *inputCB = bp->grid_add_ec (NULL,     mVolt, &parameters.pulse_form_bias1, 0.0, 180.0, "5g", 0.1, 1.0, "PULSE-FORM-BIAS1");
+        g_object_set_data( G_OBJECT (inputMB), "HasClient", inputCB);
+        bp->new_line ();
+        GtkWidget *inputMP = bp->grid_add_ec ("Phase", Deg, &parameters.pulse_form_phase0, 0.0, 180.0, "5g", 1.0, 10.0, "PULSE-FORM-PHASE0");
+        GtkWidget *inputCP = bp->grid_add_ec (NULL,      Deg, &parameters.pulse_form_phase1, 0.0, 180.0, "5g", 1.0, 10.0, "PULSE-FORM-PHASE1");
+        g_object_set_data( G_OBJECT (inputMP), "HasClient", inputCP);
+
+        bp->new_line ();
+        GtkWidget *inputMW = bp->grid_add_ec ("Width", uTime, &parameters.pulse_form_width0, 0.0, 10000.0, "5g", 0.1, 1.0, "PULSE-FORM-WIDTH0");
+        GtkWidget *inputCW = bp->grid_add_ec (NULL,      uTime, &parameters.pulse_form_width1, 0.0, 10000.0, "5g", 0.1, 1.0, "PULSE-FORM-WIDTH1");
+        g_object_set_data( G_OBJECT (inputMW), "HasClient", inputCW);
+        bp->new_line ();
+        GtkWidget *inputMWI = bp->grid_add_ec ("WidthIF", uTime, &parameters.pulse_form_width0if, 0.0, 10000.0, "5g", 0.1, 1.0, "PULSE-FORM-WIDTH0IF");
+        GtkWidget *inputCWI = bp->grid_add_ec (NULL,        uTime, &parameters.pulse_form_width1if, 0.0, 10000.0, "5g", 0.1, 1.0, "PULSE-FORM-WIDTH1IF");
+        g_object_set_data( G_OBJECT (inputMWI), "HasClient", inputCWI);
+        bp->new_line ();
+        
+        GtkWidget *inputMH = bp->grid_add_ec ("Height", mVolt, &parameters.pulse_form_height0, -1000.0, 1000.0, "5g", 1.0, 10.0, "PULSE-FORM-HEIGHT0");
+        GtkWidget *inputCH = bp->grid_add_ec (NULL,       mVolt, &parameters.pulse_form_height1, -1000.0, 1000.0, "5g", 1.0, 10.0, "PULSE-FORM-HEIGTH1");
+        bp->new_line ();
+        GtkWidget *inputMHI = bp->grid_add_ec ("HeightIF", mVolt, &parameters.pulse_form_height0if, -1000.0, 1000.0, "5g", 1.0, 10.0, "PULSE-FORM-HEIGHT0IF");
+        GtkWidget *inputCHI = bp->grid_add_ec (NULL,         mVolt, &parameters.pulse_form_height1if, -1000.0, 1000.0, "5g", 1.0, 10.0, "PULSE-FORM-HEIGTH1IF");
+        bp->new_line ();
+        
+        GtkWidget *inputX  = bp->grid_add_ec ("Shape", Unity, &parameters.pulse_form_shapex, -10.0, 10.0, "4g", 0.1, 1.0, "PULSE-FORM-SHAPEX");
+        GtkWidget *inputXI = bp->grid_add_ec (NULL,    Unity, &parameters.pulse_form_shapexif, -10.0, 10.0, "4g", 0.1, 1.0, "PULSE-FORM-SHAPEXIF");
+        g_object_set_data( G_OBJECT (inputX), "HasClient", inputXI);
+        bp->new_line ();
+        GtkWidget *inputXW  = bp->grid_add_ec ("ShapeW", Unity, &parameters.pulse_form_shapexw, 0.0, 1.0, "4g", 0.1, 1.0, "PULSE-FORM-SHAPEXW");
+        GtkWidget *inputXWI = bp->grid_add_ec (NULL,    Unity, &parameters.pulse_form_shapexwif, 0.0, 1.0, "4g", 0.1, 1.0, "PULSE-FORM-SHAPEXWIF");
+        g_object_set_data( G_OBJECT (inputXW), "HasClient", inputXWI);
+        bp->new_line ();
+        
+        bp->set_input_nx (1);
+        bp->grid_add_check_button ( N_("Enable"), "Enable Pulse Forming", 2,
+                                    G_CALLBACK (Inet_Json_External_Scandata::pulse_form_enable), this);
 
         // =======================================
 
@@ -840,18 +906,26 @@ Inet_Json_External_Scandata::Inet_Json_External_Scandata (Gxsm4app *app):AppBase
         gtk_widget_show (wid);
         const gchar *zoom_levels[] = {
                                       "0.001",
+                                      "0.003",
                                       "0.01",
+                                      "0.03",
                                       "0.1",
+                                      "0.3",
                                       "1",
+                                      "3",
                                       "10",
+                                      "30",
                                       "100",
+                                      "300",
                                       "1000",
+                                      "3000",
                                       "10k",
+                                      "30k",
                                       "100k",
                                       NULL };
 	for(int i=0; zoom_levels[i]; i++)
                 gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (wid),  zoom_levels[i], zoom_levels[i]);
-	gtk_combo_box_set_active (GTK_COMBO_BOX (wid), 3);
+	gtk_combo_box_set_active (GTK_COMBO_BOX (wid), 6);
 
 
         bp->grid_add_check_button ( N_("Ch2: AC"), "Remove Offset from Ch2", 1,
@@ -871,6 +945,29 @@ Inet_Json_External_Scandata::Inet_Json_External_Scandata (Gxsm4app *app):AppBase
 
         bp->grid_add_check_button ( N_("Ch3 AC"), "Remove Offset from Ch3", 1,
                                     G_CALLBACK (Inet_Json_External_Scandata::scope_ac_ch3_callback), this);
+        bp->grid_add_check_button ( N_("XY"), "display XY plot for In1, In2", 1,
+                                    G_CALLBACK (Inet_Json_External_Scandata::scope_xy_on_callback), this);
+        bp->grid_add_check_button ( N_("FFT"), "display FFT plot for In1, In2", 1,
+                                    G_CALLBACK (Inet_Json_External_Scandata::scope_fft_on_callback), this);
+        
+        wid = gtk_combo_box_text_new ();
+        g_signal_connect (G_OBJECT (wid), "changed",
+                          G_CALLBACK (Inet_Json_External_Scandata::scope_fft_time_zoom_callback),
+                          this);
+        bp->grid_add_widget (wid);
+        const gchar *time_zoom_levels[] = {
+                                      "1",
+                                      "2",
+                                      "5",
+                                      "10",
+                                      "20",
+                                      "50",
+                                      "100",
+                                      NULL };
+	for(int i=0; time_zoom_levels[i]; i++)
+                gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (wid),  time_zoom_levels[i], time_zoom_levels[i]);
+	gtk_combo_box_set_active (GTK_COMBO_BOX (wid), 0);
+
         bp->new_line ();
         bram_shift = 0;
         bp->grid_add_widget (gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL, 0, 4096, 10), 10);
@@ -1110,6 +1207,13 @@ void Inet_Json_External_Scandata::show_dF_control (GtkWidget *widget, Inet_Json_
                 gtk_widget_hide (self->dF_control_frame);
 }
 
+void Inet_Json_External_Scandata::show_pulse_control (GtkWidget *widget, Inet_Json_External_Scandata *self){
+        if (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)))
+                gtk_widget_show (self->pulse_control_frame);
+        else
+                gtk_widget_hide (self->pulse_control_frame);
+}
+
 void Inet_Json_External_Scandata::select_pac_lck_amplitude (GtkWidget *widget, Inet_Json_External_Scandata *self){
         self->write_parameter ("LCK_AMPLITUDE", gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)));
 }
@@ -1161,6 +1265,39 @@ void Inet_Json_External_Scandata::dfreq_ctrl_parameter_changed (Param_Control* p
         self->write_parameter ("DFREQ_FB_SETPOINT", self->parameters.dfreq_fb_setpoint);
         self->write_parameter ("DFREQ_FB_UPPER", self->parameters.control_dfreq_fb_upper);
         self->write_parameter ("DFREQ_FB_LOWER", self->parameters.control_dfreq_fb_lower);
+}
+
+void Inet_Json_External_Scandata::pulse_form_parameter_changed (Param_Control* pcs, gpointer user_data){
+        Inet_Json_External_Scandata *self = (Inet_Json_External_Scandata *)user_data;
+        self->write_parameter ("PULSE_FORM_BIAS0", self->parameters.pulse_form_bias0);
+        self->write_parameter ("PULSE_FORM_BIAS1", self->parameters.pulse_form_bias1);
+        self->write_parameter ("PULSE_FORM_PHASE0", self->parameters.pulse_form_phase0);
+        self->write_parameter ("PULSE_FORM_PHASE1", self->parameters.pulse_form_phase1);
+        self->write_parameter ("PULSE_FORM_WIDTH0", self->parameters.pulse_form_width0);
+        self->write_parameter ("PULSE_FORM_WIDTH1", self->parameters.pulse_form_width1);
+        self->write_parameter ("PULSE_FORM_WIDTH0IF", self->parameters.pulse_form_width0if);
+        self->write_parameter ("PULSE_FORM_WIDTH1IF", self->parameters.pulse_form_width1if);
+        self->write_parameter ("PULSE_FORM_SHAPEXW", self->parameters.pulse_form_shapexw);
+        self->write_parameter ("PULSE_FORM_SHAPEXWIF", self->parameters.pulse_form_shapexwif);
+        self->write_parameter ("PULSE_FORM_SHAPEX", self->parameters.pulse_form_shapex);
+        self->write_parameter ("PULSE_FORM_SHAPEXIF", self->parameters.pulse_form_shapexif);
+
+        if (self->parameters.pulse_form_enable){
+                self->write_parameter ("PULSE_FORM_HEIGHT0", self->parameters.pulse_form_height0);
+                self->write_parameter ("PULSE_FORM_HEIGHT1", self->parameters.pulse_form_height1);
+                self->write_parameter ("PULSE_FORM_HEIGHT0IF", self->parameters.pulse_form_height0if);
+                self->write_parameter ("PULSE_FORM_HEIGHT1IF", self->parameters.pulse_form_height1if);
+        } else {
+                self->write_parameter ("PULSE_FORM_HEIGHT0", 0.0);
+                self->write_parameter ("PULSE_FORM_HEIGHT1", 0.0);
+                self->write_parameter ("PULSE_FORM_HEIGHT0IF", 0.0);
+                self->write_parameter ("PULSE_FORM_HEIGHT1IF", 0.0);
+        }
+}
+
+void Inet_Json_External_Scandata::pulse_form_enable (GtkWidget *widget, Inet_Json_External_Scandata *self){
+        self->parameters.pulse_form_enable = gtk_check_button_get_active (GTK_CHECK_BUTTON (widget));
+        self->pulse_form_parameter_changed (NULL, self);
 }
 
 void Inet_Json_External_Scandata::save_values (NcFile *ncf){
@@ -1486,15 +1623,27 @@ void Inet_Json_External_Scandata::scope_ac_ch3_callback (GtkWidget *widget, Inet
         self->scope_ac[2] = gtk_check_button_get_active (GTK_CHECK_BUTTON (widget));
 }
 
+void Inet_Json_External_Scandata::scope_xy_on_callback (GtkWidget *widget, Inet_Json_External_Scandata *self){
+        self->scope_xy_on = gtk_check_button_get_active (GTK_CHECK_BUTTON (widget));
+}
+
+void Inet_Json_External_Scandata::scope_fft_on_callback (GtkWidget *widget, Inet_Json_External_Scandata *self){
+        self->scope_fft_on = gtk_check_button_get_active (GTK_CHECK_BUTTON (widget));
+}
 void Inet_Json_External_Scandata::scope_z_ch1_callback (GtkWidget *widget, Inet_Json_External_Scandata *self){
-        double z[] = { 0.001, 0.01, 0.1, 1.0, 10., 100., 1000., 10e3, 100e3, 1., 0., 0. };
+        double z[] = { 0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1.0, 3.0, 10., 30.0, 100., 300.0, 1000., 3000.0, 10e3, 30e3, 100e3, 1., 0., 0. };
         int i = gtk_combo_box_get_active (GTK_COMBO_BOX (widget));
         self->scope_z[0] = z[i];
 }
 void Inet_Json_External_Scandata::scope_z_ch2_callback (GtkWidget *widget, Inet_Json_External_Scandata *self){
-        double z[] = { 0.001, 0.01, 0.1, 1.0, 10., 100., 1000., 10e3, 100e3, 1., 0., 0. };
+        double z[] = { 0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1.0, 3.0, 10., 30.0, 100., 300.0, 1000., 3000.0, 10e3, 30e3, 100e3, 1., 0., 0. };
         int i = gtk_combo_box_get_active (GTK_COMBO_BOX (widget));
         self->scope_z[1] = z[i];
+}
+void Inet_Json_External_Scandata::scope_fft_time_zoom_callback (GtkWidget *widget, Inet_Json_External_Scandata *self){
+        double z[] = { 1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100., 1., 0., 0. };
+        int i = gtk_combo_box_get_active (GTK_COMBO_BOX (widget));
+        self->scope_fft_time_zoom = z[i];
 }
 
 void Inet_Json_External_Scandata::connect_cb (GtkWidget *widget, Inet_Json_External_Scandata *self){
@@ -1910,6 +2059,96 @@ void Inet_Json_External_Scandata::stream_data (){
                 }
         }
 #endif
+}
+
+#define FFT_LEN 1024
+double blackman_nuttall_window (int i, double y){
+        static gboolean init=true;
+        static double w[FFT_LEN];
+        if (init){
+                for (int i=0; i<FFT_LEN; ++i){
+                        double ipl = i*M_PI/FFT_LEN;
+                        double x1 = 2*ipl;
+                        double x2 = 4*ipl;
+                        double x3 = 6*ipl;
+                        w[i] = 0.3635819 - 0.4891775 * cos (x1) + 0.1365995 * cos (x2) - 0.0106411 * cos (x3);
+                }
+                init=false;
+        }
+        return w[i]*y;
+}
+
+gint compute_fft (gint len, double *data, double *psd, double mu=1.){
+        static gint n=0;
+        static double *in=NULL;
+        //static double *out=NULL;
+        static fftw_complex *out=NULL;
+        static fftw_plan plan=NULL;
+
+        if (n != len || !in || !out || !plan){
+                if (plan){
+                        fftw_destroy_plan (plan); plan=NULL;
+                }
+                // free temp data memory
+                if (in) { delete[] in; in=NULL; }
+                if (out) { delete[] out; out=NULL; }
+                n=0;
+                if (len < 2) // clenaup only, exit
+                        return 0;
+
+                n = len;
+                // get memory for complex data
+                in  = new double [n];
+                out = new fftw_complex [n];
+                //out = new double [n];
+
+                // create plan for fft
+                plan = fftw_plan_dft_r2c_1d (n, in, out, FFTW_ESTIMATE);
+                //plan = fftw_plan_r2r_1d (n, in, out, FFTW_REDFT00, FFTW_ESTIMATE);
+                if (plan == NULL)
+                        return -1;
+        }
+
+                
+        // prepare data for fftw
+#if 0
+        double s=2.*M_PI/(n-1);
+        double a0=0.54;
+        double a1=1.-a0;
+        int n2=n/2;
+        for (int i = 0; i < n; ++i){
+                double w=a0+a1*cos((i-n2)*s);
+                in[i] = w*data[i];
+        }
+#else
+        //double mx=0., mi=0.;
+        for (int i = 0; i < n; ++i){
+                in[i] = blackman_nuttall_window (i, data[i]);
+                //if (i==0) mi=mx=in[i];
+                //if (in[i] > mx) mx=in[i];
+                //if (in[i] < mi) mi=in[i];
+        }
+        //g_print("FFT in Min: %g Max: %g\n",mi,mx);
+#endif
+        //g_print("FFTin %g",in[0]);
+                
+        // compute transform
+        fftw_execute (plan);
+
+        //double N=2*(n-1);
+        //double scale = 1./(max*2*(n-1));
+        double scale = M_PI*2/n;
+        double mag=0.;
+        for (int i=0; i<n/2; ++i){
+                mag = scale * sqrt(c_re(out[i])*c_re(out[i]) + c_im(out[i])*c_im(out[i]));
+                //psd_db[i] = gfloat((1.-mu)*(double)psd_db[i] + mu*20.*log(mag));
+                psd[i] = gfloat((1.-mu)*(double)psd[i] + mu*mag);
+                //if (i==0) mi=mx=mag;
+                //if (mag > mx) mx=mag;
+                //if (mag < mi) mi=mag;
+        }
+        //g_print("FFT out Min: %g Max: %g\n",mi,mx);
+        return 0;
 }
 
 double Inet_Json_External_Scandata::unwrap (int k, double phi){
@@ -2479,11 +2718,108 @@ void Inet_Json_External_Scandata::dynamic_graph_draw_function (GtkDrawingArea *a
                                 }
                         }
                         
-                } else if (transport == 0){ // add polar plot for CH1,2 as XY
-                        wave->set_stroke_rgba (CAIRO_COLOR_MAGENTA);
-                        for (int k=0; k<n; ++k)
-                                wave->set_xy_fast (k,xcenter-yr*gain_scale[0]*signal[0][k],-yr*gain_scale[1]*signal[1][k]);
-                        wave->draw (cr);
+                } else {
+                        if (transport == 0 and scope_xy_on){ // add polar plot for CH1,2 as XY
+                                wave->set_stroke_rgba (CAIRO_COLOR_MAGENTA);
+                                for (int k=0; k<n; ++k)
+                                        wave->set_xy_fast (k,xcenter-yr*scope_z[0]*gain_scale[0]*signal[0][k],-yr*scope_z[1]*gain_scale[1]*signal[1][k]);
+                                wave->draw (cr);
+                        } if (transport == 0 and scope_fft_on){ // add FFT plot for CH1,2
+                                const unsigned int fftlen = FFT_LEN; // use first N samples from buffer
+                                double tm = FFT_LEN/1024*bram_window_length;
+                                double fm = FFT_LEN/tm/2.;
+                                static double power_spectrum[2][FFT_LEN/2];
+                                cairo_item_path *wave_psd = new cairo_item_path (fftlen/2);
+                                wave_psd->set_line_width (1.0);
+                                        
+                                compute_fft (fftlen, &signal[0][0], &power_spectrum[0][0]);
+
+                                wave_psd->set_stroke_rgba (CAIRO_COLOR_MAGENTA);
+                                double xk0 = xcenter-0.4*scope_width;
+                                double xkf = scope_width/(fftlen/2)*scope_fft_time_zoom;
+                                int km=0;
+                                double psdmx=0.;
+                                for (int k=0; k<fftlen/2; ++k){
+                                        wave_psd->set_xy_fast (k, xk0+xkf*(k-bram_shift)*scope_fft_time_zoom, db_to_y (dB_from_mV (scope_z[0]*power_spectrum[0][k]), dB_hi, y_hi, dB_mags));
+                                        if (k==2){ // skip nyquist
+                                                psdmx = power_spectrum[0][k];
+                                                km = k;
+                                        } else
+                                                if (psdmx < power_spectrum[0][k]){
+                                                        psdmx = power_spectrum[0][k];
+                                                        km = k;
+                                                }
+                                }
+                                wave_psd->draw (cr);
+                                {
+                                        double f=fm/scope_fft_time_zoom * km/(fftlen/2.0);
+                                        double x=xk0+xkf*(km-bram_shift)*scope_fft_time_zoom;
+                                        valuestring = g_strdup_printf ("%g mV @ %g %s", psdmx, f*1e-3, "kHz");
+                                        reading->set_stroke_rgba (CAIRO_COLOR_MAGENTA);
+                                        reading->set_text (x, db_to_y (dB_from_mV (scope_z[0]*psdmx), dB_hi, y_hi, dB_mags), valuestring);
+                                        g_free (valuestring);
+                                        reading->draw (cr);
+                                }
+                                compute_fft (fftlen, &signal[1][0], &power_spectrum[1][0]);
+                                
+                                wave_psd->set_stroke_rgba (CAIRO_COLOR_YELLOW);
+                                for (int k=0; k<fftlen/2; ++k){
+                                        wave_psd->set_xy_fast (k, xk0+xkf*(k-bram_shift)*scope_fft_time_zoom, db_to_y (dB_from_mV (scope_z[1]*power_spectrum[1][k]), dB_hi, y_hi, dB_mags));
+                                        if (k==2){ // skip nyquist
+                                                psdmx = power_spectrum[1][k];
+                                                km = k;
+                                        } else
+                                                if (psdmx < power_spectrum[1][k]){
+                                                        psdmx = power_spectrum[1][k];
+                                                        km = k;
+                                                }
+                                }
+                                wave_psd->draw (cr);
+                                delete wave_psd;
+                                {
+                                        double f=fm/scope_fft_time_zoom * km/(fftlen/2.0);
+                                        double x=xk0+xkf*(km-bram_shift)*scope_fft_time_zoom;
+                                        valuestring = g_strdup_printf ("%g mV @ %g %s", psdmx, f*1e-3, "kHz");
+                                        reading->set_stroke_rgba (CAIRO_COLOR_YELLOW);
+                                        reading->set_text (x, db_to_y (dB_from_mV (scope_z[1]*psdmx), dB_hi, y_hi, dB_mags), valuestring);
+                                        g_free (valuestring);
+                                        reading->draw (cr);
+                                }                                
+                                // compute FFT frq scale
+
+                                // Freq tics!
+                                double df = AutoSkl(fm/10)/scope_fft_time_zoom;
+                                double f0 = 0.0;
+                                double fr = fm/scope_fft_time_zoom;
+                                double x0=xk0-xkf*bram_shift*scope_fft_time_zoom;
+                                cursors->set_stroke_rgba (CAIRO_COLOR_YELLOW_ID, 0.5);
+                                reading->set_anchor (CAIRO_ANCHOR_CENTER);
+                                for (double f=AutoNext(f0, df); f <= fr; f += df){
+                                        double x=x0+scope_width*(f-f0)/fr; // freq position tic pos
+                                        valuestring = g_strdup_printf ("%g %s", f*1e-3, "kHz");
+                                        reading->set_stroke_rgba (CAIRO_COLOR_YELLOW);
+                                        reading->set_text (x, yr-18, valuestring);
+                                        g_free (valuestring);
+                                        reading->draw (cr);
+                                        cursors->set_xy_fast (0,x,-yr);
+                                        cursors->set_xy_fast (1,x,yr);
+                                        cursors->draw (cr);
+                                }
+
+                                // dB/Hz ticks
+                                cursors->set_stroke_rgba (CAIRO_COLOR_MAGENTA_ID, 0.5);
+                                for (int db=(int)dB_hi; db >= -20*dB_mags; db -= 10){
+                                        double y;
+                                        valuestring = g_strdup_printf ("%4d dB/Hz", db);
+                                        reading->set_stroke_rgba (CAIRO_COLOR_MAGENTA);
+                                        reading->set_text (scope_width - 70,  y=db_to_y ((double)db, dB_hi, y_hi, dB_mags), valuestring);
+                                        g_free (valuestring);
+                                        reading->draw (cr);
+                                        cursors->set_xy_fast (0,xcenter+(scope_width)*(-0.5),y);
+                                        cursors->set_xy_fast (1,xcenter+(scope_width*0.7)*(0.5),y);
+                                        cursors->draw (cr);
+                                }
+                        }
                 }
                 delete wave;
                 delete reading;

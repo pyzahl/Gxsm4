@@ -123,7 +123,17 @@ struct PACPLL_parameters {
         double dfreq_controller;
         double control_dfreq_fb_upper;
         double control_dfreq_fb_lower;
-
+        
+        double pulse_form_bias0, pulse_form_bias1;
+        double pulse_form_phase0, pulse_form_phase1;
+        double pulse_form_width0, pulse_form_width1;
+        double pulse_form_width0if, pulse_form_width1if;
+        double pulse_form_height0, pulse_form_height1;
+        double pulse_form_height0if, pulse_form_height1if;
+        double pulse_form_shapexw, pulse_form_shapexwif;
+        double pulse_form_shapex, pulse_form_shapexif;
+        gboolean pulse_form_enable;
+ 
         double set_singleshot_transport_trigger;
 
         double transport_tau[4];
@@ -219,7 +229,24 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         { "DFREQ_FB_UPPER", &pacpll_parameters.control_dfreq_fb_upper, false },
         { "DFREQ_FB_LOWER", &pacpll_parameters.control_dfreq_fb_lower, false },
         { "DFREQ_CONTROLLER", &pacpll_parameters.dfreq_controller, false },
-        
+
+        { "PULSE_FORM_BIAS0", &pacpll_parameters.pulse_form_bias0, false },
+        { "PULSE_FORM_BIAS1", &pacpll_parameters.pulse_form_bias1, false },
+        { "PULSE_FORM_PHASE0", &pacpll_parameters.pulse_form_phase0, false },
+        { "PULSE_FORM_PHASE1", &pacpll_parameters.pulse_form_phase1, false },
+        { "PULSE_FORM_WIDTH0", &pacpll_parameters.pulse_form_width0, false },
+        { "PULSE_FORM_WIDTH0IF", &pacpll_parameters.pulse_form_width0if, false },
+        { "PULSE_FORM_WIDTH1", &pacpll_parameters.pulse_form_width1, false },
+        { "PULSE_FORM_WIDTH1IF", &pacpll_parameters.pulse_form_width1if, false },
+        { "PULSE_FORM_HEIGHT0", &pacpll_parameters.pulse_form_height0, false },
+        { "PULSE_FORM_HEIGHT0IF", &pacpll_parameters.pulse_form_height0if, false },
+        { "PULSE_FORM_HEIGHT1", &pacpll_parameters.pulse_form_height1, false },
+        { "PULSE_FORM_HEIGHT1IF", &pacpll_parameters.pulse_form_height1if, false },
+        { "PULSE_FORM_SHAPEXW", &pacpll_parameters.pulse_form_shapexw, false },
+        { "PULSE_FORM_SHAPEXWIF", &pacpll_parameters.pulse_form_shapexwif, false },
+        { "PULSE_FORM_SHAPEX", &pacpll_parameters.pulse_form_shapex, false },
+        { "PULSE_FORM_SHAPEXIF", &pacpll_parameters.pulse_form_shapexif, false },
+         
         { NULL, NULL, true }
 };
 
@@ -260,6 +287,7 @@ public:
         static void select_pac_lck_amplitude (GtkWidget *widget, Inet_Json_External_Scandata *self);
         static void select_pac_lck_phase (GtkWidget *widget, Inet_Json_External_Scandata *self);
         static void show_dF_control (GtkWidget *widget, Inet_Json_External_Scandata *self);
+        static void show_pulse_control (GtkWidget *widget, Inet_Json_External_Scandata *self);
         static void qcontrol (GtkWidget *widget, Inet_Json_External_Scandata *self);
 	static void qc_parameter_changed (Param_Control* pcs, gpointer user_data);
 	static void tune_parameter_changed (Param_Control* pcs, gpointer user_data);
@@ -280,6 +308,9 @@ public:
         static void dfreq_controller_invert (GtkWidget *widget, Inet_Json_External_Scandata *self);
         static void dfreq_controller (GtkWidget *widget, Inet_Json_External_Scandata *self);
 
+	static void pulse_form_parameter_changed (Param_Control* pcs, gpointer user_data);
+        static void pulse_form_enable (GtkWidget *widget, Inet_Json_External_Scandata *self);
+
         static void choice_operation_callback (GtkWidget *widget, Inet_Json_External_Scandata *self);
         static void choice_transport_ch12_callback (GtkWidget *widget, Inet_Json_External_Scandata *self);
         static void choice_transport_ch3_callback (GtkWidget *widget, Inet_Json_External_Scandata *self);
@@ -288,6 +319,9 @@ public:
         static void scope_ac_ch1_callback (GtkWidget *widget, Inet_Json_External_Scandata *self);
         static void scope_ac_ch2_callback (GtkWidget *widget, Inet_Json_External_Scandata *self);
         static void scope_ac_ch3_callback (GtkWidget *widget, Inet_Json_External_Scandata *self);
+        static void scope_xy_on_callback (GtkWidget *widget, Inet_Json_External_Scandata *self);
+        static void scope_fft_on_callback (GtkWidget *widget, Inet_Json_External_Scandata *self);
+        static void scope_fft_time_zoom_callback (GtkWidget *widget, Inet_Json_External_Scandata *self);
 
         static void scope_z_ch1_callback (GtkWidget *widget, Inet_Json_External_Scandata *self);
         static void scope_z_ch2_callback (GtkWidget *widget, Inet_Json_External_Scandata *self);
@@ -524,6 +558,9 @@ private:
         GSettings *inet_json_settings;
         
         gboolean run_scope;
+        gboolean scope_xy_on;
+        gboolean scope_fft_on;
+        double scope_fft_time_zoom;
         gboolean scope_ac[5];
         double scope_z[2];
         double scope_dc_level[5];
@@ -542,6 +579,7 @@ private:
 
         GtkWidget *signal_graph;
         GtkWidget *dF_control_frame;
+        GtkWidget *pulse_control_frame;
        
         GtkWidget *input_rpaddress;
         GtkWidget *text_status;

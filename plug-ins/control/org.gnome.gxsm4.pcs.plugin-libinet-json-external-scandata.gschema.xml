@@ -205,6 +205,103 @@
       <description>pcs0000, PCS Remote-ID: 'rp-pacpll-DFREQ-CONTROL-MONITOR', Default/U: 0.0000 Hz    , Adjustment PCS Name: 'rp-pacpll-DFREQ-CONTROL-MONITOR' </description>
     </key>
 
+    <key name="rp-pacpll-pulse-form-bias0" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'rp-pacpll-PULSE-FORM-BIAS0', Default/U:   0 mV     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PULSE-FORM-BIAS0', Default/U:   0 mV    , Adjustment PCS Name: 'rp-pacpll-PULSE-FORM-BIAS0' </description>
+    </key>
+
+    <key name="rp-pacpll-pulse-form-bias1" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'rp-pacpll-PULSE-FORM-BIAS1', Default/U:  0 mV     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PULSE-FORM-BIAS1', Default/U:  0 mV    , Adjustment PCS Name: 'rp-pacpll-PULSE-FORM-BIAS1' </description>
+    </key>
+
+    <key name="rp-pacpll-pulse-form-phase0" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'rp-pacpll-PULSE-FORM-PHASE0', Default/U:     0 °     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PULSE-FORM-PHASE0', Default/U:     0 °    , Adjustment PCS Name: 'rp-pacpll-PULSE-FORM-PHASE0' </description>
+    </key>
+
+    <key name="rp-pacpll-pulse-form-phase1" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'rp-pacpll-PULSE-FORM-PHASE1', Default/U:     0 °     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PULSE-FORM-PHASE1', Default/U:     0 °    , Adjustment PCS Name: 'rp-pacpll-PULSE-FORM-PHASE1' </description>
+    </key>
+
+    <key name="rp-pacpll-pulse-form-width0" type="d">
+      <default>10</default>
+      <summary>PCS Remote-ID: 'rp-pacpll-PULSE-FORM-WIDTH0', Default/U:    0.1 µs     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PULSE-FORM-WIDTH0', Default/U:    0.1 µs    , Adjustment PCS Name: 'rp-pacpll-PULSE-FORM-WIDTH0' </description>
+    </key>
+
+    <key name="rp-pacpll-pulse-form-width1" type="d">
+      <default>10</default>
+      <summary>PCS Remote-ID: 'rp-pacpll-PULSE-FORM-WIDTH1', Default/U:    0.1 µs     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PULSE-FORM-WIDTH1', Default/U:    0.1 µs    , Adjustment PCS Name: 'rp-pacpll-PULSE-FORM-WIDTH1' </description>
+    </key>
+
+    <key name="rp-pacpll-pulse-form-width0if" type="d">
+      <default>100</default>
+      <summary>PCS Remote-ID: 'rp-pacpll-PULSE-FORM-WIDTH0IF', Default/U:     0.5 µs     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PULSE-FORM-WIDTH0IF', Default/U:     1 µs    , Adjustment PCS Name: 'rp-pacpll-PULSE-FORM-WIDTH0IF' </description>
+    </key>
+
+    <key name="rp-pacpll-pulse-form-width1if" type="d">
+      <default>100</default>
+      <summary>PCS Remote-ID: 'rp-pacpll-PULSE-FORM-WIDTH1IF', Default/U:     0.5 µs     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PULSE-FORM-WIDTH1IF', Default/U:     1 µs    , Adjustment PCS Name: 'rp-pacpll-PULSE-FORM-WIDTH1IF' </description>
+    </key>
+
+    <key name="rp-pacpll-pulse-form-height0" type="d">
+      <default>100</default>
+      <summary>PCS Remote-ID: 'rp-pacpll-PULSE-FORM-HEIGHT0', Default/U:   100 mV     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PULSE-FORM-HEIGHT0', Default/U:   100 mV    , Adjustment PCS Name: 'rp-pacpll-PULSE-FORM-HEIGHT0' </description>
+    </key>
+
+    <key name="rp-pacpll-pulse-form-heigth1" type="d">
+      <default>-100</default>
+      <summary>PCS Remote-ID: 'rp-pacpll-PULSE-FORM-HEIGTH1', Default/U:  -100 mV     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PULSE-FORM-HEIGTH1', Default/U:  -100 mV    , Adjustment PCS Name: 'rp-pacpll-PULSE-FORM-HEIGTH1' </description>
+    </key>
+
+    <key name="rp-pacpll-pulse-form-height0if" type="d">
+      <default>-5</default>
+      <summary>PCS Remote-ID: 'rp-pacpll-PULSE-FORM-HEIGHT0IF', Default/U:  -10 mV     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PULSE-FORM-HEIGHT0IF', Default/U:   -10 mV    , Adjustment PCS Name: 'rp-pacpll-PULSE-FORM-HEIGHT0IF' </description>
+    </key>
+
+    <key name="rp-pacpll-pulse-form-heigth1if" type="d">
+      <default>5</default>
+      <summary>PCS Remote-ID: 'rp-pacpll-PULSE-FORM-HEIGTH1IF', Default/U: 10 mV     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PULSE-FORM-HEIGTH1IF', Default/U: 10 mV    , Adjustment PCS Name: 'rp-pacpll-PULSE-FORM-HEIGTH1IF' </description>
+    </key>
+
+    <key name="rp-pacpll-pulse-form-shapex" type="d">
+      <default>1</default>
+      <summary>PCS Remote-ID: 'rp-pacpll-PULSE-FORM-SHAPEX', Default/U:    1       </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PULSE-FORM-SHAPEX', Default/U:    1      , Adjustment PCS Name: 'rp-pacpll-PULSE-FORM-SHAPEX' </description>
+    </key>
+
+    <key name="rp-pacpll-pulse-form-shapexif" type="d">
+      <default>1</default>
+      <summary>PCS Remote-ID: 'rp-pacpll-PULSE-FORM-SHAPEXIF', Default/U:    1       </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PULSE-FORM-SHAPEXIF', Default/U:    1      , Adjustment PCS Name: 'rp-pacpll-PULSE-FORM-SHAPEXIF' </description>
+    </key>
+
+    <key name="rp-pacpll-pulse-form-shapexw" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'rp-pacpll-PULSE-FORM-SHAPEXW', Default/U:    0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PULSE-FORM-SHAPEXW', Default/U:    0      , Adjustment PCS Name: 'rp-pacpll-PULSE-FORM-SHAPEXW' </description>
+    </key>
+
+    <key name="rp-pacpll-pulse-form-shapexwif" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'rp-pacpll-PULSE-FORM-SHAPEXWIF', Default/U:    0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PULSE-FORM-SHAPEXWIF', Default/U:    0      , Adjustment PCS Name: 'rp-pacpll-PULSE-FORM-SHAPEXWIF' </description>
+    </key>
+ 
+
     <key name="rp-pacpll-scope-width" type="d">
       <default>512</default>
       <summary>PCS Remote-ID: 'rp-pacpll-scope-width', Default/U: 760     </summary>
