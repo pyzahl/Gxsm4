@@ -877,14 +877,14 @@ void AppBase::position_auto (){
                         // g_message ("SORRY GTK4 can't do it -- Requested Window Position [%s: %d, %d]   -- no gtk_window_move ().", window_key, window_geometry[WGEO_XPOS], window_geometry[WGEO_YPOS]);
                         XSM_DEBUG_GM (DBG_L1, "AppBase::position_auto ** Requested Window Position ** %s ** XY (%d, %d)", window_key, window_geometry[WGEO_XPOS], window_geometry[WGEO_YPOS]);
 # ifdef GDK_WINDOWING_X11
-                        if (1){ //GDK_IS_X11_DISPLAY (display){
+                        if (GDK_IS_X11_DISPLAY (gdk_display_get_default ())){
                                 Window   xw = GDK_SURFACE_XID (GDK_SURFACE (gtk_native_get_surface(GTK_NATIVE (window))));
                                 Display *xd = GDK_SURFACE_XDISPLAY (GDK_SURFACE (gtk_native_get_surface(GTK_NATIVE (window))));
                                 XMoveWindow (xd, xw, (int)window_geometry[WGEO_XPOS], (int)window_geometry[WGEO_YPOS]);
                         } else
 # endif
 # ifdef GDK_WINDOWING_WAYLAND
-                                if (1){ // GDK_IS_WAYLAND_DISPLAY (display)){
+                                if (GDK_IS_WAYLAND_DISPLAY (gdk_display_get_default ())){
                                         g_message ("SORRY WAYLAND DOES NOT GIVE ANY ACCESS TO WINDOW GEOMETRY.;");
                                 } else
                                         g_error ("Unsupported GDK backend");
@@ -908,7 +908,7 @@ void AppBase::resize_auto (){
                         // g_message ("SORRY GTK4 can't do it -- Requested Window Resize [%s: %d, %d]   -- no gtk_window_resize ().", window_key, window_geometry[WGEO_WIDTH], window_geometry[WGEO_HEIGHT]);
                          XSM_DEBUG_GM (DBG_L1, "AppBase::resize_auto **** Requested Window Resize   ** %s ** WH (%d, %d)", window_key, window_geometry[WGEO_WIDTH], window_geometry[WGEO_HEIGHT]);
 # ifdef GDK_WINDOWING_X11
-                        if (1){ //GDK_IS_X11_DISPLAY (display){
+                        if (GDK_IS_X11_DISPLAY (gdk_display_get_default ())){
                                 Window   xw = GDK_SURFACE_XID (GDK_SURFACE (gtk_native_get_surface(GTK_NATIVE (window))));
                                 Display *xd = GDK_SURFACE_XDISPLAY (GDK_SURFACE (gtk_native_get_surface(GTK_NATIVE (window))));
                                 if ((unsigned int)window_geometry[WGEO_WIDTH] > 0 && (unsigned int)window_geometry[WGEO_HEIGHT] > 0)
@@ -916,11 +916,11 @@ void AppBase::resize_auto (){
                         } else
 # endif
 # ifdef GDK_WINDOWING_WAYLAND
-                        if (1){ //GDK_IS_WAYLAND_DISPLAY (display)){
-                                g_message ("SORRY WAYLAND DOES NOT GIVE ANY ACCESS TO WINDOW GEOMETRY.;");
-                        } else
+                                if (GDK_IS_WAYLAND_DISPLAY (gdk_display_get_default ())){
+                                        g_message ("SORRY WAYLAND DOES NOT GIVE ANY ACCESS TO WINDOW GEOMETRY.;");
+                                } else
 # endif
-                                g_error ("Unsupported GDK backend");
+                                        g_error ("Unsupported GDK backend");
                 }
 #else
         XSM_DEBUG_GM (DBG_L2, "AppBase::resize_auto ** ENABLE_GXSM_WINDOW_MANAGEMENT is disabled.");
@@ -948,7 +948,7 @@ void AppBase::SaveGeometry(gboolean store_to_settings){
         //gtk_window_get_position (GTK_WINDOW (window), &window_geometry[WGEO_XPOS], &window_geometry[WGEO_YPOS]); 
 
 # ifdef GDK_WINDOWING_X11
-        if (1){ // GDK_IS_X11_DISPLAY (display){
+        if (GDK_IS_X11_DISPLAY (gdk_display_get_default ())){
                 Window   xw = GDK_SURFACE_XID (GDK_SURFACE (gtk_native_get_surface(GTK_NATIVE (window))));
                 Display *xd = GDK_SURFACE_XDISPLAY (GDK_SURFACE (gtk_native_get_surface(GTK_NATIVE (window))));
                 Window root;
@@ -973,7 +973,7 @@ void AppBase::SaveGeometry(gboolean store_to_settings){
         } else
 # endif
 # ifdef GDK_WINDOWING_WAYLAND
-                if (1){ //GDK_IS_WAYLAND_DISPLAY (display)){
+                if (GDK_IS_WAYLAND_DISPLAY (gdk_display_get_default ())){
                         g_message ("SORRY WAYLAND DOES NOT GIVE ANY ACCESS TO WINDOW GEOMETRY.;");
                 } else
 # endif
