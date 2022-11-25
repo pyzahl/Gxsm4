@@ -22,10 +22,11 @@ GXSM Web Site: http://gxsm.sf.net
 
 # 2. Installation
 
-Gxsm4 requires GTK4, GtkSourceView5, libfftw, libnetcdf, libquicktime, ... Therefore, please install a recent linux distribution like debian or ubuntu (>= 22.04 LTS). Please do not use Wayland as Window manager. This is in Ubuntu 22.04 default if you are not using an nvidia gpu. To deactivate Wayland support, please add/enalbe as root in /etc/gdm3/custom.conf the line
+Gxsm4 requires GTK4, GtkSourceView5, libfftw, libnetcdf, libquicktime, ... Therefore, please install a recent linux distribution like debian or ubuntu (>= 22.04 LTS). To run GXSM4 with Wayland as window manager, you have to alternative to tweak your linux: i) In Ubuntu 22.04 Wayland is the default window manager if you are not using an nvidia gpu. To deactivate Wayland support, please add/enalbe as root in /etc/gdm3/custom.conf the line.  
 ```
 WaylandEnable=false
 ```
+ii) Alternatively, deactivate the splash screen during GXSM4 startup. Open the dconf-editor and navigate to org/gnome/gxsm4. Here change the entry "splash" to off.
 
 To obtain a copy of the source code, please run in a terminal:  
 ``` 
