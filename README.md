@@ -42,7 +42,7 @@ Then run in the folder Gxsm4-git
  $ meson compile
  $ meson install
 ```
-Here, "meson compile, install" or just "ninja install" to do it all.
+Here, "meson compile, meson install" calls ninja. You can simply call "ninja install" to do it all.
 
 To uninstall call in the buildir
 ``` 
