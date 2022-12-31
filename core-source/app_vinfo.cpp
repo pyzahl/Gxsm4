@@ -42,6 +42,7 @@ ViewInfo::ViewInfo(Scan *Sc, int qf, double zf){
   sc=Sc; 
   ux=uy=uz=NULL; // use "Scan" Units
   userzoommode=0;
+  as_pixy=1.0;
   
   EnableTimeDisplay (FALSE);
   SetPixelUnit (FALSE);
