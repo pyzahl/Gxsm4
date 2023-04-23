@@ -1,0 +1,6 @@
+gxsm4 (4.0.0-0ubuntu0) jammy; urgency=medium
+
+  * initial package for GXSM4 on Ubuntu 22.04 LTS
+
+ -- Thorsten Wagner <stm@users.sf.net>  Sun, 23 Apr 2023 20:23:00 +0200
+
