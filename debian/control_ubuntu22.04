@@ -1,0 +1,117 @@
+Source: gxsm4
+Section: science
+Priority: optional
+Maintainer: Thorsten Wagner <stm@users.sf.net>
+Build-Depends: 	debhelper (>= 12~),
+		autotools-dev,
+		cmake,
+		freeglut3-dev,
+		git,
+		gsettings-desktop-schemas-dev,
+		gtk-doc-tools,
+		intltool,
+		libatk-bridge2.0-dev,
+		libcairo2-dev,
+		libopencv-dev,
+		libfftw3-dev,
+		libgail-3-dev,
+		libglew-dev,
+		libglib2.0-dev,
+		libglm-dev,
+		libglu1-mesa-dev,
+		libgsl-dev,
+		libgtk-4-dev,
+		libgtksourceview-5-dev,
+		libnetcdf-dev,
+		libnetcdf-c++4-dev,
+		libnetcdf-cxx-legacy-dev,
+		libnlopt-dev,
+		libopencv-dev,
+		libpopt-dev,
+		libpython3-dev,
+		libquicktime-dev,
+		libsoup2.4-dev,
+		libxml2-dev,
+		mesa-common-dev,
+		meson,
+		python3,
+		python3-dev,
+		python3-gi,
+		python3-numpy,
+		subversion,
+		yelp,
+		yelp-tools 
+Standards-Version: 3.9.7
+Homepage: http://gxsm.sf.net
+#Vcs-Git: https://github.com/pyzahl/Gxsm4.git
+#Vcs-Browser:  https://github.com/pyzahl/Gxsm4
+
+Package: gxsm4
+Architecture: any
+Multi-Arch: same
+Pre-Depends:	${misc:Pre-Depends}
+Depends: 	${shlibs:Depends}, 
+		${misc:Depends},
+		bash,
+		dbus-x11,
+		devscripts,
+		freeglut3,
+		gsettings-desktop-schemas,
+		libatk-bridge2.0-0,
+		libcairo2,
+		libfftw3-3,
+		libgail-3-0,
+		libglew2.2,
+		libglib2.0-0,
+		libglu1-mesa,
+		libgsl27,
+		libgtk-4-1,
+		libgtksourceview-5-0,
+		libgtksourceview-3.0-common,
+		libnetcdf-c++4-1,
+		libnlopt0,
+		libopencv-contrib4.5d,
+		libopencv-core4.5d,
+		libopencv-highgui4.5d,
+		libopencv-imgproc4.5d,
+		libopencv-objdetect4.5d,
+		libopencv-video4.5d,
+		libpopt0,
+		libpython3.10,
+		libquicktime2,
+		libsoup2.4-1,
+		libxdot4,
+		libxml2-dev,
+		python3,
+		python3-gi,
+		python3-numpy,
+		python3-pydot,
+		python3-scipy,
+		sed,
+		subversion,
+		xdg-utils,
+		xdot
+Suggests: sranger-modules-mk23-dkms, sranger-modules-std-dkms, gwyddion
+Replaces: sranger (<< 0.0.2 )
+Breaks: sranger (<< 0.0.2 )
+Description: Multi-channel data acquisition via STM/AFM
+ GXSM -- Gnome X Scanning Microscopy.
+ .
+ Gxsm is a powerful graphical interface for any kind of 2D
+ and 3D (multilayered 2D mode) data acquisition methods, 
+ especially designed for SPM and SPA-LEED, which are used 
+ in surface science. It includes methods for 2D data (of 
+ various types: byte, short, long, double) visualization 
+ and manipulation. We are currently using it for STM, AFM, 
+ SARLS, and SPA-LEED.
+ .
+ Gxsm is powerful, it is easy to extend via plug-ins, it is
+ unlimited in data size... and it is a free and open source 
+ software hosted by SourceForge! It is based on the Linux 
+ Gtk+/Gnome development environment.
+ .
+ More details on http://gxsm.sf.net and 
+ http://sranger.sf.net or in 
+ J. Vac. Sci. Technol. B 28, C4E39 (2010) 
+ (doi:10.1116/1.3374719) 
+ 
