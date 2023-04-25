@@ -116,8 +116,8 @@ much more ... to be figured out ans tested ....
 
 ## 4. How to report bugs
 
-Bugs should be reported to the GNOME bug tracking system.
-(http://bugzilla.gnome.org, product gedit). You will need to create an
+Bugs should be reported to the gitlab bug tracking system.
+(https://github.com/pyzahl/Gxsm4/issues). You will need to create an
 account for yourself.
 
 In the bug report please include:
@@ -143,9 +143,9 @@ In the bug report please include:
 
 ## 5. Patches
 
-Patches should also be submitted to bugzilla.gnome.org. If the patch
-fixes an existing bug, add the patch as an attachment to that bug
-report.
+Patches should also be submitted to https://github.com/pyzahl/Gxsm4/. 
+If the patch fixes an existing bug, add the patch as an attachment to 
+that bug report.
 
 Otherwise, enter a new bug report that describes the patch, and attach
 the patch to that bug report.
