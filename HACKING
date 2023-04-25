@@ -4,45 +4,26 @@ Source code repository
 gxsm source code is maintained using the git version control system
 and is available at the following location:
 
-
-    git://git.code.sf.net/p/gxsm/gxsm3-beta
-
-
-A web interface is available at:
-
-    https://sourceforge.net/p/gxsm/gxsm3/ci/master/tree/
-
-
-
+    https://github.com/pyzahl/Gxsm4/
 
 Building from git
 =================
 
-When building from a git checkout you will need to run the
-autogen.sh script which takes care of running automake, autoconf,
-etc and then run "configure" for you. You can pass options like
---prefix to autogen.sh and they will be forwarded to the configure
-script.
+git clone https://github.com/pyzahl/Gxsm4 gxsm4-git
+cd gxsm4-git
+mkdir builddir
+meson builddir
+ninja
+sudo ninja install
 
-Note that you cannot run gedit from its build directory: you need
-to install it with "make install". For this reason it is highly
-recommended that you install in a separate prefix instead of
-overwriting your system binaries. Note however that when running
-gedit from a custom prefix you will need to set many environment
-variables accordingly, for instance PATH and XDG_DATA_DIR.
-The JHBuild tool can take care of all this for you.
+You can replace the ninja commands by
 
+cd builddir
+meson compile
+sudo meson install
 
 Commit guidelines
 =================
-
-Please don't commit directly to the git repository unless
-you have been given the green light to commit freely to gedit.
-When in doubt assume you haven't ;-).
-
-Please attach patches in bugzilla (http://bugzilla.gnome.org).
-If the patch fixes a bug that is not reported yet in bugzilla or is
-an enhancement, create a new bugreport.
 
 Please create patches with the git format-patch command.
 
@@ -55,7 +36,7 @@ your help, I just want to review these fixes before applying.
 If you are a "build sheriff", feel free to commit fixes for build and
 configure (please, send me an e-mail with the patch you have applied).
 
-When committing to the gedit git repository make sure to include a
+When committing to the gxsm4 git repository make sure to include a
 meaningful commit message. Changes without a sufficient commit message
 will be reverted. Commit messages should have the following format:
 
@@ -193,7 +174,7 @@ Here are some general advices.
 See also
 ========
 
-http://gxsm.sf.net
+https://gxsm.sf.net
 
 
 Thanks,
