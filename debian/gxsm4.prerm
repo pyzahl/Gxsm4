@@ -19,6 +19,10 @@ set -e
 
 case "$1" in
     remove|upgrade|deconfigure)
+    	echo "removing gxsm menu"	
+	cd /usr/share/gxsm4/menu	
+	xdg-desktop-menu uninstall --noupdate gxsm-gxsm4.desktop
+	xdg-desktop-menu forceupdate	
     ;;
 
     failed-upgrade)

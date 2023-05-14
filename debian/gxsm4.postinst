@@ -20,6 +20,10 @@ set -e
 
 case "$1" in
     configure)
+    	echo "installing desktop icon"
+	cd /usr/share/gxsm4/menu	
+	xdg-desktop-menu install --noupdate gxsm-gxsm4.desktop
+	xdg-desktop-menu forceupdate
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)
