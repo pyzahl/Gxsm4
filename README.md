@@ -22,7 +22,7 @@ GXSM Web Site: http://gxsm.sf.net
 
 # 2. Installation
 
-Gxsm4 requires GTK4, GtkSourceView5, libfftw, libnetcdf, libquicktime, ... Therefore, please install a recent linux distribution like debian or ubuntu (>= 22.04 LTS). To run GXSM4 with Wayland as window manager, you have to alternative to tweak your linux: i) In Ubuntu 22.04 Wayland is the default window manager if you are not using an nvidia gpu. To deactivate Wayland support, please add/enalbe as root in /etc/gdm3/custom.conf the line.  
+Gxsm4 requires GTK4, GtkSourceView5, libfftw, libnetcdf, libquicktime, ... Therefore, please install a recent linux distribution like debian or ubuntu (>= 22.04 LTS). To run GXSM4 with Wayland as window manager, you have two alternative to tweak your linux: i) In Ubuntu 22.04 Wayland is the default window manager if you are not using an nvidia gpu. To deactivate Wayland support, please add/enalbe as root in /etc/gdm3/custom.conf the line.  
 ```
 WaylandEnable=false
 ```
@@ -116,8 +116,8 @@ much more ... to be figured out ans tested ....
 
 ## 4. How to report bugs
 
-Bugs should be reported to the GNOME bug tracking system.
-(http://bugzilla.gnome.org, product gedit). You will need to create an
+Bugs should be reported to the gitlab bug tracking system.
+(https://github.com/pyzahl/Gxsm4/issues). You will need to create an
 account for yourself.
 
 In the bug report please include:
@@ -143,9 +143,9 @@ In the bug report please include:
 
 ## 5. Patches
 
-Patches should also be submitted to bugzilla.gnome.org. If the patch
-fixes an existing bug, add the patch as an attachment to that bug
-report.
+Patches should also be submitted to https://github.com/pyzahl/Gxsm4/. 
+If the patch fixes an existing bug, add the patch as an attachment to 
+that bug report.
 
 Otherwise, enter a new bug report that describes the patch, and attach
 the patch to that bug report.

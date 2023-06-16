@@ -1,0 +1,4 @@
+debian/gxsm4.pdf usr/share/doc/gxsm4
+icons/*svg usr/share/gxsm4/icons
+icons/gxsm4-icon.svg usr/share/icons/hicolor/scalable/apps
+debian/*.desktop usr/share/gxsm4/menu

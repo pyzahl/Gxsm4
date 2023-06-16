@@ -229,6 +229,13 @@ localedir        = get_option('datadir') / 'locale'
 
 schemas_dir      = get_option('prefix') / get_option('datadir') / 'glib-2.0' / 'schemas'
 
+compile_schemas = find_program('glib-compile-schemas', required: false)
+if compile_schemas.found()
+  test('Validate schema file', compile_schemas,
+    args: ['--strict', '--dry-run', meson.current_source_dir()]
+  )
+endif
+
 lib_global_gxsm_name  =  'lib-global-'+meson.project_name() 
 lib_pcs_gxsm_name     =  'lib-pcs-'+meson.project_name() 
 lib_utils_gxsm_name   =  'lib-utils-'+meson.project_name() 
@@ -329,5 +336,7 @@ subdir('icons')
 
 #subdir('thumbnailers')
 #subdir('tools')
+
+gnome.post_install(glib_compile_schemas: true, gtk_update_icon_cache: true, update_desktop_database: true)
 
 

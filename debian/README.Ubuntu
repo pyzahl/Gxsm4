@@ -1,0 +1,20 @@
+gxsm4 for Ubuntu
+----------------
+
+If you need access to bleeding edge features of gxsm4, please compile from source.
+You can always get the current version from git via:
+
+git clone https://github.com/pyzahl/gxsm4
+
+This package was built from the git version with no specific procedure 
+regarding stability, thus it might be broken for some use-cases. If this
+happens, you should contact the packager or the developers via email or
+by posting a bug report in our forums at:
+
+gxsm.sf.net
+
+Thank you for trying the deb-package of gxsm.
+
+Please contribute to improve Gxsm.
+
+-- Thorsten Wagner <stm@users.sf.net>  Sun, 23 Apr 2023 19:23:00 +0200

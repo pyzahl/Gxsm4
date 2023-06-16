@@ -1,0 +1,133 @@
+.Dd 1/17/23             \" DATE
+.Dt GXSM4 1             \" Program name and manual section number
+.Os Debian 11 Bullseye, Ubuntu 22.04 LTS
+
+.Sh NAME                \" Section Header - required - don't modify
+.Nm GXSM4
+.\" Use .Nm macro to designate other names for the documented program.
+.Nd Gnome X Scanning Microscopy
+
+.Sh SYNOPSIS             \" Section Header - required - don't modify
+.Nm
+.Op Fl option              \" [-abcd]
+.\" .Op Fl a Ar path         \" [-a path]
+.\" .Op Ar file              \" [file]
+-\" .Op Ar                   \" [file ...]
+.Ar List of loadable file(s) .nc \" Underlined argument - use .Ar anywhere to underline
+
+.Sh DESCRIPTION          \" Section Header - required - don't modify
+.Nm
+is a powerful graphical interface for any kind of 2D and 3D (multilayered 2D 
+mode) data acquisition methods, especially designed for SPM and SPA-LEED, which 
+are used in surface science. It includes methods for 2D data (of various types: 
+byte, short, long, double) visualization and manipulation. We are currently 
+using it for STM and all kinds of AFM.
+.Pp                      \" Inserts a space
+.Nm 
+is powerful, it is easy to extend via plug-ins, it is unlimited in data size... 
+and it is a free and open source software hosted by SourceForge! It is based on 
+the Linux Gtk+/Gnome development environment.
+.Pp                      \" Inserts a space
+More details on 
+.Pp
+.Bl -bullet
+.It Pa
+http://gxsm.sf.net
+.It Pa
+http://sranger.sf.net
+.It Pa 
+J. Vac. Sci. Technol. B 28, C4E39 (2010), doi:10.1116/1.3374719
+.El
+.Pp
+.Sh OPTIONS
+Help
+.Bl -tag -width
+.It Fl ?, Fl Fl help
+Show help options
+.El
+.Pp
+Application Options
+.Bl -tag -width
+.It Fl V, Fl Fl version
+Show the application's version
+.It Fl h, --hardware-card
+Hardware Card: no | ... (depends on available HwI plugins)
+.It Fl d, Fl Fl Hardware-DSPDev
+Hardware DSP Device Path: /dev/sranger_mk23_0 | ... (depends on module type and index if multiple DSPs)
+.It Fl u, Fl Fl User-Unit
+XYZ Unit: AA | nm | um | mm | BZ | sec | V | 1 
+.It Fl  m, Fl Fl load-files-as-movie
+load file from command in one channel as movie
+.It Fl s, Fl Fl new-instance
+Start a new instance of 
+.Nm
+-- not yet functional, use different user account via ssh -X... for now.
+.El
+.Pp
+Debugging
+.Bl -tag -width
+.It Fl L, Fl Fl logging-level
+Set 
+.Nm
+logging/monitor level. omit all loggings: 0, minimal logging: 1, default logging: 2, verbose logging: 3, ...
+.It Fl Fl disable-plugins
+Disable default plugin loading on startup
+.It Fl g, Fl Fl disable-geometry-management
+Disable Gxsm Window Geometry load/restore on startup
+.It Fl Fl force-configure
+Force to reconfigure Gxsm on startup
+.It Fl Fl force-rebuild-configuration-defaults
+Forces to restore all GXSM values to build in defaults at startup
+.It Fl Fl write-gxsm-preferences-gschema
+Generate Gxsm preferences gschema file on startup with build in defaults and exit
+.It Fl Fl write-gxsm-gl-preferences-gschema
+Generate Gxsm GL preferences gschema file on startup with build in defaults and exit
+.It Fl Fl write-gxsm-pcs-gschema
+Generate Gxsm pcs gschema file on startup with build in defaults while execution
+.It Fl Fl write-gxsm-pcs-adj-gschema
+Generate Gxsm pcs adjustements gschema file on startup with build in defaults while execution
+.It Fl Fl D, Fl Fl debug-level=DN
+Set Gxsm debug level. 0: no debug output on console, 1: normal, 2: more verbose, ...5 increased verbosity
+.It Fl P, Fl Fl pi-debug-level=PDN
+Set Gxsm Plug-In debug level. 0: no debug output on console, 1: normal, 2: more verbose, ...5 increased verbosity
+.It Fl T, Fl Fl build-self-test-script
+Build gxsm4 self test pyremote script.
+.El
+
+.Sh HISTORY           \" Document history if command behaves in a unique manner
+The project Gxsm was initiated by the main author Percy Zahl, see the
+Gxsm Manual and homepage http://gxsm.sf.net for a complete list of
+the contributors to the Gxsm project.
+
+Read the online 
+.Nm
+manual at http://gxsm.sf.net.
+This manual page was written by
+.Pp
+.Bl -bullet
+.It Pa 
+Percy Zahl <zahl@users.sf.net>
+.It Pa 
+Stefan Schroeder <stefan_fkp@users.sf.net> (Update for Gxsm3)
+.It Pa 
+Thorsten WAgner <stm@users.sf.net> (Update for Gxsm4)
+.El
+for the Debian GNU/Linux system (but may be used by others).
+
+.Sh BUGS
+See the Tracker/Bugs at http://sourceforge.net/projects/gxsm/
+
+.Sh COPYING
+Copyright 1997 - 2023 Percy Zahl, Andreas Klust, Thorsten Wagner
+.Pp
+This is free software (GPL); see the source for copying conditions.  There
+is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+.Sh SEE ALSO
+.\" List links in ascending order by section, alphabetically within a section.
+.\" Please do not reference files that do not exist without filing a bug report
+.Xr gmetopng 1 ,
+.Xr nctopng 1 ,
+.Xr rhkspm32topng 1 ,
+.Xr scalatopng 1 ,
+.Xr vpdata2ascii 1
