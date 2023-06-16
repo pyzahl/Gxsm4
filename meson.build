@@ -147,8 +147,8 @@ fftw  = dependency('fftw3')
 xml   = dependency('libxml-2.0')
 gmod  = dependency('gmodule-2.0')
 gmodexp = dependency('gmodule-export-2.0')
-#lz    = dependency('zlib', method : 'system')
-lz    = cc.find_library('z')
+lz    = dependency('zlib', method : 'system')
+#lz    = cc.find_library('z')
 
 icuuc = cc.find_library('icuuc')
 

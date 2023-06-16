@@ -58,6 +58,8 @@
 
 The following script shows you all commands that the gxsm-module supports:
 
+% 
+%% \begin{verbatim}
 \begin{alltt}
 print dir(gxsm)
 \end{alltt}

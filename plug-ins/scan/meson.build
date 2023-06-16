@@ -14,7 +14,7 @@ plugin_list = [
     { 'name': 'uksoft2001_im_export' },
     { 'name': 'wip_im_export' },
     { 'name': 'g_dat_im_export' },
-    { 'name': 'gmeyer_im_export' },
+    { 'name': 'gmeyer_im_export', 'deps': [lz ] },
     { 'name': 'nanoimport' },
     { 'name': 'omicron_io' },
     { 'name': 'png_im_export' },
