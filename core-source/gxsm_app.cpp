@@ -1319,12 +1319,17 @@ void App::GxsmSplash(gdouble progress, const gchar *info, const gchar* text){
         GVariant *splash_message = g_settings_get_value (gxsm_app_settings, "splash-message");
         GVariant *splash_message_font = g_settings_get_value (gxsm_app_settings, "splash-message-font");
 
+        // char * env = getenv(“XDG_SESSION_TYPE”); // = 'x11' or 'wayland'
+        // test: $$ echo $XDG_SESSION_TYPE
+        // ONLY X11, issues on Wayland
+
+        // if (g_variant_get_boolean (splash_display) && (strncmp (getenv(“XDG_SESSION_TYPE”), 'x11', 3) == 0)){
         if (g_variant_get_boolean (splash_display)){
                 splash = gtk_popover_new ();
                 GtkWidget *vb = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
 		gtk_widget_show (vb);
                 gtk_popover_set_child (GTK_POPOVER (splash), vb);
-
+               
                 splash_darea = gtk_drawing_area_new ();
                 gtk_drawing_area_set_content_width  (GTK_DRAWING_AREA (splash_darea), ImgW);
                 gtk_drawing_area_set_content_height (GTK_DRAWING_AREA (splash_darea), ImgH);
@@ -1356,9 +1361,8 @@ void App::GxsmSplash(gdouble progress, const gchar *info, const gchar* text){
 
                 gtk_widget_set_parent (splash, GTK_WIDGET(app_window));
                 gtk_popover_set_has_arrow (GTK_POPOVER (splash), FALSE);
-
                 // FIX-ME GTK4 
-                //gtk_popover_set_pointing_to (GTK_POPOVER (splash), &(GdkRectangle){ 1000-ImgW/2, 500-ImgH/2, 1, 1});
+                gtk_popover_set_pointing_to (GTK_POPOVER (splash), &(GdkRectangle){ 1000-ImgW/2, 500-ImgH/2, 1, 1});
 
                 gtk_popover_popup (GTK_POPOVER (splash));
         }

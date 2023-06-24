@@ -1,0 +1,30 @@
+<schemalist>
+  <schema id="org.gnome.gxsm4.pcs.plugin-libspm-template-hwi" path="/org/gnome/gxsm4/pcs/plugin-libspm-template-hwi/">
+
+    <key name="template-stm-speed" type="d">
+      <default>1</default>
+      <summary>PCS Remote-ID: 'template-stm-speed', Default/U:  0.00       </summary>
+      <description>pcs0000, PCS Remote-ID: 'template-stm-speed', Default/U:  0.00      , Adjustment PCS Name: 'template-stm-speed' </description>
+    </key>
+
+    <key name="template-stm-bias" type="d">
+      <default>1</default>
+      <summary>PCS Remote-ID: 'template-stm-bias', Default/U:  0.00 V     </summary>
+      <description>pcs0000, PCS Remote-ID: 'template-stm-bias', Default/U:  0.00 V    , Adjustment PCS Name: 'template-stm-bias' </description>
+    </key>
+
+    <key name="template-afm-speed" type="d">
+      <default>2</default>
+      <summary>PCS Remote-ID: 'template-afm-speed', Default/U:  0.00       </summary>
+      <description>pcs0000, PCS Remote-ID: 'template-afm-speed', Default/U:  0.00      , Adjustment PCS Name: 'template-afm-speed' </description>
+    </key>
+
+    <key name="template-afm-bias" type="d">
+      <default>2</default>
+      <summary>PCS Remote-ID: 'template-afm-bias', Default/U:  0.00 V     </summary>
+      <description>pcs0000, PCS Remote-ID: 'template-afm-bias', Default/U:  0.00 V    , Adjustment PCS Name: 'template-afm-bias' </description>
+    </key>
+  </schema>
+
+</schemalist>
+
