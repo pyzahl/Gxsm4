@@ -1,0 +1,86 @@
+<schemalist>
+
+  <schema id="org.gnome.gxsm4.hwi.spm-template-control" path="/org/gnome/gxsm4/hwi/spm-template-control/">
+    <key name="configure-mode" type="b">
+      <default>false</default>
+      <summary>SPM TEMPLATE Control Configure mode</summary>
+      <description>
+	GUI template option
+      </description>
+    </key>
+
+    <key name="spm-bias" type="i">
+      <default>0</default>
+      <summary>last setting...</summary>
+      <description>
+	...
+      </description>
+    </key>
+    <key name="template-tab-stm" type="b">
+      <default>true</default>
+      <summary>Indicates if tab xy to be showed</summary>
+      <description>
+	GUI templateplification option: Indicates tab xy to be showed
+      </description>
+    </key>
+    <key name="template-tab-afm" type="b">
+      <default>true</default>
+      <summary>Indicates if tab xy to be showed</summary>
+      <description>
+	GUI templateplification option: Indicates tab xy to be showed
+      </description>
+    </key>
+    <key name="template-tab-config" type="b">
+      <default>true</default>
+      <summary>Indicates if tab xy to be showed</summary>
+      <description>
+	GUI templateplification option: Indicates tab xy to be showed
+      </description>
+    </key>
+    
+    <key name="spm-template-hvx" type="i">
+      <default>1</default>
+      <summary>Piezo Drive VX scan setting</summary>
+      <description>
+        last VX setting (combo box index)
+      </description>
+    </key>
+    <key name="spm-template-hvy" type="i">
+      <default>1</default>
+      <summary>Piezo Drive VY scan setting</summary>
+      <description>
+        last VY setting (combo box index)
+      </description>
+    </key>
+    <key name="spm-template-hvz" type="i">
+      <default>2</default>
+      <summary>Piezo Drive VZ scan setting</summary>
+      <description>
+        last VZ setting (combo box index)
+      </description>
+    </key>
+    <key name="spm-template-hvx0" type="i">
+      <default>4</default>
+      <summary>Piezo Drive VX offset setting</summary>
+      <description>
+        last VX offset setting (combo box index)
+      </description>
+    </key>
+    <key name="spm-template-hvy0" type="i">
+      <default>4</default>
+      <summary>Piezo Drive VY offset setting</summary>
+      <description>
+        last VY offset setting (combo box index)
+      </description>
+    </key>
+    <key name="spm-template-hvz0" type="i">
+      <default>4</default>
+      <summary>Piezo Drive VZ offset setting</summary>
+      <description>
+        last VZ offset setting (combo box index)
+      </description>
+    </key>
+ 
+  </schema>
+
+</schemalist>

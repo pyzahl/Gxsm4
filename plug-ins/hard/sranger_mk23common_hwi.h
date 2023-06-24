@@ -86,9 +86,6 @@ public:
 	virtual long GetMaxPointsPerLine(){ return 0; };
 	virtual long GetMaxLines(){ return 0; };
 
-	virtual int ReadScanData(int y_index, int num_srcs, Mem2d *m[MAX_SRCS_CHANNELS]) { return 0; }; // done via thread.
-	virtual int ReadProbeData(int nsrcs, int nprobe, int kx, int ky, Mem2d *m, double scale=1.) { return 0; };	// obsolete since VP
-
 	virtual const gchar* get_info() { return "*Virtual*"; };
 
 	/* Hardware realtime monitoring -- all optional */

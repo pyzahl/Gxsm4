@@ -57,8 +57,6 @@ class XSM_Hardware{
 
 	virtual int update_gxsm_configurations (){ return 0; }; /* called after GUI build complete */
 
-	virtual long GetPreScanLineOffset (){ return 0L; };
-
 	/* query Hardware description and features */
 	const gchar* Info (int data){ return get_info(); }; /* Info on Hardware Class */
 	virtual const gchar* GetStatusInfo () { return AddStatusString; }; /* Status */
@@ -66,7 +64,6 @@ class XSM_Hardware{
 	/* Hardware Limits */
 	virtual long GetMaxPointsPerLine (){ return 1L<<16; };
 	virtual long GetMaxLines (){ return 1L<<16; };
-	virtual long GetMaxChannels (){ return 1L; }; /* not used, may be obsoleted */
 
 	/* Hardware realtime monitoring -- all optional */
 	/* default properties are
@@ -143,15 +140,6 @@ class XSM_Hardware{
 	virtual void EventCheckOn(){;};
 	virtual void EventCheckOff(){;};
 
-	virtual size_t ReadData(void *buf, size_t count) { 
-		return 0; 
-	};
-	virtual int ReadScanData(int y_index, int num_srcs, Mem2d *m[MAX_SRCS_CHANNELS]) {
-		return 0; 
-	};
-	virtual int ReadProbeData(int nsrcs, int nprobe, int kx, int ky, Mem2d *m, double scale=1.) { 
-		return 0; 
-	};
 	void SetFastScan(int f=0) { fast_scan=f; };
 	virtual int IsFastScan() { return fast_scan; };
 	void SetSuspendWatches(int f=0) { suspend_watches=f; };
