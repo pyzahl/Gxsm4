@@ -87,7 +87,23 @@
         last VZ offset setting (combo box index)
       </description>
     </key>
- 
+
+    <key name="adv-enable-slope-compensation" type="b">
+      <default>false</default>
+      <summary>scan generator slope compenation mode</summary>
+      <description>
+	scan generator slope compenation mode switch
+      </description>
+    </key>
+    
+    <key name="adv-enable-tip-return-to-center" type="b">
+      <default>false</default>
+      <summary>return to center behavior</summary>
+      <description>
+	RTC
+      </description>
+    </key>
+    
   </schema>
 
 </schemalist>

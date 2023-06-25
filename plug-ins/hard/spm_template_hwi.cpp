@@ -309,6 +309,57 @@ GtkWidget*  GUI_Builder::grid_add_mixer_options (gint channel, gint preset, gpoi
         return cbtxt;
 };
 
+GtkWidget* GUI_Builder::grid_add_scan_input_signal_options (gint channel, gint preset, gpointer ref){ // preset=scan_source[CHANNEL]
+        GtkWidget *cbtxt = gtk_combo_box_text_new (); 
+        g_object_set_data(G_OBJECT (cbtxt), "scan_channel_source", GINT_TO_POINTER (channel)); 
+
+        int jj=0;
+
+        // Template demo only
+        gchar *signal_label[] = { "PLL-Freq", "PLL-Phase", "PLL-Exec", "PLL-Ampl", "AnySignal", NULL }; // MUST MATCH CALLBACK!!!
+        for (int jj=0; signal_label[jj]; ++jj){
+                gchar *id = g_strdup_printf ("%d", jj); gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, signal_label[jj]); g_free (id);
+        }
+        
+#if 0 // actual MK3 code
+        for (int jj=0;  jj<NUM_SIGNALS_UNIVERSAL && sranger_common_hwi->lookup_dsp_signal_managed (jj)->p; ++jj){ 
+                if (1 || !strcmp (sranger_common_hwi->lookup_dsp_signal_managed (jj)->module, "Analog_IN") 
+                    || !strcmp (sranger_common_hwi->lookup_dsp_signal_managed (jj)->module, "Control") 
+                    || !strcmp (sranger_common_hwi->lookup_dsp_signal_managed (jj)->module, "Counter") 
+                    || !strcmp (sranger_common_hwi->lookup_dsp_signal_managed (jj)->module, "LockIn") 
+                    || !strcmp (sranger_common_hwi->lookup_dsp_signal_managed (jj)->module, "VP") 
+                    || !strcmp (sranger_common_hwi->lookup_dsp_signal_managed (jj)->module, "Z_Servo") 
+                    || !strcmp (sranger_common_hwi->lookup_dsp_signal_managed (jj)->module, "M_Servo") 
+                    || !strcmp (sranger_common_hwi->lookup_dsp_signal_managed (jj)->module, "Mixer") 
+                    || !strcmp (sranger_common_hwi->lookup_dsp_signal_managed (jj)->module, "RMS") 
+                    || !strcmp (sranger_common_hwi->lookup_dsp_signal_managed (jj)->module, "PAC")){ 
+                        if (sranger_common_hwi->lookup_dsp_signal_managed (jj)->index >= 0){ 
+                                int si = sranger_common_hwi->query_module_signal_input(DSP_SIGNAL_SCAN_CHANNEL_MAP0_ID+channel); 
+                                const gchar *vjfixedlab[] = { "Counter 0", "Counter 1", "NULL", "NULL" }; 
+                                int vi=sranger_common_hwi->lookup_dsp_signal_managed (si)->index/8; 
+                                int vj=sranger_common_hwi->lookup_dsp_signal_managed (si)->index - 8*vi; 
+                                gchar *tmp = g_strdup_printf("%s[%d]-%s", 
+                                                             sranger_common_hwi->lookup_dsp_signal_managed (jj)->label, vi, 
+                                                             vj < 4 
+                                                             ? sranger_common_hwi->lookup_dsp_signal_managed (sranger_common_hwi->query_module_signal_input(DSP_SIGNAL_VECPROBE0_INPUT_ID+vj))->label 
+                                                             : vjfixedlab[vj-4] 
+                                                             );	
+                                { gchar *id = g_strdup_printf ("%d", jj); gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, tmp); g_free (id); } 
+                                g_free (tmp); 
+                        } else {				
+                                { gchar *id = g_strdup_printf ("%d", jj); gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, sranger_common_hwi->lookup_dsp_signal_managed (jj)->label); g_free (id); } 
+                        } 
+                } 
+        }
+#endif
+        gtk_combo_box_set_active (GTK_COMBO_BOX (cbtxt), preset); 
+        g_signal_connect (G_OBJECT (cbtxt), "changed",	
+                          G_CALLBACK (SPM_Template_Control::choice_scansource_callback), 
+                          ref);
+        grid_add_widget (cbtxt);
+        return cbtxt;
+};
+
 
 static GActionEntry win_SPM_Template_popup_entries[] = {
         { "dsp-mover-configure", SPM_Template_Control::configure_callback, NULL, "true", NULL },
@@ -652,6 +703,71 @@ void SPM_Template_Control::create_folder (){
         scan_speed_ec = bp->ec;
         bp->new_line ();
 
+        bp->new_line ();
+	bp->grid_add_ec ("Fast Return", Unity, &fast_return, 1., 1000., "5g", 1., 10.,  "adv-scan-fast-return");
+
+        bp->set_configure_list_mode_on ();
+	bp->grid_add_ec ("XS 2nd ZOff", Angstroem, &x2nd_Zoff, -10000., 10000., ".2f", 1., 1., "adv-scan-xs2nd-z-offset");
+        bp->new_line ();
+        bp->set_configure_list_mode_off ();
+
+        bp->set_scale_nx (2);
+        bp->grid_add_ec_with_scale ("Slope X", Unity, &area_slope_x, -0.2, 0.2, ".5f", 0.0001, 0.0001,  "adv-scan-slope-x"); slope_x_ec = bp->ec;
+        gtk_scale_set_digits (GTK_SCALE (bp->scale), 5);
+        bp->new_line ();
+
+        bp->grid_add_ec_with_scale ("Slope Y", Unity, &area_slope_y, -0.2, 0.2, ".5f", 0.0001, 0.0001,  "adv-scan-slope-y"); slope_y_ec = bp->ec;
+        gtk_scale_set_digits (GTK_SCALE (bp->scale), 5);
+        bp->set_scale_nx ();
+        bp->new_line (0,2);
+
+        bp->grid_add_check_button ("Enable Slope Compensation", "enable analog slope compensation...", 1,
+                                       G_CALLBACK(SPM_Template_Control::DSP_slope_callback), this, area_slope_compensation_flag, 0);
+        g_settings_bind (hwi_settings, "adv-enable-slope-compensation",
+                         G_OBJECT (GTK_CHECK_BUTTON (bp->button)), "active",
+                         G_SETTINGS_BIND_DEFAULT);
+
+        bp->grid_add_check_button ("Enable automatic Tip return to center", "enable auto tip return to center after scan", 1,
+                                       G_CALLBACK(SPM_Template_Control::DSP_cret_callback), this, center_return_flag, 0);
+        g_settings_bind (hwi_settings, "adv-enable-tip-return-to-center",
+                         G_OBJECT (GTK_CHECK_BUTTON (bp->button)), "active",
+                         G_SETTINGS_BIND_DEFAULT);
+
+        PI_DEBUG (DBG_L4, "DSPC----FB-CONTROL -- INPUT-SRCS ----------------------------- ");
+
+	// SCAN CHANNEL INPUT SOURCE CONFIGURATION MENUS
+        bp->pop_grid ();
+        bp->new_line ();
+        bp->new_grid_with_frame ("Scan Input Source Selection");
+
+        bp->set_configure_list_mode_on ();
+        bp->add_to_configure_list (bp->frame); // manage en block
+        bp->set_configure_list_mode_off ();
+        
+        bp->grid_add_label ("... Signal Scan Sources Selections ...", NULL, 4);
+
+        bp->new_line ();
+
+        for (int i=0; i<4; ++i){
+                bp->grid_add_scan_input_signal_options (i, scan_source[i], this);
+                VPScanSrcVPitem[i] =  bp->wid;
+        }
+
+        // LDC -- Enable Linear Drift Correction -- Controls
+        bp->pop_grid ();
+        bp->new_line ();
+        bp->new_grid_with_frame ("Enable Linear Drift Correction (LDC)");
+        bp->set_configure_list_mode_on ();
+
+	LDC_status = bp->grid_add_check_button ("Enable Linear Drift Correction", NULL, 3);
+	gtk_check_button_set_active (GTK_CHECK_BUTTON (LDC_status), 0);
+	ldc_flag = 0;
+	g_signal_connect (G_OBJECT (LDC_status), "toggled",
+			    G_CALLBACK (SPM_Template_Control::ldc_callback), this);
+
+
+
+        
 	// ======================================== Piezo Drive / Amplifier Settings
         bp->pop_grid ();
         bp->new_line ();
@@ -766,7 +882,25 @@ void SPM_Template_Control::create_folder (){
         set_window_geometry ("spm-template-control"); // must add key to xml file: Gxsm-3.0/gxsm4/org.gnome.gxsm4.window-geometry.gschema.xml
 }
 
+int SPM_Template_Control::DSP_slope_callback (GtkWidget *widget, SPM_Template_Control *dspc){
+        PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);
+	dspc->area_slope_compensation_flag = gtk_check_button_get_active (GTK_CHECK_BUTTON (widget));	
+	dspc->update_controller();
+        return 0;
+}
 
+int SPM_Template_Control::DSP_cret_callback (GtkWidget *widget, SPM_Template_Control *dspc){
+        PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);
+	dspc->center_return_flag = gtk_check_button_get_active (GTK_CHECK_BUTTON (widget));	
+        return 0;
+}
+
+
+int SPM_Template_Control::ldc_callback(GtkWidget *widget, SPM_Template_Control *dspc){
+        PI_DEBUG_GP (DBG_L4, "%s \n",__FUNCTION__);
+	dspc->update_controller();
+	return 0;
+}
 
 
 int SPM_Template_Control::ChangedAction(GtkWidget *widget, SPM_Template_Control *dspc){
@@ -801,6 +935,52 @@ int SPM_Template_Control::choice_mixmode_callback (GtkWidget *widget, SPM_Templa
         PI_DEBUG_GP (DBG_L4, "%s **3 done\n",__FUNCTION__);
         return 0;
 }
+
+int SPM_Template_Control::choice_scansource_callback (GtkWidget *widget, SPM_Template_Control *dspc){
+        PI_DEBUG_GP (DBG_L4, "%s \n",__FUNCTION__);
+
+        if (gtk_combo_box_get_active (GTK_COMBO_BOX (widget)) == -1 || g_object_get_data( G_OBJECT (widget), "updating_in_progress")){
+                PI_DEBUG_GP (DBG_L4, "%s bail out for label refresh only\n",__FUNCTION__);
+                return 0;
+        }
+            
+	gint signal  = gtk_combo_box_get_active (GTK_COMBO_BOX (widget));
+        gint channel = GPOINTER_TO_INT (g_object_get_data( G_OBJECT (widget), "scan_channel_source"));
+
+#if 0
+	PI_DEBUG_GP (DBG_L3, "ScanSource-Input[%d]=0x%x  <== %s\n",channel,signal, sranger_common_hwi->dsp_signal_lookup_managed[signal].label);
+	sranger_common_hwi->change_signal_input (signal, DSP_SIGNAL_SCAN_CHANNEL_MAP0_ID+channel, dspc->DSP_vpdata_ij[0]*8+dspc->DSP_vpdata_ij[1]);
+	dspc->scan_source[channel] = signal;
+
+	// manage unit -- TDB
+	//	dspc->scan_unit2volt_factor[channel] = 1.;
+	//	dspc->update_sourcesignals_from_DSP_callback ();
+
+	// verify and update:
+	int si = sranger_common_hwi->query_module_signal_input(DSP_SIGNAL_SCAN_CHANNEL_MAP0_ID+channel);
+
+        main_get_gapp()->channelselector->SetModeChannelSignal(17+channel, 
+                                                               sranger_common_hwi->lookup_dsp_signal_managed (si)->label,
+                                                               sranger_common_hwi->lookup_dsp_signal_managed (si)->label,
+                                                               sranger_common_hwi->lookup_dsp_signal_managed (si)->unit,
+                                                               sranger_common_hwi->lookup_dsp_signal_managed (si)->scale
+                                                               );
+#else
+        // Template demo only
+        gchar *signal_label[] = { "PLL-Freq", "PLL-Phase", "PLL-Exec", "PLL-Ampl", "AnySignal", NULL }; // MUST MATCH CALLBACK!!!
+        gchar *signal_unit[] = { "Hz", "deg", "mV", "mV", "V", NULL };
+        double signal_scale[] = { 1., 2., 1000., 1000., 1., 0. };
+        main_get_gapp()->channelselector->SetModeChannelSignal(17+channel,
+                                                               signal_label[signal],
+                                                               signal_label[signal],
+                                                               signal_unit[signal],
+                                                               signal_scale[signal]
+                                                               );
+#endif
+        
+        return 0;
+}
+
 
 
 void SPM_Template_Control::update_zpos_readings(){

@@ -73,6 +73,30 @@
       <description>pcs0000, PCS Remote-ID: 'fbs-scan-speed-scan', Default/U:     500 Å/s    , Adjustment PCS Name: 'fbs-scan-speed-scan' </description>
     </key>
 
+    <key name="adv-scan-fast-return" type="d">
+      <default>1</default>
+      <summary>PCS Remote-ID: 'adv-scan-fast-return', Default/U: 1       </summary>
+      <description>pcs0000, PCS Remote-ID: 'adv-scan-fast-return', Default/U: 1    , Adjustment PCS Name: 'adv-scan-fast-return' </description>
+    </key>
+
+    <key name="adv-scan-xs2nd-z-offset" type="d">
+      <default>0.0</default>
+      <summary>PCS Remote-ID: 'adv-scan-xs2nd-z-offset', Default/U: 0 Å     </summary>
+      <description>pcs0000, PCS Remote-ID: 'adv-scan-xs2nd-z-offset', Default/U: 0 Å    , Adjustment PCS Name: 'adv-scan-xs2nd-z-offset' </description>
+    </key>
+
+    <key name="adv-scan-slope-x" type="d">
+      <default>0.0</default>
+      <summary>PCS Remote-ID: 'adv-scan-slope-x', Default/U: 0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'adv-scan-slope-x', Default/U: 0      , Adjustment PCS Name: 'adv-scan-slope-x' </description>
+    </key>
+
+    <key name="adv-scan-slope-y" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'adv-scan-slope-y', Default/U: 0     </summary>
+      <description>pcs0000, PCS Remote-ID: 'adv-scan-slope-y', Default/U: 0    , Adjustment PCS Name: 'adv-scan-slope-y' </description>
+    </key>
+
     
     <key name="template-stm-speed" type="d">
       <default>2000.0</default>

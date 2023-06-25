@@ -106,7 +106,8 @@ public:
         };
 
         GtkWidget* grid_add_mixer_options (gint channel, gint preset, gpointer ref);
-
+        GtkWidget* grid_add_scan_input_signal_options (gint channel, gint preset, gpointer ref);
+        
         // tmp use
         void add_to_remote_list (Gtk_EntryControl *ecx, const gchar *rid) {
                 remote_list_ec = ecx->AddEntry2RemoteList(rid, remote_list_ec);
@@ -164,6 +165,12 @@ public:
                 Vslope   = new UnitObj("V/s","V/s");
                 Hex      = new UnitObj("h","h");
 
+                scan_source[0] = 0;
+                scan_source[1] = 1;
+                scan_source[2] = 2;
+                scan_source[3] = 3;
+
+                // init all vars -- done via dconf schemata -- BUT not at first generation via auto write schemata, will get random memory eventually to edit manually later....
                 
                 sim_speed[0]=sim_speed[1]=2000.0; // per tab
                 sim_bias[0]=sim_bias[1]=0.0;
@@ -199,7 +206,13 @@ public:
 	//static int config_waveform (GtkWidget *widget, SPM_Template_Control *spmsc);
 	static void configure_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
         static int choice_Ampl_callback(GtkWidget *widget, SPM_Template_Control *spmsc);
+        static int choice_scansource_callback (GtkWidget *widget, SPM_Template_Control *dspc);
 
+	static int DSP_cret_callback (GtkWidget *widget, SPM_Template_Control *dspc);
+	static int DSP_slope_callback (GtkWidget *widget, SPM_Template_Control *dspc);
+
+        static int ldc_callback(GtkWidget *widget, SPM_Template_Control *dspc);
+        
         static void show_tab_to_configure (GtkWidget* w, gpointer data){
                 gtk_widget_show (GTK_WIDGET (g_object_get_data (G_OBJECT (w), "TabGrid")));
         };
@@ -248,6 +261,15 @@ public:
 
         // Feedback (Z-Servo)
 	double z_servo[3];    // Z-Servo (Feedback) [0] (not used here), [1] Const Proportional, [2] Const Integral [user visible values]
+
+	int    scan_source[4];   // scan source mapping index
+
+	double fast_return;       //!< on-the-fly fast return option (scan retrace speed override factor, 1=normal)
+	double x2nd_Zoff;         //!< Z lift off for 2nd scan line (MFM etc...)
+	GtkWidget *VPScanSrcVPitem[4];
+
+	int    ldc_flag;          //! LDC status at last update
+	GtkWidget *LDC_status;    //!< linear drift correction flag (on/off)
 
         // Scan Slope Compensation Parameters
         double area_slope_x;      //!< slope compensation in X, in scan coordinate system (possibly rotated) -- applied before, but by feedback

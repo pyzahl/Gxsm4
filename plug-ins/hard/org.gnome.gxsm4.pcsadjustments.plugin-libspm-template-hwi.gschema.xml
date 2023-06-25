@@ -71,7 +71,30 @@
       <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'fbs-scan-speed-scan' </summary>
       <description>Configuration for GXSM Entry with ID 'fbs-scan-speed-scan'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
     </key>
+    
+    <key name="adv-scan-fast-return" type="ad">
+      <default>[1000, 1, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'adv-scan-fast-return' </summary>
+      <description>Configuration for GXSM Entry with ID 'adv-scan-fast-return'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
 
+    <key name="adv-scan-xs2nd-z-offset" type="ad">
+      <default>[10000, -10000, 1e+111, -1e+111, 1e+111, 1e+111, 1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'adv-scan-xs2nd-z-offset' </summary>
+      <description>Configuration for GXSM Entry with ID 'adv-scan-xs2nd-z-offset'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="adv-scan-slope-x" type="ad">
+      <default>[0.2, -0.2, 1e+111, -1e+111, 1e+111, 1e+111, 0.0001, 0.0001, 0.001, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'adv-scan-slope-x' </summary>
+      <description>Configuration for GXSM Entry with ID 'adv-scan-slope-x'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="adv-scan-slope-y" type="ad">
+      <default>[0.2, -0.2, 1e+111, -1e+111, 1e+111, 1e+111, 0.0001, 0.0001, 0.001, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'adv-scan-slope-y' </summary>
+      <description>Configuration for GXSM Entry with ID 'adv-scan-slope-y'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
 
     <key name="template-stm-speed" type="ad">
       <default>[150000, 0.01, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
