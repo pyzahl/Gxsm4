@@ -284,6 +284,32 @@ static void spm_template_hwi_cleanup(void)
 
 // GUI Section -- custom to HwI
 // ================================================================================
+
+GtkWidget*  GUI_Builder::grid_add_mixer_options (gint channel, gint preset, gpointer ref){
+        gchar *id;
+        GtkWidget *cbtxt = gtk_combo_box_text_new ();
+        
+        g_object_set_data (G_OBJECT (cbtxt), "mix_channel", GINT_TO_POINTER (channel)); 
+                                                                        
+        id = g_strdup_printf ("%d", MM_OFF);         gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, "OFF"); g_free (id); 
+        id = g_strdup_printf ("%d", MM_ON);          gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, "LIN"); g_free (id); 
+        id = g_strdup_printf ("%d", MM_NEG|MM_ON);   gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, "NEG-LIN"); g_free (id); 
+        id = g_strdup_printf ("%d", MM_LOG|MM_ON);   gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, "LOG"); g_free (id); 
+
+        gchar *preset_id = g_strdup_printf ("%d", preset); 
+        gtk_combo_box_set_active_id (GTK_COMBO_BOX (cbtxt), preset_id);
+        //g_print ("SetActive MIX%d p=%d <%s>\n", channel, preset, preset_id);
+        g_free (preset_id);
+                
+        g_signal_connect (G_OBJECT (cbtxt),"changed",	
+                          G_CALLBACK (SPM_Template_Control::choice_mixmode_callback), 
+                          ref);				
+                
+        grid_add_widget (cbtxt);
+        return cbtxt;
+};
+
+
 static GActionEntry win_SPM_Template_popup_entries[] = {
         { "dsp-mover-configure", SPM_Template_Control::configure_callback, NULL, "true", NULL },
 };
@@ -439,7 +465,8 @@ int SPM_Template_Control::config_options_callback (GtkWidget *widget, SPM_Templa
 
 void SPM_Template_Control::create_folder (){
         GtkWidget *notebook;
- 
+ 	GSList *zpos_control_list=NULL;
+
         AppWindowInit ("SPM Tempate Control Window");
         
         // ========================================
@@ -450,7 +477,7 @@ void SPM_Template_Control::create_folder (){
         gtk_widget_show (notebook);
         gtk_grid_attach (GTK_GRID (v_grid), notebook, 1,1, 1,1);
 
-        const char *TabNames[] = { "STM", "AFM", "Config", NULL};
+        const char *TabNames[] = { "sim-STM", "sim-AFM", "sim-Config", NULL};
         const char *tab_key[] = { "template-tab-stm", "template-tab-afm", "template-tab-config", NULL};
         const char *tab_key_prefix[] = { "template-stm-", "template-afm-", "template-config-", NULL};
         int i,itab;
@@ -460,7 +487,222 @@ void SPM_Template_Control::create_folder (){
         bp->set_input_width_chars (10);
         bp->set_no_spin ();
 
-        for (itab=i=0; TabNames[i]; ++i){                
+
+// ==== Folder: Feedback & Scan ========================================
+        bp->start_notebook_tab (notebook, "Feedback & Scan", "template-tab-feedback-scan", hwi_settings);
+
+	bp->new_grid_with_frame ("SPM Controls");
+        
+        // ------- FB Characteristics
+        bp->start (); // start on grid top and use widget grid attach nx=4
+        bp->set_scale_nx (4); // set scale width to 4
+        bp->set_input_width_chars (10);
+
+        bp->grid_add_ec_with_scale ("Bias", Volt, &bias, -10., 10., "4g", 0.001, 0.01, "fbs-bias");
+        //        bp->ec->set_adjustment_mode (PARAM_CONTROL_ADJUSTMENT_LOG | PARAM_CONTROL_ADJUSTMENT_LOG_SYM | PARAM_CONTROL_ADJUSTMENT_DUAL_RANGE | PARAM_CONTROL_ADJUSTMENT_ADD_MARKS );
+        bp->ec->SetScaleWidget (bp->scale, 0);
+        bp->ec->set_logscale_min (1e-3);
+        gtk_scale_set_digits (GTK_SCALE (bp->scale), 5);
+        bp->new_line ();
+
+        bp->set_input_width_chars (30);
+        bp->set_input_nx (2);
+        bp->grid_add_ec ("Z-Pos/Setpoint:", Angstroem, &zpos_ref, -100., 100., "6g", 0.01, 0.1, "adv-dsp-zpos-ref");
+        ZPos_ec = bp->ec;
+        zpos_control_list = g_slist_prepend (zpos_control_list, bp->ec);
+                 
+        bp->set_input_width_chars (12);
+        bp->set_input_nx ();
+
+	bp->grid_add_check_button ("Z-Pos Monitor",
+                                   "Z Position Monitor. Disable to set Z-Position Setpoint for const height mode. "
+                                   "Switch Transfer to CZ-FUZZY-LOG for Z-CONTROL Constant Heigth Mode Operation with current compliance given by Fuzzy-Level. "
+                                   "Slow down feedback to minimize instabilities. "
+                                   "Set Current setpoint a notch below compliance level.",
+                                   1,
+                                   G_CALLBACK (SPM_Template_Control::zpos_monitor_callback), this,
+                                   0, 0);
+        GtkWidget *zposmon_checkbutton = bp->button;
+        bp->new_line ();
+
+        bp->set_configure_list_mode_off ();
+
+        // MIXER headers
+
+	bp->grid_add_label ("Source");
+        bp->grid_add_label ("Setpoint", NULL, 2);
+
+        bp->set_configure_list_mode_on ();
+        bp->grid_add_label ("Gain");
+        bp->grid_add_label ("Fuzzy-Level");
+        bp->grid_add_label ("Transfer");
+        bp->set_configure_list_mode_off ();
+
+        bp->new_line ();
+
+        bp->set_scale_nx (1);
+
+        // Build MIXER CHANNELs
+        UnitObj *mixer_unit[4] = { Current, Frq, Volt, Volt };
+        const gchar *mixer_channel_label[4] = { "STM Current", "AFM/Force", "Mix2", "Mix3" };
+        const gchar *mixer_remote_id_set[4] = { "fbs-mx0-current-set",  "fbs-mx1-freq-set",   "fbs-mx2-set",   "fbs-mx3-set" };
+        const gchar *mixer_remote_id_gn[4]  = { "fbs-mx0-current-gain" ,"fbs-mx1-freq-gain",  "fbs-mx2-gain",  "fbs-mx3-gain" };
+        const gchar *mixer_remote_id_fl[4]  = { "fbs-mx0-current-level","fbs-mx1-freq-level", "fbs-mx2-level", "fbs-mx3-level" };
+
+        // Note: transform mode is always default [LOG,OFF,OFF,OFF] -- NOT READ BACK FROM DSP -- !!!
+        for (gint ch=0; ch<2; ++ch){
+
+                GtkWidget *signal_select_widget = NULL;
+                UnitObj *tmp = NULL;
+#if 0
+                // add feedback mixer source signal selection
+                signal_select_widget = bp->grid_add_mixer_input_options (ch, mix_fbsource[ch], this);
+                if (ch > 1){
+                        const gchar *u =  sranger_common_hwi->lookup_dsp_signal_managed (mix_fbsource[ch])->unit;
+
+                        switch (u[0]){
+                        case 'V': tmp = new UnitObj("V","V"); break;
+                        case 'A' : tmp = new UnitObj(UTF8_ANGSTROEM,"A"); break;
+                        case 'H': tmp = new UnitObj("Hz","Hz"); break;
+                        case 'd': tmp = new UnitObj(UTF8_DEGREE,"Deg"); break;
+                        case 's': tmp = new UnitObj("s","sec"); break;
+                        case 'C': tmp = new UnitObj("#","CNT"); break;
+                        case 'm': tmp = new UnitObj("V","V"); break;
+                        case '1': tmp = new UnitObj("x1","x1"); break;
+                        case 'X': tmp = new UnitObj("X","Flag"); break;
+                        case 'x': tmp = new UnitObj("xV","xV"); break;
+                        case '*': tmp = new UnitObj("*V","*V"); break;
+                        default: tmp = new UnitObj("V","V"); break;
+                        }
+                        mixer_unit[ch] = tmp;
+                }                
+#else
+                // predef label
+                bp->grid_add_label (mixer_channel_label[ch]);
+#endif
+
+                bp->grid_add_ec_with_scale (NULL, mixer_unit[ch], &mix_set_point[ch], ch==0? 0.0:-100.0, 100., "4g", 0.001, 0.01, mixer_remote_id_set[ch]);
+                // bp->ec->set_adjustment_mode (PARAM_CONTROL_ADJUSTMENT_LOG | PARAM_CONTROL_ADJUSTMENT_ADD_MARKS );
+                bp->ec->SetScaleWidget (bp->scale, 0);
+                bp->ec->set_logscale_min (1e-4);
+                bp->ec->set_logscale_magshift (-3);
+                gtk_scale_set_digits (GTK_SCALE (bp->scale), 5);
+
+                if (signal_select_widget)
+                        g_object_set_data (G_OBJECT (signal_select_widget), "related_ec_setpoint", bp->ec);
+
+                
+                // bp->add_to_configure_hide_list (bp->scale);
+                bp->set_input_width_chars (10);
+                bp->set_configure_list_mode_on ();
+                bp->grid_add_ec (NULL, Unity, &mix_gain[ch], -1.0, 1.0, "5g", 0.001, 0.01, mixer_remote_id_gn[ch]);
+                bp->grid_add_ec (NULL, mixer_unit[ch], &mix_level[ch], -100.0, 100.0, "5g", 0.001, 0.01, mixer_remote_id_fl[ch]);
+
+                if (tmp) delete (tmp); // done setting unit -- if custom
+                
+                if (signal_select_widget)
+                        g_object_set_data (G_OBJECT (signal_select_widget), "related_ec_level", bp->ec);
+                
+                bp->grid_add_mixer_options (ch, mix_transform_mode[ch], this);
+                bp->set_configure_list_mode_off ();
+                bp->new_line ();
+        }
+        bp->set_configure_list_mode_off ();
+
+        bp->set_input_width_chars ();
+        
+        // Z-Servo
+        bp->pop_grid ();
+        bp->new_line ();
+        bp->new_grid_with_frame ("Z-Servo");
+
+        bp->set_label_width_chars (7);
+        bp->set_input_width_chars (12);
+
+        bp->set_configure_list_mode_on ();
+	bp->grid_add_ec_with_scale ("CP", Unity, &z_servo[SERVO_CP], 0., 200., "5g", 1.0, 0.1, "fbs-cp");
+        GtkWidget *ZServoCP = bp->input;
+        bp->new_line ();
+        bp->set_configure_list_mode_off ();
+        bp->grid_add_ec_with_scale ("CI", Unity, &z_servo[SERVO_CI], 0., 200., "5g", 1.0, 0.1, "fbs-ci");
+        GtkWidget *ZServoCI = bp->input;
+
+        g_object_set_data( G_OBJECT (ZServoCI), "HasClient", ZServoCP);
+        g_object_set_data( G_OBJECT (ZServoCP), "HasMaster", ZServoCI);
+        g_object_set_data( G_OBJECT (ZServoCI), "HasRatio", GUINT_TO_POINTER((guint)round(1000.*z_servo[SERVO_CP]/z_servo[SERVO_CI])));
+        
+        bp->set_label_width_chars ();
+
+	// ========================================
+        PI_DEBUG (DBG_L4, "DSPC----SCAN ------------------------------- ");
+        bp->pop_grid ();
+        bp->new_line ();
+        bp->new_grid_with_frame ("Scan Characteristics");
+
+        bp->start (4); // wx=4
+        bp->set_label_width_chars (7);
+
+        bp->set_configure_list_mode_on ();
+
+	bp->grid_add_ec_with_scale ("MoveSpd", Speed, &move_speed_x, 0.1, 10000., "5g", 1., 10., "fbs-scan-speed-move");
+        bp->new_line ();
+        bp->set_configure_list_mode_off ();
+
+	bp->grid_add_ec_with_scale ("ScanSpd", Speed, &scan_speed_x_requested, 0.1, 10000., "5g", 1., 10., "fbs-scan-speed-scan");
+        scan_speed_ec = bp->ec;
+        bp->new_line ();
+
+	// ======================================== Piezo Drive / Amplifier Settings
+        bp->pop_grid ();
+        bp->new_line ();
+        bp->new_grid_with_frame ("Piezo Drive Settings");
+
+        const gchar *PDR_gain_label[6] = { "VX", "VY", "VZ", "VX0", "VY0", "VZ0" };
+        const gchar *PDR_gain_key[6] = { "vx", "vy", "vz", "vx0", "vy0", "vz0" };
+        for(int j=0; j<6; j++) {
+                if (j == 3 && main_get_gapp()->xsm->Inst->OffsetMode () == OFM_DSP_OFFSET_ADDING)
+                        break;
+
+                gtk_label_set_width_chars (GTK_LABEL (bp->grid_add_label (PDR_gain_label[j])), 6);
+        
+                GtkWidget *wid = gtk_combo_box_text_new ();
+                g_object_set_data  (G_OBJECT (wid), "chindex", GINT_TO_POINTER (j));
+
+                // Init gain-choicelist
+                for(int ig=0; ig<GAIN_POSITIONS; ig++){
+                        AmpIndex  AmpI;
+                        AmpI.l = 0L;
+                        AmpI.s.ch = j;
+                        AmpI.s.x  = ig;
+                        gchar *Vxyz = g_strdup_printf("%g",xsmres.V[ig]);
+                        gchar *id = g_strdup_printf ("%ld",AmpI.l);
+                        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (wid), id, Vxyz);
+                        g_free (id);
+                        g_free (Vxyz);
+                }
+
+                g_signal_connect (G_OBJECT (wid), "changed",
+                                  G_CALLBACK (SPM_Template_Control::choice_Ampl_callback),
+                                  this);
+
+                gchar *tmpkey = g_strconcat ("spm-template-h", PDR_gain_key[j], NULL); 
+                // get last setting, will call callback connected above to update gains!
+                g_settings_bind (hwi_settings, tmpkey,
+                                 G_OBJECT (GTK_COMBO_BOX (wid)), "active",
+                                 G_SETTINGS_BIND_DEFAULT);
+                g_free (tmpkey);
+
+                //VXYZS0Gain[j] = wid; // store for remote access/manipulation
+                bp->grid_add_widget (wid);
+                bp->add_to_scan_freeze_widget_list (wid);
+        }
+
+        bp->notebook_tab_show_all ();
+
+        
+
+        
+        for (i=0; TabNames[i]; ++i){                
                 Gtk_EntryControl *ec_axis[3];
 
                 bp->start_notebook_tab (notebook, TabNames[i], tab_key[i], hwi_settings);
@@ -473,13 +715,13 @@ void SPM_Template_Control::create_folder (){
                         bp->set_input_width_chars(20);
                         bp->set_default_ec_change_notice_fkt (SPM_Template_Control::ChangedNotify, this);
 
-                        bp->grid_add_ec_with_scale ("Speed", Velocity, &speed[i], 0.01, 150e3, "5.2f", 1., 10., "speed");
+                        bp->grid_add_ec_with_scale ("Speed", Velocity, &sim_speed[i], 0.01, 150e3, "5.2f", 1., 10., "speed");
                         g_object_set_data( G_OBJECT (bp->input), "TabIndex", GINT_TO_POINTER (i));
                         
                         bp->new_line ();
 
                         bp->set_configure_list_mode_on ();
-                        bp->grid_add_ec_with_scale ("Bias", Volt, &bias[i], -10., 10., "5.2f", 0.1, 1., "bias");
+                        bp->grid_add_ec_with_scale ("Bias", Volt, &sim_bias[i], -10., 10., "5.2f", 0.1, 1., "bias");
                         g_object_set_data( G_OBJECT (bp->input), "TabIndex", GINT_TO_POINTER (i));
                         bp->set_configure_list_mode_off ();
 
@@ -506,47 +748,7 @@ void SPM_Template_Control::create_folder (){
                                                GCallback (config_options_callback), this, 1, 0x04);
 
                         bp->new_line ();
-                        // ======================================== Piezo Drive / Amplifier Settings
-                        bp->new_grid_with_frame ("Piezo Drive Settings");
 
-                        const gchar *PDR_gain_label[6] = { "VX", "VY", "VZ", "VX0", "VY0", "VZ0" };
-                        const gchar *PDR_gain_key[6] = { "vx", "vy", "vz", "vx0", "vy0", "vz0" };
-                        for(int j=0; j<6; j++) {
-                                if (j == 3 && main_get_gapp()->xsm->Inst->OffsetMode () == OFM_DSP_OFFSET_ADDING)
-                                        break;
-
-                                gtk_label_set_width_chars (GTK_LABEL (bp->grid_add_label (PDR_gain_label[j])), 6);
-        
-                                GtkWidget *wid = gtk_combo_box_text_new ();
-                                g_object_set_data  (G_OBJECT (wid), "chindex", GINT_TO_POINTER (j));
-
-                                // Init gain-choicelist
-                                for(int ig=0; ig<GAIN_POSITIONS; ig++){
-                                        AmpIndex  AmpI;
-                                        AmpI.l = 0L;
-                                        AmpI.s.ch = j;
-                                        AmpI.s.x  = ig;
-                                        gchar *Vxyz = g_strdup_printf("%g",xsmres.V[ig]);
-                                        gchar *id = g_strdup_printf ("%ld",AmpI.l);
-                                        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (wid), id, Vxyz);
-                                        g_free (id);
-                                        g_free (Vxyz);
-                                }
-
-                                g_signal_connect (G_OBJECT (wid), "changed",
-                                                  G_CALLBACK (SPM_Template_Control::choice_Ampl_callback),
-                                                  this);
-
-                                gchar *tmpkey = g_strconcat ("spm-template-h", PDR_gain_key[j], NULL); 
-                                // get last setting, will call callback connected above to update gains!
-                                g_settings_bind (hwi_settings, tmpkey,
-                                                 G_OBJECT (GTK_COMBO_BOX (wid)), "active",
-                                                 G_SETTINGS_BIND_DEFAULT);
-                                g_free (tmpkey);
-
-                                //VXYZS0Gain[j] = wid; // store for remote access/manipulation
-                                bp->grid_add_widget (wid);
-                        }
 
                         // ...
                 }
@@ -563,6 +765,87 @@ void SPM_Template_Control::create_folder (){
         AppWindowInit (NULL); // stage two
         set_window_geometry ("spm-template-control"); // must add key to xml file: Gxsm-3.0/gxsm4/org.gnome.gxsm4.window-geometry.gschema.xml
 }
+
+
+
+
+int SPM_Template_Control::ChangedAction(GtkWidget *widget, SPM_Template_Control *dspc){
+	dspc->update_controller ();
+	return 0;
+}
+
+void SPM_Template_Control::ChangedNotify(Param_Control* pcs, gpointer dspc){
+	((SPM_Template_Control*)dspc)->update_controller (); // update basic SPM Control Parameters
+}
+
+int SPM_Template_Control::choice_mixmode_callback (GtkWidget *widget, SPM_Template_Control *dspc){
+	gint channel=0;
+        gint selection=0;
+
+        PI_DEBUG_GP (DBG_L4, "%s \n",__FUNCTION__);
+
+        channel = GPOINTER_TO_INT (g_object_get_data(G_OBJECT (widget), "mix_channel"));
+        selection = atoi (gtk_combo_box_get_active_id (GTK_COMBO_BOX (widget)));
+
+        //g_print ("Choice MIX%d MT=%d\n", channel, selection);
+
+	PI_DEBUG_GP (DBG_L3, "MixMode[%d]=0x%x\n",channel,selection);
+
+	dspc->mix_transform_mode[channel] = selection;
+
+        PI_DEBUG_GP (DBG_L4, "%s ** 2\n",__FUNCTION__);
+
+	dspc->update_controller ();
+        //g_print ("DSP READBACK MIX%d MT=%d\n", channel, (int)sranger_common_hwi->read_dsp_feedback ("MT", channel));
+
+        PI_DEBUG_GP (DBG_L4, "%s **3 done\n",__FUNCTION__);
+        return 0;
+}
+
+
+void SPM_Template_Control::update_zpos_readings(){
+        double zp,a,b;
+        main_get_gapp()->xsm->hardware->RTQuery ("z", zp, a, b);
+        gchar *info = g_strdup_printf (" (%g Ang)", main_get_gapp()->xsm->Inst->V2ZAng(zp));
+        ZPos_ec->set_info (info);
+        ZPos_ec->Put_Value ();
+        g_free (info);
+}
+
+guint SPM_Template_Control::refresh_zpos_readings(SPM_Template_Control *dspc){ 
+	if (main_get_gapp()->xsm->hardware->IsSuspendWatches ())
+		return TRUE;
+
+	dspc->update_zpos_readings ();
+	return TRUE;
+}
+
+int SPM_Template_Control::zpos_monitor_callback( GtkWidget *widget, SPM_Template_Control *dspc){
+        if (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget))){
+                //g_slist_foreach ((GSList*)g_object_get_data (G_OBJECT (widget), "DSP_zpos_control_list"), (GFunc) App::thaw_ec, NULL);
+                dspc->zpos_refresh_timer_id = g_timeout_add (200, (GSourceFunc)SPM_Template_Control::refresh_zpos_readings, dspc);
+        }else{
+                //g_slist_foreach ((GSList*)g_object_get_data (G_OBJECT (widget), "DSP_zpos_control_list"), (GFunc) App::freeze_ec, NULL);
+
+                if (dspc->zpos_refresh_timer_id){
+                        g_source_remove (dspc->zpos_refresh_timer_id);
+                        dspc->zpos_refresh_timer_id = 0;
+                }
+        }
+        return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 // HwI Implementation
@@ -725,7 +1008,7 @@ public:
 
         // create dummy data 3.5Ang period
         virtual double get_z(double x, double y, int ch) {
-                return 10.*ch + Template_ControlClass->bias[0] * ab * sin(x/ab*2.*M_PI) * cos(y/ab*2.*M_PI);
+                return 10.*ch + Template_ControlClass->sim_bias[0] * ab * sin(x/ab*2.*M_PI) * cos(y/ab*2.*M_PI);
         };
 };
 
@@ -765,7 +1048,7 @@ double spm_template_hwi_dev::simulate_value (int xi, int yi, int ch){
 
         //g_print ("XYR0: %g %g",x,y);
 
-        // use template landscape is scan loaded to CH11 !!
+        // use template landscape if scan loaded to CH11 !!
         if (main_get_gapp()->xsm->scan[10]){
                 double ix,iy;
                 main_get_gapp()->xsm->scan[10]->World2Pixel  (x, y, ix,iy);
@@ -816,10 +1099,10 @@ gpointer DataReadThread (void *ptr_sr){
                                                         sr->data_x_index = xi;
                                                         sr->data_z_value = sr->simulate_value (xi, yi, ch);
                                                         //g_print("%d",ch);
-                                                        usleep (1000000 / Template_ControlClass->speed[0]);
+                                                        usleep (1000000 / Template_ControlClass->sim_speed[0]);
                                                         sr->Mob_dir[dir][ch]->PutDataPkt (sr->data_z_value, xi, yi);
                                                         while (sr->PauseFlg)
-                                                                usleep (1000000 / Template_ControlClass->speed[0]);
+                                                                usleep (1000000 / Template_ControlClass->sim_speed[0]);
                                                 }
                                 g_print("\n");
                         }
@@ -836,10 +1119,10 @@ gpointer DataReadThread (void *ptr_sr){
                                                 for (int ch=0; ch<sr->nsrcs_dir[dir]; ++ch){
                                                         sr->data_x_index = xi;
                                                         sr->data_z_value = sr->simulate_value (xi, yi, ch);
-                                                        usleep (1000000 / Template_ControlClass->speed[0]);
+                                                        usleep (1000000 / Template_ControlClass->sim_speed[0]);
                                                         sr->Mob_dir[dir][ch]->PutDataPkt (sr->data_z_value, xi, yi);
                                                         while (sr->PauseFlg)
-                                                                usleep (1000000 / Template_ControlClass->speed[0]);
+                                                                usleep (1000000 / Template_ControlClass->sim_speed[0]);
                                                 }
                         sr->data_y_count = yi-y0; // completed
                         sr->data_y_index = yi;

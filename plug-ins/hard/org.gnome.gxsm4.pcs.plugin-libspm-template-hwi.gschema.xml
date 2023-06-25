@@ -1,26 +1,99 @@
 <schemalist>
   <schema id="org.gnome.gxsm4.pcs.plugin-libspm-template-hwi" path="/org/gnome/gxsm4/pcs/plugin-libspm-template-hwi/">
 
+    <key name="fbs-bias" type="d">
+      <default>0.1</default>
+      <summary>PCS Remote-ID: 'fbs-bias', Default/U:    0.1 V     </summary>
+      <description>pcs0000, PCS Remote-ID: 'fbs-bias', Default/U:    0.1 V    , Adjustment PCS Name: 'fbs-bias' </description>
+    </key>
+
+    <key name="adv-dsp-zpos-ref" type="d">
+      <default>0.0</default>
+      <summary>PCS Remote-ID: 'adv-dsp-zpos-ref', Default/U: 0 Å     </summary>
+      <description>pcs0000, PCS Remote-ID: 'adv-dsp-zpos-ref', Default/U: 0.0 Å    , Adjustment PCS Name: 'adv-dsp-zpos-ref' </description>
+    </key>
+
+    <key name="fbs-mx0-current-set" type="d">
+      <default>0.0</default>
+      <summary>PCS Remote-ID: 'fbs-mx0-current-set', Default/U:    0 nA     </summary>
+      <description>pcs0000, PCS Remote-ID: 'fbs-mx0-current-set', Default/U:    0 nA    , Adjustment PCS Name: 'fbs-mx0-current-set' </description>
+    </key>
+
+    <key name="fbs-mx0-current-gain" type="d">
+      <default>1.0</default>
+      <summary>PCS Remote-ID: 'fbs-mx0-current-gain', Default/U: 1       </summary>
+      <description>pcs0000, PCS Remote-ID: 'fbs-mx0-current-gain', Default/U: 10      , Adjustment PCS Name: 'fbs-mx0-current-gain' </description>
+    </key>
+
+    <key name="fbs-mx0-current-level" type="d">
+      <default>0.0</default>
+      <summary>PCS Remote-ID: 'fbs-mx0-current-level', Default/U: 0 nA     </summary>
+      <description>pcs0000, PCS Remote-ID: 'fbs-mx0-current-level', Default/U: 0 nA    , Adjustment PCS Name: 'fbs-mx0-current-level' </description>
+    </key>
+
+    <key name="fbs-mx1-freq-set" type="d">
+      <default>0.0</default>
+      <summary>PCS Remote-ID: 'fbs-mx1-freq-set', Default/U: 0 Hz     </summary>
+      <description>pcs0000, PCS Remote-ID: 'fbs-mx1-freq-set', Default/U: -4.02466e-124 Hz    , Adjustment PCS Name: 'fbs-mx1-freq-set' </description>
+    </key>
+
+    <key name="fbs-mx1-freq-gain" type="d">
+      <default>0.0</default>
+      <summary>PCS Remote-ID: 'fbs-mx1-freq-gain', Default/U:0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'fbs-mx1-freq-gain', Default/U:0      , Adjustment PCS Name: 'fbs-mx1-freq-gain' </description>
+    </key>
+
+    <key name="fbs-mx1-freq-level" type="d">
+      <default>0.0</default>
+      <summary>PCS Remote-ID: 'fbs-mx1-freq-level', Default/U: 0 Hz     </summary>
+      <description>pcs0000, PCS Remote-ID: 'fbs-mx1-freq-level', Default/U: 0 Hz    , Adjustment PCS Name: 'fbs-mx1-freq-level' </description>
+    </key>
+
+    <key name="fbs-cp" type="d">
+      <default>10.0</default>
+      <summary>PCS Remote-ID: 'fbs-cp', Default/U: -5.70287e+91       </summary>
+      <description>pcs0000, PCS Remote-ID: 'fbs-cp', Default/U: 0    , Adjustment PCS Name: 'fbs-cp' </description>
+    </key>
+
+    <key name="fbs-ci" type="d">
+      <default>10.0</default>
+      <summary>PCS Remote-ID: 'fbs-ci', Default/U: 10       </summary>
+      <description>pcs0000, PCS Remote-ID: 'fbs-ci', Default/U: 10   , Adjustment PCS Name: 'fbs-ci' </description>
+    </key>
+
+    <key name="fbs-scan-speed-move" type="d">
+      <default>500.0</default>
+      <summary>PCS Remote-ID: 'fbs-scan-speed-move', Default/U:     500 Å/s     </summary>
+      <description>pcs0000, PCS Remote-ID: 'fbs-scan-speed-move', Default/U:     500 Å/s    , Adjustment PCS Name: 'fbs-scan-speed-move' </description>
+    </key>
+
+    <key name="fbs-scan-speed-scan" type="d">
+      <default>500.0</default>
+      <summary>PCS Remote-ID: 'fbs-scan-speed-scan', Default/U:     500 Å/s     </summary>
+      <description>pcs0000, PCS Remote-ID: 'fbs-scan-speed-scan', Default/U:     500 Å/s    , Adjustment PCS Name: 'fbs-scan-speed-scan' </description>
+    </key>
+
+    
     <key name="template-stm-speed" type="d">
-      <default>1</default>
-      <summary>PCS Remote-ID: 'template-stm-speed', Default/U:  0.00       </summary>
-      <description>pcs0000, PCS Remote-ID: 'template-stm-speed', Default/U:  0.00      , Adjustment PCS Name: 'template-stm-speed' </description>
+      <default>2000.0</default>
+      <summary>PCS Remote-ID: 'template-stm-speed', Default/U: 2000.00 px/s     </summary>
+      <description>pcs0000, PCS Remote-ID: 'template-stm-speed', Default/U: 2000.00 px/s    , Adjustment PCS Name: 'template-stm-speed' </description>
     </key>
 
     <key name="template-stm-bias" type="d">
-      <default>1</default>
+      <default>1.0</default>
       <summary>PCS Remote-ID: 'template-stm-bias', Default/U:  0.00 V     </summary>
       <description>pcs0000, PCS Remote-ID: 'template-stm-bias', Default/U:  0.00 V    , Adjustment PCS Name: 'template-stm-bias' </description>
     </key>
 
     <key name="template-afm-speed" type="d">
-      <default>2</default>
-      <summary>PCS Remote-ID: 'template-afm-speed', Default/U:  0.00       </summary>
-      <description>pcs0000, PCS Remote-ID: 'template-afm-speed', Default/U:  0.00      , Adjustment PCS Name: 'template-afm-speed' </description>
+      <default>2000.0</default>
+      <summary>PCS Remote-ID: 'template-afm-speed', Default/U: 2000.00 px/s     </summary>
+      <description>pcs0000, PCS Remote-ID: 'template-afm-speed', Default/U: 2000.00 px/s    , Adjustment PCS Name: 'template-afm-speed' </description>
     </key>
 
     <key name="template-afm-bias" type="d">
-      <default>2</default>
+      <default>0.0</default>
       <summary>PCS Remote-ID: 'template-afm-bias', Default/U:  0.00 V     </summary>
       <description>pcs0000, PCS Remote-ID: 'template-afm-bias', Default/U:  0.00 V    , Adjustment PCS Name: 'template-afm-bias' </description>
     </key>

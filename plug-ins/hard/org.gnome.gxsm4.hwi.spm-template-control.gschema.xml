@@ -16,6 +16,13 @@
 	...
       </description>
     </key>
+    <key name="template-tab-feedback-scan" type="b">
+      <default>true</default>
+      <summary>Indicates if tab xy to be showed</summary>
+      <description>
+	GUI templateplification option: Indicates tab xy to be showed
+      </description>
+    </key>
     <key name="template-tab-stm" type="b">
       <default>true</default>
       <summary>Indicates if tab xy to be showed</summary>
