@@ -37,9 +37,127 @@
 #define SERVO_CP    1
 #define SERVO_CI    2
 
-
+#define NUM_SIGNALS 99
 
 #define NUM_SIGNALS_UNIVERSAL 200
+
+typedef struct { gint32 id; const gchar* name; guint32 sigptr; } MOD_INPUT;
+
+/**
+# * Signal Input ID's for safe DSP based signal pointer adjustment methods
+#**/
+
+#define DSP_SIGNAL_MONITOR_INPUT_BASE_ID   0x0000
+
+#define DSP_SIGNAL_BASE_BLOCK_A_ID         0x1000
+#define DSP_SIGNAL_Z_SERVO_INPUT_ID       (DSP_SIGNAL_BASE_BLOCK_A_ID+1)
+#define DSP_SIGNAL_M_SERVO_INPUT_ID       (DSP_SIGNAL_Z_SERVO_INPUT_ID+1)
+#define DSP_SIGNAL_MIXER0_INPUT_ID        (DSP_SIGNAL_M_SERVO_INPUT_ID+1)
+#define DSP_SIGNAL_MIXER1_INPUT_ID        (DSP_SIGNAL_MIXER0_INPUT_ID+1)
+#define DSP_SIGNAL_MIXER2_INPUT_ID        (DSP_SIGNAL_MIXER1_INPUT_ID+1)
+#define DSP_SIGNAL_MIXER3_INPUT_ID        (DSP_SIGNAL_MIXER2_INPUT_ID+1)
+#define DSP_SIGNAL_DIFF_IN0_ID            (DSP_SIGNAL_MIXER3_INPUT_ID+1)
+#define DSP_SIGNAL_DIFF_IN1_ID            (DSP_SIGNAL_DIFF_IN0_ID+1)
+#define DSP_SIGNAL_DIFF_IN2_ID            (DSP_SIGNAL_DIFF_IN1_ID+1)
+#define DSP_SIGNAL_DIFF_IN3_ID            (DSP_SIGNAL_DIFF_IN2_ID+1)
+#define DSP_SIGNAL_SCAN_CHANNEL_MAP0_ID   (DSP_SIGNAL_DIFF_IN3_ID+1)
+#define DSP_SIGNAL_SCAN_CHANNEL_MAP1_ID   (DSP_SIGNAL_SCAN_CHANNEL_MAP0_ID+1)
+#define DSP_SIGNAL_SCAN_CHANNEL_MAP2_ID   (DSP_SIGNAL_SCAN_CHANNEL_MAP1_ID+1)
+#define DSP_SIGNAL_SCAN_CHANNEL_MAP3_ID   (DSP_SIGNAL_SCAN_CHANNEL_MAP2_ID+1)
+
+#define DSP_SIGNAL_BASE_BLOCK_B_ID         0x2000
+#define DSP_SIGNAL_LOCKIN_A_INPUT_ID      (DSP_SIGNAL_BASE_BLOCK_B_ID+1)
+#define DSP_SIGNAL_LOCKIN_B_INPUT_ID      (DSP_SIGNAL_LOCKIN_A_INPUT_ID+1)
+#define DSP_SIGNAL_VECPROBE0_INPUT_ID     (DSP_SIGNAL_LOCKIN_B_INPUT_ID+1)
+#define DSP_SIGNAL_VECPROBE1_INPUT_ID     (DSP_SIGNAL_VECPROBE0_INPUT_ID+1)
+#define DSP_SIGNAL_VECPROBE2_INPUT_ID     (DSP_SIGNAL_VECPROBE1_INPUT_ID+1)
+#define DSP_SIGNAL_VECPROBE3_INPUT_ID     (DSP_SIGNAL_VECPROBE2_INPUT_ID+1)
+#define DSP_SIGNAL_VECPROBE0_CONTROL_ID   (DSP_SIGNAL_VECPROBE3_INPUT_ID+1)
+#define DSP_SIGNAL_VECPROBE1_CONTROL_ID   (DSP_SIGNAL_VECPROBE0_CONTROL_ID+1)
+#define DSP_SIGNAL_VECPROBE2_CONTROL_ID   (DSP_SIGNAL_VECPROBE1_CONTROL_ID+1)
+#define DSP_SIGNAL_VECPROBE3_CONTROL_ID   (DSP_SIGNAL_VECPROBE2_CONTROL_ID+1)
+#define DSP_SIGNAL_VECPROBE_TRIGGER_INPUT_ID (DSP_SIGNAL_VECPROBE3_CONTROL_ID+1)
+#define DSP_SIGNAL_VECPROBE_LIMITER_INPUT_ID (DSP_SIGNAL_VECPROBE_TRIGGER_INPUT_ID+1)
+#define DSP_SIGNAL_VECPROBE_LIMITER_UP_INPUT_ID (DSP_SIGNAL_VECPROBE_LIMITER_INPUT_ID+1)
+#define DSP_SIGNAL_VECPROBE_LIMITER_DN_INPUT_ID (DSP_SIGNAL_VECPROBE_LIMITER_UP_INPUT_ID+1)
+#define DSP_SIGNAL_VECPROBE_TRACKER_INPUT_ID (DSP_SIGNAL_VECPROBE_LIMITER_DN_INPUT_ID+1)
+
+#define DSP_SIGNAL_BASE_BLOCK_C_ID             0x3000
+#define DSP_SIGNAL_OUTMIX_CH0_INPUT_ID        (DSP_SIGNAL_BASE_BLOCK_C_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH0_ADD_A_INPUT_ID  (DSP_SIGNAL_OUTMIX_CH0_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH0_SUB_B_INPUT_ID  (DSP_SIGNAL_OUTMIX_CH0_ADD_A_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH0_SMAC_A_INPUT_ID (DSP_SIGNAL_OUTMIX_CH0_SUB_B_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH0_SMAC_B_INPUT_ID (DSP_SIGNAL_OUTMIX_CH0_SMAC_A_INPUT_ID+1)
+
+#define DSP_SIGNAL_OUTMIX_CH1_INPUT_ID        (DSP_SIGNAL_OUTMIX_CH0_SMAC_B_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH1_ADD_A_INPUT_ID  (DSP_SIGNAL_OUTMIX_CH1_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH1_SUB_B_INPUT_ID  (DSP_SIGNAL_OUTMIX_CH1_ADD_A_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH1_SMAC_A_INPUT_ID (DSP_SIGNAL_OUTMIX_CH1_SUB_B_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH1_SMAC_B_INPUT_ID (DSP_SIGNAL_OUTMIX_CH1_SMAC_A_INPUT_ID+1)
+
+#define DSP_SIGNAL_OUTMIX_CH2_INPUT_ID        (DSP_SIGNAL_OUTMIX_CH1_SMAC_B_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH2_ADD_A_INPUT_ID  (DSP_SIGNAL_OUTMIX_CH2_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH2_SUB_B_INPUT_ID  (DSP_SIGNAL_OUTMIX_CH2_ADD_A_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH2_SMAC_A_INPUT_ID (DSP_SIGNAL_OUTMIX_CH2_SUB_B_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH2_SMAC_B_INPUT_ID (DSP_SIGNAL_OUTMIX_CH2_SMAC_A_INPUT_ID+1)
+
+#define DSP_SIGNAL_OUTMIX_CH3_INPUT_ID        (DSP_SIGNAL_OUTMIX_CH2_SMAC_B_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH3_ADD_A_INPUT_ID  (DSP_SIGNAL_OUTMIX_CH3_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH3_SUB_B_INPUT_ID  (DSP_SIGNAL_OUTMIX_CH3_ADD_A_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH3_SMAC_A_INPUT_ID (DSP_SIGNAL_OUTMIX_CH3_SUB_B_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH3_SMAC_B_INPUT_ID (DSP_SIGNAL_OUTMIX_CH3_SMAC_A_INPUT_ID+1)
+
+#define DSP_SIGNAL_OUTMIX_CH4_INPUT_ID        (DSP_SIGNAL_OUTMIX_CH3_SMAC_B_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH4_ADD_A_INPUT_ID  (DSP_SIGNAL_OUTMIX_CH4_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH4_SUB_B_INPUT_ID  (DSP_SIGNAL_OUTMIX_CH4_ADD_A_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH4_SMAC_A_INPUT_ID (DSP_SIGNAL_OUTMIX_CH4_SUB_B_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH4_SMAC_B_INPUT_ID (DSP_SIGNAL_OUTMIX_CH4_SMAC_A_INPUT_ID+1)
+
+#define DSP_SIGNAL_OUTMIX_CH5_INPUT_ID        (DSP_SIGNAL_OUTMIX_CH4_SMAC_B_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH5_ADD_A_INPUT_ID  (DSP_SIGNAL_OUTMIX_CH5_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH5_SUB_B_INPUT_ID  (DSP_SIGNAL_OUTMIX_CH5_ADD_A_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH5_SMAC_A_INPUT_ID (DSP_SIGNAL_OUTMIX_CH5_SUB_B_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH5_SMAC_B_INPUT_ID (DSP_SIGNAL_OUTMIX_CH5_SMAC_A_INPUT_ID+1)
+
+#define DSP_SIGNAL_OUTMIX_CH6_INPUT_ID        (DSP_SIGNAL_OUTMIX_CH5_SMAC_B_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH6_ADD_A_INPUT_ID  (DSP_SIGNAL_OUTMIX_CH6_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH6_SUB_B_INPUT_ID  (DSP_SIGNAL_OUTMIX_CH6_ADD_A_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH6_SMAC_A_INPUT_ID (DSP_SIGNAL_OUTMIX_CH6_SUB_B_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH6_SMAC_B_INPUT_ID (DSP_SIGNAL_OUTMIX_CH6_SMAC_A_INPUT_ID+1)
+
+#define DSP_SIGNAL_OUTMIX_CH7_INPUT_ID        (DSP_SIGNAL_OUTMIX_CH6_SMAC_B_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH7_ADD_A_INPUT_ID  (DSP_SIGNAL_OUTMIX_CH7_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH7_SUB_B_INPUT_ID  (DSP_SIGNAL_OUTMIX_CH7_ADD_A_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH7_SMAC_A_INPUT_ID (DSP_SIGNAL_OUTMIX_CH7_SUB_B_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH7_SMAC_B_INPUT_ID (DSP_SIGNAL_OUTMIX_CH7_SMAC_A_INPUT_ID+1)
+
+#define DSP_SIGNAL_OUTMIX_CH8_INPUT_ID        (DSP_SIGNAL_OUTMIX_CH7_SMAC_B_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH8_ADD_A_INPUT_ID  (DSP_SIGNAL_OUTMIX_CH8_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH9_INPUT_ID        (DSP_SIGNAL_OUTMIX_CH8_ADD_A_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH9_ADD_A_INPUT_ID  (DSP_SIGNAL_OUTMIX_CH9_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH10_INPUT_ID       (DSP_SIGNAL_OUTMIX_CH9_ADD_A_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH10_ADD_A_INPUT_ID (DSP_SIGNAL_OUTMIX_CH10_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH11_INPUT_ID       (DSP_SIGNAL_OUTMIX_CH10_ADD_A_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH11_ADD_A_INPUT_ID (DSP_SIGNAL_OUTMIX_CH11_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH12_INPUT_ID       (DSP_SIGNAL_OUTMIX_CH11_ADD_A_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH12_ADD_A_INPUT_ID (DSP_SIGNAL_OUTMIX_CH12_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH13_INPUT_ID       (DSP_SIGNAL_OUTMIX_CH12_ADD_A_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH13_ADD_A_INPUT_ID (DSP_SIGNAL_OUTMIX_CH13_INPUT_ID+1)
+
+#define DSP_SIGNAL_BASE_BLOCK_D_ID             0x4000
+#define DSP_SIGNAL_ANALOG_AVG_INPUT_ID        (DSP_SIGNAL_BASE_BLOCK_D_ID+1)
+#define DSP_SIGNAL_SCOPE_SIGNAL1_INPUT_ID     (DSP_SIGNAL_ANALOG_AVG_INPUT_ID+1)
+#define DSP_SIGNAL_SCOPE_SIGNAL2_INPUT_ID     (DSP_SIGNAL_SCOPE_SIGNAL1_INPUT_ID+1)
+#define DSP_SIGNAL_SCO1_INPUT_ID               (DSP_SIGNAL_SCOPE_SIGNAL2_INPUT_ID+1)
+#define DSP_SIGNAL_SCO1_AMPLITUDE_INPUT_ID     (DSP_SIGNAL_SCO1_INPUT_ID+1)
+#define DSP_SIGNAL_SCO2_INPUT_ID               (DSP_SIGNAL_SCO1_AMPLITUDE_INPUT_ID+1)
+#define DSP_SIGNAL_SCO2_AMPLITUDE_INPUT_ID     (DSP_SIGNAL_SCO2_INPUT_ID+1)
+
+#define LAST_INPUT_ID                          DSP_SIGNAL_SCO2_AMPLITUDE_INPUT_ID
+
+#define SIGNAL_INPUT_DISABLED -10
+
+
 
 typedef struct{
 	guint32 p;  // pointer in usigned int (32 bit)
@@ -50,6 +168,13 @@ typedef struct{
 	const gchar *module;
 	int index; // actual vector index
 } DSP_SIG_UNIVERSAL;
+
+typedef struct{
+	gint32    mindex;           /**< monitor signal index to be set to adress by signald_id -- 0...NUM_MONITOR_SIGNALS-1, or any valid MODULE_SIGNAL_ID.  -1: ready/no action =WO */
+	gint32    signal_id;        /**< valid signal identification -- 0...#siganls configured in signal list OR set this to -1 to query signal at mindex  =WO */
+	guint32   act_address_input_set;  /**RO (W=0 OK)  verification of actual action taken -- actual input addresss of pointer manipulated =WO */
+	guint32   act_address_signal;     /**RO (W=0 OK)  verification of actual signal address configure for input =WO */
+} SIGNAL_MANAGE;
 
 
 typedef enum { PV_MODE_NONE, PV_MODE_IV, PV_MODE_FZ, PV_MODE_PL, PV_MODE_LP, PV_MODE_SP, PV_MODE_TS, PV_MODE_GVP, PV_MODE_AC, PV_MODE_AX, PV_MODE_TK, PV_MODE_ABORT } pv_mode;
@@ -204,6 +329,10 @@ public:
 class SPM_Template_Control : public AppBase{
 public:
         SPM_Template_Control(Gxsm4app *app):AppBase(app){
+                vpg_window = NULL;
+                vpg_app_window = NULL;
+                vpg_grid = NULL;
+
                 // need to create according xml recource files for this to make work....
                 hwi_settings = g_settings_new (GXSM_RES_BASE_PATH_DOT".hwi.spm-template-control");
                 Unity    = new UnitObj(" "," ");
@@ -265,6 +394,14 @@ public:
         virtual void AppWindowInit(const gchar *title);
 	void create_folder();
 
+	void get_tab_settings (const gchar *tab_key, guint64 &option_flags, guint64 &AC_auto_flags, guint64 glock_data[6]);
+        void set_tab_settings (const gchar *tab_key, guint64 option_flags, guint64 AC_auto_flags, guint64 glock_data[6]);
+
+	void save_values (NcFile *ncf);
+        void load_values (NcFile *ncf);
+
+        void store_values ();
+
         static int config_options_callback (GtkWidget *widget, SPM_Template_Control *dspc);
         
 	//static void ChangedWaveOut(Param_Control* pcs, gpointer data);
@@ -303,10 +440,12 @@ public:
 
         static int auto_probe_callback(GtkWidget *widget, SPM_Template_Control *dspc);
 	static int Probing_graph_callback(GtkWidget *widget, SPM_Template_Control *dspc, int finish_flag=0);
+        static int Probing_event_setup_scan (int ch, const gchar *titleprefix, const gchar *name, const gchar *unit, const gchar *label, double d2u, int nvalues);
+	static int Probing_eventcheck_callback(GtkWidget *widget, SPM_Template_Control *dspc);
+	static int Probing_exec_ABORT_callback(GtkWidget *widget, SPM_Template_Control *dspc);
 	static int Probing_save_callback(GtkWidget *widget, SPM_Template_Control *dspc);
 	static int Probing_abort_callback(GtkWidget *widget, SPM_Template_Control *dspc);
 
-        
 	static int Probing_exec_IV_callback(GtkWidget *widget, SPM_Template_Control *dspc);
 	static int Probing_write_IV_callback(GtkWidget *widget, SPM_Template_Control *dspc);
 	static int callback_change_IV_option_flags (GtkWidget *widget, SPM_Template_Control *dspc);
@@ -314,7 +453,7 @@ public:
 
 	static int Probing_exec_GVP_callback(GtkWidget *widget, SPM_Template_Control *dspc);
 	static int Probing_write_GVP_callback(GtkWidget *widget, SPM_Template_Control *dspc);
-
+        
         static int callback_change_GVP_vpc_option_flags (GtkWidget *widget, SPM_Template_Control *dspc);
 	static int callback_update_GVP_vpc_option_checkbox (GtkWidget *widget, SPM_Template_Control *dspc);
 	static int callback_change_GVP_option_flags (GtkWidget *widget, SPM_Template_Control *dspc);
@@ -327,12 +466,79 @@ public:
 	static int callback_XJoin (GtkWidget *widget, SPM_Template_Control *dspc);
 	static int callback_GrMatWindow (GtkWidget *widget, SPM_Template_Control *dspc);
 
+	int probedata_length () { return current_probe_data_index; };
+	void push_probedata_arrays ();
+	GArray** pop_probedata_arrays ();
+	GArray** pop_probehdr_arrays ();
+	void init_probedata_arrays ();
+	static void free_probedata_array_set (GArray** garr, SPM_Template_Control *dc);
+	static void free_probehdr_array_set (GArray** garr, SPM_Template_Control *dc);
+	void free_probedata_arrays ();
+
+	int check_vp_in_progress (const gchar *extra_info=NULL) { return 0; }; // DUMMY -- check controller for !!
+
+	void add_probedata(double data[13]);
+	void add_probevector();
+	void set_probevector(double pv[9]);
+
+	void add_probe_hdr(double pv[9]);
+	void dump_probe_hdr();
+
+	void probedata_visualize (GArray *probedata_x, GArray *probedata_y,  GArray *probedata_sec, 
+				  ProfileControl* &pc, ProfileControl* &pc_av, int plot_msk,
+				  const gchar *xlab, const gchar *xua, double xmult,
+				  const gchar *ylab, const gchar *yua, double ymult,
+				  int current_i, int si, int nas, gboolean join_same_x=FALSE,
+                                  gint xmap=0, gint src=0, gint num_active_xmaps=1, gint num_active_sources=1);
+
+
+        
    	const char* vp_label_lookup(int i);
 	const char* vp_unit_lookup(int i);
 	double      vp_scale_lookup(int i);
 
+        
+	static gboolean idle_callback_update_gui (gpointer data){
+		SPM_Template_Control *dspc = (SPM_Template_Control*) data;
+                gapp->spm_update_all();
+                gapp->SetStatus(N_("Saved VP data: "), dspc->idle_callback_data_fn);
+                gchar *bbt = g_strdup_printf ("Save now - last: %s", dspc->idle_callback_data_fn);
+                gtk_button_set_label (GTK_BUTTON (dspc->save_button), bbt);
+                g_free (bbt);
+                g_free (dspc->idle_callback_data_fn); // clean up tmp data now
+                dspc->idle_callback_data_fn = NULL;
+		dspc->idle_id_update_gui = 0; // done.
+		return FALSE;
+	};
+		
+	void update_gui_thread_safe (const gchar *fntmp) {
+                // execute GUI updated thread safe
+                if (idle_id_update_gui == 0){
+                        idle_callback_data_fn = g_strdup (fntmp);
+                        idle_id_update_gui = g_idle_add (SPM_Template_Control::idle_callback_update_gui, this);
+                } else {
+                        g_warning ("update_gui_thread_safe: is busy, skipping [%s].", fntmp);
+                }
+	};
+
+        void update(){
+                if (!GUI_ready) return;
+
+                g_slist_foreach((GSList*)g_object_get_data( G_OBJECT (window), "DSP_EC_list"),
+                                (GFunc) App::update_ec, NULL);
+                g_slist_foreach((GSList*)g_object_get_data( G_OBJECT (window), "DSP_VPC_OPTIONS_list"),
+                                (GFunc) callback_update_GVP_vpc_option_checkbox, this);
+        };
+
+
+
      
-        void update_controller () {}; // dummy, implement control parameter updates
+        void update_controller () {
+
+                mirror_dsp_scan_dx32 = 1.0; // dsp_scan_fs_dx*dsp_scan_dnx; // actual DSP dx in S15.16 between pixels in X
+                mirror_dsp_scan_dy32 = 1.0; // dsp_scan_fs_dy*dsp_scan_dny; // actual DSP dy in S15.16 between pixels in Y
+
+        }; // dummy, implement control parameter updates
 
         
         GUI_Builder *bp;
@@ -364,14 +570,21 @@ public:
 
 	int    scan_source[4];    // scan source mapping signal index for imaging
 	int    probe_source[4];   // probe source mapping signal index for 32bit data channels [0..3]
+
+	int    vp_input_id_cache[4];  // cache VP input config;
+	int    DSP_vpdata_ij[2];
+	GtkWidget *VPSig_menu, *VPSig_mi[8], *VPScanSrcVPitem[4];
         
 	double fast_return;       //!< on-the-fly fast return option (scan retrace speed override factor, 1=normal)
 	double x2nd_Zoff;         //!< Z lift off for 2nd scan line (MFM etc...)
-	GtkWidget *VPScanSrcVPitem[4];
 
 	int    ldc_flag;          //! LDC status at last update
 	GtkWidget *LDC_status;    //!< linear drift correction flag (on/off)
 
+        // -- DSP Scan DNX,DNY mirror
+        gint32 mirror_dsp_scan_dx32, mirror_dsp_scan_dy32;
+
+        
         // Scan Slope Compensation Parameters
         double area_slope_x;      //!< slope compensation in X, in scan coordinate system (possibly rotated) -- applied before, but by feedback
 	double area_slope_y;      //!< slope compensation in Y, in scan coordinate system (possibly rotated) -- applied before, but by feedback
@@ -537,11 +750,24 @@ protected:
 
 	void write_dsp_abort_probe ();
 
+        int idle_callback_data_ff;
+        guint idle_id;
+
+        gchar *idle_callback_data_fn;
+        guint idle_id_update_gui;
+
+	gboolean GUI_ready;
+
 private:
 	#define MAX_PV 50
 	PROBE_VECTOR_GENERIC     dsp_vector_list[MAX_PV]; // copy for GXSM internal use only
 
 	GSettings *hwi_settings;
+
+        // ==== VP graphs organizer
+        Gxsm4appWindow *vpg_app_window;
+	GtkWindow* vpg_window;
+        GtkWidget* vpg_grid;
 
 	UnitObj *Unity, *Volt, *Velocity;
         UnitObj *Angstroem, *Frq, *Time, *TimeUms, *msTime, *minTime, *Deg, *Current, *Current_pA, *Speed, *PhiSpeed, *Vslope, *Hex;
@@ -620,17 +846,19 @@ public:
                              Mem2d **Mob0, Mem2d **Mob1, Mem2d **Mob2, Mem2d **Mob3);
 
         // dummy template signal management
+	// SIGNAL MANAGEMENT
 
-	virtual void read_dsp_signals () { dsp_signal_lookup_managed[0].p = 0; };
-	virtual int lookup_signal_by_ptr(gint64 sigptr) { return -1; };
-	virtual int lookup_signal_by_name(const gchar *sig_name) { return -1; };
-	virtual const gchar *lookup_signal_name_by_index(int i) { return "NOT SUPPORTED"; };
-	virtual const gchar *lookup_signal_unit_by_index(int i) { return "NOT SUPPORTED"; };
-	virtual double lookup_signal_scale_by_index(int i) { return 0.; };
-	virtual int change_signal_input(int signal_index, gint32 input_id, gint32 voffset=0) { return -10; };
-	virtual int query_module_signal_input(gint32 input_id) { return -10; };
+	virtual void read_dsp_signals () { read_signal_lookup (); read_actual_module_configuration (); };
 
-	// ========================================
+	virtual int lookup_signal_by_ptr(gint64 sigptr);
+	virtual int lookup_signal_by_name(const gchar *sig_name);
+	virtual const gchar *lookup_signal_name_by_index(int i);
+	virtual const gchar *lookup_signal_unit_by_index(int i);
+	virtual double lookup_signal_scale_by_index(int i);
+	virtual int change_signal_input(int signal_index, gint32 input_id, gint32 voffset=0);
+	virtual int query_module_signal_input(gint32 input_id);
+	int read_signal_lookup ();
+	int read_actual_module_configuration ();
 
 	DSP_SIG_UNIVERSAL *lookup_dsp_signal_managed(gint i){
                 if (i<NUM_SIGNALS_UNIVERSAL)

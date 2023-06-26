@@ -63,6 +63,8 @@ gfloat color_yellow[4]  = { 1., 1., 0., 1.0 };
 
 // SR specific conversions and lookups
 
+#define DSP_FRQ_REF 75000.0
+
 #define SRV2     (2.05/32767.)
 #define SRV10    (10.0/32767.)
 #define PhaseFac (1./16.)
@@ -115,14 +117,14 @@ const char* unitlookup[] = { "V",   "V",    "V",    "V",    "V",    "V",     "V"
 #define XSM_DEBUG_PG(X) ;
 
 const char* SPM_Template_Control::vp_label_lookup(int i){
-        //if (i==0) // IN0 dedicated for tunnel current
-        //        return sranger_common_hwi->lookup_signal_name_by_index (0);
+        if (i==0) // IN0 dedicated for tunnel current
+                return spm_template_hwi->lookup_signal_name_by_index (0);
 	if (i > 11 && i < 16){
 		int k=i-12;
 		if (vp_input_id_cache[k] < 0)
-			vp_input_id_cache[k] = sranger_common_hwi->query_module_signal_input (DSP_SIGNAL_VECPROBE0_INPUT_ID + k);
+			vp_input_id_cache[k] = spm_template_hwi->query_module_signal_input (DSP_SIGNAL_VECPROBE0_INPUT_ID + k);
 		if (vp_input_id_cache[k] >= 0){
-			return sranger_common_hwi->lookup_signal_name_by_index (vp_input_id_cache[k]);
+			return spm_template_hwi->lookup_signal_name_by_index (vp_input_id_cache[k]);
 		}
 	}		
 	return lablookup[i];
@@ -131,16 +133,16 @@ const char* SPM_Template_Control::vp_label_lookup(int i){
 const char* SPM_Template_Control::vp_unit_lookup(int i){
         if (i==0){ // IN0 dedicated for tunnel current
                 if (main_get_gapp()->xsm->Inst->nAmpere2V (1.) > 1.)
-                        return "pA"; // sranger_common_hwi->lookup_signal_unit_by_index (0); // must be a unscaled unit here
+                        return "pA"; // spm_template_hwi->lookup_signal_unit_by_index (0); // must be a unscaled unit here
                 else
-                        return "nA"; // sranger_common_hwi->lookup_signal_unit_by_index (0); // must be a unscaled unit here
+                        return "nA"; // spm_template_hwi->lookup_signal_unit_by_index (0); // must be a unscaled unit here
         }
 	if (i > 11 && i < 16){
 		int k=i-12;
 		if (vp_input_id_cache[k] < 0)
-			vp_input_id_cache[k] = sranger_common_hwi->query_module_signal_input (DSP_SIGNAL_VECPROBE0_INPUT_ID + k);
+			vp_input_id_cache[k] = spm_template_hwi->query_module_signal_input (DSP_SIGNAL_VECPROBE0_INPUT_ID + k);
 		if (vp_input_id_cache[k] >= 0){
-			return sranger_common_hwi->lookup_signal_unit_by_index (vp_input_id_cache[k]);
+			return spm_template_hwi->lookup_signal_unit_by_index (vp_input_id_cache[k]);
 		}
 	}		
 	return unitlookup[i];
@@ -150,7 +152,7 @@ double SPM_Template_Control::vp_scale_lookup(int i){
 	double DAC2Ulookup[]={ SRV10, SRV10,  SRV10,  SRV10,  SRV10,  SRV10,   SRV10,  SRV10,
 			       ZAngFac, BiasFac, SRV10,  SRV10,  SRV10, SRV10,  SRV10, 
 			       1.,
-			       1e3/frq_ref, XAngFac, YAngFac, ZAngFac, BiasFac, PhaseFac, 1.,
+			       1e3/DSP_FRQ_REF, XAngFac, YAngFac, ZAngFac, BiasFac, PhaseFac, 1.,
 			       0.
 	};
 
@@ -162,9 +164,9 @@ double SPM_Template_Control::vp_scale_lookup(int i){
 	if (i > 11 && i < 16){
 		int k=i-12;
 		if (vp_input_id_cache[k] < 0)
-			vp_input_id_cache[k] = sranger_common_hwi->query_module_signal_input (DSP_SIGNAL_VECPROBE0_INPUT_ID + k);
+			vp_input_id_cache[k] = spm_template_hwi->query_module_signal_input (DSP_SIGNAL_VECPROBE0_INPUT_ID + k);
 		if (vp_input_id_cache[k] >= 0){
-			return sranger_common_hwi->lookup_signal_scale_by_index (vp_input_id_cache[k]);
+			return spm_template_hwi->lookup_signal_scale_by_index (vp_input_id_cache[k]);
 		}
 	}		
 	return DAC2Ulookup[i];
@@ -292,6 +294,8 @@ int SPM_Template_Control::Probing_eventcheck_callback( GtkWidget *widget, SPM_Te
                                 }
                         }
 
+#if 0  //** DATAMAP0...7 to scan image disabled
+                        
                         // auto decide on mapping mode -- direct data map to Scan-Channel or to Scan-Event
                 
                         // *****************************************************************************************************************
@@ -322,7 +326,6 @@ int SPM_Template_Control::Probing_eventcheck_callback( GtkWidget *widget, SPM_Te
                                         } else
                                                 break; // bail
                                 }
-                        
                                 if (map){
                                         if (xip<0){ // only once per coordinate!
                                                 if (garr_hdr) {
@@ -389,7 +392,7 @@ int SPM_Template_Control::Probing_eventcheck_callback( GtkWidget *widget, SPM_Te
                                                         continue;
                                                 }
                                         }
-
+                                        
                                         // sanity check adn trigger initial final setup -- need to resize scan map?
                                         if (main_get_gapp()->xsm->scan[chmap]->data.s.dz < 0.){
                                                 gchar *id = g_strconcat ("Map-", (const gchar*)g_ptr_array_index (glabarray,  mapi),
@@ -464,8 +467,9 @@ int SPM_Template_Control::Probing_eventcheck_callback( GtkWidget *widget, SPM_Te
                                                 main_get_gapp()->xsm->scan[chmap]->mem2d->data->MkVLookup(0, dspc->last_probe_data_index-1); // use index
                                 
                                         main_get_gapp()->xsm->scan[chmap]->draw ();
-                                } // endif map
+                                } // endif map                              
                         } // for mappi
+#endif //** DATAMAP0...7 to scan image disabled
                         
                         // unref lable and symbols
                         g_ptr_array_free (glabarray, TRUE);
@@ -1034,9 +1038,9 @@ int SPM_Template_Control::Probing_save_callback( GtkWidget *widget, SPM_Template
 	f << "# GXSM-DSP-Control-LOCKIN:: AC_amp=[ " 
 	  << dspc->AC_amp[0] << " V, " << dspc->AC_amp[1] << ", " << dspc->AC_amp[2] << ", " << dspc->AC_amp[3] << "], "
 	  << " AC_frq=" << dspc->AC_frq << " Hz, "
-	  << " AC_phaseA=" << dspc->AC_phaseA << " deg, "
-	  << " AC_phaseB=" << dspc->AC_phaseB << " deg, "
-	  << " AC_avg_cycles=" << dspc->AC_lockin_avg_cycels
+                //<< " AC_phaseA=" << dspc->AC_phaseA << " deg, "
+                //<< " AC_phaseB=" << dspc->AC_phaseB << " deg, "
+                //<< " AC_avg_cycles=" << dspc->AC_lockin_avg_cycels
 	  << " " << std::endl; 
 
 	gchar *tmp = g_strdup(main_get_gapp()->xsm->data.ui.comment);
@@ -1135,10 +1139,10 @@ int SPM_Template_Control::Probing_save_callback( GtkWidget *widget, SPM_Template
 		val[3] = g_array_index (dspc->garray_probe_hdrlist[PROBEDATA_ARRAY_ZS], double, i);
 		val[4] = g_array_index (dspc->garray_probe_hdrlist[PROBEDATA_ARRAY_SEC], double, i);
 
-// 1e3/dspc->frq_ref, XAngFac, YAngFac, ZAngFac,
+// 1e3/DSP_FRQ_REF, XAngFac, YAngFac, ZAngFac,
                 
 		f << "#  " << std::setw(6) << i << "\t "
-		  << std::setw(10) << val[0] * 1e3/dspc->frq_ref << "\t " << std::setw(10) << (val[0]-t0) * 1e3/dspc->frq_ref << "\t "
+		  << std::setw(10) << val[0] * 1e3/DSP_FRQ_REF << "\t " << std::setw(10) << (val[0]-t0) * 1e3/DSP_FRQ_REF << "\t "
 		  << std::setw(10) << val[1] * XAngFac << "\t "
 		  << std::setw(10) << val[2] * YAngFac << "\t "
 		  << std::setw(10) << val[3] * ZAngFac << "\t "
@@ -1408,9 +1412,9 @@ void SPM_Template_Control::dump_probe_hdr(){
 		val[4] = g_array_index (garray_probe_hdrlist[PROBEDATA_ARRAY_SEC], double, i);
 
 #ifdef DUMP_TERM
-// 1e3/dspc->frq_ref, XAngFac, YAngFac, ZAngFac,
+// 1e3/DSP_FRQ_REF, XAngFac, YAngFac, ZAngFac,
 		std::cout << std::setw(6) << i << "\t "
-			  << std::setw(10) << val[0] * 1e3/frq_ref << "\t " << std::setw(10) << (val[0]-t0) * 1e3/frq_ref << "\t "
+			  << std::setw(10) << val[0] * 1e3/DSP_FRQ_REF << "\t " << std::setw(10) << (val[0]-t0) * 1e3/DSP_FRQ_REF << "\t "
 			  << std::setw(10) << val[1] * XAngFac << "\t "
 			  << std::setw(10) << val[2] * YAngFac << "\t "
 			  << std::setw(10) << val[3] * ZAngFac << "\t "
@@ -1434,7 +1438,7 @@ void SPM_Template_Control::dump_probe_hdr(){
 
 			// only put new marker/update/rotate if more than a pixel moved!
 			if (s2 > 2.*main_get_gapp()->xsm->MasterScan->data.s.dx*main_get_gapp()->xsm->MasterScan->data.s.dx+main_get_gapp()->xsm->MasterScan->data.s.dy*main_get_gapp()->xsm->MasterScan->data.s.dy){
-				gchar *info = g_strdup_printf ("TrkPt# %d %.1fms", i, val[0]*1e3/frq_ref);
+				gchar *info = g_strdup_printf ("TrkPt# %d %.1fms", i, val[0]*1e3/DSP_FRQ_REF);
 				double xyz[3] = {
 					main_get_gapp()->xsm->Inst->Dig2XA ((long) round (val[1]))
 					+ main_get_gapp()->xsm->Inst->Dig2X0A ((long) round ( g_array_index (garray_probe_hdrlist[PROBEDATA_ARRAY_X0], double, i))),

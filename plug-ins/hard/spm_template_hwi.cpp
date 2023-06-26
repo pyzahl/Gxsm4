@@ -67,7 +67,7 @@
 #include "surface.h"
 
 #include "../common/pyremote.h"
-
+#include "spm_template_hwi.h"
 
 // Define HwI PlugIn reference name here, this is what is listed later within "Preferenced Dialog"
 // i.e. the string selected for "Hardware/Card"!
@@ -92,7 +92,6 @@ extern int debug_level;
 extern int force_gxsm_defaults;
 
 
-typedef struct { gint32 id; const gchar* name; DSP_INT32_P sigptr; } MOD_INPUT;
 
 MOD_INPUT mod_input_list[] = {
         //## [ MODULE_SIGNAL_INPUT_ID, name, actual hooked signal address ]
@@ -153,12 +152,6 @@ MOD_INPUT mod_input_list[] = {
 
         { 0, "END", 0 }
 };
-
-
-
-
-
-
 
 
 
@@ -608,6 +601,9 @@ void Template_Control_show_callback (GSimpleAction *simple, GVariant *parameter,
 }
 
 
+
+
+
 void SPM_Template_Control::configure_callback (GSimpleAction *action, GVariant *parameter, 
                                           gpointer user_data){
         SPM_Template_Control *mc = (SPM_Template_Control *) user_data;
@@ -655,6 +651,552 @@ void SPM_Template_Control::configure_callback (GSimpleAction *action, GVariant *
                 g_variant_unref (new_state);
         }
 }
+
+
+
+
+
+
+
+
+void SPM_Template_Control::store_values (){
+        g_settings_set_int (hwi_settings, "probe-sources", Source);
+        g_settings_set_int (hwi_settings, "probe-sources-x", XSource);
+        g_settings_set_boolean (hwi_settings, "probe-x-join", XJoin);
+        g_settings_set_boolean (hwi_settings, "probe-graph-matrix-window", GrMatWin);
+        g_settings_set_int (hwi_settings, "probe-p-sources", PSource);
+        g_settings_set_int (hwi_settings, "probe-pavg-sources", PlotAvg);
+        g_settings_set_int (hwi_settings, "probe-psec-sources", PlotSec);
+
+        //set_tab_settings ("AC", AC_option_flags, AC_auto_flags, AC_glock_data);
+        set_tab_settings ("IV", IV_option_flags, IV_auto_flags, IV_glock_data);
+        //set_tab_settings ("FZ", FZ_option_flags, FZ_auto_flags, FZ_glock_data);
+        //set_tab_settings ("PL", PL_option_flags, PL_auto_flags, PL_glock_data);
+        //set_tab_settings ("LP", LP_option_flags, LP_auto_flags, LP_glock_data);
+        //set_tab_settings ("SP", SP_option_flags, SP_auto_flags, SP_glock_data);
+        //set_tab_settings ("TS", TS_option_flags, TS_auto_flags, TS_glock_data);
+        set_tab_settings ("GVP", GVP_option_flags, GVP_auto_flags, GVP_glock_data);
+        //set_tab_settings ("TK", TK_option_flags, TK_auto_flags, TK_glock_data);
+        //set_tab_settings ("AX", AX_option_flags, AX_auto_flags, AX_glock_data);
+        //set_tab_settings ("AB", ABORT_option_flags, ABORT_auto_flags, ABORT_glock_data);
+
+        GVP_store_vp ("LM_set_last"); // last in view
+        PI_DEBUG_GM (DBG_L3, "SPM_Template_Control::store_values complete.");
+}
+
+void SPM_Template_Control::GVP_store_vp (const gchar *key){
+	PI_DEBUG_GM (DBG_L3, "GVP-VP store to memo %s", key);
+        GVariant *v = g_settings_get_value (hwi_settings, "probe-gvp-vector-program-matrix");
+        //GVariant *v = g_settings_get_value (hwi_settings, "probe-lm-vector-program-matrix");
+        GVariantDict *dict = g_variant_dict_new (v);
+        if (!dict){
+                PI_DEBUG_GW (DBG_L1, "ERROR: SPM_Template_Control::GVP_store_vp -- can't read dictionary 'probe-gvp-vector-program-matrix' a{sv}.");
+                return;
+        }
+
+        gint32 vp_program_length;
+        for (vp_program_length=0; GVP_points[vp_program_length] > 0; ++vp_program_length);
+                
+        gsize    n = MIN (vp_program_length+1, N_GVP_VECTORS);
+        GVariant *pc_array_du = g_variant_new_fixed_array (g_variant_type_new ("d"), GVP_du, n, sizeof (double));
+        GVariant *pc_array_dx = g_variant_new_fixed_array (g_variant_type_new ("d"), GVP_dx, n, sizeof (double));
+        GVariant *pc_array_dy = g_variant_new_fixed_array (g_variant_type_new ("d"), GVP_dy, n, sizeof (double));
+        GVariant *pc_array_dz = g_variant_new_fixed_array (g_variant_type_new ("d"), GVP_dz, n, sizeof (double));
+        GVariant *pc_array_ds = g_variant_new_fixed_array (g_variant_type_new ("d"), GVP_dsig, n, sizeof (double));
+        GVariant *pc_array_ts = g_variant_new_fixed_array (g_variant_type_new ("d"), GVP_ts, n, sizeof (double));
+        GVariant *pc_array_pn = g_variant_new_fixed_array (g_variant_type_new ("i"), GVP_points, n, sizeof (gint32));
+        GVariant *pc_array_op = g_variant_new_fixed_array (g_variant_type_new ("i"), GVP_opt, n, sizeof (gint32));
+        GVariant *pc_array_da = g_variant_new_fixed_array (g_variant_type_new ("i"), GVP_data, n, sizeof (gint32));
+        GVariant *pc_array_vn = g_variant_new_fixed_array (g_variant_type_new ("i"), GVP_vnrep, n, sizeof (gint32));
+        GVariant *pc_array_vp = g_variant_new_fixed_array (g_variant_type_new ("i"), GVP_vpcjr, n, sizeof (gint32));
+
+        GVariant *pc_array[] = { pc_array_du, pc_array_dx, pc_array_dy, pc_array_dz, pc_array_ds, pc_array_ts,
+                                 pc_array_pn, pc_array_op, pc_array_da, pc_array_vn, pc_array_vp,
+                                 NULL };
+        const gchar *vckey[] = { "du", "dx", "dy", "dz", "ds", "ts", "pn", "op", "da", "vn", "vp", NULL };
+
+        for (int i=0; vckey[i] && pc_array[i]; ++i){
+                gchar *m_vckey = g_strdup_printf ("%s-%s", vckey[i], key);
+
+                // g_print ("GVP store: %s = %s\n", m_vckey, g_variant_print (pc_array[i], true));
+
+                if (g_variant_dict_contains (dict, m_vckey)){
+                        if (!g_variant_dict_remove (dict, m_vckey)){
+                                PI_DEBUG_GW (DBG_L1, "ERROR: SPM_Template_Control::GVP_store_vp -- key '%s' found, but removal failed.", m_vckey);
+                                g_free (m_vckey);
+                                return;
+                        }
+                }
+                g_variant_dict_insert_value (dict, m_vckey, pc_array[i]);
+                g_free (m_vckey);
+        }
+
+        GVariant *probe_vector_program_matrix = g_variant_dict_end (dict);
+        g_settings_set_value (hwi_settings, "probe-gvp-vector-program-matrix", probe_vector_program_matrix);
+        //g_settings_set_value (hwi_settings, "probe-lm-vector-program-matrix", probe_vector_program_matrix);
+
+        // all g_variants created here are "consumed" by the "set" calls, if I try to unref, it cause random crashes.
+        //g_variant_unref (probe_vector_program_matrix);
+        //g_variant_dict_unref (dict);
+        // Can't do, don't need??? -- getting this: GLib-CRITICAL **: g_variant_unref: assertion 'value->ref_count > 0' failed
+        //        for (int i=0; pc_array[i]; ++i)
+        //                g_variant_unref (pc_array[i]);
+}
+
+void SPM_Template_Control::GVP_restore_vp (const gchar *key){
+	// g_message ("GVP-VP restore memo key=%s", key);
+	PI_DEBUG_GP (DBG_L2, "GVP-VP restore to memo %s\n", key);
+	g_message ( "GVP-VP restore to memo %s\n", key);
+        GVariant *v = g_settings_get_value (hwi_settings, "probe-gvp-vector-program-matrix");
+        //GVariant *v = g_settings_get_value (hwi_settings, "probe-lm-vector-program-matrix");
+        GVariantDict *dict = g_variant_dict_new (v);
+        if (!dict){
+                PI_DEBUG_GP (DBG_L2, "ERROR: SPM_Template_Control::GVP_restore_vp -- can't read dictionary 'probe-gvp-vector-program-matrix' a{sv}.\n");
+                return;
+        }
+        gsize  n; // == N_GVP_VECTORS;
+        GVariant *vd[6];
+        GVariant *vi[5];
+        double *pc_array_d[6];
+        gint32 *pc_array_i[5];
+        const gchar *vckey_d[] = { "du", "dx", "dy", "dz", "ds", "ts", NULL };
+        const gchar *vckey_i[] = { "pn", "op", "da", "vn", "vp", NULL };
+        double *GVPd[] = { GVP_du, GVP_dx, GVP_dy, GVP_dz, GVP_dsig, GVP_ts, NULL };
+        gint32 *GVPi[] = { GVP_points, GVP_opt, GVP_data, GVP_vnrep, GVP_vpcjr, NULL };
+        gint32 vp_program_length=0;
+        
+        for (int i=0; vckey_i[i]; ++i){
+                gchar *m_vckey = g_strdup_printf ("%s-%s", vckey_i[i], key);
+                for (int k=0; k<N_GVP_VECTORS; ++k) GVPi[i][k]=0; // zero init vector
+                if ((vi[i] = g_variant_dict_lookup_value (dict, m_vckey, ((const GVariantType *) "ai"))) == NULL){
+                        PI_DEBUG_GP (DBG_L2, "GXSM4 DCONF: SPM_Template_Control::GVP_restore_vp -- key_i '%s' memo not found. Setting to Zero.\n", m_vckey);
+                        // g_warning ("GXSM4 DCONF: SPM_Template_Control::GVP_restore_vp -- key_i '%s' memo not found. Setting to Zero.\n", m_vckey);
+                        g_free (m_vckey);
+                        continue;
+                }
+                // g_print ("GVP restore: %s = %s\n", m_vckey, g_variant_print (vi[i], true));
+
+                pc_array_i[i] = (gint32*) g_variant_get_fixed_array (vi[i], &n, sizeof (gint32));
+                if (i==0) // actual length of this vector should fit all others -- verify
+                        vp_program_length=n;
+                else
+                        if (n != vp_program_length)
+                                g_warning ("GXSM4 DCONF: SPM_Template_Control::GVP_restore_vp -- key_i '%s' vector length %ld not matching program n=%d.\n", m_vckey, n, vp_program_length);
+                // g_assert_cmpint (n, ==, N_GVP_VECTORS);
+                for (int k=0; k<n && k<N_GVP_VECTORS; ++k)
+                        GVPi[i][k]=pc_array_i[i][k];
+                g_free (m_vckey);
+                g_variant_unref (vi[i]);
+        }                        
+
+        for (int i=0; vckey_d[i]; ++i){
+                gchar *m_vckey = g_strdup_printf ("%s-%s", vckey_d[i], key);
+                for (int k=0; k<N_GVP_VECTORS; ++k) GVPd[i][k]=0.; // zero init vector
+                if ((vd[i] = g_variant_dict_lookup_value (dict, m_vckey, ((const GVariantType *) "ad"))) == NULL){
+                        PI_DEBUG_GP (DBG_L2, "GXSM4 DCONF: SPM_Template_Control::GVP_restore_vp -- key_d '%s' memo not found. Setting to Zero.", m_vckey);
+                        // g_warning ("GXSM4 DCONF: SPM_Template_Control::GVP_restore_vp -- key_d '%s' memo not found. Setting to Zero.", m_vckey);
+                        g_free (m_vckey);
+                        continue;
+                }
+                // g_print ("GVP restore: %s = %s\n", m_vckey, g_variant_print (vd[i], true));
+
+                pc_array_d[i] = (double*) g_variant_get_fixed_array (vd[i], &n, sizeof (double));
+                //g_assert_cmpint (n, ==, N_GVP_VECTORS);
+                if (n != vp_program_length)
+                        g_warning ("GXSM4 DCONF: SPM_Template_Control::GVP_restore_vp -- key_d '%s' vector length %ld not matching program n=%d.\n", m_vckey, n, vp_program_length);
+                for (int k=0; k<vp_program_length && k<N_GVP_VECTORS; ++k)
+                        GVPd[i][k]=pc_array_d[i][k];
+                g_free (m_vckey);
+                g_variant_unref (vd[i]);
+        }                        
+        
+        g_variant_dict_unref (dict);
+        g_variant_unref (v);
+
+	update ();
+}
+
+int SPM_Template_Control::callback_edit_GVP (GtkWidget *widget, SPM_Template_Control *dspc){
+        //        PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);
+        int x=1, y=10;
+	int ki = GPOINTER_TO_INT (g_object_get_data(G_OBJECT(widget), "VPC"));
+	int  a = GPOINTER_TO_INT (g_object_get_data(G_OBJECT(widget), "ARROW"));
+
+	if (ki < 0){
+		const int VPT_YPAD=0;
+		int c = GPOINTER_TO_INT (g_object_get_data(G_OBJECT(dspc->VPprogram[0]), "CF"));
+		int cw = 1;
+		if (dspc->VPprogram[1]){
+			for (int j=1; j<10; ++j)
+				if (dspc->VPprogram[j]){
+                                        // FIX-ME GTK4 ???
+					gtk_window_destroy (GTK_WINDOW (dspc->VPprogram[j]));
+					dspc->VPprogram[j] = NULL;
+				}
+		} else
+			for (int k=0; k<N_GVP_VECTORS && cw < 10; ++k){
+				if (dspc->GVP_vpcjr[k] < 0){
+					int kf=k;
+					int ki=k+dspc->GVP_vpcjr[k];
+					if (kf >= 0){
+                                                // fix!! todo
+						//** ADD_BUTTON_GRID ("arrow-up-symbolic", "Loop",   dspc->VPprogram[0], x+0, y+ki+1, 1, kf-ki+2, -2, NULL, NULL, dspc->VPprogram[cw]);
+                                                //ADD_BUTTON_TAB(GTK_ARROW_UP, "Loop",   dspc->VPprogram[0], c+0, c+1, ki+1, kf+2, GTK_FILL, GTK_FILL, 0, VPT_YPAD, -1, -2, NULL, NULL, dspc->VPprogram[cw]);
+						++c; ++cw;
+					}
+				}
+			}
+		return 0;
+	}
+
+	if (a == GVP_SHIFT_UP && ki >= 1 && ki < N_GVP_VECTORS)
+		for (int k=ki-1; k < N_GVP_VECTORS-1; ++k){
+			int ks = k+1;
+			dspc->GVP_du[k] = dspc->GVP_du[ks];
+			dspc->GVP_dx[k] = dspc->GVP_dx[ks];
+			dspc->GVP_dy[k] = dspc->GVP_dy[ks];
+			dspc->GVP_dz[k] = dspc->GVP_dz[ks];
+			dspc->GVP_dsig[k] = dspc->GVP_dsig[ks];
+			dspc->GVP_ts[k]  = dspc->GVP_ts[ks];
+			dspc->GVP_points[k] = dspc->GVP_points[ks];
+			dspc->GVP_opt[k] = dspc->GVP_opt[ks];
+			dspc->GVP_vnrep[k] = dspc->GVP_vnrep[ks];
+			dspc->GVP_vpcjr[k] = dspc->GVP_vpcjr[ks];
+		} 
+	else if (a == GVP_SHIFT_DN && ki >= 0 && ki < N_GVP_VECTORS-2)
+		for (int k=N_GVP_VECTORS-1; k > ki; --k){
+			int ks = k-1;
+			dspc->GVP_du[k] = dspc->GVP_du[ks];
+			dspc->GVP_dx[k] = dspc->GVP_dx[ks];
+			dspc->GVP_dy[k] = dspc->GVP_dy[ks];
+			dspc->GVP_dz[k] = dspc->GVP_dz[ks];
+			dspc->GVP_dsig[k] = dspc->GVP_dsig[ks];
+			dspc->GVP_ts[k]  = dspc->GVP_ts[ks];
+			dspc->GVP_points[k] = dspc->GVP_points[ks];
+			dspc->GVP_opt[k] = dspc->GVP_opt[ks];
+			dspc->GVP_vnrep[k] = dspc->GVP_vnrep[ks];
+			dspc->GVP_vpcjr[k] = dspc->GVP_vpcjr[ks];
+		}
+	dspc->update ();
+        return 0;
+}
+
+
+// helper func
+NcVar* spm_template_hwi_ncaddvar (NcFile *ncf, const gchar *varname, const gchar *varunit, const gchar *longname, const gchar *shortname, double value){
+	NcVar* ncv = ncf->add_var (varname, ncDouble);
+	ncv->add_att ("long_name", longname);
+	ncv->add_att ("short_name", shortname);
+	ncv->add_att ("var_unit", varunit);
+	ncv->put (&value);
+	return ncv;
+}
+NcVar* spm_template_hwi_ncaddvar (NcFile *ncf, const gchar *varname, const gchar *varunit, const gchar *longname, const gchar *shortname, int value){
+	NcVar* ncv = ncf->add_var (varname, ncInt);
+	ncv->add_att ("long_name", longname);
+	ncv->add_att ("short_name", shortname);
+	ncv->add_att ("var_unit", varunit);
+	ncv->put (&value);
+	return ncv;
+}
+
+#define SPMTMPL_ID "spm_template_hwi_"
+
+void SPM_Template_Control::save_values (NcFile *ncf){
+	NcVar *ncv;
+
+	PI_DEBUG (DBG_L4, "SPM_Template_Control::save_values");
+	gchar *i=NULL;
+
+        i = g_strconcat ("SPM Template HwI ** Hardware-Info:\n", spm_template_hwi->get_info (), NULL);
+
+	NcDim* infod  = ncf->add_dim("sranger_info_dim", strlen(i));
+	NcVar* info   = ncf->add_var("sranger_info", ncChar, infod);
+	info->add_att("long_name", "SPM_Template_Control plugin information");
+	info->put(i, strlen(i));
+	g_free (i);
+
+// Basic Feedback/Scan Parameter ============================================================
+
+	ncv=spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"bias", "V", "SRanger: (Sampel or Tip) Bias Voltage", "Bias", bias);
+	ncv->add_att ("label", "Bias");
+	ncv=spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"z_setpoint", "A", "SRanger: auxillary/Z setpoint", "Z Set Point", zpos_ref);
+	ncv->add_att ("label", "Z Setpoint");
+
+	ncv=spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix0_set_point", "nA", "SRanger: Mix0: Current set point", "Current Setpt.", mix_set_point[0]);
+	ncv->add_att ("label", "Current");
+	ncv=spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix1_set_point", "Hz", "SRanger: Mix1: Voltage set point", "Voltage Setpt.", mix_set_point[1]);
+	ncv->add_att ("label", "VoltSetpt.");
+	ncv=spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix2_set_point", "V", "SRanger: Mix2: Aux2 set point", "Aux2 Setpt.", mix_set_point[2]);
+	ncv->add_att ("label", "Aux2 Setpt.");
+	ncv=spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix3_set_point", "V", "SRanger: Mix3: Aux3 set point", "Aux3 Setpt.", mix_set_point[3]);
+	ncv->add_att ("label", "Aux3 Setpt.");
+
+	ncv=spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix0_mix_gain", "1", "SRanger: Mix0 gain", "Current gain", mix_gain[0]);
+	ncv=spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix1_mix_gain", "1", "SRanger: Mix1 gain", "Voltage gain", mix_gain[1]);
+	ncv=spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix2_mix_gain", "1", "SRanger: Mix2 gain", "Aux2 gain", mix_gain[2]);
+	ncv=spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix3_mix_gain", "1", "SRanger: Mix3 gain", "Aux3 gain", mix_gain[3]);
+
+	ncv=spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix0_mix_level", "1", "SRanger: Mix0 level", "Current level", mix_level[0]);
+	ncv=spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix1_mix_level", "1", "SRanger: Mix1 level", "Voltage level", mix_level[1]);
+	ncv=spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix2_mix_level", "1", "SRanger: Mix2 level", "Aux2 level", mix_level[2]);
+	ncv=spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix3_mix_level", "1", "SRanger: Mix3 level", "Aux3 level", mix_level[3]);
+
+	ncv=spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix0_current_mix_transform_mode", "BC", "SRanger: Mix0 transform_mode", "Current transform_mode", (double)mix_transform_mode[0]);
+	ncv->add_att ("mode_bcoding", "0:Off, 1:On, 2:Log, 4:IIR, 8:FUZZY");
+	ncv=spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix1_voltage_mix_transform_mode", "BC", "SRanger: Mix1 transform_mode", "Voltage transform_mode", (double)mix_transform_mode[1]);
+	ncv->add_att ("mode_bcoding", "0:Off, 1:On, 2:Log, 4:IIR, 8:FUZZY");
+	ncv=spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix2_aux2_mix_transform_mode", "BC", "SRanger: Mix2 transform_mode", "Aux2 transform_mode", (double)mix_transform_mode[2]);
+	ncv->add_att ("mode_bcoding", "0:Off, 1:On, 2:Log, 4:IIR, 8:FUZZY");
+	ncv=spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix3_aux3_mix_transform_mode", "BC", "SRanger: Mix3 transform_mode", "Aux3 transform_mode", (double)mix_transform_mode[3]);
+	ncv->add_att ("mode_bcoding", "0:Off, 1:On, 2:Log, 4:IIR, 8:FUZZY");
+
+
+	ncv=spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"move_speed_x", "A/s", "SRanger: Move speed X", "Xm Velocity", move_speed_x);
+	ncv->add_att ("label", "Velocity Xm");
+
+
+
+// Vector Probe ============================================================
+
+}
+
+
+#define NC_GET_VARIABLE(VNAME, VAR) if(ncf->get_var(VNAME)) ncf->get_var(VNAME)->get(VAR)
+
+void SPM_Template_Control::load_values (NcFile *ncf){
+	PI_DEBUG (DBG_L4, "SPM_Template_Control::load_values");
+	// Values will also be written in old style DSP Control window for the reason of backwards compatibility
+	// OK -- but will be obsoleted and removed at any later point -- PZ
+	NC_GET_VARIABLE ("spm_template_hwi_bias", &bias);
+	NC_GET_VARIABLE ("spm_template_hwi_bias", &main_get_gapp()->xsm->data.s.Bias);
+        NC_GET_VARIABLE ("spm_template_hwi_set_point1", &mix_set_point[1]);
+        NC_GET_VARIABLE ("spm_template_hwi_set_point0", &mix_set_point[0]);
+
+	update ();
+}
+
+
+
+
+
+
+
+void SPM_Template_Control::get_tab_settings (const gchar *tab_key, guint64 &option_flags, guint64 &auto_flags, guint64 glock_data[6]) {
+        PI_DEBUG_GP (DBG_L4, "SPM_Template_Control::get_tab_settings for tab '%s'\n", tab_key);
+
+        gint dbg_level = 0;
+
+#define PI_DEBUG_GPX(X, ARGS...) g_print (ARGS);
+        
+        GVariant *v = g_settings_get_value (hwi_settings, "probe-tab-options");
+
+        // PI_DEBUG_GPX (dbg_level, "probe-tab-options type is '%s'\n", g_variant_get_type (v));
+        //        PI_DEBUG_GPX (dbg_level, "probe-tab-options=%s\n", g_variant_print (v,true));
+        
+        GVariantDict *dict = g_variant_dict_new (v);
+
+        if (!dict){
+                PI_DEBUG_GPX (dbg_level, "ERROR: SPM_Template_Control::get_tab_settings -- can't read dictionary 'probe-tab-options' a{sv}.\n");
+                return;
+        }
+#if 0
+        if (!g_variant_dict_contains (dict, tab_key)){
+                PI_DEBUG_GPX (dbg_level, "ERROR: SPM_Template_Control::get_tab_settings -- can't find key '%s' in dict 'probe-tab-options'.\n", tab_key);
+        }
+        PI_DEBUG_GPX (dbg_level, "SPM_Template_Control::get_tab_settings -- key '%s' found in dict 'probe-tab-options' :)\n", tab_key);
+#endif
+        
+        GVariant *value = g_variant_dict_lookup_value (dict, tab_key, ((const GVariantType *) "at")); // array uint64
+        if (!value){
+                g_warning ("WARNING (Normal at first start) -- Note: only at FIRST START: Building Settings. SPM_Template_Control::get_tab_settings:\n --> can't get find array 'at' data for key '%s' in 'probe-tab-options' dictionary.\n Storing default now.", tab_key);
+
+                if (dict)
+                        g_variant_dict_unref (dict);
+                if (value)
+                        g_variant_unref (value);
+                
+                // make default -- at first start, it is missing as can not be define in schema.
+                // uint64 @at [18446744073709551615,..]
+                GVariant *v_default = g_variant_new_parsed ("@a{sv} {"
+                                                            "'AC': <@at [0,0,0,0,0,0,0,0,0]>, "
+                                                            "'IV': <@at [0,0,0,0,0,0,0,0,0]>, "
+                                                            "'FZ': <@at [0,0,0,0,0,0,0,0,0]>, "
+                                                            "'PL': <@at [0,0,0,0,0,0,0,0,0]>, "
+                                                            "'LP': <@at [0,0,0,0,0,0,0,0,0]>, "
+                                                            "'SP': <@at [0,0,0,0,0,0,0,0,0]>, "
+                                                            "'TS': <@at [0,0,0,0,0,0,0,0,0]>, "
+                                                            "'LM': <@at [0,0,0,0,0,0,0,0,0]>, "
+                                                            "'TK': <@at [0,0,0,0,0,0,0,0,0]>, "
+                                                            "'AX': <@at [0,0,0,0,0,0,0,0,0]>, "
+                                                            "'AB': <@at [0,0,0,0,0,0,0,0,0]>"
+                                                            "}");
+                dict = g_variant_dict_new (v_default);
+                value = g_variant_dict_lookup_value (dict, tab_key, ((const GVariantType *) "at"));
+                g_variant_unref (v_default);
+        }
+        if (value){
+                guint64  *ai = NULL;
+                gsize     ni;
+                
+                ai = (guint64*) g_variant_get_fixed_array (value, &ni, sizeof (guint64));
+                g_assert_cmpint (ni, ==, 9);
+
+#if 0
+                PI_DEBUG_GPX (dbg_level, "SPM_Template_Control::get_tab_settings -- reading '%s' tab options [", tab_key);
+                for (int i=0; i<ni; ++i)
+                        PI_DEBUG_GPX (DBG_L4, "0x%08x, ", ai[i]);
+                PI_DEBUG_GPX (dbg_level, "]\n");
+#endif
+                option_flags = ai[1];
+                auto_flags = ai[2];
+      
+                for (int i=0; i<6; ++i)
+                        glock_data [i] = ai[1+2+i];
+
+                // must free data for ourselves
+                g_variant_unref (value);
+        } else {
+                PI_DEBUG_GPX (dbg_level, "ERROR: SPM_Template_Control::get_tab_settings -- cant get array 'at' from key '%s' in 'probe-tab-options' dictionary. And default rewrite failed also.\n", tab_key);
+        }
+
+        GVariant *vto = g_variant_dict_end (dict);
+
+        // testing storing
+#if 0
+        if (vto){
+                PI_DEBUG_GPX (dbg_level, "SPM_Template_Control::get_tab_settings -- stored tab-setings dict to variant OK.\n");
+        } else {
+                PI_DEBUG_GPX (dbg_level, "ERROR SPM_Template_Control::get_tab_settings -- store tab-setings dict to variant failed.\n");
+        }
+        if (g_settings_is_writable (hwi_settings, "probe-tab-options")){
+                PI_DEBUG_GPX (dbg_level, "SPM_Template_Control::get_tab_settings -- is writable\n");
+        } else {
+                PI_DEBUG_GPX (dbg_level, "WARNING/ERROR SPM_Template_Control::get_tab_settings -- is NOT writable\n");
+        }
+#endif
+        if (!g_settings_set_value (hwi_settings, "probe-tab-options", vto)){
+                PI_DEBUG_GPX (dbg_level, "ERROR SPM_Template_Control::get_tab_settings -- update probe-tab-options dict failed.\n");
+        }
+        g_variant_dict_unref (dict);
+        //        g_variant_unref (vto);
+        // PI_DEBUG_GPX (dbg_level, "SPM_Template_Control::get_tab_settings -- done.\n");
+}
+
+//                PI_DEBUG (DBG_L1, "key '" << tab_key << "' not found in probe-tab-options.");
+
+
+void SPM_Template_Control::set_tab_settings (const gchar *tab_key, guint64 option_flags, guint64 auto_flags, guint64 glock_data[6]) {
+        GVariant *v = g_settings_get_value (hwi_settings, "probe-tab-options");
+
+        gint dbg_level = 0;
+
+#define PI_DEBUG_GPX(X, ARGS...) g_print (ARGS);
+
+        // PI_DEBUG_GPX (dbg_level, "probe-tab-options type is '%s'\n", g_variant_get_type (v));
+        //        PI_DEBUG_GPX (dbg_level, "probe-tab-options old=%s\n", g_variant_print (v,true));
+
+        GVariantDict *dict = g_variant_dict_new (v);
+
+        if (!dict){
+                PI_DEBUG_GPX (dbg_level, "ERROR: SPM_Template_Control::set_tab_settings -- can't read dictionary 'probe-tab-options' a{sai}.\n");
+                return;
+        }
+#if 0
+        if (!g_variant_dict_contains (dict, tab_key)){
+                PI_DEBUG_GPX (dbg_level, "ERROR: SPM_Template_Control::set_tab_settings -- can't find key '%s' in dict 'probe-tab-options'.\n", tab_key);
+                return;
+        }
+        PI_DEBUG_GPX (dbg_level, "SPM_Template_Control::set_tab_settings -- key '%s' found in dict 'probe-tab-options' :)\n", tab_key);
+#endif
+
+        GVariant *value = g_variant_dict_lookup_value (dict, tab_key, ((const GVariantType *) "at"));
+        if (!value){
+                PI_DEBUG_GPX (dbg_level, "ERROR: SPM_Template_Control::set_tab_settings -- can't find array 'at' data from key '%s' in 'probe-tab-options' dictionary for update.\n", tab_key);
+                g_variant_dict_unref (dict);
+                return;
+        }
+        if (value){
+                gsize    ni = 9;
+                guint64 *ai = g_new (guint64, ni);
+
+                //                PI_DEBUG_GPX (dbg_level, "SPM_Template_Control::set_tab_settings ** key '%s' old v=%s\n", tab_key, g_variant_print (value, true));
+#if 0
+                // ---- debug read
+                guint64  *aix = NULL;
+                gsize     nix;
+                
+                aix = (guint64*) g_variant_get_fixed_array (value, &nix, sizeof (guint64));
+                g_assert_cmpint (nix, ==, 9);
+
+                PI_DEBUG_GPX (dbg_level, "SPM_Template_Control::set_tab_settings ** key '%s' old x=[", tab_key);
+                for (int i=0; i<nix; ++i)
+                        PI_DEBUG_GPX (DBG_L4, "0x%08llx, ", aix[i]);
+                PI_DEBUG_GPX (dbg_level, "] hex\n");
+                PI_DEBUG_GPX (dbg_level, "SPM_Template_Control::set_tab_settings ** key '%s' old x=[", tab_key);
+                for (int i=0; i<nix; ++i)
+                        PI_DEBUG_GPX (DBG_L4, "%lld, ", aix[i]);
+                PI_DEBUG_GPX (dbg_level, "] decimal\n");
+                // -----end debug read back test
+#endif
+                // option_flags = option_flags & 0xfff; // mask
+                ai[0] = 0;
+                ai[1] = option_flags;
+                ai[2] = auto_flags;
+
+                // test -- set all the same
+                //for (int i=0; i<9; ++i)
+                //        ai[i] = auto_flags;
+
+                for (int i=0; i<6; ++i)
+                        ai[1+2+i] = glock_data [i];
+
+#if 0
+                PI_DEBUG_GPX (dbg_level, "SPM_Template_Control::set_tab_settings ** key '%s' new x=[", tab_key);
+                for (int i=0; i<ni; ++i)
+                        PI_DEBUG_GPX (DBG_L4, "0x%08llx, ", ai[i]);
+                PI_DEBUG_GPX (dbg_level, "] hex\n");
+#endif
+                
+                g_variant_unref (value); // free old variant
+                value = g_variant_new_fixed_array (g_variant_type_new ("t"), ai, ni, sizeof (guint64));
+
+                // PI_DEBUG_GPX (dbg_level, "SPM_Template_Control::set_tab_settings ** key '%s' new v=%s\n", tab_key, g_variant_print (value, true));
+
+                // remove old
+                if (!g_variant_dict_remove (dict, tab_key)){
+                        PI_DEBUG_GPX (dbg_level, "ERROR: SPM_Template_Control::set_tab_settings -- cant find and remove key '%s' from 'probe-tab-options' dictionary.\n", tab_key);
+                }
+                // insert new
+                // PI_DEBUG_GPX (dbg_level, "SPM_Template_Control::set_tab_settings -- inserting new updated key '%s' into 'probe-tab-options' dictionary.\n", tab_key);
+                g_variant_dict_insert_value (dict, tab_key, value);
+
+                g_free (ai); // free array
+                // must free data for ourselves
+        } else {
+                PI_DEBUG_GPX (dbg_level, "ERROR: SPM_Template_Control::set_tab_settings -- cant get array 'au' from key '%s' in 'probe-tab-options' dictionary.\n", tab_key);
+        }
+
+        GVariant *vto = g_variant_dict_end (dict);
+
+        // PI_DEBUG_GPX (dbg_level, "probe-tab-options new=%s\n", g_variant_print (vto, true));
+
+        // testing storing
+        if (!vto){
+                PI_DEBUG_GPX (dbg_level, "ERROR SPM_Template_Control::set_tab_settings -- store tab-setings dict to variant failed.\n");
+        }
+        if (!g_settings_set_value (hwi_settings, "probe-tab-options", vto)){
+                PI_DEBUG_GPX (dbg_level, "ERROR SPM_Template_Control::set_tab_settings -- update probe-tab-options dict failed.\n");
+        }
+        g_variant_dict_unref (dict);
+        //        g_variant_unref (vto);
+
+        //        PI_DEBUG_GPX (dbg_level, "SPM_Template_Control::set_tab_settings -- done.\n");
+        return;
+}
+
+
+
 
 void SPM_Template_Control::AppWindowInit(const gchar *title){
         if (title) { // stage 1
@@ -1778,9 +2320,149 @@ int SPM_Template_Control::choice_prbsource_callback (GtkWidget *widget, SPM_Temp
 
 
 
+int SPM_Template_Control::callback_change_IV_option_flags (GtkWidget *widget, SPM_Template_Control *dspc){
+        PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);
+	guint64 msk = (guint64) GPOINTER_TO_UINT (g_object_get_data(G_OBJECT(widget), "Bit_Mask"));
+	if (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)))
+		dspc->IV_option_flags = (dspc->IV_option_flags & (~msk)) | msk;
+	else
+		dspc->IV_option_flags &= ~msk;
+
+        dspc->set_tab_settings ("IV", dspc->IV_option_flags, dspc->IV_auto_flags, dspc->IV_glock_data);
+        return 0;
+}
+
+int SPM_Template_Control::callback_change_IV_auto_flags (GtkWidget *widget, SPM_Template_Control *dspc){
+        PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);
+	guint64 msk = (guint64) GPOINTER_TO_UINT (g_object_get_data(G_OBJECT(widget), "Bit_Mask"));
+	if (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)))
+		dspc->IV_auto_flags = (dspc->IV_auto_flags & (~msk)) | msk;
+	else
+		dspc->IV_auto_flags &= ~msk;
+
+	//if (dspc->write_vector_mode == PV_MODE_IV)
+	//	dspc->raster_auto_flags = dspc->IV_auto_flags;
+
+        dspc->set_tab_settings ("IV", dspc->IV_option_flags, dspc->IV_auto_flags, dspc->IV_glock_data);
+        return 0;
+}
 
 
+int SPM_Template_Control::Probing_exec_IV_callback( GtkWidget *widget, SPM_Template_Control *dspc){
+        PI_DEBUG_GP (DBG_L4, "%s \n",__FUNCTION__);
+	dspc->current_auto_flags = dspc->IV_auto_flags;
 
+	if (dspc->check_vp_in_progress ()) 
+		return -1;
+
+        if (dspc->IV_auto_flags & FLAG_AUTO_RUN_INITSCRIPT){
+                gchar *tmp = g_strdup ("vp-sts-initial");
+                main_get_gapp()->SignalRemoteActionToPlugins (&tmp);
+                g_free (tmp);
+        }
+
+        // ** TEMPLATE DUMMY **
+        // write code to controller
+        //dspc->write_dsp_probe (0, PV_MODE_NONE);
+
+	if (dspc->IV_auto_flags & FLAG_AUTO_GLOCK){
+		dspc->vis_Source  = dspc->IV_glock_data[0];
+		dspc->vis_XSource = dspc->IV_glock_data[1];
+		dspc->vis_PSource = dspc->IV_glock_data[2];
+		dspc->vis_XJoin   = dspc->IV_glock_data[3];
+		dspc->vis_PlotAvg = dspc->IV_glock_data[4];
+		dspc->vis_PlotSec = dspc->IV_glock_data[5];
+	} else {
+		dspc->vis_Source = dspc->IV_glock_data[0] = dspc->Source ;
+		dspc->vis_XSource= dspc->IV_glock_data[1] = dspc->XSource;
+		dspc->vis_PSource= dspc->IV_glock_data[2] = dspc->PSource;
+		dspc->vis_XJoin  = dspc->IV_glock_data[3] = dspc->XJoin  ;
+		dspc->vis_PlotAvg= dspc->IV_glock_data[4] = dspc->PlotAvg;
+		dspc->vis_PlotSec= dspc->IV_glock_data[5] = dspc->PlotSec;
+	}
+
+	dspc->current_auto_flags = dspc->IV_auto_flags;
+
+
+        // ** TEMPLATE DUMMY **
+        // exec IV GVP code on controller now and initiate data streaming
+
+        // dspc->probe_trigger_single_shot = 1;
+	// dspc->write_dsp_probe (1, PV_MODE_IV); // Exec STS probing here
+	// sranger_common_hwi->start_fifo_read (0, 0,0,0,0, NULL,NULL,NULL,NULL);
+
+	return 0;
+}
+
+int SPM_Template_Control::Probing_write_IV_callback( GtkWidget *widget, SPM_Template_Control *dspc){
+        // write IV GVP code to controller
+        // dspc->write_dsp_probe (0, PV_MODE_IV);
+        return 0;
+}
+
+
+int SPM_Template_Control::callback_update_GVP_vpc_option_checkbox (GtkWidget *widget, SPM_Template_Control *dspc){
+        //        PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);
+	int  k   = GPOINTER_TO_INT (g_object_get_data(G_OBJECT(widget), "VPC"));
+	guint64 msk = (guint64) GPOINTER_TO_UINT (g_object_get_data(G_OBJECT(widget), "Bit_Mask"));
+	gtk_check_button_set_active (GTK_CHECK_BUTTON(widget), (dspc->GVP_opt[k] & msk) ? 1:0);
+
+        dspc->set_tab_settings ("GVP", dspc->GVP_option_flags, dspc->GVP_auto_flags, dspc->GVP_glock_data);
+        return 0;
+}
+
+// GVP
+
+int SPM_Template_Control::Probing_exec_GVP_callback( GtkWidget *widget, SPM_Template_Control *dspc){
+	dspc->current_auto_flags = dspc->GVP_auto_flags;
+
+	if (dspc->check_vp_in_progress ()) 
+		return -1;
+
+        if (dspc->GVP_auto_flags & FLAG_AUTO_RUN_INITSCRIPT){
+                gchar *tmp = g_strdup ("vp-gvp-initial");
+                main_get_gapp()->SignalRemoteActionToPlugins (&tmp);
+                g_free (tmp);
+        }
+      
+        // ** TEMPLATE DUMMY **
+        // write code to controller
+        //dspc->write_dsp_probe (0, PV_MODE_NONE);
+
+	if (dspc->GVP_auto_flags & FLAG_AUTO_GLOCK){
+		dspc->vis_Source  = dspc->GVP_glock_data[0];
+		dspc->vis_XSource = dspc->GVP_glock_data[1];
+		dspc->vis_PSource = dspc->GVP_glock_data[2];
+		dspc->vis_XJoin   = dspc->GVP_glock_data[3];
+		dspc->vis_PlotAvg = dspc->GVP_glock_data[4];
+		dspc->vis_PlotSec = dspc->GVP_glock_data[5];
+	} else {
+		dspc->vis_Source = dspc->GVP_glock_data[0] = dspc->Source ;
+		dspc->vis_XSource= dspc->GVP_glock_data[1] = dspc->XSource;
+		dspc->vis_PSource= dspc->GVP_glock_data[2] = dspc->PSource;
+		dspc->vis_XJoin  = dspc->GVP_glock_data[3] = dspc->XJoin  ;
+		dspc->vis_PlotAvg= dspc->GVP_glock_data[4] = dspc->PlotAvg;
+		dspc->vis_PlotSec= dspc->GVP_glock_data[5] = dspc->PlotSec;
+	}
+
+	dspc->current_auto_flags = dspc->GVP_auto_flags;
+
+        // ** TEMPLATE DUMMY **
+        // exec GVP code on controller now and initiate data streaming
+        
+	// dspc->probe_trigger_single_shot = 1;
+	// dspc->write_dsp_probe (1, PV_MODE_GVP); // Exec FZ probing here
+	// sranger_common_hwi->start_fifo_read (0, 0,0,0,0, NULL,NULL,NULL,NULL);
+
+	return 0;
+}
+
+
+int SPM_Template_Control::Probing_write_GVP_callback( GtkWidget *widget, SPM_Template_Control *dspc){
+        // write GVP code to controller
+        // dspc->write_dsp_probe (0, PV_MODE_GVP);
+        return 0;
+}
 
 
 
