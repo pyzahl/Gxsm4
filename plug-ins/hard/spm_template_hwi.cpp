@@ -66,14 +66,106 @@
 #include "gxsm_window.h"
 #include "surface.h"
 
+#include "../common/pyremote.h"
+
 
 // Define HwI PlugIn reference name here, this is what is listed later within "Preferenced Dialog"
 // i.e. the string selected for "Hardware/Card"!
 #define THIS_HWI_PLUGIN_NAME "SPM-TEMPL:SPM"
 #define THIS_HWI_PREFIX      "SPM_TEMPL_HwI"
 
+
+#define UTF8_DEGREE    "\302\260"
+#define UTF8_MU        "\302\265"
+#define UTF8_ANGSTROEM "\303\205"
+
+#define X_SOURCE_MSK 0x10000000 // select for X-mapping
+#define P_SOURCE_MSK 0x20000000 // select for plotting
+#define A_SOURCE_MSK 0x40000000 // select for Avg plotting
+#define S_SOURCE_MSK 0x80000000 // select for Sec plotting
+
+#define GVP_SHIFT_UP  1
+#define GVP_SHIFT_DN -1
+
+
 extern int debug_level;
 extern int force_gxsm_defaults;
+
+
+typedef struct { gint32 id; const gchar* name; DSP_INT32_P sigptr; } MOD_INPUT;
+
+MOD_INPUT mod_input_list[] = {
+        //## [ MODULE_SIGNAL_INPUT_ID, name, actual hooked signal address ]
+        { DSP_SIGNAL_Z_SERVO_INPUT_ID, "Z_SERVO", 0 },
+        { DSP_SIGNAL_M_SERVO_INPUT_ID, "M_SERVO", 0 },
+        { DSP_SIGNAL_MIXER0_INPUT_ID, "MIXER0", 0 },
+        { DSP_SIGNAL_MIXER1_INPUT_ID, "MIXER1", 0 },
+        { DSP_SIGNAL_MIXER2_INPUT_ID, "MIXER2", 0 },
+        { DSP_SIGNAL_MIXER3_INPUT_ID, "MIXER3", 0 },
+
+        { DSP_SIGNAL_DIFF_IN0_ID, "DIFF_IN0", 0 },
+        { DSP_SIGNAL_DIFF_IN1_ID, "DIFF_IN1", 0 },
+        { DSP_SIGNAL_DIFF_IN2_ID, "DIFF_IN2", 0 },
+        { DSP_SIGNAL_DIFF_IN3_ID, "DIFF_IN3", 0 },
+
+        { DSP_SIGNAL_SCAN_CHANNEL_MAP0_ID, "SCAN_CHMAP0", 0 },
+        { DSP_SIGNAL_SCAN_CHANNEL_MAP1_ID, "SCAN_CHMAP1", 0 },
+        { DSP_SIGNAL_SCAN_CHANNEL_MAP2_ID, "SCAN_CHMAP2", 0 },
+        { DSP_SIGNAL_SCAN_CHANNEL_MAP3_ID, "SCAN_CHMAP3", 0 },
+
+        { DSP_SIGNAL_LOCKIN_A_INPUT_ID, "LOCKIN_A", 0 },
+        { DSP_SIGNAL_LOCKIN_B_INPUT_ID, "LOCKIN_B", 0 },
+        { DSP_SIGNAL_VECPROBE0_INPUT_ID, "VECPROBE0", 0 },
+        { DSP_SIGNAL_VECPROBE1_INPUT_ID, "VECPROBE1", 0 },
+        { DSP_SIGNAL_VECPROBE2_INPUT_ID, "VECPROBE2", 0 },
+        { DSP_SIGNAL_VECPROBE3_INPUT_ID, "VECPROBE3", 0 },
+        { DSP_SIGNAL_VECPROBE0_CONTROL_ID, "VECPROBE0_C", 0 },
+        { DSP_SIGNAL_VECPROBE1_CONTROL_ID, "VECPROBE1_C", 0 },
+        { DSP_SIGNAL_VECPROBE2_CONTROL_ID, "VECPROBE2_C", 0 },
+        { DSP_SIGNAL_VECPROBE3_CONTROL_ID, "VECPROBE3_C", 0 },
+
+        { DSP_SIGNAL_OUTMIX_CH5_INPUT_ID, "OUTMIX_CH5", 0 },
+        { DSP_SIGNAL_OUTMIX_CH5_ADD_A_INPUT_ID, "OUTMIX_CH5_ADD_A", 0 },
+        { DSP_SIGNAL_OUTMIX_CH5_SUB_B_INPUT_ID, "OUTMIX_CH5_SUB_B", 0 },
+        { DSP_SIGNAL_OUTMIX_CH5_SMAC_A_INPUT_ID, "OUTMIX_CH5_SMAC_A", 0 },
+        { DSP_SIGNAL_OUTMIX_CH5_SMAC_B_INPUT_ID, "OUTMIX_CH5_SMAC_B", 0 },
+
+        { DSP_SIGNAL_OUTMIX_CH6_INPUT_ID, "OUTMIX_CH6", 0 },
+        { DSP_SIGNAL_OUTMIX_CH6_ADD_A_INPUT_ID, "OUTMIX_CH6_ADD_A", 0 },
+        { DSP_SIGNAL_OUTMIX_CH6_SUB_B_INPUT_ID, "OUTMIX_CH6_SUB_B", 0 },
+        { DSP_SIGNAL_OUTMIX_CH6_SMAC_A_INPUT_ID, "OUTMIX_CH6_SMAC_A", 0 },
+        { DSP_SIGNAL_OUTMIX_CH6_SMAC_B_INPUT_ID, "OUTMIX_CH6_SMAC_B", 0 },
+
+        { DSP_SIGNAL_OUTMIX_CH7_INPUT_ID, "OUTMIX_CH7", 0 },
+        { DSP_SIGNAL_OUTMIX_CH7_ADD_A_INPUT_ID, "OUTMIX_CH7_ADD_A", 0 },
+        { DSP_SIGNAL_OUTMIX_CH7_SUB_B_INPUT_ID, "OUTMIX_CH7_SUB_B", 0 },
+        { DSP_SIGNAL_OUTMIX_CH7_SMAC_A_INPUT_ID, "OUTMIX_CH7_SMAC_A", 0 },
+        { DSP_SIGNAL_OUTMIX_CH7_SMAC_B_INPUT_ID, "OUTMIX_CH7_SMAC_B", 0 },
+
+        { DSP_SIGNAL_OUTMIX_CH8_INPUT_ID, "OUTMIX_CH8_INPUT", 0 },
+        { DSP_SIGNAL_OUTMIX_CH8_ADD_A_INPUT_ID, "OUTMIX_CH8_ADD_A_INPUT", 0 },
+        { DSP_SIGNAL_OUTMIX_CH9_INPUT_ID, "OUTMIX_CH9_INPUT", 0 },
+        { DSP_SIGNAL_OUTMIX_CH9_ADD_A_INPUT_ID, "OUTMIX_CH9_ADD_A_INPUT", 0 },
+
+        { DSP_SIGNAL_ANALOG_AVG_INPUT_ID, "ANALOG_AVG_INPUT", 0 },
+        { DSP_SIGNAL_SCOPE_SIGNAL1_INPUT_ID, "SCOPE_SIGNAL1_INPUT", 0 },
+        { DSP_SIGNAL_SCOPE_SIGNAL2_INPUT_ID, "SCOPE_SIGNAL2_INPUT", 0 },
+
+        { 0, "END", 0 }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 // Plugin Prototypes
@@ -358,6 +450,152 @@ GtkWidget* GUI_Builder::grid_add_scan_input_signal_options (gint channel, gint p
                           ref);
         grid_add_widget (cbtxt);
         return cbtxt;
+};
+
+
+GtkWidget* GUI_Builder::grid_add_probe_source_signal_options (gint channel, gint preset, gpointer ref){ // preset=probe_source[CHANNEL])
+        GtkWidget *cbtxt = gtk_combo_box_text_new (); 
+        gtk_widget_set_size_request (cbtxt, 50, -1); 
+        g_object_set_data(G_OBJECT (cbtxt), "prb_channel_source", GINT_TO_POINTER (channel)); 
+
+
+        // Template demo only
+        gchar *signal_label[] = { "PLL-Freq", "PLL-Phase", "PLL-Exec", "PLL-Ampl", "AnySignal", NULL }; // MUST MATCH CALLBACK!!!
+        for (int jj=0; signal_label[jj]; ++jj){
+                gchar *id = g_strdup_printf ("%d", jj); gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, signal_label[jj]); g_free (id);
+        }
+
+#if 0        
+        for (int jj=0;  jj<NUM_SIGNALS_UNIVERSAL && sranger_common_hwi->lookup_dsp_signal_managed (jj)->p; ++jj){ 
+                gchar *id = g_strdup_printf ("%d", jj);
+                const gchar *label = sranger_common_hwi->lookup_dsp_signal_managed (jj)->label;
+                gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, label?label:"???");
+                g_free (id);
+        }
+#endif
+        if (preset > 0)
+                gtk_combo_box_set_active (GTK_COMBO_BOX (cbtxt), preset); 
+        else
+                gtk_combo_box_set_active (GTK_COMBO_BOX (cbtxt), 4); // NULL SIGNAL [TESTING FALLBACK for -1/error]
+                
+        g_signal_connect (G_OBJECT (cbtxt), "changed",	
+                          G_CALLBACK (SPM_Template_Control::choice_prbsource_callback), 
+                          ref);				
+        grid_add_widget (cbtxt);
+        return cbtxt;
+};
+
+
+
+
+GtkWidget* GUI_Builder::grid_add_probe_status (const gchar *status_label) {
+        GtkWidget *inp = grid_add_input (status_label);
+        gtk_entry_buffer_set_text (GTK_ENTRY_BUFFER (gtk_entry_get_buffer (GTK_ENTRY(inp))), " --- ", -1);
+        gtk_editable_set_editable (GTK_EDITABLE (inp), FALSE);
+        return inp;
+};
+
+void GUI_Builder::grid_add_probe_controls (gboolean have_dual,
+                              guint64 option_flags, GCallback option_cb,
+                              guint64 auto_flags, GCallback auto_cb,
+                              GCallback exec_cb, GCallback write_cb, GCallback graph_cb, GCallback x_cb,
+                              gpointer cb_data,
+                              const gchar *control_id) {                                                            
+
+        new_grid_with_frame ("Probe Controller");
+        new_grid ();
+        gtk_grid_set_column_homogeneous (GTK_GRID (grid), TRUE);
+        gtk_widget_set_hexpand (grid, TRUE);
+                
+        // ==================================================
+        set_configure_list_mode_on ();
+        // OPTIONS
+        grid_add_check_button_guint64 ("Feedback On",
+                                       "Check to keep Z feedback on while probe.", 1,
+                                       GCallback (option_cb), cb_data, option_flags, FLAG_FB_ON); 
+        if (have_dual) {                                         
+                grid_add_check_button_guint64 ("Dual Mode",
+                                               "Check to run symmetric probe:\n"
+                                               "take reverse data to start.", 1,
+                                               GCallback (option_cb), cb_data, option_flags, FLAG_DUAL); 
+        }                                                       
+        grid_add_check_button_guint64 ("Oversampling", "Check do enable DSP data oversampling:\n"
+                                       "integrates data at intermediate points (averaging).\n"
+                                       "(recommended)", 1,
+                                       GCallback (option_cb), cb_data, option_flags, FLAG_INTEGRATE); 
+        grid_add_check_button_guint64 ("Full Ramp", "Check do enable data acquisition on all probe segments:\n"
+                                       "including start/end ramps and delays.", 1,
+                                       GCallback (option_cb), cb_data, option_flags, FLAG_SHOW_RAMP); 
+        // AUTO MODES
+        grid_add_check_button_guint64 ("Auto Plot", "Enable life data plotting:\n"
+                                       "disable to save resources and CPU time for huge data sets\n"
+                                       "and use manual plot update if needed.", 1,
+                                       GCallback (auto_cb), cb_data, auto_flags, FLAG_AUTO_PLOT); 
+        grid_add_check_button_guint64 ("Auto Save", "Enable save data auutomatically at competion.\n"
+                                       "(recommended)", 1,
+                                       GCallback (auto_cb), cb_data, auto_flags, FLAG_AUTO_SAVE); 
+        grid_add_check_button_guint64 ("GLock", "Lock Data/Graphs Configuration.\n"
+                                       "(recommended to check after setup and one test run)", 1,
+                                       GCallback (auto_cb), cb_data, auto_flags, FLAG_AUTO_GLOCK); 
+        grid_add_check_button_guint64 ("Run Init Script", "Run Init Script before VP execution.\n"
+                                       "(use only if init script (see python console, Actions Scripts) for VP-mode is created and reviewed, you can configure any initial condtions like bias, setpoint for example.)", 1,
+                                       GCallback (auto_cb), cb_data, auto_flags, FLAG_AUTO_RUN_INITSCRIPT);
+        set_configure_list_mode_off ();
+        // ==================================================
+        GtkWidget *tmp = grid;
+        pop_grid ();
+        grid_add_widget (tmp);
+                                                                        
+        new_line ();
+
+        new_grid ();
+        gtk_grid_set_column_homogeneous (GTK_GRID (grid), TRUE);
+        gtk_widget_set_hexpand (grid, TRUE);
+                
+        remote_action_cb *ra = g_new( remote_action_cb, 1);     
+        ra -> cmd = g_strdup_printf("DSP_VP_%s_EXECUTE", control_id); 
+        gchar *help = g_strconcat ("Remote example: action (", ra->cmd, ")", NULL); 
+        grid_add_button ("Execute", help, 2,
+                         GCallback (exec_cb), cb_data);
+        g_free (help);
+        ra -> RemoteCb = (void (*)(GtkWidget*, void*))exec_cb;  
+        ra -> widget = button;                                  
+        ra -> data = cb_data;                                      
+
+                
+        main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra ); 
+        PI_DEBUG (DBG_L2, "Adding new Remote Cmd: " << ra->cmd ); 
+                                                                        
+        // ==================================================
+        set_configure_list_mode_on ();
+        grid_add_button ("Write Vectors",
+                         "Update Vector Program on DSP.\n"
+                         "USE WITH CAUTION: possibel any time, but has real time consequences,\n"
+                         "may be used to accellerate/abort VP.", 1,
+                         GCallback (write_cb), cb_data);
+        set_configure_list_mode_off ();
+        // ==================================================
+		                                                        
+        grid_add_button ("Plot",
+                         "Manually update all graphs.", 1,
+                         GCallback (graph_cb), cb_data);         
+                                                                        
+        grid_add_button ("Save",
+                         "Save all VP data, file name is auto generated.", 1,
+                         G_CALLBACK (SPM_Template_Control::Probing_save_callback), cb_data);         
+
+        // ==================================================
+        set_configure_list_mode_on ();
+        grid_add_button ("ABORT", "Cancel VP Program (writes and executes Zero Vector Program)\n"
+                         "USE WITH CAUTION: pending data will get corrupted.", 1,
+                         GCallback (x_cb), cb_data);
+        set_configure_list_mode_off ();
+        // ==================================================
+
+        tmp = grid;
+        pop_grid ();
+        grid_add_widget (tmp);
+        pop_grid ();
 };
 
 
@@ -815,6 +1053,510 @@ void SPM_Template_Control::create_folder (){
 
         bp->notebook_tab_show_all ();
 
+        // ==== Folder: LockIn  ========================================
+        bp->new_grid ();
+        bp->start_notebook_tab (notebook, "Lock-In", "template-tab-lockin", hwi_settings);
+
+ 	bp->new_grid_with_frame ("Digital Lock-In settings");
+        bp->set_default_ec_change_notice_fkt (SPM_Template_Control::lockin_adjust_callback, this);
+
+        bp->new_line ();
+
+#define GET_CURRENT_LOCKING_MODE 0 // dummy
+        
+        LockIn_mode = bp->grid_add_check_button ("LockIn run free", "enable contineous modulation and LockIn processing.\n",
+                                                     1,
+                                                     GCallback (SPM_Template_Control::lockin_runfree_callback), this,
+                                                     GET_CURRENT_LOCKING_MODE, 0);
+
+        bp->new_line ();
+	bp->grid_add_ec ("Bias Amp", Volt, &AC_amp[0], 0., 1., "5g", 0.001, 0.01, "LCK-AC-Bias-Amp");
+        bp->new_line ();
+        bp->grid_add_ec ("Z Amp", Angstroem, &AC_amp[1], 0., 100., "5g", 0.01, 0.1, "LCK-AC-Z-Amp");
+
+
+        
+// ==== Folder Set for Vector Probe ========================================
+// ==== Folder: I-V STS setup ========================================
+        PI_DEBUG (DBG_L4, "DSPC----TAB-IV ------------------------------- ");
+
+        bp->new_grid ();
+        bp->start_notebook_tab (notebook, "STS", "template-tab-sts", hwi_settings);
+	// ==================================================
+        bp->new_grid_with_frame ("I-V Type Spectroscopy");
+	// ==================================================
+
+	bp->grid_add_label ("IV Probe"); bp->grid_add_label ("Start"); bp->grid_add_label ("End");  bp->grid_add_label ("Points");
+        bp->new_line ();
+
+        bp->grid_add_ec (NULL, Volt, &IV_start, -10.0, 10., "5.3g", 0.1, 0.025, "IV-Start", i);
+        bp->grid_add_ec (NULL, Volt, &IV_end, -10.0, 10.0, "5.3g", 0.1, 0.025, "IV-End", i);
+        bp->grid_add_ec (NULL, Unity, &IV_points, 1, 1000, "5g", "IV-Points", i);
+        bp->set_pcs_remote_prefix (REMOTE_PREFIX);
+        
+        bp->new_line ();
+
+	bp->grid_add_ec ("Slope", Vslope, &IV_slope,0.1,1000.0, "5.3g", 1., 10., "IV-Slope");
+	bp->grid_add_ec ("Slope Ramp", Vslope, &IV_slope_ramp,0.1,1000.0, "5.3g", 1., 10., "IV-Slope-Ramp");
+        bp->new_line ();
+        bp->set_configure_list_mode_on ();
+	bp->grid_add_ec ("#IV sets", Unity, &IV_repetitions, 1, 100, "3g", "IV-rep");
+
+        bp->new_line ();
+
+	IV_status = bp->grid_add_probe_status ("Status");
+        bp->new_line ();
+
+        bp->pop_grid ();
+        bp->new_line ();
+        bp->grid_add_probe_controls (TRUE,
+                                         IV_option_flags, GCallback (callback_change_IV_option_flags),
+                                         IV_auto_flags,  GCallback (callback_change_IV_auto_flags),
+                                         GCallback (SPM_Template_Control::Probing_exec_IV_callback),
+                                         GCallback (SPM_Template_Control::Probing_write_IV_callback),
+                                         GCallback (SPM_Template_Control::Probing_graph_callback),
+                                         GCallback (SPM_Template_Control::Probing_abort_callback),
+                                         this,
+                                         "IV");
+        bp->notebook_tab_show_all ();
+        bp->pop_grid ();
+
+
+        
+        bp->new_grid ();
+        bp->start_notebook_tab (notebook, "GVP", "template-tab-gvp", hwi_settings);
+
+	// ========================================
+        PI_DEBUG (DBG_L4, "DSPC----TAB-VP ------------------------------- ");
+
+ 	bp->new_grid_with_frame ("Generic Vector Program (VP) Probe and Manipulation");
+ 	// g_print ("================== TAB 'GVP' ============= Generic Vector Program (VP) Probe and Manipulation\n");
+
+	// ----- VP Program Vectors Headings
+	// ------------------------------------- divided view
+
+	// ------------------------------------- VP program table, scrolled
+ 	GtkWidget *vp = gtk_scrolled_window_new ();
+        gtk_widget_set_vexpand (vp, TRUE);
+	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (vp), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+	gtk_scrolled_window_set_min_content_height  (GTK_SCROLLED_WINDOW (vp), 100);
+        gtk_widget_set_vexpand (bp->grid, TRUE);
+        bp->grid_add_widget (vp); // only widget in bp->grid
+
+        bp->new_grid ();
+	gtk_scrolled_window_set_child (GTK_SCROLLED_WINDOW (vp), bp->grid);
+        
+        // ----- VP Program Vectors Listing -- headers
+	VPprogram[0] = bp->grid;
+
+        bp->set_no_spin ();
+        
+        bp->grid_add_label ("Vec[PC]", "Vector Program Counter");
+        bp->grid_add_label ("VP-dU", "vec-du");
+        bp->grid_add_label ("VP-dX", "vec-dx (default or mapped)");
+        bp->grid_add_label ("VP-dY", "vec-dy (default or mapped)");
+        bp->grid_add_label ("VP-dZ", "vec-dz");
+        bp->set_configure_list_mode_on ();
+        bp->grid_add_label ("VP-dSig", "vec-dSignal mapped");
+        bp->set_configure_list_mode_off ();
+        bp->grid_add_label ("time", "total time for VP section");
+        bp->grid_add_label ("points", "points (# vectors to add)");
+        bp->grid_add_label ("FB", "Feedback");
+        bp->set_configure_list_mode_on ();
+        bp->grid_add_label ("IOS", "GPIO-Set");
+        bp->grid_add_label ("IOR", "GPIO-Read");
+        bp->grid_add_label ("TP", "TRIGGER-POS");
+        bp->grid_add_label ("TN", "TRIGGER-NEG");
+        bp->grid_add_label ("GPIO", "data for GPIO / mask for trigger on GPIO");
+        bp->grid_add_label ("Nrep", "VP # repetition");
+        bp->grid_add_label ("PCJR", "Vector-PC jump relative\n (example: set to -2 to repeat previous two vectors.)");
+        bp->set_configure_list_mode_off ();
+        bp->grid_add_label("Shift", "Edit: Shift VP Block up/down");
+
+        bp->new_line ();
+        
+	GSList *EC_vpc_opt_list=NULL;
+        Gtk_EntryControl *ec_iter[12];
+	for (int k=0; k < N_GVP_VECTORS; ++k) {
+		gchar *tmpl = g_strdup_printf ("vec[%02d]", k); 
+
+                // g_print ("GVP-DEBUG:: %s -[%d]------> GVPdu=%g, ... points=%d,.. opt=%8x\n", tmpl, k, GVP_du[k], GVP_points[k],  GVP_opt[k]);
+
+		bp->grid_add_label (tmpl, "Vector PC");
+		bp->grid_add_ec (NULL,      Volt, &GVP_du[k], -10.0,   10.0,   "6.4g", 1., 10., "gvp-du", k); 
+                if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
+
+		bp->grid_add_ec (NULL, Angstroem, &GVP_dx[k], -100000.0, 100000.0, "6.4g", 1., 10., "gvp-dx", k); 
+                if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
+
+		bp->grid_add_ec (NULL, Angstroem, &GVP_dy[k], -100000.0, 100000.0, "6.4g", 1., 10., "gvp-dy", k); 
+                if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
+
+		bp->grid_add_ec (NULL, Angstroem, &GVP_dz[k], -100000.0, 100000.0, "6.4g", 1., 10., "gvp-dz", k); 
+                if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
+
+                bp->set_configure_list_mode_on (); // === advanced ===========================================
+		bp->grid_add_ec (NULL,    Volt, &GVP_dsig[k], -1000.0, 1000.0, "6.4g",1., 10., "gvp-dsig", k); 
+                if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
+                bp->set_configure_list_mode_off (); // ========================================================
+
+		bp->grid_add_ec (NULL,      Time, &GVP_ts[k], 0., 10000.0,     "5.4g", 1., 10., "gvp-dt", k); 
+                if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
+
+		bp->grid_add_ec (NULL,      Unity, &GVP_points[k], 0, 4000,  "5g", "gvp-n", k); 
+                if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
+
+
+		//note:  VP_FEEDBACK_HOLD is only the mask, this bit in GVP_opt is set to ONE for FEEBACK=ON !! Ot is inveretd while vector generation ONLY.
+		bp->grid_add_check_button ("", NULL, 1,
+                                               GCallback (callback_change_GVP_vpc_option_flags), this,
+                                               GVP_opt[k], VP_FEEDBACK_HOLD);
+                EC_vpc_opt_list = g_slist_prepend( EC_vpc_opt_list, bp->button);
+                g_object_set_data (G_OBJECT (bp->button), "VPC", GINT_TO_POINTER (k));
+
+                bp->set_configure_list_mode_on (); // ================ advanced section
+
+                bp->grid_add_check_button ("", NULL, 1,
+                                               GCallback (callback_change_GVP_vpc_option_flags), this,
+                                               GVP_opt[k], VP_GPIO_SET);
+                EC_vpc_opt_list = g_slist_prepend( EC_vpc_opt_list, bp->button);
+                g_object_set_data (G_OBJECT (bp->button), "VPC", GINT_TO_POINTER (k));
+
+                bp->grid_add_check_button ("", NULL, 1,
+                                               GCallback (callback_change_GVP_vpc_option_flags), this,
+                                               GVP_opt[k], VP_GPIO_READ);
+                EC_vpc_opt_list = g_slist_prepend( EC_vpc_opt_list, bp->button);
+                g_object_set_data (G_OBJECT (bp->button), "VPC", GINT_TO_POINTER (k));
+
+                bp->grid_add_check_button ("", NULL, 1,
+                                               GCallback (callback_change_GVP_vpc_option_flags), this,
+                                               GVP_opt[k], VP_TRIGGER_P);
+                EC_vpc_opt_list = g_slist_prepend( EC_vpc_opt_list, bp->button);
+                g_object_set_data (G_OBJECT (bp->button), "VPC", GINT_TO_POINTER (k));
+
+                bp->grid_add_check_button ("", NULL, 1,
+                                               GCallback (callback_change_GVP_vpc_option_flags), this,
+                                               GVP_opt[k], VP_TRIGGER_N);
+                EC_vpc_opt_list = g_slist_prepend( EC_vpc_opt_list, bp->button);
+                g_object_set_data (G_OBJECT (bp->button), "VPC", GINT_TO_POINTER (k));
+
+		bp->grid_add_ec (NULL, Hex,   &GVP_data[k],   0, 0xffff,  "04X", "gvp-data", k); 
+                if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
+
+		bp->grid_add_ec (NULL, Unity, &GVP_vnrep[k], 0., 32000.,  ".0f", "gvp-nrep", k); 
+                if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
+
+		bp->grid_add_ec (NULL, Unity, &GVP_vpcjr[k], -50.,   0.,  ".0f", "gvp-pcjr", k); 
+                if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
+
+                bp->set_configure_list_mode_off (); // ==================================
+
+                GtkWidget *button;
+		if (k > 0){
+                        bp->grid_add_widget (button=gtk_button_new_from_icon_name ("arrow-up-symbolic"));
+                        gtk_widget_set_tooltip_text (button, "Shift VP up here");
+                        g_object_set_data (G_OBJECT(button), "VPC", GINT_TO_POINTER (k));
+                        g_object_set_data (G_OBJECT(button), "ARROW", GINT_TO_POINTER (GVP_SHIFT_UP));
+			g_signal_connect ( G_OBJECT (button), "clicked",
+                                           G_CALLBACK (callback_edit_GVP),
+                                           this);
+		} else {
+                        bp->grid_add_widget (button=gtk_button_new_from_icon_name ("view-more-symbolic"));
+                        gtk_widget_set_tooltip_text (button, "Toggle VP Flow Chart");
+                        g_object_set_data (G_OBJECT(button), "VPC", GINT_TO_POINTER (k));
+                        g_object_set_data (G_OBJECT(button), "ARROW", GINT_TO_POINTER (GVP_SHIFT_UP));
+			g_signal_connect ( G_OBJECT (button), "clicked",
+                                           G_CALLBACK (callback_edit_GVP),
+                                           this);
+                }
+		if (k < N_GVP_VECTORS-1){
+                        bp->grid_add_widget (button=gtk_button_new_from_icon_name ("arrow-down-symbolic"));
+                        gtk_widget_set_tooltip_text (button, "Shift VP down here");
+                        g_object_set_data (G_OBJECT(button), "VPC", GINT_TO_POINTER (k));
+                        g_object_set_data (G_OBJECT(button), "ARROW", GINT_TO_POINTER (GVP_SHIFT_DN));
+			g_signal_connect ( G_OBJECT (button), "clicked",
+                                           G_CALLBACK (callback_edit_GVP),
+                                           this);
+		}
+		g_free (tmpl);
+		if (k==0)
+			g_object_set_data (G_OBJECT (bp->grid), "CF", GINT_TO_POINTER (bp->x));
+
+                bp->new_line ();
+                
+	}
+	g_object_set_data( G_OBJECT (window), "DSP_VPC_OPTIONS_list", EC_vpc_opt_list);
+
+        bp->set_no_spin (false);
+
+        // lower part: controls
+        bp->pop_grid ();
+        bp->new_line ();
+        bp->new_grid_with_frame ("VP Memos");
+
+	// MEMO BUTTONs
+        gtk_widget_set_hexpand (bp->grid, TRUE);
+	const gchar *keys[] = { "VPA", "VPB", "VPC", "VPD", "VPE", "VPF", "VPG", "VPH", "VPI", "VPJ", "V0", NULL };
+
+	for (int i=0; keys[i]; ++i) {
+                GdkRGBA rgba;
+		gchar *gckey  = g_strdup_printf ("LM_set_%s", keys[i]);
+		gchar *stolab = g_strdup_printf ("STO %s", keys[i]);
+		gchar *rcllab = g_strdup_printf ("RCL %s", keys[i]);
+		gchar *memolab = g_strdup_printf ("M %s", keys[i]);             
+		gchar *memoid  = g_strdup_printf ("memo-vp%c", 'a'+i);             
+                remote_action_cb *ra = NULL;
+                gchar *help = NULL;
+
+                bp->set_xy (i+1, 10);
+                // add button with remote support for program recall
+                ra = g_new( remote_action_cb, 1);
+                ra -> cmd = g_strdup_printf("DSP_VP_STO_%s", keys[i]);
+                help = g_strconcat ("Remote example: action (", ra->cmd, ")", NULL); 
+                bp->grid_add_button (N_(stolab), help, 1,
+                                         G_CALLBACK (callback_GVP_store_vp), this,
+                                         "key", gckey);
+                g_free (help);
+                ra -> RemoteCb = (void (*)(GtkWidget*, void*))callback_GVP_store_vp;
+                ra -> widget = bp->button;
+                ra -> data = this;
+                main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra );
+                PI_DEBUG (DBG_L2, "Adding new Remote Cmd: " << ra->cmd ); 
+
+                // CSS
+                //                if (gdk_rgba_parse (&rgba, "tomato"))
+                //                        gtk_widget_override_background_color ( GTK_WIDGET (bp->button), GTK_STATE_FLAG_PRELIGHT, &rgba);
+
+                bp->set_xy (i+1, 11);
+
+                // add button with remote support for program recall
+                ra = g_new( remote_action_cb, 1);
+                ra -> cmd = g_strdup_printf("DSP_VP_RCL_%s", keys[i]);
+                help = g_strconcat ("Remote example: action (", ra->cmd, ")", NULL); 
+                bp->grid_add_button (N_(rcllab), help, 1,
+                                         G_CALLBACK (callback_GVP_restore_vp), this,
+                                         "key", gckey);
+                g_free (help);
+                ra -> RemoteCb = (void (*)(GtkWidget*, void*))callback_GVP_restore_vp;
+                ra -> widget = bp->button;
+                ra -> data = this;
+                main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra );
+                PI_DEBUG (DBG_L2, "Adding new Remote Cmd: " << ra->cmd ); 
+                
+                // CSS
+                //                if (gdk_rgba_parse (&rgba, "SeaGreen3"))
+                //                        gtk_widget_override_background_color ( GTK_WIDGET (bp->button), GTK_STATE_FLAG_PRELIGHT, &rgba);
+#if 0 // may adda memo/info button
+                bp->set_xy (i+1, 12);
+                bp->grid_add_button (N_(memolab), memolab, 1,
+                                         G_CALLBACK (callback_GVP_memo_vp), this,
+                                         "key", gckey);
+#endif
+                bp->set_xy (i+1, 12);
+                bp->grid_add_input (NULL);
+                bp->set_input_width_chars (10);
+                gtk_widget_set_hexpand (bp->input, TRUE);
+
+                g_settings_bind (hwi_settings, memoid,
+                                 G_OBJECT (bp->input), "text",
+                                 G_SETTINGS_BIND_DEFAULT);
+
+                //g_free (gckey);
+                //g_free (stolab);
+                //g_free (rcllab);
+                g_free (memolab);
+                g_free (memoid);
+	}
+
+        // ===================== done with panned
+        
+        bp->pop_grid ();
+        bp->new_line ();
+
+	bp->new_grid_with_frame ("VP Finish Settings and Status");
+        bp->set_configure_list_mode_on ();
+	bp->grid_add_ec ("GVP-Final-Delay", Time, &GVP_final_delay, 0., 1., "5.3g", 0.001, 0.01, "GVP-Final-Delay");
+	bp->grid_add_label ("GPIO key", "Key code to enable GPIO set operations.\n(GPIO manipulation is locked out if not set right.)");
+	bp->grid_add_ec (GVP_GPIO_KEYCODE_S, Unity, &GVP_GPIO_lock, 0, 9999, "04.0f", "GVP-GPIO-Lock-" GVP_GPIO_KEYCODE_S);
+        bp->new_line ();
+        bp->set_configure_list_mode_off ();
+
+	GVP_status = bp->grid_add_probe_status ("Status");
+
+        bp->pop_grid ();
+        bp->new_line ();
+
+        bp->grid_add_probe_controls (FALSE,
+                                         GVP_option_flags, GCallback (callback_change_GVP_option_flags),
+                                         GVP_auto_flags,  GCallback (callback_change_GVP_auto_flags),
+                                         GCallback (SPM_Template_Control::Probing_exec_GVP_callback),
+                                         GCallback (SPM_Template_Control::Probing_write_GVP_callback),
+                                         GCallback (SPM_Template_Control::Probing_graph_callback),
+                                         GCallback (SPM_Template_Control::Probing_abort_callback),
+                                         this,
+                                         "GVP");
+        bp->notebook_tab_show_all ();
+        bp->pop_grid ();
+
+
+
+// ==== Folder: Graphs -- Vector Probe Data Visualisation setup ========================================
+        bp->new_grid ();
+        bp->start_notebook_tab (notebook, "Graphs", "template-tab-graphs", hwi_settings);
+
+        PI_DEBUG (DBG_L4, "DSPC----TAB-GRAPHS ------------------------------- ");
+
+ 	bp->new_grid_with_frame ("Probe Sources & Graph Setup");
+
+	// source channel setup -- just and example or template -- that's a reduced set of the MK3
+	int   msklookup[] = { 0x000010, 0x000020, 0x000040, 0x000080, 0x000100, 0x000200, 0x000400, 0x000800,
+			      0x000008, 0x001000, 0x002000, 0x004000, 0x008000,
+			      0x0100000, 0x0200000, 0x0400000, 0x0800000, 0x1000000,
+			      -1 
+	};
+	const char* lablookup[] = { "ADC0-I", "ADC1", "ADC2", "ADC3", "ADC4", "ADC5","ADC6","ADC7",
+				    "LockIn0", "LockIn X",  "LockIn Y", "LockIn Mag", "Auxillary"
+				    "Time", "Z-mon", "Bias-mon", "SEC",
+				    NULL
+	};
+        
+        bp->grid_add_label ("Source", "Check column to activate channel", 2, 0.);
+        bp->grid_add_label ("X", "Check column to plot channel on X axis.", 1);
+        bp->grid_add_label ("Y", "Check column to plot channel on Y axis.", 1);
+        bp->grid_add_label ("Avg", "Check column to plot average of all spectra", 1);
+        bp->grid_add_label ("Sec", "Check column to show all sections.", 1);
+        GtkWidget *sep = gtk_separator_new (GTK_ORIENTATION_VERTICAL);
+        gtk_widget_set_size_request (sep, 5, -1);
+        bp->grid_add_widget (sep, 5);
+        //bp->grid_add_label (" --- ", NULL, 5);
+
+        bp->grid_add_label ("Source", "Check column to activate channel", 2, 0.);
+        bp->grid_add_label ("X", "Check column to plot channel on X axis.", 1);
+        bp->grid_add_label ("Y", "Check column to plot channel on Y axis.", 1);
+        bp->grid_add_label ("Avg", "Check column to plot average of all spectra", 1);
+        bp->grid_add_label ("Sec", "Check column to show all sections.", 1);
+        sep = gtk_separator_new (GTK_ORIENTATION_VERTICAL);
+        gtk_widget_set_size_request (sep, 5, -1);
+        bp->grid_add_widget (sep, 5);
+        //bp->grid_add_label (" --- ", NULL, 5);
+
+        bp->grid_add_label ("Source", "Check column to activate channel", 2, 0.);
+        bp->grid_add_label ("X", "Check column to plot channel on X axis.", 1);
+        bp->grid_add_label ("Y", "Check column to plot channel on Y axis.", 1);
+        bp->grid_add_label ("Avg", "Check column to plot average of all spectra", 1);
+        bp->grid_add_label ("Sec", "Check column to show all sections.", 1);
+
+        bp->new_line ();
+
+        PI_DEBUG (DBG_L4, "DSPC----TAB-GRAPHS TOGGELS  ------------------------------- ");
+
+        gint y = bp->y;
+	for (i=0; msklookup[i] >= 0 && lablookup[i]; ++i) {
+                PI_DEBUG (DBG_L4, "GRAPHS*** i=" << i << " " << lablookup[i]);
+		if (!msklookup[i]) 
+			continue;
+		int c=i/8; 
+		c*=11;
+                c++;
+		int m = -1;
+		if (i >= 9 && i < 12)
+			m = i-8;
+		else
+			m = -1;
+                int r = y+i%8+1;
+
+                bp->set_xy (c, r);
+
+                // Source
+                bp->grid_add_check_button ("", NULL, 1,
+                                               GCallback (change_source_callback), this,
+                                               Source, (((int) msklookup[i]) & 0xfffffff)
+                                               );
+                // source selection for i=9..12:
+                if (m >= 0){
+                        bp->grid_add_probe_source_signal_options (m, probe_source[m], this);
+                }
+                //fixed assignment:
+                // bp->grid_add_label (lablookup[i], NULL, 1, 0.);
+                g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER ((int) msklookup[i])); 
+                g_object_set_data (G_OBJECT(bp->button), "VPC", GINT_TO_POINTER (i)); 
+                
+                // use as X-Source
+                bp->grid_add_check_button ("", NULL, 1,
+                                               GCallback (change_source_callback), this,
+                                               XSource, (((int) (X_SOURCE_MSK | msklookup[i])) & 0xfffffff)
+                                               );
+                g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER ((int) (X_SOURCE_MSK | msklookup[i]))); 
+                g_object_set_data (G_OBJECT(bp->button), "VPC", GINT_TO_POINTER (i)); 
+
+                // use as Plot (Y)-Source
+                bp->grid_add_check_button ("", NULL, 1,
+                                               G_CALLBACK (change_source_callback), this,
+                                               PSource, (((int) (P_SOURCE_MSK | msklookup[i])) & 0xfffffff)
+                                               );
+                g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER ((int) (P_SOURCE_MSK | msklookup[i]))); 
+                g_object_set_data (G_OBJECT(bp->button), "VPC", GINT_TO_POINTER (i)); 
+                
+                // use as A-Source (Average)
+                bp->grid_add_check_button ("", NULL, 1,
+                                               G_CALLBACK (change_source_callback), this,
+                                               PlotAvg, (((int) (A_SOURCE_MSK | msklookup[i])) & 0xfffffff)
+                                               );
+                g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER ((int) (A_SOURCE_MSK | msklookup[i]))); 
+                g_object_set_data (G_OBJECT(bp->button), "VPC", GINT_TO_POINTER (i)); 
+                
+                // use as S-Source (Section)
+                bp->grid_add_check_button ("", NULL, 1,
+                                               G_CALLBACK (change_source_callback), this,
+                                               PlotSec, (((int) (S_SOURCE_MSK | msklookup[i])) & 0xfffffff)
+                                               );
+                g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER ((int) (S_SOURCE_MSK | msklookup[i]))); 
+                g_object_set_data (G_OBJECT(bp->button), "VPC", GINT_TO_POINTER (i)); 
+                
+                // bp->grid_add_check_button_graph_matrix(lablookup[i], (int) msklookup[i], m, probe_source[m], i, this);
+                // bp->grid_add_check_button_graph_matrix(" ", (int) (X_SOURCE_MSK | msklookup[i]), -1, i, this);
+                // bp->grid_add_check_button_graph_matrix(" ", (int) (P_SOURCE_MSK | msklookup[i]), -1, i, this);
+                // bp->grid_add_check_button_graph_matrix(" ", (int) (A_SOURCE_MSK | msklookup[i]), -1, i, this);
+                // bp->grid_add_check_button_graph_matrix(" ", (int) (S_SOURCE_MSK | msklookup[i]), -1, i, this);
+                if (c < 23){
+                        sep = gtk_separator_new (GTK_ORIENTATION_VERTICAL);
+                        gtk_widget_set_size_request (sep, 5, -1);
+                        bp->grid_add_widget (sep);
+                }
+	}
+
+        
+        bp->pop_grid ();
+        bp->new_line ();
+
+	bp->grid_add_check_button ("Join all graphs for same X", "Join all plots with same X.\n"
+                                       "Note: if auto scale (default) Y-scale\n"
+                                       "will only apply to 1st graph - use hold/exp. only for asolute scale.)", 1,
+                                       GCallback (callback_XJoin), this,
+                                       XJoin, 1
+                                       );
+	bp->grid_add_check_button ("Use single window", "Place all probe graphs in single window.",
+                                       1,
+                                       GCallback (callback_GrMatWindow), this,
+                                       GrMatWin, 1
+                                       );
+        bp->pop_grid ();
+        bp->new_line ();
+        bp->new_grid_with_frame ("Plot / Save current data in buffer");
+
+	bp->grid_add_button ("Plot");
+	g_signal_connect (G_OBJECT (bp->button), "clicked",
+                          G_CALLBACK (SPM_Template_Control::Probing_graph_callback), this);
+	
+        save_button = bp->grid_add_button ("Save");
+	g_signal_connect (G_OBJECT (bp->button), "clicked",
+                          G_CALLBACK (SPM_Template_Control::Probing_save_callback), this);
+
+        bp->notebook_tab_show_all ();
+        bp->pop_grid ();
+
+        
+
         
 
         
@@ -1016,8 +1758,23 @@ int SPM_Template_Control::zpos_monitor_callback( GtkWidget *widget, SPM_Template
 }
 
 
+int SPM_Template_Control::choice_prbsource_callback (GtkWidget *widget, SPM_Template_Control *dspc){
+        PI_DEBUG_GP (DBG_L4, "%s \n",__FUNCTION__);
+        
+        if (gtk_combo_box_get_active (GTK_COMBO_BOX (widget)) == -1)
+                return 0;
 
+        gint selection = gtk_combo_box_get_active (GTK_COMBO_BOX (widget));
+	gint channel   = GPOINTER_TO_INT (g_object_get_data( G_OBJECT (widget), "prb_channel_source"));
 
+	dspc->probe_source[channel] = selection;
+
+        // ** template **
+        // must reconfigure controller accordingly here...
+        // ** template **
+
+        return 0;
+}
 
 
 
@@ -1553,3 +2310,146 @@ gint spm_template_hwi_dev::RTQuery (const gchar *property, double &val1, double 
 	return TRUE;
 }
 
+// template/dummy signal management
+
+
+
+int spm_template_hwi_dev::lookup_signal_by_ptr(gint64 sigptr){
+	for (int i=0; i<NUM_SIGNALS; ++i){
+		if (dsp_signal_lookup_managed[i].dim == 1 && sigptr == dsp_signal_lookup_managed[i].p)
+			return i;
+		gint64 offset = sigptr - (gint64)dsp_signal_lookup_managed[i].p;
+		if (sigptr >= dsp_signal_lookup_managed[i].p && offset < 4*dsp_signal_lookup_managed[i].dim){
+			dsp_signal_lookup_managed[i].index = offset/4;
+			return i;
+		}
+	}
+	return -1;
+}
+
+int spm_template_hwi_dev::lookup_signal_by_name(const gchar *sig_name){
+	for (int i=0; i<NUM_SIGNALS; ++i)
+		if (!strcmp (sig_name, dsp_signal_lookup_managed[i].label))
+			return i;
+	return -1;
+}
+
+const gchar *spm_template_hwi_dev::lookup_signal_name_by_index(int i){
+	if (i<NUM_SIGNALS && i >= 0){
+		// dsp_signal_lookup_managed[i].index
+		return (const gchar*)dsp_signal_lookup_managed[i].label;
+	} else
+		return "INVALID INDEX";
+}
+
+const gchar *spm_template_hwi_dev::lookup_signal_unit_by_index(int i){
+	if (i<NUM_SIGNALS && i >= 0)
+		return (const gchar*)dsp_signal_lookup_managed[i].unit;
+	else
+		return "INVALID INDEX";
+}
+
+double spm_template_hwi_dev::lookup_signal_scale_by_index(int i){
+	if (i<NUM_SIGNALS && i >= 0)
+		return dsp_signal_lookup_managed[i].scale;
+	else
+		return 0.;
+}
+
+int spm_template_hwi_dev::change_signal_input(int signal_index, gint32 input_id, gint32 voffset){
+	gint32 si = signal_index | (voffset >= 0 && voffset < dsp_signal_lookup_managed[signal_index].dim ? voffset<<16 : 0); 
+	SIGNAL_MANAGE sm = { input_id, si, 0, 0 }; // for read/write control part of signal_monitor only
+	PI_DEBUG_GM (DBG_L3, "XX::change_module_signal_input");
+
+        //
+        // dummy
+        // must adjust signal configurayion on controller here
+        //
+        
+	PI_DEBUG_GM (DBG_L3, "XX::change_module_signal_input done: [%d,%d,0x%x,0x%x]",
+                     sm.mindex,sm.signal_id,sm.act_address_input_set,sm.act_address_signal);
+	return 0;
+}
+
+int spm_template_hwi_dev::query_module_signal_input(gint32 input_id){
+        int mode=0;
+        int ret;
+
+        // template dummy -- query controller here:
+        // read signal address at input_id, then lookup signal by address from map
+
+        // use dummy list
+	int signal_index = mod_input_list[input_id].id; // lookup_signal_by_ptr (sm.act_address_signal);
+
+	return signal_index;
+}
+
+int spm_template_hwi_dev::read_signal_lookup (){
+        // read actual signal list from controller and manage a copy
+#if 0
+	for (int i=0; i<NUM_SIGNALS; ++i){
+		CONV_32 (dsp_signal_list[i].p);
+		dsp_signal_lookup_managed[i].p = dsp_signal_list[i].p;
+		dsp_signal_lookup_managed[i].dim   = dsp_signal_lookup[i].dim;
+		dsp_signal_lookup_managed[i].label = g_strdup(dsp_signal_lookup[i].label);
+                if (i==0){ // IN0 dedicated to tunnel current via IVC
+                        // g_print ("1nA to Volt=%g  1pA to Volt=%g",main_get_gapp()->xsm->Inst->nAmpere2V (1.),main_get_gapp()->xsm->Inst->nAmpere2V (1e-3));
+                        if (main_get_gapp()->xsm->Inst->nAmpere2V (1.) > 1.){
+                                dsp_signal_lookup_managed[i].unit  = g_strdup("pA"); // use pA scale
+                                dsp_signal_lookup_managed[i].scale = dsp_signal_lookup[i].scale; // -> Volts
+                                dsp_signal_lookup_managed[i].scale /= main_get_gapp()->xsm->Inst->nAmpere2V (1); // values are always in nA
+                        } else {
+                                dsp_signal_lookup_managed[i].unit  = g_strdup("nA");
+                                dsp_signal_lookup_managed[i].scale = dsp_signal_lookup[i].scale; // -> Volts
+                                dsp_signal_lookup_managed[i].scale /= main_get_gapp()->xsm->Inst->nAmpere2V (1.); // nA
+                        }
+                } else {
+                        dsp_signal_lookup_managed[i].unit  = g_strdup(dsp_signal_lookup[i].unit);
+                        dsp_signal_lookup_managed[i].scale = dsp_signal_lookup[i].scale;
+                }
+		dsp_signal_lookup_managed[i].module  = g_strdup(dsp_signal_lookup[i].module);
+		dsp_signal_lookup_managed[i].index  = -1;
+                PI_DEBUG_PLAIN (DBG_L2,
+                                "Sig[" << i << "]: ptr=" << dsp_signal_lookup_managed[i].p 
+                                << ", " << dsp_signal_lookup_managed[i].dim 
+                                << ", " << dsp_signal_lookup_managed[i].label 
+                                << " [v" << dsp_signal_lookup_managed[i].index << "] "
+                                << ", " << dsp_signal_lookup_managed[i].unit
+                                << ", " << dsp_signal_lookup_managed[i].scale
+                                << ", " << dsp_signal_lookup_managed[i].module
+                                << "\n"
+                                );
+		for (int k=0; k<i; ++k)
+			if (dsp_signal_lookup_managed[k].p == dsp_signal_lookup_managed[i].p){
+                                PI_DEBUG_PLAIN (DBG_L2,
+                                                "Sig[" << i << "]: ptr=" << dsp_signal_lookup_managed[i].p 
+                                                << " identical with Sig[" << k << "]: ptr=" << dsp_signal_lookup_managed[k].p 
+                                                << " ==> POSSIBLE ERROR IN SIGNAL TABLE <== GXSM is aborting here, suspicious DSP data.\n"
+                                                );
+                                g_warning ("DSP SIGNAL TABLE finding: Sig[%d] '%s': ptr=%x is identical with Sig[%d] '%s': ptr=%x",
+                                           i, dsp_signal_lookup_managed[i].label, dsp_signal_lookup_managed[i].p,
+                                           k, dsp_signal_lookup_managed[k].label, dsp_signal_lookup_managed[k].p);
+				// exit (-1);
+			}
+	}
+#endif
+	return 0;
+}
+
+int spm_template_hwi_dev::read_actual_module_configuration (){
+	for (int i=0; mod_input_list[i].id; ++i){
+		int si = query_module_signal_input (mod_input_list[i].id);
+		if (si >= 0 && si < NUM_SIGNALS){
+                        PI_DEBUG_GM (DBG_L2, "INPUT %s (%04X) is set to %s",
+                                     mod_input_list[i].name, mod_input_list[i].id,
+                                     dsp_signal_lookup_managed[si].label );
+		} else {
+                        if (si == SIGNAL_INPUT_DISABLED)
+                                PI_DEBUG_GM (DBG_L2, "INPUT %s (%04X) is DISABLED", mod_input_list[i].name, mod_input_list[i].id);
+                        else
+                                PI_DEBUG_GM (DBG_L2, "INPUT %s (%04X) -- ERROR DETECTED", mod_input_list[i].name, mod_input_list[i].id);
+		}
+	}
+
+	return 0;
+}

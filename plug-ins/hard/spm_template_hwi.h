@@ -29,11 +29,63 @@
 #ifndef __SPM_TEMPLATE_HWI_H
 #define __SPM_TEMPLATE_HWI_H
 
+#include "core-source/app_profile.h"
 
+#define REMOTE_PREFIX "dsp-"
 
 #define SERVO_SETPT 0
 #define SERVO_CP    1
 #define SERVO_CI    2
+
+
+
+#define NUM_SIGNALS_UNIVERSAL 200
+
+typedef struct{
+	guint32 p;  // pointer in usigned int (32 bit)
+	guint32 dim;
+	const gchar *label;
+	const gchar *unit;
+	double scale; // factor to multipy with to get base unit value representation
+	const gchar *module;
+	int index; // actual vector index
+} DSP_SIG_UNIVERSAL;
+
+
+typedef enum { PV_MODE_NONE, PV_MODE_IV, PV_MODE_FZ, PV_MODE_PL, PV_MODE_LP, PV_MODE_SP, PV_MODE_TS, PV_MODE_GVP, PV_MODE_AC, PV_MODE_AX, PV_MODE_TK, PV_MODE_ABORT } pv_mode;
+typedef enum { MAKE_VEC_FLAG_NORMAL=0, MAKE_VEC_FLAG_VHOLD=1, MAKE_VEC_FLAG_RAMP=2, MAKE_VEC_FLAG_END=4 } make_vector_flags;
+
+#define FLAG_FB_ON       0x01 // FB on
+#define FLAG_DUAL        0x02 // Dual Data
+#define FLAG_SHOW_RAMP   0x04 // show ramp data
+#define FLAG_INTEGRATE   0x08 // integrate and normalize date of all AIC data point inbetween
+
+#define FLAG_AUTO_SAVE   0x01 // auto save
+#define FLAG_AUTO_PLOT   0x02 // auto plot
+#define FLAG_AUTO_GLOCK  0x04 // auto graph lock
+#define FLAG_AUTO_RUN_INITSCRIPT  0x08 // auto run init script
+
+
+/** VP option masks ** MUST MATCH DSP DEFINITIONS ** **/
+#define VP_FEEDBACK_HOLD 0x01
+#define VP_AIC_INTEGRATE 0x02
+#define VP_TRACK_REF     0x04
+#define VP_TRACK_UP      0x08
+#define VP_TRACK_DN      0x10
+#define VP_TRACK_FIN     0x20
+#define VP_TRACK_SRC     0xC0
+#define VP_LIMITER       0x300 // Limiter ON/OFF flag mask
+#define VP_LIMITER_UP    0x100 // Limit if > value
+#define VP_LIMITER_DN    0x200 // Limit if < value
+#define VP_LIMIT_SRC     0xC0  // Limiter "Value" source code bit mask 0x40+0x80  00: Z (IN0), 01: I (IN1), 10: (IN2), 11: (IN3) // MK2!, Signal Mk3
+#define VP_GPIO_MSK        0x00ff0000 // GPIO 8bit mask (lower only)
+#define VP_TRIGGER_P       0x01000000 // GPIO/signal trigger flag on pos edge -- release VP on "data & mask" or time end/out of section 
+#define VP_TRIGGER_N       0x02000000 // GPIO/signal trigger flag on neg edge -- release VP on "data & mask" or time end/out of section 
+#define VP_GPIO_SET        0x04000000 // GPIO set/update data -- once per section via statemachine, using idle cycle time for slow IO!!
+#define VP_GPIO_READ       0x08000000 // GPIO set/update data -- once per section via statemachine, using idle cycle time for slow IO!!
+#define VP_RESET_COUNTER_0 0x10000000
+#define VP_RESET_COUNTER_1 0x20000000
+#define VP_NODATA_RESERVED 0x80000000
 
 
 /**
@@ -107,7 +159,15 @@ public:
 
         GtkWidget* grid_add_mixer_options (gint channel, gint preset, gpointer ref);
         GtkWidget* grid_add_scan_input_signal_options (gint channel, gint preset, gpointer ref);
-        
+        GtkWidget* grid_add_probe_source_signal_options (gint channel, gint preset, gpointer ref);
+
+        GtkWidget* grid_add_probe_status (const gchar *status_label);
+        void grid_add_probe_controls (gboolean have_dual,
+                                      guint64 option_flags, GCallback option_cb,
+                                      guint64 auto_flags, GCallback auto_cb,
+                                      GCallback exec_cb, GCallback write_cb, GCallback graph_cb, GCallback x_cb,
+                                      gpointer cb_data,
+                                      const gchar *control_id);
         // tmp use
         void add_to_remote_list (Gtk_EntryControl *ecx, const gchar *rid) {
                 remote_list_ec = ecx->AddEntry2RemoteList(rid, remote_list_ec);
@@ -170,6 +230,11 @@ public:
                 scan_source[2] = 2;
                 scan_source[3] = 3;
 
+                probe_source[0] = 0;
+                probe_source[1] = 1;
+                probe_source[2] = 2;
+                probe_source[3] = 3;
+
                 // init all vars -- done via dconf schemata -- BUT not at first generation via auto write schemata, will get random memory eventually to edit manually later....
                 
                 sim_speed[0]=sim_speed[1]=2000.0; // per tab
@@ -212,7 +277,10 @@ public:
 	static int DSP_slope_callback (GtkWidget *widget, SPM_Template_Control *dspc);
 
         static int ldc_callback(GtkWidget *widget, SPM_Template_Control *dspc);
-        
+
+        static void lockin_adjust_callback(Param_Control* pcs, gpointer data) {};
+        static int lockin_runfree_callback(GtkWidget *widget, SPM_Template_Control *dspc) {};
+
         static void show_tab_to_configure (GtkWidget* w, gpointer data){
                 gtk_widget_show (GTK_WIDGET (g_object_get_data (G_OBJECT (w), "TabGrid")));
         };
@@ -231,7 +299,39 @@ public:
 	static guint refresh_zpos_readings(SPM_Template_Control *dspc);
         static int zpos_monitor_callback(GtkWidget *widget, SPM_Template_Control *dspc);
         static int choice_mixmode_callback (GtkWidget *widget, SPM_Template_Control *dspc);
+        static int choice_prbsource_callback(GtkWidget *widget, SPM_Template_Control *dspc);
 
+        static int auto_probe_callback(GtkWidget *widget, SPM_Template_Control *dspc);
+	static int Probing_graph_callback(GtkWidget *widget, SPM_Template_Control *dspc, int finish_flag=0);
+	static int Probing_save_callback(GtkWidget *widget, SPM_Template_Control *dspc);
+	static int Probing_abort_callback(GtkWidget *widget, SPM_Template_Control *dspc);
+
+        
+	static int Probing_exec_IV_callback(GtkWidget *widget, SPM_Template_Control *dspc);
+	static int Probing_write_IV_callback(GtkWidget *widget, SPM_Template_Control *dspc);
+	static int callback_change_IV_option_flags (GtkWidget *widget, SPM_Template_Control *dspc);
+	static int callback_change_IV_auto_flags (GtkWidget *widget, SPM_Template_Control *dspc);
+
+	static int Probing_exec_GVP_callback(GtkWidget *widget, SPM_Template_Control *dspc);
+	static int Probing_write_GVP_callback(GtkWidget *widget, SPM_Template_Control *dspc);
+
+        static int callback_change_GVP_vpc_option_flags (GtkWidget *widget, SPM_Template_Control *dspc);
+	static int callback_update_GVP_vpc_option_checkbox (GtkWidget *widget, SPM_Template_Control *dspc);
+	static int callback_change_GVP_option_flags (GtkWidget *widget, SPM_Template_Control *dspc);
+	static int callback_change_GVP_auto_flags (GtkWidget *widget, SPM_Template_Control *dspc);
+	static int callback_edit_GVP (GtkWidget *widget, SPM_Template_Control *dspc);
+	static int callback_GVP_store_vp (GtkWidget *widget, SPM_Template_Control *dspc);
+	static int callback_GVP_restore_vp (GtkWidget *widget, SPM_Template_Control *dspc);
+
+        static int change_source_callback (GtkWidget *widget, SPM_Template_Control *dspc);
+	static int callback_XJoin (GtkWidget *widget, SPM_Template_Control *dspc);
+	static int callback_GrMatWindow (GtkWidget *widget, SPM_Template_Control *dspc);
+
+   	const char* vp_label_lookup(int i);
+	const char* vp_unit_lookup(int i);
+	double      vp_scale_lookup(int i);
+
+     
         void update_controller () {}; // dummy, implement control parameter updates
 
         
@@ -262,8 +362,9 @@ public:
         // Feedback (Z-Servo)
 	double z_servo[3];    // Z-Servo (Feedback) [0] (not used here), [1] Const Proportional, [2] Const Integral [user visible values]
 
-	int    scan_source[4];   // scan source mapping index
-
+	int    scan_source[4];    // scan source mapping signal index for imaging
+	int    probe_source[4];   // probe source mapping signal index for 32bit data channels [0..3]
+        
 	double fast_return;       //!< on-the-fly fast return option (scan retrace speed override factor, 1=normal)
 	double x2nd_Zoff;         //!< Z lift off for 2nd scan line (MFM etc...)
 	GtkWidget *VPScanSrcVPitem[4];
@@ -285,8 +386,161 @@ public:
 	double scan_speed_x;      //!< in DAC (AIC) units per second - best match
 	Gtk_EntryControl *scan_speed_ec;
 
-        
+	// UserEvent sensitive:
+	double ue_bias;
+	double ue_set_point[4];
+	double ue_z_servo[3];
+	double ue_scan_speed_x_r;
+	double ue_scan_speed_x;
+	double ue_slope_x;
+	double ue_slope_y;
+	double ue_slope_flg;
+
+	// LockIn
+	double    AC_amp[4], AC_frq, AC_phaseA, AC_phaseB;
+	Gtk_EntryControl *AC_frq_ec;
+	guint64   AC_option_flags;
+	guint64   AC_auto_flags;
+	GtkWidget *LockIn_mode;
+	GtkWidget *AC_status;
+	guint64   AC_glock_data[6];
+
+	// Probing
+	int probe_trigger_raster_points_user;
+	int probe_trigger_raster_points;
+	int probe_trigger_raster_points_b;
+	int probe_trigger_single_shot;
+
+	// Graphs Folder -- user settings origin
+	int Source, XSource, PSource;
+        gboolean XJoin, GrMatWin;
+	int PlotAvg, PlotSec;
+
+	// Graphs used life -- dep. on GLOCK if copy of user settings or memorized last setting
+	int vis_Source, vis_XSource, vis_XJoin, vis_PSource;
+	int vis_PlotAvg, vis_PlotSec;
+
+	int probe_ready;
+	gchar *probe_fname;
+	int probe_findex;
+
+	// vector generation helpers
+	void make_auto_n_vector_elments (double fnum);
+	double make_Vdz_vector (double Ui, double Uf, double dZ, int n, double slope, int source, int options, double long &duration, make_vector_flags flags);
+	double make_Vdx0_vector (double Ui, double Uf, double dZ, int n, double slope, int source, int options, double long &duration, make_vector_flags flags);
+	double make_dx0_vector (double X0i, double X0f, int n, double slope, int source, int options, double long &duration, make_vector_flags flags);
+	double make_ZXYramp_vector (double dZ, double dX, double dY, int n, double slope, int source, int options, double long &duration, make_vector_flags flags);
+	double make_UZXYramp_vector (double dU, double dZ, double dX, double dY, double dSig1, double dSig2, int n, int nrep, int ptr_next, double ts, int source, int options, double long &duration, make_vector_flags flags);
+	double make_phase_vector (double dPhi, int n, double slope, int source, int options, double long &duration, make_vector_flags flags);
+	double make_delay_vector (double delay, int source, int options, double long &duration, make_vector_flags flags, int points=0);
+	void append_null_vector (int options, int index);
+
+	PROBE_VECTOR_GENERIC dsp_vector;
+
+	// STS (I-V)
+	double IV_start, IV_end, IV_slope, IV_slope_ramp, IV_final_delay, IV_recover_delay;
+	int    IV_points;
+	int    IV_repetitions;
+	guint64 IV_option_flags;
+	guint64 IV_auto_flags;
+	GtkWidget *IV_status;
+	guint64 IV_glock_data[6];
+
+
+	// GVP (General Vector Probe)
+#define GVP_GPIO_KEYCODE    57
+#define GVP_GPIO_KEYCODE_S "57"
+#define N_GVP_VECTORS 45 // 50 vectors max total, need a few extra for controls and finish.
+	double GVP_du[N_GVP_VECTORS], GVP_dx[N_GVP_VECTORS], GVP_dy[N_GVP_VECTORS], GVP_dz[N_GVP_VECTORS], GVP_dsig[N_GVP_VECTORS], GVP_ts[N_GVP_VECTORS], GVP_final_delay;
+	gint32 GVP_points[N_GVP_VECTORS];
+	gint32 GVP_opt[N_GVP_VECTORS];   // options
+	gint32 GVP_data[N_GVP_VECTORS];  // GPIO data
+	gint32 GVP_vnrep[N_GVP_VECTORS]; // Vector N repetitions
+	gint32 GVP_vpcjr[N_GVP_VECTORS]; // VPC jump relative length
+	int    GVP_repetitions;
+	int    GVP_GPIO_lock;
+	guint64    GVP_option_flags;
+	guint64    GVP_auto_flags;
+	GtkWidget *VPprogram[10];
+	GtkWidget *GVP_status;
+	guint64    GVP_glock_data[6];
+	gchar  GVP_key[8];
+	void GVP_store_vp (const gchar *key);
+	void GVP_restore_vp (const gchar *key);
+
+
+	// -- Profile Displays
+	int last_probe_data_index;
+
+	// dynamic temporary probe data storage
+	GSList *probedata_list;
+	GSList *probehdr_list;
+	int num_probe_events;
+	// -- Array of full expanded probe data set
+#define NUM_PROBEDATA_ARRAYS 27
+	GArray *garray_probe_hdrlist[NUM_PROBEDATA_ARRAYS];
+	GArray *garray_probedata[NUM_PROBEDATA_ARRAYS];
+	int current_probe_data_index;
+	int nun_valid_data_sections;
+	int nun_valid_hdr, last_nun_hdr_dumped;
+#define PROBEDATA_ARRAY_INDEX 0 // Array [0] holds the probe index over all sections
+#define PROBEDATA_ARRAY_TIME  1 // Array [1] holds the time
+#define PROBEDATA_ARRAY_X0    2 // Array [2] holds X-Offset
+#define PROBEDATA_ARRAY_Y0    3 // Array [3] holds Y-Offset
+#define PROBEDATA_ARRAY_PHI   4 // Array [4] holds Z-Offset
+#define PROBEDATA_ARRAY_XS    5 // Array [5] holds X-Scan
+#define PROBEDATA_ARRAY_YS    6 // Array [6] holds Y-Scan
+#define PROBEDATA_ARRAY_ZS    7 // Array [7] holds Z-Scan
+#define PROBEDATA_ARRAY_U     8 // Array [8] holds U (Bias)
+#define PROBEDATA_ARRAY_SEC   9 // Array [9] holds Section Index
+#define PROBEDATA_ARRAY_AIC5OUT_ZMON 10 // Array [10] holds ZMON (AIC5 out)
+#define PROBEDATA_ARRAY_AIC6OUT_UMON 11 // Array [11] holds UMON (AIC6 out)
+#define PROBEDATA_ARRAY_AIC0         12 // Array [12] holds FBS (Feedback Source, i.e. I, df, force, ...)
+#define PROBEDATA_ARRAY_AIC1         13 // Array [13] holds AIC0 in
+#define PROBEDATA_ARRAY_AIC2         14 // Array [14] holds AIC1 in
+#define PROBEDATA_ARRAY_AIC3         15 // Array [15] holds AIC2 in
+#define PROBEDATA_ARRAY_AIC4         16 // Array [16] holds AIC3 in
+#define PROBEDATA_ARRAY_AIC5         17 // Array [17] holds AIC4 in
+#define PROBEDATA_ARRAY_AIC6         18 // Array [18] holds AIC6 in (not used yet)
+#define PROBEDATA_ARRAY_AIC7         19 // Array [19] holds AIC7 in (not used yet)
+#define PROBEDATA_ARRAY_LCK0         20 // Array [20] holds LockIn0st
+#define PROBEDATA_ARRAY_LCK1A        21 // Array [21] holds LockIn1st
+#define PROBEDATA_ARRAY_LCK1B        22 // Array [22] holds LockIn22st
+#define PROBEDATA_ARRAY_LCK2A        23 // Array [23] holds LockIn1st
+#define PROBEDATA_ARRAY_LCK2B        24 // Array [24] holds LockIn22st
+#define PROBEDATA_ARRAY_COUNT        25 // Array [25] holds Count
+#define PROBEDATA_ARRAY_BLOCK        26 // Array [26] holds Block start index (hold start index for every section) 
+
+#define PROBEDATA_ARRAY_END          PROBEDATA_ARRAY_COUNT // last element number
+
+#define MAX_NUM_CHANNELS 26
+
+	// The factor of 2 is to have it big enough to hold also the averaged data
+	ProfileControl *probe_pc_matrix[2*MAX_NUM_CHANNELS][2*MAX_NUM_CHANNELS];
+
+	gchar *vp_exec_mode_name;
+
+	guint64    current_auto_flags;
+	guint64    raster_auto_flags;
+	GtkWidget *save_button;
+
+	gboolean        pv_lock;
+	gboolean        gr_lock;
+
+
+protected:
+	void read_dsp_probe ();
+	void write_dsp_probe (int start, pv_mode pvm);
+
+	void read_dsp_vector (int index);
+	void write_dsp_vector (int index);
+
+	void write_dsp_abort_probe ();
+
 private:
+	#define MAX_PV 50
+	PROBE_VECTOR_GENERIC     dsp_vector_list[MAX_PV]; // copy for GXSM internal use only
+
 	GSettings *hwi_settings;
 
 	UnitObj *Unity, *Volt, *Velocity;
@@ -364,7 +618,28 @@ public:
         int start_data_read (int y_start, 
                              int num_srcs0, int num_srcs1, int num_srcs2, int num_srcs3, 
                              Mem2d **Mob0, Mem2d **Mob1, Mem2d **Mob2, Mem2d **Mob3);
-                
+
+        // dummy template signal management
+
+	virtual void read_dsp_signals () { dsp_signal_lookup_managed[0].p = 0; };
+	virtual int lookup_signal_by_ptr(gint64 sigptr) { return -1; };
+	virtual int lookup_signal_by_name(const gchar *sig_name) { return -1; };
+	virtual const gchar *lookup_signal_name_by_index(int i) { return "NOT SUPPORTED"; };
+	virtual const gchar *lookup_signal_unit_by_index(int i) { return "NOT SUPPORTED"; };
+	virtual double lookup_signal_scale_by_index(int i) { return 0.; };
+	virtual int change_signal_input(int signal_index, gint32 input_id, gint32 voffset=0) { return -10; };
+	virtual int query_module_signal_input(gint32 input_id) { return -10; };
+
+	// ========================================
+
+	DSP_SIG_UNIVERSAL *lookup_dsp_signal_managed(gint i){
+                if (i<NUM_SIGNALS_UNIVERSAL)
+                        return &dsp_signal_lookup_managed[i];
+                else
+                        return NULL;
+	};
+
+       
 
         // sim params and internal data
         double sim_current;
@@ -381,9 +656,10 @@ public:
 	int nsrcs_dir[4]; // number of source channes active
         gint ScanningFlg;
         gint PauseFlg;
+
 protected:
 	int thread_sim; // connection to SRanger used by thread
-
+        DSP_SIG_UNIVERSAL dsp_signal_lookup_managed[NUM_SIGNALS_UNIVERSAL]; // signals, generic version
 
 private:
 	GThread *data_read_thread;
