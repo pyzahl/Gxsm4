@@ -2400,6 +2400,7 @@ int SPM_Template_Control::Probing_write_IV_callback( GtkWidget *widget, SPM_Temp
         return 0;
 }
 
+// GVP vector program editor 
 
 int SPM_Template_Control::callback_update_GVP_vpc_option_checkbox (GtkWidget *widget, SPM_Template_Control *dspc){
         //        PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);
@@ -2411,7 +2412,60 @@ int SPM_Template_Control::callback_update_GVP_vpc_option_checkbox (GtkWidget *wi
         return 0;
 }
 
-// GVP
+int SPM_Template_Control::callback_change_GVP_vpc_option_flags (GtkWidget *widget, SPM_Template_Control *dspc){
+        //        PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);
+	int  k = GPOINTER_TO_INT (g_object_get_data(G_OBJECT(widget), "VPC"));
+	guint64 msk = (guint64) GPOINTER_TO_UINT (g_object_get_data(G_OBJECT(widget), "Bit_Mask"));
+
+	if( gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)))
+		dspc->GVP_opt[k] = (dspc->GVP_opt[k] & (~msk)) | msk;
+	else
+		dspc->GVP_opt[k] &= ~msk;
+
+        dspc->set_tab_settings ("LM", dspc->GVP_option_flags, dspc->GVP_auto_flags, dspc->GVP_glock_data);
+        return 0;
+}
+
+int SPM_Template_Control::callback_change_GVP_option_flags (GtkWidget *widget, SPM_Template_Control *dspc){
+        //        PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);
+	guint64 msk = (guint64) GPOINTER_TO_UINT (g_object_get_data(G_OBJECT(widget), "Bit_Mask"));
+	if (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)))
+		dspc->GVP_option_flags = (dspc->GVP_option_flags & (~msk)) | msk;
+	else
+		dspc->GVP_option_flags &= ~msk;
+
+	if (dspc->write_vector_mode == PV_MODE_GVP)
+		dspc->raster_auto_flags = dspc->GVP_auto_flags;
+
+        dspc->set_tab_settings ("LM", dspc->GVP_option_flags, dspc->GVP_auto_flags, dspc->GVP_glock_data);
+        dspc->set_tab_settings ("GVP", dspc->GVP_option_flags, dspc->GVP_auto_flags, dspc->GVP_glock_data);
+        dspc->GVP_store_vp ("LM_set_last"); // last in view
+        dspc->GVP_store_vp ("GVP_set_last"); // last in view
+        return 0;
+}
+
+int SPM_Template_Control::callback_GVP_store_vp (GtkWidget *widget, SPM_Template_Control *dspc){
+        PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);
+	dspc->GVP_store_vp ((const gchar*)g_object_get_data(G_OBJECT(widget), "key"));
+        return 0;
+}
+int SPM_Template_Control::callback_GVP_restore_vp (GtkWidget *widget, SPM_Template_Control *dspc){
+        PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);
+	dspc->GVP_restore_vp ((const gchar*)g_object_get_data(G_OBJECT(widget), "key"));
+        return 0;
+}
+
+int SPM_Template_Control::callback_change_GVP_auto_flags (GtkWidget *widget, SPM_Template_Control *dspc){
+        PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);
+	guint64 msk = (guint64) GPOINTER_TO_UINT (g_object_get_data(G_OBJECT(widget), "Bit_Mask"));
+	if (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)))
+		dspc->GVP_auto_flags = (dspc->GVP_auto_flags & (~msk)) | msk;
+	else
+		dspc->GVP_auto_flags &= ~msk;
+
+        dspc->set_tab_settings ("LM", dspc->GVP_option_flags, dspc->GVP_auto_flags, dspc->GVP_glock_data);
+        return 0;
+}
 
 int SPM_Template_Control::Probing_exec_GVP_callback( GtkWidget *widget, SPM_Template_Control *dspc){
 	dspc->current_auto_flags = dspc->GVP_auto_flags;
@@ -2464,7 +2518,63 @@ int SPM_Template_Control::Probing_write_GVP_callback( GtkWidget *widget, SPM_Tem
         return 0;
 }
 
+// Graphs Callbacks
 
+int SPM_Template_Control::change_source_callback (GtkWidget *widget, SPM_Template_Control *dspc){
+        PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);
+	long channel;
+	channel = (long) GPOINTER_TO_INT (g_object_get_data(G_OBJECT(widget), "Source_Channel"));
+	if (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget))) {
+		if (channel & X_SOURCE_MSK)
+			dspc->XSource |= channel;
+		else if (channel & P_SOURCE_MSK)
+			dspc->PSource |= channel;
+		else if (channel & A_SOURCE_MSK)
+			dspc->PlotAvg |= channel;
+		else if (channel & S_SOURCE_MSK)
+			dspc->PlotSec |= channel;
+		else
+			dspc->Source |= channel;
+		
+	}
+	else {
+		if (channel & X_SOURCE_MSK)
+			dspc->XSource &= ~channel;
+		else if (channel & P_SOURCE_MSK)
+			dspc->PSource &= ~channel;
+		else if (channel & A_SOURCE_MSK)
+			dspc->PlotAvg &= ~channel;
+		else if (channel & S_SOURCE_MSK)
+			dspc->PlotSec &= ~channel;
+		else
+			dspc->Source &= ~channel;
+	}
+
+
+	dspc->vis_Source = dspc->Source;
+	dspc->vis_XSource = dspc->XSource;
+	dspc->vis_PSource = dspc->PSource;
+	dspc->vis_XJoin = dspc->XJoin;
+	dspc->vis_PlotAvg = dspc->PlotAvg;
+	dspc->vis_PlotSec = dspc->PlotSec;
+
+	return 0;
+}
+
+int SPM_Template_Control::callback_XJoin (GtkWidget *widget, SPM_Template_Control *dspc){
+        PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);
+	dspc->XJoin = (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget))) ? TRUE : FALSE;
+	dspc->vis_XJoin = dspc->XJoin;
+        g_settings_set_boolean (dspc->hwi_settings, "probe-x-join", dspc->XJoin);
+        return 0;
+}
+
+int SPM_Template_Control::callback_GrMatWindow (GtkWidget *widget, SPM_Template_Control *dspc){
+        PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);
+	dspc->GrMatWin = (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget))) ? TRUE : FALSE;
+        g_settings_set_boolean (dspc->hwi_settings, "probe-graph-matrix-window", dspc->GrMatWin);
+        return 0;
+}
 
 
 // HwI Implementation

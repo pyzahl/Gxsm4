@@ -764,6 +764,8 @@ private:
 
 	GSettings *hwi_settings;
 
+        pv_mode write_vector_mode;
+        
         // ==== VP graphs organizer
         Gxsm4appWindow *vpg_app_window;
 	GtkWindow* vpg_window;

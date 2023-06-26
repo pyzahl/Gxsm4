@@ -953,7 +953,9 @@ int SPM_Template_Control::Probing_abort_callback( GtkWidget *widget, SPM_Templat
 	// can not simply cancel a DSP vector program in progress -- well can, but: this leaves it in an undefined state of all effected outputs incl.
 	// ==> feedback state ON or OFF. SO AFTER THAT -- CHEC and eventually manually recover settings!
 	// but aborting on your request
-	dspc->Probing_exec_ABORT_callback (widget, dspc);
+
+	// **** dspc->Probing_exec_ABORT_callback (widget, dspc);
+        
         return 0;
 }
 
