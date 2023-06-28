@@ -680,7 +680,7 @@ void SPM_Template_Control::store_values (){
         //set_tab_settings ("AX", AX_option_flags, AX_auto_flags, AX_glock_data);
         //set_tab_settings ("AB", ABORT_option_flags, ABORT_auto_flags, ABORT_glock_data);
 
-        GVP_store_vp ("LM_set_last"); // last in view
+        GVP_store_vp ("GVP_set_last"); // last in view
         PI_DEBUG_GM (DBG_L3, "SPM_Template_Control::store_values complete.");
 }
 
@@ -1026,7 +1026,7 @@ void SPM_Template_Control::get_tab_settings (const gchar *tab_key, guint64 &opti
                                                             "'LP': <@at [0,0,0,0,0,0,0,0,0]>, "
                                                             "'SP': <@at [0,0,0,0,0,0,0,0,0]>, "
                                                             "'TS': <@at [0,0,0,0,0,0,0,0,0]>, "
-                                                            "'LM': <@at [0,0,0,0,0,0,0,0,0]>, "
+                                                            "'GVP': <@at [0,0,0,0,0,0,0,0,0]>, "
                                                             "'TK': <@at [0,0,0,0,0,0,0,0,0]>, "
                                                             "'AX': <@at [0,0,0,0,0,0,0,0,0]>, "
                                                             "'AB': <@at [0,0,0,0,0,0,0,0,0]>"
@@ -1856,7 +1856,7 @@ void SPM_Template_Control::create_folder (){
 
 	for (int i=0; keys[i]; ++i) {
                 GdkRGBA rgba;
-		gchar *gckey  = g_strdup_printf ("LM_set_%s", keys[i]);
+		gchar *gckey  = g_strdup_printf ("GVP_set_%s", keys[i]);
 		gchar *stolab = g_strdup_printf ("STO %s", keys[i]);
 		gchar *rcllab = g_strdup_printf ("RCL %s", keys[i]);
 		gchar *memolab = g_strdup_printf ("M %s", keys[i]);             
@@ -2436,7 +2436,7 @@ int SPM_Template_Control::callback_change_GVP_vpc_option_flags (GtkWidget *widge
 	else
 		dspc->GVP_opt[k] &= ~msk;
 
-        dspc->set_tab_settings ("LM", dspc->GVP_option_flags, dspc->GVP_auto_flags, dspc->GVP_glock_data);
+        dspc->set_tab_settings ("GVP", dspc->GVP_option_flags, dspc->GVP_auto_flags, dspc->GVP_glock_data);
         return 0;
 }
 
@@ -2451,9 +2451,7 @@ int SPM_Template_Control::callback_change_GVP_option_flags (GtkWidget *widget, S
 	if (dspc->write_vector_mode == PV_MODE_GVP)
 		dspc->raster_auto_flags = dspc->GVP_auto_flags;
 
-        dspc->set_tab_settings ("LM", dspc->GVP_option_flags, dspc->GVP_auto_flags, dspc->GVP_glock_data);
         dspc->set_tab_settings ("GVP", dspc->GVP_option_flags, dspc->GVP_auto_flags, dspc->GVP_glock_data);
-        dspc->GVP_store_vp ("LM_set_last"); // last in view
         dspc->GVP_store_vp ("GVP_set_last"); // last in view
         return 0;
 }
@@ -2477,7 +2475,7 @@ int SPM_Template_Control::callback_change_GVP_auto_flags (GtkWidget *widget, SPM
 	else
 		dspc->GVP_auto_flags &= ~msk;
 
-        dspc->set_tab_settings ("LM", dspc->GVP_option_flags, dspc->GVP_auto_flags, dspc->GVP_glock_data);
+        dspc->set_tab_settings ("GVP", dspc->GVP_option_flags, dspc->GVP_auto_flags, dspc->GVP_glock_data);
         return 0;
 }
 
