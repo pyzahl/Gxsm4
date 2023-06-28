@@ -1546,11 +1546,19 @@ void SPM_Template_Control::create_folder (){
 			    G_CALLBACK (SPM_Template_Control::ldc_callback), this);
 
 
+        // LDC settings
+	bp->grid_add_ec ("LDCdX", Speed, &dxdt, -100., 100., "5g", 0.001, 0.01, "fbs-scan-ldc-dx");
+        bp->grid_add_ec ("dY", Speed, &dydt, -100., 100., "5g", 0.001, 0.01, "fbs-scan-ldc-dy");
+        bp->grid_add_ec ("dZ", Speed, &dzdt, -100., 100., "5g", 0.001, 0.01, "fbs-scan-ldc-dz");
 
+        bp->set_configure_list_mode_off ();
+
+        bp->set_input_width_chars (8);
         
-	// ======================================== Piezo Drive / Amplifier Settings
         bp->pop_grid ();
         bp->new_line ();
+
+	// ======================================== Piezo Drive / Amplifier Settings
         bp->new_grid_with_frame ("Piezo Drive Settings");
 
         const gchar *PDR_gain_label[6] = { "VX", "VY", "VZ", "VX0", "VY0", "VZ0" };
@@ -1592,8 +1600,11 @@ void SPM_Template_Control::create_folder (){
                 bp->grid_add_widget (wid);
                 bp->add_to_scan_freeze_widget_list (wid);
         }
+        bp->pop_grid ();
+        bp->new_line ();
 
         bp->notebook_tab_show_all ();
+        bp->pop_grid ();
 
         // ==== Folder: LockIn  ========================================
         bp->new_grid ();
@@ -1616,6 +1627,8 @@ void SPM_Template_Control::create_folder (){
         bp->new_line ();
         bp->grid_add_ec ("Z Amp", Angstroem, &AC_amp[1], 0., 100., "5g", 0.01, 0.1, "LCK-AC-Z-Amp");
 
+        bp->notebook_tab_show_all ();
+        bp->pop_grid ();
 
         
 // ==== Folder Set for Vector Probe ========================================
@@ -1631,9 +1644,9 @@ void SPM_Template_Control::create_folder (){
 	bp->grid_add_label ("IV Probe"); bp->grid_add_label ("Start"); bp->grid_add_label ("End");  bp->grid_add_label ("Points");
         bp->new_line ();
 
-        bp->grid_add_ec (NULL, Volt, &IV_start, -10.0, 10., "5.3g", 0.1, 0.025, "IV-Start", i);
-        bp->grid_add_ec (NULL, Volt, &IV_end, -10.0, 10.0, "5.3g", 0.1, 0.025, "IV-End", i);
-        bp->grid_add_ec (NULL, Unity, &IV_points, 1, 1000, "5g", "IV-Points", i);
+        bp->grid_add_ec (NULL, Volt, &IV_start, -10.0, 10., "5.3g", 0.1, 0.025, "IV-Start");
+        bp->grid_add_ec (NULL, Volt, &IV_end, -10.0, 10.0, "5.3g", 0.1, 0.025, "IV-End");
+        bp->grid_add_ec (NULL, Unity, &IV_points, 1, 1000, "5g", "IV-Points");
         bp->set_pcs_remote_prefix (REMOTE_PREFIX);
         
         bp->new_line ();
@@ -1643,6 +1656,7 @@ void SPM_Template_Control::create_folder (){
         bp->new_line ();
         bp->set_configure_list_mode_on ();
 	bp->grid_add_ec ("#IV sets", Unity, &IV_repetitions, 1, 100, "3g", "IV-rep");
+        bp->set_configure_list_mode_off ();
 
         bp->new_line ();
 
@@ -2575,6 +2589,22 @@ int SPM_Template_Control::callback_GrMatWindow (GtkWidget *widget, SPM_Template_
         g_settings_set_boolean (dspc->hwi_settings, "probe-graph-matrix-window", dspc->GrMatWin);
         return 0;
 }
+
+
+void SPM_Template_Control::lockin_adjust_callback(Param_Control* pcs, gpointer data){
+	SPM_Template_Control *dspc = (SPM_Template_Control*)data;
+}
+
+int SPM_Template_Control::lockin_runfree_callback(GtkWidget *widget, SPM_Template_Control *dspc){
+        PI_DEBUG_GP (DBG_L4, "%s \n",__FUNCTION__);
+	if (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)))
+                PI_DEBUG_GP (DBG_L1, "LockIn Modul ON");
+	else
+                PI_DEBUG_GP (DBG_L1, "LockIn Modul OFF");
+
+	return 0;
+}
+
 
 
 // HwI Implementation

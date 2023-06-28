@@ -16,7 +16,52 @@
 	...
       </description>
     </key>
+
+    <key name="window-00-tabs" type="s">
+      <default>"------------------------------"</default>
+      <summary>Window Tabs Coding</summary>
+      <description>
+	last tabs configuration
+      </description>
+    </key>
+    
+    <key name="window-01-tabs" type="s">
+      <default>"------------------------------"</default>
+      <summary>Window Tabs Coding</summary>
+      <description>
+	last tabs configuration
+      </description>
+    </key>
+
     <key name="template-tab-feedback-scan" type="b">
+      <default>true</default>
+      <summary>Indicates if tab xy to be showed</summary>
+      <description>
+	GUI templateplification option: Indicates tab xy to be showed
+      </description>
+    </key>
+    <key name="template-tab-lockin" type="b">
+      <default>true</default>
+      <summary>Indicates if tab xy to be showed</summary>
+      <description>
+	GUI templateplification option: Indicates tab xy to be showed
+      </description>
+    </key>
+    <key name="template-tab-sts" type="b">
+      <default>true</default>
+      <summary>Indicates if tab xy to be showed</summary>
+      <description>
+	GUI templateplification option: Indicates tab xy to be showed
+      </description>
+    </key>
+    <key name="template-tab-gvp" type="b">
+      <default>true</default>
+      <summary>Indicates if tab xy to be showed</summary>
+      <description>
+	GUI templateplification option: Indicates tab xy to be showed
+      </description>
+    </key>
+    <key name="template-tab-graphs" type="b">
       <default>true</default>
       <summary>Indicates if tab xy to be showed</summary>
       <description>
@@ -103,6 +148,88 @@
 	RTC
       </description>
     </key>
+
+
+
+    <key name="memo-vpa" type="s">
+      <default>"--"</default>
+      <summary>VP Memo</summary>
+      <description>
+	memo string for VPA... buffers
+      </description>
+    </key>
+    <key name="memo-vpb" type="s">
+      <default>"--"</default>
+      <summary>VP Memo</summary>
+      <description>
+	memo string for VPA... buffers
+      </description>
+    </key>
+    <key name="memo-vpc" type="s">
+      <default>"--"</default>
+      <summary>VP Memo</summary>
+      <description>
+	memo string for VPA... buffers
+      </description>
+    </key>
+    <key name="memo-vpd" type="s">
+      <default>"--"</default>
+      <summary>VP Memo</summary>
+      <description>
+	memo string for VPA... buffers
+      </description>
+    </key>
+    <key name="memo-vpe" type="s">
+      <default>"--"</default>
+      <summary>VP Memo</summary>
+      <description>
+	memo string for VPA... buffers
+      </description>
+    </key>
+    <key name="memo-vpf" type="s">
+      <default>"--"</default>
+      <summary>VP Memo</summary>
+      <description>
+	memo string for VPA... buffers
+      </description>
+    </key>
+    <key name="memo-vpg" type="s">
+      <default>"--"</default>
+      <summary>VP Memo</summary>
+      <description>
+	memo string for VPA... buffers
+      </description>
+    </key>
+    <key name="memo-vph" type="s">
+      <default>"--"</default>
+      <summary>VP Memo</summary>
+      <description>
+	memo string for VPA... buffers
+      </description>
+    </key>
+    <key name="memo-vpi" type="s">
+      <default>"--"</default>
+      <summary>VP Memo</summary>
+      <description>
+	memo string for VPA... buffers
+      </description>
+    </key>
+    <key name="memo-vpj" type="s">
+      <default>"--"</default>
+      <summary>VP Memo</summary>
+      <description>
+	memo string for VPA... buffers
+      </description>
+    </key>
+    <key name="memo-vpk" type="s">
+      <default>"--"</default>
+      <summary>VP Memo</summary>
+      <description>
+	memo string for VPA... buffers
+      </description>
+    </key>
+
+
     
   </schema>
 

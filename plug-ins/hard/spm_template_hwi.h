@@ -324,6 +324,7 @@ public:
         GtkWidget *page;
 };
 
+#define N_GVP_VECTORS 25 //  vectors max total, need a few extra for controls and finish.
 
 // GUI for hardware template specific controls
 class SPM_Template_Control : public AppBase{
@@ -354,17 +355,100 @@ public:
                 Vslope   = new UnitObj("V/s","V/s");
                 Hex      = new UnitObj("h","h");
 
-                scan_source[0] = 0;
-                scan_source[1] = 1;
-                scan_source[2] = 2;
-                scan_source[3] = 3;
+                bias = 0;
+                zpos_ref = 0;
 
-                probe_source[0] = 0;
-                probe_source[1] = 1;
-                probe_source[2] = 2;
-                probe_source[3] = 3;
+                for (int i=0; i<4; ++i){
+                        scan_source[i] = i;
+                        probe_source[i] = i;
+                        
+                        mix_fbsource[i] = 0;
+                        mix_unit2volt_factor[i] = 1;
+                        mix_set_point[i] = 0;
+                        mix_gain[i] = 1;
+                        mix_level[i] = 0;
+                        mix_transform_mode[i] = 0;
+                }
 
-                // init all vars -- done via dconf schemata -- BUT not at first generation via auto write schemata, will get random memory eventually to edit manually later....
+                z_servo[0] = 0;
+                z_servo[1] = 0;
+                z_servo[2] = 0;
+
+                fast_return = 0;
+                x2nd_Zoff = 0;
+
+                ldc_flag = 0;
+                mirror_dsp_scan_dx32 = 1;
+                mirror_dsp_scan_dy32 = 1;
+        
+                area_slope_x = 0;
+                area_slope_y = 0;
+                area_slope_compensation_flag = 0;
+                center_return_flag = 0;
+
+                move_speed_x = 500;
+                scan_speed_x_requested = 500;
+                scan_speed_x = 500;
+
+                ue_bias = 0;
+                ue_set_point[0] = 0;
+                ue_set_point[1] = 0;
+                ue_set_point[2] = 0;
+                ue_set_point[3] = 0;
+                ue_z_servo[0] = 0;
+                ue_z_servo[1] = 0;
+                ue_z_servo[2] = 0;
+                ue_scan_speed_x_r = 0;
+                ue_scan_speed_x = 0;
+                ue_slope_x = 0;
+                ue_slope_y = 0;
+                ue_slope_flg = 0;
+
+                dxdt = 0;
+                dydt = 0;
+                dzdt = 0;
+
+                
+                // LockIn
+                AC_amp[0] = 0;
+                AC_amp[1] = 0;
+                AC_amp[2] = 0;
+                AC_amp[3] = 0;
+                AC_frq = 330;
+
+	// Graphs Folder -- user settings origin
+                Source = XSource = PSource = 0;
+                XJoin = GrMatWin = 0;
+                PlotAvg = PlotSec = 0;
+
+	// Graphs used life -- dep. on GLOCK if copy of user settings or memorized last setting
+                vis_Source = vis_XSource = vis_XJoin = vis_PSource = 0;
+                vis_PlotAvg = vis_PlotSec = 0;
+
+
+	// STS (I-V)
+                IV_start = -1, IV_end = 1, IV_slope = 0.1, IV_slope_ramp = 0.5, IV_final_delay=0.1, IV_recover_delay=0.1;
+                IV_points = 2000;
+                IV_repetitions = 1;
+
+                for (int i=0; i<N_GVP_VECTORS; ++i){
+                        GVP_du[i] = 0;
+                        GVP_dx[i] = 0;
+                        GVP_dy[i] = 0;
+                        GVP_dz[i] = 0;
+                        GVP_dsig[i] = 0;
+                        GVP_ts[i] = 0;
+                        GVP_points[i] = 0;
+                        GVP_opt[i] = 0;
+                        GVP_data[i] = 0;
+                        GVP_vnrep[i] = 0;
+                        GVP_vpcjr[i] = 0;
+                        GVP_final_delay = 0.0;
+                }
+                GVP_repetitions = 0;
+                
+                // init all vars with last used values is done via dconf / schemata
+                // -- BUT not at very first generation via auto write schemata, will get random memory eventually to edit manually later....
                 
                 sim_speed[0]=sim_speed[1]=2000.0; // per tab
                 sim_bias[0]=sim_bias[1]=0.0;
@@ -415,8 +499,8 @@ public:
 
         static int ldc_callback(GtkWidget *widget, SPM_Template_Control *dspc);
 
-        static void lockin_adjust_callback(Param_Control* pcs, gpointer data) {};
-        static int lockin_runfree_callback(GtkWidget *widget, SPM_Template_Control *dspc) {};
+        static void lockin_adjust_callback(Param_Control* pcs, gpointer data);
+        static int lockin_runfree_callback(GtkWidget *widget, SPM_Template_Control *dspc);
 
         static void show_tab_to_configure (GtkWidget* w, gpointer data){
                 gtk_widget_show (GTK_WIDGET (g_object_get_data (G_OBJECT (w), "TabGrid")));
@@ -599,6 +683,9 @@ public:
 	double scan_speed_x;      //!< in DAC (AIC) units per second - best match
 	Gtk_EntryControl *scan_speed_ec;
 
+        double dxdt, dydt, dzdt;
+
+        
 	// UserEvent sensitive:
 	double ue_bias;
 	double ue_set_point[4];
