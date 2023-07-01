@@ -3279,7 +3279,7 @@ void DSPControl::store_values (){
         set_tab_settings ("LP", LP_option_flags, LP_auto_flags, LP_glock_data);
         set_tab_settings ("SP", SP_option_flags, SP_auto_flags, SP_glock_data);
         set_tab_settings ("TS", TS_option_flags, TS_auto_flags, TS_glock_data);
-        set_tab_settings ("GVP", GVP_option_flags, GVP_auto_flags, GVP_glock_data);
+        set_tab_settings ("VP", GVP_option_flags, GVP_auto_flags, GVP_glock_data);
         set_tab_settings ("TK", TK_option_flags, TK_auto_flags, TK_glock_data);
         set_tab_settings ("AX", AX_option_flags, AX_auto_flags, AX_glock_data);
         set_tab_settings ("AB", ABORT_option_flags, ABORT_auto_flags, ABORT_glock_data);
@@ -5241,7 +5241,7 @@ int DSPControl::callback_change_GVP_option_flags (GtkWidget *widget, DSPControl 
 		dspc->raster_auto_flags = dspc->GVP_auto_flags;
 
         dspc->set_tab_settings ("LM", dspc->GVP_option_flags, dspc->GVP_auto_flags, dspc->GVP_glock_data);
-        dspc->set_tab_settings ("GVP", dspc->GVP_option_flags, dspc->GVP_auto_flags, dspc->GVP_glock_data);
+        dspc->set_tab_settings ("VP", dspc->GVP_option_flags, dspc->GVP_auto_flags, dspc->GVP_glock_data);
         dspc->GVP_store_vp ("LM_set_last"); // last in view
         dspc->GVP_store_vp ("GVP_set_last"); // last in view
         return 0;
@@ -5267,7 +5267,7 @@ int DSPControl::callback_update_GVP_vpc_option_checkbox (GtkWidget *widget, DSPC
 	guint64 msk = (guint64) GPOINTER_TO_UINT (g_object_get_data(G_OBJECT(widget), "Bit_Mask"));
 	gtk_check_button_set_active (GTK_CHECK_BUTTON(widget), (dspc->GVP_opt[k] & msk) ? 1:0);
 
-        dspc->set_tab_settings ("GVP", dspc->GVP_option_flags, dspc->GVP_auto_flags, dspc->GVP_glock_data); // **** LM ??? ****
+        dspc->set_tab_settings ("VP", dspc->GVP_option_flags, dspc->GVP_auto_flags, dspc->GVP_glock_data); // **** LM ??? ****
         return 0;
 }
 

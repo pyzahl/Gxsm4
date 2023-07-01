@@ -675,17 +675,18 @@ void SPM_Template_Control::store_values (){
         //set_tab_settings ("LP", LP_option_flags, LP_auto_flags, LP_glock_data);
         //set_tab_settings ("SP", SP_option_flags, SP_auto_flags, SP_glock_data);
         //set_tab_settings ("TS", TS_option_flags, TS_auto_flags, TS_glock_data);
-        set_tab_settings ("GVP", GVP_option_flags, GVP_auto_flags, GVP_glock_data);
+        set_tab_settings ("VP", GVP_option_flags, GVP_auto_flags, GVP_glock_data);
         //set_tab_settings ("TK", TK_option_flags, TK_auto_flags, TK_glock_data);
         //set_tab_settings ("AX", AX_option_flags, AX_auto_flags, AX_glock_data);
         //set_tab_settings ("AB", ABORT_option_flags, ABORT_auto_flags, ABORT_glock_data);
 
-        GVP_store_vp ("GVP_set_last"); // last in view
+        GVP_store_vp ("VP_set_last"); // last in view
         PI_DEBUG_GM (DBG_L3, "SPM_Template_Control::store_values complete.");
 }
 
 void SPM_Template_Control::GVP_store_vp (const gchar *key){
 	PI_DEBUG_GM (DBG_L3, "GVP-VP store to memo %s", key);
+	g_message ("GVP-VP store to memo %s", key);
         GVariant *v = g_settings_get_value (hwi_settings, "probe-gvp-vector-program-matrix");
         //GVariant *v = g_settings_get_value (hwi_settings, "probe-lm-vector-program-matrix");
         GVariantDict *dict = g_variant_dict_new (v);
@@ -718,7 +719,7 @@ void SPM_Template_Control::GVP_store_vp (const gchar *key){
         for (int i=0; vckey[i] && pc_array[i]; ++i){
                 gchar *m_vckey = g_strdup_printf ("%s-%s", vckey[i], key);
 
-                // g_print ("GVP store: %s = %s\n", m_vckey, g_variant_print (pc_array[i], true));
+                g_print ("GVP store: %s = %s\n", m_vckey, g_variant_print (pc_array[i], true));
 
                 if (g_variant_dict_contains (dict, m_vckey)){
                         if (!g_variant_dict_remove (dict, m_vckey)){
@@ -745,8 +746,8 @@ void SPM_Template_Control::GVP_store_vp (const gchar *key){
 
 void SPM_Template_Control::GVP_restore_vp (const gchar *key){
 	// g_message ("GVP-VP restore memo key=%s", key);
-	PI_DEBUG_GP (DBG_L2, "GVP-VP restore to memo %s\n", key);
-	g_message ( "GVP-VP restore to memo %s\n", key);
+	PI_DEBUG_GP (DBG_L2, "GVP-VP restore memo %s\n", key);
+	g_message ( "GVP-VP restore memo %s\n", key);
         GVariant *v = g_settings_get_value (hwi_settings, "probe-gvp-vector-program-matrix");
         //GVariant *v = g_settings_get_value (hwi_settings, "probe-lm-vector-program-matrix");
         GVariantDict *dict = g_variant_dict_new (v);
@@ -767,6 +768,8 @@ void SPM_Template_Control::GVP_restore_vp (const gchar *key){
         
         for (int i=0; vckey_i[i]; ++i){
                 gchar *m_vckey = g_strdup_printf ("%s-%s", vckey_i[i], key);
+                g_message ( "GVP-VP restore %s\n", m_vckey);
+
                 for (int k=0; k<N_GVP_VECTORS; ++k) GVPi[i][k]=0; // zero init vector
                 if ((vi[i] = g_variant_dict_lookup_value (dict, m_vckey, ((const GVariantType *) "ai"))) == NULL){
                         PI_DEBUG_GP (DBG_L2, "GXSM4 DCONF: SPM_Template_Control::GVP_restore_vp -- key_i '%s' memo not found. Setting to Zero.\n", m_vckey);
@@ -774,7 +777,7 @@ void SPM_Template_Control::GVP_restore_vp (const gchar *key){
                         g_free (m_vckey);
                         continue;
                 }
-                // g_print ("GVP restore: %s = %s\n", m_vckey, g_variant_print (vi[i], true));
+                g_print ("GVP restore: %s = %s\n", m_vckey, g_variant_print (vi[i], true));
 
                 pc_array_i[i] = (gint32*) g_variant_get_fixed_array (vi[i], &n, sizeof (gint32));
                 if (i==0) // actual length of this vector should fit all others -- verify
@@ -798,7 +801,7 @@ void SPM_Template_Control::GVP_restore_vp (const gchar *key){
                         g_free (m_vckey);
                         continue;
                 }
-                // g_print ("GVP restore: %s = %s\n", m_vckey, g_variant_print (vd[i], true));
+                g_print ("GVP restore: %s = %s\n", m_vckey, g_variant_print (vd[i], true));
 
                 pc_array_d[i] = (double*) g_variant_get_fixed_array (vd[i], &n, sizeof (double));
                 //g_assert_cmpint (n, ==, N_GVP_VECTORS);
@@ -1010,6 +1013,7 @@ void SPM_Template_Control::get_tab_settings (const gchar *tab_key, guint64 &opti
         GVariant *value = g_variant_dict_lookup_value (dict, tab_key, ((const GVariantType *) "at")); // array uint64
         if (!value){
                 g_warning ("WARNING (Normal at first start) -- Note: only at FIRST START: Building Settings. SPM_Template_Control::get_tab_settings:\n --> can't get find array 'at' data for key '%s' in 'probe-tab-options' dictionary.\n Storing default now.", tab_key);
+                g_print ("WARNING (Normal at first start) -- Note: only at FIRST START: Building Settings. SPM_Template_Control::get_tab_settings:\n --> can't get find array 'at' data for key '%s' in 'probe-tab-options' dictionary.\n Storing default now.", tab_key);
 
                 if (dict)
                         g_variant_dict_unref (dict);
@@ -1026,7 +1030,8 @@ void SPM_Template_Control::get_tab_settings (const gchar *tab_key, guint64 &opti
                                                             "'LP': <@at [0,0,0,0,0,0,0,0,0]>, "
                                                             "'SP': <@at [0,0,0,0,0,0,0,0,0]>, "
                                                             "'TS': <@at [0,0,0,0,0,0,0,0,0]>, "
-                                                            "'GVP': <@at [0,0,0,0,0,0,0,0,0]>, "
+                                                            "'VP': <@at [0,0,0,0,0,0,0,0,0]>, "
+                                                            //"'GVP': <@at [0,0,0,0,0,0,0,0,0]>, "
                                                             "'TK': <@at [0,0,0,0,0,0,0,0,0]>, "
                                                             "'AX': <@at [0,0,0,0,0,0,0,0,0]>, "
                                                             "'AB': <@at [0,0,0,0,0,0,0,0,0]>"
@@ -1950,7 +1955,7 @@ void SPM_Template_Control::create_folder (){
                                          GCallback (SPM_Template_Control::Probing_graph_callback),
                                          GCallback (SPM_Template_Control::Probing_abort_callback),
                                          this,
-                                         "GVP");
+                                         "VP");
         bp->notebook_tab_show_all ();
         bp->pop_grid ();
 
@@ -2179,6 +2184,11 @@ void SPM_Template_Control::create_folder (){
         //g_object_set_data( G_OBJECT (window), "SPM_SIM_EC_list", bp->get_ec_list_head ());
         spm_template_hwi_pi.app->RemoteEntryList = g_slist_concat (spm_template_hwi_pi.app->RemoteEntryList, bp->get_remote_list_head ());
         configure_callback (NULL, NULL, this); // configure "false"
+
+	g_object_set_data( G_OBJECT (window), "DSP_EC_list", bp->get_ec_list_head ());
+	g_object_set_data( G_OBJECT (zposmon_checkbutton), "DSP_zpos_control_list", zpos_control_list);
+        
+	GUI_ready = TRUE;
         
         AppWindowInit (NULL); // stage two
         set_window_geometry ("spm-template-control"); // must add key to xml file: Gxsm-3.0/gxsm4/org.gnome.gxsm4.window-geometry.gschema.xml
@@ -2433,7 +2443,7 @@ int SPM_Template_Control::callback_update_GVP_vpc_option_checkbox (GtkWidget *wi
 	guint64 msk = (guint64) GPOINTER_TO_UINT (g_object_get_data(G_OBJECT(widget), "Bit_Mask"));
 	gtk_check_button_set_active (GTK_CHECK_BUTTON(widget), (dspc->GVP_opt[k] & msk) ? 1:0);
 
-        dspc->set_tab_settings ("GVP", dspc->GVP_option_flags, dspc->GVP_auto_flags, dspc->GVP_glock_data);
+        dspc->set_tab_settings ("VP", dspc->GVP_option_flags, dspc->GVP_auto_flags, dspc->GVP_glock_data);
         return 0;
 }
 
@@ -2447,7 +2457,7 @@ int SPM_Template_Control::callback_change_GVP_vpc_option_flags (GtkWidget *widge
 	else
 		dspc->GVP_opt[k] &= ~msk;
 
-        dspc->set_tab_settings ("GVP", dspc->GVP_option_flags, dspc->GVP_auto_flags, dspc->GVP_glock_data);
+        dspc->set_tab_settings ("VP", dspc->GVP_option_flags, dspc->GVP_auto_flags, dspc->GVP_glock_data);
         return 0;
 }
 
@@ -2462,8 +2472,8 @@ int SPM_Template_Control::callback_change_GVP_option_flags (GtkWidget *widget, S
 	if (dspc->write_vector_mode == PV_MODE_GVP)
 		dspc->raster_auto_flags = dspc->GVP_auto_flags;
 
-        dspc->set_tab_settings ("GVP", dspc->GVP_option_flags, dspc->GVP_auto_flags, dspc->GVP_glock_data);
-        dspc->GVP_store_vp ("GVP_set_last"); // last in view
+        dspc->set_tab_settings ("VP", dspc->GVP_option_flags, dspc->GVP_auto_flags, dspc->GVP_glock_data);
+        dspc->GVP_store_vp ("VP_set_last"); // last in view
         return 0;
 }
 
@@ -2486,7 +2496,7 @@ int SPM_Template_Control::callback_change_GVP_auto_flags (GtkWidget *widget, SPM
 	else
 		dspc->GVP_auto_flags &= ~msk;
 
-        dspc->set_tab_settings ("GVP", dspc->GVP_option_flags, dspc->GVP_auto_flags, dspc->GVP_glock_data);
+        dspc->set_tab_settings ("VP", dspc->GVP_option_flags, dspc->GVP_auto_flags, dspc->GVP_glock_data);
         return 0;
 }
 

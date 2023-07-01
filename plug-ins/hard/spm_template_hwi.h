@@ -453,6 +453,12 @@ public:
                 sim_speed[0]=sim_speed[1]=2000.0; // per tab
                 sim_bias[0]=sim_bias[1]=0.0;
                 options = 0x03;
+
+                get_tab_settings ("IV", IV_option_flags, IV_auto_flags, IV_glock_data);
+                get_tab_settings ("VP", GVP_option_flags, GVP_auto_flags, GVP_glock_data);
+                GVP_restore_vp ("VP_set_last"); // last in view
+
+                
                 create_folder ();
         };
 	virtual ~SPM_Template_Control() {
