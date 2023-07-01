@@ -5267,7 +5267,7 @@ int DSPControl::callback_update_GVP_vpc_option_checkbox (GtkWidget *widget, DSPC
 	guint64 msk = (guint64) GPOINTER_TO_UINT (g_object_get_data(G_OBJECT(widget), "Bit_Mask"));
 	gtk_check_button_set_active (GTK_CHECK_BUTTON(widget), (dspc->GVP_opt[k] & msk) ? 1:0);
 
-        dspc->set_tab_settings ("LM", dspc->GVP_option_flags, dspc->GVP_auto_flags, dspc->GVP_glock_data);
+        dspc->set_tab_settings ("GVP", dspc->GVP_option_flags, dspc->GVP_auto_flags, dspc->GVP_glock_data); // **** LM ??? ****
         return 0;
 }
 

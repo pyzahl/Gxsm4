@@ -581,7 +581,8 @@ public:
 	const char* vp_unit_lookup(int i);
 	double      vp_scale_lookup(int i);
 
-        
+        void update_GUI(); // update GUI
+           
 	static gboolean idle_callback_update_gui (gpointer data){
 		SPM_Template_Control *dspc = (SPM_Template_Control*) data;
                 gapp->spm_update_all();
@@ -605,18 +606,6 @@ public:
                 }
 	};
 
-        void update(){
-                if (!GUI_ready) return;
-
-                g_slist_foreach((GSList*)g_object_get_data( G_OBJECT (window), "DSP_EC_list"),
-                                (GFunc) App::update_ec, NULL);
-                g_slist_foreach((GSList*)g_object_get_data( G_OBJECT (window), "DSP_VPC_OPTIONS_list"),
-                                (GFunc) callback_update_GVP_vpc_option_checkbox, this);
-        };
-
-
-
-     
         void update_controller () {
 
                 mirror_dsp_scan_dx32 = 1.0; // dsp_scan_fs_dx*dsp_scan_dnx; // actual DSP dx in S15.16 between pixels in X

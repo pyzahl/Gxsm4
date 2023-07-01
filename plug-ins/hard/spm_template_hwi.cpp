@@ -813,7 +813,7 @@ void SPM_Template_Control::GVP_restore_vp (const gchar *key){
         g_variant_dict_unref (dict);
         g_variant_unref (v);
 
-	update ();
+	update_GUI ();
 }
 
 int SPM_Template_Control::callback_edit_GVP (GtkWidget *widget, SPM_Template_Control *dspc){
@@ -877,7 +877,7 @@ int SPM_Template_Control::callback_edit_GVP (GtkWidget *widget, SPM_Template_Con
 			dspc->GVP_vnrep[k] = dspc->GVP_vnrep[ks];
 			dspc->GVP_vpcjr[k] = dspc->GVP_vpcjr[ks];
 		}
-	dspc->update ();
+	dspc->update_GUI ();
         return 0;
 }
 
@@ -973,7 +973,7 @@ void SPM_Template_Control::load_values (NcFile *ncf){
         NC_GET_VARIABLE ("spm_template_hwi_set_point1", &mix_set_point[1]);
         NC_GET_VARIABLE ("spm_template_hwi_set_point0", &mix_set_point[0]);
 
-	update ();
+	update_GUI ();
 }
 
 
@@ -1971,7 +1971,7 @@ void SPM_Template_Control::create_folder (){
 			      -1 
 	};
 	const char* lablookup[] = { "ADC0-I", "ADC1", "ADC2", "ADC3", "ADC4", "ADC5","ADC6","ADC7",
-				    "LockIn0", "LockIn X",  "LockIn Y", "LockIn Mag", "Auxillary"
+				    "LockIn0", "LockIn X",  "LockIn Y", "LockIn Mag", "Auxillary",
 				    "Time", "Z-mon", "Bias-mon", "SEC",
 				    NULL
 	};
@@ -1996,12 +1996,13 @@ void SPM_Template_Control::create_folder (){
         bp->grid_add_widget (sep, 5);
         //bp->grid_add_label (" --- ", NULL, 5);
 
+#if 0 // if need more
         bp->grid_add_label ("Source", "Check column to activate channel", 2, 0.);
         bp->grid_add_label ("X", "Check column to plot channel on X axis.", 1);
         bp->grid_add_label ("Y", "Check column to plot channel on Y axis.", 1);
         bp->grid_add_label ("Avg", "Check column to plot average of all spectra", 1);
         bp->grid_add_label ("Sec", "Check column to show all sections.", 1);
-
+#endif
         bp->new_line ();
 
         PI_DEBUG (DBG_L4, "DSPC----TAB-GRAPHS TOGGELS  ------------------------------- ");
@@ -2015,7 +2016,7 @@ void SPM_Template_Control::create_folder (){
 		c*=11;
                 c++;
 		int m = -1;
-		if (i >= 9 && i < 12)
+		if (i >= 9 && i < 13) // flex sources 9..12
 			m = i-8;
 		else
 			m = -1;
@@ -2029,8 +2030,10 @@ void SPM_Template_Control::create_folder (){
                                                Source, (((int) msklookup[i]) & 0xfffffff)
                                                );
                 // source selection for i=9..12:
-                if (m >= 0){
+                if (m >= 0){ // flex source
                         bp->grid_add_probe_source_signal_options (m, probe_source[m], this);
+                }else { // fixed assignment
+                        bp->grid_add_label (lablookup[i], NULL, 1, 0.);
                 }
                 //fixed assignment:
                 // bp->grid_add_label (lablookup[i], NULL, 1, 0.);
@@ -2084,6 +2087,7 @@ void SPM_Template_Control::create_folder (){
         
         bp->pop_grid ();
         bp->new_line ();
+        bp->new_grid_with_frame ("Plot Mode Configuration");
 
 	bp->grid_add_check_button ("Join all graphs for same X", "Join all plots with same X.\n"
                                        "Note: if auto scale (default) Y-scale\n"
@@ -2279,7 +2283,14 @@ int SPM_Template_Control::choice_scansource_callback (GtkWidget *widget, SPM_Tem
         return 0;
 }
 
+void SPM_Template_Control::update_GUI(){
+        if (!GUI_ready) return;
 
+	g_slist_foreach((GSList*)g_object_get_data( G_OBJECT (window), "DSP_EC_list"),
+			(GFunc) App::update_ec, NULL);
+	g_slist_foreach((GSList*)g_object_get_data( G_OBJECT (window), "DSP_VPC_OPTIONS_list"),
+			(GFunc) callback_update_GVP_vpc_option_checkbox, this);
+}
 
 void SPM_Template_Control::update_zpos_readings(){
         double zp,a,b;

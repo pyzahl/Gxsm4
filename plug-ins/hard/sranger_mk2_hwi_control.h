@@ -528,6 +528,7 @@ class DSPControl : public AppBase{
 	};
 
 
+	int check_vp_in_progress (const gchar *extra_info=NULL);
 
         
 	int probedata_length () { return current_probe_data_index; };
@@ -538,8 +539,6 @@ class DSPControl : public AppBase{
 	static void free_probedata_array_set (GArray** garr, DSPControl *dc);
 	static void free_probehdr_array_set (GArray** garr, DSPControl *dc);
 	void free_probedata_arrays ();
-
-	int check_vp_in_progress (const gchar *extra_info=NULL);
 
 	void add_probedata(double data[13]);
 	void add_probevector();
