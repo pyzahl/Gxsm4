@@ -556,6 +556,81 @@ public:
 	static int callback_XJoin (GtkWidget *widget, SPM_Template_Control *dspc);
 	static int callback_GrMatWindow (GtkWidget *widget, SPM_Template_Control *dspc);
 
+#if 0
+	const char* vp_label_lookup(int i);
+	const char* vp_unit_lookup(int i);
+	double      vp_scale_lookup(int i);
+
+	void update_sourcesignals_from_DSP_callback ();
+#endif
+
+	static gboolean idle_callback (gpointer data){
+		SPM_Template_Control *dspc = (SPM_Template_Control*) data;
+
+                // make probe vector data is not locked for vector manipulations, wait until available (fast)
+                while (dspc->pv_lock)
+                        usleep (1000);
+
+                dspc->gr_lock = TRUE;
+		dspc->Probing_graph_callback (NULL, dspc, dspc->idle_callback_data_ff);
+                dspc->gr_lock = FALSE;
+                
+		dspc->idle_id = 0; // done.
+
+		return FALSE;
+	};
+		
+	void Probing_graph_update_thread_safe (int finish_flag=0) {
+                static int timeout_count=0;
+                static int last_index=0;
+                static int count=0;
+                // g_message ("Probing_graph_update_thread_safe: current index=%d, last=%d", current_probe_data_index, last_index);
+
+                if (current_probe_data_index <= last_index && !finish_flag){
+                        // g_message ("Probing_graph_update_thread_safe: exit no new data");
+                        return;
+                }
+                last_index = current_probe_data_index;
+                ++count;
+                // call: Probing_graph_callback (NULL, this, finish_flag);
+                // check for --  idle_id ??
+                while (idle_id && finish_flag){
+                        g_message ("Probing_graph_update_thread_safe: Finish_flag set -- waiting for last update to complete. current index=%d, last=%d, #toc=%d",
+                                   current_probe_data_index, last_index, timeout_count);
+                        usleep(250000);
+                        ++timeout_count;
+                        
+                        if (last_index == current_probe_data_index && timeout_count > 10){
+                                g_warning ("Probing_graph_update_thread_safe: Trying auto recovery from stalled update (timeout reached). current index=%d, last=%d",
+                                         current_probe_data_index, last_index);
+                                idle_id = 0;
+                                timeout_count = 0;
+                        }
+                        
+                }
+                if (idle_id == 0){
+                        // g_message ("Probing_graph_update_thread_safe: plot update. delayed by %d attempts. Current data index=%d",
+                        //           count, current_probe_data_index);
+                        count=0;
+                        idle_callback_data_ff = finish_flag;
+                        idle_id = g_idle_add (SPM_Template_Control::idle_callback, this);
+                        if (finish_flag){
+                                g_message ("Probing_graph_update_thread_safe: plot update. Finished. Current data index=%d",
+                                           current_probe_data_index);
+                                last_index = 0;
+                        }
+                } else {
+                        // g_warning ("Probing_graph_update_thread_safe: is busy, skipping. [%d]", count);
+                }
+	};
+
+
+
+	//int check_vp_in_progress (const gchar *extra_info=NULL);
+
+
+
+        
 	int probedata_length () { return current_probe_data_index; };
 	void push_probedata_arrays ();
 	GArray** pop_probedata_arrays ();
@@ -898,6 +973,8 @@ public:
 	virtual gint RTQuery_clear_to_start_probe (){ return 1; };
 	virtual gint RTQuery_clear_to_move_tip (){ return 1; };
 
+	int is_scanning() { return ScanningFlg; };
+
 	virtual double GetUserParam (gint n, gchar *id=NULL) { return 0.; };
 	virtual gint   SetUserParam (gint n, gchar *id=NULL, double value=0.) { return 0; };
 	
@@ -929,6 +1006,16 @@ public:
                              int num_srcs0, int num_srcs1, int num_srcs2, int num_srcs3, 
                              Mem2d **Mob0, Mem2d **Mob1, Mem2d **Mob2, Mem2d **Mob3);
 
+	virtual int ReadProbeData (int dspdev=0, int control=0);
+
+	int probe_fifo_thread_active;
+	int fifo_data_y_index;
+
+	int fifo_data_num_srcs[4]; // 0: XP, 1: XM, 2: 2ND_XP, 3: 2ND_XM
+	Mem2d **fifo_data_Mobp[4]; // 0: XP, 1: XM, 2: 2ND_XP, 3: 2ND_XM
+
+
+        
         // dummy template signal management
 	// SIGNAL MANAGEMENT
 
@@ -954,7 +1041,9 @@ public:
        
 
         // sim params and internal data
+        double sim_bias;
         double sim_current;
+        double sim_z;
         double data_z_value;
         double x0,y0; // offset
 
@@ -975,6 +1064,7 @@ protected:
 
 private:
 	GThread *data_read_thread;
+	GThread *probe_data_read_thread;
         gboolean KillFlg; 
 
 protected:

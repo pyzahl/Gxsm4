@@ -4,7 +4,7 @@
  * universal STM/AFM/SARLS/SPALEED/... controlling and
  * data analysis software
  *
- * Gxsm Hardware Interface Plugin Name: sranger_mk2_hwi.C
+ * Gxsm Hardware Interface Plugin Name: spm_template_hwi.C
  * ===============================================
  * 
  * Copyright (C) 1999 The Free Software Foundation
@@ -91,6 +91,11 @@
 extern int debug_level;
 extern int force_gxsm_defaults;
 
+
+extern "C++" {
+        extern SPM_Template_Control *Template_ControlClass;
+        extern GxsmPlugin spm_template_hwi_pi;
+}
 
 
 MOD_INPUT mod_input_list[] = {
@@ -2845,10 +2850,31 @@ double spm_template_hwi_dev::simulate_value (int xi, int yi, int ch){
         return fz * (z + (zm > 0. ? zm : lat.get_z (x,y, ch)));
 }
 
-// DataReadThread:
+// THREAD AND FIFO CONTROL STATES
+
+
+#define RET_FR_OK      0
+#define RET_FR_ERROR   -1
+#define RET_FR_WAIT    1
+#define RET_FR_NOWAIT  2
+#define RET_FR_FCT_END 3
+
+#define FR_NO   0
+#define FR_YES  1
+
+#define FR_INIT   1
+#define FR_FINISH 2
+#define FR_FIFO_FORCE_RESET 3
+
+
+gpointer ScanDataReadThread (void *ptr_sr);
+gpointer ProbeDataReadThread (void *ptr_sr);
+gpointer ProbeDataReadFunction (void *ptr_sr, int dspdev);
+
+// ScanDataReadThread:
 // Image Data read thread -- actual scan/pixel data transfer
 
-gpointer DataReadThread (void *ptr_sr){
+gpointer ScanDataReadThread (void *ptr_sr){
         spm_template_hwi_dev *sr = (spm_template_hwi_dev*)ptr_sr;
         int nx,ny, x0,y0;
         int Nx, Ny;
@@ -2911,6 +2937,324 @@ gpointer DataReadThread (void *ptr_sr){
         return NULL;
 }
 
+
+// ProbeDataReadThread:
+// Independent ProbeDataRead Thread (manual probe)
+gpointer ProbeDataReadThread (void *ptr_sr){
+	int finish_flag=FALSE;
+	spm_template_hwi_dev *sr = (spm_template_hwi_dev*)ptr_sr;
+
+	if (sr->probe_fifo_thread_active){
+		//LOGMSGS ( "ProbeFifoReadThread ERROR: Attempt to start again while in progress! [#" << sr->probe_fifo_thread_active << "]" << std::endl);
+		return NULL;
+	}
+	sr->probe_fifo_thread_active++;
+	Template_ControlClass->probe_ready = FALSE;
+
+        // normal mode, wait for finish (single shot probe exec by user)
+	if (Template_ControlClass->probe_trigger_single_shot)
+		 finish_flag=TRUE;
+
+	while (sr->is_scanning () || finish_flag){ // while scanning (raster mode) or until single shot probe is finished
+                if (Template_ControlClass->current_auto_flags & FLAG_AUTO_PLOT)
+                        Template_ControlClass->Probing_graph_update_thread_safe ();
+
+                if (sr->ReadProbeData ()){ // True when finished
+                
+                        if (finish_flag){
+                                if (Template_ControlClass->current_auto_flags & FLAG_AUTO_PLOT)
+                                        Template_ControlClass->Probing_graph_update_thread_safe (1);
+				
+                                if (Template_ControlClass->current_auto_flags & FLAG_AUTO_SAVE)
+                                        Template_ControlClass->Probing_save_callback (NULL, Template_ControlClass);	
+
+                                break;
+                        }
+                        Template_ControlClass->push_probedata_arrays ();
+                        Template_ControlClass->init_probedata_arrays ();
+                }
+	}
+
+	--sr->probe_fifo_thread_active;
+	Template_ControlClass->probe_ready = TRUE;
+
+	return NULL;
+}
+
+
+// ReadProbeData:
+// read from probe data FIFO, this engine needs to be called several times from master thread/function
+int spm_template_hwi_dev::ReadProbeData (int dspdev, int control){
+#if 0
+	int pvd_blk_size=0;
+	static double pv[9];
+	static int last = 0;
+	static int last_read_end = 0;
+	static DATA_FIFO_EXTERN_PCOPY fifo;
+	static PROBE_SECTION_HEADER section_header;
+	static int next_header = 0;
+	static int number_channels = 0;
+	static int data_index = 0;
+	static int end_read = 0;
+	static int data_block_size=0;
+	static int need_fct = FR_YES;  // need fifo control
+	static int need_hdr = FR_YES;  // need header
+	static int need_data = FR_YES; // need data
+	static int ch_lut[32];
+	static int ch_msk[]  = { 0x0000001, 0x0000002,   0x0000010, 0x0000020, 0x0000040, 0x0000080,   0x0000100, 0x0000200, 0x0000400, 0x0000800,
+				 0x0000008, 0x0001000, 0x0002000, 0x0004000, 0x0008000,   0x0000004,   0x0000000 };
+	static int ch_size[] = {    2, 2,    2, 2, 2, 2,   2, 2, 2, 2,    4,   4,  4,  4,   4,   4,  0 };
+	static const char *ch_header[] = {"Zmon-AIC5Out", "Umon-AIC6Out", "AIC0-I", "AIC1", "AIC2", "AIC3", "AIC4", "AIC5", "AIC6", "AIC7",
+					  "LockIn0", "LockIn1stA", "LockIn1stB", "LockIn2ndA", "LockIn2ndB", "Count", NULL };
+	static short data[EXTERN_PROBEDATAFIFO_LENGTH];
+	static double dataexpanded[16];
+#ifdef LOGMSGS0
+	static double dbg0=0., dbg1=0.;
+	static int dbgi0=0;
+#endif
+
+	switch (control){
+	case FR_FIFO_FORCE_RESET: // not used normally -- FIFO is reset by DSP at probe_init (single probe)
+		fifo.r_position = 0;
+		fifo.w_position = 0;
+		check_and_swap (fifo.r_position);
+		check_and_swap (fifo.w_position);
+		lseek (dspdev, magic_data.probedatafifo, SRANGER_MK23_SEEK_DATA_SPACE | SRANGER_MK23_SEEK_ATOMIC);
+		sr_write (dspdev, &fifo, 2*sizeof(DSP_INT)); // reset positions now to prevent reading old/last dataset before DSP starts init/putting data
+		return RET_FR_OK;
+
+	case FR_INIT:
+		last = 0;
+		next_header = 0;
+		number_channels = 0;
+		data_index = 0;
+		last_read_end = 0;
+
+		need_fct  = FR_YES;
+		need_hdr  = FR_YES;
+		need_data = FR_YES;
+
+		Template_ControlClass->init_probedata_arrays ();
+		for (int i=0; i<16; dataexpanded[i++]=0.);
+
+		LOGMSGS0 ( std::endl << "************** PROBE FIFO-READ INIT **************" << std::endl);
+		LOGMSGS ( "FR::INIT-OK." << std::endl);
+		return RET_FR_OK; // init OK.
+
+	case FR_FINISH:
+		LOGMSGS ( "FR::FINISH-OK." << std::endl);
+		return RET_FR_OK; // finish OK.
+
+	default: break;
+	}
+
+	if (need_fct){ // read and check fifo control?
+		LOGMSGS2 ( "FR::NEED_FCT, last: 0x"  << std::hex << last << std::dec << std::endl);
+
+		lseek (dspdev, magic_data.probedatafifo, SRANGER_MK23_SEEK_DATA_SPACE | SRANGER_MK23_SEEK_ATOMIC);
+		sr_read  (dspdev, &fifo, sizeof (fifo));
+		check_and_swap (fifo.w_position);
+		check_and_swap (fifo.current_section_head_position);
+		check_and_swap (fifo.current_section_index);
+		check_and_swap (fifo.p_buffer_base);
+		end_read = fifo.w_position >= last ? fifo.w_position : EXTERN_PROBEDATAFIFO_LENGTH;
+
+		LOGMSGS2 ( "FR::NEED_FCT, magic.prbdata_fifo  @Adr: 0x"  << std::hex << magic_data.probedatafifo << std::dec << std::endl);
+		LOGMSGS2 ( "FR::NEED_FCT, magic.prbdata_fifo.p_buf: 0x"  << std::hex << fifo.p_buffer_base << std::dec << std::endl);
+		LOGMSGS2 ( "FR::NEED_FCT, w_position: 0x"  << std::hex << fifo.w_position << std::dec << std::endl);
+
+		// check for new data
+		if ((end_read - last) < 1)
+			return RET_FR_WAIT;
+		else {
+			need_fct  = FR_NO;
+			need_data = FR_YES;
+		}
+	}
+
+	if (need_data){ // read full FIFO block
+		LOGMSGS ( "FR::NEED_DATA" << std::endl);
+
+		int database = (int)fifo.p_buffer_base;
+		int dataleft = end_read;
+		int position = 0;
+		if (fifo.w_position > last_read_end){
+//			database += last_read_end;
+//			dataleft -= last_read_end;
+		}
+		for (; dataleft > 0; database += 0x4000, dataleft -= 0x4000, position += 0x4000){
+			LOGMSGS ( "FR::NEED_DATA: B::0x" <<  std::hex << database <<  std::dec << std::endl);
+			lseek (dspdev, database, SRANGER_MK23_SEEK_DATA_SPACE | SRANGER_MK23_SEEK_ATOMIC); // ### CONSIDER NON_ATOMIC
+			sr_read  (dspdev, &data[position], (dataleft >= 0x4000 ? 0x4000 : dataleft)<<1);
+		}
+		last_read_end = end_read;
+			
+		need_data = FR_NO;
+	}
+
+	if (need_hdr){ // we have enough data if control gets here!
+		LOGMSGS ( "FR::NEED_HDR" << std::endl);
+
+		if (((fifo.w_position - last) < (sizeof (section_header)>>1))){
+			need_fct  = FR_YES;
+			return RET_FR_WAIT;
+		}
+		
+		// set vector of expanded data array representation, section start
+		pv[0] = section_header.time;
+		pv[1] = section_header.x_offset;
+		pv[2] = section_header.y_offset;
+		pv[3] = section_header.z_offset;
+		pv[4] = section_header.x_scan;
+		pv[5] = section_header.y_scan;
+		pv[6] = section_header.z_scan;
+		pv[7] = section_header.u_scan;
+		pv[8] = section_header.section;
+
+
+		Template_ControlClass->add_probe_hdr (pv);
+		
+
+		need_hdr = FR_NO;
+
+
+	for (int element=0; last < end_read; ++last, ++data_index){
+
+
+		int channel = ch_lut[element++];
+		if (channel >= 0){ // only if valid (skip possible dummy (2) fillings)
+			// check for long data (4)
+			if (ch_size[channel] == 4){
+				LNG *tmp = (LNG*)&data[last];
+				check_and_swap (*tmp);
+				dataexpanded[channel] = (double) (*tmp);
+				++last; ++data_index;
+			} else { // normal data (2)
+				check_and_swap (data[last]);
+				dataexpanded[channel] = (double) data[last];
+			}
+		}
+
+		// add vector and data to expanded data array representation
+		if ((data_index % pvd_blk_size) == (pvd_blk_size-1)){
+			if (data_index >= pvd_blk_size) // skip to next vector
+				Template_ControlClass->add_probevector ();
+			else // set vector as previously read from section header (pv[]) at sec start
+				Template_ControlClass->set_probevector (pv);
+			// add full data vector
+			Template_ControlClass->add_probedata (dataexpanded);
+			element = 0;
+
+			// check for FIFO loop now
+			if (last > (EXTERN_PROBEDATAFIFO_LENGTH - EXTERN_PROBEDATA_MAX_LEFT)){
+				++last;
+				LOGMSGS0 ( "FR:FIFO LOOP DETECTED ** Data @ " 
+					   << "0x" << std::hex << last
+					   << " -2 :[" << (*((DSP_LONG*)&data[last-2]))
+					   << " " << (*((DSP_LONG*)&data[last]))
+					   << " " << (*((DSP_LONG*)&data[last+2]))
+					   << " " << (*((DSP_LONG*)&data[last+4]))
+					   << " " << (*((DSP_LONG*)&data[last+6])) 
+					   << "] : FIFO LOOP MARK " << std::dec << ( *((DSP_LONG*)&data[last]) == 0 ? "OK":"ERROR")
+					   << std::endl);
+				next_header -= last;
+				last = -1; // compensate for ++last at of for(;;)!
+				end_read = fifo.w_position;
+			}
+		}
+	}
+
+	LOGMSGS ( "FR:FIFO NEED FCT" << std::endl);
+	need_fct = FR_YES;
+
+	return RET_FR_WAIT;
+
+
+// emergency bailout and auto recovery, FIFO restart
+auto_recover_and_debug:
+
+#ifdef LOGMSGS0
+	LOGMSGS0 ( "************** -- FIFO DEBUG -- **************" << std::endl);
+	LOGMSGS0 ( "LastArdess: " << "0x" << std::hex << last << std::dec << std::endl);
+	for (int adr=last-8; adr < last+32; adr+=8){
+		while (adr < 0) ++adr;
+		LOGMSGS0 ("0x" << std::hex << adr << "::"
+			  << " " << (*((DSP_LONG*)&data[adr]))
+			  << " " << (*((DSP_LONG*)&data[adr+2]))
+			  << " " << (*((DSP_LONG*)&data[adr+4]))
+			  << " " << (*((DSP_LONG*)&data[adr+6]))
+			  << std::dec << std::endl);
+	}
+	LOGMSGS0 ( "************** TRYING AUTO RECOVERY **************" << std::endl);
+	LOGMSGS0 ( "***** -- STOP * RESET FIFO * START PROBE -- ******" << std::endl);
+#endif
+//	LOGMSGS0 ( "***** BAILOUT ****** TERM." << std::endl);
+
+				LOGMSGS ( "END** FR::FCT, w_position: 0x"  << std::hex << fifo.w_position << std::dec << std::endl);
+				LOGMSGS ( "END** LastArdess: " << "0x" << std::hex << last << std::dec << std::endl);
+				LOGMSGS ( "**FIFO::  HDR ALIGNMENT ASSUMING FOR MAPPING" << std::endl);
+				LOGMSGS ( "**FIFO::  SRCS---- N------- t-------  X0-- Y0-- PHI-  XS-- YS-- ZS--  U--- SEC-" << std::endl);
+				for (int adr=last-0x4000; adr < last+0x100; adr+=14){
+					while (adr < 0) ++adr;
+					LOGMSGS (  "0x" << std::setw(4) << std::hex << adr << "::"         // HDR
+						   << " " << std::setw(8) << (*((DSP_LONG*)&data[adr]))    // srcs
+						   << " " << std::setw(8) << (*((DSP_LONG*)&data[adr+2]))  // n
+						   << " " << std::setw(8) << (*((DSP_LONG*)&data[adr+4]))  // t
+						   << "  " << std::setw(4) << (*((DSP_INT*)&data[adr+6]))  // x0
+						   << " " << std::setw(4) << (*((DSP_INT*)&data[adr+7]))   // y0
+						   << " " << std::setw(4) << (*((DSP_INT*)&data[adr+8]))   // ph
+						   << "  " << std::setw(4) << (*((DSP_INT*)&data[adr+9]))  // xs
+						   << " " << std::setw(4) << (*((DSP_INT*)&data[adr+10]))  // ys
+						   << " " << std::setw(4) << (*((DSP_INT*)&data[adr+11]))  // zs(5)
+						   << "  " << std::setw(4) << (*((DSP_INT*)&data[adr+12])) // U(6)
+						   << " " << std::setw(4) << (*((DSP_INT*)&data[adr+13]))  // sec
+						   << std::dec << std::endl);
+				}
+
+	Template_ControlClass->dump_probe_hdr (); // TESTING
+				
+
+	// *****	exit (0);
+
+	// STOP PROBE
+	// reset positions now to prevent reading old/last dataset before DSP starts init/putting data
+	DSP_INT start_stop[2] = { 0, 1 };
+	lseek (dspdev, magic_data.probe, SRANGER_MK23_SEEK_DATA_SPACE | SRANGER_MK23_SEEK_ATOMIC);
+	sr_write (dspdev, &start_stop, 2*sizeof(DSP_INT));
+
+	// RESET FIFO
+	// reset positions now to prevent reading old/last dataset before DSP starts init/putting data
+	fifo.r_position = 0;
+	fifo.w_position = 0;
+	check_and_swap (fifo.r_position);
+	check_and_swap (fifo.w_position);
+	lseek (dspdev, magic_data.probedatafifo, SRANGER_MK23_SEEK_DATA_SPACE | SRANGER_MK23_SEEK_ATOMIC);
+	sr_write (dspdev, &fifo, 2*sizeof(DSP_INT));
+
+	// START PROBE
+	// reset positions now to prevent reading old/last dataset before DSP starts init/putting data
+	start_stop[0] = 1;
+	start_stop[1] = 0;
+	lseek (dspdev, magic_data.probe, SRANGER_MK23_SEEK_DATA_SPACE | SRANGER_MK23_SEEK_ATOMIC);
+	sr_write (dspdev, &start_stop, 2*sizeof(DSP_INT));
+
+	// reset all internal and partial reinit FIFO read thread
+	last = 0;
+	next_header = 0;
+	number_channels = 0;
+	data_index = 0;
+	last_read_end = 0;
+	need_fct  = FR_YES;
+	need_hdr  = FR_YES;
+	need_data = FR_YES;
+#endif
+	// and start over on next call
+	return RET_FR_WAIT;
+}
+
+
+
+
 // prepare, create and start g-thread for data transfer
 int spm_template_hwi_dev::start_data_read (int y_start, 
                                             int num_srcs0, int num_srcs1, int num_srcs2, int num_srcs3, 
@@ -2920,10 +3264,38 @@ int spm_template_hwi_dev::start_data_read (int y_start,
 
         g_message("Setting up FifoReadThread");
 
-        ScanningFlg=1; // can be used to abort data read thread. (Scan Stop forced by user)
-        data_y_count = y_start; // if > 0, scan dir is "bottom-up"
-        data_read_thread = g_thread_new ("FifoReadThread", DataReadThread, this);
 
+	if (num_srcs0 || num_srcs1 || num_srcs2 || num_srcs3){ // setup streaming of scan data
+#if 0 // full version used by MK2/3
+		fifo_data_num_srcs[0] = num_srcs0; // number sources -> (forward)
+		fifo_data_num_srcs[1] = num_srcs1; // number sources <- (return)
+		fifo_data_num_srcs[2] = num_srcs2; // numbre sources 2nd->  (2nd pass forward if used)
+		fifo_data_num_srcs[3] = num_srcs3; // number sources <-2nd  (2nd pass return if used)
+		fifo_data_Mobp[0] = Mob0; // 2d memory object list ->
+		fifo_data_Mobp[1] = Mob1; // ...
+		fifo_data_Mobp[2] = Mob2;
+		fifo_data_Mobp[3] = Mob3;
+		fifo_data_y_index = y_start; // if > 0, scan dir is "bottom-up"
+		fifo_read_thread = g_thread_new ("FifoReadThread", FifoReadThread, this);
+
+                // do also raster probing setup?
+		if ((Template_ControlClass->Source & 0xffff) && Template_ControlClass->probe_trigger_raster_points > 0){
+			Template_ControlClass->probe_trigger_single_shot = 0;
+			ReadProbeFifo (thread_dsp, FR_FIFO_FORCE_RESET); // reset FIFO
+			ReadProbeFifo (thread_dsp, FR_INIT); // init
+		}
+#endif
+                // scan simulator
+                ScanningFlg=1; // can be used to abort data read thread. (Scan Stop forced by user)
+                data_y_count = y_start; // if > 0, scan dir is "bottom-up"
+                data_read_thread = g_thread_new ("FifoReadThread", ScanDataReadThread, this);
+                
+	}
+	else{ // expect and stream probe data
+		if (Template_ControlClass->vis_Source & 0xffff)
+			probe_data_read_thread = g_thread_new ("ProbeFifoReadThread", ProbeDataReadThread, this);
+	}
+      
 	return 0;
 }
 
