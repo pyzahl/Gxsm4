@@ -30,6 +30,7 @@
 #define __SPM_TEMPLATE_HWI_H
 
 #include "core-source/app_profile.h"
+#include "spm_template_hwi_emulator.h"
 
 #define REMOTE_PREFIX "dsp-"
 
@@ -39,8 +40,8 @@
 
 
 typedef struct {
-        guint32     msklookup;   // signal source mask, or signal id for swappable
-        const gchar *lablookup;  // label for signal | NULL for flex signal life swappable
+        guint32     mask;   // signal source mask, or signal id for swappable
+        const gchar *label;  // label for signal | NULL for flex signal life swappable
         const gchar *description; // signal description
         const gchar *unit;  // gxsm signal unit symbolic id
         double scale_factor; // multiplier for raw value to unit conversion
@@ -252,7 +253,7 @@ typedef struct{
 #define MM_CZ_FUZZY   0x08  // FUZZY-CZ/NORMAL
 #define MM_NEG     0x10  // NEGATE SOURCE (INPUT)
 
-
+// forward defs
 
 class SPM_Template_Control;
 
@@ -975,7 +976,7 @@ public:
 	 */
 	virtual gint RTQuery (const gchar *property, double &val1, double &val2, double &val3);
 
-	virtual gint RTQuery () { return data_y_index + subscan_data_y_index_offset; }; // actual progress on scan -- y-index mirror from FIFO read
+	virtual gint RTQuery () { return spm_emu->data_y_index + subscan_data_y_index_offset; }; // actual progress on scan -- y-index mirror from FIFO read
 
 	/* high level calls for instrtument condition checks */
 	virtual gint RTQuery_clear_to_start_scan (){ return 1; };
@@ -1048,21 +1049,10 @@ public:
 	};
 
        
-
-        // sim params and internal data
-        double sim_bias;
-        double sim_current;
-        double sim_z;
-        double data_z_value;
-        double x0,y0; // offset
-
-        // scan engine
-        int data_y_count;
-        int data_y_index;
-        int data_x_index;
         int subscan_data_y_index_offset;
+
    	Mem2d **Mob_dir[4]; // reference to scan memory object (mem2d)
-	long srcs_dir[4]; // souce cahnnel coding
+	long srcs_dir[4]; // souce channel coding
 	int nsrcs_dir[4]; // number of source channes active
         gint ScanningFlg;
         gint PauseFlg;
@@ -1075,14 +1065,10 @@ private:
 	GThread *data_read_thread;
 	GThread *probe_data_read_thread;
         gboolean KillFlg; 
-
-protected:
+        
+public:
+        SPM_emulator *spm_emu; // DSP emulator for dummy data generation and minimal SPM behavior
 };
-
-
-
-
-
 
 
 #endif

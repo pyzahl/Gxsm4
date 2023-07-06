@@ -68,6 +68,7 @@
 
 #include "../common/pyremote.h"
 #include "spm_template_hwi.h"
+#include "spm_template_hwi_emulator.h"
 
 // Define HwI PlugIn reference name here, this is what is listed later within "Preferenced Dialog"
 // i.e. the string selected for "Hardware/Card"!
@@ -119,12 +120,12 @@ SOURCE_SIGNAL_DEF source_signals[] = {
 };
 
 SOURCE_SIGNAL_DEF swappable_signals[] = {
-        { 0, "LockIn-X", " ", "V", 1.0 },
-        { 0, "LockIn-Y", " ", "V", 1.0 },
-	{ 0, "PLL-Freq", " ", "Hz", 1.0 },
-	{ 0, "PLL-Phase", " ", "deg", 1.0 },
-	{ 0, "PLL-Exec", " ", "mV", 1000.0 },
-	{ 0, "PLL-Ampl", " ", "mV", 1000.0 },
+        { 1, "LockIn-X", " ", "V", 1.0 },
+        { 2, "LockIn-Y", " ", "V", 1.0 },
+	{ 3, "PLL-Freq", " ", "Hz", 1.0 },
+	{ 4, "PLL-Phase", " ", "deg", 1.0 },
+	{ 5, "PLL-Exec", " ", "mV", 1000.0 },
+	{ 6, "PLL-Ampl", " ", "mV", 1000.0 },
         { 0, NULL, NULL, NULL, 0.0 }
 };
 
@@ -435,10 +436,8 @@ GtkWidget* GUI_Builder::grid_add_scan_input_signal_options (gint channel, gint p
 
         int jj=0;
 
-        // Template demo only
-        gchar *signal_label[] = { "PLL-Freq", "PLL-Phase", "PLL-Exec", "PLL-Ampl", "AnySignal", NULL }; // MUST MATCH CALLBACK!!!
-        for (int jj=0; signal_label[jj]; ++jj){
-                gchar *id = g_strdup_printf ("%d", jj); gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, signal_label[jj]); g_free (id);
+        for (int jj=0; swappable_signals[jj].label; ++jj){
+                gchar *id = g_strdup_printf ("%d", jj); gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, swappable_signals[jj].label); g_free (id);
         }
         
 #if 0 // actual MK3 code
@@ -487,10 +486,8 @@ GtkWidget* GUI_Builder::grid_add_probe_source_signal_options (gint channel, gint
         g_object_set_data(G_OBJECT (cbtxt), "prb_channel_source", GINT_TO_POINTER (channel)); 
 
 
-        // Template demo only
-        gchar *signal_label[] = { "PLL-Freq", "PLL-Phase", "PLL-Exec", "PLL-Ampl", "AnySignal", NULL }; // MUST MATCH CALLBACK!!!
-        for (int jj=0; signal_label[jj]; ++jj){
-                gchar *id = g_strdup_printf ("%d", jj); gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, signal_label[jj]); g_free (id);
+        for (int jj=0; swappable_signals[jj].label; ++jj){
+                gchar *id = g_strdup_printf ("%d", jj); gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, swappable_signals[jj].label); g_free (id);
         }
 
 #if 0        
@@ -2313,15 +2310,11 @@ int SPM_Template_Control::choice_scansource_callback (GtkWidget *widget, SPM_Tem
                                                                sranger_common_hwi->lookup_dsp_signal_managed (si)->scale
                                                                );
 #else
-        // Template demo only
-        gchar *signal_label[] = { "PLL-Freq", "PLL-Phase", "PLL-Exec", "PLL-Ampl", "AnySignal", NULL }; // MUST MATCH CALLBACK!!!
-        gchar *signal_unit[] = { "Hz", "deg", "mV", "mV", "V", NULL };
-        double signal_scale[] = { 1., 2., 1000., 1000., 1., 0. };
         main_get_gapp()->channelselector->SetModeChannelSignal(17+channel,
-                                                               signal_label[signal],
-                                                               signal_label[signal],
-                                                               signal_unit[signal],
-                                                               signal_scale[signal]
+                                                               swappable_signals[signal].label,
+                                                               swappable_signals[signal].label,
+                                                               swappable_signals[signal].unit,
+                                                               swappable_signals[signal].scale_factor
                                                                );
 #endif
         
@@ -2666,12 +2659,9 @@ int SPM_Template_Control::lockin_runfree_callback(GtkWidget *widget, SPM_Templat
 
 
 spm_template_hwi_dev::spm_template_hwi_dev(){
-        data_z_value = 0.;
-        data_y_count = 0;
-        data_y_index = 0;
-        data_x_index = 0;
-        sim_current=0.;
-        
+
+        spm_emu = new SPM_emulator ();
+                 
 	subscan_data_y_index_offset = 0;
         ScanningFlg=0;
         KillFlg=FALSE;
@@ -2683,6 +2673,7 @@ spm_template_hwi_dev::spm_template_hwi_dev(){
 }
 
 spm_template_hwi_dev::~spm_template_hwi_dev(){
+        delete spm_emu;
 }
 
 int spm_template_hwi_dev::RotateStepwise(int exec) {
@@ -2690,14 +2681,14 @@ int spm_template_hwi_dev::RotateStepwise(int exec) {
 }
 
 gboolean spm_template_hwi_dev::SetOffset(double x, double y){
-        x0=x; y0=y; // "DAC" units
+        spm_emu->x0=x; spm_emu->y0=y; // "DAC" units
         return FALSE;
 }
 
 gboolean spm_template_hwi_dev::MovetoXY (double x, double y){
         if (!ScanningFlg){
-                data_x_index = (int)round(Nx/2 +   x/Dx);
-                data_y_index = (int)round(Ny/2 + (-y/Dy));
+                spm_emu->data_x_index = (int)round(Nx/2 +   x/Dx);
+                spm_emu->data_y_index = (int)round(Ny/2 + (-y/Dy));
         }
         // if slow, return TRUE until completed, execuite non blocking!
         // May/Should return FALSE right away if hardware is independently executing and completing the move.
@@ -2705,180 +2696,8 @@ gboolean spm_template_hwi_dev::MovetoXY (double x, double y){
         return FALSE;
 }
 
-class feature{
-public:
-        feature(double rr=400.){
-                ab = 3.5;
-                xy[0] = ab*g_random_double_range (-rr, rr);
-                xy[1] = ab*g_random_double_range (-rr, rr);
-        };
-        ~feature(){};
-
-        virtual double get_z(double x, double y, int ch) { return 0.; };
-        
-        double xy[2];
-        double ab;
-};
-
-class feature_step : public feature{
-public:
-        feature_step():feature(400.){
-                phi = g_random_double_range (25., 75.);
-                m = atan(phi/57.);
-                dz = 3.4;
-        };
-        ~feature_step(){};
-
-        virtual double get_z(double x, double y, int ch) {
-                x -= xy[0];
-                y -= xy[1];
-                return m * x > y ? dz : 0.;
-        };
-private:
-        double phi,m;
-        double dz;
-};
-
-class feature_island : public feature{
-public:
-        feature_island(double rr=1000.):feature(rr){
-                r2 = g_random_double_range (10*ab, 100*ab);
-                r2 *= r2;
-        };
-        ~feature_island(){};
-
-        virtual double get_z(double x, double y, int ch)  {
-                x -= xy[0];
-                y -= xy[1];
-                return x*x+y*y < r2 ? ab : 0.;
-        };
-private:
-        double r2;
-};
-
-class feature_blob : public feature_island{
-public:
-        feature_blob():feature_island(2000.){
-                bz=50.;
-                double rr=bz;
-                for (int i=0; i<200; ++i){
-                        xx[i] = ab*g_random_double_range (-rr, rr);
-                        yy[i] = ab*g_random_double_range (-rr, rr);
-                        r2[i] = g_random_double_range (10*ab, bz*ab);
-                        r2[i] *= r2[i];
-                }
-        };
-        ~feature_blob(){};
-
-        virtual double get_z(double x, double y, int ch)  {
-                x -= xy[0];
-                y -= xy[1];
-                double z=0.;
-                for (int i=0; i<200; ++i){
-                        z += (x-xx[i])*(x-xx[i])+(y-yy[i])*(y-yy[i]) < r2[i] ? ab : 0.;
-                }
-                return z;
-        };
-private:
-        double xx[200], yy[200];
-        double r2[200];
-        double bz;
-};
-
-class feature_molecule : public feature{
-public:
-        feature_molecule(){
-                w=10.; h=30.;
-                phi = M_PI/6.*g_random_int_range (0, 4);
-        };
-        ~feature_molecule(){};
-
-        double shape(double x, double y){
-                double zx=cos(x/w*(M_PI/2));
-                double zy=cos(y/h*(M_PI/2));
-                return 6.5*(zx*zx*zy*zy);
-        };
-        
-        virtual double get_z(double x, double y, int ch) {
-                x -= xy[0];
-                y -= xy[1];
-                double xx =  x*cos(phi)+y*sin(phi);
-                double yy = -x*sin(phi)+y*cos(phi);
-                double rx=w*w;
-                double ry=h*h;
-                return xx*xx < rx && yy*yy < ry ? shape(xx,yy) : 0.;
-        };
-private:
-        double phi;
-        double w,h;
-};
-
-class feature_lattice : public feature{
-public:
-        feature_lattice(){
-        };
-        ~feature_lattice(){};
-
-        // create dummy data 3.5Ang period
-        virtual double get_z(double x, double y, int ch) {
-                return 10.*ch + Template_ControlClass->sim_bias[0] * ab * sin(x/ab*2.*M_PI) * cos(y/ab*2.*M_PI);
-        };
-};
 
 
-double spm_template_hwi_dev::simulate_value (int xi, int yi, int ch){
-        const int N_steps=20;
-        const int N_blobs=7;
-        const int N_islands=10;
-        const int N_molecules=512;
-        const int N_bad_spots=16;
-        static feature_step stp[N_steps];
-        static feature_island il[N_islands];
-        static feature_blob blb[N_blobs];
-        static feature_molecule mol[N_molecules];
-        static feature_lattice lat;
-        static double fz = 1./main_get_gapp()->xsm->Inst->Dig2ZA(1);
-
-        double x = xi*Dx-Dx*Nx/2; // x in DAC units
-        double y = (Ny-yi-1)*Dy-Dy*Ny/2; // y in DAC units, i=0 is top line, i=Ny is bottom line
-
-        // Please Note:
-        // spm_template_hwi_pi.app->xsm->... and main_get_gapp()->xsm->...
-        // are identical pointers to the main g-application (gapp) class and it is made availabe vie the plugin descriptor
-        // in case the global gapp is not exported or used in the plugin. And either one may be used to access core settings.
-        
-        x = main_get_gapp()->xsm->Inst->Dig2XA ((long)round(x)); // convert to anstroems for model using instrument class, use Scan Gains
-        y = main_get_gapp()->xsm->Inst->Dig2YA ((long)round(y)); // convert to anstroems for model
-
-        x += 1.5*g_random_double_range (-main_get_gapp()->xsm->Inst->Dig2XA(2), main_get_gapp()->xsm->Inst->Dig2XA(2));
-        y += 1.5*g_random_double_range (-main_get_gapp()->xsm->Inst->Dig2YA(2), main_get_gapp()->xsm->Inst->Dig2YA(2));
-        
-        //g_print ("XY: %g %g  [%g %g %d %d]",x,y, Dx,Dy, xi,yi);
-        
-        invTransform (&x, &y); // apply rotation! Use invTransform for simualtion.
-        x += main_get_gapp()->xsm->Inst->Dig2X0A (x0); // use Offset Gains
-        y += main_get_gapp()->xsm->Inst->Dig2Y0A (y0);
-
-        //g_print ("XYR0: %g %g",x,y);
-
-        // use template landscape if scan loaded to CH11 !!
-        if (main_get_gapp()->xsm->scan[10]){
-                double ix,iy;
-                main_get_gapp()->xsm->scan[10]->World2Pixel  (x, y, ix,iy);
-                return main_get_gapp()->xsm->scan[10]->data.s.dz * main_get_gapp()->xsm->scan[10]->mem2d->GetDataPktInterpol (ix,iy);
-        }
-
-        double z=0.0;
-        for (int i=0; i<N_steps;     ++i) z += stp[i].get_z (x,y, ch);
-        for (int i=0; i<N_islands;   ++i) z +=  il[i].get_z (x,y, ch);
-        if (Template_ControlClass->options & 2)
-                for (int i=0; i<N_blobs;     ++i) z += blb[i].get_z (x,y, ch);
-        double zm=0;
-        if (Template_ControlClass->options & 1)
-                for (int i=0; i<N_molecules; ++i) zm += mol[i].get_z (x,y, ch);
-        
-        return fz * (z + (zm > 0. ? zm : lat.get_z (x,y, ch)));
-}
 
 // THREAD AND FIFO CONTROL STATES
 
@@ -2920,7 +2739,7 @@ gpointer ScanDataReadThread (void *ptr_sr){
 
         } else return NULL; // error, no reference
 
-	if (sr->data_y_count == 0){ // top-down
+	if (sr->spm_emu->data_y_count == 0){ // top-down
                 g_message("FifoReadThread Scanning Top-Down... %d", sr->ScanningFlg);
 		for (int yi=y0; yi < y0+ny; ++yi){ // for all lines
                         for (int dir = 0; dir < 4 && sr->ScanningFlg; ++dir){ // check for every pass -> <- 2> <2
@@ -2930,18 +2749,18 @@ gpointer ScanDataReadThread (void *ptr_sr){
                                 else
                                         for (int xi=x0; xi < x0+nx; ++xi) // all points per line
                                                 for (int ch=0; ch<sr->nsrcs_dir[dir]; ++ch){
-                                                        sr->data_x_index = xi;
-                                                        sr->data_z_value = sr->simulate_value (xi, yi, ch);
+                                                        sr->spm_emu->data_x_index = xi;
+                                                        double z = sr->spm_emu->simulate_value (sr, xi, yi, ch);
                                                         //g_print("%d",ch);
                                                         usleep (1000000 / Template_ControlClass->sim_speed[0]);
-                                                        sr->Mob_dir[dir][ch]->PutDataPkt (sr->data_z_value, xi, yi);
+                                                        sr->Mob_dir[dir][ch]->PutDataPkt (z, xi, yi);
                                                         while (sr->PauseFlg)
                                                                 usleep (1000000 / Template_ControlClass->sim_speed[0]);
                                                 }
                                 g_print("\n");
                         }
-                        sr->data_y_count = yi-y0; // completed
-                        sr->data_y_index = yi; // completed
+                        sr->spm_emu->data_y_count = yi-y0; // completed
+                        sr->spm_emu->data_y_index = yi; // completed
                 }
 	}else{ // bottom-up
 		for (int yi=y0+ny-1; yi-y0 >= 0; --yi){
@@ -2951,15 +2770,15 @@ gpointer ScanDataReadThread (void *ptr_sr){
                                 else
                                         for (int xi=x0; xi < x0+nx; ++xi)
                                                 for (int ch=0; ch<sr->nsrcs_dir[dir]; ++ch){
-                                                        sr->data_x_index = xi;
-                                                        sr->data_z_value = sr->simulate_value (xi, yi, ch);
+                                                        sr->spm_emu->data_x_index = xi;
+                                                        double z = sr->spm_emu->simulate_value (sr, xi, yi, ch);
                                                         usleep (1000000 / Template_ControlClass->sim_speed[0]);
-                                                        sr->Mob_dir[dir][ch]->PutDataPkt (sr->data_z_value, xi, yi);
+                                                        sr->Mob_dir[dir][ch]->PutDataPkt (z, xi, yi);
                                                         while (sr->PauseFlg)
                                                                 usleep (1000000 / Template_ControlClass->sim_speed[0]);
                                                 }
-                        sr->data_y_count = yi-y0; // completed
-                        sr->data_y_index = yi;
+                        sr->spm_emu->data_y_count = yi-y0; // completed
+                        sr->spm_emu->data_y_index = yi;
                 }
         }
 
@@ -3317,7 +3136,7 @@ int spm_template_hwi_dev::start_data_read (int y_start,
 #endif
                 // scan simulator
                 ScanningFlg=1; // can be used to abort data read thread. (Scan Stop forced by user)
-                data_y_count = y_start; // if > 0, scan dir is "bottom-up"
+                spm_emu->data_y_count = y_start; // if > 0, scan dir is "bottom-up"
                 data_read_thread = g_thread_new ("FifoReadThread", ScanDataReadThread, this);
                 
 	}
@@ -3415,14 +3234,14 @@ gboolean spm_template_hwi_dev::ScanLineM(int yindex, int xdir, int muxmode,
         if (ScanningFlg){ // make sure we did not got aborted and comkpleted already!
 
                 //g_print ("sranger_mk3_hwi_spm::ScanLineM(yindex=%d [fifo-y=%d], xdir=%d, ydir=%d, lssrcs=%x) checking...\n", yindex, data_y_index, xdir, ydir, muxmode);
-                y_current = data_y_index;
+                y_current = spm_emu->data_y_index;
 
-                if (ydir > 0 && yindex <= data_y_count){
-                        g_print ("sranger_mk3_hwi_spm::ScanLineM(yindex=%d [fifo-y=%d], xdir=%d, ydir=%d, lssrcs=%x) y done.\n", yindex, data_y_index, xdir, ydir, muxmode);
+                if (ydir > 0 && yindex <= spm_emu->data_y_count){
+                        g_print ("sranger_mk3_hwi_spm::ScanLineM(yindex=%d [fifo-y=%d], xdir=%d, ydir=%d, lssrcs=%x) y done.\n", yindex, spm_emu->data_y_index, xdir, ydir, muxmode);
                         return FALSE; // line completed top-down
                 }
-                if (ydir < 0 && yindex >= data_y_count){
-                        g_print ("sranger_mk3_hwi_spm::ScanLineM(yindex=%d [fifo-y=%d], xdir=%d, ydir=%d, lssrcs=%x) y done.\n", yindex, data_y_index, xdir, ydir, muxmode);
+                if (ydir < 0 && yindex >= spm_emu->data_y_count){
+                        g_print ("sranger_mk3_hwi_spm::ScanLineM(yindex=%d [fifo-y=%d], xdir=%d, ydir=%d, lssrcs=%x) y done.\n", yindex, spm_emu->data_y_index, xdir, ydir, muxmode);
                         return FALSE; // line completed bot-up
                 }
 
@@ -3457,12 +3276,12 @@ gboolean spm_template_hwi_dev::ScanLineM(int yindex, int xdir, int muxmode,
 
 gint spm_template_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2, double &val3){
         if (*property == 'z'){
-                double x = (double)(data_x_index-Nx/2)*Dx;
-                double y = (double)(Ny/2-data_y_index)*Dy;
+                double x = (double)(spm_emu->data_x_index-Nx/2)*Dx;
+                double y = (double)(Ny/2-spm_emu->data_y_index)*Dy;
                 Transform (&x, &y); // apply rotation!
-		val1 =  main_get_gapp()->xsm->Inst->VZ() * data_z_value;
-		val2 =  main_get_gapp()->xsm->Inst->VX() * (x + x0 ) * 10/32768; // assume "internal" non analog offset adding here (same gain)
-                val3 =  main_get_gapp()->xsm->Inst->VY() * (y + y0 ) * 10/32768;
+		val1 =  main_get_gapp()->xsm->Inst->VZ() * spm_emu->data_z_value;
+		val2 =  main_get_gapp()->xsm->Inst->VX() * (x + spm_emu->x0 ) * 10/32768; // assume "internal" non analog offset adding here (same gain)
+                val3 =  main_get_gapp()->xsm->Inst->VY() * (y + spm_emu->y0 ) * 10/32768;
 		return TRUE;
 	}
 
@@ -3472,12 +3291,12 @@ gint spm_template_hwi_dev::RTQuery (const gchar *property, double &val1, double 
                 // no offset simulated
 		if (main_get_gapp()->xsm->Inst->OffsetMode () == OFM_ANALOG_OFFSET_ADDING){
 			val1 =  main_get_gapp()->xsm->Inst->VZ0() * 0.;
-			val2 =  main_get_gapp()->xsm->Inst->VX0() * x0*10/32768;
-			val3 =  main_get_gapp()->xsm->Inst->VY0() * y0*10/32768;
+			val2 =  main_get_gapp()->xsm->Inst->VX0() * spm_emu->x0*10/32768;
+			val3 =  main_get_gapp()->xsm->Inst->VY0() * spm_emu->y0*10/32768;
 		} else {
 			val1 =  main_get_gapp()->xsm->Inst->VZ() * 0.;
-			val2 =  main_get_gapp()->xsm->Inst->VX() * x0*10/32768;
-			val3 =  main_get_gapp()->xsm->Inst->VY() * y0*10/32768;
+			val2 =  main_get_gapp()->xsm->Inst->VX() * spm_emu->x0*10/32768;
+			val3 =  main_get_gapp()->xsm->Inst->VY() * spm_emu->y0*10/32768;
 		}
 		
 		return TRUE;
@@ -3486,16 +3305,16 @@ gint spm_template_hwi_dev::RTQuery (const gchar *property, double &val1, double 
         // ZXY in Angstroem
         if (*property == 'R'){
                 // ZXY Volts after Piezoamp -- without analog offset -> Dig -> ZXY in Angstroem
-		val1 = main_get_gapp()->xsm->Inst->V2ZAng (main_get_gapp()->xsm->Inst->VZ() * data_z_value);
-		val2 = main_get_gapp()->xsm->Inst->V2XAng (main_get_gapp()->xsm->Inst->VX() * (double)(data_x_index-Nx/2)*Dx)*10/32768;
-                val3 = main_get_gapp()->xsm->Inst->V2YAng (main_get_gapp()->xsm->Inst->VY() * (double)(Ny/2-data_y_index/2)*Dy)*10/32768;
+		val1 = main_get_gapp()->xsm->Inst->V2ZAng (main_get_gapp()->xsm->Inst->VZ() * spm_emu->data_z_value);
+		val2 = main_get_gapp()->xsm->Inst->V2XAng (main_get_gapp()->xsm->Inst->VX() * (double)(spm_emu->data_x_index-Nx/2)*Dx)*10/32768;
+                val3 = main_get_gapp()->xsm->Inst->V2YAng (main_get_gapp()->xsm->Inst->VY() * (double)(Ny/2-spm_emu->data_y_index/2)*Dy)*10/32768;
 		return TRUE;
         }
 
         if (*property == 'f'){
                 val1 = 0.; // qf - DSPPACClass->pll.Reference[0]; // Freq Shift
-		val2 = sim_current / main_get_gapp()->xsm->Inst->nAmpere2V(1.); // actual nA reading    xxxx V  * 0.1nA/V
-		val3 = sim_current / main_get_gapp()->xsm->Inst->nAmpere2V(1.); // actual nA RMS reading    xxxx V  * 0.1nA/V -- N/A for simulation
+		val2 = spm_emu->sim_current / main_get_gapp()->xsm->Inst->nAmpere2V(1.); // actual nA reading    xxxx V  * 0.1nA/V
+		val3 = spm_emu->sim_current / main_get_gapp()->xsm->Inst->nAmpere2V(1.); // actual nA RMS reading    xxxx V  * 0.1nA/V -- N/A for simulation
 		return TRUE;
 	}
 
@@ -3533,15 +3352,15 @@ gint spm_template_hwi_dev::RTQuery (const gchar *property, double &val1, double 
 	}
 
         if (*property == 'p'){ // SCAN DATA INDEX, CENTERED range: +/- NX/2, +/-NY/2
-                val1 = (double)( data_x_index - (main_get_gapp()->xsm->data.s.nx/2 - 1) + 1);
-                val2 = (double)(-data_y_index + (main_get_gapp()->xsm->data.s.ny/2 - 1) + 1);
-                val3 = (double)data_z_value;
+                val1 = (double)( spm_emu->data_x_index - (main_get_gapp()->xsm->data.s.nx/2 - 1) + 1);
+                val2 = (double)(-spm_emu->data_y_index + (main_get_gapp()->xsm->data.s.ny/2 - 1) + 1);
+                val3 = (double)spm_emu->data_z_value;
 		return TRUE;
         }
         if (*property == 'P'){ // SCAN DATA INDEX, range: 0..NX, 0..NY
-                val1 = (double)(data_x_index);
-                val2 = (double)(data_y_index);
-                val3 = (double)data_z_value;
+                val1 = (double)(spm_emu->data_x_index);
+                val2 = (double)(spm_emu->data_y_index);
+                val3 = (double)spm_emu->data_z_value;
 		return TRUE;
         }
 //	printf ("ZXY: %g %g %g\n", val1, val2, val3);

@@ -111,9 +111,11 @@ class XSM_Hardware{
 
 	/* set scan step sizes, if dy is 0 or not given dy=dx is assumed */
 	virtual void SetDxDy(double dx, double dy=0.);
+	virtual void GetDxDy(double &dx, double &dy) { dx = Dx, dy = Dy; };
 
 	/* set scan dimensions, if ny not given or 0 ny=nx is assumed */
 	virtual void SetNxNy(long nx, long ny=0L);
+	virtual void GetNxNy(long &nx, long &ny) { nx = Nx, ny = Ny; };
 
 	/* set scan angle in degree, this affects the scan-coordinate system */
 	virtual void SetAlpha(double alpha);
@@ -171,9 +173,10 @@ class XSM_Hardware{
 	double sim_xyz0[3];
 	gint   sim_mode;
 
- protected:
+ public:
 	long   XAnz, Nx, Ny;
 	double rx, ry, Dx, Dy;
+ protected:
 	double Alpha;
 	double rotmxx,rotmxy,rotmyx,rotmyy,rotoffx,rotoffy;
 
