@@ -37,8 +37,17 @@
 #define SERVO_CP    1
 #define SERVO_CI    2
 
-#define NUM_SIGNALS 99
 
+typedef struct {
+        guint32     msklookup;   // signal source mask, or signal id for swappable
+        const gchar *lablookup;  // label for signal | NULL for flex signal life swappable
+        const gchar *description; // signal description
+        const gchar *unit;  // gxsm signal unit symbolic id
+        double scale_factor; // multiplier for raw value to unit conversion
+} SOURCE_SIGNAL_DEF;
+
+
+#define NUM_SIGNALS 99
 #define NUM_SIGNALS_UNIVERSAL 200
 
 typedef struct { gint32 id; const gchar* name; guint32 sigptr; } MOD_INPUT;

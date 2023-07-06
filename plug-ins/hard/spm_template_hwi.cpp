@@ -97,6 +97,36 @@ extern "C++" {
         extern GxsmPlugin spm_template_hwi_pi;
 }
 
+SOURCE_SIGNAL_DEF source_signals[] = {
+	{ 0x000010, "ADC0-I", " ", "nA", 1.0 },
+        { 0x000020, "ADC1", " ", "V", 1.0 },
+        { 0x000040, "ADC2", " ", "V", 1.0 },
+        { 0x000080, "ADC3", " ", "V", 1.0 },
+        { 0x000100, "ADC4", " ", "V", 1.0 },
+        { 0x000200, "ADC5", " ", "V", 1.0 },
+        { 0x000400, "ADC6", " ", "V", 1.0 },
+        { 0x000800, "ADC7", " ", "V", 1.0 },
+        { 0x000008, "LockIn0", " ", "V", 1.0 },
+        { 0x001000, NULL, " ", "V", 1.0 }, // ** swappable **,
+        { 0x002000, NULL, " ", "V", 1.0 }, // ** swappable **,
+        { 0x004000, NULL, " ", "V", 1.0 }, // ** swappable **,
+        { 0x008000, NULL, " ", "V", 1.0 }, // ** swappable **,
+        { 0x0100000, "Time", " ", "s", 1.0 },
+        { 0x0000001, "Z-mon", " ", "AA", 1.0 },
+        { 0x0000002, "Bias-mon", " ", "V", 1.0 },
+        { 0x1000000, "SEC", " ", "#", 1.0 },
+        { 0, NULL, NULL, NULL, 0.0 }
+};
+
+SOURCE_SIGNAL_DEF swappable_signals[] = {
+        { 0, "LockIn-X", " ", "V", 1.0 },
+        { 0, "LockIn-Y", " ", "V", 1.0 },
+	{ 0, "PLL-Freq", " ", "Hz", 1.0 },
+	{ 0, "PLL-Phase", " ", "deg", 1.0 },
+	{ 0, "PLL-Exec", " ", "mV", 1000.0 },
+	{ 0, "PLL-Ampl", " ", "mV", 1000.0 },
+        { 0, NULL, NULL, NULL, 0.0 }
+};
 
 MOD_INPUT mod_input_list[] = {
         //## [ MODULE_SIGNAL_INPUT_ID, name, actual hooked signal address ]
