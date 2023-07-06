@@ -1,0 +1,260 @@
+/* -*- Mode: C++; indent-tabs-mode: nil; c-basic-offset: 8 c-style: "K&R" -*- */
+
+/* Gxsm - Gnome X Scanning Microscopy
+ * universal STM/AFM/SARLS/SPALEED/... controlling and
+ * data analysis software
+ * 
+ * Copyright (C) 1999,2000,2001,2002,2003 Percy Zahl
+ *
+ * Authors: Percy Zahl <zahl@users.sf.net>
+ * additional features: Andreas Klust <klust@users.sf.net>
+ * WWW Home: http://gxsm.sf.net
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
+ */
+
+
+#ifndef __SPM_TEMPLATE_HWI_STRUCTS_H
+#define __SPM_TEMPLATE_HWI_STRUCTS_H
+
+#define REMOTE_PREFIX "dsp-"
+
+#define SERVO_SETPT 0
+#define SERVO_CP    1
+#define SERVO_CI    2
+
+// NEW: generalized signals
+
+typedef struct {
+        guint32     mask;   // signal source mask, or signal id for swappable
+        const gchar *label;  // label for signal | NULL for flex signal life swappable
+        const gchar *description; // signal description
+        const gchar *unit;  // gxsm signal unit symbolic id
+        double scale_factor; // multiplier for raw value to unit conversion
+} SOURCE_SIGNAL_DEF;
+
+
+// borrowed from MK3 DSP... TDB
+
+#define NUM_SIGNALS 99
+#define NUM_SIGNALS_UNIVERSAL 200
+
+typedef struct { gint32 id; const gchar* name; guint32 sigptr; } MOD_INPUT;
+
+/**
+# * Signal Input ID's for safe DSP based signal pointer adjustment methods
+#**/
+
+#define DSP_SIGNAL_MONITOR_INPUT_BASE_ID   0x0000
+
+#define DSP_SIGNAL_BASE_BLOCK_A_ID         0x1000
+#define DSP_SIGNAL_Z_SERVO_INPUT_ID       (DSP_SIGNAL_BASE_BLOCK_A_ID+1)
+#define DSP_SIGNAL_M_SERVO_INPUT_ID       (DSP_SIGNAL_Z_SERVO_INPUT_ID+1)
+#define DSP_SIGNAL_MIXER0_INPUT_ID        (DSP_SIGNAL_M_SERVO_INPUT_ID+1)
+#define DSP_SIGNAL_MIXER1_INPUT_ID        (DSP_SIGNAL_MIXER0_INPUT_ID+1)
+#define DSP_SIGNAL_MIXER2_INPUT_ID        (DSP_SIGNAL_MIXER1_INPUT_ID+1)
+#define DSP_SIGNAL_MIXER3_INPUT_ID        (DSP_SIGNAL_MIXER2_INPUT_ID+1)
+#define DSP_SIGNAL_DIFF_IN0_ID            (DSP_SIGNAL_MIXER3_INPUT_ID+1)
+#define DSP_SIGNAL_DIFF_IN1_ID            (DSP_SIGNAL_DIFF_IN0_ID+1)
+#define DSP_SIGNAL_DIFF_IN2_ID            (DSP_SIGNAL_DIFF_IN1_ID+1)
+#define DSP_SIGNAL_DIFF_IN3_ID            (DSP_SIGNAL_DIFF_IN2_ID+1)
+#define DSP_SIGNAL_SCAN_CHANNEL_MAP0_ID   (DSP_SIGNAL_DIFF_IN3_ID+1)
+#define DSP_SIGNAL_SCAN_CHANNEL_MAP1_ID   (DSP_SIGNAL_SCAN_CHANNEL_MAP0_ID+1)
+#define DSP_SIGNAL_SCAN_CHANNEL_MAP2_ID   (DSP_SIGNAL_SCAN_CHANNEL_MAP1_ID+1)
+#define DSP_SIGNAL_SCAN_CHANNEL_MAP3_ID   (DSP_SIGNAL_SCAN_CHANNEL_MAP2_ID+1)
+
+#define DSP_SIGNAL_BASE_BLOCK_B_ID         0x2000
+#define DSP_SIGNAL_LOCKIN_A_INPUT_ID      (DSP_SIGNAL_BASE_BLOCK_B_ID+1)
+#define DSP_SIGNAL_LOCKIN_B_INPUT_ID      (DSP_SIGNAL_LOCKIN_A_INPUT_ID+1)
+#define DSP_SIGNAL_VECPROBE0_INPUT_ID     (DSP_SIGNAL_LOCKIN_B_INPUT_ID+1)
+#define DSP_SIGNAL_VECPROBE1_INPUT_ID     (DSP_SIGNAL_VECPROBE0_INPUT_ID+1)
+#define DSP_SIGNAL_VECPROBE2_INPUT_ID     (DSP_SIGNAL_VECPROBE1_INPUT_ID+1)
+#define DSP_SIGNAL_VECPROBE3_INPUT_ID     (DSP_SIGNAL_VECPROBE2_INPUT_ID+1)
+#define DSP_SIGNAL_VECPROBE0_CONTROL_ID   (DSP_SIGNAL_VECPROBE3_INPUT_ID+1)
+#define DSP_SIGNAL_VECPROBE1_CONTROL_ID   (DSP_SIGNAL_VECPROBE0_CONTROL_ID+1)
+#define DSP_SIGNAL_VECPROBE2_CONTROL_ID   (DSP_SIGNAL_VECPROBE1_CONTROL_ID+1)
+#define DSP_SIGNAL_VECPROBE3_CONTROL_ID   (DSP_SIGNAL_VECPROBE2_CONTROL_ID+1)
+#define DSP_SIGNAL_VECPROBE_TRIGGER_INPUT_ID (DSP_SIGNAL_VECPROBE3_CONTROL_ID+1)
+#define DSP_SIGNAL_VECPROBE_LIMITER_INPUT_ID (DSP_SIGNAL_VECPROBE_TRIGGER_INPUT_ID+1)
+#define DSP_SIGNAL_VECPROBE_LIMITER_UP_INPUT_ID (DSP_SIGNAL_VECPROBE_LIMITER_INPUT_ID+1)
+#define DSP_SIGNAL_VECPROBE_LIMITER_DN_INPUT_ID (DSP_SIGNAL_VECPROBE_LIMITER_UP_INPUT_ID+1)
+#define DSP_SIGNAL_VECPROBE_TRACKER_INPUT_ID (DSP_SIGNAL_VECPROBE_LIMITER_DN_INPUT_ID+1)
+
+#define DSP_SIGNAL_BASE_BLOCK_C_ID             0x3000
+#define DSP_SIGNAL_OUTMIX_CH0_INPUT_ID        (DSP_SIGNAL_BASE_BLOCK_C_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH0_ADD_A_INPUT_ID  (DSP_SIGNAL_OUTMIX_CH0_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH0_SUB_B_INPUT_ID  (DSP_SIGNAL_OUTMIX_CH0_ADD_A_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH0_SMAC_A_INPUT_ID (DSP_SIGNAL_OUTMIX_CH0_SUB_B_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH0_SMAC_B_INPUT_ID (DSP_SIGNAL_OUTMIX_CH0_SMAC_A_INPUT_ID+1)
+
+#define DSP_SIGNAL_OUTMIX_CH1_INPUT_ID        (DSP_SIGNAL_OUTMIX_CH0_SMAC_B_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH1_ADD_A_INPUT_ID  (DSP_SIGNAL_OUTMIX_CH1_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH1_SUB_B_INPUT_ID  (DSP_SIGNAL_OUTMIX_CH1_ADD_A_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH1_SMAC_A_INPUT_ID (DSP_SIGNAL_OUTMIX_CH1_SUB_B_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH1_SMAC_B_INPUT_ID (DSP_SIGNAL_OUTMIX_CH1_SMAC_A_INPUT_ID+1)
+
+#define DSP_SIGNAL_OUTMIX_CH2_INPUT_ID        (DSP_SIGNAL_OUTMIX_CH1_SMAC_B_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH2_ADD_A_INPUT_ID  (DSP_SIGNAL_OUTMIX_CH2_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH2_SUB_B_INPUT_ID  (DSP_SIGNAL_OUTMIX_CH2_ADD_A_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH2_SMAC_A_INPUT_ID (DSP_SIGNAL_OUTMIX_CH2_SUB_B_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH2_SMAC_B_INPUT_ID (DSP_SIGNAL_OUTMIX_CH2_SMAC_A_INPUT_ID+1)
+
+#define DSP_SIGNAL_OUTMIX_CH3_INPUT_ID        (DSP_SIGNAL_OUTMIX_CH2_SMAC_B_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH3_ADD_A_INPUT_ID  (DSP_SIGNAL_OUTMIX_CH3_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH3_SUB_B_INPUT_ID  (DSP_SIGNAL_OUTMIX_CH3_ADD_A_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH3_SMAC_A_INPUT_ID (DSP_SIGNAL_OUTMIX_CH3_SUB_B_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH3_SMAC_B_INPUT_ID (DSP_SIGNAL_OUTMIX_CH3_SMAC_A_INPUT_ID+1)
+
+#define DSP_SIGNAL_OUTMIX_CH4_INPUT_ID        (DSP_SIGNAL_OUTMIX_CH3_SMAC_B_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH4_ADD_A_INPUT_ID  (DSP_SIGNAL_OUTMIX_CH4_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH4_SUB_B_INPUT_ID  (DSP_SIGNAL_OUTMIX_CH4_ADD_A_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH4_SMAC_A_INPUT_ID (DSP_SIGNAL_OUTMIX_CH4_SUB_B_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH4_SMAC_B_INPUT_ID (DSP_SIGNAL_OUTMIX_CH4_SMAC_A_INPUT_ID+1)
+
+#define DSP_SIGNAL_OUTMIX_CH5_INPUT_ID        (DSP_SIGNAL_OUTMIX_CH4_SMAC_B_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH5_ADD_A_INPUT_ID  (DSP_SIGNAL_OUTMIX_CH5_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH5_SUB_B_INPUT_ID  (DSP_SIGNAL_OUTMIX_CH5_ADD_A_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH5_SMAC_A_INPUT_ID (DSP_SIGNAL_OUTMIX_CH5_SUB_B_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH5_SMAC_B_INPUT_ID (DSP_SIGNAL_OUTMIX_CH5_SMAC_A_INPUT_ID+1)
+
+#define DSP_SIGNAL_OUTMIX_CH6_INPUT_ID        (DSP_SIGNAL_OUTMIX_CH5_SMAC_B_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH6_ADD_A_INPUT_ID  (DSP_SIGNAL_OUTMIX_CH6_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH6_SUB_B_INPUT_ID  (DSP_SIGNAL_OUTMIX_CH6_ADD_A_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH6_SMAC_A_INPUT_ID (DSP_SIGNAL_OUTMIX_CH6_SUB_B_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH6_SMAC_B_INPUT_ID (DSP_SIGNAL_OUTMIX_CH6_SMAC_A_INPUT_ID+1)
+
+#define DSP_SIGNAL_OUTMIX_CH7_INPUT_ID        (DSP_SIGNAL_OUTMIX_CH6_SMAC_B_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH7_ADD_A_INPUT_ID  (DSP_SIGNAL_OUTMIX_CH7_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH7_SUB_B_INPUT_ID  (DSP_SIGNAL_OUTMIX_CH7_ADD_A_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH7_SMAC_A_INPUT_ID (DSP_SIGNAL_OUTMIX_CH7_SUB_B_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH7_SMAC_B_INPUT_ID (DSP_SIGNAL_OUTMIX_CH7_SMAC_A_INPUT_ID+1)
+
+#define DSP_SIGNAL_OUTMIX_CH8_INPUT_ID        (DSP_SIGNAL_OUTMIX_CH7_SMAC_B_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH8_ADD_A_INPUT_ID  (DSP_SIGNAL_OUTMIX_CH8_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH9_INPUT_ID        (DSP_SIGNAL_OUTMIX_CH8_ADD_A_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH9_ADD_A_INPUT_ID  (DSP_SIGNAL_OUTMIX_CH9_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH10_INPUT_ID       (DSP_SIGNAL_OUTMIX_CH9_ADD_A_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH10_ADD_A_INPUT_ID (DSP_SIGNAL_OUTMIX_CH10_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH11_INPUT_ID       (DSP_SIGNAL_OUTMIX_CH10_ADD_A_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH11_ADD_A_INPUT_ID (DSP_SIGNAL_OUTMIX_CH11_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH12_INPUT_ID       (DSP_SIGNAL_OUTMIX_CH11_ADD_A_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH12_ADD_A_INPUT_ID (DSP_SIGNAL_OUTMIX_CH12_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH13_INPUT_ID       (DSP_SIGNAL_OUTMIX_CH12_ADD_A_INPUT_ID+1)
+#define DSP_SIGNAL_OUTMIX_CH13_ADD_A_INPUT_ID (DSP_SIGNAL_OUTMIX_CH13_INPUT_ID+1)
+
+#define DSP_SIGNAL_BASE_BLOCK_D_ID             0x4000
+#define DSP_SIGNAL_ANALOG_AVG_INPUT_ID        (DSP_SIGNAL_BASE_BLOCK_D_ID+1)
+#define DSP_SIGNAL_SCOPE_SIGNAL1_INPUT_ID     (DSP_SIGNAL_ANALOG_AVG_INPUT_ID+1)
+#define DSP_SIGNAL_SCOPE_SIGNAL2_INPUT_ID     (DSP_SIGNAL_SCOPE_SIGNAL1_INPUT_ID+1)
+#define DSP_SIGNAL_SCO1_INPUT_ID               (DSP_SIGNAL_SCOPE_SIGNAL2_INPUT_ID+1)
+#define DSP_SIGNAL_SCO1_AMPLITUDE_INPUT_ID     (DSP_SIGNAL_SCO1_INPUT_ID+1)
+#define DSP_SIGNAL_SCO2_INPUT_ID               (DSP_SIGNAL_SCO1_AMPLITUDE_INPUT_ID+1)
+#define DSP_SIGNAL_SCO2_AMPLITUDE_INPUT_ID     (DSP_SIGNAL_SCO2_INPUT_ID+1)
+
+#define LAST_INPUT_ID                          DSP_SIGNAL_SCO2_AMPLITUDE_INPUT_ID
+
+#define SIGNAL_INPUT_DISABLED -10
+
+
+
+typedef struct{
+	guint32 p;  // pointer in usigned int (32 bit)
+	guint32 dim;
+	const gchar *label;
+	const gchar *unit;
+	double scale; // factor to multipy with to get base unit value representation
+	const gchar *module;
+	int index; // actual vector index
+} DSP_SIG_UNIVERSAL;
+
+typedef struct{
+	gint32    mindex;           /**< monitor signal index to be set to adress by signald_id -- 0...NUM_MONITOR_SIGNALS-1, or any valid MODULE_SIGNAL_ID.  -1: ready/no action =WO */
+	gint32    signal_id;        /**< valid signal identification -- 0...#siganls configured in signal list OR set this to -1 to query signal at mindex  =WO */
+	guint32   act_address_input_set;  /**RO (W=0 OK)  verification of actual action taken -- actual input addresss of pointer manipulated =WO */
+	guint32   act_address_signal;     /**RO (W=0 OK)  verification of actual signal address configure for input =WO */
+} SIGNAL_MANAGE;
+
+
+typedef enum { PV_MODE_NONE, PV_MODE_IV, PV_MODE_FZ, PV_MODE_PL, PV_MODE_LP, PV_MODE_SP, PV_MODE_TS, PV_MODE_GVP, PV_MODE_AC, PV_MODE_AX, PV_MODE_TK, PV_MODE_ABORT } pv_mode;
+typedef enum { MAKE_VEC_FLAG_NORMAL=0, MAKE_VEC_FLAG_VHOLD=1, MAKE_VEC_FLAG_RAMP=2, MAKE_VEC_FLAG_END=4 } make_vector_flags;
+
+#define FLAG_FB_ON       0x01 // FB on
+#define FLAG_DUAL        0x02 // Dual Data
+#define FLAG_SHOW_RAMP   0x04 // show ramp data
+#define FLAG_INTEGRATE   0x08 // integrate and normalize date of all AIC data point inbetween
+
+#define FLAG_AUTO_SAVE   0x01 // auto save
+#define FLAG_AUTO_PLOT   0x02 // auto plot
+#define FLAG_AUTO_GLOCK  0x04 // auto graph lock
+#define FLAG_AUTO_RUN_INITSCRIPT  0x08 // auto run init script
+
+
+/** VP option masks ** MUST MATCH DSP DEFINITIONS ** **/
+#define VP_FEEDBACK_HOLD 0x01
+#define VP_AIC_INTEGRATE 0x02
+#define VP_TRACK_REF     0x04
+#define VP_TRACK_UP      0x08
+#define VP_TRACK_DN      0x10
+#define VP_TRACK_FIN     0x20
+#define VP_TRACK_SRC     0xC0
+#define VP_LIMITER       0x300 // Limiter ON/OFF flag mask
+#define VP_LIMITER_UP    0x100 // Limit if > value
+#define VP_LIMITER_DN    0x200 // Limit if < value
+#define VP_LIMIT_SRC     0xC0  // Limiter "Value" source code bit mask 0x40+0x80  00: Z (IN0), 01: I (IN1), 10: (IN2), 11: (IN3) // MK2!, Signal Mk3
+#define VP_GPIO_MSK        0x00ff0000 // GPIO 8bit mask (lower only)
+#define VP_TRIGGER_P       0x01000000 // GPIO/signal trigger flag on pos edge -- release VP on "data & mask" or time end/out of section 
+#define VP_TRIGGER_N       0x02000000 // GPIO/signal trigger flag on neg edge -- release VP on "data & mask" or time end/out of section 
+#define VP_GPIO_SET        0x04000000 // GPIO set/update data -- once per section via statemachine, using idle cycle time for slow IO!!
+#define VP_GPIO_READ       0x08000000 // GPIO set/update data -- once per section via statemachine, using idle cycle time for slow IO!!
+#define VP_RESET_COUNTER_0 0x10000000
+#define VP_RESET_COUNTER_1 0x20000000
+#define VP_NODATA_RESERVED 0x80000000
+
+
+/**
+ * Vector Probe Vector
+ */
+typedef struct{
+	gint32    n;             /**< 0: number of steps to do =WR */
+	gint32    dnx;           /**< 2: distance of samples in steps =WR */
+	guint32   srcs;          /**< 4: SRCS source channel coding =WR */
+	guint32   options;       /**< 6: Options, Dig IO, ... not yet all defined =WR */
+	guint32   ptr_fb;        /**< 8: optional pointer to new feedback data struct first 3 values of SPM_PI_FEEDBACK =WR */
+	guint32   repetitions;   /**< 9: numer of repetitions =WR */
+	guint32   i,j;           /**<10,11: loop counter(s) =RO/Zero */
+	gint32    ptr_next;      /**<12: next vector (relative to VPC) until --rep_index > 0 and ptr_next != 0 =WR */
+        gint32    ptr_final;     /**<13: next vector (relative to VPC), =1 for next Vector in VP, if 0, probe is done =WR */
+	gint32    f_du;          /**<14: U (bias) stepwidth (32bit) =WR */
+	gint32    f_dx;          /**<16: X stepwidth (32bit) =WR */
+	gint32    f_dy;          /**<18: Y stepwidth (32bit) =WR */
+	gint32    f_dz;          /**<20: Z stepwidth (32bit) =WR */
+	gint32    f_dx0;         /**<22: X0 (offset) stepwidth (32bit) =WR */
+	gint32    f_dy0;         /**<24: Y0 (offset) stepwidth (32bit) =WR */
+	gint32    f_dphi;        /**<26: Phase stepwidth (32bit) +/-15.16Degree =WR */
+} PROBE_VECTOR_GENERIC;
+
+
+#define MM_OFF     0x00  // ------
+#define MM_ON      0x01  // ON/OFF
+#define MM_LOG     0x02  // LOG/LIN
+#define MM_LV_FUZZY   0x04  // FUZZY-LV/NORMAL
+#define MM_CZ_FUZZY   0x08  // FUZZY-CZ/NORMAL
+#define MM_NEG     0x10  // NEGATE SOURCE (INPUT)
+
+// GUI limit
+#define N_GVP_VECTORS 25 //  vectors max total, need a few extra for controls and finish.
+
+#endif
+

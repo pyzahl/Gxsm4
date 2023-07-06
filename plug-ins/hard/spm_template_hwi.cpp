@@ -1345,10 +1345,6 @@ void SPM_Template_Control::create_folder (){
         gtk_widget_show (notebook);
         gtk_grid_attach (GTK_GRID (v_grid), notebook, 1,1, 1,1);
 
-        const char *TabNames[] = { "sim-STM", "sim-AFM", "sim-Config", NULL};
-        const char *tab_key[] = { "template-tab-stm", "template-tab-afm", "template-tab-config", NULL};
-        const char *tab_key_prefix[] = { "template-stm-", "template-afm-", "template-config-", NULL};
-        int i,itab;
 
         bp = new GUI_Builder (v_grid);
         bp->set_error_text ("Invalid Value.");
@@ -2045,7 +2041,7 @@ void SPM_Template_Control::create_folder (){
         PI_DEBUG (DBG_L4, "DSPC----TAB-GRAPHS TOGGELS  ------------------------------- ");
 
         gint y = bp->y;
-	for (i=0; msklookup[i] >= 0 && lablookup[i]; ++i) {
+	for (int i=0; msklookup[i] >= 0 && lablookup[i]; ++i) {
                 PI_DEBUG (DBG_L4, "GRAPHS*** i=" << i << " " << lablookup[i]);
 		if (!msklookup[i]) 
 			continue;
@@ -2153,15 +2149,17 @@ void SPM_Template_Control::create_folder (){
         bp->pop_grid ();
 
         
+        // ========================================
+        // Simulator Only
 
-        
+        const char *TabNames[] = { "sim-STM", "sim-AFM", "sim-Config", NULL};
+        const char *tab_key[] = { "template-tab-stm", "template-tab-afm", "template-tab-config", NULL};
+        const char *tab_key_prefix[] = { "template-stm-", "template-afm-", "template-config-", NULL};
 
-        
-        for (i=0; TabNames[i]; ++i){                
+        for (int i=0; TabNames[i]; ++i){                
                 Gtk_EntryControl *ec_axis[3];
 
                 bp->start_notebook_tab (notebook, TabNames[i], tab_key[i], hwi_settings);
-                itab++;
                         
                 bp->set_pcs_remote_prefix (tab_key_prefix[i]);
 

@@ -9,6 +9,7 @@ plugin_list = [
     { 'name': 'spm_template_hwi',
       'sources': [ 'spm_template_hwi.cpp',
 		   'spm_template_hwi_eventhandling.cpp',
+		   'spm_template_hwi_vectorgen.cpp',
 		   'spm_template_hwi_emulator.cpp' ],
       'gschemas': [ 'org.gnome.gxsm4.pcsadjustments.plugin-libspm-template-hwi.gschema.xml',
                     'org.gnome.gxsm4.pcs.plugin-libspm-template-hwi.gschema.xml',
