@@ -861,6 +861,6 @@ void SPM_Template_Control::read_dsp_vector (int index){
 
 void SPM_Template_Control::write_dsp_abort_probe (){
         if (!spm_template_hwi) return; 
-	spm_template_hwi->spm_emu->abort_program ();
+	spm_template_hwi->spm_emu->abort_vector_program ();
 }
 

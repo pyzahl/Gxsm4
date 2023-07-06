@@ -165,6 +165,11 @@ public:
 // ========================================
 
 #define MAX_PROGRAM_VECTORS 50
+#define i_X 0
+#define i_Y 1
+#define i_Z 2
+
+#define AIC_IN(N) (N)
 
 class SPM_emulator{
 public:
@@ -175,15 +180,24 @@ public:
 		data_y_index = 0;
 		data_x_index = 0;
 
-		sim_current  = 0.;
-		sim_bias     = 0.;
-		sim_z        = 0.;
-		data_z_value  = 0.;
+		tip_current  = 0.;
+		sample_bias  = 0.;
+		data_z_value = 0.;
 
+		vp_bias = 0.0;
+		vp_zpos = 0.0;
+		
+		move_xyz_vec[0] = move_xyz_vec[1] = move_xyz_vec[2] = 0.;
+		scan_xyz_vec[0] = scan_xyz_vec[1] = scan_xyz_vec[2] = 0.;
+		scan_xy_r_vec[0]= scan_xy_r_vec[1]= scan_xy_r_vec[2]= 0.;
+		
+		vector = NULL;
 		frq_ref = 1000; // real DSP: more 75000 or 150000 Hz
 	};
         ~SPM_emulator(){};
-        
+
+	void set_bias (double bias) { sample_bias = bias; };
+	
         double simulate_value (XSM_Hardware *xsmhwi, int xi, int yi, int ch);
 
 	int read_program_vector(int i, PROBE_VECTOR_GENERIC *v){
@@ -242,15 +256,45 @@ public:
 
 		return -1;
 	};
-	int abort_program(){
+	int abort_vector_program(){
 		return 0;
 	};
 
+	execute_vector_program(){
+	};
+
+	void vp_init ();
+	void vp_stop ();
+	void vp_append_header_and_positionvector ();
+	void vp_add_vector ();
+	void vp_clear_data_srcs ();
+	void vp_integrate_data_srcs ();
+	int  vp_push_vector_normalized();
+	void vp_store_data_srcs ();
+	void vp_buffer_section_end_data_srcs();
+	void vp_next_section ();
+	void vp_next_track_vector();
+	int  vp_wait_for_trigger ();
+	void vp_process_next_section ();
+	void GPIO_check();
+	void vp_signal_limiter_test();
+	void vp_run ();
+
+	int PRB_section_count;
+	int ix,iix,lix;
+	
         double x0,y0; // offset
-        double sim_bias;
-        double sim_current;
-        double sim_z;
+        double sample_bias;
+        double tip_current;
         double data_z_value;
+
+	double vp_bias;
+	double vp_zpos;
+	int    vp_time;
+
+	double move_xyz_vec[3];
+	double scan_xyz_vec[3];
+	double scan_xy_r_vec[3];
 
         // scan engine
         int data_y_count;
@@ -259,9 +303,13 @@ public:
 
 	double frq_ref;
 	
+private:
 	PROBE_VECTOR_GENERIC vector_program[MAX_PROGRAM_VECTORS];
+	PROBE_VECTOR_GENERIC *vector;
 
-	
+	double ADC_data_sum[9];
+	int    ADC_num_samples;
+	int VP_sec_int0, VP_sec_int1, VP_sec_count;
 };
 
 
