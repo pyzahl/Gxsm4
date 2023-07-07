@@ -8,6 +8,7 @@ plugin_list = [
 		    'org.gnome.gxsm4.hwi.spm-sim-control.gschema.xml'] },
     { 'name': 'spm_template_hwi',
       'sources': [ 'spm_template_hwi.cpp',
+		   'spm_template_hwi_dev.cpp',
 		   'spm_template_hwi_eventhandling.cpp',
 		   'spm_template_hwi_vectorgen.cpp',
 		   'spm_template_hwi_emulator.cpp' ],
