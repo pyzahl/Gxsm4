@@ -126,6 +126,8 @@ spm_template_hwi_dev::spm_template_hwi_dev(){
 
         spm_emu = new SPM_emulator ();
                  
+	probe_fifo_thread_active=0;
+
 	subscan_data_y_index_offset = 0;
         ScanningFlg=0;
         KillFlg=FALSE;
@@ -268,8 +270,10 @@ gpointer ScanDataReadThread (void *ptr_sr){
 gpointer ProbeDataReadThread (void *ptr_sr){
 	int finish_flag=FALSE;
 	spm_template_hwi_dev *sr = (spm_template_hwi_dev*)ptr_sr;
+        g_message("ProbeFifoReadThread ENTER");
 
-	if (sr->probe_fifo_thread_active){
+	if (sr->probe_fifo_thread_active > 0){
+                g_message("ProbeFifoReadThread ERROR: Attempt to start again while in progress! [%d]", sr->probe_fifo_thread_active );
 		//LOGMSGS ( "ProbeFifoReadThread ERROR: Attempt to start again while in progress! [#" << sr->probe_fifo_thread_active << "]" << std::endl);
 		return NULL;
 	}
@@ -280,12 +284,14 @@ gpointer ProbeDataReadThread (void *ptr_sr){
 	if (Template_ControlClass->probe_trigger_single_shot)
 		 finish_flag=TRUE;
 
+        g_message("ProbeFifoReadThread ** starting processing loop ** FF=%s", finish_flag?"True":"False");
 	while (sr->is_scanning () || finish_flag){ // while scanning (raster mode) or until single shot probe is finished
                 if (Template_ControlClass->current_auto_flags & FLAG_AUTO_PLOT)
                         Template_ControlClass->Probing_graph_update_thread_safe ();
 
                 if (sr->ReadProbeData ()){ // True when finished
                 
+                        g_message("ProbeFifoReadThread ** Finished ** FF=%s", finish_flag?"True":"False");
                         if (finish_flag){
                                 if (Template_ControlClass->current_auto_flags & FLAG_AUTO_PLOT)
                                         Template_ControlClass->Probing_graph_update_thread_safe (1);
@@ -303,6 +309,8 @@ gpointer ProbeDataReadThread (void *ptr_sr){
 	--sr->probe_fifo_thread_active;
 	Template_ControlClass->probe_ready = TRUE;
 
+        g_message("ProbeFifoReadThread EXIT");
+
 	return NULL;
 }
 
@@ -317,7 +325,7 @@ int spm_template_hwi_dev::ReadProbeData (int dspdev, int control){
 	static int next_header = 0;
 	static int number_channels = 0;
         static int number_points = 0;
-	static int data_index = 0;
+	static int point_index = 0;
 	static int end_read = 0;
 	static int data_block_size=0;
 	static int need_fct = FR_YES;  // need fifo control
@@ -341,12 +349,13 @@ int spm_template_hwi_dev::ReadProbeData (int dspdev, int control){
 
 	case FR_INIT:
 
+                g_message ("VP: init");
                 spm_emu->vp_init (); // vectors should be written by now!
                 
                 last = 0;
 		next_header = 0;
 		number_channels = 0;
-		data_index = 0;
+		point_index = 0;
 		last_read_end = 0;
 
 		need_fct  = FR_YES; // Fifo Control
@@ -383,15 +392,18 @@ int spm_template_hwi_dev::ReadProbeData (int dspdev, int control){
 	if (need_hdr){ // we have enough data if control gets here!
 		LOGMSGS ( "FR::NEED_HDR" << std::endl);
 
+                g_message ("VP: section header reading");
                 if (spm_emu->vp_header_current.srcs){ // should be valid now!
                         // copy header to pv[] as assigned below
 
                         // set vector of expanded data array representation, section start
                         number_points = spm_emu->vp_header_current.n;
 
-                        if (!number_points) // finished?
+                        if (!number_points){ // finished?
+                                g_message ("VP: finished");
                                 return RET_FR_FCT_END;
-                          
+                        }
+                        
                         pv[0] = spm_emu->vp_header_current.time;
                         pv[1] = spm_emu->vp_header_current.move_xyz[i_X];
                         pv[2] = spm_emu->vp_header_current.move_xyz[i_Y];
@@ -413,8 +425,9 @@ int spm_template_hwi_dev::ReadProbeData (int dspdev, int control){
                                         ++number_channels;
                                 }
                         }
-                data_index = 0;
+                point_index = 0;
 		need_hdr = FR_NO;
+                Template_ControlClass->set_probevector (pv);
                 } else {
                         g_warning ("VP READ ERROR: no header.");
                         return RET_FR_WAIT;
@@ -422,12 +435,13 @@ int spm_template_hwi_dev::ReadProbeData (int dspdev, int control){
                 
         }
 
-        Template_ControlClass->set_probevector (pv);
-
-        for (int point=0; point < number_points; ++point){
+        int ix=0;
+        g_message ("VP: section: %d", spm_emu->vp_header_current.section);
+        for (; point_index < number_points;){
                 // template code --------
-                int ix = spm_emu->vp_exec_callback (); // run one VP step... this generates the next data set, read to transfer from spm_emu->vp_data_set[]
-                g_message ("VP: %d", ix);
+                ix = spm_emu->vp_exec_callback (); // run one VP step... this generates the next data set, read to transfer from spm_emu->vp_data_set[]
+                g_message ("VP: %d %d", ix, point_index);
+                ++point_index;
                 // ----------------------
                 
                 // expand data from stream
@@ -439,13 +453,17 @@ int spm_template_hwi_dev::ReadProbeData (int dspdev, int control){
 		// add vector and data to expanded data array representation
                 Template_ControlClass->add_probevector ();
                 Template_ControlClass->add_probedata (dataexpanded);
+
+                if (point_index % 10 == 0) break; // for graph updates
 	}
 
-	LOGMSGS ( "FR:FIFO NEED FCT" << std::endl);
-	need_fct = FR_YES;
-        need_hdr = FR_YES;
-
-	return RET_FR_WAIT;
+        if (point_index == number_points || ix == 0){
+                LOGMSGS ( "FR:FIFO NEED FCT" << std::endl);
+                need_fct = FR_YES;
+                need_hdr = FR_YES;
+        }
+        
+	return RET_FR_OK;
 }
 
 
@@ -461,6 +479,7 @@ int spm_template_hwi_dev::start_data_read (int y_start,
 
 
 	if (num_srcs0 || num_srcs1 || num_srcs2 || num_srcs3){ // setup streaming of scan data
+                g_message("... for scan.");
 #if 0 // full version used by MK2/3
 		fifo_data_num_srcs[0] = num_srcs0; // number sources -> (forward)
 		fifo_data_num_srcs[1] = num_srcs1; // number sources <- (return)
@@ -487,8 +506,11 @@ int spm_template_hwi_dev::start_data_read (int y_start,
                 
 	}
 	else{ // expect and stream probe data
-		if (Template_ControlClass->vis_Source & 0xffff)
-			probe_data_read_thread = g_thread_new ("ProbeFifoReadThread", ProbeDataReadThread, this);
+                g_message("... for probe.");
+		//if (Template_ControlClass->vis_Source & 0xffff)
+                Template_ControlClass->probe_trigger_single_shot = 1;
+                ReadProbeData (0, FR_INIT); // init
+                probe_data_read_thread = g_thread_new ("ProbeFifoReadThread", ProbeDataReadThread, this);
 	}
       
 	return 0;
