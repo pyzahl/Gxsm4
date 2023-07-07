@@ -247,8 +247,21 @@ typedef struct{
 	gint32    f_dz;          /**<20: Z stepwidth (32bit) =WR */
 	gint32    f_dx0;         /**<22: X0 (offset) stepwidth (32bit) =WR */
 	gint32    f_dy0;         /**<24: Y0 (offset) stepwidth (32bit) =WR */
-	gint32    f_dphi;        /**<26: Phase stepwidth (32bit) +/-15.16Degree =WR */
+	gint32    f_dz0;         /**<26: Z0 (offset)  =WR */
 } PROBE_VECTOR_GENERIC;
+
+/**
+ * Vector Probe Vector
+ */
+typedef struct{
+	gint32    n;             /* number data vectors following in section */
+	guint32   srcs;          /* data source coding mask */
+        guint32   time;          /* timestamp */
+        double    move_xyz[3];   /* Offset Coordinates */
+        double    scan_xyz[3];   /* Scan XY (rotated coords in global system, scan aligend), Z = F-feedback + Z-Probe */
+        double    bias;          /* Bias */
+        gint32    section;       /* VP section count */
+} PROBE_HEADER_POSITIONVECTOR;
 
 
 #define MM_OFF     0x00  // ------

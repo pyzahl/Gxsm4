@@ -1331,8 +1331,8 @@ void SPM_Template_Control::add_probevector(){
 		case PROBEDATA_ARRAY_Y0:
 			val += program_vector_list[sec].f_dy0*multi*fixptm;
 			break;
-		case PROBEDATA_ARRAY_PHI:
-			val += program_vector_list[sec].f_dphi*multi*fixptm;
+		case PROBEDATA_ARRAY_PHI: // *** FIX ME ***
+			val += program_vector_list[sec].f_dz0*multi*fixptm;
 			break;
 		case PROBEDATA_ARRAY_XS:
 			val -= program_vector_list[sec].f_dx*multi*fixptm;

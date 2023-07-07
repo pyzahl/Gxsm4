@@ -169,7 +169,7 @@ public:
 #define i_Y 1
 #define i_Z 2
 
-#define AIC_IN(N) (N)
+#define ADC_IN(N) (N) // dummy, returns channel number
 
 class SPM_emulator{
 public:
@@ -183,7 +183,8 @@ public:
 		tip_current  = 0.;
 		sample_bias  = 0.;
 		data_z_value = 0.;
-
+                pulse_counter = 99.;
+                
 		vp_bias = 0.0;
 		vp_zpos = 0.0;
 		
@@ -229,7 +230,7 @@ public:
 		vector_program[i].f_dz = v->f_dz;
 		vector_program[i].f_dx0 = v->f_dx0;
 		vector_program[i].f_dy0 = v->f_dy0;
-		vector_program[i].f_dphi = v->f_dphi;
+		vector_program[i].f_dz0 = v->f_dz0;
 
 
 		// check count ranges
@@ -270,9 +271,6 @@ public:
 	void vp_stop ();
 	void vp_append_header_and_positionvector ();
 	void vp_add_vector ();
-	void vp_clear_data_srcs ();
-	void vp_integrate_data_srcs ();
-	int  vp_push_vector_normalized();
 	void vp_store_data_srcs ();
 	void vp_buffer_section_end_data_srcs();
 	void vp_next_section ();
@@ -282,15 +280,21 @@ public:
 	void GPIO_check();
 	void vp_signal_limiter_test();
 	void vp_run ();
+        int  vp_exec_callback();
 
-	int PRB_section_count;
+        PROBE_HEADER_POSITIONVECTOR vp_header_current;
+        double vp_data_set[16]; // 16 channels max to data stream
+        int vp_num_data_sets;
+        
+	int section_count;
 	int ix,iix,lix;
 	
         double x0,y0; // offset
         double sample_bias;
         double tip_current;
         double data_z_value;
-
+        double pulse_counter;
+        
 	double vp_bias;
 	double vp_zpos;
 	int    vp_time;
@@ -305,14 +309,10 @@ public:
         int data_x_index;
 
 	double frq_ref;
-	
+	useconds_t vp_point_us;
 private:
 	PROBE_VECTOR_GENERIC vector_program[MAX_PROGRAM_VECTORS];
 	PROBE_VECTOR_GENERIC *vector;
-
-	double ADC_data_sum[9];
-	int    ADC_num_samples;
-	int VP_sec_int0, VP_sec_int1, VP_sec_count;
 
         GThread *dsp_thread;
 };

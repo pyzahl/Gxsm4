@@ -108,17 +108,15 @@ double SPM_emulator::simulate_value (XSM_Hardware *xsmhwi, int xi, int yi, int c
 
 
 
-
-
-
 // Vector Program Engine Emulator
 
 void SPM_emulator::vp_init (){
 	vector = NULL;
+        vp_header_current.section = -1; // still invalid
+        vp_num_data_sets = 0;
         vp_time = 0;
         lix = 0;
-     	vp_next_section ();
-	vp_clear_data_srcs ();
+     	vp_next_section ();    // setup vector program start
 	vp_append_header_and_positionvector ();
         // fire up thread!
 }
@@ -134,25 +132,17 @@ void SPM_emulator::vp_append_header_and_positionvector (){ // size: 14
 	// Section header: [SRCS, N, TIME]_32 :: 6
 	if (!vector) return;
 
-#if 0
-        *probe_datafifo.buffer_l++ = probe.vector->srcs; 
-        *probe_datafifo.buffer_l++ = probe.vector->n; 
-	*probe_datafifo.buffer_l++ = probe.time; 
-	probe_datafifo.buffer_w += 6; // skip 6 words == 3 long
-
-        *probe_datafifo.buffer_w++ = HRVALUE_TO_16 (move.xyz_vec[i_X]);
-        *probe_datafifo.buffer_w++ = HRVALUE_TO_16 (move.xyz_vec[i_Y]);
-        *probe_datafifo.buffer_w++ = _SSHL32 (probe.PRB_ACPhaseA32, -12); // Phase    //  HRVALUE_TO_16 (move.xyz_vec[i_Z])
-        *probe_datafifo.buffer_w++ = HRVALUE_TO_16 (scan.xy_r_vec[i_X]);
-        *probe_datafifo.buffer_w++ = HRVALUE_TO_16 (scan.xy_r_vec[i_Y]);
-        *probe_datafifo.buffer_w++ = AIC_OUT(5);  // Z: feedback.z + Z_pos>>16; *****!
-        *probe_datafifo.buffer_w++ = AIC_OUT(6);  // Bias: U_pos>>16; *******!
-
-        *probe_datafifo.buffer_w++ = PRB_section_count;
-        probe_datafifo.buffer_l += 4; // skip 4 long == 8 words
-
-        probe_datafifo.w_position += 6 + 6 + 2;
-#endif
+        vp_header_current.n    = vector->n;
+        vp_header_current.srcs = vector->srcs;
+        vp_header_current.time = vp_time;
+        vp_header_current.move_xyz[i_X] = move_xyz_vec[i_X];
+        vp_header_current.move_xyz[i_Y] = move_xyz_vec[i_Y];
+        vp_header_current.move_xyz[i_Z] = move_xyz_vec[i_Z];
+        vp_header_current.scan_xyz[i_X] = scan_xyz_vec[i_X];
+        vp_header_current.scan_xyz[i_Y] = scan_xyz_vec[i_Y];
+        vp_header_current.scan_xyz[i_Z] = scan_xyz_vec[i_Z];
+        vp_header_current.bias    = vp_bias;
+        vp_header_current.section = section_count;
 }
 
 
@@ -163,215 +153,58 @@ void SPM_emulator::vp_add_vector (){
 
 	vp_bias += vector->f_du;
 	vp_zpos += vector->f_dz; 
+
 	scan_xyz_vec[i_X] += vector->f_dx;
 	scan_xyz_vec[i_Y] += vector->f_dy;
 
-	// mappable VP out components:
-	//*probe.prb_output[0] = _SADD32 (*probe.prb_output[0], probe.vector->f_dx); // "f_dx" mapped to output[0] destination
-	//*probe.prb_output[1] = _SADD32 (*probe.prb_output[1], probe.vector->f_dy); // "f_dy" mapped to output[1] destination
-	//*probe.prb_output[2] = _SADD32 (*probe.prb_output[2], probe.vector->f_dx0); // "f_dx0" mapped to output[2] destination
-	//*probe.prb_output[3] = _SADD32 (*probe.prb_output[3], probe.vector->f_dy0); // "f_dy0" mapped to output[3] destination
-
-	//move.xyz_vec[i_X] = _SADD32 (move.xyz_vec[i_X], probe.vector->f_dx0);
-	//move.xyz_vec[i_Y] = _SADD32 (move.xyz_vec[i_Y], probe.vector->f_dy0);
-	//move.xyz_vec[i_Z] = _SADD32 (move.xyz_vec[i_Z], probe.vector->f_dz0);
-
+	move_xyz_vec[i_X] += vector->f_dx0;
+	move_xyz_vec[i_Y] += vector->f_dy0;
+	move_xyz_vec[i_Z] += vector->f_dz0;
 }
 
-void SPM_emulator::vp_clear_data_srcs (){
-	ADC_data_sum[0] = ADC_data_sum[1] = ADC_data_sum[2] =
-	ADC_data_sum[3] = ADC_data_sum[4] = ADC_data_sum[5] =
-	ADC_data_sum[6] = ADC_data_sum[7] = ADC_data_sum[8] = 0;
-	ADC_num_samples = 0;
-	
-	VP_sec_int0 = VP_sec_int1 = 0L;
-	VP_sec_count = 0;
-}
-
-void SPM_emulator::vp_integrate_data_srcs (){
-	if (vector->srcs & 0x01) // Zmonitor (AIC5 out)
-		ADC_data_sum[8] += data_z_value; // ******!
-
-	if (vector->srcs & 0x10) // AIC0 <-- FBMix 0: I (current)
-		ADC_data_sum[0] += tip_current;
-
-	if (vector->srcs & 0x20) // AIC1 <-- FBMix 1: dF (aux1)
-		ADC_data_sum[1] += 0.0;
-
-	if (vector->srcs & 0x40) // AIC2 <-- FBMix 2: (aux2)
-		ADC_data_sum[2] += 0.0;
-
-	if (vector->srcs & 0x80) // AIC3 <-- FBMix 3: (aux3)
-		ADC_data_sum[3] += 0.0;
-
-	if (vector->srcs & 0x100) // AIC4
-		ADC_data_sum[4] += AIC_IN(4);
-
-	if (vector->srcs & 0x200) // AIC5
-		ADC_data_sum[5] += AIC_IN(5);
-
-	if (vector->srcs & 0x400) // AIC6
-		ADC_data_sum[6] += AIC_IN(6);
-
-	if (vector->srcs & 0x800) // AIC7
-		ADC_data_sum[7] += AIC_IN(7);
-
-        ADC_num_samples++;
-}
-
-
-int SPM_emulator::vp_push_vector_normalized(){
-        int w=0;
-#if 0
-        if (vector->srcs & 0x01){ // Zmonitor (AIC5 -->)
-                *probe_datafifo.buffer_w++ = (int)(ADC_data_sum[8]/ADC_num_samples); ++w;
-        }
-        if (vector->srcs & 0x02){ // Umonitor (AIC6 -->)
-                *probe_datafifo.buffer_w++ = AIC_OUT(6); ++w;
-        }
-        if (vector->srcs & 0x10){ // AIC0 <-- FBMix 0: I (current)
-                *probe_datafifo.buffer_w++ = (int)(ADC_data_sum[0]/ADC_num_samples); ++w;
-        }
-        if (vector->srcs & 0x20){ // AIC1 <-- FBMix 1: dF
-                *probe_datafifo.buffer_w++ = (int)(ADC_data_sum[1]/ADC_num_samples); ++w;
-        }
-        if (vector->srcs & 0x40){ // AIC2 <-- FBMix 2
-                *probe_datafifo.buffer_w++ = (int)(ADC_data_sum[2]/ADC_num_samples); ++w;
-        }
-        if (vector->srcs & 0x80){ // AIC3 <-- FBMix 3
-                *probe_datafifo.buffer_w++ = (int)(ADC_data_sum[3]/ADC_num_samples); ++w;
-        }
-        if (vector->srcs & 0x100){ // AIC4
-                *probe_datafifo.buffer_w++ = (int)(ADC_data_sum[4]/ADC_num_samples); ++w;
-        }
-        if (vector->srcs & 0x200){ // AIC5
-                *probe_datafifo.buffer_w++ = (int)(ADC_data_sum[5]/ADC_num_samples); ++w;
-        }
-        if (vector->srcs & 0x400){ // AIC6
-                *probe_datafifo.buffer_w++ = (int)(ADC_data_sum[6]/ADC_num_samples); ++w;
-        }
-        if (vector->srcs & 0x800){ // AIC7
-                *probe_datafifo.buffer_w++ = (int)(ADC_data_sum[7]/ADC_num_samples); ++w;
-        }
-#endif
-        return w;
-}
 
 void SPM_emulator::vp_store_data_srcs ()
 {
-	int w=0;
- #if 0
-	if (vector->options & VP_AIC_INTEGRATE){
-                w=push_vector_normalized();
-	} else {
-		if (vector->srcs & 0x01) // Zmonitor (AIC5 -->)
-			*probe_datafifo.buffer_w++ = AIC_OUT(5), ++w;
-		if (vector->srcs & 0x02) // Umonitor (AIC6 -->)
-			*probe_datafifo.buffer_w++ = AIC_OUT(6), ++w;
-		if (vector->srcs & 0x10) // AIC0
-			*probe_datafifo.buffer_w++ = feedback_mixer.FB_IN_processed[0]>>8, ++w; // AIC_IN(0), ++w;
+        gint i=0;
+        // matching this to "template hardware def as of SOURCE_SIGNAL_DEF source_signals[] = { ... } 
+        if (vector->srcs & 0x000001) // Z monitor
+                vp_data_set[i++] = data_z_value + vp_zpos;
+        if (vector->srcs & 0x000002) // Bias monitor
+                vp_data_set[i++] = sample_bias;
+        if (vector->srcs & 0x000010) // ADC0-I (current input)
+                vp_data_set[i++] = tip_current;
+        if (vector->srcs & 0x000020) // ADC1
+                vp_data_set[i++] = ADC_IN(1);
+        if (vector->srcs & 0x000040) // ADC2
+                vp_data_set[i++] = ADC_IN(2);
+        if (vector->srcs & 0x000080) // ADC3
+                vp_data_set[i++] = ADC_IN(3);
+        if (vector->srcs & 0x000100) // ADC4
+                vp_data_set[i++] = ADC_IN(4);
+        if (vector->srcs & 0x000200) // ADC5
+                vp_data_set[i++] = ADC_IN(5);
+        if (vector->srcs & 0x000400) // ADC6
+                vp_data_set[i++] = ADC_IN(6);
+        if (vector->srcs & 0x000800) // ADC7
+                vp_data_set[i++] = ADC_IN(7);
+        if (vector->srcs & 0x000008) // LockIn0 [LockIn0 = LockIn channel after low pass]
+                vp_data_set[i++] = 0x0008;
+        if (vector->srcs & 0x001000) // Signal swappable
+                vp_data_set[i++] = 0x1000;
+        if (vector->srcs & 0x002000) // Signal swappable
+                vp_data_set[i++] = 0x2000;
+        if (vector->srcs & 0x004000) // Signal swappable
+                vp_data_set[i++] = 0x4000;
+        if (vector->srcs & 0x008000) // Signal swappable
+                vp_data_set[i++] = 0x8000;
+        if (vector->srcs & 0x000004) // Signal swappable
+                vp_data_set[i++] = pulse_counter;
 
-		if (vector->srcs & 0x20) // AIC1
-			*probe_datafifo.buffer_w++ = feedback_mixer.FB_IN_processed[1]>>8, ++w; // AIC_IN(1), ++w;
-
-		if (vector->srcs & 0x40) // AIC2
-			*probe_datafifo.buffer_w++ = feedback_mixer.FB_IN_processed[2]>>8, ++w; //  AIC_IN(2), ++w;
-
-		if (vector->srcs & 0x80) // AIC3
-			*probe_datafifo.buffer_w++ = feedback_mixer.FB_IN_processed[3]>>8, ++w; // AIC_IN(3), ++w;
-
-		if (vector->srcs & 0x100) // AIC4
-			*probe_datafifo.buffer_w++ = AIC_IN(4), ++w;
-
-		if (vector->srcs & 0x200) // AIC5
-			*probe_datafifo.buffer_w++ = AIC_IN(5), ++w;
-
-		if (vector->srcs & 0x400) // AIC6
-			*probe_datafifo.buffer_w++ = AIC_IN(6), ++w;
-
-		if (vector->srcs & 0x800) // AIC7
-			*probe_datafifo.buffer_w++ = AIC_IN(7), ++w;
-	}
-	// adjust long ptr
-	if (w&1) ++w, probe_datafifo.buffer_w++;
-
-	probe_datafifo.w_position += w;
-
-	w >>= 1;
-	probe_datafifo.buffer_l += w;
-
-	// read and buffer (for Rate Meter, gatetime not observed)
-	CR_generic_io.count_0 = analog.counter[0];
-
-	// LockIn data (long)
-	if (vector->srcs & 0x00008) // "--" LockIn_0
-		*probe_datafifo.buffer_l++ = LockIn_0A, probe_datafifo.buffer_w += 2,
-			probe_datafifo.w_position += 2;
-	    
-	if (vector->srcs & 0x01000) // "C1" LockIn_1st - phase A
-		*probe_datafifo.buffer_l++ = LockIn_1stA, probe_datafifo.buffer_w += 2,
-			probe_datafifo.w_position += 2;
-
-	if (vector->srcs & 0x02000) // MUX: SRC-LOOKUP[0]
-		*probe_datafifo.buffer_l++ = *src_input[0], probe_datafifo.buffer_w += 2,
-			probe_datafifo.w_position += 2;
-	    
-	if (vector->srcs & 0x04000) // MUX: SRC-LOOKUP[1] 
-		*probe_datafifo.buffer_l++ = *src_input[1], probe_datafifo.buffer_w += 2,
-			probe_datafifo.w_position += 2;
-
-	if (vector->srcs & 0x08000) // MUX: SRC-LOOKUP[2] 
-		*probe_datafifo.buffer_l++ = *src_input[2], probe_datafifo.buffer_w += 2,
-			probe_datafifo.w_position += 2;
-	    
-	if (vector->srcs & 0x00004){ // MUX: SRC-LOOKUP[3] 
-		*probe_datafifo.buffer_l++ = *src_input[3], probe_datafifo.buffer_w += 2,
-			probe_datafifo.w_position += 2;
-	}
-
-	// reset counters only if requested
-	if (vector->options & VP_RESET_COUNTER_0)
-		analog.counter[0] = 0;
-	if (vector->options & VP_RESET_COUNTER_1)
-		analog.counter[1] = 0;
-	    
-	VP_sec_int0 += *src_input[0];
-	VP_sec_int1 += *src_input[1];
-	VP_sec_count++;
-
-	// check free buffer range!!
-	if (probe_datafifo.w_position > (EXTERN_PROBEDATAFIFO_LENGTH - EXTERN_PROBEDATA_MAX_LEFT)){
-		// loop-marking
-		*probe_datafifo.buffer_l++ = 0;
-		*probe_datafifo.buffer_l++ = -1;
-		*probe_datafifo.buffer_l++ = 0;
-		// loop to fifo start!
-		probe_datafifo.buffer_w = probe_datafifo.buffer_base;
-		probe_datafifo.buffer_l = (DSP_INT32_P) probe_datafifo.buffer_base;
-		probe_datafifo.w_position = 0;
-	}
-#endif
+        vp_num_data_sets=i;
 }
 
 void SPM_emulator::vp_buffer_section_end_data_srcs ()
 {
-#if 0
-	int i, is0;
-	if (PRB_section_count < 10){
-		is0 = PRB_section_count << 3;
-		for (i=0; i<4; ++i)
-			VP_sec_end_buffer[is0+i] = *src_input[i];
-		VP_sec_end_buffer[is0+4] = analog.counter[0];
-		VP_sec_end_buffer[is0+5] = analog.counter[1];
-		VP_sec_end_buffer[is0+6] = VP_sec_int0/VP_sec_count;
-		VP_sec_end_buffer[is0+7] = VP_sec_int1/VP_sec_count;
-	}
-	// reset counters forced at end of section
-	analog.counter[0] = 0;
-	analog.counter[1] = 0;
-#endif	
-	VP_sec_int0 = VP_sec_int1 = 0L;
-	VP_sec_count = 0;
 }
 
 // mini probe program flow interpreter kernel
@@ -381,11 +214,11 @@ void SPM_emulator::vp_next_section (){
 
         if (! vector){ // initialize ?
                 vector = &vector_program[0];
-                PRB_section_count = 0; // init PVC
+                section_count = 0; // init PVC
                 g_message ("DSP:  SPM_emulator::vp_next_section INIT");
         }
         else{
-                g_message ("DSP:  SPM_emulator::vp_next_section %d [%d]", PRB_section_count, vector->i);
+                g_message ("DSP:  SPM_emulator::vp_next_section %d [%d]", section_count, vector->i);
                 if (!vector->ptr_final){ // end Vector program?
                         vp_stop ();
                         return;
@@ -396,7 +229,7 @@ void SPM_emulator::vp_next_section (){
                 if (vector->i > 0){ // do next loop?
                         --vector->i; // decrement loop counter
                         if (vector->ptr_next){ // loop or branch to next
-                                PRB_section_count += vector->ptr_next; // adjust PVC (section "count" -- better section-index)
+                                section_count += vector->ptr_next; // adjust PVC (section "count" -- better section-index)
                                 vector += vector->ptr_next; // next vector to loop
                         }else{
                                 vp_stop ();
@@ -416,15 +249,16 @@ void SPM_emulator::vp_next_section (){
 				++vector; // increment programm (vector) counter -- just increment!
 			}
 #endif			
-			++PRB_section_count;
+			++section_count;
                 }
 #else // simple
                 ++vector; // increment programm (vector) counter
-                ++PRB_section_count;
+                ++section_count;
 #endif
         }
         iix = vector->dnx; // do dnx steps to take data until next point!
         ix = vector->n; // load total steps per section = # vec to add
+        vp_point_us = (useconds_t)(iix * 1e6/frq_ref);
 }
 
 // manage conditional vector tracking mode -- atom/feature tracking
@@ -442,7 +276,7 @@ void SPM_emulator::vp_next_track_vector(){
                         if (PRB_Trk_ie > 0){ // start move to condition match pos
                                 PRB_Trk_i = 0;
                                 vector -= PRB_Trk_state; // skip back to v1 of TRACK vectors
-                                PRB_section_count -= PRB_Trk_state; // skip back to v1 of TRACK vectors
+                                section_count -= PRB_Trk_state; // skip back to v1 of TRACK vectors
                         } else { // done, no move, keep watching!
 //                              PRB_Trk_i     = 999; // it's still this!
                                 PRB_Trk_state = -1;
@@ -452,7 +286,7 @@ void SPM_emulator::vp_next_track_vector(){
                         }
                 } else if (PRB_Trk_i == PRB_Trk_ie){ // done!
                         vector += PRB_Trk_state - PRB_Trk_ie; // skip forward to end of track sequence
-                        PRB_section_count += PRB_Trk_state - PRB_Trk_ie; // skip forward to end of track sequence
+                        section_count += PRB_Trk_state - PRB_Trk_ie; // skip forward to end of track sequence
                         PRB_Trk_i     = 999;
                         PRB_Trk_state = -1;
                         PRB_Trk_ref   = 0L;
@@ -476,7 +310,7 @@ void SPM_emulator::vp_next_track_vector(){
                 }
         }
         ++vector; // increment programm (vector) counter to go to next TRACK check position
-        ++PRB_section_count; // next
+        ++section_count; // next
         iix = vector->dnx; // do dnx steps to take data until next point!
         ix = vector->n; // load total steps per section = # vec to add
 #endif
@@ -570,7 +404,9 @@ void SPM_emulator::vp_run (){
                                 return;
 #endif
                 
-                vp_integrate_data_srcs ();
+                //vp_integrate_data_srcs (); // leave to to hardware in future!
+
+                usleep (vp_point_us); iix=0;
 
                 if (! iix-- || lix){
                         if (ix--)
@@ -581,7 +417,7 @@ void SPM_emulator::vp_run (){
                         } else if (lix > 0) --lix;
 		 
                         iix = vector->dnx; // load steps inbetween "data aq" points
-                        vp_clear_data_srcs ();
+                        //vp_clear_data_srcs (); // along with integrate -- move to hardware!
                 }
        
                 vp_add_vector ();
@@ -589,6 +425,17 @@ void SPM_emulator::vp_run (){
 
         // increment probe time
 	++vp_time; 
+}
+
+int SPM_emulator::vp_exec_callback(){
+        if (vector){
+                vp_run ();
+                // --- this may run out of hard real time
+                if(!ix)
+                        vp_process_next_section ();
+                // --------------------------------------
+        }
+        return ix;
 }
 
 void SPM_emulator::thread_run_loop(){
@@ -599,7 +446,6 @@ void SPM_emulator::thread_run_loop(){
                 if(!ix)
                         vp_process_next_section ();
                 // --------------------------------------
-                usleep (100);
         }
         dsp_thread = NULL;
 }
@@ -614,8 +460,10 @@ gpointer DSP_Thread (void *data){
 }
 
 void SPM_emulator::execute_vector_program(){
+#ifdef __VP_TEST__ // exec calls are done by "ReadProbeData" for demonstration only this can be run independently w/o managed data movement
         if (!dsp_thread)
                 dsp_thread = g_thread_new ("DSPThread", DSP_Thread, this);
         else
                 g_message ("DSP is BUSY");
+#endif
 }

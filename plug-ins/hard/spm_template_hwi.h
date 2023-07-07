@@ -477,13 +477,7 @@ public:
                 }
 	};
 
-        void update_controller () {
-
-                mirror_dsp_scan_dx32 = 1.0; // dsp_scan_fs_dx*dsp_scan_dnx; // actual DSP dx in S15.16 between pixels in X
-                mirror_dsp_scan_dy32 = 1.0; // dsp_scan_fs_dy*dsp_scan_dny; // actual DSP dy in S15.16 between pixels in Y
-
-        }; // dummy, implement control parameter updates
-
+        void update_controller ();
         
         GUI_Builder *bp;
 
@@ -520,9 +514,12 @@ public:
 	int    ldc_flag;          //! LDC status at last update
 	GtkWidget *LDC_status;    //!< linear drift correction flag (on/off)
 
-        // -- DSP Scan DNX,DNY mirror
+        // -- DSP Scan DNX,DNY,... mirrors
         gint32 mirror_dsp_scan_dx32, mirror_dsp_scan_dy32;
-
+        gint32 dsp_scan_dnx, dsp_scan_dny;
+        gint32 dsp_scan_fs_dx, dsp_scan_fs_dy;
+        gint32 dsp_scan_fast_return;
+        double scanpixelrate;
         
         // Scan Slope Compensation Parameters
         double area_slope_x;      //!< slope compensation in X, in scan coordinate system (possibly rotated) -- applied before, but by feedback

@@ -115,6 +115,7 @@ SOURCE_SIGNAL_DEF source_signals[] = {
         { 0x0100000, "Time", " ", "s", 1.0 },
         { 0x0000001, "Z-mon", " ", "AA", 1.0 },
         { 0x0000002, "Bias-mon", " ", "V", 1.0 },
+        { 0x0000004, "Counter", " ", "#", 1.0 },
         { 0x1000000, "SEC", " ", "#", 1.0 },
         { 0, NULL, NULL, NULL, 0.0 }
 };
@@ -128,12 +129,6 @@ SOURCE_SIGNAL_DEF swappable_signals[] = {
 	{ 6, "PLL-Ampl", " ", "mV", 1000.0 },
         { 0, NULL, NULL, NULL, 0.0 }
 };
-
-
-
-
-
-
 
 
 
@@ -2595,5 +2590,64 @@ int SPM_Template_Control::lockin_runfree_callback(GtkWidget *widget, SPM_Templat
 
 	return 0;
 }
+
+
+
+
+void SPM_Template_Control::update_controller () {
+
+        // SCAN SPEED COMPUTATIONS -- converted to 16.16 fixed point scan generator parameters (TEMPLATE, replace with what ever)
+        double frac  = (1<<16);
+        double fs_dx = frac * spm_template_hwi_pi.app->xsm->Inst->XA2Dig (scan_speed_x_requested) / spm_template_hwi->spm_emu->frq_ref;
+        double fs_dy = frac * spm_template_hwi_pi.app->xsm->Inst->YA2Dig (scan_speed_x_requested) / spm_template_hwi->spm_emu->frq_ref;
+        if ((frac * spm_template_hwi->Dx / fs_dx) > (1<<15) || (frac * spm_template_hwi->Dy / fs_dx) > (1<<15)){
+                main_get_gapp()->message (N_("WARNING:\n"
+                                             "recalculate_dsp_scan_parameters:\n"
+                                             "requested/resulting scan speed is too slow.\n"
+                                             "Reaching 1<<15 steps inbetween!\n"
+                                             "No change on DSP performed."));
+                PI_DEBUG (DBG_EVER, "WARNING: recalculate_dsp_scan_parameters: too slow, reaching 1<<15 steps inbetween! -- no change.");
+                return;
+        }
+        // fs_dx * N =!= frac*Dx  -> N = ceil [frac*Dx/fs_dx]  -> fs_dx' = frac*Dx/N
+        
+        // N: dnx
+        dsp_scan_dnx = (gint32) ceil (frac * spm_template_hwi->Dx / fs_dx);
+        dsp_scan_dny = (gint32) ceil (frac * spm_template_hwi->Dy / fs_dy);
+        
+        dsp_scan_fs_dx = (gint32) (frac*spm_template_hwi->Dx / ceil (frac * spm_template_hwi->Dx / fs_dx));
+        dsp_scan_fs_dy = (gint32) (frac*spm_template_hwi->Dy / ceil (frac * spm_template_hwi->Dy / fs_dy));
+                
+        mirror_dsp_scan_dx32 = dsp_scan_fs_dx*dsp_scan_dnx; // actual DSP dx in S15.16 between pixels in X
+        mirror_dsp_scan_dy32 = dsp_scan_fs_dy*dsp_scan_dny; // actual DSP dy in S15.16 between pixels in Y
+        
+        dsp_scan_fast_return = (gint32) (fast_return);
+        if (dsp_scan_fast_return < 1)
+                dsp_scan_fast_return = 1;
+        if (dsp_scan_fast_return > 10000)
+                dsp_scan_fast_return = 1;
+
+        //dsp_scan_nx_pre = dsp_scan_dnx * pre_points;
+        dsp_scan_fs_dy *= spm_template_hwi->scan_direction;
+
+        //info only, updates scan speed GUI entry with actual rates (informative only)
+        scan_speed_x = spm_template_hwi_pi.app->xsm->Inst->Dig2XA ((long)(dsp_scan_fs_dx * spm_template_hwi->spm_emu->frq_ref / frac));
+        scanpixelrate = (double)dsp_scan_dnx/spm_template_hwi->spm_emu->frq_ref;
+        gchar *info = g_strdup_printf (" (%g A/s, %g ms/pix)", scan_speed_x, scanpixelrate*1e3);
+        scan_speed_ec->set_info (info);
+        g_free (info);
+
+        // SCAN PLANE/SLOPE COMPENSATION
+        if (area_slope_compensation_flag){
+                //double zx_ratio = sranger_mk2_hwi_pi.app->xsm->Inst->XResolution () / sranger_mk2_hwi_pi.app->xsm->Inst->ZModResolution (); 
+                //double zy_ratio = sranger_mk2_hwi_pi.app->xsm->Inst->YResolution () / sranger_mk2_hwi_pi.app->xsm->Inst->ZModResolution ();
+                //double mx = zx_ratio * area_slope_x;
+                //double my = zy_ratio * area_slope_y;
+                //dsp_scan_fm_dz0x = (gint32)round (fract * mx);
+                //dsp_scan_fm_dz0y = (gint32)round (fract * my);
+
+        }
+}
+
 
 // END HWI GUI MODULE

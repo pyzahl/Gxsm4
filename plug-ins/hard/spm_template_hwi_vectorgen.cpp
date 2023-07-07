@@ -123,7 +123,7 @@ double SPM_Template_Control::make_Vdz_vector (double Ui, double Uf, double dZ, i
 	program_vector.f_dy = 0;
 	program_vector.f_dx0 = 0;
 	program_vector.f_dy0 = 0;
-	program_vector.f_dphi = 0;
+	program_vector.f_dz0 = 0;
 	return main_get_gapp()->xsm->Inst->V2BiasV (main_get_gapp()->xsm->Inst->Dig2VoltOut (VOLT2AIC(Ui) + (double)program_vector.f_du*steps/CONST_DSP_F16));
 }	
 
@@ -152,7 +152,7 @@ double SPM_Template_Control::make_Vdx0_vector (double Ui, double Uf, double dZ, 
         program_vector.f_dy = 0;
         program_vector.f_du = 0;
         program_vector.f_dy0 = 0;
-        program_vector.f_dphi = 0;
+        program_vector.f_dz0 = 0;
         return main_get_gapp()->xsm->Inst->V2BiasV (main_get_gapp()->xsm->Inst->Dig2VoltOut (VOLT2AIC(Ui) + (double)program_vector.f_du*steps/CONST_DSP_F16));
 }       
 
@@ -181,7 +181,7 @@ double SPM_Template_Control::make_dx0_vector (double X0i, double X0f, int n, dou
         program_vector.f_dy = 0;
         program_vector.f_du = 0;
         program_vector.f_dy0 = 0;
-        program_vector.f_dphi = 0;
+        program_vector.f_dz0 = 0;
         return main_get_gapp()->xsm->Inst->V2BiasV (main_get_gapp()->xsm->Inst->Dig2VoltOut (VOLT2AIC(X0i) + (double)program_vector.f_dx0*steps/CONST_DSP_F16));
 }       
 
@@ -211,7 +211,7 @@ double SPM_Template_Control::make_ZXYramp_vector (double dZ, double dX, double d
 	program_vector.f_dz = (gint32)round (program_vector.n > 1 ? (CONST_DSP_F16*main_get_gapp()->xsm->Inst->ZA2Dig (dZ) / steps) : 0);
 	program_vector.f_dx0 = 0;
 	program_vector.f_dy0 = 0;
-	program_vector.f_dphi = 0;
+	program_vector.f_dz0 = 0;
 
 	return main_get_gapp()->xsm->Inst->Dig2ZA ((long)round ((double)program_vector.f_dz*steps/CONST_DSP_F16));
 }
@@ -241,7 +241,7 @@ double SPM_Template_Control::make_UZXYramp_vector (double dU, double dZ, double 
 	program_vector.f_dz = (gint32)round (program_vector.n > 1 ? (CONST_DSP_F16*main_get_gapp()->xsm->Inst->ZA2Dig (dZ) / steps) : 0);
 	program_vector.f_dx0 = (gint32)round (program_vector.n > 1 ? (CONST_DSP_F16*main_get_gapp()->xsm->Inst->ZA2Dig (dSig1) / steps) : 0);
 	program_vector.f_dy0 = (gint32)round (program_vector.n > 1 ? (CONST_DSP_F16*main_get_gapp()->xsm->Inst->ZA2Dig (dSig2) / steps) : 0);
-	program_vector.f_dphi = 0;
+	program_vector.f_dz0 = 0;
 
 	return main_get_gapp()->xsm->Inst->Dig2ZA ((long)round ((double)program_vector.f_dz*steps/CONST_DSP_F16));
 }
@@ -276,9 +276,9 @@ double SPM_Template_Control::make_phase_vector (double dPhi, int n, double slope
 	program_vector.f_dz = 0;
 	program_vector.f_dx0 = 0;
 	program_vector.f_dy0 = 0;
-	program_vector.f_dphi = (gint32)round (program_vector.n > 1 ? (CONST_DSP_F16 * dr / steps) : 0);
+	program_vector.f_dz0 = (gint32)round (program_vector.n > 1 ? (CONST_DSP_F16 * dr / steps) : 0);
 
-	return round ((double)program_vector.f_dphi*steps/CONST_DSP_F16/16.);
+	return round ((double)program_vector.f_dz0*steps/CONST_DSP_F16/16.);
 }
 
 // Make a delay Vector
@@ -304,7 +304,7 @@ double SPM_Template_Control::make_delay_vector (double delay, int source, int op
 	program_vector.f_dy = 0; // y stepwidth, not used for probing
 	program_vector.f_dx0 = 0; // x0 stepwidth, not used for probing
 	program_vector.f_dy0 = 0; // y0 stepwidth, not used for probing
-	program_vector.f_dphi = 0; // z0 stepwidth, not used for probing
+	program_vector.f_dz0 = 0; // z0 stepwidth, not used for probing
 	return (double)((long)(program_vector.n)*(long)(program_vector.dnx+1))/spm_template_hwi->spm_emu->frq_ref;
 }
 
@@ -629,7 +629,7 @@ void SPM_Template_Control::write_spm_vector_program (int start, pv_mode pvm){
 			make_ZXYramp_vector (0., IV_dx/(IV_dxy_points-1), IV_dy/(IV_dxy_points-1), 100, IV_dxy_slope, 
 					     ramp_sources, options, vp_duration, MAKE_VEC_FLAG_RAMP);
 
-			program_vector.f_dphi = (gint32)round (CONST_DSP_F16*main_get_gapp()->xsm->Inst->VoltOut2Dig (IV_dM/main_get_gapp()->xsm->Inst->BiasGainV2V ()));
+			program_vector.f_dz0 = (gint32)round (CONST_DSP_F16*main_get_gapp()->xsm->Inst->VoltOut2Dig (IV_dM/main_get_gapp()->xsm->Inst->BiasGainV2V ()));
 
 			write_program_vector (vector_index++);
 			make_delay_vector (IV_dxy_delay, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_RAMP);
@@ -833,7 +833,7 @@ void SPM_Template_Control::write_program_vector (int index){
 	program_vector_list[index].f_dz = program_vector.f_dz;
 	program_vector_list[index].f_dx0 = program_vector.f_dx0;
 	program_vector_list[index].f_dy0 = program_vector.f_dy0;
-	program_vector_list[index].f_dphi = program_vector.f_dphi;
+	program_vector_list[index].f_dz0 = program_vector.f_dz0;
 
 	{ 
 		double mVf = 10000. / (65536. * 32768.);
@@ -846,7 +846,7 @@ void SPM_Template_Control::write_program_vector (int index){
 					      program_vector.ptr_next, program_vector.ptr_final,
 					      mVf * program_vector.f_du, mVf * program_vector.f_dx, mVf * program_vector.f_dy, mVf * program_vector.f_dz,
 					      mVf * program_vector.f_dx0, mVf * program_vector.f_dy0,
-					      program_vector.f_dphi / CONST_DSP_F16
+					      mVf * program_vector.f_dz0
                                               );
 
 		main_get_gapp()->monitorcontrol->LogEvent (pvi, pvd, 2);
