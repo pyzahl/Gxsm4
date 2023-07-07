@@ -1309,7 +1309,7 @@ void SPM_Template_Control::add_probevector(){
 	sec =  (int) (ds = g_array_index (garray_probedata [PROBEDATA_ARRAY_SEC], double, current_probe_data_index-1));
 	g_array_append_val (garray_probedata [PROBEDATA_ARRAY_SEC], ds);
 	g_array_append_val (garray_probedata [PROBEDATA_ARRAY_INDEX], current_probe_data_index);
-	multi = dsp_vector_list[sec].dnx + 1;
+	multi = program_vector_list[sec].dnx + 1;
 	fixptm = 1./(1<<16);
 
 	// Block Start Index
@@ -1326,25 +1326,25 @@ void SPM_Template_Control::add_probevector(){
 			val += multi;
 			break;
 		case PROBEDATA_ARRAY_X0:
-			val += dsp_vector_list[sec].f_dx0*multi*fixptm;
+			val += program_vector_list[sec].f_dx0*multi*fixptm;
 			break;
 		case PROBEDATA_ARRAY_Y0:
-			val += dsp_vector_list[sec].f_dy0*multi*fixptm;
+			val += program_vector_list[sec].f_dy0*multi*fixptm;
 			break;
 		case PROBEDATA_ARRAY_PHI:
-			val += dsp_vector_list[sec].f_dphi*multi*fixptm;
+			val += program_vector_list[sec].f_dphi*multi*fixptm;
 			break;
 		case PROBEDATA_ARRAY_XS:
-			val -= dsp_vector_list[sec].f_dx*multi*fixptm;
+			val -= program_vector_list[sec].f_dx*multi*fixptm;
 			break;
 		case PROBEDATA_ARRAY_YS:
-			val -= dsp_vector_list[sec].f_dy*multi*fixptm;
+			val -= program_vector_list[sec].f_dy*multi*fixptm;
 			break;
 		case PROBEDATA_ARRAY_ZS:
-			val -= dsp_vector_list[sec].f_dz*multi*fixptm;
+			val -= program_vector_list[sec].f_dz*multi*fixptm;
 			break;
 		case PROBEDATA_ARRAY_U:
-			val += dsp_vector_list[sec].f_du*multi*fixptm;
+			val += program_vector_list[sec].f_du*multi*fixptm;
 			break;
 		default:
 			break; // error!!!!

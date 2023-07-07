@@ -382,8 +382,10 @@ void SPM_emulator::vp_next_section (){
         if (! vector){ // initialize ?
                 vector = &vector_program[0];
                 PRB_section_count = 0; // init PVC
+                g_message ("DSP:  SPM_emulator::vp_next_section INIT");
         }
         else{
+                g_message ("DSP:  SPM_emulator::vp_next_section %d [%d]", PRB_section_count, vector->i);
                 if (!vector->ptr_final){ // end Vector program?
                         vp_stop ();
                         return;
@@ -551,6 +553,10 @@ void SPM_emulator::vp_run (){
         // ** run_one_time_step ();
         // ** add_vector ();
 
+        if (!vector) return;
+
+        g_print ("%d %d of [%d %d]\n", ix, iix, vector->n, vector->dnx);
+        
         // next time step in GVP
         if (ix){ // idle task is working on completion of data management, wait!
 #if 0
@@ -583,4 +589,33 @@ void SPM_emulator::vp_run (){
 
         // increment probe time
 	++vp_time; 
+}
+
+void SPM_emulator::thread_run_loop(){
+        g_message ("SPM_emulator::thread_run_loop()");
+        while (vector){
+                vp_run ();
+                // --- this may run out of hard real time
+                if(!ix)
+                        vp_process_next_section ();
+                // --------------------------------------
+                usleep (100);
+        }
+        dsp_thread = NULL;
+}
+
+gpointer DSP_Thread (void *data){
+        SPM_emulator *spm_emu = (SPM_emulator*)data;
+        
+       	spm_emu->vp_init ();
+        spm_emu->thread_run_loop();
+        
+        return NULL;
+}
+
+void SPM_emulator::execute_vector_program(){
+        if (!dsp_thread)
+                dsp_thread = g_thread_new ("DSPThread", DSP_Thread, this);
+        else
+                g_message ("DSP is BUSY");
 }

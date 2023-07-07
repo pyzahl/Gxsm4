@@ -53,7 +53,7 @@ extern "C++" {
         extern GxsmPlugin spm_template_hwi_pi;
 }
 
-void SPM_Template_Control::read_dsp_probe (){
+void SPM_Template_Control::read_spm_vector_program (){
 	// if (!spm_template_hwi) return; 
 	// spm_template_hwi->read_dsp_lockin (AC_amp, AC_frq, AC_phaseA, AC_phaseB, AC_lockin_avg_cycels);
 	// update ();
@@ -69,27 +69,27 @@ void SPM_Template_Control::read_dsp_probe (){
 
 // make automatic n and dnx from float number of steps, keep n below 1000.
 void SPM_Template_Control::make_auto_n_vector_elments (double fnum){
-	dsp_vector.n = 1;
-	dsp_vector.dnx = 0;
+	program_vector.n = 1;
+	program_vector.dnx = 0;
 	if (fnum >= 1.){
 		if (fnum <= 1000.){ // automatic n ramp limiter
-			dsp_vector.n = (gint32)round (fnum);
-			dsp_vector.dnx = 0;
+			program_vector.n = (gint32)round (fnum);
+			program_vector.dnx = 0;
 		} else if (fnum <= 10000.){
-			dsp_vector.n = (gint32)round (fnum/10.);
-			dsp_vector.dnx = 10;
+			program_vector.n = (gint32)round (fnum/10.);
+			program_vector.dnx = 10;
 		} else if (fnum <= 100000.){
-			dsp_vector.n = (gint32)round (fnum/100.);
-			dsp_vector.dnx = 100;
+			program_vector.n = (gint32)round (fnum/100.);
+			program_vector.dnx = 100;
 		} else if (fnum <= 1000000.){
-			dsp_vector.n = (gint32)round (fnum/1000.);
-			dsp_vector.dnx = 1000;
+			program_vector.n = (gint32)round (fnum/1000.);
+			program_vector.dnx = 1000;
 		} else{
-			dsp_vector.n = (gint32)round (fnum/10000.);
-			dsp_vector.dnx = 10000;
+			program_vector.n = (gint32)round (fnum/10000.);
+			program_vector.dnx = 10000;
 		}
 	}
-	++dsp_vector.n;
+	++program_vector.n;
 }
 
 // make IV and dz (optional) vector from U_initial, U_final, dZ, n points and V-slope
@@ -105,26 +105,26 @@ double SPM_Template_Control::make_Vdz_vector (double Ui, double Uf, double dZ, i
 	if (flags & MAKE_VEC_FLAG_RAMP || n < 2)
 		make_auto_n_vector_elments (dv/slope*spm_template_hwi->spm_emu->frq_ref);
 	else {
-		dsp_vector.n = n; // number of data points
-                //		++dsp_vector.n;
-		dsp_vector.dnx = abs((gint32)round ((Uf - Ui)*spm_template_hwi->spm_emu->frq_ref/(slope*dsp_vector.n))); // number of steps between data points
+		program_vector.n = n; // number of data points
+                //		++program_vector.n;
+		program_vector.dnx = abs((gint32)round ((Uf - Ui)*spm_template_hwi->spm_emu->frq_ref/(slope*program_vector.n))); // number of steps between data points
 	}
-	double steps = (double)(dsp_vector.n) * (double)(dsp_vector.dnx+1);	//total number of steps
+	double steps = (double)(program_vector.n) * (double)(program_vector.dnx+1);	//total number of steps
 
 	duration += (double long) steps;
-	dsp_vector.srcs = source & 0xffff; // source channel coding
-	dsp_vector.options = options;
-	dsp_vector.repetitions = 0;
-	dsp_vector.ptr_next = 0x0;
-	dsp_vector.ptr_final = flags & MAKE_VEC_FLAG_END ? 0:1; // VPC relative branch to next vector
-	dsp_vector.f_du = flags & MAKE_VEC_FLAG_VHOLD ? 0 : (gint32)round (CONST_DSP_F16*main_get_gapp()->xsm->Inst->VoltOut2Dig ((Uf-Ui)/main_get_gapp()->xsm->Inst->BiasGainV2V ())/(steps));
-	dsp_vector.f_dz = (gint32)round (CONST_DSP_F16*main_get_gapp()->xsm->Inst->ZA2Dig (dZ/(steps)));
-	dsp_vector.f_dx = 0;
-	dsp_vector.f_dy = 0;
-	dsp_vector.f_dx0 = 0;
-	dsp_vector.f_dy0 = 0;
-	dsp_vector.f_dphi = 0;
-	return main_get_gapp()->xsm->Inst->V2BiasV (main_get_gapp()->xsm->Inst->Dig2VoltOut (VOLT2AIC(Ui) + (double)dsp_vector.f_du*steps/CONST_DSP_F16));
+	program_vector.srcs = source & 0xffff; // source channel coding
+	program_vector.options = options;
+	program_vector.repetitions = 0;
+	program_vector.ptr_next = 0x0;
+	program_vector.ptr_final = flags & MAKE_VEC_FLAG_END ? 0:1; // VPC relative branch to next vector
+	program_vector.f_du = flags & MAKE_VEC_FLAG_VHOLD ? 0 : (gint32)round (CONST_DSP_F16*main_get_gapp()->xsm->Inst->VoltOut2Dig ((Uf-Ui)/main_get_gapp()->xsm->Inst->BiasGainV2V ())/(steps));
+	program_vector.f_dz = (gint32)round (CONST_DSP_F16*main_get_gapp()->xsm->Inst->ZA2Dig (dZ/(steps)));
+	program_vector.f_dx = 0;
+	program_vector.f_dy = 0;
+	program_vector.f_dx0 = 0;
+	program_vector.f_dy0 = 0;
+	program_vector.f_dphi = 0;
+	return main_get_gapp()->xsm->Inst->V2BiasV (main_get_gapp()->xsm->Inst->Dig2VoltOut (VOLT2AIC(Ui) + (double)program_vector.f_du*steps/CONST_DSP_F16));
 }	
 
 // Copy of Vdz above, but the du steps were used for dx0
@@ -134,26 +134,26 @@ double SPM_Template_Control::make_Vdx0_vector (double Ui, double Uf, double dZ, 
         if (flags & MAKE_VEC_FLAG_RAMP || n < 2)
                 make_auto_n_vector_elments (dv/slope*spm_template_hwi->spm_emu->frq_ref);
         else {
-                dsp_vector.n = n; // number of data points
-                //              ++dsp_vector.n;
-                dsp_vector.dnx = abs((gint32)round ((Uf - Ui)*spm_template_hwi->spm_emu->frq_ref/(slope*dsp_vector.n))); // number of steps between data points
+                program_vector.n = n; // number of data points
+                //              ++program_vector.n;
+                program_vector.dnx = abs((gint32)round ((Uf - Ui)*spm_template_hwi->spm_emu->frq_ref/(slope*program_vector.n))); // number of steps between data points
         }
-        double steps = (double)(dsp_vector.n) * (double)(dsp_vector.dnx+1);     //total number of steps
+        double steps = (double)(program_vector.n) * (double)(program_vector.dnx+1);     //total number of steps
 
         duration += (double long) steps;
-        dsp_vector.srcs = source & 0xffff; // source channel coding
-        dsp_vector.options = options;
-	dsp_vector.repetitions = 0;
-	dsp_vector.ptr_next = 0x0;
-        dsp_vector.ptr_final = flags & MAKE_VEC_FLAG_END ? 0:1; // VPC relative branch to next vector
-        dsp_vector.f_dx0 = flags & MAKE_VEC_FLAG_VHOLD ? 0 : (gint32)round (CONST_DSP_F16*main_get_gapp()->xsm->Inst->VoltOut2Dig ((Uf-Ui)/main_get_gapp()->xsm->Inst->BiasGainV2V ())/(steps)); // !!!!!x ????
-        dsp_vector.f_dz = (gint32)round (CONST_DSP_F16*main_get_gapp()->xsm->Inst->ZA2Dig (dZ/(steps)));
-        dsp_vector.f_dx = 0;
-        dsp_vector.f_dy = 0;
-        dsp_vector.f_du = 0;
-        dsp_vector.f_dy0 = 0;
-        dsp_vector.f_dphi = 0;
-        return main_get_gapp()->xsm->Inst->V2BiasV (main_get_gapp()->xsm->Inst->Dig2VoltOut (VOLT2AIC(Ui) + (double)dsp_vector.f_du*steps/CONST_DSP_F16));
+        program_vector.srcs = source & 0xffff; // source channel coding
+        program_vector.options = options;
+	program_vector.repetitions = 0;
+	program_vector.ptr_next = 0x0;
+        program_vector.ptr_final = flags & MAKE_VEC_FLAG_END ? 0:1; // VPC relative branch to next vector
+        program_vector.f_dx0 = flags & MAKE_VEC_FLAG_VHOLD ? 0 : (gint32)round (CONST_DSP_F16*main_get_gapp()->xsm->Inst->VoltOut2Dig ((Uf-Ui)/main_get_gapp()->xsm->Inst->BiasGainV2V ())/(steps)); // !!!!!x ????
+        program_vector.f_dz = (gint32)round (CONST_DSP_F16*main_get_gapp()->xsm->Inst->ZA2Dig (dZ/(steps)));
+        program_vector.f_dx = 0;
+        program_vector.f_dy = 0;
+        program_vector.f_du = 0;
+        program_vector.f_dy0 = 0;
+        program_vector.f_dphi = 0;
+        return main_get_gapp()->xsm->Inst->V2BiasV (main_get_gapp()->xsm->Inst->Dig2VoltOut (VOLT2AIC(Ui) + (double)program_vector.f_du*steps/CONST_DSP_F16));
 }       
 
 // Copy of Vdz above, but the du steps were used for dx0
@@ -163,26 +163,26 @@ double SPM_Template_Control::make_dx0_vector (double X0i, double X0f, int n, dou
         if (flags & MAKE_VEC_FLAG_RAMP || n < 2)
                 make_auto_n_vector_elments (dv/slope*spm_template_hwi->spm_emu->frq_ref);
         else {
-                dsp_vector.n = n; // number of data points
-                //              ++dsp_vector.n;
-                dsp_vector.dnx = abs((gint32)round ((X0f - X0i)*spm_template_hwi->spm_emu->frq_ref/(slope*dsp_vector.n))); // number of steps between data points
+                program_vector.n = n; // number of data points
+                //              ++program_vector.n;
+                program_vector.dnx = abs((gint32)round ((X0f - X0i)*spm_template_hwi->spm_emu->frq_ref/(slope*program_vector.n))); // number of steps between data points
         }
-        double steps = (double)(dsp_vector.n) * (double)(dsp_vector.dnx+1);     //total number of steps
+        double steps = (double)(program_vector.n) * (double)(program_vector.dnx+1);     //total number of steps
 
         duration += (double long) steps;
-        dsp_vector.srcs = source & 0xffff; // source channel coding
-        dsp_vector.options = options;
-	dsp_vector.repetitions = 0;
-	dsp_vector.ptr_next = 0x0;
-        dsp_vector.ptr_final = flags & MAKE_VEC_FLAG_END ? 0:1; // VPC relative branch to next vector
-        dsp_vector.f_dx0 = flags & MAKE_VEC_FLAG_VHOLD ? 0 : (gint32)round (CONST_DSP_F16*main_get_gapp()->xsm->Inst->VoltOut2Dig (X0f-X0i)/(steps));
-        dsp_vector.f_dz = 0;
-        dsp_vector.f_dx = 0;
-        dsp_vector.f_dy = 0;
-        dsp_vector.f_du = 0;
-        dsp_vector.f_dy0 = 0;
-        dsp_vector.f_dphi = 0;
-        return main_get_gapp()->xsm->Inst->V2BiasV (main_get_gapp()->xsm->Inst->Dig2VoltOut (VOLT2AIC(X0i) + (double)dsp_vector.f_dx0*steps/CONST_DSP_F16));
+        program_vector.srcs = source & 0xffff; // source channel coding
+        program_vector.options = options;
+	program_vector.repetitions = 0;
+	program_vector.ptr_next = 0x0;
+        program_vector.ptr_final = flags & MAKE_VEC_FLAG_END ? 0:1; // VPC relative branch to next vector
+        program_vector.f_dx0 = flags & MAKE_VEC_FLAG_VHOLD ? 0 : (gint32)round (CONST_DSP_F16*main_get_gapp()->xsm->Inst->VoltOut2Dig (X0f-X0i)/(steps));
+        program_vector.f_dz = 0;
+        program_vector.f_dx = 0;
+        program_vector.f_dy = 0;
+        program_vector.f_du = 0;
+        program_vector.f_dy0 = 0;
+        program_vector.f_dphi = 0;
+        return main_get_gapp()->xsm->Inst->V2BiasV (main_get_gapp()->xsm->Inst->Dig2VoltOut (VOLT2AIC(X0i) + (double)program_vector.f_dx0*steps/CONST_DSP_F16));
 }       
 
 // make dZ/dX/dY vector from n point (if > 2, else automatic n) and (dX,dY,dZ) slope
@@ -192,58 +192,58 @@ double SPM_Template_Control::make_ZXYramp_vector (double dZ, double dX, double d
 	if (flags & MAKE_VEC_FLAG_RAMP || n<2)
 		make_auto_n_vector_elments (dr/slope*spm_template_hwi->spm_emu->frq_ref);
 	else {
-		dsp_vector.n = n;
-		dsp_vector.dnx = (gint32)round ( fabs (dr*spm_template_hwi->spm_emu->frq_ref/(slope*dsp_vector.n)));
-		++dsp_vector.n;
+		program_vector.n = n;
+		program_vector.dnx = (gint32)round ( fabs (dr*spm_template_hwi->spm_emu->frq_ref/(slope*program_vector.n)));
+		++program_vector.n;
 	}
-	double steps = (double)(dsp_vector.n) * (double)(dsp_vector.dnx+1);
+	double steps = (double)(program_vector.n) * (double)(program_vector.dnx+1);
 
 	duration += (double long) steps;
-	dsp_vector.srcs = source & 0xffff;
-	dsp_vector.options = options;
-	dsp_vector.ptr_fb = 0;
-	dsp_vector.repetitions = 0;
-	dsp_vector.ptr_next = 0x0;
-	dsp_vector.ptr_final = flags & MAKE_VEC_FLAG_END ? 0:1; // VPC relative branch to next vector
-	dsp_vector.f_du = 0;
-	dsp_vector.f_dx = (gint32)round (dsp_vector.n > 1 ? (CONST_DSP_F16*main_get_gapp()->xsm->Inst->XA2Dig (dX) / steps) : 0);
-	dsp_vector.f_dy = (gint32)round (dsp_vector.n > 1 ? (CONST_DSP_F16*main_get_gapp()->xsm->Inst->YA2Dig (dY) / steps) : 0);
-	dsp_vector.f_dz = (gint32)round (dsp_vector.n > 1 ? (CONST_DSP_F16*main_get_gapp()->xsm->Inst->ZA2Dig (dZ) / steps) : 0);
-	dsp_vector.f_dx0 = 0;
-	dsp_vector.f_dy0 = 0;
-	dsp_vector.f_dphi = 0;
+	program_vector.srcs = source & 0xffff;
+	program_vector.options = options;
+	program_vector.ptr_fb = 0;
+	program_vector.repetitions = 0;
+	program_vector.ptr_next = 0x0;
+	program_vector.ptr_final = flags & MAKE_VEC_FLAG_END ? 0:1; // VPC relative branch to next vector
+	program_vector.f_du = 0;
+	program_vector.f_dx = (gint32)round (program_vector.n > 1 ? (CONST_DSP_F16*main_get_gapp()->xsm->Inst->XA2Dig (dX) / steps) : 0);
+	program_vector.f_dy = (gint32)round (program_vector.n > 1 ? (CONST_DSP_F16*main_get_gapp()->xsm->Inst->YA2Dig (dY) / steps) : 0);
+	program_vector.f_dz = (gint32)round (program_vector.n > 1 ? (CONST_DSP_F16*main_get_gapp()->xsm->Inst->ZA2Dig (dZ) / steps) : 0);
+	program_vector.f_dx0 = 0;
+	program_vector.f_dy0 = 0;
+	program_vector.f_dphi = 0;
 
-	return main_get_gapp()->xsm->Inst->Dig2ZA ((long)round ((double)dsp_vector.f_dz*steps/CONST_DSP_F16));
+	return main_get_gapp()->xsm->Inst->Dig2ZA ((long)round ((double)program_vector.f_dz*steps/CONST_DSP_F16));
 }
 
 // make dU/dZ/dX/dY vector for n points and ts time per segment
 double SPM_Template_Control::make_UZXYramp_vector (double dU, double dZ, double dX, double dY, double dSig1, double dSig2, int n, int nrep, int ptr_next, double ts, int source, int options, double long &duration, make_vector_flags flags){
-	dsp_vector.n = n;
+	program_vector.n = n;
 	if (ts <= (0.01333e-3 * (double)(n))) 
-		dsp_vector.dnx = 0; // do N vectors at full speed, no inbetween steps.
+		program_vector.dnx = 0; // do N vectors at full speed, no inbetween steps.
 	else
-		dsp_vector.dnx = (gint32)round ( fabs (ts*spm_template_hwi->spm_emu->frq_ref/(double)(dsp_vector.n)));
-	//	++dsp_vector.n;
+		program_vector.dnx = (gint32)round ( fabs (ts*spm_template_hwi->spm_emu->frq_ref/(double)(program_vector.n)));
+	//	++program_vector.n;
 
-	double steps = (double)(dsp_vector.n) * (double)(dsp_vector.dnx+1);
+	double steps = (double)(program_vector.n) * (double)(program_vector.dnx+1);
 
 	duration += (double long) steps;
-	dsp_vector.srcs = source & 0xffff;
-	dsp_vector.options = options;
-	dsp_vector.ptr_fb = 0;
-	dsp_vector.repetitions = nrep;
-	dsp_vector.ptr_next = ptr_next;
-	dsp_vector.ptr_final = flags & MAKE_VEC_FLAG_END ? 0:1; // VPC relative branch to next vector
+	program_vector.srcs = source & 0xffff;
+	program_vector.options = options;
+	program_vector.ptr_fb = 0;
+	program_vector.repetitions = nrep;
+	program_vector.ptr_next = ptr_next;
+	program_vector.ptr_final = flags & MAKE_VEC_FLAG_END ? 0:1; // VPC relative branch to next vector
 
-	dsp_vector.f_du = (gint32)round (dsp_vector.n > 1 ? (CONST_DSP_F16*main_get_gapp()->xsm->Inst->VoltOut2Dig (dU/main_get_gapp()->xsm->Inst->BiasGainV2V ())/(steps)) : 0);
-	dsp_vector.f_dx = (gint32)round (dsp_vector.n > 1 ? (CONST_DSP_F16*main_get_gapp()->xsm->Inst->XA2Dig (dX) / steps) : 0);
-	dsp_vector.f_dy = (gint32)round (dsp_vector.n > 1 ? (CONST_DSP_F16*main_get_gapp()->xsm->Inst->YA2Dig (dY) / steps) : 0);
-	dsp_vector.f_dz = (gint32)round (dsp_vector.n > 1 ? (CONST_DSP_F16*main_get_gapp()->xsm->Inst->ZA2Dig (dZ) / steps) : 0);
-	dsp_vector.f_dx0 = (gint32)round (dsp_vector.n > 1 ? (CONST_DSP_F16*main_get_gapp()->xsm->Inst->ZA2Dig (dSig1) / steps) : 0);
-	dsp_vector.f_dy0 = (gint32)round (dsp_vector.n > 1 ? (CONST_DSP_F16*main_get_gapp()->xsm->Inst->ZA2Dig (dSig2) / steps) : 0);
-	dsp_vector.f_dphi = 0;
+	program_vector.f_du = (gint32)round (program_vector.n > 1 ? (CONST_DSP_F16*main_get_gapp()->xsm->Inst->VoltOut2Dig (dU/main_get_gapp()->xsm->Inst->BiasGainV2V ())/(steps)) : 0);
+	program_vector.f_dx = (gint32)round (program_vector.n > 1 ? (CONST_DSP_F16*main_get_gapp()->xsm->Inst->XA2Dig (dX) / steps) : 0);
+	program_vector.f_dy = (gint32)round (program_vector.n > 1 ? (CONST_DSP_F16*main_get_gapp()->xsm->Inst->YA2Dig (dY) / steps) : 0);
+	program_vector.f_dz = (gint32)round (program_vector.n > 1 ? (CONST_DSP_F16*main_get_gapp()->xsm->Inst->ZA2Dig (dZ) / steps) : 0);
+	program_vector.f_dx0 = (gint32)round (program_vector.n > 1 ? (CONST_DSP_F16*main_get_gapp()->xsm->Inst->ZA2Dig (dSig1) / steps) : 0);
+	program_vector.f_dy0 = (gint32)round (program_vector.n > 1 ? (CONST_DSP_F16*main_get_gapp()->xsm->Inst->ZA2Dig (dSig2) / steps) : 0);
+	program_vector.f_dphi = 0;
 
-	return main_get_gapp()->xsm->Inst->Dig2ZA ((long)round ((double)dsp_vector.f_dz*steps/CONST_DSP_F16));
+	return main_get_gapp()->xsm->Inst->Dig2ZA ((long)round ((double)program_vector.f_dz*steps/CONST_DSP_F16));
 }
 
 
@@ -257,75 +257,75 @@ double SPM_Template_Control::make_phase_vector (double dPhi, int n, double slope
 	if (flags & MAKE_VEC_FLAG_RAMP || n<2)
 		make_auto_n_vector_elments (dr/slope*spm_template_hwi->spm_emu->frq_ref);
 	else {
-		dsp_vector.n = n;
-		dsp_vector.dnx = (gint32)round ( fabs (dr*spm_template_hwi->spm_emu->frq_ref/(slope*dsp_vector.n)));
-		++dsp_vector.n;
+		program_vector.n = n;
+		program_vector.dnx = (gint32)round ( fabs (dr*spm_template_hwi->spm_emu->frq_ref/(slope*program_vector.n)));
+		++program_vector.n;
 	}
-	double steps = (double)(dsp_vector.n) * (double)(dsp_vector.dnx+1);
+	double steps = (double)(program_vector.n) * (double)(program_vector.dnx+1);
 
 	duration += (double long) steps;
-	dsp_vector.srcs = source & 0xffff;
-	dsp_vector.options = options;
-	dsp_vector.ptr_fb = 0;
-	dsp_vector.repetitions = 0;
-	dsp_vector.ptr_next = 0x0;
-	dsp_vector.ptr_final = flags & MAKE_VEC_FLAG_END ? 0:1; // VPC relative branch to next vector
-	dsp_vector.f_du = 0;
-	dsp_vector.f_dx = 0;
-	dsp_vector.f_dy = 0;
-	dsp_vector.f_dz = 0;
-	dsp_vector.f_dx0 = 0;
-	dsp_vector.f_dy0 = 0;
-	dsp_vector.f_dphi = (gint32)round (dsp_vector.n > 1 ? (CONST_DSP_F16 * dr / steps) : 0);
+	program_vector.srcs = source & 0xffff;
+	program_vector.options = options;
+	program_vector.ptr_fb = 0;
+	program_vector.repetitions = 0;
+	program_vector.ptr_next = 0x0;
+	program_vector.ptr_final = flags & MAKE_VEC_FLAG_END ? 0:1; // VPC relative branch to next vector
+	program_vector.f_du = 0;
+	program_vector.f_dx = 0;
+	program_vector.f_dy = 0;
+	program_vector.f_dz = 0;
+	program_vector.f_dx0 = 0;
+	program_vector.f_dy0 = 0;
+	program_vector.f_dphi = (gint32)round (program_vector.n > 1 ? (CONST_DSP_F16 * dr / steps) : 0);
 
-	return round ((double)dsp_vector.f_dphi*steps/CONST_DSP_F16/16.);
+	return round ((double)program_vector.f_dphi*steps/CONST_DSP_F16/16.);
 }
 
 // Make a delay Vector
 double SPM_Template_Control::make_delay_vector (double delay, int source, int options, double long &duration, make_vector_flags flags, int points){
 	if (points > 2){
 		double rnum = delay*spm_template_hwi->spm_emu->frq_ref;
-		dsp_vector.n = points;
-		dsp_vector.dnx = (gint32)round (rnum / points - 1.);
-		if (dsp_vector.dnx < 0)
-			dsp_vector.dnx = 0;
+		program_vector.n = points;
+		program_vector.dnx = (gint32)round (rnum / points - 1.);
+		if (program_vector.dnx < 0)
+			program_vector.dnx = 0;
 	} else
 		make_auto_n_vector_elments (delay*spm_template_hwi->spm_emu->frq_ref);
 
-	duration += (double long) (dsp_vector.n)*(dsp_vector.dnx+1);
-	dsp_vector.srcs = source & 0xffff;
-	dsp_vector.options = options;
-	dsp_vector.repetitions = 0; // number of repetitions, not used yet
-	dsp_vector.ptr_next = 0x0;  // pointer to next vector -- not used, only for loops
-	dsp_vector.ptr_final = flags & MAKE_VEC_FLAG_END ? 0:1;   // VPC relative branch to next vector
-	dsp_vector.f_du = 0;
-	dsp_vector.f_dz = 0;
-	dsp_vector.f_dx = 0; // x stepwidth, not used for probing
-	dsp_vector.f_dy = 0; // y stepwidth, not used for probing
-	dsp_vector.f_dx0 = 0; // x0 stepwidth, not used for probing
-	dsp_vector.f_dy0 = 0; // y0 stepwidth, not used for probing
-	dsp_vector.f_dphi = 0; // z0 stepwidth, not used for probing
-	return (double)((long)(dsp_vector.n)*(long)(dsp_vector.dnx+1))/spm_template_hwi->spm_emu->frq_ref;
+	duration += (double long) (program_vector.n)*(program_vector.dnx+1);
+	program_vector.srcs = source & 0xffff;
+	program_vector.options = options;
+	program_vector.repetitions = 0; // number of repetitions, not used yet
+	program_vector.ptr_next = 0x0;  // pointer to next vector -- not used, only for loops
+	program_vector.ptr_final = flags & MAKE_VEC_FLAG_END ? 0:1;   // VPC relative branch to next vector
+	program_vector.f_du = 0;
+	program_vector.f_dz = 0;
+	program_vector.f_dx = 0; // x stepwidth, not used for probing
+	program_vector.f_dy = 0; // y stepwidth, not used for probing
+	program_vector.f_dx0 = 0; // x0 stepwidth, not used for probing
+	program_vector.f_dy0 = 0; // y0 stepwidth, not used for probing
+	program_vector.f_dphi = 0; // z0 stepwidth, not used for probing
+	return (double)((long)(program_vector.n)*(long)(program_vector.dnx+1))/spm_template_hwi->spm_emu->frq_ref;
 }
 
 // Make Vector Table End
 void SPM_Template_Control::append_null_vector (int options, int index){
 	// NULL vector -- just to clean vector table
-	dsp_vector.n = 0;
-	dsp_vector.dnx = 0;
-	dsp_vector.srcs = 0x0000;
-	dsp_vector.options = options;
-	dsp_vector.repetitions = 0; // number of repetitions
-	dsp_vector.ptr_next = 0;  // END
-	dsp_vector.ptr_final= 0;  // END
-	dsp_vector.f_dx = 0;
-	dsp_vector.f_dy = 0;
-	dsp_vector.f_dz = 0;
+	program_vector.n = 0;
+	program_vector.dnx = 0;
+	program_vector.srcs = 0x0000;
+	program_vector.options = options;
+	program_vector.repetitions = 0; // number of repetitions
+	program_vector.ptr_next = 0;  // END
+	program_vector.ptr_final= 0;  // END
+	program_vector.f_dx = 0;
+	program_vector.f_dy = 0;
+	program_vector.f_dz = 0;
 	// append 4 NULL-Vectors, just to clean up the end.
-	write_dsp_vector (index);
-	write_dsp_vector (index+1);
-	write_dsp_vector (index+2);
-	write_dsp_vector (index+3);
+	write_program_vector (index);
+	write_program_vector (index+1);
+	write_program_vector (index+2);
+	write_program_vector (index+3);
 }
 
 static void via_remote_list_Check_ec(Gtk_EntryControl* ec, remote_args* ra){
@@ -333,7 +333,7 @@ static void via_remote_list_Check_ec(Gtk_EntryControl* ec, remote_args* ra){
 };
 
 // Create Vector Table form Mode (pvm=PV_MODE_XXXXX) and Execute if requested (start=TRUE) or write only
-void SPM_Template_Control::write_dsp_probe (int start, pv_mode pvm){
+void SPM_Template_Control::write_spm_vector_program (int start, pv_mode pvm){
 	int options=0;
 	int options_FBon=0;
 	int ramp_sources=0x000;
@@ -367,9 +367,9 @@ void SPM_Template_Control::write_dsp_probe (int start, pv_mode pvm){
 		recover_options = 0;
 
 		make_delay_vector (0.1, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
-		write_dsp_vector (vector_index++);
+		write_program_vector (vector_index++);
 		make_delay_vector (0.1, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_END);
-		write_dsp_vector (vector_index++);
+		write_program_vector (vector_index++);
 		append_null_vector (options, vector_index);
 		spm_template_hwi->probe_time_estimate = (int)vp_duration; // used for timeout check
 		break;
@@ -408,96 +408,96 @@ void SPM_Template_Control::write_dsp_probe (int start, pv_mode pvm){
 			vp_duration_2 =	vp_duration;
 				
 			make_Vdz_vector (bias, ui, dz_bi, -1, IV_slope_ramp, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_RAMP);
-			write_dsp_vector (vector_index++);
+			write_program_vector (vector_index++);
 
 			make_Vdz_vector (ui, u0, dz_i0, n12, IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
-			write_dsp_vector (vector_index++);
+			write_program_vector (vector_index++);
 
 			make_Vdz_vector (u0, uf, dz_0f, n23, IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
-			write_dsp_vector (vector_index++);
+			write_program_vector (vector_index++);
 
 			dU_IV = uf-ui; dU_step = dU_IV/IV_points[0];
 
 			if (IV_option_flags & FLAG_DUAL) {
 				// run also reverse probe ramp in dual mode
 				make_Vdz_vector (uf, u0, -dz_0f, n23, IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
-				write_dsp_vector (vector_index++);
+				write_program_vector (vector_index++);
 
 				make_Vdz_vector (u0, ui, -dz_i0, n12, IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
-				write_dsp_vector (vector_index++);
+				write_program_vector (vector_index++);
 
 				// Ramp back to given bias voltage   
 				make_Vdz_vector (ui, bias, -dz_bi, -1, IV_slope_ramp, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_RAMP);
-				write_dsp_vector (vector_index++);
+				write_program_vector (vector_index++);
 
 			} else {
 				make_Vdz_vector (uf, bias, -(dz_bi+dz_i0+dz_0f), -1, IV_slope_ramp, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_RAMP);
-				write_dsp_vector (vector_index++);
+				write_program_vector (vector_index++);
 			}
 
 			if (IV_repetitions > 1){
 				// Final vector, gives the IVC some time to recover   
 				make_delay_vector (IV_final_delay, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
-				write_dsp_vector (vector_index++);
+				write_program_vector (vector_index++);
 				make_delay_vector (IV_recover_delay, ramp_sources, recover_options, vp_duration, MAKE_VEC_FLAG_NORMAL);
-				dsp_vector.repetitions = IV_repetitions-1;
-				dsp_vector.ptr_next = -vector_index; // go to start
+				program_vector.repetitions = IV_repetitions-1;
+				program_vector.ptr_next = -vector_index; // go to start
 				vp_duration +=	(IV_repetitions-1)*(vp_duration - vp_duration_1);
-				write_dsp_vector (vector_index++);
+				write_program_vector (vector_index++);
 			} else {
 				make_delay_vector (IV_final_delay, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
-				write_dsp_vector (vector_index++);
+				write_program_vector (vector_index++);
 				make_delay_vector (IV_recover_delay, ramp_sources, recover_options, vp_duration, MAKE_VEC_FLAG_NORMAL);
-				write_dsp_vector (vector_index++);
+				write_program_vector (vector_index++);
 			}
 			// add automatic conductivity measurement rho(Z) -- HOLD Bias fixed now!
 			if (IVdz_repetitions > 0){
 				vp_duration_2 =	vp_duration;
 				// don't know the reason, but the following delay vector is needed to separate dI/dU and dI/dz
 				make_delay_vector (0., ramp_sources, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
-				write_dsp_vector (vector_index++);
+				write_program_vector (vector_index++);
 
 				// in case of rep > 1 the DSP will jump back to this point
 				vpc = vector_index;
 	
 				make_Vdz_vector (bias, ui, dz_bi, -1, IV_slope_ramp, ramp_sources, options, vp_duration, (make_vector_flags)(MAKE_VEC_FLAG_RAMP | MAKE_VEC_FLAG_VHOLD));
-				write_dsp_vector (vector_index++);
+				write_program_vector (vector_index++);
 	
 				make_Vdz_vector (ui, u0, dz_i0, n12, IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_VHOLD);
-				write_dsp_vector (vector_index++);
+				write_program_vector (vector_index++);
 	
 				make_Vdz_vector (u0, uf, dz_0f, n23, IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_VHOLD);
-				write_dsp_vector (vector_index++);
+				write_program_vector (vector_index++);
 	
 				if (IV_option_flags & FLAG_DUAL) {
 					make_Vdz_vector (uf, u0, -dz_0f, n23, IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_VHOLD);
-					write_dsp_vector (vector_index++);
+					write_program_vector (vector_index++);
 	
 					make_Vdz_vector (u0, ui, -dz_i0, n12, IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_VHOLD);
-					write_dsp_vector (vector_index++);
+					write_program_vector (vector_index++);
 	
 					make_Vdz_vector (ui, bias, -dz_bi, -1, IV_slope_ramp, ramp_sources, options, vp_duration, (make_vector_flags)(MAKE_VEC_FLAG_RAMP | MAKE_VEC_FLAG_VHOLD));
-					write_dsp_vector (vector_index++);
+					write_program_vector (vector_index++);
 				} else {
 					make_Vdz_vector (uf, bias, -(dz_bi+dz_i0+dz_0f), -1, IV_slope_ramp, ramp_sources, options, vp_duration, (make_vector_flags)(MAKE_VEC_FLAG_RAMP | MAKE_VEC_FLAG_VHOLD));
-					write_dsp_vector (vector_index++);
+					write_program_vector (vector_index++);
 				}
 	
 				if (IVdz_repetitions > 1){
 					// Final vector, gives the IVC some time to recover   
 					make_delay_vector (IV_final_delay, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
-					write_dsp_vector (vector_index++);
+					write_program_vector (vector_index++);
 	
 					make_delay_vector (IV_recover_delay, ramp_sources, recover_options, vp_duration, MAKE_VEC_FLAG_NORMAL);
-					dsp_vector.repetitions = IVdz_repetitions-1;
-					dsp_vector.ptr_next = -(vector_index-vpc); // go to rho start
+					program_vector.repetitions = IVdz_repetitions-1;
+					program_vector.ptr_next = -(vector_index-vpc); // go to rho start
 					vp_duration +=	(IVdz_repetitions-1)*(vp_duration - vp_duration_2);
-					write_dsp_vector (vector_index++);
+					write_program_vector (vector_index++);
 				} else {
 					make_delay_vector (IV_final_delay, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
-					write_dsp_vector (vector_index++);
+					write_program_vector (vector_index++);
 					make_delay_vector (IV_recover_delay, ramp_sources, recover_options, vp_duration, MAKE_VEC_FLAG_NORMAL);
-					write_dsp_vector (vector_index++);
+					write_program_vector (vector_index++);
 				}
 			}
 
@@ -526,51 +526,51 @@ void SPM_Template_Control::write_dsp_probe (int start, pv_mode pvm){
 				}
 
 				make_Vdz_vector (bias_prev, ui, dz_bi, -1, IV_slope_ramp, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_RAMP);
-				write_dsp_vector (vector_index++);
+				write_program_vector (vector_index++);
 
 				make_Vdz_vector (ui, uf, dz_if, IV_points[IVs], IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
-				write_dsp_vector (vector_index++);
+				write_program_vector (vector_index++);
 			
 				// info of real values set
-				dU_IV   = main_get_gapp()->xsm->Inst->V2BiasV (main_get_gapp()->xsm->Inst->Dig2VoltOut ((long double)dsp_vector.f_du*(long double)(dsp_vector.n-1)*(long double)(dsp_vector.dnx ? dsp_vector.dnx+1 : 1)/CONST_DSP_F16));
-				dU_step = main_get_gapp()->xsm->Inst->V2BiasV (main_get_gapp()->xsm->Inst->Dig2VoltOut ((long double)dsp_vector.f_du*(long double)(dsp_vector.dnx ? dsp_vector.dnx+1 : 1)/CONST_DSP_F16));
+				dU_IV   = main_get_gapp()->xsm->Inst->V2BiasV (main_get_gapp()->xsm->Inst->Dig2VoltOut ((long double)program_vector.f_du*(long double)(program_vector.n-1)*(long double)(program_vector.dnx ? program_vector.dnx+1 : 1)/CONST_DSP_F16));
+				dU_step = main_get_gapp()->xsm->Inst->V2BiasV (main_get_gapp()->xsm->Inst->Dig2VoltOut ((long double)program_vector.f_du*(long double)(program_vector.dnx ? program_vector.dnx+1 : 1)/CONST_DSP_F16));
 			
 				// add vector for reverse return ramp? -- Force return path if dz != 0
 				if (IV_option_flags & FLAG_DUAL) {
 					// run also reverse probe ramp in dual mode
 					make_Vdz_vector (uf, ui, -dz_if, IV_points[IVs], IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
-					write_dsp_vector (vector_index++);
+					write_program_vector (vector_index++);
 					
 					if (IVs == (IV_sections-1)){
 						// Ramp back to given bias voltage   
 						make_Vdz_vector (ui, bias, -dz_bi, -1, IV_slope_ramp, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_RAMP);
-						write_dsp_vector (vector_index++);
+						write_program_vector (vector_index++);
 					}
 				} else {
 					if (IVs == (IV_sections-1)){
 						// Ramp back to given bias voltage   
 						make_Vdz_vector (uf, bias, -(dz_if+dz_bi), -1, IV_slope_ramp, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_RAMP);
-						write_dsp_vector (vector_index++);
+						write_program_vector (vector_index++);
 					}
 				}
 				if (IV_repetitions > 1){
 					// Final vector, gives the IVC some time to recover   
 					make_delay_vector (IV_final_delay, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
-					write_dsp_vector (vector_index++);
+					write_program_vector (vector_index++);
 					
 					if (IVs == (IV_sections-1)){
 						make_delay_vector (IV_recover_delay, ramp_sources, recover_options, vp_duration, MAKE_VEC_FLAG_NORMAL);
-						dsp_vector.repetitions = IV_repetitions-1;
-						dsp_vector.ptr_next = -vector_index; // go to start
+						program_vector.repetitions = IV_repetitions-1;
+						program_vector.ptr_next = -vector_index; // go to start
 						vp_duration +=	(IV_repetitions-1)*(vp_duration - vp_duration_1);
-						write_dsp_vector (vector_index++);
+						write_program_vector (vector_index++);
 					}
 				} else {
 					make_delay_vector (IV_final_delay, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
-					write_dsp_vector (vector_index++);
+					write_program_vector (vector_index++);
 					if (IVs == (IV_sections-1)){
 						make_delay_vector (IV_recover_delay, ramp_sources, recover_options, vp_duration, MAKE_VEC_FLAG_NORMAL);
-						write_dsp_vector (vector_index++);
+						write_program_vector (vector_index++);
 					}
 				}
 			}
@@ -580,44 +580,44 @@ void SPM_Template_Control::write_dsp_probe (int start, pv_mode pvm){
 				vp_duration_2 =	vp_duration;
 				// don't know the reason, but the following delay vector is needed to separate dI/dU and dI/dz
 				make_delay_vector (0., ramp_sources, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
-				write_dsp_vector (vector_index++);
+				write_program_vector (vector_index++);
 
 				// in case of rep > 1 the DSP will jump back to this point
 				vpc = vector_index;
 	
 				make_Vdz_vector (bias, ui, dz_bi, -1, IV_slope_ramp, ramp_sources, options, vp_duration, (make_vector_flags)(MAKE_VEC_FLAG_RAMP | MAKE_VEC_FLAG_VHOLD));
-				write_dsp_vector (vector_index++);
+				write_program_vector (vector_index++);
 
 				make_Vdz_vector (ui, uf, dz_if, IV_points[0], IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_VHOLD);
-				write_dsp_vector (vector_index++);
+				write_program_vector (vector_index++);
 			
 				if (IV_option_flags & FLAG_DUAL) {
 					make_Vdz_vector (uf, ui, -dz_if, IV_points[0], IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_VHOLD);
-					write_dsp_vector (vector_index++);
+					write_program_vector (vector_index++);
 
 					// Ramp back to given bias voltage   
 					make_Vdz_vector (ui, bias, -dz_bi, -1, IV_slope_ramp, ramp_sources, options, vp_duration, (make_vector_flags)(MAKE_VEC_FLAG_RAMP | MAKE_VEC_FLAG_VHOLD));
-					write_dsp_vector (vector_index++);
+					write_program_vector (vector_index++);
 				} else {
 					make_Vdz_vector (uf, bias, -(dz_if+dz_bi), -1, IV_slope_ramp, ramp_sources, options, vp_duration, (make_vector_flags)(MAKE_VEC_FLAG_RAMP | MAKE_VEC_FLAG_VHOLD));
-					write_dsp_vector (vector_index++);
+					write_program_vector (vector_index++);
 				}
 	
 				if (IVdz_repetitions > 1 ){
 					// Final vector, gives the IVC some time to recover   
 					make_delay_vector (IV_final_delay, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
-					write_dsp_vector (vector_index++);
+					write_program_vector (vector_index++);
 	
 					make_delay_vector (IV_recover_delay, ramp_sources, recover_options, vp_duration, MAKE_VEC_FLAG_NORMAL);
-					dsp_vector.repetitions = IVdz_repetitions-1;
-					dsp_vector.ptr_next = -(vector_index-vpc); // go to rho start
+					program_vector.repetitions = IVdz_repetitions-1;
+					program_vector.ptr_next = -(vector_index-vpc); // go to rho start
 					vp_duration +=	(IVdz_repetitions-1)*(vp_duration - vp_duration_2);
-					write_dsp_vector (vector_index++);
+					write_program_vector (vector_index++);
 				} else {
 					make_delay_vector (IV_final_delay, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
-					write_dsp_vector (vector_index++);
+					write_program_vector (vector_index++);
 					make_delay_vector (IV_recover_delay, ramp_sources, recover_options, vp_duration, MAKE_VEC_FLAG_NORMAL);
-					write_dsp_vector (vector_index++);
+					write_program_vector (vector_index++);
 				}
 			}
 		}
@@ -629,13 +629,13 @@ void SPM_Template_Control::write_dsp_probe (int start, pv_mode pvm){
 			make_ZXYramp_vector (0., IV_dx/(IV_dxy_points-1), IV_dy/(IV_dxy_points-1), 100, IV_dxy_slope, 
 					     ramp_sources, options, vp_duration, MAKE_VEC_FLAG_RAMP);
 
-			dsp_vector.f_dphi = (gint32)round (CONST_DSP_F16*main_get_gapp()->xsm->Inst->VoltOut2Dig (IV_dM/main_get_gapp()->xsm->Inst->BiasGainV2V ()));
+			program_vector.f_dphi = (gint32)round (CONST_DSP_F16*main_get_gapp()->xsm->Inst->VoltOut2Dig (IV_dM/main_get_gapp()->xsm->Inst->BiasGainV2V ()));
 
-			write_dsp_vector (vector_index++);
+			write_program_vector (vector_index++);
 			make_delay_vector (IV_dxy_delay, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_RAMP);
-			dsp_vector.repetitions = IV_dxy_points-1;
-			dsp_vector.ptr_next = -(vector_index-vpci); // go to initial IV start for full repeat
-			write_dsp_vector (vector_index++);
+			program_vector.repetitions = IV_dxy_points-1;
+			program_vector.ptr_next = -(vector_index-vpci); // go to initial IV start for full repeat
+			write_program_vector (vector_index++);
 			vp_duration +=	(IV_dxy_points-1)*(vp_duration - vp_duration_0);
 
 			// add vector for full reverse return path -- YES!, always auto return!
@@ -643,12 +643,12 @@ void SPM_Template_Control::write_dsp_probe (int start, pv_mode pvm){
 					     -IV_dx*(IV_dxy_points)/(IV_dxy_points-1.), 
 					     -IV_dy*(IV_dxy_points)/(IV_dxy_points-1.), 100, IV_dxy_slope, 
 					     ramp_sources, options, vp_duration, MAKE_VEC_FLAG_RAMP);
-			write_dsp_vector (vector_index++);
+			write_program_vector (vector_index++);
 		}
 
 		// Final vector
 		make_delay_vector (0., ramp_sources, options, vp_duration, MAKE_VEC_FLAG_END);
-		write_dsp_vector (vector_index++);
+		write_program_vector (vector_index++);
 
 		append_null_vector (options, vector_index);
 
@@ -727,7 +727,7 @@ void SPM_Template_Control::write_dsp_probe (int start, pv_mode pvm){
 				if (GVP_vpcjr[k] < -vector_index || GVP_vpcjr[k] > 0) // origin of VP, no forward jump
 					GVP_vpcjr[k] = -vector_index; // defaults to start
 				make_UZXYramp_vector (GVP_du[k], GVP_dz[k], GVP_dx[k], GVP_dy[k], GVP_dsig[k], 0., GVP_points[k], GVP_vnrep[k]-1, GVP_vpcjr[k], GVP_ts[k], vis_Source, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
-				write_dsp_vector (vector_index++);
+				write_program_vector (vector_index++);
 				if (GVP_vnrep[k]-1 > 0)	
 					vp_duration +=	(GVP_vnrep[k]-1)*(vp_duration - vpd[k+GVP_vpcjr[k]]);
 			}
@@ -736,7 +736,7 @@ void SPM_Template_Control::write_dsp_probe (int start, pv_mode pvm){
 		options      = (GVP_option_flags & FLAG_FB_ON     ? 0      : VP_FEEDBACK_HOLD)
                         | (GVP_option_flags & FLAG_INTEGRATE ? VP_AIC_INTEGRATE : 0);
 		make_delay_vector (GVP_final_delay, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_END);
-		write_dsp_vector (vector_index++);
+		write_program_vector (vector_index++);
 
 		append_null_vector (options, vector_index);
 
@@ -760,7 +760,7 @@ void SPM_Template_Control::write_dsp_probe (int start, pv_mode pvm){
 		}
 
 		make_delay_vector (ABORT_final_delay, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_END);
-		write_dsp_vector (vector_index++);
+		write_program_vector (vector_index++);
 
 		// clear program
 		for (; vector_index<36; vector_index+=4)
@@ -777,7 +777,9 @@ void SPM_Template_Control::write_dsp_probe (int start, pv_mode pvm){
                 g_message ("Executing Vector Probe Now! Mode: %s", vp_exec_mode_name);
 		main_get_gapp()->monitorcontrol->LogEvent ("VectorProbe Execute", vp_exec_mode_name);
 		main_get_gapp()->monitorcontrol->LogEvent ("VectorProbe", info, 2);
-	}
+                // may want to make sure LockIn settings are up to date...
+                spm_template_hwi->spm_emu->execute_vector_program(); // non blocking
+        }
 
         g_free (info);
 
@@ -804,47 +806,47 @@ void SPM_Template_Control::write_dsp_probe (int start, pv_mode pvm){
 	update_GUI();
 
 	// Update from DSP
-	//read_dsp_probe ();
+	read_spm_vector_program ();
 }
 
 
-void SPM_Template_Control::write_dsp_vector (int index){
+void SPM_Template_Control::write_program_vector (int index){
         if (!spm_template_hwi) return; 
 
-        spm_template_hwi->spm_emu->write_program_vector (index, &dsp_vector);
+        spm_template_hwi->spm_emu->write_program_vector (index, &program_vector);
 
 
 	// update GXSM's internal copy of vector list
-	dsp_vector_list[index].n = dsp_vector.n;
-	dsp_vector_list[index].dnx = dsp_vector.dnx;
-	dsp_vector_list[index].srcs = dsp_vector.srcs;
-	dsp_vector_list[index].options = dsp_vector.options;
-	dsp_vector_list[index].ptr_fb = dsp_vector.ptr_fb;
-	dsp_vector_list[index].repetitions = dsp_vector.repetitions;
-	dsp_vector_list[index].i = dsp_vector.i;
-	dsp_vector_list[index].j = dsp_vector.j;
-	dsp_vector_list[index].ptr_next = dsp_vector.ptr_next;
-	dsp_vector_list[index].ptr_final = dsp_vector.ptr_final;
-	dsp_vector_list[index].f_du = dsp_vector.f_du;
-	dsp_vector_list[index].f_dx = dsp_vector.f_dx;
-	dsp_vector_list[index].f_dy = dsp_vector.f_dy;
-	dsp_vector_list[index].f_dz = dsp_vector.f_dz;
-	dsp_vector_list[index].f_dx0 = dsp_vector.f_dx0;
-	dsp_vector_list[index].f_dy0 = dsp_vector.f_dy0;
-	dsp_vector_list[index].f_dphi = dsp_vector.f_dphi;
+	program_vector_list[index].n = program_vector.n;
+	program_vector_list[index].dnx = program_vector.dnx;
+	program_vector_list[index].srcs = program_vector.srcs;
+	program_vector_list[index].options = program_vector.options;
+	program_vector_list[index].ptr_fb = program_vector.ptr_fb;
+	program_vector_list[index].repetitions = program_vector.repetitions;
+	program_vector_list[index].i = program_vector.i;
+	program_vector_list[index].j = program_vector.j;
+	program_vector_list[index].ptr_next = program_vector.ptr_next;
+	program_vector_list[index].ptr_final = program_vector.ptr_final;
+	program_vector_list[index].f_du = program_vector.f_du;
+	program_vector_list[index].f_dx = program_vector.f_dx;
+	program_vector_list[index].f_dy = program_vector.f_dy;
+	program_vector_list[index].f_dz = program_vector.f_dz;
+	program_vector_list[index].f_dx0 = program_vector.f_dx0;
+	program_vector_list[index].f_dy0 = program_vector.f_dy0;
+	program_vector_list[index].f_dphi = program_vector.f_dphi;
 
 	{ 
 		double mVf = 10000. / (65536. * 32768.);
 		gchar *pvi = g_strdup_printf ("ProbeVector[pc%02d]", index);
 		gchar *pvd = g_strdup_printf ("(n:%05d, dnx:%05d, 0x%04x, 0x%04x, r:%4d, pc:%d, f:%d),"
 					      "(dU:%6.4f mV, dxzy:%6.4f, %6.4f, %6.4f mV, dxy0:%6.4f, %6.4f mV, dP:%.4f)", 
-					      dsp_vector.n, dsp_vector.dnx,
-					      dsp_vector.srcs, dsp_vector.options,
-					      dsp_vector.repetitions,
-					      dsp_vector.ptr_next, dsp_vector.ptr_final,
-					      mVf * dsp_vector.f_du, mVf * dsp_vector.f_dx, mVf * dsp_vector.f_dy, mVf * dsp_vector.f_dz,
-					      mVf * dsp_vector.f_dx0, mVf * dsp_vector.f_dy0,
-					      dsp_vector.f_dphi / CONST_DSP_F16
+					      program_vector.n, program_vector.dnx,
+					      program_vector.srcs, program_vector.options,
+					      program_vector.repetitions,
+					      program_vector.ptr_next, program_vector.ptr_final,
+					      mVf * program_vector.f_du, mVf * program_vector.f_dx, mVf * program_vector.f_dy, mVf * program_vector.f_dz,
+					      mVf * program_vector.f_dx0, mVf * program_vector.f_dy0,
+					      program_vector.f_dphi / CONST_DSP_F16
                                               );
 
 		main_get_gapp()->monitorcontrol->LogEvent (pvi, pvd, 2);
@@ -853,9 +855,9 @@ void SPM_Template_Control::write_dsp_vector (int index){
 	}
 }
 
-void SPM_Template_Control::read_dsp_vector (int index){
+void SPM_Template_Control::read_program_vector (int index){
         if (!spm_template_hwi) return; 
-	spm_template_hwi->spm_emu->read_program_vector (index, &dsp_vector);
+	spm_template_hwi->spm_emu->read_program_vector (index, &program_vector);
 }
 
 

@@ -590,7 +590,7 @@ public:
 	double make_delay_vector (double delay, int source, int options, double long &duration, make_vector_flags flags, int points=0);
 	void append_null_vector (int options, int index);
 
-	PROBE_VECTOR_GENERIC dsp_vector;
+	PROBE_VECTOR_GENERIC program_vector;
 
 	// STS (I-V)
 	double IV_start, IV_end, IV_slope, IV_slope_ramp, IV_final_delay, IV_recover_delay;
@@ -692,11 +692,11 @@ public:
 
         
 protected:
-	void read_dsp_probe ();
-	void write_dsp_probe (int start, pv_mode pvm);
+	void read_spm_vector_program ();
+	void write_spm_vector_program (int start, pv_mode pvm);
 
-	void read_dsp_vector (int index);
-	void write_dsp_vector (int index);
+	void read_program_vector (int index);
+	void write_program_vector (int index);
 
 	void write_dsp_abort_probe ();
 
@@ -710,7 +710,7 @@ protected:
 
 private:
 	#define MAX_PV 50
-	PROBE_VECTOR_GENERIC     dsp_vector_list[MAX_PV]; // copy for GXSM internal use only
+	PROBE_VECTOR_GENERIC     program_vector_list[MAX_PV]; // copy for GXSM internal use only
 
 	GSettings *hwi_settings;
 

@@ -2424,7 +2424,7 @@ int SPM_Template_Control::Probing_exec_IV_callback( GtkWidget *widget, SPM_Templ
 
         // ** TEMPLATE DUMMY **
         // write code to controller
-        //dspc->write_dsp_probe (0, PV_MODE_NONE);
+        //dspc->write_spm_vector_program (0, PV_MODE_NONE);
 
 	if (dspc->IV_auto_flags & FLAG_AUTO_GLOCK){
 		dspc->vis_Source  = dspc->IV_glock_data[0];
@@ -2449,7 +2449,7 @@ int SPM_Template_Control::Probing_exec_IV_callback( GtkWidget *widget, SPM_Templ
         // exec IV GVP code on controller now and initiate data streaming
 
         // dspc->probe_trigger_single_shot = 1;
-	// dspc->write_dsp_probe (1, PV_MODE_IV); // Exec STS probing here
+	// dspc->write_spm_vector_program (1, PV_MODE_IV); // Exec STS probing here
 	// sranger_common_hwi->start_fifo_read (0, 0,0,0,0, NULL,NULL,NULL,NULL);
 
 	return 0;
@@ -2457,7 +2457,7 @@ int SPM_Template_Control::Probing_exec_IV_callback( GtkWidget *widget, SPM_Templ
 
 int SPM_Template_Control::Probing_write_IV_callback( GtkWidget *widget, SPM_Template_Control *dspc){
         // write IV GVP code to controller
-        // dspc->write_dsp_probe (0, PV_MODE_IV);
+        // dspc->write_spm_vector_program (0, PV_MODE_IV);
         return 0;
 }
 
@@ -2540,7 +2540,7 @@ int SPM_Template_Control::Probing_exec_GVP_callback( GtkWidget *widget, SPM_Temp
       
         // ** TEMPLATE DUMMY **
         // write code to controller
-        //dspc->write_dsp_probe (0, PV_MODE_NONE);
+        //dspc->write_spm_vector_program (0, PV_MODE_NONE);
 
 	if (dspc->GVP_auto_flags & FLAG_AUTO_GLOCK){
 		dspc->vis_Source  = dspc->GVP_glock_data[0];
@@ -2564,8 +2564,8 @@ int SPM_Template_Control::Probing_exec_GVP_callback( GtkWidget *widget, SPM_Temp
         // exec GVP code on controller now and initiate data streaming
         
 	// dspc->probe_trigger_single_shot = 1;
-	// dspc->write_dsp_probe (1, PV_MODE_GVP); // Exec FZ probing here
-	// sranger_common_hwi->start_fifo_read (0, 0,0,0,0, NULL,NULL,NULL,NULL);
+	dspc->write_spm_vector_program (1, PV_MODE_GVP); // Exec FZ probing here
+	spm_template_hwi->start_data_read (0, 0,0,0,0, NULL,NULL,NULL,NULL);
 
 	return 0;
 }
@@ -2573,7 +2573,7 @@ int SPM_Template_Control::Probing_exec_GVP_callback( GtkWidget *widget, SPM_Temp
 
 int SPM_Template_Control::Probing_write_GVP_callback( GtkWidget *widget, SPM_Template_Control *dspc){
         // write GVP code to controller
-        // dspc->write_dsp_probe (0, PV_MODE_GVP);
+        dspc->write_spm_vector_program (0, PV_MODE_GVP);
         return 0;
 }
 
@@ -3317,7 +3317,7 @@ gint spm_template_hwi_dev::RTQuery (const gchar *property, double &val1, double 
 	}
 
         if (*property == 'Z'){
-                val1 = 0.; // spm_template_hwi_pi.app->xsm->Inst->Dig2ZA ((double)dsp_probe.Zpos / (double)(1<<16));
+                val1 = 0.; // spm_template_hwi_pi.app->xsm->Inst->Dig2ZA ((double)spm_vector_program.Zpos / (double)(1<<16));
 		return TRUE;
         }
 

@@ -192,7 +192,9 @@ public:
 		scan_xy_r_vec[0]= scan_xy_r_vec[1]= scan_xy_r_vec[2]= 0.;
 		
 		vector = NULL;
-		frq_ref = 1000; // real DSP: more 75000 or 150000 Hz
+		frq_ref = 10000; // real DSP: more 75000 or 150000 Hz
+
+                dsp_thread = NULL;
 	};
         ~SPM_emulator(){};
 
@@ -260,9 +262,10 @@ public:
 		return 0;
 	};
 
-	execute_vector_program(){
-	};
+	void execute_vector_program();
 
+        void thread_run_loop();
+        
 	void vp_init ();
 	void vp_stop ();
 	void vp_append_header_and_positionvector ();
@@ -310,6 +313,8 @@ private:
 	double ADC_data_sum[9];
 	int    ADC_num_samples;
 	int VP_sec_int0, VP_sec_int1, VP_sec_count;
+
+        GThread *dsp_thread;
 };
 
 
