@@ -180,8 +180,10 @@ public:
 		data_y_index = 0;
 		data_x_index = 0;
 
-		tip_current  = 0.;
-		sample_bias  = 0.;
+		tip_current  = 0.001;
+		sample_bias  = 0.1;
+		tip_current_set  = 0.01; // 10pA
+		sample_bias_set  = 0.1; // 100mV
 		data_z_value = 0.;
                 pulse_counter = 99.;
                 
@@ -199,8 +201,16 @@ public:
 	};
         ~SPM_emulator(){};
 
-	void set_bias (double bias) { sample_bias = bias; };
-	
+	void set_bias_sp (double bias) { sample_bias = sample_bias_set = bias; };
+	void set_current_sp (double current) { tip_current = tip_current_set = current; };
+
+        void reset_params (){
+                sample_bias = sample_bias_set;
+                tip_current = tip_current_set;
+  		vp_bias = 0.0;
+		vp_zpos = 0.0;            
+        };
+        
         double simulate_value (XSM_Hardware *xsmhwi, int xi, int yi, int ch);
 
 	int read_program_vector(int i, PROBE_VECTOR_GENERIC *v){
@@ -292,6 +302,8 @@ public:
         double x0,y0; // offset
         double sample_bias;
         double tip_current;
+        double sample_bias_set;
+        double tip_current_set;
         double data_z_value;
         double pulse_counter;
         

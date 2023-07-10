@@ -144,7 +144,7 @@ public:
                 PhiSpeed = new UnitObj(UTF8_DEGREE"/s","Deg/s");
                 Vslope   = new UnitObj("V/s","V/s");
                 Hex      = new UnitObj("h","h");
-
+ 
                 bias = 0;
                 zpos_ref = 0;
 
@@ -241,12 +241,48 @@ public:
                 // -- BUT not at very first generation via auto write schemata, will get random memory eventually to edit manually later....
                 
                 sim_speed[0]=sim_speed[1]=2000.0; // per tab
-                sim_bias[0]=sim_bias[1]=0.0;
+                sim_bias[0]=sim_bias[1]=1.0;
                 options = 0x03;
 
                 get_tab_settings ("IV", IV_option_flags, IV_auto_flags, IV_glock_data);
                 get_tab_settings ("VP", GVP_option_flags, GVP_auto_flags, GVP_glock_data);
                 GVP_restore_vp ("VP_set_last"); // last in view
+
+                vp_exec_mode_name = NULL;
+                
+                init_vp_signal_info_lookup_cache();
+
+                for (int i=0; i<10; ++i)
+                        VPprogram[i] = NULL;
+
+                // init pc matrix to NULL
+                for (int i=0; i < 2*MAX_NUM_CHANNELS; ++i) 
+                        for (int j=0; j < 2*MAX_NUM_CHANNELS; ++j) 
+                                probe_pc_matrix[i][j] = NULL;
+
+                IV_status = NULL;
+                GVP_status = NULL;
+
+                write_vector_mode=PV_MODE_NONE;
+
+                probedata_list = NULL;
+                probehdr_list = NULL;
+                num_probe_events = 0;
+                last_probe_data_index = 0;
+                nun_valid_data_sections = 0;
+                pv_lock = FALSE;
+
+                probe_trigger_single_shot = 0;
+                current_probe_data_index = 0;
+                
+                for (int i=0; i<NUM_PROBEDATA_ARRAYS; ++i)
+                        garray_probedata [i] = NULL;
+                
+                for (int i=0; i<NUM_PROBEDATA_ARRAYS; ++i)
+                        garray_probe_hdrlist [i] = NULL;
+                
+                DSP_vpdata_ij[0]=2; // DSP level VP data acccess indexing, global
+                DSP_vpdata_ij[1]=0;
 
                 
                 create_folder ();
@@ -346,14 +382,6 @@ public:
 	static int callback_XJoin (GtkWidget *widget, SPM_Template_Control *dspc);
 	static int callback_GrMatWindow (GtkWidget *widget, SPM_Template_Control *dspc);
 
-#if 0
-	const char* vp_label_lookup(int i);
-	const char* vp_unit_lookup(int i);
-	double      vp_scale_lookup(int i);
-
-	void update_sourcesignals_from_DSP_callback ();
-#endif
-
 	static gboolean idle_callback (gpointer data){
 		SPM_Template_Control *dspc = (SPM_Template_Control*) data;
 
@@ -446,8 +474,13 @@ public:
 				  int current_i, int si, int nas, gboolean join_same_x=FALSE,
                                   gint xmap=0, gint src=0, gint num_active_xmaps=1, gint num_active_sources=1);
 
-
+        int   msklookup[NUM_PROBEDATA_ARRAYS+1];
+        int   expdi_lookup[NUM_PROBEDATA_ARRAYS+1];
+        char* lablookup[NUM_PROBEDATA_ARRAYS+1];
+        char* unitlookup[NUM_PROBEDATA_ARRAYS+1];
         
+
+        void init_vp_signal_info_lookup_cache();
    	const char* vp_label_lookup(int i);
 	const char* vp_unit_lookup(int i);
 	double      vp_scale_lookup(int i);
@@ -629,43 +662,11 @@ public:
 	GSList *probehdr_list;
 	int num_probe_events;
 	// -- Array of full expanded probe data set
-#define NUM_PROBEDATA_ARRAYS 27
 	GArray *garray_probe_hdrlist[NUM_PROBEDATA_ARRAYS];
 	GArray *garray_probedata[NUM_PROBEDATA_ARRAYS];
 	int current_probe_data_index;
 	int nun_valid_data_sections;
 	int nun_valid_hdr, last_nun_hdr_dumped;
-#define PROBEDATA_ARRAY_INDEX 0 // Array [0] holds the probe index over all sections
-#define PROBEDATA_ARRAY_TIME  1 // Array [1] holds the time
-#define PROBEDATA_ARRAY_X0    2 // Array [2] holds X-Offset
-#define PROBEDATA_ARRAY_Y0    3 // Array [3] holds Y-Offset
-#define PROBEDATA_ARRAY_PHI   4 // Array [4] holds Z-Offset
-#define PROBEDATA_ARRAY_XS    5 // Array [5] holds X-Scan
-#define PROBEDATA_ARRAY_YS    6 // Array [6] holds Y-Scan
-#define PROBEDATA_ARRAY_ZS    7 // Array [7] holds Z-Scan
-#define PROBEDATA_ARRAY_U     8 // Array [8] holds U (Bias)
-#define PROBEDATA_ARRAY_SEC   9 // Array [9] holds Section Index
-#define PROBEDATA_ARRAY_AIC5OUT_ZMON 10 // Array [10] holds ZMON (AIC5 out)
-#define PROBEDATA_ARRAY_AIC6OUT_UMON 11 // Array [11] holds UMON (AIC6 out)
-#define PROBEDATA_ARRAY_AIC0         12 // Array [12] holds FBS (Feedback Source, i.e. I, df, force, ...)
-#define PROBEDATA_ARRAY_AIC1         13 // Array [13] holds AIC0 in
-#define PROBEDATA_ARRAY_AIC2         14 // Array [14] holds AIC1 in
-#define PROBEDATA_ARRAY_AIC3         15 // Array [15] holds AIC2 in
-#define PROBEDATA_ARRAY_AIC4         16 // Array [16] holds AIC3 in
-#define PROBEDATA_ARRAY_AIC5         17 // Array [17] holds AIC4 in
-#define PROBEDATA_ARRAY_AIC6         18 // Array [18] holds AIC6 in (not used yet)
-#define PROBEDATA_ARRAY_AIC7         19 // Array [19] holds AIC7 in (not used yet)
-#define PROBEDATA_ARRAY_LCK0         20 // Array [20] holds LockIn0st
-#define PROBEDATA_ARRAY_LCK1A        21 // Array [21] holds LockIn1st
-#define PROBEDATA_ARRAY_LCK1B        22 // Array [22] holds LockIn22st
-#define PROBEDATA_ARRAY_LCK2A        23 // Array [23] holds LockIn1st
-#define PROBEDATA_ARRAY_LCK2B        24 // Array [24] holds LockIn22st
-#define PROBEDATA_ARRAY_COUNT        25 // Array [25] holds Count
-#define PROBEDATA_ARRAY_BLOCK        26 // Array [26] holds Block start index (hold start index for every section) 
-
-#define PROBEDATA_ARRAY_END          PROBEDATA_ARRAY_COUNT // last element number
-
-#define MAX_NUM_CHANNELS 26
 
 	// The factor of 2 is to have it big enough to hold also the averaged data
 	ProfileControl *probe_pc_matrix[2*MAX_NUM_CHANNELS][2*MAX_NUM_CHANNELS];

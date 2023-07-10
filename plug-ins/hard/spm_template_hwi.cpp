@@ -75,16 +75,6 @@
 #define THIS_HWI_PLUGIN_NAME "SPM-TEMPL:SPM"
 #define THIS_HWI_PREFIX      "SPM_TEMPL_HwI"
 
-
-#define UTF8_DEGREE    "\302\260"
-#define UTF8_MU        "\302\265"
-#define UTF8_ANGSTROEM "\303\205"
-
-#define X_SOURCE_MSK 0x10000000 // select for X-mapping
-#define P_SOURCE_MSK 0x20000000 // select for plotting
-#define A_SOURCE_MSK 0x40000000 // select for Avg plotting
-#define S_SOURCE_MSK 0x80000000 // select for Sec plotting
-
 #define GVP_SHIFT_UP  1
 #define GVP_SHIFT_DN -1
 
@@ -98,36 +88,39 @@ extern "C++" {
         extern GxsmPlugin spm_template_hwi_pi;
 }
 
+
+
 SOURCE_SIGNAL_DEF source_signals[] = {
-	{ 0x000010, "ADC0-I", " ", "nA", 1.0 },
-        { 0x000020, "ADC1", " ", "V", 1.0 },
-        { 0x000040, "ADC2", " ", "V", 1.0 },
-        { 0x000080, "ADC3", " ", "V", 1.0 },
-        { 0x000100, "ADC4", " ", "V", 1.0 },
-        { 0x000200, "ADC5", " ", "V", 1.0 },
-        { 0x000400, "ADC6", " ", "V", 1.0 },
-        { 0x000800, "ADC7", " ", "V", 1.0 },
-        { 0x000008, "LockIn0", " ", "V", 1.0 },
-        { 0x001000, NULL, " ", "V", 1.0 }, // ** swappable **,
-        { 0x002000, NULL, " ", "V", 1.0 }, // ** swappable **,
-        { 0x004000, NULL, " ", "V", 1.0 }, // ** swappable **,
-        { 0x008000, NULL, " ", "V", 1.0 }, // ** swappable **,
-        { 0x0100000, "Time", " ", "s", 1.0 },
-        { 0x0000001, "Z-mon", " ", "AA", 1.0 },
-        { 0x0000002, "Bias-mon", " ", "V", 1.0 },
-        { 0x0000004, "Counter", " ", "#", 1.0 },
-        { 0x1000000, "SEC", " ", "#", 1.0 },
-        { 0, NULL, NULL, NULL, 0.0 }
+        { 0x0100000, "Index",    " ", "#", "#", 1.0, PROBEDATA_ARRAY_INDEX },
+        { 0x0100000, "Time",     " ", "s", "s", 1.0, PROBEDATA_ARRAY_TIME },
+        { 0x0100000, "Bias",     " ", "s", "s", 1.0, PROBEDATA_ARRAY_U },
+        { 0x1000000, "SEC",      " ", "#", "#", 1.0, PROBEDATA_ARRAY_SEC },
+        // -- general signals
+        { 0x000001, "Z-mon",    " ", "AA", UTF8_ANGSTROEM, 1.0, PROBEDATA_ARRAY_S1 },
+        { 0x000002, "Bias-mon", " ", "V", "V", 1.0, PROBEDATA_ARRAY_S2 },
+	{ 0x000010, "ADC0-I", " ", "nA", "nA", 1.0, PROBEDATA_ARRAY_S3 },
+        { 0x000020, "ADC1", " ", "V", "V", 1.0, PROBEDATA_ARRAY_S4 },
+        { 0x000040, "ADC2", " ", "V", "V", 1.0, PROBEDATA_ARRAY_S5 },
+        { 0x000080, "ADC3", " ", "V", "V", 1.0, PROBEDATA_ARRAY_S6 },
+        { 0x000100, "ADC4", " ", "V", "V", 1.0, PROBEDATA_ARRAY_S7 },
+        { 0x000200, "ADC5", " ", "V", "V", 1.0, PROBEDATA_ARRAY_S8 },
+        { 0x000400, "ADC6", " ", "V", "V", 1.0, PROBEDATA_ARRAY_S9 },
+        { 0x000800, "ADC7", " ", "V", "V", 1.0, PROBEDATA_ARRAY_S10 },
+        { 0x000008, "LockIn0", " ", "nA", "nA", 1.0, PROBEDATA_ARRAY_S11 },
+        { 0x001000, "SWPSundef1", " ", "V", "V", 1.0, PROBEDATA_ARRAY_S12 }, // ** swappable **,
+        { 0x002000, "SWPSundef2", " ", "V", "V", 1.0, PROBEDATA_ARRAY_S13 }, // ** swappable **,
+        { 0x004000, "SWPSundef3", " ", "V", "V", 1.0, PROBEDATA_ARRAY_S14 }, // ** swappable **,
+        { 0x008000, "SWPSundef4", " ", "V", "V", 1.0, PROBEDATA_ARRAY_S15 }, // ** swappable **,
+        { 0, NULL, NULL, NULL, NULL, 0.0, 0 }
 };
 
+// so far fixed to swappable 4 signals as of GUI design!
 SOURCE_SIGNAL_DEF swappable_signals[] = {
-        { 1, "LockIn-X", " ", "V", 1.0 },
-        { 2, "LockIn-Y", " ", "V", 1.0 },
-	{ 3, "PLL-Freq", " ", "Hz", 1.0 },
-	{ 4, "PLL-Phase", " ", "deg", 1.0 },
-	{ 5, "PLL-Exec", " ", "mV", 1000.0 },
-	{ 6, "PLL-Ampl", " ", "mV", 1000.0 },
-        { 0, NULL, NULL, NULL, 0.0 }
+        { 0x001000, "Sig SWP1", " ", "-", "--", 1.0, 0 },
+        { 0x002000, "Sig SWP2", " ", "-", "--", 1.0, 0 },
+        { 0x004000, "Sig SWP3", " ", "-", "--", 1.0, 0 },
+        { 0x008000, "Sig SWP4", " ", "-", "--", 1.0, 0 },
+        { 0, NULL, NULL, NULL, NULL, 0.0, 0 }
 };
 
 
@@ -1307,6 +1300,8 @@ void SPM_Template_Control::create_folder (){
         bp->set_scale_nx (4); // set scale width to 4
         bp->set_input_width_chars (10);
 
+        bp->set_default_ec_change_notice_fkt (SPM_Template_Control::ChangedNotify, this);
+
         bp->grid_add_ec_with_scale ("Bias", Volt, &bias, -10., 10., "4g", 0.001, 0.01, "fbs-bias");
         //        bp->ec->set_adjustment_mode (PARAM_CONTROL_ADJUSTMENT_LOG | PARAM_CONTROL_ADJUSTMENT_LOG_SYM | PARAM_CONTROL_ADJUSTMENT_DUAL_RANGE | PARAM_CONTROL_ADJUSTMENT_ADD_MARKS );
         bp->ec->SetScaleWidget (bp->scale, 0);
@@ -1665,6 +1660,7 @@ void SPM_Template_Control::create_folder (){
 
  	bp->new_grid_with_frame ("Generic Vector Program (VP) Probe and Manipulation");
  	// g_print ("================== TAB 'GVP' ============= Generic Vector Program (VP) Probe and Manipulation\n");
+        bp->set_default_ec_change_notice_fkt (NULL, this);
 
 	// ----- VP Program Vectors Headings
 	// ------------------------------------- divided view
@@ -1942,18 +1938,6 @@ void SPM_Template_Control::create_folder (){
 
  	bp->new_grid_with_frame ("Probe Sources & Graph Setup");
 
-	// source channel setup -- just and example or template -- that's a reduced set of the MK3
-	int   msklookup[] = { 0x000010, 0x000020, 0x000040, 0x000080, 0x000100, 0x000200, 0x000400, 0x000800,
-			      0x000008, 0x001000, 0x002000, 0x004000, 0x008000,
-			      0x0100000, 0x0200000, 0x0400000, 0x0800000, 0x1000000,
-			      -1 
-	};
-	const char* lablookup[] = { "ADC0-I", "ADC1", "ADC2", "ADC3", "ADC4", "ADC5","ADC6","ADC7",
-				    "LockIn0", "LockIn X",  "LockIn Y", "LockIn Mag", "Auxillary",
-				    "Time", "Z-mon", "Bias-mon", "SEC",
-				    NULL
-	};
-        
         bp->grid_add_label ("Source", "Check column to activate channel", 2, 0.);
         bp->grid_add_label ("X", "Check column to plot channel on X axis.", 1);
         bp->grid_add_label ("Y", "Check column to plot channel on Y axis.", 1);
@@ -1974,7 +1958,7 @@ void SPM_Template_Control::create_folder (){
         bp->grid_add_widget (sep, 5);
         //bp->grid_add_label (" --- ", NULL, 5);
 
-#if 0 // if need more
+#if 1 // if need more
         bp->grid_add_label ("Source", "Check column to activate channel", 2, 0.);
         bp->grid_add_label ("X", "Check column to plot channel on X axis.", 1);
         bp->grid_add_label ("Y", "Check column to plot channel on Y axis.", 1);
@@ -1986,18 +1970,24 @@ void SPM_Template_Control::create_folder (){
         PI_DEBUG (DBG_L4, "DSPC----TAB-GRAPHS TOGGELS  ------------------------------- ");
 
         gint y = bp->y;
-	for (int i=0; msklookup[i] >= 0 && lablookup[i]; ++i) {
-                PI_DEBUG (DBG_L4, "GRAPHS*** i=" << i << " " << lablookup[i]);
-		if (!msklookup[i]) 
-			continue;
+        gint mm=0;
+	for (int i=0; source_signals[i].mask; ++i) {
+                PI_DEBUG (DBG_L4, "GRAPHS*** i=" << i << " " << source_signals[i].label);
 		int c=i/8; 
 		c*=11;
                 c++;
 		int m = -1;
-		if (i >= 9 && i < 13) // flex sources 9..12
-			m = i-8;
-		else
-			m = -1;
+                for (int k=0; swappable_signals[k].mask; ++k){
+                        if (source_signals[i].mask == swappable_signals[k].mask){
+                                source_signals[i].label = swappable_signals[k].label;
+                                source_signals[i].unit  = swappable_signals[k].unit;
+                                source_signals[i].unit_sym = swappable_signals[k].unit_sym;
+                                source_signals[i].scale_factor = swappable_signals[k].scale_factor;
+                                m = k;
+                                PI_DEBUG (DBG_L4, "GRAPHS*** SWPS init i=" << i << " k=" << k << " " << source_signals[i].label);
+                                break;
+                        }
+                }
                 int r = y+i%8+1;
 
                 bp->set_xy (c, r);
@@ -2007,47 +1997,48 @@ void SPM_Template_Control::create_folder (){
                                                GCallback (change_source_callback), this,
                                                Source, (((int) msklookup[i]) & 0xfffffff)
                                                );
-                // source selection for i=9..12:
-                if (m >= 0){ // flex source
+                // source selection for SWPS?:
+                if (m >= 0){ // swappable flex source
+                        g_message("bp->grid_add_probe_source_signal_options m=%d  %s => %d %s", m, source_signals[i].label,  probe_source[m], swappable_signals[m].label);
                         bp->grid_add_probe_source_signal_options (m, probe_source[m], this);
-                }else { // fixed assignment
-                        bp->grid_add_label (lablookup[i], NULL, 1, 0.);
+                }else { // or fixed assignment
+                        bp->grid_add_label (source_signals[i].label, NULL, 1, 0.);
                 }
                 //fixed assignment:
                 // bp->grid_add_label (lablookup[i], NULL, 1, 0.);
-                g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER ((int) msklookup[i])); 
+                g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER ((int) source_signals[i].mask)); 
                 g_object_set_data (G_OBJECT(bp->button), "VPC", GINT_TO_POINTER (i)); 
                 
                 // use as X-Source
                 bp->grid_add_check_button ("", NULL, 1,
                                                GCallback (change_source_callback), this,
-                                               XSource, (((int) (X_SOURCE_MSK | msklookup[i])) & 0xfffffff)
+                                               XSource, (((int) (X_SOURCE_MSK | source_signals[i].mask)) & 0xfffffff)
                                                );
-                g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER ((int) (X_SOURCE_MSK | msklookup[i]))); 
+                g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER ((int) (X_SOURCE_MSK | source_signals[i].mask))); 
                 g_object_set_data (G_OBJECT(bp->button), "VPC", GINT_TO_POINTER (i)); 
 
                 // use as Plot (Y)-Source
                 bp->grid_add_check_button ("", NULL, 1,
                                                G_CALLBACK (change_source_callback), this,
-                                               PSource, (((int) (P_SOURCE_MSK | msklookup[i])) & 0xfffffff)
+                                               PSource, (((int) (P_SOURCE_MSK | source_signals[i].mask)) & 0xfffffff)
                                                );
-                g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER ((int) (P_SOURCE_MSK | msklookup[i]))); 
+                g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER ((int) (P_SOURCE_MSK | source_signals[i].mask))); 
                 g_object_set_data (G_OBJECT(bp->button), "VPC", GINT_TO_POINTER (i)); 
                 
                 // use as A-Source (Average)
                 bp->grid_add_check_button ("", NULL, 1,
                                                G_CALLBACK (change_source_callback), this,
-                                               PlotAvg, (((int) (A_SOURCE_MSK | msklookup[i])) & 0xfffffff)
+                                               PlotAvg, (((int) (A_SOURCE_MSK | source_signals[i].mask)) & 0xfffffff)
                                                );
-                g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER ((int) (A_SOURCE_MSK | msklookup[i]))); 
+                g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER ((int) (A_SOURCE_MSK | source_signals[i].mask))); 
                 g_object_set_data (G_OBJECT(bp->button), "VPC", GINT_TO_POINTER (i)); 
                 
                 // use as S-Source (Section)
                 bp->grid_add_check_button ("", NULL, 1,
                                                G_CALLBACK (change_source_callback), this,
-                                               PlotSec, (((int) (S_SOURCE_MSK | msklookup[i])) & 0xfffffff)
+                                               PlotSec, (((int) (S_SOURCE_MSK | source_signals[i].mask)) & 0xfffffff)
                                                );
-                g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER ((int) (S_SOURCE_MSK | msklookup[i]))); 
+                g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER ((int) (S_SOURCE_MSK | source_signals[i].mask))); 
                 g_object_set_data (G_OBJECT(bp->button), "VPC", GINT_TO_POINTER (i)); 
                 
                 // bp->grid_add_check_button_graph_matrix(lablookup[i], (int) msklookup[i], m, probe_source[m], i, this);
@@ -2600,6 +2591,7 @@ void SPM_Template_Control::update_controller () {
         double frac  = (1<<16);
         double fs_dx = frac * spm_template_hwi_pi.app->xsm->Inst->XA2Dig (scan_speed_x_requested) / spm_template_hwi->spm_emu->frq_ref;
         double fs_dy = frac * spm_template_hwi_pi.app->xsm->Inst->YA2Dig (scan_speed_x_requested) / spm_template_hwi->spm_emu->frq_ref;
+#if 0
         if ((frac * spm_template_hwi->Dx / fs_dx) > (1<<15) || (frac * spm_template_hwi->Dy / fs_dx) > (1<<15)){
                 main_get_gapp()->message (N_("WARNING:\n"
                                              "recalculate_dsp_scan_parameters:\n"
@@ -2609,6 +2601,7 @@ void SPM_Template_Control::update_controller () {
                 PI_DEBUG (DBG_EVER, "WARNING: recalculate_dsp_scan_parameters: too slow, reaching 1<<15 steps inbetween! -- no change.");
                 return;
         }
+#endif
         // fs_dx * N =!= frac*Dx  -> N = ceil [frac*Dx/fs_dx]  -> fs_dx' = frac*Dx/N
         
         // N: dnx
@@ -2647,6 +2640,10 @@ void SPM_Template_Control::update_controller () {
                 //dsp_scan_fm_dz0y = (gint32)round (fract * my);
 
         }
+        
+        spm_template_hwi->spm_emu->set_bias_sp (bias);
+        spm_template_hwi->spm_emu->set_current_sp (mix_set_point[0]);
+        g_message ("*** Update Controller: Bias-SP: %g V, Current-SP: %g nA", bias, mix_set_point[0]);
 }
 
 

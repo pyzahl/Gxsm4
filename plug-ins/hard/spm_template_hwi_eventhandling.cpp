@@ -74,102 +74,54 @@ gfloat color_yellow[4]  = { 1., 1., 0., 1.0 };
 #define XAngFac  (main_get_gapp()->xsm->Inst->Dig2XA (1))
 #define YAngFac  (main_get_gapp()->xsm->Inst->Dig2YA (1))
 
-#define MAX_NUM_CHANNELS 26
-
-static int   msklookup[] = { 0x0000010, 0x0000020, 0x0000040, 0x0000080, 0x0000100, 0x0000200, 0x0000400, 0x0000800, 
-			     0x0000001, 0x0000002, 
-			     0x0000008, 0x0001000, 0x0002000, 0x0004000, 0x0008000, 
-			     0x0000004,
-			     0x0100000, 0x0200000, 0x0400000, 0x0800000, 0x1000000, 0x2000000, 0x4000000,
-			     -1 
-};
-
-static int   expdi_lookup[] = { PROBEDATA_ARRAY_AIC0, PROBEDATA_ARRAY_AIC1, PROBEDATA_ARRAY_AIC2, PROBEDATA_ARRAY_AIC3,
-				PROBEDATA_ARRAY_AIC4, PROBEDATA_ARRAY_AIC5, PROBEDATA_ARRAY_AIC6, PROBEDATA_ARRAY_AIC7,
-				PROBEDATA_ARRAY_AIC5OUT_ZMON, PROBEDATA_ARRAY_AIC6OUT_UMON, 
-				PROBEDATA_ARRAY_LCK0, PROBEDATA_ARRAY_LCK1A, PROBEDATA_ARRAY_LCK1B, PROBEDATA_ARRAY_LCK2A, PROBEDATA_ARRAY_LCK2B,
-				PROBEDATA_ARRAY_COUNT,
-				PROBEDATA_ARRAY_TIME, PROBEDATA_ARRAY_XS, PROBEDATA_ARRAY_YS, PROBEDATA_ARRAY_ZS,  PROBEDATA_ARRAY_U, PROBEDATA_ARRAY_PHI,
-				PROBEDATA_ARRAY_SEC,
-				0,0
-};
-
-
-
-const char* lablookup[]  = { "ADC0-I", "ADC1-SP", "ADC2-Mx2", "ADC3-Mx3", "ADC4", "ADC5","ADC6","ADC7",
-                             "Zmon", "Umon", 
-                             "LockIn0", "LockIn A-1st",  "LockIn B-1st", "LockIn A-2nd", "LockIn B-2nd",
-                             "Count",
-                             "Time", "XS",   "YS",   "ZS",   "Bias", "Phase", "VP-Section",
-                             "BLOCK",NULL
-};
-
-const char* unitlookup[] = { "V",   "V",    "V",    "V",    "V",    "V",     "V",   "V",
-                             UTF8_ANGSTROEM,   "V",    
-                             "V", "dV", "dV",  "ddV", "ddV",
-                             "CNT",
-                             "ms", UTF8_ANGSTROEM, UTF8_ANGSTROEM, UTF8_ANGSTROEM, "V", "deg", "#",
-                             "BS",NULL
-};
-
+extern SOURCE_SIGNAL_DEF source_signals[];
 
 //#define XSM_DEBUG_PG(X)  std::cout << X << std::endl;
 #define XSM_DEBUG_PG(X) ;
 
+const gchar *err_unknown_l = "L? (index)";
+const gchar *err_unknown_u = "U?";
+
+void SPM_Template_Control::init_vp_signal_info_lookup_cache(){
+        for (int i=0; i<NUM_PROBEDATA_ARRAYS; ++i){
+                msklookup[i]   = 0;
+                lablookup[i]   = err_unknown_l;
+                unitlookup[i]  = err_unknown_u;
+                expdi_lookup[i] = PROBEDATA_ARRAY_INDEX; // safety/error fallback
+                for (int k=0; source_signals[k].mask; ++k)
+                        if (source_signals[k].garr_index == i){
+                               msklookup[i]   = source_signals[k].mask;
+                               lablookup[i]   = source_signals[k].label;
+                               unitlookup[i]  = source_signals[k].unit_sym;
+                               expdi_lookup[i] = source_signals[k].garr_index;
+                        }
+                g_print ("Mask[%02d] 0x%08x => %s\n",i,msklookup[i],lablookup[i]);
+        }
+        msklookup[NUM_PROBEDATA_ARRAYS] = -1;
+        lablookup[NUM_PROBEDATA_ARRAYS] = NULL;
+        unitlookup[NUM_PROBEDATA_ARRAYS] = NULL;
+        expdi_lookup[NUM_PROBEDATA_ARRAYS] = 0;
+}
+
 const char* SPM_Template_Control::vp_label_lookup(int i){
-        if (i==0) // IN0 dedicated for tunnel current
-                return spm_template_hwi->lookup_signal_name_by_index (0);
-	if (i > 11 && i < 16){
-		int k=i-12;
-		if (vp_input_id_cache[k] < 0)
-			vp_input_id_cache[k] = spm_template_hwi->query_module_signal_input (DSP_SIGNAL_VECPROBE0_INPUT_ID + k);
-		if (vp_input_id_cache[k] >= 0){
-			return spm_template_hwi->lookup_signal_name_by_index (vp_input_id_cache[k]);
-		}
-	}		
-	return lablookup[i];
+        for (int k=0; source_signals[k].mask; ++k)
+                if (source_signals[k].garr_index == i)
+                        return  source_signals[k].label;
+        return err_unknown_l;
 }
 
 const char* SPM_Template_Control::vp_unit_lookup(int i){
-        if (i==0){ // IN0 dedicated for tunnel current
-                if (main_get_gapp()->xsm->Inst->nAmpere2V (1.) > 1.)
-                        return "pA"; // spm_template_hwi->lookup_signal_unit_by_index (0); // must be a unscaled unit here
-                else
-                        return "nA"; // spm_template_hwi->lookup_signal_unit_by_index (0); // must be a unscaled unit here
-        }
-	if (i > 11 && i < 16){
-		int k=i-12;
-		if (vp_input_id_cache[k] < 0)
-			vp_input_id_cache[k] = spm_template_hwi->query_module_signal_input (DSP_SIGNAL_VECPROBE0_INPUT_ID + k);
-		if (vp_input_id_cache[k] >= 0){
-			return spm_template_hwi->lookup_signal_unit_by_index (vp_input_id_cache[k]);
-		}
-	}		
-	return unitlookup[i];
+        for (int k=0; source_signals[k].mask; ++k)
+                if (source_signals[k].garr_index == i)
+                        return  source_signals[k].unit_sym;
+        return err_unknown_u;
 }
 
 double SPM_Template_Control::vp_scale_lookup(int i){
-	double DAC2Ulookup[]={ SRV10, SRV10,  SRV10,  SRV10,  SRV10,  SRV10,   SRV10,  SRV10,
-			       ZAngFac, BiasFac, SRV10,  SRV10,  SRV10, SRV10,  SRV10, 
-			       1.,
-			       1e3/DSP_FRQ_REF, XAngFac, YAngFac, ZAngFac, BiasFac, PhaseFac, 1.,
-			       0.
-	};
-
-        if (i==0) // IN0 dedicated for tunnel current
-                if (main_get_gapp()->xsm->Inst->nAmpere2V (1.) > 1.)
-                        return  DAC2Ulookup[0]/main_get_gapp()->xsm->Inst->nAmpere2V (1e-3); // choose pA
-                else
-                        return  DAC2Ulookup[0]/main_get_gapp()->xsm->Inst->nAmpere2V (1.); // nA
-	if (i > 11 && i < 16){
-		int k=i-12;
-		if (vp_input_id_cache[k] < 0)
-			vp_input_id_cache[k] = spm_template_hwi->query_module_signal_input (DSP_SIGNAL_VECPROBE0_INPUT_ID + k);
-		if (vp_input_id_cache[k] >= 0){
-			return spm_template_hwi->lookup_signal_scale_by_index (vp_input_id_cache[k]);
-		}
-	}		
-	return DAC2Ulookup[i];
+        for (int k=0; source_signals[k].mask; ++k)
+                if (source_signals[k].garr_index == i)
+                        return  source_signals[k].scale_factor;
+        return 1.;
 }
 
 
@@ -280,15 +232,15 @@ int SPM_Template_Control::Probing_eventcheck_callback( GtkWidget *widget, SPM_Te
 
                         int Xsrc=-1;
                         
-                        for (int src=0; msklookup[src]>=0 && src < MAX_NUM_CHANNELS; ++src){
-                                if (dspc->vis_PSource & msklookup[src] || dspc->vis_XSource & msklookup[src]){
+                        for (int src=0; dspc->msklookup[src]>=0 && src < MAX_NUM_CHANNELS; ++src){
+                                if (dspc->vis_PSource & dspc->msklookup[src] || dspc->vis_XSource & dspc->msklookup[src]){
                                         g_ptr_array_add (glabarray, (gpointer) dspc->vp_label_lookup (src));
                                         g_ptr_array_add (gsymarray, (gpointer) dspc->vp_unit_lookup (src));
                                         ++chunksize;
                                         //                                g_message ("PEV: %i #%i Lab:%s USym:%s <%c>", chunksize, src,
                                         //                                           (gpointer) dspc->vp_label_lookup (src), (gpointer) dspc->vp_unit_lookup (src),
-                                        //                                           dspc->vis_PSource & msklookup[src]? 'Y' : dspc->vis_XSource & msklookup[src] ? 'X' : '?');
-                                        if (Xsrc<0 && dspc->vis_XSource & msklookup[src]){
+                                        //                                           dspc->vis_PSource & dspc->msklookup[src]? 'Y' : dspc->vis_XSource & dspc->msklookup[src] ? 'X' : '?');
+                                        if (Xsrc<0 && dspc->vis_XSource & dspc->msklookup[src]){
                                                 Xsrc = src; // used to map layer index to value
                                         }
                                 }
@@ -317,8 +269,8 @@ int SPM_Template_Control::Probing_eventcheck_callback( GtkWidget *widget, SPM_Te
                                 // look for mapping sources and assign
                                 while (map == 0){
                                         if (src < MAX_NUM_CHANNELS){
-                                                if (dspc->vis_PSource & msklookup[src] || dspc->vis_XSource & msklookup[src])
-                                                        if (dspc->vis_PSource & msklookup[src]){
+                                                if (dspc->vis_PSource & dspc->msklookup[src] || dspc->vis_XSource & dspc->msklookup[src])
+                                                        if (dspc->vis_PSource & dspc->msklookup[src]){
                                                                 map = 1;
                                                                 break;
                                                         }
@@ -501,8 +453,8 @@ int SPM_Template_Control::Probing_eventcheck_callback( GtkWidget *widget, SPM_Te
                                 //g_message ("Looking up data chunks...");
                                 // find chunksize (total # data sources)
 
-                                for (int src=0; msklookup[src]>=0 && src < MAX_NUM_CHANNELS; ++src)
-                                        if (dspc->vis_Source & msklookup[src]){
+                                for (int src=0; dspc->msklookup[src]>=0 && src < MAX_NUM_CHANNELS; ++src)
+                                        if (dspc->vis_Source & dspc->msklookup[src]){
                                                 g_ptr_array_add (glabarray, (gpointer) dspc->vp_label_lookup (src));
                                                 g_ptr_array_add (gsymarray, (gpointer) dspc->vp_unit_lookup (src));
                                                 ++chunksize;
@@ -514,9 +466,9 @@ int SPM_Template_Control::Probing_eventcheck_callback( GtkWidget *widget, SPM_Te
                                         ProbeEntry *pe = new ProbeEntry ("Probe", time(0), glabarray, gsymarray, chunksize);
                                         for (int i = 0; i < dspc->last_probe_data_index; i++){
                                                 int j=0;
-                                                for (int src=0; msklookup[src]>=0 && src < MAX_NUM_CHANNELS; ++src){
-                                                        if (dspc->vis_Source & msklookup[src]){
-                                                                dataset[j++] = dspc->vp_scale_lookup (src) * g_array_index (garr [expdi_lookup[src]], double, i);
+                                                for (int src=0; dspc->msklookup[src]>=0 && src < MAX_NUM_CHANNELS; ++src){
+                                                        if (dspc->vis_Source & dspc->msklookup[src]){
+                                                                dataset[j++] = dspc->vp_scale_lookup (src) * g_array_index (garr [dspc->expdi_lookup[src]], double, i);
                                                                 // g_message ("data for <%s> : %d %g", (gpointer) dspc->vp_label_lookup (src), i,dataset[j-1]);
                                                         }
                                                 }
@@ -610,8 +562,12 @@ void SPM_Template_Control::probedata_visualize (GArray *probedata_x, GArray *pro
 
 	XSM_DEBUG_PG ("SPM_Template_Control::probedata_visualize -- enter");
 
-        if (!probedata_x || !probedata_y){
-                g_warning ("SPM_Template_Control::probedata_visualize called with probedata_x/y=NULL");
+        if (!probedata_x){
+                g_warning ("SPM_Template_Control::probedata_visualize called with probedata_x undefined (=NULL)");
+                return;
+        }
+        if (!probedata_y){
+                g_warning ("SPM_Template_Control::probedata_visualize called with probedata_y undefined (=NULL)");
                 return;
         }
 
@@ -715,6 +671,7 @@ void SPM_Template_Control::probedata_visualize (GArray *probedata_x, GArray *pro
 			spectra_index++;
 			spectra_section = (int) g_array_index (probedata_sec, double, i);
 		}
+                g_print ("Ptk[%04d] %g %g\n",i, g_array_index (probedata_x, double, i), g_array_index (probedata_y, double, i));
 		pc->SetPoint (i,
 			      xmult * g_array_index (probedata_x, double, i),
 			      ymult * g_array_index (probedata_y, double, i),
@@ -837,8 +794,8 @@ int SPM_Template_Control::Probing_graph_callback( GtkWidget *widget, SPM_Templat
                 GPtrArray *glabarray = g_ptr_array_new ();
                 GPtrArray *gsymarray = g_ptr_array_new ();
 			
-                for (int src=0; msklookup[src]>=0 && src < MAX_NUM_CHANNELS; ++src)
-                        if (dspc->vis_Source & msklookup[src]){
+                for (int src=0; dspc->msklookup[src]>=0 && src < MAX_NUM_CHANNELS; ++src)
+                        if (dspc->vis_Source & dspc->msklookup[src]){
                                 g_ptr_array_add (glabarray, (gpointer) dspc->vp_label_lookup (src));
                                 g_ptr_array_add (gsymarray, (gpointer) dspc->vp_unit_lookup (src));
                                 ++chunksize;
@@ -854,10 +811,10 @@ int SPM_Template_Control::Probing_graph_callback( GtkWidget *widget, SPM_Templat
                                 //for (int i = j0; i < j; i++){
                                 int k=0;
                                 XSM_DEBUG_PG("DBG-Mb2");
-                                for (int src=0; msklookup[src]>=0 && src < MAX_NUM_CHANNELS; ++src){
-                                        if (dspc->vis_Source & msklookup[src]){
-                                                dataset[k++] = dspc->vp_scale_lookup (src) * g_array_index (dspc->garray_probedata [expdi_lookup[src]], double, i);
-                                                // g_message ("Adding Dataset to PE i%d k%d %g", i, k, dspc->vp_scale_lookup (src) * g_array_index (dspc->garray_probedata [expdi_lookup[src]], double, i));
+                                for (int src=0; dspc->msklookup[src]>=0 && src < MAX_NUM_CHANNELS; ++src){
+                                        if (dspc->vis_Source & dspc->msklookup[src]){
+                                                dataset[k++] = dspc->vp_scale_lookup (src) * g_array_index (dspc->garray_probedata [dspc->expdi_lookup[src]], double, i);
+                                                // g_message ("Adding Dataset to PE i%d k%d %g", i, k, dspc->vp_scale_lookup (src) * g_array_index (dspc->garray_probedata [dspc->expdi_lookup[src]], double, i));
                                         }
                                 }
                                 pe->add ((double*)&dataset);
@@ -874,15 +831,15 @@ int SPM_Template_Control::Probing_graph_callback( GtkWidget *widget, SPM_Templat
 	}
 
         int num_active_xmaps = 0;
-	for (int xmap=0; msklookup[xmap]>=0; ++xmap)
-		if (dspc->vis_XSource & msklookup[xmap])
+	for (int xmap=0; dspc->msklookup[xmap]>=0; ++xmap)
+		if (dspc->vis_XSource & dspc->msklookup[xmap])
                         ++num_active_xmaps; 
 
 	int num_active_sources = 0;
 	int source_index;
 	int src0 = -1;
-	for (int src=0; msklookup[src]>=0; ++src)
-		if ((dspc->vis_PSource & msklookup[src]) && (dspc->vis_Source & msklookup[src])){
+	for (int src=0; dspc->msklookup[src]>=0; ++src)
+		if ((dspc->vis_PSource & dspc->msklookup[src]) && (dspc->vis_Source & dspc->msklookup[src])){
 			if (src0 < 0)
 				src0 = src;
 			++num_active_sources;
@@ -892,22 +849,22 @@ int SPM_Template_Control::Probing_graph_callback( GtkWidget *widget, SPM_Templat
         
 
 // on-the-fly visualisation graphs update
-	for (int xmap=0; msklookup[xmap]>=0; ++xmap){
-		if ((dspc->vis_XSource & msklookup[xmap]) && (dspc->vis_Source & msklookup[xmap])){
-			for (int src=0, source_index=0; msklookup[src]>=0; ++src){
+	for (int xmap=0; dspc->msklookup[xmap]>=0; ++xmap){
+		if ((dspc->vis_XSource & dspc->msklookup[xmap]) && (dspc->vis_Source & dspc->msklookup[xmap])){
+			for (int src=0, source_index=0; dspc->msklookup[src]>=0; ++src){
 				XSM_DEBUG_PG("DBG-Mbb0a " << dspc->vp_label_lookup (src));
 				if (xmap == src) continue;
 				XSM_DEBUG_PG("DBG-Mbb0b " << dspc->vp_label_lookup (src));
-				if ((dspc->vis_PSource & msklookup[src]) && (dspc->vis_Source & msklookup[src])){
+				if ((dspc->vis_PSource & dspc->msklookup[src]) && (dspc->vis_Source & dspc->msklookup[src])){
 					XSM_DEBUG_PG("DBG-Mbb1 " << dspc->vp_label_lookup (src));
 					XSM_DEBUG_PG ("Probing_graph_callback Visualisation xmap=" << xmap << " src=" << src );
 					dspc->probedata_visualize (
-						dspc->garray_probedata [expdi_lookup[xmap]], 
-						dspc->garray_probedata [expdi_lookup[src]], 
+						dspc->garray_probedata [dspc->expdi_lookup[xmap]], 
+						dspc->garray_probedata [dspc->expdi_lookup[src]], 
 						dspc->garray_probedata [PROBEDATA_ARRAY_SEC], 
 						dspc->probe_pc_matrix[xmap][dspc->vis_XJoin ? src0:src], 
 						dspc->probe_pc_matrix[MAX_NUM_CHANNELS+xmap][MAX_NUM_CHANNELS+dspc->vis_XJoin ? src0:src],
-						msklookup[src],
+						dspc->msklookup[src],
 						dspc->vp_label_lookup (xmap), dspc->vp_unit_lookup (xmap), dspc->vp_scale_lookup (xmap),
 						dspc->vp_label_lookup (src), dspc->vp_unit_lookup (src), dspc->vp_scale_lookup (src),
 						dspc->current_probe_data_index, source_index++, num_active_sources, dspc->vis_XJoin,
@@ -1060,14 +1017,14 @@ int SPM_Template_Control::Probing_save_callback( GtkWidget *widget, SPM_Template
 	f << "#C " << std::endl;
 	f << "#C VP Channel Map and Units lookup table used:=table [## msk expdi, lab, DAC2U, unit/DAC, Active]" << std::endl;
 
-	for (int i=0; msklookup[i] >= 0; ++i)
+	for (int i=0; dspc->msklookup[i] >= 0; ++i)
 		f << "# Cmap[" << i << "]" << separator 
-		  << msklookup[i] << separator 
-		  << expdi_lookup[i] << separator 
+		  << dspc->msklookup[i] << separator 
+		  << dspc->expdi_lookup[i] << separator 
 		  << dspc->vp_label_lookup (i) << separator 
 		  << dspc->vp_scale_lookup (i) << separator 
 		  << dspc->vp_unit_lookup (i) << "/DAC" << separator 
-		  << (dspc->vis_Source & msklookup[i] ? "Yes":"No") << std::endl;
+		  << (dspc->vis_Source & dspc->msklookup[i] ? "Yes":"No") << std::endl;
 
 	f << "#C " << std::endl;
 	f << "#C Full Position Vector List at Section boundaries follows :: PositionVectorList" << std::endl;
@@ -1081,12 +1038,12 @@ int SPM_Template_Control::Probing_save_callback( GtkWidget *widget, SPM_Template
 		} else
 			continue;
 
-		for (int i=13; msklookup[i]>=0; ++i){
+		for (int i=13; dspc->msklookup[i]>=0; ++i){
 			double ymult = dspc->vp_scale_lookup (i);
 			if (i>13) 
 				f << ", ";
 			f << " \"" << dspc->vp_label_lookup (i) << "\"="
-			  << (ymult * g_array_index (dspc->garray_probedata [expdi_lookup[i]], double, j))
+			  << (ymult * g_array_index (dspc->garray_probedata [dspc->expdi_lookup[i]], double, j))
 			  << " " << dspc->vp_unit_lookup (i);
 		}
 		f << ")" << std::endl;
@@ -1102,22 +1059,22 @@ int SPM_Template_Control::Probing_save_callback( GtkWidget *widget, SPM_Template
 		else
 			f << i << separator;
 
-		for (int xmap=0; msklookup[xmap]>=0; ++xmap)
-			if ((dspc->vis_XSource & msklookup[xmap]) && (dspc->vis_Source & msklookup[xmap])){
+		for (int xmap=0; dspc->msklookup[xmap]>=0; ++xmap)
+			if ((dspc->vis_XSource & dspc->msklookup[xmap]) && (dspc->vis_Source & dspc->msklookup[xmap])){
 				double xmult = dspc->vp_scale_lookup (xmap);
 				if (i == -1)
 					f << "\"" << dspc->vp_label_lookup (xmap) << " (" << dspc->vp_unit_lookup (xmap) << ")\"" << separator;
 				else
-					f << (xmult * g_array_index (dspc->garray_probedata [expdi_lookup[xmap]], double, i)) << separator;
+					f << (xmult * g_array_index (dspc->garray_probedata [dspc->expdi_lookup[xmap]], double, i)) << separator;
 			}
 
-		for (int src=0; msklookup[src]>=0; ++src)
-			if (dspc->vis_Source & msklookup[src]){
+		for (int src=0; dspc->msklookup[src]>=0; ++src)
+			if (dspc->vis_Source & dspc->msklookup[src]){
 				double ymult = dspc->vp_scale_lookup (src);
 				if (i == -1)
 					f << "\"" << dspc->vp_label_lookup (src) << " (" << dspc->vp_unit_lookup (src) << ")\"" << separator;
 				else
-					f << (ymult * g_array_index (dspc->garray_probedata [expdi_lookup[src]], double, i)) << separator;
+					f << (ymult * g_array_index (dspc->garray_probedata [dspc->expdi_lookup[src]], double, i)) << separator;
 			}
 
 		if (i == -1)
@@ -1288,7 +1245,7 @@ void SPM_Template_Control::init_probedata_arrays (){
 void SPM_Template_Control::add_probedata(double data[13]){ 
 	int i,j;
 	pv_lock = TRUE;
-	for (i = PROBEDATA_ARRAY_AIC5OUT_ZMON, j=0; i <= PROBEDATA_ARRAY_END; ++i, ++j)
+	for (i = PROBEDATA_ARRAY_S1, j=0; i <= PROBEDATA_ARRAY_END; ++i, ++j)
 		g_array_append_val (garray_probedata[i], data[j]);
 
 #ifdef TTY_DEBUG

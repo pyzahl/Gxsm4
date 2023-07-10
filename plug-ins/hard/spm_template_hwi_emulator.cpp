@@ -111,7 +111,8 @@ double SPM_emulator::simulate_value (XSM_Hardware *xsmhwi, int xi, int yi, int c
 // Vector Program Engine Emulator
 
 void SPM_emulator::vp_init (){
-	vector = NULL;
+        reset_params ();
+        vector = NULL;
         vp_header_current.section = -1; // still invalid
         vp_num_data_sets = 0;
         vp_time = 0;
@@ -126,6 +127,7 @@ void SPM_emulator::vp_stop (){
 
 	// Probe Suffix with full end position vector[6]
 	vp_append_header_and_positionvector ();
+        reset_params ();
 }
 
 void SPM_emulator::vp_append_header_and_positionvector (){ // size: 14
@@ -170,15 +172,15 @@ void SPM_emulator::vp_store_data_srcs ()
         if (vector->srcs & 0x000001) // Z monitor
                 vp_data_set[i++] = data_z_value + vp_zpos;
         if (vector->srcs & 0x000002) // Bias monitor
-                vp_data_set[i++] = sample_bias;
+                vp_data_set[i++] = sample_bias + vp_bias;
         if (vector->srcs & 0x000010) // ADC0-I (current input)
-                vp_data_set[i++] = tip_current;
+                vp_data_set[i++] = (sample_bias+vp_bias)/(sample_bias_set/tip_current_set); // I=U/Rgap  Rgap=U/I
         if (vector->srcs & 0x000020) // ADC1
-                vp_data_set[i++] = ADC_IN(1);
+                vp_data_set[i++] = 1./(sample_bias_set/tip_current_set) + exp ((sample_bias+vp_bias+0.4)*(sample_bias+vp_bias+0.4)/0.001); //ADC_IN(1);
         if (vector->srcs & 0x000040) // ADC2
-                vp_data_set[i++] = ADC_IN(2);
+                vp_data_set[i++] = vp_zpos; // ADC_IN(2);
         if (vector->srcs & 0x000080) // ADC3
-                vp_data_set[i++] = ADC_IN(3);
+                vp_data_set[i++] = vp_bias; // ADC_IN(3);
         if (vector->srcs & 0x000100) // ADC4
                 vp_data_set[i++] = ADC_IN(4);
         if (vector->srcs & 0x000200) // ADC5

@@ -31,6 +31,10 @@
 
 #define REMOTE_PREFIX "dsp-"
 
+#define UTF8_DEGREE    "\302\260"
+#define UTF8_MU        "\302\265"
+#define UTF8_ANGSTROEM "\303\205"
+
 #define SERVO_SETPT 0
 #define SERVO_CP    1
 #define SERVO_CI    2
@@ -40,6 +44,46 @@
 #define A_SOURCE_MSK 0x40000000 // select for Avg plotting
 #define S_SOURCE_MSK 0x80000000 // select for Sec plotting
 
+// G_ARRAY EXPANDED PROBE DATA
+#define NUM_PROBEDATA_ARRAYS 27
+
+// HEADER (FIXED BLOCK)
+#define PROBEDATA_ARRAY_INDEX 0 // Array [0] holds the probe index over all sections
+#define PROBEDATA_ARRAY_TIME  1 // Array [1] holds the time
+#define PROBEDATA_ARRAY_X0    2 // Array [2] holds X-Offset
+#define PROBEDATA_ARRAY_Y0    3 // Array [3] holds Y-Offset
+#define PROBEDATA_ARRAY_PHI   4 // Array [4] holds Z-Offset
+#define PROBEDATA_ARRAY_XS    5 // Array [5] holds X-Scan
+#define PROBEDATA_ARRAY_YS    6 // Array [6] holds Y-Scan
+#define PROBEDATA_ARRAY_ZS    7 // Array [7] holds Z-Scan
+#define PROBEDATA_ARRAY_U     8 // Array [8] holds U (Bias)
+#define PROBEDATA_ARRAY_SEC   9 // Array [9] holds Section Index
+// ARB DATA SIGNALS
+#define PROBEDATA_ARRAY_S1    10 // Array [10] holds ZMON (AIC5 out) [[AIC5OUT_ZMON]]
+#define PROBEDATA_ARRAY_S2    11 // Array [11] holds UMON (AIC6 out)
+#define PROBEDATA_ARRAY_S3    12 // Array [12] holds FBS (Feedback Source, i.e. I, df, force, ...)
+#define PROBEDATA_ARRAY_S4    13 // Array [13] holds AIC0 in
+#define PROBEDATA_ARRAY_S5    14 // Array [14] holds AIC1 in
+#define PROBEDATA_ARRAY_S6    15 // Array [15] holds AIC2 in
+#define PROBEDATA_ARRAY_S7    16 // Array [16] holds AIC3 in
+#define PROBEDATA_ARRAY_S8    17 // Array [17] holds AIC4 in
+#define PROBEDATA_ARRAY_S9    18 // Array [18] holds AIC6 in (not used yet)
+#define PROBEDATA_ARRAY_S10   19 // Array [19] holds AIC7 in (not used yet)
+#define PROBEDATA_ARRAY_S11   20 // Array [20] holds LockIn0st
+#define PROBEDATA_ARRAY_S12   21 // Array [21] holds LockIn1st
+#define PROBEDATA_ARRAY_S13   22 // Array [22] holds LockIn22st
+#define PROBEDATA_ARRAY_S14   23 // Array [23] holds LockIn1st
+#define PROBEDATA_ARRAY_S15   24 // Array [24] holds LockIn22st
+// Block Management
+#define PROBEDATA_ARRAY_COUNT 25 // Array [25] holds Count
+#define PROBEDATA_ARRAY_BLOCK 26 // Array [26] holds Block start index (hold start index for every section) 
+
+#define PROBEDATA_ARRAY_END          PROBEDATA_ARRAY_COUNT // last element number
+
+#define MAX_NUM_CHANNELS (PROBEDATA_ARRAY_END-1)  // 26
+
+
+
 // NEW: generalized signals
 
 typedef struct {
@@ -47,7 +91,9 @@ typedef struct {
         const gchar *label;  // label for signal | NULL for flex signal life swappable
         const gchar *description; // signal description
         const gchar *unit;  // gxsm signal unit symbolic id
+        const gchar *unit_sym;  // gxsm signal unit symbol
         double scale_factor; // multiplier for raw value to unit conversion
+        int garr_index; // expanded garray index lookup to store data
 } SOURCE_SIGNAL_DEF;
 
 
