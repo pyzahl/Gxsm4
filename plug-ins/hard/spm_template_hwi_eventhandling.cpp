@@ -129,7 +129,7 @@ const char* SPM_Template_Control::vp_unit_lookup(int i){
 }
 
 double SPM_Template_Control::vp_scale_lookup(int i){
-        for (int k=0; source_signals[k].mask; ++k)
+        for (int k=0; source_signals[k].mask; ++k){
                 if (source_signals[k].garr_index == i){
                         if (source_signals[k].mask == 0x000010){ // CUSTOM auto
                                 if (main_get_gapp()->xsm->Inst->nAmpere2V (1.) > 1.)
@@ -139,6 +139,8 @@ double SPM_Template_Control::vp_scale_lookup(int i){
                         } else
                                 return  source_signals[k].scale_factor;
                 }
+        }
+        g_warning ("vp_scale_lookup -- failed to find scale for garr index %d", i);
         return 1.;
 }
 

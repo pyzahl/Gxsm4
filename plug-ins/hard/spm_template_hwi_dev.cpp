@@ -414,7 +414,7 @@ int spm_template_hwi_dev::ReadProbeData (int dspdev, int control){
                         pv[7] = spm_emu->vp_header_current.bias;
                         pv[8] = spm_emu->vp_header_current.section;
 
-                        Template_ControlClass->add_probe_hdr (pv);
+                        Template_ControlClass->add_probe_hdr (pv); // add probe section with full position header
 
                         // analyze header and setup channel lookup table
                         number_channels=0;

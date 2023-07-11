@@ -61,7 +61,7 @@ void SPM_Template_Control::read_spm_vector_program (){
 
 
 // some needfull macros to get some readable code
-#define CONST_DSP_F16 65536.
+#define CONST_DSP_F16 1. //65536.
 #define VOLT2AIC(U)   (int)(main_get_gapp()->xsm->Inst->VoltOut2Dig (main_get_gapp()->xsm->Inst->BiasV2V (U)))
 #define DVOLT2AIC(U)  (int)(main_get_gapp()->xsm->Inst->VoltOut2Dig ((U)/main_get_gapp()->xsm->Inst->BiasGainV2V ()))
 

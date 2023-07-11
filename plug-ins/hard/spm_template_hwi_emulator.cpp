@@ -115,8 +115,9 @@ void SPM_emulator::vp_init (){
         vector = NULL;
         vp_header_current.section = -1; // still invalid
         vp_num_data_sets = 0;
+        section_count=ix=iix=lix = 0;
         vp_time = 0;
-        lix = 0;
+        vp_clock_start = clock();
      	vp_next_section ();    // setup vector program start
 	vp_append_header_and_positionvector ();
         // fire up thread!
@@ -146,7 +147,7 @@ void SPM_emulator::vp_append_header_and_positionvector (){ // size: 14
         vp_header_current.bias    = vp_bias;
         vp_header_current.section = section_count;
 
-        g_print ("HPV [%4d %08x t=%8d XYZ %g %g %g B %g Sec %d]\n", vector->n, vector->srcs, vp_time, scan_xyz_vec[i_X], scan_xyz_vec[i_Y], scan_xyz_vec[i_Z], vp_bias, section_count);
+        //        g_print ("HPV [%4d %08x t=%8d XYZ %g %g %g B %g Sec %d]\n", vector->n, vector->srcs, vp_time, scan_xyz_vec[i_X], scan_xyz_vec[i_Y], scan_xyz_vec[i_Z], vp_bias, section_count);
 }
 
 
@@ -165,7 +166,7 @@ void SPM_emulator::vp_add_vector (){
 	move_xyz_vec[i_Y] += vector->f_dy0;
 	move_xyz_vec[i_Z] += vector->f_dz0;
 
-        g_print ("VP+ [B %8g Z %8g, Sxy %8g %8g]\n", vp_bias, vp_zpos,  scan_xyz_vec[i_X], scan_xyz_vec[i_Y]);
+        //        g_print ("VP+ [B %8g Z %8g, Sxy %8g %8g]\n", vp_bias, vp_zpos,  scan_xyz_vec[i_X], scan_xyz_vec[i_Y]);
 }
 
 
@@ -186,9 +187,9 @@ void SPM_emulator::vp_store_data_srcs ()
         if (vector->srcs & 0x000080) // ADC3
                 vp_data_set[i++] = vp_bias; // ADC_IN(3);
         if (vector->srcs & 0x000100) // ADC4
-                vp_data_set[i++] = ADC_IN(4);
+                vp_data_set[i++] = vp_time;
         if (vector->srcs & 0x000200) // ADC5
-                vp_data_set[i++] = ADC_IN(5);
+                vp_data_set[i++] = clock () - vp_clock_start;
         if (vector->srcs & 0x000400) // ADC6
                 vp_data_set[i++] = ADC_IN(6);
         if (vector->srcs & 0x000800) // ADC7
@@ -196,7 +197,7 @@ void SPM_emulator::vp_store_data_srcs ()
         if (vector->srcs & 0x000008) // LockIn0 [LockIn0 = LockIn channel after low pass]
                 vp_data_set[i++] = 0x0008;
         if (vector->srcs & 0x001000) // Signal swappable
-                vp_data_set[i++] = 0x1000;
+                vp_data_set[i++] = (sample_bias + vp_bias)*(sample_bias + vp_bias);
         if (vector->srcs & 0x002000) // Signal swappable
                 vp_data_set[i++] = 0x2000;
         if (vector->srcs & 0x004000) // Signal swappable
@@ -389,6 +390,7 @@ void SPM_emulator::vp_signal_limiter_test(){
 //  -update current count, restore skip data counter
 
 void SPM_emulator::vp_run (){
+        static clock_t last_clock=vp_clock_start;
         // next time step in GVP
         // ** run_one_time_step ();
         // ** add_vector ();
@@ -409,11 +411,21 @@ void SPM_emulator::vp_run (){
                         if (vp_wait_for_trigger ())
                                 return;
 #endif
-                
-                //vp_integrate_data_srcs (); // leave to to hardware in future!
 
-                usleep (vp_point_us); iix=0;
-
+//#define RTE_STEPS
+#ifdef RTE_STEPS
+                vp_integrate_data_srcs (); // leave to to hardware in future!
+#else
+                useconds_t us = (clock () - last_clock)*1000000/CLOCKS_PER_SEC;
+                last_clock = clock();
+                if (vp_point_us > us)
+                        usleep (vp_point_us-us);
+                for (;--iix;){ // in DSP or FPGA do this in steps
+                        vp_add_vector (); // iix times
+                        ++vp_time;
+                }
+                --vp_time;
+#endif
                 if (! iix-- || lix){
                         if (ix--)
                                 vp_store_data_srcs ();
@@ -423,10 +435,14 @@ void SPM_emulator::vp_run (){
                         } else if (lix > 0) --lix;
 		 
                         iix = vector->dnx; // load steps inbetween "data aq" points
-                        //vp_clear_data_srcs (); // along with integrate -- move to hardware!
+#ifdef RTE_STEPS
+                        vp_clear_data_srcs (); // along with integrate -- move to hardware!
+#endif
                 }
-       
+
+#ifdef RTE_STEPS
                 vp_add_vector ();
+#endif
         }
 
         // increment probe time

@@ -180,10 +180,10 @@ public:
 		data_y_index = 0;
 		data_x_index = 0;
 
-		tip_current  = 0.001;
-		sample_bias  = 0.1;
+		tip_current  = 1.234;
+		sample_bias  = 2.0;
 		tip_current_set  = 0.01; // 10pA
-		sample_bias_set  = 0.1; // 100mV
+		sample_bias_set  = 2.0; // 100mV
 		data_z_value = 0.;
                 pulse_counter = 99.;
                 
@@ -195,7 +195,7 @@ public:
 		scan_xy_r_vec[0]= scan_xy_r_vec[1]= scan_xy_r_vec[2]= 0.;
 		
 		vector = NULL;
-		frq_ref = 10000; // real DSP: more 75000 or 150000 Hz
+		frq_ref = 75000.; // real DSP: more 75000 or 150000 Hz
 
                 dsp_thread = NULL;
 	};
@@ -314,7 +314,8 @@ public:
 	double vp_bias;
 	double vp_zpos;
 	int    vp_time;
-
+        clock_t vp_clock_start;
+        
 	double move_xyz_vec[3];
 	double scan_xyz_vec[3];
 	double scan_xy_r_vec[3];

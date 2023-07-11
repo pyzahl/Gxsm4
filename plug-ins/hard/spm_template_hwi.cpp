@@ -88,12 +88,15 @@ extern "C++" {
         extern GxsmPlugin spm_template_hwi_pi;
 }
 
-#define ADCV10    (10.0/32767.)
-#define BiasFac  (main_get_gapp()->xsm->Inst->Dig2VoltOut (1.) * main_get_gapp()->xsm->Inst->BiasGainV2V ())
-#define BiasOffset (main_get_gapp()->xsm->Inst->Dig2VoltOut (1.) * main_get_gapp()->xsm->Inst->BiasV2V (0.))
-#define ZAngFac  (main_get_gapp()->xsm->Inst->Dig2ZA (1))
-#define XAngFac  (main_get_gapp()->xsm->Inst->Dig2XA (1))
-#define YAngFac  (main_get_gapp()->xsm->Inst->Dig2YA (1))
+#define CPN(N) ((double)(1LL<<(N))-1.)
+#define DSP32Qs15dot16TOV     (10.0/(32767.*(1<<16)))
+#define ADCV10     (10.0/32767.)
+#define BiasFac    (main_get_gapp()->xsm->Inst->Dig2VoltOut (1.) * main_get_gapp()->xsm->Inst->BiasGainV2V ())
+#define BiasOffset (main_get_gapp()->xsm->Inst->Dig2VoltOut (1.) * main_get_gapp()->xsm->Inst->BiasV2V (0.)) // not used here
+#define CurrFac    (main_get_gapp()->xsm->Inst->Dig2VoltOut (1.)) // to Volt only at this stage
+#define ZAngFac    (main_get_gapp()->xsm->Inst->Dig2ZA (1))
+#define XAngFac    (DSP32Qs15dot16TOV*main_get_gapp()->xsm->Inst->Dig2XA (1))
+#define YAngFac    (DSP32Qs15dot16TOV*main_get_gapp()->xsm->Inst->Dig2YA (1))
 
 // Masks MUST BE unique
 SOURCE_SIGNAL_DEF source_signals[] = {
@@ -102,14 +105,14 @@ SOURCE_SIGNAL_DEF source_signals[] = {
         { 0x0100000, "Bias",     " ", "V", "V", BiasFac, PROBEDATA_ARRAY_U },
         { 0x4000000, "SEC",      " ", "#", "#", 1.0, PROBEDATA_ARRAY_SEC },
         // -- general signals
-        { 0x000001, "Z-mon",    " ", "AA", UTF8_ANGSTROEM, 1.0, PROBEDATA_ARRAY_S1 },
+        { 0x000001, "Z-mon",    " ", "AA", UTF8_ANGSTROEM, ZAngFac, PROBEDATA_ARRAY_S1 },
         { 0x000002, "Bias-mon", " ", "V", "V", BiasFac, PROBEDATA_ARRAY_S2 },
-	{ 0x000010, "ADC0-I", " ", "nA", "nA", ADCV10, PROBEDATA_ARRAY_S3 }, // <=== unit sym and scakle are custom auto adjusted in _eventhandling lookup fucntions as of this mask 
+	{ 0x000010, "Current", " ", "nA", "nA", CurrFac, PROBEDATA_ARRAY_S3 }, // <=== to Volt conversion here -- unit sym and scale are custom auto adjusted in .._eventhandling lookup functions as of this mask 
         { 0x000020, "ADC1", " ", "V", "V", ADCV10, PROBEDATA_ARRAY_S4 },
-        { 0x000040, "ADC2", " ", "V", "V", ADCV10, PROBEDATA_ARRAY_S5 },
-        { 0x000080, "ADC3", " ", "V", "V", ADCV10, PROBEDATA_ARRAY_S6 },
-        { 0x000100, "ADC4", " ", "V", "V", ADCV10, PROBEDATA_ARRAY_S7 },
-        { 0x000200, "ADC5", " ", "V", "V", ADCV10, PROBEDATA_ARRAY_S8 },
+        { 0x000040, "VP Zpos", " ", "AA", UTF8_ANGSTROEM, ZAngFac, PROBEDATA_ARRAY_S5 },
+        { 0x000080, "VP Bias", " ", "V", "V", BiasFac, PROBEDATA_ARRAY_S6 },
+        { 0x000100, "VP steps", " ", "pts", "pts", 1., PROBEDATA_ARRAY_S7 },
+        { 0x000200, "Clock", " ", "ms", "ms", 1000./CLOCKS_PER_SEC, PROBEDATA_ARRAY_S8 },
         { 0x000400, "ADC6", " ", "V", "V", ADCV10, PROBEDATA_ARRAY_S9 },
         { 0x000800, "ADC7", " ", "V", "V", ADCV10, PROBEDATA_ARRAY_S10 },
         { 0x000008, "LockIn0", " ", "nA", "nA", ADCV10, PROBEDATA_ARRAY_S11 },
