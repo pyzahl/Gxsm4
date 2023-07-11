@@ -88,38 +88,44 @@ extern "C++" {
         extern GxsmPlugin spm_template_hwi_pi;
 }
 
+#define ADCV10    (10.0/32767.)
+#define BiasFac  (main_get_gapp()->xsm->Inst->Dig2VoltOut (1.) * main_get_gapp()->xsm->Inst->BiasGainV2V ())
+#define BiasOffset (main_get_gapp()->xsm->Inst->Dig2VoltOut (1.) * main_get_gapp()->xsm->Inst->BiasV2V (0.))
+#define ZAngFac  (main_get_gapp()->xsm->Inst->Dig2ZA (1))
+#define XAngFac  (main_get_gapp()->xsm->Inst->Dig2XA (1))
+#define YAngFac  (main_get_gapp()->xsm->Inst->Dig2YA (1))
 
 // Masks MUST BE unique
 SOURCE_SIGNAL_DEF source_signals[] = {
         { 0x1000000, "Index",    " ", "#", "#", 1.0, PROBEDATA_ARRAY_INDEX },
         { 0x2000000, "Time",     " ", "s", "s", 1.0, PROBEDATA_ARRAY_TIME },
-        { 0x0100000, "Bias",     " ", "V", "V", 10.0/32768, PROBEDATA_ARRAY_U },
+        { 0x0100000, "Bias",     " ", "V", "V", BiasFac, PROBEDATA_ARRAY_U },
         { 0x4000000, "SEC",      " ", "#", "#", 1.0, PROBEDATA_ARRAY_SEC },
         // -- general signals
         { 0x000001, "Z-mon",    " ", "AA", UTF8_ANGSTROEM, 1.0, PROBEDATA_ARRAY_S1 },
-        { 0x000002, "Bias-mon", " ", "V", "V", 10.0/32768, PROBEDATA_ARRAY_S2 },
-	{ 0x000010, "ADC0-I", " ", "nA", "nA", 10.0/32768, PROBEDATA_ARRAY_S3 },
-        { 0x000020, "ADC1", " ", "V", "V", 1.0, PROBEDATA_ARRAY_S4 },
-        { 0x000040, "ADC2", " ", "V", "V", 1.0, PROBEDATA_ARRAY_S5 },
-        { 0x000080, "ADC3", " ", "V", "V", 1.0, PROBEDATA_ARRAY_S6 },
-        { 0x000100, "ADC4", " ", "V", "V", 1.0, PROBEDATA_ARRAY_S7 },
-        { 0x000200, "ADC5", " ", "V", "V", 1.0, PROBEDATA_ARRAY_S8 },
-        { 0x000400, "ADC6", " ", "V", "V", 1.0, PROBEDATA_ARRAY_S9 },
-        { 0x000800, "ADC7", " ", "V", "V", 1.0, PROBEDATA_ARRAY_S10 },
-        { 0x000008, "LockIn0", " ", "nA", "nA", 1.0, PROBEDATA_ARRAY_S11 },
-        { 0x001000, "SWPSundef1", " ", "V", "V", 1.0, PROBEDATA_ARRAY_S12 }, // ** swappable **,
-        { 0x002000, "SWPSundef2", " ", "V", "V", 1.0, PROBEDATA_ARRAY_S13 }, // ** swappable **,
-        { 0x004000, "SWPSundef3", " ", "V", "V", 1.0, PROBEDATA_ARRAY_S14 }, // ** swappable **,
-        { 0x008000, "SWPSundef4", " ", "V", "V", 1.0, PROBEDATA_ARRAY_S15 }, // ** swappable **,
+        { 0x000002, "Bias-mon", " ", "V", "V", BiasFac, PROBEDATA_ARRAY_S2 },
+	{ 0x000010, "ADC0-I", " ", "nA", "nA", ADCV10, PROBEDATA_ARRAY_S3 }, // <=== unit sym and scakle are custom auto adjusted in _eventhandling lookup fucntions as of this mask 
+        { 0x000020, "ADC1", " ", "V", "V", ADCV10, PROBEDATA_ARRAY_S4 },
+        { 0x000040, "ADC2", " ", "V", "V", ADCV10, PROBEDATA_ARRAY_S5 },
+        { 0x000080, "ADC3", " ", "V", "V", ADCV10, PROBEDATA_ARRAY_S6 },
+        { 0x000100, "ADC4", " ", "V", "V", ADCV10, PROBEDATA_ARRAY_S7 },
+        { 0x000200, "ADC5", " ", "V", "V", ADCV10, PROBEDATA_ARRAY_S8 },
+        { 0x000400, "ADC6", " ", "V", "V", ADCV10, PROBEDATA_ARRAY_S9 },
+        { 0x000800, "ADC7", " ", "V", "V", ADCV10, PROBEDATA_ARRAY_S10 },
+        { 0x000008, "LockIn0", " ", "nA", "nA", ADCV10, PROBEDATA_ARRAY_S11 },
+        { 0x001000, "SWPSundef1", " ", "V", "V", ADCV10, PROBEDATA_ARRAY_S12 }, // ** swappable **,
+        { 0x002000, "SWPSundef2", " ", "V", "V", ADCV10, PROBEDATA_ARRAY_S13 }, // ** swappable **,
+        { 0x004000, "SWPSundef3", " ", "V", "V", ADCV10, PROBEDATA_ARRAY_S14 }, // ** swappable **,
+        { 0x008000, "SWPSundef4", " ", "V", "V", ADCV10, PROBEDATA_ARRAY_S15 }, // ** swappable **,
         { 0, NULL, NULL, NULL, NULL, 0.0, 0 }
 };
 
 // so far fixed to swappable 4 signals as of GUI design!
 SOURCE_SIGNAL_DEF swappable_signals[] = {
-        { 0x001000, "Sig SWP1", " ", "-", "--", 1.0, 0 },
-        { 0x002000, "Sig SWP2", " ", "-", "--", 1.0, 0 },
-        { 0x004000, "Sig SWP3", " ", "-", "--", 1.0, 0 },
-        { 0x008000, "Sig SWP4", " ", "-", "--", 1.0, 0 },
+        { 0x001000, "Sig SWP1", " ", "-", "--", ADCV10, 0 },
+        { 0x002000, "Sig SWP2", " ", "-", "--", ADCV10, 0 },
+        { 0x004000, "Sig SWP3", " ", "-", "--", ADCV10, 0 },
+        { 0x008000, "Sig SWP4", " ", "-", "--", ADCV10, 0 },
         { 0, NULL, NULL, NULL, NULL, 0.0, 0 }
 };
 

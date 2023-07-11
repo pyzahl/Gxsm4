@@ -82,6 +82,10 @@ extern SOURCE_SIGNAL_DEF source_signals[];
 const gchar *err_unknown_l = "L? (index)";
 const gchar *err_unknown_u = "U?";
 
+const gchar *str_pA = "pA";
+const gchar *str_nA = "nA";
+
+
 void SPM_Template_Control::init_vp_signal_info_lookup_cache(){
         for (int i=0; i<NUM_PROBEDATA_ARRAYS; ++i){
                 msklookup[i]   = 0;
@@ -114,14 +118,27 @@ const char* SPM_Template_Control::vp_label_lookup(int i){
 const char* SPM_Template_Control::vp_unit_lookup(int i){
         for (int k=0; source_signals[k].mask; ++k)
                 if (source_signals[k].garr_index == i)
-                        return  source_signals[k].unit_sym;
+                        if (source_signals[k].mask == 0x000010){ // CUSTOM auto
+                                if (main_get_gapp()->xsm->Inst->nAmpere2V (1.) > 1.)
+                                        return str_pA;
+                                else
+                                        return str_nA;
+                        } else
+                                return  source_signals[k].unit_sym;
         return err_unknown_u;
 }
 
 double SPM_Template_Control::vp_scale_lookup(int i){
         for (int k=0; source_signals[k].mask; ++k)
-                if (source_signals[k].garr_index == i)
-                        return  source_signals[k].scale_factor;
+                if (source_signals[k].garr_index == i){
+                        if (source_signals[k].mask == 0x000010){ // CUSTOM auto
+                                if (main_get_gapp()->xsm->Inst->nAmpere2V (1.) > 1.)
+                                        return source_signals[k].scale_factor/main_get_gapp()->xsm->Inst->nAmpere2V (1e-3); // choose pA
+                                else
+                                        return source_signals[k].scale_factor/main_get_gapp()->xsm->Inst->nAmpere2V (1.); // nA
+                        } else
+                                return  source_signals[k].scale_factor;
+                }
         return 1.;
 }
 
