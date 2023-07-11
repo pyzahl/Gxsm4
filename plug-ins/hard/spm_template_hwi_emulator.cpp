@@ -145,6 +145,8 @@ void SPM_emulator::vp_append_header_and_positionvector (){ // size: 14
         vp_header_current.scan_xyz[i_Z] = scan_xyz_vec[i_Z];
         vp_header_current.bias    = vp_bias;
         vp_header_current.section = section_count;
+
+        g_print ("HPV [%4d %08x t=%8d XYZ %g %g %g B %g Sec %d]\n", vector->n, vector->srcs, vp_time, scan_xyz_vec[i_X], scan_xyz_vec[i_Y], scan_xyz_vec[i_Z], vp_bias, section_count);
 }
 
 
@@ -162,6 +164,8 @@ void SPM_emulator::vp_add_vector (){
 	move_xyz_vec[i_X] += vector->f_dx0;
 	move_xyz_vec[i_Y] += vector->f_dy0;
 	move_xyz_vec[i_Z] += vector->f_dz0;
+
+        g_print ("VP+ [B %8g Z %8g, Sxy %8g %8g]\n", vp_bias, vp_zpos,  scan_xyz_vec[i_X], scan_xyz_vec[i_Y]);
 }
 
 

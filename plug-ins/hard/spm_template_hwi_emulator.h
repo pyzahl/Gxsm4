@@ -242,7 +242,11 @@ public:
 		vector_program[i].f_dy0 = v->f_dy0;
 		vector_program[i].f_dz0 = v->f_dz0;
 
-
+                g_print ("Vec[%2d] = [%4d, %4d, 0x%08x, %03d, %02d, %02d, {dU %d dXYZ %d %d %d}]\n",
+                         i, v->n, v->dnx, v->srcs,
+                         v->repetitions, v->ptr_next, v->ptr_final,
+                         v->f_du, v->f_dx, v->f_dy, v->f_dz);
+                
 		// check count ranges
 		// NULL VECTOR, OK: END
 		if (!(vector_program[i].n == 0 && vector_program[i].dnx == 0 && vector_program[i].ptr_next == 0 && vector_program[i].ptr_final == 0))

@@ -823,8 +823,8 @@ void SPM_Template_Control::write_program_vector (int index){
 	program_vector_list[index].options = program_vector.options;
 	program_vector_list[index].ptr_fb = program_vector.ptr_fb;
 	program_vector_list[index].repetitions = program_vector.repetitions;
-	program_vector_list[index].i = program_vector.i;
-	program_vector_list[index].j = program_vector.j;
+	program_vector_list[index].i = 0; //program_vector.i;
+	program_vector_list[index].j = 0; //program_vector.j;
 	program_vector_list[index].ptr_next = program_vector.ptr_next;
 	program_vector_list[index].ptr_final = program_vector.ptr_final;
 	program_vector_list[index].f_du = program_vector.f_du;

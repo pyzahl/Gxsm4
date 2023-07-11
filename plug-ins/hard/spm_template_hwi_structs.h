@@ -282,9 +282,9 @@ typedef struct{
 	gint32    dnx;           /**< 2: distance of samples in steps =WR */
 	guint32   srcs;          /**< 4: SRCS source channel coding =WR */
 	guint32   options;       /**< 6: Options, Dig IO, ... not yet all defined =WR */
-	guint32   ptr_fb;        /**< 8: optional pointer to new feedback data struct first 3 values of SPM_PI_FEEDBACK =WR */
-	guint32   repetitions;   /**< 9: numer of repetitions =WR */
-	guint32   i,j;           /**<10,11: loop counter(s) =RO/Zero */
+	gint32    ptr_fb;        /**< 8: optional pointer to new feedback data struct first 3 values of SPM_PI_FEEDBACK =WR */
+	gint32    repetitions;   /**< 9: numer of repetitions =WR */
+	gint32    i,j;           /**<10,11: loop counter(s) =RO/Zero */
 	gint32    ptr_next;      /**<12: next vector (relative to VPC) until --rep_index > 0 and ptr_next != 0 =WR */
         gint32    ptr_final;     /**<13: next vector (relative to VPC), =1 for next Vector in VP, if 0, probe is done =WR */
 	gint32    f_du;          /**<14: U (bias) stepwidth (32bit) =WR */

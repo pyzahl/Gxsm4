@@ -284,6 +284,7 @@ public:
                 DSP_vpdata_ij[0]=2; // DSP level VP data acccess indexing, global
                 DSP_vpdata_ij[1]=0;
 
+                memset (&program_vector, 0, sizeof(program_vector));
                 
                 create_folder ();
         };

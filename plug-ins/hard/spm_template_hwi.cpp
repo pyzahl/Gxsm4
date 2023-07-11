@@ -91,14 +91,14 @@ extern "C++" {
 
 
 SOURCE_SIGNAL_DEF source_signals[] = {
-        { 0x0100000, "Index",    " ", "#", "#", 1.0, PROBEDATA_ARRAY_INDEX },
-        { 0x0100000, "Time",     " ", "s", "s", 1.0, PROBEDATA_ARRAY_TIME },
-        { 0x0100000, "Bias",     " ", "s", "s", 1.0, PROBEDATA_ARRAY_U },
+        { 0x1000000, "Index",    " ", "#", "#", 1.0, PROBEDATA_ARRAY_INDEX },
+        { 0x2000000, "Time",     " ", "s", "s", 1.0/1000, PROBEDATA_ARRAY_TIME },
+        { 0x0100000, "Bias",     " ", "V", "V", 10.0/32768, PROBEDATA_ARRAY_U },
         { 0x1000000, "SEC",      " ", "#", "#", 1.0, PROBEDATA_ARRAY_SEC },
         // -- general signals
         { 0x000001, "Z-mon",    " ", "AA", UTF8_ANGSTROEM, 1.0, PROBEDATA_ARRAY_S1 },
-        { 0x000002, "Bias-mon", " ", "V", "V", 1.0, PROBEDATA_ARRAY_S2 },
-	{ 0x000010, "ADC0-I", " ", "nA", "nA", 1.0, PROBEDATA_ARRAY_S3 },
+        { 0x000002, "Bias-mon", " ", "V", "V", 10.0/32768, PROBEDATA_ARRAY_S2 },
+	{ 0x000010, "ADC0-I", " ", "nA", "nA", 10.0/32768, PROBEDATA_ARRAY_S3 },
         { 0x000020, "ADC1", " ", "V", "V", 1.0, PROBEDATA_ARRAY_S4 },
         { 0x000040, "ADC2", " ", "V", "V", 1.0, PROBEDATA_ARRAY_S5 },
         { 0x000080, "ADC3", " ", "V", "V", 1.0, PROBEDATA_ARRAY_S6 },

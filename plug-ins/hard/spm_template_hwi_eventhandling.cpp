@@ -76,8 +76,8 @@ gfloat color_yellow[4]  = { 1., 1., 0., 1.0 };
 
 extern SOURCE_SIGNAL_DEF source_signals[];
 
-//#define XSM_DEBUG_PG(X)  std::cout << X << std::endl;
-#define XSM_DEBUG_PG(X) ;
+#define XSM_DEBUG_PG(X)  std::cout << X << std::endl;
+//#define XSM_DEBUG_PG(X) ;
 
 const gchar *err_unknown_l = "L? (index)";
 const gchar *err_unknown_u = "U?";
@@ -97,6 +97,7 @@ void SPM_Template_Control::init_vp_signal_info_lookup_cache(){
                         }
                 g_print ("Mask[%02d] 0x%08x => %s\n",i,msklookup[i],lablookup[i]);
         }
+        // END MARK:
         msklookup[NUM_PROBEDATA_ARRAYS] = -1;
         lablookup[NUM_PROBEDATA_ARRAYS] = NULL;
         unitlookup[NUM_PROBEDATA_ARRAYS] = NULL;
@@ -849,15 +850,15 @@ int SPM_Template_Control::Probing_graph_callback( GtkWidget *widget, SPM_Templat
         
 
 // on-the-fly visualisation graphs update
-	for (int xmap=0; dspc->msklookup[xmap]>=0; ++xmap){
+	for (int xmap=0; dspc->msklookup[xmap]>=0 && xmap < MAX_NUM_CHANNELS; ++xmap){
 		if ((dspc->vis_XSource & dspc->msklookup[xmap]) && (dspc->vis_Source & dspc->msklookup[xmap])){
-			for (int src=0, source_index=0; dspc->msklookup[src]>=0; ++src){
-				XSM_DEBUG_PG("DBG-Mbb0a " << dspc->vp_label_lookup (src));
+			for (int src=0, source_index=0; dspc->msklookup[src]>=0 && src < MAX_NUM_CHANNELS; ++src){
+				//XSM_DEBUG_PG("DBG-Mbb0a " << dspc->vp_label_lookup (src));
 				if (xmap == src) continue;
 				XSM_DEBUG_PG("DBG-Mbb0b " << dspc->vp_label_lookup (src));
 				if ((dspc->vis_PSource & dspc->msklookup[src]) && (dspc->vis_Source & dspc->msklookup[src])){
 					XSM_DEBUG_PG("DBG-Mbb1 " << dspc->vp_label_lookup (src));
-					XSM_DEBUG_PG ("Probing_graph_callback Visualisation xmap=" << xmap << " src=" << src );
+					XSM_DEBUG_PG ("Probing_graph_callback Visualisation xmap=" << xmap << " src=" << src << " ** " << dspc->vp_label_lookup (src) << " ( " << dspc->vp_label_lookup (xmap) << " )");
 					dspc->probedata_visualize (
 						dspc->garray_probedata [dspc->expdi_lookup[xmap]], 
 						dspc->garray_probedata [dspc->expdi_lookup[src]], 
@@ -871,11 +872,12 @@ int SPM_Template_Control::Probing_graph_callback( GtkWidget *widget, SPM_Templat
                                                 xmap, src, num_active_xmaps, dspc->vis_XJoin ? 1 : num_active_sources);
 					XSM_DEBUG_PG("DBG-Mbb1x");
 				} else { // clean up unused windows...
-					XSM_DEBUG_PG("DBG-Mbb1e");
+					XSM_DEBUG_PG("DBG-Mbb1e cleanup xmap=" << xmap << " src=" << src << " ** " << dspc->vp_label_lookup (src));
 					if (dspc->probe_pc_matrix[xmap][src]){
 						delete dspc->probe_pc_matrix[xmap][src]; // get rid of it now
 						dspc->probe_pc_matrix[xmap][src] = NULL;
 					}
+					XSM_DEBUG_PG("DBG-Mbb1eX cleanup AV xmap=" << (MAX_NUM_CHANNELS+xmap) << " src=" << (MAX_NUM_CHANNELS+src) << " ** " << dspc->vp_label_lookup (src));
 					if (dspc->probe_pc_matrix[MAX_NUM_CHANNELS+xmap][MAX_NUM_CHANNELS+src]){
 						delete dspc->probe_pc_matrix[MAX_NUM_CHANNELS+xmap][MAX_NUM_CHANNELS+src]; // get rid of it now
 						dspc->probe_pc_matrix[MAX_NUM_CHANNELS+xmap][MAX_NUM_CHANNELS+src] = NULL;
@@ -887,14 +889,14 @@ int SPM_Template_Control::Probing_graph_callback( GtkWidget *widget, SPM_Templat
 			XSM_DEBUG_PG("DBG-Mbb2");
 			for (int src=0; src<MAX_NUM_CHANNELS; ++src){
 				if (dspc->probe_pc_matrix[xmap][src]){
-					XSM_DEBUG_PG ("Probing_graph_callback cleanup xmap=" << xmap << " src=" << src );
+					XSM_DEBUG_PG ("Probing_graph_callback cleanup xmap=" << xmap << " src=" << src  << " ** " << dspc->vp_label_lookup (src));
 					delete dspc->probe_pc_matrix[xmap][src]; // get rid of it now
 					dspc->probe_pc_matrix[xmap][src] = NULL;
 				}
 				if (dspc->probe_pc_matrix[MAX_NUM_CHANNELS+xmap][MAX_NUM_CHANNELS+src]){
-					XSM_DEBUG_PG ("Probing_graph_callback cleanup AV xmap=" << xmap << " src=" << src );
+					XSM_DEBUG_PG ("Probing_graph_callback cleanup AV xmap=" << xmap << " src=" << src << " ** " << dspc->vp_label_lookup (src) );
 					delete dspc->probe_pc_matrix[MAX_NUM_CHANNELS+xmap][MAX_NUM_CHANNELS+src]; // get rid of it now
-						dspc->probe_pc_matrix[MAX_NUM_CHANNELS+xmap][MAX_NUM_CHANNELS+src] = NULL;
+                                        dspc->probe_pc_matrix[MAX_NUM_CHANNELS+xmap][MAX_NUM_CHANNELS+src] = NULL;
 				}
 			}
 		}
