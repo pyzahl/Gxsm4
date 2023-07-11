@@ -242,7 +242,7 @@ public:
 		vector_program[i].f_dy0 = v->f_dy0;
 		vector_program[i].f_dz0 = v->f_dz0;
 
-                g_print ("Vec[%2d] = [%4d, %4d, 0x%08x, %03d, %02d, %02d, {dU %d dXYZ %d %d %d}]\n",
+                g_print ("Vec[%2d] = [#%4d, %4d, 0x%08x, nr%03d, n%02d, f%02d, {dU %d dXYZ %d %d %d}]\n",
                          i, v->n, v->dnx, v->srcs,
                          v->repetitions, v->ptr_next, v->ptr_final,
                          v->f_du, v->f_dx, v->f_dy, v->f_dz);

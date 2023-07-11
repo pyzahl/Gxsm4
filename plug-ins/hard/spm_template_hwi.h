@@ -348,6 +348,7 @@ public:
 
 
         static void ChangedNotify(Param_Control* pcs, gpointer data);
+        static void ChangedNotifyVP(Param_Control* pcs, gpointer data);
         static int ChangedAction(GtkWidget *widget, SPM_Template_Control *dspc);
 	void update_zpos_readings ();
 	static guint refresh_zpos_readings(SPM_Template_Control *dspc);

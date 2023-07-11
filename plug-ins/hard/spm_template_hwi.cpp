@@ -89,12 +89,12 @@ extern "C++" {
 }
 
 
-
+// Masks MUST BE unique
 SOURCE_SIGNAL_DEF source_signals[] = {
         { 0x1000000, "Index",    " ", "#", "#", 1.0, PROBEDATA_ARRAY_INDEX },
-        { 0x2000000, "Time",     " ", "s", "s", 1.0/1000, PROBEDATA_ARRAY_TIME },
+        { 0x2000000, "Time",     " ", "s", "s", 1.0, PROBEDATA_ARRAY_TIME },
         { 0x0100000, "Bias",     " ", "V", "V", 10.0/32768, PROBEDATA_ARRAY_U },
-        { 0x1000000, "SEC",      " ", "#", "#", 1.0, PROBEDATA_ARRAY_SEC },
+        { 0x4000000, "SEC",      " ", "#", "#", 1.0, PROBEDATA_ARRAY_SEC },
         // -- general signals
         { 0x000001, "Z-mon",    " ", "AA", UTF8_ANGSTROEM, 1.0, PROBEDATA_ARRAY_S1 },
         { 0x000002, "Bias-mon", " ", "V", "V", 10.0/32768, PROBEDATA_ARRAY_S2 },
@@ -1660,7 +1660,7 @@ void SPM_Template_Control::create_folder (){
 
  	bp->new_grid_with_frame ("Generic Vector Program (VP) Probe and Manipulation");
  	// g_print ("================== TAB 'GVP' ============= Generic Vector Program (VP) Probe and Manipulation\n");
-        bp->set_default_ec_change_notice_fkt (NULL, this);
+        bp->set_default_ec_change_notice_fkt (SPM_Template_Control::ChangedNotifyVP, this);
 
 	// ----- VP Program Vectors Headings
 	// ------------------------------------- divided view
@@ -2188,6 +2188,17 @@ int SPM_Template_Control::ChangedAction(GtkWidget *widget, SPM_Template_Control 
 
 void SPM_Template_Control::ChangedNotify(Param_Control* pcs, gpointer dspc){
 	((SPM_Template_Control*)dspc)->update_controller (); // update basic SPM Control Parameters
+}
+
+void SPM_Template_Control::ChangedNotifyVP(Param_Control* pcs, gpointer dspc){
+        for (int k=0; k<8; k++)
+                g_message ("**VP[%02d] %8gV %8gA %8gs np%4d nr%4d",
+                           k,
+                           ((SPM_Template_Control*)dspc)->GVP_du[k],
+                           ((SPM_Template_Control*)dspc)->GVP_dz[k],
+                           ((SPM_Template_Control*)dspc)->GVP_ts[k],
+                           ((SPM_Template_Control*)dspc)->GVP_points[k],
+                           ((SPM_Template_Control*)dspc)->GVP_vnrep[k]);
 }
 
 int SPM_Template_Control::choice_mixmode_callback (GtkWidget *widget, SPM_Template_Control *dspc){

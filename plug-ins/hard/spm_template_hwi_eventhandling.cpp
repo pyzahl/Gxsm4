@@ -76,8 +76,8 @@ gfloat color_yellow[4]  = { 1., 1., 0., 1.0 };
 
 extern SOURCE_SIGNAL_DEF source_signals[];
 
-#define XSM_DEBUG_PG(X)  std::cout << X << std::endl;
-//#define XSM_DEBUG_PG(X) ;
+//#define XSM_DEBUG_PG(X)  std::cout << X << std::endl;
+#define XSM_DEBUG_PG(X) ;
 
 const gchar *err_unknown_l = "L? (index)";
 const gchar *err_unknown_u = "U?";
@@ -672,7 +672,7 @@ void SPM_Template_Control::probedata_visualize (GArray *probedata_x, GArray *pro
 			spectra_index++;
 			spectra_section = (int) g_array_index (probedata_sec, double, i);
 		}
-                g_print ("Ptk[%04d] %g %g\n",i, g_array_index (probedata_x, double, i), g_array_index (probedata_y, double, i));
+                //g_print ("Ptk[%04d] %g %g\n",i, g_array_index (probedata_x, double, i), g_array_index (probedata_y, double, i));
 		pc->SetPoint (i,
 			      xmult * g_array_index (probedata_x, double, i),
 			      ymult * g_array_index (probedata_y, double, i),

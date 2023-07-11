@@ -722,8 +722,8 @@ void SPM_Template_Control::write_spm_vector_program (int start, pv_mode pvm){
 
 				// override FB on/off option flag here (1 = FB on, 0 = FB off):
 				options = (GVP_option_flags & FLAG_INTEGRATE ? VP_AIC_INTEGRATE : 0) | (lmopt) | ((GVP_data[k]&0xff) << 16);
-				if (GVP_vnrep[k] < 1)
-					GVP_vnrep[k] = 1;
+				if (GVP_vnrep[k] < 0)
+					GVP_vnrep[k] = 0;
 				if (GVP_vpcjr[k] < -vector_index || GVP_vpcjr[k] > 0) // origin of VP, no forward jump
 					GVP_vpcjr[k] = -vector_index; // defaults to start
 				make_UZXYramp_vector (GVP_du[k], GVP_dz[k], GVP_dx[k], GVP_dy[k], GVP_dsig[k], 0., GVP_points[k], GVP_vnrep[k]-1, GVP_vpcjr[k], GVP_ts[k], vis_Source, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
