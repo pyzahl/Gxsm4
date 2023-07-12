@@ -144,7 +144,7 @@ public:
                 PhiSpeed = new UnitObj(UTF8_DEGREE"/s","Deg/s");
                 Vslope   = new UnitObj("V/s","V/s");
                 Hex      = new UnitObj("h","h");
- 
+               
                 bias = 0;
                 zpos_ref = 0;
 

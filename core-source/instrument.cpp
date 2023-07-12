@@ -68,6 +68,23 @@ XSM_Instrument::XSM_Instrument(XSMRESOURCES &xsmres){
 	zunitname=NULL;
 }
 
+// may call from HwI to custom adjust and override preferences
+void XSM_Instrument::override_dig_range (long digital_range, XSMRESOURCES &xsmres){ // always symmetric +/-
+	DigRangeIn  = digital_range;
+	DigRangeOut = digital_range;
+	update_piezosensitivity (xsmres);
+}
+
+void XSM_Instrument::override_volt_in_range (double vrange, XSMRESOURCES &xsmres){ // always symmetric +/-
+	AnalogVMaxIn = vrange;
+	update_piezosensitivity (xsmres);
+}
+
+void XSM_Instrument::override_volt_out_range (double vrange, XSMRESOURCES &xsmres){ // always symmetric +/-
+	AnalogVMaxOut = vrange;
+	update_piezosensitivity (xsmres);
+}	
+
 OFFSET_MODE XSM_Instrument::OffsetMode (OFFSET_MODE ofm){ 
 	return offset_mode;
 }

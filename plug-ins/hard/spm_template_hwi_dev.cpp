@@ -124,6 +124,11 @@ MOD_INPUT mod_input_list[] = {
 
 spm_template_hwi_dev::spm_template_hwi_dev(){
 
+        // auto adjust and override preferences
+        main_get_gapp()->xsm->Inst->override_dig_range ((1<<31)-1, xsmres);
+        main_get_gapp()->xsm->Inst->override_volt_in_range (10.0, xsmres);
+        main_get_gapp()->xsm->Inst->override_volt_out_range (10.0, xsmres);
+        
         spm_emu = new SPM_emulator ();
                  
 	probe_fifo_thread_active=0;
