@@ -95,16 +95,21 @@ extern "C++" {
 #define BiasOffset (main_get_gapp()->xsm->Inst->Dig2VoltOut (1.) * main_get_gapp()->xsm->Inst->BiasV2V (0.)) // not used here
 #define CurrFac    (main_get_gapp()->xsm->Inst->Dig2VoltOut (1.)) // to Volt only at this stage
 #define ZAngFac    (main_get_gapp()->xsm->Inst->Dig2ZA (1))
-#define XAngFac    (DSP32Qs15dot16TOV*main_get_gapp()->xsm->Inst->Dig2XA (1))
-#define YAngFac    (DSP32Qs15dot16TOV*main_get_gapp()->xsm->Inst->Dig2YA (1))
+#define XAngFac    (main_get_gapp()->xsm->Inst->Dig2XA (1))
+#define YAngFac    (main_get_gapp()->xsm->Inst->Dig2YA (1))
 
 // Masks MUST BE unique
 SOURCE_SIGNAL_DEF source_signals[] = {
+        // -- 8 vector generated signals (outputs/mapping) ==> must match: #define NUM_VECTOR_SIGNALS 8
         { 0x1000000, "Index",    " ", "#", "#", 1.0, PROBEDATA_ARRAY_INDEX },
         { 0x2000000, "Time",     " ", "s", "s", 1.0, PROBEDATA_ARRAY_TIME },
         { 0x0100000, "Bias",     " ", "V", "V", BiasFac, PROBEDATA_ARRAY_U },
         { 0x4000000, "SEC",      " ", "#", "#", 1.0, PROBEDATA_ARRAY_SEC },
-        // -- general signals
+        { 0x8000000, "XS",      " ", "AA", UTF8_ANGSTROEM, XAngFac, PROBEDATA_ARRAY_XS },
+        {0x10000000, "YS",      " ", "AA", UTF8_ANGSTROEM, YAngFac, PROBEDATA_ARRAY_YS },
+        {0x20000000, "ZS",      " ", "AA", UTF8_ANGSTROEM, ZAngFac, PROBEDATA_ARRAY_ZS },
+        {0x40000000, "PHI",     " ", "deg", UTF8_DEGREE, 1., PROBEDATA_ARRAY_PHI },
+        // -- general measured signals from index [8]
         { 0x000001, "Z-mon",    " ", "AA", UTF8_ANGSTROEM, ZAngFac, PROBEDATA_ARRAY_S1 },
         { 0x000002, "Bias-mon", " ", "V", "V", BiasFac, PROBEDATA_ARRAY_S2 },
 	{ 0x000010, "Current", " ", "nA", "nA", CurrFac, PROBEDATA_ARRAY_S3 }, // <=== to Volt conversion here -- unit sym and scale are custom auto adjusted in .._eventhandling lookup functions as of this mask 

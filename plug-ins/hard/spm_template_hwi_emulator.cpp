@@ -144,10 +144,10 @@ void SPM_emulator::vp_append_header_and_positionvector (){ // size: 14
         vp_header_current.scan_xyz[i_X] = scan_xyz_vec[i_X];
         vp_header_current.scan_xyz[i_Y] = scan_xyz_vec[i_Y];
         vp_header_current.scan_xyz[i_Z] = scan_xyz_vec[i_Z];
-        vp_header_current.bias    = vp_bias;
+        vp_header_current.bias    = sample_bias+vp_bias;
         vp_header_current.section = section_count;
 
-        //        g_print ("HPV [%4d %08x t=%8d XYZ %g %g %g B %g Sec %d]\n", vector->n, vector->srcs, vp_time, scan_xyz_vec[i_X], scan_xyz_vec[i_Y], scan_xyz_vec[i_Z], vp_bias, section_count);
+        g_print ("EMU** HPV [%4d %08x t=%8d XYZ %g %g %g B %g Sec %d]\n", vector->n, vector->srcs, vp_time, scan_xyz_vec[i_X], scan_xyz_vec[i_Y], scan_xyz_vec[i_Z], vp_bias, section_count);
 }
 
 
@@ -166,7 +166,7 @@ void SPM_emulator::vp_add_vector (){
 	move_xyz_vec[i_Y] += vector->f_dy0;
 	move_xyz_vec[i_Z] += vector->f_dz0;
 
-        //        g_print ("VP+ [B %8g Z %8g, Sxy %8g %8g]\n", vp_bias, vp_zpos,  scan_xyz_vec[i_X], scan_xyz_vec[i_Y]);
+        g_print ("EMU** VP+ [B %8d Z %8d, Sxy %8d %8d]\n", vp_bias, vp_zpos,  scan_xyz_vec[i_X], scan_xyz_vec[i_Y]);
 }
 
 
@@ -175,13 +175,13 @@ void SPM_emulator::vp_store_data_srcs ()
         gint i=0;
         // matching this to "template hardware def as of SOURCE_SIGNAL_DEF source_signals[] = { ... } 
         if (vector->srcs & 0x000001) // Z monitor
-                vp_data_set[i++] = data_z_value + vp_zpos;
+                vp_data_set[i++] = scan_xyz_vec[i_Z]+vp_zpos;
         if (vector->srcs & 0x000002) // Bias monitor
                 vp_data_set[i++] = sample_bias + vp_bias;
         if (vector->srcs & 0x000010) // ADC0-I (current input)
-                vp_data_set[i++] = (sample_bias+vp_bias)/(sample_bias_set/tip_current_set); // I=U/Rgap  Rgap=U/I
+                vp_data_set[i++] = sim_current_func1();
         if (vector->srcs & 0x000020) // ADC1
-                vp_data_set[i++] = 1./(sample_bias_set/tip_current_set) + exp ((sample_bias+vp_bias+0.4)*(sample_bias+vp_bias+0.4)/0.001); //ADC_IN(1);
+                vp_data_set[i++] = sim_current_func2();
         if (vector->srcs & 0x000040) // ADC2
                 vp_data_set[i++] = vp_zpos; // ADC_IN(2);
         if (vector->srcs & 0x000080) // ADC3
@@ -197,7 +197,7 @@ void SPM_emulator::vp_store_data_srcs ()
         if (vector->srcs & 0x000008) // LockIn0 [LockIn0 = LockIn channel after low pass]
                 vp_data_set[i++] = 0x0008;
         if (vector->srcs & 0x001000) // Signal swappable
-                vp_data_set[i++] = (sample_bias + vp_bias)*(sample_bias + vp_bias);
+                vp_data_set[i++] = 0x1000;
         if (vector->srcs & 0x002000) // Signal swappable
                 vp_data_set[i++] = 0x2000;
         if (vector->srcs & 0x004000) // Signal swappable
@@ -397,7 +397,7 @@ void SPM_emulator::vp_run (){
 
         if (!vector) return;
 
-        g_print ("%d %d of [%d %d]\n", ix, iix, vector->n, vector->dnx);
+        //g_print ("%d %d of [%d %d]\n", ix, iix, vector->n, vector->dnx);
         
         // next time step in GVP
         if (ix){ // idle task is working on completion of data management, wait!

@@ -48,6 +48,7 @@
 #define THIS_HWI_PREFIX      "SPM_TEMPL_HwI"
 
 extern int debug_level;
+extern SOURCE_SIGNAL_DEF source_signals[];
 
 extern "C++" {
         extern SPM_Template_Control *Template_ControlClass;
@@ -228,7 +229,7 @@ gpointer ScanDataReadThread (void *ptr_sr){
                                                         while (sr->PauseFlg)
                                                                 usleep (1000000 / Template_ControlClass->sim_speed[0]);
                                                 }
-                                g_print("\n");
+                                //g_print("\n");
                         }
                         sr->spm_emu->data_y_count = yi-y0; // completed
                         sr->spm_emu->data_y_index = yi; // completed
@@ -336,13 +337,8 @@ int spm_template_hwi_dev::ReadProbeData (int dspdev, int control){
 	static int need_fct = FR_YES;  // need fifo control
 	static int need_hdr = FR_YES;  // need header
 	static int need_data = FR_YES; // need data
-	static int ch_lut[32];
-	static int ch_msk[]  = { 0x0000001, 0x0000002,   0x0000010, 0x0000020, 0x0000040, 0x0000080,   0x0000100, 0x0000200, 0x0000400, 0x0000800,
-				 0x0000008, 0x0001000, 0x0002000, 0x0004000, 0x0008000,   0x0000004,   0x0000000 };
-	static int ch_size[] = {    2, 2,    2, 2, 2, 2,   2, 2, 2, 2,    4,   4,  4,  4,   4,   4,  0 };
-	static const char *ch_header[] = {"Zmon-AIC5Out", "Umon-AIC6Out", "AIC0-I", "AIC1", "AIC2", "AIC3", "AIC4", "AIC5", "AIC6", "AIC7",
-					  "LockIn0", "*LockIn1stA", "*LockIn1stB", "*LockIn2ndA", "*LockIn2ndB", "Count", NULL };
 	static double dataexpanded[16];
+	static int ch_lut[32];
 #ifdef LOGMSGS0
 	static double dbg0=0., dbg1=0.;
 	static int dbgi0=0;
@@ -369,6 +365,7 @@ int spm_template_hwi_dev::ReadProbeData (int dspdev, int control){
 
 		Template_ControlClass->init_probedata_arrays ();
 		for (int i=0; i<16; dataexpanded[i++]=0.);
+		for (int i=0; i<32; ch_lut[i++]=0);
 
 		LOGMSGS ( std::endl << "************** PROBE FIFO-READ INIT **************" << std::endl);
 		LOGMSGS ( "FR::INIT-OK." << std::endl);
@@ -419,20 +416,20 @@ int spm_template_hwi_dev::ReadProbeData (int dspdev, int control){
                         pv[7] = spm_emu->vp_header_current.bias;
                         pv[8] = spm_emu->vp_header_current.section;
 
-                        Template_ControlClass->add_probe_hdr (pv); // add probe section with full position header
+                        Template_ControlClass->add_probe_hdr (pv); // add full position header
 
                         // analyze header and setup channel lookup table
                         number_channels=0;
                         LOGMSGS ( "FR::NEED_HDR: decoding DATA_SRCS to read..." << std::endl);
-                        for (int i = 0; ch_msk[i] && i < 18; ++i){
-                                if (spm_emu->vp_header_current.srcs & ch_msk[i]){
+                        for (int i = 0; source_signals[i+NUM_VECTOR_SIGNALS].mask && source_signals[i+NUM_VECTOR_SIGNALS].mask; ++i){
+                                if (spm_emu->vp_header_current.srcs & source_signals[i+NUM_VECTOR_SIGNALS].mask){
                                         ch_lut[number_channels] = i;
                                         ++number_channels;
                                 }
                         }
                 point_index = 0;
 		need_hdr = FR_NO;
-                Template_ControlClass->set_probevector (pv);
+                Template_ControlClass->set_probevector (pv); // set section start reference position/values for vector generation
                 } else {
                         g_warning ("VP READ ERROR: no header.");
                         return RET_FR_WAIT;
@@ -456,7 +453,8 @@ int spm_template_hwi_dev::ReadProbeData (int dspdev, int control){
                 }
 
 		// add vector and data to expanded data array representation
-                Template_ControlClass->add_probevector ();
+                if (point_index > 0) // initial point set at section start
+                        Template_ControlClass->add_probevector (); // generate control vector reference
                 Template_ControlClass->add_probedata (dataexpanded);
 
                 if (point_index % 10 == 0) break; // for graph updates

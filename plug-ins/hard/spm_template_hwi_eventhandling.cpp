@@ -1280,6 +1280,8 @@ void SPM_Template_Control::add_probedata(double data[13]){
 	pv_lock = FALSE;
 }
 
+
+// add probe vector to generate ramp reference signals (same as on hardware, but this data is not streamed as redundent)
 void SPM_Template_Control::add_probevector(){ 
 	int i,j, sec;
 	double ds, val, multi, fixptm;
@@ -1294,10 +1296,11 @@ void SPM_Template_Control::add_probevector(){
 	val = g_array_index (garray_probedata[PROBEDATA_ARRAY_BLOCK], double, current_probe_data_index-1);
 	g_array_append_val (garray_probedata[PROBEDATA_ARRAY_BLOCK], val);
 
+#define TTY_DEBUG
 #ifdef TTY_DEBUG
-	std::cout << "+pv[" << current_probe_data_index << "] (m=" << multi << "): ";
+	std::cout << "EV** +pv[" << current_probe_data_index << "] (m=" << multi << "): ";
 #endif
-	for (i = PROBEDATA_ARRAY_TIME, j=0; i < PROBEDATA_ARRAY_SEC; ++i, ++j){
+	for (i = PROBEDATA_ARRAY_TIME; i < PROBEDATA_ARRAY_SEC; ++i){
 		val = g_array_index (garray_probedata[i], double, current_probe_data_index-1);
 		switch (i){
 		case PROBEDATA_ARRAY_TIME:
@@ -1340,6 +1343,7 @@ void SPM_Template_Control::add_probevector(){
 	pv_lock = FALSE;
 }
 
+// set section start reference position/values for vector generation
 void SPM_Template_Control::set_probevector(double pv[9]){ 
 	int i,j;
 	pv_lock = TRUE;
@@ -1351,7 +1355,7 @@ void SPM_Template_Control::set_probevector(double pv[9]){
 	g_array_append_val (garray_probedata[PROBEDATA_ARRAY_BLOCK], di);
 	
 #ifdef TTY_DEBUG
-	std::cout << "pv[" << current_probe_data_index << "]_[txyz0xyzSus]set: ";
+	std::cout << "EV** set pv[" << current_probe_data_index << "]_[txyz0xyzSus]set: ";
 	for (i = PROBEDATA_ARRAY_TIME, j=0; i <= PROBEDATA_ARRAY_SEC; ++i, ++j)
 		std::cout << pv[j] << ", ";
 	std::cout << std::endl;

@@ -44,6 +44,8 @@
 #define A_SOURCE_MSK 0x40000000 // select for Avg plotting
 #define S_SOURCE_MSK 0x80000000 // select for Sec plotting
 
+#define NUM_VECTOR_SIGNALS 8
+
 // G_ARRAY EXPANDED PROBE DATA
 #define NUM_PROBEDATA_ARRAYS 27
 

@@ -170,6 +170,7 @@ public:
 #define i_Z 2
 
 #define ADC_IN(N) (N) // dummy, returns channel number
+#define Qfac 3276.7
 
 class SPM_emulator{
 public:
@@ -181,14 +182,14 @@ public:
 		data_x_index = 0;
 
 		tip_current  = 1.234;
-		sample_bias  = 2.0;
+		sample_bias  = (gint)round(Qfac*2.0);
 		tip_current_set  = 0.01; // 10pA
 		sample_bias_set  = 2.0; // 100mV
 		data_z_value = 0.;
                 pulse_counter = 99.;
                 
-		vp_bias = 0.0;
-		vp_zpos = 0.0;
+		vp_bias = 0;
+		vp_zpos = 0;
 		
 		move_xyz_vec[0] = move_xyz_vec[1] = move_xyz_vec[2] = 0.;
 		scan_xyz_vec[0] = scan_xyz_vec[1] = scan_xyz_vec[2] = 0.;
@@ -201,18 +202,28 @@ public:
 	};
         ~SPM_emulator(){};
 
-	void set_bias_sp (double bias) { sample_bias = sample_bias_set = bias; };
+        void set_bias_sp (double bias) { sample_bias = (gint)round(Qfac*(sample_bias_set = bias)); };
 	void set_current_sp (double current) { tip_current = tip_current_set = current; };
 
         void reset_params (){
-                sample_bias = sample_bias_set;
+                set_bias_sp (sample_bias_set);
                 tip_current = tip_current_set;
-  		vp_bias = 0.0;
-		vp_zpos = 0.0;            
+  		vp_bias = 0;
+		vp_zpos = 0;            
         };
         
         double simulate_value (XSM_Hardware *xsmhwi, int xi, int yi, int ch);
 
+        double sim_current_func() {
+                return ((double)(sample_bias+vp_bias)/Qfac)/(sample_bias_set/tip_current_set); // I=U/Rgap  Rgap=U/I
+        };
+        gint sim_current_func1() {
+                return (gint)round(Qfac*sim_current_func());
+        };
+        gint sim_current_func2() {
+                double w = sample_bias/Qfac+vp_bias/Qfac+0.4;
+                return (gint)round(Qfac * (1./(sample_bias_set/tip_current_set) + exp (w*w/0.001)));
+        };
 	int read_program_vector(int i, PROBE_VECTOR_GENERIC *v){
 		if (i >= MAX_PROGRAM_VECTORS || i < 0)
 			return 0;
@@ -310,20 +321,23 @@ public:
         double tip_current_set;
         double data_z_value;
         double pulse_counter;
+
+        // integer 32Q16
+        gint     i_bias;
         
-	double vp_bias;
-	double vp_zpos;
-	int    vp_time;
+	gint     vp_bias;
+	gint     vp_zpos;
+	gint     vp_time;
         clock_t vp_clock_start;
         
-	double move_xyz_vec[3];
-	double scan_xyz_vec[3];
-	double scan_xy_r_vec[3];
+	gint move_xyz_vec[3];
+	gint scan_xyz_vec[3];
+	gint scan_xy_r_vec[3];
 
         // scan engine
-        int data_y_count;
-        int data_y_index;
-        int data_x_index;
+        gint data_y_count;
+        gint data_y_index;
+        gint data_x_index;
 
 	double frq_ref;
 	useconds_t vp_point_us;
