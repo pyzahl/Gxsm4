@@ -684,8 +684,8 @@ gint spm_template_hwi_dev::RTQuery (const gchar *property, double &val1, double 
 
         if (*property == 'f'){
                 val1 = 0.; // qf - DSPPACClass->pll.Reference[0]; // Freq Shift
-		val2 = spm_emu->tip_current / main_get_gapp()->xsm->Inst->nAmpere2V(1.); // actual nA reading    xxxx V  * 0.1nA/V
-		val3 = spm_emu->tip_current / main_get_gapp()->xsm->Inst->nAmpere2V(1.); // actual nA RMS reading    xxxx V  * 0.1nA/V -- N/A for simulation
+		val2 = spm_emu->sim_current_func() / main_get_gapp()->xsm->Inst->nAmpere2V(1.); // actual nA reading    xxxx V  * 0.1nA/V
+		val3 = spm_emu->sim_current_func() / main_get_gapp()->xsm->Inst->nAmpere2V(1.); // actual nA RMS reading    xxxx V  * 0.1nA/V -- N/A for simulation
 		return TRUE;
 	}
 

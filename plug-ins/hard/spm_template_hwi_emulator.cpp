@@ -128,6 +128,11 @@ void SPM_emulator::vp_stop (){
 
 	// Probe Suffix with full end position vector[6]
 	vp_append_header_and_positionvector ();
+
+        // undo adjustement -- TDB: smooth or no action in reality
+        scan_xyz_vec[i_Z] -= vp_zpos;
+        sample_bias -= vp_bias;
+
         reset_params ();
 }
 
@@ -147,7 +152,9 @@ void SPM_emulator::vp_append_header_and_positionvector (){ // size: 14
         vp_header_current.bias    = sample_bias+vp_bias;
         vp_header_current.section = section_count;
 
-        g_print ("EMU** HPV [%4d %08x t=%8d XYZ %g %g %g B %g Sec %d]\n", vector->n, vector->srcs, vp_time, scan_xyz_vec[i_X], scan_xyz_vec[i_Y], scan_xyz_vec[i_Z], vp_bias, section_count);
+        g_print ("EMU** HPV [%4d Srcs%08x t=%08d s XYZ %g %g %g in V Bias %g V Sec %d]\n", vector->n, vector->srcs, vp_time,
+                 DAC2Volt (scan_xyz_vec[i_X]), DAC2Volt (scan_xyz_vec[i_Y]), DAC2Volt (scan_xyz_vec[i_Z]),
+                 DAC2Volt (vp_bias), section_count);
 }
 
 
@@ -156,17 +163,24 @@ void SPM_emulator::vp_add_vector (){
 	// check for valid vector *** and for limiter active (freeze)
 	if (!vector) return;
 
+        // accumulate adjustements (internal use)
 	vp_bias += vector->f_du;
 	vp_zpos += vector->f_dz; 
 
+        // adjust parameter vectors
+        sample_bias += vector->f_du;
+        
 	scan_xyz_vec[i_X] += vector->f_dx;
 	scan_xyz_vec[i_Y] += vector->f_dy;
-
+        scan_xyz_vec[i_Z] += vector->f_dz;
+        
 	move_xyz_vec[i_X] += vector->f_dx0;
 	move_xyz_vec[i_Y] += vector->f_dy0;
 	move_xyz_vec[i_Z] += vector->f_dz0;
 
-        g_print ("EMU** VP+ [B %8d Z %8d, Sxy %8d %8d]\n", vp_bias, vp_zpos,  scan_xyz_vec[i_X], scan_xyz_vec[i_Y]);
+        g_print ("EMU** VP+ [%4d Srcs%08x t=%08d s XYZ %g %g %g in V Bias %g V Sec %d]\n", vector->n, vector->srcs, vp_time,
+                 DAC2Volt (scan_xyz_vec[i_X]), DAC2Volt (scan_xyz_vec[i_Y]), DAC2Volt (scan_xyz_vec[i_Z]),
+                 DAC2Volt (vp_bias), section_count);
 }
 
 
@@ -175,9 +189,9 @@ void SPM_emulator::vp_store_data_srcs ()
         gint i=0;
         // matching this to "template hardware def as of SOURCE_SIGNAL_DEF source_signals[] = { ... } 
         if (vector->srcs & 0x000001) // Z monitor
-                vp_data_set[i++] = scan_xyz_vec[i_Z]+vp_zpos;
+                vp_data_set[i++] = scan_xyz_vec[i_Z];
         if (vector->srcs & 0x000002) // Bias monitor
-                vp_data_set[i++] = sample_bias + vp_bias;
+                vp_data_set[i++] = sample_bias;
         if (vector->srcs & 0x000010) // ADC0-I (current input)
                 vp_data_set[i++] = sim_current_func1();
         if (vector->srcs & 0x000020) // ADC1

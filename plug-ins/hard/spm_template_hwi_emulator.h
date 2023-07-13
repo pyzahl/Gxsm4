@@ -170,7 +170,10 @@ public:
 #define i_Z 2
 
 #define ADC_IN(N) (N) // dummy, returns channel number
-#define Qfac 3276.7
+
+#define Qfac (double)(1<<31-1)
+#define Volt2DAC(X) ((gint)round(Qfac*0.1*(X)))
+#define DAC2Volt(X) ((double)(X)/Qfac*10.)
 
 class SPM_emulator{
 public:
@@ -181,11 +184,9 @@ public:
 		data_y_index = 0;
 		data_x_index = 0;
 
-		tip_current  = 1.234;
-		sample_bias  = (gint)round(Qfac*2.0);
+		sample_bias  = Volt2DAC(2.0);
 		tip_current_set  = 0.01; // 10pA
 		sample_bias_set  = 2.0; // 100mV
-		data_z_value = 0.;
                 pulse_counter = 99.;
                 
 		vp_bias = 0;
@@ -202,12 +203,12 @@ public:
 	};
         ~SPM_emulator(){};
 
-        void set_bias_sp (double bias) { sample_bias = (gint)round(Qfac*(sample_bias_set = bias)); };
-	void set_current_sp (double current) { tip_current = tip_current_set = current; };
+        void set_bias_sp (double bias) { sample_bias = Volt2DAC (sample_bias_set = bias); };
+	void set_current_sp (double current) { tip_current_set =  main_get_gapp()->xsm->Inst->nAmpere2V(current); };
 
         void reset_params (){
                 set_bias_sp (sample_bias_set);
-                tip_current = tip_current_set;
+
   		vp_bias = 0;
 		vp_zpos = 0;            
         };
@@ -215,14 +216,14 @@ public:
         double simulate_value (XSM_Hardware *xsmhwi, int xi, int yi, int ch);
 
         double sim_current_func() {
-                return ((double)(sample_bias+vp_bias)/Qfac)/(sample_bias_set/tip_current_set); // I=U/Rgap  Rgap=U/I
+                return DAC2Volt (sample_bias)/(sample_bias_set/tip_current_set); // I=U/Rgap  Rgap=U/I
         };
         gint sim_current_func1() {
-                return (gint)round(Qfac*sim_current_func());
+                return Volt2DAC (sim_current_func());
         };
         gint sim_current_func2() {
-                double w = sample_bias/Qfac+vp_bias/Qfac+0.4;
-                return (gint)round(Qfac * (1./(sample_bias_set/tip_current_set) + exp (w*w/0.001)));
+                double w = DAC2Volt (sample_bias)+0.4;
+                return Volt2DAC (1./(sample_bias_set/tip_current_set) + exp (w*w/0.001));
         };
 	int read_program_vector(int i, PROBE_VECTOR_GENERIC *v){
 		if (i >= MAX_PROGRAM_VECTORS || i < 0)
@@ -316,13 +317,12 @@ public:
 	
         double x0,y0; // offset
         double sample_bias;
-        double tip_current;
         double sample_bias_set;
         double tip_current_set;
         double data_z_value;
         double pulse_counter;
 
-        // integer 32Q16
+        // integer 32Q16 "HARDWARE"
         gint     i_bias;
         
 	gint     vp_bias;
@@ -341,6 +341,7 @@ public:
 
 	double frq_ref;
 	useconds_t vp_point_us;
+                        
 private:
 	PROBE_VECTOR_GENERIC vector_program[MAX_PROGRAM_VECTORS];
 	PROBE_VECTOR_GENERIC *vector;

@@ -1286,7 +1286,7 @@ void SPM_Template_Control::add_probevector(){
 	int i,j, sec;
 	double ds, val, multi, fixptm;
 	pv_lock = TRUE;
-	sec =  (int) (ds = g_array_index (garray_probedata [PROBEDATA_ARRAY_SEC], double, current_probe_data_index-1));
+	sec =  (int) (ds = g_array_index (garray_probedata [PROBEDATA_ARRAY_SEC], double, current_probe_data_index-1)); 
 	g_array_append_val (garray_probedata [PROBEDATA_ARRAY_SEC], ds);
 	g_array_append_val (garray_probedata [PROBEDATA_ARRAY_INDEX], current_probe_data_index);
 	multi = program_vector_list[sec].dnx + 1;
