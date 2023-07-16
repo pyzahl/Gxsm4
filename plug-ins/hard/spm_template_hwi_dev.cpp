@@ -39,6 +39,7 @@
 #include "surface.h"
 
 #include "../common/pyremote.h"
+#include "spm_template_hwi_structs.h"
 #include "spm_template_hwi.h"
 #include "spm_template_hwi_emulator.h"
 
@@ -325,7 +326,7 @@ gpointer ProbeDataReadThread (void *ptr_sr){
 // read from probe data FIFO, this engine needs to be called several times from master thread/function
 int spm_template_hwi_dev::ReadProbeData (int dspdev, int control){
 	int pvd_blk_size=0;
-	static double pv[9];
+	static double pv[NUM_PV_HEADER_SIGNALS];
 	static int last = 0;
 	static int last_read_end = 0;
 	static int next_header = 0;
@@ -337,7 +338,7 @@ int spm_template_hwi_dev::ReadProbeData (int dspdev, int control){
 	static int need_fct = FR_YES;  // need fifo control
 	static int need_hdr = FR_YES;  // need header
 	static int need_data = FR_YES; // need data
-	static double dataexpanded[16];
+	static double dataexpanded[NUM_PV_DATA_SIGNALS];
 	static int ch_lut[32];
 #ifdef LOGMSGS0
 	static double dbg0=0., dbg1=0.;
@@ -351,6 +352,8 @@ int spm_template_hwi_dev::ReadProbeData (int dspdev, int control){
 	case FR_INIT:
 
                 g_message ("VP: init");
+                for (int i=0; i<NUM_PV_HEADER_SIGNALS; ++i) pv[i]=0.;
+
                 spm_emu->vp_init (); // vectors should be written by now!
                 
                 last = 0;
@@ -405,17 +408,24 @@ int spm_template_hwi_dev::ReadProbeData (int dspdev, int control){
                                 g_message ("VP: finished");
                                 return RET_FR_FCT_END;
                         }
-                        
-                        pv[0] = spm_emu->vp_header_current.time;
-                        pv[1] = spm_emu->vp_header_current.move_xyz[i_X];
-                        pv[2] = spm_emu->vp_header_current.move_xyz[i_Y];
-                        pv[3] = spm_emu->vp_header_current.move_xyz[i_Z];
-                        pv[4] = spm_emu->vp_header_current.scan_xyz[i_X];
-                        pv[5] = spm_emu->vp_header_current.scan_xyz[i_Y];
-                        pv[6] = spm_emu->vp_header_current.scan_xyz[i_Z];
-                        pv[7] = spm_emu->vp_header_current.bias;
-                        pv[8] = spm_emu->vp_header_current.section;
 
+                        pv[PROBEDATA_ARRAY_INDEX] = spm_emu->vp_header_current.time; // ** fix
+                        pv[PROBEDATA_ARRAY_TIME] = spm_emu->vp_header_current.time;
+                        pv[PROBEDATA_ARRAY_X0] = spm_emu->vp_header_current.move_xyz[i_X];
+                        pv[PROBEDATA_ARRAY_Y0] = spm_emu->vp_header_current.move_xyz[i_Y];
+                        pv[PROBEDATA_ARRAY_PHI]= spm_emu->vp_header_current.move_xyz[i_Z]; // *** fix me
+                        pv[PROBEDATA_ARRAY_XS] = spm_emu->vp_header_current.scan_xyz[i_X];
+                        pv[PROBEDATA_ARRAY_YS] = spm_emu->vp_header_current.scan_xyz[i_Y];
+                        pv[PROBEDATA_ARRAY_ZS] = spm_emu->vp_header_current.scan_xyz[i_Z];
+                        pv[PROBEDATA_ARRAY_U]  = spm_emu->vp_header_current.bias;
+                        pv[PROBEDATA_ARRAY_SEC] = spm_emu->vp_header_current.section;
+#if 1
+                        g_print ("ReadPVD_VP-HDR****** SECTION spm_emu->vp_header_current.section = %d\n", spm_emu->vp_header_current.section);
+                        g_print ("ReadPVD_VP-HDR****** pv vector, time=%d = (", spm_emu->vp_header_current.time);
+                        for (int i = PROBEDATA_ARRAY_INDEX; i <= PROBEDATA_ARRAY_SEC; ++i)
+                                g_print("%g_[%d], ", pv[i],i);
+                        g_print("\n");
+#endif
                         Template_ControlClass->add_probe_hdr (pv); // add full position header
 
                         // analyze header and setup channel lookup table
@@ -438,12 +448,12 @@ int spm_template_hwi_dev::ReadProbeData (int dspdev, int control){
         }
 
         int ix=0;
+        clock_t ct = clock();
         g_message ("VP: section: %d", spm_emu->vp_header_current.section);
         for (; point_index < number_points;){
                 // template code --------
                 ix = spm_emu->vp_exec_callback (); // run one VP step... this generates the next data set, read to transfer from spm_emu->vp_data_set[]
-                g_message ("VP: %d %d", ix, point_index);
-                ++point_index;
+                // g_message ("VP: %d %d", ix, point_index);
                 // ----------------------
                 
                 // expand data from stream
@@ -453,11 +463,11 @@ int spm_template_hwi_dev::ReadProbeData (int dspdev, int control){
                 }
 
 		// add vector and data to expanded data array representation
-                if (point_index > 0) // initial point set at section start
+                if (point_index++ > 1)
                         Template_ControlClass->add_probevector (); // generate control vector reference
                 Template_ControlClass->add_probedata (dataexpanded);
 
-                if (point_index % 10 == 0) break; // for graph updates
+                if (20.*(clock () - ct)/CLOCKS_PER_SEC > 1.) break; // for graph updates
 	}
 
         if (point_index == number_points || ix == 0){

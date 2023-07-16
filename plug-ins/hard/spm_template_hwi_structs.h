@@ -60,6 +60,9 @@
 #define PROBEDATA_ARRAY_ZS    7 // Array [7] holds Z-Scan
 #define PROBEDATA_ARRAY_U     8 // Array [8] holds U (Bias)
 #define PROBEDATA_ARRAY_SEC   9 // Array [9] holds Section Index
+
+#define NUM_PV_HEADER_SIGNALS (PROBEDATA_ARRAY_SEC+1)
+
 // ARB DATA SIGNALS
 #define PROBEDATA_ARRAY_S1    10 // Array [10] holds ZMON (AIC5 out) [[AIC5OUT_ZMON]]
 #define PROBEDATA_ARRAY_S2    11 // Array [11] holds UMON (AIC6 out)
@@ -80,10 +83,11 @@
 #define PROBEDATA_ARRAY_COUNT 25 // Array [25] holds Count
 #define PROBEDATA_ARRAY_BLOCK 26 // Array [26] holds Block start index (hold start index for every section) 
 
-#define PROBEDATA_ARRAY_END          PROBEDATA_ARRAY_COUNT // last element number
+#define PROBEDATA_ARRAY_END   PROBEDATA_ARRAY_BLOCK // last element number
 
 #define MAX_NUM_CHANNELS (PROBEDATA_ARRAY_END-1)  // 26
 
+#define NUM_PV_DATA_SIGNALS (PROBEDATA_ARRAY_END-PROBEDATA_ARRAY_S1)
 
 
 // NEW: generalized signals

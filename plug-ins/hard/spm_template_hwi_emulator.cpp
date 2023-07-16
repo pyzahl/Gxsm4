@@ -40,6 +40,7 @@
 #include "surface.h"
 
 #include "../common/pyremote.h"
+#include "spm_template_hwi_structs.h"
 #include "spm_template_hwi.h"
 #include "spm_template_hwi_emulator.h"
 
@@ -113,6 +114,21 @@ double SPM_emulator::simulate_value (XSM_Hardware *xsmhwi, int xi, int yi, int c
 void SPM_emulator::vp_init (){
         reset_params ();
         vector = NULL;
+
+        vp_header_current.n    = 0;
+        vp_header_current.srcs = 0;
+        vp_header_current.time = 0;
+        vp_header_current.move_xyz[i_X] = 0;
+        vp_header_current.move_xyz[i_Y] = 0;
+        vp_header_current.move_xyz[i_Z] = 0;
+        vp_header_current.scan_xyz[i_X] = 0;
+        vp_header_current.scan_xyz[i_Y] = 0;
+        vp_header_current.scan_xyz[i_Z] = 0;
+        vp_header_current.bias    = 0;
+        vp_header_current.section = 0;
+
+        for (int i=0; i<16; ++i) vp_data_set[i] = 0;
+        
         vp_header_current.section = -1; // still invalid
         vp_num_data_sets = 0;
         section_count=ix=iix=lix = 0;
@@ -149,7 +165,7 @@ void SPM_emulator::vp_append_header_and_positionvector (){ // size: 14
         vp_header_current.scan_xyz[i_X] = scan_xyz_vec[i_X];
         vp_header_current.scan_xyz[i_Y] = scan_xyz_vec[i_Y];
         vp_header_current.scan_xyz[i_Z] = scan_xyz_vec[i_Z];
-        vp_header_current.bias    = sample_bias+vp_bias;
+        vp_header_current.bias    = sample_bias;
         vp_header_current.section = section_count;
 
         g_print ("EMU** HPV [%4d Srcs%08x t=%08d s XYZ %g %g %g in V Bias %g V Sec %d]\n", vector->n, vector->srcs, vp_time,
@@ -178,9 +194,11 @@ void SPM_emulator::vp_add_vector (){
 	move_xyz_vec[i_Y] += vector->f_dy0;
 	move_xyz_vec[i_Z] += vector->f_dz0;
 
+#if 0
         g_print ("EMU** VP+ [%4d Srcs%08x t=%08d s XYZ %g %g %g in V Bias %g V Sec %d]\n", vector->n, vector->srcs, vp_time,
                  DAC2Volt (scan_xyz_vec[i_X]), DAC2Volt (scan_xyz_vec[i_Y]), DAC2Volt (scan_xyz_vec[i_Z]),
                  DAC2Volt (vp_bias), section_count);
+#endif
 }
 
 
