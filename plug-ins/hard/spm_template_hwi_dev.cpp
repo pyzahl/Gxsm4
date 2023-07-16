@@ -426,7 +426,8 @@ int spm_template_hwi_dev::ReadProbeData (int dspdev, int control){
                                 g_print("%g_[%d], ", pv[i],i);
                         g_print("\n");
 #endif
-                        Template_ControlClass->add_probe_hdr (pv); // add full position header
+                        Template_ControlClass->add_probe_hdr (pv);   // add full position header
+                        Template_ControlClass->set_probevector (pv); // set section start reference position/values for vector generation
 
                         // analyze header and setup channel lookup table
                         number_channels=0;
@@ -437,9 +438,8 @@ int spm_template_hwi_dev::ReadProbeData (int dspdev, int control){
                                         ++number_channels;
                                 }
                         }
-                point_index = 0;
-		need_hdr = FR_NO;
-                Template_ControlClass->set_probevector (pv); // set section start reference position/values for vector generation
+                        point_index = 0;
+                        need_hdr = FR_NO;
                 } else {
                         g_warning ("VP READ ERROR: no header.");
                         return RET_FR_WAIT;
@@ -463,7 +463,7 @@ int spm_template_hwi_dev::ReadProbeData (int dspdev, int control){
                 }
 
 		// add vector and data to expanded data array representation
-                if (point_index++ > 1)
+                if (point_index++ > 0)
                         Template_ControlClass->add_probevector (); // generate control vector reference
                 Template_ControlClass->add_probedata (dataexpanded);
 

@@ -1296,7 +1296,7 @@ void SPM_Template_Control::add_probevector(){
 	g_array_append_val (garray_probedata [PROBEDATA_ARRAY_SEC], current_probe_section);
 	g_array_append_val (garray_probedata [PROBEDATA_ARRAY_INDEX], current_probe_data_index);
 
-	multi = program_vector_list[current_probe_section].dnx + 1;
+	multi = 1. + program_vector_list[current_probe_section].dnx;
 	fixptm = 1./(1<<16);
 
 	// copy Block Start Index
@@ -1304,18 +1304,18 @@ void SPM_Template_Control::add_probevector(){
 	g_array_append_val (garray_probedata[PROBEDATA_ARRAY_BLOCK], val);
 
         g_print ("##ADD_PV[%04d] sec=%d blk=%d (du %d  dxyz %d %d %d)\n",
-                 current_probe_data_index, current_probe_section, val,
+                 current_probe_data_index, current_probe_section, (int)val,
                  program_vector_list[current_probe_section].f_du,
                  program_vector_list[current_probe_section].f_dx, program_vector_list[current_probe_section].f_dy, program_vector_list[current_probe_section].f_dz
                  );
 #define TTY_DEBUG
 #ifdef TTY_DEBUG
-	g_print("##ADD_PV[%04d] <+=> (multi=%d, ", current_probe_data_index, multi);
+	g_print("##ADD_PV[%04d] <+=> (multi=%d, ", current_probe_data_index, (int)multi);
 #endif
 	for (i = PROBEDATA_ARRAY_TIME; i < PROBEDATA_ARRAY_SEC; ++i){
 		val = g_array_index (garray_probedata[i], double, current_probe_data_index-1); // get previous, then add delta
 #ifdef TTY_DEBUG
-		g_print("%g => ", val/fixptm);
+		g_print("%d => ", (int)val);
 #endif
 		switch (i){
 		case PROBEDATA_ARRAY_TIME:
@@ -1347,7 +1347,7 @@ void SPM_Template_Control::add_probevector(){
 		}
 		g_array_append_val (garray_probedata[i], val);
 #ifdef TTY_DEBUG
-		g_print("%g", val/fixptm);
+		g_print("%d, ", (int)val);
 #endif
 	}
 	++nun_valid_data_sections;
