@@ -328,6 +328,7 @@ public:
 	gint     vp_bias;
 	gint     vp_zpos;
 	gint     vp_time;
+	gint     vp_index_all;
         clock_t vp_clock_start;
         
 	gint move_xyz_vec[3];

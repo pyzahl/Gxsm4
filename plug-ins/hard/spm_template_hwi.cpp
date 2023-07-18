@@ -130,7 +130,7 @@ SOURCE_SIGNAL_DEF source_signals[] = {
 
 // so far fixed to swappable 4 signals as of GUI design!
 SOURCE_SIGNAL_DEF swappable_signals[] = {
-        { 0x001000, "Sig SWP1", " ", "-", "--", ADCV10, 0 },
+        { 0x001000, "Sig Index", " ", "-", "--", 1.0, 0 },
         { 0x002000, "Sig SWP2", " ", "-", "--", ADCV10, 0 },
         { 0x004000, "Sig SWP3", " ", "-", "--", ADCV10, 0 },
         { 0x008000, "Sig SWP4", " ", "-", "--", ADCV10, 0 },

@@ -133,6 +133,7 @@ void SPM_emulator::vp_init (){
         vp_num_data_sets = 0;
         section_count=ix=iix=lix = 0;
         vp_time = 0;
+        vp_index_all = 0;
         vp_clock_start = clock();
      	vp_next_section ();    // setup vector program start
 	vp_append_header_and_positionvector ();
@@ -229,7 +230,7 @@ void SPM_emulator::vp_store_data_srcs ()
         if (vector->srcs & 0x000008) // LockIn0 [LockIn0 = LockIn channel after low pass]
                 vp_data_set[i++] = 0x0008;
         if (vector->srcs & 0x001000) // Signal swappable
-                vp_data_set[i++] = 0x1000;
+                vp_data_set[i++] = vp_index_all++; // 0x1000;
         if (vector->srcs & 0x002000) // Signal swappable
                 vp_data_set[i++] = 0x2000;
         if (vector->srcs & 0x004000) // Signal swappable

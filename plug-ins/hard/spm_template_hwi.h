@@ -463,7 +463,7 @@ public:
 
 	int check_vp_in_progress (const gchar *extra_info=NULL) { return 0; }; // DUMMY -- check controller for !!
 
-	void add_probedata(double data[NUM_PV_DATA_SIGNALS]);
+	void add_probedata(double data[NUM_PV_DATA_SIGNALS], double pv[NUM_PV_HEADER_SIGNALS], gboolean set_pv=false);
 	void add_probevector();
 	void set_probevector(double pv[NUM_PV_HEADER_SIGNALS]);
 
