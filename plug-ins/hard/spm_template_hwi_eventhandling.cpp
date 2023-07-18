@@ -1243,7 +1243,6 @@ void SPM_Template_Control::free_probedata_arrays (){
 }
 
 void SPM_Template_Control::init_probedata_arrays (){
-	pv_lock = TRUE;
 	for(int i=0; i<4; ++i)
 		vp_input_id_cache[i]=-1;
 	for (int i=0; i<NUM_PROBEDATA_ARRAYS; ++i){
@@ -1262,7 +1261,6 @@ void SPM_Template_Control::init_probedata_arrays (){
 	nun_valid_data_sections = 0;
 	nun_valid_hdr = 0;
 	last_nun_hdr_dumped = 0;
-	pv_lock = FALSE;
 }
 
 #define TTY_DEBUG
@@ -1282,7 +1280,6 @@ void SPM_Template_Control::add_probe_hdr(double pv[NUM_PV_HEADER_SIGNALS]){
 // set section start reference position/values for vector generation
 void SPM_Template_Control::set_probevector(double pv[NUM_PV_HEADER_SIGNALS]){ 
 	int i,j;
-	pv_lock = TRUE;
 
         g_print ("***************** SET_PV [%d] section = %d",  current_probe_data_index, (int)pv[PROBEDATA_ARRAY_SEC]);
         current_probe_section = (int)pv[PROBEDATA_ARRAY_SEC];
@@ -1300,7 +1297,6 @@ void SPM_Template_Control::set_probevector(double pv[NUM_PV_HEADER_SIGNALS]){
 		g_print("%g_[%d], ", pv[j],i);
         g_print("\n");
 #endif
-	pv_lock = FALSE;
 }
 
 // add probe vector to generate ramp reference signals (same as on hardware, but this data is not streamed as redundent)
@@ -1312,7 +1308,6 @@ void SPM_Template_Control::add_probevector(){
                 return;
         }
         
-	pv_lock = TRUE;
         double dsec = (double)current_probe_section;
         double dind = (double)current_probe_data_index;
 	g_array_append_val (garray_probedata [PROBEDATA_ARRAY_SEC], dsec);
@@ -1331,11 +1326,11 @@ void SPM_Template_Control::add_probevector(){
                  program_vector_list[current_probe_section].f_dx, program_vector_list[current_probe_section].f_dy, program_vector_list[current_probe_section].f_dz
                  );
 #ifdef TTY_DEBUG
-	g_print(" <+=> (multi=%d, ", current_probe_data_index, (int)multi);
+	g_print(" <+=> (multi=%d) PV=( ", (int)multi);
 #endif
 	for (i = PROBEDATA_ARRAY_TIME; i < PROBEDATA_ARRAY_SEC; ++i){
 		val = g_array_index (garray_probedata[i], double, current_probe_data_index-1); // get previous, then add delta
-#ifdef TTY_DEBUG
+#ifdef TTY_DEBUG_PREV
 		g_print("%d => ", (int)val);
 #endif
 		switch (i){
@@ -1368,34 +1363,34 @@ void SPM_Template_Control::add_probevector(){
 		}
 		g_array_append_val (garray_probedata[i], val);
 #ifdef TTY_DEBUG
-		g_print("%d, ", (int)val);
+		g_print("%d_[%d], ", (int)val,i);
 #endif
 	}
 	++nun_valid_data_sections;
 
 #ifdef TTY_DEBUG
-        g_print("\n");
+        //g_print(" )\n");
 #endif
-	pv_lock = FALSE;
 }
 
+// CALL ONLY THIS EXTERNALLY TO ADD DATA
 void SPM_Template_Control::add_probedata(double data[NUM_PV_DATA_SIGNALS], double pv[NUM_PV_HEADER_SIGNALS], gboolean set_pv){ 
 	int i,j;
         
+        pv_lock = TRUE;
         // create and add vector generated signals
         if (set_pv)
                 add_probe_hdr (pv);
         else
                 add_probevector();
 
-        pv_lock = TRUE;
 	for (i = PROBEDATA_ARRAY_S1, j=0; i <= PROBEDATA_ARRAY_END; ++i, ++j)
 		g_array_append_val (garray_probedata[i], data[j]);
 
 #ifdef TTY_DEBUG
 	std::cout << "###ADD_PDATA[" << current_probe_data_index << "]: ";
 	for (i = PROBEDATA_ARRAY_S1, j=0; i <= PROBEDATA_ARRAY_END; ++i, ++j)
-		std::cout << data[j] << ", ";
+		std::cout << ((int)(data[j])) << ", ";
 	std::cout << std::endl;
 #endif
 
