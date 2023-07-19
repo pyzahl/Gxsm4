@@ -102,7 +102,7 @@ extern "C++" {
 SOURCE_SIGNAL_DEF source_signals[] = {
         // -- 8 vector generated signals (outputs/mapping) ==> must match: #define NUM_VECTOR_SIGNALS 8
         { 0x1000000, "Index",    " ", "#", "#", 1.0, PROBEDATA_ARRAY_INDEX },
-        { 0x2000000, "Time",     " ", "s", "s", 1.0, PROBEDATA_ARRAY_TIME },
+        { 0x2000000, "Time",     " ", "ms", "ms", 1.0/75, PROBEDATA_ARRAY_TIME }, // 1000/emu->frq_ref => ms
         { 0x0100000, "Bias",     " ", "V", "V", BiasFac, PROBEDATA_ARRAY_U },
         { 0x4000000, "SEC",      " ", "#", "#", 1.0, PROBEDATA_ARRAY_SEC },
         { 0x8000000, "XS",      " ", "AA", UTF8_ANGSTROEM, XAngFac, PROBEDATA_ARRAY_XS },
