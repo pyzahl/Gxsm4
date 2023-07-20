@@ -1378,9 +1378,12 @@ void SPM_Template_Control::add_probedata(double data[NUM_PV_DATA_SIGNALS], doubl
         
         pv_lock = TRUE;
         // create and add vector generated signals
-        if (set_pv)
+        if (set_pv){
                 add_probe_hdr (pv);
-        else
+                if (!current_probe_data_index)
+                        for (i = PROBEDATA_ARRAY_S1, j=0; i <= PROBEDATA_ARRAY_END; ++i, ++j)
+                                g_array_append_val (garray_probedata[i], data[j]);
+        } else
                 add_probevector();
 
 	for (i = PROBEDATA_ARRAY_S1, j=0; i <= PROBEDATA_ARRAY_END; ++i, ++j)

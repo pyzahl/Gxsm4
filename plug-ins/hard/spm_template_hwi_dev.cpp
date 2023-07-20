@@ -466,7 +466,7 @@ int spm_template_hwi_dev::ReadProbeData (int dspdev, int control){
 		// add vector and data to expanded data array representation
                 Template_ControlClass->add_probedata (dataexpanded, pv, !point_index);
 
-                if (!ix || (clock () - ct)/CLOCKS_PER_SEC > 100.) break; // for graph updates
+                if (!ix || (clock () - ct)*100/CLOCKS_PER_SEC > 1) break; // for graph updates
 	}
 
         if (point_index == number_points || ix == 0){

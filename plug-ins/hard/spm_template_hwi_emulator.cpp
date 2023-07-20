@@ -222,7 +222,7 @@ void SPM_emulator::vp_store_data_srcs ()
         if (vector->srcs & 0x000100) // ADC4
                 vp_data_set[i++] = vp_time;
         if (vector->srcs & 0x000200) // ADC5
-                vp_data_set[i++] = clock () - vp_clock_start;
+                vp_data_set[i++] = (double)(clock () - vp_clock_start)*1000/CLOCKS_PER_SEC; // ms
         if (vector->srcs & 0x000400) // ADC6
                 vp_data_set[i++] = ADC_IN(6);
         if (vector->srcs & 0x000800) // ADC7
@@ -449,14 +449,14 @@ void SPM_emulator::vp_run (){
 #ifdef RTE_STEPS
                 vp_integrate_data_srcs (); // leave to to hardware in future!
 #else
-                useconds_t us = (clock () - last_clock)*1000000/CLOCKS_PER_SEC;
-                last_clock = clock();
+                double us = ((double)clock () - (double)last_clock)*1e6/CLOCKS_PER_SEC;
                 if (vp_point_us > us)
-                        usleep (vp_point_us-us);
+                        usleep ((clock_t)(vp_point_us-us));
                 for (;--iix;){ // in DSP or FPGA do this in steps
                         vp_add_vector (); // iix times
                         ++vp_time;
                 }
+                last_clock = clock();
                 --vp_time;
 #endif
                 if (! iix-- || lix){

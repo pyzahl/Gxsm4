@@ -117,7 +117,7 @@ SOURCE_SIGNAL_DEF source_signals[] = {
         { 0x000040, "VP Zpos", " ", "AA", UTF8_ANGSTROEM, ZAngFac, PROBEDATA_ARRAY_S5 },
         { 0x000080, "VP Bias", " ", "V", "V", BiasFac, PROBEDATA_ARRAY_S6 },
         { 0x000100, "VP steps", " ", "pts", "pts", 1., PROBEDATA_ARRAY_S7 },
-        { 0x000200, "Clock", " ", "ms", "ms", 1000./CLOCKS_PER_SEC, PROBEDATA_ARRAY_S8 },
+        { 0x000200, "Clock", " ", "ms", "ms", 1., PROBEDATA_ARRAY_S8 },
         { 0x000400, "ADC6", " ", "V", "V", ADCV10, PROBEDATA_ARRAY_S9 },
         { 0x000800, "ADC7", " ", "V", "V", ADCV10, PROBEDATA_ARRAY_S10 },
         { 0x000008, "LockIn0", " ", "nA", "nA", ADCV10, PROBEDATA_ARRAY_S11 },
@@ -447,7 +447,7 @@ GtkWidget* GUI_Builder::grid_add_probe_source_signal_options (gint channel, gint
                 g_free (id);
         }
 #endif
-        if (preset > 0)
+        if (preset >= 0)
                 gtk_combo_box_set_active (GTK_COMBO_BOX (cbtxt), preset); 
         else
                 gtk_combo_box_set_active (GTK_COMBO_BOX (cbtxt), 4); // NULL SIGNAL [TESTING FALLBACK for -1/error]
@@ -2013,7 +2013,7 @@ void SPM_Template_Control::create_folder (){
                                                );
                 // source selection for SWPS?:
                 if (m >= 0){ // swappable flex source
-                        g_message("bp->grid_add_probe_source_signal_options m=%d  %s => %d %s", m, source_signals[i].label,  probe_source[m], swappable_signals[m].label);
+                        //g_message("bp->grid_add_probe_source_signal_options m=%d  %s => %d %s", m, source_signals[i].label,  probe_source[m], swappable_signals[m].label);
                         bp->grid_add_probe_source_signal_options (m, probe_source[m], this);
                 }else { // or fixed assignment
                         bp->grid_add_label (source_signals[i].label, NULL, 1, 0.);
