@@ -93,7 +93,7 @@ extern "C++" {
 #define ADCV10     (10.0/32767.)
 #define BiasFac    (main_get_gapp()->xsm->Inst->Dig2VoltOut (1.) * main_get_gapp()->xsm->Inst->BiasGainV2V ())
 #define BiasOffset (main_get_gapp()->xsm->Inst->Dig2VoltOut (1.) * main_get_gapp()->xsm->Inst->BiasV2V (0.)) // not used here
-#define CurrFac    (main_get_gapp()->xsm->Inst->Dig2VoltOut (1.)) // to Volt only at this stage
+#define CurrFac    (main_get_gapp()->xsm->Inst->Dig2VoltOut (1.) *1./main_get_gapp()->xsm->Inst->nAmpere2V (1.))
 #define ZAngFac    (main_get_gapp()->xsm->Inst->Dig2ZA (1))
 #define XAngFac    (main_get_gapp()->xsm->Inst->Dig2XA (1))
 #define YAngFac    (main_get_gapp()->xsm->Inst->Dig2YA (1))
@@ -112,8 +112,8 @@ SOURCE_SIGNAL_DEF source_signals[] = {
         // -- general measured signals from index [8]
         { 0x000001, "Z-mon",    " ", "AA", UTF8_ANGSTROEM, ZAngFac, PROBEDATA_ARRAY_S1 },
         { 0x000002, "Bias-mon", " ", "V", "V", BiasFac, PROBEDATA_ARRAY_S2 },
-	{ 0x000010, "Current", " ", "nA", "nA", CurrFac, PROBEDATA_ARRAY_S3 }, // <=== to Volt conversion here -- unit sym and scale are custom auto adjusted in .._eventhandling lookup functions as of this mask 
-        { 0x000020, "ADC1", " ", "V", "V", ADCV10, PROBEDATA_ARRAY_S4 },
+	{ 0x000010, "CurrentSim1", " ", "nA", "nA", CurrFac, PROBEDATA_ARRAY_S3 }, // <=== to Volt conversion here -- unit sym and scale are custom auto adjusted in .._eventhandling lookup functions as of this mask 
+        { 0x000020, "CurrentSim2", " ", "nA", "nA", CurrFac, PROBEDATA_ARRAY_S4 },
         { 0x000040, "VP Zpos", " ", "AA", UTF8_ANGSTROEM, ZAngFac, PROBEDATA_ARRAY_S5 },
         { 0x000080, "VP Bias", " ", "V", "V", BiasFac, PROBEDATA_ARRAY_S6 },
         { 0x000100, "VP steps", " ", "pts", "pts", 1., PROBEDATA_ARRAY_S7 },

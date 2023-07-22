@@ -223,7 +223,8 @@ public:
         };
         gint sim_current_func2() {
                 double w = DAC2Volt (sample_bias)+0.4;
-                return Volt2DAC (1./(sample_bias_set/tip_current_set) + exp (w*w/0.001));
+                double x = 0.001*sim_current_func1();
+                return x*x + Volt2DAC (0.1*exp (-w*w/0.001));
         };
 	int read_program_vector(int i, PROBE_VECTOR_GENERIC *v){
 		if (i >= MAX_PROGRAM_VECTORS || i < 0)

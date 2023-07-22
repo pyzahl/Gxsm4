@@ -1179,6 +1179,8 @@ void ProfileControl::canvas_draw_function (GtkDrawingArea *area, cairo_t *cr,
         cairo_item **c_item;
         cairo_item_text **c_item_t;
 
+        if (!pc) return;
+        
         // check for resize;
         pc->resize_drawing ((double)width, (double)height);
 
@@ -1188,6 +1190,7 @@ void ProfileControl::canvas_draw_function (GtkDrawingArea *area, cairo_t *cr,
         cairo_translate (cr, pc->left_border*pc->border, pc->top_border*pc->border);
         // +++++++++++++++++++++++++++++++++++++++++++++++++++
         
+        if (!pc->frame) return;
         pc->frame->draw (cr);
         pc->xaxislabel->draw (cr);
         pc->yaxislabel->draw (cr, -90.);
