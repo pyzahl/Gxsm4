@@ -101,40 +101,41 @@ extern "C++" {
 // Masks MUST BE unique
 SOURCE_SIGNAL_DEF source_signals[] = {
         // -- 8 vector generated signals (outputs/mapping) ==> must match: #define NUM_VECTOR_SIGNALS 8
-        { 0x1000000, "Index",    " ", "#", "#", 1.0, PROBEDATA_ARRAY_INDEX },
-        { 0x2000000, "Time",     " ", "ms", "ms", 1.0/75, PROBEDATA_ARRAY_TIME }, // 1000/emu->frq_ref => ms
-        { 0x0100000, "Bias",     " ", "V", "V", BiasFac, PROBEDATA_ARRAY_U },
-        { 0x4000000, "SEC",      " ", "#", "#", 1.0, PROBEDATA_ARRAY_SEC },
-        { 0x8000000, "XS",      " ", "AA", UTF8_ANGSTROEM, XAngFac, PROBEDATA_ARRAY_XS },
-        {0x10000000, "YS",      " ", "AA", UTF8_ANGSTROEM, YAngFac, PROBEDATA_ARRAY_YS },
-        {0x20000000, "ZS",      " ", "AA", UTF8_ANGSTROEM, ZAngFac, PROBEDATA_ARRAY_ZS },
-        {0x40000000, "PHI",     " ", "deg", UTF8_DEGREE, 1., PROBEDATA_ARRAY_PHI },
+        { 0x01000000, "Index",    " ", "#", "#", 1.0, PROBEDATA_ARRAY_INDEX },
+        { 0x02000000, "Time",     " ", "ms", "ms", 1.0/75, PROBEDATA_ARRAY_TIME }, // 1000/emu->frq_ref => ms
+        { 0x00100000, "Bias",     " ", "V", "V", BiasFac, PROBEDATA_ARRAY_U },
+        { 0x04000000, "SEC",      " ", "#", "#", 1.0, PROBEDATA_ARRAY_SEC },
+        { 0x08000000, "XS",      " ", "AA", UTF8_ANGSTROEM, XAngFac, PROBEDATA_ARRAY_XS },
+        { 0x10000000, "YS",      " ", "AA", UTF8_ANGSTROEM, YAngFac, PROBEDATA_ARRAY_YS },
+        { 0x20000000, "ZS",      " ", "AA", UTF8_ANGSTROEM, ZAngFac, PROBEDATA_ARRAY_ZS },
+        { 0x40000000, "PHI",     " ", "deg", UTF8_DEGREE, 1., PROBEDATA_ARRAY_PHI },
         // -- general measured signals from index [8]
-        { 0x000001, "Z-mon",    " ", "AA", UTF8_ANGSTROEM, ZAngFac, PROBEDATA_ARRAY_S1 },
-        { 0x000002, "Bias-mon", " ", "V", "V", BiasFac, PROBEDATA_ARRAY_S2 },
-	{ 0x000010, "CurrentSim1", " ", "nA", "nA", CurrFac, PROBEDATA_ARRAY_S3 }, // <=== to Volt conversion here -- unit sym and scale are custom auto adjusted in .._eventhandling lookup functions as of this mask 
-        { 0x000020, "CurrentSim2", " ", "nA", "nA", CurrFac, PROBEDATA_ARRAY_S4 },
-        { 0x000040, "VP Zpos", " ", "AA", UTF8_ANGSTROEM, ZAngFac, PROBEDATA_ARRAY_S5 },
-        { 0x000080, "VP Bias", " ", "V", "V", BiasFac, PROBEDATA_ARRAY_S6 },
-        { 0x000100, "VP steps", " ", "pts", "pts", 1., PROBEDATA_ARRAY_S7 },
-        { 0x000200, "Clock", " ", "ms", "ms", 1., PROBEDATA_ARRAY_S8 },
-        { 0x000400, "ADC6", " ", "V", "V", ADCV10, PROBEDATA_ARRAY_S9 },
-        { 0x000800, "ADC7", " ", "V", "V", ADCV10, PROBEDATA_ARRAY_S10 },
-        { 0x000008, "LockIn0", " ", "nA", "nA", ADCV10, PROBEDATA_ARRAY_S11 },
-        { 0x001000, "SWPSundef1", " ", "V", "V", ADCV10, PROBEDATA_ARRAY_S12 }, // ** swappable **,
-        { 0x002000, "SWPSundef2", " ", "V", "V", ADCV10, PROBEDATA_ARRAY_S13 }, // ** swappable **,
-        { 0x004000, "SWPSundef3", " ", "V", "V", ADCV10, PROBEDATA_ARRAY_S14 }, // ** swappable **,
-        { 0x008000, "SWPSundef4", " ", "V", "V", ADCV10, PROBEDATA_ARRAY_S15 }, // ** swappable **,
-        { 0, NULL, NULL, NULL, NULL, 0.0, 0 }
+        { 0x00000001, "Z-mon",    " ", "AA", UTF8_ANGSTROEM, ZAngFac, PROBEDATA_ARRAY_S1 },
+        { 0x00000002, "Bias-mon", " ", "V", "V", BiasFac, PROBEDATA_ARRAY_S2 },
+	{ 0x00000010, "CurrentSim1", " ", "nA", "nA", CurrFac, PROBEDATA_ARRAY_S3 }, // <=== to Volt conversion here -- unit sym and scale are custom auto adjusted in .._eventhandling lookup functions as of this mask 
+        { 0x00000020, "CurrentSim2", " ", "nA", "nA", CurrFac, PROBEDATA_ARRAY_S4 },
+        { 0x00000040, "VP Zpos", " ", "AA", UTF8_ANGSTROEM, ZAngFac, PROBEDATA_ARRAY_S5 },
+        { 0x00000080, "VP Bias", " ", "V", "V", BiasFac, PROBEDATA_ARRAY_S6 },
+        { 0x00000100, "VP steps", " ", "pts", "pts", 1., PROBEDATA_ARRAY_S7 },
+        { 0x00000200, "Clock", " ", "ms", "ms", 1., PROBEDATA_ARRAY_S8 },
+        { 0x00000400, "IX", " ", "ix#", "ix#", 1, PROBEDATA_ARRAY_S9 },
+        { 0x00000800, "ADC7", " ", "V", "V", ADCV10, PROBEDATA_ARRAY_S10 },
+        { 0x00000008, "LockIn0", " ", "nA", "nA", ADCV10, PROBEDATA_ARRAY_S11 },
+        { 0x00001000, "SWPSundef1", " ", "V", "V", ADCV10, PROBEDATA_ARRAY_S12 }, // ** swappable **,
+        { 0x00002000, "SWPSundef2", " ", "V", "V", ADCV10, PROBEDATA_ARRAY_S13 }, // ** swappable **,
+        { 0x00004000, "SWPSundef3", " ", "V", "V", ADCV10, PROBEDATA_ARRAY_S14 }, // ** swappable **,
+        { 0x00008000, "SWPSundef4", " ", "V", "V", ADCV10, PROBEDATA_ARRAY_S15 }, // ** swappable **,
+        { 0x80000000, "BlockI", " ", "i#", "i#", 1, PROBEDATA_ARRAY_BLOCK },
+        { 0x00000000, NULL, NULL, NULL, NULL, 0.0, 0 }
 };
 
 // so far fixed to swappable 4 signals as of GUI design!
 SOURCE_SIGNAL_DEF swappable_signals[] = {
-        { 0x001000, "Sig Index", " ", "-", "--", 1.0, 0 },
-        { 0x002000, "Sig SWP2", " ", "-", "--", ADCV10, 0 },
-        { 0x004000, "Sig SWP3", " ", "-", "--", ADCV10, 0 },
-        { 0x008000, "Sig SWP4", " ", "-", "--", ADCV10, 0 },
-        { 0, NULL, NULL, NULL, NULL, 0.0, 0 }
+        { 0x00001000, "Sig Index", " ", "-", "--", 1.0, 0 },
+        { 0x00002000, "Sig SWP2", " ", "-", "--", ADCV10, 0 },
+        { 0x00004000, "Sig SWP3", " ", "-", "--", ADCV10, 0 },
+        { 0x00008000, "Sig SWP4", " ", "-", "--", ADCV10, 0 },
+        { 0x00000000, NULL, NULL, NULL, NULL, 0.0, 0 }
 };
 
 

@@ -482,6 +482,7 @@ public:
         char* lablookup[NUM_PROBEDATA_ARRAYS+1];
         char* unitlookup[NUM_PROBEDATA_ARRAYS+1];
         
+        double pv_tmp[NUM_PV_HEADER_SIGNALS];
 
         void init_vp_signal_info_lookup_cache();
    	const char* vp_label_lookup(int i);

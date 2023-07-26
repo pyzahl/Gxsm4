@@ -224,7 +224,7 @@ void SPM_emulator::vp_store_data_srcs ()
         if (vector->srcs & 0x000200) // ADC5
                 vp_data_set[i++] = (double)(clock () - vp_clock_start)*1000/CLOCKS_PER_SEC; // ms
         if (vector->srcs & 0x000400) // ADC6
-                vp_data_set[i++] = ADC_IN(6);
+                vp_data_set[i++] = ix; //ADC_IN(6);
         if (vector->srcs & 0x000800) // ADC7
                 vp_data_set[i++] = ADC_IN(7);
         if (vector->srcs & 0x000008) // LockIn0 [LockIn0 = LockIn channel after low pass]
@@ -457,11 +457,11 @@ void SPM_emulator::vp_run (){
                         ++vp_time;
                 }
                 last_clock = clock();
-                --vp_time;
 #endif
                 if (! iix-- || lix){
-                        if (ix--)
-                                vp_store_data_srcs ();
+                        vp_store_data_srcs ();
+                        --ix;
+                        
                         // Limiter active?
                         if (vector->options & VP_LIMITER){
                                 vp_signal_limiter_test();
@@ -479,7 +479,9 @@ void SPM_emulator::vp_run (){
         }
 
         // increment probe time
+#ifdef RTE_STEPS
 	++vp_time; 
+#endif
 }
 
 int SPM_emulator::vp_exec_callback(){
