@@ -1267,7 +1267,7 @@ void SPM_Template_Control::init_probedata_arrays (){
 	last_nun_hdr_dumped = 0;
 }
 
-#define TTY_DEBUG
+//#define TTY_DEBUG
 void SPM_Template_Control::add_probe_hdr(double pv[NUM_PV_HEADER_SIGNALS]){ 
 	int i;
         // append header
@@ -1277,16 +1277,15 @@ void SPM_Template_Control::add_probe_hdr(double pv[NUM_PV_HEADER_SIGNALS]){
 		g_array_append_val (garray_probe_hdrlist[i], pv[i]);
 
 	++nun_valid_hdr;
-
-        // set section start reference position/values for vector signal generation
-        set_probevector (pv);       
 }
 
 // set section start reference position/values for vector generation
 void SPM_Template_Control::set_probevector(double pv[NUM_PV_HEADER_SIGNALS]){ 
 	int i,j;
 
+#ifdef TTY_DEBUG
         g_print ("***************** SET_PV [%d] section = %d",  current_probe_data_index, (int)pv[PROBEDATA_ARRAY_SEC]);
+#endif
         current_probe_section = (int)pv[PROBEDATA_ARRAY_SEC];
 
         double dind = (double)current_probe_data_index;
@@ -1391,14 +1390,18 @@ void SPM_Template_Control::add_probedata(double data[NUM_PV_DATA_SIGNALS], doubl
         pv_lock = TRUE;
         // create and add vector generated signals
         if (set_pv){
-                add_probe_hdr (pv); // also sets probevector to current ref
-                if (!current_probe_data_index)
-                        for (i = PROBEDATA_ARRAY_S1, j=0; i <= PROBEDATA_ARRAY_END; ++i, ++j)
-                                g_array_append_val (garray_probedata[i], data[j]);
-        } else
+                g_print ("+++>>>> add_probedata add_hdr sec=%d and set probe vector\n", (int)pv[PROBEDATA_ARRAY_SEC]);
+                // add probe section header info
+                add_probe_hdr (pv);
+                // add (set) section start reference position/values for vector signal generation
+                set_probevector (pv);       
+        } else {
+                g_print ("+++>>>> add_probedata add_vec sec=%d\n", (int)pv[PROBEDATA_ARRAY_SEC]);
+                // add position/values, vector signal generation emulation
                 add_probevector();
-
+        }
         // add data channels
+        g_print ("+++>>>> add_probedata add_data sec=%d\n", (int)pv[PROBEDATA_ARRAY_SEC]);
 	for (i = PROBEDATA_ARRAY_S1, j=0; i <= PROBEDATA_ARRAY_END; ++i, ++j)
 		g_array_append_val (garray_probedata[i], data[j]);
 

@@ -451,7 +451,7 @@ int spm_template_hwi_dev::ReadProbeData (int dspdev, int control){
         int ix=0;
         clock_t ct = clock();
         g_message ("VP: section: %d", spm_emu->vp_header_current.section);
-        for (; point_index < number_points; ++point_index){
+        for (; point_index < number_points; point_index){
                 // template code --------
                 ix = spm_emu->vp_exec_callback (); // run one VP step... this generates the next data set, read to transfer from spm_emu->vp_data_set[]
                 // g_message ("VP: %d %d", ix, point_index);
@@ -464,8 +464,8 @@ int spm_template_hwi_dev::ReadProbeData (int dspdev, int control){
                 }
 
 		// add vector and data to expanded data array representation
-                Template_ControlClass->add_probedata (dataexpanded, pv, !point_index);
-
+                Template_ControlClass->add_probedata (dataexpanded, pv, !point_index++);
+                
                 if (!ix || (clock () - ct)*100/CLOCKS_PER_SEC > 1) break; // for graph updates
 	}
 

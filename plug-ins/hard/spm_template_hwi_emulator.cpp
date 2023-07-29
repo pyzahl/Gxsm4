@@ -258,7 +258,6 @@ void SPM_emulator::vp_next_section (){
                 g_message ("DSP:  SPM_emulator::vp_next_section INIT");
         }
         else{
-                g_message ("DSP:  SPM_emulator::vp_next_section %d [%d]", section_count, vector->i);
                 if (!vector->ptr_final){ // end Vector program?
                         vp_stop ();
                         return;
@@ -299,6 +298,7 @@ void SPM_emulator::vp_next_section (){
         iix = vector->dnx; // do dnx steps to take data until next point!
         ix = vector->n; // load total steps per section = # vec to add
         vp_point_us = (useconds_t)(iix * 1e6/frq_ref);
+        g_message ("DSP:  SPM_emulator::vp_next_section %d [%d]", section_count, vector->i);
 }
 
 // manage conditional vector tracking mode -- atom/feature tracking
