@@ -27,6 +27,50 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
  */
 
+/*
+Here is a quick start how to migrate this to start a new HwI project, I hope I did not forget some thing:
+
+Obviously get Gxsm4 from github.
+
+So if you like at some point to put your hardware into action based on this yourself, create your copy of this spm_template_hwi -- those files:
+
+pzahl@phenom:~/SVN/Gxsm4/plug-ins/hard$ ls spm_template_hwi* *spm-template*xml
+org.gnome.gxsm4.hwi.spm-template-control.gschema.xml                   spm_template_hwi.cpp           spm_template_hwi_emulator.h         spm_template_hwi_structs.h
+org.gnome.gxsm4.pcsadjustments.plugin-libspm-template-hwi.gschema.xml  spm_template_hwi_dev.cpp       spm_template_hwi_eventhandling.cpp  spm_template_hwi_vectorgen.cpp
+org.gnome.gxsm4.pcs.plugin-libspm-template-hwi.gschema.xml             spm_template_hwi_emulator.cpp  spm_template_hwi.h
+
+mcp "spm_template*" "createc#1"
+mcp "*spm-template*xml" "#1createc#2xml"
+
+
+in the all new files replace case sensitve "spm_template" to "createc" -- also check for resource key names like "spm-template" and replace
+
+add a similar section to the meson.build file:
+    { 'name': 'spm_template_hwi',
+      'sources': [ 'spm_template_hwi.cpp',
+                   'spm_template_hwi_dev.cpp',
+                   'spm_template_hwi_eventhandling.cpp',
+                   'spm_template_hwi_vectorgen.cpp',
+                   'spm_template_hwi_emulator.cpp' ],
+      'gschemas': [ 'org.gnome.gxsm4.pcsadjustments.plugin-libspm-template-hwi.gschema.xml',
+                    'org.gnome.gxsm4.pcs.plugin-libspm-template-hwi.gschema.xml',
+                    'org.gnome.gxsm4.hwi.spm-template-control.gschema.xml'] },
+
+and finally this is required:
+
+in spm_template_hwi.cpp the comment in line 2175 tells you:
+        set_window_geometry ("spm-template-control"); // must add key to xml file: core-sources/org.gnome.gxsm4.window-geometry.gschema.xml
+
+to edit  Gxsm4/core-sources/org.gnome.gxsm4.window-geometry.gschema.xml
+
+there is a key like this, to be added for your new window name:
+
+    <key name="spm-template-control" type="ai">
+      <default>[0,0, 0,0,0,0]</default>
+      <summary>show/hide state, option, X,Y, H,W</summary>
+      <description>geometry</description>
+    </key>
+*/
 
 /* Please do not change the Begin/End lines of this comment section!
  * this is a LaTeX style section used for auto generation of the PlugIn Manual 
@@ -2172,7 +2216,7 @@ void SPM_Template_Control::create_folder (){
 	GUI_ready = TRUE;
         
         AppWindowInit (NULL); // stage two
-        set_window_geometry ("spm-template-control"); // must add key to xml file: Gxsm-3.0/gxsm4/org.gnome.gxsm4.window-geometry.gschema.xml
+        set_window_geometry ("spm-template-control"); // must add key to xml file: core-sources/org.gnome.gxsm4.window-geometry.gschema.xml
 }
 
 int SPM_Template_Control::DSP_slope_callback (GtkWidget *widget, SPM_Template_Control *dspc){
