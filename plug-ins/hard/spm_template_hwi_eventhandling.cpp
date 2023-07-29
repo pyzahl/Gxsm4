@@ -1291,14 +1291,17 @@ void SPM_Template_Control::set_probevector(double pv[NUM_PV_HEADER_SIGNALS]){
         double dind = (double)current_probe_data_index;
 	g_array_append_val (garray_probedata [PROBEDATA_ARRAY_INDEX], dind);
         g_array_append_val (garray_probedata [PROBEDATA_ARRAY_BLOCK], dind);
-	for (i = PROBEDATA_ARRAY_TIME, j=1; i <= PROBEDATA_ARRAY_SEC; ++i, ++j)
-		g_array_append_val (garray_probedata [i], pv[j]);
 
         if (!nun_valid_data_sections)
                 for (int i=0; i<NUM_PV_HEADER_SIGNALS; ++i)
                         pv_tmp[i] = pv[i];
 
-	++nun_valid_data_sections;
+        if (!nun_valid_data_sections){
+                for (i = PROBEDATA_ARRAY_TIME, j=1; i <= PROBEDATA_ARRAY_SEC; ++i, ++j)
+                        g_array_append_val (garray_probedata [i], pv_tmp[j]);
+
+                ++nun_valid_data_sections;
+        }
 
 #ifdef TTY_DEBUG
 	g_print ("### SET_PV [%04d] {sec=%d}= (", current_probe_data_index, current_probe_section);
@@ -1394,12 +1397,11 @@ void SPM_Template_Control::add_probedata(double data[NUM_PV_DATA_SIGNALS], doubl
                 // add probe section header info
                 add_probe_hdr (pv);
                 // add (set) section start reference position/values for vector signal generation
-                set_probevector (pv);       
-        } else {
-                g_print ("+++>>>> add_probedata add_vec sec=%d\n", (int)pv[PROBEDATA_ARRAY_SEC]);
-                // add position/values, vector signal generation emulation
-                add_probevector();
+                set_probevector (pv);
         }
+        g_print ("+++>>>> add_probedata add_vec sec=%d\n", (int)pv[PROBEDATA_ARRAY_SEC]);
+        add_probevector();
+
         // add data channels
         g_print ("+++>>>> add_probedata add_data sec=%d\n", (int)pv[PROBEDATA_ARRAY_SEC]);
 	for (i = PROBEDATA_ARRAY_S1, j=0; i <= PROBEDATA_ARRAY_END; ++i, ++j)

@@ -377,6 +377,8 @@ int spm_template_hwi_dev::ReadProbeData (int dspdev, int control){
 		return RET_FR_OK; // init OK.
 
 	case FR_FINISH:
+                // add terminating header
+                Template_ControlClass->add_probedata (dataexpanded, pv, true);
 		LOGMSGS ( "FR::FINISH-OK." << std::endl);
 		return RET_FR_OK; // finish OK.
 
