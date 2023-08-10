@@ -63,11 +63,11 @@ public:
 
                         //gtk_header_bar_set_subtitle (GTK_HEADER_BAR  (header_bar), "last plot");
                         gtk_window_set_titlebar (GTK_WINDOW (vpdata_graph_window), header_bar);
-                        SetTitle (NULL, "last plot");
+                        SetTitle ("VP Data Viewer", "last plot");
 
                         vpdata_graph_grid = gtk_grid_new ();
                         g_object_set_data (G_OBJECT (vpdata_graph_window), "v_grid", vpdata_graph_grid);
-                        gtk_box_append (GTK_BOX (vpdata_graph_window), vpdata_graph_grid);
+                        gtk_window_set_child (GTK_WINDOW (vpdata_graph_window), vpdata_graph_grid);
                         gtk_widget_show (GTK_WIDGET (vpdata_graph_window)); // FIX-ME GTK4 SHOWALL
 
                         GtkWidget *statusbar = gtk_statusbar_new ();
@@ -97,13 +97,18 @@ public:
                 if (!pc){
                         gchar *resid = g_strdelimit (g_strconcat (xlab,ylab,NULL), " ;:()[],./?!@#$%^&*()+-=<>", '_');
 
+                        g_message( "vpdata_add_pc() new ProfileControl %s", resid);
+
                         pc = new ProfileControl (gxsm4app,
-                                                 title, numx, 
+                                                 title,
+                                                 numx, 
                                                  UXaxis, UYaxis, 
                                                  xmin, xmax,
                                                  resid,
                                                  vpdata_gr_matrix_view ? vpdata_graph_app_window : NULL);
 
+                        SetTitle ("VP Data Viewer", title);
+                        
                         if (vpdata_gr_matrix_view){
                                 pc->set_pc_matrix_size (num_active_xmaps, num_active_sources);
                                 gtk_grid_attach (GTK_GRID (vpdata_graph_grid), pc->get_pc_grid (), xmap,src, 1,1);
@@ -115,6 +120,7 @@ public:
                         pc->set_ys_label (0, ylab);
                         pc->SetData_dz (1.); // force dz=1.
                 } else {	
+                        SetTitle ("VP Data Viewer", title);
                         if (vpdata_gr_matrix_view)
                                 pc->set_pc_matrix_size (num_active_xmaps, num_active_sources);
 

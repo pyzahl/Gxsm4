@@ -2104,6 +2104,8 @@ void  ViewControl::obj_event_plot_callback (GtkWidget* widget,
         ViewControl *vc = (ViewControl *) user_data;
 	if (!vc->active_event) return;
 
+        g_message("ViewControl::obj_event_plot_callback");
+        
 	EventEntry *ee = (EventEntry*) vc->active_event->event_list->data;
 
 	if (ee->description_id () == 'P'){
@@ -2169,40 +2171,7 @@ void  ViewControl::obj_event_plot_callback (GtkWidget* widget,
                                                            1, l, 1, num_plots);
                         g_free (title);
 
-#if 0
-                        if (!vc->EventPlot[l]){
-                                gchar   *title  = g_strdup_printf ("ProbeEventY%d",l);
-                                vc->EventPlot[l] = new ProfileControl (title, nn, UXaxis, UYaxis, xmin, xmax, title);
-                                g_free (title);
-                        } else {
-                                vc->EventPlot[l]->SetXrange (xmin, xmax);
-                                //			vc->EventPlot->SetXlabel (pe->get_label (xi));
-                                //			vc->EventPlot->SetYlabel (pe->get_label (yi[0]));
-                                vc->EventPlot[l]->SetXlabel (UXaxis->MakeLongLabel ());
-                                vc->EventPlot[l]->SetYlabel (UYaxis->MakeLongLabel ());
-                                //			if (gtk_check_button_get_active (GTK_CHECK_BUTTON (vc->tog_average))){
-                                if ( gtk_combo_box_get_active (GTK_COMBO_BOX (vc->select_events_by)) == 1){
-                                        gchar* txt = g_strdup_printf ("Average of all probe events shown: %s", pe->get_label (yi[l]));
-                                        vc->EventPlot[l]->SetTitle (txt);
-                                        g_free (txt);
-                                }else if ( gtk_combo_box_get_active (GTK_COMBO_BOX (vc->select_events_by)) == 2){
-                                        gchar* txt = g_strdup_printf ("All probe events shown: %s", pe->get_label (yi[l]));
-                                        vc->EventPlot[l]->SetTitle (txt);
-                                        g_free (txt);
-                                }else if ( gtk_combo_box_get_active (GTK_COMBO_BOX (vc->select_events_by)) == 3){
-                                        gchar* txt = g_strdup_printf ("All probe projected on X: %s", pe->get_label (yi[l]));
-                                        vc->EventPlot[l]->SetTitle (txt);
-                                        g_free (txt);
-                                }else if ( gtk_combo_box_get_active (GTK_COMBO_BOX (vc->select_events_by)) == 4){
-                                        gchar* txt = g_strdup_printf ("All probe projected on Y: %s", pe->get_label (yi[l]));
-                                        vc->EventPlot[l]->SetTitle (txt);
-                                        g_free (txt);
-                                }else
-                                        vc->EventPlot[l]->SetTitle (pe->get_label (yi[l]));
-                        }
-		
                         //		if (gtk_check_button_get_active (GTK_CHECK_BUTTON (vc->tog_average))){
-#endif
                         // cleanup
                         if (!vc->EventPlot[l]->scan1d->view){
                                 delete vc->EventPlot[l]->scan1d->view;
