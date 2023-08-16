@@ -25,3 +25,5 @@ GXSM Web Site: http://gxsm.sf.net
 vivado -source make_all.tcl
 
 ... and go get a coffee ...
+
+see also: https://github.com/jhallen/vivado_setup
