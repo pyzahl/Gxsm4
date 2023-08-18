@@ -23,6 +23,10 @@
 # 2. The following source(s) files that were local or imported into the original project.
 #    (Please see the '$orig_proj_dir' and '$origin_dir' variable setting below at the start of the script)
 #
+#    <none>
+#
+# 3. The following remote source files that were added to the original project:-
+#
 #    "rtl/cfg_to_axis.v"
 #    "rtl/controller_pi.v"
 #    "rtl/amplitude_good.v"
@@ -70,9 +74,6 @@
 #    "sim/McBSP_tb.v"
 #    "sim/lms_phase_amplitude_detector.v"
 #    "sim/tb_ad5791.v"
-#
-# 3. The following remote source files that were added to the original project:-
-#
 #    "cores/axi_cfg_register_v1_0/axi_cfg_register.v"
 #    "cores/axis_averager_v1_0/axis_averager.v"
 #    "cores/axis_constant_v1_0/axis_constant.v"
@@ -324,7 +325,8 @@ set files [list \
  [file normalize "${origin_dir}/rtl/axis_AD5791.v" ]\
  [file normalize "${origin_dir}/rtl/axis_spm_control.v" ]\
 ]
-set imported_files [import_files -fileset sources_1 $files]
+add_files -norecurse -fileset $obj $files
+# set imported_files [import_files -fileset sources_1 $files]
 
 # Set 'sources_1' fileset file properties for remote files
 # None
