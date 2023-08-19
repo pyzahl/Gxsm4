@@ -27,3 +27,13 @@ vivado -source make_all.tcl
 ... and go get a coffee ...
 
 see also: https://github.com/jhallen/vivado_setup
+
+# 3. Re-Create/Update project rebuild script:
+
+This will recreate the project rebuld script and included all files to be added to the project, blocks, schematics and netlist, ...
+Very important if creating new files of any kind to NEVER designate or use the default in-project-folder destination path! 
+But choose a approproiate folder from "rtl", "sim", "cfg" or even "cores" -- or if needed create a new folder outside the project.
+Set the "root" (or start vivado form there) "here" where this README.md file is located!
+
+Vivado tcl command:
+write_project_tcl recreated-new-version.tcl
