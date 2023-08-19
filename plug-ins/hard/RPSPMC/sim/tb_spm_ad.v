@@ -3,9 +3,9 @@
 // Company: 
 // Engineer: 
 // 
-// Create Date: 08/15/2023 06:52:29 PM
+// Create Date: 08/16/2023 08:44:21 AM
 // Design Name: 
-// Module Name: ad5791_tb
+// Module Name: tb_spm_ad
 // Project Name: 
 // Target Devices: 
 // Tool Versions: 
@@ -20,8 +20,10 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
+module tb_spm_ad(
 
-module ad5791_tb;
+    );
+
     reg tb_ACLK;
     reg tb_ARESETn;
    
@@ -33,6 +35,7 @@ module ad5791_tb;
     reg resp;
     
     reg pclk=0;
+    reg sclk=0;
     reg r=1;
     reg prg=0;
     reg [512-1:0] data; // [VAdr], [N, NII, Nrep, Options, Next, dx, dy, dz, du] ** full vector data set block **
@@ -45,8 +48,44 @@ module ad5791_tb;
     wire [31:0] wsec;  // section count
     wire [1:0] sto; // trigger to store data:: 2: full vector header, 1: data sources
     wire fin;  // finished 
+
+    wire [31:0] spm_rx; // vector components
+    wire [31:0] spm_ry; // ..
+    wire [31:0] spm_rz; // ..
+    wire [31:0] spm_ru; // ..
+    wire [31:0] spm_mrx; // vector components
+    wire [31:0] spm_mry; // ..
+    wire [31:0] spm_mrz; // ..
+    wire [31:0] spm_mru; // ..
+
+    wire [31:0] mrx; // vector components
+    wire [31:0] mry; // ..
+    wire [31:0] mrz; // ..
+    wire [31:0] mru; // ..
+   
+    wire rxv;
+    wire ryv;
+    wire rzv;
+    wire ruv;
+
+    reg [31:0] rxc=0;
+    reg rxvc=1;
+    reg [31:0] ryc=0;
+    reg rycv=1;
+    reg [31:0] rzc=0;
+    reg rzcv=1;
+    reg [31:0] ruc=0;
+    reg rucv=1;
+
     
-    
+    //inout  [8-1:0] p_iob;
+    //inout  [8-1:0] n_iob;
+    reg  [8-1:0] p_iob;
+    reg  [8-1:0] n_iob;
+
+    reg ad_cmode = 1;
+    reg ad_send = 0;
+
     initial 
     begin       
         tb_ACLK = 1'b0;
@@ -59,23 +98,43 @@ module ad5791_tb;
     always #10 tb_ACLK = !tb_ACLK;
        
     always begin
-        pclk = 1; #5;
-        pclk = 0; #5;
+        pclk = 1; #32;
+        pclk = 0; #32;
     end
+
+    always begin
+        sclk = 1; #1;
+        sclk = 0; #1;
+    end
+
 
     initial
     begin
     
         $display ("running the tb");
 
+        // TEST AD SERIA lOUT
+        rxc = 0;
+        ryc = 0;
+        rzc = 0;
+        ruc = 0;
+        #10;
+        rxc = 32;
+        #10;
+        ad_send = 1;      
+        #128;
+        ad_send = 0;      
+        ad_cmode = 0;      
+
         r=1;
         #20
 
+        // TEST GVP SCAN
         prg=0;
         #20
         // move to start point
         //                  du        dz        dy        dx     Next       Nrep,   Options,     nii,      N,    [Vadr]
-        data = {192'd0, 32'd0000, 32'd0000, -32'd0002, -32'd0002,  32'd0, 32'd0000,   32'h001, 32'd002, 32'd005, 32'd00 };
+        data = {192'd0, 32'd0000, 32'd0000, -32'd0002, -32'd0002,  32'd0, 32'd0000,   32'h001, 32'd0128, 32'd005, 32'd00 };
         #2
         prg=1;
         #20
@@ -102,28 +161,28 @@ module ad5791_tb;
 
         // scan procedure
         //                  du        dz        dy        dx     Next       Nrep,   Options,     nii,      N,    [Vadr]
-        data = {192'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0002,  32'd0, 32'd0000,   32'h001, 32'd002, 32'd010, 32'd00 };
+        data = {192'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0256,  32'd0, 32'd0000,   32'h001, 32'd128, 32'd010, 32'd00 };
         #2
         prg=1;
         #20
         prg=0;
         #20
         
-        data = {192'd0, 32'd0000, 32'd0000, 32'd0000, -32'sd0002,  32'd0, 32'd0000,   32'h001, 32'd002, 32'd010, 32'd01 };
+        data = {192'd0, 32'd0000, 32'd0000, 32'd0000, -32'sd0256,  32'd0, 32'd0000,   32'h001, 32'd128, 32'd010, 32'd01 };
         #2
         prg=1;
         #20
         prg=0;
         #20
 
-        data = {192'd0, 32'd0000, 32'd0000, 32'd0002, 32'd0000,  -32'sd2, 32'd0010,   32'h001, 32'd002, 32'd001, 32'd02 };
+        data = {192'd0, 32'd0000, 32'd0000, 32'd0064, 32'd0000,  -32'sd2, 32'd0010,   32'h001, 32'd128, 32'd001, 32'd02 };
         #2
         prg=1;
         #20
         prg=0;
         #20
 
-        data = {192'd0, 32'd0004, 32'd0003, 32'd0002, 32'd0001,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd03 }; // END
+        data = {192'd0, 32'd0004, 32'd0003, 32'd0064, 32'd0001,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd03 }; // END
         #2
         prg=1;
         #20
@@ -147,7 +206,7 @@ module ad5791_tb;
 
 
 
-gvp gvp1
+gvp gvp_1
     (
         .clk(pclk),    // clocking up to aclk
         .reset(r),  // put into reset mode (hold)
@@ -164,4 +223,72 @@ gvp gvp1
 );
 
 
+axis_spm_control axis_spm_control_1
+(
+    .rotm(0),
+    
+    // SCAN COMPONENTS, ROTATED RELATIVE COORDS
+    .xs(wx), // vector components
+    .ys(wy), // ..
+    .zs(wz), // ..
+    .u(wu), // ..
+
+    // SCAN POSITION COMPONENTS, ABSOLUTE COORDS
+    .x0(0), // vector components
+    .y0(0),
+    .z0(0),
+
+    .a_clk(pclk),
+    .M_AXIS1_tdata(spm_rx),
+    .M_AXIS1_tvalid(spm_rxv),
+    .M_AXIS2_tdata(spm_ry),
+    .M_AXIS2_tvalid(spm_ryv),
+    .M_AXIS3_tdata(spm_rz),
+    .M_AXIS3_tvalid(spm_rzv),
+    .M_AXIS4_tdata(spm_ru),
+    .M_AXIS4_tvalid(spm_ruv),
+
+    .xs_mon(mrx), // vector components
+    .ys_mon(mry), // ..
+    .zs_mon(mrz), // ..
+    .u_mon(mru) // ..
+
+    );
+
+
+    
+
+
+axis_AD5791 axis_AD5791_1 
+(
+    .a_clk(pclk),
+    .S_AXIS1_tdata(spm_rx),
+    .S_AXIS1_tvalid(spm_rxv),
+    .S_AXIS2_tdata(spm_ry),
+    .S_AXIS2_tvalid(spm_ryv),
+    .S_AXIS3_tdata(spm_rz),
+    .S_AXIS3_tvalid(spm_rzv),
+    .S_AXIS4_tdata(spm_ru),
+    .S_AXIS4_tvalid(spm_ruv),
+
+    .S_AXIS1CFG_tdata(rxc),
+    .S_AXIS1CFG_tvalid(rxvc),
+    .S_AXIS2CFG_tdata(ryc),
+    .S_AXIS2CFG_tvalid(ryvc),
+    .S_AXIS3CFG_tdata(rzc),
+    .S_AXIS3CFG_tvalid(rzvc),
+    .S_AXIS4CFG_tdata(ruc),
+    .S_AXIS4CFG_tvalid(ruvc),
+
+    .configuration_mode(ad_cmode),
+    .configuration_send(ad_send)
+    
+    //.exp_p_io(p_iob),
+    //.exp_n_io(n_iob)
+    );
+    
+
+
+
 endmodule
+

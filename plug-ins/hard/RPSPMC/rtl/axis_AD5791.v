@@ -28,8 +28,9 @@ module axis_AD5791 #(
     parameter SAXIS_TDATA_WIDTH = 32
 )
 (
+    //(* X_INTERFACE_PARAMETER = "FREQ_HZ 125000000" *)
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF S_AXIS1:S_AXIS2:S_AXIS3:S_AXIS4" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF S_AXIS1:S_AXIS2:S_AXIS3:S_AXIS4:S_AXIS1CFG:S_AXIS2CFG:S_AXIS3CFG:S_AXIS4CFG" *)
     input a_clk,
     input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS1_tdata,
     input wire                          S_AXIS1_tvalid,
@@ -40,16 +41,17 @@ module axis_AD5791 #(
     input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS4_tdata,
     input wire                          S_AXIS4_tvalid,
 
+    input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS1CFG_tdata,
+    input wire                          S_AXIS1CFG_tvalid,
+    input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS2CFG_tdata,
+    input wire                          S_AXIS2CFG_tvalid,
+    input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS3CFG_tdata,
+    input wire                          S_AXIS3CFG_tvalid,
+    input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS4CFG_tdata,
+    input wire                          S_AXIS4CFG_tvalid,
+
     input wire configuration_mode,
     input wire configuration_send,
-    input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS1_CFG_tdata,
-    input wire                          S_AXIS1_CFG_tvalid,
-    input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS2_CFG_tdata,
-    input wire                          S_AXIS2_CFG_tvalid,
-    input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS3_CFG_tdata,
-    input wire                          S_AXIS3_CFG_tvalid,
-    input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS4_CFG_tdata,
-    input wire                          S_AXIS4_CFG_tvalid,
     
    // inout logic [ 8-1:0] exp_p_io,
     inout  [8-1:0] exp_p_io,
@@ -59,39 +61,60 @@ module axis_AD5791 #(
     
     reg PMD_clk=0;   // PMOD SPI CLK
     reg PMD_sync=1;  // PMOD SPI SYNC
-    reg PMD_dac [NUM_DAC-1:0]=0; // PMOD SPI DATA DAC[1..4]
+    reg PMD_dac [NUM_DAC-1:0]; // PMOD SPI DATA DAC[1..4]
     
-    reg [DAC_WORD_WIDTH-1:0] reg_dac_data[NUM_DAC-1:0]=0;
-    reg [DAC_WORD_WIDTH-1:0] reg_dac_data_buf[NUM_DAC-1:0]=0;
+    reg [DAC_WORD_WIDTH-1:0] reg_dac_data[NUM_DAC-1:0];
+    reg [DAC_WORD_WIDTH-1:0] reg_dac_data_buf[NUM_DAC-1:0];
     
     reg sync=1;
     reg start=0;
     reg [6-1:0] frame_bit_counter=0;
+    reg [4-1:0]state_load_dacs=0;
     
     reg [1:0] rdecii = 0;
+    wire [6-1:0]pass=0;
 
-    always @ (posedge aclk) // 120MHz
+
+    integer i;
+    initial begin
+      for (i=0;i<NUM_DAC;i=i+1)
+      begin
+            reg_dac_data[i] = 0;
+            reg_dac_data_buf[i] = 0;
+            PMD_dac[i]=0;
+      end     
+    end
+
+    always @ (posedge a_clk) // 120MHz
     begin
         rdecii <= rdecii+1;
         PMD_clk <= rdecii[1]; // 1/4 => 30MHz
     end
 
     // Latch data from AXIS when new
-    always @(*)
+    always @(posedge PMD_clk)
     begin
         if (configuration_mode)
         begin
-            reg_dac_data[0] <= S_AXIS1_CFG_tdata[DAC_WORD_WIDTH-1:0];
-            reg_dac_data[1] <= S_AXIS2_CFG_tdata[DAC_WORD_WIDTH-1:0];
-            reg_dac_data[2] <= S_AXIS3_CFG_tdata[DAC_WORD_WIDTH-1:0];
-            reg_dac_data[3] <= S_AXIS4_CFG_tdata[DAC_WORD_WIDTH-1:0];
+            if (S_AXIS1CFG_tvalid)
+                reg_dac_data[0] <= S_AXIS1CFG_tdata[DAC_WORD_WIDTH-1:0];
+            if (S_AXIS2CFG_tvalid)
+                reg_dac_data[1] <= S_AXIS2CFG_tdata[DAC_WORD_WIDTH-1:0];
+            if (S_AXIS3CFG_tvalid)
+                reg_dac_data[2] <= S_AXIS3CFG_tdata[DAC_WORD_WIDTH-1:0];
+            if (S_AXIS4CFG_tvalid)
+                reg_dac_data[3] <= S_AXIS4CFG_tdata[DAC_WORD_WIDTH-1:0];
         end
         else
         begin
-            reg_dac_data[0] <= {{(DAC_WORD_WIDTH-DAC_DATA_WIDTH ){1'b0}}, S_AXIS1_tdata[SAXIS_TDATA_WIDTH-1:SAXIS_TDATA_WIDTH-DAC_DATA_WIDTH]};
-            reg_dac_data[1] <= {{(DAC_WORD_WIDTH-DAC_DATA_WIDTH ){1'b0}}, S_AXIS2_tdata[SAXIS_TDATA_WIDTH-1:SAXIS_TDATA_WIDTH-DAC_DATA_WIDTH]};
-            reg_dac_data[2] <= {{(DAC_WORD_WIDTH-DAC_DATA_WIDTH ){1'b0}}, S_AXIS3_tdata[SAXIS_TDATA_WIDTH-1:SAXIS_TDATA_WIDTH-DAC_DATA_WIDTH]};
-            reg_dac_data[3] <= {{(DAC_WORD_WIDTH-DAC_DATA_WIDTH ){1'b0}}, S_AXIS4_tdata[SAXIS_TDATA_WIDTH-1:SAXIS_TDATA_WIDTH-DAC_DATA_WIDTH]};
+            if (S_AXIS1_tvalid)
+                reg_dac_data[0] <= {{(DAC_WORD_WIDTH-DAC_DATA_WIDTH ){1'b0}}, S_AXIS1_tdata[SAXIS_TDATA_WIDTH-1:SAXIS_TDATA_WIDTH-DAC_DATA_WIDTH]};
+            if (S_AXIS1_tvalid)
+                reg_dac_data[1] <= {{(DAC_WORD_WIDTH-DAC_DATA_WIDTH ){1'b0}}, S_AXIS2_tdata[SAXIS_TDATA_WIDTH-1:SAXIS_TDATA_WIDTH-DAC_DATA_WIDTH]};
+            if (S_AXIS1_tvalid)
+                reg_dac_data[2] <= {{(DAC_WORD_WIDTH-DAC_DATA_WIDTH ){1'b0}}, S_AXIS3_tdata[SAXIS_TDATA_WIDTH-1:SAXIS_TDATA_WIDTH-DAC_DATA_WIDTH]};
+            if (S_AXIS1_tvalid)
+                reg_dac_data[3] <= {{(DAC_WORD_WIDTH-DAC_DATA_WIDTH ){1'b0}}, S_AXIS4_tdata[SAXIS_TDATA_WIDTH-1:SAXIS_TDATA_WIDTH-DAC_DATA_WIDTH]};
         end
     end
 
@@ -104,13 +127,16 @@ module axis_AD5791 #(
             0: // reset mode, wait for new data
             begin
                 sync <= 1;
-                if (reg_dac_data_buf != reg_dac_data)
+                if (reg_dac_data_buf[0] != reg_dac_data[0] || reg_dac_data_buf[1] != reg_dac_data[1] || reg_dac_data_buf[2] != reg_dac_data[2] || reg_dac_data_buf[3] != reg_dac_data[3])
                 begin
-                    if (configuration_mode && configuration_send)
-                    begin
-                        state_load_dacs <= 1;
+                    if (configuration_mode)
+                    begin // load only on configuration_send pos edge
+                        if (configuration_send)
+                        begin
+                            state_load_dacs <= 1;
+                        end
                     end
-                    else
+                    else // auto load and start sending on new data
                     begin
                         state_load_dacs <= 1;
                     end
@@ -122,7 +148,10 @@ module axis_AD5791 #(
                 frame_bit_counter <= 10'd23; // 24 bits to send
     
                 // Latch Axis Data at Frame Sync Pulse and initial data serialization
-                reg_dac_data_buf <= reg_dac_data;
+                reg_dac_data_buf[0] <= reg_dac_data[0];
+                reg_dac_data_buf[1] <= reg_dac_data[1];
+                reg_dac_data_buf[2] <= reg_dac_data[2];
+                reg_dac_data_buf[3] <= reg_dac_data[3];
 
                 state_load_dacs <= 2;
             end
@@ -154,14 +183,13 @@ module axis_AD5791 #(
     always @(posedge PMD_clk) // SPI transmit data setup edge
      begin
         PMD_sync   <= sync;
-        PMD_dac[0] <= reg_dac_data_buf[frame_bit_counter][0];
-        PMD_dac[1] <= reg_dac_data_buf[frame_bit_counter][1];
-        PMD_dac[2] <= reg_dac_data_buf[frame_bit_counter][2];
-        PMD_dac[3] <= reg_dac_data_buf[frame_bit_counter][3];
+        PMD_dac[0] <= reg_dac_data_buf[0][frame_bit_counter];
+        PMD_dac[1] <= reg_dac_data_buf[1][frame_bit_counter];
+        PMD_dac[2] <= reg_dac_data_buf[2][frame_bit_counter];
+        PMD_dac[3] <= reg_dac_data_buf[3][frame_bit_counter];
     end
 
 
-reg [6-1:0]pass;
     
 // V2.0 interface McBSP on exp_n_io[], IO-in on exp_p_io (swapped pins)
 // ===========================================================================
