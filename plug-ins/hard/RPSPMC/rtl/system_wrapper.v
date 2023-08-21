@@ -138,6 +138,7 @@ module system_wrapper
   wire [7:0]led_o;
   wire reset_rtl_0;
 
+//  rpspmc_pacpll_system system_i
   system system_i
        (.DDR_addr(DDR_addr),
         .DDR_ba(DDR_ba),

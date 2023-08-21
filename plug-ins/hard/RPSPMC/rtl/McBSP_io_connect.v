@@ -21,7 +21,8 @@
 
 
 module McBSP_io_connect #(
-    parameter USE_RP_DIGITAL_IO = 0
+    parameter USE_RP_DIGITAL_IO_N = 0,
+    parameter USE_RP_DIGITAL_IO_P = 0
 )
 (
     // inout logic [ 8-1:0] exp_p_io,
@@ -79,16 +80,27 @@ end
 
 // V2.0 interface McBSP on exp_n_io[], IO-in on exp_p_io (swapped pins)
 // ===========================================================================
-IOBUF clk_iobuf (.O(McBSP_clk),      .IO(exp_n_io[0]), .I(0),         .T(1) );
-IOBUF fs_iobuf  (.O(McBSP_fs),       .IO(exp_n_io[1]), .I(0),         .T(1) );
-IOBUF rx_iobuf  (.O(McBSP_rx),       .IO(exp_n_io[2]), .I(0),         .T(1) );
-IOBUF tx_iobuf  (.O(McBSP_pass[0]),  .IO(exp_n_io[3]), .I(McBSP_tx),  .T(0) );
-IOBUF fsx_iobuf (.O(McBSP_pass[1]),  .IO(exp_n_io[4]), .I(McBSP_fsx), .T(0) );
-IOBUF frm_iobuf (.O(McBSP_pass[2]),  .IO(exp_n_io[5]), .I(McBSP_frm), .T(0) );
-IOBUF clkr_iobuf(.O(McBSP_pass[3]),  .IO(exp_n_io[6]), .I(McBSP_clkr),.T(0) );
-IOBUF nrx_iobuf (.O(McBSP_nrx),      .IO(exp_n_io[7]), .I(0),         .T(1) );
-
-if (USE_RP_DIGITAL_IO)
+if (USE_RP_DIGITAL_IO_N)
+begin
+    IOBUF clk_iobuf (.O(McBSP_clk),      .IO(exp_n_io[0]), .I(0),         .T(1) );
+    IOBUF fs_iobuf  (.O(McBSP_fs),       .IO(exp_n_io[1]), .I(0),         .T(1) );
+    IOBUF rx_iobuf  (.O(McBSP_rx),       .IO(exp_n_io[2]), .I(0),         .T(1) );
+    IOBUF tx_iobuf  (.O(McBSP_pass[0]),  .IO(exp_n_io[3]), .I(McBSP_tx),  .T(0) );
+    IOBUF fsx_iobuf (.O(McBSP_pass[1]),  .IO(exp_n_io[4]), .I(McBSP_fsx), .T(0) );
+    IOBUF frm_iobuf (.O(McBSP_pass[2]),  .IO(exp_n_io[5]), .I(McBSP_frm), .T(0) );
+    IOBUF clkr_iobuf(.O(McBSP_pass[3]),  .IO(exp_n_io[6]), .I(McBSP_clkr),.T(0) );
+    IOBUF nrx_iobuf (.O(McBSP_nrx),      .IO(exp_n_io[7]), .I(0),         .T(1) );
+end
+else
+begin
+    assign McBSP_clk = 0;
+    assign McBSP_fs = 0;
+    assign McBSP_rx = 0;
+    assign McBSP_nrx = 0;
+    assign McBSP_pass = 0;
+end
+    
+if (USE_RP_DIGITAL_IO_P)
 begin
     IOBUF exp_in_iobuf[8-1:0] (.O(RP_exp_in[8-1:0]), .IO(exp_p_io[8-1:0]), .I(8'b00000000),    .T(8'b11111111) );
 end

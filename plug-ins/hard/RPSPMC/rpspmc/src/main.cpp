@@ -57,10 +57,17 @@
 
 #define PACPLL_CFG1_OFFSET 32
 #define PACPLL_CFG2_OFFSET 0
+#define PACPLL_CFG3_OFFSET 0
 
+
+// CFG DATA REGISTER 0 [1023:0]
+// PAC-PLL Control Core
+
+// general control paging (future options)
 #define PACPLL_CFG_PAGE_CONTROL  30   // 32bit wide
 #define PACPLL_CFG_PAGE          31   // 32bit wide
 
+// PACPLL core controls
 #define PACPLL_CFG_DDS_PHASEINC  0    // 64bit wide
 #define PACPLL_CFG_VOLUME_SINE   2    // 32bit wide (default)
 #define PACPLL_CFG_CONTROL_LOOPS 3
@@ -76,28 +83,56 @@
 #define PACPLL_CFG_PACATAU      27
 #define PACPLL_CFG_PAC_DCTAU    28
 
-
-// +10 AM Controller
-// +20 PHASE Controller
-// +0 Set, +2 CP, +4 CI, +6 UPPER, +8 LOWER
-#define PACPLL_CFG_PHASE_CONTROLLER     10
-#define PACPLL_CFG_AMPLITUDE_CONTROLLER 20
-#define PACPLL_CFG_DFREQ_CONTROLLER (PACPLL_CFG1_OFFSET + 0)
-
+// Controller Core (Servos) Relative Block Offsets:
 #define PACPLL_CFG_SET   0
 #define PACPLL_CFG_CP    1
 #define PACPLL_CFG_CI    2
 #define PACPLL_CFG_UPPER 3 // 3,4 64bit
 #define PACPLL_CFG_LOWER 5 // 5,6 64bit
 
-#define PACPLL_CFG_PHASE_CONTROL_THREASHOLD (PACPLL_CFG1_OFFSET + 8)
+// [CFG0]+10 AMPL Controller
+// [CFG0]+20 PHASE Controller
+// [CFG1]+00 dFREQ Controller   
+// +0 Set, +2 CP, +4 CI, +6 UPPER, +8 LOWER
+#define PACPLL_CFG_PHASE_CONTROLLER     10 //10:16 (10,11,12,13:14,15:16)
+#define PACPLL_CFG_AMPLITUDE_CONTROLLER 20 //20:26 (20,21,22,23:24,25:26)
+
+
+// CFG DATA REGISTER 1 [1023:0]
+#define PACPLL_CFG_DFREQ_CONTROLLER         (PACPLL_CFG1_OFFSET + 0) // 00:06
+#define PACPLL_CFG_PHASE_CONTROL_THREASHOLD (PACPLL_CFG1_OFFSET + 8) // 08
+
+// SPM Z-CONTROL SERVO
+#define SPMC_CFG_Z_SERVO_CONTROLLER         (PACPLL_CFG1_OFFSET + 10) // 10:16
+#define SPMC_CFG_Z_SERVO_ZSETPOINT          (PACPLL_CFG1_OFFSET + 17) // 17
+#define SPMC_CFG_Z_SERVO_LEVEL              (PACPLL_CFG1_OFFSET + 18) // 18
+#define SPMC_CFG_Z_SERVO_MODE               (PACPLL_CFG1_OFFSET + 19) // 19
+
+// CFG DATA REGISTER 2 [1023:0]
+// PACPLL-PulseFormer Control Core
 
 #define PACPLL_CFG_PULSE_FORM_BASE      (PACPLL_CFG2_OFFSET + 0)
 #define PACPLL_CFG_PULSE_FORM_DELAY_01  0  // [ 31..16 Delay P0, 15..0 Delay P1 ] 32bit
-#define PACPLL_CFG_PULSE_FORM_WH01_ARR  1 // [ 31..16 Width_n P0, 15..0 Width_n P1; 31..16 Height_n P0, 15..0 Height_n P1, ... [n=0,1,2]] 12x32 bit
+#define PACPLL_CFG_PULSE_FORM_WH01_ARR  1 // [ 31..16 Width_n P0, 15..0 Width_n P1; 31..16 Height_n P0, 15..0 Height_n P1, ... [n=0,1,2]] 14x32 bit
+// pulse_12_width_height_array[ 1*32-1 : 0];    // 0W 1,2 =pWIF
+// pulse_12_width_height_array[ 2*32-1 : 1*32]; // 0H 1,2 =pIHF
+// pulse_12_width_height_array[ 3*32-1 : 2*32]; // 1W =pWIF
+// pulse_12_width_height_array[ 4*32-1 : 3*32]; // 1H =pWIF
+// pulse_12_width_height_array[ 5*32-1 : 4*32]; // 2W =WIF
+// pulse_12_width_height_array[ 6*32-1 : 5*32]; // 2H =HIF
+// pulse_12_width_height_array[ 7*32-1 : 6*32]; // 3W =pW
+// pulse_12_width_height_array[ 8*32-1 : 7*32]; // 3H =pH
+// pulse_12_width_height_array[ 9*32-1 : 8*32]; // 4W =pWIF
+// pulse_12_width_height_array[10*32-1 : 9*32]; // 4H =pHIF
+// pulse_12_width_height_array[11*32-1 :10*32]; // 5W =WIF
+// pulse_12_width_height_array[12*32-1 :11*32]; // 5H =HIF
+// pulse_12_width_height_array[13*32-1 :12*32]; // Bias pre
+// pulse_12_width_height_array[14*32-1 :13*32]; // Bias post
 
 
 
+
+// not used any more
 #define PACPLL_CFG_TRANSPORT_AUX_SCALE       17
 #define PACPLL_CFG_TRANSPORT_AUX_CENTER      18  // 18,19
 
@@ -105,6 +140,7 @@
 
 #if 0
 // ---------- NOT IMPLEMENTED/NO ROOM ---------------------
+// using fixed length FIR filters 
 // Configure transport tau: time const or high speed IIR filter stages
 #define PACPLL_CFG_TRANSPORT_TAU_DFREQ   (PACPLL_CFG1_OFFSET + 0)
 #define PACPLL_CFG_TRANSPORT_TAU_PHASE   (PACPLL_CFG1_OFFSET + 1)
@@ -113,12 +149,29 @@
 #endif
 
 
+// CFG DATA REGISTER 3 [1023:0]
+// SPMControl Core
+
+#define SPMC_BASE                    (PACPLL_CFG3_OFFSET + 0)
+#define SPMC_GVP_CONTROL              0 // 0: reset 1: setvec
+#define SPMC_GVP_VECTOR_DATA          1..16 // 512 bits (16x32)
+
+#define SPMC_CFG_AD5791_AXIS_DAC     17
+#define SPMC_CFG_AD5791_DAC_CONTROL  18 // 0: config mode 1,2,3: axis 4: send
+
+// SPMC Transformations Core
+#define SPMC_ROTM_XX             20  // cos(Alpha)
+#define SPMC_ROTM_XY             21  // sin(Alpha)
+//#define SPMC_ROTM_YX = -XY = -sin(Alpha)
+//#define SPMC_ROTM_YY =  XX =  cos(Alpha)
+#define SPMC_SLOPE_X             22
+#define SPMC_SLOPE_Y             23
+#define SPMC_OFFSET_X            24
+#define SPMC_OFFSET_Y            25
+#define SPMC_OFFSET_Z            26
 
 
-
-
-
-// #define REMAP_TO_OLD_FPGA_VERSION // (2019 compatible -- note transport is not finishing correctly in old FPGA in single shot)
+// ****************************************
 
 
 #define ADC_DECIMATING     1

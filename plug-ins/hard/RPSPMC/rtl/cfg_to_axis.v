@@ -28,10 +28,10 @@ module cfg_to_axis #(
     parameter MAXIS_TDATA_WIDTH = 32
 )
 (
-    input [CFG_WIDTH-1:0] cfg,
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk" *)
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF M_AXIS" *)
     input  a_clk,
+    input [CFG_WIDTH-1:0] cfg,
     output [MAXIS_TDATA_WIDTH-1:0]      M_AXIS_tdata,
     output                              M_AXIS_tvalid,
     

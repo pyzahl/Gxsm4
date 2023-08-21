@@ -2,9 +2,6 @@
 create_clock -period 8.000 -name adc_clk [get_ports adc_clk_p_i]
 create_clock -period 4.000 -name rx_clk [get_ports {daisy_p_i[1]}]
 
-#// [Place 30-574] Poor placement for routing between an IO pin and BUFG. If this sub optimal condition is acceptable for this design, you may use the CLOCK_DEDICATED_ROUTE constraint in the .xdc file to demote this message to a WARNING. However, the use of this override is highly discouraged. These examples can be used directly in the .xdc file to override this clock rule.
-set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets system_i/PS_data_transport/McBSP_io_connect/inst/clk_iobuf/O]
-
 set_property PACKAGE_PIN B10 [get_ports FIXED_IO_ps_srstb]
 set_property PACKAGE_PIN P4 [get_ports DDR_ras_n]
 set_property PACKAGE_PIN C7 [get_ports FIXED_IO_ps_porb]
@@ -136,46 +133,4 @@ set_property PACKAGE_PIN G2 [get_ports {DDR_dqs_p[1]}]
 set_property PACKAGE_PIN R2 [get_ports {DDR_dqs_p[2]}]
 
 
-
-
-
-create_generated_clock -name system_i/PS_Amplitude_Controller/amplitude_controller/inst/p_0_in -source [get_pins {system_i/PS_Amplitude_Controller/amplitude_controller/inst/rdecii_reg[1]/C}] -divide_by 2 [get_pins {system_i/PS_Amplitude_Controller/amplitude_controller/inst/rdecii_reg[1]/Q}]
-create_generated_clock -name system_i/PS_Phase_Controller/amplitude_good_check/inst/p_1_in -source [get_pins {system_i/PS_Phase_Controller/amplitude_good_check/inst/rdecii_reg[1]/C}] -divide_by 2 [get_pins {system_i/PS_Phase_Controller/amplitude_good_check/inst/rdecii_reg[1]/Q}]
-create_generated_clock -name system_i/PS_Phase_Controller/phase_controller/inst/p_0_in__0 -source [get_pins {system_i/PS_Phase_Controller/phase_controller/inst/rdecii_reg[8]/C}] -divide_by 256 [get_pins {system_i/PS_Phase_Controller/phase_controller/inst/rdecii_reg[8]/Q}]
-create_generated_clock -name system_i/PS_data_transport/axis_4s_combine_decimate/inst/FIR_next -source [get_pins system_i/PS_data_transport/axis_4s_combine_decimate/inst/fir_next_reg/C] -divide_by 2 [get_pins system_i/PS_data_transport/axis_4s_combine_decimate/inst/fir_next_reg/Q]
-create_generated_clock -name system_i/PS_data_transport/axis_4s_combine_decimate/inst/p_0_in__0 -source [get_pins {system_i/PS_data_transport/axis_4s_combine_decimate/inst/rdecii_reg[1]/C}] -divide_by 2 [get_pins {system_i/PS_data_transport/axis_4s_combine_decimate/inst/rdecii_reg[1]/Q}]
-create_generated_clock -name system_i/PS_data_transport/controller_pi_dfreq/inst/p_0_in -source [get_pins {system_i/PS_data_transport/controller_pi_dfreq/inst/rdecii_reg[1]/C}] -divide_by 2 [get_pins {system_i/PS_data_transport/controller_pi_dfreq/inst/rdecii_reg[1]/Q}]
-create_generated_clock -name system_i/QControl/inst/p_0_in_0 -source [get_pins {system_i/QControl/inst/rdecii_reg[1]/C}] -divide_by 2 [get_pins {system_i/QControl/inst/rdecii_reg[1]/Q}]
-create_generated_clock -name system_i/axis_dc_filter_0/inst/p_0_in -source [get_pins {system_i/axis_dc_filter_0/inst/rdecii_reg[1]/C}] -divide_by 2 [get_pins {system_i/axis_dc_filter_0/inst/rdecii_reg[1]/Q}]
-create_generated_clock -name system_i/lms_phase_amplitude_detector_0/inst/p_1_in -source [get_pins {system_i/lms_phase_amplitude_detector_0/inst/rdecii_reg[1]/C}] -divide_by 2 [get_pins {system_i/lms_phase_amplitude_detector_0/inst/rdecii_reg[1]/Q}]
-create_generated_clock -name dac_clk_o -source [get_pins system_i/axis_red_pitaya_dac_0/inst/ODDR_clk/C] -divide_by 1 -invert [get_ports dac_clk_o]
-create_generated_clock -name dac_sel_o -source [get_pins system_i/axis_red_pitaya_dac_0/inst/ODDR_sel/C] -divide_by 1 -invert [get_ports dac_sel_o]
-create_generated_clock -name dac_wrt_o -source [get_pins system_i/axis_red_pitaya_dac_0/inst/ODDR_wrt/C] -divide_by 1 -invert [get_ports dac_wrt_o]
-set_input_delay -clock [get_clocks adc_clk] -min -add_delay 8.000 [get_ports {adc_dat_a_i[*]}]
-set_input_delay -clock [get_clocks adc_clk] -max -add_delay 8.000 [get_ports {adc_dat_a_i[*]}]
-set_input_delay -clock [get_clocks adc_clk] -min -add_delay 8.000 [get_ports {adc_dat_b_i[*]}]
-set_input_delay -clock [get_clocks adc_clk] -max -add_delay 8.000 [get_ports {adc_dat_b_i[*]}]
-create_clock -period 16.000 -name VIRTUAL_system_i/PS_Amplitude_Controller/amplitude_controller/inst/p_0_in
-set_output_delay -clock [get_clocks dac_sel_o] -clock_fall -min -add_delay -2.000 [get_ports {dac_dat_o[*]}]
-set_output_delay -clock [get_clocks dac_sel_o] -clock_fall -max -add_delay 4.000 [get_ports {dac_dat_o[*]}]
-set_output_delay -clock [get_clocks dac_sel_o] -min -add_delay -2.000 [get_ports {dac_dat_o[*]}]
-set_output_delay -clock [get_clocks dac_sel_o] -max -add_delay 4.000 [get_ports {dac_dat_o[*]}]
-set_output_delay -clock [get_clocks dac_sel_o] -clock_fall -min -add_delay -2.000 [get_ports dac_rst_o]
-set_output_delay -clock [get_clocks dac_sel_o] -clock_fall -max -add_delay 4.000 [get_ports dac_rst_o]
-set_output_delay -clock [get_clocks dac_sel_o] -min -add_delay -2.000 [get_ports dac_rst_o]
-set_output_delay -clock [get_clocks dac_sel_o] -max -add_delay 4.000 [get_ports dac_rst_o]
-
-
-
-
-
-create_clock -period 10.000 -name {exp_n_io[0]} -waveform {0.000 5.000} [get_ports {exp_n_io[0]}]
-set_input_delay -clock [get_clocks {exp_n_io[0]}] -clock_fall -min -add_delay 20.000 [get_ports {exp_n_io[*]}]
-set_output_delay -clock [get_clocks {exp_n_io[0]}] -clock_fall -min -add_delay -5.000 [get_ports {exp_n_io[*]}]
-set_output_delay -clock [get_clocks {exp_n_io[0]}] -min -add_delay -5.000 [get_ports {exp_n_io[*]}]
-set_output_delay -clock [get_clocks {exp_n_io[0]}] -max -add_delay 20.000 [get_ports {exp_n_io[*]}]
-set_clock_groups -asynchronous -group [get_clocks adc_clk] -group [get_clocks {exp_n_io[*]}]
-set_clock_groups -asynchronous -group [get_clocks system_i/PS_data_transport/axis_4s_combine_decimate/inst/FIR_next] -group [get_clocks {exp_n_io[0]}]
-set_clock_groups -asynchronous -group [get_clocks system_i/PS_data_transport/controller_pi_dfreq/inst/p_0_in] -group [get_clocks {exp_n_io[0]}]
-set_input_delay -clock [get_clocks {exp_n_io[0]}] -clock_fall -max -add_delay 20.000 [get_ports {{exp_n_io[1]} {exp_n_io[0]}}]
-set_output_delay -clock [get_clocks {exp_n_io[0]}] -clock_fall -max -add_delay 20.000 [get_ports {{exp_n_io[3]} {exp_n_io[5]} {exp_n_io[6]}}]
+create_clock -period 16.000 -name dec_aclk -waveform {0.000 8.000} [get_nets system_i/axis_decimator_0/dec_aclk]

@@ -24,15 +24,25 @@ module axis_spm_control#(
     parameter SAXIS_TDATA_WIDTH = 32
 )
 (
-    input [128-1:0] rotm,
-    
-    // SCAN COMPONENTS, ROTATED RELATIVE COORDS
+    // SCAN COMPONENTS, ROTATED RELATIVE COORDS TO SCAN CENTER
     input [32-1:0] xs, // vector components
     input [32-1:0] ys, // ..
     input [32-1:0] zs, // ..
+    // Bias
     input [32-1:0] u, // ..
+    // two future control components using optional (DAC #5, #6)
+    // input [32-1:0] motor1, // ..
+    // input [32-1:0] motor2, // ..
 
-    // SCAN POSITION COMPONENTS, ABSOLUTE COORDS
+    // scan rotation (yx=-xy, yy=xx)
+    input [32-1:0] rotmxx, // =cos(alpha)
+    input [32-1:0] rotmxy, // =sin(alpha)
+
+    // slope -- TBD local to scan or global ???
+    input [32-1:0] slope_x,
+    input [32-1:0] slope_y,
+
+    // SCAN OFFSET / POSITION COMPONENTS, ABSOLUTE COORDS
     input [32-1:0] x0, // vector components
     input [32-1:0] y0, // ..
     input [32-1:0] z0, // ..
@@ -55,6 +65,14 @@ module axis_spm_control#(
     output [32-1:0] u_mon // ..
 
     );
+    
+    // Xr  =   rotmxx*xs + rotmxy*ys
+    // Yr  =  -rotmxy*xs + rotmxx*ys
+    // X   = X0 + Xr
+    // X   = Y0 + Yr 
+    // Zsxy = slope_x * Xr + slope_y * Yr 
+    // Z    = Z0 + z + Zsxy
+    
     
     assign M_AXIS1_tdata  = x0+xs;
     assign M_AXIS1_tvalid = 1;

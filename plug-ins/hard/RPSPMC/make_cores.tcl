@@ -7,7 +7,7 @@
 # by Anton Potocnik, 01.10.2016
 # ==================================================================================================
 
-set part_name xc7z010clg400-1
+set part_name xc7z020clg400-1
 
 if {! [file exists cores]} {
 	puts "Failed !";

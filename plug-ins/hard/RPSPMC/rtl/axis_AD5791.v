@@ -30,7 +30,7 @@ module axis_AD5791 #(
 (
     //(* X_INTERFACE_PARAMETER = "FREQ_HZ 125000000" *)
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF S_AXIS1:S_AXIS2:S_AXIS3:S_AXIS4:S_AXIS1CFG:S_AXIS2CFG:S_AXIS3CFG:S_AXIS4CFG" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF S_AXIS1:S_AXIS2:S_AXIS3:S_AXIS4:S_AXISCFG" *)
     input a_clk,
     input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS1_tdata,
     input wire                          S_AXIS1_tvalid,
@@ -41,21 +41,19 @@ module axis_AD5791 #(
     input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS4_tdata,
     input wire                          S_AXIS4_tvalid,
 
-    input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS1CFG_tdata,
-    input wire                          S_AXIS1CFG_tvalid,
-    input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS2CFG_tdata,
-    input wire                          S_AXIS2CFG_tvalid,
-    input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS3CFG_tdata,
-    input wire                          S_AXIS3CFG_tvalid,
-    input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS4CFG_tdata,
-    input wire                          S_AXIS4CFG_tvalid,
-
+    input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXISCFG_tdata,
+    input wire                          S_AXISCFG_tvalid,
+    
     input wire configuration_mode,
+    input wire [2:0] configuration_axis,
     input wire configuration_send,
     
-   // inout logic [ 8-1:0] exp_p_io,
-    inout  [8-1:0] exp_p_io,
-    inout  [8-1:0] exp_n_io
+    (* X_INTERFACE_PARAMETER = "FREQ_HZ 30000000" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN wire_PMD_clk" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF wire_PMD_sync:wire_PMD_dac" *)
+    output wire wire_PMD_clk,
+    output wire wire_PMD_sync,
+    output wire [NUM_DAC-1:0] wire_PMD_dac
     );
     
     
@@ -72,8 +70,6 @@ module axis_AD5791 #(
     reg [4-1:0]state_load_dacs=0;
     
     reg [1:0] rdecii = 0;
-    wire [6-1:0]pass=0;
-
 
     integer i;
     initial begin
@@ -96,24 +92,18 @@ module axis_AD5791 #(
     begin
         if (configuration_mode)
         begin
-            if (S_AXIS1CFG_tvalid)
-                reg_dac_data[0] <= S_AXIS1CFG_tdata[DAC_WORD_WIDTH-1:0];
-            if (S_AXIS2CFG_tvalid)
-                reg_dac_data[1] <= S_AXIS2CFG_tdata[DAC_WORD_WIDTH-1:0];
-            if (S_AXIS3CFG_tvalid)
-                reg_dac_data[2] <= S_AXIS3CFG_tdata[DAC_WORD_WIDTH-1:0];
-            if (S_AXIS4CFG_tvalid)
-                reg_dac_data[3] <= S_AXIS4CFG_tdata[DAC_WORD_WIDTH-1:0];
+            if (S_AXISCFG_tvalid)
+                reg_dac_data[configuration_axis[1:0]] <= S_AXISCFG_tdata[DAC_WORD_WIDTH-1:0];
         end
         else
         begin
             if (S_AXIS1_tvalid)
                 reg_dac_data[0] <= {{(DAC_WORD_WIDTH-DAC_DATA_WIDTH ){1'b0}}, S_AXIS1_tdata[SAXIS_TDATA_WIDTH-1:SAXIS_TDATA_WIDTH-DAC_DATA_WIDTH]};
-            if (S_AXIS1_tvalid)
+            if (S_AXIS2_tvalid)
                 reg_dac_data[1] <= {{(DAC_WORD_WIDTH-DAC_DATA_WIDTH ){1'b0}}, S_AXIS2_tdata[SAXIS_TDATA_WIDTH-1:SAXIS_TDATA_WIDTH-DAC_DATA_WIDTH]};
-            if (S_AXIS1_tvalid)
+            if (S_AXIS3_tvalid)
                 reg_dac_data[2] <= {{(DAC_WORD_WIDTH-DAC_DATA_WIDTH ){1'b0}}, S_AXIS3_tdata[SAXIS_TDATA_WIDTH-1:SAXIS_TDATA_WIDTH-DAC_DATA_WIDTH]};
-            if (S_AXIS1_tvalid)
+            if (S_AXIS4_tvalid)
                 reg_dac_data[3] <= {{(DAC_WORD_WIDTH-DAC_DATA_WIDTH ){1'b0}}, S_AXIS4_tdata[SAXIS_TDATA_WIDTH-1:SAXIS_TDATA_WIDTH-DAC_DATA_WIDTH]};
         end
     end
@@ -181,7 +171,7 @@ module axis_AD5791 #(
     end
 
     always @(posedge PMD_clk) // SPI transmit data setup edge
-     begin
+    begin
         PMD_sync   <= sync;
         PMD_dac[0] <= reg_dac_data_buf[0][frame_bit_counter];
         PMD_dac[1] <= reg_dac_data_buf[1][frame_bit_counter];
@@ -190,16 +180,8 @@ module axis_AD5791 #(
     end
 
 
-    
-// V2.0 interface McBSP on exp_n_io[], IO-in on exp_p_io (swapped pins)
-// ===========================================================================
-IOBUF clk_iobuf  (.O(pass[0]),   .IO(exp_n_io[0]), .I(PMD_clk),    .T(0) );
-IOBUF sync_iobuf (.O(pass[1]),   .IO(exp_n_io[1]), .I(PMD_sync),   .T(0) );
-IOBUF dac0_iobuf (.O(pass[2]),   .IO(exp_n_io[2]), .I(PMD_dac[0]), .T(0) );
-IOBUF dac1_iobuf (.O(pass[3]),   .IO(exp_n_io[3]), .I(PMD_dac[0]), .T(0) );
-IOBUF dac2_iobuf (.O(pass[4]),   .IO(exp_n_io[4]), .I(PMD_dac[0]), .T(0) );
-IOBUF dac3_iobuf (.O(pass[5]),   .IO(exp_n_io[5]), .I(PMD_dac[0]), .T(0) );
-
-   
+assign wire_PMD_clk  = PMD_clk;
+assign wire_PMD_sync = PMD_sync;
+assign wire_PMD_dac  = { PMD_dac[3], PMD_dac[2], PMD_dac[1], PMD_dac[0] };
     
 endmodule

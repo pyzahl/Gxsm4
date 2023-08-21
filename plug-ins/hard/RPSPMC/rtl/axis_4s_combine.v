@@ -110,7 +110,6 @@ module axis_4s_combine #(
     input wire                             S_AXIS8_tvalid,
 
     input wire [SAXIS_3_DATA_WIDTH-1:0] axis3_center,  
-    input wire [8-1:0]   rp_digital_in,
     input wire [32-1:0]  operation, // 0..7 control bits 0: 1=start 1: 1=single shot/0=fifo loop 2, 4: 16=init/reset , [31:8] DATA ACCUMULATOR (64) SHR   [0] start/stop, [1] ss/loop, [2], [3], [4] reset
     input wire [32-1:0]  ndecimate,
     input wire [32-1:0]  nsamples,

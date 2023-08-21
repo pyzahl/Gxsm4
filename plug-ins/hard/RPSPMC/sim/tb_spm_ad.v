@@ -68,23 +68,17 @@ module tb_spm_ad(
     wire rzv;
     wire ruv;
 
-    reg [31:0] rxc=0;
-    reg rxvc=1;
-    reg [31:0] ryc=0;
-    reg rycv=1;
-    reg [31:0] rzc=0;
-    reg rzcv=1;
-    reg [31:0] ruc=0;
-    reg rucv=1;
-
+    reg [31:0] dac_cfg=0;
+    reg dac_cfgv=1;
     
     //inout  [8-1:0] p_iob;
     //inout  [8-1:0] n_iob;
     reg  [8-1:0] p_iob;
     reg  [8-1:0] n_iob;
 
-    reg ad_cmode = 1;
-    reg ad_send = 0;
+    reg dac_cmode = 1;
+    reg [2:0] dac_axis = 0;
+    reg dac_send = 0;
 
     initial 
     begin       
@@ -114,17 +108,19 @@ module tb_spm_ad(
         $display ("running the tb");
 
         // TEST AD SERIA lOUT
-        rxc = 0;
-        ryc = 0;
-        rzc = 0;
-        ruc = 0;
+        dac_send = 0;      
+        dac_axis = 0;      
+        dac_cfg = 0;
+        dac_cfgv = 1;
         #10;
-        rxc = 32;
+
+        dac_axis = 0;      
+        dac_cfg = 32;
         #10;
-        ad_send = 1;      
+        dac_send = 1;      
         #128;
-        ad_send = 0;      
-        ad_cmode = 0;      
+        dac_send = 0;      
+        dac_cmode = 0;      
 
         r=1;
         #20
@@ -225,7 +221,11 @@ gvp gvp_1
 
 axis_spm_control axis_spm_control_1
 (
-    .rotm(0),
+    .rotmxy(0),
+    .rotmxx(1),
+
+    .slope_x(0),
+    .slope_y(0),
     
     // SCAN COMPONENTS, ROTATED RELATIVE COORDS
     .xs(wx), // vector components
@@ -271,17 +271,12 @@ axis_AD5791 axis_AD5791_1
     .S_AXIS4_tdata(spm_ru),
     .S_AXIS4_tvalid(spm_ruv),
 
-    .S_AXIS1CFG_tdata(rxc),
-    .S_AXIS1CFG_tvalid(rxvc),
-    .S_AXIS2CFG_tdata(ryc),
-    .S_AXIS2CFG_tvalid(ryvc),
-    .S_AXIS3CFG_tdata(rzc),
-    .S_AXIS3CFG_tvalid(rzvc),
-    .S_AXIS4CFG_tdata(ruc),
-    .S_AXIS4CFG_tvalid(ruvc),
+    .S_AXISCFG_tdata(dac_cfg),
+    .S_AXISCFG_tvalid(dac_cfgv),
 
-    .configuration_mode(ad_cmode),
-    .configuration_send(ad_send)
+    .configuration_mode(dac_cmode),
+    .configuration_axis(dac_axis),
+    .configuration_send(dac_send)
     
     //.exp_p_io(p_iob),
     //.exp_n_io(n_iob)
