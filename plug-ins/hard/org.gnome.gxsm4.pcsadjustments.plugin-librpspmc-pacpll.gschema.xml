@@ -1,0 +1,351 @@
+<schemalist>
+  <schema id="org.gnome.gxsm4.pcsadjustments.plugin-rpspmc-pacpll" path="/org/gnome/gxsm4/pcsadjustments/plugin-librpspmc-rpspmc-pacpll/">
+
+    <key name="rpspmc-dc-offset" type="ad">
+      <default>[1000, -1000, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-dc-offset' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-dc-offset'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-pac-dctau" type="ad">
+      <default>[1e6, -1, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-pac-dctau' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-pac_dctau'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-pactau" type="ad">
+      <default>[1e6, 0, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-pactau' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-pactau'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-pacatau" type="ad">
+      <default>[1e6, 0, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-pacatau' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-pacatau'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-qc-phase" type="ad">
+      <default>[360, 0, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-pacatau' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-qc-phase'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-qc-gain" type="ad">
+      <default>[1000, -1000, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-pacatau' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-qc-gain'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-frequency-manual" type="ad">
+      <default>[25e6, 0, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 100, 1000, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-frequency-manual' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-frequency-manual'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-frequency-center" type="ad">
+      <default>[25e6, 0, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 100, 1000, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-frequency-center' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-frequency-center'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-aux-scale" type="ad">
+      <default>[1e6, -1e6, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 100, 1000, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-aux-scale' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-aux-scale'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-volume-manual" type="ad">
+      <default>[1000, 0, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1.0, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-volume-manual' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-volume-manual'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-tune-dfreq" type="ad">
+      <default>[1000, 0.0001, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1.0, 1, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-tune-dfreq' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-tune-dfreq'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-tune-span" type="ad">
+      <default>[1000000, 0, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-tune-span' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-tune-span'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-volume-monitor" type="ad">
+      <default>[1000, -1000, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-volume-monitor' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-volume-monitor'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-pulse-form-bias0" type="ad">
+      <default>[1000, -1000, 1e+111, -1e+111, 1e+111, 1e+111, 1.0, 10.0, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-pulse-form-bias0' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-pulse-form-bias0'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-pulse-form-bias1" type="ad">
+      <default>[1000, -1000, 1e+111, -1e+111, 1e+111, 1e+111, 1.0, 10.0, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-pulse-form-bias1' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-pulse-form-bias1'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-pulse-form-phase0" type="ad">
+      <default>[180, 0, 1e+111, -1e+111, 1e+111, 1e+111, 1.0, 10.0, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-pulse-form-phase0' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-pulse-form-phase0'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-pulse-form-phase1" type="ad">
+      <default>[180, 0, 1e+111, -1e+111, 1e+111, 1e+111, 1.0, 10.0, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-pulse-form-phase1' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-pulse-form-phase1'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-pulse-form-width0" type="ad">
+      <default>[10000, 0, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-pulse-form-width0' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-pulse-form-width0'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-pulse-form-width1" type="ad">
+      <default>[10000, 0, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-pulse-form-width1' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-pulse-form-width1'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-pulse-form-width0if" type="ad">
+      <default>[10000, 0, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-pulse-form-width0if' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-pulse-form-width0if'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-pulse-form-width1if" type="ad">
+      <default>[10000, 0, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-pulse-form-width1if' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-pulse-form-width1if'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-pulse-form-height0" type="ad">
+      <default>[1000, -1000, 1e+111, -1e+111, 1e+111, 1e+111, 1.0, 10.0, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-pulse-form-height0' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-pulse-form-height0'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-pulse-form-heigth1" type="ad">
+      <default>[1000, -1000, 1e+111, -1e+111, 1e+111, 1e+111, 1.0, 10.0, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-pulse-form-heigth1' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-pulse-form-heigth1'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-pulse-form-height0if" type="ad">
+      <default>[1000, -1000, 1e+111, -1e+111, 1e+111, 1e+111, 1.0, 10.0, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-pulse-form-height0if' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-pulse-form-height0if'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-pulse-form-heigth1if" type="ad">
+      <default>[1000, -1000, 1e+111, -1e+111, 1e+111, 1e+111, 1.0, 10.0, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-pulse-form-heigth1if' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-pulse-form-heigth1if'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-pulse-form-shapex" type="ad">
+      <default>[10, -10, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-pulse-form-shapex' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-pulse-form-shapex'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-pulse-form-shapexif" type="ad">
+      <default>[10, -10, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-pulse-form-shapexif' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-pulse-form-shapexif'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-pulse-form-shapexw" type="ad">
+      <default>[1, 0, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-pulse-form-shapexw' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-pulse-form-shapexw'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-pulse-form-shapexwif" type="ad">
+      <default>[1, 0, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-pulse-form-shapexwif' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-pulse-form-shapexwif'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-amplitude-fb-setpoint" type="ad">
+      <default>[1000, 0, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1.0, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-amplitude-fb-setpoint' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-amplitude-fb-setpoint'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-amplitude-fb-cp" type="ad">
+      <default>[200, -200, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-amplitude-fb-cp' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-amplitude-fb-cp'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-amplitude-fb-ci" type="ad">
+      <default>[200, -200, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-amplitude-fb-ci' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-amplitude-fb-ci'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-exec-fb-lower" type="ad">
+      <default>[1000, -1000, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-exec-fb-lower' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-exec-fb-lower'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-exec-fb-upper" type="ad">
+      <default>[1000, 0, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-exec-fb-upper' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-exec-fb-upper'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-exec-amplitude-monitor" type="ad">
+      <default>[1000, -1000, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-exec-amplitude-monitor' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-exec-amplitude-monitor'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-phase-monitor" type="ad">
+      <default>[180, -180, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-phase-monitor' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-phase-monitor'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-phase-fb-setpoint" type="ad">
+      <default>[180, -180, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-phase-fb-setpoint' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-phase-fb-setpoint'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-phase-fb-cp" type="ad">
+      <default>[200, -200, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-phase-fb-cp' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-phase-fb-cp'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-phase-fb-ci" type="ad">
+      <default>[200, -200, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-phase-fb-ci' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-phase-fb-ci'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-freq-fb-lower" type="ad">
+      <default>[25e6, 0, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-freq-fb-lower' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-freq-fb-lower'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-freq-fb-upper" type="ad">
+      <default>[25e6, 0, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-freq-fb-upper' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-freq-fb-upper'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-dds-freq-monitor" type="ad">
+      <default>[25e6, 0, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-dds-freq-monitor' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-dds-freq-monitor'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-dfreq-monitor" type="ad">
+      <default>[200, -200, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-dfreq-monitor' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-dfreq-monitor'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-phase-hold-am-noise-limit" type="ad">
+      <default>[1000, 0, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1.0, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-dfreq-monitor' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-phase-hold-am-noise-limit'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-dfreq-fb-setpoint" type="ad">
+      <default>[180, -180, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-dfreq-fb-setpoint' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-dfreq-fb-setpoint'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-dfreq-fb-cp" type="ad">
+      <default>[200, -200, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-dfreq-fb-cp' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-dfreq-fb-cp'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-dfreq-fb-ci" type="ad">
+      <default>[200, -200, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-dfreq-fb-ci' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-dfreq-fb-ci'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-control-dfreq-fb-lower" type="ad">
+      <default>[10000.0, -10000, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-control-dfreq-fb-lower' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-control-dfreq-fb-lower'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-control-dfreq-fb-upper" type="ad">
+      <default>[10000.0, -10000, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-control-dfreq-fb-upper' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-control-dfreq-fb-upper'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-dfreq-control-monitor" type="ad">
+      <default>[2000, -2000, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-dfreq-control-monitor' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-dfreq-control-monitor'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    
+    <key name="rpspmc-scope-width" type="ad">
+      <default>[4096, 128, 1e+111, -1e+111, 1e+111, 1e+111, 1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-scope-width' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-scope-width'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-scope-height" type="ad">
+      <default>[1024, 128, 1e+111, -1e+111, 1e+111, 1e+111, 1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-scope-width' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-scope-height'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-rp-verbose-level" type="ad">
+      <default>[10, 0, 1e+111, -1e+111, 1e+111, 1e+111, 1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-scope-width' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-verbose-level'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-pac-transport-tau-dfreq" type="ad">
+      <default>[6.3e+07, -1, 1e+111, -1e+111, 1e+111, 1e+111, 10, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-pac-transport-tau-dfreq' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-pac-transport-tau-dfreq'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-pac-transport-tau-phase" type="ad">
+      <default>[6.3e+07, -1, 1e+111, -1e+111, 1e+111, 1e+111, 10, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-pac-transport-tau-phase' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-pac-transport-tau-phase'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-pac-transport-tau-exec" type="ad">
+      <default>[6.3e+07, -1, 1e+111, -1e+111, 1e+111, 1e+111, 10, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-pac-transport-tau-exec' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-pac-transport-tau-exec'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="rpspmc-pac-transport-tau-ampl" type="ad">
+      <default>[6.3e+07, -1, 1e+111, -1e+111, 1e+111, 1e+111, 10, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-pac-transport-tau-ampl' </summary>
+      <description>Configuration for GXSM Entry with ID 'rpspmc-pac-transport-tau-ampl'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+
+  </schema>
+
+</schemalist>
+

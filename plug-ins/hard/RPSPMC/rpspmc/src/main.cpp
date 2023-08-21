@@ -54,13 +54,26 @@
 #define REDPACPLL_DATE    0x20200408
 #define REDPACPLL_VERSION 0x00160000
 
+// FPGA MEMORY MAPPING for "RP-SPMC-RedPACPLL" 202308V00
+
+// FPGA page size is 0x1000
+
+#define FPGA_BRAM_BASE    0x40000000 //    2M (0x4000_0000 ... 0x401F_FFFF)
+
+#define FPGA_CFG_REG      0x42000000 //    4k (0x4200_0000 ... _1000)
+#define FPGA_CFG_PAGES    2          // currently only 1st page assigned/used
+
+#define FPGA_GPIO_BASE    0x42002000 // 256 each (=0x100) //** NOTE: NEW, changed from excessiv 4k to 256 as only adresses 0..128 are needed
+#define FPGA_GPIO_SIZE    0x0100     // 0x1000 previously
+#define FPGA_GPIO_BLOCKS  9          // 9x256 (0x4200_2000 ... _2800)
+#define FPGA_GPIO_PAGES   1          // 1 page
 
 #define PACPLL_CFG1_OFFSET 32
 #define PACPLL_CFG2_OFFSET 0
 #define PACPLL_CFG3_OFFSET 0
 
 
-// CFG DATA REGISTER 0 [1023:0]
+// CONFIGURATION (CFG) DATA REGISTER 0 [1023:0] x 4 = 4k
 // PAC-PLL Control Core
 
 // general control paging (future options)
@@ -106,7 +119,7 @@
 #define SPMC_CFG_Z_SERVO_CONTROLLER         (PACPLL_CFG1_OFFSET + 10) // 10:16
 #define SPMC_CFG_Z_SERVO_ZSETPOINT          (PACPLL_CFG1_OFFSET + 17) // 17
 #define SPMC_CFG_Z_SERVO_LEVEL              (PACPLL_CFG1_OFFSET + 18) // 18
-#define SPMC_CFG_Z_SERVO_MODE               (PACPLL_CFG1_OFFSET + 19) // 19
+#define SPMC_CFG_Z_SERVO_MODE               (PACPLL_CFG1_OFFSET + 19) // 19: SERVO CONTROL (enable) Bit0, ...
 
 // CFG DATA REGISTER 2 [1023:0]
 // PACPLL-PulseFormer Control Core
@@ -408,8 +421,9 @@ int thread_data__tune_control=0;
 
 const char *FPGA_PACPLL_A9_name = "/dev/mem";
 void *FPGA_PACPLL_cfg  = NULL;
+void *FPGA_PACPLL_gpio = NULL;
 void *FPGA_PACPLL_bram = NULL;
-size_t FPGA_PACPLL_CFG_block_size = 0;
+size_t FPGA_PACPLL_CFG_block_size  = 0; // CFG + GPIO space 
 size_t FPGA_PACPLL_BRAM_block_size = 0;
 
 //#define DEVELOPMENT_PACPLL_OP
@@ -453,11 +467,7 @@ void *thread_gpio_reading_FIR(void *arg);
 
 int rp_PAC_App_Init(){
         int fd;
-#ifdef REMAP_TO_OLD_FPGA_VERSION // (2019 compat.)
-        FPGA_PACPLL_CFG_block_size  = 7*sysconf (_SC_PAGESIZE);   // 1024bit CFG Register   = 7*sysconf (_SC_PAGESIZE); 
-#else
-        FPGA_PACPLL_CFG_block_size  = 9*sysconf (_SC_PAGESIZE);   // 3x 1024bit CFG Register   = 9*sysconf (_SC_PAGESIZE); (2K + 2K  = 4K for region axi_cfg_register_0, _1
-#endif
+        FPGA_PACPLL_CFG_block_size  = (FPGA_CFG_PAGES + FPGA_GPIO_PAGES)*sysconf (_SC_PAGESIZE);   // sysconf (_SC_PAGESIZE) is 0x1000; map CFG + GPIO pages
         FPGA_PACPLL_BRAM_block_size = 2048*sysconf(_SC_PAGESIZE); // Dual Ported FPGA BRAM
 
         //>INIT RP FPGA PACPLL. --- FPGA MEMORY MAPPING ---
@@ -640,19 +650,19 @@ inline void set_gpio_cfgreg_int48 (int cfg_slot, unsigned long long value){
  
 
 inline int32_t read_gpio_reg_int32_t (int gpio_block, int pos){
-        size_t offset = gpio_block * 0x1000 + pos * 8;
+        size_t offset = gpio_block * FPGA_GPIO_SIZE + pos * 8;
 
         return *((int32_t *)((uint8_t*)FPGA_PACPLL_cfg + offset)); 
 }
 
 inline int read_gpio_reg_int32 (int gpio_block, int pos){
-        size_t offset = gpio_block * 0x1000 + pos * 8;
+        size_t offset = gpio_block * FPGA_GPIO_SIZE + pos * 8;
         int x = *((int32_t *)((uint8_t*)FPGA_PACPLL_cfg + offset));
         return x;
 }
 
 inline unsigned int read_gpio_reg_uint32 (int gpio_block, int pos){
-        size_t offset = gpio_block * 0x1000 + pos * 8;
+        size_t offset = gpio_block * FPGA_GPIO_SIZE + pos * 8;
         unsigned int x = *((int32_t *)((uint8_t*)FPGA_PACPLL_cfg + offset));
         return x;
 }

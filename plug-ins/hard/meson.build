@@ -34,6 +34,16 @@ plugin_list = [
 #    { 'name': 'tc211_ccd' }, ## may be port that some day
 ]
 
+if gsl.found() and soup.found()
+    plugin_list += [
+    { 'name': 'rpspmc_pacpll', 'sources' : ['rpspmc_pacpll.cpp', 'jsmn.cpp'], 'deps': [ soup, gsl, lz ],
+      'gschemas': [ 'org.gnome.gxsm4.rpspmc-pacpll-settings.gschema.xml',
+                    'org.gnome.gxsm4.pcs.plugin-librpspmc-pacpll.gschema.xml',
+                    'org.gnome.gxsm4.pcsadjustments.plugin-librpspmc-pacpll.gschema.xml' ] },
+    ]
+endif
+
+
 settings_schemas_list = []
 
 foreach plugin : plugin_list

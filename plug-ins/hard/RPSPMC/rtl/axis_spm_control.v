@@ -62,10 +62,19 @@ module axis_spm_control#(
     output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS4_tdata,
     output wire                          M_AXIS4_tvalid,
 
-    output [32-1:0] xs_mon, // vector components
-    output [32-1:0] ys_mon, // ..
-    output [32-1:0] zs_mon, // ..
-    output [32-1:0] u_mon // ..
+    output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS_XSMON_tdata,
+    output wire                          M_AXIS_XSMON_tvalid,
+    output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS_YSMON_tdata,
+    output wire                          M_AXIS_YSMON_tvalid,
+
+    output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS_XMON_tdata,
+    output wire                          M_AXIS_XMON_tvalid,
+    output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS_YMON_tdata,
+    output wire                          M_AXIS_YMON_tvalid,
+    output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS_ZMON_tdata,
+    output wire                          M_AXIS_ZMON_tvalid,
+    output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS_UMON_tdata,
+    output wire                          M_AXIS_UMON_tvalid
 
     );
     
@@ -75,13 +84,17 @@ module axis_spm_control#(
     // X   = Y0 + Yr 
     // Zsxy = slope_x * Xr + slope_y * Yr 
     // Z    = Z0 + z + Zsxy
+
+    reg signed [32-1:0] rx;
+    reg signed [32-1:0] ry;
+    reg signed [32-1:0] rz;
+    reg signed [32-1:0] ru;
     
     reg signed [32-1:0] z_servo;
     reg signed [32-1:0] z_slope;
     reg signed [32-1:0] z_gvp;
     reg signed [32-1:0] z_offset;
     reg signed [36-1:0] z_sum;
-    reg signed [32-1:0] z;
     
     reg [RDECI:0] rdecii = 0;
 
@@ -92,6 +105,10 @@ module axis_spm_control#(
 
     always @ (posedge rdecii[RDECI])
     begin
+        rx <= xs+x0;
+        ry <= ys+y0;
+        ru <= u;
+        
         z_servo  <= S_AXIS_Z_tdata;
         z_slope  <= 0;
         z_gvp    <= zs;
@@ -99,38 +116,40 @@ module axis_spm_control#(
         z_sum    <= z_offset + z_gvp + z_slope + z_servo;
         if (z_sum > 36'sd2147483647)
         begin
-            z <= 32'sd2147483648;
+            rz <= 32'sd2147483648;
         end     
         else
         begin     
             if (z_sum < -36'sd2147483647)
             begin
-                z <= -32'sd2147483647;
+                rz <= -32'sd2147483647;
             end     
             else
             begin
-                z <= z_sum[32-1:0];
+                rz <= z_sum[32-1:0];
             end
     end         
     end
     
     
-    assign M_AXIS1_tdata  = x0+xs;
+    assign M_AXIS1_tdata  = rx;
     assign M_AXIS1_tvalid = 1;
+    assign M_AXIS_XMON_tdata  = rx;
+    assign M_AXIS_XMON_tvalid = 1;
+    assign M_AXIS_XSMON_tdata  = xs;
+    assign M_AXIS_XSMON_tvalid = 1;
     
     assign M_AXIS2_tdata  = y0+ys;
     assign M_AXIS2_tvalid = 1;
+    assign M_AXIS_YMON_tdata  = ry;
+    assign M_AXIS_YMON_tvalid = 1;
+    assign M_AXIS_YSMON_tdata  = ys;
+    assign M_AXIS_YSMON_tvalid = 1;
     
-    assign M_AXIS3_tdata  = z;
+    assign M_AXIS3_tdata  = rz;
     assign M_AXIS3_tvalid = 1;
     
-    assign M_AXIS4_tdata  = u;
+    assign M_AXIS4_tdata  = ru;
     assign M_AXIS4_tvalid = 1;
-
-    assign xs_mon = xs;
-    assign ys_mon = ys;
-    assign zs_mon = z;
-    assign u_mon  = u;
-    
     
 endmodule

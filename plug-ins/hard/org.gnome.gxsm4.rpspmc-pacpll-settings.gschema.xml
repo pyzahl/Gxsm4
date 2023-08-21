@@ -1,0 +1,13 @@
+<schemalist>
+
+  <schema id="org.gnome.gxsm4.rpspmc-pacpll-settings" path="/org/gnome/gxsm4/rpspmc-pacpll-settings/">
+    <key name="redpitay-address" type="s">
+      <default>'rp-f05603.local'</default>
+      <summary>RedPitaya IP Address.</summary>
+      <description>
+	RedPitaya IP Address like rp-f05603.local or 130.199.123.123
+      </description>
+    </key>
+  </schema>
+
+</schemalist>
