@@ -21,7 +21,8 @@
 
 
 module axis_spm_control#(
-    parameter SAXIS_TDATA_WIDTH = 32
+    parameter SAXIS_TDATA_WIDTH = 32,
+    parameter RDECI = 2   // reduced rate decimation bits 1= 1/2 ...
 )
 (
     // SCAN COMPONENTS, ROTATED RELATIVE COORDS TO SCAN CENTER
@@ -48,8 +49,10 @@ module axis_spm_control#(
     input [32-1:0] z0, // ..
 
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF M_AXIS1:M_AXIS2:M_AXIS3:M_AXIS4" *)
-    input a_clk,
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF S_AXIS_Z:M_AXIS1:M_AXIS2:M_AXIS3:M_AXIS4" *)
+    input  a_clk,
+    input  wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS_Z_tdata,
+    input  wire                          S_AXIS_Z_tvalid,
     output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS1_tdata,
     output wire                          M_AXIS1_tvalid,
     output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS2_tdata,
@@ -73,6 +76,44 @@ module axis_spm_control#(
     // Zsxy = slope_x * Xr + slope_y * Yr 
     // Z    = Z0 + z + Zsxy
     
+    reg signed [32-1:0] z_servo;
+    reg signed [32-1:0] z_slope;
+    reg signed [32-1:0] z_gvp;
+    reg signed [32-1:0] z_offset;
+    reg signed [36-1:0] z_sum;
+    reg signed [32-1:0] z;
+    
+    reg [RDECI:0] rdecii = 0;
+
+    always @ (posedge a_clk)
+    begin
+        rdecii <= rdecii+1;
+    end
+
+    always @ (posedge rdecii[RDECI])
+    begin
+        z_servo  <= S_AXIS_Z_tdata;
+        z_slope  <= 0;
+        z_gvp    <= zs;
+        z_offset <= z0;
+        z_sum    <= z_offset + z_gvp + z_slope + z_servo;
+        if (z_sum > 36'sd2147483647)
+        begin
+            z <= 32'sd2147483648;
+        end     
+        else
+        begin     
+            if (z_sum < -36'sd2147483647)
+            begin
+                z <= -32'sd2147483647;
+            end     
+            else
+            begin
+                z <= z_sum[32-1:0];
+            end
+    end         
+    end
+    
     
     assign M_AXIS1_tdata  = x0+xs;
     assign M_AXIS1_tvalid = 1;
@@ -80,7 +121,7 @@ module axis_spm_control#(
     assign M_AXIS2_tdata  = y0+ys;
     assign M_AXIS2_tvalid = 1;
     
-    assign M_AXIS3_tdata  = z0+zs;
+    assign M_AXIS3_tdata  = z;
     assign M_AXIS3_tvalid = 1;
     
     assign M_AXIS4_tdata  = u;
@@ -88,7 +129,7 @@ module axis_spm_control#(
 
     assign xs_mon = xs;
     assign ys_mon = ys;
-    assign zs_mon = zs;
+    assign zs_mon = z;
     assign u_mon  = u;
     
     
