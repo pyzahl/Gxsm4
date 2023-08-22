@@ -23,7 +23,6 @@
 # 2. The following source(s) files that were local or imported into the original project.
 #    (Please see the '$orig_proj_dir' and '$origin_dir' variable setting below at the start of the script)
 #
-#    "/home/pzahl/SVN/Gxsm4/plug-ins/hard/RPSPMC/project_RP-SPMC-RedPACPLL-202308-test/project_RP-SPMC-RedPACPLL-202308-test.srcs/utils_1/imports/synth_1/system_wrapper.dcp"
 #
 # 3. The following remote source files that were added to the original project:-
 #
@@ -84,16 +83,6 @@
 # Check file required for this script exists
 proc checkRequiredFiles { origin_dir} {
   set status true
-  set files [list \
- "[file normalize "$origin_dir/project_RP-SPMC-RedPACPLL-202308-test/project_RP-SPMC-RedPACPLL-202308-test.srcs/utils_1/imports/synth_1/system_wrapper.dcp"]"\
-  ]
-  foreach ifile $files {
-    if { ![file isfile $ifile] } {
-      puts " Could not find local file $ifile "
-      set status false
-    }
-  }
-
   set files [list \
  "[file normalize "$origin_dir/rtl/QControl.v"]"\
  "[file normalize "$origin_dir/rtl/cfg_select.v"]"\
@@ -437,20 +426,20 @@ set_property -name "top_auto_set" -value "0" -objects $obj
 set_property -name "top_lib" -value "xil_defaultlib" -objects $obj
 
 # Set 'utils_1' fileset object
-set obj [get_filesets utils_1]
+##set obj [get_filesets utils_1]
 # Import local files from the original project
-set files [list \
- [file normalize "${origin_dir}/project_RP-SPMC-RedPACPLL-202308-test/project_RP-SPMC-RedPACPLL-202308-test.srcs/utils_1/imports/synth_1/system_wrapper.dcp" ]\
-]
-set imported_files [import_files -fileset utils_1 $files]
+##set files [list \
+## [file normalize "${origin_dir}/project_RP-SPMC-RedPACPLL-202308-test/project_RP-SPMC-RedPACPLL-202308-test.srcs/utils_1/imports/synth_1/system_wrapper.dcp" ]\
+##]
+##set imported_files [import_files -fileset utils_1 $files]
 
 # Set 'utils_1' fileset file properties for remote files
 # None
 
 # Set 'utils_1' fileset file properties for local files
-set file "synth_1/system_wrapper.dcp"
-set file_obj [get_files -of_objects [get_filesets utils_1] [list "*$file"]]
-set_property -name "netlist_only" -value "0" -objects $file_obj
+#set file "synth_1/system_wrapper.dcp"
+#set file_obj [get_files -of_objects [get_filesets utils_1] [list "*$file"]]
+#set_property -name "netlist_only" -value "0" -objects $file_obj
 
 
 # Set 'utils_1' fileset properties
@@ -4668,7 +4657,7 @@ if { $obj != "" } {
 }
 set obj [get_runs synth_1]
 set_property -name "part" -value "xc7z020clg400-1" -objects $obj
-set_property -name "incremental_checkpoint" -value "$proj_dir/project_RP-SPMC-RedPACPLL-202308-test.srcs/utils_1/imports/synth_1/system_wrapper.dcp" -objects $obj
+# set_property -name "incremental_checkpoint" -value "$proj_dir/project_RP-SPMC-RedPACPLL-202308-test.srcs/utils_1/imports/synth_1/system_wrapper.dcp" -objects $obj
 set_property -name "auto_incremental_checkpoint" -value "1" -objects $obj
 set_property -name "strategy" -value "Vivado Synthesis Defaults" -objects $obj
 
@@ -4957,3 +4946,5 @@ move_dashboard_gadget -name {drc_1} -row 2 -col 0
 move_dashboard_gadget -name {timing_1} -row 0 -col 1
 move_dashboard_gadget -name {utilization_2} -row 1 -col 1
 move_dashboard_gadget -name {methodology_1} -row 2 -col 1
+
+set_param placedata.goqFix yes
