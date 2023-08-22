@@ -68,17 +68,18 @@
 #define FPGA_GPIO_BLOCKS  9          // 9x256 (0x4200_2000 ... _2800)
 #define FPGA_GPIO_PAGES   1          // 1 page
 
+#define PACPLL_CFG0_OFFSET 0
 #define PACPLL_CFG1_OFFSET 32
-#define PACPLL_CFG2_OFFSET 0
-#define PACPLL_CFG3_OFFSET 0
+#define PACPLL_CFG2_OFFSET 64
+#define PACPLL_CFG3_OFFSET 96
 
 
 // CONFIGURATION (CFG) DATA REGISTER 0 [1023:0] x 4 = 4k
 // PAC-PLL Control Core
 
 // general control paging (future options)
-#define PACPLL_CFG_PAGE_CONTROL  30   // 32bit wide
-#define PACPLL_CFG_PAGE          31   // 32bit wide
+//#define PACPLL_CFG_PAGE_CONTROL  30   // 32bit wide
+//#define PACPLL_CFG_PAGE          31   // 32bit wide
 
 // PACPLL core controls
 #define PACPLL_CFG_DDS_PHASEINC  0    // 64bit wide
