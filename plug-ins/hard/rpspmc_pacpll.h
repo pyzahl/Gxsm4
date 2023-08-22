@@ -31,7 +31,7 @@
 #define __RPSPMC_PACPLL_H
 
 #include <config.h>
-#include "jsmn.h"
+#include "../control/jsmn.h"
 
 struct JSON_parameter {
         const gchar *js_varname;
