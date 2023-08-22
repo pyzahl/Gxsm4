@@ -57,16 +57,34 @@
 // FPGA MEMORY MAPPING for "RP-SPMC-RedPACPLL" 202308V00
 
 // FPGA page size is 0x1000
+        //>INIT RP FPGA PACPLL. --- FPGA MEMORY MAPPING ---
+        //>> RP FPGA_PACPLL PAGESIZE:    00001000.
+        //>> RP FPGA_PACPLL BRAM: mapped 40000000 - 40800000   block length: 00800000.
+        //>> RP FPGA_PACPLL  CFG: mapped 42000000 - 42009000   block length: 00009000.
+
+        // RP-FPGA ADRESS MAP
+        // 32bit
+        // PS/axi_bram_reader0    0x4000_0000  2M  0x401F_FFFF
+        // PS/axi_cfg_register_0  0x4200_0000  2K  0x4200_07FF  SLICES: CFG0: 0...1023 (#0-31)@32bit   CFG1: 1024-2047 (#32-63)@32bit
+        // PS/axi_cfg_register_1  0x4200_0800  2K  0x4200_0FFF  SLICES: CFG2: 0...1023 (#0-31)@32bit [ CFG3: 1024-2047 (#32-63)@32bit ]
+        // PS/axi_gpio_0          0x4200_1000  4K  0x4200_1FFF
+        // PS/axi_gpio_1          0x4200_2000  4K  0x4200_2FFF
+        // PS/axi_gpio_2          0x4200_3000  4K  0x4200_3FFF
+        // PS/axi_gpio_3          0x4200_4000  4K  0x4200_4FFF
+        // PS/axi_gpio_4          0x4200_5000  4K  0x4200_5FFF
+        // PS/axi_gpio_5          0x4200_6000  4K  0x4200_6FFF
+        // PS/axi_gpio_6          0x4200_7000  4K  0x4200_7FFF
+        //### PS/axi_gpio_7          0x4200_8000  4K  0x4200_8FFF // removed mapping
 
 #define FPGA_BRAM_BASE    0x40000000 //    2M (0x4000_0000 ... 0x401F_FFFF)
 
-#define FPGA_CFG_REG      0x42000000 //    4k (0x4200_0000 ... _1000)
+#define FPGA_CFG_REG      0x42000000 //    4k (0x4200_0000 ... _1FFFF)
 #define FPGA_CFG_PAGES    2          // currently only 1st page assigned/used
 
 #define FPGA_GPIO_BASE    0x42002000 // 256 each (=0x100) //** NOTE: NEW, changed from excessiv 4k to 256 as only adresses 0..128 are needed
-#define FPGA_GPIO_SIZE    0x0100     // 0x1000 previously
+#define FPGA_GPIO_SIZE    0x1000     // 0x1000 previously
 #define FPGA_GPIO_BLOCKS  9          // 9x256 (0x4200_2000 ... _2800)
-#define FPGA_GPIO_PAGES   1          // 1 page
+#define FPGA_GPIO_PAGES   9          // 9 pages
 
 #define PACPLL_CFG0_OFFSET 0
 #define PACPLL_CFG1_OFFSET 32
@@ -470,56 +488,37 @@ int rp_PAC_App_Init(){
         int fd;
         FPGA_PACPLL_CFG_block_size  = (FPGA_CFG_PAGES + FPGA_GPIO_PAGES)*sysconf (_SC_PAGESIZE);   // sysconf (_SC_PAGESIZE) is 0x1000; map CFG + GPIO pages
         FPGA_PACPLL_BRAM_block_size = 2048*sysconf(_SC_PAGESIZE); // Dual Ported FPGA BRAM
-
-        //>INIT RP FPGA PACPLL. --- FPGA MEMORY MAPPING ---
-        //>> RP FPGA_PACPLL PAGESIZE:    00001000.
-        //>> RP FPGA_PACPLL BRAM: mapped 40000000 - 40800000   block length: 00800000.
-        //>> RP FPGA_PACPLL  CFG: mapped 42000000 - 42009000   block length: 00009000.
-
-        // RP-FPGA ADRESS MAP
-        // 32bit
-        // PS/axi_bram_reader0    0x4000_0000  2M  0x401F_FFFF
-        // PS/axi_cfg_register_0  0x4200_0000  2K  0x4200_07FF  SLICES: CFG0: 0...1023 (#0-31)@32bit   CFG1: 1024-2047 (#32-63)@32bit
-        // PS/axi_cfg_register_1  0x4200_0800  2K  0x4200_0FFF  SLICES: CFG2: 0...1023 (#0-31)@32bit [ CFG3: 1024-2047 (#32-63)@32bit ]
-        // PS/axi_gpio_0          0x4200_1000  4K  0x4200_1FFF
-        // PS/axi_gpio_1          0x4200_2000  4K  0x4200_2FFF
-        // PS/axi_gpio_2          0x4200_3000  4K  0x4200_3FFF
-        // PS/axi_gpio_3          0x4200_4000  4K  0x4200_4FFF
-        // PS/axi_gpio_4          0x4200_5000  4K  0x4200_5FFF
-        // PS/axi_gpio_5          0x4200_6000  4K  0x4200_6FFF
-        // PS/axi_gpio_6          0x4200_7000  4K  0x4200_7FFF
-        //### PS/axi_gpio_7          0x4200_8000  4K  0x4200_8FFF // removed mapping
-        
+       
         if ((fd = open (FPGA_PACPLL_A9_name, O_RDWR)) < 0) {
                 perror ("open");
                 return RP_EOOR;
         }
 
         FPGA_PACPLL_bram = mmap (NULL, FPGA_PACPLL_BRAM_block_size,
-                                 PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0x40000000);
+                                 PROT_READ|PROT_WRITE, MAP_SHARED, fd, FPGA_BRAM_BASE);
 
         if (FPGA_PACPLL_bram == MAP_FAILED)
                 return RP_EOOR;
   
 #ifdef DEVELOPMENT_PACPLL_OP
-        fprintf(stderr, "INIT RP FPGA PACPLL. --- FPGA MEMORY MAPPING ---\n");
-        fprintf(stderr, "RP FPGA_PACPLL PAGESIZE:    0x%08lx.\n", (unsigned long)(sysconf (_SC_PAGESIZE)));
-        fprintf(stderr, "RP FPGA_PACPLL BRAM: mapped 0x%08lx - 0x%08lx   block length: 0x%08lx.\n", (unsigned long)(0x40000000), (unsigned long)(0x40000000 + FPGA_PACPLL_BRAM_block_size), (unsigned long)(FPGA_PACPLL_BRAM_block_size));
+        fprintf(stderr, "INIT RP FPGA RPSPMC PACPLL. --- FPGA MEMORY MAPPING ---\n");
+        fprintf(stderr, "RP FPGA RPSPMC PACPLL PAGESIZE:    0x%08lx.\n", (unsigned long)(sysconf (_SC_PAGESIZE)));
+        fprintf(stderr, "RP FPGA RPSPMC PACPLL BRAM: mapped 0x%08lx - 0x%08lx   block length: 0x%08lx.\n", (unsigned long)(0x40000000), (unsigned long)(0x40000000 + FPGA_PACPLL_BRAM_block_size), (unsigned long)(FPGA_PACPLL_BRAM_block_size));
 #else
-        if (verbose > 1) fprintf(stderr, "RP FPGA_PACPLL BRAM: mapped 0x%08lx - 0x%08lx.\n", (unsigned long)(0x40000000), (unsigned long)(0x40000000 + FPGA_PACPLL_BRAM_block_size));
+        if (verbose > 1) fprintf(stderr, "RP FPGA RPSPMC PACPLL BRAM: mapped 0x%08lx - 0x%08lx.\n", (unsigned long)(0x40000000), (unsigned long)(0x40000000 + FPGA_PACPLL_BRAM_block_size));
 #endif
 
         
         FPGA_PACPLL_cfg = mmap (NULL, FPGA_PACPLL_CFG_block_size,
-                                PROT_READ|PROT_WRITE,  MAP_SHARED, fd, 0x42000000);
+                                PROT_READ|PROT_WRITE,  MAP_SHARED, fd, FPGA_CFG_REG);
 
         if (FPGA_PACPLL_cfg == MAP_FAILED)
                 return RP_EOOR;
 
 #ifdef DEVELOPMENT_PACPLL_OP
-        fprintf(stderr, "RP FPGA_PACPLL  CFG: mapped 0x%08lx - 0x%08lx   block length: 0x%08lx.\n", (unsigned long)(0x42000000), (unsigned long)(0x42000000 + FPGA_PACPLL_CFG_block_size),  (unsigned long)(FPGA_PACPLL_CFG_block_size));
+        fprintf(stderr, "RP FPGA RPSPMC PACPLL CFG: mapped 0x%08lx - 0x%08lx   block length: 0x%08lx.\n", (unsigned long)(0x42000000), (unsigned long)(0x42000000 + FPGA_PACPLL_CFG_block_size),  (unsigned long)(FPGA_PACPLL_CFG_block_size));
 #else
-        if (verbose > 1) fprintf(stderr, "RP FPGA_PACPLL  CFG: mapped 0x%08lx - 0x%08lx.\n", (unsigned long)(0x42000000), (unsigned long)(0x42000000 + FPGA_PACPLL_CFG_block_size));
+        if (verbose > 1) fprintf(stderr, "RP FPGA RPSPMC PACPLL  CFG: mapped 0x%08lx - 0x%08lx.\n", (unsigned long)(0x42000000), (unsigned long)(0x42000000 + FPGA_PACPLL_CFG_block_size));
 #endif
         
         srand(time(NULL));   // init random
@@ -613,7 +612,7 @@ inline void set_gpio_cfgreg_uint32 (int cfg_slot, unsigned int value){
 }
 
 inline void set_gpio_cfgreg_int16_int16 (int cfg_slot, gint16 value_1, gint16 value_2){
-        size_t off = 0x8000 + cfg_slot * 4;
+        size_t off = cfg_slot * 4; // ** +0x8000 old
         union { struct { gint16 hi, lo; } hl; int ww; } mem;
         mem.hl.hi = value_1;
         mem.hl.lo = value_2;
@@ -624,7 +623,7 @@ inline void set_gpio_cfgreg_int16_int16 (int cfg_slot, gint16 value_1, gint16 va
 }
 
 inline void set_gpio_cfgreg_uint16_uint16 (int cfg_slot, guint16 value_1, guint16 value_2){
-        size_t off = 0x8000 + cfg_slot * 4;
+        size_t off = cfg_slot * 4; // ** +0x8000 old
         union { struct { guint16 hi, lo; } hl; int ww; } mem;
         mem.hl.hi = value_1;
         mem.hl.lo = value_2;
@@ -703,7 +702,7 @@ void rp_PAC_adjust_dds (double freq){
         unsigned long long phase_inc = (unsigned long long)round (dds_phaseinc (freq));
         //        unsigned int lo32, hi32;
 #ifdef DEVELOPMENT_PACPLL_OP
-        fprintf(stderr, "##Adjust DDS: f= %12.4f Hz -> Q44 phase_inc=%lld  %016llx\n", freq, phase_inc, phase_inc);
+        if (verbose == 1) fprintf(stderr, "##Adjust DDS: f= %12.4f Hz -> Q44 phase_inc=%lld  %016llx\n", freq, phase_inc, phase_inc);
 #else
         if (verbose > 2) fprintf(stderr, "##Adjust: f= %12.4f Hz -> Q44 phase_inc=%lld  %016llx\n", freq, phase_inc, phase_inc);
 #endif
@@ -711,24 +710,26 @@ void rp_PAC_adjust_dds (double freq){
         set_gpio_cfgreg_int48 (PACPLL_CFG_DDS_PHASEINC, phase_inc);
 
 #ifdef DEVELOPMENT_PACPLL_OP
-        // Verify
-        unsigned long xx8 = read_gpio_reg_uint32 (4,1); // GPIO X7 : Exec Ampl Control Signal (signed)
-        unsigned long xx9 = read_gpio_reg_uint32 (5,0); // GPIO X8 : DDS Phase Inc (Freq.) upper 32 bits of 44 (signed)
-        unsigned long long ddsphi = ((unsigned long long)xx8<<(44-32)) + ((unsigned long long)xx9>>(64-44)); // DDS Phase Inc (Freq.) upper 32 bits of 44 (signed)
-        double vfreq = dds_phaseinc_to_freq(ddsphi);
-        fprintf(stderr, "##Verify DDS: f= %12.4f Hz -> Q44 phase_inc=%lld  %016llx  ERROR: %12.4f Hz\n", vfreq, ddsphi, ddsphi, (vfreq-freq));
+        if (verbose >= 1){
+                // Verify
+                unsigned long xx8 = read_gpio_reg_uint32 (4,1); // GPIO X8 : DDS Phase Inc (Freq.) upper 32 bits of 44 (signed)
+                unsigned long xx9 = read_gpio_reg_uint32 (5,0); // GPIO X9 : DDS Phase Inc (Freq.) lower 32 bits of 44 (signed)
+                unsigned long long ddsphi = ((unsigned long long)xx8<<(44-32)) + ((unsigned long long)xx9>>(64-44)); // DDS Phase Inc (Freq.) upper 32 bits of 44 (signed)
+                double vfreq = dds_phaseinc_to_freq(ddsphi);
+                fprintf(stderr, "##Verify DDS: f= %12.4f Hz -> Q44 phase_inc=%lld  %016llx  ERROR: %12.4f Hz\n", vfreq, ddsphi, ddsphi, (vfreq-freq));
+        }
 #endif
 
 }
 
 void rp_PAC_set_volume (double volume){
-        if (verbose > 2) fprintf(stderr, "##Configure: volume= %g V\n", volume); 
+        if (verbose >= 1) fprintf(stderr, "##Configure: volume= %g V\n", volume); 
         set_gpio_cfgreg_int32 (PACPLL_CFG_VOLUME_SINE, (int)(Q31 * volume));
 }
 
 // Configure Control Switched: Loops Ampl and Phase On/Off, Unwrapping, QControl
 void rp_PAC_configure_switches (int phase_ctrl, int am_ctrl, int phase_unwrap_always, int qcontrol, int lck_amp, int lck_phase, int dfreq_ctrl){
-        if (verbose > 2) fprintf(stderr, "##Configure loop controls: %x",  phase_ctrl ? 1:0 | am_ctrl ? 2:0); 
+        if (verbose >= 1) fprintf(stderr, "##Configure loop controls: 0x%08x\n",  phase_ctrl ? 1:0 | am_ctrl ? 2:0); 
         set_gpio_cfgreg_int32 (PACPLL_CFG_CONTROL_LOOPS,
                                (phase_ctrl ? 1:0) | (am_ctrl ? 2:0) | (phase_unwrap_always ? 4:0) |   // Bits 1,2,3
                                (qcontrol ? 8:0) |                                                     // Bit  4
@@ -775,7 +776,7 @@ double mu_opt (double periods){
 
 // tau in s for dual PAC and auto DC offset
 void rp_PAC_set_pactau (double tau, double atau, double dc_tau){
-        if (verbose > 2) fprintf(stderr, "##Configure: tau= %g  Q22: %d\n", tau, (int)(Q22 * tau)); 
+        if (verbose >= 1) fprintf(stderr, "##Configure: tau= %g  Q22: %d\n", tau, (int)(Q22 * tau)); 
 
 #if 1
         // in tau s (us) -> mu
@@ -831,7 +832,7 @@ void rp_PAC_auto_dc_offset_adjust (){
                 }
         }
         dc /= k;
-        if (verbose > 1) fprintf(stderr, "RP PACPLL DC-Offset = %10.6f  {%d}\n", dc, k);
+        if (verbose >= 1) fprintf(stderr, "RP PACPLL DC-Offset = %10.6f  {%d}\n", dc, k);
         rp_PAC_set_dcoff (dc);
 
         signal_dc_measured = dc;
@@ -1044,7 +1045,7 @@ void rp_PAC_transport_set_control (int control){
 void rp_PAC_configure_transport (int control, int shr_dec_data, int nsamples, int decimation, int channel_select, double scale, double center){
         __rp_pactransport_shr_dec_hi = channel_select > 7 ? 0 : ((shr_dec_data >= 0 && shr_dec_data <= 24) ? shr_dec_data : 0) << 8; // keep memory, do not shift DBG data
         
-        if (verbose == 1) fprintf(stderr, "Configure transport: dec=%d, shr=%d, CHM=%d N=%d ", decimation, shr_dec_data, channel_select, nsamples);
+        if (verbose == 1) fprintf(stderr, "Configure transport: dec=%d, shr=%d, CHM=%d N=%d\n", decimation, shr_dec_data, channel_select, nsamples);
         
         if (nsamples > 0){
                 set_gpio_cfgreg_int32 (PACPLL_CFG_TRANSPORT_SAMPLES, nsamples);
@@ -1486,7 +1487,10 @@ void set_PAC_config()
         
         // in tune mode disable controllers autmatically and do not touch DDS settings, but allow Q Control
         if (OPERATION.Value() < 6){
+                if (verbose == 1) fprintf(stderr, "** DDS: FREQUENCY_MANUAL **\n");
                 rp_PAC_adjust_dds (FREQUENCY_MANUAL.Value());
+
+                if (verbose == 1) fprintf(stderr, "** CONF SWITCHES **\n");
                 rp_PAC_configure_switches (PHASE_CONTROLLER.Value ()?1:0,
                                            AMPLITUDE_CONTROLLER.Value ()?1:0,
                                            PHASE_UNWRAPPING_ALWAYS.Value ()?1:0,
@@ -1546,15 +1550,15 @@ int rp_app_init(void)
 {
         double reading_vector[READING_MAX_VALUES];
 
-        fprintf(stderr, "Loading PACPLL application\n");
+        fprintf(stderr, "Loading RPSPMC PACPLL application\n");
 
         // Initialization of PAC api
         if (rp_PAC_App_Init() != RP_OK) 
                 {
-                        fprintf(stderr, "Red Pitaya PACPLL API init failed!\n");
+                        fprintf(stderr, "Red Pitaya RPSPMC PACPLL API init failed!\n");
                         return EXIT_FAILURE;
                 }
-        else fprintf(stderr, "Red Pitaya PACPLL API init success!\n");
+        else fprintf(stderr, "Red Pitaya RPSPMC PACPLL API init success!\n");
 
         rp_PAC_auto_dc_offset_adjust ();
 
@@ -2077,6 +2081,7 @@ void UpdateSignals(void)
         int status[3];
         static int last_op=0;
         
+        if (verbose == 1) fprintf(stderr, "** Update Signals **\n");
         if (verbose > 3) fprintf(stderr, "UpdateSignals()\n");
 
         rp_PAC_get_single_reading_FIR (reading_vector);
@@ -2190,6 +2195,7 @@ void UpdateSignals(void)
 
 
 void UpdateParams(void){
+        if (verbose == 1) fprintf(stderr, "** Update Params **\n");
         if (verbose > 3) fprintf(stderr, "UpdateParams()\n");
 	CDataManager::GetInstance()->SetParamInterval (parameter_updatePeriod.Value());
 	CDataManager::GetInstance()->SetSignalInterval (signal_updatePeriod.Value());
@@ -2234,6 +2240,7 @@ void UpdateParams(void){
 
 void OnNewParams(void)
 {
+        if (verbose == 1) fprintf(stderr, "** New Params **\n");
         //int x=0;
         //static int ppv=0;
         //static int spv=0;
