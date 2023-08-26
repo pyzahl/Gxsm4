@@ -12,8 +12,8 @@ INCLUDE += -I$(INSTALL_DIR)/rp_sdk/libjson
 LIBS = -L$(INSTALL_DIR)/lib
 LIBS += -L$(INSTALL_DIR)/rp_sdk
 
-COMMON_FLAGS+=-Wall -fPIC -Os -s
-CXXFLAGS+=$(COMMON_FLAGS) -std=c++11 $(INCLUDE)
+COMMON_FLAGS+=-Wall -fPIC -Os -s -Wno-reorder
+CXXFLAGS+=$(COMMON_FLAGS) -g -std=c++11 $(INCLUDE)
 LDFLAGS = -shared $(COMMON_FLAGS) $(LIBS)
 LDFLAGS+= -Wl,--whole-archive,--no-as-needed
 LDFLAGS+= -lcryptopp -lrpapp -lrp -lrp_sdk

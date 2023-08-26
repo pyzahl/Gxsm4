@@ -107,7 +107,7 @@ module tb_spm_ad(
     
         $display ("running the tb");
 
-        // TEST AD SERIA lOUT
+        // TEST AD SERIAL OUT
         dac_send = 0;      
         dac_axis = 0;      
         dac_cfg = 0;
@@ -248,10 +248,20 @@ axis_spm_control axis_spm_control_1
     .M_AXIS4_tdata(spm_ru),
     .M_AXIS4_tvalid(spm_ruv),
 
-    .xs_mon(mrx), // vector components
-    .ys_mon(mry), // ..
-    .zs_mon(mrz), // ..
-    .u_mon(mru) // ..
+
+    .M_AXIS_XSMON_tdata(mrx),
+    //.M_AXIS_XSMON_tvalid,
+    .M_AXIS_YSMON_tdata(mry),
+    //.M_AXIS_YSMON_tvalid,
+
+    //.M_AXIS_XMON_tdata,
+    //.M_AXIS_XMON_tvalid,
+    //.M_AXIS_YMON_tdata,
+    //.M_AXIS_YMON_tvalid,
+    //.M_AXIS_ZMON_tdata,
+    //.M_AXIS_ZMON_tvalid,
+    .M_AXIS_UMON_tdata(mru)
+    //.M_AXIS_UMON_tvalid
 
     );
 

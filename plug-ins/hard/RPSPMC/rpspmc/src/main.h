@@ -11,7 +11,6 @@
 
 #define IS_NEW(X) X.Value() != X.NewValue()
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
