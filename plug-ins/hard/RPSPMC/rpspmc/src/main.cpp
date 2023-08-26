@@ -4,7 +4,7 @@
  * universal STM/AFM/SARLS/SPALEED/... controlling and
  * data analysis software
  * 
- * Copyright (C) 1999,2000,2001,2002,2003 Percy Zahl
+ * Copyright (C) 1999,2000,..2023 Percy Zahl
  *
  * Authors: Percy Zahl <zahl@users.sf.net>
  * additional features: Andreas Klust <klust@users.sf.net>
@@ -42,8 +42,9 @@
 #include "pacpll.h"
 #include "spmc.h"
 
-//CXXSOURCES=main.cpp fpga_cfg.cpp pacpll.cpp spmc.cpp
-
+// Some thing is off while Linking, application does NOT (terminated with unkown error a tload time) work with compliled separate and linked to lib
+// In Makefile: CXXSOURCES=main.cpp fpga_cfg.cpp pacpll.cpp spmc.cpp
+// Thus this primitive alternative assembly here
 #include "fpga_cfg.cpp"
 #include "pacpll.cpp"
 #include "spmc.cpp"

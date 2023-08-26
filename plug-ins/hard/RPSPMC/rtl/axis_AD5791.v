@@ -64,6 +64,7 @@ module axis_AD5791 #(
     reg [DAC_WORD_WIDTH-1:0] reg_dac_data[NUM_DAC-1:0];
     reg [DAC_WORD_WIDTH-1:0] reg_dac_data_buf[NUM_DAC-1:0];
     
+    reg cfg_mode_job=0;
     reg sync=1;
     reg start=0;
     reg [6-1:0] frame_bit_counter=0;
@@ -123,7 +124,15 @@ module axis_AD5791 #(
                     begin // load only on configuration_send pos edge
                         if (configuration_send)
                         begin
-                            state_load_dacs <= 1;
+                            if (!cfg_mode_job)
+                            begin
+                                cfg_mode_job <= 1;
+                                state_load_dacs <= 1;
+                            end
+                        end
+                        else
+                        begin
+                            cfg_mode_job <= 0; // do not repat sending! "send bit" must be reset while in config mode
                         end
                     end
                     else // auto load and start sending on new data

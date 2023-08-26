@@ -108,17 +108,27 @@ module tb_spm_ad(
         $display ("running the tb");
 
         // TEST AD SERIAL OUT
-        dac_send = 0;      
-        dac_axis = 0;      
-        dac_cfg = 0;
-        dac_cfgv = 1;
+        dac_cmode = 1; // DACs put in config mode (hold) unless reprogrammed      
+        dac_send = 0; // SEND CFG DATA bit
+        dac_axis = 0; // DAC AXIS (Channel)
+        dac_cfg = 0;  // DAC CFG DATA
+        dac_cfgv = 1; // DATA VALID
         #10;
 
-        dac_axis = 0;      
-        dac_cfg = 32;
+        dac_axis = 3; // ADC0      
+        dac_cfg = 128; // =32
         #10;
-        dac_send = 1;      
-        #128;
+        dac_axis = 2; // ADC0      
+        dac_cfg = 64; // =32
+        #10;
+        dac_axis = 1; // ADC0      
+        dac_cfg = 32; // =32
+        #10;
+        dac_axis = 0; // ADC0      
+        dac_cfg = 16; // =32
+        #10;
+        dac_send = 1; // Send
+        #(128*64);
         dac_send = 0;      
         dac_cmode = 0;      
 
