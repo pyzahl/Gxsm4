@@ -281,103 +281,26 @@ CDoubleParameter TRANSPORT_TAU_AMPL("TRANSPORT_TAU_AMPL", CBaseParameter::RW, 0.
 
 /* SPMC Parameters */
 
-CDoubleParameter  SPMC_BIAS("SPMC_BIAS", CBaseParameter::RW, 0.0, 0, -10000, 10000); // mV
+CDoubleParameter  SPMC_BIAS("SPMC_BIAS", CBaseParameter::RW, 0.0, 0, -5.0, 5.0); // Volts
+
+CIntParameter     SPMC_Z_SERVO_MODE("SPMC_Z_SERVO_MODE", CBaseParameter::RW, 0.0, 0, 0, 1<<31);
+CDoubleParameter  SPMC_Z_SERVO_SETPOINT("SPMC_Z_SERVO_SETPOINT", CBaseParameter::RW, 0.0, 0, -5.0, 5.0); // Volts
+CDoubleParameter  SPMC_Z_SERVO_CP("SPMC_Z_SERVO_CP", CBaseParameter::RW, 0.0, 0, -1000.0, 1000.0); // XXX
+CDoubleParameter  SPMC_Z_SERVO_CI("SPMC_Z_SERVO_CI", CBaseParameter::RW, 0.0, 0, -1000.0, 1000.0); // XXX
+CDoubleParameter  SPMC_Z_SERVO_UPPER("SPMC_Z_SERVO_UPPER", CBaseParameter::RW, 0.0, 0, -5.0, 5.0); // Volts
+CDoubleParameter  SPMC_Z_SERVO_LOWER("SPMC_Z_SERVO_LOWER", CBaseParameter::RW, 0.0, 0, -5.0, 5.0); // Volts
+CDoubleParameter  SPMC_Z_SERVO_SETPOINT_CZ("SPMC_Z_SERVO_SETPOINT_CZ", CBaseParameter::RW, 0.0, 0, -5.0, 5.0); // Volts
+CDoubleParameter  SPMC_Z_SERVO_LEVEL("SPMC_Z_SERVO_LEVEL", CBaseParameter::RW, 0.0, 0, -5.0, 5.0); // Volts
+
+
 CBooleanParameter SPMC_GVP_EXECUTE("SPMC_GVP_EXECUTE", CBaseParameter::RW, false, 0);
 CBooleanParameter SPMC_GVP_PAUSE("SPMC_GVP_PAUSE", CBaseParameter::RW, false, 0);
 CBooleanParameter SPMC_GVP_STOP("SPMC_GVP_STOP", CBaseParameter::RW, false, 0);
-CIntParameter     SPMC_GVP_CONTROL_("SPMC_GVP_CONTROL", CBaseParameter::RW, 0, 0, -(1<<30), 1<<30);
+CIntParameter     SPMC_GVP_CONTROLLER("SPMC_GVP_CONTROLLER", CBaseParameter::RW, 0, 0, -(1<<30), 1<<30);
 #define MAX_GVP_VECTORS   32
 #define GVP_VECTORS_SIZE  16 // 10 components used (1st is index, then: N, nii, Options, Nrep, Next, dx, dy, dz, du, fill w zero to 16)
 #define GVP_PROGRAM_SIZE (MAX_GVP_VECTORS * GVP_VECTORS_SIZE)
 CFloatSignal SPMC_GVP_VECTOR("GVP_VECTOR_PROGRAM", GVP_PROGRAM_SIZE, 0.0f); // vector components in mV, else "converted to int"
-std::vector<float> smpc_gvp_program(GVP_PROGRAM_SIZE);
-
-
-/* ****
-       // TEST AD SERIAL OUT
-        dac_send = 0;      
-        dac_axis = 0;      
-        dac_cfg = 0;
-        dac_cfgv = 1;
-        #10;
-
-        dac_axis = 0;      
-        dac_cfg = 32;
-        #10;
-        dac_send = 1;      
-        #128;
-        dac_send = 0;      
-        dac_cmode = 0;      
-
-        r=1;
-        #20
-
-        // TEST GVP SCAN
-        prg=0;
-        #20
-        // move to start point
-        //                  du        dz        dy        dx     Next       Nrep,   Options,     nii,      N,    [Vadr]
-        data = {192'd0, 32'd0000, 32'd0000, -32'd0002, -32'd0002,  32'd0, 32'd0000,   32'h001, 32'd0128, 32'd005, 32'd00 };
-        #2
-        prg=1;
-        #20
-        prg=0;
-        #20
-
-        data = {192'd0, 32'd0004, 32'd0003, 32'd0002, 32'd0001,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd01 }; // END
-        #2
-        prg=1;
-        #20
-        prg=0;
-        #20
-
-        r=0; // release reset to run
-        #20
-
-        wait (fin);
-
-        r=1; // put into reset/hold
-        #20
-
-        prg=0;
-        #20
-
-        // scan procedure
-        // GVP Vector [512 bit max, 10x32 used currently per vector, Num Vectors=8 Currently ]
-        // [32bit]-000-fill    9,        8,       7,         6,       5,        4,         3,       2,       1       0
-        //                  du        dz        dy        dx     Next       Nrep,   Options,     nii,      N,    [Vadr]
-        data = {192'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0256,  32'd0, 32'd0000,   32'h001, 32'd128, 32'd010, 32'd00 };
-        #2
-        prg=1;
-        #20
-        prg=0;
-        #20
-        
-        data = {192'd0, 32'd0000, 32'd0000, 32'd0000, -32'sd0256,  32'd0, 32'd0000,   32'h001, 32'd128, 32'd010, 32'd01 };
-        #2
-        prg=1;
-        #20
-        prg=0;
-        #20
-
-        data = {192'd0, 32'd0000, 32'd0000, 32'd0064, 32'd0000,  -32'sd2, 32'd0010,   32'h001, 32'd128, 32'd001, 32'd02 };
-        #2
-        prg=1;
-        #20
-        prg=0;
-        #20
-
-        data = {192'd0, 32'd0004, 32'd0003, 32'd0064, 32'd0001,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd03 }; // END
-        #2
-        prg=1;
-        #20
-        prg=0;
-        #20
-
-        r=0; // release reset to run
-        wait (fin);
-******** */
-
 
 CDoubleParameter  SPMC_ALPHA("SPMC_ALPHA", CBaseParameter::RW, 0.0, 0, -360, +360); // deg
 CDoubleParameter  SPMC_SLOPE_dZX("SPMC_SLOPE_X", CBaseParameter::RW, 0.0, 0, -1.0, +1.0); // slope in Volts Z / Volt X
@@ -386,6 +309,13 @@ CDoubleParameter  SPMC_SLOPE_dZY("SPMC_SLOPE_Y", CBaseParameter::RW, 0.0, 0, -1.
 CDoubleParameter  SPMC_SET_OFFSET_X("SPMC_OFFSET_X", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 CDoubleParameter  SPMC_SET_OFFSET_Y("SPMC_OFFSET_Y", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 CDoubleParameter  SPMC_SET_OFFSET_Z("SPMC_OFFSET_Z", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
+
+// RP SPMC Monitors
+CDoubleParameter  SPMC_BIAS_MONITOR("SPMC_BIAS_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
+CDoubleParameter  SPMC_X_MONITOR("SPMC_X_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
+CDoubleParameter  SPMC_Y_MONITOR("SPMC_Y_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
+CDoubleParameter  SPMC_Z_MONITOR("SPMC_Z_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
+
 
 
 // PHASE Valid for PAC time constant set to 15us:
@@ -720,6 +650,10 @@ int rp_app_init(void)
 
         // init block transport for scope
         rp_PAC_start_transport (PACPLL_CFG_TRANSPORT_LOOP, 4096, TRANSPORT_MODE.Value ());
+
+        // Init SPMC
+        rp_spmc_AD5791_init ();
+
         
         return 0;
 }
@@ -1337,7 +1271,10 @@ void UpdateSignals(void)
         
         rp_PAC_auto_dc_offset_correct ();
 
-        last_op = OPERATION.Value (); 
+        last_op = OPERATION.Value ();
+
+        // RPSPMC Update Monitors
+        rp_spmc_update_readings ();
 }
 
 
@@ -1500,6 +1437,52 @@ void OnNewParams(void)
         PULSE_FORM_SHAPEX.Update ();
         PULSE_FORM_SHAPEXIF.Update ();
 
+        // RPSPMC
+        // ****************************************
+        fprintf(stderr, "** RPSPMC -- New Params Checking **\n Bias changed? : ");
+        if (SPMC_BIAS.IsValueChanged()){
+                fprintf(stderr, "YES\n");
+                rp_spmc_set_bias (SPMC_BIAS.Value());
+        }else
+                fprintf(stderr, "NO\n");
+        
+        fprintf(stderr, "** RPSPMC -- call Bias.Update ()");
+        SPMC_BIAS.Update ();
+        
+        fprintf(stderr, "** RPSPMC -- Bias changed now? : ");
+        if (SPMC_BIAS.IsValueChanged()){
+                fprintf(stderr, "YES\n");
+                rp_spmc_set_bias (SPMC_BIAS.Value());
+        }else
+                fprintf(stderr, "NO\n");
+        fprintf(stderr, "** RPSPMC -- Bias = %g V\n", SPMC_BIAS.Value());
+
+
+        SPMC_Z_SERVO_MODE.Update ();
+        SPMC_Z_SERVO_SETPOINT.Update ();
+        SPMC_Z_SERVO_CP.Update ();
+        SPMC_Z_SERVO_CI.Update ();
+        SPMC_Z_SERVO_UPPER.Update ();
+        SPMC_Z_SERVO_LOWER.Update ();
+        SPMC_Z_SERVO_SETPOINT_CZ.Update ();
+        SPMC_Z_SERVO_LEVEL.Update ();
+        
+        SPMC_GVP_EXECUTE.Update ();
+        SPMC_GVP_PAUSE.Update ();
+        SPMC_GVP_STOP.Update ();
+        SPMC_GVP_CONTROLLER.Update ();
+        //CFloatSignal SPMC_GVP_VECTOR("GVP_VECTOR_PROGRAM", GVP_PROGRAM_SIZE, 0.0f); // vector components in mV, else "converted to int"
+        //std::vector<float> smpc_gvp_program(GVP_PROGRAM_SIZE);
+
+        SPMC_ALPHA.Update ();
+        SPMC_SLOPE_dZX.Update ();
+        SPMC_SLOPE_dZY.Update ();
+
+        SPMC_SET_OFFSET_X.Update ();
+        SPMC_SET_OFFSET_Y.Update ();
+        SPMC_SET_OFFSET_Z.Update ();
+        // ****************************************
+        
         
         if ( OPERATION.Value () > 0 && OPERATION.Value () != operation ){
                 operation = OPERATION.Value ();

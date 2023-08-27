@@ -83,7 +83,7 @@
 
 #define SPMC_BASE                    (PACPLL_CFG3_OFFSET + 0)
 #define SPMC_GVP_CONTROL              0 // 0: reset 1: setvec
-#define SPMC_GVP_VECTOR_DATA          1..16 // 512 bits (16x32)
+#define SPMC_GVP_VECTOR_DATA          1 // 1..16 // 512 bits (16x32)
 
 #define SPMC_CFG_AD5791_DAC_AXIS_DATA 17 // 32bits
 #define SPMC_CFG_AD5791_DAC_CONTROL   18 // bits 0,1,2: axis; bit 3: config mode; bit 4: send config data, MUST reset "send bit in config mode to resend next, on hold between"
@@ -101,6 +101,11 @@
 #define SPMC_OFFSET_Z            26
 
 extern int verbose;
+
+extern CDoubleParameter  SPMC_BIAS_MONITOR;
+extern CDoubleParameter  SPMC_X_MONITOR;
+extern CDoubleParameter  SPMC_Y_MONITOR;
+extern CDoubleParameter  SPMC_Z_MONITOR;
 
 
 /* ****
@@ -241,23 +246,22 @@ void rp_spmc_AD5791_init (){
 }
 
 void rp_spmc_set_bias (double bias){
-        if (verbose >= 1) fprintf(stderr, "##Configure mode set AD5971 AXIS3 (Bias) to %g V\n", bias);
+        if (verbose > 1) fprintf(stderr, "##Configure mode set AD5971 AXIS3 (Bias) to %g V\n", bias);
         rp_spmc_AD5791_send_axis_data (3, (int)round(Q24*bias/SPMC_AD5791_REFV));
 }
 
 void rp_spmc_set_xyz (double ux, double uy, double uz){
-        if (verbose >= 1) fprintf(stderr, "##Configure mode set AD5971 AXIS0,1,2 (XYZ) to %g, %g, %g V\n", ux, uy, uz);
+        if (verbose > 1) fprintf(stderr, "##Configure mode set AD5971 AXIS0,1,2 (XYZ) to %g, %g, %g V\n", ux, uy, uz);
         rp_spmc_AD5791_set_axis_data (0, (int)round(Q24*ux/SPMC_AD5791_REFV));
         rp_spmc_AD5791_set_axis_data (1, (int)round(Q24*uy/SPMC_AD5791_REFV));
         rp_spmc_AD5791_send_axis_data (2, (int)round(Q24*uz/SPMC_AD5791_REFV));
 }
 
 
-// Phase Controller
+// Main SPM Z Feedback Servo Control
 // CONTROL[32] OUT[32]   m[24]  x  c[32]  = 56 M: 24{Q32},  P: 44{Q14}
 void rp_spmc_set_zservo_controller (double setpoint, double cp, double ci, double upper, double lower){
-        if (verbose > 2) fprintf(stderr, "##Configure RP SPMC Z-Servo Controller: set= %g  cp=%g ci=%g upper=%g lower=%g\n", setpoint, cp, ci, upper, lower); 
-
+        if (verbose > 1) fprintf(stderr, "##Configure RP SPMC Z-Servo Controller: set= %g  cp=%g ci=%g upper=%g lower=%g\n", setpoint, cp, ci, upper, lower); 
         set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_CONTROLLER + SPMC_CFG_SET,   (int)round (Q31*setpoint/SPMC_AD5791_REFV)); // => 23.1 S23Q8 @ +/-5V range in Q31
         set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_CONTROLLER + SPMC_CFG_CP,    (int)round (QZSCOEF * cp)); // Q31
         set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_CONTROLLER + SPMC_CFG_CI,    (int)round (QZSCOEF * ci)); // Q31
@@ -265,4 +269,84 @@ void rp_spmc_set_zservo_controller (double setpoint, double cp, double ci, doubl
         set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_CONTROLLER + SPMC_CFG_LOWER, (int)round (Q31*lower/SPMC_AD5791_REFV));
 }
 
+void rp_spmc_set_zservo_gxsm_speciality_setting (int mode, double z_setpoint, double level){
+        set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_MODE, mode);
+        set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_ZSETPOINT, (int)round (Q31*z_setpoint/SPMC_AD5791_REFV)); // => +/-5V range in Q31
+        set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_LEVEL, (int)round (Q31*level/SPMC_AD5791_REFV)); // => +/-5V range in Q31
+}
 
+// RPSPMC GVP Engine Management
+void rp_spmc_gvp_config (bool reset=true, bool program=false){
+        set_gpio_cfgreg_int32 (SPMC_GVP_CONTROL,
+                               (reset ? 1:0) | (program ? 2:0)
+                               );
+}
+
+void rp_spmc_set_gvp_vector (CFloatSignal &vector){
+        rp_spmc_gvp_config (); // put in reset/hold mode
+        usleep(10);
+        // write GVP-Vector [vector[0]] components
+        //                      du        dz        dy        dx     Next       Nrep,   Options,     nii,      N,    [Vadr]
+        //data = {192'd0, 32'd0000, 32'd0000, -32'd0002, -32'd0002,  32'd0, 32'd0000,   32'h001, 32'd0128, 32'd005, 32'd00 };
+        for (int i=0; i<16; ++i){
+                int x=0;
+                if (i < 10){
+                        if (i > 4) // delta components in Volts
+                                x = (int)round(Q31*vector[i]/SPMC_AD5791_REFV);  // => 23.1 S23Q8 @ +/-5V range in Q31
+                        else
+                                x = (int)round(vector[i]);
+                }
+                set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA+i, x);
+        }
+        usleep(10);
+        rp_spmc_gvp_config (true, true); // load vector
+        usleep(10);
+        rp_spmc_gvp_config (true, false);
+}
+
+
+// RPSPMC Location and Geometry
+void rp_spmc_set_rotation (double alpha){
+        set_gpio_cfgreg_int32 (SPMC_ROTM_XX, (int)round (Q31*cos(alpha)));
+        set_gpio_cfgreg_int32 (SPMC_ROTM_XY, (int)round (Q31*sin(alpha)));
+}
+
+void rp_spmc_set_slope (double dzx, double dzy){
+        set_gpio_cfgreg_int32 (SPMC_SLOPE_X, (int)round (Q31*dzx));
+        set_gpio_cfgreg_int32 (SPMC_SLOPE_Y, (int)round (Q31*dzy));
+}
+
+void rp_spmc_set_offsets (double x0, double y0, double z0){
+        set_gpio_cfgreg_int32 (SPMC_OFFSET_X, (int)round (Q31*x0/SPMC_AD5791_REFV));
+        set_gpio_cfgreg_int32 (SPMC_OFFSET_Y, (int)round (Q31*y0/SPMC_AD5791_REFV));
+        set_gpio_cfgreg_int32 (SPMC_OFFSET_Z, (int)round (Q31*z0/SPMC_AD5791_REFV));
+}
+
+
+/*
+  Signal Monitoring via GPIO:
+  U-Mon: GPIO 7 X15
+  X-Mon: GPIO 7 X16
+  Y-Mon: GPIO 8 X17
+  Z-Mon: GPIO 8 X18
+ */
+
+double rp_spmc_read_Bias_Monitor(){
+        return SPMC_AD5791_REFV*(double)read_gpio_reg_int32 (7,0) / Q31;
+}
+double rp_spmc_read_X_Monitor(){
+        return SPMC_AD5791_REFV*(double)read_gpio_reg_int32 (7,1) / Q31;
+}
+double rp_spmc_read_Y_Monitor(){
+        return SPMC_AD5791_REFV*(double)read_gpio_reg_int32 (8,0) / Q31;
+}
+double rp_spmc_read_Z_Monitor(){
+        return SPMC_AD5791_REFV*(double)read_gpio_reg_int32 (8,1) / Q31;
+}
+
+void rp_spmc_update_readings (){
+        SPMC_BIAS_MONITOR.Value () = rp_spmc_read_Bias_Monitor();
+        SPMC_X_MONITOR.Value () = rp_spmc_read_X_Monitor();
+        SPMC_Y_MONITOR.Value () = rp_spmc_read_Y_Monitor();
+        SPMC_Z_MONITOR.Value () = rp_spmc_read_Z_Monitor();
+}

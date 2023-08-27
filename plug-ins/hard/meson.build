@@ -36,7 +36,14 @@ plugin_list = [
 
 if gsl.found() and soup.found()
     plugin_list += [
-    { 'name': 'rpspmc_pacpll', 'sources' : ['rpspmc_pacpll.cpp', '../control/jsmn.cpp'], 'deps': [ soup, gsl, lz ],
+    { 'name': 'rpspmc_pacpll',
+      'sources' : ['rpspmc_pacpll.cpp',
+      		   'rpspmc_pacpll_json_data.cpp',
+      		   '../control/jsmn.cpp',
+		   'rpspmc_hwi_dev.cpp',
+		   'rpspmc_hwi_eventhandling.cpp',
+		   'rpspmc_hwi_vectorgen.cpp'],
+      'deps': [ soup, gsl, lz ],	
       'gschemas': [ 'org.gnome.gxsm4.rpspmc-pacpll-settings.gschema.xml',
                     'org.gnome.gxsm4.pcs.plugin-librpspmc-pacpll.gschema.xml',
                     'org.gnome.gxsm4.pcsadjustments.plugin-librpspmc-pacpll.gschema.xml' ] },

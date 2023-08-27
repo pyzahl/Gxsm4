@@ -1,0 +1,142 @@
+/* -*- Mode: C++; indent-tabs-mode: nil; c-basic-offset: 8 c-style: "K&R" -*- */
+
+/* Gnome gxsm - Gnome X Scanning Microscopy
+ * universal STM/AFM/SARLS/SPALEED/... controlling and
+ * data analysis software
+ *
+ * Gxsm Plugin Name: rpspmc_pacpll.C
+ * ========================================
+ * 
+ * Copyright (C) 1999 The Free Software Foundation
+ *
+ * Authors: Percy Zahl <zahl@fkp.uni-hannover.de>
+ * additional features: Andreas Klust <klust@fkp.uni-hannover.de>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
+ */
+
+#include "rpspmc_pacpll_json_data.h"
+
+PACPLL_parameters pacpll_parameters;
+PACPLL_signals pacpll_signals;
+
+JSON_parameter PACPLL_JSON_parameters[] = {
+        { "DC_OFFSET", &pacpll_parameters.dc_offset, true },
+        { "CPU_LOAD", &pacpll_parameters.cpu_load, true },
+        { "COUNTER", &pacpll_parameters.counter, true },
+        { "FREE_RAM", &pacpll_parameters.free_ram, true },
+        { "EXEC_MONITOR", &pacpll_parameters.exec_amplitude_monitor, true },
+        { "DDS_FREQ_MONITOR", &pacpll_parameters.dds_frequency_monitor, true },
+        { "VOLUME_MONITOR", &pacpll_parameters.volume_monitor, true },
+        { "PHASE_MONITOR", &pacpll_parameters.phase_monitor, true },
+        { "DFREQ_MONITOR", &pacpll_parameters.dfreq_monitor, true },
+        { "CONTROL_DFREQ_MONITOR", &pacpll_parameters.control_dfreq_monitor, true },
+
+        { "PARAMETER_PERIOD", &pacpll_parameters.parameter_period, false },
+        { "SIGNAL_PERIOD", &pacpll_parameters.signal_period, false },
+        { "BRAM_WRITE_ADR", &pacpll_parameters.bram_write_adr, true },
+        { "BRAM_SAMPLE_POS", &pacpll_parameters.bram_sample_pos, true },
+        { "BRAM_FINISHED", &pacpll_parameters.bram_finished, true },
+
+        { "SHR_DEC_DATA", &pacpll_parameters.shr_dec_data, false },
+        { "GAIN1", &pacpll_parameters.gain1, false },
+        { "GAIN2", &pacpll_parameters.gain2, false },
+        { "GAIN3", &pacpll_parameters.gain3, false },
+        { "GAIN4", &pacpll_parameters.gain4, false },
+        { "GAIN5", &pacpll_parameters.gain5, false },
+        { "PAC_DCTAU", &pacpll_parameters.pac_dctau, false },
+        { "PACTAU", &pacpll_parameters.pactau, false },
+        { "PACATAU", &pacpll_parameters.pacatau, false },
+
+        { "QCONTROL", &pacpll_parameters.qcontrol, false },
+        { "QC_GAIN", &pacpll_parameters.qc_gain, false },
+        { "QC_PHASE", &pacpll_parameters.qc_phase, false },
+
+        { "LCK_AMPLITUDE", &pacpll_parameters.lck_amplitude, false },
+        { "LCK_PHASE", &pacpll_parameters.lck_phase, false },
+
+        { "FREQUENCY_MANUAL", &pacpll_parameters.frequency_manual, false }, // manual/tune frequency
+        { "FREQUENCY_CENTER", &pacpll_parameters.frequency_center, false }, // center frequency -- used as offset for AUX
+        { "AUX_SCALE", &pacpll_parameters.aux_scale, false },
+        { "VOLUME_MANUAL", &pacpll_parameters.volume_manual, false },
+        { "OPERATION", &pacpll_parameters.operation, false },
+        { "PACVERBOSE", &pacpll_parameters.pacverbose, false },
+        { "TRANSPORT_DECIMATION", &pacpll_parameters.transport_decimation, false },
+        { "TRANSPORT_MODE", &pacpll_parameters.transport_mode, false }, // CH12
+        { "TRANSPORT_CH3", &pacpll_parameters.transport_ch3, false },
+        { "TRANSPORT_CH4", &pacpll_parameters.transport_ch4, false },
+        { "TRANSPORT_CH5", &pacpll_parameters.transport_ch5, false },
+        { "TUNE_DFREQ", &pacpll_parameters.tune_dfreq, false },
+        { "TUNE_SPAN", &pacpll_parameters.tune_span, false },
+        { "CENTER_AMPLITUDE", &pacpll_parameters.center_amplitude, false },
+        { "CENTER_PHASE", &pacpll_parameters.center_phase, false },
+        { "CENTER_FREQUENCY", &pacpll_parameters.center_frequency, false },
+        
+        { "AMPLITUDE_FB_SETPOINT", &pacpll_parameters.amplitude_fb_setpoint, false },
+        { "AMPLITUDE_FB_CP", &pacpll_parameters.amplitude_fb_cp, false },
+        { "AMPLITUDE_FB_CI", &pacpll_parameters.amplitude_fb_ci, false },
+        { "EXEC_FB_UPPER", &pacpll_parameters.exec_fb_upper, false },
+        { "EXEC_FB_LOWER", &pacpll_parameters.exec_fb_lower, false },
+        { "AMPLITUDE_CONTROLLER", &pacpll_parameters.amplitude_controller, false },
+        
+        { "PHASE_FB_SETPOINT", &pacpll_parameters.phase_fb_setpoint, false },
+        { "PHASE_FB_CP", &pacpll_parameters.phase_fb_cp, false },
+        { "PHASE_FB_CI", &pacpll_parameters.phase_fb_ci, false },
+        { "FREQ_FB_UPPER", &pacpll_parameters.freq_fb_upper, false },
+        { "FREQ_FB_LOWER", &pacpll_parameters.freq_fb_lower, false },
+        { "PHASE_HOLD_AM_NOISE_LIMIT",  &pacpll_parameters.phase_hold_am_noise_limit, false },
+        { "PHASE_CONTROLLER", &pacpll_parameters.phase_controller, false },
+        { "PHASE_UNWRAPPING_ALWAYS", &pacpll_parameters.phase_unwrapping_always, false },
+        { "SET_SINGLESHOT_TRANSPORT_TRIGGER", &pacpll_parameters.set_singleshot_transport_trigger, false },
+        
+        { "DFREQ_FB_SETPOINT", &pacpll_parameters.dfreq_fb_setpoint, false },
+        { "DFREQ_FB_CP", &pacpll_parameters.dfreq_fb_cp, false },
+        { "DFREQ_FB_CI", &pacpll_parameters.dfreq_fb_ci, false },
+        { "DFREQ_FB_UPPER", &pacpll_parameters.control_dfreq_fb_upper, false },
+        { "DFREQ_FB_LOWER", &pacpll_parameters.control_dfreq_fb_lower, false },
+        { "DFREQ_CONTROLLER", &pacpll_parameters.dfreq_controller, false },
+
+        { "PULSE_FORM_BIAS0", &pacpll_parameters.pulse_form_bias0, false },
+        { "PULSE_FORM_BIAS1", &pacpll_parameters.pulse_form_bias1, false },
+        { "PULSE_FORM_PHASE0", &pacpll_parameters.pulse_form_phase0, false },
+        { "PULSE_FORM_PHASE1", &pacpll_parameters.pulse_form_phase1, false },
+        { "PULSE_FORM_WIDTH0", &pacpll_parameters.pulse_form_width0, false },
+        { "PULSE_FORM_WIDTH0IF", &pacpll_parameters.pulse_form_width0if, false },
+        { "PULSE_FORM_WIDTH1", &pacpll_parameters.pulse_form_width1, false },
+        { "PULSE_FORM_WIDTH1IF", &pacpll_parameters.pulse_form_width1if, false },
+        { "PULSE_FORM_HEIGHT0", &pacpll_parameters.pulse_form_height0, false },
+        { "PULSE_FORM_HEIGHT0IF", &pacpll_parameters.pulse_form_height0if, false },
+        { "PULSE_FORM_HEIGHT1", &pacpll_parameters.pulse_form_height1, false },
+        { "PULSE_FORM_HEIGHT1IF", &pacpll_parameters.pulse_form_height1if, false },
+        { "PULSE_FORM_SHAPEXW", &pacpll_parameters.pulse_form_shapexw, false },
+        { "PULSE_FORM_SHAPEXWIF", &pacpll_parameters.pulse_form_shapexwif, false },
+        { "PULSE_FORM_SHAPEX", &pacpll_parameters.pulse_form_shapex, false },
+        { "PULSE_FORM_SHAPEXIF", &pacpll_parameters.pulse_form_shapexif, false },
+         
+        { NULL, NULL, true }
+};
+
+JSON_signal PACPLL_JSON_signals[] = {
+        { "SIGNAL_CH1", 1024, pacpll_signals.signal_ch1 },
+        { "SIGNAL_CH2", 1024, pacpll_signals.signal_ch2 },
+        { "SIGNAL_CH3", 1024, pacpll_signals.signal_ch3 },
+        { "SIGNAL_CH4", 1024, pacpll_signals.signal_ch4 },
+        { "SIGNAL_CH5", 1024, pacpll_signals.signal_ch5 },
+        { "SIGNAL_FRQ", 1024, pacpll_signals.signal_frq },
+        { "SIGNAL_TUNE_PHASE", 1024, pacpll_signals.signal_phase },
+        { "SIGNAL_TUNE_AMPL",  1024, pacpll_signals.signal_ampl },
+        { "SIGNAL_GPIOX",  16, pacpll_signals.signal_gpiox },
+        { NULL, 0, NULL }
+};

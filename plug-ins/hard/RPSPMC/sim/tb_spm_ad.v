@@ -107,6 +107,31 @@ module tb_spm_ad(
     
         $display ("running the tb");
 
+        // INIT GVP
+        r=1;
+        #20
+        prg=0;
+        #20
+        data = {192'd0, 32'd0004, 32'd0003, 32'd0064, 32'd0001,  32'd0, 32'd0000,   32'h000, 32'd001, 32'd004, 32'd00 }; // 000
+        #2
+        prg=1;
+        #20
+        prg=0;
+        #20
+        data = {192'd0, 32'd0004, 32'd0003, 32'd0064, 32'd0001,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd01 }; // END
+        #2
+        prg=1;
+        #20
+        prg=0;
+        #20
+
+        r=0; // release reset to run
+        wait (fin);
+
+        #20
+        r=1; // reset to hold
+
+
         // TEST AD SERIAL OUT
         dac_cmode = 1; // DACs put in config mode (hold) unless reprogrammed      
         dac_send = 0; // SEND CFG DATA bit
@@ -132,10 +157,10 @@ module tb_spm_ad(
         dac_send = 0;      
         dac_cmode = 0;      
 
-        r=1;
-        #20
 
         // TEST GVP SCAN
+        r=1;
+        #20
         prg=0;
         #20
         // move to start point

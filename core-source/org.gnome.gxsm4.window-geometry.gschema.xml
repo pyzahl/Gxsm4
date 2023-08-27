@@ -182,6 +182,12 @@
       <description>geometry</description>
     </key>
     
+    <key name="rpspmc-main-control" type="ai">
+      <default>[0,0, 0,0,0,0]</default>
+      <summary>show/hide state, option, X,Y, H,W</summary>
+      <description>geometry</description>
+    </key>
+    
     <key name="rpspmc-pacpll-control" type="ai">
       <default>[0,0, 0,0,0,0]</default>
       <summary>show/hide state, option, X,Y, H,W</summary>

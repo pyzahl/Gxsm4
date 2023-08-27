@@ -344,6 +344,267 @@
       <description>pcs0000, PCS Remote-ID: 'rpspmc-PAC-TRANSPORT-TAU-AMPL', Default/U:     -1 ms    , Adjustment PCS Name: 'rpspmc-PAC-TRANSPORT-TAU-AMPL' </description>
     </key>
 
+
+    <key name="fbs-bias" type="d">
+      <default>0.1</default>
+      <summary>PCS Remote-ID: 'fbs-bias', Default/U:    0.1 V     </summary>
+      <description>pcs0000, PCS Remote-ID: 'fbs-bias', Default/U:    0.1 V    , Adjustment PCS Name: 'fbs-bias' </description>
+    </key>
+
+    <key name="adv-dsp-zpos-ref" type="d">
+      <default>0.0</default>
+      <summary>PCS Remote-ID: 'adv-dsp-zpos-ref', Default/U: 0 Å     </summary>
+      <description>pcs0000, PCS Remote-ID: 'adv-dsp-zpos-ref', Default/U: 0.0 Å    , Adjustment PCS Name: 'adv-dsp-zpos-ref' </description>
+    </key>
+
+    <key name="fbs-mx0-current-set" type="d">
+      <default>0.0</default>
+      <summary>PCS Remote-ID: 'fbs-mx0-current-set', Default/U:    0 nA     </summary>
+      <description>pcs0000, PCS Remote-ID: 'fbs-mx0-current-set', Default/U:    0 nA    , Adjustment PCS Name: 'fbs-mx0-current-set' </description>
+    </key>
+
+    <key name="fbs-mx0-current-gain" type="d">
+      <default>1.0</default>
+      <summary>PCS Remote-ID: 'fbs-mx0-current-gain', Default/U: 1       </summary>
+      <description>pcs0000, PCS Remote-ID: 'fbs-mx0-current-gain', Default/U: 10      , Adjustment PCS Name: 'fbs-mx0-current-gain' </description>
+    </key>
+
+    <key name="fbs-mx0-current-level" type="d">
+      <default>0.0</default>
+      <summary>PCS Remote-ID: 'fbs-mx0-current-level', Default/U: 0 nA     </summary>
+      <description>pcs0000, PCS Remote-ID: 'fbs-mx0-current-level', Default/U: 0 nA    , Adjustment PCS Name: 'fbs-mx0-current-level' </description>
+    </key>
+
+    <key name="fbs-mx1-freq-set" type="d">
+      <default>0.0</default>
+      <summary>PCS Remote-ID: 'fbs-mx1-freq-set', Default/U: 0 Hz     </summary>
+      <description>pcs0000, PCS Remote-ID: 'fbs-mx1-freq-set', Default/U: -4.02466e-124 Hz    , Adjustment PCS Name: 'fbs-mx1-freq-set' </description>
+    </key>
+
+    <key name="fbs-mx1-freq-gain" type="d">
+      <default>0.0</default>
+      <summary>PCS Remote-ID: 'fbs-mx1-freq-gain', Default/U:0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'fbs-mx1-freq-gain', Default/U:0      , Adjustment PCS Name: 'fbs-mx1-freq-gain' </description>
+    </key>
+
+    <key name="fbs-mx1-freq-level" type="d">
+      <default>0.0</default>
+      <summary>PCS Remote-ID: 'fbs-mx1-freq-level', Default/U: 0 Hz     </summary>
+      <description>pcs0000, PCS Remote-ID: 'fbs-mx1-freq-level', Default/U: 0 Hz    , Adjustment PCS Name: 'fbs-mx1-freq-level' </description>
+    </key>
+
+    <key name="fbs-cp" type="d">
+      <default>10.0</default>
+      <summary>PCS Remote-ID: 'fbs-cp', Default/U: -5.70287e+91       </summary>
+      <description>pcs0000, PCS Remote-ID: 'fbs-cp', Default/U: 0    , Adjustment PCS Name: 'fbs-cp' </description>
+    </key>
+
+    <key name="fbs-ci" type="d">
+      <default>10.0</default>
+      <summary>PCS Remote-ID: 'fbs-ci', Default/U: 10       </summary>
+      <description>pcs0000, PCS Remote-ID: 'fbs-ci', Default/U: 10   , Adjustment PCS Name: 'fbs-ci' </description>
+    </key>
+
+    <key name="fbs-scan-speed-move" type="d">
+      <default>500.0</default>
+      <summary>PCS Remote-ID: 'fbs-scan-speed-move', Default/U:     500 Å/s     </summary>
+      <description>pcs0000, PCS Remote-ID: 'fbs-scan-speed-move', Default/U:     500 Å/s    , Adjustment PCS Name: 'fbs-scan-speed-move' </description>
+    </key>
+
+    <key name="fbs-scan-speed-scan" type="d">
+      <default>500.0</default>
+      <summary>PCS Remote-ID: 'fbs-scan-speed-scan', Default/U:     500 Å/s     </summary>
+      <description>pcs0000, PCS Remote-ID: 'fbs-scan-speed-scan', Default/U:     500 Å/s    , Adjustment PCS Name: 'fbs-scan-speed-scan' </description>
+    </key>
+
+    <key name="adv-scan-fast-return" type="d">
+      <default>1</default>
+      <summary>PCS Remote-ID: 'adv-scan-fast-return', Default/U: 1       </summary>
+      <description>pcs0000, PCS Remote-ID: 'adv-scan-fast-return', Default/U: 1    , Adjustment PCS Name: 'adv-scan-fast-return' </description>
+    </key>
+
+    <key name="adv-scan-xs2nd-z-offset" type="d">
+      <default>0.0</default>
+      <summary>PCS Remote-ID: 'adv-scan-xs2nd-z-offset', Default/U: 0 Å     </summary>
+      <description>pcs0000, PCS Remote-ID: 'adv-scan-xs2nd-z-offset', Default/U: 0 Å    , Adjustment PCS Name: 'adv-scan-xs2nd-z-offset' </description>
+    </key>
+
+    <key name="adv-scan-slope-x" type="d">
+      <default>0.0</default>
+      <summary>PCS Remote-ID: 'adv-scan-slope-x', Default/U: 0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'adv-scan-slope-x', Default/U: 0      , Adjustment PCS Name: 'adv-scan-slope-x' </description>
+    </key>
+
+    <key name="adv-scan-slope-y" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'adv-scan-slope-y', Default/U: 0     </summary>
+      <description>pcs0000, PCS Remote-ID: 'adv-scan-slope-y', Default/U: 0    , Adjustment PCS Name: 'adv-scan-slope-y' </description>
+    </key>
+
+
+
+    <key name="fbs-scan-ldc-dx" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'fbs-scan-ldc-dx', Default/U:     0 Å/s     </summary>
+      <description>pcs0000, PCS Remote-ID: 'fbs-scan-ldc-dx', Default/U:     0 Å/s    , Adjustment PCS Name: 'fbs-scan-ldc-dx' </description>
+    </key>
+
+    <key name="fbs-scan-ldc-dy" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'fbs-scan-ldc-dy', Default/U:     0 Å/s     </summary>
+      <description>pcs0000, PCS Remote-ID: 'fbs-scan-ldc-dy', Default/U:     0 Å/s    , Adjustment PCS Name: 'fbs-scan-ldc-dy' </description>
+    </key>
+
+    <key name="fbs-scan-ldc-dz" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'fbs-scan-ldc-dz', Default/U:     0 Å/s     </summary>
+      <description>pcs0000, PCS Remote-ID: 'fbs-scan-ldc-dz', Default/U:     0 Å/s    , Adjustment PCS Name: 'fbs-scan-ldc-dz' </description>
+    </key>
+
+    <key name="lck-ac-bias-amp" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'LCK-AC-Bias-Amp', Default/U:     0 V     </summary>
+      <description>pcs0000, PCS Remote-ID: 'LCK-AC-Bias-Amp', Default/U:     0 V    , Adjustment PCS Name: 'LCK-AC-Bias-Amp' </description>
+    </key>
+
+    <key name="lck-ac-z-amp" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'LCK-AC-Z-Amp', Default/U:     0 Å     </summary>
+      <description>pcs0000, PCS Remote-ID: 'LCK-AC-Z-Amp', Default/U:     0 Å    , Adjustment PCS Name: 'LCK-AC-Z-Amp' </description>
+    </key>
+
+    <key name="iv-start" type="d">
+      <default>-1</default>
+      <summary>PCS Remote-ID: 'IV-Start', Default/U:    -1 V     </summary>
+      <description>pcs0000, PCS Remote-ID: 'IV-Start', Default/U:    -1 V    , Adjustment PCS Name: 'IV-Start' </description>
+    </key>
+
+    <key name="iv-end" type="d">
+      <default>1</default>
+      <summary>PCS Remote-ID: 'IV-End', Default/U:     1 V     </summary>
+      <description>pcs0000, PCS Remote-ID: 'IV-End', Default/U:     1 V    , Adjustment PCS Name: 'IV-End' </description>
+    </key>
+
+    <key name="iv-points" type="d">
+      <default>2000</default>
+      <summary>PCS Remote-ID: 'IV-Points', Default/U:  2000       </summary>
+      <description>pcs0000, PCS Remote-ID: 'IV-Points', Default/U:  2000      , Adjustment PCS Name: 'IV-Points' </description>
+    </key>
+
+    <key name="rpspmc-iv-slope" type="d">
+      <default>0.1</default>
+      <summary>PCS Remote-ID: 'dsp-IV-Slope', Default/U:   0.1 V/s     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-IV-Slope', Default/U:   0.1 V/s    , Adjustment PCS Name: 'dsp-IV-Slope' </description>
+    </key>
+
+    <key name="rpspmc-iv-slope-ramp" type="d">
+      <default>0.5</default>
+      <summary>PCS Remote-ID: 'dsp-IV-Slope-Ramp', Default/U:   0.5 V/s     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-IV-Slope-Ramp', Default/U:   0.5 V/s    , Adjustment PCS Name: 'dsp-IV-Slope-Ramp' </description>
+    </key>
+
+    <key name="rpspmc-iv-rep" type="d">
+      <default>1</default>
+      <summary>PCS Remote-ID: 'dsp-IV-rep', Default/U:   1       </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-IV-rep', Default/U:   1      , Adjustment PCS Name: 'dsp-IV-rep' </description>
+    </key>
+
+    <key name="rpspmc-gvp-du00" type="ad">
+      <default>[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]</default>
+      <summary>PCS Remote-ID: 'dsp-gvp-du44', Default/U:      0 V     </summary>
+      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-du44', Default/U:      0 V    , Adjustment PCS Name: 'dsp-gvp-du44' </description>
+    </key>
+
+    <key name="rpspmc-gvp-dx00" type="ad">
+      <default>[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]</default>
+      <summary>PCS Remote-ID: 'dsp-gvp-dx44', Default/U:      0 Å     </summary>
+      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-dx44', Default/U:      0 Å    , Adjustment PCS Name: 'dsp-gvp-dx44' </description>
+    </key>
+
+    <key name="rpspmc-gvp-dy00" type="ad">
+      <default>[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]</default>
+      <summary>PCS Remote-ID: 'dsp-gvp-dy44', Default/U:      0 Å     </summary>
+      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-dy44', Default/U:      0 Å    , Adjustment PCS Name: 'dsp-gvp-dy44' </description>
+    </key>
+
+    <key name="rpspmc-gvp-dz00" type="ad">
+      <default>[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]</default>
+      <summary>PCS Remote-ID: 'dsp-gvp-dz44', Default/U:      0 Å     </summary>
+      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-dz44', Default/U:      0 Å    , Adjustment PCS Name: 'dsp-gvp-dz44' </description>
+    </key>
+
+    <key name="rpspmc-gvp-dsig00" type="ad">
+      <default>[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]</default>
+      <summary>PCS Remote-ID: 'dsp-gvp-dsig44', Default/U:      0 V     </summary>
+      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-dsig44', Default/U:      0 V    , Adjustment PCS Name: 'dsp-gvp-dsig44' </description>
+    </key>
+
+    <key name="rpspmc-gvp-dt00" type="ad">
+      <default>[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]</default>
+      <summary>PCS Remote-ID: 'dsp-gvp-dt44', Default/U:     0 s     </summary>
+      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-dt44', Default/U:     0 s    , Adjustment PCS Name: 'dsp-gvp-dt44' </description>
+    </key>
+
+    <key name="rpspmc-gvp-n00" type="ad">
+      <default>[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]</default>
+      <summary>PCS Remote-ID: 'dsp-gvp-n44', Default/U:     0       </summary>
+      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-n44', Default/U:     0      , Adjustment PCS Name: 'dsp-gvp-n44' </description>
+    </key>
+
+    <key name="rpspmc-gvp-data00" type="ad">
+      <default>[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]</default>
+      <summary>PCS Remote-ID: 'dsp-gvp-data44', Default/U: 0000 h     </summary>
+      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-data44', Default/U: 0000 h    , Adjustment PCS Name: 'dsp-gvp-data44' </description>
+    </key>
+
+    <key name="rpspmc-gvp-nrep00" type="ad">
+      <default>[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]</default>
+      <summary>PCS Remote-ID: 'dsp-gvp-nrep44', Default/U: 0       </summary>
+      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-nrep44', Default/U: 0      , Adjustment PCS Name: 'dsp-gvp-nrep44' </description>
+    </key>
+
+    <key name="rpspmc-gvp-pcjr00" type="ad">
+      <default>[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]</default>
+      <summary>PCS Remote-ID: 'dsp-gvp-pcjr44', Default/U: 0       </summary>
+      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-pcjr44', Default/U: 0      , Adjustment PCS Name: 'dsp-gvp-pcjr44' </description>
+    </key>
+
+    <key name="rpspmc-gvp-final-delay" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'dsp-GVP-Final-Delay', Default/U:     0 s     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-GVP-Final-Delay', Default/U:     0 s    , Adjustment PCS Name: 'dsp-GVP-Final-Delay' </description>
+    </key>
+
+    <key name="rpspmc-gvp-gpio-lock-57" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'dsp-GVP-GPIO-Lock-57', Default/U: 0000       </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-GVP-GPIO-Lock-57', Default/U: 0000      , Adjustment PCS Name: 'dsp-GVP-GPIO-Lock-57' </description>
+    </key>
+
+    
+    <key name="template-stm-speed" type="d">
+      <default>2000.0</default>
+      <summary>PCS Remote-ID: 'template-stm-speed', Default/U: 2000.00 px/s     </summary>
+      <description>pcs0000, PCS Remote-ID: 'template-stm-speed', Default/U: 2000.00 px/s    , Adjustment PCS Name: 'template-stm-speed' </description>
+    </key>
+
+    <key name="template-stm-bias" type="d">
+      <default>1.0</default>
+      <summary>PCS Remote-ID: 'template-stm-bias', Default/U:  0.00 V     </summary>
+      <description>pcs0000, PCS Remote-ID: 'template-stm-bias', Default/U:  0.00 V    , Adjustment PCS Name: 'template-stm-bias' </description>
+    </key>
+
+    <key name="template-afm-speed" type="d">
+      <default>2000.0</default>
+      <summary>PCS Remote-ID: 'template-afm-speed', Default/U: 2000.00 px/s     </summary>
+      <description>pcs0000, PCS Remote-ID: 'template-afm-speed', Default/U: 2000.00 px/s    , Adjustment PCS Name: 'template-afm-speed' </description>
+    </key>
+
+    <key name="template-afm-bias" type="d">
+      <default>0.0</default>
+      <summary>PCS Remote-ID: 'template-afm-bias', Default/U:  0.00 V     </summary>
+      <description>pcs0000, PCS Remote-ID: 'template-afm-bias', Default/U:  0.00 V    , Adjustment PCS Name: 'template-afm-bias' </description>
+    </key>
   </schema>
 
 </schemalist>
