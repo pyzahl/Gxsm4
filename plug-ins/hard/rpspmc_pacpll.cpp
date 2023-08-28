@@ -2204,8 +2204,6 @@ void RPSPMC_Control::BiasChanged(Param_Control* pcs, gpointer dspc){
 
         if (rpspmc_pacpll){
                 double vec[16] = { 1.0, 2., 3., 4., 5.5,6.6,7.7,8.8,9.9,10.,11.,12.,13.,14.,15.,16. };
-                g_print ("write JSON for SPMC_GVP_VECTOR [%g, %g, ...]\n", vec[0],vec[1]);
-
                 rpspmc_pacpll->write_signal ("SPMC_GVP_VECTOR", 16, vec);
         }
 
@@ -4422,6 +4420,7 @@ void RPspmc_pacpll::write_parameter (const gchar *paramater_id, int value, gbool
         }
 }
 
+//{ "signals":{"SPMC_GVP_VECTOR":{"size":16,"value":[1,2,3,4,5.5,6.6,7.7,8.8,9.9,10,11,12,13,14,15,16]}}}
 // {"signals":{"SIGNAL_CH3":{"size":1024,"value":[0,0,...,0.543632,0.550415]},"SIGNAL_CH4":{"size":1024,"value":[0,0,... ,-94.156487]},"SIGNAL_CH5":{"size":1024,"value":[0,0,.. ,-91.376022,-94.156487]
 void RPspmc_pacpll::write_signal (const gchar *paramater_id, int size, double *value, const gchar *fmt=NULL, gboolean dbg=FALSE){
         if (client){
@@ -4433,12 +4432,12 @@ void RPspmc_pacpll::write_signal (const gchar *paramater_id, int size, double *v
                         for (int i=0; i<size; ++i)
                                 g_string_append_printf (list, "%g,", value[i]);
                 
-                g_string_truncate (list, list->len-1);
-                gchar *json_string = g_strdup_printf ("{ \"signals\":{\"%s\":{\"size\":%s,\"value\":[%s]}}}", paramater_id, size, list->str);
-                g_print ("%s\n",json_string);
+                list->str[list->len-1]=']';
+                gchar *json_string = g_strdup_printf ("{ \"signals\":{\"%s\":{\"size\":%d,\"value\":[%s}}}", paramater_id, size, list->str);
+                //g_print ("%s\n",json_string);
                 g_string_free (list, true);
                 
-                soup_websocket_connection_send_text (client, json_string);
+                //soup_websocket_connection_send_text (client, json_string);
                 if  (debug_level > 0 || dbg)
                         g_print ("%s\n",json_string);
                 g_free (json_string);
@@ -4450,9 +4449,8 @@ void RPspmc_pacpll::write_signal (const gchar *paramater_id, int size, int *valu
                 GString *list = g_string_new (NULL);
                 for (int i=0; i<size; ++i)
                         g_string_append_printf (list, "%d,", value[i]);
-                g_string_truncate (list, list->len-1);
-                g_string_truncate (list, list->len-1);
-                gchar *json_string = g_strdup_printf ("{ \"signals\":{\"%s\":{\"size\":%s,\"value\":[%s]}}}", paramater_id, size, list->str);
+                list->str[list->len-1]=']';
+                gchar *json_string = g_strdup_printf ("{ \"signals\":{\"%s\":{\"size\":%d,\"value\":[%s}}}", paramater_id, size, list->str);
                 g_string_free (list, true);
                 
                 soup_websocket_connection_send_text (client, json_string);
