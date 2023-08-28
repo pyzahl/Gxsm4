@@ -817,10 +817,12 @@ void PanView :: tip_refresh()
 		
 		gchar *tmp = NULL;
 
+                double u,v,w;
+		main_get_gapp()->xsm->hardware->RTQuery ("B", u, v, w); // Bias, ...
                 if (fabs(y) < 0.25)
-                        tmp = g_strdup_printf ("I: %8.1f pA\ndF: %8.1f Hz\nZ: %8.4f" UTF8_ANGSTROEM, y*1000., x, main_get_gapp()->xsm->Inst->V2ZAng(z));
+                        tmp = g_strdup_printf ("I: %8.1f pA\ndF: %8.1f Hz\nZ: %8.4f" UTF8_ANGSTROEM "\nU: %8.4f V", y*1000., x, main_get_gapp()->xsm->Inst->V2ZAng(z), u);
                 else
-                        tmp = g_strdup_printf ("I: %8.4f nA\ndF: %8.1f Hz\nZ: %8.4f" UTF8_ANGSTROEM, y, x, main_get_gapp()->xsm->Inst->V2ZAng(z));
+                        tmp = g_strdup_printf ("I: %8.4f nA\ndF: %8.1f Hz\nZ: %8.4f" UTF8_ANGSTROEM "\nU: %8.4f V", y, x, main_get_gapp()->xsm->Inst->V2ZAng(z), u);
 
                 info->set_text (tmp);
                 info->queue_update (canvas);

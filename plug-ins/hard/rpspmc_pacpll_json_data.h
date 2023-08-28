@@ -46,6 +46,7 @@ struct JSON_signal {
 };
 
 struct PACPLL_parameters {
+        // RP-PAC-PLL module parameters
         double dc_offset;
         double exec_amplitude_monitor;
         double dds_frequency_monitor;
@@ -113,6 +114,7 @@ struct PACPLL_parameters {
         double lck_amplitude;
         double lck_phase;
 
+        // RP-PAC-PLL / extra dFreq controller module parameters
         double dfreq_monitor;
         double dfreq_fb_setpoint;
         double dfreq_fb_invert;
@@ -124,6 +126,7 @@ struct PACPLL_parameters {
         double control_dfreq_fb_upper;
         double control_dfreq_fb_lower;
         
+        // RP-PAC-PLL / extra PLL signal phase aligned pulse former
         double pulse_form_bias0, pulse_form_bias1;
         double pulse_form_phase0, pulse_form_phase1;
         double pulse_form_width0, pulse_form_width1;
@@ -134,8 +137,8 @@ struct PACPLL_parameters {
         double pulse_form_shapex, pulse_form_shapexif;
         gboolean pulse_form_enable;
  
+        // RP-PAC-PLL / DSP/McBSP level PLL signal transport controls
         double set_singleshot_transport_trigger;
-
         double transport_tau[4];
 };
 
@@ -149,6 +152,51 @@ struct PACPLL_signals {
         double signal_phase[1024]; // in tne mode, local
         double signal_ampl[1024]; // in tune mode, local
         double signal_gpiox[16];
+};
+
+
+struct SPMC_parameters {
+// RP-SPMC module parameters
+        double bias;
+        double z_servo_mode;
+        double z_servo_setpoint;
+        double z_servo_cp;
+        double z_servo_ci;
+        double z_servo_upper;
+        double z_servo_lower;
+        double z_servo_setpoint_cz;
+        double z_servo_level;
+
+        double gvp_execute;
+        double gvp_pause;
+        double gvp_stop;
+        double gvp_controller;
+        double gvp_status;
+        
+        double alpha;
+        double slope_dzx;
+        double slope_dzy;
+
+        double set_offset_x;
+        double set_offset_y;
+        double set_offset_z;
+
+        // RP SPMC Monitors
+        double bias_monitor;
+        double signal_monitor;
+        double x_monitor;
+        double y_monitor;
+        double z_monitor;
+        double x0_monitor;
+        double y0_monitor;
+        double z0_monitor;
+};
+
+#define MAX_GVP_VECTORS   32
+#define GVP_VECTOR_SIZE   16 // 10 components used (1st is index, then: N, nii, Options, Nrep, Next, dx, dy, dz, du, fill w zero to 16)
+
+struct SPMC_signals {
+        double gvp_vector[GVP_VECTOR_SIZE];
 };
 
 #endif

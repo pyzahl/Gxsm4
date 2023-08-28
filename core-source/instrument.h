@@ -1,3 +1,5 @@
+/* -*- Mode: C++; indent-tabs-mode: nil; c-basic-offset: 8 c-style: "K&R" -*- */
+
 /* Gxsm - Gnome X Scanning Microscopy
  * universal STM/AFM/SARLS/SPALEED/... controlling and
  * data analysis software
@@ -23,7 +25,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
  */
 
-/* -*- Mode: C++; indent-tabs-mode: nil; c-basic-offset: 8 c-style: "K&R" -*- */
 
 #ifndef __XSM_INSTRUMENT_H
 #define __XSM_INSTRUMENT_H
@@ -130,6 +131,18 @@ public:
 	virtual double XA2Dig(double ang){ return(ang/XResolution()); };
 	virtual double YA2Dig(double ang){ return(ang/YResolution()); };
 	virtual double ZA2Dig(double ang){ return(ang/ZResolution()); };
+
+        virtual double XA2Volt(double ang){ return(ang*xPsens/Vx); }; // xPsens V/Ang **   Volts = Ang * xPsens / Vx
+	virtual double YA2Volt(double ang){ return(ang*yPsens/Vy); };
+	virtual double ZA2Volt(double ang){ return(ang*zPsens/Vz); };
+
+        virtual double Volt2XA(double U){ return(U*Vx/xPsens); }; // xPsens V/Ang **   U = Ang * xPsens / Vx
+	virtual double Volt2YA(double U){ return(U*Vy/yPsens); };
+	virtual double Volt2ZA(double U){ return(U*Vz/zPsens); };
+        
+        virtual double X0A2Volt(double ang){ return(ang*xPsens/Vx0); }; // xPsens V/Ang
+	virtual double Y0A2Volt(double ang){ return(ang*yPsens/Vy0); };
+	virtual double Z0A2Volt(double ang){ return(ang*zPsens/Vz0); };
 
 	virtual double Dig2X0A(long dig){ return(X0Resolution()*(double)dig); };
 	virtual double Dig2Y0A(long dig){ return(Y0Resolution()*(double)dig); };

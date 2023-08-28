@@ -103,6 +103,7 @@
 extern int verbose;
 
 extern CDoubleParameter  SPMC_BIAS_MONITOR;
+extern CDoubleParameter  SPMC_SIGNAL_MONITOR;
 extern CDoubleParameter  SPMC_X_MONITOR;
 extern CDoubleParameter  SPMC_Y_MONITOR;
 extern CDoubleParameter  SPMC_Z_MONITOR;
@@ -202,6 +203,7 @@ extern CDoubleParameter  SPMC_Z_MONITOR;
 /* RP SPMC FPGA Engine Configuration and Control */
 
 // RP SPMC PMOD AD5791 management functions
+// THIS SETS the FPGA SPI interface to configuration mode, direct writes to AD!
 void rp_spmc_AD5791_set_configuration_mode (bool cmode=true, bool send=false, int axis=-1){
         static int rp_spmc_AD5791_configuration_axis=0;
         static bool rp_spmc_AD5791_configuration_mode=false;
@@ -212,11 +214,12 @@ void rp_spmc_AD5791_set_configuration_mode (bool cmode=true, bool send=false, in
         if (axis >= 0)
                 rp_spmc_AD5791_configuration_axis = axis; // change axis
         
-        set_gpio_cfgreg_int32 (SPMC_CFG_AD5791_DAC_CONTROL,
-                               (  rp_spmc_AD5791_configuration_axis & 3)
-                               | (rp_spmc_AD5791_configuration_mode ? (1<<3):0)
-                               | (rp_spmc_AD5791_configuration_send ? (1<<4):0)
-                               );
+        set_gpio_cfgreg_uint32 (SPMC_CFG_AD5791_DAC_CONTROL,
+                                (  rp_spmc_AD5791_configuration_axis & 0b111)
+                                | (rp_spmc_AD5791_configuration_mode ? (1<<3):0)
+                                | (rp_spmc_AD5791_configuration_send ? (1<<4):0)
+                                );
+        usleep(100);
 }
 
 // enable AD5791 FPGA to stream mdoe and flow contol (fast)
@@ -225,36 +228,308 @@ void rp_spmc_AD5791_set_stream_mode (){
 }
 
 // puts ALL AD5791 DACs on hold and set axis dac for config data to load, does not send it yet, all axis are loaded serially
-void rp_spmc_AD5791_set_axis_data (int axis, int data){
+void rp_spmc_AD5791_set_axis_data (int axis, uint32_t data){
         rp_spmc_AD5791_set_configuration_mode (true, false, axis);  // enter/stay in config mode, set axis
-        set_gpio_cfgreg_int32 (SPMC_CFG_AD5791_DAC_AXIS_DATA, data); // set configuration data
+        set_gpio_cfgreg_uint32 (SPMC_CFG_AD5791_DAC_AXIS_DATA, data); // set configuration data
 }
 
 // puts ALL AD5791 DACs on hold and into configuration mode, sets axiss data and sends alwasy all axis cfg data as set last
-void rp_spmc_AD5791_send_axis_data (int axis, int data){
+void rp_spmc_AD5791_send_axis_data (int axis, uint32_t data){
         rp_spmc_AD5791_set_configuration_mode (true, false, axis);  // enter/stay in config mode, set axis
-        set_gpio_cfgreg_int32 (SPMC_CFG_AD5791_DAC_AXIS_DATA, data); // set configuration data
+        set_gpio_cfgreg_uint32 (SPMC_CFG_AD5791_DAC_AXIS_DATA, data); // set configuration data
+        usleep(100);
         rp_spmc_AD5791_set_configuration_mode (true, true); // enter/stay in config mode, enter send data mode, will go into hold mode after data send
+}
+
+
+
+/***************************************************************************//**
+ * @brief Writes data into a register.
+ *
+ * @param dev              - The device structure.
+ * @param register_address - Address of the register.
+ *                          Example:
+ *                          AD5791_REG_DAC          - DAC register
+ *                          AD5791_REG_CTRL         - Control register
+ *                          AD5791_REG_CLR_CODE     - Clearcode register
+ *                          AD5791_CMD_WR_SOFT_CTRL - Software control register
+ * @param register_value   - Value of the register.
+ *
+ * @return Returns 0 in case of success or negative error code.
+*******************************************************************************/
+int32_t ad5791_set_register_value(int axis,
+				  uint8_t register_address,
+				  uint32_t register_value)
+{
+	uint8_t write_command[3] = {0, 0, 0};
+	uint32_t spi_word = 0;
+	int8_t status = 0;
+
+	spi_word = AD5791_WRITE |
+		   AD5791_ADDR_REG(register_address) |
+		   (register_value & 0xFFFFF);
+        
+        rp_spmc_AD5791_send_axis_data (axis, spi_word); // set and send
+        
+	return 0;
+}
+int32_t ad5791_prepare_register_value(int axis,
+                                      uint8_t register_address,
+                                      uint32_t register_value)
+{
+	uint8_t write_command[3] = {0, 0, 0};
+	uint32_t spi_word = 0;
+	int8_t status = 0;
+
+	spi_word = AD5791_WRITE |
+		   AD5791_ADDR_REG(register_address) |
+		   (register_value & 0xFFFFF);
+        
+        rp_spmc_AD5791_set_axis_data (axis, spi_word); // not sending out, but setting up FPGA channel data
+        
+	return 0;
+}
+
+
+/***************************************************************************//**
+ * @brief Reads the value of a register.
+ *
+ * @param dev              - The device structure.
+ * @param register_address - Address of the register.
+ *                          Example:
+ *                          AD5791_REG_DAC          - DAC register
+ *                          AD5791_REG_CTRL         - Control register
+ *                          AD5791_REG_CLR_CODE     - Clearcode register
+ *                          AD5791_CMD_WR_SOFT_CTRL - Software control register
+ *
+ * @return dataRead        - The register's value or negative error code.
+*******************************************************************************/
+int32_t ad5791_get_register_value(int axis,
+				  uint8_t register_address)
+{
+	uint8_t register_word[3] = {0, 0, 0};
+	uint32_t data_read = 0x0;
+	int8_t status = 0;
+
+	register_word[0] = (AD5791_READ | AD5791_ADDR_REG(register_address)) >> 16;
+
+        //rp_spmc_AD5791_send_axis_data (axis, spi_word);
+#if 0
+        status = spi_write_and_read(axis,
+				    register_word,
+				    3);
+	if(status != 3) {
+		return -1;
+	}
+	register_word[0] = 0x00;
+	register_word[1] = 0x00;
+	register_word[2] = 0x00;
+	status = spi_write_and_read(axis,
+				    register_word,
+				    3);
+	if(status != 3) {
+		return -1;
+	}
+	data_read = ((int32_t)register_word[0] << 16) |
+		    ((int32_t)register_word[1] <<  8) |
+		    ((int32_t)register_word[2] <<  0);
+
+	return data_read;
+#endif
+        return 0;
+}
+
+/***************************************************************************//**
+ * @brief Sets the DAC output in one of the three states.
+ *
+ * @param dev   - The device structure.
+ * @param state - The output state.
+ *                Example:
+ *                AD5791_OUT_NORMAL     - normal operation mode
+ *                AD5791_OUT_CLAMPED_6K - output is clamped via ~6KOhm to AGND
+ *                AD5791_OUT_TRISTATE   - output is in tristate
+ *
+ * @return Negative error code or 0 in case of success.
+*******************************************************************************/
+int32_t ad5791_dac_ouput_state(int axis,
+			       uint8_t state)
+{
+	uint32_t old_ctrl = 0;
+	uint32_t new_ctrl = 0;
+	int32_t status = 0;
+#if 0
+	status = ad5791_get_register_value(axis,
+					   AD5791_REG_CTRL);
+	if(status < 0) {
+		return status;
+	}
+	old_ctrl = status;
+	/* Clear DACTRI and OPGND bits. */
+	old_ctrl = old_ctrl & ~(AD5791_CTRL_DACTRI | AD5791_CTRL_OPGND);
+	/* Sets the new state provided by the user. */
+	new_ctrl = old_ctrl |
+		   ((state << 2) & (AD5791_CTRL_DACTRI | AD5791_CTRL_OPGND));
+	status = ad5791_set_register_value(axis,
+					   AD5791_REG_CTRL,
+					   new_ctrl);
+#endif
+	return status;
+}
+
+/***************************************************************************//**
+ * @brief Writes to the DAC register.
+ *
+ * @param dev   - The device structure.
+ * @param value - The value to be written to DAC.
+ *
+ * @return Negative error code or 0 in case of success.
+*******************************************************************************/
+int32_t ad5791_set_dac_value(int axis,
+			     uint32_t value)
+{
+	int32_t status = 0;
+
+	//AD5791_LDAC_LOW;
+	status = ad5791_set_register_value(axis,
+					   AD5791_REG_DAC,
+					   value);
+	//AD5791_LDAC_HIGH;
+
+	return status;
+}
+int32_t ad5791_prepare_dac_value(int axis,
+                                 uint32_t value)
+{
+	int32_t status = 0;
+
+	//AD5791_LDAC_LOW;
+	status = ad5791_prepare_register_value(axis,
+                                               AD5791_REG_DAC,
+                                               value);
+	//AD5791_LDAC_HIGH;
+
+	return status;
+}
+
+
+/***************************************************************************//**
+ * @brief Asserts RESET, CLR or LDAC in a software manner.
+ *
+ * @param dev             - The device structure.
+ * @param instruction_bit - A Software Control Register bit.
+ *                         Example:
+ *                         AD5791_SOFT_CTRL_LDAC  - Load DAC
+ *                         AD5791_SOFT_CTRL_CLR   - Clear
+ *                         AD5791_SOFT_CTRL_RESET - Reset
+ *
+ * @return Negative error code or 0 in case of success.
+*******************************************************************************/
+int32_t ad5791_soft_instruction(int axis,
+				uint8_t instruction_bit)
+{
+	int32_t status = 0;
+
+	status = ad5791_set_register_value(axis,
+					   AD5791_CMD_WR_SOFT_CTRL,
+					   instruction_bit);
+	if(status < 0) {
+		return status;
+	}
+	//mdelay(1);    // Wait for the instruction to take effect.
+
+	return status;
+}
+
+/***************************************************************************//**
+ * @brief Configures the output amplifier, DAC coding, SDO state and the
+ *        linearity error compensation.
+ *
+ * @param dev        - The device structure.
+ * @param setup_word - Is a 24-bit value that sets or clears the Control Register
+ *                    bits : RBUF bit(AD5791_CTRL_RBUF),
+ *                           BIN/2sC bit(AD5791_CTRL_BIN2SC),
+ *                           SDODIS bit(AD5791_CTRL_SDODIS) and
+ *                           LINCOMP bits(AD5791_CTRL_LINCOMP(x)).
+ *                    Example: AD5791_CTRL_BIN2SC | AD5791_CTRL_RBUF - sets
+ *                             the DAC register to use offset binary coding and
+ *                             powers down the internal output amplifier.
+ *
+ * @return Negative error code or 0 in case of success.
+*******************************************************************************/
+int32_t ad5791_setup(int axis,
+		     uint32_t setup_word)
+{
+	uint32_t old_ctrl = 0;
+	uint32_t new_ctrl = 0;
+	int32_t status = 0;
+
+	/* Reads the control register in order to save the options related to the
+	   DAC output state that may have been configured previously. */
+	//status = ad5791_get_register_value(axis,
+	//				   AD5791_REG_CTRL);
+	//if(status < 0) {
+	//	return status;
+	//}
+	//old_ctrl = status;
+        old_ctrl = 0b000000000000000000111110; // power up is ---0000111110
+	/* Clear LINCOMP, SDODIS, BIN2SC and RBUF bits. */
+	old_ctrl = old_ctrl & ~(AD5791_CTRL_LINCOMP(-1) |
+				AD5791_CTRL_SDODIS |
+				AD5791_CTRL_BIN2SC |
+				AD5791_CTRL_RBUF);
+	/* Sets the new state provided by the user. */
+	new_ctrl = old_ctrl | setup_word;
+	status = ad5791_set_register_value(axis,
+					   AD5791_REG_CTRL,
+					   new_ctrl);
+
+	return status;
 }
 
 // initialize/reset all AD5791 channels
 void rp_spmc_AD5791_init (){
-        rp_spmc_AD5791_set_axis_data (0, 0);
-        rp_spmc_AD5791_set_axis_data (1, 0);
-        rp_spmc_AD5791_set_axis_data (2, 0);
-        rp_spmc_AD5791_send_axis_data (3, 0); // sends all axis dat out at once
+
+
+ 	//AD5791_RESET_OUT;
+	//AD5791_RESET_HIGH;
+	//AD5791_LDAC_OUT;
+	//AD5791_LDAC_HIGH;
+	//AD5791_CLR_OUT;
+	//AD5791_CLR_HIGH;
+        
+        // power up one by one
+        ad5791_setup(0,0);
+        ad5791_setup(1,0);
+        ad5791_setup(2,0);
+        ad5791_setup(3,0);
+
+        // send 0V
+        ad5791_prepare_dac_value (0, 0);
+        ad5791_prepare_dac_value (1, 0);
+        ad5791_prepare_dac_value (2, 0);
+        ad5791_set_dac_value (3, 0);
 }
 
 void rp_spmc_set_bias (double bias){
         if (verbose > 1) fprintf(stderr, "##Configure mode set AD5971 AXIS3 (Bias) to %g V\n", bias);
-        rp_spmc_AD5791_send_axis_data (3, (int)round(Q24*bias/SPMC_AD5791_REFV));
+        ad5791_set_dac_value (3, (int)round(Q24*bias/SPMC_AD5791_REFV));
+
+        fprintf(stderr, "Set AD5971 AXIS3 (Bias) to %g V\n", bias);
+        fprintf(stderr, "MON-XYZU: %8g  %8g  %8g  %8g V\n",
+                SPMC_AD5791_REFV*(double)read_gpio_reg_int32 (7,0) / Q31,
+                SPMC_AD5791_REFV*(double)read_gpio_reg_int32 (7,1) / Q31,
+                SPMC_AD5791_REFV*(double)read_gpio_reg_int32 (8,0) / Q31,
+                SPMC_AD5791_REFV*(double)read_gpio_reg_int32 (8,1) / Q31
+                );
+
+        
 }
 
 void rp_spmc_set_xyz (double ux, double uy, double uz){
         if (verbose > 1) fprintf(stderr, "##Configure mode set AD5971 AXIS0,1,2 (XYZ) to %g, %g, %g V\n", ux, uy, uz);
-        rp_spmc_AD5791_set_axis_data (0, (int)round(Q24*ux/SPMC_AD5791_REFV));
-        rp_spmc_AD5791_set_axis_data (1, (int)round(Q24*uy/SPMC_AD5791_REFV));
-        rp_spmc_AD5791_send_axis_data (2, (int)round(Q24*uz/SPMC_AD5791_REFV));
+        ad5791_prepare_dac_value (0, (int)round(Q24*ux/SPMC_AD5791_REFV));
+        ad5791_prepare_dac_value (1, (int)round(Q24*uy/SPMC_AD5791_REFV));
+        ad5791_set_dac_value     (2, (int)round(Q24*uz/SPMC_AD5791_REFV));
 }
 
 
@@ -344,9 +619,16 @@ double rp_spmc_read_Z_Monitor(){
         return SPMC_AD5791_REFV*(double)read_gpio_reg_int32 (8,1) / Q31;
 }
 
+double rp_spmc_read_Signal_Monitor(){
+        return 0.0; //SPMC_AD5791_REFV*(double)read_gpio_reg_int32 (8,1) / Q31;
+}
+
 void rp_spmc_update_readings (){
         SPMC_BIAS_MONITOR.Value () = rp_spmc_read_Bias_Monitor();
         SPMC_X_MONITOR.Value () = rp_spmc_read_X_Monitor();
         SPMC_Y_MONITOR.Value () = rp_spmc_read_Y_Monitor();
         SPMC_Z_MONITOR.Value () = rp_spmc_read_Z_Monitor();
+
+        SPMC_SIGNAL_MONITOR.Value () = rp_spmc_read_Signal_Monitor();
+
 }

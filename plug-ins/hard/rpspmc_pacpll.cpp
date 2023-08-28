@@ -1364,8 +1364,8 @@ void RPSPMC_Control::create_folder (){
         bp->set_scale_nx (4); // set scale width to 4
         bp->set_input_width_chars (10);
 
-        bp->set_default_ec_change_notice_fkt (RPSPMC_Control::ChangedNotify, this);
-
+        //bp->set_default_ec_change_notice_fkt (RPSPMC_Control::ChangedNotify, this);
+        bp->set_default_ec_change_notice_fkt (RPSPMC_Control::BiasChanged, this);
         bp->grid_add_ec_with_scale ("Bias", Volt, &bias, -10., 10., "4g", 0.001, 0.01, "fbs-bias");
         //        bp->ec->set_adjustment_mode (PARAM_CONTROL_ADJUSTMENT_LOG | PARAM_CONTROL_ADJUSTMENT_LOG_SYM | PARAM_CONTROL_ADJUSTMENT_DUAL_RANGE | PARAM_CONTROL_ADJUSTMENT_ADD_MARKS );
         bp->ec->SetScaleWidget (bp->scale, 0);
@@ -1373,6 +1373,7 @@ void RPSPMC_Control::create_folder (){
         gtk_scale_set_digits (GTK_SCALE (bp->scale), 5);
         bp->new_line ();
 
+        bp->set_default_ec_change_notice_fkt (RPSPMC_Control::ZPosSetChanged, this);
         bp->set_input_width_chars (30);
         bp->set_input_nx (2);
         bp->grid_add_ec ("Z-Pos/Setpoint:", Angstroem, &zpos_ref, -100., 100., "6g", 0.01, 0.1, "adv-dsp-zpos-ref");
@@ -1381,6 +1382,7 @@ void RPSPMC_Control::create_folder (){
                  
         bp->set_input_width_chars (12);
         bp->set_input_nx ();
+        bp->set_default_ec_change_notice_fkt (RPSPMC_Control::ChangedNotify, this);
 
 	bp->grid_add_check_button ("Z-Pos Monitor",
                                    "Z Position Monitor. Disable to set Z-Position Setpoint for const height mode. "
@@ -1417,6 +1419,7 @@ void RPSPMC_Control::create_folder (){
         const gchar *mixer_remote_id_gn[4]  = { "fbs-mx0-current-gain" ,"fbs-mx1-freq-gain",  "fbs-mx2-gain",  "fbs-mx3-gain" };
         const gchar *mixer_remote_id_fl[4]  = { "fbs-mx0-current-level","fbs-mx1-freq-level", "fbs-mx2-level", "fbs-mx3-level" };
 
+        bp->set_default_ec_change_notice_fkt (RPSPMC_Control::ZServoParamChanged, this);
         // Note: transform mode is always default [LOG,OFF,OFF,OFF] -- NOT READ BACK FROM DSP -- !!!
         for (gint ch=0; ch<2; ++ch){
 
@@ -1502,6 +1505,8 @@ void RPSPMC_Control::create_folder (){
         bp->set_label_width_chars ();
 
 	// ========================================
+        bp->set_default_ec_change_notice_fkt (RPSPMC_Control::ChangedNotify, this);
+
         PI_DEBUG (DBG_L4, "DSPC----SCAN ------------------------------- ");
         bp->pop_grid ();
         bp->new_line ();
@@ -2192,6 +2197,38 @@ int RPSPMC_Control::ChangedAction(GtkWidget *widget, RPSPMC_Control *dspc){
 void RPSPMC_Control::ChangedNotify(Param_Control* pcs, gpointer dspc){
 	((RPSPMC_Control*)dspc)->update_controller (); // update basic SPM Control Parameters
 }
+
+void RPSPMC_Control::BiasChanged(Param_Control* pcs, gpointer dspc){
+        if (rpspmc_pacpll)
+                rpspmc_pacpll->write_parameter ("SPMC_BIAS", ((RPSPMC_Control*)dspc)->bias);
+
+        if (rpspmc_pacpll){
+                double vec[16] = { 1.0, 2., 3., 4., 5.5,6.6,7.7,8.8,9.9,10.,11.,12.,13.,14.,15.,16. };
+                g_print ("write JSON for SPMC_GVP_VECTOR [%g, %g, ...]\n", vec[0],vec[1]);
+
+                rpspmc_pacpll->write_signal ("SPMC_GVP_VECTOR", 16, vec);
+        }
+
+}
+
+void RPSPMC_Control::ZPosSetChanged(Param_Control* pcs, gpointer dspc){
+        if (rpspmc_pacpll)
+                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_SETPOINT_CZ", main_get_gapp()->xsm->Inst->ZA2Volt(((RPSPMC_Control*)dspc)->zpos_ref));
+}
+
+void RPSPMC_Control::ZServoParamChanged(Param_Control* pcs, gpointer dspc){
+        if (rpspmc_pacpll){
+                // (((RPSPMC_Control*)dspc)->mix_gain[ch]) // N/A
+                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_SETPOINT", ((RPSPMC_Control*)dspc)->mix_set_point[0]);
+                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_MODE", ((RPSPMC_Control*)dspc)->mix_transform_mode[0]);
+                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_CP",   ((RPSPMC_Control*)dspc)->mix_level[0]);
+                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_CP",   ((RPSPMC_Control*)dspc)->z_servo[SERVO_CP]);
+                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_CP",   ((RPSPMC_Control*)dspc)->z_servo[SERVO_CI]);
+                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_UPPER",  5.0);
+                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_LOWER", -5.0);
+        }
+}
+
 
 void RPSPMC_Control::ChangedNotifyVP(Param_Control* pcs, gpointer dspc){
         for (int k=0; k<8; k++)
@@ -4384,6 +4421,47 @@ void RPspmc_pacpll::write_parameter (const gchar *paramater_id, int value, gbool
                 g_free (json_string);
         }
 }
+
+// {"signals":{"SIGNAL_CH3":{"size":1024,"value":[0,0,...,0.543632,0.550415]},"SIGNAL_CH4":{"size":1024,"value":[0,0,... ,-94.156487]},"SIGNAL_CH5":{"size":1024,"value":[0,0,.. ,-91.376022,-94.156487]
+void RPspmc_pacpll::write_signal (const gchar *paramater_id, int size, double *value, const gchar *fmt=NULL, gboolean dbg=FALSE){
+        if (client){
+                GString *list = g_string_new (NULL);
+                if (fmt) // MUST INCLUDE COMMA: default is "%g,"
+                        for (int i=0; i<size; ++i)
+                                g_string_append_printf (list, fmt, value[i]);
+                else
+                        for (int i=0; i<size; ++i)
+                                g_string_append_printf (list, "%g,", value[i]);
+                
+                g_string_truncate (list, list->len-1);
+                gchar *json_string = g_strdup_printf ("{ \"signals\":{\"%s\":{\"size\":%s,\"value\":[%s]}}}", paramater_id, size, list->str);
+                g_print ("%s\n",json_string);
+                g_string_free (list, true);
+                
+                soup_websocket_connection_send_text (client, json_string);
+                if  (debug_level > 0 || dbg)
+                        g_print ("%s\n",json_string);
+                g_free (json_string);
+        }
+}
+
+void RPspmc_pacpll::write_signal (const gchar *paramater_id, int size, int *value, gboolean dbg=FALSE){
+        if (client){
+                GString *list = g_string_new (NULL);
+                for (int i=0; i<size; ++i)
+                        g_string_append_printf (list, "%d,", value[i]);
+                g_string_truncate (list, list->len-1);
+                g_string_truncate (list, list->len-1);
+                gchar *json_string = g_strdup_printf ("{ \"signals\":{\"%s\":{\"size\":%s,\"value\":[%s]}}}", paramater_id, size, list->str);
+                g_string_free (list, true);
+                
+                soup_websocket_connection_send_text (client, json_string);
+                if  (debug_level > 0 || dbg)
+                        g_print ("%s\n",json_string);
+                g_free (json_string);
+        }
+}
+
 
 void RPspmc_pacpll::update_health (const gchar *msg){
         if (msg){

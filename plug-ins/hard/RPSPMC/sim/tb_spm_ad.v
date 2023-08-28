@@ -80,6 +80,8 @@ module tb_spm_ad(
     reg [2:0] dac_axis = 0;
     reg dac_send = 0;
 
+    wire ad_ready;
+
     initial 
     begin       
         tb_ACLK = 1'b0;
@@ -92,8 +94,8 @@ module tb_spm_ad(
     always #10 tb_ACLK = !tb_ACLK;
        
     always begin
-        pclk = 1; #32;
-        pclk = 0; #32;
+        pclk = 1; #2;
+        pclk = 0; #2;
     end
 
     always begin
@@ -113,13 +115,13 @@ module tb_spm_ad(
         prg=0;
         #20
         data = {192'd0, 32'd0004, 32'd0003, 32'd0064, 32'd0001,  32'd0, 32'd0000,   32'h000, 32'd001, 32'd004, 32'd00 }; // 000
-        #2
+        #20
         prg=1;
         #20
         prg=0;
         #20
         data = {192'd0, 32'd0004, 32'd0003, 32'd0064, 32'd0001,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd01 }; // END
-        #2
+        #20
         prg=1;
         #20
         prg=0;
@@ -138,25 +140,28 @@ module tb_spm_ad(
         dac_axis = 0; // DAC AXIS (Channel)
         dac_cfg = 0;  // DAC CFG DATA
         dac_cfgv = 1; // DATA VALID
-        #10;
+        #20;
 
         dac_axis = 3; // ADC0      
         dac_cfg = 128; // =32
-        #10;
+        #20;
         dac_axis = 2; // ADC0      
         dac_cfg = 64; // =32
         #10;
         dac_axis = 1; // ADC0      
         dac_cfg = 32; // =32
-        #10;
+        #20;
         dac_axis = 0; // ADC0      
         dac_cfg = 16; // =32
-        #10;
+        #20;
         dac_send = 1; // Send
-        #(128*64);
+        #(20);
         dac_send = 0;      
-        dac_cmode = 0;      
+        #(20);
+        wait (ad_ready);  
 
+        #(20);
+        dac_cmode = 0;      
 
         // TEST GVP SCAN
         r=1;
@@ -262,6 +267,8 @@ axis_spm_control axis_spm_control_1
     .slope_x(0),
     .slope_y(0),
     
+    .S_AXIS_Z_tdata(0),
+    .S_AXIS_Z_tvalid(1),
     // SCAN COMPONENTS, ROTATED RELATIVE COORDS
     .xs(wx), // vector components
     .ys(wy), // ..
@@ -321,8 +328,9 @@ axis_AD5791 axis_AD5791_1
 
     .configuration_mode(dac_cmode),
     .configuration_axis(dac_axis),
-    .configuration_send(dac_send)
+    .configuration_send(dac_send),
     
+    .ready(ad_ready)
     //.exp_p_io(p_iob),
     //.exp_n_io(n_iob)
     );

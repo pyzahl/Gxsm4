@@ -43,6 +43,8 @@
 // forward defs
 extern PACPLL_parameters pacpll_parameters;
 extern PACPLL_signals pacpll_signals;
+extern SPMC_parameters spmc_parameters;
+extern SPMC_signals spmc_signals;
 extern JSON_parameter PACPLL_JSON_parameters[];
 extern JSON_signal PACPLL_JSON_signals[];
 
@@ -358,6 +360,9 @@ public:
         };
 
 
+        static void BiasChanged(Param_Control* pcs, gpointer data);
+        static void ZPosSetChanged(Param_Control* pcs, gpointer data);
+        static void ZServoParamChanged(Param_Control* pcs, gpointer data);
 
         static void ChangedNotify(Param_Control* pcs, gpointer data);
         static void ChangedNotifyVP(Param_Control* pcs, gpointer data);
@@ -1057,6 +1062,10 @@ public:
         void write_parameter (const gchar *paramater_id, double value, const gchar *fmt=NULL, gboolean dbg=FALSE);
         void write_parameter (const gchar *paramater_id, int value, gboolean dbg=FALSE);
 
+        void write_signal (const gchar *paramater_id, int size, double *value, const gchar *fmt=NULL, gboolean dbg=FALSE);
+        void write_signal (const gchar *paramater_id, int size, int *value, gboolean dbg=FALSE);
+
+        
         static int json_dump(const char *js, jsmntok_t *t, size_t count, int indent) {
                 int i, j, k;
                 if (count == 0) {

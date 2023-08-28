@@ -32,6 +32,9 @@
 PACPLL_parameters pacpll_parameters;
 PACPLL_signals pacpll_signals;
 
+SPMC_parameters spmc_parameters;
+SPMC_signals spmc_signals;
+
 JSON_parameter PACPLL_JSON_parameters[] = {
         { "DC_OFFSET", &pacpll_parameters.dc_offset, true },
         { "CPU_LOAD", &pacpll_parameters.cpu_load, true },
@@ -124,7 +127,44 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         { "PULSE_FORM_SHAPEXWIF", &pacpll_parameters.pulse_form_shapexwif, false },
         { "PULSE_FORM_SHAPEX", &pacpll_parameters.pulse_form_shapex, false },
         { "PULSE_FORM_SHAPEXIF", &pacpll_parameters.pulse_form_shapexif, false },
-         
+
+        { "SPMC_BIAS", &spmc_parameters.bias, false },
+
+        { "SPMC_Z_SERVO_MODE", &spmc_parameters.z_servo_mode, false },
+        { "SPMC_Z_SERVO_SETPOINT", &spmc_parameters.z_servo_setpoint, false },
+        { "SPMC_Z_SERVO_CP", &spmc_parameters.z_servo_cp, false },
+        { "SPMC_Z_SERVO_CI", &spmc_parameters.z_servo_ci, false },
+        { "SPMC_Z_SERVO_UPPER", &spmc_parameters.z_servo_upper, false },
+        { "SPMC_Z_SERVO_LOWER", &spmc_parameters.z_servo_lower, false },
+        { "SPMC_Z_SERVO_SETPOINT_CZ", &spmc_parameters.z_servo_setpoint_cz, false },
+        { "SPMC_Z_SERVO_LEVEL", &spmc_parameters.z_servo_level, false },
+
+
+        { "SPMC_GVP_EXECUTE", &spmc_parameters.gvp_execute, false },
+        { "SPMC_GVP_PAUSE", &spmc_parameters.gvp_pause, false },
+        { "SPMC_GVP_STOP", &spmc_parameters.gvp_stop, false },
+        { "SPMC_GVP_CONTROLLER", &spmc_parameters.gvp_controller, false },
+        { "SPMC_GVP_STATUS", &spmc_parameters.gvp_status, true },
+
+        { "SPMC_ALPHA", &spmc_parameters.alpha, false },
+        { "SPMC_SLOPE_dZX", &spmc_parameters.slope_dzx, false },
+        { "SPMC_SLOPE_dZY", &spmc_parameters.slope_dzy, false },
+
+        { "SPMC_SET_OFFSET_X", &spmc_parameters.set_offset_x, false },
+        { "SPMC_SET_OFFSET_Y", &spmc_parameters.set_offset_y, false },
+        { "SPMC_SET_OFFSET_Z", &spmc_parameters.set_offset_z, false },
+
+        // RP SPMC Monitors
+        { "SPMC_BIAS_MONITOR", &spmc_parameters.bias_monitor, true },
+        { "SPMC_SIGNAL_MONITOR", &spmc_parameters.signal_monitor, true }, // Z servo input signal (current, ...)
+        { "SPMC_X_MONITOR", &spmc_parameters.x_monitor, true },
+        { "SPMC_Y_MONITOR", &spmc_parameters.y_monitor, true },
+        { "SPMC_Z_MONITOR", &spmc_parameters.z_monitor, true },
+
+        { "SPMC_X0_MONITOR", &spmc_parameters.x0_monitor, true },
+        { "SPMC_Y0_MONITOR", &spmc_parameters.y0_monitor, true },
+        { "SPMC_Z0_MONITOR", &spmc_parameters.z0_monitor, true },
+        
         { NULL, NULL, true }
 };
 
@@ -138,5 +178,12 @@ JSON_signal PACPLL_JSON_signals[] = {
         { "SIGNAL_TUNE_PHASE", 1024, pacpll_signals.signal_phase },
         { "SIGNAL_TUNE_AMPL",  1024, pacpll_signals.signal_ampl },
         { "SIGNAL_GPIOX",  16, pacpll_signals.signal_gpiox },
+
+        { "SPMC_GVP_VECTOR", GVP_VECTOR_SIZE, spmc_signals.gvp_vector},
+
         { NULL, 0, NULL }
 };
+
+
+
+

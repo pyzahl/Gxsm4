@@ -49,10 +49,11 @@ module axis_spm_control#(
     input [32-1:0] z0, // ..
 
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF S_AXIS_Z:M_AXIS1:M_AXIS2:M_AXIS3:M_AXIS4" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF S_AXIS_Z:M_AXIS1:M_AXIS2:M_AXIS3:M_AXIS4,M_AXIS_XSMON,M_AXIS_YSMON,M_AXIS_XMON,M_AXIS_YMON,M_AXIS_ZMON,M_AXIS_UMON" *)
     input  a_clk,
     input  wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS_Z_tdata,
     input  wire                          S_AXIS_Z_tvalid,
+    
     output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS1_tdata,
     output wire                          M_AXIS1_tvalid,
     output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS2_tdata,
@@ -71,8 +72,10 @@ module axis_spm_control#(
     output wire                          M_AXIS_XMON_tvalid,
     output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS_YMON_tdata,
     output wire                          M_AXIS_YMON_tvalid,
+    
     output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS_ZMON_tdata,
     output wire                          M_AXIS_ZMON_tvalid,
+    
     output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS_UMON_tdata,
     output wire                          M_AXIS_UMON_tvalid
 
@@ -85,16 +88,16 @@ module axis_spm_control#(
     // Zsxy = slope_x * Xr + slope_y * Yr 
     // Z    = Z0 + z + Zsxy
 
-    reg signed [32-1:0] rx;
-    reg signed [32-1:0] ry;
-    reg signed [32-1:0] rz;
-    reg signed [32-1:0] ru;
+    reg signed [32-1:0] rx=0;
+    reg signed [32-1:0] ry=0;
+    reg signed [32-1:0] rz=0;
+    reg signed [32-1:0] ru=0;
     
-    reg signed [32-1:0] z_servo;
-    reg signed [32-1:0] z_slope;
-    reg signed [32-1:0] z_gvp;
-    reg signed [32-1:0] z_offset;
-    reg signed [36-1:0] z_sum;
+    reg signed [32-1:0] z_servo=0;
+    reg signed [32-1:0] z_slope=0;
+    reg signed [32-1:0] z_gvp=0;
+    reg signed [32-1:0] z_offset=0;
+    reg signed [36-1:0] z_sum=0;
     
     reg [RDECI:0] rdecii = 0;
 
@@ -123,12 +126,12 @@ module axis_spm_control#(
             if (z_sum < -36'sd2147483647)
             begin
                 rz <= -32'sd2147483647;
-            end     
+            end 
             else
             begin
                 rz <= z_sum[32-1:0];
             end
-    end         
+        end         
     end
     
     
@@ -139,7 +142,7 @@ module axis_spm_control#(
     assign M_AXIS_XSMON_tdata  = xs;
     assign M_AXIS_XSMON_tvalid = 1;
     
-    assign M_AXIS2_tdata  = y0+ys;
+    assign M_AXIS2_tdata  = ry;
     assign M_AXIS2_tvalid = 1;
     assign M_AXIS_YMON_tdata  = ry;
     assign M_AXIS_YMON_tvalid = 1;
@@ -148,8 +151,12 @@ module axis_spm_control#(
     
     assign M_AXIS3_tdata  = rz;
     assign M_AXIS3_tvalid = 1;
+    assign M_AXIS_ZMON_tdata  = rz;
+    assign M_AXIS_ZMON_tvalid = 1;
     
     assign M_AXIS4_tdata  = ru;
     assign M_AXIS4_tvalid = 1;
+    assign M_AXIS_UMON_tdata  = ru;
+    assign M_AXIS_UMON_tvalid = 1;
     
 endmodule

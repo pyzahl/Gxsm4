@@ -11,42 +11,22 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="2,169.622213 us"></ZoomStartTime>
-      <ZoomEndTime time="2,199.622214 us"></ZoomEndTime>
-      <Cursor1Time time="2,231.892000 us"></Cursor1Time>
+      <ZoomStartTime time="19,855.708 ns"></ZoomStartTime>
+      <ZoomEndTime time="20,028.859 ns"></ZoomEndTime>
+      <Cursor1Time time="20,000.000 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
-      <NameColumnWidth column_width="343"></NameColumnWidth>
+      <NameColumnWidth column_width="301"></NameColumnWidth>
       <ValueColumnWidth column_width="91"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="38" />
+   <WVObjectSize size="53" />
    <wvobject type="logic" fp_name="/tb_spm_ad/tb_ACLK">
       <obj_property name="ElementShortName">tb_ACLK</obj_property>
       <obj_property name="ObjectShortName">tb_ACLK</obj_property>
    </wvobject>
-   <wvobject type="logic" fp_name="/tb_spm_ad/tb_ARESETn">
-      <obj_property name="ElementShortName">tb_ARESETn</obj_property>
-      <obj_property name="ObjectShortName">tb_ARESETn</obj_property>
-   </wvobject>
    <wvobject type="logic" fp_name="/tb_spm_ad/temp_clk">
       <obj_property name="ElementShortName">temp_clk</obj_property>
       <obj_property name="ObjectShortName">temp_clk</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/tb_spm_ad/temp_rstn">
-      <obj_property name="ElementShortName">temp_rstn</obj_property>
-      <obj_property name="ObjectShortName">temp_rstn</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/tb_spm_ad/read_data">
-      <obj_property name="ElementShortName">read_data[31:0]</obj_property>
-      <obj_property name="ObjectShortName">read_data[31:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/tb_spm_ad/leds">
-      <obj_property name="ElementShortName">leds[3:0]</obj_property>
-      <obj_property name="ObjectShortName">leds[3:0]</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/tb_spm_ad/resp">
-      <obj_property name="ElementShortName">resp</obj_property>
-      <obj_property name="ObjectShortName">resp</obj_property>
    </wvobject>
    <wvobject type="logic" fp_name="/tb_spm_ad/pclk">
       <obj_property name="ElementShortName">pclk</obj_property>
@@ -141,64 +121,9 @@
       <obj_property name="ObjectShortName">PMD_dac[3:0]</obj_property>
       <obj_property name="isExpanded"></obj_property>
    </wvobject>
-   <wvobject type="array" fp_name="/tb_spm_ad/axis_AD5791_1/reg_dac_data">
-      <obj_property name="ElementShortName">reg_dac_data[3:0][23:0]</obj_property>
-      <obj_property name="ObjectShortName">reg_dac_data[3:0][23:0]</obj_property>
-      <obj_property name="isExpanded"></obj_property>
-      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
-      <wvobject type="array" fp_name="/tb_spm_ad/axis_AD5791_1/reg_dac_data[3]">
-         <obj_property name="ElementShortName">[3][23:0]</obj_property>
-         <obj_property name="ObjectShortName">[3][23:0]</obj_property>
-      </wvobject>
-      <wvobject type="array" fp_name="/tb_spm_ad/axis_AD5791_1/reg_dac_data[2]">
-         <obj_property name="ElementShortName">[2][23:0]</obj_property>
-         <obj_property name="ObjectShortName">[2][23:0]</obj_property>
-      </wvobject>
-      <wvobject type="array" fp_name="/tb_spm_ad/axis_AD5791_1/reg_dac_data[1]">
-         <obj_property name="ElementShortName">[1][23:0]</obj_property>
-         <obj_property name="ObjectShortName">[1][23:0]</obj_property>
-         <obj_property name="WaveformStyle">STYLE_ANALOG</obj_property>
-         <obj_property name="CellHeight">100</obj_property>
-         <obj_property name="AnalogYRangeType">ANALOG_YRANGETYPE_FIXED</obj_property>
-         <obj_property name="AnalogYRangeMin">0.000000</obj_property>
-         <obj_property name="AnalogYRRangeMax">200.000000</obj_property>
-         <obj_property name="AnalogInterpolation">ANALOG_INTERPOLATION_HOLD</obj_property>
-         <obj_property name="AnalogOffscale">ANALOG_OFFSCALE_HIDE</obj_property>
-         <obj_property name="AnalogHorizLine">0.000000</obj_property>
-      </wvobject>
-      <wvobject type="array" fp_name="/tb_spm_ad/axis_AD5791_1/reg_dac_data[0]">
-         <obj_property name="ElementShortName">[0][23:0]</obj_property>
-         <obj_property name="ObjectShortName">[0][23:0]</obj_property>
-         <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
-         <obj_property name="WaveformStyle">STYLE_ANALOG</obj_property>
-         <obj_property name="CellHeight">100</obj_property>
-         <obj_property name="AnalogYRangeType">ANALOG_YRANGETYPE_FIXED</obj_property>
-         <obj_property name="AnalogYRangeMin">0.000000</obj_property>
-         <obj_property name="AnalogYRRangeMax">200.000000</obj_property>
-         <obj_property name="AnalogInterpolation">ANALOG_INTERPOLATION_HOLD</obj_property>
-         <obj_property name="AnalogOffscale">ANALOG_OFFSCALE_HIDE</obj_property>
-         <obj_property name="AnalogHorizLine">0.000000</obj_property>
-      </wvobject>
-      <wvobject type="array" fp_name="/tb_spm_ad/axis_AD5791_1/reg_dac_data[3]">
-         <obj_property name="ElementShortName">[3][23:0]</obj_property>
-         <obj_property name="ObjectShortName">[3][23:0]</obj_property>
-      </wvobject>
-      <wvobject type="array" fp_name="/tb_spm_ad/axis_AD5791_1/reg_dac_data[2]">
-         <obj_property name="ElementShortName">[2][23:0]</obj_property>
-         <obj_property name="ObjectShortName">[2][23:0]</obj_property>
-      </wvobject>
-      <wvobject type="array" fp_name="/tb_spm_ad/axis_AD5791_1/reg_dac_data[1]">
-         <obj_property name="ElementShortName">[1][23:0]</obj_property>
-         <obj_property name="ObjectShortName">[1][23:0]</obj_property>
-      </wvobject>
-      <wvobject type="array" fp_name="/tb_spm_ad/axis_AD5791_1/reg_dac_data[0]">
-         <obj_property name="ElementShortName">[0][23:0]</obj_property>
-         <obj_property name="ObjectShortName">[0][23:0]</obj_property>
-      </wvobject>
-   </wvobject>
-   <wvobject type="array" fp_name="/tb_spm_ad/axis_AD5791_1/reg_dac_data_buf">
-      <obj_property name="ElementShortName">reg_dac_data_buf[3:0][23:0]</obj_property>
-      <obj_property name="ObjectShortName">reg_dac_data_buf[3:0][23:0]</obj_property>
+   <wvobject type="logic" fp_name="/tb_spm_ad/ad_ready">
+      <obj_property name="ElementShortName">ad_ready</obj_property>
+      <obj_property name="ObjectShortName">ad_ready</obj_property>
    </wvobject>
    <wvobject type="logic" fp_name="/tb_spm_ad/axis_AD5791_1/configuration_mode">
       <obj_property name="ElementShortName">configuration_mode</obj_property>
@@ -207,6 +132,16 @@
    <wvobject type="logic" fp_name="/tb_spm_ad/axis_AD5791_1/configuration_send">
       <obj_property name="ElementShortName">configuration_send</obj_property>
       <obj_property name="ObjectShortName">configuration_send</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_AD5791_1/reg_dac_data">
+      <obj_property name="ElementShortName">reg_dac_data[3:0][23:0]</obj_property>
+      <obj_property name="ObjectShortName">reg_dac_data[3:0][23:0]</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_AD5791_1/reg_dac_data_buf">
+      <obj_property name="ElementShortName">reg_dac_data_buf[3:0][23:0]</obj_property>
+      <obj_property name="ObjectShortName">reg_dac_data_buf[3:0][23:0]</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/tb_spm_ad/axis_AD5791_1/frame_bit_counter">
       <obj_property name="ElementShortName">frame_bit_counter[5:0]</obj_property>
@@ -217,27 +152,16 @@
       <obj_property name="ObjectShortName">state_load_dacs[3:0]</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/tb_spm_ad/axis_AD5791_1/rdecii">
-      <obj_property name="ElementShortName">rdecii[1:0]</obj_property>
-      <obj_property name="ObjectShortName">rdecii[1:0]</obj_property>
+      <obj_property name="ElementShortName">rdecii[4:0]</obj_property>
+      <obj_property name="ObjectShortName">rdecii[4:0]</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/tb_spm_ad/wx">
       <obj_property name="ElementShortName">wx[31:0]</obj_property>
       <obj_property name="ObjectShortName">wx[31:0]</obj_property>
    </wvobject>
-   <wvobject type="array" fp_name="/tb_spm_ad/rxc">
-      <obj_property name="ElementShortName">rxc[31:0]</obj_property>
-      <obj_property name="ObjectShortName">rxc[31:0]</obj_property>
-   </wvobject>
    <wvobject type="array" fp_name="/tb_spm_ad/axis_spm_control_1/M_AXIS1_tdata">
       <obj_property name="ElementShortName">M_AXIS1_tdata[31:0]</obj_property>
       <obj_property name="ObjectShortName">M_AXIS1_tdata[31:0]</obj_property>
-      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
-      <obj_property name="WaveformStyle">STYLE_ANALOG</obj_property>
-      <obj_property name="CellHeight">100</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/tb_spm_ad/axis_spm_control_1/xs_mon">
-      <obj_property name="ElementShortName">xs_mon[31:0]</obj_property>
-      <obj_property name="ObjectShortName">xs_mon[31:0]</obj_property>
       <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
       <obj_property name="WaveformStyle">STYLE_ANALOG</obj_property>
       <obj_property name="CellHeight">100</obj_property>
@@ -278,5 +202,89 @@
       <obj_property name="AnalogOffscale">ANALOG_OFFSCALE_HIDE</obj_property>
       <obj_property name="AnalogHorizLine">0.000000</obj_property>
       <obj_property name="WaveformStyle">STYLE_ANALOG</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_spm_ad/gvp_1/setvec">
+      <obj_property name="ElementShortName">setvec</obj_property>
+      <obj_property name="ObjectShortName">setvec</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_spm_ad/axis_AD5791_1/ready">
+      <obj_property name="ElementShortName">ready</obj_property>
+      <obj_property name="ObjectShortName">ready</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_spm_control_1/zs">
+      <obj_property name="ElementShortName">zs[31:0]</obj_property>
+      <obj_property name="ObjectShortName">zs[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_spm_control_1/u">
+      <obj_property name="ElementShortName">u[31:0]</obj_property>
+      <obj_property name="ObjectShortName">u[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_spm_control_1/ys">
+      <obj_property name="ElementShortName">ys[31:0]</obj_property>
+      <obj_property name="ObjectShortName">ys[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_spm_control_1/xs">
+      <obj_property name="ElementShortName">xs[31:0]</obj_property>
+      <obj_property name="ObjectShortName">xs[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/dac_cfg">
+      <obj_property name="ElementShortName">dac_cfg[31:0]</obj_property>
+      <obj_property name="ObjectShortName">dac_cfg[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/gvp_1/x">
+      <obj_property name="ElementShortName">x[31:0]</obj_property>
+      <obj_property name="ObjectShortName">x[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/gvp_1/y">
+      <obj_property name="ElementShortName">y[31:0]</obj_property>
+      <obj_property name="ObjectShortName">y[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/gvp_1/z">
+      <obj_property name="ElementShortName">z[31:0]</obj_property>
+      <obj_property name="ObjectShortName">z[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/gvp_1/u">
+      <obj_property name="ElementShortName">u[31:0]</obj_property>
+      <obj_property name="ObjectShortName">u[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_spm_control_1/M_AXIS3_tdata">
+      <obj_property name="ElementShortName">M_AXIS3_tdata[31:0]</obj_property>
+      <obj_property name="ObjectShortName">M_AXIS3_tdata[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_spm_control_1/M_AXIS4_tdata">
+      <obj_property name="ElementShortName">M_AXIS4_tdata[31:0]</obj_property>
+      <obj_property name="ObjectShortName">M_AXIS4_tdata[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_spm_control_1/rz">
+      <obj_property name="ElementShortName">rz[31:0]</obj_property>
+      <obj_property name="ObjectShortName">rz[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_spm_control_1/z_sum">
+      <obj_property name="ElementShortName">z_sum[35:0]</obj_property>
+      <obj_property name="ObjectShortName">z_sum[35:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_spm_control_1/z_servo">
+      <obj_property name="ElementShortName">z_servo[31:0]</obj_property>
+      <obj_property name="ObjectShortName">z_servo[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_spm_control_1/z_slope">
+      <obj_property name="ElementShortName">z_slope[31:0]</obj_property>
+      <obj_property name="ObjectShortName">z_slope[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_spm_control_1/z_gvp">
+      <obj_property name="ElementShortName">z_gvp[31:0]</obj_property>
+      <obj_property name="ObjectShortName">z_gvp[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_spm_control_1/z_offset">
+      <obj_property name="ElementShortName">z_offset[31:0]</obj_property>
+      <obj_property name="ObjectShortName">z_offset[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_spm_control_1/M_AXIS_ZMON_tdata">
+      <obj_property name="ElementShortName">M_AXIS_ZMON_tdata[31:0]</obj_property>
+      <obj_property name="ObjectShortName">M_AXIS_ZMON_tdata[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_spm_control_1/S_AXIS_Z_tdata">
+      <obj_property name="ElementShortName">S_AXIS_Z_tdata[31:0]</obj_property>
+      <obj_property name="ObjectShortName">S_AXIS_Z_tdata[31:0]</obj_property>
    </wvobject>
 </wave_config>

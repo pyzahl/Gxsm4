@@ -51,9 +51,17 @@ module axis_AD5791 #(
     (* X_INTERFACE_PARAMETER = "FREQ_HZ 30000000" *)
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN wire_PMD_clk" *)
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF wire_PMD_sync:wire_PMD_dac" *)
+    //(* X_INTERFACE_PARAMETER = "FREQ_HZ 125000000" *)
     output wire wire_PMD_clk,
     output wire wire_PMD_sync,
-    output wire [NUM_DAC-1:0] wire_PMD_dac
+    output wire [NUM_DAC-1:0] wire_PMD_dac,
+    
+    output wire [31:0] mon0,
+    output wire [31:0] mon1,
+    output wire [31:0] mon2,
+    output wire [31:0] mon3,
+    
+    output wire ready
     );
     
     
@@ -70,7 +78,7 @@ module axis_AD5791 #(
     reg [6-1:0] frame_bit_counter=0;
     reg [4-1:0]state_load_dacs=0;
     
-    reg [1:0] rdecii = 0;
+    reg [4:0] rdecii = 0; //4 for tetsing slow [1:0]
 
     integer i;
     initial begin
@@ -85,11 +93,11 @@ module axis_AD5791 #(
     always @ (posedge a_clk) // 120MHz
     begin
         rdecii <= rdecii+1;
-        PMD_clk <= rdecii[1]; // 1/4 => 30MHz
+        PMD_clk <= rdecii[4]; // 1/4 => 30MHz  , 4: testing slow
     end
 
     // Latch data from AXIS when new
-    always @(posedge PMD_clk)
+    always @(*) //posedge PMD_clk)
     begin
         if (configuration_mode)
         begin
@@ -99,13 +107,14 @@ module axis_AD5791 #(
         else
         begin
             if (S_AXIS1_tvalid)
-                reg_dac_data[0] <= {{(DAC_WORD_WIDTH-DAC_DATA_WIDTH ){1'b0}}, S_AXIS1_tdata[SAXIS_TDATA_WIDTH-1:SAXIS_TDATA_WIDTH-DAC_DATA_WIDTH]};
+                //                       send to data register 24 bits:         0 001 20-bit-data
+                reg_dac_data[0] <= {{(DAC_WORD_WIDTH-DAC_DATA_WIDTH-1 ){1'b0}}, 1'b1, S_AXIS1_tdata[SAXIS_TDATA_WIDTH-1:SAXIS_TDATA_WIDTH-DAC_DATA_WIDTH]};
             if (S_AXIS2_tvalid)
-                reg_dac_data[1] <= {{(DAC_WORD_WIDTH-DAC_DATA_WIDTH ){1'b0}}, S_AXIS2_tdata[SAXIS_TDATA_WIDTH-1:SAXIS_TDATA_WIDTH-DAC_DATA_WIDTH]};
+                reg_dac_data[1] <= {{(DAC_WORD_WIDTH-DAC_DATA_WIDTH-1 ){1'b0}}, 1'b1, S_AXIS2_tdata[SAXIS_TDATA_WIDTH-1:SAXIS_TDATA_WIDTH-DAC_DATA_WIDTH]};
             if (S_AXIS3_tvalid)
-                reg_dac_data[2] <= {{(DAC_WORD_WIDTH-DAC_DATA_WIDTH ){1'b0}}, S_AXIS3_tdata[SAXIS_TDATA_WIDTH-1:SAXIS_TDATA_WIDTH-DAC_DATA_WIDTH]};
+                reg_dac_data[2] <= {{(DAC_WORD_WIDTH-DAC_DATA_WIDTH-1 ){1'b0}}, 1'b1, S_AXIS3_tdata[SAXIS_TDATA_WIDTH-1:SAXIS_TDATA_WIDTH-DAC_DATA_WIDTH]};
             if (S_AXIS4_tvalid)
-                reg_dac_data[3] <= {{(DAC_WORD_WIDTH-DAC_DATA_WIDTH ){1'b0}}, S_AXIS4_tdata[SAXIS_TDATA_WIDTH-1:SAXIS_TDATA_WIDTH-DAC_DATA_WIDTH]};
+                reg_dac_data[3] <= {{(DAC_WORD_WIDTH-DAC_DATA_WIDTH-1 ){1'b0}}, 1'b1, S_AXIS4_tdata[SAXIS_TDATA_WIDTH-1:SAXIS_TDATA_WIDTH-DAC_DATA_WIDTH]};
         end
     end
 
@@ -188,9 +197,15 @@ module axis_AD5791 #(
         PMD_dac[3] <= reg_dac_data_buf[3][frame_bit_counter];
     end
 
+assign ready = (state_load_dacs == 1'b0000);
 
 assign wire_PMD_clk  = PMD_clk;
 assign wire_PMD_sync = PMD_sync;
 assign wire_PMD_dac  = { PMD_dac[3], PMD_dac[2], PMD_dac[1], PMD_dac[0] };
+  
+assign mon0 = { reg_dac_data_buf[0][19:0], {(32-24){1'b0}}, reg_dac_data_buf[0][23:20] };
+assign mon1 = { reg_dac_data_buf[1][19:0], {(32-24){1'b0}}, reg_dac_data_buf[1][23:20] };
+assign mon2 = { reg_dac_data_buf[2][19:0], {(32-24){1'b0}}, reg_dac_data_buf[2][23:20] };
+assign mon3 = { reg_dac_data_buf[3][19:0], {(32-24){1'b0}}, reg_dac_data_buf[3][23:20] };
     
 endmodule

@@ -297,10 +297,10 @@ CBooleanParameter SPMC_GVP_EXECUTE("SPMC_GVP_EXECUTE", CBaseParameter::RW, false
 CBooleanParameter SPMC_GVP_PAUSE("SPMC_GVP_PAUSE", CBaseParameter::RW, false, 0);
 CBooleanParameter SPMC_GVP_STOP("SPMC_GVP_STOP", CBaseParameter::RW, false, 0);
 CIntParameter     SPMC_GVP_CONTROLLER("SPMC_GVP_CONTROLLER", CBaseParameter::RW, 0, 0, -(1<<30), 1<<30);
+CIntParameter     SPMC_GVP_STATUS("SPMC_GVP_STATUS", CBaseParameter::RW, 0, 0, 0, 1<<30);
 #define MAX_GVP_VECTORS   32
-#define GVP_VECTORS_SIZE  16 // 10 components used (1st is index, then: N, nii, Options, Nrep, Next, dx, dy, dz, du, fill w zero to 16)
-#define GVP_PROGRAM_SIZE (MAX_GVP_VECTORS * GVP_VECTORS_SIZE)
-CFloatSignal SPMC_GVP_VECTOR("GVP_VECTOR_PROGRAM", GVP_PROGRAM_SIZE, 0.0f); // vector components in mV, else "converted to int"
+#define GVP_VECTOR_SIZE  16 // 10 components used (1st is index, then: N, nii, Options, Nrep, Next, dx, dy, dz, du, fill w zero to 16)
+CFloatSignal SPMC_GVP_VECTOR("SPMC_GVP_VECTOR", GVP_VECTOR_SIZE, 0.0f); // vector components in mV, else "converted to int"
 
 CDoubleParameter  SPMC_ALPHA("SPMC_ALPHA", CBaseParameter::RW, 0.0, 0, -360, +360); // deg
 CDoubleParameter  SPMC_SLOPE_dZX("SPMC_SLOPE_X", CBaseParameter::RW, 0.0, 0, -1.0, +1.0); // slope in Volts Z / Volt X
@@ -312,9 +312,13 @@ CDoubleParameter  SPMC_SET_OFFSET_Z("SPMC_OFFSET_Z", CBaseParameter::RW, 0.0, 0,
 
 // RP SPMC Monitors
 CDoubleParameter  SPMC_BIAS_MONITOR("SPMC_BIAS_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
+CDoubleParameter  SPMC_SIGNAL_MONITOR("SPMC_SIGNAL_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 CDoubleParameter  SPMC_X_MONITOR("SPMC_X_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 CDoubleParameter  SPMC_Y_MONITOR("SPMC_Y_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 CDoubleParameter  SPMC_Z_MONITOR("SPMC_Z_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
+CDoubleParameter  SPMC_X0_MONITOR("SPMC_X0_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
+CDoubleParameter  SPMC_Y0_MONITOR("SPMC_Y0_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
+CDoubleParameter  SPMC_Z0_MONITOR("SPMC_Z0_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 
 
 
@@ -1322,8 +1326,60 @@ void UpdateParams(void){
 }
 
 
-void OnNewParams(void)
-{
+        
+// RPSPMC Check New Parameters
+// ****************************************
+void OnNewParams_RPSPMC(void){
+        if (SPMC_BIAS.IsNewValue()){
+                SPMC_BIAS.Update ();
+                //fprintf(stderr, "New Bias = %g V\n", SPMC_BIAS.Value());
+                rp_spmc_set_bias (SPMC_BIAS.Value());
+        }
+
+        if (SPMC_Z_SERVO_SETPOINT.IsNewValue()
+            || SPMC_Z_SERVO_CP.IsNewValue()
+            || SPMC_Z_SERVO_CI.IsNewValue()
+            || SPMC_Z_SERVO_UPPER.IsNewValue()
+            || SPMC_Z_SERVO_LOWER.IsNewValue()
+            || SPMC_Z_SERVO_SETPOINT_CZ.IsNewValue()
+            || SPMC_Z_SERVO_LEVEL.IsNewValue()
+            || SPMC_Z_SERVO_MODE.IsNewValue()
+            || SPMC_Z_SERVO_MODE.IsNewValue()
+            ){
+                SPMC_Z_SERVO_SETPOINT.Update ();
+                SPMC_Z_SERVO_CP.Update ();
+                SPMC_Z_SERVO_CI.Update ();
+                SPMC_Z_SERVO_UPPER.Update ();
+                SPMC_Z_SERVO_LOWER.Update ();
+                SPMC_Z_SERVO_SETPOINT_CZ.Update ();
+                SPMC_Z_SERVO_LEVEL.Update ();
+                SPMC_Z_SERVO_MODE.Update ();
+
+                rp_spmc_set_zservo_controller (SPMC_Z_SERVO_SETPOINT.Value(), SPMC_Z_SERVO_CP.Value(), SPMC_Z_SERVO_CI.Value(), SPMC_Z_SERVO_UPPER.Value(), SPMC_Z_SERVO_LOWER.Value());
+                rp_spmc_set_zservo_gxsm_speciality_setting (SPMC_Z_SERVO_MODE.Value(), SPMC_Z_SERVO_SETPOINT_CZ.Value(), SPMC_Z_SERVO_LEVEL.Value());
+        }
+        
+        if (SPMC_GVP_EXECUTE.IsNewValue()){
+            SPMC_GVP_EXECUTE.Update ();
+        }
+        SPMC_GVP_PAUSE.Update ();
+        SPMC_GVP_STOP.Update ();
+        SPMC_GVP_CONTROLLER.Update ();
+
+        SPMC_ALPHA.Update ();
+        SPMC_SLOPE_dZX.Update ();
+        SPMC_SLOPE_dZY.Update ();
+
+        //SPMC_BIAS_MONITOR.Update ();
+        
+        SPMC_SET_OFFSET_X.Update ();
+        SPMC_SET_OFFSET_Y.Update ();
+        SPMC_SET_OFFSET_Z.Update ();
+}
+
+// PACPLL Check New Parameters
+// ****************************************
+void OnNewParams_PACPLL(void){
         if (verbose == 1) fprintf(stderr, "** New Params **\n");
         //int x=0;
         //static int ppv=0;
@@ -1437,53 +1493,6 @@ void OnNewParams(void)
         PULSE_FORM_SHAPEX.Update ();
         PULSE_FORM_SHAPEXIF.Update ();
 
-        // RPSPMC
-        // ****************************************
-        fprintf(stderr, "** RPSPMC -- New Params Checking **\n Bias changed? : ");
-        if (SPMC_BIAS.IsValueChanged()){
-                fprintf(stderr, "YES\n");
-                rp_spmc_set_bias (SPMC_BIAS.Value());
-        }else
-                fprintf(stderr, "NO\n");
-        
-        fprintf(stderr, "** RPSPMC -- call Bias.Update ()");
-        SPMC_BIAS.Update ();
-        
-        fprintf(stderr, "** RPSPMC -- Bias changed now? : ");
-        if (SPMC_BIAS.IsValueChanged()){
-                fprintf(stderr, "YES\n");
-                rp_spmc_set_bias (SPMC_BIAS.Value());
-        }else
-                fprintf(stderr, "NO\n");
-        fprintf(stderr, "** RPSPMC -- Bias = %g V\n", SPMC_BIAS.Value());
-
-
-        SPMC_Z_SERVO_MODE.Update ();
-        SPMC_Z_SERVO_SETPOINT.Update ();
-        SPMC_Z_SERVO_CP.Update ();
-        SPMC_Z_SERVO_CI.Update ();
-        SPMC_Z_SERVO_UPPER.Update ();
-        SPMC_Z_SERVO_LOWER.Update ();
-        SPMC_Z_SERVO_SETPOINT_CZ.Update ();
-        SPMC_Z_SERVO_LEVEL.Update ();
-        
-        SPMC_GVP_EXECUTE.Update ();
-        SPMC_GVP_PAUSE.Update ();
-        SPMC_GVP_STOP.Update ();
-        SPMC_GVP_CONTROLLER.Update ();
-        //CFloatSignal SPMC_GVP_VECTOR("GVP_VECTOR_PROGRAM", GVP_PROGRAM_SIZE, 0.0f); // vector components in mV, else "converted to int"
-        //std::vector<float> smpc_gvp_program(GVP_PROGRAM_SIZE);
-
-        SPMC_ALPHA.Update ();
-        SPMC_SLOPE_dZX.Update ();
-        SPMC_SLOPE_dZY.Update ();
-
-        SPMC_SET_OFFSET_X.Update ();
-        SPMC_SET_OFFSET_Y.Update ();
-        SPMC_SET_OFFSET_Z.Update ();
-        // ****************************************
-        
-        
         if ( OPERATION.Value () > 0 && OPERATION.Value () != operation ){
                 operation = OPERATION.Value ();
                 switch (operation){
@@ -1517,14 +1526,27 @@ void OnNewParams(void)
         if (verbose > 3) fprintf(stderr, "OnNewParams: set_PAC_config\n");
         set_PAC_config();
         if (verbose > 3) fprintf(stderr, "OnNewParams done.\n");
+
+}
+
+void OnNewParams(void)
+{
+        OnNewParams_PACPLL();
+        OnNewParams_RPSPMC();
 }
 
 
 void OnNewSignals(void){
+        fprintf(stderr, "** RPSPMC -- OnNew Signal\n");
         if (verbose > 3) fprintf(stderr, "OnNewSignals()\n");
 	// do something
 	CDataManager::GetInstance()->UpdateAllSignals();
         if (verbose > 3) fprintf(stderr, "OnNewSignals done.\n");
+
+        fprintf(stderr, "GVP Vector[0]: [");
+        for (int i=0; i<16; ++i)
+                fprintf(stderr, "%g ", SPMC_GVP_VECTOR[i]);
+        fprintf(stderr, " ]\n");
 }
 
 

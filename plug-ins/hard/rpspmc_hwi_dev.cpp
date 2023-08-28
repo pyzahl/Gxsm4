@@ -51,6 +51,11 @@ extern int debug_level;
 extern SOURCE_SIGNAL_DEF source_signals[];
 
 extern "C++" {
+        extern RPspmc_pacpll *rpspmc_pacpll;
+        extern GxsmPlugin rpspmc_pacpll_hwi_pi;
+}
+
+extern "C++" {
         extern RPSPMC_Control *RPSPMC_ControlClass;
         extern GxsmPlugin rpspmc_hwi_pi;
 }
@@ -650,16 +655,17 @@ gboolean rpspmc_hwi_dev::ScanLineM(int yindex, int xdir, int muxmode,
  "A" :                Mover/Wave axis counts 0,1,2 (X/Y/Z)
  "p" :                X,Y Scan/Probe Coords in Pixel, 0,0 is center, DSP Scan Coords
  "P" :                X,Y Scan/Probe Coords in Pixel, 0,0 is top left [indices]
- */
+ "B" :                Bias
+*/
 
 gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2, double &val3){
         if (*property == 'z'){
                 double x = (double)(RPSPMC_data_x_index-Nx/2)*Dx;
                 double y = (double)(Ny/2-RPSPMC_data_y_index)*Dy;
                 Transform (&x, &y); // apply rotation!
-		val1 = 0; //main_get_gapp()->xsm->Inst->VZ() * RPSPMC_data_z_value;
-		val2 = 0; // main_get_gapp()->xsm->Inst->VX() * (x + GVP_x0 ) * 10/32768; // assume "internal" non analog offset adding here (same gain)
-                val3 =  0; //main_get_gapp()->xsm->Inst->VY() * (y + GVP_y0 ) * 10/32768;
+		val1 = spmc_parameters.z_monitor; // *main_get_gapp()->xsm->Inst->VZ() * RPSPMC_data_z_value;
+		val2 = spmc_parameters.x_monitor; // *main_get_gapp()->xsm->Inst->VX() * (x + GVP_x0 ) * 10/32768; // assume "internal" non analog offset adding here (same gain)
+                val3 = spmc_parameters.y_monitor; // *main_get_gapp()->xsm->Inst->VY() * (y + GVP_y0 ) * 10/32768;
 		return TRUE;
 	}
 
@@ -668,13 +674,13 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2,
 		// NEED to request 'z' property first, then this is valid and up-to-date!!!!
                 // no offset simulated
 		if (main_get_gapp()->xsm->Inst->OffsetMode () == OFM_ANALOG_OFFSET_ADDING){
-			val1 =  0; //main_get_gapp()->xsm->Inst->VZ0() * 0.;
-			val2 =  0; // main_get_gapp()->xsm->Inst->VX0() * GVP_x0*10/32768;
-			val3 =  0; //main_get_gapp()->xsm->Inst->VY0() * GVP_y0*10/32768;
+			val1 =  spmc_parameters.z0_monitor; //main_get_gapp()->xsm->Inst->VZ0() * 0.;
+			val2 =  spmc_parameters.x0_monitor; // main_get_gapp()->xsm->Inst->VX0() * GVP_x0*10/32768;
+			val3 =  spmc_parameters.y0_monitor; //main_get_gapp()->xsm->Inst->VY0() * GVP_y0*10/32768;
 		} else {
-			val1 =  0; //main_get_gapp()->xsm->Inst->VZ() * 0.;
-			val2 =  0; //main_get_gapp()->xsm->Inst->VX() * GVP_x0*10/32768;
-			val3 =  0; //main_get_gapp()->xsm->Inst->VY() * GVP_y0*10/32768;
+			val1 =  spmc_parameters.z0_monitor; //main_get_gapp()->xsm->Inst->VZ() * 0.;
+			val2 =  spmc_parameters.x0_monitor; //main_get_gapp()->xsm->Inst->VX() * GVP_x0*10/32768;
+			val3 =  spmc_parameters.y0_monitor; //main_get_gapp()->xsm->Inst->VY() * GVP_y0*10/32768;
 		}
 		
 		return TRUE;
@@ -683,21 +689,21 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2,
         // ZXY in Angstroem
         if (*property == 'R'){
                 // ZXY Volts after Piezoamp -- without analog offset -> Dig -> ZXY in Angstroem
-		val1 =  0; //main_get_gapp()->xsm->Inst->V2ZAng (main_get_gapp()->xsm->Inst->VZ() * GVP_data_z_value);
-		val2 =  0; //main_get_gapp()->xsm->Inst->V2XAng (main_get_gapp()->xsm->Inst->VX() * (double)(GVP_data_x_index-Nx/2)*Dx)*10/32768;
-                val3 =  0; //main_get_gapp()->xsm->Inst->V2YAng (main_get_gapp()->xsm->Inst->VY() * (double)(Ny/2-GVP_data_y_index/2)*Dy)*10/32768;
+		val1 =  spmc_parameters.z_monitor; //main_get_gapp()->xsm->Inst->V2ZAng (main_get_gapp()->xsm->Inst->VZ() * GVP_data_z_value);
+		val2 =  spmc_parameters.x_monitor; //main_get_gapp()->xsm->Inst->V2XAng (main_get_gapp()->xsm->Inst->VX() * (double)(GVP_data_x_index-Nx/2)*Dx)*10/32768;
+                val3 =  spmc_parameters.z_monitor; //main_get_gapp()->xsm->Inst->V2YAng (main_get_gapp()->xsm->Inst->VY() * (double)(Ny/2-GVP_data_y_index/2)*Dy)*10/32768;
 		return TRUE;
         }
 
         if (*property == 'f'){
-                val1 = 0.; // qf - DSPPACClass->pll.Reference[0]; // Freq Shift
-		val2 =  0; //GVP_sim_current_func() / main_get_gapp()->xsm->Inst->nAmpere2V(1.); // actual nA reading    xxxx V  * 0.1nA/V
-		val3 =  0; //GVP_sim_current_func() / main_get_gapp()->xsm->Inst->nAmpere2V(1.); // actual nA RMS reading    xxxx V  * 0.1nA/V -- N/A for simulation
+                val1 = pacpll_parameters.dfreq_monitor; // qf - DSPPACClass->pll.Reference[0]; // Freq Shift
+		val2 = spmc_parameters.signal_monitor; // actual nA reading    xxxx V  * 0.1nA/V
+		val3 =  0; //
 		return TRUE;
 	}
 
         if (*property == 'Z'){
-                val1 = 0.; // rpspmc_pacpll_hwi_pi.app->xsm->Inst->Dig2ZA ((double)spm_vector_program.Zpos / (double)(1<<16));
+                val1 = rpspmc_pacpll_hwi_pi.app->xsm->Inst->Volt2ZA (spmc_parameters.z_monitor); // Z pos in Ang
 		return TRUE;
         }
 
@@ -739,6 +745,12 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2,
                 val1 = (double)(RPSPMC_data_x_index);
                 val2 = (double)(RPSPMC_data_y_index);
                 val3 = (double)RPSPMC_data_z_value;
+		return TRUE;
+        }
+        if (*property == 'B'){ // Monitors: Bias, ...
+                val1 = spmc_parameters.bias_monitor;
+                val2 = 0.0;
+                val3 = 0.0;
 		return TRUE;
         }
 //	printf ("ZXY: %g %g %g\n", val1, val2, val3);
