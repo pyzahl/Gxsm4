@@ -143,7 +143,7 @@ void  RP_JSON_talk::on_message(SoupWebsocketConnection *ws,
                                GBytes *message,
                                gpointer user_data)
 {
-         RP_JSON_talk *self = ( RP_JSON_talk *)user_data;
+        RP_JSON_talk *self = ( RP_JSON_talk *)user_data;
 	gconstpointer contents;
 	gsize len;
         gchar *tmp;
@@ -308,10 +308,12 @@ void  RP_JSON_talk::write_parameter (const gchar *paramater_id, int value, gbool
         }
 }
 
-//{ "signals":{"SPMC_GVP_VECTOR":{"size":16,"value":[1,2,3,4,5.5,6.6,7.7,8.8,9.9,10,11,12,13,14,15,16]}}}
+// {"signals":{"SPMC_GVP_VECTOR":{"size":16,"value":[1,2,3,4,5.5,6.6,7.7,8.8,9.9,10,11,12,13,14,15,16]}}}
 // {"signals":{"SIGNAL_CH3":{"size":1024,"value":[0,0,...,0.543632,0.550415]},"SIGNAL_CH4":{"size":1024,"value":[0,0,... ,-94.156487]},"SIGNAL_CH5":{"size":1024,"value":[0,0,.. ,-91.376022,-94.156487]
 void  RP_JSON_talk::write_signal (const gchar *paramater_id, int size, double *value, const gchar *fmt=NULL, gboolean dbg=FALSE){
         if (client){
+                std::vector<char> uncompressed(0);
+#if 1
                 GString *list = g_string_new (NULL);
                 if (fmt) // MUST INCLUDE COMMA: default is "%g,"
                         for (int i=0; i<size; ++i)
@@ -321,14 +323,65 @@ void  RP_JSON_talk::write_signal (const gchar *paramater_id, int size, double *v
                                 g_string_append_printf (list, "%g,", value[i]);
                 
                 list->str[list->len-1]=']';
-                gchar *json_string = g_strdup_printf ("{ \"signals\":{\"%s\":{\"size\":%d,\"value\":[%s}}}", paramater_id, size, list->str);
-                //g_print ("%s\n",json_string);
+                gchar *json_string = g_strdup_printf ("{\"signals\":{\"%s\":{\"size\":%d,\"value\":[%s}}}", paramater_id, size, list->str);
                 g_string_free (list, true);
+
+#else // add to vector directly -- bogus, 2nd call to add not working ??!?
+
+                gchar *jstmp = g_strdup_printf ("{\"signals\":{\"%s\":{\"size\":%d,\"value\":[", paramater_id, size);
+                add_string_to_vector(uncompressed, jstmp);
+                g_free (jstmp);
+
+                if (fmt){ // MUST INCLUDE COMMA: default is "%g,"
+                        for (int i=0; i<size; ++i){
+                                jstmp = g_strdup_printf (fmt, value[i]);
+                                add_string_to_vector(uncompressed, jstmp);
+                                g_free (jstmp);
+                        }
+                } else {
+                        for (int i=0; i<size-1; ++i){
+                                jstmp = g_strdup_printf ("%g,", value[i]);
+                                add_string_to_vector(uncompressed, jstmp);
+                                g_free (jstmp);
+                        }
+                        jstmp = g_strdup_printf ("%g", value[size-1]);
+                        add_string_to_vector(uncompressed, jstmp);
+                        g_free (jstmp);
+                }
+
+                jstmp = g_strdup_printf ("]}}}");
+                add_string_to_vector(uncompressed, jstmp);
+                g_free (jstmp);
+#endif
                 
-                //soup_websocket_connection_send_text (client, json_string);
+
+#if 0 // send as plain text -- does nothing ?!?!
+                soup_websocket_connection_send_text (client, json_string);
+#else // send compressed, -- causing the server to trap :( send uncompressed see below 
+                add_string_to_vector(uncompressed, json_string);
+#endif                
+
                 if  (get_debug_level () > 0 || dbg)
                         g_print ("%s\n",json_string);
                 g_free (json_string);
+
+                std::vector<char> compressed(0);
+                int compression_result = compress_vector(uncompressed, compressed);
+                assert(compression_result == F_OK);
+
+                std::vector<char> decompressed(0);
+                int decompression_result = decompress_vector(compressed, decompressed);
+                assert(decompression_result == F_OK);
+
+                printf("Uncompressed [%d]: %s\n", uncompressed.size(), uncompressed.data());
+                printf("Compressed   [%d]: ", compressed.size());
+                std::ostream &standard_output = std::cout;
+                print_bytes(standard_output, (const unsigned char *) compressed.data(), compressed.size(), false);
+                printf("Decompressed [%d]: %s\n", decompressed.size(), decompressed.data());
+
+                //soup_websocket_connection_send_binary (client, compressed.data(), compressed.size()); // crashes server
+                soup_websocket_connection_send_text (client, uncompressed.data());
+                
         }
 }
 

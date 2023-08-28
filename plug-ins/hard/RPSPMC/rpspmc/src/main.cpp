@@ -568,10 +568,10 @@ void set_PAC_config()
         
         // in tune mode disable controllers autmatically and do not touch DDS settings, but allow Q Control
         if (OPERATION.Value() < 6){
-                if (verbose == 1) fprintf(stderr, "** DDS: FREQUENCY_MANUAL **\n");
+                if (verbose > 1) fprintf(stderr, "** DDS: FREQUENCY_MANUAL **\n");
                 rp_PAC_adjust_dds (FREQUENCY_MANUAL.Value());
 
-                if (verbose == 1) fprintf(stderr, "** CONF SWITCHES **\n");
+                if (verbose > 1) fprintf(stderr, "** CONF SWITCHES **\n");
                 rp_PAC_configure_switches (PHASE_CONTROLLER.Value ()?1:0,
                                            AMPLITUDE_CONTROLLER.Value ()?1:0,
                                            PHASE_UNWRAPPING_ALWAYS.Value ()?1:0,
@@ -1166,8 +1166,7 @@ void UpdateSignals(void)
         int status[3];
         static int last_op=0;
         
-        if (verbose == 1) fprintf(stderr, "** Update Signals **\n");
-        if (verbose > 3) fprintf(stderr, "UpdateSignals()\n");
+        if (verbose > 2) fprintf(stderr, "** Update Signals **\n");
 
         rp_PAC_get_single_reading_FIR (reading_vector);
         bram_status(status);
@@ -1283,8 +1282,7 @@ void UpdateSignals(void)
 
 
 void UpdateParams(void){
-        if (verbose == 1) fprintf(stderr, "** Update Params **\n");
-        if (verbose > 3) fprintf(stderr, "UpdateParams()\n");
+        if (verbose > 2) fprintf(stderr, "** Update Params **\n");
 	CDataManager::GetInstance()->SetParamInterval (parameter_updatePeriod.Value());
 	CDataManager::GetInstance()->SetSignalInterval (signal_updatePeriod.Value());
 
@@ -1380,19 +1378,21 @@ void OnNewParams_RPSPMC(void){
 // PACPLL Check New Parameters
 // ****************************************
 void OnNewParams_PACPLL(void){
-        if (verbose == 1) fprintf(stderr, "** New Params **\n");
+        if (verbose > 2) fprintf(stderr, "** New Params **\n");
         //int x=0;
         //static int ppv=0;
         //static int spv=0;
         static int operation=0;
         //double reading_vector[READING_MAX_VALUES];
 
+        PACVERBOSE.Update ();
+        verbose = PACVERBOSE.Value ();
+
+        
 #if 0
         if (ppv == 0) { ppv=parameter_updatePeriod.Value(); parameter_updatePeriod.Update (); }
         if (spv == 0) { spv=signal_updatePeriod.Value(); signal_updatePeriod.Update (); }
         
-        if (verbose > 3) fprintf(stderr, "OnNewParams()\n");
-
         if (ppv != parameter_updatePeriod.Value ()){
                 CDataManager::GetInstance()->SetParamInterval (parameter_updatePeriod.Value());
                 ppv = parameter_updatePeriod.Value ();
@@ -1403,7 +1403,6 @@ void OnNewParams_PACPLL(void){
         }
 #endif
         
-        PACVERBOSE.Update ();
         OPERATION.Update ();
 
         GAIN1.Update ();
@@ -1449,8 +1448,6 @@ void OnNewParams_PACPLL(void){
         FREQ_FB_LOWER.Update ();
         PHASE_HOLD_AM_NOISE_LIMIT.Update ();
         
-        if (verbose > 3) fprintf(stderr, "OnNewParams: verbose=%d\n", PACVERBOSE.Value ());
-        verbose = PACVERBOSE.Value ();
 
         BRAM_SCOPE_TRIGGER_MODE.Update ();
         BRAM_SCOPE_TRIGGER_POS.Update ();
@@ -1543,13 +1540,13 @@ void OnNewSignals(void){
 	CDataManager::GetInstance()->UpdateAllSignals();
         if (verbose > 3) fprintf(stderr, "OnNewSignals done.\n");
 
-        if (SPMC_GVP_VECTOR.IsNewValue()){
-                SPMC_GVP_VECTOR.Update();
-                        fprintf(stderr, "GVP Vector[0]: [");
-                for (int i=0; i<16; ++i)
-                        fprintf(stderr, "%g ", SPMC_GVP_VECTOR[i]);
-                fprintf(stderr, " ]\n");
-        }
+        //if (SPMC_GVP_VECTOR.IsNewValue()){
+        SPMC_GVP_VECTOR.Update();
+        fprintf(stderr, "GVP Vector[0]: [");
+        for (int i=0; i<16; ++i)
+                fprintf(stderr, "%g ", SPMC_GVP_VECTOR[i]);
+        fprintf(stderr, " ]\n");
+        //}
 }
 
 
