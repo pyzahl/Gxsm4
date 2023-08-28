@@ -788,6 +788,18 @@ gboolean SPM_ScanControl::spm_scancontrol_run_scans_task (gpointer data){
                         main_get_gapp()->auto_save_scans ();
                 }
 
+                {       // check on override to not repeat when executed by pyremote -- do never repeat, will never stop!
+                        GSettings *global_settings = g_settings_new (GXSM_RES_BASE_PATH_DOT ".global");
+                        int override = g_settings_get_int (global_settings, "math-global-share-variable-repeatmode-override");
+                        if (override)
+                                g_settings_set_int (global_settings, "math-global-share-variable-repeatmode-override", 0); // reset now to normal
+                        g_clear_object (&global_settings);
+                        if (override){ // executed by pyremote -- do never repeat!
+                                runmode = 99;
+                                return TRUE;
+                        }
+                }
+
                 if (((SPM_ScanControl*)data) -> RepeatMode() && !((SPM_ScanControl*)data) -> scan_stopped_by_user)
                         runmode = 10;
                 else

@@ -1437,6 +1437,15 @@ static gboolean main_context_emit_toolbar_action_from_thread (gpointer user_data
         // NOT THREAD SAFE GUI OPERATION TRIGGER HERE
 
 	PI_DEBUG_GM (DBG_L2, "pyremote: main_context_emit_toolbar_action  >%s<", idle_data->string);
+
+        if (!strcmp (idle_data->string, "Toolbar_Scan_Start")){
+                // CHECK FOR SCAN REPEAT OPTION SET, DISABLE!
+                GSettings *global_settings = g_settings_new (GXSM_RES_BASE_PATH_DOT ".global");
+                g_settings_set_int (global_settings, "math-global-share-variable-repeatmode-override", 1);
+                g_clear_object (&global_settings);
+        }
+
+
         main_get_gapp()->signal_emit_toolbar_action (idle_data->string);
 
         UNSET_WAIT_JOIN_MAIN;
@@ -1967,6 +1976,26 @@ static PyObject* remote_get_v_lookup(PyObject *self, PyObject *args)
                 return Py_BuildValue("d", src->mem2d->data->GetVLookup(i));
         else
 		return Py_BuildValue("d", 0.);
+}
+
+
+static PyObject* remote_set_global_share_parameter(PyObject *self, PyObject *args)
+{
+	PI_DEBUG(DBG_L2, "pyremote:set_global_share_parmeter");
+
+	gchar *key;
+        double x;
+
+	if (!PyArg_ParseTuple (args, "sd", &key, &x))
+		return Py_BuildValue("d", 0.);
+
+        GSettings *global_settings = g_settings_new (GXSM_RES_BASE_PATH_DOT ".global");
+        //g_settings_set_double (global_settings, "math-global-share-variable-radius", edge_radius);
+        g_message ("Previous value of key global.%s = %g, new = %g", key, g_settings_get_double (global_settings, key), x);
+        g_settings_set_double (global_settings, key, x);
+        g_clear_object (&global_settings);
+        
+        return Py_BuildValue("d", x);
 }
 
 
@@ -3359,6 +3388,7 @@ static PyMethodDef GxsmPyMethods[] = {
 	{"get_data_pkt", remote_getdatapkt, METH_VARARGS, "Get Data Value at point: value=gxsm.get_data_pkt (ch, x, y, v, t)"},
 	{"put_data_pkt", remote_putdatapkt, METH_VARARGS, "Put Data Value to point: gxsm.put_data_pkt (value, ch, x, y, v, t)"},
 	{"get_slice", remote_getslice, METH_VARARGS, "Get Image Data Slice (Lines) from Scan in channel ch, yi ... yi+yn: [nx,ny,array]=gxsm.get_slice (ch, v, t, yi, yn)"},
+	{"set_global_share_parameter", remote_set_global_share_parameter, METH_VARARGS, "Set Global Shared Parameter for Plugins, etc. in settings: gxsm.set_global_share_parameter (key, x)"},
 	{"get_x_lookup", remote_get_x_lookup, METH_VARARGS, "Get Scan Data index to world mapping: x=gxsm.get_x_lookup (ch, i)"},
 	{"get_y_lookup", remote_get_y_lookup, METH_VARARGS, "Get Scan Data index to world mapping: y=gxsm.get_y_lookup (ch, i)"},
 	{"get_v_lookup", remote_get_v_lookup, METH_VARARGS, "Get Scan Data index to world mapping: v=gxsm.get_v_lookup (ch, i)"},
