@@ -633,8 +633,6 @@ void RPSPMC_Control_show_callback (GSimpleAction *simple, GVariant *parameter, g
 
 
 
-
-
 void RPSPMC_Control::configure_callback (GSimpleAction *action, GVariant *parameter, 
                                           gpointer user_data){
         RPSPMC_Control *mc = (RPSPMC_Control *) user_data;
@@ -2707,8 +2705,7 @@ void RPSPMC_Control::update_controller () {
 #define dB_max_from_Q(Q) (20.*log10(1L<<((32-(Q))-1)))
 #define SETUP_dB_RANGE_from_Q(PCS, Q) { PCS->setMin(dB_min_from_Q(Q)); PCS->setMax(dB_max_from_Q(Q)); }
 
-RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app)
-{
+RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
         GtkWidget *tmp;
         GtkWidget *wid;
 	
@@ -2729,19 +2726,8 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app)
                 scope_dc_level[i]=0.;
                 gain_scale[i] = 0.001; // 1000mV full scale
         }
-        block_message = 0;
         unwrap_phase_plot = true;
         
-        /* create a new connection, init */
-
-	listener=NULL;
-        port=9002;
-
-	session=NULL;
-	msg=NULL;
-	client=NULL;
-	client_error=NULL;
-	error=NULL;
         
 	PI_DEBUG (DBG_L2, "RPspmc_pacpll Plugin : building interface" );
 
@@ -3566,6 +3552,11 @@ RPspmc_pacpll::~RPspmc_pacpll (){
 	delete Unity;
 }
 
+void RPspmc_pacpll::connect_cb (GtkWidget *widget, RPspmc_pacpll *self){
+        self->json_talk_connect_cb (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget))); // connect (checked) or dissconnect
+}
+
+
 void RPspmc_pacpll::scan_start_callback (gpointer user_data){
         //rpspmc_pacpll *self = (RPspmc_pacpll *)user_data;
         RPspmc_pacpll *self = rpspmc_pacpll;
@@ -4132,333 +4123,6 @@ void RPspmc_pacpll::scope_fft_time_zoom_callback (GtkWidget *widget, RPspmc_pacp
         self->scope_fft_time_zoom = z[i];
 }
 
-void RPspmc_pacpll::connect_cb (GtkWidget *widget, RPspmc_pacpll *self){
-        if (!self->text_status) return;
-        if (!self->input_rpaddress) return;
-        self->debug_log (gtk_entry_buffer_get_text (GTK_ENTRY_BUFFER (gtk_entry_get_buffer (GTK_ENTRY (self->input_rpaddress)))));
-
-        if (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget))){
-                self->status_append ("Connecting to RedPitaya...\n");
-
-                self->update_health ("Connecting...");
-
-                // new soup session
-                self->session = soup_session_new ();
-
-                // request to fire up RedPitaya PACPLLL NGNIX server
-                gchar *urlstart = g_strdup_printf ("http://%s/bazaar?start=rpspmc", gtk_entry_buffer_get_text (GTK_ENTRY_BUFFER (gtk_entry_get_buffer (GTK_ENTRY (self->input_rpaddress)))));
-                self->status_append ("1. Requesting NGNIX RedPitaya RPSPMC-PACPLL Server Startup:\n");
-                self->status_append (urlstart);
-                self->status_append ("\n ");
-                self->msg = soup_message_new ("GET", urlstart);
-                g_free (urlstart);
-                GInputStream *istream = soup_session_send (self->session, self->msg, NULL, &self->error);
-
-                if (self->error != NULL) {
-                        g_warning ("%s", self->error->message);
-                        self->status_append (self->error->message);
-                        self->status_append ("\n ");
-                        self->update_health (self->error->message);
-                        return;
-                } else {
-                        gchar *buffer = g_new0 (gchar, 100);
-                        gssize num = g_input_stream_read (istream,
-                                                          (void *)buffer,
-                                                          100,
-                                                          NULL,
-                                                          &self->error);   
-                        if (self->error != NULL) {
-                                self->update_health (self->error->message);
-                                g_warning ("%s", self->error->message);
-                                self->status_append (self->error->message);
-                                self->status_append ("\n ");
-                                g_free (buffer);
-                                return;
-                        } else {
-                                self->status_append ("Response: ");
-                                self->status_append (buffer);
-                                self->status_append ("\n ");
-                                self->update_health (buffer);
-                        }
-                        g_free (buffer);
-                }
-
-                // then connect to NGNIX WebSocket on RP
-                self->status_append ("2. Connecting to NGNIX RedPitaya RPSPMC-PACPLL WebSocket...\n");
-                gchar *url = g_strdup_printf ("ws://%s:%u", gtk_entry_buffer_get_text (GTK_ENTRY_BUFFER (gtk_entry_get_buffer (GTK_ENTRY (self->input_rpaddress)))), self->port);
-                self->status_append (url);
-                self->status_append ("\n");
-                // g_message ("Connecting to: %s", url);
-                
-                self->msg = soup_message_new ("GET", url);
-                g_free (url);
-                // g_message ("soup_message_new - OK");
-                soup_session_websocket_connect_async (self->session, self->msg, // SoupSession *session, SoupMessage *msg,
-                                                      NULL, NULL, // const char *origin, char **protocols,
-                                                      NULL, RPspmc_pacpll::got_client_connection, self); // GCancellable *cancellable, GAsyncReadyCallback callback, gpointer user_data
-                //g_message ("soup_session_websocket_connect_async - OK");
-        } else {
-                // tear down connection
-                self->status_append ("Dissconnecting...\n ");
-                self->update_health ("Dissconnected");
-
-                //g_clear_object (&self->listener);
-                g_clear_object (&self->client);
-                g_clear_error (&self->client_error);
-                g_clear_error (&self->error);
-        }
-}
-
-void RPspmc_pacpll::got_client_connection (GObject *object, GAsyncResult *result, gpointer user_data){
-        RPspmc_pacpll *self = (RPspmc_pacpll *)user_data;
-        g_message ("got_client_connection");
-
-	self->client = soup_session_websocket_connect_finish (SOUP_SESSION (object), result, &self->client_error);
-        if (self->client_error != NULL) {
-                self->status_append ("Connection failed: ");
-                self->status_append (self->client_error->message);
-                self->status_append ("\n");
-                g_message ("%s", self->client_error->message);
-        } else {
-                self->status_append ("RedPitaya WebSocket Connected!\n ");
-		g_signal_connect(self->client, "closed",  G_CALLBACK(RPspmc_pacpll::on_closed),  self);
-		g_signal_connect(self->client, "message", G_CALLBACK(RPspmc_pacpll::on_message), self);
-		//g_signal_connect(connection, "closing", G_CALLBACK(on_closing_send_message), message);
-                self->status_append ("RedPitaya SPM Control, PAC-PLL loading configuration.\n ");
-                self->send_all_parameters ();
-                self->status_append ("RedPitaya SPM Control, PAC-PLL init, DEC FAST(12)...\n");
-                gtk_combo_box_set_active (GTK_COMBO_BOX (self->update_tr_widget), 6);  // select Ph,dF,Am,Ex
-                gtk_combo_box_set_active (GTK_COMBO_BOX (self->update_ts_widget), 12); // select 12, fast
-                while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
-                usleep(500000);
-                gtk_combo_box_set_active (GTK_COMBO_BOX (self->update_op_widget), 3); // INIT BRAM TRANSPORT AND CLEAR FIR RING BUFFERS, give me a second...
-                self->status_append ("RedPitaya SPM Control, PAC-PLL init, INIT-FIR... [2s Zzzz]\n");
-                while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
-                usleep(2000000);
-                self->status_append ("RedPitaya SPM Control, PAC-PLL init, INIT-FIR completed.\n");
-                usleep(1000000);
-                self->status_append ("RedPitaya SPM Control, PAC-PLL normal operation, set to data streaming mode.\n");
-                while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
-                usleep(500000);
-                gtk_combo_box_set_active (GTK_COMBO_BOX (self->update_op_widget), 5); // STREAMING OPERATION
-                gtk_combo_box_set_active (GTK_COMBO_BOX (self->update_ts_widget), 18); // select 19 (typical scan decimation/time scale filter)
-                self->status_append ("RedPitaya SPM Control, PAC-PLL is ready.\n ");
-        }
-}
-
-void RPspmc_pacpll::on_message(SoupWebsocketConnection *ws,
-                                             SoupWebsocketDataType type,
-                                             GBytes *message,
-                                             gpointer user_data)
-{
-        RPspmc_pacpll *self = (RPspmc_pacpll *)user_data;
-	gconstpointer contents;
-	gsize len;
-        gchar *tmp;
-        
-        self->debug_log ("WebSocket message received.");
-        
-	if (type == SOUP_WEBSOCKET_DATA_TEXT) {
-		contents = g_bytes_get_data (message, &len);
-		self->status_append ("WEBSOCKET_DATA_TEXT\n");
-		self->status_append ((gchar*)contents);
-		self->status_append ("\n");
-                g_message ("%s", (gchar*)contents);
-	} else if (type == SOUP_WEBSOCKET_DATA_BINARY) {
-		contents = g_bytes_get_data (message, &len);
-
-                tmp = g_strdup_printf ("WEBSOCKET_DATA_BINARY NGNIX JSON ZBytes: %ld", len);
-                self->debug_log (tmp);
-                g_free (tmp);
-
-#if 0
-                // dump to file
-                FILE *f;
-                f = fopen ("/tmp/gxsm-rpspmc-json.gz","wb");
-                fwrite (contents, len, 1, f);
-                fclose (f);
-                // -----------
-                //$ pzahl@phenom:~$ zcat /tmp/gxsm-rp-json.gz 
-                //{"parameters":{"DC_OFFSET":{"value":-18.508743,"min":-1000,"max":1000,"access_mode":0,"fpga_update":0},"CPU_LOAD":{"value":5.660378,"min":0,"max":100,"access_mode":0,"fpga_update":0},"COUNTER":{"value":4,"min":0,"max":1000000000000,"access_mode":0,"fpga_update":0}}}pzahl@phenom:~$ 
-                //$ pzahl@phenom:~$ file /tmp/gxsm-rp-json.gz 
-                // /tmp/gxsm-rp-json.gz: gzip compressed data, max speed, from FAT filesystem (MS-DOS, OS/2, NT)
-                // GZIP:  zlib.MAX_WBITS|16
-#endif
-                self->debug_log ("Uncompressing...");
-                gsize size=len*100+1000;
-                gchar *json_buffer = g_new0 (gchar, size);
-
-                // inflate buffer into json_buffer
-                z_stream zInfo ={0};
-                zInfo.total_in  = zInfo.avail_in  = len;
-                zInfo.total_out = zInfo.avail_out = size;
-                zInfo.next_in  = (Bytef*)contents;
-                zInfo.next_out = (Bytef*)json_buffer;
-      
-                int ret= -1;
-                ret = inflateInit2 (&zInfo, MAX_WBITS + 16);
-                if ( ret == Z_OK ) {
-                        ret = inflate( &zInfo, Z_FINISH );     // zlib function
-                        // inflate() returns
-                        // Z_OK if some progress has been made (more input processed or more output produced),
-                        // Z_STREAM_END if the end of the compressed data has been reached and all uncompressed output has been produced,
-                        // Z_NEED_DICT if a preset dictionary is needed at this point,
-                        // Z_DATA_ERROR if the input data was corrupted (input stream not conforming to the zlib format or incorrect check value, in which case strm->msg points to a string with a more specific error),
-                        // Z_STREAM_ERROR if the stream structure was inconsistent (for example next_in or next_out was Z_NULL, or the state was inadvertently written over by the application),
-                        // Z_MEM_ERROR if there was not enough memory,
-                        // Z_BUF_ERROR if no progress was possible or if there was not enough room in the output buffer when Z_FINISH is used. Note that Z_BUF_ERROR is not fatal, and inflate() can be called again with more input and more output space to continue decompressing. If
-                        // Z_DATA_ERROR is returned, the application may then call inflateSync() to look for a good compression block if a partial recovery of the data is to be attempted. 
-                        switch ( ret ){
-                        case Z_STREAM_END:
-                                tmp = NULL;
-                                if (self->debug_level > 2)
-                                        tmp = g_strdup_printf ("Z_STREAM_END out = %ld, in = %ld, ratio=%g\n",zInfo.total_out, zInfo.total_in, (double)zInfo.total_out / (double)zInfo.total_in);
-                                break;
-                        case Z_OK:
-                                tmp = g_strdup_printf ("Z_OK out = %ld, in = %ld\n",zInfo.total_out, zInfo.total_in); break;
-                        case Z_NEED_DICT:
-                                tmp = g_strdup_printf ("Z_NEED_DICT out = %ld, in = %ld\n",zInfo.total_out, zInfo.total_in); break;
-                        case Z_DATA_ERROR:
-                                self->status_append (zInfo.msg);
-                                tmp = g_strdup_printf ("\nZ_DATA_ERROR out = %ld, in = %ld\n",zInfo.total_out, zInfo.total_in); break; 
-                                break;
-                        case Z_STREAM_ERROR:
-                                tmp = g_strdup_printf ("Z_STREAM_ERROR out = %ld\n",zInfo.total_out); break;
-                        case Z_MEM_ERROR:
-                                tmp = g_strdup_printf ("Z_MEM_ERROR out = %ld, in = %ld\n",zInfo.total_out, zInfo.total_in); break;
-                        case Z_BUF_ERROR:
-                                tmp = g_strdup_printf ("Z_BUF_ERROR out = %ld, in = %ld  ratio=%g\n",zInfo.total_out, zInfo.total_in, (double)zInfo.total_out / (double)zInfo.total_in); break;
-                        default:
-                                tmp = g_strdup_printf ("ERROR ?? inflate result = %d,  out = %ld, in = %ld\n",ret,zInfo.total_out, zInfo.total_in); break;
-                        }
-                        self->status_append (tmp);
-                        g_free (tmp);
-                }
-                inflateEnd( &zInfo );   // zlib function
-                if (self->debug_level > 0){
-                        self->status_append (json_buffer);
-                        self->status_append ("\n");
-                }
-
-                self->json_parse_message (json_buffer);
-
-                g_free (json_buffer);
-
-                self->update_monitoring_parameters();
-                gtk_widget_queue_draw (self->signal_graph_area);
-
-                //self->stream_data ();
-                self->update_health ();
-        }
-	//g_bytes_unref (message); // OK, no unref by ourself!!!!
-                       
-}
-
-void RPspmc_pacpll::on_closed (SoupWebsocketConnection *ws, gpointer user_data){
-        RPspmc_pacpll *self = (RPspmc_pacpll *)user_data;
-        self->status_append ("WebSocket connection externally closed.\n");
-}
-
-void RPspmc_pacpll::json_parse_message (const char *json_string){
-        jsmn_parser p;
-        jsmntok_t tok[10000]; /* We expect no more than 10000 tokens, signal array is 1024 * 5*/
-
-        // typial data messages:
-        // {"signals":{"SIGNAL_CH3":{"size":1024,"value":[0,0,...,0.543632,0.550415]},"SIGNAL_CH4":{"size":1024,"value":[0,0,... ,-94.156487]},"SIGNAL_CH5":{"size":1024,"value":[0,0,.. ,-91.376022,-94.156487]}}}
-        // {"parameters":{"DC_OFFSET":{"value":-18.591045,"min":-1000,"max":1000,"access_mode":0,"fpga_update":0},"COUNTER":{"value":2.4,"min":0,"max":1000000000000,"access_mode":0,"fpga_update":0}}}
-
-        jsmn_init(&p);
-        int ret = jsmn_parse(&p, json_string, strlen(json_string), tok, sizeof(tok)/sizeof(tok[0]));
-        if (ret < 0) {
-                g_warning ("JSON PARSER:  Failed to parse JSON: %d\n%s\n", ret, json_string);
-                return;
-        }
-        /* Assume the top-level element is an object */
-        if (ret < 1 || tok[0].type != JSMN_OBJECT) {
-                g_warning("JSON PARSER:  Object expected\n");
-                return;
-        }
-
-#if 0
-        json_dump (json_string, tok, p.toknext, 0);
-#endif
-
-        json_fetch (json_string, tok, p.toknext, 0);
-        if  (debug_level > 1)
-                dump_parameters (debug_level);
-}
-
-
-
-void RPspmc_pacpll::write_parameter (const gchar *paramater_id, double value, const gchar *fmt, gboolean dbg){
-        //soup_websocket_connection_send_text (self->client, "text");
-        //soup_websocket_connection_send_binary (self->client, gconstpointer data, gsize length);
-        //soup_websocket_connection_send_text (client, "{ \"parameters\":{\"GAIN1\":{\"value\":200.0}}}");
-
-        if (client){
-                gchar *json_string=NULL;
-                if (fmt){
-                        gchar *format = g_strdup_printf ("{ \"parameters\":{\"%s\":{\"value\":%s}}}", paramater_id, fmt);
-                        json_string = g_strdup_printf (format, value);
-                        g_free (format);
-                } else
-                        json_string = g_strdup_printf ("{ \"parameters\":{\"%s\":{\"value\":%g}}}", paramater_id, value);
-                soup_websocket_connection_send_text (client, json_string);
-                if  (debug_level > 0 || dbg)
-                        g_print ("%s\n",json_string);
-                g_free (json_string);
-        }
-}
-
-void RPspmc_pacpll::write_parameter (const gchar *paramater_id, int value, gboolean dbg){
-        if (client){
-                gchar *json_string = g_strdup_printf ("{ \"parameters\":{\"%s\":{\"value\":%d}}}", paramater_id, value);
-                soup_websocket_connection_send_text (client, json_string);
-                if  (debug_level > 0 || dbg)
-                        g_print ("%s\n",json_string);
-                g_free (json_string);
-        }
-}
-
-//{ "signals":{"SPMC_GVP_VECTOR":{"size":16,"value":[1,2,3,4,5.5,6.6,7.7,8.8,9.9,10,11,12,13,14,15,16]}}}
-// {"signals":{"SIGNAL_CH3":{"size":1024,"value":[0,0,...,0.543632,0.550415]},"SIGNAL_CH4":{"size":1024,"value":[0,0,... ,-94.156487]},"SIGNAL_CH5":{"size":1024,"value":[0,0,.. ,-91.376022,-94.156487]
-void RPspmc_pacpll::write_signal (const gchar *paramater_id, int size, double *value, const gchar *fmt=NULL, gboolean dbg=FALSE){
-        if (client){
-                GString *list = g_string_new (NULL);
-                if (fmt) // MUST INCLUDE COMMA: default is "%g,"
-                        for (int i=0; i<size; ++i)
-                                g_string_append_printf (list, fmt, value[i]);
-                else
-                        for (int i=0; i<size; ++i)
-                                g_string_append_printf (list, "%g,", value[i]);
-                
-                list->str[list->len-1]=']';
-                gchar *json_string = g_strdup_printf ("{ \"signals\":{\"%s\":{\"size\":%d,\"value\":[%s}}}", paramater_id, size, list->str);
-                //g_print ("%s\n",json_string);
-                g_string_free (list, true);
-                
-                //soup_websocket_connection_send_text (client, json_string);
-                if  (debug_level > 0 || dbg)
-                        g_print ("%s\n",json_string);
-                g_free (json_string);
-        }
-}
-
-void RPspmc_pacpll::write_signal (const gchar *paramater_id, int size, int *value, gboolean dbg=FALSE){
-        if (client){
-                GString *list = g_string_new (NULL);
-                for (int i=0; i<size; ++i)
-                        g_string_append_printf (list, "%d,", value[i]);
-                list->str[list->len-1]=']';
-                gchar *json_string = g_strdup_printf ("{ \"signals\":{\"%s\":{\"size\":%d,\"value\":[%s}}}", paramater_id, size, list->str);
-                g_string_free (list, true);
-                
-                soup_websocket_connection_send_text (client, json_string);
-                if  (debug_level > 0 || dbg)
-                        g_print ("%s\n",json_string);
-                g_free (json_string);
-        }
-}
 
 
 void RPspmc_pacpll::update_health (const gchar *msg){
@@ -4530,6 +4194,34 @@ void RPspmc_pacpll::status_append (const gchar *msg){
                                       end_mark, 0.0, FALSE, 0.0, 0.0);
 	g_object_unref (end_mark);
 }
+
+void RPspmc_pacpll::on_connect_actions(){
+        status_append ("RedPitaya SPM Control, PAC-PLL loading configuration.\n ");
+        send_all_parameters ();
+        
+        status_append ("RedPitaya SPM Control, PAC-PLL init, DEC FAST(12)...\n");
+        gtk_combo_box_set_active (GTK_COMBO_BOX (update_tr_widget), 6);  // select Ph,dF,Am,Ex
+        gtk_combo_box_set_active (GTK_COMBO_BOX (update_ts_widget), 12); // select 12, fast
+        while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
+        usleep(500000);
+        
+        gtk_combo_box_set_active (GTK_COMBO_BOX (update_op_widget), 3); // INIT BRAM TRANSPORT AND CLEAR FIR RING BUFFERS, give me a second...
+        status_append ("RedPitaya SPM Control, PAC-PLL init, INIT-FIR... [2s Zzzz]\n");
+        while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
+        usleep(2000000);
+        
+        status_append ("RedPitaya SPM Control, PAC-PLL init, INIT-FIR completed.\n");
+        usleep(1000000);
+        
+        status_append ("RedPitaya SPM Control, PAC-PLL normal operation, set to data streaming mode.\n");
+        while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
+        usleep(500000);
+        
+        gtk_combo_box_set_active (GTK_COMBO_BOX (update_op_widget), 5); // STREAMING OPERATION
+        gtk_combo_box_set_active (GTK_COMBO_BOX (update_ts_widget), 18); // select 19 (typical scan decimation/time scale filter)
+}
+
+
 
 double AutoSkl(double dl){
   double dp=floor(log10(dl));
@@ -5361,3 +5053,5 @@ void RPspmc_pacpll::dynamic_graph_draw_function (GtkDrawingArea *area, cairo_t *
                 current_width=0;
         }
 }
+
+// END

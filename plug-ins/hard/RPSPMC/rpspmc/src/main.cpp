@@ -1543,10 +1543,13 @@ void OnNewSignals(void){
 	CDataManager::GetInstance()->UpdateAllSignals();
         if (verbose > 3) fprintf(stderr, "OnNewSignals done.\n");
 
-        fprintf(stderr, "GVP Vector[0]: [");
-        for (int i=0; i<16; ++i)
-                fprintf(stderr, "%g ", SPMC_GVP_VECTOR[i]);
-        fprintf(stderr, " ]\n");
+        if (SPMC_GVP_VECTOR.IsNewValue()){
+                SPMC_GVP_VECTOR.Update();
+                        fprintf(stderr, "GVP Vector[0]: [");
+                for (int i=0; i<16; ++i)
+                        fprintf(stderr, "%g ", SPMC_GVP_VECTOR[i]);
+                fprintf(stderr, " ]\n");
+        }
 }
 
 

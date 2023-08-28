@@ -31,14 +31,18 @@
 #define __RPSPMC_PACPLL_H
 
 #include <config.h>
-#include "../control/jsmn.h"
-#include <libsoup/soup.h>
-#include <zlib.h>
+#include "plugin.h"
+
+#include "unit.h"
+#include "pcs.h"
+#include "xsmtypes.h"
+#include "glbvars.h"
+#include "action_id.h"
 
 #include "core-source/app_profile.h"
 #include "rpspmc_hwi_structs.h"
 
-#include "rpspmc_pacpll_json_data.h""
+#include "json_talk.h"
 
 // forward defs
 extern PACPLL_parameters pacpll_parameters;
@@ -964,7 +968,7 @@ public:
 
 // Scan Control Class based on AppBase
 // -> AppBase provides a GtkWindow and some window handling basics used by Gxsm
-class RPspmc_pacpll : public AppBase{
+class RPspmc_pacpll : public AppBase, public RP_JSON_talk{
 public:
 
         RPspmc_pacpll(Gxsm4app *app); // create window and setup it contents, connect buttons, register cb's...
@@ -976,6 +980,15 @@ public:
                         const gchar *label,
                         double d2u
                         );
+
+        static void connect_cb (GtkWidget *widget, RPspmc_pacpll *self);
+
+        static void enable_scope (GtkWidget *widget, RPspmc_pacpll *self);
+        static void dbg_l1 (GtkWidget *widget, RPspmc_pacpll *self);
+        static void dbg_l2 (GtkWidget *widget, RPspmc_pacpll *self);
+        static void dbg_l4 (GtkWidget *widget, RPspmc_pacpll *self);
+
+        
 	static void scan_start_callback (gpointer user_data);
 	static void scan_stop_callback (gpointer user_data);
 
@@ -1033,6 +1046,7 @@ public:
         static void choice_auto_set_callback (GtkWidget *widget, RPspmc_pacpll *self);
 
 	void send_all_parameters ();
+
         void save_values (NcFile *ncf);
         
 	void update (); // window update (inputs, etc. -- here currently not really necessary)
@@ -1046,171 +1060,26 @@ public:
                                           int             width,
                                           int             height);
         void stream_data ();
-        
-        static void connect_cb (GtkWidget *widget, RPspmc_pacpll *self);
-        static void enable_scope (GtkWidget *widget, RPspmc_pacpll *self);
-        static void dbg_l1 (GtkWidget *widget, RPspmc_pacpll *self);
-        static void dbg_l2 (GtkWidget *widget, RPspmc_pacpll *self);
-        static void dbg_l4 (GtkWidget *widget, RPspmc_pacpll *self);
-        static void got_client_connection (GObject *object, GAsyncResult *result, gpointer user_data);
-        static void on_message(SoupWebsocketConnection *ws,
-                               SoupWebsocketDataType type,
-                               GBytes *message,
-                               gpointer user_data);
-        static void on_closed (SoupWebsocketConnection *ws, gpointer user_data);
-        
-        void write_parameter (const gchar *paramater_id, double value, const gchar *fmt=NULL, gboolean dbg=FALSE);
-        void write_parameter (const gchar *paramater_id, int value, gboolean dbg=FALSE);
 
-        void write_signal (const gchar *paramater_id, int size, double *value, const gchar *fmt=NULL, gboolean dbg=FALSE);
-        void write_signal (const gchar *paramater_id, int size, int *value, gboolean dbg=FALSE);
 
-        
-        static int json_dump(const char *js, jsmntok_t *t, size_t count, int indent) {
-                int i, j, k;
-                if (count == 0) {
-                        return 0;
-                }
-                if (t->type == JSMN_PRIMITIVE) {
-                        g_print("%.*s", t->end - t->start, js+t->start);
-                        return 1;
-                } else if (t->type == JSMN_STRING) {
-                        g_print("'%.*s'", t->end - t->start, js+t->start);
-                        return 1;
-                } else if (t->type == JSMN_OBJECT) {
-                        g_print("\n");
-                        j = 0;
-                        for (i = 0; i < t->size; i++) {
-                                for (k = 0; k < indent; k++) g_print("  ");
-                                j += json_dump(js, t+1+j, count-j, indent+1);
-                                g_print(": ");
-                                j += json_dump(js, t+1+j, count-j, indent+1);
-                                g_print("\n");
-                        }
-                        return j+1;
-                } else if (t->type == JSMN_ARRAY) {
-                        j = 0;
-                        g_print("\n");
-                        for (k = 0; k < indent-1; k++) g_print("  ");
-                        g_print("[");
-                        for (i = 0; i < t->size; i++) {
-                                j += json_dump(js, t+1+j, count-j, indent+1);
-                                g_print(", ");
-                        }
-                        g_print("]\n");
-                        return j+1;
-                }
-                return 0;
+        virtual const gchar *get_rp_address (){
+                return gtk_entry_buffer_get_text (GTK_ENTRY_BUFFER (gtk_entry_get_buffer (GTK_ENTRY (input_rpaddress))));
         };
 
-        static JSON_parameter * check_parameter (const char *string, int len){
-                //g_print ("[[check_parameter=%s]]", string);
-                for (JSON_parameter *p=PACPLL_JSON_parameters; p->js_varname; ++p)
-                        if (strncmp (string, p->js_varname, len) == 0)
-                                return p;
-                return NULL;
-        };
-        static JSON_signal * check_signal (const char *string, int len){
-                for (JSON_signal *p=PACPLL_JSON_signals; p->js_varname; ++p){
-                        //g_print ("[[check_signal[%d]=%.*s]=?=%s]", len, len, string,p->js_varname);
-                        if (strncmp (string, p->js_varname, len) == 0)
-                                return p;
-                }
-                return NULL;
-        };
-        static void dump_parameters (int dbg=0){
-                for (JSON_parameter *p=PACPLL_JSON_parameters; p->js_varname; ++p)
-                        g_print ("%s=%g\n", p->js_varname, *(p->value));
-                if (dbg > 4)
-                        for (JSON_signal *p=PACPLL_JSON_signals; p->js_varname; ++p){
-                                g_print ("%s=[", p->js_varname);
-                                for (int i=0; i<p->size; ++i)
-                                        g_print ("%g, ", p->value[i]);
-                                g_print ("]\n");
-                        }
-        };
-        static int json_fetch(const char *js, jsmntok_t *t, size_t count, int indent){
-                static JSON_parameter *jp=NULL;
-                static JSON_signal *jps=NULL;
-                static gboolean store_next=false;
-                static int array_index=0;
-                int i, j, k;
-                if (count == 0) {
-                        return 0;
-                }
-                if (indent == 0){
-                        jp=NULL;
-                        store_next=false;
-                }
-                if (t->type == JSMN_PRIMITIVE) {
-                        //g_print("%.*s", t->end - t->start, js+t->start);
-                        if (store_next){
-                                if (jp){
-                                        *(jp->value) = atof (js+t->start);
-                                        //g_print ("ATOF[%.*s]=%g %14.8f\n", 20, js+t->start, *(jp->value), *(jp->value));
-                                        jp=NULL;
-                                        store_next = false;
-                                } else if (jps){
-                                        jps->value[array_index++] = atof (js+t->start);
-                                        if (array_index >= jps->size){
-                                                jps=NULL;
-                                                store_next = false;
-                                        }
-                                }
-                        }
-                        return 1;
-                } else if (t->type == JSMN_STRING) {
-                        if (indent == 2){
-                                jps=NULL;
-                                jp=check_parameter ( js+t->start, t->end - t->start);
-                                if (!jp){
-                                        jps=check_signal ( js+t->start, t->end - t->start);
-                                        if (jps) array_index=0;
-                                }
-                        }
-                        if (indent == 3) if (strncmp (js+t->start, "value", t->end - t->start) == 0 && (jp || jps)) store_next=true;
-                        //g_print("S[%d] '%.*s' [%s]", indent, t->end - t->start, js+t->start, jp || jps?"ok":"?");
-                        return 1;
-                } else if (t->type == JSMN_OBJECT) {
-                        //g_print("\n O\n");
-                        j = 0;
-                        for (i = 0; i < t->size; i++) {
-                                //for (k = 0; k < indent; k++) g_print("  ");
-                                j += json_fetch(js, t+1+j, count-j, indent+1);
-                                //g_print(": ");
-                                j += json_fetch(js, t+1+j, count-j, indent+1);
-                                //g_print("\n");
-                        }
-                        return j+1;
-                } else if (t->type == JSMN_ARRAY) {
-                        j = 0;
-                        //g_print("\n A ");
-                        //for (k = 0; k < indent-1; k++) g_print("  ");
-                        //g_print("[");
-                        for (i = 0; i < t->size; i++) {
-                                j += json_fetch(js, t+1+j, count-j, indent+1);
-                                //g_print(", ");
-                        }
-                        //g_print("]");
-                        return j+1;
-                }
-                return 0;
-        };
+        virtual void status_append (const gchar *msg);
+        virtual void update_health (const gchar *msg=NULL);
+        virtual void on_connect_actions(); // called after connection is made -- init, setup all, ...
 
-        void json_parse_message (const char *json_string);
+        virtual int get_debug_level() { return debug_level; };
         
-        void status_append (const gchar *msg);
-        void update_health (const gchar *msg=NULL);
-        
-        void debug_log (const gchar *msg){
-                if (debug_level > 4)
-                        g_message ("%s", msg);
-                if (debug_level > 2){
-                        status_append (msg);
-                        status_append ("\n");
-                }
-        };
+        virtual void on_new_data (){
+                update_monitoring_parameters();
+                gtk_widget_queue_draw (signal_graph_area);
 
+                //self->stream_data ();
+                update_health ();
+        };
+        
         double unwrap (int k, double phi);
         
         // 1000mV = 0dB, 1mV = -60dB 
@@ -1296,22 +1165,7 @@ private:
 
 	GSList*   SPMC_RemoteEntryList;
 
-        /* Socket Connection */
-	GSocket *listener;
-	gushort port;
-
-	SoupSession *session;
-	SoupMessage *msg;
-	SoupWebsocketConnection *client;
-        GIOStream *JSON_raw_input_stream;
-	GError *client_error;
-	GError *error;
-
-        int block_message;
-
 	GMutex mutex;
-
-public:
 };
 
 #endif

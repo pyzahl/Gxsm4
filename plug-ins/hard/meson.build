@@ -39,6 +39,7 @@ if gsl.found() and soup.found()
     { 'name': 'rpspmc_pacpll',
       'sources' : ['rpspmc_pacpll.cpp',
       		   'rpspmc_pacpll_json_data.cpp',
+		   'json_talk.cpp',
       		   '../control/jsmn.cpp',
 		   'rpspmc_hwi_dev.cpp',
 		   'rpspmc_hwi_eventhandling.cpp',
