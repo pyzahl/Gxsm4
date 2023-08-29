@@ -278,7 +278,7 @@ void  RP_JSON_talk::json_parse_message (const char *json_string){
 
 
 
-void  RP_JSON_talk::write_parameter (const gchar *paramater_id, double value, const gchar *fmt, gboolean dbg){
+void  RP_JSON_talk::write_parameter (const gchar *parameter_id, double value, const gchar *fmt, gboolean dbg){
         //soup_websocket_connection_send_text (self->client, "text");
         //soup_websocket_connection_send_binary (self->client, gconstpointer data, gsize length);
         //soup_websocket_connection_send_text (client, "{ \"parameters\":{\"GAIN1\":{\"value\":200.0}}}");
@@ -286,11 +286,11 @@ void  RP_JSON_talk::write_parameter (const gchar *paramater_id, double value, co
         if (client){
                 gchar *json_string=NULL;
                 if (fmt){
-                        gchar *format = g_strdup_printf ("{ \"parameters\":{\"%s\":{\"value\":%s}}}", paramater_id, fmt);
+                        gchar *format = g_strdup_printf ("{ \"parameters\":{\"%s\":{\"value\":%s}}}", parameter_id, fmt);
                         json_string = g_strdup_printf (format, value);
                         g_free (format);
                 } else
-                        json_string = g_strdup_printf ("{ \"parameters\":{\"%s\":{\"value\":%g}}}", paramater_id, value);
+                        json_string = g_strdup_printf ("{ \"parameters\":{\"%s\":{\"value\":%.10g}}}", parameter_id, value);
                 soup_websocket_connection_send_text (client, json_string);
                 if  (debug_level > 0 || dbg)
                         g_print ("%s\n",json_string);
@@ -298,9 +298,9 @@ void  RP_JSON_talk::write_parameter (const gchar *paramater_id, double value, co
         }
 }
 
-void  RP_JSON_talk::write_parameter (const gchar *paramater_id, int value, gboolean dbg){
+void  RP_JSON_talk::write_parameter (const gchar *parameter_id, int value, gboolean dbg){
         if (client){
-                gchar *json_string = g_strdup_printf ("{ \"parameters\":{\"%s\":{\"value\":%d}}}", paramater_id, value);
+                gchar *json_string = g_strdup_printf ("{ \"parameters\":{\"%s\":{\"value\":%d}}}", parameter_id, value);
                 soup_websocket_connection_send_text (client, json_string);
                 if  (get_debug_level () > 0 || dbg)
                         g_print ("%s\n",json_string);
@@ -308,9 +308,30 @@ void  RP_JSON_talk::write_parameter (const gchar *paramater_id, int value, gbool
         }
 }
 
+void  RP_JSON_talk::write_array (const gchar *parameter_id[], int i_size, int *i_vec, int d_size, double *d_vec){
+        if (client){
+                int i=0;
+                GString *list = g_string_new (NULL);
+                g_string_append_printf (list, "{\"parameters\":{");
+                for (; i<i_size && parameter_id[i]; ++i){
+                        if (i) g_string_append (list, ",");
+                        g_string_append_printf (list, "\"%s\":{\"value\":%d}",  parameter_id[i], i_vec[i]);
+                }
+                for (int j=0; j<d_size && parameter_id[i]; ++i, ++j){
+                        if (i) g_string_append (list, ",");
+                        g_string_append_printf (list, "\"%s\":{\"value\":%.10g}",  parameter_id[i], d_vec[j]);
+                }
+                g_string_append_printf (list, "}}");
+                soup_websocket_connection_send_text (client, list->str);
+                g_print ("%s\n",list->str);
+                g_string_free (list, true);
+        }
+}
+
+
 // {"signals":{"SPMC_GVP_VECTOR":{"size":16,"value":[1,2,3,4,5.5,6.6,7.7,8.8,9.9,10,11,12,13,14,15,16]}}}
 // {"signals":{"SIGNAL_CH3":{"size":1024,"value":[0,0,...,0.543632,0.550415]},"SIGNAL_CH4":{"size":1024,"value":[0,0,... ,-94.156487]},"SIGNAL_CH5":{"size":1024,"value":[0,0,.. ,-91.376022,-94.156487]
-void  RP_JSON_talk::write_signal (const gchar *paramater_id, int size, double *value, const gchar *fmt=NULL, gboolean dbg=FALSE){
+void  RP_JSON_talk::write_signal (const gchar *parameter_id, int size, double *value, const gchar *fmt=NULL, gboolean dbg=FALSE){
         if (client){
                 std::vector<char> uncompressed(0);
 #if 1
@@ -320,15 +341,15 @@ void  RP_JSON_talk::write_signal (const gchar *paramater_id, int size, double *v
                                 g_string_append_printf (list, fmt, value[i]);
                 else
                         for (int i=0; i<size; ++i)
-                                g_string_append_printf (list, "%g,", value[i]);
+                                g_string_append_printf (list, "%.10g,", value[i]);
                 
                 list->str[list->len-1]=']';
-                gchar *json_string = g_strdup_printf ("{\"signals\":{\"%s\":{\"size\":%d,\"value\":[%s}}}", paramater_id, size, list->str);
+                gchar *json_string = g_strdup_printf ("{\"signals\":{\"%s\":{\"size\":%d,\"value\":[%s}}}", parameter_id, size, list->str);
                 g_string_free (list, true);
 
 #else // add to vector directly -- bogus, 2nd call to add not working ??!?
 
-                gchar *jstmp = g_strdup_printf ("{\"signals\":{\"%s\":{\"size\":%d,\"value\":[", paramater_id, size);
+                gchar *jstmp = g_strdup_printf ("{\"signals\":{\"%s\":{\"size\":%d,\"value\":[", parameter_id, size);
                 add_string_to_vector(uncompressed, jstmp);
                 g_free (jstmp);
 
@@ -385,13 +406,13 @@ void  RP_JSON_talk::write_signal (const gchar *paramater_id, int size, double *v
         }
 }
 
-void  RP_JSON_talk::write_signal (const gchar *paramater_id, int size, int *value, gboolean dbg=FALSE){
+void  RP_JSON_talk::write_signal (const gchar *parameter_id, int size, int *value, gboolean dbg=FALSE){
         if (client){
                 GString *list = g_string_new (NULL);
                 for (int i=0; i<size; ++i)
                         g_string_append_printf (list, "%d,", value[i]);
                 list->str[list->len-1]=']';
-                gchar *json_string = g_strdup_printf ("{ \"signals\":{\"%s\":{\"size\":%d,\"value\":[%s}}}", paramater_id, size, list->str);
+                gchar *json_string = g_strdup_printf ("{ \"signals\":{\"%s\":{\"size\":%d,\"value\":[%s}}}", parameter_id, size, list->str);
                 g_string_free (list, true);
                 
                 soup_websocket_connection_send_text (client, json_string);

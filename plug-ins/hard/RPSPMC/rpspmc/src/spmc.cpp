@@ -557,22 +557,46 @@ void rp_spmc_gvp_config (bool reset=true, bool program=false){
                                );
 }
 
-void rp_spmc_set_gvp_vector (CFloatSignal &vector){
+//void rp_spmc_set_gvp_vector (CFloatSignal &vector){
+void rp_spmc_set_gvp_vector (int pc, int n, int nii, unsigned int opts, int nrp, int nxt,
+                             double dx, double dy, double dz, double du){
         rp_spmc_gvp_config (); // put in reset/hold mode
         usleep(10);
         // write GVP-Vector [vector[0]] components
         //                      du        dz        dy        dx     Next       Nrep,   Options,     nii,      N,    [Vadr]
         //data = {192'd0, 32'd0000, 32'd0000, -32'd0002, -32'd0002,  32'd0, 32'd0000,   32'h001, 32'd0128, 32'd005, 32'd00 };
-        for (int i=0; i<16; ++i){
-                int x=0;
-                if (i < 10){
-                        if (i > 4) // delta components in Volts
-                                x = (int)round(Q31*vector[i]/SPMC_AD5791_REFV);  // => 23.1 S23Q8 @ +/-5V range in Q31
-                        else
-                                x = (int)round(vector[i]);
-                }
-                set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA+i, x);
-        }
+        fprintf(stderr, "Write Vector[PC=%03d] = ", pc);
+        int i=0;
+        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA+i++, pc);
+
+        fprintf(stderr, "%04d ", n);
+        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA+i++, n);
+
+        fprintf(stderr, "%04d ", nii);
+        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA+i++, nii);
+
+        fprintf(stderr, "%04d ", opts);
+        set_gpio_cfgreg_uint32 (SPMC_GVP_VECTOR_DATA+i++, opts);
+
+        fprintf(stderr, "%04d ", nrp);
+        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA+i++, nrp);
+
+        fprintf(stderr, "%04d ", nxt);
+        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA+i++, nxt);
+
+        fprintf(stderr, "%8.10g mV ", 1000.*dx);
+        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA+i++, (int)round(Q31*dx/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
+
+        fprintf(stderr, "%8.10g mV ", 1000.*dy);
+        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA+i++, (int)round(Q31*dy/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
+
+        fprintf(stderr, "%8.10g mV ", 1000.*dz);
+        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA+i++, (int)round(Q31*dz/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
+
+        fprintf(stderr, "%8.10g mV ", 1000.*du);
+        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA+i++, (int)round(Q31*du/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
+
+        fprintf(stderr, "\n" );
         usleep(10);
         rp_spmc_gvp_config (true, true); // load vector
         usleep(10);

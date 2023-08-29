@@ -2197,14 +2197,32 @@ void RPSPMC_Control::ChangedNotify(Param_Control* pcs, gpointer dspc){
 }
 
 void RPSPMC_Control::BiasChanged(Param_Control* pcs, gpointer dspc){
+        int j=0;
         if (rpspmc_pacpll)
                 rpspmc_pacpll->write_parameter ("SPMC_BIAS", ((RPSPMC_Control*)dspc)->bias);
 
+#if 0
+        // TESTING ONLY
         if (rpspmc_pacpll){
                 double vec[16] = { 1.0, 2., 3., 4., 5.5,6.6,7.7,8.8,9.9,10.,11.,12.,13.,14.,15.,16. };
-                rpspmc_pacpll->write_signal ("SPMC_GVP_VECTOR", 16, vec);
-        }
+                //rpspmc_pacpll->write_signal ("SPMC_GVP_VECTOR", 16, vec);
+                vec[0]=j++;
+                vec[1]=100;
+                vec[2]=1000;
+                for (int i=5; i<16; ++i)
+                        vec[i] += ((RPSPMC_Control*)dspc)->bias;
+                rpspmc_pacpll->write_array ("SPMC_GVP_VECTOR", 16, vec);
+                vec[0]=j++;
+                for (int i=5; i<16; ++i)
+                        vec[i] += ((RPSPMC_Control*)dspc)->bias;
+                rpspmc_pacpll->write_array ("SPMC_GVP_VECTOR", 16, vec);
+                vec[0]=j++;
+                for (int i=5; i<16; ++i)
+                        vec[i] += ((RPSPMC_Control*)dspc)->bias;
+                rpspmc_pacpll->write_array ("SPMC_GVP_VECTOR", 16, vec);
 
+        }
+#endif
 }
 
 void RPSPMC_Control::ZPosSetChanged(Param_Control* pcs, gpointer dspc){

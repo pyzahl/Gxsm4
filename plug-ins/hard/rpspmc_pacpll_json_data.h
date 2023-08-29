@@ -181,6 +181,8 @@ struct SPMC_parameters {
         double set_offset_y;
         double set_offset_z;
 
+        double v[16];
+        
         // RP SPMC Monitors
         double bias_monitor;
         double signal_monitor;

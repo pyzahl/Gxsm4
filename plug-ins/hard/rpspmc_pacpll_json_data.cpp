@@ -146,6 +146,24 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         { "SPMC_GVP_CONTROLLER", &spmc_parameters.gvp_controller, false },
         { "SPMC_GVP_STATUS", &spmc_parameters.gvp_status, true },
 
+        // NO READ BACK OF VECTORS
+        { "SPMC_GVP_VECTOR_PC", &spmc_parameters.v[0], false }, // INT -2147483648,2147483647
+        { "SPMC_GVP_VECTOR__N", &spmc_parameters.v[1], false }, // INT
+        { "SPMC_GVP_VECTORNII", &spmc_parameters.v[2], false }, // INT
+        { "SPMC_GVP_VECTOR__O", &spmc_parameters.v[3], false }, // INT
+        { "SPMC_GVP_VECTORNRP", &spmc_parameters.v[4], false }, // INT
+        { "SPMC_GVP_VECTORNXT", &spmc_parameters.v[5], false }, // INT
+        { "SPMC_GVP_VECTOR_DX", &spmc_parameters.v[6], false },
+        { "SPMC_GVP_VECTOR_DY", &spmc_parameters.v[7], false },
+        { "SPMC_GVP_VECTOR_DZ", &spmc_parameters.v[8], false },
+        { "SPMC_GVP_VECTOR_DU", &spmc_parameters.v[9], false },
+        { "SPMC_GVP_VECTOR010", &spmc_parameters.v[10], false },
+        { "SPMC_GVP_VECTOR011", &spmc_parameters.v[11], false },
+        { "SPMC_GVP_VECTOR012", &spmc_parameters.v[12], false },
+        { "SPMC_GVP_VECTOR013", &spmc_parameters.v[13], false },
+        { "SPMC_GVP_VECTOR014", &spmc_parameters.v[14], false },
+        { "SPMC_GVP_VECTOR015", &spmc_parameters.v[15], false },
+
         { "SPMC_ALPHA", &spmc_parameters.alpha, false },
         { "SPMC_SLOPE_dZX", &spmc_parameters.slope_dzx, false },
         { "SPMC_SLOPE_dZY", &spmc_parameters.slope_dzy, false },
@@ -167,6 +185,25 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         
         { NULL, NULL, true }
 };
+
+const gchar *SPMC_GVP_VECTOR_COMPONENTS[] = {
+        "SPMC_GVP_VECTOR_PC", 
+        "SPMC_GVP_VECTOR__N", 
+        "SPMC_GVP_VECTORNII", 
+        "SPMC_GVP_VECTOR__O", 
+        "SPMC_GVP_VECTORNRP", 
+        "SPMC_GVP_VECTORNXT", 
+        "SPMC_GVP_VECTOR_DX", 
+        "SPMC_GVP_VECTOR_DY", 
+        "SPMC_GVP_VECTOR_DZ", 
+        "SPMC_GVP_VECTOR_DU", 
+        "SPMC_GVP_VECTOR010", 
+        "SPMC_GVP_VECTOR011", 
+        "SPMC_GVP_VECTOR012", 
+        "SPMC_GVP_VECTOR013", 
+        "SPMC_GVP_VECTOR014", 
+        "SPMC_GVP_VECTOR015", 
+        NULL };
 
 JSON_signal PACPLL_JSON_signals[] = {
         { "SIGNAL_CH1", 1024, pacpll_signals.signal_ch1 },

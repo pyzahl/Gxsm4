@@ -60,6 +60,7 @@ extern "C++" {
         extern GxsmPlugin rpspmc_hwi_pi;
 }
 
+extern const gchar *SPMC_GVP_VECTOR_COMPONENTS[];
 
 MOD_INPUT mod_input_list[] = {
         //## [ MODULE_SIGNAL_INPUT_ID, name, actual hooked signal address ]
@@ -905,3 +906,79 @@ int rpspmc_hwi_dev::read_actual_module_configuration (){
 
 	return 0;
 }
+
+
+int rpspmc_hwi_dev::GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v){
+        if (i >= MAX_PROGRAM_VECTORS || i < 0)
+                return 0;
+
+        // #define GVP_VECTOR_SIZE  16 // 10 components used (1st is index, then: N, nii, Options, Nrep, Next, dx, dy, dz, du, fill w zero to 16)
+#define I_GVP_PC_INDEX  0
+#define I_GVP_N         1
+#define I_GVP_NII       2
+#define I_GVP_OPTIONS   3
+#define I_GVP_NREP      4
+#define I_GVP_NEXT      5
+#define I_GVP_SIZE     (I_GVP_NEXT+1)
+        
+#define D_GVP_DX        0
+#define D_GVP_DY        1
+#define D_GVP_DZ        2
+#define D_GVP_DU        3
+#define D_GVP_SIZE      (D_GVP_DU+1)
+        
+        int gvp_vector_i[6];
+        double gvp_vector_d[4];
+
+        gvp_vector_i [I_GVP_PC_INDEX] = i;
+        gvp_vector_i [I_GVP_N       ] = v->n;
+        gvp_vector_i [I_GVP_NII     ] = v->dnx;
+        gvp_vector_i [I_GVP_OPTIONS ] = (v->srcs << 16) | (v->options & 0xffff);
+        gvp_vector_i [I_GVP_NREP    ] = v->repetitions;
+        gvp_vector_i [I_GVP_NEXT    ] = v->ptr_next;
+
+        // v->ptr_fb;
+        // v->ptr_final;
+
+        gvp_vector_d [D_GVP_DX      ] = v->f_dx;
+        gvp_vector_d [D_GVP_DY      ] = v->f_dy;
+        gvp_vector_d [D_GVP_DZ      ] = v->f_dz;
+        gvp_vector_d [D_GVP_DU      ] = v->f_du;
+
+        g_print ("Vec[%2d] = [#%4d, %4d, 0x%08x, nr%03d, n%02d, f%02d, {dU %d dXYZ %d %d %d}]\n",
+                 i, v->n, v->dnx, v->srcs,
+                 v->repetitions, v->ptr_next, v->ptr_final,
+                 v->f_du, v->f_dx, v->f_dy, v->f_dz);
+#if 0
+        // check count ranges
+        // NULL VECTOR, OK: END
+        if (!(vector_program[i].n == 0 && vector_program[i].dnx == 0 && vector_program[i].ptr_next == 0 && vector_program[i].ptr_final == 0))
+                if (vector_program[i].dnx < 0 || vector_program[i].dnx > 32767 || vector_program[i].n <= 0 || vector_program[i].n > 32767){
+                        /*
+                          gchar *msg = g_strdup_printf ("Probe Vector [pc%02d] not acceptable:\n"
+                          "n   = %6d   [0..32767]\n"
+                          "dnx = %6d   [0..32767]\n"
+                          "Auto adjusting.\n"
+                          "Hint: adjust slope/speed/points/time.",
+                          index, vector_program[i].n, vector_program[i].dnx );
+                          main_get_gapp()->warning (msg);
+                          g_free (msg);
+                        */
+                        if (vector_program[i].dnx < 0) vector_program[i].dnx = 0;
+                        if (vector_program[i].dnx > 32767) vector_program[i].dnx = 32767;
+                        if (vector_program[i].n <= 0) vector_program[i].n = 1;
+                        if (vector_program[i].n > 32767) vector_program[i].n = 32767;
+                }
+
+        // setup VPC essentials
+        vector_program[i].i = vector_program[i].repetitions; // preload repetitions counter now! (if now already done)
+        vector_program[i].j = 0; // not yet used -- XXXX
+#endif
+
+        if (rpspmc_pacpll)
+                rpspmc_pacpll->write_array (SPMC_GVP_VECTOR_COMPONENTS,  I_GVP_SIZE, gvp_vector_i,  D_GVP_SIZE, gvp_vector_d);
+                
+        return -1;
+}
+
+

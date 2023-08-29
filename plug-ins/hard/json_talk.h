@@ -78,11 +78,13 @@ public:
                                gpointer user_data);
         static void on_closed (SoupWebsocketConnection *ws, gpointer user_data);
         
-        void write_parameter (const gchar *paramater_id, double value, const gchar *fmt=NULL, gboolean dbg=FALSE);
-        void write_parameter (const gchar *paramater_id, int value, gboolean dbg=FALSE);
+        void write_parameter (const gchar *parameter_id, double value, const gchar *fmt=NULL, gboolean dbg=FALSE);
+        void write_parameter (const gchar *parameter_id, int value, gboolean dbg=FALSE);
 
-        void write_signal (const gchar *paramater_id, int size, double *value, const gchar *fmt=NULL, gboolean dbg=FALSE);
-        void write_signal (const gchar *paramater_id, int size, int *value, gboolean dbg=FALSE);
+        void write_array (const gchar *parameter_id[], int i_size, int *i_vec, int d_size, double *d_vec); // *** custom array set 
+
+        void write_signal (const gchar *parameter_id, int size, double *value, const gchar *fmt=NULL, gboolean dbg=FALSE);
+        void write_signal (const gchar *parameter_id, int size, int *value, gboolean dbg=FALSE);
 
         virtual const gchar *get_rp_address (){ return NULL; };
         virtual int get_debug_level() { return 0; };

@@ -302,6 +302,23 @@ CIntParameter     SPMC_GVP_STATUS("SPMC_GVP_STATUS", CBaseParameter::RW, 0, 0, 0
 #define GVP_VECTOR_SIZE  16 // 10 components used (1st is index, then: N, nii, Options, Nrep, Next, dx, dy, dz, du, fill w zero to 16)
 CFloatSignal SPMC_GVP_VECTOR("SPMC_GVP_VECTOR", GVP_VECTOR_SIZE, 0.0f); // vector components in mV, else "converted to int"
 
+CIntParameter     SPMC_GVP_VECTOR_PC("SPMC_GVP_VECTOR_PC", CBaseParameter::RW, 0, 0, -2147483648,2147483647); // 00
+CIntParameter     SPMC_GVP_VECTOR__N("SPMC_GVP_VECTOR__N", CBaseParameter::RW, 0, 0, -2147483648,2147483647); // 01
+CIntParameter     SPMC_GVP_VECTORNII("SPMC_GVP_VECTORNII", CBaseParameter::RW, 0, 0, -2147483648,2147483647); // 02
+CIntParameter     SPMC_GVP_VECTOR__O("SPMC_GVP_VECTOR__O", CBaseParameter::RW, 0, 0, -2147483648,2147483647); // 03
+CIntParameter     SPMC_GVP_VECTORNRP("SPMC_GVP_VECTORNRP", CBaseParameter::RW, 0, 0, -2147483648,2147483647); // 04
+CIntParameter     SPMC_GVP_VECTORNXT("SPMC_GVP_VECTORNXT", CBaseParameter::RW, 0, 0, -2147483648,2147483647); // 05
+CDoubleParameter  SPMC_GVP_VECTOR_DX("SPMC_GVP_VECTOR_DX", CBaseParameter::RW, 0, 0, -(1<<30), 1<<30); // 06
+CDoubleParameter  SPMC_GVP_VECTOR_DY("SPMC_GVP_VECTOR_DY", CBaseParameter::RW, 0, 0, -(1<<30), 1<<30);
+CDoubleParameter  SPMC_GVP_VECTOR_DZ("SPMC_GVP_VECTOR_DZ", CBaseParameter::RW, 0, 0, -(1<<30), 1<<30);
+CDoubleParameter  SPMC_GVP_VECTOR_DU("SPMC_GVP_VECTOR_DU", CBaseParameter::RW, 0, 0, -(1<<30), 1<<30);
+CDoubleParameter  SPMC_GVP_VECTOR010("SPMC_GVP_VECTOR010", CBaseParameter::RW, 0, 0, -(1<<30), 1<<30);
+CDoubleParameter  SPMC_GVP_VECTOR011("SPMC_GVP_VECTOR011", CBaseParameter::RW, 0, 0, -(1<<30), 1<<30);
+CDoubleParameter  SPMC_GVP_VECTOR012("SPMC_GVP_VECTOR012", CBaseParameter::RW, 0, 0, -(1<<30), 1<<30);
+CDoubleParameter  SPMC_GVP_VECTOR013("SPMC_GVP_VECTOR013", CBaseParameter::RW, 0, 0, -(1<<30), 1<<30);
+CDoubleParameter  SPMC_GVP_VECTOR014("SPMC_GVP_VECTOR014", CBaseParameter::RW, 0, 0, -(1<<30), 1<<30);
+CDoubleParameter  SPMC_GVP_VECTOR015("SPMC_GVP_VECTOR015", CBaseParameter::RW, 0, 0, -(1<<30), 1<<30);
+
 CDoubleParameter  SPMC_ALPHA("SPMC_ALPHA", CBaseParameter::RW, 0.0, 0, -360, +360); // deg
 CDoubleParameter  SPMC_SLOPE_dZX("SPMC_SLOPE_X", CBaseParameter::RW, 0.0, 0, -1.0, +1.0); // slope in Volts Z / Volt X
 CDoubleParameter  SPMC_SLOPE_dZY("SPMC_SLOPE_Y", CBaseParameter::RW, 0.0, 0, -1.0, +1.0); // slope in Volts Z / Volt X
@@ -1369,10 +1386,49 @@ void OnNewParams_RPSPMC(void){
         SPMC_SLOPE_dZY.Update ();
 
         //SPMC_BIAS_MONITOR.Update ();
-        
+
         SPMC_SET_OFFSET_X.Update ();
         SPMC_SET_OFFSET_Y.Update ();
         SPMC_SET_OFFSET_Z.Update ();
+
+        int dirty=0;
+        if (SPMC_GVP_VECTOR_PC.IsNewValue ()){ SPMC_GVP_VECTOR_PC.Update (); ++dirty; }
+        if (SPMC_GVP_VECTOR__N.IsNewValue ()){ SPMC_GVP_VECTOR__N.Update (); ++dirty; }
+        if (SPMC_GVP_VECTORNII.IsNewValue ()){ SPMC_GVP_VECTORNII.Update (); ++dirty; }
+        if (SPMC_GVP_VECTOR__O.IsNewValue ()){ SPMC_GVP_VECTOR__O.Update (); ++dirty; }
+        if (SPMC_GVP_VECTORNRP.IsNewValue ()){ SPMC_GVP_VECTORNRP.Update (); ++dirty; }
+        if (SPMC_GVP_VECTORNXT.IsNewValue ()){ SPMC_GVP_VECTORNXT.Update (); ++dirty; }
+        if (SPMC_GVP_VECTOR_DX.IsNewValue ()){ SPMC_GVP_VECTOR_DX.Update (); ++dirty; }
+        if (SPMC_GVP_VECTOR_DY.IsNewValue ()){ SPMC_GVP_VECTOR_DY.Update (); ++dirty; }
+        if (SPMC_GVP_VECTOR_DZ.IsNewValue ()){ SPMC_GVP_VECTOR_DZ.Update (); ++dirty; }
+        if (SPMC_GVP_VECTOR_DU.IsNewValue ()){ SPMC_GVP_VECTOR_DU.Update (); ++dirty; }
+        if (SPMC_GVP_VECTOR010.IsNewValue ()){ SPMC_GVP_VECTOR010.Update (); ++dirty; }
+        if (SPMC_GVP_VECTOR011.IsNewValue ()){ SPMC_GVP_VECTOR011.Update (); ++dirty; }
+        if (SPMC_GVP_VECTOR012.IsNewValue ()){ SPMC_GVP_VECTOR012.Update (); ++dirty; }
+        if (SPMC_GVP_VECTOR013.IsNewValue ()){ SPMC_GVP_VECTOR013.Update (); ++dirty; }
+        if (SPMC_GVP_VECTOR014.IsNewValue ()){ SPMC_GVP_VECTOR014.Update (); ++dirty; }
+        if (SPMC_GVP_VECTOR015.IsNewValue ()){ SPMC_GVP_VECTOR015.Update (); ++dirty; }
+
+        if (dirty>0)
+                rp_spmc_set_gvp_vector (SPMC_GVP_VECTOR_PC.Value (),
+                                        SPMC_GVP_VECTOR__N.Value (),
+                                        SPMC_GVP_VECTORNII.Value (),
+                                        SPMC_GVP_VECTOR__O.Value (),
+                                        SPMC_GVP_VECTORNRP.Value (),
+                                        SPMC_GVP_VECTORNXT.Value (),
+                                        SPMC_GVP_VECTOR_DX.Value (),
+                                        SPMC_GVP_VECTOR_DY.Value (),
+                                        SPMC_GVP_VECTOR_DZ.Value (),
+                                        SPMC_GVP_VECTOR_DU.Value ()
+                                        );
+                     
+        if ( SPMC_GVP_CONTROLLER.IsNewValue ()){
+                SPMC_GVP_CONTROLLER.Update ();
+                int control = (int)round(SPMC_GVP_CONTROLLER.Value ());
+                fprintf(stderr, "GVP Control: %d\n", control);
+                rp_spmc_gvp_config (control & 0x01, control & 0x02); // reset, program
+        }
+
 }
 
 // PACPLL Check New Parameters
@@ -1534,19 +1590,21 @@ void OnNewParams(void)
 
 
 void OnNewSignals(void){
-        fprintf(stderr, "** RPSPMC -- OnNew Signal\n");
         if (verbose > 3) fprintf(stderr, "OnNewSignals()\n");
 	// do something
 	CDataManager::GetInstance()->UpdateAllSignals();
         if (verbose > 3) fprintf(stderr, "OnNewSignals done.\n");
 
-        //if (SPMC_GVP_VECTOR.IsNewValue()){
-        SPMC_GVP_VECTOR.Update();
-        fprintf(stderr, "GVP Vector[0]: [");
-        for (int i=0; i<16; ++i)
-                fprintf(stderr, "%g ", SPMC_GVP_VECTOR[i]);
-        fprintf(stderr, " ]\n");
-        //}
+#if 0
+        // do not get anything here :(
+        if (SPMC_GVP_VECTOR.IsNewValue()){
+                SPMC_GVP_VECTOR.Update();
+                fprintf(stderr, "GVP Vector[0]: [");
+                for (int i=0; i<16; ++i)
+                        fprintf(stderr, "%g ", SPMC_GVP_VECTOR[i]);
+                fprintf(stderr, " ]\n");
+        }
+#endif
 }
 
 

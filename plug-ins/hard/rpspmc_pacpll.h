@@ -886,70 +886,15 @@ public:
 
         PROBE_HEADER_POSITIONVECTOR GVP_vp_header_current;
 
-        
 	int GVP_read_program_vector(int i, PROBE_VECTOR_GENERIC *v){
 		if (i >= MAX_PROGRAM_VECTORS || i < 0)
 			return 0;
-		memcpy (v, &vector_program[i], sizeof (PROBE_VECTOR_GENERIC));
+                // NOTE: READINGN BACK NOT YET USED NOR SUPPORTED BY RPSPMC !!!
+		// memcpy (v, &vector_program[i], sizeof (PROBE_VECTOR_GENERIC));
 		return -1;
 	};
-	int GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v){
-		if (i >= MAX_PROGRAM_VECTORS || i < 0)
-			return 0;
-
-		// copy/convert to DSP format
-		vector_program[i].n = v->n;
-		vector_program[i].dnx = v->dnx;
-		vector_program[i].srcs = v->srcs;
-		vector_program[i].options = v->options;
-		vector_program[i].ptr_fb = v->ptr_fb;
-		vector_program[i].repetitions = v->repetitions;
-		vector_program[i].i = v->i;
-		vector_program[i].j = v->j;
-		vector_program[i].ptr_next = v->ptr_next;
-		vector_program[i].ptr_final = v->ptr_final;
-		vector_program[i].f_du = v->f_du;
-		vector_program[i].f_dx = v->f_dx;
-		vector_program[i].f_dy = v->f_dy;
-		vector_program[i].f_dz = v->f_dz;
-		vector_program[i].f_dx0 = v->f_dx0;
-		vector_program[i].f_dy0 = v->f_dy0;
-		vector_program[i].f_dz0 = v->f_dz0;
-
-                g_print ("Vec[%2d] = [#%4d, %4d, 0x%08x, nr%03d, n%02d, f%02d, {dU %d dXYZ %d %d %d}]\n",
-                         i, v->n, v->dnx, v->srcs,
-                         v->repetitions, v->ptr_next, v->ptr_final,
-                         v->f_du, v->f_dx, v->f_dy, v->f_dz);
-                
-		// check count ranges
-		// NULL VECTOR, OK: END
-		if (!(vector_program[i].n == 0 && vector_program[i].dnx == 0 && vector_program[i].ptr_next == 0 && vector_program[i].ptr_final == 0))
-			if (vector_program[i].dnx < 0 || vector_program[i].dnx > 32767 || vector_program[i].n <= 0 || vector_program[i].n > 32767){
-				/*
-				gchar *msg = g_strdup_printf ("Probe Vector [pc%02d] not acceptable:\n"
-							      "n   = %6d   [0..32767]\n"
-							      "dnx = %6d   [0..32767]\n"
-							      "Auto adjusting.\n"
-							      "Hint: adjust slope/speed/points/time.",
-							      index, vector_program[i].n, vector_program[i].dnx );
-				main_get_gapp()->warning (msg);
-				g_free (msg);
-				*/
-				if (vector_program[i].dnx < 0) vector_program[i].dnx = 0;
-				if (vector_program[i].dnx > 32767) vector_program[i].dnx = 32767;
-				if (vector_program[i].n <= 0) vector_program[i].n = 1;
-				if (vector_program[i].n > 32767) vector_program[i].n = 32767;
-			}
-
-		// setup VPC essentials
-		vector_program[i].i = vector_program[i].repetitions; // preload repetitions counter now! (if now already done)
-		vector_program[i].j = 0; // not yet used -- XXXX
-
-		return -1;
-	};
-
+	int GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v);
 	GVP_abort_vector_program () {};
-	PROBE_VECTOR_GENERIC vector_program[MAX_PROGRAM_VECTORS];
 
         void RPSPMC_set_bias (double bias) {};
         void RPSPMC_set_current_sp (double sp) {};

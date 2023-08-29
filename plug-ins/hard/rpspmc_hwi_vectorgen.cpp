@@ -59,12 +59,6 @@ void RPSPMC_Control::read_spm_vector_program (){
 }
 
 
-// some needfull macros to get some readable code
-#define CONST_DSP_F16 1. //65536.
-#define VOLT2AIC(U)   (int)(main_get_gapp()->xsm->Inst->VoltOut2Dig (main_get_gapp()->xsm->Inst->BiasV2V (U)))
-#define DVOLT2AIC(U)  (int)(main_get_gapp()->xsm->Inst->VoltOut2Dig ((U)/main_get_gapp()->xsm->Inst->BiasGainV2V ()))
-
-
 
 // make automatic n and dnx from float number of steps, keep n below 1000.
 void RPSPMC_Control::make_auto_n_vector_elments (double fnum){
@@ -116,14 +110,14 @@ double RPSPMC_Control::make_Vdz_vector (double Ui, double Uf, double dZ, int n, 
 	program_vector.repetitions = 0;
 	program_vector.ptr_next = 0x0;
 	program_vector.ptr_final = flags & MAKE_VEC_FLAG_END ? 0:1; // VPC relative branch to next vector
-	program_vector.f_du = flags & MAKE_VEC_FLAG_VHOLD ? 0 : (gint32)round (CONST_DSP_F16*main_get_gapp()->xsm->Inst->VoltOut2Dig ((Uf-Ui)/main_get_gapp()->xsm->Inst->BiasGainV2V ())/(steps));
-	program_vector.f_dz = (gint32)round (CONST_DSP_F16*main_get_gapp()->xsm->Inst->ZA2Dig (dZ/(steps)));
-	program_vector.f_dx = 0;
-	program_vector.f_dy = 0;
-	program_vector.f_dx0 = 0;
-	program_vector.f_dy0 = 0;
-	program_vector.f_dz0 = 0;
-	return main_get_gapp()->xsm->Inst->V2BiasV (main_get_gapp()->xsm->Inst->Dig2VoltOut (VOLT2AIC(Ui) + (double)program_vector.f_du*steps/CONST_DSP_F16));
+	program_vector.f_du = flags & MAKE_VEC_FLAG_VHOLD ? 0 : ((Uf-Ui)/main_get_gapp()->xsm->Inst->BiasGainV2V ())/steps;
+	program_vector.f_dz = main_get_gapp()->xsm->Inst->ZA2Volt (dZ/steps);
+	program_vector.f_dx = 0.0;
+	program_vector.f_dy = 0.0;
+	program_vector.f_dx0 = 0.0;
+	program_vector.f_dy0 = 0.0;
+	program_vector.f_dz0 = 0.0;
+	return main_get_gapp()->xsm->Inst->V2BiasV (Ui + program_vector.f_du*steps);
 }	
 
 // Copy of Vdz above, but the du steps were used for dx0
@@ -145,14 +139,14 @@ double RPSPMC_Control::make_Vdx0_vector (double Ui, double Uf, double dZ, int n,
 	program_vector.repetitions = 0;
 	program_vector.ptr_next = 0x0;
         program_vector.ptr_final = flags & MAKE_VEC_FLAG_END ? 0:1; // VPC relative branch to next vector
-        program_vector.f_dx0 = flags & MAKE_VEC_FLAG_VHOLD ? 0 : (gint32)round (CONST_DSP_F16*main_get_gapp()->xsm->Inst->VoltOut2Dig ((Uf-Ui)/main_get_gapp()->xsm->Inst->BiasGainV2V ())/(steps)); // !!!!!x ????
-        program_vector.f_dz = (gint32)round (CONST_DSP_F16*main_get_gapp()->xsm->Inst->ZA2Dig (dZ/(steps)));
-        program_vector.f_dx = 0;
-        program_vector.f_dy = 0;
-        program_vector.f_du = 0;
-        program_vector.f_dy0 = 0;
-        program_vector.f_dz0 = 0;
-        return main_get_gapp()->xsm->Inst->V2BiasV (main_get_gapp()->xsm->Inst->Dig2VoltOut (VOLT2AIC(Ui) + (double)program_vector.f_du*steps/CONST_DSP_F16));
+        program_vector.f_dx0 = flags & MAKE_VEC_FLAG_VHOLD ? 0 : ((Uf-Ui)/main_get_gapp()->xsm->Inst->BiasGainV2V ())/steps; // !!!!!x ????
+        program_vector.f_dz = main_get_gapp()->xsm->Inst->ZA2Volt (dZ/steps);
+        program_vector.f_dx = 0.0;
+        program_vector.f_dy = 0.0;
+        program_vector.f_du = 0.0;
+        program_vector.f_dy0 = 0.0;
+        program_vector.f_dz0 = 0.0;
+        return main_get_gapp()->xsm->Inst->V2BiasV (Ui + program_vector.f_du*steps);
 }       
 
 // Copy of Vdz above, but the du steps were used for dx0
@@ -174,14 +168,14 @@ double RPSPMC_Control::make_dx0_vector (double X0i, double X0f, int n, double sl
 	program_vector.repetitions = 0;
 	program_vector.ptr_next = 0x0;
         program_vector.ptr_final = flags & MAKE_VEC_FLAG_END ? 0:1; // VPC relative branch to next vector
-        program_vector.f_dx0 = flags & MAKE_VEC_FLAG_VHOLD ? 0 : (gint32)round (CONST_DSP_F16*main_get_gapp()->xsm->Inst->VoltOut2Dig (X0f-X0i)/(steps));
-        program_vector.f_dz = 0;
-        program_vector.f_dx = 0;
-        program_vector.f_dy = 0;
-        program_vector.f_du = 0;
-        program_vector.f_dy0 = 0;
-        program_vector.f_dz0 = 0;
-        return main_get_gapp()->xsm->Inst->V2BiasV (main_get_gapp()->xsm->Inst->Dig2VoltOut (VOLT2AIC(X0i) + (double)program_vector.f_dx0*steps/CONST_DSP_F16));
+        program_vector.f_du = 0.0;
+        program_vector.f_dx0 = flags & MAKE_VEC_FLAG_VHOLD ? 0.0 : (X0f-X0i)/steps;
+        program_vector.f_dz = 0.0;
+        program_vector.f_dx = 0.0;
+        program_vector.f_dy = 0.0;
+        program_vector.f_dy0 = 0.0;
+        program_vector.f_dz0 = 0.0;
+        return main_get_gapp()->xsm->Inst->V2BiasV (X0i + program_vector.f_dx0*steps);
 }       
 
 // make dZ/dX/dY vector from n point (if > 2, else automatic n) and (dX,dY,dZ) slope
@@ -204,15 +198,15 @@ double RPSPMC_Control::make_ZXYramp_vector (double dZ, double dX, double dY, int
 	program_vector.repetitions = 0;
 	program_vector.ptr_next = 0x0;
 	program_vector.ptr_final = flags & MAKE_VEC_FLAG_END ? 0:1; // VPC relative branch to next vector
-	program_vector.f_du = 0;
-	program_vector.f_dx = (gint32)round (program_vector.n > 1 ? (CONST_DSP_F16*main_get_gapp()->xsm->Inst->XA2Dig (dX) / steps) : 0);
-	program_vector.f_dy = (gint32)round (program_vector.n > 1 ? (CONST_DSP_F16*main_get_gapp()->xsm->Inst->YA2Dig (dY) / steps) : 0);
-	program_vector.f_dz = (gint32)round (program_vector.n > 1 ? (CONST_DSP_F16*main_get_gapp()->xsm->Inst->ZA2Dig (dZ) / steps) : 0);
-	program_vector.f_dx0 = 0;
-	program_vector.f_dy0 = 0;
-	program_vector.f_dz0 = 0;
+	program_vector.f_du = 0.0;
+	program_vector.f_dx = program_vector.n > 1 ? main_get_gapp()->xsm->Inst->XA2Volt (dX) / steps : 0.0;
+	program_vector.f_dy = program_vector.n > 1 ? main_get_gapp()->xsm->Inst->YA2Volt (dY) / steps : 0.0;
+	program_vector.f_dz = program_vector.n > 1 ? main_get_gapp()->xsm->Inst->ZA2Volt (dZ) / steps : 0.0;
+	program_vector.f_dx0 = 0.0;
+	program_vector.f_dy0 = 0.0;
+	program_vector.f_dz0 = 0.0;
 
-	return main_get_gapp()->xsm->Inst->Dig2ZA ((long)round ((double)program_vector.f_dz*steps/CONST_DSP_F16));
+	return main_get_gapp()->xsm->Inst->Volt2ZA (program_vector.f_dz*steps);
 }
 
 // make dU/dZ/dX/dY vector for n points and ts time per segment
@@ -234,51 +228,17 @@ double RPSPMC_Control::make_UZXYramp_vector (double dU, double dZ, double dX, do
 	program_vector.ptr_next = ptr_next;
 	program_vector.ptr_final = flags & MAKE_VEC_FLAG_END ? 0:1; // VPC relative branch to next vector
 
-	program_vector.f_du = (gint32)round (program_vector.n > 1 ? (CONST_DSP_F16*main_get_gapp()->xsm->Inst->VoltOut2Dig (dU/main_get_gapp()->xsm->Inst->BiasGainV2V ())/(steps)) : 0);
-	program_vector.f_dx = (gint32)round (program_vector.n > 1 ? (CONST_DSP_F16*main_get_gapp()->xsm->Inst->XA2Dig (dX) / steps) : 0);
-	program_vector.f_dy = (gint32)round (program_vector.n > 1 ? (CONST_DSP_F16*main_get_gapp()->xsm->Inst->YA2Dig (dY) / steps) : 0);
-	program_vector.f_dz = (gint32)round (program_vector.n > 1 ? (CONST_DSP_F16*main_get_gapp()->xsm->Inst->ZA2Dig (dZ) / steps) : 0);
-	program_vector.f_dx0 = (gint32)round (program_vector.n > 1 ? (CONST_DSP_F16*main_get_gapp()->xsm->Inst->ZA2Dig (dSig1) / steps) : 0);
-	program_vector.f_dy0 = (gint32)round (program_vector.n > 1 ? (CONST_DSP_F16*main_get_gapp()->xsm->Inst->ZA2Dig (dSig2) / steps) : 0);
-	program_vector.f_dz0 = 0;
+	program_vector.f_du = program_vector.n > 1 ? (dU/main_get_gapp()->xsm->Inst->BiasGainV2V ())/steps : 0.0;
+	program_vector.f_dx = program_vector.n > 1 ? main_get_gapp()->xsm->Inst->XA2Volt (dX) / steps : 0.0;
+	program_vector.f_dy = program_vector.n > 1 ? main_get_gapp()->xsm->Inst->YA2Volt (dY) / steps : 0.0;
+	program_vector.f_dz = program_vector.n > 1 ? main_get_gapp()->xsm->Inst->ZA2Volt (dZ) / steps : 0.0;
+	program_vector.f_dx0 = program_vector.n > 1 ? main_get_gapp()->xsm->Inst->ZA2Volt (dSig1) / steps : 0.0;
+	program_vector.f_dy0 = program_vector.n > 1 ? main_get_gapp()->xsm->Inst->ZA2Volt (dSig2) / steps : 0.0;
+	program_vector.f_dz0 = 0.0;
 
-	return main_get_gapp()->xsm->Inst->Dig2ZA ((long)round ((double)program_vector.f_dz*steps/CONST_DSP_F16));
+	return main_get_gapp()->xsm->Inst->Volt2ZA (program_vector.f_dz*steps);
 }
 
-
-
-
-// make dPhi vector from n point (if > 2, else automatic n) and dPhi slope
-double RPSPMC_Control::make_phase_vector (double dPhi, int n, double slope, int source, int options, double long &duration, make_vector_flags flags){
-	double dr = dPhi*16.;
-	slope *= 16.;
-
-	if (flags & MAKE_VEC_FLAG_RAMP || n<2)
-		make_auto_n_vector_elments (dr/slope*rpspmc_hwi->get_GVP_frq_ref ());
-	else {
-		program_vector.n = n;
-		program_vector.dnx = (gint32)round ( fabs (dr*rpspmc_hwi->get_GVP_frq_ref ()/(slope*program_vector.n)));
-		++program_vector.n;
-	}
-	double steps = (double)(program_vector.n) * (double)(program_vector.dnx+1);
-
-	duration += (double long) steps;
-	program_vector.srcs = source & 0xffff;
-	program_vector.options = options;
-	program_vector.ptr_fb = 0;
-	program_vector.repetitions = 0;
-	program_vector.ptr_next = 0x0;
-	program_vector.ptr_final = flags & MAKE_VEC_FLAG_END ? 0:1; // VPC relative branch to next vector
-	program_vector.f_du = 0;
-	program_vector.f_dx = 0;
-	program_vector.f_dy = 0;
-	program_vector.f_dz = 0;
-	program_vector.f_dx0 = 0;
-	program_vector.f_dy0 = 0;
-	program_vector.f_dz0 = (gint32)round (program_vector.n > 1 ? (CONST_DSP_F16 * dr / steps) : 0);
-
-	return round ((double)program_vector.f_dz0*steps/CONST_DSP_F16/16.);
-}
 
 // Make a delay Vector
 double RPSPMC_Control::make_delay_vector (double delay, int source, int options, double long &duration, make_vector_flags flags, int points){
@@ -297,13 +257,13 @@ double RPSPMC_Control::make_delay_vector (double delay, int source, int options,
 	program_vector.repetitions = 0; // number of repetitions, not used yet
 	program_vector.ptr_next = 0x0;  // pointer to next vector -- not used, only for loops
 	program_vector.ptr_final = flags & MAKE_VEC_FLAG_END ? 0:1;   // VPC relative branch to next vector
-	program_vector.f_du = 0;
-	program_vector.f_dz = 0;
-	program_vector.f_dx = 0; // x stepwidth, not used for probing
-	program_vector.f_dy = 0; // y stepwidth, not used for probing
-	program_vector.f_dx0 = 0; // x0 stepwidth, not used for probing
-	program_vector.f_dy0 = 0; // y0 stepwidth, not used for probing
-	program_vector.f_dz0 = 0; // z0 stepwidth, not used for probing
+	program_vector.f_du = 0.0;
+	program_vector.f_dz = 0.0;
+	program_vector.f_dx = 0.0; // x stepwidth, not used for probing
+	program_vector.f_dy = 0.0; // y stepwidth, not used for probing
+	program_vector.f_dx0 = 0.0; // x0 stepwidth, not used for probing
+	program_vector.f_dy0 = 0.0; // y0 stepwidth, not used for probing
+	program_vector.f_dz0 = 0.0; // z0 stepwidth, not used for probing
 	return (double)((long)(program_vector.n)*(long)(program_vector.dnx+1))/rpspmc_hwi->get_GVP_frq_ref ();
 }
 
@@ -317,9 +277,12 @@ void RPSPMC_Control::append_null_vector (int options, int index){
 	program_vector.repetitions = 0; // number of repetitions
 	program_vector.ptr_next = 0;  // END
 	program_vector.ptr_final= 0;  // END
-	program_vector.f_dx = 0;
-	program_vector.f_dy = 0;
-	program_vector.f_dz = 0;
+	program_vector.f_dx = 0.0;
+	program_vector.f_dy = 0.0;
+	program_vector.f_dz = 0.0;
+	program_vector.f_dx0 = 0.0; // x0 stepwidth, not used for probing
+	program_vector.f_dy0 = 0.0; // y0 stepwidth, not used for probing
+	program_vector.f_dz0 = 0.0; // z0 stepwidth, not used for probing
 	// append 4 NULL-Vectors, just to clean up the end.
 	write_program_vector (index);
 	write_program_vector (index+1);
