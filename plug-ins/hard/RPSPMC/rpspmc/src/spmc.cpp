@@ -219,7 +219,7 @@ void rp_spmc_AD5791_set_configuration_mode (bool cmode=true, bool send=false, in
                                 | (rp_spmc_AD5791_configuration_mode ? (1<<3):0)
                                 | (rp_spmc_AD5791_configuration_send ? (1<<4):0)
                                 );
-        usleep(100);
+        usleep(10000);
 }
 
 // enable AD5791 FPGA to stream mdoe and flow contol (fast)
@@ -237,7 +237,7 @@ void rp_spmc_AD5791_set_axis_data (int axis, uint32_t data){
 void rp_spmc_AD5791_send_axis_data (int axis, uint32_t data){
         rp_spmc_AD5791_set_configuration_mode (true, false, axis);  // enter/stay in config mode, set axis
         set_gpio_cfgreg_uint32 (SPMC_CFG_AD5791_DAC_AXIS_DATA, data); // set configuration data
-        usleep(100);
+        usleep(10000);
         rp_spmc_AD5791_set_configuration_mode (true, true); // enter/stay in config mode, enter send data mode, will go into hold mode after data send
 }
 
@@ -551,17 +551,22 @@ void rp_spmc_set_zservo_gxsm_speciality_setting (int mode, double z_setpoint, do
 }
 
 // RPSPMC GVP Engine Management
-void rp_spmc_gvp_config (bool reset=true, bool program=false){
+void rp_spmc_gvp_config (bool reset=true, bool program=false, bool pause=false){
+        if (!reset)
+                rp_spmc_AD5791_set_stream_mode (); // enable streaming for AD5791 DAC's from FPGA now!
+
+        usleep(10000);
+                
         set_gpio_cfgreg_int32 (SPMC_GVP_CONTROL,
-                               (reset ? 1:0) | (program ? 2:0)
+                               (reset ? 1:0) | (program ? 2:0) | (pause ? 4:0)
                                );
 }
 
 //void rp_spmc_set_gvp_vector (CFloatSignal &vector){
-void rp_spmc_set_gvp_vector (int pc, int n, int nii, unsigned int opts, int nrp, int nxt,
+void rp_spmc_set_gvp_vector (int pc, int n, int nii, unsigned int opts, int nrp, int nxt, int decii,
                              double dx, double dy, double dz, double du){
         rp_spmc_gvp_config (); // put in reset/hold mode
-        usleep(10);
+        usleep(10000);
         // write GVP-Vector [vector[0]] components
         //                      du        dz        dy        dx     Next       Nrep,   Options,     nii,      N,    [Vadr]
         //data = {192'd0, 32'd0000, 32'd0000, -32'd0002, -32'd0002,  32'd0, 32'd0000,   32'h001, 32'd0128, 32'd005, 32'd00 };
@@ -595,6 +600,9 @@ void rp_spmc_set_gvp_vector (int pc, int n, int nii, unsigned int opts, int nrp,
 
         fprintf(stderr, "%8.10g mV ", 1000.*du);
         set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA+i++, (int)round(Q31*du/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
+
+        fprintf(stderr, "decii=%d ", decii); // last vector componet
+        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA+15, decii);  // decimation
 
         fprintf(stderr, "\n" );
         usleep(10);

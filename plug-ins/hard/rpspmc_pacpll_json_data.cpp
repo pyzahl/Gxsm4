@@ -143,7 +143,7 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         { "SPMC_GVP_EXECUTE", &spmc_parameters.gvp_execute, false },
         { "SPMC_GVP_PAUSE", &spmc_parameters.gvp_pause, false },
         { "SPMC_GVP_STOP", &spmc_parameters.gvp_stop, false },
-        { "SPMC_GVP_CONTROLLER", &spmc_parameters.gvp_controller, false },
+        { "SPMC_GVP_PROGRAM", &spmc_parameters.gvp_program, false },
         { "SPMC_GVP_STATUS", &spmc_parameters.gvp_status, true },
 
         // NO READ BACK OF VECTORS
@@ -153,16 +153,16 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         { "SPMC_GVP_VECTOR__O", &spmc_parameters.v[3], false }, // INT
         { "SPMC_GVP_VECTORNRP", &spmc_parameters.v[4], false }, // INT
         { "SPMC_GVP_VECTORNXT", &spmc_parameters.v[5], false }, // INT
-        { "SPMC_GVP_VECTOR_DX", &spmc_parameters.v[6], false },
-        { "SPMC_GVP_VECTOR_DY", &spmc_parameters.v[7], false },
-        { "SPMC_GVP_VECTOR_DZ", &spmc_parameters.v[8], false },
-        { "SPMC_GVP_VECTOR_DU", &spmc_parameters.v[9], false },
-        { "SPMC_GVP_VECTOR010", &spmc_parameters.v[10], false },
-        { "SPMC_GVP_VECTOR011", &spmc_parameters.v[11], false },
-        { "SPMC_GVP_VECTOR012", &spmc_parameters.v[12], false },
-        { "SPMC_GVP_VECTOR013", &spmc_parameters.v[13], false },
-        { "SPMC_GVP_VECTOR014", &spmc_parameters.v[14], false },
-        { "SPMC_GVP_VECTOR015", &spmc_parameters.v[15], false },
+        { "SPMC_GVP_VECTORDCI", &spmc_parameters.v[6], false }, // INT
+        { "SPMC_GVP_VECTOR_DX", &spmc_parameters.v[7], false },
+        { "SPMC_GVP_VECTOR_DY", &spmc_parameters.v[8], false },
+        { "SPMC_GVP_VECTOR_DZ", &spmc_parameters.v[9], false },
+        { "SPMC_GVP_VECTOR_DU", &spmc_parameters.v[10], false },
+        { "SPMC_GVP_VECTOR010", &spmc_parameters.v[11], false },
+        { "SPMC_GVP_VECTOR011", &spmc_parameters.v[12], false },
+        { "SPMC_GVP_VECTOR012", &spmc_parameters.v[13], false },
+        { "SPMC_GVP_VECTOR013", &spmc_parameters.v[14], false },
+        { "SPMC_GVP_VECTOR014", &spmc_parameters.v[15], false },
 
         { "SPMC_ALPHA", &spmc_parameters.alpha, false },
         { "SPMC_SLOPE_dZX", &spmc_parameters.slope_dzx, false },
@@ -193,6 +193,7 @@ const gchar *SPMC_GVP_VECTOR_COMPONENTS[] = {
         "SPMC_GVP_VECTOR__O", 
         "SPMC_GVP_VECTORNRP", 
         "SPMC_GVP_VECTORNXT", 
+        "SPMC_GVP_VECTORDCI", 
         "SPMC_GVP_VECTOR_DX", 
         "SPMC_GVP_VECTOR_DY", 
         "SPMC_GVP_VECTOR_DZ", 
@@ -202,7 +203,6 @@ const gchar *SPMC_GVP_VECTOR_COMPONENTS[] = {
         "SPMC_GVP_VECTOR012", 
         "SPMC_GVP_VECTOR013", 
         "SPMC_GVP_VECTOR014", 
-        "SPMC_GVP_VECTOR015", 
         NULL };
 
 JSON_signal PACPLL_JSON_signals[] = {

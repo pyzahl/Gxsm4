@@ -141,7 +141,9 @@ rpspmc_hwi_dev::rpspmc_hwi_dev(){
 	subscan_data_y_index_offset = 0;
         ScanningFlg=0;
         KillFlg=FALSE;
-        
+
+        RPSPMC_GVP_decii = 512; // GVP decii initial value
+
         for (int i=0; i<4; ++i){
                 srcs_dir[i] = nsrcs_dir[i] = 0;
                 Mob_dir[i] = NULL;
@@ -907,6 +909,23 @@ int rpspmc_hwi_dev::read_actual_module_configuration (){
 	return 0;
 }
 
+double rpspmc_hwi_dev::get_GVP_frq_ref () {
+        return 120e6/RPSPMC_GVP_decii;
+};
+
+
+void rpspmc_hwi_dev::GVP_execute_vector_program(){
+        rpspmc_pacpll->write_parameter ("SPMC_GVP_EXECUTE", 1);
+}
+
+void rpspmc_hwi_dev::GVP_vp_init (){
+        // rpspmc_pacpll->write_parameter ("SPMC_GVP_EXECUTE", 1);
+        // rpspmc_pacpll->write_parameter ("SPMC_GVP_STOP", 0);
+        // rpspmc_pacpll->write_parameter ("SPMC_GVP_PAUSE", 0);
+}
+
+void rpspmc_hwi_dev::rpspmc_hwi_dev::GVP_start_data_read(){
+}
 
 int rpspmc_hwi_dev::GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v){
         if (i >= MAX_PROGRAM_VECTORS || i < 0)
@@ -919,16 +938,17 @@ int rpspmc_hwi_dev::GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v){
 #define I_GVP_OPTIONS   3
 #define I_GVP_NREP      4
 #define I_GVP_NEXT      5
-#define I_GVP_SIZE     (I_GVP_NEXT+1)
+#define I_GVP_DECII     6
+#define I_GVP_SIZE (I_GVP_DECII+1)
         
 #define D_GVP_DX        0
 #define D_GVP_DY        1
 #define D_GVP_DZ        2
 #define D_GVP_DU        3
-#define D_GVP_SIZE      (D_GVP_DU+1)
+#define D_GVP_SIZE (D_GVP_DU+1)
         
-        int gvp_vector_i[6];
-        double gvp_vector_d[4];
+        int gvp_vector_i[I_GVP_SIZE];
+        double gvp_vector_d[D_GVP_SIZE];
 
         gvp_vector_i [I_GVP_PC_INDEX] = i;
         gvp_vector_i [I_GVP_N       ] = v->n;
@@ -936,6 +956,7 @@ int rpspmc_hwi_dev::GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v){
         gvp_vector_i [I_GVP_OPTIONS ] = (v->srcs << 16) | (v->options & 0xffff);
         gvp_vector_i [I_GVP_NREP    ] = v->repetitions;
         gvp_vector_i [I_GVP_NEXT    ] = v->ptr_next;
+        gvp_vector_i [I_GVP_DECII   ] = RPSPMC_GVP_decii;
 
         // v->ptr_fb;
         // v->ptr_final;

@@ -170,7 +170,7 @@ struct SPMC_parameters {
         double gvp_execute;
         double gvp_pause;
         double gvp_stop;
-        double gvp_controller;
+        double gvp_program;
         double gvp_status;
         
         double alpha;

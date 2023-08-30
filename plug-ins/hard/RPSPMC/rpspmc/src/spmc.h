@@ -77,9 +77,9 @@ extern "C" {
         void rp_spmc_set_zservo_controller (double setpoint, double cp, double ci, double upper, double lower);
         void rp_spmc_set_zservo_gxsm_speciality_setting (int mode, double z_setpoint, double level);
 
-        void rp_spmc_gvp_config (bool reset, bool program); // taking out of reset starts GVP!
+        void rp_spmc_gvp_config (bool reset, bool program, bool pause); // taking out of reset starts GVP!
         //void rp_spmc_set_gvp_vector (CFloatSignal &vector);
-        void rp_spmc_set_gvp_vector (int pc, int n, int nii, unsigned int opts, int nrp, int nxt,
+        void rp_spmc_set_gvp_vector (int pc, int n, int nii, unsigned int opts, int nrp, int nxt, int decii,
                                      double dx, double dy, double dz, double du);
 
         void rp_spmc_set_rotation (double alpha);

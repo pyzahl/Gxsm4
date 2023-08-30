@@ -27,6 +27,7 @@ module AD5791_io_connect #(
 (
 //    inout [8-1:0]  exp_p_io,
     inout [8-1:0]  exp_n_io,
+    (* X_INTERFACE_PARAMETER = "FREQ_HZ 30000000" *)
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN PMD_clk" *)
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF PMD_sync:PMD_dac" *)
     input PMD_clk,

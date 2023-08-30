@@ -296,7 +296,7 @@ CDoubleParameter  SPMC_Z_SERVO_LEVEL("SPMC_Z_SERVO_LEVEL", CBaseParameter::RW, 0
 CBooleanParameter SPMC_GVP_EXECUTE("SPMC_GVP_EXECUTE", CBaseParameter::RW, false, 0);
 CBooleanParameter SPMC_GVP_PAUSE("SPMC_GVP_PAUSE", CBaseParameter::RW, false, 0);
 CBooleanParameter SPMC_GVP_STOP("SPMC_GVP_STOP", CBaseParameter::RW, false, 0);
-CIntParameter     SPMC_GVP_CONTROLLER("SPMC_GVP_CONTROLLER", CBaseParameter::RW, 0, 0, -(1<<30), 1<<30);
+CIntParameter     SPMC_GVP_PROGRAM("SPMC_GVP_PROGRAM", CBaseParameter::RW, 0, 0, -(1<<30), 1<<30);
 CIntParameter     SPMC_GVP_STATUS("SPMC_GVP_STATUS", CBaseParameter::RW, 0, 0, 0, 1<<30);
 #define MAX_GVP_VECTORS   32
 #define GVP_VECTOR_SIZE  16 // 10 components used (1st is index, then: N, nii, Options, Nrep, Next, dx, dy, dz, du, fill w zero to 16)
@@ -308,6 +308,7 @@ CIntParameter     SPMC_GVP_VECTORNII("SPMC_GVP_VECTORNII", CBaseParameter::RW, 0
 CIntParameter     SPMC_GVP_VECTOR__O("SPMC_GVP_VECTOR__O", CBaseParameter::RW, 0, 0, -2147483648,2147483647); // 03
 CIntParameter     SPMC_GVP_VECTORNRP("SPMC_GVP_VECTORNRP", CBaseParameter::RW, 0, 0, -2147483648,2147483647); // 04
 CIntParameter     SPMC_GVP_VECTORNXT("SPMC_GVP_VECTORNXT", CBaseParameter::RW, 0, 0, -2147483648,2147483647); // 05
+CIntParameter     SPMC_GVP_VECTORDCI("SPMC_GVP_VECTORDCI", CBaseParameter::RW, 0, 0, -2147483648,2147483647); // 05
 CDoubleParameter  SPMC_GVP_VECTOR_DX("SPMC_GVP_VECTOR_DX", CBaseParameter::RW, 0, 0, -(1<<30), 1<<30); // 06
 CDoubleParameter  SPMC_GVP_VECTOR_DY("SPMC_GVP_VECTOR_DY", CBaseParameter::RW, 0, 0, -(1<<30), 1<<30);
 CDoubleParameter  SPMC_GVP_VECTOR_DZ("SPMC_GVP_VECTOR_DZ", CBaseParameter::RW, 0, 0, -(1<<30), 1<<30);
@@ -1374,12 +1375,6 @@ void OnNewParams_RPSPMC(void){
                 rp_spmc_set_zservo_gxsm_speciality_setting (SPMC_Z_SERVO_MODE.Value(), SPMC_Z_SERVO_SETPOINT_CZ.Value(), SPMC_Z_SERVO_LEVEL.Value());
         }
         
-        if (SPMC_GVP_EXECUTE.IsNewValue()){
-            SPMC_GVP_EXECUTE.Update ();
-        }
-        SPMC_GVP_PAUSE.Update ();
-        SPMC_GVP_STOP.Update ();
-        SPMC_GVP_CONTROLLER.Update ();
 
         SPMC_ALPHA.Update ();
         SPMC_SLOPE_dZX.Update ();
@@ -1391,6 +1386,11 @@ void OnNewParams_RPSPMC(void){
         SPMC_SET_OFFSET_Y.Update ();
         SPMC_SET_OFFSET_Z.Update ();
 
+        SPMC_GVP_PROGRAM.Update ();
+        SPMC_GVP_EXECUTE.Update ();
+        SPMC_GVP_PAUSE.Update ();
+        SPMC_GVP_STOP.Update ();
+
         int dirty=0;
         if (SPMC_GVP_VECTOR_PC.IsNewValue ()){ SPMC_GVP_VECTOR_PC.Update (); ++dirty; }
         if (SPMC_GVP_VECTOR__N.IsNewValue ()){ SPMC_GVP_VECTOR__N.Update (); ++dirty; }
@@ -1398,11 +1398,11 @@ void OnNewParams_RPSPMC(void){
         if (SPMC_GVP_VECTOR__O.IsNewValue ()){ SPMC_GVP_VECTOR__O.Update (); ++dirty; }
         if (SPMC_GVP_VECTORNRP.IsNewValue ()){ SPMC_GVP_VECTORNRP.Update (); ++dirty; }
         if (SPMC_GVP_VECTORNXT.IsNewValue ()){ SPMC_GVP_VECTORNXT.Update (); ++dirty; }
+        if (SPMC_GVP_VECTORDCI.IsNewValue ()){ SPMC_GVP_VECTORDCI.Update (); ++dirty; }
         if (SPMC_GVP_VECTOR_DX.IsNewValue ()){ SPMC_GVP_VECTOR_DX.Update (); ++dirty; }
         if (SPMC_GVP_VECTOR_DY.IsNewValue ()){ SPMC_GVP_VECTOR_DY.Update (); ++dirty; }
         if (SPMC_GVP_VECTOR_DZ.IsNewValue ()){ SPMC_GVP_VECTOR_DZ.Update (); ++dirty; }
         if (SPMC_GVP_VECTOR_DU.IsNewValue ()){ SPMC_GVP_VECTOR_DU.Update (); ++dirty; }
-        if (SPMC_GVP_VECTOR010.IsNewValue ()){ SPMC_GVP_VECTOR010.Update (); ++dirty; }
         if (SPMC_GVP_VECTOR011.IsNewValue ()){ SPMC_GVP_VECTOR011.Update (); ++dirty; }
         if (SPMC_GVP_VECTOR012.IsNewValue ()){ SPMC_GVP_VECTOR012.Update (); ++dirty; }
         if (SPMC_GVP_VECTOR013.IsNewValue ()){ SPMC_GVP_VECTOR013.Update (); ++dirty; }
@@ -1416,17 +1416,21 @@ void OnNewParams_RPSPMC(void){
                                         SPMC_GVP_VECTOR__O.Value (),
                                         SPMC_GVP_VECTORNRP.Value (),
                                         SPMC_GVP_VECTORNXT.Value (),
+                                        SPMC_GVP_VECTORDCI.Value (),
                                         SPMC_GVP_VECTOR_DX.Value (),
                                         SPMC_GVP_VECTOR_DY.Value (),
                                         SPMC_GVP_VECTOR_DZ.Value (),
                                         SPMC_GVP_VECTOR_DU.Value ()
                                         );
                      
-        if ( SPMC_GVP_CONTROLLER.IsNewValue ()){
-                SPMC_GVP_CONTROLLER.Update ();
-                int control = (int)round(SPMC_GVP_CONTROLLER.Value ());
-                fprintf(stderr, "GVP Control: %d\n", control);
-                rp_spmc_gvp_config (control & 0x01, control & 0x02); // reset, program
+        if ( SPMC_GVP_PROGRAM.IsNewValue (), SPMC_GVP_EXECUTE.IsNewValue () || SPMC_GVP_STOP.IsNewValue () || SPMC_GVP_PAUSE.IsNewValue ()){
+                int reset = SPMC_GVP_STOP.Value ();
+                int prog = SPMC_GVP_PROGRAM.Value ();
+                int pause= SPMC_GVP_PAUSE.Value ();
+                int exec = SPMC_GVP_EXECUTE.Value ();
+
+                fprintf(stderr, "GVP Control: exec: %d, reset: %d, prog: %d, pause: %d, stop: % ==> @reset=%d\n", exec, reset, prog, pause, reset ? 1 : exec ? 0 : 1);
+                rp_spmc_gvp_config (reset ? true : exec ? false : true, prog? true:false, pause?true:false); // reset, program
         }
 
 }

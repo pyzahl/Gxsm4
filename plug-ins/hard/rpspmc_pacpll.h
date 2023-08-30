@@ -878,11 +878,10 @@ private:
 public:
         
         //SPM_emulator *spm_emu; // DSP emulator for dummy data generation and minimal SPM behavior
-        double get_GVP_frq_ref () { return 2500000.0; };
-
-        void GVP_execute_vector_program() {}; // non blocking
-        void GVP_vp_init () {};
-        void GVP_start_data_read() {}; // non blocking
+        double get_GVP_frq_ref ();
+        void GVP_execute_vector_program(); // non blocking
+        void GVP_vp_init ();
+        void GVP_start_data_read(); // non blocking
 
         PROBE_HEADER_POSITIONVECTOR GVP_vp_header_current;
 
@@ -898,6 +897,9 @@ public:
 
         void RPSPMC_set_bias (double bias) {};
         void RPSPMC_set_current_sp (double sp) {};
+
+        gint RPSPMC_GVP_decii;
+
         gint RPSPMC_data_y_count;
         gint RPSPMC_data_z_value;
         gint RPSPMC_data_y_index;

@@ -25,8 +25,9 @@ module gvp #(
     parameter NUM_VECTORS    = 8
 )
 (
-    input clk,    // clocking up to aclk
-    input reset,  // put into reset mode (hold)
+    input a_clk,    // clocking up to aclk
+    input reset,  // put into reset mode (set program and hold)
+    input pause,  // put/release into/from pause mode -- always completes the "ii" nop cycles!
     input setvec, // program vector data using vp_set data
     input [512-1:0] vp_set, // [VAdr], [N, NII, Options, Nrep, Next, dx, dy, dz, du] ** full vector data set block **
     output [32-1:0] x, // vector components
@@ -40,6 +41,9 @@ module gvp #(
     );
     
     //localparam integer NUM_VECTORS = 1 << NUM_VECTORS_N2;
+    reg [32-1:0] decimation=0;
+    reg [32-1:0] rdecii=0;
+    reg clk=0;
     
     // program controls
     reg [32-1:0] i=0;
@@ -54,6 +58,7 @@ module gvp #(
     reg [32-1:0]  vec_iin[NUM_VECTORS-1:0];
     reg [32-1:0]  vec_options[NUM_VECTORS-1:0];
     reg [32-1:0]  vec_nrep[NUM_VECTORS-1:0];
+    reg [32-1:0]  vec_deci[NUM_VECTORS-1:0];
     reg signed [8-1:0]   vec_next[NUM_VECTORS-1:0];
 
     reg signed [32-1:0]  vec_dx[NUM_VECTORS-1:0];
@@ -91,6 +96,18 @@ module gvp #(
     end
 */
 
+    always @ (posedge a_clk) // 120MHz
+    begin
+        if (rdecii == 0)
+        begin
+            rdecii <= decimation;
+            clk <= !clk;
+        end else begin
+            rdecii <= rdecii-1;
+        end
+    end
+
+
     // runs GVP code if out of reset mode until finished!
     always @(posedge clk) // run on decimated clk as required
     begin
@@ -102,6 +119,8 @@ module gvp #(
             
             vec_nrep[vp_set [NUM_VECTORS_N2:0]]    <= vp_set [5*32-1:4*32];
             vec_i[vp_set [NUM_VECTORS_N2:0]]       <= vp_set [5*32-1:4*32];
+
+            vec_deci[vp_set [NUM_VECTORS_N2:0]]    <= vp_set [16*32-1:15*32]; // all over process decimation adjust
             
             vec_next[vp_set [NUM_VECTORS_N2:0]]    <= vp_set [6*32-1:5*32];
             vec_dx[vp_set [NUM_VECTORS_N2:0]]      <= vp_set [7*32-1:6*32];
@@ -127,8 +146,10 @@ module gvp #(
                     load_next_vector <= 0;
                     i   <= vec_n[pvc];
                     ii  <= vec_iin[pvc];
+                    decimation <= vec_deci[pvc];
                     if (vec_n[pvc] == 0) // n == 0: END OF VECTOR PROGRAM REACHED
                     begin
+                        decimation <= 1; // reset to fast 
                         finished <= 1;
                     end
                 end
@@ -145,7 +166,8 @@ module gvp #(
                         store <= 0;
                         ii <= ii-1;
                     end
-                    else         
+                    else
+                    if (!pause)        
                     begin // arrived at data point
                         store <= 1; // store data sources (push trigger)
                         if (i) // advance to next point...
