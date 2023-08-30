@@ -516,10 +516,10 @@ void rp_spmc_set_bias (double bias){
 
         fprintf(stderr, "Set AD5971 AXIS3 (Bias) to %g V\n", bias);
         fprintf(stderr, "MON-XYZU: %8g  %8g  %8g  %8g V\n",
-                SPMC_AD5791_REFV*(double)read_gpio_reg_int32 (7,0) / Q31,
-                SPMC_AD5791_REFV*(double)read_gpio_reg_int32 (7,1) / Q31,
                 SPMC_AD5791_REFV*(double)read_gpio_reg_int32 (8,0) / Q31,
-                SPMC_AD5791_REFV*(double)read_gpio_reg_int32 (8,1) / Q31
+                SPMC_AD5791_REFV*(double)read_gpio_reg_int32 (8,1) / Q31,
+                SPMC_AD5791_REFV*(double)read_gpio_reg_int32 (9,0) / Q31,
+                SPMC_AD5791_REFV*(double)read_gpio_reg_int32 (9,1) / Q31
                 );
 
         

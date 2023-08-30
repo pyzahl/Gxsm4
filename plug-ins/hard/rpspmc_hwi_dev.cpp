@@ -460,13 +460,18 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
         for (; point_index < number_points; point_index){
                 // template code --------
                 //**** ix = GVP_vp_exec_callback (); // run one VP step... this generates the next data set, read to transfer from GVP_vp_data_set[]
-                // g_message ("VP: %d %d", ix, point_index);
+                // TO BE IMPLEMENTED
+                if (point_index == (number_points-1)) ix = 0; else ix = 1; // DUMMY
+                
+                g_message ("VP: %d %d", ix, point_index);
                 // ----------------------
                 
                 // expand data from stream
                 for (int element=0; element < number_channels; ++element){
                         int channel = ch_lut[element];
                         //**** dataexpanded[channel] = GVP_vp_data_set[element];
+                        // TO BE IMPLEMENTED
+                        dataexpanded[channel] = (double)point_index;
                 }
 
 		// add vector and data to expanded data array representation
@@ -919,9 +924,69 @@ void rpspmc_hwi_dev::GVP_execute_vector_program(){
 }
 
 void rpspmc_hwi_dev::GVP_vp_init (){
-        // rpspmc_pacpll->write_parameter ("SPMC_GVP_EXECUTE", 1);
-        // rpspmc_pacpll->write_parameter ("SPMC_GVP_STOP", 0);
-        // rpspmc_pacpll->write_parameter ("SPMC_GVP_PAUSE", 0);
+        GVP_vp_header_current.n    = 0;
+        GVP_vp_header_current.srcs = 0;
+        GVP_vp_header_current.time = 0;
+        GVP_vp_header_current.move_xyz[i_X] = 0;
+        GVP_vp_header_current.move_xyz[i_Y] = 0;
+        GVP_vp_header_current.move_xyz[i_Z] = 0;
+        GVP_vp_header_current.scan_xyz[i_X] = 0;
+        GVP_vp_header_current.scan_xyz[i_Y] = 0;
+        GVP_vp_header_current.scan_xyz[i_Z] = 0;
+        GVP_vp_header_current.bias    = 0;
+        GVP_vp_header_current.section = 0;
+
+        for (int i=0; i<16; ++i) GVP_vp_data_set[i] = 0;
+        GVP_vp_header_current.section = -1;
+
+        RPSPMC_GVP_section_count = 0;
+        RPSPMC_GVP_n = 0;
+        GVP_vp_header_current.section = -1; // still invalid
+        //vp_num_data_sets = 0;
+        //section_count=ix=iix=lix = 0;
+        //vp_time = 0;
+        //vp_index_all = 0;
+        //vp_clock_start = clock();
+     	//vp_next_section ();    // setup vector program start
+	GVP_fetch_header_and_positionvector ();
+        // fire up thread!
+        
+        GVP_vp_header_current.srcs = 1; // should be valid now!
+
+}
+
+
+void rpspmc_hwi_dev::GVP_fetch_header_and_positionvector (){ // size: 14
+	// Section header: [SRCS, N, TIME]_32 :: 6
+	//if (!vector) return;
+
+        /*
+        GVP_vp_header_current.n    = vector->n;
+        GVP_vp_header_current.srcs = vector->srcs;
+        GVP_vp_header_current.time = vp_time;
+        GVP_vp_header_current.move_xyz[i_X] = move_xyz_vec[i_X];
+        GVP_vp_header_current.move_xyz[i_Y] = move_xyz_vec[i_Y];
+        GVP_vp_header_current.move_xyz[i_Z] = move_xyz_vec[i_Z];
+        GVP_vp_header_current.scan_xyz[i_X] = scan_xyz_vec[i_X];
+        GVP_vp_header_current.scan_xyz[i_Y] = scan_xyz_vec[i_Y];
+        GVP_vp_header_current.scan_xyz[i_Z] = scan_xyz_vec[i_Z];
+        GVP_vp_header_current.bias    = sample_bias;
+        GVP_vp_header_current.section = section_count;
+        */
+        GVP_vp_header_current.section = ++RPSPMC_GVP_section_count;
+
+        //g_print ("EMU** HPV [%4d Srcs%08x t=%08d s XYZ %g %g %g in V Bias %g V Sec %d]\n", vector->n, vector->srcs, vp_time,
+        //         DAC2Volt (scan_xyz_vec[i_X]), DAC2Volt (scan_xyz_vec[i_Y]), DAC2Volt (scan_xyz_vec[i_Z]),
+        //         DAC2Volt (vp_bias), section_count);
+}
+
+void rpspmc_hwi_dev::GVP_fetch_data_srcs (){
+        //double GVP_vp_data_set[16]; // 16 channels max to data stream
+}
+
+void rpspmc_hwi_dev::GVP_abort_vector_program (){
+        rpspmc_pacpll->write_parameter ("SPMC_GVP_EXECUTE", 0);
+        rpspmc_pacpll->write_parameter ("SPMC_GVP_STOP", 1);
 }
 
 void rpspmc_hwi_dev::rpspmc_hwi_dev::GVP_start_data_read(){

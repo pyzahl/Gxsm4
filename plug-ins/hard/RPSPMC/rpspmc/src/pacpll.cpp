@@ -101,8 +101,6 @@
 #define PACPLL_CFG_TRANSPORT_TAU_AMPL    (PACPLL_CFG1_OFFSET + 3)
 #endif
 
-
-
 pthread_attr_t gpio_reading_attr;
 pthread_mutex_t gpio_reading_mutexsum;
 int gpio_reading_control = -1;
@@ -634,7 +632,6 @@ void *thread_gpio_reading_FIR(void *arg) {
         for(j=0; gpio_reading_control; ){
 
                 pthread_mutex_lock (&gpio_reading_mutexsum);
-
 
                 x = read_gpio_reg_int32 (1,0); // GPIO X1 : LMS A (cfg + 0x1000)
                 gpio_reading_FIRV_vector[GPIO_READING_LMS_A] -= (double)gpio_reading_FIRV_buffer[GPIO_READING_LMS_A][j];

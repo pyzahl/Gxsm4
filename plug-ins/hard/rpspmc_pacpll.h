@@ -882,8 +882,9 @@ public:
         void GVP_execute_vector_program(); // non blocking
         void GVP_vp_init ();
         void GVP_start_data_read(); // non blocking
-
+        
         PROBE_HEADER_POSITIONVECTOR GVP_vp_header_current;
+        double GVP_vp_data_set[16]; // 16 channels max to data stream
 
 	int GVP_read_program_vector(int i, PROBE_VECTOR_GENERIC *v){
 		if (i >= MAX_PROGRAM_VECTORS || i < 0)
@@ -893,13 +894,19 @@ public:
 		return -1;
 	};
 	int GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v);
-	GVP_abort_vector_program () {};
+	void GVP_abort_vector_program ();
+
+        void GVP_fetch_header_and_positionvector ();
+        void GVP_fetch_data_srcs ();
 
         void RPSPMC_set_bias (double bias) {};
         void RPSPMC_set_current_sp (double sp) {};
 
         gint RPSPMC_GVP_decii;
-
+        gint RPSPMC_GVP_section_count;
+        gint RPSPMC_GVP_n;
+        
+        gint RPSPMC_GVP_secn;
         gint RPSPMC_data_y_count;
         gint RPSPMC_data_z_value;
         gint RPSPMC_data_y_index;

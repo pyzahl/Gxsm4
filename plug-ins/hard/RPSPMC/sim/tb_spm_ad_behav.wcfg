@@ -11,15 +11,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="19,855.708 ns"></ZoomStartTime>
-      <ZoomEndTime time="20,028.859 ns"></ZoomEndTime>
-      <Cursor1Time time="20,000.000 ns"></Cursor1Time>
+      <ZoomStartTime time="0.000 ns"></ZoomStartTime>
+      <ZoomEndTime time="17,345.001 ns"></ZoomEndTime>
+      <Cursor1Time time="89.253 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
-      <NameColumnWidth column_width="301"></NameColumnWidth>
+      <NameColumnWidth column_width="295"></NameColumnWidth>
       <ValueColumnWidth column_width="91"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="53" />
+   <WVObjectSize size="43" />
    <wvobject type="logic" fp_name="/tb_spm_ad/tb_ACLK">
       <obj_property name="ElementShortName">tb_ACLK</obj_property>
       <obj_property name="ObjectShortName">tb_ACLK</obj_property>
@@ -136,7 +136,6 @@
    <wvobject type="array" fp_name="/tb_spm_ad/axis_AD5791_1/reg_dac_data">
       <obj_property name="ElementShortName">reg_dac_data[3:0][23:0]</obj_property>
       <obj_property name="ObjectShortName">reg_dac_data[3:0][23:0]</obj_property>
-      <obj_property name="isExpanded"></obj_property>
       <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/tb_spm_ad/axis_AD5791_1/reg_dac_data_buf">
@@ -246,45 +245,5 @@
    <wvobject type="array" fp_name="/tb_spm_ad/gvp_1/u">
       <obj_property name="ElementShortName">u[31:0]</obj_property>
       <obj_property name="ObjectShortName">u[31:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/tb_spm_ad/axis_spm_control_1/M_AXIS3_tdata">
-      <obj_property name="ElementShortName">M_AXIS3_tdata[31:0]</obj_property>
-      <obj_property name="ObjectShortName">M_AXIS3_tdata[31:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/tb_spm_ad/axis_spm_control_1/M_AXIS4_tdata">
-      <obj_property name="ElementShortName">M_AXIS4_tdata[31:0]</obj_property>
-      <obj_property name="ObjectShortName">M_AXIS4_tdata[31:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/tb_spm_ad/axis_spm_control_1/rz">
-      <obj_property name="ElementShortName">rz[31:0]</obj_property>
-      <obj_property name="ObjectShortName">rz[31:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/tb_spm_ad/axis_spm_control_1/z_sum">
-      <obj_property name="ElementShortName">z_sum[35:0]</obj_property>
-      <obj_property name="ObjectShortName">z_sum[35:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/tb_spm_ad/axis_spm_control_1/z_servo">
-      <obj_property name="ElementShortName">z_servo[31:0]</obj_property>
-      <obj_property name="ObjectShortName">z_servo[31:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/tb_spm_ad/axis_spm_control_1/z_slope">
-      <obj_property name="ElementShortName">z_slope[31:0]</obj_property>
-      <obj_property name="ObjectShortName">z_slope[31:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/tb_spm_ad/axis_spm_control_1/z_gvp">
-      <obj_property name="ElementShortName">z_gvp[31:0]</obj_property>
-      <obj_property name="ObjectShortName">z_gvp[31:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/tb_spm_ad/axis_spm_control_1/z_offset">
-      <obj_property name="ElementShortName">z_offset[31:0]</obj_property>
-      <obj_property name="ObjectShortName">z_offset[31:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/tb_spm_ad/axis_spm_control_1/M_AXIS_ZMON_tdata">
-      <obj_property name="ElementShortName">M_AXIS_ZMON_tdata[31:0]</obj_property>
-      <obj_property name="ObjectShortName">M_AXIS_ZMON_tdata[31:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/tb_spm_ad/axis_spm_control_1/S_AXIS_Z_tdata">
-      <obj_property name="ElementShortName">S_AXIS_Z_tdata[31:0]</obj_property>
-      <obj_property name="ObjectShortName">S_AXIS_Z_tdata[31:0]</obj_property>
    </wvobject>
 </wave_config>

@@ -122,7 +122,6 @@ extern "C" {
   void rp_PAC_set_dfreq_controller (double setpoint, double cp, double ci, double upper, double lower);
   void *thread_gpio_reading_FIR(void *arg) ;
   void rp_PAC_get_single_reading_FIR (double reading_vector[READING_MAX_VALUES]);
-  void rp_PAC_get_single_reading (double reading_vector[READING_MAX_VALUES]);
 
   void *thread_gpio_reading_FIR(void *arg);
 
