@@ -106,7 +106,13 @@ pthread_mutex_t gpio_reading_mutexsum;
 int gpio_reading_control = -1;
 
 double gpio_reading_FIRV_vector[MAX_FIR_VALUES];
+double gpio_reading_FIRV_vector_CH3_mapping = 0.0;
+double gpio_reading_FIRV_vector_CH4_mapping = 0.0;
+double gpio_reading_FIRV_vector_CH5_mapping = 0.0;
 int gpio_reading_FIRV_buffer[MAX_FIR_VALUES][GPIO_FIR_LEN];
+int gpio_reading_FIRV_buffer_CH3_mapping[GPIO_FIR_LEN];
+int gpio_reading_FIRV_buffer_CH4_mapping[GPIO_FIR_LEN];
+int gpio_reading_FIRV_buffer_CH5_mapping[GPIO_FIR_LEN];
 unsigned long gpio_reading_FIRV_buffer_DDS[2][GPIO_FIR_LEN];
 
 static pthread_t gpio_reading_thread;
@@ -135,6 +141,11 @@ extern CIntParameter SHR_DEC_DATA;
 extern CIntParameter TRANSPORT_DECIMATION;
 extern CDoubleParameter AUX_SCALE;
 extern CDoubleParameter FREQUENCY_CENTER;
+
+extern CIntParameter TRANSPORT_CH3;
+extern CIntParameter TRANSPORT_CH4;
+extern CIntParameter TRANSPORT_CH5;
+
 
 // Q44: 32766.0000 Hz -> phase_inc=4611404543  0000000112dc72ff
 double dds_phaseinc (double freq){
@@ -620,6 +631,7 @@ void rp_PAC_set_dfreq_controller (double setpoint, double cp, double ci, double 
 void *thread_gpio_reading_FIR(void *arg) {
         unsigned long x8,x9;
         int i,j,x,y;
+	int ch;
         for (j=0; j<GPIO_FIR_LEN; j++){
                 gpio_reading_FIRV_buffer[GPIO_READING_DDS_X8][j] = 0;
                 gpio_reading_FIRV_buffer[GPIO_READING_DDS_X9][j] = 0;
@@ -629,6 +641,10 @@ void *thread_gpio_reading_FIR(void *arg) {
                 for (j=0; j<GPIO_FIR_LEN; j++)
                         gpio_reading_FIRV_buffer[i][j] = 0;
         }
+	gpio_reading_FIRV_vector_CH3_mapping = gpio_reading_FIRV_vector_CH4_mapping = gpio_reading_FIRV_vector_CH5_mapping = 0.0; 
+	for (j=0; j<GPIO_FIR_LEN; j++)
+	  gpio_reading_FIRV_buffer_CH3_mapping[j] = gpio_reading_FIRV_buffer_CH4_mapping[j] = gpio_reading_FIRV_buffer_CH5_mapping[j] = 0.0;
+
         for(j=0; gpio_reading_control; ){
 
                 pthread_mutex_lock (&gpio_reading_mutexsum);
@@ -682,6 +698,27 @@ void *thread_gpio_reading_FIR(void *arg) {
                 gpio_reading_FIRV_vector[GPIO_READING_CONTROL_DFREQ] += (double)x;
                 gpio_reading_FIRV_buffer[GPIO_READING_CONTROL_DFREQ][j] = x;
 
+
+                ch = TRANSPORT_CH3.Value ();
+                x = read_gpio_reg_int32 ((ch>>1)+1,ch&1); // GPIO (0,0) = (x1, x2), (0,1), (1,0), (1,1), ... (9,0), (9,1) = (x19,x20)
+                gpio_reading_FIRV_vector_CH3_mapping -= (double)gpio_reading_FIRV_buffer_CH3_mapping[j];
+                gpio_reading_FIRV_vector_CH3_mapping += (double)x;
+                gpio_reading_FIRV_buffer_CH3_mapping[j] = x;
+
+		ch = TRANSPORT_CH4.Value ();
+                x = read_gpio_reg_int32 ((ch>>1)+1,ch&1); // GPIO (0,0) = (x1, x2), (0,1), (1,0), (1,1), ... (9,0), (9,1) = (x19,x20)
+                gpio_reading_FIRV_vector_CH4_mapping -= (double)gpio_reading_FIRV_buffer_CH4_mapping[j];
+                gpio_reading_FIRV_vector_CH4_mapping += (double)x;
+                gpio_reading_FIRV_buffer_CH4_mapping[j] = x;
+
+		ch = TRANSPORT_CH5.Value ();
+                x = read_gpio_reg_int32 ((ch>>1)+1,ch&1); // GPIO (0,0) = (x1, x2), (0,1), (1,0), (1,1), ... (9,0), (9,1) = (x19,x20)
+                gpio_reading_FIRV_vector_CH5_mapping -= (double)gpio_reading_FIRV_buffer_CH5_mapping[j];
+                gpio_reading_FIRV_vector_CH5_mapping += (double)x;
+                gpio_reading_FIRV_buffer_CH5_mapping[j] = x;
+
+
+		
                 pthread_mutex_unlock (&gpio_reading_mutexsum);
 
                 ++j;

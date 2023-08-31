@@ -2235,9 +2235,9 @@ void RPSPMC_Control::ZServoParamChanged(Param_Control* pcs, gpointer dspc){
                 // (((RPSPMC_Control*)dspc)->mix_gain[ch]) // N/A
                 rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_SETPOINT", ((RPSPMC_Control*)dspc)->mix_set_point[0]);
                 rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_MODE", ((RPSPMC_Control*)dspc)->mix_transform_mode[0]);
-                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_CP",   ((RPSPMC_Control*)dspc)->mix_level[0]);
+                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_LEVEL",   ((RPSPMC_Control*)dspc)->mix_level[0]);
                 rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_CP",   ((RPSPMC_Control*)dspc)->z_servo[SERVO_CP]);
-                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_CP",   ((RPSPMC_Control*)dspc)->z_servo[SERVO_CI]);
+                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_CI",   ((RPSPMC_Control*)dspc)->z_servo[SERVO_CI]);
                 rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_UPPER",  5.0);
                 rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_LOWER", -5.0);
         }
@@ -2792,7 +2792,6 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
         parameters.pacatau = 30.0; // us
         parameters.frequency_manual = 32768.0; // Hz
         parameters.frequency_center = 32768.0; // Hz
-        parameters.aux_scale = 0.011642; // 20Hz / V equivalent 
         parameters.volume_manual = 300.0; // mV
         parameters.qc_gain=0.0; // gain +/-1.0
         parameters.qc_phase=0.0; // deg
@@ -2821,11 +2820,9 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
         bp->set_default_ec_change_notice_fkt (RPspmc_pacpll::pac_frequency_parameter_changed, this);
   	bp->grid_add_ec ("Frequency", Hz, &parameters.frequency_manual, 0.0, 20e6, ".3lf", 0.1, 10., "FREQUENCY-MANUAL");
         bp->new_line ();
-        bp->set_no_spin (true);
         bp->set_input_width_chars (8);
-        bp->set_input_nx (1);
-  	bp->grid_add_ec ("Center,Scale", Hz, &parameters.frequency_center, 0.0, 20e6, ".3lf", 0.1, 10., "FREQUENCY-CENTER");
-  	bp->grid_add_ec (NULL, Unity, &parameters.aux_scale, -1e6, 1e6, ".6lf", 0.1, 10., "AUX-SCALE");
+        bp->set_input_nx (2);
+  	bp->grid_add_ec ("Center", Hz, &parameters.frequency_center, 0.0, 20e6, ".3lf", 0.1, 10., "FREQUENCY-CENTER");
         bp->new_line ();
         bp->set_no_spin (false);
         bp->set_input_nx (2);
@@ -3300,24 +3297,51 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
         update_tr_widget = wid;
 	gtk_combo_box_set_active (GTK_COMBO_BOX (wid), transport+1); // normal operation for PLL, transfer: Phase, Freq,[Am,Ex] (analog: Freq, McBSP: 4ch transfer Ph, Frq, Am, Ex)
 
+// *** PAC_PLL::GPIO MONITORS ***                                                                    readings are via void *thread_gpio_reading_FIR(g), read_gpio_reg_int32 (n,m)
+// *** DBG ***                                                                                                //        gpio_reading_FIRV_vector[GPIO_READING_LMS_A]        (1,0); // GPIO X1 : LMS A
+// *** DBG ***                                                                                                //        gpio_reading_FIRV_vector[GPIO_READING_LMS_A]        (1,1); // GPIO X2 : LMS B
+// *** DBG ***                                                                                                //        -----------------------                             (2,0); // GPIO X3 : DBG M
+//oubleParameter VOLUME_MONITOR("VOLUME_MONITOR", CBaseParameter::RW, 0, 0, -1000.0, 1000.0);                 // mV  ** gpio_reading_FIRV_vector[GPIO_READING_AMPL]         (2,1); // GPIO X4 : CORDIC SQRT (AM2=A^2+B^2)
+// via  DC_OFFSET rp_PAC_auto_dc_offset_correct ()                                                                                                                          (3,0); // GPIO X5 : DC_OFFSET (M-DC)
+// *** DBG ***                                                                                                //        -----------------------                             (3,1); // GPIO X6 : --- SPMC STATUS [FB, GVP, AD5791, --]
+//oubleParameter EXEC_MONITOR("EXEC_MONITOR", CBaseParameter::RW, 0, 0, -1000.0, 1000.0);                     //  mV ** gpio_reading_FIRV_vector[GPIO_READING_EXEC]         (4,0); // GPIO X7 : Exec Ampl Control Signal (signed)
+//oubleParameter DDS_FREQ_MONITOR("DDS_FREQ_MONITOR", CBaseParameter::RW, 0, 0, 0.0, 25e6);                   //  Hz ** gpio_reading_FIRV_vector[GPIO_READING_DDS_FREQ]     (4,1); // GPIO X8 : DDS Phase Inc (Freq.) upper 32 bits of 44 (unsigned)
+//                                                                                                              //                                                            (5,0); // GPIO X9 : DDS Phase Inc (Freq.) lower 32 bits of 44 (unsigned)
+//oubleParameter PHASE_MONITOR("PHASE_MONITOR", CBaseParameter::RW, 0, 0, -180.0, 180.0);                     // deg ** gpio_reading_FIRV_vector[GPIO_READING_PHASE]        (5,1); // GPIO X10: CORDIC ATAN(X/Y)
+//oubleParameter DFREQ_MONITOR("DFREQ_MONITOR", CBaseParameter::RW, 0, 0, -1000.0, 1000.0);                   // Hz  ** gpio_reading_FIRV_vector[GPIO_READING_DDS_FREQ]     (6,0); // GPIO X11: dFreq
+// *** DBG ***                                                                                                //        -----------------------                             (6,1); // GPIO X12: ---
+//oubleParameter CONTROL_DFREQ_MONITOR("CONTROL_DFREQ_MONITOR", CBaseParameter::RW, 0, 0, -10000.0, 10000.0); // mV  **  gpio_re..._FIRV_vector[GPIO_READING_CONTROL_DFREQ] (7,0); // GPIO X13: control dFreq value
+// *** DBG ***                                                                                                //        -----------------------                             (7,1); // GPIO X14: --- SIGNAL PASS [IN2] (Current, FB SRC)
+// *** DBG ***                                                                                                //        -----------------------                             (8,0); // GPIO X15: --- UMON
+// *** DBG ***                                                                                                //        -----------------------                             (8,1); // GPIO X16: --- XMON
+// *** DBG ***                                                                                                //        -----------------------                             (9,0); // GPIO X17: --- YMON
+// *** DBG ***                                                                                                //        -----------------------                             (9,1); // GPIO X18: --- ZMON
+// *** DBG ***                                                                                                //        -----------------------                            (10,0); // GPIO X19: ---
+// *** DBG ***                                                                                                //        -----------------------                            (10,1); // GPIO X20: ---
         
         // GPIO monitor selections -- full set, experimental
 	const gchar *monitor_modes_gpio[] = {
                 "OFF: no plot",
-                "LMS Amplitude(A,B)",
-                "LMS Phase(A,B)",
-                "LMS A (Real)",
-                "LMS B (Imag)",
-                "SQRT Ampl Monitor",
-                "ATAN Phase Monitor",
-                "X5",
-                "X6",
-                "Exec Amplitude",
-                "DDS Freq Monitor",
-                "X3 M (LMS Input)",
-                "X5 M1(LMS Input-DC)",
-                "X11 BRAM WPOS",
-                "X12 BRAM DEC",
+                "X1 LMS A",
+                "X2 LMS B",
+                "X3 DBG M",
+                "X4 SQRT AM2",
+                "X5 DC OFFSET",
+                "X6 SPMC STATUS FB,GVP, AD",
+                "X7 EXEC AM",
+                "X8 DDS PH INC upper",
+                "X9 DDS PH INC lower",
+                "X10 ATAN(X/Y)",
+                "X11 dFreq",
+                "X12 DBG --",
+                "X13 Ctrl dFreq",
+                "X14 Signal Pass IN2",
+                "X15 UMON",
+                "X16 XMON",
+                "X17 YMON",
+                "X18 ZMON",
+                "X19 ===",
+                "X20 ===",
                 NULL };
 
         // CH3 from GPIO MONITOR</p>
@@ -3684,7 +3708,6 @@ void RPspmc_pacpll::pac_frequency_parameter_changed (Param_Control* pcs, gpointe
         RPspmc_pacpll *self = (RPspmc_pacpll *)user_data;
         self->write_parameter ("FREQUENCY_MANUAL", self->parameters.frequency_manual, "%.4f"); //, TRUE);
         self->write_parameter ("FREQUENCY_CENTER", self->parameters.frequency_center, "%.4f"); //, TRUE);
-        self->write_parameter ("AUX_SCALE", self->parameters.aux_scale);
 }
 
 void RPspmc_pacpll::pac_volume_parameter_changed (Param_Control* pcs, gpointer user_data){

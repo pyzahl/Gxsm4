@@ -72,7 +72,6 @@ JSON_parameter PACPLL_JSON_parameters[] = {
 
         { "FREQUENCY_MANUAL", &pacpll_parameters.frequency_manual, false }, // manual/tune frequency
         { "FREQUENCY_CENTER", &pacpll_parameters.frequency_center, false }, // center frequency -- used as offset for AUX
-        { "AUX_SCALE", &pacpll_parameters.aux_scale, false },
         { "VOLUME_MANUAL", &pacpll_parameters.volume_manual, false },
         { "OPERATION", &pacpll_parameters.operation, false },
         { "PACVERBOSE", &pacpll_parameters.pacverbose, false },

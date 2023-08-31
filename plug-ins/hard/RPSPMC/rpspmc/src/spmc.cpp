@@ -515,12 +515,14 @@ void rp_spmc_set_bias (double bias){
         ad5791_set_dac_value (3, (int)round(Q24*bias/SPMC_AD5791_REFV));
 
         fprintf(stderr, "Set AD5971 AXIS3 (Bias) to %g V\n", bias);
-        fprintf(stderr, "MON-XYZU: %8g  %8g  %8g  %8g V\n",
+        fprintf(stderr, "MON-UXYZ: %8g  %8g  %8g  %8g V  STATUS: %08X  PASS: %8g V\n",
                 SPMC_AD5791_REFV*(double)read_gpio_reg_int32 (8,0) / Q31,
                 SPMC_AD5791_REFV*(double)read_gpio_reg_int32 (8,1) / Q31,
                 SPMC_AD5791_REFV*(double)read_gpio_reg_int32 (9,0) / Q31,
-                SPMC_AD5791_REFV*(double)read_gpio_reg_int32 (9,1) / Q31
-                );
+                SPMC_AD5791_REFV*(double)read_gpio_reg_int32 (9,1) / Q31,
+                read_gpio_reg_int32 (3,1),
+                1.0*(double)read_gpio_reg_int32 (7,1) / Q15
+                );            // (3,1) X6 STATUS, (7,1) X14 SIGNAL PASS
 
         
 }
@@ -639,20 +641,20 @@ void rp_spmc_set_offsets (double x0, double y0, double z0){
  */
 
 double rp_spmc_read_Bias_Monitor(){
-        return SPMC_AD5791_REFV*(double)read_gpio_reg_int32 (7,0) / Q31;
-}
-double rp_spmc_read_X_Monitor(){
-        return SPMC_AD5791_REFV*(double)read_gpio_reg_int32 (7,1) / Q31;
-}
-double rp_spmc_read_Y_Monitor(){
         return SPMC_AD5791_REFV*(double)read_gpio_reg_int32 (8,0) / Q31;
 }
-double rp_spmc_read_Z_Monitor(){
+double rp_spmc_read_X_Monitor(){
         return SPMC_AD5791_REFV*(double)read_gpio_reg_int32 (8,1) / Q31;
+}
+double rp_spmc_read_Y_Monitor(){
+        return SPMC_AD5791_REFV*(double)read_gpio_reg_int32 (9,0) / Q31;
+}
+double rp_spmc_read_Z_Monitor(){
+        return SPMC_AD5791_REFV*(double)read_gpio_reg_int32 (9,1) / Q31;
 }
 
 double rp_spmc_read_Signal_Monitor(){
-        return 0.0; //SPMC_AD5791_REFV*(double)read_gpio_reg_int32 (8,1) / Q31;
+        return 0.0; //SPMC_AD5791_REFV*(double)read_gpio_reg_int32 (7,1) / Q31;
 }
 
 void rp_spmc_update_readings (){

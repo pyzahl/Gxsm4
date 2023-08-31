@@ -70,7 +70,6 @@ struct PACPLL_parameters {
         double pacatau;
         double frequency_manual; // manual f reset
         double frequency_center; // manual f reference
-        double aux_scale;
         double volume_manual;
         double operation;
         double pacverbose;

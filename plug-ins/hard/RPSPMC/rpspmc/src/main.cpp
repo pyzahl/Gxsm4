@@ -25,6 +25,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
  */
 
+// VIVADO 2023.1.1 NEEDS TCL HACK:>> set_param placedata.goqFix yes
+
 #include <limits.h>
 #include <math.h>
 #include <stdio.h>
@@ -73,9 +75,8 @@
 #define FPGA_BRAM_BASE    0x40000000 // 2M (0x4000_0000 ... 0x401F_FFFF)
 #define FPGA_BRAM_PAGES   2048       // 2M
 
-#define FPGA_CFG_REG      0x42000000 // 8k (0x4200_0000 ... _1FFFF)
-#define FPGA_CFG_REG2     0x42010000 // 8k (0x4200_0000 ... _1FFFF)
-#define FPGA_CFG_PAGES    2          // 2 pages assigned, 8k
+#define FPGA_CFG_REG      0x42000000 // 4k (0x4200_0000 ... _0FFF)
+#define FPGA_CFG_PAGES    1          // 1 pages assigned, 4k
 
 #define FPGA_GPIO_BASE    0x42002000 // 10 pages @4k each (=0x1000) 0x4200_2000 .. 0x4200_BFFF
 #define FPGA_GPIO_PAGES   10         // 10 pages @4k each for each GPIO block containg 2x32bit channels @read address +0 and +8 (0x4200_2000-_2FFF, _3000-_3FFF, .. _B000-_BFFF)
@@ -152,9 +153,9 @@ CIntParameter PACVERBOSE("PACVERBOSE", CBaseParameter::RW, 0, 0, 0, 10);
  *  ... modes to be added for FIFO contineous operation mode
  */
 
-CIntParameter TRANSPORT_CH3("TRANSPORT_CH3", CBaseParameter::RW, 0, 0, 0, 13);
-CIntParameter TRANSPORT_CH4("TRANSPORT_CH4", CBaseParameter::RW, 1, 0, 0, 13);
-CIntParameter TRANSPORT_CH5("TRANSPORT_CH5", CBaseParameter::RW, 1, 0, 0, 13);
+CIntParameter TRANSPORT_CH3("TRANSPORT_CH3", CBaseParameter::RW, 0, 0, 0, 19);
+CIntParameter TRANSPORT_CH4("TRANSPORT_CH4", CBaseParameter::RW, 1, 0, 0, 19);
+CIntParameter TRANSPORT_CH5("TRANSPORT_CH5", CBaseParameter::RW, 1, 0, 0, 19);
 CIntParameter TRANSPORT_MODE("TRANSPORT_MODE", CBaseParameter::RW, 0, 0, 0, 32768);
 CIntParameter TRANSPORT_DECIMATION("TRANSPORT_DECIMATION", CBaseParameter::RW, 2, 0, 1, 1<<24);
 CIntParameter SHR_DEC_DATA("SHR_DEC_DATA", CBaseParameter::RW, 0, 0, 0, 24);
@@ -275,10 +276,10 @@ CDoubleParameter TRANSPORT_TAU_AMPL("TRANSPORT_TAU_AMPL", CBaseParameter::RW, 0.
 // *** PAC_PLL::GPIO MONITORS ***                                                                    readings are via void *thread_gpio_reading_FIR(g), read_gpio_reg_int32 (n,m)
 // *** DBG ***                                                                                                //        gpio_reading_FIRV_vector[GPIO_READING_LMS_A]        (1,0); // GPIO X1 : LMS A
 // *** DBG ***                                                                                                //        gpio_reading_FIRV_vector[GPIO_READING_LMS_A]        (1,1); // GPIO X2 : LMS B
-// *** DBG ***                                                                                                //        -----------------------                             (2,0); // GPIO X3 : LMS B
+// *** DBG ***                                                                                                //        -----------------------                             (2,0); // GPIO X3 : DBG M
 CDoubleParameter VOLUME_MONITOR("VOLUME_MONITOR", CBaseParameter::RW, 0, 0, -1000.0, 1000.0);                 // mV  ** gpio_reading_FIRV_vector[GPIO_READING_AMPL]         (2,1); // GPIO X4 : CORDIC SQRT (AM2=A^2+B^2)
-// via  DC_OFFSET rp_PAC_auto_dc_offset_correct ()                                                                                                                          (3,0); // GPIO X5 : DC_OFFSET
-// *** DBG ***                                                                                                //        -----------------------                             (3,1); // GPIO X6 : ---
+// via  DC_OFFSET rp_PAC_auto_dc_offset_correct ()                                                                                                                          (3,0); // GPIO X5 : DC_OFFSET (M-DC)
+// *** DBG ***                                                                                                //        -----------------------                             (3,1); // GPIO X6 : --- SPMC STATUS [FB, GVP, AD5791, --]
 CDoubleParameter EXEC_MONITOR("EXEC_MONITOR", CBaseParameter::RW, 0, 0, -1000.0, 1000.0);                     //  mV ** gpio_reading_FIRV_vector[GPIO_READING_EXEC]         (4,0); // GPIO X7 : Exec Ampl Control Signal (signed)
 CDoubleParameter DDS_FREQ_MONITOR("DDS_FREQ_MONITOR", CBaseParameter::RW, 0, 0, 0.0, 25e6);                   //  Hz ** gpio_reading_FIRV_vector[GPIO_READING_DDS_FREQ]     (4,1); // GPIO X8 : DDS Phase Inc (Freq.) upper 32 bits of 44 (unsigned)
                                                                                                               //                                                            (5,0); // GPIO X9 : DDS Phase Inc (Freq.) lower 32 bits of 44 (unsigned)
@@ -286,7 +287,13 @@ CDoubleParameter PHASE_MONITOR("PHASE_MONITOR", CBaseParameter::RW, 0, 0, -180.0
 CDoubleParameter DFREQ_MONITOR("DFREQ_MONITOR", CBaseParameter::RW, 0, 0, -1000.0, 1000.0);                   // Hz  ** gpio_reading_FIRV_vector[GPIO_READING_DDS_FREQ]     (6,0); // GPIO X11: dFreq
 // *** DBG ***                                                                                                //        -----------------------                             (6,1); // GPIO X12: ---
 CDoubleParameter CONTROL_DFREQ_MONITOR("CONTROL_DFREQ_MONITOR", CBaseParameter::RW, 0, 0, -10000.0, 10000.0); // mV  **  gpio_re..._FIRV_vector[GPIO_READING_CONTROL_DFREQ] (7,0); // GPIO X13: control dFreq value
-// *** DBG ***                                                                                                //        -----------------------                             (7,1); // GPIO X14: ---
+// *** DBG ***                                                                                                //        -----------------------                             (7,1); // GPIO X14: --- SIGNAL PASS [IN2] (Current, FB SRC)
+// *** DBG ***                                                                                                //        -----------------------                             (8,0); // GPIO X15: --- UMON
+// *** DBG ***                                                                                                //        -----------------------                             (8,1); // GPIO X16: --- XMON
+// *** DBG ***                                                                                                //        -----------------------                             (9,0); // GPIO X17: --- YMON
+// *** DBG ***                                                                                                //        -----------------------                             (9,1); // GPIO X18: --- ZMON
+// *** DBG ***                                                                                                //        -----------------------                            (10,0); // GPIO X19: ---
+// *** DBG ***                                                                                                //        -----------------------                            (10,1); // GPIO X20: ---
 
 
 
@@ -401,6 +408,9 @@ extern pthread_attr_t gpio_reading_attr;
 extern pthread_mutex_t gpio_reading_mutexsum;
 extern int gpio_reading_control;
 extern double gpio_reading_FIRV_vector[MAX_FIR_VALUES];
+extern double gpio_reading_FIRV_vector_CH3_mapping;
+extern double gpio_reading_FIRV_vector_CH4_mapping;
+extern double gpio_reading_FIRV_vector_CH5_mapping;
 extern pthread_t gpio_reading_thread;
 
 
@@ -416,9 +426,9 @@ int rp_PAC_App_Init(){
 
         fprintf(stderr, "*** INIT RP FPGA RPSPMC PACPLL ***\n");
 
+        FPGA_PACPLL_BRAM_block_size  = 2048*sysconf(_SC_PAGESIZE); // Dual Ported FPGA BRAM
         FPGA_PACPLL_CFG_block_size   = FPGA_CFG_PAGES*sysconf (_SC_PAGESIZE);   // sysconf (_SC_PAGESIZE) is 0x1000; map CFG + GPIO pages
         FPGA_PACPLL_GPIO_block_size  = FPGA_GPIO_PAGES*sysconf (_SC_PAGESIZE);   // sysconf (_SC_PAGESIZE) is 0x1000; map CFG + GPIO pages
-        FPGA_PACPLL_BRAM_block_size  = 2048*sysconf(_SC_PAGESIZE); // Dual Ported FPGA BRAM
        
         if ((fd = open (FPGA_PACPLL_A9_name, O_RDWR)) < 0) {
                 perror ("open");
@@ -1251,20 +1261,21 @@ void UpdateSignals(void)
 
                 // Slow GPIO MONITOR in strip plotter mode
                 // Push it to vector
-                ch = TRANSPORT_CH3.Value ();
+                //ch = TRANSPORT_CH3.Value ();
                 if (verbose > 3) fprintf(stderr, "UpdateSignals: CH3=%d \n", ch);
                 g_data_signal_ch3.erase (g_data_signal_ch3.begin());
-                g_data_signal_ch3.push_back (gpio_reading_FIRV_vector[ch >=0 && ch < MAX_FIR_VALUES ? ch : 0] * GAIN3.Value ());
+                //read_gpio_reg_int32 (n,m)
+                g_data_signal_ch3.push_back (gpio_reading_FIRV_vector_CH3_mapping/GPIO_FIR_LEN * GAIN3.Value ());
 
-                ch = TRANSPORT_CH4.Value ();
+                //ch = TRANSPORT_CH4.Value ();
                 if (verbose > 3) fprintf(stderr, "UpdateSignals: CH4=%d \n", ch);
                 g_data_signal_ch4.erase (g_data_signal_ch4.begin());
-                g_data_signal_ch4.push_back (gpio_reading_FIRV_vector[ch >=0 && ch < MAX_FIR_VALUES ? ch : 1] * GAIN4.Value ());
+                g_data_signal_ch4.push_back (gpio_reading_FIRV_vector_CH4_mapping/GPIO_FIR_LEN * GAIN4.Value ());
 
-                ch = TRANSPORT_CH5.Value ();
+                //ch = TRANSPORT_CH5.Value ();
                 if (verbose > 3) fprintf(stderr, "UpdateSignals: CH5=%d \n", ch);
                 g_data_signal_ch5.erase (g_data_signal_ch5.begin());
-                g_data_signal_ch5.push_back (gpio_reading_FIRV_vector[ch >=0 && ch < MAX_FIR_VALUES ? ch : 1] * GAIN5.Value ());
+                g_data_signal_ch5.push_back (gpio_reading_FIRV_vector_CH5_mapping/GPIO_FIR_LEN * GAIN5.Value ());
 
                 // Copy data to signals
                 if (verbose > 3) fprintf(stderr, "UpdateSignals copy signals\n");
