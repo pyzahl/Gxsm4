@@ -203,6 +203,9 @@ module tb_spm_ad(
         #20
         wait (fin);
 
+        #200
+
+
         r=1; // put into reset/hold
         #20
 

@@ -390,7 +390,7 @@ int32_t ad5791_set_dac_value(int axis,
 	//AD5791_LDAC_LOW;
 	status = ad5791_set_register_value (axis,
                                             AD5791_REG_DAC,
-                                            (uint32_t)round(Q19*volts/SPMC_AD5791_REFV));
+                                            (uint32_t)((unsigned int)round(Q19*volts/SPMC_AD5791_REFV)));
 	//AD5791_LDAC_HIGH;
 
 	return status;
@@ -403,7 +403,7 @@ int32_t ad5791_prepare_dac_value(int axis,
 	//AD5791_LDAC_LOW;
 	status = ad5791_prepare_register_value (axis,
                                                 AD5791_REG_DAC,
-                                                (uint32_t)round(Q19*volts/SPMC_AD5791_REFV));
+                                                (uint32_t)((unsigned int)round(Q19*volts/SPMC_AD5791_REFV)));
 	//AD5791_LDAC_HIGH;
 
 	return status;
@@ -548,7 +548,7 @@ void rp_spmc_set_zservo_controller (double setpoint, double cp, double ci, doubl
 }
 
 void rp_spmc_set_zservo_gxsm_speciality_setting (int mode, double z_setpoint, double level){
-        if (verbose > 1) fprintf(stderr, "##Configure RP SPMC Z-Servo Controller: mode= %g  Zset=%g level=%g\n", mode, z_setpoint, level); 
+        if (verbose > 1) fprintf(stderr, "##Configure RP SPMC Z-Servo Controller: mode= %d  Zset=%g level=%g\n", mode, z_setpoint, level); 
         set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_MODE, mode);
         set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_ZSETPOINT, (int)round (Q31*z_setpoint/SPMC_AD5791_REFV)); // => +/-5V range in Q31
         set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_LEVEL, (int)round (Q31*level/SPMC_AD5791_REFV)); // => +/-5V range in Q31
@@ -662,8 +662,10 @@ double rp_spmc_read_Signal_Monitor(){
 
 void rp_spmc_update_readings (){
         int gvpstatus = read_gpio_reg_int32 (3,1);
+        int gvpsec = read_gpio_reg_int32 (10,0);
+        int gvpi   = read_gpio_reg_int32 (10,1);
         SPMC_GVP_STATUS.Value () = gvpstatus;
-        if (verbose > 2) fprintf(stderr, "## GVP status Sec: %d S: %x", gvpstatus>>8, gvpstatus&0xff);
+        fprintf(stderr, "## GVP status: %d S: %x  Sec=%d i%d\n", gvpstatus>>8, gvpstatus&0xff, gvpsec, gvpi);
 
         SPMC_BIAS_MONITOR.Value () = rp_spmc_read_Bias_Monitor();
         SPMC_X_MONITOR.Value () = rp_spmc_read_X_Monitor();
