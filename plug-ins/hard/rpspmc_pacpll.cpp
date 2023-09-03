@@ -1335,6 +1335,7 @@ void RPSPMC_Control::create_folder (){
         GtkWidget *notebook;
  	GSList *zpos_control_list=NULL;
 
+
         AppWindowInit ("RP-SPM Control Window");
         
         // ========================================
@@ -1489,18 +1490,26 @@ void RPSPMC_Control::create_folder (){
         bp->set_input_width_chars (12);
 
         bp->set_configure_list_mode_on ();
-	bp->grid_add_ec_with_scale ("CP", Unity, &z_servo[SERVO_CP], 0., 200., "5g", 1.0, 0.1, "fbs-cp");
+	bp->grid_add_ec_with_scale ("CP", dB, &spmc_parameters.z_servo_cp_db, -100., 20., "5g", 1.0, 0.1, "fbs-cp"); // z_servo[SERVO_CP]
         GtkWidget *ZServoCP = bp->input;
         bp->new_line ();
         bp->set_configure_list_mode_off ();
-        bp->grid_add_ec_with_scale ("CI", Unity, &z_servo[SERVO_CI], 0., 200., "5g", 1.0, 0.1, "fbs-ci");
+        bp->grid_add_ec_with_scale ("CI", dB, &spmc_parameters.z_servo_ci_db, -100., 20., "5g", 1.0, 0.1, "fbs-ci"); // z_servo[SERVO_CI
         GtkWidget *ZServoCI = bp->input;
 
-        g_object_set_data( G_OBJECT (ZServoCI), "HasClient", ZServoCP);
-        g_object_set_data( G_OBJECT (ZServoCP), "HasMaster", ZServoCI);
+        //g_object_set_data( G_OBJECT (ZServoCI), "HasClient", ZServoCP);
+        //g_object_set_data( G_OBJECT (ZServoCP), "HasMaster", ZServoCI);
         g_object_set_data( G_OBJECT (ZServoCI), "HasRatio", GUINT_TO_POINTER((guint)round(1000.*z_servo[SERVO_CP]/z_servo[SERVO_CI])));
         
         bp->set_label_width_chars ();
+
+        bp->grid_add_check_button ("Enable", "enable Z servo feedback controller.", 1,
+                                   G_CALLBACK(RPSPMC_Control::ZServoControl), this, ((int)spmc_parameters.gvp_status)&1, 0);
+
+        spmc_parameters.z_servo_invert = 1.;
+        bp->grid_add_check_button ("Invert", "invert Z servo control.", 0,
+                                   G_CALLBACK(RPSPMC_Control::ZServoControlInv), this, spmc_parameters.z_servo_invert < 0.0, 0);
+
 
 	// ========================================
         bp->set_default_ec_change_notice_fkt (RPSPMC_Control::ChangedNotify, this);
@@ -2196,10 +2205,10 @@ void RPSPMC_Control::ChangedNotify(Param_Control* pcs, gpointer dspc){
 	((RPSPMC_Control*)dspc)->update_controller (); // update basic SPM Control Parameters
 }
 
-void RPSPMC_Control::BiasChanged(Param_Control* pcs, gpointer dspc){
+void RPSPMC_Control::BiasChanged(Param_Control* pcs, RPSPMC_Control* self){
         int j=0;
         if (rpspmc_pacpll)
-                rpspmc_pacpll->write_parameter ("SPMC_BIAS", ((RPSPMC_Control*)dspc)->bias);
+                rpspmc_pacpll->write_parameter ("SPMC_BIAS", self->bias);
 
 #if 0
         // TESTING ONLY
@@ -2210,37 +2219,52 @@ void RPSPMC_Control::BiasChanged(Param_Control* pcs, gpointer dspc){
                 vec[1]=100;
                 vec[2]=1000;
                 for (int i=5; i<16; ++i)
-                        vec[i] += ((RPSPMC_Control*)dspc)->bias;
+                        vec[i] += self->bias;
                 rpspmc_pacpll->write_array ("SPMC_GVP_VECTOR", 16, vec);
                 vec[0]=j++;
                 for (int i=5; i<16; ++i)
-                        vec[i] += ((RPSPMC_Control*)dspc)->bias;
+                        vec[i] += self->bias;
                 rpspmc_pacpll->write_array ("SPMC_GVP_VECTOR", 16, vec);
                 vec[0]=j++;
                 for (int i=5; i<16; ++i)
-                        vec[i] += ((RPSPMC_Control*)dspc)->bias;
+                        vec[i] += self->bias;
                 rpspmc_pacpll->write_array ("SPMC_GVP_VECTOR", 16, vec);
 
         }
 #endif
 }
 
-void RPSPMC_Control::ZPosSetChanged(Param_Control* pcs, gpointer dspc){
+void RPSPMC_Control::ZPosSetChanged(Param_Control* pcs, RPSPMC_Control *self){
         if (rpspmc_pacpll)
-                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_SETPOINT_CZ", main_get_gapp()->xsm->Inst->ZA2Volt(((RPSPMC_Control*)dspc)->zpos_ref));
+                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_SETPOINT_CZ", main_get_gapp()->xsm->Inst->ZA2Volt(self->zpos_ref));
 }
 
-void RPSPMC_Control::ZServoParamChanged(Param_Control* pcs, gpointer dspc){
+void RPSPMC_Control::ZServoParamChanged(Param_Control* pcs, RPSPMC_Control *self){
         if (rpspmc_pacpll){
                 // (((RPSPMC_Control*)dspc)->mix_gain[ch]) // N/A
-                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_SETPOINT", ((RPSPMC_Control*)dspc)->mix_set_point[0]);
-                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_MODE", ((RPSPMC_Control*)dspc)->mix_transform_mode[0]);
-                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_LEVEL",   ((RPSPMC_Control*)dspc)->mix_level[0]);
-                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_CP",   ((RPSPMC_Control*)dspc)->z_servo[SERVO_CP]);
-                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_CI",   ((RPSPMC_Control*)dspc)->z_servo[SERVO_CI]);
+                self->z_servo[SERVO_CP] = spmc_parameters.z_servo_invert * pow (10., spmc_parameters.z_servo_cp_db/20.);
+                self->z_servo[SERVO_CI] = spmc_parameters.z_servo_invert * pow (10., spmc_parameters.z_servo_ci_db/20.);
+                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_SETPOINT", self->mix_set_point[0]);
+                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_MODE",     self->mix_transform_mode[0]);
+                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_LEVEL",    self->mix_level[0]);
+                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_CP",       self->z_servo[SERVO_CP]);
+                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_CI",       self->z_servo[SERVO_CI]);
                 rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_UPPER",  5.0);
                 rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_LOWER", -5.0);
         }
+}
+void RPSPMC_Control::ZServoControl (GtkWidget *widget, RPSPMC_Control *self){
+        if (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)))
+                spmc_parameters.z_servo_mode = 1;
+        else
+                spmc_parameters.z_servo_mode = 0;
+
+        self->ZServoParamChanged (NULL, self);
+}
+
+void RPSPMC_Control::ZServoControlInv (GtkWidget *widget, RPSPMC_Control *self){
+        spmc_parameters.z_servo_invert = gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)) ? -1.:1.;
+        self->ZServoParamChanged (NULL, self);
 }
 
 

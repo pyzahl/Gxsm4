@@ -75,7 +75,8 @@
 #define FPGA_BRAM_BASE    0x40000000 // 2M (0x4000_0000 ... 0x401F_FFFF)
 #define FPGA_BRAM_PAGES   2048       // 2M
 
-#define FPGA_CFG_REG      0x42000000 // 4k (0x4200_0000 ... _0FFF)
+#define FPGA_CFG_REG1     0x42000000 // 4k (0x4200_0000 ... _0FFF)
+#define FPGA_CFG_REG2     0x43000000 // 4k (0x4200_0000 ... _0FFF)
 #define FPGA_CFG_PAGES    1          // 1 pages assigned, 4k
 
 #define FPGA_GPIO_BASE    0x42002000 // 10 pages @4k each (=0x1000) 0x4200_2000 .. 0x4200_BFFF
@@ -310,12 +311,11 @@ CDoubleParameter  SPMC_Z_SERVO_LOWER("SPMC_Z_SERVO_LOWER", CBaseParameter::RW, 0
 CDoubleParameter  SPMC_Z_SERVO_SETPOINT_CZ("SPMC_Z_SERVO_SETPOINT_CZ", CBaseParameter::RW, 0.0, 0, -5.0, 5.0); // Volts
 CDoubleParameter  SPMC_Z_SERVO_LEVEL("SPMC_Z_SERVO_LEVEL", CBaseParameter::RW, 0.0, 0, -5.0, 5.0); // Volts
 
-
 CBooleanParameter SPMC_GVP_EXECUTE("SPMC_GVP_EXECUTE", CBaseParameter::RW, false, 0);
-CBooleanParameter SPMC_GVP_PAUSE("SPMC_GVP_PAUSE", CBaseParameter::RW, false, 0);
-CBooleanParameter SPMC_GVP_STOP("SPMC_GVP_STOP", CBaseParameter::RW, false, 0);
-CIntParameter     SPMC_GVP_PROGRAM("SPMC_GVP_PROGRAM", CBaseParameter::RW, 0, 0, -(1<<30), 1<<30);
-CIntParameter     SPMC_GVP_STATUS("SPMC_GVP_STATUS", CBaseParameter::RW, 0, 0, 0, 1<<30);
+CBooleanParameter SPMC_GVP_PAUSE("SPMC_GVP_PAUSE",     CBaseParameter::RW, false, 0);
+CBooleanParameter SPMC_GVP_STOP("SPMC_GVP_STOP",       CBaseParameter::RW, false, 0);
+CBooleanParameter SPMC_GVP_PROGRAM("SPMC_GVP_PROGRAM", CBaseParameter::RW, false, 0);
+CIntParameter     SPMC_GVP_STATUS("SPMC_GVP_STATUS",   CBaseParameter::RW, 0, 0, 0, 0xffff);
 #define MAX_GVP_VECTORS   32
 #define GVP_VECTOR_SIZE  16 // 10 components used (1st is index, then: N, nii, Options, Nrep, Next, dx, dy, dz, du, fill w zero to 16)
 CFloatSignal SPMC_GVP_VECTOR("SPMC_GVP_VECTOR", GVP_VECTOR_SIZE, 0.0f); // vector components in mV, else "converted to int"
@@ -392,9 +392,11 @@ int thread_data__tune_control=0;
  */
 
 const char *FPGA_PACPLL_A9_name = "/dev/mem";
-void *FPGA_PACPLL_cfg  = NULL;
-void *FPGA_PACPLL_gpio = NULL;
 void *FPGA_PACPLL_bram = NULL;
+void *FPGA_PACPLL_cfg1 = NULL;
+void *FPGA_PACPLL_cfg2 = NULL;
+void *FPGA_PACPLL_gpio = NULL;
+void *FPGA_PACPLL_gpio2 = NULL;
 size_t FPGA_PACPLL_CFG_block_size  = 0; // CFG space 
 size_t FPGA_PACPLL_GPIO_block_size  = 0; // GPIO space 
 size_t FPGA_PACPLL_BRAM_block_size = 0; // BRAM space
@@ -437,34 +439,31 @@ int rp_PAC_App_Init(){
 
         FPGA_PACPLL_bram = mmap (NULL, FPGA_PACPLL_BRAM_block_size,
                                  PROT_READ|PROT_WRITE, MAP_SHARED, fd, FPGA_BRAM_BASE);
-
         if (FPGA_PACPLL_bram == MAP_FAILED)
                 return RP_EOOR;
-  
-#ifdef DEVELOPMENT_PACPLL_OP
-        fprintf(stderr, "INIT RP FPGA RPSPMC PACPLL. --- FPGA MEMORY MAPPING ---\n");
-        fprintf(stderr, "RP FPGA RPSPMC PACPLL PAGESIZE:    0x%08lx.\n", (unsigned long)(sysconf (_SC_PAGESIZE)));
-        fprintf(stderr, "RP FPGA RPSPMC PACPLL BRAM: mapped 0x%08lx - 0x%08lx   block length: 0x%08lx.\n", (unsigned long)(0x40000000), (unsigned long)(0x40000000 + FPGA_PACPLL_BRAM_block_size), (unsigned long)(FPGA_PACPLL_BRAM_block_size));
-#else
-        if (verbose > 1) fprintf(stderr, "RP FPGA RPSPMC PACPLL BRAM: mapped 0x%08lx - 0x%08lx.\n", (unsigned long)(0x40000000), (unsigned long)(0x40000000 + FPGA_PACPLL_BRAM_block_size));
-#endif
+         
+        FPGA_PACPLL_cfg1 = mmap (NULL, FPGA_PACPLL_CFG_block_size,
+                                PROT_READ|PROT_WRITE,  MAP_SHARED, fd, FPGA_CFG_REG1);
+        if (FPGA_PACPLL_cfg1 == MAP_FAILED)
+                return RP_EOOR;
 
-        
-        FPGA_PACPLL_cfg = mmap (NULL, FPGA_PACPLL_CFG_block_size,
-                                PROT_READ|PROT_WRITE,  MAP_SHARED, fd, FPGA_CFG_REG);
-        if (FPGA_PACPLL_cfg == MAP_FAILED)
+        FPGA_PACPLL_cfg2 = mmap (NULL, FPGA_PACPLL_CFG_block_size,
+                                PROT_READ|PROT_WRITE,  MAP_SHARED, fd, FPGA_CFG_REG2);
+        if (FPGA_PACPLL_cfg2 == MAP_FAILED)
                 return RP_EOOR;
 
         FPGA_PACPLL_gpio = mmap (NULL, FPGA_PACPLL_GPIO_block_size,
                                 PROT_READ|PROT_WRITE,  MAP_SHARED, fd, FPGA_GPIO_BASE);
-
         if (FPGA_PACPLL_gpio == MAP_FAILED)
                 return RP_EOOR;
 
 #ifdef DEVELOPMENT_PACPLL_OP
-        fprintf(stderr, "RP FPGA RPSPMC PACPLL CFG: mapped 0x%08lx - 0x%08lx   block length: 0x%08lx.\n", (unsigned long)(0x42000000), (unsigned long)(0x42000000 + FPGA_PACPLL_CFG_block_size),  (unsigned long)(FPGA_PACPLL_CFG_block_size));
-#else
-        if (verbose > 1) fprintf(stderr, "RP FPGA RPSPMC PACPLL  CFG: mapped 0x%08lx - 0x%08lx.\n", (unsigned long)(0x42000000), (unsigned long)(0x42000000 + FPGA_PACPLL_CFG_block_size));
+        fprintf(stderr, "INIT RP FPGA RPSPMC PACPLL. --- FPGA MEMORY MAPPING ---\n");
+        fprintf(stderr, "RP FPGA RPSPMC PACPLL PAGESIZE:        0x%08lx.\n", (unsigned long)(sysconf (_SC_PAGESIZE)));
+        fprintf(stderr, "RP FPGA RPSPMC PACPLL BRAM      mapped 0x%08lx - 0x%08lx   block length: 0x%08lx.\n", (unsigned long)FPGA_BRAM_BASE, (unsigned long)(FPGA_BRAM_BASE + FPGA_PACPLL_BRAM_block_size-1), (unsigned long)(FPGA_PACPLL_BRAM_block_size));
+        fprintf(stderr, "RP FPGA RPSPMC PACPLL CFG REG1  mapped 0x%08lx - 0x%08lx   block length: 0x%08lx.\n", (unsigned long)FPGA_CFG_REG1,   (unsigned long)(FPGA_CFG_REG1 + FPGA_PACPLL_CFG_block_size-1),  (unsigned long)(FPGA_PACPLL_CFG_block_size));
+        fprintf(stderr, "RP FPGA RPSPMC PACPLL CFG REG2  mapped 0x%08lx - 0x%08lx   block length: 0x%08lx.\n", (unsigned long)FPGA_CFG_REG2,   (unsigned long)(FPGA_CFG_REG2 + FPGA_PACPLL_CFG_block_size-1),  (unsigned long)(FPGA_PACPLL_CFG_block_size));
+        fprintf(stderr, "RP FPGA RPSPMC PACPLL GPIO REGs mapped 0x%08lx - 0x%08lx   block length: 0x%08lx.\n", (unsigned long)FPGA_GPIO_BASE, (unsigned long)(FPGA_GPIO_BASE + FPGA_PACPLL_GPIO_block_size-1), (unsigned long)(FPGA_PACPLL_GPIO_block_size));
 #endif
         
         srand(time(NULL));   // init random
@@ -483,10 +482,13 @@ void rp_PAC_App_Release(){
         pthread_join (gpio_reading_thread, &status);
         pthread_mutex_destroy (&gpio_reading_mutexsum);
         
-        munmap (FPGA_PACPLL_gpio, FPGA_PACPLL_CFG_block_size);
-        munmap (FPGA_PACPLL_cfg, FPGA_PACPLL_CFG_block_size);
+        munmap (FPGA_PACPLL_gpio, FPGA_PACPLL_GPIO_block_size);
+        munmap (FPGA_PACPLL_cfg1, FPGA_PACPLL_CFG_block_size);
+        munmap (FPGA_PACPLL_cfg2, FPGA_PACPLL_CFG_block_size);
         munmap (FPGA_PACPLL_bram, FPGA_PACPLL_BRAM_block_size);
-
+#ifdef DEVELOPMENT_PACPLL_OP
+        fprintf(stderr, "RP FPGA maps unmapped.\n");
+#endif
         pthread_exit (NULL);
 }
 
@@ -1358,6 +1360,8 @@ void OnNewParams_RPSPMC(void){
                 rp_spmc_set_bias (SPMC_BIAS.Value());
         }
 
+        //SPMC_GVP_STATUS.Update ();
+
         if (SPMC_Z_SERVO_SETPOINT.IsNewValue()
             || SPMC_Z_SERVO_CP.IsNewValue()
             || SPMC_Z_SERVO_CI.IsNewValue()
@@ -1392,11 +1396,6 @@ void OnNewParams_RPSPMC(void){
         SPMC_SET_OFFSET_Y.Update ();
         SPMC_SET_OFFSET_Z.Update ();
 
-        SPMC_GVP_PROGRAM.Update ();
-        SPMC_GVP_EXECUTE.Update ();
-        SPMC_GVP_PAUSE.Update ();
-        SPMC_GVP_STOP.Update ();
-
         int dirty=0;
         if (SPMC_GVP_VECTOR_PC.IsNewValue ()){ SPMC_GVP_VECTOR_PC.Update (); ++dirty; }
         if (SPMC_GVP_VECTOR__N.IsNewValue ()){ SPMC_GVP_VECTOR__N.Update (); ++dirty; }
@@ -1429,14 +1428,18 @@ void OnNewParams_RPSPMC(void){
                                         SPMC_GVP_VECTOR_DU.Value ()
                                         );
                      
-        if ( SPMC_GVP_PROGRAM.IsNewValue (), SPMC_GVP_EXECUTE.IsNewValue () || SPMC_GVP_STOP.IsNewValue () || SPMC_GVP_PAUSE.IsNewValue ()){
-                int reset = SPMC_GVP_STOP.Value ();
-                int prog = SPMC_GVP_PROGRAM.Value ();
-                int pause= SPMC_GVP_PAUSE.Value ();
-                int exec = SPMC_GVP_EXECUTE.Value ();
-
-                fprintf(stderr, "GVP Control: exec: %d, reset: %d, prog: %d, pause: %d, stop: % ==> @reset=%d\n", exec, reset, prog, pause, reset ? 1 : exec ? 0 : 1);
-                rp_spmc_gvp_config (reset ? true : exec ? false : true, prog? true:false, pause?true:false); // reset, program
+        if ( SPMC_GVP_PROGRAM.IsNewValue () || SPMC_GVP_EXECUTE.IsNewValue () || SPMC_GVP_STOP.IsNewValue () || SPMC_GVP_PAUSE.IsNewValue ()){
+                SPMC_GVP_STOP.Update ();
+                SPMC_GVP_PROGRAM.Update ();
+                SPMC_GVP_PAUSE.Update ();
+                SPMC_GVP_EXECUTE.Update ();
+                int stop = SPMC_GVP_STOP.Value () ? 1:0;
+                int prog = SPMC_GVP_PROGRAM.Value () ? 1:0;
+                int pause= SPMC_GVP_PAUSE.Value () ? 1:0;
+                int exec = SPMC_GVP_EXECUTE.Value () ? 1:0;
+                int reset =  stop ? 1 : (exec ? 0 : 1);
+                fprintf(stderr, "*** GVP Control: exec: %d, stop: %d, prog: %d, pause: %d ==> reset=%d\n", exec, stop, prog, pause, reset);
+                rp_spmc_gvp_config (reset ? true : false, prog? true:false, pause?true:false);
         }
 
 }

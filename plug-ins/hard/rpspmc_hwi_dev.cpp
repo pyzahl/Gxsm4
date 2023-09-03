@@ -657,7 +657,7 @@ gboolean rpspmc_hwi_dev::ScanLineM(int yindex, int xdir, int muxmode,
  "o" :                Z0, X0, Y0  offset -- in volts after piezo amplifier
  "R" :                expected Z, X, Y -- in Angstroem/base unit
  "f" :                dFreq, I-avg, I-RMS
- "s","S" :                DSP Statemachine Status Bits, DSP load, DSP load peak
+ "s","S" :            DSP Statemachine Status Bits, DSP load, DSP load peak
  "Z" :                probe Z Position
  "i" :                GPIO (high level speudo monitor)
  "A" :                Mover/Wave axis counts 0,1,2 (X/Y/Z)
@@ -724,9 +724,13 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2,
                         }
                 }
                 // build status flags
+                int statusbits = round(spmc_parameters.gvp_status);
+		val3 = (double)(statusbits>>8);
+		val2 = (double)(statusbits&0xff);
 		val1 = (double)(0
-                                +1 // (FeedBackActive    ? 1:0)
-				+ ((ScanningFlg & 3) << 1)  // Stop = 1, Pause = 2
+                                +(statusbits&0x07) // (FeedBackActive    ? 1:0)
+                                +((statusbits&0xff)<<3) // (FeedBackActive    ? 1:0)
+				//+ ((ScanningFlg & 3) << 1)  // Stop = 1, Pause = 2
 				//+ (( ProbingSTSActive   ? 1:0) << 3)
 				//+ (( MoveInProgress     ? 1:0) << 4)
 				//+ (( PLLActive          ? 1:0) << 5)
@@ -920,8 +924,21 @@ double rpspmc_hwi_dev::get_GVP_frq_ref () {
 
 
 void rpspmc_hwi_dev::GVP_execute_vector_program(){
-        rpspmc_pacpll->write_parameter ("SPMC_GVP_EXECUTE", 1);
+        g_message ("rpspmc_hwi_dev::GVP_execute_vector_program ()");
+        rpspmc_pacpll->write_parameter ("SPMC_GVP_PAUSE", false);
+        rpspmc_pacpll->write_parameter ("SPMC_GVP_PROGRAM", false);
+        rpspmc_pacpll->write_parameter ("SPMC_GVP_STOP", false);
+        rpspmc_pacpll->write_parameter ("SPMC_GVP_EXECUTE", true);
 }
+
+void rpspmc_hwi_dev::GVP_abort_vector_program (){
+        g_message ("rpspmc_hwi_dev::GVP_abort_vector_program ()");
+        rpspmc_pacpll->write_parameter ("SPMC_GVP_PAUSE", false);
+        rpspmc_pacpll->write_parameter ("SPMC_GVP_PROGRAM", false);
+        rpspmc_pacpll->write_parameter ("SPMC_GVP_STOP", true);
+        rpspmc_pacpll->write_parameter ("SPMC_GVP_EXECUTE", false);
+}
+
 
 void rpspmc_hwi_dev::GVP_vp_init (){
         GVP_vp_header_current.n    = 0;
@@ -982,11 +999,6 @@ void rpspmc_hwi_dev::GVP_fetch_header_and_positionvector (){ // size: 14
 
 void rpspmc_hwi_dev::GVP_fetch_data_srcs (){
         //double GVP_vp_data_set[16]; // 16 channels max to data stream
-}
-
-void rpspmc_hwi_dev::GVP_abort_vector_program (){
-        rpspmc_pacpll->write_parameter ("SPMC_GVP_EXECUTE", 0);
-        rpspmc_pacpll->write_parameter ("SPMC_GVP_STOP", 1);
 }
 
 void rpspmc_hwi_dev::rpspmc_hwi_dev::GVP_start_data_read(){

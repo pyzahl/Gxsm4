@@ -688,7 +688,7 @@ void RPSPMC_Control::write_spm_vector_program (int start, pv_mode pvm){
 					GVP_vnrep[k] = 0;
 				if (GVP_vpcjr[k] < -vector_index || GVP_vpcjr[k] > 0) // origin of VP, no forward jump
 					GVP_vpcjr[k] = -vector_index; // defaults to start
-				make_UZXYramp_vector (GVP_du[k], GVP_dz[k], GVP_dx[k], GVP_dy[k], GVP_dsig[k], 0., GVP_points[k], GVP_vnrep[k]-1, GVP_vpcjr[k], GVP_ts[k], vis_Source, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+				make_UZXYramp_vector (GVP_du[k], GVP_dz[k], GVP_dx[k], GVP_dy[k], GVP_dsig[k], 0., GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k], vis_Source, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
 				write_program_vector (vector_index++);
 				if (GVP_vnrep[k]-1 > 0)	
 					vp_duration +=	(GVP_vnrep[k]-1)*(vp_duration - vpd[k+GVP_vpcjr[k]]);

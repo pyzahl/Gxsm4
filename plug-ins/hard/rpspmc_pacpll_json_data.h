@@ -161,6 +161,9 @@ struct SPMC_parameters {
         double z_servo_setpoint;
         double z_servo_cp;
         double z_servo_ci;
+        double z_servo_cp_db;
+        double z_servo_ci_db;
+        double z_servo_invert;
         double z_servo_upper;
         double z_servo_lower;
         double z_servo_setpoint_cz;

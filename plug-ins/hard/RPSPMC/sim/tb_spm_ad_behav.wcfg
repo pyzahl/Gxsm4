@@ -12,14 +12,14 @@
    </db_ref_list>
    <zoom_setting>
       <ZoomStartTime time="0.000 ns"></ZoomStartTime>
-      <ZoomEndTime time="17,345.001 ns"></ZoomEndTime>
-      <Cursor1Time time="89.253 ns"></Cursor1Time>
+      <ZoomEndTime time="18,011.368 ns"></ZoomEndTime>
+      <Cursor1Time time="2,000.000 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
-      <NameColumnWidth column_width="295"></NameColumnWidth>
+      <NameColumnWidth column_width="289"></NameColumnWidth>
       <ValueColumnWidth column_width="91"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="43" />
+   <WVObjectSize size="44" />
    <wvobject type="logic" fp_name="/tb_spm_ad/tb_ACLK">
       <obj_property name="ElementShortName">tb_ACLK</obj_property>
       <obj_property name="ObjectShortName">tb_ACLK</obj_property>
@@ -245,5 +245,9 @@
    <wvobject type="array" fp_name="/tb_spm_ad/gvp_1/u">
       <obj_property name="ElementShortName">u[31:0]</obj_property>
       <obj_property name="ObjectShortName">u[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_spm_ad/gvp_1/pause">
+      <obj_property name="ElementShortName">pause</obj_property>
+      <obj_property name="ObjectShortName">pause</obj_property>
    </wvobject>
 </wave_config>

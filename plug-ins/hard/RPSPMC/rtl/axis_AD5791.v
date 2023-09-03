@@ -28,7 +28,6 @@ module axis_AD5791 #(
     parameter SAXIS_TDATA_WIDTH = 32
 )
 (
-    //(* X_INTERFACE_PARAMETER = "FREQ_HZ 125000000" *)
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk" *)
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF S_AXIS1:S_AXIS2:S_AXIS3:S_AXIS4:S_AXISCFG" *)
     input a_clk,
@@ -48,10 +47,9 @@ module axis_AD5791 #(
     input wire [2:0] configuration_axis,
     input wire configuration_send,
     
-    (* X_INTERFACE_PARAMETER = "FREQ_HZ 30000000" *)
+    // (* X_INTERFACE_PARAMETER = "FREQ_HZ 30000000" *)
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN wire_PMD_clk" *)
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF wire_PMD_sync:wire_PMD_dac" *)
-    //(* X_INTERFACE_PARAMETER = "FREQ_HZ 125000000" *)
     output wire wire_PMD_clk,
     output wire wire_PMD_sync,
     output wire [NUM_DAC-1:0] wire_PMD_dac,
@@ -102,19 +100,29 @@ module axis_AD5791 #(
         if (configuration_mode)
         begin
             if (S_AXISCFG_tvalid)
+            begin
                 reg_dac_data[configuration_axis[1:0]] <= S_AXISCFG_tdata[DAC_WORD_WIDTH-1:0];
+            end
         end
         else
         begin
             if (S_AXIS1_tvalid)
+            begin            
                 //                       send to data register 24 bits:         0 001 20-bit-data
                 reg_dac_data[0] <= {{(DAC_WORD_WIDTH-DAC_DATA_WIDTH-1 ){1'b0}}, 1'b1, S_AXIS1_tdata[SAXIS_TDATA_WIDTH-1:SAXIS_TDATA_WIDTH-DAC_DATA_WIDTH]};
+            end
             if (S_AXIS2_tvalid)
+            begin            
                 reg_dac_data[1] <= {{(DAC_WORD_WIDTH-DAC_DATA_WIDTH-1 ){1'b0}}, 1'b1, S_AXIS2_tdata[SAXIS_TDATA_WIDTH-1:SAXIS_TDATA_WIDTH-DAC_DATA_WIDTH]};
+            end
             if (S_AXIS3_tvalid)
+            begin            
                 reg_dac_data[2] <= {{(DAC_WORD_WIDTH-DAC_DATA_WIDTH-1 ){1'b0}}, 1'b1, S_AXIS3_tdata[SAXIS_TDATA_WIDTH-1:SAXIS_TDATA_WIDTH-DAC_DATA_WIDTH]};
+            end
             if (S_AXIS4_tvalid)
+            begin            
                 reg_dac_data[3] <= {{(DAC_WORD_WIDTH-DAC_DATA_WIDTH-1 ){1'b0}}, 1'b1, S_AXIS4_tdata[SAXIS_TDATA_WIDTH-1:SAXIS_TDATA_WIDTH-DAC_DATA_WIDTH]};
+            end
         end
     end
 

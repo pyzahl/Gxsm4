@@ -345,7 +345,7 @@
     </key>
 
 
-    <key name="fbs-bias" type="ad">
+    <key name="dsp-fbs-bias" type="ad">
       <default>[10, -10, 1e+111, -1e+111, 1e+111, 1e+111, 0.001, 0.01, 0.1, 0,  0, 0      ]      </default>
       <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'fbs-bias' </summary>
       <description>Configuration for GXSM Entry with ID 'fbs-bias'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
@@ -357,61 +357,61 @@
       <description>Configuration for GXSM Entry with ID 'adv-dsp-zpos-ref'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
     </key>
 
-    <key name="fbs-mx0-current-set" type="ad">
+    <key name="dsp-fbs-mx0-current-set" type="ad">
       <default>[100, 0, 1e+111, -1e+111, 1e+111, 1e+111, 0.001, 0.01, 0.1, 0,  0, 0      ]      </default>
       <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'fbs-mx0-current-set' </summary>
       <description>Configuration for GXSM Entry with ID 'fbs-mx0-current-set'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
     </key>
 
-    <key name="fbs-mx0-current-gain" type="ad">
+    <key name="dsp-fbs-mx0-current-gain" type="ad">
       <default>[1, -1, 1e+111, -1e+111, 1e+111, 1e+111, 0.001, 0.01, 0.1, 0,  0, 0      ]      </default>
       <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'fbs-mx0-current-gain' </summary>
       <description>Configuration for GXSM Entry with ID 'fbs-mx0-current-gain'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
     </key>
 
-    <key name="fbs-mx0-current-level" type="ad">
+    <key name="dsp-fbs-mx0-current-level" type="ad">
       <default>[100, -100, 1e+111, -1e+111, 1e+111, 1e+111, 0.001, 0.01, 0.1, 0,  0, 0      ]      </default>
       <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'fbs-mx0-current-level' </summary>
       <description>Configuration for GXSM Entry with ID 'fbs-mx0-current-level'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
     </key>
 
-    <key name="fbs-mx1-freq-set" type="ad">
+    <key name="dsp-fbs-mx1-freq-set" type="ad">
       <default>[100, -100, 1e+111, -1e+111, 1e+111, 1e+111, 0.001, 0.01, 0.1, 0,  0, 0      ]      </default>
       <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'fbs-mx1-freq-set' </summary>
       <description>Configuration for GXSM Entry with ID 'fbs-mx1-freq-set'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
     </key>
 
-    <key name="fbs-mx1-freq-gain" type="ad">
+    <key name="dsp-fbs-mx1-freq-gain" type="ad">
       <default>[1, -1, 1e+111, -1e+111, 1e+111, 1e+111, 0.001, 0.01, 0.1, 0,  0, 0      ]      </default>
       <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'fbs-mx1-freq-gain' </summary>
       <description>Configuration for GXSM Entry with ID 'fbs-mx1-freq-gain'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
     </key>
 
-    <key name="fbs-mx1-freq-level" type="ad">
+    <key name="dsp-fbs-mx1-freq-level" type="ad">
       <default>[100, -100, 1e+111, -1e+111, 1e+111, 1e+111, 0.001, 0.01, 0.1, 0,  0, 0      ]      </default>
       <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'fbs-mx1-freq-level' </summary>
       <description>Configuration for GXSM Entry with ID 'fbs-mx1-freq-level'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
     </key>
 
-    <key name="fbs-cp" type="ad">
-      <default>[200, 0, 1e+111, -1e+111, 1e+111, 1e+111, 1, 0.1, 1, 0,  0, 0      ]      </default>
+    <key name="dsp-fbs-cp" type="ad">
+      <default>[20, -100, 1e+111, -1e+111, 1e+111, 1e+111, 1, 0.1, 1, 0,  0, 0      ]      </default>
       <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'fbs-cp' </summary>
       <description>Configuration for GXSM Entry with ID 'fbs-cp'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
     </key>
 
-    <key name="fbs-ci" type="ad">
-      <default>[200, 0, 1e+111, -1e+111, 1e+111, 1e+111, 1, 0.1, 1, 0,  0, 0      ]      </default>
+    <key name="dsp-fbs-ci" type="ad">
+      <default>[20, -100, 1e+111, -1e+111, 1e+111, 1e+111, 1, 0.1, 1, 0,  0, 0      ]      </default>
       <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'fbs-ci' </summary>
       <description>Configuration for GXSM Entry with ID 'fbs-ci'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
     </key>
 
-    <key name="fbs-scan-speed-move" type="ad">
+    <key name="dsp-fbs-scan-speed-move" type="ad">
       <default>[10000, 0.1, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
       <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'fbs-scan-speed-move' </summary>
       <description>Configuration for GXSM Entry with ID 'fbs-scan-speed-move'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
     </key>
 
-    <key name="fbs-scan-speed-scan" type="ad">
+    <key name="dsp-fbs-scan-speed-scan" type="ad">
       <default>[10000, 0.1, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
       <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'fbs-scan-speed-scan' </summary>
       <description>Configuration for GXSM Entry with ID 'fbs-scan-speed-scan'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
@@ -441,19 +441,19 @@
       <description>Configuration for GXSM Entry with ID 'adv-scan-slope-y'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
     </key>
 
-    <key name="fbs-scan-ldc-dx" type="ad">
+    <key name="dsp-fbs-scan-ldc-dx" type="ad">
       <default>[100, -100, 1e+111, -1e+111, 1e+111, 1e+111, 0.001, 0.01, 0.1, 0,  0, 0      ]      </default>
       <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'fbs-scan-ldc-dx' </summary>
       <description>Configuration for GXSM Entry with ID 'fbs-scan-ldc-dx'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
     </key>
 
-    <key name="fbs-scan-ldc-dy" type="ad">
+    <key name="dsp-fbs-scan-ldc-dy" type="ad">
       <default>[100, -100, 1e+111, -1e+111, 1e+111, 1e+111, 0.001, 0.01, 0.1, 0,  0, 0      ]      </default>
       <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'fbs-scan-ldc-dy' </summary>
       <description>Configuration for GXSM Entry with ID 'fbs-scan-ldc-dy'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
     </key>
 
-    <key name="fbs-scan-ldc-dz" type="ad">
+    <key name="dsp-fbs-scan-ldc-dz" type="ad">
       <default>[100, -100, 1e+111, -1e+111, 1e+111, 1e+111, 0.001, 0.01, 0.1, 0,  0, 0      ]      </default>
       <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'fbs-scan-ldc-dz' </summary>
       <description>Configuration for GXSM Entry with ID 'fbs-scan-ldc-dz'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>

@@ -146,6 +146,7 @@ public:
                 Unity    = new UnitObj(" "," ");
                 Volt     = new UnitObj("V","V");
                 Velocity  = new UnitObj("px/s","px/s");
+                dB       = new UnitObj("dB","dB");
 
                 Angstroem= new UnitObj(UTF8_ANGSTROEM,"A");
                 Frq      = new UnitObj("Hz","Hz");
@@ -310,7 +311,8 @@ public:
                 delete Unity;
                 delete Volt;
                 delete Velocity;
-
+                delete dB;
+                
                 delete Angstroem;
                 delete Frq;
                 delete Time;
@@ -364,9 +366,11 @@ public:
         };
 
 
-        static void BiasChanged(Param_Control* pcs, gpointer data);
-        static void ZPosSetChanged(Param_Control* pcs, gpointer data);
-        static void ZServoParamChanged(Param_Control* pcs, gpointer data);
+        static void BiasChanged(Param_Control* pcs, RPSPMC_Control *self);
+        static void ZPosSetChanged(Param_Control* pcs, RPSPMC_Control *self);
+        static void ZServoParamChanged(Param_Control* pcs, RPSPMC_Control *self);
+        static void ZServoControl(GtkWidget *widget, RPSPMC_Control *self);
+        static void ZServoControlInv(GtkWidget *widget, RPSPMC_Control *self);
 
         static void ChangedNotify(Param_Control* pcs, gpointer data);
         static void ChangedNotifyVP(Param_Control* pcs, gpointer data);
@@ -744,7 +748,7 @@ private:
 	GtkWindow* vpg_window;
         GtkWidget* vpg_grid;
 
-	UnitObj *Unity, *Volt, *Velocity;
+	UnitObj *Unity, *Volt, *Velocity, *dB;
         UnitObj *Angstroem, *Frq, *Time, *TimeUms, *msTime, *minTime, *Deg, *Current, *Current_pA, *Speed, *PhiSpeed, *Vslope, *Hex;
 };
 

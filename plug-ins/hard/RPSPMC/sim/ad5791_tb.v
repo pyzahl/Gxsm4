@@ -149,7 +149,7 @@ module ad5791_tb;
 
 gvp gvp1
     (
-        .clk(pclk),    // clocking up to aclk
+        .a_clk(pclk),    // clocking up to aclk
         .reset(r),  // put into reset mode (hold)
         .setvec(prg), // program vector data using vp_set data
         .vp_set(data), // [VAdr], [N, NII, Nrep, Options, Next, dx, dy, dz, du] ** full vector data set block **
@@ -160,6 +160,7 @@ gvp gvp1
         .options(wopt),  // section options: FB, ...
         .section(wsec),  // section count
         .store_data(sto), // trigger to store data:: 2: full vector header, 1: data sources
+        .pause(0),
         .gvp_finished(fin)      // finished 
 );
 

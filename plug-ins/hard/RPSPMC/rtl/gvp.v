@@ -37,7 +37,9 @@ module gvp #(
     output [32-1:0] options,  // section options: FB, ...
     output [32-1:0] section,  // section count
     output [1:0 ] store_data, // trigger to store data:: 2: full vector header, 1: data sources
-    output gvp_finished       // finished flag
+    output [32-1:0] dbg_i,    // data count
+    output gvp_finished,       // finished flag
+    output gvp_hold            // on hold/pause
     );
     
     //localparam integer NUM_VECTORS = 1 << NUM_VECTORS_N2;
@@ -203,7 +205,11 @@ module gvp #(
     assign u = vec_u;
     
     assign section = sec;
+    
     assign store_data = store;
     assign gvp_finished = finished;
+    assign hold = pause;
+    
+    assign dbg_i = i;
     
 endmodule

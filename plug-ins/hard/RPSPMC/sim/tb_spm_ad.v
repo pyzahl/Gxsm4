@@ -38,6 +38,7 @@ module tb_spm_ad(
     reg sclk=0;
     reg r=1;
     reg prg=0;
+    reg pause=0;
     reg [512-1:0] data; // [VAdr], [N, NII, Nrep, Options, Next, dx, dy, dz, du] ** full vector data set block **
 
     wire [31:0] wx; // vector components
@@ -94,8 +95,8 @@ module tb_spm_ad(
     always #10 tb_ACLK = !tb_ACLK;
        
     always begin
-        pclk = 1; #2;
-        pclk = 0; #2;
+        pclk = 1; #1;
+        pclk = 0; #1;
     end
 
     always begin
@@ -114,13 +115,20 @@ module tb_spm_ad(
         #20
         prg=0;
         #20
-        data = {192'd0, 32'd0004, 32'd0003, 32'd0064, 32'd0001,  32'd0, 32'd0000,   32'h000, 32'd001, 32'd004, 32'd00 }; // 000
+        //                  decii       du        dz        dy        dx     Next       Nrep,   Options,     nii,      N,    [Vadr]
+        data = {160'd0, 32'd0064, 32'd0004, 32'd0003, 32'd0064, 32'd0001,  32'd0, 32'd0000,   32'h000, 32'd001, 32'd0014, 32'd00 }; // 000
         #20
         prg=1;
         #20
         prg=0;
         #20
-        data = {192'd0, 32'd0004, 32'd0003, 32'd0064, 32'd0001,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd01 }; // END
+        data = {160'd0, 32'd0064, -32'd0004, -32'd0003, -32'd0064, -32'd0001,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd014, 32'd01 }; // END
+        #20
+        prg=1;
+        #20
+        prg=0;
+        #20
+        data = {160'd0, 32'd0064, -32'd0000, -32'd0000, -32'd0000, -32'd0000,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd02 }; // END
         #20
         prg=1;
         #20
@@ -170,14 +178,14 @@ module tb_spm_ad(
         #20
         // move to start point
         //                  du        dz        dy        dx     Next       Nrep,   Options,     nii,      N,    [Vadr]
-        data = {192'd0, 32'd0000, 32'd0000, -32'd0002, -32'd0002,  32'd0, 32'd0000,   32'h001, 32'd0128, 32'd005, 32'd00 };
+        data = {160'd0, 32'd0064, 32'd0000, 32'd0000, -32'd0002, -32'd0002,  32'd0, 32'd0000,   32'h001, 32'd0128, 32'd005, 32'd00 };
         #2
         prg=1;
         #20
         prg=0;
         #20
 
-        data = {192'd0, 32'd0004, 32'd0003, 32'd0002, 32'd0001,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd01 }; // END
+        data = {160'd0, 32'd0064, 32'd0004, 32'd0003, 32'd0002, 32'd0001,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd01 }; // END
         #2
         prg=1;
         #20
@@ -187,6 +195,12 @@ module tb_spm_ad(
         r=0; // release reset to run
         #20
 
+        pause=0;
+        #20
+        pause=1;
+        #200
+        pause=0;
+        #20
         wait (fin);
 
         r=1; // put into reset/hold
@@ -197,28 +211,28 @@ module tb_spm_ad(
 
         // scan procedure
         //                  du        dz        dy        dx     Next       Nrep,   Options,     nii,      N,    [Vadr]
-        data = {192'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0256,  32'd0, 32'd0000,   32'h001, 32'd128, 32'd010, 32'd00 };
+        data = {160'd0, 32'd0064, 32'd0000, 32'd0000, 32'd0000, 32'd0256,  32'd0, 32'd0000,   32'h001, 32'd128, 32'd010, 32'd00 };
         #2
         prg=1;
         #20
         prg=0;
         #20
         
-        data = {192'd0, 32'd0000, 32'd0000, 32'd0000, -32'sd0256,  32'd0, 32'd0000,   32'h001, 32'd128, 32'd010, 32'd01 };
+        data = {160'd0, 32'd0064, 32'd0000, 32'd0000, 32'd0000, -32'sd0256,  32'd0, 32'd0000,   32'h001, 32'd128, 32'd010, 32'd01 };
         #2
         prg=1;
         #20
         prg=0;
         #20
 
-        data = {192'd0, 32'd0000, 32'd0000, 32'd0064, 32'd0000,  -32'sd2, 32'd0010,   32'h001, 32'd128, 32'd001, 32'd02 };
+        data = {160'd0, 32'd0064, 32'd0000, 32'd0000, 32'd0064, 32'd0000,  -32'sd2, 32'd0010,   32'h001, 32'd128, 32'd001, 32'd02 };
         #2
         prg=1;
         #20
         prg=0;
         #20
 
-        data = {192'd0, 32'd0004, 32'd0003, 32'd0064, 32'd0001,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd03 }; // END
+        data = {160'd0, 32'd0064, 32'd0004, 32'd0003, 32'd0064, 32'd0001,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd03 }; // END
         #2
         prg=1;
         #20
@@ -244,7 +258,7 @@ module tb_spm_ad(
 
 gvp gvp_1
     (
-        .clk(pclk),    // clocking up to aclk
+        .a_clk(pclk),    // clocking up to aclk
         .reset(r),  // put into reset mode (hold)
         .setvec(prg), // program vector data using vp_set data
         .vp_set(data), // [VAdr], [N, NII, Nrep, Options, Next, dx, dy, dz, du] ** full vector data set block **
@@ -254,6 +268,7 @@ gvp gvp_1
         .u(wu), // ..
         .options(wopt),  // section options: FB, ...
         .section(wsec),  // section count
+        .pause(pause),
         .store_data(sto), // trigger to store data:: 2: full vector header, 1: data sources
         .gvp_finished(fin)      // finished 
 );
