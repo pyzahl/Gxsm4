@@ -793,7 +793,7 @@ void rp_PAC_get_single_reading_FIR (double reading_vector[READING_MAX_VALUES]){
 
 }
 
-
+#if 0
 // Get all GPIO mapped data / system state snapshot
 void rp_PAC_get_single_reading (double reading_vector[READING_MAX_VALUES]){
         int x,y,xx7;
@@ -866,6 +866,7 @@ void rp_PAC_get_single_reading (double reading_vector[READING_MAX_VALUES]){
                 else if (verbose > 3) fprintf(stderr, "PAC READING: Ampl=%10.4f V Phase=%10.4f deg a=%10.4f b=%10.4f  FPGA: %10.4f %10.4f FIR: %10.4f %10.4f  M %10.4f V  pfpga=%10.4f\n", v,p, a,b, x4, x10, x5, x6, x3, pfpga);
         }
 }
-        
+
+#endif
 
 

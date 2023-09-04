@@ -79,6 +79,25 @@
 #define SPMC_GVP_CONTROL              (SPMC_BASE + 0) // 0: reset 1: setvec
 #define SPMC_GVP_VECTOR_DATA          (SPMC_BASE + 1) // 1..16 // 512 bits (16x32)
 
+// GVP VCETOR COMPONETS IN ARRAY AT OFFESTS
+//                   decii      du        dz        dy        dx     Next       Nrep,   Options,     nii,      N,    [Vadr]
+#define GVP_VEC_VADR  0
+#define GVP_VEC_N     1
+#define GVP_VEC_NII   2
+#define GVP_VEC_OPT   3
+#define GVP_VEC_NREP  4
+#define GVP_VEC_NEXT  5
+#define GVP_VEC_DX    6
+#define GVP_VEC_DY    7
+#define GVP_VEC_DZ    8
+#define GVP_VEC_DU    9
+#define GVP_VEC_010   10
+#define GVP_VEC_011   11
+#define GVP_VEC_012   12
+#define GVP_VEC_013   13
+#define GVP_VEC_014   14
+#define GVP_VEC_DECII 15
+
 #define SPMC_CFG_AD5791_DAC_AXIS_DATA (SPMC_BASE + 17) // 32bits
 #define SPMC_CFG_AD5791_DAC_CONTROL   (SPMC_BASE + 18) // bits 0,1,2: axis; bit 3: config mode; bit 4: send config data, MUST reset "send bit in config mode to resend next, on hold between"
 
@@ -102,6 +121,19 @@ extern CDoubleParameter  SPMC_SIGNAL_MONITOR;
 extern CDoubleParameter  SPMC_X_MONITOR;
 extern CDoubleParameter  SPMC_Y_MONITOR;
 extern CDoubleParameter  SPMC_Z_MONITOR;
+
+// Integer to binary string. Writes a string of n "bit" characters '1' or '0' as of x&[1<<(N-1)]] to b[0..n-1] and terminating b[n]=0.
+// NOTE: b[] must be at least n+1 bytes long, termination 0 is written to b[n].
+// Returns passed b pointer for convenience
+// Example: { char b16[17]; printf("%s", int_to_binary(b, 1234, 16); }
+
+const char *int_to_binary (char b[], int x, int n){
+        char *p = b;
+	for (int z = 1<<(n-1); z > 0; z >>= 1)
+                *p++ = (x & z) ? '1' : '0';
+        *p = 0;
+	return b;
+}
 
 
 /* ****
@@ -554,65 +586,74 @@ void rp_spmc_set_zservo_gxsm_speciality_setting (int mode, double z_setpoint, do
         set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_LEVEL, (int)round (Q31*level/SPMC_AD5791_REFV)); // => +/-5V range in Q31
 }
 
+#define DBG_SETUPGVP
+
 // RPSPMC GVP Engine Management
 void rp_spmc_gvp_config (bool reset=true, bool program=false, bool pause=false){
-        if (!reset)
+        if (!reset){
                 rp_spmc_AD5791_set_stream_mode (); // enable streaming for AD5791 DAC's from FPGA now!
-
-        usleep(10000);
-                
-        set_gpio_cfgreg_int32 (SPMC_GVP_CONTROL,
-                               (reset ? 1:0) | (program ? 2:0) | (pause ? 4:0)
-                               );
-        if (verbose > 1) fprintf(stderr, "##Configure GVP: %08x", (reset ? 1:0) | (program ? 2:0) | (pause ? 4:0)); 
+                //usleep(1000);
+        }
+        int cfg = (reset ? 1:0) | (program ? 2:0) | (pause ? 4:0);
+        set_gpio_cfgreg_int32 (SPMC_GVP_CONTROL, cfg);
+        usleep(1000);
+        //if (verbose > 1)
+#ifdef DBG_SETUPGVP
+        char s8[9]; memset(s8, 0, 9);
+        fprintf(stderr, "##Configure GVP: %08x => [Paus Prg Res] %s\n", cfg, int_to_binary(s8, cfg, 3)); 
+        rp_spmc_update_readings ();
+#endif
 }
 
 //void rp_spmc_set_gvp_vector (CFloatSignal &vector){
 void rp_spmc_set_gvp_vector (int pc, int n, int nii, unsigned int opts, int nrp, int nxt, int decii,
                              double dx, double dy, double dz, double du){
-        rp_spmc_gvp_config (); // put in reset/hold mode
-        usleep(10000);
+        rp_spmc_gvp_config (); // assure reset+hold mode
+
+        fprintf(stderr, "Write Vector[PC=%03d] init", pc);
         // write GVP-Vector [vector[0]] components
-        //                      du        dz        dy        dx     Next       Nrep,   Options,     nii,      N,    [Vadr]
-        //data = {192'd0, 32'd0000, 32'd0000, -32'd0002, -32'd0002,  32'd0, 32'd0000,   32'h001, 32'd0128, 32'd005, 32'd00 };
-        fprintf(stderr, "Write Vector[PC=%03d] = ", pc);
-        int i=0;
-        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA+i++, pc);
+        //                   decii      du        dz        dy        dx     Next       Nrep,   Options,     nii,      N,    [Vadr]
+        //data = {160'd0, 32'd0064, 32'd0000, 32'd0000, -32'd0002, -32'd0002,  32'd0, 32'd0000,   32'h001, 32'd0128, 32'd005, 32'd00 };
+        fprintf(stderr, "Write Vector[PC=%03d] = [", pc);
+        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_VADR, pc);
 
-        fprintf(stderr, "%04d ", n);
-        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA+i++, n);
+        fprintf(stderr, "%04d, ", n);
+        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_N, n);
 
-        fprintf(stderr, "%04d ", nii);
-        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA+i++, nii);
+        fprintf(stderr, "%04d, ", nii);
+        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_NII, nii);
 
-        fprintf(stderr, "%04d ", opts);
-        set_gpio_cfgreg_uint32 (SPMC_GVP_VECTOR_DATA+i++, opts);
+        fprintf(stderr, "%04d, ", opts);
+        set_gpio_cfgreg_uint32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_OPT, opts);
 
-        fprintf(stderr, "%04d ", nrp);
-        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA+i++, nrp);
+        fprintf(stderr, "%04d, ", nrp);
+        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_NREP, nrp);
 
-        fprintf(stderr, "%04d ", nxt);
-        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA+i++, nxt);
+        fprintf(stderr, "%04d, ", nxt);
+        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_NEXT, nxt);
 
-        fprintf(stderr, "%8.10g mV ", 1000.*dx);
-        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA+i++, (int)round(Q31*dx/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
+        fprintf(stderr, "%8.10g mV, ", 1000.*dx);
+        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_DX, (int)round(Q31*dx/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
 
-        fprintf(stderr, "%8.10g mV ", 1000.*dy);
-        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA+i++, (int)round(Q31*dy/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
+        fprintf(stderr, "%8.10g mV, ", 1000.*dy);
+        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_DY, (int)round(Q31*dy/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
 
-        fprintf(stderr, "%8.10g mV ", 1000.*dz);
-        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA+i++, (int)round(Q31*dz/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
+        fprintf(stderr, "%8.10g mV, ", 1000.*dz);
+        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_DZ, (int)round(Q31*dz/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
 
-        fprintf(stderr, "%8.10g mV ", 1000.*du);
-        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA+i++, (int)round(Q31*du/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
+        fprintf(stderr, "%8.10g mV, ", 1000.*du);
+        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_DU, (int)round(Q31*du/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
 
-        fprintf(stderr, "decii=%d ", decii); // last vector componet
-        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA+15, decii);  // decimation
+        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_010, 0);  // clear bits
+        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_011, 0);  // clear bits
+        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_012, 0);  // clear bits
+        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_013, 0);  // clear bits
+        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_014, 0);  // clear bits
 
-        fprintf(stderr, "\n" );
-        usleep(10000);
+        fprintf(stderr, "0,0,0,0, decii=%d]\n", decii); // last vector component is decii
+        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_DECII, decii);  // decimation
+
         rp_spmc_gvp_config (true, true); // load vector
-        usleep(10000);
         rp_spmc_gvp_config (true, false);
 }
 
@@ -660,12 +701,28 @@ double rp_spmc_read_Signal_Monitor(){
         return 0.0; //SPMC_AD5791_REFV*(double)read_gpio_reg_int32 (7,1) / Q31;
 }
 
+
 void rp_spmc_update_readings (){
+        char b8[9];
+        char b16[17];
         int gvpstatus = read_gpio_reg_int32 (3,1);
         int gvpsec = read_gpio_reg_int32 (10,0);
         int gvpi   = read_gpio_reg_int32 (10,1);
         SPMC_GVP_STATUS.Value () = gvpstatus;
-        fprintf(stderr, "## GVP status: %d S: %x  Sec=%d i%d\n", gvpstatus>>8, gvpstatus&0xff, gvpsec, gvpi);
+
+
+        //## **********: 0000HFZ ADrdy: * GVPS:     SectPPPSFPRS Sec *** SecI ****
+        //## GVP status: 0000010 ADrdy: 1 GVPS: 0000000000101000 Sec=000 SecI0000
+       
+        //                        32        3      2         1      1      1       1
+        //assign dbg_status = { sec[4:0], pvc, store, finished, pause, reset, setvec };
+
+        fprintf(stderr, "## **********: 0000HFZ ADrdy: * GVPS:     SectPPPSFPRS Sec *** SecI ****\n");
+        fprintf(stderr, "## GVP status: %s ADrdy: %d GVPS: %s Sec=%03d SecI%04d\n",
+                int_to_binary (b8, gvpstatus&0x7f, 7),
+                ((gvpstatus>>7)&1)?1:0,
+                int_to_binary (b16, gvpstatus>>8, 16),
+                gvpsec, gvpi);
 
         SPMC_BIAS_MONITOR.Value () = rp_spmc_read_Bias_Monitor();
         SPMC_X_MONITOR.Value () = rp_spmc_read_X_Monitor();
@@ -675,3 +732,4 @@ void rp_spmc_update_readings (){
         SPMC_SIGNAL_MONITOR.Value () = rp_spmc_read_Signal_Monitor();
 
 }
+

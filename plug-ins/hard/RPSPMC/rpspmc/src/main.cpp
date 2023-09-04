@@ -293,8 +293,8 @@ CDoubleParameter CONTROL_DFREQ_MONITOR("CONTROL_DFREQ_MONITOR", CBaseParameter::
 // *** DBG ***                                                                                                //        -----------------------                             (8,1); // GPIO X16: --- XMON
 // *** DBG ***                                                                                                //        -----------------------                             (9,0); // GPIO X17: --- YMON
 // *** DBG ***                                                                                                //        -----------------------                             (9,1); // GPIO X18: --- ZMON
-// *** DBG ***                                                                                                //        -----------------------                            (10,0); // GPIO X19: ---
-// *** DBG ***                                                                                                //        -----------------------                            (10,1); // GPIO X20: ---
+// *** DBG ***                                                                                                //        -----------------------                            (10,0); // GPIO X19: --- GVP-SEC
+// *** DBG ***                                                                                                //        -----------------------                            (10,1); // GPIO X20: --- GVP-I
 
 
 
@@ -892,13 +892,13 @@ void read_bram (int n, int dec, int t_mode, double gain1, double gain2){
                         SIGNAL_CH2[k]  = (float)iy32/Q31*10.0; // correct to Q31 * 10V
                 }
                 break;
-        case 8: // Debug and Testing Channels [McBSP bits]
+        case 8: // Debug and Testing *** Channels [McBSP bits]
                 i += index_shift;
                 for (k=0; k < SIGNAL_SIZE_DEFAULT; ++k){
-                        int32_t ix32 = *((int32_t *)((uint8_t*)FPGA_PACPLL_bram+i)); i+=4; // IN1 - AC (IN1-MDC AC dec + filtered) (16)
-                        int32_t iy32 = *((int32_t *)((uint8_t*)FPGA_PACPLL_bram+i)); i+=4; // IN1 - DC (IN1 IIR LP dec + filtered) (16)
-                        SIGNAL_CH1[k] = (float)ix32*gain1/Q22*1000.;
-                        SIGNAL_CH2[k] = (float)iy32*gain2/Q22*1000.; // where is the 1/2 ???
+                        int32_t ix32 = *((int32_t *)((uint8_t*)FPGA_PACPLL_bram+i)); i+=4; //DBG AXIS7 -- IN1 - AC (IN1-MDC AC dec + filtered) (16)
+                        int32_t iy32 = *((int32_t *)((uint8_t*)FPGA_PACPLL_bram+i)); i+=4; //DBG AXIS8 -- IN1 - DC (IN1 IIR LP dec + filtered) (16)
+                        SIGNAL_CH1[k] = (float)ix32; //*gain1/Q22*1000.;
+                        SIGNAL_CH2[k] = (float)iy32; //*gain2/Q22*1000.; // where is the 1/2 ???
                 }
 #ifdef GPIODEBUG_ON
                 i += index_shift;

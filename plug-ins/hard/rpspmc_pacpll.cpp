@@ -3306,7 +3306,7 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
                 "Phase, dFreq,[Am,Ex]", // [5] SCAN
                 "DHC: dFreq, dFControl", // [6] DFC Adjust
                 "DDR IN1/IN2",          // [7] SCOPE with DEC=1,SHR=0 Double(max) Data Rate config
-                "DEBUG McBSP",          // [8]
+                "AXIS7/8",             // [8]
                 NULL };
    
 	// Init choicelist
@@ -4527,8 +4527,8 @@ void RPspmc_pacpll::dynamic_graph_draw_function (GtkDrawingArea *area, cairo_t *
                                      pacpll_signals.signal_phase, pacpll_signals.signal_ampl  }; // 5,6 PHASE, AMPL in Tune Mode, averaged from burst
                 double x,xf,min,max,s,ydb,yph;
 
-                const gchar *ch01_lab[2][10] = { {"IN1", "IN1-AC", "Ampl", "dPhase", "Phase", "Phase", "-", "-", "DBG", NULL },
-                                                 {"IN2", "IN1-DC", "Exec", "dFreq ", "Ampl ", "dFreq", "-", "-", "DBG", NULL } }; 
+                const gchar *ch01_lab[2][10] = { {"IN1", "IN1-AC", "Ampl", "dPhase", "Phase", "Phase", "-", "-", "AX7", NULL },
+                                                 {"IN2", "IN1-DC", "Exec", "dFreq ", "Ampl ", "dFreq", "-", "-", "AX8", NULL } }; 
                 
                 if (operation_mode >= 6 && operation_mode <= 9){
                         if (operation_mode == 9)
@@ -4643,8 +4643,10 @@ void RPspmc_pacpll::dynamic_graph_draw_function (GtkDrawingArea *area, cairo_t *
                                                  || (ch == 1 && channel_selections[0]==6) // OP:  Phase, dFreq
                                                 )
                                                     wave->set_xy_fast (k, x, freq_to_y (s, y_hi)), tic_hz=1; // Hz
-                                        else if ( channel_selections[0]==9 && ch < 2){
-                                                wave->set_xy_fast (k, x,-yr*(gain_scale[ch]>0.?gain_scale[ch]:1.)*signal[ch][k]), tic_lin=1; // else: linear scale with gain
+                                        else if ( channel_selections[0]==9 && ch < 2){ // DBG AXIS7/8
+                                                if (fabs (signal[ch][k]) > 10)
+                                                        g_print("%04d C%01d: %g, %g * %g\n",k,ch,x,gain_scale[ch],signal[ch][k]);
+                                                wave->set_xy_fast_clip_y (k, x,-yr*(gain_scale[ch]>0.?gain_scale[ch]:1.)*signal[ch][k], yr), tic_lin=1; // else: linear scale with gain
 #if 0
                                                 for (int bit=0; bit<binary_BITS; ++bit)
                                                         binwave8bit[bit]->set_xy_fast (k, x, binary_to_y (signal[ch][k], bit, ch, y_hi, binary_BITS));

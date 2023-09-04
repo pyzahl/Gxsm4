@@ -123,6 +123,7 @@ public:
         };
 	virtual void draw (cairo_t* cr, double alpha=1.0, gboolean tr=true) {};
         virtual void set_xy_fast (int i, double x, double y) { xy[i].x=x, xy[i].y=y; };
+        virtual void set_xy_fast_clip_y (int i, double x, double y, double ymax=1000.) { if (fabs(y) > ymax) y=ymax;  xy[i].x=x, xy[i].y=y; };
         virtual void set_xy_test (int i, double x, double y) { 
                 if (x == NAN || x == -NAN) x = 0.; // NAN catch
                 if (y == NAN || y == -NAN) y = 0.; // NAN catch

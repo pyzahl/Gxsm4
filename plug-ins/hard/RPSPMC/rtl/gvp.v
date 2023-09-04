@@ -25,11 +25,20 @@ module gvp #(
     parameter NUM_VECTORS    = 8
 )
 (
+    // (* X_INTERFACE_PARAMETER = "FREQ_HZ 125000000" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF M_AXIS1:M_AXIS2" *)
     input a_clk,    // clocking up to aclk
     input reset,  // put into reset mode (set program and hold)
     input pause,  // put/release into/from pause mode -- always completes the "ii" nop cycles!
     input setvec, // program vector data using vp_set data
     input [512-1:0] vp_set, // [VAdr], [N, NII, Options, Nrep, Next, dx, dy, dz, du] ** full vector data set block **
+    
+    output wire [32-1:0]  M_AXIS1_tdata, // Lck-X
+    output wire           M_AXIS1_tvalid,
+    output wire [32-1:0]  M_AXIS2_tdata, // Lck-Y
+    output wire           M_AXIS2_tvalid,
+
     output [32-1:0] x, // vector components
     output [32-1:0] y, // ..
     output [32-1:0] z, // ..
@@ -39,8 +48,11 @@ module gvp #(
     output [1:0 ] store_data, // trigger to store data:: 2: full vector header, 1: data sources
     output [32-1:0] dbg_i,    // data count
     output gvp_finished,       // finished flag
-    output gvp_hold            // on hold/pause
+    output gvp_hold,            // on hold/pause
+    output [15:0] dbg_status
     );
+
+    reg [512-1:0] vp_set_data; // [VAdr], [N, NII, Options, Nrep, Next, dx, dy, dz, du] ** full vector data set block **
     
     //localparam integer NUM_VECTORS = 1 << NUM_VECTORS_N2;
     reg [32-1:0] decimation=0;
@@ -61,14 +73,14 @@ module gvp #(
     reg [32-1:0]  vec_options[NUM_VECTORS-1:0];
     reg [32-1:0]  vec_nrep[NUM_VECTORS-1:0];
     reg [32-1:0]  vec_deci[NUM_VECTORS-1:0];
-    reg signed [8-1:0]   vec_next[NUM_VECTORS-1:0];
+    reg signed [NUM_VECTORS_N2:0] vec_next[NUM_VECTORS-1:0];
 
     reg signed [32-1:0]  vec_dx[NUM_VECTORS-1:0];
     reg signed [32-1:0]  vec_dy[NUM_VECTORS-1:0];
     reg signed [32-1:0]  vec_dz[NUM_VECTORS-1:0];
     reg signed [32-1:0]  vec_du[NUM_VECTORS-1:0];
     
-    reg [NUM_VECTORS_N2-1:0] pvc=0; // program counter. 0...NUM_VECTORS-1
+    reg signed [NUM_VECTORS_N2:0] pvc=0; // program counter. 0...NUM_VECTORS-1 "+ signuma bit"
 
     // data vector register
     reg signed [32-1:0]  vec_x=0;
@@ -104,6 +116,10 @@ module gvp #(
         begin
             rdecii <= decimation;
             clk <= !clk;
+            if (setvec)
+            begin
+                vp_set_data <= vp_set; // buffer
+            end
         end else begin
             rdecii <= rdecii-1;
         end
@@ -115,20 +131,20 @@ module gvp #(
     begin
         if (setvec)
         begin
-            vec_n[vp_set [NUM_VECTORS_N2:0]]       <= vp_set [2*32-1:1*32];
-            vec_iin[vp_set [NUM_VECTORS_N2:0]]     <= vp_set [3*32-1:2*32];
-            vec_options[vp_set [NUM_VECTORS_N2:0]] <= vp_set [4*32-1:3*32];
+            vec_n[vp_set [NUM_VECTORS_N2:0]]       <= vp_set_data [2*32-1:1*32];
+            vec_iin[vp_set [NUM_VECTORS_N2:0]]     <= vp_set_data [3*32-1:2*32];
+            vec_options[vp_set [NUM_VECTORS_N2:0]] <= vp_set_data [4*32-1:3*32];
             
-            vec_nrep[vp_set [NUM_VECTORS_N2:0]]    <= vp_set [5*32-1:4*32];
-            vec_i[vp_set [NUM_VECTORS_N2:0]]       <= vp_set [5*32-1:4*32];
+            vec_nrep[vp_set [NUM_VECTORS_N2:0]]    <= vp_set_data [5*32-1:4*32];
+            vec_i[vp_set [NUM_VECTORS_N2:0]]       <= vp_set_data [5*32-1:4*32];
 
-            vec_deci[vp_set [NUM_VECTORS_N2:0]]    <= vp_set [16*32-1:15*32]; // all over process decimation adjust
+            vec_deci[vp_set [NUM_VECTORS_N2:0]]    <= vp_set_data [16*32-1:15*32]; // all over process decimation adjust
             
-            vec_next[vp_set [NUM_VECTORS_N2:0]]    <= vp_set [6*32-1:5*32];
-            vec_dx[vp_set [NUM_VECTORS_N2:0]]      <= vp_set [7*32-1:6*32];
-            vec_dy[vp_set [NUM_VECTORS_N2:0]]      <= vp_set [8*32-1:7*32];
-            vec_dz[vp_set [NUM_VECTORS_N2:0]]      <= vp_set [9*32-1:8*32];
-            vec_du[vp_set [NUM_VECTORS_N2:0]]      <= vp_set [10*32-1:9*32];
+            vec_next[vp_set [NUM_VECTORS_N2:0]]    <= vp_set_data [5*32+NUM_VECTORS_N2:5*32]; // limited to +/- NUM_VECTORS
+            vec_dx[vp_set [NUM_VECTORS_N2:0]]      <= vp_set_data [7*32-1:6*32];
+            vec_dy[vp_set [NUM_VECTORS_N2:0]]      <= vp_set_data [8*32-1:7*32];
+            vec_dz[vp_set [NUM_VECTORS_N2:0]]      <= vp_set_data [9*32-1:8*32];
+            vec_du[vp_set [NUM_VECTORS_N2:0]]      <= vp_set_data [10*32-1:9*32];
         end
         else
         begin
@@ -148,11 +164,14 @@ module gvp #(
                     load_next_vector <= 0;
                     i   <= vec_n[pvc];
                     ii  <= vec_iin[pvc];
-                    decimation <= vec_deci[pvc];
                     if (vec_n[pvc] == 0) // n == 0: END OF VECTOR PROGRAM REACHED
                     begin
                         decimation <= 1; // reset to fast 
                         finished <= 1;
+                    end 
+                    else
+                    begin
+                        decimation <= vec_deci[pvc];
                     end
                 end
                 else
@@ -203,6 +222,12 @@ module gvp #(
     assign y = vec_y;
     assign z = vec_z;
     assign u = vec_u;
+
+    assign M_AXIS1_tdata = i;
+    assign M_AXIS1_tvalid = 1;
+    assign M_AXIS2_tdata = vec_u;
+    assign M_AXIS2_tvalid = 1;
+
     
     assign section = sec;
     
@@ -210,6 +235,9 @@ module gvp #(
     assign gvp_finished = finished;
     assign hold = pause;
     
+    
     assign dbg_i = i;
+    //                      32        3      2         1      1      1       1
+    assign dbg_status = { sec[4:0], pvc, store, finished, pause, reset, setvec };
     
 endmodule
