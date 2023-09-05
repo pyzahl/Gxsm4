@@ -76,7 +76,7 @@ module axis_AD5791 #(
     reg [6-1:0] frame_bit_counter=0;
     reg [4-1:0]state_load_dacs=0;
     
-    reg [4:0] rdecii = 0; //4 for tetsing slow [1:0]
+    reg [2:0] rdecii = 0; //4 for tetsing slow [1:0]
 
     integer i;
     initial begin
@@ -91,7 +91,7 @@ module axis_AD5791 #(
     always @ (posedge a_clk) // 120MHz
     begin
         rdecii <= rdecii+1;
-        PMD_clk <= rdecii[4]; // 1/4 => 30MHz  , 4: testing slow
+        PMD_clk <= rdecii[2]; // 1/4 => 30MHz  , 4: testing slow
     end
 
     // Latch data from AXIS when new
