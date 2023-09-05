@@ -1031,22 +1031,22 @@ int rpspmc_hwi_dev::GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v){
         gvp_vector_i [I_GVP_N       ] = v->n;
         gvp_vector_i [I_GVP_NII     ] = v->dnx;
         gvp_vector_i [I_GVP_OPTIONS ] = (v->srcs << 16) | (v->options & 0xffff);
-        gvp_vector_i [I_GVP_NREP    ] = v->repetitions;
+        gvp_vector_i [I_GVP_NREP    ] = v->repetitions > 1 ? v->repetitions-1 : 0;
         gvp_vector_i [I_GVP_NEXT    ] = v->ptr_next;
         gvp_vector_i [I_GVP_DECII   ] = RPSPMC_GVP_decii;
 
         // v->ptr_fb;
         // v->ptr_final;
 
-        gvp_vector_d [D_GVP_DX      ] = v->f_dx;
-        gvp_vector_d [D_GVP_DY      ] = v->f_dy;
-        gvp_vector_d [D_GVP_DZ      ] = v->f_dz;
+        gvp_vector_d [D_GVP_DX      ] = main_get_gapp()->xsm->Inst->XA2Volt(v->f_dx);
+        gvp_vector_d [D_GVP_DY      ] = main_get_gapp()->xsm->Inst->YA2Volt(v->f_dy);
+        gvp_vector_d [D_GVP_DZ      ] = main_get_gapp()->xsm->Inst->ZA2Volt(v->f_dz);
         gvp_vector_d [D_GVP_DU      ] = v->f_du;
 
-        g_print ("Vec[%2d] = [#%4d, %4d, 0x%08x, nr%03d, n%02d, f%02d, {dU %d dXYZ %d %d %d}]\n",
+        g_print ("Vec[%2d] = [#%4d, %4d, 0x%08x, nr%03d, pc%02d, [fv%02d], {dU %g V dXYZ %g A %g A %g A} ]  %g ZV/1A\n",
                  i, v->n, v->dnx, v->srcs,
                  v->repetitions, v->ptr_next, v->ptr_final,
-                 v->f_du, v->f_dx, v->f_dy, v->f_dz);
+                 v->f_du, v->f_dx, v->f_dy, v->f_dz,  main_get_gapp()->xsm->Inst->ZA2Volt(1.0));
 #if 0
         // check count ranges
         // NULL VECTOR, OK: END

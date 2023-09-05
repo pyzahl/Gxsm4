@@ -679,7 +679,7 @@ int rp_app_init(void)
                         fprintf(stderr, "Red Pitaya RPSPMC PACPLL API init failed!\n");
                         return EXIT_FAILURE;
                 }
-        else fprintf(stderr, "Red Pitaya RPSPMC PACPLL API init success!\n");
+        else fprintf(stderr, "Red Pitaya RPSPMC PACPLL API init memory mappings success!\n");
 
         rp_PAC_auto_dc_offset_adjust ();
 
@@ -695,7 +695,10 @@ int rp_app_init(void)
 
         // Init SPMC
         rp_spmc_AD5791_init ();
-        
+
+        rp_spmc_gvp_init ();
+
+        fprintf(stderr, "Red Pitaya RPSPMC PACPLL API init completed!\n");
         return 0;
 }
 

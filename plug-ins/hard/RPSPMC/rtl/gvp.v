@@ -49,9 +49,13 @@ module gvp #(
     output [32-1:0] dbg_i,    // data count
     output gvp_finished,       // finished flag
     output gvp_hold,            // on hold/pause
-    output [15:0] dbg_status
+    output [32-1:0] dbg_status
     );
 
+    // buffers
+    reg reset_flg=1;  // put into reset mode (set program and hold)
+    reg pause_flg=0;  // put/release into/from pause mode -- always completes the "ii" nop cycles!
+    reg setvec_flg=0; // program vector data using vp_set data
     reg [512-1:0] vp_set_data; // [VAdr], [N, NII, Options, Nrep, Next, dx, dy, dz, du] ** full vector data set block **
     
     //localparam integer NUM_VECTORS = 1 << NUM_VECTORS_N2;
@@ -112,11 +116,14 @@ module gvp #(
 
     always @ (posedge a_clk) // 120MHz
     begin
+        reset_flg  <= reset;  // put into reset mode (set program and hold)
+        pause_flg  <= pause;  // put/release into/from pause mode -- always completes the "ii" nop cycles!
+        setvec_flg <= setvec; // program vector data using vp_set data
         if (rdecii == 0)
         begin
             rdecii <= decimation;
             clk <= !clk;
-            if (setvec)
+            if (setvec_flg)
             begin
                 vp_set_data <= vp_set; // buffer
             end
@@ -129,7 +136,7 @@ module gvp #(
     // runs GVP code if out of reset mode until finished!
     always @(posedge clk) // run on decimated clk as required
     begin
-        if (setvec)
+        if (setvec_flg)
         begin
             vec_n[vp_set [NUM_VECTORS_N2:0]]       <= vp_set_data [2*32-1:1*32];
             vec_iin[vp_set [NUM_VECTORS_N2:0]]     <= vp_set_data [3*32-1:2*32];
@@ -148,7 +155,7 @@ module gvp #(
         end
         else
         begin
-            if (reset) // reset mode / hold
+            if (reset_flg) // reset mode / hold
             begin
                 pvc <= 0;
                 sec <= 0;
@@ -188,7 +195,7 @@ module gvp #(
                         ii <= ii-1;
                     end
                     else
-                    if (!pause)        
+                    if (!pause_flg)        
                     begin // arrived at data point
                         store <= 1; // store data sources (push trigger)
                         if (i) // advance to next point...
@@ -233,11 +240,11 @@ module gvp #(
     
     assign store_data = store;
     assign gvp_finished = finished;
-    assign hold = pause;
+    assign hold = pause_flg;
     
     
-    assign dbg_i = i;
-    //                      32        3      2         1      1      1       1
-    assign dbg_status = { sec[4:0], pvc, store, finished, pause, reset, setvec };
+    assign dbg_i = vec_n[0];
+    //                      32                              3      2         1      1      1       1
+    assign dbg_status = {{(32-4-2-3-3){1'b0}}, sec[4:0], pvc, store, finished, pause, reset, setvec };
     
 endmodule

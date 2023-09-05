@@ -132,18 +132,22 @@ public:
 	virtual double YA2Dig(double ang){ return(ang/YResolution()); };
 	virtual double ZA2Dig(double ang){ return(ang/ZResolution()); };
 
-        virtual double XA2Volt(double ang){ return(ang*xPsens/Vx); }; // xPsens V/Ang **   Volts = Ang * xPsens / Vx
-	virtual double YA2Volt(double ang){ return(ang*yPsens/Vy); };
-	virtual double ZA2Volt(double ang){ return(ang*zPsens/Vz); };
+        virtual double XA2Volt(double ang){ return(ang/xPsens/Vx); }; // xPsens Ang/V **   Volts = Ang * xPsens / Vx
+	virtual double YA2Volt(double ang){ return(ang/yPsens/Vy); };
+	virtual double ZA2Volt(double ang){ return(ang/zPsens/Vz); };
 
-        virtual double Volt2XA(double U){ return(U*Vx/xPsens); }; // xPsens V/Ang **   U = Ang * xPsens / Vx
-	virtual double Volt2YA(double U){ return(U*Vy/yPsens); };
-	virtual double Volt2ZA(double U){ return(U*Vz/zPsens); };
+        virtual double Volt2XA(double U){ return(U*Vx*xPsens); }; // xPsens Ang/V **   U = Ang * xPsens / Vx
+	virtual double Volt2YA(double U){ return(U*Vy*yPsens); };
+	virtual double Volt2ZA(double U){ return(U*Vz*zPsens); };
         
-        virtual double X0A2Volt(double ang){ return(ang*xPsens/Vx0); }; // xPsens V/Ang
-	virtual double Y0A2Volt(double ang){ return(ang*yPsens/Vy0); };
-	virtual double Z0A2Volt(double ang){ return(ang*zPsens/Vz0); };
+        virtual double X0A2Volt(double ang){ return(ang/xPsens/Vx0); }; // xPsens Ang/V
+	virtual double Y0A2Volt(double ang){ return(ang/yPsens/Vy0); };
+	virtual double Z0A2Volt(double ang){ return(ang/zPsens/Vz0); };
 
+        virtual double Volt2X0A(double U){ return(U*Vx0*xPsens); }; // xPsens Ang/V **   U = Ang * xPsens / Vx
+	virtual double Volt2Y0A(double U){ return(U*Vy0*yPsens); };
+	virtual double Volt2Z0A(double U){ return(U*Vz0*zPsens); };
+        
 	virtual double Dig2X0A(long dig){ return(X0Resolution()*(double)dig); };
 	virtual double Dig2Y0A(long dig){ return(Y0Resolution()*(double)dig); };
 	virtual double Dig2Z0A(long dig){ return(Z0Resolution()*(double)dig); };
@@ -181,9 +185,9 @@ public:
 	virtual double dHertz2V(double v){ return UInLimit(v*dHertz2Volt); };
 	virtual double eV2V(double eV){ return UOutLimit(eV/eV2Volt); };
 	virtual double V2BiasV(double U){return U*BiasGain+BiasOffset; }; // used to determin the correct voltages for STS ramps
-	virtual double V2XAng(double U){return U*xR/AnalogVMaxOut; }; // convert volts (piezo) to Ang (X)
-	virtual double V2YAng(double U){return U*yR/AnalogVMaxOut; }; // convert volts (piezo) to Ang (Y)
-	virtual double V2ZAng(double U){return U*zR/AnalogVMaxOut; }; // convert volts (piezo) to Ang (Z)
+	virtual double V2XAng(double U){ return Volt2XA(U); }; //return U*xR/AnalogVMaxOut; }; // convert volts (piezo) to Ang (X)
+	virtual double V2YAng(double U){ return Volt2YA(U); }; //return U*yR/AnalogVMaxOut; }; // convert volts (piezo) to Ang (Y)
+	virtual double V2ZAng(double U){ return Volt2ZA(U); }; //return U*zR/AnalogVMaxOut; }; // convert volts (piezo) to Ang (Z)
 
 	gchar *type;
 	gchar *name;
