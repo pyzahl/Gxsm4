@@ -267,7 +267,7 @@ XSM_Hardware *get_gxsm_hwi_hardware_class ( void *data ) {
 	// probe for harware here...
 	rpspmc_hwi = new rpspmc_hwi_dev ();
 	
-        main_get_gapp()->monitorcontrol->LogEvent ("HwI: probing succeeded.", "SPM Template System Ready.");
+        main_get_gapp()->monitorcontrol->LogEvent ("HwI: probing succeeded.", "RP SPM Control System Ready.");
 	return rpspmc_hwi;
 }
 
@@ -311,6 +311,10 @@ static void rpspmc_pacpll_hwi_query(void)
 // ==================================================
 	PI_DEBUG (DBG_L2, "rpspmc_pacpll_query:new" );
 
+        // first
+        rpspmc_pacpll = new RPspmc_pacpll (main_get_gapp() -> get_app ());
+
+        // second
 	RPSPMC_ControlClass = new RPSPMC_Control (main_get_gapp() -> get_app ());
         
 	rpspmc_pacpll_hwi_pi.status = g_strconcat(N_("Plugin query has attached "),
@@ -318,7 +322,6 @@ static void rpspmc_pacpll_hwi_query(void)
                                                   N_(": " THIS_HWI_PREFIX "-Control is created."),
                                                   NULL);
 
-        rpspmc_pacpll = new RPspmc_pacpll (main_get_gapp() -> get_app ());
 
 	PI_DEBUG (DBG_L2, "rpspmc_pacpll_query:res" );
 	
@@ -940,10 +943,10 @@ void RPSPMC_Control::save_values (NcFile *ncf){
 	PI_DEBUG (DBG_L4, "RPSPMC_Control::save_values");
 	gchar *i=NULL;
 
-        i = g_strconcat ("SPM Template HwI ** Hardware-Info:\n", rpspmc_hwi->get_info (), NULL);
+        i = g_strconcat ("RP SPM Control HwI ** Hardware-Info:\n", rpspmc_hwi->get_info (), NULL);
 
-	NcDim* infod  = ncf->add_dim("sranger_info_dim", strlen(i));
-	NcVar* info   = ncf->add_var("sranger_info", ncChar, infod);
+	NcDim* infod  = ncf->add_dim("rpspmc_info_dim", strlen(i));
+	NcVar* info   = ncf->add_var("rpspmc_info", ncChar, infod);
 	info->add_att("long_name", "RPSPMC_Control plugin information");
 	info->put(i, strlen(i));
 	g_free (i);
@@ -1353,7 +1356,7 @@ void RPSPMC_Control::create_folder (){
         bp->set_pcs_remote_prefix ("dsp-"); // for script compatibility reason keeping this the same for all HwI.
 
 // ==== Folder: Feedback & Scan ========================================
-        bp->start_notebook_tab (notebook, "Feedback & Scan", "template-tab-feedback-scan", hwi_settings);
+        bp->start_notebook_tab (notebook, "Feedback & Scan", "rpspmc-tab-feedback-scan", hwi_settings);
 
 	bp->new_grid_with_frame ("SPM Controls");
         
@@ -1637,7 +1640,7 @@ void RPSPMC_Control::create_folder (){
                                   G_CALLBACK (RPSPMC_Control::choice_Ampl_callback),
                                   this);
 
-                gchar *tmpkey = g_strconcat ("spm-template-h", PDR_gain_key[j], NULL); 
+                gchar *tmpkey = g_strconcat ("spm-rpspmc-h", PDR_gain_key[j], NULL); 
                 // get last setting, will call callback connected above to update gains!
                 g_settings_bind (hwi_settings, tmpkey,
                                  G_OBJECT (GTK_COMBO_BOX (wid)), "active",
@@ -1656,7 +1659,7 @@ void RPSPMC_Control::create_folder (){
 
         // ==== Folder: LockIn  ========================================
         bp->new_grid ();
-        bp->start_notebook_tab (notebook, "Lock-In", "template-tab-lockin", hwi_settings);
+        bp->start_notebook_tab (notebook, "Lock-In", "rpspmc-tab-lockin", hwi_settings);
 
  	bp->new_grid_with_frame ("Digital Lock-In settings");
         bp->set_default_ec_change_notice_fkt (RPSPMC_Control::lockin_adjust_callback, this);
@@ -1684,7 +1687,7 @@ void RPSPMC_Control::create_folder (){
         PI_DEBUG (DBG_L4, "DSPC----TAB-IV ------------------------------- ");
 
         bp->new_grid ();
-        bp->start_notebook_tab (notebook, "STS", "template-tab-sts", hwi_settings);
+        bp->start_notebook_tab (notebook, "STS", "rpspmc-tab-sts", hwi_settings);
 	// ==================================================
         bp->new_grid_with_frame ("I-V Type Spectroscopy");
 	// ==================================================
@@ -1727,7 +1730,7 @@ void RPSPMC_Control::create_folder (){
 
         
         bp->new_grid ();
-        bp->start_notebook_tab (notebook, "GVP", "template-tab-gvp", hwi_settings);
+        bp->start_notebook_tab (notebook, "GVP", "rpspmc-tab-gvp", hwi_settings);
 
 	// ========================================
         PI_DEBUG (DBG_L4, "DSPC----TAB-VP ------------------------------- ");
@@ -2006,7 +2009,7 @@ void RPSPMC_Control::create_folder (){
 
 // ==== Folder: Graphs -- Vector Probe Data Visualisation setup ========================================
         bp->new_grid ();
-        bp->start_notebook_tab (notebook, "Graphs", "template-tab-graphs", hwi_settings);
+        bp->start_notebook_tab (notebook, "Graphs", "rpspmc-tab-graphs", hwi_settings);
 
         PI_DEBUG (DBG_L4, "DSPC----TAB-GRAPHS ------------------------------- ");
 
@@ -2158,7 +2161,77 @@ void RPSPMC_Control::create_folder (){
         bp->notebook_tab_show_all ();
         bp->pop_grid ();
 
-  
+
+
+// ==== Folder: RT System Connection ========================================
+        bp->new_grid ();
+        bp->start_notebook_tab (notebook, "RedPitaya Web Socket", "rpspmc-tab-system", hwi_settings);
+
+        PI_DEBUG (DBG_L4, "DSPC----TAB-SYSTEM ------------------------------- ");
+
+        bp->new_grid_with_frame ("RedPitaya Web Socket Address for JSON talk", 10);
+
+        bp->set_input_width_chars (25);
+        rpspmc_pacpll->input_rpaddress = bp->grid_add_input ("RedPitaya Address");
+
+        g_settings_bind (rpspmc_pacpll->inet_json_settings, "redpitay-address",
+                         G_OBJECT (bp->input), "text",
+                         G_SETTINGS_BIND_DEFAULT);
+        gtk_widget_set_tooltip_text (rpspmc_pacpll->input_rpaddress, "RedPitaya IP Address like rp-f05603.local or 130.199.123.123");
+        //  "ws://rp-f05603.local:9002/"
+        //gtk_entry_set_text (GTK_ENTRY (input_rpaddress), "http://rp-f05603.local/pacpll/?type=run");
+        //gtk_entry_set_text (GTK_ENTRY (input_rpaddress), "130.199.243.200");
+        //gtk_entry_set_text (GTK_ENTRY (input_rpaddress), "192.168.1.10");
+        
+        bp->grid_add_check_button ( N_("Connect"), "Check to initiate connection, uncheck to close connection.", 1,
+                                    G_CALLBACK (RPspmc_pacpll::connect_cb), rpspmc_pacpll);
+        bp->grid_add_check_button ( N_("Debug"), "Enable debugging LV1.", 1,
+                                    G_CALLBACK (RPspmc_pacpll::dbg_l1), rpspmc_pacpll);
+        bp->grid_add_check_button ( N_("+"), "Debug LV2", 1,
+                                    G_CALLBACK (RPspmc_pacpll::dbg_l2), rpspmc_pacpll);
+        bp->grid_add_check_button ( N_("++"), "Debug LV4", 1,
+                                    G_CALLBACK (RPspmc_pacpll::dbg_l4), rpspmc_pacpll);
+        rpspmc_pacpll->rp_verbose_level = 0.0;
+        bp->set_input_width_chars (2);
+  	bp->grid_add_ec ("V", Unity, &rpspmc_pacpll->rp_verbose_level, 0., 10., ".0f", 1., 1., "RP-VERBOSE-LEVEL");        
+        //bp->new_line ();
+        //tmp=bp->grid_add_button ( N_("Read"), "TEST READ", 1,
+        //                          G_CALLBACK (RPspmc_pacpll::read_cb), this);
+        //tmp=bp->grid_add_button ( N_("Write"), "TEST WRITE", 1,
+        //                          G_CALLBACK (RPspmc_pacpll::write_cb), this);
+
+        bp->new_line ();
+        bp->set_input_width_chars (80);
+        rpspmc_pacpll->red_pitaya_health = bp->grid_add_input ("RedPitaya Health",10);
+
+        PangoFontDescription *fontDesc = pango_font_description_from_string ("monospace 10");
+        //gtk_widget_modify_font (red_pitaya_health, fontDesc);
+        // ### GTK4 ??? CSS ??? ###  gtk_widget_override_font (red_pitaya_health, fontDesc); // use CSS, thx, annyoing garbage... ??!?!?!?
+        pango_font_description_free (fontDesc);
+
+        gtk_widget_set_sensitive (bp->input, FALSE);
+        gtk_editable_set_editable (GTK_EDITABLE (bp->input), FALSE); 
+        rpspmc_pacpll->update_health ("Not connected.");
+        bp->new_line ();
+
+        rpspmc_pacpll->text_status = gtk_text_view_new ();
+ 	gtk_text_view_set_editable (GTK_TEXT_VIEW (rpspmc_pacpll->text_status), FALSE);
+        //gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (text_status), GTK_WRAP_WORD_CHAR);
+        GtkWidget *scrolled_window = gtk_scrolled_window_new ();
+        gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolled_window), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+        //gtk_widget_set_size_request (scrolled_window, 200, 60);
+        gtk_widget_set_hexpand (scrolled_window, TRUE);
+        gtk_widget_set_vexpand (scrolled_window, TRUE);
+        gtk_scrolled_window_set_child ( GTK_SCROLLED_WINDOW (scrolled_window), rpspmc_pacpll->text_status);
+        bp->grid_add_widget (scrolled_window, 10);
+        gtk_widget_show (scrolled_window);
+        
+        // ========================================
+        bp->pop_grid ();
+        bp->show_all ();
+
+
+        
 	// ============================================================
 	// save List away...
         rpspmc_pacpll_hwi_pi.app->RemoteEntryList = g_slist_concat (rpspmc_pacpll_hwi_pi.app->RemoteEntryList, bp->get_remote_list_head ());
@@ -2786,7 +2859,7 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
         // Window Title
 	AppWindowInit("RPSPMC PACPLL Control for RedPitaya");
 
-        gchar *gs_path = g_strdup_printf ("%s.inet_json_settings", GXSM_RES_BASE_PATH_DOT);
+        gchar *gs_path = g_strdup_printf ("%s.hwi.rpspmc-control", GXSM_RES_BASE_PATH_DOT);
         inet_json_settings = g_settings_new (gs_path);
 
         bp = new BuildParam (v_grid);
@@ -3511,11 +3584,24 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
                           G_CALLBACK (RPspmc_pacpll::scope_buffer_position_callback),
                           this);
 
+        bp->new_line ();
+        run_scope=0;
+        bp->grid_add_check_button ( N_("Scope"), "Enable Scope", 1,
+                                    G_CALLBACK (RPspmc_pacpll::enable_scope), this);
+        scope_width_points  = 512.;
+        scope_height_points = 256.;
+        bp->set_input_width_chars (5);
+  	bp->grid_add_ec ("SW", Unity, &scope_width_points, 256.0, 4096.0, ".0f", 128, 256., "SCOPE-WIDTH");
+        bp->set_input_width_chars (4);
+  	bp->grid_add_ec ("SH", Unity, &scope_height_points, 128.0, 1024.0, ".0f", 128, 256., "SCOPE-HEIGHT");
+
+
         // ========================================
         
         bp->pop_grid ();
         bp->new_line ();
-        
+
+#if 0
         bp->new_grid_with_frame ("RedPitaya Web Socket Address for JSON talk", 10);
 
         bp->set_input_width_chars (25);
@@ -3532,21 +3618,12 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
         
         bp->grid_add_check_button ( N_("Connect"), "Check to initiate connection, uncheck to close connection.", 1,
                                     G_CALLBACK (RPspmc_pacpll::connect_cb), this);
-        run_scope=0;
-        bp->grid_add_check_button ( N_("Scope"), "Enable Scope", 1,
-                                    G_CALLBACK (RPspmc_pacpll::enable_scope), this);
         bp->grid_add_check_button ( N_("Debug"), "Enable debugging LV1.", 1,
                                     G_CALLBACK (RPspmc_pacpll::dbg_l1), this);
         bp->grid_add_check_button ( N_("+"), "Debug LV2", 1,
                                     G_CALLBACK (RPspmc_pacpll::dbg_l2), this);
         bp->grid_add_check_button ( N_("++"), "Debug LV4", 1,
                                     G_CALLBACK (RPspmc_pacpll::dbg_l4), this);
-        scope_width_points  = 512.;
-        scope_height_points = 256.;
-        bp->set_input_width_chars (5);
-  	bp->grid_add_ec ("SW", Unity, &scope_width_points, 256.0, 4096.0, ".0f", 128, 256., "SCOPE-WIDTH");
-        bp->set_input_width_chars (4);
-  	bp->grid_add_ec ("SH", Unity, &scope_height_points, 128.0, 1024.0, ".0f", 128, 256., "SCOPE-HEIGHT");
         rp_verbose_level = 0.0;
         bp->set_input_width_chars (2);
   	bp->grid_add_ec ("V", Unity, &rp_verbose_level, 0., 10., ".0f", 1., 1., "RP-VERBOSE-LEVEL");        
@@ -3586,7 +3663,7 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
         bp->pop_grid ();
         
         bp->show_all ();
- 
+ #endif
         // save List away...
 	//g_object_set_data( G_OBJECT (window), "RPSPMCONTROL_EC_list", EC_list);
 

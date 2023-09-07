@@ -142,7 +142,7 @@ public:
                 vpg_grid = NULL;
 
                 // need to create according xml recource files for this to make work....
-                hwi_settings = g_settings_new (GXSM_RES_BASE_PATH_DOT".hwi.spm-template-control");
+                hwi_settings = g_settings_new (GXSM_RES_BASE_PATH_DOT".hwi.rpspmc-control");
                 Unity    = new UnitObj(" "," ");
                 Volt     = new UnitObj("V","V");
                 Velocity  = new UnitObj("px/s","px/s");
@@ -1085,7 +1085,6 @@ private:
         PACPLL_signals signals;
 
         BuildParam *bp;
-        GSettings *inet_json_settings;
         
         gboolean run_scope;
         gboolean scope_xy_on;
@@ -1110,20 +1109,21 @@ private:
         GtkWidget *signal_graph;
         GtkWidget *dF_control_frame;
         GtkWidget *pulse_control_frame;
-       
-        GtkWidget *input_rpaddress;
-        GtkWidget *text_status;
-	GtkWidget *red_pitaya_health;
-
         Gtk_EntryControl *input_ddsfreq;
-
-        gint debug_level; 
-        double rp_verbose_level; 
         UnitObj *Unity, *Hz, *Deg, *VoltDeg, *Volt, *mVolt, *VoltHz, *dB, *Time, *mTime, *uTime;
 
 	GSList*   SPMC_RemoteEntryList;
 
 	GMutex mutex;
+       
+public:
+        // moved controls to main tab
+        GtkWidget *input_rpaddress;
+        GtkWidget *text_status;
+	GtkWidget *red_pitaya_health;
+        gint debug_level; 
+        double rp_verbose_level; 
+        GSettings *inet_json_settings;
 };
 
 #endif

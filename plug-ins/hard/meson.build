@@ -29,7 +29,8 @@ plugin_list = [
       'gschemas': [ 'org.gnome.gxsm4.hwi.sranger_mk23.gschema.xml',
                     'org.gnome.gxsm4.hwi.sranger_mk23_mover.gschema.xml',
                     'org.gnome.gxsm4.pcs.plugin-libsranger-mk2-hwi.gschema.xml',
-                    'org.gnome.gxsm4.pcsadjustments.plugin-libsranger-mk2-hwi.gschema.xml'
+                    'org.gnome.gxsm4.pcsadjustments.plugin-libsranger-mk2-hwi.gschema.xml',
+		    'org.gnome.gxsm4.hwi.rpspmc-control.gschema.xml'
                    ] },
 #    { 'name': 'tc211_ccd' }, ## may be port that some day
 ]
