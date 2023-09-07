@@ -22,7 +22,8 @@
 
 module axis_spm_control#(
     parameter SAXIS_TDATA_WIDTH = 32,
-    parameter RDECI = 2   // reduced rate decimation bits 1= 1/2 ...
+    parameter QROTM = 20,
+    parameter RDECI = 4   // reduced rate decimation bits 1= 1/2 ...
 )
 (
     // SCAN COMPONENTS, ROTATED RELATIVE COORDS TO SCAN CENTER
@@ -88,6 +89,14 @@ module axis_spm_control#(
     // Zsxy = slope_x * Xr + slope_y * Yr 
     // Z    = Z0 + z + Zsxy
 
+    reg signed [32-1:0] mxx=0; // Q20
+    reg signed [32-1:0] mxy=1<<20; // Q20
+
+    reg signed [32-1:0] x=0;
+    reg signed [32-1:0] y=0;
+    reg signed [32+QROTM+2-1:0] rrx=0;
+    reg signed [32+QROTM+2-1:0] rry=0;
+
     reg signed [32-1:0] rx=0;
     reg signed [32-1:0] ry=0;
     reg signed [32-1:0] rz=0;
@@ -108,13 +117,22 @@ module axis_spm_control#(
 
     always @ (posedge rdecii[RDECI])
     begin
-        rx <= xs+x0;
-        ry <= ys+y0;
+    // always buffer locally
+        x <= xs;
+        y <= ys;
         ru <= u;
+        z_gvp <= zs;
+        mxx <= rotmxx;
+        mxy <= rotmxy;
+
+        rrx <=  mxx*x + mxy*y;
+        rry <= -mxy*x + mxx*y;
+        
+        rx <= (rrx >>> QROTM) + x0;
+        ry <= (rry >>> QROTM) + y0;
         
         z_servo  <= S_AXIS_Z_tdata;
         z_slope  <= 0;
-        z_gvp    <= zs;
         z_offset <= z0;
         z_sum    <= z_offset + z_gvp + z_slope + z_servo;
         if (z_sum > 36'sd2147483647)

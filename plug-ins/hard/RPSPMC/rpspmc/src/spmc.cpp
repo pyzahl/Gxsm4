@@ -102,6 +102,8 @@
 #define SPMC_CFG_AD5791_DAC_CONTROL   (SPMC_BASE + 18) // bits 0,1,2: axis; bit 3: config mode; bit 4: send config data, MUST reset "send bit in config mode to resend next, on hold between"
 
 
+#define Q_XYPRECISION Q20
+
 // SPMC Transformations Core
 #define SPMC_ROTM_XX             (SPMC_BASE + 20)  // cos(Alpha)
 #define SPMC_ROTM_XY             (SPMC_BASE + 21)  // sin(Alpha)
@@ -128,6 +130,14 @@ extern CDoubleParameter  SPMC_Z_MONITOR;
 // Example: { char b16[17]; printf("%s", int_to_binary(b, 1234, 16); }
 
 const char *int_to_binary (char b[], int x, int n){
+        char *p = b;
+	for (int z = 1<<(n-1); z > 0; z >>= 1)
+                *p++ = (x & z) ? '1' : '0';
+        *p = 0;
+	return b;
+}
+
+const char *uint_to_binary (char b[], unsigned int x, int n){
         char *p = b;
 	for (int z = 1<<(n-1); z > 0; z >>= 1)
                 *p++ = (x & z) ? '1' : '0';
@@ -406,6 +416,10 @@ int32_t ad5791_dac_ouput_state(int axis,
 	return status;
 }
 
+inline double ad5791_dac_to_volts (uint32_t value){ return SPMC_AD5791_REFV*(double)value / Q19; }
+inline int32_t volts_to_ad5791_dac (double volts){ return round(Q19*volts/SPMC_AD5791_REFV); }
+
+
 /***************************************************************************//**
  * @brief Writes to the DAC register.
  *
@@ -418,12 +432,19 @@ int32_t ad5791_set_dac_value(int axis,
 			     double volts)
 {
 	int32_t status = 0;
+        union { int i; unsigned int ui; }u;
 
-	//AD5791_LDAC_LOW;
+        u.i = volts_to_ad5791_dac (volts);
+
+        if (verbose >= 0){
+                char s32[33]; memset(s32, 0, 33);
+                fprintf(stderr, "##ad5791setdac: %g V in Q19 int = %08x 0b%s\n", volts, u.i, int_to_binary(s32, u.i, 32)); 
+                //fprintf(stderr, "##ad5791setdac: %g V in Q19 int = %08x 0b%s\n", volts, u.ui, uint_to_binary(s32, u.ui, 32)); 
+        }
+                
 	status = ad5791_set_register_value (axis,
                                             AD5791_REG_DAC,
-                                            (uint32_t)((unsigned int)round(Q19*volts/SPMC_AD5791_REFV)));
-	//AD5791_LDAC_HIGH;
+                                            (uint32_t)u.ui);
 
 	return status;
 }
@@ -431,17 +452,23 @@ int32_t ad5791_prepare_dac_value(int axis,
                                  double volts)
 {
 	int32_t status = 0;
+        union { int i; unsigned int ui; }u;
+        
+        u.i = volts_to_ad5791_dac (volts);
 
-	//AD5791_LDAC_LOW;
+        if (verbose > 1){
+                char s32[33]; memset(s32, 0, 33);
+                fprintf(stderr, "##ad5791setdac: %g V in Q19 int = %08x 0b%s\n", volts, u.i, int_to_binary(s32, u.i, 32)); 
+                //fprintf(stderr, "##ad5791setdac: %g V in Q19 int = %08x 0b%s\n", volts, u.ui, uint_to_binary(s32, u.ui, 32)); 
+        }
+
 	status = ad5791_prepare_register_value (axis,
                                                 AD5791_REG_DAC,
-                                                (uint32_t)((unsigned int)round(Q19*volts/SPMC_AD5791_REFV)));
-	//AD5791_LDAC_HIGH;
+                                                (uint32_t)u.ui);
 
 	return status;
 }
 
-inline double ad5791_dac_to_volts (uint32_t value){ return SPMC_AD5791_REFV*(double)value / Q19; }
 
 
 /***************************************************************************//**
@@ -510,7 +537,8 @@ int32_t ad5791_setup(int axis,
 				AD5791_CTRL_BIN2SC |
 				AD5791_CTRL_RBUF);
 	/* Sets the new state provided by the user. */
-	new_ctrl = old_ctrl | setup_word;
+	//new_ctrl = old_ctrl | setup_word;
+	new_ctrl = AD5791_CTRL_SDODIS;
 	status = ad5791_set_register_value(axis,
 					   AD5791_REG_CTRL,
 					   new_ctrl);
@@ -528,6 +556,8 @@ void rp_spmc_AD5791_init (){
 	//AD5791_LDAC_HIGH;
 	//AD5791_CLR_OUT;
 	//AD5791_CLR_HIGH;
+
+        rp_spmc_set_rotation (0.0);
         
         // power up one by one
         ad5791_setup(0,0);
@@ -545,6 +575,9 @@ void rp_spmc_AD5791_init (){
 void rp_spmc_set_bias (double bias){
         if (verbose > 1) fprintf(stderr, "##Configure mode set AD5971 AXIS3 (Bias) to %g V\n", bias);
 
+        ad5791_prepare_dac_value (0, bias+0.1);
+        ad5791_prepare_dac_value (1, bias+0.2);
+        ad5791_prepare_dac_value (2, bias+0.3);
         ad5791_set_dac_value (3, bias);
 
         if (verbose > 2){
@@ -680,19 +713,23 @@ void rp_spmc_set_gvp_vector (int pc, int n, int nii, unsigned int opts, int nrp,
 
 // RPSPMC Location and Geometry
 void rp_spmc_set_rotation (double alpha){
-        set_gpio_cfgreg_int32 (SPMC_ROTM_XX, (int)round (Q31*cos(alpha)));
-        set_gpio_cfgreg_int32 (SPMC_ROTM_XY, (int)round (Q31*sin(alpha)));
+        set_gpio_cfgreg_int32 (SPMC_ROTM_XX, (int)round (Q_XYPRECISION*cos(alpha)));
+        set_gpio_cfgreg_int32 (SPMC_ROTM_XY, (int)round (Q_XYPRECISION*sin(alpha)));
 }
 
 void rp_spmc_set_slope (double dzx, double dzy){
-        set_gpio_cfgreg_int32 (SPMC_SLOPE_X, (int)round (Q31*dzx));
-        set_gpio_cfgreg_int32 (SPMC_SLOPE_Y, (int)round (Q31*dzy));
+        set_gpio_cfgreg_int32 (SPMC_SLOPE_X, (int)round (Q_XYPRECISION*dzx));
+        set_gpio_cfgreg_int32 (SPMC_SLOPE_Y, (int)round (Q_XYPRECISION*dzy));
 }
 
 void rp_spmc_set_offsets (double x0, double y0, double z0){
-        set_gpio_cfgreg_int32 (SPMC_OFFSET_X, (int)round (Q31*x0/SPMC_AD5791_REFV));
-        set_gpio_cfgreg_int32 (SPMC_OFFSET_Y, (int)round (Q31*y0/SPMC_AD5791_REFV));
-        set_gpio_cfgreg_int32 (SPMC_OFFSET_Z, (int)round (Q31*z0/SPMC_AD5791_REFV));
+        set_gpio_cfgreg_int32 (SPMC_OFFSET_X, volts_to_ad5791_dac (x0));
+        set_gpio_cfgreg_int32 (SPMC_OFFSET_Y, volts_to_ad5791_dac (y0));
+        set_gpio_cfgreg_int32 (SPMC_OFFSET_Z, volts_to_ad5791_dac (z0));
+}
+
+void rp_spmc_set_scanpos (double x0, double y0){
+        // setup GVP to do so...
 }
 
 

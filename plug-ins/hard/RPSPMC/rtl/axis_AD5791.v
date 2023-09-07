@@ -47,9 +47,11 @@ module axis_AD5791 #(
     input wire [2:0] configuration_axis,
     input wire configuration_send,
     
-    // (* X_INTERFACE_PARAMETER = "FREQ_HZ 30000000" *)
+    (* X_INTERFACE_PARAMETER = "FREQ_HZ 30000000" *)
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN wire_PMD_clk" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF wire_PMD_sync:wire_PMD_dac" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF wire_PMD_sync:wire_PMD_dac:wire_PMD_dac_read" *)
+
+    input  wire wire_PMD_dac_read,
     output wire wire_PMD_clk,
     output wire wire_PMD_sync,
     output wire [NUM_DAC-1:0] wire_PMD_dac,

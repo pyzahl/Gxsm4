@@ -167,10 +167,14 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         { "SPMC_SLOPE_dZX", &spmc_parameters.slope_dzx, false },
         { "SPMC_SLOPE_dZY", &spmc_parameters.slope_dzy, false },
 
+        { "SPMC_SET_SCANPOS_X", &spmc_parameters.set_scanpos_x, false },
+        { "SPMC_SET_SCANPOS_Y", &spmc_parameters.set_scanpos_y, false },
+
         { "SPMC_SET_OFFSET_X", &spmc_parameters.set_offset_x, false },
         { "SPMC_SET_OFFSET_Y", &spmc_parameters.set_offset_y, false },
         { "SPMC_SET_OFFSET_Z", &spmc_parameters.set_offset_z, false },
 
+        
         // RP SPMC Monitors
         { "SPMC_BIAS_MONITOR", &spmc_parameters.bias_monitor, true },
         { "SPMC_SIGNAL_MONITOR", &spmc_parameters.signal_monitor, true }, // Z servo input signal (current, ...)

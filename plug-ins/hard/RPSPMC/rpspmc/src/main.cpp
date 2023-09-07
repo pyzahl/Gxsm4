@@ -342,6 +342,9 @@ CDoubleParameter  SPMC_ALPHA("SPMC_ALPHA", CBaseParameter::RW, 0.0, 0, -360, +36
 CDoubleParameter  SPMC_SLOPE_dZX("SPMC_SLOPE_X", CBaseParameter::RW, 0.0, 0, -1.0, +1.0); // slope in Volts Z / Volt X
 CDoubleParameter  SPMC_SLOPE_dZY("SPMC_SLOPE_Y", CBaseParameter::RW, 0.0, 0, -1.0, +1.0); // slope in Volts Z / Volt X
 
+CDoubleParameter  SPMC_SET_SCANPOS_X("SPMC_SCANPOS_X", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
+CDoubleParameter  SPMC_SET_SCANPOS_Y("SPMC_SCANPOS_Y", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
+
 CDoubleParameter  SPMC_SET_OFFSET_X("SPMC_OFFSET_X", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 CDoubleParameter  SPMC_SET_OFFSET_Y("SPMC_OFFSET_Y", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 CDoubleParameter  SPMC_SET_OFFSET_Z("SPMC_OFFSET_Z", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
@@ -1389,16 +1392,32 @@ void OnNewParams_RPSPMC(void){
         }
         
 
-        SPMC_ALPHA.Update ();
-        SPMC_SLOPE_dZX.Update ();
-        SPMC_SLOPE_dZY.Update ();
+        if (SPMC_ALPHA.IsNewValue ()){
+                SPMC_ALPHA.Update ();
+                rp_spmc_set_rotation (SPMC_ALPHA.Value ());
+        }
+        if (SPMC_SLOPE_dZX.IsNewValue () || SPMC_SLOPE_dZY.IsNewValue ()){
+                SPMC_SLOPE_dZX.Update ();
+                SPMC_SLOPE_dZY.Update ();
+                rp_spmc_set_slope (SPMC_SLOPE_dZX.Value (), SPMC_SLOPE_dZY.Value ());
+        }
+        
+        if (SPMC_SET_OFFSET_X.IsNewValue () || SPMC_SET_OFFSET_Y.IsNewValue () || SPMC_SET_OFFSET_Z.IsNewValue ()){
+                SPMC_SET_OFFSET_X.Update ();
+                SPMC_SET_OFFSET_Y.Update ();
+                SPMC_SET_OFFSET_Z.Update ();
+                rp_spmc_set_offsets (SPMC_SET_OFFSET_X.Value (),
+                                     SPMC_SET_OFFSET_Y.Value (),
+                                     SPMC_SET_OFFSET_Z.Value ());
+        }
 
-        //SPMC_BIAS_MONITOR.Update ();
-
-        SPMC_SET_OFFSET_X.Update ();
-        SPMC_SET_OFFSET_Y.Update ();
-        SPMC_SET_OFFSET_Z.Update ();
-
+        if (SPMC_SET_SCANPOS_X.IsNewValue () || SPMC_SET_SCANPOS_Y.IsNewValue ()){
+                SPMC_SET_SCANPOS_X.Update ();
+                SPMC_SET_SCANPOS_Y.Update ();
+                rp_spmc_set_scanpos (SPMC_SET_SCANPOS_X.Value (),
+                                     SPMC_SET_SCANPOS_Y.Value ());
+        }
+        
         int dirty=0;
         if (SPMC_GVP_VECTOR_PC.IsNewValue ()){ SPMC_GVP_VECTOR_PC.Update (); ++dirty; }
         if (SPMC_GVP_VECTOR__N.IsNewValue ()){ SPMC_GVP_VECTOR__N.Update (); ++dirty; }
