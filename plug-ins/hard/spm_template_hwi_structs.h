@@ -29,8 +29,6 @@
 #ifndef __SPM_TEMPLATE_HWI_STRUCTS_H
 #define __SPM_TEMPLATE_HWI_STRUCTS_H
 
-#define REMOTE_PREFIX "dsp-"
-
 #define UTF8_DEGREE    "\302\260"
 #define UTF8_MU        "\302\265"
 #define UTF8_ANGSTROEM "\303\205"

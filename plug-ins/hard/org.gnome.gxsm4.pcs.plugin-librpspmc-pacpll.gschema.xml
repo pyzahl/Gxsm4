@@ -1,609 +1,584 @@
 <schemalist>
   <schema id="org.gnome.gxsm4.pcs.plugin-librpspmc-pacpll" path="/org/gnome/gxsm4/pcs/plugin-librpspmc-pacpll/">
 
-    <key name="rpspmc-dc-offset" type="d">
+    <key name="rp-pacpll-dc-offset" type="d">
       <default>0</default>
-      <summary>PCS Remote-ID: 'rpspmc-DC-OFFSET', Default/U: 0 mV     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-DC-OFFSET', Default/U: 0 mV    , Adjustment PCS Name: 'rpspmc-DC-OFFSET' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-DC-OFFSET', Default/U: 0 mV     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-DC-OFFSET', Default/U: 0 mV    , Adjustment PCS Name: 'rp-pacpll-DC-OFFSET' </description>
     </key>
 
-    <key name="rpspmc-pac-dctau" type="d">
+    <key name="rp-pacpll-pac-dctau" type="d">
       <default>10.0</default>
-      <summary>PCS Remote-ID: 'rpspmc-PAC-DCTAU', Default/U: 10.0 ms     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-PAC-DCTAU', Default/U: 10.0 ms    , Adjustment PCS Name: 'rpspmc-PAC-DCTAU' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-PAC-DCTAU', Default/U: 10.0 ms     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PAC-DCTAU', Default/U: 10.0 ms    , Adjustment PCS Name: 'rp-pacpll-PAC-DCTAU' </description>
     </key>
 
-    <key name="rpspmc-pactau" type="d">
+    <key name="rp-pacpll-pactau" type="d">
       <default>40.0</default>
-      <summary>PCS Remote-ID: 'rpspmc-PACTAU', Default/U: 40.0 µs     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-PACTAU', Default/U: 40.0 µs    , Adjustment PCS Name: 'rpspmc-PACTAU' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-PACTAU', Default/U: 40.0 µs     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PACTAU', Default/U: 40.0 µs    , Adjustment PCS Name: 'rp-pacpll-PACTAU' </description>
     </key>
 
-    <key name="rpspmc-pacatau" type="d">
+    <key name="rp-pacpll-pacatau" type="d">
       <default>40.0</default>
-      <summary>PCS Remote-ID: 'rpspmc-PACATAU', Default/U: 40.0 µs     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-PACATAU', Default/U: 40.0 µs    , Adjustment PCS Name: 'rpspmc-PACATAU' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-PACATAU', Default/U: 40.0 µs     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PACATAU', Default/U: 40.0 µs    , Adjustment PCS Name: 'rp-pacpll-PACATAU' </description>
     </key>
 
-    <key name="rpspmc-qc-phase" type="d">
+    <key name="rp-pacpll-qc-phase" type="d">
       <default>0.0</default>
-      <summary>PCS Remote-ID: 'rpspmc-QC-PHASE', Default/U: 0.0 deg     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-QC-PHASE', Default/U: 0.0 deg    , Adjustment PCS Name: 'rpspmc-QC-PHASE' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-QC-PHASE', Default/U: 0.0 deg     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-QC-PHASE', Default/U: 0.0 deg    , Adjustment PCS Name: 'rp-pacpll-QC-PHASE' </description>
     </key>
 
-    <key name="rpspmc-qc-gain" type="d">
+    <key name="rp-pacpll-qc-gain" type="d">
       <default>0.0</default>
-      <summary>PCS Remote-ID: 'rpspmc-QC-GAIN', Default/U: 0.0      </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-QC-GAIN', Default/U: 0.0     , Adjustment PCS Name: 'rpspmc-QC-GAIN' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-QC-GAIN', Default/U: 0.0      </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-QC-GAIN', Default/U: 0.0     , Adjustment PCS Name: 'rp-pacpll-QC-GAIN' </description>
     </key>
 
-    <key name="rpspmc-frequency-manual" type="d">
+    <key name="rp-pacpll-frequency-manual" type="d">
       <default>32768</default>
-      <summary>PCS Remote-ID: 'rpspmc-FREQUENCY-MANUAL', Default/U: 32768 Hz     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-FREQUENCY-MANUAL', Default/U: 32768 Hz    , Adjustment PCS Name: 'rpspmc-FREQUENCY-MANUAL' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-FREQUENCY-MANUAL', Default/U: 32768 Hz     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-FREQUENCY-MANUAL', Default/U: 32768 Hz    , Adjustment PCS Name: 'rp-pacpll-FREQUENCY-MANUAL' </description>
     </key>
 
-    <key name="rpspmc-frequency-center" type="d">
+    <key name="rp-pacpll-frequency-center" type="d">
       <default>32768</default>
-      <summary>PCS Remote-ID: 'rpspmc-FREQUENCY-CENTER', Default/U: 32768 Hz     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-FREQUENCY-CENTER', Default/U: 32768 Hz    , Adjustment PCS Name: 'rpspmc-FREQUENCY-CENTER' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-FREQUENCY-CENTER', Default/U: 32768 Hz     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-FREQUENCY-CENTER', Default/U: 32768 Hz    , Adjustment PCS Name: 'rp-pacpll-FREQUENCY-CENTER' </description>
     </key>
 
-    <key name="rpspmc-aux-scale" type="d">
+    <key name="rp-pacpll-aux-scale" type="d">
       <default>0.011642</default>
-      <summary>PCS Remote-ID: 'rpspmc-AUX-SCALE', Default/U: 0.011642 (20Hz/V) </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-AUX-SCALE', Default/U: 0.011642 (20Hz/V), Adjustment PCS Name: 'rpspmc-AUX-SCALE' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-AUX-SCALE', Default/U: 0.011642 (20Hz/V) </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-AUX-SCALE', Default/U: 0.011642 (20Hz/V), Adjustment PCS Name: 'rp-pacpll-AUX-SCALE' </description>
     </key>
 
-    <key name="rpspmc-volume-manual" type="d">
+    <key name="rp-pacpll-volume-manual" type="d">
       <default>300</default>
-      <summary>PCS Remote-ID: 'rpspmc-VOLUME-MANUAL', Default/U: 300 mV     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-VOLUME-MANUAL', Default/U: 300 mV    , Adjustment PCS Name: 'rpspmc-VOLUME-MANUAL' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-VOLUME-MANUAL', Default/U: 300 mV     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-VOLUME-MANUAL', Default/U: 300 mV    , Adjustment PCS Name: 'rp-pacpll-VOLUME-MANUAL' </description>
     </key>
 
-    <key name="rpspmc-tune-dfreq" type="d">
+    <key name="rp-pacpll-tune-dfreq" type="d">
       <default>0.1</default>
-      <summary>PCS Remote-ID: 'rpspmc-TUNE-DFREQ', Default/U: 0.1 Hz     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-TUNE-DFREQ', Default/U: 0.1 Hz    , Adjustment PCS Name: 'rpspmc-TUNE-DFREQ' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-TUNE-DFREQ', Default/U: 0.1 Hz     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-TUNE-DFREQ', Default/U: 0.1 Hz    , Adjustment PCS Name: 'rp-pacpll-TUNE-DFREQ' </description>
     </key>
 
-    <key name="rpspmc-tune-span" type="d">
+    <key name="rp-pacpll-tune-span" type="d">
       <default>50</default>
-      <summary>PCS Remote-ID: 'rpspmc-TUNE-SPAN', Default/U: 50 Hz     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-TUNE-SPAN', Default/U: 50 Hz    , Adjustment PCS Name: 'rpspmc-TUNE-SPAN' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-TUNE-SPAN', Default/U: 50 Hz     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-TUNE-SPAN', Default/U: 50 Hz    , Adjustment PCS Name: 'rp-pacpll-TUNE-SPAN' </description>
     </key>
 
-    <key name="rpspmc-volume-monitor" type="d">
+    <key name="rp-pacpll-volume-monitor" type="d">
       <default>0</default>
-      <summary>PCS Remote-ID: 'rpspmc-VOLUME-MONITOR', Default/U: 0 mV     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-VOLUME-MONITOR', Default/U: 0 mV    , Adjustment PCS Name: 'rpspmc-VOLUME-MONITOR' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-VOLUME-MONITOR', Default/U: 0 mV     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-VOLUME-MONITOR', Default/U: 0 mV    , Adjustment PCS Name: 'rp-pacpll-VOLUME-MONITOR' </description>
     </key>
 
-    <key name="rpspmc-amplitude-fb-setpoint" type="d">
+    <key name="rp-pacpll-amplitude-fb-setpoint" type="d">
       <default>100</default>
-      <summary>PCS Remote-ID: 'rpspmc-AMPLITUDE-FB-SETPOINT', Default/U: 100 mV     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-AMPLITUDE-FB-SETPOINT', Default/U: 100 mV    , Adjustment PCS Name: 'rpspmc-AMPLITUDE-FB-SETPOINT' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-AMPLITUDE-FB-SETPOINT', Default/U: 100 mV     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-AMPLITUDE-FB-SETPOINT', Default/U: 100 mV    , Adjustment PCS Name: 'rp-pacpll-AMPLITUDE-FB-SETPOINT' </description>
     </key>
 
-    <key name="rpspmc-amplitude-fb-cp" type="d">
+    <key name="rp-pacpll-amplitude-fb-cp" type="d">
       <default>-25</default>
-      <summary>PCS Remote-ID: 'rpspmc-AMPLITUDE-FB-CP', Default/U: -25 dB     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-AMPLITUDE-FB-CP', Default/U: -25 dB    , Adjustment PCS Name: 'rpspmc-AMPLITUDE-FB-CP' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-AMPLITUDE-FB-CP', Default/U: -25 dB     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-AMPLITUDE-FB-CP', Default/U: -25 dB    , Adjustment PCS Name: 'rp-pacpll-AMPLITUDE-FB-CP' </description>
     </key>
 
-    <key name="rpspmc-amplitude-fb-ci" type="d">
+    <key name="rp-pacpll-amplitude-fb-ci" type="d">
       <default>-40</default>
-      <summary>PCS Remote-ID: 'rpspmc-AMPLITUDE-FB-CI', Default/U: -40 dB     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-AMPLITUDE-FB-CI', Default/U: -40 dB    , Adjustment PCS Name: 'rpspmc-AMPLITUDE-FB-CI' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-AMPLITUDE-FB-CI', Default/U: -40 dB     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-AMPLITUDE-FB-CI', Default/U: -40 dB    , Adjustment PCS Name: 'rp-pacpll-AMPLITUDE-FB-CI' </description>
     </key>
 
-    <key name="rpspmc-exec-fb-lower" type="d">
+    <key name="rp-pacpll-exec-fb-lower" type="d">
       <default>-300</default>
-      <summary>PCS Remote-ID: 'rpspmc-EXEC-FB-LOWER', Default/U: -300 mV     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-EXEC-FB-LOWER', Default/U: -300 mV    , Adjustment PCS Name: 'rpspmc-EXEC-FB-LOWER' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-EXEC-FB-LOWER', Default/U: -300 mV     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-EXEC-FB-LOWER', Default/U: -300 mV    , Adjustment PCS Name: 'rp-pacpll-EXEC-FB-LOWER' </description>
     </key>
 
-    <key name="rpspmc-exec-fb-upper" type="d">
+    <key name="rp-pacpll-exec-fb-upper" type="d">
       <default>300</default>
-      <summary>PCS Remote-ID: 'rpspmc-EXEC-FB-UPPER', Default/U: 300 mV     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-EXEC-FB-UPPER', Default/U: 300 mV    , Adjustment PCS Name: 'rpspmc-EXEC-FB-UPPER' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-EXEC-FB-UPPER', Default/U: 300 mV     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-EXEC-FB-UPPER', Default/U: 300 mV    , Adjustment PCS Name: 'rp-pacpll-EXEC-FB-UPPER' </description>
     </key>
 
-    <key name="rpspmc-exec-amplitude-monitor" type="d">
+    <key name="rp-pacpll-exec-amplitude-monitor" type="d">
       <default>0</default>
-      <summary>PCS Remote-ID: 'rpspmc-EXEC-AMPLITUDE-MONITOR', Default/U: 0 mV     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-EXEC-AMPLITUDE-MONITOR', Default/U: 0 mV    , Adjustment PCS Name: 'rpspmc-EXEC-AMPLITUDE-MONITOR' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-EXEC-AMPLITUDE-MONITOR', Default/U: 0 mV     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-EXEC-AMPLITUDE-MONITOR', Default/U: 0 mV    , Adjustment PCS Name: 'rp-pacpll-EXEC-AMPLITUDE-MONITOR' </description>
     </key>
 
-    <key name="rpspmc-phase-monitor" type="d">
+    <key name="rp-pacpll-phase-monitor" type="d">
       <default>0</default>
-      <summary>PCS Remote-ID: 'rpspmc-PHASE-MONITOR', Default/U: 0 °     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-PHASE-MONITOR', Default/U: 0 °    , Adjustment PCS Name: 'rpspmc-PHASE-MONITOR' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-PHASE-MONITOR', Default/U: 0 °     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PHASE-MONITOR', Default/U: 0 °    , Adjustment PCS Name: 'rp-pacpll-PHASE-MONITOR' </description>
     </key>
 
-    <key name="rpspmc-phase-fb-setpoint" type="d">
+    <key name="rp-pacpll-phase-fb-setpoint" type="d">
       <default>50</default>
-      <summary>PCS Remote-ID: 'rpspmc-PHASE-FB-SETPOINT', Default/U: 50 °     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-PHASE-FB-SETPOINT', Default/U: 50 °    , Adjustment PCS Name: 'rpspmc-PHASE-FB-SETPOINT' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-PHASE-FB-SETPOINT', Default/U: 50 °     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PHASE-FB-SETPOINT', Default/U: 50 °    , Adjustment PCS Name: 'rp-pacpll-PHASE-FB-SETPOINT' </description>
     </key>
 
-    <key name="rpspmc-phase-fb-cp" type="d">
+    <key name="rp-pacpll-phase-fb-cp" type="d">
       <default>-76</default>
-      <summary>PCS Remote-ID: 'rpspmc-PHASE-FB-CP', Default/U: -76 dB     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-PHASE-FB-CP', Default/U: -76 dB    , Adjustment PCS Name: 'rpspmc-PHASE-FB-CP' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-PHASE-FB-CP', Default/U: -76 dB     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PHASE-FB-CP', Default/U: -76 dB    , Adjustment PCS Name: 'rp-pacpll-PHASE-FB-CP' </description>
     </key>
 
-    <key name="rpspmc-phase-fb-ci" type="d">
+    <key name="rp-pacpll-phase-fb-ci" type="d">
       <default>-143</default>
-      <summary>PCS Remote-ID: 'rpspmc-PHASE-FB-CI', Default/U: -143 dB     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-PHASE-FB-CI', Default/U: -143 dB    , Adjustment PCS Name: 'rpspmc-PHASE-FB-CI' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-PHASE-FB-CI', Default/U: -143 dB     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PHASE-FB-CI', Default/U: -143 dB    , Adjustment PCS Name: 'rp-pacpll-PHASE-FB-CI' </description>
     </key>
 
-    <key name="rpspmc-freq-fb-lower" type="d">
+    <key name="rp-pacpll-freq-fb-lower" type="d">
       <default>30000</default>
-      <summary>PCS Remote-ID: 'rpspmc-FREQ-FB-LOWER', Default/U: 30000 Hz     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-FREQ-FB-LOWER', Default/U: 30000 Hz    , Adjustment PCS Name: 'rpspmc-FREQ-FB-LOWER' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-FREQ-FB-LOWER', Default/U: 30000 Hz     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-FREQ-FB-LOWER', Default/U: 30000 Hz    , Adjustment PCS Name: 'rp-pacpll-FREQ-FB-LOWER' </description>
     </key>
 
-    <key name="rpspmc-freq-fb-upper" type="d">
+    <key name="rp-pacpll-freq-fb-upper" type="d">
       <default>33000</default>
-      <summary>PCS Remote-ID: 'rpspmc-FREQ-FB-UPPER', Default/U: 33000 Hz     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-FREQ-FB-UPPER', Default/U: 33000 Hz    , Adjustment PCS Name: 'rpspmc-FREQ-FB-UPPER' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-FREQ-FB-UPPER', Default/U: 33000 Hz     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-FREQ-FB-UPPER', Default/U: 33000 Hz    , Adjustment PCS Name: 'rp-pacpll-FREQ-FB-UPPER' </description>
     </key>
 
-    <key name="rpspmc-dds-freq-monitor" type="d">
+    <key name="rp-pacpll-dds-freq-monitor" type="d">
       <default>32768</default>
-      <summary>PCS Remote-ID: 'rpspmc-DDS-FREQ-MONITOR', Default/U: 32768 Hz     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-DDS-FREQ-MONITOR', Default/U: 32768 Hz    , Adjustment PCS Name: 'rpspmc-DDS-FREQ-MONITOR' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-DDS-FREQ-MONITOR', Default/U: 32768 Hz     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-DDS-FREQ-MONITOR', Default/U: 32768 Hz    , Adjustment PCS Name: 'rp-pacpll-DDS-FREQ-MONITOR' </description>
     </key>
 
-    <key name="rpspmc-phase-hold-am-noise-limit" type="d">
+    <key name="rp-pacpll-phase-hold-am-noise-limit" type="d">
       <default>5</default>
-      <summary>PCS Remote-ID: 'rpspmc-phase-hold-am-noise-limit', Default/U: 5 mV     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-phase-hold-am-noise-limit', Default/U: 5 mV    , Adjustment PCS Name: 'rpspmc-phase-hold-am-noise-limit' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-phase-hold-am-noise-limit', Default/U: 5 mV     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-phase-hold-am-noise-limit', Default/U: 5 mV    , Adjustment PCS Name: 'rp-pacpll-phase-hold-am-noise-limit' </description>
     </key>
 
-    <key name="rpspmc-dfreq-monitor" type="d">
+    <key name="rp-pacpll-dfreq-monitor" type="d">
       <default>0</default>
-      <summary>PCS Remote-ID: 'rpspmc-DFREQ-MONITOR', Default/U: 0 °     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-DFREQ-MONITOR', Default/U: 0 °    , Adjustment PCS Name: 'rpspmc-DFREQ-MONITOR' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-DFREQ-MONITOR', Default/U: 0 °     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-DFREQ-MONITOR', Default/U: 0 °    , Adjustment PCS Name: 'rp-pacpll-DFREQ-MONITOR' </description>
     </key>
 
-    <key name="rpspmc-dfreq-fb-setpoint" type="d">
+    <key name="rp-pacpll-dfreq-fb-setpoint" type="d">
       <default>0</default>
-      <summary>PCS Remote-ID: 'rpspmc-DFREQ-FB-SETPOINT', Default/U:    60 °     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-DFREQ-FB-SETPOINT', Default/U:    60 °    , Adjustment PCS Name: 'rpspmc-DFREQ-FB-SETPOINT' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-DFREQ-FB-SETPOINT', Default/U:    60 °     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-DFREQ-FB-SETPOINT', Default/U:    60 °    , Adjustment PCS Name: 'rp-pacpll-DFREQ-FB-SETPOINT' </description>
     </key>
 
-    <key name="rpspmc-dfreq-fb-cp" type="d">
+    <key name="rp-pacpll-dfreq-fb-cp" type="d">
       <default>-76</default>
-      <summary>PCS Remote-ID: 'rpspmc-DFREQ-FB-CP', Default/U: -76 dB     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-DFREQ-FB-CP', Default/U: -76 dB    , Adjustment PCS Name: 'rpspmc-DFREQ-FB-CP' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-DFREQ-FB-CP', Default/U: -76 dB     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-DFREQ-FB-CP', Default/U: -76 dB    , Adjustment PCS Name: 'rp-pacpll-DFREQ-FB-CP' </description>
     </key>
 
-    <key name="rpspmc-dfreq-fb-ci" type="d">
+    <key name="rp-pacpll-dfreq-fb-ci" type="d">
       <default>-143</default>
-      <summary>PCS Remote-ID: 'rpspmc-DFREQ-FB-CI', Default/U: -143 dB     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-DFREQ-FB-CI', Default/U: -143 dB    , Adjustment PCS Name: 'rpspmc-DFREQ-FB-CI' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-DFREQ-FB-CI', Default/U: -143 dB     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-DFREQ-FB-CI', Default/U: -143 dB    , Adjustment PCS Name: 'rp-pacpll-DFREQ-FB-CI' </description>
     </key>
 
-    <key name="rpspmc-control-dfreq-fb-lower" type="d">
+    <key name="rp-pacpll-control-dfreq-fb-lower" type="d">
       <default>-500</default>
-      <summary>PCS Remote-ID: 'rpspmc-CONTROL-DFREQ-FB-LOWER', Default/U: -500 Hz     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-CONTROL-DFREQ-FB-LOWER', Default/U: -500 Hz    , Adjustment PCS Name: 'rpspmc-CONTROL-DFREQ-FB-LOWER' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-CONTROL-DFREQ-FB-LOWER', Default/U: -500 Hz     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-CONTROL-DFREQ-FB-LOWER', Default/U: -500 Hz    , Adjustment PCS Name: 'rp-pacpll-CONTROL-DFREQ-FB-LOWER' </description>
     </key>
 
-    <key name="rpspmc-control-dfreq-fb-upper" type="d">
+    <key name="rp-pacpll-control-dfreq-fb-upper" type="d">
       <default>500</default>
-      <summary>PCS Remote-ID: 'rpspmc-CONTROL-DFREQ-FB-UPPER', Default/U: 500 Hz     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-CONTROL-DFREQ-FB-UPPER', Default/U: 500 Hz    , Adjustment PCS Name: 'rpspmc-CONTROL-DFREQ-FB-UPPER' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-CONTROL-DFREQ-FB-UPPER', Default/U: 500 Hz     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-CONTROL-DFREQ-FB-UPPER', Default/U: 500 Hz    , Adjustment PCS Name: 'rp-pacpll-CONTROL-DFREQ-FB-UPPER' </description>
     </key>
 
-    <key name="rpspmc-dfreq-control-monitor" type="d">
+    <key name="rp-pacpll-dfreq-control-monitor" type="d">
       <default>0</default>
-      <summary>PCS Remote-ID: 'rpspmc-DFREQ-CONTROL-MONITOR', Default/U: 0.0000 Hz     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-DFREQ-CONTROL-MONITOR', Default/U: 0.0000 Hz    , Adjustment PCS Name: 'rpspmc-DFREQ-CONTROL-MONITOR' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-DFREQ-CONTROL-MONITOR', Default/U: 0.0000 Hz     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-DFREQ-CONTROL-MONITOR', Default/U: 0.0000 Hz    , Adjustment PCS Name: 'rp-pacpll-DFREQ-CONTROL-MONITOR' </description>
     </key>
 
-    <key name="rpspmc-pulse-form-bias0" type="d">
+    <key name="rp-pacpll-pulse-form-bias0" type="d">
       <default>0</default>
-      <summary>PCS Remote-ID: 'rpspmc-PULSE-FORM-BIAS0', Default/U:   0 mV     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-PULSE-FORM-BIAS0', Default/U:   0 mV    , Adjustment PCS Name: 'rpspmc-PULSE-FORM-BIAS0' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-PULSE-FORM-BIAS0', Default/U:   0 mV     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PULSE-FORM-BIAS0', Default/U:   0 mV    , Adjustment PCS Name: 'rp-pacpll-PULSE-FORM-BIAS0' </description>
     </key>
 
-    <key name="rpspmc-pulse-form-bias1" type="d">
+    <key name="rp-pacpll-pulse-form-bias1" type="d">
       <default>0</default>
-      <summary>PCS Remote-ID: 'rpspmc-PULSE-FORM-BIAS1', Default/U:  0 mV     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-PULSE-FORM-BIAS1', Default/U:  0 mV    , Adjustment PCS Name: 'rpspmc-PULSE-FORM-BIAS1' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-PULSE-FORM-BIAS1', Default/U:  0 mV     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PULSE-FORM-BIAS1', Default/U:  0 mV    , Adjustment PCS Name: 'rp-pacpll-PULSE-FORM-BIAS1' </description>
     </key>
 
-    <key name="rpspmc-pulse-form-phase0" type="d">
+    <key name="rp-pacpll-pulse-form-phase0" type="d">
       <default>0</default>
-      <summary>PCS Remote-ID: 'rpspmc-PULSE-FORM-PHASE0', Default/U:     0 °     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-PULSE-FORM-PHASE0', Default/U:     0 °    , Adjustment PCS Name: 'rpspmc-PULSE-FORM-PHASE0' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-PULSE-FORM-PHASE0', Default/U:     0 °     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PULSE-FORM-PHASE0', Default/U:     0 °    , Adjustment PCS Name: 'rp-pacpll-PULSE-FORM-PHASE0' </description>
     </key>
 
-    <key name="rpspmc-pulse-form-phase1" type="d">
+    <key name="rp-pacpll-pulse-form-phase1" type="d">
       <default>0</default>
-      <summary>PCS Remote-ID: 'rpspmc-PULSE-FORM-PHASE1', Default/U:     0 °     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-PULSE-FORM-PHASE1', Default/U:     0 °    , Adjustment PCS Name: 'rpspmc-PULSE-FORM-PHASE1' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-PULSE-FORM-PHASE1', Default/U:     0 °     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PULSE-FORM-PHASE1', Default/U:     0 °    , Adjustment PCS Name: 'rp-pacpll-PULSE-FORM-PHASE1' </description>
     </key>
 
-    <key name="rpspmc-pulse-form-width0" type="d">
+    <key name="rp-pacpll-pulse-form-width0" type="d">
       <default>10</default>
-      <summary>PCS Remote-ID: 'rpspmc-PULSE-FORM-WIDTH0', Default/U:    0.1 µs     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-PULSE-FORM-WIDTH0', Default/U:    0.1 µs    , Adjustment PCS Name: 'rpspmc-PULSE-FORM-WIDTH0' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-PULSE-FORM-WIDTH0', Default/U:    0.1 µs     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PULSE-FORM-WIDTH0', Default/U:    0.1 µs    , Adjustment PCS Name: 'rp-pacpll-PULSE-FORM-WIDTH0' </description>
     </key>
 
-    <key name="rpspmc-pulse-form-width1" type="d">
+    <key name="rp-pacpll-pulse-form-width1" type="d">
       <default>10</default>
-      <summary>PCS Remote-ID: 'rpspmc-PULSE-FORM-WIDTH1', Default/U:    0.1 µs     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-PULSE-FORM-WIDTH1', Default/U:    0.1 µs    , Adjustment PCS Name: 'rpspmc-PULSE-FORM-WIDTH1' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-PULSE-FORM-WIDTH1', Default/U:    0.1 µs     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PULSE-FORM-WIDTH1', Default/U:    0.1 µs    , Adjustment PCS Name: 'rp-pacpll-PULSE-FORM-WIDTH1' </description>
     </key>
 
-    <key name="rpspmc-pulse-form-width0if" type="d">
+    <key name="rp-pacpll-pulse-form-width0if" type="d">
       <default>100</default>
-      <summary>PCS Remote-ID: 'rpspmc-PULSE-FORM-WIDTH0IF', Default/U:     0.5 µs     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-PULSE-FORM-WIDTH0IF', Default/U:     1 µs    , Adjustment PCS Name: 'rpspmc-PULSE-FORM-WIDTH0IF' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-PULSE-FORM-WIDTH0IF', Default/U:     0.5 µs     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PULSE-FORM-WIDTH0IF', Default/U:     1 µs    , Adjustment PCS Name: 'rp-pacpll-PULSE-FORM-WIDTH0IF' </description>
     </key>
 
-    <key name="rpspmc-pulse-form-width1if" type="d">
+    <key name="rp-pacpll-pulse-form-width1if" type="d">
       <default>100</default>
-      <summary>PCS Remote-ID: 'rpspmc-PULSE-FORM-WIDTH1IF', Default/U:     0.5 µs     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-PULSE-FORM-WIDTH1IF', Default/U:     1 µs    , Adjustment PCS Name: 'rpspmc-PULSE-FORM-WIDTH1IF' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-PULSE-FORM-WIDTH1IF', Default/U:     0.5 µs     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PULSE-FORM-WIDTH1IF', Default/U:     1 µs    , Adjustment PCS Name: 'rp-pacpll-PULSE-FORM-WIDTH1IF' </description>
     </key>
 
-    <key name="rpspmc-pulse-form-height0" type="d">
+    <key name="rp-pacpll-pulse-form-height0" type="d">
       <default>100</default>
-      <summary>PCS Remote-ID: 'rpspmc-PULSE-FORM-HEIGHT0', Default/U:   100 mV     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-PULSE-FORM-HEIGHT0', Default/U:   100 mV    , Adjustment PCS Name: 'rpspmc-PULSE-FORM-HEIGHT0' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-PULSE-FORM-HEIGHT0', Default/U:   100 mV     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PULSE-FORM-HEIGHT0', Default/U:   100 mV    , Adjustment PCS Name: 'rp-pacpll-PULSE-FORM-HEIGHT0' </description>
     </key>
 
-    <key name="rpspmc-pulse-form-heigth1" type="d">
+    <key name="rp-pacpll-pulse-form-heigth1" type="d">
       <default>-100</default>
-      <summary>PCS Remote-ID: 'rpspmc-PULSE-FORM-HEIGTH1', Default/U:  -100 mV     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-PULSE-FORM-HEIGTH1', Default/U:  -100 mV    , Adjustment PCS Name: 'rpspmc-PULSE-FORM-HEIGTH1' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-PULSE-FORM-HEIGTH1', Default/U:  -100 mV     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PULSE-FORM-HEIGTH1', Default/U:  -100 mV    , Adjustment PCS Name: 'rp-pacpll-PULSE-FORM-HEIGTH1' </description>
     </key>
 
-    <key name="rpspmc-pulse-form-height0if" type="d">
+    <key name="rp-pacpll-pulse-form-height0if" type="d">
       <default>-5</default>
-      <summary>PCS Remote-ID: 'rpspmc-PULSE-FORM-HEIGHT0IF', Default/U:  -10 mV     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-PULSE-FORM-HEIGHT0IF', Default/U:   -10 mV    , Adjustment PCS Name: 'rpspmc-PULSE-FORM-HEIGHT0IF' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-PULSE-FORM-HEIGHT0IF', Default/U:  -10 mV     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PULSE-FORM-HEIGHT0IF', Default/U:   -10 mV    , Adjustment PCS Name: 'rp-pacpll-PULSE-FORM-HEIGHT0IF' </description>
     </key>
 
-    <key name="rpspmc-pulse-form-heigth1if" type="d">
+    <key name="rp-pacpll-pulse-form-heigth1if" type="d">
       <default>5</default>
-      <summary>PCS Remote-ID: 'rpspmc-PULSE-FORM-HEIGTH1IF', Default/U: 10 mV     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-PULSE-FORM-HEIGTH1IF', Default/U: 10 mV    , Adjustment PCS Name: 'rpspmc-PULSE-FORM-HEIGTH1IF' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-PULSE-FORM-HEIGTH1IF', Default/U: 10 mV     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PULSE-FORM-HEIGTH1IF', Default/U: 10 mV    , Adjustment PCS Name: 'rp-pacpll-PULSE-FORM-HEIGTH1IF' </description>
     </key>
 
-    <key name="rpspmc-pulse-form-shapex" type="d">
+    <key name="rp-pacpll-pulse-form-shapex" type="d">
       <default>1</default>
-      <summary>PCS Remote-ID: 'rpspmc-PULSE-FORM-SHAPEX', Default/U:    1       </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-PULSE-FORM-SHAPEX', Default/U:    1      , Adjustment PCS Name: 'rpspmc-PULSE-FORM-SHAPEX' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-PULSE-FORM-SHAPEX', Default/U:    1       </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PULSE-FORM-SHAPEX', Default/U:    1      , Adjustment PCS Name: 'rp-pacpll-PULSE-FORM-SHAPEX' </description>
     </key>
 
-    <key name="rpspmc-pulse-form-shapexif" type="d">
+    <key name="rp-pacpll-pulse-form-shapexif" type="d">
       <default>1</default>
-      <summary>PCS Remote-ID: 'rpspmc-PULSE-FORM-SHAPEXIF', Default/U:    1       </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-PULSE-FORM-SHAPEXIF', Default/U:    1      , Adjustment PCS Name: 'rpspmc-PULSE-FORM-SHAPEXIF' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-PULSE-FORM-SHAPEXIF', Default/U:    1       </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PULSE-FORM-SHAPEXIF', Default/U:    1      , Adjustment PCS Name: 'rp-pacpll-PULSE-FORM-SHAPEXIF' </description>
     </key>
 
-    <key name="rpspmc-pulse-form-shapexw" type="d">
+    <key name="rp-pacpll-pulse-form-shapexw" type="d">
       <default>0</default>
-      <summary>PCS Remote-ID: 'rpspmc-PULSE-FORM-SHAPEXW', Default/U:    0       </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-PULSE-FORM-SHAPEXW', Default/U:    0      , Adjustment PCS Name: 'rpspmc-PULSE-FORM-SHAPEXW' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-PULSE-FORM-SHAPEXW', Default/U:    0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PULSE-FORM-SHAPEXW', Default/U:    0      , Adjustment PCS Name: 'rp-pacpll-PULSE-FORM-SHAPEXW' </description>
     </key>
 
-    <key name="rpspmc-pulse-form-shapexwif" type="d">
+    <key name="rp-pacpll-pulse-form-shapexwif" type="d">
       <default>0</default>
-      <summary>PCS Remote-ID: 'rpspmc-PULSE-FORM-SHAPEXWIF', Default/U:    0       </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-PULSE-FORM-SHAPEXWIF', Default/U:    0      , Adjustment PCS Name: 'rpspmc-PULSE-FORM-SHAPEXWIF' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-PULSE-FORM-SHAPEXWIF', Default/U:    0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PULSE-FORM-SHAPEXWIF', Default/U:    0      , Adjustment PCS Name: 'rp-pacpll-PULSE-FORM-SHAPEXWIF' </description>
     </key>
  
 
-    <key name="rpspmc-scope-width" type="d">
+    <key name="rp-pacpll-scope-width" type="d">
       <default>512</default>
-      <summary>PCS Remote-ID: 'rpspmc-scope-width', Default/U: 760     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-scope_width', Default: 760, Adjustment PCS Name: 'rpspmc-scope-width' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-scope-width', Default/U: 760     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-scope_width', Default: 760, Adjustment PCS Name: 'rp-pacpll-scope-width' </description>
     </key>
 
-    <key name="rpspmc-scope-height" type="d">
+    <key name="rp-pacpll-scope-height" type="d">
       <default>256</default>
-      <summary>PCS Remote-ID: 'rpspmc-scope-height', Default/U: 256     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-scope_height', Default: 256, Adjustment PCS Name: 'rpspmc-scope-height' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-scope-height', Default/U: 256     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-scope_height', Default: 256, Adjustment PCS Name: 'rp-pacpll-scope-height' </description>
     </key>
 
-    <key name="rpspmc-rp-verbose-level" type="d">
+    <key name="rp-pacpll-rp-verbose-level" type="d">
       <default>0</default>
-      <summary>PCS Remote-ID: 'rpspmc-rp-verbose-level', Default/U: 0     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-verbose-level', Default: 0, Adjustment PCS Name: 'rpspmc-verbose-level' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-rp-verbose-level', Default/U: 0     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-verbose-level', Default: 0, Adjustment PCS Name: 'rp-pacpll-verbose-level' </description>
     </key>
     
-    <key name="rpspmc-pac-transport-tau-dfreq" type="d">
+    <key name="rp-pacpll-pac-transport-tau-dfreq" type="d">
       <default>-1</default>
-      <summary>PCS Remote-ID: 'rpspmc-PAC-TRANSPORT-TAU-DFREQ', Default/U:     -1 ms     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-PAC-TRANSPORT-TAU-DFREQ', Default/U:     -1 ms    , Adjustment PCS Name: 'rpspmc-PAC-TRANSPORT-TAU-DFREQ' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-PAC-TRANSPORT-TAU-DFREQ', Default/U:     -1 ms     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PAC-TRANSPORT-TAU-DFREQ', Default/U:     -1 ms    , Adjustment PCS Name: 'rp-pacpll-PAC-TRANSPORT-TAU-DFREQ' </description>
     </key>
 
-    <key name="rpspmc-pac-transport-tau-phase" type="d">
+    <key name="rp-pacpll-pac-transport-tau-phase" type="d">
       <default>-1</default>
-      <summary>PCS Remote-ID: 'rpspmc-PAC-TRANSPORT-TAU-PHASE', Default/U:     -1 ms     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-PAC-TRANSPORT-TAU-PHASE', Default/U:     -1 ms    , Adjustment PCS Name: 'rpspmc-PAC-TRANSPORT-TAU-PHASE' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-PAC-TRANSPORT-TAU-PHASE', Default/U:     -1 ms     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PAC-TRANSPORT-TAU-PHASE', Default/U:     -1 ms    , Adjustment PCS Name: 'rp-pacpll-PAC-TRANSPORT-TAU-PHASE' </description>
     </key>
 
-    <key name="rpspmc-pac-transport-tau-exec" type="d">
+    <key name="rp-pacpll-pac-transport-tau-exec" type="d">
       <default>-1</default>
-      <summary>PCS Remote-ID: 'rpspmc-PAC-TRANSPORT-TAU-EXEC', Default/U:     -1 ms     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-PAC-TRANSPORT-TAU-EXEC', Default/U:     -1 ms    , Adjustment PCS Name: 'rpspmc-PAC-TRANSPORT-TAU-EXEC' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-PAC-TRANSPORT-TAU-EXEC', Default/U:     -1 ms     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PAC-TRANSPORT-TAU-EXEC', Default/U:     -1 ms    , Adjustment PCS Name: 'rp-pacpll-PAC-TRANSPORT-TAU-EXEC' </description>
     </key>
 
-    <key name="rpspmc-pac-transport-tau-ampl" type="d">
+    <key name="rp-pacpll-pac-transport-tau-ampl" type="d">
       <default>-1</default>
-      <summary>PCS Remote-ID: 'rpspmc-PAC-TRANSPORT-TAU-AMPL', Default/U:     -1 ms     </summary>
-      <description>pcs0000, PCS Remote-ID: 'rpspmc-PAC-TRANSPORT-TAU-AMPL', Default/U:     -1 ms    , Adjustment PCS Name: 'rpspmc-PAC-TRANSPORT-TAU-AMPL' </description>
+      <summary>PCS Remote-ID: 'rp-pacpll-PAC-TRANSPORT-TAU-AMPL', Default/U:     -1 ms     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PAC-TRANSPORT-TAU-AMPL', Default/U:     -1 ms    , Adjustment PCS Name: 'rp-pacpll-PAC-TRANSPORT-TAU-AMPL' </description>
     </key>
 
 
-    <key name="fbs-bias" type="d">
+    <key name="dsp-fbs-bias" type="d">
       <default>0.1</default>
       <summary>PCS Remote-ID: 'fbs-bias', Default/U:    0.1 V     </summary>
       <description>pcs0000, PCS Remote-ID: 'fbs-bias', Default/U:    0.1 V    , Adjustment PCS Name: 'fbs-bias' </description>
     </key>
 
-    <key name="adv-dsp-zpos-ref" type="d">
+    <key name="dsp-adv-dsp-zpos-ref" type="d">
       <default>0.0</default>
-      <summary>PCS Remote-ID: 'adv-dsp-zpos-ref', Default/U: 0 Å     </summary>
+      <summary>PCS Remote-ID: 'dsp-adv-dsp-zpos-ref', Default/U: 0 Å     </summary>
       <description>pcs0000, PCS Remote-ID: 'adv-dsp-zpos-ref', Default/U: 0.0 Å    , Adjustment PCS Name: 'adv-dsp-zpos-ref' </description>
     </key>
 
-    <key name="fbs-mx0-current-set" type="d">
+    <key name="dsp-fbs-mx0-current-set" type="d">
       <default>0.0</default>
       <summary>PCS Remote-ID: 'fbs-mx0-current-set', Default/U:    0 nA     </summary>
       <description>pcs0000, PCS Remote-ID: 'fbs-mx0-current-set', Default/U:    0 nA    , Adjustment PCS Name: 'fbs-mx0-current-set' </description>
     </key>
 
-    <key name="fbs-mx0-current-gain" type="d">
+    <key name="dsp-fbs-mx0-current-gain" type="d">
       <default>1.0</default>
       <summary>PCS Remote-ID: 'fbs-mx0-current-gain', Default/U: 1       </summary>
       <description>pcs0000, PCS Remote-ID: 'fbs-mx0-current-gain', Default/U: 10      , Adjustment PCS Name: 'fbs-mx0-current-gain' </description>
     </key>
 
-    <key name="fbs-mx0-current-level" type="d">
+    <key name="dsp-fbs-mx0-current-level" type="d">
       <default>0.0</default>
       <summary>PCS Remote-ID: 'fbs-mx0-current-level', Default/U: 0 nA     </summary>
       <description>pcs0000, PCS Remote-ID: 'fbs-mx0-current-level', Default/U: 0 nA    , Adjustment PCS Name: 'fbs-mx0-current-level' </description>
     </key>
 
-    <key name="fbs-mx1-freq-set" type="d">
+    <key name="dsp-fbs-mx1-freq-set" type="d">
       <default>0.0</default>
       <summary>PCS Remote-ID: 'fbs-mx1-freq-set', Default/U: 0 Hz     </summary>
       <description>pcs0000, PCS Remote-ID: 'fbs-mx1-freq-set', Default/U: -4.02466e-124 Hz    , Adjustment PCS Name: 'fbs-mx1-freq-set' </description>
     </key>
 
-    <key name="fbs-mx1-freq-gain" type="d">
+    <key name="dsp-fbs-mx1-freq-gain" type="d">
       <default>0.0</default>
       <summary>PCS Remote-ID: 'fbs-mx1-freq-gain', Default/U:0       </summary>
       <description>pcs0000, PCS Remote-ID: 'fbs-mx1-freq-gain', Default/U:0      , Adjustment PCS Name: 'fbs-mx1-freq-gain' </description>
     </key>
 
-    <key name="fbs-mx1-freq-level" type="d">
+    <key name="dsp-fbs-mx1-freq-level" type="d">
       <default>0.0</default>
       <summary>PCS Remote-ID: 'fbs-mx1-freq-level', Default/U: 0 Hz     </summary>
       <description>pcs0000, PCS Remote-ID: 'fbs-mx1-freq-level', Default/U: 0 Hz    , Adjustment PCS Name: 'fbs-mx1-freq-level' </description>
     </key>
 
-    <key name="fbs-cp" type="d">
+    <key name="dsp-fbs-cp" type="d">
       <default>10.0</default>
       <summary>PCS Remote-ID: 'fbs-cp', Default/U: -5.70287e+91       </summary>
       <description>pcs0000, PCS Remote-ID: 'fbs-cp', Default/U: 0    , Adjustment PCS Name: 'fbs-cp' </description>
     </key>
 
-    <key name="fbs-ci" type="d">
+    <key name="dsp-fbs-ci" type="d">
       <default>10.0</default>
       <summary>PCS Remote-ID: 'fbs-ci', Default/U: 10       </summary>
       <description>pcs0000, PCS Remote-ID: 'fbs-ci', Default/U: 10   , Adjustment PCS Name: 'fbs-ci' </description>
     </key>
 
-    <key name="fbs-scan-speed-move" type="d">
+    <key name="dsp-fbs-scan-speed-move" type="d">
       <default>500.0</default>
       <summary>PCS Remote-ID: 'fbs-scan-speed-move', Default/U:     500 Å/s     </summary>
       <description>pcs0000, PCS Remote-ID: 'fbs-scan-speed-move', Default/U:     500 Å/s    , Adjustment PCS Name: 'fbs-scan-speed-move' </description>
     </key>
 
-    <key name="fbs-scan-speed-scan" type="d">
+    <key name="dsp-fbs-scan-speed-scan" type="d">
       <default>500.0</default>
       <summary>PCS Remote-ID: 'fbs-scan-speed-scan', Default/U:     500 Å/s     </summary>
       <description>pcs0000, PCS Remote-ID: 'fbs-scan-speed-scan', Default/U:     500 Å/s    , Adjustment PCS Name: 'fbs-scan-speed-scan' </description>
     </key>
 
-    <key name="adv-scan-fast-return" type="d">
+    <key name="dsp-adv-scan-fast-return" type="d">
       <default>1</default>
-      <summary>PCS Remote-ID: 'adv-scan-fast-return', Default/U: 1       </summary>
+      <summary>PCS Remote-ID: 'dsp-adv-scan-fast-return', Default/U: 1       </summary>
       <description>pcs0000, PCS Remote-ID: 'adv-scan-fast-return', Default/U: 1    , Adjustment PCS Name: 'adv-scan-fast-return' </description>
     </key>
 
-    <key name="adv-scan-xs2nd-z-offset" type="d">
+    <key name="dsp-adv-scan-xs2nd-z-offset" type="d">
       <default>0.0</default>
-      <summary>PCS Remote-ID: 'adv-scan-xs2nd-z-offset', Default/U: 0 Å     </summary>
+      <summary>PCS Remote-ID: 'dsp-adv-scan-xs2nd-z-offset', Default/U: 0 Å     </summary>
       <description>pcs0000, PCS Remote-ID: 'adv-scan-xs2nd-z-offset', Default/U: 0 Å    , Adjustment PCS Name: 'adv-scan-xs2nd-z-offset' </description>
     </key>
 
-    <key name="adv-scan-slope-x" type="d">
+    <key name="dsp-adv-scan-slope-x" type="d">
       <default>0.0</default>
-      <summary>PCS Remote-ID: 'adv-scan-slope-x', Default/U: 0       </summary>
+      <summary>PCS Remote-ID: 'dsp-adv-scan-slope-x', Default/U: 0       </summary>
       <description>pcs0000, PCS Remote-ID: 'adv-scan-slope-x', Default/U: 0      , Adjustment PCS Name: 'adv-scan-slope-x' </description>
     </key>
 
-    <key name="adv-scan-slope-y" type="d">
+    <key name="dsp-adv-scan-slope-y" type="d">
       <default>0</default>
-      <summary>PCS Remote-ID: 'adv-scan-slope-y', Default/U: 0     </summary>
+      <summary>PCS Remote-ID: 'dsp-adv-scan-slope-y', Default/U: 0     </summary>
       <description>pcs0000, PCS Remote-ID: 'adv-scan-slope-y', Default/U: 0    , Adjustment PCS Name: 'adv-scan-slope-y' </description>
     </key>
 
 
 
-    <key name="fbs-scan-ldc-dx" type="d">
+    <key name="dsp-fbs-scan-ldc-dx" type="d">
       <default>0</default>
       <summary>PCS Remote-ID: 'fbs-scan-ldc-dx', Default/U:     0 Å/s     </summary>
       <description>pcs0000, PCS Remote-ID: 'fbs-scan-ldc-dx', Default/U:     0 Å/s    , Adjustment PCS Name: 'fbs-scan-ldc-dx' </description>
     </key>
 
-    <key name="fbs-scan-ldc-dy" type="d">
+    <key name="dsp-fbs-scan-ldc-dy" type="d">
       <default>0</default>
       <summary>PCS Remote-ID: 'fbs-scan-ldc-dy', Default/U:     0 Å/s     </summary>
       <description>pcs0000, PCS Remote-ID: 'fbs-scan-ldc-dy', Default/U:     0 Å/s    , Adjustment PCS Name: 'fbs-scan-ldc-dy' </description>
     </key>
 
-    <key name="fbs-scan-ldc-dz" type="d">
+    <key name="dsp-fbs-scan-ldc-dz" type="d">
       <default>0</default>
       <summary>PCS Remote-ID: 'fbs-scan-ldc-dz', Default/U:     0 Å/s     </summary>
       <description>pcs0000, PCS Remote-ID: 'fbs-scan-ldc-dz', Default/U:     0 Å/s    , Adjustment PCS Name: 'fbs-scan-ldc-dz' </description>
     </key>
 
-    <key name="lck-ac-bias-amp" type="d">
+    <key name="dsp-lck-ac-bias-amp" type="d">
       <default>0</default>
       <summary>PCS Remote-ID: 'LCK-AC-Bias-Amp', Default/U:     0 V     </summary>
       <description>pcs0000, PCS Remote-ID: 'LCK-AC-Bias-Amp', Default/U:     0 V    , Adjustment PCS Name: 'LCK-AC-Bias-Amp' </description>
     </key>
 
-    <key name="lck-ac-z-amp" type="d">
+    <key name="dsp-lck-ac-z-amp" type="d">
       <default>0</default>
       <summary>PCS Remote-ID: 'LCK-AC-Z-Amp', Default/U:     0 Å     </summary>
       <description>pcs0000, PCS Remote-ID: 'LCK-AC-Z-Amp', Default/U:     0 Å    , Adjustment PCS Name: 'LCK-AC-Z-Amp' </description>
     </key>
 
-    <key name="iv-start" type="d">
+    <key name="dsp-iv-start" type="d">
       <default>-1</default>
       <summary>PCS Remote-ID: 'IV-Start', Default/U:    -1 V     </summary>
       <description>pcs0000, PCS Remote-ID: 'IV-Start', Default/U:    -1 V    , Adjustment PCS Name: 'IV-Start' </description>
     </key>
 
-    <key name="iv-end" type="d">
+    <key name="dsp-iv-end" type="d">
       <default>1</default>
       <summary>PCS Remote-ID: 'IV-End', Default/U:     1 V     </summary>
       <description>pcs0000, PCS Remote-ID: 'IV-End', Default/U:     1 V    , Adjustment PCS Name: 'IV-End' </description>
     </key>
 
-    <key name="iv-points" type="d">
+    <key name="dsp-iv-points" type="d">
       <default>2000</default>
       <summary>PCS Remote-ID: 'IV-Points', Default/U:  2000       </summary>
       <description>pcs0000, PCS Remote-ID: 'IV-Points', Default/U:  2000      , Adjustment PCS Name: 'IV-Points' </description>
     </key>
 
-    <key name="rpspmc-iv-slope" type="d">
+    <key name="dsp-iv-slope" type="d">
       <default>0.1</default>
       <summary>PCS Remote-ID: 'dsp-IV-Slope', Default/U:   0.1 V/s     </summary>
       <description>pcs0000, PCS Remote-ID: 'dsp-IV-Slope', Default/U:   0.1 V/s    , Adjustment PCS Name: 'dsp-IV-Slope' </description>
     </key>
 
-    <key name="rpspmc-iv-slope-ramp" type="d">
+    <key name="dsp-iv-slope-ramp" type="d">
       <default>0.5</default>
       <summary>PCS Remote-ID: 'dsp-IV-Slope-Ramp', Default/U:   0.5 V/s     </summary>
       <description>pcs0000, PCS Remote-ID: 'dsp-IV-Slope-Ramp', Default/U:   0.5 V/s    , Adjustment PCS Name: 'dsp-IV-Slope-Ramp' </description>
     </key>
 
-    <key name="rpspmc-iv-rep" type="d">
+    <key name="dsp-iv-rep" type="d">
       <default>1</default>
       <summary>PCS Remote-ID: 'dsp-IV-rep', Default/U:   1       </summary>
       <description>pcs0000, PCS Remote-ID: 'dsp-IV-rep', Default/U:   1      , Adjustment PCS Name: 'dsp-IV-rep' </description>
     </key>
 
-    <key name="rpspmc-gvp-du00" type="ad">
+    <key name="dsp-gvp-du00" type="ad">
       <default>[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]</default>
       <summary>PCS Remote-ID: 'dsp-gvp-du44', Default/U:      0 V     </summary>
       <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-du44', Default/U:      0 V    , Adjustment PCS Name: 'dsp-gvp-du44' </description>
     </key>
 
-    <key name="rpspmc-gvp-dx00" type="ad">
+    <key name="dsp-gvp-dx00" type="ad">
       <default>[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]</default>
       <summary>PCS Remote-ID: 'dsp-gvp-dx44', Default/U:      0 Å     </summary>
       <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-dx44', Default/U:      0 Å    , Adjustment PCS Name: 'dsp-gvp-dx44' </description>
     </key>
 
-    <key name="rpspmc-gvp-dy00" type="ad">
+    <key name="dsp-gvp-dy00" type="ad">
       <default>[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]</default>
       <summary>PCS Remote-ID: 'dsp-gvp-dy44', Default/U:      0 Å     </summary>
       <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-dy44', Default/U:      0 Å    , Adjustment PCS Name: 'dsp-gvp-dy44' </description>
     </key>
 
-    <key name="rpspmc-gvp-dz00" type="ad">
+    <key name="dsp-gvp-dz00" type="ad">
       <default>[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]</default>
       <summary>PCS Remote-ID: 'dsp-gvp-dz44', Default/U:      0 Å     </summary>
       <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-dz44', Default/U:      0 Å    , Adjustment PCS Name: 'dsp-gvp-dz44' </description>
     </key>
 
-    <key name="rpspmc-gvp-dsig00" type="ad">
+    <key name="dsp-gvp-dsig00" type="ad">
       <default>[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]</default>
       <summary>PCS Remote-ID: 'dsp-gvp-dsig44', Default/U:      0 V     </summary>
       <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-dsig44', Default/U:      0 V    , Adjustment PCS Name: 'dsp-gvp-dsig44' </description>
     </key>
 
-    <key name="rpspmc-gvp-dt00" type="ad">
+    <key name="dsp-gvp-dt00" type="ad">
       <default>[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]</default>
       <summary>PCS Remote-ID: 'dsp-gvp-dt44', Default/U:     0 s     </summary>
       <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-dt44', Default/U:     0 s    , Adjustment PCS Name: 'dsp-gvp-dt44' </description>
     </key>
 
-    <key name="rpspmc-gvp-n00" type="ad">
+    <key name="dsp-gvp-n00" type="ad">
       <default>[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]</default>
       <summary>PCS Remote-ID: 'dsp-gvp-n44', Default/U:     0       </summary>
       <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-n44', Default/U:     0      , Adjustment PCS Name: 'dsp-gvp-n44' </description>
     </key>
 
-    <key name="rpspmc-gvp-data00" type="ad">
+    <key name="dsp-gvp-data00" type="ad">
       <default>[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]</default>
       <summary>PCS Remote-ID: 'dsp-gvp-data44', Default/U: 0000 h     </summary>
       <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-data44', Default/U: 0000 h    , Adjustment PCS Name: 'dsp-gvp-data44' </description>
     </key>
 
-    <key name="rpspmc-gvp-nrep00" type="ad">
+    <key name="dsp-gvp-nrep00" type="ad">
       <default>[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]</default>
       <summary>PCS Remote-ID: 'dsp-gvp-nrep44', Default/U: 0       </summary>
       <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-nrep44', Default/U: 0      , Adjustment PCS Name: 'dsp-gvp-nrep44' </description>
     </key>
 
-    <key name="rpspmc-gvp-pcjr00" type="ad">
+    <key name="dsp-gvp-pcjr00" type="ad">
       <default>[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]</default>
       <summary>PCS Remote-ID: 'dsp-gvp-pcjr44', Default/U: 0       </summary>
       <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-pcjr44', Default/U: 0      , Adjustment PCS Name: 'dsp-gvp-pcjr44' </description>
     </key>
 
-    <key name="rpspmc-gvp-final-delay" type="d">
+    <key name="dsp-gvp-final-delay" type="d">
       <default>0</default>
       <summary>PCS Remote-ID: 'dsp-GVP-Final-Delay', Default/U:     0 s     </summary>
       <description>pcs0000, PCS Remote-ID: 'dsp-GVP-Final-Delay', Default/U:     0 s    , Adjustment PCS Name: 'dsp-GVP-Final-Delay' </description>
     </key>
 
-    <key name="rpspmc-gvp-gpio-lock-57" type="d">
+    <key name="dsp-gvp-gpio-lock-57" type="d">
       <default>0</default>
       <summary>PCS Remote-ID: 'dsp-GVP-GPIO-Lock-57', Default/U: 0000       </summary>
       <description>pcs0000, PCS Remote-ID: 'dsp-GVP-GPIO-Lock-57', Default/U: 0000      , Adjustment PCS Name: 'dsp-GVP-GPIO-Lock-57' </description>
-    </key>
-
-    
-    <key name="template-stm-speed" type="d">
-      <default>2000.0</default>
-      <summary>PCS Remote-ID: 'template-stm-speed', Default/U: 2000.00 px/s     </summary>
-      <description>pcs0000, PCS Remote-ID: 'template-stm-speed', Default/U: 2000.00 px/s    , Adjustment PCS Name: 'template-stm-speed' </description>
-    </key>
-
-    <key name="template-stm-bias" type="d">
-      <default>1.0</default>
-      <summary>PCS Remote-ID: 'template-stm-bias', Default/U:  0.00 V     </summary>
-      <description>pcs0000, PCS Remote-ID: 'template-stm-bias', Default/U:  0.00 V    , Adjustment PCS Name: 'template-stm-bias' </description>
-    </key>
-
-    <key name="template-afm-speed" type="d">
-      <default>2000.0</default>
-      <summary>PCS Remote-ID: 'template-afm-speed', Default/U: 2000.00 px/s     </summary>
-      <description>pcs0000, PCS Remote-ID: 'template-afm-speed', Default/U: 2000.00 px/s    , Adjustment PCS Name: 'template-afm-speed' </description>
-    </key>
-
-    <key name="template-afm-bias" type="d">
-      <default>0.0</default>
-      <summary>PCS Remote-ID: 'template-afm-bias', Default/U:  0.00 V     </summary>
-      <description>pcs0000, PCS Remote-ID: 'template-afm-bias', Default/U:  0.00 V    , Adjustment PCS Name: 'template-afm-bias' </description>
     </key>
   </schema>
 

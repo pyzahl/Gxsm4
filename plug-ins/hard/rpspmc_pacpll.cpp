@@ -298,8 +298,6 @@ typedef struct {
 
 // Query Function, installs Plugin's in File/Import and Export Menupaths!
 
-#define REMOTE_PREFIX "RPSPMC_"
-
 static void rpspmc_pacpll_hwi_query(void)
 {
 	if(rpspmc_pacpll_hwi_pi.status) g_free(rpspmc_pacpll_hwi_pi.status); 
@@ -1352,6 +1350,7 @@ void RPSPMC_Control::create_folder (){
         bp->set_input_width_chars (10);
         bp->set_no_spin ();
 
+        bp->set_pcs_remote_prefix ("dsp-"); // for script compatibility reason keeping this the same for all HwI.
 
 // ==== Folder: Feedback & Scan ========================================
         bp->start_notebook_tab (notebook, "Feedback & Scan", "template-tab-feedback-scan", hwi_settings);
@@ -1696,7 +1695,6 @@ void RPSPMC_Control::create_folder (){
         bp->grid_add_ec (NULL, Volt, &IV_start, -10.0, 10., "5.3g", 0.1, 0.025, "IV-Start");
         bp->grid_add_ec (NULL, Volt, &IV_end, -10.0, 10.0, "5.3g", 0.1, 0.025, "IV-End");
         bp->grid_add_ec (NULL, Unity, &IV_points, 1, 1000, "5g", "IV-Points");
-        bp->set_pcs_remote_prefix (REMOTE_PREFIX);
         
         bp->new_line ();
 
@@ -2794,7 +2792,7 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
         bp = new BuildParam (v_grid);
         bp->set_no_spin (true);
 
-        bp->set_pcs_remote_prefix ("rpspmc-");
+        bp->set_pcs_remote_prefix ("rp-pacpll-");
 
         bp->set_input_width_chars (16);
         bp->set_default_ec_change_notice_fkt (NULL, NULL);

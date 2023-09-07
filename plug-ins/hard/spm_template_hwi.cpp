@@ -1679,7 +1679,7 @@ void SPM_Template_Control::create_folder (){
         bp->grid_add_ec (NULL, Volt, &IV_start, -10.0, 10., "5.3g", 0.1, 0.025, "IV-Start");
         bp->grid_add_ec (NULL, Volt, &IV_end, -10.0, 10.0, "5.3g", 0.1, 0.025, "IV-End");
         bp->grid_add_ec (NULL, Unity, &IV_points, 1, 1000, "5g", "IV-Points");
-        bp->set_pcs_remote_prefix (REMOTE_PREFIX);
+        bp->set_pcs_remote_prefix ("-dsp");
         
         bp->new_line ();
 
