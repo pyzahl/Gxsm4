@@ -1009,6 +1009,14 @@ void rpspmc_hwi_dev::GVP_fetch_data_srcs (){
 void rpspmc_hwi_dev::rpspmc_hwi_dev::GVP_start_data_read(){
 }
 
+
+#define QN(N) ((1<<(N))-1)
+#define Q19 QN(19)
+#define Q31 0x7FFFFFFF  // (1<<31)-1 ... ov in expression expansion
+#define SPMC_AD5791_REFV 5.0 // DAC AD5791 Reference Volatge is 5.000000V (+/-5V Range)
+inline double ad5791_dac_to_volts (int value){ return SPMC_AD5791_REFV*(double)value / Q19; }
+inline int    volts_to_ad5791_dac (double volts){ return round(Q19*volts/SPMC_AD5791_REFV); }
+
 int rpspmc_hwi_dev::GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v){
         if (i >= MAX_PROGRAM_VECTORS || i < 0)
                 return 0;
@@ -1048,11 +1056,23 @@ int rpspmc_hwi_dev::GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v){
         gvp_vector_d [D_GVP_DZ      ] = v->f_dz;
         gvp_vector_d [D_GVP_DU      ] = v->f_du;
 
-        g_print ("Vec[%2d] = [#%4d, %4d, 0x%08x, nr%03d, pc[%02d], {fin%02d}, {dU %g V dXYZ %g A %g A %g A} ]\n",
+        int dx_dac =  volts_to_ad5791_dac (gvp_vector_d [D_GVP_DX]);
+        int dy_dac =  volts_to_ad5791_dac (gvp_vector_d [D_GVP_DY]);
+        int dz_dac =  volts_to_ad5791_dac (gvp_vector_d [D_GVP_DZ]);
+        int du_dac =  volts_to_ad5791_dac (gvp_vector_d [D_GVP_DU]);
+        double dx_actual =  ad5791_dac_to_volts (gvp_vector_i [I_GVP_NII] * gvp_vector_i [I_GVP_N] * volts_to_ad5791_dac (gvp_vector_d [D_GVP_DX]));
+        double dy_actual =  ad5791_dac_to_volts (gvp_vector_i [I_GVP_NII] * gvp_vector_i [I_GVP_N] * volts_to_ad5791_dac (gvp_vector_d [D_GVP_DY]));
+        double dz_actual =  ad5791_dac_to_volts (gvp_vector_i [I_GVP_NII] * gvp_vector_i [I_GVP_N] * volts_to_ad5791_dac (gvp_vector_d [D_GVP_DZ]));
+        double du_actual =  ad5791_dac_to_volts (gvp_vector_i [I_GVP_NII] * gvp_vector_i [I_GVP_N] * volts_to_ad5791_dac (gvp_vector_d [D_GVP_DU]));
+
+        g_print ("Vec[%2d] = [#%4d, %4d, 0x%08x, nr%03d, pc[%02d], {fin%02d}, {dU %g V dXYZ %g A %g A %g A} ] Actual Delta [%d %d %d %d]DAC [%g, %g, %g, %g]V\n",
                  i, v->n, v->dnx, v->srcs,
                  v->repetitions, v->ptr_next, v->ptr_final,
                  v->f_du,
-                 v->f_dx, v->f_dy, v->f_dz);
+                 v->f_dx, v->f_dy, v->f_dz,
+                 dx_dac, dy_dac, dz_dac, du_dac,
+                 dx_actual, dy_actual, dz_actual, du_actual
+                 );
 #if 0
         // check count ranges
         // NULL VECTOR, OK: END

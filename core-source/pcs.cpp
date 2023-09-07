@@ -57,6 +57,11 @@ good starting point.
 
 #define EC_INF 1e133
 
+
+// PCS debugging/watching
+// #define DEBUG_PCS_LOG
+
+
 int total_message_count = 0;
 int total_message_count_int = 0;
 
@@ -371,6 +376,9 @@ gchar *Param_Control::Get_UsrString(){
 
 
 gboolean Param_Control::Set_FromValue(double nVal){
+#ifdef DEBUG_PCS_LOG
+        g_message ("PCS Set_FromValue newVal: %g   CurdVal: %g dVal: %g", nVal, Current_Dval, Get_dValue() );
+#endif
 	if (ShowMessage_flag)
                 return false;	//do nothing if a message dialog is active
         if (StringVal)
@@ -378,6 +386,10 @@ gboolean Param_Control::Set_FromValue(double nVal){
 
         if (nVal == Current_Dval)
                 return false;
+
+#ifdef DEBUG_PCS_LOG
+        g_message ("PCS Set_FromValue %g   dValue: %g", nVal, Get_dValue() );
+#endif
         
 	new_value = nVal;
 	if(nVal <= vMax && nVal >= vMin){
@@ -730,7 +742,6 @@ void Gtk_EntryControl::adjustment_callback(GtkAdjustment *adj, Gtk_EntryControl 
 
 
         double  v=gtk_adjustment_get_value (adj);
-        //#define DEBUG_PCS_LOG
 #ifdef DEBUG_PCS_LOG
         g_message ("PCS:adj-callback get_vale (adj)  : %g --> v=%g", gtk_adjustment_get_value (adj), v);
 #endif
@@ -1132,13 +1143,11 @@ gint Gtk_EntryControl::update_callback(GtkEditable *editable, void *data){
                         if (current_object->StringVal){
                                 ;
                         } else {
-#if 0 // enable to monitor updates
-                                gchar *tmp;
 #ifdef DEBUG_PCS_LOG
-                                //g_message ("Gtk_EntryControl::update_callback txt={%s} pcs=%s", p, tmp=current_object->get_refname ());
-#endif
+                                gchar *tmp;
                                 g_free (tmp);
                                 double x=atof (p);
+                                g_message ("Gtk_EntryControl::update_callback txt={%s} pcs=%s  [%g]", p, tmp=current_object->get_refname (), x);
                                 current_object->Set_Parameter (x, FALSE, FALSE);
 #else
                                 current_object->Set_Parameter (atof (p), FALSE, FALSE);
@@ -1160,8 +1169,8 @@ gint Gtk_EntryControl::update_callback(GtkEditable *editable, void *data){
 
 void Gtk_EntryControl::entry_focus_leave_callback (GtkEventController *controller, gpointer self)
 {
-        update_callback (GTK_EDITABLE (self), NULL);
         g_message ("ENTRY OUT-OF-FOCUS, buffer: %s", gtk_entry_buffer_get_text (gtk_entry_get_buffer (GTK_ENTRY (self))));
+        update_callback (GTK_EDITABLE (self), NULL);
 }
 
 
@@ -1517,7 +1526,6 @@ void Gtk_EntryControl::put_pcs_configuartion (){
 	}
 }
 
-//#define DEBUG_PCS_LOG
 
 static gint
 ec_gtk_spin_button_sci_output (GtkSpinButton *spin_button,
