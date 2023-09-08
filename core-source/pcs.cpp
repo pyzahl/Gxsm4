@@ -384,9 +384,13 @@ gboolean Param_Control::Set_FromValue(double nVal){
         if (StringVal)
                 return false;
 
-        if (nVal == Current_Dval)
-                return false;
-
+        if (nVal == Current_Dval){
+                if (strncmp(refname, "dsp-gvp", 7)==0) // weird patch
+                        g_message ("Param_Control::Set_FromValue: same value[%s]: %g", refname, Current_Dval); // TEST
+                else
+                        return false;
+        }
+        
 #ifdef DEBUG_PCS_LOG
         g_message ("PCS Set_FromValue %g   dValue: %g", nVal, Get_dValue() );
 #endif
@@ -1169,7 +1173,7 @@ gint Gtk_EntryControl::update_callback(GtkEditable *editable, void *data){
 
 void Gtk_EntryControl::entry_focus_leave_callback (GtkEventController *controller, gpointer self)
 {
-        g_message ("ENTRY OUT-OF-FOCUS, buffer: %s", gtk_entry_buffer_get_text (gtk_entry_get_buffer (GTK_ENTRY (self))));
+        //g_message ("ENTRY OUT-OF-FOCUS, buffer: %s", gtk_entry_buffer_get_text (gtk_entry_get_buffer (GTK_ENTRY (self))));
         update_callback (GTK_EDITABLE (self), NULL);
 }
 

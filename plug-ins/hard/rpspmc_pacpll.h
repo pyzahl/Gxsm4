@@ -753,7 +753,7 @@ private:
 };
 
 
-#define MAX_PROGRAM_VECTORS 16
+#define MAX_PROGRAM_VECTORS 8
 #define i_X 0
 #define i_Y 1
 #define i_Z 2

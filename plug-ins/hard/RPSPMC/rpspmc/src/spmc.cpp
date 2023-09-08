@@ -102,7 +102,7 @@
 #define SPMC_CFG_AD5791_DAC_CONTROL   (SPMC_BASE + 18) // bits 0,1,2: axis; bit 3: config mode; bit 4: send config data, MUST reset "send bit in config mode to resend next, on hold between"
 
 
-#define Q_XYPRECISION Q20
+#define Q_XYPRECISION Q28
 
 // SPMC Transformations Core
 #define SPMC_ROTM_XX             (SPMC_BASE + 20)  // cos(Alpha)
@@ -419,6 +419,9 @@ int32_t ad5791_dac_ouput_state(int axis,
 inline double ad5791_dac_to_volts (uint32_t value){ return SPMC_AD5791_REFV*(double)value / Q19; }
 inline int32_t volts_to_ad5791_dac (double volts){ return round(Q19*volts/SPMC_AD5791_REFV); }
 
+inline double rpspmc_to_volts (uint32_t value){ return SPMC_AD5791_REFV*(double)value / Q31; }
+inline int32_t volts_to_rpspmc (double volts){ return round(Q31*volts/SPMC_AD5791_REFV); }
+
 
 /***************************************************************************//**
  * @brief Writes to the DAC register.
@@ -582,13 +585,12 @@ void rp_spmc_set_bias (double bias){
 
         if (verbose > 2){
                 fprintf(stderr, "Set AD5971 AXIS3 (Bias) to %g V\n", bias);
-                fprintf(stderr, "MON-UXYZ: %8g  %8g  %8g  %8g V  STATUS: %08X [%g] PASS: %8g V\n",
-                        ad5791_dac_to_volts (read_gpio_reg_int32 (8,0)),
-                        ad5791_dac_to_volts (read_gpio_reg_int32 (8,1)),
-                        ad5791_dac_to_volts (read_gpio_reg_int32 (9,0)),
-                        ad5791_dac_to_volts (read_gpio_reg_int32 (9,1)),
+                fprintf(stderr, "MON-UXYZ: %8g  %8g  %8g  %8g V  STATUS: %08X PASS: %8g V\n",
+                        rpspmc_to_volts (read_gpio_reg_int32 (8,0)),
+                        rpspmc_to_volts (read_gpio_reg_int32 (8,1)),
+                        rpspmc_to_volts (read_gpio_reg_int32 (9,0)),
+                        rpspmc_to_volts (read_gpio_reg_int32 (9,1)),
                         read_gpio_reg_int32 (3,1),
-                        ad5791_dac_to_volts ((read_gpio_reg_int32 (3,1)&0b00001111111111111111111100000000)>>8),
                         1.0*(double)read_gpio_reg_int32 (7,1) / Q15
                         );            // (3,1) X6 STATUS, (7,1) X14 SIGNAL PASS
         }
@@ -631,7 +633,7 @@ void rp_spmc_gvp_config (bool reset=true, bool program=false, bool pause=false){
         }
         int cfg = (reset ? 1:0) | (program ? 2:0) | (pause ? 4:0);
         set_gpio_cfgreg_int32 (SPMC_GVP_CONTROL, cfg);
-        usleep(500);
+        usleep(5000);
 #ifdef DBG_SETUPGVP
         if (verbose > 1){
                 char s8[9]; memset(s8, 0, 9);
@@ -723,9 +725,9 @@ void rp_spmc_set_slope (double dzx, double dzy){
 }
 
 void rp_spmc_set_offsets (double x0, double y0, double z0){
-        set_gpio_cfgreg_int32 (SPMC_OFFSET_X, volts_to_ad5791_dac (x0));
-        set_gpio_cfgreg_int32 (SPMC_OFFSET_Y, volts_to_ad5791_dac (y0));
-        set_gpio_cfgreg_int32 (SPMC_OFFSET_Z, volts_to_ad5791_dac (z0));
+        set_gpio_cfgreg_int32 (SPMC_OFFSET_X, volts_to_rpspmc (x0));
+        set_gpio_cfgreg_int32 (SPMC_OFFSET_Y, volts_to_rpspmc (y0));
+        set_gpio_cfgreg_int32 (SPMC_OFFSET_Z, volts_to_rpspmc (z0));
 }
 
 void rp_spmc_set_scanpos (double x0, double y0){

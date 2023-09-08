@@ -2340,6 +2340,8 @@ void RPSPMC_Control::ZServoControlInv (GtkWidget *widget, RPSPMC_Control *self){
 
 
 void RPSPMC_Control::ChangedNotifyVP(Param_Control* pcs, gpointer dspc){
+        g_message ("**ChangedNotifyVP**");
+#if 0
         for (int k=0; k<8; k++)
                 g_message ("**VP[%02d] %8gV %8gA %8gs np%4d nr%4d",
                            k,
@@ -2348,6 +2350,7 @@ void RPSPMC_Control::ChangedNotifyVP(Param_Control* pcs, gpointer dspc){
                            ((RPSPMC_Control*)dspc)->GVP_ts[k],
                            ((RPSPMC_Control*)dspc)->GVP_points[k],
                            ((RPSPMC_Control*)dspc)->GVP_vnrep[k]);
+#endif
 }
 
 int RPSPMC_Control::choice_mixmode_callback (GtkWidget *widget, RPSPMC_Control *dspc){

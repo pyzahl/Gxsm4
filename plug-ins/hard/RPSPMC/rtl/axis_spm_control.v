@@ -22,7 +22,7 @@
 
 module axis_spm_control#(
     parameter SAXIS_TDATA_WIDTH = 32,
-    parameter QROTM = 20,
+    parameter QROTM = 28,
     parameter RDECI = 4   // reduced rate decimation bits 1= 1/2 ...
 )
 (
