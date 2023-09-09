@@ -724,9 +724,9 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
 
                 // SPMC_GVP_CLK = 125 MHz
                 // slew in V/s
-                // => time / point: slew/n
+                // => time / point: 1/slew
         
-                double dt = slew/n;
+                double dt = 1.0/slew;
                 // => NII total = dt*SPMC_GVP_CLK
                 double NII_total = dt*SPMC_GVP_CLK;
 
@@ -745,7 +745,7 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
                 // total vector steps:
                 Nsteps = nii * n;
 
-                if (verbose > 1) fprintf(stderr, "Calc decii: slew=%g/s, dmin=%g V, dt=%g s, ##=%g, Nsteps=%g", slew, dmin, dt, NII_total, Nsteps);
+                if (verbose > 1) fprintf(stderr, "Auto calc decii: slew=%g pts/s, dmin=%g V, dt=%g s, ##=%g, Nsteps=%g\n", slew, dmin, dt, NII_total, Nsteps);
 
                 
         }
