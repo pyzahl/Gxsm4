@@ -2752,8 +2752,9 @@ void RPSPMC_Control::update_controller () {
 
         // SCAN SPEED COMPUTATIONS -- converted to 16.16 fixed point scan generator parameters (TEMPLATE, replace with what ever)
         double frac  = (1<<16);
-        double fs_dx = frac * rpspmc_pacpll_hwi_pi.app->xsm->Inst->XA2Dig (scan_speed_x_requested) / rpspmc_hwi->get_GVP_frq_ref ();
-        double fs_dy = frac * rpspmc_pacpll_hwi_pi.app->xsm->Inst->YA2Dig (scan_speed_x_requested) / rpspmc_hwi->get_GVP_frq_ref ();
+        // *** FIX
+        double fs_dx = frac * rpspmc_pacpll_hwi_pi.app->xsm->Inst->XA2Dig (scan_speed_x_requested) / 200e3; //rpspmc_hwi->get_GVP_frq_ref ();
+        double fs_dy = frac * rpspmc_pacpll_hwi_pi.app->xsm->Inst->YA2Dig (scan_speed_x_requested) / 200e3; //rpspmc_hwi->get_GVP_frq_ref ();
 #if 0
         if ((frac * rpspmc_hwi->Dx / fs_dx) > (1<<15) || (frac * rpspmc_hwi->Dy / fs_dx) > (1<<15)){
                 main_get_gapp()->message (N_("WARNING:\n"
@@ -2787,8 +2788,10 @@ void RPSPMC_Control::update_controller () {
         dsp_scan_fs_dy *= rpspmc_hwi->scan_direction;
 
         //info only, updates scan speed GUI entry with actual rates (informative only)
-        scan_speed_x = rpspmc_pacpll_hwi_pi.app->xsm->Inst->Dig2XA ((long)(dsp_scan_fs_dx * rpspmc_hwi->get_GVP_frq_ref () / frac));
-        scanpixelrate = (double)dsp_scan_dnx/rpspmc_hwi->get_GVP_frq_ref ();
+        // *** FIX ME !!
+        scan_speed_x = rpspmc_pacpll_hwi_pi.app->xsm->Inst->Dig2XA ((long)(dsp_scan_fs_dx * 200e3 / frac)); // rpspmc_hwi->get_GVP_frq_ref ()
+        // ************* FIX
+        scanpixelrate = (double)dsp_scan_dnx/200e3;   // rpspmc_hwi->get_GVP_frq_ref ();
         gchar *info = g_strdup_printf (" (%g A/s, %g ms/pix)", scan_speed_x, scanpixelrate*1e3);
         scan_speed_ec->set_info (info);
         g_free (info);
@@ -4272,6 +4275,7 @@ void RPspmc_pacpll::update_health (const gchar *msg){
         if (msg){
                 gtk_entry_buffer_set_text (GTK_ENTRY_BUFFER (gtk_entry_get_buffer (GTK_ENTRY((red_pitaya_health)))), msg, -1);
         } else {
+#if 0
                 gchar *gpiox_string = NULL;
                 if (scope_width_points > 1000){
                         gpiox_string = g_strdup_printf ("1[%08x %08x, %08x %08x] 5[%08x %08x, %08x %08x] 9[%08x %08x, %08x %08x] 13[%08x %08x, %08x %08x]",
@@ -4285,10 +4289,19 @@ void RPspmc_pacpll::update_health (const gchar *msg){
                                                         (int)pacpll_signals.signal_gpiox[14], (int)pacpll_signals.signal_gpiox[15]
                                                         );
                 }
-                gchar *health_string = g_strdup_printf ("CPU: %03.0f%% Free: %6.1f MB %s #%g", pacpll_parameters.cpu_load, pacpll_parameters.free_ram/1024/1024, gpiox_string?gpiox_string:"[]", pacpll_parameters.counter);
+                gchar *health_string = g_strdup_printf ("CPU: %03.0f%% Free: %6.1f MB %s #%g",
+                                                        pacpll_parameters.cpu_load,
+                                                        pacpll_parameters.free_ram/1024/1024,
+                                                        gpiox_string?gpiox_string:"[]", pacpll_parameters.counter);
+                g_free (gpiox_string);
+#else
+                gchar *health_string = g_strdup_printf ("CPU: %03.0f%% Free: %6.1f MB #%g",
+                                                        pacpll_parameters.cpu_load,
+                                                        pacpll_parameters.free_ram/1024/1024,
+                                                        pacpll_parameters.counter);
+#endif
                 gtk_entry_buffer_set_text (GTK_ENTRY_BUFFER (gtk_entry_get_buffer (GTK_ENTRY((red_pitaya_health)))), health_string, -1);
                 g_free (health_string);
-                g_free (gpiox_string);
         }
 }
 

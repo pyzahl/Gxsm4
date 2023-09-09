@@ -77,7 +77,6 @@ inline void set_gpio_cfgreg_uint32 (int cfg_slot, unsigned int value){
 }
 
 inline void set_gpio_cfgreg_int16_int16 (int cfg_slot, gint16 value_1, gint16 value_2){
-        //size_t off = cfg_slot * 4; // ** +0x8000 old
         union { struct { gint16 hi, lo; } hl; int ww; } mem;
         mem.hl.hi = value_1;
         mem.hl.lo = value_2;
@@ -88,7 +87,6 @@ inline void set_gpio_cfgreg_int16_int16 (int cfg_slot, gint16 value_1, gint16 va
 }
 
 inline void set_gpio_cfgreg_uint16_uint16 (int cfg_slot, guint16 value_1, guint16 value_2){
-        //size_t off = cfg_slot * 4; // ** +0x8000 old
         union { struct { guint16 hi, lo; } hl; int ww; } mem;
         mem.hl.hi = value_1;
         mem.hl.lo = value_2;
@@ -99,10 +97,7 @@ inline void set_gpio_cfgreg_uint16_uint16 (int cfg_slot, guint16 value_1, guint1
 }
 
 inline void set_gpio_cfgreg_int64 (int cfg_slot, long long value){
-        size_t off_lo = cfg_slot * 4;
-        size_t off_hi = off_lo + 4;
         unsigned long long uv = (unsigned long long)value;
-        if (verbose > 2) fprintf(stderr, "set_gpio64[CFG%d] int64 %04x = %08x %d\n", cfg_slot, off_lo, value, value);
         *((int32_t *)(cfg_reg_adr(cfg_slot)))   = uv & 0xffffffff;
         *((int32_t *)(cfg_reg_adr(cfg_slot+1))) = uv >> 32;
 }

@@ -626,7 +626,7 @@ void rp_PAC_set_dfreq_controller (double setpoint, double cp, double ci, double 
 // new GPIO READING THREAD with FIR
 void *thread_gpio_reading_FIR(void *arg) {
         unsigned long x8,x9;
-        int i,j,x,y;
+        int i,j,x;
 	int ch;
         for (j=0; j<GPIO_FIR_LEN; j++){
                 gpio_reading_FIRV_buffer[GPIO_READING_DDS_X8][j] = 0;

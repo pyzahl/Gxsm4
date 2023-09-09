@@ -195,13 +195,13 @@ struct SPMC_parameters {
         // RP SPMC Monitors
         double bias_monitor;
         double signal_monitor;
-        double x_monitor;
+        double x_monitor; // final XYZ = VecOffset + VecScan + Vec(0,0,Zslope)
         double y_monitor;
         double z_monitor;
-        double x0_monitor;
+        double x0_monitor; // Offsets
         double y0_monitor;
         double z0_monitor;
-        double xs_monitor;
+        double xs_monitor; // scan coords
         double ys_monitor;
         double zs_monitor;
 };

@@ -212,8 +212,8 @@ double RPSPMC_Control::make_UZXYramp_vector (double dU, double dZ, double dX, do
 	program_vector.f_dx = main_get_gapp()->xsm->Inst->XA2Volt (dX);
 	program_vector.f_dy = main_get_gapp()->xsm->Inst->YA2Volt (dY);
 	program_vector.f_dz = main_get_gapp()->xsm->Inst->ZA2Volt (dZ);
-	program_vector.f_da = main_get_gapp()->xsm->Inst->ZA2Volt (dSig1);
-	program_vector.f_db = main_get_gapp()->xsm->Inst->ZA2Volt (dSig2);
+	program_vector.f_da = dSig1;
+	program_vector.f_db = dSig2;
 
 	duration += ts;
       

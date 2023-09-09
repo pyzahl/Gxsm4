@@ -142,8 +142,6 @@ rpspmc_hwi_dev::rpspmc_hwi_dev(){
         ScanningFlg=0;
         KillFlg=FALSE;
 
-        RPSPMC_GVP_decii = 512; // GVP decii initial value
-
         for (int i=0; i<4; ++i){
                 srcs_dir[i] = nsrcs_dir[i] = 0;
                 Mob_dir[i] = NULL;
@@ -660,7 +658,7 @@ gboolean rpspmc_hwi_dev::ScanLineM(int yindex, int xdir, int muxmode,
  Propertiy hash:      return val1, val2, val3:
  "z" :                ZS, XS, YS  with offset!! -- in volts after piezo amplifier
  "o" :                Z0, X0, Y0  offset -- in volts after piezo amplifier
- "R" :                expected Z, X, Y -- in Angstroem/base unit
+ "R" :                Scan Pos ZS, XS, YS -- in Angstroem/base unit
  "f" :                dFreq, I-avg, I-RMS
  "s","S" :            DSP Statemachine Status Bits, DSP load, DSP load peak
  "Z" :                probe Z Position
@@ -672,50 +670,37 @@ gboolean rpspmc_hwi_dev::ScanLineM(int yindex, int xdir, int muxmode,
 */
 
 gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2, double &val3){
-        if (*property == 'z'){
-                double x = (double)(RPSPMC_data_x_index-Nx/2)*Dx;
-                double y = (double)(Ny/2-RPSPMC_data_y_index)*Dy;
-                Transform (&x, &y); // apply rotation!
-		val1 = spmc_parameters.z_monitor; // *main_get_gapp()->xsm->Inst->VZ() * RPSPMC_data_z_value;
-		val2 = spmc_parameters.x_monitor; // *main_get_gapp()->xsm->Inst->VX() * (x + GVP_x0 ) * 10/32768; // assume "internal" non analog offset adding here (same gain)
-                val3 = spmc_parameters.y_monitor; // *main_get_gapp()->xsm->Inst->VY() * (y + GVP_y0 ) * 10/32768;
+        if (*property == 'z'){ // Scan Coordinates: ZScan, XScan, YScan  with offset!! -- in volts after piezo amplifier 
+		val1 = spmc_parameters.z_monitor*main_get_gapp()->xsm->Inst->VZ();
+		val2 = spmc_parameters.x_monitor*main_get_gapp()->xsm->Inst->VX();
+                val3 = spmc_parameters.y_monitor*main_get_gapp()->xsm->Inst->VY();
 		return TRUE;
 	}
 
-	if (*property == 'o' || *property == 'O'){
-		// read/convert and return offset
-		// NEED to request 'z' property first, then this is valid and up-to-date!!!!
-                // no offset simulated
-		if (main_get_gapp()->xsm->Inst->OffsetMode () == OFM_ANALOG_OFFSET_ADDING){
-			val1 =  spmc_parameters.z0_monitor; //main_get_gapp()->xsm->Inst->VZ0() * 0.;
-			val2 =  spmc_parameters.x0_monitor; // main_get_gapp()->xsm->Inst->VX0() * GVP_x0*10/32768;
-			val3 =  spmc_parameters.y0_monitor; //main_get_gapp()->xsm->Inst->VY0() * GVP_y0*10/32768;
-		} else {
-			val1 =  spmc_parameters.z0_monitor; //main_get_gapp()->xsm->Inst->VZ() * 0.;
-			val2 =  spmc_parameters.x0_monitor; //main_get_gapp()->xsm->Inst->VX() * GVP_x0*10/32768;
-			val3 =  spmc_parameters.y0_monitor; //main_get_gapp()->xsm->Inst->VY() * GVP_y0*10/32768;
-		}
+	if (*property == 'o' || *property == 'O'){ // Offsets: Z0, X0, Y0  offset -- in volts after piezo amplifier
+                val1 =  spmc_parameters.z0_monitor * main_get_gapp()->xsm->Inst->VZ();
+                val2 =  spmc_parameters.x0_monitor * main_get_gapp()->xsm->Inst->VX();
+                val3 =  spmc_parameters.y0_monitor * main_get_gapp()->xsm->Inst->VY();
 		
 		return TRUE;
 	}
 
         // ZXY in Angstroem
-        if (*property == 'R'){
-                // ZXY Volts after Piezoamp -- without analog offset -> Dig -> ZXY in Angstroem
-		val1 =  spmc_parameters.z_monitor; //main_get_gapp()->xsm->Inst->V2ZAng (main_get_gapp()->xsm->Inst->VZ() * GVP_data_z_value);
-		val2 =  spmc_parameters.x_monitor; //main_get_gapp()->xsm->Inst->V2XAng (main_get_gapp()->xsm->Inst->VX() * (double)(GVP_data_x_index-Nx/2)*Dx)*10/32768;
-                val3 =  spmc_parameters.z_monitor; //main_get_gapp()->xsm->Inst->V2YAng (main_get_gapp()->xsm->Inst->VY() * (double)(Ny/2-GVP_data_y_index/2)*Dy)*10/32768;
+        if (*property == 'R'){ // Scan Pos ZS, XS, YS -- without offset in Angstroem
+		val1 =  main_get_gapp()->xsm->Inst->Volt2ZA (spmc_parameters.zs_monitor);
+		val2 =  main_get_gapp()->xsm->Inst->Volt2XA (spmc_parameters.xs_monitor);
+                val3 =  main_get_gapp()->xsm->Inst->Volt2YA (spmc_parameters.zs_monitor);
 		return TRUE;
         }
 
         if (*property == 'f'){
                 val1 = pacpll_parameters.dfreq_monitor; // qf - DSPPACClass->pll.Reference[0]; // Freq Shift
-		val2 = spmc_parameters.signal_monitor; // actual nA reading    xxxx V  * 0.1nA/V
+		val2 = spmc_parameters.signal_monitor / main_get_gapp()->xsm->Inst->nAmpere2V (1.); // actual nA reading
 		val3 =  0; //
 		return TRUE;
 	}
 
-        if (*property == 'Z'){
+        if (*property == 'Z'){ // probe Z -- well total Z here again
                 val1 = rpspmc_pacpll_hwi_pi.app->xsm->Inst->Volt2ZA (spmc_parameters.z_monitor); // Z pos in Ang
 		return TRUE;
         }
@@ -730,13 +715,12 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2,
                 }
                 // build status flags
                 int statusbits = round(spmc_parameters.gvp_status);
-		val3 = (double)(statusbits>>8);
+		val3 = (double)(statusbits>>8);   //  assign dbg_status = {sec[32-3:0], reset, pause, ~finished };
 		val2 = (double)(statusbits&0xff);
-		val1 = (double)(0
-                                +(statusbits&0x07) // (FeedBackActive    ? 1:0)
-                                +((statusbits&0xff)<<3) // (FeedBackActive    ? 1:0)
-				//+ ((ScanningFlg & 3) << 1)  // Stop = 1, Pause = 2
-				//+ (( ProbingSTSActive   ? 1:0) << 3)
+		val1 = (double)(    (statusbits&0x01       ? 1:0)      // (Z Servo Feedback Active: Bit0)
+				+ ((((statusbits>>8)&0x04) ? 1:0) << 1)  // Scan/GVP Stop/Reset    (Scan)
+                                + ((((statusbits>>8)&0x02) ? 1:0) << 2)  // Scan/GVP Pause         (Scan)
+				+ ((((statusbits>>8)&0x01) ? 1:0) << 3)  // Scan/GVP not finished  (Probing)
 				//+ (( MoveInProgress     ? 1:0) << 4)
 				//+ (( PLLActive          ? 1:0) << 5)
 				//+ (( ZPOS-Adjuster      ? 1:0) << 6)
@@ -923,11 +907,6 @@ int rpspmc_hwi_dev::read_actual_module_configuration (){
 	return 0;
 }
 
-double rpspmc_hwi_dev::get_GVP_frq_ref () {
-        return 120e6/RPSPMC_GVP_decii;
-};
-
-
 void rpspmc_hwi_dev::GVP_execute_vector_program(){
         g_message ("rpspmc_hwi_dev::GVP_execute_vector_program ()");
         rpspmc_pacpll->write_parameter ("SPMC_GVP_PAUSE", false);
@@ -1032,12 +1011,14 @@ int rpspmc_hwi_dev::GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v){
         int gvp_vector_i[I_GVP_SIZE];
         double gvp_vector_d[D_GVP_SIZE];
 
+        // Vector Program Code Setup
         gvp_vector_i [I_GVP_PC_INDEX] = i;
         gvp_vector_i [I_GVP_N       ] = v->n;
         gvp_vector_i [I_GVP_OPTIONS ] = (v->srcs << 16) | (v->options & 0xffff);
         gvp_vector_i [I_GVP_NREP    ] = v->repetitions > 1 ? v->repetitions-1 : 0;
         gvp_vector_i [I_GVP_NEXT    ] = v->ptr_next;
 
+        // Vector Components are all in Volts
         gvp_vector_d [D_GVP_DX      ] = v->f_dx;
         gvp_vector_d [D_GVP_DY      ] = v->f_dy;
         gvp_vector_d [D_GVP_DZ      ] = v->f_dz;
@@ -1046,6 +1027,7 @@ int rpspmc_hwi_dev::GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v){
         gvp_vector_d [D_GVP_BB      ] = v->f_db;
         gvp_vector_d [D_GVP_SLW     ] = v->slew;
 
+        // send it down
         if (rpspmc_pacpll)
                 rpspmc_pacpll->write_array (SPMC_GVP_VECTOR_COMPONENTS,  I_GVP_SIZE, gvp_vector_i,  D_GVP_SIZE, gvp_vector_d);
                 

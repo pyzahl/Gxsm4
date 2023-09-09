@@ -882,7 +882,6 @@ private:
 public:
         
         //SPM_emulator *spm_emu; // DSP emulator for dummy data generation and minimal SPM behavior
-        double get_GVP_frq_ref ();
         void GVP_execute_vector_program(); // non blocking
         void GVP_vp_init ();
         void GVP_start_data_read(); // non blocking
@@ -906,7 +905,6 @@ public:
         void RPSPMC_set_bias (double bias) {};
         void RPSPMC_set_current_sp (double sp) {};
 
-        gint RPSPMC_GVP_decii;
         gint RPSPMC_GVP_section_count;
         gint RPSPMC_GVP_n;
         

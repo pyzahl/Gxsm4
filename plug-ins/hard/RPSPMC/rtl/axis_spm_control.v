@@ -94,8 +94,9 @@ module axis_spm_control#(
     // Zsxy = slope_x * Xr + slope_y * Yr 
     // Z    = Z0 + z + Zsxy
 
-    reg [32-1:0] xy_move_step = 32;
-    reg [32-1:0] z_move_step = 1;
+    reg signed [32-1:0] xy_move_step = 32;
+    reg signed [32-1:0] z_move_step = 1;
+    
     reg signed [32-1:0] mx0s = 0;
     reg signed [32-1:0] my0s = 0;
     reg signed [32-1:0] mz0s = 0;

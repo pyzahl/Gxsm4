@@ -331,9 +331,7 @@ int32_t ad5791_set_register_value(int axis,
 				  uint8_t register_address,
 				  uint32_t register_value)
 {
-	uint8_t write_command[3] = {0, 0, 0};
 	uint32_t spi_word = 0;
-	//int8_t status = 0;
 
 	spi_word = AD5791_WRITE |
 		   AD5791_ADDR_REG(register_address) |
@@ -347,9 +345,7 @@ int32_t ad5791_prepare_register_value(int axis,
                                       uint8_t register_address,
                                       uint32_t register_value)
 {
-	uint8_t write_command[3] = {0, 0, 0};
 	uint32_t spi_word = 0;
-	//int8_t status = 0;
 
 	spi_word = AD5791_WRITE |
 		   AD5791_ADDR_REG(register_address) |
@@ -377,7 +373,7 @@ int32_t ad5791_prepare_register_value(int axis,
 int32_t ad5791_get_register_value(int axis,
 				  uint8_t register_address)
 {
-#if 0
+#if 0  // no read back serial data connected to FPGA. N/A
 	uint8_t register_word[3] = {0, 0, 0};
 	uint32_t data_read = 0x0;
 	int8_t status = 0;
@@ -424,10 +420,10 @@ int32_t ad5791_get_register_value(int axis,
 int32_t ad5791_dac_ouput_state(int axis,
 			       uint8_t state)
 {
-	uint32_t old_ctrl = 0;
-	uint32_t new_ctrl = 0;
 	int32_t status = 0;
 #if 0
+	uint32_t old_ctrl = 0;
+	uint32_t new_ctrl = 0;
 	status = ad5791_get_register_value(axis,
 					   AD5791_REG_CTRL);
 	if(status < 0) {
@@ -446,11 +442,11 @@ int32_t ad5791_dac_ouput_state(int axis,
 	return status;
 }
 
-inline double ad5791_dac_to_volts (uint32_t value){ return SPMC_AD5791_REFV*(double)value / Q19; }
-inline int32_t volts_to_ad5791_dac (double volts){ return round(Q19*volts/SPMC_AD5791_REFV); }
+inline double ad5791_dac_to_volts (int value){ return SPMC_AD5791_REFV*(double)value / Q19; }
+inline int volts_to_ad5791_dac (double volts){ return round(Q19*volts/SPMC_AD5791_REFV); }
 
-inline double rpspmc_to_volts (uint32_t value){ return SPMC_AD5791_REFV*(double)value / Q31; }
-inline int32_t volts_to_rpspmc (double volts){ return round(Q31*volts/SPMC_AD5791_REFV); }
+inline double rpspmc_to_volts (int value){ return SPMC_AD5791_REFV*(double)value / Q31; }
+inline int volts_to_rpspmc (double volts){ return round(Q31*volts/SPMC_AD5791_REFV); }
 
 
 /***************************************************************************//**
@@ -581,28 +577,25 @@ int32_t ad5791_setup(int axis,
 
 // initialize/reset all AD5791 channels
 void rp_spmc_AD5791_init (){
-
-
- 	//AD5791_RESET_OUT;
-	//AD5791_RESET_HIGH;
-	//AD5791_LDAC_OUT;
-	//AD5791_LDAC_HIGH;
-	//AD5791_CLR_OUT;
-	//AD5791_CLR_HIGH;
-
         rp_spmc_set_rotation (0.0);
-        
+
         // power up one by one
         ad5791_setup(0,0);
         ad5791_setup(1,0);
         ad5791_setup(2,0);
         ad5791_setup(3,0);
 
+        usleep(10000);
+
         // send 0V
         ad5791_prepare_dac_value (0, 0.0);
         ad5791_prepare_dac_value (1, 0.0);
         ad5791_prepare_dac_value (2, 0.0);
         ad5791_set_dac_value (3, 0.0);
+
+        usleep(10000);
+
+        rp_spmc_AD5791_set_stream_mode (); // enable streaming for AD5791 DAC's from FPGA now!
 }
 
 void rp_spmc_set_bias (double bias){
@@ -718,7 +711,7 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
                 }
                 double ddmin = dmin/n; // smallest point distance in volts at full step
 
-                int ddminQ31  = (int)round(Q31*ddmin/SPMC_AD5791_REFV); // smallest point distance in Q31 for DAC in S19Q12  (32 bit total precision fixed point)
+                //int ddminQ31  = (int)round(Q31*ddmin/SPMC_AD5791_REFV); // smallest point distance in Q31 for DAC in S19Q12  (32 bit total precision fixed point)
                 // Error:
                 //double ddminE = (double)ddminQ31 - Q31*ddmin/SPMC_AD5791_REFV; // smallest point distance in Q31 for DAC in S19Q12  (32 bit total precision fixed point)
 
@@ -850,15 +843,13 @@ void rp_spmc_set_scanpos (double x0, double y0){
 
 
 void rp_spmc_update_readings (){
-        char b8[9];
-        char b16[17];
-        int gvpstatus = read_gpio_reg_int32 (3,1);
-        SPMC_GVP_STATUS.Value () = gvpstatus;
-       
-        //assign dbg_status = { GVP-STATUS, 0,0,0,0,  0, GVP-hold, GVP-finished, z-servo };
-        //                      = { sec[32-3], reset, pause, ~finished }[23:0]
 
+        SPMC_GVP_STATUS.Value () = read_gpio_reg_int32 (3,1);
+        //assign dbg_status = { GVP-STATUS, 0,0,0,0,  0, GVP-hold, GVP-finished, z-servo };
+        //                      |= { sec[32-3], reset, pause, ~finished }[23:0]
+        
         SPMC_BIAS_MONITOR.Value () = rpspmc_to_volts (read_gpio_reg_int32 (8,0));
+
         SPMC_X_MONITOR.Value () = rpspmc_to_volts (read_gpio_reg_int32 (8,1));
         SPMC_Y_MONITOR.Value () = rpspmc_to_volts (read_gpio_reg_int32 (9,0));
         SPMC_Z_MONITOR.Value () = rpspmc_to_volts (read_gpio_reg_int32 (9,1));
