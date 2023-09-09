@@ -31,7 +31,7 @@ module axis_spm_control#(
     input [32-1:0] ys, // ..
     input [32-1:0] zs, // ..
     // Bias
-    input [32-1:0] u, // ..
+    input [32-1:0] us, // .. probe bias
     // two future control components using optional (DAC #5, #6)
     // input [32-1:0] motor1, // ..
     // input [32-1:0] motor2, // ..
@@ -48,9 +48,12 @@ module axis_spm_control#(
     input [32-1:0] x0, // vector components
     input [32-1:0] y0, // ..
     input [32-1:0] z0, // ..
+    input [32-1:0] u0, // Bias Reference
+    input [32-1:0] xy_offset_step, // @Q31 => Q31 / 120M => [18 sec full scale swin @ step 1 decii = 0]  x RDECI
+    input [32-1:0] z_offset_step, // @Q31 => Q31 / 120M => [18 sec full scale swin @ step 1 decii = 0]  x RDECI
 
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF S_AXIS_Z:M_AXIS1:M_AXIS2:M_AXIS3:M_AXIS4,M_AXIS_XSMON,M_AXIS_YSMON,M_AXIS_XMON,M_AXIS_YMON,M_AXIS_ZMON,M_AXIS_UMON" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF S_AXIS_Z:M_AXIS1:M_AXIS2:M_AXIS3:M_AXIS4:M_AXIS_XSMON:M_AXIS_YSMON:M_AXIS_ZSMON:M_AXIS_X0MON:M_AXIS_Y0MON:M_AXIS_Z0MON:M_AXIS_UrefMON" *)
     input  a_clk,
     input  wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS_Z_tdata,
     input  wire                          S_AXIS_Z_tvalid,
@@ -68,17 +71,19 @@ module axis_spm_control#(
     output wire                          M_AXIS_XSMON_tvalid,
     output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS_YSMON_tdata,
     output wire                          M_AXIS_YSMON_tvalid,
+    output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS_ZSMON_tdata,
+    output wire                          M_AXIS_ZSMON_tvalid,
 
-    output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS_XMON_tdata,
-    output wire                          M_AXIS_XMON_tvalid,
-    output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS_YMON_tdata,
-    output wire                          M_AXIS_YMON_tvalid,
+    output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS_X0MON_tdata,
+    output wire                          M_AXIS_X0MON_tvalid,
+    output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS_Y0MON_tdata,
+    output wire                          M_AXIS_Y0MON_tvalid,
     
-    output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS_ZMON_tdata,
-    output wire                          M_AXIS_ZMON_tvalid,
+    output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS_Z0MON_tdata,
+    output wire                          M_AXIS_Z0MON_tvalid,
     
-    output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS_UMON_tdata,
-    output wire                          M_AXIS_UMON_tvalid
+    output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS_UrefMON_tdata,
+    output wire                          M_AXIS_UrefMON_tvalid
 
     );
     
@@ -89,11 +94,31 @@ module axis_spm_control#(
     // Zsxy = slope_x * Xr + slope_y * Yr 
     // Z    = Z0 + z + Zsxy
 
+    reg [32-1:0] xy_move_step = 32;
+    reg [32-1:0] z_move_step = 1;
+    reg signed [32-1:0] mx0s = 0;
+    reg signed [32-1:0] my0s = 0;
+    reg signed [32-1:0] mz0s = 0;
+    reg signed [32-1:0] mu0s = 0;
+
+    reg signed [32-1:0] mx0p = 0;
+    reg signed [32-1:0] my0p = 0;
+    reg signed [32-1:0] mz0p = 0;
+    reg signed [32-1:0] mx0m = 0;
+    reg signed [32-1:0] my0m = 0;
+    reg signed [32-1:0] mz0m = 0;
+    reg signed [32-1:0] mx0 = 0;
+    reg signed [32-1:0] my0 = 0;
+    reg signed [32-1:0] mz0 = 0;
+
     reg signed [32-1:0] mxx=0; // Q20
     reg signed [32-1:0] mxy=1<<20; // Q20
 
+
     reg signed [32-1:0] x=0;
     reg signed [32-1:0] y=0;
+    reg signed [32-1:0] u=0;
+    
     reg signed [32+QROTM+2-1:0] rrx=0;
     reg signed [32+QROTM+2-1:0] rry=0;
 
@@ -110,6 +135,7 @@ module axis_spm_control#(
     
     reg [RDECI:0] rdecii = 0;
 
+
     always @ (posedge a_clk)
     begin
         rdecii <= rdecii+1;
@@ -118,23 +144,67 @@ module axis_spm_control#(
     always @ (posedge rdecii[RDECI])
     begin
     // always buffer locally
+        xy_move_step <= xy_offset_step;
+        z_move_step <= z_offset_step;
         x <= xs;
         y <= ys;
-        ru <= u;
+        u <= us;
         z_gvp <= zs;
         mxx <= rotmxx;
         mxy <= rotmxy;
 
+        // Offset Adjusters
+        mx0s <= x0;
+        my0s <= y0;
+        mz0s <= z0;
+        mu0s <= u0;
+        
+        // MUST ASSURE mx0+/-xy_move_step never exceeds +/-Q31 to avoid over flow else a PBC jump will happen! 
+        
+        mx0p <= mx0+xy_move_step;
+        mx0m <= mx0-xy_move_step;
+        if (mx0s > mx0p)
+            mx0 <= mx0p;
+        else begin if (mx0s < mx0m)
+            mx0 <= mx0m;
+        else
+            mx0 <= mx0s;
+        end    
+             
+        my0p <= my0+xy_move_step;
+        my0m <= my0-xy_move_step;
+        if (my0s > my0p)
+            my0 <= my0p;
+        else begin if (my0s < my0m)
+            my0 <= my0m;
+        else
+            my0 <= my0s;
+        end
+        
+        mz0p <= mz0+z_move_step;
+        mz0m <= mz0-z_move_step;
+        if (mz0s > mz0p)
+            mz0 <= mz0p;
+        else begin if (mz0s < mz0m)
+            mz0 <= mz0m;
+        else 
+            mz0 <= mz0s;
+        end        
+
+        // Bias set
+        ru <= mu0s + u;
+
+        // Scan Rotation
         rrx <=  mxx*x + mxy*y;
         rry <= -mxy*x + mxx*y;
         
-        rx <= (rrx >>> QROTM) + x0;
-        ry <= (rry >>> QROTM) + y0;
+        rx <= (rrx >>> QROTM) + mx0;
+        ry <= (rry >>> QROTM) + my0;
         
+        // Z and slope
         z_servo  <= S_AXIS_Z_tdata;
         z_slope  <= 0;
-        z_offset <= z0;
-        z_sum    <= z_offset + z_gvp + z_slope + z_servo;
+        z_sum    <= mz0 + z_gvp + z_slope + z_servo;
         if (z_sum > 36'sd2147483647)
         begin
             rz <= 32'sd2147483648;
@@ -155,26 +225,28 @@ module axis_spm_control#(
     
     assign M_AXIS1_tdata  = rx;
     assign M_AXIS1_tvalid = 1;
-    assign M_AXIS_XMON_tdata  = rx;
-    assign M_AXIS_XMON_tvalid = 1;
+    assign M_AXIS_X0MON_tdata  = mx0;
+    assign M_AXIS_X0MON_tvalid = 1;
     assign M_AXIS_XSMON_tdata  = xs;
     assign M_AXIS_XSMON_tvalid = 1;
     
     assign M_AXIS2_tdata  = ry;
     assign M_AXIS2_tvalid = 1;
-    assign M_AXIS_YMON_tdata  = ry;
-    assign M_AXIS_YMON_tvalid = 1;
+    assign M_AXIS_Y0MON_tdata  = my0;
+    assign M_AXIS_Y0MON_tvalid = 1;
     assign M_AXIS_YSMON_tdata  = ys;
     assign M_AXIS_YSMON_tvalid = 1;
     
     assign M_AXIS3_tdata  = rz;
     assign M_AXIS3_tvalid = 1;
-    assign M_AXIS_ZMON_tdata  = rz;
-    assign M_AXIS_ZMON_tvalid = 1;
+    assign M_AXIS_ZSMON_tdata  = z_servo;
+    assign M_AXIS_ZSMON_tvalid = 1;
+    assign M_AXIS_Z0MON_tdata  = mz0;
+    assign M_AXIS_Z0MON_tvalid = 1;
     
     assign M_AXIS4_tdata  = ru;
     assign M_AXIS4_tvalid = 1;
-    assign M_AXIS_UMON_tdata  = ru;
-    assign M_AXIS_UMON_tvalid = 1;
+    assign M_AXIS_UrefMON_tdata  = mu0s;
+    assign M_AXIS_UrefMON_tvalid = 1;
     
 endmodule

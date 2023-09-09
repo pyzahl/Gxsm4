@@ -71,25 +71,22 @@ extern "C" {
         void rp_spmc_AD5791_set_axis_data (int axis, int data);
         void rp_spmc_AD5791_send_axis_data (int axis, int data);
         void rp_spmc_AD5791_init ();
-        void rp_spmc_set_bias (double bias); // WARNING -- instant setting
-        void rp_spmc_set_xyz (double ux, double uy, double uz);  // WARNING -- instant setting
+        void rp_spmc_set_bias (double bias);
+        void rp_spmc_set_xyzu (double ux, double uy, double uz, double bias);  // WARNING -- instant setting in config mode (test only)
 
         void rp_spmc_set_zservo_controller (double setpoint, double cp, double ci, double upper, double lower);
         void rp_spmc_set_zservo_gxsm_speciality_setting (int mode, double z_setpoint, double level);
 
-        void rp_spmc_gvp_config (bool reset, bool program, bool pause); // taking out of reset starts GVP!
+        void rp_spmc_gvp_config (bool reset, bool program, bool pause, int reset_options); // taking out of reset starts GVP!
         //void rp_spmc_set_gvp_vector (CFloatSignal &vector);
-        void rp_spmc_set_gvp_vector (int pc, int n, int nii, unsigned int opts, int nrp, int nxt, int decii,
-                                     double dx, double dy, double dz, double du);
+        void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
+                                     double dx, double dy, double dz, double du,
+                                     double da, double db, double slew);
 
         void rp_spmc_set_rotation (double alpha);
         void rp_spmc_set_slope (double dzx, double dzy);
-        void rp_spmc_set_offsets (double x0, double y0, double z0);
+        void rp_spmc_set_offsets (double x0, double y0, double z0, double xy_move_slew, double z_move_slew);
 
-        double rp_spmc_read_Bias_Monitor ();
-        double rp_spmc_read_X_Monitor ();
-        double rp_spmc_read_Y_Monitor ();
-        double rp_spmc_read_X_Monitor ();
         void rp_spmc_update_readings ();
 
 #ifdef __cplusplus

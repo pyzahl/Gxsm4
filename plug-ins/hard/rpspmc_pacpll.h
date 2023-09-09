@@ -639,13 +639,13 @@ public:
 
 	// vector generation helpers
 	void make_auto_n_vector_elments (double fnum);
-	double make_Vdz_vector (double Ui, double Uf, double dZ, int n, double slope, int source, int options, double long &duration, make_vector_flags flags);
-	double make_Vdx0_vector (double Ui, double Uf, double dZ, int n, double slope, int source, int options, double long &duration, make_vector_flags flags);
-	double make_dx0_vector (double X0i, double X0f, int n, double slope, int source, int options, double long &duration, make_vector_flags flags);
-	double make_ZXYramp_vector (double dZ, double dX, double dY, int n, double slope, int source, int options, double long &duration, make_vector_flags flags);
-	double make_UZXYramp_vector (double dU, double dZ, double dX, double dY, double dSig1, double dSig2, int n, int nrep, int ptr_next, double ts, int source, int options, double long &duration, make_vector_flags flags);
-	double make_phase_vector (double dPhi, int n, double slope, int source, int options, double long &duration, make_vector_flags flags);
-	double make_delay_vector (double delay, int source, int options, double long &duration, make_vector_flags flags, int points=0);
+	double make_Vdz_vector (double Ui, double Uf, double dZ, int n, double slope, int source, int options, double &duration, make_vector_flags flags);
+	double make_Vdx0_vector (double Ui, double Uf, double dZ, int n, double slope, int source, int options, double &duration, make_vector_flags flags);
+	double make_dx0_vector (double X0i, double X0f, int n, double slope, int source, int options, double &duration, make_vector_flags flags);
+	double make_ZXYramp_vector (double dZ, double dX, double dY, int n, double slope, int source, int options, double &duration, make_vector_flags flags);
+	double make_UZXYramp_vector (double dU, double dZ, double dX, double dY, double dSig1, double dSig2, int n, int nrep, int ptr_next, double ts, int source, int options, double &duration, make_vector_flags flags);
+	double make_phase_vector (double dPhi, int n, double slope, int source, int options, double &duration, make_vector_flags flags);
+	double make_delay_vector (double delay, int source, int options, double &duration, make_vector_flags flags, int points=0);
 	void append_null_vector (int options, int index);
 
 	PROBE_VECTOR_GENERIC program_vector;
@@ -753,7 +753,7 @@ private:
 };
 
 
-#define MAX_PROGRAM_VECTORS 8
+#define MAX_PROGRAM_VECTORS 16
 #define i_X 0
 #define i_Y 1
 #define i_Z 2

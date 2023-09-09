@@ -173,6 +173,7 @@ struct SPMC_parameters {
         double gvp_pause;
         double gvp_stop;
         double gvp_program;
+        double gvp_reset_options;
         double gvp_status;
         
         double alpha;
@@ -186,6 +187,9 @@ struct SPMC_parameters {
         double set_offset_y;
         double set_offset_z;
 
+        double set_offset_xy_slew;
+        double set_offset_z_slew;
+
         double v[16];
         
         // RP SPMC Monitors
@@ -197,6 +201,9 @@ struct SPMC_parameters {
         double x0_monitor;
         double y0_monitor;
         double z0_monitor;
+        double xs_monitor;
+        double ys_monitor;
+        double zs_monitor;
 };
 
 #define MAX_GVP_VECTORS   32

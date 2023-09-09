@@ -143,25 +143,22 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         { "SPMC_GVP_PAUSE", &spmc_parameters.gvp_pause, false },
         { "SPMC_GVP_STOP", &spmc_parameters.gvp_stop, false },
         { "SPMC_GVP_PROGRAM", &spmc_parameters.gvp_program, false },
+        { "SPMC_GVP_RESET_OPTIONS", &spmc_parameters.gvp_reset_options, false },
         { "SPMC_GVP_STATUS", &spmc_parameters.gvp_status, true },
 
         // NO READ BACK OF VECTORS
-        { "SPMC_GVP_VECTOR_PC", &spmc_parameters.v[0], false }, // INT -2147483648,2147483647
-        { "SPMC_GVP_VECTOR__N", &spmc_parameters.v[1], false }, // INT
-        { "SPMC_GVP_VECTORNII", &spmc_parameters.v[2], false }, // INT
-        { "SPMC_GVP_VECTOR__O", &spmc_parameters.v[3], false }, // INT
-        { "SPMC_GVP_VECTORNRP", &spmc_parameters.v[4], false }, // INT
-        { "SPMC_GVP_VECTORNXT", &spmc_parameters.v[5], false }, // INT
-        { "SPMC_GVP_VECTORDCI", &spmc_parameters.v[6], false }, // INT
-        { "SPMC_GVP_VECTOR_DX", &spmc_parameters.v[7], false },
-        { "SPMC_GVP_VECTOR_DY", &spmc_parameters.v[8], false },
-        { "SPMC_GVP_VECTOR_DZ", &spmc_parameters.v[9], false },
-        { "SPMC_GVP_VECTOR_DU", &spmc_parameters.v[10], false },
-        { "SPMC_GVP_VECTOR010", &spmc_parameters.v[11], false },
-        { "SPMC_GVP_VECTOR011", &spmc_parameters.v[12], false },
-        { "SPMC_GVP_VECTOR012", &spmc_parameters.v[13], false },
-        { "SPMC_GVP_VECTOR013", &spmc_parameters.v[14], false },
-        { "SPMC_GVP_VECTOR014", &spmc_parameters.v[15], false },
+        { "SPMC_GVP_VECTOR_PC", &spmc_parameters.v[0], false }, // INT Vector[PC] to set
+        { "SPMC_GVP_VECTOR__N", &spmc_parameters.v[1], false }, // INT # points
+        { "SPMC_GVP_VECTOR__O", &spmc_parameters.v[2], false }, // INT options [Z-Servo Hold, ... , SRCS bits]
+        { "SPMC_GVP_VECTORNRP", &spmc_parameters.v[3], false }, // INT # repetitions (0=none, i.e. execute and proceed with to next vector)
+        { "SPMC_GVP_VECTORNXT", &spmc_parameters.v[4], false }, // INT # loop jump rel to PC to next vector
+        { "SPMC_GVP_VECTOR_DX", &spmc_parameters.v[5], false }, // Float: DX in Volts total length of vector component
+        { "SPMC_GVP_VECTOR_DY", &spmc_parameters.v[6], false }, // Float: DY in Volts total length of vector component
+        { "SPMC_GVP_VECTOR_DZ", &spmc_parameters.v[7], false }, // Float: DZ in Volts total length of vector component
+        { "SPMC_GVP_VECTOR_DU", &spmc_parameters.v[8], false }, // Float: DU (Bias) adjust rel to Bias ref in Volts total length of vector component
+        { "SPMC_GVP_VECTOR_AA", &spmc_parameters.v[9], false }, // Float: AA (Aux Channel ADC #5) -- reserved
+        { "SPMC_GVP_VECTOR_BB", &spmc_parameters.v[10], false }, // Float: BB (Aux Channel ADC #6) -- reserved
+        { "SPMC_GVP_VECTORSLW", &spmc_parameters.v[11], false }, // Float: slew rate in #points / sec
 
         { "SPMC_ALPHA", &spmc_parameters.alpha, false },
         { "SPMC_SLOPE_dZX", &spmc_parameters.slope_dzx, false },
@@ -174,17 +171,24 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         { "SPMC_SET_OFFSET_Y", &spmc_parameters.set_offset_y, false },
         { "SPMC_SET_OFFSET_Z", &spmc_parameters.set_offset_z, false },
 
+        { "SPMC_SET_OFFSET_XY_SLEW", &spmc_parameters.set_offset_xy_slew, false },
+        { "SPMC_SET_OFFSET_Z_SLEW", &spmc_parameters.set_offset_z_slew, false },
         
         // RP SPMC Monitors
         { "SPMC_BIAS_MONITOR", &spmc_parameters.bias_monitor, true },
         { "SPMC_SIGNAL_MONITOR", &spmc_parameters.signal_monitor, true }, // Z servo input signal (current, ...)
-        { "SPMC_X_MONITOR", &spmc_parameters.x_monitor, true },
+
+        { "SPMC_X_MONITOR", &spmc_parameters.x_monitor, true }, // FINAL XYZ POS at DACs
         { "SPMC_Y_MONITOR", &spmc_parameters.y_monitor, true },
         { "SPMC_Z_MONITOR", &spmc_parameters.z_monitor, true },
 
-        { "SPMC_X0_MONITOR", &spmc_parameters.x0_monitor, true },
+        { "SPMC_X0_MONITOR", &spmc_parameters.x0_monitor, true }, // OFFSETS
         { "SPMC_Y0_MONITOR", &spmc_parameters.y0_monitor, true },
         { "SPMC_Z0_MONITOR", &spmc_parameters.z0_monitor, true },
+        
+        { "SPMC_XS_MONITOR", &spmc_parameters.xs_monitor, true }, // SCAN POS
+        { "SPMC_YS_MONITOR", &spmc_parameters.ys_monitor, true },
+        { "SPMC_ZS_MONITOR", &spmc_parameters.zs_monitor, true },
         
         { NULL, NULL, true }
 };
@@ -192,20 +196,16 @@ JSON_parameter PACPLL_JSON_parameters[] = {
 const gchar *SPMC_GVP_VECTOR_COMPONENTS[] = {
         "SPMC_GVP_VECTOR_PC", 
         "SPMC_GVP_VECTOR__N", 
-        "SPMC_GVP_VECTORNII", 
         "SPMC_GVP_VECTOR__O", 
         "SPMC_GVP_VECTORNRP", 
         "SPMC_GVP_VECTORNXT", 
-        "SPMC_GVP_VECTORDCI", 
         "SPMC_GVP_VECTOR_DX", 
         "SPMC_GVP_VECTOR_DY", 
         "SPMC_GVP_VECTOR_DZ", 
         "SPMC_GVP_VECTOR_DU", 
-        "SPMC_GVP_VECTOR010", 
-        "SPMC_GVP_VECTOR011", 
-        "SPMC_GVP_VECTOR012", 
-        "SPMC_GVP_VECTOR013", 
-        "SPMC_GVP_VECTOR014", 
+        "SPMC_GVP_VECTOR_AA", 
+        "SPMC_GVP_VECTOR_BB", 
+        "SPMC_GVP_VECTORSLW", 
         NULL };
 
 JSON_signal PACPLL_JSON_signals[] = {

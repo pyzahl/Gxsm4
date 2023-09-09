@@ -310,8 +310,8 @@ int RPSPMC_Control::Probing_eventcheck_callback( GtkWidget *widget, RPSPMC_Contr
                                                                    i,
                                                                    g_array_index (garr_hdr[PROBEDATA_ARRAY_INDEX], double, i),
                                                                    g_array_index (garr_hdr[PROBEDATA_ARRAY_TIME], double, i),
-                                                                   g_array_index (garr_hdr[PROBEDATA_ARRAY_X0], double, i),
-                                                                   g_array_index (garr_hdr[PROBEDATA_ARRAY_Y0], double, i),
+                                                                   g_array_index (garr_hdr[PROBEDATA_ARRAY_AA, double, i),
+                                                                   g_array_index (garr_hdr[PROBEDATA_ARRAY_BB], double, i),
                                                                    g_array_index (garr_hdr[PROBEDATA_ARRAY_PHI], double, i),
                                                                    g_array_index (garr_hdr[PROBEDATA_ARRAY_XS], double, i),
                                                                    g_array_index (garr_hdr[PROBEDATA_ARRAY_YS], double, i),
@@ -322,8 +322,8 @@ int RPSPMC_Control::Probing_eventcheck_callback( GtkWidget *widget, RPSPMC_Contr
                                                         if (main_get_gapp()->xsm->scan[chmap]->mem2d->data->GetNxSub()){
 #if 1
                                                                 g_message ("CH[%d] HDR ixy: %d, %d   sls[%d,%d, %d,%d]", chmap,
-                                                                           (int)g_array_index (garr_hdr[PROBEDATA_ARRAY_X0], double, i),
-                                                                           (int)g_array_index (garr_hdr[PROBEDATA_ARRAY_Y0], double, i),
+                                                                           (int)g_array_index (garr_hdr[PROBEDATA_ARRAY_AA], double, i),
+                                                                           (int)g_array_index (garr_hdr[PROBEDATA_ARRAY_BB], double, i),
                                                                            main_get_gapp()->xsm->scan[chmap]->mem2d->data->GetX0Sub(), main_get_gapp()->xsm->scan[chmap]->mem2d->data->GetNxSub(),
                                                                            main_get_gapp()->xsm->scan[chmap]->mem2d->data->GetY0Sub(), main_get_gapp()->xsm->scan[chmap]->mem2d->data->GetNySub()
                                                                            );
@@ -331,8 +331,8 @@ int RPSPMC_Control::Probing_eventcheck_callback( GtkWidget *widget, RPSPMC_Contr
                                                                 xip = main_get_gapp()->xsm->scan[chmap]->mem2d->data->GetNxSub()-1 - g_array_index (garr_hdr[PROBEDATA_ARRAY_X0], double, i);
                                                                 yip = main_get_gapp()->xsm->scan[chmap]->mem2d->data->GetNySub()-1 - g_array_index (garr_hdr[PROBEDATA_ARRAY_Y0], double, i);
                                                         } else {
-                                                                xip = nx-1 - g_array_index (garr_hdr[PROBEDATA_ARRAY_X0], double, i);
-                                                                yip = ny-1 - g_array_index (garr_hdr[PROBEDATA_ARRAY_Y0], double, i);
+                                                                xip = nx-1 - g_array_index (garr_hdr[PROBEDATA_ARRAY_AA], double, i);
+                                                                yip = ny-1 - g_array_index (garr_hdr[PROBEDATA_ARRAY_BB], double, i);
                                                         }
 
                                                         xiD = ((int)g_array_index (garr_hdr[PROBEDATA_ARRAY_XS], double, i)<<16)/dspc->mirror_dsp_scan_dx32 + nx/2 - 1;
@@ -800,9 +800,9 @@ int RPSPMC_Control::Probing_graph_callback( GtkWidget *widget, RPSPMC_Control *d
                 int j=0;
                 //g_message ("Creating SE *** %d %d %d", j, sec, dspc->current_probe_data_index);
                 se = new ScanEvent (
-                                    main_get_gapp()->xsm->Inst->Dig2X0A ((long) round (g_array_index (dspc->garray_probedata [PROBEDATA_ARRAY_X0], double, j)))
+                                    main_get_gapp()->xsm->data.s.x0
                                     + main_get_gapp()->xsm->Inst->Dig2XA ((long) round (g_array_index (dspc->garray_probedata [PROBEDATA_ARRAY_XS], double, j))),
-                                    main_get_gapp()->xsm->Inst->Dig2Y0A ((long) round (g_array_index (dspc->garray_probedata [PROBEDATA_ARRAY_Y0], double, j)))
+                                    main_get_gapp()->xsm->data.s.y0
                                     + main_get_gapp()->xsm->Inst->Dig2YA ((long) round (g_array_index (dspc->garray_probedata [PROBEDATA_ARRAY_YS], double, j))),
                                     main_get_gapp()->xsm->Inst->Dig2ZA ((long) round ( g_array_index (dspc->garray_probedata [PROBEDATA_ARRAY_ZS], double, j)))
                                     );
@@ -1316,7 +1316,7 @@ void RPSPMC_Control::set_probevector(double pv[NUM_PV_HEADER_SIGNALS]){
 // add probe vector to generate ramp reference signals (same as on hardware, but this data is not streamed as redundent)
 void RPSPMC_Control::add_probevector(){ 
 	int i,j;
-	double val, multi, fixptm;
+	double val, fixptm;
         if (current_probe_data_index < 1){ // must have previous data point
                 g_warning ("### *** add_probevector() call at first point is invalid, skipping. point index=%d*** ", current_probe_data_index);
                 return;
@@ -1327,8 +1327,6 @@ void RPSPMC_Control::add_probevector(){
 	g_array_append_val (garray_probedata [PROBEDATA_ARRAY_SEC], dsec);
 	g_array_append_val (garray_probedata [PROBEDATA_ARRAY_INDEX], dind);
 
-	multi = 1. + program_vector_list[current_probe_section].dnx;
-
 	// copy Block Start Index
 	val = g_array_index (garray_probedata [PROBEDATA_ARRAY_BLOCK], double, current_probe_data_index-1);
 	g_array_append_val (garray_probedata [PROBEDATA_ARRAY_BLOCK], val);
@@ -1338,9 +1336,8 @@ void RPSPMC_Control::add_probevector(){
                  program_vector_list[current_probe_section].f_du,
                  program_vector_list[current_probe_section].f_dx, program_vector_list[current_probe_section].f_dy, program_vector_list[current_probe_section].f_dz
                  );
-#ifdef TTY_DEBUG
-	g_print(" <+=> (multi=%d) PV=( ", (int)multi);
-#endif
+        double multi = 1./program_vector_list[current_probe_section].n;
+        double dt    = 1./program_vector_list[current_probe_section].slew;
 	for (i = PROBEDATA_ARRAY_TIME; i < PROBEDATA_ARRAY_SEC; ++i){
 		// val = g_array_index (garray_probedata[i], double, current_probe_data_index-1); // get previous, then add delta
                 val = pv_tmp[i];
@@ -1349,16 +1346,13 @@ void RPSPMC_Control::add_probevector(){
 #endif
 		switch (i){
 		case PROBEDATA_ARRAY_TIME:
-			val += multi;
+			val += dt;
 			break;
-		case PROBEDATA_ARRAY_X0:
-			val += program_vector_list[current_probe_section].f_dx0*multi;
+		case PROBEDATA_ARRAY_AA:
+			val += program_vector_list[current_probe_section].f_da*multi;
 			break;
-		case PROBEDATA_ARRAY_Y0:
-			val += program_vector_list[current_probe_section].f_dy0*multi;
-			break;
-		case PROBEDATA_ARRAY_PHI: // *** FIX ME ***
-			val += program_vector_list[current_probe_section].f_dz0*multi;
+		case PROBEDATA_ARRAY_BB:
+			val += program_vector_list[current_probe_section].f_db*multi;
 			break;
 		case PROBEDATA_ARRAY_XS:
 			val -= program_vector_list[current_probe_section].f_dx*multi;
@@ -1475,10 +1469,8 @@ void RPSPMC_Control::dump_probe_hdr(){
 			if (s2 > 2.*main_get_gapp()->xsm->MasterScan->data.s.dx*main_get_gapp()->xsm->MasterScan->data.s.dx+main_get_gapp()->xsm->MasterScan->data.s.dy*main_get_gapp()->xsm->MasterScan->data.s.dy){
 				gchar *info = g_strdup_printf ("TrkPt# %d %.1fms", i, val[0]*1e3/DSP_FRQ_REF);
 				double xyz[3] = {
-					main_get_gapp()->xsm->Inst->Dig2XA ((long) round (val[1]))
-					+ main_get_gapp()->xsm->Inst->Dig2X0A ((long) round ( g_array_index (garray_probe_hdrlist[PROBEDATA_ARRAY_X0], double, i))),
-					main_get_gapp()->xsm->Inst->Dig2YA ((long) round (val[2]))
-					+ main_get_gapp()->xsm->Inst->Dig2Y0A ((long) round ( g_array_index (garray_probe_hdrlist[PROBEDATA_ARRAY_Y0], double, i))),
+					main_get_gapp()->xsm->Inst->Dig2XA ((long) round (val[1])) + main_get_gapp()->xsm->data.s.x0,
+					main_get_gapp()->xsm->Inst->Dig2YA ((long) round (val[2])) + main_get_gapp()->xsm->data.s.y0,
 					main_get_gapp()->xsm->Inst->Dig2ZA ((long) round (val[3]))
 				};
 				

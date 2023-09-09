@@ -184,7 +184,7 @@ void rp_PAC_adjust_dds (double freq){
         set_gpio_cfgreg_int48 (PACPLL_CFG_DDS_PHASEINC, phase_inc);
 
 #ifdef DEVELOPMENT_PACPLL_OP
-        if (verbose >= 1){
+        if (verbose >= 2){
                 // Verify
                 unsigned long xx8 = read_gpio_reg_uint32 (4,1); // GPIO X8 : DDS Phase Inc (Freq.) upper 32 bits of 44 (signed)
                 unsigned long xx9 = read_gpio_reg_uint32 (5,0); // GPIO X9 : DDS Phase Inc (Freq.) lower 32 bits of 44 (signed)
@@ -197,13 +197,13 @@ void rp_PAC_adjust_dds (double freq){
 }
 
 void rp_PAC_set_volume (double volume){
-        if (verbose >= 1) fprintf(stderr, "##Configure: volume= %g V\n", volume); 
+        if (verbose > 2) fprintf(stderr, "##Configure: volume= %g V\n", volume); 
         set_gpio_cfgreg_int32 (PACPLL_CFG_VOLUME_SINE, (int)(Q31 * volume));
 }
 
 // Configure Control Switched: Loops Ampl and Phase On/Off, Unwrapping, QControl
 void rp_PAC_configure_switches (int phase_ctrl, int am_ctrl, int phase_unwrap_always, int qcontrol, int lck_amp, int lck_phase, int dfreq_ctrl){
-        if (verbose >= 1) fprintf(stderr, "##Configure loop controls: 0x%08x\n",  phase_ctrl ? 1:0 | am_ctrl ? 2:0); 
+        if (verbose > 2) fprintf(stderr, "##Configure loop controls: 0x%08x\n",  phase_ctrl ? 1:0 | am_ctrl ? 2:0); 
         set_gpio_cfgreg_int32 (PACPLL_CFG_CONTROL_LOOPS,
                                (phase_ctrl ? 1:0) | (am_ctrl ? 2:0) | (phase_unwrap_always ? 4:0) |   // Bits 1,2,3
                                (qcontrol ? 8:0) |                                                     // Bit  4
@@ -250,7 +250,7 @@ double mu_opt (double periods){
 
 // tau in s for dual PAC and auto DC offset
 void rp_PAC_set_pactau (double tau, double atau, double dc_tau){
-        if (verbose >= 1) fprintf(stderr, "##Configure: tau= %g  Q22: %d\n", tau, (int)(Q22 * tau)); 
+        if (verbose > 2) fprintf(stderr, "##Configure: tau= %g  Q22: %d\n", tau, (int)(Q22 * tau)); 
 
 #if 1
         // in tau s (us) -> mu

@@ -275,8 +275,8 @@ CDoubleParameter TRANSPORT_TAU_AMPL("TRANSPORT_TAU_AMPL", CBaseParameter::RW, 0.
 */
 
 // *** PAC_PLL::GPIO MONITORS ***                                                                    readings are via void *thread_gpio_reading_FIR(g), read_gpio_reg_int32 (n,m)
-// *** DBG ***                                                                                                //        gpio_reading_FIRV_vector[GPIO_READING_LMS_A]        (1,0); // GPIO X1 : LMS A
-// *** DBG ***                                                                                                //        gpio_reading_FIRV_vector[GPIO_READING_LMS_A]        (1,1); // GPIO X2 : LMS B
+// *** DBG ***                                                                                                //        gpio_reading_FIRV_vector[GPIO_READING_LMS_A]        (1,0); // GPIO X1 : LMS A ** Obso => XS
+// *** DBG ***                                                                                                //        gpio_reading_FIRV_vector[GPIO_READING_LMS_A]        (1,1); // GPIO X2 : LMS B ** Obso => YS
 // *** DBG ***                                                                                                //        -----------------------                             (2,0); // GPIO X3 : DBG M
 CDoubleParameter VOLUME_MONITOR("VOLUME_MONITOR", CBaseParameter::RW, 0, 0, -1000.0, 1000.0);                 // mV  ** gpio_reading_FIRV_vector[GPIO_READING_AMPL]         (2,1); // GPIO X4 : CORDIC SQRT (AM2=A^2+B^2)
 // via  DC_OFFSET rp_PAC_auto_dc_offset_correct ()                                                                                                                          (3,0); // GPIO X5 : DC_OFFSET (M-DC)
@@ -289,12 +289,12 @@ CDoubleParameter DFREQ_MONITOR("DFREQ_MONITOR", CBaseParameter::RW, 0, 0, -1000.
 // *** DBG ***                                                                                                //        -----------------------                             (6,1); // GPIO X12: --- Transport Status: writeposition
 CDoubleParameter CONTROL_DFREQ_MONITOR("CONTROL_DFREQ_MONITOR", CBaseParameter::RW, 0, 0, -10000.0, 10000.0); // mV  **  gpio_re..._FIRV_vector[GPIO_READING_CONTROL_DFREQ] (7,0); // GPIO X13: control dFreq value
 // *** DBG ***                                                                                                //        -----------------------                             (7,1); // GPIO X14: --- SIGNAL PASS [IN2] (Current, FB SRC)
-// *** DBG ***                                                                                                //        -----------------------                             (8,0); // GPIO X15: --- UMON
+// *** DBG ***                                                                                                //        -----------------------                             (8,0); // GPIO X15: --- UMON Bias
 // *** DBG ***                                                                                                //        -----------------------                             (8,1); // GPIO X16: --- XMON
 // *** DBG ***                                                                                                //        -----------------------                             (9,0); // GPIO X17: --- YMON
 // *** DBG ***                                                                                                //        -----------------------                             (9,1); // GPIO X18: --- ZMON
-// *** DBG ***                                                                                                //        -----------------------                            (10,0); // GPIO X19: --- GVP-SEC
-// *** DBG ***                                                                                                //        -----------------------                            (10,1); // GPIO X20: --- GVP-I
+// *** DBG ***                                                                                                //        -----------------------                            (10,0); // GPIO X19: --- ZS-MON
+// *** DBG ***                                                                                                //        -----------------------                            (10,1); // GPIO X20: --- Z0-MON
 
 
 
@@ -315,28 +315,23 @@ CBooleanParameter SPMC_GVP_EXECUTE("SPMC_GVP_EXECUTE", CBaseParameter::RW, false
 CBooleanParameter SPMC_GVP_PAUSE("SPMC_GVP_PAUSE",     CBaseParameter::RW, false, 0);
 CBooleanParameter SPMC_GVP_STOP("SPMC_GVP_STOP",       CBaseParameter::RW, false, 0);
 CBooleanParameter SPMC_GVP_PROGRAM("SPMC_GVP_PROGRAM", CBaseParameter::RW, false, 0);
+CIntParameter     SPMC_GVP_RESET_OPTIONS("SPMC_GVP_RESET_OPTIONS",   CBaseParameter::RW, 0, 0, 0, 0xffff);
 CIntParameter     SPMC_GVP_STATUS("SPMC_GVP_STATUS",   CBaseParameter::RW, 0, 0, 0, 0xffff);
-#define MAX_GVP_VECTORS   32
 #define GVP_VECTOR_SIZE  16 // 10 components used (1st is index, then: N, nii, Options, Nrep, Next, dx, dy, dz, du, fill w zero to 16)
 CFloatSignal SPMC_GVP_VECTOR("SPMC_GVP_VECTOR", GVP_VECTOR_SIZE, 0.0f); // vector components in mV, else "converted to int"
 
-CIntParameter     SPMC_GVP_VECTOR_PC("SPMC_GVP_VECTOR_PC", CBaseParameter::RW, 0, 0, -2147483648,2147483647); // 00
-CIntParameter     SPMC_GVP_VECTOR__N("SPMC_GVP_VECTOR__N", CBaseParameter::RW, 0, 0, -2147483648,2147483647); // 01
-CIntParameter     SPMC_GVP_VECTORNII("SPMC_GVP_VECTORNII", CBaseParameter::RW, 0, 0, -2147483648,2147483647); // 02
-CIntParameter     SPMC_GVP_VECTOR__O("SPMC_GVP_VECTOR__O", CBaseParameter::RW, 0, 0, -2147483648,2147483647); // 03
-CIntParameter     SPMC_GVP_VECTORNRP("SPMC_GVP_VECTORNRP", CBaseParameter::RW, 0, 0, -2147483648,2147483647); // 04
-CIntParameter     SPMC_GVP_VECTORNXT("SPMC_GVP_VECTORNXT", CBaseParameter::RW, 0, 0, -2147483648,2147483647); // 05
-CIntParameter     SPMC_GVP_VECTORDCI("SPMC_GVP_VECTORDCI", CBaseParameter::RW, 0, 0, -2147483648,2147483647); // 05
-CDoubleParameter  SPMC_GVP_VECTOR_DX("SPMC_GVP_VECTOR_DX", CBaseParameter::RW, 0, 0, -(1<<30), 1<<30); // 06
-CDoubleParameter  SPMC_GVP_VECTOR_DY("SPMC_GVP_VECTOR_DY", CBaseParameter::RW, 0, 0, -(1<<30), 1<<30);
-CDoubleParameter  SPMC_GVP_VECTOR_DZ("SPMC_GVP_VECTOR_DZ", CBaseParameter::RW, 0, 0, -(1<<30), 1<<30);
-CDoubleParameter  SPMC_GVP_VECTOR_DU("SPMC_GVP_VECTOR_DU", CBaseParameter::RW, 0, 0, -(1<<30), 1<<30);
-CDoubleParameter  SPMC_GVP_VECTOR010("SPMC_GVP_VECTOR010", CBaseParameter::RW, 0, 0, -(1<<30), 1<<30);
-CDoubleParameter  SPMC_GVP_VECTOR011("SPMC_GVP_VECTOR011", CBaseParameter::RW, 0, 0, -(1<<30), 1<<30);
-CDoubleParameter  SPMC_GVP_VECTOR012("SPMC_GVP_VECTOR012", CBaseParameter::RW, 0, 0, -(1<<30), 1<<30);
-CDoubleParameter  SPMC_GVP_VECTOR013("SPMC_GVP_VECTOR013", CBaseParameter::RW, 0, 0, -(1<<30), 1<<30);
-CDoubleParameter  SPMC_GVP_VECTOR014("SPMC_GVP_VECTOR014", CBaseParameter::RW, 0, 0, -(1<<30), 1<<30);
-CDoubleParameter  SPMC_GVP_VECTOR015("SPMC_GVP_VECTOR015", CBaseParameter::RW, 0, 0, -(1<<30), 1<<30);
+CIntParameter     SPMC_GVP_VECTOR_PC("SPMC_GVP_VECTOR_PC", CBaseParameter::RW, 0, 0, -2147483648,2147483647); // Vector[PC] to set
+CIntParameter     SPMC_GVP_VECTOR__N("SPMC_GVP_VECTOR__N", CBaseParameter::RW, 0, 0, -2147483648,2147483647); // # points
+CIntParameter     SPMC_GVP_VECTOR__O("SPMC_GVP_VECTOR__O", CBaseParameter::RW, 0, 0, -2147483648,2147483647); // options [Z-Servo Hold, ... , SRCS bits]
+CIntParameter     SPMC_GVP_VECTORNRP("SPMC_GVP_VECTORNRP", CBaseParameter::RW, 0, 0, -2147483648,2147483647); // # repetitions
+CIntParameter     SPMC_GVP_VECTORNXT("SPMC_GVP_VECTORNXT", CBaseParameter::RW, 0, 0, -2147483648,2147483647); // loop jump rel to PC to next vector
+CDoubleParameter  SPMC_GVP_VECTOR_DX("SPMC_GVP_VECTOR_DX", CBaseParameter::RW, 0, 0, -10.0, 10.0); // DX in Volts total length of vector component
+CDoubleParameter  SPMC_GVP_VECTOR_DY("SPMC_GVP_VECTOR_DY", CBaseParameter::RW, 0, 0, -10.0, 10.0); // DY in Volts total length of vector component
+CDoubleParameter  SPMC_GVP_VECTOR_DZ("SPMC_GVP_VECTOR_DZ", CBaseParameter::RW, 0, 0, -10.0, 10.0); // DZ in Volts total length of vector component
+CDoubleParameter  SPMC_GVP_VECTOR_DU("SPMC_GVP_VECTOR_DU", CBaseParameter::RW, 0, 0, -10.0, 10.0); // DU (=Bias) adjust rel to Bias Ref in Volts total length of vector component
+CDoubleParameter  SPMC_GVP_VECTOR_AA("SPMC_GVP_VECTOR_AA", CBaseParameter::RW, 0, 0, -10.0, 10.0); // AA (Aux Channel ADC #5) -- reserved
+CDoubleParameter  SPMC_GVP_VECTOR_BB("SPMC_GVP_VECTOR_BB", CBaseParameter::RW, 0, 0, -10.0, 10.0); // BB (Aux Channel ADC #6) -- reserved
+CDoubleParameter  SPMC_GVP_VECTORSLW("SPMC_GVP_VECTORSLW", CBaseParameter::RW, 0, 0,   0.0, 1e6);  // slew rate in #points / sec -- max: 1 MSPS
 
 CDoubleParameter  SPMC_ALPHA("SPMC_ALPHA", CBaseParameter::RW, 0.0, 0, -360, +360); // deg
 CDoubleParameter  SPMC_SLOPE_dZX("SPMC_SLOPE_X", CBaseParameter::RW, 0.0, 0, -1.0, +1.0); // slope in Volts Z / Volt X
@@ -349,6 +344,10 @@ CDoubleParameter  SPMC_SET_OFFSET_X("SPMC_OFFSET_X", CBaseParameter::RW, 0.0, 0,
 CDoubleParameter  SPMC_SET_OFFSET_Y("SPMC_OFFSET_Y", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 CDoubleParameter  SPMC_SET_OFFSET_Z("SPMC_OFFSET_Z", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 
+CDoubleParameter  SPMC_SET_OFFSET_XY_SLEW("SPMC_OFFSET_XY_SLEW", CBaseParameter::RW, 0.0, 0, 0.0, 1000.0); // V/s slew rate
+CDoubleParameter  SPMC_SET_OFFSET_Z_SLEW("SPMC_OFFSET_Z_SLEW", CBaseParameter::RW, 0.0, 0, 0.0, 1000.0); // V/s slew rate
+
+
 // *** RP SPMC::GPIO MONITORS ***
 CDoubleParameter  SPMC_BIAS_MONITOR("SPMC_BIAS_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 CDoubleParameter  SPMC_SIGNAL_MONITOR("SPMC_SIGNAL_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
@@ -358,6 +357,9 @@ CDoubleParameter  SPMC_Z_MONITOR("SPMC_Z_MONITOR", CBaseParameter::RW, 0.0, 0, -
 CDoubleParameter  SPMC_X0_MONITOR("SPMC_X0_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 CDoubleParameter  SPMC_Y0_MONITOR("SPMC_Y0_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 CDoubleParameter  SPMC_Z0_MONITOR("SPMC_Z0_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
+CDoubleParameter  SPMC_XS_MONITOR("SPMC_XS_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
+CDoubleParameter  SPMC_YS_MONITOR("SPMC_YS_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
+CDoubleParameter  SPMC_ZS_MONITOR("SPMC_ZS_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 
 
 
@@ -613,10 +615,10 @@ void set_PAC_config()
         
         // in tune mode disable controllers autmatically and do not touch DDS settings, but allow Q Control
         if (OPERATION.Value() < 6){
-                if (verbose > 1) fprintf(stderr, "** DDS: FREQUENCY_MANUAL **\n");
+                if (verbose > 2) fprintf(stderr, "** DDS: FREQUENCY_MANUAL **\n");
                 rp_PAC_adjust_dds (FREQUENCY_MANUAL.Value());
 
-                if (verbose > 1) fprintf(stderr, "** CONF SWITCHES **\n");
+                if (verbose > 2) fprintf(stderr, "** CONF SWITCHES **\n");
                 rp_PAC_configure_switches (PHASE_CONTROLLER.Value ()?1:0,
                                            AMPLITUDE_CONTROLLER.Value ()?1:0,
                                            PHASE_UNWRAPPING_ALWAYS.Value ()?1:0,
@@ -1402,13 +1404,23 @@ void OnNewParams_RPSPMC(void){
                 rp_spmc_set_slope (SPMC_SLOPE_dZX.Value (), SPMC_SLOPE_dZY.Value ());
         }
         
-        if (SPMC_SET_OFFSET_X.IsNewValue () || SPMC_SET_OFFSET_Y.IsNewValue () || SPMC_SET_OFFSET_Z.IsNewValue ()){
+        if (SPMC_SET_OFFSET_X.IsNewValue ()
+            || SPMC_SET_OFFSET_Y.IsNewValue ()
+            || SPMC_SET_OFFSET_Z.IsNewValue ()
+            || SPMC_SET_OFFSET_XY_SLEW.IsNewValue ()
+            || SPMC_SET_OFFSET_Z_SLEW.IsNewValue ()){
+                
                 SPMC_SET_OFFSET_X.Update ();
                 SPMC_SET_OFFSET_Y.Update ();
                 SPMC_SET_OFFSET_Z.Update ();
+                SPMC_SET_OFFSET_XY_SLEW.Update ();
+                SPMC_SET_OFFSET_Z_SLEW.Update ();
                 rp_spmc_set_offsets (SPMC_SET_OFFSET_X.Value (),
                                      SPMC_SET_OFFSET_Y.Value (),
-                                     SPMC_SET_OFFSET_Z.Value ());
+                                     SPMC_SET_OFFSET_Z.Value (),
+                                     SPMC_SET_OFFSET_XY_SLEW.Value (),
+                                     SPMC_SET_OFFSET_XY_SLEW.Value ()
+                                     );
         }
 
         if (SPMC_SET_SCANPOS_X.IsNewValue () || SPMC_SET_SCANPOS_Y.IsNewValue ()){
@@ -1421,36 +1433,39 @@ void OnNewParams_RPSPMC(void){
         int dirty=0;
         if (SPMC_GVP_VECTOR_PC.IsNewValue ()){ SPMC_GVP_VECTOR_PC.Update (); ++dirty; }
         if (SPMC_GVP_VECTOR__N.IsNewValue ()){ SPMC_GVP_VECTOR__N.Update (); ++dirty; }
-        if (SPMC_GVP_VECTORNII.IsNewValue ()){ SPMC_GVP_VECTORNII.Update (); ++dirty; }
         if (SPMC_GVP_VECTOR__O.IsNewValue ()){ SPMC_GVP_VECTOR__O.Update (); ++dirty; }
         if (SPMC_GVP_VECTORNRP.IsNewValue ()){ SPMC_GVP_VECTORNRP.Update (); ++dirty; }
         if (SPMC_GVP_VECTORNXT.IsNewValue ()){ SPMC_GVP_VECTORNXT.Update (); ++dirty; }
-        if (SPMC_GVP_VECTORDCI.IsNewValue ()){ SPMC_GVP_VECTORDCI.Update (); ++dirty; }
         if (SPMC_GVP_VECTOR_DX.IsNewValue ()){ SPMC_GVP_VECTOR_DX.Update (); ++dirty; }
         if (SPMC_GVP_VECTOR_DY.IsNewValue ()){ SPMC_GVP_VECTOR_DY.Update (); ++dirty; }
         if (SPMC_GVP_VECTOR_DZ.IsNewValue ()){ SPMC_GVP_VECTOR_DZ.Update (); ++dirty; }
         if (SPMC_GVP_VECTOR_DU.IsNewValue ()){ SPMC_GVP_VECTOR_DU.Update (); ++dirty; }
-        if (SPMC_GVP_VECTOR011.IsNewValue ()){ SPMC_GVP_VECTOR011.Update (); ++dirty; }
-        if (SPMC_GVP_VECTOR012.IsNewValue ()){ SPMC_GVP_VECTOR012.Update (); ++dirty; }
-        if (SPMC_GVP_VECTOR013.IsNewValue ()){ SPMC_GVP_VECTOR013.Update (); ++dirty; }
-        if (SPMC_GVP_VECTOR014.IsNewValue ()){ SPMC_GVP_VECTOR014.Update (); ++dirty; }
-        if (SPMC_GVP_VECTOR015.IsNewValue ()){ SPMC_GVP_VECTOR015.Update (); ++dirty; }
+        if (SPMC_GVP_VECTOR_AA.IsNewValue ()){ SPMC_GVP_VECTOR_AA.Update (); ++dirty; }
+        if (SPMC_GVP_VECTOR_BB.IsNewValue ()){ SPMC_GVP_VECTOR_BB.Update (); ++dirty; }
+        if (SPMC_GVP_VECTORSLW.IsNewValue ()){ SPMC_GVP_VECTORSLW.Update (); ++dirty; }
 
         if (dirty>0)
                 rp_spmc_set_gvp_vector (SPMC_GVP_VECTOR_PC.Value (),
                                         SPMC_GVP_VECTOR__N.Value (),
-                                        SPMC_GVP_VECTORNII.Value (),
                                         SPMC_GVP_VECTOR__O.Value (),
                                         SPMC_GVP_VECTORNRP.Value (),
                                         SPMC_GVP_VECTORNXT.Value (),
-                                        SPMC_GVP_VECTORDCI.Value (),
                                         SPMC_GVP_VECTOR_DX.Value (),
                                         SPMC_GVP_VECTOR_DY.Value (),
                                         SPMC_GVP_VECTOR_DZ.Value (),
-                                        SPMC_GVP_VECTOR_DU.Value ()
+                                        SPMC_GVP_VECTOR_DU.Value (),
+                                        SPMC_GVP_VECTOR_AA.Value (),
+                                        SPMC_GVP_VECTOR_BB.Value (),
+                                        SPMC_GVP_VECTORSLW.Value ()
                                         );
                      
-        if ( SPMC_GVP_PROGRAM.IsNewValue () || SPMC_GVP_EXECUTE.IsNewValue () || SPMC_GVP_STOP.IsNewValue () || SPMC_GVP_PAUSE.IsNewValue ()){
+        if ( SPMC_GVP_PROGRAM.IsNewValue ()
+             || SPMC_GVP_EXECUTE.IsNewValue ()
+             || SPMC_GVP_STOP.IsNewValue ()
+             || SPMC_GVP_PAUSE.IsNewValue ()
+             || SPMC_GVP_RESET_OPTIONS.IsNewValue ()
+             ){
+                
                 SPMC_GVP_STOP.Update ();
                 SPMC_GVP_PROGRAM.Update ();
                 SPMC_GVP_PAUSE.Update ();
@@ -1461,7 +1476,11 @@ void OnNewParams_RPSPMC(void){
                 int exec = SPMC_GVP_EXECUTE.Value () ? 1:0;
                 int reset =  stop ? 1 : (exec ? 0 : 1);
                 fprintf(stderr, "*** GVP Control: exec: %d, stop: %d, prog: %d, pause: %d ==> reset=%d\n", exec, stop, prog, pause, reset);
-                rp_spmc_gvp_config (reset ? true : false, prog? true:false, pause?true:false);
+
+                if (SPMC_GVP_RESET_OPTIONS.IsNewValue ()){
+                                SPMC_GVP_RESET_OPTIONS.Update ();
+                                rp_spmc_gvp_config (reset ? true : false, prog? true:false, pause?true:false, SPMC_GVP_RESET_OPTIONS.Value ());
+                        }  else rp_spmc_gvp_config (reset ? true : false, prog? true:false, pause?true:false);
         }
 
 }

@@ -50,8 +50,8 @@
 // HEADER (FIXED BLOCK)
 #define PROBEDATA_ARRAY_INDEX 0 // Array [0] holds the probe index over all sections
 #define PROBEDATA_ARRAY_TIME  1 // Array [1] holds the time
-#define PROBEDATA_ARRAY_X0    2 // Array [2] holds X-Offset
-#define PROBEDATA_ARRAY_Y0    3 // Array [3] holds Y-Offset
+#define PROBEDATA_ARRAY_AA    2 // Array [2] holds X-Offset
+#define PROBEDATA_ARRAY_BB    3 // Array [3] holds Y-Offset
 #define PROBEDATA_ARRAY_PHI   4 // Array [4] holds Z-Offset
 #define PROBEDATA_ARRAY_XS    5 // Array [5] holds X-Scan
 #define PROBEDATA_ARRAY_YS    6 // Array [6] holds Y-Scan
@@ -282,22 +282,18 @@ typedef enum { MAKE_VEC_FLAG_NORMAL=0, MAKE_VEC_FLAG_VHOLD=1, MAKE_VEC_FLAG_RAMP
  * Vector Probe Vector
  */
 typedef struct{
-	gint32    n;             /**< 0: number of steps to do =WR */
-	gint32    dnx;           /**< 2: distance of samples in steps =WR */
-	guint32   srcs;          /**< 4: SRCS source channel coding =WR */
-	guint32   options;       /**< 6: Options, Dig IO, ... not yet all defined =WR */
-	gint32    ptr_fb;        /**< 8: optional pointer to new feedback data struct first 3 values of SPM_PI_FEEDBACK =WR */
-	gint32    repetitions;   /**< 9: numer of repetitions =WR */
-	gint32    i,j;           /**<10,11: loop counter(s) =RO/Zero */
-	gint32    ptr_next;      /**<12: next vector (relative to VPC) until --rep_index > 0 and ptr_next != 0 =WR */
-        gint32    ptr_final;     /**<13: next vector (relative to VPC), =1 for next Vector in VP, if 0, probe is done =WR */
-	double    f_du;          /**<14: U (bias) stepwidth in Volts =WR */
-	double    f_dx;          /**<16: X stepwidth in Volts =WR */
-	double    f_dy;          /**<18: Y stepwidth in Volts =WR */
-	double    f_dz;          /**<20: Z stepwidth in Volts =WR */
-	double    f_dx0;         /**<22: X0 (offset) stepwidth in Volts =WR */
-	double    f_dy0;         /**<24: Y0 (offset) stepwidth in Volts =WR */
-	double    f_dz0;         /**<26: Z0 (offset) stepwidth in Volts =WR */
+	gint32    n;             // number of points to do
+        double    slew;          // slew rate in points per second
+	guint32   srcs;          // SRCS source channel coding
+	guint32   options;       // Options, Dig IO, ... not yet all defined
+	gint32    repetitions;   // numer of repetitions
+        gint32    ptr_next;      // loop jump relative to vpc
+	double    f_du;          // dU (bias) full vector delta in Volts
+	double    f_dx;          // dX full vector delta in Volts
+	double    f_dy;          // dY full vector delta in Volts
+	double    f_dz;          // dZ full vector delta in Volts
+	double    f_da;          // dA aux channel A full vector delta in Volts
+	double    f_db;          // dB aux channel B full vector delta in Volts
 } PROBE_VECTOR_GENERIC;
 
 /**

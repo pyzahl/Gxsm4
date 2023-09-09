@@ -21,8 +21,8 @@
 
 
 module gvp #(
-    parameter NUM_VECTORS_N2 = 3,
-    parameter NUM_VECTORS    = 8
+    parameter NUM_VECTORS_N2 = 4,
+    parameter NUM_VECTORS    = 16
 )
 (
     // (* X_INTERFACE_PARAMETER = "FREQ_HZ 125000000" *)
@@ -33,6 +33,7 @@ module gvp #(
     input pause,  // put/release into/from pause mode -- always completes the "ii" nop cycles!
     input setvec, // program vector data using vp_set data
     input [512-1:0] vp_set, // [VAdr], [N, NII, Options, Nrep, Next, dx, dy, dz, du] ** full vector data set block **
+    input [16-1:0] reset_options, // option (fb hold/go, srcs... to pass when idle or in reset mode
     
     output wire [32-1:0]  M_AXIS1_tdata, // Lck-X
     output wire           M_AXIS1_tvalid,
@@ -43,12 +44,10 @@ module gvp #(
     output [32-1:0] y, // ..
     output [32-1:0] z, // ..
     output [32-1:0] u, // ..
-    output [32-1:0] options,  // section options: FB, ...
-    output [32-1:0] section,  // section count
+    output [32-1:0] options,  // section options: FB, ... (flags) and source selections bits
     output [1:0 ] store_data, // trigger to store data:: 2: full vector header, 1: data sources
-    output [32-1:0] dbg_i,    // data count
-    output gvp_finished,       // finished flag
-    output gvp_hold,            // on hold/pause
+    output gvp_finished,      // finished flag
+    output gvp_hold,          // on hold/pause
     output [32-1:0] dbg_status
     );
 
@@ -91,6 +90,8 @@ module gvp #(
     reg signed [32-1:0]  vec_y=0;
     reg signed [32-1:0]  vec_z=0;
     reg signed [32-1:0]  vec_u=0;
+
+    reg [32-1:0] set_options=0;
 
     // data store trigger
     reg [1:0] store = 0;
@@ -162,6 +163,7 @@ module gvp #(
                 store <= 0;
                 finished <= 0;
                 load_next_vector <= 1;
+                set_options <= reset_options;
             end
             else // run program step
             begin
@@ -175,10 +177,12 @@ module gvp #(
                     begin
                         decimation <= 1; // reset to fast 
                         finished <= 1;
+                        set_options <= reset_options;
                     end 
                     else
                     begin
                         decimation <= vec_deci[pvc];
+                        set_options <= vec_options[pvc];
                     end
                 end
                 else
@@ -229,22 +233,19 @@ module gvp #(
     assign y = vec_y;
     assign z = vec_z;
     assign u = vec_u;
+    
+    assign options = set_options;
+    
 
     assign M_AXIS1_tdata = i;
     assign M_AXIS1_tvalid = 1;
     assign M_AXIS2_tdata = vec_u;
     assign M_AXIS2_tvalid = 1;
-
-    
-    assign section = sec;
     
     assign store_data = store;
     assign gvp_finished = finished;
     assign hold = pause_flg;
     
-    
-    assign dbg_i = vec_n[0];
-    //                      32                              3      2         1      1      1       1
-    assign dbg_status = {{(32-4-2-3-3){1'b0}}, sec[4:0], pvc, store, finished, pause, reset, setvec };
+    assign dbg_status = {sec[32-3:0], reset, pause, ~finished };
     
 endmodule

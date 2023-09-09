@@ -424,8 +424,8 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
 
                         pv[PROBEDATA_ARRAY_INDEX] = index_all;
                         pv[PROBEDATA_ARRAY_TIME] = GVP_vp_header_current.time;
-                        pv[PROBEDATA_ARRAY_X0] = GVP_vp_header_current.move_xyz[i_X];
-                        pv[PROBEDATA_ARRAY_Y0] = GVP_vp_header_current.move_xyz[i_Y];
+                        pv[PROBEDATA_ARRAY_AA] = GVP_vp_header_current.move_xyz[i_X]; // *** fix me
+                        pv[PROBEDATA_ARRAY_BB] = GVP_vp_header_current.move_xyz[i_Y]; // *** fix me
                         pv[PROBEDATA_ARRAY_PHI]= GVP_vp_header_current.move_xyz[i_Z]; // *** fix me
                         pv[PROBEDATA_ARRAY_XS] = GVP_vp_header_current.scan_xyz[i_X];
                         pv[PROBEDATA_ARRAY_YS] = GVP_vp_header_current.scan_xyz[i_Y];
@@ -1009,95 +1009,42 @@ void rpspmc_hwi_dev::GVP_fetch_data_srcs (){
 void rpspmc_hwi_dev::rpspmc_hwi_dev::GVP_start_data_read(){
 }
 
-
-#define QN(N) ((1<<(N))-1)
-#define Q19 QN(19)
-#define Q31 0x7FFFFFFF  // (1<<31)-1 ... ov in expression expansion
-#define SPMC_AD5791_REFV 5.0 // DAC AD5791 Reference Volatge is 5.000000V (+/-5V Range)
-inline double ad5791_dac_to_volts (int value){ return SPMC_AD5791_REFV*(double)value / Q19; }
-inline int    volts_to_ad5791_dac (double volts){ return round(Q19*volts/SPMC_AD5791_REFV); }
-
 int rpspmc_hwi_dev::GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v){
         if (i >= MAX_PROGRAM_VECTORS || i < 0)
                 return 0;
 
-        // #define GVP_VECTOR_SIZE  16 // 10 components used (1st is index, then: N, nii, Options, Nrep, Next, dx, dy, dz, du, fill w zero to 16)
 #define I_GVP_PC_INDEX  0
 #define I_GVP_N         1
-#define I_GVP_NII       2
-#define I_GVP_OPTIONS   3
-#define I_GVP_NREP      4
-#define I_GVP_NEXT      5
-#define I_GVP_DECII     6
-#define I_GVP_SIZE (I_GVP_DECII+1)
+#define I_GVP_OPTIONS   2
+#define I_GVP_NREP      3
+#define I_GVP_NEXT      4
+#define I_GVP_SIZE (I_GVP_NEXT+1)
         
 #define D_GVP_DX        0
 #define D_GVP_DY        1
 #define D_GVP_DZ        2
 #define D_GVP_DU        3
-#define D_GVP_SIZE (D_GVP_DU+1)
+#define D_GVP_AA        4
+#define D_GVP_BB        5
+#define D_GVP_SLW       6
+#define D_GVP_SIZE (D_GVP_SLW+1)
         
         int gvp_vector_i[I_GVP_SIZE];
         double gvp_vector_d[D_GVP_SIZE];
 
         gvp_vector_i [I_GVP_PC_INDEX] = i;
         gvp_vector_i [I_GVP_N       ] = v->n;
-        gvp_vector_i [I_GVP_NII     ] = v->dnx;
         gvp_vector_i [I_GVP_OPTIONS ] = (v->srcs << 16) | (v->options & 0xffff);
         gvp_vector_i [I_GVP_NREP    ] = v->repetitions > 1 ? v->repetitions-1 : 0;
         gvp_vector_i [I_GVP_NEXT    ] = v->ptr_next;
-        gvp_vector_i [I_GVP_DECII   ] = RPSPMC_GVP_decii;
-
-        // v->ptr_fb;
-        // v->ptr_final;
 
         gvp_vector_d [D_GVP_DX      ] = v->f_dx;
         gvp_vector_d [D_GVP_DY      ] = v->f_dy;
         gvp_vector_d [D_GVP_DZ      ] = v->f_dz;
         gvp_vector_d [D_GVP_DU      ] = v->f_du;
-
-        int dx_dac =  volts_to_ad5791_dac (gvp_vector_d [D_GVP_DX]);
-        int dy_dac =  volts_to_ad5791_dac (gvp_vector_d [D_GVP_DY]);
-        int dz_dac =  volts_to_ad5791_dac (gvp_vector_d [D_GVP_DZ]);
-        int du_dac =  volts_to_ad5791_dac (gvp_vector_d [D_GVP_DU]);
-        double dx_actual =  ad5791_dac_to_volts (gvp_vector_i [I_GVP_NII] * gvp_vector_i [I_GVP_N] * volts_to_ad5791_dac (gvp_vector_d [D_GVP_DX]));
-        double dy_actual =  ad5791_dac_to_volts (gvp_vector_i [I_GVP_NII] * gvp_vector_i [I_GVP_N] * volts_to_ad5791_dac (gvp_vector_d [D_GVP_DY]));
-        double dz_actual =  ad5791_dac_to_volts (gvp_vector_i [I_GVP_NII] * gvp_vector_i [I_GVP_N] * volts_to_ad5791_dac (gvp_vector_d [D_GVP_DZ]));
-        double du_actual =  ad5791_dac_to_volts (gvp_vector_i [I_GVP_NII] * gvp_vector_i [I_GVP_N] * volts_to_ad5791_dac (gvp_vector_d [D_GVP_DU]));
-
-        g_print ("Vec[%2d] = [#%4d, %4d, 0x%08x, nr%03d, pc[%02d], {fin%02d}, {dU %g V dXYZ %g A %g A %g A} ] Actual Delta [%d %d %d %d]DAC [%g, %g, %g, %g]V\n",
-                 i, v->n, v->dnx, v->srcs,
-                 v->repetitions, v->ptr_next, v->ptr_final,
-                 v->f_du,
-                 v->f_dx, v->f_dy, v->f_dz,
-                 dx_dac, dy_dac, dz_dac, du_dac,
-                 dx_actual, dy_actual, dz_actual, du_actual
-                 );
-#if 0
-        // check count ranges
-        // NULL VECTOR, OK: END
-        if (!(vector_program[i].n == 0 && vector_program[i].dnx == 0 && vector_program[i].ptr_next == 0 && vector_program[i].ptr_final == 0))
-                if (vector_program[i].dnx < 0 || vector_program[i].dnx > 32767 || vector_program[i].n <= 0 || vector_program[i].n > 32767){
-                        /*
-                          gchar *msg = g_strdup_printf ("Probe Vector [pc%02d] not acceptable:\n"
-                          "n   = %6d   [0..32767]\n"
-                          "dnx = %6d   [0..32767]\n"
-                          "Auto adjusting.\n"
-                          "Hint: adjust slope/speed/points/time.",
-                          index, vector_program[i].n, vector_program[i].dnx );
-                          main_get_gapp()->warning (msg);
-                          g_free (msg);
-                        */
-                        if (vector_program[i].dnx < 0) vector_program[i].dnx = 0;
-                        if (vector_program[i].dnx > 32767) vector_program[i].dnx = 32767;
-                        if (vector_program[i].n <= 0) vector_program[i].n = 1;
-                        if (vector_program[i].n > 32767) vector_program[i].n = 32767;
-                }
-
-        // setup VPC essentials
-        vector_program[i].i = vector_program[i].repetitions; // preload repetitions counter now! (if now already done)
-        vector_program[i].j = 0; // not yet used -- XXXX
-#endif
+        gvp_vector_d [D_GVP_AA      ] = v->f_da;
+        gvp_vector_d [D_GVP_BB      ] = v->f_db;
+        gvp_vector_d [D_GVP_SLW     ] = v->slew;
 
         if (rpspmc_pacpll)
                 rpspmc_pacpll->write_array (SPMC_GVP_VECTOR_COMPONENTS,  I_GVP_SIZE, gvp_vector_i,  D_GVP_SIZE, gvp_vector_d);
