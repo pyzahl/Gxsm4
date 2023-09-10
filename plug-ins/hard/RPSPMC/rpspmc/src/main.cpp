@@ -302,7 +302,7 @@ CDoubleParameter CONTROL_DFREQ_MONITOR("CONTROL_DFREQ_MONITOR", CBaseParameter::
 
 CDoubleParameter  SPMC_BIAS("SPMC_BIAS", CBaseParameter::RW, 0.0, 0, -5.0, 5.0); // Volts
 
-CIntParameter     SPMC_Z_SERVO_MODE("SPMC_Z_SERVO_MODE", CBaseParameter::RW, 0.0, 0, 0, 1<<31);
+CIntParameter     SPMC_Z_SERVO_MODE("SPMC_Z_SERVO_MODE", CBaseParameter::RW, 0, 0, 0, 0xffff);
 CDoubleParameter  SPMC_Z_SERVO_SETPOINT("SPMC_Z_SERVO_SETPOINT", CBaseParameter::RW, 0.0, 0, -5.0, 5.0); // Volts
 CDoubleParameter  SPMC_Z_SERVO_CP("SPMC_Z_SERVO_CP", CBaseParameter::RW, 0.0, 0, -1000.0, 1000.0); // XXX
 CDoubleParameter  SPMC_Z_SERVO_CI("SPMC_Z_SERVO_CI", CBaseParameter::RW, 0.0, 0, -1000.0, 1000.0); // XXX
@@ -1379,7 +1379,6 @@ void OnNewParams_RPSPMC(void){
             || SPMC_Z_SERVO_SETPOINT_CZ.IsNewValue()
             || SPMC_Z_SERVO_LEVEL.IsNewValue()
             || SPMC_Z_SERVO_MODE.IsNewValue()
-            || SPMC_Z_SERVO_MODE.IsNewValue()
             ){
                 SPMC_Z_SERVO_SETPOINT.Update ();
                 SPMC_Z_SERVO_CP.Update ();
@@ -1389,6 +1388,8 @@ void OnNewParams_RPSPMC(void){
                 SPMC_Z_SERVO_SETPOINT_CZ.Update ();
                 SPMC_Z_SERVO_LEVEL.Update ();
                 SPMC_Z_SERVO_MODE.Update ();
+
+                fprintf(stderr, "Z Servo Mode = %d\n", SPMC_Z_SERVO_MODE.Value());
 
                 rp_spmc_set_zservo_controller (SPMC_Z_SERVO_SETPOINT.Value(), SPMC_Z_SERVO_CP.Value(), SPMC_Z_SERVO_CI.Value(), SPMC_Z_SERVO_UPPER.Value(), SPMC_Z_SERVO_LOWER.Value());
                 rp_spmc_set_zservo_gxsm_speciality_setting (SPMC_Z_SERVO_MODE.Value(), SPMC_Z_SERVO_SETPOINT_CZ.Value(), SPMC_Z_SERVO_LEVEL.Value());

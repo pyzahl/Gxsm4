@@ -240,7 +240,7 @@ module axis_spm_control#(
     
     assign M_AXIS3_tdata  = rz;
     assign M_AXIS3_tvalid = 1;
-    assign M_AXIS_ZSMON_tdata  = z_servo;
+    assign M_AXIS_ZSMON_tdata  = zs;
     assign M_AXIS_ZSMON_tvalid = 1;
     assign M_AXIS_Z0MON_tdata  = mz0;
     assign M_AXIS_Z0MON_tvalid = 1;

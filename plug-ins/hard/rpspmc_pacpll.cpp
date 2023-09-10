@@ -108,15 +108,15 @@ SOURCE_SIGNAL_DEF source_signals[] = {
         { 0x02000000, "Time",     " ", "ms", "ms", 1.0/75, PROBEDATA_ARRAY_TIME }, // 1000/emu->frq_ref => ms
         { 0x00100000, "Bias",     " ", "V", "V", BiasFac, PROBEDATA_ARRAY_U },
         { 0x04000000, "SEC",      " ", "#", "#", 1.0, PROBEDATA_ARRAY_SEC },
-        { 0x08000000, "XS",      " ", "AA", UTF8_ANGSTROEM, XAngFac, PROBEDATA_ARRAY_XS },
-        { 0x10000000, "YS",      " ", "AA", UTF8_ANGSTROEM, YAngFac, PROBEDATA_ARRAY_YS },
-        { 0x20000000, "ZS",      " ", "AA", UTF8_ANGSTROEM, ZAngFac, PROBEDATA_ARRAY_ZS },
-        { 0x40000000, "PHI",     " ", "deg", UTF8_DEGREE, 1., PROBEDATA_ARRAY_PHI },
+        { 0x08000000, "XS",       " ", "AA", UTF8_ANGSTROEM, XAngFac, PROBEDATA_ARRAY_XS },
+        { 0x10000000, "YS",       " ", "AA", UTF8_ANGSTROEM, YAngFac, PROBEDATA_ARRAY_YS },
+        { 0x20000000, "ZS",       " ", "AA", UTF8_ANGSTROEM, ZAngFac, PROBEDATA_ARRAY_ZS },
+        { 0x40000000, "DA",       " ", "V", "V", 1., PROBEDATA_ARRAY_DA },
         // -- general measured signals from index [8]
         { 0x00000001, "Z-mon",    " ", "AA", UTF8_ANGSTROEM, ZAngFac, PROBEDATA_ARRAY_S1 },
         { 0x00000002, "Bias-mon", " ", "V", "V", BiasFac, PROBEDATA_ARRAY_S2 },
-	{ 0x00000010, "CurrentSim1", " ", "nA", "nA", CurrFac, PROBEDATA_ARRAY_S3 }, // <=== to Volt conversion here -- unit sym and scale are custom auto adjusted in .._eventhandling lookup functions as of this mask 
-        { 0x00000020, "CurrentSim2", " ", "nA", "nA", CurrFac, PROBEDATA_ARRAY_S4 },
+	{ 0x00000010, "In1-Signal", " ", "V", "V", 1.0, PROBEDATA_ARRAY_S3 }, // <=== to Volt conversion here -- unit sym and scale are custom auto adjusted in .._eventhandling lookup functions as of this mask 
+        { 0x00000020, "In2-Current", " ", "nA", "nA", CurrFac, PROBEDATA_ARRAY_S4 },
         { 0x00000040, "VP Zpos", " ", "AA", UTF8_ANGSTROEM, ZAngFac, PROBEDATA_ARRAY_S5 },
         { 0x00000080, "VP Bias", " ", "V", "V", BiasFac, PROBEDATA_ARRAY_S6 },
         { 0x00000100, "VP steps", " ", "pts", "pts", 1., PROBEDATA_ARRAY_S7 },
@@ -124,20 +124,20 @@ SOURCE_SIGNAL_DEF source_signals[] = {
         { 0x00000400, "IX", " ", "ix#", "ix#", 1, PROBEDATA_ARRAY_S9 },
         { 0x00000800, "ADC7", " ", "V", "V", ADCV10, PROBEDATA_ARRAY_S10 },
         { 0x00000008, "LockIn0", " ", "nA", "nA", ADCV10, PROBEDATA_ARRAY_S11 },
-        { 0x00001000, "SWPSundef1", " ", "V", "V", ADCV10, PROBEDATA_ARRAY_S12 }, // ** swappable **,
-        { 0x00002000, "SWPSundef2", " ", "V", "V", ADCV10, PROBEDATA_ARRAY_S13 }, // ** swappable **,
-        { 0x00004000, "SWPSundef3", " ", "V", "V", ADCV10, PROBEDATA_ARRAY_S14 }, // ** swappable **,
-        { 0x00008000, "SWPSundef4", " ", "V", "V", ADCV10, PROBEDATA_ARRAY_S15 }, // ** swappable **,
+        { 0x00001000, "SWPS1-choose", " ", "V", "V", 1.0, PROBEDATA_ARRAY_S12 }, // ** swappable **,
+        { 0x00002000, "SWPS2-chhose", " ", "V", "V", 1.0, PROBEDATA_ARRAY_S13 }, // ** swappable **,
+        { 0x00004000, "SWPS3-choose", " ", "V", "V", 1.0, PROBEDATA_ARRAY_S14 }, // ** swappable **,
+        { 0x00008000, "SWPS4-choose", " ", "V", "V", 1.0, PROBEDATA_ARRAY_S15 }, // ** swappable **,
         { 0x80000000, "BlockI", " ", "i#", "i#", 1, PROBEDATA_ARRAY_BLOCK },
         { 0x00000000, NULL, NULL, NULL, NULL, 0.0, 0 }
 };
 
 // so far fixed to swappable 4 signals as of GUI design!
 SOURCE_SIGNAL_DEF swappable_signals[] = {
-        { 0x00001000, "Sig Index", " ", "-", "--", 1.0, 0 },
-        { 0x00002000, "Sig SWP2", " ", "-", "--", ADCV10, 0 },
-        { 0x00004000, "Sig SWP3", " ", "-", "--", ADCV10, 0 },
-        { 0x00008000, "Sig SWP4", " ", "-", "--", ADCV10, 0 },
+        { 0x00001000, "dFrequency", " ", "-", "--", 1.0, 0 },
+        { 0x00002000, "Phase",      " ", "-", "--", 1.0, 0 },
+        { 0x00004000, "Excitation", " ", "-", "--", 1.0, 0 },
+        { 0x00008000, "Amplitude",  " ", "-", "--", 1.0, 0 },
         { 0x00000000, NULL, NULL, NULL, NULL, 0.0, 0 }
 };
 
@@ -1503,10 +1503,10 @@ void RPSPMC_Control::create_folder (){
 
         //g_object_set_data( G_OBJECT (ZServoCI), "HasClient", ZServoCP);
         //g_object_set_data( G_OBJECT (ZServoCP), "HasMaster", ZServoCI);
-        g_object_set_data( G_OBJECT (ZServoCI), "HasRatio", GUINT_TO_POINTER((guint)round(1000.*z_servo[SERVO_CP]/z_servo[SERVO_CI])));
+        //g_object_set_data( G_OBJECT (ZServoCI), "HasRatio", GUINT_TO_POINTER((guint)round(1000.*z_servo[SERVO_CP]/z_servo[SERVO_CI])));
         
+        bp->new_line ();
         bp->set_label_width_chars ();
-
         bp->grid_add_check_button ("Enable", "enable Z servo feedback controller.", 1,
                                    G_CALLBACK(RPSPMC_Control::ZServoControl), this, ((int)spmc_parameters.gvp_status)&1, 0);
 
@@ -2316,7 +2316,7 @@ void RPSPMC_Control::ZServoParamChanged(Param_Control* pcs, RPSPMC_Control *self
                 self->z_servo[SERVO_CP] = spmc_parameters.z_servo_invert * pow (10., spmc_parameters.z_servo_cp_db/20.);
                 self->z_servo[SERVO_CI] = spmc_parameters.z_servo_invert * pow (10., spmc_parameters.z_servo_ci_db/20.);
                 rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_SETPOINT", self->mix_set_point[0]);
-                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_MODE",     self->mix_transform_mode[0]);
+                //rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_MODE",     self->mix_transform_mode[0]);
                 rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_LEVEL",    self->mix_level[0]);
                 rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_CP",       self->z_servo[SERVO_CP]);
                 rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_CI",       self->z_servo[SERVO_CI]);
@@ -2362,12 +2362,14 @@ int RPSPMC_Control::choice_mixmode_callback (GtkWidget *widget, RPSPMC_Control *
         channel = GPOINTER_TO_INT (g_object_get_data(G_OBJECT (widget), "mix_channel"));
         selection = atoi (gtk_combo_box_get_active_id (GTK_COMBO_BOX (widget)));
 
-        //g_print ("Choice MIX%d MT=%d\n", channel, selection);
 
 	PI_DEBUG_GP (DBG_L3, "MixMode[%d]=0x%x\n",channel,selection);
 
 	dspc->mix_transform_mode[channel] = selection;
-
+        if (channel == 0){
+                g_print ("Choice MIX%d MT=%d\n", channel, selection);
+                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_MODE", selection0.1);
+        }
         PI_DEBUG_GP (DBG_L4, "%s ** 2\n",__FUNCTION__);
 
 	dspc->update_controller ();
