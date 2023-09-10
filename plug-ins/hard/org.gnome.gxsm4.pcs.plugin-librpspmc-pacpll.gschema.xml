@@ -510,76 +510,71 @@
     </key>
 
     <key name="dsp-gvp-du00" type="ad">
-      <default>[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]</default>
-      <summary>PCS Remote-ID: 'dsp-gvp-du44', Default/U:      0 V     </summary>
-      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-du44', Default/U:      0 V    , Adjustment PCS Name: 'dsp-gvp-du44' </description>
+      <default>[0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,0]</default>
+      <summary>PCS Remote-ID: 'dsp-gvp-du16', Default/U:      0 V     </summary>
+      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-du16', Default/U:      0 V    , Adjustment PCS Name: 'dsp-gvp-du16' </description>
     </key>
 
     <key name="dsp-gvp-dx00" type="ad">
-      <default>[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]</default>
-      <summary>PCS Remote-ID: 'dsp-gvp-dx44', Default/U:      0 Å     </summary>
-      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-dx44', Default/U:      0 Å    , Adjustment PCS Name: 'dsp-gvp-dx44' </description>
+      <default>[0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,0]</default>
+      <summary>PCS Remote-ID: 'dsp-gvp-dx16', Default/U:      0 Å     </summary>
+      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-dx16', Default/U:      0 Å    , Adjustment PCS Name: 'dsp-gvp-dx16' </description>
     </key>
 
     <key name="dsp-gvp-dy00" type="ad">
-      <default>[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]</default>
-      <summary>PCS Remote-ID: 'dsp-gvp-dy44', Default/U:      0 Å     </summary>
-      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-dy44', Default/U:      0 Å    , Adjustment PCS Name: 'dsp-gvp-dy44' </description>
+      <default>[0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,0]</default>
+      <summary>PCS Remote-ID: 'dsp-gvp-dy16', Default/U:      0 Å     </summary>
+      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-dy16', Default/U:      0 Å    , Adjustment PCS Name: 'dsp-gvp-dy16' </description>
     </key>
 
     <key name="dsp-gvp-dz00" type="ad">
-      <default>[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]</default>
-      <summary>PCS Remote-ID: 'dsp-gvp-dz44', Default/U:      0 Å     </summary>
-      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-dz44', Default/U:      0 Å    , Adjustment PCS Name: 'dsp-gvp-dz44' </description>
+      <default>[0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,0]</default>
+      <summary>PCS Remote-ID: 'dsp-gvp-dz16', Default/U:      0 Å     </summary>
+      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-dz16', Default/U:      0 Å    , Adjustment PCS Name: 'dsp-gvp-dz16' </description>
     </key>
 
-    <key name="dsp-gvp-dsig00" type="ad">
-      <default>[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]</default>
-      <summary>PCS Remote-ID: 'dsp-gvp-dsig44', Default/U:      0 V     </summary>
-      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-dsig44', Default/U:      0 V    , Adjustment PCS Name: 'dsp-gvp-dsig44' </description>
+    <key name="dsp-gvp-da00" type="ad">
+      <default>[0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,0]</default>
+      <summary>PCS Remote-ID: 'dsp-gvp-da16', Default/U:      0 V     </summary>
+      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-dsig16', Default/U:      0 V    , Adjustment PCS Name: 'dsp-gvp-dsig16' </description>
+    </key>
+
+    <key name="dsp-gvp-db00" type="ad">
+      <default>[0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,0]</default>
+      <summary>PCS Remote-ID: 'dsp-gvp-db16', Default/U:      0 V     </summary>
+      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-dsig16', Default/U:      0 V    , Adjustment PCS Name: 'dsp-gvp-dsig16' </description>
     </key>
 
     <key name="dsp-gvp-dt00" type="ad">
-      <default>[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]</default>
-      <summary>PCS Remote-ID: 'dsp-gvp-dt44', Default/U:     0 s     </summary>
-      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-dt44', Default/U:     0 s    , Adjustment PCS Name: 'dsp-gvp-dt44' </description>
+      <default>[0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,0]</default>
+      <summary>PCS Remote-ID: 'dsp-gvp-dt16', Default/U:     0 s     </summary>
+      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-dt16', Default/U:     0 s    , Adjustment PCS Name: 'dsp-gvp-dt16' </description>
     </key>
 
     <key name="dsp-gvp-n00" type="ad">
-      <default>[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]</default>
-      <summary>PCS Remote-ID: 'dsp-gvp-n44', Default/U:     0       </summary>
-      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-n44', Default/U:     0      , Adjustment PCS Name: 'dsp-gvp-n44' </description>
+      <default>[0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,0]</default>
+      <summary>PCS Remote-ID: 'dsp-gvp-n16', Default/U:     0       </summary>
+      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-n16', Default/U:     0      , Adjustment PCS Name: 'dsp-gvp-n16' </description>
     </key>
 
     <key name="dsp-gvp-data00" type="ad">
-      <default>[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]</default>
-      <summary>PCS Remote-ID: 'dsp-gvp-data44', Default/U: 0000 h     </summary>
-      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-data44', Default/U: 0000 h    , Adjustment PCS Name: 'dsp-gvp-data44' </description>
+      <default>[0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,0]</default>
+      <summary>PCS Remote-ID: 'dsp-gvp-data16', Default/U: 0000 h     </summary>
+      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-data16', Default/U: 0000 h    , Adjustment PCS Name: 'dsp-gvp-data16' </description>
     </key>
 
     <key name="dsp-gvp-nrep00" type="ad">
-      <default>[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]</default>
-      <summary>PCS Remote-ID: 'dsp-gvp-nrep44', Default/U: 0       </summary>
-      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-nrep44', Default/U: 0      , Adjustment PCS Name: 'dsp-gvp-nrep44' </description>
+      <default>[0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,0]</default>
+      <summary>PCS Remote-ID: 'dsp-gvp-nrep16', Default/U: 0       </summary>
+      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-nrep16', Default/U: 0      , Adjustment PCS Name: 'dsp-gvp-nrep16' </description>
     </key>
 
     <key name="dsp-gvp-pcjr00" type="ad">
-      <default>[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]</default>
-      <summary>PCS Remote-ID: 'dsp-gvp-pcjr44', Default/U: 0       </summary>
-      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-pcjr44', Default/U: 0      , Adjustment PCS Name: 'dsp-gvp-pcjr44' </description>
+      <default>[0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,0]</default>
+      <summary>PCS Remote-ID: 'dsp-gvp-pcjr16', Default/U: 0       </summary>
+      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-pcjr16', Default/U: 0      , Adjustment PCS Name: 'dsp-gvp-pcjr16' </description>
     </key>
 
-    <key name="dsp-gvp-final-delay" type="d">
-      <default>0</default>
-      <summary>PCS Remote-ID: 'dsp-GVP-Final-Delay', Default/U:     0 s     </summary>
-      <description>pcs0000, PCS Remote-ID: 'dsp-GVP-Final-Delay', Default/U:     0 s    , Adjustment PCS Name: 'dsp-GVP-Final-Delay' </description>
-    </key>
-
-    <key name="dsp-gvp-gpio-lock-57" type="d">
-      <default>0</default>
-      <summary>PCS Remote-ID: 'dsp-GVP-GPIO-Lock-57', Default/U: 0000       </summary>
-      <description>pcs0000, PCS Remote-ID: 'dsp-GVP-GPIO-Lock-57', Default/U: 0000      , Adjustment PCS Name: 'dsp-GVP-GPIO-Lock-57' </description>
-    </key>
   </schema>
 
 </schemalist>

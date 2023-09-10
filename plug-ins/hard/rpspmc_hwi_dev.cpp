@@ -133,8 +133,8 @@ rpspmc_hwi_dev::rpspmc_hwi_dev(){
 
         // auto adjust and override preferences
         main_get_gapp()->xsm->Inst->override_dig_range ((1<<31)-1, xsmres);
-        main_get_gapp()->xsm->Inst->override_volt_in_range (10.0, xsmres);
-        main_get_gapp()->xsm->Inst->override_volt_out_range (10.0, xsmres);
+        main_get_gapp()->xsm->Inst->override_volt_in_range (5.0, xsmres);
+        main_get_gapp()->xsm->Inst->override_volt_out_range (5.0, xsmres);
         
 	probe_fifo_thread_active=0;
 
@@ -670,7 +670,7 @@ gboolean rpspmc_hwi_dev::ScanLineM(int yindex, int xdir, int muxmode,
 */
 
 gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2, double &val3){
-        if (*property == 'z'){ // Scan Coordinates: ZScan, XScan, YScan  with offset!! -- in volts after piezo amplifier 
+        if (*property == 'z'){ // Scan Coordinates: ZScan, XScan, YScan  with offset!! -- in volts with gains!
 		val1 = spmc_parameters.z_monitor*main_get_gapp()->xsm->Inst->VZ();
 		val2 = spmc_parameters.x_monitor*main_get_gapp()->xsm->Inst->VX();
                 val3 = spmc_parameters.y_monitor*main_get_gapp()->xsm->Inst->VY();
@@ -911,6 +911,7 @@ void rpspmc_hwi_dev::GVP_execute_vector_program(){
         g_message ("rpspmc_hwi_dev::GVP_execute_vector_program ()");
         rpspmc_pacpll->write_parameter ("SPMC_GVP_PAUSE", false);
         rpspmc_pacpll->write_parameter ("SPMC_GVP_PROGRAM", false);
+        rpspmc_pacpll->write_parameter ("SPMC_GVP_STOP", true); // put into reset condition via stop and restart
         rpspmc_pacpll->write_parameter ("SPMC_GVP_STOP", false);
         rpspmc_pacpll->write_parameter ("SPMC_GVP_EXECUTE", true);
 }
@@ -1014,19 +1015,48 @@ int rpspmc_hwi_dev::GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v){
         // Vector Program Code Setup
         gvp_vector_i [I_GVP_PC_INDEX] = i;
         gvp_vector_i [I_GVP_N       ] = v->n;
-        gvp_vector_i [I_GVP_OPTIONS ] = (v->srcs << 16) | (v->options & 0xffff);
+        gvp_vector_i [I_GVP_OPTIONS ] = (v->srcs & 0xffffff << 8) | (v->options & VP_FEEDBACK_HOLD ? 0:1);
         gvp_vector_i [I_GVP_NREP    ] = v->repetitions > 1 ? v->repetitions-1 : 0;
         gvp_vector_i [I_GVP_NEXT    ] = v->ptr_next;
 
-        // Vector Components are all in Volts
-        gvp_vector_d [D_GVP_DX      ] = v->f_dx;
-        gvp_vector_d [D_GVP_DY      ] = v->f_dy;
-        gvp_vector_d [D_GVP_DZ      ] = v->f_dz;
-        gvp_vector_d [D_GVP_DU      ] = v->f_du;
-        gvp_vector_d [D_GVP_AA      ] = v->f_da;
-        gvp_vector_d [D_GVP_BB      ] = v->f_db;
-        gvp_vector_d [D_GVP_SLW     ] = v->slew;
 
+        if (i == 0 && (v->options & VP_INITIAL_SET_VEC)){ // 1st vector is set postion vector? Get pos and calc differentials.
+
+                g_print ("Vec[%2d] XYZU: %g %g %g %g V <== VPos XYZU: %g %g %g %g V [%g A %g A %g A %g V]\n",
+                         i,
+                         v->f_dx, v->f_dy, v->f_dz, v->f_du,
+                         spmc_parameters.xs_monitor,
+                         spmc_parameters.ys_monitor,
+                         spmc_parameters.zs_monitor,
+                         spmc_parameters.bias_monitor,
+                         main_get_gapp()->xsm->Inst->Volt2XA (spmc_parameters.xs_monitor),
+                         main_get_gapp()->xsm->Inst->Volt2YA (spmc_parameters.ys_monitor),
+                         main_get_gapp()->xsm->Inst->Volt2ZA (spmc_parameters.zs_monitor),
+                         spmc_parameters.bias_monitor
+                         );
+
+                // Vector Components are all in Volts
+                gvp_vector_d [D_GVP_DX      ] = v->f_dx - spmc_parameters.xs_monitor; // target XS - current XS
+                gvp_vector_d [D_GVP_DY      ] = v->f_dy - spmc_parameters.ys_monitor;
+                gvp_vector_d [D_GVP_DZ      ] = v->f_dz - spmc_parameters.zs_monitor;
+                gvp_vector_d [D_GVP_DU      ] = v->f_du - spmc_parameters.bias_monitor; // target Bias - current Bias
+                gvp_vector_d [D_GVP_AA      ] = 0.0; // monitor N/A
+                gvp_vector_d [D_GVP_BB      ] = 0.0; // monitor N/A
+                gvp_vector_d [D_GVP_SLW     ] = v->slew;
+        } else {
+                g_print ("Vec[%2d] XYZU: %g %g %g %g V\n",
+                         i,
+                         v->f_dx, v->f_dy, v->f_dz, v->f_du);
+                // Vector Components are all in Volts
+                gvp_vector_d [D_GVP_DX      ] = v->f_dx;
+                gvp_vector_d [D_GVP_DY      ] = v->f_dy;
+                gvp_vector_d [D_GVP_DZ      ] = v->f_dz;
+                gvp_vector_d [D_GVP_DU      ] = v->f_du;
+                gvp_vector_d [D_GVP_AA      ] = v->f_da;
+                gvp_vector_d [D_GVP_BB      ] = v->f_db;
+                gvp_vector_d [D_GVP_SLW     ] = v->slew;
+        }
+        
         // send it down
         if (rpspmc_pacpll)
                 rpspmc_pacpll->write_array (SPMC_GVP_VECTOR_COMPONENTS,  I_GVP_SIZE, gvp_vector_i,  D_GVP_SIZE, gvp_vector_d);

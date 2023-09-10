@@ -661,7 +661,7 @@ void rp_spmc_gvp_config (bool reset=true, bool program=false, bool pause=false, 
         int cfg = (reset ? 1:0) | (program ? 2:0) | (pause ? 4:0) | (r_options << 16);
         set_gpio_cfgreg_int32 (SPMC_GVP_CONTROL, cfg);
         
-        usleep(5000);
+        usleep(1000);
 #ifdef DBG_SETUPGVP
         if (verbose > 1){
                 char s8[9]; memset(s8, 0, 9);
@@ -691,7 +691,7 @@ void rp_spmc_gvp_init (){
 void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
                              double dx, double dy, double dz, double du,
                              double da, double db,
-                             double slew){
+                             double slew, bool update_life=false){
         if (pc >= MAX_NUM_PROGRAN_VECTORS || pc < 0){
                 fprintf(stderr, "ERROR: Vector[PC=%03d] out of valif vector program space. Ignoring. GVP is put into RESET mode now.", pc);
                 return;
@@ -704,13 +704,19 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
                 // find smallest non null delta component
                 double deltas[6] = { dx,dy,dz,du,da,db };
                 double dmin = 10.0; // Volts here, +/-5V is max range
+                double dmax =  0.0; // Volts here, +/-5V is max range
                 for (int i=0; i<6; ++i){
                         double x = fabs(deltas[i]);
                         if (x > 1e-8 && dmin > x)
                                 dmin = x;
+                        if (dmax < x)
+                                dmax = x;
                 }
                 double ddmin = dmin/n; // smallest point distance in volts at full step
-
+                double ddmax = dmax/n; // smallest point distance in volts at full step
+                double Vstep_prec_Q31 = 5.0/Q31;  // GVP precison:  5/(1<<31)*1e6 = ~0.00232830643653869629 uV
+                                                  // DAC precision: 5/(1<<19)*1e6 = 9.5367431640625  uV
+                
                 //int ddminQ31  = (int)round(Q31*ddmin/SPMC_AD5791_REFV); // smallest point distance in Q31 for DAC in S19Q12  (32 bit total precision fixed point)
                 // Error:
                 //double ddminE = (double)ddminQ31 - Q31*ddmin/SPMC_AD5791_REFV; // smallest point distance in Q31 for DAC in S19Q12  (32 bit total precision fixed point)
@@ -728,9 +734,12 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
 
                 // 100 A/V  x 20 -> 2000 A/V or 0.5mV/A or 5uV/pm assumptions for max decci step 1pm
 
+                /*
                 nii = 1;
                 if (ddmin > 2e-6) // 1uV steps min
                         nii = (int)round(ddmin * 1e6);
+                */
+                nii = 1+(int)round(ddmin/Vstep_prec_Q31)/1e6; // Error < relative 1e6
 
                 decii = (int)round(NII_total / nii);
                 //double deciiE = (double)decii - NII_total / nii;
@@ -738,13 +747,20 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
                 // total vector steps:
                 Nsteps = nii * n;
 
-                if (verbose > 1) fprintf(stderr, "Auto calc decii: slew=%g pts/s, dmin=%g V, dt=%g s, ##=%g, Nsteps=%g\n", slew, dmin, dt, NII_total, Nsteps);
+                if (verbose > 1) fprintf(stderr, "Auto calc decii: slew=%g pts/s, dmin=%g V, dt=%g s, ##=%g, Nsteps=%g {ddmin=%g uV #%g ddmax=%g uV #%g}\n",
+                                         slew, dmin, dt, NII_total, Nsteps, ddmin, ddmin/Vstep_prec_Q31, ddmax, ddmax/Vstep_prec_Q31);
 
                 
         }
 
-        rp_spmc_gvp_config (); // assure reset+hold mode
+        if (!update_life)
+                rp_spmc_gvp_config (); // assure reset+hold mode // NOT REQUIRED
+        else
+                if (verbose > 1) fprintf(stderr, "Life Vector Update is ON\n");
 
+        // *** IMPORTANT GVP BEHAVIOR PER DESIGN ***
+        // N=5 ii=2 ==> 3 inter vec add steps (2 extra waits), 6 (points) x3 (inter) delta vectors added for section
+        
         
         if (verbose > 1) fprintf(stderr, "Write Vector[PC=%03d] init", pc);
         // write GVP-Vector [vector[0]] components
@@ -754,10 +770,10 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
         set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_VADR, pc);
 
         if (verbose > 1) fprintf(stderr, "%04d, ", n);
-        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_N, n);
+        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_N, n > 0 ? n-1 : 0); // *** see above note
 
         if (verbose > 1) fprintf(stderr, "%04d, ", nii);
-        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_NII, nii);
+        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_NII, nii > 0 ? nii-1 : 0); // *** see above note
 
         if (verbose > 1) fprintf(stderr, "%04d, ", opts);
         set_gpio_cfgreg_uint32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_OPT, opts);
@@ -793,8 +809,13 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
         if (verbose > 1) fprintf(stderr, "0,0,0, decii=%d]\n", decii); // last vector component is decii
         set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_DECII, decii);  // decimation
 
-        rp_spmc_gvp_config (true, true); // load vector
-        rp_spmc_gvp_config (true, false);
+        if (update_life){
+                rp_spmc_gvp_config (false, true);  // set vector
+                rp_spmc_gvp_config (false, false); // continue
+        } else {
+                rp_spmc_gvp_config (true, true); // load vector
+                rp_spmc_gvp_config (true, false);
+        }
 }
 
 

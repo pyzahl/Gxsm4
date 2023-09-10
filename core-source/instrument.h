@@ -185,9 +185,9 @@ public:
 	virtual double dHertz2V(double v){ return UInLimit(v*dHertz2Volt); };
 	virtual double eV2V(double eV){ return UOutLimit(eV/eV2Volt); };
 	virtual double V2BiasV(double U){return U*BiasGain+BiasOffset; }; // used to determin the correct voltages for STS ramps
-	virtual double V2XAng(double U){ return Volt2XA(U); }; //return U*xR/AnalogVMaxOut; }; // convert volts (piezo) to Ang (X)
-	virtual double V2YAng(double U){ return Volt2YA(U); }; //return U*yR/AnalogVMaxOut; }; // convert volts (piezo) to Ang (Y)
-	virtual double V2ZAng(double U){ return Volt2ZA(U); }; //return U*zR/AnalogVMaxOut; }; // convert volts (piezo) to Ang (Z)
+	virtual double V2XAng(double U){ return U*xR/AnalogVMaxOut; }; // convert volts (piezo) to Ang (X)
+	virtual double V2YAng(double U){ return U*yR/AnalogVMaxOut; }; // convert volts (piezo) to Ang (Y)
+	virtual double V2ZAng(double U){ return U*zR/AnalogVMaxOut; }; // convert volts (piezo) to Ang (Z)
 
 	gchar *type;
 	gchar *name;

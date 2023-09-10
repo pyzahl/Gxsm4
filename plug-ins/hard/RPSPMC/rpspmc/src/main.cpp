@@ -315,6 +315,7 @@ CBooleanParameter SPMC_GVP_EXECUTE("SPMC_GVP_EXECUTE", CBaseParameter::RW, false
 CBooleanParameter SPMC_GVP_PAUSE("SPMC_GVP_PAUSE",     CBaseParameter::RW, false, 0);
 CBooleanParameter SPMC_GVP_STOP("SPMC_GVP_STOP",       CBaseParameter::RW, false, 0);
 CBooleanParameter SPMC_GVP_PROGRAM("SPMC_GVP_PROGRAM", CBaseParameter::RW, false, 0);
+CBooleanParameter SPMC_GVP_LIVE_VECTOR_UPDATE("SPMC_GVP_LIVE_VECTOR_UPDATE", CBaseParameter::RW, true, 0);
 CIntParameter     SPMC_GVP_RESET_OPTIONS("SPMC_GVP_RESET_OPTIONS",   CBaseParameter::RW, 0, 0, 0, 0xffff);
 CIntParameter     SPMC_GVP_STATUS("SPMC_GVP_STATUS",   CBaseParameter::RW, 0, 0, 0, 0xffff);
 #define GVP_VECTOR_SIZE  16 // 10 components used (1st is index, then: N, nii, Options, Nrep, Next, dx, dy, dz, du, fill w zero to 16)
@@ -1444,7 +1445,8 @@ void OnNewParams_RPSPMC(void){
         if (SPMC_GVP_VECTOR_BB.IsNewValue ()){ SPMC_GVP_VECTOR_BB.Update (); ++dirty; }
         if (SPMC_GVP_VECTORSLW.IsNewValue ()){ SPMC_GVP_VECTORSLW.Update (); ++dirty; }
 
-        if (dirty>0)
+        if (dirty>0){
+                SPMC_GVP_LIVE_VECTOR_UPDATE.Update ();
                 rp_spmc_set_gvp_vector (SPMC_GVP_VECTOR_PC.Value (),
                                         SPMC_GVP_VECTOR__N.Value (),
                                         SPMC_GVP_VECTOR__O.Value (),
@@ -1456,8 +1458,10 @@ void OnNewParams_RPSPMC(void){
                                         SPMC_GVP_VECTOR_DU.Value (),
                                         SPMC_GVP_VECTOR_AA.Value (),
                                         SPMC_GVP_VECTOR_BB.Value (),
-                                        SPMC_GVP_VECTORSLW.Value ()
+                                        SPMC_GVP_VECTORSLW.Value (),
+                                        SPMC_GVP_LIVE_VECTOR_UPDATE.Value ()
                                         );
+        }
                      
         if ( SPMC_GVP_PROGRAM.IsNewValue ()
              || SPMC_GVP_EXECUTE.IsNewValue ()

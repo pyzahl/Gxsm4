@@ -113,11 +113,11 @@ module tb_spm_ad(
         // INIT GVP
         r=1; #10 prg=0; #10
         //                  decii       du        dz        dy        dx     Next       Nrep,   Options,     nii,      N,    [Vadr]
-        data = {32'd0001, 160'd0, 32'd0004, 32'd0003, 32'd0064, 32'd0001,  32'd0, 32'd0000,   32'h000, 32'd0010, 32'd0005, 32'd00 }; // 000
+        data = {32'd0001, 160'd0, 32'd0004, 32'd0003, 32'd0064, 32'd0001,  32'd0, 32'd0000,   32'h000, 32'd02, 32'd005, 32'd00 }; // 000
         #10 prg=1; #10 prg=0; #10
-        data = {32'd0001, 160'd0, -32'd0004, -32'd0003, -32'd0064, -32'd0001,  32'd0, 32'd0000,   32'h000, 32'd020, 32'd005, 32'd01 }; // END
+        data = {32'd0001, 160'd0, -32'd0004,-32'd0003,-32'd0064,-32'd0001, 32'd0, 32'd0000,   32'h000, 32'd02, 32'd005, 32'd01 }; // END
         #10 prg=1; #10 prg=0; #10
-        data = {32'd0001, 160'd0, -32'd0000, -32'd0000, -32'd0000, -32'd0000,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd02 }; // END
+        data = {32'd0001, 160'd0, -32'd0000,-32'd0000,-32'd0000,-32'd0000, 32'd0, 32'd0000,   32'h000, 32'd00, 32'd000, 32'd02 }; // END
         #10 prg=1; #10 prg=0; #10
 
         data = {32'd0000, 160'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0000,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd03 }; #2
@@ -217,13 +217,12 @@ gvp gvp_1
         .z(wz), // ..
         .u(wu), // ..
         .options(wopt),  // section options: FB, ...
-        .section(wsec),  // section count
         .pause(pause),
         .store_data(sto), // trigger to store data:: 2: full vector header, 1: data sources
         .gvp_finished(fin)      // finished 
 );
 
-
+/*
 axis_spm_control axis_spm_control_1
 (
     .rotmxy(0),
@@ -267,7 +266,6 @@ axis_spm_control axis_spm_control_1
     //.M_AXIS_YMON_tvalid,
     //.M_AXIS_ZMON_tdata,
     //.M_AXIS_ZMON_tvalid,
-    .M_AXIS_UMON_tdata(mru)
     //.M_AXIS_UMON_tvalid
 
     );
@@ -300,7 +298,7 @@ axis_AD5791 axis_AD5791_1
     //.exp_n_io(n_iob)
     );
     
-
+*/
 
 
 endmodule

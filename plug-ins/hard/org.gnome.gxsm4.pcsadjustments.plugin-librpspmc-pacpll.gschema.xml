@@ -532,10 +532,16 @@
       <description>Configuration for GXSM Entry with ID 'dsp-gvp-dz00'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
     </key>
 
-    <key name="dsp-gvp-dsig00" type="ad">
-      <default>[1000, -1000, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+    <key name="dsp-gvp-da00" type="ad">
+      <default>[10, -10, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
       <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'dsp-gvp-dsig00' </summary>
-      <description>Configuration for GXSM Entry with ID 'dsp-gvp-dsig00'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+      <description>Configuration for GXSM Entry with ID 'dsp-gvp-da'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="dsp-gvp-db00" type="ad">
+      <default>[10, -10, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'dsp-gvp-dsig00' </summary>
+      <description>Configuration for GXSM Entry with ID 'dsp-gvp-db'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
     </key>
 
     <key name="dsp-gvp-dt00" type="ad">
@@ -568,17 +574,6 @@
       <description>Configuration for GXSM Entry with ID 'dsp-gvp-pcjr00'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
     </key>
 
-    <key name="dsp-gvp-final-delay" type="ad">
-      <default>[1, 0, 1e+111, -1e+111, 1e+111, 1e+111, 0.001, 0.01, 0.1, 0,  0, 0      ]      </default>
-      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'dsp-gvp-final-delay' </summary>
-      <description>Configuration for GXSM Entry with ID 'dsp-gvp-final-delay'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
-    </key>
-
-    <key name="dsp-gvp-gpio-lock-57" type="ad">
-      <default>[9999, 0, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
-      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'dsp-gvp-gpio-lock-57' </summary>
-      <description>Configuration for GXSM Entry with ID 'dsp-gvp-gpio-lock-57'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
-    </key>
   </schema>
 </schemalist>
 

@@ -271,7 +271,7 @@ typedef enum { MAKE_VEC_FLAG_NORMAL=0, MAKE_VEC_FLAG_VHOLD=1, MAKE_VEC_FLAG_RAMP
 #define VP_GPIO_MSK        0x00ff0000 // GPIO 8bit mask (lower only)
 #define VP_TRIGGER_P       0x01000000 // GPIO/signal trigger flag on pos edge -- release VP on "data & mask" or time end/out of section 
 #define VP_TRIGGER_N       0x02000000 // GPIO/signal trigger flag on neg edge -- release VP on "data & mask" or time end/out of section 
-#define VP_GPIO_SET        0x04000000 // GPIO set/update data -- once per section via statemachine, using idle cycle time for slow IO!!
+#define VP_INITIAL_SET_VEC 0x04000000 // GPIO set/update data -- once per section via statemachine, using idle cycle time for slow IO!!
 #define VP_GPIO_READ       0x08000000 // GPIO set/update data -- once per section via statemachine, using idle cycle time for slow IO!!
 #define VP_RESET_COUNTER_0 0x10000000
 #define VP_RESET_COUNTER_1 0x20000000

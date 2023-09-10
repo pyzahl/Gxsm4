@@ -733,18 +733,18 @@ void RPSPMC_Control::GVP_store_vp (const gchar *key){
         GVariant *pc_array_dx = g_variant_new_fixed_array (g_variant_type_new ("d"), GVP_dx, n, sizeof (double));
         GVariant *pc_array_dy = g_variant_new_fixed_array (g_variant_type_new ("d"), GVP_dy, n, sizeof (double));
         GVariant *pc_array_dz = g_variant_new_fixed_array (g_variant_type_new ("d"), GVP_dz, n, sizeof (double));
-        GVariant *pc_array_ds = g_variant_new_fixed_array (g_variant_type_new ("d"), GVP_dsig, n, sizeof (double));
+        GVariant *pc_array_da = g_variant_new_fixed_array (g_variant_type_new ("d"), GVP_da, n, sizeof (double));
+        GVariant *pc_array_db = g_variant_new_fixed_array (g_variant_type_new ("d"), GVP_db, n, sizeof (double));
         GVariant *pc_array_ts = g_variant_new_fixed_array (g_variant_type_new ("d"), GVP_ts, n, sizeof (double));
         GVariant *pc_array_pn = g_variant_new_fixed_array (g_variant_type_new ("i"), GVP_points, n, sizeof (gint32));
         GVariant *pc_array_op = g_variant_new_fixed_array (g_variant_type_new ("i"), GVP_opt, n, sizeof (gint32));
-        GVariant *pc_array_da = g_variant_new_fixed_array (g_variant_type_new ("i"), GVP_data, n, sizeof (gint32));
         GVariant *pc_array_vn = g_variant_new_fixed_array (g_variant_type_new ("i"), GVP_vnrep, n, sizeof (gint32));
         GVariant *pc_array_vp = g_variant_new_fixed_array (g_variant_type_new ("i"), GVP_vpcjr, n, sizeof (gint32));
 
-        GVariant *pc_array[] = { pc_array_du, pc_array_dx, pc_array_dy, pc_array_dz, pc_array_ds, pc_array_ts,
-                                 pc_array_pn, pc_array_op, pc_array_da, pc_array_vn, pc_array_vp,
+        GVariant *pc_array[] = { pc_array_du, pc_array_dx, pc_array_dy, pc_array_dz, pc_array_da, pc_array_db, pc_array_ts,
+                                 pc_array_pn, pc_array_op, pc_array_vn, pc_array_vp,
                                  NULL };
-        const gchar *vckey[] = { "du", "dx", "dy", "dz", "ds", "ts", "pn", "op", "da", "vn", "vp", NULL };
+        const gchar *vckey[] = { "du", "dx", "dy", "dz", "da", "db", "ts", "pn", "op", "vn", "vp", NULL };
 
         for (int i=0; vckey[i] && pc_array[i]; ++i){
                 gchar *m_vckey = g_strdup_printf ("%s-%s", vckey[i], key);
@@ -786,14 +786,14 @@ void RPSPMC_Control::GVP_restore_vp (const gchar *key){
                 return;
         }
         gsize  n; // == N_GVP_VECTORS;
-        GVariant *vd[6];
-        GVariant *vi[5];
-        double *pc_array_d[6];
-        gint32 *pc_array_i[5];
-        const gchar *vckey_d[] = { "du", "dx", "dy", "dz", "ds", "ts", NULL };
-        const gchar *vckey_i[] = { "pn", "op", "da", "vn", "vp", NULL };
-        double *GVPd[] = { GVP_du, GVP_dx, GVP_dy, GVP_dz, GVP_dsig, GVP_ts, NULL };
-        gint32 *GVPi[] = { GVP_points, GVP_opt, GVP_data, GVP_vnrep, GVP_vpcjr, NULL };
+        GVariant *vd[7];
+        GVariant *vi[4];
+        double *pc_array_d[7];
+        gint32 *pc_array_i[4];
+        const gchar *vckey_d[] = { "du", "dx", "dy", "dz", "da", "db", "ts", NULL };
+        const gchar *vckey_i[] = { "pn", "op", "vn", "vp", NULL };
+        double *GVPd[] = { GVP_du, GVP_dx, GVP_dy, GVP_dz, GVP_da, GVP_db, GVP_ts, NULL };
+        gint32 *GVPi[] = { GVP_points, GVP_opt, GVP_vnrep, GVP_vpcjr, NULL };
         gint32 vp_program_length=0;
         
         for (int i=0; vckey_i[i]; ++i){
@@ -889,7 +889,8 @@ int RPSPMC_Control::callback_edit_GVP (GtkWidget *widget, RPSPMC_Control *dspc){
 			dspc->GVP_dx[k] = dspc->GVP_dx[ks];
 			dspc->GVP_dy[k] = dspc->GVP_dy[ks];
 			dspc->GVP_dz[k] = dspc->GVP_dz[ks];
-			dspc->GVP_dsig[k] = dspc->GVP_dsig[ks];
+			dspc->GVP_da[k] = dspc->GVP_da[ks];
+			dspc->GVP_db[k] = dspc->GVP_db[ks];
 			dspc->GVP_ts[k]  = dspc->GVP_ts[ks];
 			dspc->GVP_points[k] = dspc->GVP_points[ks];
 			dspc->GVP_opt[k] = dspc->GVP_opt[ks];
@@ -903,7 +904,8 @@ int RPSPMC_Control::callback_edit_GVP (GtkWidget *widget, RPSPMC_Control *dspc){
 			dspc->GVP_dx[k] = dspc->GVP_dx[ks];
 			dspc->GVP_dy[k] = dspc->GVP_dy[ks];
 			dspc->GVP_dz[k] = dspc->GVP_dz[ks];
-			dspc->GVP_dsig[k] = dspc->GVP_dsig[ks];
+			dspc->GVP_da[k] = dspc->GVP_da[ks];
+			dspc->GVP_db[k] = dspc->GVP_db[ks];
 			dspc->GVP_ts[k]  = dspc->GVP_ts[ks];
 			dspc->GVP_points[k] = dspc->GVP_points[ks];
 			dspc->GVP_opt[k] = dspc->GVP_opt[ks];
@@ -1759,22 +1761,23 @@ void RPSPMC_Control::create_folder (){
         bp->set_no_spin ();
         
         bp->grid_add_label ("Vec[PC]", "Vector Program Counter");
-        bp->grid_add_label ("VP-dU", "vec-du");
-        bp->grid_add_label ("VP-dX", "vec-dx (default or mapped)");
-        bp->grid_add_label ("VP-dY", "vec-dy (default or mapped)");
-        bp->grid_add_label ("VP-dZ", "vec-dz");
+        bp->grid_add_label ("VP-dU", "vec-du (Bias, DAC CH4)");
+        bp->grid_add_label ("VP-dX", "vec-dx (X-Scan, *Mrot + X0, DAC CH1)");
+        bp->grid_add_label ("VP-dY", "vec-dy (Y-Scan, *Mrot + Y0, DAC CH2)");
+        bp->grid_add_label ("VP-dZ", "vec-dz (Z-Probe + Z-Servo + Z0, DAC CH3)");
         bp->set_configure_list_mode_on ();
-        bp->grid_add_label ("VP-dSig", "vec-dSignal mapped");
+        bp->grid_add_label ("VP-dA", "vec-dA (**DAC CH5)");
+        bp->grid_add_label ("VP-dB", "vec-dA (**DAC CH6)");
         bp->set_configure_list_mode_off ();
         bp->grid_add_label ("time", "total time for VP section");
         bp->grid_add_label ("points", "points (# vectors to add)");
         bp->grid_add_label ("FB", "Feedback");
         bp->set_configure_list_mode_on ();
-        bp->grid_add_label ("IOS", "GPIO-Set");
-        bp->grid_add_label ("IOR", "GPIO-Read");
-        bp->grid_add_label ("TP", "TRIGGER-POS");
-        bp->grid_add_label ("TN", "TRIGGER-NEG");
-        bp->grid_add_label ("GPIO", "data for GPIO / mask for trigger on GPIO");
+        bp->grid_add_label ("VSET", "Treat this as a initial set position, vector differential from current position are computed!");
+        //bp->grid_add_label ("IOR", "** GPIO-Read N/A");
+        //bp->grid_add_label ("TP", "** TRIGGER-POS N/A");
+        //bp->grid_add_label ("TN", "** TRIGGER-NEG N/A");
+        //bp->grid_add_label ("GPIO", "** mask for trigger on GPIO N/A");
         bp->grid_add_label ("Nrep", "VP # repetition");
         bp->grid_add_label ("PCJR", "Vector-PC jump relative\n (example: set to -2 to repeat previous two vectors.)");
         bp->set_configure_list_mode_off ();
@@ -1803,7 +1806,9 @@ void RPSPMC_Control::create_folder (){
                 if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
 
                 bp->set_configure_list_mode_on (); // === advanced ===========================================
-		bp->grid_add_ec (NULL,    Volt, &GVP_dsig[k], -1000.0, 1000.0, "6.4g",1., 10., "gvp-dsig", k); 
+		bp->grid_add_ec (NULL,    Volt, &GVP_da[k], -10.0, 10.0, "6.4g",1., 10., "gvp-da", k); 
+                if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
+		bp->grid_add_ec (NULL,    Volt, &GVP_db[k], -10.0, 10.0, "6.4g",1., 10., "gvp-db", k); 
                 if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
                 bp->set_configure_list_mode_off (); // ========================================================
 
@@ -1825,10 +1830,10 @@ void RPSPMC_Control::create_folder (){
 
                 bp->grid_add_check_button ("", NULL, 1,
                                                GCallback (callback_change_GVP_vpc_option_flags), this,
-                                               GVP_opt[k], VP_GPIO_SET);
+                                               GVP_opt[k], VP_INITIAL_SET_VEC);
                 EC_vpc_opt_list = g_slist_prepend( EC_vpc_opt_list, bp->button);
                 g_object_set_data (G_OBJECT (bp->button), "VPC", GINT_TO_POINTER (k));
-
+#if 0
                 bp->grid_add_check_button ("", NULL, 1,
                                                GCallback (callback_change_GVP_vpc_option_flags), this,
                                                GVP_opt[k], VP_GPIO_READ);
@@ -1849,7 +1854,8 @@ void RPSPMC_Control::create_folder (){
 
 		bp->grid_add_ec (NULL, Hex,   &GVP_data[k],   0, 0xffff,  "04X", "gvp-data", k); 
                 if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
-
+#endif
+                
 		bp->grid_add_ec (NULL, Unity, &GVP_vnrep[k], 0., 32000.,  ".0f", "gvp-nrep", k); 
                 if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
 
@@ -1980,13 +1986,7 @@ void RPSPMC_Control::create_folder (){
         bp->pop_grid ();
         bp->new_line ();
 
-	bp->new_grid_with_frame ("VP Finish Settings and Status");
-        bp->set_configure_list_mode_on ();
-	bp->grid_add_ec ("GVP-Final-Delay", Time, &GVP_final_delay, 0., 1., "5.3g", 0.001, 0.01, "GVP-Final-Delay");
-	bp->grid_add_label ("GPIO key", "Key code to enable GPIO set operations.\n(GPIO manipulation is locked out if not set right.)");
-	bp->grid_add_ec (GVP_GPIO_KEYCODE_S, Unity, &GVP_GPIO_lock, 0, 9999, "04.0f", "GVP-GPIO-Lock-" GVP_GPIO_KEYCODE_S);
-        bp->new_line ();
-        bp->set_configure_list_mode_off ();
+	bp->new_grid_with_frame ("VP Status");
 
 	GVP_status = bp->grid_add_probe_status ("Status");
 

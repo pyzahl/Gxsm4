@@ -25,16 +25,14 @@ module AD5791_io_connect #(
     parameter USE_RP_DIGITAL_IO = 1
 )
 (
-    inout [8-1:0]  exp_p_io,
     inout [8-1:0]  exp_n_io,
     (* X_INTERFACE_PARAMETER = "FREQ_HZ 30000000" *)
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN PMD_clk" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF PMD_sync:PMD_dac:PMD_dac_data_read" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF PMD_sync:PMD_dac" *)
     input PMD_clk,
     input PMD_sync,
     input [NUM_DAC-1:0] PMD_dac,
-    output [8-1:0] RP_exp_out,
-    output PMD_dac_data_read
+    output [8-1:0] RP_exp_out
 );
 
 
@@ -59,6 +57,6 @@ IOBUF dac3_iobuf (.O(RP_exp_out[3]),   .IO(exp_n_io[3]), .I(PMD_dac[3]), .T(0) )
 IOBUF sync_iobuf (.O(RP_exp_out[6]),   .IO(exp_n_io[6]), .I(PMD_sync),   .T(0) );
 IOBUF clk_iobuf  (.O(RP_exp_out[7]),   .IO(exp_n_io[7]), .I(PMD_clk),    .T(0) );
 
-IOBUF dac_read_iobuf (.O(PMD_dac_data_read),   .IO(exp_p_io[7]), .I(0), .T(1) );
+//IOBUF dac_read_iobuf (.O(PMD_dac_data_read),   .IO(exp_p_io[7]), .I(0), .T(1) );
 
 endmodule

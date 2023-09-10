@@ -81,7 +81,8 @@ extern "C" {
         //void rp_spmc_set_gvp_vector (CFloatSignal &vector);
         void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
                                      double dx, double dy, double dz, double du,
-                                     double da, double db, double slew);
+                                     double da, double db, double slew,
+                                     bool update_life);
 
         void rp_spmc_set_rotation (double alpha);
         void rp_spmc_set_slope (double dzx, double dzy);

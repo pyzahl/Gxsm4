@@ -44,6 +44,13 @@
 
 #include "json_talk.h"
 
+
+#define MAX_PROGRAM_VECTORS 16
+#define i_X 0
+#define i_Y 1
+#define i_Z 2
+
+
 // forward defs
 extern PACPLL_parameters pacpll_parameters;
 extern PACPLL_signals pacpll_signals;
@@ -244,16 +251,15 @@ public:
                         GVP_dx[i] = 0;
                         GVP_dy[i] = 0;
                         GVP_dz[i] = 0;
-                        GVP_dsig[i] = 0;
+                        GVP_da[i] = 0;
+                        GVP_db[i] = 0;
                         GVP_ts[i] = 0;
                         GVP_points[i] = 0;
                         GVP_opt[i] = 0;
                         GVP_data[i] = 0;
                         GVP_vnrep[i] = 0;
                         GVP_vpcjr[i] = 0;
-                        GVP_final_delay = 0.0;
                 }
-                GVP_repetitions = 0;
                 
                 // init all vars with last used values is done via dconf / schemata
                 // -- BUT not at very first generation via auto write schemata, will get random memory eventually to edit manually later....
@@ -643,7 +649,7 @@ public:
 	double make_Vdx0_vector (double Ui, double Uf, double dZ, int n, double slope, int source, int options, double &duration, make_vector_flags flags);
 	double make_dx0_vector (double X0i, double X0f, int n, double slope, int source, int options, double &duration, make_vector_flags flags);
 	double make_ZXYramp_vector (double dZ, double dX, double dY, int n, double slope, int source, int options, double &duration, make_vector_flags flags);
-	double make_UZXYramp_vector (double dU, double dZ, double dX, double dY, double dSig1, double dSig2, int n, int nrep, int ptr_next, double ts, int source, int options, double &duration, make_vector_flags flags);
+	double make_UZXYramp_vector (double dU, double dZ, double dX, double dY, double da, double db, int n, int nrep, int ptr_next, double ts, int source, int options);
 	double make_phase_vector (double dPhi, int n, double slope, int source, int options, double &duration, make_vector_flags flags);
 	double make_delay_vector (double delay, int source, int options, double &duration, make_vector_flags flags, int points=0);
 	void append_null_vector (int options, int index);
@@ -661,23 +667,20 @@ public:
 
 
 	// GVP (General Vector Probe)
-#define GVP_GPIO_KEYCODE    57
-#define GVP_GPIO_KEYCODE_S "57"
-#define N_GVP_VECTORS 45 // 50 vectors max total, need a few extra for controls and finish.
-	double GVP_du[N_GVP_VECTORS], GVP_dx[N_GVP_VECTORS], GVP_dy[N_GVP_VECTORS], GVP_dz[N_GVP_VECTORS], GVP_dsig[N_GVP_VECTORS], GVP_ts[N_GVP_VECTORS], GVP_final_delay;
+#define N_GVP_VECTORS MAX_PROGRAM_VECTORS
+	double GVP_du[N_GVP_VECTORS], GVP_dx[N_GVP_VECTORS], GVP_dy[N_GVP_VECTORS], GVP_dz[N_GVP_VECTORS];
+        double GVP_da[N_GVP_VECTORS],  GVP_db[N_GVP_VECTORS];
+        double GVP_ts[N_GVP_VECTORS];
 	gint32 GVP_points[N_GVP_VECTORS];
 	gint32 GVP_opt[N_GVP_VECTORS];   // options
 	gint32 GVP_data[N_GVP_VECTORS];  // GPIO data
 	gint32 GVP_vnrep[N_GVP_VECTORS]; // Vector N repetitions
 	gint32 GVP_vpcjr[N_GVP_VECTORS]; // VPC jump relative length
-	int    GVP_repetitions;
-	int    GVP_GPIO_lock;
 	guint64    GVP_option_flags;
 	guint64    GVP_auto_flags;
 	GtkWidget *VPprogram[10];
 	GtkWidget *GVP_status;
 	guint64    GVP_glock_data[6];
-	gchar  GVP_key[8];
 	void GVP_store_vp (const gchar *key);
 	void GVP_restore_vp (const gchar *key);
 
@@ -753,10 +756,6 @@ private:
 };
 
 
-#define MAX_PROGRAM_VECTORS 16
-#define i_X 0
-#define i_Y 1
-#define i_Z 2
 
 /*
  * RPSPMC hardware interface class -- derived from GXSM XSM_hardware abstraction class
