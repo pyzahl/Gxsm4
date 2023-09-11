@@ -43,6 +43,7 @@
 #include "rpspmc_hwi_structs.h"
 
 #include "json_talk.h"
+#include "rpspmc_stream.h"
 
 
 #define MAX_PROGRAM_VECTORS 16
@@ -60,6 +61,15 @@ extern JSON_parameter PACPLL_JSON_parameters[];
 extern JSON_signal PACPLL_JSON_signals[];
 
 class RPSPMC_Control;
+class RPspmc_pacpll;
+
+extern RPSPMC_Control *RPSPMC_ControlClass;
+
+extern "C++" {
+        extern RPspmc_pacpll *rpspmc_pacpll;
+        extern GxsmPlugin rpspmc_pacpll_hwi_pi;
+}
+
 
 // GUI builder helper
 class GUI_Builder : public BuildParam{
@@ -761,7 +771,7 @@ private:
  * RPSPMC hardware interface class -- derived from GXSM XSM_hardware abstraction class
  * =======================================================================
  */
-class rpspmc_hwi_dev : public XSM_Hardware{
+class rpspmc_hwi_dev : public XSM_Hardware, public RP_stream{
 
 public: 
 	friend class RPSPMC_Control;
@@ -769,6 +779,11 @@ public:
 	rpspmc_hwi_dev();
 	virtual ~rpspmc_hwi_dev();
 
+        static void spmc_stream_connect_cb (GtkWidget *widget, rpspmc_hwi_dev *self);
+        virtual const gchar *get_rp_address ();
+        virtual void status_append (const gchar *msg);
+        virtual void on_connect_actions();
+        
 	/* Parameter  */
 	virtual long GetMaxLines(){ return 32000; };
 

@@ -51,7 +51,11 @@
 #include "pacpll.cpp"
 #include "spmc.cpp"
 
+#define ENABLE_STREAM_THREAD
 
+#ifdef ENABLE_STREAM_THREAD
+#include "spmc_stream_server.cpp"
+#endif
 
 // INSTALL:
 // cp ~/SVN/RedPitaya/RedPACPLL4mdc-SPI/RedPACPLL4mdc-SPI.runs/impl_1/system_wrapper.bit fpga.bit
@@ -409,7 +413,7 @@ size_t FPGA_PACPLL_GPIO_block_size  = 0; // GPIO space
 size_t FPGA_PACPLL_BRAM_block_size = 0; // BRAM space
 
 #define DEVELOPMENT_PACPLL_OP
-int verbose = 1;
+int verbose = 2;
 
 //fprintf(stderr, "");
 
@@ -422,8 +426,12 @@ extern double gpio_reading_FIRV_vector_CH4_mapping;
 extern double gpio_reading_FIRV_vector_CH5_mapping;
 extern pthread_t gpio_reading_thread;
 
-
-
+#ifdef ENABLE_STREAM_THREAD
+extern pthread_attr_t stream_server_attr;
+extern pthread_mutex_t stream_server_mutexsum;
+extern int stream_server_control;
+extern pthread_t stream_server_thread;
+#endif
 
 /*
  * RedPitaya A9 FPGA Memory Mapping Init
@@ -480,6 +488,14 @@ int rp_PAC_App_Init(){
         pthread_attr_setdetachstate (&gpio_reading_attr, PTHREAD_CREATE_JOINABLE);
         pthread_create ( &gpio_reading_thread, &gpio_reading_attr, thread_gpio_reading_FIR, NULL); // start GPIO reading thread FIRs
         pthread_attr_destroy (&gpio_reading_attr);
+
+#ifdef ENABLE_STREAM_THREAD
+        pthread_mutex_init (&stream_server_mutexsum, NULL);
+        pthread_attr_init (&stream_server_attr);
+        pthread_attr_setdetachstate (&stream_server_attr, PTHREAD_CREATE_JOINABLE);
+        pthread_create ( &stream_server_thread, &stream_server_attr, thread_stream_server, NULL); // start stream server
+        pthread_attr_destroy (&stream_server_attr);
+#endif
         return RP_OK;
 }
 
@@ -488,6 +504,12 @@ void rp_PAC_App_Release(){
         gpio_reading_control = 0;
         pthread_join (gpio_reading_thread, &status);
         pthread_mutex_destroy (&gpio_reading_mutexsum);
+
+#ifdef ENABLE_STREAM_THREAD
+        stream_server_control = 0;
+        pthread_join (stream_server_thread, &status);
+        pthread_mutex_destroy (&stream_server_mutexsum);
+#endif
         
         munmap (FPGA_PACPLL_gpio, FPGA_PACPLL_GPIO_block_size);
         munmap (FPGA_PACPLL_cfg1, FPGA_PACPLL_CFG_block_size);

@@ -1,3 +1,30 @@
+/* -*- Mode: C++; indent-tabs-mode: nil; c-basic-offset: 8 c-style: "K&R" -*- */
+
+/* Gxsm - Gnome X Scanning Microscopy
+ * universal STM/AFM/SARLS/SPALEED/... controlling and
+ * data analysis software
+ * 
+ * Copyright (C) 1999,2000,..2023 Percy Zahl
+ *
+ * Authors: Percy Zahl <zahl@users.sf.net>
+ * additional features: Andreas Klust <klust@users.sf.net>
+ * WWW Home: http://gxsm.sf.net
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
+ */
+
 #include <limits.h>
 #include <math.h>
 #include <stdio.h>
@@ -628,6 +655,9 @@ void *thread_gpio_reading_FIR(void *arg) {
         unsigned long x8,x9;
         int i,j,x;
 	int ch;
+
+	//fprintf(stderr, "thread_gpio_reading_FIR started\n");
+	
         for (j=0; j<GPIO_FIR_LEN; j++){
                 gpio_reading_FIRV_buffer[GPIO_READING_DDS_X8][j] = 0;
                 gpio_reading_FIRV_buffer[GPIO_READING_DDS_X9][j] = 0;

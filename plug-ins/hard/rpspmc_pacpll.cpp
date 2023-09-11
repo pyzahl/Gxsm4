@@ -2185,6 +2185,8 @@ void RPSPMC_Control::create_folder (){
         
         bp->grid_add_check_button ( N_("Connect"), "Check to initiate connection, uncheck to close connection.", 1,
                                     G_CALLBACK (RPspmc_pacpll::connect_cb), rpspmc_pacpll);
+        bp->grid_add_check_button ( N_("Connect Stream"), "Check to initiate stream connection, uncheck to close connection.", 1,
+                                    G_CALLBACK (rpspmc_hwi_dev::spmc_stream_connect_cb), rpspmc_hwi);
         bp->grid_add_check_button ( N_("Debug"), "Enable debugging LV1.", 1,
                                     G_CALLBACK (RPspmc_pacpll::dbg_l1), rpspmc_pacpll);
         bp->grid_add_check_button ( N_("+"), "Debug LV2", 1,

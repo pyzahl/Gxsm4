@@ -41,6 +41,7 @@
 #include "../common/pyremote.h"
 #include "rpspmc_hwi_structs.h"
 #include "rpspmc_pacpll.h"
+#include "rpspmc_stream.h"
 
 // Define HwI PlugIn reference name here, this is what is listed later within "Preferenced Dialog"
 // i.e. the string selected for "Hardware/Card"!
@@ -152,6 +153,22 @@ rpspmc_hwi_dev::rpspmc_hwi_dev(){
 
 rpspmc_hwi_dev::~rpspmc_hwi_dev(){
 }
+
+
+void rpspmc_hwi_dev::spmc_stream_connect_cb (GtkWidget *widget, rpspmc_hwi_dev *self){
+        self->stream_connect_cb (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget))); // connect (checked) or dissconnect
+}
+
+const gchar *rpspmc_hwi_dev::get_rp_address (){
+        return rpspmc_pacpll->get_rp_address ();
+}
+void rpspmc_hwi_dev::status_append (const gchar *msg){
+        return rpspmc_pacpll->status_append (msg);
+}
+void rpspmc_hwi_dev::on_connect_actions(){
+        status_append ("RedPitaya SPM Control Stream -- initializing.\n ");
+}
+
 
 int rpspmc_hwi_dev::RotateStepwise(int exec) {
         rpspmc_pacpll->write_parameter ("SPMC_ALPHA", Alpha);

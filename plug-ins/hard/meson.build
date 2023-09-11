@@ -43,6 +43,7 @@ if gsl.found() and soup.found()
 		   'json_talk.cpp',
       		   '../control/jsmn.cpp',
 		   'rpspmc_hwi_dev.cpp',
+		   'rpspmc_stream.cpp',
 		   'rpspmc_hwi_eventhandling.cpp',
 		   'rpspmc_hwi_vectorgen.cpp'],
       'deps': [ soup, gsl, lz ],	
