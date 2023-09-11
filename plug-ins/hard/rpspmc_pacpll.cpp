@@ -111,7 +111,7 @@ SOURCE_SIGNAL_DEF source_signals[] = {
         { 0x08000000, "XS",       " ", "AA", UTF8_ANGSTROEM, XAngFac, PROBEDATA_ARRAY_XS },
         { 0x10000000, "YS",       " ", "AA", UTF8_ANGSTROEM, YAngFac, PROBEDATA_ARRAY_YS },
         { 0x20000000, "ZS",       " ", "AA", UTF8_ANGSTROEM, ZAngFac, PROBEDATA_ARRAY_ZS },
-        { 0x40000000, "DA",       " ", "V", "V", 1., PROBEDATA_ARRAY_DA },
+        { 0x40000000, "DA",       " ", "V", "V", 1., PROBEDATA_ARRAY_AA },
         // -- general measured signals from index [8]
         { 0x00000001, "Z-mon",    " ", "AA", UTF8_ANGSTROEM, ZAngFac, PROBEDATA_ARRAY_S1 },
         { 0x00000002, "Bias-mon", " ", "V", "V", BiasFac, PROBEDATA_ARRAY_S2 },
@@ -2368,7 +2368,7 @@ int RPSPMC_Control::choice_mixmode_callback (GtkWidget *widget, RPSPMC_Control *
 	dspc->mix_transform_mode[channel] = selection;
         if (channel == 0){
                 g_print ("Choice MIX%d MT=%d\n", channel, selection);
-                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_MODE", selection0.1);
+                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_MODE", selection);
         }
         PI_DEBUG_GP (DBG_L4, "%s ** 2\n",__FUNCTION__);
 

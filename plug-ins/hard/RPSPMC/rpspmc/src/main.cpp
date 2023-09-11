@@ -338,15 +338,16 @@ CDoubleParameter  SPMC_ALPHA("SPMC_ALPHA", CBaseParameter::RW, 0.0, 0, -360, +36
 CDoubleParameter  SPMC_SLOPE_dZX("SPMC_SLOPE_X", CBaseParameter::RW, 0.0, 0, -1.0, +1.0); // slope in Volts Z / Volt X
 CDoubleParameter  SPMC_SLOPE_dZY("SPMC_SLOPE_Y", CBaseParameter::RW, 0.0, 0, -1.0, +1.0); // slope in Volts Z / Volt X
 
-CDoubleParameter  SPMC_SET_SCANPOS_X("SPMC_SCANPOS_X", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
-CDoubleParameter  SPMC_SET_SCANPOS_Y("SPMC_SCANPOS_Y", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
+CDoubleParameter  SPMC_SET_SCANPOS_X("SPMC_SET_SCANPOS_X", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
+CDoubleParameter  SPMC_SET_SCANPOS_Y("SPMC_SET_SCANPOS_Y", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
+CDoubleParameter  SPMC_SET_SCANPOS_SLEW("SPMC_SET_SCANPOS_SLEW", CBaseParameter::RW, 0.0, 0, 0.0, 1e6); // Volts/s
 
-CDoubleParameter  SPMC_SET_OFFSET_X("SPMC_OFFSET_X", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
-CDoubleParameter  SPMC_SET_OFFSET_Y("SPMC_OFFSET_Y", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
-CDoubleParameter  SPMC_SET_OFFSET_Z("SPMC_OFFSET_Z", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
+CDoubleParameter  SPMC_SET_OFFSET_X("SPMC_SET_OFFSET_X", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
+CDoubleParameter  SPMC_SET_OFFSET_Y("SPMC_SET_OFFSET_Y", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
+CDoubleParameter  SPMC_SET_OFFSET_Z("SPMC_SET_OFFSET_Z", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 
-CDoubleParameter  SPMC_SET_OFFSET_XY_SLEW("SPMC_OFFSET_XY_SLEW", CBaseParameter::RW, 0.0, 0, 0.0, 1000.0); // V/s slew rate
-CDoubleParameter  SPMC_SET_OFFSET_Z_SLEW("SPMC_OFFSET_Z_SLEW", CBaseParameter::RW, 0.0, 0, 0.0, 1000.0); // V/s slew rate
+CDoubleParameter  SPMC_SET_OFFSET_XY_SLEW("SPMC_SET_OFFSET_XY_SLEW", CBaseParameter::RW, 0.0, 0, 0.0, 1000.0); // V/s slew rate
+CDoubleParameter  SPMC_SET_OFFSET_Z_SLEW("SPMC_SET_OFFSET_Z_SLEW", CBaseParameter::RW, 0.0, 0, 0.0, 1000.0); // V/s slew rate
 
 
 // *** RP SPMC::GPIO MONITORS ***
@@ -1409,9 +1410,7 @@ void OnNewParams_RPSPMC(void){
         if (SPMC_SET_OFFSET_X.IsNewValue ()
             || SPMC_SET_OFFSET_Y.IsNewValue ()
             || SPMC_SET_OFFSET_Z.IsNewValue ()
-            || SPMC_SET_OFFSET_XY_SLEW.IsNewValue ()
-            || SPMC_SET_OFFSET_Z_SLEW.IsNewValue ()){
-                
+            ){
                 SPMC_SET_OFFSET_X.Update ();
                 SPMC_SET_OFFSET_Y.Update ();
                 SPMC_SET_OFFSET_Z.Update ();
@@ -1426,10 +1425,12 @@ void OnNewParams_RPSPMC(void){
         }
 
         if (SPMC_SET_SCANPOS_X.IsNewValue () || SPMC_SET_SCANPOS_Y.IsNewValue ()){
+                SPMC_SET_SCANPOS_SLEW.Update ();
                 SPMC_SET_SCANPOS_X.Update ();
                 SPMC_SET_SCANPOS_Y.Update ();
                 rp_spmc_set_scanpos (SPMC_SET_SCANPOS_X.Value (),
-                                     SPMC_SET_SCANPOS_Y.Value ());
+                                     SPMC_SET_SCANPOS_Y.Value (),
+                                     SPMC_SET_SCANPOS_SLEW.Value ());
         }
         
         int dirty=0;

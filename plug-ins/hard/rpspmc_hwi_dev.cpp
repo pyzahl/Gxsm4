@@ -61,6 +61,8 @@ extern "C++" {
 }
 
 extern const gchar *SPMC_GVP_VECTOR_COMPONENTS[];
+extern const gchar *SPMC_SET_OFFSET_COMPONENTS[];
+extern const gchar *SPMC_SET_SCANPOS_COMPONENTS[];
 
 MOD_INPUT mod_input_list[] = {
         //## [ MODULE_SIGNAL_INPUT_ID, name, actual hooked signal address ]
@@ -157,22 +159,31 @@ int rpspmc_hwi_dev::RotateStepwise(int exec) {
 }
 
 gboolean rpspmc_hwi_dev::SetOffset(double x, double y){ // in "DIG"
-        rpspmc_pacpll->write_parameter ("SPMC_SET_OFFSET_X", main_get_gapp()->xsm->Inst->XA2Volt (main_get_gapp()->xsm->Inst->Dig2XA (x))); // need in Volts
-        rpspmc_pacpll->write_parameter ("SPMC_SET_OFFSET_Y", main_get_gapp()->xsm->Inst->YA2Volt (main_get_gapp()->xsm->Inst->Dig2YA (y))); // need in Volts
-        //spm_emu->x0=x; spm_emu->y0=y; // "DAC" units
+        double jdata[3];
+        jdata[0] = main_get_gapp()->xsm->Inst->XA2Volt (main_get_gapp()->xsm->Inst->Dig2XA (x));
+        jdata[1] = main_get_gapp()->xsm->Inst->YA2Volt (main_get_gapp()->xsm->Inst->Dig2YA (y));
+        jdata[2] = main_get_gapp()->xsm->Inst->XA2Volt (RPSPMC_ControlClass->move_speed_x);
+
+        g_message ("Set OffsetXY: %g, %g D => %g, %g V @%gV/s", x,y, jdata[0], jdata[1], jdata[2]);
+
+        if (rpspmc_pacpll)
+                rpspmc_pacpll->write_array (SPMC_SET_OFFSET_COMPONENTS, 0, NULL,  3, jdata);
+
         return FALSE;
 }
 
 gboolean rpspmc_hwi_dev::MovetoXY (double x, double y){
         if (!ScanningFlg){
-                RPSPMC_data_x_index = (int)round(Nx/2 +   x/Dx);
-                RPSPMC_data_y_index = (int)round(Ny/2 + (-y/Dy));
-                rpspmc_pacpll->write_parameter ("SPMC_SET_SCANPOS_X", main_get_gapp()->xsm->Inst->XA2Volt (main_get_gapp()->xsm->Inst->Dig2XA (x))); // need in Volts
-                rpspmc_pacpll->write_parameter ("SPMC_SET_SCANPOS_Y", main_get_gapp()->xsm->Inst->YA2Volt (main_get_gapp()->xsm->Inst->Dig2YA (y))); // need in Volts
+                double jdata[3];
+                jdata[0] = main_get_gapp()->xsm->Inst->XA2Volt (main_get_gapp()->xsm->Inst->Dig2XA (x));
+                jdata[1] = main_get_gapp()->xsm->Inst->YA2Volt (main_get_gapp()->xsm->Inst->Dig2YA (y));
+                jdata[2] = main_get_gapp()->xsm->Inst->XA2Volt (RPSPMC_ControlClass->scan_speed_x_requested);
+
+                g_message ("Set ScanPosXY: %g, %g D => %g, %g V @%gV/s", x,y, jdata[0], jdata[1], jdata[2]);
+
+                if (rpspmc_pacpll)
+                        rpspmc_pacpll->write_array (SPMC_SET_SCANPOS_COMPONENTS, 0, NULL,  3, jdata);
         }
-        // if slow, return TRUE until completed, execuite non blocking!
-        // May/Should return FALSE right away if hardware is independently executing and completing the move.
-        // else blocking GUI
         return FALSE;
 }
 

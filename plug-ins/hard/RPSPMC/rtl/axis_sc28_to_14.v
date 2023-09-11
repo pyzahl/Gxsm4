@@ -32,8 +32,7 @@ module axis_sc28_to_14 #(
     parameter MAXIS_TDATA_WIDTH = 32
 )
 (
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF S_AXIS:S_AXIS_aux:M_AXIS" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS:S_AXIS_aux:M_AXIS" *)
     input a_clk,
     input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS_tdata,
     input wire                          S_AXIS_tvalid,

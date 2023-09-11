@@ -831,16 +831,16 @@ void rp_spmc_set_slope (double dzx, double dzy){
 }
 
 void rp_spmc_set_offsets (double x0, double y0, double z0, double xy_move_slew=-1., double z_move_slew=-1.){
-        static int xy_step = volts_to_rpspmc (0.5/SPMC_CLK);
-        static int z_step = volts_to_rpspmc (0.2/SPMC_CLK);
+        static int xy_step = 1+(int)(volts_to_rpspmc (0.5/SPMC_CLK));
+        static int z_step = 1+(int)(volts_to_rpspmc (0.2/SPMC_CLK));
 
         // adjust rate is SPMC_CLK in Hz
         if (xy_move_slew >= 0.0)
-                xy_step = volts_to_rpspmc (xy_move_slew/SPMC_CLK);
+                xy_step = 1+(int)(volts_to_rpspmc (xy_move_slew/SPMC_CLK));
         if (z_move_slew >= 0.0)
-                z_step = volts_to_rpspmc (z_move_slew/SPMC_CLK);
+                z_step = 1+(int)(volts_to_rpspmc (z_move_slew/SPMC_CLK));
 
-        if (verbose > 1) fprintf(stderr, "[%g %g %g]V {%d %d}/cycle\n", x0, y0, z0, xy_step, z_step);
+        if (verbose > 1) fprintf(stderr, "** set offsets [%g %g %g]V {%d %d}/cycle\n", x0, y0, z0, xy_step, z_step);
 
         set_gpio_cfgreg_int32 (SPMC_OFFSET_X, x0_buf = volts_to_rpspmc (x0));
         set_gpio_cfgreg_int32 (SPMC_OFFSET_Y, y0_buf = volts_to_rpspmc (y0));
@@ -849,8 +849,26 @@ void rp_spmc_set_offsets (double x0, double y0, double z0, double xy_move_slew=-
         set_gpio_cfgreg_int32 (SPMC_Z_MOVE_STEP, z_step);
 }
 
-void rp_spmc_set_scanpos (double x0, double y0){
+void rp_spmc_set_scanpos (double xs, double ys, double slew){
         // setup GVP to do so...
+        
+        rp_spmc_gvp_config (); // reset any GVP now!
+
+        // read current xy scan pos
+        double x = rpspmc_to_volts (read_gpio_reg_int32 (1,0));
+        double y = rpspmc_to_volts (read_gpio_reg_int32 (1,1));
+
+        // make vector to new scan pos requested:
+        rp_spmc_set_gvp_vector (0, 400, 0, 0, 0,
+                                xs-x, ys-y, 0.0, 0.0,
+                                0.0, 0.0,
+                                slew, false);
+        rp_spmc_set_gvp_vector (0, 0, 0, 0, 0,
+                                0.0, 0.0, 0.0, 0.0,
+                                0.0, 0.0,
+                                0.0, false);
+        // and execute
+        rp_spmc_gvp_config (false);
 }
 
 

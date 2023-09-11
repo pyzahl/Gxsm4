@@ -25,9 +25,7 @@ module gvp #(
     parameter NUM_VECTORS    = 16
 )
 (
-    // (* X_INTERFACE_PARAMETER = "FREQ_HZ 125000000" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF M_AXIS1:M_AXIS2" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF M_AXIS_X:M_AXIS_Y:M_AXIS_Z:M_AXIS_U" *)
     input a_clk,    // clocking up to aclk
     input reset,  // put into reset mode (set program and hold)
     input pause,  // put/release into/from pause mode -- always completes the "ii" nop cycles!
@@ -35,15 +33,14 @@ module gvp #(
     input [512-1:0] vp_set, // [VAdr], [N, NII, Options, Nrep, Next, dx, dy, dz, du] ** full vector data set block **
     input [16-1:0] reset_options, // option (fb hold/go, srcs... to pass when idle or in reset mode
     
-    output wire [32-1:0]  M_AXIS1_tdata, // Lck-X
-    output wire           M_AXIS1_tvalid,
-    output wire [32-1:0]  M_AXIS2_tdata, // Lck-Y
-    output wire           M_AXIS2_tvalid,
-
-    output [32-1:0] x, // vector components
-    output [32-1:0] y, // ..
-    output [32-1:0] z, // ..
-    output [32-1:0] u, // ..
+    output wire [32-1:0] M_AXIS_X_tdata, // vector components
+    output wire          M_AXIS_X_tvalid,
+    output wire [32-1:0] M_AXIS_Y_tdata, // ..
+    output wire          M_AXIS_Y_tvalid,
+    output wire [32-1:0] M_AXIS_Z_tdata, // ..
+    output wire          M_AXIS_Z_tvalid,
+    output wire [32-1:0] M_AXIS_U_tdata, // ..
+    output wire          M_AXIS_U_tvalid,
     output [32-1:0] options,  // section options: FB, ... (flags) and source selections bits
     output [1:0 ] store_data, // trigger to store data:: 2: full vector header, 1: data sources
     output gvp_finished,      // finished flag
@@ -229,19 +226,17 @@ module gvp #(
         end     
     end
     
-    assign x = vec_x;
-    assign y = vec_y;
-    assign z = vec_z;
-    assign u = vec_u;
+    assign M_AXIS_X_tdata = vec_x;
+    assign M_AXIS_X_tvalid = 1;
+    assign M_AXIS_Y_tdata = vec_y;
+    assign M_AXIS_Y_tvalid = 1;
+    assign M_AXIS_Z_tdata = vec_z;
+    assign M_AXIS_Z_tvalid = 1;
+    assign M_AXIS_U_tdata = vec_u;
+    assign M_AXIS_U_tvalid = 1;
     
     assign options = set_options;
-    
-
-    assign M_AXIS1_tdata = i;
-    assign M_AXIS1_tvalid = 1;
-    assign M_AXIS2_tdata = vec_u;
-    assign M_AXIS2_tvalid = 1;
-    
+       
     assign store_data = store;
     assign gvp_finished = finished;
     assign hold = pause_flg;

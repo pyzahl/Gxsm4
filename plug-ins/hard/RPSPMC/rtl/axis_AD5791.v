@@ -28,8 +28,7 @@ module axis_AD5791 #(
     parameter SAXIS_TDATA_WIDTH = 32
 )
 (
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF S_AXIS1:S_AXIS2:S_AXIS3:S_AXIS4:S_AXISCFG" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS1:S_AXIS2:S_AXIS3:S_AXIS4:S_AXISCFG" *)
     input a_clk,
     input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS1_tdata,
     input wire                          S_AXIS1_tvalid,
@@ -47,11 +46,7 @@ module axis_AD5791 #(
     input wire [2:0] configuration_axis,
     input wire configuration_send,
     
-    (* X_INTERFACE_PARAMETER = "FREQ_HZ 30000000" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN wire_PMD_clk" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF wire_PMD_sync:wire_PMD_dac:wire_PMD_dac_read" *)
-
-    input  wire wire_PMD_dac_read,
+    (* X_INTERFACE_PARAMETER = "FREQ_HZ 30000000, ASSOCIATED_CLKEN wire_PMD_clk, ASSOCIATED_BUSIF wire_PMD" *)
     output wire wire_PMD_clk,
     output wire wire_PMD_sync,
     output wire [NUM_DAC-1:0] wire_PMD_dac,

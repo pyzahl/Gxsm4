@@ -87,7 +87,8 @@ extern "C" {
         void rp_spmc_set_rotation (double alpha);
         void rp_spmc_set_slope (double dzx, double dzy);
         void rp_spmc_set_offsets (double x0, double y0, double z0, double xy_move_slew, double z_move_slew);
-
+        void rp_spmc_set_scanpos (double xs, double ys, double slew);
+        
         void rp_spmc_update_readings ();
 
 #ifdef __cplusplus

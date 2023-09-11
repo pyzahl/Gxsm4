@@ -52,8 +52,7 @@ module axis_spm_control#(
     input [32-1:0] xy_offset_step, // @Q31 => Q31 / 120M => [18 sec full scale swin @ step 1 decii = 0]  x RDECI
     input [32-1:0] z_offset_step, // @Q31 => Q31 / 120M => [18 sec full scale swin @ step 1 decii = 0]  x RDECI
 
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF S_AXIS_Z:M_AXIS1:M_AXIS2:M_AXIS3:M_AXIS4:M_AXIS_XSMON:M_AXIS_YSMON:M_AXIS_ZSMON:M_AXIS_X0MON:M_AXIS_Y0MON:M_AXIS_Z0MON:M_AXIS_UrefMON" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS_Z:M_AXIS1:M_AXIS2:M_AXIS3:M_AXIS4:M_AXIS_XSMON:M_AXIS_YSMON:M_AXIS_ZSMON:M_AXIS_X0MON:M_AXIS_Y0MON:M_AXIS_Z0MON:M_AXIS_UrefMON" *)
     input  a_clk,
     input  wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS_Z_tdata,
     input  wire                          S_AXIS_Z_tvalid,

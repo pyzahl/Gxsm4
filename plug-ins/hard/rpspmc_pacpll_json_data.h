@@ -182,6 +182,7 @@ struct SPMC_parameters {
 
         double set_scanpos_x;
         double set_scanpos_y;
+        double set_scanpos_slew;
         
         double set_offset_x;
         double set_offset_y;

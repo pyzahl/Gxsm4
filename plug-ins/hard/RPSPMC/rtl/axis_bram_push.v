@@ -71,14 +71,10 @@ module axis_bram_push #(
     input wire push_next,
     input wire reset,
     
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a2_clk" *)
+    // BRAM PORT A
+    (* X_INTERFACE_PARAMETER = "FREQ_HZ 125000000, ASSOCIATED_CLKEN a2_clk, ASSOCIATED_BUSIF BRAM_PORTA" *)
     input a2_clk, // double a_clk used for BRAM (125MHz)
     
-    // BRAM PORT A
-    //(* X_INTERFACE_PARAMETER = "FREQ_HZ 62500000" *)
-    //(* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN BRAM_PORTA_clk" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF BRAM_PORTA" *)
-    (* X_INTERFACE_PARAMETER = "FREQ_HZ 125000000" *)
     output wire                        BRAM_PORTA_clk,
     output wire [BRAM_ADDR_WIDTH-1:0]  BRAM_PORTA_addr,
     output wire [BRAM_DATA_WIDTH-1:0]  BRAM_PORTA_din,

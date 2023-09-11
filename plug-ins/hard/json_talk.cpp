@@ -313,14 +313,16 @@ void  RP_JSON_talk::write_array (const gchar *parameter_id[], int i_size, int *i
                 int i=0;
                 GString *list = g_string_new (NULL);
                 g_string_append_printf (list, "{\"parameters\":{");
-                for (; i<i_size && parameter_id[i]; ++i){
-                        if (i) g_string_append (list, ",");
-                        g_string_append_printf (list, "\"%s\":{\"value\":%d}",  parameter_id[i], i_vec[i]);
-                }
-                for (int j=0; j<d_size && parameter_id[i]; ++i, ++j){
-                        if (i) g_string_append (list, ",");
-                        g_string_append_printf (list, "\"%s\":{\"value\":%.10g}",  parameter_id[i], d_vec[j]);
-                }
+                if (i_vec)
+                        for (; i<i_size && parameter_id[i]; ++i){
+                                if (i) g_string_append (list, ",");
+                                g_string_append_printf (list, "\"%s\":{\"value\":%d}",  parameter_id[i], i_vec[i]);
+                        }
+                if (d_vec)
+                        for (int j=0; j<d_size && parameter_id[i]; ++i, ++j){
+                                if (i) g_string_append (list, ",");
+                                g_string_append_printf (list, "\"%s\":{\"value\":%.10g}",  parameter_id[i], d_vec[j]);
+                        }
                 g_string_append_printf (list, "}}");
                 soup_websocket_connection_send_text (client, list->str);
                 //g_print ("%s\n",list->str);
