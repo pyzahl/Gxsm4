@@ -78,8 +78,13 @@ module axis_bram_stream_srcs #(
     input wire [32-1:0] chAs, // EXEC  0x0200
     input wire [32-1:0] chBs, // PHASE 0x0400
     input wire [32-1:0] chCs, // AMPL  0x0800
+    input wire [32-1:0] chDs, // AUX   0x1000
+    input wire [32-1:0] chEs, // AUX   0x2000
+    //input wire [32-1:0] gvp_time[32-1: 0], // TIME  0x4000 // lower 32
+    //input wire [32-1:0] gvp_time[48-1:32], // TIME  0x8000 // upper 32 (16 lower only)
     input wire [32-1:0] srcs, // data selection mask and options
     input wire [32-1:0] index,
+    input wire [48-1:0] gvp_time,
     input wire [2-1:0] push_next,
     input wire reset,
     
@@ -109,7 +114,7 @@ module axis_bram_stream_srcs #(
 
     reg [16-1:0] srcs_mask=0;
     reg [4-1:0]  channel=0;
-    reg [32-1:0] stream_buffer [12-1:0];
+    reg [32-1:0] stream_buffer [16-1:0];
 
 
     reg status_ready=1;
@@ -158,20 +163,22 @@ module axis_bram_stream_srcs #(
                     stream_buffer[9] <= chAs;
                     stream_buffer[10] <= chBs;
                     stream_buffer[11] <= chCs;
+                    stream_buffer[12] <= chDs;
+                    stream_buffer[13] <= chEs;
+                    stream_buffer[14] <= gvp_time[32-1: 0];
+                    stream_buffer[15] <= { 16'd0, gvp_time[48-1:32] };
                     case (push_next)
                         1: 
                         begin // normal data set as of srcs
-                            //               |headermrk-index|-----srcs------
-                            //               11110000111100001111000011110000
-                            srcs_mask <= { 1'b0, index[15-1:0], srcs[32-1:16] };
-                            bram_data_next  <= 0; // frame info: mask and type (header or data)
+                            srcs_mask       <= { 1'b0, index[15-1:0], srcs[32-1:16] };
+                            bram_data_next  <= { 1'b0, index[15-1:0], srcs[32-1:16] }; // frame info: mask and type (header or data)
                         end
                         2:
                         begin // full header info, all signals
-                            //               |headermark-----|-----srcs------
-                            //               11110000111100001111000011110000
-                            srcs_mask <= 32'b11110000000000000000111111111111; // ALL 12
-                            bram_data_next  <= 0; // frame info: mask and type (header or data)
+                            //                     |headermark-----|-----srcs------
+                            //                     11110000111100001111000011110000
+                            srcs_mask       <= 32'b11110000000000001111111111111111; // ALL 12
+                            bram_data_next  <= 32'b11110000000000001111111111111111; // frame info: mask and type (header or data)
                         end
                     endcase
                     status_ready <= 0;
