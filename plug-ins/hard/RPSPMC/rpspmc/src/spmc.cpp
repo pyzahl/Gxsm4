@@ -649,8 +649,10 @@ void rp_spmc_set_zservo_gxsm_speciality_setting (int mode, double z_setpoint, do
 
 // RPSPMC GVP Engine Management
 void rp_spmc_gvp_config (bool reset=true, bool program=false, bool pause=false, int reset_options=-1){
+        static bool reset_last=1;
         static int r_options = 0;
-
+        int start=0;
+        
         if (reset_options >= 0)
                 r_options = reset_options&0xffff;
         
@@ -660,6 +662,10 @@ void rp_spmc_gvp_config (bool reset=true, bool program=false, bool pause=false, 
         }
         int cfg = (reset ? 1:0) | (program ? 2:0) | (pause ? 4:0) | (r_options << 16);
         set_gpio_cfgreg_int32 (SPMC_GVP_CONTROL, cfg);
+        if (!reset and reset_last) // starting now condtion
+                start = 4;
+        stream_server_control = (stream_server_control & 0x01) | (reset? 0:2) | start;
+        reset_last = reset;
         
         usleep(1000);
 #ifdef DBG_SETUPGVP
