@@ -90,7 +90,7 @@ public:
         virtual int get_debug_level() { return 0; };
 
         virtual void on_new_data (){
-                g_message ("New data for displap or review!");
+                g_message ("New data!");
         };
         
         virtual void status_append (const gchar *msg){

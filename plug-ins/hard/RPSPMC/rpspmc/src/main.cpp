@@ -76,15 +76,18 @@
 
 // FPGA page size is 0x1000
 
-#define FPGA_BRAM_BASE    0x40000000 // 2M (0x4000_0000 ... 0x401F_FFFF)
-#define FPGA_BRAM_PAGES   2048       // 2M
+#define FPGA_BRAM_PACPLL_BASE    0x40000000 // 2M (0x4000_0000 ... 0x401F_FFFF)
+#define FPGA_BRAM_PACPLL_PAGES   2048       // 2M
+
+#define FPGA_BRAM_SPMC_BASE      0x41000000 // 2M (0x4000_0000 ... 0x401F_FFFF)
+#define FPGA_BRAM_SPMC_PAGES     2048       // 2M
 
 #define FPGA_CFG_REG1     0x42000000 // 4k (0x4200_0000 ... _0FFF)
 #define FPGA_CFG_REG2     0x43000000 // 4k (0x4200_0000 ... _0FFF)
 #define FPGA_CFG_PAGES    1          // 1 pages assigned, 4k
 
-#define FPGA_GPIO_BASE    0x42002000 // 10 pages @4k each (=0x1000) 0x4200_2000 .. 0x4200_BFFF
-#define FPGA_GPIO_PAGES   10         // 10 pages @4k each for each GPIO block containg 2x32bit channels @read address +0 and +8 (0x4200_2000-_2FFF, _3000-_3FFF, .. _B000-_BFFF)
+#define FPGA_GPIO_BASE    0x42002000 // 11 pages @4k each (=0x1000) 0x4200_2000 .. 0x4200_BFFF
+#define FPGA_GPIO_PAGES   11         // 11 pages @4k each for each GPIO block containg 2x32bit channels @read address +0 and +8 (0x4200_2000-_2FFF, _3000-_3FFF, .. _B000-_BFFF)
 
 
 //Signal size
@@ -299,6 +302,8 @@ CDoubleParameter CONTROL_DFREQ_MONITOR("CONTROL_DFREQ_MONITOR", CBaseParameter::
 // *** DBG ***                                                                                                //        -----------------------                             (9,1); // GPIO X18: --- ZMON
 // *** DBG ***                                                                                                //        -----------------------                            (10,0); // GPIO X19: --- ZS-MON
 // *** DBG ***                                                                                                //        -----------------------                            (10,1); // GPIO X20: --- Z0-MON
+// *** DBG ***                                                                                                //        -----------------------                            (11,0); // GPIO X21: --- SPMC BRAM LAST WRITE ADDRESS (0..16383)
+// *** DBG ***                                                                                                //        -----------------------                            (11,1); // GPIO X22: --- Z-GVP MON
 
 
 
@@ -404,13 +409,15 @@ int thread_data__tune_control=0;
 
 const char *FPGA_PACPLL_A9_name = "/dev/mem";
 void *FPGA_PACPLL_bram = NULL;
+void *FPGA_SPMC_bram = NULL;
 void *FPGA_PACPLL_cfg1 = NULL;
 void *FPGA_PACPLL_cfg2 = NULL;
 void *FPGA_PACPLL_gpio = NULL;
 void *FPGA_PACPLL_gpio2 = NULL;
 size_t FPGA_PACPLL_CFG_block_size  = 0; // CFG space 
 size_t FPGA_PACPLL_GPIO_block_size  = 0; // GPIO space 
-size_t FPGA_PACPLL_BRAM_block_size = 0; // BRAM space
+size_t FPGA_PACPLL_BRAM_block_size = 0; // BRAM space PACPLL
+size_t FPGA_SPMC_BRAM_block_size = 0; // BRAM space SPMC
 
 #define DEVELOPMENT_PACPLL_OP
 int verbose = 2;
@@ -444,6 +451,7 @@ int rp_PAC_App_Init(){
         fprintf(stderr, "*** INIT RP FPGA RPSPMC PACPLL ***\n");
 
         FPGA_PACPLL_BRAM_block_size  = 2048*sysconf(_SC_PAGESIZE); // Dual Ported FPGA BRAM
+        FPGA_SPMC_BRAM_block_size    = 2048*sysconf(_SC_PAGESIZE); // Dual Ported FPGA BRAM
         FPGA_PACPLL_CFG_block_size   = FPGA_CFG_PAGES*sysconf (_SC_PAGESIZE);   // sysconf (_SC_PAGESIZE) is 0x1000; map CFG + GPIO pages
         FPGA_PACPLL_GPIO_block_size  = FPGA_GPIO_PAGES*sysconf (_SC_PAGESIZE);   // sysconf (_SC_PAGESIZE) is 0x1000; map CFG + GPIO pages
        
@@ -453,10 +461,15 @@ int rp_PAC_App_Init(){
         }
 
         FPGA_PACPLL_bram = mmap (NULL, FPGA_PACPLL_BRAM_block_size,
-                                 PROT_READ|PROT_WRITE, MAP_SHARED, fd, FPGA_BRAM_BASE);
+                                 PROT_READ|PROT_WRITE, MAP_SHARED, fd, FPGA_BRAM_PACPLL_BASE);
         if (FPGA_PACPLL_bram == MAP_FAILED)
                 return RP_EOOR;
-         
+
+        FPGA_SPMC_bram = mmap (NULL, FPGA_SPMC_BRAM_block_size,
+                                 PROT_READ|PROT_WRITE, MAP_SHARED, fd, FPGA_BRAM_SPMC_BASE);
+        if (FPGA_SPMC_bram == MAP_FAILED)
+                return RP_EOOR;
+        
         FPGA_PACPLL_cfg1 = mmap (NULL, FPGA_PACPLL_CFG_block_size,
                                 PROT_READ|PROT_WRITE,  MAP_SHARED, fd, FPGA_CFG_REG1);
         if (FPGA_PACPLL_cfg1 == MAP_FAILED)
@@ -475,7 +488,8 @@ int rp_PAC_App_Init(){
 #ifdef DEVELOPMENT_PACPLL_OP
         fprintf(stderr, "INIT RP FPGA RPSPMC PACPLL. --- FPGA MEMORY MAPPING ---\n");
         fprintf(stderr, "RP FPGA RPSPMC PACPLL PAGESIZE:        0x%08lx.\n", (unsigned long)(sysconf (_SC_PAGESIZE)));
-        fprintf(stderr, "RP FPGA RPSPMC PACPLL BRAM      mapped 0x%08lx - 0x%08lx   block length: 0x%08lx.\n", (unsigned long)FPGA_BRAM_BASE, (unsigned long)(FPGA_BRAM_BASE + FPGA_PACPLL_BRAM_block_size-1), (unsigned long)(FPGA_PACPLL_BRAM_block_size));
+        fprintf(stderr, "RP FPGA RPSPMC PACPLL BRAM PLL  mapped 0x%08lx - 0x%08lx   block length: 0x%08lx.\n", (unsigned long)FPGA_BRAM_PACPLL_BASE, (unsigned long)(FPGA_BRAM_PACPLL_BASE + FPGA_PACPLL_BRAM_block_size-1), (unsigned long)(FPGA_PACPLL_BRAM_block_size));
+        fprintf(stderr, "RP FPGA RPSPMC PACPLL BRAM SPMC mapped 0x%08lx - 0x%08lx   block length: 0x%08lx.\n", (unsigned long)FPGA_BRAM_SPMC_BASE, (unsigned long)(FPGA_BRAM_SPMC_BASE + FPGA_SPMC_BRAM_block_size-1), (unsigned long)(FPGA_SPMC_BRAM_block_size));
         fprintf(stderr, "RP FPGA RPSPMC PACPLL CFG REG1  mapped 0x%08lx - 0x%08lx   block length: 0x%08lx.\n", (unsigned long)FPGA_CFG_REG1,   (unsigned long)(FPGA_CFG_REG1 + FPGA_PACPLL_CFG_block_size-1),  (unsigned long)(FPGA_PACPLL_CFG_block_size));
         fprintf(stderr, "RP FPGA RPSPMC PACPLL CFG REG2  mapped 0x%08lx - 0x%08lx   block length: 0x%08lx.\n", (unsigned long)FPGA_CFG_REG2,   (unsigned long)(FPGA_CFG_REG2 + FPGA_PACPLL_CFG_block_size-1),  (unsigned long)(FPGA_PACPLL_CFG_block_size));
         fprintf(stderr, "RP FPGA RPSPMC PACPLL GPIO REGs mapped 0x%08lx - 0x%08lx   block length: 0x%08lx.\n", (unsigned long)FPGA_GPIO_BASE, (unsigned long)(FPGA_GPIO_BASE + FPGA_PACPLL_GPIO_block_size-1), (unsigned long)(FPGA_PACPLL_GPIO_block_size));
@@ -514,6 +528,7 @@ void rp_PAC_App_Release(){
         munmap (FPGA_PACPLL_gpio, FPGA_PACPLL_GPIO_block_size);
         munmap (FPGA_PACPLL_cfg1, FPGA_PACPLL_CFG_block_size);
         munmap (FPGA_PACPLL_cfg2, FPGA_PACPLL_CFG_block_size);
+        munmap (FPGA_SPMC_bram, FPGA_SPMC_BRAM_block_size);
         munmap (FPGA_PACPLL_bram, FPGA_PACPLL_BRAM_block_size);
 #ifdef DEVELOPMENT_PACPLL_OP
         fprintf(stderr, "RP FPGA maps unmapped.\n");

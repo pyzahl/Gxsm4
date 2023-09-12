@@ -42,6 +42,17 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 
+
+
+#include <websocketpp/config/asio_no_tls.hpp>
+#include <websocketpp/server.hpp>
+
+#include <fstream>
+#include <iostream>
+#include <set>
+#include <streambuf>
+#include <string>
+
 #include <DataManager.h>
 #include <CustomParameters.h>
 
@@ -57,16 +68,196 @@ pthread_mutex_t stream_server_mutexsum;
 int stream_server_control = -1;
 static pthread_t stream_server_thread;
 
-int interrupted = 0;
+extern void *FPGA_SPMC_bram;
 
-void signal_handler(int sig)
-{
-  interrupted = 1;
+#define BRAM_SIZE 16384  // (14 bit address)
+#define BRAM_ADRESS_MASK 0x3fff;
+
+inline unsigned int stream_lastwrite_address(){
+        return read_gpio_reg_int32 (11,0) & BRAM_ADRESS_MASK;
 }
+
+// int32_t x32 = *((int32_t *)((uint8_t*)FPGA_SPMC_bram+i)); i+=4;
+
+
+/**
+ * The telemetry server accepts connections and sends a message every second to
+ * each client containing an integer count. This example can be used as the
+ * basis for programs that expose a stream of telemetry data for logging,
+ * dashboards, etc.
+ *
+ * This example uses the timer based concurrency method and is self contained
+ * and singled threaded. Refer to telemetry client for an example of a similar
+ * telemetry setup using threads rather than timers.
+ *
+ * This example also includes an example simple HTTP server that serves a web
+ * dashboard displaying the count. This simple design is suitable for use 
+ * delivering a small number of files to a small number of clients. It is ideal
+ * for cases like embedded dashboards that don't want the complexity of an extra
+ * HTTP server to serve static files.
+ *
+ * This design *will* fall over under high traffic or DoS conditions. In such
+ * cases you are much better off proxying to a real HTTP server for the http
+ * requests.
+ */
+
+class telemetry_server {
+public:
+    typedef websocketpp::connection_hdl connection_hdl;
+    typedef websocketpp::server<websocketpp::config::asio> server;
+
+    telemetry_server() : m_count(0) {
+        // set up access channels to only log interesting things
+        m_endpoint.clear_access_channels(websocketpp::log::alevel::all);
+        m_endpoint.set_access_channels(websocketpp::log::alevel::access_core);
+        m_endpoint.set_access_channels(websocketpp::log::alevel::app);
+
+        // Initialize the Asio transport policy
+        m_endpoint.init_asio();
+
+        // Bind the handlers we are using
+        using websocketpp::lib::placeholders::_1;
+        using websocketpp::lib::bind;
+        m_endpoint.set_open_handler(bind(&telemetry_server::on_open,this,_1));
+        m_endpoint.set_close_handler(bind(&telemetry_server::on_close,this,_1));
+        m_endpoint.set_http_handler(bind(&telemetry_server::on_http,this,_1));
+    }
+
+    void run(std::string docroot, uint16_t port) {
+        std::stringstream ss;
+        ss << "Running telemetry server on port "<< port <<" using docroot=" << docroot;
+        m_endpoint.get_alog().write(websocketpp::log::alevel::app,ss.str());
+        
+        m_docroot = docroot;
+        
+        // listen on specified port
+        m_endpoint.listen(port);
+
+        // Start the server accept loop
+        m_endpoint.start_accept();
+
+        // Set the initial timer to start telemetry
+        set_timer();
+
+        // Start the ASIO io_service run loop
+        try {
+            m_endpoint.run();
+        } catch (websocketpp::exception const & e) {
+            std::cout << e.what() << std::endl;
+        }
+    }
+
+    void set_timer() {
+        m_timer = m_endpoint.set_timer(
+            1000,
+            websocketpp::lib::bind(
+                &telemetry_server::on_timer,
+                this,
+                websocketpp::lib::placeholders::_1
+            )
+        );
+    }
+
+    void on_timer(websocketpp::lib::error_code const & ec) {
+        if (ec) {
+            // there was an error, stop telemetry
+            m_endpoint.get_alog().write(websocketpp::log::alevel::app,
+                    "Timer Error: "+ec.message());
+            return;
+        }
+        
+        std::stringstream val;
+
+        double darray[32];
+        for (int i=0; i<32; ++i)
+                darray[i] = (double)(i-16)*m_count;
+        
+        val << "** Test Telemetry Server: count is " << m_count++ << " Last Write Address: " << stream_lastwrite_address() << " **\n";
+        
+        // Broadcast count to all connections
+        con_list::iterator it;
+        for (it = m_connections.begin(); it != m_connections.end(); ++it) {
+            m_endpoint.send(*it,val.str(),websocketpp::frame::opcode::text);
+            m_endpoint.send(*it, darray, 32*sizeof(double), websocketpp::frame::opcode::binary);
+            m_endpoint.send(*it, FPGA_SPMC_bram, 512, websocketpp::frame::opcode::binary);
+        }
+
+        // set timer for next telemetry check
+        set_timer();
+    }
+
+    void on_http(connection_hdl hdl) {
+        // Upgrade our connection handle to a full connection_ptr
+        server::connection_ptr con = m_endpoint.get_con_from_hdl(hdl);
+    
+        std::ifstream file;
+        std::string filename = con->get_resource();
+        std::string response;
+    
+        m_endpoint.get_alog().write(websocketpp::log::alevel::app,
+            "http request1: "+filename);
+    
+        if (filename == "/") {
+            filename = m_docroot+"index.html";
+        } else {
+            filename = m_docroot+filename.substr(1);
+        }
+        
+        m_endpoint.get_alog().write(websocketpp::log::alevel::app,
+            "http request2: "+filename);
+    
+        file.open(filename.c_str(), std::ios::in);
+        if (!file) {
+            // 404 error
+            std::stringstream ss;
+        
+            ss << "<!doctype html><html><head>"
+               << "<title>RP-SPMC-STREAM-WS: Error 404 (Resource not found)</title><body>"
+               << "<h1>Error 404</h1>"
+               << "<p>The requested URL " << filename << " was not found on this server.</p>"
+               << "</body></head></html>";
+        
+            con->set_body(ss.str());
+            con->set_status(websocketpp::http::status_code::not_found);
+            return;
+        }
+    
+        file.seekg(0, std::ios::end);
+        response.reserve(file.tellg());
+        file.seekg(0, std::ios::beg);
+    
+        response.assign((std::istreambuf_iterator<char>(file)),
+                        std::istreambuf_iterator<char>());
+    
+        con->set_body(response);
+        con->set_status(websocketpp::http::status_code::ok);
+    }
+
+    void on_open(connection_hdl hdl) {
+        m_connections.insert(hdl);
+    }
+
+    void on_close(connection_hdl hdl) {
+        m_connections.erase(hdl);
+    }
+private:
+    typedef std::set<connection_hdl,std::owner_less<connection_hdl>> con_list;
+    
+    server m_endpoint;
+    con_list m_connections;
+    server::timer_ptr m_timer;
+    
+    std::string m_docroot;
+    
+    // Telemetry data
+    uint64_t m_count;
+};
+
 
 
 // stream server thread
 void *thread_stream_server(void *arg) {
+#ifdef PLAIN_SOCKET
         int fd, sock_server, sock_client;
         int position, limit, offset;
         volatile uint32_t *rx_addr, *rx_cntr;
@@ -78,10 +269,20 @@ void *thread_stream_server(void *arg) {
         struct sockaddr_in addr;
         uint32_t size;
         int yes = 1;
+#endif
+        
+        fprintf(stderr, "Starting thread: Telemetry stream_server test\n");
+        
+        telemetry_server s;
+        std::string docroot;
+        uint16_t port = TCP_PORT;
+        
+        docroot = std::string("spmcstream");
+        s.run(docroot, TCP_PORT);
 
+#ifdef PLAIN_SOCKET
         char message[256];
 
-        fprintf(stderr, "Starting thread: stream_server\n");
 
         
         if ((sock_server = socket(AF_INET, SOCK_STREAM, 0)) < 0){
@@ -168,13 +369,8 @@ void *thread_stream_server(void *arg) {
         // finish up/reset mode
         
         close (sock_server);
-
-#if 0
-        while (stream_server_control){
-                fprintf(stderr, "Stream server: Test Loop\n");
-                usleep (1000000);
-        }
 #endif
+        
         fprintf(stderr, "Stream server exiting.\n");
         return NULL;
 }

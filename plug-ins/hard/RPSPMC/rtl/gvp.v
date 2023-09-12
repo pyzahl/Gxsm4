@@ -45,6 +45,7 @@ module gvp #(
     output [1:0 ] store_data, // trigger to store data:: 2: full vector header, 1: data sources
     output gvp_finished,      // finished flag
     output gvp_hold,          // on hold/pause
+    output [32-1:0] index,
     output [32-1:0] dbg_status
     );
 
@@ -240,6 +241,7 @@ module gvp #(
     assign store_data = store;
     assign gvp_finished = finished;
     assign hold = pause_flg;
+    assign index = i;
     
     assign dbg_status = {sec[32-3:0], reset, pause, ~finished };
     

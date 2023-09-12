@@ -51,28 +51,20 @@ void RP_stream::stream_connect_cb (gboolean connect){
 
                 // new soup session
                 session = soup_session_new ();
-                //socket = soup_socket_new ();
 
                 // then connect to Stream Socket on RP
-                gchar *url = g_strdup_printf ("%s:%u", get_rp_address (), port);
+                gchar *url = g_strdup_printf ("ws://%s:%u", get_rp_address (), port);
+                status_append ("Connecting to: ");
                 status_append (url);
                 status_append ("\n");
                 // g_message ("Connecting to: %s", url);
 
-#if 0
-		soup_socket_connect_async (session,
-					   NULL, //GCancellable *cancellable,
-					   RP_stream::got_client_connection,
-					   this);
-#endif
-		#if 1
                 msg = soup_message_new ("GET", url);
                 g_free (url);
                 // g_message ("soup_message_new - OK");
                 soup_session_websocket_connect_async (session, msg, // SoupSession *session, SoupMessage *msg,
                                                       NULL, NULL, // const char *origin, char **protocols,
                                                       NULL,  RP_stream::got_client_connection, this); // GCancellable *cancellable, GAsyncReadyCallback callback, gpointer user_data
-		#endif
                 //g_message ("soup_session_websocket_connect_async - OK");
         } else {
                 // tear down connection
@@ -132,6 +124,9 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
 
                 tmp = g_strdup_printf ("WEBSOCKET_DATA_BINARY SPMC ZBytes: %ld", len);
                 self->status_append (tmp);
+                self->status_append ("\n");
+                self->status_append_bytes (contents, len);
+                self->status_append ("\n");
                 self->debug_log (tmp);
                 g_free (tmp);
 
