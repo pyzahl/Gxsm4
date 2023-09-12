@@ -26,27 +26,28 @@ module gvp #(
 )
 (
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF M_AXIS_X:M_AXIS_Y:M_AXIS_Z:M_AXIS_U" *)
-    input a_clk,    // clocking up to aclk
-    input reset,  // put into reset mode (set program and hold)
-    input pause,  // put/release into/from pause mode -- always completes the "ii" nop cycles!
-    input setvec, // program vector data using vp_set data
-    input [512-1:0] vp_set, // [VAdr], [N, NII, Options, Nrep, Next, dx, dy, dz, du] ** full vector data set block **
-    input [16-1:0] reset_options, // option (fb hold/go, srcs... to pass when idle or in reset mode
+    input		 a_clk, // clocking up to aclk
+    input		 reset, // put into reset mode (set program and hold)
+    input		 pause, // put/release into/from pause mode -- always completes the "ii" nop cycles!
+    input		 setvec, // program vector data using vp_set data
+    input [512-1:0]	 vp_set, // [VAdr], [N, NII, Options, Nrep, Next, dx, dy, dz, du] ** full vector data set block **
+    input [16-1:0]	 reset_options, // option (fb hold/go, srcs... to pass when idle or in reset mode
     
     output wire [32-1:0] M_AXIS_X_tdata, // vector components
-    output wire          M_AXIS_X_tvalid,
+    output wire		 M_AXIS_X_tvalid,
     output wire [32-1:0] M_AXIS_Y_tdata, // ..
-    output wire          M_AXIS_Y_tvalid,
+    output wire		 M_AXIS_Y_tvalid,
     output wire [32-1:0] M_AXIS_Z_tdata, // ..
-    output wire          M_AXIS_Z_tvalid,
+    output wire		 M_AXIS_Z_tvalid,
     output wire [32-1:0] M_AXIS_U_tdata, // ..
-    output wire          M_AXIS_U_tvalid,
-    output [32-1:0] options,  // section options: FB, ... (flags) and source selections bits
-    output [1:0 ] store_data, // trigger to store data:: 2: full vector header, 1: data sources
-    output gvp_finished,      // finished flag
-    output gvp_hold,          // on hold/pause
-    output [32-1:0] index,
-    output [32-1:0] dbg_status
+    output wire		 M_AXIS_U_tvalid,
+    output [32-1:0]	 options, // section options: FB, ... (flags) and source selections bits
+    output [1:0 ]	 store_data, // trigger to store data:: 2: full vector header, 1: data sources
+    output		 gvp_finished, // finished flag
+    output		 gvp_hold, // on hold/pause
+    output [32-1:0]	 index,
+    output [48-1:0]	 gvp_time,
+    output [32-1:0]	 dbg_status
     );
 
     // buffers
@@ -91,6 +92,9 @@ module gvp #(
 
     reg [32-1:0] set_options=0;
 
+    reg [48-1] vec_gvp_time=0;
+   
+   
     // data store trigger
     reg [1:0] store = 0;
     
@@ -115,6 +119,10 @@ module gvp #(
 
     always @ (posedge a_clk) // 120MHz
     begin
+        if (reset_flg) // reset mode / hold
+          vec_gvp_time <= 0;
+	else
+	  vec_gvp_time <= vec_time+1;
         reset_flg  <= reset;  // put into reset mode (set program and hold)
         pause_flg  <= pause;  // put/release into/from pause mode -- always completes the "ii" nop cycles!
         setvec_flg <= setvec; // program vector data using vp_set data
@@ -242,6 +250,7 @@ module gvp #(
     assign gvp_finished = finished;
     assign hold = pause_flg;
     assign index = i;
+    assign gvp_time = vec_gvp_time;
     
     assign dbg_status = {sec[32-3:0], reset, pause, ~finished };
     
