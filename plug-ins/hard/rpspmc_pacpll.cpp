@@ -101,33 +101,55 @@ RP data streaming
 #define XAngFac    (main_get_gapp()->xsm->Inst->Dig2XA (1))
 #define YAngFac    (main_get_gapp()->xsm->Inst->Dig2YA (1))
 
+/*
+                              // CH      MASK
+    input wire [32-1:0] ch1s, // XS      0x0001  X in Scan coords
+    input wire [32-1:0] ch2s, // YS      0x0002  Y in Scan coords
+    input wire [32-1:0] ch3s, // ZS      0x0004  Z
+    input wire [32-1:0] ch4s, // U       0x0008  Bias
+    input wire [32-1:0] ch5s, // IN1     0x0010  IN1 RP (Signal)
+    input wire [32-1:0] ch6s, // IN2     0x0020  IN2 RP (Current)
+    input wire [32-1:0] ch7s, // IN3     0x0040  reserved, N/A at this time
+    input wire [32-1:0] ch8s, // IN4     0x0080  reserved, N/A at this time
+    input wire [32-1:0] ch9s, // DFREQ   0x0100  via PACPLL FIR
+    input wire [32-1:0] chAs, // EXEC    0x0200  via PACPLL FIR
+    input wire [32-1:0] chBs, // PHASE   0x0400  via PACPLL FIR
+    input wire [32-1:0] chCs, // AMPL    0x0800  via PACPLL FIR
+    input wire [32-1:0] chDs, // LockInA 0x1000  LockIn X (ToDo)
+    input wire [32-1:0] chEs, // LockInB 0x2000  LocKin R (ToDo)
+    // from below
+    // gvp_time[32-1: 0]      // TIME  0x4000 // lower 32
+    // gvp_time[48-1:32]      // TIME  0x8000 // upper 32 (16 lower only)
+    input wire [48-1:0] gvp_time,  // time since GVP start in 1/125MHz units
+*/
+
 // Masks MUST BE unique
 SOURCE_SIGNAL_DEF source_signals[] = {
         // -- 8 vector generated signals (outputs/mapping) ==> must match: #define NUM_VECTOR_SIGNALS 8
         { 0x01000000, "Index",    " ", "#", "#", 1.0, PROBEDATA_ARRAY_INDEX },
-        { 0x02000000, "Time",     " ", "ms", "ms", 1.0/75, PROBEDATA_ARRAY_TIME }, // 1000/emu->frq_ref => ms
+        { 0x0000C000, "Time",     " ", "ms", "ms", 1.0/75, PROBEDATA_ARRAY_TIME }, // 1000/emu->frq_ref => ms
         { 0x00000008, "Bias",     " ", "V", "V", BiasFac, PROBEDATA_ARRAY_U },
         { 0x10000000, "SEC",      " ", "#", "#", 1.0, PROBEDATA_ARRAY_SEC },
         { 0x00000001, "XS",       " ", "AA", UTF8_ANGSTROEM, XAngFac, PROBEDATA_ARRAY_XS },
         { 0x00000002, "YS",       " ", "AA", UTF8_ANGSTROEM, YAngFac, PROBEDATA_ARRAY_YS },
         { 0x00000004, "ZS",       " ", "AA", UTF8_ANGSTROEM, ZAngFac, PROBEDATA_ARRAY_ZS },
         { 0x20000000, "DA",       " ", "V", "V", 1., PROBEDATA_ARRAY_AA },
-        // -- general measured signals from index [8]
-        { 0x00000040, "Z-mon",    " ", "AA", UTF8_ANGSTROEM, ZAngFac, PROBEDATA_ARRAY_S1 },
-        { 0x20000002, "Bias-mon", " ", "V", "V", BiasFac, PROBEDATA_ARRAY_S2 },
-	{ 0x00000010, "In1-Signal", " ", "V", "V", 1.0, PROBEDATA_ARRAY_S3 }, // <=== to Volt conversion here -- unit sym and scale are custom auto adjusted in .._eventhandling lookup functions as of this mask 
-        { 0x00000020, "In2-Current", " ", "nA", "nA", CurrFac, PROBEDATA_ARRAY_S4 },
-        { 0x00000040, "VP Zpos", " ", "AA", UTF8_ANGSTROEM, ZAngFac, PROBEDATA_ARRAY_S5 },
-        { 0x00000080, "VP Bias", " ", "V", "V", BiasFac, PROBEDATA_ARRAY_S6 },
-        { 0x40000000, "VP steps", " ", "pts", "pts", 1., PROBEDATA_ARRAY_S7 },
-        { 0x80000000, "Clock", " ", "ms", "ms", 1., PROBEDATA_ARRAY_S8 },
-        { 0x00000400, "IX", " ", "ix#", "ix#", 1, PROBEDATA_ARRAY_S9 },
-        { 0x00000080, "ADC7", " ", "V", "V", ADCV10, PROBEDATA_ARRAY_S10 },
-        { 0x00000008, "LockIn0", " ", "nA", "nA", ADCV10, PROBEDATA_ARRAY_S11 },
-        { 0x00000200, "SWPS1-choose", " ", "V", "V", 1.0, PROBEDATA_ARRAY_S12 }, // ** swappable **,
-        { 0x00000100, "SWPS2-chhose", " ", "V", "V", 1.0, PROBEDATA_ARRAY_S13 }, // ** swappable **,
-        { 0x00000800, "SWPS3-choose", " ", "V", "V", 1.0, PROBEDATA_ARRAY_S14 }, // ** swappable **,
-        { 0x00000400, "SWPS4-choose", " ", "V", "V", 1.0, PROBEDATA_ARRAY_S15 }, // ** swappable **,
+        // -- general measured signals from index [8]   // <=== to Volt conversion here -- unit sym and scale are custom auto adjusted in .._eventhandling lookup functions as of this mask 
+	{ 0x00000010, "In1-Signal",   " ", "V",   "V", 1.0,        PROBEDATA_ARRAY_S1 },
+        { 0x00000020, "In2-Current",  " ", "nA", "nA", CurrFac,    PROBEDATA_ARRAY_S2 },
+        { 0x00000040, "In3-**",       " ", "V",   "V", 1.0,        PROBEDATA_ARRAY_S3 },
+        { 0x00000080, "In4-**",       " ", "V",   "V", 1.0,        PROBEDATA_ARRAY_S4 },
+        { 0x00001000, "LockInX",      " ", "V",   "V", 1.0,        PROBEDATA_ARRAY_S5 },
+        { 0x00002000, "LockInR",      " ", "V",   "V", 1.0,        PROBEDATA_ARRAY_S6 },
+        { 0x40000000, "VP steps",     " ", "pts", "pts", 1.0,      PROBEDATA_ARRAY_S7 },
+        //        { 0x80000000, "Clock",        " ", "ms", "ms", 1.0,        PROBEDATA_ARRAY_S8 },
+        //        { 0x00000400, "IX",           " ", "ix#", "ix#", 1,        PROBEDATA_ARRAY_S9 },
+        //        { 0x00000080, "ADC7",         " ", "V",  "V", ADCV10,      PROBEDATA_ARRAY_S10 },
+        //        { 0x00000008, "LockIn0",      " ", "nA", "nA", ADCV10,     PROBEDATA_ARRAY_S11 },
+        { 0x00000200, "SWPS1-choose", " ", "V",  "V", 1.0, PROBEDATA_ARRAY_S12 }, // ** swappable **,
+        { 0x00000100, "SWPS2-chhose", " ", "V",  "V", 1.0, PROBEDATA_ARRAY_S13 }, // ** swappable **,
+        { 0x00000800, "SWPS3-choose", " ", "V",  "V", 1.0, PROBEDATA_ARRAY_S14 }, // ** swappable **,
+        { 0x00000400, "SWPS4-choose", " ", "V",  "V", 1.0, PROBEDATA_ARRAY_S15 }, // ** swappable **,
         { 0x80000000, "BlockI", " ", "i#", "i#", 1, PROBEDATA_ARRAY_BLOCK },
         { 0x00000000, NULL, NULL, NULL, NULL, 0.0, 0 }
 };

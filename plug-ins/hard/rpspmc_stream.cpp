@@ -110,54 +110,35 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
 	gsize len;
         gchar *tmp;
         
-        self->debug_log ("WebSocket SPMC message received.");
-	self->status_append ("WebSocket SPMC message received.\n");
+        //self->debug_log ("WebSocket SPMC message received.");
+	//self->status_append ("WebSocket SPMC message received.\n");
         
 	if (type == SOUP_WEBSOCKET_DATA_TEXT) {
 		contents = g_bytes_get_data (message, &len);
-		self->status_append ("WEBSOCKET_DATA_TEXT\n");
+		//self->status_append ("WEBSOCKET_DATA_TEXT\n");
 		self->status_append ((gchar*)contents);
-		self->status_append ("\n");
+		//self->status_append ("\n");
                 g_message ("%s", (gchar*)contents);
 	} else if (type == SOUP_WEBSOCKET_DATA_BINARY) {
 		contents = g_bytes_get_data (message, &len);
 
-                tmp = g_strdup_printf ("WEBSOCKET_DATA_BINARY SPMC ZBytes: %ld", len);
+                tmp = g_strdup_printf ("WEBSOCKET_DATA_BINARY SPMC ZBytes: %ld\n", len);
                 self->status_append (tmp);
-                self->status_append ("\n");
-                self->status_append_bytes (contents, len);
+                self->status_append_bytes (contents, len > 256 ? 256 : len); // truncate
                 self->status_append ("\n");
                 self->debug_log (tmp);
                 g_free (tmp);
 
-#if 0
-                // dump to file
-                FILE *f;
-                f = fopen ("/tmp/gxsm-rpspmc-json.gz","wb");
-                fwrite (contents, len, 1, f);
-                fclose (f);
-                // -----------
-                //$ pzahl@phenom:~$ zcat /tmp/gxsm-rp-json.gz 
-                //{"parameters":{"DC_OFFSET":{"value":-18.508743,"min":-1000,"max":1000,"access_mode":0,"fpga_update":0},"CPU_LOAD":{"value":5.660378,"min":0,"max":100,"access_mode":0,"fpga_update":0},"COUNTER":{"value":4,"min":0,"max":1000000000000,"access_mode":0,"fpga_update":0}}}pzahl@phenom:~$ 
-                //$ pzahl@phenom:~$ file /tmp/gxsm-rp-json.gz 
-                // /tmp/gxsm-rp-json.gz: gzip compressed data, max speed, from FAT filesystem (MS-DOS, OS/2, NT)
-                // GZIP:  zlib.MAX_WBITS|16
-#endif
-                self->debug_log ("Uncompressing...");
 
 		// ... work on it
                 std::ostream &standard_output = std::cout;
-                self->status_append (contents);
-                self->print_bytes(standard_output, (const unsigned char *) contents, len, true);
+                self->print_bytes (standard_output, (const unsigned char *) contents, len > 256 ? 256 : len, true);
 		
-                self->on_new_data ();
+                self->on_new_data (contents, len); // process data
         }
-	//g_bytes_unref (message); // OK, no unref by ourself!!!!
-                       
 }
 
 void  RP_stream::on_closed (SoupWebsocketConnection *ws, gpointer user_data){
         RP_stream *self = ( RP_stream *)user_data;
         self->status_append ("WebSocket connection externally closed.\n");
 }
-

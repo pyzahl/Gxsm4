@@ -65,7 +65,7 @@
 
 pthread_attr_t stream_server_attr;
 pthread_mutex_t stream_server_mutexsum;
-int stream_server_control = -1;
+int stream_server_control = 1;
 static pthread_t stream_server_thread;
 
 extern void *FPGA_SPMC_bram;
@@ -75,37 +75,13 @@ extern void *FPGA_SPMC_bram;
 #define BRAM_ADRESS_MASK 0x3fff
 #define ESIZE            4
 
-inline bool finished(){
-        return read_gpio_reg_int32 (3,1) & 1 ? true:false;
+inline bool gvp_finished (){
+        return (read_gpio_reg_int32 (3,1) & 2) ? true:false;
 }
 
 inline unsigned int stream_lastwrite_address(){
         return read_gpio_reg_int32 (11,0) & BRAM_ADRESS_MASK;
 }
-
-// int32_t x32 = *((int32_t *)((uint8_t*)FPGA_SPMC_bram+i)); i+=4;
-
-
-/**
- * The telemetry server accepts connections and sends a message every second to
- * each client containing an integer count. This example can be used as the
- * basis for programs that expose a stream of telemetry data for logging,
- * dashboards, etc.
- *
- * This example uses the timer based concurrency method and is self contained
- * and singled threaded. Refer to telemetry client for an example of a similar
- * telemetry setup using threads rather than timers.
- *
- * This example also includes an example simple HTTP server that serves a web
- * dashboard displaying the count. This simple design is suitable for use 
- * delivering a small number of files to a small number of clients. It is ideal
- * for cases like embedded dashboards that don't want the complexity of an extra
- * HTTP server to serve static files.
- *
- * This design *will* fall over under high traffic or DoS conditions. In such
- * cases you are much better off proxying to a real HTTP server for the http
- * requests.
- */
 
 class spmc_stream_server {
 public:
@@ -177,32 +153,52 @@ public:
         
                 std::stringstream val;
                 int data_len = 0;
-                void *data=NULL;
+                volatile void *data=NULL;
 
-                if (stream_server_control & 4){ // started!
+                val << " ** Telemetry Server: # " << m_count++ << "** ";
+
+                val << " stream_ctrl: " << stream_server_control;
+                
+                if (stream_server_control & 2){ // started!
                         limit = BRAM_POS_HALF;
                         count = 0;
+                        stream_server_control = (stream_server_control & 0x03); // remove start flag now
                 }
-                
-                if (stream_server_control & 2 || stream_server_control & 4){
-                        int position = stream_lastwrite_address();
+
+                int position   = stream_lastwrite_address();
+                int size_valid = position;
+
+                val << " position: " << position;
+
+                if (stream_server_control & 2){ // started?
+                        if (gvp_finished ()){ // must transfer data written to block when finished but block not full.
+                                stream_server_control = 1; // remove all flags, done after this, last block to finish moving!
+                                val << " ** GVP FINISHED ** stream_ctrl: " << stream_server_control;
+                                int clear_len = ESIZE * (BRAM_SIZE-position-1);
+                                if (clear_len > 0){
+                                        memset ( FPGA_SPMC_bram + ESIZE * (position+1), 0, clear_len);
+                                        position += clear_len;
+                                } else clear_len = 0;
+                        }
                         if ((limit > 0 && position > limit) || (limit = 0 && position < BRAM_POS_HALF)){
                                 limit = limit > 0 ? 0 : BRAM_POS_HALF;
-                                data = FPGA_SPMC_bram + limit > 0 ? 0 : ESIZE * BRAM_POS_HALF;
+                                data = FPGA_SPMC_bram + ((limit > 0) ? 0 : ESIZE * BRAM_POS_HALF);
                                 data_len = ESIZE * BRAM_POS_HALF;
                                 count++;
+                                val << " ** DATA ** COUNT: " << count;
                         }
-                        val << "GVP out of reset [" << stream_server_control&6 <<"] block count: " << count<< " Last Write Address: " << position << data_len > 0 ? " *SENDING BLOCK* " : "*WAITING FOR DATA*"
-                            << " ** Test Telemetry Server: count is " << m_count++ << "**\n";
+                        val  << (data_len > 0 ? " *SENDING BLOCK* " : "*WAITING FOR DATA*");
                 } else
-                        val << "GVP is idle ** Test Telemetry Server: count is " << m_count++ << " Last Write Address: " << stream_lastwrite_address() << " **\n";
-        
+                        val << " **GVP is idle **";
+
+                val << "\n";
+                
                 // Broadcast count to all connections
                 con_list::iterator it;
                 for (it = m_connections.begin(); it != m_connections.end(); ++it) {
                         m_endpoint.send(*it,val.str(),websocketpp::frame::opcode::text);
                         if (data_len > 0)
-                                m_endpoint.send(*it, data, data_len, websocketpp::frame::opcode::binary);
+                                m_endpoint.send(*it, (void *)data, data_len, websocketpp::frame::opcode::binary);
                 }
 
                 // set timer for next telemetry check
@@ -282,25 +278,9 @@ private:
         int count;
 };
 
-
-
 // stream server thread
 void *thread_stream_server(void *arg) {
-#ifdef PLAIN_SOCKET
-        int fd, sock_server, sock_client;
-        int position, limit, offset;
-        volatile uint32_t *rx_addr, *rx_cntr;
-        volatile uint16_t *rx_rate;
-        volatile uint8_t *rx_rst;
-        volatile void *cfg, *sts, *ram;
-        cpu_set_t mask;
-        struct sched_param param;
-        struct sockaddr_in addr;
-        uint32_t size;
-        int yes = 1;
-#endif
-        
-        fprintf(stderr, "Starting thread: Telemetry stream_server test\n");
+        if (verbose > 1) fprintf(stderr, "Starting thread: Telemetry stream_server test\n");
         
         spmc_stream_server s;
         std::string docroot;
@@ -308,236 +288,7 @@ void *thread_stream_server(void *arg) {
         
         docroot = std::string("spmcstream");
         s.run(docroot, TCP_PORT);
-
-#ifdef PLAIN_SOCKET
-        char message[256];
-
-
         
-        if ((sock_server = socket(AF_INET, SOCK_STREAM, 0)) < 0){
-                fprintf(stderr, "E: socket init error\n");
-                //perror("socket");
-                return NULL;
-        }
-
-#if 0
-        ram = mmap(NULL, 128*sysconf(_SC_PAGESIZE), PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
-
-        rx_rst = (uint8_t *)(cfg + 0);
-        rx_rate = (uint16_t *)(cfg + 2);
-        rx_addr = (uint32_t *)(cfg + 4);
-        
-        rx_cntr = (uint32_t *)(sts + 0);
-        
-        *rx_addr = size;
-#endif
-  
-        setsockopt(sock_server, SOL_SOCKET, SO_REUSEADDR, (void *)&yes, sizeof(yes));
-
-        /* setup listening address */
-        memset(&addr, 0, sizeof(addr));
-        addr.sin_family = AF_INET;
-        addr.sin_addr.s_addr = htonl(INADDR_ANY);
-        addr.sin_port = htons(TCP_PORT);
-
-        if(bind(sock_server, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-                fprintf(stderr, "E: socket bind error\n");
-                //perror("bind");
-                return NULL;
-        }
-
-        listen(sock_server, 1024);
-
-        while (!interrupted && stream_server_control){
-
-                usleep(100); // init...
-
-                fprintf(stderr, "Stream server listening for connection...\n");
-                if((sock_client = accept(sock_server, NULL, NULL)) < 0) {
-                        fprintf(stderr, "Stream server: Error accepting connection.\n");
-                        //perror("accept");
-                        return NULL;
-                }
-
-                signal(SIGINT, signal_handler);
-
-                limit = 2*1024;
-
-                int count=0;
-                while (!interrupted && stream_server_control) {
-#if 0
-                        /* read ram writer position */
-                        position = *rx_cntr;
-
-                        /* send 256 kB if ready, otherwise sleep 0.1 ms */
-                        if((limit > 0 && position > limit) || (limit == 0 && position < 2*1024)) {
-                                offset = limit > 0 ? 0 : 256*1024;
-                                limit = limit > 0 ? 0 : 2*1024;
-                                if(send(sock_client, ram + offset, 256*1024, MSG_NOSIGNAL) < 0) break;
-                        } else {
-                                usleep(100);
-                        }
-#endif
-
-                        sprintf (message,"** Test Message [%06d] STOP **\n", count++);
-                        if(send(sock_client, message, strlen(message), MSG_NOSIGNAL) < 0) break;
-
-                        fprintf(stderr, message);
-
-                        usleep (1000000);
-                }
-
-                signal(SIGINT, SIG_DFL);
-                close(sock_client);
-        
-                pthread_mutex_lock (&stream_server_mutexsum);
-                // ...
-                pthread_mutex_unlock (&stream_server_mutexsum);
-        }
-
-        // finish up/reset mode
-        
-        close (sock_server);
-#endif
-        
-        fprintf(stderr, "Stream server exiting.\n");
+        if (verbose > 1) fprintf(stderr, "Stream server exiting.\n");
         return NULL;
 }
-
-
-#if 0
-int main ()
-{
-        int fd, sock_server, sock_client;
-        int position, limit, offset;
-        volatile uint32_t *rx_addr, *rx_cntr;
-        volatile uint16_t *rx_rate;
-        volatile uint8_t *rx_rst;
-        volatile void *cfg, *sts, *ram;
-        cpu_set_t mask;
-        struct sched_param param;
-        struct sockaddr_in addr;
-        uint32_t size;
-        int yes = 1;
-
-        memset(&param, 0, sizeof(param));
-        param.sched_priority = sched_get_priority_max(SCHED_FIFO);
-        sched_setscheduler(0, SCHED_FIFO, &param);
-
-        CPU_ZERO(&mask);
-        CPU_SET(1, &mask);
-        sched_setaffinity(0, sizeof(cpu_set_t), &mask);
-
-        if((fd = open("/dev/mem", O_RDWR)) < 0)
-                {
-                        perror("open");
-                        return EXIT_FAILURE;
-                }
-
-        cfg = mmap(NULL, sysconf(_SC_PAGESIZE), PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0x40000000);
-        sts = mmap(NULL, sysconf(_SC_PAGESIZE), PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0x41000000);
-
-        close(fd);
-
-        if((fd = open("/dev/cma", O_RDWR)) < 0)
-                {
-                        perror("open");
-                        return EXIT_FAILURE;
-                }
-
-        size = 128*sysconf(_SC_PAGESIZE);
-
-        if(ioctl(fd, CMA_ALLOC, &size) < 0)
-                {
-                        perror("ioctl");
-                        return EXIT_FAILURE;
-                }
-
-        ram = mmap(NULL, 128*sysconf(_SC_PAGESIZE), PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
-
-        rx_rst = (uint8_t *)(cfg + 0);
-        rx_rate = (uint16_t *)(cfg + 2);
-        rx_addr = (uint32_t *)(cfg + 4);
-
-        rx_cntr = (uint32_t *)(sts + 0);
-
-        *rx_addr = size;
-
-        if((sock_server = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-                {
-                        perror("socket");
-                        return EXIT_FAILURE;
-                }
-
-        setsockopt(sock_server, SOL_SOCKET, SO_REUSEADDR, (void *)&yes, sizeof(yes));
-
-        /* setup listening address */
-        memset(&addr, 0, sizeof(addr));
-        addr.sin_family = AF_INET;
-        addr.sin_addr.s_addr = htonl(INADDR_ANY);
-        addr.sin_port = htons(TCP_PORT);
-
-        if(bind(sock_server, (struct sockaddr *)&addr, sizeof(addr)) < 0)
-                {
-                        perror("bind");
-                        return EXIT_FAILURE;
-                }
-
-        listen(sock_server, 1024);
-
-        while(!interrupted)
-                {
-                        /* enter reset mode */
-                        *rx_rst &= ~1;
-                        usleep(100);
-                        *rx_rst &= ~2;
-                        /* set default sample rate */
-                        *rx_rate = 4;
-
-                        if((sock_client = accept(sock_server, NULL, NULL)) < 0)
-                                {
-                                        perror("accept");
-                                        return EXIT_FAILURE;
-                                }
-
-                        signal(SIGINT, signal_handler);
-
-                        /* enter normal operating mode */
-                        *rx_rst |= 2;
-                        usleep(100);
-                        *rx_rst |= 1;
-
-                        limit = 2*1024;
-
-                        while(!interrupted)
-                                {
-                                        /* read ram writer position */
-                                        position = *rx_cntr;
-
-                                        /* send 256 kB if ready, otherwise sleep 0.1 ms */
-                                        if((limit > 0 && position > limit) || (limit == 0 && position < 2*1024))
-                                                {
-                                                        offset = limit > 0 ? 0 : 256*1024;
-                                                        limit = limit > 0 ? 0 : 2*1024;
-                                                        if(send(sock_client, ram + offset, 256*1024, MSG_NOSIGNAL) < 0) break;
-                                                }
-                                        else
-                                                {
-                                                        usleep(100);
-                                                }
-                                }
-
-                        signal(SIGINT, SIG_DFL);
-                        close(sock_client);
-                }
-
-        /* enter reset mode */
-        *rx_rst &= ~1;
-        usleep(100);
-        *rx_rst &= ~2;
-
-        close(sock_server);
-
-        return EXIT_SUCCESS;
-}
-#endif

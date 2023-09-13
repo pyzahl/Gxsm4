@@ -91,9 +91,7 @@ module gvp #(
     reg signed [32-1:0]  vec_u=0;
 
     reg [32-1:0] set_options=0;
-
-    reg [48-1] vec_gvp_time=0;
-   
+    reg [48-1:0] vec_gvp_time=0;
    
     // data store trigger
     reg [1:0] store = 0;
@@ -120,9 +118,9 @@ module gvp #(
     always @ (posedge a_clk) // 120MHz
     begin
         if (reset_flg) // reset mode / hold
-          vec_gvp_time <= 0;
-	else
-	  vec_gvp_time <= vec_time+1;
+            vec_gvp_time <= 0;
+        else
+            vec_gvp_time <= vec_gvp_time+1;
         reset_flg  <= reset;  // put into reset mode (set program and hold)
         pause_flg  <= pause;  // put/release into/from pause mode -- always completes the "ii" nop cycles!
         setvec_flg <= setvec; // program vector data using vp_set data
@@ -173,65 +171,70 @@ module gvp #(
             end
             else // run program step
             begin
-                if (load_next_vector || finished) // load next vector / hold if finished
-                begin
-                    store <= 2; // store full header (push trigger)
-                    load_next_vector <= 0;
-                    i   <= vec_n[pvc];
-                    ii  <= vec_iin[pvc];
-                    if (vec_n[pvc] == 0) // n == 0: END OF VECTOR PROGRAM REACHED
-                    begin
-                        decimation <= 1; // reset to fast 
-                        finished <= 1;
-                        set_options <= reset_options;
-                    end 
-                    else
-                    begin
-                        decimation <= vec_deci[pvc];
-                        set_options <= vec_options[pvc];
-                    end
-                end
+                if (finished)
+                    store <= 0; // hold finsihed state -- until reset
                 else
-                begin // go...
-                    // add vector
-                    vec_x <= vec_x + vec_dx[pvc];
-                    vec_y <= vec_y + vec_dy[pvc];
-                    vec_z <= vec_z + vec_dz[pvc];
-                    vec_u <= vec_u + vec_du[pvc];
-                    
-                    if (ii) // do intermediate step(s) ?
+                begin
+                    if (load_next_vector || finished) // load next vector
                     begin
-                        store <= 0;
-                        ii <= ii-1;
+                        store <= 2; // store full header (push trigger)
+                        load_next_vector <= 0;
+                        i   <= vec_n[pvc];
+                        ii  <= vec_iin[pvc];
+                        if (vec_n[pvc] == 0) // n == 0: END OF VECTOR PROGRAM REACHED
+                        begin
+                            decimation <= 1; // reset to fast 
+                            finished <= 1;
+                            set_options <= reset_options;
+                        end 
+                        else
+                        begin
+                            decimation <= vec_deci[pvc];
+                            set_options <= vec_options[pvc];
+                        end
                     end
                     else
-                    if (!pause_flg)        
-                    begin // arrived at data point
-                        store <= 1; // store data sources (push trigger)
-                        if (i) // advance to next point...
+                    begin // go...
+                        // add vector
+                        vec_x <= vec_x + vec_dx[pvc];
+                        vec_y <= vec_y + vec_dy[pvc];
+                        vec_z <= vec_z + vec_dz[pvc];
+                        vec_u <= vec_u + vec_du[pvc];
+                        
+                        if (ii) // do intermediate step(s) ?
                         begin
-                            ii <= vec_iin[pvc];
-                            i <= i-1;
+                            store <= 0;
+                            ii <= ii-1;
                         end
                         else
-                        begin // finsihed section, next vector -- if n != 0...
-                            sec <= sec + 1;
-                            if (vec_i[pvc] > 0) // do next loop?
+                        if (!pause_flg)        
+                        begin // arrived at data point
+                            store <= 1; // store data sources (push trigger)
+                            if (i) // advance to next point...
                             begin
-                                vec_i[pvc] <= vec_i[pvc] - 1;
-                                pvc <= pvc + vec_next[pvc]; // jump to loop head
-                                load_next_vector <= 1;
+                                ii <= vec_iin[pvc];
+                                i <= i-1;
                             end
-                            else // next vector in vector program list
-                            begin
-                                vec_i[pvc] <= vec_nrep[pvc]; // reload loop counter for next time now!
-                                pvc <= pvc + 1; // next vector index
-                                load_next_vector <= 1;
-                            end
-                        end            
+                            else
+                            begin // finsihed section, next vector -- if n != 0...
+                                sec <= sec + 1;
+                                if (vec_i[pvc] > 0) // do next loop?
+                                begin
+                                    vec_i[pvc] <= vec_i[pvc] - 1;
+                                    pvc <= pvc + vec_next[pvc]; // jump to loop head
+                                    load_next_vector <= 1;
+                                end
+                                else // next vector in vector program list
+                                begin
+                                    vec_i[pvc] <= vec_nrep[pvc]; // reload loop counter for next time now!
+                                    pvc <= pvc + 1; // next vector index
+                                    load_next_vector <= 1;
+                                end
+                            end            
+                        end
                     end
                 end
-            end
+            end       
         end     
     end
     

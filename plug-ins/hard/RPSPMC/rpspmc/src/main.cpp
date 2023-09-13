@@ -1520,6 +1520,13 @@ void OnNewParams_RPSPMC(void){
                 int reset =  stop ? 1 : (exec ? 0 : 1);
                 fprintf(stderr, "*** GVP Control: exec: %d, stop: %d, prog: %d, pause: %d ==> reset=%d\n", exec, stop, prog, pause, reset);
 
+                if (exec)
+                        stream_server_control = (stream_server_control & 0x01) | 2; // set start bit
+
+                if (stop)
+                        stream_server_control = (stream_server_control & 0x01) | 4; // set stop bit
+
+                
                 if (SPMC_GVP_RESET_OPTIONS.IsNewValue ()){
                                 SPMC_GVP_RESET_OPTIONS.Update ();
                                 rp_spmc_gvp_config (reset ? true : false, prog? true:false, pause?true:false, SPMC_GVP_RESET_OPTIONS.Value ());

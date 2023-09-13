@@ -300,10 +300,15 @@ typedef struct{
  * Vector Probe Vector
  */
 typedef struct{
+        // ==== FPGA STREAM MATCHING DATA SECTION
+        guint16   srcs_mask;
+        guint16   index;
+        gint32    chNs[14];      // full channel data set -- includes positions. X,Y,Z,U,IN1,IN2,x,x,dF,Exec,Phase,Ampl, LckA, LckB
+        gint64    gvp_time;      // GVP time in 1/125MHz, 48bit
+        // ======================
 	gint32    n;             /* number data vectors following in section */
 	guint32   srcs;          /* data source coding mask */
         guint32   time;          /* timestamp */
-        double    move_xyz[3];   /* Offset Coordinates */
         double    scan_xyz[3];   /* Scan XY (rotated coords in global system, scan aligend), Z = F-feedback + Z-Probe */
         double    bias;          /* Bias */
         gint32    section;       /* VP section count */
@@ -322,3 +327,58 @@ typedef struct{
 
 #endif
 
+/*
+
+(                             // CH      MASK
+    input wire [32-1:0] ch1s, // XS      0x0001  X in Scan coords
+    input wire [32-1:0] ch2s, // YS      0x0002  Y in Scan coords
+    input wire [32-1:0] ch3s, // ZS      0x0004  Z
+    input wire [32-1:0] ch4s, // U       0x0008  Bias
+    input wire [32-1:0] ch5s, // IN1     0x0010  IN1 RP (Signal)
+    input wire [32-1:0] ch6s, // IN2     0x0020  IN2 RP (Current)
+    input wire [32-1:0] ch7s, // IN3     0x0040  reserved, N/A at this time
+    input wire [32-1:0] ch8s, // IN4     0x0080  reserved, N/A at this time
+    input wire [32-1:0] ch9s, // DFREQ   0x0100  via PACPLL FIR
+    input wire [32-1:0] chAs, // EXEC    0x0200  via PACPLL FIR
+    input wire [32-1:0] chBs, // PHASE   0x0400  via PACPLL FIR
+    input wire [32-1:0] chCs, // AMPL    0x0800  via PACPLL FIR
+    input wire [32-1:0] chDs, // LockInA 0x1000  LockIn X (ToDo)
+    input wire [32-1:0] chEs, // LockInB 0x2000  LocKin R (ToDo)
+    // from below
+    // gvp_time[32-1: 0]      // TIME  0x4000 // lower 32
+    // gvp_time[48-1:32]      // TIME  0x8000 // upper 32 (16 lower only)
+    input wire [48-1:0] gvp_time,  // time since GVP start in 1/125MHz units
+    input wire [32-1:0] srcs,      // data selection mask and options
+    input wire [32-1:0] index,     // index starting at N-1 down to 0
+
+                    stream_buffer[0] <= ch1s;
+                    stream_buffer[1] <= ch2s;
+                    stream_buffer[2] <= ch3s;
+                    stream_buffer[3] <= ch4s;
+                    stream_buffer[4] <= ch5s;
+                    stream_buffer[5] <= ch6s;
+                    stream_buffer[6] <= ch7s;
+                    stream_buffer[7] <= ch8s;
+                    stream_buffer[8] <= ch9s;
+                    stream_buffer[9] <= chAs;
+                    stream_buffer[10] <= chBs;
+                    stream_buffer[11] <= chCs;
+                    stream_buffer[12] <= chDs;
+                    stream_buffer[13] <= chEs;
+                    stream_buffer[14] <= gvp_time[32-1:0];
+                    stream_buffer[15] <= { 16'd0, gvp_time[48-1:32] };
+                    case (push_next)
+                        1: 
+                        begin // normal data set as of srcs
+                            srcs_mask       <= { 1'b0, index[15-1:0], srcs[32-1:16] };
+                            bram_data_next  <= { 1'b0, index[15-1:0], srcs[32-1:16] }; // frame info: mask and type (header or data)
+                        end
+                        2:
+                        begin // full header info, all signals
+                            //                     |headermark-----|-----srcs------
+                            //                     11110000111100001111000011110000
+                            srcs_mask       <= 32'b11110000000000001111111111111111; // ALL 12
+                            bram_data_next  <= 32'b11110000000000001111111111111111; // frame info: mask and type (header or data)
+                        end
+                    endcase
+*/

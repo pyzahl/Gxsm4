@@ -70,6 +70,7 @@ extern "C++" {
         extern GxsmPlugin rpspmc_pacpll_hwi_pi;
 }
 
+#define BRAM_SIZE        16384            // (14 bit address)
 
 // GUI builder helper
 class GUI_Builder : public BuildParam{
@@ -783,6 +784,7 @@ public:
         virtual const gchar *get_rp_address ();
         virtual void status_append (const gchar *msg);
         virtual void on_connect_actions();
+        virtual void on_new_data (gconstpointer contents, gsize len);
         
 	/* Parameter  */
 	virtual long GetMaxLines(){ return 32000; };
@@ -891,7 +893,9 @@ protected:
 private:
 	GThread *data_read_thread;
 	GThread *probe_data_read_thread;
-        gboolean KillFlg; 
+        gboolean KillFlg;
+
+        gint32 *stream_buffer[2][BRAM_SIZE >> 1];
         
 public:
         
@@ -913,7 +917,7 @@ public:
 	int GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v);
 	void GVP_abort_vector_program ();
 
-        void GVP_fetch_header_and_positionvector ();
+        void GVP_fetch_header_and_positionvector (gconstpointer stream);
         void GVP_fetch_data_srcs ();
 
         void RPSPMC_set_bias (double bias) {};

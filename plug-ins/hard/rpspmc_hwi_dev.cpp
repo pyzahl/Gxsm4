@@ -356,6 +356,10 @@ gpointer ProbeDataReadThread (void *ptr_sr){
 	return NULL;
 }
 
+void rpspmc_hwi_dev::on_new_data (gconstpointer contents, gsize len){
+        int k=0;
+        memcpy (&stream_buffer[k][0], contents, len);
+}
 
 // ReadProbeData:
 // read from probe data FIFO, this engine needs to be called several times from master thread/function
@@ -450,9 +454,6 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
 
                         pv[PROBEDATA_ARRAY_INDEX] = index_all;
                         pv[PROBEDATA_ARRAY_TIME] = GVP_vp_header_current.time;
-                        pv[PROBEDATA_ARRAY_AA] = GVP_vp_header_current.move_xyz[i_X]; // *** fix me
-                        pv[PROBEDATA_ARRAY_BB] = GVP_vp_header_current.move_xyz[i_Y]; // *** fix me
-                        pv[PROBEDATA_ARRAY_PHI]= GVP_vp_header_current.move_xyz[i_Z]; // *** fix me
                         pv[PROBEDATA_ARRAY_XS] = GVP_vp_header_current.scan_xyz[i_X];
                         pv[PROBEDATA_ARRAY_YS] = GVP_vp_header_current.scan_xyz[i_Y];
                         pv[PROBEDATA_ARRAY_ZS] = GVP_vp_header_current.scan_xyz[i_Z];
@@ -957,9 +958,6 @@ void rpspmc_hwi_dev::GVP_vp_init (){
         GVP_vp_header_current.n    = 0;
         GVP_vp_header_current.srcs = 0;
         GVP_vp_header_current.time = 0;
-        GVP_vp_header_current.move_xyz[i_X] = 0;
-        GVP_vp_header_current.move_xyz[i_Y] = 0;
-        GVP_vp_header_current.move_xyz[i_Z] = 0;
         GVP_vp_header_current.scan_xyz[i_X] = 0;
         GVP_vp_header_current.scan_xyz[i_Y] = 0;
         GVP_vp_header_current.scan_xyz[i_Z] = 0;
@@ -978,7 +976,9 @@ void rpspmc_hwi_dev::GVP_vp_init (){
         //vp_index_all = 0;
         //vp_clock_start = clock();
      	//vp_next_section ();    // setup vector program start
-	GVP_fetch_header_and_positionvector ();
+
+	//****SET to GVP_fetch_header_and_positionvector ();
+
         // fire up thread!
         
         GVP_vp_header_current.srcs = 1; // should be valid now!
@@ -986,7 +986,7 @@ void rpspmc_hwi_dev::GVP_vp_init (){
 }
 
 
-void rpspmc_hwi_dev::GVP_fetch_header_and_positionvector (){ // size: 14
+void rpspmc_hwi_dev::GVP_fetch_header_and_positionvector (gconstpointer stream) {
 	// Section header: [SRCS, N, TIME]_32 :: 6
 	//if (!vector) return;
 
@@ -994,9 +994,6 @@ void rpspmc_hwi_dev::GVP_fetch_header_and_positionvector (){ // size: 14
         GVP_vp_header_current.n    = vector->n;
         GVP_vp_header_current.srcs = vector->srcs;
         GVP_vp_header_current.time = vp_time;
-        GVP_vp_header_current.move_xyz[i_X] = move_xyz_vec[i_X];
-        GVP_vp_header_current.move_xyz[i_Y] = move_xyz_vec[i_Y];
-        GVP_vp_header_current.move_xyz[i_Z] = move_xyz_vec[i_Z];
         GVP_vp_header_current.scan_xyz[i_X] = scan_xyz_vec[i_X];
         GVP_vp_header_current.scan_xyz[i_Y] = scan_xyz_vec[i_Y];
         GVP_vp_header_current.scan_xyz[i_Z] = scan_xyz_vec[i_Z];
@@ -1050,7 +1047,7 @@ int rpspmc_hwi_dev::GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v){
 
         if (i == 0 && (v->options & VP_INITIAL_SET_VEC)){ // 1st vector is set postion vector? Get pos and calc differentials.
 
-                g_print ("Vec[%2d] XYZU: %g %g %g %g V <== VPos XYZU: %g %g %g %g V [%g A %g A %g A %g V]\n",
+                g_print ("Vec[%2d] XYZU: %g %g %g %g V <== VPos XYZU: %g %g %g %g V [%g A %g A %g A %g V] SRCSO=%08x\n",
                          i,
                          v->f_dx, v->f_dy, v->f_dz, v->f_du,
                          spmc_parameters.xs_monitor,
@@ -1060,7 +1057,8 @@ int rpspmc_hwi_dev::GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v){
                          main_get_gapp()->xsm->Inst->Volt2XA (spmc_parameters.xs_monitor),
                          main_get_gapp()->xsm->Inst->Volt2YA (spmc_parameters.ys_monitor),
                          main_get_gapp()->xsm->Inst->Volt2ZA (spmc_parameters.zs_monitor),
-                         spmc_parameters.bias_monitor
+                         spmc_parameters.bias_monitor,
+                         gvp_vector_i [I_GVP_OPTIONS ]
                          );
 
                 // Vector Components are all in Volts

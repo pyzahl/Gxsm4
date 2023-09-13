@@ -73,9 +73,7 @@ public:
         virtual const gchar *get_rp_address (){ return NULL; };
         virtual int get_debug_level() { return 0; };
 
-        virtual void on_new_data (){
-                g_message ("New data for displap or review!");
-        };
+        virtual void on_new_data (gconstpointer contents, gsize len) {};
         
         virtual void status_append (const gchar *msg){
                 g_message (msg);
@@ -158,7 +156,7 @@ public:
                 for (size_t data_index = 0; data_index < data_length; ++data_index) {
                         stream << std::hex << std::setw(2) << (int) data[data_index];
                         if (format) {
-                                stream << (((data_index + 1) % 16 == 0) ? "\n" : " ");
+                                stream << (((data_index + 1) % 32 == 0) ? "\n" : ((data_index + 1) % 4 == 0) ? "  " : " ");
                         }
                 }
                 stream << std::endl;
@@ -170,7 +168,7 @@ public:
                 for (size_t data_index = 0; data_index < data_length; ++data_index) {
                         stream << std::hex << std::setw(2) << (int) data[data_index];
                         if (format) {
-                                stream << (((data_index + 1) % 16 == 0) ? "\n" : " ");
+                                stream << (((data_index + 1) % 32 == 0) ? "\n" : ((data_index + 1) % 4 == 0) ? "  " : " ");
                         }
                 }
                 stream << std::endl;
@@ -178,7 +176,6 @@ public:
                 status_append (str.c_str());
         };
 
-	
         void test_compression() {
                 std::vector<char> uncompressed(0);
                 auto *my_string = (char *) "Hello, world!";
