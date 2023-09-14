@@ -113,7 +113,7 @@ module axis_bram_stream_srcs #(
     reg [BRAM_ADDR_WIDTH-1:0] bram_addr=0, bram_addr_next=0;
     reg [BRAM_DATA_WIDTH-1:0] bram_data, bram_data_next;
 
-    reg [16-1:0] srcs_mask=0;
+    reg [24-1:0] srcs_mask=0;
     reg [4-1:0]  channel=0;
     reg [32-1:0] stream_buffer [16-1:0];
 
@@ -175,8 +175,8 @@ module axis_bram_stream_srcs #(
                         case (push_next)
                             1: 
                             begin // normal data set as of srcs
-                                srcs_mask       <= { 1'b0, index[15-1:0], srcs[32-1:16] };
-                                bram_data_next  <= { 1'b0, index[15-1:0], srcs[32-1:16] }; // frame info: mask and type (header or data)
+                                srcs_mask       <= srcs[32-1:8];
+                                bram_data_next  <= { index[16-1:0], srcs[32-1:16] }; // frame info: mask and type (header or data)
                             end
                             2:
                             begin // full header info, all signals
