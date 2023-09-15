@@ -176,6 +176,20 @@ public:
                 status_append (str.c_str());
         };
 
+        void status_append_int32(const guint32 *data, size_t data_length, bool format = true) {
+                std::ostringstream stream;
+                stream << std::setfill('0');
+                for (size_t data_index = 0; data_index < data_length; ++data_index) {
+                        stream << std::hex << std::setw(8) << data[data_index];
+                        if (format) {
+                                stream << (((data_index + 1) % 10 == 0) ? "\n": " ");
+                        }
+                }
+                stream << std::endl;
+                std::string str =  stream.str();
+                status_append (str.c_str());
+        };
+
         void test_compression() {
                 std::vector<char> uncompressed(0);
                 auto *my_string = (char *) "Hello, world!";

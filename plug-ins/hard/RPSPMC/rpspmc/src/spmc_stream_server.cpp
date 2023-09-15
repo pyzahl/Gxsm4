@@ -68,12 +68,11 @@ pthread_mutex_t stream_server_mutexsum;
 int stream_server_control = 1;
 static pthread_t stream_server_thread;
 
-extern void *FPGA_SPMC_bram;
+extern volatile void *FPGA_SPMC_bram;
 
 #define BRAM_SIZE        16384            // (14 bit address)
 #define BRAM_POS_HALF    (BRAM_SIZE>>1)
 #define BRAM_ADRESS_MASK 0x3fff
-#define ESIZE            4
 
 inline bool gvp_finished (){
         return (read_gpio_reg_int32 (3,1) & 2) ? true:false;
@@ -153,12 +152,12 @@ public:
         
                 std::stringstream val;
                 int data_len = 0;
-                volatile void *data=NULL;
-
-                val << " ** Telemetry Server: # " << m_count++ << "** ";
-
-                val << " stream_ctrl: " << stream_server_control;
+                int offset = 0;
                 
+                if (verbose > 1){
+                        val << " ** Telemetry Server: # " << m_count++ << "** ";
+                        val << " stream_ctrl: " << stream_server_control;
+                }
                 if (stream_server_control & 2){ // started!
                         limit = BRAM_POS_HALF;
                         count = 0;
@@ -166,39 +165,46 @@ public:
                 }
 
                 int position   = stream_lastwrite_address();
-                int size_valid = position;
 
-                val << " position: " << position;
+                if (verbose > 1) val << " position: " << position;
 
                 if (stream_server_control & 2){ // started?
                         if (gvp_finished ()){ // must transfer data written to block when finished but block not full.
                                 stream_server_control = 1; // remove all flags, done after this, last block to finish moving!
-                                val << " ** GVP FINISHED ** stream_ctrl: " << stream_server_control;
-                                int clear_len = ESIZE * (BRAM_SIZE-position-1);
+                                if (verbose > 1){
+                                        val << " ** GVP FINISHED ** stream_ctrl: " << stream_server_control;
+                                }
+                                int clear_len = BRAM_SIZE-position-1;
                                 if (clear_len > 0){
-                                        memset ( FPGA_SPMC_bram + ESIZE * (position+1), 0, clear_len);
+                                        //memset ( FPGA_SPMC_bram + sizeof(uint32_t) * (position+1), 0, clear_len);
                                         position += clear_len;
                                 } else clear_len = 0;
                         }
                         if ((limit > 0 && position > limit) || (limit = 0 && position < BRAM_POS_HALF)){
-                                limit = limit > 0 ? 0 : BRAM_POS_HALF;
-                                data = FPGA_SPMC_bram + ((limit > 0) ? 0 : ESIZE * BRAM_POS_HALF);
-                                data_len = ESIZE * BRAM_POS_HALF;
-                                count++;
-                                val << " ** DATA ** COUNT: " << count;
+                                offset = (limit > 0 ? 0 : BRAM_POS_HALF)<<2;
+                                limit  =  limit > 0 ? 0 : BRAM_POS_HALF;
+                                data_len = BRAM_POS_HALF;
+                                if (verbose > 1){
+                                        count++;
+                                        val << " ** DATA ** COUNT: " << count;
+                                }
                         }
-                        val  << (data_len > 0 ? " *SENDING BLOCK* " : "*WAITING FOR DATA*");
+                        if (verbose > 1) val  << (data_len > 0 ? " *SENDING BLOCK* " : "*WAITING FOR DATA*")
+                                              << " offset: " << offset
+                                                 ;
                 } else
-                        val << " **GVP is idle **";
+                        if (verbose > 1) val << " **GVP is idle **";
 
-                val << "\n";
+                if (verbose > 1) val << "\n";
                 
                 // Broadcast count to all connections
                 con_list::iterator it;
                 for (it = m_connections.begin(); it != m_connections.end(); ++it) {
-                        m_endpoint.send(*it,val.str(),websocketpp::frame::opcode::text);
-                        if (data_len > 0)
-                                m_endpoint.send(*it, (void *)data, data_len, websocketpp::frame::opcode::binary);
+                        if (verbose > 1)  m_endpoint.send(*it, val.str(),websocketpp::frame::opcode::text);
+                        if (data_len > 0){
+                                //m_endpoint.send(*it, (void*)FPGA_SPMC_bram, 1024 * sizeof(uint32_t), websocketpp::frame::opcode::binary);
+                                m_endpoint.send(*it, (void*)FPGA_SPMC_bram+offset, data_len * sizeof(uint32_t), websocketpp::frame::opcode::binary);
+                        }
                 }
 
                 // set timer for next telemetry check
@@ -284,7 +290,6 @@ void *thread_stream_server(void *arg) {
         
         spmc_stream_server s;
         std::string docroot;
-        uint16_t port = TCP_PORT;
         
         docroot = std::string("spmcstream");
         s.run(docroot, TCP_PORT);

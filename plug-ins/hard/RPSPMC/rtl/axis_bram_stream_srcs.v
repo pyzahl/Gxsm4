@@ -110,15 +110,14 @@ module axis_bram_stream_srcs #(
     reg [2:0] bramwr_sms_start=1'b0;
     reg bram_wren = 1'b0;
     reg bram_wren_next = 1'b0;
-    reg [BRAM_ADDR_WIDTH-1:0] bram_addr=0, bram_addr_next=0;
+    reg [BRAM_ADDR_WIDTH-1:0] bram_addr=0, bram_addr_next=0, position=0;
     reg [BRAM_DATA_WIDTH-1:0] bram_data, bram_data_next;
 
-    reg [16-1:0] srcs_mask=0;
+    reg [24-1:0] srcs_mask=0;
     reg [4-1:0]  channel=0;
     reg [32-1:0] stream_buffer [16-1:0];
 
     reg once=1;
-
     reg status_ready=1;
 
     assign BRAM_PORTA_clk = a2_clk;
@@ -128,27 +127,27 @@ module axis_bram_stream_srcs #(
     assign BRAM_PORTA_addr = bram_addr;
     assign BRAM_PORTA_din = bram_data;
 
-    assign last_write_addr = {{(16-BRAM_ADDR_WIDTH){0'b0}}, bram_addr[BRAM_ADDR_WIDTH-1:0]};
+    assign last_write_addr = {{(16-BRAM_ADDR_WIDTH){0'b0}}, position};
         
     assign ready = status_ready;   
+      
     
     // BRAM writer at own a2_clk
     always @(posedge a2_clk)
     begin
+        bram_addr <= bram_addr_next;
+        bram_data <= bram_data_next;
+        bram_wren <= bram_wren_next;
         if (reset)
         begin
             bram_wren_next  <= 1'b0;
-            bram_addr_next  <= {(BRAM_ADDR_WIDTH){-1'b1}}; // idle, reset addr pointer
+            bram_addr_next  <= 0; //{(BRAM_ADDR_WIDTH){-1'b1}}; // idle, reset addr pointer
             bramwr_sms <= 0;
             once <= 1;
         end
         else
         begin
-            bram_addr <= bram_addr_next;
-            bram_data <= bram_data_next;
-            bram_wren <= bram_wren_next;
-            // bramwr_sms <= (push_next && bramwr_sms == 0)  ? 3'd1 : reset ? 3'd0 : bramwr_sms_next; // SMS Control: start, reset, next
-          
+            position <= bram_addr;
             // BRAM STORE MACHINE
             case(bramwr_sms)
                 0:    // Begin/reset/wait state
@@ -175,8 +174,8 @@ module axis_bram_stream_srcs #(
                         case (push_next)
                             1: 
                             begin // normal data set as of srcs
-                                srcs_mask       <= { 1'b0, index[15-1:0], srcs[32-1:16] };
-                                bram_data_next  <= { 1'b0, index[15-1:0], srcs[32-1:16] }; // frame info: mask and type (header or data)
+                                srcs_mask       <= srcs[32-1:8];
+                                bram_data_next  <= { index[16-1:0], srcs[32-8-1:8] }; // frame info: mask and type (header or data)
                             end
                             2:
                             begin // full header info, all signals
@@ -203,28 +202,29 @@ module axis_bram_stream_srcs #(
                     bram_wren_next  <= 1'b0;
                     if (srcs_mask & (1<<channel))
                     begin
-                        bram_data_next  <= stream_buffer[channel];
-                        channel <= channel + 1;
+                        bram_data_next <= stream_buffer[channel];
                         bram_addr_next <= bram_addr_next + 1;
-                        bramwr_sms <= 3'd2;
-                    end else if ((srcs_mask >> channel) == 0) // check if no more data to push 
-                    begin
-                        status_ready <= 1;
-                        bramwr_sms <= 3'd0; // wait for next data set
                     end
+                    if ((srcs_mask >> channel) == 0 || channel == 15) // check if no more data to push or last 
+                    begin
+                        if (channel == 15)
+                            bramwr_sms <= 3'd3; // write last and finish frame
+                        else                    
+                            bramwr_sms <= 3'd0; // finished -- wait for next data set
+                    end
+                    else
+                        bramwr_sms <= 3'd2; // write and then repeat here
+                    channel <= channel + 1; // check next channel, no mode change or write
                 end
                 2:    // Write
                 begin
                     bram_wren_next  <= 1'b1;
-                    if (channel == 15)
-                    begin // stream of data set completed
-                        status_ready <= 1;
-                        bramwr_sms <= 3'd0; // wait for next data set
-                    end
-                    else
-                    begin // next channel
-                        bramwr_sms <= 3'd1;
-                    end                 
+                    bramwr_sms <= 3'd1;
+                end
+                3:    // Write last
+                begin
+                    bram_wren_next  <= 1'b1;
+                    bramwr_sms <= 3'd0;
                 end
             endcase
         end

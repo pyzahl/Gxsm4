@@ -124,7 +124,7 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
 
                 tmp = g_strdup_printf ("WEBSOCKET_DATA_BINARY SPMC ZBytes: %ld\n", len);
                 self->status_append (tmp);
-                self->status_append_bytes (contents, len > 256 ? 256 : len); // truncate
+                self->status_append_int32 (contents, (len/4) > 128 ? 128 : len/4); // truncate
                 self->status_append ("\n");
                 self->debug_log (tmp);
                 g_free (tmp);

@@ -46,6 +46,7 @@
 #define FPGA_GPIO_SIZE    0x1000     // 0x1000
 
 extern void *FPGA_PACPLL_bram;
+extern volatile void *FPGA_SPMC_bram;
 extern void *FPGA_PACPLL_cfg1;
 extern void *FPGA_PACPLL_cfg2;
 extern void *FPGA_PACPLL_gpio;

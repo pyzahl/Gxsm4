@@ -45,6 +45,8 @@ module tb_spm_ad(
     wire [31:0] wy; // ..
     wire [31:0] wz; // ..
     wire [31:0] wu; // ..
+    wire [31:0] gvp_time;
+    wire [31:0] gvp_index;
     wire [31:0] wopt;  // section options: FB, ...
     wire [31:0] wsec;  // section count
     wire [1:0] sto; // trigger to store data:: 2: full vector header, 1: data sources
@@ -113,31 +115,35 @@ module tb_spm_ad(
         // INIT GVP
         r=1; #10 prg=0; #10
         //                  decii       du        dz        dy        dx     Next       Nrep,   Options,     nii,      N,    [Vadr]
-        data = {32'd0001, 160'd0, 32'd0004, 32'd0003, 32'd0064, 32'd0001,  32'd0, 32'd0000,   32'h000, 32'd02, 32'd005, 32'd00 }; // 000
+        data = {32'd016, 160'd0, 32'd0004, 32'd0003, 32'd0064, 32'd0001,  32'd0, 32'd0000,   32'h0100, 32'd02, 32'd005, 32'd00 }; // 000
         #10 prg=1; #10 prg=0; #10
-        data = {32'd0001, 160'd0, -32'd0004,-32'd0003,-32'd0064,-32'd0001, 32'd0, 32'd0000,   32'h000, 32'd02, 32'd005, 32'd01 }; // END
+        data = {32'd016, 160'd0, -32'd0004,-32'd0003,-32'd0064,-32'd0001, 32'd0, 32'd0000,   32'hff00, 32'd02, 32'd005, 32'd01 }; // END
         #10 prg=1; #10 prg=0; #10
-        data = {32'd0001, 160'd0, -32'd0000,-32'd0000,-32'd0000,-32'd0000, 32'd0, 32'd0000,   32'h000, 32'd00, 32'd000, 32'd02 }; // END
+        data = {32'd016, 160'd0, -32'd0000,-32'd0000,-32'd0000,-32'd0000, 32'd0, 32'd0000,   32'hff00, 32'd00, 32'd000, 32'd02 }; // END
         #10 prg=1; #10 prg=0; #10
 
-        data = {32'd0000, 160'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0000,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd03 }; #2
+        data = {32'd016, 160'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0000,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd03 }; #2
         prg=1; #10 prg=0; #10
-        data = {32'd0000, 160'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0000,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd04 }; #2
+        data = {32'd0016, 160'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0000,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd04 }; #2
         prg=1; #10 prg=0; #10
-        data = {32'd0000, 160'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0000,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd05 }; #2
+        data = {32'd0016, 160'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0000,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd05 }; #2
         prg=1; #10 prg=0; #10
-        data = {32'd0000, 160'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0000,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd06 }; #2
+        data = {32'd0016, 160'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0000,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd06 }; #2
         prg=1; #10 prg=0; #10
-        data = {32'd0000, 160'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0000,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd07 }; #2
+        data = {32'd0016, 160'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0000,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd07 }; #2
         prg=1; #10 prg=0; #10
 
 
         r=0; // release reset to run
         wait (fin);
-
         #20
         r=1; // reset to hold
-
+        #20
+        r=0; // release reset to run again
+        wait (fin);
+        #20
+        r=1; // reset to hold
+        #20
 
         // TEST AD SERIAL OUT
         dac_cmode = 1; // DACs put in config mode (hold) unless reprogrammed      
@@ -212,15 +218,42 @@ gvp gvp_1
         .reset(r),  // put into reset mode (hold)
         .setvec(prg), // program vector data using vp_set data
         .vp_set(data), // [VAdr], [N, NII, Nrep, Options, Next, dx, dy, dz, du] ** full vector data set block **
-        .x(wx), // vector components
-        .y(wy), // ..
-        .z(wz), // ..
-        .u(wu), // ..
+        .M_AXIS_X_tdata(wx), // vector components
+        .M_AXIS_Y_tdata(wy), // ..
+        .M_AXIS_Z_tdata(wz), // ..
+        .M_AXIS_U_tdata(wu), // ..
+        .index(gvp_index),
+        .gvp_time(gvp_time),
         .options(wopt),  // section options: FB, ...
         .pause(pause),
         .store_data(sto), // trigger to store data:: 2: full vector header, 1: data sources
         .gvp_finished(fin)      // finished 
 );
+
+
+axis_bram_stream_srcs axis_bram_stream_srcs_tb
+(                             // CH      MASK
+        .ch1s(wx), // XS      0x0001  X in Scan coords
+        .ch2s(wy), // YS      0x0002  Y in Scan coords
+        .ch3s(wz), // ZS      0x0004  Z
+        .ch4s(wu), // U       0x0008  Bias
+        .ch5s(5), // IN1     0x0010  IN1 RP (Signal)
+        .ch6s(6), // IN2     0x0020  IN2 RP (Current)
+        .ch7s(7), // IN3     0x0040  reserved, N/A at this time
+        .ch8s(8), // IN4     0x0080  reserved, N/A at this time
+        .ch9s(9), // DFREQ   0x0100  via PACPLL FIR
+        .chAs(10), // EXEC    0x0200  via PACPLL FIR
+        .chBs(11), // PHASE   0x0400  via PACPLL FIR
+        .chCs(12), // AMPL    0x0800  via PACPLL FIR
+        .chDs(13), // LockInA 0x1000  LockIn X (ToDo)
+        .chEs(14), // LockInB 0x2000  LocKin R (ToDo)
+        .gvp_time(gvp_time),  // time since GVP start in 1/125MHz units
+        .srcs(wopt),      // data selection mask and options
+        .index(gvp_index),     // index starting at N-1 down to 0
+        .push_next(sto), // frame header/data point trigger control
+	.reset(r),
+        .a2_clk(pclk) // double a_clk used for BRAM (125MHz)
+    );
 
 /*
 axis_spm_control axis_spm_control_1
