@@ -2096,6 +2096,9 @@ void RPSPMC_Control::create_folder (){
                                                GCallback (change_source_callback), this,
                                                Source, (((int) msklookup[i]) & 0xfffffff)
                                                );
+                g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER ((int) source_signals[i].mask)); 
+                g_object_set_data (G_OBJECT(bp->button), "VPC", GINT_TO_POINTER (i)); 
+
                 // source selection for SWPS?:
                 if (m >= 0){ // swappable flex source
                         //g_message("bp->grid_add_probe_source_signal_options m=%d  %s => %d %s", m, source_signals[i].label,  probe_source[m], swappable_signals[m].label);
@@ -2105,8 +2108,6 @@ void RPSPMC_Control::create_folder (){
                 }
                 //fixed assignment:
                 // bp->grid_add_label (lablookup[i], NULL, 1, 0.);
-                g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER ((int) source_signals[i].mask)); 
-                g_object_set_data (G_OBJECT(bp->button), "VPC", GINT_TO_POINTER (i)); 
                 
                 // use as X-Source
                 bp->grid_add_check_button ("", NULL, 1,
@@ -2730,7 +2731,8 @@ int RPSPMC_Control::change_source_callback (GtkWidget *widget, RPSPMC_Control *d
 			dspc->Source &= ~channel;
 	}
 
-
+        //g_message ("change_source_callback: Ch: %08x => Srcs: %08x", channel, dspc->Source);
+        
 	dspc->vis_Source = dspc->Source;
 	dspc->vis_XSource = dspc->XSource;
 	dspc->vis_PSource = dspc->PSource;
@@ -4338,7 +4340,7 @@ void RPspmc_pacpll::status_append (const gchar *msg){
 	GString *output;
 	GtkTextMark *end_mark;
         GtkTextIter start_iter, end_trim_iter, end_iter;
-        gint lines, max_lines=20*debug_level+55;
+        gint lines, max_lines=400;
 
 	if (!msg) {
                 /* Change default font and color throughout the widget */
@@ -4377,15 +4379,24 @@ void RPspmc_pacpll::status_append (const gchar *msg){
                 gtk_text_buffer_get_iter_at_line_index (console_buf, &end_trim_iter, lines-max_lines, 0);
                 gtk_text_buffer_delete (console_buf,  &start_iter,  &end_trim_iter);
         }
-        
-	// scroll to end
-	gtk_text_buffer_get_end_iter (console_buf, &end_iter);
-	end_mark = gtk_text_buffer_create_mark (console_buf, "cursor", &end_iter,
+
+#if 1
+        // scroll to end
+        gtk_text_buffer_get_end_iter (console_buf, &end_iter);
+        end_mark = gtk_text_buffer_create_mark (console_buf, "cursor", &end_iter,
                                                 FALSE);
-	g_object_ref (end_mark);
-	gtk_text_view_scroll_to_mark (GTK_TEXT_VIEW (text_status),
+        g_object_ref (end_mark);
+        gtk_text_view_scroll_to_mark (GTK_TEXT_VIEW (text_status),
                                       end_mark, 0.0, FALSE, 0.0, 0.0);
-	g_object_unref (end_mark);
+        g_object_unref (end_mark);
+#endif
+        //GTK_TEXT_VIEW (text_status)->ScrollToIter (GTK_TEXT_VIEW (text_status)->EndIter, 0, false, 0, 0);
+ 
+        //this.tv.SizeAllocated += new SizeAllocatedHandl er(Scroll2);
+        // ##Create a function for scrolling
+        //public void Scroll2(object sender, Gtk.SizeAllocatedArgs e)
+        //{ tv.ScrollToIter(tv.Buffer.EndIter, 0, false, 0, 0); }
+
 }
 
 void RPspmc_pacpll::on_connect_actions(){

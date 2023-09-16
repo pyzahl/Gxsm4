@@ -122,17 +122,17 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
 	} else if (type == SOUP_WEBSOCKET_DATA_BINARY) {
 		contents = g_bytes_get_data (message, &len);
 
-                tmp = g_strdup_printf ("WEBSOCKET_DATA_BINARY SPMC ZBytes: %ld\n", len);
+                tmp = g_strdup_printf ("WEBSOCKET_DATA_BINARY SPMC Bytes: %ld\n", len);
                 self->status_append (tmp);
-                self->status_append_int32 (contents, (len/4) > 128 ? 128 : len/4); // truncate
+                self->status_append_int32 (contents, (len/4) > 256 ? 256 : len/4); // truncate
                 self->status_append ("\n");
-                self->debug_log (tmp);
+                //self->debug_log (tmp);
                 g_free (tmp);
 
 
 		// ... work on it
-                std::ostream &standard_output = std::cout;
-                self->print_bytes (standard_output, (const unsigned char *) contents, len > 256 ? 256 : len, true);
+                //std::ostream &standard_output = std::cout;
+                //self->print_bytes (standard_output, (const unsigned char *) contents, len > 256 ? 256 : len, true);
 		
                 self->on_new_data (contents, len); // process data
         }

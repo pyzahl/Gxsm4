@@ -39,16 +39,15 @@ module tb_spm_ad(
     reg r=1;
     reg prg=0;
     reg pause=0;
-    reg [512-1:0] data; // [VAdr], [N, NII, Nrep, Options, Next, dx, dy, dz, du] ** full vector data set block **
+    reg [512-1:0] vector; // [VAdr], [N, NII, Nrep, Options, Next, dx, dy, dz, du] ** full vector data set block **
 
     wire [31:0] wx; // vector components
     wire [31:0] wy; // ..
     wire [31:0] wz; // ..
     wire [31:0] wu; // ..
-    wire [31:0] gvp_time;
+    wire [47:0] gvp_time;
     wire [31:0] gvp_index;
     wire [31:0] wopt;  // section options: FB, ...
-    wire [31:0] wsec;  // section count
     wire [1:0] sto; // trigger to store data:: 2: full vector header, 1: data sources
     wire fin;  // finished 
 
@@ -112,27 +111,69 @@ module tb_spm_ad(
     
         $display ("running the tb");
 
+
         // INIT GVP
         r=1; #10 prg=0; #10
         //                  decii       du        dz        dy        dx     Next       Nrep,   Options,     nii,      N,    [Vadr]
-        data = {32'd016, 160'd0, 32'd0004, 32'd0003, 32'd0064, 32'd0001,  32'd0, 32'd0000,   32'h0100, 32'd02, 32'd005, 32'd00 }; // 000
+        vector = {32'd016, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0,  32'd998121, -32'd0, -32'd0, -32'd0, -32'd0, -32'd000, 32'h801,  32'd50,  32'd4, -32'd0}; // Vector #0
         #10 prg=1; #10 prg=0; #10
-        data = {32'd016, 160'd0, -32'd0004,-32'd0003,-32'd0064,-32'd0001, 32'd0, 32'd0000,   32'hff00, 32'd02, 32'd005, 32'd01 }; // END
+        vector = {32'd016, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd998830, -32'd0, -32'd0, -32'd0, -32'd0, -32'd000, 32'h801,  32'd05,  32'd4,  32'd1}; // Vector #1
         #10 prg=1; #10 prg=0; #10
-        data = {32'd016, 160'd0, -32'd0000,-32'd0000,-32'd0000,-32'd0000, 32'd0, 32'd0000,   32'hff00, 32'd00, 32'd000, 32'd02 }; // END
+        vector = {32'd016, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd000, 32'h1, -32'd0, -32'd0,  32'd2}; // Vector #2
+        #10 prg=1; #10 prg=0; #10
+        r=0; // release reset to run
+        wait (fin);
+        #20
+        r=1; // reset to hold
+        #20
+    
+
+
+        // INIT GVP
+        r=1; #10 prg=0; #10
+        //                  decii       du        dz        dy        dx     Next       Nrep,   Options,     nii,      N,    [Vadr]
+        vector = {32'd016, 160'd0, 32'd0004, 32'd0003, 32'd002, 32'd0001,  32'd0, 32'd0000,   32'h0801, 32'd02, 32'd005, 32'd00 }; // 000 Bias Mask "08xx"
+        #10 prg=1; #10 prg=0; #10
+        vector = {32'd016, 160'd0, -32'd0004,-32'd0003,-32'd002,-32'd0001, 32'd0, 32'd0000,   32'h0901, 32'd02, 32'd005, 32'd01 }; // END Bias + X mask "09xx"
+        #10 prg=1; #10 prg=0; #10
+        vector = {32'd016, 160'd0, -32'd0000,-32'd0000,-32'd0000,-32'd0000, 32'd0, 32'd0000,   32'h0000, 32'd00, 32'd000, 32'd02 }; // END
         #10 prg=1; #10 prg=0; #10
 
-        data = {32'd016, 160'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0000,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd03 }; #2
+        vector = {32'd016, 160'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0000,  32'd0, 32'd0000,   32'h0000, 32'd000, 32'd000, 32'd03 }; #2
         prg=1; #10 prg=0; #10
-        data = {32'd0016, 160'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0000,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd04 }; #2
+        vector = {32'd0016, 160'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0000,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd04 }; #2
         prg=1; #10 prg=0; #10
-        data = {32'd0016, 160'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0000,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd05 }; #2
+        vector = {32'd0016, 160'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0000,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd05 }; #2
         prg=1; #10 prg=0; #10
-        data = {32'd0016, 160'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0000,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd06 }; #2
+        vector = {32'd0016, 160'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0000,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd06 }; #2
         prg=1; #10 prg=0; #10
-        data = {32'd0016, 160'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0000,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd07 }; #2
+        vector = {32'd0016, 160'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0000,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd07 }; #2
         prg=1; #10 prg=0; #10
 
+        r=0; // release reset to run
+        wait (fin);
+        #20
+        r=1; // reset to hold
+        #20
+        r=0; // release reset to run again
+        wait (fin);
+        #20
+        r=1; // reset to hold
+        #20
+
+        // INIT GVP
+        r=1; #10 prg=0; #10
+        //            decii       **     **     **     BB     AA     du     dz     dy     dx       Next    Nrep,  Options, nii,   N,  [Vadr]
+        vector = {32'd250, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0,  32'd8589935, -32'd0, -32'd0,  32'd858993, -32'd0, -32'd000, 32'h801,  32'd4,  32'd9, -32'd0}; // Vector #0
+        prg=1; #10 prg=0; #10
+        vector = {32'd250, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd8589935, -32'd0, -32'd0, -32'd858993, -32'd0, -32'd000, 32'h801,  32'd4,  32'd9,  32'd1}; // Vector #1
+        prg=1; #10 prg=0; #10
+        vector = {32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd1, 32'd0, 32'd0, 32'd2}; // Vector #2
+        prg=1; #10 prg=0; #10
+        vector = {32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd1, 32'd0, 32'd0, 32'd3}; // Vector #3
+        prg=1; #10 prg=0; #10
+        vector = {32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd1, 32'd0, 32'd0, 32'd4}; // Vector #4
+        prg=1; #10 prg=0; #10
 
         r=0; // release reset to run
         wait (fin);
@@ -178,21 +219,21 @@ module tb_spm_ad(
         r=1; #10  prg=0; #10
         // move to start point
         //         decii                du        dz        dy        dx     Next       Nrep,   Options,     nii,      N,    [Vadr]
-        data = {32'd0024, 160'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0256,  32'd0, 32'd0000,   32'h001, 32'd128, 32'd010, 32'd00 }; // X+ ==>>
+        vector = {32'd0024, 160'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0256,  32'd0, 32'd0000,   32'h001, 32'd128, 32'd010, 32'd00 }; // X+ ==>>
         prg=1; #10 prg=0; #10
-        data = {32'd0024, 160'd0, 32'd0000, 32'd0000, 32'd0000, -32'sd0256,  32'd0, 32'd0000,   32'h001, 32'd128, 32'd010, 32'd01 }; // X- <==
+        vector = {32'd0024, 160'd0, 32'd0000, 32'd0000, 32'd0000, -32'sd0256,  32'd0, 32'd0000,   32'h001, 32'd128, 32'd010, 32'd01 }; // X- <==
         prg=1; #10 prg=0; #10
-        data = {32'd0024, 160'd0, 32'd0000, 32'd0000, 32'd0064, 32'd0000,  -32'sd2, 32'd0010,   32'h001, 32'd128, 32'd001, 32'd02 }; // repeat PC-2 10x
+        vector = {32'd0024, 160'd0, 32'd0000, 32'd0000, 32'd0064, 32'd0000,  -32'sd2, 32'd0010,   32'h001, 32'd128, 32'd001, 32'd02 }; // repeat PC-2 10x
         prg=1; #10 prg=0; #10
-        data = {32'd0000, 160'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0000,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd03 }; #2
+        vector = {32'd0000, 160'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0000,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd03 }; #2
         prg=1; #10 prg=0; #10
-        data = {32'd0000, 160'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0000,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd04 }; #2
+        vector = {32'd0000, 160'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0000,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd04 }; #2
         prg=1; #10 prg=0; #10
-        data = {32'd0000, 160'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0000,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd05 }; #2
+        vector = {32'd0000, 160'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0000,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd05 }; #2
         prg=1; #10 prg=0; #10
-        data = {32'd0000, 160'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0000,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd06 }; #2
+        vector = {32'd0000, 160'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0000,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd06 }; #2
         prg=1; #10 prg=0; #10
-        data = {32'd0000, 160'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0000,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd07 }; #2
+        vector = {32'd0000, 160'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0000,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd07 }; #2
         prg=1; #10 prg=0; #10
 
         r=0; // release reset to run
@@ -217,7 +258,8 @@ gvp gvp_1
         .a_clk(pclk),    // clocking up to aclk
         .reset(r),  // put into reset mode (hold)
         .setvec(prg), // program vector data using vp_set data
-        .vp_set(data), // [VAdr], [N, NII, Nrep, Options, Next, dx, dy, dz, du] ** full vector data set block **
+        .vp_set(vector), // [VAdr], [N, NII, Nrep, Options, Next, dx, dy, dz, du] ** full vector data set block **
+        .reset_options(1), // option (fb hold/go, srcs... to pass when idle or in reset mode
         .M_AXIS_X_tdata(wx), // vector components
         .M_AXIS_Y_tdata(wy), // ..
         .M_AXIS_Z_tdata(wz), // ..
@@ -230,6 +272,11 @@ gvp gvp_1
         .gvp_finished(fin)      // finished 
 );
 
+wire clkbra;
+wire [14-1:0] addra;
+wire [32-1:0] dina;
+wire ena;
+wire wea;
 
 axis_bram_stream_srcs axis_bram_stream_srcs_tb
 (                             // CH      MASK
@@ -251,9 +298,27 @@ axis_bram_stream_srcs axis_bram_stream_srcs_tb
         .srcs(wopt),      // data selection mask and options
         .index(gvp_index),     // index starting at N-1 down to 0
         .push_next(sto), // frame header/data point trigger control
-	.reset(r),
-        .a2_clk(pclk) // double a_clk used for BRAM (125MHz)
+	    .reset(r),
+        .a2_clk(pclk), // double a_clk used for BRAM (125MHz)
+        .BRAM_PORTA_clka(clkbbra),
+        .BRAM_PORTA_addra(addra),
+        .BRAM_PORTA_dina(dina),
+        .BRAM_PORTA_ena(ena),
+        .BRAM_PORTA_wea(wea)
     );
+
+/*
+blk_mem_gen_spmc bram_store_inst (
+  .clka(clkbra),    // input wire clka
+  .wea(wr_en),      // input wire [0 : 0] wea
+  .addra(addr_wr),  // input wire [13 : 0] addra
+  .dina(data_wr),    // input wire [31 : 0] dina
+  .clkb(clk),    // input wire clkb
+  .enb(rd_en),      // input wire enb
+  .addrb(addr_rd),  // input wire [13 : 0] addrb
+  .doutb(data_rd)  // output wire [31 : 0] doutb
+);
+*/
 
 /*
 axis_spm_control axis_spm_control_1

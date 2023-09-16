@@ -36,12 +36,19 @@
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <pthread.h>
+#include <fstream>
+#include <iostream>
+#include <set>
+#include <streambuf>
+#include <string>
 
 #include <DataManager.h>
 #include <CustomParameters.h>
 
 #include "fpga_cfg.h"
 #include "spmc.h"
+
+#include "spmc_stream_server.h"
 
 // RPSPMC
 //RDECI=4
@@ -152,6 +159,7 @@ extern CDoubleParameter  SPMC_Y0_MONITOR;
 extern CDoubleParameter  SPMC_Z0_MONITOR;
 
 extern int stream_server_control;
+extern spmc_stream_server spmc_stream_server_instance;
 
 int x0_buf = 0;
 int y0_buf = 0;
@@ -764,53 +772,76 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
         // N=5 ii=2 ==> 3 inter vec add steps (2 extra waits), 6 (points) x3 (inter) delta vectors added for section
         
         
-        if (verbose > 1) fprintf(stderr, "Write Vector[PC=%03d] init", pc);
         // write GVP-Vector [vector[0]] components
-        //                   decii      du        dz        dy        dx     Next       Nrep,   Options,     nii,      N,    [Vadr]
-        //data = {160'd0, 32'd0064, 32'd0000, 32'd0000, -32'd0002, -32'd0002,  32'd0, 32'd0000,   32'h001, 32'd0128, 32'd005, 32'd00 };
+        //           decii  ******     du        dz        dy        dx       Next      Nrep,   Options,     nii,      N,  [Vadr]
+        // data = {32'd016, 160'd0, 32'd0004, 32'd0003, 32'd0064, 32'd0001,  32'd0, 32'd0000,   32'h0100, 32'd02, 32'd005, 32'd00 }; // 000
+
+        if (verbose > 1) fprintf(stderr, "Write Vector[PC=%03d] init", pc);
+        
+        int idv[16];
         if (verbose > 1) fprintf(stderr, "Write Vector[PC=%03d] = [", pc);
-        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_VADR, pc);
+        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_VADR, idv[0]=pc);
 
         if (verbose > 1) fprintf(stderr, "%04d, ", n);
-        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_N, n > 0 ? n-1 : 0); // *** see above note
+        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_N, idv[1]=n > 0 ? n-1 : 0); // *** see above note
 
         if (verbose > 1) fprintf(stderr, "%04d, ", nii);
-        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_NII, nii > 0 ? nii-1 : 0); // *** see above note
+        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_NII, idv[2]=nii > 0 ? nii-1 : 0); // *** see above note
 
         if (verbose > 1) fprintf(stderr, "%04d, ", opts);
-        set_gpio_cfgreg_uint32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_OPT, opts);
+        set_gpio_cfgreg_uint32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_OPT, idv[3]=opts);
 
         if (verbose > 1) fprintf(stderr, "%04d, ", nrp);
-        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_NREP, nrp);
+        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_NREP, idv[4]=nrp);
 
         if (verbose > 1) fprintf(stderr, "%04d, ", nxt);
-        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_NEXT, nxt);
+        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_NEXT, idv[5]=nxt);
 
         if (verbose > 1) fprintf(stderr, "dX %8.10g uV, ", 1e6*dx/Nsteps);
-        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_DX, (int)round(Q31*dx/Nsteps/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
+        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_DX, idv[6]=(int)round(Q31*dx/Nsteps/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
 
         if (verbose > 1) fprintf(stderr, "dY %8.10g uV, ", 1e6*dy/Nsteps);
-        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_DY, (int)round(Q31*dy/Nsteps/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
+        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_DY, idv[7]=(int)round(Q31*dy/Nsteps/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
 
         if (verbose > 1) fprintf(stderr, "dZ %8.10g uV, ", 1e6*dz/Nsteps);
-        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_DZ, (int)round(Q31*dz/Nsteps/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
+        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_DZ, idv[8]=(int)round(Q31*dz/Nsteps/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
 
         if (verbose > 1) fprintf(stderr, "dU %8.10g uV, ", 1e6*du/Nsteps);
-        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_DU, (int)round(Q31*du/Nsteps/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
+        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_DU, idv[9]=(int)round(Q31*du/Nsteps/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
 
         if (verbose > 1) fprintf(stderr, "dA %8.10g uV, ", 1e6*da/Nsteps);
-        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_DA, (int)round(Q31*da/Nsteps/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
+        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_DA, idv[10]=(int)round(Q31*da/Nsteps/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
         
         if (verbose > 1) fprintf(stderr, "dB %8.10g uV, ", 1e6*db/Nsteps);
-        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_DB, (int)round(Q31*db/Nsteps/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
+        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_DB, idv[11]=(int)round(Q31*db/Nsteps/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
         
-        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_012, 0);  // clear bits
-        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_013, 0);  // clear bits
-        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_014, 0);  // clear bits
+        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_012, idv[12]=0);  // clear bits -- not yet used componets
+        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_013, idv[13]=0);  // clear bits
+        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_014, idv[14]=0);  // clear bits
 
-        if (verbose > 1) fprintf(stderr, "0,0,0, decii=%d]\n", decii); // last vector component is decii
+        if (verbose > 1) fprintf(stderr, "0,0,0, decii=%d]\n", idv[15]=decii); // last vector component is decii
         set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_DECII, decii);  // decimation
 
+        //<< std::setfill('0') << std::hex << std::setw(8) << data
+        
+        if (verbose > 0){
+                std::stringstream vector_def;
+                vector_def << std::setfill('0') << std::setw(10) << "vector = {32'd" << idv[15]; // decii
+                for (int i=14; i>=0; i--){
+                        switch (i){
+                        case 3:
+                                vector_def << std::setw(8) << std::hex << ", 32'h" << idv[i];
+                                break;
+                        default:
+                                vector_def << std::dec << ", " << (idv[i]>0?" ":"-") << "32'd" << (abs(idv[i]));
+                                break;
+                        }
+                }
+                vector_def << "}; // Vector #" << pc;
+                spmc_stream_server_instance.add_vector (vector_def.str());
+        }
+
+        
         if (update_life){
                 rp_spmc_gvp_config (false, true);  // set vector
                 rp_spmc_gvp_config (false, false); // continue

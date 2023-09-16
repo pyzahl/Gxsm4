@@ -203,7 +203,7 @@ double RPSPMC_Control::make_ZXYramp_vector (double dZ, double dX, double dY, int
 double RPSPMC_Control::make_UZXYramp_vector (double dU, double dZ, double dX, double dY, double da, double db, int n, int nrep, int ptr_next, double ts, int source, int options){
 	program_vector.n = n;
 	program_vector.slew = n/ts;
-	program_vector.srcs = source & 0xffff;
+	program_vector.srcs = source;
 	program_vector.options = options;
 	program_vector.repetitions = nrep;
 	program_vector.ptr_next = ptr_next;
@@ -224,7 +224,7 @@ double RPSPMC_Control::make_delay_vector (double delay, int source, int options,
 	duration += delay;
 	program_vector.n = points;
 	program_vector.slew = points/delay;
-	program_vector.srcs = source & 0xffff;
+	program_vector.srcs = source;
 	program_vector.options = options;
 	program_vector.repetitions = 0; // number of repetitions, not used yet
 	program_vector.ptr_next = 0x0;  // pointer to next vector -- not used, only for loops
@@ -250,6 +250,7 @@ void RPSPMC_Control::append_null_vector (int options, int index){
 	program_vector.f_dx = 0.0;
 	program_vector.f_dy = 0.0;
 	program_vector.f_dz = 0.0;
+	program_vector.f_du = 0.0;
 	program_vector.f_da = 0.0;
 	program_vector.f_db = 0.0;
 	write_program_vector (index);
@@ -284,6 +285,9 @@ void RPSPMC_Control::write_spm_vector_program (int start, pv_mode pvm){
 	if (!start) // reset 
 		probe_trigger_single_shot = 0;
 
+
+        g_message ("Srcs: %08x vSrcs: %08x", Source, vis_Source);
+
 	switch (pvm){
 	case PV_MODE_IV: // ------------ Special Vector Setup for IV Probes "Probe ala STM"
                 g_free (vp_exec_mode_name); vp_exec_mode_name = g_strdup ("VP: STS");
@@ -298,7 +302,6 @@ void RPSPMC_Control::write_spm_vector_program (int start, pv_mode pvm){
                 
 	case PV_MODE_GVP: // ------------ Special Vector Setup for GVP (general vector probe)
                 g_free (vp_exec_mode_name); vp_exec_mode_name = g_strdup ("VP: Vector Program");
-		ramp_sources = GVP_option_flags & FLAG_SHOW_RAMP ? vis_Source : 0x000;
 
 		// setup vector program
 		{

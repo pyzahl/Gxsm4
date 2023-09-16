@@ -176,16 +176,57 @@ public:
                 status_append (str.c_str());
         };
 
+#define SPMC_AD5791_REFV 5.0 // DAC AD5791 Reference Volatge is 5.000000V (+/-5V Range)
+        double rpspmc_to_volts (int value){ return SPMC_AD5791_REFV*(double)value / ((1<<31)-1); }
+
         void status_append_int32(const guint32 *data, size_t data_length, bool format = true) {
                 std::ostringstream stream;
                 stream << std::setfill('0');
+              
                 for (size_t data_index = 0; data_index < data_length; ++data_index) {
+                        if (data_index % 10 == 0)
+                                stream << std::hex << std::setw(8) << data_index << ": ";
                         stream << std::hex << std::setw(8) << data[data_index];
                         if (format) {
                                 stream << (((data_index + 1) % 10 == 0) ? "\n": " ");
                         }
                 }
                 stream << std::endl;
+
+                // analyze
+                int offset = 0;
+
+                int sec=0;
+                int point=0;
+                do{
+                        int srcs = data[offset]&0xffff;
+                        int i    = data[offset]>>16;
+                        stream << "SEC/PT[" << sec << ", " << point << "] HDR: i=" << std::dec << i << " SRCS=0x" << std::hex << std::setw(4) << srcs << std::endl;
+                        offset++; point++;
+                
+                        int chlut[16];
+                        int nch=0;
+                        double volts[16];
+                        for (i=0; i<16; i++){
+                                chlut[i]=-1;
+                                if (srcs & (1<<i))
+                                        chlut[nch++]=i;
+                        }
+                        stream << std::hex << std::setw(8) << offset << ": ";
+                        for (size_t ch_index = 0; ch_index < nch && ch_index+offset < data_length; ++ch_index){
+                                stream << std::hex << std::setw(8) << data[ch_index+offset] << ", ";
+                                volts[ch_index] = rpspmc_to_volts (data[ch_index+offset]);
+                        }
+                        stream << std::endl;
+                        stream << std::hex << std::setw(8) << point << ": ";
+                        for (size_t ch_index = 0; ch_index < nch; ++ch_index){
+                                stream << std::setw(8) << std::defaultfloat << std::setw(8) << volts[ch_index] << ", ";
+                        }
+                        stream << std::endl;
+                        offset += nch;
+                } while (offset < data_length && point < 20);
+
+
                 std::string str =  stream.str();
                 status_append (str.c_str());
         };

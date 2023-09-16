@@ -41,6 +41,8 @@ module gvp #(
     output wire		 M_AXIS_Z_tvalid,
     output wire [32-1:0] M_AXIS_U_tdata, // ..
     output wire		 M_AXIS_U_tvalid,
+    output wire	[32-1:0] M_AXIS_SRCS_tdata,
+    output wire		 M_AXIS_SRCS_tvalid,
     output [32-1:0]	 options, // section options: FB, ... (flags) and source selections bits
     output [1:0 ]	 store_data, // trigger to store data:: 2: full vector header, 1: data sources
     output		 gvp_finished, // finished flag
@@ -209,14 +211,15 @@ module gvp #(
                         else
                         if (!pause_flg)        
                         begin // arrived at data point
-                            store <= 1; // store data sources (push trigger)
                             if (i) // advance to next point...
                             begin
+                                store <= 1; // store data sources (push trigger)
                                 ii <= vec_iin[pvc];
                                 i <= i-1;
                             end
                             else
                             begin // finsihed section, next vector -- if n != 0...
+                                store <= 0; // full store data sources at next section start (push trigger)
                                 sec <= sec + 1;
                                 if (vec_i[pvc] > 0) // do next loop?
                                 begin
@@ -246,6 +249,8 @@ module gvp #(
     assign M_AXIS_Z_tvalid = 1;
     assign M_AXIS_U_tdata = vec_u;
     assign M_AXIS_U_tvalid = 1;
+    assign M_AXIS_SRCS_tdata = set_options;
+    assign M_AXIS_SRCS_tvalid = 1;
     
     assign options = set_options;
        
