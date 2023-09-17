@@ -87,8 +87,10 @@ public:
                 if (get_debug_level () > 4)
                         g_message ("%s", msg);
                 if (get_debug_level () > 2){
-                        status_append (msg);
-                        status_append ("\n");
+                        if (msg){
+                                status_append (msg);
+                                status_append ("\n");
+                        }
                 }
         };
         
@@ -162,7 +164,9 @@ public:
                 stream << std::endl;
         };
 
-        void status_append_bytes(const unsigned char *data, size_t data_length, bool format = true) {
+        void status_appends_bytes(const unsigned char *data, size_t data_length, bool format = true) {
+                if (data_length < 1)
+                        return;
                 std::ostringstream stream;
                 stream << std::setfill('0');
                 for (size_t data_index = 0; data_index < data_length; ++data_index) {
@@ -180,15 +184,18 @@ public:
         double rpspmc_to_volts (int value){ return SPMC_AD5791_REFV*(double)value / ((1<<31)-1); }
 
         void status_append_int32(const guint32 *data, size_t data_length, bool format = true) {
+                if (data_length < 1)
+                        return;
                 std::ostringstream stream;
                 stream << std::setfill('0');
-              
+
+                int wpl=17;
                 for (size_t data_index = 0; data_index < data_length; ++data_index) {
-                        if (data_index % 10 == 0)
+                        if (data_index % wpl == 0)
                                 stream << std::hex << std::setw(8) << data_index << ": ";
                         stream << std::hex << std::setw(8) << data[data_index];
                         if (format) {
-                                stream << (((data_index + 1) % 10 == 0) ? "\n": " ");
+                                stream << (((data_index + 1) % wpl == 0) ? "\n": " ");
                         }
                 }
                 stream << std::endl;
@@ -224,7 +231,7 @@ public:
                         }
                         stream << std::endl;
                         offset += nch;
-                } while (offset < data_length && point < 20);
+                } while (offset < data_length && point < 3);
 
 
                 std::string str =  stream.str();

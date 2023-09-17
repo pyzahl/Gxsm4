@@ -88,7 +88,7 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
                                             "Timer Error: "+ec.message());
                 return;
         }
-        
+
         std::stringstream val;
         int data_len = 0;
         int offset = 0;
@@ -133,8 +133,9 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
                                       << std::endl;
         } else
                 if (verbose > 2) val << " **GVP is idle **" << std::endl;
+               
+        if (verbose > 2) val << " ** SENDING FULL BRAM DUMP **" << std::endl;
 
-                
         // Broadcast count to all connections
         con_list::iterator it;
         for (it = m_connections.begin(); it != m_connections.end(); ++it) {
@@ -144,6 +145,9 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
 
                 if (data_len > 0){
                         m_endpoint.send(*it, (void*)FPGA_SPMC_bram+offset, data_len * sizeof(uint32_t), websocketpp::frame::opcode::binary);
+                } 
+                if (verbose > 2){
+                        m_endpoint.send(*it, (void*)FPGA_SPMC_bram, 2*BRAM_POS_HALF * sizeof(uint32_t), websocketpp::frame::opcode::binary);
                 }
         }
 

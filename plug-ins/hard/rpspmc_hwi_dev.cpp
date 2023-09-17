@@ -163,7 +163,7 @@ const gchar *rpspmc_hwi_dev::get_rp_address (){
         return rpspmc_pacpll->get_rp_address ();
 }
 void rpspmc_hwi_dev::status_append (const gchar *msg){
-        return rpspmc_pacpll->status_append (msg);
+        rpspmc_pacpll->status_append (msg);
 }
 void rpspmc_hwi_dev::on_connect_actions(){
         status_append ("RedPitaya SPM Control Stream -- initializing.\n ");

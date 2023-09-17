@@ -125,7 +125,10 @@ module axis_bram_stream_srcs #(
     reg r=0;
     reg [2-1:0] hdr_type=0;
 
-    assign BRAM_PORTA_clka = a2_clk;
+    reg clk12=0;
+    reg clk122=0;
+
+    assign BRAM_PORTA_clka = clk12;
     // assign BRAM_PORTA_rst = ~a_resetn;
     assign BRAM_PORTA_wea = bram_wren;
     assign BRAM_PORTA_ena = bram_en;
@@ -136,10 +139,18 @@ module axis_bram_stream_srcs #(
         
     assign ready = status_ready;   
       
+    always @(posedge a2_clk)
+    begin
+        clk12 <= ~clk12;
+    end    
     
+    always @(posedge clk12)
+    begin
+        clk122 <= ~clk122;
+    end    
     
     // BRAM writer at own a2_clk
-    always @(negedge a2_clk)
+    always @(posedge clk122)
     begin
         bram_addr <= bram_addr_next; // delay one more!
         bram_data <= bram_data_next;
@@ -150,7 +161,7 @@ module axis_bram_stream_srcs #(
         if (r)
         begin
             bram_wren_next  <= 1'b0;
-            bram_en_next  <= 1'b0;
+            bram_en_next    <= 1'b0;
             bram_addr_next  <= -1; //{(BRAM_ADDR_WIDTH){-1'b1}}; // idle, reset addr pointer
             bramwr_sms <= 0;
             once <= 1;
@@ -167,7 +178,7 @@ module axis_bram_stream_srcs #(
                         hdr_type <= push_mode;
                         status_ready <= 0;
                         bram_wren_next  <= 1'b0;
-                        bram_en_next  <= 1'b1;
+                        bram_en_next    <= 1'b0;
                         channel <= 0;
                         once <= 0; // only one push!
                         // buffer all data
@@ -192,16 +203,17 @@ module axis_bram_stream_srcs #(
                     else
                     begin
                         status_ready <= 1;
-                        bram_en_next  <= 1'b0;
+                        bram_en_next    <= 1'b0;
                         bram_wren_next  <= 1'b0;
                         if (!push_next)
                             once <= 1; // push_next is clear now, wait for next push!
                         bramwr_sms <= 3'd0; // wait for next data
                     end
                 end
-                1:    // Data prepare cycle
+                1:    // Data prepare cycle HEADER
                 begin
-                    bram_wren_next  <= 1'b1;
+                    bram_wren_next  <= 1'b0;
+                    bram_en_next    <= 1'b1;
                     // prepare header -- full or normal point header
                     case (hdr_type)
                         1: 
@@ -214,42 +226,66 @@ module axis_bram_stream_srcs #(
                             srcs_mask       <= 24'h0ffff;// ALL 16
                             bram_data_next  <= { index[16-1:0], 16'hffff }; // frame info: mask and type (header or data)
                         end
+                        3:
+                        begin // full header info, all signals, + END MARKING
+                            stream_buffer[12] <= 32'hffffeeee;
+                            stream_buffer[13] <= 32'hfefecdcd;
+                            srcs_mask       <= 24'hfffff;// ALL 16
+                            bram_data_next  <= { 16'hfefe, 16'hfefe }; // frame info: END MARK, full vector position list follows
+                        end
                     endcase
                     bram_addr_next <= bram_addr_next + 1;
-                    bramwr_sms <= 3'd2; // start pushing selected channels
+                    bramwr_sms <= 3'd3; // start pushing selected channels
                 end
-                2:    // Data prepare cycle
+                2:    // Data prepare cycle DATA
                 begin
-                    bram_wren_next  <= 1'b1;
                     if (srcs_mask & (1<<channel))
                     begin
+                        bram_wren_next  <= 1'b0;
+                        bram_en_next    <= 1'b1;
                         bram_data_next <= channel; // DATA ALIGNMENT TEST
                         //bram_data_next <= stream_buffer[channel];
                         bram_addr_next <= bram_addr_next + 1; // next adr
                         if (channel == 4'd15) // check if no more data to push or last 
-                            bramwr_sms <= 3'd0; //3 write last and finish frame
+                            bramwr_sms <= 3'd4; //3 write last and finish frame
                         else
-                            bramwr_sms <= 3'd2; //2 write and then repeat here
+                            bramwr_sms <= 3'd3; //2 write and then repeat here
                     end
                     else
                     begin
+                        bram_wren_next  <= 1'b0;
+                        bram_en_next    <= 1'b0;
                         //bram_data_next <= 32'hffeeffee; // END FRAME MARK/NO DATA SEND
                         //bram_addr_next <= bram_addr_next; // do not inc
                         if ((srcs_mask >> channel) == 0 || channel == 15) // check if no more data to push or last 
-                            bramwr_sms <= 3'd0; //0 finish frame
+                            bramwr_sms <= 3'd6; //0 finish frame
                         else
                             bramwr_sms <= 3'd2; //1 repeat here
                     end
                     channel <= channel + 1; // check next channel, no mode change or write
                 end
-                3:    // Write
+                3:    // Write repeat A
                 begin
                     bram_wren_next  <= 1'b1;
+                    bram_en_next    <= 1'b1;
+                    bramwr_sms <= 3'd5;
+                end
+                4:    // Write last finish A
+                begin
+                    bram_wren_next  <= 1'b1;
+                    bram_en_next    <= 1'b1;
+                    bramwr_sms <= 3'd6;
+                end
+                5:    // Write repeat B
+                begin
+                    bram_wren_next  <= 1'b0;
+                    bram_en_next    <= 1'b0;
                     bramwr_sms <= 3'd2;
                 end
-                4:    // Write last
+                6:    // Write last finish B
                 begin
-                    bram_wren_next  <= 1'b1;
+                    bram_wren_next  <= 1'b0;
+                    bram_en_next    <= 1'b0;
                     bramwr_sms <= 3'd0;
                 end
             endcase

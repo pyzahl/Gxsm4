@@ -45,6 +45,7 @@ void RP_stream::stream_connect_cb (gboolean connect){
         debug_log (get_rp_address ());
 
         if (connect){
+                status_append (NULL); // clear
                 status_append ("Connecting to SPM Stream on RedPitaya...\n");
 
                 update_health ("Connecting stream...");
@@ -111,20 +112,24 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
         gchar *tmp;
         
         //self->debug_log ("WebSocket SPMC message received.");
-	//self->status_append ("WebSocket SPMC message received.\n");
+	self->status_append ("WebSocket SPMC message received.\n");
         
 	if (type == SOUP_WEBSOCKET_DATA_TEXT) {
 		contents = g_bytes_get_data (message, &len);
-		//self->status_append ("WEBSOCKET_DATA_TEXT\n");
-		self->status_append ((gchar*)contents);
-		//self->status_append ("\n");
-                g_message ("%s", (gchar*)contents);
+		self->status_append ("WEBSOCKET_DATA_TEXT\n");
+                if (contents && len > 0)
+                        self->status_append ((gchar*)contents);
+                else
+                        self->status_append ("Empty text message received.");
+		self->status_append ("\n");
+                g_message ("WS Message: %s", (gchar*)contents);
 	} else if (type == SOUP_WEBSOCKET_DATA_BINARY) {
 		contents = g_bytes_get_data (message, &len);
 
                 tmp = g_strdup_printf ("WEBSOCKET_DATA_BINARY SPMC Bytes: %ld\n", len);
                 self->status_append (tmp);
-                self->status_append_int32 (contents, (len/4) > 256 ? 256 : len/4); // truncate
+                self->status_append ("\n");
+                self->status_append_int32 (contents, (len/4) > 1024 ? 1024 : len/4); // truncate
                 self->status_append ("\n");
                 //self->debug_log (tmp);
                 g_free (tmp);

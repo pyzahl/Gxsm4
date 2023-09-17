@@ -45,8 +45,8 @@ void RP_JSON_talk::json_talk_connect_cb (gboolean connect){
         debug_log (get_rp_address ());
 
         if (connect){
+                status_append (NULL); // clear
                 status_append ("Connecting to RedPitaya...\n");
-
                 update_health ("Connecting...");
 
                 // new soup session
@@ -83,9 +83,11 @@ void RP_JSON_talk::json_talk_connect_cb (gboolean connect){
                                 return;
                         } else {
                                 status_append ("Response: ");
-                                status_append (buffer);
-                                status_append ("\n ");
-                                update_health (buffer);
+                                if (buffer){
+                                        status_append (buffer);
+                                        status_append ("\n ");
+                                        update_health (buffer);
+                                }
                         }
                         g_free (buffer);
                 }
@@ -146,16 +148,18 @@ void  RP_JSON_talk::on_message(SoupWebsocketConnection *ws,
         RP_JSON_talk *self = ( RP_JSON_talk *)user_data;
 	gconstpointer contents;
 	gsize len;
-        gchar *tmp;
+        gchar *tmp = NULL;
         
         self->debug_log ("WebSocket message received.");
         
 	if (type == SOUP_WEBSOCKET_DATA_TEXT) {
 		contents = g_bytes_get_data (message, &len);
 		self->status_append ("WEBSOCKET_DATA_TEXT\n");
-		self->status_append ((gchar*)contents);
-		self->status_append ("\n");
-                g_message ("%s", (gchar*)contents);
+                if (contents) {
+                        self->status_append ((gchar*)contents);
+                        self->status_append ("\n");
+                        g_message ("%s", (gchar*)contents);
+                }
 	} else if (type == SOUP_WEBSOCKET_DATA_BINARY) {
 		contents = g_bytes_get_data (message, &len);
 
@@ -189,6 +193,7 @@ void  RP_JSON_talk::on_message(SoupWebsocketConnection *ws,
       
                 int ret= -1;
                 ret = inflateInit2 (&zInfo, MAX_WBITS + 16);
+                tmp = NULL;
                 if ( ret == Z_OK ) {
                         ret = inflate( &zInfo, Z_FINISH );     // zlib function
                         // inflate() returns
@@ -202,7 +207,6 @@ void  RP_JSON_talk::on_message(SoupWebsocketConnection *ws,
                         // Z_DATA_ERROR is returned, the application may then call inflateSync() to look for a good compression block if a partial recovery of the data is to be attempted. 
                         switch ( ret ){
                         case Z_STREAM_END:
-                                tmp = NULL;
                                 if (self->get_debug_level () > 2)
                                         tmp = g_strdup_printf ("Z_STREAM_END out = %ld, in = %ld, ratio=%g\n",zInfo.total_out, zInfo.total_in, (double)zInfo.total_out / (double)zInfo.total_in);
                                 break;
@@ -211,7 +215,8 @@ void  RP_JSON_talk::on_message(SoupWebsocketConnection *ws,
                         case Z_NEED_DICT:
                                 tmp = g_strdup_printf ("Z_NEED_DICT out = %ld, in = %ld\n",zInfo.total_out, zInfo.total_in); break;
                         case Z_DATA_ERROR:
-                                self->status_append (zInfo.msg);
+                                if (zInfo.msg)
+                                        self->status_append (zInfo.msg);
                                 tmp = g_strdup_printf ("\nZ_DATA_ERROR out = %ld, in = %ld\n",zInfo.total_out, zInfo.total_in); break; 
                                 break;
                         case Z_STREAM_ERROR:
@@ -223,13 +228,17 @@ void  RP_JSON_talk::on_message(SoupWebsocketConnection *ws,
                         default:
                                 tmp = g_strdup_printf ("ERROR ?? inflate result = %d,  out = %ld, in = %ld\n",ret,zInfo.total_out, zInfo.total_in); break;
                         }
-                        self->status_append (tmp);
-                        g_free (tmp);
+                        if (tmp){
+                                self->status_append (tmp);
+                                g_free (tmp);
+                        }
                 }
                 inflateEnd( &zInfo );   // zlib function
                 if (self->get_debug_level () > 0){
-                        self->status_append (json_buffer);
-                        self->status_append ("\n");
+                        if (json_buffer){
+                                self->status_append (json_buffer);
+                                self->status_append ("\n");
+                        }
                 }
 
                 self->json_parse_message (json_buffer);

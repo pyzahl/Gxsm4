@@ -96,7 +96,7 @@ module gvp #(
     reg [48-1:0] vec_gvp_time=0;
    
     // data store trigger
-    reg [1:0] store = 0;
+    reg [1:0] store = 0;       
     
     // for vector programming -- in reset mode to be safe -- but shoudl work also for live updates -- caution, check!
 /*
@@ -123,6 +123,7 @@ module gvp #(
             vec_gvp_time <= 0;
         else
             vec_gvp_time <= vec_gvp_time+1;
+
         reset_flg  <= reset;  // put into reset mode (set program and hold)
         pause_flg  <= pause;  // put/release into/from pause mode -- always completes the "ii" nop cycles!
         setvec_flg <= setvec; // program vector data using vp_set data
@@ -174,23 +175,27 @@ module gvp #(
             else // run program step
             begin
                 if (finished)
+                begin
                     store <= 0; // hold finsihed state -- until reset
+                    decimation <= 1; // reset to fast 
+                    set_options <= reset_options;
+                end            
                 else
                 begin
                     if (load_next_vector || finished) // load next vector
                     begin
-                        store <= 2; // store full header (push trigger)
                         load_next_vector <= 0;
                         i   <= vec_n[pvc];
                         ii  <= vec_iin[pvc];
                         if (vec_n[pvc] == 0) // n == 0: END OF VECTOR PROGRAM REACHED
                         begin
-                            decimation <= 1; // reset to fast 
                             finished <= 1;
-                            set_options <= reset_options;
+                            store <= 3; // finshed -- store full header (push trigger) and GVP end mark
+                            set_options <= 32'hffffffff;
                         end 
                         else
                         begin
+                            store <= 2; // store full header (push trigger)
                             decimation <= vec_deci[pvc];
                             set_options <= vec_options[pvc];
                         end

@@ -105,8 +105,10 @@ public:
                 if (get_debug_level () > 4)
                         g_message ("%s", msg);
                 if (get_debug_level () > 2){
-                        status_append (msg);
-                        status_append ("\n");
+                        if (msg){
+                                status_append (msg);
+                                status_append ("\n");
+                        }
                 }
         };
         

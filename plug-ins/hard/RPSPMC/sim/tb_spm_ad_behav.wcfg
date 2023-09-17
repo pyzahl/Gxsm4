@@ -11,15 +11,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="8,292.420 ns"></ZoomStartTime>
-      <ZoomEndTime time="8,388.901 ns"></ZoomEndTime>
-      <Cursor1Time time="8,316.000 ns"></Cursor1Time>
+      <ZoomStartTime time="0.000 ns"></ZoomStartTime>
+      <ZoomEndTime time="887.801 ns"></ZoomEndTime>
+      <Cursor1Time time="5,743.680 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="350"></NameColumnWidth>
-      <ValueColumnWidth column_width="135"></ValueColumnWidth>
+      <ValueColumnWidth column_width="105"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="39" />
+   <WVObjectSize size="41" />
    <wvobject type="logic" fp_name="/tb_spm_ad/pclk">
       <obj_property name="ElementShortName">pclk</obj_property>
       <obj_property name="ObjectShortName">pclk</obj_property>
@@ -128,10 +128,6 @@
       <obj_property name="AnalogOffscale">ANALOG_OFFSCALE_HIDE</obj_property>
       <obj_property name="AnalogHorizLine">0.000000</obj_property>
    </wvobject>
-   <wvobject type="logic" fp_name="/tb_spm_ad/sclk">
-      <obj_property name="ElementShortName">sclk</obj_property>
-      <obj_property name="ObjectShortName">sclk</obj_property>
-   </wvobject>
    <wvobject type="array" fp_name="/tb_spm_ad/gvp_1/ii">
       <obj_property name="ElementShortName">ii[31:0]</obj_property>
       <obj_property name="ObjectShortName">ii[31:0]</obj_property>
@@ -189,6 +185,10 @@
    <wvobject type="logic" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/bram_wren_next">
       <obj_property name="ElementShortName">bram_wren_next</obj_property>
       <obj_property name="ObjectShortName">bram_wren_next</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/bram_en_next">
+      <obj_property name="ElementShortName">bram_en_next</obj_property>
+      <obj_property name="ObjectShortName">bram_en_next</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/bram_addr">
       <obj_property name="ElementShortName">bram_addr[15:0]</obj_property>
@@ -265,5 +265,13 @@
    <wvobject type="logic" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/BRAM_PORTA_wea">
       <obj_property name="ElementShortName">BRAM_PORTA_wea</obj_property>
       <obj_property name="ObjectShortName">BRAM_PORTA_wea</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/BRAM_PORTA_addra">
+      <obj_property name="ElementShortName">BRAM_PORTA_addra[15:0]</obj_property>
+      <obj_property name="ObjectShortName">BRAM_PORTA_addra[15:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/BRAM_PORTA_dina">
+      <obj_property name="ElementShortName">BRAM_PORTA_dina[31:0]</obj_property>
+      <obj_property name="ObjectShortName">BRAM_PORTA_dina[31:0]</obj_property>
    </wvobject>
 </wave_config>

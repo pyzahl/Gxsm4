@@ -3692,7 +3692,6 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
         gtk_scrolled_window_set_child ( GTK_SCROLLED_WINDOW (scrolled_window), text_status);
         bp->grid_add_widget (scrolled_window, 10);
         gtk_widget_show (scrolled_window);
-        status_append (NULL);
         
         // ========================================
         bp->pop_grid ();
@@ -4342,7 +4341,8 @@ void RPspmc_pacpll::status_append (const gchar *msg){
         GtkTextIter start_iter, end_trim_iter, end_iter;
         gint lines, max_lines=400;
 
-	if (!msg) {
+	if (msg == NULL) {
+                //status_append ("** Zero Data/Message **");
                 /* Change default font and color throughout the widget */
                 GtkCssProvider *provider = gtk_css_provider_new ();
                 gtk_css_provider_load_from_data (provider,
@@ -4356,7 +4356,21 @@ void RPspmc_pacpll::status_append (const gchar *msg){
                                                 GTK_STYLE_PROVIDER (provider),
                                                 GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
                 
-		return;
+
+                // clear text buffer
+                // read string which contain last command output
+                console_buf = gtk_text_view_get_buffer (GTK_TEXT_VIEW(text_status));
+                gtk_text_buffer_get_bounds (console_buf, &start_iter, &end_iter);
+                
+                gtk_text_buffer_get_start_iter (console_buf, &start_iter);
+                lines = gtk_text_buffer_get_line_count (console_buf);
+                if (lines > 80){
+                        g_message ("Clear socket log %d lines. <%s>", lines, msg);
+                        gtk_text_buffer_get_iter_at_line_index (console_buf, &end_trim_iter, lines-10, 0);
+                        gtk_text_buffer_delete (console_buf,  &start_iter,  &end_trim_iter);
+                }
+
+                return;
 	}
 
 	// read string which contain last command output
