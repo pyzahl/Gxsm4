@@ -189,7 +189,7 @@ public:
                 std::ostringstream stream;
                 stream << std::setfill('0');
 
-                int wpl=17;
+                int wpl=16;
                 for (size_t data_index = 0; data_index < data_length; ++data_index) {
                         if (data_index % wpl == 0)
                                 stream << std::hex << std::setw(8) << data_index << ": ";

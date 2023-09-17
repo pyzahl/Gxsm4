@@ -11,15 +11,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="0.000 ns"></ZoomStartTime>
-      <ZoomEndTime time="887.801 ns"></ZoomEndTime>
-      <Cursor1Time time="5,743.680 ns"></Cursor1Time>
+      <ZoomStartTime time="4,924.550 ns"></ZoomStartTime>
+      <ZoomEndTime time="5,016.291 ns"></ZoomEndTime>
+      <Cursor1Time time="5,000.000 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="350"></NameColumnWidth>
-      <ValueColumnWidth column_width="105"></ValueColumnWidth>
+      <ValueColumnWidth column_width="99"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="41" />
+   <WVObjectSize size="37" />
    <wvobject type="logic" fp_name="/tb_spm_ad/pclk">
       <obj_property name="ElementShortName">pclk</obj_property>
       <obj_property name="ObjectShortName">pclk</obj_property>
@@ -190,6 +190,10 @@
       <obj_property name="ElementShortName">bram_en_next</obj_property>
       <obj_property name="ObjectShortName">bram_en_next</obj_property>
    </wvobject>
+   <wvobject type="logic" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/BRAM_PORTA_clk">
+      <obj_property name="ElementShortName">BRAM_PORTA_clk</obj_property>
+      <obj_property name="ObjectShortName">BRAM_PORTA_clk</obj_property>
+   </wvobject>
    <wvobject type="array" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/bram_addr">
       <obj_property name="ElementShortName">bram_addr[15:0]</obj_property>
       <obj_property name="ObjectShortName">bram_addr[15:0]</obj_property>
@@ -253,25 +257,5 @@
    <wvobject type="array" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/push_next">
       <obj_property name="ElementShortName">push_next[1:0]</obj_property>
       <obj_property name="ObjectShortName">push_next[1:0]</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/BRAM_PORTA_clka">
-      <obj_property name="ElementShortName">BRAM_PORTA_clka</obj_property>
-      <obj_property name="ObjectShortName">BRAM_PORTA_clka</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/BRAM_PORTA_ena">
-      <obj_property name="ElementShortName">BRAM_PORTA_ena</obj_property>
-      <obj_property name="ObjectShortName">BRAM_PORTA_ena</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/BRAM_PORTA_wea">
-      <obj_property name="ElementShortName">BRAM_PORTA_wea</obj_property>
-      <obj_property name="ObjectShortName">BRAM_PORTA_wea</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/BRAM_PORTA_addra">
-      <obj_property name="ElementShortName">BRAM_PORTA_addra[15:0]</obj_property>
-      <obj_property name="ObjectShortName">BRAM_PORTA_addra[15:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/BRAM_PORTA_dina">
-      <obj_property name="ElementShortName">BRAM_PORTA_dina[31:0]</obj_property>
-      <obj_property name="ObjectShortName">BRAM_PORTA_dina[31:0]</obj_property>
    </wvobject>
 </wave_config>

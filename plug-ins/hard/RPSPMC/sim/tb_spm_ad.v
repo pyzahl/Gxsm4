@@ -115,11 +115,11 @@ module tb_spm_ad(
         // INIT GVP
         r=1; #10 prg=0; #10
         //                  decii                                           du      dz      dy      dx    Next      Nrep,   Options,     nii,      N,    [Vadr]
-        vector = {32'd032, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0,  32'd998121, -32'd0, -32'd0, -32'd0, -32'd0, -32'd000, 32'hc0f01,  32'd03,  32'd4, -32'd0}; // Vector #0
+        vector = {32'd04, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0,  32'd998121, -32'd0, -32'd0, -32'd0, -32'd0, -32'd000, 32'hc0801,  32'd03,  32'd4, -32'd0}; // Vector #0
         #10 prg=1; #10 prg=0; #10
-        vector = {32'd032, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd998830, -32'd0, -32'd0, -32'd0, -32'd0, -32'd000, 32'hc0f01,  32'd03,  32'd4,  32'd1}; // Vector #1
+        vector = {32'd04, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd998830, -32'd0, -32'd0, -32'd0, -32'd0, -32'd000, 32'hc0801,  32'd03,  32'd4,  32'd1}; // Vector #1
         #10 prg=1; #10 prg=0; #10
-        vector = {32'd032, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd000, 32'h1, -32'd0, -32'd0,  32'd2}; // Vector #2
+        vector = {32'd012, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd000, 32'h1, -32'd0, -32'd0,  32'd2}; // Vector #2
         #10 prg=1; #10 prg=0; #10
         r=0; // release reset to run
         wait (fin);
@@ -300,11 +300,11 @@ axis_bram_stream_srcs axis_bram_stream_srcs_tb
         .push_next(sto), // frame header/data point trigger control
 	    .reset(r),
         .a2_clk(pclk), // double a_clk used for BRAM (125MHz)
-        .BRAM_PORTA_clka(clkbbra),
-        .BRAM_PORTA_addra(addra),
-        .BRAM_PORTA_dina(dina),
-        .BRAM_PORTA_ena(ena),
-        .BRAM_PORTA_wea(wea)
+        .BRAM_PORTA_clk(clkbbra),
+        .BRAM_PORTA_addr(addra),
+        .BRAM_PORTA_din(dina),
+        .BRAM_PORTA_en(ena),
+        .BRAM_PORTA_we(wea)
     );
 
 /*

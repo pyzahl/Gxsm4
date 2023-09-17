@@ -65,7 +65,10 @@ module axis_bram_stream_srcs #(
     parameter integer BRAM_DATA_WIDTH = 32,
     parameter integer BRAM_ADDR_WIDTH = 16
 )
-(                             // CH      MASK
+(
+    (* X_INTERFACE_PARAMETER = "FREQ_HZ 125000000, ASSOCIATED_CLKEN a2_clk, ASSOCIATED_BUSIF BRAM_PORTA" *)
+                             // CH      MASK
+    input a2_clk, // double a_clk used for BRAM (125MHz)
     input wire [32-1:0] ch1s, // XS      0x0001  X in Scan coords
     input wire [32-1:0] ch2s, // YS      0x0002  Y in Scan coords
     input wire [32-1:0] ch3s, // ZS      0x0004  Z
@@ -90,16 +93,22 @@ module axis_bram_stream_srcs #(
     input wire reset,
     
     // BRAM PORT A
-    (* X_INTERFACE_PARAMETER = "FREQ_HZ 125000000, ASSOCIATED_CLKEN a2_clk, ASSOCIATED_BUSIF BRAM_PORTA" *)
-    input a2_clk, // double a_clk used for BRAM (125MHz)
+
+
+    // [IP_Flow 19-4751] Bus Interface 'BRAM_PORTA_clk': FREQ_HZ bus parameter is missing for output clock interface.
+
+    //(* X_INTERFACE_INFO = "BRAM_PORTA_clk CLK" *)
+    //(* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME BRAM_PORTA, ASSOCIATED_BUSIF BRAM_PORTA, ASSOCIATED_CLKEN BRAM_PORTA_clk, FREQ_HZ 125000000" *)
+
     
-    output wire                        BRAM_PORTA_clka,
-    output wire [BRAM_ADDR_WIDTH-1:0]  BRAM_PORTA_addra,
-    output wire [BRAM_DATA_WIDTH-1:0]  BRAM_PORTA_dina,
+    (* X_INTERFACE_PARAMETER = "FREQ_HZ 125000000, ASSOCIATED_CLKEN BRAM_PORTA_clk" *)
+    output wire                        BRAM_PORTA_clk,
+    output wire [BRAM_ADDR_WIDTH-1:0]  BRAM_PORTA_addr,
+    output wire [BRAM_DATA_WIDTH-1:0]  BRAM_PORTA_din,
     // input  wire [BRAM_DATA_WIDTH-1:0]  BRAM_PORTA_rddata,
     // output wire                        BRAM_PORTA_rst,
-    output wire                        BRAM_PORTA_ena,
-    output wire                        BRAM_PORTA_wea,
+    output wire                        BRAM_PORTA_en,
+    output wire                        BRAM_PORTA_we,
 
     output wire [16-1:0]  last_write_addr,
     output wire ready
@@ -128,12 +137,12 @@ module axis_bram_stream_srcs #(
     reg clk12=0;
     reg clk122=0;
 
-    assign BRAM_PORTA_clka = clk12;
+    assign BRAM_PORTA_clk = ~a2_clk;
     // assign BRAM_PORTA_rst = ~a_resetn;
-    assign BRAM_PORTA_wea = bram_wren;
-    assign BRAM_PORTA_ena = bram_en;
-    assign BRAM_PORTA_addra = bram_addr;
-    assign BRAM_PORTA_dina = bram_data;
+    assign BRAM_PORTA_we = bram_wren;
+    assign BRAM_PORTA_en = bram_en;
+    assign BRAM_PORTA_addr = bram_addr;
+    assign BRAM_PORTA_din = bram_data;
 
     assign last_write_addr = {{(16-BRAM_ADDR_WIDTH){0'b0}}, position};
         
@@ -150,7 +159,7 @@ module axis_bram_stream_srcs #(
     end    
     
     // BRAM writer at own a2_clk
-    always @(posedge clk122)
+    always @(posedge a2_clk)
     begin
         bram_addr <= bram_addr_next; // delay one more!
         bram_data <= bram_data_next;
@@ -241,26 +250,26 @@ module axis_bram_stream_srcs #(
                 begin
                     if (srcs_mask & (1<<channel))
                     begin
-                        bram_wren_next  <= 1'b0;
+                        bram_wren_next  <= 1'b1; // 0
                         bram_en_next    <= 1'b1;
                         bram_data_next <= channel; // DATA ALIGNMENT TEST
                         //bram_data_next <= stream_buffer[channel];
                         bram_addr_next <= bram_addr_next + 1; // next adr
                         if (channel == 4'd15) // check if no more data to push or last 
-                            bramwr_sms <= 3'd4; //3 write last and finish frame
+                            bramwr_sms <= 3'd0; //4 3 write last and finish frame
                         else
-                            bramwr_sms <= 3'd3; //2 write and then repeat here
+                            bramwr_sms <= 3'd2; //3 2 write and then repeat here
                     end
                     else
                     begin
-                        bram_wren_next  <= 1'b0;
+                        bram_wren_next  <= 1'b1; // 0
                         bram_en_next    <= 1'b0;
                         //bram_data_next <= 32'hffeeffee; // END FRAME MARK/NO DATA SEND
                         //bram_addr_next <= bram_addr_next; // do not inc
                         if ((srcs_mask >> channel) == 0 || channel == 15) // check if no more data to push or last 
-                            bramwr_sms <= 3'd6; //0 finish frame
+                            bramwr_sms <= 3'd0; //6 0 finish frame
                         else
-                            bramwr_sms <= 3'd2; //1 repeat here
+                            bramwr_sms <= 3'd2; //2 1 repeat here
                     end
                     channel <= channel + 1; // check next channel, no mode change or write
                 end
