@@ -111,6 +111,8 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
 	gconstpointer contents;
 	gsize len;
         gchar *tmp;
+
+        static int position=0;
         
         //self->debug_log ("WebSocket SPMC message received.");
 	self->status_append ("WebSocket SPMC message received.\n");
@@ -124,18 +126,20 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
                         self->status_append ("Empty text message received.");
 		self->status_append ("\n");
                 g_message ("WS Message: %s", (gchar*)contents);
+                if (strncmp(contents, "{Position:{", 11) == 0)
+                        position = atoi (contents+11);
 	} else if (type == SOUP_WEBSOCKET_DATA_BINARY) {
 		contents = g_bytes_get_data (message, &len);
 
-                int pos = 1024;
+                int pos = 0x300;
                 if (pos < (int)(spmc_parameters.gvp_data_position))
-                        pos = (int)(spmc_parameters.gvp_data_position);
+                        pos = ((int)(spmc_parameters.gvp_data_position)+0x100)&0xfff00;
 
                 tmp = g_strdup_printf ("WEBSOCKET_DATA_BINARY SPMC Bytes: 0x%04x,  Position: 0x%04x\n", len,(int)spmc_parameters.gvp_data_position);
                 self->status_append (tmp);
                 self->status_append ("\n");
                         
-                self->status_append_int32 (contents, pos); // truncate
+                self->status_append_int32 (contents, pos > len? len:pos); // truncate
                 self->status_append ("\n");
                 //self->debug_log (tmp);
                 g_free (tmp);
@@ -145,7 +149,7 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
                 //std::ostream &standard_output = std::cout;
                 //self->print_bytes (standard_output, (const unsigned char *) contents, len > 256 ? 256 : len, true);
 		
-                self->on_new_data (contents, len); // process data
+                self->on_new_data (contents, len, position); // process data
         }
 }
 
@@ -153,3 +157,4 @@ void  RP_stream::on_closed (SoupWebsocketConnection *ws, gpointer user_data){
         RP_stream *self = ( RP_stream *)user_data;
         self->status_append ("WebSocket connection externally closed.\n");
 }
+

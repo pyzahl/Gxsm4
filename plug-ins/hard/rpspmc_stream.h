@@ -73,7 +73,7 @@ public:
         virtual const gchar *get_rp_address (){ return NULL; };
         virtual int get_debug_level() { return 0; };
 
-        virtual void on_new_data (gconstpointer contents, gsize len) {};
+        virtual void on_new_data (gconstpointer contents, gsize len, int position) {};
         
         virtual void status_append (const gchar *msg){
                 g_message (msg);
@@ -198,40 +198,6 @@ public:
                         }
                 }
                 stream << std::endl;
-
-                // analyze
-                int offset = 0;
-
-                int sec=0;
-                int point=0;
-                do{
-                        int srcs = data[offset]&0xffff;
-                        int i    = data[offset]>>16;
-                        stream << "SEC/PT[" << sec << ", " << point << "] HDR: i=" << std::dec << i << " SRCS=0x" << std::hex << std::setw(4) << srcs << std::endl;
-                        offset++; point++;
-                
-                        int chlut[16];
-                        int nch=0;
-                        double volts[16];
-                        for (i=0; i<16; i++){
-                                chlut[i]=-1;
-                                if (srcs & (1<<i))
-                                        chlut[nch++]=i;
-                        }
-                        stream << std::hex << std::setw(8) << offset << ": ";
-                        for (size_t ch_index = 0; ch_index < nch && ch_index+offset < data_length; ++ch_index){
-                                stream << std::hex << std::setw(8) << data[ch_index+offset] << ", ";
-                                volts[ch_index] = rpspmc_to_volts (data[ch_index+offset]);
-                        }
-                        stream << std::endl;
-                        stream << std::hex << std::setw(8) << point << ": ";
-                        for (size_t ch_index = 0; ch_index < nch; ++ch_index){
-                                stream << std::setw(8) << std::defaultfloat << std::setw(8) << volts[ch_index] << ", ";
-                        }
-                        stream << std::endl;
-                        offset += nch;
-                } while (offset < data_length && point < 3);
-
 
                 std::string str =  stream.str();
                 status_append (str.c_str());

@@ -356,9 +356,93 @@ gpointer ProbeDataReadThread (void *ptr_sr){
 	return NULL;
 }
 
-void rpspmc_hwi_dev::on_new_data (gconstpointer contents, gsize len){
+void rpspmc_hwi_dev::on_new_data (gconstpointer contents, gsize len, int position){
+	static int number_channels = 0;
+        static int number_points = 0;
+	static int point_index = 0;
+        static int index_all = 0;
+        static double pv[NUM_PV_HEADER_SIGNALS];
+	static double dataexpanded[NUM_PV_DATA_SIGNALS];
+
+        static int init = -1;
+        if (init){
+                GVP_vp_init (); // vectors should be written by now!
+                RPSPMC_ControlClass->init_probedata_arrays ();
+                init=0;
+        }
+        
         int k=0;
         memcpy (&stream_buffer[k][0], contents, len);
+
+        int pos = (int)spmc_parameters.gvp_data_position;
+
+        std::ostringstream stream;
+
+        // analyze
+        int offset = 0x100;
+
+        int sec=0;
+        int point=0;
+       
+        do{
+                int srcs = stream_buffer[0][offset]&0xffff;
+                int i    = stream_buffer[0][offset]>>16;
+                stream << std::endl << "SEC/PT[" << sec << ", " << point << "] HDR: i=" << std::dec << i << " SRCS=0x" << std::hex << std::setw(4) << srcs << std::endl;
+                offset++; point++;
+
+                if (srcs == 0xffff)
+                        number_points = i+1;
+
+                int ch_lut[16];
+                int number_channels=0;
+                double volts[16];
+                for (i=0; i<16; i++){
+                        ch_lut[i]=-1;
+                        if (srcs & (1<<i))
+                                ch_lut[number_channels++]=i;
+                }
+                stream << std::hex << std::setw(8) << offset << ": ";
+                for (size_t ch_index = 0; ch_index < number_channels && ch_index+offset < position; ++ch_index){
+                        //stream << std::hex << std::setw(8) << stream_buffer[0][ch_index+offset] << ", ";
+                        volts[ch_index] = rpspmc_to_volts (stream_buffer[0][ch_index+offset]);
+                        if (srcs == 0xffff || srcs == 0xfefe){
+                                switch (ch_lut[ch_index]){
+                                case 0: g_array_append_val (RPSPMC_ControlClass->garray_probedata[PROBEDATA_ARRAY_XS], volts[ch_index]); break;
+                                case 1: g_array_append_val (RPSPMC_ControlClass->garray_probedata[PROBEDATA_ARRAY_YS], volts[ch_index]); break;
+                                case 2: g_array_append_val (RPSPMC_ControlClass->garray_probedata[PROBEDATA_ARRAY_ZS], volts[ch_index]); break;
+                                case 3: g_array_append_val (RPSPMC_ControlClass->garray_probedata[PROBEDATA_ARRAY_U ], volts[ch_index]); break;
+                                }
+                                point_index=0;
+                        }
+                }
+
+                if (srcs&0xc000 || srcs == 0xfefe){
+                        double t = (double)(((unsigned long)stream_buffer[0][15+offset]<<16) | (unsigned long)stream_buffer[0][14+offset])/125000.;
+                        g_array_append_val (RPSPMC_ControlClass->garray_probedata[PROBEDATA_ARRAY_TIME], t);
+                }
+                double dii=index_all++;
+                g_array_append_val (RPSPMC_ControlClass->garray_probedata[PROBEDATA_ARRAY_INDEX], dii);
+                double dsec=sec;
+                g_array_append_val (RPSPMC_ControlClass->garray_probedata[PROBEDATA_ARRAY_SEC], dsec);
+
+                if (++point_index == number_points)
+                        point_index=0;
+
+                RPSPMC_ControlClass->current_probe_data_index++;	
+
+                //stream << std::endl;
+                //stream << std::hex << std::setw(8) << point << ": ";
+                for (size_t ch_index = 0; ch_index < number_channels; ++ch_index){
+                        stream << std::setw(8) << std::defaultfloat << volts[ch_index] << ", ";
+                }
+                //stream << std::endl;
+                offset += number_channels;
+        } while (offset < position && offset < (len>>2));
+
+
+        std::string str =  stream.str();
+        status_append (str.c_str());
+
 }
 
 // ReadProbeData:
@@ -424,6 +508,7 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
 	default: break;
 	}
 
+
 	if (need_fct){ // read and check fifo control?
 		LOGMSGS2 ( "FR::NEED_FCT" << std::endl);
                 // template -- dummy, no actual FIFO here
@@ -437,6 +522,7 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
 		need_data = FR_NO;
 	}
 
+#if 0
 	if (need_hdr){ // we have enough data if control gets here!
 		LOGMSGS ( "FR::NEED_HDR" << std::endl);
 
@@ -486,6 +572,7 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
                 
         }
 
+#endif
         int ix=0;
         clock_t ct = clock();
         g_message ("VP: section: %d", GVP_vp_header_current.section);
@@ -497,7 +584,7 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
                 
                 g_message ("VP: %d %d", ix, point_index);
                 // ----------------------
-                
+#if 0                
                 // expand data from stream
                 for (int element=0; element < number_channels; ++element){
                         int channel = ch_lut[element];
@@ -505,9 +592,9 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
                         // TO BE IMPLEMENTED
                         dataexpanded[channel] = (double)point_index;
                 }
-
+#endif
 		// add vector and data to expanded data array representation
-                RPSPMC_ControlClass->add_probedata (dataexpanded, pv, !point_index++);
+                //RPSPMC_ControlClass->add_probedata (dataexpanded, pv, !point_index++);
                 
                 if (!ix || (clock () - ct)*100/CLOCKS_PER_SEC > 1) break; // for graph updates
 	}
@@ -532,6 +619,13 @@ int rpspmc_hwi_dev::start_data_read (int y_start,
 
         g_message("Setting up FifoReadThread");
 
+        g_message ("VP: init");
+
+        GVP_vp_init (); // vectors should be written by now!
+        RPSPMC_ControlClass->init_probedata_arrays ();
+
+        g_message("INIT done. EXITING NOW.");
+	return 0;
 
 	if (num_srcs0 || num_srcs1 || num_srcs2 || num_srcs3){ // setup streaming of scan data
                 g_message("... for scan.");

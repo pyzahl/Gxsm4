@@ -784,7 +784,7 @@ public:
         virtual const gchar *get_rp_address ();
         virtual void status_append (const gchar *msg);
         virtual void on_connect_actions();
-        virtual void on_new_data (gconstpointer contents, gsize len);
+        virtual void on_new_data (gconstpointer contents, gsize len, int position);
         
 	/* Parameter  */
 	virtual long GetMaxLines(){ return 32000; };
@@ -895,7 +895,7 @@ private:
 	GThread *probe_data_read_thread;
         gboolean KillFlg;
 
-        gint32 *stream_buffer[2][BRAM_SIZE >> 1];
+        gint32 stream_buffer[2][BRAM_SIZE >> 1];
         
 public:
         

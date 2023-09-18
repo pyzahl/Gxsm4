@@ -163,13 +163,13 @@ module axis_bram_stream_srcs #(
     begin
         //bram_addr <= bram_addr_next; // delay one more!
         
-        // silly patch of unresolved adressing issue
-        if ((bram_addr_next & 14'h00f) == 1)
-            bram_addr <= bram_addr_next + 14'h040; // fix addresses @ 0xXXX0 : -0x40
+        // silly patch of unresolved adressing issue 0-,4+
+        if ((bram_addr_next & 14'h00f) == 4'hf)
+            bram_addr <= bram_addr_next - 14'h040; // fix addresses @ 0xXXX0 : -0x40
         else 
         begin 
-            if ((bram_addr_next & 14'h00f) == 3)
-                bram_addr <= bram_addr_next - 14'h040; // fix addresses @ 0xXXX2 : +0x40
+            if ((bram_addr_next & 14'h00f) == 1)
+                bram_addr <= bram_addr_next + 14'h040; // fix addresses @ 0xXXX2 : +0x40
             else     
                 bram_addr <= bram_addr_next; // all other addresses are OK
         end
@@ -188,7 +188,7 @@ module axis_bram_stream_srcs #(
         end
         else
         begin
-            position <= bram_addr;
+            position <= bram_addr_next;
             // BRAM STORE MACHINE
             case(bramwr_sms)
                 0:    // Begin/reset/wait state
@@ -259,8 +259,8 @@ module axis_bram_stream_srcs #(
                     if (srcs_mask & (1<<channel))
                     begin
                         bram_wr_next  <= 1'b1; // 0
-                        bram_data_next <= channel; // DATA ALIGNMENT TEST
-                        //bram_data_next <= stream_buffer[channel];
+                        //bram_data_next <= channel; // DATA ALIGNMENT TEST
+                        bram_data_next <= stream_buffer[channel];
                         bram_addr_next <= bram_addr_next + 1; // next adr
                         if (channel == 4'd15) // check if no more data to push or last 
                             bramwr_sms <= 3'd0; //4 3 write last and finish frame
@@ -270,8 +270,6 @@ module axis_bram_stream_srcs #(
                     else
                     begin
                         bram_wr_next  <= 1'b1; // 0
-                        //bram_data_next <= 32'hffeeffee; // END FRAME MARK/NO DATA SEND
-                        //bram_addr_next <= bram_addr_next; // do not inc
                         if ((srcs_mask >> channel) == 0 || channel == 15) // check if no more data to push or last 
                             bramwr_sms <= 3'd0; //6 0 finish frame
                         else

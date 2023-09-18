@@ -92,6 +92,7 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
         }
 
         std::stringstream val;
+        std::stringstream position_info;
         int data_len = 0;
         int offset = 0;
                 
@@ -106,7 +107,8 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
         }
 
         int position   = stream_lastwrite_address();
-        SPMC_GVP_DATA_POSITION.Value () = position;
+        position_info << "{Position:{" << position << "}}" << std::endl;
+        SPMC_GVP_DATA_POSITION.Value () = position; // too slow
 
         if (stream_server_control & 2){ // started?
                 if (verbose > 1) val << " position: " << position;
@@ -138,6 +140,8 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
                
         if (verbose > 2) val << " ** SENDING FULL BRAM DUMP **" << std::endl;
 
+        //gchar *json_string = g_strdup_printf ("{ \"parameters\":{\"%s\":{\"value\":%d}}}", parameter_id, value);
+
         // Broadcast count to all connections
         con_list::iterator it;
         for (it = m_connections.begin(); it != m_connections.end(); ++it) {
@@ -146,6 +150,7 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
                         m_endpoint.send(*it, info_stream.str(), websocketpp::frame::opcode::text);
 
                 if (data_len > 0){
+                        m_endpoint.send(*it, position_info.str(), websocketpp::frame::opcode::text);
                         m_endpoint.send(*it, (void*)FPGA_SPMC_bram+offset, data_len * sizeof(uint32_t), websocketpp::frame::opcode::binary);
                 } 
                 if (verbose > 2){

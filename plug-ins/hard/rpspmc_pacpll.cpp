@@ -127,7 +127,7 @@ RP data streaming
 SOURCE_SIGNAL_DEF source_signals[] = {
         // -- 8 vector generated signals (outputs/mapping) ==> must match: #define NUM_VECTOR_SIGNALS 8
         { 0x01000000, "Index",    " ", "#", "#", 1.0, PROBEDATA_ARRAY_INDEX },
-        { 0x0000C000, "Time",     " ", "ms", "ms", 1.0/75, PROBEDATA_ARRAY_TIME }, // 1000/emu->frq_ref => ms
+        { 0x0000C000, "Time",     " ", "ms", "ms", 1.0, PROBEDATA_ARRAY_TIME }, // 1000/emu->frq_ref => ms
         { 0x00000008, "Bias",     " ", "V", "V", BiasFac, PROBEDATA_ARRAY_U },
         { 0x10000000, "SEC",      " ", "#", "#", 1.0, PROBEDATA_ARRAY_SEC },
         { 0x00000001, "XS",       " ", "AA", UTF8_ANGSTROEM, XAngFac, PROBEDATA_ARRAY_XS },
