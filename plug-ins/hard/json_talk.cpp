@@ -149,6 +149,8 @@ void  RP_JSON_talk::on_message(SoupWebsocketConnection *ws,
 	gconstpointer contents;
 	gsize len;
         gchar *tmp = NULL;
+
+        static int zbuf_err=0;
         
         self->debug_log ("WebSocket message received.");
         
@@ -224,7 +226,13 @@ void  RP_JSON_talk::on_message(SoupWebsocketConnection *ws,
                         case Z_MEM_ERROR:
                                 tmp = g_strdup_printf ("Z_MEM_ERROR out = %ld, in = %ld\n",zInfo.total_out, zInfo.total_in); break;
                         case Z_BUF_ERROR:
-                                tmp = g_strdup_printf ("Z_BUF_ERROR out = %ld, in = %ld  ratio=%g\n",zInfo.total_out, zInfo.total_in, (double)zInfo.total_out / (double)zInfo.total_in); break;
+                                if (zbuf_err++ < 11){
+                                        if (zbuf_err++ < 10)
+                                                tmp = g_strdup_printf ("Z_BUF_ERROR out = %ld, in = %ld  ratio=%g\n",zInfo.total_out, zInfo.total_in, (double)zInfo.total_out / (double)zInfo.total_in);
+                                        else
+                                                tmp = g_strdup_printf ("too many Z_BUF_ERRORs. Snoozing.\n");
+                                }
+                                break;
                         default:
                                 tmp = g_strdup_printf ("ERROR ?? inflate result = %d,  out = %ld, in = %ld\n",ret,zInfo.total_out, zInfo.total_in); break;
                         }

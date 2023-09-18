@@ -144,7 +144,7 @@ module axis_bram_stream_srcs #(
     assign BRAM_PORTA_addr = bram_addr;
     assign BRAM_PORTA_din = bram_data;
 
-    assign last_write_addr = {{(16-BRAM_ADDR_WIDTH){0'b0}}, position};
+    assign last_write_addr = {{(16-BRAM_ADDR_WIDTH){0'b0}}, position}; 
         
     assign ready = status_ready;   
       

@@ -880,18 +880,22 @@ public:
                 GVP_vp_header_current.srcs = GVP_stream_buffer[offset]&0xffff;
 
                 GVP_vp_header_current.i = (GVP_stream_buffer[offset]>>16);
-                if (GVP_vp_header_current.srcs == 0xfff){
+                if (GVP_vp_header_current.srcs == 0xffff){
                         GVP_vp_header_current.n    = GVP_vp_header_current.i + 1;
                         GVP_vp_header_current.endmark = 0;
                 } else {
                         if (GVP_stream_buffer[offset] == 0xfefefefe){
                                 GVP_vp_header_current.endmark = 1;
+                                GVP_vp_header_current.n = 0;
+                                GVP_vp_header_current.i = 0;
                                 GVP_vp_header_current.srcs = 0xfff;
                         }
                 }
                         
                 GVP_vp_header_current.index = GVP_vp_header_current.n - GVP_vp_header_current.i;
 
+                g_message ("N[%4d / %4d] GVP_vp_header_current.srcs=%04x", GVP_vp_header_current.index, GVP_vp_header_current.n, GVP_vp_header_current.srcs);
+                             
                 GVP_vp_header_current.number_channels=0;
                 for (int i=0; i<16; i++){
                         GVP_vp_header_current.ch_lut[i]=-1;
@@ -903,14 +907,21 @@ public:
                 for (ch_index=0; ch_index < GVP_vp_header_current.number_channels && ch_index+offset < GVP_stream_buffer_position; ++ch_index){
                         int ich = GVP_vp_header_current.ch_lut[ch_index];
                         GVP_vp_header_current.chNs[ich] = GVP_stream_buffer[1+ch_index+offset];
-                        GVP_vp_header_current.dataexpanded[ich] = rpspmc_to_volts (GVP_vp_header_current.chNs[ich]); // Volts
+                        if (ich < 14){
+                                GVP_vp_header_current.dataexpanded[ich] = rpspmc_to_volts (GVP_vp_header_current.chNs[ich]); // Volts
+                                g_message ("%g V", GVP_vp_header_current.dataexpanded[ich]);
+                        }
                 }
-
+        
                 if (ch_index+offset < GVP_stream_buffer_position){
-                        GVP_vp_header_current.gvp_time = (unsigned long)(GVP_vp_header_current.chNs[15]<<16) | (unsigned long)GVP_vp_header_current.chNs[14];
-                        return (GVP_vp_header_current.srcs == 0xfff || GVP_vp_header_current.srcs == 0xfefe)? -1 : 0; // true for full position header update
+                        if (GVP_vp_header_current.srcs & 0xc000){
+                                GVP_vp_header_current.gvp_time = (unsigned long)(GVP_vp_header_current.chNs[15]<<16) | (unsigned long)GVP_vp_header_current.chNs[14];
+                                g_message ("%g ms", GVP_vp_header_current.gvp_time/125e3);
+                        }
+                        if (GVP_vp_header_current.srcs == 0xffff || GVP_vp_header_current.srcs == 0xfefe) return -1; // true for full position header update
+                        return ch_index;
                 }  else
-                        return 1+ch_index; // number channels read until position
+                        return ch_index; // number channels read until position
         };
        
         int subscan_data_y_index_offset;

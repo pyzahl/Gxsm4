@@ -435,13 +435,13 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
 
                 // READ FULL SECTION HEADER
 
-                g_message ("VP: section header reading");
+                g_message ("VP: section header reading pos[%04x] off[%04x]", GVP_stream_buffer_position, GVP_stream_buffer_offset);
                 stream << "Stream Offset: " << std::hex << std::setw(8) << GVP_stream_buffer_offset << ": " << std::endl;
 
                 if (GVP_stream_buffer_AB >= 0 && GVP_stream_buffer_position-GVP_stream_buffer_AB*(BRAM_SIZE>>1) > 0x100){
-                        if (read_GVP_data_block_to_position_vector (GVP_stream_buffer_offset)){
+                        if (read_GVP_data_block_to_position_vector (GVP_stream_buffer_offset) == -1){
                                 // copy header to pv[] as assigned below
-                                g_message ("VP section header.");
+                                g_message ("Reading VP section header...");
                                 stream << "*** VP: section header ***" << std::endl;
 
                                 if (GVP_vp_header_current.section < 0)
@@ -458,18 +458,22 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
                                 pv[PROBEDATA_ARRAY_SEC]   = GVP_vp_header_current.section;
 
                         } else {
-                                stream << "*** VP: section header error ***" << std::endl;
-                                return RET_FR_FCT_END; //, expected full header. Error -- keep scanning?
+                                g_message ("VP: waiting for section header -- incomplete **");
+                                return RET_FR_WAIT;
+                                //g_message ("VP: section header read error.");
+                                //stream << "*** VP: section header error ***" << std::endl;
+                                //return RET_FR_FCT_END; //, expected full header. Error -- keep scanning?
                         }
                 } else {
-                        stream << "*** VP: section waiting for header ***" << std::endl;
+                        g_message ("VP: waiting for section header");
+                        stream << "VP: waiting for section header" << std::endl;
                         return RET_FR_WAIT;
                 }
                 
 
                 if (GVP_vp_header_current.endmark){ // finished?
                         stream << "*** VP: section finshed ENDMARK found ***" << std::endl;
-                        g_message ("VP: finished");
+                        g_message ("*** GVP: finished ***");
                         return RET_FR_FCT_END;
                 }
 
@@ -500,8 +504,9 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
         g_message ("VP: section: %d gvpi[%04d]", GVP_vp_header_current.section, GVP_vp_header_current.i);
         //stream << "Section Data ** Stream Offset: " << std::hex << std::setw(8) << GVP_stream_buffer_offset << ": " << std::endl;
         for (; GVP_vp_header_current.i < GVP_vp_header_current.n; ){
-
-                if (read_GVP_data_block_to_position_vector (GVP_stream_buffer_offset) > 0){
+                int ret=0;
+                ret = read_GVP_data_block_to_position_vector (GVP_stream_buffer_offset);
+                if (ret == GVP_vp_header_current.number_channels){
                         GVP_stream_buffer_offset += 1 + GVP_vp_header_current.number_channels;
 
                         g_message ("VP [%04d] of %d\n", GVP_vp_header_current.i, GVP_vp_header_current.n);
@@ -509,7 +514,13 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
                         // add vector and data to expanded data array representation
                         RPSPMC_ControlClass->add_probedata (GVP_vp_header_current.dataexpanded, pv, !point_index++);
                 } else {
-                        g_message ("-- waiting for data --", GVP_vp_header_current.section);
+                        if (GVP_vp_header_current.endmark){ // finished?
+                                stream << "*** VP: section finshed ENDMARK found ***" << std::endl;
+                                g_message ("*** GVP: finished ***");
+                                return RET_FR_FCT_END;
+                        }
+                        g_message ("-- waiting for data: #ch read = %d / %d--", ret,  GVP_vp_header_current.number_channels);
+                        //return RET_FR_FCT_END;
                         return RET_FR_OK; // wait for data
                 }
                         
