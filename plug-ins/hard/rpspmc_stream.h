@@ -147,8 +147,7 @@ public:
                         if (current_character == '\00') {
                                 break;
                         }
-
-                        character_index++;
+                       character_index++;
                 }
         };
 

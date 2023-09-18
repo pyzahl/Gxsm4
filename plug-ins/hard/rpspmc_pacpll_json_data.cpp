@@ -190,6 +190,9 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         { "SPMC_XS_MONITOR", &spmc_parameters.xs_monitor, true }, // SCAN POS
         { "SPMC_YS_MONITOR", &spmc_parameters.ys_monitor, true },
         { "SPMC_ZS_MONITOR", &spmc_parameters.zs_monitor, true },
+
+        { "SPMC_GVP_DATA_POSITION", &spmc_parameters.gvp_data_position, true },
+
         
         { NULL, NULL, true }
 };

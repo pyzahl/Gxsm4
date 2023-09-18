@@ -37,6 +37,7 @@
 
 #include "rpspmc_pacpll.h"
 
+extern SPMC_parameters spmc_parameters;
 
 /* *** RP_stream module *** */
 
@@ -126,10 +127,15 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
 	} else if (type == SOUP_WEBSOCKET_DATA_BINARY) {
 		contents = g_bytes_get_data (message, &len);
 
-                tmp = g_strdup_printf ("WEBSOCKET_DATA_BINARY SPMC Bytes: %ld\n", len);
+                int pos = 1024;
+                if (pos < (int)(spmc_parameters.gvp_data_position))
+                        pos = (int)(spmc_parameters.gvp_data_position);
+
+                tmp = g_strdup_printf ("WEBSOCKET_DATA_BINARY SPMC Bytes: 0x%04x,  Position: 0x%04x\n", len,(int)spmc_parameters.gvp_data_position);
                 self->status_append (tmp);
                 self->status_append ("\n");
-                self->status_append_int32 (contents, (len/4) > 1024 ? 1024 : len/4); // truncate
+                        
+                self->status_append_int32 (contents, pos); // truncate
                 self->status_append ("\n");
                 //self->debug_log (tmp);
                 g_free (tmp);

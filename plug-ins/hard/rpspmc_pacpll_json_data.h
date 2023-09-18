@@ -175,6 +175,7 @@ struct SPMC_parameters {
         double gvp_program;
         double gvp_reset_options;
         double gvp_status;
+        double gvp_data_position;
         
         double alpha;
         double slope_dzx;

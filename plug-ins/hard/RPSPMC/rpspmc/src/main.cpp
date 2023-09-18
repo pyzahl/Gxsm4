@@ -338,6 +338,9 @@ CDoubleParameter  SPMC_GVP_VECTOR_AA("SPMC_GVP_VECTOR_AA", CBaseParameter::RW, 0
 CDoubleParameter  SPMC_GVP_VECTOR_BB("SPMC_GVP_VECTOR_BB", CBaseParameter::RW, 0, 0, -10.0, 10.0); // BB (Aux Channel ADC #6) -- reserved
 CDoubleParameter  SPMC_GVP_VECTORSLW("SPMC_GVP_VECTORSLW", CBaseParameter::RW, 0, 0,   0.0, 1e6);  // slew rate in #points / sec -- max: 1 MSPS
 
+CIntParameter     SPMC_GVP_DATA_POSITION("SPMC_GVP_DATA_POSITION", CBaseParameter::RW, 0, 0, -2147483648,2147483647); // Last BRAM write position
+
+
 CDoubleParameter  SPMC_ALPHA("SPMC_ALPHA", CBaseParameter::RW, 0.0, 0, -360, +360); // deg
 CDoubleParameter  SPMC_SLOPE_dZX("SPMC_SLOPE_X", CBaseParameter::RW, 0.0, 0, -1.0, +1.0); // slope in Volts Z / Volt X
 CDoubleParameter  SPMC_SLOPE_dZY("SPMC_SLOPE_Y", CBaseParameter::RW, 0.0, 0, -1.0, +1.0); // slope in Volts Z / Volt X

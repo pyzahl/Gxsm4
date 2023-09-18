@@ -11,15 +11,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="4,924.550 ns"></ZoomStartTime>
-      <ZoomEndTime time="5,016.291 ns"></ZoomEndTime>
-      <Cursor1Time time="5,000.000 ns"></Cursor1Time>
+      <ZoomStartTime time="97.170 ns"></ZoomStartTime>
+      <ZoomEndTime time="194.951 ns"></ZoomEndTime>
+      <Cursor1Time time="1,000.000 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
-      <NameColumnWidth column_width="350"></NameColumnWidth>
-      <ValueColumnWidth column_width="99"></ValueColumnWidth>
+      <NameColumnWidth column_width="346"></NameColumnWidth>
+      <ValueColumnWidth column_width="91"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="37" />
+   <WVObjectSize size="36" />
    <wvobject type="logic" fp_name="/tb_spm_ad/pclk">
       <obj_property name="ElementShortName">pclk</obj_property>
       <obj_property name="ObjectShortName">pclk</obj_property>
@@ -176,23 +176,13 @@
       <obj_property name="CustomSignalColor">#00FFFF</obj_property>
       <obj_property name="UseCustomSignalColor">true</obj_property>
    </wvobject>
-   <wvobject type="logic" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/bram_wren">
-      <obj_property name="ElementShortName">bram_wren</obj_property>
-      <obj_property name="ObjectShortName">bram_wren</obj_property>
-      <obj_property name="CustomSignalColor">#FFFF00</obj_property>
-      <obj_property name="UseCustomSignalColor">true</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/bram_wren_next">
-      <obj_property name="ElementShortName">bram_wren_next</obj_property>
-      <obj_property name="ObjectShortName">bram_wren_next</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/bram_en_next">
-      <obj_property name="ElementShortName">bram_en_next</obj_property>
-      <obj_property name="ObjectShortName">bram_en_next</obj_property>
-   </wvobject>
    <wvobject type="logic" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/BRAM_PORTA_clk">
       <obj_property name="ElementShortName">BRAM_PORTA_clk</obj_property>
       <obj_property name="ObjectShortName">BRAM_PORTA_clk</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/BRAM_PORTA_we">
+      <obj_property name="ElementShortName">BRAM_PORTA_we</obj_property>
+      <obj_property name="ObjectShortName">BRAM_PORTA_we</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/bram_addr">
       <obj_property name="ElementShortName">bram_addr[15:0]</obj_property>
@@ -219,6 +209,10 @@
       <obj_property name="ObjectShortName">bram_data_next[31:0]</obj_property>
       <obj_property name="CustomSignalColor">#FF00FF</obj_property>
       <obj_property name="UseCustomSignalColor">true</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/bram_wr">
+      <obj_property name="ElementShortName">bram_wr</obj_property>
+      <obj_property name="ObjectShortName">bram_wr</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/channel">
       <obj_property name="ElementShortName">channel[3:0]</obj_property>

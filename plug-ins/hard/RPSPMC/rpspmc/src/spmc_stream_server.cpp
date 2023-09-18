@@ -71,6 +71,8 @@ extern spmc_stream_server spmc_stream_server_instance;
 
 extern volatile void *FPGA_SPMC_bram;
 
+extern CIntParameter SPMC_GVP_DATA_POSITION;
+
 
 inline bool gvp_finished (){
         return (read_gpio_reg_int32 (3,1) & 2) ? true:false;
@@ -104,7 +106,7 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
         }
 
         int position   = stream_lastwrite_address();
-
+        SPMC_GVP_DATA_POSITION.Value () = position;
 
         if (stream_server_control & 2){ // started?
                 if (verbose > 1) val << " position: " << position;
