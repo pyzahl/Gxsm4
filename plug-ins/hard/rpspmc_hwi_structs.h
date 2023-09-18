@@ -303,15 +303,20 @@ typedef struct{
         // ==== FPGA STREAM MATCHING DATA SECTION
         guint16   srcs_mask;
         guint16   index;
-        gint32    chNs[14];      // full channel data set -- includes positions. X,Y,Z,U,IN1,IN2,x,x,dF,Exec,Phase,Ampl, LckA, LckB
+        gint32    chNs[16];      // full channel data set -- includes positions. X,Y,Z,U,IN1,IN2,x,x,dF,Exec,Phase,Ampl, LckA, LckB
         gint64    gvp_time;      // GVP time in 1/125MHz, 48bit
+        int       number_channels;
+        int       ch_lut[16];
         // ======================
+        double    dataexpanded[NUM_PV_DATA_SIGNALS];
+        gint32    i;             /* GVP i: N-1, ... 0 */
 	gint32    n;             /* number data vectors following in section */
 	guint32   srcs;          /* data source coding mask */
         guint32   time;          /* timestamp */
         double    scan_xyz[3];   /* Scan XY (rotated coords in global system, scan aligend), Z = F-feedback + Z-Probe */
         double    bias;          /* Bias */
         gint32    section;       /* VP section count */
+        gint32    endmark;
 } PROBE_HEADER_POSITIONVECTOR;
 
 
@@ -381,4 +386,80 @@ typedef struct{
                             bram_data_next  <= 32'b11110000000000001111111111111111; // frame info: mask and type (header or data)
                         end
                     endcase
+
+
+
+
+
+
+
+
+#if 0
+        // analyze
+        int sec=0;
+        int point=0;
+       
+        do{
+                int srcs = GVP_stream_buffer[0][offset]&0xffff;
+                int i    = GVP_stream_buffer[0][offset]>>16;
+                stream << std::endl << "SEC/PT[" << sec << ", " << point << "] HDR: i=" << std::dec << i << " SRCS=0x" << std::hex << std::setw(4) << srcs << std::endl;
+                offset++; point++;
+
+                if (srcs == 0xffff)
+                        number_points = i+1;
+
+                int ch_lut[16];
+                int number_channels=0;
+                double volts[16];
+                for (i=0; i<16; i++){
+                        ch_lut[i]=-1;
+                        if (srcs & (1<<i))
+                                ch_lut[number_channels++]=i;
+                }
+                stream << std::hex << std::setw(8) << offset << ": ";
+                for (size_t ch_index = 0; ch_index < number_channels && ch_index+offset < position; ++ch_index){
+                        //stream << std::hex << std::setw(8) << stream_buffer[0][ch_index+offset] << ", ";
+                        volts[ch_index] = rpspmc_to_volts (stream_buffer[0][ch_index+offset]);
+                        if (srcs == 0xffff || srcs == 0xfefe){
+                                switch (ch_lut[ch_index]){
+                                case 0: g_array_append_val (RPSPMC_ControlClass->garray_probedata[PROBEDATA_ARRAY_XS], volts[ch_index]); break;
+                                case 1: g_array_append_val (RPSPMC_ControlClass->garray_probedata[PROBEDATA_ARRAY_YS], volts[ch_index]); break;
+                                case 2: g_array_append_val (RPSPMC_ControlClass->garray_probedata[PROBEDATA_ARRAY_ZS], volts[ch_index]); break;
+                                case 3: g_array_append_val (RPSPMC_ControlClass->garray_probedata[PROBEDATA_ARRAY_U ], volts[ch_index]); break;
+                                }
+                                point_index=0;
+                        }
+                }
+
+                if (srcs&0xc000 || srcs == 0xfefe){
+                        double t = (double)(((unsigned long)stream_buffer[0][15+offset]<<16) | (unsigned long)stream_buffer[0][14+offset])/125000.;
+                        g_array_append_val (RPSPMC_ControlClass->garray_probedata[PROBEDATA_ARRAY_TIME], t);
+                }
+                double dii=index_all++;
+                g_array_append_val (RPSPMC_ControlClass->garray_probedata[PROBEDATA_ARRAY_INDEX], dii);
+                double dsec=sec;
+                g_array_append_val (RPSPMC_ControlClass->garray_probedata[PROBEDATA_ARRAY_SEC], dsec);
+
+                if (++point_index == number_points)
+                        point_index=0;
+
+                RPSPMC_ControlClass->current_probe_data_index++;	
+
+                //stream << std::endl;
+                //stream << std::hex << std::setw(8) << point << ": ";
+                for (size_t ch_index = 0; ch_index < number_channels; ++ch_index){
+                        stream << std::setw(8) << std::defaultfloat << volts[ch_index] << ", ";
+                }
+                //stream << std::endl;
+                offset += number_channels;
+        } while (offset < position && offset < (len>>2));
+#endif
+
+
+        
+
+
+
+
+
 */

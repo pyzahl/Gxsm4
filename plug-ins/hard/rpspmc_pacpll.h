@@ -839,8 +839,6 @@ public:
 				   Mem2d *Mob[MAX_SRCS_CHANNELS],
 				   int ixy_sub[4]);
 
-        double simulate_value (int xi, int yi, int ch); // simulate data at x,y,ch function
-
         int start_data_read (int y_start, 
                              int num_srcs0, int num_srcs1, int num_srcs2, int num_srcs3, 
                              Mem2d **Mob0, Mem2d **Mob1, Mem2d **Mob2, Mem2d **Mob3);
@@ -877,6 +875,43 @@ public:
                         return NULL;
 	};
 
+        int read_GVP_data_block_to_position_vector (int offset){
+                size_t ch_index;
+                GVP_vp_header_current.srcs = GVP_stream_buffer[offset]&0xffff;
+
+                GVP_vp_header_current.i = (GVP_stream_buffer[offset]>>16);
+                if (GVP_vp_header_current.srcs == 0xfff){
+                        GVP_vp_header_current.n    = GVP_vp_header_current.i + 1;
+                        GVP_vp_header_current.endmark = 0;
+                } else {
+                        if (GVP_stream_buffer[offset] == 0xfefefefe){
+                                GVP_vp_header_current.endmark = 1;
+                                GVP_vp_header_current.srcs = 0xfff;
+                        }
+                }
+                        
+                GVP_vp_header_current.index = GVP_vp_header_current.n - GVP_vp_header_current.i;
+
+                GVP_vp_header_current.number_channels=0;
+                for (int i=0; i<16; i++){
+                        GVP_vp_header_current.ch_lut[i]=-1;
+                        if (GVP_vp_header_current.srcs & (1<<i))
+                                GVP_vp_header_current.ch_lut[GVP_vp_header_current.number_channels++] = i;
+                }
+
+                // expand data stream and sort into channels
+                for (ch_index=0; ch_index < GVP_vp_header_current.number_channels && ch_index+offset < GVP_stream_buffer_position; ++ch_index){
+                        int ich = GVP_vp_header_current.ch_lut[ch_index];
+                        GVP_vp_header_current.chNs[ich] = GVP_stream_buffer[1+ch_index+offset];
+                        GVP_vp_header_current.dataexpanded[ich] = rpspmc_to_volts (GVP_vp_header_current.chNs[ich]); // Volts
+                }
+
+                if (ch_index+offset < GVP_stream_buffer_position){
+                        GVP_vp_header_current.gvp_time = (unsigned long)(GVP_vp_header_current.chNs[15]<<16) | (unsigned long)GVP_vp_header_current.chNs[14];
+                        return (GVP_vp_header_current.srcs == 0xfff || GVP_vp_header_current.srcs == 0xfefe)? -1 : 0; // true for full position header update
+                }  else
+                        return 1+ch_index; // number channels read until position
+        };
        
         int subscan_data_y_index_offset;
 
@@ -895,7 +930,10 @@ private:
 	GThread *probe_data_read_thread;
         gboolean KillFlg;
 
-        gint32 stream_buffer[2][BRAM_SIZE >> 1];
+        gint32 GVP_stream_buffer[BRAM_SIZE];
+        int GVP_stream_buffer_offset;
+        int GVP_stream_buffer_AB;
+        int GVP_stream_buffer_position;
         
 public:
         
