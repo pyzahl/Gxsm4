@@ -1320,8 +1320,8 @@ void RPSPMC_Control::set_probevector(double pv[NUM_PV_HEADER_SIGNALS]){
                 ++nun_valid_data_sections;
         }
 
-#ifdef TTY_DEBUG
-	g_print ("### SET_PV [%04d] {sec=%d}= (", current_probe_data_index, current_probe_section);
+#if 1 //def TTY_DEBUG
+	g_print ("### SET_PV [%04d] {sec=%d}#s[%d]= (", current_probe_data_index, current_probe_section, nun_valid_data_sections);
 	for (i = PROBEDATA_ARRAY_INDEX, j=0; i <= PROBEDATA_ARRAY_SEC; ++i, ++j)
 		g_print("%g_[%d], ", pv[j],i);
         g_print("\n");
@@ -1346,11 +1346,13 @@ void RPSPMC_Control::add_probevector(){
 	val = g_array_index (garray_probedata [PROBEDATA_ARRAY_BLOCK], double, current_probe_data_index-1);
 	g_array_append_val (garray_probedata [PROBEDATA_ARRAY_BLOCK], val);
 
+#if 0
         g_print ("###ADD_PV[%04d] sec=%d blk=%d (du %g  dxyz %g %g %g) \n",
                  current_probe_data_index, current_probe_section, (int)val,
                  program_vector_list[current_probe_section].f_du,
                  program_vector_list[current_probe_section].f_dx, program_vector_list[current_probe_section].f_dy, program_vector_list[current_probe_section].f_dz
                  );
+#endif
         double multi = 1./program_vector_list[current_probe_section].n;
         double dt    = 1./program_vector_list[current_probe_section].slew;
 	for (i = PROBEDATA_ARRAY_TIME; i < PROBEDATA_ARRAY_SEC; ++i){

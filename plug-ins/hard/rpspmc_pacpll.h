@@ -51,6 +51,7 @@
 #define i_Y 1
 #define i_Z 2
 
+#define MAX_PV MAX_PROGRAM_VECTORS
 
 // forward defs
 extern PACPLL_parameters pacpll_parameters;
@@ -70,7 +71,8 @@ extern "C++" {
         extern GxsmPlugin rpspmc_pacpll_hwi_pi;
 }
 
-#define BRAM_SIZE        16384            // (14 bit address)
+#define BRAM_SIZE        16384            // (1<<14, 14 bit address)
+#define EXPAND_MULTIPLES 512
 
 // GUI builder helper
 class GUI_Builder : public BuildParam{
@@ -508,6 +510,25 @@ public:
 	void add_probevector();
 	void set_probevector(double pv[NUM_PV_HEADER_SIGNALS]);
 
+        int next_section(int pc){
+                 if (pc < 0)
+                         return 0; // start
+                 else {
+                         if (program_vector_list[pc].iloop > 0){
+                                 program_vector_list[pc].iloop--;
+                                 pc += program_vector_list[pc].ptr_next; // jump
+                         } else {
+                                 program_vector_list[pc].iloop = program_vector_list[pc].repetitions; // reload
+                                 pc++; // next
+                         }
+                         if ( pc >= MAX_PV ||  pc < 0){ // pc exception check (out of valid vpc range)
+                                 pc=0; // reset
+                                 g_warning ("Inernal GVP_vp_header_current.section (vpc) program counter position / jump out of range.");
+                         }
+                 }
+                 return pc;
+        };
+        
 	void add_probe_hdr(double pv[NUM_PV_HEADER_SIGNALS]);
 	void dump_probe_hdr();
 
@@ -750,7 +771,6 @@ protected:
 	gboolean GUI_ready;
 
 private:
-	#define MAX_PV 50
 	PROBE_VECTOR_GENERIC     program_vector_list[MAX_PV]; // copy for GXSM internal use only
 
 	GSettings *hwi_settings;
@@ -898,12 +918,6 @@ public:
                         
                 GVP_vp_header_current.index = GVP_vp_header_current.n - GVP_vp_header_current.i;
 
-#if 0
-                if (GVP_vp_header_current.endmark)
-                        g_message ("N[ENDMARK]");
-                else
-                        g_message ("N[%4d / %4d] GVP_vp_header_current.srcs=%04x", GVP_vp_header_current.index, GVP_vp_header_current.n, GVP_vp_header_current.srcs);
-#endif                        
                 GVP_vp_header_current.number_channels=0;
                 for (int i=0; i<16; i++){
                         GVP_vp_header_current.ch_lut[i]=-1;
@@ -921,9 +935,26 @@ public:
                         }
                 }
         
+
+#if 1
+                if (GVP_vp_header_current.srcs == 0xffff){
+                        GVP_vp_header_current.gvp_time = (unsigned long)(GVP_vp_header_current.chNs[15]<<16) | (unsigned long)GVP_vp_header_current.chNs[14];
+                        GVP_vp_header_current.dataexpanded[14] = (double)GVP_vp_header_current.gvp_time/125e3;
+                        if (GVP_vp_header_current.endmark)
+                                g_message ("N[ENDMARK]");
+                        else
+                                g_message ("N[%4d / %4d] GVP_vp_header_current.srcs=%04x   Bias=%8g V    t=%8g ms",
+                                           GVP_vp_header_current.index, GVP_vp_header_current.n, GVP_vp_header_current.srcs,
+                                           rpspmc_to_volts (GVP_vp_header_current.chNs[3]),
+                                           GVP_vp_header_current.dataexpanded[14]
+                                           );
+                }
+#endif                        
+
                 if (ch_index+offset < GVP_stream_buffer_position){
                         if (GVP_vp_header_current.srcs & 0xc000){
                                 GVP_vp_header_current.gvp_time = (unsigned long)(GVP_vp_header_current.chNs[15]<<16) | (unsigned long)GVP_vp_header_current.chNs[14];
+                                GVP_vp_header_current.dataexpanded[14] = (double)GVP_vp_header_current.gvp_time/125e3;
                                 //g_message ("%g ms", GVP_vp_header_current.gvp_time/125e3);
                         }
                         if (GVP_vp_header_current.srcs == 0xffff)
@@ -950,7 +981,7 @@ private:
 	GThread *probe_data_read_thread;
         gboolean KillFlg;
 
-        gint32 GVP_stream_buffer[BRAM_SIZE];
+        gint32 GVP_stream_buffer[EXPAND_MULTIPLES*BRAM_SIZE];
         int GVP_stream_buffer_offset;
         int GVP_stream_buffer_AB;
         int GVP_stream_buffer_position;
@@ -974,9 +1005,6 @@ public:
 	};
 	int GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v);
 	void GVP_abort_vector_program ();
-
-        void GVP_fetch_header_and_positionvector (gconstpointer stream);
-        void GVP_fetch_data_srcs ();
 
         void RPSPMC_set_bias (double bias) {};
         void RPSPMC_set_current_sp (double sp) {};

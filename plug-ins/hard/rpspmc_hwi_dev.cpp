@@ -361,7 +361,7 @@ void rpspmc_hwi_dev::on_new_data (gconstpointer contents, gsize len, int positio
                 GVP_stream_buffer_AB=0;
         GVP_stream_buffer_position=position;
         g_message ("on_new_data ** AB=%d pos=%d",  GVP_stream_buffer_AB, GVP_stream_buffer_position);
-        memcpy (&GVP_stream_buffer[ GVP_stream_buffer_AB & 1 ? (BRAM_SIZE>>1) : 0 ], contents, len);
+        memcpy (&GVP_stream_buffer[ (GVP_stream_buffer_AB * (BRAM_SIZE>>1))&(EXPAND_MULTIPLES*BRAM_SIZE-1) ], contents, len);
         GVP_stream_buffer_AB++;
 }
 
@@ -370,7 +370,7 @@ void rpspmc_hwi_dev::on_new_data (gconstpointer contents, gsize len, int positio
 int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
 	static double pv[NUM_PV_HEADER_SIGNALS];
 	static int point_index = 0;
-        static int index_all = 0;
+        //        static int index_all = 0;
 	static int end_read = 0;
 	static int need_fct = FR_YES;  // need fifo control
 	static int need_hdr = FR_YES;  // need header
@@ -395,7 +395,7 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
 
                 GVP_vp_header_current.endmark = 0;
 		point_index = 0;
-                index_all = 0;
+                //                index_all = 0;
 
 		need_fct  = FR_YES; // Fifo Control
 		need_hdr  = FR_YES; // Header
@@ -436,25 +436,23 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
                 // READ FULL SECTION HEADER
 
                 if (GVP_stream_buffer_AB > 0){
-                        g_message ("VP[[%d]]: section header ** reading pos[%04x] off[%04x] #AB=%d", index_all, GVP_stream_buffer_position, GVP_stream_buffer_offset, GVP_stream_buffer_AB);
+                        g_message ("VP: section header ** reading pos[%04x] off[%04x] #AB=%d", GVP_stream_buffer_position, GVP_stream_buffer_offset, GVP_stream_buffer_AB);
                         g_message ("Reading VP section header...");
                         if (read_GVP_data_block_to_position_vector (GVP_stream_buffer_offset) == -1){
-                                // copy header to pv[] as assigned below
 
-                                if (GVP_vp_header_current.section < 0)
-                                        GVP_vp_header_current.section = 0;
-                                else
-                                        GVP_vp_header_current.section++;
-
+                                // next section, load header, manage pc
+                                GVP_vp_header_current.section = RPSPMC_ControlClass->next_section (GVP_vp_header_current.section);
+                                        
                                 g_message (" *** OK, loading pv sec[%d] ***", GVP_vp_header_current.section);
- 
-                                pv[PROBEDATA_ARRAY_INDEX] = index_all++;
+
+                                // copy header to pv[] as assigned below
+                                pv[PROBEDATA_ARRAY_INDEX] = (double)GVP_vp_header_current.index;
+                                pv[PROBEDATA_ARRAY_SEC]   = (double)GVP_vp_header_current.section;
                                 pv[PROBEDATA_ARRAY_TIME]  = (double)GVP_vp_header_current.gvp_time/125e3; // ms
                                 pv[PROBEDATA_ARRAY_XS]    = rpspmc_to_volts (GVP_vp_header_current.chNs[0]);
                                 pv[PROBEDATA_ARRAY_YS]    = rpspmc_to_volts (GVP_vp_header_current.chNs[1]);
                                 pv[PROBEDATA_ARRAY_ZS]    = rpspmc_to_volts (GVP_vp_header_current.chNs[2]);
                                 pv[PROBEDATA_ARRAY_U ]    = rpspmc_to_volts (GVP_vp_header_current.chNs[3]);
-                                pv[PROBEDATA_ARRAY_SEC]   = GVP_vp_header_current.section;
 
                         } else {
                                 if (GVP_vp_header_current.endmark){ // finished?
@@ -499,7 +497,7 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
 
                         // add vector and data to expanded data array representation
                         RPSPMC_ControlClass->add_probedata (GVP_vp_header_current.dataexpanded, pv, !point_index++);
-                        index_all++;
+                        //                        index_all++;
                 } else {
                         if (GVP_vp_header_current.endmark){ // finished?
                                 g_message ("*** GVP: finished ***");
@@ -974,47 +972,9 @@ void rpspmc_hwi_dev::GVP_vp_init (){
         RPSPMC_GVP_section_count = 0;
         RPSPMC_GVP_n = 0;
         GVP_vp_header_current.section = -1; // still invalid
-        GVP_stream_buffer_offset = 0x100;
-
-        //vp_num_data_sets = 0;
-        //section_count=ix=iix=lix = 0;
-        //vp_time = 0;
-        //vp_index_all = 0;
-        //vp_clock_start = clock();
-     	//vp_next_section ();    // setup vector program start
-
-	//****SET to GVP_fetch_header_and_positionvector ();
-
-        // fire up thread!
-        
-
+        GVP_stream_buffer_offset = 0x100; // =0x00 **** TESTING BRAM ISSUE -- FIX ME !!! *****
 }
 
-
-void rpspmc_hwi_dev::GVP_fetch_header_and_positionvector (gconstpointer stream) {
-	// Section header: [SRCS, N, TIME]_32 :: 6
-	//if (!vector) return;
-
-        /*
-        GVP_vp_header_current.n    = vector->n;
-        GVP_vp_header_current.srcs = vector->srcs;
-        GVP_vp_header_current.time = vp_time;
-        GVP_vp_header_current.scan_xyz[i_X] = scan_xyz_vec[i_X];
-        GVP_vp_header_current.scan_xyz[i_Y] = scan_xyz_vec[i_Y];
-        GVP_vp_header_current.scan_xyz[i_Z] = scan_xyz_vec[i_Z];
-        GVP_vp_header_current.bias    = sample_bias;
-        GVP_vp_header_current.section = section_count;
-        */
-        GVP_vp_header_current.section = ++RPSPMC_GVP_section_count;
-
-        //g_print ("EMU** HPV [%4d Srcs%08x t=%08d s XYZ %g %g %g in V Bias %g V Sec %d]\n", vector->n, vector->srcs, vp_time,
-        //         DAC2Volt (scan_xyz_vec[i_X]), DAC2Volt (scan_xyz_vec[i_Y]), DAC2Volt (scan_xyz_vec[i_Z]),
-        //         DAC2Volt (vp_bias), section_count);
-}
-
-void rpspmc_hwi_dev::GVP_fetch_data_srcs (){
-        //double GVP_vp_data_set[16]; // 16 channels max to data stream
-}
 
 void rpspmc_hwi_dev::rpspmc_hwi_dev::GVP_start_data_read(){
 }

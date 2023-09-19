@@ -287,6 +287,7 @@ typedef struct{
 	guint32   srcs;          // SRCS source channel coding
 	guint32   options;       // Options, Dig IO, ... not yet all defined
 	gint32    repetitions;   // numer of repetitions
+        gint32    iloop;
         gint32    ptr_next;      // loop jump relative to vpc
 	double    f_du;          // dU (bias) full vector delta in Volts
 	double    f_dx;          // dX full vector delta in Volts

@@ -132,7 +132,7 @@ SOURCE_SIGNAL_DEF source_signals[] = {
         { 0x00800000, "Bias",     " ", "V", "V", 1.0, PROBEDATA_ARRAY_U },
         { 0x08000000, "DA",       " ", "V", "V", 1.0, PROBEDATA_ARRAY_AA },
         // -- general measured signals from index [8]   // <=== to Volt conversion here -- unit sym and scale are custom auto adjusted in .._eventhandling lookup functions as of this mask 
-        { 0x0000C000, "Time-Mon",     " ", "ms", "ms", 1.0, PROBEDATA_ARRAY_S15 }, // 1000/emu->frq_ref => ms
+        { 0x0000C000, "Time-Mon",     " ", "ms", "ms", 1.0, PROBEDATA_ARRAY_S15 }, // ms
         { 0x00000001, "XS-Mon",       " ", "AA", UTF8_ANGSTROEM, 1.0, PROBEDATA_ARRAY_S1 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x00000002, "YS-Mon",       " ", "AA", UTF8_ANGSTROEM, 1.0, PROBEDATA_ARRAY_S2 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x00000004, "ZS-Mon",       " ", "AA", UTF8_ANGSTROEM, 1.0, PROBEDATA_ARRAY_S3 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
@@ -147,7 +147,7 @@ SOURCE_SIGNAL_DEF source_signals[] = {
         { 0x00000100, "SWPS2-chhose", " ", "V",  "V", 1.0, PROBEDATA_ARRAY_S12 }, // ** swappable **,
         { 0x00000800, "SWPS3-choose", " ", "V",  "V", 1.0, PROBEDATA_ARRAY_S13 }, // ** swappable **,
         { 0x00000400, "SWPS4-choose", " ", "V",  "V", 1.0, PROBEDATA_ARRAY_S14 }, // ** swappable **,
-        { 0x80000000, "BlockI", " ", "i#", "i#", 1, PROBEDATA_ARRAY_BLOCK },
+        { 0x80000000, "BlockI", " ", "i#", "i#", 1.0, PROBEDATA_ARRAY_BLOCK }, // MUST BE ALWAYS LAST AND IN HERE!! END MARK.
         { 0x00000000, NULL, NULL, NULL, NULL, 0.0, 0 }
 };
 

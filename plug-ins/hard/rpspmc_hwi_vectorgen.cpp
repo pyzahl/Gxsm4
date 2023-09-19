@@ -386,6 +386,7 @@ void RPSPMC_Control::write_program_vector (int index){
 	program_vector_list[index].srcs = program_vector.srcs;
 	program_vector_list[index].options = program_vector.options;
 	program_vector_list[index].repetitions = program_vector.repetitions;
+	program_vector_list[index].iloop = program_vector.repetitions; // init
 	program_vector_list[index].ptr_next = program_vector.ptr_next;
 	program_vector_list[index].f_du = program_vector.f_du;
 	program_vector_list[index].f_dx = program_vector.f_dx;
