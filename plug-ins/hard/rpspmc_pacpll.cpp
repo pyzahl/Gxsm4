@@ -88,18 +88,14 @@ RP data streaming
 #define GVP_SHIFT_UP  1
 #define GVP_SHIFT_DN -1
 
-
-
-
 #define CPN(N) ((double)(1LL<<(N))-1.)
-#define DSP32Qs15dot16TOV     (10.0/(32767.*(1<<16)))
-#define ADCV10     (10.0/32767.)
-#define BiasFac    (main_get_gapp()->xsm->Inst->Dig2VoltOut (1.) * main_get_gapp()->xsm->Inst->BiasGainV2V ())
-#define BiasOffset (main_get_gapp()->xsm->Inst->Dig2VoltOut (1.) * main_get_gapp()->xsm->Inst->BiasV2V (0.)) // not used here
-#define CurrFac    (main_get_gapp()->xsm->Inst->Dig2VoltOut (1.) *1./main_get_gapp()->xsm->Inst->nAmpere2V (1.))
-#define ZAngFac    (main_get_gapp()->xsm->Inst->Dig2ZA (1))
-#define XAngFac    (main_get_gapp()->xsm->Inst->Dig2XA (1))
-#define YAngFac    (main_get_gapp()->xsm->Inst->Dig2YA (1))
+
+// WARNING WARNIN WARNING.. not working life
+#define BiasFac    main_get_gapp()->xsm->Inst->BiasGainV2V ()
+#define CurrFac    (1./main_get_gapp()->xsm->Inst->nAmpere2V (1.))
+#define ZAngFac    (main_get_gapp()->xsm->Inst->Volt2ZA (1))
+#define XAngFac    (main_get_gapp()->xsm->Inst->Volt2XA (1))
+#define YAngFac    (main_get_gapp()->xsm->Inst->Volt2YA (1))
 
 /*
                               // CH      MASK
@@ -126,30 +122,32 @@ RP data streaming
 // Masks MUST BE unique
 SOURCE_SIGNAL_DEF source_signals[] = {
         // -- 8 vector generated signals (outputs/mapping) ==> must match: #define NUM_VECTOR_SIGNALS 8
+        //  xxxxSRCS
         { 0x01000000, "Index",    " ", "#", "#", 1.0, PROBEDATA_ARRAY_INDEX },
-        { 0x02000000, "Time",     " ", "ms", "ms", 1.0, PROBEDATA_ARRAY_TIME }, // 1000/emu->frq_ref => ms
+        { 0x02000000, "Time",     " ", "ms", "ms", 1.0, PROBEDATA_ARRAY_TIME }, // ms
         { 0x04000000, "SEC",      " ", "#", "#", 1.0, PROBEDATA_ARRAY_SEC },
-        { 0x10000000, "XS",       " ", "AA", UTF8_ANGSTROEM, XAngFac, PROBEDATA_ARRAY_XS },
-        { 0x20000000, "YS",       " ", "AA", UTF8_ANGSTROEM, YAngFac, PROBEDATA_ARRAY_YS },
-        { 0x40000000, "ZS",       " ", "AA", UTF8_ANGSTROEM, ZAngFac, PROBEDATA_ARRAY_ZS },
-        { 0x80000000, "Bias",     " ", "V", "V", BiasFac, PROBEDATA_ARRAY_U },
-        { 0x08000000, "DA",       " ", "V", "V", 1., PROBEDATA_ARRAY_AA },
+        { 0x00100000, "XS",       " ", "AA", UTF8_ANGSTROEM, 1.0, PROBEDATA_ARRAY_XS }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
+        { 0x00200000, "YS",       " ", "AA", UTF8_ANGSTROEM, 1.0, PROBEDATA_ARRAY_YS }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
+        { 0x00400000, "ZS",       " ", "AA", UTF8_ANGSTROEM, 1.0, PROBEDATA_ARRAY_ZS }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
+        { 0x00800000, "Bias",     " ", "V", "V", 1.0, PROBEDATA_ARRAY_U },
+        { 0x08000000, "DA",       " ", "V", "V", 1.0, PROBEDATA_ARRAY_AA },
         // -- general measured signals from index [8]   // <=== to Volt conversion here -- unit sym and scale are custom auto adjusted in .._eventhandling lookup functions as of this mask 
         { 0x0000C000, "Time-Mon",     " ", "ms", "ms", 1.0, PROBEDATA_ARRAY_S15 }, // 1000/emu->frq_ref => ms
-        { 0x00000001, "XS-Mon",       " ", "AA", UTF8_ANGSTROEM, XAngFac, PROBEDATA_ARRAY_S1 },
-        { 0x00000002, "YS-Mon",       " ", "AA", UTF8_ANGSTROEM, YAngFac, PROBEDATA_ARRAY_S2 },
-        { 0x00000004, "ZS-Mon",       " ", "AA", UTF8_ANGSTROEM, ZAngFac, PROBEDATA_ARRAY_S3 },
-        { 0x00000008, "Bias-Mon",     " ", "V", "V", BiasFac, PROBEDATA_ARRAY_S4 },
-	{ 0x00000010, "In1-Signal",   " ", "V",   "V", 1.0,        PROBEDATA_ARRAY_S5 },
-        { 0x00000020, "In2-Current",  " ", "nA", "nA", CurrFac,    PROBEDATA_ARRAY_S6 },
-        { 0x00000040, "In3-**",       " ", "V",   "V", 1.0,        PROBEDATA_ARRAY_S7 },
-        { 0x00000080, "In4-**",       " ", "V",   "V", 1.0,        PROBEDATA_ARRAY_S8 },
-        { 0x00001000, "LockInX",      " ", "V",   "V", 1.0,        PROBEDATA_ARRAY_S9 },
-        { 0x00002000, "LockInR",      " ", "V",   "V", 1.0,        PROBEDATA_ARRAY_S10 },
+        { 0x00000001, "XS-Mon",       " ", "AA", UTF8_ANGSTROEM, 1.0, PROBEDATA_ARRAY_S1 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
+        { 0x00000002, "YS-Mon",       " ", "AA", UTF8_ANGSTROEM, 1.0, PROBEDATA_ARRAY_S2 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
+        { 0x00000004, "ZS-Mon",       " ", "AA", UTF8_ANGSTROEM, 1.0, PROBEDATA_ARRAY_S3 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
+        { 0x00000008, "Bias-Mon",     " ", "V",   "V", 1.0,    PROBEDATA_ARRAY_S4 }, // BiasFac, see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
+	{ 0x00000010, "In1-Signal",   " ", "V",   "V", 1.0,    PROBEDATA_ARRAY_S5 },
+        { 0x00000020, "In2-Current",  " ", "nA", "nA", 1.0,    PROBEDATA_ARRAY_S6 }, // CurrFac, see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
+        { 0x00000040, "In3-**",       " ", "V",   "V", 1.0,    PROBEDATA_ARRAY_S7 },
+        { 0x00000080, "In4-**",       " ", "V",   "V", 1.0,    PROBEDATA_ARRAY_S8 },
+        { 0x00001000, "LockInX",      " ", "V",   "V", 1.0,    PROBEDATA_ARRAY_S9 },
+        { 0x00002000, "LockInR",      " ", "V",   "V", 1.0,    PROBEDATA_ARRAY_S10 },
         { 0x00000200, "SWPS1-choose", " ", "V",  "V", 1.0, PROBEDATA_ARRAY_S11 }, // ** swappable **,
         { 0x00000100, "SWPS2-chhose", " ", "V",  "V", 1.0, PROBEDATA_ARRAY_S12 }, // ** swappable **,
         { 0x00000800, "SWPS3-choose", " ", "V",  "V", 1.0, PROBEDATA_ARRAY_S13 }, // ** swappable **,
         { 0x00000400, "SWPS4-choose", " ", "V",  "V", 1.0, PROBEDATA_ARRAY_S14 }, // ** swappable **,
+        { 0x80000000, "BlockI", " ", "i#", "i#", 1, PROBEDATA_ARRAY_BLOCK },
         { 0x00000000, NULL, NULL, NULL, NULL, 0.0, 0 }
 };
 

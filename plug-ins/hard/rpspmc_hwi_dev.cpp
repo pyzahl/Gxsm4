@@ -135,7 +135,7 @@ MOD_INPUT mod_input_list[] = {
 rpspmc_hwi_dev::rpspmc_hwi_dev(){
 
         // auto adjust and override preferences
-        main_get_gapp()->xsm->Inst->override_dig_range ((1<<31)-1, xsmres);
+        main_get_gapp()->xsm->Inst->override_dig_range (1<<19, xsmres); // gxsm does precision sanity checks and trys to round to best fit grid
         main_get_gapp()->xsm->Inst->override_volt_in_range (5.0, xsmres);
         main_get_gapp()->xsm->Inst->override_volt_out_range (5.0, xsmres);
         
@@ -328,8 +328,6 @@ gpointer ProbeDataReadThread (void *ptr_sr){
 
         g_message("ProbeFifoReadThread ** starting processing loop ** FF=%s", finish_flag?"True":"False");
 	while (sr->is_scanning () || finish_flag){ // while scanning (raster mode) or until single shot probe is finished
-                if (RPSPMC_ControlClass->current_auto_flags & FLAG_AUTO_PLOT)
-                        RPSPMC_ControlClass->Probing_graph_update_thread_safe ();
 
                 if (sr->ReadProbeData ()){ // True when finished
                 
@@ -346,6 +344,8 @@ gpointer ProbeDataReadThread (void *ptr_sr){
                         RPSPMC_ControlClass->push_probedata_arrays ();
                         RPSPMC_ControlClass->init_probedata_arrays ();
                 }
+                if (RPSPMC_ControlClass->current_auto_flags & FLAG_AUTO_PLOT)
+                        RPSPMC_ControlClass->Probing_graph_update_thread_safe ();
 	}
 
 	--sr->probe_fifo_thread_active;
@@ -357,11 +357,12 @@ gpointer ProbeDataReadThread (void *ptr_sr){
 }
 
 void rpspmc_hwi_dev::on_new_data (gconstpointer contents, gsize len, int position){
-        static int k=0;
-        GVP_stream_buffer_AB=-2; // lock
+        if (GVP_stream_buffer_AB < 0) // restarted, reset read count
+                GVP_stream_buffer_AB=0;
         GVP_stream_buffer_position=position;
-        memcpy (&GVP_stream_buffer[k*(BRAM_SIZE>>1)], contents, len);
-        GVP_stream_buffer_AB=k; // last updated page
+        g_message ("on_new_data ** AB=%d pos=%d",  GVP_stream_buffer_AB, GVP_stream_buffer_position);
+        memcpy (&GVP_stream_buffer[ GVP_stream_buffer_AB & 1 ? (BRAM_SIZE>>1) : 0 ], contents, len);
+        GVP_stream_buffer_AB++;
 }
 
 // ReadProbeData:
@@ -375,7 +376,7 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
 	static int need_hdr = FR_YES;  // need header
 	static int need_data = FR_YES; // need data
 
-        std::ostringstream stream;
+        //std::ostringstream stream;
 #ifdef LOGMSGS0
 	static double dbg0=0., dbg1=0.;
 	static int dbgi0=0;
@@ -391,7 +392,8 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
                 for (int i=0; i<NUM_PV_HEADER_SIGNALS; ++i) pv[i]=0.;
 
                 GVP_vp_init (); // vectors should be written by now!
-                
+
+                GVP_vp_header_current.endmark = 0;
 		point_index = 0;
                 index_all = 0;
 
@@ -431,25 +433,22 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
 
 	if (need_hdr){ // we have enough data if control gets here!
 		LOGMSGS ( "FR::NEED_HDR" << std::endl);
-                std::string str =  stream.str();
-
                 // READ FULL SECTION HEADER
 
-                g_message ("VP: section header reading pos[%04x] off[%04x]", GVP_stream_buffer_position, GVP_stream_buffer_offset);
-                stream << "Stream Offset: " << std::hex << std::setw(8) << GVP_stream_buffer_offset << ": " << std::endl;
-
-                if (GVP_stream_buffer_AB >= 0 && GVP_stream_buffer_position-GVP_stream_buffer_AB*(BRAM_SIZE>>1) > 0x100){
+                if (GVP_stream_buffer_AB > 0){
+                        g_message ("VP[[%d]]: section header ** reading pos[%04x] off[%04x] #AB=%d", index_all, GVP_stream_buffer_position, GVP_stream_buffer_offset, GVP_stream_buffer_AB);
+                        g_message ("Reading VP section header...");
                         if (read_GVP_data_block_to_position_vector (GVP_stream_buffer_offset) == -1){
                                 // copy header to pv[] as assigned below
-                                g_message ("Reading VP section header...");
-                                stream << "*** VP: section header ***" << std::endl;
 
                                 if (GVP_vp_header_current.section < 0)
                                         GVP_vp_header_current.section = 0;
                                 else
                                         GVP_vp_header_current.section++;
+
+                                g_message (" *** OK, loading pv sec[%d] ***", GVP_vp_header_current.section);
  
-                                pv[PROBEDATA_ARRAY_INDEX] = index_all;
+                                pv[PROBEDATA_ARRAY_INDEX] = index_all++;
                                 pv[PROBEDATA_ARRAY_TIME]  = (double)GVP_vp_header_current.gvp_time/125e3; // ms
                                 pv[PROBEDATA_ARRAY_XS]    = rpspmc_to_volts (GVP_vp_header_current.chNs[0]);
                                 pv[PROBEDATA_ARRAY_YS]    = rpspmc_to_volts (GVP_vp_header_current.chNs[1]);
@@ -458,68 +457,55 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
                                 pv[PROBEDATA_ARRAY_SEC]   = GVP_vp_header_current.section;
 
                         } else {
+                                if (GVP_vp_header_current.endmark){ // finished?
+                                        g_message ("*** GVP: finished ***");
+                                        return RET_FR_FCT_END;
+                                }
+                                
                                 g_message ("VP: waiting for section header -- incomplete **");
-                                return RET_FR_WAIT;
-                                //g_message ("VP: section header read error.");
-                                //stream << "*** VP: section header error ***" << std::endl;
-                                //return RET_FR_FCT_END; //, expected full header. Error -- keep scanning?
+                                return RET_FR_OK;
                         }
                 } else {
-                        g_message ("VP: waiting for section header");
-                        stream << "VP: waiting for section header" << std::endl;
-                        return RET_FR_WAIT;
+                        g_message ("VP: waiting for data");
+                        return RET_FR_OK;
                 }
                 
 
                 if (GVP_vp_header_current.endmark){ // finished?
-                        stream << "*** VP: section finshed ENDMARK found ***" << std::endl;
                         g_message ("*** GVP: finished ***");
                         return RET_FR_FCT_END;
                 }
 
-
-#if 1
-                g_print ("ReadPVD_VP-HDR****** SECTION GVP_vp_header_current.section = %d\n", GVP_vp_header_current.section);
-                g_print ("ReadPVD_VP-HDR****** pv vector, time=%d = (", GVP_vp_header_current.time);
-                for (int i = PROBEDATA_ARRAY_INDEX; i <= PROBEDATA_ARRAY_SEC; ++i)
-                        g_print("%g_[%d], ", pv[i],i);
-                g_print("\n");
-#endif
-
-                status_append (str.c_str());
-
                 GVP_stream_buffer_offset += 1 + GVP_vp_header_current.number_channels;
                 
                 point_index = 0;
+                g_print("add probe data header and data");
                 RPSPMC_ControlClass->add_probedata (GVP_vp_header_current.dataexpanded, pv, !point_index++);
 
                 need_hdr = FR_NO;
         }
 
-        std::string str =  stream.str();
-
         // KEED READING DATA...
         
         clock_t ct = clock();
-        g_message ("VP: section: %d gvpi[%04d]", GVP_vp_header_current.section, GVP_vp_header_current.i);
-        //stream << "Section Data ** Stream Offset: " << std::hex << std::setw(8) << GVP_stream_buffer_offset << ": " << std::endl;
+        //g_message ("VP: section: %d gvpi[%04d]", GVP_vp_header_current.section, GVP_vp_header_current.i);
         for (; GVP_vp_header_current.i < GVP_vp_header_current.n; ){
                 int ret=0;
                 ret = read_GVP_data_block_to_position_vector (GVP_stream_buffer_offset);
                 if (ret == GVP_vp_header_current.number_channels){
                         GVP_stream_buffer_offset += 1 + GVP_vp_header_current.number_channels;
 
-                        g_message ("VP [%04d] of %d\n", GVP_vp_header_current.i, GVP_vp_header_current.n);
+                        //g_message ("VP [%04d] of %d\n", GVP_vp_header_current.i, GVP_vp_header_current.n);
 
                         // add vector and data to expanded data array representation
                         RPSPMC_ControlClass->add_probedata (GVP_vp_header_current.dataexpanded, pv, !point_index++);
+                        index_all++;
                 } else {
                         if (GVP_vp_header_current.endmark){ // finished?
-                                stream << "*** VP: section finshed ENDMARK found ***" << std::endl;
                                 g_message ("*** GVP: finished ***");
                                 return RET_FR_FCT_END;
                         }
-                        g_message ("-- waiting for data: #ch read = %d / %d--", ret,  GVP_vp_header_current.number_channels);
+                        //g_message ("-- waiting for data: #ch read = %d / %d--", ret,  GVP_vp_header_current.number_channels);
                         //return RET_FR_FCT_END;
                         return RET_FR_OK; // wait for data
                 }
@@ -952,6 +938,10 @@ int rpspmc_hwi_dev::read_actual_module_configuration (){
 
 void rpspmc_hwi_dev::GVP_execute_vector_program(){
         g_message ("rpspmc_hwi_dev::GVP_execute_vector_program ()");
+
+        // reset GVP stream buffer read count
+        GVP_stream_buffer_AB = -1;
+
         rpspmc_pacpll->write_parameter ("SPMC_GVP_PAUSE", false);
         rpspmc_pacpll->write_parameter ("SPMC_GVP_PROGRAM", false);
         rpspmc_pacpll->write_parameter ("SPMC_GVP_STOP", true); // put into reset condition via stop and restart

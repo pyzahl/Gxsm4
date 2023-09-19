@@ -446,7 +446,7 @@ public:
                 static int timeout_count=0;
                 static int last_index=0;
                 static int count=0;
-                // g_message ("Probing_graph_update_thread_safe: current index=%d, last=%d", current_probe_data_index, last_index);
+                //g_message ("Probing_graph_update_thread_safe: current index=%d, last=%d", current_probe_data_index, last_index);
 
                 if (current_probe_data_index <= last_index && !finish_flag){
                         // g_message ("Probing_graph_update_thread_safe: exit no new data");
@@ -457,8 +457,8 @@ public:
                 // call: Probing_graph_callback (NULL, this, finish_flag);
                 // check for --  idle_id ??
                 while (idle_id && finish_flag){
-                        g_message ("Probing_graph_update_thread_safe: Finish_flag set -- waiting for last update to complete. current index=%d, last=%d, #toc=%d",
-                                   current_probe_data_index, last_index, timeout_count);
+                        //g_message ("Probing_graph_update_thread_safe: Finish_flag set -- waiting for last update to complete. current index=%d, last=%d, #toc=%d",
+                        //            current_probe_data_index, last_index, timeout_count);
                         usleep(250000);
                         ++timeout_count;
                         
@@ -477,8 +477,8 @@ public:
                         idle_callback_data_ff = finish_flag;
                         idle_id = g_idle_add (RPSPMC_Control::idle_callback, this);
                         if (finish_flag){
-                                g_message ("Probing_graph_update_thread_safe: plot update. Finished. Current data index=%d",
-                                           current_probe_data_index);
+                                //g_message ("Probing_graph_update_thread_safe: plot update. Finished. Current data index=%d",
+                                //           current_probe_data_index);
                                 last_index = 0;
                         }
                 } else {
@@ -877,6 +877,10 @@ public:
 
         int read_GVP_data_block_to_position_vector (int offset){
                 size_t ch_index;
+
+                if (offset >= GVP_stream_buffer_position) // MAKE PCB
+                        return 0;
+
                 GVP_vp_header_current.srcs = GVP_stream_buffer[offset]&0xffff;
 
                 GVP_vp_header_current.i = (GVP_stream_buffer[offset]>>16);
@@ -888,14 +892,18 @@ public:
                                 GVP_vp_header_current.endmark = 1;
                                 GVP_vp_header_current.n = 0;
                                 GVP_vp_header_current.i = 0;
-                                GVP_vp_header_current.srcs = 0xfff;
+                                GVP_vp_header_current.srcs = 0xffff;
                         }
                 }
                         
                 GVP_vp_header_current.index = GVP_vp_header_current.n - GVP_vp_header_current.i;
 
-                g_message ("N[%4d / %4d] GVP_vp_header_current.srcs=%04x", GVP_vp_header_current.index, GVP_vp_header_current.n, GVP_vp_header_current.srcs);
-                             
+#if 0
+                if (GVP_vp_header_current.endmark)
+                        g_message ("N[ENDMARK]");
+                else
+                        g_message ("N[%4d / %4d] GVP_vp_header_current.srcs=%04x", GVP_vp_header_current.index, GVP_vp_header_current.n, GVP_vp_header_current.srcs);
+#endif                        
                 GVP_vp_header_current.number_channels=0;
                 for (int i=0; i<16; i++){
                         GVP_vp_header_current.ch_lut[i]=-1;
@@ -909,16 +917,17 @@ public:
                         GVP_vp_header_current.chNs[ich] = GVP_stream_buffer[1+ch_index+offset];
                         if (ich < 14){
                                 GVP_vp_header_current.dataexpanded[ich] = rpspmc_to_volts (GVP_vp_header_current.chNs[ich]); // Volts
-                                g_message ("%g V", GVP_vp_header_current.dataexpanded[ich]);
+                                //g_message ("%g V", GVP_vp_header_current.dataexpanded[ich]);
                         }
                 }
         
                 if (ch_index+offset < GVP_stream_buffer_position){
                         if (GVP_vp_header_current.srcs & 0xc000){
                                 GVP_vp_header_current.gvp_time = (unsigned long)(GVP_vp_header_current.chNs[15]<<16) | (unsigned long)GVP_vp_header_current.chNs[14];
-                                g_message ("%g ms", GVP_vp_header_current.gvp_time/125e3);
+                                //g_message ("%g ms", GVP_vp_header_current.gvp_time/125e3);
                         }
-                        if (GVP_vp_header_current.srcs == 0xffff || GVP_vp_header_current.srcs == 0xfefe) return -1; // true for full position header update
+                        if (GVP_vp_header_current.srcs == 0xffff)
+                                return -1; // true for full position header update
                         return ch_index;
                 }  else
                         return ch_index; // number channels read until position

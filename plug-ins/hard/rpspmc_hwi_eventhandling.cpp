@@ -132,13 +132,28 @@ const char* RPSPMC_Control::vp_unit_lookup(int i){
 double RPSPMC_Control::vp_scale_lookup(int i){
         for (int k=0; source_signals[k].mask; ++k){
                 if (source_signals[k].garr_index == i){
-                        if (source_signals[k].mask == 0x000010){ // CUSTOM auto
+                        switch (source_signals[k].mask){
+                        case 0x00000020: // CUSTOM auto
                                 if (main_get_gapp()->xsm->Inst->nAmpere2V (1.) > 1.)
                                         return source_signals[k].scale_factor/main_get_gapp()->xsm->Inst->nAmpere2V (1e-3); // choose pA
                                 else
                                         return source_signals[k].scale_factor/main_get_gapp()->xsm->Inst->nAmpere2V (1.); // nA
-                        } else
+                                break;
+                        case 0x00100000: // function calls...
+                        case 0x00000001: 
+                                return main_get_gapp()->xsm->Inst->Volt2XA (1);
+                        case 0x00200000:
+                        case 0x00000002:
+                                return main_get_gapp()->xsm->Inst->Volt2YA (1);
+                        case 0x00400000:
+                        case 0x00000004:
+                                return main_get_gapp()->xsm->Inst->Volt2ZA (1);
+                        case 0x00800000:
+                        case 0x00000008:
+                                return main_get_gapp()->xsm->Inst->BiasGainV2V ();
+                        default:
                                 return  source_signals[k].scale_factor;
+                        }
                 }
         }
         g_warning ("vp_scale_lookup -- failed to find scale for garr index %d", i);
@@ -461,7 +476,7 @@ int RPSPMC_Control::Probing_eventcheck_callback( GtkWidget *widget, RPSPMC_Contr
                                                             yip+main_get_gapp()->xsm->MasterScan->mem2d->data->GetY0Sub(),
                                                             wx,wy); // with SLS offset
                         se = new ScanEvent (wx,wy,
-                                            main_get_gapp()->xsm->Inst->Dig2ZA ((long) round (g_array_index (garr [PROBEDATA_ARRAY_ZS], double, 0)))
+                                            main_get_gapp()->xsm->Inst->Volt2ZA (g_array_index (garr [PROBEDATA_ARRAY_ZS], double, 0))
                                             );
                         main_get_gapp()->xsm->MasterScan->mem2d->AttachScanEvent (se);
                         
@@ -801,10 +816,10 @@ int RPSPMC_Control::Probing_graph_callback( GtkWidget *widget, RPSPMC_Control *d
                 //g_message ("Creating SE *** %d %d %d", j, sec, dspc->current_probe_data_index);
                 se = new ScanEvent (
                                     main_get_gapp()->xsm->data.s.x0
-                                    + main_get_gapp()->xsm->Inst->Dig2XA ((long) round (g_array_index (dspc->garray_probedata [PROBEDATA_ARRAY_XS], double, j))),
+                                    + main_get_gapp()->xsm->Inst->Volt2XA (g_array_index (dspc->garray_probedata [PROBEDATA_ARRAY_XS], double, j)),
                                     main_get_gapp()->xsm->data.s.y0
-                                    + main_get_gapp()->xsm->Inst->Dig2YA ((long) round (g_array_index (dspc->garray_probedata [PROBEDATA_ARRAY_YS], double, j))),
-                                    main_get_gapp()->xsm->Inst->Dig2ZA ((long) round ( g_array_index (dspc->garray_probedata [PROBEDATA_ARRAY_ZS], double, j)))
+                                    + main_get_gapp()->xsm->Inst->Volt2YA (g_array_index (dspc->garray_probedata [PROBEDATA_ARRAY_YS], double, j)),
+                                    main_get_gapp()->xsm->Inst->Volt2ZA (g_array_index (dspc->garray_probedata [PROBEDATA_ARRAY_ZS], double, j))
                                     );
                 main_get_gapp()->xsm->MasterScan->mem2d->AttachScanEvent (se);
 
@@ -1005,7 +1020,7 @@ int RPSPMC_Control::Probing_save_callback( GtkWidget *widget, RPSPMC_Control *ds
 	  << ", iX0=" << ix << " Pix iX0=" << iy << " Pix"
 	  << std::endl;
         if (main_get_gapp()->xsm->MasterScan)
-                f << "# DSP SCANCOORD POSITION :: DSP-XSpos=" 
+                f << "# DSP SCANCOORD POSITION :: DSP-XSpos="  // FIXME!!!!
                   << (((int)g_array_index (dspc->garray_probe_hdrlist[PROBEDATA_ARRAY_XS], double, 0)<<16)/dspc->mirror_dsp_scan_dx32 + main_get_gapp()->xsm->MasterScan->data.s.nx/2 - 1)
                   << " DSP-YSpos=" 
                   << ((main_get_gapp()->xsm->MasterScan->data.s.nx/2 - 1) - ((int)g_array_index (dspc->garray_probe_hdrlist[PROBEDATA_ARRAY_YS], double, 0)<<16)/dspc->mirror_dsp_scan_dy32)
@@ -1331,7 +1346,7 @@ void RPSPMC_Control::add_probevector(){
 	val = g_array_index (garray_probedata [PROBEDATA_ARRAY_BLOCK], double, current_probe_data_index-1);
 	g_array_append_val (garray_probedata [PROBEDATA_ARRAY_BLOCK], val);
 
-        g_print ("###ADD_PV[%04d] sec=%d blk=%d (du %d  dxyz %d %d %d) ",
+        g_print ("###ADD_PV[%04d] sec=%d blk=%d (du %g  dxyz %g %g %g) \n",
                  current_probe_data_index, current_probe_section, (int)val,
                  program_vector_list[current_probe_section].f_du,
                  program_vector_list[current_probe_section].f_dx, program_vector_list[current_probe_section].f_dy, program_vector_list[current_probe_section].f_dz
@@ -1389,17 +1404,17 @@ void RPSPMC_Control::add_probedata(double data[NUM_PV_DATA_SIGNALS], double pv[N
         pv_lock = TRUE;
         // create and add vector generated signals
         if (set_pv){
-                g_print ("+++>>>> add_probedata add_hdr sec=%d and set probe vector\n", (int)pv[PROBEDATA_ARRAY_SEC]);
+                //g_print ("+++>>>> add_probedata add_hdr sec=%d and set probe vector\n", (int)pv[PROBEDATA_ARRAY_SEC]);
                 // add probe section header info
                 add_probe_hdr (pv);
                 // add (set) section start reference position/values for vector signal generation
                 set_probevector (pv);
         }
-        g_print ("+++>>>> add_probedata add_vec sec=%d\n", (int)pv[PROBEDATA_ARRAY_SEC]);
+        //g_print ("+++>>>> add_probedata add_vec sec=%d\n", (int)pv[PROBEDATA_ARRAY_SEC]);
         add_probevector();
 
         // add data channels
-        g_print ("+++>>>> add_probedata add_data sec=%d\n", (int)pv[PROBEDATA_ARRAY_SEC]);
+        //g_print ("+++>>>> add_probedata add_data sec=%d\n", (int)pv[PROBEDATA_ARRAY_SEC]);
 	for (i = PROBEDATA_ARRAY_S1, j=0; i <= PROBEDATA_ARRAY_END; ++i, ++j)
 		g_array_append_val (garray_probedata[i], data[j]);
 
@@ -1411,6 +1426,7 @@ void RPSPMC_Control::add_probedata(double data[NUM_PV_DATA_SIGNALS], double pv[N
 #endif
 
 	current_probe_data_index++;	
+        //g_print ("+++>>>> add_probedata add_data done current index=%d\n", current_probe_data_index);
 	pv_lock = FALSE;
 }
 

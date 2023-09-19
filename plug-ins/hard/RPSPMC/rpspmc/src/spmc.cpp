@@ -706,8 +706,8 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
                 fprintf(stderr, "ERROR: Vector[PC=%03d] out of valif vector program space. Ignoring. GVP is put into RESET mode now.", pc);
                 return;
         }
-        int nii   = 0;
-        int decii = 0;
+        unsigned int nii   = 0;
+        unsigned int decii = 0;
         double Nsteps = 1.0;
 
         if (n > 0){
@@ -749,9 +749,9 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
                 if (ddmin > 2e-6) // 1uV steps min
                         nii = (int)round(ddmin * 1e6);
                 */
-                nii = 1+(int)round(ddmin/Vstep_prec_Q31)/1e6; // Error < relative 1e6
+                nii = 1+(unsigned int)round(ddmin/Vstep_prec_Q31)/1e6; // Error < relative 1e6
 
-                decii = (int)round(NII_total / nii);
+                decii = (unsigned int)round(NII_total / nii);
                 //double deciiE = (double)decii - NII_total / nii;
 
                 // total vector steps:
@@ -786,7 +786,7 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
         set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_N, idv[1]=n > 0 ? n-1 : 0); // *** see above note
 
         if (verbose > 1) fprintf(stderr, "%04d, ", nii);
-        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_NII, idv[2]=nii > 0 ? nii-1 : 0); // *** see above note
+        set_gpio_cfgreg_uint32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_NII, idv[2]=nii > 0 ? nii-1 : 0); // *** see above note
 
         if (verbose > 1) fprintf(stderr, "%04d, ", opts);
         set_gpio_cfgreg_uint32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_OPT, idv[3]=opts);
@@ -820,7 +820,7 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
         set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_014, idv[14]=0);  // clear bits
 
         if (verbose > 1) fprintf(stderr, "0,0,0, decii=%d]\n", idv[15]=decii); // last vector component is decii
-        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_DECII, decii);  // decimation
+        set_gpio_cfgreg_uint32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_DECII, decii);  // decimation
 
         //<< std::setfill('0') << std::hex << std::setw(8) << data
         
