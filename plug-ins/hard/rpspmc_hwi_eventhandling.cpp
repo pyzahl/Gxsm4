@@ -1351,7 +1351,7 @@ void RPSPMC_Control::add_probevector(){
                  );
 #endif
         double multi = 1./(program_vector_list[current_probe_section].n-1);
-        double dt    = 1./program_vector_list[current_probe_section].slew*1e-03; // slew = npoints / time in ms
+        double dt    = 1./program_vector_list[current_probe_section].slew*1e03; // slew = npoints / time in ms
 	for (i = PROBEDATA_ARRAY_TIME; i < PROBEDATA_ARRAY_SEC; ++i){
 		// val = g_array_index (garray_probedata[i], double, current_probe_data_index-1); // get previous, then add delta
                 val = pv_tmp[i];
@@ -1404,26 +1404,28 @@ void RPSPMC_Control::add_probevector(){
         //         H -> D -> D ->... D -> H -> D -> D ->... H -> D -> D ->... D -> H
         // initial H                                                               final H
         // set_pv  1    0    0       0    1    0    0       1    0    0       0    1
-        // add_pv  0    1    1       1    0    1    1       0    1    1       1    0
+        // add_pv 0    1    1       1    0    1    1       0    1    1       1    0
         
         pv_lock = TRUE;
         // create and add vector generated signals
         if (set_pv){
-                //g_print ("+++>>>> add_probedata add_hdr sec=%d and set probe vector\n", (int)pv[PROBEDATA_ARRAY_SEC]);
-                // add probe section header info
+                // array add probe section header info
                 add_probe_hdr (pv);
-                // add (set) section start reference position/values for vector signal generation
+                // array add (set) section start reference position/values for vector signal generation
                 set_probevector (pv);
-        }
-        if (add_pv){
-                //g_print ("+++>>>> add_probedata add_vec sec=%d\n", (int)pv[PROBEDATA_ARRAY_SEC]);
+                g_print ("===>>>> SET-VP  i[%d] sec=%d t=%g ms   #valid sec{%d}\n", current_probe_data_index, (int)pv[PROBEDATA_ARRAY_SEC], pv[PROBEDATA_ARRAY_TIME], nun_valid_data_sections);
+
+        } else if (add_pv){
+
+                // array add (increment add) from previous/ reference position vector: signal generation emulation
                 add_probevector();
+                g_print ("+++>>>> ADD-PV  i[%d] sec=%d t=%g ms\n", current_probe_data_index,  (int)pv[PROBEDATA_ARRAY_SEC], pv[PROBEDATA_ARRAY_TIME]);
         }
         
         // add data channels
-        //g_print ("+++>>>> add_probedata add_data sec=%d\n", (int)pv[PROBEDATA_ARRAY_SEC]);
 	for (i = PROBEDATA_ARRAY_S1, j=0; i <= PROBEDATA_ARRAY_END; ++i, ++j)
 		g_array_append_val (garray_probedata[i], data[j]);
+        g_print ("+++>>>> PUSH DATA i[%d] sec=%d  t=%g ms\n", current_probe_data_index, (int)pv[PROBEDATA_ARRAY_SEC],  data[14]);
 
         current_probe_data_index++;
 

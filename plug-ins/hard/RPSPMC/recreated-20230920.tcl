@@ -23,8 +23,6 @@
 # 2. The following source(s) files that were local or imported into the original project.
 #    (Please see the '$orig_proj_dir' and '$origin_dir' variable setting below at the start of the script)
 #
-#    "/home/pzahl/SVN/Gxsm4/plug-ins/hard/RPSPMC/project_RP-SPMC-RedPACPLL-202308-test/project_RP-SPMC-RedPACPLL-202308-test.srcs/utils_1/imports/synth_1/system_wrapper.dcp"
-#    "/home/pzahl/SVN/Gxsm4/plug-ins/hard/RPSPMC/project_RP-SPMC-RedPACPLL-202308-test/project_RP-SPMC-RedPACPLL-202308-test.srcs/utils_1/imports/impl_1/system_wrapper_routed.dcp"
 #
 # 3. The following remote source files that were added to the original project:-
 #
@@ -87,17 +85,6 @@
 # Check file required for this script exists
 proc checkRequiredFiles { origin_dir} {
   set status true
-  set files [list \
- "[file normalize "$origin_dir/project_RP-SPMC-RedPACPLL-202308-test/project_RP-SPMC-RedPACPLL-202308-test.srcs/utils_1/imports/synth_1/system_wrapper.dcp"]"\
- "[file normalize "$origin_dir/project_RP-SPMC-RedPACPLL-202308-test/project_RP-SPMC-RedPACPLL-202308-test.srcs/utils_1/imports/impl_1/system_wrapper_routed.dcp"]"\
-  ]
-  foreach ifile $files {
-    if { ![file isfile $ifile] } {
-      puts " Could not find local file $ifile "
-      set status false
-    }
-  }
-
   set files [list \
  "[file normalize "$origin_dir/rtl/QControl.v"]"\
  "[file normalize "$origin_dir/rtl/cfg_select.v"]"\
@@ -181,7 +168,7 @@ if { [info exists ::origin_dir_loc] } {
 }
 
 # Set the project name
-set _xil_proj_name_ "project_RP-SPMC-RedPACPLL-202308-test"
+set _xil_proj_name_ "project_RP-SPMC-RedPACPLL-20230920-test"
 
 # Use project name variable, if specified in the tcl shell
 if { [info exists ::user_project_name] } {
@@ -443,31 +430,6 @@ set obj [get_filesets sim_ad5791]
 set_property -name "top" -value "ad5791_tb" -objects $obj
 set_property -name "top_auto_set" -value "0" -objects $obj
 set_property -name "top_lib" -value "xil_defaultlib" -objects $obj
-
-# Set 'utils_1' fileset object
-set obj [get_filesets utils_1]
-# Import local files from the original project
-set files [list \
- [file normalize "${origin_dir}/project_RP-SPMC-RedPACPLL-202308-test/project_RP-SPMC-RedPACPLL-202308-test.srcs/utils_1/imports/synth_1/system_wrapper.dcp" ]\
- [file normalize "${origin_dir}/project_RP-SPMC-RedPACPLL-202308-test/project_RP-SPMC-RedPACPLL-202308-test.srcs/utils_1/imports/impl_1/system_wrapper_routed.dcp" ]\
-]
-set imported_files [import_files -fileset utils_1 $files]
-
-# Set 'utils_1' fileset file properties for remote files
-# None
-
-# Set 'utils_1' fileset file properties for local files
-set file "synth_1/system_wrapper.dcp"
-set file_obj [get_files -of_objects [get_filesets utils_1] [list "*$file"]]
-set_property -name "netlist_only" -value "0" -objects $file_obj
-
-set file "impl_1/system_wrapper_routed.dcp"
-set file_obj [get_files -of_objects [get_filesets utils_1] [list "*$file"]]
-set_property -name "netlist_only" -value "0" -objects $file_obj
-
-
-# Set 'utils_1' fileset properties
-set obj [get_filesets utils_1]
 
 
 # Adding sources referenced in BDs, if not already added
@@ -5576,14 +5538,6 @@ set obj [get_report_configs -of_objects [get_runs synth_1] synth_1_synth_report_
 if { $obj != "" } {
 
 }
-set obj [get_runs synth_1]
-set_property -name "part" -value "xc7z020clg400-1" -objects $obj
-set_property -name "incremental_checkpoint" -value "$proj_dir/project_RP-SPMC-RedPACPLL-202308-test.srcs/utils_1/imports/synth_1/system_wrapper.dcp" -objects $obj
-set_property -name "auto_incremental_checkpoint" -value "1" -objects $obj
-set_property -name "strategy" -value "Vivado Synthesis Defaults" -objects $obj
-
-# set the current synth run
-current_run -synthesis [get_runs synth_1]
 
 # Create 'impl_1' run (if not found)
 if {[string equal [get_runs -quiet impl_1] ""]} {
@@ -5799,22 +5753,6 @@ set obj [get_report_configs -of_objects [get_runs impl_1] impl_1_post_route_phys
 if { $obj != "" } {
 set_property -name "options.warn_on_violation" -value "1" -objects $obj
 
-}
-set obj [get_runs impl_1]
-set_property -name "part" -value "xc7z020clg400-1" -objects $obj
-set_property -name "incremental_checkpoint" -value "$proj_dir/project_RP-SPMC-RedPACPLL-202308-test.srcs/utils_1/imports/impl_1/system_wrapper_routed.dcp" -objects $obj
-set_property -name "auto_incremental_checkpoint" -value "1" -objects $obj
-set_property -name "incremental_checkpoint.directive" -value "RuntimeOptimized" -objects $obj
-set_property -name "strategy" -value "Vivado Implementation Defaults" -objects $obj
-set_property -name "steps.write_bitstream.args.readback_file" -value "0" -objects $obj
-set_property -name "steps.write_bitstream.args.verbose" -value "0" -objects $obj
-
-# set the current impl run
-current_run -implementation [get_runs impl_1]
-catch {
- if { $idrFlowPropertiesConstraints != {} } {
-   set_param runs.disableIDRFlowPropertyConstraints $idrFlowPropertiesConstraints
- }
 }
 
 puts "INFO: Project created:${_xil_proj_name_}"

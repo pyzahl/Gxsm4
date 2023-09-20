@@ -357,11 +357,17 @@ gpointer ProbeDataReadThread (void *ptr_sr){
 }
 
 void rpspmc_hwi_dev::on_new_data (gconstpointer contents, gsize len, int position){
+        int offset = 0;
         if (GVP_stream_buffer_AB < 0) // restarted, reset read count
                 GVP_stream_buffer_AB=0;
-        GVP_stream_buffer_position=position;
-        g_message ("on_new_data ** AB=%d pos=%d",  GVP_stream_buffer_AB, GVP_stream_buffer_position);
-        memcpy (&GVP_stream_buffer[ (GVP_stream_buffer_AB * (BRAM_SIZE>>1))&(EXPAND_MULTIPLES*BRAM_SIZE-1) ], contents, len);
+        
+        offset = (GVP_stream_buffer_AB*(BRAM_SIZE>>1))&(EXPAND_MULTIPLES*BRAM_SIZE-1);
+        
+        memcpy (&GVP_stream_buffer[offset], contents, len);
+        
+        GVP_stream_buffer_position = (position + offset)&(EXPAND_MULTIPLES*BRAM_SIZE-1);
+        g_message ("on_new_data ** AB=%d pos=%d  buffer_pos=0x%08x",  GVP_stream_buffer_AB, position, GVP_stream_buffer_position);
+        
         GVP_stream_buffer_AB++;
 }
 
@@ -370,7 +376,7 @@ void rpspmc_hwi_dev::on_new_data (gconstpointer contents, gsize len, int positio
 int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
 	static double pv[NUM_PV_HEADER_SIGNALS];
 	static int point_index = 0;
-        //        static int index_all = 0;
+        static int index_all = 0;
 	static int end_read = 0;
 	static int need_fct = FR_YES;  // need fifo control
 	static int need_hdr = FR_YES;  // need header
@@ -394,6 +400,7 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
                 GVP_vp_init (); // vectors should be written by now!
 
                 GVP_vp_header_current.endmark = 0;
+                index_all = 0;
 		point_index = 0;
                 //                index_all = 0;
 
@@ -434,7 +441,7 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
 	if (need_hdr){ // we have enough data if control gets here!
 		LOGMSGS ( "FR::NEED_HDR" << std::endl);
                 // READ FULL SECTION HEADER
-
+                g_message ("VP: Waiting for Section Header [%d] StreamPos=%08x", GVP_stream_buffer_AB, GVP_stream_buffer_position);
                 if (GVP_stream_buffer_AB > 0){
                         g_message ("VP: section header ** reading pos[%04x] off[%04x] #AB=%d", GVP_stream_buffer_position, GVP_stream_buffer_offset, GVP_stream_buffer_AB);
                         g_message ("Reading VP section header...");
@@ -446,13 +453,18 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
                                 g_message (" *** OK, loading pv sec[%d] ***", GVP_vp_header_current.section);
 
                                 // copy header to pv[] as assigned below
-                                pv[PROBEDATA_ARRAY_INDEX] = (double)GVP_vp_header_current.index;
+                                pv[PROBEDATA_ARRAY_INDEX] = (double)index_all++;
+                                pv[PROBEDATA_ARRAY_PHI]   = (double)GVP_vp_header_current.index; // testing, point index in section
                                 pv[PROBEDATA_ARRAY_SEC]   = (double)GVP_vp_header_current.section;
                                 pv[PROBEDATA_ARRAY_TIME]  = GVP_vp_header_current.dataexpanded[14]; // time in ms
                                 pv[PROBEDATA_ARRAY_XS]    = GVP_vp_header_current.dataexpanded[0]; // Xs in Volts
                                 pv[PROBEDATA_ARRAY_YS]    = GVP_vp_header_current.dataexpanded[1]; // Ys in Volts
                                 pv[PROBEDATA_ARRAY_ZS]    = GVP_vp_header_current.dataexpanded[2]; // Zs in Volts
                                 pv[PROBEDATA_ARRAY_U ]    = GVP_vp_header_current.dataexpanded[3]; // Bias in Volts
+
+                                g_message ("PVh sec[%g] i=%g t=%g ms U=%g V",
+                                           pv[PROBEDATA_ARRAY_SEC],pv[PROBEDATA_ARRAY_INDEX],
+                                           pv[PROBEDATA_ARRAY_TIME],pv[PROBEDATA_ARRAY_U ]);
 
                         } else {
                                 if (GVP_vp_header_current.endmark){ // finished?
@@ -496,7 +508,9 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
                         //g_message ("VP [%04d] of %d\n", GVP_vp_header_current.i, GVP_vp_header_current.n);
 
                         // add vector and data to expanded data array representation
-                        RPSPMC_ControlClass->add_probedata (GVP_vp_header_current.dataexpanded, pv, false, (GVP_vp_header_current.i < (GVP_vp_header_current.n-1)) ? true:false);
+                        pv[PROBEDATA_ARRAY_INDEX] = (double)index_all++;
+                        RPSPMC_ControlClass->add_probedata (GVP_vp_header_current.dataexpanded, pv, false, true); //(GVP_vp_header_current.i < (GVP_vp_header_current.n-1)) ? true:false);
+
                 } else {
                         if (GVP_vp_header_current.endmark){ // finished?
                                 g_message ("*** GVP: finished ***");

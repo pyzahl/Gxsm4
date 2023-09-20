@@ -130,7 +130,9 @@ SOURCE_SIGNAL_DEF source_signals[] = {
         { 0x00200000, "YS",       " ", "AA", UTF8_ANGSTROEM, 1.0, PROBEDATA_ARRAY_YS }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x00400000, "ZS",       " ", "AA", UTF8_ANGSTROEM, 1.0, PROBEDATA_ARRAY_ZS }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x00800000, "Bias",     " ", "V", "V", 1.0, PROBEDATA_ARRAY_U },
-        { 0x08000000, "DA",       " ", "V", "V", 1.0, PROBEDATA_ARRAY_AA },
+        //{ 0x08000000, "DA",       " ", "V", "V", 1.0, PROBEDATA_ARRAY_AA },
+        //{ 0x10000000, "DB",       " ", "V", "V", 1.0, PROBEDATA_ARRAY_BB },
+        //{ 0x20000000, "PHI",      " ", "deg", "deg", 1.0, PROBEDATA_ARRAY_PHI },
         // -- general measured signals from index [8]   // <=== to Volt conversion here -- unit sym and scale are custom auto adjusted in .._eventhandling lookup functions as of this mask 
         { 0x0000C000, "Time-Mon",     " ", "ms", "ms", 1.0, PROBEDATA_ARRAY_S15 }, // time in ms
         { 0x00000001, "XS-Mon",       " ", "AA", UTF8_ANGSTROEM, 1.0, PROBEDATA_ARRAY_S1 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!

@@ -51,8 +51,6 @@
 #define i_Y 1
 #define i_Z 2
 
-#define MAX_PV MAX_PROGRAM_VECTORS
-
 // forward defs
 extern PACPLL_parameters pacpll_parameters;
 extern PACPLL_signals pacpll_signals;
@@ -523,7 +521,7 @@ public:
                                  program_vector_list[pc].iloop = program_vector_list[pc].repetitions; // reload
                                  pc++; // next
                          }
-                         if ( pc >= MAX_PV ||  pc < 0){ // pc exception check (out of valid vpc range)
+                         if ( pc >= MAX_PROGRAM_VECTORS ||  pc < 0){ // pc exception check (out of valid vpc range)
                                  pc=0; // reset
                                  g_warning ("Inernal GVP_vp_header_current.section (vpc) program counter position / jump out of range.");
                          }
@@ -774,7 +772,7 @@ protected:
 	gboolean GUI_ready;
 
 private:
-	PROBE_VECTOR_GENERIC     program_vector_list[MAX_PV]; // copy for GXSM internal use only
+	PROBE_VECTOR_GENERIC     program_vector_list[MAX_PROGRAM_VECTORS]; // copy for GXSM internal use only
 
 	GSettings *hwi_settings;
 
