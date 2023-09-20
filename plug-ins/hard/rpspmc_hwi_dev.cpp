@@ -448,11 +448,11 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
                                 // copy header to pv[] as assigned below
                                 pv[PROBEDATA_ARRAY_INDEX] = (double)GVP_vp_header_current.index;
                                 pv[PROBEDATA_ARRAY_SEC]   = (double)GVP_vp_header_current.section;
-                                pv[PROBEDATA_ARRAY_TIME]  = (double)GVP_vp_header_current.gvp_time/125e3; // ms
-                                pv[PROBEDATA_ARRAY_XS]    = rpspmc_to_volts (GVP_vp_header_current.chNs[0]);
-                                pv[PROBEDATA_ARRAY_YS]    = rpspmc_to_volts (GVP_vp_header_current.chNs[1]);
-                                pv[PROBEDATA_ARRAY_ZS]    = rpspmc_to_volts (GVP_vp_header_current.chNs[2]);
-                                pv[PROBEDATA_ARRAY_U ]    = rpspmc_to_volts (GVP_vp_header_current.chNs[3]);
+                                pv[PROBEDATA_ARRAY_TIME]  = GVP_vp_header_current.dataexpanded[14]; // time in ms
+                                pv[PROBEDATA_ARRAY_XS]    = GVP_vp_header_current.dataexpanded[0]; // Xs in Volts
+                                pv[PROBEDATA_ARRAY_YS]    = GVP_vp_header_current.dataexpanded[1]; // Ys in Volts
+                                pv[PROBEDATA_ARRAY_ZS]    = GVP_vp_header_current.dataexpanded[2]; // Zs in Volts
+                                pv[PROBEDATA_ARRAY_U ]    = GVP_vp_header_current.dataexpanded[3]; // Bias in Volts
 
                         } else {
                                 if (GVP_vp_header_current.endmark){ // finished?

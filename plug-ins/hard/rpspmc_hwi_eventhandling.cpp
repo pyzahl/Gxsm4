@@ -1350,8 +1350,8 @@ void RPSPMC_Control::add_probevector(){
                  program_vector_list[current_probe_section].f_dx, program_vector_list[current_probe_section].f_dy, program_vector_list[current_probe_section].f_dz
                  );
 #endif
-        double multi = 1./program_vector_list[current_probe_section].n;
-        double dt    = 1./program_vector_list[current_probe_section].slew;
+        double multi = 1./(program_vector_list[current_probe_section].n-1);
+        double dt    = 1./program_vector_list[current_probe_section].slew*1e-03; // slew = npoints / time in ms
 	for (i = PROBEDATA_ARRAY_TIME; i < PROBEDATA_ARRAY_SEC; ++i){
 		// val = g_array_index (garray_probedata[i], double, current_probe_data_index-1); // get previous, then add delta
                 val = pv_tmp[i];

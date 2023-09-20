@@ -124,7 +124,7 @@ SOURCE_SIGNAL_DEF source_signals[] = {
         // -- 8 vector generated signals (outputs/mapping) ==> must match: #define NUM_VECTOR_SIGNALS 8
         //  xxxxSRCS
         { 0x01000000, "Index",    " ", "#", "#", 1.0, PROBEDATA_ARRAY_INDEX },
-        { 0x02000000, "Time",     " ", "ms", "ms", 1.0, PROBEDATA_ARRAY_TIME }, // ms
+        { 0x02000000, "Time",     " ", "ms", "ms", 1.0, PROBEDATA_ARRAY_TIME }, // time in ms
         { 0x04000000, "SEC",      " ", "#", "#", 1.0, PROBEDATA_ARRAY_SEC },
         { 0x00100000, "XS",       " ", "AA", UTF8_ANGSTROEM, 1.0, PROBEDATA_ARRAY_XS }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x00200000, "YS",       " ", "AA", UTF8_ANGSTROEM, 1.0, PROBEDATA_ARRAY_YS }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
@@ -132,7 +132,7 @@ SOURCE_SIGNAL_DEF source_signals[] = {
         { 0x00800000, "Bias",     " ", "V", "V", 1.0, PROBEDATA_ARRAY_U },
         { 0x08000000, "DA",       " ", "V", "V", 1.0, PROBEDATA_ARRAY_AA },
         // -- general measured signals from index [8]   // <=== to Volt conversion here -- unit sym and scale are custom auto adjusted in .._eventhandling lookup functions as of this mask 
-        { 0x0000C000, "Time-Mon",     " ", "ms", "ms", 1.0, PROBEDATA_ARRAY_S15 }, // ms
+        { 0x0000C000, "Time-Mon",     " ", "ms", "ms", 1.0, PROBEDATA_ARRAY_S15 }, // time in ms
         { 0x00000001, "XS-Mon",       " ", "AA", UTF8_ANGSTROEM, 1.0, PROBEDATA_ARRAY_S1 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x00000002, "YS-Mon",       " ", "AA", UTF8_ANGSTROEM, 1.0, PROBEDATA_ARRAY_S2 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x00000004, "ZS-Mon",       " ", "AA", UTF8_ANGSTROEM, 1.0, PROBEDATA_ARRAY_S3 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!

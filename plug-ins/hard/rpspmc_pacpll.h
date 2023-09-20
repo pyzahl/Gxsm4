@@ -944,7 +944,11 @@ public:
                         GVP_vp_header_current.gvp_time = (unsigned long)(GVP_vp_header_current.chNs[15]<<16) | (unsigned long)GVP_vp_header_current.chNs[14];
                         GVP_vp_header_current.dataexpanded[14] = (double)GVP_vp_header_current.gvp_time/125e3;
                         if (GVP_vp_header_current.endmark)
-                                g_message ("N[ENDMARK]");
+                                g_message ("N[ENDMARK] GVP_vp_header_current.srcs=%04x   Bias=%8g V    t=%8g ms",
+                                           GVP_vp_header_current.srcs,
+                                           rpspmc_to_volts (GVP_vp_header_current.chNs[3]),
+                                           GVP_vp_header_current.dataexpanded[14]
+                                           );
                         else
                                 g_message ("N[%4d / %4d] GVP_vp_header_current.srcs=%04x   Bias=%8g V    t=%8g ms",
                                            GVP_vp_header_current.index, GVP_vp_header_current.n, GVP_vp_header_current.srcs,
@@ -958,7 +962,6 @@ public:
                         if (GVP_vp_header_current.srcs & 0xc000){
                                 GVP_vp_header_current.gvp_time = (unsigned long)(GVP_vp_header_current.chNs[15]<<16) | (unsigned long)GVP_vp_header_current.chNs[14];
                                 GVP_vp_header_current.dataexpanded[14] = (double)GVP_vp_header_current.gvp_time/125e3;
-                                //g_message ("%g ms", GVP_vp_header_current.gvp_time/125e3);
                         }
                         if (GVP_vp_header_current.srcs == 0xffff)
                                 return -1; // true for full position header update
