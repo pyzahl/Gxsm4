@@ -25,7 +25,7 @@ module gvp #(
     parameter NUM_VECTORS    = 16
 )
 (
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF M_AXIS_X:M_AXIS_Y:M_AXIS_Z:M_AXIS_U" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF M_AXIS_X:M_AXIS_Y:M_AXIS_Z:M_AXIS_U:M_AXIS_SRCS:M_AXIS_INDEX:M_AXIS_GVP_TIME" *)
     input		 a_clk, // clocking up to aclk
     input		 reset, // put into reset mode (set program and hold)
     input		 pause, // put/release into/from pause mode -- always completes the "ii" nop cycles!
@@ -34,22 +34,24 @@ module gvp #(
     input [16-1:0]	 reset_options, // option (fb hold/go, srcs... to pass when idle or in reset mode
     
     output wire [32-1:0] M_AXIS_X_tdata, // vector components
-    output wire		 M_AXIS_X_tvalid,
+    output wire		     M_AXIS_X_tvalid,
     output wire [32-1:0] M_AXIS_Y_tdata, // ..
-    output wire		 M_AXIS_Y_tvalid,
+    output wire		     M_AXIS_Y_tvalid,
     output wire [32-1:0] M_AXIS_Z_tdata, // ..
-    output wire		 M_AXIS_Z_tvalid,
+    output wire		     M_AXIS_Z_tvalid,
     output wire [32-1:0] M_AXIS_U_tdata, // ..
-    output wire		 M_AXIS_U_tvalid,
+    output wire		     M_AXIS_U_tvalid,
     output wire	[32-1:0] M_AXIS_SRCS_tdata,
-    output wire		 M_AXIS_SRCS_tvalid,
-    output [32-1:0]	 options, // section options: FB, ... (flags) and source selections bits
-    output [1:0 ]	 store_data, // trigger to store data:: 2: full vector header, 1: data sources
-    output		 gvp_finished, // finished flag
-    output		 gvp_hold, // on hold/pause
-    output [32-1:0]	 index,
-    output [48-1:0]	 gvp_time,
-    output [32-1:0]	 dbg_status
+    output wire	         M_AXIS_SRCS_tvalid,
+    output wire [32-1:0] options, // section options: FB, ... (flags) and source selections bits
+    output wire [1:0 ] store_data, // trigger to store data:: 2: full vector header, 1: data sources
+    output wire	 gvp_finished, // finished flag
+    output wire	 gvp_hold, // on hold/pause
+    output wire	[32-1:0] M_AXIS_index_tdata,
+    output wire	         M_AXIS_index_tvalid,
+    output wire	[48-1:0] M_AXIS_gvp_time_tdata,
+    output wire	         M_AXIS_gvp_time_tvalid,
+    output wire [32-1:0] dbg_status
     );
 
     // buffers
@@ -262,8 +264,10 @@ module gvp #(
     assign store_data = store;
     assign gvp_finished = finished;
     assign hold = pause_flg;
-    assign index = i;
-    assign gvp_time = vec_gvp_time;
+    assign M_AXIS_index_tdata = i;
+    assign M_AXIS_index_tvalid = 1;
+    assign M_AXIS_gvp_time_tdata = vec_gvp_time;
+    assign M_AXIS_gvp_time_tvalid = 1;
     
     assign dbg_status = {sec[32-3:0], reset, pause, ~finished };
     

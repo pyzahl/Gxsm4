@@ -410,7 +410,7 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
 
 	case FR_FINISH:
                 // add terminating header
-                RPSPMC_ControlClass->add_probedata (GVP_vp_header_current.dataexpanded, pv, true);
+                RPSPMC_ControlClass->add_probedata (GVP_vp_header_current.dataexpanded, pv, true, false);
 		LOGMSGS ( "FR::FINISH-OK." << std::endl);
 		return RET_FR_OK; // finish OK.
 
@@ -478,7 +478,7 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
                 
                 point_index = 0;
                 g_print("add probe data header and data");
-                RPSPMC_ControlClass->add_probedata (GVP_vp_header_current.dataexpanded, pv, !point_index++);
+                RPSPMC_ControlClass->add_probedata (GVP_vp_header_current.dataexpanded, pv, true, true);
 
                 need_hdr = FR_NO;
         }
@@ -496,8 +496,7 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
                         //g_message ("VP [%04d] of %d\n", GVP_vp_header_current.i, GVP_vp_header_current.n);
 
                         // add vector and data to expanded data array representation
-                        RPSPMC_ControlClass->add_probedata (GVP_vp_header_current.dataexpanded, pv, !point_index++);
-                        //                        index_all++;
+                        RPSPMC_ControlClass->add_probedata (GVP_vp_header_current.dataexpanded, pv, false, (GVP_vp_header_current.i < (GVP_vp_header_current.n-1)) ? true:false);
                 } else {
                         if (GVP_vp_header_current.endmark){ // finished?
                                 g_message ("*** GVP: finished ***");

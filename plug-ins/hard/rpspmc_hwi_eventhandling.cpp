@@ -1304,21 +1304,24 @@ void RPSPMC_Control::set_probevector(double pv[NUM_PV_HEADER_SIGNALS]){
         g_print ("***************** SET_PV [%d] section = %d",  current_probe_data_index, (int)pv[PROBEDATA_ARRAY_SEC]);
 #endif
         current_probe_section = (int)pv[PROBEDATA_ARRAY_SEC];
+        current_probe_block_index = current_probe_data_index;
 
+        double dsec = (double)current_probe_section;
         double dind = (double)current_probe_data_index;
+        g_array_append_val (garray_probedata [PROBEDATA_ARRAY_SEC], dsec);
 	g_array_append_val (garray_probedata [PROBEDATA_ARRAY_INDEX], dind);
-        g_array_append_val (garray_probedata [PROBEDATA_ARRAY_BLOCK], dind);
+        g_array_append_val (garray_probedata [PROBEDATA_ARRAY_BLOCK], dind); // same, start index of section
 
-        if (!nun_valid_data_sections)
+        //        if (!nun_valid_data_sections)
                 for (int i=0; i<NUM_PV_HEADER_SIGNALS; ++i)
                         pv_tmp[i] = pv[i];
 
-        if (!nun_valid_data_sections){
+                //        if (!nun_valid_data_sections){
                 for (i = PROBEDATA_ARRAY_TIME, j=1; i <= PROBEDATA_ARRAY_SEC; ++i, ++j)
                         g_array_append_val (garray_probedata [i], pv_tmp[j]);
 
                 ++nun_valid_data_sections;
-        }
+                //}
 
 #if 1 //def TTY_DEBUG
 	g_print ("### SET_PV [%04d] {sec=%d}#s[%d]= (", current_probe_data_index, current_probe_section, nun_valid_data_sections);
@@ -1332,19 +1335,13 @@ void RPSPMC_Control::set_probevector(double pv[NUM_PV_HEADER_SIGNALS]){
 void RPSPMC_Control::add_probevector(){ 
 	int i,j;
 	double val, fixptm;
-        if (current_probe_data_index < 1){ // must have previous data point
-                g_warning ("### *** add_probevector() call at first point is invalid, skipping. point index=%d*** ", current_probe_data_index);
-                return;
-        }
         
         double dsec = (double)current_probe_section;
         double dind = (double)current_probe_data_index;
+        double dblk = (double)current_probe_block_index;
 	g_array_append_val (garray_probedata [PROBEDATA_ARRAY_SEC], dsec);
 	g_array_append_val (garray_probedata [PROBEDATA_ARRAY_INDEX], dind);
-
-	// copy Block Start Index
-	val = g_array_index (garray_probedata [PROBEDATA_ARRAY_BLOCK], double, current_probe_data_index-1);
-	g_array_append_val (garray_probedata [PROBEDATA_ARRAY_BLOCK], val);
+	g_array_append_val (garray_probedata [PROBEDATA_ARRAY_BLOCK], dblk);
 
 #if 0
         g_print ("###ADD_PV[%04d] sec=%d blk=%d (du %g  dxyz %g %g %g) \n",
@@ -1400,8 +1397,14 @@ void RPSPMC_Control::add_probevector(){
 }
 
 // CALL ONLY THIS EXTERNALLY TO ADD DATA
-void RPSPMC_Control::add_probedata(double data[NUM_PV_DATA_SIGNALS], double pv[NUM_PV_HEADER_SIGNALS], gboolean set_pv){ 
+ void RPSPMC_Control::add_probedata(double data[NUM_PV_DATA_SIGNALS], double pv[NUM_PV_HEADER_SIGNALS], gboolean set_pv, gboolean add_pv){ 
 	int i,j;
+
+        // Data Stream:
+        //         H -> D -> D ->... D -> H -> D -> D ->... H -> D -> D ->... D -> H
+        // initial H                                                               final H
+        // set_pv  1    0    0       0    1    0    0       1    0    0       0    1
+        // add_pv  0    1    1       1    0    1    1       0    1    1       1    0
         
         pv_lock = TRUE;
         // create and add vector generated signals
@@ -1412,13 +1415,17 @@ void RPSPMC_Control::add_probedata(double data[NUM_PV_DATA_SIGNALS], double pv[N
                 // add (set) section start reference position/values for vector signal generation
                 set_probevector (pv);
         }
-        //g_print ("+++>>>> add_probedata add_vec sec=%d\n", (int)pv[PROBEDATA_ARRAY_SEC]);
-        add_probevector();
-
+        if (add_pv){
+                //g_print ("+++>>>> add_probedata add_vec sec=%d\n", (int)pv[PROBEDATA_ARRAY_SEC]);
+                add_probevector();
+        }
+        
         // add data channels
         //g_print ("+++>>>> add_probedata add_data sec=%d\n", (int)pv[PROBEDATA_ARRAY_SEC]);
 	for (i = PROBEDATA_ARRAY_S1, j=0; i <= PROBEDATA_ARRAY_END; ++i, ++j)
 		g_array_append_val (garray_probedata[i], data[j]);
+
+        current_probe_data_index++;
 
 #ifdef TTY_DEBUG
 	std::cout << "###ADD_PDATA[" << current_probe_data_index << "]: ";
@@ -1426,8 +1433,7 @@ void RPSPMC_Control::add_probedata(double data[NUM_PV_DATA_SIGNALS], double pv[N
 		std::cout << ((int)(data[j])) << ", ";
 	std::cout << std::endl;
 #endif
-
-	current_probe_data_index++;	
+        
         //g_print ("+++>>>> add_probedata add_data done current index=%d\n", current_probe_data_index);
 	pv_lock = FALSE;
 }

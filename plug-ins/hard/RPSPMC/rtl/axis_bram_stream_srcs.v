@@ -66,29 +66,47 @@ module axis_bram_stream_srcs #(
     parameter integer BRAM_ADDR_WIDTH = 14
 )
 (
-    (* X_INTERFACE_PARAMETER = "FREQ_HZ 125000000, ASSOCIATED_CLKEN a2_clk, ASSOCIATED_BUSIF BRAM_PORTA" *)
                              // CH      MASK
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS_ch1s:S_AXIS_ch2s:S_AXIS_ch3s:S_AXIS_ch4s:S_AXIS_ch5s:S_AXIS_ch6s:S_AXIS_ch7s:S_AXIS_ch8s:S_AXIS_ch9s:S_AXIS_chAs:S_AXIS_chBs:S_AXIS_chCs:S_AXIS_chDs:S_AXIS_chEs:S_AXIS_gvp_time:S_AXIS_srcs:S_AXIS_index" *)
+
     input a2_clk, // double a_clk used for BRAM (125MHz)
-    input wire [32-1:0] ch1s, // XS      0x0001  X in Scan coords
-    input wire [32-1:0] ch2s, // YS      0x0002  Y in Scan coords
-    input wire [32-1:0] ch3s, // ZS      0x0004  Z
-    input wire [32-1:0] ch4s, // U       0x0008  Bias
-    input wire [32-1:0] ch5s, // IN1     0x0010  IN1 RP (Signal)
-    input wire [32-1:0] ch6s, // IN2     0x0020  IN2 RP (Current)
-    input wire [32-1:0] ch7s, // IN3     0x0040  reserved, N/A at this time
-    input wire [32-1:0] ch8s, // IN4     0x0080  reserved, N/A at this time
-    input wire [32-1:0] ch9s, // DFREQ   0x0100  via PACPLL FIR
-    input wire [32-1:0] chAs, // EXEC    0x0200  via PACPLL FIR
-    input wire [32-1:0] chBs, // PHASE   0x0400  via PACPLL FIR
-    input wire [32-1:0] chCs, // AMPL    0x0800  via PACPLL FIR
-    input wire [32-1:0] chDs, // LockInA 0x1000  LockIn X (ToDo)
-    input wire [32-1:0] chEs, // LockInB 0x2000  LocKin R (ToDo)
+    input wire [32-1:0] S_AXIS_ch1s_tdata, // XS      0x0001  X in Scan coords
+    input wire          S_AXIS_ch1s_tvalid,
+    input wire [32-1:0] S_AXIS_ch2s_tdata, // YS      0x0002  Y in Scan coords
+    input wire          S_AXIS_ch2s_tvalid,
+    input wire [32-1:0] S_AXIS_ch3s_tdata, // ZS      0x0004  Z
+    input wire          S_AXIS_ch3s_tvalid,
+    input wire [32-1:0] S_AXIS_ch4s_tdata, // U       0x0008  Bias
+    input wire          S_AXIS_ch4s_tvalid,
+    input wire [32-1:0] S_AXIS_ch5s_tdata, // IN1     0x0010  IN1 RP (Signal)
+    input wire          S_AXIS_ch5s_tvalid,
+    input wire [32-1:0] S_AXIS_ch6s_tdata, // IN2     0x0020  IN2 RP (Current)
+    input wire          S_AXIS_ch6s_tvalid,
+    input wire [32-1:0] S_AXIS_ch7s_tdata, // IN3     0x0040  reserved, N/A at this time
+    input wire          S_AXIS_ch7s_tvalid,
+    input wire [32-1:0] S_AXIS_ch8s_tdata, // IN4     0x0080  reserved, N/A at this time
+    input wire          S_AXIS_ch8s_tvalid,
+    input wire [32-1:0] S_AXIS_ch9s_tdata, // DFREQ   0x0100  via PACPLL FIR
+    input wire          S_AXIS_ch9s_tvalid,
+    input wire [32-1:0] S_AXIS_chAs_tdata, // EXEC    0x0200  via PACPLL FIR
+    input wire          S_AXIS_chAs_tvalid,
+    input wire [32-1:0] S_AXIS_chBs_tdata, // PHASE   0x0400  via PACPLL FIR
+    input wire          S_AXIS_chBs_tvalid,
+    input wire [32-1:0] S_AXIS_chCs_tdata, // AMPL    0x0800  via PACPLL FIR
+    input wire          S_AXIS_chCs_tvalid,
+    input wire [32-1:0] S_AXIS_chDs_tdata, // LockInA 0x1000  LockIn X (ToDo)
+    input wire          S_AXIS_chDs_tvalid,
+    input wire [32-1:0] S_AXIS_chEs_tdata, // LockInB 0x2000  LocKin R (ToDo)
+    input wire          S_AXIS_chEs_tvalid,
     // from below
     // gvp_time[32-1: 0]      // TIME  0x4000 // lower 32
     // gvp_time[48-1:32]      // TIME  0x8000 // upper 32 (16 lower only)
-    input wire [48-1:0] gvp_time,  // time since GVP start in 1/125MHz units
-    input wire [32-1:0] srcs,      // data selection mask and options
-    input wire [32-1:0] index,     // index starting at N-1 down to 0
+    input wire [48-1:0] S_AXIS_gvp_time_tdata,  // time since GVP start in 1/125MHz units
+    input wire          S_AXIS_gvp_time_tvalid,
+    input wire [32-1:0] S_AXIS_srcs_tdata,      // data selection mask and options
+    input wire          S_AXIS_srcs_tvalid,
+    input wire [32-1:0] S_AXIS_index_tdata,     // index starting at N-1 down to 0
+    input wire          S_AXIS_index_tvalid,
     input wire [2-1:0]  push_next, // frame header/data point trigger control
     input wire reset,
     
@@ -101,6 +119,7 @@ module axis_bram_stream_srcs #(
     //(* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME BRAM_PORTA, ASSOCIATED_BUSIF BRAM_PORTA, ASSOCIATED_CLKEN BRAM_PORTA_clk, FREQ_HZ 125000000" *)
 
     
+    (* X_INTERFACE_PARAMETER = "FREQ_HZ 125000000, ASSOCIATED_CLKEN a2_clk, ASSOCIATED_BUSIF BRAM_PORTA" *)
     (* X_INTERFACE_PARAMETER = "FREQ_HZ 125000000, ASSOCIATED_CLKEN BRAM_PORTA_clk" *)
     output wire                        BRAM_PORTA_clk,
     output wire [BRAM_ADDR_WIDTH-1:0]  BRAM_PORTA_addr,
@@ -201,22 +220,22 @@ module axis_bram_stream_srcs #(
                         channel <= 0;
                         once <= 0; // only one push!
                         // buffer all data
-                        stream_buffer[0] <= ch1s;
-                        stream_buffer[1] <= ch2s;
-                        stream_buffer[2] <= ch3s;
-                        stream_buffer[3] <= ch4s;
-                        stream_buffer[4] <= ch5s;
-                        stream_buffer[5] <= ch6s;
-                        stream_buffer[6] <= ch7s;
-                        stream_buffer[7] <= ch8s;
-                        stream_buffer[8] <= ch9s;
-                        stream_buffer[9] <= chAs;
-                        stream_buffer[10] <= chBs;
-                        stream_buffer[11] <= chCs;
-                        stream_buffer[12] <= chDs;
-                        stream_buffer[13] <= chEs;
-                        stream_buffer[14] <= gvp_time[32-1:0];
-                        stream_buffer[15] <= { 16'd0, gvp_time[48-1:32] };
+                        stream_buffer[0] <= S_AXIS_ch1s_tdata[32-1:0]; // X
+                        stream_buffer[1] <= S_AXIS_ch2s_tdata[32-1:0]; // Y
+                        stream_buffer[2] <= S_AXIS_ch3s_tdata[32-1:0]; // Z
+                        stream_buffer[3] <= S_AXIS_ch4s_tdata[32-1:0]; // U
+                        stream_buffer[4] <= S_AXIS_ch5s_tdata[32-1:0]; // IN1
+                        stream_buffer[5] <= S_AXIS_ch6s_tdata[32-1:0]; // IN2
+                        stream_buffer[6] <= S_AXIS_ch7s_tdata[32-1:0];
+                        stream_buffer[7] <= S_AXIS_ch8s_tdata[32-1:0];
+                        stream_buffer[8] <= S_AXIS_ch9s_tdata[32-1:0]; // PACPLL
+                        stream_buffer[9] <= S_AXIS_chAs_tdata[32-1:0]; // PACPLL
+                        stream_buffer[10] <= S_AXIS_chBs_tdata[32-1:0]; // PACPLL
+                        stream_buffer[11] <= S_AXIS_chCs_tdata[32-1:0]; // PACPLL
+                        stream_buffer[12] <= S_AXIS_chDs_tdata[32-1:0];
+                        stream_buffer[13] <= S_AXIS_chEs_tdata[32-1:0];
+                        stream_buffer[14] <= S_AXIS_gvp_time_tdata[32-1:0];
+                        stream_buffer[15] <= { 16'd0, S_AXIS_gvp_time_tdata[48-1:32] };
                         bramwr_sms <= 3'd1; // write frame start info, then data
                     end
                     else
@@ -235,13 +254,13 @@ module axis_bram_stream_srcs #(
                     case (hdr_type)
                         1: 
                         begin // normal data set as of srcs
-                            srcs_mask       <= srcs[32-1:8];
-                            bram_data_next  <= { index[16-1:0], srcs[32-8-1:8] }; // frame info: mask and type (header or data)
+                            srcs_mask       <= S_AXIS_srcs_tdata[32-1:8];
+                            bram_data_next  <= { S_AXIS_index_tdata[16-1:0], S_AXIS_srcs_tdata[32-8-1:8] }; // frame info: mask and type (header or data)
                         end
                         2:
                         begin // full header info, all signals
                             srcs_mask       <= 24'h0ffff;// ALL 16
-                            bram_data_next  <= { index[16-1:0], 16'hffff }; // frame info: mask and type (header or data)
+                            bram_data_next  <= { S_AXIS_index_tdata[16-1:0], 16'hffff }; // frame info: mask and type (header or data)
                         end
                         3:
                         begin // full header info, all signals, + END MARKING

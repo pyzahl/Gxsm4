@@ -506,9 +506,11 @@ public:
 
 	int check_vp_in_progress (const gchar *extra_info=NULL) { return 0; }; // DUMMY -- check controller for !!
 
-	void add_probedata(double data[NUM_PV_DATA_SIGNALS], double pv[NUM_PV_HEADER_SIGNALS], gboolean set_pv=false);
-	void add_probevector();
+	void add_probedata(double data[NUM_PV_DATA_SIGNALS], double pv[NUM_PV_HEADER_SIGNALS], gboolean set_pv=false, gboolean add_pv=true);
+        // "set" and append PROBEDATA_ARRAY_INDEX, BLOCK, HEADER:[X,Y,Z,U,A,B]
 	void set_probevector(double pv[NUM_PV_HEADER_SIGNALS]);
+        // append PROBEDATA_ARRAY_INDEX, SEC, BLOCK and  "add" to (emulate GVP signal generation) TIME, X,Y,Z,U,A,B, and append
+	void add_probevector();
 
         int next_section(int pc){
                  if (pc < 0)
@@ -728,6 +730,7 @@ public:
 	GArray *garray_probe_hdrlist[NUM_PROBEDATA_ARRAYS];
 	GArray *garray_probedata[NUM_PROBEDATA_ARRAYS];
 	int current_probe_data_index;
+        int current_probe_block_index;
         int current_probe_section;
 	int nun_valid_data_sections;
 	int nun_valid_hdr, last_nun_hdr_dumped;

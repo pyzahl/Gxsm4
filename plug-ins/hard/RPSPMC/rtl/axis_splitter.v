@@ -20,50 +20,41 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module axis_FIR #(
+module axis_splitter #(
     parameter SAXIS_TDATA_WIDTH = 32,
-    parameter MAXIS_TDATA_WIDTH = 32,
-    parameter FIR_DECI   = 64, // FIR LEN
-    parameter FIR_DECI_L = 6 // extra bits to accomodate FIR_DECI number 
+    parameter MAXIS_TDATA_WIDTH = 32
 )
 (
     // (* X_INTERFACE_PARAMETER = "FREQ_HZ 125000000" *)
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk" *)
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF S_AXIS:M_AXIS:M_AXIS2" *)
     input a_clk,
-    input next_dv,
     
     input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS_tdata,
     input wire                          S_AXIS_tvalid,
     output wire [MAXIS_TDATA_WIDTH-1:0] M_AXIS_tdata,
     output wire                         M_AXIS_tvalid,
     output wire [MAXIS_TDATA_WIDTH-1:0] M_AXIS2_tdata,
-    output wire                         M_AXIS2_tvalid
+    output wire                         M_AXIS2_tvalid,
+    output wire [MAXIS_TDATA_WIDTH-1:0] monitor
     );
     
-    reg [FIR_DECI_L-1:0] i = 0;
-    reg signed [SAXIS_TDATA_WIDTH+FIR_DECI_L-1:0] sum = 0;
-    reg signed [SAXIS_TDATA_WIDTH-1:0] fir_buffer[FIR_DECI-1:0];
     reg signed [SAXIS_TDATA_WIDTH-1:0] data_in;
     reg signed [MAXIS_TDATA_WIDTH-1:0] buffer; 
-    always @ (posedge next_dv)
+    always @ (posedge a_clk)
     begin
         if (S_AXIS_tvalid)
         begin
-            data_in       <= $signed(S_AXIS_tdata);
-            sum           <= sum - fir_buffer[i] + data_in;
-            fir_buffer[i] <= data_in;
+            data_in   <= $signed(S_AXIS_tdata);
+            buffer    <= data_in;
         end
         else
         begin
-            fir_buffer[i] <= 0;
-            sum           <= 0;
-            data_in       <= 0;
+	     buffer  <= 0;
         end
-        i <= i+1;
-        buffer <= sum[SAXIS_TDATA_WIDTH+FIR_DECI_L-1:FIR_DECI_L+SAXIS_TDATA_WIDTH-MAXIS_TDATA_WIDTH];
     end
     
+    assign monitor = buffer;
     assign M_AXIS_tdata  = buffer;
     assign M_AXIS_tvalid = S_AXIS_tvalid;
     assign M_AXIS2_tdata  = buffer;

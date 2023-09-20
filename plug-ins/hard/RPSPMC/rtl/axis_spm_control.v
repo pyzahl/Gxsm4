@@ -26,12 +26,21 @@ module axis_spm_control#(
     parameter RDECI = 4   // reduced rate decimation bits 1= 1/2 ...
 )
 (
-    // SCAN COMPONENTS, ROTATED RELATIVE COORDS TO SCAN CENTER
-    input [32-1:0] xs, // vector components
-    input [32-1:0] ys, // ..
-    input [32-1:0] zs, // ..
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS_Xs:S_AXIS_Ys:S_AXIS_Zs:S_AXIS_U:S_AXIS_Z:M_AXIS1:M_AXIS2:M_AXIS3:M_AXIS4:M_AXIS_XSMON:M_AXIS_YSMON:M_AXIS_ZSMON:M_AXIS_X0MON:M_AXIS_Y0MON:M_AXIS_Z0MON:M_AXIS_UrefMON" *)
+    input a_clk,
+    // GVP/SCAN COMPONENTS, ROTATED RELATIVE COORDS TO SCAN CENTER
+    input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS_Xs_tdata,
+    input wire                          S_AXIS_Xs_tvalid,
+    input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS_Ys_tdata,
+    input wire                          S_AXIS_Ys_tvalid,
+    input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS_Zs_tdata,
+    input wire                          S_AXIS_Zs_tvalid,
+    // Z Feedback Servo
+    input  wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS_Z_tdata,
+    input  wire                          S_AXIS_Z_tvalid,
     // Bias
-    input [32-1:0] us, // .. probe bias
+    input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS_U_tdata,
+    input wire                          S_AXIS_U_tvalid,
     // two future control components using optional (DAC #5, #6)
     // input [32-1:0] motor1, // ..
     // input [32-1:0] motor2, // ..
@@ -52,11 +61,6 @@ module axis_spm_control#(
     input [32-1:0] xy_offset_step, // @Q31 => Q31 / 120M => [18 sec full scale swin @ step 1 decii = 0]  x RDECI
     input [32-1:0] z_offset_step, // @Q31 => Q31 / 120M => [18 sec full scale swin @ step 1 decii = 0]  x RDECI
 
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS_Z:M_AXIS1:M_AXIS2:M_AXIS3:M_AXIS4:M_AXIS_XSMON:M_AXIS_YSMON:M_AXIS_ZSMON:M_AXIS_X0MON:M_AXIS_Y0MON:M_AXIS_Z0MON:M_AXIS_UrefMON" *)
-    input  a_clk,
-    input  wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS_Z_tdata,
-    input  wire                          S_AXIS_Z_tvalid,
-    
     output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS1_tdata,
     output wire                          M_AXIS1_tvalid,
     output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS2_tdata,
@@ -146,10 +150,10 @@ module axis_spm_control#(
     // always buffer locally
         xy_move_step <= xy_offset_step;
         z_move_step <= z_offset_step;
-        x <= xs;
-        y <= ys;
-        u <= us;
-        z_gvp <= zs;
+        x <= S_AXIS_Xs_tdata;
+        y <= S_AXIS_Ys_tdata;
+        z_gvp <= S_AXIS_Zs_tdata;
+        u <= S_AXIS_U_tdata;
         mxx <= rotmxx;
         mxy <= rotmxy;
 
@@ -227,19 +231,19 @@ module axis_spm_control#(
     assign M_AXIS1_tvalid = 1;
     assign M_AXIS_X0MON_tdata  = mx0;
     assign M_AXIS_X0MON_tvalid = 1;
-    assign M_AXIS_XSMON_tdata  = xs;
+    assign M_AXIS_XSMON_tdata  = x;
     assign M_AXIS_XSMON_tvalid = 1;
     
     assign M_AXIS2_tdata  = ry;
     assign M_AXIS2_tvalid = 1;
     assign M_AXIS_Y0MON_tdata  = my0;
     assign M_AXIS_Y0MON_tvalid = 1;
-    assign M_AXIS_YSMON_tdata  = ys;
+    assign M_AXIS_YSMON_tdata  = y;
     assign M_AXIS_YSMON_tvalid = 1;
     
     assign M_AXIS3_tdata  = rz;
     assign M_AXIS3_tvalid = 1;
-    assign M_AXIS_ZSMON_tdata  = zs;
+    assign M_AXIS_ZSMON_tdata  = z_gvp;
     assign M_AXIS_ZSMON_tvalid = 1;
     assign M_AXIS_Z0MON_tdata  = mz0;
     assign M_AXIS_Z0MON_tvalid = 1;

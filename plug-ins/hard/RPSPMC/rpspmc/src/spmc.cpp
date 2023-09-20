@@ -68,7 +68,7 @@
 #define SPMC_ACLK_MHZ   125 // RP Analog Clock Base in MHz
 #define SPMC_RDECI      4
 #define SPMC_CLK        ((double)SPMC_ACLK_MHZ*1e6/(1<<(SPMC_RDECI+1)))
-#define SPMC_GVP_CLK    ((double)SPMC_ACLK_MHZ*1e6)
+#define SPMC_GVP_CLK    ((double)SPMC_ACLK_MHZ*1e6/2)
 
 #define MAX_NUM_PROGRAN_VECTORS 16
 #define Q_XYPRECISION Q28
@@ -731,7 +731,7 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
                 // Error:
                 //double ddminE = (double)ddminQ31 - Q31*ddmin/SPMC_AD5791_REFV; // smallest point distance in Q31 for DAC in S19Q12  (32 bit total precision fixed point)
 
-                // SPMC_GVP_CLK = 125 MHz
+                // SPMC_GVP_CLK = 125/2 MHz
                 // slew in V/s
                 // => time / point: 1/slew
         
