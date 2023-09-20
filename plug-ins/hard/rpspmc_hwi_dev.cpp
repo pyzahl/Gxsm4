@@ -374,6 +374,7 @@ void rpspmc_hwi_dev::on_new_data (gconstpointer contents, gsize len, int positio
 // ReadProbeData:
 // read from probe data FIFO, this engine needs to be called several times from master thread/function
 int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
+        static int recursion_level=0;
 	static double pv[NUM_PV_HEADER_SIGNALS];
 	static int point_index = 0;
         static int index_all = 0;
@@ -382,6 +383,7 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
 	static int need_hdr = FR_YES;  // need header
 	static int need_data = FR_YES; // need data
 
+        
         //std::ostringstream stream;
 #ifdef LOGMSGS0
 	static double dbg0=0., dbg1=0.;
@@ -390,10 +392,12 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
 
 	switch (control){
 	case FR_FIFO_FORCE_RESET: // not used normally -- FIFO is reset by DSP at probe_init (single probe)
-		return RET_FR_OK;
+                return ReadProbeData (0, FR_FINISH); // finish
 
 	case FR_INIT:
-
+                g_message ("VP INIT: ReadProbeData rl=%d", recursion_level);
+                recursion_level=1;
+                
                 g_message ("VP: init");
                 for (int i=0; i<NUM_PV_HEADER_SIGNALS; ++i) pv[i]=0.;
 
@@ -416,14 +420,21 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
 		return RET_FR_OK; // init OK.
 
 	case FR_FINISH:
-                // add terminating header
-                RPSPMC_ControlClass->add_probedata (GVP_vp_header_current.dataexpanded, pv, true, false);
-		LOGMSGS ( "FR::FINISH-OK." << std::endl);
-		return RET_FR_OK; // finish OK.
+                RPSPMC_ControlClass->add_probedata (GVP_vp_header_current.dataexpanded, pv, true, true);
+                --recursion_level;
+                LOGMSGS ( "FR::FINISH-OK." << std::endl);
+                g_message ( "FR::FINISH-OK");
+		return RET_FR_FCT_END; // finish OK.
 
 	default: break;
 	}
 
+        if (recursion_level > 2){
+                g_warning ("ReadProbeData rl=%d", recursion_level);
+                usleep(200000);
+                return ReadProbeData (0, FR_FINISH); // finish
+        }
+        
 
 	if (need_fct){ // read and check fifo control?
 		LOGMSGS2 ( "FR::NEED_FCT" << std::endl);
@@ -447,6 +458,8 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
                         g_message ("Reading VP section header...");
                         if (read_GVP_data_block_to_position_vector (GVP_stream_buffer_offset) == -1){
 
+                                GVP_stream_buffer_offset += 1 + GVP_vp_header_current.number_channels; // skip forward by read number of entries
+                                
                                 // next section, load header, manage pc
                                 GVP_vp_header_current.section = RPSPMC_ControlClass->next_section (GVP_vp_header_current.section);
                                         
@@ -467,30 +480,28 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
                                            pv[PROBEDATA_ARRAY_TIME],pv[PROBEDATA_ARRAY_U ]);
 
                         } else {
-                                if (GVP_vp_header_current.endmark){ // finished?
+                                if (GVP_vp_header_current.endmark){ // checking -- finished?
                                         g_message ("*** GVP: finished ***");
-                                        return RET_FR_FCT_END;
+                                        return ReadProbeData (0, FR_FINISH); // finish
                                 }
                                 
                                 g_message ("VP: waiting for section header -- incomplete **");
+                                usleep(100000);
                                 return RET_FR_OK;
                         }
                 } else {
                         g_message ("VP: waiting for data");
+                        usleep(100000);
                         return RET_FR_OK;
                 }
                 
-
                 if (GVP_vp_header_current.endmark){ // finished?
-                        g_message ("*** GVP: finished ***");
-                        return RET_FR_FCT_END;
+                        return ReadProbeData (0, FR_FINISH);
                 }
-
-                GVP_stream_buffer_offset += 1 + GVP_vp_header_current.number_channels;
                 
-                point_index = 0;
-                g_print("add probe data header and data");
                 RPSPMC_ControlClass->add_probedata (GVP_vp_header_current.dataexpanded, pv, true, true);
+
+                point_index = 0;
 
                 need_hdr = FR_NO;
         }
@@ -503,7 +514,7 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
                 int ret=0;
                 ret = read_GVP_data_block_to_position_vector (GVP_stream_buffer_offset);
                 if (ret == GVP_vp_header_current.number_channels){
-                        GVP_stream_buffer_offset += 1 + GVP_vp_header_current.number_channels;
+                        GVP_stream_buffer_offset += 1 + GVP_vp_header_current.number_channels; // skip forward on success by read number of entries
 
                         //g_message ("VP [%04d] of %d\n", GVP_vp_header_current.i, GVP_vp_header_current.n);
 
@@ -513,11 +524,9 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
 
                 } else {
                         if (GVP_vp_header_current.endmark){ // finished?
-                                g_message ("*** GVP: finished ***");
-                                return RET_FR_FCT_END;
+                                g_message ("*** GVP: finished -- end mark found ***");
+                                return ReadProbeData (0, FR_FINISH); // finish
                         }
-                        //g_message ("-- waiting for data: #ch read = %d / %d--", ret,  GVP_vp_header_current.number_channels);
-                        //return RET_FR_FCT_END;
                         return RET_FR_OK; // wait for data
                 }
                         

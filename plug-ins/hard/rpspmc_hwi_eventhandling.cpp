@@ -132,6 +132,7 @@ const char* RPSPMC_Control::vp_unit_lookup(int i){
 double RPSPMC_Control::vp_scale_lookup(int i){
         for (int k=0; source_signals[k].mask; ++k){
                 if (source_signals[k].garr_index == i){
+                        //g_print ("vpsl[%d]: %8x, %g\n",i,source_signals[k].mask, source_signals[k].scale_factor);
                         switch (source_signals[k].mask){
                         case 0x00000020: // CUSTOM auto
                                 if (main_get_gapp()->xsm->Inst->nAmpere2V (1.) > 1.)
@@ -151,6 +152,9 @@ double RPSPMC_Control::vp_scale_lookup(int i){
                         case 0x00800000:
                         case 0x00000008:
                                 return main_get_gapp()->xsm->Inst->BiasGainV2V ();
+                        case 0x04000000: // ARRAY_SEC  -- SECTION
+                                //g_print ("vpsl: %8x, %g\n",source_signals[k].mask, source_signals[k].scale_factor);
+                                return 1.0;
                         default:
                                 return  source_signals[k].scale_factor;
                         }
@@ -1343,6 +1347,8 @@ void RPSPMC_Control::add_probevector(){
 	g_array_append_val (garray_probedata [PROBEDATA_ARRAY_INDEX], dind);
 	g_array_append_val (garray_probedata [PROBEDATA_ARRAY_BLOCK], dblk);
 
+        //g_print ("add-pv: dsec=%g\n", dsec);
+        
 #if 0
         g_print ("###ADD_PV[%04d] sec=%d blk=%d (du %g  dxyz %g %g %g) \n",
                  current_probe_data_index, current_probe_section, (int)val,
@@ -1350,14 +1356,10 @@ void RPSPMC_Control::add_probevector(){
                  program_vector_list[current_probe_section].f_dx, program_vector_list[current_probe_section].f_dy, program_vector_list[current_probe_section].f_dz
                  );
 #endif
-        double multi = 1./(program_vector_list[current_probe_section].n-1);
-        double dt    = 1./program_vector_list[current_probe_section].slew*1e03; // slew = npoints / time in ms
+        double multi = 1./(program_vector_list[current_probe_section].n);
+        double dt    = 1./program_vector_list[current_probe_section].slew*1e03; // slew = npoints / time in ms (sec x 1e3)
 	for (i = PROBEDATA_ARRAY_TIME; i < PROBEDATA_ARRAY_SEC; ++i){
-		// val = g_array_index (garray_probedata[i], double, current_probe_data_index-1); // get previous, then add delta
                 val = pv_tmp[i];
-#ifdef TTY_DEBUG_PREV
-		g_print("%d => ", (int)val);
-#endif
 		switch (i){
 		case PROBEDATA_ARRAY_TIME:
 			val += dt;
@@ -1385,15 +1387,8 @@ void RPSPMC_Control::add_probevector(){
 		}
                 pv_tmp[i] = val;
 		g_array_append_val (garray_probedata[i], val);
-#ifdef TTY_DEBUG
-		g_print("%d_[%d], ", (int)val,i);
-#endif
 	}
 	++nun_valid_data_sections;
-
-#ifdef TTY_DEBUG
-        g_print(" ) #{%d : %d} \n", nun_valid_data_sections, current_probe_data_index);
-#endif
 }
 
 // CALL ONLY THIS EXTERNALLY TO ADD DATA
@@ -1425,7 +1420,7 @@ void RPSPMC_Control::add_probevector(){
         // add data channels
 	for (i = PROBEDATA_ARRAY_S1, j=0; i <= PROBEDATA_ARRAY_END; ++i, ++j)
 		g_array_append_val (garray_probedata[i], data[j]);
-        g_print ("+++>>>> PUSH DATA i[%d] sec=%d  t=%g ms\n", current_probe_data_index, (int)pv[PROBEDATA_ARRAY_SEC],  data[14]);
+        //g_print ("+++>>>> PUSH DATA i[%d] sec=%d  t=%g ms\n", current_probe_data_index, (int)pv[PROBEDATA_ARRAY_SEC],  data[14]);
 
         current_probe_data_index++;
 
