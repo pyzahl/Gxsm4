@@ -134,8 +134,9 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
 
                 tmp = g_strdup_printf ("WEBSOCKET_DATA_BINARY SPMC Bytes: 0x%04x,  Position: 0x%04x + AB=%d x BRAMSIZE/2\n", len, position, streamAB);
                 self->status_append (tmp);
-                        
-                self->status_append_int32 (contents, 512); // truncate, just a snap
+                g_message (tmp);
+                
+                self->status_append_int32 (contents, 512, true, streamAB*len, true); // truncate, just a snap
                 self->status_append ("\n");
                 //self->debug_log (tmp);
                 g_free (tmp);

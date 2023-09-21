@@ -303,6 +303,7 @@ typedef struct{
 typedef struct{
         // ==== FPGA STREAM MATCHING DATA SECTION
         guint16   srcs_mask;
+        guint16   srcs_mask_vector;
         guint16   index;
         gint32    chNs[16];      // full channel data set -- includes positions. X,Y,Z,U,IN1,IN2,x,x,dF,Exec,Phase,Ampl, LckA, LckB
         gint64    gvp_time;      // GVP time in 1/125MHz, 48bit
@@ -311,6 +312,7 @@ typedef struct{
         // ======================
         double    dataexpanded[NUM_PV_DATA_SIGNALS];
         gint32    i;             /* GVP i: N-1, ... 0 */
+        gint32    ilast;
 	gint32    n;             /* number data vectors following in section */
 	guint32   srcs;          /* data source coding mask */
         guint32   time;          /* timestamp */

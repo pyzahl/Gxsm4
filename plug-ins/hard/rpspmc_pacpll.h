@@ -900,12 +900,20 @@ public:
                         return NULL;
 	};
 
-        int read_GVP_data_block_to_position_vector (int offset){
+        int read_GVP_data_block_to_position_vector (int offset, gboolean expect_full_header=false){
                 size_t ch_index;
 
-                if (offset >= GVP_stream_buffer_position) // Buffer is huge now all pages concat
+                if (offset >= GVP_stream_buffer_position){ // Buffer is huge now all pages concat
+                        gchar *tmp = g_strdup_printf ("read_GVP_data_block_to_position_vector: Reading offset %08x is beyond stream write position %08x. Awaiting data.",
+                                                      offset, GVP_stream_buffer_position);
+                        status_append (tmp);
+                        if (offset > 16)
+                                status_append_int32 (&GVP_stream_buffer[offset-16], 3*16, true, offset-16, true);
+                        g_message (tmp);
+                        g_free (tmp);
                         return 0;
-
+                }
+                
                 GVP_vp_header_current.srcs = GVP_stream_buffer[offset]&0xffff;
 
                 GVP_vp_header_current.i = (GVP_stream_buffer[offset]>>16);
@@ -918,8 +926,29 @@ public:
                                 GVP_vp_header_current.n = 0;
                                 GVP_vp_header_current.i = 0;
                                 GVP_vp_header_current.srcs = 0xffff;
+                        } else {
+                                if (GVP_vp_header_current.n = GVP_vp_header_current.i+2)
+                                        GVP_vp_header_current.srcs_mask_vector = GVP_vp_header_current.srcs;
+                                else {
+                                        if (GVP_vp_header_current.i != (GVP_vp_header_current.ilast+1)
+                                            ||
+                                            GVP_vp_header_current.srcs_mask_vector != GVP_vp_header_current.srcs){
+                                                // stream ERROR detected
+                                                gchar *tmp = g_strdup_printf ("read_GVP_data_block_to_position_vector: Stream ERROR at Reading offset %08x, write position %08x.\n"
+                                                                              "SRCS/index mismatch detected. %04x vs %04x, i %d -> %d",
+                                                                              offset, GVP_stream_buffer_position,
+                                                                              GVP_vp_header_current.srcs_mask_vector, GVP_vp_header_current.srcs,
+                                                                              GVP_vp_header_current.ilast, GVP_vp_header_current.i);
+                                                status_append (tmp);
+                                                if (offset > 32)
+                                                        status_append_int32 (&GVP_stream_buffer[offset-32], 5*16, true, offset-32, true);
+                                                g_message (tmp);
+                                                g_free (tmp);
+                                        }
+                                }
                         }
                 }
+                GVP_vp_header_current.ilast = GVP_vp_header_current.i;
                         
                 GVP_vp_header_current.index = GVP_vp_header_current.n - GVP_vp_header_current.i;
 
@@ -942,7 +971,17 @@ public:
                                 //g_message ("%g V", GVP_vp_header_current.dataexpanded[ich]);
                         }
                 }
-        
+
+                if (expect_full_header && GVP_vp_header_current.srcs != 0xffff){
+                        gchar *tmp = g_strdup_printf ("ERROR: read_GVP_data_block_to_position_vector: Reading offset %08x, write position %08x. Expecting full header but found srcs=%04x, i=%d",
+                                                      offset, GVP_stream_buffer_position,  GVP_vp_header_current.srcs, GVP_vp_header_current.i);
+                        status_append (tmp);
+                        if (offset>32)
+                                status_append_int32 (&GVP_stream_buffer[offset-32], 5*16, true, offset-32, true);
+                        g_warning (tmp);
+                        g_free (tmp);
+                }
+                
 
 #if 1
                 if (GVP_vp_header_current.srcs == 0xffff){

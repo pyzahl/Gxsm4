@@ -182,7 +182,7 @@ public:
 #define SPMC_AD5791_REFV 5.0 // DAC AD5791 Reference Volatge is 5.000000V (+/-5V Range)
         double rpspmc_to_volts (int value){ return SPMC_AD5791_REFV*(double)value / ((1<<31)-1); }
 
-        void status_append_int32(const guint32 *data, size_t data_length, bool format = true) {
+        void status_append_int32(const guint32 *data, size_t data_length, bool format = true, int offset=0, bool also_gprint = false) {
                 if (data_length < 1)
                         return;
                 std::ostringstream stream;
@@ -191,7 +191,7 @@ public:
                 int wpl=16;
                 for (size_t data_index = 0; data_index < data_length; ++data_index) {
                         if (data_index % wpl == 0)
-                                stream << std::hex << std::setw(8) << data_index << ": ";
+                                stream << std::hex << std::setw(8) << (data_index+offset) << ": ";
                         stream << std::hex << std::setw(8) << data[data_index];
                         if (format) {
                                 stream << (((data_index + 1) % wpl == 0) ? "\n": " ");
@@ -201,6 +201,10 @@ public:
 
                 std::string str =  stream.str();
                 status_append (str.c_str());
+
+                if (also_gprint)
+                        g_print (str.c_str());
+                
         };
 
         void test_compression() {

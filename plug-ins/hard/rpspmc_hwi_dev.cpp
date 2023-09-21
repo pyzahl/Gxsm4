@@ -458,7 +458,7 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
                 if (GVP_stream_buffer_AB > 0){
                         g_message ("VP: section header ** reading pos[%04x] off[%04x] #AB=%d", GVP_stream_buffer_position, GVP_stream_buffer_offset, GVP_stream_buffer_AB);
                         g_message ("Reading VP section header...");
-                        if (read_GVP_data_block_to_position_vector (GVP_stream_buffer_offset) == -1){
+                        if (read_GVP_data_block_to_position_vector (GVP_stream_buffer_offset, true) == -1){ // NEED FULL HEADER
 
                                 GVP_stream_buffer_offset += 1 + GVP_vp_header_current.number_channels; // skip forward by read number of entries
                                 
@@ -529,7 +529,7 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
                                 g_message ("*** GVP: finished -- end mark found ***");
                                 return ReadProbeData (0, FR_FINISH); // finish
                         }
-                        g_message ("VP: waiting for data");
+                        g_message ("VP: waiting for data ** section: %d gvpi[%04d] Pos:{0x%04x} Offset:0x%04x", GVP_vp_header_current.section, GVP_vp_header_current.i, (int)spmc_parameters.gvp_data_position, GVP_stream_buffer_offset);
                         usleep(100000);
                         return RET_FR_OK; // wait for data
                 }
