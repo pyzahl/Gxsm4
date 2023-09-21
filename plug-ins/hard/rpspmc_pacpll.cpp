@@ -119,6 +119,15 @@ RP data streaming
     input wire [48-1:0] gvp_time,  // time since GVP start in 1/125MHz units
 */
 
+#define CPN(N) ((double)(1LL<<(N))-1.)
+
+#define RP_FPGA_QEXEC 31 // Q EXEC READING Controller        -- 1V/(2^RP_FPGA_QEXEC-1)
+#define RP_FPGA_QSQRT 23 // Q CORDIC SQRT Amplitude Reading  -- 1V/(2^RP_FPGA_QSQRT-1)
+#define RP_FPGA_QATAN 21 // Q CORDIC ATAN Phase Reading      -- 180deg/(PI*(2^RP_FPGA_QATAN-1))
+#define RP_FPGA_QFREQ 44 // Q DIFF FREQ READING              -- 125MHz/(2^RP_FPGA_QFREQ-1) well number should not exceed 32bit 
+
+#define DSP32Qs15dot16TO_Volt (10.0/(32767.*(1<<16)))
+
 // Masks MUST BE unique
 SOURCE_SIGNAL_DEF source_signals[] = {
         // -- 8 vector generated signals (outputs/mapping) ==> must match: #define NUM_VECTOR_SIGNALS 8
@@ -141,24 +150,24 @@ SOURCE_SIGNAL_DEF source_signals[] = {
         { 0x00000008, "Bias-Mon",     " ", "V",   "V", 1.0,    PROBEDATA_ARRAY_S4 }, // BiasFac, see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
 	{ 0x00000010, "In1-Signal",   " ", "V",   "V", 1.0,    PROBEDATA_ARRAY_S5 },
         { 0x00000020, "In2-Current",  " ", "nA", "nA", 1.0,    PROBEDATA_ARRAY_S6 }, // CurrFac, see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
-        { 0x00000040, "In3-**",       " ", "V",   "V", 1.0,    PROBEDATA_ARRAY_S7 },
-        { 0x00000080, "In4-**",       " ", "V",   "V", 1.0,    PROBEDATA_ARRAY_S8 },
-        { 0x00001000, "LockInX",      " ", "V",   "V", 1.0,    PROBEDATA_ARRAY_S9 },
-        { 0x00002000, "LockInR",      " ", "V",   "V", 1.0,    PROBEDATA_ARRAY_S10 },
-        { 0x00000200, "SWPS1-choose", " ", "V",  "V", 1.0, PROBEDATA_ARRAY_S11 }, // ** swappable **,
-        { 0x00000100, "SWPS2-chhose", " ", "V",  "V", 1.0, PROBEDATA_ARRAY_S12 }, // ** swappable **,
-        { 0x00000800, "SWPS3-choose", " ", "V",  "V", 1.0, PROBEDATA_ARRAY_S13 }, // ** swappable **,
-        { 0x00000400, "SWPS4-choose", " ", "V",  "V", 1.0, PROBEDATA_ARRAY_S14 }, // ** swappable **,
+        { 0x00000040, "In3-**",       " ", "V",   "V", DSP32Qs15dot16TO_Volt,    PROBEDATA_ARRAY_S7 },
+        { 0x00000080, "In4-**",       " ", "V",   "V", DSP32Qs15dot16TO_Volt,    PROBEDATA_ARRAY_S8 },
+        { 0x00000100, "SWPS1-choose", " ", "V",   "V", 1.0,    PROBEDATA_ARRAY_S9 }, // ** swappable **,
+        { 0x00000200, "SWPS2-chhose", " ", "V",   "V", 1.0,    PROBEDATA_ARRAY_S10 }, // ** swappable **,
+        { 0x00000400, "SWPS3-choose", " ", "V",   "V", 1.0,    PROBEDATA_ARRAY_S11 }, // ** swappable **,
+        { 0x00000800, "SWPS4-choose", " ", "V",   "V", 1.0,    PROBEDATA_ARRAY_S12 }, // ** swappable **,
+        { 0x00001000, "LockInX",      " ", "V",   "V", DSP32Qs15dot16TO_Volt,    PROBEDATA_ARRAY_S13 },
+        { 0x00002000, "dFreqCtrl",    " ", "V",   "V", DSP32Qs15dot16TO_Volt,    PROBEDATA_ARRAY_S14 },
         { 0x80000000, "BlockI", " ", "i#", "i#", 1.0, PROBEDATA_ARRAY_BLOCK }, // MUST BE ALWAYS LAST AND IN HERE!! END MARK.
         { 0x00000000, NULL, NULL, NULL, NULL, 0.0, 0 }
 };
 
 // so far fixed to swappable 4 signals as of GUI design!
 SOURCE_SIGNAL_DEF swappable_signals[] = {
-        { 0x00000200, "dFrequency", " ", "-", "--", 1.0, 0 },
-        { 0x00000100, "Phase",      " ", "-", "--", 1.0, 0 },
-        { 0x00000800, "Excitation", " ", "-", "--", 1.0, 0 },
-        { 0x00000400, "Amplitude",  " ", "-", "--", 1.0, 0 },
+        { 0x00000100, "Phase",      " ", "deg", UTF8_DEGREE, (180.0/(M_PI*((1L<<RP_FPGA_QATAN)-1))), 0 },
+        { 0x00000200, "dFrequency", " ", "Hz", "Hz", (125e6/((1L<<RP_FPGA_QFREQ)-1)), 0 },
+        { 0x00000400, "Amplitude",  " ", "mV", "mV", (1.0/((1L<<RP_FPGA_QSQRT)-1)), 0 },
+        { 0x00000800, "Excitation", " ", "mV", "mV", (1.0/((1L<<RP_FPGA_QEXEC)-1)), 0 },
         { 0x00000000, NULL, NULL, NULL, NULL, 0.0, 0 }
 };
 
@@ -2082,7 +2091,8 @@ void RPSPMC_Control::create_folder (){
                                 source_signals[i].unit_sym = swappable_signals[k].unit_sym;
                                 source_signals[i].scale_factor = swappable_signals[k].scale_factor;
                                 m = k;
-                                PI_DEBUG (DBG_L4, "GRAPHS*** SWPS init i=" << i << " k=" << k << " " << source_signals[i].label);
+                                PI_DEBUG (DBG_L4, "GRAPHS*** SWPS init i=" << i << " k=" << k << " " << source_signals[i].label << " sfac=" << source_signals[i].scale_factor);
+                                g_message ("GRAPHS*** SWPS init i=%d k=%d {%s} sfac=%g", i, k, source_signals[i].label,source_signals[i].scale_factor);
                                 break;
                         }
                 }
@@ -2205,8 +2215,12 @@ void RPSPMC_Control::create_folder (){
         //gtk_entry_set_text (GTK_ENTRY (input_rpaddress), "130.199.243.200");
         //gtk_entry_set_text (GTK_ENTRY (input_rpaddress), "192.168.1.10");
         
-        bp->grid_add_check_button ( N_("Connect"), "Check to initiate connection, uncheck to close connection.", 1,
+        bp->grid_add_check_button ( N_("Restart"), "Check to reload FPGA and initiate connection, uncheck to close connection.", 1,
                                     G_CALLBACK (RPspmc_pacpll::connect_cb), rpspmc_pacpll);
+	g_object_set_data( G_OBJECT (bp->button), "RESTART", GINT_TO_POINTER (1));
+        bp->grid_add_check_button ( N_("Connect"), "Check to re-initiate connection, uncheck to close connection.", 1,
+                                    G_CALLBACK (RPspmc_pacpll::connect_cb), rpspmc_pacpll);
+	g_object_set_data( G_OBJECT (bp->button), "RESTART", GINT_TO_POINTER (0));
         bp->grid_add_check_button ( N_("Connect Stream"), "Check to initiate stream connection, uncheck to close connection.", 1,
                                     G_CALLBACK (rpspmc_hwi_dev::spmc_stream_connect_cb), rpspmc_hwi);
         bp->grid_add_check_button ( N_("Debug"), "Enable debugging LV1.", 1,
@@ -3727,7 +3741,8 @@ RPspmc_pacpll::~RPspmc_pacpll (){
 }
 
 void RPspmc_pacpll::connect_cb (GtkWidget *widget, RPspmc_pacpll *self){
-        self->json_talk_connect_cb (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget))); // connect (checked) or dissconnect
+        self->json_talk_connect_cb (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)),
+                                    GPOINTER_TO_INT (g_object_get_data( G_OBJECT (widget), "RESTART"))); // connect (checked) or dissconnect
 }
 
 

@@ -73,7 +73,7 @@ public:
         virtual const gchar *get_rp_address (){ return NULL; };
         virtual int get_debug_level() { return 0; };
 
-        virtual void on_new_data (gconstpointer contents, gsize len, int position) {};
+        virtual int on_new_data (gconstpointer contents, gsize len, int position) {};
         
         virtual void status_append (const gchar *msg){
                 g_message (msg);

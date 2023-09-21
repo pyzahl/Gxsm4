@@ -40,7 +40,8 @@ module axis_splitter #(
     );
     
     reg signed [SAXIS_TDATA_WIDTH-1:0] data_in;
-    reg signed [MAXIS_TDATA_WIDTH-1:0] buffer; 
+    reg signed [MAXIS_TDATA_WIDTH-1:0] buffer;
+     
     always @ (posedge a_clk)
     begin
         if (S_AXIS_tvalid)
@@ -50,7 +51,7 @@ module axis_splitter #(
         end
         else
         begin
-	     buffer  <= 0;
+            buffer  <= 0;
         end
     end
     

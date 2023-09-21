@@ -70,7 +70,7 @@ public:
                 error=NULL;
         };
         ~RP_JSON_talk (){};
-        void json_talk_connect_cb (gboolean connect); // connect/dissconnect
+        void json_talk_connect_cb (gboolean connect, gboolean restart); // connect/dissconnect
         static void got_client_connection (GObject *object, GAsyncResult *result, gpointer user_data);
         static void on_message(SoupWebsocketConnection *ws,
                                SoupWebsocketDataType type,

@@ -136,7 +136,7 @@ rpspmc_hwi_dev::rpspmc_hwi_dev(){
 
         // auto adjust and override preferences
         main_get_gapp()->xsm->Inst->override_dig_range (1<<19, xsmres); // gxsm does precision sanity checks and trys to round to best fit grid
-        main_get_gapp()->xsm->Inst->override_volt_in_range (5.0, xsmres);
+        main_get_gapp()->xsm->Inst->override_volt_in_range (1.0, xsmres);
         main_get_gapp()->xsm->Inst->override_volt_out_range (5.0, xsmres);
         
 	probe_fifo_thread_active=0;
@@ -258,7 +258,7 @@ gpointer ScanDataReadThread (void *ptr_sr){
                                         for (int xi=x0; xi < x0+nx; ++xi) // all points per line
                                                 for (int ch=0; ch<sr->nsrcs_dir[dir]; ++ch){
                                                         sr->RPSPMC_data_x_index = xi;
-                                                        double z = sr->RPSPMC_simulate_value (sr, xi, yi, ch);
+                                                        double z = 0.;//sr->RPSPMC_simulate_value (sr, xi, yi, ch);
                                                         //g_print("%d",ch);
                                                         usleep (10000);
                                                         sr->Mob_dir[dir][ch]->PutDataPkt (z, xi, yi);
@@ -279,7 +279,7 @@ gpointer ScanDataReadThread (void *ptr_sr){
                                         for (int xi=x0; xi < x0+nx; ++xi)
                                                 for (int ch=0; ch<sr->nsrcs_dir[dir]; ++ch){
                                                         sr->RPSPMC_data_x_index = xi;
-                                                        double z = sr->RPSPMC_simulate_value (sr, xi, yi, ch);
+                                                        double z = 0.; // sr->RPSPMC_simulate_value (sr, xi, yi, ch);
                                                         usleep (10000);
                                                         sr->Mob_dir[dir][ch]->PutDataPkt (z, xi, yi);
                                                         while (sr->PauseFlg)
@@ -329,10 +329,10 @@ gpointer ProbeDataReadThread (void *ptr_sr){
         g_message("ProbeFifoReadThread ** starting processing loop ** FF=%s", finish_flag?"True":"False");
 	while (sr->is_scanning () || finish_flag){ // while scanning (raster mode) or until single shot probe is finished
 
-                if (sr->ReadProbeData ()){ // True when finished
+                if (sr->ReadProbeData () || sr->abort_GVP_flag){ // True when finished or cancelled
                 
                         g_message("ProbeFifoReadThread ** Finished ** FF=%s", finish_flag?"True":"False");
-                        if (finish_flag){
+                        if (finish_flag || sr->abort_GVP_flag){
                                 if (RPSPMC_ControlClass->current_auto_flags & FLAG_AUTO_PLOT)
                                         RPSPMC_ControlClass->Probing_graph_update_thread_safe (1);
 				
@@ -356,7 +356,7 @@ gpointer ProbeDataReadThread (void *ptr_sr){
 	return NULL;
 }
 
-void rpspmc_hwi_dev::on_new_data (gconstpointer contents, gsize len, int position){
+int rpspmc_hwi_dev::on_new_data (gconstpointer contents, gsize len, int position){
         int offset = 0;
         if (GVP_stream_buffer_AB < 0) // restarted, reset read count
                 GVP_stream_buffer_AB=0;
@@ -369,6 +369,8 @@ void rpspmc_hwi_dev::on_new_data (gconstpointer contents, gsize len, int positio
         g_message ("on_new_data ** AB=%d pos=%d  buffer_pos=0x%08x",  GVP_stream_buffer_AB, position, GVP_stream_buffer_position);
         
         GVP_stream_buffer_AB++;
+
+        return GVP_stream_buffer_AB;
 }
 
 // ReadProbeData:
@@ -452,7 +454,7 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
 	if (need_hdr){ // we have enough data if control gets here!
 		LOGMSGS ( "FR::NEED_HDR" << std::endl);
                 // READ FULL SECTION HEADER
-                g_message ("VP: Waiting for Section Header [%d] StreamPos=%08x", GVP_stream_buffer_AB, GVP_stream_buffer_position);
+                g_message ("VP: Waiting for Section Header [%d] StreamPos=0x%08x", GVP_stream_buffer_AB, GVP_stream_buffer_position);
                 if (GVP_stream_buffer_AB > 0){
                         g_message ("VP: section header ** reading pos[%04x] off[%04x] #AB=%d", GVP_stream_buffer_position, GVP_stream_buffer_offset, GVP_stream_buffer_AB);
                         g_message ("Reading VP section header...");
@@ -527,6 +529,8 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
                                 g_message ("*** GVP: finished -- end mark found ***");
                                 return ReadProbeData (0, FR_FINISH); // finish
                         }
+                        g_message ("VP: waiting for data");
+                        usleep(100000);
                         return RET_FR_OK; // wait for data
                 }
                         
@@ -975,6 +979,8 @@ void rpspmc_hwi_dev::GVP_abort_vector_program (){
         rpspmc_pacpll->write_parameter ("SPMC_GVP_PROGRAM", false);
         rpspmc_pacpll->write_parameter ("SPMC_GVP_STOP", true);
         rpspmc_pacpll->write_parameter ("SPMC_GVP_EXECUTE", false);
+
+        abort_GVP_flag = true;
 }
 
 
@@ -995,6 +1001,8 @@ void rpspmc_hwi_dev::GVP_vp_init (){
         RPSPMC_GVP_n = 0;
         GVP_vp_header_current.section = -1; // still invalid
         GVP_stream_buffer_offset = 0x100; // =0x00 **** TESTING BRAM ISSUE -- FIX ME !!! *****
+
+        abort_GVP_flag = false;
 }
 
 

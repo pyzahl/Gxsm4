@@ -546,6 +546,7 @@ public:
         int   expdi_lookup[NUM_PROBEDATA_ARRAYS+1];
         char* lablookup[NUM_PROBEDATA_ARRAYS+1];
         char* unitlookup[NUM_PROBEDATA_ARRAYS+1];
+        double scalelookup[NUM_PROBEDATA_ARRAYS+1];
         
         double pv_tmp[NUM_PV_HEADER_SIGNALS];
 
@@ -808,7 +809,7 @@ public:
         virtual const gchar *get_rp_address ();
         virtual void status_append (const gchar *msg);
         virtual void on_connect_actions();
-        virtual void on_new_data (gconstpointer contents, gsize len, int position);
+        virtual int on_new_data (gconstpointer contents, gsize len, int position);
         
 	/* Parameter  */
 	virtual long GetMaxLines(){ return 32000; };
@@ -902,7 +903,7 @@ public:
         int read_GVP_data_block_to_position_vector (int offset){
                 size_t ch_index;
 
-                if (offset >= GVP_stream_buffer_position) // MAKE PCB
+                if (offset >= GVP_stream_buffer_position) // Buffer is huge now all pages concat
                         return 0;
 
                 GVP_vp_header_current.srcs = GVP_stream_buffer[offset]&0xffff;
@@ -934,7 +935,10 @@ public:
                         int ich = GVP_vp_header_current.ch_lut[ch_index];
                         GVP_vp_header_current.chNs[ich] = GVP_stream_buffer[1+ch_index+offset];
                         if (ich < 14){
-                                GVP_vp_header_current.dataexpanded[ich] = rpspmc_to_volts (GVP_vp_header_current.chNs[ich]); // Volts
+                                if (ich > 4)
+                                        GVP_vp_header_current.dataexpanded[ich] = (double)GVP_vp_header_current.chNs[ich]; // raw
+                                else
+                                        GVP_vp_header_current.dataexpanded[ich] = rpspmc_to_volts (GVP_vp_header_current.chNs[ich]); // Volts
                                 //g_message ("%g V", GVP_vp_header_current.dataexpanded[ich]);
                         }
                 }
@@ -967,8 +971,10 @@ public:
                         if (GVP_vp_header_current.srcs == 0xffff)
                                 return -1; // true for full position header update
                         return ch_index;
-                }  else
+                }  else {
+                        g_message ("[%08x] *** end of new data at ch=%d ** Must wait for next page and retry.", offset, ch_index);
                         return ch_index; // number channels read until position
+                }
         };
        
         int subscan_data_y_index_offset;
@@ -987,6 +993,7 @@ private:
 	GThread *data_read_thread;
 	GThread *probe_data_read_thread;
         gboolean KillFlg;
+
 
         gint32 GVP_stream_buffer[EXPAND_MULTIPLES*BRAM_SIZE];
         int GVP_stream_buffer_offset;
@@ -1024,7 +1031,8 @@ public:
         gint RPSPMC_data_z_value;
         gint RPSPMC_data_y_index;
         gint RPSPMC_data_x_index;
-        double RPSPMC_simulate_value (XSM_Hardware *xsmhwi, int xi, int yi, int ch) { return (double)sin(0.1*xi)*cos(0.1*yi); };
+
+        gboolean abort_GVP_flag;
 };
 
         

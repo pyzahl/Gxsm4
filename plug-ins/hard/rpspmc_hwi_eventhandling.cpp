@@ -80,8 +80,8 @@ extern SOURCE_SIGNAL_DEF source_signals[];
 //#define XSM_DEBUG_PG(X)  std::cout << X << std::endl;
 #define XSM_DEBUG_PG(X) ;
 
-const gchar *err_unknown_l = "L? (index)";
-const gchar *err_unknown_u = "U?";
+const gchar *err_unknown_l = "L N/A, using index";
+const gchar *err_unknown_u = "U N/A";
 
 const gchar *str_pA = "pA";
 const gchar *str_nA = "nA";
@@ -93,6 +93,7 @@ void RPSPMC_Control::init_vp_signal_info_lookup_cache(){
                 lablookup[i]   = err_unknown_l;
                 unitlookup[i]  = err_unknown_u;
                 expdi_lookup[i] = PROBEDATA_ARRAY_INDEX; // safety/error fallback
+                scalelookup[i] = vp_scale_lookup(i);
                 for (int k=0; source_signals[k].mask; ++k)
                         if (source_signals[k].garr_index == i){
                                msklookup[i]   = source_signals[k].mask;
@@ -100,13 +101,14 @@ void RPSPMC_Control::init_vp_signal_info_lookup_cache(){
                                unitlookup[i]  = source_signals[k].unit_sym;
                                expdi_lookup[i] = source_signals[k].garr_index;
                         }
-                g_print ("Mask[%02d] 0x%08x => %s\n",i,msklookup[i],lablookup[i]);
+                g_print ("Mask[%02d] 0x%08x => %s in %s x %g\n",i,msklookup[i],lablookup[i],unitlookup[i], scalelookup[i]);
         }
         // END MARK:
         msklookup[NUM_PROBEDATA_ARRAYS] = -1;
         lablookup[NUM_PROBEDATA_ARRAYS] = NULL;
         unitlookup[NUM_PROBEDATA_ARRAYS] = NULL;
         expdi_lookup[NUM_PROBEDATA_ARRAYS] = 0;
+        scalelookup[NUM_PROBEDATA_ARRAYS] = 0.0;
 }
 
 const char* RPSPMC_Control::vp_label_lookup(int i){
@@ -119,7 +121,7 @@ const char* RPSPMC_Control::vp_label_lookup(int i){
 const char* RPSPMC_Control::vp_unit_lookup(int i){
         for (int k=0; source_signals[k].mask; ++k)
                 if (source_signals[k].garr_index == i)
-                        if (source_signals[k].mask == 0x000010){ // CUSTOM auto
+                        if (source_signals[k].mask == 0x000020){ // CUSTOM auto
                                 if (main_get_gapp()->xsm->Inst->nAmpere2V (1.) > 1.)
                                         return str_pA;
                                 else
@@ -131,6 +133,7 @@ const char* RPSPMC_Control::vp_unit_lookup(int i){
 
 double RPSPMC_Control::vp_scale_lookup(int i){
         for (int k=0; source_signals[k].mask; ++k){
+                //g_print ("vpsl %s  [%d]: %8x, %g\n",source_signals[k].label, i,source_signals[k].mask, source_signals[k].scale_factor);
                 if (source_signals[k].garr_index == i){
                         //g_print ("vpsl[%d]: %8x, %g\n",i,source_signals[k].mask, source_signals[k].scale_factor);
                         switch (source_signals[k].mask){
@@ -156,7 +159,8 @@ double RPSPMC_Control::vp_scale_lookup(int i){
                                 //g_print ("vpsl: %8x, %g\n",source_signals[k].mask, source_signals[k].scale_factor);
                                 return 1.0;
                         default:
-                                return  source_signals[k].scale_factor;
+                                //g_print ("vpsl for %s: 0x%08x, sfac=%g\n",source_signals[k].label, source_signals[k].mask, source_signals[k].scale_factor);
+                                return source_signals[k].scale_factor; // some thing bogus here
                         }
                 }
         }
@@ -1304,9 +1308,6 @@ void RPSPMC_Control::add_probe_hdr(double pv[NUM_PV_HEADER_SIGNALS]){
 void RPSPMC_Control::set_probevector(double pv[NUM_PV_HEADER_SIGNALS]){ 
 	int i,j;
 
-#ifdef TTY_DEBUG
-        g_print ("***************** SET_PV [%d] section = %d",  current_probe_data_index, (int)pv[PROBEDATA_ARRAY_SEC]);
-#endif
         current_probe_section = (int)pv[PROBEDATA_ARRAY_SEC];
         current_probe_block_index = current_probe_data_index;
 
@@ -1316,18 +1317,15 @@ void RPSPMC_Control::set_probevector(double pv[NUM_PV_HEADER_SIGNALS]){
 	g_array_append_val (garray_probedata [PROBEDATA_ARRAY_INDEX], dind);
         g_array_append_val (garray_probedata [PROBEDATA_ARRAY_BLOCK], dind); // same, start index of section
 
-        //        if (!nun_valid_data_sections)
-                for (int i=0; i<NUM_PV_HEADER_SIGNALS; ++i)
-                        pv_tmp[i] = pv[i];
+        for (int i=0; i<NUM_PV_HEADER_SIGNALS; ++i)
+                pv_tmp[i] = pv[i];
 
-                //        if (!nun_valid_data_sections){
-                for (i = PROBEDATA_ARRAY_TIME, j=1; i <= PROBEDATA_ARRAY_SEC; ++i, ++j)
-                        g_array_append_val (garray_probedata [i], pv_tmp[j]);
+        for (i = PROBEDATA_ARRAY_TIME, j=1; i <= PROBEDATA_ARRAY_SEC; ++i, ++j)
+                g_array_append_val (garray_probedata [i], pv_tmp[j]);
 
-                ++nun_valid_data_sections;
-                //}
+        ++nun_valid_data_sections;
 
-#if 1 //def TTY_DEBUG
+#ifdef TTY_DEBUG
 	g_print ("### SET_PV [%04d] {sec=%d}#s[%d]= (", current_probe_data_index, current_probe_section, nun_valid_data_sections);
 	for (i = PROBEDATA_ARRAY_INDEX, j=0; i <= PROBEDATA_ARRAY_SEC; ++i, ++j)
 		g_print("%g_[%d], ", pv[j],i);
@@ -1414,7 +1412,7 @@ void RPSPMC_Control::add_probevector(){
 
                 // array add (increment add) from previous/ reference position vector: signal generation emulation
                 add_probevector();
-                g_print ("+++>>>> ADD-PV  i[%d] sec=%d t=%g ms\n", current_probe_data_index,  (int)pv[PROBEDATA_ARRAY_SEC], pv[PROBEDATA_ARRAY_TIME]);
+                //g_print ("+++>>>> ADD-PV  i[%d] sec=%d t=%g ms\n", current_probe_data_index,  (int)pv[PROBEDATA_ARRAY_SEC], pv[PROBEDATA_ARRAY_TIME]);
         }
         
         // add data channels

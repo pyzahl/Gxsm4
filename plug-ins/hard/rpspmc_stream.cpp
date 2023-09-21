@@ -113,6 +113,7 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
         gchar *tmp;
 
         static int position=0;
+        static int streamAB=0;
         
         //self->debug_log ("WebSocket SPMC message received.");
 	self->status_append ("WebSocket SPMC message received.\n");
@@ -131,25 +132,15 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
 	} else if (type == SOUP_WEBSOCKET_DATA_BINARY) {
 		contents = g_bytes_get_data (message, &len);
 
-                int pos = 0x300;
-                if (pos < (int)(spmc_parameters.gvp_data_position))
-                        pos = ((int)(spmc_parameters.gvp_data_position)+0x100)&0xfff00;
-
-                tmp = g_strdup_printf ("WEBSOCKET_DATA_BINARY SPMC Bytes: 0x%04x,  Position: 0x%04x\n", len,(int)spmc_parameters.gvp_data_position);
+                tmp = g_strdup_printf ("WEBSOCKET_DATA_BINARY SPMC Bytes: 0x%04x,  Position: 0x%04x + AB=%d x BRAMSIZE/2\n", len, position, streamAB);
                 self->status_append (tmp);
-                self->status_append ("\n");
                         
                 self->status_append_int32 (contents, 512); // truncate, just a snap
                 self->status_append ("\n");
                 //self->debug_log (tmp);
                 g_free (tmp);
-
-
-		// ... work on it
-                //std::ostream &standard_output = std::cout;
-                //self->print_bytes (standard_output, (const unsigned char *) contents, len > 256 ? 256 : len, true);
 		
-                self->on_new_data (contents, len, position); // process data
+                streamAB = self->on_new_data (contents, len, position); // process data
         }
 }
 
