@@ -139,7 +139,7 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
                 self->status_append (tmp);
                 self->status_append ("\n");
                         
-                self->status_append_int32 (contents, pos > len? len:pos); // truncate
+                self->status_append_int32 (contents, 512); // truncate, just a snap
                 self->status_append ("\n");
                 //self->debug_log (tmp);
                 g_free (tmp);

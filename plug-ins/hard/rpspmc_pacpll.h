@@ -515,10 +515,13 @@ public:
                          return 0; // start
                  else {
                          if (program_vector_list[pc].iloop > 0){
-                                 program_vector_list[pc].iloop--;
-                                 pc += program_vector_list[pc].ptr_next; // jump
+                                 if (--program_vector_list[pc].iloop > 0)
+                                         pc += program_vector_list[pc].ptr_next; // jump
+                                 else {
+                                         program_vector_list[pc].iloop = program_vector_list[pc].repetitions; // reload
+                                         pc++; // and proceed to next
+                                 }
                          } else {
-                                 program_vector_list[pc].iloop = program_vector_list[pc].repetitions; // reload
                                  pc++; // next
                          }
                          if ( pc >= MAX_PROGRAM_VECTORS ||  pc < 0){ // pc exception check (out of valid vpc range)
