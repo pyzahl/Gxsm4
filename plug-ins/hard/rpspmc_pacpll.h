@@ -809,7 +809,7 @@ public:
         virtual const gchar *get_rp_address ();
         virtual void status_append (const gchar *msg);
         virtual void on_connect_actions();
-        virtual int on_new_data (gconstpointer contents, gsize len, int position);
+        virtual int on_new_data (gconstpointer contents, gsize len, int position, int new_count=1);
         
 	/* Parameter  */
 	virtual long GetMaxLines(){ return 32000; };

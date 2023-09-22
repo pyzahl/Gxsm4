@@ -73,7 +73,7 @@ public:
         virtual const gchar *get_rp_address (){ return NULL; };
         virtual int get_debug_level() { return 0; };
 
-        virtual int on_new_data (gconstpointer contents, gsize len, int position) {};
+        virtual int on_new_data (gconstpointer contents, gsize len, int position, int new_count=1) {};
         
         virtual void status_append (const gchar *msg){
                 g_message (msg);
@@ -200,10 +200,11 @@ public:
                 stream << std::endl;
 
                 std::string str =  stream.str();
-                status_append (str.c_str());
 
                 if (also_gprint)
                         g_print (str.c_str());
+                else
+                        status_append (str.c_str()); // WARNING -- NOT THREAD SAFE
                 
         };
 
@@ -242,6 +243,7 @@ public:
         GIOStream *JSON_raw_input_stream;
 	GError *client_error;
 	GError *error;
+        
 };
 
 

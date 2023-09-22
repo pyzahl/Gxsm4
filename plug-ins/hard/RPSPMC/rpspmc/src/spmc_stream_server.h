@@ -144,7 +144,7 @@ public:
                 info_count++;
         };
         void add_info (std::string info){
-                info_stream << "Info: " << info << std::endl;
+                info_stream << "{Info: {" << info << "}}" << std::endl;
                 info_count++;
         };
         void clear_info_stream(){
@@ -168,4 +168,5 @@ private:
 
         int limit;
         int count;
+        int last_offset;
 };

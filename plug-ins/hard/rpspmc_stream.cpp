@@ -113,8 +113,10 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
         gchar *tmp;
 
         static int position=0;
+        static int count=0;
+        static int count_prev=-1;
         static int streamAB=0;
-        
+
         //self->debug_log ("WebSocket SPMC message received.");
 	self->status_append ("WebSocket SPMC message received.\n");
         
@@ -127,8 +129,21 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
                         self->status_append ("Empty text message received.");
 		self->status_append ("\n");
                 g_message ("WS Message: %s", (gchar*)contents);
-                if (strncmp(contents, "{Position:{", 11) == 0)
-                        position = atoi (contents+11);
+
+                if (g_strrstr (contents, "RESET")){
+                        self->status_append ("WEBSOCKET_STREAM: RESET (GVP Init)\n");
+                        position=0;
+                        streamAB=0;
+                        count = 0;
+                        count_prev = -1;
+                } else {
+                        if (strncmp(contents, "{Position:{", 11) == 0)
+                                position = atoi (contents+11);
+                        gchar *p=g_strrstr (contents, "Count:{");
+                        if (p)
+                                count = atoi (p+7);
+                }
+                
 	} else if (type == SOUP_WEBSOCKET_DATA_BINARY) {
 		contents = g_bytes_get_data (message, &len);
 
@@ -140,8 +155,11 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
                 self->status_append ("\n");
                 //self->debug_log (tmp);
                 g_free (tmp);
-		
-                streamAB = self->on_new_data (contents, len, position); // process data
+
+                g_print ("*A* SOUP_WEBSOCKET_DATA_BINARY ** count=%d, prev=%d   new=%d\n", count , count_prev, count-count_prev );
+                streamAB = self->on_new_data (contents, len, position, count-count_prev ); // process data
+                count_prev = count;
+                g_print ("*B* SOUP_WEBSOCKET_DATA_BINARY ** count=%d, prev=%d\n", count , count_prev);
         }
 }
 

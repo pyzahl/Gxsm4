@@ -356,19 +356,21 @@ gpointer ProbeDataReadThread (void *ptr_sr){
 	return NULL;
 }
 
-int rpspmc_hwi_dev::on_new_data (gconstpointer contents, gsize len, int position){
+int rpspmc_hwi_dev::on_new_data (gconstpointer contents, gsize len, int position, int new_count){
         int offset = 0;
         if (GVP_stream_buffer_AB < 0) // restarted, reset read count
-                GVP_stream_buffer_AB=0;
+                GVP_stream_buffer_AB=-1;
         
+        if (new_count > 0)
+                GVP_stream_buffer_AB++;
+
         offset = (GVP_stream_buffer_AB*(BRAM_SIZE>>1))&(EXPAND_MULTIPLES*BRAM_SIZE-1);
         
         memcpy (&GVP_stream_buffer[offset], contents, len);
         
         GVP_stream_buffer_position = (position + offset)&(EXPAND_MULTIPLES*BRAM_SIZE-1);
-        g_message ("on_new_data ** AB=%d pos=%d  buffer_pos=0x%08x",  GVP_stream_buffer_AB, position, GVP_stream_buffer_position);
-        
-        GVP_stream_buffer_AB++;
+        g_message ("on_new_data ** AB=%d pos=%d  buffer_pos=0x%08x  new_count=%d",  GVP_stream_buffer_AB, position, GVP_stream_buffer_position, new_count);
+
 
         return GVP_stream_buffer_AB;
 }
@@ -455,7 +457,7 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
 		LOGMSGS ( "FR::NEED_HDR" << std::endl);
                 // READ FULL SECTION HEADER
                 g_message ("VP: Waiting for Section Header [%d] StreamPos=0x%08x", GVP_stream_buffer_AB, GVP_stream_buffer_position);
-                if (GVP_stream_buffer_AB > 0){
+                if (GVP_stream_buffer_AB >= 0){
                         g_message ("VP: section header ** reading pos[%04x] off[%04x] #AB=%d", GVP_stream_buffer_position, GVP_stream_buffer_offset, GVP_stream_buffer_AB);
                         g_message ("Reading VP section header...");
                         if (read_GVP_data_block_to_position_vector (GVP_stream_buffer_offset, true) == -1){ // NEED FULL HEADER
@@ -964,7 +966,7 @@ void rpspmc_hwi_dev::GVP_execute_vector_program(){
         g_message ("rpspmc_hwi_dev::GVP_execute_vector_program ()");
 
         // reset GVP stream buffer read count
-        GVP_stream_buffer_AB = -1;
+        GVP_stream_buffer_AB = -2;
 
         rpspmc_pacpll->write_parameter ("SPMC_GVP_PAUSE", false);
         rpspmc_pacpll->write_parameter ("SPMC_GVP_PROGRAM", false);
@@ -996,7 +998,7 @@ void rpspmc_hwi_dev::GVP_vp_init (){
 
         for (int i=0; i<16; ++i) GVP_vp_data_set[i] = 0;
         GVP_vp_header_current.section = -1;
-
+       
         RPSPMC_GVP_section_count = 0;
         RPSPMC_GVP_n = 0;
         GVP_vp_header_current.section = -1; // still invalid

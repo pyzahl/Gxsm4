@@ -94,8 +94,9 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
         std::stringstream val;
         std::stringstream position_info;
         int data_len = 0;
-        int offset = 0;
-                
+        static int offset = 0;
+        static bool started = false;
+        
         if (verbose > 2){
                 val << " ** Telemetry Server: # " << m_count++ << "** ";
                 val << " stream_ctrl: " << stream_server_control;
@@ -103,17 +104,31 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
         if (stream_server_control & 2){ // started!
                 limit = BRAM_POS_HALF;
                 count = 0;
-                stream_server_control = (stream_server_control & 0x03); // remove start flag now
+                last_offset = 0;
+                offset = 0;
+                stream_server_control ^= 2; // remove start flag now
+                started = true;
+                std::string tmp("RESET:{true}");
+                add_info (tmp);
         }
-
+        if (stream_server_control & 4){ // stopped!
+                stream_server_control = 1; // remove flags
+                std::string tmp("STOPPED:{true}");
+                add_info (tmp);
+                started = false;
+        }
+        
         int position   = stream_lastwrite_address();
-        position_info << "{Position:{" << position << "}}" << std::endl;
-        SPMC_GVP_DATA_POSITION.Value () = position; // too slow
+        position_info << "{Position:{" << position << "},Count:{" << count << "}}" << std::endl;
+        SPMC_GVP_DATA_POSITION.Value () = position; // too slow, but backup to watch
 
-        if (stream_server_control & 2){ // started?
+        if (started){ // started?
                 if (verbose > 1) val << " position: " << position;
                 if (gvp_finished ()){ // must transfer data written to block when finished but block not full.
                         stream_server_control = 1; // remove all flags, done after this, last block to finish moving!
+                        started = false;
+                        std::string tmp("FINSIHED NEXT:{true}");
+                        add_info (tmp);
                         if (verbose > 1){
                                 val << " ** GVP FINISHED ** stream_ctrl: " << stream_server_control;
                         }
@@ -123,29 +138,22 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
                                 position += clear_len;
                         } else clear_len = 0;
                 }
+
+                data_len = BRAM_POS_HALF; // always resend updated data block in intervals if GVP is active!
+
                 if ((limit > 0 && position > limit) || (limit = 0 && position < BRAM_POS_HALF)){
                         offset = (limit > 0 ? 0 : BRAM_POS_HALF)<<2;
                         limit  =  limit > 0 ? 0 : BRAM_POS_HALF;
-                        data_len = BRAM_POS_HALF;
-                        if (verbose > 1){
-                                count++;
-                                val << " ** DATA ** COUNT: " << count;
-                        }
+                        count++;
                 }
-                if (verbose > 1) val  << (data_len > 0 ? " *SENDING BLOCK* " : "*WAITING FOR DATA*")
-                                      << " offset: " << offset
-                                      << std::endl;
-        } else
-                if (verbose > 2) val << " **GVP is idle **" << std::endl;
+        }
                
-        if (verbose > 2) val << " ** SENDING FULL BRAM DUMP **" << std::endl;
-
         //gchar *json_string = g_strdup_printf ("{ \"parameters\":{\"%s\":{\"value\":%d}}}", parameter_id, value);
 
         // Broadcast count to all connections
         con_list::iterator it;
         for (it = m_connections.begin(); it != m_connections.end(); ++it) {
-                if (verbose > 1 && val.str().length()>0)  m_endpoint.send(*it, val.str(), websocketpp::frame::opcode::text);
+                //if (verbose > 1 && val.str().length()>0)  m_endpoint.send(*it, val.str(), websocketpp::frame::opcode::text);
                 if (info_count > 0)
                         m_endpoint.send(*it, info_stream.str(), websocketpp::frame::opcode::text);
 
@@ -153,7 +161,7 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
                         m_endpoint.send(*it, position_info.str(), websocketpp::frame::opcode::text);
                         m_endpoint.send(*it, (void*)FPGA_SPMC_bram+offset, data_len * sizeof(uint32_t), websocketpp::frame::opcode::binary);
                 } 
-                if (verbose > 2){
+                if (verbose > 3){
                         m_endpoint.send(*it, (void*)FPGA_SPMC_bram, 2*BRAM_POS_HALF * sizeof(uint32_t), websocketpp::frame::opcode::binary);
                 }
         }
@@ -161,10 +169,7 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
         clear_info_stream ();
 
         // set timer for next telemetry check
-        if (data_len > 0)
-                set_timer(250);
-        else
-                set_timer();
+        set_timer(250);
 }
 
 
