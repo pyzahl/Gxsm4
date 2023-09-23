@@ -63,8 +63,8 @@
 
 #define CMA_ALLOC _IOWR('Z', 0, uint32_t)
 
-#define BRAM_SIZE        16384            // (14 bit address)
-#define BRAM_POS_HALF    (BRAM_SIZE>>1)
+#define BRAM_SIZE        0x4000       // (== 1<<14,  14 bit address)
+#define BRAM_POS_HALF    0x2000
 #define BRAM_ADRESS_MASK 0x3fff
 
 class spmc_stream_server {

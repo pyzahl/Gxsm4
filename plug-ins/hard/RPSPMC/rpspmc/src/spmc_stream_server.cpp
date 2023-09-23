@@ -121,7 +121,7 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
         int position   = stream_lastwrite_address();
         position_info << "{Position:{" << position << "},Count:{" << count << "}}" << std::endl;
         SPMC_GVP_DATA_POSITION.Value () = position; // too slow, but backup to watch
-
+        
         if (started){ // started?
                 if (verbose > 1) val << " position: " << position;
                 if (gvp_finished ()){ // must transfer data written to block when finished but block not full.
@@ -141,13 +141,16 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
 
                 data_len = BRAM_POS_HALF; // always resend updated data block in intervals if GVP is active!
 
-                if ((limit > 0 && position > limit) || (limit = 0 && position < BRAM_POS_HALF)){
-                        offset = (limit > 0 ? 0 : BRAM_POS_HALF)<<2;
-                        limit  =  limit > 0 ? 0 : BRAM_POS_HALF;
+                if ((limit > 0 && position > limit) || (limit == 0 && position < BRAM_POS_HALF)){
+                        offset = limit > 0 ? 0 : (BRAM_POS_HALF<<2);
+                        limit  = limit > 0 ? 0 : BRAM_POS_HALF;
                         count++;
                 }
+                // val << " {DBG_OFFSET:{0x"<< std::hex << offset << "}, DBG_LIMIT:{0x" << limit << std::dec << "}, DBG_COUNT:{" << count << "}}" << std::endl;
+                add_info (val.str());
         }
-               
+
+        
         //gchar *json_string = g_strdup_printf ("{ \"parameters\":{\"%s\":{\"value\":%d}}}", parameter_id, value);
 
         // Broadcast count to all connections
@@ -159,7 +162,8 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
 
                 if (data_len > 0){
                         m_endpoint.send(*it, position_info.str(), websocketpp::frame::opcode::text);
-                        m_endpoint.send(*it, (void*)FPGA_SPMC_bram+offset, data_len * sizeof(uint32_t), websocketpp::frame::opcode::binary);
+                        //m_endpoint.send(*it, (void*)FPGA_SPMC_bram, 2*BRAM_POS_HALF * sizeof(uint32_t), websocketpp::frame::opcode::binary);
+                        m_endpoint.send(*it, (void*)(FPGA_SPMC_bram)+offset, data_len * sizeof(uint32_t), websocketpp::frame::opcode::binary);
                 } 
                 if (verbose > 3){
                         m_endpoint.send(*it, (void*)FPGA_SPMC_bram, 2*BRAM_POS_HALF * sizeof(uint32_t), websocketpp::frame::opcode::binary);
@@ -169,7 +173,7 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
         clear_info_stream ();
 
         // set timer for next telemetry check
-        set_timer(250);
+        set_timer(100);
 }
 
 

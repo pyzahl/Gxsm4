@@ -116,11 +116,13 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
         static int count=0;
         static int count_prev=-1;
         static int streamAB=0;
-
+        static bool finished=false;
+        
         //self->debug_log ("WebSocket SPMC message received.");
 	self->status_append ("WebSocket SPMC message received.\n");
         
 	if (type == SOUP_WEBSOCKET_DATA_TEXT) {
+                gchar *p;
 		contents = g_bytes_get_data (message, &len);
 		self->status_append ("WEBSOCKET_DATA_TEXT\n");
                 if (contents && len > 0)
@@ -132,34 +134,46 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
 
                 if (g_strrstr (contents, "RESET")){
                         self->status_append ("WEBSOCKET_STREAM: RESET (GVP Init)\n");
+                        finished=false;
                         position=0;
                         streamAB=0;
                         count = 0;
                         count_prev = -1;
-                } else {
-                        if (strncmp(contents, "{Position:{", 11) == 0)
-                                position = atoi (contents+11);
-                        gchar *p=g_strrstr (contents, "Count:{");
+
+                } else if (g_strrstr (contents, "FINSIHED NEXT:{true}")){
+                        self->status_append ("WEBSOCKET_STREAM: FINISHED NEXT\n");
+                        finished=true;
+
+                } else if (strncmp(contents, "{Position:{", 11) == 0){ // SIMPLE JSON BLOCK
+                        position = atoi (contents+11);
+                        p=g_strrstr (contents, "Count:{");
                         if (p)
                                 count = atoi (p+7);
                 }
-                
+               
 	} else if (type == SOUP_WEBSOCKET_DATA_BINARY) {
 		contents = g_bytes_get_data (message, &len);
 
-                tmp = g_strdup_printf ("WEBSOCKET_DATA_BINARY SPMC Bytes: 0x%04x,  Position: 0x%04x + AB=%d x BRAMSIZE/2\n", len, position, streamAB);
+                tmp = g_strdup_printf ("WEBSOCKET_DATA_BINARY SPMC Bytes: 0x%04x,  Position: 0x%04x + AB=%d x BRAMSIZE/2, Count: %d\n", len, position, streamAB, count);
                 self->status_append (tmp);
                 g_message (tmp);
-                
-                self->status_append_int32 (contents, 512, true, streamAB*len, true); // truncate, just a snap
-                self->status_append ("\n");
+   
+                //self->status_append_int32 (contents, 512, true, streamAB*len, true); // truncate, just a snap
+                //self->status_append ("\n");
                 //self->debug_log (tmp);
                 g_free (tmp);
 
-                g_print ("*A* SOUP_WEBSOCKET_DATA_BINARY ** count=%d, prev=%d   new=%d\n", count , count_prev, count-count_prev );
-                streamAB = self->on_new_data (contents, len, position, count-count_prev ); // process data
+#if 1
+                FILE* pFile;
+                tmp = g_strdup_printf ("WS-BRAM-DATA-BLOCK_%03d_Pos0x%04x_AB_%02d%s.bin", count, position, streamAB, finished?"F":"C");
+                pFile = fopen(tmp, "wb");
+                g_free (tmp);
+                fwrite(contents, 1, len, pFile);
+                fclose(pFile);
+                // hexdump -v -e '"%08_ax: "' -e ' 16/4 "%08x_L[red:0x018ec108,green:0x018fffff] " " \n"' WS-BRAM-DATA-BLOCK_000_Pos0x1f7e_AB_00.bin
+#endif
+                streamAB = self->on_new_data (contents, len, position, count-count_prev, finished); // process data
                 count_prev = count;
-                g_print ("*B* SOUP_WEBSOCKET_DATA_BINARY ** count=%d, prev=%d\n", count , count_prev);
         }
 }
 
@@ -168,3 +182,83 @@ void  RP_stream::on_closed (SoupWebsocketConnection *ws, gpointer user_data){
         self->status_append ("WebSocket connection externally closed.\n");
 }
 
+/*
+*** DEBUGGING STREAM boundary cross over issue
+
+WS-BRAM-DATA-BLOCK_000_Pos0x1f53_AB_00C.bin  
+WS-BRAM-DATA-BLOCK_000_Pos0x2156_AB_00C.bin  
+WS-BRAM-DATA-BLOCK_001_Pos0x0056_AB_01C.bin  << ????
+WS-BRAM-DATA-BLOCK_001_Pos0x235e_AB_00C.bin  << ????
+WS-BRAM-DATA-BLOCK_001_Pos0x2566_AB_01C.bin  
+
+** Message: 20:33:06.923: WS Message: {Position:{8454},Count:{0}}
+
+** Message: 20:33:06.924: WEBSOCKET_DATA_BINARY SPMC Bytes: 0x8000,  Position: 0x2106 + AB=0 x BRAMSIZE/2, Count: 0
+
+** Message: 20:33:06.924: on_new_data ** AB=0 pos=8454  buffer_pos=0x00002106  new_count=0  ...
+** Message: 20:33:06.925: VP: Waiting for Section Header [0] StreamPos=0x00002106
+** Message: 20:33:06.925: VP: section header ** reading pos[2106] off[1ff1] #AB=0
+** Message: 20:33:06.925: Reading VP section header...
+00001fd1: 00000000 ffd7828a f3a67848 ffd77efc 0c3de678 00000000 02a0c108 f399ab7c ffd77efc 0c3fc354 00000000 029fc108 f38cdeb0 ffd77a09 0c41a030 0c59d75c
+00001fe1: 029ec108 ffd7692c ffd77a09 0c437d0c 00000000 029dc108 f3734518 ffd7797d 0c4559e8 00000000 029cc108 f366784c ffd7797d 0c4736c4 00000000 00000000
+00001ff1: f359ab80 0c30dc74 0c4913a0 00000000 029ac108 f34cdeb4 ffd78012 0c4af07c 00000000 0299c108 f34011e8 ffd78012 0c4ccd58 00000000 0298c108 028bc108
+00002001: ffd7a132 0c4eb786 00000000 0297c108 e8c5abce ffd7a132 0c509462 00000000 0296c108 e8b8df02 ffd79cae 0c52713e 00000000 0295c108 e8ac1236 00000000
+00002011: 0c544e1a 00000000 0294c108 e89f456a ffd7981e 0c562af6 00000000 0293c108 e892789e ffd7981e 0c5807d2 00000000 0292c108 e885abd2 ffd794a0 02a1c108
+
+
+** (gxsm4:1892279): WARNING **: 20:33:06.925: ERROR: read_GVP_data_block_to_position_vector: Reading offset 00001ff1, write position 00002106. Expecting full header but found srcs=ab80, i=-3239
+** Message: 20:33:06.925: *** GVP: STREAM ERROR, NO HEADER WHEN EXPECTED -- aborting. ***
+===>>>> SET-VP  i[1571] sec=1 t=1301.33 ms   #valid sec{1572}
+** Message: 20:33:06.925: FR::FINISH-OK
+** Message: 20:33:06.925: ProbeFifoReadThread ** Finished ** FF=True
+
+Thread 1 "gxsm4" received signal SIGSEGV, Segmentation fault.
+
+
+
+
+
+
+
+
+
+
+
+
+
+===>>>> SET-VP  i[1024] sec=1 t=100.09 ms   #valid sec{1025}
+** Message: 22:23:58.075: [00001ba8] *** end of new data at ch=3 ** Must wait for next page and retry.
+** Message: 22:23:58.075: VP: waiting for data ** section: 1 gvpi[0687] Pos:{0x22ef} Offset:0x1ba8
+** Message: 22:23:58.130: WS Message: {Info: { position: 12265}}
+
+** Message: 22:23:58.132: WS Message: {Position:{12265},Count:{0}}
+
+** Message: 22:23:58.132: WEBSOCKET_DATA_BINARY SPMC Bytes: 0x8000,  Position: 0x2fe9 + AB=0 x BRAMSIZE/2, Count: 0
+
+** Message: 22:23:58.133: on_new_data ** AB=0 pos=12265  buffer_pos=0x00002fe9  new_count=0  ...
+** Message: 22:23:58.176: VP: Waiting for Section Header [0] StreamPos=0x00002fe9
+** Message: 22:23:58.176: VP: section header ** reading pos[2fe9] off[1fe1] #AB=0
+** Message: 22:23:58.176: Reading VP section header...
+00001fc1: 00000000 ffd787b6 0a842828 ffd785f9 0124ae68 00000000 01dcc108 0a840764 ffd785f9 0124de20 00000000 01dbc108 0a83e6a0 ffd785f9 01250dd8 00000000
+00001fd1: 01dac108 01277a30 ffd785f9 01253d90 00000000 01d9c108 0a83a518 ffd785f9 01256d48 00000000 01d8c108 0a838454 ffd785f9 01259d00 00000000 00000000
+00001fe1: 0a836390 01236060 0125ccb8 00000000 01d6c108 0a8342cc ffd785f9 0125fc70 00000000 01d5c108 0a832208 ffd785f9 01262c28 00000000 01d4c108 01c7c108
+00001ff1: ffd785f9 00000000 00000000 01d3c108 0a82e080 ffd785f9 01268b98 00000000 01d2c108 0a82bfbc ffd785f9 0126bb50 00000000 01d1c108 0a829ef8 00b14464
+00002001: cccccccc cccccccc cccccccc cccccccc cccccccc cccccccc cccccccc cccccccc cccccccc cccccccc cccccccc cccccccc cccccccc cccccccc cccccccc cccccccc
+
+
+** (gxsm4:1900768): WARNING **: 22:23:58.176: ERROR: read_GVP_data_block_to_position_vector: Reading offset 00001fe1, write position 00002fe9. Expecting full header but found srcs=6390, i=2691
+** Message: 22:23:58.176: *** GVP: STREAM ERROR, NO HEADER WHEN EXPECTED -- aborting. ***
+===>>>> SET-VP  i[1576] sec=1 t=100.09 ms   #valid sec{1577}
+** Message: 22:23:58.176: FR::FINISH-OK
+** Message: 22:23:58.176: ProbeFifoReadThread ** Finished ** FF=True
+** Message: 22:23:58.231: WS Message: {Info: { position: 1068}}
+
+** Message: 22:23:58.232: WS Message: {Position:{1068},Count:{1}}
+
+** Message: 22:23:58.235: WEBSOCKET_DATA_BINARY SPMC Bytes: 0x8000,  Position: 0x042c + AB=0 x BRAMSIZE/2, Count: 1
+
+** Message: 22:23:58.235: on_new_data ** AB=1 pos=1068  buffer_pos=0x0000242c  new_count=1  ...
+** Message: 22:23:58.334: WS Message: {Info: { position: 6255}}
+
+  
+ */

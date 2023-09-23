@@ -809,7 +809,7 @@ public:
         virtual const gchar *get_rp_address ();
         virtual void status_append (const gchar *msg);
         virtual void on_connect_actions();
-        virtual int on_new_data (gconstpointer contents, gsize len, int position, int new_count=1);
+        virtual int on_new_data (gconstpointer contents, gsize len, int position, int new_count=1, bool last=false);
         
 	/* Parameter  */
 	virtual long GetMaxLines(){ return 32000; };
@@ -903,20 +903,29 @@ public:
         int read_GVP_data_block_to_position_vector (int offset, gboolean expect_full_header=false){
                 size_t ch_index;
 
+                if (offset < 0 || offset > (EXPAND_MULTIPLES*BRAM_SIZE-20)){
+                        gchar *tmp = g_strdup_printf ("read_GVP_data_block_to_position_vector: Reading offset %08x out of range ERROR.",
+                                                      offset);
+                        status_append (tmp);
+                        g_warning (tmp);
+                        g_free (tmp);
+                        return -999;
+                }
+                
                 if (offset >= GVP_stream_buffer_position){ // Buffer is huge now all pages concat
                         gchar *tmp = g_strdup_printf ("read_GVP_data_block_to_position_vector: Reading offset %08x is beyond stream write position %08x. Awaiting data.",
                                                       offset, GVP_stream_buffer_position);
                         status_append (tmp);
                         if (offset > 16)
                                 status_append_int32 (&GVP_stream_buffer[offset-16], 3*16, true, offset-16, true);
-                        g_message (tmp);
+                        g_warning (tmp);
                         g_free (tmp);
-                        return 0;
+                        return -99;
                 }
                 
                 GVP_vp_header_current.srcs = GVP_stream_buffer[offset]&0xffff;
 
-                GVP_vp_header_current.i = (GVP_stream_buffer[offset]>>16);
+                GVP_vp_header_current.i = (int)((unsigned int)(GVP_stream_buffer[offset]>>16));
                 if (GVP_vp_header_current.srcs == 0xffff){
                         GVP_vp_header_current.n    = GVP_vp_header_current.i + 1;
                         GVP_vp_header_current.endmark = 0;
@@ -942,8 +951,9 @@ public:
                                                 status_append (tmp);
                                                 if (offset > 32)
                                                         status_append_int32 (&GVP_stream_buffer[offset-32], 5*16, true, offset-32, true);
-                                                g_message (tmp);
+                                                g_warning (tmp);
                                                 g_free (tmp);
+                                                return (-98);
                                         }
                                 }
                         }
@@ -951,7 +961,21 @@ public:
                 GVP_vp_header_current.ilast = GVP_vp_header_current.i;
                         
                 GVP_vp_header_current.index = GVP_vp_header_current.n - GVP_vp_header_current.i;
-
+                if (GVP_vp_header_current.index < 0){
+                        gchar *tmp = g_strdup_printf ("read_GVP_data_block_to_position_vector: Stream ERROR at Reading offset %08x, write position %08x.\n"
+                                                      "SRCS/index mismatch detected. %04x vs %04x, i %d -> %d  => n=%d (<0 is illegal)",
+                                                      offset, GVP_stream_buffer_position,
+                                                      GVP_vp_header_current.srcs_mask_vector, GVP_vp_header_current.srcs,
+                                                      GVP_vp_header_current.ilast, GVP_vp_header_current.i, GVP_vp_header_current.index);
+                        status_append (tmp);
+                        if (offset > 32)
+                                status_append_int32 (&GVP_stream_buffer[offset-32], 5*16, true, offset-32, true);
+                        g_warning (tmp);
+                        g_free (tmp);
+                        GVP_vp_header_current.index = 0; // to prevent issues
+                        return (-95);
+                }
+                
                 GVP_vp_header_current.number_channels=0;
                 for (int i=0; i<16; i++){
                         GVP_vp_header_current.ch_lut[i]=-1;
@@ -980,6 +1004,7 @@ public:
                                 status_append_int32 (&GVP_stream_buffer[offset-32], 5*16, true, offset-32, true);
                         g_warning (tmp);
                         g_free (tmp);
+                        return (-97);
                 }
                 
 
@@ -1038,6 +1063,7 @@ private:
         int GVP_stream_buffer_offset;
         int GVP_stream_buffer_AB;
         int GVP_stream_buffer_position;
+        int GVP_stream_status;
         
 public:
         

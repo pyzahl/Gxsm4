@@ -356,21 +356,25 @@ gpointer ProbeDataReadThread (void *ptr_sr){
 	return NULL;
 }
 
-int rpspmc_hwi_dev::on_new_data (gconstpointer contents, gsize len, int position, int new_count){
+int rpspmc_hwi_dev::on_new_data (gconstpointer contents, gsize len, int position, int new_count, bool last){
         int offset = 0;
-        if (GVP_stream_buffer_AB < 0) // restarted, reset read count
+        if (GVP_stream_buffer_AB < 0){ // restarted, reset read count
                 GVP_stream_buffer_AB=-1;
-        
+                GVP_stream_status=1;
+        }
         if (new_count > 0)
                 GVP_stream_buffer_AB++;
 
+        if (last)
+                GVP_stream_status=-1;
+        
         offset = (GVP_stream_buffer_AB*(BRAM_SIZE>>1))&(EXPAND_MULTIPLES*BRAM_SIZE-1);
         
         memcpy (&GVP_stream_buffer[offset], contents, len);
         
         GVP_stream_buffer_position = (position + offset)&(EXPAND_MULTIPLES*BRAM_SIZE-1);
-        g_message ("on_new_data ** AB=%d pos=%d  buffer_pos=0x%08x  new_count=%d",  GVP_stream_buffer_AB, position, GVP_stream_buffer_position, new_count);
-
+        g_message ("on_new_data ** AB=%d pos=%d  buffer_pos=0x%08x  new_count=%d  %s",
+                   GVP_stream_buffer_AB, position, GVP_stream_buffer_position, new_count, last? "finished":"...");
 
         return GVP_stream_buffer_AB;
 }
@@ -386,7 +390,7 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
 	static int need_fct = FR_YES;  // need fifo control
 	static int need_hdr = FR_YES;  // need header
 	static int need_data = FR_YES; // need data
-
+        int ret=0;
         
         //std::ostringstream stream;
 #ifdef LOGMSGS0
@@ -460,7 +464,8 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
                 if (GVP_stream_buffer_AB >= 0){
                         g_message ("VP: section header ** reading pos[%04x] off[%04x] #AB=%d", GVP_stream_buffer_position, GVP_stream_buffer_offset, GVP_stream_buffer_AB);
                         g_message ("Reading VP section header...");
-                        if (read_GVP_data_block_to_position_vector (GVP_stream_buffer_offset, true) == -1){ // NEED FULL HEADER
+                        ret = read_GVP_data_block_to_position_vector (GVP_stream_buffer_offset, true); // NEED FULL HEADER
+                        if (ret == -1){ // GOT FULL HEADER
 
                                 GVP_stream_buffer_offset += 1 + GVP_vp_header_current.number_channels; // skip forward by read number of entries
                                 
@@ -486,6 +491,16 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
                         } else {
                                 if (GVP_vp_header_current.endmark){ // checking -- finished?
                                         g_message ("*** GVP: finished ***");
+                                        return ReadProbeData (0, FR_FINISH); // finish
+                                }
+
+                                if (ret < -90){
+                                        g_message ("*** GVP: STREAM ERROR, NO HEADER WHEN EXPECTED -- aborting. ***");
+                                        return ReadProbeData (0, FR_FINISH); // finish
+                                }
+
+                                if (GVP_stream_status < 0){
+                                        g_message ("*** GVP: stream ended -- finished ***");
                                         return ReadProbeData (0, FR_FINISH); // finish
                                 }
                                 
@@ -515,7 +530,6 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
         clock_t ct = clock();
         //g_message ("VP: section: %d gvpi[%04d]", GVP_vp_header_current.section, GVP_vp_header_current.i);
         for (; GVP_vp_header_current.i < GVP_vp_header_current.n; ){
-                int ret=0;
                 ret = read_GVP_data_block_to_position_vector (GVP_stream_buffer_offset);
                 if (ret == GVP_vp_header_current.number_channels){
                         GVP_stream_buffer_offset += 1 + GVP_vp_header_current.number_channels; // skip forward on success by read number of entries
@@ -531,6 +545,17 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
                                 g_message ("*** GVP: finished -- end mark found ***");
                                 return ReadProbeData (0, FR_FINISH); // finish
                         }
+
+                        if (ret < -90){
+                                g_message ("*** GVP: DATA STREAM ERROR -- aborting. ***");
+                                return ReadProbeData (0, FR_FINISH); // finish
+                        }
+
+                        if (GVP_stream_status < 0){
+                                g_message ("*** GVP: data stream ended -- finished ***");
+                                return ReadProbeData (0, FR_FINISH); // finish
+                        }
+
                         g_message ("VP: waiting for data ** section: %d gvpi[%04d] Pos:{0x%04x} Offset:0x%04x", GVP_vp_header_current.section, GVP_vp_header_current.i, (int)spmc_parameters.gvp_data_position, GVP_stream_buffer_offset);
                         usleep(100000);
                         return RET_FR_OK; // wait for data
@@ -1003,6 +1028,7 @@ void rpspmc_hwi_dev::GVP_vp_init (){
         RPSPMC_GVP_n = 0;
         GVP_vp_header_current.section = -1; // still invalid
         GVP_stream_buffer_offset = 0x100; // =0x00 **** TESTING BRAM ISSUE -- FIX ME !!! *****
+        GVP_stream_status=0;
 
         abort_GVP_flag = false;
 }
