@@ -720,6 +720,7 @@ public:
 	void GVP_store_vp (const gchar *key);
 	void GVP_restore_vp (const gchar *key);
 
+        void write_spm_scan_vector_program (double rx, double ry, int nx, int ny, double slew[2], int subscan[4], long int srcs[4]);
 
 	// -- Profile Displays
 	int last_probe_data_index;
@@ -762,6 +763,7 @@ protected:
 	void read_spm_vector_program ();
 	void write_spm_vector_program (int start, pv_mode pvm);
 
+        
 	void read_program_vector (int index);
 	void write_program_vector (int index);
 

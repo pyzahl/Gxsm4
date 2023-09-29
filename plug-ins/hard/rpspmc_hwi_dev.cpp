@@ -231,62 +231,66 @@ gpointer ProbeDataReadFunction (void *ptr_sr, int dspdev);
 // ScanDataReadThread:
 // Image Data read thread -- actual scan/pixel data transfer
 
-gpointer ScanDataReadThread (void *ptr_sr){
-        rpspmc_hwi_dev *sr = (rpspmc_hwi_dev*)ptr_sr;
+gpointer ScanDataReadThread (void *ptr_hwi){
+        rpspmc_hwi_dev *hwi = (rpspmc_hwi_dev*)ptr_hwi;
         int nx,ny, x0,y0;
-        int Nx, Ny;
         g_message("FifoReadThread Start");
 
-        if (sr->Mob_dir[sr->srcs_dir[0] ? 0:1]){
-                ny = sr->Mob_dir[sr->srcs_dir[0] ? 0:1][0]->GetNySub(); // number lines to transfer
-                nx = sr->Mob_dir[sr->srcs_dir[0] ? 0:1][0]->GetNxSub(); // number points per lines
-                x0 = sr->Mob_dir[sr->srcs_dir[0] ? 0:1][0]->data->GetX0Sub(); // number points per lines
-                y0 = sr->Mob_dir[sr->srcs_dir[0] ? 0:1][0]->data->GetY0Sub(); // number points per lines
+        if (hwi->Mob_dir[hwi->srcs_dir[0] ? 0:1]){
+                ny = hwi->Mob_dir[hwi->srcs_dir[0] ? 0:1][0]->GetNySub(); // number lines to transfer
+                nx = hwi->Mob_dir[hwi->srcs_dir[0] ? 0:1][0]->GetNxSub(); // number points per lines
+                x0 = hwi->Mob_dir[hwi->srcs_dir[0] ? 0:1][0]->data->GetX0Sub(); // number points per lines
+                y0 = hwi->Mob_dir[hwi->srcs_dir[0] ? 0:1][0]->data->GetY0Sub(); // number points per lines
 
                 g_message("FifoReadThread nx,ny = (%d, %d) @ (%d, %d)", nx, ny, x0, y0);
 
         } else return NULL; // error, no reference
 
-	if (sr->RPSPMC_data_y_count == 0){ // top-down
-                g_message("FifoReadThread Scanning Top-Down... %d", sr->ScanningFlg);
+        // center_return_flag,
+        // update:
+        // scanpixelrate
+
+        
+	if (hwi->RPSPMC_data_y_count == 0){ // top-down
+                g_message("FifoReadThread Scanning Top-Down... %d", hwi->ScanningFlg);
 		for (int yi=y0; yi < y0+ny; ++yi){ // for all lines
-                        for (int dir = 0; dir < 4 && sr->ScanningFlg; ++dir){ // check for every pass -> <- 2> <2
-                                //g_message("FifoReadThread ny = %d, dir = %d, nsrcs = %d, srcs = 0x%04X", yi, dir, sr->nsrcs_dir[dir], sr->srcs_dir[dir]);
-                                if (sr->nsrcs_dir[dir] == 0) // direction pass active?
+                        for (int dir = 0; dir < 4 && hwi->ScanningFlg; ++dir){ // check for every pass -> <- 2> <2
+                                //g_message("FifoReadThread ny = %d, dir = %d, nsrcs = %d, srcs = 0x%04X", yi, dir, hwi->nsrcs_dir[dir], hwi->srcs_dir[dir]);
+                                if (hwi->nsrcs_dir[dir] == 0) // direction pass active?
                                         continue; // not selected?
                                 else
                                         for (int xi=x0; xi < x0+nx; ++xi) // all points per line
-                                                for (int ch=0; ch<sr->nsrcs_dir[dir]; ++ch){
-                                                        sr->RPSPMC_data_x_index = xi;
-                                                        double z = 0.;//sr->RPSPMC_simulate_value (sr, xi, yi, ch);
+                                                for (int ch=0; ch<hwi->nsrcs_dir[dir]; ++ch){
+                                                        hwi->RPSPMC_data_x_index = xi;
+                                                        double z = 0.;//hwi->RPSPMC_simulate_value (sr, xi, yi, ch);
                                                         //g_print("%d",ch);
                                                         usleep (10000);
-                                                        sr->Mob_dir[dir][ch]->PutDataPkt (z, xi, yi);
-                                                        while (sr->PauseFlg)
+                                                        hwi->Mob_dir[dir][ch]->PutDataPkt (z, xi, yi);
+                                                        while (hwi->PauseFlg)
                                                                 usleep (10000);
                                                 }
                                 //g_print("\n");
                         }
-                        sr->RPSPMC_data_y_count = yi-y0; // completed
-                        sr->RPSPMC_data_y_index = yi; // completed
+                        hwi->RPSPMC_data_y_count = yi-y0; // completed
+                        hwi->RPSPMC_data_y_index = yi; // completed
                 }
 	}else{ // bottom-up
 		for (int yi=y0+ny-1; yi-y0 >= 0; --yi){
-                        for (int dir = 0; dir < 4 && sr->ScanningFlg; ++dir) // check for every pass -> <- 2> <2
-                                if (!sr->nsrcs_dir[dir])
+                        for (int dir = 0; dir < 4 && hwi->ScanningFlg; ++dir) // check for every pass -> <- 2> <2
+                                if (!hwi->nsrcs_dir[dir])
                                         continue; // not selected?
                                 else
                                         for (int xi=x0; xi < x0+nx; ++xi)
-                                                for (int ch=0; ch<sr->nsrcs_dir[dir]; ++ch){
-                                                        sr->RPSPMC_data_x_index = xi;
-                                                        double z = 0.; // sr->RPSPMC_simulate_value (sr, xi, yi, ch);
+                                                for (int ch=0; ch<hwi->nsrcs_dir[dir]; ++ch){
+                                                        hwi->RPSPMC_data_x_index = xi;
+                                                        double z = 0.; // hwi->RPSPMC_simulate_value (sr, xi, yi, ch);
                                                         usleep (10000);
-                                                        sr->Mob_dir[dir][ch]->PutDataPkt (z, xi, yi);
-                                                        while (sr->PauseFlg)
+                                                        hwi->Mob_dir[dir][ch]->PutDataPkt (z, xi, yi);
+                                                        while (hwi->PauseFlg)
                                                                 usleep (10000);
                                                 }
-                        sr->RPSPMC_data_y_count = yi-y0; // completed
-                        sr->RPSPMC_data_y_index = yi;
+                        hwi->RPSPMC_data_y_count = yi-y0; // completed
+                        hwi->RPSPMC_data_y_index = yi;
                 }
         }
 
@@ -309,17 +313,17 @@ gpointer ScanDataReadThread (void *ptr_sr){
 
 // ProbeDataReadThread:
 // Independent ProbeDataRead Thread (manual probe)
-gpointer ProbeDataReadThread (void *ptr_sr){
+gpointer ProbeDataReadThread (void *ptr_hwi){
 	int finish_flag=FALSE;
-	rpspmc_hwi_dev *sr = (rpspmc_hwi_dev*)ptr_sr;
+	rpspmc_hwi_dev *hwi = (rpspmc_hwi_dev*)ptr_hwi;
         g_message("ProbeFifoReadThread ENTER");
 
-	if (sr->probe_fifo_thread_active > 0){
-                g_message("ProbeFifoReadThread ERROR: Attempt to start again while in progress! [%d]", sr->probe_fifo_thread_active );
-		//LOGMSGS ( "ProbeFifoReadThread ERROR: Attempt to start again while in progress! [#" << sr->probe_fifo_thread_active << "]" << std::endl);
+	if (hwi->probe_fifo_thread_active > 0){
+                g_message("ProbeFifoReadThread ERROR: Attempt to start again while in progress! [%d]", hwi->probe_fifo_thread_active );
+		//LOGMSGS ( "ProbeFifoReadThread ERROR: Attempt to start again while in progress! [#" << hwi->probe_fifo_thread_active << "]" << std::endl);
 		return NULL;
 	}
-	sr->probe_fifo_thread_active++;
+	hwi->probe_fifo_thread_active++;
 	RPSPMC_ControlClass->probe_ready = FALSE;
 
         // normal mode, wait for finish (single shot probe exec by user)
@@ -327,12 +331,12 @@ gpointer ProbeDataReadThread (void *ptr_sr){
 		 finish_flag=TRUE;
 
         g_message("ProbeFifoReadThread ** starting processing loop ** FF=%s", finish_flag?"True":"False");
-	while (sr->is_scanning () || finish_flag){ // while scanning (raster mode) or until single shot probe is finished
+	while (hwi->is_scanning () || finish_flag){ // while scanning (raster mode) or until single shot probe is finished
 
-                if (sr->ReadProbeData () || sr->abort_GVP_flag){ // True when finished or cancelled
+                if (hwi->ReadProbeData () || hwi->abort_GVP_flag){ // True when finished or cancelled
                 
                         g_message("ProbeFifoReadThread ** Finished ** FF=%s", finish_flag?"True":"False");
-                        if (finish_flag || sr->abort_GVP_flag){
+                        if (finish_flag || hwi->abort_GVP_flag){
                                 if (RPSPMC_ControlClass->current_auto_flags & FLAG_AUTO_PLOT)
                                         RPSPMC_ControlClass->Probing_graph_update_thread_safe (1);
 				
@@ -348,7 +352,7 @@ gpointer ProbeDataReadThread (void *ptr_sr){
                         RPSPMC_ControlClass->Probing_graph_update_thread_safe ();
 	}
 
-	--sr->probe_fifo_thread_active;
+	--hwi->probe_fifo_thread_active;
 	RPSPMC_ControlClass->probe_ready = TRUE;
 
         g_message("ProbeFifoReadThread EXIT");
@@ -586,6 +590,29 @@ int rpspmc_hwi_dev::start_data_read (int y_start,
 
 	if (num_srcs0 || num_srcs1 || num_srcs2 || num_srcs3){ // setup streaming of scan data
                 g_message("... for scan.");
+
+                double slew[2];
+                slew[0] = RPSPMC_ControlClass->scan_speed_x = RPSPMC_ControlClass->scan_speed_x_requested;
+                slew[1] = RPSPMC_ControlClass->fast_return * RPSPMC_ControlClass->scan_speed_x_requested;
+                RPSPMC_ControlClass->scanpixelrate = slew[0]/rx*Nx;
+                // x2nd_Zoff
+
+                int subscan[4];
+                if (Mob_dir[srcs_dir[0] ? 0:1]){
+                        subscan[3] = Mob_dir[srcs_dir[0] ? 0:1][0]->GetNySub(); // number lines to transfer
+                        subscan[1] = Mob_dir[srcs_dir[0] ? 0:1][0]->GetNxSub(); // number points per lines
+                        subscan[0] = Mob_dir[srcs_dir[0] ? 0:1][0]->data->GetX0Sub(); // number points per lines
+                        subscan[2] = Mob_dir[srcs_dir[0] ? 0:1][0]->data->GetY0Sub(); // number points per lines
+                } else return NULL; // error, no reference
+
+                
+                // write scan program
+                RPSPMC_ControlClass->write_spm_scan_vector_program (rx, ry, Nx, Ny, slew, subscan, srcs_dir);
+                
+                // start GVP
+                GVP_execute_vector_program(); // non blocking
+
+                
 #if 0 // full version used by MK2/3
 		fifo_data_num_srcs[0] = num_srcs0; // number sources -> (forward)
 		fifo_data_num_srcs[1] = num_srcs1; // number sources <- (return)

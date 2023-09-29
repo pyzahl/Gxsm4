@@ -119,6 +119,7 @@ cairo = dependency('cairo-gobject')
 freet = dependency('freetype2')
 gset  = dependency('gsettings-desktop-schemas')
 x11   = dependency('x11')
+glm   = dependency('glm')
 gl    = dependency(['gl'], required : false)
 #glew  = dependency(['glew'], required : false) ## work perfect for local Debian Testing build, not recognized via flatpak 
 glew  = cc.find_library('GLEW')   ## required : false)  ## well, still required, compile will fails with missing GL/gl.h/glm.h.....

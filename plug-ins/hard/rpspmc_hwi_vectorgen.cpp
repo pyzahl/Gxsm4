@@ -260,6 +260,41 @@ static void via_remote_list_Check_ec(Gtk_EntryControl* ec, remote_args* ra){
 	ec->CheckRemoteCmd (ra);
 };
 
+void RPSPMC_Control::write_spm_scan_vector_program (double rx, double ry, int nx, int ny, double slew[2], int subscan[4], long int srcs[4]){
+        int vector_index=0;
+
+        double tfwd = slew[0]/rx;
+        double trev = slew[1]/rx;
+        double ti = slew[0]/sqrt(rx*rx+ry*ry);
+        double xi = -rx/2.+rx*subscan[0]/nx;
+        double yi =  ry/2.-ry*subscan[2]/ny;
+        double dx = rx-rx*subscan[1]/nx;
+        double dy = ry-ry*subscan[3]/ny;
+        // may wait a sec to assumre monitors been up-to-date?
+        make_UZXYramp_vector (0., 0., // GVP_du[k], GVP_dz[k],
+                              xi, yi, 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
+                              100, 0, 0, ti, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
+                              0, VP_INITIAL_SET_VEC);
+        write_program_vector (vector_index++);
+        make_UZXYramp_vector (0., 0., // GVP_du[k], GVP_dz[k],
+                              dx, 0, 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
+                              nx-subscan[1], 0, 0, tfwd, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
+                              srcs[0], 0); // vis_Source, GVP_opt[k]);
+        write_program_vector (vector_index++);
+        make_UZXYramp_vector (0., 0., // GVP_du[k], GVP_dz[k],
+                              -dx, 0, 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
+                              nx-subscan[1], 0, 0, trev, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
+                              srcs[1], 0); // vis_Source, GVP_opt[k]);
+        write_program_vector (vector_index++);
+        make_UZXYramp_vector (0., 0., // GVP_du[k], GVP_dz[k],
+                              0., dy/ny, 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
+                              10, ny, -2, tfwd/ny, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
+                              srcs[0], 0); // vis_Source, GVP_opt[k]);
+        write_program_vector (vector_index++);
+        append_null_vector (options, vector_index);
+}
+
+
 // Create Vector Table form Mode (pvm=PV_MODE_XXXXX) and Execute if requested (start=TRUE) or write only
 void RPSPMC_Control::write_spm_vector_program (int start, pv_mode pvm){
 	int options=0;
