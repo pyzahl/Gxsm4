@@ -722,6 +722,7 @@ public:
 
         void write_spm_scan_vector_program (double rx, double ry, int nx, int ny, double slew[2], int subscan[4], long int srcs[4]);
 
+        
 	// -- Profile Displays
 	int last_probe_data_index;
 
@@ -872,6 +873,11 @@ public:
 
 	virtual int ReadProbeData (int dspdev=0, int control=0);
 
+        int GVP_expect_header(double *pv, int &index_all);
+        int GVP_expect_point(double *pv, int &index_all);
+
+
+        
 	int probe_fifo_thread_active;
 	int fifo_data_y_index;
 
