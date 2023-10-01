@@ -707,11 +707,12 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
                 return;
         }
         unsigned int nii   = 0;
-        unsigned int decii = 0;
+        unsigned int decii = 32;
         double Nsteps = 1.0;
 
-        if (n > 0){
+        if (n > 0 && slew > 0.0){
                 // find smallest non null delta component
+                double dt = 0.0;
                 double deltas[6] = { dx,dy,dz,du,da,db };
                 double dmin = 10.0; // Volts here, +/-5V is max range
                 double dmax =  0.0; // Volts here, +/-5V is max range
@@ -734,8 +735,8 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
                 // SPMC_GVP_CLK = 125/2 MHz
                 // slew in V/s
                 // => time / point: 1/slew
-        
-                double dt = 1.0/slew;
+
+                dt = 1.0/slew;
                 // => NII total = dt*SPMC_GVP_CLK
                 double NII_total = dt*SPMC_GVP_CLK;
 
@@ -749,9 +750,18 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
                 if (ddmin > 2e-6) // 1uV steps min
                         nii = (int)round(ddmin * 1e6);
                 */
+                
                 nii = 3+(unsigned int)round(ddmin/Vstep_prec_Q31)/1e6; // Error < relative 1e6
 
                 decii = (unsigned int)round(NII_total / nii);
+
+                // check for limits, auto adjust
+                if (decii < 32){
+                        decii = 32;
+                        nii = (unsigned int)round(NII_total / decii);
+                        if (nii < 2)
+                                nii=3;
+                }
                 //double deciiE = (double)decii - NII_total / nii;
 
                 // total vector steps:
@@ -826,14 +836,17 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
         
         if (verbose > 0){
                 std::stringstream vector_def;
-                vector_def << std::setfill('0') << std::setw(10) << "vector = {32'd" << idv[15]; // decii
+                if (pc == 0)
+                        //             vector =   {32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd000, 32'h1001, -32'd0, -32'd0,  32'd1}; // Vector #1
+                        vector_def << "VectorDef: { Decii, 0,0,0, dB,dA,dU,dZ,dY,dX, nxt,opts,nii,n, pc}\n";
+                vector_def << "vector = {32'd" << ((unsigned int)idv[15]); // decii
                 for (int i=14; i>=0; i--){
                         switch (i){
                         case 3:
-                                vector_def << std::setw(8) << std::hex << ", 32'h" << idv[i];
+                                vector_def << std::setfill('0') << std::setw(8) << std::hex << ", 32'h" << ((unsigned int)idv[i]); // SRCS, OPTIONS
                                 break;
                         default:
-                                vector_def << std::dec << ", " << (idv[i]>0?" ":"-") << "32'd" << (abs(idv[i]));
+                                vector_def << ((idv[i] < 0) ?", -":",  ") << std::setfill('0') << std::dec << "32'd" << (abs(idv[i]));
                                 break;
                         }
                 }

@@ -69,7 +69,7 @@ static pthread_t stream_server_thread;
 
 extern spmc_stream_server spmc_stream_server_instance;
 
-extern volatile void *FPGA_SPMC_bram;
+extern void *FPGA_SPMC_bram;
 
 extern CIntParameter SPMC_GVP_DATA_POSITION;
 
@@ -94,7 +94,7 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
         std::stringstream val;
         std::stringstream position_info;
         int data_len = 0;
-        static int offset = 0;
+        static size_t offset = 0;
         static bool started = false;
         
         if (verbose > 2){
@@ -161,9 +161,10 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
                         m_endpoint.send(*it, info_stream.str(), websocketpp::frame::opcode::text);
 
                 if (data_len > 0){
+                        uint8_t *bram = ((uint8_t*)FPGA_SPMC_bram + offset);
                         m_endpoint.send(*it, position_info.str(), websocketpp::frame::opcode::text);
                         //m_endpoint.send(*it, (void*)FPGA_SPMC_bram, 2*BRAM_POS_HALF * sizeof(uint32_t), websocketpp::frame::opcode::binary);
-                        m_endpoint.send(*it, (void*)(FPGA_SPMC_bram)+offset, data_len * sizeof(uint32_t), websocketpp::frame::opcode::binary);
+                        m_endpoint.send(*it, (void*)bram, data_len * sizeof(uint32_t), websocketpp::frame::opcode::binary);
                 } 
                 if (verbose > 3){
                         m_endpoint.send(*it, (void*)FPGA_SPMC_bram, 2*BRAM_POS_HALF * sizeof(uint32_t), websocketpp::frame::opcode::binary);

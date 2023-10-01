@@ -409,7 +409,7 @@ spmc_stream_server spmc_stream_server_instance;
 
 const char *FPGA_PACPLL_A9_name = "/dev/mem";
 void *FPGA_PACPLL_bram = NULL;
-volatile void *FPGA_SPMC_bram = NULL;
+void *FPGA_SPMC_bram = NULL;
 void *FPGA_PACPLL_cfg1 = NULL;
 void *FPGA_PACPLL_cfg2 = NULL;
 void *FPGA_PACPLL_gpio = NULL;
@@ -454,35 +454,46 @@ int rp_PAC_App_Init(){
         FPGA_PACPLL_GPIO_block_size  = FPGA_GPIO_PAGES*sysconf (_SC_PAGESIZE);   // sysconf (_SC_PAGESIZE) is 0x1000; map CFG + GPIO pages
        
         if ((fd = open (FPGA_PACPLL_A9_name, O_RDWR)) < 0) {
+                fprintf(stderr, "EE *** FPGA A9 /dev/mem FD OPEN FAILED ***\n");
                 perror ("open");
                 return RP_EOOR;
         }
 
         FPGA_PACPLL_bram = mmap (NULL, FPGA_PACPLL_BRAM_block_size,
                                  PROT_READ|PROT_WRITE, MAP_SHARED, fd, FPGA_BRAM_PACPLL_BASE);
-        if (FPGA_PACPLL_bram == MAP_FAILED)
+        if (FPGA_PACPLL_bram == MAP_FAILED){
+                fprintf(stderr, "EE ** FPGA MMAP PACPLL_BRAM block failed ***\n");
                 return RP_EOOR;
-
+        }
+        
         FPGA_SPMC_bram = mmap (NULL, FPGA_SPMC_BRAM_block_size,
                                PROT_READ|PROT_WRITE, MAP_SHARED, fd, FPGA_BRAM_SPMC_BASE);
-        if (FPGA_SPMC_bram == MAP_FAILED)
+        if (FPGA_SPMC_bram == MAP_FAILED){
+                fprintf(stderr, "EE *** FPGA MMAP SPMC_BRAM block failed ***\n");
                 return RP_EOOR;
+        }
         
         FPGA_PACPLL_cfg1 = mmap (NULL, FPGA_PACPLL_CFG_block_size,
                                 PROT_READ|PROT_WRITE,  MAP_SHARED, fd, FPGA_CFG_REG1);
-        if (FPGA_PACPLL_cfg1 == MAP_FAILED)
+        if (FPGA_PACPLL_cfg1 == MAP_FAILED){
+                fprintf(stderr, "EE *** FPGA MMAP PACPLL_CFG1 block failed ***\n");
                 return RP_EOOR;
-
+        }
+        
         FPGA_PACPLL_cfg2 = mmap (NULL, FPGA_PACPLL_CFG_block_size,
                                 PROT_READ|PROT_WRITE,  MAP_SHARED, fd, FPGA_CFG_REG2);
-        if (FPGA_PACPLL_cfg2 == MAP_FAILED)
+        if (FPGA_PACPLL_cfg2 == MAP_FAILED){
+                fprintf(stderr, "EE *** FPGA MMAP PACPLL_CFG2 block failed ***\n");
                 return RP_EOOR;
-
+        }
+        
         FPGA_PACPLL_gpio = mmap (NULL, FPGA_PACPLL_GPIO_block_size,
                                 PROT_READ|PROT_WRITE,  MAP_SHARED, fd, FPGA_GPIO_BASE);
-        if (FPGA_PACPLL_gpio == MAP_FAILED)
+        if (FPGA_PACPLL_gpio == MAP_FAILED){
+                fprintf(stderr, "EE *** FPGA MMAP PACPLL_GPIO block failed ***\n");
                 return RP_EOOR;
-
+        }
+        
 #ifdef DEVELOPMENT_PACPLL_OP
         fprintf(stderr, "INIT RP FPGA RPSPMC PACPLL. --- FPGA MEMORY MAPPING ---\n");
         fprintf(stderr, "RP FPGA RPSPMC PACPLL PAGESIZE:        0x%08lx.\n", (unsigned long)(sysconf (_SC_PAGESIZE)));
@@ -506,6 +517,7 @@ int rp_PAC_App_Init(){
         pthread_attr_setdetachstate (&stream_server_attr, PTHREAD_CREATE_JOINABLE);
         pthread_create ( &stream_server_thread, &stream_server_attr, thread_stream_server, NULL); // start stream server
         pthread_attr_destroy (&stream_server_attr);
+        
         return RP_OK;
 }
 
@@ -522,7 +534,7 @@ void rp_PAC_App_Release(){
         munmap (FPGA_PACPLL_gpio, FPGA_PACPLL_GPIO_block_size);
         munmap (FPGA_PACPLL_cfg1, FPGA_PACPLL_CFG_block_size);
         munmap (FPGA_PACPLL_cfg2, FPGA_PACPLL_CFG_block_size);
-        munmap ((void*)FPGA_SPMC_bram, FPGA_SPMC_BRAM_block_size);
+        munmap (FPGA_SPMC_bram, FPGA_SPMC_BRAM_block_size);
         munmap (FPGA_PACPLL_bram, FPGA_PACPLL_BRAM_block_size);
 #ifdef DEVELOPMENT_PACPLL_OP
         fprintf(stderr, "RP FPGA maps unmapped.\n");
