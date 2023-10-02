@@ -277,11 +277,11 @@ int rpspmc_hwi_dev::GVP_expect_header(double *pv, int &index_all){
                                         return 0;
                                 }
                         
-                                g_message ("VP: waiting for section header -- incomplete **");
+                                g_message ("Scan VP: waiting for section header -- incomplete **");
                                 usleep(100000);
                         }
                 } else {
-                        g_message ("VP: waiting for data");
+                        g_message ("Scan VP: waiting for header data");
                         usleep(100000);
                 }
                 
@@ -321,7 +321,7 @@ int rpspmc_hwi_dev::GVP_expect_point(double *pv, int &index_all){
                                 return 0;
                         }
 
-                        g_message ("VP: waiting for data ** section: %d gvpi[%04d] Pos:{0x%04x} Offset:0x%04x", GVP_vp_header_current.section, GVP_vp_header_current.i, (int)spmc_parameters.gvp_data_position, GVP_stream_buffer_offset);
+                        g_message ("Scan VP: waiting for data ** section: %d gvpi[%04d] Pos:{0x%04x} Offset:0x%04x", GVP_vp_header_current.section, GVP_vp_header_current.i, (int)spmc_parameters.gvp_data_position, GVP_stream_buffer_offset);
                         usleep(100000);
                 }
         } while (ret < 0);
@@ -745,7 +745,7 @@ int rpspmc_hwi_dev::start_data_read (int y_start,
                 double slew[2];
                 slew[0] = RPSPMC_ControlClass->scan_speed_x = RPSPMC_ControlClass->scan_speed_x_requested;
                 slew[1] = RPSPMC_ControlClass->fast_return * RPSPMC_ControlClass->scan_speed_x_requested;
-                RPSPMC_ControlClass->scanpixelrate = slew[0]/rx*Nx;
+                RPSPMC_ControlClass->scanpixelrate = slew[0]/main_get_gapp()->xsm->data.s.rx*main_get_gapp()->xsm->data.s.nx;
                 // x2nd_Zoff
 
                 int subscan[4];
@@ -754,11 +754,12 @@ int rpspmc_hwi_dev::start_data_read (int y_start,
                         subscan[1] = Mob_dir[srcs_dir[0] ? 0:1][0]->GetNxSub(); // number points per lines
                         subscan[0] = Mob_dir[srcs_dir[0] ? 0:1][0]->data->GetX0Sub(); // number points per lines
                         subscan[2] = Mob_dir[srcs_dir[0] ? 0:1][0]->data->GetY0Sub(); // number points per lines
-                } else return NULL; // error, no reference
-
+                } else return 0; // error, no reference
                 
                 // write scan program
-                RPSPMC_ControlClass->write_spm_scan_vector_program (rx, ry, Nx, Ny, slew, subscan, srcs_dir);
+                RPSPMC_ControlClass->write_spm_scan_vector_program (main_get_gapp()->xsm->data.s.rx, main_get_gapp()->xsm->data.s.ry,
+                                                                    main_get_gapp()->xsm->data.s.nx, main_get_gapp()->xsm->data.s.ny,
+                                                                    slew, subscan, srcs_dir);
                 
                 // start GVP
                 GVP_execute_vector_program(); // non blocking
@@ -1249,7 +1250,7 @@ int rpspmc_hwi_dev::GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v){
 
         if (i == 0 && (v->options & VP_INITIAL_SET_VEC)){ // 1st vector is set postion vector? Get pos and calc differentials.
 
-                g_print ("Vec[%2d] XYZU: %g %g %g %g V <== VPos XYZU: %g %g %g %g V [%g A %g A %g A %g V] SRCSO=%08x\n",
+                g_print ("Initial Vec[%2d] XYZU: %g %g %g %g V <== VPos XYZU: %g %g %g %g V [%g A %g A %g A %g V] SRCSO=%08x\n",
                          i,
                          v->f_dx, v->f_dy, v->f_dz, v->f_du,
                          spmc_parameters.xs_monitor,
@@ -1272,9 +1273,10 @@ int rpspmc_hwi_dev::GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v){
                 gvp_vector_d [D_GVP_BB      ] = 0.0; // monitor N/A
                 gvp_vector_d [D_GVP_SLW     ] = v->slew;
         } else {
-                g_print ("Vec[%2d] XYZU: %g %g %g %g V\n",
+                g_print ("Vec[%2d] XYZU: %g %g %g %g V  [#%d, R%d J%d SRCS=%08x]\n",
                          i,
-                         v->f_dx, v->f_dy, v->f_dz, v->f_du);
+                         v->f_dx, v->f_dy, v->f_dz, v->f_du,
+                         gvp_vector_i [I_GVP_N       ], gvp_vector_i [I_GVP_NREP    ], gvp_vector_i [I_GVP_NEXT    ], gvp_vector_i [I_GVP_OPTIONS ] );
                 // Vector Components are all in Volts
                 gvp_vector_d [D_GVP_DX      ] = v->f_dx;
                 gvp_vector_d [D_GVP_DY      ] = v->f_dy;

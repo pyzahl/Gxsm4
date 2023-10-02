@@ -838,7 +838,7 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
                 std::stringstream vector_def;
                 if (pc == 0)
                         //             vector =   {32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd000, 32'h1001, -32'd0, -32'd0,  32'd1}; // Vector #1
-                        vector_def << "VectorDef: { Decii, 0,0,0, dB,dA,dU,dZ,dY,dX, nxt,opts,nii,n, pc}\n";
+                        vector_def << "VectorDef: { Decii, 0,0,0, dB,dA,dU,dZ,dY,dX, nxt,reps,opts,nii,n, pc}\n";
                 vector_def << "vector = {32'd" << ((unsigned int)idv[15]); // decii
                 for (int i=14; i>=0; i--){
                         switch (i){

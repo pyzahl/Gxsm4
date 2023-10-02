@@ -266,10 +266,49 @@ void RPSPMC_Control::write_spm_scan_vector_program (double rx, double ry, int nx
         double tfwd = slew[0]/rx;
         double trev = slew[1]/rx;
         double ti = slew[0]/sqrt(rx*rx+ry*ry);
+
+        // new convert Ang to Volts
+        rx = main_get_gapp()->xsm->Inst->XA2Volt (rx); // WARNING, not yet accounting for rotation here in case x and y piezo sensitivities are not the same!
+        ry = main_get_gapp()->xsm->Inst->YA2Volt (ry);
+        
         double xi = -rx/2.+rx*subscan[0]/nx;
         double yi =  ry/2.-ry*subscan[2]/ny;
-        double dx = rx-rx*subscan[1]/nx;
-        double dy = ry-ry*subscan[3]/ny;
+        double dx = rx*subscan[1]/nx; // scan X vector length
+        double dy = ry*subscan[3]/ny; // scan Y vector length
+
+        /*
+write spm scan GVP: ti, fwd, rev= 1.80086s, 2.5468s, 2.5468s;  xi,yi=(-0.05, 0.05)V, dx,dy=(0.1, 0.1)V nx,ny=(100, 100) subscan=[[0 100][0 100]], srcs0=0x00000010
+** Message: 20:16:17.263: GVP_write_program_vector[0]: srcs = 0x00000001
+Vec[ 0] XYZU: -5e-05 5e-05 0 0 V <== VPos XYZU: 0 0 0 0 V [0 A 0 A 0 A 0 V] SRCSO=00000001
+** Message: 20:16:17.263: GVP_write_program_vector[1]: srcs = 0x00001001
+Vec[ 1] XYZU: 0.0001 0 0 0 V
+** Message: 20:16:17.263: GVP_write_program_vector[2]: srcs = 0x00001001
+Vec[ 2] XYZU: -0.0001 0 0 0 V
+** Message: 20:16:17.263: GVP_write_program_vector[3]: srcs = 0x00001001
+Vec[ 3] XYZU: 0 1e-06 0 0 V
+** Message: 20:16:17.263: GVP_write_program_vector[4]: srcs = 0x00000000
+Vec[ 4] XYZU: 0 0 0 0 V
+** Message: 20:16:17.263: rpspmc_hwi_dev::GVP_execute_vector_program ()
+** Message: 20:16:17.263: FifoReadThread Start
+** Message: 20:16:17.263: FifoReadThread nx,ny = (100, 100) @ (0, 0)
+** Message: 20:16:17.263: Scan VP: waiting for header data
+VectorDef{   Decii,        0,      0,      0,     dB,     dA,     dU,     dZ,     dY,      dX,      nxt,  repts,       opts,     nii,      n ,     pc}
+vector = {32'd375179,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd72, -32'd072,  32'd0,  32'd0000, 32'h0001,  32'd2,  32'd99,  32'd0}; // Vector #0
+vector = {32'd530583,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd00,  32'd143,  32'd0,  32'd0000, 32'h1001,  32'd2,  32'd99,  32'd1}; // Vector #1
+vector = {32'd530583,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd00, -32'd143,  32'd0,  32'd0000, 32'h1001,  32'd2,  32'd99,  32'd2}; // Vector #2
+vector = {32'd053058,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd14,  32'd000, -32'd2,  32'd9900, 32'h1001,  32'd2,  32'd9,  32'd3}; // Vector #3
+vector = {32'd000032,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd00,  32'd000,  32'd0,  32'd0000, 32'h0,  32'd0,  32'd0,  32'd4}; // Vector #4
+{Info: {RESET:{true}}}
+        */
+
+        g_message ("write spm scan GVP: ti, fwd, rev= %gs, %gs, %gs;  xi,yi=(%g, %g)V, dx,dy=(%g, %g)V nx,ny=(%d, %d) subscan=[[%d %d][%d %d]], srcs0=0x%08x",
+                   ti, tfwd, trev,
+                   xi, yi,
+                   dx, dy,
+                   nx, ny,
+                   subscan[0], subscan[1], subscan[2], subscan[3], 
+                   srcs[0]);
+        
         // may wait a sec to assumre monitors been up-to-date?
         make_UZXYramp_vector (0., 0., // GVP_du[k], GVP_dz[k],
                               xi, yi, 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
@@ -278,17 +317,17 @@ void RPSPMC_Control::write_spm_scan_vector_program (double rx, double ry, int nx
         write_program_vector (vector_index++);
         make_UZXYramp_vector (0., 0., // GVP_du[k], GVP_dz[k],
                               dx, 0, 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
-                              nx-subscan[1], 0, 0, tfwd, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
+                              subscan[1], 0, 0, tfwd, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
                               srcs[0], 0); // vis_Source, GVP_opt[k]);
         write_program_vector (vector_index++);
         make_UZXYramp_vector (0., 0., // GVP_du[k], GVP_dz[k],
                               -dx, 0, 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
-                              nx-subscan[1], 0, 0, trev, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
+                              subscan[1], 0, 0, trev, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
                               srcs[1], 0); // vis_Source, GVP_opt[k]);
         write_program_vector (vector_index++);
         make_UZXYramp_vector (0., 0., // GVP_du[k], GVP_dz[k],
-                              0., dy/ny, 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
-                              10, ny, -2, tfwd/ny, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
+                              0., dy/(subscan[3]-1), 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
+                              10, subscan[3], -2, tfwd/ny, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
                               srcs[0], 0); // vis_Source, GVP_opt[k]);
         write_program_vector (vector_index++);
         append_null_vector (options, vector_index);
