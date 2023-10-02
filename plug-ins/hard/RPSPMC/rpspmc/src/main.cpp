@@ -277,8 +277,8 @@ CDoubleParameter TRANSPORT_TAU_AMPL("TRANSPORT_TAU_AMPL", CBaseParameter::RW, 0.
 */
 
 // *** PAC_PLL::GPIO MONITORS ***                                                                    readings are via void *thread_gpio_reading_FIR(g), read_gpio_reg_int32 (n,m)
-// *** DBG ***                                                                                                //        gpio_reading_FIRV_vector[GPIO_READING_LMS_A]        (1,0); // GPIO X1 : LMS A ** Obso => XS
-// *** DBG ***                                                                                                //        gpio_reading_FIRV_vector[GPIO_READING_LMS_A]        (1,1); // GPIO X2 : LMS B ** Obso => YS
+// *** DBG ***                                                                                                //        gpio_reading_FIRV_vector[GPIO_READING_LMS_A]        (1,0); // GPIO X1 : XS-GVP
+// *** DBG ***                                                                                                //        gpio_reading_FIRV_vector[GPIO_READING_LMS_A]        (1,1); // GPIO X2 : YS-GVP
 // *** DBG ***                                                                                                //        -----------------------                             (2,0); // GPIO X3 : DBG M
 CDoubleParameter VOLUME_MONITOR("VOLUME_MONITOR", CBaseParameter::RW, 0, 0, -1000.0, 1000.0);                 // mV  ** gpio_reading_FIRV_vector[GPIO_READING_AMPL]         (2,1); // GPIO X4 : CORDIC SQRT (AM2=A^2+B^2)
 // via  DC_OFFSET rp_PAC_auto_dc_offset_correct ()                                                                                                                          (3,0); // GPIO X5 : DC_OFFSET (M-DC)
@@ -294,11 +294,11 @@ CDoubleParameter CONTROL_DFREQ_MONITOR("CONTROL_DFREQ_MONITOR", CBaseParameter::
 // *** DBG ***                                                                                                //        -----------------------                             (8,0); // GPIO X15: --- UMON Bias
 // *** DBG ***                                                                                                //        -----------------------                             (8,1); // GPIO X16: --- XMON
 // *** DBG ***                                                                                                //        -----------------------                             (9,0); // GPIO X17: --- YMON
-// *** DBG ***                                                                                                //        -----------------------                             (9,1); // GPIO X18: --- ZMON
-// *** DBG ***                                                                                                //        -----------------------                            (10,0); // GPIO X19: --- ZS-MON
-// *** DBG ***                                                                                                //        -----------------------                            (10,1); // GPIO X20: --- Z0-MON
+// *** DBG ***                                                                                                //        -----------------------                             (9,1); // GPIO X18: --- ZMON   (Z total at DAC3)
+// *** DBG ***                                                                                                //        -----------------------                            (10,0); // GPIO X19: --- ZS-MON (Z-GVP)
+// *** DBG ***                                                                                                //        -----------------------                            (10,1); // GPIO X20: --- Z0-MON (Z-Offset)
 // *** DBG ***                                                                                                //        -----------------------                            (11,0); // GPIO X21: --- SPMC BRAM LAST WRITE ADDRESS (0..16383)
-// *** DBG ***                                                                                                //        -----------------------                            (11,1); // GPIO X22: --- Z-GVP MON
+// *** DBG ***                                                                                                //        -----------------------                            (11,1); // GPIO X22: --- Z-Sum to DAC MON
 
 
 
@@ -1494,7 +1494,7 @@ void OnNewParams_RPSPMC(void){
                 SPMC_GVP_LIVE_VECTOR_UPDATE.Update ();
                 rp_spmc_set_gvp_vector (SPMC_GVP_VECTOR_PC.Value (),
                                         SPMC_GVP_VECTOR__N.Value (),
-                                        SPMC_GVP_VECTOR__O.Value (),
+                                        (unsigned int)SPMC_GVP_VECTOR__O.Value (),
                                         SPMC_GVP_VECTORNRP.Value (),
                                         SPMC_GVP_VECTORNXT.Value (),
                                         SPMC_GVP_VECTOR_DX.Value (),

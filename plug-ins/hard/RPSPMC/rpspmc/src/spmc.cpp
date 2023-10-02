@@ -163,6 +163,9 @@ extern spmc_stream_server spmc_stream_server_instance;
 
 int x0_buf = 0;
 int y0_buf = 0;
+int z0_buf = 0;
+int bias_buf = 0;
+
 
 // Integer to binary string. Writes a string of n "bit" characters '1' or '0' as of x&[1<<(N-1)]] to b[0..n-1] and terminating b[n]=0.
 // NOTE: b[] must be at least n+1 bytes long, termination 0 is written to b[n].
@@ -453,10 +456,10 @@ int32_t ad5791_dac_ouput_state(int axis,
 }
 
 inline double ad5791_dac_to_volts (int value){ return SPMC_AD5791_REFV*(double)value / Q19; }
-inline int volts_to_ad5791_dac (double volts){ return round(Q19*volts/SPMC_AD5791_REFV); }
+inline int volts_to_ad5791_dac (double volts){ return (int)round(Q19*volts/SPMC_AD5791_REFV); }
 
 inline double rpspmc_to_volts (int value){ return SPMC_AD5791_REFV*(double)value / Q31; }
-inline int volts_to_rpspmc (double volts){ return round(Q31*volts/SPMC_AD5791_REFV); }
+inline int volts_to_rpspmc (double volts){ return (int)round(Q31*volts/SPMC_AD5791_REFV); }
 
 
 /***************************************************************************//**
@@ -610,7 +613,7 @@ void rp_spmc_AD5791_init (){
 
 void rp_spmc_set_bias (double bias){
         if (verbose > 1) fprintf(stderr, "##Configure mode set AD5971 AXIS3 (Bias) to %g V\n", bias);
-        set_gpio_cfgreg_int32 (SPMC_BIAS_REF, volts_to_rpspmc (bias));
+        set_gpio_cfgreg_int32 (SPMC_BIAS_REF, bias_buf = volts_to_rpspmc (bias));
 }
 
 // WARNING: FOR TEST/CALIBARTION ONLY, direct DAC write via config mode!!!
@@ -702,6 +705,43 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
                              double dx, double dy, double dz, double du,
                              double da, double db,
                              double slew, bool update_life=false){
+
+        if (pc&0x1000){ // special auto vector delta computation mode
+                if (verbose > 1) fprintf(stderr, "Write Vector[PC=%03d] auto calc init ref. vector from absolute vector pos. ", pc);
+                double x = rpspmc_to_volts (read_gpio_reg_int32 (1,0));
+                double y = rpspmc_to_volts (read_gpio_reg_int32 (1,1));
+                double z = rpspmc_to_volts (read_gpio_reg_int32 (10,0));
+                double u = rpspmc_to_volts (read_gpio_reg_int32 (8,0)); // Bias sum from SET and GVP
+                double bias = rpspmc_to_volts (bias_buf);
+
+                dx -= x;
+                dy -= y;
+                dz -= z;
+                du -= u-bias;
+
+                // selection flags to clear auto delta to only adjust selected componet
+                if ((pc&0x1001) == 0x1001)
+                        dx = 0.;
+                if ((pc&0x1002) == 0x1002)
+                        dy = 0.;
+                if ((pc&0x1004) == 0x1004)
+                        dz = 0.;
+                if ((pc&0x1008) == 0x1008)
+                        du = 0.;
+                if ((pc&0x1010) == 0x1010)
+                        da = 0.;
+                if ((pc&0x1020) == 0x1020)
+                        db = 0.;
+                pc = 0; // set pc to 0, this is only for first vector
+                
+                if (verbose > 1) fprintf(stderr, "auto deltas dXYZU => [%g %g %g %g] V ... vec[PC=000] = [", dx, dy, dz, du);
+
+                // da, db not managed yet
+        }else{
+                if (verbose > 1) fprintf(stderr, "Write Vector[PC=%03d] = [", pc);
+        }
+        
+
         if (pc >= MAX_NUM_PROGRAN_VECTORS || pc < 0){
                 fprintf(stderr, "ERROR: Vector[PC=%03d] out of valif vector program space. Ignoring. GVP is put into RESET mode now.", pc);
                 return;
@@ -786,10 +826,8 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
         //           decii  ******     du        dz        dy        dx       Next      Nrep,   Options,     nii,      N,  [Vadr]
         // data = {32'd016, 160'd0, 32'd0004, 32'd0003, 32'd0064, 32'd0001,  32'd0, 32'd0000,   32'h0100, 32'd02, 32'd005, 32'd00 }; // 000
 
-        if (verbose > 1) fprintf(stderr, "Write Vector[PC=%03d] init", pc);
         
         int idv[16];
-        if (verbose > 1) fprintf(stderr, "Write Vector[PC=%03d] = [", pc);
         set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_VADR, idv[0]=pc);
 
         if (verbose > 1) fprintf(stderr, "%04d, ", n);
@@ -890,7 +928,7 @@ void rp_spmc_set_offsets (double x0, double y0, double z0, double xy_move_slew=-
 
         set_gpio_cfgreg_int32 (SPMC_OFFSET_X, x0_buf = volts_to_rpspmc (x0));
         set_gpio_cfgreg_int32 (SPMC_OFFSET_Y, y0_buf = volts_to_rpspmc (y0));
-        set_gpio_cfgreg_int32 (SPMC_OFFSET_Z, volts_to_rpspmc (z0));
+        set_gpio_cfgreg_int32 (SPMC_OFFSET_Z, z0_buf = volts_to_rpspmc (z0));
         set_gpio_cfgreg_int32 (SPMC_XY_MOVE_STEP, xy_step);
         set_gpio_cfgreg_int32 (SPMC_Z_MOVE_STEP, z_step);
 }

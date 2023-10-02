@@ -1249,43 +1249,23 @@ int rpspmc_hwi_dev::GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v){
 
 
         if (i == 0 && (v->options & VP_INITIAL_SET_VEC)){ // 1st vector is set postion vector? Get pos and calc differentials.
-
-                g_print ("Initial Vec[%2d] XYZU: %g %g %g %g V <== VPos XYZU: %g %g %g %g V [%g A %g A %g A %g V] SRCSO=%08x\n",
-                         i,
-                         v->f_dx, v->f_dy, v->f_dz, v->f_du,
-                         spmc_parameters.xs_monitor,
-                         spmc_parameters.ys_monitor,
-                         spmc_parameters.zs_monitor,
-                         spmc_parameters.bias_monitor,
-                         main_get_gapp()->xsm->Inst->Volt2XA (spmc_parameters.xs_monitor),
-                         main_get_gapp()->xsm->Inst->Volt2YA (spmc_parameters.ys_monitor),
-                         main_get_gapp()->xsm->Inst->Volt2ZA (spmc_parameters.zs_monitor),
-                         spmc_parameters.bias_monitor,
-                         gvp_vector_i [I_GVP_OPTIONS ]
-                         );
-
-                // Vector Components are all in Volts
-                gvp_vector_d [D_GVP_DX      ] = v->f_dx - spmc_parameters.xs_monitor; // target XS - current XS
-                gvp_vector_d [D_GVP_DY      ] = v->f_dy - spmc_parameters.ys_monitor;
-                gvp_vector_d [D_GVP_DZ      ] = v->f_dz - spmc_parameters.zs_monitor;
-                gvp_vector_d [D_GVP_DU      ] = v->f_du - spmc_parameters.bias_monitor; // target Bias - current Bias
-                gvp_vector_d [D_GVP_AA      ] = 0.0; // monitor N/A
-                gvp_vector_d [D_GVP_BB      ] = 0.0; // monitor N/A
-                gvp_vector_d [D_GVP_SLW     ] = v->slew;
-        } else {
-                g_print ("Vec[%2d] XYZU: %g %g %g %g V  [#%d, R%d J%d SRCS=%08x]\n",
-                         i,
-                         v->f_dx, v->f_dy, v->f_dz, v->f_du,
-                         gvp_vector_i [I_GVP_N       ], gvp_vector_i [I_GVP_NREP    ], gvp_vector_i [I_GVP_NEXT    ], gvp_vector_i [I_GVP_OPTIONS ] );
-                // Vector Components are all in Volts
-                gvp_vector_d [D_GVP_DX      ] = v->f_dx;
-                gvp_vector_d [D_GVP_DY      ] = v->f_dy;
-                gvp_vector_d [D_GVP_DZ      ] = v->f_dz;
-                gvp_vector_d [D_GVP_DU      ] = v->f_du;
-                gvp_vector_d [D_GVP_AA      ] = v->f_da;
-                gvp_vector_d [D_GVP_BB      ] = v->f_db;
-                gvp_vector_d [D_GVP_SLW     ] = v->slew;
+                gvp_vector_i [I_GVP_PC_INDEX] = 0x1000; // all componets are absolute set coordnates!
+                // componets can be masked to set=0 via dX=0 0x1001, dY=0 0x1002, dZ=0 0x1004, du=0 0x1008,da=0  0x1010, db=0 0x1020
         }
+
+        g_print ("Vec[%2d] XYZU: %g %g %g %g V  [#%d, R%d J%d SRCS=%08x] initial Msk=%04x\n",
+                 i,
+                 v->f_dx, v->f_dy, v->f_dz, v->f_du,
+                 gvp_vector_i [I_GVP_N       ], gvp_vector_i [I_GVP_NREP    ], gvp_vector_i [I_GVP_NEXT    ], gvp_vector_i [I_GVP_OPTIONS ],
+                 gvp_vector_i [I_GVP_PC_INDEX]);
+        // Vector Components are all in Volts
+        gvp_vector_d [D_GVP_DX      ] = v->f_dx;
+        gvp_vector_d [D_GVP_DY      ] = v->f_dy;
+        gvp_vector_d [D_GVP_DZ      ] = v->f_dz;
+        gvp_vector_d [D_GVP_DU      ] = v->f_du;
+        gvp_vector_d [D_GVP_AA      ] = v->f_da;
+        gvp_vector_d [D_GVP_BB      ] = v->f_db;
+        gvp_vector_d [D_GVP_SLW     ] = v->slew;
         
         // send it down
         if (rpspmc_pacpll)
