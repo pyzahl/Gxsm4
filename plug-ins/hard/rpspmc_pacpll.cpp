@@ -4427,24 +4427,34 @@ void RPspmc_pacpll::status_append (const gchar *msg){
 void RPspmc_pacpll::on_connect_actions(){
         status_append ("RedPitaya SPM Control, PAC-PLL loading configuration.\n ");
         send_all_parameters ();
-        
+        while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
+
         status_append ("RedPitaya SPM Control, PAC-PLL init, DEC FAST(12)...\n");
         gtk_combo_box_set_active (GTK_COMBO_BOX (update_tr_widget), 6);  // select Ph,dF,Am,Ex
         gtk_combo_box_set_active (GTK_COMBO_BOX (update_ts_widget), 12); // select 12, fast
-        while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
-        usleep(500000);
+        for (int i=0; i<25; ++i){
+                while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
+                usleep(20000);
+        }
         
         gtk_combo_box_set_active (GTK_COMBO_BOX (update_op_widget), 3); // INIT BRAM TRANSPORT AND CLEAR FIR RING BUFFERS, give me a second...
         status_append ("RedPitaya SPM Control, PAC-PLL init, INIT-FIR... [2s Zzzz]\n");
-        while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
-        usleep(2000000);
+        for (int i=0; i<100; ++i){
+                while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
+                usleep(20000);
+        }
         
         status_append ("RedPitaya SPM Control, PAC-PLL init, INIT-FIR completed.\n");
-        usleep(1000000);
+        for (int i=0; i<50; ++i){
+                while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
+                usleep(20000);
+        }
         
         status_append ("RedPitaya SPM Control, PAC-PLL normal operation, set to data streaming mode.\n");
-        while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
-        usleep(500000);
+        for (int i=0; i<25; ++i){
+                while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
+                usleep(20000);
+        }
         
         gtk_combo_box_set_active (GTK_COMBO_BOX (update_op_widget), 5); // STREAMING OPERATION
         gtk_combo_box_set_active (GTK_COMBO_BOX (update_ts_widget), 18); // select 19 (typical scan decimation/time scale filter)

@@ -930,12 +930,12 @@ public:
                         g_warning (tmp);
                         g_free (tmp);
 #endif
-                        return -99;
+                        return -99; // OK -- but have wait and reprocess when data package is completed
                 }
                 
                 GVP_vp_header_current.srcs = GVP_stream_buffer[offset]&0xffff;
 
-                GVP_vp_header_current.i = (int)((unsigned int)(GVP_stream_buffer[offset]>>16));
+                GVP_vp_header_current.i = (int)(((guint32)GVP_stream_buffer[offset])>>16);
                 if (GVP_vp_header_current.srcs == 0xffff){
                         GVP_vp_header_current.n    = GVP_vp_header_current.i + 1;
                         GVP_vp_header_current.endmark = 0;
@@ -999,7 +999,7 @@ public:
                         GVP_vp_header_current.chNs[ich] = GVP_stream_buffer[1+ch_index+offset];
                         if (ich < 14){
                                 if (ich > 4)
-                                        GVP_vp_header_current.dataexpanded[ich] = (double)GVP_vp_header_current.chNs[ich]; // raw
+                                        GVP_vp_header_current.dataexpanded[ich] = (double)GVP_vp_header_current.chNs[ich]; // raw // fix me -- apply conversion to units!
                                 else
                                         GVP_vp_header_current.dataexpanded[ich] = rpspmc_to_volts (GVP_vp_header_current.chNs[ich]); // Volts
                                 //g_message ("%g V", GVP_vp_header_current.dataexpanded[ich]);
@@ -1020,7 +1020,7 @@ public:
 
 #if 1
                 if (GVP_vp_header_current.srcs == 0xffff){
-                        GVP_vp_header_current.gvp_time = (unsigned long)(GVP_vp_header_current.chNs[15]<<16) | (unsigned long)GVP_vp_header_current.chNs[14];
+                        GVP_vp_header_current.gvp_time = (((guint64)((guint32)GVP_vp_header_current.chNs[15]))<<32) | (guint64)((guint32)GVP_vp_header_current.chNs[14]);
                         GVP_vp_header_current.dataexpanded[14] = (double)GVP_vp_header_current.gvp_time/125e3;
                         if (GVP_vp_header_current.endmark)
                                 g_message ("N[ENDMARK] GVP_vp_header_current.srcs=%04x   Bias=%8g V    t=%8g ms",
@@ -1039,7 +1039,7 @@ public:
 
                 if (ch_index+offset < GVP_stream_buffer_position){
                         if (GVP_vp_header_current.srcs & 0xc000){
-                                GVP_vp_header_current.gvp_time = (unsigned long)(GVP_vp_header_current.chNs[15]<<16) | (unsigned long)GVP_vp_header_current.chNs[14];
+                                GVP_vp_header_current.gvp_time = (((guint64)((guint32)GVP_vp_header_current.chNs[15]))<<32) | (guint64)((guint32)GVP_vp_header_current.chNs[14]);
                                 GVP_vp_header_current.dataexpanded[14] = (double)GVP_vp_header_current.gvp_time/125e3;
                         }
                         if (GVP_vp_header_current.srcs == 0xffff)

@@ -320,7 +320,7 @@ appInclude  = include_directories(gxsm_lib_includes)
 
 
 #all_cflags = ['-fpermissive', '-O3', '-w']
-all_cflags = ['-fpermissive', '-w', '-g']
+all_cflags = ['-fpermissive', '-w', '-O3', '-g']
 all_plugin_cflags = ['-fpermissive', '-w']
 all_plugin_deps = [icuuc, gtk, cairo, freet, gset, netcdf, fftw, xml, png, gmod, gmodexp, dl]
 all_plugin_link_args = ['-Mmodules', '-export-dynamic', '-fno-version']

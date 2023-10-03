@@ -133,7 +133,7 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
                 //g_message ("WS Message: %s", (gchar*)contents);
 
                 if (g_strrstr (contents, "RESET")){
-                        self->status_append ("WEBSOCKET_STREAM: RESET (GVP Init)\n");
+                        self->status_append ("WEBSOCKET_STREAM: RESET (GVP Init) Message Received.\n");
                         finished=false;
                         position=0;
                         streamAB=0;
@@ -265,6 +265,38 @@ Thread 1 "gxsm4" received signal SIGSEGV, Segmentation fault.
 
 ** Message: 22:23:58.235: on_new_data ** AB=1 pos=1068  buffer_pos=0x0000242c  new_count=1  ...
 ** Message: 22:23:58.334: WS Message: {Info: { position: 6255}}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+** Message: 13:18:16.110: on_new_data ** AB=0 pos=8197  buffer_pos=0x00002005  new_count=0  ...
+** Message: 13:18:16.140: VP: Waiting for Section Header [0] StreamPos=0x00002005
+** Message: 13:18:16.140: VP: section header ** reading pos[2005] off[2002] #AB=0
+** Message: 13:18:16.140: Reading VP section header...
+00001fe2: 06025290 0693c038 061a5a3a fffffe31 000015cc 8d82e194 00000002 0692c038 061c8978 fffffe26 00001741 8e0209b0 00000002 0691c038 cccccccc fffffe44
+00001ff2: 00000002 8e8131cc 00000002 0690c038 0620e7f4 fffffe38 00000d95 8f0059e8 00000002 068fc038 06231732 fffffe45 0000042a 8f7f8204 00000000 00000000
+00002002: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+00002012: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+00002022: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+
+
+** (gxsm4:2043331): WARNING **: 13:18:16.140: ERROR: read_GVP_data_block_to_position_vector: Reading offset 00002002, write position 00002005. Expecting full header but found srcs=0000, i=0
+** Message: 13:18:16.140: *** GVP: DATA STREAM ERROR, NO VALID HEDAER AS EXPECTED -- aborting. EE ret = -97 ***
+===>>>> SET-VP  i[1322] sec=0 t=0 ms   #valid sec{1323}
+
+
 
   
  */
