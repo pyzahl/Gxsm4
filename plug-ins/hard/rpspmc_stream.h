@@ -59,6 +59,8 @@ public:
                 client=NULL;
                 client_error=NULL;
                 error=NULL;
+
+                last_vector_pc_confirmed = -1;
         };
         ~RP_stream (){};
         void stream_connect_cb (gboolean connect); // connect/dissconnect
@@ -75,13 +77,20 @@ public:
 
         virtual int on_new_data (gconstpointer contents, gsize len, int position, int new_count=1, bool last=false) {};
         
-        virtual void status_append (const gchar *msg){
+        virtual void status_append (const gchar *msg, bool schedule_from_thread=false){
                 g_message (msg);
         };
         virtual void update_health (const gchar *msg=NULL){
                 g_message (msg);
         };
         virtual void on_connect_actions (){}; // called on connect, setup instrument, send all parameters, etc
+
+        void resetVPCconfirmed (){
+                last_vector_pc_confirmed = -1;
+        };
+        int getVPCconfirmed (){
+                return last_vector_pc_confirmed;
+        };
         
         void debug_log (const gchar *msg){
                 if (get_debug_level () > 4)
@@ -201,9 +210,10 @@ public:
 
                 std::string str =  stream.str();
 
-                if (also_gprint)
+                if (also_gprint){
                         g_print (str.c_str());
-                else
+                        status_append (str.c_str(), true); // MUST SCHEDULE -- NOT THREAD SAFE
+                } else
                         status_append (str.c_str()); // WARNING -- NOT THREAD SAFE
                 
         };
@@ -228,8 +238,7 @@ public:
                 printf("Decompressed: %s\n", decompressed.data());
         };
 
-
-
+        int last_vector_pc_confirmed;
 
         
         /* Socket Connection */

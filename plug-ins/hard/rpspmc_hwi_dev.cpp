@@ -162,8 +162,23 @@ void rpspmc_hwi_dev::spmc_stream_connect_cb (GtkWidget *widget, rpspmc_hwi_dev *
 const gchar *rpspmc_hwi_dev::get_rp_address (){
         return rpspmc_pacpll->get_rp_address ();
 }
-void rpspmc_hwi_dev::status_append (const gchar *msg){
-        rpspmc_pacpll->status_append (msg);
+void rpspmc_hwi_dev::status_append (const gchar *msg, bool schedule_from_thread){
+        static gchar *buffer=NULL;
+        if (schedule_from_thread){
+                if (!buffer)
+                        buffer = g_strdup (msg);
+                else {
+                        gchar *tmp = buffer;
+                        buffer = g_strconcat (buffer, msg, NULL);
+                        g_free (tmp);
+                }
+        } else {
+                if (buffer){
+                        rpspmc_pacpll->status_append (buffer);
+                        g_free (buffer); buffer=NULL;
+                }
+                rpspmc_pacpll->status_append (msg);
+        }
 }
 void rpspmc_hwi_dev::on_connect_actions(){
         status_append ("RedPitaya SPM Control Stream -- initializing.\n ");
@@ -234,7 +249,7 @@ gpointer ProbeDataReadFunction (void *ptr_sr, int dspdev);
 int rpspmc_hwi_dev::GVP_expect_header(double *pv, int &index_all){
         int ret = -100;
         do {
-                if (GVP_stream_buffer_AB >= 0){
+                if (GVP_stream_buffer_AB >= 0){ // make sure stream actually started!
                         ret = read_GVP_data_block_to_position_vector (GVP_stream_buffer_offset, true); // NEED FULL HEADER
 
                         if (ret == -1){ // GOT FULL HEADER
@@ -250,15 +265,34 @@ int rpspmc_hwi_dev::GVP_expect_header(double *pv, int &index_all){
                                 pv[PROBEDATA_ARRAY_INDEX] = (double)index_all++;
                                 pv[PROBEDATA_ARRAY_PHI]   = (double)GVP_vp_header_current.index; // testing, point index in section
                                 pv[PROBEDATA_ARRAY_SEC]   = (double)GVP_vp_header_current.section;
-                                pv[PROBEDATA_ARRAY_TIME]  = GVP_vp_header_current.dataexpanded[14]; // time in ms
+                                // header ref
                                 pv[PROBEDATA_ARRAY_XS]    = GVP_vp_header_current.dataexpanded[0]; // Xs in Volts
                                 pv[PROBEDATA_ARRAY_YS]    = GVP_vp_header_current.dataexpanded[1]; // Ys in Volts
                                 pv[PROBEDATA_ARRAY_ZS]    = GVP_vp_header_current.dataexpanded[2]; // Zs in Volts
-                                pv[PROBEDATA_ARRAY_U ]    = GVP_vp_header_current.dataexpanded[3]; // Bias in Volts
+                                pv[PROBEDATA_ARRAY_U]     = GVP_vp_header_current.dataexpanded[3]; // Bias in Volts
+                                // data
+                                pv[PROBEDATA_ARRAY_S1]    = GVP_vp_header_current.dataexpanded[0]; // Xs in Volts
+                                pv[PROBEDATA_ARRAY_S2]    = GVP_vp_header_current.dataexpanded[1]; // Ys in Volts
+                                pv[PROBEDATA_ARRAY_S3]    = GVP_vp_header_current.dataexpanded[2]; // Zs in Volts
+                                pv[PROBEDATA_ARRAY_S4]    = GVP_vp_header_current.dataexpanded[3]; // Bias in Volts
+                                pv[PROBEDATA_ARRAY_S5]    = GVP_vp_header_current.dataexpanded[4]; // IN1
+                                pv[PROBEDATA_ARRAY_S6]    = GVP_vp_header_current.dataexpanded[5]; // IN2
+                                pv[PROBEDATA_ARRAY_S7]    = GVP_vp_header_current.dataexpanded[6]; // IN3 **
+                                pv[PROBEDATA_ARRAY_S8]    = GVP_vp_header_current.dataexpanded[7]; // IN4 **
+                                pv[PROBEDATA_ARRAY_S9]    = GVP_vp_header_current.dataexpanded[8]; // DFREQ
+                                pv[PROBEDATA_ARRAY_S10]   = GVP_vp_header_current.dataexpanded[9]; // EXEC
+                                pv[PROBEDATA_ARRAY_S11]   = GVP_vp_header_current.dataexpanded[10]; // PHASE
+                                pv[PROBEDATA_ARRAY_S12]   = GVP_vp_header_current.dataexpanded[11]; // AMPL
+                                pv[PROBEDATA_ARRAY_S13]   = GVP_vp_header_current.dataexpanded[12]; // LCKInA
+                                pv[PROBEDATA_ARRAY_S14]   = GVP_vp_header_current.dataexpanded[13]; // dFreqCtrl
+                                pv[PROBEDATA_ARRAY_TIME]  = GVP_vp_header_current.dataexpanded[14]; // time in ms
                         
                                 g_message ("PVh sec[%g] i=%g t=%g ms U=%g V",
                                            pv[PROBEDATA_ARRAY_SEC],pv[PROBEDATA_ARRAY_INDEX],
                                            pv[PROBEDATA_ARRAY_TIME],pv[PROBEDATA_ARRAY_U ]);
+
+                                g_message ("Got Header.");
+                                
                                 return ret;
                         
                         } else {
@@ -267,8 +301,8 @@ int rpspmc_hwi_dev::GVP_expect_header(double *pv, int &index_all){
                                         return 0;
                                 }
                         
-                                if (ret < -90){
-                                        g_message ("*** GVP: STREAM ERROR, NO HEADER WHEN EXPECTED -- aborting. ***");
+                                if (ret > -99 && ret < -90){
+                                        g_message ("*** GVP: DATA STREAM ERROR, NO VALID HEDAER AS EXPECTED -- aborting. EE ret = %d ***", ret);
                                         return 0;
                                 }
                         
@@ -299,32 +333,55 @@ int rpspmc_hwi_dev::GVP_expect_point(double *pv, int &index_all){
                 if (ret == GVP_vp_header_current.number_channels){
                         GVP_stream_buffer_offset += 1 + GVP_vp_header_current.number_channels; // skip forward on success by read number of entries
 
-                        //g_message ("VP [%04d] of %d\n", GVP_vp_header_current.i, GVP_vp_header_current.n);
+                        g_message ("GVP point [%04d], (N#ch): ret=%d\n", GVP_vp_header_current.i, ret);
 
-                        // add vector and data to expanded data array representation
+                        // copy vector data to expanded data array representation -- only active srcs will be updated between headers
                         pv[PROBEDATA_ARRAY_INDEX] = (double)index_all++;
-                        //RPSPMC_ControlClass->add_probedata (GVP_vp_header_current.dataexpanded, pv, false, true); //(GVP_vp_header_current.i < (GVP_vp_header_current.n-1)) ? true:false);
-
+                        /* (***) obsolete/skipping as direct lookup
+                        pv[PROBEDATA_ARRAY_S1]    = GVP_vp_header_current.dataexpanded[0]; // Xs in Volts
+                        pv[PROBEDATA_ARRAY_S2]    = GVP_vp_header_current.dataexpanded[1]; // Ys in Volts
+                        pv[PROBEDATA_ARRAY_S3]    = GVP_vp_header_current.dataexpanded[2]; // Zs in Volts
+                        pv[PROBEDATA_ARRAY_S4]    = GVP_vp_header_current.dataexpanded[3]; // Bias in Volts
+                        pv[PROBEDATA_ARRAY_S5]    = GVP_vp_header_current.dataexpanded[4]; // IN1
+                        pv[PROBEDATA_ARRAY_S6]    = GVP_vp_header_current.dataexpanded[5]; // IN2
+                        pv[PROBEDATA_ARRAY_S7]    = GVP_vp_header_current.dataexpanded[6]; // IN3 **
+                        pv[PROBEDATA_ARRAY_S8]    = GVP_vp_header_current.dataexpanded[7]; // IN4 **
+                        pv[PROBEDATA_ARRAY_S9]    = GVP_vp_header_current.dataexpanded[8]; // DFREQ
+                        pv[PROBEDATA_ARRAY_S10]   = GVP_vp_header_current.dataexpanded[9]; // EXEC
+                        pv[PROBEDATA_ARRAY_S11]   = GVP_vp_header_current.dataexpanded[10]; // PHASE
+                        pv[PROBEDATA_ARRAY_S12]   = GVP_vp_header_current.dataexpanded[11]; // AMPL
+                        pv[PROBEDATA_ARRAY_S13]   = GVP_vp_header_current.dataexpanded[12]; // LCKInA
+                        pv[PROBEDATA_ARRAY_S14]   = GVP_vp_header_current.dataexpanded[13]; // dFreqCtrl
+                        pv[PROBEDATA_ARRAY_TIME]  = GVP_vp_header_current.dataexpanded[14]; // time in ms
+                        */
+                        if (GVP_vp_header_current.i == 0){
+                                g_message ("*** GVP: section complete ***");
+                                return 0; // OK done.
+                        }
+                        return  GVP_vp_header_current.i;
                 } else {
                         if (GVP_vp_header_current.endmark){ // finished?
                                 g_message ("*** GVP: finished -- end mark found ***");
                                 return 0;
                         }
 
-                        if (ret < -90){
-                                g_message ("*** GVP: DATA STREAM ERROR -- aborting. ***");
-                                return 0;
-                        }
 
                         if (GVP_stream_status < 0){
                                 g_message ("*** GVP: data stream ended -- finished ***");
                                 return 0;
                         }
 
-                        g_message ("Scan VP: waiting for data ** section: %d gvpi[%04d] Pos:{0x%04x} Offset:0x%04x", GVP_vp_header_current.section, GVP_vp_header_current.i, (int)spmc_parameters.gvp_data_position, GVP_stream_buffer_offset);
+                        if (ret > -99 && ret < -90){
+                                g_message ("*** GVP: DATA STREAM ERROR -- aborting. EE ret = %d ***", ret);
+                                return ret;
+                        }
+
+                        g_message ("Scan VP [EEOKwait, ret=%d]: waiting for data ** section: %d gvpi[%04d] Pos:{0x%04x} Offset:0x%04x", ret, GVP_vp_header_current.section, GVP_vp_header_current.i, (int)spmc_parameters.gvp_data_position, GVP_stream_buffer_offset);
                         usleep(100000);
                 }
         } while (ret < 0);
+        
+        return GVP_vp_header_current.i;
 }
 
 
@@ -335,17 +392,26 @@ gpointer ScanDataReadThread (void *ptr_hwi){
         rpspmc_hwi_dev *hwi = (rpspmc_hwi_dev*)ptr_hwi;
         int nx,ny, x0,y0;
         int ret=0;
-        int lut[4][16];
+        int lut[4][NUM_PV_DATA_SIGNALS];
 
-        // setup lookup
+        for (int i=0; i<NUM_PV_HEADER_SIGNALS; ++i) pv[i]=0.;
+        
+        for (int ch=0; ch<4; ++ch)
+                for (int i=0; i<NUM_PV_DATA_SIGNALS; ++i)
+                        lut[ch][i]=0;
+
+        // setup direct lookup from src ch and dir  to  GVP_vp_header_current.dataexpanded
         for (int dir = 0; dir < 4; ++dir)
-                for (int ch=0; ch < hwi->nsrcs_dir[dir]; ch++){
-                        lut[dir][ch] = 0;
+                for (int ch=0; ch < hwi->nsrcs_dir[dir]; ch++)
                         for (int i=0; source_signals[i].mask; ++i)
-                                if (hwi->srcs_dir[dir] & source_signals[i].mask)
-                                        lut[dir][ch] = source_signals[i].garr_index;
-                }
-                        
+                                if (hwi->srcs_dir[dir] & source_signals[i].mask){
+                                        if (source_signals[i].garr_index == PROBEDATA_ARRAY_TIME)
+                                                lut[dir][ch] = 14;
+                                        else
+                                                lut[dir][ch] = source_signals[i].garr_index - PROBEDATA_ARRAY_S1; // as ..._S1 .. _S14 are exactly incremental => 0..13 ; see (***) above
+                                        g_message ("GVP Data Expanded Lookup table signal %02d: lut[%d][%02d] = %d", i,dir,ch,lut[dir][ch]);
+                                }
+        
         g_message("FifoReadThread Start");
 
         if (hwi->Mob_dir[hwi->srcs_dir[0] ? 0:1]){
@@ -362,87 +428,111 @@ gpointer ScanDataReadThread (void *ptr_hwi){
         // update:
         // scanpixelrate
 
-        hwi->GVP_vp_init ();
+        g_message ("last vector confirmed: %d, need %d", hwi->getVPCconfirmed (), hwi->last_vector_index);
 
+        while (hwi->getVPCconfirmed () < hwi->last_vector_index){
+                //g_message ("Waiting for GVP been written and confirmed. [Vector %d]", hwi->getVPCconfirmed ());
+                usleep(20000);
+        }
+        g_message ("GVP been written and confirmed for vector #%d. Executing GVP now.", hwi->getVPCconfirmed ());
+
+
+        // start GVP
+        hwi->GVP_vp_init ();
+        hwi->GVP_execute_vector_program(); // non blocking
+        
+        g_message ("Expect header for move to initial scan point...");
         // wait for and fetch header for move to scan start point
         hwi->GVP_expect_header (pv, index_all);
+        
         // fetch points but discard
-        for (; hwi->GVP_vp_header_current.i < hwi->GVP_vp_header_current.n; ){
+        g_message ("Fetch dummy points of move... hdr[i=%d, n=%d]",  hwi->GVP_vp_header_current.i, hwi->GVP_vp_header_current.n);
+
+        for (ret=-1; ret; ){
                 ret = hwi->GVP_expect_point (pv, index_all);
+                if (ret < 0){
+                        g_message("STREAM ERROR, FifoReadThread Aborting.");
+                        return NULL;
+                }
         }
+
+        g_message ("Completed section: moved to 1st scan point");
         
-	if (hwi->RPSPMC_data_y_count == 0){ // top-down
-                g_message("FifoReadThread Scanning Top-Down... %d", hwi->ScanningFlg);
-		for (int yi=y0; yi < y0+ny; ++yi){ // for all lines
-                        // for (int dir = 0; dir < 4 && hwi->ScanningFlg; ++dir){ // check for every pass -> <- 2> <2
-                        for (int dir = 0; dir < 2 && hwi->ScanningFlg; ++dir){ // check for every pass -> <- for first test only
-                                // wait for and fetch header for first scan line
-                                hwi->GVP_expect_header (pv, index_all);
+	// hwi->RPSPMC_data_y_count == 0 for  top-down star tat line 0, else start line (last) bottom up
+        g_message("FifoReadThread Scanning %s: %d", hwi->RPSPMC_data_y_count == 0 ? "Top Down" : "Bottom Up", hwi->ScanningFlg);
+
+        int ydir = hwi->RPSPMC_data_y_count == 0 ? 1:-1;
         
-                                //g_message("FifoReadThread ny = %d, dir = %d, nsrcs = %d, srcs = 0x%04X", yi, dir, hwi->nsrcs_dir[dir], hwi->srcs_dir[dir]);
-                                if (hwi->nsrcs_dir[dir] == 0){ // direction pass active?
-                                        // fetch points but discard
-                                        for (; hwi->GVP_vp_header_current.i < hwi->GVP_vp_header_current.n; ){
-                                                ret = hwi->GVP_expect_point (pv, index_all);
+        for (int yi=hwi->RPSPMC_data_y_count == 0 ?  y0 : y0+ny-1;     // ? top down : bottom up
+             hwi->RPSPMC_data_y_count == 0 ? yi < y0+ny : yi-y0 >= 0;
+             yi += ydir){ // for all lines and directional passes [->, <-, [-2>, <2-]]
+                
+                g_message ("scan line: #%d", yi);
+                // for (int dir = 0; dir < 4 && hwi->ScanningFlg; ++dir){ // check for every pass -> <- 2> <2
+                for (int dir = 0; dir < 2 && hwi->ScanningFlg; ++dir){ // check for every pass -> <- for first test only
+                        // wait for and fetch header for first scan line
+                        g_message ("scan line %d, dir=%d -- expect header.", yi, dir);
+                        hwi->GVP_expect_header (pv, index_all); // this get includes the first data point
+        
+                        g_message ("scan line %d, dir=%d -- expecting points now...", yi, dir);
+                        //g_message("FifoReadThread ny = %d, dir = %d, nsrcs = %d, srcs = 0x%04X", yi, dir, hwi->nsrcs_dir[dir], hwi->srcs_dir[dir]);
+                        if (hwi->nsrcs_dir[dir] == 0){ // direction pass active?
+                                // fetch points but discard
+                                g_message ("discarding not selcted scan axis data...");
+                                for (ret=-1; ret; ){
+                                        ret = hwi->GVP_expect_point (pv, index_all);
+                                        if (ret < 0){
+                                                g_message("STREAM ERROR, FifoReadThread Aborting.");
+                                                return NULL;
                                         }
-                                        continue; // not selected?
-                                } else {
-                                        // sanity check
-                                        if (hwi->GVP_vp_header_current.n != nx)
-                                                g_warning ("GVP SCAN ERROR: NX != GVP.current.n: %d, %d", nx, hwi->GVP_vp_header_current.n);
-                                        for (int xi=x0; xi < x0+nx; ++xi) // all points per line
-                                                for (int ch=0; ch<hwi->nsrcs_dir[dir]; ++ch){
-                                                        hwi->RPSPMC_data_x_index = xi;
-                                                        ret = hwi->GVP_expect_point (pv, index_all);
-                                                        //g_print("%d",ch);
-                                                        hwi->Mob_dir[dir][ch]->PutDataPkt (pv[lut[dir][ch]], xi, yi);
-                                                }
+                                }
+                                continue; // not selected?
+                        } else {
+                                // sanity check
+                                if (hwi->GVP_vp_header_current.n != nx)
+                                        g_warning ("GVP SCAN ERROR: NX != GVP.current.n: %d, %d", nx, hwi->GVP_vp_header_current.n);
+                                int ret2;
+                                for (int xi=x0, ret2=ret=1; xi < x0+nx && ret; ++xi){ // all points per line
+                                        g_message ("Got point data for: xi=%d [x0=%d nx=%d] ret=%d", xi, x0, nx, ret);
+                                        if (ret < 0){
+                                                g_message("STREAM ERROR, FifoReadThread Aborting.");
+                                                return NULL;
+                                        }
+                                        hwi->RPSPMC_data_x_index = xi;
+                                        for (int ch=0; ch<hwi->nsrcs_dir[dir]; ++ch){
+                                                g_message("PUT DATA POINT dir[%d] ch[%d] xy[%d, %d]", dir,ch,xi,yi);
+                                                g_message("PUT DATA POINT dataexp[%d]", lut[dir][ch]);
+                                                g_message("PUT DATA POINT dataexp[%d] = %g V", lut[dir][ch], hwi->GVP_vp_header_current.dataexpanded [lut [dir][ch]]);
+                                                if (hwi->Mob_dir[dir][ch])
+                                                        hwi->Mob_dir[dir][ch]->PutDataPkt (hwi->GVP_vp_header_current.dataexpanded [lut [dir][ch]], xi, yi);
+                                                else 
+                                                        g_message("SCAN MOBJ[%d][%d] ERROR", dir,ch);
+                                        }
+                                        if ((ret=ret2)) // delay one
+                                                ret2 = hwi->GVP_expect_point (pv, index_all);
+                                }
                                 //g_print("\n");
-                                }
-                        }
-                        // wait for and fetch header for move to next scan line start point
-                        hwi->GVP_expect_header (pv, index_all);
-                        // fetch points but discard
-                        for (; hwi->GVP_vp_header_current.i < hwi->GVP_vp_header_current.n; ){
-                                ret = hwi->GVP_expect_point (pv, index_all);
-                        }
-
-                        hwi->RPSPMC_data_y_count = yi-y0; // completed
-                        hwi->RPSPMC_data_y_index = yi; // completed
-                }
-	}else{ // bottom-up
-		for (int yi=y0+ny-1; yi-y0 >= 0; --yi){
-                        for (int dir = 0; dir < 4 && hwi->ScanningFlg; ++dir){ // check for every pass -> <- 2> <2
-                                // wait for and fetch header for first scan line
-                                hwi->GVP_expect_header (pv, index_all);
-
-                                if (!hwi->nsrcs_dir[dir]){ // direction pass active?
-                                        // fetch points but discard
-                                        for (; hwi->GVP_vp_header_current.i < hwi->GVP_vp_header_current.n; ){
-                                                ret = hwi->GVP_expect_point (pv, index_all);
-                                        }
-                                        continue; // not selected?
-                                } else {
-                                        // sanity check
-                                        if (hwi->GVP_vp_header_current.n != nx)
-                                                g_warning ("GVP SCAN ERROR: NX != GVP.current.n: %d, %d", nx, hwi->GVP_vp_header_current.n);
-                                        for (int xi=x0; xi < x0+nx; ++xi)
-                                                for (int ch=0; ch<hwi->nsrcs_dir[dir]; ++ch){
-                                                        hwi->RPSPMC_data_x_index = xi;
-                                                        ret = hwi->GVP_expect_point (pv, index_all);
-                                                        hwi->Mob_dir[dir][ch]->PutDataPkt (pv[lut[dir][ch]], xi, yi);
-                                                }
-                                }
-                        // wait for and fetch header for move to next scan line start point
-                        hwi->GVP_expect_header (pv, index_all);
-                        // fetch points but discard
-                        for (; hwi->GVP_vp_header_current.i < hwi->GVP_vp_header_current.n; ){
-                                ret = hwi->GVP_expect_point (pv, index_all);
-                        }
-                        hwi->RPSPMC_data_y_count = yi-y0; // completed
-                        hwi->RPSPMC_data_y_index = yi;
                         }
                 }
+                g_message ("Completed scan line, move to next y...");
+                // wait for and fetch header for move to next scan line start point
+                hwi->GVP_expect_header (pv, index_all);
+                // fetch points but discard
+                for (ret=-1; ret; ){
+                        ret = hwi->GVP_expect_point (pv, index_all);
+                        if (ret < 0){
+                                g_message("STREAM ERROR, FifoReadThread Aborting.");
+                                return NULL;
+                        }
+                }
+
+                if (hwi->GVP_vp_header_current.endmark){ // checking -- finished?
+                        g_message("GVP STREAM END DETECTED, FifoReadThread Aborting.");
+                        return NULL;
+                }
+                
+                hwi->RPSPMC_data_y_count = yi-y0; // completed
+                hwi->RPSPMC_data_y_index = yi; // completed
         }
 
         g_message("FifoReadThread Completed");
@@ -477,6 +567,8 @@ gpointer ProbeDataReadThread (void *ptr_hwi){
 	hwi->probe_fifo_thread_active++;
 	RPSPMC_ControlClass->probe_ready = FALSE;
 
+        hwi->ReadProbeData (0, FR_INIT); // init
+        
         // normal mode, wait for finish (single shot probe exec by user)
 	if (RPSPMC_ControlClass->probe_trigger_single_shot)
 		 finish_flag=TRUE;
@@ -564,9 +656,15 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
                 g_message ("VP: init");
                 for (int i=0; i<NUM_PV_HEADER_SIGNALS; ++i) pv[i]=0.;
 
+                g_message ("last vector confirmed: %d, need %d", getVPCconfirmed (), last_vector_index);
+                // wait for vectors been confirmed
+                while (getVPCconfirmed () < last_vector_index){
+                        usleep(20000);
+                }
+                g_message ("GVP been written and confirmed for vector #%d. Executing GVP now.", getVPCconfirmed ());
                 GVP_vp_init (); // vectors should be written by now!
+                GVP_execute_vector_program(); // non blocking
 
-                GVP_vp_header_current.endmark = 0;
                 index_all = 0;
 		point_index = 0;
                 //                index_all = 0;
@@ -757,36 +855,19 @@ int rpspmc_hwi_dev::start_data_read (int y_start,
                 } else return 0; // error, no reference
                 
                 // write scan program
+
+                resetVPCconfirmed ();
                 RPSPMC_ControlClass->write_spm_scan_vector_program (main_get_gapp()->xsm->data.s.rx, main_get_gapp()->xsm->data.s.ry,
                                                                     main_get_gapp()->xsm->data.s.nx, main_get_gapp()->xsm->data.s.ny,
                                                                     slew, subscan, srcs_dir);
                 
-                // start GVP
-                GVP_execute_vector_program(); // non blocking
 
-                
-#if 0 // full version used by MK2/3
-		fifo_data_num_srcs[0] = num_srcs0; // number sources -> (forward)
-		fifo_data_num_srcs[1] = num_srcs1; // number sources <- (return)
-		fifo_data_num_srcs[2] = num_srcs2; // numbre sources 2nd->  (2nd pass forward if used)
-		fifo_data_num_srcs[3] = num_srcs3; // number sources <-2nd  (2nd pass return if used)
-		fifo_data_Mobp[0] = Mob0; // 2d memory object list ->
-		fifo_data_Mobp[1] = Mob1; // ...
-		fifo_data_Mobp[2] = Mob2;
-		fifo_data_Mobp[3] = Mob3;
-		fifo_data_y_index = y_start; // if > 0, scan dir is "bottom-up"
-		fifo_read_thread = g_thread_new ("FifoReadThread", FifoReadThread, this);
+                g_message ("Scan GVP written and send. Preparing for start.");
 
-                // do also raster probing setup?
-		if ((RPSPMC_ControlClass->Source & 0xffff) && RPSPMC_ControlClass->probe_trigger_raster_points > 0){
-			RPSPMC_ControlClass->probe_trigger_single_shot = 0;
-			ReadProbeFifo (thread_dsp, FR_FIFO_FORCE_RESET); // reset FIFO
-			ReadProbeFifo (thread_dsp, FR_INIT); // init
-		}
-#endif
-                // scan simulator
                 ScanningFlg=1; // can be used to abort data read thread. (Scan Stop forced by user)
                 RPSPMC_data_y_count = y_start; // if > 0, scan dir is "bottom-up"
+		main_get_gapp()->monitorcontrol->LogEvent ("Starting Data read thread.","*");
+                
                 data_read_thread = g_thread_new ("FifoReadThread", ScanDataReadThread, this);
                 
 	}
@@ -794,7 +875,6 @@ int rpspmc_hwi_dev::start_data_read (int y_start,
                 g_message("... for probe.");
 		//if (RPSPMC_ControlClass->vis_Source & 0xffff)
                 RPSPMC_ControlClass->probe_trigger_single_shot = 1;
-                ReadProbeData (0, FR_INIT); // init
                 probe_data_read_thread = g_thread_new ("ProbeFifoReadThread", ProbeDataReadThread, this);
 	}
       
@@ -1171,6 +1251,7 @@ void rpspmc_hwi_dev::GVP_execute_vector_program(){
 
         // reset GVP stream buffer read count
         GVP_stream_buffer_AB = -2;
+        GVP_vp_header_current.endmark = 0;
 
         rpspmc_pacpll->write_parameter ("SPMC_GVP_PAUSE", false);
         rpspmc_pacpll->write_parameter ("SPMC_GVP_PROGRAM", false);
@@ -1198,13 +1279,11 @@ void rpspmc_hwi_dev::GVP_vp_init (){
         GVP_vp_header_current.scan_xyz[i_Y] = 0;
         GVP_vp_header_current.scan_xyz[i_Z] = 0;
         GVP_vp_header_current.bias    = 0;
-        GVP_vp_header_current.section = 0;
-
-        for (int i=0; i<16; ++i) GVP_vp_data_set[i] = 0;
         GVP_vp_header_current.section = -1;
-       
+
         RPSPMC_GVP_section_count = 0;
         RPSPMC_GVP_n = 0;
+        
         GVP_vp_header_current.section = -1; // still invalid
         GVP_stream_buffer_offset = 0x100; // =0x00 **** TESTING BRAM ISSUE -- FIX ME !!! *****
         GVP_stream_status=0;

@@ -313,7 +313,7 @@ vector = {32'd000032,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  3
         make_UZXYramp_vector (0., 0., // GVP_du[k], GVP_dz[k],
                               xi, yi, 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
                               100, 0, 0, ti, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
-                              0, VP_INITIAL_SET_VEC);
+                              srcs[0], VP_INITIAL_SET_VEC);
         write_program_vector (vector_index++);
         make_UZXYramp_vector (0., 0., // GVP_du[k], GVP_dz[k],
                               dx, 0, 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
@@ -359,6 +359,7 @@ void RPSPMC_Control::write_spm_vector_program (int start, pv_mode pvm){
 	if (!start) // reset 
 		probe_trigger_single_shot = 0;
 
+        rpspmc_hwi->resetVPCconfirmed ();
 
         g_message ("Srcs: %08x vSrcs: %08x", Source, vis_Source);
 
@@ -410,35 +411,20 @@ void RPSPMC_Control::write_spm_vector_program (int start, pv_mode pvm){
                         gtk_entry_buffer_set_text (GTK_ENTRY_BUFFER (gtk_entry_get_buffer (GTK_ENTRY(GVP_status))), info, -1);
 		break;
 	}
-
+        
 	if (start){
                 g_message ("Executing Vector Probe Now! Mode: %s", vp_exec_mode_name);
 		main_get_gapp()->monitorcontrol->LogEvent ("VectorProbe Execute", vp_exec_mode_name);
 		main_get_gapp()->monitorcontrol->LogEvent ("VectorProbe", info, 2);
+
                 // may want to make sure LockIn settings are up to date...
-                rpspmc_hwi->GVP_execute_vector_program(); // non blocking
+                rpspmc_hwi->start_data_read (0, 0,0,0,0, NULL,NULL,NULL,NULL); // init data streaming -- non blocking thread is fired up
         }
 
         g_free (info);
 
 	// --------------------------------------------------
 
-#if 0
-	if (remote_set_post_start){
-                gchar *line3[] = { g_strdup ("set"), 
-                                   g_strdup (gtk_entry_buffer_get_text (GTK_ENTRY_BUFFER (gtk_entry_get_buffer (GTK_ENTRY(PL_remote_set_target))))), 
-                                   g_strdup_printf ("%.4f", PL_remote_set_value), 
-                                   NULL
-                };
-                g_slist_foreach(main_get_gapp()->RemoteEntryList, (GFunc) via_remote_list_Check_ec, (gpointer)line3);
-                for (int k=0; line3[k]; ++k) g_free (line3[k]);
-	}
-
-	// now write probe structure, this may starts probe if "start" is true
-	rpspmc_hwi->write_dsp_lockin_probe_final (AC_amp, AC_frq, AC_phaseA, AC_phaseB, AC_lockin_avg_cycels, FZ_limiter_val, 
-							  noise_amp,
-							  start);
-#endif
 
 	// Update EC's
 	update_GUI();
@@ -452,7 +438,6 @@ void RPSPMC_Control::write_program_vector (int index){
         if (!rpspmc_hwi) return; 
 
         rpspmc_hwi->GVP_write_program_vector (index, &program_vector);
-
 
 	// update GXSM's internal copy of vector list
 	program_vector_list[index].n = program_vector.n;
@@ -468,6 +453,8 @@ void RPSPMC_Control::write_program_vector (int index){
 	program_vector_list[index].f_dz = program_vector.f_dz;
 	program_vector_list[index].f_da = program_vector.f_da;
 	program_vector_list[index].f_db = program_vector.f_db;
+
+        rpspmc_hwi->last_vector_index = index;
 
 	{ 
 		gchar *pvi = g_strdup_printf ("ProbeVector[pc%02d]", index);

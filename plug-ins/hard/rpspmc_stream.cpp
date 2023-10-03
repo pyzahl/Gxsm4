@@ -130,7 +130,7 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
                 else
                         self->status_append ("Empty text message received.");
 		self->status_append ("\n");
-                g_message ("WS Message: %s", (gchar*)contents);
+                //g_message ("WS Message: %s", (gchar*)contents);
 
                 if (g_strrstr (contents, "RESET")){
                         self->status_append ("WEBSOCKET_STREAM: RESET (GVP Init)\n");
@@ -149,6 +149,12 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
                         p=g_strrstr (contents, "Count:{");
                         if (p)
                                 count = atoi (p+7);
+                } else if (g_strrstr (contents, "vector = {")){
+                        p = g_strrstr (contents, "// Vector #");
+                        if (p){
+                                self->last_vector_pc_confirmed = atoi (p+11);
+                                g_message (p);
+                        }
                 }
                
 	} else if (type == SOUP_WEBSOCKET_DATA_BINARY) {

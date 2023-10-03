@@ -112,7 +112,7 @@ RP data streaming
     input wire [32-1:0] chBs, // PHASE   0x0400  via PACPLL FIR
     input wire [32-1:0] chCs, // AMPL    0x0800  via PACPLL FIR
     input wire [32-1:0] chDs, // LockInA 0x1000  LockIn X (ToDo)
-    input wire [32-1:0] chEs, // LockInB 0x2000  LocKin R (ToDo)
+    input wire [32-1:0] chEs, // LockInB 0x2000  dFreqCtrl (ToDo)
     // from below
     // gvp_time[32-1: 0]      // TIME  0x4000 // lower 32
     // gvp_time[48-1:32]      // TIME  0x8000 // upper 32 (16 lower only)
@@ -2589,7 +2589,6 @@ int RPSPMC_Control::Probing_exec_IV_callback( GtkWidget *widget, RPSPMC_Control 
 
         // dspc->probe_trigger_single_shot = 1;
 	// dspc->write_spm_vector_program (1, PV_MODE_IV); // Exec STS probing here
-	// sranger_common_hwi->start_fifo_read (0, 0,0,0,0, NULL,NULL,NULL,NULL);
 
 	return 0;
 }
@@ -2695,12 +2694,10 @@ int RPSPMC_Control::Probing_exec_GVP_callback( GtkWidget *widget, RPSPMC_Control
 
 	dspc->current_auto_flags = dspc->GVP_auto_flags;
 
-        // ** TEMPLATE DUMMY **
         // write and exec GVP code on controller and initiate data streaming
         
 	// dspc->probe_trigger_single_shot = 1;
 	dspc->write_spm_vector_program (1, PV_MODE_GVP); // Write and Exec GVP program
-	rpspmc_hwi->start_data_read (0, 0,0,0,0, NULL,NULL,NULL,NULL); // init data streaming -- non blocking thread is fired up
 
 	return 0;
 }

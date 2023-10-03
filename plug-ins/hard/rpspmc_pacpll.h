@@ -810,7 +810,7 @@ public:
 
         static void spmc_stream_connect_cb (GtkWidget *widget, rpspmc_hwi_dev *self);
         virtual const gchar *get_rp_address ();
-        virtual void status_append (const gchar *msg);
+        virtual void status_append (const gchar *msg, bool schedule_from_thread=false);
         virtual void on_connect_actions();
         virtual int on_new_data (gconstpointer contents, gsize len, int position, int new_count=1, bool last=false);
         
@@ -914,20 +914,22 @@ public:
                 if (offset < 0 || offset > (EXPAND_MULTIPLES*BRAM_SIZE-20)){
                         gchar *tmp = g_strdup_printf ("read_GVP_data_block_to_position_vector: Reading offset %08x out of range ERROR.",
                                                       offset);
-                        status_append (tmp);
+                        status_append (tmp, true);
                         g_warning (tmp);
                         g_free (tmp);
                         return -999;
                 }
                 
                 if (offset >= GVP_stream_buffer_position){ // Buffer is huge now all pages concat
+#if 0
                         gchar *tmp = g_strdup_printf ("read_GVP_data_block_to_position_vector: Reading offset %08x is beyond stream write position %08x. Awaiting data.",
                                                       offset, GVP_stream_buffer_position);
-                        status_append (tmp);
+                        status_append (tmp, true);
                         if (offset > 16)
                                 status_append_int32 (&GVP_stream_buffer[offset-16], 3*16, true, offset-16, true);
                         g_warning (tmp);
                         g_free (tmp);
+#endif
                         return -99;
                 }
                 
@@ -956,7 +958,7 @@ public:
                                                                               offset, GVP_stream_buffer_position,
                                                                               GVP_vp_header_current.srcs_mask_vector, GVP_vp_header_current.srcs,
                                                                               GVP_vp_header_current.ilast, GVP_vp_header_current.i);
-                                                status_append (tmp);
+                                                status_append (tmp, true);
                                                 if (offset > 32)
                                                         status_append_int32 (&GVP_stream_buffer[offset-32], 5*16, true, offset-32, true);
                                                 g_warning (tmp);
@@ -975,7 +977,7 @@ public:
                                                       offset, GVP_stream_buffer_position,
                                                       GVP_vp_header_current.srcs_mask_vector, GVP_vp_header_current.srcs,
                                                       GVP_vp_header_current.ilast, GVP_vp_header_current.i, GVP_vp_header_current.index);
-                        status_append (tmp);
+                        status_append (tmp, true);
                         if (offset > 32)
                                 status_append_int32 (&GVP_stream_buffer[offset-32], 5*16, true, offset-32, true);
                         g_warning (tmp);
@@ -1007,7 +1009,7 @@ public:
                 if (expect_full_header && GVP_vp_header_current.srcs != 0xffff){
                         gchar *tmp = g_strdup_printf ("ERROR: read_GVP_data_block_to_position_vector: Reading offset %08x, write position %08x. Expecting full header but found srcs=%04x, i=%d",
                                                       offset, GVP_stream_buffer_position,  GVP_vp_header_current.srcs, GVP_vp_header_current.i);
-                        status_append (tmp);
+                        status_append (tmp, true);
                         if (offset>32)
                                 status_append_int32 (&GVP_stream_buffer[offset-32], 5*16, true, offset-32, true);
                         g_warning (tmp);
@@ -1044,8 +1046,9 @@ public:
                                 return -1; // true for full position header update
                         return ch_index;
                 }  else {
-                        g_message ("[%08x] *** end of new data at ch=%d ** Must wait for next page and retry.", offset, ch_index);
-                        return ch_index; // number channels read until position
+                        g_message ("[%08x] *** end of new data at ch=%d ** Must wait for next page/update send and retry.", offset, ch_index);
+                        return -99;
+                        // return ch_index; // number channels read until position
                 }
         };
        
@@ -1074,14 +1077,14 @@ private:
         int GVP_stream_status;
         
 public:
-        
+        gint last_vector_index;
+ 
         //SPM_emulator *spm_emu; // DSP emulator for dummy data generation and minimal SPM behavior
         void GVP_execute_vector_program(); // non blocking
         void GVP_vp_init ();
         void GVP_start_data_read(); // non blocking
         
         PROBE_HEADER_POSITIONVECTOR GVP_vp_header_current;
-        double GVP_vp_data_set[16]; // 16 channels max to data stream
 
 	int GVP_read_program_vector(int i, PROBE_VECTOR_GENERIC *v){
 		if (i >= MAX_PROGRAM_VECTORS || i < 0)
