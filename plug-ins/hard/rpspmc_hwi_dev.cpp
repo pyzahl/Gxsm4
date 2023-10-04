@@ -303,14 +303,17 @@ int rpspmc_hwi_dev::GVP_expect_header(double *pv, int &index_all){
                         
                                 if (ret > -99 && ret < -90){
                                         g_message ("*** GVP: DATA STREAM ERROR, NO VALID HEDAER AS EXPECTED -- aborting. EE ret = %d ***", ret);
-                                        return 0;
+                                        GVP_abort_vector_program ();
+                                        RPSPMC_ControlClass->probe_ready = TRUE;
+                                        return ret;
                                 }
                         
                                 if (GVP_stream_status < 0){
                                         g_message ("*** GVP: stream ended -- finished ***");
                                         return 0;
                                 }
-                        
+
+                                // -99 is only OK error, "wait, repeat, need more data"
                                 g_message ("Scan VP: waiting for section header -- incomplete **");
                                 usleep(100000);
                         }
@@ -323,6 +326,15 @@ int rpspmc_hwi_dev::GVP_expect_header(double *pv, int &index_all){
                         return 0;
                 }
         } while (ret < -1 && ScanningFlg);
+
+        if (!ScanningFlg){
+                g_message("User Abort.");
+                GVP_abort_vector_program ();
+                RPSPMC_ControlClass->probe_ready = TRUE;
+                return -9999;
+        }
+
+        return 0;
 }
 
 int rpspmc_hwi_dev::GVP_expect_point(double *pv, int &index_all){
@@ -373,14 +385,26 @@ int rpspmc_hwi_dev::GVP_expect_point(double *pv, int &index_all){
 
                         if (ret > -99 && ret < -90){
                                 g_message ("*** GVP: DATA STREAM ERROR -- aborting. EE ret = %d ***", ret);
+                                GVP_abort_vector_program ();
+                                RPSPMC_ControlClass->probe_ready = TRUE;
                                 return ret;
                         }
 
-                        g_message ("Scan VP [EEOKwait, ret=%d]: waiting for data ** section: %d gvpi[%04d] Pos:{0x%04x} Offset:0x%04x", ret, GVP_vp_header_current.section, GVP_vp_header_current.i, (int)spmc_parameters.gvp_data_position, GVP_stream_buffer_offset);
+                        // -99 is only OK error, "wait, repeat, need more data"
+
+                        //g_message ("Scan VP [EEOKwait, ret=%d]: waiting for data ** section: %d gvpi[%04d] Pos:{0x%04x} Offset:0x%04x",
+                        //           ret, GVP_vp_header_current.section, GVP_vp_header_current.i, (int)spmc_parameters.gvp_data_position, GVP_stream_buffer_offset);
                         usleep(100000);
                 }
         } while (ret < 0 && ScanningFlg);
         
+        if (!ScanningFlg){
+                g_message("User Abort.");
+                GVP_abort_vector_program ();
+                RPSPMC_ControlClass->probe_ready = TRUE;
+                return -9999;
+        }
+
         return GVP_vp_header_current.i;
 }
 
@@ -448,7 +472,7 @@ gpointer ScanDataReadThread (void *ptr_hwi){
         
         g_message ("Expect header for move to initial scan point...");
         // wait for and fetch header for move to scan start point
-        hwi->GVP_expect_header (pv, index_all);
+        if (hwi->GVP_expect_header (pv, index_all) != -1) return NULL;
 
         g_message ("Initial move hdr OK.");
         // fetch points but discard
@@ -456,14 +480,9 @@ gpointer ScanDataReadThread (void *ptr_hwi){
         g_message ("num points=%d", hwi->GVP_vp_header_current.n);
         g_message ("Fetch dummy points of move...");
 
-        for (ret=-1; ret; ){
+        for (ret=-1; ret && hwi->ScanningFlg; ){
                 ret = hwi->GVP_expect_point (pv, index_all);
-                if (ret < 0){
-                        g_message("STREAM ERROR, FifoReadThread Aborting.");
-                        hwi->GVP_abort_vector_program ();
-                        RPSPMC_ControlClass->probe_ready = TRUE;
-                        return NULL;
-                }
+                if (ret < 0) return NULL;
         }
 
         g_message ("Completed section: moved to 1st scan point");
@@ -482,21 +501,16 @@ gpointer ScanDataReadThread (void *ptr_hwi){
                 for (int dir = 0; dir < 2 && hwi->ScanningFlg; ++dir){ // check for every pass -> <- for first test only
                         // wait for and fetch header for first scan line
                         g_message ("scan line %d, dir=%d -- expect header.", yi, dir);
-                        hwi->GVP_expect_header (pv, index_all); // this get includes the first data point
-        
+                        if (hwi->GVP_expect_header (pv, index_all) != -1) return NULL;  // this get includes the first data point and full position
+                        
                         g_message ("scan line %d, dir=%d -- expecting points now...", yi, dir);
                         //g_message("FifoReadThread ny = %d, dir = %d, nsrcs = %d, srcs = 0x%04X", yi, dir, hwi->nsrcs_dir[dir], hwi->srcs_dir[dir]);
                         if (hwi->nsrcs_dir[dir] == 0){ // direction pass active?
                                 // fetch points but discard
                                 g_message ("discarding not selcted scan axis data...");
-                                for (ret=-1; ret; ){
+                                for (ret=-1; ret && hwi->ScanningFlg; ){
                                         ret = hwi->GVP_expect_point (pv, index_all);
-                                        if (ret < 0){
-                                                g_message("STREAM ERROR, FifoReadThread Aborting.");
-                                                hwi->GVP_abort_vector_program ();
-                                                RPSPMC_ControlClass->probe_ready = TRUE;
-                                                return NULL;
-                                        }
+                                        if (ret < 0) return NULL;
                                 }
                                 continue; // not selected?
                         } else {
@@ -504,7 +518,8 @@ gpointer ScanDataReadThread (void *ptr_hwi){
                                 if (hwi->GVP_vp_header_current.n != nx)
                                         g_warning ("GVP SCAN ERROR: NX != GVP.current.n: %d, %d", nx, hwi->GVP_vp_header_current.n);
                                 int ret2;
-                                for (int xi=x0, ret2=ret=1; xi < x0+nx && ret; ++xi){ // all points per line
+                                //for (int xi=x0, ret2=ret=1; xi < x0+nx && ret; ++xi){ // all points per line
+                                for (int xi=x0, ret2=ret=1; ret; ++xi){ // all points per line
                                         g_message ("Got point data [N-%d] for: xi=%d [x0=%d nx=%d]",  hwi->GVP_vp_header_current.i, xi, x0, nx);
                                         if (ret < 0){
                                                 g_message("STREAM ERROR, FifoReadThread Aborting.");
@@ -529,23 +544,26 @@ gpointer ScanDataReadThread (void *ptr_hwi){
                                                         g_message("SCAN MOBJ[%d][%d] ERROR", dir,ch);
                                         }
                                         if ((ret=ret2)) // delay one
-                                                ret2 = hwi->GVP_expect_point (pv, index_all);
+                                                if (ret)
+                                                        ret2 = hwi->GVP_expect_point (pv, index_all);
                                 }
                                 //g_print("\n");
                         }
                 }
                 g_message ("Completed scan line, move to next y...");
+
+                if (hwi->GVP_vp_header_current.endmark){ // checking -- finished?
+                        g_message("GVP STREAM END DETECTED, FifoReadThread Aborting.");
+                        RPSPMC_ControlClass->probe_ready = TRUE;
+                        return NULL;
+                }
+                
                 // wait for and fetch header for move to next scan line start point
-                hwi->GVP_expect_header (pv, index_all);
+                if (hwi->GVP_expect_header (pv, index_all) != -1) return NULL;
                 // fetch points but discard
-                for (ret=-1; ret; ){
+                for (ret=-1; ret && hwi->ScanningFlg; ){
                         ret = hwi->GVP_expect_point (pv, index_all);
-                        if (ret < 0){
-                                g_message("STREAM ERROR, FifoReadThread Aborting.");
-                                hwi->GVP_abort_vector_program ();
-                                RPSPMC_ControlClass->probe_ready = TRUE;
-                                return NULL;
-                        }
+                        if (ret < 0) return NULL;
                 }
 
                 if (hwi->GVP_vp_header_current.endmark){ // checking -- finished?
@@ -647,8 +665,8 @@ int rpspmc_hwi_dev::on_new_data (gconstpointer contents, gsize len, int position
         
         GVP_stream_buffer_position = (position + offset)&(EXPAND_MULTIPLES*BRAM_SIZE-1);
         
-        g_message ("on_new_data ** AB=%d pos=%d  buffer_pos=0x%08x  new_count=%d  %s",
-                   AB, position, GVP_stream_buffer_position, new_count, last? "finished":"...");
+        //g_message ("on_new_data ** AB=%d pos=%d  buffer_pos=0x%08x  new_count=%d  %s",
+        //           AB, position, GVP_stream_buffer_position, new_count, last? "finished":"...");
 
         GVP_stream_buffer_AB = AB; // update now after memcopy
         return AB;

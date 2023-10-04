@@ -39,6 +39,12 @@
 #include <fcntl.h>
 #include <pthread.h>
 
+#define REDPACPLL_DATE    0x20231003
+#define REDPACPLL_VERSION 0x00160000
+#define RPSPMC_VERSION    0x00010013
+#define RPSPMC_VNAME      "RPSPMC Evaluation Regime SG2023"
+#define RPSPMC_SRCS_INFO  "XYZU 1234 SWPS LCTm"
+
 #include "main.h"
 #include "fpga_cfg.h"
 #include "pacpll.h"
@@ -64,8 +70,6 @@
  * ------------------------------------------------------------
  */
 
-#define REDPACPLL_DATE    0x20200408
-#define REDPACPLL_VERSION 0x00160000
 
 // FPGA MEMORY MAPPING for "RP-SPMC-RedPACPLL" 202308V00
 

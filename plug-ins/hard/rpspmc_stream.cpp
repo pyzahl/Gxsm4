@@ -127,7 +127,7 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
                 if (contents && len < 100){
                         tmp = g_strdup_printf ("WEBSOCKET_DATA_TEXT: %s", contents);
                         self->status_append (tmp);
-                        g_message (tmp);
+                        //g_message (tmp);
                         g_free (tmp);
                 } else {
                         self->status_append ("WEBSOCKET_DATA_TEXT ------\n");
@@ -175,14 +175,14 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
 	} else if (type == SOUP_WEBSOCKET_DATA_BINARY) {
 		contents = g_bytes_get_data (message, &len);
 
-                tmp = g_strdup_printf ("WEBSOCKET_DATA_BINARY SPMC Bytes: 0x%04x,  Position: 0x%04x + AB=%d x BRAMSIZE/2, Count: %d\n", len, position, streamAB, count);
-                self->status_append (tmp);
-                g_message (tmp);
+                //tmp = g_strdup_printf ("WEBSOCKET_DATA_BINARY SPMC Bytes: 0x%04x,  Position: 0x%04x + AB=%d x BRAMSIZE/2, Count: %d\n", len, position, streamAB, count);
+                //self->status_append (tmp);
+                //g_message (tmp);
    
                 //self->status_append_int32 (contents, 512, true, streamAB*len, true); // truncate, just a snap
                 //self->status_append ("\n");
                 //self->debug_log (tmp);
-                g_free (tmp);
+                //g_free (tmp);
 
 #if 1
                 FILE* pFile;

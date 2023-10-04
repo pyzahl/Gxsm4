@@ -245,6 +245,7 @@ module axis_spm_control#(
     assign M_AXIS3_tvalid = 1;
     assign M_AXIS_ZSMON_tdata  = z_gvp;  // Z-GVP aka scan
     assign M_AXIS_ZSMON_tvalid = 1;
+    assign M_AXIS_Z0MON_tdata  = mz0; // Z Offset aka Z0
     assign M_AXIS_Z0MON_tvalid = 1;
     
     assign M_AXIS4_tdata  = ru;

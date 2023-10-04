@@ -86,13 +86,13 @@ module axis_bram_stream_srcs #(
     input wire          S_AXIS_ch7s_tvalid,
     input wire [32-1:0] S_AXIS_ch8s_tdata, // IN4     0x0080  reserved, N/A at this time
     input wire          S_AXIS_ch8s_tvalid,
-    input wire [32-1:0] S_AXIS_ch9s_tdata, // DFREQ   0x0100  via PACPLL FIR
+    input wire [32-1:0] S_AXIS_ch9s_tdata, // DFREQ   0x0100  via PACPLL FIR1 ** via transport / decimation selector
     input wire          S_AXIS_ch9s_tvalid,
-    input wire [32-1:0] S_AXIS_chAs_tdata, // EXEC    0x0200  via PACPLL FIR
+    input wire [32-1:0] S_AXIS_chAs_tdata, // EXEC    0x0200  via PACPLL FIR2
     input wire          S_AXIS_chAs_tvalid,
-    input wire [32-1:0] S_AXIS_chBs_tdata, // PHASE   0x0400  via PACPLL FIR
+    input wire [32-1:0] S_AXIS_chBs_tdata, // PHASE   0x0400  via PACPLL FIR3
     input wire          S_AXIS_chBs_tvalid,
-    input wire [32-1:0] S_AXIS_chCs_tdata, // AMPL    0x0800  via PACPLL FIR
+    input wire [32-1:0] S_AXIS_chCs_tdata, // AMPL    0x0800  via PACPLL FIR4
     input wire          S_AXIS_chCs_tvalid,
     input wire [32-1:0] S_AXIS_chDs_tdata, // LockInA 0x1000  LockIn X (ToDo)
     input wire          S_AXIS_chDs_tvalid,
@@ -219,7 +219,7 @@ module axis_bram_stream_srcs #(
                         bram_wr_next  <= 1'b0;
                         channel <= 0;
                         once <= 0; // only one push!
-                        // buffer all data
+                        // buffer all data in order [] of srcs bits in mask
                         stream_buffer[0] <= S_AXIS_ch1s_tdata[32-1:0]; // X
                         stream_buffer[1] <= S_AXIS_ch2s_tdata[32-1:0]; // Y
                         stream_buffer[2] <= S_AXIS_ch3s_tdata[32-1:0]; // Z

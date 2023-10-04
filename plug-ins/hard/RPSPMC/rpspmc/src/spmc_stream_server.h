@@ -142,6 +142,8 @@ public:
 
         void add_greeting (){
                 info_stream << "\n***\nSPMC Stream Server is connected.\n***\n" << std::endl;
+                info_stream << "\n*** " RPSPMC_VNAME " ***\n" << std::endl;
+                info_stream << "\n*** SRCS Bit Mask Coding is '32b " RPSPMC_SRCS_INFO " ***\n" << std::endl;
                 info_count++;
         };
         void add_vector (std::string vec){

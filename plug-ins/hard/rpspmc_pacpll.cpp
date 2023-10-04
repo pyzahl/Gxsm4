@@ -1826,13 +1826,13 @@ void RPSPMC_Control::create_folder (){
 		bp->grid_add_ec (NULL,      Volt, &GVP_du[k], -10.0,   10.0,   "6.4g", 1., 10., "gvp-du", k); 
                 if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
 
-		bp->grid_add_ec (NULL, Angstroem, &GVP_dx[k], -100000.0, 100000.0, "6.4g", 1., 10., "gvp-dx", k); 
+		bp->grid_add_ec (NULL, Angstroem, &GVP_dx[k], -1000000.0, 1000000.0, "6.4g", 1., 10., "gvp-dx", k); 
                 if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
 
-		bp->grid_add_ec (NULL, Angstroem, &GVP_dy[k], -100000.0, 100000.0, "6.4g", 1., 10., "gvp-dy", k); 
+		bp->grid_add_ec (NULL, Angstroem, &GVP_dy[k], -1000000.0, 1000000.0, "6.4g", 1., 10., "gvp-dy", k); 
                 if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
 
-		bp->grid_add_ec (NULL, Angstroem, &GVP_dz[k], -100000.0, 100000.0, "6.4g", 1., 10., "gvp-dz", k); 
+		bp->grid_add_ec (NULL, Angstroem, &GVP_dz[k], -1000000.0, 1000000.0, "6.4g", 1., 10., "gvp-dz", k); 
                 if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
 
                 bp->set_configure_list_mode_on (); // === advanced ===========================================
@@ -1842,10 +1842,10 @@ void RPSPMC_Control::create_folder (){
                 if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
                 bp->set_configure_list_mode_off (); // ========================================================
 
-		bp->grid_add_ec (NULL,      Time, &GVP_ts[k], 0., 10000.0,     "5.4g", 1., 10., "gvp-dt", k); 
+		bp->grid_add_ec (NULL,      Time, &GVP_ts[k], 0., 147573952580.0,     "5.4g", 1., 10., "gvp-dt", k); // 1<<64 / 125e6 s max
                 if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
 
-		bp->grid_add_ec (NULL,      Unity, &GVP_points[k], 0, 4000,  "5g", "gvp-n", k); 
+		bp->grid_add_ec (NULL,      Unity, &GVP_points[k], 0, 1e10,  "5g", "gvp-n", k); // theroretically 1<<64, but that's a insane huge memory demand. Limitinig to 10G
                 if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
 
 
@@ -1886,10 +1886,10 @@ void RPSPMC_Control::create_folder (){
                 if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
 #endif
                 
-		bp->grid_add_ec (NULL, Unity, &GVP_vnrep[k], 0., 32000.,  ".0f", "gvp-nrep", k); 
+		bp->grid_add_ec (NULL, Unity, &GVP_vnrep[k], 0., 65536.,  ".0f", "gvp-nrep", k); // limit to 1<<16
                 if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
 
-		bp->grid_add_ec (NULL, Unity, &GVP_vpcjr[k], -50.,   0.,  ".0f", "gvp-pcjr", k); 
+		bp->grid_add_ec (NULL, Unity, &GVP_vpcjr[k], -16.,   0.,  ".0f", "gvp-pcjr", k); // -MAX NUM VECTORS at longest
                 if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
 
                 bp->set_configure_list_mode_off (); // ==================================

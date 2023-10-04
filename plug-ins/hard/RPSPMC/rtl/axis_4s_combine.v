@@ -437,13 +437,13 @@ module axis_4s_combine #(
     assign delta_frequency_direct  = reg_delta_freq[31:0]; 
     
     // assign CH1,2 from box carr filtering as selected and AM, EX
-    assign M_AXIS_CH1_tdata = ch1s[31:0];
+    assign M_AXIS_CH1_tdata  = ch1s[31:0];
     assign M_AXIS_CH1_tvalid = !reg_operation[4];
-    assign M_AXIS_CH2_tdata =  ch2s[31:0];
+    assign M_AXIS_CH2_tdata  = ch2s[31:0];
     assign M_AXIS_CH2_tvalid = !reg_operation[4];
-    assign M_AXIS_CH3_tdata = chAMs[31:0];
+    assign M_AXIS_CH3_tdata  = chAMs[31:0];
     assign M_AXIS_CH3_tvalid = !reg_operation[4];
-    assign M_AXIS_CH4_tdata = chEXs[31:0];
+    assign M_AXIS_CH4_tdata  = chEXs[31:0];
     assign M_AXIS_CH4_tvalid = !reg_operation[4];
 
     // must be in STREAMING MODE for contineous op
