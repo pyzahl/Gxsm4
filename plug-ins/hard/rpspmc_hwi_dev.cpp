@@ -460,6 +460,7 @@ gpointer ScanDataReadThread (void *ptr_hwi){
                 ret = hwi->GVP_expect_point (pv, index_all);
                 if (ret < 0){
                         g_message("STREAM ERROR, FifoReadThread Aborting.");
+                        hwi->GVP_abort_vector_program ();
                         RPSPMC_ControlClass->probe_ready = TRUE;
                         return NULL;
                 }
@@ -492,6 +493,7 @@ gpointer ScanDataReadThread (void *ptr_hwi){
                                         ret = hwi->GVP_expect_point (pv, index_all);
                                         if (ret < 0){
                                                 g_message("STREAM ERROR, FifoReadThread Aborting.");
+                                                hwi->GVP_abort_vector_program ();
                                                 RPSPMC_ControlClass->probe_ready = TRUE;
                                                 return NULL;
                                         }
@@ -506,6 +508,7 @@ gpointer ScanDataReadThread (void *ptr_hwi){
                                         g_message ("Got point data [N-%d] for: xi=%d [x0=%d nx=%d]",  hwi->GVP_vp_header_current.i, xi, x0, nx);
                                         if (ret < 0){
                                                 g_message("STREAM ERROR, FifoReadThread Aborting.");
+                                                hwi->GVP_abort_vector_program ();
                                                 RPSPMC_ControlClass->probe_ready = TRUE;
                                                 return NULL;
                                         }
@@ -517,9 +520,12 @@ gpointer ScanDataReadThread (void *ptr_hwi){
                                                         k=4;
                                                 }
                                                 g_message("PUT DATA POINT dir[%d] ch[%d] xy[%d, %d] kch[%d] = %g V", dir,ch,xi,yi,k,hwi->GVP_vp_header_current.dataexpanded [k]);
-                                                if (hwi->Mob_dir[dir][ch])
-                                                        hwi->Mob_dir[dir][ch]->PutDataPkt (hwi->GVP_vp_header_current.dataexpanded [k], xi, yi);
-                                                else 
+                                                if (hwi->Mob_dir[dir][ch]){
+                                                        if (xi >=0 && yi >=0 && xi < hwi->Mob_dir[dir][ch]->GetNx ()  && yi < hwi->Mob_dir[dir][ch]->GetNy ())
+                                                                hwi->Mob_dir[dir][ch]->PutDataPkt (hwi->GVP_vp_header_current.dataexpanded [k], xi, yi);
+                                                        else
+                                                                g_message ("EEEE xi, yi index out of range: [0..%d-1, 0..%d-1]", hwi->Mob_dir[dir][ch]->GetNx (), hwi->Mob_dir[dir][ch]->GetNy ());
+                                                } else 
                                                         g_message("SCAN MOBJ[%d][%d] ERROR", dir,ch);
                                         }
                                         if ((ret=ret2)) // delay one
@@ -536,6 +542,7 @@ gpointer ScanDataReadThread (void *ptr_hwi){
                         ret = hwi->GVP_expect_point (pv, index_all);
                         if (ret < 0){
                                 g_message("STREAM ERROR, FifoReadThread Aborting.");
+                                hwi->GVP_abort_vector_program ();
                                 RPSPMC_ControlClass->probe_ready = TRUE;
                                 return NULL;
                         }

@@ -119,39 +119,54 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
         static bool finished=false;
         
         //self->debug_log ("WebSocket SPMC message received.");
-	self->status_append ("WebSocket SPMC message received.\n");
+	//self->status_append ("WebSocket SPMC message received.\n");
         
 	if (type == SOUP_WEBSOCKET_DATA_TEXT) {
                 gchar *p;
 		contents = g_bytes_get_data (message, &len);
-		self->status_append ("WEBSOCKET_DATA_TEXT\n");
-                if (contents && len > 0)
-                        self->status_append ((gchar*)contents);
-                else
-                        self->status_append ("Empty text message received.");
-		self->status_append ("\n");
+                if (contents && len < 100){
+                        tmp = g_strdup_printf ("WEBSOCKET_DATA_TEXT: %s", contents);
+                        self->status_append (tmp);
+                        g_message (tmp);
+                        g_free (tmp);
+                } else {
+                        self->status_append ("WEBSOCKET_DATA_TEXT ------\n");
+                        if (contents && len > 0)
+                                self->status_append ((gchar*)contents);
+                        else
+                                self->status_append ("Empty text message received.");
+                        if (g_strrstr (contents, "\n"))
+                                self->status_append ("--------------------------\n");
+                        else
+                                self->status_append ("\n--------------------------\n");
+                }
                 //g_message ("WS Message: %s", (gchar*)contents);
 
                 if (g_strrstr (contents, "RESET")){
-                        self->status_append ("WEBSOCKET_STREAM: RESET (GVP Init) Message Received.\n");
+                        self->status_append ("** WEBSOCKET STREAM TAG: RESET (GVP Start) Received.\n");
+                        g_message ("** WEBSOCKET STREAM TAG: RESET (GVP Start) Received");
                         finished=false;
                         position=0;
                         streamAB=0;
                         count = 0;
                         count_prev = -1;
 
-                } else if (g_strrstr (contents, "FINSIHED NEXT:{true}")){
-                        self->status_append ("WEBSOCKET_STREAM: FINISHED NEXT\n");
+                }
+                
+                if (g_strrstr (contents, "FinishedNext:{true}")){
+                        self->status_append ("** WEBSOCKET STREAM TAG: FINISHED NEXT (GVP completed, last package update is been send) Received\n");
+                        g_message ("** WEBSOCKET STREAM TAG: FINISHED NEXT (GVP completed, last package update is been send) Received");
                         finished=true;
-
-                } else if (strncmp(contents, "{Position:{", 11) == 0){ // SIMPLE JSON BLOCK
-                        position = atoi (contents+11);
-                        p=g_strrstr (contents, "Count:{");
-                        if (p)
+                }
+                
+                if ((p=g_strrstr(contents, "Position:{"))){ // SIMPLE JSON BLOCK
+                        position = atoi (p+10);
+                        if ((p=g_strrstr (contents, "Count:{")))
                                 count = atoi (p+7);
-                } else if (g_strrstr (contents, "vector = {")){
-                        p = g_strrstr (contents, "// Vector #");
-                        if (p){
+                }
+
+                if (g_strrstr (contents, "vector = {")){
+                        if ((p = g_strrstr (contents, "// Vector #"))){
                                 self->last_vector_pc_confirmed = atoi (p+11);
                                 g_message (p);
                         }

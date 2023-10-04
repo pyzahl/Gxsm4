@@ -854,7 +854,7 @@ public:
 
 	virtual void StartScan2D() { PauseFlg=0; ScanningFlg=1; KillFlg=FALSE; };
         // EndScan2D() is been called until it returns TRUE from scan control idle task until it returns FALSE (indicating it's completed)
-	virtual gboolean EndScan2D() { ScanningFlg=0; return FALSE; };
+	virtual gboolean EndScan2D() { ScanningFlg=0; GVP_abort_vector_program (); return FALSE; };
 	virtual void PauseScan2D()   { PauseFlg=1; };
 	virtual void ResumeScan2D()  { PauseFlg=0; };
 	virtual void KillScan2D()    { PauseFlg=0; KillFlg=TRUE; };

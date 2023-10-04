@@ -133,12 +133,17 @@ public:
         
         void on_open(connection_hdl hdl) {
                 m_connections.insert(hdl);
+                add_greeting ();
         };
 
         void on_close(connection_hdl hdl) {
                 m_connections.erase(hdl);
         };
 
+        void add_greeting (){
+                info_stream << "\n***\nSPMC Stream Server is connected.\n***\n" << std::endl;
+                info_count++;
+        };
         void add_vector (std::string vec){
                 info_stream << vec << std::endl;
                 info_count++;
