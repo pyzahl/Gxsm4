@@ -143,6 +143,7 @@ typedef struct{
 	gchar pidsrcZtype[PIDCHMAX][8];
 	gchar pidsrcZlabel[PIDCHMAX][CHLABELLEN];
 	double pidsrcZd2u[PIDCHMAX];
+	guint64 pidsrc_msk[PIDCHMAX];
 	int  pidchno[PIDCHMAX]; 
 	int  piddefault;
 	gchar daqsrc[DAQCHMAX][CHLABELLEN];
@@ -151,6 +152,7 @@ typedef struct{
 	gchar daqZtype[DAQCHMAX][8];
 	gchar daqZlabel[DAQCHMAX][CHLABELLEN];
 	double daqZd2u[DAQCHMAX];
+	guint64 daq_msk[DAQCHMAX];
 	int  daqdefault;
 	gchar extchno[EXTCHMAX];
 	//

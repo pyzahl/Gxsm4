@@ -1054,13 +1054,31 @@ extern "C++" {
                 GNOME_RES_ENTRY_LAST
         };
 
+        // setzt Channel-Zuordnung
+        // SRCS MODES:
+        // bit 0 1 2 3:   PID (Z), ... (calculated stuff (Z=Topo)) :: SR: 0 only is Z-Topo
+        // bit 4 5 6 7:   MUXA select PIDSRC (Force, I, dF, ..)   (mux A bei PC31, bei PCI32 alle auf A), SR: 4 AIC5, 5: AIC0, ... 
+        // bit 8,9,10,11: MUXB select Analog Value (Friction, ..) (mux B bei PC31) SR: ... AIC7 except AIC5
+        // bit 12,13,14,15: AUX select C,D,E,F, SR: LockIn_dIdV, LockIn_ddIdV, LockIn_I0, Count (32bit) -- MK3: generic signal0..3
+        //#define MSK_PID(X)  (1<<((X)&3))
+        //#define MSK_MUXA(X) (1<<(((X)&3)+4))
+        //#define MSK_MUXB(X) (1<<(((X)&3)+8))
+        //#define MSK_AUX(X)  (1<<(((X)&3)+12))
+#define MSK_PID(X)  (1<<((X)&3)) // 0..3
+#define MSK_DAQ(X)  (1<<((X)+4)) // 4..16
+        // may be overridden/updated by HwI! Historic to Gxsm, but universal enough for future!
+        
         void gxsm_init_dynamic_res(){
                 for (int i=0; i<MAXPALANZ; ++i)
                         xsmres.PalPathList[i] = NULL;
-                for (int i=0; i<PIDCHMAX; ++i)
+                for (int i=0; i<PIDCHMAX; ++i){
                         xsmres.pidsrcZd2u[i] = 0.; 
-                for (int i=0; i<DAQCHMAX; ++i)
+                        xsmres.pidsrc_msk[i] = MSK_PID(i); // generate defaults
+                }
+                for (int i=0; i<DAQCHMAX; ++i){
                         xsmres.daqZd2u[i] = 0.;
+                        xsmres.daq_msk[i] = MSK_DAQ(i); // generate defaults
+                }
         }
 
         // Directory File Selection Stuff

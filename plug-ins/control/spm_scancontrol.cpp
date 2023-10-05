@@ -950,10 +950,19 @@ static void spm_scancontrol_set_subscan_callback (GtkWidget *w, void *data){
 // bit 4 5 6 7:   MUXA select PIDSRC (Force, I, dF, ..)   (mux A bei PC31, bei PCI32 alle auf A), SR: 4 AIC5, 5: AIC0, ... 
 // bit 8,9,10,11: MUXB select Analog Value (Friction, ..) (mux B bei PC31) SR: ... AIC7 except AIC5
 // bit 12,13,14,15: AUX select C,D,E,F, SR: LockIn_dIdV, LockIn_ddIdV, LockIn_I0, Count (32bit) -- MK3: generic signal0..3
+/*
 #define MSK_PID(X)  (1<<((X)&3))
 #define MSK_MUXA(X) (1<<(((X)&3)+4))
 #define MSK_MUXB(X) (1<<(((X)&3)+8))
 #define MSK_AUX(X)  (1<<(((X)&3)+12))
+*/
+
+// now via rescources. Defaults as of above's match are now auto setup in core gxsm_rescourcetable.cpp: void gxsm_init_dynamic_res()
+// and may be ovreridden at run time or via HwI at init/auto configuration time!
+#define MSK_PID(X)  xsmres.pidsrc_msk[(X)&3]
+#define MSK_MUXA(X) xsmres.daq_msk[(X)]
+#define MSK_MUXB(X) xsmres.daq_msk[(X)+4]
+#define MSK_AUX(X)  xsmres.daq_msk[(X)+8]
 
 
 int SPM_ScanControl::free_scan_lists (){

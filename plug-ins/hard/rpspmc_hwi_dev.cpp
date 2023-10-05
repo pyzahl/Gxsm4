@@ -138,6 +138,47 @@ rpspmc_hwi_dev::rpspmc_hwi_dev(){
         main_get_gapp()->xsm->Inst->override_dig_range (1<<19, xsmres); // gxsm does precision sanity checks and trys to round to best fit grid
         main_get_gapp()->xsm->Inst->override_volt_in_range (1.0, xsmres);
         main_get_gapp()->xsm->Inst->override_volt_out_range (5.0, xsmres);
+
+        // SRCS Mapping for Scan Channels as set via Channelselector (independing from Graphs/GVP) in Gxsm, but here same masks as same GVP is used
+        
+        /*
+        // do overrides/reconfigs of srcs mappings:
+#define MSK_PID(X)  (1<<((X)&3)) // 0..3
+#define MSK_DAQ(X)  (1<<((X)+4)) // 4..16
+        // may be overridden/updated by HwI! Historic to Gxsm, but universal enough for future!
+        
+        void gxsm_init_dynamic_res(){
+                for (int i=0; i<MAXPALANZ; ++i)
+                        xsmres.PalPathList[i] = NULL;
+                for (int i=0; i<PIDCHMAX; ++i){
+                        xsmres.pidsrcZd2u[i] = 0.; 
+                        xsmres.pidsrc_msk[i] = MSK_PID(i); // generate defaults
+                }
+                for (int i=0; i<DAQCHMAX; ++i){
+                        xsmres.daqZd2u[i] = 0.;
+                        xsmres.daq_msk[i] = MSK_DAQ(i); // generate defaults
+                }
+        }
+        */
+
+        xsmres.pidsrc_msk[2] = 0x000001;  // XS (Scan) non rot scan coord sys
+        xsmres.pidsrc_msk[3] = 0x000002;  // YS (Scan) non rot scan coord sys
+        xsmres.pidsrc_msk[0] = 0x000004;  // ZS-total
+        xsmres.pidsrc_msk[1] = 0x000008;  // UMon Bias
+
+        xsmres.daq_msk[0] = 0x000020;  // In2 = Current
+        xsmres.daq_msk[1] = 0x000010;  // In1 = QP Signal
+        xsmres.daq_msk[2] = 0x000040;  // In3 **
+        xsmres.daq_msk[3] = 0x000080;  // In4 **
+        xsmres.daq_msk[4] = 0x001000;  // LockInX
+        xsmres.daq_msk[5] = 0x002000;  // dFreqCrtl value
+        xsmres.daq_msk[6] = 0x004000;  // Time lower 32 (cycles at ~17sec)
+        xsmres.daq_msk[7] = 0x00C000;  // time 64bit time tics (1/125 MHz resolution)
+
+        xsmres.daq_msk[8]  = 0x000100;  // SWP signal PAC-PLL: defualt Phase
+        xsmres.daq_msk[9]  = 0x000200;  // SWP signal PAC-PLL: defualt dFreq
+        xsmres.daq_msk[10] = 0x000400;  // SWP signal PAC-PLL: defualt Ampl
+        xsmres.daq_msk[12] = 0x000800;  // SWP signal PAC-PLL: defualt Exec
         
 	probe_fifo_thread_active=0;
 
