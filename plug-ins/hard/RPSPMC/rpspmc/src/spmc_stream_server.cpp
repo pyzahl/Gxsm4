@@ -97,7 +97,7 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
         static bool started = false;
 
         int position   = stream_lastwrite_address();
-        position_info << "{";
+        position_info << "{StreamInfo";
 
         if (stream_server_control & 2){ // started!
                 limit = BRAM_POS_HALF;
@@ -116,7 +116,6 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
                 started = false;
         }
         
-        position_info << "Position:{" << position << "},Count:{" << count << "}";
         
         if (started){ // started?
                 if (gvp_finished ()){ // must transfer data written to block when finished but block not full.
@@ -140,6 +139,7 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
                 }
                 position_info << std::hex <<  ",BRAMlimit:{0x" << limit << "}" <<  ",BRAMoffset:{0x" << offset << "}";
         }
+        position_info << ",Position:{" << position << "},Count:{" << count << "}";
 
         position_info << "}" << std::endl;
         

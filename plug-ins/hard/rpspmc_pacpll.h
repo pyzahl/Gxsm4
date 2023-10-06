@@ -922,11 +922,11 @@ public:
                 
                 if (offset >= GVP_stream_buffer_position){ // Buffer is huge now all pages concat
 #if 0
-                        gchar *tmp = g_strdup_printf ("read_GVP_data_block_to_position_vector: Reading offset %08x is beyond stream write position %08x. Awaiting data.",
+                        gchar *tmp = g_strdup_printf ("read_GVP_data_block_to_position_vector: Reading offset %08x is beyond stream write position %08x. Awaiting data.\n",
                                                       offset, GVP_stream_buffer_position);
                         status_append (tmp, true);
-                        if (offset > 16)
-                                status_append_int32 (&GVP_stream_buffer[offset-16], 3*16, true, offset-16, true);
+                        if (offset > 64)
+                                status_append_int32 (&GVP_stream_buffer[offset-64], 10*16, true, offset-64, true);
                         g_warning (tmp);
                         g_free (tmp);
 #endif
@@ -954,13 +954,13 @@ public:
                                             GVP_vp_header_current.srcs_mask_vector != GVP_vp_header_current.srcs){
                                                 // stream ERROR detected
                                                 gchar *tmp = g_strdup_printf ("read_GVP_data_block_to_position_vector: Stream ERROR at Reading offset %08x, write position %08x.\n"
-                                                                              "SRCS/index mismatch detected. %04x vs %04x, i %d -> %d",
+                                                                              "SRCS/index mismatch detected. %04x vs %04x, i %d -> %d\n",
                                                                               offset, GVP_stream_buffer_position,
                                                                               GVP_vp_header_current.srcs_mask_vector, GVP_vp_header_current.srcs,
                                                                               GVP_vp_header_current.ilast, GVP_vp_header_current.i);
                                                 status_append (tmp, true);
-                                                if (offset > 32)
-                                                        status_append_int32 (&GVP_stream_buffer[offset-32], 5*16, true, offset-32, true);
+                                                if (offset > 64)
+                                                        status_append_int32 (&GVP_stream_buffer[offset-64], 10*16, true, offset-64, true);
                                                 g_warning (tmp);
                                                 g_free (tmp);
                                                 return (-98);
@@ -973,13 +973,13 @@ public:
                 GVP_vp_header_current.index = GVP_vp_header_current.n - GVP_vp_header_current.i;
                 if (GVP_vp_header_current.index < 0){
                         gchar *tmp = g_strdup_printf ("read_GVP_data_block_to_position_vector: Stream ERROR at Reading offset %08x, write position %08x.\n"
-                                                      "SRCS/index mismatch detected. %04x vs %04x, i %d -> %d  => n=%d (<0 is illegal)",
+                                                      "SRCS/index mismatch detected. %04x vs %04x, i %d -> %d  => n=%d (<0 is illegal)\n",
                                                       offset, GVP_stream_buffer_position,
                                                       GVP_vp_header_current.srcs_mask_vector, GVP_vp_header_current.srcs,
                                                       GVP_vp_header_current.ilast, GVP_vp_header_current.i, GVP_vp_header_current.index);
                         status_append (tmp, true);
-                        if (offset > 32)
-                                status_append_int32 (&GVP_stream_buffer[offset-32], 5*16, true, offset-32, true);
+                        if (offset > 64)
+                                status_append_int32 (&GVP_stream_buffer[offset-64], 10*16, true, offset-64, true);
                         g_warning (tmp);
                         g_free (tmp);
                         GVP_vp_header_current.index = 0; // to prevent issues
@@ -1007,11 +1007,11 @@ public:
                 }
 
                 if (expect_full_header && GVP_vp_header_current.srcs != 0xffff){
-                        gchar *tmp = g_strdup_printf ("ERROR: read_GVP_data_block_to_position_vector: Reading offset %08x, write position %08x. Expecting full header but found srcs=%04x, i=%d",
+                        gchar *tmp = g_strdup_printf ("ERROR: read_GVP_data_block_to_position_vector: Reading offset %08x, write position %08x. Expecting full header but found srcs=%04x, i=%d\n",
                                                       offset, GVP_stream_buffer_position,  GVP_vp_header_current.srcs, GVP_vp_header_current.i);
                         status_append (tmp, true);
-                        if (offset>32)
-                                status_append_int32 (&GVP_stream_buffer[offset-32], 5*16, true, offset-32, true);
+                        if (offset>64)
+                                status_append_int32 (&GVP_stream_buffer[offset-64], 10*16, true, offset-64, true);
                         g_warning (tmp);
                         g_free (tmp);
                         return (-97);

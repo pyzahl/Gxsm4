@@ -202,6 +202,10 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
                 // this odd and double data move than required, but there is an odd BRAM memory addressing issue otherwise
                 streamAB = self->on_new_data (contents+bram_offset, len/2, position, count-count_prev, finished); // process data
                 count_prev = count;
+
+                //tmp = g_strdup_printf ("WEBSOCKET_DATA_BINARY SPMC Bytes: 0x%04x,  Position: 0x%04x + AB=%d x BRAMSIZE/2, Count: %d\n", len, position, streamAB, count);
+                //self->status_append (tmp);
+                //g_free (tmp);
         }
 }
 
