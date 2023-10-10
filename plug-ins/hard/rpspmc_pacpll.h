@@ -911,6 +911,9 @@ public:
         int read_GVP_data_block_to_position_vector (int offset, gboolean expect_full_header=false){
                 size_t ch_index;
 
+                if (expect_full_header || offset==0)
+                        status_append_int32 (&GVP_stream_buffer[offset], 10*16, true, offset, true);
+                
                 if (offset < 0 || offset > (EXPAND_MULTIPLES*BRAM_SIZE-20)){
                         gchar *tmp = g_strdup_printf ("read_GVP_data_block_to_position_vector: Reading offset %08x out of range ERROR.",
                                                       offset);
@@ -927,6 +930,8 @@ public:
                         status_append (tmp, true);
                         if (offset > 64)
                                 status_append_int32 (&GVP_stream_buffer[offset-64], 10*16, true, offset-64, true);
+                        else
+                                status_append_int32 (&GVP_stream_buffer[0], 10*16, true, 0, true);
                         g_warning (tmp);
                         g_free (tmp);
 #endif
@@ -961,6 +966,8 @@ public:
                                                 status_append (tmp, true);
                                                 if (offset > 64)
                                                         status_append_int32 (&GVP_stream_buffer[offset-64], 10*16, true, offset-64, true);
+                                                else
+                                                        status_append_int32 (&GVP_stream_buffer[0], 10*16, true, 0, true);
                                                 g_warning (tmp);
                                                 g_free (tmp);
                                                 return (-98);
@@ -980,6 +987,8 @@ public:
                         status_append (tmp, true);
                         if (offset > 64)
                                 status_append_int32 (&GVP_stream_buffer[offset-64], 10*16, true, offset-64, true);
+                        else
+                                status_append_int32 (&GVP_stream_buffer[0], 10*16, true, 0, true);
                         g_warning (tmp);
                         g_free (tmp);
                         GVP_vp_header_current.index = 0; // to prevent issues
@@ -1012,6 +1021,8 @@ public:
                         status_append (tmp, true);
                         if (offset>64)
                                 status_append_int32 (&GVP_stream_buffer[offset-64], 10*16, true, offset-64, true);
+                        else
+                                status_append_int32 (&GVP_stream_buffer[0], 10*16, true, 0, true);
                         g_warning (tmp);
                         g_free (tmp);
                         return (-97);
@@ -1046,7 +1057,7 @@ public:
                                 return -1; // true for full position header update
                         return ch_index;
                 }  else {
-                        g_message ("[%08x] *** end of new data at ch=%d ** Must wait for next page/update send and retry.", offset, ch_index);
+                        // g_message ("[%08x] *** end of new data at ch=%d ** Must wait for next page/update send and retry.", offset, ch_index);
                         return -99;
                         // return ch_index; // number channels read until position
                 }

@@ -95,7 +95,8 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
         int data_len = 0;
         static size_t offset = 0;
         static bool started = false;
-
+        static int position_prev=0;
+        
         int position   = stream_lastwrite_address();
         position_info << "{StreamInfo";
 
@@ -108,6 +109,7 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
                 position_info << "RESET:{true},";
                 started = true;
                 position=0;
+                position_prev=-1;
         }
         
         if (stream_server_control & 4){ // stopped!
@@ -118,16 +120,13 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
         
         
         if (started){ // started?
-                if (gvp_finished ()){ // must transfer data written to block when finished but block not full.
+                if (position_prev >= 0 && gvp_finished ()){ // must transfer data written to block when finished but block not full.
+                        position_info << std::hex << ",preFinPos{0x" << position << "}";
+                        usleep (50000); // make sure all fifos are emptied...
+                        position   = stream_lastwrite_address(); // update again
                         stream_server_control = 1; // remove all flags, done after this, last block to finish moving!
                         started = false;
                         position_info << ",FinishedNext:{true}";
-
-                        int clear_len = BRAM_SIZE-position-1;
-                        if (clear_len > 0){
-                                //memset ( FPGA_SPMC_bram + sizeof(uint32_t) * (position+1), 0, clear_len);
-                                position += clear_len;
-                        } else clear_len = 0;
                 }
 
                 data_len = BRAM_POS_HALF; // always resend updated data block in intervals if GVP is active!
@@ -139,9 +138,11 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
                 }
                 position_info << std::hex <<  ",BRAMlimit:{0x" << limit << "}" <<  ",BRAMoffset:{0x" << offset << "}";
         }
-        position_info << ",Position:{" << position << "},Count:{" << count << "}";
+        position_info <<  std::hex <<  ",Position:{0x" << position << std::dec << "},Count:{" << count << "}";
 
         position_info << "}" << std::endl;
+
+        usleep (200000); // make sure all fifos are emptied...
         
         // Broadcast to all connections
         con_list::iterator it;
@@ -149,16 +150,19 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
                 if (info_count > 0)
                         m_endpoint.send(*it, info_stream.str(), websocketpp::frame::opcode::text);
 
-                if (data_len > 0){
+                if (data_len > 0 && position_prev != position){
                         uint8_t *bram = (uint8_t*)FPGA_SPMC_bram + offset;
                         m_endpoint.send(*it, position_info.str(), websocketpp::frame::opcode::text);
-                        m_endpoint.send(*it, (void*)FPGA_SPMC_bram, 2*BRAM_POS_HALF * sizeof(uint32_t), websocketpp::frame::opcode::binary); // full block
+                        m_endpoint.send(*it, (void*)FPGA_SPMC_bram, (0x200+2*BRAM_POS_HALF) * sizeof(uint32_t), websocketpp::frame::opcode::binary); // full block
                         //m_endpoint.send(*it, (void*)bram, data_len * sizeof(uint32_t), websocketpp::frame::opcode::binary); // there is a address mix up at block boundaries ?!?!? WTF
                 } 
+#if 0
                 if (verbose > 3){
                         m_endpoint.send(*it, (void*)FPGA_SPMC_bram, 2*BRAM_POS_HALF * sizeof(uint32_t), websocketpp::frame::opcode::binary);
                 }
+#endif
         }
+        position_prev=position;
 
         clear_info_stream ();
 

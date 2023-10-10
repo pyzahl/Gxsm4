@@ -11,12 +11,12 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="97.170 ns"></ZoomStartTime>
-      <ZoomEndTime time="194.951 ns"></ZoomEndTime>
-      <Cursor1Time time="1,000.000 ns"></Cursor1Time>
+      <ZoomStartTime time="0.000 ns"></ZoomStartTime>
+      <ZoomEndTime time="101.885 ns"></ZoomEndTime>
+      <Cursor1Time time="20,000.000 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
-      <NameColumnWidth column_width="346"></NameColumnWidth>
+      <NameColumnWidth column_width="340"></NameColumnWidth>
       <ValueColumnWidth column_width="91"></ValueColumnWidth>
    </column_width_setting>
    <WVObjectSize size="36" />
@@ -176,14 +176,6 @@
       <obj_property name="CustomSignalColor">#00FFFF</obj_property>
       <obj_property name="UseCustomSignalColor">true</obj_property>
    </wvobject>
-   <wvobject type="logic" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/BRAM_PORTA_clk">
-      <obj_property name="ElementShortName">BRAM_PORTA_clk</obj_property>
-      <obj_property name="ObjectShortName">BRAM_PORTA_clk</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/BRAM_PORTA_we">
-      <obj_property name="ElementShortName">BRAM_PORTA_we</obj_property>
-      <obj_property name="ObjectShortName">BRAM_PORTA_we</obj_property>
-   </wvobject>
    <wvobject type="array" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/bram_addr">
       <obj_property name="ElementShortName">bram_addr[15:0]</obj_property>
       <obj_property name="ObjectShortName">bram_addr[15:0]</obj_property>
@@ -220,14 +212,6 @@
       <obj_property name="CustomSignalColor">#00FFFF</obj_property>
       <obj_property name="UseCustomSignalColor">true</obj_property>
    </wvobject>
-   <wvobject type="array" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/index">
-      <obj_property name="ElementShortName">index[31:0]</obj_property>
-      <obj_property name="ObjectShortName">index[31:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/srcs">
-      <obj_property name="ElementShortName">srcs[31:0]</obj_property>
-      <obj_property name="ObjectShortName">srcs[31:0]</obj_property>
-   </wvobject>
    <wvobject type="array" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/srcs_mask">
       <obj_property name="ElementShortName">srcs_mask[23:0]</obj_property>
       <obj_property name="ObjectShortName">srcs_mask[23:0]</obj_property>
@@ -245,11 +229,27 @@
       <obj_property name="ObjectShortName">r</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/last_write_addr">
-      <obj_property name="ElementShortName">last_write_addr[15:0]</obj_property>
-      <obj_property name="ObjectShortName">last_write_addr[15:0]</obj_property>
+      <obj_property name="ElementShortName">last_write_addr[31:0]</obj_property>
+      <obj_property name="ObjectShortName">last_write_addr[31:0]</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/push_next">
       <obj_property name="ElementShortName">push_next[1:0]</obj_property>
       <obj_property name="ObjectShortName">push_next[1:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/bram_porta_addr">
+      <obj_property name="ElementShortName">bram_porta_addr[15:0]</obj_property>
+      <obj_property name="ObjectShortName">bram_porta_addr[15:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/bram_porta_wrdata">
+      <obj_property name="ElementShortName">bram_porta_wrdata[31:0]</obj_property>
+      <obj_property name="ObjectShortName">bram_porta_wrdata[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/bram_porta_we">
+      <obj_property name="ElementShortName">bram_porta_we</obj_property>
+      <obj_property name="ObjectShortName">bram_porta_we</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/bram_porta_clk">
+      <obj_property name="ElementShortName">bram_porta_clk</obj_property>
+      <obj_property name="ObjectShortName">bram_porta_clk</obj_property>
    </wvobject>
 </wave_config>

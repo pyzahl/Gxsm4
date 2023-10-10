@@ -155,18 +155,18 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
 
                 }
                 
+                if ((p=g_strrstr(contents, "Position:{0x"))){ // SIMPLE JSON BLOCK
+                        position = strtoul (p+10, NULL, 16); // effin addr hacks pactches!!!
+                        if ((p=g_strrstr (contents, "Count:{")))
+                                count = atoi (p+7);
+                }
+
                 if (g_strrstr (contents, "FinishedNext:{true}")){
                         self->status_append ("** WEBSOCKET STREAM TAG: FINISHED NEXT (GVP completed, last package update is been send) Received\n");
                         g_message ("** WEBSOCKET STREAM TAG: FINISHED NEXT (GVP completed, last package update is been send) Received");
                         finished=true;
                 }
                 
-                if ((p=g_strrstr(contents, "Position:{"))){ // SIMPLE JSON BLOCK
-                        position = atoi (p+10);
-                        if ((p=g_strrstr (contents, "Count:{")))
-                                count = atoi (p+7);
-                }
-
                 if ((p=g_strrstr(contents, "BRAMoffset:{0x"))){ // SIMPLE JSON BLOCK
                         bram_offset = strtoul(p+12, NULL, 16);
                 }
@@ -181,6 +181,7 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
 	} else if (type == SOUP_WEBSOCKET_DATA_BINARY) {
 		contents = g_bytes_get_data (message, &len);
 
+                //tmp = g_strdup_printf ("\nSTREAMINFO: BLOCK %03d  Pos 0x%04x  AB %02d  %s\n", count, position, streamAB, finished?"_Fini":"_Cont");
                 //tmp = g_strdup_printf ("WEBSOCKET_DATA_BINARY SPMC Bytes: 0x%04x,  Position: 0x%04x + AB=%d x BRAMSIZE/2, Count: %d\n", len, position, streamAB, count);
                 //self->status_append (tmp);
                 //g_message (tmp);
@@ -190,9 +191,9 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
                 //self->debug_log (tmp);
                 //g_free (tmp);
 
-#if 0
+#if 1
                 FILE* pFile;
-                tmp = g_strdup_printf ("WS-BRAM-DATA-BLOCK_%03d_Pos0x%04x_AB_%02d%s.bin", count, position, streamAB, finished?"F":"C");
+                tmp = g_strdup_printf ("WS-BRAM-DATA-BLOCK_%03d_Pos0x%04x_AB_%02d%s.bin", count, position, streamAB, finished?"_Fini":"_Cont");
                 pFile = fopen(tmp, "wb");
                 g_free (tmp);
                 fwrite(contents, 1, len, pFile);
@@ -200,7 +201,9 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
                 // hexdump -v -e '"%08_ax: "' -e ' 16/4 "%08x_L[red:0x018ec108,green:0x018fffff] " " \n"' WS-BRAM-DATA-BLOCK_000_Pos0x1f7e_AB_00.bin
 #endif
                 // this odd and double data move than required, but there is an odd BRAM memory addressing issue otherwise
-                streamAB = self->on_new_data (contents+bram_offset, len/2, position, count-count_prev, finished); // process data
+                
+                //streamAB = self->on_new_data (contents+bram_offset, len/2, position, count-count_prev, finished); // process data
+                streamAB = self->on_new_data (contents+0x400+bram_offset, 0x10000/2, position, count-count_prev, finished); // process data
                 count_prev = count;
 
                 //tmp = g_strdup_printf ("WEBSOCKET_DATA_BINARY SPMC Bytes: 0x%04x,  Position: 0x%04x + AB=%d x BRAMSIZE/2, Count: %d\n", len, position, streamAB, count);

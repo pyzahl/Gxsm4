@@ -157,6 +157,7 @@ public:
         void clear_info_stream(){
                 info_stream.str("");
                 info_count=0;
+                info_x=0;
         };
         
 private:
@@ -171,6 +172,7 @@ private:
         // Telemetry data
         uint64_t m_count;
         int info_count;
+        int info_x;
         std::stringstream info_stream;
 
         int limit;

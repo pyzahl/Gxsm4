@@ -1801,9 +1801,16 @@ void RPSPMC_Control::create_folder (){
         bp->set_configure_list_mode_off ();
         bp->grid_add_label ("time", "total time for VP section");
         bp->grid_add_label ("points", "points (# vectors to add)");
-        bp->grid_add_label ("FB", "Feedback");
+        bp->grid_add_label ("FB", "Feedback (Option bit 0)");
         bp->set_configure_list_mode_on ();
         bp->grid_add_label ("VSET", "Treat this as a initial set position, vector differential from current position are computed!");
+        bp->grid_add_label ("7", "Option bit 7");
+        bp->grid_add_label ("6", "Option bit 6");
+        bp->grid_add_label ("5", "Option bit 5");
+        bp->grid_add_label ("4", "Option bit 4");
+        bp->grid_add_label ("3", "Option bit 3");
+        bp->grid_add_label ("2", "Option bit 2");
+        bp->grid_add_label ("1", "Option bit 1");
         //bp->grid_add_label ("IOR", "** GPIO-Read N/A");
         //bp->grid_add_label ("TP", "** TRIGGER-POS N/A");
         //bp->grid_add_label ("TN", "** TRIGGER-NEG N/A");
@@ -1859,10 +1866,19 @@ void RPSPMC_Control::create_folder (){
                 bp->set_configure_list_mode_on (); // ================ advanced section
 
                 bp->grid_add_check_button ("", NULL, 1,
-                                               GCallback (callback_change_GVP_vpc_option_flags), this,
-                                               GVP_opt[k], VP_INITIAL_SET_VEC);
+                                           GCallback (callback_change_GVP_vpc_option_flags), this,
+                                           GVP_opt[k], VP_INITIAL_SET_VEC);
                 EC_vpc_opt_list = g_slist_prepend( EC_vpc_opt_list, bp->button);
                 g_object_set_data (G_OBJECT (bp->button), "VPC", GINT_TO_POINTER (k));
+                
+                for (int bit=7; bit >= 1; --bit){
+                        bp->grid_add_check_button ("", NULL, 1,
+                                                   GCallback (callback_change_GVP_vpc_option_flags), this,
+                                                   GVP_opt[k], (1<<bit));
+                        EC_vpc_opt_list = g_slist_prepend( EC_vpc_opt_list, bp->button);
+                        g_object_set_data (G_OBJECT (bp->button), "VPC", GINT_TO_POINTER (k));
+                }
+
 #if 0
                 bp->grid_add_check_button ("", NULL, 1,
                                                GCallback (callback_change_GVP_vpc_option_flags), this,

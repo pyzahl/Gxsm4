@@ -264,8 +264,8 @@ gvp gvp_1
         .M_AXIS_Y_tdata(wy), // ..
         .M_AXIS_Z_tdata(wz), // ..
         .M_AXIS_U_tdata(wu), // ..
-        .index(gvp_index),
-        .gvp_time(gvp_time),
+        .M_AXIS_index_tdata(gvp_index),
+        .M_AXIS_gvp_time_tdata(gvp_time),
         .options(wopt),  // section options: FB, ...
         .pause(pause),
         .store_data(sto), // trigger to store data:: 2: full vector header, 1: data sources
@@ -280,31 +280,31 @@ wire wea;
 
 axis_bram_stream_srcs axis_bram_stream_srcs_tb
 (                             // CH      MASK
-        .ch1s(wx), // XS      0x0001  X in Scan coords
-        .ch2s(wy), // YS      0x0002  Y in Scan coords
-        .ch3s(wz), // ZS      0x0004  Z
-        .ch4s(wu), // U       0x0008  Bias
-        .ch5s(5), // IN1     0x0010  IN1 RP (Signal)
-        .ch6s(6), // IN2     0x0020  IN2 RP (Current)
-        .ch7s(7), // IN3     0x0040  reserved, N/A at this time
-        .ch8s(8), // IN4     0x0080  reserved, N/A at this time
-        .ch9s(9), // DFREQ   0x0100  via PACPLL FIR
-        .chAs(10), // EXEC    0x0200  via PACPLL FIR
-        .chBs(11), // PHASE   0x0400  via PACPLL FIR
-        .chCs(12), // AMPL    0x0800  via PACPLL FIR
-        .chDs(13), // LockInA 0x1000  LockIn X (ToDo)
-        .chEs(14), // LockInB 0x2000  LocKin R (ToDo)
-        .gvp_time(gvp_time),  // time since GVP start in 1/125MHz units
-        .srcs(wopt),      // data selection mask and options
-        .index(gvp_index),     // index starting at N-1 down to 0
+        .S_AXIS_ch1s_tdata(wx), // XS      0x0001  X in Scan coords
+        .S_AXIS_ch2s_tdata(wy), // YS      0x0002  Y in Scan coords
+        .S_AXIS_ch3s_tdata(wz), // ZS      0x0004  Z
+        .S_AXIS_ch4s_tdata(wu), // U       0x0008  Bias
+        .S_AXIS_ch5s_tdata(5), // IN1     0x0010  IN1 RP (Signal)
+        .S_AXIS_ch6s_tdata(6), // IN2     0x0020  IN2 RP (Current)
+        .S_AXIS_ch7s_tdata(7), // IN3     0x0040  reserved, N/A at this time
+        .S_AXIS_ch8s_tdata(8), // IN4     0x0080  reserved, N/A at this time
+        .S_AXIS_ch9s_tdata(9), // DFREQ   0x0100  via PACPLL FIR
+        .S_AXIS_chAs_tdata(10), // EXEC    0x0200  via PACPLL FIR
+        .S_AXIS_chBs_tdata(11), // PHASE   0x0400  via PACPLL FIR
+        .S_AXIS_chCs_tdata(12), // AMPL    0x0800  via PACPLL FIR
+        .S_AXIS_chDs_tdata(13), // LockInA 0x1000  LockIn X (ToDo)
+        .S_AXIS_chEs_tdata(14), // LockInB 0x2000  LocKin R (ToDo)
+        .S_AXIS_gvp_time_tdata(gvp_time),  // time since GVP start in 1/125MHz units
+        .S_AXIS_srcs_tdata(wopt),      // data selection mask and options
+        .S_AXIS_index_tdata(gvp_index),     // index starting at N-1 down to 0
         .push_next(sto), // frame header/data point trigger control
 	    .reset(r),
         .a2_clk(pclk), // double a_clk used for BRAM (125MHz)
-        .BRAM_PORTA_clk(clkbbra),
-        .BRAM_PORTA_addr(addra),
-        .BRAM_PORTA_din(dina),
+        .bram_porta_clk(clkbbra),
+        .bram_porta_addr(addra),
+        .bram_porta_wrdata(dina),
         //.BRAM_PORTA_en(ena),
-        .BRAM_PORTA_we(wea)
+        .bram_porta_we(wea)
     );
 
 /*

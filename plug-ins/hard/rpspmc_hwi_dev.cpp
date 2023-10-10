@@ -689,7 +689,8 @@ gpointer ProbeDataReadThread (void *ptr_hwi){
 int rpspmc_hwi_dev::on_new_data (gconstpointer contents, gsize len, int position, int new_count, bool last){
         int offset = 0;
         int AB=GVP_stream_buffer_AB;
-
+        int fifo = position > 0 ? 1:0;
+        
         if (AB < 0){ // restarted, reset read count
                 AB=-1;
                 GVP_stream_status=1;
@@ -697,14 +698,16 @@ int rpspmc_hwi_dev::on_new_data (gconstpointer contents, gsize len, int position
         if (new_count > 0)
                 AB++;
 
-        if (last)
+        if (last){
                 GVP_stream_status=-1;
+                fifo = 0;
+        }
         
         offset = (AB*(BRAM_SIZE>>1))&(EXPAND_MULTIPLES*BRAM_SIZE-1);
         
         memcpy (&GVP_stream_buffer[offset], contents, len);
         
-        GVP_stream_buffer_position = (position + offset)&(EXPAND_MULTIPLES*BRAM_SIZE-1);
+        GVP_stream_buffer_position = (position + offset - fifo)&(EXPAND_MULTIPLES*BRAM_SIZE-1);
         
         //g_message ("on_new_data ** AB=%d pos=%d  buffer_pos=0x%08x  new_count=%d  %s",
         //           AB, position, GVP_stream_buffer_position, new_count, last? "finished":"...");
@@ -830,6 +833,8 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
 
                         } else {
                                 if (GVP_vp_header_current.endmark){ // checking -- finished?
+                                        // add last point
+                                        RPSPMC_ControlClass->add_probedata (GVP_vp_header_current.dataexpanded, pv, false, true);
                                         g_message ("*** GVP: finished ***");
                                         return ReadProbeData (0, FR_FINISH); // finish
                                 }
@@ -896,12 +901,12 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
                                 return ReadProbeData (0, FR_FINISH); // finish
                         }
 
-                        g_message ("VP: waiting for data ** section: %d gvpi[%04d] Pos:{0x%04x} Offset:0x%04x", GVP_vp_header_current.section, GVP_vp_header_current.i, (int)spmc_parameters.gvp_data_position, GVP_stream_buffer_offset);
-                        usleep(100000);
+                        // g_message ("VP: waiting for data ** section: %d gvpi[%04d] Pos:{0x%04x} Offset:0x%04x", GVP_vp_header_current.section, GVP_vp_header_current.i, (int)spmc_parameters.gvp_data_position, GVP_stream_buffer_offset);
+                        //usleep(100000);
                         return RET_FR_OK; // wait for data
                 }
                         
-                if (!GVP_vp_header_current.i || (clock () - ct)*100/CLOCKS_PER_SEC > 1) break; // for graph updates
+                if (!GVP_vp_header_current.i || (clock () - ct)*25/CLOCKS_PER_SEC > 1) break; // for graph updates
 	}
 
         if (GVP_vp_header_current.i == 0){
@@ -1357,7 +1362,7 @@ void rpspmc_hwi_dev::GVP_vp_init (){
         // reset GVP stream buffer read count
         GVP_stream_buffer_AB = -2;
         GVP_stream_buffer_position = 0;
-        GVP_stream_buffer_offset = 0x100; // =0x00 **** TESTING BRAM ISSUE -- FIX ME !!! *****
+        GVP_stream_buffer_offset = 0; // 0x100   //  =0x00 **** TESTING BRAM ISSUE -- FIX ME !!! *****
         GVP_stream_status=0;
 
         GVP_vp_header_current.endmark = 0;
@@ -1407,7 +1412,7 @@ int rpspmc_hwi_dev::GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v){
         // Vector Program Code Setup
         gvp_vector_i [I_GVP_PC_INDEX] = i;
         gvp_vector_i [I_GVP_N       ] = v->n;
-        gvp_vector_i [I_GVP_OPTIONS ] = ((v->srcs & 0xffffff) << 8) | ((v->options & VP_FEEDBACK_HOLD) ? 0:1);
+        gvp_vector_i [I_GVP_OPTIONS ] = ((v->srcs & 0xffffff) << 8) | (v->options & 0xff); //   ((v->options & VP_FEEDBACK_HOLD) ? 0:1) | (1<<7) | (1<<6) | (1<<5);
         g_message ("GVP_write_program_vector[%d]: srcs = 0x%08x", i, gvp_vector_i [I_GVP_OPTIONS ] );
         gvp_vector_i [I_GVP_NREP    ] = v->repetitions > 1 ? v->repetitions-1 : 0;
         gvp_vector_i [I_GVP_NEXT    ] = v->ptr_next;

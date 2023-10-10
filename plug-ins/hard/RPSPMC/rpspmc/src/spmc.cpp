@@ -705,7 +705,7 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
                              double dx, double dy, double dz, double du,
                              double da, double db,
                              double slew, bool update_life=false){
-
+        
         if (pc&0x1000){ // special auto vector delta computation mode
                 if (verbose > 1) fprintf(stderr, "Write Vector[PC=%03d] auto calc init ref. vector from absolute vector pos. ", pc);
                 double x = rpspmc_to_volts (read_gpio_reg_int32 (1,0));

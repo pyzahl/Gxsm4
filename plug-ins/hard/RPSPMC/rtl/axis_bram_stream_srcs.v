@@ -63,9 +63,23 @@
 
 module axis_bram_stream_srcs #(
     parameter integer BRAM_DATA_WIDTH = 32,
-    parameter integer BRAM_ADDR_WIDTH = 14
+    parameter integer BRAM_ADDR_WIDTH = 16,
+    parameter integer INT_ADDR_WIDTH = 14
 )
 (
+    // BRAM PORT A
+    // [IP_Flow 19-4751] Bus Interface 'BRAM_PORTA_clk': FREQ_HZ bus parameter is missing for output clock interface.
+    //(* X_INTERFACE_INFO = "BRAM_PORTA_clk CLK" *)
+    //(* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME BRAM_PORTA, ASSOCIATED_BUSIF BRAM_PORTA, ASSOCIATED_CLKEN BRAM_PORTA_clk, FREQ_HZ 125000000" *)
+    
+    (* X_INTERFACE_PARAMETER = "FREQ_HZ 125000000, ASSOCIATED_CLKEN a2_clk, ASSOCIATED_BUSIF bram_porta" *)
+    (* X_INTERFACE_PARAMETER = "FREQ_HZ 125000000, ASSOCIATED_CLKEN bram_porta_clk, ASSOCIATED_BUSIF bram_porta:bram_porta_addr:bram_porta_wrdata:bram_porta_we" *)
+    output wire                        bram_porta_clk,
+    output wire [BRAM_ADDR_WIDTH-1:0]  bram_porta_addr,
+    output wire [BRAM_DATA_WIDTH-1:0]  bram_porta_wrdata,
+    output wire                        bram_porta_we,
+    output wire                        bram_porta_en,
+
                              // CH      MASK
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS_ch1s:S_AXIS_ch2s:S_AXIS_ch3s:S_AXIS_ch4s:S_AXIS_ch5s:S_AXIS_ch6s:S_AXIS_ch7s:S_AXIS_ch8s:S_AXIS_ch9s:S_AXIS_chAs:S_AXIS_chBs:S_AXIS_chCs:S_AXIS_chDs:S_AXIS_chEs:S_AXIS_gvp_time:S_AXIS_srcs:S_AXIS_index" *)
 
@@ -110,26 +124,8 @@ module axis_bram_stream_srcs #(
     input wire [2-1:0]  push_next, // frame header/data point trigger control
     input wire reset,
     
-    // BRAM PORT A
 
-
-    // [IP_Flow 19-4751] Bus Interface 'BRAM_PORTA_clk': FREQ_HZ bus parameter is missing for output clock interface.
-
-    //(* X_INTERFACE_INFO = "BRAM_PORTA_clk CLK" *)
-    //(* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME BRAM_PORTA, ASSOCIATED_BUSIF BRAM_PORTA, ASSOCIATED_CLKEN BRAM_PORTA_clk, FREQ_HZ 125000000" *)
-
-    
-    (* X_INTERFACE_PARAMETER = "FREQ_HZ 125000000, ASSOCIATED_CLKEN a2_clk, ASSOCIATED_BUSIF BRAM_PORTA" *)
-    (* X_INTERFACE_PARAMETER = "FREQ_HZ 125000000, ASSOCIATED_CLKEN BRAM_PORTA_clk" *)
-    output wire                        BRAM_PORTA_clk,
-    output wire [BRAM_ADDR_WIDTH-1:0]  BRAM_PORTA_addr,
-    output wire [BRAM_DATA_WIDTH-1:0]  BRAM_PORTA_din,
-    // input  wire [BRAM_DATA_WIDTH-1:0]  BRAM_PORTA_rddata,
-    // output wire                        BRAM_PORTA_rst,
-    // output wire                        BRAM_PORTA_en,
-    output wire                        BRAM_PORTA_we,
-
-    output wire [16-1:0]  last_write_addr,
+    output wire [32-1:0]  last_write_addr,
     output wire ready
     );
     
@@ -137,11 +133,14 @@ module axis_bram_stream_srcs #(
     //reg [2:0] bramwr_sms_next=3'd0;
     reg [2:0] bramwr_sms_start=1'b0;
     reg bram_wr = 1'b0;
+    reg bram_wr2 = 1'b0;
     reg bram_wr_next = 1'b0;
     reg [BRAM_ADDR_WIDTH-1:0] bram_addr=14'h200;
+    reg [BRAM_ADDR_WIDTH-1:0] bram_addr2=14'h200;
     reg [BRAM_ADDR_WIDTH-1:0] bram_addr_next=14'h200;
-    reg [BRAM_ADDR_WIDTH-1:0] position=0;
+    reg [BRAM_ADDR_WIDTH-1:0] position [4:0];
     reg [BRAM_DATA_WIDTH-1:0] bram_data=0;
+    reg [BRAM_DATA_WIDTH-1:0] bram_data2=0;
     reg [BRAM_DATA_WIDTH-1:0] bram_data_next=0;
 
     reg [24-1:0] srcs_mask=0;
@@ -157,16 +156,22 @@ module axis_bram_stream_srcs #(
     reg clk12=0;
     reg clk122=0;
 
-    assign BRAM_PORTA_clk = ~a2_clk;
-    // assign BRAM_PORTA_rst = ~a_resetn;
-    assign BRAM_PORTA_we = bram_wr;
-    assign BRAM_PORTA_addr = bram_addr;
-    assign BRAM_PORTA_din = bram_data;
+    reg patch=0;
 
-    assign last_write_addr = {{(16-BRAM_ADDR_WIDTH){0'b0}}, position}; 
+    assign bram_porta_clk = ~a2_clk;
+    // assign BRAM_PORTA_rst = ~a_resetn;
+    assign bram_porta_we = bram_wr;
+    assign bram_porta_addr = bram_addr;
+    assign bram_porta_wrdata = bram_data;
+    assign bram_porta_en = 1;
+
+    assign last_write_addr = {{(32-BRAM_ADDR_WIDTH){0'b0}}, position[0]}; 
         
     assign ready = status_ready;   
       
+    integer i;
+    initial for (i=0; i<=4; i=i+1) position[i] = 0;
+
     always @(posedge a2_clk)
     begin
         clk12 <= ~clk12;
@@ -177,37 +182,54 @@ module axis_bram_stream_srcs #(
         clk122 <= ~clk122;
     end    
     
+    always @(S_AXIS_srcs_tdata[7])
+    begin
+        patch <= S_AXIS_srcs_tdata[7];
+    end
+        
+    
     // BRAM writer at a2_clk
     always @(posedge a2_clk)
     begin
         //bram_addr <= bram_addr_next; // delay one more!
         
         // silly patch of unresolved adressing issue 0-,4+
-        if ((bram_addr_next & 14'h00f) == 4'hf)
-            bram_addr <= bram_addr_next - 14'h040; // fix addresses @ 0xXXX0 : -0x40
+        if (patch && ((bram_addr_next & 14'h00f) == 4'hf))
+            bram_addr2 <= bram_addr_next - 14'h040; // fix addresses @ 0xXXX0 : -0x40
         else 
         begin 
-            if ((bram_addr_next & 14'h00f) == 1)
-                bram_addr <= bram_addr_next + 14'h040; // fix addresses @ 0xXXX2 : +0x40
+            if (patch && ((bram_addr_next & 14'h00f) == 1))
+                bram_addr2 <= bram_addr_next + 14'h040; // fix addresses @ 0xXXX2 : +0x40
             else     
-                bram_addr <= bram_addr_next; // all other addresses are OK
+                bram_addr2 <= bram_addr_next; // all other addresses are OK
         end
+       
+        bram_data2 <= bram_data_next;
+        bram_wr2   <= bram_wr_next;
+
+        bram_addr <= bram_addr2 + 16'h100; // Shift in window -1
+        bram_data <= bram_data2;
+        bram_wr   <= bram_wr2;
+
+        // delay position
+        position[3] <= position[4];
+        position[2] <= position[3];
+        position[1] <= position[2];
+        position[0] <= position[1];
         
-        bram_data <= bram_data_next;
-        bram_wr <= bram_wr_next;
         push_mode <= push_next;
         r <= reset;
         if (r)
         begin
             bram_wr_next  <= 1'b0;
             //bram_addr_next  <= -1; //{(BRAM_ADDR_WIDTH){-1'b1}}; // idle, reset addr pointer
-            bram_addr_next  <= 14'h100-2;  // idle, reset addr pointer
+            bram_addr_next  <= -1; //14'h080-2;  // -2; idle, reset addr pointer
             bramwr_sms <= 0;
             once <= 1;
         end
         else
         begin
-            position <= bram_addr_next;
+            position[4] <= bram_addr_next;
             // BRAM STORE MACHINE
             case(bramwr_sms)
                 0:    // Begin/reset/wait state
@@ -270,7 +292,7 @@ module axis_bram_stream_srcs #(
                             bram_data_next  <= { 16'hfefe, 16'hfefe }; // frame info: END MARK, full vector position list follows
                         end
                     endcase
-                    bram_addr_next <= bram_addr_next + 1;
+                    bram_addr_next <= (bram_addr_next + 1) & 16'h3fff;
                     bramwr_sms <= 3'd2; // start pushing selected channels
                 end
                 2:    // Data prepare cycle DATA
@@ -280,7 +302,7 @@ module axis_bram_stream_srcs #(
                         bram_wr_next  <= 1'b1; // 0
                         //bram_data_next <= channel; // DATA ALIGNMENT TEST
                         bram_data_next <= stream_buffer[channel];
-                        bram_addr_next <= bram_addr_next + 1; // next adr
+                        bram_addr_next <= (bram_addr_next + 1) & 16'h3fff; // next adr
                         if (channel == 4'd15) // check if no more data to push or last 
                             bramwr_sms <= 3'd0; //4 3 write last and finish frame
                         else
