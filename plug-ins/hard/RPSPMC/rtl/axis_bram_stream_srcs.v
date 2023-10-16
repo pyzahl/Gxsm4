@@ -193,21 +193,23 @@ module axis_bram_stream_srcs #(
     begin
         //bram_addr <= bram_addr_next; // delay one more!
         
-        // silly patch of unresolved adressing issue 0-,4+
-        if (patch && ((bram_addr_next & 14'h00f) == 4'hf))
-            bram_addr2 <= bram_addr_next - 14'h040; // fix addresses @ 0xXXX0 : -0x40
+        // shift
+        bram_addr2 <= bram_addr_next + 16'h0ff;
+        
+        // apply silly patch of unresolved adressing issue 0-,4+
+        if (patch && ((bram_addr2 & 14'h00f) == 4'hf)) // f
+            bram_addr <= bram_addr2 - 14'h040; // fix addresses @ 0xXXX0 : -0x40
         else 
         begin 
-            if (patch && ((bram_addr_next & 14'h00f) == 1))
-                bram_addr2 <= bram_addr_next + 14'h040; // fix addresses @ 0xXXX2 : +0x40
+            if (patch && ((bram_addr2 & 14'h00f) == 1)) // 1
+                bram_addr <= bram_addr2 + 14'h040; // fix addresses @ 0xXXX2 : +0x40
             else     
-                bram_addr2 <= bram_addr_next; // all other addresses are OK
+                bram_addr <= bram_addr2; // all other addresses are OK
         end
        
         bram_data2 <= bram_data_next;
         bram_wr2   <= bram_wr_next;
 
-        bram_addr <= bram_addr2 + 16'h100; // Shift in window -1
         bram_data <= bram_data2;
         bram_wr   <= bram_wr2;
 

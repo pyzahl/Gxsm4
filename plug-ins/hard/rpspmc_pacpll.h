@@ -909,11 +909,13 @@ public:
 	};
 
         int read_GVP_data_block_to_position_vector (int offset, gboolean expect_full_header=false){
+                static int retry = 3;
                 size_t ch_index;
 
                 if (expect_full_header || offset==0)
                         status_append_int32 (&GVP_stream_buffer[offset], 10*16, true, offset, true);
                 
+#if 0
                 if (offset < 0 || offset > (EXPAND_MULTIPLES*BRAM_SIZE-20)){
                         gchar *tmp = g_strdup_printf ("read_GVP_data_block_to_position_vector: Reading offset %08x out of range ERROR.",
                                                       offset);
@@ -922,6 +924,7 @@ public:
                         g_free (tmp);
                         return -999;
                 }
+#endif
                 
                 if (offset >= GVP_stream_buffer_position){ // Buffer is huge now all pages concat
 #if 0
@@ -944,6 +947,7 @@ public:
                 if (GVP_vp_header_current.srcs == 0xffff){
                         GVP_vp_header_current.n    = GVP_vp_header_current.i + 1;
                         GVP_vp_header_current.endmark = 0;
+                        retry=3;
                 } else {
                         if (GVP_stream_buffer[offset] == 0xfefefefe){
                                 GVP_vp_header_current.endmark = 1;
@@ -992,7 +996,10 @@ public:
                         g_warning (tmp);
                         g_free (tmp);
                         GVP_vp_header_current.index = 0; // to prevent issues
-                        return (-95);
+                        if (--retry)
+                                return -99;
+                        else
+                                return (-95);
                 }
                 
                 GVP_vp_header_current.number_channels=0;
@@ -1016,8 +1023,8 @@ public:
                 }
 
                 if (expect_full_header && GVP_vp_header_current.srcs != 0xffff){
-                        gchar *tmp = g_strdup_printf ("ERROR: read_GVP_data_block_to_position_vector: Reading offset %08x, write position %08x. Expecting full header but found srcs=%04x, i=%d\n",
-                                                      offset, GVP_stream_buffer_position,  GVP_vp_header_current.srcs, GVP_vp_header_current.i);
+                        gchar *tmp = g_strdup_printf ("ERROR: read_GVP_data_block_to_position_vector: Reading offset %08x, write position %08x. Expecting full header but found srcs=%04x, i=%d rty=%d\n",
+                                                      offset, GVP_stream_buffer_position,  GVP_vp_header_current.srcs, GVP_vp_header_current.i, retry);
                         status_append (tmp, true);
                         if (offset>64)
                                 status_append_int32 (&GVP_stream_buffer[offset-64], 10*16, true, offset-64, true);
@@ -1025,7 +1032,10 @@ public:
                                 status_append_int32 (&GVP_stream_buffer[0], 10*16, true, 0, true);
                         g_warning (tmp);
                         g_free (tmp);
-                        return (-97);
+                        if (--retry)
+                                return -99;
+                        else
+                                return (-97);
                 }
                 
 
@@ -1053,6 +1063,7 @@ public:
                                 GVP_vp_header_current.gvp_time = (((guint64)((guint32)GVP_vp_header_current.chNs[15]))<<32) | (guint64)((guint32)GVP_vp_header_current.chNs[14]);
                                 GVP_vp_header_current.dataexpanded[14] = (double)GVP_vp_header_current.gvp_time/125e3;
                         }
+                        retry=3;
                         if (GVP_vp_header_current.srcs == 0xffff)
                                 return -1; // true for full position header update
                         return ch_index;

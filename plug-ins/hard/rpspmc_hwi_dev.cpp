@@ -689,7 +689,7 @@ gpointer ProbeDataReadThread (void *ptr_hwi){
 int rpspmc_hwi_dev::on_new_data (gconstpointer contents, gsize len, int position, int new_count, bool last){
         int offset = 0;
         int AB=GVP_stream_buffer_AB;
-        int fifo = position > 0 ? 1:0;
+        int fifo = 0; //position > 0 ? 1:0;
         
         if (AB < 0){ // restarted, reset read count
                 AB=-1;
@@ -706,8 +706,18 @@ int rpspmc_hwi_dev::on_new_data (gconstpointer contents, gsize len, int position
         offset = (AB*(BRAM_SIZE>>1))&(EXPAND_MULTIPLES*BRAM_SIZE-1);
         
         memcpy (&GVP_stream_buffer[offset], contents, len);
-        
+
         GVP_stream_buffer_position = (position + offset - fifo)&(EXPAND_MULTIPLES*BRAM_SIZE-1);
+#if 1
+        gchar *tmp = g_strdup_printf ("WS-BUFFER-DATA_AB%03d_Off%0x08d_Pos0x%04x_GVPPos%0x08d.bin", AB, offset, position,  GVP_stream_buffer_position);
+        FILE *pFile = fopen(tmp, "wb");
+        g_free (tmp);
+        fwrite(&GVP_stream_buffer[0], 1, 4*offset+len, pFile);
+        fclose(pFile);
+        // hexdump -v -e '"%08_ax: "' -e ' 16/4 "%08x_L[red:0x018ec108,green:0x018fffff] " " \n"' WS-BRAM-DATA-BLOCK_000_Pos0x1f7e_AB_00.bin
+#endif
+
+        
         
         //g_message ("on_new_data ** AB=%d pos=%d  buffer_pos=0x%08x  new_count=%d  %s",
         //           AB, position, GVP_stream_buffer_position, new_count, last? "finished":"...");

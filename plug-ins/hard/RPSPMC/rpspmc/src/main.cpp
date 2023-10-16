@@ -410,7 +410,7 @@ spmc_stream_server spmc_stream_server_instance;
 
 const char *FPGA_PACPLL_A9_name = "/dev/mem";
 void *FPGA_PACPLL_bram = NULL;
-void *FPGA_SPMC_bram = NULL;
+volatile uint8_t *FPGA_SPMC_bram = NULL;
 void *FPGA_PACPLL_cfg1 = NULL;
 void *FPGA_PACPLL_cfg2 = NULL;
 void *FPGA_PACPLL_gpio = NULL;
@@ -454,7 +454,7 @@ int rp_PAC_App_Init(){
         FPGA_PACPLL_CFG_block_size   = FPGA_CFG_PAGES*sysconf (_SC_PAGESIZE);   // sysconf (_SC_PAGESIZE) is 0x1000; map CFG + GPIO pages
         FPGA_PACPLL_GPIO_block_size  = FPGA_GPIO_PAGES*sysconf (_SC_PAGESIZE);   // sysconf (_SC_PAGESIZE) is 0x1000; map CFG + GPIO pages
        
-        if ((fd = open (FPGA_PACPLL_A9_name, O_RDWR)) < 0) {
+        if ((fd = open (FPGA_PACPLL_A9_name, O_RDWR|O_SYNC)) < 0) { // O_SYNC, O_DIRECT
                 fprintf(stderr, "EE *** FPGA A9 /dev/mem FD OPEN FAILED ***\n");
                 perror ("open");
                 return RP_EOOR;
@@ -467,8 +467,8 @@ int rp_PAC_App_Init(){
                 return RP_EOOR;
         }
         
-        FPGA_SPMC_bram = mmap (NULL, FPGA_SPMC_BRAM_block_size,
-                               PROT_READ|PROT_WRITE, MAP_SHARED, fd, FPGA_BRAM_SPMC_BASE);
+        FPGA_SPMC_bram = (volatile uint8_t*) mmap (NULL, FPGA_SPMC_BRAM_block_size,
+                               PROT_READ|PROT_WRITE , MAP_SHARED, fd, FPGA_BRAM_SPMC_BASE);
         if (FPGA_SPMC_bram == MAP_FAILED){
                 fprintf(stderr, "EE *** FPGA MMAP SPMC_BRAM block failed ***\n");
                 return RP_EOOR;
@@ -535,7 +535,7 @@ void rp_PAC_App_Release(){
         munmap (FPGA_PACPLL_gpio, FPGA_PACPLL_GPIO_block_size);
         munmap (FPGA_PACPLL_cfg1, FPGA_PACPLL_CFG_block_size);
         munmap (FPGA_PACPLL_cfg2, FPGA_PACPLL_CFG_block_size);
-        munmap (FPGA_SPMC_bram, FPGA_SPMC_BRAM_block_size);
+        munmap ((void*)FPGA_SPMC_bram, FPGA_SPMC_BRAM_block_size);
         munmap (FPGA_PACPLL_bram, FPGA_PACPLL_BRAM_block_size);
 #ifdef DEVELOPMENT_PACPLL_OP
         fprintf(stderr, "RP FPGA maps unmapped.\n");
