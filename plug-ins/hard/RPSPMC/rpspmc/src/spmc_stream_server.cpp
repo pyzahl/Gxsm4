@@ -58,6 +58,8 @@
 #include <DataManager.h>
 #include <CustomParameters.h>
 
+#include "spmc_dma.h"
+
 #include "fpga_cfg.h"
 #include "pacpll.h"
 
@@ -71,7 +73,9 @@ static pthread_t stream_server_thread;
 
 extern spmc_stream_server spmc_stream_server_instance;
 
-extern volatile uint8_t *FPGA_SPMC_bram;
+extern spmc_dma_support *spm_dma_instance;
+
+//extern volatile uint8_t *FPGA_SPMC_bram;
 //extern void *FPGA_SPMC_bram;
 
 extern CIntParameter SPMC_GVP_DATA_POSITION;
@@ -99,12 +103,15 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
         static size_t offset = 0;
         static bool started = false;
         static int position_prev=0;
-        static int position_prev2=0;
         
         int position   = stream_lastwrite_address();
         position_info << "{StreamInfo";
 
         if (stream_server_control & 2){ // started!
+
+                if (spm_dma_instance)
+                        spm_dma_instance->start_dma ();
+
                 limit = BRAM_POS_HALF;
                 count = 0;
                 last_offset = 0;
@@ -124,6 +131,10 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
         
         // use delayed position_prev
         if (started){ // started?
+
+                 if (spm_dma_instance)
+                         spm_dma_instance->print_check_dma_all();
+                 
                 if (position_prev >= 0 && gvp_finished ()){ // must transfer data written to block when finished but block not full.
                         position_info << std::hex << ",preFinPos{0x" << position << "}";
                         usleep (50000); // make sure all fifos are emptied...
@@ -162,8 +173,8 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
 
         position_info << "}" << std::endl;
 
-        msync ((void *)FPGA_SPMC_bram, 4*0x4200, MS_SYNC);
-
+        //*** msync ((void *)FPGA_SPMC_bram, 4*0x4200, MS_SYNC);
+                        
         // Broadcast to all connections
         con_list::iterator it;
         for (it = m_connections.begin(); it != m_connections.end(); ++it) {
@@ -173,9 +184,12 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
                 if (data_len > 0 && position_prev != position){
                         //uint8_t *bram = (uint8_t*)FPGA_SPMC_bram + offset;
                         m_endpoint.send(*it, position_info.str(), websocketpp::frame::opcode::text);
-                        if (position_prev >= 0)
-                                m_endpoint.send(*it, (void*) FPGA_SPMC_bram, (0x200+2*BRAM_POS_HALF) * sizeof(uint32_t), websocketpp::frame::opcode::binary); // full block
-                        //m_endpoint.send(*it, (void*)bram, data_len * sizeof(uint32_t), websocketpp::frame::opcode::binary); // there is a address mix up at block boundaries ?!?!? WTF
+                        if (position_prev >= 0){
+                                if (spm_dma_instance)
+                                        m_endpoint.send(*it, (void*)spm_dma_instance->dma_memdest (), (2*BRAM_POS_HALF) * sizeof(uint32_t), websocketpp::frame::opcode::binary); // full block
+                                //m_endpoint.send(*it, (void*) FPGA_SPMC_bram, (0x200+2*BRAM_POS_HALF) * sizeof(uint32_t), websocketpp::frame::opcode::binary); // full block
+                                //m_endpoint.send(*it, (void*)bram, data_len * sizeof(uint32_t), websocketpp::frame::opcode::binary); // there is a address mix up at block boundaries ?!?!? WTF
+                        }
                 } 
 #if 0
                 if (verbose > 3){

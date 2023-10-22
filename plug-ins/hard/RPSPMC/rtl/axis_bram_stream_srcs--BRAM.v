@@ -62,25 +62,24 @@
 
 
 module axis_bram_stream_srcs #(
-    parameter integer DMA_DATA_WIDTH = 32,
-    parameter integer DMA_ADDR_WIDTH = 16,
+    parameter integer BRAM_DATA_WIDTH = 32,
+    parameter integer BRAM_ADDR_WIDTH = 16,
     parameter integer INT_ADDR_WIDTH = 14
 )
 (
     // BRAM PORT A
-    // [IP_Flow 19-4751] Bus Interface 'DMA_PORTA_clk': FREQ_HZ bus parameter is missing for output clock interface.
-    //(* X_INTERFACE_INFO = "DMA_PORTA_clk CLK" *)
-    //(* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME DMA_PORTA, ASSOCIATED_BUSIF DMA_PORTA, ASSOCIATED_CLKEN DMA_PORTA_clk, FREQ_HZ 125000000" *)
+    // [IP_Flow 19-4751] Bus Interface 'BRAM_PORTA_clk': FREQ_HZ bus parameter is missing for output clock interface.
+    //(* X_INTERFACE_INFO = "BRAM_PORTA_clk CLK" *)
+    //(* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME BRAM_PORTA, ASSOCIATED_BUSIF BRAM_PORTA, ASSOCIATED_CLKEN BRAM_PORTA_clk, FREQ_HZ 125000000" *)
     
-    (* X_INTERFACE_PARAMETER = "FREQ_HZ 125000000, ASSOCIATED_CLKEN dma_data_clk, ASSOCIATED_BUSIF M_AXIS" *)
-    output wire                        dma_data_clk,
-    output wire                        [DMA_DATA_WIDTH-1:0] M_AXIS_tdata,
-    output wire                        M_AXIS_tvalid,
-    output wire                        M_AXIS_tlast,
-    input wire                         M_AXIS_tready,
+    (* X_INTERFACE_PARAMETER = "FREQ_HZ 125000000, ASSOCIATED_CLKEN a2_clk, ASSOCIATED_BUSIF bram_porta" *)
+    (* X_INTERFACE_PARAMETER = "FREQ_HZ 125000000, ASSOCIATED_CLKEN bram_porta_clk, ASSOCIATED_BUSIF bram_porta:bram_porta_addr:bram_porta_wrdata:bram_porta_we" *)
+    output wire                        bram_porta_clk,
+    output wire [BRAM_ADDR_WIDTH-1:0]  bram_porta_addr,
+    output wire [BRAM_DATA_WIDTH-1:0]  bram_porta_wrdata,
+    output wire                        bram_porta_we,
+    output wire                        bram_porta_en,
 
-    output wire                        dma_fifo_resetn,
-    
                              // CH      MASK
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS_ch1s:S_AXIS_ch2s:S_AXIS_ch3s:S_AXIS_ch4s:S_AXIS_ch5s:S_AXIS_ch6s:S_AXIS_ch7s:S_AXIS_ch8s:S_AXIS_ch9s:S_AXIS_chAs:S_AXIS_chBs:S_AXIS_chCs:S_AXIS_chDs:S_AXIS_chEs:S_AXIS_gvp_time:S_AXIS_srcs:S_AXIS_index" *)
 
@@ -133,13 +132,16 @@ module axis_bram_stream_srcs #(
     reg [2:0] bramwr_sms=3'd0;
     //reg [2:0] bramwr_sms_next=3'd0;
     reg [2:0] bramwr_sms_start=1'b0;
-    reg dma_wr = 1'b0;
-    reg dma_wr_next = 1'b0;
-    reg [DMA_DATA_WIDTH-1:0] dma_data=0;
-    reg [DMA_DATA_WIDTH-1:0] dma_data_next=0;
-    reg [DMA_ADDR_WIDTH-1:0] dma_addr=0;
-    reg [DMA_ADDR_WIDTH-1:0] dma_addr_next=0;
-    reg [DMA_ADDR_WIDTH-1:0] position;
+    reg bram_wr = 1'b0;
+    reg bram_wr2 = 1'b0;
+    reg bram_wr_next = 1'b0;
+    reg [BRAM_ADDR_WIDTH-1:0] bram_addr=14'h200;
+    reg [BRAM_ADDR_WIDTH-1:0] bram_addr2=14'h200;
+    reg [BRAM_ADDR_WIDTH-1:0] bram_addr_next=14'h200;
+    reg [BRAM_ADDR_WIDTH-1:0] position [4:0];
+    reg [BRAM_DATA_WIDTH-1:0] bram_data=0;
+    reg [BRAM_DATA_WIDTH-1:0] bram_data2=0;
+    reg [BRAM_DATA_WIDTH-1:0] bram_data_next=0;
 
     reg [24-1:0] srcs_mask=0;
     reg [4-1:0] channel=0;
@@ -151,55 +153,94 @@ module axis_bram_stream_srcs #(
     reg r=0;
     reg [2-1:0] hdr_type=0;
 
-    reg last=0;
+    reg clk12=0;
+    reg clk122=0;
 
-    assign dma_data_clk = a2_clk;
-    // assign DMA_PORTA_rst = ~a_resetn;
-    assign M_AXIS_tdata  = dma_data;
-    assign M_AXIS_tvalid = dma_wr;
-    assign M_AXIS_tlast  = last; // ??
+    reg patch=0;
 
-    assign dma_fifo_resetn = ~reset;
+    assign bram_porta_clk = ~a2_clk;
+    // assign BRAM_PORTA_rst = ~a_resetn;
+    assign bram_porta_we = bram_wr;
+    assign bram_porta_addr = bram_addr;
+    assign bram_porta_wrdata = bram_data;
+    assign bram_porta_en = 1;
 
-    assign last_write_addr = {{(32-DMA_ADDR_WIDTH){0'b0}}, position}; 
+    assign last_write_addr = {{(32-BRAM_ADDR_WIDTH){0'b0}}, position[0]}; 
         
     assign ready = status_ready;   
       
     integer i;
     initial for (i=0; i<=4; i=i+1) position[i] = 0;
 
+    always @(posedge a2_clk)
+    begin
+        clk12 <= ~clk12;
+    end    
+    
+    always @(posedge clk12)
+    begin
+        clk122 <= ~clk122;
+    end    
+    
+    always @(S_AXIS_srcs_tdata[7])
+    begin
+        patch <= S_AXIS_srcs_tdata[7];
+    end
+        
     
     // BRAM writer at a2_clk
     always @(posedge a2_clk)
     begin
+        //bram_addr <= bram_addr_next; // delay one more!
+        
+        // shift
+        bram_addr2 <= bram_addr_next + 16'h0ff;
+        
+        // apply silly patch of unresolved adressing issue 0-,4+
+        if (patch && ((bram_addr2 & 14'h00f) == 4'hf)) // f
+            bram_addr <= bram_addr2 - 14'h040; // fix addresses @ 0xXXX0 : -0x40
+        else 
+        begin 
+            if (patch && ((bram_addr2 & 14'h00f) == 1)) // 1
+                bram_addr <= bram_addr2 + 14'h040; // fix addresses @ 0xXXX2 : +0x40
+            else     
+                bram_addr <= bram_addr2; // all other addresses are OK
+        end
+       
+        bram_data2 <= bram_data_next;
+        bram_wr2   <= bram_wr_next;
+
+        bram_data <= bram_data2;
+        bram_wr   <= bram_wr2;
+
+        // delay position
+        position[3] <= position[4];
+        position[2] <= position[3];
+        position[1] <= position[2];
+        position[0] <= position[1];
+        
         push_mode <= push_next;
         r <= reset;
-
-        dma_wr    <= dma_wr_next;
-        dma_data  <= dma_data_next;
-        dma_addr  <= dma_addr_next;
-
         if (r)
         begin
-            dma_wr_next    <= 1'b0;
-            dma_data_next  <= 0;
-            dma_addr_next  <= -1;
+            bram_wr_next  <= 1'b0;
+            //bram_addr_next  <= -1; //{(BRAM_ADDR_WIDTH){-1'b1}}; // idle, reset addr pointer
+            bram_addr_next  <= -1; //14'h080-2;  // -2; idle, reset addr pointer
             bramwr_sms <= 0;
             once <= 1;
         end
         else
         begin
-            position <= dma_addr;
+            position[4] <= bram_addr_next;
             // BRAM STORE MACHINE
             case(bramwr_sms)
                 0:    // Begin/reset/wait state
                 begin
-                    dma_wr_next <= 1'b0;
-                    last <= 0;                 
                     if (push_mode && once) // buffer data and start write cycle
                     begin
                         hdr_type <= push_mode;
                         status_ready <= 0;
+                        bram_wr_next  <= 1'b0;
                         channel <= 0;
                         once <= 0; // only one push!
                         // buffer all data in order [] of srcs bits in mask
@@ -224,6 +265,7 @@ module axis_bram_stream_srcs #(
                     else
                     begin
                         status_ready <= 1;
+                        bram_wr_next  <= 1'b0;
                         if (!push_next)
                             once <= 1; // push_next is clear now, wait for next push!
                         bramwr_sms <= 3'd0; // wait for next data
@@ -231,57 +273,48 @@ module axis_bram_stream_srcs #(
                 end
                 1:    // Data prepare cycle HEADER
                 begin
-                    dma_wr_next <= 1'b1;
+                    bram_wr_next  <= 1'b1;
                     // prepare header -- full or normal point header
                     case (hdr_type)
                         1: 
                         begin // normal data set as of srcs
-                            srcs_mask <= S_AXIS_srcs_tdata[32-1:8];
-                            dma_data_next <= { S_AXIS_index_tdata[16-1:0], S_AXIS_srcs_tdata[32-8-1:8] }; // frame info: mask and type (header or data)
+                            srcs_mask       <= S_AXIS_srcs_tdata[32-1:8];
+                            bram_data_next  <= { S_AXIS_index_tdata[16-1:0], S_AXIS_srcs_tdata[32-8-1:8] }; // frame info: mask and type (header or data)
                         end
                         2:
                         begin // full header info, all signals
-                            srcs_mask <= 24'h0ffff;// ALL 16
-                            dma_data_next <= { S_AXIS_index_tdata[16-1:0], 16'hffff }; // frame info: mask and type (header or data)
+                            srcs_mask       <= 24'h0ffff;// ALL 16
+                            bram_data_next  <= { S_AXIS_index_tdata[16-1:0], 16'hffff }; // frame info: mask and type (header or data)
                         end
                         3:
                         begin // full header info, all signals, + END MARKING
                             stream_buffer[12] <= 32'hffffeeee;
                             stream_buffer[13] <= 32'hfefecdcd;
-                            srcs_mask <= 24'hfffff;// ALL 16
-                            dma_data_next <= { 16'hfefe, 16'hfefe }; // frame info: END MARK, full vector position list follows
+                            srcs_mask       <= 24'hfffff;// ALL 16
+                            bram_data_next  <= { 16'hfefe, 16'hfefe }; // frame info: END MARK, full vector position list follows
                         end
                     endcase
-                    dma_addr_next <= (dma_addr_next + 1) & 16'h3fff;
+                    bram_addr_next <= (bram_addr_next + 1) & 16'h3fff;
                     bramwr_sms <= 3'd2; // start pushing selected channels
                 end
                 2:    // Data prepare cycle DATA
                 begin
                     if (srcs_mask & (1<<channel))
                     begin
-                        //dma_data_next <= channel; // DATA ALIGNMENT TEST
-                        dma_data_next <= stream_buffer[channel];
-                        dma_addr_next <= (dma_addr_next + 1) & 16'h3fff; // next adr
+                        bram_wr_next  <= 1'b1; // 0
+                        //bram_data_next <= channel; // DATA ALIGNMENT TEST
+                        bram_data_next <= stream_buffer[channel];
+                        bram_addr_next <= (bram_addr_next + 1) & 16'h3fff; // next adr
                         if (channel == 4'd15) // check if no more data to push or last 
-                        begin
-                            dma_wr_next <= 1'b0; // 0: data to write done next this set
-                            last <= 1;                 
                             bramwr_sms <= 3'd0; //4 3 write last and finish frame
-                        end
                         else
-                        begin
-                            dma_wr_next <= 1'b1; // 1: data to write for this channel
                             bramwr_sms <= 3'd2; //3 2 write and then repeat here
-                        end
                     end
                     else
                     begin
-                        dma_wr_next <= 1'b0; // 0: no data in this channel
+                        bram_wr_next  <= 1'b1; // 0
                         if ((srcs_mask >> channel) == 0 || channel == 15) // check if no more data to push or last 
-                        begin
-                            last <= 1;                 
                             bramwr_sms <= 3'd0; //6 0 finish frame
-                        end                     
                         else
                             bramwr_sms <= 3'd2; //2 1 repeat here
                     end

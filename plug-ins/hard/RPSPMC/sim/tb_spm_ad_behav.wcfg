@@ -11,15 +11,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="0.000 ns"></ZoomStartTime>
-      <ZoomEndTime time="101.885 ns"></ZoomEndTime>
-      <Cursor1Time time="20,000.000 ns"></Cursor1Time>
+      <ZoomStartTime time="112.300 ns"></ZoomStartTime>
+      <ZoomEndTime time="226.207 ns"></ZoomEndTime>
+      <Cursor1Time time="5,000.000 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
-      <NameColumnWidth column_width="340"></NameColumnWidth>
+      <NameColumnWidth column_width="322"></NameColumnWidth>
       <ValueColumnWidth column_width="91"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="36" />
+   <WVObjectSize size="37" />
    <wvobject type="logic" fp_name="/tb_spm_ad/pclk">
       <obj_property name="ElementShortName">pclk</obj_property>
       <obj_property name="ObjectShortName">pclk</obj_property>
@@ -176,36 +176,6 @@
       <obj_property name="CustomSignalColor">#00FFFF</obj_property>
       <obj_property name="UseCustomSignalColor">true</obj_property>
    </wvobject>
-   <wvobject type="array" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/bram_addr">
-      <obj_property name="ElementShortName">bram_addr[15:0]</obj_property>
-      <obj_property name="ObjectShortName">bram_addr[15:0]</obj_property>
-      <obj_property name="CustomSignalColor">#FF00FF</obj_property>
-      <obj_property name="UseCustomSignalColor">true</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/bram_data">
-      <obj_property name="ElementShortName">bram_data[31:0]</obj_property>
-      <obj_property name="ObjectShortName">bram_data[31:0]</obj_property>
-      <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
-      <obj_property name="AnalogYRangeType">ANALOG_YRANGETYPE_FIXED</obj_property>
-      <obj_property name="AnalogYRangeMin">0.000000</obj_property>
-      <obj_property name="AnalogYRRangeMax">100.000000</obj_property>
-      <obj_property name="AnalogInterpolation">ANALOG_INTERPOLATION_HOLD</obj_property>
-      <obj_property name="AnalogOffscale">ANALOG_OFFSCALE_HIDE</obj_property>
-      <obj_property name="AnalogHorizLine">0.000000</obj_property>
-      <obj_property name="Radix">HEXRADIX</obj_property>
-      <obj_property name="CustomSignalColor">#FFA500</obj_property>
-      <obj_property name="UseCustomSignalColor">true</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/bram_data_next">
-      <obj_property name="ElementShortName">bram_data_next[31:0]</obj_property>
-      <obj_property name="ObjectShortName">bram_data_next[31:0]</obj_property>
-      <obj_property name="CustomSignalColor">#FF00FF</obj_property>
-      <obj_property name="UseCustomSignalColor">true</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/bram_wr">
-      <obj_property name="ElementShortName">bram_wr</obj_property>
-      <obj_property name="ObjectShortName">bram_wr</obj_property>
-   </wvobject>
    <wvobject type="array" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/channel">
       <obj_property name="ElementShortName">channel[3:0]</obj_property>
       <obj_property name="ObjectShortName">channel[3:0]</obj_property>
@@ -236,20 +206,40 @@
       <obj_property name="ElementShortName">push_next[1:0]</obj_property>
       <obj_property name="ObjectShortName">push_next[1:0]</obj_property>
    </wvobject>
-   <wvobject type="array" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/bram_porta_addr">
-      <obj_property name="ElementShortName">bram_porta_addr[15:0]</obj_property>
-      <obj_property name="ObjectShortName">bram_porta_addr[15:0]</obj_property>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/M_AXIS_tdata">
+      <obj_property name="ElementShortName">M_AXIS_tdata[31:0]</obj_property>
+      <obj_property name="ObjectShortName">M_AXIS_tdata[31:0]</obj_property>
    </wvobject>
-   <wvobject type="array" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/bram_porta_wrdata">
-      <obj_property name="ElementShortName">bram_porta_wrdata[31:0]</obj_property>
-      <obj_property name="ObjectShortName">bram_porta_wrdata[31:0]</obj_property>
+   <wvobject type="logic" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/M_AXIS_tvalid">
+      <obj_property name="ElementShortName">M_AXIS_tvalid</obj_property>
+      <obj_property name="ObjectShortName">M_AXIS_tvalid</obj_property>
    </wvobject>
-   <wvobject type="logic" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/bram_porta_we">
-      <obj_property name="ElementShortName">bram_porta_we</obj_property>
-      <obj_property name="ObjectShortName">bram_porta_we</obj_property>
+   <wvobject type="logic" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/M_AXIS_tlast">
+      <obj_property name="ElementShortName">M_AXIS_tlast</obj_property>
+      <obj_property name="ObjectShortName">M_AXIS_tlast</obj_property>
    </wvobject>
-   <wvobject type="logic" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/bram_porta_clk">
-      <obj_property name="ElementShortName">bram_porta_clk</obj_property>
-      <obj_property name="ObjectShortName">bram_porta_clk</obj_property>
+   <wvobject type="logic" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/M_AXIS_tready">
+      <obj_property name="ElementShortName">M_AXIS_tready</obj_property>
+      <obj_property name="ObjectShortName">M_AXIS_tready</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/a2_clk">
+      <obj_property name="ElementShortName">a2_clk</obj_property>
+      <obj_property name="ObjectShortName">a2_clk</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/dma_wr">
+      <obj_property name="ElementShortName">dma_wr</obj_property>
+      <obj_property name="ObjectShortName">dma_wr</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/dma_fifo_resetn">
+      <obj_property name="ElementShortName">dma_fifo_resetn</obj_property>
+      <obj_property name="ObjectShortName">dma_fifo_resetn</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/dma_data">
+      <obj_property name="ElementShortName">dma_data[31:0]</obj_property>
+      <obj_property name="ObjectShortName">dma_data[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/dma_addr">
+      <obj_property name="ElementShortName">dma_addr[15:0]</obj_property>
+      <obj_property name="ObjectShortName">dma_addr[15:0]</obj_property>
    </wvobject>
 </wave_config>

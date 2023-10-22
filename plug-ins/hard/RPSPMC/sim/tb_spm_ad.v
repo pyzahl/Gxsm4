@@ -273,10 +273,9 @@ gvp gvp_1
 );
 
 wire clkbra;
-wire [14-1:0] addra;
-wire [32-1:0] dina;
-wire ena;
-wire wea;
+wire [32-1:0] dma_tdata;
+wire dma_tvalid;
+wire dma_tlast;
 
 axis_bram_stream_srcs axis_bram_stream_srcs_tb
 (                             // CH      MASK
@@ -300,11 +299,11 @@ axis_bram_stream_srcs axis_bram_stream_srcs_tb
         .push_next(sto), // frame header/data point trigger control
 	    .reset(r),
         .a2_clk(pclk), // double a_clk used for BRAM (125MHz)
-        .bram_porta_clk(clkbbra),
-        .bram_porta_addr(addra),
-        .bram_porta_wrdata(dina),
-        //.BRAM_PORTA_en(ena),
-        .bram_porta_we(wea)
+        .dma_data_clk(clkbbra),
+        .M_AXIS_tdata(dma_tdata),
+        .M_AXIS_tvalid(dma_tvalid),
+        .M_AXIS_tlast(dma_tlast),
+        .M_AXIS_tready(1)
     );
 
 /*

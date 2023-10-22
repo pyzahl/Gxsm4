@@ -61,7 +61,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module axis_bram_stream_srcs #(
+module axis_dma_stream_srcs #(
     parameter integer DMA_DATA_WIDTH = 32,
     parameter integer DMA_ADDR_WIDTH = 16,
     parameter integer INT_ADDR_WIDTH = 14

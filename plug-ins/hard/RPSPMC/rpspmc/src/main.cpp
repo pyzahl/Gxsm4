@@ -50,6 +50,8 @@
 #include "pacpll.h"
 #include "spmc.h"
 
+#include "spmc_dma.h"
+
 // Some thing is off while Linking, application does NOT (terminated with unkown error a tload time) work with compliled separate and linked to lib
 // In Makefile: CXXSOURCES=main.cpp fpga_cfg.cpp pacpll.cpp spmc.cpp
 // Thus this primitive alternative assembly here
@@ -72,6 +74,25 @@
 
 
 // FPGA MEMORY MAPPING for "RP-SPMC-RedPACPLL" 202308V00
+
+/*
+Network 1					
+/PS/axi_bram_reader_scope/s00_axi	S_AXI	reg0	0x4000_0000	2M	0x401F_FFFF
+/PS/axi_dma_spmc/S_AXI_LITE	S_AXI_LITE	Reg	0x4040_0000	64K	0x4040_FFFF
+/PS/Configurations/axi_cfg_register_0/s_axi	S_AXI	reg0	0x4200_0000	4K	0x4200_0FFF
+/PS/Configurations/axi_cfg_register_1/s_axi	S_AXI	reg0	0x4300_0000	4K	0x4300_0FFF
+/PS/GPIOs/axi_gpio_0/S_AXI	S_AXI	Reg	0x4200_2000	4K	0x4200_2FFF
+/PS/GPIOs/axi_gpio_1/S_AXI	S_AXI	Reg	0x4200_3000	4K	0x4200_3FFF
+/PS/GPIOs/axi_gpio_2/S_AXI	S_AXI	Reg	0x4200_4000	4K	0x4200_4FFF
+/PS/GPIOs/axi_gpio_3/S_AXI	S_AXI	Reg	0x4200_5000	4K	0x4200_5FFF
+/PS/GPIOs/axi_gpio_4/S_AXI	S_AXI	Reg	0x4200_6000	4K	0x4200_6FFF
+/PS/GPIOs/axi_gpio_5/S_AXI	S_AXI	Reg	0x4200_7000	4K	0x4200_7FFF
+/PS/GPIOs/axi_gpio_6/S_AXI	S_AXI	Reg	0x4200_8000	4K	0x4200_8FFF
+/PS/GPIOs/axi_gpio_7/S_AXI	S_AXI	Reg	0x4200_9000	4K	0x4200_9FFF
+/PS/GPIOs/axi_gpio_8/S_AXI	S_AXI	Reg	0x4200_A000	4K	0x4200_AFFF
+/PS/GPIOs/axi_gpio_9/S_AXI	S_AXI	Reg	0x4200_B000	4K	0x4200_BFFF
+/PS/GPIOs/axi_gpio_10/S_AXI	S_AXI	Reg	0x4200_C000	4K	0x4200_CFFF
+*/
 
 // FPGA page size is 0x1000
 
@@ -401,7 +422,7 @@ CDoubleParameter counter("COUNTER", CBaseParameter::RW, 1, 0, 1e-12, 1e+12);
 int thread_data__tune_control=0;
 
 spmc_stream_server spmc_stream_server_instance;
-
+spmc_dma_support *spm_dma_instance = NULL;
 
 /*
  * RedPitaya A9 FPGA Link
@@ -410,7 +431,7 @@ spmc_stream_server spmc_stream_server_instance;
 
 const char *FPGA_PACPLL_A9_name = "/dev/mem";
 void *FPGA_PACPLL_bram = NULL;
-volatile uint8_t *FPGA_SPMC_bram = NULL;
+//volatile uint8_t *FPGA_SPMC_bram = NULL;
 void *FPGA_PACPLL_cfg1 = NULL;
 void *FPGA_PACPLL_cfg2 = NULL;
 void *FPGA_PACPLL_gpio = NULL;
@@ -466,14 +487,15 @@ int rp_PAC_App_Init(){
                 fprintf(stderr, "EE ** FPGA MMAP PACPLL_BRAM block failed ***\n");
                 return RP_EOOR;
         }
-        
+
+#if 0 // NO BRAM ANY MORE -> DMA
         FPGA_SPMC_bram = (volatile uint8_t*) mmap (NULL, FPGA_SPMC_BRAM_block_size,
                                PROT_READ|PROT_WRITE , MAP_SHARED, fd, FPGA_BRAM_SPMC_BASE);
         if (FPGA_SPMC_bram == MAP_FAILED){
                 fprintf(stderr, "EE *** FPGA MMAP SPMC_BRAM block failed ***\n");
                 return RP_EOOR;
         }
-        
+#endif   
         FPGA_PACPLL_cfg1 = mmap (NULL, FPGA_PACPLL_CFG_block_size,
                                 PROT_READ|PROT_WRITE,  MAP_SHARED, fd, FPGA_CFG_REG1);
         if (FPGA_PACPLL_cfg1 == MAP_FAILED){
@@ -494,17 +516,26 @@ int rp_PAC_App_Init(){
                 fprintf(stderr, "EE *** FPGA MMAP PACPLL_GPIO block failed ***\n");
                 return RP_EOOR;
         }
+
+        fprintf(stderr, "INIT RP FPGA RPSPMC PACPLL: BRAM, CONTROL and GPIO MEMORY MAPPINGs completed.\n");
         
 #ifdef DEVELOPMENT_PACPLL_OP
         fprintf(stderr, "INIT RP FPGA RPSPMC PACPLL. --- FPGA MEMORY MAPPING ---\n");
         fprintf(stderr, "RP FPGA RPSPMC PACPLL PAGESIZE:        0x%08lx.\n", (unsigned long)(sysconf (_SC_PAGESIZE)));
         fprintf(stderr, "RP FPGA RPSPMC PACPLL BRAM PLL  mapped 0x%08lx - 0x%08lx   block length: 0x%08lx.\n", (unsigned long)FPGA_BRAM_PACPLL_BASE, (unsigned long)(FPGA_BRAM_PACPLL_BASE + FPGA_PACPLL_BRAM_block_size-1), (unsigned long)(FPGA_PACPLL_BRAM_block_size));
-        fprintf(stderr, "RP FPGA RPSPMC PACPLL BRAM SPMC mapped 0x%08lx - 0x%08lx   block length: 0x%08lx.\n", (unsigned long)FPGA_BRAM_SPMC_BASE, (unsigned long)(FPGA_BRAM_SPMC_BASE + FPGA_SPMC_BRAM_block_size-1), (unsigned long)(FPGA_SPMC_BRAM_block_size));
+        //fprintf(stderr, "RP FPGA RPSPMC PACPLL BRAM SPMC mapped 0x%08lx - 0x%08lx   block length: 0x%08lx.\n", (unsigned long)FPGA_BRAM_SPMC_BASE, (unsigned long)(FPGA_BRAM_SPMC_BASE + FPGA_SPMC_BRAM_block_size-1), (unsigned long)(FPGA_SPMC_BRAM_block_size));
         fprintf(stderr, "RP FPGA RPSPMC PACPLL CFG REG1  mapped 0x%08lx - 0x%08lx   block length: 0x%08lx.\n", (unsigned long)FPGA_CFG_REG1,   (unsigned long)(FPGA_CFG_REG1 + FPGA_PACPLL_CFG_block_size-1),  (unsigned long)(FPGA_PACPLL_CFG_block_size));
         fprintf(stderr, "RP FPGA RPSPMC PACPLL CFG REG2  mapped 0x%08lx - 0x%08lx   block length: 0x%08lx.\n", (unsigned long)FPGA_CFG_REG2,   (unsigned long)(FPGA_CFG_REG2 + FPGA_PACPLL_CFG_block_size-1),  (unsigned long)(FPGA_PACPLL_CFG_block_size));
         fprintf(stderr, "RP FPGA RPSPMC PACPLL GPIO REGs mapped 0x%08lx - 0x%08lx   block length: 0x%08lx.\n", (unsigned long)FPGA_GPIO_BASE, (unsigned long)(FPGA_GPIO_BASE + FPGA_PACPLL_GPIO_block_size-1), (unsigned long)(FPGA_PACPLL_GPIO_block_size));
 #endif
+
+        rp_spmc_gvp_config (); // assure GVP is in reset mode
         
+        fprintf(stderr, "INIT RP FPGA RPSPMC PACPLL: initializing DMA support.\n");
+        spm_dma_instance = new spmc_dma_support (fd); // create and init DMA support module
+
+        fprintf(stderr, "INIT RP FPGA RPSPMC PACPLL: initializing worker threads.\n");
+
         srand(time(NULL));   // init random
 
         pthread_mutex_init (&gpio_reading_mutexsum, NULL);
@@ -519,6 +550,8 @@ int rp_PAC_App_Init(){
         pthread_create ( &stream_server_thread, &stream_server_attr, thread_stream_server, NULL); // start stream server
         pthread_attr_destroy (&stream_server_attr);
         
+        fprintf(stderr, "INIT RP FPGA RPSPMC PACPLL completed.\n");
+
         return RP_OK;
 }
 
@@ -531,16 +564,20 @@ void rp_PAC_App_Release(){
         stream_server_control = 0;
         pthread_join (stream_server_thread, &status);
         pthread_mutex_destroy (&stream_server_mutexsum);
-        
+
         munmap (FPGA_PACPLL_gpio, FPGA_PACPLL_GPIO_block_size);
         munmap (FPGA_PACPLL_cfg1, FPGA_PACPLL_CFG_block_size);
         munmap (FPGA_PACPLL_cfg2, FPGA_PACPLL_CFG_block_size);
-        munmap ((void*)FPGA_SPMC_bram, FPGA_SPMC_BRAM_block_size);
+        //munmap ((void*)FPGA_SPMC_bram, FPGA_SPMC_BRAM_block_size);
         munmap (FPGA_PACPLL_bram, FPGA_PACPLL_BRAM_block_size);
 #ifdef DEVELOPMENT_PACPLL_OP
         fprintf(stderr, "RP FPGA maps unmapped.\n");
 #endif
         pthread_exit (NULL);
+
+        if (spm_dma_instance)
+                delete spm_dma_instance;
+        spm_dma_instance = NULL;
 }
 
 
