@@ -32,6 +32,8 @@ module gvp #(
     input		 setvec, // program vector data using vp_set data
     input [512-1:0]	 vp_set, // [VAdr], [N, NII, Options, Nrep, Next, dx, dy, dz, du] ** full vector data set block **
     input [16-1:0]	 reset_options, // option (fb hold/go, srcs... to pass when idle or in reset mode
+
+    input        stall, // asserted by stream srcs when AXI DMA / FIFO is not ready to accept data -- should never happen, but prevents data loss/gap 
     
     output wire [32-1:0] M_AXIS_X_tdata, // vector components
     output wire		     M_AXIS_X_tvalid,
@@ -127,7 +129,7 @@ module gvp #(
             vec_gvp_time <= vec_gvp_time+1;
 
         reset_flg  <= reset;  // put into reset mode (set program and hold)
-        pause_flg  <= pause;  // put/release into/from pause mode -- always completes the "ii" nop cycles!
+        pause_flg  <= pause || stall;  // put/release into/from pause mode -- always completes the "ii" nop cycles!
         setvec_flg <= setvec; // program vector data using vp_set data
         if (rdecii == 0)
         begin

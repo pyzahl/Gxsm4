@@ -87,6 +87,26 @@
 /PS/GPIOs/axi_gpio_9/S_AXI	S_AXI	Reg	0x412A_0000	64K	0x412A_FFFF
 /PS/GPIOs/axi_gpio_10/S_AXI	S_AXI	Reg	0x4122_0000	64K	0x4122_FFFF
 
+SPMC DMA: ****************************** BD
+SPMC DMA: BD_0 @0x05000000:
+SPMC DMA: - NEXT_DESC 0x05000040
+SPMC DMA: - BUFF_ADDR 0x05010000
+SPMC DMA: - CONTROL   0x0c020000
+SPMC DMA: BD_1 @0x05000040:
+SPMC DMA: - NEXT_DESC 0x05000080
+SPMC DMA: - BUFF_ADDR 0x05030000
+SPMC DMA: - CONTROL   0x0c020000
+SPMC DMA: BD_2 @0x05000080:
+SPMC DMA: - NEXT_DESC 0x050000c0
+SPMC DMA: - BUFF_ADDR 0x05050000
+SPMC DMA: - CONTROL   0x0c020000
+SPMC DMA: BD_3 @0x050000c0:
+SPMC DMA: - NEXT_DESC 0x05000000
+SPMC DMA: - BUFF_ADDR 0x05070000
+SPMC DMA: - CONTROL   0x0c020000
+SPMC DMA: ******************************
+SPMC DMA: S2MM Tail Descriptor Address 0x050000c0
+
 */
 
 #define SPMC_DMA_DESCRIPTOR_REGISTERS_SIZE 0xFFFF // 64 KiB 
@@ -251,30 +271,81 @@ public:
                 INFO_PRINTF("S2MM Tail Descriptor Address 0x%08x\n", s2mm_tail_descriptor_address);	
 
                 /*********************************************************************/
-                /*                 set current/base descriptor addresses             */
+                /*                          start transfer                           */
                 /*           and start dma operations (S2MM_DMACR.RS = 1)            */
+                /*                 (by setting the tail descriptors)                 */
+                /* -----------------------------------------------------------------
+                  A DMA operation for the S2MM channel is set up and
+                  started by using the following sequence:
+
+                  1. Write the address of the starting descriptor to
+                  the Current Descriptor register. If AXI DMA is
+                  configured for an address space greater than 32,
+                  then also program the MSB 32 bits of the current
+                  descriptor.
+
+                  2. Start the S2MM channel running by setting the
+                  run/stop bit to 1 (S2MM_DMACR.RS =1). The halted bit
+                  (DMASR.Halted) should deassert indicating the S2MM
+                  channel is running.
+
+                  3. If desired, enable interrupts by writing a 1 to
+                  S2MM_DMACR.IOC_IrqEn and S2MM_DMACR.Err_IrqEn.
+
+                  4. Write a valid address to the Tail Descriptor
+                  register. If AXI DMA is configured for an address
+                  space greater than 32, then also program the MSB 32
+                  bits of the current descriptor.
+
+                  5. Writing to the Tail Descriptor register triggers
+                  the DMA to start fetching the descriptors from the
+                  memory.
+
+                  6. The fetched descriptors are processed and any
+                  data received from the S2MM streaming channel is
+                  written to the memory.  Cyclic DMA Mode
+
+                  AXI DMA can be run in cyclic mode by making certain
+                  changes to the Buffer Descriptor ( BD) chain
+                  setup. In cyclic mode, DMA fetches and processes the
+                  same BDs without interruption. The DMA continues to
+                  fetch and process until it is stopped or reset.
+                -------------------------------------------------------------- */
+                /*********************************************************************/	
+
                 /*********************************************************************/
+                /*                 set current/base descriptor addresses             */
+                /*********************************************************************/
+
                 set_offset(axi_dma, SPMC_DMA_S2MM_CURDESC, s2mm_base_descriptor_address); 
-                set_offset(axi_dma, SPMC_DMA_S2MM_CONTROL_REGISTER, 0x01 + SPMC_DMA_CYCLIC_ENABLE); 
-                set_offset(axi_dma, SPMC_DMA_S2MM_CONTROL_REGISTER, SPMC_DMA_RUN + SPMC_DMA_IOC_IRqEn); 
+
+                print_check_dma_all();
+                INFO_PRINTF ("START DMA\n");
+                //set_offset(axi_dma, SPMC_DMA_S2MM_CONTROL_REGISTER, SPMC_DMA_RUN | SPMC_DMA_CYCLIC_ENABLE); 
+                set_offset(axi_dma, SPMC_DMA_S2MM_CONTROL_REGISTER, SPMC_DMA_RUN | SPMC_DMA_CYCLIC_ENABLE); // + SPMC_DMA_IOC_IRqEn); 
+                print_check_dma_all();
+
+                //Changing the tail descriptor address has an effect on the discontinuities 
+                set_offset (axi_dma, SPMC_DMA_S2MM_TAILDESC, s2mm_tail_descriptor_address); 
+                print_check_dma_all();
+
+
 	};
 
         void start_dma(){
-                INFO_PRINTF ("RESET, SETUP and START DMA\n");
+                INFO_PRINTF ("RESET DMA\n");
                 // Full reset DMA
                 reset_all_dma ();
 
+                print_check_dma_all();
+
+                INFO_PRINTF ("SETUP DMA\n");
                 // Build Descriptor Chain
                 setup_dma();
 
-                //uint32_t ADDRESS_OFFSET = 0x0; 
-                /*********************************************************************/
-                /*                          start transfer                           */
-                /*                 (by setting the tail descriptors)                 */
-                /*********************************************************************/	
-                //Changing the tail descriptor address has an effect on the discontinuities 
-                set_offset (axi_dma, SPMC_DMA_S2MM_TAILDESC, s2mm_tail_descriptor_address); 
-                INFO_PRINTF ("* START DMA *\n");
+
+                INFO_PRINTF ("* DMA ACTIVE *\n");
+                print_check_dma_all();
         };
 
         unsigned int get_s2mm_status(){

@@ -77,6 +77,7 @@ module axis_bram_stream_srcs #(
     output wire                        [DMA_DATA_WIDTH-1:0] M_AXIS_tdata,
     output wire                        M_AXIS_tvalid,
     output wire                        M_AXIS_tlast,
+    //output wire                        [3:0] M_AXIS_tkeep, // ???
     input wire                         M_AXIS_tready,
 
     output wire                        dma_fifo_resetn,
@@ -127,7 +128,7 @@ module axis_bram_stream_srcs #(
     
 
     output wire [32-1:0]  last_write_addr,
-    output wire ready
+    output wire stall
     );
     
     reg [2:0] bramwr_sms=3'd0;
@@ -163,7 +164,7 @@ module axis_bram_stream_srcs #(
 
     assign last_write_addr = {{(32-DMA_ADDR_WIDTH){0'b0}}, position}; 
         
-    assign ready = status_ready;   
+    assign stall = ~M_AXIS_tready; // && status_ready;
       
     integer i;
     initial for (i=0; i<=4; i=i+1) position[i] = 0;
