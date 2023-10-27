@@ -104,7 +104,7 @@ Now install and run GXSM4 (assuming that the json-file/source is in the folder g
 	     Some thing seams slow here at build and update, or has post idel latency.
 
 - known GTK4 shortcomings so far noted: 
-  - Long popup/down selection lists, items out of "screen limits" are not sccessible, no/missing scrolling feature, etc.. No idea yet how to make this work right.
+  - FIXED IN GTK4 NOW!! -- Long popup/down selection lists, items out of "screen limits" are not sccessible, no/missing scrolling feature, etc.. No idea yet how to make this work right.
   - Rendering in cairo fall back mode (when using X11 export via ssh -X for example) is very slow -- some where around a magnitude (10x) slow! What makes remote work nearly impossible. However, varies a lot by "fetaure" used. Menu pop ups are very slow, take long to appear. GUI initial  build (many entries, etc.) takes a long time.
   - press/release signals not available for simple button widget. Work around assigning handlers does not work as expected. Work for a canvas "home made" button. Non perfec tbu tworkable workaround currently used: Arrow icons on button widget accept press and release events. (Needed for Mover Controls: "fire wave signal on DSP when pressed" direction buttons.
 
@@ -123,6 +123,12 @@ Then start gxsm4 again.
 
  - Save Profile as Drawing=pdf -> crash
 
+## News/Updates/ToDo List:
+
+- RPSPMC: a all new all FPGA SPM control is in the works
+- ToDo: port all NetCDF code to consistent latest NetCDF4
+- Add better Unit/SI-Unit support, allow customization with "to unit" scale factors of generic ADC0...7 Inputs via preferences/Data vs. limited base units
+- Address odd scan object management/move/... glitches
 
 ## FYI:
 ----
@@ -133,7 +139,7 @@ Oh well some crap.
 much more ... to be figured out ans tested ....
 
 
-## 4. How to report bugs
+## How to report bugs
 
 Bugs should be reported to the gitlab bug tracking system.
 (https://github.com/pyzahl/Gxsm4/issues). You will need to create an
