@@ -205,6 +205,7 @@ module gvp #(
                         end
                     end
                     else
+                    if (!pause_flg)        
                     begin // go...
                         // add vector
                         vec_x <= vec_x + vec_dx[pvc];
@@ -218,7 +219,6 @@ module gvp #(
                             ii <= ii-1;
                         end
                         else
-                        if (!pause_flg)        
                         begin // arrived at data point
                             if (i) // advance to next point...
                             begin

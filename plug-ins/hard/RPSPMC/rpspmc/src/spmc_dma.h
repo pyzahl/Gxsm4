@@ -52,19 +52,15 @@
 // PS -----------------------------------------------------------------------------------------------------  
 // AXI_DMA:
 // axi_dma_spmc/Data_MM2S:
-/PS/processing_system7_Zynq/S_AXI_ACP	S_AXI_ACP	ACP_DDR_LOWOCM	0x0000_0000	256M	0x0FFF_FFFF
-/PS/processing_system7_Zynq/S_AXI_ACP	S_AXI_ACP	ACP_QSPI_LINEAR	0xFC00_0000	16M	0xFCFF_FFFF
-/PS/processing_system7_Zynq/S_AXI_HP0	S_AXI_HP0	HP0_DDR_LOWOCM	0x1000_0000	256M	0x1FFF_FFFF // *** == HP0_ADDRESS 
-
-// axi_dma_spmc/Data_S2MM2:
-/PS/processing_system7_Zynq/S_AXI_ACP	S_AXI_ACP	ACP_DDR_LOWOCM	0x00000_0000	256M	0x0FFF_FFFF
-/PS/processing_system7_Zynq/S_AXI_ACP	S_AXI_ACP	ACP_QSPI_LINEAR	0xFC00_0000	16M	0xFCFF_FFFF
-/PS/processing_system7_Zynq/S_AXI_HP0	S_AXI_HP0	HP0_DDR_LOWOCM	0x1000_0000	256M	0x1FFF_FFFF // *** == HP0_ADDRESS 
-
-// axi_dma_spmc/Data_SG:
-/PS/processing_system7_Zynq/S_AXI_ACP	S_AXI_ACP	ACP_DDR_LOWOCM	0x00000_0000	256M	0x0FFF_FFFF
-/PS/processing_system7_Zynq/S_AXI_ACP	S_AXI_ACP	ACP_QSPI_LINEAR	0xFC00_0000	16M	0xFCFF_FFFF
-/PS/processing_system7_Zynq/S_AXI_HP0	S_AXI_HP0	HP0_DDR_LOWOCM	0x1000_0000	256M	0x1FFF_FFFF // *** == HP0_ADDRESS  
+axi_dma_spmc							
+/PS/axi_dma_spmc/Data_SG (32 address bits : 4G)							
+/PS/processing_system7_Zynq/S_AXI_HP0	S_AXI_HP0	HP0_DDR_LOWOCM	0x0100_0000	2M	0x11F_FFFF	0x0100_0000	0x011F_FFFF
+/PS/processing_system7_Zynq/S_AXI_ACP	S_AXI_ACP	ACP_DDR_LOWOCM	0x0000_000	2M	0x1F_FFFF	0x0000_0000	0x001F_FFFF
+/PS/processing_system7_Zynq/S_AXI_ACP	S_AXI_ACP	ACP_QSPI_LINEAR	0xFC00_0000	2M	0xFC1F_FFFF	0xFC00_0000	0xFC1F_FFFF
+/PS/axi_dma_spmc/Data_S2MM (32 address bits : 4G)							
+/PS/processing_system7_Zynq/S_AXI_HP0	S_AXI_HP0	HP0_DDR_LOWOCM	0x0100_0000	2M	0x11F_FFFF	0x0100_0000	0x011F_FFFF
+/PS/processing_system7_Zynq/S_AXI_ACP	S_AXI_ACP	ACP_DDR_LOWOCM	0x0000_0000	2M	0x1F_FFFF	0x0000_0000	0x001F_FFFF
+/PS/processing_system7_Zynq/S_AXI_ACP	S_AXI_ACP	ACP_QSPI_LINEAR	0xFC00_0000	2M	0xFC1F_FFFF	0xFC00_0000	0xFC1F_FFFF
 
 // Zynq ---------------------------------------------------------------------------------------------------
 /PS/axi_dma_spmc/S_AXI_LITE
@@ -109,41 +105,38 @@ SPMC DMA: S2MM Tail Descriptor Address 0x050000c0
 
 */
 
-#define SPMC_DMA_DESCRIPTOR_REGISTERS_SIZE 0xFFFF // 64 KiB 
-#define SPMC_DMA_SG_DMA_DESCRIPTORS_WIDTH  0xFFFF // 64 KiB 
-#define SPMC_DMA_MEMBLOCK_WIDTH            0x3FFFFFF // Size of memory used by S2MM and MM2S (64 MiB)
-#define SPMC_DMA_BUFFER_BLOCK_WIDTH        0x7FFFFF  // Size of memory block per descriptor in bytes (8 MiB) (Formerly 0x7D0000, but I don't know why) 
+// 2MB length = 0x0020_0000  (2M)
+// Descriptor = 0x0001_0000  (64k)
 
 #define SPMC_DMA_AXI_DMA_ADDRESS	  0x40400000
-#define SPMC_DMA_HP0_ADDRESS 		  0x01000000
-#define SPMC_DMA_MM2S_BASE_DESC_ADDR	  SPMC_DMA_HP0_ADDRESS
-#define SPMC_DMA_S2MM_BASE_DESC_ADDR	  (SPMC_DMA_HP0_ADDRESS + SPMC_DMA_MEMBLOCK_WIDTH+1)
-#define SPMC_DMA_MM2S_SOURCE_ADDRESS 	  (SPMC_DMA_HP0_ADDRESS + SPMC_DMA_SG_DMA_DESCRIPTORS_WIDTH+1)
-#define SPMC_DMA_S2MM_TARGET_ADDRESS 	  (SPMC_DMA_HP0_ADDRESS + (SPMC_DMA_MEMBLOCK_WIDTH+1) + (SPMC_DMA_SG_DMA_DESCRIPTORS_WIDTH+1))
+#define SPMC_DMA_HP0_ADDRESS 		  0x01000000 // reserved cache-coherent memory region (linux kernel does not use this memory!)
 
-// --- example 
-// AXI_DMA_ADDRESS: 0x40400000
-// HP0_ADDRESS:     0x01000000
-// MM2S_BASE_DESC_ADDR: 0x01000000
-// S2MM_BASE_DESC_ADDR: 0x05000000
-// MM2S_SOURCE_ADDRESS: 0x01010000
-// S2MM_TARGET_ADDRESS: 0x05010000
+#define SPMC_DMA_N_DESC 2
+#define SPMC_DMA_TRANSFER_BYTES 0x00080000 // MAX WINDOW: 2M - 64k  = 0x00200000 - N_DESC x 64k
+#define SPMC_DMA_TRANSFER_INTS  SPMC_DMA_N_DESC*SPMC_DMA_TRANSFER_BYTES/4 //TRANSFER_BYTES/4 
+
+
+#define SPMC_DMA_DESCRIPTOR_REGISTERS_SIZE 0x1000 // 4k  **64 KiB 
+#define SPMC_DMA_SG_DMA_DESCRIPTORS_WIDTH  0x1000 // 4k  **64 KiB 
+#define SPMC_DMA_MEMBLOCK_SIZE             0x00200000 // Size of memory used by S2MM and MM2S (2 M total 0x0100_000 - 0x011F_FFFF)
+#define SPMC_DMA_BUFFER_BLOCK_SIZE         0x00080000 // Size of memory block per descriptor in bytes: 0.5 M -- two blocks, cyclic
+
+//#define SPMC_DMA_MM2S_BASE_DESC_ADDR	  SPMC_DMA_HP0_ADDRESS
+#define SPMC_DMA_S2MM_BASE_DESC_ADDR	  SPMC_DMA_HP0_ADDRESS
+//#define SPMC_DMA_MM2S_SOURCE_ADDRESS 	  (SPMC_DMA_HP0_ADDRESS + SPMC_DMA_SG_DMA_DESCRIPTORS_WIDTH + SPMC_DMA_N_DESC*SPMC_DMA_BUFFER_BLOCK_WIDTH)
+#define SPMC_DMA_S2MM_TARGET_ADDRESS 	  (SPMC_DMA_HP0_ADDRESS + SPMC_DMA_SG_DMA_DESCRIPTORS_WIDTH)
 
 
 #define SPMC_DMA_START_FRAME 	0x08000000 //TXSOF = 1 TXEOF = 0 
-#define SPMC_DMA_MID_FRAME 	0x00000000 //TXSOF = TXEOF = 0 
-#define SPMC_DMA_COMPLETE_FRAME 0x0C000000 //TXSOF = TXEOF = 1
 #define SPMC_DMA_END_FRAME 	0x04000000 //TXSOF = 0 TXEOF = 1
+#define SPMC_DMA_COMPLETE_FRAME 0x0C000000 //TXSOF = TXEOF = 1
+#define SPMC_DMA_MID_FRAME 	0x00000000 //TXSOF = TXEOF = 0 
 
 //For DMACR (MM2S/S2MM Control register)
 #define SPMC_DMA_RUN             0x0001 
 #define SPMC_DMA_CYCLIC_ENABLE   0x0010
 #define SPMC_DMA_IOC_IRqEn       0x0800 //Interrupt on Complete Interrupt Enable 
 
-#define SPMC_DMA_N_DESC 4
-#define SPMC_DMA_TRANSFER_BYTES (1<<(15+2)) // 1024
-#define SPMC_DMA_TRANSFER_INTS  SPMC_DMA_N_DESC*SPMC_DMA_TRANSFER_BYTES/4 //TRANSFER_BYTES/4 
-#define SPMC_DMA_TRANSFER_BITS  8*SPMC_DMA_TRANSFER_BYTES  
 
 
 
@@ -187,48 +180,48 @@ public:
                 axi_dma = (unsigned int*) mmap(NULL, SPMC_DMA_DESCRIPTOR_REGISTERS_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, fd, SPMC_DMA_AXI_DMA_ADDRESS);
                 if (axi_dma == MAP_FAILED){
                         INFO_PRINTF ("axi_dma mmap failed.\n");
-                }
-
+                } else
+                        fprintf(stderr, "RP FPGA RPSPMC AXI_DMA          mapped 0x%08lx - 0x%08lx   block length: 0x%08lx  => *0x%08lx\n", (unsigned long)SPMC_DMA_AXI_DMA_ADDRESS, (unsigned long)(SPMC_DMA_AXI_DMA_ADDRESS + SPMC_DMA_DESCRIPTOR_REGISTERS_SIZE-1), (unsigned long)(SPMC_DMA_DESCRIPTOR_REGISTERS_SIZE), (unsigned long)axi_dma);
+#if 0
                 // Create 64k mm2s descriptors memory map at HP0_MM2S_DMA_DESCRIPTORS_ADDRESS (0x08000000)
                 mm2s_descriptors = (unsigned int*) mmap(NULL, SPMC_DMA_DESCRIPTOR_REGISTERS_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, fd, SPMC_DMA_MM2S_BASE_DESC_ADDR); //Formerly mm2s_descriptor_register_mmap
                 if ( mm2s_descriptors == MAP_FAILED){
                         INFO_PRINTF (" mm2s_descriptors mmap failed.\n");
-                }
-
+                } else
+                        fprintf(stderr, "RP FPGA RPSPMC DMA MM2S_DESC    mapped 0x%08lx - 0x%08lx   block length: 0x%08lx  => *0x%08lx\n", (unsigned long)SPMC_DMA_MM2S_BASE_DESC_ADDR, (unsigned long)(SPMC_DMA_MM2S_BASE_DESC_ADDR + SPMC_DMA_DESCRIPTOR_REGISTERS_SIZE-1), (unsigned long)(SPMC_DMA_DESCRIPTOR_REGISTERS_SIZE), (unsigned long)mm2s_descriptors);
+#endif
                 // Create 64k s2mm descriptors memory map at HP0_S2MM_DMA_DESCRIPTORS_ADDRESS (0x0c000000)
                 s2mm_descriptors = (unsigned int*) mmap(NULL, SPMC_DMA_DESCRIPTOR_REGISTERS_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, fd, SPMC_DMA_S2MM_BASE_DESC_ADDR); //Formerly s2mm_descriptor_register_mmap
                 if ( s2mm_descriptors == MAP_FAILED){
                         INFO_PRINTF (" s2mm_descriptors mmap failed.\n");
-                }
+                } else
+                        fprintf(stderr, "RP FPGA RPSPMC DMA S2MM_DESC    mapped 0x%08lx - 0x%08lx   block length: 0x%08lx  => *0x%08lx\n", (unsigned long)SPMC_DMA_S2MM_BASE_DESC_ADDR, (unsigned long)(SPMC_DMA_S2MM_BASE_DESC_ADDR + SPMC_DMA_DESCRIPTOR_REGISTERS_SIZE-1), (unsigned long)(SPMC_DMA_DESCRIPTOR_REGISTERS_SIZE), (unsigned long)s2mm_descriptors);
 
+#if 0
                 // Create ~1Mb x Num_Descriptors source memory map at HP0_MM2S_SOURCE_MEM_ADDRESS  (0x08010000)
-                source_memory = (unsigned int*) mmap(NULL, SPMC_DMA_BUFFER_BLOCK_WIDTH*SPMC_DMA_N_DESC, PROT_READ|PROT_WRITE, MAP_SHARED, fd, (off_t)(SPMC_DMA_MM2S_SOURCE_ADDRESS)); //Formerly source_mmap
+                source_memory = (unsigned int*) mmap(NULL, SPMC_DMA_BUFFER_BLOCK_SIZE*SPMC_DMA_N_DESC, PROT_READ|PROT_WRITE, MAP_SHARED, fd, (off_t)(SPMC_DMA_MM2S_SOURCE_ADDRESS)); //Formerly source_mmap
                 if (source_memory == MAP_FAILED){
                         INFO_PRINTF ("source_memory mmap failed.\n");
-                }
-
+                } else
+                        fprintf(stderr, "RP FPGA RPSPMC DMA SOURCE MEM   mapped 0x%08lx - 0x%08lx   block length: 0x%08lx  => *0x%08lx\n", (unsigned long)SPMC_DMA_MM2S_SOURCE_ADDRESS, (unsigned long)(SPMC_DMA_MM2S_SOURCE_ADDRESS + SPMC_DMA_BUFFER_BLOCK_SIZE*SPMC_DMA_N_DESC-1), (unsigned long)(SPMC_DMA_BUFFER_BLOCK_SIZE*SPMC_DMA_N_DESC), (unsigned long)source_memory);
+#endif
                 // Create ~1Mb x Num_Descriptors target memory map at HP0_S2MM_TARGET_MEM_ADDRESS (0x0c010000)
-                dest_memory = (unsigned int*) mmap(NULL, SPMC_DMA_BUFFER_BLOCK_WIDTH*SPMC_DMA_N_DESC, PROT_READ|PROT_WRITE, MAP_SHARED, fd, (off_t)(SPMC_DMA_S2MM_TARGET_ADDRESS)); //Formerly dest_mmap 
+                dest_memory = (unsigned int*) mmap(NULL, SPMC_DMA_BUFFER_BLOCK_SIZE*SPMC_DMA_N_DESC, PROT_READ|PROT_WRITE, MAP_SHARED, fd, (off_t)(SPMC_DMA_S2MM_TARGET_ADDRESS)); //Formerly dest_mmap 
                 if (dest_memory == MAP_FAILED){
                         INFO_PRINTF ("dest_memory mmap failed.\n");
-                }
+                } else
+                        fprintf(stderr, "RP FPGA RPSPMC DMA DEST MEM     mapped 0x%08lx - 0x%08lx   block length: 0x%08lx  => *0x%08lx\n", (unsigned long)SPMC_DMA_S2MM_TARGET_ADDRESS, (unsigned long)(SPMC_DMA_S2MM_TARGET_ADDRESS + SPMC_DMA_BUFFER_BLOCK_SIZE*SPMC_DMA_N_DESC-1), (unsigned long)(SPMC_DMA_BUFFER_BLOCK_SIZE*SPMC_DMA_N_DESC), (unsigned long)dest_memory);
 
                 INFO_PRINTF ("spmc_dma_support class init -- mmaps completed.\n");
 
                 // Clear mm2s descriptors 
-                memset(mm2s_descriptors, 0x00000000, SPMC_DMA_DESCRIPTOR_REGISTERS_SIZE); 
+                //memset(mm2s_descriptors, 0x00000000, SPMC_DMA_DESCRIPTOR_REGISTERS_SIZE/4); 
 
                 // Clear s2mm descriptors 
-                memset(s2mm_descriptors, 0x00000000, SPMC_DMA_DESCRIPTOR_REGISTERS_SIZE); 
+                memset(s2mm_descriptors, 0x00000000, SPMC_DMA_DESCRIPTOR_REGISTERS_SIZE/4); 
 
                 // Clear Target Memory 
-                memset(dest_memory, 0x00001111, SPMC_DMA_N_DESC*SPMC_DMA_BUFFER_BLOCK_WIDTH/4); 
-                
-                //memset(dest_memory+0*SPMC_DMA_BUFFER_BLOCK_WIDTH, 0x11111111, SPMC_DMA_BUFFER_BLOCK_WIDTH/4); 
-                //memset(dest_memory+1*SPMC_DMA_BUFFER_BLOCK_WIDTH, 0x22222222, SPMC_DMA_BUFFER_BLOCK_WIDTH/4); 
-                //memset(dest_memory+2*SPMC_DMA_BUFFER_BLOCK_WIDTH, 0x33333333, SPMC_DMA_BUFFER_BLOCK_WIDTH/4); 
-                //memset(dest_memory+3*SPMC_DMA_BUFFER_BLOCK_WIDTH, 0x44444444, SPMC_DMA_BUFFER_BLOCK_WIDTH/4); 
-
+                memset(dest_memory, 0x00001111, SPMC_DMA_N_DESC*SPMC_DMA_BUFFER_BLOCK_SIZE/4); 
                 
                 INFO_PRINTF ("spmc_dma_support class init -- clear mem completed.\n");
 
@@ -240,23 +233,23 @@ public:
         
         ~spmc_dma_support (){
                 reset_all_dma ();
-                munmap (dest_memory, SPMC_DMA_BUFFER_BLOCK_WIDTH*SPMC_DMA_N_DESC);
-                munmap (source_memory, SPMC_DMA_BUFFER_BLOCK_WIDTH*SPMC_DMA_N_DESC);
+                munmap (dest_memory, SPMC_DMA_BUFFER_BLOCK_SIZE*SPMC_DMA_N_DESC);
+                //munmap (source_memory, SPMC_DMA_BUFFER_BLOCK_SIZE*SPMC_DMA_N_DESC);
                 munmap (s2mm_descriptors, SPMC_DMA_DESCRIPTOR_REGISTERS_SIZE);
-                munmap (mm2s_descriptors, SPMC_DMA_DESCRIPTOR_REGISTERS_SIZE);
+                //munmap (mm2s_descriptors, SPMC_DMA_DESCRIPTOR_REGISTERS_SIZE);
                 munmap (axi_dma, SPMC_DMA_DESCRIPTOR_REGISTERS_SIZE);
                 INFO_PRINTF ("spmc_dma_support class destructor -- reset DMA and mumap completed.\n");
         };
 
         void reset_all_dma (){
                 // Reset and halt all DMA operations 
-                set_offset (axi_dma, SPMC_DMA_MM2S_CONTROL_REGISTER, 0x4); 
+                //set_offset (axi_dma, SPMC_DMA_MM2S_CONTROL_REGISTER, 0x4); 
                 set_offset (axi_dma, SPMC_DMA_S2MM_CONTROL_REGISTER, 0x4); 
-                set_offset (axi_dma, SPMC_DMA_MM2S_CONTROL_REGISTER, 0x0); 
+                //set_offset (axi_dma, SPMC_DMA_MM2S_CONTROL_REGISTER, 0x0); 
                 set_offset (axi_dma, SPMC_DMA_S2MM_CONTROL_REGISTER, 0x0); 
-                mm2s_status = get_offset (axi_dma, SPMC_DMA_MM2S_STATUS_REGISTER); 
+                //mm2s_status = get_offset (axi_dma, SPMC_DMA_MM2S_STATUS_REGISTER); 
                 s2mm_status = get_offset (axi_dma, SPMC_DMA_S2MM_STATUS_REGISTER); 
-                print_status (mm2s_status, "MM2S"); 
+                //print_status (mm2s_status, "MM2S"); 
                 print_status (s2mm_status, "S2MM"); 
         };
         
@@ -267,6 +260,7 @@ public:
                 //Save the current/base descriptor address 
                 s2mm_base_descriptor_address = SPMC_DMA_S2MM_BASE_DESC_ADDR; 
                 INFO_PRINTF("S2MM Base Descriptor Address 0x%08x\n", s2mm_base_descriptor_address);	
+
                 s2mm_tail_descriptor_address = build_descriptors(s2mm_descriptors, SPMC_DMA_S2MM_BASE_DESC_ADDR, SPMC_DMA_S2MM_TARGET_ADDRESS);
                 INFO_PRINTF("S2MM Tail Descriptor Address 0x%08x\n", s2mm_tail_descriptor_address);	
 
@@ -316,23 +310,35 @@ public:
                 /*********************************************************************/
                 /*                 set current/base descriptor addresses             */
                 /*********************************************************************/
-
-                set_offset(axi_dma, SPMC_DMA_S2MM_CURDESC, s2mm_base_descriptor_address); 
-
-                print_check_dma_all();
-                INFO_PRINTF ("START DMA\n");
-                //set_offset(axi_dma, SPMC_DMA_S2MM_CONTROL_REGISTER, SPMC_DMA_RUN | SPMC_DMA_CYCLIC_ENABLE); 
-                set_offset(axi_dma, SPMC_DMA_S2MM_CONTROL_REGISTER, SPMC_DMA_RUN | SPMC_DMA_CYCLIC_ENABLE); // + SPMC_DMA_IOC_IRqEn); 
+                INFO_PRINTF ("SET CURRENT DESCRIPTOR ADDRESS\n");
                 print_check_dma_all();
 
-                //Changing the tail descriptor address has an effect on the discontinuities 
+                // 1) SET POINTER TO INITIAl DESCRIPTOR ADDRESS
+                set_offset (axi_dma, SPMC_DMA_S2MM_CURDESC, s2mm_base_descriptor_address); 
+                print_check_dma_all();
+
+                // 2) START RS=1
+                INFO_PRINTF ("SET START DMA IN CONTROL RS=1\n");
+                set_offset (axi_dma, SPMC_DMA_S2MM_CONTROL_REGISTER, SPMC_DMA_RUN); 
+                print_check_dma_all();
+
+                INFO_PRINTF ("SET START DMA IN CONTROL RS=1 + CYCLIC\n");
+                set_offset (axi_dma, SPMC_DMA_S2MM_CONTROL_REGISTER, SPMC_DMA_RUN | SPMC_DMA_CYCLIC_ENABLE); 
+                print_check_dma_all();
+
+                // 3) IRQ EN if desired
+                INFO_PRINTF ("SET START DMA IN CONTROL RS=1 + CYCLIC + ~IRqEn -- ** no IRQ\n");
+                //set_offset (axi_dma, SPMC_DMA_S2MM_CONTROL_REGISTER, SPMC_DMA_RUN | SPMC_DMA_IOC_IRqEn); 
+                print_check_dma_all();
+
+                // 4...) Write Tail Descriptor register -- this starts DMA descriptor fetching
+                INFO_PRINTF ("SET TAIL DESCRIPTOR ADDRESS\n");
                 set_offset (axi_dma, SPMC_DMA_S2MM_TAILDESC, s2mm_tail_descriptor_address); 
                 print_check_dma_all();
-
-
 	};
 
         void start_dma(){
+                INFO_PRINTF ("RE-START DMA\n");
                 INFO_PRINTF ("RESET DMA\n");
                 // Full reset DMA
                 reset_all_dma ();
@@ -342,7 +348,6 @@ public:
                 INFO_PRINTF ("SETUP DMA\n");
                 // Build Descriptor Chain
                 setup_dma();
-
 
                 INFO_PRINTF ("* DMA ACTIVE *\n");
                 print_check_dma_all();
@@ -484,7 +489,7 @@ public:
         uint32_t build_descriptors(unsigned int* descriptor_chain, uint32_t BASE_DESC_ADDR, uint32_t TARGET_ADDRESS){		
                 INFO_PRINTF("****************************** BD\n");
                 int i; 	
-                for (i = 0; i < SPMC_DMA_N_DESC; i++){
+                for (i = 0; i <= SPMC_DMA_N_DESC; i++){
                         // *********************************************************************
                         // Next Descriptor Pointer: 0x00 (Set to location of next descriptor) 
                         // Buffer Address: 0x08 (Set to location to read from (MM2S) or write data (S2MM) to)
@@ -492,48 +497,49 @@ public:
                         // *********************************************************************
                         //The ith descriptor, BD_i, in the chain, is located at (BASE_DESC_ADDR + i*0x40).
                         //If the current descriptor, BD_i, is not the last in the chain
-                        if(i != (SPMC_DMA_N_DESC-1)){ 
+                        if(i != SPMC_DMA_N_DESC){ 
                                 //Then it must point to the next descriptor in the chain, BD_{i+1}, 
                                 //located at (BASE_DESC_ADDR+(i+1)*0x40)
                                 set_offset(descriptor_chain, SPMC_DMA_NEXT_DESC + i*0x40, BASE_DESC_ADDR+(i+1)*0x40); 					
+                                //BD_i reads from/writes to TARGET_ADDRESS + (i*TRANSFER_BYTES) 
+                                set_offset(descriptor_chain, SPMC_DMA_BUFF_ADDR + i*0x40, TARGET_ADDRESS+i*SPMC_DMA_TRANSFER_BYTES); 		
+                                //BD_i performs a transfer of TRANSFER_BYTES to/from the AXI stream 
+                                //from/to the location TARGET_ADDRESS+i*TRANSFER_BYTES
+                                set_offset(descriptor_chain, SPMC_DMA_CONTROL + i*0x40, SPMC_DMA_MID_FRAME+SPMC_DMA_TRANSFER_BYTES);
+                                INFO_PRINTF("BD_%d @0x%08x:\n", i, BASE_DESC_ADDR+i*0x40);
                         } 
-                        //Otherwise, i.e. if BD_i is the last descriptor in the chain 
+                        //Otherwise, i.e. if BD_i is the tail descriptor in the chain of cyclic mode, make point to first
                         else{ 
                                 //Then it must point to the first descriptor in the chain, BD_0, 
                                 //located at (BASE_DESC_ADDR+0*0x40)
                                 //At least in cyclic mode, which is what we are using for the moment. 
-                                set_offset(descriptor_chain, SPMC_DMA_NEXT_DESC + i*0x40, BASE_DESC_ADDR+0*0x40); 			
+                                set_offset(descriptor_chain, SPMC_DMA_NEXT_DESC + i*0x40, BASE_DESC_ADDR+0*0x40);
+                                // no other function (remains zero)
+                                set_offset(descriptor_chain, SPMC_DMA_CONTROL + i*0x40, 0);
+                                set_offset(descriptor_chain, SPMC_DMA_BUFF_ADDR + i*0x40, 0); 		
+                                INFO_PRINTF("CYCLIC TAIL BD_%d @0x%08x:\n", i, BASE_DESC_ADDR+i*0x40);
                         }
-                        //BD_i reads from/writes to TARGET_ADDRESS + (i*TRANSFER_BYTES) 
-                        set_offset(descriptor_chain, SPMC_DMA_BUFF_ADDR + i*0x40, TARGET_ADDRESS+i*SPMC_DMA_TRANSFER_BYTES); 		
-                        //For the moment we won't deal with frame flags, just let all descriptors 
-                        //transfer complete frames. 
-                        //BD_i performs a transfer of TRANSFER_BYTES to/from the AXI stream 
-                        //from/to the location TARGET_ADDRESS+i*TRANSFER_BYTES
-                        set_offset(descriptor_chain, SPMC_DMA_CONTROL + i*0x40, SPMC_DMA_COMPLETE_FRAME+SPMC_DMA_TRANSFER_BYTES); 
 
-                        INFO_PRINTF("BD_%d @0x%08x:\n", i, BASE_DESC_ADDR+i*0x40);					
                         INFO_PRINTF("- NEXT_DESC 0x%08x\n", get_offset(descriptor_chain, SPMC_DMA_NEXT_DESC+i*0x40)); 
                         INFO_PRINTF("- BUFF_ADDR 0x%08x\n", get_offset(descriptor_chain, SPMC_DMA_BUFF_ADDR+i*0x40)); 
                         INFO_PRINTF("- CONTROL   0x%08x\n", get_offset(descriptor_chain, SPMC_DMA_CONTROL+i*0x40)); 
                 }
                 INFO_PRINTF("******************************\n");
                 //Return the address of the tail descriptor, located at 
-                //BASE_DESC_ADDR + (N_DESC-1)*0x40
-                return BASE_DESC_ADDR+(SPMC_DMA_N_DESC-1)*0x40; 
+                return BASE_DESC_ADDR+0x50; // (SPMC_DMA_N_DESC)*0x40; -- for cyclic mode, programm any address NOT part of chain!
         };
 
 private:
         int mm2s_status, s2mm_status; 			
-        uint32_t mm2s_base_descriptor_address; //Formerly mm2s_current_descriptor_address
+        //uint32_t mm2s_base_descriptor_address; //Formerly mm2s_current_descriptor_address
         uint32_t s2mm_base_descriptor_address; //Formerly s2mm_current_descriptor_address
-        uint32_t mm2s_tail_descriptor_address;
+        //uint32_t mm2s_tail_descriptor_address;
         uint32_t s2mm_tail_descriptor_address;
 
         unsigned int* axi_dma;
-        unsigned int* mm2s_descriptors;
+        //unsigned int* mm2s_descriptors;
         unsigned int* s2mm_descriptors;
-        unsigned int* source_memory;
+        //unsigned int* source_memory;
         unsigned int* dest_memory;
 };
 

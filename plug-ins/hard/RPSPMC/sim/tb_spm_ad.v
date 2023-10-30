@@ -41,6 +41,8 @@ module tb_spm_ad(
     reg pause=0;
     reg [512-1:0] vector; // [VAdr], [N, NII, Nrep, Options, Next, dx, dy, dz, du] ** full vector data set block **
 
+    reg dma_ready=1;
+
     wire [31:0] wx; // vector components
     wire [31:0] wy; // ..
     wire [31:0] wz; // ..
@@ -69,6 +71,13 @@ module tb_spm_ad(
     wire ryv;
     wire rzv;
     wire ruv;
+
+    wire clkbra;
+    wire [32-1:0] dma_tdata;
+    wire dma_tvalid;
+    wire dma_tlast;
+    wire dma_stall;
+    
 
     reg [31:0] dac_cfg=0;
     reg dac_cfgv=1;
@@ -115,11 +124,11 @@ module tb_spm_ad(
         // INIT GVP
         r=1; #10 prg=0; #10
         //                  decii                                           du      dz      dy      dx    Next      Nrep,   Options,     nii,      N,    [Vadr]
-        vector = {32'd04, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0,  32'd998121, -32'd0, -32'd0, -32'd0, -32'd0, -32'd000, 32'hc0801,  32'd03,  32'd256, -32'd0}; // Vector #0
+        vector = {32'd16, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0,  32'd10, -32'd0, -32'd0, -32'd0, -32'd0, -32'd000, 32'hc0801,  32'd02,  32'd16, -32'd0}; // Vector #0
         #10 prg=1; #10 prg=0; #10
-        vector = {32'd04, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd998830, -32'd0, -32'd0, -32'd0, -32'd0, -32'd000, 32'hc0801,  32'd03,  32'd256,  32'd1}; // Vector #1
+        vector = {32'd16, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd10, -32'd0, -32'd0, -32'd0, -32'd0, -32'd000, 32'hc0801,  32'd02,  32'd16,  32'd1}; // Vector #1
         #10 prg=1; #10 prg=0; #10
-        vector = {32'd012, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd000, 32'h1, -32'd0, -32'd0,  32'd2}; // Vector #2
+        vector = {32'd16, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd000, 32'h1, -32'd0, -32'd0,  32'd2}; // Vector #2
         #10 prg=1; #10 prg=0; #10
         r=0; // release reset to run
         wait (fin);
@@ -268,14 +277,10 @@ gvp gvp_1
         .M_AXIS_gvp_time_tdata(gvp_time),
         .options(wopt),  // section options: FB, ...
         .pause(pause),
+        .stall(dma_stall),
         .store_data(sto), // trigger to store data:: 2: full vector header, 1: data sources
         .gvp_finished(fin)      // finished 
 );
-
-wire clkbra;
-wire [32-1:0] dma_tdata;
-wire dma_tvalid;
-wire dma_tlast;
 
 axis_bram_stream_srcs axis_bram_stream_srcs_tb
 (                             // CH      MASK
@@ -303,7 +308,8 @@ axis_bram_stream_srcs axis_bram_stream_srcs_tb
         .M_AXIS_tdata(dma_tdata),
         .M_AXIS_tvalid(dma_tvalid),
         .M_AXIS_tlast(dma_tlast),
-        .M_AXIS_tready(1)
+        .M_AXIS_tready(dma_ready),
+        .stall(dma_stall)
     );
 
 /*

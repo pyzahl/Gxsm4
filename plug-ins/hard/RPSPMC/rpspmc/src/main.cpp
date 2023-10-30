@@ -521,12 +521,12 @@ int rp_PAC_App_Init(){
         
 #ifdef DEVELOPMENT_PACPLL_OP
         fprintf(stderr, "INIT RP FPGA RPSPMC PACPLL. --- FPGA MEMORY MAPPING ---\n");
-        fprintf(stderr, "RP FPGA RPSPMC PACPLL PAGESIZE:        0x%08lx.\n", (unsigned long)(sysconf (_SC_PAGESIZE)));
-        fprintf(stderr, "RP FPGA RPSPMC PACPLL BRAM PLL  mapped 0x%08lx - 0x%08lx   block length: 0x%08lx.\n", (unsigned long)FPGA_BRAM_PACPLL_BASE, (unsigned long)(FPGA_BRAM_PACPLL_BASE + FPGA_PACPLL_BRAM_block_size-1), (unsigned long)(FPGA_PACPLL_BRAM_block_size));
-        //fprintf(stderr, "RP FPGA RPSPMC PACPLL BRAM SPMC mapped 0x%08lx - 0x%08lx   block length: 0x%08lx.\n", (unsigned long)FPGA_BRAM_SPMC_BASE, (unsigned long)(FPGA_BRAM_SPMC_BASE + FPGA_SPMC_BRAM_block_size-1), (unsigned long)(FPGA_SPMC_BRAM_block_size));
-        fprintf(stderr, "RP FPGA RPSPMC PACPLL CFG REG1  mapped 0x%08lx - 0x%08lx   block length: 0x%08lx.\n", (unsigned long)FPGA_CFG_REG1,   (unsigned long)(FPGA_CFG_REG1 + FPGA_PACPLL_CFG_block_size-1),  (unsigned long)(FPGA_PACPLL_CFG_block_size));
-        fprintf(stderr, "RP FPGA RPSPMC PACPLL CFG REG2  mapped 0x%08lx - 0x%08lx   block length: 0x%08lx.\n", (unsigned long)FPGA_CFG_REG2,   (unsigned long)(FPGA_CFG_REG2 + FPGA_PACPLL_CFG_block_size-1),  (unsigned long)(FPGA_PACPLL_CFG_block_size));
-        fprintf(stderr, "RP FPGA RPSPMC PACPLL GPIO REGs mapped 0x%08lx - 0x%08lx   block length: 0x%08lx.\n", (unsigned long)FPGA_GPIO_BASE, (unsigned long)(FPGA_GPIO_BASE + FPGA_PACPLL_GPIO_block_size-1), (unsigned long)(FPGA_PACPLL_GPIO_block_size));
+        fprintf(stderr, "RP FPGA RPSPMC PACPLL PAGESIZE:        0x%08lx\n", (unsigned long)(sysconf (_SC_PAGESIZE)));
+        fprintf(stderr, "RP FPGA RPSPMC PACPLL BRAM PLL  mapped 0x%08lx - 0x%08lx   block length: 0x%08lx\n", (unsigned long)FPGA_BRAM_PACPLL_BASE, (unsigned long)(FPGA_BRAM_PACPLL_BASE + FPGA_PACPLL_BRAM_block_size-1), (unsigned long)(FPGA_PACPLL_BRAM_block_size));
+        //fprintf(stderr, "RP FPGA RPSPMC PACPLL BRAM SPMC mapped 0x%08lx - 0x%08lx   block length: 0x%08lx\n", (unsigned long)FPGA_BRAM_SPMC_BASE, (unsigned long)(FPGA_BRAM_SPMC_BASE + FPGA_SPMC_BRAM_block_size-1), (unsigned long)(FPGA_SPMC_BRAM_block_size));
+        fprintf(stderr, "RP FPGA RPSPMC PACPLL CFG REG1  mapped 0x%08lx - 0x%08lx   block length: 0x%08lx\n", (unsigned long)FPGA_CFG_REG1,   (unsigned long)(FPGA_CFG_REG1 + FPGA_PACPLL_CFG_block_size-1),  (unsigned long)(FPGA_PACPLL_CFG_block_size));
+        fprintf(stderr, "RP FPGA RPSPMC PACPLL CFG REG2  mapped 0x%08lx - 0x%08lx   block length: 0x%08lx\n", (unsigned long)FPGA_CFG_REG2,   (unsigned long)(FPGA_CFG_REG2 + FPGA_PACPLL_CFG_block_size-1),  (unsigned long)(FPGA_PACPLL_CFG_block_size));
+        fprintf(stderr, "RP FPGA RPSPMC PACPLL GPIO REGs mapped 0x%08lx - 0x%08lx   block length: 0x%08lx\n", (unsigned long)FPGA_GPIO_BASE, (unsigned long)(FPGA_GPIO_BASE + FPGA_PACPLL_GPIO_block_size-1), (unsigned long)(FPGA_PACPLL_GPIO_block_size));
 #endif
 
         rp_spmc_gvp_config (); // assure GVP is in reset mode
