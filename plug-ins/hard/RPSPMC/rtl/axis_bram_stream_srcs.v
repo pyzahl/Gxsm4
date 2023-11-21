@@ -153,17 +153,19 @@ module axis_bram_stream_srcs #(
 
     reg last=0;
 
+    reg fifo_ready=0;
+
     assign dma_data_clk = a2_clk;
     // assign DMA_PORTA_rst = ~a_resetn;
     assign M_AXIS_tdata  = dma_data;
     assign M_AXIS_tvalid = dma_wr;
-    assign M_AXIS_tlast  = last; // ??
+    assign M_AXIS_tlast  = 1; //last; // packet mode
 
     assign dma_fifo_resetn = ~reset;
 
     assign last_write_addr = {{(32-DMA_ADDR_WIDTH){0'b0}}, position}; 
         
-    assign stall = ~M_AXIS_tready; // && status_ready;
+    assign stall = ~fifo_ready; // && status_ready;
       
     integer i;
     initial for (i=0; i<=4; i=i+1) position[i] = 0;
@@ -174,6 +176,7 @@ module axis_bram_stream_srcs #(
     begin
         push_mode <= push_next;
         r <= reset;
+        fifo_ready <= M_AXIS_tready;
 
         dma_wr    <= dma_wr_next;
         dma_data  <= dma_data_next;
@@ -189,7 +192,7 @@ module axis_bram_stream_srcs #(
         end
         else
         begin
-            if (M_AXIS_tready)
+            if (fifo_ready)
             begin
                 position <= dma_addr;
                 // BRAM STORE MACHINE

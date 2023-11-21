@@ -132,8 +132,10 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
         // use delayed position_prev
         if (started){ // started?
 
-                 if (spm_dma_instance)
+                if (spm_dma_instance){
                          spm_dma_instance->print_check_dma_all();
+                         fprintf(stderr, "GVP WPos: %d, FIFO R,WPos: %08x, %08x\n", position, read_gpio_reg_int32 (12,0), read_gpio_reg_int32 (12,1));
+                }
                  
                 if (position_prev >= 0 && gvp_finished ()){ // must transfer data written to block when finished but block not full.
                         position_info << std::hex << ",preFinPos{0x" << position << "}";

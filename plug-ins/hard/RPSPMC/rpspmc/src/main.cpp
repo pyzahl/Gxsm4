@@ -107,7 +107,7 @@ Network 1
 #define FPGA_CFG_PAGES    1          // 1 pages assigned, 4k
 
 #define FPGA_GPIO_BASE    0x42002000 // 11 pages @4k each (=0x1000) 0x4200_2000 .. 0x4200_BFFF
-#define FPGA_GPIO_PAGES   11         // 11 pages @4k each for each GPIO block containg 2x32bit channels @read address +0 and +8 (0x4200_2000-_2FFF, _3000-_3FFF, .. _B000-_BFFF)
+#define FPGA_GPIO_PAGES   12         // 11 pages @4k each for each GPIO block containg 2x32bit channels @read address +0 and +8 (0x4200_2000-_2FFF, _3000-_3FFF, .. _B000-_BFFF)
 
 
 //Signal size
@@ -324,6 +324,8 @@ CDoubleParameter CONTROL_DFREQ_MONITOR("CONTROL_DFREQ_MONITOR", CBaseParameter::
 // *** DBG ***                                                                                                //        -----------------------                            (10,1); // GPIO X20: --- Z0-MON (Z-Offset)
 // *** DBG ***                                                                                                //        -----------------------                            (11,0); // GPIO X21: --- SPMC BRAM LAST WRITE ADDRESS (0..16383)
 // *** DBG ***                                                                                                //        -----------------------                            (11,1); // GPIO X22: --- Z-Sum to DAC MON
+// *** DBG ***                                                                                                //        -----------------------                            (12,0); // GPIO X23: --- Fifo RC
+// *** DBG ***                                                                                                //        -----------------------                            (12,1); // GPIO X24: --- Fifo WC
 
 
 

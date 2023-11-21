@@ -43,6 +43,7 @@
 
 // #include "server_library.h" 
 
+
 // -------------------------------------------------------------------------------------------------------
 // FPGA Address Mappings
 // -------------------------------------------------------------------------------------------------------
@@ -112,8 +113,7 @@ SPMC DMA: S2MM Tail Descriptor Address 0x050000c0
 #define SPMC_DMA_HP0_ADDRESS 		  0x01000000 // reserved cache-coherent memory region (linux kernel does not use this memory!)
 
 #define SPMC_DMA_N_DESC 2
-#define SPMC_DMA_TRANSFER_BYTES 0x00080000 // MAX WINDOW: 2M - 64k  = 0x00200000 - N_DESC x 64k
-#define SPMC_DMA_TRANSFER_INTS  SPMC_DMA_N_DESC*SPMC_DMA_TRANSFER_BYTES/4 //TRANSFER_BYTES/4 
+#define SPMC_DMA_TRANSFER_BYTES 0x00080000 // 0.5M ****MAX WINDOW: 2M - DESCRIPTOR_BLOCK
 
 
 #define SPMC_DMA_DESCRIPTOR_REGISTERS_SIZE 0x1000 // 4k  **64 KiB 
@@ -209,8 +209,16 @@ public:
                 dest_memory = (unsigned int*) mmap(NULL, SPMC_DMA_BUFFER_BLOCK_SIZE*SPMC_DMA_N_DESC, PROT_READ|PROT_WRITE, MAP_SHARED, fd, (off_t)(SPMC_DMA_S2MM_TARGET_ADDRESS)); //Formerly dest_mmap 
                 if (dest_memory == MAP_FAILED){
                         INFO_PRINTF ("dest_memory mmap failed.\n");
-                } else
-                        fprintf(stderr, "RP FPGA RPSPMC DMA DEST MEM     mapped 0x%08lx - 0x%08lx   block length: 0x%08lx  => *0x%08lx\n", (unsigned long)SPMC_DMA_S2MM_TARGET_ADDRESS, (unsigned long)(SPMC_DMA_S2MM_TARGET_ADDRESS + SPMC_DMA_BUFFER_BLOCK_SIZE*SPMC_DMA_N_DESC-1), (unsigned long)(SPMC_DMA_BUFFER_BLOCK_SIZE*SPMC_DMA_N_DESC), (unsigned long)dest_memory);
+                } else {
+                        unsigned long paddr=0;
+                        //virt_to_phys_user(&paddr, (uintptr_t) dest_memory);
+
+                        fprintf(stderr, "RP FPGA RPSPMC DMA DEST MEM     mapped 0x%08lx - 0x%08lx   block length: 0x%08lx  PHYS ADDR: 0x%08lx\n",
+                                (unsigned long)SPMC_DMA_S2MM_TARGET_ADDRESS,
+                                (unsigned long)(SPMC_DMA_S2MM_TARGET_ADDRESS + SPMC_DMA_BUFFER_BLOCK_SIZE*SPMC_DMA_N_DESC-1),
+                                (unsigned long)(SPMC_DMA_BUFFER_BLOCK_SIZE*SPMC_DMA_N_DESC),
+                                paddr)
+dest_memory);
 
                 INFO_PRINTF ("spmc_dma_support class init -- mmaps completed.\n");
 
@@ -366,7 +374,7 @@ public:
         void print_check_dma_all(){
                 int i = 0; 	
                 uint32_t S2MM_i_status; 	
-                if(!((s2mm_status = get_s2mm_status())&0x2)){
+                if(1){ //!((s2mm_status = get_s2mm_status())&0x2)){
                         for(i = 0; i < SPMC_DMA_N_DESC; i++){ 
                                 S2MM_i_status = get_s2mm_nth_status(i);
                                 INFO_PRINTF("Descriptor %d Status: 0x%08x\n", i, S2MM_i_status);		
@@ -515,8 +523,8 @@ public:
                                 //At least in cyclic mode, which is what we are using for the moment. 
                                 set_offset(descriptor_chain, SPMC_DMA_NEXT_DESC + i*0x40, BASE_DESC_ADDR+0*0x40);
                                 // no other function (remains zero)
-                                set_offset(descriptor_chain, SPMC_DMA_CONTROL + i*0x40, 0);
-                                set_offset(descriptor_chain, SPMC_DMA_BUFF_ADDR + i*0x40, 0); 		
+                                set_offset(descriptor_chain, SPMC_DMA_CONTROL + i*0x40, SPMC_DMA_MID_FRAME+SPMC_DMA_TRANSFER_BYTES);
+                                set_offset(descriptor_chain, SPMC_DMA_BUFF_ADDR + i*0x40, TARGET_ADDRESS+0*SPMC_DMA_TRANSFER_BYTES); 		
                                 INFO_PRINTF("CYCLIC TAIL BD_%d @0x%08x:\n", i, BASE_DESC_ADDR+i*0x40);
                         }
 
