@@ -43,6 +43,7 @@
 
 // #include "server_library.h" 
 
+#include "virt_phys.cpp"
 
 // -------------------------------------------------------------------------------------------------------
 // FPGA Address Mappings
@@ -170,27 +171,35 @@ SPMC DMA: S2MM Tail Descriptor Address 0x050000c0
 
 #define INFO_PRINTF(ARGS...)  fprintf(stderr, "SPMC DMA: " ARGS)
 
+//root@rp-f09296:/opt/redpitaya/www/apps/rpspmc# cat /proc/2878/maps 
+//b6f9e000-b6f9f000 rw-s 01000000 00:06 16         /dev/mem
+//b6f9f000-b6fa0000 rw-s 40400000 00:06 16         /dev/mem
+//b6fa0000-b6fa1000 rw-s 43000000 00:06 16         /dev/mem
+//b6fa1000-b6fa2000 rw-s 42000000 00:06 16         /dev/mem
+
+extern void *FPGA_PACPLL_bram;
+
 class spmc_dma_support {
 public:
         spmc_dma_support (int fd){ // int fd = open("/dev/mem",O_RDWR|O_SYNC);
 
                 INFO_PRINTF ("spmc_dma_support class init\n");
                 
-                // Create 64K AXI DMA Memory Map at AXI_DMA_ADDRESS (0x40400000)
+                // Create 64K AXI DMA Memory Map at AXI_DMA_ADDRESS
                 axi_dma = (unsigned int*) mmap(NULL, SPMC_DMA_DESCRIPTOR_REGISTERS_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, fd, SPMC_DMA_AXI_DMA_ADDRESS);
                 if (axi_dma == MAP_FAILED){
                         INFO_PRINTF ("axi_dma mmap failed.\n");
                 } else
                         fprintf(stderr, "RP FPGA RPSPMC AXI_DMA          mapped 0x%08lx - 0x%08lx   block length: 0x%08lx  => *0x%08lx\n", (unsigned long)SPMC_DMA_AXI_DMA_ADDRESS, (unsigned long)(SPMC_DMA_AXI_DMA_ADDRESS + SPMC_DMA_DESCRIPTOR_REGISTERS_SIZE-1), (unsigned long)(SPMC_DMA_DESCRIPTOR_REGISTERS_SIZE), (unsigned long)axi_dma);
 #if 0
-                // Create 64k mm2s descriptors memory map at HP0_MM2S_DMA_DESCRIPTORS_ADDRESS (0x08000000)
+                // Create 64k mm2s descriptors memory map at HP0_MM2S_DMA_DESCRIPTORS_ADDRESS
                 mm2s_descriptors = (unsigned int*) mmap(NULL, SPMC_DMA_DESCRIPTOR_REGISTERS_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, fd, SPMC_DMA_MM2S_BASE_DESC_ADDR); //Formerly mm2s_descriptor_register_mmap
                 if ( mm2s_descriptors == MAP_FAILED){
                         INFO_PRINTF (" mm2s_descriptors mmap failed.\n");
                 } else
                         fprintf(stderr, "RP FPGA RPSPMC DMA MM2S_DESC    mapped 0x%08lx - 0x%08lx   block length: 0x%08lx  => *0x%08lx\n", (unsigned long)SPMC_DMA_MM2S_BASE_DESC_ADDR, (unsigned long)(SPMC_DMA_MM2S_BASE_DESC_ADDR + SPMC_DMA_DESCRIPTOR_REGISTERS_SIZE-1), (unsigned long)(SPMC_DMA_DESCRIPTOR_REGISTERS_SIZE), (unsigned long)mm2s_descriptors);
 #endif
-                // Create 64k s2mm descriptors memory map at HP0_S2MM_DMA_DESCRIPTORS_ADDRESS (0x0c000000)
+                // Create 64k s2mm descriptors memory map at HP0_S2MM_DMA_DESCRIPTORS_ADDRESS
                 s2mm_descriptors = (unsigned int*) mmap(NULL, SPMC_DMA_DESCRIPTOR_REGISTERS_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, fd, SPMC_DMA_S2MM_BASE_DESC_ADDR); //Formerly s2mm_descriptor_register_mmap
                 if ( s2mm_descriptors == MAP_FAILED){
                         INFO_PRINTF (" s2mm_descriptors mmap failed.\n");
@@ -198,38 +207,41 @@ public:
                         fprintf(stderr, "RP FPGA RPSPMC DMA S2MM_DESC    mapped 0x%08lx - 0x%08lx   block length: 0x%08lx  => *0x%08lx\n", (unsigned long)SPMC_DMA_S2MM_BASE_DESC_ADDR, (unsigned long)(SPMC_DMA_S2MM_BASE_DESC_ADDR + SPMC_DMA_DESCRIPTOR_REGISTERS_SIZE-1), (unsigned long)(SPMC_DMA_DESCRIPTOR_REGISTERS_SIZE), (unsigned long)s2mm_descriptors);
 
 #if 0
-                // Create ~1Mb x Num_Descriptors source memory map at HP0_MM2S_SOURCE_MEM_ADDRESS  (0x08010000)
-                source_memory = (unsigned int*) mmap(NULL, SPMC_DMA_BUFFER_BLOCK_SIZE*SPMC_DMA_N_DESC, PROT_READ|PROT_WRITE, MAP_SHARED, fd, (off_t)(SPMC_DMA_MM2S_SOURCE_ADDRESS)); //Formerly source_mmap
+                // Create ~1Mb x Num_Descriptors source memory map
+                source_memory = (unsigned int*) mmap(NULL, SPMC_DMA_BUFFER_BLOCK_SIZE*SPMC_DMA_N_DESC, PROT_READ|PROT_WRITE, MAP_SHARED, fd, SPMC_DMA_MM2S_SOURCE_ADDRESS); //Formerly source_mmap
                 if (source_memory == MAP_FAILED){
                         INFO_PRINTF ("source_memory mmap failed.\n");
                 } else
                         fprintf(stderr, "RP FPGA RPSPMC DMA SOURCE MEM   mapped 0x%08lx - 0x%08lx   block length: 0x%08lx  => *0x%08lx\n", (unsigned long)SPMC_DMA_MM2S_SOURCE_ADDRESS, (unsigned long)(SPMC_DMA_MM2S_SOURCE_ADDRESS + SPMC_DMA_BUFFER_BLOCK_SIZE*SPMC_DMA_N_DESC-1), (unsigned long)(SPMC_DMA_BUFFER_BLOCK_SIZE*SPMC_DMA_N_DESC), (unsigned long)source_memory);
 #endif
-                // Create ~1Mb x Num_Descriptors target memory map at HP0_S2MM_TARGET_MEM_ADDRESS (0x0c010000)
-                dest_memory = (unsigned int*) mmap(NULL, SPMC_DMA_BUFFER_BLOCK_SIZE*SPMC_DMA_N_DESC, PROT_READ|PROT_WRITE, MAP_SHARED, fd, (off_t)(SPMC_DMA_S2MM_TARGET_ADDRESS)); //Formerly dest_mmap 
+                // Create ~1Mb x Num_Descriptors target memory map
+                dest_memory = (unsigned int*) mmap(NULL, SPMC_DMA_BUFFER_BLOCK_SIZE*SPMC_DMA_N_DESC, PROT_READ|PROT_WRITE, MAP_SHARED, fd, SPMC_DMA_S2MM_TARGET_ADDRESS); //Formerly dest_mmap 
                 if (dest_memory == MAP_FAILED){
                         INFO_PRINTF ("dest_memory mmap failed.\n");
                 } else {
-                        unsigned long paddr=0;
-                        //virt_to_phys_user(&paddr, (uintptr_t) dest_memory);
+                        uintptr_t paddr = 0;
+                        uintptr_t vaddr = (uintptr_t) dest_memory;
+                        int ret = virt_to_phys_user(&paddr, vaddr);
 
-                        fprintf(stderr, "RP FPGA RPSPMC DMA DEST MEM     mapped 0x%08lx - 0x%08lx   block length: 0x%08lx  PHYS ADDR: 0x%08lx\n",
+                        fprintf(stderr, "RP FPGA RPSPMC DMA DEST MEM     mapped 0x%08lx - 0x%08lx   block length: 0x%08lx  PHYS ADDR[pid=%d, ret=%d]: Paddr: 0x%08ux for Vaddr: 0x%08lx  ##[0x%08lx]\n",
                                 (unsigned long)SPMC_DMA_S2MM_TARGET_ADDRESS,
                                 (unsigned long)(SPMC_DMA_S2MM_TARGET_ADDRESS + SPMC_DMA_BUFFER_BLOCK_SIZE*SPMC_DMA_N_DESC-1),
                                 (unsigned long)(SPMC_DMA_BUFFER_BLOCK_SIZE*SPMC_DMA_N_DESC),
-                                paddr)
-dest_memory);
+                                getpid(), ret, paddr,  (unsigned long)vaddr,  (unsigned long)SPMC_DMA_S2MM_TARGET_ADDRESS);
+                }
 
                 INFO_PRINTF ("spmc_dma_support class init -- mmaps completed.\n");
-
+                // head -c 25165824 /dev/mem > /tmp/dump0
+                // hexdump --skip 0x1000000 -v -e '"%08_ax: "' -e ' 16/4 "%08x_L[red:0] " " \n"' dump0 | less
+        
                 // Clear mm2s descriptors 
-                //memset(mm2s_descriptors, 0x00000000, SPMC_DMA_DESCRIPTOR_REGISTERS_SIZE/4); 
+                //memset(mm2s_descriptors, 0, SPMC_DMA_DESCRIPTOR_REGISTERS_SIZE); 
 
                 // Clear s2mm descriptors 
-                memset(s2mm_descriptors, 0x00000000, SPMC_DMA_DESCRIPTOR_REGISTERS_SIZE/4); 
+                memset(s2mm_descriptors, 0, SPMC_DMA_DESCRIPTOR_REGISTERS_SIZE); 
 
                 // Clear Target Memory 
-                memset(dest_memory, 0x00001111, SPMC_DMA_N_DESC*SPMC_DMA_BUFFER_BLOCK_SIZE/4); 
+                memset(dest_memory, 0x1111, SPMC_DMA_N_DESC*SPMC_DMA_BUFFER_BLOCK_SIZE); 
                 
                 INFO_PRINTF ("spmc_dma_support class init -- clear mem completed.\n");
 
@@ -396,7 +408,7 @@ dest_memory);
                 s2mm_status = get_s2mm_status();
                 print_status(s2mm_status, "S2MM"); 
 
-                //memdump(dest_memory, SPMC_DMA_TRANSFER_INTS);
+                memdump(dest_memory, 0x1000); //SPMC_DMA_TRANSFER_INTS);
 
                 //halt_dma();
                 //reset_dma();
