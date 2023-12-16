@@ -11,15 +11,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="99.350 ns"></ZoomStartTime>
-      <ZoomEndTime time="283.251 ns"></ZoomEndTime>
-      <Cursor1Time time="130.000 ns"></Cursor1Time>
+      <ZoomStartTime time="0.000 ns"></ZoomStartTime>
+      <ZoomEndTime time="80.201 ns"></ZoomEndTime>
+      <Cursor1Time time="5,000.000 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
-      <NameColumnWidth column_width="298"></NameColumnWidth>
+      <NameColumnWidth column_width="292"></NameColumnWidth>
       <ValueColumnWidth column_width="91"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="40" />
+   <WVObjectSize size="42" />
    <wvobject type="logic" fp_name="/tb_spm_ad/pclk">
       <obj_property name="ElementShortName">pclk</obj_property>
       <obj_property name="ObjectShortName">pclk</obj_property>
@@ -261,5 +261,13 @@
    <wvobject type="logic" fp_name="/tb_spm_ad/gvp_1/stall">
       <obj_property name="ElementShortName">stall</obj_property>
       <obj_property name="ObjectShortName">stall</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/dma_data_next">
+      <obj_property name="ElementShortName">dma_data_next[31:0]</obj_property>
+      <obj_property name="ObjectShortName">dma_data_next[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/dma_addr_next">
+      <obj_property name="ElementShortName">dma_addr_next[15:0]</obj_property>
+      <obj_property name="ObjectShortName">dma_addr_next[15:0]</obj_property>
    </wvobject>
 </wave_config>

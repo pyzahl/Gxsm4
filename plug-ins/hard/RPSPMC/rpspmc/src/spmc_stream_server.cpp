@@ -187,8 +187,10 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
                         //uint8_t *bram = (uint8_t*)FPGA_SPMC_bram + offset;
                         m_endpoint.send(*it, position_info.str(), websocketpp::frame::opcode::text);
                         if (position_prev >= 0){
-                                if (spm_dma_instance)
-                                        m_endpoint.send(*it, (void*)spm_dma_instance->dma_memdest (), (2*BRAM_POS_HALF) * sizeof(uint32_t), websocketpp::frame::opcode::binary); // full block
+                                if (spm_dma_instance){
+                                        m_endpoint.send(*it, (void*)(spm_dma_instance->dma_memdest ()), (2*BRAM_POS_HALF) * sizeof(uint32_t), websocketpp::frame::opcode::binary); // full block
+                                        spm_dma_instance->memdump (spm_dma_instance->dma_memdest (), 0x100);
+                                }
                                 //m_endpoint.send(*it, (void*) FPGA_SPMC_bram, (0x200+2*BRAM_POS_HALF) * sizeof(uint32_t), websocketpp::frame::opcode::binary); // full block
                                 //m_endpoint.send(*it, (void*)bram, data_len * sizeof(uint32_t), websocketpp::frame::opcode::binary); // there is a address mix up at block boundaries ?!?!? WTF
                         }

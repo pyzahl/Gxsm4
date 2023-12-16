@@ -62,8 +62,10 @@
 
 // INSTALL:
 // cp ~/SVN/RedPitaya/RedPACPLL4mdc-SPI/RedPACPLL4mdc-SPI.runs/impl_1/system_wrapper.bit fpga.bit
-// scp -r pacpll root@rp-f05603.local:/opt/redpitaya/www/apps/
+// scp -r rpspmc root@rp-f05603.local:/opt/redpitaya/www/apps/
 // make clean; make INSTALL_DIR=/opt/redpitaya
+
+// On rev RP OS 2.x >>> need to install: root@rp-f09296:/opt/redpitaya/www/apps/rpspmc# apt-get install libwebsocketpp-dev
 
 // CHROME BROWSER NOTES: USER SCHIT-F5 to force reload of all data, else caches are fooling....
 

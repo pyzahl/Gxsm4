@@ -48,7 +48,7 @@
 // -------------------------------------------------------------------------------------------------------
 // FPGA Address Mappings
 // -------------------------------------------------------------------------------------------------------
-
+// memory dump 0x01000000 ... +0x80000*2+1000:  $$dd bs=1 skip=16777216 count=1049576 if=/dev/mem of=/tmp/dump1
 /*
 
 // PS -----------------------------------------------------------------------------------------------------  
@@ -134,8 +134,8 @@ SPMC DMA: S2MM Tail Descriptor Address 0x050000c0
 #define SPMC_DMA_MID_FRAME 	0x00000000 //TXSOF = TXEOF = 0 
 
 //For DMACR (MM2S/S2MM Control register)
-#define SPMC_DMA_RUN             0x0001 
-#define SPMC_DMA_CYCLIC_ENABLE   0x0010
+#define SPMC_DMA_RUN             0x0001 // RUN
+#define SPMC_DMA_CYCLIC_ENABLE   0x0010 // BIT 4
 #define SPMC_DMA_IOC_IRqEn       0x0800 //Interrupt on Complete Interrupt Enable 
 
 
@@ -170,6 +170,7 @@ SPMC DMA: S2MM Tail Descriptor Address 0x050000c0
 #define SPMC_DMA_STATUS 	0x1C //Descriptor status
 
 #define INFO_PRINTF(ARGS...)  fprintf(stderr, "SPMC DMA: " ARGS)
+#define X_PRINTF(ARGS...)  fprintf(stderr, ARGS)
 
 //root@rp-f09296:/opt/redpitaya/www/apps/rpspmc# cat /proc/2878/maps 
 //b6f9e000-b6f9f000 rw-s 01000000 00:06 16         /dev/mem
@@ -241,7 +242,7 @@ public:
                 memset(s2mm_descriptors, 0, SPMC_DMA_DESCRIPTOR_REGISTERS_SIZE); 
 
                 // Clear Target Memory 
-                memset(dest_memory, 0x1111, SPMC_DMA_N_DESC*SPMC_DMA_BUFFER_BLOCK_SIZE); 
+                memset(dest_memory, 0xdd, SPMC_DMA_N_DESC*SPMC_DMA_BUFFER_BLOCK_SIZE); 
                 
                 INFO_PRINTF ("spmc_dma_support class init -- clear mem completed.\n");
 
@@ -343,7 +344,7 @@ public:
                 print_check_dma_all();
 
                 INFO_PRINTF ("SET START DMA IN CONTROL RS=1 + CYCLIC\n");
-                set_offset (axi_dma, SPMC_DMA_S2MM_CONTROL_REGISTER, SPMC_DMA_RUN | SPMC_DMA_CYCLIC_ENABLE); 
+                set_offset (axi_dma, SPMC_DMA_S2MM_CONTROL_REGISTER, SPMC_DMA_RUN); // | SPMC_DMA_CYCLIC_ENABLE); 
                 print_check_dma_all();
 
                 // 3) IRQ EN if desired
@@ -352,8 +353,16 @@ public:
                 print_check_dma_all();
 
                 // 4...) Write Tail Descriptor register -- this starts DMA descriptor fetching
-                INFO_PRINTF ("SET TAIL DESCRIPTOR ADDRESS\n");
+
+                /* Ensure that the cyclic bit in the control register is set.
+                   Program the Tail Descriptor register with some value which is not a part of the BD chain. Say
+                   for example 0x50.
+                   After the Tail Descriptor register is programmed, the DMA starts fetching and processing
+                   the BDs (which are set up in a ring fashion) until the DMA is stopped or reset.
+                */
+                INFO_PRINTF ("SET TAIL DESCRIPTOR ADDRESS (CYCLIC: any value not part of BD chain!)\n");
                 set_offset (axi_dma, SPMC_DMA_S2MM_TAILDESC, s2mm_tail_descriptor_address); 
+                //set_offset (axi_dma, SPMC_DMA_S2MM_TAILDESC, 0x50); 
                 print_check_dma_all();
 	};
 
@@ -394,6 +403,7 @@ public:
                 }
                 s2mm_status = get_s2mm_status();
                 print_status(s2mm_status, "S2MM"); 
+                memdump(dest_memory, 0x80); //SPMC_DMA_TRANSFER_INTS);
         };
         
         void wait_test_dma(){
@@ -463,9 +473,11 @@ public:
         void memdump(void* virtual_address, int int_count)
         {    
                 unsigned int *p = (unsigned int *) virtual_address;
-                int offset; 
-                for(offset = 0; offset < int_count; offset++){
-                        INFO_PRINTF("%d: 0x%08x\n", offset, p[offset]);         
+                int offset,k;
+                for(offset = 0; offset < int_count; offset+=16){
+                        X_PRINTF("[%08x] %04d:", offset, offset);
+                        for(k = 0; k < 16; k++) { X_PRINTF(" %08x", p[offset+k]); }
+                        X_PRINTF("\n");
                 }
         };
 
@@ -517,15 +529,16 @@ public:
                         // *********************************************************************
                         //The ith descriptor, BD_i, in the chain, is located at (BASE_DESC_ADDR + i*0x40).
                         //If the current descriptor, BD_i, is not the last in the chain
-                        if(i != SPMC_DMA_N_DESC){ 
+                      
+                        if (i != SPMC_DMA_N_DESC){ 
                                 //Then it must point to the next descriptor in the chain, BD_{i+1}, 
                                 //located at (BASE_DESC_ADDR+(i+1)*0x40)
-                                set_offset(descriptor_chain, SPMC_DMA_NEXT_DESC + i*0x40, BASE_DESC_ADDR+(i+1)*0x40); 					
+                                set_offset (descriptor_chain, SPMC_DMA_NEXT_DESC + i*0x40, BASE_DESC_ADDR+(i+1)*0x40); 					
                                 //BD_i reads from/writes to TARGET_ADDRESS + (i*TRANSFER_BYTES) 
-                                set_offset(descriptor_chain, SPMC_DMA_BUFF_ADDR + i*0x40, TARGET_ADDRESS+i*SPMC_DMA_TRANSFER_BYTES); 		
+                                set_offset (descriptor_chain, SPMC_DMA_BUFF_ADDR + i*0x40, TARGET_ADDRESS+i*SPMC_DMA_TRANSFER_BYTES); 		
                                 //BD_i performs a transfer of TRANSFER_BYTES to/from the AXI stream 
                                 //from/to the location TARGET_ADDRESS+i*TRANSFER_BYTES
-                                set_offset(descriptor_chain, SPMC_DMA_CONTROL + i*0x40, SPMC_DMA_MID_FRAME+SPMC_DMA_TRANSFER_BYTES);
+                                set_offset (descriptor_chain, SPMC_DMA_CONTROL + i*0x40, SPMC_DMA_TRANSFER_BYTES);
                                 INFO_PRINTF("BD_%d @0x%08x:\n", i, BASE_DESC_ADDR+i*0x40);
                         } 
                         //Otherwise, i.e. if BD_i is the tail descriptor in the chain of cyclic mode, make point to first
@@ -533,20 +546,20 @@ public:
                                 //Then it must point to the first descriptor in the chain, BD_0, 
                                 //located at (BASE_DESC_ADDR+0*0x40)
                                 //At least in cyclic mode, which is what we are using for the moment. 
-                                set_offset(descriptor_chain, SPMC_DMA_NEXT_DESC + i*0x40, BASE_DESC_ADDR+0*0x40);
+                                set_offset (descriptor_chain, SPMC_DMA_NEXT_DESC + i*0x40, BASE_DESC_ADDR);
                                 // no other function (remains zero)
-                                set_offset(descriptor_chain, SPMC_DMA_CONTROL + i*0x40, SPMC_DMA_MID_FRAME+SPMC_DMA_TRANSFER_BYTES);
-                                set_offset(descriptor_chain, SPMC_DMA_BUFF_ADDR + i*0x40, TARGET_ADDRESS+0*SPMC_DMA_TRANSFER_BYTES); 		
-                                INFO_PRINTF("CYCLIC TAIL BD_%d @0x%08x:\n", i, BASE_DESC_ADDR+i*0x40);
+                                set_offset (descriptor_chain, SPMC_DMA_BUFF_ADDR + i*0x40, TARGET_ADDRESS+i*SPMC_DMA_TRANSFER_BYTES); // taildescr, not used data, but non zero		
+                                set_offset (descriptor_chain, SPMC_DMA_CONTROL + i*0x40, 0x50); // taildescr, not used data, but non zero
+                                INFO_PRINTF ("CYCLIC TAIL BD_%d @0x%08x:\n", i, BASE_DESC_ADDR+i*0x40);
                         }
 
-                        INFO_PRINTF("- NEXT_DESC 0x%08x\n", get_offset(descriptor_chain, SPMC_DMA_NEXT_DESC+i*0x40)); 
-                        INFO_PRINTF("- BUFF_ADDR 0x%08x\n", get_offset(descriptor_chain, SPMC_DMA_BUFF_ADDR+i*0x40)); 
-                        INFO_PRINTF("- CONTROL   0x%08x\n", get_offset(descriptor_chain, SPMC_DMA_CONTROL+i*0x40)); 
+                        INFO_PRINTF ("- NEXT_DESC 0x%08x\n", get_offset(descriptor_chain, SPMC_DMA_NEXT_DESC+i*0x40)); 
+                        INFO_PRINTF ("- BUFF_ADDR 0x%08x\n", get_offset(descriptor_chain, SPMC_DMA_BUFF_ADDR+i*0x40)); 
+                        INFO_PRINTF ("- CONTROL   0x%08x\n", get_offset(descriptor_chain, SPMC_DMA_CONTROL+i*0x40)); 
                 }
-                INFO_PRINTF("******************************\n");
+                INFO_PRINTF ("******************************\n");
                 //Return the address of the tail descriptor, located at 
-                return BASE_DESC_ADDR+0x50; // (SPMC_DMA_N_DESC)*0x40; -- for cyclic mode, programm any address NOT part of chain!
+                return BASE_DESC_ADDR+(SPMC_DMA_N_DESC)*0x40; //-- for cyclic mode, programm any address NOT part of chain!
         };
 
 private:
