@@ -429,7 +429,7 @@ spmc_stream_server spmc_stream_server_instance;
 spmc_dma_support *spm_dma_instance = NULL;
 
 /*
- * RedPitaya A9 FPGA Link
+ * RedPitaya A9 FPGA LinksR
  * ------------------------------------------------------------
  */
 
@@ -1566,14 +1566,17 @@ void OnNewParams_RPSPMC(void){
                 int pause= SPMC_GVP_PAUSE.Value () ? 1:0;
                 int exec = SPMC_GVP_EXECUTE.Value () ? 1:0;
                 int reset =  stop ? 1 : (exec ? 0 : 1);
+                
                 fprintf(stderr, "*** GVP Control: exec: %d, stop: %d, prog: %d, pause: %d ==> reset=%d\n", exec, stop, prog, pause, reset);
 
-                if (exec)
+                if (exec){
+                        if (spm_dma_instance)
+                                spm_dma_instance->start_dma ();
+                        usleep (10000);
                         stream_server_control = (stream_server_control & 0x01) | 2; // set start bit
-
+                }
                 if (stop)
                         stream_server_control = (stream_server_control & 0x01) | 4; // set stop bit
-
                 
                 if (SPMC_GVP_RESET_OPTIONS.IsNewValue ()){
                                 SPMC_GVP_RESET_OPTIONS.Update ();

@@ -103,15 +103,12 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
         static size_t offset = 0;
         static bool started = false;
         static int position_prev=0;
+        static bool data_valid = false;
         
-        int position   = stream_lastwrite_address();
+        int position = stream_lastwrite_address();
         position_info << "{StreamInfo";
 
         if (stream_server_control & 2){ // started!
-
-                if (spm_dma_instance)
-                        spm_dma_instance->start_dma ();
-
                 limit = BRAM_POS_HALF;
                 count = 0;
                 last_offset = 0;
@@ -119,6 +116,7 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
                 stream_server_control ^= 2; // remove start flag now
                 position_info << "RESET:{true},";
                 started = true;
+                data_valid = false;
                 position=0;
                 position_prev=-1;
         }
@@ -132,9 +130,14 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
         // use delayed position_prev
         if (started){ // started?
 
+                // check for valid header
+
                 if (spm_dma_instance){
-                         spm_dma_instance->print_check_dma_all();
-                         fprintf(stderr, "GVP WPos: %d, FIFO R,WPos: %08x, %08x\n", position, read_gpio_reg_int32 (12,0), read_gpio_reg_int32 (12,1));
+                        unsigned int *initial = spm_dma_instance->dma_memdest ();
+                        if (!data_valid && (initial[0] & 0xffff) == 0xffff)
+                                data_valid = true;
+                        fprintf(stderr, "GVP WPos: %d, FIFO R,WPos: %08x, %08x, A: %08x, B: %08x  *I: %08x Data: %s\n", position, read_gpio_reg_int32 (12,0), read_gpio_reg_int32 (12,1), spm_dma_instance->get_s2mm_nth_status(0), spm_dma_instance->get_s2mm_nth_status(1), initial[0], data_valid?"VALID":"WAITING");
+                        spm_dma_instance->print_check_dma_all();
                 }
                  
                 if (position_prev >= 0 && gvp_finished ()){ // must transfer data written to block when finished but block not full.
@@ -157,39 +160,20 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
         }
 
         position_info <<  std::hex <<  ",Position:{0x" << ( position_prev >= 0 ? position_prev : 0 ) << std::dec << "},Count:{" << count << "}";
-
-        // flush the cache before reading the data from DRAM by calling
-        // Xil_DCacheFlushRange(PARAM_BASE_ADDRESS, 4*1); (defined in xil_cache.c)
-        // Xil_DCacheInvalidateRange
-        // Xil_DCacheFlushRange(FPGA_SPMC_bram, 4*0x4200);
-
-        // *** =>  Xil_DCacheInvalidateRange ((INTPTR) FPGA_SPMC_bram, 4*0x4200);
-
-        // Xil_L1ICacheInvalidateRange ((INTPTR) FPGA_SPMC_bram, 4*0x4200);
-
-        // use volatile ??? -- issues with types and mmap/unmap
-
-        // int msync(void addr[.length], size_t length, int flags);
-
-
-
         position_info << "}" << std::endl;
 
-        //*** msync ((void *)FPGA_SPMC_bram, 4*0x4200, MS_SYNC);
-                        
         // Broadcast to all connections
         con_list::iterator it;
         for (it = m_connections.begin(); it != m_connections.end(); ++it) {
                 if (info_count > 0)
                         m_endpoint.send(*it, info_stream.str(), websocketpp::frame::opcode::text);
-                
                 if (data_len > 0 && position_prev != position){
                         //uint8_t *bram = (uint8_t*)FPGA_SPMC_bram + offset;
                         m_endpoint.send(*it, position_info.str(), websocketpp::frame::opcode::text);
-                        if (position_prev >= 0){
+                        if (position_prev >= 0 && data_valid){
                                 if (spm_dma_instance){
-                                        m_endpoint.send(*it, (void*)(spm_dma_instance->dma_memdest ()), (2*BRAM_POS_HALF) * sizeof(uint32_t), websocketpp::frame::opcode::binary); // full block
                                         spm_dma_instance->memdump (spm_dma_instance->dma_memdest (), 0x100);
+                                        m_endpoint.send(*it, (void*)(spm_dma_instance->dma_memdest ()), (2*BRAM_POS_HALF) * sizeof(uint32_t), websocketpp::frame::opcode::binary); // full block
                                 }
                                 //m_endpoint.send(*it, (void*) FPGA_SPMC_bram, (0x200+2*BRAM_POS_HALF) * sizeof(uint32_t), websocketpp::frame::opcode::binary); // full block
                                 //m_endpoint.send(*it, (void*)bram, data_len * sizeof(uint32_t), websocketpp::frame::opcode::binary); // there is a address mix up at block boundaries ?!?!? WTF
@@ -205,7 +189,7 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
 
         clear_info_stream ();
 
-        // set timer for next telemetry check
+        // set timer for next telemetry
         set_timer(200);
 }
 

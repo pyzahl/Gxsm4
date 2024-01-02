@@ -264,10 +264,9 @@ public:
 
         void reset_all_dma (){
                 // Reset and halt all DMA operations 
-                //set_offset (axi_dma, SPMC_DMA_MM2S_CONTROL_REGISTER, 0x4); 
-                set_offset (axi_dma, SPMC_DMA_S2MM_CONTROL_REGISTER, 0x4); 
-                //set_offset (axi_dma, SPMC_DMA_MM2S_CONTROL_REGISTER, 0x0); 
-                set_offset (axi_dma, SPMC_DMA_S2MM_CONTROL_REGISTER, 0x0); 
+                halt_dma();
+                reset_dma();
+
                 //mm2s_status = get_offset (axi_dma, SPMC_DMA_MM2S_STATUS_REGISTER); 
                 s2mm_status = get_offset (axi_dma, SPMC_DMA_S2MM_STATUS_REGISTER); 
                 //print_status (mm2s_status, "MM2S"); 
@@ -344,7 +343,7 @@ public:
                 print_check_dma_all();
 
                 INFO_PRINTF ("SET START DMA IN CONTROL RS=1 + CYCLIC\n");
-                set_offset (axi_dma, SPMC_DMA_S2MM_CONTROL_REGISTER, SPMC_DMA_RUN); // | SPMC_DMA_CYCLIC_ENABLE); 
+                set_offset (axi_dma, SPMC_DMA_S2MM_CONTROL_REGISTER, SPMC_DMA_RUN | SPMC_DMA_CYCLIC_ENABLE); 
                 print_check_dma_all();
 
                 // 3) IRQ EN if desired
@@ -361,24 +360,30 @@ public:
                    the BDs (which are set up in a ring fashion) until the DMA is stopped or reset.
                 */
                 INFO_PRINTF ("SET TAIL DESCRIPTOR ADDRESS (CYCLIC: any value not part of BD chain!)\n");
-                set_offset (axi_dma, SPMC_DMA_S2MM_TAILDESC, s2mm_tail_descriptor_address); 
-                //set_offset (axi_dma, SPMC_DMA_S2MM_TAILDESC, 0x50); 
+                //set_offset (axi_dma, SPMC_DMA_S2MM_TAILDESC, s2mm_tail_descriptor_address); 
+                set_offset (axi_dma, SPMC_DMA_S2MM_TAILDESC, 0x50); 
                 print_check_dma_all();
 	};
 
         void start_dma(){
-                INFO_PRINTF ("RE-START DMA\n");
+                //INFO_PRINTF ("RE-START DMA\n");
                 INFO_PRINTF ("RESET DMA\n");
+
                 // Full reset DMA
                 reset_all_dma ();
+                halt_dma (); // out of reset, halt
+                
+                // Clear Target Memory 
+                //INFO_PRINTF ("CLEAR TARGET MEMORY with 0xDDDD DDDD\n");
+                memset(dest_memory, 0xdd, SPMC_DMA_N_DESC*SPMC_DMA_BUFFER_BLOCK_SIZE); 
+                
+                //print_check_dma_all();
 
-                print_check_dma_all();
-
-                INFO_PRINTF ("SETUP DMA\n");
+                //INFO_PRINTF ("SETUP DMA\n");
                 // Build Descriptor Chain
                 setup_dma();
 
-                INFO_PRINTF ("* DMA ACTIVE *\n");
+                INFO_PRINTF ("DMA ACTIVE\n");
                 print_check_dma_all();
         };
 
@@ -403,7 +408,7 @@ public:
                 }
                 s2mm_status = get_s2mm_status();
                 print_status(s2mm_status, "S2MM"); 
-                memdump(dest_memory, 0x80); //SPMC_DMA_TRANSFER_INTS);
+                //memdump(dest_memory, 0x80); //SPMC_DMA_TRANSFER_INTS);
         };
         
         void wait_test_dma(){
@@ -430,16 +435,18 @@ public:
         
         void halt_dma(){
                 //Halt DMA 
-                set_offset(axi_dma, SPMC_DMA_S2MM_CONTROL_REGISTER, 0x0); 
-                set_offset(axi_dma, SPMC_DMA_S2MM_CONTROL_REGISTER, 0x0); 
+                set_offset(axi_dma, SPMC_DMA_S2MM_CONTROL_REGISTER, 0x0); // Bit0 <= 0 ==> STOP DMA
+                set_offset(axi_dma, SPMC_DMA_S2MM_CONTROL_REGISTER, 0x0);
+                usleep (10000);
                 s2mm_status = get_offset(axi_dma, SPMC_DMA_S2MM_STATUS_REGISTER); 
                 print_status(s2mm_status,"S2MM");
         };
 
         void reset_dma(){
                 //Reset DMA 
+                set_offset(axi_dma, SPMC_DMA_S2MM_CONTROL_REGISTER, 0x4); // Bit2 <= 1 (=4) ==> PUT DMA IN RESET
                 set_offset(axi_dma, SPMC_DMA_S2MM_CONTROL_REGISTER, 0x4); 
-                set_offset(axi_dma, SPMC_DMA_S2MM_CONTROL_REGISTER, 0x4); 
+                usleep (10000);
                 s2mm_status = get_offset(axi_dma, SPMC_DMA_S2MM_STATUS_REGISTER); 
                 print_status(s2mm_status,"S2MM");   
         };

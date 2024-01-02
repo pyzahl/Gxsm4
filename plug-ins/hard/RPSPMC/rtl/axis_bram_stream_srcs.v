@@ -63,7 +63,7 @@
 
 module axis_bram_stream_srcs #(
     parameter integer DMA_DATA_WIDTH = 32,
-    parameter integer DMA_ADDR_WIDTH = 16
+    parameter integer DMA_ADDR_WIDTH = 32
 )
 (
     // BRAM PORT A
@@ -155,24 +155,10 @@ module axis_bram_stream_srcs #(
 
     reg last_packet=0; // last element of data block
     reg last=0; // last of whole transmission
-    reg last01=0;
-    reg last02=0;
-    reg last03=0;
-    reg last04=0;
-    reg last05=0;
-    reg last06=0;
-    reg last07=0;
-    reg last08=0;
-    reg last09=0;
-    reg last10=0;
-    reg last11=0;
-    reg last12=0;
-    reg last13=0;
-    reg last14=0;
-    reg last15=0;
-    reg last16=0;
 
     reg fifo_ready=0;
+
+    reg [15:0] padding=0;
 
 //    reg [1:0] rdecii = 0;
 //    always @ (posedge a2_clk)
@@ -185,7 +171,7 @@ module axis_bram_stream_srcs #(
     // assign DMA_PORTA_rst = ~a_resetn;
     assign M_AXIS_tdata  = dma_data;
     assign M_AXIS_tvalid = dma_wr;
-    assign M_AXIS_tlast  = last16; // *** packet mode -- not DMA, last indicates end of DMA
+    assign M_AXIS_tlast  = last; // *** packet mode -- not DMA, last indicates end of DMA
 
     assign dma_fifo_resetn = ~reset;
 
@@ -193,25 +179,12 @@ module axis_bram_stream_srcs #(
         
     assign stall = ~fifo_ready; // && status_ready;
       
-    integer i;
-    //initial for (i=0; i<=4; i=i+1) position[i] = 0;
-
-    always @(S_AXIS_srcs_tdata[7])
-    begin
-        test_mode <= S_AXIS_srcs_tdata[7];
-    end
-
-
-
 
     // BRAM writer at a2_clk
     //always @ (posedge rdecii[1])
     always @(posedge a2_clk)
     begin
-    
-        // delay last by 16 cycles until completion of all 16 final channels are send
-        last01 <= last; last02 <= last01; last03 <= last02; last04 <= last03; last05 <= last04; last06 <= last05; last07 <= last06; last08 <= last07; last09 <= last08; last10 <= last09; last11 <= last10; last12 <= last11; last13 <= last12;  last14 <= last13; last15 <= last14; last16 <= last15;
-    
+        
         push_mode <= push_next;
         r <= reset;
         fifo_ready <= M_AXIS_tready;
@@ -286,6 +259,7 @@ module axis_bram_stream_srcs #(
                             1: 
                             begin // normal data set as of srcs
                                 srcs_mask <= S_AXIS_srcs_tdata[32-1:8];
+                                test_mode <= S_AXIS_srcs_tdata[7];
                                 dma_data_next <= { S_AXIS_index_tdata[16-1:0], S_AXIS_srcs_tdata[32-8-1:8] }; // frame info: mask and type (header or data)
                             end
                             2:
@@ -295,11 +269,11 @@ module axis_bram_stream_srcs #(
                             end
                             3:
                             begin // full header info, all signals, + END MARKING
+                                test_mode <= 0;
                                 stream_buffer[12] <= 32'hffffeeee;
                                 stream_buffer[13] <= 32'hfefecdcd;
                                 srcs_mask <= 24'hfffff;// ALL 16
                                 dma_data_next <= { 16'hfefe, 16'hfefe }; // frame info: END MARK, full vector position list follows
-                                last <= 1;
                             end
                         endcase
                         //dma_addr_next <= (dma_addr_next + 1) & 16'h3fff;
@@ -311,12 +285,20 @@ module axis_bram_stream_srcs #(
                         begin
                             //dma_data_next <= channel; // DATA ALIGNMENT TEST
                             dma_data_next <= stream_buffer[channel];
-                            dma_addr_next <= (dma_addr_next + 1) & 16'h3fff; // next adr
+                            dma_addr_next <= dma_addr_next + 1; //(..) & 16'h3fff; // next adr
                             if (channel == 4'd15) // check if no more data to push or last 
                             begin
-                                dma_wr_next <= 1'b0; // 0: data to write done next this set
-                                last_packet <= 1;                 
-                                bramwr_sms <= 3'd0; //4 3 write last and finish frame
+                                last_packet <= 1;
+                                if (hdr_type == 3) // END MARK HDR
+                                begin
+                                    padding <= 32;
+                                    bramwr_sms <= 3'd3; //6 0 add fifo padding to flush DMA buffers (32 long)
+                                end 
+                                else
+                                begin
+                                    dma_wr_next <= 1'b0; // 0: data to write done next this set
+                                    bramwr_sms <= 3'd0; //4 3 write last and finish frame
+                                end
                             end
                             else
                             begin
@@ -329,13 +311,28 @@ module axis_bram_stream_srcs #(
                             dma_wr_next <= 1'b0; // 0: no data in this channel
                             if ((srcs_mask >> channel) == 0 || channel == 15) // check if no more data to push or last 
                             begin
-                                last_packet <= 1;                 
+                                last_packet <= 1;          
                                 bramwr_sms <= 3'd0; //6 0 finish frame
                             end                     
                             else
                                 bramwr_sms <= 3'd2; //2 1 repeat here
                         end
                         channel <= channel + 1; // check next channel, no mode change or write
+                    end
+                    3:    // post data set stream padding
+                    begin
+                        if (padding > 0)
+                        begin                     
+                            dma_data_next <= padding;
+                            dma_addr_next <= dma_addr_next + 1;
+                            padding <= padding - 1;
+                        end
+                        else
+                        begin
+                            last <= 1; // set TLAST
+                            dma_wr_next <= 1'b0; // 0: data to write done next this set
+                            bramwr_sms <= 3'd0; //6 0 finish
+                        end             
                     end
                 endcase
             end

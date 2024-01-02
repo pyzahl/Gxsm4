@@ -1,22 +1,26 @@
-APP=$(notdir $(CURDIR:%/=%))
+MODEL ?= Z10
 
-# Versioning system
-BUILD_NUMBER ?= 0
-REVISION ?= devbuild
-VER:=$(shell cat info/info.json | grep version | sed -e 's/.*:\ *\"//' | sed -e 's/-.*//')
+CFLAGS  = -std=gnu11 -Wall ## -Werror
+CFLAGS += -I/opt/redpitaya/include -D$(MODEL)
+LDFLAGS = -L/opt/redpitaya/lib
+LDLIBS = -static -lrp -lrp-hw-calib -lrp-hw-profiles
 
-INSTALL_DIR ?= ../../build
+INCLUDE += -I/opt/redpitaya/include/api250-12
+LDLIBS += -lrp-gpio -lrp-i2c
+LDLIBS += -lrp-hw -lm -lstdc++ -lpthread -li2c
 
-CONTROLLERHF = controllerhf.so
+# List of compiled object files (not yet linked to executable)
 
-CFLAGS += -DVERSION=$(VER)-$(BUILD_NUMBER) -DREVISION=$(REVISION)
-export CFLAGS
+PRGS = src
 
-all: $(CONTROLLERHF)
+OBJS := $(patsubst %,%.o,$(PRGS))
+SRC := $(patsubst %,%.c,$(PRGS))
 
-$(CONTROLLERHF):
-	$(MAKE) -C src
+all: $(PRGS)
+
+$(PRGS): %: %.c
+    $(CC) $< $(CFLAGS) $(LDFLAGS) $(LDLIBS) -o $@
 
 clean:
-	$(MAKE) -C src clean
-	-$(RM) *.so
+    $(RM) *.o
+    $(RM) $(OBJS)
