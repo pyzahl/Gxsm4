@@ -80,16 +80,17 @@ extern spmc_dma_support *spm_dma_instance;
 
 extern CIntParameter SPMC_GVP_DATA_POSITION;
 
+//#define SPMC_DMA_BUFFER_BLOCK_SIZE         0x00080000 // Size of memory block per descriptor in bytes: 0.5 M -- two blocks, cyclic
+#define BLKSIZE ((SPMC_DMA_N_DESC*SPMC_DMA_BUFFER_BLOCK_SIZE)/4) // 2 * 0x00080000 / 4 = 0x40000
 
 inline bool gvp_finished (){
         return (read_gpio_reg_int32 (3,1) & 2) ? true:false;
 }
 
 inline unsigned int stream_lastwrite_address(){
-        return read_gpio_reg_int32 (11,0) & BRAM_ADRESS_MASK;
+        return read_gpio_reg_int32 (11,0) & (BLKSIZE-1); // 20bit 0x3FFFF   // & BRAM_ADRESS_MASK;
 }
 
-#define BLKSIZE ((SPMC_DMA_N_DESC*SPMC_DMA_BUFFER_BLOCK_SIZE)/4)
 
 void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
         if (ec) {
@@ -171,16 +172,43 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
 
                 if (data_valid && started && position_prev != position){
                         int n  = position_prev < position ? position - position_prev : 0;
+                        const int max_msg = 32768;
                         if (n > 0){
                                 fprintf(stderr, "Block: [%08x : %08x] %d\n", position_prev, position, n);
-                                spm_dma_instance->memdump_from (dma_mem, n, position_prev);
-                                m_endpoint.send(*it, (void*)(&dma_mem[position_prev]), n*sizeof(uint32_t), websocketpp::frame::opcode::binary);
+                                //spm_dma_instance->memdump_from (dma_mem, n, position_prev);
+                                int o=0;
+                                while (n > max_msg){
+                                        m_endpoint.send(*it, (void*)(&dma_mem[position_prev+o]), max_msg*sizeof(uint32_t), websocketpp::frame::opcode::binary);
+                                        n -= max_msg;
+                                        o += max_msg;
+                                }
+                                if (n > 0)
+                                        m_endpoint.send(*it, (void*)(&dma_mem[position_prev+o]), n*sizeof(uint32_t), websocketpp::frame::opcode::binary);
                         } else {
                                 fprintf(stderr, "BlockLoop: [%08x : END, 0 : %08x]\n", position_prev, position);
-                                spm_dma_instance->memdump_from (dma_mem, BLKSIZE-position_prev, position_prev);
-                                m_endpoint.send(*it, (void*)(&dma_mem[position_prev]), (BLKSIZE-position_prev)*sizeof(uint32_t), websocketpp::frame::opcode::binary);
-                                spm_dma_instance->memdump_from (dma_mem, position, 0);
-                                m_endpoint.send(*it, (void*)(&dma_mem[0]), (position)*sizeof(uint32_t), websocketpp::frame::opcode::binary);
+                                //spm_dma_instance->memdump_from (dma_mem, BLKSIZE-position_prev, position_prev);
+                                n = BLKSIZE-position_prev;
+                                int o=0;
+                                while (n > max_msg){
+                                        m_endpoint.send(*it, (void*)(&dma_mem[position_prev+o]), max_msg*sizeof(uint32_t), websocketpp::frame::opcode::binary);
+                                        n -= max_msg;
+                                        o += max_msg;
+                                }
+                                if (n > 0)
+                                        m_endpoint.send(*it, (void*)(&dma_mem[position_prev+o]), n*sizeof(uint32_t), websocketpp::frame::opcode::binary);
+                                //m_endpoint.send(*it, (void*)(&dma_mem[position_prev]), (BLKSIZE-position_prev)*sizeof(uint32_t), websocketpp::frame::opcode::binary);
+
+                                //spm_dma_instance->memdump_from (dma_mem, position, 0);
+                                n = position;
+                                o=0;
+                                while (n > max_msg){
+                                        m_endpoint.send(*it, (void*)(&dma_mem[o]), max_msg*sizeof(uint32_t), websocketpp::frame::opcode::binary);
+                                        n -= max_msg;
+                                        o += max_msg;
+                                }
+                                if (n > 0)
+                                        m_endpoint.send(*it, (void*)(&dma_mem[o]), n*sizeof(uint32_t), websocketpp::frame::opcode::binary);
+                                //m_endpoint.send(*it, (void*)(&dma_mem[0]), (position)*sizeof(uint32_t), websocketpp::frame::opcode::binary);
                                 count++;
                         }
                 } 
@@ -203,7 +231,7 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
         clear_info_stream ();
 
         // set timer for next telemetry
-        set_timer(200);
+        set_timer(100);
 }
 
 
