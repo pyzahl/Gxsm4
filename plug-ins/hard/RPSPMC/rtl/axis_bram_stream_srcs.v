@@ -241,6 +241,7 @@ module axis_bram_stream_srcs #(
                             stream_buffer[13] <= S_AXIS_chEs_tdata[32-1:0];
                             stream_buffer[14] <= S_AXIS_gvp_time_tdata[32-1:0];
                             stream_buffer[15] <= { 16'd0, S_AXIS_gvp_time_tdata[48-1:32] };
+                            test_mode <= S_AXIS_srcs_tdata[7];
                             bramwr_sms <= 3'd1; // write frame start info, then data
                         end
                         else
@@ -258,8 +259,7 @@ module axis_bram_stream_srcs #(
                         case (hdr_type)
                             1: 
                             begin // normal data set as of srcs
-                                srcs_mask <= S_AXIS_srcs_tdata[32-1:8];
-                                test_mode <= S_AXIS_srcs_tdata[7];
+                                srcs_mask <= S_AXIS_srcs_tdata[32-1:8]; // 24 SRCS bits, 8 Option bits
                                 dma_data_next <= { S_AXIS_index_tdata[16-1:0], S_AXIS_srcs_tdata[32-8-1:8] }; // frame info: mask and type (header or data)
                             end
                             2:
@@ -270,13 +270,11 @@ module axis_bram_stream_srcs #(
                             3:
                             begin // full header info, all signals, + END MARKING
                                 test_mode <= 0;
-                                stream_buffer[12] <= 32'hffffeeee;
-                                stream_buffer[13] <= 32'hfefecdcd;
                                 srcs_mask <= 24'hfffff;// ALL 16
                                 dma_data_next <= { 16'hfefe, 16'hfefe }; // frame info: END MARK, full vector position list follows
                             end
                         endcase
-                        //dma_addr_next <= (dma_addr_next + 1) & 16'h3fff;
+                        dma_addr_next <= dma_addr_next + 1; //) & 16'h3fff;
                         bramwr_sms <= 3'd2; // start pushing selected channels
                     end
                     2:    // Data prepare cycle DATA
@@ -286,6 +284,7 @@ module axis_bram_stream_srcs #(
                             //dma_data_next <= channel; // DATA ALIGNMENT TEST
                             dma_data_next <= stream_buffer[channel];
                             dma_addr_next <= dma_addr_next + 1; //(..) & 16'h3fff; // next adr
+                            dma_wr_next <= 1'b1; // 1: selected data in this channel
                             if (channel == 4'd15) // check if no more data to push or last 
                             begin
                                 last_packet <= 1;
@@ -296,13 +295,11 @@ module axis_bram_stream_srcs #(
                                 end 
                                 else
                                 begin
-                                    dma_wr_next <= 1'b0; // 0: data to write done next this set
                                     bramwr_sms <= 3'd0; //4 3 write last and finish frame
                                 end
                             end
                             else
                             begin
-                                dma_wr_next <= 1'b1; // 1: data to write for this channel
                                 bramwr_sms <= 3'd2; //3 2 write and then repeat here
                             end
                         end
@@ -315,16 +312,21 @@ module axis_bram_stream_srcs #(
                                 bramwr_sms <= 3'd0; //6 0 finish frame
                             end                     
                             else
+                            begin
                                 bramwr_sms <= 3'd2; //2 1 repeat here
+                            end                         
                         end
                         channel <= channel + 1; // check next channel, no mode change or write
                     end
                     3:    // post data set stream padding
                     begin
                         if (padding > 0)
-                        begin                     
-                            dma_data_next <= padding;
-                            dma_addr_next <= dma_addr_next + 1;
+                        begin
+                            if (padding > 16)                 
+                                dma_data_next <= 32'hffffeeee;
+                            else
+                                dma_data_next <= padding;
+                            //dma_addr_next <= dma_addr_next + 1;
                             padding <= padding - 1;
                         end
                         else

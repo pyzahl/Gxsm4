@@ -162,6 +162,7 @@ SPMC DMA: S2MM Tail Descriptor Address 0x050000c0
 #define SPMC_DMA_S2MM_CURDESC_MSB            0x3C    // unused with 32bit addresses
 #define SPMC_DMA_S2MM_TAILDESC               0x40    // must align 0x40 addresses
 #define SPMC_DMA_S2MM_TAILDESC_MSB           0x44    // unused with 32bit addresses
+#define SPMC_DMA_S2MM_DESTINATION_ADDRESS    0x48    // 
 
 //Scatter/Gather Control 
 #define SPMC_DMA_NEXT_DESC 	0x00 //Set to address of next descriptor in chain 
@@ -397,6 +398,10 @@ public:
                 return get_offset (s2mm_descriptors, SPMC_DMA_STATUS + i*0x40);
         };
 
+        unsigned int get_s2mm_destination_address(){
+                return get_offset (axi_dma, SPMC_DMA_S2MM_DESTINATION_ADDRESS);
+        };
+        
         void print_check_dma_all(){
                 int i = 0; 	
                 uint32_t S2MM_i_status; 	
@@ -482,6 +487,18 @@ public:
                 unsigned int *p = (unsigned int *) virtual_address;
                 int offset,k;
                 for(offset = 0; offset < int_count; offset+=16){
+                        X_PRINTF("[%08x] %04d:", offset, offset);
+                        for(k = 0; k < 16; k++) { X_PRINTF(" %08x", p[offset+k]); }
+                        X_PRINTF("\n");
+                }
+        };
+
+        void memdump_from(void* virtual_address, int int_count, int from)
+        {    
+                unsigned int *p = (unsigned int *) virtual_address;
+                int offset,k;
+                int_count += from;
+                for(offset = from; offset < int_count; offset+=16){
                         X_PRINTF("[%08x] %04d:", offset, offset);
                         for(k = 0; k < 16; k++) { X_PRINTF(" %08x", p[offset+k]); }
                         X_PRINTF("\n");
