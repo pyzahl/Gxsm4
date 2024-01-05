@@ -698,7 +698,7 @@ int rpspmc_hwi_dev::on_new_data (gconstpointer contents, gsize len, int position
         memcpy (&GVP_stream_buffer[position], contents, len);
 
         GVP_stream_buffer_position = position + (len>>2);
-#if 1
+#if 0
         //gchar *tmp = g_strdup_printf ("WS-BUFFER-DATA_AB%03d_Off%0x08d_Pos0x%04x_GVPPos%0x08d.bin", AB, offset, position,  GVP_stream_buffer_position);
         gchar *tmp = g_strdup_printf ("GXSM-BUFFER-DATA_Off_%08d_GVPPos0x%08x.bin", position, GVP_stream_buffer_position);
         FILE *pFile = fopen(tmp, "wb");

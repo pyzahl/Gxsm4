@@ -193,7 +193,7 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
                 //self->debug_log (tmp);
                 //g_free (tmp);
 
-#if 1
+#if 0
                 FILE* pFile;
                 //tmp = g_strdup_printf ("WS-BRAM-DATA-BLOCK_%03d_Pos0x%04x_AB_%02d%s.bin", count, position, streamAB, finished?"_Fini":"_Cont");
                 tmp = g_strdup_printf ("DMA-DATA-NEW_%08d%s.bin", count_stream, finished?"_Fini":"_Cont");
@@ -203,10 +203,6 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
                 fclose(pFile);
                 // hexdump -v -e '"%08_ax: "' -e ' 16/4 "%08x_L[red:0x018ec108,green:0x018fffff] " " \n"' WS-BRAM-DATA-BLOCK_000_Pos0x1f7e_AB_00.bin
 #endif
-                // this odd and double data move than required, but there is an odd BRAM memory addressing issue otherwise
-                
-                //streamAB = self->on_new_data (contents+bram_offset, len/2, position, count-count_prev, finished); // process data
-                //streamAB = self->on_new_data (contents+0x400+bram_offset, 0x10000/2, position, count-count_prev, finished); // process data
 
                 streamAB = self->on_new_data (contents, len, count_stream, 0);
                 count_stream += (len>>2);

@@ -148,8 +148,8 @@ SOURCE_SIGNAL_DEF source_signals[] = {
         { 0x00000002, "YS-Mon",       " ", "AA", UTF8_ANGSTROEM, 1.0, PROBEDATA_ARRAY_S2 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x00000004, "ZS-Mon",       " ", "AA", UTF8_ANGSTROEM, 1.0, PROBEDATA_ARRAY_S3 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x00000008, "Bias-Mon",     " ", "V",   "V", 1.0,    PROBEDATA_ARRAY_S4 }, // BiasFac, see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
-	{ 0x00000010, "In1-Signal",   " ", "V",   "V", 1.0,    PROBEDATA_ARRAY_S5 },
-        { 0x00000020, "In2-Current",  " ", "nA", "nA", 1.0,    PROBEDATA_ARRAY_S6 }, // CurrFac, see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
+	{ 0x00000010, "In1-Signal",   " ", "V",   "V", DSP32Qs15dot16TO_Volt,    PROBEDATA_ARRAY_S5 },
+        { 0x00000020, "In2-Current",  " ", "nA", "nA", DSP32Qs15dot16TO_Volt,    PROBEDATA_ARRAY_S6 }, // CurrFac, see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x00000040, "In3-**",       " ", "V",   "V", DSP32Qs15dot16TO_Volt,    PROBEDATA_ARRAY_S7 },
         { 0x00000080, "In4-**",       " ", "V",   "V", DSP32Qs15dot16TO_Volt,    PROBEDATA_ARRAY_S8 },
         { 0x00000100, "SWPS1-choose", " ", "V",   "V", 1.0,    PROBEDATA_ARRAY_S9 }, // ** swappable **,
