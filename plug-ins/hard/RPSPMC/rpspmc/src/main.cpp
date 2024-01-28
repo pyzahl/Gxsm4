@@ -1354,28 +1354,28 @@ void UpdateSignals(void)
                     }
                 }
                 //clear_tune_data = 1;
-                if (verbose > 3) fprintf(stderr, "UpdateSignals get GPIO reading:\n");
+                //if (verbose > 3) fprintf(stderr, "UpdateSignals get GPIO reading:\n");
 
                 // Slow GPIO MONITOR in strip plotter mode
                 // Push it to vector
                 //ch = TRANSPORT_CH3.Value ();
-                if (verbose > 3) fprintf(stderr, "UpdateSignals: CH3=%d \n", ch);
+                //if (verbose > 3) fprintf(stderr, "UpdateSignals: CH3=%d \n", ch);
                 g_data_signal_ch3.erase (g_data_signal_ch3.begin());
                 //read_gpio_reg_int32 (n,m)
                 g_data_signal_ch3.push_back (gpio_reading_FIRV_vector_CH3_mapping/GPIO_FIR_LEN * GAIN3.Value ());
 
                 //ch = TRANSPORT_CH4.Value ();
-                if (verbose > 3) fprintf(stderr, "UpdateSignals: CH4=%d \n", ch);
+                //if (verbose > 3) fprintf(stderr, "UpdateSignals: CH4=%d \n", ch);
                 g_data_signal_ch4.erase (g_data_signal_ch4.begin());
                 g_data_signal_ch4.push_back (gpio_reading_FIRV_vector_CH4_mapping/GPIO_FIR_LEN * GAIN4.Value ());
 
                 //ch = TRANSPORT_CH5.Value ();
-                if (verbose > 3) fprintf(stderr, "UpdateSignals: CH5=%d \n", ch);
+                //if (verbose > 3) fprintf(stderr, "UpdateSignals: CH5=%d \n", ch);
                 g_data_signal_ch5.erase (g_data_signal_ch5.begin());
                 g_data_signal_ch5.push_back (gpio_reading_FIRV_vector_CH5_mapping/GPIO_FIR_LEN * GAIN5.Value ());
 
                 // Copy data to signals
-                if (verbose > 3) fprintf(stderr, "UpdateSignals copy signals\n");
+                // if (verbose > 3) fprintf(stderr, "UpdateSignals copy signals\n");
                 for (int i = 0; i < SIGNAL_SIZE_DEFAULT; i++){
                         SIGNAL_CH3[i] = g_data_signal_ch3[i];
                         SIGNAL_CH4[i] = g_data_signal_ch4[i];
@@ -1383,7 +1383,7 @@ void UpdateSignals(void)
                 }
         }
         
-        if (verbose > 3) fprintf(stderr, "UpdateSignal complete.\n");
+        //if (verbose > 3) fprintf(stderr, "UpdateSignal complete.\n");
 
         // GPIO via FIR thread
         VOLUME_MONITOR.Value ()   = gpio_reading_FIRV_vector[GPIO_READING_AMPL]/GPIO_FIR_LEN * 1000./QCORDICSQRT;
@@ -1403,7 +1403,7 @@ void UpdateSignals(void)
 
 
 void UpdateParams(void){
-        if (verbose > 2) fprintf(stderr, "** Update Params **\n");
+        //if (verbose > 2) fprintf(stderr, "** Update Params **\n");
 	CDataManager::GetInstance()->SetParamInterval (parameter_updatePeriod.Value());
 	CDataManager::GetInstance()->SetSignalInterval (signal_updatePeriod.Value());
 
@@ -1435,13 +1435,13 @@ void UpdateParams(void){
 
         counter.Value()=counter.Value()+(double)parameter_updatePeriod.Value()/1000.0;
 
-        if (verbose > 3) fprintf(stderr, "UpdateParams: text update\n");
+        //if (verbose > 3) fprintf(stderr, "UpdateParams: text update\n");
         pacpll_text.Value() = "Hello this is the RP PACPLL Server.    ";
 
         if (counter.Value()>30000) {
                 counter.Value()=0;
         }
-        if (verbose > 3) fprintf(stderr, "UpdateParams complete.\n");
+        //if (verbose > 3) fprintf(stderr, "UpdateParams complete.\n");
 }
 
 
@@ -1572,16 +1572,17 @@ void OnNewParams_RPSPMC(void){
                 if (exec){
                         if (spm_dma_instance)
                                 spm_dma_instance->start_dma ();
-                        usleep (10000);
                         stream_server_control = (stream_server_control & 0x01) | 2; // set start bit
+                        usleep (100000);
                 }
-                if (stop)
-                        stream_server_control = (stream_server_control & 0x01) | 4; // set stop bit
-                
                 if (SPMC_GVP_RESET_OPTIONS.IsNewValue ()){
                                 SPMC_GVP_RESET_OPTIONS.Update ();
                                 rp_spmc_gvp_config (reset ? true : false, prog? true:false, pause?true:false, SPMC_GVP_RESET_OPTIONS.Value ());
                         }  else rp_spmc_gvp_config (reset ? true : false, prog? true:false, pause?true:false);
+                if (stop){
+                        usleep (100000);
+                        stream_server_control = (stream_server_control & 0x01) | 4; // set stop bit
+                }
         }
 
 }

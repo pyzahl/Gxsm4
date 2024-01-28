@@ -1060,11 +1060,11 @@ gboolean rpspmc_hwi_dev::ScanLineM(int yindex, int xdir, int muxmode,
                 //g_print ("sranger_mk3_hwi_spm::ScanLineM(yindex=%d [fifo-y=%d], xdir=%d, ydir=%d, lssrcs=%x) checking...\n", yindex, data_y_index, xdir, ydir, muxmode);
                 y_current = RPSPMC_data_y_index;
 
-                if (ydir > 0 && yindex <= RPSPMC_data_y_count){
+                if (ydir > 0 && yindex <= RPSPMC_data_y_index){
                         g_print ("sranger_mk3_hwi_spm::ScanLineM(yindex=%d [fifo-y=%d], xdir=%d, ydir=%d, lssrcs=%x) y done.\n", yindex, RPSPMC_data_y_index, xdir, ydir, muxmode);
                         return FALSE; // line completed top-down
                 }
-                if (ydir < 0 && yindex >= RPSPMC_data_y_count){
+                if (ydir < 0 && yindex >= RPSPMC_data_y_index){
                         g_print ("sranger_mk3_hwi_spm::ScanLineM(yindex=%d [fifo-y=%d], xdir=%d, ydir=%d, lssrcs=%x) y done.\n", yindex, RPSPMC_data_y_index, xdir, ydir, muxmode);
                         return FALSE; // line completed bot-up
                 }

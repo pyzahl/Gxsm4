@@ -265,14 +265,17 @@ void RPSPMC_Control::write_spm_scan_vector_program (double rx, double ry, int nx
 
         double tfwd = slew[0]/rx;
         double trev = slew[1]/rx;
-        double ti = slew[0]/sqrt(rx*rx+ry*ry);
 
         // new convert Ang to Volts
         rx = main_get_gapp()->xsm->Inst->XA2Volt (rx); // WARNING, not yet accounting for rotation here in case x and y piezo sensitivities are not the same!
         ry = main_get_gapp()->xsm->Inst->YA2Volt (ry);
+
+        //g_message ("write spm scan GVP from: rx,y: %g V, %g V, slew: %g A/s, %g A/s -> tifr: %g, %g, %g", rx,ry, slew[0], slew[1], ti, tfwd, trev);
         
         double xi = -rx/2.+rx*subscan[0]/nx;
         double yi =  ry/2.-ry*subscan[2]/ny;
+        double ti = slew[1]/sqrt(xi*xi+yi*yi);
+
         double dx = rx*subscan[1]/nx; // scan X vector length
         double dy = ry*subscan[3]/ny; // scan Y vector length
 
@@ -310,21 +313,25 @@ vector = {32'd000032,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  3
                    srcs[0]);
         
         // may wait a sec to assumre monitors been up-to-date?
+        // initial vector to start
         make_UZXYramp_vector (0., 0., // GVP_du[k], GVP_dz[k],
                               xi, yi, 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
                               100, 0, 0, ti, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
                               srcs[0], VP_INITIAL_SET_VEC);
         write_program_vector (vector_index++);
+        // fwd scan "->"
         make_UZXYramp_vector (0., 0., // GVP_du[k], GVP_dz[k],
                               dx, 0, 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
                               subscan[1], 0, 0, tfwd, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
                               srcs[0], 0); // vis_Source, GVP_opt[k]);
         write_program_vector (vector_index++);
+        // rev scan "<-"
         make_UZXYramp_vector (0., 0., // GVP_du[k], GVP_dz[k],
                               -dx, 0, 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
                               subscan[1], 0, 0, trev, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
                               srcs[1], 0); // vis_Source, GVP_opt[k]);
         write_program_vector (vector_index++);
+        // next line
         make_UZXYramp_vector (0., 0., // GVP_du[k], GVP_dz[k],
                               0., dy/(subscan[3]-1), 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
                               10, subscan[3], -2, tfwd/ny, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],

@@ -126,7 +126,7 @@ RP data streaming
 #define RP_FPGA_QATAN 21 // Q CORDIC ATAN Phase Reading      -- 180deg/(PI*(2^RP_FPGA_QATAN-1))
 #define RP_FPGA_QFREQ 44 // Q DIFF FREQ READING              -- 125MHz/(2^RP_FPGA_QFREQ-1) well number should not exceed 32bit 
 
-#define DSP32Qs15dot16TO_Volt (10.0/(32767.*(1<<16)))
+#define DSP32Qs15dot16TO_Volt (50/(32767.*(1<<16)))
 
 // Masks MUST BE unique
 SOURCE_SIGNAL_DEF source_signals[] = {

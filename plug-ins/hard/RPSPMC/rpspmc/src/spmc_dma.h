@@ -4,7 +4,6 @@
  * universal STM/AFM/SARLS/SPALEED/... controlling and
  * data analysis software
  * 
- * Copyright (C) 1999,2000,..2023 Percy Zahl
  *
  * Authors: Percy Zahl <zahl@users.sf.net>
  * additional features: Andreas Klust <klust@users.sf.net>
@@ -105,11 +104,75 @@ SPMC DMA: - CONTROL   0x0c020000
 SPMC DMA: ******************************
 SPMC DMA: S2MM Tail Descriptor Address 0x050000c0
 
+============================
+ZYNQ DMA CONTROLLER
+UG585
+https://docs.xilinx.com/r/en-US/ug585-zynq-7000-SoC-TRM/Register-XDMAPS_DA_0_OFFSET-Details
+=============================
+need access to current/last DMA write position "DA_0" Offset 0x404
+Destination Addr DMA Channel 0 
+Absolute Address  dmac0_ns: 0xF8004404
+Absolute Address  dmac0_ns: 0xF8004408
+
+XDMAPS_DA_0_OFFSET  0x00000404
+XDMAPS_CC_0_OFFSET  0x00000408 
+                   
 */
+
+#define XIL_XDMAPS_ADDRESS_NS  0xF8004000 // DMAC0_ns (non secure (boot) mode)
+#define XIL_XDMAPS_ADDRESS_S   0xF8003000 // DMAC0_s  (secure (boot) mode)
+#define XIL_XDMAPS_ADDRESS     XIL_XDMAPS_ADDRESS_NS
+#define XIL_XDMAPS_SIZE        0x00001000
+#define XIL_XDMAPS_DA_0_OFFSET 0x00000404
+#define XIL_XDMAPS_CC_0_OFFSET 0x00000408
+
+// **** from xdmaps_hw.h
+#define 	XDMAPS_DS_OFFSET   0x000 /* DMA Status Register */
+#define 	XDMAPS_DPC_OFFSET   0x004 /* DMA Program Counter Rregister */
+#define 	XDMAPS_INTEN_OFFSET   0X020 /* DMA Interrupt Enable Register */
+#define 	XDMAPS_ES_OFFSET   0x024 /* DMA Event Status Register */
+#define 	XDMAPS_INTSTATUS_OFFSET 0x00000028 
+#define 	XDMAPS_INTCLR_OFFSET   0x02c /* DMA Interrupt Clear Register */
+#define 	XDMAPS_FSM_OFFSET 0x00000030 
+#define 	XDMAPS_FSC_OFFSET 0x00000034
+#define 	XDMAPS_FTM_OFFSET   0x038 /* DMA Fault Type DMA Manager Register */
+#define 	XDMAPS_FTC0_OFFSET   0x040 /* DMA Fault Type for DMA Channel 0 */
+#define 	XDmaPs_FTCn_OFFSET(ch)   (XDMAPS_FTC0_OFFSET + (ch) * 4)
+#define 	XDMAPS_CS0_OFFSET   0x100 /* Channel Status for DMA Channel 0 */
+#define 	XDmaPs_CSn_OFFSET(ch)   (XDMAPS_CS0_OFFSET + (ch) * 8)
+#define 	XDMAPS_CPC0_OFFSET 0x00000104 
+#define 	XDmaPs_CPCn_OFFSET(ch)   (XDMAPS_CPC0_OFFSET + (ch) * 8)
+#define 	XDMAPS_SA_0_OFFSET 0x00000400
+#define 	XDmaPs_SA_n_OFFSET(ch)   (XDMAPS_SA_0_OFFSET + (ch) * 0x20)
+#define 	XDMAPS_DA_0_OFFSET 0x00000404
+#define 	XDmaPs_DA_n_OFFSET(ch)   (XDMAPS_DA_0_OFFSET + (ch) * 0x20)
+#define 	XDMAPS_CC_0_OFFSET 0x00000408
+#define 	XDmaPs_CC_n_OFFSET(ch)   (XDMAPS_CC_0_OFFSET + (ch) * 0x20)
+#define 	XDMAPS_LC0_0_OFFSET   0x40C /* Loop Counter 0 for DMA Channel 0 */
+#define 	XDmaPs_LC0_n_OFFSET(ch)   (XDMAPS_LC0_0_OFFSET + (ch) * 0x20)
+#define 	XDMAPS_LC1_0_OFFSET   0x410 /* Loop Counter 1 for DMA Channel 0 */
+#define 	XDmaPs_LC1_n_OFFSET(ch)   (XDMAPS_LC1_0_OFFSET + (ch) * 0x20)
+#define 	XDMAPS_DBGSTATUS_OFFSET   0xD00 /* Debug Status Register */
+#define 	XDMAPS_DBGCMD_OFFSET   0xD04 /* Debug Command Register */
+#define 	XDMAPS_DBGINST0_OFFSET   0xD08 /* Debug Instruction 0 Register */
+#define 	XDMAPS_DBGINST1_OFFSET   0xD0C /* Debug Instruction 1 Register */
+#define 	XDMAPS_CR0_OFFSET   0xE00 /* Configuration Register 0 */
+#define 	XDMAPS_CR1_OFFSET   0xE04 /* Configuration Register 1 */
+#define 	XDMAPS_CR2_OFFSET   0xE08 /* Configuration Register 2 */
+#define 	XDMAPS_CR3_OFFSET   0xE0C /* Configuration Register 3 */
+#define 	XDMAPS_CR4_OFFSET   0xE10 /* Configuration Register 4 */
+#define 	XDMAPS_CRDN_OFFSET   0xE14 /* Configuration Register Dn */
+#define 	XDMAPS_DS_DMA_STATUS   0x0F /* DMA status mask */
+#define 	XDMAPS_DS_DMA_STATUS_STOPPED   0x00 /* debug status busy mask */
+#define 	XDMAPS_DBGSTATUS_BUSY   0x01 /* debug status busy mask */
+#define 	XDMAPS_CR1_I_CACHE_LEN_MASK   0x07 /* i_cache_len mask */
+#define 	XDmaPs_DBGINST0(b1, b0, ch, dbg_th)   (((b1) << 24) | ((b0) << 16) | (((ch) & 0x7) << 8) | ((dbg_th & 0x1)))
+
 
 // 2MB length = 0x0020_0000  (2M)
 // Descriptor = 0x0001_0000  (64k)
 
+#define SPMC_DMA_AXI_DMA_ADDRESS	  0x40400000 
 #define SPMC_DMA_AXI_DMA_ADDRESS	  0x40400000
 #define SPMC_DMA_HP0_ADDRESS 		  0x01000000 // reserved cache-coherent memory region (linux kernel does not use this memory!)
 
@@ -232,6 +295,21 @@ public:
                                 getpid(), ret, paddr,  (unsigned long)vaddr,  (unsigned long)SPMC_DMA_S2MM_TARGET_ADDRESS);
                 }
 
+                xil_xdmaps = (unsigned int*) mmap(NULL, XIL_XDMAPS_SIZE, PROT_READ, MAP_SHARED, fd, XIL_XDMAPS_ADDRESS); 
+                if (xil_xdmaps == MAP_FAILED){
+                        INFO_PRINTF ("XIL_XDMAPS mmap failed. (ZYNQ DMA PS MAPS)\n");
+                } else {
+                        uintptr_t paddr = 0;
+                        uintptr_t vaddr = (uintptr_t) xil_xdmaps;
+                        int ret = virt_to_phys_user(&paddr, vaddr);
+
+                        fprintf(stderr, "XIL XDMAPS MEM     mapped 0x%08lx - 0x%08lx   block length: 0x%08lx  PHYS ADDR[pid=%d, ret=%d]: Paddr: 0x%08ux for Vaddr: 0x%08lx  ##[0x%08lx]\n",
+                                (unsigned long)XIL_XDMAPS_ADDRESS,
+                                (unsigned long)(XIL_XDMAPS_ADDRESS + XIL_XDMAPS_SIZE),
+                                (unsigned long)(XIL_XDMAPS_SIZE),
+                                getpid(), ret, paddr,  (unsigned long)vaddr,  (unsigned long)XIL_XDMAPS_ADDRESS);
+                }
+                 
                 INFO_PRINTF ("spmc_dma_support class init -- mmaps completed.\n");
                 // head -c 25165824 /dev/mem > /tmp/dump0
                 // hexdump --skip 0x1000000 -v -e '"%08_ax: "' -e ' 16/4 "%08x_L[red:0] " " \n"' dump0 | less
@@ -255,6 +333,9 @@ public:
         
         ~spmc_dma_support (){
                 reset_all_dma ();
+
+                munmap (xil_xdmaps, XIL_XDMAPS_SIZE); 
+
                 munmap (dest_memory, SPMC_DMA_BUFFER_BLOCK_SIZE*SPMC_DMA_N_DESC);
                 //munmap (source_memory, SPMC_DMA_BUFFER_BLOCK_SIZE*SPMC_DMA_N_DESC);
                 munmap (s2mm_descriptors, SPMC_DMA_DESCRIPTOR_REGISTERS_SIZE);
@@ -388,6 +469,13 @@ public:
                 print_check_dma_all();
         };
 
+        unsigned int get_dmaps_DA0_offset() { return xil_xdmaps [XIL_XDMAPS_DA_0_OFFSET>>2]; };
+        unsigned int get_dmaps_CC0_offset() { return xil_xdmaps [XIL_XDMAPS_CC_0_OFFSET>>2]; };
+
+        unsigned int get_dmaps_DAn_offset(int ch) { return xil_xdmaps [(XDmaPs_DA_n_OFFSET(ch))>>2]; };
+        unsigned int get_dmaps_CCn_offset(int ch) { return xil_xdmaps [(XDmaPs_CC_n_OFFSET(ch))>>2]; };
+
+        
         unsigned int get_s2mm_status(){
                 return get_offset (axi_dma, SPMC_DMA_S2MM_STATUS_REGISTER);
         };
@@ -403,12 +491,13 @@ public:
         };
         
         void print_check_dma_all(){
-                int i = 0; 	
                 uint32_t S2MM_i_status; 	
                 if(1){ //!((s2mm_status = get_s2mm_status())&0x2)){
-                        for(i = 0; i < SPMC_DMA_N_DESC; i++){ 
+                        for(int i = 0; i < SPMC_DMA_N_DESC; i++){ 
                                 S2MM_i_status = get_s2mm_nth_status(i);
-                                INFO_PRINTF("Descriptor %d Status: 0x%08x\n", i, S2MM_i_status);		
+                                INFO_PRINTF("Descriptor %d Status: 0x%08x DA: ", i, S2MM_i_status);
+                                for(int j = 0; j < 8; ++j) { X_PRINTF(" 0x%06x", get_dmaps_DAn_offset(j)); }
+                                X_PRINTF("\n");
                         }
                 }
                 s2mm_status = get_s2mm_status();
@@ -598,6 +687,8 @@ private:
         unsigned int* s2mm_descriptors;
         //unsigned int* source_memory;
         unsigned int* dest_memory;
+
+        unsigned int* xil_xdmaps;
 };
 
 /*

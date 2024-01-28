@@ -678,7 +678,7 @@ void rp_spmc_gvp_config (bool reset=true, bool program=false, bool pause=false, 
 #ifdef DBG_SETUPGVP
         if (verbose > 1){
                 char s8[9]; memset(s8, 0, 9);
-                fprintf(stderr, "##Configure GVP: %08x => [Paus Prg Res] %s\n", cfg, int_to_binary(s8, cfg, 3)); 
+                fprintf(stderr, "##Configure GVP: %08x => [Paus Prg Res] %s\n", cfg, int_to_binary(s8, cfg, 3));
                 rp_spmc_update_readings ();
         }
 #endif
