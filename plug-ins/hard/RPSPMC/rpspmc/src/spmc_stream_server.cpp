@@ -121,11 +121,25 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
         unsigned int *dma_mem = spm_dma_instance->dma_memdest (); // 2M total, for descriptors (unavalabale for data) and two DMA blocks a 0x80000 bytes at this address
         
         int position = stream_lastwrite_address();
-        if (spm_dma_instance->get_s2mm_nth_status(0) == 0)
-                position = position > 32 ? position - 32 : 0;
-      
-        position_info << "{StreamInfo";
 
+        static int p__pos=0;
+        static int p__sc=0;
+        static int ttic = 0;
+
+        ttic++;
+        
+        if (p__pos != position || p__sc != stream_server_control || ttic % 64 == 0){
+                fprintf(stderr, "STREAM SERVER TIMER FUNC control=%d position=%08x DMAmem[0]=%08x\n", stream_server_control, position, dma_mem[0]);
+                p__pos = position;
+                p__sc  = stream_server_control;
+        }
+        
+        position_info << "{StreamInfo::";
+
+        if (stream_server_control == 1){
+                ; //started = false;
+        }                
+        
         if (stream_server_control & 2){ // started!
                 count = 0;
                 stream_server_control ^= 2; // remove start flag now
@@ -163,17 +177,31 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
                 }
 
                 fprintf(stderr, "GVP WPos: %d, A: %08x, B: %08x  *I: %08x Data: %s DA: %08x\n", position, spm_dma_instance->get_s2mm_nth_status(0), spm_dma_instance->get_s2mm_nth_status(1), dma_mem[0], data_valid?"VALID":"WAITING", spm_dma_instance->get_s2mm_destination_address());
-                spm_dma_instance->print_check_dma_all();
+                //spm_dma_instance->print_check_dma_all();
                         
+                fprintf(stderr, "GVP data[0]=%08x, data[WPos%d] = %08x\n", dma_mem[0], position, dma_mem[position]);
+                
                 // WAIT FOR LAST DATA HACK -- NO GOOD FOR CYCLIC
                 if (data_valid && gvp_finished ()){
-                        usleep(50000);
-                        fprintf(stderr, "GVP FINISHED ** CHECKING END OF DATA\n");
                         position = stream_lastwrite_address();
+                        fprintf(stderr, "GVP Finished pos=0x%08x\n", position);
+                        position_info << "END,FinishedNext:{true}" << std::hex <<  ",Position:{0x" << position << std::dec << "},Count:{" << count << "},";
+
+                        // wait for DMA to complete last bytes if any
+                        // HACK -- need to fix via DMA WRITE ADDRESS (spm_dma_instance->get_dmaps_DAn_offset(0))
+                        int k=20;
+                        while (k && dma_mem[position] == 0xdddddddd){
+                                usleep(10000); --k;
+                        }
+                        position = stream_lastwrite_address();
+                        fprintf(stderr, "GVP FINISHED ** CHECKING END OF DATA @ position = %08x\n", position);
                         while (position > 1 && dma_mem[position] == 0xdddddddd){
                                 position--;
                                 fprintf(stderr, "FIN ** position-- %08x\n", position);
                         }
+                        fprintf(stderr, "GVP FINISHED. Stream server on standy after last package send out.\n");
+
+                        stream_server_control = (stream_server_control & 0x01) | 4; // set stop bit
                 }
         }
 
@@ -185,14 +213,16 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
 
         // Broadcast to all connections
         con_list::iterator it;
+        int connection=false;
         for (it = m_connections.begin(); it != m_connections.end(); ++it) {
+                connection=true;
                 if (info_count > 0)
                         m_endpoint.send(*it, info_stream.str(), websocketpp::frame::opcode::text);
 
                 if (stream_position_info_count > 0)
                         m_endpoint.send(*it, position_info.str(), websocketpp::frame::opcode::text);
 
-                if (data_valid && started && position_prev != position){
+                if (data_valid && position_prev != position){
 
                         if (verbose > 3)
                                 fprintf(stderr, "Buffered amount = %d\n", m_endpoint.get_con_from_hdl (*it)->get_buffered_amount());
@@ -200,7 +230,7 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
                         int n  = position_prev < position ? position - position_prev : 0;
                         const int max_msg = 32768;
                         if (n > 0){
-                                fprintf(stderr, "Block: [%08x : %08x] %d\n", position_prev, position, n);
+                                fprintf(stderr, "Block: [%08x : %08x] size= %d ... ", position_prev, position, n);
                                 //spm_dma_instance->memdump_from (dma_mem, n, position_prev);
                                 int o=0;
                                 //wait_for_buffer_empty("W1");
@@ -212,8 +242,9 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
                                 }
                                 if (n > 0)
                                         m_endpoint.send(*it, (void*)(&dma_mem[position_prev+o]), n*sizeof(uint32_t), websocketpp::frame::opcode::binary);
+                                fprintf(stderr, "send.\n", position_prev, position, n);
                         } else {
-                                fprintf(stderr, "BlockLoop: [%08x : END, 0 : %08x]\n", position_prev, position);
+                                fprintf(stderr, "BlockLoop: [%08x : END, 0 : %08x] ... ", position_prev, position);
                                 //spm_dma_instance->memdump_from (dma_mem, BLKSIZE-position_prev, position_prev);
                                 n = BLKSIZE-position_prev;
                                 int o=0;
@@ -240,31 +271,23 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
                                 if (n > 0)
                                         m_endpoint.send(*it, (void*)(&dma_mem[o]), n*sizeof(uint32_t), websocketpp::frame::opcode::binary);
                                 //m_endpoint.send(*it, (void*)(&dma_mem[0]), (position)*sizeof(uint32_t), websocketpp::frame::opcode::binary);
+                                fprintf(stderr, "send.\n", position_prev, position, n);
                                 count++;
                         }
                 } 
         }
-
-        if (data_valid){
-                position_prev=position;
-                if (started && gvp_finished ()){
-                        std::stringstream position_fin;
-                        position = stream_lastwrite_address();
-                        fprintf(stderr, "GVP Finished pos=0x%08x\n", position);
-                        stream_server_control = 1; // remove all flags, done after this, last block to finish moving!
-                        started = false;
-                        position_fin << "{StreamInfo,END,FinishedNext:{true}" << std::hex <<  ",Position:{0x" << position << std::dec << "},Count:{" << count << "}}";
-                        for (it = m_connections.begin(); it != m_connections.end(); ++it) {
-                                m_endpoint.send(*it, position_fin.str(), websocketpp::frame::opcode::text);
-                        }
-                        rp_spmc_gvp_config (true, false, false);
-                }
+        if (connection){
+                if (data_valid)
+                        position_prev=position;
+        } else {
+                if (data_valid && ttic % 64 == 0)
+                        fprintf(stderr, "Data OK. BUT: No Socket Connection/lost? Pending to send: [%08x : %08x]\n", position_prev, position);
         }
         
         clear_info_stream ();
 
         // set timer for next telemetry
-        set_timer(50);
+        set_timer(100);
 }
 
 

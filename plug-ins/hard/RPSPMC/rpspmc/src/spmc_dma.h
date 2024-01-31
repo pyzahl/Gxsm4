@@ -449,7 +449,7 @@ public:
 
         void start_dma(){
                 //INFO_PRINTF ("RE-START DMA\n");
-                INFO_PRINTF ("RESET DMA\n");
+                INFO_PRINTF ("(RE)STARTING DMA: RESET DMA ** HALT ** INIT0xDD ** SETUP-DMA\n");
 
                 // Full reset DMA
                 reset_all_dma ();

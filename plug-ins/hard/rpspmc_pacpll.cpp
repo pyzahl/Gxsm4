@@ -4365,7 +4365,7 @@ void RPspmc_pacpll::status_append (const gchar *msg){
 	GtkTextView *textview;
 	GString *output;
 	GtkTextMark *end_mark;
-        GtkTextIter start_iter, end_trim_iter, end_iter;
+        GtkTextIter iter, start_iter, end_trim_iter, end_iter;
         gint lines, max_lines=400;
 
 	if (msg == NULL) {
@@ -4397,6 +4397,9 @@ void RPspmc_pacpll::status_append (const gchar *msg){
                         gtk_text_buffer_delete (console_buf,  &start_iter,  &end_trim_iter);
                 }
 
+                gtk_text_buffer_get_end_iter (console_buf, &iter);
+                gtk_text_buffer_create_mark (console_buf, "scroll", &iter, TRUE);
+                
                 return;
 	}
 
@@ -4409,17 +4412,24 @@ void RPspmc_pacpll::status_append (const gchar *msg){
                                                          &start_iter, &end_iter,
                                                          FALSE));
 
-	// append input line
-	output = g_string_append (output, msg);
-	gtk_text_buffer_set_text (console_buf, output->str, -1);
-	g_string_free (output, TRUE);
+        // insert text and keep view at end
+        gtk_text_buffer_get_end_iter (console_buf, &iter); // get end
+        gtk_text_buffer_insert (console_buf, &iter, msg, -1); // insert at end
+        gtk_text_iter_set_line_offset (&iter, 0); // do not scroll horizontal
+        end_mark = gtk_text_buffer_get_mark (console_buf, "scroll");
+        gtk_text_view_scroll_mark_onscreen (textview, end_mark);
 
+        // purge top
         gtk_text_buffer_get_start_iter (console_buf, &start_iter);
         lines = gtk_text_buffer_get_line_count (console_buf);
-        if (lines > max_lines){
+        if (lines > (max_lines)){
                 gtk_text_buffer_get_iter_at_line_index (console_buf, &end_trim_iter, lines-max_lines, 0);
                 gtk_text_buffer_delete (console_buf,  &start_iter,  &end_trim_iter);
         }
+
+        gtk_text_iter_set_line_offset (&iter, 0); // do not scroll horizontal
+        end_mark = gtk_text_buffer_get_mark (console_buf, "scroll");
+        gtk_text_view_scroll_mark_onscreen (textview, end_mark);
 
 #if 1
         // scroll to end
@@ -4431,13 +4441,6 @@ void RPspmc_pacpll::status_append (const gchar *msg){
                                       end_mark, 0.0, FALSE, 0.0, 0.0);
         g_object_unref (end_mark);
 #endif
-        //GTK_TEXT_VIEW (text_status)->ScrollToIter (GTK_TEXT_VIEW (text_status)->EndIter, 0, false, 0, 0);
- 
-        //this.tv.SizeAllocated += new SizeAllocatedHandl er(Scroll2);
-        // ##Create a function for scrolling
-        //public void Scroll2(object sender, Gtk.SizeAllocatedArgs e)
-        //{ tv.ScrollToIter(tv.Buffer.EndIter, 0, false, 0, 0); }
-
 }
 
 void RPspmc_pacpll::on_connect_actions(){

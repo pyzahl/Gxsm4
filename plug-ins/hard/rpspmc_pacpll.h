@@ -912,8 +912,10 @@ public:
                 static int retry = 3;
                 size_t ch_index;
 
+#if 0
                 if (expect_full_header || offset==0)
                         status_append_int32 (&GVP_stream_buffer[offset], 10*16, true, offset, true);
+#endif
                 
 #if 0
                 if (offset < 0 || offset > (EXPAND_MULTIPLES*DMA_SIZE-20)){

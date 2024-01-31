@@ -300,7 +300,7 @@ void rp_spmc_AD5791_set_configuration_mode (bool cmode=true, bool send=false, in
                                 | (rp_spmc_AD5791_configuration_send ? (1<<4):0)
                                 );
         usleep(10000);
-        if (verbose > 1) fprintf(stderr, "##  FPGA AD5781 to %s mode, send %d, axis %d\n", cmode?"config":"streaming", send?1:0, axis);
+        //if (verbose > 1) fprintf(stderr, "##  FPGA AD5781 to %s mode, send %d, axis %d\n", cmode?"config":"streaming", send?1:0, axis);
 }
 
 // enable AD5791 FPGA to stream mdoe and flow contol (fast)
@@ -707,19 +707,21 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
                              double slew, bool update_life=false){
         
         if (pc&0x1000){ // special auto vector delta computation mode
-                if (verbose > 1) fprintf(stderr, "Write Vector[PC=%03d] auto calc init ref. vector from absolute vector pos. ", pc);
+                if (verbose > 1) fprintf(stderr, "**Auto calc init vector to absolute position [%g %g %g %g] V\n", dx, dy, dz, du);
                 double x = rpspmc_to_volts (read_gpio_reg_int32 (1,0));
                 double y = rpspmc_to_volts (read_gpio_reg_int32 (1,1));
                 double z = rpspmc_to_volts (read_gpio_reg_int32 (10,0));
                 double u = rpspmc_to_volts (read_gpio_reg_int32 (8,0)); // Bias sum from SET and GVP
                 double bias = rpspmc_to_volts (bias_buf);
 
+                if (verbose > 1) fprintf(stderr, "**XYZU readings are => [%g %g %g %g] V, bias buffer=%g V\n", x, y, z, u, bias);
+
                 dx -= x;
                 dy -= y;
                 dz -= z;
                 du -= u-bias;
 
-                // selection flags to clear auto delta to only adjust selected componet
+                // selection flags to clear auto delta to only adjust selected component
                 if ((pc&0x1001) == 0x1001)
                         dx = 0.;
                 if ((pc&0x1002) == 0x1002)
@@ -732,9 +734,8 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
                         da = 0.;
                 if ((pc&0x1020) == 0x1020)
                         db = 0.;
-                pc = 0; // set pc to 0, this is only for first vector
-                
-                if (verbose > 1) fprintf(stderr, "auto deltas dXYZU => [%g %g %g %g] V ... vec[PC=000] = [", dx, dy, dz, du);
+                pc=0; // set PC = 0. Remove special mask
+                if (verbose > 1) fprintf(stderr, "Write Vector[PC=%03d] **{dXYZU => [%g %g %g %g] V} = [", pc, dx, dy, dz, du);
 
                 // da, db not managed yet
         }else{

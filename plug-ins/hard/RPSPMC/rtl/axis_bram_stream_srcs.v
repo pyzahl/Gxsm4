@@ -206,6 +206,7 @@ module axis_bram_stream_srcs #(
             bramwr_sms <= 0;
             last <= 0;
             once <= 1;
+            position <= 0;
         end
         else
         begin

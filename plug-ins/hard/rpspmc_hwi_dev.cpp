@@ -1337,22 +1337,24 @@ int rpspmc_hwi_dev::read_actual_module_configuration (){
 	return 0;
 }
 
+
+// GVP CONTROL MODES:
+#define SPMC_GVP_CONTROL_RESET     0
+#define SPMC_GVP_CONTROL_EXECUTE   1   
+#define SPMC_GVP_CONTROL_PAUSE     2
+#define SPMC_GVP_CONTROL_RESUME    3
+#define SPMC_GVP_CONTROL_PROGRAM   4
+
+
+
 void rpspmc_hwi_dev::GVP_execute_vector_program(){
         g_message ("rpspmc_hwi_dev::GVP_execute_vector_program ()");
-        rpspmc_pacpll->write_parameter ("SPMC_GVP_PAUSE", false);
-        rpspmc_pacpll->write_parameter ("SPMC_GVP_PROGRAM", false);
-        rpspmc_pacpll->write_parameter ("SPMC_GVP_STOP", true); // put into reset condition via stop and restart
-        rpspmc_pacpll->write_parameter ("SPMC_GVP_STOP", false);
-        rpspmc_pacpll->write_parameter ("SPMC_GVP_EXECUTE", true);
+        rpspmc_pacpll->write_parameter ("SPMC_GVP_CONTROL", SPMC_GVP_CONTROL_EXECUTE);
 }
 
 void rpspmc_hwi_dev::GVP_abort_vector_program (){
         g_message ("rpspmc_hwi_dev::GVP_abort_vector_program ()");
-        rpspmc_pacpll->write_parameter ("SPMC_GVP_PAUSE", false);
-        rpspmc_pacpll->write_parameter ("SPMC_GVP_PROGRAM", false);
-        rpspmc_pacpll->write_parameter ("SPMC_GVP_STOP", true);
-        rpspmc_pacpll->write_parameter ("SPMC_GVP_EXECUTE", false);
-
+        rpspmc_pacpll->write_parameter ("SPMC_GVP_CONTROL", SPMC_GVP_CONTROL_RESET);
         abort_GVP_flag = true;
 }
 
