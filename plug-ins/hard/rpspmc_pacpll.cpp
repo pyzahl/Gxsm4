@@ -4362,7 +4362,6 @@ void RPspmc_pacpll::update_health (const gchar *msg){
 
 void RPspmc_pacpll::status_append (const gchar *msg){
 	GtkTextBuffer *console_buf;
-	GtkTextView *textview;
 	GString *output;
 	GtkTextMark *end_mark;
         GtkTextIter iter, start_iter, end_trim_iter, end_iter;
@@ -4417,7 +4416,7 @@ void RPspmc_pacpll::status_append (const gchar *msg){
         gtk_text_buffer_insert (console_buf, &iter, msg, -1); // insert at end
         gtk_text_iter_set_line_offset (&iter, 0); // do not scroll horizontal
         end_mark = gtk_text_buffer_get_mark (console_buf, "scroll");
-        gtk_text_view_scroll_mark_onscreen (textview, end_mark);
+        gtk_text_view_scroll_mark_onscreen (GTK_TEXT_VIEW (text_status), end_mark);
 
         // purge top
         gtk_text_buffer_get_start_iter (console_buf, &start_iter);
@@ -4429,7 +4428,7 @@ void RPspmc_pacpll::status_append (const gchar *msg){
 
         gtk_text_iter_set_line_offset (&iter, 0); // do not scroll horizontal
         end_mark = gtk_text_buffer_get_mark (console_buf, "scroll");
-        gtk_text_view_scroll_mark_onscreen (textview, end_mark);
+        gtk_text_view_scroll_mark_onscreen (GTK_TEXT_VIEW (text_status), end_mark);
 
 #if 1
         // scroll to end

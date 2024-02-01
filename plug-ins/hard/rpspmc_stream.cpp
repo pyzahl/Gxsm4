@@ -130,8 +130,8 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
 		contents = g_bytes_get_data (message, &len);
                 if (contents && len < 100){
                         tmp = g_strdup_printf ("WEBSOCKET_DATA_TEXT: %s", contents);
-                        self->status_append (tmp);
-                        //g_message (tmp);
+                        //self->status_append (tmp);
+                        g_message (tmp);
                         g_free (tmp);
                 } else {
                         self->status_append ("WEBSOCKET_DATA_TEXT ------\n");
@@ -217,5 +217,7 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
 
 void  RP_stream::on_closed (SoupWebsocketConnection *ws, gpointer user_data){
         RP_stream *self = ( RP_stream *)user_data;
-        self->status_append ("WebSocket connection externally closed.\n");
+        self->status_append ("WebSocket stream connection externally closed.\n");
+        self->status_append ("--> auto reconnecting...\n");
+        self->stream_connect_cb (TRUE);
 }
