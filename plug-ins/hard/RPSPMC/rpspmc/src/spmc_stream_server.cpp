@@ -80,13 +80,15 @@ extern spmc_dma_support *spm_dma_instance;
 
 extern CIntParameter SPMC_GVP_DATA_POSITION;
 
+//#define SPMC_DMA_BUFFER_BLOCK_SIZE         0x00080000 // Size of memory block per descriptor in bytes: 0.5 M -- two blocks, cyclic
+#define BLKSIZE ((SPMC_DMA_N_DESC*SPMC_DMA_BUFFER_BLOCK_SIZE)/4) // 2 * 0x00080000 / 4 = 0x40000
 
 inline bool gvp_finished (){
         return (read_gpio_reg_int32 (3,1) & 2) ? true:false;
 }
 
 inline unsigned int stream_lastwrite_address(){
-        return read_gpio_reg_int32 (11,0) & BRAM_ADRESS_MASK;
+        return read_gpio_reg_int32 (11,0) & (BLKSIZE-1); // 20bit 0x3FFFF   // & BRAM_ADRESS_MASK;
 }
 
 
@@ -94,115 +96,198 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
         if (ec) {
                 // there was an error, stop telemetry
                 m_endpoint.get_alog().write(websocketpp::log::alevel::app,
-                                            "Timer Error: "+ec.message());
+                                            "Stream Server Timer Error: "+ec.message());
                 return;
         }
 
-        std::stringstream position_info;
-        int data_len = 0;
-        static size_t offset = 0;
-        static bool started = false;
-        static int position_prev=0;
+#if 1
+        if (verbose > 2){
+                size_t webs_nbuf=getBufferedAmount();
+                if (webs_nbuf > 16000){
+                        fprintf(stderr, "** Skipping ** WebSocket Buffered Amount: %d\n", webs_nbuf);
+                        return;
+                }else{
+                        fprintf(stderr, "WebSocket Buffered Amount: %d\n", webs_nbuf);
+                }
+        }
+#endif
         
-        int position   = stream_lastwrite_address();
-        position_info << "{StreamInfo";
+        std::stringstream position_info;
+        static bool started = false;
+        static bool data_valid = false;
+        static int position_prev=0;
+        int stream_position_info_count=0;
+        
+        unsigned int *dma_mem = spm_dma_instance->dma_memdest (); // 2M total, for descriptors (unavalabale for data) and two DMA blocks a 0x80000 bytes at this address
+        
+        int position = stream_lastwrite_address();
 
+        static int p__pos=0;
+        static int p__sc=0;
+        static int ttic = 0;
+
+        ttic++;
+        
+        if (p__pos != position || p__sc != stream_server_control || ttic % 64 == 0){
+                fprintf(stderr, "STREAM SERVER TIMER FUNC control=%d position=%08x DMAmem[0]=%08x\n", stream_server_control, position, dma_mem[0]);
+                p__pos = position;
+                p__sc  = stream_server_control;
+        }
+        
+        position_info << "{StreamInfo::";
+
+        if (stream_server_control == 1){
+                ; //started = false;
+        }                
+        
         if (stream_server_control & 2){ // started!
-
-                if (spm_dma_instance)
-                        spm_dma_instance->start_dma ();
-
-                limit = BRAM_POS_HALF;
                 count = 0;
-                last_offset = 0;
-                offset = 0;
                 stream_server_control ^= 2; // remove start flag now
                 position_info << "RESET:{true},";
                 started = true;
+                data_valid = false;
                 position=0;
-                position_prev=-1;
+                position_prev=0;
+                stream_position_info_count++;
         }
         
         if (stream_server_control & 4){ // stopped!
                 stream_server_control = 1; // remove flags
                 position_info << "STOPPED:{true},";
                 started = false;
+                stream_position_info_count++;
         }
         
         // use delayed position_prev
         if (started){ // started?
 
-                 if (spm_dma_instance)
-                         spm_dma_instance->print_check_dma_all();
-                 
-                if (position_prev >= 0 && gvp_finished ()){ // must transfer data written to block when finished but block not full.
-                        position_info << std::hex << ",preFinPos{0x" << position << "}";
-                        usleep (50000); // make sure all fifos are emptied...
-                        position = stream_lastwrite_address(); // update again
-                        stream_server_control = 1; // remove all flags, done after this, last block to finish moving!
-                        started = false;
-                        position_info << ",FinishedNext:{true}";
+                // check for valid header
+
+                if (!data_valid && (dma_mem[0] & 0xffff) == 0xffff)
+                        data_valid = true;
+
+                if (data_valid){
+                        int lag=0;
+                        while (position > 1 && dma_mem[position] == 0xdddddddd)
+                                position--, lag++;
+                        if (lag){
+                                fprintf(stderr, "... position-- lag=%d pos=0x%08x ** DMA_DA0_off=0x%08x\n", lag, position, spm_dma_instance->get_dmaps_DAn_offset(0));
+                                // for (int dn=0; dn<8; ++dn) fprintf(stderr, " ** DMA_DA%d_off=0x%06x\n", dn, spm_dma_instance->get_dmaps_DAn_offset(dn));
+                        }
                 }
 
-                data_len = BRAM_POS_HALF; // always resend updated data block in intervals if GVP is active!
+                fprintf(stderr, "GVP WPos: %d, A: %08x, B: %08x  *I: %08x Data: %s DA: %08x\n", position, spm_dma_instance->get_s2mm_nth_status(0), spm_dma_instance->get_s2mm_nth_status(1), dma_mem[0], data_valid?"VALID":"WAITING", spm_dma_instance->get_s2mm_destination_address());
+                //spm_dma_instance->print_check_dma_all();
+                        
+                fprintf(stderr, "GVP data[0]=%08x, data[WPos%d] = %08x\n", dma_mem[0], position, dma_mem[position]);
+                
+                // WAIT FOR LAST DATA HACK -- NO GOOD FOR CYCLIC
+                if (data_valid && gvp_finished ()){
+                        position = stream_lastwrite_address();
+                        fprintf(stderr, "GVP Finished pos=0x%08x\n", position);
+                        position_info << "END,FinishedNext:{true}" << std::hex <<  ",Position:{0x" << position << std::dec << "},Count:{" << count << "},";
 
-                if ((limit > 0 && position_prev > limit) || (limit == 0 && position_prev < BRAM_POS_HALF)){
-                        offset = limit > 0 ? (BRAM_POS_HALF<<2) : 0;
-                        limit  = limit > 0 ? 0 : BRAM_POS_HALF;
-                        count++;
+                        // wait for DMA to complete last bytes if any
+                        // HACK -- need to fix via DMA WRITE ADDRESS (spm_dma_instance->get_dmaps_DAn_offset(0))
+                        int k=20;
+                        while (k && dma_mem[position] == 0xdddddddd){
+                                usleep(10000); --k;
+                        }
+                        position = stream_lastwrite_address();
+                        fprintf(stderr, "GVP FINISHED ** CHECKING END OF DATA @ position = %08x\n", position);
+                        while (position > 1 && dma_mem[position] == 0xdddddddd){
+                                position--;
+                                fprintf(stderr, "FIN ** position-- %08x\n", position);
+                        }
+                        fprintf(stderr, "GVP FINISHED. Stream server on standy after last package send out.\n");
+
+                        stream_server_control = (stream_server_control & 0x01) | 4; // set stop bit
                 }
-                position_info << std::hex <<  ",BRAMlimit:{0x" << limit << "}" <<  ",BRAMoffset:{0x" << offset << "}";
         }
 
-        position_info <<  std::hex <<  ",Position:{0x" << ( position_prev >= 0 ? position_prev : 0 ) << std::dec << "},Count:{" << count << "}";
-
-        // flush the cache before reading the data from DRAM by calling
-        // Xil_DCacheFlushRange(PARAM_BASE_ADDRESS, 4*1); (defined in xil_cache.c)
-        // Xil_DCacheInvalidateRange
-        // Xil_DCacheFlushRange(FPGA_SPMC_bram, 4*0x4200);
-
-        // *** =>  Xil_DCacheInvalidateRange ((INTPTR) FPGA_SPMC_bram, 4*0x4200);
-
-        // Xil_L1ICacheInvalidateRange ((INTPTR) FPGA_SPMC_bram, 4*0x4200);
-
-        // use volatile ??? -- issues with types and mmap/unmap
-
-        // int msync(void addr[.length], size_t length, int flags);
-
-
-
+        if ( data_valid && position_prev != position ){
+                position_info <<  std::hex <<  ",Position:{0x" << position_prev << std::dec << "},Count:{" << count << "}";
+                stream_position_info_count++;
+        }
         position_info << "}" << std::endl;
 
-        //*** msync ((void *)FPGA_SPMC_bram, 4*0x4200, MS_SYNC);
-                        
         // Broadcast to all connections
         con_list::iterator it;
+        int connection=false;
         for (it = m_connections.begin(); it != m_connections.end(); ++it) {
+                connection=true;
                 if (info_count > 0)
                         m_endpoint.send(*it, info_stream.str(), websocketpp::frame::opcode::text);
-                
-                if (data_len > 0 && position_prev != position){
-                        //uint8_t *bram = (uint8_t*)FPGA_SPMC_bram + offset;
+
+                if (stream_position_info_count > 0)
                         m_endpoint.send(*it, position_info.str(), websocketpp::frame::opcode::text);
-                        if (position_prev >= 0){
-                                if (spm_dma_instance)
-                                        m_endpoint.send(*it, (void*)spm_dma_instance->dma_memdest (), (2*BRAM_POS_HALF) * sizeof(uint32_t), websocketpp::frame::opcode::binary); // full block
-                                //m_endpoint.send(*it, (void*) FPGA_SPMC_bram, (0x200+2*BRAM_POS_HALF) * sizeof(uint32_t), websocketpp::frame::opcode::binary); // full block
-                                //m_endpoint.send(*it, (void*)bram, data_len * sizeof(uint32_t), websocketpp::frame::opcode::binary); // there is a address mix up at block boundaries ?!?!? WTF
+
+                if (data_valid && position_prev != position){
+
+                        if (verbose > 3)
+                                fprintf(stderr, "Buffered amount = %d\n", m_endpoint.get_con_from_hdl (*it)->get_buffered_amount());
+                        
+                        int n  = position_prev < position ? position - position_prev : 0;
+                        const int max_msg = 32768;
+                        if (n > 0){
+                                fprintf(stderr, "Block: [%08x : %08x] size= %d ... ", position_prev, position, n);
+                                //spm_dma_instance->memdump_from (dma_mem, n, position_prev);
+                                int o=0;
+                                //wait_for_buffer_empty("W1");
+                                while (n > max_msg){
+                                        //wait_for_buffer_empty("W1n");
+                                        m_endpoint.send(*it, (void*)(&dma_mem[position_prev+o]), max_msg*sizeof(uint32_t), websocketpp::frame::opcode::binary);
+                                        n -= max_msg;
+                                        o += max_msg;
+                                }
+                                if (n > 0)
+                                        m_endpoint.send(*it, (void*)(&dma_mem[position_prev+o]), n*sizeof(uint32_t), websocketpp::frame::opcode::binary);
+                                fprintf(stderr, "send.\n", position_prev, position, n);
+                        } else {
+                                fprintf(stderr, "BlockLoop: [%08x : END, 0 : %08x] ... ", position_prev, position);
+                                //spm_dma_instance->memdump_from (dma_mem, BLKSIZE-position_prev, position_prev);
+                                n = BLKSIZE-position_prev;
+                                int o=0;
+                                //wait_for_buffer_empty("W2");
+                                while (n > max_msg){
+                                        //wait_for_buffer_empty("W2na");
+                                        m_endpoint.send(*it, (void*)(&dma_mem[position_prev+o]), max_msg*sizeof(uint32_t), websocketpp::frame::opcode::binary);
+                                        n -= max_msg;
+                                        o += max_msg;
+                                }
+                                if (n > 0)
+                                        m_endpoint.send(*it, (void*)(&dma_mem[position_prev+o]), n*sizeof(uint32_t), websocketpp::frame::opcode::binary);
+                                //m_endpoint.send(*it, (void*)(&dma_mem[position_prev]), (BLKSIZE-position_prev)*sizeof(uint32_t), websocketpp::frame::opcode::binary);
+
+                                //spm_dma_instance->memdump_from (dma_mem, position, 0);
+                                n = position;
+                                o=0;
+                                while (n > max_msg){
+                                        //wait_for_buffer_empty("W2nb");
+                                        m_endpoint.send(*it, (void*)(&dma_mem[o]), max_msg*sizeof(uint32_t), websocketpp::frame::opcode::binary);
+                                        n -= max_msg;
+                                        o += max_msg;
+                                }
+                                if (n > 0)
+                                        m_endpoint.send(*it, (void*)(&dma_mem[o]), n*sizeof(uint32_t), websocketpp::frame::opcode::binary);
+                                //m_endpoint.send(*it, (void*)(&dma_mem[0]), (position)*sizeof(uint32_t), websocketpp::frame::opcode::binary);
+                                fprintf(stderr, "send.\n", position_prev, position, n);
+                                count++;
                         }
                 } 
-#if 0
-                if (verbose > 3){
-                        m_endpoint.send(*it, (void*)FPGA_SPMC_bram, 2*BRAM_POS_HALF * sizeof(uint32_t), websocketpp::frame::opcode::binary);
-                }
-#endif
         }
-        position_prev=position;
-
+        if (connection){
+                if (data_valid)
+                        position_prev=position;
+        } else {
+                if (data_valid && ttic % 64 == 0)
+                        fprintf(stderr, "Data OK. BUT: No Socket Connection/lost? Pending to send: [%08x : %08x]\n", position_prev, position);
+        }
+        
         clear_info_stream ();
 
-        // set timer for next telemetry check
-        set_timer(200);
+        // set timer for next telemetry
+        set_timer(100);
 }
 
 
@@ -255,7 +340,7 @@ void spmc_stream_server::on_http(connection_hdl hdl) {
 
 // stream server thread
 void *thread_stream_server (void *arg) {
-        if (verbose > 1) fprintf(stderr, "Starting thread: Telemetry stream_server test\n");
+        if (verbose > 1) fprintf(stderr, "Starting thread: SPMC stream_server test\n");
 
         std::string docroot;
 
@@ -263,7 +348,7 @@ void *thread_stream_server (void *arg) {
 
         spmc_stream_server_instance.run(docroot, TCP_PORT);
 
-        if (verbose > 1) fprintf(stderr, "Stream server exiting.\n");
+        if (verbose > 1) fprintf(stderr, "SPMC Stream server exiting.\n");
         return NULL;
 }
 

@@ -27,12 +27,10 @@
 
 #pragma once
 
-
 #define PACPLL_CFG0_OFFSET 0
 #define PACPLL_CFG1_OFFSET 32
 #define PACPLL_CFG2_OFFSET 64
 #define PACPLL_CFG3_OFFSET 128
-
 
 #define QN(N) ((1<<(N))-1)
 #define QN64(N) ((1LL<<(N))-1)

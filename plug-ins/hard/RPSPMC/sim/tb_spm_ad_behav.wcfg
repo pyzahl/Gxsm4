@@ -11,15 +11,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="112.300 ns"></ZoomStartTime>
-      <ZoomEndTime time="226.207 ns"></ZoomEndTime>
+      <ZoomStartTime time="0.000 ns"></ZoomStartTime>
+      <ZoomEndTime time="80.201 ns"></ZoomEndTime>
       <Cursor1Time time="5,000.000 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
-      <NameColumnWidth column_width="322"></NameColumnWidth>
+      <NameColumnWidth column_width="292"></NameColumnWidth>
       <ValueColumnWidth column_width="91"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="37" />
+   <WVObjectSize size="42" />
    <wvobject type="logic" fp_name="/tb_spm_ad/pclk">
       <obj_property name="ElementShortName">pclk</obj_property>
       <obj_property name="ObjectShortName">pclk</obj_property>
@@ -69,7 +69,7 @@
       <obj_property name="WaveformStyle">STYLE_ANALOG</obj_property>
       <obj_property name="CellHeight">100</obj_property>
       <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
-      <obj_property name="AnalogYRangeType">ANALOG_YRANGETYPE_FIXED</obj_property>
+      <obj_property name="AnalogYRangeType">ANALOG_YRANGETYPE_AUTO</obj_property>
       <obj_property name="AnalogYRangeMin">0.000000</obj_property>
       <obj_property name="AnalogYRRangeMax">100.000000</obj_property>
       <obj_property name="AnalogInterpolation">ANALOG_INTERPOLATION_HOLD</obj_property>
@@ -121,9 +121,9 @@
       <obj_property name="ObjectShortName">ii[31:0]</obj_property>
       <obj_property name="WaveformStyle">STYLE_ANALOG</obj_property>
       <obj_property name="CellHeight">100</obj_property>
-      <obj_property name="AnalogYRangeType">ANALOG_YRANGETYPE_FIXED</obj_property>
-      <obj_property name="AnalogYRangeMin">6.81383</obj_property>
-      <obj_property name="AnalogYRRangeMax">16.3138</obj_property>
+      <obj_property name="AnalogYRangeType">ANALOG_YRANGETYPE_AUTO</obj_property>
+      <obj_property name="AnalogYRangeMin">6.814000</obj_property>
+      <obj_property name="AnalogYRRangeMax">16.314000</obj_property>
       <obj_property name="AnalogInterpolation">ANALOG_INTERPOLATION_HOLD</obj_property>
       <obj_property name="AnalogOffscale">ANALOG_OFFSCALE_HIDE</obj_property>
       <obj_property name="AnalogHorizLine">0.000000</obj_property>
@@ -139,6 +139,18 @@
       <obj_property name="AnalogInterpolation">ANALOG_INTERPOLATION_HOLD</obj_property>
       <obj_property name="AnalogOffscale">ANALOG_OFFSCALE_HIDE</obj_property>
       <obj_property name="AnalogHorizLine">0.000000</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/gvp_1/sec">
+      <obj_property name="ElementShortName">sec[31:0]</obj_property>
+      <obj_property name="ObjectShortName">sec[31:0]</obj_property>
+      <obj_property name="CellHeight">100</obj_property>
+      <obj_property name="AnalogYRangeType">ANALOG_YRANGETYPE_AUTO</obj_property>
+      <obj_property name="AnalogYRangeMin">0.000000</obj_property>
+      <obj_property name="AnalogYRRangeMax">0.000000</obj_property>
+      <obj_property name="AnalogInterpolation">ANALOG_INTERPOLATION_LINEAR</obj_property>
+      <obj_property name="AnalogOffscale">ANALOG_OFFSCALE_HIDE</obj_property>
+      <obj_property name="AnalogHorizLine">0.000000</obj_property>
+      <obj_property name="WaveformStyle">STYLE_ANALOG</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/tb_spm_ad/gvp_1/store">
       <obj_property name="ElementShortName">store[1:0]</obj_property>
@@ -157,6 +169,10 @@
    <wvobject type="logic" fp_name="/tb_spm_ad/gvp_1/pause">
       <obj_property name="ElementShortName">pause</obj_property>
       <obj_property name="ObjectShortName">pause</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_spm_ad/gvp_1/pause_flg">
+      <obj_property name="ElementShortName">pause_flg</obj_property>
+      <obj_property name="ObjectShortName">pause_flg</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/tb_spm_ad/gvp_1/decimation">
       <obj_property name="ElementShortName">decimation[31:0]</obj_property>
@@ -241,5 +257,17 @@
    <wvobject type="array" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/dma_addr">
       <obj_property name="ElementShortName">dma_addr[15:0]</obj_property>
       <obj_property name="ObjectShortName">dma_addr[15:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_spm_ad/gvp_1/stall">
+      <obj_property name="ElementShortName">stall</obj_property>
+      <obj_property name="ObjectShortName">stall</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/dma_data_next">
+      <obj_property name="ElementShortName">dma_data_next[31:0]</obj_property>
+      <obj_property name="ObjectShortName">dma_data_next[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_bram_stream_srcs_tb/dma_addr_next">
+      <obj_property name="ElementShortName">dma_addr_next[15:0]</obj_property>
+      <obj_property name="ObjectShortName">dma_addr_next[15:0]</obj_property>
    </wvobject>
 </wave_config>

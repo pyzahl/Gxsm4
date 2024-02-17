@@ -45,6 +45,7 @@
 #include <pthread.h>
 
 #include <websocketpp/config/asio_no_tls.hpp>
+#include <websocketpp/connection.hpp>
 #include <websocketpp/server.hpp>
 
 #include <fstream>
@@ -116,7 +117,27 @@ public:
                         std::cout << e.what() << std::endl;
                 }
         }
+#if 1
+        size_t getBufferedAmount() {
+                con_list::iterator it;
+                size_t webs_nbuf=0;
+                for (it = m_connections.begin(); it != m_connections.end(); ++it) {
+                        server::connection_ptr connection = m_endpoint.get_con_from_hdl (*it);
+                        webs_nbuf += connection->get_buffered_amount();
+                }
 
+                // m_endpoint.get_con_from_hdl (*it)->get_buffered_amount();
+
+                return webs_nbuf;
+        }
+#endif
+#if 0        
+        void wait_for_buffer_empty (const char *msg){
+                size_t webs_nbuf=getBufferedAmount();
+                if (webs_nbuf > 0)
+                        fprintf(stderr, "**[%s] WebSocket Buffered Amount: %d\n", msg, webs_nbuf);
+        }
+#endif   
         void set_timer(int ms=1000) {
                 m_timer = m_endpoint.set_timer(
                                                ms,
@@ -165,6 +186,7 @@ private:
     
         server m_endpoint;
         con_list m_connections;
+        
         server::timer_ptr m_timer;
     
         std::string m_docroot;

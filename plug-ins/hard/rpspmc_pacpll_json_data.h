@@ -169,10 +169,11 @@ struct SPMC_parameters {
         double z_servo_setpoint_cz;
         double z_servo_level;
 
-        double gvp_execute;
-        double gvp_pause;
-        double gvp_stop;
-        double gvp_program;
+        double gvp_control;
+        //double gvp_execute;
+        //double gvp_pause;
+        //double gvp_stop;
+        //double gvp_program;
         double gvp_reset_options;
         double gvp_status;
         double gvp_data_position;

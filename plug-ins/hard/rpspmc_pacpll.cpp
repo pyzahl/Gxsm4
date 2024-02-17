@@ -126,7 +126,7 @@ RP data streaming
 #define RP_FPGA_QATAN 21 // Q CORDIC ATAN Phase Reading      -- 180deg/(PI*(2^RP_FPGA_QATAN-1))
 #define RP_FPGA_QFREQ 44 // Q DIFF FREQ READING              -- 125MHz/(2^RP_FPGA_QFREQ-1) well number should not exceed 32bit 
 
-#define DSP32Qs15dot16TO_Volt (10.0/(32767.*(1<<16)))
+#define DSP32Qs15dot16TO_Volt (50/(32767.*(1<<16)))
 
 // Masks MUST BE unique
 SOURCE_SIGNAL_DEF source_signals[] = {
@@ -148,8 +148,8 @@ SOURCE_SIGNAL_DEF source_signals[] = {
         { 0x00000002, "YS-Mon",       " ", "AA", UTF8_ANGSTROEM, 1.0, PROBEDATA_ARRAY_S2 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x00000004, "ZS-Mon",       " ", "AA", UTF8_ANGSTROEM, 1.0, PROBEDATA_ARRAY_S3 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x00000008, "Bias-Mon",     " ", "V",   "V", 1.0,    PROBEDATA_ARRAY_S4 }, // BiasFac, see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
-	{ 0x00000010, "In1-Signal",   " ", "V",   "V", 1.0,    PROBEDATA_ARRAY_S5 },
-        { 0x00000020, "In2-Current",  " ", "nA", "nA", 1.0,    PROBEDATA_ARRAY_S6 }, // CurrFac, see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
+	{ 0x00000010, "In1-Signal",   " ", "V",   "V", DSP32Qs15dot16TO_Volt,    PROBEDATA_ARRAY_S5 },
+        { 0x00000020, "In2-Current",  " ", "nA", "nA", DSP32Qs15dot16TO_Volt,    PROBEDATA_ARRAY_S6 }, // CurrFac, see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x00000040, "In3-**",       " ", "V",   "V", DSP32Qs15dot16TO_Volt,    PROBEDATA_ARRAY_S7 },
         { 0x00000080, "In4-**",       " ", "V",   "V", DSP32Qs15dot16TO_Volt,    PROBEDATA_ARRAY_S8 },
         { 0x00000100, "SWPS1-choose", " ", "V",   "V", 1.0,    PROBEDATA_ARRAY_S9 }, // ** swappable **,
@@ -4362,10 +4362,9 @@ void RPspmc_pacpll::update_health (const gchar *msg){
 
 void RPspmc_pacpll::status_append (const gchar *msg){
 	GtkTextBuffer *console_buf;
-	GtkTextView *textview;
 	GString *output;
 	GtkTextMark *end_mark;
-        GtkTextIter start_iter, end_trim_iter, end_iter;
+        GtkTextIter iter, start_iter, end_trim_iter, end_iter;
         gint lines, max_lines=400;
 
 	if (msg == NULL) {
@@ -4397,6 +4396,9 @@ void RPspmc_pacpll::status_append (const gchar *msg){
                         gtk_text_buffer_delete (console_buf,  &start_iter,  &end_trim_iter);
                 }
 
+                gtk_text_buffer_get_end_iter (console_buf, &iter);
+                gtk_text_buffer_create_mark (console_buf, "scroll", &iter, TRUE);
+                
                 return;
 	}
 
@@ -4409,17 +4411,24 @@ void RPspmc_pacpll::status_append (const gchar *msg){
                                                          &start_iter, &end_iter,
                                                          FALSE));
 
-	// append input line
-	output = g_string_append (output, msg);
-	gtk_text_buffer_set_text (console_buf, output->str, -1);
-	g_string_free (output, TRUE);
+        // insert text and keep view at end
+        gtk_text_buffer_get_end_iter (console_buf, &iter); // get end
+        gtk_text_buffer_insert (console_buf, &iter, msg, -1); // insert at end
+        gtk_text_iter_set_line_offset (&iter, 0); // do not scroll horizontal
+        end_mark = gtk_text_buffer_get_mark (console_buf, "scroll");
+        gtk_text_view_scroll_mark_onscreen (GTK_TEXT_VIEW (text_status), end_mark);
 
+        // purge top
         gtk_text_buffer_get_start_iter (console_buf, &start_iter);
         lines = gtk_text_buffer_get_line_count (console_buf);
-        if (lines > max_lines){
+        if (lines > (max_lines)){
                 gtk_text_buffer_get_iter_at_line_index (console_buf, &end_trim_iter, lines-max_lines, 0);
                 gtk_text_buffer_delete (console_buf,  &start_iter,  &end_trim_iter);
         }
+
+        gtk_text_iter_set_line_offset (&iter, 0); // do not scroll horizontal
+        end_mark = gtk_text_buffer_get_mark (console_buf, "scroll");
+        gtk_text_view_scroll_mark_onscreen (GTK_TEXT_VIEW (text_status), end_mark);
 
 #if 1
         // scroll to end
@@ -4431,13 +4440,6 @@ void RPspmc_pacpll::status_append (const gchar *msg){
                                       end_mark, 0.0, FALSE, 0.0, 0.0);
         g_object_unref (end_mark);
 #endif
-        //GTK_TEXT_VIEW (text_status)->ScrollToIter (GTK_TEXT_VIEW (text_status)->EndIter, 0, false, 0, 0);
- 
-        //this.tv.SizeAllocated += new SizeAllocatedHandl er(Scroll2);
-        // ##Create a function for scrolling
-        //public void Scroll2(object sender, Gtk.SizeAllocatedArgs e)
-        //{ tv.ScrollToIter(tv.Buffer.EndIter, 0, false, 0, 0); }
-
 }
 
 void RPspmc_pacpll::on_connect_actions(){
