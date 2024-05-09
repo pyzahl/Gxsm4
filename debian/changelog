@@ -1,3 +1,21 @@
+gxsm4 (4.0.0-0ubuntu7) noble; urgency=medium
+
+  * fixed dependency on libnetcdf-cxx-legacy-dev
+
+ -- Thorsten Wagner <stm@users.sf.net>  Sat, 17 Feb 2024 12:38:39 +0100
+
+gxsm4 (4.0.0-0ubuntu6) noble; urgency=medium
+
+  * port to Ubuntu 24.04
+
+ -- Thorsten Wagner <stm@users.sf.net>  Sat, 17 Feb 2024 11:34:49 +0100
+
+gxsm4 (4.0.0-0ubuntu5) jammy; urgency=medium
+
+  * including new RSPMC template
+
+ -- Thorsten Wagner <stm@users.sf.net>  Sat, 17 Feb 2024 11:29:18 +0100
+
 gxsm4 (4.0.0-0ubuntu4) jammy; urgency=medium
 
   * new build based on code from 2023.06.23
