@@ -24,6 +24,10 @@
 	<attribute name="label" translatable="yes">Save _as...</attribute>
 	<attribute name="action">win.pyfile-save-as</attribute>
       </item>
+      <item>
+	<attribute name="label" translatable="yes">Restart Python interpreter</attribute>
+	<attribute name="action">win.pyremote-restart-interpreter</attribute>
+      </item>
       <submenu>
 	<attribute name="label" translatable="yes">Action Scripts</attribute>
 	<section>
