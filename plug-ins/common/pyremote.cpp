@@ -3765,26 +3765,6 @@ void py_gxsm_console::kill(GtkToggleButton *btn, gpointer user_data)
 {
         py_gxsm_console *pygc = (py_gxsm_console *)user_data;
 
-<<<<<<< HEAD
-        if (pygc->user_script_running > 0){
-                pygc->append (N_("\n*** SCRIPT KILL: Setting PyErr Interrupt to abort script.\n"));
-        
-                //Py_AddPendingCall(-1);
-                PI_DEBUG_GM (DBG_L2,  "trying to kill interpreter");
-                //PyErr_SetInterrupt(); // kills gxsm :(
-                
-                PyGILState_STATE state = PyGILState_Ensure();    
-                PyErr_SetString(PyExc_KeyboardInterrupt, "Abort");
-                PyErr_CheckSignals();
-                PyGILState_Release(state);
-
-#if 0
-                PyGILState_STATE state = PyGILState_Ensure();    
-                int r = Py_AddPendingCall(&Stop, NULL); // inject our Stop routine
-                PyErr_SetInterrupt ();
-                g_message ("Py_AddPendingCall -> %d", r);
-                PyGILState_Release(state);
-=======
         if (pygc->user_script_data.cmd){ // User script running (or should be)
                 pygc->append (N_("\n*** SCRIPT INTERRUPT REQUESTED: Setting PyErr SIGINT to abort script.\n"));
                 PI_DEBUG_GM (DBG_L2,  "trying to interrup interpreter, sending SIGINT.");
@@ -3797,7 +3777,6 @@ void py_gxsm_console::kill(GtkToggleButton *btn, gpointer user_data)
                 PyGILState_STATE gstate = PyGILState_Ensure ();
                 PyErr_CheckSignals ();
                 PyGILState_Release (gstate);
->>>>>>> refs/remotes/origin/master
 
         } else {
                 pygc->append (N_("\n*** SCRIPT INTERRUPT: No user script is currently running.\n"));
