@@ -69,8 +69,8 @@ extern "C++" {
         extern GxsmPlugin rpspmc_pacpll_hwi_pi;
 }
 
-#define BRAM_SIZE        16384            // (1<<14, 14 bit address)
-#define EXPAND_MULTIPLES 512
+#define DMA_SIZE         0x40000            // 20bit count of 32bit words ==> 1MB DMA Block:  2 x 0x80000 bytes
+#define EXPAND_MULTIPLES 32
 
 // GUI builder helper
 class GUI_Builder : public BuildParam{
@@ -912,11 +912,13 @@ public:
                 static int retry = 3;
                 size_t ch_index;
 
+#if 0
                 if (expect_full_header || offset==0)
                         status_append_int32 (&GVP_stream_buffer[offset], 10*16, true, offset, true);
+#endif
                 
 #if 0
-                if (offset < 0 || offset > (EXPAND_MULTIPLES*BRAM_SIZE-20)){
+                if (offset < 0 || offset > (EXPAND_MULTIPLES*DMA_SIZE-20)){
                         gchar *tmp = g_strdup_printf ("read_GVP_data_block_to_position_vector: Reading offset %08x out of range ERROR.",
                                                       offset);
                         status_append (tmp, true);
@@ -1092,7 +1094,7 @@ private:
         gboolean KillFlg;
 
 
-        gint32 GVP_stream_buffer[EXPAND_MULTIPLES*BRAM_SIZE];
+        gint32 GVP_stream_buffer[EXPAND_MULTIPLES*DMA_SIZE];
         int GVP_stream_buffer_offset;
         int GVP_stream_buffer_AB;
         int GVP_stream_buffer_position;

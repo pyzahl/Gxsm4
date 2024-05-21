@@ -121,6 +121,8 @@ module gvp #(
     end
 */
 
+    reg [8:0] rd=511;
+
     always @ (posedge a_clk) // 120MHz
     begin
         if (reset_flg) // reset mode / hold
@@ -128,7 +130,9 @@ module gvp #(
         else
             vec_gvp_time <= vec_gvp_time+1;
 
-        reset_flg  <= reset;  // put into reset mode (set program and hold)
+        rd[0] <= reset; rd[1] <= rd[0]; rd[2] <= rd[1]; rd[3] <= rd[2]; rd[4] <= rd[3]; rd[5] <= rd[4];  rd[6] <= rd[5]; rd[7] <= rd[6]; rd[8] <= rd[7];
+        reset_flg  <= rd[8];  // put into reset mode (set program and hold)
+        
         pause_flg  <= pause || stall;  // put/release into/from pause mode -- always completes the "ii" nop cycles!
         setvec_flg <= setvec; // program vector data using vp_set data
         if (rdecii == 0)
@@ -205,6 +209,7 @@ module gvp #(
                         end
                     end
                     else
+                    if (!pause_flg)        
                     begin // go...
                         // add vector
                         vec_x <= vec_x + vec_dx[pvc];
@@ -218,7 +223,6 @@ module gvp #(
                             ii <= ii-1;
                         end
                         else
-                        if (!pause_flg)        
                         begin // arrived at data point
                             if (i) // advance to next point...
                             begin

@@ -62,8 +62,10 @@
 
 // INSTALL:
 // cp ~/SVN/RedPitaya/RedPACPLL4mdc-SPI/RedPACPLL4mdc-SPI.runs/impl_1/system_wrapper.bit fpga.bit
-// scp -r pacpll root@rp-f05603.local:/opt/redpitaya/www/apps/
+// scp -r rpspmc root@rp-f05603.local:/opt/redpitaya/www/apps/
 // make clean; make INSTALL_DIR=/opt/redpitaya
+
+// On rev RP OS 2.x >>> need to install: root@rp-f09296:/opt/redpitaya/www/apps/rpspmc# apt-get install libwebsocketpp-dev
 
 // CHROME BROWSER NOTES: USER SCHIT-F5 to force reload of all data, else caches are fooling....
 
@@ -107,7 +109,7 @@ Network 1
 #define FPGA_CFG_PAGES    1          // 1 pages assigned, 4k
 
 #define FPGA_GPIO_BASE    0x42002000 // 11 pages @4k each (=0x1000) 0x4200_2000 .. 0x4200_BFFF
-#define FPGA_GPIO_PAGES   11         // 11 pages @4k each for each GPIO block containg 2x32bit channels @read address +0 and +8 (0x4200_2000-_2FFF, _3000-_3FFF, .. _B000-_BFFF)
+#define FPGA_GPIO_PAGES   12         // 11 pages @4k each for each GPIO block containg 2x32bit channels @read address +0 and +8 (0x4200_2000-_2FFF, _3000-_3FFF, .. _B000-_BFFF)
 
 
 //Signal size
@@ -324,6 +326,8 @@ CDoubleParameter CONTROL_DFREQ_MONITOR("CONTROL_DFREQ_MONITOR", CBaseParameter::
 // *** DBG ***                                                                                                //        -----------------------                            (10,1); // GPIO X20: --- Z0-MON (Z-Offset)
 // *** DBG ***                                                                                                //        -----------------------                            (11,0); // GPIO X21: --- SPMC BRAM LAST WRITE ADDRESS (0..16383)
 // *** DBG ***                                                                                                //        -----------------------                            (11,1); // GPIO X22: --- Z-Sum to DAC MON
+// *** DBG ***                                                                                                //        -----------------------                            (12,0); // GPIO X23: --- Fifo RC
+// *** DBG ***                                                                                                //        -----------------------                            (12,1); // GPIO X24: --- Fifo WC
 
 
 
@@ -340,10 +344,13 @@ CDoubleParameter  SPMC_Z_SERVO_LOWER("SPMC_Z_SERVO_LOWER", CBaseParameter::RW, 0
 CDoubleParameter  SPMC_Z_SERVO_SETPOINT_CZ("SPMC_Z_SERVO_SETPOINT_CZ", CBaseParameter::RW, 0.0, 0, -5.0, 5.0); // Volts
 CDoubleParameter  SPMC_Z_SERVO_LEVEL("SPMC_Z_SERVO_LEVEL", CBaseParameter::RW, 0.0, 0, -5.0, 5.0); // Volts
 
-CBooleanParameter SPMC_GVP_EXECUTE("SPMC_GVP_EXECUTE", CBaseParameter::RW, false, 0);
-CBooleanParameter SPMC_GVP_PAUSE("SPMC_GVP_PAUSE",     CBaseParameter::RW, false, 0);
-CBooleanParameter SPMC_GVP_STOP("SPMC_GVP_STOP",       CBaseParameter::RW, false, 0);
-CBooleanParameter SPMC_GVP_PROGRAM("SPMC_GVP_PROGRAM", CBaseParameter::RW, false, 0);
+#define SPMC_GVP_CONTROL_RESET     0
+#define SPMC_GVP_CONTROL_EXECUTE   1   
+#define SPMC_GVP_CONTROL_PAUSE     2
+#define SPMC_GVP_CONTROL_RESUME    3
+#define SPMC_GVP_CONTROL_PROGRAM   4
+
+CIntParameter     SPMC_GVP_CONTROL_MODE("SPMC_GVP_CONTROL", CBaseParameter::RW, 0, 0, 0, 0xffff);
 CBooleanParameter SPMC_GVP_LIVE_VECTOR_UPDATE("SPMC_GVP_LIVE_VECTOR_UPDATE", CBaseParameter::RW, true, 0);
 CIntParameter     SPMC_GVP_RESET_OPTIONS("SPMC_GVP_RESET_OPTIONS",   CBaseParameter::RW, 0, 0, 0, 0xffff);
 CIntParameter     SPMC_GVP_STATUS("SPMC_GVP_STATUS",   CBaseParameter::RW, 0, 0, 0, 0xffff);
@@ -425,7 +432,7 @@ spmc_stream_server spmc_stream_server_instance;
 spmc_dma_support *spm_dma_instance = NULL;
 
 /*
- * RedPitaya A9 FPGA Link
+ * RedPitaya A9 FPGA LinksR
  * ------------------------------------------------------------
  */
 
@@ -521,12 +528,12 @@ int rp_PAC_App_Init(){
         
 #ifdef DEVELOPMENT_PACPLL_OP
         fprintf(stderr, "INIT RP FPGA RPSPMC PACPLL. --- FPGA MEMORY MAPPING ---\n");
-        fprintf(stderr, "RP FPGA RPSPMC PACPLL PAGESIZE:        0x%08lx.\n", (unsigned long)(sysconf (_SC_PAGESIZE)));
-        fprintf(stderr, "RP FPGA RPSPMC PACPLL BRAM PLL  mapped 0x%08lx - 0x%08lx   block length: 0x%08lx.\n", (unsigned long)FPGA_BRAM_PACPLL_BASE, (unsigned long)(FPGA_BRAM_PACPLL_BASE + FPGA_PACPLL_BRAM_block_size-1), (unsigned long)(FPGA_PACPLL_BRAM_block_size));
-        //fprintf(stderr, "RP FPGA RPSPMC PACPLL BRAM SPMC mapped 0x%08lx - 0x%08lx   block length: 0x%08lx.\n", (unsigned long)FPGA_BRAM_SPMC_BASE, (unsigned long)(FPGA_BRAM_SPMC_BASE + FPGA_SPMC_BRAM_block_size-1), (unsigned long)(FPGA_SPMC_BRAM_block_size));
-        fprintf(stderr, "RP FPGA RPSPMC PACPLL CFG REG1  mapped 0x%08lx - 0x%08lx   block length: 0x%08lx.\n", (unsigned long)FPGA_CFG_REG1,   (unsigned long)(FPGA_CFG_REG1 + FPGA_PACPLL_CFG_block_size-1),  (unsigned long)(FPGA_PACPLL_CFG_block_size));
-        fprintf(stderr, "RP FPGA RPSPMC PACPLL CFG REG2  mapped 0x%08lx - 0x%08lx   block length: 0x%08lx.\n", (unsigned long)FPGA_CFG_REG2,   (unsigned long)(FPGA_CFG_REG2 + FPGA_PACPLL_CFG_block_size-1),  (unsigned long)(FPGA_PACPLL_CFG_block_size));
-        fprintf(stderr, "RP FPGA RPSPMC PACPLL GPIO REGs mapped 0x%08lx - 0x%08lx   block length: 0x%08lx.\n", (unsigned long)FPGA_GPIO_BASE, (unsigned long)(FPGA_GPIO_BASE + FPGA_PACPLL_GPIO_block_size-1), (unsigned long)(FPGA_PACPLL_GPIO_block_size));
+        fprintf(stderr, "RP FPGA RPSPMC PACPLL PAGESIZE:        0x%08lx\n", (unsigned long)(sysconf (_SC_PAGESIZE)));
+        fprintf(stderr, "RP FPGA RPSPMC PACPLL BRAM PLL  mapped 0x%08lx - 0x%08lx   block length: 0x%08lx\n", (unsigned long)FPGA_BRAM_PACPLL_BASE, (unsigned long)(FPGA_BRAM_PACPLL_BASE + FPGA_PACPLL_BRAM_block_size-1), (unsigned long)(FPGA_PACPLL_BRAM_block_size));
+        //fprintf(stderr, "RP FPGA RPSPMC PACPLL BRAM SPMC mapped 0x%08lx - 0x%08lx   block length: 0x%08lx\n", (unsigned long)FPGA_BRAM_SPMC_BASE, (unsigned long)(FPGA_BRAM_SPMC_BASE + FPGA_SPMC_BRAM_block_size-1), (unsigned long)(FPGA_SPMC_BRAM_block_size));
+        fprintf(stderr, "RP FPGA RPSPMC PACPLL CFG REG1  mapped 0x%08lx - 0x%08lx   block length: 0x%08lx\n", (unsigned long)FPGA_CFG_REG1,   (unsigned long)(FPGA_CFG_REG1 + FPGA_PACPLL_CFG_block_size-1),  (unsigned long)(FPGA_PACPLL_CFG_block_size));
+        fprintf(stderr, "RP FPGA RPSPMC PACPLL CFG REG2  mapped 0x%08lx - 0x%08lx   block length: 0x%08lx\n", (unsigned long)FPGA_CFG_REG2,   (unsigned long)(FPGA_CFG_REG2 + FPGA_PACPLL_CFG_block_size-1),  (unsigned long)(FPGA_PACPLL_CFG_block_size));
+        fprintf(stderr, "RP FPGA RPSPMC PACPLL GPIO REGs mapped 0x%08lx - 0x%08lx   block length: 0x%08lx\n", (unsigned long)FPGA_GPIO_BASE, (unsigned long)(FPGA_GPIO_BASE + FPGA_PACPLL_GPIO_block_size-1), (unsigned long)(FPGA_PACPLL_GPIO_block_size));
 #endif
 
         rp_spmc_gvp_config (); // assure GVP is in reset mode
@@ -1350,28 +1357,28 @@ void UpdateSignals(void)
                     }
                 }
                 //clear_tune_data = 1;
-                if (verbose > 3) fprintf(stderr, "UpdateSignals get GPIO reading:\n");
+                //if (verbose > 3) fprintf(stderr, "UpdateSignals get GPIO reading:\n");
 
                 // Slow GPIO MONITOR in strip plotter mode
                 // Push it to vector
                 //ch = TRANSPORT_CH3.Value ();
-                if (verbose > 3) fprintf(stderr, "UpdateSignals: CH3=%d \n", ch);
+                //if (verbose > 3) fprintf(stderr, "UpdateSignals: CH3=%d \n", ch);
                 g_data_signal_ch3.erase (g_data_signal_ch3.begin());
                 //read_gpio_reg_int32 (n,m)
                 g_data_signal_ch3.push_back (gpio_reading_FIRV_vector_CH3_mapping/GPIO_FIR_LEN * GAIN3.Value ());
 
                 //ch = TRANSPORT_CH4.Value ();
-                if (verbose > 3) fprintf(stderr, "UpdateSignals: CH4=%d \n", ch);
+                //if (verbose > 3) fprintf(stderr, "UpdateSignals: CH4=%d \n", ch);
                 g_data_signal_ch4.erase (g_data_signal_ch4.begin());
                 g_data_signal_ch4.push_back (gpio_reading_FIRV_vector_CH4_mapping/GPIO_FIR_LEN * GAIN4.Value ());
 
                 //ch = TRANSPORT_CH5.Value ();
-                if (verbose > 3) fprintf(stderr, "UpdateSignals: CH5=%d \n", ch);
+                //if (verbose > 3) fprintf(stderr, "UpdateSignals: CH5=%d \n", ch);
                 g_data_signal_ch5.erase (g_data_signal_ch5.begin());
                 g_data_signal_ch5.push_back (gpio_reading_FIRV_vector_CH5_mapping/GPIO_FIR_LEN * GAIN5.Value ());
 
                 // Copy data to signals
-                if (verbose > 3) fprintf(stderr, "UpdateSignals copy signals\n");
+                // if (verbose > 3) fprintf(stderr, "UpdateSignals copy signals\n");
                 for (int i = 0; i < SIGNAL_SIZE_DEFAULT; i++){
                         SIGNAL_CH3[i] = g_data_signal_ch3[i];
                         SIGNAL_CH4[i] = g_data_signal_ch4[i];
@@ -1379,7 +1386,7 @@ void UpdateSignals(void)
                 }
         }
         
-        if (verbose > 3) fprintf(stderr, "UpdateSignal complete.\n");
+        //if (verbose > 3) fprintf(stderr, "UpdateSignal complete.\n");
 
         // GPIO via FIR thread
         VOLUME_MONITOR.Value ()   = gpio_reading_FIRV_vector[GPIO_READING_AMPL]/GPIO_FIR_LEN * 1000./QCORDICSQRT;
@@ -1399,7 +1406,7 @@ void UpdateSignals(void)
 
 
 void UpdateParams(void){
-        if (verbose > 2) fprintf(stderr, "** Update Params **\n");
+        //if (verbose > 2) fprintf(stderr, "** Update Params **\n");
 	CDataManager::GetInstance()->SetParamInterval (parameter_updatePeriod.Value());
 	CDataManager::GetInstance()->SetSignalInterval (signal_updatePeriod.Value());
 
@@ -1431,13 +1438,13 @@ void UpdateParams(void){
 
         counter.Value()=counter.Value()+(double)parameter_updatePeriod.Value()/1000.0;
 
-        if (verbose > 3) fprintf(stderr, "UpdateParams: text update\n");
+        //if (verbose > 3) fprintf(stderr, "UpdateParams: text update\n");
         pacpll_text.Value() = "Hello this is the RP PACPLL Server.    ";
 
         if (counter.Value()>30000) {
                 counter.Value()=0;
         }
-        if (verbose > 3) fprintf(stderr, "UpdateParams complete.\n");
+        //if (verbose > 3) fprintf(stderr, "UpdateParams complete.\n");
 }
 
 
@@ -1546,35 +1553,45 @@ void OnNewParams_RPSPMC(void){
                                         );
         }
                      
-        if ( SPMC_GVP_PROGRAM.IsNewValue ()
-             || SPMC_GVP_EXECUTE.IsNewValue ()
-             || SPMC_GVP_STOP.IsNewValue ()
-             || SPMC_GVP_PAUSE.IsNewValue ()
-             || SPMC_GVP_RESET_OPTIONS.IsNewValue ()
-             ){
-                
-                SPMC_GVP_STOP.Update ();
-                SPMC_GVP_PROGRAM.Update ();
-                SPMC_GVP_PAUSE.Update ();
-                SPMC_GVP_EXECUTE.Update ();
-                int stop = SPMC_GVP_STOP.Value () ? 1:0;
-                int prog = SPMC_GVP_PROGRAM.Value () ? 1:0;
-                int pause= SPMC_GVP_PAUSE.Value () ? 1:0;
-                int exec = SPMC_GVP_EXECUTE.Value () ? 1:0;
-                int reset =  stop ? 1 : (exec ? 0 : 1);
-                fprintf(stderr, "*** GVP Control: exec: %d, stop: %d, prog: %d, pause: %d ==> reset=%d\n", exec, stop, prog, pause, reset);
+        if (SPMC_GVP_CONTROL_MODE.IsNewValue ()){
+                std::stringstream info;
+                info << "SPMC_GVP_CONTROL_MODE: {";
+                // rp_spmc_gvp_config (reset, program, pause, [resetoptions]);
+                SPMC_GVP_CONTROL_MODE.Update ();
+                switch (SPMC_GVP_CONTROL_MODE.Value ()){
+                case SPMC_GVP_CONTROL_RESET:
+                        if (SPMC_GVP_RESET_OPTIONS.IsNewValue ()){
+                                SPMC_GVP_RESET_OPTIONS.Update ();
+                                rp_spmc_gvp_config (true, false, false, SPMC_GVP_RESET_OPTIONS.Value ());
+                        }  else rp_spmc_gvp_config (true, false, false);
+                        fprintf(stderr, "*** GVP Control Mode: set RESET, force stop stream server.\n");
+                        info << "set RESET, force stop stream server";
+                        stream_server_control = (stream_server_control & 0x01) | 4; // set stop bit
+                        break;
+                case SPMC_GVP_CONTROL_EXECUTE:
+                        fprintf(stderr, "*** GVP Control Mode: START 1 (make sure stream server is stopped)\n");
+                        stream_server_control = (stream_server_control & 0x01) | 4; // set stop bit
+                        usleep(100000);
+                        rp_spmc_gvp_config (true, false, false); // make sure it is in reset state before
+                        fprintf(stderr, "*** GVP Control Mode: START 2 (assure RESET state first), start stream server\n");
+                        usleep(100000);
 
-                if (exec)
+                        spm_dma_instance->start_dma (); // get DMA ready to take data
                         stream_server_control = (stream_server_control & 0x01) | 2; // set start bit
 
-                if (stop)
-                        stream_server_control = (stream_server_control & 0x01) | 4; // set stop bit
+                        rp_spmc_gvp_config (false, false, false); // take out of reset -> release GVP to start executing VPC
+                        fprintf(stderr, "*** GVP Control Mode: START 3 (taking out of RESET)\n");
 
-                
-                if (SPMC_GVP_RESET_OPTIONS.IsNewValue ()){
-                                SPMC_GVP_RESET_OPTIONS.Update ();
-                                rp_spmc_gvp_config (reset ? true : false, prog? true:false, pause?true:false, SPMC_GVP_RESET_OPTIONS.Value ());
-                        }  else rp_spmc_gvp_config (reset ? true : false, prog? true:false, pause?true:false);
+                        info << "EXECUTE: RESET, start stream server, out of RESET";
+                        break;
+                case SPMC_GVP_CONTROL_PAUSE:   rp_spmc_gvp_config (false, false, true ); fprintf(stderr, "*** GVP Control Mode: PAUSE\n"); info << "set PAUSE"; break; // SET PAUSE active
+                case SPMC_GVP_CONTROL_RESUME:  rp_spmc_gvp_config (false, false, false); fprintf(stderr, "*** GVP Control Mode: unset PAUSE, RESUME EXECUTE\n"); info << "unset PAUSE"; break; // UNSET PAUSE
+                case SPMC_GVP_CONTROL_PROGRAM: rp_spmc_gvp_config (false, true,  false); fprintf(stderr, "*** GVP Control Mode: PROGRAM\n"); info << "set PROGRAM"; break; // SETVECTOR, RESET IGNORE, MAY BE LIVE!
+                default: info << "INVALID MODE"; break;
+                }
+
+                info << " * ROpt=" << SPMC_GVP_RESET_OPTIONS.Value () << "}";
+                spmc_stream_server_instance.add_info (info.str());
         }
 
 }

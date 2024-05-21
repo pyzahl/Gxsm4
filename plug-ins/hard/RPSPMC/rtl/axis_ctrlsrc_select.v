@@ -21,7 +21,7 @@
 
 
 module axis_ctrlsrc_select #(
-    parameter SAXIS_DATA_WIDTH = 16,
+    parameter SAXIS_DATA_WIDTH = 32,
     parameter MAXIS_DATA_WIDTH = 32
 )
 (

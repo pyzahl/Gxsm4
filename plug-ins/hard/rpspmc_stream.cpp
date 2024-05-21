@@ -119,7 +119,9 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
         static bool finished=false;
 
         static size_t bram_offset=0;
-                
+
+        static int count_stream=0;
+        
         //self->debug_log ("WebSocket SPMC message received.");
 	//self->status_append ("WebSocket SPMC message received.\n");
         
@@ -128,8 +130,8 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
 		contents = g_bytes_get_data (message, &len);
                 if (contents && len < 100){
                         tmp = g_strdup_printf ("WEBSOCKET_DATA_TEXT: %s", contents);
-                        self->status_append (tmp);
-                        //g_message (tmp);
+                        //self->status_append (tmp);
+                        g_message (tmp);
                         g_free (tmp);
                 } else {
                         self->status_append ("WEBSOCKET_DATA_TEXT ------\n");
@@ -152,7 +154,7 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
                         streamAB=0;
                         count = 0;
                         count_prev = -1;
-
+                        count_stream=0;
                 }
                 
                 if ((p=g_strrstr(contents, "Position:{0x"))){ // SIMPLE JSON BLOCK
@@ -191,19 +193,20 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
                 //self->debug_log (tmp);
                 //g_free (tmp);
 
-#if 1
+#if 0
                 FILE* pFile;
-                tmp = g_strdup_printf ("WS-BRAM-DATA-BLOCK_%03d_Pos0x%04x_AB_%02d%s.bin", count, position, streamAB, finished?"_Fini":"_Cont");
+                //tmp = g_strdup_printf ("WS-BRAM-DATA-BLOCK_%03d_Pos0x%04x_AB_%02d%s.bin", count, position, streamAB, finished?"_Fini":"_Cont");
+                tmp = g_strdup_printf ("DMA-DATA-NEW_%08d%s.bin", count_stream, finished?"_Fini":"_Cont");
                 pFile = fopen(tmp, "wb");
                 g_free (tmp);
                 fwrite(contents, 1, len, pFile);
                 fclose(pFile);
                 // hexdump -v -e '"%08_ax: "' -e ' 16/4 "%08x_L[red:0x018ec108,green:0x018fffff] " " \n"' WS-BRAM-DATA-BLOCK_000_Pos0x1f7e_AB_00.bin
 #endif
-                // this odd and double data move than required, but there is an odd BRAM memory addressing issue otherwise
-                
-                //streamAB = self->on_new_data (contents+bram_offset, len/2, position, count-count_prev, finished); // process data
-                streamAB = self->on_new_data (contents+0x400+bram_offset, 0x10000/2, position, count-count_prev, finished); // process data
+
+                streamAB = self->on_new_data (contents, len, count_stream, 0);
+                count_stream += (len>>2);
+
                 count_prev = count;
 
                 //tmp = g_strdup_printf ("WEBSOCKET_DATA_BINARY SPMC Bytes: 0x%04x,  Position: 0x%04x + AB=%d x BRAMSIZE/2, Count: %d\n", len, position, streamAB, count);
@@ -214,5 +217,7 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
 
 void  RP_stream::on_closed (SoupWebsocketConnection *ws, gpointer user_data){
         RP_stream *self = ( RP_stream *)user_data;
-        self->status_append ("WebSocket connection externally closed.\n");
+        self->status_append ("WebSocket stream connection externally closed.\n");
+        self->status_append ("--> auto reconnecting...\n");
+        self->stream_connect_cb (TRUE);
 }

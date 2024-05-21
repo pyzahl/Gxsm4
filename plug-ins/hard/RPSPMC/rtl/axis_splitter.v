@@ -47,7 +47,10 @@ module axis_splitter #(
         if (S_AXIS_tvalid)
         begin
             data_in   <= $signed(S_AXIS_tdata);
-            buffer    <= data_in;
+            if (SAXIS_TDATA_WIDTH < MAXIS_TDATA_WIDTH)
+                buffer    <= data_in <<< (MAXIS_TDATA_WIDTH - SAXIS_TDATA_WIDTH);
+            else
+                buffer    <= data_in;
         end
         else
         begin

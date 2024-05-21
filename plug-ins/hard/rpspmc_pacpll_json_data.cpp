@@ -35,6 +35,7 @@ PACPLL_signals pacpll_signals;
 SPMC_parameters spmc_parameters;
 SPMC_signals spmc_signals;
 
+
 JSON_parameter PACPLL_JSON_parameters[] = {
         { "DC_OFFSET", &pacpll_parameters.dc_offset, true },
         { "CPU_LOAD", &pacpll_parameters.cpu_load, true },
@@ -139,10 +140,11 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         { "SPMC_Z_SERVO_LEVEL", &spmc_parameters.z_servo_level, false },
 
 
-        { "SPMC_GVP_EXECUTE", &spmc_parameters.gvp_execute, false },
-        { "SPMC_GVP_PAUSE", &spmc_parameters.gvp_pause, false },
-        { "SPMC_GVP_STOP", &spmc_parameters.gvp_stop, false },
-        { "SPMC_GVP_PROGRAM", &spmc_parameters.gvp_program, false },
+        { "SPMC_GVP_EXECUTE", &spmc_parameters.gvp_control, 0 },
+        //{ "SPMC_GVP_EXECUTE", &spmc_parameters.gvp_execute, false },
+        //{ "SPMC_GVP_PAUSE", &spmc_parameters.gvp_pause, false },
+        //{ "SPMC_GVP_STOP", &spmc_parameters.gvp_stop, false },
+        //{ "SPMC_GVP_PROGRAM", &spmc_parameters.gvp_program, false },
         { "SPMC_GVP_RESET_OPTIONS", &spmc_parameters.gvp_reset_options, false },
         { "SPMC_GVP_STATUS", &spmc_parameters.gvp_status, true },
 
