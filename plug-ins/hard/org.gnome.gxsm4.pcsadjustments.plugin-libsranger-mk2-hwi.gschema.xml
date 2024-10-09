@@ -469,6 +469,24 @@
       <description>Configuration for GXSM Entry with ID 'dsp-iv-sections'. Setup of Min/Max Range (warning: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
     </key>
 
+    <key name="dsp-iv-start" type="ad">
+      <default>[10, -10, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 0.025, 0.25, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'dsp-iv-start00' </summary>
+      <description>Configuration for GXSM Entry with ID 'dsp-iv-start00'. Setup of Min/Max Range (warning: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="dsp-iv-end" type="ad">
+      <default>[10, -10, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 0.025, 0.25, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'dsp-iv-end00' </summary>
+      <description>Configuration for GXSM Entry with ID 'dsp-iv-end00'. Setup of Min/Max Range (warning: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="dsp-iv-points" type="ad">
+      <default>[1000, 1, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'dsp-iv-points00' </summary>
+      <description>Configuration for GXSM Entry with ID 'dsp-iv-points00'. Setup of Min/Max Range (warning: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
     <key name="dsp-iv-start00" type="ad">
       <default>[10, -10, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 0.025, 0.25, 0,  0, 0      ]      </default>
       <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'dsp-iv-start00' </summary>
