@@ -1,3 +1,9 @@
+gxsm4 (4.0.0-0ubuntu8) noble; urgency=medium
+
+  * fixed problem with shlibs
+
+ -- Thorsten Wagner <stm@users.sf.net>  Thu, 09 May 2024 14:51:18 +0200
+
 gxsm4 (4.0.0-0ubuntu7) noble; urgency=medium
 
   * fixed dependency on libnetcdf-cxx-legacy-dev
