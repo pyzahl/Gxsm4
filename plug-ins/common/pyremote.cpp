@@ -601,6 +601,7 @@ to the community. The GXSM-Forums always welcome input.
 #include "surface.h"
 
 #include "pyremote.h"
+// #include "remote.h" -- clash, stupid. copy of "typedef struct remote_action_cb" in own file.
 
 #include "pyscript_templates.h"
 #include "pyscript_templates_script_libs.h"
@@ -754,6 +755,7 @@ typedef struct {
         double vec[4];
         gint64 i64;
         gchar  c;
+        remote_action_cb *ra_info;
 } IDLE_from_thread_data;
 
 
@@ -1118,6 +1120,7 @@ static void CbAction_ra(remote_action_cb* ra, gpointer arglist){
 				(*ra->RemoteCb) (ra->widget, ra->data);
 			else
 				(*ra->RemoteCb) (ra->widget, arglist);
+                        ((gchar**)arglist)[3] = (gchar*)ra;
 			// see above and pcs.h
 		}
 };
@@ -1286,8 +1289,9 @@ static gboolean main_context_action_from_thread (gpointer user_data){
 
 	PI_DEBUG(DBG_L2, "pyremote Action ** idle cb: value:" << parameter << ", " << value );
 
-	gchar *list[] = {(char *)"action", parameter, value, NULL};
+	gchar *list[] = {(char *)"action", parameter, value, NULL, NULL};
 	g_slist_foreach(gapp->RemoteActionList, (GFunc) CbAction_ra, (gpointer)list);
+        idle_data->ra_info = (remote_action_cb*)(list[3]);
         idle_data->ret = 0;
 
         UNSET_WAIT_JOIN_MAIN;
@@ -1296,16 +1300,24 @@ static gboolean main_context_action_from_thread (gpointer user_data){
 
 static PyObject* remote_action(PyObject *self, PyObject *args)
 {
-	PI_DEBUG(DBG_L2, "pyremote: Action ") ;
+        PI_DEBUG(DBG_L2, "pyremote: Action ") ;
         IDLE_from_thread_data idle_data;
         idle_data.self = self;
         idle_data.args = args;
         idle_data.wait_join = true;
         g_idle_add (main_context_action_from_thread, (gpointer)&idle_data);
         WAIT_JOIN_MAIN;
+        if ( idle_data.ra_info )
+                if ( idle_data.ra_info->data_length > 0){
+                        npy_intp dims[2];
+                        dims[0] = 3; // max 5
+                        dims[1] = idle_data.ra_info->data_length;
+                        PyObject* pyarr = PyArray_SimpleNewFromData(2, dims, NPY_DOUBLE, (void*)idle_data.ra_info->data_vector[0]);
+                        PyArray_ENABLEFLAGS((PyArrayObject*) pyarr, NPY_ARRAY_OWNDATA);
+                        return Py_BuildValue("O", pyarr); // Python code will receive the array as numpy array.
+                }
         return Py_BuildValue("i", idle_data.ret);
 }
-
 
 static gboolean main_context_idle_rtquery (gpointer user_data){
         IDLE_from_thread_data *idle_data = (IDLE_from_thread_data *) user_data;

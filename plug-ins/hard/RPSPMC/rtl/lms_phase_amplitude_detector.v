@@ -287,6 +287,7 @@ module lms_phase_amplitude_detector #(
 
     reg [1:0] rdecii = 0;
 
+/*
     always @ (posedge aclk)
     begin
         rdecii <= rdecii+1;
@@ -298,354 +299,366 @@ module lms_phase_amplitude_detector #(
             LckDXYdphi_0 <= LckDXYdphi_mem[Lck_i-Lck_N];
         end
     end
+*/
 
-
-    always @ (posedge rdecii[1])
+    //always @ (posedge rdecii[1])
+    always @ (posedge aclk)
     begin
-        Rtau  <= tau;  // buffer to register -- Q22 tau phase
-        RAtau <= Atau; // buffer to register -- Q22 tau amplitude
-        
-    //  special IIR DC filter DC error on average of samples at 0,90,180,270
-        if (sc_zero)
+        rdecii <= rdecii+1;
+        // rdecii 00 01 *10 11 00 ...
+        if (rdecii == 3)
         begin
-            sc_zero <= 0; // reset zero indicator
+            LckDXYdphi_1 <= LckDXYdphi_mem[Lck_i-Lck_N+1];
+        end else begin
+            LckDXYdphi_0 <= LckDXYdphi_mem[Lck_i-Lck_N];
         end
-        
-    // Signal Input
-        signal   <= S_AXIS_SIGNAL_tdata[LMS_DATA_WIDTH-1:0];
-        signal_1 <= signal;
-        signal_2 <= signal_1;
-        signal_3 <= signal_2;
-        signal_4 <= signal_3;
-        signal_5 <= signal_4;
-        signal_6 <= signal_5;
-        signal_7 <= signal_6;
-        signal_8 <= signal_7;
-        signal_9 <= signal_8;
-        signal_10 <= signal_9;  // DDS step, delay signal by 10 -- check!
-        
-    // Sin, Cos
-        //s <= {{(LMS_DATA_WIDTH-LMS_Q_WIDTH-1){ S_AXIS_SC_tdata[S_AXIS_SC_TDATA_WIDTH/2+SC_DATA_WIDTH-1]}}, S_AXIS_SC_tdata[S_AXIS_SC_TDATA_WIDTH/2+SC_DATA_WIDTH-1 : S_AXIS_SC_TDATA_WIDTH/2+SC_DATA_WIDTH-LMS_Q_WIDTH-1]};   // 26Q22 truncated
-        //c <= {{(LMS_DATA_WIDTH-LMS_Q_WIDTH-1){ S_AXIS_SC_tdata[                        SC_DATA_WIDTH-1]}}, S_AXIS_SC_tdata[                        SC_DATA_WIDTH-1 :                         SC_DATA_WIDTH-LMS_Q_WIDTH-1]};   // 26Q22 truncated
-        c <= S_AXIS_SC_tdata[                        SC_DATA_WIDTH-1 :                       0];  // 25Q24 full dynamic range, proper rounding   24: 0
-        s <= S_AXIS_SC_tdata[S_AXIS_SC_TDATA_WIDTH/2+SC_DATA_WIDTH-1 : S_AXIS_SC_TDATA_WIDTH/2];  // 25Q24 full dynamic range, proper rounding   56:32
-    // and pipelined delayed s,c
-        c1 <= c;
-        c2 <= c1;
-        c3 <= c2;
-        s1 <= s;
-        s2 <= s1;
-        s3 <= s2;
-        
-    // S,C Zero Detector
-        if (s > $signed(0) && ~sp)
+        if (rdecii[1]==1)
         begin
-            sp <= 1;
-            sc_zero <= 1;
-        end else
-        begin
-            if (s<$signed(0) && sp)
+            Rtau  <= tau;  // buffer to register -- Q22 tau phase
+            RAtau <= Atau; // buffer to register -- Q22 tau amplitude
+            
+        //  special IIR DC filter DC error on average of samples at 0,90,180,270
+            if (sc_zero)
             begin
-                sp <= 0;
-                sc_zero <= 1;
+                sc_zero <= 0; // reset zero indicator
             end
-        end
-        if (c>$signed(0) && ~cp)
-        begin
-            cp <= 1;
-            sc_zero <= 1;
-        end else
-        begin
-            if (c<$signed(0) && cp)
+            
+        // Signal Input
+            signal   <= S_AXIS_SIGNAL_tdata[LMS_DATA_WIDTH-1:0];
+            signal_1 <= signal;
+            signal_2 <= signal_1;
+            signal_3 <= signal_2;
+            signal_4 <= signal_3;
+            signal_5 <= signal_4;
+            signal_6 <= signal_5;
+            signal_7 <= signal_6;
+            signal_8 <= signal_7;
+            signal_9 <= signal_8;
+            signal_10 <= signal_9;  // DDS step, delay signal by 10 -- check!
+            
+        // Sin, Cos
+            //s <= {{(LMS_DATA_WIDTH-LMS_Q_WIDTH-1){ S_AXIS_SC_tdata[S_AXIS_SC_TDATA_WIDTH/2+SC_DATA_WIDTH-1]}}, S_AXIS_SC_tdata[S_AXIS_SC_TDATA_WIDTH/2+SC_DATA_WIDTH-1 : S_AXIS_SC_TDATA_WIDTH/2+SC_DATA_WIDTH-LMS_Q_WIDTH-1]};   // 26Q22 truncated
+            //c <= {{(LMS_DATA_WIDTH-LMS_Q_WIDTH-1){ S_AXIS_SC_tdata[                        SC_DATA_WIDTH-1]}}, S_AXIS_SC_tdata[                        SC_DATA_WIDTH-1 :                         SC_DATA_WIDTH-LMS_Q_WIDTH-1]};   // 26Q22 truncated
+            c <= S_AXIS_SC_tdata[                        SC_DATA_WIDTH-1 :                       0];  // 25Q24 full dynamic range, proper rounding   24: 0
+            s <= S_AXIS_SC_tdata[S_AXIS_SC_TDATA_WIDTH/2+SC_DATA_WIDTH-1 : S_AXIS_SC_TDATA_WIDTH/2];  // 25Q24 full dynamic range, proper rounding   56:32
+        // and pipelined delayed s,c
+            c1 <= c;
+            c2 <= c1;
+            c3 <= c2;
+            s1 <= s;
+            s2 <= s1;
+            s3 <= s2;
+            
+        // S,C Zero Detector
+            if (s > $signed(0) && ~sp)
             begin
-                cp <= 0;
+                sp <= 1;
                 sc_zero <= 1;
-            end
-        end
-
-        // Compute the prediction
-        // ### 1 pipeline level
-        // predict <= (s * a + c * b + "0.5") >>> 22; // Q22
-        sa_1 <= s * a; // Q SC + Q LMS 
-        cb_1 <= c * b; // Q24 + Q22 => Q46
-        
-        // ### 2
-        predict_err_2 <= signal_1 - ((sa_1 + cb_1 + SCQHALF) >>> SC_Q_WIDTH); // sum, round normalize Q SC + Q LMS to Q LMS: 46 to 22
-        //# DUAL PAC or PAC+LCK -- both needs 82 DSP units out of 80 available for total design
-        if (USE_DUAL_PAC)
-        begin
-            //== Apredict1 <= (s * Aa + c * Ab + QHALF) >>> LMS_Q_WIDTH; // Q44
-            Asa_1 <= s * Aa; // Q SC + Q LMS 
-            Acb_1 <= c * Ab; //  Q24 + Q22 => Q46
-            Apredict_err_2 <= signal_1 - ((Asa_1 + Acb_1 + SCQHALF) >>> SC_Q_WIDTH); // Q44
-        end
-        
-        // Compute d_mu_e    
-        // ### 3
-        // error = signal-predict #// Q22 - Q22 : Q22
-        // d_mu_e1 <= ((signal-predict1) * tau + "0.5") >>> 22;
-        //== d_mu_e3 <= ((signal1 - predict1) * Rtau + QHALF) >>> LMS_Q_WIDTH;
-        //d_mu_e_3 <= (predict_err_2 * Rtau + LMSQHALF) >>> LMS_Q_WIDTH;
-        //d_mu_e_3 <= (predict_err_2 * Rtau + LMSQHALF); // ) >>> LMS_Q_WIDTH;
-        d_mu_e_3 <= predict_err_2 * Rtau + LMSQHALF; // ** test w o rounding
-        if (USE_DUAL_PAC)
-        begin
-            //Ad_mu_e1 <= ((m1-Apredict1) * Atau + 45'sh200000) >>> 22;
-            Ad_mu_e_3 <= Apredict_err_2 * RAtau + LMSQHALF; //) >>> LMS_Q_WIDTH;
-        end
-        
-        // Compute LMS
-        // ### 4
-        // b <= b + ((c2 * d_mu_e2 + "0.5") >>> 22);
-        // b <= b + ((c3 * d_mu_e_3 + SCQHALF) >>> SC_Q_WIDTH);
-        // b <= b + ((c3 * $signed(d_mu_e_3[LMS_Q_WIDTH+LMS_Q_WIDTH-1:LMS_Q_WIDTH]) + SCQHALF) >>> SC_Q_WIDTH);
-        // Cd_mu_e_4 <= c3 * $signed(d_mu_e_3[LMS_Q_WIDTH+LMS_Q_WIDTH-1 : LMS_Q_WIDTH]) + SCQHALF;
-        
-        //LMS_DATA_WIDTH+LMS_DATA_WIDTH-1
-        //--- Cd_mu_e_4 <= c3 * $signed(d_mu_e_3[LMS_Q_WIDTH+LMS_Q_WIDTH-1 : LMS_Q_WIDTH]);
-        Cd_mu_e_4 <= c3 * $signed(d_mu_e_3[LMS_Q_WIDTH+LMS_Q_WIDTH-1 : LMS_Q_WIDTH]);
-        //b <= b + $signed(Cd_mu_e_4[LMS_Q_WIDTH+SC_Q_WIDTH-1 : SC_Q_WIDTH]);
-        b <= b + ((Cd_mu_e_4 + SCQHALF) >>> SC_Q_WIDTH);
-        if (USE_DUAL_PAC)
-        begin
-            // Ab <= Ab + ((c3 * $signed(Ad_mu_e_3[LMS_Q_WIDTH+LMS_Q_WIDTH-1:LMS_Q_WIDTH]) + SCQHALF) >>> SC_Q_WIDTH);
-            ACd_mu_e_4 <= c3 * $signed(Ad_mu_e_3[LMS_Q_WIDTH+LMS_Q_WIDTH-1 : LMS_Q_WIDTH]);
-            Ab <= Ab + ((ACd_mu_e_4 + SCQHALF) >>> SC_Q_WIDTH);
-        end
-        
-        // a <= a + ((s2 * d_mu_e2 + "0.5") >>> 22);
-        // a <= a + ((s3 * d_mu_e_3 + SCQHALF) >>> SC_Q_WIDTH);
-        // a <= a + ((s3 * $signed(d_mu_e_3[LMS_Q_WIDTH+LMS_Q_WIDTH-1:LMS_Q_WIDTH]) + SCQHALF) >>> SC_Q_WIDTH);
-        Sd_mu_e_4 <= s3 * $signed(d_mu_e_3[LMS_Q_WIDTH+LMS_Q_WIDTH-1 : LMS_Q_WIDTH]);
-        a <= a + ((Sd_mu_e_4+SCQHALF) >>> SC_Q_WIDTH);
-        if (USE_DUAL_PAC)
-        begin
-            // Aa <= Aa + ((s3 * $signed(Ad_mu_e_3[LMS_Q_WIDTH+LMS_Q_WIDTH-1:LMS_Q_WIDTH]) + SCQHALF) >>> SC_Q_WIDTH);
-            ASd_mu_e_4 <= s3 * $signed(Ad_mu_e_3[LMS_Q_WIDTH+LMS_Q_WIDTH-1 : LMS_Q_WIDTH]);
-            Aa <= Aa + ((ASd_mu_e_4+SCQHALF) >>> SC_Q_WIDTH);
-        end
-        
-        // Rot45
-        // R2 = sqrt(2)
-        // ar = a*R2 - b*R2 = R2*(a-b)
-        // br = a*R2 + b*R2 = R2*(a+b)
-        // Q22*arctan (ar/br) # +/- pi/2    
-        // --> phase = Q22 arctan ((a-b)/(a+b))
-        // amp = sqrt (a*a + b*b); // SQRT( Q44 )
-        // ph  = atan ((a-b)/(a+b)); // Q22
-        //---- amplitude and phase moved to end
-
-        /*
-        // amplitude squared from 2nd A-PAC 
-        ampl2 <= Aa*Aa + Ab*Ab; // 1Q44
-        // x,y (for phase)from 1st PAC
-        y <= a-b;
-        x <= a+b;
-        */
-        
-        if (COMPUTE_LOCKIN)
-        begin
-    
-    /*      sequencial code
-            x = signal*s;
-            y = signal*c;
-            // add new
-            sumdphi  += dphi
-            sumcorrx += x*dphi
-            sumcorry += y*dphi
-            // correct and compensate if phase window len changed
-            while (sumdphi > 2*math.pi+dphi/2):
-                sumdphi  -= corrdphi[circ(corri-corrlen)];
-                sumcorrx -= corrx[circ(corri-corrlen)];
-                sumcorry -= corry[circ(corri-corrlen)];
-                corrlen--;
-
-            // Verilog:          
-            corrdphi[corri] = dphi;
-            corrx[corri] = x*dphi;
-            corry[corri] = y*dphi;
-            corrlen++;
-            corri = circ(corri+1);
-
-            LckdIntPhi2 = LckdIntPhi1 + LckDdphi1; // one step ???? blocking works may be???
-            // single shot unrolled LockIn moving window correlation integral
-            if ((LckdIntPhi2 - LckDdphi [Lck_i-Lck_N]) >= PHASE_2PI ) // phase > 2pi (+dphi/2) // 2pi =!= 2<<44 -- ahead
+            end else
             begin
-                LckdIntPhi1 <= LckdIntPhi2 - LckDdphi [Lck_i-Lck_N] - LckDdphi [Lck_i-Lck_N+1];
-                LckXInt <= LckXInt - LckXdphi [Lck_i-Lck_N] - LckXdphi [Lck_i-Lck_N+1] + LckXdphi [Lck_i]; 
-                LckYInt <= LckYInt - LckYdphi [Lck_i-Lck_N] - LckYdphi [Lck_i-Lck_N+1] + LckYdphi [Lck_i];
-                Lck_N <= Lck_N - 1; //!!!!
-            end else 
+                if (s<$signed(0) && sp)
                 begin
-                if (LckdIntPhi2 >= PHASE_2PI) // phase > 2pi (+dphi/2) // 2pi =!= 2<<44 -- right on
-                begin
-                    LckdIntPhi1 <= LckdIntPhi2 - LckDdphi [Lck_i-Lck_N];
-                    LckXInt <= LckXInt - LckXdphi [Lck_i-Lck_N] + LckXdphi [Lck_i];
-                    LckYInt <= LckYInt - LckYdphi [Lck_i-Lck_N] + LckYdphi [Lck_i];
-                end else
-                begin // behind
-                    LckXInt <= LckXInt + LckXdphi [Lck_i];
-                    LckYInt <= LckYInt + LckYdphi [Lck_i];
-                    Lck_N <= Lck_N + 1; //!!!!
+                    sp <= 0;
+                    sc_zero <= 1;
                 end
             end
-
-
-    */
-
-            // Classic LockIn and Correlation moving Integral over one period
+            if (c>$signed(0) && ~cp)
+            begin
+                cp <= 1;
+                sc_zero <= 1;
+            end else
+            begin
+                if (c<$signed(0) && cp)
+                begin
+                    cp <= 0;
+                    sc_zero <= 1;
+                end
+            end
     
-            // Store in ring buffer
-            // LckDdphi [Lck_i] <= LckDdphi4; // LCK_INT_PH_WIDTH 
-            // LckXdphi [Lck_i] <= LckXdphi4; // LCK_INT_WIDTH
-            // LckYdphi [Lck_i] <= LckYdphi4;
-            LckDXYdphi_mem [Lck_i] <= { LckDdphi4, LckXdphi4, LckYdphi4 }; // LCK_INT_PH_WIDTH 
-
-            // STEP 1: Correlelation Product
-            LckDdphi1  <= S_AXIS_DDS_dphi_tdata[DPHASE_WIDTH-1:0] >>> 2; // convert to LCK_INT_PH_WIDTH  -- account for 4x decimation 
-            LckXcorrp1 <= s * signal_10; // SC_Q_WIDTH x LMS_DATA_WIDTH , LMS_Q_WIDTH
-            LckYcorrp1 <= c * signal_10; //
-
-            // STEP 2 
-            LckX2 <= (LckXcorrp1 + SCQHALF) >>> SC_Q_WIDTH; // Q22  LMS_DATA_WIDTH , LMS_Q_WIDTH
-            LckY2 <= (LckYcorrp1 + SCQHALF) >>> SC_Q_WIDTH; // Q22
-            LckDdphi2 <= LckDdphi1 >>> LCK_PH_SHIFT; 
-
-            // STEP 3: Scale to Phase-Signal Volume // **** DDS_dphi limited from principal 48bit to LCK_DPH_WIDTH *****
-            LckXdphi4 <= LckX2 * LckDdphi2; // S_AXIS_DDS_dphi_tdata[LCK_DPH_WIDTH-1:0]; // LMS_DATA_WIDTH + LCK_DPH_WIDTH - >>>PH_SHIFT  == LCK_INT_WIDTH   [26]Q22 + Q44 [assume 30kHz range renorm by 12 now (4096) --  4166 is 30kHz spp] 22+44-12=54
-            LckYdphi4 <= LckY2 * LckDdphi2; // S_AXIS_DDS_dphi_tdata[LCK_DPH_WIDTH-1:0]; // Q22 [16 sig -> 6 spare] + Q44 [12 spare @ 30kHz] 44+22-6-12
-            LckDdphi4 <= LckDdphi2[LCK_INT_PH_WIDTH-1:0];
-
-            //LckXdphi4 <= LckXdphi3 >>> PH_SHIFT; // LMS_DATA_WIDTH + LCK_DPH_WIDTH - >>>PH_SHIFT  == LCK_INT_WIDTH   [26]Q22 + Q44 [assume 30kHz range renorm by 12 now (4096) --  4166 is 30kHz spp] 22+44-12=54
-            //LckYdphi4 <= LckYdphi3 >>> PH_SHIFT; // Q22 [16 sig -> 6 spare] + Q44 [12 spare @ 30kHz] 44+22-6-12
-            //LckDdphi4 <= LckDdphi3;
+            // Compute the prediction
+            // ### 1 pipeline level
+            // predict <= (s * a + c * b + "0.5") >>> 22; // Q22
+            sa_1 <= s * a; // Q SC + Q LMS 
+            cb_1 <= c * b; // Q24 + Q22 => Q46
             
-            // SETP 4: update ring buffer and correl length
-            // update one period integral
-            // single shot unrolled LockIn moving window correlation integral
+            // ### 2
+            predict_err_2 <= signal_1 - ((sa_1 + cb_1 + SCQHALF) >>> SC_Q_WIDTH); // sum, round normalize Q SC + Q LMS to Q LMS: 46 to 22
+            //# DUAL PAC or PAC+LCK -- both needs 82 DSP units out of 80 available for total design
+            if (USE_DUAL_PAC)
+            begin
+                //== Apredict1 <= (s * Aa + c * Ab + QHALF) >>> LMS_Q_WIDTH; // Q44
+                Asa_1 <= s * Aa; // Q SC + Q LMS 
+                Acb_1 <= c * Ab; //  Q24 + Q22 => Q46
+                Apredict_err_2 <= signal_1 - ((Asa_1 + Acb_1 + SCQHALF) >>> SC_Q_WIDTH); // Q44
+            end
             
+            // Compute d_mu_e    
+            // ### 3
+            // error = signal-predict #// Q22 - Q22 : Q22
+            // d_mu_e1 <= ((signal-predict1) * tau + "0.5") >>> 22;
+            //== d_mu_e3 <= ((signal1 - predict1) * Rtau + QHALF) >>> LMS_Q_WIDTH;
+            //d_mu_e_3 <= (predict_err_2 * Rtau + LMSQHALF) >>> LMS_Q_WIDTH;
+            //d_mu_e_3 <= (predict_err_2 * Rtau + LMSQHALF); // ) >>> LMS_Q_WIDTH;
+            d_mu_e_3 <= predict_err_2 * Rtau + LMSQHALF; // ** test w o rounding
+            if (USE_DUAL_PAC)
+            begin
+                //Ad_mu_e1 <= ((m1-Apredict1) * Atau + 45'sh200000) >>> 22;
+                Ad_mu_e_3 <= Apredict_err_2 * RAtau + LMSQHALF; //) >>> LMS_Q_WIDTH;
+            end
+            
+            // Compute LMS
+            // ### 4
+            // b <= b + ((c2 * d_mu_e2 + "0.5") >>> 22);
+            // b <= b + ((c3 * d_mu_e_3 + SCQHALF) >>> SC_Q_WIDTH);
+            // b <= b + ((c3 * $signed(d_mu_e_3[LMS_Q_WIDTH+LMS_Q_WIDTH-1:LMS_Q_WIDTH]) + SCQHALF) >>> SC_Q_WIDTH);
+            // Cd_mu_e_4 <= c3 * $signed(d_mu_e_3[LMS_Q_WIDTH+LMS_Q_WIDTH-1 : LMS_Q_WIDTH]) + SCQHALF;
+            
+            //LMS_DATA_WIDTH+LMS_DATA_WIDTH-1
+            //--- Cd_mu_e_4 <= c3 * $signed(d_mu_e_3[LMS_Q_WIDTH+LMS_Q_WIDTH-1 : LMS_Q_WIDTH]);
+            Cd_mu_e_4 <= c3 * $signed(d_mu_e_3[LMS_Q_WIDTH+LMS_Q_WIDTH-1 : LMS_Q_WIDTH]);
+            //b <= b + $signed(Cd_mu_e_4[LMS_Q_WIDTH+SC_Q_WIDTH-1 : SC_Q_WIDTH]);
+            b <= b + ((Cd_mu_e_4 + SCQHALF) >>> SC_Q_WIDTH);
+            if (USE_DUAL_PAC)
+            begin
+                // Ab <= Ab + ((c3 * $signed(Ad_mu_e_3[LMS_Q_WIDTH+LMS_Q_WIDTH-1:LMS_Q_WIDTH]) + SCQHALF) >>> SC_Q_WIDTH);
+                ACd_mu_e_4 <= c3 * $signed(Ad_mu_e_3[LMS_Q_WIDTH+LMS_Q_WIDTH-1 : LMS_Q_WIDTH]);
+                Ab <= Ab + ((ACd_mu_e_4 + SCQHALF) >>> SC_Q_WIDTH);
+            end
+            
+            // a <= a + ((s2 * d_mu_e2 + "0.5") >>> 22);
+            // a <= a + ((s3 * d_mu_e_3 + SCQHALF) >>> SC_Q_WIDTH);
+            // a <= a + ((s3 * $signed(d_mu_e_3[LMS_Q_WIDTH+LMS_Q_WIDTH-1:LMS_Q_WIDTH]) + SCQHALF) >>> SC_Q_WIDTH);
+            Sd_mu_e_4 <= s3 * $signed(d_mu_e_3[LMS_Q_WIDTH+LMS_Q_WIDTH-1 : LMS_Q_WIDTH]);
+            a <= a + ((Sd_mu_e_4+SCQHALF) >>> SC_Q_WIDTH);
+            if (USE_DUAL_PAC)
+            begin
+                // Aa <= Aa + ((s3 * $signed(Ad_mu_e_3[LMS_Q_WIDTH+LMS_Q_WIDTH-1:LMS_Q_WIDTH]) + SCQHALF) >>> SC_Q_WIDTH);
+                ASd_mu_e_4 <= s3 * $signed(Ad_mu_e_3[LMS_Q_WIDTH+LMS_Q_WIDTH-1 : LMS_Q_WIDTH]);
+                Aa <= Aa + ((ASd_mu_e_4+SCQHALF) >>> SC_Q_WIDTH);
+            end
+            
+            // Rot45
+            // R2 = sqrt(2)
+            // ar = a*R2 - b*R2 = R2*(a-b)
+            // br = a*R2 + b*R2 = R2*(a+b)
+            // Q22*arctan (ar/br) # +/- pi/2    
+            // --> phase = Q22 arctan ((a-b)/(a+b))
+            // amp = sqrt (a*a + b*b); // SQRT( Q44 )
+            // ph  = atan ((a-b)/(a+b)); // Q22
+            //---- amplitude and phase moved to end
+    
             /*
-            if ((LckdIntPhi + LckDdphi4 - LckDdphi [Lck_i-Lck_N]) >= PHASE_2PIR) // phase > 2pi (+dphi/2) // 2pi =!= 2<<44 -- ahead
-            begin
-                LckdIntPhi <= LckdIntPhi + LckDdphi4 - LckDdphi [Lck_i-Lck_N] - LckDdphi [Lck_i-Lck_N+1]; // remove two dPhi's, one shorter 
-                LckXInt    <= LckXInt    + LckXdphi4 - LckXdphi [Lck_i-Lck_N] - LckXdphi [Lck_i-Lck_N+1]; 
-                LckYInt    <= LckYInt    + LckYdphi4 - LckYdphi [Lck_i-Lck_N] - LckYdphi [Lck_i-Lck_N+1];
-                Lck_N <= Lck_N - 1; // shorter
-            end else 
-                begin
-                if (LckdIntPhi + LckDdphi4 >= PHASE_2PIR) // phase > 2pi (+dphi/2) // 2pi =!= 2<<44 -- right on
-                begin
-                    LckdIntPhi <= LckdIntPhi + LckDdphi4 - LckDdphi [Lck_i-Lck_N]; // remove one dPhi, add one new dPhi (now change in length)
-                    LckXInt    <= LckXInt    + LckXdphi4 - LckXdphi [Lck_i-Lck_N];
-                    LckYInt    <= LckYInt    + LckYdphi4 - LckYdphi [Lck_i-Lck_N];
-                    // Lck_N unchanged
-                end else
-                begin // behind
-                    LckdIntPhi <= LckdIntPhi + LckDdphi4; // add new dPhi, and keep -- longer now
-                    LckXInt    <= LckXInt    + LckXdphi4;
-                    LckYInt    <= LckYInt    + LckYdphi4;
-                    Lck_N <= Lck_N + 1; // longer
-                end
-            end
+            // amplitude squared from 2nd A-PAC 
+            ampl2 <= Aa*Aa + Ab*Ab; // 1Q44
+            // x,y (for phase)from 1st PAC
+            y <= a-b;
+            x <= a+b;
             */
             
-            //LckDXYdphi_0 <= LckDXYdphi_mem[Lck_i-Lck_N];
-            //LckDXYdphi_1 <= LckDXYdphi_mem[Lck_i-Lck_N+1];
-            //    reg [LCK_INT_PH_WIDTH+LCK_INT_WIDTH+LCK_INT_WIDTH-1:0]     LckDXYdphi [(1<<LCK_BUFFER_LEN2)-1:0];
-            if ((LckdIntPhi + LckDdphi4 - LckDXYdphi_0[LCK_INT_PH_WIDTH+LCK_INT_WIDTH+LCK_INT_WIDTH-1:LCK_INT_WIDTH+LCK_INT_WIDTH]) >= PHASE_2PIR) // phase > 2pi (+dphi/2) // 2pi =!= 2<<44 -- ahead
+            if (COMPUTE_LOCKIN)
             begin
-                LckdIntPhi <= LckdIntPhi + LckDdphi4 - LckDXYdphi_0[LCK_INT_PH_WIDTH+LCK_INT_WIDTH+LCK_INT_WIDTH-1:LCK_INT_WIDTH+LCK_INT_WIDTH] - LckDXYdphi_1[LCK_INT_PH_WIDTH+LCK_INT_WIDTH+LCK_INT_WIDTH-1:LCK_INT_WIDTH+LCK_INT_WIDTH]; // remove two dPhi's, one shorter 
-                LckXInt    <= LckXInt    + LckXdphi4 - LckDXYdphi_0[                 LCK_INT_WIDTH+LCK_INT_WIDTH-1:LCK_INT_WIDTH              ] - LckDXYdphi_1[                 LCK_INT_WIDTH+LCK_INT_WIDTH-1:LCK_INT_WIDTH              ]; 
-                LckYInt    <= LckYInt    + LckYdphi4 - LckDXYdphi_0[                               LCK_INT_WIDTH-1:0                          ] - LckDXYdphi_1[                               LCK_INT_WIDTH-1:0                          ];
-                Lck_N <= Lck_N - 1; // shorter
-            end else 
-                begin
-                if (LckdIntPhi + LckDdphi4 >= PHASE_2PIR) // phase > 2pi (+dphi/2) // 2pi =!= 2<<44 -- right on
-                begin
-                    LckdIntPhi <= LckdIntPhi + LckDdphi4 - LckDXYdphi_0[LCK_INT_PH_WIDTH+LCK_INT_WIDTH+LCK_INT_WIDTH-1:LCK_INT_WIDTH+LCK_INT_WIDTH]; // remove one dPhi, add one new dPhi (now change in length)
-                    LckXInt    <= LckXInt    + LckXdphi4 - LckDXYdphi_0[                 LCK_INT_WIDTH+LCK_INT_WIDTH-1:LCK_INT_WIDTH              ];
-                    LckYInt    <= LckYInt    + LckYdphi4 - LckDXYdphi_0[                               LCK_INT_WIDTH-1:0                          ];
-                    // Lck_N unchanged
-                end else
-                begin // behind
-                    LckdIntPhi <= LckdIntPhi + LckDdphi4; // add new dPhi, and keep -- longer now
-                    LckXInt    <= LckXInt    + LckXdphi4;
-                    LckYInt    <= LckYInt    + LckYdphi4;
-                    Lck_N <= Lck_N + 1; // longer
-                end
-            end
-            
-
-
-            Lck_i <= Lck_i + 1;
-    
-            //   localparam integer LCK_INT_WIDTH      = LMS_DATA_WIDTH + DPHASE_WIDTH - PH_SHIFT; // integral over sine should not exceed 1  LMS_DATA_WIDTH + LCK_DPH_WIDTH - >>>PH_SHIFT  == LCK_INT_WIDTH
-            //   ** signed [LCK_INT_WIDTH-1:0] LckXInt=0;
-
-            //**    wire [45-1:0] PHASE_2PIR = 45'd4402296783253; //30200Hz 1/4 rate (DEC4)   *** 398599931957
-            //**    wire [22-1:0] TWO_PI_Q22 = 22'd26353589; // 2pi in Q22
-            //LckXSumNorm <= TWO_PI_Q22 * $signed(LckXInt[LCK_INT_WIDTH-1 : DPHASE_WIDTH - PH_SHIFT]); //>>> LCK_NORM; // normalize with 2pi == Q44 - PH_SHIFT (remaining bits afer partial pre norm)
-            //LckYSumNorm <= TWO_PI_Q22 * $signed(LckYInt[LCK_INT_WIDTH-1 : DPHASE_WIDTH - PH_SHIFT]); //>>> LCK_NORM; // 
-            //LckXSum <= LckXSumNorm >>> 22; //>>> LCK_NORM; // normalize with 2pi == Q44 - PH_SHIFT (remaining bits afer partial pre norm)
-            //LckYSum <= LckYSumNorm >>> 22; //>>> LCK_NORM; // 
-            //LckXSum <= LckXInt >>> (DPHASE_WIDTH-3 - LMS_Q_WIDTH + PH_SHIFT + 1 -13 ); //>>> LCK_NORM; // normalize with pi == Q44 / 4 {1/4 rate} / 2 {pi vs 2pi} = 44-3 - PH_SHIFT (remaining bits afer partial pre norm)
-            //LckYSum <= LckYInt >>> (DPHASE_WIDTH-3 - LMS_Q_WIDTH + PH_SHIFT + 1 -13); //>>> LCK_NORM; // 
-            //  x = INT__2PI { (X*SC >> SC__Q_WIDTH)*dPHI >> PH_SHIFT } / PI
-            //                  (X[22]+24)-24 + (44-22) 
-            LckXSum <= LckXInt >>> (DPHASE_WIDTH-2+1 - LCK_PH_SHIFT -2); //>>> LCK_NORM; // normalize with pi == Q44 / 4 {1/4 rate} / 2 {pi vs 2pi} = 44-3 - PH_SHIFT (remaining bits afer partial pre norm)
-            LckYSum <= LckYInt >>> (DPHASE_WIDTH-2+1 - LCK_PH_SHIFT -2); //>>> LCK_NORM; // 
-            //norm = 2 / self.PHASE_2PI / (1<<(self.LMS_Q_WIDTH)) * (1<<self.PH_SHIFT)
-            //         2^44 / 2^21 [keep LMS Q WIDTH] = 2^23  ----> 2pi * (XXX >> 23)
-            //  (44-...)=  DPHASE_WIDTH  - PH_SHIFT - LMS_Q_WIDTH     
-            // self.a = self.filter(self.a, 2pi*self.LckXSum/norm)  # 2 pi * ...
-
-        end
-          
-        // prepare outputs by selection        
         
-        if (USE_DUAL_PAC && !COMPUTE_LOCKIN)
-        begin
-            //# For Dual PAC:     
-            // amplitude squared from 2nd A-PAC 
-            a2 <= Aa*Aa;
-            b2 <= Ab*Ab;
-            //== ampl2 <= Aa*Aa + Ab*Ab; // 1Q44
-            ampl2 <= a2 + b2; // 1Q44
-            // x,y (for phase)from 1st PAC
-            y <= a-b;
-            x <= a+b;
-        end 
-        else if (COMPUTE_LOCKIN)
-        begin
-            // select PAC or LockIn individually
-            if (USE_DUAL_PAC) // select from Dual PAC or LockIn options
-            begin
-                a2 <= (lck_ampl?LckXSum:Aa)*(lck_ampl?LckXSum:Aa);
-                b2 <= (lck_ampl?LckYSum:Ab)*(lck_ampl?LckYSum:Ab);
-            end else
-            begin // select from Single PAC (same tau for PH and AM) or LockIn
-                a2 <= (lck_ampl?LckXSum:a)*(lck_ampl?LckXSum:a);
-                b2 <= (lck_ampl?LckYSum:b)*(lck_ampl?LckYSum:b);
+        /*      sequencial code
+                x = signal*s;
+                y = signal*c;
+                // add new
+                sumdphi  += dphi
+                sumcorrx += x*dphi
+                sumcorry += y*dphi
+                // correct and compensate if phase window len changed
+                while (sumdphi > 2*math.pi+dphi/2):
+                    sumdphi  -= corrdphi[circ(corri-corrlen)];
+                    sumcorrx -= corrx[circ(corri-corrlen)];
+                    sumcorry -= corry[circ(corri-corrlen)];
+                    corrlen--;
+    
+                // Verilog:          
+                corrdphi[corri] = dphi;
+                corrx[corri] = x*dphi;
+                corry[corri] = y*dphi;
+                corrlen++;
+                corri = circ(corri+1);
+    
+                LckdIntPhi2 = LckdIntPhi1 + LckDdphi1; // one step ???? blocking works may be???
+                // single shot unrolled LockIn moving window correlation integral
+                if ((LckdIntPhi2 - LckDdphi [Lck_i-Lck_N]) >= PHASE_2PI ) // phase > 2pi (+dphi/2) // 2pi =!= 2<<44 -- ahead
+                begin
+                    LckdIntPhi1 <= LckdIntPhi2 - LckDdphi [Lck_i-Lck_N] - LckDdphi [Lck_i-Lck_N+1];
+                    LckXInt <= LckXInt - LckXdphi [Lck_i-Lck_N] - LckXdphi [Lck_i-Lck_N+1] + LckXdphi [Lck_i]; 
+                    LckYInt <= LckYInt - LckYdphi [Lck_i-Lck_N] - LckYdphi [Lck_i-Lck_N+1] + LckYdphi [Lck_i];
+                    Lck_N <= Lck_N - 1; //!!!!
+                end else 
+                    begin
+                    if (LckdIntPhi2 >= PHASE_2PI) // phase > 2pi (+dphi/2) // 2pi =!= 2<<44 -- right on
+                    begin
+                        LckdIntPhi1 <= LckdIntPhi2 - LckDdphi [Lck_i-Lck_N];
+                        LckXInt <= LckXInt - LckXdphi [Lck_i-Lck_N] + LckXdphi [Lck_i];
+                        LckYInt <= LckYInt - LckYdphi [Lck_i-Lck_N] + LckYdphi [Lck_i];
+                    end else
+                    begin // behind
+                        LckXInt <= LckXInt + LckXdphi [Lck_i];
+                        LckYInt <= LckYInt + LckYdphi [Lck_i];
+                        Lck_N <= Lck_N + 1; //!!!!
+                    end
+                end
+    
+    
+        */
+    
+                // Classic LockIn and Correlation moving Integral over one period
+        
+                // Store in ring buffer
+                // LckDdphi [Lck_i] <= LckDdphi4; // LCK_INT_PH_WIDTH 
+                // LckXdphi [Lck_i] <= LckXdphi4; // LCK_INT_WIDTH
+                // LckYdphi [Lck_i] <= LckYdphi4;
+                LckDXYdphi_mem [Lck_i] <= { LckDdphi4, LckXdphi4, LckYdphi4 }; // LCK_INT_PH_WIDTH 
+    
+                // STEP 1: Correlelation Product
+                LckDdphi1  <= S_AXIS_DDS_dphi_tdata[DPHASE_WIDTH-1:0] >>> 2; // convert to LCK_INT_PH_WIDTH  -- account for 4x decimation 
+                LckXcorrp1 <= s * signal_10; // SC_Q_WIDTH x LMS_DATA_WIDTH , LMS_Q_WIDTH
+                LckYcorrp1 <= c * signal_10; //
+    
+                // STEP 2 
+                LckX2 <= (LckXcorrp1 + SCQHALF) >>> SC_Q_WIDTH; // Q22  LMS_DATA_WIDTH , LMS_Q_WIDTH
+                LckY2 <= (LckYcorrp1 + SCQHALF) >>> SC_Q_WIDTH; // Q22
+                LckDdphi2 <= LckDdphi1 >>> LCK_PH_SHIFT; 
+    
+                // STEP 3: Scale to Phase-Signal Volume // **** DDS_dphi limited from principal 48bit to LCK_DPH_WIDTH *****
+                LckXdphi4 <= LckX2 * LckDdphi2; // S_AXIS_DDS_dphi_tdata[LCK_DPH_WIDTH-1:0]; // LMS_DATA_WIDTH + LCK_DPH_WIDTH - >>>PH_SHIFT  == LCK_INT_WIDTH   [26]Q22 + Q44 [assume 30kHz range renorm by 12 now (4096) --  4166 is 30kHz spp] 22+44-12=54
+                LckYdphi4 <= LckY2 * LckDdphi2; // S_AXIS_DDS_dphi_tdata[LCK_DPH_WIDTH-1:0]; // Q22 [16 sig -> 6 spare] + Q44 [12 spare @ 30kHz] 44+22-6-12
+                LckDdphi4 <= LckDdphi2[LCK_INT_PH_WIDTH-1:0];
+    
+                //LckXdphi4 <= LckXdphi3 >>> PH_SHIFT; // LMS_DATA_WIDTH + LCK_DPH_WIDTH - >>>PH_SHIFT  == LCK_INT_WIDTH   [26]Q22 + Q44 [assume 30kHz range renorm by 12 now (4096) --  4166 is 30kHz spp] 22+44-12=54
+                //LckYdphi4 <= LckYdphi3 >>> PH_SHIFT; // Q22 [16 sig -> 6 spare] + Q44 [12 spare @ 30kHz] 44+22-6-12
+                //LckDdphi4 <= LckDdphi3;
+                
+                // SETP 4: update ring buffer and correl length
+                // update one period integral
+                // single shot unrolled LockIn moving window correlation integral
+                
+                /*
+                if ((LckdIntPhi + LckDdphi4 - LckDdphi [Lck_i-Lck_N]) >= PHASE_2PIR) // phase > 2pi (+dphi/2) // 2pi =!= 2<<44 -- ahead
+                begin
+                    LckdIntPhi <= LckdIntPhi + LckDdphi4 - LckDdphi [Lck_i-Lck_N] - LckDdphi [Lck_i-Lck_N+1]; // remove two dPhi's, one shorter 
+                    LckXInt    <= LckXInt    + LckXdphi4 - LckXdphi [Lck_i-Lck_N] - LckXdphi [Lck_i-Lck_N+1]; 
+                    LckYInt    <= LckYInt    + LckYdphi4 - LckYdphi [Lck_i-Lck_N] - LckYdphi [Lck_i-Lck_N+1];
+                    Lck_N <= Lck_N - 1; // shorter
+                end else 
+                    begin
+                    if (LckdIntPhi + LckDdphi4 >= PHASE_2PIR) // phase > 2pi (+dphi/2) // 2pi =!= 2<<44 -- right on
+                    begin
+                        LckdIntPhi <= LckdIntPhi + LckDdphi4 - LckDdphi [Lck_i-Lck_N]; // remove one dPhi, add one new dPhi (now change in length)
+                        LckXInt    <= LckXInt    + LckXdphi4 - LckXdphi [Lck_i-Lck_N];
+                        LckYInt    <= LckYInt    + LckYdphi4 - LckYdphi [Lck_i-Lck_N];
+                        // Lck_N unchanged
+                    end else
+                    begin // behind
+                        LckdIntPhi <= LckdIntPhi + LckDdphi4; // add new dPhi, and keep -- longer now
+                        LckXInt    <= LckXInt    + LckXdphi4;
+                        LckYInt    <= LckYInt    + LckYdphi4;
+                        Lck_N <= Lck_N + 1; // longer
+                    end
+                end
+                */
+                
+                //LckDXYdphi_0 <= LckDXYdphi_mem[Lck_i-Lck_N];
+                //LckDXYdphi_1 <= LckDXYdphi_mem[Lck_i-Lck_N+1];
+                //    reg [LCK_INT_PH_WIDTH+LCK_INT_WIDTH+LCK_INT_WIDTH-1:0]     LckDXYdphi [(1<<LCK_BUFFER_LEN2)-1:0];
+                if ((LckdIntPhi + LckDdphi4 - LckDXYdphi_0[LCK_INT_PH_WIDTH+LCK_INT_WIDTH+LCK_INT_WIDTH-1:LCK_INT_WIDTH+LCK_INT_WIDTH]) >= PHASE_2PIR) // phase > 2pi (+dphi/2) // 2pi =!= 2<<44 -- ahead
+                begin
+                    LckdIntPhi <= LckdIntPhi + LckDdphi4 - LckDXYdphi_0[LCK_INT_PH_WIDTH+LCK_INT_WIDTH+LCK_INT_WIDTH-1:LCK_INT_WIDTH+LCK_INT_WIDTH] - LckDXYdphi_1[LCK_INT_PH_WIDTH+LCK_INT_WIDTH+LCK_INT_WIDTH-1:LCK_INT_WIDTH+LCK_INT_WIDTH]; // remove two dPhi's, one shorter 
+                    LckXInt    <= LckXInt    + LckXdphi4 - LckDXYdphi_0[                 LCK_INT_WIDTH+LCK_INT_WIDTH-1:LCK_INT_WIDTH              ] - LckDXYdphi_1[                 LCK_INT_WIDTH+LCK_INT_WIDTH-1:LCK_INT_WIDTH              ]; 
+                    LckYInt    <= LckYInt    + LckYdphi4 - LckDXYdphi_0[                               LCK_INT_WIDTH-1:0                          ] - LckDXYdphi_1[                               LCK_INT_WIDTH-1:0                          ];
+                    Lck_N <= Lck_N - 1; // shorter
+                end else 
+                    begin
+                    if (LckdIntPhi + LckDdphi4 >= PHASE_2PIR) // phase > 2pi (+dphi/2) // 2pi =!= 2<<44 -- right on
+                    begin
+                        LckdIntPhi <= LckdIntPhi + LckDdphi4 - LckDXYdphi_0[LCK_INT_PH_WIDTH+LCK_INT_WIDTH+LCK_INT_WIDTH-1:LCK_INT_WIDTH+LCK_INT_WIDTH]; // remove one dPhi, add one new dPhi (now change in length)
+                        LckXInt    <= LckXInt    + LckXdphi4 - LckDXYdphi_0[                 LCK_INT_WIDTH+LCK_INT_WIDTH-1:LCK_INT_WIDTH              ];
+                        LckYInt    <= LckYInt    + LckYdphi4 - LckDXYdphi_0[                               LCK_INT_WIDTH-1:0                          ];
+                        // Lck_N unchanged
+                    end else
+                    begin // behind
+                        LckdIntPhi <= LckdIntPhi + LckDdphi4; // add new dPhi, and keep -- longer now
+                        LckXInt    <= LckXInt    + LckXdphi4;
+                        LckYInt    <= LckYInt    + LckYdphi4;
+                        Lck_N <= Lck_N + 1; // longer
+                    end
+                end
+                
+    
+    
+                Lck_i <= Lck_i + 1;
+        
+                //   localparam integer LCK_INT_WIDTH      = LMS_DATA_WIDTH + DPHASE_WIDTH - PH_SHIFT; // integral over sine should not exceed 1  LMS_DATA_WIDTH + LCK_DPH_WIDTH - >>>PH_SHIFT  == LCK_INT_WIDTH
+                //   ** signed [LCK_INT_WIDTH-1:0] LckXInt=0;
+    
+                //**    wire [45-1:0] PHASE_2PIR = 45'd4402296783253; //30200Hz 1/4 rate (DEC4)   *** 398599931957
+                //**    wire [22-1:0] TWO_PI_Q22 = 22'd26353589; // 2pi in Q22
+                //LckXSumNorm <= TWO_PI_Q22 * $signed(LckXInt[LCK_INT_WIDTH-1 : DPHASE_WIDTH - PH_SHIFT]); //>>> LCK_NORM; // normalize with 2pi == Q44 - PH_SHIFT (remaining bits afer partial pre norm)
+                //LckYSumNorm <= TWO_PI_Q22 * $signed(LckYInt[LCK_INT_WIDTH-1 : DPHASE_WIDTH - PH_SHIFT]); //>>> LCK_NORM; // 
+                //LckXSum <= LckXSumNorm >>> 22; //>>> LCK_NORM; // normalize with 2pi == Q44 - PH_SHIFT (remaining bits afer partial pre norm)
+                //LckYSum <= LckYSumNorm >>> 22; //>>> LCK_NORM; // 
+                //LckXSum <= LckXInt >>> (DPHASE_WIDTH-3 - LMS_Q_WIDTH + PH_SHIFT + 1 -13 ); //>>> LCK_NORM; // normalize with pi == Q44 / 4 {1/4 rate} / 2 {pi vs 2pi} = 44-3 - PH_SHIFT (remaining bits afer partial pre norm)
+                //LckYSum <= LckYInt >>> (DPHASE_WIDTH-3 - LMS_Q_WIDTH + PH_SHIFT + 1 -13); //>>> LCK_NORM; // 
+                //  x = INT__2PI { (X*SC >> SC__Q_WIDTH)*dPHI >> PH_SHIFT } / PI
+                //                  (X[22]+24)-24 + (44-22) 
+                LckXSum <= LckXInt >>> (DPHASE_WIDTH-2+1 - LCK_PH_SHIFT -2); //>>> LCK_NORM; // normalize with pi == Q44 / 4 {1/4 rate} / 2 {pi vs 2pi} = 44-3 - PH_SHIFT (remaining bits afer partial pre norm)
+                LckYSum <= LckYInt >>> (DPHASE_WIDTH-2+1 - LCK_PH_SHIFT -2); //>>> LCK_NORM; // 
+                //norm = 2 / self.PHASE_2PI / (1<<(self.LMS_Q_WIDTH)) * (1<<self.PH_SHIFT)
+                //         2^44 / 2^21 [keep LMS Q WIDTH] = 2^23  ----> 2pi * (XXX >> 23)
+                //  (44-...)=  DPHASE_WIDTH  - PH_SHIFT - LMS_Q_WIDTH     
+                // self.a = self.filter(self.a, 2pi*self.LckXSum/norm)  # 2 pi * ...
+    
             end
-            ampl2 <= a2 + b2; // 1Q44
-            // x,y (for phase)from PH PAC or LockIn
-            y     <= (lck_phase?LckXSum:a) - (lck_phase?LckYSum:b);
-            x     <= (lck_phase?LckXSum:a) + (lck_phase?LckYSum:b);
-            //y     <= (lck_phase? LckYSum : (a - b));
-            //x     <= (lck_phase? LckXSum : (a + b));
-        end
-        else
-        begin
-            a2 <= a*a;
-            b2 <= b*b;
-            //== ampl2 <= Aa*Aa + Ab*Ab; // 1Q44
-            ampl2 <= a2 + b2; // 1Q44
-            // x,y (for phase)from 1st PAC
-            y <= a-b;
-            x <= a+b;
+              
+            // prepare outputs by selection        
+            
+            if (USE_DUAL_PAC && !COMPUTE_LOCKIN)
+            begin
+                //# For Dual PAC:     
+                // amplitude squared from 2nd A-PAC 
+                a2 <= Aa*Aa;
+                b2 <= Ab*Ab;
+                //== ampl2 <= Aa*Aa + Ab*Ab; // 1Q44
+                ampl2 <= a2 + b2; // 1Q44
+                // x,y (for phase)from 1st PAC
+                y <= a-b;
+                x <= a+b;
+            end 
+            else if (COMPUTE_LOCKIN)
+            begin
+                // select PAC or LockIn individually
+                if (USE_DUAL_PAC) // select from Dual PAC or LockIn options
+                begin
+                    a2 <= (lck_ampl?LckXSum:Aa)*(lck_ampl?LckXSum:Aa);
+                    b2 <= (lck_ampl?LckYSum:Ab)*(lck_ampl?LckYSum:Ab);
+                end else
+                begin // select from Single PAC (same tau for PH and AM) or LockIn
+                    a2 <= (lck_ampl?LckXSum:a)*(lck_ampl?LckXSum:a);
+                    b2 <= (lck_ampl?LckYSum:b)*(lck_ampl?LckYSum:b);
+                end
+                ampl2 <= a2 + b2; // 1Q44
+                // x,y (for phase)from PH PAC or LockIn
+                y     <= (lck_phase?LckXSum:a) - (lck_phase?LckYSum:b);
+                x     <= (lck_phase?LckXSum:a) + (lck_phase?LckYSum:b);
+                //y     <= (lck_phase? LckYSum : (a - b));
+                //x     <= (lck_phase? LckXSum : (a + b));
+            end
+            else
+            begin
+                a2 <= a*a;
+                b2 <= b*b;
+                //== ampl2 <= Aa*Aa + Ab*Ab; // 1Q44
+                ampl2 <= a2 + b2; // 1Q44
+                // x,y (for phase)from 1st PAC
+                y <= a-b;
+                x <= a+b;
+            end
         end
     end
-    
+         
     //assign amplitude = sqrt (a*a+b*b); // Q22
     //assign phase = 4194303*atan ((a-b)/(a+b)); // Q22
 

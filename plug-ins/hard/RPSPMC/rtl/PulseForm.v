@@ -59,11 +59,12 @@ module PulseForm #(
 
     reg [1:0] rdecii = 0;
 
+/*
     always @ (posedge a_clk)
     begin
         rdecii <= rdecii+1;
     end
-
+*/
     always @ (*) // Latch
     begin
         p12_delay <= pulse_12_delay;
@@ -98,95 +99,100 @@ module PulseForm #(
     end
 
 
-    always @ (posedge rdecii[1])
+    //always @ (posedge rdecii[1])
+    always @ (posedge a_clk)
     begin
-       if (ENABLE_ADC_OUT)
-       begin
-            if (start == 1 && last==2) // Pulse 0 Sin X Neg Start
-            begin
-                nd0        <= p12_delay[31:16]; // Delay from zero x trigger
-                nw0        <= p12_wh_arr[0]; // width
-                pval_init0 <= p12_wh_arr[2]; // height
-                arri0 <= 4;
-                last  <= 1;
-            end
-
-            if (start == 2 && last==1) // Pulse 1 Sin X Pos Start
-            begin
-                nd1        <= p12_delay[15:0]; // Delay from zero x trigger
-                nw1        <= p12_wh_arr[1]; // width
-                pval_init1 <= p12_wh_arr[3]; // height
-                arri1 <= 5;
-                last  <= 2;
-            end
-            
-            // Pulse 0
-            if (nd0 > 0)
-            begin // run delay
-                if (finished1)
+        rdecii <= rdecii+1; // rdecii 00 01 *10 11 00 ...
+        if (rdecii == 1)
+        begin
+           if (ENABLE_ADC_OUT)
+           begin
+                if (start == 1 && last==2) // Pulse 0 Sin X Neg Start
                 begin
-                    pval <= p12_wh_arr[24];
+                    nd0        <= p12_delay[31:16]; // Delay from zero x trigger
+                    nw0        <= p12_wh_arr[0]; // width
+                    pval_init0 <= p12_wh_arr[2]; // height
+                    arri0 <= 4;
+                    last  <= 1;
                 end
-                nd0  <= nd0-1;
-            end
-            else begin
-                if (nw0 > 0) // set pulse signal to value
+    
+                if (start == 2 && last==1) // Pulse 1 Sin X Pos Start
                 begin
-                    finished0 <= 0;
-                    pval <= pval_init0;
-                    nw0  <= nw0-1;
+                    nd1        <= p12_delay[15:0]; // Delay from zero x trigger
+                    nw1        <= p12_wh_arr[1]; // width
+                    pval_init1 <= p12_wh_arr[3]; // height
+                    arri1 <= 5;
+                    last  <= 2;
                 end
-                else begin  // finished, reset all, pulse signal=0
-                    if (arri0 < 22)
+                
+                // Pulse 0
+                if (nd0 > 0)
+                begin // run delay
+                    if (finished1)
                     begin
-                        nw0        <= p12_wh_arr[arri0];
-                        pval_init0 <= p12_wh_arr[arri0+2];
-                        arri0 <= arri0 + 4;
+                        pval <= p12_wh_arr[24];
+                    end
+                    nd0  <= nd0-1;
+                end
+                else begin
+                    if (nw0 > 0) // set pulse signal to value
+                    begin
+                        finished0 <= 0;
+                        pval <= pval_init0;
+                        nw0  <= nw0-1;
                     end
                     else begin  // finished, reset all, pulse signal=0
-                        finished0 <= 1;
-                        if (finished1)
+                        if (arri0 < 22)
                         begin
-                            pval  <= p12_wh_arr[26];
+                            nw0        <= p12_wh_arr[arri0];
+                            pval_init0 <= p12_wh_arr[arri0+2];
+                            arri0 <= arri0 + 4;
+                        end
+                        else begin  // finished, reset all, pulse signal=0
+                            finished0 <= 1;
+                            if (finished1)
+                            begin
+                                pval  <= p12_wh_arr[26];
+                            end
                         end
                     end
                 end
-            end
-            // Pulse 1
-            if (nd1 > 0)
-            begin // run delay
-                if (finished0)
-                begin
-                    pval <= p12_wh_arr[25];
-                end
-                nd1  <= nd1-1;
-            end
-            else begin
-                if (nw1 > 0) // set pulse signal to value
-                begin
-                    finished1 <= 0;
-                    pval <= pval_init1;
-                    nw1  <= nw1-1;
-                end
-                else begin  // finished, reset all, pulse signal=0
-                    if (arri1 < 22)
+                // Pulse 1
+                if (nd1 > 0)
+                begin // run delay
+                    if (finished0)
                     begin
-                        nw1        <= p12_wh_arr[arri1];
-                        pval_init1 <= p12_wh_arr[arri1+2];
-                        arri1 <= arri1 + 4;
+                        pval <= p12_wh_arr[25];
+                    end
+                    nd1  <= nd1-1;
+                end
+                else begin
+                    if (nw1 > 0) // set pulse signal to value
+                    begin
+                        finished1 <= 0;
+                        pval <= pval_init1;
+                        nw1  <= nw1-1;
                     end
                     else begin  // finished, reset all, pulse signal=0
-                        finished1 <= 1;
-                        if (finished0)
+                        if (arri1 < 22)
                         begin
-                            pval  <= p12_wh_arr[27];
+                            nw1        <= p12_wh_arr[arri1];
+                            pval_init1 <= p12_wh_arr[arri1+2];
+                            arri1 <= arri1 + 4;
+                        end
+                        else begin  // finished, reset all, pulse signal=0
+                            finished1 <= 1;
+                            if (finished0)
+                            begin
+                                pval  <= p12_wh_arr[27];
+                            end
                         end
                     end
                 end
             end
         end
     end
-    
+        
     assign M_AXIS_tdata  = pval;
     assign M_AXIS_tvalid = 1;
    

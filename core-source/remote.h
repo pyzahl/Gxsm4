@@ -40,12 +40,16 @@
 
 enum REMOTE_TYP { REMO_ACTION, REMO_MENUACTION, REMO_SETENTRY, REMO_CBACTION, REMO_ENDLIST };
 
-typedef struct {
-        gchar  *cmd;
-        void (*RemoteCb)(GtkWidget *widget , gpointer data);
+typedef struct remote_action_cb {
+        const gchar  *cmd;
+        void (*RemoteCb)(GtkWidget *widget , void* data);
         GtkWidget *widget;
         gpointer data;
-} remote_action_cb;
+        const gchar *return_data;
+        int ret;
+        int data_length;
+        double *data_vector[5];
+};
 
 typedef struct {
         char     *cmd;

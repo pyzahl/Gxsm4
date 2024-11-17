@@ -46,6 +46,8 @@
 #include "pcs.h"
 #include "glbvars.h"
 #include "surface.h"
+#include "remote.h"
+
 
 // ============================================================
 // GnomeAppService
@@ -1058,3 +1060,34 @@ gboolean AppBase::gapp_load_on_drop_files (GtkDropTarget *target, const GValue  
         return TRUE;
 }
      
+
+
+GtkWidget* BuildParam::grid_add_exec_button (const gchar* labeltxt,
+                                                  GCallback exec_cb, gpointer cb_data, const gchar *control_id,
+                                                  int bwx,
+                                                  const gchar *data_key, gpointer key_data){
+
+        remote_action_cb *ra = g_new( remote_action_cb, 1);     
+        ra -> cmd = g_strdup_printf("EXECUTE_%s", control_id); 
+        gchar *tooltip = g_strconcat ("Remote example: action (", ra->cmd, ")", NULL); 
+
+        button = gtk_button_new_with_label (N_(labeltxt));
+        g_signal_connect(G_OBJECT (button), "clicked", G_CALLBACK(exec_cb), cb_data);
+
+        ra -> RemoteCb = (void (*)(GtkWidget*, void*))exec_cb;  
+        ra -> widget = button;                                  
+        ra -> data = cb_data;                                      
+        ra -> return_data = NULL;
+        
+        if (data_key)
+                g_object_set_data (G_OBJECT (button), data_key, key_data);
+        gtk_widget_set_tooltip_text (button, tooltip);
+        g_free (tooltip);
+                
+        grid_add_widget (button, bwx);
+
+        gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, ra ); 
+                
+        return button;
+}
+

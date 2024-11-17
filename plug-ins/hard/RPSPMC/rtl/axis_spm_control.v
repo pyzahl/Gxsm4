@@ -23,7 +23,8 @@
 module axis_spm_control#(
     parameter SAXIS_TDATA_WIDTH = 32,
     parameter QROTM = 28,
-    parameter RDECI = 4   // reduced rate decimation bits 1= 1/2 ...
+    parameter RDECI  = 4,   // reduced rate decimation bits 1= 1/2 ...
+    parameter RDECII = 8   // reduced rate decimation bits 1= 1/2 ...
 )
 (
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS_Xs:S_AXIS_Ys:S_AXIS_Zs:S_AXIS_U:S_AXIS_Z:M_AXIS1:M_AXIS2:M_AXIS3:M_AXIS4:M_AXIS_XSMON:M_AXIS_YSMON:M_AXIS_ZSMON:M_AXIS_X0MON:M_AXIS_Y0MON:M_AXIS_Z0MON:M_AXIS_UrefMON" *)
@@ -139,93 +140,98 @@ module axis_spm_control#(
     
     reg [RDECI:0] rdecii = 0;
 
-
+/*
     always @ (posedge a_clk)
     begin
         rdecii <= rdecii+1;
     end
+*/
 
-    always @ (posedge rdecii[RDECI])
+    //always @ (posedge rdecii[RDECI])
+    always @ (posedge a_clk)
     begin
-    // always buffer locally
-        xy_move_step <= xy_offset_step;
-        z_move_step <= z_offset_step;
-        x <= S_AXIS_Xs_tdata;
-        y <= S_AXIS_Ys_tdata;
-        z_gvp <= S_AXIS_Zs_tdata;
-        u <= S_AXIS_U_tdata;
-        mxx <= rotmxx;
-        mxy <= rotmxy;
-
-        // Offset Adjusters
-        mx0s <= x0;
-        my0s <= y0;
-        mz0s <= z0;
-        mu0s <= u0;
-        
-        // MUST ASSURE mx0+/-xy_move_step never exceeds +/-Q31 to avoid over flow else a PBC jump will happen! 
-        
-        mx0p <= mx0+xy_move_step;
-        mx0m <= mx0-xy_move_step;
-        if (mx0s > mx0p)
-            mx0 <= mx0p;
-        else begin if (mx0s < mx0m)
-            mx0 <= mx0m;
-        else
-            mx0 <= mx0s;
-        end    
-             
-        my0p <= my0+xy_move_step;
-        my0m <= my0-xy_move_step;
-        if (my0s > my0p)
-            my0 <= my0p;
-        else begin if (my0s < my0m)
-            my0 <= my0m;
-        else
-            my0 <= my0s;
-        end
-        
-        mz0p <= mz0+z_move_step;
-        mz0m <= mz0-z_move_step;
-        if (mz0s > mz0p)
-            mz0 <= mz0p;
-        else begin if (mz0s < mz0m)
-            mz0 <= mz0m;
-        else 
-            mz0 <= mz0s;
-        end        
-
-        // Bias set
-        ru <= mu0s + u;
-
-        // Scan Rotation
-        rrx <=  mxx*x + mxy*y;
-        rry <= -mxy*x + mxx*y;
-        
-        rx <= (rrx >>> QROTM) + mx0;
-        ry <= (rry >>> QROTM) + my0;
-        
-        // Z and slope
-        z_servo  <= S_AXIS_Z_tdata;
-        z_slope  <= 0;
-        z_sum    <= mz0 + z_gvp + z_slope + z_servo;
-        if (z_sum > 36'sd2147483647)
+        rdecii <= rdecii+1; // rdecii 00 01 *10 11 00 ...
+        if (rdecii == RDECII)
         begin
-            rz <= 32'sd2147483648;
-        end     
-        else
-        begin     
-            if (z_sum < -36'sd2147483647)
-            begin
-                rz <= -32'sd2147483647;
-            end 
-            else
-            begin
-                rz <= z_sum[32-1:0];
-            end
-        end         
-    end
+        // always buffer locally
+            xy_move_step <= xy_offset_step;
+            z_move_step <= z_offset_step;
+            x <= S_AXIS_Xs_tdata;
+            y <= S_AXIS_Ys_tdata;
+            z_gvp <= S_AXIS_Zs_tdata;
+            u <= S_AXIS_U_tdata;
+            mxx <= rotmxx;
+            mxy <= rotmxy;
     
+            // Offset Adjusters
+            mx0s <= x0;
+            my0s <= y0;
+            mz0s <= z0;
+            mu0s <= u0;
+            
+            // MUST ASSURE mx0+/-xy_move_step never exceeds +/-Q31 to avoid over flow else a PBC jump will happen! 
+            
+            mx0p <= mx0+xy_move_step;
+            mx0m <= mx0-xy_move_step;
+            if (mx0s > mx0p)
+                mx0 <= mx0p;
+            else begin if (mx0s < mx0m)
+                mx0 <= mx0m;
+            else
+                mx0 <= mx0s;
+            end    
+                 
+            my0p <= my0+xy_move_step;
+            my0m <= my0-xy_move_step;
+            if (my0s > my0p)
+                my0 <= my0p;
+            else begin if (my0s < my0m)
+                my0 <= my0m;
+            else
+                my0 <= my0s;
+            end
+            
+            mz0p <= mz0+z_move_step;
+            mz0m <= mz0-z_move_step;
+            if (mz0s > mz0p)
+                mz0 <= mz0p;
+            else begin if (mz0s < mz0m)
+                mz0 <= mz0m;
+            else 
+                mz0 <= mz0s;
+            end        
+    
+            // Bias set
+            ru <= mu0s + u;
+    
+            // Scan Rotation
+            rrx <=  mxx*x + mxy*y;
+            rry <= -mxy*x + mxx*y;
+            
+            rx <= (rrx >>> QROTM) + mx0;
+            ry <= (rry >>> QROTM) + my0;
+            
+            // Z and slope
+            z_servo  <= S_AXIS_Z_tdata;
+            z_slope  <= 0;
+            z_sum    <= mz0 + z_gvp + z_slope + z_servo;
+            if (z_sum > 36'sd2147483647)
+            begin
+                rz <= 32'sd2147483648;
+            end     
+            else
+            begin     
+                if (z_sum < -36'sd2147483647)
+                begin
+                    rz <= -32'sd2147483647;
+                end 
+                else
+                begin
+                    rz <= z_sum[32-1:0];
+                end
+            end         
+        end
+    end    
     
     assign M_AXIS1_tdata  = rx;
     assign M_AXIS1_tvalid = 1;

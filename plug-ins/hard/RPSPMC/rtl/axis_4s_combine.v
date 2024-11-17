@@ -197,28 +197,34 @@ module axis_4s_combine #(
 
     reg [1:0] rdecii = 0;
 
+/*
     always @ (posedge a_clk)
     begin
         rdecii <= rdecii+1;
     end
+*/
 
-
-    always @ (posedge rdecii[1])
+    //always @ (posedge rdecii[1])
+    always @ (posedge a_clk)
     begin
-        // buffer in local register
-        reg_channel_selector <= channel_selector[4-1:0];
-        reg_ext_trigger <= ext_trigger;
-        reg_operation <= operation[7:0];
-        reg_shift     <= operation[31:8];
-        reg_ndecimate <= ndecimate;
-        reg_nsamples  <= nsamples;
-
-        // map data sources and calculate delta Freq
-        reg_freq_center <= {{(64-SAXIS_3_DATA_WIDTH){1'b0}},  axis3_center[SAXIS_3_DATA_WIDTH-1:0]}; // expand to 64 bit, signed but always pos
-        reg_freq        <= {{(64-SAXIS_3_DATA_WIDTH){1'b0}}, S_AXIS3_tdata[SAXIS_3_DATA_WIDTH-1:0]}; // expand to 64 bit, signed but always pos
-        reg_delta_freq  <= reg_freq - reg_freq_center; // compute delta frequency -- should need way less than actual 48bits now! But here we go will full range. Deciamtion may overrun is delta is way way off normal.
+        rdecii <= rdecii+1; // rdecii 00 01 *10 11 00 ...
+        if (rdecii == 1)
+        begin
+            // buffer in local register
+            reg_channel_selector <= channel_selector[4-1:0];
+            reg_ext_trigger <= ext_trigger;
+            reg_operation <= operation[7:0];
+            reg_shift     <= operation[31:8];
+            reg_ndecimate <= ndecimate;
+            reg_nsamples  <= nsamples;
+    
+            // map data sources and calculate delta Freq
+            reg_freq_center <= {{(64-SAXIS_3_DATA_WIDTH){1'b0}},  axis3_center[SAXIS_3_DATA_WIDTH-1:0]}; // expand to 64 bit, signed but always pos
+            reg_freq        <= {{(64-SAXIS_3_DATA_WIDTH){1'b0}}, S_AXIS3_tdata[SAXIS_3_DATA_WIDTH-1:0]}; // expand to 64 bit, signed but always pos
+            reg_delta_freq  <= reg_freq - reg_freq_center; // compute delta frequency -- should need way less than actual 48bits now! But here we go will full range. Deciamtion may overrun is delta is way way off normal.
+        end
     end
-
+    
     always @(posedge a_clk)
     begin
 

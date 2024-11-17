@@ -64,17 +64,23 @@ module amplitude_good#(
 
     reg [1:0] rdecii = 0;
 
+/*
     always @ (posedge aclk)
     begin
         rdecii <= rdecii+1;
     end
-
-    always @ (posedge rdecii[1])
+*/
+    //always @ (posedge rdecii[1])
+    always @ (posedge aclk)
     begin
-        a   <= S_AXIS_AM_tdata;
-        thr <= S_AXIS_AMTHR_tdata;
-        not_good <= a > thr ? 0:1; // 0 means OK (no hold)
+        rdecii <= rdecii+1; // rdecii 00 01 *10 11 00 ...
+        if (rdecii == 1)
+        begin
+            a   <= S_AXIS_AM_tdata;
+            thr <= S_AXIS_AMTHR_tdata;
+            not_good <= a > thr ? 0:1; // 0 means OK (no hold)
+        end
     end
- 
+     
     assign hold = not_good;
 endmodule

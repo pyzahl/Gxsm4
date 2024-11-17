@@ -511,6 +511,10 @@ class BuildParam{
                 grid_add_widget (button, bwx);
                 return button;
         };
+        GtkWidget* grid_add_exec_button (const gchar* labeltxt,
+                                         GCallback exec_cb, gpointer cb_data, const gchar *control_id,
+                                         int bwx=1,
+                                         const gchar *data_key=NULL, gpointer key_data=NULL);
         static void lock_callback (GtkWidget *button, void *data) {
                 gtk_button_set_icon_name (GTK_BUTTON (button),
                                           gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (button))

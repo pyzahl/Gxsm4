@@ -72,16 +72,22 @@ module phase_unwrap #(
 
     reg [1:0] rdecii = 0;
 
+/*
     always @ (posedge aclk)
     begin
         rdecii <= rdecii+1;
     end
-
-    always @ (posedge rdecii[1])
+*/
+    //always @ (posedge rdecii[1])
+    always @ (posedge aclk)
     begin
-        reg_unwrap_enable <= enable;
+        rdecii <= rdecii+1; // rdecii 00 01 *10 11 00 ...
+        if (rdecii == 1)
+        begin
+            reg_unwrap_enable <= enable;
+        end
     end
-
+    
     always @ (posedge aclk)
     begin
         p0 <= $signed ({{(M_AXIS_TDATA_WIDTH-S_AXIS_TDATA_WIDTH){S_AXIS_tdata[S_AXIS_TDATA_WIDTH-1]}}, S_AXIS_tdata[S_AXIS_TDATA_WIDTH-1:0]});
