@@ -70,24 +70,23 @@ module QControl #(
     always @ (posedge a_clk)
     begin
         rdecii <= rdecii+1;
-    end
-    
-    always @ (posedge rdecii[1])
-    begin
-        reg_QC_enable <= QC_enable;
-        reg_QC_gain   <= QC_gain;
-        reg_QC_delay  <= QC_delay[QC_PHASE_LEN2-1:0];
-        // Q-Control Mixer
-        
-        signal   <= {S_AXIS_SIGNAL_M_tdata[SIGNAL_M_WIDTH-1 : 0]};
-        delayline[i] <= signal;
-        
-        // qc_delay = 4096 - #delaysampels
-        // Q-Control + PAC-PLL Volume Control Mixer
-        reg_QC_signal <= reg_QC_enable ? reg_QC_gain * $signed(delayline[id]) : 0;
-        // regy_vx_QC    <= regy_vx + reg_QC_signal; // Volume Q15 or Q(VAXIS_DATA_Q-1)
-        id <= i + reg_QC_delay;
-        i  <= i+1;
+        if (rdecii[1])
+        begin
+            reg_QC_enable <= QC_enable;
+            reg_QC_gain   <= QC_gain;
+            reg_QC_delay  <= QC_delay[QC_PHASE_LEN2-1:0];
+            // Q-Control Mixer
+            
+            signal   <= {S_AXIS_SIGNAL_M_tdata[SIGNAL_M_WIDTH-1 : 0]};
+            delayline[i] <= signal;
+            
+            // qc_delay = 4096 - #delaysampels
+            // Q-Control + PAC-PLL Volume Control Mixer
+            reg_QC_signal <= reg_QC_enable ? reg_QC_gain * $signed(delayline[id]) : 0;
+            // regy_vx_QC    <= regy_vx + reg_QC_signal; // Volume Q15 or Q(VAXIS_DATA_Q-1)
+            id <= i + reg_QC_delay;
+            i  <= i+1;
+        end
     end
 
 

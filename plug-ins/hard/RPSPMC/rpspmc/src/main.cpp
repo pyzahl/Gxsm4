@@ -27,6 +27,8 @@
 
 // VIVADO 2023.1.1 NEEDS TCL HACK:>> set_param placedata.goqFix yes
 
+int verbose = 2;
+
 #include <limits.h>
 #include <math.h>
 #include <stdio.h>
@@ -94,6 +96,7 @@ Network 1
 /PS/GPIOs/axi_gpio_8/S_AXI	S_AXI	Reg	0x4200_A000	4K	0x4200_AFFF
 /PS/GPIOs/axi_gpio_9/S_AXI	S_AXI	Reg	0x4200_B000	4K	0x4200_BFFF
 /PS/GPIOs/axi_gpio_10/S_AXI	S_AXI	Reg	0x4200_C000	4K	0x4200_CFFF
+                   11                                  D000    
 */
 
 // FPGA page size is 0x1000
@@ -101,8 +104,10 @@ Network 1
 #define FPGA_BRAM_PACPLL_BASE    0x40000000 // 2M (0x4000_0000 ... 0x401F_FFFF)
 #define FPGA_BRAM_PACPLL_PAGES   2048       // 2M
 
-#define FPGA_BRAM_SPMC_BASE      0x50000000 // 2M (0x4000_0000 ... 0x401F_FFFF)
-#define FPGA_BRAM_SPMC_PAGES     2048       // 2M
+//
+//#define FPGA_BRAM_SPMC_BASE      0x50000000 // 2M (0x4000_0000 ... 0x401F_FFFF)
+//#define FPGA_BRAM_SPMC_PAGES     2048       // 2M
+//
 
 #define FPGA_CFG_REG1     0x42000000 // 4k (0x4200_0000 ... _0FFF)
 #define FPGA_CFG_REG2     0x43000000 // 4k (0x4200_0000 ... _0FFF)
@@ -449,7 +454,6 @@ size_t FPGA_PACPLL_BRAM_block_size = 0; // BRAM space PACPLL
 size_t FPGA_SPMC_BRAM_block_size = 0; // BRAM space SPMC
 
 #define DEVELOPMENT_PACPLL_OP
-int verbose = 2;
 
 //fprintf(stderr, "");
 
@@ -1295,7 +1299,7 @@ void UpdateSignals(void)
 {
         //static int clear_tune_data=1;
         static pthread_t tune_thread;
-        int ch;
+        //int ch;
         int status[3];
         static int last_op=0;
         
@@ -1520,7 +1524,9 @@ void OnNewParams_RPSPMC(void){
                                      SPMC_SET_SCANPOS_Y.Value (),
                                      SPMC_SET_SCANPOS_SLEW.Value ());
         }
-        
+
+        // {"parameters":{"SPMC_GVP_VECTOR_PC":{"value":2},"SPMC_GVP_VECTOR__N":{"value":100},"SPMC_GVP_VECTOR__O":{"value":0},"SPMC_GVP_VECTORNRP":{"value":0},"SPMC_GVP_VECTORNXT":{"value":0},"SPMC_GVP_VECTOR_DX":{"value":0},"SPMC_GVP_VECTOR_DY":{"value":0},"SPMC_GVP_VECTOR_DZ":{"value":0},"SPMC_GVP_VECTOR_DU":{"value":-1},"SPMC_GVP_VECTOR_AA":{"value":0},"SPMC_GVP_VECTOR_BB":{"value":0},"SPMC_GVP_VECTORSLW":{"value":10000}}}
+
         int dirty=0;
         if (SPMC_GVP_VECTOR_PC.IsNewValue ()){ SPMC_GVP_VECTOR_PC.Update (); ++dirty; }
         if (SPMC_GVP_VECTOR__N.IsNewValue ()){ SPMC_GVP_VECTOR__N.Update (); ++dirty; }
@@ -1607,7 +1613,9 @@ void OnNewParams_PACPLL(void){
         //double reading_vector[READING_MAX_VALUES];
 
         PACVERBOSE.Update ();
-        verbose = PACVERBOSE.Value ();
+
+        // keep fixed for debugging
+        //verbose = PACVERBOSE.Value ();
 
         
 #if 0

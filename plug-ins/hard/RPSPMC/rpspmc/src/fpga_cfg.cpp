@@ -51,7 +51,7 @@ extern void *FPGA_PACPLL_cfg1;
 extern void *FPGA_PACPLL_cfg2;
 extern void *FPGA_PACPLL_gpio;
 
-extern int verbose;
+// extern int verbose;
 
 inline uint8_t* cfg_reg_adr(int cfg_slot){
         size_t off;

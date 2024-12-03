@@ -152,7 +152,7 @@ static pthread_t gpio_reading_thread;
 #define BITS_PLHASE_CONTROL 48
 
 
-extern int verbose;
+// extern int verbose;
 extern double signal_dc_measured;
 extern int phase_setpoint_qcordicatan;
 

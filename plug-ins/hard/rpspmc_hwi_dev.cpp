@@ -662,6 +662,8 @@ gpointer ProbeDataReadThread (void *ptr_hwi){
 	while (hwi->is_scanning () || finish_flag){ // while scanning (raster mode) or until single shot probe is finished
 
                 if (hwi->ReadProbeData () || hwi->abort_GVP_flag){ // True when finished or cancelled
+                        if (hwi->abort_GVP_flag)
+                                g_message("ProbeFifoReadThread ** GVP Abort");
                 
                         g_message("ProbeFifoReadThread ** Finished ** FF=%s", finish_flag?"True":"False");
                         if (finish_flag || hwi->abort_GVP_flag){
@@ -747,8 +749,15 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
 
                 g_message ("last vector confirmed: %d, need %d", getVPCconfirmed (), last_vector_index);
                 // wait for vectors been confirmed
-                while (getVPCconfirmed () < last_vector_index){
+                
+                for (int jj=0; jj<100 && getVPCconfirmed () < last_vector_index; jj++){
                         usleep(20000);
+                        g_message ("Waiting for vectors confirmed. #[%d] ** last vector confirmed: %d, need %d", jj, getVPCconfirmed (), last_vector_index);
+                        
+                        if (jj > 99){
+                                g_message ( "VECROR WRITE TIMEOUT, ABROTING -- FR::FINISH-OK");
+                                return RET_FR_FCT_END; // finish OK.
+                        }
                 }
                 g_message ("GVP been written and confirmed for vector #%d. Executing GVP now.", getVPCconfirmed ());
                 GVP_vp_init (); // vectors should be written by now!

@@ -247,6 +247,10 @@ module gvp #(
                 end       
             end     
         end
+        else
+        begin
+            rdecii <= rdecii-1;
+        end
     end    
     
     assign M_AXIS_X_tdata = vec_x;

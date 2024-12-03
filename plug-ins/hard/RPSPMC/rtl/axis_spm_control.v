@@ -23,8 +23,7 @@
 module axis_spm_control#(
     parameter SAXIS_TDATA_WIDTH = 32,
     parameter QROTM = 28,
-    parameter RDECI  = 4,   // reduced rate decimation bits 1= 1/2 ...
-    parameter RDECII = 8   // reduced rate decimation bits 1= 1/2 ...
+    parameter RDECI  = 5   // reduced rate decimation bits 1= 1/2 ...
 )
 (
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS_Xs:S_AXIS_Ys:S_AXIS_Zs:S_AXIS_U:S_AXIS_Z:M_AXIS1:M_AXIS2:M_AXIS3:M_AXIS4:M_AXIS_XSMON:M_AXIS_YSMON:M_AXIS_ZSMON:M_AXIS_X0MON:M_AXIS_Y0MON:M_AXIS_Z0MON:M_AXIS_UrefMON" *)
@@ -151,7 +150,7 @@ module axis_spm_control#(
     always @ (posedge a_clk)
     begin
         rdecii <= rdecii+1; // rdecii 00 01 *10 11 00 ...
-        if (rdecii == RDECII)
+        if (rdecii == 0)
         begin
         // always buffer locally
             xy_move_step <= xy_offset_step;

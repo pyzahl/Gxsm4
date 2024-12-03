@@ -68,7 +68,7 @@
 #define SPMC_ACLK_MHZ   125 // RP Analog Clock Base in MHz
 #define SPMC_RDECI      4
 #define SPMC_CLK        ((double)SPMC_ACLK_MHZ*1e6/(1<<(SPMC_RDECI+1)))
-#define SPMC_GVP_CLK    ((double)SPMC_ACLK_MHZ*1e6/2)
+#define SPMC_GVP_CLK    ((double)SPMC_ACLK_MHZ*1e6) // /2 for decii i noutside block only (old)
 
 #define MAX_NUM_PROGRAN_VECTORS 16
 #define Q_XYPRECISION Q28
@@ -140,7 +140,7 @@
 #define SPMC_XY_MOVE_STEP        (SPMC_BASE + 28)
 #define SPMC_Z_MOVE_STEP         (SPMC_BASE + 29)
 
-extern int verbose;
+//extern int verbose;
 
 extern CIntParameter     SPMC_GVP_STATUS;
 extern CDoubleParameter  SPMC_BIAS_MONITOR;
@@ -590,6 +590,8 @@ int32_t ad5791_setup(int axis,
 
 // initialize/reset all AD5791 channels
 void rp_spmc_AD5791_init (){
+        fprintf(stderr, "##rp_spmc_AD5791_init\n");
+
         rp_spmc_set_rotation (0.0);
 
         // power up one by one
@@ -748,7 +750,7 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
                 return;
         }
         unsigned int nii   = 0;
-        unsigned int decii = 32;
+        unsigned int decii = 64;
         double Nsteps = 1.0;
 
         if (n > 0 && slew > 0.0){
