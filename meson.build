@@ -114,6 +114,7 @@ glib = dependency('glib-2.0')
 gio  = dependency('gio-2.0')
 gtk  = dependency('gtk4', version : '>= 4.1')
 soup = dependency('libsoup-2.4', version : '>= 2.24')
+websocketpp = dependency('websocketpp') ## apt get libwebsocketpp-dev
 cairo = dependency('cairo-gobject')
 #cairo = dependency('cairo')
 freet = dependency('freetype2')

@@ -46,7 +46,7 @@ if gsl.found() and soup.found()
 		   'rpspmc_stream.cpp',
 		   'rpspmc_hwi_eventhandling.cpp',
 		   'rpspmc_hwi_vectorgen.cpp'],
-      'deps': [ soup, gsl, lz ],	
+      'deps': [ soup, gsl, lz, websocketpp ],	
       'gschemas': [ 'org.gnome.gxsm4.rpspmc-pacpll-settings.gschema.xml',
                     'org.gnome.gxsm4.pcs.plugin-librpspmc-pacpll.gschema.xml',
                     'org.gnome.gxsm4.pcsadjustments.plugin-librpspmc-pacpll.gschema.xml' ] },
