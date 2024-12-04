@@ -125,10 +125,14 @@ module gvp #(
     always @ (posedge a_clk) // 120MHz
     begin
         if (reset_flg) // reset mode / hold
+        begin
             vec_gvp_time <= 0;
+            vec_u <= 0; // always reset U
+        end
         else
+        begin
             vec_gvp_time <= vec_gvp_time+1;
-
+        end
         rd[0] <= reset; rd[1] <= rd[0]; rd[2] <= rd[1]; rd[3] <= rd[2]; rd[4] <= rd[3]; rd[5] <= rd[4];  rd[6] <= rd[5]; rd[7] <= rd[6]; rd[8] <= rd[7];
         reset_flg  <= rd[8];  // put into reset mode (set program and hold)
         

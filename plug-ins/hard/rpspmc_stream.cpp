@@ -30,16 +30,19 @@
 
 #include <gtk/gtk.h>
 #include <gio/gio.h>
-#include <libsoup/soup.h>
 #include <zlib.h>
 
 #include "config.h"
 
 #include "rpspmc_pacpll.h"
 
+
 extern SPMC_parameters spmc_parameters;
 
 /* *** RP_stream module *** */
+#ifdef USE_WEBSOCKETPP
+RP_stream *hack_self;
+#endif
 
 void RP_stream::stream_connect_cb (gboolean connect){
         if (!get_rp_address ()) return;
@@ -51,6 +54,50 @@ void RP_stream::stream_connect_cb (gboolean connect){
 
                 update_health ("Connecting stream...");
 
+#ifdef USE_WEBSOCKETPP
+	try {
+                // Set logging to be pretty verbose (everything except message payloads)
+                client->set_access_channels(websocketpp::log::alevel::all);
+                client->clear_access_channels(websocketpp::log::alevel::frame_payload);
+                client->set_error_channels(websocketpp::log::elevel::all);
+                
+                // Initialize ASIO
+                client->init_asio();
+
+                // Register our message handler
+                hack_self = this;
+                client->set_message_handler(&on_message);
+
+                // then connect to Stream Socket on RP
+                //gchar *uri = g_strdup_printf ("ws://%s:%u", get_rp_address (), port);
+                gchar *uri = g_strdup_printf ("ws://192.168.0.7:9003");
+                status_append ("Connecting to: ");
+                status_append (uri);
+                status_append ("\n");
+
+                websocketpp::lib::error_code ec;
+                con = client->get_connection(uri, ec);
+                if (ec) {
+                        status_append ("could not create connection because:");
+                        status_append (ec.message().c_str());
+                        return ;
+                }
+
+                // Note that connect here only requests a connection. No network messages are
+                // exchanged until the event loop starts running in the next line.
+                client->connect(con);
+
+		// Create a thread to run the ASIO io_service event loop
+		websocketpp::lib::thread asio_thread(&wsppclient::run, client);
+
+                // Detach the thread (or join if you want to wait for it to finish)
+                asio_thread.detach();
+                
+        } catch (websocketpp::exception const & e) {
+                status_append (e.what());
+        }
+
+#else
                 // new soup session
                 session = soup_session_new ();
 
@@ -68,18 +115,38 @@ void RP_stream::stream_connect_cb (gboolean connect){
                                                       NULL, NULL, // const char *origin, char **protocols,
                                                       NULL,  RP_stream::got_client_connection, this); // GCancellable *cancellable, GAsyncReadyCallback callback, gpointer user_data
                 //g_message ("soup_session_websocket_connect_async - OK");
+#endif
         } else {
+#ifdef USE_WEBSOCKETPP
+                if (con){
+                        status_append ("Dissconnecting...\n ");
+                        std::error_code ec;
+                        client->close(con, websocketpp::close::status::going_away, "End Session", ec);
+                        // close(websocketpp::connection_hdl, websocketpp::close::status::value, const std::string&, std::error_code&)
+                        update_health ("Dissconnected");
+                        con = NULL;
+                }
+#else
                 // tear down connection
                 status_append ("Dissconnecting...\n ");
-                update_health ("Dissconnected");
 
                 //g_clear_object (&listener);
                 g_clear_object (&client);
                 g_clear_error (&client_error);
                 g_clear_error (&error);
+
+                update_health ("Dissconnected");
+#endif
         }
 }
 
+
+#ifdef USE_WEBSOCKETPP
+void  RP_stream::got_client_connection (GObject *object, gpointer user_data){
+        RP_stream *self = ( RP_stream *)user_data;
+        g_message ("got_client_connection");
+}
+#else
 void  RP_stream::got_client_connection (GObject *object, GAsyncResult *result, gpointer user_data){
         RP_stream *self = ( RP_stream *)user_data;
         g_message ("got_client_connection");
@@ -101,13 +168,17 @@ void  RP_stream::got_client_connection (GObject *object, GAsyncResult *result, g
                 self->status_append ("RedPitaya SPM Control, SPMC Stream is ready.\n ");
         }
 }
+#endif
 
+#ifdef USE_WEBSOCKETPP
+void  RP_stream::on_message(websocketpp::connection_hdl, wsppclient::message_ptr msg)
+#else
 void  RP_stream::on_message(SoupWebsocketConnection *ws,
                                SoupWebsocketDataType type,
                                GBytes *message,
                                gpointer user_data)
+#endif
 {
-        RP_stream *self = ( RP_stream *)user_data;
 	gconstpointer contents;
 	gsize len;
         gchar *tmp;
@@ -121,13 +192,21 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
         static size_t bram_offset=0;
 
         static int count_stream=0;
-        
+
         //self->debug_log ("WebSocket SPMC message received.");
 	//self->status_append ("WebSocket SPMC message received.\n");
-        
+
+#ifdef USE_WEBSOCKETPP
+        RP_stream *self = hack_self;
+        if (msg->get_opcode() == websocketpp::frame::opcode::text) {
+                contents = msg->get_payload().c_str();
+                len = msg->get_payload().size();
+#else 
+        RP_stream *self = ( RP_stream *)user_data;
 	if (type == SOUP_WEBSOCKET_DATA_TEXT) {
-                gchar *p;
 		contents = g_bytes_get_data (message, &len);
+#endif
+                gchar *p;
                 if (contents && len < 100){
                         tmp = g_strdup_printf ("WEBSOCKET_DATA_TEXT: %s", contents);
                         //self->status_append (tmp);
@@ -180,9 +259,14 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
                         }
                 }
                
+#ifdef USE_WEBSOCKETPP
+        } else {
+                contents = msg->get_payload().c_str();
+                len = msg->get_payload().size();
+#else
 	} else if (type == SOUP_WEBSOCKET_DATA_BINARY) {
 		contents = g_bytes_get_data (message, &len);
-
+#endif
                 //tmp = g_strdup_printf ("\nSTREAMINFO: BLOCK %03d  Pos 0x%04x  AB %02d  %s\n", count, position, streamAB, finished?"_Fini":"_Cont");
                 //tmp = g_strdup_printf ("WEBSOCKET_DATA_BINARY SPMC Bytes: 0x%04x,  Position: 0x%04x + AB=%d x BRAMSIZE/2, Count: %d\n", len, position, streamAB, count);
                 //self->status_append (tmp);
@@ -215,9 +299,18 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
         }
 }
 
+#ifdef USE_WEBSOCKETPP
+void  RP_stream::on_closed (GObject *object, gpointer user_data){
+        RP_stream *self = ( RP_stream *)user_data;
+        self->status_append ("WebSocket stream connection externally closed.\n");
+        self->status_append ("--> auto reconnecting...\n");
+        self->stream_connect_cb (TRUE);
+}
+#else
 void  RP_stream::on_closed (SoupWebsocketConnection *ws, gpointer user_data){
         RP_stream *self = ( RP_stream *)user_data;
         self->status_append ("WebSocket stream connection externally closed.\n");
         self->status_append ("--> auto reconnecting...\n");
         self->stream_connect_cb (TRUE);
 }
+#endif
