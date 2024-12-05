@@ -459,7 +459,7 @@ gpointer ScanDataReadThread (void *ptr_hwi){
         rpspmc_hwi_dev *hwi = (rpspmc_hwi_dev*)ptr_hwi;
         int nx,ny, x0,y0;
         int ret=0;
-        int lut[4][NUM_PV_DATA_SIGNALS];
+        int pvlut[4][NUM_PV_DATA_SIGNALS];
 
         RPSPMC_ControlClass->probe_ready = FALSE;
 
@@ -467,7 +467,7 @@ gpointer ScanDataReadThread (void *ptr_hwi){
         
         for (int dir=0; dir<4; ++dir)
                 for (int ch=0; ch<NUM_PV_DATA_SIGNALS; ++ch)
-                        lut[dir][ch]=0;
+                        pvlut[dir][ch]=0;
 
         // setup direct lookup from src ch and dir  to  GVP_vp_header_current.dataexpanded
         for (int dir = 0; dir < 4; ++dir)
@@ -475,11 +475,18 @@ gpointer ScanDataReadThread (void *ptr_hwi){
                         for (int i=0; source_signals[i].mask; ++i)
                                 if (hwi->srcs_dir[dir] & source_signals[i].mask){
                                         if (source_signals[i].garr_index == PROBEDATA_ARRAY_TIME)
-                                                lut[dir][ch] = 14;
+                                                pvlut[dir][ch] = 14;
                                         else
-                                                lut[dir][ch] = source_signals[i].garr_index - PROBEDATA_ARRAY_S1; // as ..._S1 .. _S14 are exactly incremental => 0..13 ; see (***) above
-                                        g_message ("GVP Data Expanded Lookup table signal %02d: lut[%d][%02d] = %d", i,dir,ch,lut[dir][ch]);
+                                                pvlut[dir][ch] = source_signals[i].garr_index - PROBEDATA_ARRAY_S1; // as ..._S1 .. _S14 are exactly incremental => 0..13 ; see (***) above
+                                        g_message ("GVP Data Expanded Lookup table signal %02d: pvlut[%d][%02d] = %d", i,dir,ch,pvlut[dir][ch]);
                                 }
+
+        g_message("GVP Data Expanded Lookup table: PVLUT");
+        for (int dir = 0; dir < 4; ++dir)
+                for (int ch=0; ch < hwi->nsrcs_dir[dir] && ch<NUM_PV_DATA_SIGNALS; ch++)
+                        g_message ("pvlut[%d][%02d] = %d", dir,ch,pvlut[dir][ch]);
+
+        g_message ("A pvlut[0][0] = %d",pvlut[0][0]);
         
         g_message("FifoReadThread Start");
 
@@ -534,14 +541,21 @@ gpointer ScanDataReadThread (void *ptr_hwi){
         g_message("FifoReadThread Scanning %s: %d", hwi->RPSPMC_data_y_count == 0 ? "Top Down" : "Bottom Up", hwi->ScanningFlg);
 
         int ydir = hwi->RPSPMC_data_y_count == 0 ? 1:-1;
+
+
+        g_message ("B pvlut[0][0] = %d",pvlut[0][0]);
+
         
         for (int yi=hwi->RPSPMC_data_y_count == 0 ?  y0 : y0+ny-1;     // ? top down : bottom up
              hwi->RPSPMC_data_y_count == 0 ? yi < y0+ny : yi-y0 >= 0;
              yi += ydir){ // for all lines and directional passes [->, <-, [-2>, <2-]]
                 
-                g_message ("scan line: #%d", yi);
+                g_message ("*************************** scan line: #%d **********************", yi);
                 // for (int dir = 0; dir < 4 && hwi->ScanningFlg; ++dir){ // check for every pass -> <- 2> <2
                 for (int dir = 0; dir < 2 && hwi->ScanningFlg; ++dir){ // check for every pass -> <- for first test only
+
+                        g_message ("C pvlut[0][0] = %d",pvlut[0][0]);
+
                         // wait for and fetch header for first scan line
                         g_message ("scan line %d, dir=%d -- expect header.", yi, dir);
                         if (hwi->GVP_expect_header (pv, index_all) != -1) return NULL;  // this get includes the first data point and full position
@@ -572,10 +586,12 @@ gpointer ScanDataReadThread (void *ptr_hwi){
                                         }
                                         hwi->RPSPMC_data_x_index = xi;
                                         for (int ch=0; ch<hwi->nsrcs_dir[dir]; ++ch){
-                                                int k = lut [dir][ch];
+                                                g_message ("pvlut[dir=%d][ch=%d] = %d",dir,ch,pvlut[dir][ch]);
+                                                int k = pvlut[0][0]; //[dir][ch];
+                                                g_message ("D* k=pvlut[0][0] = %d, k=%d",pvlut[0][0], k);
                                                 if (k < 0 || k >= NUM_PV_DATA_SIGNALS){
-                                                        g_message ("EEEE lookup corruption => Lut[][] is fucked: invalid k=%d",k);
-                                                        k=4;
+                                                        g_message ("EEEE expand channel lookup table corruption => pvlut[%d][%d] is fucked: invalid k=%d ** => fallback k=2", dir, ch, k);
+                                                        k=2;
                                                 }
                                                 g_message("PUT DATA POINT dir[%d] ch[%d] xy[%d, %d] kch[%d] = %g V", dir,ch,xi,yi,k,hwi->GVP_vp_header_current.dataexpanded [k]);
                                                 if (hwi->Mob_dir[dir][ch]){
@@ -616,7 +632,7 @@ gpointer ScanDataReadThread (void *ptr_hwi){
                 }
                 
                 hwi->RPSPMC_data_y_count = yi-y0; // completed
-                hwi->RPSPMC_data_y_index = yi; // completed
+                hwi->RPSPMC_data_y_index = yi; // completed scan line
         }
 
         RPSPMC_ControlClass->probe_ready = TRUE;
@@ -1066,15 +1082,15 @@ gboolean rpspmc_hwi_dev::ScanLineM(int yindex, int xdir, int muxmode,
         // ACTUAL SCAN PROGRESS CHECK on line basis
         if (ScanningFlg){ // make sure we did not got aborted and comkpleted already!
 
-                //g_print ("sranger_mk3_hwi_spm::ScanLineM(yindex=%d [fifo-y=%d], xdir=%d, ydir=%d, lssrcs=%x) checking...\n", yindex, data_y_index, xdir, ydir, muxmode);
+                //g_print ("rpspmc_hwi_spm::ScanLineM(yindex=%d [fifo-y=%d], xdir=%d, ydir=%d, lssrcs=%x) checking...\n", yindex, data_y_index, xdir, ydir, muxmode);
                 y_current = RPSPMC_data_y_index;
 
                 if (ydir > 0 && yindex <= RPSPMC_data_y_index){
-                        g_print ("sranger_mk3_hwi_spm::ScanLineM(yindex=%d [fifo-y=%d], xdir=%d, ydir=%d, lssrcs=%x) y done.\n", yindex, RPSPMC_data_y_index, xdir, ydir, muxmode);
+                        g_print ("rpspmc_hwi_spm::ScanLineM(yindex=%d [fifo-y=%d], xdir=%d, ydir=%d, lssrcs=%x) y done.\n", yindex, RPSPMC_data_y_index, xdir, ydir, muxmode);
                         return FALSE; // line completed top-down
                 }
                 if (ydir < 0 && yindex >= RPSPMC_data_y_index){
-                        g_print ("sranger_mk3_hwi_spm::ScanLineM(yindex=%d [fifo-y=%d], xdir=%d, ydir=%d, lssrcs=%x) y done.\n", yindex, RPSPMC_data_y_index, xdir, ydir, muxmode);
+                        g_print ("rpspmc_hwi_spm::ScanLineM(yindex=%d [fifo-y=%d], xdir=%d, ydir=%d, lssrcs=%x) y done.\n", yindex, RPSPMC_data_y_index, xdir, ydir, muxmode);
                         return FALSE; // line completed bot-up
                 }
 

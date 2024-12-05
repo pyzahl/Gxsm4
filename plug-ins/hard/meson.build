@@ -35,7 +35,7 @@ plugin_list = [
 #    { 'name': 'tc211_ccd' }, ## may be port that some day
 ]
 
-if gsl.found() and soup.found()
+if gsl.found() and soup.found() and websocketpp.found()
     plugin_list += [
     { 'name': 'rpspmc_pacpll',
       'sources' : ['rpspmc_pacpll.cpp',
