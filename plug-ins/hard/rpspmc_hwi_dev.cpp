@@ -453,18 +453,18 @@ int rpspmc_hwi_dev::GVP_expect_point(double *pv, int &index_all){
 
 
 gpointer ScanDataReadThread (void *ptr_hwi){
+        rpspmc_hwi_dev *hwi = (rpspmc_hwi_dev*)ptr_hwi;
+        int pvlut[4][NUM_PV_DATA_SIGNALS];
         double pv[NUM_PV_HEADER_SIGNALS];
         int point_index = 0;
         int index_all = 0;
-        rpspmc_hwi_dev *hwi = (rpspmc_hwi_dev*)ptr_hwi;
         int nx,ny, x0,y0;
         int ret=0;
-        int pvlut[4][NUM_PV_DATA_SIGNALS];
 
         RPSPMC_ControlClass->probe_ready = FALSE;
 
         for (int i=0; i<NUM_PV_HEADER_SIGNALS; ++i) pv[i]=0.;
-        
+
         for (int dir=0; dir<4; ++dir)
                 for (int ch=0; ch<NUM_PV_DATA_SIGNALS; ++ch)
                         pvlut[dir][ch]=0;
@@ -586,9 +586,8 @@ gpointer ScanDataReadThread (void *ptr_hwi){
                                         }
                                         hwi->RPSPMC_data_x_index = xi;
                                         for (int ch=0; ch<hwi->nsrcs_dir[dir]; ++ch){
-                                                g_message ("pvlut[dir=%d][ch=%d] = %d",dir,ch,pvlut[dir][ch]);
-                                                int k = pvlut[0][0]; //[dir][ch];
-                                                g_message ("D* k=pvlut[0][0] = %d, k=%d",pvlut[0][0], k);
+                                                int k = pvlut[dir][ch];
+                                                g_message ("pvlut[dir=%d][ch=%d] = %d, k= %d",dir,ch,pvlut[dir][ch], k);
                                                 if (k < 0 || k >= NUM_PV_DATA_SIGNALS){
                                                         g_message ("EEEE expand channel lookup table corruption => pvlut[%d][%d] is fucked: invalid k=%d ** => fallback k=2", dir, ch, k);
                                                         k=2;
