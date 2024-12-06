@@ -44,6 +44,51 @@ extern SPMC_parameters spmc_parameters;
 RP_stream *hack_self;
 #endif
 
+gchar* get_ip_from_hostname(const gchar *host){
+        struct addrinfo* result;
+        struct addrinfo* res;
+        int error;
+        struct addrinfo  hints;
+        gchar *g_hostip = NULL;
+
+        memset(&hints, 0, sizeof(hints));
+        hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
+        hints.ai_socktype = SOCK_DGRAM; /* Datagram socket -- limit to sockets */
+        hints.ai_flags = 0;
+        hints.ai_protocol = 0;          /* Any protocol */
+
+        // hints may be = NULL for all
+    
+        /* resolve the domain name into a list of addresses */
+        error = getaddrinfo(host, NULL, &hints, &result);
+        if (error != 0) {   
+                if (error == EAI_SYSTEM) {
+                        perror("getaddrinfo");
+                } else {
+                        g_error ("error in getaddrinfo: %s\n", gai_strerror(error));
+                }   
+                return NULL;
+        }
+
+        /* loop over all returned results and do inverse lookup */
+        for (res = result; res != NULL; res = res->ai_next) {   
+                char hostip[NI_MAXHOST];
+                error = getnameinfo(res->ai_addr, res->ai_addrlen, hostip, NI_MAXHOST, NULL, 0, 0); 
+                if (error != 0) {
+                        g_error ("error in getnameinfo: %s\n", gai_strerror(error));
+                        continue;
+                }
+                if (*hostip != '\0'){
+                        g_message ("%s => %s\n", host, hostip);
+                        g_hostip = g_strdup (hostip);
+                        break; // take first result!
+                }
+        }
+        freeaddrinfo(result);
+        return g_hostip; // give away, must g_free
+}
+
+
 void RP_stream::stream_connect_cb (gboolean connect){
         if (!get_rp_address ()) return;
         debug_log (get_rp_address ());
@@ -63,23 +108,29 @@ void RP_stream::stream_connect_cb (gboolean connect){
                 
                         // Initialize ASIO
                         client->init_asio();
+                        //client->start_perpetual(); //*
+                        //client->reset(new websocketpp::lib::thread(&wsppclient::run, &client)); //*
 
                         // Register our message handler
                         hack_self = this;
                         client->set_message_handler(&on_message);
 
                         // then connect to Stream Socket on RP
-                        //gchar *uri = g_strdup_printf ("ws://%s:%u", get_rp_address (), port);
-                        gchar *uri = g_strdup_printf ("ws://192.168.0.7:9003");
+                        status_append ("Resolving IP address...\n");
+                        gchar *uri = g_strdup_printf ("ws://%s:%u", get_ip_from_hostname (get_rp_address ()), port);
+
                         status_append ("Connecting to: ");
                         status_append (uri);
                         status_append ("\n");
 
                         websocketpp::lib::error_code ec;
                         con = client->get_connection(uri, ec);
+                        g_free (uri);
+                        
                         if (ec) {
                                 status_append ("could not create connection because:");
                                 status_append (ec.message().c_str());
+                                status_append ("\n");
                                 return ;
                         }
 
@@ -121,8 +172,8 @@ void RP_stream::stream_connect_cb (gboolean connect){
                 if (con){
                         status_append ("Dissconnecting...\n ");
                         std::error_code ec;
-                        client->close(con, websocketpp::close::status::normal, "End Session", ec);
-                        client->stop();
+                        client->close(con, websocketpp::close::status::normal, "", ec);
+                        //client->stop();
                         // close(websocketpp::connection_hdl, websocketpp::close::status::value, const std::string&, std::error_code&)
                         
                         update_health ("Dissconnected");
@@ -144,6 +195,35 @@ void RP_stream::stream_connect_cb (gboolean connect){
 
 
 #ifdef USE_WEBSOCKETPP
+#if 0
+//https://docs.websocketpp.org/md_tutorials_utility_client_utility_client.html
+void RP_stream::on_close(client * c, websocketpp::connection_hdl hdl) {
+    m_status = "Closed";
+    client::connection_ptr con = c->get_con_from_hdl(hdl);
+    std::stringstream s;
+    s << "close code: " << con->get_remote_close_code() << " (" 
+      << websocketpp::close::status::get_string(con->get_remote_close_code()) 
+      << "), close reason: " << con->get_remote_close_reason();
+    m_error_reason = s.str();
+}
+
+void RP_stream::close(int id, websocketpp::close::status::value code) {
+    websocketpp::lib::error_code ec;
+    
+    con_list::iterator metadata_it = m_connection_list.find(id);
+    if (metadata_it == m_connection_list.end()) {
+        std::cout << "> No connection found with id " << id << std::endl;
+        return;
+    }
+    
+    m_endpoint.close(metadata_it->second->get_hdl(), code, "", ec);
+    if (ec) {
+        std::cout << "> Error initiating close: " << ec.message() << std::endl;
+    }
+}
+
+#endif
+
 void  RP_stream::got_client_connection (GObject *object, gpointer user_data){
         RP_stream *self = ( RP_stream *)user_data;
         g_message ("got_client_connection");

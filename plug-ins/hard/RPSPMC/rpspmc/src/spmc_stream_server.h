@@ -122,8 +122,10 @@ public:
                 con_list::iterator it;
                 size_t webs_nbuf=0;
                 for (it = m_connections.begin(); it != m_connections.end(); ++it) {
-                        server::connection_ptr connection = m_endpoint.get_con_from_hdl (*it);
-                        webs_nbuf += connection->get_buffered_amount();
+                        if (it != m_connections.end()){
+                                server::connection_ptr connection = m_endpoint.get_con_from_hdl (*it);
+                                webs_nbuf += connection->get_buffered_amount();
+                        }
                 }
 
                 // m_endpoint.get_con_from_hdl (*it)->get_buffered_amount();

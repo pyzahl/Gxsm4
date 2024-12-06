@@ -68,6 +68,7 @@
 #define SPMC_ACLK_MHZ   125 // RP Analog Clock Base in MHz
 #define SPMC_RDECI      4
 #define SPMC_CLK        ((double)SPMC_ACLK_MHZ*1e6/(1<<(SPMC_RDECI+1)))
+#define SPMC_GVP_MIN_DECII 128
 #define SPMC_GVP_CLK    ((double)SPMC_ACLK_MHZ*1e6) // /2 for decii i noutside block only (old)
 
 #define MAX_NUM_PROGRAN_VECTORS 16
@@ -690,14 +691,14 @@ void rp_spmc_gvp_init (){
         rp_spmc_gvp_config (); // assure reset+hold mode
 
         for (int pc=0; pc<8; ++pc){
-                if (verbose > 1) fprintf(stderr, "Init Vector[PC=%03d] to zero, decii=32\n", pc);
+                if (verbose > 1) fprintf(stderr, "Init Vector[PC=%03d] to zero, decii=%d\n", pc, SPMC_GVP_MIN_DECII);
                 // write GVP-Vector [vector[0]] components
                 //                   decii      du        dz        dy        dx     Next       Nrep,   Options,     nii,      N,    [Vadr]
                 //data = {160'd0, 32'd0064, 32'd0000, 32'd0000, -32'd0002, -32'd0002,  32'd0, 32'd0000,   32'h001, 32'd0128, 32'd005, 32'd00 };
                 set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_VADR, pc);
                 for (int i=1; i<16; ++i)
                         set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + i, 0);
-                set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_DECII, 32);  // decimation
+                set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_DECII, SPMC_GVP_MIN_DECII);  // decimation
                 rp_spmc_gvp_config (true, true); // load vector
                 rp_spmc_gvp_config (true, false);
         }
@@ -750,7 +751,7 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
                 return;
         }
         unsigned int nii   = 0;
-        unsigned int decii = 64;
+        unsigned int decii = 128; // minimum decii required for ADC: 32*4  => 4x DECII FOR ADC CLK x 32bits
         double Nsteps = 1.0;
 
         if (n > 0 && slew > 0.0){
@@ -799,8 +800,9 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
                 decii = (unsigned int)round(NII_total / nii);
 
                 // check for limits, auto adjust
-                if (decii < 32){
-                        decii = 32;
+                if (decii < SPMC_GVP_MIN_DECII){
+
+                        decii = SPMC_GVP_MIN_DECII;
                         nii = (unsigned int)round(NII_total / decii);
                         if (nii < 2)
                                 nii=3;
