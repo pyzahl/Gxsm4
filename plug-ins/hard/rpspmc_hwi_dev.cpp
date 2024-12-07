@@ -455,7 +455,7 @@ int rpspmc_hwi_dev::GVP_expect_point(double *pv, int &index_all){
 gpointer ScanDataReadThread (void *ptr_hwi){
         rpspmc_hwi_dev *hwi = (rpspmc_hwi_dev*)ptr_hwi;
         int pvlut[4][NUM_PV_DATA_SIGNALS];
-        double pv[NUM_PV_HEADER_SIGNALS];
+        double pv[MAX_NUM_CHANNELS]; // full pv vector
         int point_index = 0;
         int index_all = 0;
         int nx,ny, x0,y0;
@@ -463,7 +463,7 @@ gpointer ScanDataReadThread (void *ptr_hwi){
 
         RPSPMC_ControlClass->probe_ready = FALSE;
 
-        for (int i=0; i<NUM_PV_HEADER_SIGNALS; ++i) pv[i]=0.;
+        for (int i=0; i<MAX_NUM_CHANNELS; ++i) pv[i]=0.;
 
         for (int dir=0; dir<4; ++dir)
                 for (int ch=0; ch<NUM_PV_DATA_SIGNALS; ++ch)
@@ -478,15 +478,10 @@ gpointer ScanDataReadThread (void *ptr_hwi){
                                                 pvlut[dir][ch] = 14;
                                         else
                                                 pvlut[dir][ch] = source_signals[i].garr_index - PROBEDATA_ARRAY_S1; // as ..._S1 .. _S14 are exactly incremental => 0..13 ; see (***) above
-                                        g_message ("GVP Data Expanded Lookup table signal %02d: pvlut[%d][%02d] = %d", i,dir,ch,pvlut[dir][ch]);
+                                        //g_message ("GVP Data Expanded Lookup table signal %02d: pvlut[%d][%02d] = %d", i,dir,ch,pvlut[dir][ch]);
                                 }
 
-        g_message("GVP Data Expanded Lookup table: PVLUT");
-        for (int dir = 0; dir < 4; ++dir)
-                for (int ch=0; ch < hwi->nsrcs_dir[dir] && ch<NUM_PV_DATA_SIGNALS; ch++)
-                        g_message ("pvlut[%d][%02d] = %d", dir,ch,pvlut[dir][ch]);
-
-        g_message ("A pvlut[0][0] = %d",pvlut[0][0]);
+        g_message("GVP Data Expanded Lookup table: PVLUT"); for (int dir = 0; dir < 4; ++dir){ for (int ch=0; ch<NUM_PV_DATA_SIGNALS; ch++){g_print ("%02d, ", pvlut[dir][ch]);}g_print ("\n");}
         
         g_message("FifoReadThread Start");
 
@@ -502,7 +497,7 @@ gpointer ScanDataReadThread (void *ptr_hwi){
                 RPSPMC_ControlClass->probe_ready = TRUE;
                 return NULL; // error, no reference
         }
-        
+
         // center_return_flag,
         // update:
         // scanpixelrate
@@ -514,7 +509,6 @@ gpointer ScanDataReadThread (void *ptr_hwi){
                 usleep(20000);
         }
         g_message ("GVP been written and confirmed for vector #%d. Executing GVP now.", hwi->getVPCconfirmed ());
-
 
         // start GVP
         hwi->GVP_vp_init ();
@@ -535,6 +529,8 @@ gpointer ScanDataReadThread (void *ptr_hwi){
                 if (ret < 0) return NULL;
         }
 
+        g_message("AF GVP Data Expanded Lookup table: PVLUT"); for (int dir = 0; dir < 4; ++dir){ for (int ch=0; ch<NUM_PV_DATA_SIGNALS; ch++){g_print ("%02d, ", pvlut[dir][ch]);}g_print ("\n");}
+
         g_message ("Completed section: moved to 1st scan point");
         
 	// hwi->RPSPMC_data_y_count == 0 for  top-down star tat line 0, else start line (last) bottom up
@@ -543,7 +539,7 @@ gpointer ScanDataReadThread (void *ptr_hwi){
         int ydir = hwi->RPSPMC_data_y_count == 0 ? 1:-1;
 
 
-        g_message ("B pvlut[0][0] = %d",pvlut[0][0]);
+        g_message("BB GVP Data Expanded Lookup table: PVLUT"); for (int dir = 0; dir < 4; ++dir){ for (int ch=0; ch<NUM_PV_DATA_SIGNALS; ch++){g_print ("%02d, ", pvlut[dir][ch]);}g_print ("\n");}
 
         
         for (int yi=hwi->RPSPMC_data_y_count == 0 ?  y0 : y0+ny-1;     // ? top down : bottom up
@@ -554,13 +550,11 @@ gpointer ScanDataReadThread (void *ptr_hwi){
                 // for (int dir = 0; dir < 4 && hwi->ScanningFlg; ++dir){ // check for every pass -> <- 2> <2
                 for (int dir = 0; dir < 2 && hwi->ScanningFlg; ++dir){ // check for every pass -> <- for first test only
 
-                        g_message ("C pvlut[0][0] = %d",pvlut[0][0]);
-
                         // wait for and fetch header for first scan line
                         g_message ("scan line %d, dir=%d -- expect header.", yi, dir);
                         if (hwi->GVP_expect_header (pv, index_all) != -1) return NULL;  // this get includes the first data point and full position
                         
-                        g_message ("scan line %d, dir=%d -- expecting points now...", yi, dir);
+                        //g_message ("scan line %d, dir=%d -- expecting points now...", yi, dir);
                         //g_message("FifoReadThread ny = %d, dir = %d, nsrcs = %d, srcs = 0x%04X", yi, dir, hwi->nsrcs_dir[dir], hwi->srcs_dir[dir]);
                         if (hwi->nsrcs_dir[dir] == 0){ // direction pass active?
                                 // fetch points but discard
@@ -577,22 +571,23 @@ gpointer ScanDataReadThread (void *ptr_hwi){
                                 int ret2;
                                 //for (int xi=x0, ret2=ret=1; xi < x0+nx && ret; ++xi){ // all points per line
                                 for (int xi=x0, ret2=ret=1; ret; ++xi){ // all points per line
-                                        g_message ("Got point data [N-%d] for: xi=%d [x0=%d nx=%d]",  hwi->GVP_vp_header_current.i, xi, x0, nx);
+                                        //g_message ("Got point data [N-%d] for: xi=%d [x0=%d nx=%d] nsrcs[%d]=",  hwi->GVP_vp_header_current.i, xi, x0, nx, dir, hwi->nsrcs_dir[dir]);
                                         if (ret < 0){
+                                                g_message ("Got point data [N-%d] for: xi=%d [x0=%d nx=%d] nsrcs[%d]=",  hwi->GVP_vp_header_current.i, xi, x0, nx, dir, hwi->nsrcs_dir[dir]);
                                                 g_message("STREAM ERROR, FifoReadThread Aborting.");
                                                 hwi->GVP_abort_vector_program ();
                                                 RPSPMC_ControlClass->probe_ready = TRUE;
                                                 return NULL;
                                         }
                                         hwi->RPSPMC_data_x_index = xi;
-                                        for (int ch=0; ch<hwi->nsrcs_dir[dir]; ++ch){
+                                        for (int ch=0; ch<hwi->nsrcs_dir[dir] && ch<NUM_PV_DATA_SIGNALS; ++ch){
                                                 int k = pvlut[dir][ch];
-                                                g_message ("pvlut[dir=%d][ch=%d] = %d, k= %d",dir,ch,pvlut[dir][ch], k);
+                                                //g_message ("pvlut[dir=%d][ch=%d] = %d, k= %d",dir,ch,pvlut[dir][ch], k);
                                                 if (k < 0 || k >= NUM_PV_DATA_SIGNALS){
-                                                        g_message ("EEEE expand channel lookup table corruption => pvlut[%d][%d] is fucked: invalid k=%d ** => fallback k=2", dir, ch, k);
+                                                        g_message ("EEEE expand channel lookup table corruption => pvlut[%d][%d]=%d ** => fallback k=2", dir, ch, k);
                                                         k=2;
                                                 }
-                                                g_message("PUT DATA POINT dir[%d] ch[%d] xy[%d, %d] kch[%d] = %g V", dir,ch,xi,yi,k,hwi->GVP_vp_header_current.dataexpanded [k]);
+                                                //g_message("PUT DATA POINT dir[%d] ch[%d] xy[%d, %d] kch[%d] = %g V", dir,ch,xi,yi,k,hwi->GVP_vp_header_current.dataexpanded [k]);
                                                 if (hwi->Mob_dir[dir][ch]){
                                                         if (xi >=0 && yi >=0 && xi < hwi->Mob_dir[dir][ch]->GetNx ()  && yi < hwi->Mob_dir[dir][ch]->GetNy ())
                                                                 hwi->Mob_dir[dir][ch]->PutDataPkt (hwi->GVP_vp_header_current.dataexpanded [k], xi, yi);
@@ -736,7 +731,7 @@ int rpspmc_hwi_dev::on_new_data (gconstpointer contents, gsize len, int position
 // read from probe data FIFO, this engine needs to be called several times from master thread/function
 int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
         static int recursion_level=0;
-	static double pv[NUM_PV_HEADER_SIGNALS];
+	static double pv[MAX_NUM_CHANNELS]; //NUM_PV_HEADER_SIGNALS];
 	static int point_index = 0;
         static int index_all = 0;
 	static int end_read = 0;

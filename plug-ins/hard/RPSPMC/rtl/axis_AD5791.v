@@ -73,7 +73,7 @@ module axis_AD5791 #(
     reg [6-1:0] frame_bit_counter=0;
     reg [4-1:0] state_load_dacs=0;
     
-    reg [4:0] rdecii = 0; //4 for testing slow [1:0] ** PMD clock 30MHz max = 120MHz/4
+    reg [3:0] rdecii = 0; //4 for testing slow [1:0] ** PMD clock 30MHz max = 120MHz/4
 
     integer i;
     initial begin
@@ -86,128 +86,131 @@ module axis_AD5791 #(
     end
 
     // Latch data from AXIS when new
-    always @(*) //posedge PMD_clk)
-    begin
-        if (configuration_mode)
-        begin
-            if (S_AXISCFG_tvalid)
-            begin
-                reg_dac_data[configuration_axis[1:0]] <= S_AXISCFG_tdata[DAC_WORD_WIDTH-1:0];
-            end
-        end
-        else
-        begin
-            if (S_AXIS1_tvalid)
-            begin            
-                //                       send to data register 24 bits:         0 001 20-bit-data
-                reg_dac_data[0] <= {{(DAC_WORD_WIDTH-DAC_DATA_WIDTH-1 ){1'b0}}, 1'b1, S_AXIS1_tdata[SAXIS_TDATA_WIDTH-1:SAXIS_TDATA_WIDTH-DAC_DATA_WIDTH]};
-            end
-            if (S_AXIS2_tvalid)
-            begin            
-                reg_dac_data[1] <= {{(DAC_WORD_WIDTH-DAC_DATA_WIDTH-1 ){1'b0}}, 1'b1, S_AXIS2_tdata[SAXIS_TDATA_WIDTH-1:SAXIS_TDATA_WIDTH-DAC_DATA_WIDTH]};
-            end
-            if (S_AXIS3_tvalid)
-            begin            
-                reg_dac_data[2] <= {{(DAC_WORD_WIDTH-DAC_DATA_WIDTH-1 ){1'b0}}, 1'b1, S_AXIS3_tdata[SAXIS_TDATA_WIDTH-1:SAXIS_TDATA_WIDTH-DAC_DATA_WIDTH]};
-            end
-            if (S_AXIS4_tvalid)
-            begin            
-                reg_dac_data[3] <= {{(DAC_WORD_WIDTH-DAC_DATA_WIDTH-1 ){1'b0}}, 1'b1, S_AXIS4_tdata[SAXIS_TDATA_WIDTH-1:SAXIS_TDATA_WIDTH-DAC_DATA_WIDTH]};
-            end
-        end
-    end
-
-
-    always @ (posedge a_clk) // 120MHz
+    always @(posedge a_clk) // @*   posedge PMD_clk)
     begin
         rdecii <= rdecii+1;
-        if (rdecii == 3) // [2] 1/4 => 30MHz  , [4] 1/16: testing slow
+        if (rdecii == 4) // [2] 1/4 => 30MHz  , [4] 1/16: testing slow
         begin
             rdecii <= 0;
             PMD_clk <= ~PMD_clk;
         end
+        else
+        begin
+            if (configuration_mode)
+            begin
+                if (S_AXISCFG_tvalid)
+                begin
+                    reg_dac_data[configuration_axis[1:0]] <= S_AXISCFG_tdata[DAC_WORD_WIDTH-1:0];
+                end
+            end
+            else
+            begin
+                if (S_AXIS1_tvalid)
+                begin            
+                    //                       send to data register 24 bits:         0 001 20-bit-data
+                    reg_dac_data[0] <= {{(DAC_WORD_WIDTH-DAC_DATA_WIDTH-1 ){1'b0}}, 1'b1, S_AXIS1_tdata[SAXIS_TDATA_WIDTH-1:SAXIS_TDATA_WIDTH-DAC_DATA_WIDTH]};
+                end
+                if (S_AXIS2_tvalid)
+                begin            
+                    reg_dac_data[1] <= {{(DAC_WORD_WIDTH-DAC_DATA_WIDTH-1 ){1'b0}}, 1'b1, S_AXIS2_tdata[SAXIS_TDATA_WIDTH-1:SAXIS_TDATA_WIDTH-DAC_DATA_WIDTH]};
+                end
+                if (S_AXIS3_tvalid)
+                begin            
+                    reg_dac_data[2] <= {{(DAC_WORD_WIDTH-DAC_DATA_WIDTH-1 ){1'b0}}, 1'b1, S_AXIS3_tdata[SAXIS_TDATA_WIDTH-1:SAXIS_TDATA_WIDTH-DAC_DATA_WIDTH]};
+                end
+                if (S_AXIS4_tvalid)
+                begin            
+                    reg_dac_data[3] <= {{(DAC_WORD_WIDTH-DAC_DATA_WIDTH-1 ){1'b0}}, 1'b1, S_AXIS4_tdata[SAXIS_TDATA_WIDTH-1:SAXIS_TDATA_WIDTH-DAC_DATA_WIDTH]};
+                end
+            end
+        end     
     end
 
+
+    //always @ (posedge a_clk) // 120MHz
+    //begin
+    //end
+
     always @(negedge PMD_clk) // spi clock
-    //    if (PMD_clk == 0)
-    begin
-        // clkr <= 0; // generate clkr
-        // Detect Frame Sync
-        case (state_load_dacs)
-            0: // reset mode, wait for new data
+//            if (PMD_clk == 0)
             begin
-                sync <= 1;
-                if (reg_dac_data_buf[0] != reg_dac_data[0] || reg_dac_data_buf[1] != reg_dac_data[1] || reg_dac_data_buf[2] != reg_dac_data[2] || reg_dac_data_buf[3] != reg_dac_data[3])
-                begin
-                    if (configuration_mode)
-                    begin // load only on configuration_send pos edge
-                        if (configuration_send)
+                // clkr <= 0; // generate clkr
+                // Detect Frame Sync
+                case (state_load_dacs)
+                    0: // reset mode, wait for new data
+                    begin
+                        sync <= 1;
+                        if (reg_dac_data_buf[0] != reg_dac_data[0] || reg_dac_data_buf[1] != reg_dac_data[1] || reg_dac_data_buf[2] != reg_dac_data[2] || reg_dac_data_buf[3] != reg_dac_data[3])
                         begin
-                            if (!cfg_mode_job)
+                            if (configuration_mode)
+                            begin // load only on configuration_send pos edge
+                                if (configuration_send)
+                                begin
+                                    if (!cfg_mode_job)
+                                    begin
+                                        cfg_mode_job <= 1;
+                                        state_load_dacs <= 1;
+                                    end
+                                end
+                                else
+                                begin
+                                    cfg_mode_job <= 0; // do not repat sending! "send bit" must be reset while in config mode
+                                end
+                            end
+                            else // auto load and start sending on new data
                             begin
-                                cfg_mode_job <= 1;
                                 state_load_dacs <= 1;
                             end
                         end
-                        else
-                        begin
-                            cfg_mode_job <= 0; // do not repat sending! "send bit" must be reset while in config mode
-                        end
                     end
-                    else // auto load and start sending on new data
+                    1: // load dac start
                     begin
-                        state_load_dacs <= 1;
+                        sync <= 1;
+                        frame_bit_counter <= 10'd23; // 24 bits to send
+            
+                        // Latch Axis Data at Frame Sync Pulse and initial data serialization
+                        reg_dac_data_buf[0] <= reg_dac_data[0];
+                        reg_dac_data_buf[1] <= reg_dac_data[1];
+                        reg_dac_data_buf[2] <= reg_dac_data[2];
+                        reg_dac_data_buf[3] <= reg_dac_data[3];
+        
+                        state_load_dacs <= 2;
                     end
-                end
+                    2:
+                    begin
+                        sync <= 0;
+                        state_load_dacs <= 3; // one more sync high cycle
+                    end
+                    3:
+                    begin
+                        // completed?
+                        if (frame_bit_counter == 10'b0)
+                        begin
+                            state_load_dacs <= 4; // finish
+                        end else
+                        begin
+                            // next bit
+                            frame_bit_counter <= frame_bit_counter - 1;
+                        end
+                    end   
+                    4:
+                    begin
+                        sync <= 1;
+                        state_load_dacs <= 0; // completed, standy next
+                    end   
+                endcase
             end
-            1: // load dac start
-            begin
-                sync <= 1;
-                frame_bit_counter <= 10'd23; // 24 bits to send
-    
-                // Latch Axis Data at Frame Sync Pulse and initial data serialization
-                reg_dac_data_buf[0] <= reg_dac_data[0];
-                reg_dac_data_buf[1] <= reg_dac_data[1];
-                reg_dac_data_buf[2] <= reg_dac_data[2];
-                reg_dac_data_buf[3] <= reg_dac_data[3];
-
-                state_load_dacs <= 2;
-            end
-            2:
-            begin
-                sync <= 0;
-                state_load_dacs <= 3; // one more sync high cycle
-            end
-            3:
-            begin
-                // completed?
-                if (frame_bit_counter == 10'b0)
-                begin
-                    state_load_dacs <= 4; // finish
-                end else
-                begin
-                    // next bit
-                    frame_bit_counter <= frame_bit_counter - 1;
-                end
-            end   
-            4:
-            begin
-                sync <= 1;
-                state_load_dacs <= 0; // completed, standy next
-            end   
-        endcase
-    end
-
+//            else
     always @(posedge PMD_clk) // SPI transmit data setup edge
-    //if (PMD_clk == 1)
-    begin
-        PMD_sync   <= sync;
-        PMD_dac[0] <= reg_dac_data_buf[0][frame_bit_counter];
-        PMD_dac[1] <= reg_dac_data_buf[1][frame_bit_counter];
-        PMD_dac[2] <= reg_dac_data_buf[2][frame_bit_counter];
-        PMD_dac[3] <= reg_dac_data_buf[3][frame_bit_counter];
-    end
-    //end
+            begin
+                PMD_sync   <= sync;
+                PMD_dac[0] <= reg_dac_data_buf[0][frame_bit_counter];
+                PMD_dac[1] <= reg_dac_data_buf[1][frame_bit_counter];
+                PMD_dac[2] <= reg_dac_data_buf[2][frame_bit_counter];
+                PMD_dac[3] <= reg_dac_data_buf[3][frame_bit_counter];
+            end
+//        end
+//   end 
     
 assign ready = (state_load_dacs == 1'b0000);
 

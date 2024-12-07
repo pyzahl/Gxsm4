@@ -76,6 +76,26 @@ public:
 
 #ifdef USE_WEBSOCKETPP
                 client = new wsppclient;
+
+                // Set logging to be pretty verbose (everything except message payloads)
+                client->set_access_channels(websocketpp::log::alevel::all);
+                client->clear_access_channels(websocketpp::log::alevel::frame_payload);
+                client->set_error_channels(websocketpp::log::elevel::all);
+                
+                // Initialize ASIO
+                client->init_asio();
+                //client->start_perpetual(); //*
+                //client->reset(new websocketpp::lib::thread(&wsppclient::run, &client)); //*
+                
+                // Register our message handler
+                //client->set_message_handler(&on_message);
+
+                // Set the on_message handler with a lambda that captures the user data
+                RP_stream *a=this;
+                client->set_message_handler([a](websocketpp::connection_hdl hdl, wsppclient::message_ptr msg) {
+                        on_message(a, hdl, msg);
+                });
+    
                 con=NULL;
 #else                
                 session=NULL;
@@ -91,7 +111,7 @@ public:
 
 #ifdef USE_WEBSOCKETPP
         static void got_client_connection (GObject *object, gpointer user_data);
-        static void on_message(websocketpp::connection_hdl, wsppclient::message_ptr msg);
+        static void on_message(RP_stream* self, websocketpp::connection_hdl hdl, wsppclient::message_ptr msg);
         static void on_closed (GObject *object, gpointer user_data);
 #else
         static void got_client_connection (GObject *object, GAsyncResult *result, gpointer user_data);
@@ -278,6 +298,7 @@ public:
 #ifdef USE_WEBSOCKETPP
         wsppclient *client;
         wsppclient::connection_ptr con;
+        websocketpp::lib::thread asio_thread;
 #else
 	SoupSession *session;
 	SoupSocket *socket;

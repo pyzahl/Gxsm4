@@ -36,13 +36,9 @@
 
 #include "rpspmc_pacpll.h"
 
-
 extern SPMC_parameters spmc_parameters;
 
 /* *** RP_stream module *** */
-#ifdef USE_WEBSOCKETPP
-RP_stream *hack_self;
-#endif
 
 gchar* get_ip_from_hostname(const gchar *host){
         struct addrinfo* result;
@@ -101,19 +97,6 @@ void RP_stream::stream_connect_cb (gboolean connect){
 
 #ifdef USE_WEBSOCKETPP
                 try {
-                        // Set logging to be pretty verbose (everything except message payloads)
-                        client->set_access_channels(websocketpp::log::alevel::all);
-                        client->clear_access_channels(websocketpp::log::alevel::frame_payload);
-                        client->set_error_channels(websocketpp::log::elevel::all);
-                
-                        // Initialize ASIO
-                        client->init_asio();
-                        //client->start_perpetual(); //*
-                        //client->reset(new websocketpp::lib::thread(&wsppclient::run, &client)); //*
-
-                        // Register our message handler
-                        hack_self = this;
-                        client->set_message_handler(&on_message);
 
                         // then connect to Stream Socket on RP
                         status_append ("Resolving IP address...\n");
@@ -127,6 +110,8 @@ void RP_stream::stream_connect_cb (gboolean connect){
                         con = client->get_connection(uri, ec);
                         g_free (uri);
                         
+                        //client->set_user_data(client->get_connection(), this);
+
                         if (ec) {
                                 status_append ("could not create connection because:");
                                 status_append (ec.message().c_str());
@@ -139,10 +124,15 @@ void RP_stream::stream_connect_cb (gboolean connect){
                         client->connect(con);
 
                         // Create a thread to run the ASIO io_service event loop
-                        websocketpp::lib::thread asio_thread(&wsppclient::run, client);
-
+                        //websocketpp::lib::thread asio_thread(&wsppclient::run, client);
                         // Detach the thread (or join if you want to wait for it to finish)
-                        asio_thread.detach();
+                        asio_thread = websocketpp::lib::thread(&wsppclient::run, client);
+                        //asio_thread.detach();
+
+                        //wspp_thread = websocketpp::lib::make_shared<websocketpp::lib::thread>(&wsppclient::run, client);
+                        //wspp_thread->join(); 
+
+                        status_append ("Connected via ASIO: RPSPMC DMA stream OK.");
                 
                 } catch (websocketpp::exception const & e) {
                         status_append (e.what());
@@ -253,7 +243,7 @@ void  RP_stream::got_client_connection (GObject *object, GAsyncResult *result, g
 #endif
 
 #ifdef USE_WEBSOCKETPP
-void  RP_stream::on_message(websocketpp::connection_hdl, wsppclient::message_ptr msg)
+void  RP_stream::on_message(RP_stream* self, websocketpp::connection_hdl hdl, wsppclient::message_ptr msg)
 #else
 void  RP_stream::on_message(SoupWebsocketConnection *ws,
                                SoupWebsocketDataType type,
@@ -279,7 +269,8 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
 	//self->status_append ("WebSocket SPMC message received.\n", true);
 
 #ifdef USE_WEBSOCKETPP
-        RP_stream *self = hack_self;
+        //RP_stream *self = (RP_stream*)(*c)->get_user_data(hdl);
+
         if (msg->get_opcode() == websocketpp::frame::opcode::text) {
                 contents = msg->get_payload().c_str();
                 len = msg->get_payload().size();

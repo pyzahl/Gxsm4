@@ -1613,8 +1613,8 @@ void Gtk_EntryControl::InitRegisterCb(double AdjStep, double AdjPage, double Adj
                                                 NULL);
                 GMenu *menu = g_menu_new ();
                 GMenuItem *menu_item_config = g_menu_item_new (cfg_label, NULL);
-                g_signal_connect (menu_item_config, "activate",
-                                  G_CALLBACK (ec_pcs_adjustment_configure), this);
+                // *** HOOK CONFIGURE MENUITEM TO ENTRY *** -- issue w gtk4, how???
+                //g_signal_connect (menu_item_config, "activate", G_CALLBACK (ec_pcs_adjustment_configure), this);
                 g_menu_append_item (menu, menu_item_config);
 		if (GTK_IS_SPIN_BUTTON (entry)){
                         ;// on_set_extra_menu (GTK_ENTRY (entry), G_MENU_MODEL (menu)); // need equivalent function for spin button!!
