@@ -1565,6 +1565,7 @@ void OnNewParams_RPSPMC(void){
                 // rp_spmc_gvp_config (reset, program, pause, [resetoptions]);
                 SPMC_GVP_CONTROL_MODE.Update ();
                 switch (SPMC_GVP_CONTROL_MODE.Value ()){
+
                 case SPMC_GVP_CONTROL_RESET:
                         if (SPMC_GVP_RESET_OPTIONS.IsNewValue ()){
                                 SPMC_GVP_RESET_OPTIONS.Update ();
@@ -1574,10 +1575,13 @@ void OnNewParams_RPSPMC(void){
                         info << "set RESET, force stop stream server";
                         stream_server_control = (stream_server_control & 0x01) | 4; // set stop bit
                         break;
+                        
                 case SPMC_GVP_CONTROL_EXECUTE:
                         fprintf(stderr, "*** GVP Control Mode: START 1 (make sure stream server is stopped)\n");
                         stream_server_control = (stream_server_control & 0x01) | 4; // set stop bit
                         usleep(100000);
+                        spm_dma_instance->clear_buffer (); // clean buffer now!
+
                         rp_spmc_gvp_config (true, false, false); // make sure it is in reset state before
                         fprintf(stderr, "*** GVP Control Mode: START 2 (assure RESET state first), start stream server\n");
                         usleep(100000);

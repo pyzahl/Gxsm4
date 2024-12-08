@@ -132,7 +132,7 @@ MOD_INPUT mod_input_list[] = {
 // ================================================================================
 
 
-rpspmc_hwi_dev::rpspmc_hwi_dev(){
+rpspmc_hwi_dev::rpspmc_hwi_dev():RP_stream(this){
 
         // auto adjust and override preferences
         main_get_gapp()->xsm->Inst->override_dig_range (1<<19, xsmres); // gxsm does precision sanity checks and trys to round to best fit grid
@@ -173,6 +173,12 @@ void rpspmc_hwi_dev::spmc_stream_connect_cb (GtkWidget *widget, rpspmc_hwi_dev *
 const gchar *rpspmc_hwi_dev::get_rp_address (){
         return rpspmc_pacpll->get_rp_address ();
 }
+
+gboolean rpspmc_hwi_dev::update_status_idle(gpointer self){
+        ((rpspmc_hwi_dev*)self) -> status_append(NULL, false);
+        return G_SOURCE_REMOVE;
+};
+        
 void rpspmc_hwi_dev::status_append (const gchar *msg, bool schedule_from_thread){
         static gchar *buffer=NULL;
         if (schedule_from_thread){
@@ -182,13 +188,15 @@ void rpspmc_hwi_dev::status_append (const gchar *msg, bool schedule_from_thread)
                         gchar *tmp = buffer;
                         buffer = g_strconcat (buffer, msg, NULL);
                         g_free (tmp);
+                        g_idle_add (update_status_idle, this);
                 }
         } else {
                 if (buffer){
                         rpspmc_pacpll->status_append (buffer);
                         g_free (buffer); buffer=NULL;
                 }
-                rpspmc_pacpll->status_append (msg);
+                if (msg)
+                        rpspmc_pacpll->status_append (msg);
         }
 }
 void rpspmc_hwi_dev::on_connect_actions(){
@@ -356,7 +364,7 @@ int rpspmc_hwi_dev::GVP_expect_point(double *pv, int &index_all){
                 if (ret == GVP_vp_header_current.number_channels){
                         GVP_stream_buffer_offset += 1 + GVP_vp_header_current.number_channels; // skip forward on success by read number of entries
 
-                        g_message ("GVP point [%04d] ret (N#ch) = %d\n", GVP_vp_header_current.i, ret);
+                        //g_message ("GVP point [%04d] ret (N#ch) = %d\n", GVP_vp_header_current.i, ret);
 
                         // copy vector data to expanded data array representation -- only active srcs will be updated between headers
                         pv[PROBEDATA_ARRAY_INDEX] = (double)index_all++;

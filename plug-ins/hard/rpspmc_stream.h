@@ -48,7 +48,6 @@
 
 #include "rpspmc_hwi_structs.h"
 
-
 #ifdef USE_WEBSOCKETPP
 # include <websocketpp/config/asio_no_tls_client.hpp>
 # include <websocketpp/client.hpp>
@@ -58,20 +57,20 @@
 #endif
 
 
-
-
 #ifdef USE_WEBSOCKETPP
         typedef websocketpp::client<websocketpp::config::asio_client> wsppclient;
         typedef websocketpp::lib::lock_guard<websocketpp::lib::mutex> scoped_lock;
 #endif
 
+class rpspmc_hwi_dev;
 
 class RP_stream{
 public:
-        RP_stream (){
+        RP_stream (rpspmc_hwi_dev *rp){
                 /* create a new connection, init */
 
-                listener=NULL;
+                rpspmc = rp;
+                
                 port=9003;
 
 #ifdef USE_WEBSOCKETPP
@@ -98,6 +97,7 @@ public:
     
                 con=NULL;
 #else                
+                listener=NULL;
                 session=NULL;
                 msg=NULL;
                 client=NULL;
@@ -126,10 +126,38 @@ public:
         virtual int get_debug_level() { return 0; };
 
         virtual int on_new_data (gconstpointer contents, gsize len, int position, int new_count=1, bool last=false) {};
+
+        void status_append (const gchar *msg, bool schedule_from_thread=false);
+#if 0
+        static gboolean update_status_idle(gpointer self){
+                ((RP_stream*)self) -> status_append(NULL, false);
+                return G_SOURCE_REMOVE;
+        };
         
         virtual void status_append (const gchar *msg, bool schedule_from_thread=false){
-                g_message (msg);
+                static gchar *buffer=NULL;
+                if (schedule_from_thread){
+                        g_message ("MSG FROM THREAD: %s", msg);
+                        if (!buffer)
+                                buffer = g_strdup (msg);
+                        else {
+                                gchar *tmp = buffer;
+                                buffer = g_strconcat (buffer, msg, NULL);
+                                g_free (tmp);
+                                g_idle_add (update_status_idle, this);
+                        }
+                } else {
+                        if (buffer){
+                                status_append (buffer);
+                                g_free (buffer); buffer=NULL;
+                        }
+                        if (msg){
+                                g_message ("MSG NORMAL: %s", msg);
+                                status_append (msg);
+                        }
+                }
         };
+#endif   
         virtual void update_health (const gchar *msg=NULL){
                 g_message (msg);
         };
@@ -292,14 +320,17 @@ public:
 
         
         /* Socket Connection */
-	GSocket *listener;
 	gushort port;
 
 #ifdef USE_WEBSOCKETPP
         wsppclient *client;
         wsppclient::connection_ptr con;
         websocketpp::lib::thread asio_thread;
+        GThread *wspp_asio_gthread;
+        static gpointer wspp_asio_thread (void *ptr_rp_stream);
+
 #else
+	GSocket *listener;
 	SoupSession *session;
 	SoupSocket *socket;
 	SoupMessage *msg;
@@ -308,7 +339,8 @@ public:
         GIOStream *JSON_raw_input_stream;
 	GError *client_error;
 	GError *error;
-        
+
+        rpspmc_hwi_dev *rpspmc;
 };
 
 

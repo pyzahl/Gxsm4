@@ -56,9 +56,9 @@ void RP_JSON_talk::json_talk_connect_cb (gboolean connect, gboolean restart){
                 if (restart){
                         // request to fire up RedPitaya PACPLLL NGNIX server
                         gchar *urlstart = g_strdup_printf ("http://%s/bazaar?start=rpspmc",get_rp_address ());
-                        status_append ("1. Requesting NGNIX RedPitaya RPSPMC-PACPLL Server Startup:\n");
+                        status_append ("1. Requesting NGNIX RedPitaya RPSPMC-PACPLL Server Startup: ");
                         status_append (urlstart);
-                        status_append ("\n ");
+                        status_append ("\n");
                         msg = soup_message_new ("GET", urlstart);
                         g_free (urlstart);
                         GInputStream *istream = soup_session_send (session, msg, NULL, &error);
@@ -66,7 +66,7 @@ void RP_JSON_talk::json_talk_connect_cb (gboolean connect, gboolean restart){
                         if (error != NULL) {
                                 g_warning ("%s", error->message);
                                 status_append (error->message);
-                                status_append ("\n ");
+                                status_append ("\n");
                                 update_health (error->message);
                                 return;
                         } else {
@@ -80,14 +80,14 @@ void RP_JSON_talk::json_talk_connect_cb (gboolean connect, gboolean restart){
                                         update_health (error->message);
                                         g_warning ("%s", error->message);
                                         status_append (error->message);
-                                        status_append ("\n ");
+                                        status_append ("\n");
                                         g_free (buffer);
                                         return;
                                 } else {
-                                        status_append ("Response: ");
+                                        status_append (" * Response: ");
                                         if (buffer){
                                                 status_append (buffer);
-                                                status_append ("\n ");
+                                                status_append ("\n");
                                                 update_health (buffer);
                                         }
                                 }
@@ -97,15 +97,13 @@ void RP_JSON_talk::json_talk_connect_cb (gboolean connect, gboolean restart){
                         status_append ("1. Assuming NGNIX RedPitaya RPSPMC-PACPLL Server been Runnning. (Re-Connect Attempt)\n");
                 }
                 // then connect to NGNIX WebSocket on RP
-                status_append ("2. Connecting to NGNIX RedPitaya RPSPMC-PACPLL WebSocket...\n");
+                status_append ("2. Connecting to NGNIX RedPitaya RPSPMC-PACPLL WebSocket: ");
                 gchar *url = g_strdup_printf ("ws://%s:%u", get_rp_address (), port);
                 status_append (url);
                 status_append ("\n");
-                // g_message ("Connecting to: %s", url);
                 
                 msg = soup_message_new ("GET", url);
                 g_free (url);
-                // g_message ("soup_message_new - OK");
                 soup_session_websocket_connect_async (session, msg, // SoupSession *session, SoupMessage *msg,
                                                       NULL, NULL, // const char *origin, char **protocols,
                                                       NULL,  RP_JSON_talk::got_client_connection, this); // GCancellable *cancellable, GAsyncReadyCallback callback, gpointer user_data
@@ -133,14 +131,12 @@ void  RP_JSON_talk::got_client_connection (GObject *object, GAsyncResult *result
                 self->status_append ("\n");
                 g_message ("%s", self->client_error->message);
         } else {
-                self->status_append ("RedPitaya WebSocket Connected!\n ");
+                self->status_append (" * RedPitaya WebSocket Connected!\n");
 		g_signal_connect(self->client, "closed",  G_CALLBACK( RP_JSON_talk::on_closed),  self);
 		g_signal_connect(self->client, "message", G_CALLBACK( RP_JSON_talk::on_message), self);
 		//g_signal_connect(connection, "closing", G_CALLBACK(on_closing_send_message), message);
 
                 self->on_connect_actions (); // setup instrument, send all params, ...
-
-                self->status_append ("RedPitaya SPM Control, PAC-PLL is ready.\n ");
         }
 }
 

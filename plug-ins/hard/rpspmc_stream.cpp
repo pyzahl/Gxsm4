@@ -40,6 +40,10 @@ extern SPMC_parameters spmc_parameters;
 
 /* *** RP_stream module *** */
 
+void RP_stream::status_append (const gchar *msg, bool schedule_from_thread=false){
+        rpspmc->status_append (msg, schedule_from_thread);
+}
+
 gchar* get_ip_from_hostname(const gchar *host){
         struct addrinfo* result;
         struct addrinfo* res;
@@ -84,67 +88,68 @@ gchar* get_ip_from_hostname(const gchar *host){
         return g_hostip; // give away, must g_free
 }
 
+gpointer RP_stream::wspp_asio_thread (void *ptr_rp_stream){
+        RP_stream* rps = (RP_stream*)ptr_rp_stream;
+        try {
+
+                // then connect to Stream Socket on RP
+                gchar *uri = g_strdup_printf ("ws://%s:%u", get_ip_from_hostname (rps->get_rp_address ()), rps->port);
+                rps->status_append (uri, true);
+                rps->status_append ("\n", true);
+
+                websocketpp::lib::error_code ec;
+                rps->con = rps->client->get_connection(uri, ec);
+                g_free (uri);
+                        
+                if (ec) {
+                        rps->status_append (" * EEE: could not create connection because:", true);
+                        rps->status_append (ec.message().c_str(), true);
+                        rps->status_append ("\n", true);
+                        return NULL;
+                }
+
+                // Note that connect here only requests a connection. No network messages are
+                // exchanged until the event loop starts running in the next line.
+                rps->client->connect(rps->con);
+
+                // Create a thread to run the ASIO io_service event loop
+                //websocketpp::lib::thread asio_thread(&wsppclient::run, client);
+                // Detach the thread (or join if you want to wait for it to finish)
+                rps->asio_thread = websocketpp::lib::thread(&wsppclient::run, rps->client);
+                rps->status_append (" * RPSPMC DMA stream thread: Connected. ASIO thread running next...\n", true);
+
+                //rps->asio_thread.detach();
+                rps->asio_thread.join();
+
+                rps->status_append (" * RPSPMC DMA stream thread: ASIO thread terminated.\n", true);
+                
+        } catch (websocketpp::exception const & e) {
+                rps->status_append (e.what(), true);
+        }
+
+        rps->status_append (" * Connected via ASIO, RPSPMC DMA stream thread: ASIO run finished.\n", true);
+        
+        return NULL;
+}
 
 void RP_stream::stream_connect_cb (gboolean connect){
         if (!get_rp_address ()) return;
         debug_log (get_rp_address ());
 
         if (connect){
-                status_append (NULL); // clear
-                status_append ("Connecting to SPM Stream on RedPitaya...\n");
+                status_append (NULL, true); // clear
+                status_append ("4. Connecting to RPSPMC Data Stream on RedPitaya: ", true);
 
                 update_health ("Connecting stream...");
-
-#ifdef USE_WEBSOCKETPP
-                try {
-
-                        // then connect to Stream Socket on RP
-                        status_append ("Resolving IP address...\n");
-                        gchar *uri = g_strdup_printf ("ws://%s:%u", get_ip_from_hostname (get_rp_address ()), port);
-
-                        status_append ("Connecting to: ");
-                        status_append (uri);
-                        status_append ("\n");
-
-                        websocketpp::lib::error_code ec;
-                        con = client->get_connection(uri, ec);
-                        g_free (uri);
-                        
-                        //client->set_user_data(client->get_connection(), this);
-
-                        if (ec) {
-                                status_append ("could not create connection because:");
-                                status_append (ec.message().c_str());
-                                status_append ("\n");
-                                return ;
-                        }
-
-                        // Note that connect here only requests a connection. No network messages are
-                        // exchanged until the event loop starts running in the next line.
-                        client->connect(con);
-
-                        // Create a thread to run the ASIO io_service event loop
-                        //websocketpp::lib::thread asio_thread(&wsppclient::run, client);
-                        // Detach the thread (or join if you want to wait for it to finish)
-                        asio_thread = websocketpp::lib::thread(&wsppclient::run, client);
-                        //asio_thread.detach();
-
-                        //wspp_thread = websocketpp::lib::make_shared<websocketpp::lib::thread>(&wsppclient::run, client);
-                        //wspp_thread->join(); 
-
-                        status_append ("Connected via ASIO: RPSPMC DMA stream OK.");
                 
-                } catch (websocketpp::exception const & e) {
-                        status_append (e.what());
-                }
-
+#ifdef USE_WEBSOCKETPP
+                wspp_asio_gthread = g_thread_new ("wspp_asio_gthread", wspp_asio_thread, this);
 #else
                 // new soup session
                 session = soup_session_new ();
 
                 // then connect to Stream Socket on RP
                 gchar *url = g_strdup_printf ("ws://%s:%u", get_rp_address (), port);
-                status_append ("Connecting to: ");
                 status_append (url);
                 status_append ("\n");
                 // g_message ("Connecting to: %s", url);
@@ -166,7 +171,7 @@ void RP_stream::stream_connect_cb (gboolean connect){
                         //client->stop();
                         // close(websocketpp::connection_hdl, websocketpp::close::status::value, const std::string&, std::error_code&)
                         
-                        update_health ("Dissconnected");
+                        update_health ("Dissconnected RP stream.\n");
                         con = NULL;
                 }
 #else
@@ -178,7 +183,7 @@ void RP_stream::stream_connect_cb (gboolean connect){
                 g_clear_error (&client_error);
                 g_clear_error (&error);
 
-                update_health ("Dissconnected");
+                update_health ("Dissconnected.\n");
 #endif
         }
 }
@@ -236,8 +241,6 @@ void  RP_stream::got_client_connection (GObject *object, GAsyncResult *result, g
 		//g_signal_connect(connection, "closing", G_CALLBACK(on_closing_send_message), message);
 
                 self->on_connect_actions (); // setup instrument, send all params, ...
-
-                self->status_append ("RedPitaya SPM Control, SPMC Stream is ready.\n ");
         }
 }
 #endif
@@ -313,7 +316,8 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
                         position = strtoul (p+10, NULL, 16); // effin addr hacks pactches!!!
                         if ((p=g_strrstr (contents, "Count:{")))
                                 count = atoi (p+7);
-                        g_message ("*** ==> pos: 0x%06x #%d", position, count); 
+                        //g_message("*** ==> pos: 0x%06x #%d", position, count);
+                        //{ gchar *tmp; self->status_append (tmp=g_strdup_printf("*** ==> pos: 0x%06x #%d\n", position, count), true); g_free(tmp); }
                 }
 
                 if (g_strrstr (contents, "FinishedNext:{true}")){

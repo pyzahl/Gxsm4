@@ -447,6 +447,12 @@ public:
                 print_check_dma_all();
 	};
 
+        void clear_buffer (){
+                // Clear Target Memory 
+                //INFO_PRINTF ("CLEAR TARGET MEMORY with 0xDDDD DDDD\n");
+                memset(dest_memory, 0xdd, SPMC_DMA_N_DESC*SPMC_DMA_BUFFER_BLOCK_SIZE); 
+        };
+
         void start_dma(){
                 //INFO_PRINTF ("RE-START DMA\n");
                 INFO_PRINTF ("(RE)STARTING DMA: RESET DMA ** HALT ** INIT0xDD ** SETUP-DMA\n");
@@ -454,11 +460,11 @@ public:
                 // Full reset DMA
                 reset_all_dma ();
                 halt_dma (); // out of reset, halt
-                
+
                 // Clear Target Memory 
                 //INFO_PRINTF ("CLEAR TARGET MEMORY with 0xDDDD DDDD\n");
                 memset(dest_memory, 0xdd, SPMC_DMA_N_DESC*SPMC_DMA_BUFFER_BLOCK_SIZE); 
-                
+   
                 //print_check_dma_all();
 
                 //INFO_PRINTF ("SETUP DMA\n");

@@ -810,6 +810,8 @@ public:
 
         static void spmc_stream_connect_cb (GtkWidget *widget, rpspmc_hwi_dev *self);
         virtual const gchar *get_rp_address ();
+
+        static gboolean update_status_idle(gpointer self);
         virtual void status_append (const gchar *msg, bool schedule_from_thread=false);
         virtual void on_connect_actions();
         virtual int on_new_data (gconstpointer contents, gsize len, int position, int new_count=1, bool last=false);

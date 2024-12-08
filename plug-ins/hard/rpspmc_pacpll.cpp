@@ -3738,6 +3738,9 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
         // hookup to scan start and stop
         rpspmc_pacpll_hwi_pi.app->ConnectPluginToStartScanEvent (RPspmc_pacpll::scan_start_callback);
         rpspmc_pacpll_hwi_pi.app->ConnectPluginToStopScanEvent (RPspmc_pacpll::scan_stop_callback);
+
+        
+        
 }
 
 RPspmc_pacpll::~RPspmc_pacpll (){
@@ -4444,11 +4447,11 @@ void RPspmc_pacpll::status_append (const gchar *msg){
 }
 
 void RPspmc_pacpll::on_connect_actions(){
-        status_append ("RedPitaya SPM Control, PAC-PLL loading configuration.\n ");
+        status_append ("3. RedPitaya SPM Control, PAC-PLL loading configuration:\n");
         send_all_parameters ();
         while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
 
-        status_append ("RedPitaya SPM Control, PAC-PLL init, DEC FAST(12)...\n");
+        status_append (" * RedPitaya SPM Control, PAC-PLL init, DEC FAST (12)...\n");
         gtk_combo_box_set_active (GTK_COMBO_BOX (update_tr_widget), 6);  // select Ph,dF,Am,Ex
         gtk_combo_box_set_active (GTK_COMBO_BOX (update_ts_widget), 12); // select 12, fast
         for (int i=0; i<25; ++i){
@@ -4457,19 +4460,19 @@ void RPspmc_pacpll::on_connect_actions(){
         }
         
         gtk_combo_box_set_active (GTK_COMBO_BOX (update_op_widget), 3); // INIT BRAM TRANSPORT AND CLEAR FIR RING BUFFERS, give me a second...
-        status_append ("RedPitaya SPM Control, PAC-PLL init, INIT-FIR... [2s Zzzz]\n");
+        status_append (" * RedPitaya SPM Control, PAC-PLL init, INIT-FIR... [2s Zzzz]\n");
         for (int i=0; i<100; ++i){
                 while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
                 usleep(20000);
         }
         
-        status_append ("RedPitaya SPM Control, PAC-PLL init, INIT-FIR completed.\n");
+        status_append (" * RedPitaya SPM Control, PAC-PLL init, INIT-FIR completed.\n");
         for (int i=0; i<50; ++i){
                 while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
                 usleep(20000);
         }
         
-        status_append ("RedPitaya SPM Control, PAC-PLL normal operation, set to data streaming mode.\n");
+        status_append (" * RedPitaya SPM Control, PAC-PLL normal operation, set to data streaming mode.\n");
         for (int i=0; i<25; ++i){
                 while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
                 usleep(20000);
@@ -4477,6 +4480,8 @@ void RPspmc_pacpll::on_connect_actions(){
         
         gtk_combo_box_set_active (GTK_COMBO_BOX (update_op_widget), 5); // STREAMING OPERATION
         gtk_combo_box_set_active (GTK_COMBO_BOX (update_ts_widget), 18); // select 19 (typical scan decimation/time scale filter)
+
+        status_append (" * RedPitaya SPM Control: PAC-PLL is ready.\n");
 }
 
 
