@@ -152,7 +152,7 @@ typedef struct{
 	gchar daqZtype[DAQCHMAX][8];
 	gchar daqZlabel[DAQCHMAX][CHLABELLEN];
 	double daqZd2u[DAQCHMAX];
-	int daq_msk[DAQCHMAX];
+	guint64 daq_msk[DAQCHMAX];
 	int  daqdefault;
 	gchar extchno[EXTCHMAX];
 	//

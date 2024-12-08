@@ -98,6 +98,7 @@ typedef struct {
         const gchar *unit_sym;  // gxsm signal unit symbol
         double scale_factor; // multiplier for raw value to unit conversion
         int garr_index; // expanded garray index lookup to store data
+        int scan_source_pos; // position (1-16) in scan data source list, 0: not mapped
 } SOURCE_SIGNAL_DEF;
 
 

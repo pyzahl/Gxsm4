@@ -268,6 +268,26 @@ private:
         double fac, off;
 };
 
+class HexUnit;
+
+class HexUnit : public UnitObj{
+public:
+        HexUnit(HexUnit &usrc)
+                :UnitObj(usrc){;};
+        HexUnit(const gchar *s, const gchar *pss)
+                :UnitObj(s, pss, "08X"){;};
+        HexUnit(const gchar *s, const gchar *pss, const gchar *lab)
+                :UnitObj(s, pss, "08X", lab){;};
+
+        virtual UnitObj* Copy(){ return new HexUnit(*this); };
+
+        virtual double Usr2Base(const gchar *ustr){ double u=(double)strtol (ustr, NULL, 16); return (u); }; /* Usr -> Base */
+        virtual double Usr2Base(double u){ return (u); };   /* Usr -> Base */
+        virtual double Base2Usr(double b){ return (b); }; /* Usr <- Base */
+
+private:
+};
+
 // % BZ (Brilluin Zone) auf der Basis von Volt (Oktopol Ablenspannung)
 class BZUnit;
 

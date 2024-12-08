@@ -140,48 +140,16 @@ rpspmc_hwi_dev::rpspmc_hwi_dev(){
         main_get_gapp()->xsm->Inst->override_volt_out_range (5.0, xsmres);
 
         // SRCS Mapping for Scan Channels as set via Channelselector (independing from Graphs/GVP) in Gxsm, but here same masks as same GVP is used
-        
-        /*
-        // do overrides/reconfigs of srcs mappings:
-#define MSK_PID(X)  (1<<((X)&3)) // 0..3
-#define MSK_DAQ(X)  (1<<((X)+4)) // 4..16
-        // may be overridden/updated by HwI! Historic to Gxsm, but universal enough for future!
-        
-        void gxsm_init_dynamic_res(){
-                for (int i=0; i<MAXPALANZ; ++i)
-                        xsmres.PalPathList[i] = NULL;
-                for (int i=0; i<PIDCHMAX; ++i){
-                        xsmres.pidsrcZd2u[i] = 0.; 
-                        xsmres.pidsrc_msk[i] = MSK_PID(i); // generate defaults
-                }
-                for (int i=0; i<DAQCHMAX; ++i){
-                        xsmres.daqZd2u[i] = 0.;
-                        xsmres.daq_msk[i] = MSK_DAQ(i); // generate defaults
-                }
-        }
-        */
 
-        xsmres.pidsrc_msk[2] = 0x000001;  // XS (Scan) non rot scan coord sys
-        xsmres.pidsrc_msk[3] = 0x000002;  // YS (Scan) non rot scan coord sys
-        xsmres.pidsrc_msk[0] = 0x000004;  // ZS-total
-        xsmres.pidsrc_msk[1] = 0x000008;  // UMon Bias
-
-        xsmres.daq_msk[0] = 0x000020;  // In2 = Current
-        xsmres.daq_msk[1] = 0x000010;  // In1 = QP Signal
-        xsmres.daq_msk[2] = 0x000040;  // In3 **
-        xsmres.daq_msk[3] = 0x000080;  // In4 **
-        xsmres.daq_msk[4] = 0x001000;  // LockInX
-        xsmres.daq_msk[5] = 0x002000;  // dFreqCrtl value
-        xsmres.daq_msk[6] = 0x004000;  // Time lower 32 (cycles at ~17sec)
-        xsmres.daq_msk[7] = 0x00C000;  // time 64bit time tics (1/125 MHz resolution)
-
-        xsmres.daq_msk[8]  = 0x000100;  // SWP signal PAC-PLL: defualt Phase
-        xsmres.daq_msk[9]  = 0x000200;  // SWP signal PAC-PLL: defualt dFreq
-        xsmres.daq_msk[10] = 0x000400;  // SWP signal PAC-PLL: defualt Ampl
-        xsmres.daq_msk[12] = 0x000800;  // SWP signal PAC-PLL: defualt Exec
-        
 	probe_fifo_thread_active=0;
 
+        // Automatic overriding GXSM core resources for RPSPMC setup to map scan data sources via channel selector:
+
+        // use SOURCE_SIGNAL_DEF source_signals[] table to auto configure
+        for (int i=0; source_signals[i].mask; ++i)
+                if (source_signals[i].scan_source_pos > 0)
+                        main_get_gapp()->channelselector->ConfigureHardwareMapping (source_signals[i].scan_source_pos, source_signals[i].label, source_signals[i].mask,
+                                                                                    source_signals[i].label, source_signals[i].unit, source_signals[i].scale_factor);
 	subscan_data_y_index_offset = 0;
         ScanningFlg=0;
         KillFlg=FALSE;
@@ -470,16 +438,22 @@ gpointer ScanDataReadThread (void *ptr_hwi){
                         pvlut[dir][ch]=0;
 
         // setup direct lookup from src ch and dir  to  GVP_vp_header_current.dataexpanded
-        for (int dir = 0; dir < 4; ++dir)
-                for (int ch=0; ch < hwi->nsrcs_dir[dir] && ch<NUM_PV_DATA_SIGNALS; ch++)
-                        for (int i=0; source_signals[i].mask; ++i)
+        for (int dir = 0; dir < 4; ++dir){
+                int i=0;
+                for (int ch=0; ch < hwi->nsrcs_dir[dir] && ch<NUM_PV_DATA_SIGNALS; ch++){
+                        for (; source_signals[i].mask; ++i){
+                                g_message ("GVP Data Expanded Lookup table signal dir %02d, ch %02d, ssi %02d: checking for mask 0x%08x match in 0x%08x", dir, ch, i, source_signals[i].mask, hwi->srcs_dir[dir]);
                                 if (hwi->srcs_dir[dir] & source_signals[i].mask){
                                         if (source_signals[i].garr_index == PROBEDATA_ARRAY_TIME)
                                                 pvlut[dir][ch] = 14;
                                         else
                                                 pvlut[dir][ch] = source_signals[i].garr_index - PROBEDATA_ARRAY_S1; // as ..._S1 .. _S14 are exactly incremental => 0..13 ; see (***) above
-                                        //g_message ("GVP Data Expanded Lookup table signal %02d: pvlut[%d][%02d] = %d", i,dir,ch,pvlut[dir][ch]);
+                                        g_message ("GVP Data Expanded Lookup table signal %02d: pvlut[%02d][%02d] = %02d for mask 0x%08x, garri %d", i,dir,ch,pvlut[dir][ch], source_signals[i].mask, source_signals[i].garr_index);
+                                        ++i; break;
                                 }
+                        }
+                }
+        }
 
         g_message("GVP Data Expanded Lookup table: PVLUT"); for (int dir = 0; dir < 4; ++dir){ for (int ch=0; ch<NUM_PV_DATA_SIGNALS; ch++){g_print ("%02d, ", pvlut[dir][ch]);}g_print ("\n");}
         
@@ -1023,6 +997,9 @@ gboolean rpspmc_hwi_dev::ScanLineM(int yindex, int xdir, int muxmode,
                 
                 num_srcs = (num_srcs_l<<4) | num_srcs_w;
 
+                g_message ("rpspmc_hwi_dev::ScanLineM SETUP STAGE ** DIR%+d => SRCS=%08x #%d", xdir, muxmode, num_srcs);
+                
+                // SETUP MODE, CONFIGURE SRCS,...
                 switch (xdir){
                 case 1: // first init step of XP (->)
                         // reset all
