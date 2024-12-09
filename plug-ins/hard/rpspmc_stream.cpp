@@ -93,7 +93,12 @@ gpointer RP_stream::wspp_asio_thread (void *ptr_rp_stream){
         try {
 
                 // then connect to Stream Socket on RP
-                gchar *uri = g_strdup_printf ("ws://%s:%u", get_ip_from_hostname (rps->get_rp_address ()), rps->port);
+                gchar *uri = g_strdup_printf ("ws://%s:%u", rps->get_rp_address (), rps->port);
+                rps->status_append (uri, true);
+                rps->status_append ("\n", true);
+                g_free (uri);
+                rps->status_append (" * resolved IP: ", true);
+                uri = g_strdup_printf ("ws://%s:%u", get_ip_from_hostname (rps->get_rp_address ()), rps->port);
                 rps->status_append (uri, true);
                 rps->status_append ("\n", true);
 

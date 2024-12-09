@@ -982,7 +982,6 @@ gboolean rpspmc_hwi_dev::ScanLineM(int yindex, int xdir, int muxmode,
                                           int ixy_sub[4]){
 	static int ydir=0;
 	static int running = FALSE;
-	static double us_per_line;
 
         if (yindex == -2){ // SETUP STAGE 1
                 int num_srcs_w = 0; // #words
@@ -1046,6 +1045,7 @@ gboolean rpspmc_hwi_dev::ScanLineM(int yindex, int xdir, int muxmode,
 		// Ny, Dy are number datapoints in Y to take at Dy DAC increments
 
 		ydir = yindex == 0 ? 1 : -1; // scan top-down or bottom-up ?
+                subscan_data_y_index_offset = ixy_sub[2];
 
                 // may compute and set if available
 		// main_get_gapp()->xsm->data.s.pixeltime = (double)dsp_scan.dnx/SamplingFreq;
@@ -1059,17 +1059,17 @@ gboolean rpspmc_hwi_dev::ScanLineM(int yindex, int xdir, int muxmode,
 	}
 
         // ACTUAL SCAN PROGRESS CHECK on line basis
-        if (ScanningFlg){ // make sure we did not got aborted and comkpleted already!
+        if (ScanningFlg){ // make sure we did not got aborted and completed already!
 
                 //g_print ("rpspmc_hwi_spm::ScanLineM(yindex=%d [fifo-y=%d], xdir=%d, ydir=%d, lssrcs=%x) checking...\n", yindex, data_y_index, xdir, ydir, muxmode);
                 y_current = RPSPMC_data_y_index;
 
                 if (ydir > 0 && yindex <= RPSPMC_data_y_index){
-                        g_print ("rpspmc_hwi_spm::ScanLineM(yindex=%d [fifo-y=%d], xdir=%d, ydir=%d, lssrcs=%x) y done.\n", yindex, RPSPMC_data_y_index, xdir, ydir, muxmode);
+                        g_print ("\r * rpspmc_hwi_spm::ScanLineM(yindex=%04d [fifo-y=%04d], xdir=%d, ydir=%d, lssrcs=0x%08x) top-down completed.\n", yindex, RPSPMC_data_y_index, xdir, ydir, muxmode);
                         return FALSE; // line completed top-down
                 }
                 if (ydir < 0 && yindex >= RPSPMC_data_y_index){
-                        g_print ("rpspmc_hwi_spm::ScanLineM(yindex=%d [fifo-y=%d], xdir=%d, ydir=%d, lssrcs=%x) y done.\n", yindex, RPSPMC_data_y_index, xdir, ydir, muxmode);
+                        g_print ("\r * rpspmc_hwi_spm::ScanLineM(yindex=%04d [fifo-y=%04d], xdir=%d, ydir=%d, lssrcs=0x%08x) bottom-up completed.\n", yindex, RPSPMC_data_y_index, xdir, ydir, muxmode);
                         return FALSE; // line completed bot-up
                 }
 

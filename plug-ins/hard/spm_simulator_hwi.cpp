@@ -936,6 +936,7 @@ gboolean spm_simulator_hwi_dev::ScanLineM(int yindex, int xdir, int muxmode,
 		// Ny, Dy are number datapoints in Y to take at Dy DAC increments
 
 		ydir = yindex == 0 ? 1 : -1; // scan top-down or bottom-up ?
+                subscan_data_y_index_offset = ixy_sub[2];
 
                 // may compute and set if available
 		// main_get_gapp()->xsm->data.s.pixeltime = (double)dsp_scan.dnx/SamplingFreq;
