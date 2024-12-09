@@ -148,7 +148,8 @@ rpspmc_hwi_dev::rpspmc_hwi_dev():RP_stream(this){
         // use SOURCE_SIGNAL_DEF source_signals[] table to auto configure
         for (int i=0; source_signals[i].mask; ++i)
                 if (source_signals[i].scan_source_pos > 0)
-                        main_get_gapp()->channelselector->ConfigureHardwareMapping (source_signals[i].scan_source_pos, source_signals[i].label, source_signals[i].mask,
+                        main_get_gapp()->channelselector->ConfigureHardwareMapping (source_signals[i].scan_source_pos-1,
+                                                                                    source_signals[i].label, source_signals[i].mask,
                                                                                     source_signals[i].label, source_signals[i].unit, source_signals[i].scale_factor);
 	subscan_data_y_index_offset = 0;
         ScanningFlg=0;

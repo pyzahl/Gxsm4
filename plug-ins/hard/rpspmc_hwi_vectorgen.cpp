@@ -281,18 +281,16 @@ void RPSPMC_Control::write_spm_scan_vector_program (double rx, double ry, int nx
         double tfwd = rx/slew[0];
         double trev = rx/slew[1];
 
-        // new convert Ang to Volts
-        rx = main_get_gapp()->xsm->Inst->XA2Volt (rx); // WARNING, not yet accounting for rotation here in case x and y piezo sensitivities are not the same!
-        ry = main_get_gapp()->xsm->Inst->YA2Volt (ry);
-
-        //g_message ("write spm scan GVP from: rx,y: %g V, %g V, slew: %g A/s, %g A/s -> tifr: %g, %g, %g", rx,ry, slew[0], slew[1], ti, tfwd, trev);
-        
         double xi = -rx/2.+rx*(double)subscan[0]/(double)nx;
         double yi =  ry/2.-ry*(double)subscan[2]/(double)ny;
         double ti = sqrt(xi*xi+yi*yi)/slew[1];
 
+        //g_message ("write spm scan GVP from: rx,y: %g V, %g V, slew: %g A/s, %g A/s -> tifr: %g, %g, %g", rx,ry, slew[0], slew[1], ti, tfwd, trev);
+
         double dx = rx*(double)subscan[1]/(double)nx; // scan X vector length
         double dy = ry*(double)subscan[3]/(double)ny; // scan Y vector length
+
+        //g_message ("write spm scan GVP: dx,dy: %g, %g uV", dx*e16, dy*1e6);
 
         /*
 write spm scan GVP: ti, fwd, rev= 1.80086s, 2.5468s, 2.5468s;  xi,yi=(-0.05, 0.05)V, dx,dy=(0.1, 0.1)V nx,ny=(100, 100) subscan=[[0 100][0 100]], srcs0=0x00000010
@@ -319,6 +317,8 @@ vector = {32'd000032,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  3
 {Info: {RESET:{true}}}
         */
 
+        // ** Message: 23:34:25.068: write spm scan GVP: ti, fwd, rev= 0.0707107s, 0.1s, 0.1s;  xi,yi=(-1, 1)V, dx,dy=(2, 2)V nx,ny=(100, 100) subscan=[[0 100][0 100]], srcs=0x00000039, 0x00000000
+
         g_message ("write spm scan GVP: ti, fwd, rev= %gs, %gs, %gs;  xi,yi=(%g, %g)V, dx,dy=(%g, %g)V nx,ny=(%d, %d) subscan=[[%d %d][%d %d]], srcs=0x%08x, 0x%08x",
                    ti, tfwd, trev,
                    xi, yi,
@@ -329,6 +329,8 @@ vector = {32'd000032,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  3
         
         // may wait a sec to assumre monitors been up-to-date?
         // initial vector to start
+        //?? Vec[ 0] XYZU: -0.005 0.005 0 0 V  [#100, R0 J0 SRCS=00003900] initial Msk=1000
+
         make_UZXYramp_vector (0., 0., // GVP_du[k], GVP_dz[k],
                               xi, yi, 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
                               100, 0, 0, ti, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
@@ -336,6 +338,8 @@ vector = {32'd000032,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  3
 
         //DEBUG_GVP_SCAN (PC,         DU, DX, DY, DZ, DA, DB,  TS, PTS, OPT,                VNR, VPCJ)
         //DEBUG_GVP_SCAN (vector_index, 0., xi, xi,  0., 0., 0., ti, 100, VP_INITIAL_SET_VEC,   0,   0);
+        //?? Vec[ 1] XYZU: 0.01 0 0 0 V  [#100, R0 J0 SRCS=00003900] initial Msk=0001
+
         write_program_vector (vector_index++);
 
         // fwd scan "->"

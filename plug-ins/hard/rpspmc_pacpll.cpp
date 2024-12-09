@@ -128,12 +128,38 @@ RP data streaming
 
 #define DSP32Qs15dot16TO_Volt (50/(32767.*(1<<16)))
 
+/*
+  // DATA SIGNAL MAPPING DEFINED in FPGA STREAM_SRCS RTL module:
+  // ========================================================================
+  // from RPSPMC/rtl/axis_bram_stream_srcs.v
+    input a2_clk, // double a_clk used for BRAM (125MHz)
+    input wire [32-1:0] S_AXIS_ch1s_tdata, // XS      0x0001  X in Scan coords
+    input wire [32-1:0] S_AXIS_ch2s_tdata, // YS      0x0002  Y in Scan coords
+    input wire [32-1:0] S_AXIS_ch3s_tdata, // ZS      0x0004  Z
+    input wire [32-1:0] S_AXIS_ch4s_tdata, // U       0x0008  Bias
+    input wire [32-1:0] S_AXIS_ch5s_tdata, // IN1     0x0010  IN1 RP (Signal)
+    input wire [32-1:0] S_AXIS_ch6s_tdata, // IN2     0x0020  IN2 RP (Current)
+    input wire [32-1:0] S_AXIS_ch7s_tdata, // IN3     0x0040  reserved, N/A at this time
+    input wire [32-1:0] S_AXIS_ch8s_tdata, // IN4     0x0080  reserved, N/A at this time
+    input wire [32-1:0] S_AXIS_ch9s_tdata, // DFREQ   0x0100  via PACPLL FIR1 ** via transport / decimation selector
+    input wire [32-1:0] S_AXIS_chAs_tdata, // EXEC    0x0200  via PACPLL FIR2
+    input wire [32-1:0] S_AXIS_chBs_tdata, // PHASE   0x0400  via PACPLL FIR3
+    input wire [32-1:0] S_AXIS_chCs_tdata, // AMPL    0x0800  via PACPLL FIR4
+    input wire [32-1:0] S_AXIS_chDs_tdata, // LockInA 0x1000  LockIn X (ToDo)
+    input wire [32-1:0] S_AXIS_chEs_tdata, // LockInB 0x2000  LocKin R (ToDo)
+    // from below
+    // gvp_time[32-1: 0]      // TIME  0x4000 // lower 32
+    // gvp_time[48-1:32]      // TIME  0x8000 // upper 32 (16 lower only)
+    input wire [48-1:0] S_AXIS_gvp_time_tdata,  // time since GVP start in 1/125MHz units
+*/
+
 // Masks MUST BE unique
 SOURCE_SIGNAL_DEF source_signals[] = {
         // -- 8 vector generated signals (outputs/mapping) ==> must match: #define NUM_VECTOR_SIGNALS 8
         //  xxxxSRCS
         // mask,       name/label,  descr, unit, sym, scale, garrindex, scanchpos
-        { 0x01000000, "Index",    " ",  "#",  "#",           1.0, PROBEDATA_ARRAY_INDEX, 16 },
+        //  ****SRCS lower 32 bits, upper GVP internal/generated
+        { 0x01000000, "Index",    " ",  "#",  "#",           1.0, PROBEDATA_ARRAY_INDEX, 0 },
         { 0x02000000, "Time",     " ", "ms", "ms",           1.0, PROBEDATA_ARRAY_TIME, 0 }, // time in ms
         { 0x04000000, "SEC",      " ", "#", "#",             1.0, PROBEDATA_ARRAY_SEC, 0 },
         { 0x00100000, "XS",       " ", "AA", UTF8_ANGSTROEM, 1.0, PROBEDATA_ARRAY_XS, 0 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!

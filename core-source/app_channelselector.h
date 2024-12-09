@@ -63,12 +63,12 @@ public:
                 g_message ("ChannelSelector::ConfigureHardwareMapping: %02d for %32s, 0x%08x at scale %g for %s", position, signal_name, msk, d2unit, signal_unit);
                 if (position >= 0 && position < 4){
                         xsmres.pidsrc_msk[position] = msk;
-                        SetModeChannelSignal(position+ID_CH_M_LAST-2, signal_name, signal_label, signal_unit, d2unit);
+                        SetModeChannelSignal(position+ID_CH_M_LAST-1, signal_name, signal_label, signal_unit, d2unit);
                         return;
                 }
                 if (position >= 4 && position < 16){
                         xsmres.daq_msk[position-4] = msk;
-                        SetModeChannelSignal(position+ID_CH_M_LAST-2, signal_name, signal_label, signal_unit, d2unit);
+                        SetModeChannelSignal(position+ID_CH_M_LAST-1, signal_name, signal_label, signal_unit, d2unit);
                         return;
                 }
                 g_warning ("ChannelSelector::ConfigureHardwareMapping: invalid positon %d for %s, 0x%08x", position, signal_name, msk);
