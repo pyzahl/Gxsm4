@@ -210,8 +210,10 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
                 if (data_valid){
                         int lag=0;
                         fprintf(stderr, "*** Detecting DMA stream END lag ***\n");
-                        while (position > 1 && dma_mem[position] == 0xdddddddd) // && dma_mem[position-1] == 0xdddddddd)
+                        position += BLKSIZE;
+                        while (position > (BLKSIZE>>1) && dma_mem[position%BLKSIZE] == 0xdddddddd && dma_mem[(position-1)%BLKSIZE] == 0xdddddddd)
                                 position--, lag++;
+                        position = position % BLKSIZE;
                         if (lag){
                                 fprintf(stderr, "... position-- lag=%d pos=0x%08x ** DMA_DA0_off=0x%08x\n", lag, position, spm_dma_instance->get_dmaps_DAn_offset(0));
 #ifdef MEM_DUMP_ON
