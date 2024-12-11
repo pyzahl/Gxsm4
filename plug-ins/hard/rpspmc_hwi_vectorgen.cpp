@@ -275,7 +275,7 @@ static void via_remote_list_Check_ec(Gtk_EntryControl* ec, remote_args* ra){
         }                                                               \
 
 
-void RPSPMC_Control::write_spm_scan_vector_program (double rx, double ry, int nx, int ny, double slew[2], int subscan[4], long int srcs[4]){
+void RPSPMC_Control::write_spm_scan_vector_program (double rx, double ry, int nx, int ny, double slew[2], int subscan[4], long int srcs[4], int gvp_options){
         int vector_index=0;
 
         double tfwd = rx/slew[0];
@@ -334,7 +334,7 @@ vector = {32'd000032,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  3
         make_UZXYramp_vector (0., 0., // GVP_du[k], GVP_dz[k],
                               xi, yi, 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
                               100, 0, 0, ti, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
-                              srcs[0], VP_INITIAL_SET_VEC);
+                              srcs[0], VP_INITIAL_SET_VEC | gvp_options);
 
         //DEBUG_GVP_SCAN (PC,         DU, DX, DY, DZ, DA, DB,  TS, PTS, OPT,                VNR, VPCJ)
         //DEBUG_GVP_SCAN (vector_index, 0., xi, xi,  0., 0., 0., ti, 100, VP_INITIAL_SET_VEC,   0,   0);
@@ -346,7 +346,7 @@ vector = {32'd000032,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  3
         make_UZXYramp_vector (0., 0., // GVP_du[k], GVP_dz[k],
                               dx, 0, 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
                               subscan[1], 0, 0, tfwd, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
-                              srcs[0], 0); // vis_Source, GVP_opt[k]);
+                              srcs[0], gvp_options); // vis_Source, GVP_opt[k]);
 
         //DEBUG_GVP_SCAN (vector_index, 0., dx, 0.,  0., 0., 0., tfwd, subscan[1], VP_INITIAL_SET_VEC,   0,   0);
         write_program_vector (vector_index++);
@@ -355,13 +355,13 @@ vector = {32'd000032,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  3
         make_UZXYramp_vector (0., 0., // GVP_du[k], GVP_dz[k],
                               -dx, 0, 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
                               subscan[1], 0, 0, trev, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
-                              srcs[1], 0); // vis_Source, GVP_opt[k]);
+                              srcs[1], gvp_options); // vis_Source, GVP_opt[k]);
         write_program_vector (vector_index++);
-        // next line
+        // next line with repeat for all lines from VPC-2 ny times
         make_UZXYramp_vector (0., 0., // GVP_du[k], GVP_dz[k],
                               0., dy/(subscan[3]-1), 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
                               10, subscan[3], -2, tfwd/ny, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
-                              srcs[0], 0); // vis_Source, GVP_opt[k]);
+                              srcs[0], gvp_options); // vis_Source, GVP_opt[k]);
         write_program_vector (vector_index++);
         append_null_vector (options, vector_index);
 }

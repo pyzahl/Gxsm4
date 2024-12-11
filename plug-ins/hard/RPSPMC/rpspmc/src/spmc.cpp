@@ -841,7 +841,7 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
         if (verbose > 1) fprintf(stderr, "%04d, ", nii);
         set_gpio_cfgreg_uint32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_NII, idv[2]=nii > 0 ? nii-1 : 0); // *** see above note nii > 1 for normal vector, need that time for logic
 
-        if (verbose > 1) fprintf(stderr, "%04d, ", opts);
+        if (verbose > 1) fprintf(stderr, "%08x, ", opts);
         set_gpio_cfgreg_uint32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_OPT, idv[3]=opts);
 
         if (verbose > 1) fprintf(stderr, "%04d, ", nrp);

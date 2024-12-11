@@ -111,7 +111,7 @@ module axis_bram_stream_srcs #(
     input wire          S_AXIS_chCs_tvalid,
     input wire [32-1:0] S_AXIS_chDs_tdata, // LockInA 0x1000  LockIn X (ToDo)
     input wire          S_AXIS_chDs_tvalid,
-    input wire [32-1:0] S_AXIS_chEs_tdata, // LockInB 0x2000  LocKin R (ToDo)
+    input wire [32-1:0] S_AXIS_chEs_tdata, // LockInB 0x2000  LocKin R (ToDo) [if GVP OPT BIT 6 set: GVP package counter]
     input wire          S_AXIS_chEs_tvalid,
     // from below
     // gvp_time[32-1: 0]      // TIME  0x4000 // lower 32
@@ -152,6 +152,7 @@ module axis_bram_stream_srcs #(
     reg [2-1:0] hdr_type=0;
 
     reg test_mode=0;
+    reg [32-1:0] test_count=0;
 
     reg last_packet=0; // last element of data block
     reg last=0; // last of whole transmission
@@ -192,7 +193,7 @@ module axis_bram_stream_srcs #(
         dma_wr    <= dma_wr_next;
         
         if (test_mode)
-            dma_data  <= dma_addr_next;
+            dma_data  <= dma_addr_next; // send a simple count only
         else
             dma_data  <= dma_data_next;
             
@@ -207,6 +208,7 @@ module axis_bram_stream_srcs #(
             last <= 0;
             once <= 1;
             position <= 0;
+            test_count <= 0;
         end
         else
         begin
@@ -239,10 +241,18 @@ module axis_bram_stream_srcs #(
                             stream_buffer[10] <= S_AXIS_chBs_tdata[32-1:0]; // PACPLL
                             stream_buffer[11] <= S_AXIS_chCs_tdata[32-1:0]; // PACPLL
                             stream_buffer[12] <= S_AXIS_chDs_tdata[32-1:0];
-                            stream_buffer[13] <= S_AXIS_chEs_tdata[32-1:0];
+                            if (S_AXIS_srcs_tdata[6])
+                            begin                     
+                                stream_buffer[13] <= test_count;
+                            end 
+                            else
+                            begin
+                                stream_buffer[13] <= S_AXIS_chEs_tdata[32-1:0];
+                            end                
                             stream_buffer[14] <= S_AXIS_gvp_time_tdata[32-1:0];
                             stream_buffer[15] <= { 16'd0, S_AXIS_gvp_time_tdata[48-1:32] };
                             test_mode <= S_AXIS_srcs_tdata[7];
+                            test_count <= test_count+1;
                             bramwr_sms <= 3'd1; // write frame start info, then data
                         end
                         else
@@ -270,7 +280,7 @@ module axis_bram_stream_srcs #(
                             end
                             3:
                             begin // full header info, all signals, + END MARKING
-                                test_mode <= 0;
+                                test_mode <= 0; // disable test mode
                                 srcs_mask <= 24'hfffff;// ALL 16
                                 dma_data_next <= { 16'hfefe, 16'hfefe }; // frame info: END MARK, full vector position list follows
                             end

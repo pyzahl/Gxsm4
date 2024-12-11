@@ -720,7 +720,7 @@ public:
 	void GVP_store_vp (const gchar *key);
 	void GVP_restore_vp (const gchar *key);
 
-        void write_spm_scan_vector_program (double rx, double ry, int nx, int ny, double slew[2], int subscan[4], long int srcs[4]);
+        void write_spm_scan_vector_program (double rx, double ry, int nx, int ny, double slew[2], int subscan[4], long int srcs[4], int gvp_options=0);
 
         
 	// -- Profile Displays
@@ -865,7 +865,7 @@ public:
         // Scan setup: (yindex=-2),
         // Scan init: (first call with yindex >= 0)
         // while scanning following calls are progress checks (return FALSE when yindex line data transfer is completed to go to next line for checking, else return TRUE to continue with this index!
-	virtual gboolean ScanLineM(int yindex, int xdir, int muxmode,
+	virtual gboolean ScanLineM(int yindex, int xdir, int muxmode, //srcs_mask, // muxmode
 				   Mem2d *Mob[MAX_SRCS_CHANNELS],
 				   int ixy_sub[4]);
 
@@ -1165,6 +1165,8 @@ public:
         static void dbg_l2 (GtkWidget *widget, RPspmc_pacpll *self);
         static void dbg_l4 (GtkWidget *widget, RPspmc_pacpll *self);
 
+        static void scan_gvp_opt6 (GtkWidget *widget, RPspmc_pacpll *self);
+        static void scan_gvp_opt7 (GtkWidget *widget, RPspmc_pacpll *self);
         
 	static void scan_start_callback (gpointer user_data);
 	static void scan_stop_callback (gpointer user_data);
@@ -1341,6 +1343,7 @@ public:
         GtkWidget *text_status;
 	GtkWidget *red_pitaya_health;
         gint debug_level; 
+        int scan_gvp_options;
         double rp_verbose_level; 
         GSettings *inet_json_settings;
 };

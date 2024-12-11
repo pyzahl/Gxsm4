@@ -97,28 +97,6 @@ RP data streaming
 #define XAngFac    (main_get_gapp()->xsm->Inst->Volt2XA (1))
 #define YAngFac    (main_get_gapp()->xsm->Inst->Volt2YA (1))
 
-/*
-                              // CH      MASK
-    input wire [32-1:0] ch1s, // XS      0x0001  X in Scan coords
-    input wire [32-1:0] ch2s, // YS      0x0002  Y in Scan coords
-    input wire [32-1:0] ch3s, // ZS      0x0004  Z
-    input wire [32-1:0] ch4s, // U       0x0008  Bias
-    input wire [32-1:0] ch5s, // IN1     0x0010  IN1 RP (Signal)
-    input wire [32-1:0] ch6s, // IN2     0x0020  IN2 RP (Current)
-    input wire [32-1:0] ch7s, // IN3     0x0040  reserved, N/A at this time
-    input wire [32-1:0] ch8s, // IN4     0x0080  reserved, N/A at this time
-    input wire [32-1:0] ch9s, // DFREQ   0x0100  via PACPLL FIR
-    input wire [32-1:0] chAs, // EXEC    0x0200  via PACPLL FIR
-    input wire [32-1:0] chBs, // PHASE   0x0400  via PACPLL FIR
-    input wire [32-1:0] chCs, // AMPL    0x0800  via PACPLL FIR
-    input wire [32-1:0] chDs, // LockInA 0x1000  LockIn X (ToDo)
-    input wire [32-1:0] chEs, // LockInB 0x2000  dFreqCtrl (ToDo)
-    // from below
-    // gvp_time[32-1: 0]      // TIME  0x4000 // lower 32
-    // gvp_time[48-1:32]      // TIME  0x8000 // upper 32 (16 lower only)
-    input wire [48-1:0] gvp_time,  // time since GVP start in 1/125MHz units
-*/
-
 #define CPN(N) ((double)(1LL<<(N))-1.)
 
 #define RP_FPGA_QEXEC 31 // Q EXEC READING Controller        -- 1V/(2^RP_FPGA_QEXEC-1)
@@ -152,6 +130,53 @@ RP data streaming
     // gvp_time[48-1:32]      // TIME  0x8000 // upper 32 (16 lower only)
     input wire [48-1:0] S_AXIS_gvp_time_tdata,  // time since GVP start in 1/125MHz units
 */
+#if 0
+// Masks MUST BE unique
+SOURCE_SIGNAL_DEF source_signals[] = {
+        // -- 8 vector generated signals (outputs/mapping) ==> must match: #define NUM_VECTOR_SIGNALS 8
+        //  xxxxSRCS
+        // mask,       name/label,  descr, unit, sym, scale, garrindex, scanchpos
+        //  ****SRCS lower 32 bits, upper GVP internal/generated
+        { 0x01000000, "Index", "Index",      " ", "#",  "#",            1.0, PROBEDATA_ARRAY_INDEX, 0 },
+        { 0x02000000, "Time",  "Time",       " ", "ms", "ms",           1.0, PROBEDATA_ARRAY_TIME,  0 }, // time in ms
+        { 0x04000000, "Section", "SEC",      " ", "#",  "#",            1.0, PROBEDATA_ARRAY_SEC,   0 },
+        { 0x00100000, "XScan",   "XS",       " ", "AA", UTF8_ANGSTROEM, 1.0, PROBEDATA_ARRAY_XS, 0 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
+        { 0x00200000, "YScan",   "YS",       " ", "AA", UTF8_ANGSTROEM, 1.0, PROBEDATA_ARRAY_YS, 0 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
+        { 0x00400000, "ZScan",   "ZS",       " ", "AA", UTF8_ANGSTROEM, 1.0, PROBEDATA_ARRAY_ZS, 0 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
+        { 0x00800000, "Bias",    "Bias",     " ", "V",             "V", 1.0, PROBEDATA_ARRAY_U,  0 },
+        //{ 0x08000000, "DA", "DA",          " ", "V",             "V", 1.0, PROBEDATA_ARRAY_AA, 0 },
+        //{ 0x10000000, "DB", "DB",          " ", "V",             "V", 1.0, PROBEDATA_ARRAY_BB, 0 },
+        //{ 0x20000000, "PHI", "PHI",        " ", "deg",         "deg", 1.0, PROBEDATA_ARRAY_PHI, 0 },
+        // -- general measured signals from index [8]   // <=== to Volt conversion here -- unit sym and scale are custom auto adjusted in .._eventhandling lookup functions as of this mask 
+        { 0x0000C000, "Time-Mon", "Time-Mon",  " ", "ms", "ms",           1.0,            PROBEDATA_ARRAY_S15, 15 }, // time in ms
+        { 0x00000001, "XS-Mon",   "XS-Mon",    " ", "AA", UTF8_ANGSTROEM, 1.0,            PROBEDATA_ARRAY_S1,  1 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
+        { 0x00000002, "YS-Mon",   "YS-Mon",    " ", "AA", UTF8_ANGSTROEM, 1.0,            PROBEDATA_ARRAY_S2,  2 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
+        { 0x00000004, "ZS-Topo",  "ZS-Topo",   " ", "AA", UTF8_ANGSTROEM, 1.0,            PROBEDATA_ARRAY_S3,  3 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
+        { 0x00000008, "Bias-Mon", "Bias-Mon",       " ",  "V",   "V",     1.0,            PROBEDATA_ARRAY_S4,  4 }, // BiasFac, see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
+        { 0x00000010, "In1-Signal",  "In1-Signal",  " ",  "V",   "V",    DSP32Qs15dot16TO_Volt,    PROBEDATA_ARRAY_S5,  5 },
+        { 0x00000020, "In2-Current", "In2-Current", " ",  "nA", "nA",    DSP32Qs15dot16TO_Volt,    PROBEDATA_ARRAY_S6,  6 }, // CurrFac, see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
+        { 0x00000040, "In3-**", "In3-**",      " ", "V",  "V",           DSP32Qs15dot16TO_Volt,    PROBEDATA_ARRAY_S7,  7 },
+        { 0x00000080, "In4-**", "In4-**",      " ", "V",  "V",           DSP32Qs15dot16TO_Volt,    PROBEDATA_ARRAY_S8,  8 },
+        { 0x00000100, "Phase",  "Phase",       " ", "deg", UTF8_DEGREE, (180.0/(M_PI*((1L<<RP_FPGA_QATAN)-1))),    PROBEDATA_ARRAY_S9,  9 }, // ** swappable **,
+        { 0x00000200, "dFrequency", "dFreq",   " ", "Hz", "Hz",         (125e6/((1L<<RP_FPGA_QFREQ)-1)),  PROBEDATA_ARRAY_S10, 10 }, // ** swappable **,
+        { 0x00000400, "Amplitude",  "Ampl",    " ", "mV", "mV",         (1.0/((1L<<RP_FPGA_QSQRT)-1)),    PROBEDATA_ARRAY_S11, 11 }, // ** swappable **,
+        { 0x00000800, "Excitation", "Exec",    " ", "mV", "mV",         (1.0/((1L<<RP_FPGA_QEXEC)-1)),    PROBEDATA_ARRAY_S12, 12  }, // ** swappable **,
+        { 0x00001000, "LockInX", "LockInX",    " ", "V",   "V",         DSP32Qs15dot16TO_Volt,    PROBEDATA_ARRAY_S13, 13 },
+        { 0x00002000, "dFreqCtrl", "dFreqCtrl"," ", "V",   "V",         DSP32Qs15dot16TO_Volt,    PROBEDATA_ARRAY_S14, 14 },  // GVP Package Test Count if GVP OPT bit 6 set
+        { 0x80000000, "BlockI", "BlockI",      " ", "i#", "i#",         1.0,                      PROBEDATA_ARRAY_BLOCK, 0 }, // MUST BE ALWAYS LAST AND IN HERE!! END MARK.
+        { 0x00000000, NULL, NULL, NULL, NULL, NULL,                     0.0,                      0,                     0 }
+};
+
+// so far fixed to swappable 4 signals as of GUI design!
+SOURCE_SIGNAL_DEF swappable_signals[] = {
+        { 0x00000100, "Phase",      "Phase",      " ", "deg", UTF8_DEGREE, (180.0/(M_PI*((1L<<RP_FPGA_QATAN)-1))), 0, 9 },
+        { 0x00000200, "dFrequency", "dFrequency", " ", "Hz", "Hz",         (125e6/((1L<<RP_FPGA_QFREQ)-1)), 0, 10 },
+        { 0x00000400, "Amplitude",  "Amplitude",  " ", "mV", "mV",         (1.0/((1L<<RP_FPGA_QSQRT)-1)), 0,   11 },
+        { 0x00000800, "Excitation", "Excitation", " ", "mV", "mV",         (1.0/((1L<<RP_FPGA_QEXEC)-1)), 0,   12 },
+        { 0x00000000, NULL, NULL, NULL, NULL, NULL,                         0.0,                          0,   0  }
+};
+
+#else
 
 // Masks MUST BE unique
 SOURCE_SIGNAL_DEF source_signals[] = {
@@ -179,13 +204,13 @@ SOURCE_SIGNAL_DEF source_signals[] = {
         { 0x00000020, "In2-Current",  " ", "nA", "nA", DSP32Qs15dot16TO_Volt,    PROBEDATA_ARRAY_S6,  6 }, // CurrFac, see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x00000040, "In3-**",       " ", "V",   "V", DSP32Qs15dot16TO_Volt,    PROBEDATA_ARRAY_S7,  7 },
         { 0x00000080, "In4-**",       " ", "V",   "V", DSP32Qs15dot16TO_Volt,    PROBEDATA_ARRAY_S8,  8 },
-        { 0x00000100, "Phase", " ", "V",   "V",                          1.0,    PROBEDATA_ARRAY_S9,  9 }, // ** swappable **,
-        { 0x00000200, "dFreq", " ", "V",   "V",                          1.0,    PROBEDATA_ARRAY_S10, 10 }, // ** swappable **,
-        { 0x00000400, "Ampl", " ", "V",   "V",                           1.0,    PROBEDATA_ARRAY_S11, 11 }, // ** swappable **,
-        { 0x00000800, "Exec", " ", "V",   "V",                           1.0,    PROBEDATA_ARRAY_S12, 12  }, // ** swappable **,
-        { 0x00001000, "LockInX",      " ", "V",   "V", DSP32Qs15dot16TO_Volt,    PROBEDATA_ARRAY_S13, 13 },
-        { 0x00002000, "dFreqCtrl",    " ", "V",   "V", DSP32Qs15dot16TO_Volt,    PROBEDATA_ARRAY_S14, 14 },
-        { 0x80000000, "BlockI", " ", "i#", "i#", 1.0, PROBEDATA_ARRAY_BLOCK, 0 }, // MUST BE ALWAYS LAST AND IN HERE!! END MARK.
+        { 0x00000100, "Phase",        " ", "deg",   UTF8_DEGREE, (180.0/(M_PI*((1L<<RP_FPGA_QATAN)-1))),    PROBEDATA_ARRAY_S9,  9 }, // ** swappable **,
+        { 0x00000200, "dFreq",        " ", "Hz",   "Hz",         (125e6/((1L<<RP_FPGA_QFREQ)-1)),  PROBEDATA_ARRAY_S10, 10 }, // ** swappable **,
+        { 0x00000400, "Ampl",         " ", "mV",   "mV",         (1.0/((1L<<RP_FPGA_QSQRT)-1)),    PROBEDATA_ARRAY_S11, 11 }, // ** swappable **,
+        { 0x00000800, "Exec",         " ", "mV",   "mV",         (1.0/((1L<<RP_FPGA_QEXEC)-1)),    PROBEDATA_ARRAY_S12, 12  }, // ** swappable **,
+        { 0x00001000, "LockInX",      " ", "dV",   "dV",         DSP32Qs15dot16TO_Volt,            PROBEDATA_ARRAY_S13,  13 },
+        { 0x00002000, "dFreqCtrl",    " ", "##",   "##",                           1.0,            PROBEDATA_ARRAY_S14,  14 },
+        { 0x80000000, "BlockI",       " ", "i#", "i#", 1.0,                                        PROBEDATA_ARRAY_BLOCK, 0 }, // MUST BE ALWAYS LAST AND IN HERE!! END MARK.
         { 0x00000000, NULL, NULL, NULL, NULL, 0.0, 0 }
 };
 
@@ -195,13 +220,10 @@ SOURCE_SIGNAL_DEF swappable_signals[] = {
         { 0x00000200, "dFrequency", " ", "Hz", "Hz", (125e6/((1L<<RP_FPGA_QFREQ)-1)), 0 },
         { 0x00000400, "Amplitude",  " ", "mV", "mV", (1.0/((1L<<RP_FPGA_QSQRT)-1)), 0 },
         { 0x00000800, "Excitation", " ", "mV", "mV", (1.0/((1L<<RP_FPGA_QEXEC)-1)), 0 },
-        { 0x00000000, NULL, NULL, NULL, NULL, 0.0, 0 }
+        { 0x00000000,  NULL, NULL, NULL, NULL, 0.0, 0 }
 };
 
-
-
-
-
+#endif
 
 
 extern int debug_level;
@@ -2129,6 +2151,7 @@ void RPSPMC_Control::create_folder (){
 		int m = -1;
                 for (int k=0; swappable_signals[k].mask; ++k){
                         if (source_signals[i].mask == swappable_signals[k].mask){
+                                //source_signals[i].name = swappable_signals[k].name;
                                 source_signals[i].label = swappable_signals[k].label;
                                 source_signals[i].unit  = swappable_signals[k].unit;
                                 source_signals[i].unit_sym = swappable_signals[k].unit_sym;
@@ -2272,6 +2295,10 @@ void RPSPMC_Control::create_folder (){
                                     G_CALLBACK (RPspmc_pacpll::dbg_l2), rpspmc_pacpll);
         bp->grid_add_check_button ( N_("++"), "Debug LV4", 1,
                                     G_CALLBACK (RPspmc_pacpll::dbg_l4), rpspmc_pacpll);
+        bp->grid_add_check_button ( N_("GVP6"), "Set GVP Option Bit 6 for scan", 1,
+                                    G_CALLBACK (RPspmc_pacpll::scan_gvp_opt6), rpspmc_pacpll);
+        bp->grid_add_check_button ( N_("GVP7"), "Set GVP Option Bit 7 for scan", 1,
+                                    G_CALLBACK (RPspmc_pacpll::scan_gvp_opt7), rpspmc_pacpll);
         rpspmc_pacpll->rp_verbose_level = 0.0;
         bp->set_input_width_chars (2);
   	bp->grid_add_ec ("V", Unity, &rpspmc_pacpll->rp_verbose_level, 0., 10., ".0f", 1., 1., "RP-VERBOSE-LEVEL");        
@@ -2484,14 +2511,14 @@ int RPSPMC_Control::choice_scansource_callback (GtkWidget *widget, RPSPMC_Contro
 	int si = sranger_common_hwi->query_module_signal_input(DSP_SIGNAL_SCAN_CHANNEL_MAP0_ID+channel);
 
         main_get_gapp()->channelselector->SetModeChannelSignal(17+channel, 
-                                                               sranger_common_hwi->lookup_dsp_signal_managed (si)->label,
+                                                               sranger_common_hwi->lookup_dsp_signal_managed (si)->name,
                                                                sranger_common_hwi->lookup_dsp_signal_managed (si)->label,
                                                                sranger_common_hwi->lookup_dsp_signal_managed (si)->unit,
                                                                sranger_common_hwi->lookup_dsp_signal_managed (si)->scale
                                                                );
 #else
         main_get_gapp()->channelselector->SetModeChannelSignal(17+channel,
-                                                               swappable_signals[signal].label,
+                                                               swappable_signals[signal].label, //name,
                                                                swappable_signals[signal].label,
                                                                swappable_signals[signal].unit,
                                                                swappable_signals[signal].scale_factor
@@ -2912,6 +2939,7 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
 	GSList *EC_R_list=NULL;
 	GSList *EC_QC_list=NULL;
 
+        scan_gvp_options = 0;
         debug_level = 0;
         input_rpaddress = NULL;
         text_status = NULL;
@@ -4318,6 +4346,20 @@ void RPspmc_pacpll::dbg_l4 (GtkWidget *widget, RPspmc_pacpll *self){
                 self->debug_level |= 4;
         else
                 self->debug_level &= ~4;
+}
+
+void RPspmc_pacpll::scan_gvp_opt6 (GtkWidget *widget, RPspmc_pacpll *self){
+        if (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)))
+                self->scan_gvp_options |= (1<<6);
+        else
+                self->scan_gvp_options &= ~(1<<6);
+}
+
+void RPspmc_pacpll::scan_gvp_opt7 (GtkWidget *widget, RPspmc_pacpll *self){
+        if (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)))
+                self->scan_gvp_options |= (1<<7);
+        else
+                self->scan_gvp_options &= ~(1<<7);
 }
 
 

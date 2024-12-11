@@ -92,6 +92,7 @@
 
 typedef struct {
         guint32     mask;   // signal source mask, or signal id for swappable
+        //const gchar *name;  // signal name
         const gchar *label;  // label for signal | NULL for flex signal life swappable
         const gchar *description; // signal description
         const gchar *unit;  // gxsm signal unit symbolic id

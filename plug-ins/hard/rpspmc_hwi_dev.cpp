@@ -145,13 +145,23 @@ rpspmc_hwi_dev::rpspmc_hwi_dev():RP_stream(this){
 
         // Automatic overriding GXSM core resources for RPSPMC setup to map scan data sources via channel selector:
 
+        
         // use SOURCE_SIGNAL_DEF source_signals[] table to auto configure
-        for (int i=0; source_signals[i].mask; ++i)
+        for (int i=0; source_signals[i].label; ++i){ // name
+                g_message ("Reading SOURCE_SIGNALS[%d]",i);
+                g_message ("Reading SOURCE_SIGNALS[%d].mask %x",i,source_signals[i].mask);
+                g_message ("Reading SOURCE_SIGNALS[%d].label >%s<",i,source_signals[i].label);
+                g_message ("SOURCE_SIGNAL_DEF %02d for %s mask: 0x%08x L: %s U: %s  x %g",
+                           source_signals[i].scan_source_pos-1,
+                           source_signals[i].label, source_signals[i].mask, // name
+                           source_signals[i].label, source_signals[i].unit, source_signals[i].scale_factor);
                 if (source_signals[i].scan_source_pos > 0)
                         main_get_gapp()->channelselector->ConfigureHardwareMapping (source_signals[i].scan_source_pos-1,
-                                                                                    source_signals[i].label, source_signals[i].mask,
+                                                                                    source_signals[i].label, source_signals[i].mask, // name
                                                                                     source_signals[i].label, source_signals[i].unit, source_signals[i].scale_factor);
-	subscan_data_y_index_offset = 0;
+                }
+
+        subscan_data_y_index_offset = 0;
         ScanningFlg=0;
         KillFlg=FALSE;
 
@@ -451,8 +461,8 @@ gpointer ScanDataReadThread (void *ptr_hwi){
                 int i=0;
                 for (int ch=0; ch < hwi->nsrcs_dir[dir] && ch<NUM_PV_DATA_SIGNALS; ch++){
                         for (; source_signals[i].mask; ++i){
-                                g_message ("GVP Data Expanded Lookup table signal dir %02d, ch %02d, ssi %02d: checking for mask 0x%08x match in 0x%08x", dir, ch, i, source_signals[i].mask, hwi->srcs_dir[dir]);
-                                if (hwi->srcs_dir[dir] & source_signals[i].mask){
+                                g_message ("GVP Data Expanded Lookup table signal dir %02d, ch %02d, ssi %02d: checking for mask 0x%08x (%s) match in 0x%08x", dir, ch, i, source_signals[i].mask, source_signals[i].label, hwi->srcs_dir[dir]);
+                                if ((hwi->srcs_dir[dir] & source_signals[i].mask) == source_signals[i].mask){
                                         if (source_signals[i].garr_index == PROBEDATA_ARRAY_TIME)
                                                 pvlut[dir][ch] = 14;
                                         else
@@ -576,8 +586,10 @@ gpointer ScanDataReadThread (void *ptr_hwi){
                                                                 hwi->Mob_dir[dir][ch]->PutDataPkt (hwi->GVP_vp_header_current.dataexpanded [k], xi, yi);
                                                         else
                                                                 g_message ("EEEE xi, yi index out of range: [0..%d-1, 0..%d-1]", hwi->Mob_dir[dir][ch]->GetNx (), hwi->Mob_dir[dir][ch]->GetNy ());
-                                                } else 
-                                                        g_message("SCAN MOBJ[%d][%d] ERROR", dir,ch);
+                                                } else {
+                                                        g_message("SCAN MOBJ[%d][%d] is NULL. SCAN SETUP ERROR?", dir,ch);
+                                                        g_message("skipping MOBJ -> PutDataPkt (%g, %d, %d)", hwi->GVP_vp_header_current.dataexpanded [k], xi, yi);
+                                                }
                                         }
                                         if ((ret=ret2)) // delay one
                                                 if (ret)
@@ -978,34 +990,26 @@ int rpspmc_hwi_dev::start_data_read (int y_start,
 // Scan setup: (yindex=-2),
 // Scan init: (first call with yindex >= 0)
 // while scanning following calls are progress checks (return FALSE when yindex line data transfer is completed to go to next line for checking, else return TRUE to continue with this index!
-gboolean rpspmc_hwi_dev::ScanLineM(int yindex, int xdir, int muxmode,
-                                          Mem2d *Mob[MAX_SRCS_CHANNELS],
-                                          int ixy_sub[4]){
+gboolean rpspmc_hwi_dev::ScanLineM(int yindex, int xdir, int muxmode, //srcs_mask,
+                                   Mem2d *Mob[MAX_SRCS_CHANNELS],
+                                   int ixy_sub[4]){
 	static int ydir=0;
 	static int running = FALSE;
 
+        int srcs_mask = muxmode;
+        
         if (yindex == -2){ // SETUP STAGE 1
-                int num_srcs_w = 0; // #words
-                int num_srcs_l = 0; // #long words
                 int num_srcs = 0;
-                int bi = 0;
-
                 running      = FALSE;
 
-                do{
-                        if(muxmode & (1<<bi++)) // aka "lssrcs" -- count active channels (bits=1)
-                                ++num_srcs_w;
-                }while(bi<12);
-                
-                // find # of srcs_l (32 bit data -> float ) 0x1000..0x8000 (Bits 12,13,14,15)
-                do{
-                        if(muxmode & (1<<bi++))
-                                ++num_srcs_l;
-                }while(bi<16);
-                
-                num_srcs = (num_srcs_l<<4) | num_srcs_w;
+                for (int i=0; source_signals[i].mask; ++i){
+                        if ((srcs_mask & source_signals[i].mask) == source_signals[i].mask){
+                                num_srcs++;
+                                g_message ("Match [%d] for 0x%08x <==> %s  #%d", i, source_signals[i].mask, source_signals[i].label, num_srcs);
+                        }
+                }
 
-                g_message ("rpspmc_hwi_dev::ScanLineM SETUP STAGE ** DIR%+d => SRCS=%08x #%d", xdir, muxmode, num_srcs);
+                g_message ("rpspmc_hwi_dev::ScanLineM SETUP STAGE ** DIR%+d => SRCS=%08x #%d", xdir, srcs_mask, num_srcs);
                 
                 // SETUP MODE, CONFIGURE SRCS,...
                 switch (xdir){
@@ -1016,22 +1020,22 @@ gboolean rpspmc_hwi_dev::ScanLineM(int yindex, int xdir, int muxmode,
                                 Mob_dir[i] = NULL;
                         }
                         // setup XP ->
-                        srcs_dir[0]  = muxmode;
+                        srcs_dir[0]  = srcs_mask;
                         nsrcs_dir[0] = num_srcs;
                         Mob_dir[0]   = Mob;
                         return TRUE;
                 case -1: // second init step of XM (<-)
-                        srcs_dir[1]  = muxmode;
+                        srcs_dir[1]  = srcs_mask;
                         nsrcs_dir[1] = num_srcs;
                         Mob_dir[1]   = Mob;
                         return TRUE;
                 case  2: // ... init step of 2ND_XP (2>)
-                        srcs_dir[2]  = muxmode;
+                        srcs_dir[2]  = srcs_mask;
                         nsrcs_dir[2] = num_srcs;
                         Mob_dir[2]   = Mob;
                         return TRUE;
                 case -2: // ... init step of 2ND_XM (<2)
-                        srcs_dir[3]  = muxmode;
+                        srcs_dir[3]  = srcs_mask;
                         nsrcs_dir[3] = num_srcs;
                         Mob_dir[3]   = Mob;
                         return TRUE;
@@ -1062,15 +1066,15 @@ gboolean rpspmc_hwi_dev::ScanLineM(int yindex, int xdir, int muxmode,
         // ACTUAL SCAN PROGRESS CHECK on line basis
         if (ScanningFlg){ // make sure we did not got aborted and completed already!
 
-                //g_print ("rpspmc_hwi_spm::ScanLineM(yindex=%d [fifo-y=%d], xdir=%d, ydir=%d, lssrcs=%x) checking...\n", yindex, data_y_index, xdir, ydir, muxmode);
+                //g_print ("rpspmc_hwi_spm::ScanLineM(yindex=%d [fifo-y=%d], xdir=%d, ydir=%d, lssrcs=%x) checking...\n", yindex, data_y_index, xdir, ydir, srcs_mask);
                 y_current = RPSPMC_data_y_index;
 
                 if (ydir > 0 && yindex <= RPSPMC_data_y_index){
-                        g_print ("\r * rpspmc_hwi_spm::ScanLineM(yindex=%04d [fifo-y=%04d], xdir=%d, ydir=%d, lssrcs=0x%08x) top-down completed.\n", yindex, RPSPMC_data_y_index, xdir, ydir, muxmode);
+                        g_print ("\r * rpspmc_hwi_spm::ScanLineM(yindex=%04d [fifo-y=%04d], xdir=%d, ydir=%d, lssrcs=0x%08x) top-down completed.\n", yindex, RPSPMC_data_y_index, xdir, ydir, srcs_mask);
                         return FALSE; // line completed top-down
                 }
                 if (ydir < 0 && yindex >= RPSPMC_data_y_index){
-                        g_print ("\r * rpspmc_hwi_spm::ScanLineM(yindex=%04d [fifo-y=%04d], xdir=%d, ydir=%d, lssrcs=0x%08x) bottom-up completed.\n", yindex, RPSPMC_data_y_index, xdir, ydir, muxmode);
+                        g_print ("\r * rpspmc_hwi_spm::ScanLineM(yindex=%04d [fifo-y=%04d], xdir=%d, ydir=%d, lssrcs=0x%08x) bottom-up completed.\n", yindex, RPSPMC_data_y_index, xdir, ydir, srcs_mask);
                         return FALSE; // line completed bot-up
                 }
 

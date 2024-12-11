@@ -71,7 +71,7 @@ public:
                         SetModeChannelSignal(position+ID_CH_M_LAST-1, signal_name, signal_label, signal_unit, d2unit);
                         return;
                 }
-                g_warning ("ChannelSelector::ConfigureHardwareMapping: invalid positon %d for %s, 0x%08x", position, signal_name, msk);
+                g_warning ("ChannelSelector::ConfigureHardwareMapping: EEE invalid positon %d for %s, 0x%08x", position, signal_name, msk);
         };
 
         
