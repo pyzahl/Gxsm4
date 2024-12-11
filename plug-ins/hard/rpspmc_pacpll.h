@@ -947,9 +947,9 @@ public:
                 
                 GVP_vp_header_current.srcs = GVP_stream_buffer[offset]&0xffff;
 
-                GVP_vp_header_current.i = (int)(((guint32)GVP_stream_buffer[offset])>>16);
+                GVP_vp_header_current.i = (int)(((guint32)GVP_stream_buffer[offset])>>16); // data point index within GVP section (N points)
                 if (GVP_vp_header_current.srcs == 0xffff){
-                        GVP_vp_header_current.n    = GVP_vp_header_current.i + 1;
+                        GVP_vp_header_current.n    = GVP_vp_header_current.i + 1; // this full vector of first point, index=N-1 ... counts down to 0
                         GVP_vp_header_current.endmark = 0;
                         retry=3;
                 } else {
@@ -959,15 +959,15 @@ public:
                                 GVP_vp_header_current.i = 0;
                                 GVP_vp_header_current.srcs = 0xffff;
                         } else {
-                                if (GVP_vp_header_current.n = GVP_vp_header_current.i+2)
-                                        GVP_vp_header_current.srcs_mask_vector = GVP_vp_header_current.srcs;
-                                else {
-                                        if (GVP_vp_header_current.i != (GVP_vp_header_current.ilast+1)
+                                if (GVP_vp_header_current.n == GVP_vp_header_current.i+2) // 2nd point, store srcs mask for verify
+                                        GVP_vp_header_current.srcs_mask_vector = GVP_vp_header_current.srcs; // store ref mask
+                                else { // normal GVP data stream, verify continuity
+                                        if (GVP_vp_header_current.i != (GVP_vp_header_current.ilast-1)
                                             ||
                                             GVP_vp_header_current.srcs_mask_vector != GVP_vp_header_current.srcs){
                                                 // stream ERROR detected
                                                 gchar *tmp = g_strdup_printf ("read_GVP_data_block_to_position_vector: Stream ERROR at Reading offset %08x, write position %08x.\n"
-                                                                              "SRCS/index mismatch detected. %04x vs %04x, i %d -> %d\n",
+                                                                              "SRCS/index mismatch detected. 0x%04x vs 0x%04x, missing data jump detected: i %d -> %d\n",
                                                                               offset, GVP_stream_buffer_position,
                                                                               GVP_vp_header_current.srcs_mask_vector, GVP_vp_header_current.srcs,
                                                                               GVP_vp_header_current.ilast, GVP_vp_header_current.i);
@@ -1017,10 +1017,12 @@ public:
                 for (ch_index=0; ch_index < GVP_vp_header_current.number_channels && ch_index+offset < GVP_stream_buffer_position; ++ch_index){
                         int ich = GVP_vp_header_current.ch_lut[ch_index];
                         GVP_vp_header_current.chNs[ich] = GVP_stream_buffer[1+ch_index+offset];
-                        if (ich < 14){
-                                if (ich > 4)
-                                        GVP_vp_header_current.dataexpanded[ich] = (double)GVP_vp_header_current.chNs[ich]; // raw // fix me -- apply conversion to units!
-                                else
+                        if (ich < 14){ // ICH 14,15 -> 64bit time
+                                if (ich >= 8) // ICH 9...13 FPGA Signals from PACPLL, LOCKIN
+                                        GVP_vp_header_current.dataexpanded[ich] = rpIN12_to_volts (GVP_vp_header_current.chNs[ich]); // fix me -- apply conversion to correct units!
+                                if (ich >= 4) // ICH 4,5,6,7 FPGA Signals IN1,2,3,4
+                                        GVP_vp_header_current.dataexpanded[ich] = rpIN12_to_volts (GVP_vp_header_current.chNs[ich]); // fix me -- apply conversion to correct units!
+                                else // ICH 0,1,2,3: XS,YS,ZS,Bias -- DAC Monitors
                                         GVP_vp_header_current.dataexpanded[ich] = rpspmc_to_volts (GVP_vp_header_current.chNs[ich]); // Volts
                                 //g_message ("%g V", GVP_vp_header_current.dataexpanded[ich]);
                         }

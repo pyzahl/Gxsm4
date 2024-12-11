@@ -128,36 +128,7 @@ public:
         virtual int on_new_data (gconstpointer contents, gsize len, int position, int new_count=1, bool last=false) {};
 
         void status_append (const gchar *msg, bool schedule_from_thread=false);
-#if 0
-        static gboolean update_status_idle(gpointer self){
-                ((RP_stream*)self) -> status_append(NULL, false);
-                return G_SOURCE_REMOVE;
-        };
-        
-        virtual void status_append (const gchar *msg, bool schedule_from_thread=false){
-                static gchar *buffer=NULL;
-                if (schedule_from_thread){
-                        g_message ("MSG FROM THREAD: %s", msg);
-                        if (!buffer)
-                                buffer = g_strdup (msg);
-                        else {
-                                gchar *tmp = buffer;
-                                buffer = g_strconcat (buffer, msg, NULL);
-                                g_free (tmp);
-                                g_idle_add (update_status_idle, this);
-                        }
-                } else {
-                        if (buffer){
-                                status_append (buffer);
-                                g_free (buffer); buffer=NULL;
-                        }
-                        if (msg){
-                                g_message ("MSG NORMAL: %s", msg);
-                                status_append (msg);
-                        }
-                }
-        };
-#endif   
+
         virtual void update_health (const gchar *msg=NULL){
                 g_message (msg);
         };
@@ -268,6 +239,8 @@ public:
 
 #define SPMC_AD5791_REFV 5.0 // DAC AD5791 Reference Volatge is 5.000000V (+/-5V Range)
         double rpspmc_to_volts (int value){ return SPMC_AD5791_REFV*(double)value / ((1<<31)-1); }
+#define SPMC_RPIN12_REFV 1.0 // RP FAT DACs Reference Voltage is 1.0V (+/-1V Range)
+        double rpIN12_to_volts (int value){ return SPMC_RPIN12_REFV*(double)value / ((1<<31)-1); } // +/-1 <=> 32bit signed
 
         void status_append_int32(const guint32 *data, size_t data_length, bool format = true, int offset=0, bool also_gprint = false) {
                 if (data_length < 1)
