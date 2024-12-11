@@ -1000,7 +1000,7 @@ public:
                         g_warning (tmp);
                         g_free (tmp);
                         GVP_vp_header_current.index = 0; // to prevent issues
-                        if (--retry)
+                        if (--retry || 1) // || 1 *** TESTING *** try to recover
                                 return -99;
                         else
                                 return (-95);
