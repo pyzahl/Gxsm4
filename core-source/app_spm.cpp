@@ -1368,10 +1368,13 @@ GtkWidget* App::create_as_control (){
         as_bp->grid_add_button ("...", "Set file storage folder.",1,
                                 G_CALLBACK (App::file_set_datapath_callback));
 
-        GtkWidget *checkbutton = gtk_check_button_new_with_label( N_("Auto Save"));
-        as_bp->grid_add_widget (checkbutton);
-        g_signal_connect (G_OBJECT (checkbutton), "toggled",
-                          G_CALLBACK (cb_setmode), (void*)MODE_AUTOSAVE);
+
+        GtkWidget *checkbutton = as_bp->grid_add_check_button (N_("Auto Save"), "Auto Save" PYREMOTE_CHECK_HOOK_KEY("MainAutoSave"), 1,
+                                                                cb_setmode, (void*)MODE_AUTOSAVE);
+        // GtkWidget *checkbutton = gtk_check_button_new_with_label( N_("Auto Save"));
+        // as_bp->grid_add_widget (checkbutton);
+        //g_signal_connect (G_OBJECT (checkbutton), "toggled",
+        //                  G_CALLBACK (cb_setmode), (void*)MODE_AUTOSAVE);
         g_settings_bind (as_settings, "auto-save",
                          G_OBJECT (checkbutton), "active",
                          G_SETTINGS_BIND_DEFAULT);

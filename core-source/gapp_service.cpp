@@ -1091,3 +1091,69 @@ GtkWidget* BuildParam::grid_add_exec_button (const gchar* labeltxt,
         return button;
 }
 
+
+static void remote_cb_check( GtkWidget *widget, gpointer *data ){
+	gtk_check_button_set_active (GTK_CHECK_BUTTON (widget), true); 
+}
+static void remote_cb_uncheck( GtkWidget *widget, gpointer *data ){
+	gtk_check_button_set_active (GTK_CHECK_BUTTON (widget), false); 
+}
+
+GtkWidget* BuildParam::grid_add_check_button_remote_enabled (const gchar* labeltxt, const char *tooltip, int bwx,
+                                                             GCallback cb, gpointer cb_data, guint64 source, guint64 mask, const gchar *control_id=NULL){
+
+        button = gtk_check_button_new_with_label (N_(labeltxt));
+        if (!control_id && tooltip){ // tooltip with REMOTEID must be given like "Tooltip Text .... PyRemote:action([UN]CHECK-REMOTEID)" <= PYREMOTE_CHECK_HOOK_KEY
+                const char *cmd = strstr (tooltip, PYREMOTE_CHECK_HOOK_KEY_PREFIX); // -xxxx).  remote IDs: -> CHECK-REMOTEID, UNCHECK-REMOTEID
+                g_message ("check button (%s) with RemoteID: [UN]CHECK-%s", tooltip, cmd);
+                if (cmd){
+                        const char *cmd1 = strstr (cmd, "-");
+                        const char *cmd2 = strstr (cmd, ")");
+                        control_id = g_strndup(cmd1+1, cmd2-cmd1-1);
+                        g_message ("Setting up check button (%s) with RemoteID: [UN]CHECK-%s", tooltip, control_id);
+                }
+        }
+        if (control_id){
+                remote_action_cb *raC = g_new( remote_action_cb, 1);     
+                raC -> cmd = g_strdup_printf("CHECK-%s", control_id);
+                gchar *autotooltip = g_strconcat ("Remote example: action ([UN]", raC->cmd, ")", NULL); 
+                gtk_widget_set_tooltip_text (button, autotooltip);
+                g_free (autotooltip);
+                raC -> RemoteCb = (void (*)(GtkWidget*, void*))remote_cb_check;  
+                raC -> widget = button;                                  
+                raC -> data = cb_data;                                      
+                raC -> return_data = NULL;
+                gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, raC ); 
+
+                remote_action_cb *raUC = g_new( remote_action_cb, 1);     
+                raUC -> cmd = g_strdup_printf("UNCHECK-%s", control_id);
+                raUC -> RemoteCb = (void (*)(GtkWidget*, void*))remote_cb_uncheck;  
+                raUC -> widget = button;                                  
+                raUC -> data = cb_data;                                      
+                raUC -> return_data = NULL;
+                gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, raUC ); 
+        } else
+                if (tooltip)
+                        gtk_widget_set_tooltip_text (button, tooltip);
+        if (mask > 0){
+                g_object_set_data(G_OBJECT(button), "Bit_Mask", GUINT_TO_POINTER (mask));
+                gtk_check_button_set_active (GTK_CHECK_BUTTON (button), (((source) & (mask)) ? 1:0));
+        }
+        if (mask == 0){
+                gtk_check_button_set_active (GTK_CHECK_BUTTON (button), (source)? 1:0);
+        }
+        if (cb){
+                g_signal_connect(G_OBJECT (button), "toggled", G_CALLBACK(cb), cb_data);
+        }
+        grid_add_widget (button, bwx);
+        return button;
+}
+
+GtkWidget* BuildParam::grid_add_check_button (const gchar* labeltxt, const char *tooltip, int bwx,
+                                              GCallback cb, gpointer data, int source, int mask){
+        return grid_add_check_button_remote_enabled (labeltxt, tooltip, bwx, cb, data, (guint64)source, (guint64)mask, NULL);
+}
+GtkWidget* BuildParam::grid_add_check_button_guint64(const gchar* labeltxt, const char *tooltip, int bwx,
+                                                     GCallback cb, gpointer data, guint64 source, guint64 mask, const gchar *control_id){
+        return grid_add_check_button_remote_enabled (labeltxt, tooltip, bwx, cb, data, source, mask, control_id);
+}

@@ -42,7 +42,8 @@
 
 
 typedef struct _Gxsm4appWindow         Gxsm4appWindow;
-
+#define PYREMOTE_CHECK_HOOK_KEY_PREFIX "PyRemote:action([UN]CHECK-"
+#define PYREMOTE_CHECK_HOOK_KEY(KEY)   PYREMOTE_CHECK_HOOK_KEY_PREFIX KEY")"
 
 // Used Ressource Types
 typedef enum
@@ -493,28 +494,20 @@ class BuildParam{
 		grid_add_widget (button, bwx);
                 return button;
         };
-        GtkWidget* grid_add_check_button (const gchar* labeltxt, const char *tooltip=NULL, int bwx=1,
-                                          GCallback cb=NULL, gpointer data=NULL, gint source=0, gint mask=-1){
-                button = gtk_check_button_new_with_label (N_(labeltxt));
-                if (tooltip)
-                        gtk_widget_set_tooltip_text (button, tooltip);
-                if (mask > 0){
-                        g_object_set_data(G_OBJECT(button), "Bit_Mask", GINT_TO_POINTER (mask));
-                        gtk_check_button_set_active (GTK_CHECK_BUTTON (button), (((source) & (mask)) ? 1:0));
-                }
-                if (mask == 0){
-                        gtk_check_button_set_active (GTK_CHECK_BUTTON (button), (source)? 1:0);
-                }
-                if (cb){
-                        g_signal_connect(G_OBJECT (button), "toggled", G_CALLBACK(cb), data);
-                }
-                grid_add_widget (button, bwx);
-                return button;
-        };
+
+        // add this (example) is tooltip string for remote enabling:  PYREMOTE_CHECK_HOOK_KEY("SCAN-REPEAT")
+        GtkWidget* grid_add_check_button_remote_enabled (const gchar* labeltxt, const char *tooltip=NULL, int bwx=1,
+                                                         GCallback cb=NULL, gpointer data=NULL, guint64 source=0, guint64 mask=0, const gchar *control_id=NULL);
+        
+        GtkWidget* grid_add_check_button (const gchar* labeltxt, const char *tooltip=NULL, int bwx=1, GCallback cb=NULL, gpointer data=NULL, int source=0, int mask=0);
+
+        GtkWidget* grid_add_check_button_guint64(const gchar* labeltxt, const char *tooltip=NULL, int bwx=1, GCallback cb=NULL, gpointer data=NULL, guint64 source=0, guint64 mask=0, const gchar *control_id=NULL);
+
         GtkWidget* grid_add_exec_button (const gchar* labeltxt,
                                          GCallback exec_cb, gpointer cb_data, const gchar *control_id,
                                          int bwx=1,
                                          const gchar *data_key=NULL, gpointer key_data=NULL);
+        
         static void lock_callback (GtkWidget *button, void *data) {
                 gtk_button_set_icon_name (GTK_BUTTON (button),
                                           gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (button))
@@ -664,48 +657,6 @@ class BuildParam{
 
                 grid_add_widget (f, bwx);
                 return icon;
-        };
-
-
-
-
-        
-        GtkWidget* grid_add_check_button_gint32 (const gchar* labeltxt, const char *tooltip=NULL, int bwx=1,
-                                                 GCallback cb=NULL, gpointer data=NULL, gint32 source=0, gint32 mask=-1){
-                button = gtk_check_button_new_with_label (N_(labeltxt));
-                if (tooltip)
-                        gtk_widget_set_tooltip_text (button, tooltip);
-                if (mask > 0){
-                        g_object_set_data(G_OBJECT(button), "Bit_Mask", GINT_TO_POINTER (mask));
-                        gtk_check_button_set_active (GTK_CHECK_BUTTON (button), (((source) & (mask)) ? 1:0));
-                }
-                if (mask == 0){
-                        gtk_check_button_set_active (GTK_CHECK_BUTTON (button), (source)? 1:0);
-                }
-                if (cb){
-                        g_signal_connect(G_OBJECT (button), "toggled", G_CALLBACK(cb), data);
-                }
-                grid_add_widget (button, bwx);
-                return button;
-        };
-
-        GtkWidget* grid_add_check_button_guint64 (const gchar* labeltxt, const char *tooltip, int bwx,
-                                          GCallback cb, gpointer data, guint64 source, guint64 mask){
-                button = gtk_check_button_new_with_label (N_(labeltxt));
-                if (tooltip)
-                        gtk_widget_set_tooltip_text (button, tooltip);
-                if (mask > 0){
-                        g_object_set_data(G_OBJECT(button), "Bit_Mask", GUINT_TO_POINTER (mask));
-                        gtk_check_button_set_active (GTK_CHECK_BUTTON (button), (((source) & (mask)) ? 1:0));
-                }
-                if (mask == 0){
-                        gtk_check_button_set_active (GTK_CHECK_BUTTON (button), (source)? 1:0);
-                }
-                if (cb){
-                        g_signal_connect(G_OBJECT (button), "toggled", G_CALLBACK(cb), data);
-                }
-                grid_add_widget (button, bwx);
-                return button;
         };
 
         GtkWidget* grid_add_radio_button (const gchar* labeltxt, const char *tooltip=NULL,

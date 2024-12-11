@@ -420,7 +420,9 @@ SPM_ScanControl::SPM_ScanControl (Gxsm4app *app):AppBase(app)
 	spmsc_bp->new_line ();
 
         spmsc_bp->grid_add_check_button (N_("Repeat"),
-                                         N_("Auto Restart Scan after completion.\nWARNING:\n Script triggered scan start will\n"
+                                         N_("Auto Restart Scan after completion. "
+                                            PYREMOTE_CHECK_HOOK_KEY("SCAN-REPEAT")
+                                            "\nWARNING:\n Script triggered scan start will\n"
                                             "never go beyond that scan start comand\n and repeats as long as this is checked.") , 1,
                                          G_CALLBACK (cb_repeat_mode), this,
                                          RepeatMode ());

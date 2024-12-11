@@ -49,10 +49,10 @@ good starting point.
 
 #include "xsmdebug.h"
 #include "glbvars.h"
+#include "gapp_service.h"
 #include "pcs.h"
 #include "util.h"
 #include "plugin.h"
-#include "gapp_service.h"
 #include "gnome-res.h"
 
 #define EC_INF 1e133
@@ -1260,7 +1260,7 @@ void Gtk_EntryControl::pcs_adjustment_configure (){
                 bp.grid_add_ec ("Page [B2]", unit, &page, -EC_INF, EC_INF, "8g"); bp.new_line ();
                 bp.grid_add_ec ("Pg10 [B3]", unit, &page10, -EC_INF, EC_INF, "8g"); bp.new_line ();
                 bp.grid_add_ec ("Progressive", unity, &progressive, 0., 10., "g"); bp.new_line ();
-
+#if 0
                 g_object_set_data  (G_OBJECT (dialog), "CB-LOG-SCALE",
                                     bp.grid_add_check_button ("Log-Scale", "use slider in log scale mode.\n WARING: EXPERIMENTAL",
                                                               1, NULL, NULL, (adj_mode & PARAM_CONTROL_ADJUSTMENT_LOG)?1:0
@@ -1270,18 +1270,19 @@ void Gtk_EntryControl::pcs_adjustment_configure (){
                 bp.new_line ();
                 g_object_set_data  (G_OBJECT (dialog), "CB-LOG-SYM",
                                     bp.grid_add_check_button ("Log-Sym", "use slider in log scale mode with zero at center. Left: log, neg val.\n WARING: EXPERIMENTAL",
-                                                              1,NULL, NULL, adj_mode & PARAM_CONTROL_ADJUSTMENT_LOG?1:0
+                                                              1, NULL, NULL, adj_mode & PARAM_CONTROL_ADJUSTMENT_LOG?1:0
                                                               ));
                 bp.new_line ();
                 g_object_set_data  (G_OBJECT (dialog), "CB-DUAL-RANGE",
                                     bp.grid_add_check_button ("Dual-Range", "use slider in log scale mode with zero at center. Left: log, neg val.\n WARING: EXPERIMENTAL",
-                                                              1,NULL, NULL, adj_mode & PARAM_CONTROL_ADJUSTMENT_LOG?1:0
+                                                              1, NULL, NULL, adj_mode & PARAM_CONTROL_ADJUSTMENT_LOG?1:0
                                                               ));
                 bp.new_line ();
                 g_object_set_data  (G_OBJECT (dialog), "CB-TICKS",
                                     bp.grid_add_check_button ("Add-Ticks", "add tick marks w. snapping to slider",
-                                                              1,NULL, NULL, adj_mode & PARAM_CONTROL_ADJUSTMENT_LOG?1:0
+                                                              1, NULL, NULL, adj_mode & PARAM_CONTROL_ADJUSTMENT_LOG?1:0
                                                               ));
+#endif
                 bp.new_line ();
         }
 
