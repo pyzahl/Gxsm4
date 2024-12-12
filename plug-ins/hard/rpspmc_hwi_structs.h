@@ -88,6 +88,9 @@
 #define NUM_PV_DATA_SIGNALS (PROBEDATA_ARRAY_END-PROBEDATA_ARRAY_S1)
 
 
+#define QN(N) ((1<<(N))-1)
+
+
 // NEW: generalized signals
 
 typedef struct {

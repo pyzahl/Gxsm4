@@ -39,6 +39,7 @@ module axis_splitter #(
     output wire [MAXIS_TDATA_WIDTH-1:0] monitor
     );
     
+    /*
     reg signed [SAXIS_TDATA_WIDTH-1:0] data_in;
     reg signed [MAXIS_TDATA_WIDTH-1:0] buffer;
      
@@ -63,5 +64,20 @@ module axis_splitter #(
     assign M_AXIS_tvalid = S_AXIS_tvalid;
     assign M_AXIS2_tdata  = buffer;
     assign M_AXIS2_tvalid = S_AXIS_tvalid;
+    */
+    
+    // ROUNDING down - -consider for DAC
+    // Consider, if you have a data values i_data coming in with IWID (input width) bits, and you want to create a data value with OWID bits, why not just grab the top OWID bits?
+    // assign	w_tozero = i_data[(IWID-1):0] + { {(OWID){1'b0}}, i_data[(IWID-1)], {(IWID-OWID-1){!i_data[(IWID-1)]}}};
+    // assign monitor = S_AXIS_tdata[SAXIS_TDATA_WIDTH-1:0] + { {(MAXIS_TDATA_WIDTH){1'b0}}, S_AXIS_tdata[SAXIS_TDATA_WIDTH-1], {(SAXIS_TDATA_WIDTH-MAXIS_TDATA_WIDTH-1){!S_AXIS_tdata[SAXIS_TDATA_WIDTH-1]}}};
+    
+    // EXPAND / COPY:
+    assign monitor = {{S_AXIS_tdata[SAXIS_TDATA_WIDTH-1:0]}, {(MAXIS_TDATA_WIDTH-SAXIS_TDATA_WIDTH){1'b0}}};
+    assign M_AXIS_tdata  = {{S_AXIS_tdata[SAXIS_TDATA_WIDTH-1:0]}, {(MAXIS_TDATA_WIDTH-SAXIS_TDATA_WIDTH){1'b0}}};
+    assign M_AXIS_tvalid = S_AXIS_tvalid;
+    assign M_AXIS2_tdata  = {{S_AXIS_tdata[SAXIS_TDATA_WIDTH-1:0]}, {(MAXIS_TDATA_WIDTH-SAXIS_TDATA_WIDTH){1'b0}}};
+    assign M_AXIS2_tvalid = S_AXIS_tvalid;
+    
+    
     
 endmodule

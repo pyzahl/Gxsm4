@@ -178,7 +178,7 @@ SOURCE_SIGNAL_DEF swappable_signals[] = {
 
 #else
 
-// Masks MUST BE unique
+// Masks MUST BE unique **** max # signal: 32  (graphs_matrix[][32] fix size! Unused=uninitialized.)
 SOURCE_SIGNAL_DEF source_signals[] = {
         // -- 8 vector generated signals (outputs/mapping) ==> must match: #define NUM_VECTOR_SIGNALS 8
         //  xxxxSRCS
@@ -768,7 +768,7 @@ void RPSPMC_Control::configure_callback (GSimpleAction *action, GVariant *parame
 
 
 
-void RPSPMC_Control::store_values (){
+void RPSPMC_Control::store_graphs_values (){
         g_settings_set_int (hwi_settings, "probe-sources", Source);
         g_settings_set_int (hwi_settings, "probe-sources-x", XSource);
         g_settings_set_boolean (hwi_settings, "probe-x-join", XJoin);
@@ -790,7 +790,26 @@ void RPSPMC_Control::store_values (){
         //set_tab_settings ("AB", ABORT_option_flags, ABORT_auto_flags, ABORT_glock_data);
 
         GVP_store_vp ("VP_set_last"); // last in view
-        PI_DEBUG_GM (DBG_L3, "RPSPMC_Control::store_values complete.");
+        PI_DEBUG_GM (DBG_L3, "RPSPMC_Control::store_graphs_values matrix complete.");
+}
+
+void RPSPMC_Control::restore_graphs_values (){
+        PI_DEBUG_GM (DBG_L3, "RPSPMC_Control::restore_graphs_values matrix settings.");
+        Source = g_settings_get_int (hwi_settings, "probe-sources");
+        XSource = g_settings_get_int (hwi_settings, "probe-sources-x");
+        XJoin = g_settings_get_boolean (hwi_settings, "probe-x-join");
+        GrMatWin = g_settings_get_boolean (hwi_settings, "probe-graph-matrix-window");
+        PSource = g_settings_get_int (hwi_settings, "probe-p-sources");
+        PlotAvg = g_settings_get_int (hwi_settings, "probe-pavg-sources");
+        PlotSec = g_settings_get_int (hwi_settings, "probe-psec-sources");
+
+        for (int i=0; graphs_matrix[0][i]; ++i)
+                if (graphs_matrix[0][i]){
+                        gtk_check_button_set_active (GTK_CHECK_BUTTON (graphs_matrix[0][i]), (Source & (((int) msklookup[i]) & 0xfffffff)));
+                        gtk_check_button_set_active (GTK_CHECK_BUTTON (graphs_matrix[1][i]), (XSource & (((int) (X_SOURCE_MSK | source_signals[i].mask)) & 0xfffffff)));
+                        gtk_check_button_set_active (GTK_CHECK_BUTTON (graphs_matrix[2][i]), (PSource & (((int) (P_SOURCE_MSK | source_signals[i].mask)) & 0xfffffff)));
+                        // ..
+                 }
 }
 
 void RPSPMC_Control::GVP_store_vp (const gchar *key){
@@ -820,10 +839,14 @@ void RPSPMC_Control::GVP_store_vp (const gchar *key){
         GVariant *pc_array_vn = g_variant_new_fixed_array (g_variant_type_new ("i"), GVP_vnrep, n, sizeof (gint32));
         GVariant *pc_array_vp = g_variant_new_fixed_array (g_variant_type_new ("i"), GVP_vpcjr, n, sizeof (gint32));
 
+        GVP_glock_data[0] = Source; GVP_glock_data[1] = XSource; GVP_glock_data[2] = PSource; GVP_glock_data[3] = XJoin; GVP_glock_data[4] = PlotAvg; GVP_glock_data[5] = PlotSec;
+        GVariant *pc_array_grm = g_variant_new_fixed_array (g_variant_type_new ("t"), GVP_glock_data, 6, sizeof (guint64));
+        
         GVariant *pc_array[] = { pc_array_du, pc_array_dx, pc_array_dy, pc_array_dz, pc_array_da, pc_array_db, pc_array_ts,
                                  pc_array_pn, pc_array_op, pc_array_vn, pc_array_vp,
+                                 pc_array_grm,
                                  NULL };
-        const gchar *vckey[] = { "du", "dx", "dy", "dz", "da", "db", "ts", "pn", "op", "vn", "vp", NULL };
+        const gchar *vckey[] = { "du", "dx", "dy", "dz", "da", "db", "ts", "pn", "op", "vn", "vp", "grm", NULL };
 
         for (int i=0; vckey[i] && pc_array[i]; ++i){
                 gchar *m_vckey = g_strdup_printf ("%s-%s", vckey[i], key);
@@ -868,7 +891,7 @@ void RPSPMC_Control::GVP_restore_vp (const gchar *key){
         GVariant *vd[7];
         GVariant *vi[4];
         double *pc_array_d[7];
-        gint32 *pc_array_i[4];
+        gint32 *pc_array_i[5];
         const gchar *vckey_d[] = { "du", "dx", "dy", "dz", "da", "db", "ts", NULL };
         const gchar *vckey_i[] = { "pn", "op", "vn", "vp", NULL };
         double *GVPd[] = { GVP_du, GVP_dx, GVP_dy, GVP_dz, GVP_da, GVP_db, GVP_ts, NULL };
@@ -877,7 +900,7 @@ void RPSPMC_Control::GVP_restore_vp (const gchar *key){
         
         for (int i=0; vckey_i[i]; ++i){
                 gchar *m_vckey = g_strdup_printf ("%s-%s", vckey_i[i], key);
-                g_message ( "GVP-VP restore %s\n", m_vckey);
+                g_print ( "GVP-VP restore %s\n", m_vckey);
 
                 for (int k=0; k<N_GVP_VECTORS; ++k) GVPi[i][k]=0; // zero init vector
                 if ((vi[i] = g_variant_dict_lookup_value (dict, m_vckey, ((const GVariantType *) "ai"))) == NULL){
@@ -901,6 +924,22 @@ void RPSPMC_Control::GVP_restore_vp (const gchar *key){
                 g_variant_unref (vi[i]);
         }                        
 
+        {
+                gchar *m_vckey = g_strdup_printf ("%s-%s", "grm", key);
+                g_print ( "GVP-VP restore %s\n", m_vckey);
+                GVariant *viG;
+                if ((viG = g_variant_dict_lookup_value (dict, m_vckey, ((const GVariantType *) "at"))) == NULL){
+                        PI_DEBUG_GP (DBG_L2, "GXSM4 DCONF: RPSPMC_Control::GVP_restore_vp -- key_i '%s' memo not found. Setting to Zero.\n", m_vckey);
+                        // g_warning ("GXSM4 DCONF: RPSPMC_Control::GVP_restore_vp -- key_i '%s' memo not found. Setting to Zero.\n", m_vckey);
+                        g_free (m_vckey);
+                } else {
+                        g_print ("GVP restore: %s = %s\n", m_vckey, g_variant_print (viG, true));
+                        guint64 *gvp_grm_array_i =  (guint64*) g_variant_get_fixed_array (viG, &n, sizeof (gint64));
+                        for (int k=0; k<n && k<6; ++k)
+                                GVP_glock_data[k]=gvp_grm_array_i[k];
+                }
+        }
+        
         for (int i=0; vckey_d[i]; ++i){
                 gchar *m_vckey = g_strdup_printf ("%s-%s", vckey_d[i], key);
                 for (int k=0; k<N_GVP_VECTORS; ++k) GVPd[i][k]=0.; // zero init vector
@@ -925,6 +964,18 @@ void RPSPMC_Control::GVP_restore_vp (const gchar *key){
         g_variant_dict_unref (dict);
         g_variant_unref (v);
 
+        Source = GVP_glock_data[0]; XSource = GVP_glock_data[1]; PSource = GVP_glock_data[2]; XJoin = GVP_glock_data[3]; PlotAvg = GVP_glock_data[4];  PlotSec = GVP_glock_data[5];
+        // update Graphs
+        for (int i=0; graphs_matrix[0][i]; ++i)
+                if (graphs_matrix[0][i]){
+                        gtk_check_button_set_active (GTK_CHECK_BUTTON (graphs_matrix[0][i]), (Source & (((int) msklookup[i]) & 0xfffffff)));
+                        gtk_check_button_set_active (GTK_CHECK_BUTTON (graphs_matrix[1][i]), (XSource & (((int) (X_SOURCE_MSK | source_signals[i].mask)) & 0xfffffff)));
+                        gtk_check_button_set_active (GTK_CHECK_BUTTON (graphs_matrix[2][i]), (PSource & (((int) (P_SOURCE_MSK | source_signals[i].mask)) & 0xfffffff)));
+                        // ..
+                 }
+
+
+        
 	update_GUI ();
 }
 
@@ -2143,7 +2194,11 @@ void RPSPMC_Control::create_folder (){
 
         gint y = bp->y;
         gint mm=0;
-	for (int i=0; source_signals[i].mask; ++i) {
+
+        for (int i=0; i<32; ++i) for (int j=0; j<5; ++j) graphs_matrix[j][i]=NULL;
+        restore_graphs_values ();
+
+        for (int i=0; source_signals[i].mask; ++i) {
                 PI_DEBUG (DBG_L4, "GRAPHS*** i=" << i << " " << source_signals[i].label);
 		int c=i/8; 
 		c*=11;
@@ -2167,10 +2222,10 @@ void RPSPMC_Control::create_folder (){
                 bp->set_xy (c, r);
 
                 // Source
-                bp->grid_add_check_button ("", NULL, 1,
-                                               GCallback (change_source_callback), this,
-                                               Source, (((int) msklookup[i]) & 0xfffffff)
-                                               );
+                graphs_matrix[0][i] = bp->grid_add_check_button ("", NULL, 1,
+                                                                 GCallback (change_source_callback), this,
+                                                                 Source, (((int) msklookup[i]) & 0xfffffff)
+                                                                 );
                 g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER ((int) source_signals[i].mask)); 
                 g_object_set_data (G_OBJECT(bp->button), "VPC", GINT_TO_POINTER (i)); 
 
@@ -2185,34 +2240,34 @@ void RPSPMC_Control::create_folder (){
                 // bp->grid_add_label (lablookup[i], NULL, 1, 0.);
                 
                 // use as X-Source
-                bp->grid_add_check_button ("", NULL, 1,
-                                               GCallback (change_source_callback), this,
-                                               XSource, (((int) (X_SOURCE_MSK | source_signals[i].mask)) & 0xfffffff)
-                                               );
+                graphs_matrix[1][i] = bp->grid_add_check_button ("", NULL, 1,
+                                                                 GCallback (change_source_callback), this,
+                                                                 XSource, (((int) (X_SOURCE_MSK | source_signals[i].mask)) & 0xfffffff)
+                                                                 );
                 g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER ((int) (X_SOURCE_MSK | source_signals[i].mask))); 
                 g_object_set_data (G_OBJECT(bp->button), "VPC", GINT_TO_POINTER (i)); 
 
                 // use as Plot (Y)-Source
-                bp->grid_add_check_button ("", NULL, 1,
-                                               G_CALLBACK (change_source_callback), this,
-                                               PSource, (((int) (P_SOURCE_MSK | source_signals[i].mask)) & 0xfffffff)
-                                               );
+                graphs_matrix[2][i] = bp->grid_add_check_button ("", NULL, 1,
+                                                                 G_CALLBACK (change_source_callback), this,
+                                                                 PSource, (((int) (P_SOURCE_MSK | source_signals[i].mask)) & 0xfffffff)
+                                                                 );
                 g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER ((int) (P_SOURCE_MSK | source_signals[i].mask))); 
                 g_object_set_data (G_OBJECT(bp->button), "VPC", GINT_TO_POINTER (i)); 
                 
                 // use as A-Source (Average)
-                bp->grid_add_check_button ("", NULL, 1,
-                                               G_CALLBACK (change_source_callback), this,
-                                               PlotAvg, (((int) (A_SOURCE_MSK | source_signals[i].mask)) & 0xfffffff)
-                                               );
+                graphs_matrix[3][i] = bp->grid_add_check_button ("", NULL, 1,
+                                                                 G_CALLBACK (change_source_callback), this,
+                                                                 PlotAvg, (((int) (A_SOURCE_MSK | source_signals[i].mask)) & 0xfffffff)
+                                                                 );
                 g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER ((int) (A_SOURCE_MSK | source_signals[i].mask))); 
                 g_object_set_data (G_OBJECT(bp->button), "VPC", GINT_TO_POINTER (i)); 
                 
                 // use as S-Source (Section)
-                bp->grid_add_check_button ("", NULL, 1,
-                                               G_CALLBACK (change_source_callback), this,
-                                               PlotSec, (((int) (S_SOURCE_MSK | source_signals[i].mask)) & 0xfffffff)
-                                               );
+                graphs_matrix[4][i] = bp->grid_add_check_button ("", NULL, 1,
+                                                                 G_CALLBACK (change_source_callback), this,
+                                                                 PlotSec, (((int) (S_SOURCE_MSK | source_signals[i].mask)) & 0xfffffff)
+                                                                 );
                 g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER ((int) (S_SOURCE_MSK | source_signals[i].mask))); 
                 g_object_set_data (G_OBJECT(bp->button), "VPC", GINT_TO_POINTER (i)); 
                 
@@ -2233,17 +2288,17 @@ void RPSPMC_Control::create_folder (){
         bp->new_line ();
         bp->new_grid_with_frame ("Plot Mode Configuration");
 
-	bp->grid_add_check_button ("Join all graphs for same X", "Join all plots with same X.\n"
-                                       "Note: if auto scale (default) Y-scale\n"
-                                       "will only apply to 1st graph - use hold/exp. only for asolute scale.)", 1,
-                                       GCallback (callback_XJoin), this,
-                                       XJoin, 1
-                                       );
-	bp->grid_add_check_button ("Use single window", "Place all probe graphs in single window.",
-                                       1,
-                                       GCallback (callback_GrMatWindow), this,
-                                       GrMatWin, 1
-                                       );
+	graphs_matrix[0][31] = bp->grid_add_check_button ("Join all graphs for same X", "Join all plots with same X.\n"
+                                                          "Note: if auto scale (default) Y-scale\n"
+                                                          "will only apply to 1st graph - use hold/exp. only for asolute scale.)", 1,
+                                                          GCallback (callback_XJoin), this,
+                                                          XJoin, 1
+                                                          );
+	graphs_matrix[1][31] = bp->grid_add_check_button ("Use single window", "Place all probe graphs in single window.",
+                                                          1,
+                                                          GCallback (callback_GrMatWindow), this,
+                                                          GrMatWin, 1
+                                                          );
         bp->pop_grid ();
         bp->new_line ();
         bp->new_grid_with_frame ("Plot / Save current data in buffer");
@@ -2820,6 +2875,9 @@ int RPSPMC_Control::change_source_callback (GtkWidget *widget, RPSPMC_Control *d
 	dspc->vis_PlotAvg = dspc->PlotAvg;
 	dspc->vis_PlotSec = dspc->PlotSec;
 
+        // store
+        dspc->store_graphs_values ();
+        
 	return 0;
 }
 

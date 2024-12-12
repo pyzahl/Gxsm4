@@ -354,7 +354,8 @@ public:
 	void save_values (NcFile *ncf);
         void load_values (NcFile *ncf);
 
-        void store_values ();
+        void store_graphs_values ();
+        void restore_graphs_values ();
 
         static int config_options_callback (GtkWidget *widget, RPSPMC_Control *dspc);
         
@@ -716,6 +717,7 @@ public:
 	guint64    GVP_auto_flags;
 	GtkWidget *VPprogram[10];
 	GtkWidget *GVP_status;
+        GtkWidget *graphs_matrix[5][32];
 	guint64    GVP_glock_data[6];
 	void GVP_store_vp (const gchar *key);
 	void GVP_restore_vp (const gchar *key);
@@ -910,8 +912,9 @@ public:
                         return NULL;
 	};
 
+#define RECOVERY_RETRYS 100
         int read_GVP_data_block_to_position_vector (int offset, gboolean expect_full_header=false){
-                static int retry = 3;
+                static int retry = RECOVERY_RETRYS;
                 size_t ch_index;
 
 #if 0
@@ -951,7 +954,7 @@ public:
                 if (GVP_vp_header_current.srcs == 0xffff){
                         GVP_vp_header_current.n    = GVP_vp_header_current.i + 1; // this full vector of first point, index=N-1 ... counts down to 0
                         GVP_vp_header_current.endmark = 0;
-                        retry=3;
+                        retry=RECOVERY_RETRYS;
                 } else {
                         if (GVP_stream_buffer[offset] == 0xfefefefe){
                                 GVP_vp_header_current.endmark = 1;
@@ -966,19 +969,27 @@ public:
                                             ||
                                             GVP_vp_header_current.srcs_mask_vector != GVP_vp_header_current.srcs){
                                                 // stream ERROR detected
-                                                gchar *tmp = g_strdup_printf ("read_GVP_data_block_to_position_vector: Stream ERROR at Reading offset %08x, write position %08x.\n"
-                                                                              "SRCS/index mismatch detected. 0x%04x vs 0x%04x, missing data jump detected: i %d -> %d\n",
-                                                                              offset, GVP_stream_buffer_position,
-                                                                              GVP_vp_header_current.srcs_mask_vector, GVP_vp_header_current.srcs,
-                                                                              GVP_vp_header_current.ilast, GVP_vp_header_current.i);
-                                                status_append (tmp, true);
-                                                if (offset > 64)
-                                                        status_append_int32 (&GVP_stream_buffer[offset-64], 10*16, true, offset-64, true);
-                                                else
-                                                        status_append_int32 (&GVP_stream_buffer[0], 10*16, true, 0, true);
-                                                g_warning (tmp);
-                                                g_free (tmp);
-                                                return (-98);
+                                                { gchar *tmp = g_strdup_printf ("read_GVP_data_block_to_position_vector: Stream ERROR at Reading offset %08x, write position %08x.\n"
+                                                                                "SRCS/index mismatch detected. 0x%04x vs 0x%04x, missing data jump detected: i %d -> %d\n",
+                                                                                offset, GVP_stream_buffer_position,
+                                                                                GVP_vp_header_current.srcs_mask_vector, GVP_vp_header_current.srcs,
+                                                                                GVP_vp_header_current.ilast, GVP_vp_header_current.i);
+                                                        status_append (tmp, true);
+                                                        if (offset > 64)
+                                                                status_append_int32 (&GVP_stream_buffer[offset-64], 10*16, true, offset-64, true);
+                                                        else
+                                                                status_append_int32 (&GVP_stream_buffer[0], 10*16, true, 0, true);
+                                                        g_warning (tmp);
+                                                        g_free (tmp);
+                                                }
+                                                if (--retry > 0){ //  try to recover
+                                                        gchar *tmp = g_strdup_printf ("Trying to recover stream from missing/bogus data. retry=%d\n", retry);
+                                                        status_append (tmp, true);
+                                                        g_warning (tmp);
+                                                        g_free (tmp);
+                                                        return -99;
+                                                }else
+                                                        return -98;
                                         }
                                 }
                         }
@@ -1000,9 +1011,13 @@ public:
                         g_warning (tmp);
                         g_free (tmp);
                         GVP_vp_header_current.index = 0; // to prevent issues
-                        if (--retry || 1) // || 1 *** TESTING *** try to recover
+                        if (--retry > 0){ //  try to recover
+                                gchar *tmp = g_strdup_printf ("Trying to recover stream from missing/bogus data. retry=%d\n", retry);
+                                status_append (tmp, true);
+                                g_warning (tmp);
+                                g_free (tmp);
                                 return -99;
-                        else
+                        } else
                                 return (-95);
                 }
                 
@@ -1038,9 +1053,13 @@ public:
                                 status_append_int32 (&GVP_stream_buffer[0], 10*16, true, 0, true);
                         g_warning (tmp);
                         g_free (tmp);
-                        if (--retry)
+                        if (--retry > 0){
+                                gchar *tmp = g_strdup_printf ("Trying to recover stream from missing/bogus data. retry=%d\n", retry);
+                                status_append (tmp, true);
+                                g_warning (tmp);
+                                g_free (tmp);
                                 return -99;
-                        else
+                        } else
                                 return (-97);
                 }
                 
@@ -1069,7 +1088,7 @@ public:
                                 GVP_vp_header_current.gvp_time = (((guint64)((guint32)GVP_vp_header_current.chNs[15]))<<32) | (guint64)((guint32)GVP_vp_header_current.chNs[14]);
                                 GVP_vp_header_current.dataexpanded[14] = (double)GVP_vp_header_current.gvp_time/125e3;
                         }
-                        retry=3;
+                        retry=RECOVERY_RETRYS;
                         if (GVP_vp_header_current.srcs == 0xffff)
                                 return -1; // true for full position header update
                         return ch_index;

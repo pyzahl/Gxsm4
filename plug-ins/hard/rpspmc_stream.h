@@ -238,9 +238,9 @@ public:
         };
 
 #define SPMC_AD5791_REFV 5.0 // DAC AD5791 Reference Volatge is 5.000000V (+/-5V Range)
-        double rpspmc_to_volts (int value){ return SPMC_AD5791_REFV*(double)value / ((1<<31)-1); }
+        double rpspmc_to_volts (int value){ return SPMC_AD5791_REFV*(double)value / QN(31); }
 #define SPMC_RPIN12_REFV 1.0 // RP FAT DACs Reference Voltage is 1.0V (+/-1V Range)
-        double rpIN12_to_volts (int value){ return SPMC_RPIN12_REFV*(double)value / ((1<<31)-1); } // +/-1 <=> 32bit signed
+        double rpIN12_to_volts (int value){ return SPMC_RPIN12_REFV*(double)value / QN(31); } // +/-1 <=> 32bit signed
 
         void status_append_int32(const guint32 *data, size_t data_length, bool format = true, int offset=0, bool also_gprint = false) {
                 if (data_length < 1)
