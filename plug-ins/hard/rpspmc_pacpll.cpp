@@ -805,9 +805,9 @@ void RPSPMC_Control::restore_graphs_values (){
 
         for (int i=0; graphs_matrix[0][i]; ++i)
                 if (graphs_matrix[0][i]){
-                        gtk_check_button_set_active (GTK_CHECK_BUTTON (graphs_matrix[0][i]), (Source & (((int) msklookup[i]) & 0xfffffff)));
-                        gtk_check_button_set_active (GTK_CHECK_BUTTON (graphs_matrix[1][i]), (XSource & (((int) (X_SOURCE_MSK | source_signals[i].mask)) & 0xfffffff)));
-                        gtk_check_button_set_active (GTK_CHECK_BUTTON (graphs_matrix[2][i]), (PSource & (((int) (P_SOURCE_MSK | source_signals[i].mask)) & 0xfffffff)));
+                        gtk_check_button_set_active (GTK_CHECK_BUTTON (graphs_matrix[0][i]),  Source & source_signals[i].mask);
+                        gtk_check_button_set_active (GTK_CHECK_BUTTON (graphs_matrix[1][i]), XSource & source_signals[i].mask);
+                        gtk_check_button_set_active (GTK_CHECK_BUTTON (graphs_matrix[2][i]), PSource & source_signals[i].mask);
                         // ..
                  }
 }
@@ -968,9 +968,9 @@ void RPSPMC_Control::GVP_restore_vp (const gchar *key){
         // update Graphs
         for (int i=0; graphs_matrix[0][i]; ++i)
                 if (graphs_matrix[0][i]){
-                        gtk_check_button_set_active (GTK_CHECK_BUTTON (graphs_matrix[0][i]), (Source & (((int) msklookup[i]) & 0xfffffff)));
-                        gtk_check_button_set_active (GTK_CHECK_BUTTON (graphs_matrix[1][i]), (XSource & (((int) (X_SOURCE_MSK | source_signals[i].mask)) & 0xfffffff)));
-                        gtk_check_button_set_active (GTK_CHECK_BUTTON (graphs_matrix[2][i]), (PSource & (((int) (P_SOURCE_MSK | source_signals[i].mask)) & 0xfffffff)));
+                        gtk_check_button_set_active (GTK_CHECK_BUTTON (graphs_matrix[0][i]),  Source & source_signals[i].mask);
+                        gtk_check_button_set_active (GTK_CHECK_BUTTON (graphs_matrix[1][i]), XSource & source_signals[i].mask);
+                        gtk_check_button_set_active (GTK_CHECK_BUTTON (graphs_matrix[2][i]), PSource & source_signals[i].mask);
                         // ..
                  }
 
@@ -2224,7 +2224,7 @@ void RPSPMC_Control::create_folder (){
                 // Source
                 graphs_matrix[0][i] = bp->grid_add_check_button ("", NULL, 1,
                                                                  GCallback (change_source_callback), this,
-                                                                 Source, (((int) msklookup[i]) & 0xfffffff)
+                                                                 Source, (((int) msklookup[i]) & 0xffffffff)
                                                                  );
                 g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER ((int) source_signals[i].mask)); 
                 g_object_set_data (G_OBJECT(bp->button), "VPC", GINT_TO_POINTER (i)); 
@@ -2242,7 +2242,7 @@ void RPSPMC_Control::create_folder (){
                 // use as X-Source
                 graphs_matrix[1][i] = bp->grid_add_check_button ("", NULL, 1,
                                                                  GCallback (change_source_callback), this,
-                                                                 XSource, (((int) (X_SOURCE_MSK | source_signals[i].mask)) & 0xfffffff)
+                                                                 XSource, (((int) (X_SOURCE_MSK | source_signals[i].mask)) & 0xffffffff)
                                                                  );
                 g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER ((int) (X_SOURCE_MSK | source_signals[i].mask))); 
                 g_object_set_data (G_OBJECT(bp->button), "VPC", GINT_TO_POINTER (i)); 
@@ -2250,7 +2250,7 @@ void RPSPMC_Control::create_folder (){
                 // use as Plot (Y)-Source
                 graphs_matrix[2][i] = bp->grid_add_check_button ("", NULL, 1,
                                                                  G_CALLBACK (change_source_callback), this,
-                                                                 PSource, (((int) (P_SOURCE_MSK | source_signals[i].mask)) & 0xfffffff)
+                                                                 PSource, (((int) (P_SOURCE_MSK | source_signals[i].mask)) & 0xffffffff)
                                                                  );
                 g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER ((int) (P_SOURCE_MSK | source_signals[i].mask))); 
                 g_object_set_data (G_OBJECT(bp->button), "VPC", GINT_TO_POINTER (i)); 
@@ -2258,7 +2258,7 @@ void RPSPMC_Control::create_folder (){
                 // use as A-Source (Average)
                 graphs_matrix[3][i] = bp->grid_add_check_button ("", NULL, 1,
                                                                  G_CALLBACK (change_source_callback), this,
-                                                                 PlotAvg, (((int) (A_SOURCE_MSK | source_signals[i].mask)) & 0xfffffff)
+                                                                 PlotAvg, (((int) (A_SOURCE_MSK | source_signals[i].mask)) & 0xffffffff)
                                                                  );
                 g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER ((int) (A_SOURCE_MSK | source_signals[i].mask))); 
                 g_object_set_data (G_OBJECT(bp->button), "VPC", GINT_TO_POINTER (i)); 
@@ -2266,7 +2266,7 @@ void RPSPMC_Control::create_folder (){
                 // use as S-Source (Section)
                 graphs_matrix[4][i] = bp->grid_add_check_button ("", NULL, 1,
                                                                  G_CALLBACK (change_source_callback), this,
-                                                                 PlotSec, (((int) (S_SOURCE_MSK | source_signals[i].mask)) & 0xfffffff)
+                                                                 PlotSec, (((int) (S_SOURCE_MSK | source_signals[i].mask)) & 0xffffffff)
                                                                  );
                 g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER ((int) (S_SOURCE_MSK | source_signals[i].mask))); 
                 g_object_set_data (G_OBJECT(bp->button), "VPC", GINT_TO_POINTER (i)); 
@@ -2841,28 +2841,28 @@ int RPSPMC_Control::change_source_callback (GtkWidget *widget, RPSPMC_Control *d
 	long channel;
 	channel = (long) GPOINTER_TO_INT (g_object_get_data(G_OBJECT(widget), "Source_Channel"));
 	if (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget))) {
-		if (channel & X_SOURCE_MSK)
+		if ((channel & __SOURCE_MSK) == X_SOURCE_MSK)
 			dspc->XSource |= channel;
-		else if (channel & P_SOURCE_MSK)
+		else if ((channel & __SOURCE_MSK) == P_SOURCE_MSK)
 			dspc->PSource |= channel;
-		else if (channel & A_SOURCE_MSK)
+		else if ((channel & __SOURCE_MSK) == A_SOURCE_MSK)
 			dspc->PlotAvg |= channel;
-		else if (channel & S_SOURCE_MSK)
+		else if ((channel & __SOURCE_MSK) == S_SOURCE_MSK)
 			dspc->PlotSec |= channel;
-		else
+		else if ((channel & __SOURCE_MSK) == 0)
 			dspc->Source |= channel;
 		
 	}
 	else {
-		if (channel & X_SOURCE_MSK)
+		if ((channel & __SOURCE_MSK) ==  X_SOURCE_MSK)
 			dspc->XSource &= ~channel;
-		else if (channel & P_SOURCE_MSK)
+		else if ((channel & __SOURCE_MSK) == P_SOURCE_MSK)
 			dspc->PSource &= ~channel;
-		else if (channel & A_SOURCE_MSK)
+		else if ((channel & __SOURCE_MSK) == A_SOURCE_MSK)
 			dspc->PlotAvg &= ~channel;
-		else if (channel & S_SOURCE_MSK)
+		else if ((channel & __SOURCE_MSK) == S_SOURCE_MSK)
 			dspc->PlotSec &= ~channel;
-		else
+                else if ((channel & __SOURCE_MSK) == 0)
 			dspc->Source &= ~channel;
 	}
 

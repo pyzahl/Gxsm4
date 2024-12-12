@@ -37,10 +37,11 @@
 #define SERVO_CP    1
 #define SERVO_CI    2
 
-#define X_SOURCE_MSK 0x10000000 // select for X-mapping
-#define P_SOURCE_MSK 0x20000000 // select for plotting
-#define A_SOURCE_MSK 0x40000000 // select for Avg plotting
-#define S_SOURCE_MSK 0x80000000 // select for Sec plotting
+#define __SOURCE_MSK 0xF00000000 // mask for usage mode
+#define X_SOURCE_MSK 0x100000000 // select for X-mapping
+#define P_SOURCE_MSK 0x200000000 // select for plotting
+#define A_SOURCE_MSK 0x300000000 // select for Avg plotting
+#define S_SOURCE_MSK 0x400000000 // select for Sec plotting
 
 #define NUM_VECTOR_SIGNALS 8
 
