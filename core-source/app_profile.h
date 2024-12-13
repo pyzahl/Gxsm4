@@ -67,6 +67,8 @@ typedef struct{
 #define PROFILE_MODE_STICS    (1<<17)
 #define PROFILE_MODE_DECIMATE (1<<18)
 #define PROFILE_MODE_XR_AB    (1<<19)
+#define PROFILE_MODE_XL1000   (1<<20)
+#define PROFILE_MODE_XL4000   (1<<21)
 
 #define PROFILE_SCALE_XAUTO   (1<<0)
 #define PROFILE_SCALE_YAUTO   (1<<1)
@@ -74,6 +76,7 @@ typedef struct{
 #define PROFILE_SCALE_YHOLD   (1<<4)
 #define PROFILE_SCALE_XEXPAND (1<<5)
 #define PROFILE_SCALE_YEXPAND (1<<6)
+
 
 #define UTF8_DEGREE "\302\260"
 
@@ -183,6 +186,8 @@ class ProfileControl : public AppBase, public LineProfile1D{
         void settings_adjust_mode_callback (GSimpleAction *action, GVariant *parameter, gint64 flg);
 
 	static void logy_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
+	static void last1000_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
+	static void last4000_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
 	static void linreg_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
 	static void psd_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
 	static void ydiff_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);

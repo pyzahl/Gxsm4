@@ -988,7 +988,8 @@ public:
                                                         status_append (tmp, true);
                                                         g_warning (tmp);
                                                         g_free (tmp);
-                                                        GVP_vp_header_current.ilast = GVP_vp_header_current.i+1; // adjust for skip ***
+                                                        if (GVP_vp_header_current.i >= 0 && GVP_vp_header_current.i < GVP_vp_header_current.n)
+                                                                GVP_vp_header_current.ilast = GVP_vp_header_current.i+1; // adjust for skip ***
                                                         return -99;  // OK -- but retry -- **have wait and reprocess when data package is completed
                                                 }else
                                                         return -98;
