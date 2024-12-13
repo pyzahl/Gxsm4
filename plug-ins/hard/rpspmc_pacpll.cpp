@@ -1637,7 +1637,7 @@ void RPSPMC_Control::create_folder (){
         
         bp->new_line ();
         bp->set_label_width_chars ();
-        bp->grid_add_check_button ("Enable", "enable Z servo feedback controller.", 1,
+        bp->grid_add_check_button ("Enable", "enable Z servo feedback controller." PYREMOTE_CHECK_HOOK_KEY("MainZservo"), 1,
                                    G_CALLBACK(RPSPMC_Control::ZServoControl), this, ((int)spmc_parameters.gvp_status)&1, 0);
 
         spmc_parameters.z_servo_invert = 1.;
@@ -1684,7 +1684,7 @@ void RPSPMC_Control::create_folder (){
         bp->set_scale_nx ();
         bp->new_line (0,2);
 
-        bp->grid_add_check_button ("Enable Slope Compensation", "enable analog slope compensation...", 1,
+        bp->grid_add_check_button ("Enable Slope Compensation", "Enable XY scan slope compensation." PYREMOTE_CHECK_HOOK_KEY("MainXYSLC"), 1,
                                        G_CALLBACK(RPSPMC_Control::DSP_slope_callback), this, area_slope_compensation_flag, 0);
         g_settings_bind (hwi_settings, "adv-enable-slope-compensation",
                          G_OBJECT (GTK_CHECK_BUTTON (bp->button)), "active",
@@ -1722,7 +1722,7 @@ void RPSPMC_Control::create_folder (){
         bp->new_grid_with_frame ("Enable Linear Drift Correction (LDC)");
         bp->set_configure_list_mode_on ();
 
-	LDC_status = bp->grid_add_check_button ("Enable Linear Drift Correction", NULL, 3);
+	LDC_status = bp->grid_add_check_button ("Enable Linear Drift Correction","Enable Linear Drift Correction" PYREMOTE_CHECK_HOOK_KEY("MainLDC"), 3);
 	gtk_check_button_set_active (GTK_CHECK_BUTTON (LDC_status), 0);
 	ldc_flag = 0;
 	g_signal_connect (G_OBJECT (LDC_status), "toggled",
@@ -1800,7 +1800,7 @@ void RPSPMC_Control::create_folder (){
 
 #define GET_CURRENT_LOCKING_MODE 0 // dummy
         
-        LockIn_mode = bp->grid_add_check_button ("LockIn run free", "enable contineous modulation and LockIn processing.\n",
+        LockIn_mode = bp->grid_add_check_button ("LockIn run free", "enable contineous modulation and LockIn processing." PYREMOTE_CHECK_HOOK_KEY("MainLCKrun"),
                                                      1,
                                                      GCallback (RPSPMC_Control::lockin_runfree_callback), this,
                                                      GET_CURRENT_LOCKING_MODE, 0);
@@ -1957,7 +1957,7 @@ void RPSPMC_Control::create_folder (){
 
 
 		//note:  VP_FEEDBACK_HOLD is only the mask, this bit in GVP_opt is set to ONE for FEEBACK=ON !! Ot is inveretd while vector generation ONLY.
-		bp->grid_add_check_button ("", NULL, 1,
+		bp->grid_add_check_button ("", bp->PYREMOTE_CHECK_HOOK_KEY_FUNC("Enable Zservo","dsp-gvp-Zservo",k), 1,
                                                GCallback (callback_change_GVP_vpc_option_flags), this,
                                                GVP_opt[k], VP_FEEDBACK_HOLD);
                 EC_vpc_opt_list = g_slist_prepend( EC_vpc_opt_list, bp->button);
@@ -1965,7 +1965,7 @@ void RPSPMC_Control::create_folder (){
 
                 bp->set_configure_list_mode_on (); // ================ advanced section
 
-                bp->grid_add_check_button ("", NULL, 1,
+                bp->grid_add_check_button ("", bp->PYREMOTE_CHECK_HOOK_KEY_FUNC("Vector is a absolute reference (goto)","dsp-gvp-Zservo",k), 1,
                                            GCallback (callback_change_GVP_vpc_option_flags), this,
                                            GVP_opt[k], VP_INITIAL_SET_VEC);
                 EC_vpc_opt_list = g_slist_prepend( EC_vpc_opt_list, bp->button);
@@ -3151,7 +3151,7 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
         bp->ec->Freeze ();
         bp->new_line ();
         bp->set_input_nx (1);
-        bp->grid_add_check_button ( N_("Enable"), "Enable Amplitude Controller", 2,
+        bp->grid_add_check_button ( N_("Enable"), bp->PYREMOTE_CHECK_HOOK_KEY_FUNC("Enable Amplitude Controller","rp-pacpll-AMcontroller"), 2,
                                     G_CALLBACK (RPspmc_pacpll::amplitude_controller), this);
         bp->grid_add_check_button ( N_("Invert"), "Invert Amplitude Controller Gain. Normally positive.", 2,
                                     G_CALLBACK (RPspmc_pacpll::amplitude_controller_invert), this);
@@ -3216,7 +3216,7 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
 
         bp->new_line ();
         bp->set_input_nx (1);
-        bp->grid_add_check_button ( N_("Enable"), "Enable Phase Controller", 2,
+        bp->grid_add_check_button ( N_("Enable"), bp->PYREMOTE_CHECK_HOOK_KEY_FUNC("Enable Phase Controller","rp-pacpll-PHcontroller"), 2,
                                     G_CALLBACK (RPspmc_pacpll::phase_controller), this);
         bp->grid_add_check_button ( N_("Invert"), "Invert Phase Controller Gain. Normally positive.", 2,
                                     G_CALLBACK (RPspmc_pacpll::phase_controller_invert), this);
@@ -3273,7 +3273,7 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
         bp->ec->Freeze ();
         bp->new_line ();
         bp->set_input_nx (1);
-        bp->grid_add_check_button ( N_("Enable"), "Enable Dfreq Controller", 2,
+        bp->grid_add_check_button ( N_("Enable"), bp->PYREMOTE_CHECK_HOOK_KEY_FUNC("Enable Dfreq Controller","rp-pacpll-DFcontroller"), 2,
                                     G_CALLBACK (RPspmc_pacpll::dfreq_controller), this);
         bp->grid_add_check_button ( N_("Invert"), "Invert Dfreq Controller Gain. Normally positive.", 2,
                                     G_CALLBACK (RPspmc_pacpll::dfreq_controller_invert), this);
@@ -3338,7 +3338,7 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
         bp->new_line ();
         
         bp->set_input_nx (1);
-        bp->grid_add_check_button ( N_("Enable"), "Enable Pulse Forming", 2,
+        bp->grid_add_check_button ( N_("Enable"),  bp->PYREMOTE_CHECK_HOOK_KEY_FUNC("Enable Pulse Forming","rp-pacpll-PF"), 2,
                                     G_CALLBACK (RPspmc_pacpll::pulse_form_enable), this);
 
         // =======================================

@@ -495,6 +495,15 @@ class BuildParam{
                 return button;
         };
 
+        // generate ID-KEY for tooltip remote hook
+        const gchar* PYREMOTE_CHECK_HOOK_KEY_FUNC(const gchar* tt, const gchar *idkey, int k=-1){
+                g_message ("PYREMOTE_CHECK_HOOK_KEY_FUNC: %s. %s%s%02d)",tt,PYREMOTE_CHECK_HOOK_KEY_PREFIX,idkey,k);
+                if (k >= 0)
+                        return g_strdup_printf ("%s. %s%s%02d)",tt,PYREMOTE_CHECK_HOOK_KEY_PREFIX,idkey,k);
+                else
+                        return g_strdup_printf ("%s. %s%s)",tt,PYREMOTE_CHECK_HOOK_KEY_PREFIX,idkey);
+        };
+
         // add this (example) is tooltip string for remote enabling:  PYREMOTE_CHECK_HOOK_KEY("SCAN-REPEAT")
         GtkWidget* grid_add_check_button_remote_enabled (const gchar* labeltxt, const char *tooltip=NULL, int bwx=1,
                                                          GCallback cb=NULL, gpointer data=NULL, guint64 source=0, guint64 mask=0, const gchar *control_id=NULL);
