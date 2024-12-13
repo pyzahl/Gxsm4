@@ -969,11 +969,12 @@ public:
                                             ||
                                             GVP_vp_header_current.srcs_mask_vector != GVP_vp_header_current.srcs){
                                                 // stream ERROR detected
-                                                { gchar *tmp = g_strdup_printf ("read_GVP_data_block_to_position_vector: Stream ERROR at Reading offset %08x, write position %08x.\n"
-                                                                                "SRCS/index mismatch detected. 0x%04x vs 0x%04x, missing data jump detected: i %d -> %d\n",
-                                                                                offset, GVP_stream_buffer_position,
-                                                                                GVP_vp_header_current.srcs_mask_vector, GVP_vp_header_current.srcs,
-                                                                                GVP_vp_header_current.ilast, GVP_vp_header_current.i);
+                                                {
+                                                        gchar *tmp = g_strdup_printf ("read_GVP_data_block_to_position_vector: Stream ERROR at Reading offset %08x, write position %08x.\n"
+                                                                                      "SRCS/index mismatch detected: 0x%04x vs 0x%04x or missing data/index jump: i %d -> %d\n",
+                                                                                      offset, GVP_stream_buffer_position,
+                                                                                      GVP_vp_header_current.srcs_mask_vector, GVP_vp_header_current.srcs,
+                                                                                      GVP_vp_header_current.ilast, GVP_vp_header_current.i);
                                                         status_append (tmp, true);
                                                         if (offset > 64)
                                                                 status_append_int32 (&GVP_stream_buffer[offset-64], 10*16, true, offset-64, true);

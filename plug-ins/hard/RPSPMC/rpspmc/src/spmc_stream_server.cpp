@@ -130,7 +130,7 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
         
 #define CLEAR_SEND_DMA_MEM
 #ifdef CLEAR_SEND_DMA_MEM
-        if (DDposition_prev != DDposition){
+        if (started && (DDposition_prev != DDposition)){
                 // clear/invalidate already send mem with 0xdddddddd
                 int n  = DDposition_prev < DDposition ? DDposition - DDposition_prev : 0;
                 fprintf(stderr, "*** Clearing Send Block w DDDDDDDD: [%08x : %08x] size= %d ***\n", DDposition_prev, DDposition, n);
@@ -170,19 +170,18 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
         
         int position = stream_lastwrite_address();
 
-
-        
+//#define POSITION_TICS
+#ifdef  POSITION_TICS
         static int p__pos=0;
         static int p__sc=0;
         static int ttic = 0;
-
         ttic++;
-        
         if (p__pos != position || p__sc != stream_server_control || ttic % 64 == 0){
                 fprintf(stderr, "STREAM SERVER TIMER FUNC control=%d position=%08x <- %08x DMAmem[0]=%08x\n", stream_server_control, position, position_prev, dma_mem[0]);
                 p__pos = position;
                 p__sc  = stream_server_control;
         }
+#endif
         
         position_info << "{StreamInfo::";
 
@@ -191,15 +190,16 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
         }                
         
         if (stream_server_control & 2){ // started!
-                count = 0;
                 stream_server_control ^= 2; // remove start flag now
-                position_info << "RESET:{true},";
-                started = true;
-                data_valid = false;
+                count = 0;
                 position=0;
                 position_prev=0;
                 DDposition = 0;
                 DDposition_prev = 0;
+                position_info <<  std::hex <<  ",Position:{0x" << position_prev << std::dec << "},Count:{" << count << "}";
+                position_info << "RESET:{true},";
+                started = true;
+                data_valid = false;
                 stream_position_info_count++;
         }
         
@@ -207,6 +207,8 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
                 stream_server_control = 1; // remove flags
                 position_info << "STOPPED:{true},";
                 started = false;
+                DDposition = 0;
+                DDposition_prev = 0;
                 stream_position_info_count++;
         }
         
@@ -229,7 +231,8 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
                                 fprintf(stderr, "... position-- lag=%d pos=0x%08x ** DMA_DA0_off=0x%08x\n", lag, position, spm_dma_instance->get_dmaps_DAn_offset(0));
 #ifdef MEM_DUMP_ON
                                 if (position > 64)
-                                        spm_dma_instance->memdump_from (dma_mem, lag+64, position-64);
+                                        if (stream_debug_flags & 5)
+                                                spm_dma_instance->memdump_from (dma_mem, lag+64, position-64);
                                 // for (int dn=0; dn<8; ++dn) fprintf(stderr, " ** DMA_DA%d_off=0x%06x\n", dn, spm_dma_instance->get_dmaps_DAn_offset(dn));
 #endif
                         }
@@ -368,8 +371,10 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
                         position_prev=position;
                 }
         } else {
+#ifdef  POSITION_TICS
                 if (data_valid && ttic % 64 == 0)
                         fprintf(stderr, "Data OK. BUT: No Socket Connection/lost? Pending to send: [%08x : %08x]\n", position_prev, position);
+#endif
         }
         
         clear_info_stream ();
