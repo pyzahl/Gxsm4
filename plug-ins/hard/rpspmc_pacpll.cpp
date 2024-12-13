@@ -1965,7 +1965,7 @@ void RPSPMC_Control::create_folder (){
 
                 bp->set_configure_list_mode_on (); // ================ advanced section
 
-                bp->grid_add_check_button ("", bp->PYREMOTE_CHECK_HOOK_KEY_FUNC("Vector is a absolute reference (goto)","dsp-gvp-Zservo",k), 1,
+                bp->grid_add_check_button ("", bp->PYREMOTE_CHECK_HOOK_KEY_FUNC("Vector is a absolute reference (goto)","dsp-gvp-Set",k), 1,
                                            GCallback (callback_change_GVP_vpc_option_flags), this,
                                            GVP_opt[k], VP_INITIAL_SET_VEC);
                 EC_vpc_opt_list = g_slist_prepend( EC_vpc_opt_list, bp->button);
