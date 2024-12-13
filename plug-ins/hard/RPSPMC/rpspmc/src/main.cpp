@@ -28,6 +28,7 @@
 // VIVADO 2023.1.1 NEEDS TCL HACK:>> set_param placedata.goqFix yes
 
 int verbose = 2;
+int stream_debug_flags = 0;
 
 #include <limits.h>
 #include <math.h>

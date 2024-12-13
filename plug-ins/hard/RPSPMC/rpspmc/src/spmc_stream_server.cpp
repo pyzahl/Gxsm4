@@ -25,6 +25,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
  */
 
+//extern int verbose;
+//extern int stream_debug_flags;
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -122,7 +125,7 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
         
         unsigned int *dma_mem = spm_dma_instance->dma_memdest (); // 2M total, for descriptors (unavalabale for data) and two DMA blocks a 0x80000 bytes at this address
 
-//#define MEM_DUMP_ON
+#define MEM_DUMP_ON
 #define MEM_DUMP_CYCLE_ON
         
 #define CLEAR_SEND_DMA_MEM
@@ -133,24 +136,30 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
                 fprintf(stderr, "*** Clearing Send Block w DDDDDDDD: [%08x : %08x] size= %d ***\n", DDposition_prev, DDposition, n);
                 if (n > 0){
 #ifdef MEM_DUMP_ON
-                        spm_dma_instance->memdump_from (&dma_mem[DDposition_prev], 64, DDposition_prev); //n
+                        if (stream_debug_flags & 4)
+                                spm_dma_instance->memdump_from (&dma_mem[DDposition_prev], 64, DDposition_prev); //n
 #endif
-                        memset((void*)(&dma_mem[DDposition_prev]), 0xdd, n*sizeof(uint32_t));
+                        if (!(stream_debug_flags & 2))
+                                memset((void*)(&dma_mem[DDposition_prev]), 0xdd, n*sizeof(uint32_t));
                 } else {
                         fprintf(stderr, "*** DMA CYCLING detected [%08x : %08x] ***\n", DDposition_prev, DDposition);
                         n = BLKSIZE-DDposition_prev;
                         if (n > 0){
 #ifdef MEM_DUMP_CYCLE_ON
-                                spm_dma_instance->memdump_from (&dma_mem[DDposition_prev], 64, DDposition_prev); //n
+                                if (stream_debug_flags & 3)
+                                        spm_dma_instance->memdump_from (&dma_mem[DDposition_prev], 64, DDposition_prev); //n
 #endif
-                                memset((void*)(&dma_mem[DDposition_prev]), 0xdd, n*sizeof(uint32_t));
+                                if (!(stream_debug_flags & 2))
+                                        memset((void*)(&dma_mem[DDposition_prev]), 0xdd, n*sizeof(uint32_t));
                         }
                         n = DDposition;
                         if (n > 0){
 #ifdef MEM_DUMP_CYCLE_ON
-                                spm_dma_instance->memdump_from (&dma_mem[0], 64, 0); // n
+                                if (stream_debug_flags & 3)
+                                        spm_dma_instance->memdump_from (&dma_mem[0], 64, 0); // n
 #endif
-                                memset((void*)(&dma_mem[0]), 0xdd, n*sizeof(uint32_t));
+                                if (!(stream_debug_flags & 2))
+                                        memset((void*)(&dma_mem[0]), 0xdd, n*sizeof(uint32_t));
                         }
                 }
                 DDposition_prev = DDposition = 0;

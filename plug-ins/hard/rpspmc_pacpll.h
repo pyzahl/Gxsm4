@@ -668,9 +668,9 @@ public:
 	int probe_trigger_single_shot;
 
 	// Graphs Folder -- user settings origin
-	int Source, XSource, PSource;
+	guint64 Source, XSource, PSource;
+	guint64 PlotAvg, PlotSec;
         gboolean XJoin, GrMatWin;
-	int PlotAvg, PlotSec;
 
 	// Graphs used life -- dep. on GLOCK if copy of user settings or memorized last setting
 	int vis_Source, vis_XSource, vis_XJoin, vis_PSource;
@@ -912,7 +912,7 @@ public:
                         return NULL;
 	};
 
-#define RECOVERY_RETRYS 100
+#define RECOVERY_RETRYS 10
         int read_GVP_data_block_to_position_vector (int offset, gboolean expect_full_header=false){
                 static int retry = RECOVERY_RETRYS;
                 size_t ch_index;
@@ -952,7 +952,7 @@ public:
 
                 GVP_vp_header_current.i = (int)(((guint32)GVP_stream_buffer[offset])>>16); // data point index within GVP section (N points)
                 if (GVP_vp_header_current.srcs == 0xffff){
-                        GVP_vp_header_current.n    = GVP_vp_header_current.i + 1; // this full vector of first point, index=N-1 ... counts down to 0
+                        GVP_vp_header_current.n     = GVP_vp_header_current.i + 1; // this full vector of first point, index=N-1 ... counts down to 0
                         GVP_vp_header_current.endmark = 0;
                         retry=RECOVERY_RETRYS;
                 } else {
@@ -987,14 +987,14 @@ public:
                                                         status_append (tmp, true);
                                                         g_warning (tmp);
                                                         g_free (tmp);
-                                                        return -99;
+                                                        GVP_vp_header_current.ilast = GVP_vp_header_current.i+1; // adjust for skip ***
+                                                        return -99;  // OK -- but retry -- **have wait and reprocess when data package is completed
                                                 }else
                                                         return -98;
                                         }
                                 }
                         }
                 }
-                GVP_vp_header_current.ilast = GVP_vp_header_current.i;
                         
                 GVP_vp_header_current.index = GVP_vp_header_current.n - GVP_vp_header_current.i;
                 if (GVP_vp_header_current.index < 0){
@@ -1011,14 +1011,7 @@ public:
                         g_warning (tmp);
                         g_free (tmp);
                         GVP_vp_header_current.index = 0; // to prevent issues
-                        if (--retry > 0){ //  try to recover
-                                gchar *tmp = g_strdup_printf ("Trying to recover stream from missing/bogus data. retry=%d\n", retry);
-                                status_append (tmp, true);
-                                g_warning (tmp);
-                                g_free (tmp);
-                                return -99;
-                        } else
-                                return (-95);
+                        return (-95);
                 }
                 
                 GVP_vp_header_current.number_channels=0;
@@ -1027,7 +1020,7 @@ public:
                         if (GVP_vp_header_current.srcs & (1<<i))
                                 GVP_vp_header_current.ch_lut[GVP_vp_header_current.number_channels++] = i;
                 }
-
+                
                 // expand data stream and sort into channels
                 for (ch_index=0; ch_index < GVP_vp_header_current.number_channels && ch_index+offset < GVP_stream_buffer_position; ++ch_index){
                         int ich = GVP_vp_header_current.ch_lut[ch_index];
@@ -1058,7 +1051,7 @@ public:
                                 status_append (tmp, true);
                                 g_warning (tmp);
                                 g_free (tmp);
-                                return -99;
+                                return -99;  // OK -- but have wait and reprocess when data package is completed
                         } else
                                 return (-97);
                 }
@@ -1084,17 +1077,20 @@ public:
 #endif                        
 
                 if (ch_index+offset < GVP_stream_buffer_position){
-                        if (GVP_vp_header_current.srcs & 0xc000){
+                        if ((GVP_vp_header_current.srcs & 0xc000) == 0xc000){ // fetch 64 bit time
                                 GVP_vp_header_current.gvp_time = (((guint64)((guint32)GVP_vp_header_current.chNs[15]))<<32) | (guint64)((guint32)GVP_vp_header_current.chNs[14]);
                                 GVP_vp_header_current.dataexpanded[14] = (double)GVP_vp_header_current.gvp_time/125e3;
                         }
                         retry=RECOVERY_RETRYS;
                         if (GVP_vp_header_current.srcs == 0xffff)
                                 return -1; // true for full position header update
+
+                        GVP_vp_header_current.ilast = GVP_vp_header_current.i; // next point should be this - 1
                         return ch_index;
-                }  else {
+
+                } else {
                         // g_message ("[%08x] *** end of new data at ch=%d ** Must wait for next page/update send and retry.", offset, ch_index);
-                        return -99;
+                        return -99;   // OK -- but have wait and reprocess when data package is completed
                         // return ch_index; // number channels read until position
                 }
         };
