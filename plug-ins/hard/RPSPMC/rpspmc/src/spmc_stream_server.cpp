@@ -91,6 +91,12 @@ inline bool gvp_finished (){
 }
 
 inline unsigned int stream_lastwrite_address(){
+        static unsigned int last=0;
+        unsigned int nwrites_FPGA = read_gpio_reg_int32 (11,0);
+        if (nwrites_FPGA > last+0x100 || nwrites_FPGA < last){
+                fprintf(stderr, "*** nwrites FPGA: %08x  B#%d\n", nwrites_FPGA, nwrites_FPGA/BLKSIZE);
+                last = nwrites_FPGA;
+        }
         return read_gpio_reg_int32 (11,0) & (BLKSIZE-1); // 20bit 0x3FFFF   // & BRAM_ADRESS_MASK;
 }
 

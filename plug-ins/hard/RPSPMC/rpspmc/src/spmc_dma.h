@@ -176,6 +176,7 @@ XDMAPS_CC_0_OFFSET  0x00000408
 #define SPMC_DMA_AXI_DMA_ADDRESS	  0x40400000
 #define SPMC_DMA_HP0_ADDRESS 		  0x01000000 // reserved cache-coherent memory region (linux kernel does not use this memory!)
 
+#if 1 // OK ==============================
 #define SPMC_DMA_N_DESC 2
 #define SPMC_DMA_TRANSFER_BYTES 0x00080000 // 0.5M ****MAX WINDOW: 2M - DESCRIPTOR_BLOCK
 
@@ -184,6 +185,18 @@ XDMAPS_CC_0_OFFSET  0x00000408
 #define SPMC_DMA_SG_DMA_DESCRIPTORS_WIDTH  0x1000 // 4k  **64 KiB 
 #define SPMC_DMA_MEMBLOCK_SIZE             0x00200000 // Size of memory used by S2MM and MM2S (2 M total 0x0100_000 - 0x011F_FFFF)
 #define SPMC_DMA_BUFFER_BLOCK_SIZE         0x00080000 // Size of memory block per descriptor in bytes: 0.5 M -- two blocks, cyclic
+
+#else // FOR TESTING =====================
+
+#define SPMC_DMA_N_DESC 1
+#define SPMC_DMA_TRANSFER_BYTES 0x00100000 // 1M ****MAX WINDOW: 2M - DESCRIPTOR_BLOCK
+
+
+#define SPMC_DMA_DESCRIPTOR_REGISTERS_SIZE 0x1000 // 4k  **64 KiB 
+#define SPMC_DMA_SG_DMA_DESCRIPTORS_WIDTH  0x1000 // 4k  **64 KiB 
+#define SPMC_DMA_MEMBLOCK_SIZE             0x00200000 // Size of memory used by S2MM and MM2S (2 M total 0x0100_000 - 0x011F_FFFF)
+#define SPMC_DMA_BUFFER_BLOCK_SIZE         0x00100000 // Size of memory block per descriptor in bytes: 0.5 M -- two blocks, cyclic
+#endif
 
 //#define SPMC_DMA_MM2S_BASE_DESC_ADDR	  SPMC_DMA_HP0_ADDRESS
 #define SPMC_DMA_S2MM_BASE_DESC_ADDR	  SPMC_DMA_HP0_ADDRESS

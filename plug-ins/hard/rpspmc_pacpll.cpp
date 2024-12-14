@@ -132,21 +132,21 @@ RP data streaming
 */
 #if 0
 // Masks MUST BE unique
-SOURCE_SIGNAL_DEF source_signals[] = {
+SOURCE_SIGNAL_DEF rpspmc_source_signals[] = {
         // -- 8 vector generated signals (outputs/mapping) ==> must match: #define NUM_VECTOR_SIGNALS 8
         //  xxxxSRCS
         // mask,       name/label,  descr, unit, sym, scale, garrindex, scanchpos
         //  ****SRCS lower 32 bits, upper GVP internal/generated
-        { 0x01000000, "Index", "Index",      " ", "#",  "#",            1.0, PROBEDATA_ARRAY_INDEX, 0 },
-        { 0x02000000, "Time",  "Time",       " ", "ms", "ms",           1.0, PROBEDATA_ARRAY_TIME,  0 }, // time in ms
-        { 0x04000000, "Section", "SEC",      " ", "#",  "#",            1.0, PROBEDATA_ARRAY_SEC,   0 },
-        { 0x00100000, "XScan",   "XS",       " ", "AA", UTF8_ANGSTROEM, 1.0, PROBEDATA_ARRAY_XS, 0 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
-        { 0x00200000, "YScan",   "YS",       " ", "AA", UTF8_ANGSTROEM, 1.0, PROBEDATA_ARRAY_YS, 0 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
-        { 0x00400000, "ZScan",   "ZS",       " ", "AA", UTF8_ANGSTROEM, 1.0, PROBEDATA_ARRAY_ZS, 0 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
-        { 0x00800000, "Bias",    "Bias",     " ", "V",             "V", 1.0, PROBEDATA_ARRAY_U,  0 },
-        //{ 0x08000000, "DA", "DA",          " ", "V",             "V", 1.0, PROBEDATA_ARRAY_AA, 0 },
-        //{ 0x10000000, "DB", "DB",          " ", "V",             "V", 1.0, PROBEDATA_ARRAY_BB, 0 },
-        //{ 0x20000000, "PHI", "PHI",        " ", "deg",         "deg", 1.0, PROBEDATA_ARRAY_PHI, 0 },
+        { 0x01000000, "Index",   "Index",      " ", "#",  "#",            1.0, PROBEDATA_ARRAY_INDEX, 0 }, 
+        { 0x02000000, "Time",    "Time",       " ", "ms", "ms",           1.0, PROBEDATA_ARRAY_TIME,  0 }, // time in ms
+        { 0x04000000, "Section", "SEC",        " ", "#",  "#",            1.0, PROBEDATA_ARRAY_SEC,   0 },
+        { 0x00100000, "XScan",   "XS",         " ", "AA", UTF8_ANGSTROEM, 1.0, PROBEDATA_ARRAY_XS, 0 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
+        { 0x00200000, "YScan",   "YS",         " ", "AA", UTF8_ANGSTROEM, 1.0, PROBEDATA_ARRAY_YS, 0 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
+        { 0x00400000, "ZScan",   "ZS",         " ", "AA", UTF8_ANGSTROEM, 1.0, PROBEDATA_ARRAY_ZS, 0 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
+        { 0x00800000, "Bias",    "Bias",       " ", "V",             "V", 1.0, PROBEDATA_ARRAY_U,  0 },
+        { 0x08000000, "X0",      "DA",         " ", "V",             "V", 1.0, PROBEDATA_ARRAY_X0, -1 },
+        { 0x10000000, "XY",      "DB",         " ", "V",             "V", 1.0, PROBEDATA_ARRAY_Y0, -1 },
+        { 0x20000000, "PHI",     "PHI",        " ", "deg",         "deg", 1.0, PROBEDATA_ARRAY_PHI, -1 },
         // -- general measured signals from index [8]   // <=== to Volt conversion here -- unit sym and scale are custom auto adjusted in .._eventhandling lookup functions as of this mask 
         { 0x0000C000, "Time-Mon", "Time-Mon",  " ", "ms", "ms",           1.0,            PROBEDATA_ARRAY_S15, 15 },//ICH 14 + 15 : 64bit time in ms
         { 0x00000001, "XS-Mon",   "XS-Mon",    " ", "AA", UTF8_ANGSTROEM, 1.0,            PROBEDATA_ARRAY_S1,  1 }, //ICH:  0  see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
@@ -162,7 +162,9 @@ SOURCE_SIGNAL_DEF source_signals[] = {
         { 0x00000400, "Amplitude",  "Ampl",    " ", "mV", "mV",         (1.0/((1L<<RP_FPGA_QSQRT)-1)),    PROBEDATA_ARRAY_S11, 11 },         // 10 ** swappable **,
         { 0x00000800, "Excitation", "Exec",    " ", "mV", "mV",         (1.0/((1L<<RP_FPGA_QEXEC)-1)),    PROBEDATA_ARRAY_S12, 12 },         // 11 ** swappable **,
         { 0x00001000, "LockInX", "LockInX",    " ", "V",   "V",           1.0,            PROBEDATA_ARRAY_S13, 13 },                         // 12 
-        { 0x00002000, "dFreqCtrl", "dFreqCtrl"," ", "V",   "V",           1.0,            PROBEDATA_ARRAY_S14, 14 },                         // 13 GVP Package Test Count if GVP OPT bit 6 set
+        { 0x00002000, "dFreqCtrl", "dFreqCtrl"," ", "V",   "V",           1.0,            PROBEDATA_ARRAY_S14, 14 },                         // 13 GVP Package Test Count if GVP OPT bit 6
+        { 0x00004000, "--",        "--",       " ", "V",   "V",           1.0,            PROBEDATA_ARRAY_S15,   -1 },                        // -- DUMMY SO FAR
+        { 0x00008000, "--",        "--",       " ", "V",   "V",           1.0,            PROBEDATA_ARRAY_COUNT, -1 },                        // -- DUMMY SO FAR
         { 0x80000000, "BlockI", "BlockI",      " ", "i#", "i#",           1.0,            PROBEDATA_ARRAY_BLOCK, 0 }, // MUST BE ALWAYS LAST AND IN HERE!! END MARK.
         { 0x00000000, NULL, NULL, NULL, NULL, NULL,                       0.0,            0,                     0 }
 };
@@ -179,7 +181,7 @@ SOURCE_SIGNAL_DEF swappable_signals[] = {
 #else
 
 // Masks MUST BE unique **** max # signal: 32  (graphs_matrix[][32] fix size! Unused=uninitialized.)
-SOURCE_SIGNAL_DEF source_signals[] = {
+SOURCE_SIGNAL_DEF rpspmc_source_signals[] = {
         // -- 8 vector generated signals (outputs/mapping) ==> must match: #define NUM_VECTOR_SIGNALS 8
         //  xxxxSRCS
         // mask,       name/label,  descr, unit, sym, scale, garrindex, scanchpos
@@ -191,9 +193,9 @@ SOURCE_SIGNAL_DEF source_signals[] = {
         { 0x00200000, "YS",       " ", "AA", UTF8_ANGSTROEM, 1.0, PROBEDATA_ARRAY_YS, 0 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x00400000, "ZS",       " ", "AA", UTF8_ANGSTROEM, 1.0, PROBEDATA_ARRAY_ZS, 0 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x00800000, "Bias",     " ", "V",             "V", 1.0, PROBEDATA_ARRAY_U, 0 },
-        //{ 0x08000000, "DA",       " ", "V",           "V", 1.0, PROBEDATA_ARRAY_AA, 0 },
-        //{ 0x10000000, "DB",       " ", "V",           "V", 1.0, PROBEDATA_ARRAY_BB, 0 },
-        //{ 0x20000000, "PHI",      " ", "deg",       "deg", 1.0, PROBEDATA_ARRAY_PHI, 0 },
+        { 0x08000000, "AA",       " ", "V",           "V", 1.0, PROBEDATA_ARRAY_AA, -1 },
+        { 0x10000000, "BB",       " ", "V",           "V", 1.0, PROBEDATA_ARRAY_BB, -1 },
+        { 0x20000000, "PHI",      " ", "deg",       "deg", 1.0, PROBEDATA_ARRAY_PHI, -1 },
         // -- general measured signals from index [8]   // <=== to Volt conversion here -- unit sym and scale are custom auto adjusted in .._eventhandling lookup functions as of this mask 
         { 0x0000C000, "Time-Mon",     " ", "ms", "ms",           1.0,            PROBEDATA_ARRAY_S15, 15 }, // time in ms
         { 0x00000001, "XS-Mon",       " ", "AA", UTF8_ANGSTROEM, 1.0,            PROBEDATA_ARRAY_S1,  1 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
@@ -210,7 +212,9 @@ SOURCE_SIGNAL_DEF source_signals[] = {
         { 0x00000800, "Exec",         " ", "mV",   "mV",         (1.0/((1L<<RP_FPGA_QEXEC)-1)),    PROBEDATA_ARRAY_S12, 12  }, // ** swappable **,
         { 0x00001000, "LockInX",      " ", "dV",   "dV",         DSP32Qs15dot16TO_Volt,            PROBEDATA_ARRAY_S13,  13 },
         { 0x00002000, "dFreqCtrl",    " ", "##",   "##",                           1.0,            PROBEDATA_ARRAY_S14,  14 },
-        { 0x80000000, "BlockI",       " ", "i#", "i#", 1.0,                                        PROBEDATA_ARRAY_BLOCK, 0 }, // MUST BE ALWAYS LAST AND IN HERE!! END MARK.
+        { 0x00004000, "--",           " ", "V",     "V",                           1.0,            PROBEDATA_ARRAY_S15,   0 }, // -- DUMMY SO FAR
+        { 0x00008000, "--",           " ", "V",     "V",                           1.0,            PROBEDATA_ARRAY_COUNT, 0 }, // -- DUMMY SO FAR
+        { 0x80000000, "BlockI",       " ", "i#",    "i#",                          1.0,            PROBEDATA_ARRAY_BLOCK, 0 }, // MUST BE ALWAYS LAST AND IN HERE!! END MARK.
         { 0x00000000, NULL, NULL, NULL, NULL, 0.0, 0 }
 };
 
@@ -805,9 +809,9 @@ void RPSPMC_Control::restore_graphs_values (){
 
         for (int i=0; graphs_matrix[0][i]; ++i)
                 if (graphs_matrix[0][i]){
-                        gtk_check_button_set_active (GTK_CHECK_BUTTON (graphs_matrix[0][i]),  Source & source_signals[i].mask);
-                        gtk_check_button_set_active (GTK_CHECK_BUTTON (graphs_matrix[1][i]), XSource & source_signals[i].mask);
-                        gtk_check_button_set_active (GTK_CHECK_BUTTON (graphs_matrix[2][i]), PSource & source_signals[i].mask);
+                        gtk_check_button_set_active (GTK_CHECK_BUTTON (graphs_matrix[0][i]),  Source & rpspmc_source_signals[i].mask);
+                        gtk_check_button_set_active (GTK_CHECK_BUTTON (graphs_matrix[1][i]), XSource & rpspmc_source_signals[i].mask);
+                        gtk_check_button_set_active (GTK_CHECK_BUTTON (graphs_matrix[2][i]), PSource & rpspmc_source_signals[i].mask);
                         // ..
                  }
 }
@@ -968,9 +972,9 @@ void RPSPMC_Control::GVP_restore_vp (const gchar *key){
         // update Graphs
         for (int i=0; graphs_matrix[0][i]; ++i)
                 if (graphs_matrix[0][i]){
-                        gtk_check_button_set_active (GTK_CHECK_BUTTON (graphs_matrix[0][i]),  Source & source_signals[i].mask);
-                        gtk_check_button_set_active (GTK_CHECK_BUTTON (graphs_matrix[1][i]), XSource & source_signals[i].mask);
-                        gtk_check_button_set_active (GTK_CHECK_BUTTON (graphs_matrix[2][i]), PSource & source_signals[i].mask);
+                        gtk_check_button_set_active (GTK_CHECK_BUTTON (graphs_matrix[0][i]),  Source & rpspmc_source_signals[i].mask);
+                        gtk_check_button_set_active (GTK_CHECK_BUTTON (graphs_matrix[1][i]), XSource & rpspmc_source_signals[i].mask);
+                        gtk_check_button_set_active (GTK_CHECK_BUTTON (graphs_matrix[2][i]), PSource & rpspmc_source_signals[i].mask);
                         // ..
                  }
 
@@ -1633,7 +1637,7 @@ void RPSPMC_Control::create_folder (){
 
         //g_object_set_data( G_OBJECT (ZServoCI), "HasClient", ZServoCP);
         //g_object_set_data( G_OBJECT (ZServoCP), "HasMaster", ZServoCI);
-        //g_object_set_data( G_OBJECT (ZServoCI), "HasRatio", GUINT_TO_POINTER((guint)round(1000.*z_servo[SERVO_CP]/z_servo[SERVO_CI])));
+        //g_object_set_data( G_OBJECT (ZServoCI), "HasRatio", GINT_TO_POINTER((guint)round(1000.*z_servo[SERVO_CP]/z_servo[SERVO_CI])));
         
         bp->new_line ();
         bp->set_label_width_chars ();
@@ -2198,43 +2202,49 @@ void RPSPMC_Control::create_folder (){
         for (int i=0; i<32; ++i) for (int j=0; j<5; ++j) graphs_matrix[j][i]=NULL;
         restore_graphs_values ();
 
-        for (int i=0; source_signals[i].mask; ++i) {
-                PI_DEBUG (DBG_L4, "GRAPHS*** i=" << i << " " << source_signals[i].label);
-		int c=i/8; 
+        int ii=0;
+        for (int i=0; rpspmc_source_signals[i].mask; ++i) {
+                if (rpspmc_source_signals[i].scan_source_pos < 0) continue; // skip
+                PI_DEBUG (DBG_L4, "GRAPHS*** i=" << i << " " << rpspmc_source_signals[i].label);
+		int c=ii/8; 
 		c*=11;
                 c++;
 		int m = -1;
                 for (int k=0; swappable_signals[k].mask; ++k){
-                        if (source_signals[i].mask == swappable_signals[k].mask){
-                                //source_signals[i].name = swappable_signals[k].name;
-                                source_signals[i].label = swappable_signals[k].label;
-                                source_signals[i].unit  = swappable_signals[k].unit;
-                                source_signals[i].unit_sym = swappable_signals[k].unit_sym;
-                                source_signals[i].scale_factor = swappable_signals[k].scale_factor;
+                        if (rpspmc_source_signals[i].mask == swappable_signals[k].mask){
+                                //rpspmc_source_signals[i].name = swappable_signals[k].name;
+                                rpspmc_source_signals[i].label = swappable_signals[k].label;
+                                rpspmc_source_signals[i].unit  = swappable_signals[k].unit;
+                                rpspmc_source_signals[i].unit_sym = swappable_signals[k].unit_sym;
+                                rpspmc_source_signals[i].scale_factor = swappable_signals[k].scale_factor;
                                 m = k;
-                                PI_DEBUG (DBG_L4, "GRAPHS*** SWPS init i=" << i << " k=" << k << " " << source_signals[i].label << " sfac=" << source_signals[i].scale_factor);
-                                g_message ("GRAPHS*** SWPS init i=%d k=%d {%s} sfac=%g", i, k, source_signals[i].label,source_signals[i].scale_factor);
+                                PI_DEBUG (DBG_L4, "GRAPHS*** SWPS init i=" << i << " k=" << k << " " << rpspmc_source_signals[i].label << " sfac=" << rpspmc_source_signals[i].scale_factor);
+                                g_message ("GRAPHS*** SWPS init i=%d k=%d {%s} sfac=%g", i, k, rpspmc_source_signals[i].label,rpspmc_source_signals[i].scale_factor);
                                 break;
                         }
                 }
-                int r = y+i%8+1;
+                int r = y+ii%8+1;
+                ii++;
 
                 bp->set_xy (c, r);
 
+                g_message ("GRAPHS MATRIX SELECTOR BUILD: %d => 0x%08x",i,rpspmc_source_signals[i].mask);
+                
                 // Source
                 graphs_matrix[0][i] = bp->grid_add_check_button ("", NULL, 1,
                                                                  GCallback (change_source_callback), this,
-                                                                 Source, (((int) msklookup[i]) & 0xffffffff)
+                                                                 Source, rpspmc_source_signals[i].mask
                                                                  );
-                g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER ((int) source_signals[i].mask)); 
+                g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER (rpspmc_source_signals[i].mask)); 
+                g_object_set_data (G_OBJECT(bp->button), "SourceMapping",  GINT_TO_POINTER (MAP_SOURCE_REC)); 
                 g_object_set_data (G_OBJECT(bp->button), "VPC", GINT_TO_POINTER (i)); 
 
                 // source selection for SWPS?:
                 if (m >= 0){ // swappable flex source
-                        //g_message("bp->grid_add_probe_source_signal_options m=%d  %s => %d %s", m, source_signals[i].label,  probe_source[m], swappable_signals[m].label);
+                        //g_message("bp->grid_add_probe_source_signal_options m=%d  %s => %d %s", m, rpspmc_source_signals[i].label,  probe_source[m], swappable_signals[m].label);
                         bp->grid_add_probe_source_signal_options (m, probe_source[m], this);
                 }else { // or fixed assignment
-                        bp->grid_add_label (source_signals[i].label, NULL, 1, 0.);
+                        bp->grid_add_label (rpspmc_source_signals[i].label, NULL, 1, 0.);
                 }
                 //fixed assignment:
                 // bp->grid_add_label (lablookup[i], NULL, 1, 0.);
@@ -2242,40 +2252,44 @@ void RPSPMC_Control::create_folder (){
                 // use as X-Source
                 graphs_matrix[1][i] = bp->grid_add_check_button ("", NULL, 1,
                                                                  GCallback (change_source_callback), this,
-                                                                 XSource, (((int) (X_SOURCE_MSK | source_signals[i].mask)) & 0xffffffff)
+                                                                 XSource, X_SOURCE_MSK | rpspmc_source_signals[i].mask
                                                                  );
-                g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER ((int) (X_SOURCE_MSK | source_signals[i].mask))); 
+                g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER (rpspmc_source_signals[i].mask)); 
+                g_object_set_data (G_OBJECT(bp->button), "Source_Mapping", GINT_TO_POINTER (MAP_SOURCE_X)); 
                 g_object_set_data (G_OBJECT(bp->button), "VPC", GINT_TO_POINTER (i)); 
 
                 // use as Plot (Y)-Source
                 graphs_matrix[2][i] = bp->grid_add_check_button ("", NULL, 1,
                                                                  G_CALLBACK (change_source_callback), this,
-                                                                 PSource, (((int) (P_SOURCE_MSK | source_signals[i].mask)) & 0xffffffff)
+                                                                 PSource, P_SOURCE_MSK | rpspmc_source_signals[i].mask
                                                                  );
-                g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER ((int) (P_SOURCE_MSK | source_signals[i].mask))); 
+                g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER (rpspmc_source_signals[i].mask)); 
+                g_object_set_data (G_OBJECT(bp->button), "Source_Mapping", GINT_TO_POINTER (MAP_SOURCE_PLOTY));
                 g_object_set_data (G_OBJECT(bp->button), "VPC", GINT_TO_POINTER (i)); 
                 
                 // use as A-Source (Average)
                 graphs_matrix[3][i] = bp->grid_add_check_button ("", NULL, 1,
                                                                  G_CALLBACK (change_source_callback), this,
-                                                                 PlotAvg, (((int) (A_SOURCE_MSK | source_signals[i].mask)) & 0xffffffff)
+                                                                 PlotAvg, A_SOURCE_MSK | rpspmc_source_signals[i].mask
                                                                  );
-                g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER ((int) (A_SOURCE_MSK | source_signals[i].mask))); 
+                g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER (rpspmc_source_signals[i].mask)); 
+                g_object_set_data (G_OBJECT(bp->button), "Source_Mapping", GINT_TO_POINTER (MAP_SOURCE_AVG));
                 g_object_set_data (G_OBJECT(bp->button), "VPC", GINT_TO_POINTER (i)); 
                 
                 // use as S-Source (Section)
                 graphs_matrix[4][i] = bp->grid_add_check_button ("", NULL, 1,
                                                                  G_CALLBACK (change_source_callback), this,
-                                                                 PlotSec, (((int) (S_SOURCE_MSK | source_signals[i].mask)) & 0xffffffff)
+                                                                 PlotSec, S_SOURCE_MSK | rpspmc_source_signals[i].mask
                                                                  );
-                g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER ((int) (S_SOURCE_MSK | source_signals[i].mask))); 
+                g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER (rpspmc_source_signals[i].mask)); 
+                g_object_set_data (G_OBJECT(bp->button), "Source_Mapping", GINT_TO_POINTER (MAP_SOURCE_SEC));
                 g_object_set_data (G_OBJECT(bp->button), "VPC", GINT_TO_POINTER (i)); 
                 
-                // bp->grid_add_check_button_graph_matrix(lablookup[i], (int) msklookup[i], m, probe_source[m], i, this);
-                // bp->grid_add_check_button_graph_matrix(" ", (int) (X_SOURCE_MSK | msklookup[i]), -1, i, this);
-                // bp->grid_add_check_button_graph_matrix(" ", (int) (P_SOURCE_MSK | msklookup[i]), -1, i, this);
-                // bp->grid_add_check_button_graph_matrix(" ", (int) (A_SOURCE_MSK | msklookup[i]), -1, i, this);
-                // bp->grid_add_check_button_graph_matrix(" ", (int) (S_SOURCE_MSK | msklookup[i]), -1, i, this);
+                // bp->grid_add_check_button_graph_matrix(lablookup[i], (int) rpspmc_source_signals[i].mask, m, probe_source[m], i, this);
+                // bp->grid_add_check_button_graph_matrix(" ", (int) (X_SOURCE_MSK | rpspmc_source_signals[i].mask), -1, i, this);
+                // bp->grid_add_check_button_graph_matrix(" ", (int) (P_SOURCE_MSK | rpspmc_source_signals[i].mask), -1, i, this);
+                // bp->grid_add_check_button_graph_matrix(" ", (int) (A_SOURCE_MSK | rpspmc_source_signals[i].mask), -1, i, this);
+                // bp->grid_add_check_button_graph_matrix(" ", (int) (S_SOURCE_MSK | rpspmc_source_signals[i].mask), -1, i, this);
                 if (c < 23){
                         sep = gtk_separator_new (GTK_ORIENTATION_VERTICAL);
                         gtk_widget_set_size_request (sep, 5, -1);
@@ -2835,43 +2849,37 @@ int RPSPMC_Control::Probing_write_GVP_callback( GtkWidget *widget, RPSPMC_Contro
 }
 
 // Graphs Callbacks
-
 int RPSPMC_Control::change_source_callback (GtkWidget *widget, RPSPMC_Control *dspc){
         PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);
-	long channel;
-	channel = (long) GPOINTER_TO_INT (g_object_get_data(G_OBJECT(widget), "Source_Channel"));
-	if (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget))) {
-		if ((channel & __SOURCE_MSK) == X_SOURCE_MSK)
-			dspc->XSource |= channel;
-		else if ((channel & __SOURCE_MSK) == P_SOURCE_MSK)
-			dspc->PSource |= channel;
-		else if ((channel & __SOURCE_MSK) == A_SOURCE_MSK)
-			dspc->PlotAvg |= channel;
-		else if ((channel & __SOURCE_MSK) == S_SOURCE_MSK)
-			dspc->PlotSec |= channel;
-		else if ((channel & __SOURCE_MSK) == 0)
-			dspc->Source |= channel;
-		
-	}
-	else {
-		if ((channel & __SOURCE_MSK) ==  X_SOURCE_MSK)
-			dspc->XSource &= ~channel;
-		else if ((channel & __SOURCE_MSK) == P_SOURCE_MSK)
-			dspc->PSource &= ~channel;
-		else if ((channel & __SOURCE_MSK) == A_SOURCE_MSK)
-			dspc->PlotAvg &= ~channel;
-		else if ((channel & __SOURCE_MSK) == S_SOURCE_MSK)
-			dspc->PlotSec &= ~channel;
-                else if ((channel & __SOURCE_MSK) == 0)
-			dspc->Source &= ~channel;
-	}
+	guint32 channel = GPOINTER_TO_INT (g_object_get_data(G_OBJECT(widget), "Source_Channel"));
+	guint32 mapping = GPOINTER_TO_INT (g_object_get_data(G_OBJECT(widget), "Source_Mapping"));
+	if (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)))
+                switch (mapping){
+                case MAP_SOURCE_REC:   dspc->Source  |= channel; break;
+                case MAP_SOURCE_X:     dspc->XSource |= channel; break;
+                case MAP_SOURCE_PLOTY: dspc->PSource |= channel; break;
+                case MAP_SOURCE_AVG:   dspc->PlotAvg |= channel; break;
+                case MAP_SOURCE_SEC:   dspc->PlotSec |= channel; break;
+                default: break;
+                }
+        else
+                switch (mapping){
+                case MAP_SOURCE_REC:   dspc->Source  &= ~channel; break;
+                case MAP_SOURCE_X:     dspc->XSource &= ~channel; break;
+                case MAP_SOURCE_PLOTY: dspc->PSource &= ~channel; break;
+                case MAP_SOURCE_AVG:   dspc->PlotAvg &= ~channel; break;
+                case MAP_SOURCE_SEC:   dspc->PlotSec &= ~channel; break;
+                default: break;
+                }
 
+        g_message ("CH=%08x MAP:%d *** S%08x X%08x Y%08x",channel, mapping, dspc->Source,dspc->XSource,dspc->PSource );
+        
         //g_message ("change_source_callback: Ch: %08x => Srcs: %08x", channel, dspc->Source);
         
-	dspc->vis_Source = dspc->Source;
+	dspc->vis_Source  = dspc->Source;
 	dspc->vis_XSource = dspc->XSource;
 	dspc->vis_PSource = dspc->PSource;
-	dspc->vis_XJoin = dspc->XJoin;
+	dspc->vis_XJoin   = dspc->XJoin;
 	dspc->vis_PlotAvg = dspc->PlotAvg;
 	dspc->vis_PlotSec = dspc->PlotSec;
 

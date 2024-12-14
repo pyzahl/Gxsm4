@@ -49,7 +49,7 @@
 #define THIS_HWI_PREFIX      "SPM_TEMPL_HwI"
 
 extern int debug_level;
-extern SOURCE_SIGNAL_DEF source_signals[];
+extern SOURCE_SIGNAL_DEF rpspmc_source_signals[];
 
 extern "C++" {
         extern RPspmc_pacpll *rpspmc_pacpll;
@@ -146,19 +146,19 @@ rpspmc_hwi_dev::rpspmc_hwi_dev():RP_stream(this){
         // Automatic overriding GXSM core resources for RPSPMC setup to map scan data sources via channel selector:
 
         
-        // use SOURCE_SIGNAL_DEF source_signals[] table to auto configure
-        for (int i=0; source_signals[i].label; ++i){ // name
+        // use SOURCE_SIGNAL_DEF rpspmc_source_signals[] table to auto configure
+        for (int i=0; rpspmc_source_signals[i].label; ++i){ // name
                 g_message ("Reading SOURCE_SIGNALS[%d]",i);
-                g_message ("Reading SOURCE_SIGNALS[%d].mask %x",i,source_signals[i].mask);
-                g_message ("Reading SOURCE_SIGNALS[%d].label >%s<",i,source_signals[i].label);
+                g_message ("Reading SOURCE_SIGNALS[%d].mask %x",i,rpspmc_source_signals[i].mask);
+                g_message ("Reading SOURCE_SIGNALS[%d].label >%s<",i,rpspmc_source_signals[i].label);
                 g_message ("SOURCE_SIGNAL_DEF %02d for %s mask: 0x%08x L: %s U: %s  x %g",
-                           source_signals[i].scan_source_pos-1,
-                           source_signals[i].label, source_signals[i].mask, // name
-                           source_signals[i].label, source_signals[i].unit, source_signals[i].scale_factor);
-                if (source_signals[i].scan_source_pos > 0)
-                        main_get_gapp()->channelselector->ConfigureHardwareMapping (source_signals[i].scan_source_pos-1,
-                                                                                    source_signals[i].label, source_signals[i].mask, // name
-                                                                                    source_signals[i].label, source_signals[i].unit, source_signals[i].scale_factor);
+                           rpspmc_source_signals[i].scan_source_pos-1,
+                           rpspmc_source_signals[i].label, rpspmc_source_signals[i].mask, // name
+                           rpspmc_source_signals[i].label, rpspmc_source_signals[i].unit, rpspmc_source_signals[i].scale_factor);
+                if (rpspmc_source_signals[i].scan_source_pos > 0)
+                        main_get_gapp()->channelselector->ConfigureHardwareMapping (rpspmc_source_signals[i].scan_source_pos-1,
+                                                                                    rpspmc_source_signals[i].label, rpspmc_source_signals[i].mask, // name
+                                                                                    rpspmc_source_signals[i].label, rpspmc_source_signals[i].unit, rpspmc_source_signals[i].scale_factor);
                 }
 
         subscan_data_y_index_offset = 0;
@@ -460,14 +460,14 @@ gpointer ScanDataReadThread (void *ptr_hwi){
         for (int dir = 0; dir < 4; ++dir){
                 int i=0;
                 for (int ch=0; ch < hwi->nsrcs_dir[dir] && ch<NUM_PV_DATA_SIGNALS; ch++){
-                        for (; source_signals[i].mask; ++i){
-                                g_message ("GVP Data Expanded Lookup table signal dir %02d, ch %02d, ssi %02d: checking for mask 0x%08x (%s) match in 0x%08x", dir, ch, i, source_signals[i].mask, source_signals[i].label, hwi->srcs_dir[dir]);
-                                if ((hwi->srcs_dir[dir] & source_signals[i].mask) == source_signals[i].mask){
-                                        if (source_signals[i].garr_index == PROBEDATA_ARRAY_TIME)
+                        for (; rpspmc_source_signals[i].mask; ++i){
+                                g_message ("GVP Data Expanded Lookup table signal dir %02d, ch %02d, ssi %02d: checking for mask 0x%08x (%s) match in 0x%08x", dir, ch, i, rpspmc_source_signals[i].mask, rpspmc_source_signals[i].label, hwi->srcs_dir[dir]);
+                                if ((hwi->srcs_dir[dir] & rpspmc_source_signals[i].mask) == rpspmc_source_signals[i].mask){
+                                        if (rpspmc_source_signals[i].garr_index == PROBEDATA_ARRAY_TIME)
                                                 pvlut[dir][ch] = 14;
                                         else
-                                                pvlut[dir][ch] = source_signals[i].garr_index - PROBEDATA_ARRAY_S1; // as ..._S1 .. _S14 are exactly incremental => 0..13 ; see (***) above
-                                        g_message ("GVP Data Expanded Lookup table signal %02d: pvlut[%02d][%02d] = %02d for mask 0x%08x, garri %d", i,dir,ch,pvlut[dir][ch], source_signals[i].mask, source_signals[i].garr_index);
+                                                pvlut[dir][ch] = rpspmc_source_signals[i].garr_index - PROBEDATA_ARRAY_S1; // as ..._S1 .. _S14 are exactly incremental => 0..13 ; see (***) above
+                                        g_message ("GVP Data Expanded Lookup table signal %02d: pvlut[%02d][%02d] = %02d for mask 0x%08x, garri %d", i,dir,ch,pvlut[dir][ch], rpspmc_source_signals[i].mask, rpspmc_source_signals[i].garr_index);
                                         ++i; break;
                                 }
                         }
@@ -1002,10 +1002,10 @@ gboolean rpspmc_hwi_dev::ScanLineM(int yindex, int xdir, int muxmode, //srcs_mas
                 int num_srcs = 0;
                 running      = FALSE;
 
-                for (int i=0; source_signals[i].mask; ++i){
-                        if ((srcs_mask & source_signals[i].mask) == source_signals[i].mask){
+                for (int i=0; rpspmc_source_signals[i].mask; ++i){
+                        if ((srcs_mask & rpspmc_source_signals[i].mask) == rpspmc_source_signals[i].mask){
                                 num_srcs++;
-                                g_message ("Match [%d] for 0x%08x <==> %s  #%d", i, source_signals[i].mask, source_signals[i].label, num_srcs);
+                                g_message ("Match [%d] for 0x%08x <==> %s  #%d", i, rpspmc_source_signals[i].mask, rpspmc_source_signals[i].label, num_srcs);
                         }
                 }
 

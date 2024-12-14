@@ -75,7 +75,7 @@ gfloat color_yellow[4]  = { 1., 1., 0., 1.0 };
 #define XAngFac  (main_get_gapp()->xsm->Inst->Dig2XA (1))
 #define YAngFac  (main_get_gapp()->xsm->Inst->Dig2YA (1))
 
-extern SOURCE_SIGNAL_DEF source_signals[];
+extern SOURCE_SIGNAL_DEF rpspmc_source_signals[];
 
 //#define XSM_DEBUG_PG(X)  std::cout << X << std::endl;
 #define XSM_DEBUG_PG(X) ;
@@ -94,12 +94,12 @@ void RPSPMC_Control::init_vp_signal_info_lookup_cache(){
                 unitlookup[i]  = err_unknown_u;
                 expdi_lookup[i] = PROBEDATA_ARRAY_INDEX; // safety/error fallback
                 scalelookup[i] = vp_scale_lookup(i);
-                for (int k=0; source_signals[k].mask; ++k)
-                        if (source_signals[k].garr_index == i){
-                               msklookup[i]   = source_signals[k].mask;
-                               lablookup[i]   = source_signals[k].label;
-                               unitlookup[i]  = source_signals[k].unit_sym;
-                               expdi_lookup[i] = source_signals[k].garr_index;
+                for (int k=0; rpspmc_source_signals[k].mask; ++k)
+                        if (rpspmc_source_signals[k].garr_index == i){
+                               msklookup[i]   = rpspmc_source_signals[k].mask;
+                               lablookup[i]   = rpspmc_source_signals[k].label;
+                               unitlookup[i]  = rpspmc_source_signals[k].unit_sym;
+                               expdi_lookup[i] = rpspmc_source_signals[k].garr_index;
                         }
                 g_print ("Mask[%02d] 0x%08x => %s in %s x %g\n",i,msklookup[i],lablookup[i],unitlookup[i], scalelookup[i]);
         }
@@ -112,36 +112,36 @@ void RPSPMC_Control::init_vp_signal_info_lookup_cache(){
 }
 
 const char* RPSPMC_Control::vp_label_lookup(int i){
-        for (int k=0; source_signals[k].mask; ++k)
-                if (source_signals[k].garr_index == i)
-                        return  source_signals[k].label;
+        for (int k=0; rpspmc_source_signals[k].mask; ++k)
+                if (rpspmc_source_signals[k].garr_index == i)
+                        return  rpspmc_source_signals[k].label;
         return err_unknown_l;
 }
 
 const char* RPSPMC_Control::vp_unit_lookup(int i){
-        for (int k=0; source_signals[k].mask; ++k)
-                if (source_signals[k].garr_index == i)
-                        if (source_signals[k].mask == 0x000020){ // CUSTOM auto
+        for (int k=0; rpspmc_source_signals[k].mask; ++k)
+                if (rpspmc_source_signals[k].garr_index == i)
+                        if (rpspmc_source_signals[k].mask == 0x000020){ // CUSTOM auto
                                 if (main_get_gapp()->xsm->Inst->nAmpere2V (1.) > 1.)
                                         return str_pA;
                                 else
                                         return str_nA;
                         } else
-                                return  source_signals[k].unit_sym;
+                                return  rpspmc_source_signals[k].unit_sym;
         return err_unknown_u;
 }
 
 double RPSPMC_Control::vp_scale_lookup(int i){
-        for (int k=0; source_signals[k].mask; ++k){
-                //g_print ("vpsl %s  [%d]: %8x, %g\n",source_signals[k].label, i,source_signals[k].mask, source_signals[k].scale_factor);
-                if (source_signals[k].garr_index == i){
-                        //g_print ("vpsl[%d]: %8x, %g\n",i,source_signals[k].mask, source_signals[k].scale_factor);
-                        switch (source_signals[k].mask){
+        for (int k=0; rpspmc_source_signals[k].mask; ++k){
+                g_print ("looking for %d == [%d] in vpsl %20s  [%02d]: %08x,  %g\n",i, rpspmc_source_signals[k].garr_index, rpspmc_source_signals[k].label, i,rpspmc_source_signals[k].mask, rpspmc_source_signals[k].scale_factor);
+                if (rpspmc_source_signals[k].garr_index == i){
+                        g_print ("Found: vpsl[%d]: %08x, ScaleFac= %g\n",i,rpspmc_source_signals[k].mask, rpspmc_source_signals[k].scale_factor);
+                        switch (rpspmc_source_signals[k].mask){
                         case 0x00000020: // CUSTOM auto
                                 if (main_get_gapp()->xsm->Inst->nAmpere2V (1.) > 1.)
-                                        return source_signals[k].scale_factor/main_get_gapp()->xsm->Inst->nAmpere2V (1e-3); // choose pA
+                                        return rpspmc_source_signals[k].scale_factor/main_get_gapp()->xsm->Inst->nAmpere2V (1e-3); // choose pA
                                 else
-                                        return source_signals[k].scale_factor/main_get_gapp()->xsm->Inst->nAmpere2V (1.); // nA
+                                        return rpspmc_source_signals[k].scale_factor/main_get_gapp()->xsm->Inst->nAmpere2V (1.); // nA
                                 break;
                         case 0x00100000: // function calls...
                         case 0x00000001: 
@@ -156,11 +156,11 @@ double RPSPMC_Control::vp_scale_lookup(int i){
                         case 0x00000008:
                                 return main_get_gapp()->xsm->Inst->BiasGainV2V ();
                         case 0x04000000: // ARRAY_SEC  -- SECTION
-                                //g_print ("vpsl: %8x, %g\n",source_signals[k].mask, source_signals[k].scale_factor);
+                                //g_print ("vpsl: %8x, %g\n",rpspmc_source_signals[k].mask, rpspmc_source_signals[k].scale_factor);
                                 return 1.0;
                         default:
-                                //g_print ("vpsl for %s: 0x%08x, sfac=%g\n",source_signals[k].label, source_signals[k].mask, source_signals[k].scale_factor);
-                                return source_signals[k].scale_factor; // some thing bogus here
+                                //g_print ("vpsl for %s: 0x%08x, sfac=%g\n",rpspmc_source_signals[k].label, rpspmc_source_signals[k].mask, rpspmc_source_signals[k].scale_factor);
+                                return rpspmc_source_signals[k].scale_factor;
                         }
                 }
         }
