@@ -212,9 +212,9 @@ SOURCE_SIGNAL_DEF rpspmc_source_signals[] = {
         { 0x00000800, "Exec",         " ", "mV",   "mV",         (1.0/((1L<<RP_FPGA_QEXEC)-1)),    PROBEDATA_ARRAY_S12, 12  }, // ** swappable **,
         { 0x00001000, "LockInX",      " ", "dV",   "dV",         DSP32Qs15dot16TO_Volt,            PROBEDATA_ARRAY_S13,  13 },
         { 0x00002000, "dFreqCtrl",    " ", "##",   "##",                           1.0,            PROBEDATA_ARRAY_S14,  14 },
-        { 0x00004000, "--",           " ", "V",     "V",                           1.0,            PROBEDATA_ARRAY_S15,   0 }, // -- DUMMY SO FAR
-        { 0x00008000, "--",           " ", "V",     "V",                           1.0,            PROBEDATA_ARRAY_COUNT, 0 }, // -- DUMMY SO FAR
-        { 0x80000000, "BlockI",       " ", "i#",    "i#",                          1.0,            PROBEDATA_ARRAY_BLOCK, 0 }, // MUST BE ALWAYS LAST AND IN HERE!! END MARK.
+        { 0x00004000, "--",           " ", "V",     "V",                           1.0,            PROBEDATA_ARRAY_S15,   -1 }, // -- DUMMY SO FAR
+        { 0x00008000, "--",           " ", "V",     "V",                           1.0,            PROBEDATA_ARRAY_COUNT, -1 }, // -- DUMMY SO FAR
+        { 0x80000000, "BlockI",       " ", "i#",    "i#",                          1.0,            PROBEDATA_ARRAY_BLOCK, -1 }, // MUST BE ALWAYS LAST AND IN HERE!! END MARK.
         { 0x00000000, NULL, NULL, NULL, NULL, 0.0, 0 }
 };
 

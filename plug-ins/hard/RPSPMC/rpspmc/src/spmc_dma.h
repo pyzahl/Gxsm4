@@ -433,10 +433,11 @@ public:
                 print_check_dma_all();
 
                 // 2) START RS=1
+#if 0
                 INFO_PRINTF ("SET START DMA IN CONTROL RS=1\n");
                 set_offset (axi_dma, SPMC_DMA_S2MM_CONTROL_REGISTER, SPMC_DMA_RUN); 
                 print_check_dma_all();
-
+#endif
                 INFO_PRINTF ("SET START DMA IN CONTROL RS=1 + CYCLIC\n");
                 set_offset (axi_dma, SPMC_DMA_S2MM_CONTROL_REGISTER, SPMC_DMA_RUN | SPMC_DMA_CYCLIC_ENABLE); 
                 print_check_dma_all();
@@ -456,7 +457,7 @@ public:
                 */
                 INFO_PRINTF ("SET TAIL DESCRIPTOR ADDRESS (CYCLIC: any value not part of BD chain!)\n");
                 //set_offset (axi_dma, SPMC_DMA_S2MM_TAILDESC, s2mm_tail_descriptor_address); 
-                set_offset (axi_dma, SPMC_DMA_S2MM_TAILDESC, 0x50); 
+                set_offset (axi_dma, SPMC_DMA_S2MM_TAILDESC, 0x50); // 0x50
                 print_check_dma_all();
 	};
 
