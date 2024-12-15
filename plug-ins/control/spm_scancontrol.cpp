@@ -1605,8 +1605,13 @@ gboolean SPM_ScanControl::do_scanline (int init){
                 return FALSE; // done.
         }
         
-        if (idf_data.scan_list) IdleRefreshFunc (&idf_data);
-        // main_get_gapp()->check_events_self(); // FIX ME -- obsolete?
+        const gint64 max_age = 100000; // 100ms
+        static gint64 time_of_last_update = 0;
+        if ( (time_of_last_update+max_age) < g_get_real_time () ){ // throttle
+                time_of_last_update = g_get_real_time ();
+                if (idf_data.scan_list) IdleRefreshFunc (&idf_data);
+        }
+
         return TRUE;
 }
 
