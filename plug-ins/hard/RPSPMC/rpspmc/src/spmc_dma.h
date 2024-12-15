@@ -457,7 +457,8 @@ public:
                 */
                 INFO_PRINTF ("SET TAIL DESCRIPTOR ADDRESS (CYCLIC: any value not part of BD chain!)\n");
                 //set_offset (axi_dma, SPMC_DMA_S2MM_TAILDESC, s2mm_tail_descriptor_address); 
-                set_offset (axi_dma, SPMC_DMA_S2MM_TAILDESC, 0x50); // 0x50
+                //##set_offset (axi_dma, SPMC_DMA_S2MM_TAILDESC, 0x50); // 0x50
+                set_offset (axi_dma, SPMC_DMA_S2MM_TAILDESC, s2mm_tail_descriptor_address+0x50); 
                 print_check_dma_all();
 	};
 
@@ -679,10 +680,14 @@ public:
                                 //Then it must point to the first descriptor in the chain, BD_0, 
                                 //located at (BASE_DESC_ADDR+0*0x40)
                                 //At least in cyclic mode, which is what we are using for the moment. 
-                                set_offset (descriptor_chain, SPMC_DMA_NEXT_DESC + i*0x40, BASE_DESC_ADDR);
+                                set_offset (descriptor_chain, SPMC_DMA_NEXT_DESC + i*0x40, BASE_DESC_ADDR); //+0*0x40);
                                 // no other function (remains zero)
                                 set_offset (descriptor_chain, SPMC_DMA_BUFF_ADDR + i*0x40, TARGET_ADDRESS+i*SPMC_DMA_TRANSFER_BYTES); // taildescr, not used data, but non zero		
-                                set_offset (descriptor_chain, SPMC_DMA_CONTROL + i*0x40, 0x50); // taildescr, not used data, but non zero
+                                //set_offset (descriptor_chain, SPMC_DMA_CONTROL + i*0x40, SPMC_DMA_TRANSFER_BYTES);
+                                //set_offset (descriptor_chain, SPMC_DMA_CONTROL + i*0x40, 0x00); // not cycling
+                                //set_offset (descriptor_chain, SPMC_DMA_CONTROL + i*0x40, 0x04); // one missing word 
+                                set_offset (descriptor_chain, SPMC_DMA_CONTROL + i*0x40, 0x04); //
+                                //##set_offset (descriptor_chain, SPMC_DMA_CONTROL + i*0x40, 0x50); // taildescr, not used data, but non zero
                                 INFO_PRINTF ("CYCLIC TAIL BD_%d @0x%08x:\n", i, BASE_DESC_ADDR+i*0x40);
                         }
 
