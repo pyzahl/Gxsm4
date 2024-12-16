@@ -107,10 +107,9 @@ module axis_decimator #
         y4 <= y3;
         y3 <= y2;
         y2 <= y1;
-        y1 <= {{(AXIS_SIGNAL_DATA_WIDTH-AXIS_SIGNAL_SIGNIFICANT_DATA_WIDTH){AXIS_SIGNAL_DATA_WIDTH+S_AXIS_SIGNAL_tdata[AXIS_SIGNAL_SIGNIFICANT_DATA_WIDTH-1]}}, // signum bit 13 extend to 16
+        y1 <= {{(AXIS_SIGNAL_DATA_WIDTH-AXIS_SIGNAL_SIGNIFICANT_DATA_WIDTH){S_AXIS_SIGNAL_tdata[AXIS_SIGNAL_DATA_WIDTH+AXIS_SIGNAL_SIGNIFICANT_DATA_WIDTH-1]}}, // signum bit 13 extend to 16
                {S_AXIS_SIGNAL_tdata[AXIS_SIGNAL_DATA_WIDTH+AXIS_SIGNAL_SIGNIFICANT_DATA_WIDTH-1 : AXIS_SIGNAL_DATA_WIDTH]} // 14bit ADC data bits 13..0
               };
-
 
         //if (aclk[0])
         //begin
@@ -127,10 +126,10 @@ module axis_decimator #
 
 
     assign M_AXIS_S0_tdata = x; // x[(16-1):0] + { {(14){1'b0}}, x[(16-1)], {(16-14-1){!x[(16-1)]}}}; // x
-    assign M_AXIS_S0_tvalid = 1;
+    assign M_AXIS_S0_tvalid = S_AXIS_SIGNAL_tvalid;
     assign M_AXIS_S1_tdata = y;
-    assign M_AXIS_S1_tvalid = 1;
+    assign M_AXIS_S1_tvalid = S_AXIS_SIGNAL_tvalid;
     assign M_AXIS_S01_tdata = S_AXIS_SIGNAL_tdata;
-    assign M_AXIS_S01_tvalid = 1;
+    assign M_AXIS_S01_tvalid = S_AXIS_SIGNAL_tvalid;
 
 endmodule

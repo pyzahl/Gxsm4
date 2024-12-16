@@ -72,9 +72,9 @@ module axis_splitter #(
     // assign monitor = S_AXIS_tdata[SAXIS_TDATA_WIDTH-1:0] + { {(MAXIS_TDATA_WIDTH){1'b0}}, S_AXIS_tdata[SAXIS_TDATA_WIDTH-1], {(SAXIS_TDATA_WIDTH-MAXIS_TDATA_WIDTH-1){!S_AXIS_tdata[SAXIS_TDATA_WIDTH-1]}}};
     
     // EXPAND / COPY:
-    assign monitor = {{S_AXIS_tdata[SAXIS_TDATA_WIDTH-1:0]}, {(MAXIS_TDATA_WIDTH-SAXIS_TDATA_WIDTH){1'b0}}};
-    assign M_AXIS_tdata  = {{S_AXIS_tdata[SAXIS_TDATA_WIDTH-1:0]}, {(MAXIS_TDATA_WIDTH-SAXIS_TDATA_WIDTH){1'b0}}};
-    assign M_AXIS_tvalid = S_AXIS_tvalid;
+    assign monitor        = {{S_AXIS_tdata[SAXIS_TDATA_WIDTH-1:0]}, {(MAXIS_TDATA_WIDTH-SAXIS_TDATA_WIDTH){1'b0}}};
+    assign M_AXIS_tdata   = {{S_AXIS_tdata[SAXIS_TDATA_WIDTH-1:0]}, {(MAXIS_TDATA_WIDTH-SAXIS_TDATA_WIDTH){1'b0}}};
+    assign M_AXIS_tvalid  = S_AXIS_tvalid;
     assign M_AXIS2_tdata  = {{S_AXIS_tdata[SAXIS_TDATA_WIDTH-1:0]}, {(MAXIS_TDATA_WIDTH-SAXIS_TDATA_WIDTH){1'b0}}};
     assign M_AXIS2_tvalid = S_AXIS_tvalid;
     

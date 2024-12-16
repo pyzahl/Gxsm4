@@ -64,9 +64,14 @@ int stream_debug_flags = 0;
 #include "spmc_stream_server.cpp"
 
 // INSTALL:
-// cp ~/SVN/RedPitaya/RedPACPLL4mdc-SPI/RedPACPLL4mdc-SPI.runs/impl_1/system_wrapper.bit fpga.bit
+// =============================================================
+// copy complete infrastructure:
 // scp -r rpspmc root@rp-f05603.local:/opt/redpitaya/www/apps/
+// build:
 // make clean; make INSTALL_DIR=/opt/redpitaya
+
+// update fpga.bit only:
+// Gxsm4/plug-ins/hard/RPSPMC/rpspmc$ scp ../project_RP-SPMC-RedPACPLL-202308-test/project_RP-SPMC-RedPACPLL-202308-test.runs/impl_1/system_wrapper.bit root@rp-f09296.local:/opt/redpitaya/www/apps/rpspmc/fpga.bit
 
 // On rev RP OS 2.x >>> need to install: root@rp-f09296:/opt/redpitaya/www/apps/rpspmc# apt-get install libwebsocketpp-dev
 
