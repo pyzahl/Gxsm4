@@ -276,33 +276,50 @@ static void via_remote_list_Check_ec(Gtk_EntryControl* ec, remote_args* ra){
 
 
 void RPSPMC_Control::write_spm_scan_vector_program (double rx, double ry, int nx, int ny, double slew[2], int subscan[4], long int srcs[4], int gvp_options){
+        static int subscan_buffer[4] = {-1,-1,-1,-1};
+        static int srcs_buffer[4] = {0,0,0,0};
+        
         int vector_index=0;
 
         double tfwd = rx/slew[0];
         double trev = rx/slew[1];
 
-        double xi = -rx/2.+rx*(double)subscan[0]/(double)nx;
-        double yi =  ry/2.-ry*(double)subscan[2]/(double)ny;
+        if (subscan == NULL && subscan_buffer[0] < 0)
+                return;
+        
+        if (subscan && srcs){
+                subscan_buffer[0]=subscan[0];
+                subscan_buffer[1]=subscan[1];
+                subscan_buffer[2]=subscan[2];
+                subscan_buffer[3]=subscan[3];
+                srcs_buffer[0]=srcs[0];
+                srcs_buffer[1]=srcs[1];
+                srcs_buffer[2]=srcs[2];
+                srcs_buffer[3]=srcs[3];
+        }
+        
+        double xi = -rx/2.+rx*(double)subscan_buffer[0]/(double)nx;
+        double yi =  ry/2.-ry*(double)subscan_buffer[2]/(double)ny;
         double ti = sqrt(xi*xi+yi*yi)/slew[1];
 
         //g_message ("write spm scan GVP from: rx,y: %g V, %g V, slew: %g A/s, %g A/s -> tifr: %g, %g, %g", rx,ry, slew[0], slew[1], ti, tfwd, trev);
 
-        double dx = rx*(double)subscan[1]/(double)nx; // scan X vector length
-        double dy = ry*(double)subscan[3]/(double)ny; // scan Y vector length
+        double dx = rx*(double)subscan_buffer[1]/(double)nx; // scan X vector length
+        double dy = ry*(double)subscan_buffer[3]/(double)ny; // scan Y vector length
 
         //g_message ("write spm scan GVP: dx,dy: %g, %g uV", dx*e16, dy*1e6);
 
         /*
-write spm scan GVP: ti, fwd, rev= 1.80086s, 2.5468s, 2.5468s;  xi,yi=(-0.05, 0.05)V, dx,dy=(0.1, 0.1)V nx,ny=(100, 100) subscan=[[0 100][0 100]], srcs0=0x00000010
-** Message: 20:16:17.263: GVP_write_program_vector[0]: srcs = 0x00000001
-Vec[ 0] XYZU: -5e-05 5e-05 0 0 V <== VPos XYZU: 0 0 0 0 V [0 A 0 A 0 A 0 V] SRCSO=00000001
-** Message: 20:16:17.263: GVP_write_program_vector[1]: srcs = 0x00001001
+write spm scan GVP: ti, fwd, rev= 1.80086s, 2.5468s, 2.5468s;  xi,yi=(-0.05, 0.05)V, dx,dy=(0.1, 0.1)V nx,ny=(100, 100) subscan_buffer=[[0 100][0 100]], srcs_buffer0=0x00000010
+** Message: 20:16:17.263: GVP_write_program_vector[0]: srcs_buffer = 0x00000001
+Vec[ 0] XYZU: -5e-05 5e-05 0 0 V <== VPos XYZU: 0 0 0 0 V [0 A 0 A 0 A 0 V] SRCS_BUFFERO=00000001
+** Message: 20:16:17.263: GVP_write_program_vector[1]: srcs_buffer = 0x00001001
 Vec[ 1] XYZU: 0.0001 0 0 0 V
-** Message: 20:16:17.263: GVP_write_program_vector[2]: srcs = 0x00001001
+** Message: 20:16:17.263: GVP_write_program_vector[2]: srcs_buffer = 0x00001001
 Vec[ 2] XYZU: -0.0001 0 0 0 V
-** Message: 20:16:17.263: GVP_write_program_vector[3]: srcs = 0x00001001
+** Message: 20:16:17.263: GVP_write_program_vector[3]: srcs_buffer = 0x00001001
 Vec[ 3] XYZU: 0 1e-06 0 0 V
-** Message: 20:16:17.263: GVP_write_program_vector[4]: srcs = 0x00000000
+** Message: 20:16:17.263: GVP_write_program_vector[4]: srcs_buffer = 0x00000000
 Vec[ 4] XYZU: 0 0 0 0 V
 ** Message: 20:16:17.263: rpspmc_hwi_dev::GVP_execute_vector_program ()
 ** Message: 20:16:17.263: FifoReadThread Start
@@ -317,51 +334,51 @@ vector = {32'd000032,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  3
 {Info: {RESET:{true}}}
         */
 
-        // ** Message: 23:34:25.068: write spm scan GVP: ti, fwd, rev= 0.0707107s, 0.1s, 0.1s;  xi,yi=(-1, 1)V, dx,dy=(2, 2)V nx,ny=(100, 100) subscan=[[0 100][0 100]], srcs=0x00000039, 0x00000000
+        // ** Message: 23:34:25.068: write spm scan GVP: ti, fwd, rev= 0.0707107s, 0.1s, 0.1s;  xi,yi=(-1, 1)V, dx,dy=(2, 2)V nx,ny=(100, 100) subscan_buffer=[[0 100][0 100]], srcs_buffer=0x00000039, 0x00000000
 
-        g_message ("write spm scan GVP: ti, fwd, rev= %gs, %gs, %gs;  xi,yi=(%g, %g)V, dx,dy=(%g, %g)V nx,ny=(%d, %d) subscan=[[%d %d][%d %d]], srcs=0x%08x, 0x%08x",
+        g_message ("write spm scan GVP: ti, fwd, rev= %gs, %gs, %gs;  xi,yi=(%g, %g)V, dx,dy=(%g, %g)V nx,ny=(%d, %d) subscan_buffer=[[%d %d][%d %d]], srcs_buffer=0x%08x, 0x%08x",
                    ti, tfwd, trev,
                    xi, yi,
                    dx, dy,
                    nx, ny,
-                   subscan[0], subscan[1], subscan[2], subscan[3], 
-                   srcs[0],srcs[1]);
+                   subscan_buffer[0], subscan_buffer[1], subscan_buffer[2], subscan_buffer[3], 
+                   srcs_buffer[0],srcs_buffer[1]);
         
         // may wait a sec to assumre monitors been up-to-date?
         // initial vector to start
-        //?? Vec[ 0] XYZU: -0.005 0.005 0 0 V  [#100, R0 J0 SRCS=00003900] initial Msk=1000
+        //?? Vec[ 0] XYZU: -0.005 0.005 0 0 V  [#100, R0 J0 SRCS_BUFFER=00003900] initial Msk=1000
 
         make_UZXYramp_vector (0., 0., // GVP_du[k], GVP_dz[k],
                               xi, yi, 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
                               100, 0, 0, ti, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
-                              srcs[0], VP_INITIAL_SET_VEC | gvp_options);
+                              srcs_buffer[0], VP_INITIAL_SET_VEC | gvp_options);
 
         //DEBUG_GVP_SCAN (PC,         DU, DX, DY, DZ, DA, DB,  TS, PTS, OPT,                VNR, VPCJ)
         //DEBUG_GVP_SCAN (vector_index, 0., xi, xi,  0., 0., 0., ti, 100, VP_INITIAL_SET_VEC,   0,   0);
-        //?? Vec[ 1] XYZU: 0.01 0 0 0 V  [#100, R0 J0 SRCS=00003900] initial Msk=0001
+        //?? Vec[ 1] XYZU: 0.01 0 0 0 V  [#100, R0 J0 SRCS_BUFFER=00003900] initial Msk=0001
 
         write_program_vector (vector_index++);
 
         // fwd scan "->"
         make_UZXYramp_vector (0., 0., // GVP_du[k], GVP_dz[k],
                               dx, 0, 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
-                              subscan[1], 0, 0, tfwd, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
-                              srcs[0], gvp_options); // vis_Source, GVP_opt[k]);
+                              subscan_buffer[1], 0, 0, tfwd, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
+                              srcs_buffer[0], gvp_options); // vis_Source, GVP_opt[k]);
 
-        //DEBUG_GVP_SCAN (vector_index, 0., dx, 0.,  0., 0., 0., tfwd, subscan[1], VP_INITIAL_SET_VEC,   0,   0);
+        //DEBUG_GVP_SCAN (vector_index, 0., dx, 0.,  0., 0., 0., tfwd, subscan_buffer[1], VP_INITIAL_SET_VEC,   0,   0);
         write_program_vector (vector_index++);
 
         // rev scan "<-"
         make_UZXYramp_vector (0., 0., // GVP_du[k], GVP_dz[k],
                               -dx, 0, 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
-                              subscan[1], 0, 0, trev, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
-                              srcs[1], gvp_options); // vis_Source, GVP_opt[k]);
+                              subscan_buffer[1], 0, 0, trev, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
+                              srcs_buffer[1], gvp_options); // vis_Source, GVP_opt[k]);
         write_program_vector (vector_index++);
         // next line with repeat for all lines from VPC-2 ny times
         make_UZXYramp_vector (0., 0., // GVP_du[k], GVP_dz[k],
-                              0., dy/(subscan[3]-1), 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
-                              10, subscan[3], -2, tfwd/ny, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
-                              srcs[0], gvp_options); // vis_Source, GVP_opt[k]);
+                              0., dy/(subscan_buffer[3]-1), 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
+                              10, subscan_buffer[3], -2, tfwd/ny, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
+                              srcs_buffer[0], gvp_options); // vis_Source, GVP_opt[k]);
         write_program_vector (vector_index++);
         append_null_vector (options, vector_index);
 }

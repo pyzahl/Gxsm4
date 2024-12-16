@@ -543,13 +543,6 @@ public:
 				  int current_i, int si, int nas, gboolean join_same_x=FALSE,
                                   gint xmap=0, gint src=0, gint num_active_xmaps=1, gint num_active_sources=1);
 
-        int   msklookup[NUM_PROBEDATA_ARRAYS+1];
-        int   expdi_lookup[NUM_PROBEDATA_ARRAYS+1];
-        char* lablookup[NUM_PROBEDATA_ARRAYS+1];
-        char* unitlookup[NUM_PROBEDATA_ARRAYS+1];
-        double scalelookup[NUM_PROBEDATA_ARRAYS+1];
-        
-        double pv_tmp[NUM_PV_HEADER_SIGNALS];
 
         void init_vp_signal_info_lookup_cache();
    	const char* vp_label_lookup(int i);
@@ -780,6 +773,15 @@ protected:
 
 	gboolean GUI_ready;
 
+public:
+        int   msklookup[NUM_PROBEDATA_ARRAYS+1];
+        int   expdi_lookup[NUM_PROBEDATA_ARRAYS+1];
+        char* lablookup[NUM_PROBEDATA_ARRAYS+1];
+        char* unitlookup[NUM_PROBEDATA_ARRAYS+1];
+        double scalelookup[NUM_PROBEDATA_ARRAYS+1];
+        
+        double pv_tmp[NUM_PV_HEADER_SIGNALS];
+
 private:
 	PROBE_VECTOR_GENERIC     program_vector_list[MAX_PROGRAM_VECTORS]; // copy for GXSM internal use only
 
@@ -912,190 +914,7 @@ public:
                         return NULL;
 	};
 
-#define RECOVERY_RETRYS 10
-        int read_GVP_data_block_to_position_vector (int offset, gboolean expect_full_header=false){
-                static int retry = RECOVERY_RETRYS;
-                size_t ch_index;
-
-#if 0
-                if (expect_full_header || offset==0)
-                        status_append_int32 (&GVP_stream_buffer[offset], 10*16, true, offset, true);
-#endif
-                
-#if 0
-                if (offset < 0 || offset > (EXPAND_MULTIPLES*DMA_SIZE-20)){
-                        gchar *tmp = g_strdup_printf ("read_GVP_data_block_to_position_vector: Reading offset %08x out of range ERROR.",
-                                                      offset);
-                        status_append (tmp, true);
-                        g_warning (tmp);
-                        g_free (tmp);
-                        return -999;
-                }
-#endif
-                
-                if (offset >= GVP_stream_buffer_position){ // Buffer is huge now all pages concat
-#if 0
-                        gchar *tmp = g_strdup_printf ("read_GVP_data_block_to_position_vector: Reading offset %08x is beyond stream write position %08x. Awaiting data.\n",
-                                                      offset, GVP_stream_buffer_position);
-                        status_append (tmp, true);
-                        if (offset > 64)
-                                status_append_int32 (&GVP_stream_buffer[offset-64], 10*16, true, offset-64, true);
-                        else
-                                status_append_int32 (&GVP_stream_buffer[0], 10*16, true, 0, true);
-                        g_warning (tmp);
-                        g_free (tmp);
-#endif
-                        return -99; // OK -- but have wait and reprocess when data package is completed
-                }
-                
-                GVP_vp_header_current.srcs = GVP_stream_buffer[offset]&0xffff;
-
-                GVP_vp_header_current.i = (int)(((guint32)GVP_stream_buffer[offset])>>16); // data point index within GVP section (N points)
-                if (GVP_vp_header_current.srcs == 0xffff){
-                        GVP_vp_header_current.n     = GVP_vp_header_current.i + 1; // this full vector of first point, index=N-1 ... counts down to 0
-                        GVP_vp_header_current.endmark = 0;
-                        retry=RECOVERY_RETRYS;
-                } else {
-                        if (GVP_stream_buffer[offset] == 0xfefefefe){
-                                GVP_vp_header_current.endmark = 1;
-                                GVP_vp_header_current.n = 0;
-                                GVP_vp_header_current.i = 0;
-                                GVP_vp_header_current.srcs = 0xffff;
-                        } else {
-                                if (GVP_vp_header_current.n == GVP_vp_header_current.i+2) // 2nd point, store srcs mask for verify
-                                        GVP_vp_header_current.srcs_mask_vector = GVP_vp_header_current.srcs; // store ref mask
-                                else { // normal GVP data stream, verify continuity
-                                        if (GVP_vp_header_current.i != (GVP_vp_header_current.ilast-1)
-                                            ||
-                                            GVP_vp_header_current.srcs_mask_vector != GVP_vp_header_current.srcs){
-                                                // stream ERROR detected
-                                                {
-                                                        gchar *tmp = g_strdup_printf ("read_GVP_data_block_to_position_vector: Stream ERROR at Reading offset %08x, write position %08x.\n"
-                                                                                      "SRCS/index mismatch detected: 0x%04x vs 0x%04x or missing data/index jump: i %d -> %d\n",
-                                                                                      offset, GVP_stream_buffer_position,
-                                                                                      GVP_vp_header_current.srcs_mask_vector, GVP_vp_header_current.srcs,
-                                                                                      GVP_vp_header_current.ilast, GVP_vp_header_current.i);
-                                                        status_append (tmp, true);
-                                                        if (offset > 64)
-                                                                status_append_int32 (&GVP_stream_buffer[offset-64], 10*16, true, offset-64, true);
-                                                        else
-                                                                status_append_int32 (&GVP_stream_buffer[0], 10*16, true, 0, true);
-                                                        g_warning (tmp);
-                                                        g_free (tmp);
-                                                }
-                                                if (--retry > 0){ //  try to recover
-                                                        gchar *tmp = g_strdup_printf ("Trying to recover stream from missing/bogus data. retry=%d\n", retry);
-                                                        status_append (tmp, true);
-                                                        g_warning (tmp);
-                                                        g_free (tmp);
-                                                        if (GVP_vp_header_current.i >= 0 && GVP_vp_header_current.i < GVP_vp_header_current.n)
-                                                                GVP_vp_header_current.ilast = GVP_vp_header_current.i+1; // adjust for skip ***
-                                                        return -99;  // OK -- but retry -- **have wait and reprocess when data package is completed
-                                                }else
-                                                        return -98;
-                                        }
-                                }
-                        }
-                }
-                        
-                GVP_vp_header_current.index = GVP_vp_header_current.n - GVP_vp_header_current.i;
-                if (GVP_vp_header_current.index < 0){
-                        gchar *tmp = g_strdup_printf ("read_GVP_data_block_to_position_vector: Stream ERROR at Reading offset %08x, write position %08x.\n"
-                                                      "SRCS/index mismatch detected. %04x vs %04x, i %d -> %d  => n=%d (<0 is illegal)\n",
-                                                      offset, GVP_stream_buffer_position,
-                                                      GVP_vp_header_current.srcs_mask_vector, GVP_vp_header_current.srcs,
-                                                      GVP_vp_header_current.ilast, GVP_vp_header_current.i, GVP_vp_header_current.index);
-                        status_append (tmp, true);
-                        if (offset > 64)
-                                status_append_int32 (&GVP_stream_buffer[offset-64], 10*16, true, offset-64, true);
-                        else
-                                status_append_int32 (&GVP_stream_buffer[0], 10*16, true, 0, true);
-                        g_warning (tmp);
-                        g_free (tmp);
-                        GVP_vp_header_current.index = 0; // to prevent issues
-                        return (-95);
-                }
-                
-                GVP_vp_header_current.number_channels=0;
-                for (int i=0; i<16; i++){
-                        GVP_vp_header_current.ch_lut[i]=-1;
-                        if (GVP_vp_header_current.srcs & (1<<i))
-                                GVP_vp_header_current.ch_lut[GVP_vp_header_current.number_channels++] = i;
-                }
-                
-                // expand data stream and sort into channels
-                for (ch_index=0; ch_index < GVP_vp_header_current.number_channels && ch_index+offset < GVP_stream_buffer_position; ++ch_index){
-                        int ich = GVP_vp_header_current.ch_lut[ch_index];
-                        GVP_vp_header_current.chNs[ich] = GVP_stream_buffer[1+ch_index+offset];
-                        if (ich < 14){ // ICH 14,15 -> 64bit time
-                                if (ich >= 8) // ICH 9...13 FPGA Signals from PACPLL, LOCKIN
-                                        GVP_vp_header_current.dataexpanded[ich] = rpIN12_to_volts (GVP_vp_header_current.chNs[ich]); // fix me -- apply conversion to correct units!
-                                if (ich >= 4) // ICH 4,5,6,7 FPGA Signals IN1,2,3,4
-                                        GVP_vp_header_current.dataexpanded[ich] = rpIN12_to_volts (GVP_vp_header_current.chNs[ich]); // fix me -- apply conversion to correct units!
-                                else // ICH 0,1,2,3: XS,YS,ZS,Bias -- DAC Monitors
-                                        GVP_vp_header_current.dataexpanded[ich] = rpspmc_to_volts (GVP_vp_header_current.chNs[ich]); // Volts
-                                //g_message ("%g V", GVP_vp_header_current.dataexpanded[ich]);
-                        }
-                }
-
-                if (expect_full_header && GVP_vp_header_current.srcs != 0xffff){
-                        gchar *tmp = g_strdup_printf ("ERROR: read_GVP_data_block_to_position_vector: Reading offset %08x, write position %08x. Expecting full header but found srcs=%04x, i=%d rty=%d\n",
-                                                      offset, GVP_stream_buffer_position,  GVP_vp_header_current.srcs, GVP_vp_header_current.i, retry);
-                        status_append (tmp, true);
-                        if (offset>64)
-                                status_append_int32 (&GVP_stream_buffer[offset-64], 10*16, true, offset-64, true);
-                        else
-                                status_append_int32 (&GVP_stream_buffer[0], 10*16, true, 0, true);
-                        g_warning (tmp);
-                        g_free (tmp);
-                        if (--retry > 0){
-                                gchar *tmp = g_strdup_printf ("Trying to recover stream from missing/bogus data. retry=%d\n", retry);
-                                status_append (tmp, true);
-                                g_warning (tmp);
-                                g_free (tmp);
-                                return -99;  // OK -- but have wait and reprocess when data package is completed
-                        } else
-                                return (-97);
-                }
-                
-
-#if 1
-                if (GVP_vp_header_current.srcs == 0xffff){
-                        GVP_vp_header_current.gvp_time = (((guint64)((guint32)GVP_vp_header_current.chNs[15]))<<32) | (guint64)((guint32)GVP_vp_header_current.chNs[14]);
-                        GVP_vp_header_current.dataexpanded[14] = (double)GVP_vp_header_current.gvp_time/125e3;
-                        if (GVP_vp_header_current.endmark)
-                                g_message ("N[ENDMARK] GVP_vp_header_current.srcs=%04x   Bias=%8g V    t=%8g ms",
-                                           GVP_vp_header_current.srcs,
-                                           rpspmc_to_volts (GVP_vp_header_current.chNs[3]),
-                                           GVP_vp_header_current.dataexpanded[14]
-                                           );
-                        else
-                                g_message ("N[%4d / %4d] GVP_vp_header_current.srcs=%04x   Bias=%8g V    t=%8g ms",
-                                           GVP_vp_header_current.index, GVP_vp_header_current.n, GVP_vp_header_current.srcs,
-                                           rpspmc_to_volts (GVP_vp_header_current.chNs[3]),
-                                           GVP_vp_header_current.dataexpanded[14]
-                                           );
-                }
-#endif                        
-
-                if (ch_index+offset < GVP_stream_buffer_position){
-                        if ((GVP_vp_header_current.srcs & 0xc000) == 0xc000){ // fetch 64 bit time
-                                GVP_vp_header_current.gvp_time = (((guint64)((guint32)GVP_vp_header_current.chNs[15]))<<32) | (guint64)((guint32)GVP_vp_header_current.chNs[14]);
-                                GVP_vp_header_current.dataexpanded[14] = (double)GVP_vp_header_current.gvp_time/125e3;
-                        }
-                        retry=RECOVERY_RETRYS;
-                        if (GVP_vp_header_current.srcs == 0xffff)
-                                return -1; // true for full position header update
-
-                        GVP_vp_header_current.ilast = GVP_vp_header_current.i; // next point should be this - 1
-                        return ch_index;
-
-                } else {
-                        // g_message ("[%08x] *** end of new data at ch=%d ** Must wait for next page/update send and retry.", offset, ch_index);
-                        return -99;   // OK -- but have wait and reprocess when data package is completed
-                        // return ch_index; // number channels read until position
-                }
-        };
+        int read_GVP_data_block_to_position_vector (int offset, gboolean expect_full_header=false);
        
         int subscan_data_y_index_offset;
 

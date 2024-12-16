@@ -131,7 +131,7 @@ const char* RPSPMC_Control::vp_unit_lookup(int i){
         return err_unknown_u;
 }
 
-double RPSPMC_Control::vp_scale_lookup(int i){
+double RPSPMC_Control::vp_scale_lookup(int i){ // 2nd level scalings to GXSM units, Volt to Ang, Volt to nA, etc.
         for (int k=0; rpspmc_source_signals[k].mask; ++k){
                 //g_print ("looking for %d == [%d] in vpsl %20s  [%02d]: %08x,  %g\n",i, rpspmc_source_signals[k].garr_index, rpspmc_source_signals[k].label, i,rpspmc_source_signals[k].mask, rpspmc_source_signals[k].scale_factor);
                 if (rpspmc_source_signals[k].garr_index == i){
@@ -139,9 +139,9 @@ double RPSPMC_Control::vp_scale_lookup(int i){
                         switch (rpspmc_source_signals[k].mask){
                         case 0x00000020: // CUSTOM auto
                                 if (main_get_gapp()->xsm->Inst->nAmpere2V (1.) > 1.)
-                                        return rpspmc_source_signals[k].scale_factor/main_get_gapp()->xsm->Inst->nAmpere2V (1e-3); // choose pA
+                                        return main_get_gapp()->xsm->Inst->nAmpere2V (1e-3); // choose pA
                                 else
-                                        return rpspmc_source_signals[k].scale_factor/main_get_gapp()->xsm->Inst->nAmpere2V (1.); // nA
+                                        return main_get_gapp()->xsm->Inst->nAmpere2V (1.); // nA
                                 break;
                         case 0x00100000: // function calls...
                         case 0x00000001: 
@@ -156,11 +156,9 @@ double RPSPMC_Control::vp_scale_lookup(int i){
                         case 0x00000008:
                                 return main_get_gapp()->xsm->Inst->BiasGainV2V ();
                         case 0x04000000: // ARRAY_SEC  -- SECTION
-                                //g_print ("vpsl: %8x, %g\n",rpspmc_source_signals[k].mask, rpspmc_source_signals[k].scale_factor);
                                 return 1.0;
                         default:
-                                //g_print ("vpsl for %s: 0x%08x, sfac=%g\n",rpspmc_source_signals[k].label, rpspmc_source_signals[k].mask, rpspmc_source_signals[k].scale_factor);
-                                return rpspmc_source_signals[k].scale_factor;
+                                return 1.0; // use as defined in source_signals, data is scaled while expanding to base units
                         }
                 }
         }
@@ -1417,7 +1415,7 @@ void RPSPMC_Control::add_probevector(){
         
         // add data channels
 	for (i = PROBEDATA_ARRAY_S1, j=0; i <= PROBEDATA_ARRAY_END; ++i, ++j)
-		g_array_append_val (garray_probedata[i], data[j]);
+		g_array_append_val (garray_probedata[i], data[j]); // sorting header expanded data in units into garrays
         //g_print ("+++>>>> PUSH DATA i[%d] sec=%d  t=%g ms\n", current_probe_data_index, (int)pv[PROBEDATA_ARRAY_SEC],  data[14]);
 
         current_probe_data_index++;

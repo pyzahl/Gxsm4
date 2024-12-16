@@ -104,6 +104,8 @@
 
 // NEW: generalized signals
 
+#define SIGNAL_INDEX_ICH0 11
+
 typedef struct {
         guint32     mask;   // signal source mask, or signal id for swappable
         //const gchar *name;  // signal name

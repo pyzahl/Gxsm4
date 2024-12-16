@@ -179,6 +179,10 @@ SOURCE_SIGNAL_DEF swappable_signals[] = {
 };
 
 #else
+#define SPMC_AD5791_REFV 5.0 // DAC AD5791 Reference Volatge is 5.000000V (+/-5V Range)
+#define SPMC_AD5791_to_volts (SPMC_AD5791_REFV / QN(31))
+#define SPMC_RPIN12_REFV 1.0 // RP FAT DACs Reference Voltage is 1.0V (+/-1V Range)
+#define SPMC_RPIN12_to_volts (SPMC_RPIN12_REFV / QN(31))
 
 // Masks MUST BE unique **** max # signal: 32  (graphs_matrix[][32] fix size! Unused=uninitialized.)
 SOURCE_SIGNAL_DEF rpspmc_source_signals[] = {
@@ -186,35 +190,36 @@ SOURCE_SIGNAL_DEF rpspmc_source_signals[] = {
         //  xxxxSRCS
         // mask,       name/label,  descr, unit, sym, scale, garrindex, scanchpos
         //  ****SRCS lower 32 bits, upper GVP internal/generated
-        { 0x01000000, "Index",    " ",  "#",  "#",           1.0, PROBEDATA_ARRAY_INDEX, 0 },
-        { 0x02000000, "Time",     " ", "ms", "ms",           1.0, PROBEDATA_ARRAY_TIME, 0 }, // time in ms
-        { 0x04000000, "SEC",      " ", "#", "#",             1.0, PROBEDATA_ARRAY_SEC, 0 },
-        { 0x00100000, "XS",       " ", "AA", UTF8_ANGSTROEM, 1.0, PROBEDATA_ARRAY_XS, 0 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
-        { 0x00200000, "YS",       " ", "AA", UTF8_ANGSTROEM, 1.0, PROBEDATA_ARRAY_YS, 0 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
-        { 0x00400000, "ZS",       " ", "AA", UTF8_ANGSTROEM, 1.0, PROBEDATA_ARRAY_ZS, 0 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
-        { 0x00800000, "Bias",     " ", "V",             "V", 1.0, PROBEDATA_ARRAY_U, 0 },
-        { 0x08000000, "AA",       " ", "V",           "V", 1.0, PROBEDATA_ARRAY_AA, -1 },
-        { 0x10000000, "BB",       " ", "V",           "V", 1.0, PROBEDATA_ARRAY_BB, -1 },
-        { 0x20000000, "PHI",      " ", "deg",       "deg", 1.0, PROBEDATA_ARRAY_PHI, -1 },
+        { 0x01000000, "Index",    " ",  "#",            "#",                  1.0, PROBEDATA_ARRAY_INDEX, 0 },
+        { 0x02000000, "Time",     " ", "ms",           "ms",                  1.0, PROBEDATA_ARRAY_TIME,  0 }, // time in ms
+        { 0x04000000, "SEC",      " ", "#",             "#",                  1.0, PROBEDATA_ARRAY_SEC,   0 },
+        { 0x00100000, "XS",       " ", "AA", UTF8_ANGSTROEM, SPMC_AD5791_to_volts, PROBEDATA_ARRAY_XS, 0 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
+        { 0x00200000, "YS",       " ", "AA", UTF8_ANGSTROEM, SPMC_AD5791_to_volts, PROBEDATA_ARRAY_YS, 0 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
+        { 0x00400000, "ZS",       " ", "AA", UTF8_ANGSTROEM, SPMC_AD5791_to_volts, PROBEDATA_ARRAY_ZS, 0 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
+        { 0x00800000, "Bias",     " ", "V",             "V", SPMC_AD5791_to_volts, PROBEDATA_ARRAY_U,  0 },
+        { 0x08000000, "AA",       " ", "V",             "V", SPMC_AD5791_to_volts, PROBEDATA_ARRAY_AA, -1 },
+        { 0x10000000, "BB",       " ", "V",             "V", SPMC_AD5791_to_volts, PROBEDATA_ARRAY_BB, -1 },
+        { 0x20000000, "PHI",      " ", "deg",         "deg",                  1.0, PROBEDATA_ARRAY_PHI, -1 },
         // -- general measured signals from index [8]   // <=== to Volt conversion here -- unit sym and scale are custom auto adjusted in .._eventhandling lookup functions as of this mask 
-        { 0x0000C000, "Time-Mon",     " ", "ms", "ms",           1.0,            PROBEDATA_ARRAY_S15, 15 }, // time in ms
-        { 0x00000001, "XS-Mon",       " ", "AA", UTF8_ANGSTROEM, 1.0,            PROBEDATA_ARRAY_S1,  1 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
-        { 0x00000002, "YS-Mon",       " ", "AA", UTF8_ANGSTROEM, 1.0,            PROBEDATA_ARRAY_S2,  2 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
-        { 0x00000004, "ZS-Topo",      " ", "AA", UTF8_ANGSTROEM, 1.0,            PROBEDATA_ARRAY_S3,  3 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
-        { 0x00000008, "Bias-Mon",     " ", "V",             "V", 1.0,            PROBEDATA_ARRAY_S4,  4 }, // BiasFac, see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
-        { 0x00000010, "In1-Signal",   " ", "V",   "V", DSP32Qs15dot16TO_Volt,    PROBEDATA_ARRAY_S5,  5 },
-        { 0x00000020, "In2-Current",  " ", "nA", "nA", DSP32Qs15dot16TO_Volt,    PROBEDATA_ARRAY_S6,  6 }, // CurrFac, see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
-        { 0x00000040, "In3-**",       " ", "V",   "V", DSP32Qs15dot16TO_Volt,    PROBEDATA_ARRAY_S7,  7 },
-        { 0x00000080, "In4-**",       " ", "V",   "V", DSP32Qs15dot16TO_Volt,    PROBEDATA_ARRAY_S8,  8 },
-        { 0x00000100, "Phase",        " ", "deg",   UTF8_DEGREE, (180.0/(M_PI*((1L<<RP_FPGA_QATAN)-1))),    PROBEDATA_ARRAY_S9,  9 }, // ** swappable **,
-        { 0x00000200, "dFreq",        " ", "Hz",   "Hz",         (125e6/((1L<<RP_FPGA_QFREQ)-1)),  PROBEDATA_ARRAY_S10, 10 }, // ** swappable **,
-        { 0x00000400, "Ampl",         " ", "mV",   "mV",         (1.0/((1L<<RP_FPGA_QSQRT)-1)),    PROBEDATA_ARRAY_S11, 11 }, // ** swappable **,
-        { 0x00000800, "Exec",         " ", "mV",   "mV",         (1.0/((1L<<RP_FPGA_QEXEC)-1)),    PROBEDATA_ARRAY_S12, 12  }, // ** swappable **,
-        { 0x00001000, "LockInX",      " ", "dV",   "dV",         DSP32Qs15dot16TO_Volt,            PROBEDATA_ARRAY_S13,  13 },
-        { 0x00002000, "dFreqCtrl",    " ", "##",   "##",                           1.0,            PROBEDATA_ARRAY_S14,  14 },
-        { 0x00004000, "--",           " ", "V",     "V",                           1.0,            PROBEDATA_ARRAY_S15,   -1 }, // -- DUMMY SO FAR
-        { 0x00008000, "--",           " ", "V",     "V",                           1.0,            PROBEDATA_ARRAY_COUNT, -1 }, // -- DUMMY SO FAR
-        { 0x80000000, "BlockI",       " ", "i#",    "i#",                          1.0,            PROBEDATA_ARRAY_BLOCK, -1 }, // MUST BE ALWAYS LAST AND IN HERE!! END MARK.
+        { 0x0000C000, "Time-Mon",     " ", "ms",           "ms",                                    1.0, PROBEDATA_ARRAY_S15, 15 }, // time in ms
+        // === XS-Mon,.. at index [11, ..] ** SIGNAL_INDEX_ICH0 **
+        { 0x00000001, "XS-Mon",       " ", "AA", UTF8_ANGSTROEM,                   SPMC_AD5791_to_volts, PROBEDATA_ARRAY_S1,  1 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
+        { 0x00000002, "YS-Mon",       " ", "AA", UTF8_ANGSTROEM,                   SPMC_AD5791_to_volts, PROBEDATA_ARRAY_S2,  2 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
+        { 0x00000004, "ZS-Topo",      " ", "AA", UTF8_ANGSTROEM,                   SPMC_AD5791_to_volts, PROBEDATA_ARRAY_S3,  3 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
+        { 0x00000008, "Bias-Mon",     " ", "V",             "V",                   SPMC_AD5791_to_volts, PROBEDATA_ARRAY_S4,  4 }, // BiasFac, see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
+        { 0x00000010, "In1-Signal",   " ", "V",             "V",                   SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S5,  5 },
+        { 0x00000020, "In2-Current",  " ", "nA",           "nA",                   SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S6,  6 }, // CurrFac, see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
+        { 0x00000040, "In3-**",       " ", "V",             "V",                   SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S7,  7 },
+        { 0x00000080, "In4-**",       " ", "V",             "V",                   SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S8,  8 },
+        { 0x00000100, "Phase",        " ", "deg",   UTF8_DEGREE, (180.0/(M_PI*((1L<<RP_FPGA_QATAN)-1))), PROBEDATA_ARRAY_S9,  9 }, // ** swappable **,
+        { 0x00000200, "dFreq",        " ", "Hz",           "Hz",        (125e6/((1L<<RP_FPGA_QFREQ)-1)), PROBEDATA_ARRAY_S10, 10 }, // ** swappable **,
+        { 0x00000400, "Ampl",         " ", "mV",           "mV",          (1.0/((1L<<RP_FPGA_QSQRT)-1)), PROBEDATA_ARRAY_S11, 11 }, // ** swappable **,
+        { 0x00000800, "Exec",         " ", "mV",           "mV",          (1.0/((1L<<RP_FPGA_QEXEC)-1)), PROBEDATA_ARRAY_S12, 12  }, // ** swappable **,
+        { 0x00001000, "LockInX",      " ", "dV",           "dV",                   SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S13, 13 },
+        { 0x00002000, "dFreqCtrl",    " ", "##",           "##",                                    1.0, PROBEDATA_ARRAY_S14, 14 },
+        { 0x00004000, "--",           " ", "V",             "V",                                    1.0, PROBEDATA_ARRAY_S15, -1 }, // -- DUMMY SO FAR
+        { 0x00008000, "--",           " ", "V",             "V",                                    1.0, PROBEDATA_ARRAY_COUNT, -1 }, // -- DUMMY SO FAR
+        { 0x80000000, "BlockI",       " ", "i#",           "i#",                                    1.0, PROBEDATA_ARRAY_BLOCK, -1 }, // MUST BE ALWAYS LAST AND IN HERE!! END MARK.
         { 0x00000000, NULL, NULL, NULL, NULL, 0.0, 0 }
 };
 
@@ -2924,48 +2929,12 @@ int RPSPMC_Control::lockin_runfree_callback(GtkWidget *widget, RPSPMC_Control *d
 
 void RPSPMC_Control::update_controller () {
 
-        // SCAN SPEED COMPUTATIONS -- converted to 16.16 fixed point scan generator parameters (TEMPLATE, replace with what ever)
-        double frac  = (1<<16);
-        // *** FIX
-        double fs_dx = frac * rpspmc_pacpll_hwi_pi.app->xsm->Inst->XA2Dig (scan_speed_x_requested) / 200e3; //rpspmc_hwi->get_GVP_frq_ref ();
-        double fs_dy = frac * rpspmc_pacpll_hwi_pi.app->xsm->Inst->YA2Dig (scan_speed_x_requested) / 200e3; //rpspmc_hwi->get_GVP_frq_ref ();
-#if 0
-        if ((frac * rpspmc_hwi->Dx / fs_dx) > (1<<15) || (frac * rpspmc_hwi->Dy / fs_dx) > (1<<15)){
-                main_get_gapp()->message (N_("WARNING:\n"
-                                             "recalculate_dsp_scan_parameters:\n"
-                                             "requested/resulting scan speed is too slow.\n"
-                                             "Reaching 1<<15 steps inbetween!\n"
-                                             "No change on DSP performed."));
-                PI_DEBUG (DBG_EVER, "WARNING: recalculate_dsp_scan_parameters: too slow, reaching 1<<15 steps inbetween! -- no change.");
-                return;
-        }
-#endif
-        // fs_dx * N =!= frac*Dx  -> N = ceil [frac*Dx/fs_dx]  -> fs_dx' = frac*Dx/N
-        
-        // N: dnx
-        dsp_scan_dnx = (gint32) ceil (frac * rpspmc_hwi->Dx / fs_dx);
-        dsp_scan_dny = (gint32) ceil (frac * rpspmc_hwi->Dy / fs_dy);
-        
-        dsp_scan_fs_dx = (gint32) (frac*rpspmc_hwi->Dx / ceil (frac * rpspmc_hwi->Dx / fs_dx));
-        dsp_scan_fs_dy = (gint32) (frac*rpspmc_hwi->Dy / ceil (frac * rpspmc_hwi->Dy / fs_dy));
-                
-        mirror_dsp_scan_dx32 = dsp_scan_fs_dx*dsp_scan_dnx; // actual DSP dx in S15.16 between pixels in X
-        mirror_dsp_scan_dy32 = dsp_scan_fs_dy*dsp_scan_dny; // actual DSP dy in S15.16 between pixels in Y
-        
-        dsp_scan_fast_return = (gint32) (fast_return);
-        if (dsp_scan_fast_return < 1)
-                dsp_scan_fast_return = 1;
-        if (dsp_scan_fast_return > 10000)
-                dsp_scan_fast_return = 1;
+        // SCAN SPEED COMPUTATIONS
+        double slew[2];
+        slew[0] = scan_speed_x = scan_speed_x_requested;
+        slew[1] = fast_return * scan_speed_x_requested;
+        scanpixelrate = slew[0]/main_get_gapp()->xsm->data.s.rx*main_get_gapp()->xsm->data.s.nx;
 
-        //dsp_scan_nx_pre = dsp_scan_dnx * pre_points;
-        dsp_scan_fs_dy *= rpspmc_hwi->scan_direction;
-
-        //info only, updates scan speed GUI entry with actual rates (informative only)
-        // *** FIX ME !!
-        scan_speed_x = rpspmc_pacpll_hwi_pi.app->xsm->Inst->Dig2XA ((long)(dsp_scan_fs_dx * 200e3 / frac)); // rpspmc_hwi->get_GVP_frq_ref ()
-        // ************* FIX
-        scanpixelrate = (double)dsp_scan_dnx/200e3;   // rpspmc_hwi->get_GVP_frq_ref ();
         gchar *info = g_strdup_printf (" (%g A/s, %g ms/pix)", scan_speed_x, scanpixelrate*1e3);
         scan_speed_ec->set_info (info);
         g_free (info);
@@ -2980,7 +2949,11 @@ void RPSPMC_Control::update_controller () {
                 //dsp_scan_fm_dz0y = (gint32)round (fract * my);
 
         }
-        
+        if (rpspmc_hwi->is_scanning()) // only if scanning!
+                write_spm_scan_vector_program (main_get_gapp()->xsm->data.s.rx, main_get_gapp()->xsm->data.s.ry,
+                                               main_get_gapp()->xsm->data.s.nx, main_get_gapp()->xsm->data.s.ny,
+                                               slew, NULL, NULL);
+                
         rpspmc_hwi->RPSPMC_set_bias (bias);
         rpspmc_hwi->RPSPMC_set_current_sp (mix_set_point[0]);
         g_message ("*** Update Controller: Bias-SP: %g V, Current-SP: %g nA", bias, mix_set_point[0]);
