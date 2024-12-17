@@ -818,7 +818,7 @@ public:
         static gboolean update_status_idle(gpointer self);
         virtual void status_append (const gchar *msg, bool schedule_from_thread=false);
         virtual void on_connect_actions();
-        virtual int on_new_data (gconstpointer contents, gsize len, int position, int new_count=1, bool last=false);
+        virtual int on_new_data (gconstpointer contents, gsize len, bool init=false);
         
 	/* Parameter  */
 	virtual long GetMaxLines(){ return 32000; };
@@ -935,6 +935,7 @@ private:
 
 
         gint32 GVP_stream_buffer[EXPAND_MULTIPLES*DMA_SIZE];
+        GMutex GVP_stream_buffer_mutex;
         int GVP_stream_buffer_offset;
         int GVP_stream_buffer_AB;
         int GVP_stream_buffer_position;

@@ -142,6 +142,7 @@ rpspmc_hwi_dev::rpspmc_hwi_dev():RP_stream(this){
         // SRCS Mapping for Scan Channels as set via Channelselector (independing from Graphs/GVP) in Gxsm, but here same masks as same GVP is used
 
 	probe_fifo_thread_active=0;
+        g_mutex_init (&GVP_stream_buffer_mutex);
 
         // Automatic overriding GXSM core resources for RPSPMC setup to map scan data sources via channel selector:
 
@@ -191,6 +192,7 @@ gboolean rpspmc_hwi_dev::update_status_idle(gpointer self){
 };
         
 void rpspmc_hwi_dev::status_append (const gchar *msg, bool schedule_from_thread){
+        static guint idle_func=0;
         static gchar *buffer=NULL;
         if (schedule_from_thread){
                 if (!buffer)
@@ -199,10 +201,13 @@ void rpspmc_hwi_dev::status_append (const gchar *msg, bool schedule_from_thread)
                         gchar *tmp = buffer;
                         buffer = g_strconcat (buffer, msg, NULL);
                         g_free (tmp);
-                        g_idle_add (update_status_idle, this);
+                        if (!idle_func)
+                                idle_func = g_idle_add (update_status_idle, this);
                 }
         } else {
                 if (buffer){
+                        if (idle_func)
+                                idle_func = 0;
                         rpspmc_pacpll->status_append (buffer);
                         g_free (buffer); buffer=NULL;
                 }
@@ -695,16 +700,34 @@ gpointer ProbeDataReadThread (void *ptr_hwi){
 	return NULL;
 }
 
-int rpspmc_hwi_dev::on_new_data (gconstpointer contents, gsize len, int position, int new_count, bool last){
+int rpspmc_hwi_dev::on_new_data (gconstpointer contents, gsize len, bool init){
+        static int position=0; // internal write position
 
-        //gint32 *GVP_stream_buffer=NULL;
-
-        if (position==0)
+        g_message ("on_new_data(len=%u) pos=0x%08x", len, position);
+        
+        if (init){
+                g_message ("on_new_data(INIT)");
+                position=0;
                 memset (GVP_stream_buffer, 0xee, EXPAND_MULTIPLES*DMA_SIZE*sizeof(gint32));
+                return 0;
+        }
 
+        g_mutex_lock (&GVP_stream_buffer_mutex);
+
+        int half_full = EXPAND_MULTIPLES*DMA_SIZE/2;
+        if (GVP_stream_buffer_offset > half_full){ // shift upper 1/2 data back down to 0 if completed processing lower half data
+                g_message ("on_new_data() GXSM stream buffer processing pos > 1/2 full mark. [proc:%08x, wpos:%08x], copy back down...", GVP_stream_buffer_offset, position);
+                GVP_stream_buffer_offset -= half_full;
+                position -= half_full;
+                memcpy (&GVP_stream_buffer[0], &GVP_stream_buffer[half_full], half_full*sizeof(gint32));
+                memset (&GVP_stream_buffer[half_full], 0xee, half_full*sizeof(gint32));
+        }
+        
         memcpy (&GVP_stream_buffer[position], contents, len);
 
-        GVP_stream_buffer_position = position + (len>>2);
+        position += len>>2; // update internal last write position
+        GVP_stream_buffer_position = position; // update valid data position in stream
+
 #if 0
         //gchar *tmp = g_strdup_printf ("WS-BUFFER-DATA_AB%03d_Off%0x08d_Pos0x%04x_GVPPos%0x08d.bin", AB, offset, position,  GVP_stream_buffer_position);
         gchar *tmp = g_strdup_printf ("GXSM-BUFFER-DATA_Off_%08d_GVPPos0x%08x.bin", position, GVP_stream_buffer_position);
@@ -714,11 +737,13 @@ int rpspmc_hwi_dev::on_new_data (gconstpointer contents, gsize len, int position
         fclose(pFile);
         // hexdump -v -e '"%08_ax: "' -e ' 16/4 "%08x_L[red:0x018ec108,green:0x018fffff] " " \n"' WS-BRAM-DATA-BLOCK_000_Pos0x1f7e_AB_00.bin
 #endif
-
         //g_message ("on_new_data ** AB=%d pos=%d  buffer_pos=0x%08x  new_count=%d  %s",
         //           AB, position, GVP_stream_buffer_position, new_count, last? "finished":"...");
 
-        GVP_stream_buffer_AB = 1; // update now after memcopy
+        GVP_stream_buffer_AB = 1; // update now after memcopy, valid data in buffer
+
+        g_mutex_unlock (&GVP_stream_buffer_mutex);
+
         return 0;
 }
 
@@ -1374,6 +1399,7 @@ void rpspmc_hwi_dev::GVP_vp_init (){
         GVP_stream_buffer_position = 0;
         GVP_stream_buffer_offset = 0; // 0x100   //  =0x00 **** TESTING BRAM ISSUE -- FIX ME !!! *****
         GVP_stream_status=0;
+        on_new_data (NULL, 0, true);
 
         GVP_vp_header_current.endmark = 0;
         GVP_vp_header_current.n    = 0;
@@ -1461,6 +1487,8 @@ int rpspmc_hwi_dev::read_GVP_data_block_to_position_vector (int offset, gboolean
         static int retry = RECOVERY_RETRYS;
         size_t ch_index;
 
+        g_mutex_lock (&GVP_stream_buffer_mutex);
+        
 #if 0
         if (expect_full_header || offset==0)
                 status_append_int32 (&GVP_stream_buffer[offset], 10*16, true, offset, true);
@@ -1473,6 +1501,7 @@ int rpspmc_hwi_dev::read_GVP_data_block_to_position_vector (int offset, gboolean
                 status_append (tmp, true);
                 g_warning (tmp);
                 g_free (tmp);
+                g_mutex_unlock (&GVP_stream_buffer_mutex);
                 return -999;
         }
 #endif
@@ -1489,6 +1518,7 @@ int rpspmc_hwi_dev::read_GVP_data_block_to_position_vector (int offset, gboolean
                 g_warning (tmp);
                 g_free (tmp);
 #endif
+                g_mutex_unlock (&GVP_stream_buffer_mutex);
                 return -99; // OK -- but have wait and reprocess when data package is completed
         }
                 
@@ -1534,9 +1564,12 @@ int rpspmc_hwi_dev::read_GVP_data_block_to_position_vector (int offset, gboolean
                                                 g_free (tmp);
                                                 if (GVP_vp_header_current.i >= 0 && GVP_vp_header_current.i < GVP_vp_header_current.n)
                                                         GVP_vp_header_current.ilast = GVP_vp_header_current.i+1; // adjust for skip ***
+                                                g_mutex_unlock (&GVP_stream_buffer_mutex);
                                                 return -99;  // OK -- but retry -- **have wait and reprocess when data package is completed
-                                        }else
+                                        }else {
+                                                g_mutex_unlock (&GVP_stream_buffer_mutex);
                                                 return -98;
+                                        }
                                 }
                         }
                 }
@@ -1557,6 +1590,7 @@ int rpspmc_hwi_dev::read_GVP_data_block_to_position_vector (int offset, gboolean
                 g_warning (tmp);
                 g_free (tmp);
                 GVP_vp_header_current.index = 0; // to prevent issues
+                g_mutex_unlock (&GVP_stream_buffer_mutex);
                 return (-95);
         }
                 
@@ -1591,9 +1625,12 @@ int rpspmc_hwi_dev::read_GVP_data_block_to_position_vector (int offset, gboolean
                         status_append (tmp, true);
                         g_warning (tmp);
                         g_free (tmp);
+                        g_mutex_unlock (&GVP_stream_buffer_mutex);
                         return -99;  // OK -- but have wait and reprocess when data package is completed
-                } else
+                } else {
+                        g_mutex_unlock (&GVP_stream_buffer_mutex);
                         return (-97);
+                }
         }
                 
 
@@ -1622,14 +1659,19 @@ int rpspmc_hwi_dev::read_GVP_data_block_to_position_vector (int offset, gboolean
                         GVP_vp_header_current.dataexpanded[14] = (double)GVP_vp_header_current.gvp_time/125e3;
                 }
                 retry=RECOVERY_RETRYS;
-                if (GVP_vp_header_current.srcs == 0xffff)
+                if (GVP_vp_header_current.srcs == 0xffff){
+                        g_mutex_unlock (&GVP_stream_buffer_mutex);
                         return -1; // true for full position header update
-
+                }
+                
                 GVP_vp_header_current.ilast = GVP_vp_header_current.i; // next point should be this - 1
+
+                g_mutex_unlock (&GVP_stream_buffer_mutex);
                 return ch_index;
 
         } else {
                 // g_message ("[%08x] *** end of new data at ch=%d ** Must wait for next page/update send and retry.", offset, ch_index);
+                g_mutex_unlock (&GVP_stream_buffer_mutex);
                 return -99;   // OK -- but have wait and reprocess when data package is completed
                 // return ch_index; // number channels read until position
         }

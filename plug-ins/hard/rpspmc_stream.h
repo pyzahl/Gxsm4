@@ -125,7 +125,7 @@ public:
         virtual const gchar *get_rp_address (){ return NULL; };
         virtual int get_debug_level() { return 0; };
 
-        virtual int on_new_data (gconstpointer contents, gsize len, int position, int new_count=1, bool last=false) {};
+        virtual int on_new_data (gconstpointer contents, gsize len, bool init=false) {};
 
         void status_append (const gchar *msg, bool schedule_from_thread=false);
 

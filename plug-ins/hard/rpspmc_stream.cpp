@@ -265,13 +265,9 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
 
         static int position=0;
         static int count=0;
-        static int count_prev=-1;
-        static int streamAB=0;
         static bool finished=false;
 
         static size_t bram_offset=0;
-
-        static int count_stream=0;
 
         //self->debug_log ("WebSocket SPMC message received.");
 	//self->status_append ("WebSocket SPMC message received.\n", true);
@@ -311,10 +307,9 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
                         g_message ("** WEBSOCKET STREAM TAG: RESET (GVP Start) Received");
                         finished=false;
                         position=0;
-                        streamAB=0;
                         count = 0;
-                        count_prev = -1;
-                        count_stream=0;
+                        // TESTing:
+                        self->on_new_data (NULL, 0, true);
                 }
                 
                 if ((p=g_strrstr(contents, "Position:{0x"))){ // SIMPLE JSON BLOCK
@@ -350,35 +345,8 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
 	} else if (type == SOUP_WEBSOCKET_DATA_BINARY) {
 		contents = g_bytes_get_data (message, &len);
 #endif
-                //tmp = g_strdup_printf ("\nSTREAMINFO: BLOCK %03d  Pos 0x%04x  AB %02d  %s\n", count, position, streamAB, finished?"_Fini":"_Cont");
-                //tmp = g_strdup_printf ("WEBSOCKET_DATA_BINARY SPMC Bytes: 0x%04x,  Position: 0x%04x + AB=%d x BRAMSIZE/2, Count: %d\n", len, position, streamAB, count);
-                //self->status_append (tmp, true);
-                //g_message (tmp);
-   
-                //self->status_append_int32 (contents, 512, true, streamAB*len, true, true); // truncate, just a snap
-                //self->status_append ("\n", true);
-                //self->debug_log (tmp);
-                //g_free (tmp);
 
-#if 0
-                FILE* pFile;
-                //tmp = g_strdup_printf ("WS-BRAM-DATA-BLOCK_%03d_Pos0x%04x_AB_%02d%s.bin", count, position, streamAB, finished?"_Fini":"_Cont");
-                tmp = g_strdup_printf ("DMA-DATA-NEW_%08d%s.bin", count_stream, finished?"_Fini":"_Cont");
-                pFile = fopen(tmp, "wb");
-                g_free (tmp);
-                fwrite(contents, 1, len, pFile);
-                fclose(pFile);
-                // hexdump -v -e '"%08_ax: "' -e ' 16/4 "%08x_L[red:0x018ec108,green:0x018fffff] " " \n"' WS-BRAM-DATA-BLOCK_000_Pos0x1f7e_AB_00.bin
-#endif
-
-                streamAB = self->on_new_data (contents, len, count_stream, 0);
-                count_stream += (len>>2);
-
-                count_prev = count;
-
-                //tmp = g_strdup_printf ("WEBSOCKET_DATA_BINARY SPMC Bytes: 0x%04x,  Position: 0x%04x + AB=%d x BRAMSIZE/2, Count: %d\n", len, position, streamAB, count);
-                //self->status_append (tmp, true);
-                //g_free (tmp);
+                self->on_new_data (contents, len);
         }
 }
 

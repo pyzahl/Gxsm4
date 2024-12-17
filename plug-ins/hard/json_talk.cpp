@@ -275,7 +275,8 @@ void  RP_JSON_talk::json_parse_message (const char *json_string){
         jsmn_init(&p);
         int ret = jsmn_parse(&p, json_string, strlen(json_string), tok, sizeof(tok)/sizeof(tok[0]));
         if (ret < 0) {
-                g_warning ("JSON PARSER:  Failed to parse JSON: %d\n%s\n", ret, json_string);
+                g_warning ("JSON PARSER:  Failed to parse JSON: %d [%d / %d]\n", ret, sizeof(tok), sizeof(tok[0]));
+                //g_warning ("JSON PARSER:  Failed to parse JSON: %d\n%s\n", ret, json_string);
                 return;
         }
         /* Assume the top-level element is an object */
