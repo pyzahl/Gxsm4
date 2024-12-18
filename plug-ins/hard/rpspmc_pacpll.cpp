@@ -500,10 +500,10 @@ GtkWidget*  GUI_Builder::grid_add_mixer_options (gint channel, gint preset, gpoi
         
         g_object_set_data (G_OBJECT (cbtxt), "mix_channel", GINT_TO_POINTER (channel)); 
                                                                         
-        id = g_strdup_printf ("%d", MM_OFF);         gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, "OFF"); g_free (id); 
-        id = g_strdup_printf ("%d", MM_ON);          gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, "LIN"); g_free (id); 
-        id = g_strdup_printf ("%d", MM_NEG|MM_ON);   gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, "NEG-LIN"); g_free (id); 
-        id = g_strdup_printf ("%d", MM_LOG|MM_ON);   gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, "LOG"); g_free (id); 
+        id = g_strdup_printf ("%d", MM_OFF);        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, "OFF"); g_free (id); 
+        id = g_strdup_printf ("%d", MM_LIN);        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, "LIN"); g_free (id); 
+        id = g_strdup_printf ("%d", MM_LOG);        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, "LOG"); g_free (id); 
+        id = g_strdup_printf ("%d", MM_FCZ|MM_LOG); gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, "FCZ-LOG"); g_free (id); 
 
         gchar *preset_id = g_strdup_printf ("%d", preset); 
         gtk_combo_box_set_active_id (GTK_COMBO_BOX (cbtxt), preset_id);
@@ -1563,7 +1563,7 @@ void RPSPMC_Control::create_folder (){
 
         bp->set_default_ec_change_notice_fkt (RPSPMC_Control::ZServoParamChanged, this);
         // Note: transform mode is always default [LOG,OFF,OFF,OFF] -- NOT READ BACK FROM DSP -- !!!
-        for (gint ch=0; ch<2; ++ch){
+        for (gint ch=0; ch<1; ++ch){
 
                 GtkWidget *signal_select_widget = NULL;
                 UnitObj *tmp = NULL;
@@ -1646,11 +1646,12 @@ void RPSPMC_Control::create_folder (){
         
         bp->new_line ();
         bp->set_label_width_chars ();
+#if 1
         bp->grid_add_check_button ("Enable", "enable Z servo feedback controller." PYREMOTE_CHECK_HOOK_KEY("MainZservo"), 1,
                                    G_CALLBACK(RPSPMC_Control::ZServoControl), this, ((int)spmc_parameters.gvp_status)&1, 0);
-
+#endif
         spmc_parameters.z_servo_invert = 1.;
-        bp->grid_add_check_button ("Invert", "invert Z servo control.", 0,
+        bp->grid_add_check_button ("Invert", "invert Z servo control.", 1,
                                    G_CALLBACK(RPSPMC_Control::ZServoControlInv), this, spmc_parameters.z_servo_invert < 0.0, 0);
 
 
@@ -2507,12 +2508,13 @@ void RPSPMC_Control::ZServoParamChanged(Param_Control* pcs, RPSPMC_Control *self
         }
 }
 void RPSPMC_Control::ZServoControl (GtkWidget *widget, RPSPMC_Control *self){
-        if (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)))
-                spmc_parameters.z_servo_mode = 1;
-        else
-                spmc_parameters.z_servo_mode = 0;
-
-        self->ZServoParamChanged (NULL, self);
+        if (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget))){
+                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_MODE", MM_OFF);
+                // set MixMode to grey/inconsistent
+        } else {
+                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_MODE", self->mix_transform_mode[0]);
+                // update MixMode
+        }
 }
 
 void RPSPMC_Control::ZServoControlInv (GtkWidget *widget, RPSPMC_Control *self){
@@ -2550,7 +2552,7 @@ int RPSPMC_Control::choice_mixmode_callback (GtkWidget *widget, RPSPMC_Control *
 	dspc->mix_transform_mode[channel] = selection;
         if (channel == 0){
                 g_print ("Choice MIX%d MT=%d\n", channel, selection);
-                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_MODE", selection);
+                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_MODE", selection); // mapped to MM_LIN/LOG/FCZLOG (0,1,3)
         }
         PI_DEBUG_GP (DBG_L4, "%s ** 2\n",__FUNCTION__);
 

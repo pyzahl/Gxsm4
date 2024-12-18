@@ -342,11 +342,9 @@ typedef struct{
 
 
 #define MM_OFF     0x00  // ------
-#define MM_ON      0x01  // ON/OFF
+#define MM_LIN     0x01  // ON/OFF
 #define MM_LOG     0x02  // LOG/LIN
-#define MM_LV_FUZZY   0x04  // FUZZY-LV/NORMAL
-#define MM_CZ_FUZZY   0x08  // FUZZY-CZ/NORMAL
-#define MM_NEG     0x10  // NEGATE SOURCE (INPUT)
+#define MM_FCZ     0x04  // FUZZY-CZ/NORMAL
 
 // GUI limit
 #define N_GVP_VECTORS 25 //  vectors max total, need a few extra for controls and finish.

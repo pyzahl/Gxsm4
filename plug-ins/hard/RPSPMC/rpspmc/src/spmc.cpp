@@ -94,7 +94,13 @@
 #define SPMC_CFG_Z_SERVO_CONTROLLER         (PACPLL_CFG1_OFFSET + 10) // 10:16
 #define SPMC_CFG_Z_SERVO_ZSETPOINT          (PACPLL_CFG1_OFFSET + 17) // 17
 #define SPMC_CFG_Z_SERVO_LEVEL              (PACPLL_CFG1_OFFSET + 18) // 18
-#define SPMC_CFG_Z_SERVO_MODE               (PACPLL_CFG1_OFFSET + 19) // 19: SERVO CONTROL (enable) Bit0, ...
+// CONTROL REGISTER 19:
+// Bit0: SERVO CONTROL (enable)
+// Bit1: LN (log mode) if set: Ln (ABS (INPUT 32bit)) in 8.24 Fractional (32bit) MUST CONVERT SETPOINT ACCORDINGLY!!!, else linear (32bit signed)
+// Bit2: Fuzzy CZ mode
+#define SPMC_CFG_Z_SERVO_MODE               (PACPLL_CFG1_OFFSET + 19) // 19: SERVO CONTROL REGISTER
+
+
 
 // CFG DATA REGISTER 3 [1023:0]
 // SPMControl Core
