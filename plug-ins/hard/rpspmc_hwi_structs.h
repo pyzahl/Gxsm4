@@ -342,8 +342,8 @@ typedef struct{
 
 
 #define MM_OFF     0x00  // ------
-#define MM_LIN     0x01  // ON/OFF
-#define MM_LOG     0x02  // LOG/LIN
+#define MM_ON      0x01  // ON/OFF (LINEAR)
+#define MM_LOG     0x02  // ENABLE LOG TRANSFER
 #define MM_FCZ     0x04  // FUZZY-CZ/NORMAL
 
 // GUI limit

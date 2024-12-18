@@ -51,7 +51,7 @@ module axis_ctrlsrc_select #(
     always @ (posedge a_clk)
     begin
         x <= $signed({{(8){S_AXIS_tdata[SAXIS_DATA_WIDTH-1]}}, {S_AXIS_tdata[SAXIS_DATA_WIDTH-1:8]} }) + $signed(signal_offset[SAXIS_DATA_WIDTH-1:8]); // REMOVE SIGNAL OFFSET ==> must be < 256
-        y <= x[SAXIS_DATA_WIDTH-1:0] ? -x : x; // ABS
+        y <= x[SAXIS_DATA_WIDTH-1] ? -x : x; // ABS
     end
 
 
@@ -59,9 +59,9 @@ module axis_ctrlsrc_select #(
     // assign	w_tozero = i_data[(IWID-1):0] + { {(OWID){1'b0}}, i_data[(IWID-1)], {(IWID-OWID-1){!i_data[(IWID-1)]}}};
 
 // {(64-SAXIS_3_DATA_WIDTH){1'b0}}
-    assign M_AXIS_tdata = selection_ln ? { {(MAXIS_DATA_WIDTH-SAXIS_DATA_WIDTH){S_AXIS_LN_tdata[SAXIS_DATA_WIDTH-1]}}, S_AXIS_LN_tdata[SAXIS_DATA_WIDTH-1:0] } : { {(MAXIS_DATA_WIDTH-SAXIS_DATA_WIDTH){S_AXIS_tdata[SAXIS_DATA_WIDTH-1]}}, S_AXIS_tdata[SAXIS_DATA_WIDTH-1:0] };
+    assign M_AXIS_tdata = selection_ln ? { {(MAXIS_DATA_WIDTH-SAXIS_DATA_WIDTH){S_AXIS_LN_tdata[SAXIS_DATA_WIDTH-1]}}, S_AXIS_LN_tdata[SAXIS_DATA_WIDTH-1:0] } : x;
     assign M_AXIS_tvalid = S_AXIS_tvalid;
-    assign M_AXIS_ABS_tdata = y + 32; //ln_offset; // fixed extra offset from zero
+    assign M_AXIS_ABS_tdata = y + 1; //ln_offset; // fixed extra offset from zero
     assign M_AXIS_ABS_tvalid = S_AXIS_tvalid;
 
 endmodule

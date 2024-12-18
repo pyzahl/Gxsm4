@@ -501,9 +501,9 @@ GtkWidget*  GUI_Builder::grid_add_mixer_options (gint channel, gint preset, gpoi
         g_object_set_data (G_OBJECT (cbtxt), "mix_channel", GINT_TO_POINTER (channel)); 
                                                                         
         id = g_strdup_printf ("%d", MM_OFF);        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, "OFF"); g_free (id); 
-        id = g_strdup_printf ("%d", MM_LIN);        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, "LIN"); g_free (id); 
-        id = g_strdup_printf ("%d", MM_LOG);        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, "LOG"); g_free (id); 
-        id = g_strdup_printf ("%d", MM_FCZ|MM_LOG); gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, "FCZ-LOG"); g_free (id); 
+        id = g_strdup_printf ("%d", MM_ON);         gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, "LIN"); g_free (id); 
+        id = g_strdup_printf ("%d", MM_ON | MM_LOG);          gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, "LOG"); g_free (id); 
+        id = g_strdup_printf ("%d", MM_ON | MM_LOG | MM_FCZ); gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, "FCZ-LOG"); g_free (id); 
 
         gchar *preset_id = g_strdup_printf ("%d", preset); 
         gtk_combo_box_set_active_id (GTK_COMBO_BOX (cbtxt), preset_id);
@@ -1911,7 +1911,7 @@ void RPSPMC_Control::create_folder (){
         bp->set_configure_list_mode_off ();
         bp->grid_add_label ("time", "total time for VP section");
         bp->grid_add_label ("points", "points (# vectors to add)");
-        bp->grid_add_label ("FB", "Feedback (Option bit 0)");
+        bp->grid_add_label ("FB", "Feedback (Option bit 0), CHECKED=FB-OFF (for now)");
         bp->set_configure_list_mode_on ();
         bp->grid_add_label ("VSET", "Treat this as a initial set position, vector differential from current position are computed!");
         bp->grid_add_label ("7", "Option bit 7");
