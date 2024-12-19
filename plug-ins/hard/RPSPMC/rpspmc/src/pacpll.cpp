@@ -108,11 +108,6 @@
 
 
 
-// not used any more
-#define PACPLL_CFG_TRANSPORT_AUX_SCALE       17
-#define PACPLL_CFG_TRANSPORT_AUX_CENTER      18  // 18,19
-
-
 
 #if 0
 // ---------- NOT IMPLEMENTED/NO ROOM ---------------------

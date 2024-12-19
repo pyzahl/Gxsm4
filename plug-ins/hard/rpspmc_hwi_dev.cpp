@@ -1159,7 +1159,13 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2,
 
         if (*property == 'f'){
                 val1 = pacpll_parameters.dfreq_monitor; // qf - DSPPACClass->pll.Reference[0]; // Freq Shift
-		val2 = spmc_parameters.signal_monitor / main_get_gapp()->xsm->Inst->nAmpere2V (1.); // actual nA reading
+#if 0
+                if ((int)(spmc_parameters.z_servo_mode) & MM_LOG) // values are in 8.24 fractional
+                        val2 = exp(spmc_parameters.signal_monitor/(double)(1<<24)) / main_get_gapp()->xsm->Inst->nAmpere2V (1.); // actual nA reading
+                else
+                        val2 = spmc_parameters.signal_monitor / main_get_gapp()->xsm->Inst->nAmpere2V (1.); // actual nA reading
+#endif
+                val2 = spmc_parameters.signal_monitor / main_get_gapp()->xsm->Inst->nAmpere2V (1.); // actual nA reading
 		val3 =  0; //
 		return TRUE;
 	}
@@ -1181,7 +1187,8 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2,
                 int statusbits = round(spmc_parameters.gvp_status);
 		val3 = (double)(statusbits>>8);   //  assign dbg_status = {sec[32-3:0], reset, pause, ~finished };
 		val2 = (double)(statusbits&0xff);
-		val1 = (double)(    (statusbits&0x01       ? 1:0)      // (Z Servo Feedback Active: Bit0)
+		val1 = (double)(    (statusbits&0x01 && ((int)(spmc_parameters.z_servo_mode) & MM_ON)
+                                     ? 1:0)      // (Z Servo Feedback Active: Bit0)
 				+ ((((statusbits>>8)&0x04) ? 1:0) << 1)  // Scan/GVP Stop/Reset    (Scan)
                                 + ((((statusbits>>8)&0x02) ? 1:0) << 2)  // Scan/GVP Pause         (Scan)
 				+ ((((statusbits>>8)&0x01) ? 1:0) << 3)  // Scan/GVP not finished  (Probing)

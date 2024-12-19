@@ -376,7 +376,7 @@ vector = {32'd000032,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  3
         write_program_vector (vector_index++);
         // next line with repeat for all lines from VPC-2 ny times
         make_UZXYramp_vector (0., 0., // GVP_du[k], GVP_dz[k],
-                              0., dy/(subscan_buffer[3]-1), 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
+                              0., -dy/(subscan_buffer[3]-1), 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
                               10, subscan_buffer[3], -2, tfwd/ny, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
                               srcs_buffer[0], gvp_options); // vis_Source, GVP_opt[k]);
         write_program_vector (vector_index++);
@@ -442,10 +442,10 @@ void RPSPMC_Control::write_spm_vector_program (int start, pv_mode pvm){
 					GVP_vnrep[k] = 0;
 				if (GVP_vpcjr[k] < -vector_index || GVP_vpcjr[k] > 0) // origin of VP, no forward jump
 					GVP_vpcjr[k] = -vector_index; // defaults to start
-                                
+
 				vp_duration += make_UZXYramp_vector (GVP_du[k], GVP_dz[k], GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
                                                                      GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
-                                                                     vis_Source, GVP_opt[k]);
+                                                                     vis_Source, GVP_opt[k]^1); // invert FB flag in bit0, FPGA GVP FB=1 => FB-hold
 				write_program_vector (vector_index++);
 				if (GVP_vnrep[k]-1 > 0)	
 					vp_duration +=	(GVP_vnrep[k]-1)*(vp_duration - vpd[k+GVP_vpcjr[k]]);

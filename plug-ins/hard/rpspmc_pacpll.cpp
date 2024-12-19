@@ -130,55 +130,6 @@ RP data streaming
     // gvp_time[48-1:32]      // TIME  0x8000 // upper 32 (16 lower only)
     input wire [48-1:0] S_AXIS_gvp_time_tdata,  // time since GVP start in 1/125MHz units
 */
-#if 0
-// Masks MUST BE unique
-SOURCE_SIGNAL_DEF rpspmc_source_signals[] = {
-        // -- 8 vector generated signals (outputs/mapping) ==> must match: #define NUM_VECTOR_SIGNALS 8
-        //  xxxxSRCS
-        // mask,       name/label,  descr, unit, sym, scale, garrindex, scanchpos
-        //  ****SRCS lower 32 bits, upper GVP internal/generated
-        { 0x01000000, "Index",   "Index",      " ", "#",  "#",            1.0, PROBEDATA_ARRAY_INDEX, 0 }, 
-        { 0x02000000, "Time",    "Time",       " ", "ms", "ms",           1.0, PROBEDATA_ARRAY_TIME,  0 }, // time in ms
-        { 0x04000000, "Section", "SEC",        " ", "#",  "#",            1.0, PROBEDATA_ARRAY_SEC,   0 },
-        { 0x00100000, "XScan",   "XS",         " ", "AA", UTF8_ANGSTROEM, 1.0, PROBEDATA_ARRAY_XS, 0 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
-        { 0x00200000, "YScan",   "YS",         " ", "AA", UTF8_ANGSTROEM, 1.0, PROBEDATA_ARRAY_YS, 0 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
-        { 0x00400000, "ZScan",   "ZS",         " ", "AA", UTF8_ANGSTROEM, 1.0, PROBEDATA_ARRAY_ZS, 0 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
-        { 0x00800000, "Bias",    "Bias",       " ", "V",             "V", 1.0, PROBEDATA_ARRAY_U,  0 },
-        { 0x08000000, "X0",      "DA",         " ", "V",             "V", 1.0, PROBEDATA_ARRAY_X0, -1 },
-        { 0x10000000, "XY",      "DB",         " ", "V",             "V", 1.0, PROBEDATA_ARRAY_Y0, -1 },
-        { 0x20000000, "PHI",     "PHI",        " ", "deg",         "deg", 1.0, PROBEDATA_ARRAY_PHI, -1 },
-        // -- general measured signals from index [8]   // <=== to Volt conversion here -- unit sym and scale are custom auto adjusted in .._eventhandling lookup functions as of this mask 
-        { 0x0000C000, "Time-Mon", "Time-Mon",  " ", "ms", "ms",           1.0,            PROBEDATA_ARRAY_S15, 15 },//ICH 14 + 15 : 64bit time in ms
-        { 0x00000001, "XS-Mon",   "XS-Mon",    " ", "AA", UTF8_ANGSTROEM, 1.0,            PROBEDATA_ARRAY_S1,  1 }, //ICH:  0  see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
-        { 0x00000002, "YS-Mon",   "YS-Mon",    " ", "AA", UTF8_ANGSTROEM, 1.0,            PROBEDATA_ARRAY_S2,  2 }, //      1  see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
-        { 0x00000004, "ZS-Topo",  "ZS-Topo",   " ", "AA", UTF8_ANGSTROEM, 1.0,            PROBEDATA_ARRAY_S3,  3 }, //      2  see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
-        { 0x00000008, "Bias-Mon", "Bias-Mon",       " ",  "V",   "V",     1.0,            PROBEDATA_ARRAY_S4,  4 }, //      3 BiasFac, see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
-        { 0x00000010, "In1-Signal",  "In1-Signal",  " ",  "V",   "V",     1.0,            PROBEDATA_ARRAY_S5,  5 }, //      4
-        { 0x00000020, "In2-Current", "In2-Current", " ",  "V",   "V",     1.0,            PROBEDATA_ARRAY_S6,  6 }, //      5  CurrFac, see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
-        { 0x00000040, "In3-**", "In3-**",      " ", "V",  "V",            1.0,            PROBEDATA_ARRAY_S7,  7 }, //      6
-        { 0x00000080, "In4-**", "In4-**",      " ", "V",  "V",            1.0,            PROBEDATA_ARRAY_S8,  8 }, //      7
-        { 0x00000100, "Phase",  "Phase",       " ", "deg", UTF8_DEGREE, (180.0/(M_PI*((1L<<RP_FPGA_QATAN)-1))),    PROBEDATA_ARRAY_S9,  9 }, //  8 ** swappable **,
-        { 0x00000200, "dFrequency", "dFreq",   " ", "Hz", "Hz",         (125e6/((1L<<RP_FPGA_QFREQ)-1)),  PROBEDATA_ARRAY_S10, 10 },         //  9 ** swappable **,
-        { 0x00000400, "Amplitude",  "Ampl",    " ", "mV", "mV",         (1.0/((1L<<RP_FPGA_QSQRT)-1)),    PROBEDATA_ARRAY_S11, 11 },         // 10 ** swappable **,
-        { 0x00000800, "Excitation", "Exec",    " ", "mV", "mV",         (1.0/((1L<<RP_FPGA_QEXEC)-1)),    PROBEDATA_ARRAY_S12, 12 },         // 11 ** swappable **,
-        { 0x00001000, "LockInX", "LockInX",    " ", "V",   "V",           1.0,            PROBEDATA_ARRAY_S13, 13 },                         // 12 
-        { 0x00002000, "dFreqCtrl", "dFreqCtrl"," ", "V",   "V",           1.0,            PROBEDATA_ARRAY_S14, 14 },                         // 13 GVP Package Test Count if GVP OPT bit 6
-        { 0x00004000, "--",        "--",       " ", "V",   "V",           1.0,            PROBEDATA_ARRAY_S15,   -1 },                        // -- DUMMY SO FAR
-        { 0x00008000, "--",        "--",       " ", "V",   "V",           1.0,            PROBEDATA_ARRAY_COUNT, -1 },                        // -- DUMMY SO FAR
-        { 0x80000000, "BlockI", "BlockI",      " ", "i#", "i#",           1.0,            PROBEDATA_ARRAY_BLOCK, 0 }, // MUST BE ALWAYS LAST AND IN HERE!! END MARK.
-        { 0x00000000, NULL, NULL, NULL, NULL, NULL,                       0.0,            0,                     0 }
-};
-
-// so far fixed to swappable 4 signals as of GUI design!
-SOURCE_SIGNAL_DEF swappable_signals[] = {
-        { 0x00000100, "Phase",      "Phase",      " ", "deg", UTF8_DEGREE, (180.0/(M_PI*((1L<<RP_FPGA_QATAN)-1))), 0, 9 },
-        { 0x00000200, "dFrequency", "dFrequency", " ", "Hz", "Hz",         (125e6/((1L<<RP_FPGA_QFREQ)-1)), 0, 10 },
-        { 0x00000400, "Amplitude",  "Amplitude",  " ", "mV", "mV",         (1.0/((1L<<RP_FPGA_QSQRT)-1)), 0,   11 },
-        { 0x00000800, "Excitation", "Excitation", " ", "mV", "mV",         (1.0/((1L<<RP_FPGA_QEXEC)-1)), 0,   12 },
-        { 0x00000000, NULL, NULL, NULL, NULL, NULL,                         0.0,                          0,   0  }
-};
-
-#else
 #define SPMC_AD5791_REFV 5.0 // DAC AD5791 Reference Volatge is 5.000000V (+/-5V Range)
 #define SPMC_AD5791_to_volts (SPMC_AD5791_REFV / QN(31))
 #define SPMC_RPIN12_REFV 1.0 // RP FAT DACs Reference Voltage is 1.0V (+/-1V Range)
@@ -216,7 +167,7 @@ SOURCE_SIGNAL_DEF rpspmc_source_signals[] = {
         { 0x00000400, "Ampl",         " ", "mV",           "mV",          (1.0/((1L<<RP_FPGA_QSQRT)-1)), PROBEDATA_ARRAY_S11, 11 }, // ** swappable **,
         { 0x00000800, "Exec",         " ", "mV",           "mV",          (1.0/((1L<<RP_FPGA_QEXEC)-1)), PROBEDATA_ARRAY_S12, 12  }, // ** swappable **,
         { 0x00001000, "LockInX",      " ", "dV",           "dV",                   SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S13, 13 },
-        { 0x00002000, "dFreqCtrl",    " ", "##",           "##",                                    1.0, PROBEDATA_ARRAY_S14, 14 },
+        { 0x00002000, "dFreqCtrl",    " ", "##",           "##",                   SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S14, 14 },
         { 0x00004000, "--",           " ", "V",             "V",                                    1.0, PROBEDATA_ARRAY_S15, -1 }, // -- DUMMY SO FAR
         { 0x00008000, "--",           " ", "V",             "V",                                    1.0, PROBEDATA_ARRAY_COUNT, -1 }, // -- DUMMY SO FAR
         { 0x80000000, "BlockI",       " ", "i#",           "i#",                                    1.0, PROBEDATA_ARRAY_BLOCK, -1 }, // MUST BE ALWAYS LAST AND IN HERE!! END MARK.
@@ -231,8 +182,6 @@ SOURCE_SIGNAL_DEF swappable_signals[] = {
         { 0x00000800, "Excitation", " ", "mV", "mV", (1.0/((1L<<RP_FPGA_QEXEC)-1)), 0 },
         { 0x00000000,  NULL, NULL, NULL, NULL, 0.0, 0 }
 };
-
-#endif
 
 
 extern int debug_level;

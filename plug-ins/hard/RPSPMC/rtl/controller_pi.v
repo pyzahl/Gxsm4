@@ -59,6 +59,7 @@ module controller_pi #(
     parameter AUTO_RESET_AT_LIMIT  = 0,        // optional behavior instead of saturation at limits,   X      0
 		                                       //  push control back to reset value
     parameter USE_RESET_DATA_INPUT = 1,        // has reset value AXIS input,                          1      1
+    parameter FUZZY_CONST_CONTROL_MODE = 0,    // if enabled trys to maintain "reset" value if not exceeding setpoint as a limit, if so, normal regulation operation 
 
     parameter RDECI  = 1,  // reduced rate decimation bits 1= 1/2 ...
     parameter RDECII = 1   // reduced rate decimation bits 1= 1/2 ...
@@ -83,6 +84,7 @@ module controller_pi #(
     input wire                                          S_AXIS_reset_tvalid,
     input wire enable,
     input wire control_hold,
+    input wire fuzzy_cr_mode, // reset value is use as "Z" target unles setpoint limit is reached
     
     output wire [AXIS_TDATA_WIDTH-1:0] M_AXIS_PASS_tdata, // passed input
     output wire                        M_AXIS_PASS_tvalid,
@@ -119,6 +121,7 @@ module controller_pi #(
     reg signed [zW_ERROR-1:0] error=0;
     reg signed [zW_ERROR-1:0] error_next=0;
     reg signed [zW_ERROR-1:0] reg_setpoint;
+    reg signed [zW_ERROR-1:0] error_level=0;
     reg signed [zW_CONTROL_INT-1:0] upper, lower, reset;
     reg signed [zW_CONTROL_INT-1:0] control=0;
     reg signed [zW_CONTROL_INT-1:0] control_next=0;
@@ -132,6 +135,7 @@ module controller_pi #(
     reg control_min;
     reg reg_enable;
     reg reg_hold;
+    reg fuzzy_cr_active=0;
 
     assign M_AXIS_PASS_tdata  = S_AXIS_tdata; // pass
     assign M_AXIS_PASS_tvalid = S_AXIS_tvalid; // pass
@@ -244,8 +248,22 @@ always @(posedge i_clk)
             reg_setpoint <= {{(zW_ERROR-IN_W+1){setpoint[AXIS_TDATA_WIDTH-1]}},       setpoint[IN_W-1:0]};
             // calculate error
             error_next   <= reg_setpoint - m; // IN_W + 1  (zW_ERROR)
-    
-            if (reg_enable && !reg_hold) // run controller, integrate and prepare control output
+
+            if (FUZZY_CONST_CONTROL_MODE && fuzzy_cr_mode && reg_enable && !reg_hold)
+            begin
+                error_level <= reg_setpoint >>> 7; // about 1% of setpoint (1/128)            
+                if (error > error_level) // assuming positive signal and setpoint, assuming signal < set_point (1% tolerance for erro within normal regulation) => FUZZY on and try to shift Z to reset value
+                begin
+                    controlint_next <= controlint + reg_ci*(reset - controlint); // saturation via extended range and limiter // Q64.. += Q31 x Q22
+                    control_next    <= controlint; 
+                    fuzzy_cr_active <= 1;
+                end
+                else
+                begin
+                    fuzzy_cr_active <= 0;
+                end             
+            end
+            if (!fuzzy_cr_active && reg_enable && !reg_hold) // run controller, integrate and prepare control output
             begin
                 control_cie <= reg_ci*error; // ciX*error // saturation via extended range and limiter // Q64.. += Q31 x Q22
                 control_cpe <= reg_cp*error; // cpX*error // saturation via extended range and limiter // Q64.. += Q31 x Q22
@@ -260,8 +278,8 @@ always @(posedge i_clk)
                     control_next    <= reset;
                 end
             end
-        end
-    end    
+        end     
+    end   
      
     //assign M_AXIS_CONTROL_tdata   = {control[zW_CONTROL_INT-1], control[zW_CONTROL_INT-zW_EXTEND-2 : zW_CONTROL_INT-zW_EXTEND-CONTROL_W]}; // strip extension
     assign M_AXIS_CONTROL_tdata   = {{(M_AXIS_CONTROL_TDATA_WIDTH-CONTROL_W){control[zW_CONTROL_INT-1]}}, control[zW_CONTROL_INT-zW_EXTEND-1 : zW_CONTROL_INT-zW_EXTEND-CONTROL_W]}; // strip extension, expand to TDATA WIDTH
