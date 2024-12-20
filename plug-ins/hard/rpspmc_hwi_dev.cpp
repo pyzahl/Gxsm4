@@ -1542,6 +1542,10 @@ int rpspmc_hwi_dev::read_GVP_data_block_to_position_vector (int offset, gboolean
                         GVP_vp_header_current.n = 0;
                         GVP_vp_header_current.i = 0;
                         GVP_vp_header_current.srcs = 0xffff;
+                        status_append ("GVP END MARK DETECTED", true);
+                        g_message ("** GVP END MARK DETECTED **");
+                        g_mutex_unlock (&GVP_stream_buffer_mutex);
+                        return 0; // END OF GVP -- anywas a full position vector still follows, discarding now
                 } else {
                         if (GVP_vp_header_current.n == GVP_vp_header_current.i+2) // 2nd point, store srcs mask for verify
                                 GVP_vp_header_current.srcs_mask_vector = GVP_vp_header_current.srcs; // store ref mask

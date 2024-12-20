@@ -170,7 +170,7 @@ void RP_stream::stream_connect_cb (gboolean connect){
         } else {
 #ifdef USE_WEBSOCKETPP
                 if (con){
-                        status_append ("Dissconnecting...\n ");
+                        status_append ("Dissconnecting...\n ", true);
                         std::error_code ec;
                         client->close(con, websocketpp::close::status::normal, "", ec);
                         //client->stop();
@@ -181,7 +181,7 @@ void RP_stream::stream_connect_cb (gboolean connect){
                 }
 #else
                 // tear down connection
-                status_append ("Dissconnecting...\n ");
+                status_append ("Dissconnecting...\n ", true);
 
                 //g_clear_object (&listener);
                 g_clear_object (&client);
@@ -284,12 +284,12 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
 		contents = g_bytes_get_data (message, &len);
 #endif
                 gchar *p;
-                if (contents && len < 100){
-                        tmp = g_strdup_printf ("WEBSOCKET_DATA_TEXT: %s", contents);
-                        //self->status_append (tmp, true);
+                if (contents && len > 0){ //< 100){
+                        tmp = g_strdup_printf ("** WS TEXT MESSAGE: %s", contents);
+                        self->status_append (tmp, true);
                         g_message (tmp);
                         g_free (tmp);
-                } else {
+                } /* else {
                         self->status_append ("WEBSOCKET_DATA_TEXT ------\n", true);
                         if (contents && len > 0)
                                 self->status_append ((gchar*)contents, true);
@@ -300,11 +300,12 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
                         else
                                 self->status_append ("\n--------------------------\n", true);
                 }
+                  */
                 //g_message ("WS Message: %s", (gchar*)contents);
 
                 if (g_strrstr (contents, "RESET")){
                         self->status_append ("** WEBSOCKET STREAM TAG: RESET (GVP Start) Received.\n", true);
-                        g_message ("** WEBSOCKET STREAM TAG: RESET (GVP Start) Received");
+                        g_message ("** WEBSOCKET STREAM TAG: RESET (GVP Start) Received.");
                         finished=false;
                         position=0;
                         count = 0;
@@ -333,7 +334,7 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
                 if (g_strrstr (contents, "vector = {")){
                         if ((p = g_strrstr (contents, "// Vector #"))){
                                 self->last_vector_pc_confirmed = atoi (p+11);
-                                g_message (p);
+                                g_message ("** VECTOR #%02d confirmed.", self->last_vector_pc_confirmed);
                         }
                 }
                
@@ -353,15 +354,15 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
 #ifdef USE_WEBSOCKETPP
 void  RP_stream::on_closed (GObject *object, gpointer user_data){
         RP_stream *self = ( RP_stream *)user_data;
-        self->status_append ("WebSocket stream connection externally closed.\n");
-        self->status_append ("--> auto reconnecting...\n");
+        self->status_append ("WebSocket stream connection externally closed.\n", true);
+        self->status_append ("--> auto reconnecting...\n", true);
         self->stream_connect_cb (TRUE);
 }
 #else
 void  RP_stream::on_closed (SoupWebsocketConnection *ws, gpointer user_data){
         RP_stream *self = ( RP_stream *)user_data;
-        self->status_append ("WebSocket stream connection externally closed.\n");
-        self->status_append ("--> auto reconnecting...\n");
+        self->status_append ("WebSocket stream connection externally closed.\n", true);
+        self->status_append ("--> auto reconnecting...\n", true);
         self->stream_connect_cb (TRUE);
 }
 #endif
