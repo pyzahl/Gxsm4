@@ -27,7 +27,7 @@ module axis_ctrlsrc_select #(
 )
 (
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF S_AXIS:S_AXIS_LN:M_AXIS_ABS:M_AXIS" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF S_AXIS:S_AXIS_LN:M_AXIS_ABS:M_AXIS_MON:M_AXIS" *)
     input a_clk,
     input wire [SAXIS_DATA_WIDTH-1:0]  S_AXIS_tdata,
     input wire                         S_AXIS_tvalid,
@@ -42,7 +42,10 @@ module axis_ctrlsrc_select #(
     output               M_AXIS_ABS_tvalid,
 
     output [MAXIS_DATA_WIDTH-1:0]      M_AXIS_tdata,
-    output                             M_AXIS_tvalid
+    output                             M_AXIS_tvalid,
+
+    output [MAXIS_DATA_WIDTH-1:0]      M_AXIS_MON_tdata,
+    output                             M_AXIS_MON_tvalid
 );
 
     reg signed [SAXIS_DATA_WIDTH-1:0] x;
@@ -61,6 +64,8 @@ module axis_ctrlsrc_select #(
     // Consider, if you have a data values i_data coming in with IWID (input width) bits, and you want to create a data value with OWID bits, why not just grab the top OWID bits?
     // assign	w_tozero = i_data[(IWID-1):0] + { {(OWID){1'b0}}, i_data[(IWID-1)], {(IWID-OWID-1){!i_data[(IWID-1)]}}};
 
+    assign M_AXIS_MON_tdata = x;
+    assign M_AXIS_MON_tvalid = S_AXIS_tvalid;
     assign M_AXIS_tdata = selection_ln ? S_AXIS_LN_tdata : x;
     assign M_AXIS_tvalid = S_AXIS_tvalid;
     assign M_AXIS_ABS_tdata = y + 1; //ln_offset; // fixed extra offset from zero

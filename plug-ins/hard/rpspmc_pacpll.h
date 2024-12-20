@@ -1040,6 +1040,7 @@ public:
 
 	static void pulse_form_parameter_changed (Param_Control* pcs, gpointer user_data);
         static void pulse_form_enable (GtkWidget *widget, RPspmc_pacpll *self);
+        static void pulse_form_fire (GtkWidget *widget, RPspmc_pacpll *self);
 
         static void choice_operation_callback (GtkWidget *widget, RPspmc_pacpll *self);
         static void choice_transport_ch12_callback (GtkWidget *widget, RPspmc_pacpll *self);
@@ -1057,6 +1058,9 @@ public:
         static void scope_z_ch2_callback (GtkWidget *widget, RPspmc_pacpll *self);
 
         static void scope_buffer_position_callback (GtkWidget *widget, RPspmc_pacpll *self);
+        static void scope_save_data_callback (GtkWidget *widget, RPspmc_pacpll *self);
+
+        static void copy_f0_callback (GtkWidget *widget, RPspmc_pacpll *self);
 
         
         static void choice_update_ts_callback (GtkWidget *widget, RPspmc_pacpll *self);
@@ -1069,6 +1073,7 @@ public:
         
 	void update (); // window update (inputs, etc. -- here currently not really necessary)
         void update_monitoring_parameters ();
+        void save_scope_data ();
 
         static void graph_draw_function (GtkDrawingArea *area, cairo_t *cr,
                                          int             width,
@@ -1139,6 +1144,9 @@ private:
         int channel_selections[7];
         int deg_extend;
 
+        double resonator_frequency_fitted;
+        double resonator_phase_fitted;
+        
         double bram_window_length; // scope window length in sec
         
         PACPLL_parameters parameters;
@@ -1155,6 +1163,9 @@ private:
         double scope_dc_level[5];
         int transport;
         int bram_shift;
+        int trigger_mode;
+        double trigger_post_time;
+        double bram_saved_buffer[5][4096];
         double gain_scale[5];
         double time_scale[5];
         gboolean unwrap_phase_plot;

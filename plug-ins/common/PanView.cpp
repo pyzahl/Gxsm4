@@ -822,9 +822,9 @@ void PanView :: tip_refresh()
                 double s1,s2,s3;
                 main_get_gapp()->xsm->hardware->RTQuery ("S", s1, s2, s3); // Status
                 if (fabs(y) < 0.25)
-                        tmp = g_strdup_printf ("I: %8.1f pA\ndF: %8.1f Hz\nZ: %8.4f" UTF8_ANGSTROEM "\nU: %8.4f V\nX%04x %02x", y*1000., x, main_get_gapp()->xsm->Inst->V2ZAng(z), u, (int)s2, (int)s3);
+                        tmp = g_strdup_printf ("I: %8.1f pA\ndF: %8.1f Hz\nZ: %8.4f " UTF8_ANGSTROEM "\nU: %8.4f V\nIN2: %8.4f V\nh%04x %02x", y*1000., x, main_get_gapp()->xsm->Inst->V2ZAng(z), u, q, (int)s2, (int)s3);
                 else
-                        tmp = g_strdup_printf ("I: %8.4f nA\ndF: %8.1f Hz\nZ: %8.4f" UTF8_ANGSTROEM "\nU: %8.4f V\nX%04x %02x", y, x, main_get_gapp()->xsm->Inst->V2ZAng(z), u, (int)s2, (int)s3);
+                        tmp = g_strdup_printf ("I: %8.4f nA\ndF: %8.1f Hz\nZ: %8.4f " UTF8_ANGSTROEM "\nU: %8.4f V\nIN2: %8.4f V\nh%04x %02x", y, x, main_get_gapp()->xsm->Inst->V2ZAng(z), u, q, (int)s2, (int)s3);
 
                 info->set_text (tmp);
                 info->queue_update (canvas);

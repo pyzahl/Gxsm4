@@ -1166,7 +1166,7 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2,
                         val2 = spmc_parameters.signal_monitor / main_get_gapp()->xsm->Inst->nAmpere2V (1.); // actual nA reading
 #endif
                 val2 = spmc_parameters.signal_monitor / main_get_gapp()->xsm->Inst->nAmpere2V (1.); // actual nA reading
-		val3 =  0; //
+		val3 = spmc_parameters.signal_monitor;
 		return TRUE;
 	}
 

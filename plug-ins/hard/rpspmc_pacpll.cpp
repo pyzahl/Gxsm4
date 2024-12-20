@@ -2928,6 +2928,7 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
 	
 	GSList *EC_R_list=NULL;
 	GSList *EC_QC_list=NULL;
+	GSList *EC_FP_list=NULL;
 
         scan_gvp_options = 0;
         debug_level = 0;
@@ -2935,6 +2936,9 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
         text_status = NULL;
         streaming = 0;
 
+        resonator_frequency_fitted = -1.;
+        resonator_phase_fitted = -1.;
+        
         ch_freq = -1;
         ch_ampl = -1;
         deg_extend = 1;
@@ -3019,10 +3023,16 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
         bp->set_input_nx (2);
         bp->set_default_ec_change_notice_fkt (RPspmc_pacpll::pac_frequency_parameter_changed, this);
   	bp->grid_add_ec ("Frequency", Hz, &parameters.frequency_manual, 0.0, 20e6, ".3lf", 0.1, 10., "FREQUENCY-MANUAL");
+        EC_FP_list = g_slist_prepend( EC_FP_list, bp->ec);
         bp->new_line ();
         bp->set_input_width_chars (8);
-        bp->set_input_nx (2);
+        bp->set_input_nx (1);
   	bp->grid_add_ec ("Center", Hz, &parameters.frequency_center, 0.0, 20e6, ".3lf", 0.1, 10., "FREQUENCY-CENTER");
+        EC_FP_list = g_slist_prepend( EC_FP_list, bp->ec);
+  	bp->grid_add_button (N_("Copy"), "Copy F-center result from tune.", 1,
+                             G_CALLBACK (RPspmc_pacpll::copy_f0_callback), this);
+        GtkWidget *CpyButton = bp->button;
+
         bp->new_line ();
         bp->set_no_spin (false);
         bp->set_input_nx (2);
@@ -3273,6 +3283,9 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
         bp->grid_add_check_button ( N_("Enable"),  bp->PYREMOTE_CHECK_HOOK_KEY_FUNC("Enable Pulse Forming","rp-pacpll-PF"), 2,
                                     G_CALLBACK (RPspmc_pacpll::pulse_form_enable), this);
 
+        bp->grid_add_exec_button ( N_("Single Shot"),
+                                   G_CALLBACK (RPspmc_pacpll::pulse_form_fire), this, "FirePulse",
+                                   2);
         // =======================================
 
         bp->pop_grid ();
@@ -3683,6 +3696,9 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
 	gtk_combo_box_set_active (GTK_COMBO_BOX (wid), 0);
 
         bp->new_line ();
+
+        bp->grid_add_exec_button ( N_("Save"), G_CALLBACK (RPspmc_pacpll::scope_save_data_callback), this, "ScopeSaveData");
+
         bram_shift = 0;
         bp->grid_add_widget (gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL, 0, 4096, 10), 10);
         g_signal_connect (G_OBJECT (bp->any_widget), "value-changed",
@@ -3773,6 +3789,7 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
 	//g_object_set_data( G_OBJECT (window), "RPSPMCONTROL_EC_list", EC_list);
 
 	g_object_set_data( G_OBJECT (window), "RPSPMCONTROL_EC_READINGS_list", EC_R_list);
+	g_object_set_data( G_OBJECT (CpyButton), "PAC_FP_list", EC_FP_list);
 
         set_window_geometry ("rpspmc-pacpll-control"); // needs rescoure entry and defines window menu entry as geometry is managed
 
@@ -4026,6 +4043,108 @@ void RPspmc_pacpll::pulse_form_enable (GtkWidget *widget, RPspmc_pacpll *self){
         self->pulse_form_parameter_changed (NULL, self);
 }
 
+void RPspmc_pacpll::pulse_form_fire (GtkWidget *widget, RPspmc_pacpll *self){
+        gtk_combo_box_set_active (GTK_COMBO_BOX (self->update_op_widget), 3); // RESET (INIT BRAM TRANSPORT AND CLEAR FIR RING BUFFERS)
+        while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, false);
+        usleep(300000);
+        gtk_combo_box_set_active (GTK_COMBO_BOX (self->update_op_widget), 4); // SINGLE SHOT
+}
+
+void RPspmc_pacpll::save_scope_data (){
+        static int count=0;
+        static int base_count=-1;
+	std::ofstream f;
+        int i;
+	const gchar *separator = "\t";
+	time_t t;
+	time(&t);
+
+        if (base_count != gapp->xsm->file_counter) // auto reset for new image
+                count=0;
+                
+        base_count = gapp->xsm->file_counter;
+        gchar *fntmp = g_strdup_printf ("%s/%s%03d-%s%04d.rpdata",
+					g_settings_get_string (gapp->get_as_settings (), "auto-save-folder-probe"), 
+					gapp->xsm->data.ui.basename, base_count, "RP", count++);
+        
+	f.open (fntmp);
+
+        int ix=-999999, iy=-999999;
+
+	if (gapp->xsm->MasterScan){
+		gapp->xsm->MasterScan->World2Pixel (gapp->xsm->data.s.x0, gapp->xsm->data.s.y0, ix, iy, SCAN_COORD_ABSOLUTE);
+	}
+
+	const gchar *transport_modes[] = {
+                "IN1, IN2",             // [0] SCOPE
+                "IN1: AC, DC",          // [1] MON
+                "AMC: Ampl, Exec",      // [2] AMC Adjust
+                "PHC: dPhase, dFreq",   // [3] PHC Adjust
+                "Phase, Ampl",          // [4] TUNE
+                "Phase, dFreq,[Am,Ex]", // [5] SCAN
+                "DHC: dFreq, dFControl", // [6] DFC Adjust
+                "DDR IN1/IN2",          // [7] SCOPE with DEC=1,SHR=0 Double(max) Data Rate config
+                "DEBUG McBSP",          // [8]
+                NULL };
+
+        
+        // self->bram_window_length = 1024.*(double)decimation*1./125e6; // sec
+        int decimation = 1 << data_shr_max;
+        double tw1024 = bram_window_length;
+
+        f.precision (12);
+
+	f << "# view via: xmgrace -graph 0 -pexec 'title \"GXSM RP Data: " << fntmp << "\"' -block " << fntmp  << " -bxy 2:4 ..." << std::endl;
+	f << "# GXSM RP Data :: RPVersion=00.01 vdate=20241114" << std::endl;
+	f << "# Date                   :: date=" << ctime(&t) << "#" << std::endl;
+	f << "# FileName               :: name=" << fntmp << std::endl;
+	f << "# GXSM-Main-Offset       :: X0=" << gapp->xsm->data.s.x0 << " Ang" <<  "  Y0=" << gapp->xsm->data.s.y0 << " Ang" 
+	  << ", iX0=" << ix << " Pix iX0=" << iy << " Pix"
+	  << std::endl;
+
+        f << "#C RP SAMPLING and DECIMATION SETTINGS:" << std::endl;
+        f << "#C BRAM transfer window length is 1024 points, duration is tw=" << tw1024 << " s" << std::endl;
+        f << "#C BRAM data length is 4096 points=" << (4*tw1024) << " s" << std::endl;
+        f << "#C                    SHR_DEC_DATA=" << data_shr_max << std::endl;
+        f << "#C            TRANSPORT_DECIMATION=" << decimation << std::endl;
+        f << "#C         BRAM_SCOPE_TRIGGER_MODE=" << trigger_mode << std::endl;
+        f << "#C SET_SINGLESHOT_TRGGER_POST_TIME=" << trigger_post_time << " us" << std::endl;
+        f << "#C              BRAM_WINDOW_LENGTH=" << (1e3*bram_window_length)       << " ms" << std::endl;
+        f << "#C                        BRAM_DEC=" << decimation << std::endl;
+        f << "#C                   BRAM_DATA_SHR=" << data_shr_max << std::endl;
+	f << "#C       CH1 CH2 TRANSPORT MAPPING=" << transport << " CH1,CH2 <= " << transport_modes[transport] << std::endl;
+	f << "#C Data CH1, CH2 is raw data as of RP subsystem. For In1/In2: voltage in mV" << std::endl;
+	f << "#C " << std::endl;
+
+        double *signal[] = { pacpll_signals.signal_ch1, pacpll_signals.signal_ch2, pacpll_signals.signal_ch3, pacpll_signals.signal_ch4, pacpll_signals.signal_ch5, // 0...4 CH1..5
+                             pacpll_signals.signal_phase, pacpll_signals.signal_ampl  }; // 5,6 PHASE, AMPL in Tune Mode, averaged from burst
+
+        int uwait=600000;
+        
+        tw1024 /= 1024.; // per px in sec
+        tw1024 *= 1e6;   // effective sample intervall in us between points
+        f << "#C index time[us] " << transport_modes[transport] << std::endl;
+        for (int k=0; k<4; ++k){
+                write_parameter ("BRAM_SCOPE_SHIFT_POINTS", k*1024);
+                usleep(uwait); // wait for data to update
+                while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, false);
+
+                for (i=0; i<1024; ++i){
+                        bram_saved_buffer[0][i+k*1024] = ((i+k*1024)*tw1024);                   // time; buffer for later access via pyremote
+                        bram_saved_buffer[1][i+k*1024] = pacpll_signals.signal_ch1[(i+1)%1024]; // CH1; buffer for later access via pyremote
+                        bram_saved_buffer[2][i+k*1024] = pacpll_signals.signal_ch2[(i+1)%1024]; // CH2; buffer for later access via pyremote
+                        f << (i+k*1024) << " \t"
+                          << ((i+k*1024)*tw1024) << " \t"
+                          << pacpll_signals.signal_ch1[(i+1)%1024] << " \t"
+                          << pacpll_signals.signal_ch2[i] << "\n";
+                }
+        }
+        f.close();
+
+        write_parameter ("BRAM_SCOPE_SHIFT_POINTS", 0);
+        
+}
+
 void RPspmc_pacpll::save_values (NcFile *ncf){
         // store all rpspmc_pacpll's control parameters for the RP PAC-PLL
         // if socket connection is up
@@ -4176,7 +4295,7 @@ void RPspmc_pacpll::choice_transport_ch12_callback (GtkWidget *widget, RPspmc_pa
 }
 
 void RPspmc_pacpll::choice_trigger_mode_callback (GtkWidget *widget, RPspmc_pacpll *self){
-        self->write_parameter ("BRAM_SCOPE_TRIGGER_MODE", gtk_combo_box_get_active (GTK_COMBO_BOX (widget)));
+        self->write_parameter ("BRAM_SCOPE_TRIGGER_MODE", self->trigger_mode = gtk_combo_box_get_active (GTK_COMBO_BOX (widget)));
         self->write_parameter ("BRAM_SCOPE_TRIGGER_POS", (int)(0.1*1024));
 }
 
@@ -4195,6 +4314,10 @@ void RPspmc_pacpll::choice_auto_set_callback (GtkWidget *widget, RPspmc_pacpll *
 
 void RPspmc_pacpll::scope_buffer_position_callback (GtkWidget *widget, RPspmc_pacpll *self){
         self->write_parameter ("BRAM_SCOPE_SHIFT_POINTS", self->bram_shift = (int)gtk_range_get_value (GTK_RANGE (widget)));
+}
+
+void RPspmc_pacpll::scope_save_data_callback (GtkWidget *widget, RPspmc_pacpll *self){
+        self->save_scope_data ();
 }
 
 
@@ -4313,6 +4436,15 @@ void RPspmc_pacpll::update_monitoring_parameters(){
         if (G_IS_OBJECT (window))
 		g_slist_foreach((GSList*)g_object_get_data( G_OBJECT (window), "RPSPMCONTROL_EC_READINGS_list"),
 				(GFunc) App::update_ec, NULL);
+}
+
+void RPspmc_pacpll::copy_f0_callback (GtkWidget *widget, RPspmc_pacpll *self){
+        if (self->resonator_frequency_fitted > 0){
+                self->parameters.frequency_center = self->parameters.frequency_manual = self->resonator_frequency_fitted;
+                self->parameters.phase_fb_setpoint = self->resonator_phase_fitted;
+                g_slist_foreach((GSList*)g_object_get_data( G_OBJECT (widget), "PAC_FP_list"),
+				(GFunc) App::update_ec, NULL);
+        }
 }
 
 void RPspmc_pacpll::enable_scope (GtkWidget *widget, RPspmc_pacpll *self){
@@ -5245,6 +5377,9 @@ void RPspmc_pacpll::dynamic_graph_draw_function (GtkDrawingArea *area, cairo_t *
                                         delete resfit;
                                         delete phfit;
 
+                                        resonator_frequency_fitted = lmgeofit_res.get_F0 ();
+                                        resonator_phase_fitted = lmgeofit_ph.get_C ();
+                                        
                                         valuestring = g_strdup_printf ("Model Q: %g  A: %g mV  F0: %g Hz  Phase: %g [%g] @ %g Hz",
                                                                        lmgeofit_res.get_Q (),
                                                                        1000./lmgeofit_res.get_A (),
@@ -5257,6 +5392,9 @@ void RPspmc_pacpll::dynamic_graph_draw_function (GtkDrawingArea *area, cairo_t *
                                         reading->set_text (10, (110-14*1), valuestring);
                                         g_free (valuestring);
                                         reading->draw (cr);
+                                }else {
+                                        resonator_frequency_fitted = -1.; // invalid, no fit
+                                        resonator_phase_fitted = -1.;
                                 }
                         }
                         

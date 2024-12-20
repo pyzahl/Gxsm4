@@ -65,87 +65,8 @@
 // X  X  X  X   X  X  X  X
 //       R            R
 
-#define SPMC_ACLK_MHZ   125 // RP Analog Clock Base in MHz
-#define SPMC_RDECI      4
-#define SPMC_CLK        ((double)SPMC_ACLK_MHZ*1e6/(1<<(SPMC_RDECI+1)))
-#define SPMC_GVP_MIN_DECII 128
-#define SPMC_GVP_CLK    ((double)SPMC_ACLK_MHZ*1e6) // /2 for decii i noutside block only (old)
-
-#define MAX_NUM_PROGRAN_VECTORS 16
-#define Q_XYPRECISION Q28
 
 
-// Controller Core (Servos) Relative Block Offsets:
-#define SPMC_CFG_SET   0
-#define SPMC_CFG_CP    1
-#define SPMC_CFG_CI    2
-#define SPMC_CFG_UPPER 3 // 3,4 64bit
-#define SPMC_CFG_LOWER 5 // 5,6 64bit
-
-// [CFG0]+10 AMPL Controller
-// [CFG0]+20 PHASE Controller
-// [CFG1]+00 dFREQ Controller   
-// +0 Set, +2 CP, +4 CI, +6 UPPER, +8 LOWER
-
-#define SPMC_AD5791_REFV 5.0 // DAC AD5791 Reference Volatge is 5.000000V (+/-5V Range)
-#define QZSCOEF Q31 // Q Z-Servo Controller
-
-// SPM Z-CONTROL SERVO
-#define SPMC_CFG_Z_SERVO_CONTROLLER         (PACPLL_CFG1_OFFSET + 10) // 10:16
-#define SPMC_CFG_Z_SERVO_ZSETPOINT          (PACPLL_CFG1_OFFSET + 17) // 17
-#define SPMC_CFG_Z_SERVO_LEVEL              (PACPLL_CFG1_OFFSET + 18) // 18
-// CONTROL REGISTER 19:
-// Bit0: SERVO CONTROL (enable)
-// Bit1: LN (log mode) if set: Ln (ABS (INPUT 32bit)) in 8.24 Fractional (32bit) MUST CONVERT SETPOINT ACCORDINGLY!!!, else linear (32bit signed)
-// Bit2: Fuzzy CZ mode
-#define SPMC_CFG_Z_SERVO_MODE               (PACPLL_CFG1_OFFSET + 19) // 19: SERVO CONTROL REGISTER
-
-
-
-// CFG DATA REGISTER 3 [1023:0]
-// SPMControl Core
-
-#define SPMC_BASE                     PACPLL_CFG3_OFFSET
-#define SPMC_GVP_CONTROL              (SPMC_BASE + 0) // 0: reset 1: setvec
-#define SPMC_GVP_VECTOR_DATA          (SPMC_BASE + 1) // 1..16 // 512 bits (16x32)
-
-// GVP VCETOR COMPONETS IN ARRAY AT OFFESTS
-//                   decii      du        dz        dy        dx     Next       Nrep,   Options,     nii,      N,    [Vadr]
-#define GVP_VEC_VADR   0
-#define GVP_VEC_N      1
-#define GVP_VEC_NII    2
-#define GVP_VEC_OPT    3
-#define GVP_VEC_NREP   4
-#define GVP_VEC_NEXT   5
-#define GVP_VEC_DX     6
-#define GVP_VEC_DY     7
-#define GVP_VEC_DZ     8
-#define GVP_VEC_DU     9
-#define GVP_VEC_DA    10
-#define GVP_VEC_DB    11
-#define GVP_VEC_012   12
-#define GVP_VEC_013   13
-#define GVP_VEC_014   14
-#define GVP_VEC_DECII 15
-
-#define SPMC_CFG_AD5791_DAC_AXIS_DATA (SPMC_BASE + 17) // 32bits
-#define SPMC_CFG_AD5791_DAC_CONTROL   (SPMC_BASE + 18) // bits 0,1,2: axis; bit 3: config mode; bit 4: send config data, MUST reset "send bit in config mode to resend next, on hold between"
-
-
-// SPMC Transformations Core
-#define SPMC_ROTM_XX             (SPMC_BASE + 20)  // cos(Alpha)
-#define SPMC_ROTM_XY             (SPMC_BASE + 21)  // sin(Alpha)
-//#define SPMC_ROTM_YX = -XY = -sin(Alpha)
-//#define SPMC_ROTM_YY =  XX =  cos(Alpha)
-#define SPMC_SLOPE_X             (SPMC_BASE + 22)
-#define SPMC_SLOPE_Y             (SPMC_BASE + 23)
-#define SPMC_OFFSET_X            (SPMC_BASE + 24)
-#define SPMC_OFFSET_Y            (SPMC_BASE + 25)
-#define SPMC_OFFSET_Z            (SPMC_BASE + 26)
-#define SPMC_BIAS_REF            (SPMC_BASE + 27)
-
-#define SPMC_XY_MOVE_STEP        (SPMC_BASE + 28)
-#define SPMC_Z_MOVE_STEP         (SPMC_BASE + 29)
 
 //extern int verbose;
 //extern int stream_debug_flags;
@@ -469,6 +390,10 @@ inline int volts_to_ad5791_dac (double volts){ return (int)round(Q19*volts/SPMC_
 inline double rpspmc_to_volts (int value){ return SPMC_AD5791_REFV*(double)value / Q31; }
 inline int volts_to_rpspmc (double volts){ return (int)round(Q31*volts/SPMC_AD5791_REFV); }
 
+//inline double rpspmc_FIR32IN1_to_volts (int value){ return SPMC_IN01_REFV*(double)(value*256) / Q31; }
+inline double rpspmc_FIR32IN1_to_volts (int value){ return SPMC_IN01_REFV*(double)(value) / Q23; } // SQ24.8
+inline double volts_to_rpspmc_FIR32IN1 (doubel value){ return (int)round(Q23*volts/SPMC_IN01_REFV); }
+
 
 /***************************************************************************//**
  * @brief Writes to the DAC register.
@@ -654,7 +579,7 @@ void rp_spmc_set_xyzu (double ux, double uy, double uz, double bias){
 // CONTROL[32] OUT[32]   m[24]  x  c[32]  = 56 M: 24{Q32},  P: 44{Q14}
 void rp_spmc_set_zservo_controller (double setpoint, double cp, double ci, double upper, double lower){
         if (verbose > 1) fprintf(stderr, "##Configure RP SPMC Z-Servo Controller: set= %g  cp=%g ci=%g upper=%g lower=%g\n", setpoint, cp, ci, upper, lower); 
-        set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_CONTROLLER + SPMC_CFG_SET,   volts_to_rpspmc (setpoint));
+        set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_CONTROLLER + SPMC_CFG_SET,   volts_to_rpspmc_FIR32IN1 (setpoint)); // RP IN1 -- SQ24.8 @ about 1V
         set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_CONTROLLER + SPMC_CFG_CP,    (int)round (QZSCOEF * cp)); // Q31
         set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_CONTROLLER + SPMC_CFG_CI,    (int)round (QZSCOEF * ci)); // Q31
         set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_CONTROLLER + SPMC_CFG_UPPER, volts_to_rpspmc (upper));
@@ -994,7 +919,7 @@ void rp_spmc_update_readings (){
         SPMC_Y_MONITOR.Value () = rpspmc_to_volts (read_gpio_reg_int32 (9,0));
         SPMC_Z_MONITOR.Value () = rpspmc_to_volts (read_gpio_reg_int32 (9,1));
 
-        SPMC_XS_MONITOR.Value () = rpspmc_to_volts (read_gpio_reg_int32 (1,0));
+        SPMC_XS_MONITOR.Value () = rpspmc_to_volts (read_gpio_reg_int32 (1,0)); // (0,0 in FPGA-DIA)
         SPMC_YS_MONITOR.Value () = rpspmc_to_volts (read_gpio_reg_int32 (1,1));
         SPMC_ZS_MONITOR.Value () = rpspmc_to_volts (read_gpio_reg_int32 (10,0));
 
@@ -1002,6 +927,6 @@ void rp_spmc_update_readings (){
         SPMC_Y0_MONITOR.Value () = rpspmc_to_volts (y0_buf); // ** mirror
         SPMC_Z0_MONITOR.Value () = rpspmc_to_volts (read_gpio_reg_int32 (10,1));
 
-        SPMC_SIGNAL_MONITOR.Value () = rpspmc_to_volts (read_gpio_reg_int32 (7,1));
+        SPMC_SIGNAL_MONITOR.Value () = rpspmc_FIR32IN1_to_volts (read_gpio_reg_int32 (7,1));
 }
 

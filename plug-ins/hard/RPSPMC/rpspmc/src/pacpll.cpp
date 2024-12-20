@@ -43,81 +43,7 @@
 #include "fpga_cfg.h"
 #include "pacpll.h"
 
-#define ADC_DECIMATING     1
-#define ADC_SAMPLING_RATE (125e6/ADC_DECIMATING)
 
-
-// CONFIGURATION (CFG) DATA REGISTER 0 [1023:0] x 4 = 4k
-// PAC-PLL Control Core
-
-// general control paging (future options)
-//#define PACPLL_CFG_PAGE_CONTROL  30   // 32bit wide
-//#define PACPLL_CFG_PAGE          31   // 32bit wide
-
-// PACPLL core controls
-#define PACPLL_CFG_DDS_PHASEINC  0    // 64bit wide
-#define PACPLL_CFG_VOLUME_SINE   2    // 32bit wide (default)
-#define PACPLL_CFG_CONTROL_LOOPS 3
-
-#define PACPLL_CFG_PACTAU        4 // (actual Q22 mu)
-#define PACPLL_CFG_DC_OFFSET     5
-
-#define PACPLL_CFG_PACATAU      27
-#define PACPLL_CFG_PAC_DCTAU    28
-
-// Controller Core (Servos) Relative Block Offsets:
-#define PACPLL_CFG_SET   0
-#define PACPLL_CFG_CP    1
-#define PACPLL_CFG_CI    2
-#define PACPLL_CFG_UPPER 3 // 3,4 64bit
-#define PACPLL_CFG_LOWER 5 // 5,6 64bit
-
-// [CFG0]+10 AMPL Controller
-// [CFG0]+20 PHASE Controller
-// [CFG1]+00 dFREQ Controller   
-// +0 Set, +2 CP, +4 CI, +6 UPPER, +8 LOWER
-#define PACPLL_CFG_PHASE_CONTROLLER     10 //10:16 (10,11,12,13:14,15:16)
-#define PACPLL_CFG_AMPLITUDE_CONTROLLER 20 //20:26 (20,21,22,23:24,25:26)
-
-
-// CFG DATA REGISTER 1 [1023:0]
-#define PACPLL_CFG_DFREQ_CONTROLLER         (PACPLL_CFG1_OFFSET + 0) // 00:06
-#define PACPLL_CFG_PHASE_CONTROL_THREASHOLD (PACPLL_CFG1_OFFSET + 8) // 08
-
-// CFG DATA REGISTER 2 [1023:0]
-// PACPLL-PulseFormer Control Core
-
-#define PACPLL_CFG_PULSE_FORM_BASE      (PACPLL_CFG2_OFFSET + 0)
-#define PACPLL_CFG_PULSE_FORM_DELAY_01  0  // [ 31..16 Delay P0, 15..0 Delay P1 ] 32bit
-#define PACPLL_CFG_PULSE_FORM_WH01_ARR  1 // [ 31..16 Width_n P0, 15..0 Width_n P1; 31..16 Height_n P0, 15..0 Height_n P1, ... [n=0,1,2]] 14x32 bit
-// pulse_12_width_height_array[ 1*32-1 : 0];    // 0W 1,2 =pWIF
-// pulse_12_width_height_array[ 2*32-1 : 1*32]; // 0H 1,2 =pIHF
-// pulse_12_width_height_array[ 3*32-1 : 2*32]; // 1W =pWIF
-// pulse_12_width_height_array[ 4*32-1 : 3*32]; // 1H =pWIF
-// pulse_12_width_height_array[ 5*32-1 : 4*32]; // 2W =WIF
-// pulse_12_width_height_array[ 6*32-1 : 5*32]; // 2H =HIF
-// pulse_12_width_height_array[ 7*32-1 : 6*32]; // 3W =pW
-// pulse_12_width_height_array[ 8*32-1 : 7*32]; // 3H =pH
-// pulse_12_width_height_array[ 9*32-1 : 8*32]; // 4W =pWIF
-// pulse_12_width_height_array[10*32-1 : 9*32]; // 4H =pHIF
-// pulse_12_width_height_array[11*32-1 :10*32]; // 5W =WIF
-// pulse_12_width_height_array[12*32-1 :11*32]; // 5H =HIF
-// pulse_12_width_height_array[13*32-1 :12*32]; // Bias pre
-// pulse_12_width_height_array[14*32-1 :13*32]; // Bias post
-
-
-
-
-
-#if 0
-// ---------- NOT IMPLEMENTED/NO ROOM ---------------------
-// using fixed length FIR filters 
-// Configure transport tau: time const or high speed IIR filter stages
-#define PACPLL_CFG_TRANSPORT_TAU_DFREQ   (PACPLL_CFG1_OFFSET + 0)
-#define PACPLL_CFG_TRANSPORT_TAU_PHASE   (PACPLL_CFG1_OFFSET + 1)
-#define PACPLL_CFG_TRANSPORT_TAU_EXEC    (PACPLL_CFG1_OFFSET + 2)
-#define PACPLL_CFG_TRANSPORT_TAU_AMPL    (PACPLL_CFG1_OFFSET + 3)
-#endif
 
 pthread_attr_t gpio_reading_attr;
 pthread_mutex_t gpio_reading_mutexsum;
@@ -143,8 +69,6 @@ static pthread_t gpio_reading_thread;
  */
 
 
-#define BITS_AMPL_CONTROL   32
-#define BITS_PLHASE_CONTROL 48
 
 
 // extern int verbose;
@@ -235,7 +159,6 @@ void rp_PAC_configure_switches (int phase_ctrl, int am_ctrl, int phase_unwrap_al
                                );
 }
 
-#define QCONTROL_CFG_GAIN_DELAY 29
 // Configure Q-Control Logic build into Volume Adjuster
 void rp_PAC_set_qcontrol (double gain, double phase){
         double samples_per_period = ADC_SAMPLING_RATE / FREQUENCY_MANUAL.Value ();
@@ -552,9 +475,10 @@ void rp_PAC_configure_transport (int control, int shr_dec_data, int nsamples, in
         channel_select = remap_ch[channel_select];
 #endif
         set_gpio_cfgreg_int32 (PACPLL_CFG_TRANSPORT_CHANNEL_SELECT, channel_select);
-        // AUX scale, center
-        set_gpio_cfgreg_int32 (PACPLL_CFG_TRANSPORT_AUX_SCALE, (int)round(Q15*scale));
-        set_gpio_cfgreg_int48 (PACPLL_CFG_TRANSPORT_AUX_CENTER, (unsigned long long)round (dds_phaseinc (center))); // => 44bit phase f0 center ref for delta_freq calculation on FPGA
+
+        // AUX scale, center ** OBSOLETED **
+        //set_gpio_cfgreg_int32 (PACPLL_CFG_TRANSPORT_AUX_SCALE, (int)round(Q15*scale));
+        //set_gpio_cfgreg_int48 (PACPLL_CFG_TRANSPORT_AUX_CENTER, (unsigned long long)round (dds_phaseinc (center))); // => 44bit phase f0 center ref for delta_freq calculation on FPGA
 
         rp_PAC_transport_set_control (control);
 }
