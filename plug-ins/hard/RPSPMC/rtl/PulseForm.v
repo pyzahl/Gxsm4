@@ -28,6 +28,8 @@ module PulseForm #(
    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk" *)
    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF M_AXIS" *)
    input a_clk,
+   input single_shot,
+   input run,
    input wire [2:0] zero_spcp,
    input wire [31:0] pulse_12_delay,
    input wire [14*32-1:0] pulse_12_width_height_array,
@@ -59,6 +61,11 @@ module PulseForm #(
 
     reg [1:0] rdecii = 0;
 
+    reg init_shot     = 0; 
+    reg [4:0] count   = 0;
+    reg i_single_shot = 0;
+    reg i_zero_spcp2  = 0; 
+
 /*
     always @ (posedge a_clk)
     begin
@@ -84,25 +91,40 @@ module PulseForm #(
         { p12_wh_arr[26], p12_wh_arr[27] } <= pulse_12_width_height_array[14*32-1 :13*32]; // Bias post
     end
 
-    always @ (posedge zero_spcp[2]) // volume zero crossing towards:
-    begin
-        case (zero_spcp[1])
-            0: // sin neg start
-            begin // P1
-                start <= 1;
-            end
-            1: // sin pos start
-            begin // P2
-                start <= 2;
-            end
-        endcase
-    end
-
-
     //always @ (posedge rdecii[1])
     always @ (posedge a_clk)
     begin
         rdecii <= rdecii+1; // rdecii 00 01 *10 11 00 ...
+
+        if (run || count > 0)
+        begin
+            if (zero_spcp[2] != i_zero_spcp2)
+            begin
+                i_zero_spcp2 <= zero_spcp[2];
+                case (zero_spcp[1])
+                    1: // c pos start
+                    begin // P1
+                        start <= 1;
+                    end
+                    0: // c neg start
+                    begin
+                        start <= 2;
+                    end
+                endcase  
+            end              
+        end
+
+        if (single_shot != i_single_shot)
+        begin
+            i_single_shot <= single_shot;
+            if (single_shot)
+            begin
+                count <= 2; // initiale single shot
+                last  <= 1;
+            end
+        end
+        
+
         if (rdecii == 1)
         begin
            if (ENABLE_ADC_OUT)
@@ -114,6 +136,8 @@ module PulseForm #(
                     pval_init0 <= p12_wh_arr[2]; // height
                     arri0 <= 4;
                     last  <= 1;
+                    if (count > 0)
+                        count <= count - 1;
                 end
     
                 if (start == 2 && last==1) // Pulse 1 Sin X Pos Start
@@ -123,6 +147,8 @@ module PulseForm #(
                     pval_init1 <= p12_wh_arr[3]; // height
                     arri1 <= 5;
                     last  <= 2;
+                    if (count > 0)
+                        count <= count - 1;
                 end
                 
                 // Pulse 0

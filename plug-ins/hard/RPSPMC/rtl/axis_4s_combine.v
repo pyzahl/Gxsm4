@@ -109,7 +109,9 @@ module axis_4s_combine #(
     input wire [SAXIS_78_TDATA_WIDTH-1:0]  S_AXIS8_tdata, // Lck-Y
     input wire                             S_AXIS8_tvalid,
 
-    input wire [SAXIS_3_DATA_WIDTH-1:0] axis3_center,  
+    input wire [SAXIS_3_DATA_WIDTH-1:0] axis3_center,
+    input wire [2:0] zero_spcp,
+
     input wire [32-1:0]  operation, // 0..7 control bits 0: 1=start 1: 1=single shot/0=fifo loop 2, 4: 16=init/reset , [31:8] DATA ACCUMULATOR (64) SHR   [0] start/stop, [1] ss/loop, [2], [3], [4] reset
     input wire [32-1:0]  ndecimate,
     input wire [32-1:0]  nsamples,
@@ -146,7 +148,9 @@ module axis_4s_combine #(
     output wire BR_next,
     output wire BR_reset,
     input  wire BR_ready,
-    input  wire [15:0] BR_wpos
+    input  wire [15:0] BR_wpos,
+    output wire pulse_arm_single,
+    output wire pulse_run    
     );
     
     reg [2:0] dec_sms=3'd0;
@@ -179,6 +183,12 @@ module axis_4s_combine #(
     reg bram_next=0;
     reg bram_retry=0;
 
+    reg reg_pulse_arm_single=0;
+    reg reg_pulse_run=1;
+
+    assign pulse_arm_single = reg_pulse_arm_single;
+    assign pulse_run = reg_pulse_run;
+
     //wire signed [64-1:0] Q31HALF = { {(64-31){1'b0}}, 1'b1, {(31-1){1'b0}} };
 
     
@@ -197,6 +207,10 @@ module axis_4s_combine #(
 
     reg [1:0] rdecii = 0;
 
+    reg i_zero_spcp1 = 0;
+    reg zero_x_s = 0;
+
+
 /*
     always @ (posedge a_clk)
     begin
@@ -204,7 +218,6 @@ module axis_4s_combine #(
     end
 */
 
-    //always @ (posedge rdecii[1])
     always @ (posedge a_clk)
     begin
         rdecii <= rdecii+1; // rdecii 00 01 *10 11 00 ...
@@ -216,17 +229,20 @@ module axis_4s_combine #(
             reg_operation <= operation[7:0];
             reg_shift     <= operation[31:8];
             reg_ndecimate <= ndecimate;
-            reg_nsamples  <= nsamples;
+            reg_nsamples  <= nsamples+1;
     
             // map data sources and calculate delta Freq
             reg_freq_center <= {{(64-SAXIS_3_DATA_WIDTH){1'b0}},  axis3_center[SAXIS_3_DATA_WIDTH-1:0]}; // expand to 64 bit, signed but always pos
             reg_freq        <= {{(64-SAXIS_3_DATA_WIDTH){1'b0}}, S_AXIS3_tdata[SAXIS_3_DATA_WIDTH-1:0]}; // expand to 64 bit, signed but always pos
             reg_delta_freq  <= reg_freq - reg_freq_center; // compute delta frequency -- should need way less than actual 48bits now! But here we go will full range. Deciamtion may overrun is delta is way way off normal.
         end
-    end
-    
-    always @(posedge a_clk)
-    begin
+
+        if (i_zero_spcp1 != zero_spcp[1])
+        begin
+            i_zero_spcp1 <= zero_spcp[1];
+            if (zero_spcp[1] > 0)
+                zero_x_s <= 1;
+        end
 
         // ===============================================================================
         // MANAGE EXT CONTROLS [reset, operation, trigger] FOR DECIMATING STATE MACHINE
@@ -247,12 +263,6 @@ module axis_4s_combine #(
             dec_sms <= dec_sms_next; // go to next mode
         end
         
-        if(reg_operation[0]) // operation mode: tigger start running
-        begin
-            trigger <= trigger_next;    // GPIO TRIGGER: VIA SOFTWARE, AUTO RUN
-        end else begin
-            trigger <= reg_ext_trigger; // PL TRIGGER: (McBSP hardware trigger mode)
-        end
             
         // ===============================================================================
         // DECIMATING STATE MACHINE
@@ -262,6 +272,7 @@ module axis_4s_combine #(
             // ===============================================================================================
             0: // RESET STATE
             begin
+                zero_x_s      <= 0;
                 bram_reset    <= 1'b1;
                 finished      <= 1'b0;
                 dec_sms_next  <= 3'd1; // ready, now wait for release of reset operation to enagage trigger and arm
@@ -271,7 +282,55 @@ module axis_4s_combine #(
             // ===============================================================================================
             1:    // Wait for trigger
             begin
-                if(trigger)
+            
+                // trigger and pulse arm logic
+                if(reg_operation[0]) // operation mode: tigger start running
+                begin
+                    if (reg_operation[1]) // Scope Manual Single Shot Mode 
+                    begin
+                        if (zero_x_s) // wait for ref zero crossing
+                        begin
+                            zero_x_s <= 0;
+                            if (!trigger)
+                            begin
+                                reg_pulse_arm_single <= 1; // arm simple pulse
+                                reg_pulse_run <= 0;
+                            end                     
+                            trigger <= trigger_next;    // GPIO TRIGGER: VIA SOFTWARE, AUTO RUN
+                        end
+                        else
+                        begin
+                            trigger <= 0; // wait
+                            reg_pulse_arm_single <= 0; // disable pulse
+                            reg_pulse_run <= 0;
+                        end
+                    end
+                    else // Scope Auto Mode, but auto trigger on S
+                    begin
+                        if (zero_x_s) // wait for ref zero crossing
+                        begin
+                            zero_x_s <= 0;
+                            if (!trigger)
+                            begin
+                                reg_pulse_arm_single <= 0; // arm simple pulse
+                                reg_pulse_run <= 1;
+                            end                     
+                            trigger <= trigger_next;    // GPIO TRIGGER: VIA SOFTWARE, AUTO RUN
+                        end
+                        else
+                        begin
+                            trigger <= 0; // wait
+                            reg_pulse_arm_single <= 0;
+                            reg_pulse_run <= 1; // keep pulses running 
+                        end
+                    end         
+                end else begin
+                    trigger <= reg_ext_trigger; // PL TRIGGER: (McBSP hardware trigger mode)
+                    reg_pulse_arm_single <= 0;
+                    reg_pulse_run <= 1;
+                end
+            
+                if(trigger) // start job
                 begin
                     sample_count <= 32'd0;
                     fir_next     <= 0;      // FIR start and hold
@@ -429,7 +488,8 @@ module axis_4s_combine #(
             end
             // ===============================================================================================
             4:    // Finished State -- wait for new operation setup
-            begin   
+            begin
+                zero_x_s     <= 0;
                 bram_next    <= 0;    // hold BRAM write next
                 fir_next     <= 0;    // hold FIR
                 finished     <= 1'b1; // set finish flag
