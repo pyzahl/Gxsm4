@@ -392,7 +392,7 @@ inline int volts_to_rpspmc (double volts){ return (int)round(Q31*volts/SPMC_AD57
 
 //inline double rpspmc_FIR32IN1_to_volts (int value){ return SPMC_IN01_REFV*(double)(value*256) / Q31; }
 inline double rpspmc_FIR32IN1_to_volts (int value){ return SPMC_IN01_REFV*(double)(value) / Q23; } // SQ24.8
-inline double volts_to_rpspmc_FIR32IN1 (doubel value){ return (int)round(Q23*volts/SPMC_IN01_REFV); }
+inline double volts_to_rpspmc_FIR32IN1 (double volts){ return (int)round(Q23*volts/SPMC_IN01_REFV); }
 
 
 /***************************************************************************//**
@@ -875,26 +875,65 @@ void rp_spmc_set_offsets (double x0, double y0, double z0, double xy_move_slew=-
         set_gpio_cfgreg_int32 (SPMC_Z_MOVE_STEP, z_step);
 }
 
-void rp_spmc_set_scanpos (double xs, double ys, double slew){
+void rp_spmc_set_scanpos (double xs, double ys, double slew, int opts){
         // setup GVP to do so...
-        
-        rp_spmc_gvp_config (); // reset any GVP now!
-
         // read current xy scan pos
-        double x = rpspmc_to_volts (read_gpio_reg_int32 (1,0));
-        double y = rpspmc_to_volts (read_gpio_reg_int32 (1,1));
+        double dx = xs - rpspmc_to_volts (read_gpio_reg_int32 (1,0));
+        double dy = ys - rpspmc_to_volts (read_gpio_reg_int32 (1,1));
+
+        double dist = sqrt(dx*dx + dy*dy);
+        double eps = ad5791_dac_to_volts (16); // arbitrary limit 4bit to ignore delta
+        int n = 10+int(1000*dist);
+        
+        // slew comes in V/s => px/s
+        slew = n*slew/dist; // convert A/s to slew rate in N/dt per vector
+        
+        fprintf(stderr, "** set scanpos [%g V, %g V @%g s/Vec]V ** dxy: |%g, %g| = %g  ** %s\n", xs, ys, slew, dx,dy, dist, dist < eps ? "At Position.":"Loading GVP...");
+
+        if (dist < eps)
+                return;
+        
+        rp_spmc_gvp_config (true, false, false); // reset any GVP now!
+        fprintf(stderr, "** set scanpos GVP reset **\n");
+        usleep(100000);
+
 
         // make vector to new scan pos requested:
-        rp_spmc_set_gvp_vector (0, 400, 0, 0, 0,
-                                xs-x, ys-y, 0.0, 0.0,
+        rp_spmc_set_gvp_vector (0, n, 0, 0, 0,
+                                dx, dy, 0.0, 0.0,
                                 0.0, 0.0,
                                 slew, false);
         rp_spmc_set_gvp_vector (0, 0, 0, 0, 0,
                                 0.0, 0.0, 0.0, 0.0,
                                 0.0, 0.0,
                                 0.0, false);
+
+        fprintf(stderr, "** set scanpos GVP vectors programmed **\n");
+        usleep(100000);
+
+#if 1
+        fprintf(stderr, "*** GVP Control Mode: START 1 (make sure stream server is stopped)\n");
+        stream_server_control = (stream_server_control & 0x01) | 4; // set stop bit
+        usleep(100000);
+        spm_dma_instance->clear_buffer (); // clean buffer now!
+
+        rp_spmc_gvp_config (true, false, false); // make sure it is in reset state before
+        fprintf(stderr, "*** GVP Control Mode: START 2 (assure RESET state first), start stream server\n");
+        usleep(100000);
+
+        spm_dma_instance->start_dma (); // get DMA ready to take data
+        stream_server_control = (stream_server_control & 0x01) | 2; // set start bit
+
+        rp_spmc_gvp_config (false, false, false); // take out of reset -> release GVP to start executing VPC
+        fprintf(stderr, "*** GVP Control Mode: START 3 (taking out of RESET)\n");
+
+        usleep(100000);
+#else
+        usleep(100000);
         // and execute
-        rp_spmc_gvp_config (false);
+        rp_spmc_gvp_config (false, false, false);
+        fprintf(stderr, "** set scanpos GVP started **\n");
+#endif
 }
 
 

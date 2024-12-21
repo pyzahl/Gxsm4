@@ -30,6 +30,10 @@
 int verbose = 2;
 int stream_debug_flags = 0;
 
+// global thread control parameter
+int thread_data__tune_control=0;
+
+
 #include <limits.h>
 #include <math.h>
 #include <stdio.h>
@@ -52,16 +56,22 @@ int stream_debug_flags = 0;
 #include "fpga_cfg.h"
 #include "pacpll.h"
 #include "spmc.h"
-
 #include "spmc_dma.h"
+#include "spmc_stream_server.h"
+
+spmc_stream_server spmc_stream_server_instance;
+spmc_dma_support *spm_dma_instance = NULL;
+
 
 // Some thing is off while Linking, application does NOT (terminated with unkown error a tload time) work with compliled separate and linked to lib
 // In Makefile: CXXSOURCES=main.cpp fpga_cfg.cpp pacpll.cpp spmc.cpp
 // Thus this primitive alternative assembly here
 #include "fpga_cfg.cpp"
 #include "pacpll.cpp"
-#include "spmc.cpp"
 #include "spmc_stream_server.cpp"
+
+
+#include "spmc.cpp"
 
 // INSTALL:
 // =============================================================
@@ -388,6 +398,7 @@ CDoubleParameter  SPMC_SLOPE_dZY("SPMC_SLOPE_Y", CBaseParameter::RW, 0.0, 0, -1.
 CDoubleParameter  SPMC_SET_SCANPOS_X("SPMC_SET_SCANPOS_X", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 CDoubleParameter  SPMC_SET_SCANPOS_Y("SPMC_SET_SCANPOS_Y", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 CDoubleParameter  SPMC_SET_SCANPOS_SLEW("SPMC_SET_SCANPOS_SLEW", CBaseParameter::RW, 0.0, 0, 0.0, 1e6); // Volts/s
+CIntParameter     SPMC_SET_SCANPOS_OPTS("SPMC_SET_SCANPOS_OPTS", CBaseParameter::RW, 0, 0,  -2147483648,2147483647); // options [Z-Servo Hold, ..., SRCS bits]
 
 CDoubleParameter  SPMC_SET_OFFSET_X("SPMC_SET_OFFSET_X", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 CDoubleParameter  SPMC_SET_OFFSET_Y("SPMC_SET_OFFSET_Y", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
@@ -436,11 +447,6 @@ CFloatParameter cpuLoad("CPU_LOAD", CBaseParameter::RW, 0, 0, 0, 100);
 CFloatParameter memoryFree ("FREE_RAM", CBaseParameter::RW, 0, 0, 0, 1e15);
 CDoubleParameter counter("COUNTER", CBaseParameter::RW, 1, 0, 1e-12, 1e+12);
 
-// global thread control parameter
-int thread_data__tune_control=0;
-
-spmc_stream_server spmc_stream_server_instance;
-spmc_dma_support *spm_dma_instance = NULL;
 
 /*
  * RedPitaya A9 FPGA LinksR
@@ -1524,11 +1530,13 @@ void OnNewParams_RPSPMC(void){
 
         if (SPMC_SET_SCANPOS_X.IsNewValue () || SPMC_SET_SCANPOS_Y.IsNewValue ()){
                 SPMC_SET_SCANPOS_SLEW.Update ();
+                SPMC_SET_SCANPOS_OPTS.Update ();
                 SPMC_SET_SCANPOS_X.Update ();
                 SPMC_SET_SCANPOS_Y.Update ();
                 rp_spmc_set_scanpos (SPMC_SET_SCANPOS_X.Value (),
                                      SPMC_SET_SCANPOS_Y.Value (),
-                                     SPMC_SET_SCANPOS_SLEW.Value ());
+                                     SPMC_SET_SCANPOS_SLEW.Value (),
+                                     SPMC_SET_SCANPOS_OPTS.Value ());
         }
 
         // {"parameters":{"SPMC_GVP_VECTOR_PC":{"value":2},"SPMC_GVP_VECTOR__N":{"value":100},"SPMC_GVP_VECTOR__O":{"value":0},"SPMC_GVP_VECTORNRP":{"value":0},"SPMC_GVP_VECTORNXT":{"value":0},"SPMC_GVP_VECTOR_DX":{"value":0},"SPMC_GVP_VECTOR_DY":{"value":0},"SPMC_GVP_VECTOR_DZ":{"value":0},"SPMC_GVP_VECTOR_DU":{"value":-1},"SPMC_GVP_VECTOR_AA":{"value":0},"SPMC_GVP_VECTOR_BB":{"value":0},"SPMC_GVP_VECTORSLW":{"value":10000}}}

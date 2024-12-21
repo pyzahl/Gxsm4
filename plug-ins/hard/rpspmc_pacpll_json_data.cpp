@@ -169,6 +169,7 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         { "SPMC_SET_SCANPOS_X", &spmc_parameters.set_scanpos_x, false },
         { "SPMC_SET_SCANPOS_Y", &spmc_parameters.set_scanpos_y, false },
         { "SPMC_SET_SCANPOS_SLEW", &spmc_parameters.set_scanpos_slew, false },
+        { "SPMC_SET_SCANPOS_OPTS", &spmc_parameters.set_scanpos_opts, false },
 
         { "SPMC_SET_OFFSET_X", &spmc_parameters.set_offset_x, false },
         { "SPMC_SET_OFFSET_Y", &spmc_parameters.set_offset_y, false },
@@ -217,10 +218,11 @@ const gchar *SPMC_GVP_VECTOR_COMPONENTS[] = {
 const gchar *SPMC_SET_OFFSET_COMPONENTS[] = {
         "SPMC_SET_OFFSET_X", 
         "SPMC_SET_OFFSET_Y", 
-        "SPMC_SET_OFFSET_XY_SLEW", 
+        "SPMC_SET_OFFSET_XY_SLEW",
         NULL };
 
 const gchar *SPMC_SET_SCANPOS_COMPONENTS[] = {
+        "SPMC_SET_SCANPOS_OPTS", 
         "SPMC_SET_SCANPOS_X", 
         "SPMC_SET_SCANPOS_Y", 
         "SPMC_SET_SCANPOS_SLEW", 

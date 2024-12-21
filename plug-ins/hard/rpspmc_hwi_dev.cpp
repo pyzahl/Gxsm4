@@ -242,14 +242,16 @@ gboolean rpspmc_hwi_dev::SetOffset(double x, double y){ // in "DIG"
 gboolean rpspmc_hwi_dev::MovetoXY (double x, double y){
         if (!ScanningFlg){
                 double jdata[3];
+                int jdata_i[1];
                 jdata[0] = main_get_gapp()->xsm->Inst->XA2Volt (main_get_gapp()->xsm->Inst->Dig2XA (x));
                 jdata[1] = main_get_gapp()->xsm->Inst->YA2Volt (main_get_gapp()->xsm->Inst->Dig2YA (y));
                 jdata[2] = main_get_gapp()->xsm->Inst->XA2Volt (RPSPMC_ControlClass->scan_speed_x_requested);
-
+                jdata_i[0] = 0;
+                
                 g_message ("Set ScanPosXY: %g, %g D => %g, %g V @%gV/s", x,y, jdata[0], jdata[1], jdata[2]);
 
                 if (rpspmc_pacpll)
-                        rpspmc_pacpll->write_array (SPMC_SET_SCANPOS_COMPONENTS, 0, NULL,  3, jdata);
+                        rpspmc_pacpll->write_array (SPMC_SET_SCANPOS_COMPONENTS, 1, jdata_i,  3, jdata); // { OPTS, X, Y, SLEW }
         }
         return FALSE;
 }
