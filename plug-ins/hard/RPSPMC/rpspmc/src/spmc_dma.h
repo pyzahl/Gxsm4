@@ -246,8 +246,8 @@ XDMAPS_CC_0_OFFSET  0x00000408
 #define SPMC_DMA_CONTROL 	0x18 //Set transfer length, T/RXSOF and T/RXEOF 
 #define SPMC_DMA_STATUS 	0x1C //Descriptor status
 
-#define INFO_PRINTF(ARGS...)  fprintf(stderr, "SPMC DMA: " ARGS)
-#define X_PRINTF(ARGS...)  fprintf(stderr, ARGS)
+#define INFO_PRINTF(ARGS...)  if (verbose > 1) fprintf(stderr, "SPMC DMA: " ARGS)
+#define X_PRINTF(ARGS...)  if (verbose > 1) fprintf(stderr, ARGS)
 
 //root@rp-f09296:/opt/redpitaya/www/apps/rpspmc# cat /proc/2878/maps 
 //b6f9e000-b6f9f000 rw-s 01000000 00:06 16         /dev/mem

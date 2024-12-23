@@ -23,10 +23,11 @@
 module axis_spm_control#(
     parameter SAXIS_TDATA_WIDTH = 32,
     parameter QROTM = 28,
+    parameter QSLOPE = 31,
     parameter RDECI  = 5   // reduced rate decimation bits 1= 1/2 ...
 )
 (
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS_Xs:S_AXIS_Ys:S_AXIS_Zs:S_AXIS_U:S_AXIS_Z:M_AXIS1:M_AXIS2:M_AXIS3:M_AXIS4:M_AXIS_XSMON:M_AXIS_YSMON:M_AXIS_ZSMON:M_AXIS_X0MON:M_AXIS_Y0MON:M_AXIS_Z0MON:M_AXIS_UrefMON" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS_Xs:S_AXIS_Ys:S_AXIS_Zs:S_AXIS_U:S_AXIS_Z:M_AXIS1:M_AXIS2:M_AXIS3:M_AXIS4:M_AXIS_XSMON:M_AXIS_YSMON:M_AXIS_ZSMON:M_AXIS_X0MON:M_AXIS_Z_SLOPE:M_AXIS_Y0MON:M_AXIS_Z0MON:M_AXIS_UrefMON" *)
     input a_clk,
     // GVP/SCAN COMPONENTS, ROTATED RELATIVE COORDS TO SCAN CENTER
     input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS_Xs_tdata,
@@ -49,9 +50,9 @@ module axis_spm_control#(
     input [32-1:0] rotmxx, // =cos(alpha)
     input [32-1:0] rotmxy, // =sin(alpha)
 
-    // slope -- TBD local to scan or global ???
-    input [32-1:0] slope_x,
-    input [32-1:0] slope_y,
+    // slope -- always applied in global XY plane ???
+    input [32-1:0] slope_x, // SQ31
+    input [32-1:0] slope_y, // SQ31
 
     // SCAN OFFSET / POSITION COMPONENTS, ABSOLUTE COORDS
     input [32-1:0] x0, // vector components
@@ -84,6 +85,9 @@ module axis_spm_control#(
     
     output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS_Z0MON_tdata,
     output wire                          M_AXIS_Z0MON_tvalid,
+    
+    output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS_Z_SLOPE_tdata,
+    output wire                          M_AXIS_Z_SLOPE_tvalid,
     
     output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS_UrefMON_tdata,
     output wire                          M_AXIS_UrefMON_tvalid
@@ -132,10 +136,16 @@ module axis_spm_control#(
     reg signed [32-1:0] ru=0;
     
     reg signed [32-1:0] z_servo=0;
+    reg signed [32-1:0] z_slope_requested=0;
+    reg signed [32-1:0] z_slope_ps=0;
+    reg signed [32-1:0] z_slope_ms=0;
     reg signed [32-1:0] z_slope=0;
     reg signed [32-1:0] z_gvp=0;
     reg signed [32-1:0] z_offset=0;
     reg signed [36-1:0] z_sum=0;
+
+    reg signed [32+QSLOPE+1-1:0] slx=0;
+    reg signed [32+QSLOPE+1-1:0] sly=0;
     
     reg [RDECI:0] rdecii = 0;
 
@@ -153,8 +163,8 @@ module axis_spm_control#(
         if (rdecii == 0)
         begin
         // always buffer locally
-            xy_move_step <= xy_offset_step;
-            z_move_step <= z_offset_step;
+            xy_move_step <= xy_offset_step; // XY offset adjuster speed limit (max step)
+            z_move_step  <= z_offset_step; // Z offset / slope comp. speed limit (max step) when adjusting
             x <= S_AXIS_Xs_tdata;
             y <= S_AXIS_Ys_tdata;
             z_gvp <= S_AXIS_Zs_tdata;
@@ -207,13 +217,29 @@ module axis_spm_control#(
             rrx <=  mxx*x + mxy*y;
             rry <= -mxy*x + mxx*y;
             
-            rx <= (rrx >>> QROTM) + mx0;
-            ry <= (rry >>> QROTM) + my0;
+            rx <= (rrx >>> QROTM) + mx0; // final global X pos
+            ry <= (rry >>> QROTM) + my0; // final global Y pos
             
-            // Z and slope
+            // Z and slope comensation in global X,Y and in non rot coords. sys 0,0=invariant point
             z_servo  <= S_AXIS_Z_tdata;
-            z_slope  <= 0;
-            z_sum    <= mz0 + z_gvp + z_slope + z_servo;
+            
+            slx <= slope_x * rx;
+            sly <= slope_y * ry;
+            
+            // Z slope calculation (plane) and z_slope adjuster
+            z_slope_requested <= (slx >>> QSLOPE) + (sly >>> QSLOPE);
+            z_slope_ps <= z_slope+z_move_step;
+            z_slope_ms <= z_slope-z_move_step;
+            if (z_slope_requested > z_slope_ps)
+                z_slope <= z_slope_ps;
+            else begin if (z_slope_requested < z_slope_ms)
+                z_slope <= z_slope_ms;
+            else
+                z_slope <= z_slope_requested;
+            end    
+            
+            //z_sum    <= mz0 + z_gvp + z_slope + z_servo;
+            z_sum    <= mz0 + z_gvp + z_servo;
             if (z_sum > 36'sd2147483647)
             begin
                 rz <= 32'sd2147483648;
@@ -252,6 +278,10 @@ module axis_spm_control#(
     assign M_AXIS_ZSMON_tvalid = 1;
     assign M_AXIS_Z0MON_tdata  = mz0; // Z Offset aka Z0
     assign M_AXIS_Z0MON_tvalid = 1;
+
+    assign M_AXIS_ZSLOPE_tdata  = z_slope;
+    assign M_AXIS_ZSLOPE_tvalid = 1;
+
     
     assign M_AXIS4_tdata  = ru;
     assign M_AXIS4_tvalid = 1;

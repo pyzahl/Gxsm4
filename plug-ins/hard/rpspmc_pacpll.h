@@ -390,6 +390,9 @@ public:
         static void ZServoControl(GtkWidget *widget, RPSPMC_Control *self);
         static void ZServoControlInv(GtkWidget *widget, RPSPMC_Control *self);
 
+        static void Slope_dZX_Changed(Param_Control* pcs, RPSPMC_Control* self);
+        static void Slope_dZY_Changed(Param_Control* pcs, RPSPMC_Control* self);
+        
         static void ChangedNotify(Param_Control* pcs, gpointer data);
         static void ChangedNotifyVP(Param_Control* pcs, gpointer data);
         static int ChangedAction(GtkWidget *widget, RPSPMC_Control *dspc);
@@ -960,9 +963,6 @@ public:
 	};
 	int GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v);
 	void GVP_abort_vector_program ();
-
-        void RPSPMC_set_bias (double bias) {};
-        void RPSPMC_set_current_sp (double sp) {};
 
         gint RPSPMC_GVP_section_count;
         gint RPSPMC_GVP_n;

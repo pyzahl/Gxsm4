@@ -1634,20 +1634,18 @@ void RPSPMC_Control::create_folder (){
         bp->set_configure_list_mode_off ();
 
         bp->set_scale_nx (2);
+        bp->set_default_ec_change_notice_fkt (RPSPMC_Control::Slope_dZX_Changed, this);
         bp->grid_add_ec_with_scale ("Slope X", Unity, &area_slope_x, -0.2, 0.2, ".5f", 0.0001, 0.0001,  "adv-scan-slope-x"); slope_x_ec = bp->ec;
         gtk_scale_set_digits (GTK_SCALE (bp->scale), 5);
         bp->new_line ();
 
+        bp->set_default_ec_change_notice_fkt (RPSPMC_Control::Slope_dZY_Changed, this);
         bp->grid_add_ec_with_scale ("Slope Y", Unity, &area_slope_y, -0.2, 0.2, ".5f", 0.0001, 0.0001,  "adv-scan-slope-y"); slope_y_ec = bp->ec;
         gtk_scale_set_digits (GTK_SCALE (bp->scale), 5);
         bp->set_scale_nx ();
         bp->new_line (0,2);
 
-        bp->grid_add_check_button ("Enable Slope Compensation", "Enable XY scan slope compensation." PYREMOTE_CHECK_HOOK_KEY("MainXYSLC"), 1,
-                                       G_CALLBACK(RPSPMC_Control::DSP_slope_callback), this, area_slope_compensation_flag, 0);
-        g_settings_bind (hwi_settings, "adv-enable-slope-compensation",
-                         G_OBJECT (GTK_CHECK_BUTTON (bp->button)), "active",
-                         G_SETTINGS_BIND_DEFAULT);
+        bp->set_default_ec_change_notice_fkt (RPSPMC_Control::ChangedNotify, this); // set default handler
 
         bp->grid_add_check_button ("Enable automatic Tip return to center", "enable auto tip return to center after scan", 1,
                                        G_CALLBACK(RPSPMC_Control::DSP_cret_callback), this, center_return_flag, 0);
@@ -1678,7 +1676,7 @@ void RPSPMC_Control::create_folder (){
         // LDC -- Enable Linear Drift Correction -- Controls
         bp->pop_grid ();
         bp->new_line ();
-        bp->new_grid_with_frame ("Enable Linear Drift Correction (LDC)");
+        bp->new_grid_with_frame ("Enable Linear Drift Correction (LDC) -- N/A on RPSPMC at this time");
         bp->set_configure_list_mode_on ();
 
 	LDC_status = bp->grid_add_check_button ("Enable Linear Drift Correction","Enable Linear Drift Correction" PYREMOTE_CHECK_HOOK_KEY("MainLDC"), 3);
@@ -2378,73 +2376,65 @@ void RPSPMC_Control::create_folder (){
         set_window_geometry ("rpspmc-main-control"); // must add key to xml file: core-sources/org.gnome.gxsm4.window-geometry.gschema.xml
 }
 
-int RPSPMC_Control::DSP_slope_callback (GtkWidget *widget, RPSPMC_Control *dspc){
+int RPSPMC_Control::DSP_slope_callback (GtkWidget *widget, RPSPMC_Control *self){
         PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);
-	dspc->area_slope_compensation_flag = gtk_check_button_get_active (GTK_CHECK_BUTTON (widget));	
-	dspc->update_controller();
+	self->area_slope_compensation_flag = gtk_check_button_get_active (GTK_CHECK_BUTTON (widget));	
+	self->update_controller();
         return 0;
 }
 
-int RPSPMC_Control::DSP_cret_callback (GtkWidget *widget, RPSPMC_Control *dspc){
+int RPSPMC_Control::DSP_cret_callback (GtkWidget *widget, RPSPMC_Control *self){
         PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);
-	dspc->center_return_flag = gtk_check_button_get_active (GTK_CHECK_BUTTON (widget));	
+	self->center_return_flag = gtk_check_button_get_active (GTK_CHECK_BUTTON (widget));	
         return 0;
 }
 
 
-int RPSPMC_Control::ldc_callback(GtkWidget *widget, RPSPMC_Control *dspc){
+int RPSPMC_Control::ldc_callback(GtkWidget *widget, RPSPMC_Control *self){
         PI_DEBUG_GP (DBG_L4, "%s \n",__FUNCTION__);
-	dspc->update_controller();
+	self->update_controller();
 	return 0;
 }
 
 
-int RPSPMC_Control::ChangedAction(GtkWidget *widget, RPSPMC_Control *dspc){
-	dspc->update_controller ();
+int RPSPMC_Control::ChangedAction(GtkWidget *widget, RPSPMC_Control *self){
+	self->update_controller ();
 	return 0;
 }
 
-void RPSPMC_Control::ChangedNotify(Param_Control* pcs, gpointer dspc){
-	((RPSPMC_Control*)dspc)->update_controller (); // update basic SPM Control Parameters
+void RPSPMC_Control::ChangedNotify(Param_Control* pcs, gpointer self){
+	((RPSPMC_Control*)self)->update_controller (); // update basic SPM Control Parameters
 }
 
 void RPSPMC_Control::BiasChanged(Param_Control* pcs, RPSPMC_Control* self){
         int j=0;
         if (rpspmc_pacpll)
                 rpspmc_pacpll->write_parameter ("SPMC_BIAS", self->bias);
+}
 
-#if 0
-        // TESTING ONLY
+void RPSPMC_Control::Slope_dZX_Changed(Param_Control* pcs, RPSPMC_Control* self){
         if (rpspmc_pacpll){
-                double vec[16] = { 1.0, 2., 3., 4., 5.5,6.6,7.7,8.8,9.9,10.,11.,12.,13.,14.,15.,16. };
-                //rpspmc_pacpll->write_signal ("SPMC_GVP_VECTOR", 16, vec);
-                vec[0]=j++;
-                vec[1]=100;
-                vec[2]=1000;
-                for (int i=5; i<16; ++i)
-                        vec[i] += self->bias;
-                rpspmc_pacpll->write_array ("SPMC_GVP_VECTOR", 16, vec);
-                vec[0]=j++;
-                for (int i=5; i<16; ++i)
-                        vec[i] += self->bias;
-                rpspmc_pacpll->write_array ("SPMC_GVP_VECTOR", 16, vec);
-                vec[0]=j++;
-                for (int i=5; i<16; ++i)
-                        vec[i] += self->bias;
-                rpspmc_pacpll->write_array ("SPMC_GVP_VECTOR", 16, vec);
-
+                double zx_ratio = main_get_gapp()->xsm->Inst->XResolution () / main_get_gapp()->xsm->Inst->ZModResolution (); 
+                rpspmc_pacpll->write_parameter ("SPMC_SLOPE_X", zx_ratio * self->area_slope_x);
         }
-#endif
+}
+
+void RPSPMC_Control::Slope_dZY_Changed(Param_Control* pcs, RPSPMC_Control* self){
+        if (rpspmc_pacpll){
+                double zy_ratio = main_get_gapp()->xsm->Inst->YResolution () / main_get_gapp()->xsm->Inst->ZModResolution ();
+                rpspmc_pacpll->write_parameter ("SPMC_SLOPE_Y", zy_ratio * self->area_slope_y);
+        }
 }
 
 void RPSPMC_Control::ZPosSetChanged(Param_Control* pcs, RPSPMC_Control *self){
-        if (rpspmc_pacpll)
+        if (rpspmc_pacpll){
                 rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_SETPOINT_CZ", main_get_gapp()->xsm->Inst->ZA2Volt(self->zpos_ref));
+        }
 }
 
 void RPSPMC_Control::ZServoParamChanged(Param_Control* pcs, RPSPMC_Control *self){
         if (rpspmc_pacpll){
-                // (((RPSPMC_Control*)dspc)->mix_gain[ch]) // N/A
+                // (((RPSPMC_Control*)self)->mix_gain[ch]) // N/A
                 self->z_servo[SERVO_CP] = spmc_parameters.z_servo_invert * pow (10., spmc_parameters.z_servo_cp_db/20.);
                 self->z_servo[SERVO_CI] = spmc_parameters.z_servo_invert * pow (10., spmc_parameters.z_servo_ci_db/20.);
                 rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_SETPOINT", self->mix_set_point[0]);
@@ -2472,21 +2462,21 @@ void RPSPMC_Control::ZServoControlInv (GtkWidget *widget, RPSPMC_Control *self){
 }
 
 
-void RPSPMC_Control::ChangedNotifyVP(Param_Control* pcs, gpointer dspc){
+void RPSPMC_Control::ChangedNotifyVP(Param_Control* pcs, gpointer self){
         g_message ("**ChangedNotifyVP**");
 #if 0
         for (int k=0; k<8; k++)
                 g_message ("**VP[%02d] %8gV %8gA %8gs np%4d nr%4d",
                            k,
-                           ((RPSPMC_Control*)dspc)->GVP_du[k],
-                           ((RPSPMC_Control*)dspc)->GVP_dz[k],
-                           ((RPSPMC_Control*)dspc)->GVP_ts[k],
-                           ((RPSPMC_Control*)dspc)->GVP_points[k],
-                           ((RPSPMC_Control*)dspc)->GVP_vnrep[k]);
+                           ((RPSPMC_Control*)self)->GVP_du[k],
+                           ((RPSPMC_Control*)self)->GVP_dz[k],
+                           ((RPSPMC_Control*)self)->GVP_ts[k],
+                           ((RPSPMC_Control*)self)->GVP_points[k],
+                           ((RPSPMC_Control*)self)->GVP_vnrep[k]);
 #endif
 }
 
-int RPSPMC_Control::choice_mixmode_callback (GtkWidget *widget, RPSPMC_Control *dspc){
+int RPSPMC_Control::choice_mixmode_callback (GtkWidget *widget, RPSPMC_Control *self){
 	gint channel=0;
         gint selection=0;
 
@@ -2498,21 +2488,21 @@ int RPSPMC_Control::choice_mixmode_callback (GtkWidget *widget, RPSPMC_Control *
 
 	PI_DEBUG_GP (DBG_L3, "MixMode[%d]=0x%x\n",channel,selection);
 
-	dspc->mix_transform_mode[channel] = selection;
+	self->mix_transform_mode[channel] = selection;
         if (channel == 0){
                 g_print ("Choice MIX%d MT=%d\n", channel, selection);
                 rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_MODE", selection); // mapped to MM_LIN/LOG/FCZLOG (0,1,3)
         }
         PI_DEBUG_GP (DBG_L4, "%s ** 2\n",__FUNCTION__);
 
-	dspc->update_controller ();
+	self->update_controller ();
         //g_print ("DSP READBACK MIX%d MT=%d\n", channel, (int)sranger_common_hwi->read_dsp_feedback ("MT", channel));
 
         PI_DEBUG_GP (DBG_L4, "%s **3 done\n",__FUNCTION__);
         return 0;
 }
 
-int RPSPMC_Control::choice_scansource_callback (GtkWidget *widget, RPSPMC_Control *dspc){
+int RPSPMC_Control::choice_scansource_callback (GtkWidget *widget, RPSPMC_Control *self){
         PI_DEBUG_GP (DBG_L4, "%s \n",__FUNCTION__);
 
         if (gtk_combo_box_get_active (GTK_COMBO_BOX (widget)) == -1 || g_object_get_data( G_OBJECT (widget), "updating_in_progress")){
@@ -2525,12 +2515,12 @@ int RPSPMC_Control::choice_scansource_callback (GtkWidget *widget, RPSPMC_Contro
 
 #if 0
 	PI_DEBUG_GP (DBG_L3, "ScanSource-Input[%d]=0x%x  <== %s\n",channel,signal, sranger_common_hwi->dsp_signal_lookup_managed[signal].label);
-	sranger_common_hwi->change_signal_input (signal, DSP_SIGNAL_SCAN_CHANNEL_MAP0_ID+channel, dspc->DSP_vpdata_ij[0]*8+dspc->DSP_vpdata_ij[1]);
-	dspc->scan_source[channel] = signal;
+	sranger_common_hwi->change_signal_input (signal, DSP_SIGNAL_SCAN_CHANNEL_MAP0_ID+channel, self->DSP_vpdata_ij[0]*8+self->DSP_vpdata_ij[1]);
+	self->scan_source[channel] = signal;
 
 	// manage unit -- TDB
-	//	dspc->scan_unit2volt_factor[channel] = 1.;
-	//	dspc->update_sourcesignals_from_DSP_callback ();
+	//	self->scan_unit2volt_factor[channel] = 1.;
+	//	self->update_sourcesignals_from_DSP_callback ();
 
 	// verify and update:
 	int si = sranger_common_hwi->query_module_signal_input(DSP_SIGNAL_SCAN_CHANNEL_MAP0_ID+channel);
@@ -2571,31 +2561,31 @@ void RPSPMC_Control::update_zpos_readings(){
         g_free (info);
 }
 
-guint RPSPMC_Control::refresh_zpos_readings(RPSPMC_Control *dspc){ 
+guint RPSPMC_Control::refresh_zpos_readings(RPSPMC_Control *self){ 
 	if (main_get_gapp()->xsm->hardware->IsSuspendWatches ())
 		return TRUE;
 
-	dspc->update_zpos_readings ();
+	self->update_zpos_readings ();
 	return TRUE;
 }
 
-int RPSPMC_Control::zpos_monitor_callback( GtkWidget *widget, RPSPMC_Control *dspc){
+int RPSPMC_Control::zpos_monitor_callback( GtkWidget *widget, RPSPMC_Control *self){
         if (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget))){
                 //g_slist_foreach ((GSList*)g_object_get_data (G_OBJECT (widget), "DSP_zpos_control_list"), (GFunc) App::thaw_ec, NULL);
-                dspc->zpos_refresh_timer_id = g_timeout_add (200, (GSourceFunc)RPSPMC_Control::refresh_zpos_readings, dspc);
+                self->zpos_refresh_timer_id = g_timeout_add (200, (GSourceFunc)RPSPMC_Control::refresh_zpos_readings, self);
         }else{
                 //g_slist_foreach ((GSList*)g_object_get_data (G_OBJECT (widget), "DSP_zpos_control_list"), (GFunc) App::freeze_ec, NULL);
 
-                if (dspc->zpos_refresh_timer_id){
-                        g_source_remove (dspc->zpos_refresh_timer_id);
-                        dspc->zpos_refresh_timer_id = 0;
+                if (self->zpos_refresh_timer_id){
+                        g_source_remove (self->zpos_refresh_timer_id);
+                        self->zpos_refresh_timer_id = 0;
                 }
         }
         return 0;
 }
 
 
-int RPSPMC_Control::choice_prbsource_callback (GtkWidget *widget, RPSPMC_Control *dspc){
+int RPSPMC_Control::choice_prbsource_callback (GtkWidget *widget, RPSPMC_Control *self){
         PI_DEBUG_GP (DBG_L4, "%s \n",__FUNCTION__);
         
         if (gtk_combo_box_get_active (GTK_COMBO_BOX (widget)) == -1)
@@ -2604,7 +2594,7 @@ int RPSPMC_Control::choice_prbsource_callback (GtkWidget *widget, RPSPMC_Control
         gint selection = gtk_combo_box_get_active (GTK_COMBO_BOX (widget));
 	gint channel   = GPOINTER_TO_INT (g_object_get_data( G_OBJECT (widget), "prb_channel_source"));
 
-	dspc->probe_source[channel] = selection;
+	self->probe_source[channel] = selection;
 
         // ** template **
         // must reconfigure controller accordingly here...
@@ -2615,42 +2605,42 @@ int RPSPMC_Control::choice_prbsource_callback (GtkWidget *widget, RPSPMC_Control
 
 
 
-int RPSPMC_Control::callback_change_IV_option_flags (GtkWidget *widget, RPSPMC_Control *dspc){
+int RPSPMC_Control::callback_change_IV_option_flags (GtkWidget *widget, RPSPMC_Control *self){
         PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);
 	guint64 msk = (guint64) GPOINTER_TO_UINT (g_object_get_data(G_OBJECT(widget), "Bit_Mask"));
 	if (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)))
-		dspc->IV_option_flags = (dspc->IV_option_flags & (~msk)) | msk;
+		self->IV_option_flags = (self->IV_option_flags & (~msk)) | msk;
 	else
-		dspc->IV_option_flags &= ~msk;
+		self->IV_option_flags &= ~msk;
 
-        dspc->set_tab_settings ("IV", dspc->IV_option_flags, dspc->IV_auto_flags, dspc->IV_glock_data);
+        self->set_tab_settings ("IV", self->IV_option_flags, self->IV_auto_flags, self->IV_glock_data);
         return 0;
 }
 
-int RPSPMC_Control::callback_change_IV_auto_flags (GtkWidget *widget, RPSPMC_Control *dspc){
+int RPSPMC_Control::callback_change_IV_auto_flags (GtkWidget *widget, RPSPMC_Control *self){
         PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);
 	guint64 msk = (guint64) GPOINTER_TO_UINT (g_object_get_data(G_OBJECT(widget), "Bit_Mask"));
 	if (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)))
-		dspc->IV_auto_flags = (dspc->IV_auto_flags & (~msk)) | msk;
+		self->IV_auto_flags = (self->IV_auto_flags & (~msk)) | msk;
 	else
-		dspc->IV_auto_flags &= ~msk;
+		self->IV_auto_flags &= ~msk;
 
-	//if (dspc->write_vector_mode == PV_MODE_IV)
-	//	dspc->raster_auto_flags = dspc->IV_auto_flags;
+	//if (self->write_vector_mode == PV_MODE_IV)
+	//	self->raster_auto_flags = self->IV_auto_flags;
 
-        dspc->set_tab_settings ("IV", dspc->IV_option_flags, dspc->IV_auto_flags, dspc->IV_glock_data);
+        self->set_tab_settings ("IV", self->IV_option_flags, self->IV_auto_flags, self->IV_glock_data);
         return 0;
 }
 
 
-int RPSPMC_Control::Probing_exec_IV_callback( GtkWidget *widget, RPSPMC_Control *dspc){
+int RPSPMC_Control::Probing_exec_IV_callback( GtkWidget *widget, RPSPMC_Control *self){
         PI_DEBUG_GP (DBG_L4, "%s \n",__FUNCTION__);
-	dspc->current_auto_flags = dspc->IV_auto_flags;
+	self->current_auto_flags = self->IV_auto_flags;
 
-	if (dspc->check_vp_in_progress ()) 
+	if (self->check_vp_in_progress ()) 
 		return -1;
 
-        if (dspc->IV_auto_flags & FLAG_AUTO_RUN_INITSCRIPT){
+        if (self->IV_auto_flags & FLAG_AUTO_RUN_INITSCRIPT){
                 gchar *tmp = g_strdup ("vp-sts-initial");
                 main_get_gapp()->SignalRemoteActionToPlugins (&tmp);
                 g_free (tmp);
@@ -2658,214 +2648,214 @@ int RPSPMC_Control::Probing_exec_IV_callback( GtkWidget *widget, RPSPMC_Control 
 
         // ** TEMPLATE DUMMY **
         // write code to controller
-        //dspc->write_spm_vector_program (0, PV_MODE_NONE);
+        //self->write_spm_vector_program (0, PV_MODE_NONE);
 
-	if (dspc->IV_auto_flags & FLAG_AUTO_GLOCK){
-		dspc->vis_Source  = dspc->IV_glock_data[0];
-		dspc->vis_XSource = dspc->IV_glock_data[1];
-		dspc->vis_PSource = dspc->IV_glock_data[2];
-		dspc->vis_XJoin   = dspc->IV_glock_data[3];
-		dspc->vis_PlotAvg = dspc->IV_glock_data[4];
-		dspc->vis_PlotSec = dspc->IV_glock_data[5];
+	if (self->IV_auto_flags & FLAG_AUTO_GLOCK){
+		self->vis_Source  = self->IV_glock_data[0];
+		self->vis_XSource = self->IV_glock_data[1];
+		self->vis_PSource = self->IV_glock_data[2];
+		self->vis_XJoin   = self->IV_glock_data[3];
+		self->vis_PlotAvg = self->IV_glock_data[4];
+		self->vis_PlotSec = self->IV_glock_data[5];
 	} else {
-		dspc->vis_Source = dspc->IV_glock_data[0] = dspc->Source ;
-		dspc->vis_XSource= dspc->IV_glock_data[1] = dspc->XSource;
-		dspc->vis_PSource= dspc->IV_glock_data[2] = dspc->PSource;
-		dspc->vis_XJoin  = dspc->IV_glock_data[3] = dspc->XJoin  ;
-		dspc->vis_PlotAvg= dspc->IV_glock_data[4] = dspc->PlotAvg;
-		dspc->vis_PlotSec= dspc->IV_glock_data[5] = dspc->PlotSec;
+		self->vis_Source = self->IV_glock_data[0] = self->Source ;
+		self->vis_XSource= self->IV_glock_data[1] = self->XSource;
+		self->vis_PSource= self->IV_glock_data[2] = self->PSource;
+		self->vis_XJoin  = self->IV_glock_data[3] = self->XJoin  ;
+		self->vis_PlotAvg= self->IV_glock_data[4] = self->PlotAvg;
+		self->vis_PlotSec= self->IV_glock_data[5] = self->PlotSec;
 	}
 
-	dspc->current_auto_flags = dspc->IV_auto_flags;
+	self->current_auto_flags = self->IV_auto_flags;
 
 
         // ** TEMPLATE DUMMY **
         // exec IV GVP code on controller now and initiate data streaming
 
-        // dspc->probe_trigger_single_shot = 1;
-	// dspc->write_spm_vector_program (1, PV_MODE_IV); // Exec STS probing here
+        // self->probe_trigger_single_shot = 1;
+	// self->write_spm_vector_program (1, PV_MODE_IV); // Exec STS probing here
 
 	return 0;
 }
 
-int RPSPMC_Control::Probing_write_IV_callback( GtkWidget *widget, RPSPMC_Control *dspc){
+int RPSPMC_Control::Probing_write_IV_callback( GtkWidget *widget, RPSPMC_Control *self){
         // write IV GVP code to controller
-        // dspc->write_spm_vector_program (0, PV_MODE_IV);
+        // self->write_spm_vector_program (0, PV_MODE_IV);
         return 0;
 }
 
 // GVP vector program editor 
 
-int RPSPMC_Control::callback_update_GVP_vpc_option_checkbox (GtkWidget *widget, RPSPMC_Control *dspc){
+int RPSPMC_Control::callback_update_GVP_vpc_option_checkbox (GtkWidget *widget, RPSPMC_Control *self){
         //        PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);
 	int  k   = GPOINTER_TO_INT (g_object_get_data(G_OBJECT(widget), "VPC"));
 	guint64 msk = (guint64) GPOINTER_TO_UINT (g_object_get_data(G_OBJECT(widget), "Bit_Mask"));
-	gtk_check_button_set_active (GTK_CHECK_BUTTON(widget), (dspc->GVP_opt[k] & msk) ? 1:0);
+	gtk_check_button_set_active (GTK_CHECK_BUTTON(widget), (self->GVP_opt[k] & msk) ? 1:0);
 
-        dspc->set_tab_settings ("VP", dspc->GVP_option_flags, dspc->GVP_auto_flags, dspc->GVP_glock_data);
+        self->set_tab_settings ("VP", self->GVP_option_flags, self->GVP_auto_flags, self->GVP_glock_data);
         return 0;
 }
 
-int RPSPMC_Control::callback_change_GVP_vpc_option_flags (GtkWidget *widget, RPSPMC_Control *dspc){
+int RPSPMC_Control::callback_change_GVP_vpc_option_flags (GtkWidget *widget, RPSPMC_Control *self){
         //        PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);
 	int  k = GPOINTER_TO_INT (g_object_get_data(G_OBJECT(widget), "VPC"));
 	guint64 msk = (guint64) GPOINTER_TO_UINT (g_object_get_data(G_OBJECT(widget), "Bit_Mask"));
 
 	if( gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)))
-		dspc->GVP_opt[k] = (dspc->GVP_opt[k] & (~msk)) | msk;
+		self->GVP_opt[k] = (self->GVP_opt[k] & (~msk)) | msk;
 	else
-		dspc->GVP_opt[k] &= ~msk;
+		self->GVP_opt[k] &= ~msk;
 
-        dspc->set_tab_settings ("VP", dspc->GVP_option_flags, dspc->GVP_auto_flags, dspc->GVP_glock_data);
+        self->set_tab_settings ("VP", self->GVP_option_flags, self->GVP_auto_flags, self->GVP_glock_data);
         return 0;
 }
 
-int RPSPMC_Control::callback_change_GVP_option_flags (GtkWidget *widget, RPSPMC_Control *dspc){
+int RPSPMC_Control::callback_change_GVP_option_flags (GtkWidget *widget, RPSPMC_Control *self){
         //        PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);
 	guint64 msk = (guint64) GPOINTER_TO_UINT (g_object_get_data(G_OBJECT(widget), "Bit_Mask"));
 	if (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)))
-		dspc->GVP_option_flags = (dspc->GVP_option_flags & (~msk)) | msk;
+		self->GVP_option_flags = (self->GVP_option_flags & (~msk)) | msk;
 	else
-		dspc->GVP_option_flags &= ~msk;
+		self->GVP_option_flags &= ~msk;
 
-	if (dspc->write_vector_mode == PV_MODE_GVP)
-		dspc->raster_auto_flags = dspc->GVP_auto_flags;
+	if (self->write_vector_mode == PV_MODE_GVP)
+		self->raster_auto_flags = self->GVP_auto_flags;
 
-        dspc->set_tab_settings ("VP", dspc->GVP_option_flags, dspc->GVP_auto_flags, dspc->GVP_glock_data);
-        dspc->GVP_store_vp ("VP_set_last"); // last in view
+        self->set_tab_settings ("VP", self->GVP_option_flags, self->GVP_auto_flags, self->GVP_glock_data);
+        self->GVP_store_vp ("VP_set_last"); // last in view
         return 0;
 }
 
-int RPSPMC_Control::callback_GVP_store_vp (GtkWidget *widget, RPSPMC_Control *dspc){
+int RPSPMC_Control::callback_GVP_store_vp (GtkWidget *widget, RPSPMC_Control *self){
         PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);
-	dspc->GVP_store_vp ((const gchar*)g_object_get_data(G_OBJECT(widget), "key"));
+	self->GVP_store_vp ((const gchar*)g_object_get_data(G_OBJECT(widget), "key"));
         return 0;
 }
-int RPSPMC_Control::callback_GVP_restore_vp (GtkWidget *widget, RPSPMC_Control *dspc){
+int RPSPMC_Control::callback_GVP_restore_vp (GtkWidget *widget, RPSPMC_Control *self){
         PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);
-	dspc->GVP_restore_vp ((const gchar*)g_object_get_data(G_OBJECT(widget), "key"));
+	self->GVP_restore_vp ((const gchar*)g_object_get_data(G_OBJECT(widget), "key"));
         return 0;
 }
 
-int RPSPMC_Control::callback_change_GVP_auto_flags (GtkWidget *widget, RPSPMC_Control *dspc){
+int RPSPMC_Control::callback_change_GVP_auto_flags (GtkWidget *widget, RPSPMC_Control *self){
         PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);
 	guint64 msk = (guint64) GPOINTER_TO_UINT (g_object_get_data(G_OBJECT(widget), "Bit_Mask"));
 	if (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)))
-		dspc->GVP_auto_flags = (dspc->GVP_auto_flags & (~msk)) | msk;
+		self->GVP_auto_flags = (self->GVP_auto_flags & (~msk)) | msk;
 	else
-		dspc->GVP_auto_flags &= ~msk;
+		self->GVP_auto_flags &= ~msk;
 
-        dspc->set_tab_settings ("VP", dspc->GVP_option_flags, dspc->GVP_auto_flags, dspc->GVP_glock_data);
+        self->set_tab_settings ("VP", self->GVP_option_flags, self->GVP_auto_flags, self->GVP_glock_data);
         return 0;
 }
 
-int RPSPMC_Control::Probing_exec_GVP_callback( GtkWidget *widget, RPSPMC_Control *dspc){
-	dspc->current_auto_flags = dspc->GVP_auto_flags;
+int RPSPMC_Control::Probing_exec_GVP_callback( GtkWidget *widget, RPSPMC_Control *self){
+	self->current_auto_flags = self->GVP_auto_flags;
 
-	if (dspc->check_vp_in_progress ()) 
+	if (self->check_vp_in_progress ()) 
 		return -1;
 
-        if (dspc->GVP_auto_flags & FLAG_AUTO_RUN_INITSCRIPT){
+        if (self->GVP_auto_flags & FLAG_AUTO_RUN_INITSCRIPT){
                 gchar *tmp = g_strdup ("vp-gvp-initial");
                 main_get_gapp()->SignalRemoteActionToPlugins (&tmp);
                 g_free (tmp);
         }
       
-	if (dspc->GVP_auto_flags & FLAG_AUTO_GLOCK){
-		dspc->vis_Source  = dspc->GVP_glock_data[0];
-		dspc->vis_XSource = dspc->GVP_glock_data[1];
-		dspc->vis_PSource = dspc->GVP_glock_data[2];
-		dspc->vis_XJoin   = dspc->GVP_glock_data[3];
-		dspc->vis_PlotAvg = dspc->GVP_glock_data[4];
-		dspc->vis_PlotSec = dspc->GVP_glock_data[5];
+	if (self->GVP_auto_flags & FLAG_AUTO_GLOCK){
+		self->vis_Source  = self->GVP_glock_data[0];
+		self->vis_XSource = self->GVP_glock_data[1];
+		self->vis_PSource = self->GVP_glock_data[2];
+		self->vis_XJoin   = self->GVP_glock_data[3];
+		self->vis_PlotAvg = self->GVP_glock_data[4];
+		self->vis_PlotSec = self->GVP_glock_data[5];
 	} else {
-		dspc->vis_Source = dspc->GVP_glock_data[0] = dspc->Source ;
-		dspc->vis_XSource= dspc->GVP_glock_data[1] = dspc->XSource;
-		dspc->vis_PSource= dspc->GVP_glock_data[2] = dspc->PSource;
-		dspc->vis_XJoin  = dspc->GVP_glock_data[3] = dspc->XJoin  ;
-		dspc->vis_PlotAvg= dspc->GVP_glock_data[4] = dspc->PlotAvg;
-		dspc->vis_PlotSec= dspc->GVP_glock_data[5] = dspc->PlotSec;
+		self->vis_Source = self->GVP_glock_data[0] = self->Source ;
+		self->vis_XSource= self->GVP_glock_data[1] = self->XSource;
+		self->vis_PSource= self->GVP_glock_data[2] = self->PSource;
+		self->vis_XJoin  = self->GVP_glock_data[3] = self->XJoin  ;
+		self->vis_PlotAvg= self->GVP_glock_data[4] = self->PlotAvg;
+		self->vis_PlotSec= self->GVP_glock_data[5] = self->PlotSec;
 	}
 
-	dspc->current_auto_flags = dspc->GVP_auto_flags;
+	self->current_auto_flags = self->GVP_auto_flags;
 
         // write and exec GVP code on controller and initiate data streaming
         
-	// dspc->probe_trigger_single_shot = 1;
-	dspc->write_spm_vector_program (1, PV_MODE_GVP); // Write and Exec GVP program
+	// self->probe_trigger_single_shot = 1;
+	self->write_spm_vector_program (1, PV_MODE_GVP); // Write and Exec GVP program
 
 	return 0;
 }
 
 
-int RPSPMC_Control::Probing_write_GVP_callback( GtkWidget *widget, RPSPMC_Control *dspc){
+int RPSPMC_Control::Probing_write_GVP_callback( GtkWidget *widget, RPSPMC_Control *self){
         // write GVP code to controller
-        dspc->write_spm_vector_program (0, PV_MODE_GVP);
+        self->write_spm_vector_program (0, PV_MODE_GVP);
         return 0;
 }
 
 // Graphs Callbacks
-int RPSPMC_Control::change_source_callback (GtkWidget *widget, RPSPMC_Control *dspc){
+int RPSPMC_Control::change_source_callback (GtkWidget *widget, RPSPMC_Control *self){
         PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);
 	guint32 channel = GPOINTER_TO_INT (g_object_get_data(G_OBJECT(widget), "Source_Channel"));
 	guint32 mapping = GPOINTER_TO_INT (g_object_get_data(G_OBJECT(widget), "Source_Mapping"));
 	if (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)))
                 switch (mapping){
-                case MAP_SOURCE_REC:   dspc->Source  |= channel; break;
-                case MAP_SOURCE_X:     dspc->XSource |= channel; break;
-                case MAP_SOURCE_PLOTY: dspc->PSource |= channel; break;
-                case MAP_SOURCE_AVG:   dspc->PlotAvg |= channel; break;
-                case MAP_SOURCE_SEC:   dspc->PlotSec |= channel; break;
+                case MAP_SOURCE_REC:   self->Source  |= channel; break;
+                case MAP_SOURCE_X:     self->XSource |= channel; break;
+                case MAP_SOURCE_PLOTY: self->PSource |= channel; break;
+                case MAP_SOURCE_AVG:   self->PlotAvg |= channel; break;
+                case MAP_SOURCE_SEC:   self->PlotSec |= channel; break;
                 default: break;
                 }
         else
                 switch (mapping){
-                case MAP_SOURCE_REC:   dspc->Source  &= ~channel; break;
-                case MAP_SOURCE_X:     dspc->XSource &= ~channel; break;
-                case MAP_SOURCE_PLOTY: dspc->PSource &= ~channel; break;
-                case MAP_SOURCE_AVG:   dspc->PlotAvg &= ~channel; break;
-                case MAP_SOURCE_SEC:   dspc->PlotSec &= ~channel; break;
+                case MAP_SOURCE_REC:   self->Source  &= ~channel; break;
+                case MAP_SOURCE_X:     self->XSource &= ~channel; break;
+                case MAP_SOURCE_PLOTY: self->PSource &= ~channel; break;
+                case MAP_SOURCE_AVG:   self->PlotAvg &= ~channel; break;
+                case MAP_SOURCE_SEC:   self->PlotSec &= ~channel; break;
                 default: break;
                 }
 
-        g_message ("CH=%08x MAP:%d *** S%08x X%08x Y%08x",channel, mapping, dspc->Source,dspc->XSource,dspc->PSource );
+        g_message ("CH=%08x MAP:%d *** S%08x X%08x Y%08x",channel, mapping, self->Source,self->XSource,self->PSource );
         
-        //g_message ("change_source_callback: Ch: %08x => Srcs: %08x", channel, dspc->Source);
+        //g_message ("change_source_callback: Ch: %08x => Srcs: %08x", channel, self->Source);
         
-	dspc->vis_Source  = dspc->Source;
-	dspc->vis_XSource = dspc->XSource;
-	dspc->vis_PSource = dspc->PSource;
-	dspc->vis_XJoin   = dspc->XJoin;
-	dspc->vis_PlotAvg = dspc->PlotAvg;
-	dspc->vis_PlotSec = dspc->PlotSec;
+	self->vis_Source  = self->Source;
+	self->vis_XSource = self->XSource;
+	self->vis_PSource = self->PSource;
+	self->vis_XJoin   = self->XJoin;
+	self->vis_PlotAvg = self->PlotAvg;
+	self->vis_PlotSec = self->PlotSec;
 
         // store
-        dspc->store_graphs_values ();
+        self->store_graphs_values ();
         
 	return 0;
 }
 
-int RPSPMC_Control::callback_XJoin (GtkWidget *widget, RPSPMC_Control *dspc){
+int RPSPMC_Control::callback_XJoin (GtkWidget *widget, RPSPMC_Control *self){
         PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);
-	dspc->XJoin = (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget))) ? TRUE : FALSE;
-	dspc->vis_XJoin = dspc->XJoin;
-        g_settings_set_boolean (dspc->hwi_settings, "probe-x-join", dspc->XJoin);
+	self->XJoin = (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget))) ? TRUE : FALSE;
+	self->vis_XJoin = self->XJoin;
+        g_settings_set_boolean (self->hwi_settings, "probe-x-join", self->XJoin);
         return 0;
 }
 
-int RPSPMC_Control::callback_GrMatWindow (GtkWidget *widget, RPSPMC_Control *dspc){
+int RPSPMC_Control::callback_GrMatWindow (GtkWidget *widget, RPSPMC_Control *self){
         PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);
-	dspc->GrMatWin = (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget))) ? TRUE : FALSE;
-        g_settings_set_boolean (dspc->hwi_settings, "probe-graph-matrix-window", dspc->GrMatWin);
+	self->GrMatWin = (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget))) ? TRUE : FALSE;
+        g_settings_set_boolean (self->hwi_settings, "probe-graph-matrix-window", self->GrMatWin);
         return 0;
 }
 
 
 void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, gpointer data){
-	RPSPMC_Control *dspc = (RPSPMC_Control*)data;
+	RPSPMC_Control *self = (RPSPMC_Control*)data;
 }
 
-int RPSPMC_Control::lockin_runfree_callback(GtkWidget *widget, RPSPMC_Control *dspc){
+int RPSPMC_Control::lockin_runfree_callback(GtkWidget *widget, RPSPMC_Control *self){
         PI_DEBUG_GP (DBG_L4, "%s \n",__FUNCTION__);
 	if (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)))
                 PI_DEBUG_GP (DBG_L1, "LockIn Modul ON");
@@ -2890,24 +2880,10 @@ void RPSPMC_Control::update_controller () {
         scan_speed_ec->set_info (info);
         g_free (info);
 
-        // SCAN PLANE/SLOPE COMPENSATION
-        if (area_slope_compensation_flag){
-                //double zx_ratio = sranger_mk2_hwi_pi.app->xsm->Inst->XResolution () / sranger_mk2_hwi_pi.app->xsm->Inst->ZModResolution (); 
-                //double zy_ratio = sranger_mk2_hwi_pi.app->xsm->Inst->YResolution () / sranger_mk2_hwi_pi.app->xsm->Inst->ZModResolution ();
-                //double mx = zx_ratio * area_slope_x;
-                //double my = zy_ratio * area_slope_y;
-                //dsp_scan_fm_dz0x = (gint32)round (fract * mx);
-                //dsp_scan_fm_dz0y = (gint32)round (fract * my);
-
-        }
         if (rpspmc_hwi->is_scanning()) // only if scanning!
                 write_spm_scan_vector_program (main_get_gapp()->xsm->data.s.rx, main_get_gapp()->xsm->data.s.ry,
                                                main_get_gapp()->xsm->data.s.nx, main_get_gapp()->xsm->data.s.ny,
                                                slew, NULL, NULL);
-                
-        rpspmc_hwi->RPSPMC_set_bias (bias);
-        rpspmc_hwi->RPSPMC_set_current_sp (mix_set_point[0]);
-        g_message ("*** Update Controller: Bias-SP: %g V, Current-SP: %g nA", bias, mix_set_point[0]);
 }
 
 

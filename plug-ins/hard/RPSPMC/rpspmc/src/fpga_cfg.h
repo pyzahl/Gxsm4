@@ -202,11 +202,13 @@
 #define SPMC_ACLK_MHZ   125 // RP Analog Clock Base in MHz
 #define SPMC_RDECI      4
 #define SPMC_CLK        ((double)SPMC_ACLK_MHZ*1e6/(1<<(SPMC_RDECI+1)))
-#define SPMC_GVP_MIN_DECII 128
+#define SPMC_GVP_MIN_DECII 2           // fastest
+#define SPMC_GVP_REGULAR_MIN_DECII 128 // about 1MHz max for ADCs
 #define SPMC_GVP_CLK    ((double)SPMC_ACLK_MHZ*1e6) // /2 for decii i noutside block only (old)
 
 #define MAX_NUM_PROGRAN_VECTORS 16
-#define Q_XYPRECISION Q28
+#define Q_XY_PRECISION Q28
+#define Q_Z_SLOPE_PRECISION Q31
 
 #define SPMC_IN01_REFV   1.13 // RP IN1,2 REF Volatge is 1.0V (+/-1V Range)
 #define SPMC_AD5791_REFV 5.0 // DAC AD5791 Reference Volatge is 5.000000V (+/-5V Range)

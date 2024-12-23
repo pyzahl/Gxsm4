@@ -411,12 +411,14 @@ int32_t ad5791_set_dac_value(int axis,
 
         u.i = volts_to_ad5791_dac (volts);
 
-        if (verbose >= 0){
+        /* 
+        if (verbose > 0){
                 char s32[33]; memset(s32, 0, 33);
                 fprintf(stderr, "##ad5791setdac: %g V in Q19 int = %08x 0b%s\n", volts, u.i, int_to_binary(s32, u.i, 32)); 
                 //fprintf(stderr, "##ad5791setdac: %g V in Q19 int = %08x 0b%s\n", volts, u.ui, uint_to_binary(s32, u.ui, 32)); 
         }
-                
+        */
+        
 	status = ad5791_set_register_value (axis,
                                             AD5791_REG_DAC,
                                             (uint32_t)u.ui);
@@ -636,6 +638,14 @@ void rp_spmc_gvp_init (){
         }
 }
 
+// pc: ProgramCounter (Vector #)
+// n: num points / vector
+// opts: option flags: FB, ...
+// nrp: num repetitions
+// nxt: next vector, rel jump to +/-# vectors on PC
+// deltas: for dx,dy,dz,du, da,db
+// slew: data points/second / vector
+// update_file: allow update while in progress (scan speed adjust, etc.), applied on FPGA level at next vector start!
 void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
                              double dx, double dy, double dz, double du,
                              double da, double db,
@@ -681,15 +691,27 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
         }else{
                 if (verbose > 1) fprintf(stderr, "Write Vector[PC=%03d] = [", pc);
         }
-        
+
+        unsigned int nii   = 0;
+        unsigned int min_decii = SPMC_GVP_REGULAR_MIN_DECII; // minimum regular decii required for ADC: 32*4  => 4x DECII FOR ADC CLK x 32bits
+        unsigned int decii = min_decii;
+        double       Nsteps = 1.0;
+
+        if (pc&0x2000){ // allow this vector for max (recording) speed?
+                if (verbose > 1) fprintf(stderr, "ALLOWING MAX SLEW as of PC 0x2000 set\n");
+                min_decii = SPMC_GVP_MIN_DECII; // experimental fast option -- no good for 1MSPS OUTs, shall stay fixed for this vector
+                pc ^= 0x2000;  // clear bit
+        }
+        if (slew > 1e6){ // allow this vector for max (recording) speed?
+                if (verbose > 1) fprintf(stderr, "ALLOWING MAX SLEW as requested.\n");
+                // dx=dy=dz=du=0.;
+                min_decii = SPMC_GVP_MIN_DECII; // experimental fast option -- no good for 1MSPS OUTs, shall stay fixed for this vector
+        }
 
         if (pc >= MAX_NUM_PROGRAN_VECTORS || pc < 0){
                 fprintf(stderr, "ERROR: Vector[PC=%03d] out of valif vector program space. Ignoring. GVP is put into RESET mode now.", pc);
                 return;
         }
-        unsigned int nii   = 0;
-        unsigned int decii = 128; // minimum decii required for ADC: 32*4  => 4x DECII FOR ADC CLK x 32bits
-        double Nsteps = 1.0;
 
         if (n > 0 && slew > 0.0){
                 // find smallest non null delta component
@@ -737,7 +759,7 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
                 decii = (unsigned int)round(NII_total / nii);
 
                 // check for limits, auto adjust
-                if (decii < SPMC_GVP_MIN_DECII){
+                if (decii < min_decii){
 
                         decii = SPMC_GVP_MIN_DECII;
                         nii = (unsigned int)round(NII_total / decii);
@@ -847,13 +869,15 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
 
 // RPSPMC Location and Geometry
 void rp_spmc_set_rotation (double alpha){
-        set_gpio_cfgreg_int32 (SPMC_ROTM_XX, (int)round (Q_XYPRECISION*cos(alpha)));
-        set_gpio_cfgreg_int32 (SPMC_ROTM_XY, (int)round (Q_XYPRECISION*sin(alpha)));
+        if (verbose > 1) fprintf(stderr, "** set rotation %g\n", alpha);
+        set_gpio_cfgreg_int32 (SPMC_ROTM_XX, (int)round (Q_XY_PRECISION*cos(alpha)));
+        set_gpio_cfgreg_int32 (SPMC_ROTM_XY, (int)round (Q_XY_PRECISION*sin(alpha)));
 }
 
 void rp_spmc_set_slope (double dzx, double dzy){
-        set_gpio_cfgreg_int32 (SPMC_SLOPE_X, (int)round (Q_XYPRECISION*dzx));
-        set_gpio_cfgreg_int32 (SPMC_SLOPE_Y, (int)round (Q_XYPRECISION*dzy));
+        if (verbose > 1) fprintf(stderr, "** set dZxy slopes %g, %g\n", dzx, dzy);
+        set_gpio_cfgreg_int32 (SPMC_SLOPE_X, (int)round (Q_Z_SLOPE_PRECISION*dzx));
+        set_gpio_cfgreg_int32 (SPMC_SLOPE_Y, (int)round (Q_Z_SLOPE_PRECISION*dzy));
 }
 
 void rp_spmc_set_offsets (double x0, double y0, double z0, double xy_move_slew=-1., double z_move_slew=-1.){
@@ -888,13 +912,13 @@ void rp_spmc_set_scanpos (double xs, double ys, double slew, int opts){
         // slew comes in V/s => px/s
         slew = n*slew/dist; // convert A/s to slew rate in N/dt per vector
         
-        fprintf(stderr, "** set scanpos [%g V, %g V @%g s/Vec]V ** dxy: |%g, %g| = %g  ** %s\n", xs, ys, slew, dx,dy, dist, dist < eps ? "At Position.":"Loading GVP...");
+        if (verbose > 1) fprintf(stderr, "** set scanpos [%g V, %g V @%g s/Vec]V ** dxy: |%g, %g| = %g  ** %s\n", xs, ys, slew, dx,dy, dist, dist < eps ? "At Position.":"Loading GVP...");
 
         if (dist < eps)
                 return;
         
         rp_spmc_gvp_config (true, false, false); // reset any GVP now!
-        fprintf(stderr, "** set scanpos GVP reset **\n");
+        if (verbose > 1) fprintf(stderr, "** set scanpos GVP reset **\n");
         usleep(100000);
 
 
@@ -908,31 +932,31 @@ void rp_spmc_set_scanpos (double xs, double ys, double slew, int opts){
                                 0.0, 0.0,
                                 0.0, false);
 
-        fprintf(stderr, "** set scanpos GVP vectors programmed **\n");
+        if (verbose > 1) fprintf(stderr, "** set scanpos GVP vectors programmed **\n");
         usleep(100000);
 
 #if 1
-        fprintf(stderr, "*** GVP Control Mode: START 1 (make sure stream server is stopped)\n");
+        if (verbose > 2) fprintf(stderr, "*** GVP Control Mode: START 1 (make sure stream server is stopped)\n");
         stream_server_control = (stream_server_control & 0x01) | 4; // set stop bit
         usleep(100000);
         spm_dma_instance->clear_buffer (); // clean buffer now!
 
         rp_spmc_gvp_config (true, false, false); // make sure it is in reset state before
-        fprintf(stderr, "*** GVP Control Mode: START 2 (assure RESET state first), start stream server\n");
+        if (verbose > 2) fprintf(stderr, "*** GVP Control Mode: START 2 (assure RESET state first), start stream server\n");
         usleep(100000);
 
         spm_dma_instance->start_dma (); // get DMA ready to take data
         stream_server_control = (stream_server_control & 0x01) | 2; // set start bit
 
         rp_spmc_gvp_config (false, false, false); // take out of reset -> release GVP to start executing VPC
-        fprintf(stderr, "*** GVP Control Mode: START 3 (taking out of RESET)\n");
+        if (verbose > 2) fprintf(stderr, "*** GVP Control Mode: START 3 (taking out of RESET)\n");
 
         usleep(100000);
 #else
         usleep(100000);
         // and execute
         rp_spmc_gvp_config (false, false, false);
-        fprintf(stderr, "** set scanpos GVP started **\n");
+        if (verbose > 1) fprintf(stderr, "** set scanpos GVP started **\n");
 #endif
 }
 
