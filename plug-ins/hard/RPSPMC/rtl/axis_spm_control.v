@@ -51,8 +51,8 @@ module axis_spm_control#(
     input [32-1:0] rotmxy, // =sin(alpha)
 
     // slope -- always applied in global XY plane ???
-    input [32-1:0] slope_x, // SQ31
-    input [32-1:0] slope_y, // SQ31
+    input [32-1:0] slope_x, // SQ28
+    input [32-1:0] slope_y, // SQ28
 
     // SCAN OFFSET / POSITION COMPONENTS, ABSOLUTE COORDS
     input [32-1:0] x0, // vector components
@@ -109,12 +109,12 @@ module axis_spm_control#(
     reg signed [32-1:0] mz0s = 0;
     reg signed [32-1:0] mu0s = 0;
 
-    reg signed [32-1:0] mx0p = 0;
-    reg signed [32-1:0] my0p = 0;
-    reg signed [32-1:0] mz0p = 0;
-    reg signed [32-1:0] mx0m = 0;
-    reg signed [32-1:0] my0m = 0;
-    reg signed [32-1:0] mz0m = 0;
+    reg signed [32+1-1:0] mx0p = 0;
+    reg signed [32+1-1:0] my0p = 0;
+    reg signed [32+1-1:0] mz0p = 0;
+    reg signed [32+1-1:0] mx0m = 0;
+    reg signed [32+1-1:0] my0m = 0;
+    reg signed [32+1-1:0] mz0m = 0;
     reg signed [32-1:0] mx0 = 0;
     reg signed [32-1:0] my0 = 0;
     reg signed [32-1:0] mz0 = 0;
@@ -130,22 +130,25 @@ module axis_spm_control#(
     reg signed [32+QROTM+2-1:0] rrx=0;
     reg signed [32+QROTM+2-1:0] rry=0;
 
-    reg signed [32-1:0] rx=0;
-    reg signed [32-1:0] ry=0;
-    reg signed [32-1:0] rz=0;
-    reg signed [32-1:0] ru=0;
+    reg signed [32+2-1:0] rx=0;
+    reg signed [32+2-1:0] ry=0;
+    //reg signed [32-1:0] rz=0;
+    reg signed [32+2-1:0] ru=0;
     
     reg signed [32-1:0] z_servo=0;
-    reg signed [32-1:0] z_slope_requested=0;
-    reg signed [32-1:0] z_slope_ps=0;
-    reg signed [32-1:0] z_slope_ms=0;
+    reg signed [32-1:0] dZx=0;
+    reg signed [32-1:0] dZx_p=0;
+    reg signed [32-1:0] dZx_m=0;
+    reg signed [32-1:0] dZy=0;
+    reg signed [32-1:0] dZy_p=0;
+    reg signed [32-1:0] dZy_m=0;
     reg signed [32-1:0] z_slope=0;
     reg signed [32-1:0] z_gvp=0;
     reg signed [32-1:0] z_offset=0;
     reg signed [36-1:0] z_sum=0;
 
-    reg signed [32+QSLOPE+1-1:0] slx=0;
-    reg signed [32+QSLOPE+1-1:0] sly=0;
+    reg signed [32+2+QSLOPE+1-1:0] dZmx=0;
+    reg signed [32+2+QSLOPE+1-1:0] dZmy=0;
     
     reg [RDECI:0] rdecii = 0;
 
@@ -222,68 +225,64 @@ module axis_spm_control#(
             
             // Z and slope comensation in global X,Y and in non rot coords. sys 0,0=invariant point
             z_servo  <= S_AXIS_Z_tdata;
-            
-            slx <= slope_x * rx;
-            sly <= slope_y * ry;
-            
-            // Z slope calculation (plane) and z_slope adjuster
-            z_slope_requested <= (slx >>> QSLOPE) + (sly >>> QSLOPE);
-            z_slope_ps <= z_slope+z_move_step;
-            z_slope_ms <= z_slope-z_move_step;
-            if (z_slope_requested > z_slope_ps)
-                z_slope <= z_slope_ps;
-            else begin if (z_slope_requested < z_slope_ms)
-                z_slope <= z_slope_ms;
+
+            // slope_x, y adjusters for smooth op
+            dZx_p <= dZx + z_move_step; // using Z move step
+            dZx_m <= dZx - z_move_step;
+            if (slope_x > dZx_p)
+                dZx <= dZx_p; // adjust up
+            else begin if (slope_x < dZx_m)
+                dZx <= dZx_m; // adjust dn
             else
-                z_slope <= z_slope_requested;
+                dZx <= slope_x; // OK final set, no more change if set value slope_x stays unchanged!
             end    
-            
-            //z_sum    <= mz0 + z_gvp + z_slope + z_servo;
-            z_sum    <= mz0 + z_gvp + z_servo;
-            if (z_sum > 36'sd2147483647)
-            begin
-                rz <= 32'sd2147483648;
-            end     
+            dZy_p <= dZy + z_move_step; // using Z move step
+            dZy_m <= dZy - z_move_step;
+            if (slope_y > dZy_p)
+                dZy <= dZy_p;
+            else begin if (slope_y < dZy_m)
+                dZy <= dZy_m;
             else
-            begin     
-                if (z_sum < -36'sd2147483647)
-                begin
-                    rz <= -32'sd2147483647;
-                end 
-                else
-                begin
-                    rz <= z_sum[32-1:0];
-                end
-            end         
+                dZy <= slope_y;
+            end    
+
+            // Z slope calculation (plane)
+            dZmx <= dZx * rx;
+            dZmy <= dZy * ry;
+            
+            z_slope <= (dZmx >>> QSLOPE) + (dZmy >>> QSLOPE);
+            
+            //z_sum   <= mz0 + z_gvp + z_slope + z_servo;
+            z_sum    <= mz0 + z_gvp + z_servo;
         end
     end    
     
-    assign M_AXIS1_tdata  = rx;
+    assign M_AXIS1_tdata  = rx > 34'sd2147483647 ? 32'sd2147483648 : rx < -34'sd2147483647 ? -32'sd2147483647 : rx[32-1:0]; // Saturate
     assign M_AXIS1_tvalid = 1;
     assign M_AXIS_X0MON_tdata  = mx0;
     assign M_AXIS_X0MON_tvalid = 1;
     assign M_AXIS_XSMON_tdata  = x;
     assign M_AXIS_XSMON_tvalid = 1;
     
-    assign M_AXIS2_tdata  = ry;
+    assign M_AXIS2_tdata  = ry > 34'sd2147483647 ? 32'sd2147483648 : ry < -34'sd2147483647 ? -32'sd2147483647 : ry[32-1:0]; // Saturate
     assign M_AXIS2_tvalid = 1;
     assign M_AXIS_Y0MON_tdata  = my0;
     assign M_AXIS_Y0MON_tvalid = 1;
     assign M_AXIS_YSMON_tdata  = y;
     assign M_AXIS_YSMON_tvalid = 1;
     
-    assign M_AXIS3_tdata  = rz;
+    assign M_AXIS3_tdata  = z_sum > 36'sd2147483647 ? 32'sd2147483648 : z_sum < -36'sd2147483647 ? -32'sd2147483647 : z_sum[32-1:0]; // rz;  // Saturate Z_sum
     assign M_AXIS3_tvalid = 1;
     assign M_AXIS_ZSMON_tdata  = z_gvp;  // Z-GVP aka scan
     assign M_AXIS_ZSMON_tvalid = 1;
     assign M_AXIS_Z0MON_tdata  = mz0; // Z Offset aka Z0
     assign M_AXIS_Z0MON_tvalid = 1;
 
-    assign M_AXIS_ZSLOPE_tdata  = z_slope;
+    assign M_AXIS_ZSLOPE_tdata  = z_slope > 36'sd2147483647 ? 32'sd2147483648 : z_slope < -36'sd2147483647 ? -32'sd2147483647 : z_slope[32-1:0];
     assign M_AXIS_ZSLOPE_tvalid = 1;
 
     
-    assign M_AXIS4_tdata  = ru;
+    assign M_AXIS4_tdata  = ru > 34'sd2147483647 ? 32'sd2147483648 : ru < -34'sd2147483647 ? -32'sd2147483647 : ru[32-1:0]; // Saturate
     assign M_AXIS4_tvalid = 1;
     assign M_AXIS_UrefMON_tdata  = mu0s;
     assign M_AXIS_UrefMON_tvalid = 1;
