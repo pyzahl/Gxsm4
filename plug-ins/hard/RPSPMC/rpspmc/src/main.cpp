@@ -1524,7 +1524,7 @@ void OnNewParams_RPSPMC(void){
                                      SPMC_SET_OFFSET_Y.Value (),
                                      SPMC_SET_OFFSET_Z.Value (),
                                      SPMC_SET_OFFSET_XY_SLEW.Value (),
-                                     SPMC_SET_OFFSET_XY_SLEW.Value ()
+                                     SPMC_SET_OFFSET_Z_SLEW.Value ()
                                      );
         }
 

@@ -19,7 +19,7 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
-
+// 32 -> SQ8.24 (with switch to select log path: ln(1+abs(x+offset) vs. linear (x+offset))
 module axis_ctrlsrc_select #(
     parameter SAXIS_DATA_WIDTH = 32,
     parameter MAXIS_DATA_WIDTH = 32,
@@ -64,7 +64,7 @@ module axis_ctrlsrc_select #(
     // Consider, if you have a data values i_data coming in with IWID (input width) bits, and you want to create a data value with OWID bits, why not just grab the top OWID bits?
     // assign	w_tozero = i_data[(IWID-1):0] + { {(OWID){1'b0}}, i_data[(IWID-1)], {(IWID-OWID-1){!i_data[(IWID-1)]}}};
 
-    assign M_AXIS_MON_tdata = x;
+    assign M_AXIS_MON_tdata = x; // SQ8.24
     assign M_AXIS_MON_tvalid = S_AXIS_tvalid;
     assign M_AXIS_tdata = selection_ln ? S_AXIS_LN_tdata : x;
     assign M_AXIS_tvalid = S_AXIS_tvalid;

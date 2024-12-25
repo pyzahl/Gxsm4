@@ -341,10 +341,11 @@ typedef struct{
 } PROBE_HEADER_POSITIONVECTOR;
 
 
-#define MM_OFF     0x00  // ------
-#define MM_ON      0x01  // ON/OFF (LINEAR)
-#define MM_LOG     0x02  // ENABLE LOG TRANSFER
-#define MM_FCZ     0x04  // FUZZY-CZ/NORMAL
+#define MM_OFF     0x0000  // ------
+#define MM_ON      0x0001  // ON/OFF (LINEAR)
+#define MM_LOG     0x0002  // ENABLE LOG TRANSFER
+#define MM_FCZ     0x0004  // FUZZY-CZ/NORMAL
+#define MM_RESET   0x0100  // setbit 8 to put z-servo controller into RESET, WARNING: Z will go to Z-Setpoint what so ever.
 
 // GUI limit
 #define N_GVP_VECTORS 25 //  vectors max total, need a few extra for controls and finish.

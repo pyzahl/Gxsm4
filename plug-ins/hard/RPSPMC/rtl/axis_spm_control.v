@@ -19,7 +19,6 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
-
 module axis_spm_control#(
     parameter SAXIS_TDATA_WIDTH = 32,
     parameter QROTM = 28,
@@ -134,6 +133,9 @@ module axis_spm_control#(
     reg signed [32+2-1:0] ry=0;
     //reg signed [32-1:0] rz=0;
     reg signed [32+2-1:0] ru=0;
+
+    reg signed [32-1:0] slx; // SQ28
+    reg signed [32-1:0] sly; // SQ28
     
     reg signed [32-1:0] z_servo=0;
     reg signed [32-1:0] dZx=0;
@@ -159,6 +161,22 @@ module axis_spm_control#(
     end
 */
 
+// Value adjuster
+`define ADJUSTER(REG, XP, XM, STEP, TARGET) \
+    XP <= REG + STEP;  \
+    XM <= REG - STEP;  \
+    if (TARGET > XP)   \
+        REG <= XP;     \
+    else begin if (TARGET < XM) \
+        REG <= XM;     \
+    else               \
+        REG <= TARGET; \
+    end                \
+
+// Saturated result to 32bit
+`define SATURATE_32(REG) (REG > 33'sd2147483647 ? 32'sd2147483647 : REG < -33'sd2147483647 ? -32'sd2147483647 : REG[32-1:0]) 
+
+
     //always @ (posedge rdecii[RDECI])
     always @ (posedge a_clk)
     begin
@@ -168,51 +186,33 @@ module axis_spm_control#(
         // always buffer locally
             xy_move_step <= xy_offset_step; // XY offset adjuster speed limit (max step)
             z_move_step  <= z_offset_step; // Z offset / slope comp. speed limit (max step) when adjusting
+
             x <= S_AXIS_Xs_tdata;
             y <= S_AXIS_Ys_tdata;
             z_gvp <= S_AXIS_Zs_tdata;
             u <= S_AXIS_U_tdata;
+            
             mxx <= rotmxx;
             mxy <= rotmxy;
     
-            // Offset Adjusters
+            slx <= slope_x;
+            sly <= slope_y;
+    
+            // XYZ Offset Adjusters -- Zoffset curretnly not used/obsolete
             mx0s <= x0;
             my0s <= y0;
             mz0s <= z0;
             mu0s <= u0;
             
-            // MUST ASSURE mx0+/-xy_move_step never exceeds +/-Q31 to avoid over flow else a PBC jump will happen! 
-            
-            mx0p <= mx0+xy_move_step;
-            mx0m <= mx0-xy_move_step;
-            if (mx0s > mx0p)
-                mx0 <= mx0p;
-            else begin if (mx0s < mx0m)
-                mx0 <= mx0m;
-            else
-                mx0 <= mx0s;
-            end    
-                 
-            my0p <= my0+xy_move_step;
-            my0m <= my0-xy_move_step;
-            if (my0s > my0p)
-                my0 <= my0p;
-            else begin if (my0s < my0m)
-                my0 <= my0m;
-            else
-                my0 <= my0s;
-            end
-            
-            mz0p <= mz0+z_move_step;
-            mz0m <= mz0-z_move_step;
-            if (mz0s > mz0p)
-                mz0 <= mz0p;
-            else begin if (mz0s < mz0m)
-                mz0 <= mz0m;
-            else 
-                mz0 <= mz0s;
-            end        
-    
+             // MUST ASSURE mx0+/-xy_move_step never exceeds +/-Q31 -- exta bit used + saturation as assign -- to avoid over flow else a PBC jump will happen! 
+            `ADJUSTER (mx0, mx0p, mx0m, xy_move_step, mx0s);
+            `ADJUSTER (my0, my0p, my0m, xy_move_step, my0s);
+            `ADJUSTER (mz0, mz0p, mz0m, xy_move_step, mz0s);
+                        
+            // slope_x, y adjusters for smooth op
+            `ADJUSTER (dZx, dZx_p, dZx_m, z_move_step, slx);
+            `ADJUSTER (dZy, dZy_p, dZy_m, z_move_step, sly);
+
             // Bias set
             ru <= mu0s + u;
     
@@ -226,26 +226,6 @@ module axis_spm_control#(
             // Z and slope comensation in global X,Y and in non rot coords. sys 0,0=invariant point
             z_servo  <= S_AXIS_Z_tdata;
 
-            // slope_x, y adjusters for smooth op
-            dZx_p <= dZx + z_move_step; // using Z move step
-            dZx_m <= dZx - z_move_step;
-            if (slope_x > dZx_p)
-                dZx <= dZx_p; // adjust up
-            else begin if (slope_x < dZx_m)
-                dZx <= dZx_m; // adjust dn
-            else
-                dZx <= slope_x; // OK final set, no more change if set value slope_x stays unchanged!
-            end    
-            dZy_p <= dZy + z_move_step; // using Z move step
-            dZy_m <= dZy - z_move_step;
-            if (slope_y > dZy_p)
-                dZy <= dZy_p;
-            else begin if (slope_y < dZy_m)
-                dZy <= dZy_m;
-            else
-                dZy <= slope_y;
-            end    
-
             // Z slope calculation (plane)
             dZmx <= dZx * rx;
             dZmy <= dZy * ry;
@@ -257,32 +237,32 @@ module axis_spm_control#(
         end
     end    
     
-    assign M_AXIS1_tdata  = rx > 34'sd2147483647 ? 32'sd2147483648 : rx < -34'sd2147483647 ? -32'sd2147483647 : rx[32-1:0]; // Saturate
+    assign M_AXIS1_tdata  = `SATURATE_32 (rx);
     assign M_AXIS1_tvalid = 1;
     assign M_AXIS_X0MON_tdata  = mx0;
     assign M_AXIS_X0MON_tvalid = 1;
     assign M_AXIS_XSMON_tdata  = x;
     assign M_AXIS_XSMON_tvalid = 1;
     
-    assign M_AXIS2_tdata  = ry > 34'sd2147483647 ? 32'sd2147483648 : ry < -34'sd2147483647 ? -32'sd2147483647 : ry[32-1:0]; // Saturate
+    assign M_AXIS2_tdata  = `SATURATE_32 (ry);
     assign M_AXIS2_tvalid = 1;
     assign M_AXIS_Y0MON_tdata  = my0;
     assign M_AXIS_Y0MON_tvalid = 1;
     assign M_AXIS_YSMON_tdata  = y;
     assign M_AXIS_YSMON_tvalid = 1;
     
-    assign M_AXIS3_tdata  = z_sum > 36'sd2147483647 ? 32'sd2147483648 : z_sum < -36'sd2147483647 ? -32'sd2147483647 : z_sum[32-1:0]; // rz;  // Saturate Z_sum
+    assign M_AXIS3_tdata  = `SATURATE_32 (z_sum);
     assign M_AXIS3_tvalid = 1;
     assign M_AXIS_ZSMON_tdata  = z_gvp;  // Z-GVP aka scan
     assign M_AXIS_ZSMON_tvalid = 1;
     assign M_AXIS_Z0MON_tdata  = mz0; // Z Offset aka Z0
     assign M_AXIS_Z0MON_tvalid = 1;
 
-    assign M_AXIS_ZSLOPE_tdata  = z_slope > 36'sd2147483647 ? 32'sd2147483648 : z_slope < -36'sd2147483647 ? -32'sd2147483647 : z_slope[32-1:0];
+    assign M_AXIS_ZSLOPE_tdata  = `SATURATE_32 (z_slope);
     assign M_AXIS_ZSLOPE_tvalid = 1;
 
     
-    assign M_AXIS4_tdata  = ru > 34'sd2147483647 ? 32'sd2147483648 : ru < -34'sd2147483647 ? -32'sd2147483647 : ru[32-1:0]; // Saturate
+    assign M_AXIS4_tdata  = `SATURATE_32 (ru);
     assign M_AXIS4_tvalid = 1;
     assign M_AXIS_UrefMON_tdata  = mu0s;
     assign M_AXIS_UrefMON_tvalid = 1;

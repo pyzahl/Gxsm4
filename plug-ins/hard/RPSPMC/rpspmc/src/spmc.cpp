@@ -390,9 +390,9 @@ inline int volts_to_ad5791_dac (double volts){ return (int)round(Q19*volts/SPMC_
 inline double rpspmc_to_volts (int value){ return SPMC_AD5791_REFV*(double)value / Q31; }
 inline int volts_to_rpspmc (double volts){ return (int)round(Q31*volts/SPMC_AD5791_REFV); }
 
-//inline double rpspmc_FIR32IN1_to_volts (int value){ return SPMC_IN01_REFV*(double)(value*256) / Q31; }
-inline double rpspmc_FIR32IN1_to_volts (int value){ return SPMC_IN01_REFV*(double)(value) / Q23; } // SQ24.8
-inline double volts_to_rpspmc_FIR32IN1 (double volts){ return (int)round(Q23*volts/SPMC_IN01_REFV); }
+inline double rpspmc_CONTROL_SELECT_ZS_to_volts (int value){ return SPMC_IN01_REFV*(double)(value*256) / Q31; }
+inline double rpspmc_FIR32IN1_to_volts (int value){ return SPMC_IN01_REFV*(double)(value) / Q31; } // SQ24.8
+inline double volts_to_rpspmc_FIR32IN1 (double volts){ return (int)round(Q31*volts/SPMC_IN01_REFV); }
 
 
 /***************************************************************************//**
@@ -581,7 +581,7 @@ void rp_spmc_set_xyzu (double ux, double uy, double uz, double bias){
 // CONTROL[32] OUT[32]   m[24]  x  c[32]  = 56 M: 24{Q32},  P: 44{Q14}
 void rp_spmc_set_zservo_controller (double setpoint, double cp, double ci, double upper, double lower){
         if (verbose > 1) fprintf(stderr, "##Configure RP SPMC Z-Servo Controller: set= %g  cp=%g ci=%g upper=%g lower=%g\n", setpoint, cp, ci, upper, lower); 
-        set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_CONTROLLER + SPMC_CFG_SET,   volts_to_rpspmc_FIR32IN1 (setpoint)); // RP IN1 -- SQ24.8 @ about 1V
+        set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_CONTROLLER + SPMC_CFG_SET,   volts_to_rpspmc_FIR32IN1 (setpoint)); // RP IN1 -- SQ31  ((FPGA internal converted via float/log using 24.8) @ about 1V
         set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_CONTROLLER + SPMC_CFG_CP,    (int)round (QZSCOEF * cp)); // Q31
         set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_CONTROLLER + SPMC_CFG_CI,    (int)round (QZSCOEF * ci)); // Q31
         set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_CONTROLLER + SPMC_CFG_UPPER, volts_to_rpspmc (upper));
@@ -990,6 +990,6 @@ void rp_spmc_update_readings (){
         SPMC_Y0_MONITOR.Value () = rpspmc_to_volts (y0_buf); // ** mirror
         SPMC_Z0_MONITOR.Value () = rpspmc_to_volts (read_gpio_reg_int32 (10,1));
 
-        SPMC_SIGNAL_MONITOR.Value () = rpspmc_FIR32IN1_to_volts (read_gpio_reg_int32 (7,1));
+        SPMC_SIGNAL_MONITOR.Value () = rpspmc_CONTROL_SELECT_ZS_to_volts (read_gpio_reg_int32 (7,1)); // SQ8.24 
 }
 

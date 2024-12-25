@@ -2429,6 +2429,11 @@ void RPSPMC_Control::Slope_dZY_Changed(Param_Control* pcs, RPSPMC_Control* self)
 void RPSPMC_Control::ZPosSetChanged(Param_Control* pcs, RPSPMC_Control *self){
         if (rpspmc_pacpll){
                 rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_SETPOINT_CZ", main_get_gapp()->xsm->Inst->ZA2Volt(self->zpos_ref));
+                if (self->mix_level[0] > 0.){
+                        rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_UPPER", main_get_gapp()->xsm->Inst->ZA2Volt(self->zpos_ref));
+                        usleep (100000);
+                        rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_SETPOINT", main_get_gapp()->xsm->Inst->nAmpere2V(self->mix_level[0]));
+                }
         }
 }
 
@@ -2437,13 +2442,22 @@ void RPSPMC_Control::ZServoParamChanged(Param_Control* pcs, RPSPMC_Control *self
                 // (((RPSPMC_Control*)self)->mix_gain[ch]) // N/A
                 self->z_servo[SERVO_CP] = spmc_parameters.z_servo_invert * pow (10., spmc_parameters.z_servo_cp_db/20.);
                 self->z_servo[SERVO_CI] = spmc_parameters.z_servo_invert * pow (10., spmc_parameters.z_servo_ci_db/20.);
-                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_SETPOINT", self->mix_set_point[0]);
+                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_SETPOINT", main_get_gapp()->xsm->Inst->nAmpere2V(self->mix_set_point[0]));
                 //rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_MODE",     self->mix_transform_mode[0]);
-                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_LEVEL",    self->mix_level[0]);
+                //rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_LEVEL",    main_get_gapp()->xsm->Inst->nAmpere2V(self->mix_level[0]));
+                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_LEVEL",    main_get_gapp()->xsm->Inst->nAmpere2V(-0.013));
                 rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_CP",       self->z_servo[SERVO_CP]);
                 rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_CI",       self->z_servo[SERVO_CI]);
                 rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_UPPER",  5.0);
-                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_LOWER", -5.0);
+                if (self->mix_level[0] > 0.){
+                        rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_UPPER", main_get_gapp()->xsm->Inst->ZA2Volt(self->zpos_ref));
+                        usleep (100000);
+                        rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_SETPOINT", main_get_gapp()->xsm->Inst->nAmpere2V(self->mix_level[0]));
+                } else {
+                        rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_SETPOINT", main_get_gapp()->xsm->Inst->nAmpere2V(self->mix_set_point[0]));
+                        usleep (100000);
+                        rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_LOWER", -5.0);
+                }
         }
 }
 void RPSPMC_Control::ZServoControl (GtkWidget *widget, RPSPMC_Control *self){
@@ -2496,6 +2510,7 @@ int RPSPMC_Control::choice_mixmode_callback (GtkWidget *widget, RPSPMC_Control *
         PI_DEBUG_GP (DBG_L4, "%s ** 2\n",__FUNCTION__);
 
 	self->update_controller ();
+        self->ZServoParamChanged (NULL, self);
         //g_print ("DSP READBACK MIX%d MT=%d\n", channel, (int)sranger_common_hwi->read_dsp_feedback ("MT", channel));
 
         PI_DEBUG_GP (DBG_L4, "%s **3 done\n",__FUNCTION__);

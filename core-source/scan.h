@@ -296,7 +296,11 @@ public:
         gchar *storage_name;
 
         Gxsm4app *gxsm4app;
+
+public:
+        gint memo_y; // external use
 };
+
 
 /*
  * TopoGraphic Ableitung

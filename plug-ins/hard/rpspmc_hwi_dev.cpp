@@ -261,6 +261,7 @@ gboolean rpspmc_hwi_dev::MovetoXY (double x, double y){
 
 // THREAD AND FIFO CONTROL STATES
 
+#define GVP_DEBUG_VERBOSE 0
 
 #define RET_FR_OK      0
 #define RET_FR_ERROR   -1
@@ -296,8 +297,9 @@ int rpspmc_hwi_dev::GVP_expect_header(double *pv, int &index_all){
                                 // next section, load header, manage pc
                                 GVP_vp_header_current.section = RPSPMC_ControlClass->next_section (GVP_vp_header_current.section);
                                         
+#if GVP_DEBUG_VERBOSE > 2
                                 g_message (" *** OK, loading pv sec[%d] ***", GVP_vp_header_current.section);
-                        
+#endif
                                 // copy header to pv[] as assigned below
                                 pv[PROBEDATA_ARRAY_INDEX] = (double)index_all++;
                                 pv[PROBEDATA_ARRAY_PHI]   = (double)GVP_vp_header_current.index; // testing, point index in section
@@ -323,13 +325,14 @@ int rpspmc_hwi_dev::GVP_expect_header(double *pv, int &index_all){
                                 pv[PROBEDATA_ARRAY_S13]   = GVP_vp_header_current.dataexpanded[12]; // LCKInA
                                 pv[PROBEDATA_ARRAY_S14]   = GVP_vp_header_current.dataexpanded[13]; // dFreqCtrl
                                 pv[PROBEDATA_ARRAY_TIME]  = GVP_vp_header_current.dataexpanded[14]; // time in ms
-                        
+
+#if GVP_DEBUG_VERBOSE > 2
                                 g_message ("PVh sec[%g] i=%g t=%g ms U=%g V IN1: %g V IN2: %g V",
                                            pv[PROBEDATA_ARRAY_SEC],pv[PROBEDATA_ARRAY_INDEX],
                                            pv[PROBEDATA_ARRAY_TIME],pv[PROBEDATA_ARRAY_U ], pv[PROBEDATA_ARRAY_S5], pv[PROBEDATA_ARRAY_S6]);
 
                                 g_message ("Got Header. ret=%d", ret);
-                                
+#endif                           
                                 return ret;
                         
                         } else {
@@ -382,8 +385,9 @@ int rpspmc_hwi_dev::GVP_expect_point(double *pv, int &index_all){
                 if (ret == GVP_vp_header_current.number_channels){
                         GVP_stream_buffer_offset += 1 + GVP_vp_header_current.number_channels; // skip forward on success by read number of entries
 
-                        //g_message ("GVP point [%04d] ret (N#ch) = %d\n", GVP_vp_header_current.i, ret);
-
+#if GVP_DEBUG_VERBOSE > 2
+                        g_message ("GVP point [%04d] ret (N#ch) = %d\n", GVP_vp_header_current.i, ret);
+#endif
                         // copy vector data to expanded data array representation -- only active srcs will be updated between headers
                         pv[PROBEDATA_ARRAY_INDEX] = (double)index_all++;
                         /* (***) obsolete/skipping as direct lookup
@@ -404,7 +408,9 @@ int rpspmc_hwi_dev::GVP_expect_point(double *pv, int &index_all){
                         pv[PROBEDATA_ARRAY_TIME]  = GVP_vp_header_current.dataexpanded[14]; // time in ms
                         */
                         if (GVP_vp_header_current.i == 0){
+#if GVP_DEBUG_VERBOSE > 2
                                 g_message ("*** GVP: section complete ***");
+#endif
                                 return 0; // OK done.
                         }
                         return  GVP_vp_header_current.i;
@@ -505,7 +511,9 @@ gpointer ScanDataReadThread (void *ptr_hwi){
         g_message ("last vector confirmed: %d, need %d", hwi->getVPCconfirmed (), hwi->last_vector_index);
 
         while (hwi->getVPCconfirmed () < hwi->last_vector_index){
-                //g_message ("Waiting for GVP been written and confirmed. [Vector %d]", hwi->getVPCconfirmed ());
+#if GVP_DEBUG_VERBOSE > 4
+                g_message ("Waiting for GVP been written and confirmed. [Vector %d]", hwi->getVPCconfirmed ());
+#endif
                 usleep(20000);
         }
         g_message ("GVP been written and confirmed for vector #%d. Executing GVP now.", hwi->getVPCconfirmed ());
@@ -529,8 +537,6 @@ gpointer ScanDataReadThread (void *ptr_hwi){
                 if (ret < 0) return NULL;
         }
 
-        g_message("AF GVP Data Expanded Lookup table: PVLUT"); for (int dir = 0; dir < 4; ++dir){ for (int ch=0; ch<NUM_PV_DATA_SIGNALS; ch++){g_print ("%02d, ", pvlut[dir][ch]);}g_print ("\n");}
-
         g_message ("Completed section: moved to 1st scan point");
         
 	// hwi->RPSPMC_data_y_count == 0 for  top-down star tat line 0, else start line (last) bottom up
@@ -538,27 +544,31 @@ gpointer ScanDataReadThread (void *ptr_hwi){
 
         int ydir = hwi->RPSPMC_data_y_count == 0 ? 1:-1;
 
-
-        g_message("BB GVP Data Expanded Lookup table: PVLUT"); for (int dir = 0; dir < 4; ++dir){ for (int ch=0; ch<NUM_PV_DATA_SIGNALS; ch++){g_print ("%02d, ", pvlut[dir][ch]);}g_print ("\n");}
-
-        
         for (int yi=hwi->RPSPMC_data_y_count == 0 ?  y0 : y0+ny-1;     // ? top down : bottom up
              hwi->RPSPMC_data_y_count == 0 ? yi < y0+ny : yi-y0 >= 0;
              yi += ydir){ // for all lines and directional passes [->, <-, [-2>, <2-]]
                 
+#if GVP_DEBUG_VERBOSE > 0
                 g_message ("*************************** scan line: #%d **********************", yi);
+#endif
                 // for (int dir = 0; dir < 4 && hwi->ScanningFlg; ++dir){ // check for every pass -> <- 2> <2
                 for (int dir = 0; dir < 2 && hwi->ScanningFlg; ++dir){ // check for every pass -> <- for first test only
 
                         // wait for and fetch header for first scan line
+#if GVP_DEBUG_VERBOSE > 2
                         g_message ("scan line %d, dir=%d -- expect header.", yi, dir);
+#endif
                         if (hwi->GVP_expect_header (pv, index_all) != -1) return NULL;  // this get includes the first data point and full position
                         
-                        //g_message ("scan line %d, dir=%d -- expecting points now...", yi, dir);
-                        //g_message("FifoReadThread ny = %d, dir = %d, nsrcs = %d, srcs = 0x%04X", yi, dir, hwi->nsrcs_dir[dir], hwi->srcs_dir[dir]);
+#if GVP_DEBUG_VERBOSE > 2
+                        g_message ("scan line %d, dir=%d -- expecting points now...", yi, dir);
+                        g_message("FifoReadThread ny = %d, dir = %d, nsrcs = %d, srcs = 0x%04X", yi, dir, hwi->nsrcs_dir[dir], hwi->srcs_dir[dir]);
+#endif
                         if (hwi->nsrcs_dir[dir] == 0){ // direction pass active?
                                 // fetch points but discard
+#if GVP_DEBUG_VERBOSE > 2
                                 g_message ("discarding not selcted scan axis data...");
+#endif
                                 for (ret=-1; ret && hwi->ScanningFlg; ){
                                         ret = hwi->GVP_expect_point (pv, index_all);
                                         if (ret < 0) return NULL;
@@ -571,7 +581,9 @@ gpointer ScanDataReadThread (void *ptr_hwi){
                                 int ret2;
                                 //for (int xi=x0, ret2=ret=1; xi < x0+nx && ret; ++xi){ // all points per line
                                 for (int xi=x0, ret2=ret=1; ret; ++xi){ // all points per line
-                                        //g_message ("Got point data [N-%d] for: xi=%d [x0=%d nx=%d] nsrcs[%d]=",  hwi->GVP_vp_header_current.i, xi, x0, nx, dir, hwi->nsrcs_dir[dir]);
+#if GVP_DEBUG_VERBOSE > 2
+                                        g_message ("Got point data [N-%d] for: xi=%d [x0=%d nx=%d] nsrcs[%d]=",  hwi->GVP_vp_header_current.i, xi, x0, nx, dir, hwi->nsrcs_dir[dir]);
+#endif
                                         if (ret < 0){
                                                 g_message ("Got point data [N-%d] for: xi=%d [x0=%d nx=%d] nsrcs[%d]=",  hwi->GVP_vp_header_current.i, xi, x0, nx, dir, hwi->nsrcs_dir[dir]);
                                                 g_message("STREAM ERROR, FifoReadThread Aborting.");
@@ -582,12 +594,13 @@ gpointer ScanDataReadThread (void *ptr_hwi){
                                         hwi->RPSPMC_data_x_index = xi;
                                         for (int ch=0; ch<hwi->nsrcs_dir[dir] && ch<NUM_PV_DATA_SIGNALS; ++ch){
                                                 int k = pvlut[dir][ch];
-                                                //g_message ("pvlut[dir=%d][ch=%d] = %d, k= %d",dir,ch,pvlut[dir][ch], k);
                                                 if (k < 0 || k >= NUM_PV_DATA_SIGNALS){
                                                         g_message ("EEEE expand channel lookup table corruption => pvlut[%d][%d]=%d ** => fallback k=2", dir, ch, k);
                                                         k=2;
                                                 }
-                                                //g_message("PUT DATA POINT dir[%d] ch[%d] xy[%d, %d] kch[%d] = %g V", dir,ch,xi,yi,k,hwi->GVP_vp_header_current.dataexpanded [k]);
+#if GVP_DEBUG_VERBOSE > 4
+                                                g_message("PUT DATA POINT dir[%d] ch[%d] xy[%d, %d] kch[%d] = %g V", dir,ch,xi,yi,k,hwi->GVP_vp_header_current.dataexpanded [k]);
+#endif
                                                 if (hwi->Mob_dir[dir][ch]){
                                                         if (xi >=0 && yi >=0 && xi < hwi->Mob_dir[dir][ch]->GetNx ()  && yi < hwi->Mob_dir[dir][ch]->GetNy ())
                                                                 hwi->Mob_dir[dir][ch]->PutDataPkt (hwi->GVP_vp_header_current.dataexpanded [k], xi, yi); // direct use, skipping pv[] remapping
@@ -602,10 +615,14 @@ gpointer ScanDataReadThread (void *ptr_hwi){
                                                 if (ret)
                                                         ret2 = hwi->GVP_expect_point (pv, index_all);
                                 }
-                                //g_print("\n");
+#if GVP_DEBUG_VERBOSE > 2
+                                g_print("\n");
+#endif
                         }
                 }
+#if GVP_DEBUG_VERBOSE > 2
                 g_message ("Completed scan line, move to next y...");
+#endif
 
                 if (hwi->GVP_vp_header_current.endmark){ // checking -- finished?
                         g_message("GVP STREAM END DETECTED, FifoReadThread Aborting.");
@@ -632,6 +649,7 @@ gpointer ScanDataReadThread (void *ptr_hwi){
         }
 
         RPSPMC_ControlClass->probe_ready = TRUE;
+        hwi->EndScan2D();
         g_message("FifoReadThread Completed");
         return NULL;
 }
@@ -855,7 +873,7 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
                                 // next section, load header, manage pc
                                 GVP_vp_header_current.section = RPSPMC_ControlClass->next_section (GVP_vp_header_current.section);
                                         
-                                g_message (" *** OK, loading pv sec[%d] ***", GVP_vp_header_current.section);
+                                // g_message (" *** OK, loading pv sec[%d] ***", GVP_vp_header_current.section);
 
                                 // copy header to pv[] as assigned below
                                 pv[PROBEDATA_ARRAY_INDEX] = (double)index_all++;
@@ -867,9 +885,11 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
                                 pv[PROBEDATA_ARRAY_ZS]    = GVP_vp_header_current.dataexpanded[2]; // Zs in Volts
                                 pv[PROBEDATA_ARRAY_U ]    = GVP_vp_header_current.dataexpanded[3]; // Bias in Volts
 
+#if GVP_DEBUG_VERBOSE > 2
                                 g_message ("PVh sec[%g] i=%g t=%g ms U=%g V",
                                            pv[PROBEDATA_ARRAY_SEC],pv[PROBEDATA_ARRAY_INDEX],
                                            pv[PROBEDATA_ARRAY_TIME],pv[PROBEDATA_ARRAY_U ]);
+#endif
 
                         } else {
                                 if (GVP_vp_header_current.endmark){ // checking -- finished?
@@ -1097,11 +1117,11 @@ gboolean rpspmc_hwi_dev::ScanLineM(int yindex, int xdir, int muxmode, //srcs_mas
                 y_current = RPSPMC_data_y_index;
 
                 if (ydir > 0 && yindex <= RPSPMC_data_y_index){
-                        g_print ("\r * rpspmc_hwi_spm::ScanLineM(yindex=%04d [fifo-y=%04d], xdir=%d, ydir=%d, lssrcs=0x%08x) top-down completed.\n", yindex, RPSPMC_data_y_index, xdir, ydir, srcs_mask);
+                        //g_print ("\r * rpspmc_hwi_spm::ScanLineM(yindex=%04d [fifo-y=%04d], xdir=%d, ydir=%d, lssrcs=0x%08x) top-down completed.\n", yindex, RPSPMC_data_y_index, xdir, ydir, srcs_mask);
                         return FALSE; // line completed top-down
                 }
                 if (ydir < 0 && yindex >= RPSPMC_data_y_index){
-                        g_print ("\r * rpspmc_hwi_spm::ScanLineM(yindex=%04d [fifo-y=%04d], xdir=%d, ydir=%d, lssrcs=0x%08x) bottom-up completed.\n", yindex, RPSPMC_data_y_index, xdir, ydir, srcs_mask);
+                        //g_print ("\r * rpspmc_hwi_spm::ScanLineM(yindex=%04d [fifo-y=%04d], xdir=%d, ydir=%d, lssrcs=0x%08x) bottom-up completed.\n", yindex, RPSPMC_data_y_index, xdir, ydir, srcs_mask);
                         return FALSE; // line completed bot-up
                 }
 
@@ -1516,7 +1536,8 @@ int rpspmc_hwi_dev::read_GVP_data_block_to_position_vector (int offset, gboolean
 #endif
                 
         if (offset >= GVP_stream_buffer_position){ // Buffer is huge now all pages concat
-#if 0
+
+#if GVP_DEBUG_VERBOSE > 3
                 gchar *tmp = g_strdup_printf ("read_GVP_data_block_to_position_vector: Reading offset %08x is beyond stream write position %08x. Awaiting data.\n",
                                               offset, GVP_stream_buffer_position);
                 status_append (tmp, true);
@@ -1651,6 +1672,8 @@ int rpspmc_hwi_dev::read_GVP_data_block_to_position_vector (int offset, gboolean
         if (GVP_vp_header_current.srcs == 0xffff){
                 GVP_vp_header_current.gvp_time = (((guint64)((guint32)GVP_vp_header_current.chNs[15]))<<32) | (guint64)((guint32)GVP_vp_header_current.chNs[14]);
                 GVP_vp_header_current.dataexpanded[14] = (double)GVP_vp_header_current.gvp_time/125e3;
+
+#if GVP_DEBUG_VERBOSE > 2
                 if (GVP_vp_header_current.endmark)
                         g_message ("N[ENDMARK] GVP_vp_header_current.srcs=%04x   Bias=%8g V    t=%8g ms",
                                    GVP_vp_header_current.srcs,
@@ -1663,6 +1686,7 @@ int rpspmc_hwi_dev::read_GVP_data_block_to_position_vector (int offset, gboolean
                                    rpspmc_to_volts (GVP_vp_header_current.chNs[3]),
                                    GVP_vp_header_current.dataexpanded[14]
                                    );
+#endif
         }
 #endif                        
 

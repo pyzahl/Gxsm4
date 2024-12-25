@@ -43,12 +43,15 @@ module axis_sadd #(
     
     reg signed [SAXIS_TDATA_WIDTH+1-1:0] sum=0;
 
+// Saturated result to 32bit
+`define SATURATE(REG) (REG  > POS_SATURATION_LIMIT ? POS_SATURATION_VALUE : REG < NEG_SATURATION_LIMIT ? NEG_SATURATION_VALUE : REG[MAXIS_TDATA_WIDTH-1:0]) 
+
     always @ (posedge a_clk)
     begin
         sum <= $signed(S_AXIS_A_tdata) + $signed(S_AXIS_B_tdata);
     end
     
-    assign M_AXIS_SUM_tdata  = sum > POS_SATURATION_LIMIT ? POS_SATURATION_VALUE : sum < NEG_SATURATION_LIMIT ? NEG_SATURATION_VALUE : sum[MAXIS_TDATA_WIDTH-1:0]; // Saturate
+    assign M_AXIS_SUM_tdata  = `SATURATE(sum);  // sum > POS_SATURATION_LIMIT ? POS_SATURATION_VALUE : sum < NEG_SATURATION_LIMIT ? NEG_SATURATION_VALUE : sum[MAXIS_TDATA_WIDTH-1:0]; // Saturate
     assign M_AXIS_SUM_tvalid = S_AXIS_A_tvalid && S_AXIS_A_tvalid;
     
 endmodule  

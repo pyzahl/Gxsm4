@@ -162,14 +162,23 @@ public:
 	// some helpers
 	static void call_scan_start (Scan* sc, gpointer data){ 
                 if (!sc) return;
+
 		if (data)
 			sc->start (((MultiVoltEntry*)data)->position (), ((MultiVoltEntry*)data)->volt ());
 		else
 			sc->start (0, gapp->xsm->data.s.Bias);
+
+                sc->memo_y = -1;
 	};
 	static void call_scan_draw_line (Scan* sc, gpointer data){
+                static gint y_last=-1;
 		gint y_realtime = gapp->xsm->hardware->RTQuery ();
 		gint y_update = ((SPM_ScanControl*)data)->line2update; // may be skipping lines when busy/fast as we are here called only when idle
+
+                if (y_realtime == sc->memo_y)
+                        return;
+                sc->memo_y = y_realtime;
+                
                 // "Tip" and data aupdate frequency control/limit
                 if (sc->get_last_line_updated() == y_update && sc->get_last_line_updated_time_delta () < 200000) return; // nothing to update
                 sc->set_last_line_updated(y_update);
