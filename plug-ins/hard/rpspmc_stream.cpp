@@ -284,26 +284,12 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
 		contents = g_bytes_get_data (message, &len);
 #endif
                 gchar *p;
-                /*
-                if (contents && len > 0){ //< 100){
-                        tmp = g_strdup_printf ("** WS TEXT MESSAGE: %s", contents);
+                if (g_strrstr (contents, "#***")){
+                        tmp = g_strdup_printf ("** WS TEXT MESSAGE **\n%s", (gchar*)contents);
                         self->status_append (tmp, true);
                         g_message (tmp);
                         g_free (tmp);
                 }
-                */
-                /* else {
-                        self->status_append ("WEBSOCKET_DATA_TEXT ------\n", true);
-                        if (contents && len > 0)
-                                self->status_append ((gchar*)contents, true);
-                        else
-                                self->status_append ("Empty text message received.", true);
-                        if (g_strrstr (contents, "\n"))
-                                self->status_append ("--------------------------\n", true);
-                        else
-                                self->status_append ("\n--------------------------\n", true);
-                }
-                  */
                 //g_message ("WS Message: %s", (gchar*)contents);
 
                 if (g_strrstr (contents, "RESET")){

@@ -199,7 +199,7 @@ void rpspmc_hwi_dev::status_append (const gchar *msg, bool schedule_from_thread)
                         buffer = g_strdup (msg);
                 else {
                         gchar *tmp = buffer;
-                        buffer = g_strconcat (buffer, msg, NULL);
+                        buffer = g_strconcat (buffer, msg, NULL); // append to buffer only, schedule idle if not yet exiting
                         g_free (tmp);
                         if (!idle_func)
                                 idle_func = g_idle_add (update_status_idle, this);
@@ -1656,7 +1656,7 @@ int rpspmc_hwi_dev::read_GVP_data_block_to_position_vector (int offset, gboolean
                 g_free (tmp);
                 if (--retry > 0){
                         gchar *tmp = g_strdup_printf ("Trying to recover stream from missing/bogus data. retry=%d\n", retry);
-                        status_append (tmp, true);
+                        //status_append (tmp, true);
                         g_warning (tmp);
                         g_free (tmp);
                         g_mutex_unlock (&GVP_stream_buffer_mutex);

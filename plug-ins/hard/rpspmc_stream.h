@@ -263,10 +263,8 @@ public:
 
                 if (also_gprint){
                         g_print (str.c_str());
-                        status_append (str.c_str(), true); // MUST SCHEDULE -- NOT THREAD SAFE
-                } else
-                        status_append (str.c_str()); // WARNING -- NOT THREAD SAFE
-                
+                        status_append (str.c_str(), true);
+                }                
         };
 
         void test_compression() {

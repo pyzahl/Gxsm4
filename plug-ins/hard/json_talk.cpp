@@ -266,7 +266,7 @@ void  RP_JSON_talk::on_closed (SoupWebsocketConnection *ws, gpointer user_data){
 
 void  RP_JSON_talk::json_parse_message (const char *json_string){
         jsmn_parser p;
-        jsmntok_t tok[10000]; /* We expect no more than 10000 tokens, signal array is 1024 * 5*/
+        jsmntok_t tok[20000]; /* We expect no more than 10000 tokens, signal array is 1024 * 5*/
 
         // typial data messages:
         // {"signals":{"SIGNAL_CH3":{"size":1024,"value":[0,0,...,0.543632,0.550415]},"SIGNAL_CH4":{"size":1024,"value":[0,0,... ,-94.156487]},"SIGNAL_CH5":{"size":1024,"value":[0,0,.. ,-91.376022,-94.156487]}}}
@@ -275,7 +275,17 @@ void  RP_JSON_talk::json_parse_message (const char *json_string){
         jsmn_init(&p);
         int ret = jsmn_parse(&p, json_string, strlen(json_string), tok, sizeof(tok)/sizeof(tok[0]));
         if (ret < 0) {
-                g_warning ("JSON PARSER:  Failed to parse JSON: %d [%d / %d]\n", ret, sizeof(tok), sizeof(tok[0]));
+                gchar *tmp = g_strndup (json_string, 80);
+                gint jn=strlen(json_string);
+                if (jn > 80){
+                        gint i = jn-10;
+                        while (i < 80) ++i;
+                        gchar *tmpX = g_strconcat (tmp, " .. ", &json_string[i], NULL);
+                        g_free (tmp);
+                        tmp = tmpX;
+                }
+                g_warning ("JSON PARSER:  Failed to parse JSON: ERR=%d %s jslen=%d\n%80s\n", ret, ret==-3?"JSMN_ERROR_PART":ret==-2?"JSMN_ERROR_INVAL":ret==-1?"JSMN_ERROR_NOMEM":"ERR??", strlen(json_string), tmp);
+                g_free (tmp);
                 //g_warning ("JSON PARSER:  Failed to parse JSON: %d\n%s\n", ret, json_string);
                 return;
         }

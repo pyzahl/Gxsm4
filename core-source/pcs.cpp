@@ -385,10 +385,14 @@ gboolean Param_Control::Set_FromValue(double nVal){
                 return false;
 
         if (nVal == Current_Dval){
+#if 0
                 if (strncmp(refname, "dsp-gvp", 7)==0) // weird patch
                         g_message ("Param_Control::Set_FromValue: same value[%s]: %g", refname, Current_Dval); // TEST
                 else
                         return false;
+#else
+                return false; // no actual value change, done.
+#endif
         }
         
 #ifdef DEBUG_PCS_LOG
