@@ -134,8 +134,8 @@ module axis_spm_control#(
     //reg signed [32-1:0] rz=0;
     reg signed [32+2-1:0] ru=0;
 
-    reg signed [32-1:0] slx; // SQ28
-    reg signed [32-1:0] sly; // SQ28
+    reg signed [32-1:0] slx; // SQ31
+    reg signed [32-1:0] sly; // SQ31
     
     reg signed [32-1:0] z_servo=0;
     reg signed [32-1:0] dZx=0;
@@ -232,8 +232,8 @@ module axis_spm_control#(
             
             z_slope <= (dZmx >>> QSLOPE) + (dZmy >>> QSLOPE);
             
-            //z_sum   <= mz0 + z_gvp + z_slope + z_servo;
-            z_sum    <= mz0 + z_gvp + z_servo;
+            z_sum   <= mz0 + z_gvp + z_slope + z_servo;
+            //z_sum    <= mz0 + z_gvp + z_servo;
         end
     end    
     

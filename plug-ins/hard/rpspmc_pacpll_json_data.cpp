@@ -163,8 +163,10 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         { "SPMC_GVP_VECTORSLW", &spmc_parameters.v[11], false }, // Float: slew rate in #points / sec
 
         { "SPMC_ALPHA", &spmc_parameters.alpha, false },
-        { "SPMC_SLOPE_dZX", &spmc_parameters.slope_dzx, false },
-        { "SPMC_SLOPE_dZY", &spmc_parameters.slope_dzy, false },
+        
+        { "SPMC_SLOPE_DZX", &spmc_parameters.slope_dzx, false },
+        { "SPMC_SLOPE_DZY", &spmc_parameters.slope_dzy, false },
+        { "SPMC_SLOPE_SLEW", &spmc_parameters.slope_slew, false },
 
         { "SPMC_SET_SCANPOS_X", &spmc_parameters.set_scanpos_x, false },
         { "SPMC_SET_SCANPOS_Y", &spmc_parameters.set_scanpos_y, false },

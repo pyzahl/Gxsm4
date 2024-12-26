@@ -874,13 +874,15 @@ void rp_spmc_set_rotation (double alpha){
         set_gpio_cfgreg_int32 (SPMC_ROTM_XY, (int)round (Q_XY_PRECISION*sin(alpha)));
 }
 
-void rp_spmc_set_slope (double dzx, double dzy){
-        if (verbose > 1) fprintf(stderr, "** set dZxy slopes %g, %g\n", dzx, dzy);
+void rp_spmc_set_slope (double dzx, double dzy, double dzxy_slew){
+        int dzxy_step = 1+(int)round (Q_Z_SLOPE_PRECISION*dzxy_slew/SPMC_CLK);
+        if (verbose > 1) fprintf(stderr, "** set dZxy slopes %g, %g ** dZ-step: %g => %d\n", dzx, dzy, dzxy_slew, dzxy_step);
+        set_gpio_cfgreg_int32 (SPMC_Z_MOVE_STEP, dzxy_step);
         set_gpio_cfgreg_int32 (SPMC_SLOPE_X, (int)round (Q_Z_SLOPE_PRECISION*dzx));
         set_gpio_cfgreg_int32 (SPMC_SLOPE_Y, (int)round (Q_Z_SLOPE_PRECISION*dzy));
 }
 
-void rp_spmc_set_offsets (double x0, double y0, double z0, double xy_move_slew=-1., double z_move_slew=-1.){
+void rp_spmc_set_offsets (double x0, double y0, double z0, double xy_move_slew, double z_move_slew){
         static int xy_step = 1+(int)(volts_to_rpspmc (0.5/SPMC_CLK));
         static int z_step = 1+(int)(volts_to_rpspmc (0.2/SPMC_CLK));
 
@@ -896,7 +898,7 @@ void rp_spmc_set_offsets (double x0, double y0, double z0, double xy_move_slew=-
         set_gpio_cfgreg_int32 (SPMC_OFFSET_Y, y0_buf = volts_to_rpspmc (y0));
         set_gpio_cfgreg_int32 (SPMC_OFFSET_Z, z0_buf = volts_to_rpspmc (z0));
         set_gpio_cfgreg_int32 (SPMC_XY_MOVE_STEP, xy_step);
-        set_gpio_cfgreg_int32 (SPMC_Z_MOVE_STEP, z_step);
+        //set_gpio_cfgreg_int32 (SPMC_Z_MOVE_STEP, z_step);
 }
 
 void rp_spmc_set_scanpos (double xs, double ys, double slew, int opts){

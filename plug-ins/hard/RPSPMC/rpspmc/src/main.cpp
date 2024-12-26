@@ -46,11 +46,11 @@ int thread_data__tune_control=0;
 #include <fcntl.h>
 #include <pthread.h>
 
-#define REDPACPLL_DATE    0x20231003
+#define REDPACPLL_DATE    0x20241224
 #define REDPACPLL_VERSION 0x00160000
-#define RPSPMC_VERSION    0x00010013
-#define RPSPMC_VNAME      "RPSPMC Evaluation Regime SG2023"
-#define RPSPMC_SRCS_INFO  "XYZU 1234 SWPS LCTm"
+#define RPSPMC_VERSION    0x00010014
+#define RPSPMC_VNAME      "Evaluation Regime SG20241224"
+#define RPSPMC_SRCS_INFO  "Bit0..3: XYZU | Bit4-7: IN1,2,3,4 | Bit8-11: dFREQ,EXEC,PHASE,AMPL | Bit 12..15: LckA,B, TIME64"
 
 #include "main.h"
 #include "fpga_cfg.h"
@@ -392,8 +392,9 @@ CDoubleParameter  SPMC_GVP_VECTOR_BB("SPMC_GVP_VECTOR_BB", CBaseParameter::RW, 0
 CDoubleParameter  SPMC_GVP_VECTORSLW("SPMC_GVP_VECTORSLW", CBaseParameter::RW, 0, 0,   0.0, 1e6);  // slew rate in #points / sec -- max: 1 MSPS
 
 CDoubleParameter  SPMC_ALPHA("SPMC_ALPHA", CBaseParameter::RW, 0.0, 0, -360, +360); // deg
-CDoubleParameter  SPMC_SLOPE_dZX("SPMC_SLOPE_X", CBaseParameter::RW, 0.0, 0, -1.0, +1.0); // slope in Volts Z / Volt X
-CDoubleParameter  SPMC_SLOPE_dZY("SPMC_SLOPE_Y", CBaseParameter::RW, 0.0, 0, -1.0, +1.0); // slope in Volts Z / Volt X
+CDoubleParameter  SPMC_SLOPE_DZX("SPMC_SLOPE_DZX", CBaseParameter::RW, 0.0, 0, -1.0, +1.0); // slope in Volts Z / Volt X
+CDoubleParameter  SPMC_SLOPE_DZY("SPMC_SLOPE_DZY", CBaseParameter::RW, 0.0, 0, -1.0, +1.0); // slope in Volts Z / Volt X
+CDoubleParameter  SPMC_SLOPE_SLEW("SPMC_SLOPE_SLEW", CBaseParameter::RW, 0.0, 0, 0.0, +1e6); // slope in 1 / sec
 
 CDoubleParameter  SPMC_SET_SCANPOS_X("SPMC_SET_SCANPOS_X", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 CDoubleParameter  SPMC_SET_SCANPOS_Y("SPMC_SET_SCANPOS_Y", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
@@ -1505,10 +1506,12 @@ void OnNewParams_RPSPMC(void){
                 SPMC_ALPHA.Update ();
                 rp_spmc_set_rotation (SPMC_ALPHA.Value ());
         }
-        if (SPMC_SLOPE_dZX.IsNewValue () || SPMC_SLOPE_dZY.IsNewValue ()){
-                SPMC_SLOPE_dZX.Update ();
-                SPMC_SLOPE_dZY.Update ();
-                rp_spmc_set_slope (SPMC_SLOPE_dZX.Value (), SPMC_SLOPE_dZY.Value ());
+        
+        if (SPMC_SLOPE_DZX.IsNewValue () || SPMC_SLOPE_DZY.IsNewValue () || SPMC_SLOPE_SLEW.IsNewValue ()){
+                SPMC_SLOPE_SLEW.Update ();
+                SPMC_SLOPE_DZX.Update ();
+                SPMC_SLOPE_DZY.Update ();
+                rp_spmc_set_slope (SPMC_SLOPE_DZX.Value (), SPMC_SLOPE_DZY.Value (), SPMC_SLOPE_SLEW.Value ());
         }
         
         if (SPMC_SET_OFFSET_X.IsNewValue ()

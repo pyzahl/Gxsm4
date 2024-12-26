@@ -181,6 +181,7 @@ struct SPMC_parameters {
         double alpha;
         double slope_dzx;
         double slope_dzy;
+        double slope_slew;
 
         double set_scanpos_x;
         double set_scanpos_y;
