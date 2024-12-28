@@ -83,6 +83,9 @@ spmc_dma_support *spm_dma_instance = NULL;
 // update fpga.bit only:
 // Gxsm4/plug-ins/hard/RPSPMC/rpspmc$ scp ../project_RP-SPMC-RedPACPLL-202308-test/project_RP-SPMC-RedPACPLL-202308-test.runs/impl_1/system_wrapper.bit root@rp-f09296.local:/opt/redpitaya/www/apps/rpspmc/fpga.bit
 
+// copy sources:
+// pzahl@phenom:~/SVN/Gxsm4/plug-ins/hard/RPSPMC/rpspmc$ scp src/*.h src/*.cpp root@rp-f09296.local:/opt/redpitaya/www/apps/rpspmc/src
+
 // On rev RP OS 2.x >>> need to install: root@rp-f09296:/opt/redpitaya/www/apps/rpspmc# apt-get install libwebsocketpp-dev
 
 // CHROME BROWSER NOTES: USER SCHIT-F5 to force reload of all data, else caches are fooling....
@@ -370,6 +373,8 @@ CDoubleParameter  SPMC_Z_SERVO_LEVEL("SPMC_Z_SERVO_LEVEL", CBaseParameter::RW, 0
 #define SPMC_GVP_CONTROL_PAUSE     2
 #define SPMC_GVP_CONTROL_RESUME    3
 #define SPMC_GVP_CONTROL_PROGRAM   4
+
+CIntParameter     SPMC_GVP_STREAM_MUX("SPMC_GVP_STREAM_MUX", CBaseParameter::RW, 0, 0, 0,0xffff); //
 
 CIntParameter     SPMC_GVP_CONTROL_MODE("SPMC_GVP_CONTROL", CBaseParameter::RW, 0, 0, 0, 0xffff);
 CBooleanParameter SPMC_GVP_LIVE_VECTOR_UPDATE("SPMC_GVP_LIVE_VECTOR_UPDATE", CBaseParameter::RW, true, 0);
@@ -1575,7 +1580,13 @@ void OnNewParams_RPSPMC(void){
                                         SPMC_GVP_LIVE_VECTOR_UPDATE.Value ()
                                         );
         }
-                     
+
+        if (SPMC_GVP_STREAM_MUX.IsNewValue ()){
+                SPMC_GVP_STREAM_MUX.Update ();
+                rp_set_gvp_stream_mux_selector (SPMC_GVP_STREAM_MUX.Value ());
+        }
+
+        
         if (SPMC_GVP_CONTROL_MODE.IsNewValue ()){
                 std::stringstream info;
                 info << "SPMC_GVP_CONTROL_MODE: {";

@@ -207,7 +207,7 @@ module axis_spm_control#(
              // MUST ASSURE mx0+/-xy_move_step never exceeds +/-Q31 -- exta bit used + saturation as assign -- to avoid over flow else a PBC jump will happen! 
             `ADJUSTER (mx0, mx0p, mx0m, xy_move_step, mx0s);
             `ADJUSTER (my0, my0p, my0m, xy_move_step, my0s);
-            `ADJUSTER (mz0, mz0p, mz0m, xy_move_step, mz0s);
+            `ADJUSTER (mz0, mz0p, mz0m, z_move_step, mz0s);
                         
             // slope_x, y adjusters for smooth op
             `ADJUSTER (dZx, dZx_p, dZx_m, z_move_step, slx);
@@ -246,6 +246,7 @@ module axis_spm_control#(
     
     assign M_AXIS2_tdata  = `SATURATE_32 (ry);
     assign M_AXIS2_tvalid = 1;
+    
     assign M_AXIS_Y0MON_tdata  = my0;
     assign M_AXIS_Y0MON_tvalid = 1;
     assign M_AXIS_YSMON_tdata  = y;
@@ -253,12 +254,14 @@ module axis_spm_control#(
     
     assign M_AXIS3_tdata  = `SATURATE_32 (z_sum);
     assign M_AXIS3_tvalid = 1;
+
     assign M_AXIS_ZSMON_tdata  = z_gvp;  // Z-GVP aka scan
     assign M_AXIS_ZSMON_tvalid = 1;
+
     assign M_AXIS_Z0MON_tdata  = mz0; // Z Offset aka Z0
     assign M_AXIS_Z0MON_tvalid = 1;
 
-    assign M_AXIS_ZSLOPE_tdata  = `SATURATE_32 (z_slope);
+    assign M_AXIS_ZSLOPE_tdata  = z_slope; // slope compensation signal to be added saturation to z_sum before out
     assign M_AXIS_ZSLOPE_tvalid = 1;
 
     

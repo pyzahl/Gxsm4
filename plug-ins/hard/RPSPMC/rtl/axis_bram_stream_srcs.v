@@ -93,25 +93,25 @@ module axis_bram_stream_srcs #(
     input wire          S_AXIS_ch3s_tvalid,
     input wire [32-1:0] S_AXIS_ch4s_tdata, // U       0x0008  Bias
     input wire          S_AXIS_ch4s_tvalid,
-    input wire [32-1:0] S_AXIS_ch5s_tdata, // IN1     0x0010  IN1 RP (Signal)
+    input wire [32-1:0] S_AXIS_ch5s_tdata, // IN1     0x0010  IN1 RP (Signal) -- PLL Signal
     input wire          S_AXIS_ch5s_tvalid,
-    input wire [32-1:0] S_AXIS_ch6s_tdata, // IN2     0x0020  IN2 RP (Current)
+    input wire [32-1:0] S_AXIS_ch6s_tdata, // IN2     0x0020  IN2 RP (Current -- after FIR, OFFSET COMP in SQ8.24)
     input wire          S_AXIS_ch6s_tvalid,
-    input wire [32-1:0] S_AXIS_ch7s_tdata, // IN3     0x0040  reserved, N/A at this time
+    input wire [32-1:0] S_AXIS_ch7s_tdata, // IN3     0x0040  reserved, N/A at this time [NOW: IN2-Z-SERVO-PASS]
     input wire          S_AXIS_ch7s_tvalid,
-    input wire [32-1:0] S_AXIS_ch8s_tdata, // IN4     0x0080  reserved, N/A at this time
+    input wire [32-1:0] S_AXIS_ch8s_tdata, // IN4     0x0080  reserved, N/A at this time [NOW: Z-SLOPE]
     input wire          S_AXIS_ch8s_tvalid,
-    input wire [32-1:0] S_AXIS_ch9s_tdata, // DFREQ   0x0100  via PACPLL FIR1 ** via transport / decimation selector
+    input wire [32-1:0] S_AXIS_ch9s_tdata, // DFREQ   0x0100  via PACPLL FIR1 ** via transport / decimation selector  | MUXABLE in Future
     input wire          S_AXIS_ch9s_tvalid,
-    input wire [32-1:0] S_AXIS_chAs_tdata, // EXEC    0x0200  via PACPLL FIR2
+    input wire [32-1:0] S_AXIS_chAs_tdata, // EXEC    0x0200  via PACPLL FIR2 ** via transport / decimation selector  | MUXABLE in Future
     input wire          S_AXIS_chAs_tvalid,
-    input wire [32-1:0] S_AXIS_chBs_tdata, // PHASE   0x0400  via PACPLL FIR3
+    input wire [32-1:0] S_AXIS_chBs_tdata, // PHASE   0x0400  via PACPLL FIR3 ** via transport / decimation selector  | MUXABLE in Future
     input wire          S_AXIS_chBs_tvalid,
-    input wire [32-1:0] S_AXIS_chCs_tdata, // AMPL    0x0800  via PACPLL FIR4
+    input wire [32-1:0] S_AXIS_chCs_tdata, // AMPL    0x0800  via PACPLL FIR4 ** via transport / decimation selector  | MUXABLE in Future
     input wire          S_AXIS_chCs_tvalid,
-    input wire [32-1:0] S_AXIS_chDs_tdata, // LockInA 0x1000  LockIn X (ToDo)
+    input wire [32-1:0] S_AXIS_chDs_tdata, // LockInA 0x1000  LockIn X (ToDo) | MUXABLE in Future [NOW: IN2 NO FIR]
     input wire          S_AXIS_chDs_tvalid,
-    input wire [32-1:0] S_AXIS_chEs_tdata, // LockInB 0x2000  LocKin R (ToDo) [if GVP OPT BIT 6 set: GVP package counter]
+    input wire [32-1:0] S_AXIS_chEs_tdata, // LockInB 0x2000  LocKin R (ToDo) | MUXABLE in Future [NOW: dFreq CTRL]
     input wire          S_AXIS_chEs_tvalid,
     // from below
     // gvp_time[32-1: 0]      // TIME  0x4000 // lower 32
@@ -253,29 +253,22 @@ module axis_bram_stream_srcs #(
                                 channel <= 0;
                                 once <= 0; // only one push!
                                 // buffer all data in order [] of srcs bits in mask
-                                stream_buffer[0] <= S_AXIS_ch1s_tdata[32-1:0]; // X
-                                stream_buffer[1] <= S_AXIS_ch2s_tdata[32-1:0]; // Y
-                                stream_buffer[2] <= S_AXIS_ch3s_tdata[32-1:0]; // Z
-                                stream_buffer[3] <= S_AXIS_ch4s_tdata[32-1:0]; // U
-                                stream_buffer[4] <= S_AXIS_ch5s_tdata[32-1:0]; // IN1
-                                stream_buffer[5] <= S_AXIS_ch6s_tdata[32-1:0]; // IN2
-                                stream_buffer[6] <= S_AXIS_ch7s_tdata[32-1:0];
-                                stream_buffer[7] <= S_AXIS_ch8s_tdata[32-1:0];
-                                stream_buffer[8] <= S_AXIS_ch9s_tdata[32-1:0]; // PACPLL
-                                stream_buffer[9] <= S_AXIS_chAs_tdata[32-1:0]; // PACPLL
-                                stream_buffer[10] <= S_AXIS_chBs_tdata[32-1:0]; // PACPLL
-                                stream_buffer[11] <= S_AXIS_chCs_tdata[32-1:0]; // PACPLL
-                                stream_buffer[12] <= S_AXIS_chDs_tdata[32-1:0];
-                                if (S_AXIS_srcs_tdata[6])
-                                begin                     
-                                    stream_buffer[13] <= test_count;
-                                end 
-                                else
-                                begin
-                                    stream_buffer[13] <= S_AXIS_chEs_tdata[32-1:0];
-                                end                
-                                stream_buffer[14] <= S_AXIS_gvp_time_tdata[32-1:0];
-                                stream_buffer[15] <= { 16'd0, S_AXIS_gvp_time_tdata[48-1:32] };
+                                stream_buffer[0]  <= S_AXIS_ch1s_tdata[32-1:0]; // X
+                                stream_buffer[1]  <= S_AXIS_ch2s_tdata[32-1:0]; // Y
+                                stream_buffer[2]  <= S_AXIS_ch3s_tdata[32-1:0]; // Z
+                                stream_buffer[3]  <= S_AXIS_ch4s_tdata[32-1:0]; // U
+                                stream_buffer[4]  <= S_AXIS_ch5s_tdata[32-1:0]; // IN1
+                                stream_buffer[5]  <= S_AXIS_ch6s_tdata[32-1:0]; // IN2
+                                stream_buffer[6]  <= S_AXIS_ch7s_tdata[32-1:0]; // IN3
+                                stream_buffer[7]  <= S_AXIS_ch8s_tdata[32-1:0]; // IN4
+                                stream_buffer[8]  <= S_AXIS_ch9s_tdata[32-1:0];  // PACPLL DFREQ | MUXABLE in Future
+                                stream_buffer[9]  <= S_AXIS_chAs_tdata[32-1:0];  // PACPLL EXEC  | MUXABLE in Future
+                                stream_buffer[10] <= S_AXIS_chBs_tdata[32-1:0]; // PACPLL PHASE | MUXABLE in Future
+                                stream_buffer[11] <= S_AXIS_chCs_tdata[32-1:0]; // PACPLL AMPL  | MUXABLE in Future
+                                stream_buffer[12] <= S_AXIS_chDs_tdata[32-1:0]; // LCK-X        | MUXABLE in Future
+                                stream_buffer[13] <= S_AXIS_chEs_tdata[32-1:0]; // LCK-R        | MUXABLE in Future
+                                stream_buffer[14] <= S_AXIS_gvp_time_tdata[32-1:0]; // TIME lower 32
+                                stream_buffer[15] <= { 16'd0, S_AXIS_gvp_time_tdata[48-1:32] }; // TIME upper
                                 test_mode <= S_AXIS_srcs_tdata[7];
                                 test_count <= test_count+1;
                                 bramwr_sms <= 3'd1; // write frame start info, then data

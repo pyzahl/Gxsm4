@@ -159,13 +159,13 @@ SOURCE_SIGNAL_DEF rpspmc_source_signals[] = {
         { 0x00000004, "ZS-Topo",      " ", "AA", UTF8_ANGSTROEM,                   SPMC_AD5791_to_volts, PROBEDATA_ARRAY_S3,  3 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x00000008, "Bias-Mon",     " ", "V",             "V",                   SPMC_AD5791_to_volts, PROBEDATA_ARRAY_S4,  4 }, // BiasFac, see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x00000010, "In1-Signal",   " ", "V",             "V",                   SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S5,  5 },
-        { 0x00000020, "In2-Current",  " ", "nA",           "nA",                   SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S6,  6 }, // CurrFac, see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
+        { 0x00000020, "In2-Current",  " ", "nA",           "nA",               256*SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S6,  6 }, // CurrFac, see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x00000040, "In3-**",       " ", "V",             "V",                   SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S7,  7 },
         { 0x00000080, "In4-**",       " ", "V",             "V",                   SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S8,  8 },
-        { 0x00000100, "Phase",        " ", "deg",   UTF8_DEGREE, (180.0/(M_PI*((1L<<RP_FPGA_QATAN)-1))), PROBEDATA_ARRAY_S9,  9 }, // ** swappable **,
-        { 0x00000200, "dFreq",        " ", "Hz",           "Hz",        (125e6/((1L<<RP_FPGA_QFREQ)-1)), PROBEDATA_ARRAY_S10, 10 }, // ** swappable **,
-        { 0x00000400, "Ampl",         " ", "mV",           "mV",          (1.0/((1L<<RP_FPGA_QSQRT)-1)), PROBEDATA_ARRAY_S11, 11 }, // ** swappable **,
-        { 0x00000800, "Exec",         " ", "mV",           "mV",          (1.0/((1L<<RP_FPGA_QEXEC)-1)), PROBEDATA_ARRAY_S12, 12  }, // ** swappable **,
+        { 0x00000100, "SWP*00",       " ", "Hz",           "Hz",        (125e6/((1L<<RP_FPGA_QFREQ)-1)), PROBEDATA_ARRAY_S10, 10 }, // ** swappable **,
+        { 0x00000200, "SWP*01",       " ", "mV",           "mV",          (1.0/((1L<<RP_FPGA_QEXEC)-1)), PROBEDATA_ARRAY_S12, 12  }, // ** swappable **,
+        { 0x00000400, "SWP*02",       " ", "deg",   UTF8_DEGREE, (180.0/(M_PI*((1L<<RP_FPGA_QATAN)-1))), PROBEDATA_ARRAY_S9,  9 }, // ** swappable **,
+        { 0x00000800, "SWP*03",       " ", "mV",           "mV",          (1.0/((1L<<RP_FPGA_QSQRT)-1)), PROBEDATA_ARRAY_S11, 11 }, // ** swappable **,
         { 0x00001000, "LockInX",      " ", "dV",           "dV",                   SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S13, 13 },
         { 0x00002000, "dFreqCtrl",    " ", "##",           "##",                   SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S14, 14 },
         { 0x00004000, "--",           " ", "V",             "V",                                    1.0, PROBEDATA_ARRAY_S15, -1 }, // -- DUMMY SO FAR
@@ -175,12 +175,25 @@ SOURCE_SIGNAL_DEF rpspmc_source_signals[] = {
 };
 
 // so far fixed to swappable 4 signals as of GUI design!
-SOURCE_SIGNAL_DEF swappable_signals[] = {
-        { 0x00000100, "Phase",      " ", "deg", UTF8_DEGREE, (180.0/(M_PI*((1L<<RP_FPGA_QATAN)-1))), 0 },
-        { 0x00000200, "dFrequency", " ", "Hz", "Hz", (125e6/((1L<<RP_FPGA_QFREQ)-1)), 0 },
-        { 0x00000400, "Amplitude",  " ", "mV", "mV", (1.0/((1L<<RP_FPGA_QSQRT)-1)), 0 },
-        { 0x00000800, "Excitation", " ", "mV", "mV", (1.0/((1L<<RP_FPGA_QEXEC)-1)), 0 },
-        { 0x00000000,  NULL, NULL, NULL, NULL, 0.0, 0 }
+SOURCE_SIGNAL_DEF swappable_signals[] = {                                                                 // DEFAULT MUX MAP, 16 signals max 
+        //  SIGNAL #  Name               Units.... Scale                                         DEFAULT ASSIGN
+        { 0x00000000, "dFrequency",  " ", "Hz", "Hz", (125e6/((1L<<RP_FPGA_QFREQ)-1)),                0 }, // 0 => 0
+        { 0x00000001, "Excitation",  " ", "mV", "mV", (1.0/((1L<<RP_FPGA_QEXEC)-1)),                  1 }, // 1 => 1
+        { 0x00000002, "Phase",       " ", "deg", UTF8_DEGREE, (180.0/(M_PI*((1L<<RP_FPGA_QATAN)-1))), 2 }, // 2 => 2
+        { 0x00000003, "Amplitude",   " ", "mV", "mV", (1.0/((1L<<RP_FPGA_QSQRT)-1)),                  3 }, // 3 => 3
+        { 0x00000004, "Test04",      " ", "mV", "mV", (1.0),                                         -1 },
+        { 0x00000005, "Test05",      " ", "mV", "mV", (1.0),                                         -1 },
+        { 0x00000006, "Test06",      " ", "mV", "mV", (1.0),                                         -1 },
+        { 0x00000007, "Test07",      " ", "mV", "mV", (1.0),                                         -1 },
+        { 0x00000008, "Test08",      " ", "mV", "mV", (1.0),                                         -1 },
+        { 0x00000009, "Test09",      " ", "mV", "mV", (1.0),                                         -1 },
+        { 0x00000010, "Test10",      " ", "mV", "mV", (1.0),                                         -1 },
+        { 0x00000011, "Test11",      " ", "mV", "mV", (1.0),                                         -1 },
+        { 0x00000012, "Test12",      " ", "mV", "mV", (1.0),                                         -1 },
+        { 0x00000013, "Test13",      " ", "mV", "mV", (1.0),                                         -1 },
+        { 0x00000014, "Test14",      " ", "mV", "mV", (1.0),                                         -1 },
+        { 0x00000015, "Z-OUT",       " ", "mV", "mV", (1.0),                                         -1 },
+        { 0x00000016,  NULL, NULL, NULL, NULL, 0.0, 0 }
 };
 
 
@@ -2157,24 +2170,53 @@ void RPSPMC_Control::create_folder (){
 
         int ii=0;
         for (int i=0; rpspmc_source_signals[i].mask; ++i) {
+                int k=-1;
                 if (rpspmc_source_signals[i].scan_source_pos < 0) continue; // skip
                 PI_DEBUG (DBG_L4, "GRAPHS*** i=" << i << " " << rpspmc_source_signals[i].label);
 		int c=ii/8; 
 		c*=11;
                 c++;
-		int m = -1;
-                for (int k=0; swappable_signals[k].mask; ++k){
-                        if (rpspmc_source_signals[i].mask == swappable_signals[k].mask){
-                                //rpspmc_source_signals[i].name = swappable_signals[k].name;
-                                rpspmc_source_signals[i].label = swappable_signals[k].label;
-                                rpspmc_source_signals[i].unit  = swappable_signals[k].unit;
-                                rpspmc_source_signals[i].unit_sym = swappable_signals[k].unit_sym;
-                                rpspmc_source_signals[i].scale_factor = swappable_signals[k].scale_factor;
-                                m = k;
-                                PI_DEBUG (DBG_L4, "GRAPHS*** SWPS init i=" << i << " k=" << k << " " << rpspmc_source_signals[i].label << " sfac=" << rpspmc_source_signals[i].scale_factor);
-                                g_message ("GRAPHS*** SWPS init i=%d k=%d {%s} sfac=%g", i, k, rpspmc_source_signals[i].label,rpspmc_source_signals[i].scale_factor);
-                                break;
-                        }
+                switch (rpspmc_source_signals[i].mask){
+                case 0x0100:
+                        k=0;
+                        //rpspmc_source_signals[i].name  = swappable_signals[k].name;
+                        rpspmc_source_signals[i].label = swappable_signals[k].label;
+                        rpspmc_source_signals[i].unit  = swappable_signals[k].unit;
+                        rpspmc_source_signals[i].unit_sym = swappable_signals[k].unit_sym;
+                        rpspmc_source_signals[i].scale_factor = swappable_signals[k].scale_factor;
+                        PI_DEBUG (DBG_L4, "GRAPHS*** SWPS init i=" << i << " k=" << k << " " << rpspmc_source_signals[i].label << " sfac=" << rpspmc_source_signals[i].scale_factor);
+                        g_message ("GRAPHS*** SWPS init i=%d k=%d {%s} sfac=%g", i, k, rpspmc_source_signals[i].label,rpspmc_source_signals[i].scale_factor);
+                        break;
+                case 0x0200:
+                        k=1;
+                        //rpspmc_source_signals[i].name  = swappable_signals[k].name;
+                        rpspmc_source_signals[i].label = swappable_signals[k].label;
+                        rpspmc_source_signals[i].unit  = swappable_signals[k].unit;
+                        rpspmc_source_signals[i].unit_sym = swappable_signals[k].unit_sym;
+                        rpspmc_source_signals[i].scale_factor = swappable_signals[k].scale_factor;
+                        PI_DEBUG (DBG_L4, "GRAPHS*** SWPS init i=" << i << " k=" << k << " " << rpspmc_source_signals[i].label << " sfac=" << rpspmc_source_signals[i].scale_factor);
+                        g_message ("GRAPHS*** SWPS init i=%d k=%d {%s} sfac=%g", i, k, rpspmc_source_signals[i].label,rpspmc_source_signals[i].scale_factor);
+                        break;
+                case 0x0400:
+                        k=2;
+                        //rpspmc_source_signals[i].name  = swappable_signals[k].name;
+                        rpspmc_source_signals[i].label = swappable_signals[k].label;
+                        rpspmc_source_signals[i].unit  = swappable_signals[k].unit;
+                        rpspmc_source_signals[i].unit_sym = swappable_signals[k].unit_sym;
+                        rpspmc_source_signals[i].scale_factor = swappable_signals[k].scale_factor;
+                        PI_DEBUG (DBG_L4, "GRAPHS*** SWPS init i=" << i << " k=" << k << " " << rpspmc_source_signals[i].label << " sfac=" << rpspmc_source_signals[i].scale_factor);
+                        g_message ("GRAPHS*** SWPS init i=%d k=%d {%s} sfac=%g", i, k, rpspmc_source_signals[i].label,rpspmc_source_signals[i].scale_factor);
+                        break;
+                case 0x0800:
+                        k=3;
+                        //rpspmc_source_signals[i].name  = swappable_signals[k].name;
+                        rpspmc_source_signals[i].label = swappable_signals[k].label;
+                        rpspmc_source_signals[i].unit  = swappable_signals[k].unit;
+                        rpspmc_source_signals[i].unit_sym = swappable_signals[k].unit_sym;
+                        rpspmc_source_signals[i].scale_factor = swappable_signals[k].scale_factor;
+                        PI_DEBUG (DBG_L4, "GRAPHS*** SWPS init i=" << i << " k=" << k << " " << rpspmc_source_signals[i].label << " sfac=" << rpspmc_source_signals[i].scale_factor);
+                        g_message ("GRAPHS*** SWPS init i=%d k=%d {%s} sfac=%g", i, k, rpspmc_source_signals[i].label,rpspmc_source_signals[i].scale_factor);
+                        break;
                 }
                 int r = y+ii%8+1;
                 ii++;
@@ -2193,9 +2235,9 @@ void RPSPMC_Control::create_folder (){
                 g_object_set_data (G_OBJECT(bp->button), "VPC", GINT_TO_POINTER (i)); 
 
                 // source selection for SWPS?:
-                if (m >= 0){ // swappable flex source
-                        //g_message("bp->grid_add_probe_source_signal_options m=%d  %s => %d %s", m, rpspmc_source_signals[i].label,  probe_source[m], swappable_signals[m].label);
-                        bp->grid_add_probe_source_signal_options (m, probe_source[m], this);
+                if (k >= 0){ // swappable flex source
+                        //g_message("bp->grid_add_probe_source_signal_options m=%d  %s => %d %s", k, rpspmc_source_signals[i].label,  probe_source[k], swappable_signals[k].label);
+                        bp->grid_add_probe_source_signal_options (k, probe_source[k], this);
                 }else { // or fixed assignment
                         bp->grid_add_label (rpspmc_source_signals[i].label, NULL, 1, 0.);
                 }
@@ -2532,8 +2574,20 @@ int RPSPMC_Control::choice_scansource_callback (GtkWidget *widget, RPSPMC_Contro
 	gint signal  = gtk_combo_box_get_active (GTK_COMBO_BOX (widget));
         gint channel = GPOINTER_TO_INT (g_object_get_data( G_OBJECT (widget), "scan_channel_source"));
 
+        // testing default
+        int s9  = 0;
+        int s10 = 1;
+        int s11 = 2;
+        int s12 = 3;
+
+	PI_DEBUG_GP (DBG_L3, "GVP STREAM MUX SELECTOR:  [%d] %s ==> [%d]\n",signal, swappable_signals[signal].label, channel);
+
+        if (rpspmc_pacpll)
+                rpspmc_pacpll->write_parameter ("SPMC_GVP_STREAM_MUX", ((s12 & 0xf)<<12) | ((s11 & 0xf)<<8) | ((s10 & 0xf)<<4) | (s9 & 0xf) );
+
+        
 #if 0
-	PI_DEBUG_GP (DBG_L3, "ScanSource-Input[%d]=0x%x  <== %s\n",channel,signal, sranger_common_hwi->dsp_signal_lookup_managed[signal].label);
+	PI_DEBUG_GP (DBG_L3, "ScanSource-Input[%d]=0x%x  <== %s\n",channel,signal, rpspmc_pacpll->dsp_signal_lookup_managed[signal].label);
 	sranger_common_hwi->change_signal_input (signal, DSP_SIGNAL_SCAN_CHANNEL_MAP0_ID+channel, self->DSP_vpdata_ij[0]*8+self->DSP_vpdata_ij[1]);
 	self->scan_source[channel] = signal;
 
