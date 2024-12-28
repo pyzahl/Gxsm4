@@ -869,7 +869,7 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
 /*
 void rp_set_gvp_stream_mux_selector (int s9, int s10, int s11, int s12){
         if (verbose > 1) fprintf(stderr, "** set gvp stream mux %d %d %d %d\n", s9,s10,s11,s12);
-        set_gpio_cfgreg_int32 (SPMC_GVP_STREAM_MUX4_SELECTOR, ((s12 & 0xf)<<12) | ((s11 & 0xf)<<8) | ((s10 & 0xf)<<4) | (s9 & 0xf) );
+        set_gpio_cfgreg_int32 (SPMC_GVP_STREAM_MUX4_SELECTOR, .. | ((s12 & 0xf)<<12) | ((s11 & 0xf)<<8) | ((s10 & 0xf)<<4) | (s9 & 0xf) );
 }
 */
 

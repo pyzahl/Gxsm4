@@ -183,11 +183,13 @@ public:
                
                 bias = 0;
                 zpos_ref = 0;
+                zpos_mon = 0;
 
-                for (int i=0; i<4; ++i){
-                        scan_source[i] = i;
+                for (int i=0; i<6; ++i){
+                        scan_source[i]  = i;
                         probe_source[i] = i;
-                        
+                }
+                for (int i=0; i<4; ++i){
                         mix_fbsource[i] = 0;
                         mix_unit2volt_factor[i] = 1;
                         mix_set_point[i] = 0;
@@ -587,6 +589,7 @@ public:
 
 	Gtk_EntryControl *ZPos_ec;
    	double zpos_ref;
+   	double zpos_mon;
 	gint   zpos_refresh_timer_id;
 	  
 	// -- FEEDBACK MIXER --
@@ -601,12 +604,12 @@ public:
         // Feedback (Z-Servo)
 	double z_servo[3];    // Z-Servo (Feedback) [0] (not used here), [1] Const Proportional, [2] Const Integral [user visible values]
 
-	int    scan_source[4];    // scan source mapping signal index for imaging
-	int    probe_source[4];   // probe source mapping signal index for 32bit data channels [0..3]
+	int    scan_source[6];    // scan source mapping signal index for imaging
+	int    probe_source[6];   // probe source mapping signal index for 32bit data channels [0..3]
 
 	int    vp_input_id_cache[4];  // cache VP input config;
 	int    DSP_vpdata_ij[2];
-	GtkWidget *VPSig_menu, *VPSig_mi[8], *VPScanSrcVPitem[4];
+	GtkWidget *VPSig_menu, *VPSig_mi[8], *VPScanSrcVPitem[6];
         
 	double fast_return;       //!< on-the-fly fast return option (scan retrace speed override factor, 1=normal)
 	double x2nd_Zoff;         //!< Z lift off for 2nd scan line (MFM etc...)

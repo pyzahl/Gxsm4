@@ -130,6 +130,8 @@ JSON_parameter PACPLL_JSON_parameters[] = {
 
         { "SPMC_BIAS", &spmc_parameters.bias, false },
 
+        { "SPMC_GVP_STREAM_MUX", &spmc_parameters.gvp_stream_mux, false },
+
         { "SPMC_Z_SERVO_MODE", &spmc_parameters.z_servo_mode, false },
         { "SPMC_Z_SERVO_SETPOINT", &spmc_parameters.z_servo_setpoint, false },
         { "SPMC_Z_SERVO_CP", &spmc_parameters.z_servo_cp, false },

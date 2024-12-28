@@ -27,7 +27,7 @@ module axis_selector #(
 (
     // (* X_INTERFACE_PARAMETER = "FREQ_HZ 125000000" *)
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF S_AXIS_00:S_AXIS_01:S_AXIS_02:S_AXIS_03:S_AXIS_04:S_AXIS_05:S_AXIS_06:S_AXIS_07:S_AXIS_08:S_AXIS_09:S_AXIS_10:S_AXIS_11:S_AXIS_12:S_AXIS_13:S_AXIS_14:S_AXIS_15:M_AXIS_1:M_AXIS_2:M_AXIS_3:M_AXIS_4" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF S_AXIS_00:S_AXIS_01:S_AXIS_02:S_AXIS_03:S_AXIS_04:S_AXIS_05:S_AXIS_06:S_AXIS_07:S_AXIS_08:S_AXIS_09:S_AXIS_10:S_AXIS_11:S_AXIS_12:S_AXIS_13:S_AXIS_14:S_AXIS_15:M_AXIS_1:M_AXIS_2:M_AXIS_3:M_AXIS_4:M_AXIS_5:M_AXIS_6" *)
     input a_clk,
     
     input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS_00_tdata,
@@ -70,7 +70,11 @@ module axis_selector #(
     output wire [MAXIS_TDATA_WIDTH-1:0] M_AXIS_3_tdata,
     output wire                         M_AXIS_3_tvalid,
     output wire [MAXIS_TDATA_WIDTH-1:0] M_AXIS_4_tdata,
-    output wire                         M_AXIS_4_tvalid
+    output wire                         M_AXIS_4_tvalid,
+    output wire [MAXIS_TDATA_WIDTH-1:0] M_AXIS_5_tdata,
+    output wire                         M_AXIS_5_tvalid,
+    output wire [MAXIS_TDATA_WIDTH-1:0] M_AXIS_6_tdata,
+    output wire                         M_AXIS_6_tvalid
     );
     
     reg [SAXIS_TDATA_WIDTH-1:0] data1 = 0;
@@ -81,6 +85,10 @@ module axis_selector #(
     reg valid3 = 0;
     reg [SAXIS_TDATA_WIDTH-1:0] data4 = 0;
     reg valid4 = 0;
+    reg [SAXIS_TDATA_WIDTH-1:0] data5 = 0;
+    reg valid5 = 0;
+    reg [SAXIS_TDATA_WIDTH-1:0] data6 = 0;
+    reg valid6 = 0;
     
 // my SELECTOR
 // connects input N to output x stream
@@ -174,12 +182,11 @@ module axis_selector #(
     begin
 
         `MY_SELECTOR (axis_selector[4-1:0], data1, valid1);
-        
         `MY_SELECTOR (axis_selector[8-1:4], data2, valid2);
-        
         `MY_SELECTOR (axis_selector[12-1:8], data3, valid3);
-        
         `MY_SELECTOR (axis_selector[16-1:12], data4, valid4);
+        `MY_SELECTOR (axis_selector[20-1:16], data5, valid5);
+        `MY_SELECTOR (axis_selector[24-1:20], data6, valid6);
 
     end
     
@@ -191,5 +198,9 @@ module axis_selector #(
     assign M_AXIS_3_tvalid = valid3;
     assign M_AXIS_4_tdata  = data4;
     assign M_AXIS_4_tvalid = valid4;
+    assign M_AXIS_5_tdata  = data5;
+    assign M_AXIS_5_tvalid = valid5;
+    assign M_AXIS_6_tdata  = data6;
+    assign M_AXIS_6_tvalid = valid6;
     
 endmodule

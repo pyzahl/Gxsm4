@@ -353,9 +353,15 @@
     </key>
 
     <key name="dsp-adv-dsp-zpos-ref" type="ad">
-      <default>[100, -100, 1e+111, -1e+111, 1e+111, 1e+111, 0.01, 0.1, 1, 0,  0, 0      ]      </default>
+      <default>[1000, -1000, 1e+111, -1e+111, 1e+111, 1e+111, 0.01, 0.1, 1, 0,  0, 0      ]      </default>
       <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'adv-dsp-zpos-ref' </summary>
       <description>Configuration for GXSM Entry with ID 'adv-dsp-zpos-ref'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="dsp-adv-dsp-zpos-mon" type="ad">
+      <default>[10000, -10000, 1e+111, -1e+111, 1e+111, 1e+111, 0.01, 0.1, 1, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'adv-dsp-zpos-ref' </summary>
+      <description>Configuration for GXSM Entry with ID 'adv-dsp-zpos-mon'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
     </key>
 
     <key name="dsp-fbs-mx0-current-set" type="ad">

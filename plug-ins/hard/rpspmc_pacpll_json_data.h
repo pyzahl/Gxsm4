@@ -157,6 +157,9 @@ struct PACPLL_signals {
 struct SPMC_parameters {
 // RP-SPMC module parameters
         double bias;
+
+        double gvp_stream_mux;
+        
         double z_servo_mode;
         double z_servo_setpoint;
         double z_servo_cp;

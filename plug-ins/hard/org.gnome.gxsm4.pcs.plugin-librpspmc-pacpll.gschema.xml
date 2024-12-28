@@ -357,6 +357,12 @@
       <description>pcs0000, PCS Remote-ID: 'adv-dsp-zpos-ref', Default/U: 0.0 Å    , Adjustment PCS Name: 'adv-dsp-zpos-ref' </description>
     </key>
 
+    <key name="dsp-adv-dsp-zpos-mon" type="d">
+      <default>0.0</default>
+      <summary>PCS Remote-ID: 'dsp-adv-dsp-zpos-mon', Default/U: 0 Å     </summary>
+      <description>pcs0000, PCS Remote-ID: 'adv-dsp-zpos-mon', Default/U: 0.0 Å    , Adjustment PCS Name: 'adv-dsp-zpos-mon' </description>
+    </key>
+
     <key name="dsp-fbs-mx0-current-set" type="d">
       <default>0.0</default>
       <summary>PCS Remote-ID: 'fbs-mx0-current-set', Default/U:    0 nA     </summary>

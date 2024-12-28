@@ -719,6 +719,9 @@ class BuildParam{
         void show_all () { gtk_widget_show (grid); };
 
         // set default entry/inpout width chars to be configured, -1: leve unset/default
+        void set_label_width_chars (gint nwc=-1){
+                label_width_chars = nwc;
+        };
         void set_input_width_chars (gint nwc=-1){
                 input_width_chars = nwc;
         };
@@ -729,9 +732,6 @@ class BuildParam{
                 wx=snx;
         };
 
-        void set_label_width_chars (gint nwc=-1){
-                label_width_chars = nwc;
-        }
         
         static void delete_ec (gpointer data){
                 Gtk_EntryControl *ec_tmp = (Gtk_EntryControl*)data;
