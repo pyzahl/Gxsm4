@@ -287,21 +287,6 @@ module lms_phase_amplitude_detector #(
 
     reg [1:0] rdecii = 0;
 
-/*
-    always @ (posedge aclk)
-    begin
-        rdecii <= rdecii+1;
-        // rdecii 00 01 *10 11 00 ...
-        if (rdecii == 3)
-        begin
-            LckDXYdphi_1 <= LckDXYdphi_mem[Lck_i-Lck_N+1];
-        end else begin
-            LckDXYdphi_0 <= LckDXYdphi_mem[Lck_i-Lck_N];
-        end
-    end
-*/
-
-    //always @ (posedge rdecii[1])
     always @ (posedge aclk)
     begin
         rdecii <= rdecii+1;

@@ -190,8 +190,8 @@ SOURCE_SIGNAL_DEF swappable_signals[] = {                                       
         { 0x00000010, "Test10",      " ", "mV", "mV", (1.0),                                         -1 },
         { 0x00000011, "Test11",      " ", "mV", "mV", (1.0),                                         -1 },
         { 0x00000012, "Test12",      " ", "mV", "mV", (1.0),                                         -1 },
-        { 0x00000013, "LockInA",     " ", "dV", "dV", (SPMC_RPIN12_to_volts),                        -1 },
-        { 0x00000014, "LockInB",     " ", "dV", "dV", (SPMC_RPIN12_to_volts),                        -1 },
+        { 0x00000013, "LockInX",     " ", "dV", "dV", (SPMC_RPIN12_to_volts),                        -1 },
+        { 0x00000014, "LockInY",     " ", "dV", "dV", (SPMC_RPIN12_to_volts),                        -1 },
         { 0x00000015, "Z-OUT",       " ", "mV", "mV", (SPMC_AD5791_to_volts),                         5 },
         { 0x00000016,  NULL, NULL, NULL, NULL, 0.0, 0 }
 };

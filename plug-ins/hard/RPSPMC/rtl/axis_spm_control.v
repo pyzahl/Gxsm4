@@ -158,8 +158,9 @@ module axis_spm_control#(
     reg signed [32-1:0] dZy=0;
     reg signed [32-1:0] dZy_p=0;
     reg signed [32-1:0] dZy_m=0;
-    reg signed [32-1:0] z_slope=0;
-    reg signed [32-1:0] z_gvp=0;
+    reg signed [32+1-1:0] z_slope=0;
+    reg signed [32+1-1:0] z_gvp=0;
+    reg signed [32+1-1:0] z_scan=0;
     reg signed [32-1:0] z_offset=0;
     reg signed [36-1:0] z_sum=0;
 
@@ -264,9 +265,9 @@ module axis_spm_control#(
             dZmx <= dZx * rx;
             dZmy <= dZy * ry;
             
-            z_slope <= (dZmx >>> QSLOPE) + (dZmy >>> QSLOPE) + (mt == 3 ? modulation : 0);
-            
-            z_sum   <= mz0 + z_gvp + z_servo;
+            z_slope <= (dZmx >>> QSLOPE) + (dZmy >>> QSLOPE);
+            z_scan  <= z_gvp + z_servo + (mt == 3 ? modulation : 0);
+            z_sum   <= z_gvp + z_servo + (mt == 3 ? modulation : 0) + mz0;
             //z_sum    <= mz0 + z_gvp + z_servo + Z_slope;
         end
     end    
@@ -289,18 +290,19 @@ module axis_spm_control#(
     assign M_AXIS3_tdata  = `SATURATE_32 (z_sum);
     assign M_AXIS3_tvalid = 1;
 
-    assign M_AXIS_ZSMON_tdata  = z_gvp;  // Z-GVP aka scan
+    assign M_AXIS_ZSMON_tdata  = `SATURATE_32 (z_scan);
     assign M_AXIS_ZSMON_tvalid = 1;
 
     assign M_AXIS_Z0MON_tdata  = mz0; // Z Offset aka Z0
     assign M_AXIS_Z0MON_tvalid = 1;
 
-    assign M_AXIS_ZSLOPE_tdata  = z_slope; // slope compensation signal to be added saturation to z_sum before out
+    assign M_AXIS_ZSLOPE_tdata  = `SATURATE_32 (z_slope); // slope compensation signal to be added saturation to z_sum before out
     assign M_AXIS_ZSLOPE_tvalid = 1;
 
     
     assign M_AXIS4_tdata  = `SATURATE_32 (ru);
     assign M_AXIS4_tvalid = 1;
+    
     assign M_AXIS_UrefMON_tdata  = mu0s;
     assign M_AXIS_UrefMON_tvalid = 1;
 
