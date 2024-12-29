@@ -979,8 +979,20 @@ void rp_spmc_set_scanpos (double xs, double ys, double slew, int opts){
 void rp_spmc_set_lck_modulation_frequency (double freq){
         // 44 Bit Phase, using 48bit tdata
         unsigned long long phase_inc = (unsigned long long)round (dds_phaseinc (freq));
-        if (verbose > 1) fprintf(stderr, "##Configure: LCK DDS Freq= %g Hz [%lld]\n", freq, phase_inc);
-        set_gpio_cfgreg_int48 (SPMC_CFG_SC_LCK_DDS_PHASEINC, phase_inc);
+        // double df = fclk*(double)ddsphaseincQ44/(double)(Q44);  Want: Q44 / phase_inc_mod = INT
+        unsigned long long N = (unsigned long long)round ((double)(Q44+1) / phase_inc);
+        unsigned long long phase_inc_mod = (Q44+1) / N;
+        if (verbose > 1){
+                double fact = dds_phaseinc_to_freq (phase_inc);
+                double ferr = fact - freq;
+                fprintf(stderr, "##Configure: LCK DDS IDEAL Freq= %g Hz [%lld]  Actual f=%g Hz  Delta=%g mHz\n", freq, phase_inc, fact, ferr*1000);
+
+                fact = dds_phaseinc_to_freq (phase_inc_mod);
+                ferr = fact - freq;
+                fprintf(stderr, "##Configure: LCK DDS MOD   Freq= %g Hz [%lld]  Actual f=%g Hz  Delta=%g mHz\n", freq, phase_inc_mod, fact, ferr*1000);
+
+        }
+        set_gpio_cfgreg_int48 (SPMC_CFG_SC_LCK_DDS_PHASEINC, phase_inc_mod);
 }
 
 void rp_spmc_set_lck_volume (double volume){

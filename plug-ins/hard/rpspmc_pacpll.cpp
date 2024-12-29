@@ -162,12 +162,12 @@ SOURCE_SIGNAL_DEF rpspmc_source_signals[] = {
         { 0x00000020, "In2-Current",  " ", "nA",           "nA",               256*SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S6,  6 }, // CurrFac, see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x00000040, "In3-**",       " ", "V",             "V",                   SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S7,  7 },
         { 0x00000080, "In4-**",       " ", "V",             "V",                   SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S8,  8 },
-        { 0x00000100, "SWP*00",       " ", "Hz",           "Hz",        (125e6/((1L<<RP_FPGA_QFREQ)-1)), PROBEDATA_ARRAY_S10, 9 },  // ** swappable via GVP-SRC-MUX **
-        { 0x00000200, "SWP*01",       " ", "mV",           "mV",          (1.0/((1L<<RP_FPGA_QEXEC)-1)), PROBEDATA_ARRAY_S12, 10 }, // ** swappable via GVP-SRC-MUX **
-        { 0x00000400, "SWP*02",       " ", "deg",   UTF8_DEGREE, (180.0/(M_PI*((1L<<RP_FPGA_QATAN)-1))), PROBEDATA_ARRAY_S9,  11 }, // ** swappable via GVP-SRC-MUX **
-        { 0x00000800, "SWP*03",       " ", "mV",           "mV",          (1.0/((1L<<RP_FPGA_QSQRT)-1)), PROBEDATA_ARRAY_S11, 12 }, // ** swappable via GVP-SRC-MUX **
-        { 0x00001000, "SWP*04",       " ", "dV",           "dV",                   SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S13, 13 }, // ** swappable via GVP-SRC-MUX **
-        { 0x00002000, "SWP*05",       " ", "##",           "##",                   SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S14, 14 }, // ** swappable via GVP-SRC-MUX **
+        { 0x00000100, "SWP*00",       " ", "Hz",           "Hz",        (125e6/((1L<<RP_FPGA_QFREQ)-1)), PROBEDATA_ARRAY_S10, 9 },  // ** swappable via GVP-SRC-MUX ** -- been replaced as set from swappable_signals[]
+        { 0x00000200, "SWP*01",       " ", "mV",           "mV",          (1.0/((1L<<RP_FPGA_QEXEC)-1)), PROBEDATA_ARRAY_S12, 10 }, // ** swappable via GVP-SRC-MUX ** -- been replaced as set from swappable_signals[]
+        { 0x00000400, "SWP*02",       " ", "deg",   UTF8_DEGREE, (180.0/(M_PI*((1L<<RP_FPGA_QATAN)-1))), PROBEDATA_ARRAY_S9,  11 }, // ** swappable via GVP-SRC-MUX ** -- been replaced as set from swappable_signals[]
+        { 0x00000800, "SWP*03",       " ", "mV",           "mV",          (1.0/((1L<<RP_FPGA_QSQRT)-1)), PROBEDATA_ARRAY_S11, 12 }, // ** swappable via GVP-SRC-MUX ** -- been replaced as set from swappable_signals[]
+        { 0x00001000, "SWP*04",       " ", "dV",           "dV",                   SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S13, 13 }, // ** swappable via GVP-SRC-MUX ** -- been replaced as set from swappable_signals[]
+        { 0x00002000, "SWP*05",       " ", "##",           "##",                   SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S14, 14 }, // ** swappable via GVP-SRC-MUX ** -- been replaced as set from swappable_signals[]
         { 0x00004000, "--",           " ", "V",             "V",                                    1.0, PROBEDATA_ARRAY_S15,   -1 }, // -- DUMMY SO FAR
         { 0x00008000, "--",           " ", "V",             "V",                                    1.0, PROBEDATA_ARRAY_COUNT, -1 }, // -- DUMMY SO FAR
         { 0x80000000, "BlockI",       " ", "i#",           "i#",                                    1.0, PROBEDATA_ARRAY_BLOCK, -1 }, // MUST BE ALWAYS LAST AND IN HERE!! END MARK.
@@ -1775,6 +1775,7 @@ void RPSPMC_Control::create_folder (){
         bp->new_line ();
 	bp->grid_add_ec ("Modulation Frequency", new UnitObj("Hz","Hz"), &spmc_parameters.sc_lck_frequency, 0.0, 30e6, "5g", 1.0, 100.0, "SPMC-LCK-FREQ");
         bp->new_line ();
+        bp->grid_add_label ("Modulation on");
         bp->grid_add_modulation_target_options (0, (int)spmc_parameters.sc_lck_target, this);
 
         for (int jj=1; modulation_targets[jj].label; ++jj){
