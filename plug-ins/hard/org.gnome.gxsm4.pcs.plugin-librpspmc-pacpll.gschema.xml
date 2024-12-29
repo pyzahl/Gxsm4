@@ -467,18 +467,50 @@
       <description>pcs0000, PCS Remote-ID: 'fbs-scan-ldc-dz', Default/U:     0 Å/s    , Adjustment PCS Name: 'fbs-scan-ldc-dz' </description>
     </key>
 
-    <key name="dsp-lck-ac-bias-amp" type="d">
+
+    <key name="dsp-spmc-lck-freq" type="d">
       <default>0</default>
-      <summary>PCS Remote-ID: 'LCK-AC-Bias-Amp', Default/U:     0 V     </summary>
-      <description>pcs0000, PCS Remote-ID: 'LCK-AC-Bias-Amp', Default/U:     0 V    , Adjustment PCS Name: 'LCK-AC-Bias-Amp' </description>
+      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-FREQ', Default/U:     0 Hz     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-FREQ', Default/U:     300 Hz    , Adjustment PCS Name: 'dsp-SPMC-LCK-FREQ' </description>
     </key>
 
-    <key name="dsp-lck-ac-z-amp" type="d">
+    <key name="dsp-spmc-lck-mod-volume-x-scan" type="d">
       <default>0</default>
-      <summary>PCS Remote-ID: 'LCK-AC-Z-Amp', Default/U:     0 Å     </summary>
-      <description>pcs0000, PCS Remote-ID: 'LCK-AC-Z-Amp', Default/U:     0 Å    , Adjustment PCS Name: 'LCK-AC-Z-Amp' </description>
+      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-ModVolume-X-Scan', Default/U:     0 AA     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-ModVolume-X-Scan', Default/U:     0 AA    , Adjustment PCS Name: 'dsp-SPMC-LCK-ModVolume-X-Scan' </description>
     </key>
 
+    <key name="dsp-spmc-lck-mod-volume-y-scan" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-ModVolume-Y-Scan', Default/U:     0 AA     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-ModVolume-Y-Scan', Default/U:     0 AA    , Adjustment PCS Name: 'dsp-SPMC-LCK-ModVolume-Y-Scan' </description>
+    </key>
+
+    <key name="dsp-spmc-lck-mod-volume-z-scan" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-ModVolume-Z-Scan', Default/U:     0 AA     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-ModVolume-Z-Scan', Default/U:     0 AA    , Adjustment PCS Name: 'dsp-SPMC-LCK-ModVolume-Z-Scan' </description>
+    </key>
+
+    <key name="dsp-spmc-lck-mod-volume-bias" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-ModVolume-Bias', Default/U:     0 V     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-ModVolume-Bias', Default/U:     0 V    , Adjustment PCS Name: 'dsp-SPMC-LCK-ModVolume-Bias' </description>
+    </key>
+
+    <key name="dsp-spmc-lck-tau" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-TAU', Default/U:     0 ms     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-TAU', Default/U:     0 ms    , Adjustment PCS Name: 'dsp-SPMC-LCK-TAU' </description>
+    </key>
+
+    <key name="dsp-spmc-lck-phase" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-PHASE', Default/U:     0 °     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-PHASE', Default/U:     0 °    , Adjustment PCS Name: 'dsp-SPMC-LCK-PHASE' </description>
+    </key>
+
+    
     <key name="dsp-iv-start" type="d">
       <default>-1</default>
       <summary>PCS Remote-ID: 'IV-Start', Default/U:    -1 V     </summary>

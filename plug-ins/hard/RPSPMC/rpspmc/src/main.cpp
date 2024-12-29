@@ -413,6 +413,15 @@ CDoubleParameter  SPMC_SET_OFFSET_Z("SPMC_SET_OFFSET_Z", CBaseParameter::RW, 0.0
 CDoubleParameter  SPMC_SET_OFFSET_XY_SLEW("SPMC_SET_OFFSET_XY_SLEW", CBaseParameter::RW, 0.0, 0, 0.0, 1000.0); // V/s slew rate
 CDoubleParameter  SPMC_SET_OFFSET_Z_SLEW("SPMC_SET_OFFSET_Z_SLEW", CBaseParameter::RW, 0.0, 0, 0.0, 1000.0); // V/s slew rate
 
+// MODULATION, LOCK-IN
+
+CDoubleParameter  SPMC_SC_LCK_FREQUENCY("SPMC_SC_LCK_FREQUENCY", CBaseParameter::RW, 0.0, 0, 0.0, 30e6); // Hz
+CDoubleParameter  SPMC_SC_LCK_VOLUME("SPMC_SC_LCK_VOLUME", CBaseParameter::RW, 0.0, 0, 0.0, 5000.0); //  mV
+CIntParameter     SPMC_SC_LCK_TARGET("SPMC_SC_LCK_TARGET", CBaseParameter::RW, 0, 0, 0, 16); // # 0=NONE, 1:X, 2:Y, 3:Z, 4:U
+CDoubleParameter  SPMC_SC_LCK_PHASE("SPMC_SC_LCK_PHASE", CBaseParameter::RW, 0.0, 0, 0.0, 360.0); // deg
+CDoubleParameter  SPMC_SC_LCK_TAU("SPMC_SC_LCK_TAU", CBaseParameter::RW, 0.0, 0, 0.0, 10000.0); // ms
+
+
 
 // *** RP SPMC::GPIO MONITORS ***
 CDoubleParameter  SPMC_BIAS_MONITOR("SPMC_BIAS_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
@@ -1632,6 +1641,30 @@ void OnNewParams_RPSPMC(void){
                 spmc_stream_server_instance.add_info (info.str());
         }
 
+        // RPSPMC Lock-In...
+        if (SPMC_SC_LCK_FREQUENCY.IsNewValue ()){
+                SPMC_SC_LCK_FREQUENCY.Update ();
+                rp_spmc_set_lck_modulation_frequency (SPMC_SC_LCK_FREQUENCY.Value ());
+        }
+        if (SPMC_SC_LCK_VOLUME.IsNewValue ()){
+                SPMC_SC_LCK_VOLUME.Update ();
+                rp_spmc_set_lck_volume (SPMC_SC_LCK_VOLUME.Value ());
+        }
+        if (SPMC_SC_LCK_TARGET.IsNewValue ()){
+                SPMC_SC_LCK_TARGET.Update ();
+                rp_spmc_set_lck_target (SPMC_SC_LCK_TARGET.Value ());
+        }
+        if (SPMC_SC_LCK_PHASE.IsNewValue ()){
+                SPMC_SC_LCK_PHASE.Update ();
+                rp_spmc_set_lck_phase (SPMC_SC_LCK_PHASE.Value ());
+        }
+        if (SPMC_SC_LCK_TAU.IsNewValue ()){
+                SPMC_SC_LCK_TAU.Update ();
+                rp_spmc_set_lck_tau (SPMC_SC_LCK_TAU.Value ());
+        }
+
+
+        
 }
 
 // PACPLL Check New Parameters

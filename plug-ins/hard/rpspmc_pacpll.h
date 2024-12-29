@@ -110,6 +110,7 @@ public:
         GtkWidget* grid_add_mixer_options (gint channel, gint preset, gpointer ref);
         GtkWidget* grid_add_scan_input_signal_options (gint channel, gint preset, gpointer ref);
         GtkWidget* grid_add_probe_source_signal_options (gint channel, gint preset, gpointer ref);
+        GtkWidget* grid_add_modulation_target_options (gint channel, gint preset, gpointer ref);
 
         GtkWidget* grid_add_probe_status (const gchar *status_label);
         void grid_add_probe_controls (gboolean have_dual,
@@ -236,13 +237,6 @@ public:
                 dydt = 0;
                 dzdt = 0;
 
-                
-                // LockIn
-                AC_amp[0] = 0;
-                AC_amp[1] = 0;
-                AC_amp[2] = 0;
-                AC_amp[3] = 0;
-                AC_frq = 330;
 
 	// Graphs Folder -- user settings origin
                 Source = XSource = PSource = 0;
@@ -373,7 +367,7 @@ public:
         static int ldc_callback(GtkWidget *widget, RPSPMC_Control *dspc);
 
         static void lockin_adjust_callback(Param_Control* pcs, gpointer data);
-        static int lockin_runfree_callback(GtkWidget *widget, RPSPMC_Control *dspc);
+        static int choice_mod_target_callback (GtkWidget *widget, RPSPMC_Control *dspc);
 
         static void show_tab_to_configure (GtkWidget* w, gpointer data){
                 gtk_widget_show (GTK_WIDGET (g_object_get_data (G_OBJECT (w), "TabGrid")));
@@ -652,14 +646,11 @@ public:
 	double ue_slope_flg;
 
 	// LockIn
-	double    AC_amp[4], AC_frq, AC_phaseA, AC_phaseB;
-	Gtk_EntryControl *AC_frq_ec;
-	guint64   AC_option_flags;
-	guint64   AC_auto_flags;
-	GtkWidget *LockIn_mode;
-	GtkWidget *AC_status;
-	guint64   AC_glock_data[6];
-
+        #define LCK_NUM_TARGETS 8
+        int LCK_Target;
+	double    LCK_Volume[LCK_NUM_TARGETS];
+        GtkWidget *LCK_VolumeEntry[LCK_NUM_TARGETS];
+        
 	// Probing
 	int probe_trigger_raster_points_user;
 	int probe_trigger_raster_points;

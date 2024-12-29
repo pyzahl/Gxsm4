@@ -108,9 +108,15 @@
 // Bit2: Fuzzy CZ mode
 #define SPMC_CFG_Z_SERVO_MODE               (PACPLL_CFG1_OFFSET + 19) // 19: SERVO CONTROL REGISTER
 
-// CFG1 20...29 available
+#define SPMC_CFG_SC_LCK_DDS_PHASEINC        (PACPLL_CFG1_OFFSET + 20) // 20,21: Frequency 64bit LockIn (DDS Phase Inc)
+#define SPMC_CFG_SC_LCK_VOLUME              (PACPLL_CFG1_OFFSET + 22) // 22: SC Volume 
+#define SPMC_CFG_SC_LCK_TARGET              (PACPLL_CFG1_OFFSET + 23) // 23: Target for mixing 1..4 so far, 0=NONE / OFF
+#define SPMC_CFG_SC_LCK_TAU                 (PACPLL_CFG1_OFFSET + 24) // 24: Tau/Time const in ms
+#define SPMC_CFG_SC_LCK_PHASE               (PACPLL_CFG1_OFFSET + 25) // 25: Phase
 
-#define SPMC_GVP_STREAM_MUX4_SELECTOR       (PACPLL_CFG1_OFFSET + 30) // 19: SERVO CONTROL REGISTER
+// CFG1 26...29 available
+
+#define SPMC_CFG_GVP_STREAM_MUX4_SELECTOR   (PACPLL_CFG1_OFFSET + 30) // 19: SERVO CONTROL REGISTER
 
 
 // CFG DATA REGISTER 2 [1023:0]

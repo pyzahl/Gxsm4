@@ -23,10 +23,13 @@ module axis_spm_control#(
     parameter SAXIS_TDATA_WIDTH = 32,
     parameter QROTM = 28,
     parameter QSLOPE = 31,
+    parameter S_AXIS_SC_TDATA_WIDTH = 64,
+    parameter SC_DATA_WIDTH  = 25,  // SC 25Q24
+    parameter SC_Q_WIDTH     = 24,  // SC 25Q24
     parameter RDECI  = 5   // reduced rate decimation bits 1= 1/2 ...
 )
 (
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS_Xs:S_AXIS_Ys:S_AXIS_Zs:S_AXIS_U:S_AXIS_Z:M_AXIS1:M_AXIS2:M_AXIS3:M_AXIS4:M_AXIS_XSMON:M_AXIS_YSMON:M_AXIS_ZSMON:M_AXIS_X0MON:M_AXIS_Z_SLOPE:M_AXIS_Y0MON:M_AXIS_Z0MON:M_AXIS_UrefMON" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS_Xs:S_AXIS_Ys:S_AXIS_Zs:S_AXIS_U:S_AXIS_SC:S_AXIS_Z:M_AXIS1:M_AXIS2:M_AXIS3:M_AXIS4:M_AXIS_XSMON:M_AXIS_YSMON:M_AXIS_ZSMON:M_AXIS_X0MON:M_AXIS_Z_SLOPE:M_AXIS_Y0MON:M_AXIS_Z0MON:M_AXIS_UrefMON:M_AXIS_SC" *)
     input a_clk,
     // GVP/SCAN COMPONENTS, ROTATED RELATIVE COORDS TO SCAN CENTER
     input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS_Xs_tdata,
@@ -41,9 +44,18 @@ module axis_spm_control#(
     // Bias
     input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS_U_tdata,
     input wire                          S_AXIS_U_tvalid,
-    // two future control components using optional (DAC #5, #6)
-    // input [32-1:0] motor1, // ..
-    // input [32-1:0] motor2, // ..
+    // two future control components using optional (DAC #5, #6) "Motor1, Motor2"
+    //input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS_M1_tdata,
+    //input wire                          S_AXIS_M1_tvalid,
+    //input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS_M2_tdata,
+    //input wire                          S_AXIS_M2_tvalid,
+    
+    // SC Lock-In Reference and controls
+    input wire [S_AXIS_SC_TDATA_WIDTH-1:0]  S_AXIS_SC_tdata,
+    input wire                              S_AXIS_SC_tvalid,
+    input [31:0] modulation_volume, // volume for modulation Q31
+    input [31:0] modulation_target, // target signal for mod (#XYZUAB)
+    
 
     // scan rotation (yx=-xy, yy=xx)
     input [32-1:0] rotmxx, // =cos(alpha)
@@ -89,8 +101,10 @@ module axis_spm_control#(
     output wire                          M_AXIS_Z_SLOPE_tvalid,
     
     output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS_UrefMON_tdata,
-    output wire                          M_AXIS_UrefMON_tvalid
+    output wire                          M_AXIS_UrefMON_tvalid,
 
+    output wire [S_AXIS_SC_TDATA_WIDTH-1:0]  M_AXIS_SC_tdata,
+    output wire                              M_AXIS_SC_tvalid
     );
     
     // Xr  =   rotmxx*xs + rotmxy*ys
@@ -152,6 +166,15 @@ module axis_spm_control#(
     reg signed [32+2+QSLOPE+1-1:0] dZmx=0;
     reg signed [32+2+QSLOPE+1-1:0] dZmy=0;
     
+    
+    reg signed [SC_DATA_WIDTH-1:0] s=0; // Q SC (25Q24)
+    reg signed [SC_DATA_WIDTH-1:0] c=0; // Q SC (25Q24)
+    reg signed [SC_DATA_WIDTH-1:0] mv=0;
+    reg signed [3-1:0] mt=0;
+
+    reg signed [2*SC_DATA_WIDTH-1:0] mod_tmp=0;
+    reg signed [32-1:0] modulation=0;
+   
     reg [RDECI:0] rdecii = 0;
 
 /*
@@ -176,10 +199,21 @@ module axis_spm_control#(
 // Saturated result to 32bit
 `define SATURATE_32(REG) (REG > 33'sd2147483647 ? 32'sd2147483647 : REG < -33'sd2147483647 ? -32'sd2147483647 : REG[32-1:0]) 
 
-
     //always @ (posedge rdecii[RDECI])
     always @ (posedge a_clk)
     begin
+    
+        // LockIn 
+        // Sin, Cos
+        c <= S_AXIS_SC_tdata[                        SC_DATA_WIDTH-1 :                       0];  // 25Q24 full dynamic range, proper rounding   24: 0
+        s <= S_AXIS_SC_tdata[S_AXIS_SC_TDATA_WIDTH/2+SC_DATA_WIDTH-1 : S_AXIS_SC_TDATA_WIDTH/2];  // 25Q24 full dynamic range, proper rounding   56:32
+        mv <= modulation_volume[32-1:32-SC_DATA_WIDTH];
+        mt <= modulation_target[3-1:0];
+
+        mod_tmp    <= mv * s;
+        modulation <= mod_tmp >>> (SC_DATA_WIDTH -(32-SC_DATA_WIDTH)); // remap to default 32
+    
+    
         rdecii <= rdecii+1; // rdecii 00 01 *10 11 00 ...
         if (rdecii == 0)
         begin
@@ -214,14 +248,14 @@ module axis_spm_control#(
             `ADJUSTER (dZy, dZy_p, dZy_m, z_move_step, sly);
 
             // Bias set
-            ru <= mu0s + u;
+            ru <= mu0s + u + (mt == 4 ? modulation : 0);
     
             // Scan Rotation
             rrx <=  mxx*x + mxy*y;
             rry <= -mxy*x + mxx*y;
             
-            rx <= (rrx >>> QROTM) + mx0; // final global X pos
-            ry <= (rry >>> QROTM) + my0; // final global Y pos
+            rx <= (rrx >>> QROTM) + mx0 + (mt == 1 ? modulation : 0); // final global X pos
+            ry <= (rry >>> QROTM) + my0 + (mt == 2 ? modulation : 0); // final global Y pos
             
             // Z and slope comensation in global X,Y and in non rot coords. sys 0,0=invariant point
             z_servo  <= S_AXIS_Z_tdata;
@@ -230,10 +264,10 @@ module axis_spm_control#(
             dZmx <= dZx * rx;
             dZmy <= dZy * ry;
             
-            z_slope <= (dZmx >>> QSLOPE) + (dZmy >>> QSLOPE);
+            z_slope <= (dZmx >>> QSLOPE) + (dZmy >>> QSLOPE) + (mt == 3 ? modulation : 0);
             
-            z_sum   <= mz0 + z_gvp + z_slope + z_servo;
-            //z_sum    <= mz0 + z_gvp + z_servo;
+            z_sum   <= mz0 + z_gvp + z_servo;
+            //z_sum    <= mz0 + z_gvp + z_servo + Z_slope;
         end
     end    
     
@@ -269,5 +303,10 @@ module axis_spm_control#(
     assign M_AXIS4_tvalid = 1;
     assign M_AXIS_UrefMON_tdata  = mu0s;
     assign M_AXIS_UrefMON_tvalid = 1;
+
+    // pass to LockIn 
+    assign M_AXIS_SC_tdata  = S_AXIS_SC_tdata;
+    assign M_AXIS_SC_tvalid = S_AXIS_SC_tvalid; 
+
     
 endmodule

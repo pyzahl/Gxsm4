@@ -869,13 +869,13 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
 /*
 void rp_set_gvp_stream_mux_selector (int s9, int s10, int s11, int s12){
         if (verbose > 1) fprintf(stderr, "** set gvp stream mux %d %d %d %d\n", s9,s10,s11,s12);
-        set_gpio_cfgreg_int32 (SPMC_GVP_STREAM_MUX4_SELECTOR, .. | ((s12 & 0xf)<<12) | ((s11 & 0xf)<<8) | ((s10 & 0xf)<<4) | (s9 & 0xf) );
+        set_gpio_cfgreg_int32 (SPMC_CFG_GVP_STREAM_MUX4_SELECTOR, .. | ((s12 & 0xf)<<12) | ((s11 & 0xf)<<8) | ((s10 & 0xf)<<4) | (s9 & 0xf) );
 }
 */
 
 void rp_set_gvp_stream_mux_selector (int selector){
         if (verbose > 1) fprintf(stderr, "** set gvp stream mux %04x\n", selector);
-        set_gpio_cfgreg_int32 (SPMC_GVP_STREAM_MUX4_SELECTOR, selector);
+        set_gpio_cfgreg_int32 (SPMC_CFG_GVP_STREAM_MUX4_SELECTOR, selector);
 }
 
 // RPSPMC Location and Geometry
@@ -972,6 +972,42 @@ void rp_spmc_set_scanpos (double xs, double ys, double slew, int opts){
         if (verbose > 1) fprintf(stderr, "** set scanpos GVP started **\n");
 #endif
 }
+
+
+// Lock In / Modulation
+
+void rp_spmc_set_lck_modulation_frequency (double freq){
+        // 44 Bit Phase, using 48bit tdata
+        unsigned long long phase_inc = (unsigned long long)round (dds_phaseinc (freq));
+        if (verbose > 1) fprintf(stderr, "##Configure: LCK DDS Freq= %g Hz [%lld]\n", freq, phase_inc);
+        set_gpio_cfgreg_int48 (SPMC_CFG_SC_LCK_DDS_PHASEINC, phase_inc);
+}
+
+void rp_spmc_set_lck_volume (double volume){
+        if (verbose > 1) fprintf(stderr, "##Configure: LCK VOLUME volume= %g mV\n", volume);
+        set_gpio_cfgreg_int32 (SPMC_CFG_SC_LCK_VOLUME, volts_to_rpspmc(volume));
+}
+
+void rp_spmc_set_lck_target (int target){
+        if (verbose > 1) fprintf(stderr, "##Configure: LCK TARGET: #%d\n", target);
+        set_gpio_cfgreg_int32 (SPMC_CFG_SC_LCK_TARGET, target&0x0f);
+}
+
+void rp_spmc_set_lck_tau (double tau){
+        if (verbose > 1) fprintf(stderr, "##Configure: LCK TAU: %g ms\n", tau);
+        set_gpio_cfgreg_int32 (SPMC_CFG_SC_LCK_TAU, (int)round(Q31 * tau));
+}
+
+void rp_spmc_set_lck_phase (double phase){
+        if (verbose > 1) fprintf(stderr, "##Configure: LCK PHASE: %g deg\n", phase);
+        set_gpio_cfgreg_int32 (SPMC_CFG_SC_LCK_PHASE, (int)round(Q31 * phase));
+}
+
+
+
+
+
+
 
 
 /*

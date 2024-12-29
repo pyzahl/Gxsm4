@@ -212,6 +212,12 @@ struct SPMC_parameters {
         double xs_monitor; // scan coords
         double ys_monitor;
         double zs_monitor;
+
+        double sc_lck_frequency;
+        double sc_lck_volume;
+        double sc_lck_target;
+        double sc_lck_tau;
+        double sc_lck_phase;
 };
 
 #define MAX_GVP_VECTORS   32

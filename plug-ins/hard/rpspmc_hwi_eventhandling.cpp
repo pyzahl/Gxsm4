@@ -1039,13 +1039,11 @@ int RPSPMC_Control::Probing_save_callback( GtkWidget *widget, RPSPMC_Control *ds
                 f << "# DSP SCANCOORD POSITION :: NO MASTERSCAN SCAN COORDINATES N/A" << std::endl;
 	f << "# GXSM-DSP-Control-FB    :: Bias=" << dspc->bias << " V" <<  ", Current=" << dspc->mix_set_point[0]  << " nA" << std::endl; 
 	f << "# GXSM-DSP-Control-STS   :: #IV=" << dspc->IV_repetitions << " " << std::endl; 
-	f << "# GXSM-DSP-Control-LOCKIN:: AC_amp=[ " 
-	  << dspc->AC_amp[0] << " V, " << dspc->AC_amp[1] << ", " << dspc->AC_amp[2] << ", " << dspc->AC_amp[3] << "], "
-	  << " AC_frq=" << dspc->AC_frq << " Hz, "
-                //<< " AC_phaseA=" << dspc->AC_phaseA << " deg, "
-                //<< " AC_phaseB=" << dspc->AC_phaseB << " deg, "
-                //<< " AC_avg_cycles=" << dspc->AC_lockin_avg_cycels
-	  << " " << std::endl; 
+        // FIXME ** ADD LCK INFO **
+	//f << "# GXSM-DSP-Control-LOCKIN:: AC_amp=[ " 
+	//  << dspc->AC_amp[0] << " V, " << dspc->AC_amp[1] << ", " << dspc->AC_amp[2] << ", " << dspc->AC_amp[3] << "], "
+	//  << " AC_frq=" << dspc->AC_frq << " Hz, ";
+	f << " " << std::endl; 
 
 	gchar *tmp = g_strdup(main_get_gapp()->xsm->data.ui.comment);
 	gchar *cr;

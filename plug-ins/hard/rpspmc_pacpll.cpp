@@ -144,9 +144,9 @@ SOURCE_SIGNAL_DEF rpspmc_source_signals[] = {
         { 0x01000000, "Index",    " ",  "#",            "#",                  1.0, PROBEDATA_ARRAY_INDEX, 0 },
         { 0x02000000, "Time",     " ", "ms",           "ms",                  1.0, PROBEDATA_ARRAY_TIME,  0 }, // time in ms
         { 0x04000000, "SEC",      " ", "#",             "#",                  1.0, PROBEDATA_ARRAY_SEC,   0 },
-        { 0x00100000, "XS",       " ", "AA", UTF8_ANGSTROEM, SPMC_AD5791_to_volts, PROBEDATA_ARRAY_XS, 0 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
-        { 0x00200000, "YS",       " ", "AA", UTF8_ANGSTROEM, SPMC_AD5791_to_volts, PROBEDATA_ARRAY_YS, 0 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
-        { 0x00400000, "ZS",       " ", "AA", UTF8_ANGSTROEM, SPMC_AD5791_to_volts, PROBEDATA_ARRAY_ZS, 0 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
+        { 0x00100000, "X-Scan",   " ", "AA", UTF8_ANGSTROEM, SPMC_AD5791_to_volts, PROBEDATA_ARRAY_XS, 0 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
+        { 0x00200000, "Y-Scan",   " ", "AA", UTF8_ANGSTROEM, SPMC_AD5791_to_volts, PROBEDATA_ARRAY_YS, 0 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
+        { 0x00400000, "Z-Scan",   " ", "AA", UTF8_ANGSTROEM, SPMC_AD5791_to_volts, PROBEDATA_ARRAY_ZS, 0 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x00800000, "Bias",     " ", "V",             "V", SPMC_AD5791_to_volts, PROBEDATA_ARRAY_U,  0 },
         { 0x08000000, "AA",       " ", "V",             "V", SPMC_AD5791_to_volts, PROBEDATA_ARRAY_AA, -1 },
         { 0x10000000, "BB",       " ", "V",             "V", SPMC_AD5791_to_volts, PROBEDATA_ARRAY_BB, -1 },
@@ -177,10 +177,10 @@ SOURCE_SIGNAL_DEF rpspmc_source_signals[] = {
 // so far fixed to swappable 4 signals as of GUI design!
 SOURCE_SIGNAL_DEF swappable_signals[] = {                                                                 // DEFAULT MUX MAP, 16 signals max 
         //  SIGNAL #  Name               Units.... Scale                                         DEFAULT ASSIGN
-        { 0x00000000, "dFrequency",  " ", "Hz", "Hz", (125e6/((1L<<RP_FPGA_QFREQ)-1)),                0 }, // 0 => 0
-        { 0x00000001, "Excitation",  " ", "mV", "mV", (1.0/((1L<<RP_FPGA_QEXEC)-1)),                  1 }, // 1 => 1
-        { 0x00000002, "Phase",       " ", "deg", UTF8_DEGREE, (180.0/(M_PI*((1L<<RP_FPGA_QATAN)-1))), 2 }, // 2 => 2
-        { 0x00000003, "Amplitude",   " ", "mV", "mV", (1.0/((1L<<RP_FPGA_QSQRT)-1)),                  3 }, // 3 => 3
+        { 0x00000000, "dFrequency",  " ", "Hz", "Hz", (125e6/((1L<<RP_FPGA_QFREQ)-1)),                0 },
+        { 0x00000001, "Excitation",  " ", "mV", "mV", (1.0/((1L<<RP_FPGA_QEXEC)-1)),                  1 },
+        { 0x00000002, "Phase",       " ", "deg", UTF8_DEGREE, (180.0/(M_PI*((1L<<RP_FPGA_QATAN)-1))), 2 },
+        { 0x00000003, "Amplitude",   " ", "mV", "mV", (1.0/((1L<<RP_FPGA_QSQRT)-1)),                  3 },
         { 0x00000004, "dFreq Control", " ", "mV", "mV", (1.0),                                        4 },
         { 0x00000005, "Test05",      " ", "mV", "mV", (1.0),                                         -1 },
         { 0x00000006, "Test06",      " ", "mV", "mV", (1.0),                                         -1 },
@@ -193,6 +193,18 @@ SOURCE_SIGNAL_DEF swappable_signals[] = {                                       
         { 0x00000013, "LockInA",     " ", "dV", "dV", (SPMC_RPIN12_to_volts),                        -1 },
         { 0x00000014, "LockInB",     " ", "dV", "dV", (SPMC_RPIN12_to_volts),                        -1 },
         { 0x00000015, "Z-OUT",       " ", "mV", "mV", (SPMC_AD5791_to_volts),                         5 },
+        { 0x00000016,  NULL, NULL, NULL, NULL, 0.0, 0 }
+};
+
+SOURCE_SIGNAL_DEF modulation_targets[] = {
+        //  SIGNAL #  Name               Units.... Scale
+        { 0x00000000, "None/OFF",    " ",  "-",  "-", (1.0),                          0, 0 },
+        { 0x00000001, "X-Scan",      " ", "AA", UTF8_ANGSTROEM, SPMC_AD5791_to_volts, 0, 0 },
+        { 0x00000002, "Y-Scan",      " ", "AA", UTF8_ANGSTROEM, SPMC_AD5791_to_volts, 0, 0 },
+        { 0x00000003, "Z-Scan",      " ", "AA", UTF8_ANGSTROEM, SPMC_AD5791_to_volts, 0, 0 },
+        { 0x00000004, "Bias",        " ", "V",             "V", SPMC_AD5791_to_volts, 0, 0 },
+        //{ 0x00000005, "A",           " ", "V",             "V", SPMC_AD5791_to_volts, 0, 0 },
+        //{ 0x00000006, "B",           " ", "V",             "V", SPMC_AD5791_to_volts, 0, 0 },
         { 0x00000016,  NULL, NULL, NULL, NULL, 0.0, 0 }
 };
 
@@ -511,14 +523,6 @@ GtkWidget* GUI_Builder::grid_add_probe_source_signal_options (gint channel, gint
                 gchar *id = g_strdup_printf ("%d", jj); gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, swappable_signals[jj].label); g_free (id);
         }
 
-#if 0        
-        for (int jj=0;  jj<NUM_SIGNALS_UNIVERSAL && sranger_common_hwi->lookup_dsp_signal_managed (jj)->p; ++jj){ 
-                gchar *id = g_strdup_printf ("%d", jj);
-                const gchar *label = sranger_common_hwi->lookup_dsp_signal_managed (jj)->label;
-                gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, label?label:"???");
-                g_free (id);
-        }
-#endif
         if (preset >= 0)
                 gtk_combo_box_set_active (GTK_COMBO_BOX (cbtxt), preset); 
         else
@@ -526,6 +530,28 @@ GtkWidget* GUI_Builder::grid_add_probe_source_signal_options (gint channel, gint
                 
         g_signal_connect (G_OBJECT (cbtxt), "changed",	
                           G_CALLBACK (RPSPMC_Control::choice_prbsource_callback), 
+                          ref);				
+        grid_add_widget (cbtxt);
+        return cbtxt;
+};
+
+GtkWidget* GUI_Builder::grid_add_modulation_target_options (gint channel, gint preset, gpointer ref){
+        GtkWidget *cbtxt = gtk_combo_box_text_new (); 
+        gtk_widget_set_size_request (cbtxt, 50, -1); 
+        g_object_set_data(G_OBJECT (cbtxt), "mod_channel", GINT_TO_POINTER (channel)); 
+
+
+        for (int jj=0;  modulation_targets[jj].label; ++jj){
+                gchar *id = g_strdup_printf ("%d", jj); gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, modulation_targets[jj].label); g_free (id);
+        }
+
+        if (preset >= 0)
+                gtk_combo_box_set_active (GTK_COMBO_BOX (cbtxt), preset); 
+        else
+                gtk_combo_box_set_active (GTK_COMBO_BOX (cbtxt), 4); // NULL SIGNAL [TESTING FALLBACK for -1/error]
+                
+        g_signal_connect (G_OBJECT (cbtxt), "changed",	
+                          G_CALLBACK (RPSPMC_Control::choice_mod_target_callback), 
                           ref);				
         grid_add_widget (cbtxt);
         return cbtxt;
@@ -1616,7 +1642,6 @@ void RPSPMC_Control::create_folder (){
 
 	bp->grid_add_ec_with_scale ("ScanSpd", Speed, &scan_speed_x_requested, 0.1, 100000., "5g", 1., 10., "fbs-scan-speed-scan");
         scan_speed_ec = bp->ec;
-        bp->new_line ();
 
         bp->new_line ();
 	bp->grid_add_ec ("Fast Return", Unity, &fast_return, 1., 1000., "5g", 1., 10.,  "adv-scan-fast-return");
@@ -1624,11 +1649,10 @@ void RPSPMC_Control::create_folder (){
 #if 0
         bp->set_configure_list_mode_on ();
 	bp->grid_add_ec ("XS 2nd ZOff", Angstroem, &x2nd_Zoff, -10000., 10000., ".2f", 1., 1., "adv-scan-xs2nd-z-offset");
-        bp->new_line ();
         bp->set_configure_list_mode_off ();
 #endif
-        
-        bp->set_scale_nx (2);
+
+        bp->new_line ();
         bp->set_default_ec_change_notice_fkt (RPSPMC_Control::Slope_dZX_Changed, this);
         bp->grid_add_ec_with_scale ("Slope X", Unity, &area_slope_x, -0.2, 0.2, ".5f", 0.0001, 0.0001,  "adv-scan-slope-x"); slope_x_ec = bp->ec;
         gtk_scale_set_digits (GTK_SCALE (bp->scale), 5);
@@ -1637,6 +1661,7 @@ void RPSPMC_Control::create_folder (){
         bp->set_default_ec_change_notice_fkt (RPSPMC_Control::Slope_dZY_Changed, this);
         bp->grid_add_ec_with_scale ("Slope Y", Unity, &area_slope_y, -0.2, 0.2, ".5f", 0.0001, 0.0001,  "adv-scan-slope-y"); slope_y_ec = bp->ec;
         gtk_scale_set_digits (GTK_SCALE (bp->scale), 5);
+
         bp->set_scale_nx ();
         bp->new_line (0,2);
 
@@ -1744,23 +1769,31 @@ void RPSPMC_Control::create_folder (){
         bp->new_grid ();
         bp->start_notebook_tab (notebook, "Lock-In", "rpspmc-tab-lockin", hwi_settings);
 
- 	bp->new_grid_with_frame ("Digital Lock-In settings");
+ 	bp->new_grid_with_frame ("RP SPMC Lock-In Control and Routing");
         bp->set_default_ec_change_notice_fkt (RPSPMC_Control::lockin_adjust_callback, this);
-
-        bp->new_line ();
-
-#define GET_CURRENT_LOCKING_MODE 0 // dummy
         
-        LockIn_mode = bp->grid_add_check_button ("LockIn run free", "enable contineous modulation and LockIn processing." PYREMOTE_CHECK_HOOK_KEY("MainLCKrun"),
-                                                     1,
-                                                     GCallback (RPSPMC_Control::lockin_runfree_callback), this,
-                                                     GET_CURRENT_LOCKING_MODE, 0);
-
         bp->new_line ();
-	bp->grid_add_ec ("Bias Amp", Volt, &AC_amp[0], 0., 1., "5g", 0.001, 0.01, "LCK-AC-Bias-Amp");
+	bp->grid_add_ec ("Modulation Frequency", new UnitObj("Hz","Hz"), &spmc_parameters.sc_lck_frequency, 0.0, 30e6, "5g", 1.0, 100.0, "SPMC-LCK-FREQ");
         bp->new_line ();
-        bp->grid_add_ec ("Z Amp", Angstroem, &AC_amp[1], 0., 100., "5g", 0.01, 0.1, "LCK-AC-Z-Amp");
+        bp->grid_add_modulation_target_options (0, (int)spmc_parameters.sc_lck_target, this);
 
+        for (int jj=1; modulation_targets[jj].label; ++jj){
+                bp->new_line ();
+                gchar *lab = g_strdup_printf ("Volume for %s", modulation_targets[jj].label);
+                gchar *id = g_strdup_printf ("SPMC-LCK-ModVolume-%s", modulation_targets[jj].label);
+                UnitObj *u = new UnitObj(modulation_targets[jj].unit_sym, modulation_targets[jj].unit);
+                bp->grid_add_ec (lab, u, &LCK_Volume[jj], 0., 1e6, "5g", 0.001, 0.01, id);
+                g_free (lab);
+                g_free (id);
+                LCK_VolumeEntry[jj]=bp->input;
+        }
+        
+        bp->new_line ();
+	bp->grid_add_ec ("Time Const", new UnitObj("ms","ms"), &spmc_parameters.sc_lck_tau, 0., 1e6, "5g", 1e-6, 10e3, "SPMC-LCK-TAU");
+        bp->new_line ();
+	bp->grid_add_ec ("Phase", new UnitObj(UTF8_DEGREE,"Deg"), &spmc_parameters.sc_lck_phase, 0., 360., "5g", 0.1, 5.0, "SPMC-LCK-PHASE");
+
+        
         bp->notebook_tab_show_all ();
         bp->pop_grid ();
 
@@ -2549,7 +2582,6 @@ int RPSPMC_Control::choice_scansource_callback (GtkWidget *widget, RPSPMC_Contro
         if (rpspmc_pacpll)
                 rpspmc_pacpll->write_parameter ("SPMC_GVP_STREAM_MUX", __GVP_selection_muxval (self->scan_source));
 
-        // *** FIX ME channel==3 not working
         main_get_gapp()->channelselector->SetModeChannelSignal(13+channel,
                                                                swappable_signals[selection].label,
                                                                swappable_signals[selection].label,
@@ -2879,20 +2911,32 @@ int RPSPMC_Control::callback_GrMatWindow (GtkWidget *widget, RPSPMC_Control *sel
 
 void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, gpointer data){
 	RPSPMC_Control *self = (RPSPMC_Control*)data;
+        if (rpspmc_pacpll){
+                rpspmc_pacpll->write_parameter ("SPMC_SC_LCK_FREQUENCY", spmc_parameters.sc_lck_frequency);
+                double scale[LCK_NUM_TARGETS] = { 0.0, XAngFac, YAngFac, ZAngFac, BiasFac, 1.0, 1.0, 1.0 }; 
+                if  (self->LCK_Target > 0 && self->LCK_Target < LCK_NUM_TARGETS){ 
+                        spmc_parameters.sc_lck_volume = self->LCK_Volume[self->LCK_Target] / scale[self->LCK_Target];
+                        rpspmc_pacpll->write_parameter ("SPMC_SC_LCK_VOLUME", spmc_parameters.sc_lck_volume); // => Volts
+                }
+                rpspmc_pacpll->write_parameter ("SPMC_SC_LCK_TAU", spmc_parameters.sc_lck_tau);
+                g_message ("ADJ LOCKIN FRQ %g Hz, target=%d vol=%g V", spmc_parameters.sc_lck_frequency, self->LCK_Target, spmc_parameters.sc_lck_volume);
+        }
 }
 
-int RPSPMC_Control::lockin_runfree_callback(GtkWidget *widget, RPSPMC_Control *self){
+int RPSPMC_Control::choice_mod_target_callback (GtkWidget *widget, RPSPMC_Control *self){
         PI_DEBUG_GP (DBG_L4, "%s \n",__FUNCTION__);
-	if (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)))
-                PI_DEBUG_GP (DBG_L1, "LockIn Modul ON");
-	else
-                PI_DEBUG_GP (DBG_L1, "LockIn Modul OFF");
 
-	return 0;
+	self->LCK_Target = gtk_combo_box_get_active (GTK_COMBO_BOX (widget));
+        
+        for (int jj=1; modulation_targets[jj].label; ++jj)
+                gtk_widget_set_sensitive (self->LCK_VolumeEntry[jj], jj == self->LCK_Target);
+        
+        if (rpspmc_pacpll){
+                rpspmc_pacpll->write_parameter ("SPMC_SC_LCK_TARGET", self->LCK_Target);
+                self->lockin_adjust_callback (NULL, self); // update correct volume
+        }
+        return 0;
 }
-
-
-
 
 void RPSPMC_Control::update_controller () {
 
