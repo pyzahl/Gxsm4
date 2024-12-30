@@ -181,18 +181,18 @@ SOURCE_SIGNAL_DEF swappable_signals[] = {                                       
         { 0x00000001, "Excitation",  " ", "mV", "mV", (1.0/((1L<<RP_FPGA_QEXEC)-1)),                  1 },
         { 0x00000002, "Phase",       " ", "deg", UTF8_DEGREE, (180.0/(M_PI*((1L<<RP_FPGA_QATAN)-1))), 2 },
         { 0x00000003, "Amplitude",   " ", "mV", "mV", (1.0/((1L<<RP_FPGA_QSQRT)-1)),                  3 },
-        { 0x00000004, "dFreq Control", " ", "mV", "mV", (1.0),                                        4 },
+        { 0x00000004, "dFreq-Control", " ", "mV", "mV", (1.0),                                        4 },
         { 0x00000005, "Test05",      " ", "mV", "mV", (1.0),                                         -1 },
         { 0x00000006, "Test06",      " ", "mV", "mV", (1.0),                                         -1 },
         { 0x00000007, "Test07",      " ", "mV", "mV", (1.0),                                         -1 },
         { 0x00000008, "Test08",      " ", "mV", "mV", (1.0),                                         -1 },
         { 0x00000009, "Test09",      " ", "mV", "mV", (1.0),                                         -1 },
         { 0x00000010, "Test10",      " ", "mV", "mV", (1.0),                                         -1 },
-        { 0x00000011, "Test11",      " ", "mV", "mV", (1.0),                                         -1 },
-        { 0x00000012, "Test12",      " ", "mV", "mV", (1.0),                                         -1 },
-        { 0x00000013, "LockInX",     " ", "dV", "dV", (SPMC_RPIN12_to_volts),                        -1 },
-        { 0x00000014, "LockInY",     " ", "dV", "dV", (SPMC_RPIN12_to_volts),                        -1 },
-        { 0x00000015, "Z-OUT",       " ", "mV", "mV", (SPMC_AD5791_to_volts),                         5 },
+        { 0x00000011, "SineRef",     " ",  "V",  "V", (SPMC_AD5791_to_volts),                                         -1 },
+        { 0x00000012, "LockInX",     " ", "dV", "dV", (SPMC_RPIN12_to_volts),                        -1 },
+        { 0x00000013, "LockInY",     " ", "dV", "dV", (SPMC_RPIN12_to_volts),                        -1 },
+        { 0x00000014, "IN1noFIR",    " ",  "V",  "V", (SPMC_RPIN12_to_volts),                                         -1 },
+        { 0x00000015, "ZwSlope-OUT",  " ", "mV", "mV", (SPMC_AD5791_to_volts),                         5 },
         { 0x00000016,  NULL, NULL, NULL, NULL, 0.0, 0 }
 };
 
@@ -202,14 +202,14 @@ SOURCE_SIGNAL_DEF modulation_targets[] = {
         { 0x00000001, "X-Scan",      " ", "AA", UTF8_ANGSTROEM, SPMC_AD5791_to_volts, 0, 0 },
         { 0x00000002, "Y-Scan",      " ", "AA", UTF8_ANGSTROEM, SPMC_AD5791_to_volts, 0, 0 },
         { 0x00000003, "Z-Scan",      " ", "AA", UTF8_ANGSTROEM, SPMC_AD5791_to_volts, 0, 0 },
-        { 0x00000004, "Bias",        " ", "V",             "V", SPMC_AD5791_to_volts, 0, 0 },
+        { 0x00000004, "Bias",        " ", "mV",           "mV", SPMC_AD5791_to_volts, 0, 0 },
         //{ 0x00000005, "A",           " ", "V",             "V", SPMC_AD5791_to_volts, 0, 0 },
         //{ 0x00000006, "B",           " ", "V",             "V", SPMC_AD5791_to_volts, 0, 0 },
         { 0x00000016,  NULL, NULL, NULL, NULL, 0.0, 0 }
 };
 
 // helper func to assemble mux value from selctions
-int    __GVP_selection_muxval(int selection[6]) { int mux=0; for (int i=0; i<6; i++) mux |= (selection[i] & 0x0f)<<(4*i); return mux; }
+int __GVP_selection_muxval(int selection[6]) { int mux=0; for (int i=0; i<6; i++) mux |= (selection[i] & 0x0f)<<(4*i); return mux; }
 
 extern int debug_level;
 extern int force_gxsm_defaults;
@@ -2649,11 +2649,9 @@ int RPSPMC_Control::choice_prbsource_callback (GtkWidget *widget, RPSPMC_Control
         if (rpspmc_pacpll)
                 rpspmc_pacpll->write_parameter ("SPMC_GVP_STREAM_MUX", __GVP_selection_muxval (self->probe_source));
 
-        g_message ("RPSPMC_Control::choice_prbsource_callback: probe_source[%d] = %d [%s]", channel, selection, swappable_signals[selection].label);
-        
-        // ** template **
-        // must reconfigure controller accordingly here...
-        // ** template **
+        g_message ("RPSPMC_Control::choice_prbsource_callback: probe_source[%d] = %d [%s] MUX=%08x", channel, selection,
+                   swappable_signals[selection].label,
+                   __GVP_selection_muxval (self->probe_source));
 
         return 0;
 }
@@ -2812,6 +2810,8 @@ int RPSPMC_Control::Probing_exec_GVP_callback( GtkWidget *widget, RPSPMC_Control
 
         if (rpspmc_pacpll)
                 rpspmc_pacpll->write_parameter ("SPMC_GVP_STREAM_MUX", __GVP_selection_muxval (self->probe_source));
+
+        self->init_vp_signal_info_lookup_cache(); // update
 
 
         if (self->GVP_auto_flags & FLAG_AUTO_RUN_INITSCRIPT){

@@ -869,13 +869,13 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
 /*
 void rp_set_gvp_stream_mux_selector (int s9, int s10, int s11, int s12){
         if (verbose > 1) fprintf(stderr, "** set gvp stream mux %d %d %d %d\n", s9,s10,s11,s12);
-        set_gpio_cfgreg_int32 (SPMC_CFG_GVP_STREAM_MUX4_SELECTOR, .. | ((s12 & 0xf)<<12) | ((s11 & 0xf)<<8) | ((s10 & 0xf)<<4) | (s9 & 0xf) );
+        set_gpio_cfgreg_int32 (SPMC_CFG_GVP_STREAM_MUX6_SELECTOR, .. | ((s12 & 0xf)<<12) | ((s11 & 0xf)<<8) | ((s10 & 0xf)<<4) | (s9 & 0xf) );
 }
 */
 
-void rp_set_gvp_stream_mux_selector (int selector){
-        if (verbose > 1) fprintf(stderr, "** set gvp stream mux %04x\n", selector);
-        set_gpio_cfgreg_int32 (SPMC_CFG_GVP_STREAM_MUX4_SELECTOR, selector);
+void rp_set_gvp_stream_mux_selector (unsigned long selector){
+        if (verbose > 1) fprintf(stderr, "** set gvp stream mux 0x%06x\n", selector);
+        set_gpio_cfgreg_int32 (SPMC_CFG_GVP_STREAM_MUX6_SELECTOR, selector);
 }
 
 // RPSPMC Location and Geometry
@@ -976,28 +976,26 @@ void rp_spmc_set_scanpos (double xs, double ys, double slew, int opts){
 
 // Lock In / Modulation
 
-void rp_spmc_set_lck_modulation_frequency (double freq){
+double rp_spmc_set_lck_modulation_frequency (double freq){
         // 44 Bit Phase, using 48bit tdata
-        unsigned long long phase_inc = (unsigned long long)round (dds_phaseinc (freq));
-        // double df = fclk*(double)ddsphaseincQ44/(double)(Q44);  Want: Q44 / phase_inc_mod = INT
-        unsigned long long N = (unsigned long long)round ((double)(Q44+1) / phase_inc);
-        unsigned long long phase_inc_mod = (Q44+1) / N;
+        unsigned int n = round (log2(dds_phaseinc (freq)));
+        unsigned long long phase_inc = 1LL << n;
+        double fact = dds_phaseinc_to_freq (phase_inc);
+        
         if (verbose > 1){
-                double fact = dds_phaseinc_to_freq (phase_inc);
                 double ferr = fact - freq;
-                fprintf(stderr, "##Configure: LCK DDS IDEAL Freq= %g Hz [%lld]  Actual f=%g Hz  Delta=%g mHz\n", freq, phase_inc, fact, ferr*1000);
-
-                fact = dds_phaseinc_to_freq (phase_inc_mod);
-                ferr = fact - freq;
-                fprintf(stderr, "##Configure: LCK DDS MOD   Freq= %g Hz [%lld]  Actual f=%g Hz  Delta=%g mHz\n", freq, phase_inc_mod, fact, ferr*1000);
-
+                fprintf(stderr, "##Configure: LCK DDS IDEAL Freq= %g Hz [%lld, N2=%d, M=%lld]  Actual f=%g Hz  Delta=%g Hz  (using power of 2 phase_inc)\n", freq, phase_inc, n, QQ44/phase_inc, fact, ferr);
+                // Configure: LCK DDS IDEAL Freq= 100 Hz [16777216, N2=24, M=1048576]  Actual f=119.209 Hz  Delta=19.2093 Hz  (using power of 2 phase_inc)
         }
-        set_gpio_cfgreg_int48 (SPMC_CFG_SC_LCK_DDS_PHASEINC, phase_inc_mod);
+        
+        set_gpio_cfgreg_int48_16 (SPMC_CFG_SC_LCK_DDS_PHASEINC, phase_inc, n);
+
+        return fact;
 }
 
 void rp_spmc_set_lck_volume (double volume){
         if (verbose > 1) fprintf(stderr, "##Configure: LCK VOLUME volume= %g mV\n", volume);
-        set_gpio_cfgreg_int32 (SPMC_CFG_SC_LCK_VOLUME, volts_to_rpspmc(volume));
+        set_gpio_cfgreg_int32 (SPMC_CFG_SC_LCK_VOLUME, volts_to_rpspmc(1e-3*volume));
 }
 
 void rp_spmc_set_lck_target (int target){

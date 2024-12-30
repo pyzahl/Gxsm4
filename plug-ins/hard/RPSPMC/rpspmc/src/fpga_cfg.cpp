@@ -109,6 +109,10 @@ inline void set_gpio_cfgreg_int48 (int cfg_slot, unsigned long long value){
         set_gpio_cfgreg_int64 (cfg_slot, value << 16);
 }
  
+inline void set_gpio_cfgreg_int48_16(int cfg_slot, unsigned long long value, unsigned int n){
+        set_gpio_cfgreg_int64 (cfg_slot, value << 16 | (n&0xffff));
+}
+ 
 
 inline int32_t read_gpio_reg_int32_t (int gpio_block, int pos){
         size_t offset = (gpio_block-1) * FPGA_GPIO_SIZE + pos * 8;

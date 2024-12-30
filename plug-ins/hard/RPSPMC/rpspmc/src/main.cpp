@@ -374,7 +374,7 @@ CDoubleParameter  SPMC_Z_SERVO_LEVEL("SPMC_Z_SERVO_LEVEL", CBaseParameter::RW, 0
 #define SPMC_GVP_CONTROL_RESUME    3
 #define SPMC_GVP_CONTROL_PROGRAM   4
 
-CIntParameter     SPMC_GVP_STREAM_MUX("SPMC_GVP_STREAM_MUX", CBaseParameter::RW, 0, 0, 0,0xffff); //
+CIntParameter     SPMC_GVP_STREAM_MUX("SPMC_GVP_STREAM_MUX", CBaseParameter::RW, 0, 0, 0, 0xffffff); //
 
 CIntParameter     SPMC_GVP_CONTROL_MODE("SPMC_GVP_CONTROL", CBaseParameter::RW, 0, 0, 0, 0xffff);
 CBooleanParameter SPMC_GVP_LIVE_VECTOR_UPDATE("SPMC_GVP_LIVE_VECTOR_UPDATE", CBaseParameter::RW, true, 0);
@@ -1592,6 +1592,7 @@ void OnNewParams_RPSPMC(void){
 
         if (SPMC_GVP_STREAM_MUX.IsNewValue ()){
                 SPMC_GVP_STREAM_MUX.Update ();
+                fprintf(stderr, "*** SPMC_GVP_STREAM_MUX.IsNew Value = %06x\n", SPMC_GVP_STREAM_MUX.Value ());
                 rp_set_gvp_stream_mux_selector (SPMC_GVP_STREAM_MUX.Value ());
         }
 

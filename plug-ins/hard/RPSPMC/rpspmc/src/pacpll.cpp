@@ -92,28 +92,28 @@ extern CIntParameter TRANSPORT_CH5;
 // Q44: 32766.0000 Hz -> phase_inc=4611404543  0000000112dc72ff
 double dds_phaseinc (double freq){
         double fclk = ADC_SAMPLING_RATE;
-        return Q44*freq/fclk;
+        return QQ44*freq/fclk;
 }
 
 double dds_phaseinc_to_freq (unsigned long long ddsphaseincQ44){
         double fclk = ADC_SAMPLING_RATE;
 #ifdef DEVELOPMENT_PACPLL_OP_V
-        double df = fclk*(double)ddsphaseincQ44/(double)(Q44);
-        fprintf(stderr, "##DDS Phase Inc abs to freq: df= %12.4f Hz <- Q44 phase_inc=%lld  %016llx\n", df, ddsphaseincQ44, ddsphaseincQ44phase_inc);
+        double df = fclk*(double)ddsphaseincQ44/(double)(QQ44);
+        fprintf(stderr, "##DDS Phase Inc abs to freq: df= %12.4f Hz <- QQ44 phase_inc=%lld  %016llx\n", df, ddsphaseincQ44, ddsphaseincQ44phase_inc);
         return df;
 #else
-        return fclk*(double)ddsphaseincQ44/(double)(Q44);
+        return fclk*(double)ddsphaseincQ44/(double)(QQ44);
 #endif
 }
 
 double dds_phaseinc_rel_to_freq (long long ddsphaseincQ44){
         double fclk = ADC_SAMPLING_RATE;
 #ifdef DEVELOPMENT_PACPLL_OP_V
-        double df = fclk*(double)ddsphaseincQ44/(double)(Q44);
+        double df = fclk*(double)ddsphaseincQ44/(double)(QQ44);
         fprintf(stderr, "##DDS Phase Inc rel to freq: df= %12.4f Hz <- Q44 phase_inc=%lld  %016llx\n", df, ddsphaseincQ44, ddsphaseincQ44phase_inc);
         return df;
 #else
-        return fclk*(double)ddsphaseincQ44/(double)(Q44);
+        return fclk*(double)ddsphaseincQ44/(double)(QQ44);
 #endif
 }
 

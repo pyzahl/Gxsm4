@@ -116,7 +116,7 @@
 
 // CFG1 26...29 available
 
-#define SPMC_CFG_GVP_STREAM_MUX4_SELECTOR   (PACPLL_CFG1_OFFSET + 30) // 19: SERVO CONTROL REGISTER
+#define SPMC_CFG_GVP_STREAM_MUX6_SELECTOR   (PACPLL_CFG1_OFFSET + 30) // 19: SERVO CONTROL REGISTER
 
 
 // CFG DATA REGISTER 2 [1023:0]
@@ -263,6 +263,10 @@
 #define Q47 QN64(47)
 #define Q44 QN64(44)
 #define Q48 QN64(48)
+
+// for PhaseInc I need
+#define QQ44 (1LL<<44)
+
 
 typedef unsigned short guint16;
 typedef short gint16;
