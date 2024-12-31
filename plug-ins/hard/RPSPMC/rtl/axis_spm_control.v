@@ -208,11 +208,11 @@ module axis_spm_control#(
         // Sin, Cos
         c <= S_AXIS_SC_tdata[                        SC_DATA_WIDTH-1 :                       0];  // 25Q24 full dynamic range, proper rounding   24: 0
         s <= S_AXIS_SC_tdata[S_AXIS_SC_TDATA_WIDTH/2+SC_DATA_WIDTH-1 : S_AXIS_SC_TDATA_WIDTH/2];  // 25Q24 full dynamic range, proper rounding   56:32
-        mv <= modulation_volume[32-1:32-SC_DATA_WIDTH];
+        mv <= modulation_volume[32-1:0];
         mt <= modulation_target[3-1:0];
 
         mod_tmp    <= mv * s;
-        modulation <= mod_tmp >>> (SC_DATA_WIDTH -(32-SC_DATA_WIDTH)); // remap to default 32
+        modulation <= mod_tmp >>> SC_Q_WIDTH; // remap to default 32
     
     
         rdecii <= rdecii+1; // rdecii 00 01 *10 11 00 ...

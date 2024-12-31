@@ -892,6 +892,8 @@ public:
         // dummy template signal management
 	// SIGNAL MANAGEMENT
 
+        void set_spmc_signal_mux (int source[6]);
+        
 	virtual void read_dsp_signals () { read_signal_lookup (); read_actual_module_configuration (); };
 
 	virtual int lookup_signal_by_ptr(gint64 sigptr);

@@ -994,8 +994,8 @@ double rp_spmc_set_lck_modulation_frequency (double freq){
 }
 
 void rp_spmc_set_lck_volume (double volume){
-        if (verbose > 1) fprintf(stderr, "##Configure: LCK VOLUME volume= %g mV\n", volume);
-        set_gpio_cfgreg_int32 (SPMC_CFG_SC_LCK_VOLUME, volts_to_rpspmc(1e-3*volume));
+        if (verbose > 1) fprintf(stderr, "##Configure: LCK VOLUME volume= %g V\n", volume);
+        set_gpio_cfgreg_int32 (SPMC_CFG_SC_LCK_VOLUME, volts_to_rpspmc(volume));
 }
 
 void rp_spmc_set_lck_target (int target){

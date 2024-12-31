@@ -19,6 +19,34 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
+/*
+// Design for a half-adder
+module ha ( input   a, b,
+            output  sum, cout);
+
+  assign sum  = a ^ b;
+  assign cout = a & b;
+endmodule
+
+// A top level design that contains N instances of half adder
+module my_design
+	#(parameter N=4)
+		(	input [N-1:0] a, b,
+			output [N-1:0] sum, cout);
+
+	// Declare a temporary loop variable to be used during
+	// generation and won't be available during simulation
+	genvar i;
+
+	// Generate for loop to instantiate N times
+	generate
+		for (i = 0; i < N; i = i + 1) begin
+          ha u0 (a[i], b[i], sum[i], cout[i]);
+		end
+	endgenerate
+endmodule
+*/
+
 
 module axis_selector #(
     parameter SAXIS_TDATA_WIDTH = 32,
@@ -76,7 +104,8 @@ module axis_selector #(
     output wire [MAXIS_TDATA_WIDTH-1:0] M_AXIS_6_tdata,
     output wire                         M_AXIS_6_tvalid
     );
-    
+   
+   /* 
     reg [SAXIS_TDATA_WIDTH-1:0] data1 = 0;
     reg valid1 = 0;
     reg [SAXIS_TDATA_WIDTH-1:0] data2 = 0;
@@ -177,7 +206,6 @@ module axis_selector #(
         end  \
     endcase \
 
-
     always @ (posedge a_clk)
     begin
 
@@ -187,9 +215,8 @@ module axis_selector #(
         `MY_SELECTOR (axis_selector[16-1:12], data4, valid4);
         `MY_SELECTOR (axis_selector[20-1:16], data5, valid5);
         `MY_SELECTOR (axis_selector[24-1:20], data6, valid6);
-
     end
-    
+
     assign M_AXIS_1_tdata  = data1;
     assign M_AXIS_1_tvalid = valid1;
     assign M_AXIS_2_tdata  = data2;
@@ -202,5 +229,65 @@ module axis_selector #(
     assign M_AXIS_5_tvalid = valid5;
     assign M_AXIS_6_tdata  = data6;
     assign M_AXIS_6_tvalid = valid6;
-    
+*/  
+
+// my SELECTOR MUX
+// connects input N to output x stream
+
+
+`define MY_SELECTOR_DATA(N, xdata) \
+    assign xdata = N ==  0? S_AXIS_00_tdata \
+                 : N ==  1? S_AXIS_01_tdata \
+                 : N ==  2? S_AXIS_02_tdata \
+                 : N ==  3? S_AXIS_03_tdata \
+                 : N ==  4? S_AXIS_04_tdata \
+                 : N ==  5? S_AXIS_05_tdata \
+                 : N ==  6? S_AXIS_06_tdata \
+                 : N ==  7? S_AXIS_07_tdata \
+                 : N ==  8? S_AXIS_08_tdata \
+                 : N ==  9? S_AXIS_09_tdata \
+                 : N == 10? S_AXIS_10_tdata \
+                 : N == 11? S_AXIS_11_tdata \
+                 : N == 11? S_AXIS_12_tdata \
+                 : N == 12? S_AXIS_13_tdata \
+                 : N == 13? S_AXIS_13_tdata \
+                 : N == 14? S_AXIS_14_tdata \
+                 : N == 15? S_AXIS_15_tdata : 0 \
+                 
+
+`define MY_SELECTOR_VALID(N, xvalid) \
+    assign xvalid = N ==  0? S_AXIS_00_tvalid \
+                  : N ==  1? S_AXIS_01_tvalid \
+                  : N ==  2? S_AXIS_02_tvalid \
+                  : N ==  3? S_AXIS_03_tvalid \
+                  : N ==  4? S_AXIS_04_tvalid \
+                  : N ==  5? S_AXIS_05_tvalid \
+                  : N ==  6? S_AXIS_06_tvalid \
+                  : N ==  7? S_AXIS_07_tvalid \
+                  : N ==  8? S_AXIS_08_tvalid \
+                  : N ==  9? S_AXIS_09_tvalid \
+                  : N == 10? S_AXIS_10_tvalid \
+                  : N == 11? S_AXIS_11_tvalid \
+                  : N == 11? S_AXIS_12_tvalid \
+                  : N == 12? S_AXIS_13_tvalid \
+                  : N == 13? S_AXIS_13_tvalid \
+                  : N == 14? S_AXIS_14_tvalid \
+                  : N == 15? S_AXIS_15_tvalid : 0 \
+                 
+
+`MY_SELECTOR_DATA (axis_selector[4-1:0], M_AXIS_1_tdata);
+`MY_SELECTOR_DATA (axis_selector[8-1:4], M_AXIS_2_tdata);
+`MY_SELECTOR_DATA (axis_selector[12-1:8], M_AXIS_3_tdata);
+`MY_SELECTOR_DATA (axis_selector[16-1:12], M_AXIS_4_tdata);
+`MY_SELECTOR_DATA (axis_selector[20-1:16], M_AXIS_5_tdata);
+`MY_SELECTOR_DATA (axis_selector[24-1:20], M_AXIS_6_tdata);
+
+`MY_SELECTOR_VALID (axis_selector[4-1:0], M_AXIS_1_tvalid);
+`MY_SELECTOR_VALID (axis_selector[8-1:4], M_AXIS_2_tvalid);
+`MY_SELECTOR_VALID (axis_selector[12-1:8], M_AXIS_3_tvalid);
+`MY_SELECTOR_VALID (axis_selector[16-1:12], M_AXIS_4_tvalid);
+`MY_SELECTOR_VALID (axis_selector[20-1:16], M_AXIS_5_tvalid);
+`MY_SELECTOR_VALID (axis_selector[24-1:20], M_AXIS_6_tvalid);
+
+
 endmodule

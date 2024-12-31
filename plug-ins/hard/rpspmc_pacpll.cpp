@@ -2580,6 +2580,8 @@ int RPSPMC_Control::choice_scansource_callback (GtkWidget *widget, RPSPMC_Contro
 
 	PI_DEBUG_GP (DBG_L3, "GVP STREAM MUX SELECTOR:  [%d] %s ==> [%d]\n",signal, swappable_signals[selection].label, channel);
 
+        rpspmc_hwi->set_spmc_signal_mux (RPSPMC_ControlClass->scan_source);
+
         if (rpspmc_pacpll)
                 rpspmc_pacpll->write_parameter ("SPMC_GVP_STREAM_MUX", __GVP_selection_muxval (self->scan_source));
 
@@ -2646,6 +2648,8 @@ int RPSPMC_Control::choice_prbsource_callback (GtkWidget *widget, RPSPMC_Control
 	gint channel   = GPOINTER_TO_INT (g_object_get_data( G_OBJECT (widget), "prb_channel_source"));
 
 	self->probe_source[channel] = selection;
+
+        rpspmc_hwi->set_spmc_signal_mux (RPSPMC_ControlClass->probe_source);
         if (rpspmc_pacpll)
                 rpspmc_pacpll->write_parameter ("SPMC_GVP_STREAM_MUX", __GVP_selection_muxval (self->probe_source));
 
@@ -2693,6 +2697,12 @@ int RPSPMC_Control::Probing_exec_IV_callback( GtkWidget *widget, RPSPMC_Control 
 	if (self->check_vp_in_progress ()) 
 		return -1;
 
+        rpspmc_hwi->set_spmc_signal_mux (RPSPMC_ControlClass->probe_source);
+        if (rpspmc_pacpll)
+                rpspmc_pacpll->write_parameter ("SPMC_GVP_STREAM_MUX", __GVP_selection_muxval (self->probe_source));
+
+        self->init_vp_signal_info_lookup_cache(); // update signal mapping cache
+
         if (self->IV_auto_flags & FLAG_AUTO_RUN_INITSCRIPT){
                 gchar *tmp = g_strdup ("vp-sts-initial");
                 main_get_gapp()->SignalRemoteActionToPlugins (&tmp);
@@ -2721,19 +2731,16 @@ int RPSPMC_Control::Probing_exec_IV_callback( GtkWidget *widget, RPSPMC_Control 
 
 	self->current_auto_flags = self->IV_auto_flags;
 
+        // write and exec GVP code on controller and initiate data streaming
 
-        // ** TEMPLATE DUMMY **
-        // exec IV GVP code on controller now and initiate data streaming
-
-        // self->probe_trigger_single_shot = 1;
-	// self->write_spm_vector_program (1, PV_MODE_IV); // Exec STS probing here
+	self->write_spm_vector_program (1, PV_MODE_IV); // Write and Exec GVP program
 
 	return 0;
 }
 
 int RPSPMC_Control::Probing_write_IV_callback( GtkWidget *widget, RPSPMC_Control *self){
-        // write IV GVP code to controller
-        // self->write_spm_vector_program (0, PV_MODE_IV);
+        // write GVP code to controller
+        self->write_spm_vector_program (0, PV_MODE_IV);
         return 0;
 }
 
@@ -2808,10 +2815,11 @@ int RPSPMC_Control::Probing_exec_GVP_callback( GtkWidget *widget, RPSPMC_Control
 	if (self->check_vp_in_progress ()) 
 		return -1;
 
+        rpspmc_hwi->set_spmc_signal_mux (RPSPMC_ControlClass->probe_source);
         if (rpspmc_pacpll)
                 rpspmc_pacpll->write_parameter ("SPMC_GVP_STREAM_MUX", __GVP_selection_muxval (self->probe_source));
 
-        self->init_vp_signal_info_lookup_cache(); // update
+        self->init_vp_signal_info_lookup_cache(); // update signal mapping cache
 
 
         if (self->GVP_auto_flags & FLAG_AUTO_RUN_INITSCRIPT){
@@ -2840,7 +2848,6 @@ int RPSPMC_Control::Probing_exec_GVP_callback( GtkWidget *widget, RPSPMC_Control
 
         // write and exec GVP code on controller and initiate data streaming
         
-	// self->probe_trigger_single_shot = 1;
 	self->write_spm_vector_program (1, PV_MODE_GVP); // Write and Exec GVP program
 
 	return 0;
@@ -3817,6 +3824,7 @@ void RPspmc_pacpll::scan_start_callback (gpointer user_data){
         //self->operation_mode = 0;
         g_message ("RPspmc_pacpll::scan_start_callback");
 
+        rpspmc_hwi->set_spmc_signal_mux (RPSPMC_ControlClass->scan_source);
         if (RPSPMC_ControlClass)
                 rpspmc_pacpll->write_parameter ("SPMC_GVP_STREAM_MUX", __GVP_selection_muxval (RPSPMC_ControlClass->scan_source));
 

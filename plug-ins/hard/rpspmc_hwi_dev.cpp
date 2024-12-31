@@ -132,7 +132,6 @@ MOD_INPUT mod_input_list[] = {
 // HwI Implementation
 // ================================================================================
 
-
 rpspmc_hwi_dev::rpspmc_hwi_dev():RP_stream(this){
 
         // auto adjust and override preferences
@@ -147,33 +146,16 @@ rpspmc_hwi_dev::rpspmc_hwi_dev():RP_stream(this){
 
         // Automatic overriding GXSM core resources for RPSPMC setup to map scan data sources via channel selector:
 
+        // CHECK and init SWPS signals (GVP MUX MAPPING)
+        if (RPSPMC_ControlClass)
+                set_spmc_signal_mux (RPSPMC_ControlClass->scan_source);
+        else {
+                int defaults[6]={0,1,2,3,4,5};
+                set_spmc_signal_mux (defaults);
+        }
         
         // use SOURCE_SIGNAL_DEF rpspmc_source_signals[] table to auto configure
         for (int i=0; rpspmc_source_signals[i].label; ++i){ // name
-
-                // CHECK and init SWPS signals (GVP MUX MAPPING)
-                int k=-1;
-                switch (rpspmc_source_signals[i].mask){
-                case 0x0100: k=0; break;
-                case 0x0200: k=1; break;
-                case 0x0400: k=2; break;
-                case 0x0800: k=3; break;
-                case 0x1000: k=4; break;
-                case 0x2000: k=5; break;
-                }
-
-                if (k >= 0){
-                        if (RPSPMC_ControlClass)
-                                k = RPSPMC_ControlClass->scan_source[k];
-                      //rpspmc_source_signals[i].name         = swappable_signals[k].name;
-                        rpspmc_source_signals[i].label        = swappable_signals[k].label;
-                        rpspmc_source_signals[i].unit         = swappable_signals[k].unit;
-                        rpspmc_source_signals[i].unit_sym     = swappable_signals[k].unit_sym;
-                        rpspmc_source_signals[i].scale_factor = swappable_signals[k].scale_factor;
-                        g_message ("SCAN SOURCE SWPS INIT ** i=%d k=%d {%s} sfac=%g", i, k, rpspmc_source_signals[i].label,rpspmc_source_signals[i].scale_factor);
-                }
-                
-
                 g_message ("Reading SOURCE_SIGNALS[%d]",i);
                 g_message ("Reading SOURCE_SIGNALS[%d].mask %x",i,rpspmc_source_signals[i].mask);
                 g_message ("Reading SOURCE_SIGNALS[%d].label >%s<",i,rpspmc_source_signals[i].label);
@@ -1281,7 +1263,32 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2,
 	return TRUE;
 }
 
+
+
 // template/dummy signal management
+
+void rpspmc_hwi_dev::set_spmc_signal_mux (int source[6]){
+        int k;
+        for (int i=0; rpspmc_source_signals[i].label; ++i){ // name
+                k=-1;
+                switch (rpspmc_source_signals[i].mask){
+                case 0x0100: k=0; break;
+                case 0x0200: k=1; break;
+                case 0x0400: k=2; break;
+                case 0x0800: k=3; break;
+                case 0x1000: k=4; break;
+                case 0x2000: k=5; break;
+                default: continue;
+                }
+                k = source[k];
+                //rpspmc_source_signals[i].name         = swappable_signals[k].name;
+                rpspmc_source_signals[i].label        = swappable_signals[k].label;
+                rpspmc_source_signals[i].unit         = swappable_signals[k].unit;
+                rpspmc_source_signals[i].unit_sym     = swappable_signals[k].unit_sym;
+                rpspmc_source_signals[i].scale_factor = swappable_signals[k].scale_factor;
+                g_message ("GVP SOURCE MUX/SWPS INIT ** i=%d k=%d {%s} sfac=%g", i, k, rpspmc_source_signals[i].label,rpspmc_source_signals[i].scale_factor);
+        }
+}
 
 
 
