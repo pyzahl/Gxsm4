@@ -26,6 +26,18 @@ module tb_spm_ad(
 
     reg tb_ACLK;
     reg tb_ARESETn;
+
+    parameter AXIS_TDATA_WIDTH = 64;
+    parameter signed CR_INIT = 32'h7FFFFFFF;  // ((1<<31)-1)
+    parameter signed CI_INIT = 32'h00000000;
+    parameter signed ERROR_E_INIT = 64'h3FFFFFFFFFFFFFFF; //4611686018427387903
+    reg clock;
+    reg signed [31:0] deltasRe;
+    reg signed [31:0] deltasIm;
+    reg signed [AXIS_TDATA_WIDTH-1:0] deltasReIm;
+    wire signed [AXIS_TDATA_WIDTH-1:0] SinCos;
+    wire scv;
+ 
    
     wire temp_clk;
     wire temp_rstn; 
@@ -62,6 +74,38 @@ module tb_spm_ad(
     wire [31:0] spm_mrz; // ..
     wire [31:0] spm_mru; // ..
 
+    wire spm_rxv;
+    wire spm_ryv;
+    wire spm_rzv;
+    wire spm_ruv;
+
+    wire spm_mrxv;
+    wire spm_mryv;
+    wire spm_mrzv;
+    wire spm_mruv;
+
+    wire [31:0] spm_Zslope;
+    wire spm_Zslopev;
+
+
+    wire [31:0] spm_mx0;   
+    wire spm_mx0v;  
+    wire [31:0] spm_my0;   
+    wire spm_my0v;  
+            
+    wire [31:0] spm_mz0;   
+    wire spm_mz0v;  
+            
+    wire [31:0] spm_Zslope;
+    wire spm_Zslopev;
+            
+    wire [31:0] spm_Urm;   
+    wire spm_Urmv;  
+            
+    wire [63:0] SCp;       
+    wire SCpv;       
+
+
     wire [31:0] mrx; // vector components
     wire [31:0] mry; // ..
     wire [31:0] mrz; // ..
@@ -93,6 +137,14 @@ module tb_spm_ad(
 
     wire ad_ready;
 
+    reg [31:0] sig=0;
+    reg [63:0] sc=0;
+    reg [15:0] ddsn2=30;
+    reg [47:0] dphiQ44; 
+    //##Configure: LCK DDS IDEAL Freq= 10000 Hz [1073741824, N2=30, M=16384]  Actual f=7629.39 Hz  Delta=-2370.61 Hz  (using power of 2 phase_inc)
+
+    reg [47:0] ddsph=0;
+
     initial 
     begin       
         tb_ACLK = 1'b0;
@@ -101,12 +153,13 @@ module tb_spm_ad(
     //------------------------------------------------------------------------
     // Simple Clock Generator
     //------------------------------------------------------------------------
-    
-    always #10 tb_ACLK = !tb_ACLK;
        
     always begin
         pclk = 1; #1;
         pclk = 0; #1;
+        ddsph = ddsph + dphiQ44; 
+        sc  = { SinCos[63:32]>>7, SinCos[31:0]>>7 };
+        sig = SinCos[63:32];
     end
 
     always begin
@@ -119,6 +172,44 @@ module tb_spm_ad(
     begin
     
         $display ("running the tb");
+/*
+#!/usr/bin/python
+import numpy
+import math
+
+Q31 = 0x7FFFFFFF # ((1<<31)-1);
+Q32 = 0xFFFFFFFF # ((1<<32)-1);
+Q44 = 1<<44
+
+def adjust (hz):
+    fclk = 125e6
+    dphi = 2.*math.pi*(hz/fclk)
+    dRe = int (Q31 * math.cos (dphi))
+    dIm = int (Q31 * math.sin (dphi))
+
+    print ('fclk: ', fclk, ' Hz')
+    print ('dphi = ', dphi, ' rad')
+    print ('dphiQ44 = ', round(Q44*dphi/(2*math.pi)))
+    print ('deltasRe = ', dRe)
+    print ('deltasIm = ', dIm)
+    
+    return (dRe, dIm)
+
+print (adjust (100))
+*/
+        // SDB init
+        clock = 0;
+        
+        //fclk:  125000000.0  Hz
+        //dphi =  5.026548245743669e-06  rad
+        dphiQ44 =  14073749;
+        deltasRe =  2147483646;
+        deltasIm =  10794;
+
+        
+        deltasRe = 2145957801;
+        deltasIm = 80939050;
+        deltasReIm = { deltasRe, deltasIm };
 
 
         // INIT GVP
@@ -262,7 +353,6 @@ module tb_spm_ad(
 
 
 
-
 gvp gvp_1
     (
         .a_clk(pclk),    // clocking up to aclk
@@ -313,71 +403,41 @@ axis_bram_stream_srcs axis_bram_stream_srcs_tb
         .stall(dma_stall)
     );
 
-/*
-blk_mem_gen_spmc bram_store_inst (
-  .clka(clkbra),    // input wire clka
-  .wea(wr_en),      // input wire [0 : 0] wea
-  .addra(addr_wr),  // input wire [13 : 0] addra
-  .dina(data_wr),    // input wire [31 : 0] dina
-  .clkb(clk),    // input wire clkb
-  .enb(rd_en),      // input wire enb
-  .addrb(addr_rd),  // input wire [13 : 0] addrb
-  .doutb(data_rd)  // output wire [31 : 0] doutb
-);
-*/
 
-/*
-axis_spm_control axis_spm_control_1
-(
-    .rotmxy(0),
-    .rotmxx(1),
-
-    .slope_x(0),
-    .slope_y(0),
+axis_py_lockin lockin
+    (
+    .a_clk(pclk),    // clocking up to aclk
+    .S_AXIS_SIGNAL_tdata(sig),
+    .S_AXIS_SIGNAL_tvalid(1),
     
-    .S_AXIS_Z_tdata(0),
-    .S_AXIS_Z_tvalid(1),
-    // SCAN COMPONENTS, ROTATED RELATIVE COORDS
-    .xs(wx), // vector components
-    .ys(wy), // ..
-    .zs(wz), // ..
-    .u(wu), // ..
+    // SC Lock-In Reference and controls
+    .S_AXIS_SC_tdata(sc),
+    .S_AXIS_SC_tvalid(1),
+    .S_AXIS_DDS_N2_tdata(ddsn2),
+    .S_AXIS_DDS_N2_tvalid(1),
+    
+    // XY Output
+    .M_AXIS_A2_tdata(la2),
+    .M_AXIS_A2_tvalid(la2v),
+    .M_AXIS_X_tdata(lx),
+    .M_AXIS_X_tvalid(lxv),
+    .M_AXIS_Y_tdata(ly),
+    .M_AXIS_Y_tvalid(lyv),
+    
+    // S ref out
+    .M_AXIS_Sref_tdata(lsref),
+    .M_AXIS_Sref_tvalid(lsrv),
+    // SDeci ref out
+    .M_AXIS_SDref_tdata(lsd),
+    .M_AXIS_SDref_tvalid(lsdv)
+);    
 
-    // SCAN POSITION COMPONENTS, ABSOLUTE COORDS
-    .x0(0), // vector components
-    .y0(0),
-    .z0(0),
 
-    .a_clk(pclk),
-    .M_AXIS1_tdata(spm_rx),
-    .M_AXIS1_tvalid(spm_rxv),
-    .M_AXIS2_tdata(spm_ry),
-    .M_AXIS2_tvalid(spm_ryv),
-    .M_AXIS3_tdata(spm_rz),
-    .M_AXIS3_tvalid(spm_rzv),
-    .M_AXIS4_tdata(spm_ru),
-    .M_AXIS4_tvalid(spm_ruv),
-
-
-    .M_AXIS_XSMON_tdata(mrx),
-    //.M_AXIS_XSMON_tvalid,
-    .M_AXIS_YSMON_tdata(mry),
-    //.M_AXIS_YSMON_tvalid,
-
-    //.M_AXIS_XMON_tdata,
-    //.M_AXIS_XMON_tvalid,
-    //.M_AXIS_YMON_tdata,
-    //.M_AXIS_YMON_tvalid,
-    //.M_AXIS_ZMON_tdata,
-    //.M_AXIS_ZMON_tvalid,
-    //.M_AXIS_UMON_tvalid
-
-    );
 
 
     
 
-
+/*
 axis_AD5791 axis_AD5791_1 
 (
     .a_clk(pclk),
@@ -404,6 +464,106 @@ axis_AD5791 axis_AD5791_1
     
 */
 
+/*
+axis_spm_control axis_spm_control_tb
+(
+    .a_clk(pclk),
+    .S_AXIS_Xs_tdata(wx),
+    .S_AXIS_Xs_tvalid(1),
+    .S_AXIS_Ys_tdata(wy),
+    .S_AXIS_Ys_tvalid(q),
+    .S_AXIS_Zs_tdata(0),
+    .S_AXIS_Zs_tvalid(1),
+    
+    .S_AXIS_Z_tdata(0),
+    .S_AXIS_Z_tvalid(1),
+    
+    .S_AXIS_U_tdata(0),
+    .S_AXIS_U_tvalid(1),
+    // two future control components using optional (DAC #5, #6) "Motor1, Motor2"
+    //input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS_M1_tdata,
+    //input wire                          S_AXIS_M1_tvalid,
+    //input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS_M2_tdata,
+    //input wire                          S_AXIS_M2_tvalid,
+    
+    // SC Lock-In Reference and controls
+    .S_AXIS_SC_tdata(SinCos),
+    .S_AXIS_SC_tvalid(1),
+    .modulation_volume(10000), // volume for modulation Q31
+    .modulation_target(4), // target signal for mod (#XYZUAB)
+    
+
+    // scan rotation (yx=-xy, yy=xx)
+    .rotmxx(1), // =cos(alpha)
+    .rotmxy(0), // =sin(alpha)
+
+    // slope -- always applied in global XY plane ???
+    .slope_x(1000), // SQ28
+    .slope_y(1000), // SQ28
+
+    // SCAN OFFSET / POSITION COMPONENTS, ABSOLUTE COORDS
+    .x0(0), // vector components
+    .y0(0), // ..
+    .z0(0), // ..
+    .u0(0), // Bias Reference
+    .xy_offset_step(100), // @Q31 => Q31 / 120M => [18 sec full scale swin @ step 1 decii = 0]  x RDECI
+    .z_offset_step(100), // @Q31 => Q31 / 120M => [18 sec full scale swin @ step 1 decii = 0]  x RDECI
+
+    .M_AXIS1_tdata (spm_rx),  
+    .M_AXIS1_tvalid(spm_rxv), 
+    .M_AXIS2_tdata (spm_ry),  
+    .M_AXIS2_tvalid(spm_ryv), 
+    .M_AXIS3_tdata (spm_rz),  
+    .M_AXIS3_tvalid(spm_rzv), 
+    .M_AXIS4_tdata (spm_ru),  
+    .M_AXIS4_tvalid(spm_ruv), 
+
+    .M_AXIS_XSMON_tdata (spm_mrx),  
+    .M_AXIS_XSMON_tvalid(spm_mrxv),
+    .M_AXIS_YSMON_tdata (spm_mry),  
+    .M_AXIS_YSMON_tvalid(spm_mryv),
+    .M_AXIS_ZSMON_tdata (spm_mrz),  
+    .M_AXIS_ZSMON_tvalid(spm_mrzv),
+
+    .M_AXIS_X0MON_tdata (spm_mx0), 
+    .M_AXIS_X0MON_tvalid(spm_mx0v),
+    .M_AXIS_Y0MON_tdata (spm_my0),
+    .M_AXIS_Y0MON_tvalid(spm_my0v),
+    
+    .M_AXIS_Z0MON_tdata (spm_mz0),
+    .M_AXIS_Z0MON_tvalid(spm_mz0v),
+    
+  .M_AXIS_Z_SLOPE_tdata (spm_Zslope),
+  .M_AXIS_Z_SLOPE_tvalid(spm_Zslopev),
+    
+  .M_AXIS_UrefMON_tdata (spm_Urm),
+  .M_AXIS_UrefMON_tvalid(spm_Urmv),
+
+       .M_AXIS_SC_tdata (SCp),
+      .M_AXIS_SC_tvalid (SCpv)
+);
+*/
+
+//def adjust (hz)
+//    fclk = 1e6 
+//    dphi = 2.*pi*(hz/fclk)
+//    dRe = int (Q31 * cos (dphi))
+//    dIm = int (Q31 * sin (dphi))
+//    return (dRe, dIm)
+//Q31 = 0x7FFFFFFF # ((1<<31)-1);
+//Q32 = 0xFFFFFFFF # ((1<<32)-1);
+//cr = Q31 # ((1<<32)-1);
+//ci = 0;
+
+
+SineSDB64 SDB_tb
+(
+    .aclk (pclk),
+    .S_AXIS_DELTAS_tdata(deltasReIm), // deltas(Re,Im) vector
+    .S_AXIS_DELTAS_tvalid(1),
+    .M_AXIS_SC_tdata(SinCos), // (Sine, Cosine) vector
+    .M_AXIS_SC_tvalid(SCtv)
+);
 
 endmodule
 

@@ -39,8 +39,8 @@ module axis_spm_control#(
     input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS_Zs_tdata,
     input wire                          S_AXIS_Zs_tvalid,
     // Z Feedback Servo
-    input  wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS_Z_tdata,
-    input  wire                          S_AXIS_Z_tvalid,
+    input  wire [SAXIS_TDATA_WIDTH-1:0] S_AXIS_Z_tdata,
+    input  wire                         S_AXIS_Z_tvalid,
     // Bias
     input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS_U_tdata,
     input wire                          S_AXIS_U_tvalid,
@@ -53,8 +53,8 @@ module axis_spm_control#(
     // SC Lock-In Reference and controls
     input wire [S_AXIS_SC_TDATA_WIDTH-1:0]  S_AXIS_SC_tdata,
     input wire                              S_AXIS_SC_tvalid,
-    input [31:0] modulation_volume, // volume for modulation Q31
-    input [31:0] modulation_target, // target signal for mod (#XYZUAB)
+    input [32-1:0] modulation_volume, // volume for modulation Q31
+    input [32-1:0] modulation_target, // target signal for mod (#XYZUAB)
     
 
     // scan rotation (yx=-xy, yy=xx)
@@ -178,12 +178,6 @@ module axis_spm_control#(
    
     reg [RDECI:0] rdecii = 0;
 
-/*
-    always @ (posedge a_clk)
-    begin
-        rdecii <= rdecii+1;
-    end
-*/
 
 // Value adjuster
 `define ADJUSTER(REG, XP, XM, STEP, TARGET) \
@@ -195,7 +189,7 @@ module axis_spm_control#(
         REG <= XM;     \
     else               \
         REG <= TARGET; \
-    end                \
+    end
 
 // Saturated result to 32bit
 `define SATURATE_32(REG) (REG > 33'sd2147483647 ? 32'sd2147483647 : REG < -33'sd2147483647 ? -32'sd2147483647 : REG[32-1:0]) 
@@ -203,22 +197,18 @@ module axis_spm_control#(
     //always @ (posedge rdecii[RDECI])
     always @ (posedge a_clk)
     begin
-    
-        // LockIn 
-        // Sin, Cos
-        c <= S_AXIS_SC_tdata[                        SC_DATA_WIDTH-1 :                       0];  // 25Q24 full dynamic range, proper rounding   24: 0
-        s <= S_AXIS_SC_tdata[S_AXIS_SC_TDATA_WIDTH/2+SC_DATA_WIDTH-1 : S_AXIS_SC_TDATA_WIDTH/2];  // 25Q24 full dynamic range, proper rounding   56:32
-        mv <= modulation_volume[32-1:0];
-        mt <= modulation_target[3-1:0];
-
-        mod_tmp    <= mv * s;
-        modulation <= mod_tmp >>> SC_Q_WIDTH; // remap to default 32
-    
-    
         rdecii <= rdecii+1; // rdecii 00 01 *10 11 00 ...
         if (rdecii == 0)
         begin
-        // always buffer locally
+            // LockIn Sin, Cos from DDS
+            c <= S_AXIS_SC_tdata[                        SC_DATA_WIDTH-1 : 0]; // 25Q24 full dynamic range, proper rounding   24: 0
+            s <= S_AXIS_SC_tdata[S_AXIS_SC_TDATA_WIDTH/2+SC_DATA_WIDTH-1 : S_AXIS_SC_TDATA_WIDTH/2]; // 25Q24 full dynamic range, proper rounding   56:32
+            mv <= modulation_volume[32-1 : 32-SC_DATA_WIDTH];
+            mt <= modulation_target[3-1:0];
+            mod_tmp    <= mv * s;
+            modulation <= mod_tmp >>> SC_Q_WIDTH; // remap to default 32
+            
+            // always buffer locally
             xy_move_step <= xy_offset_step; // XY offset adjuster speed limit (max step)
             z_move_step  <= z_offset_step; // Z offset / slope comp. speed limit (max step) when adjusting
 
@@ -240,13 +230,13 @@ module axis_spm_control#(
             mu0s <= u0;
             
              // MUST ASSURE mx0+/-xy_move_step never exceeds +/-Q31 -- exta bit used + saturation as assign -- to avoid over flow else a PBC jump will happen! 
-            `ADJUSTER (mx0, mx0p, mx0m, xy_move_step, mx0s);
-            `ADJUSTER (my0, my0p, my0m, xy_move_step, my0s);
-            `ADJUSTER (mz0, mz0p, mz0m, z_move_step, mz0s);
+            `ADJUSTER (mx0, mx0p, mx0m, xy_move_step, mx0s)
+            `ADJUSTER (my0, my0p, my0m, xy_move_step, my0s)
+            `ADJUSTER (mz0, mz0p, mz0m, z_move_step, mz0s)
                         
             // slope_x, y adjusters for smooth op
-            `ADJUSTER (dZx, dZx_p, dZx_m, z_move_step, slx);
-            `ADJUSTER (dZy, dZy_p, dZy_m, z_move_step, sly);
+            `ADJUSTER (dZx, dZx_p, dZx_m, z_move_step, slx)
+            `ADJUSTER (dZy, dZy_p, dZy_m, z_move_step, sly)
 
             // Bias set
             ru <= mu0s + u + (mt == 4 ? modulation : 0);

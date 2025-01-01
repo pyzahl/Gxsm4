@@ -21,7 +21,7 @@
 
 
 module axis_py_lockin#(
-    parameter S_AXIS_SIGNAL_TDATA_WIDTH = 32,  // SC 25Q24
+    parameter S_AXIS_SIGNAL_TDATA_WIDTH = 32, 
     parameter LCK_CORRSUM_WIDTH = 32,  // Final Precision
     parameter S_AXIS_SC_TDATA_WIDTH = 64,
     parameter SC_DATA_WIDTH  = 25,  // SC 25Q24
@@ -32,7 +32,7 @@ module axis_py_lockin#(
     parameter DECII2_MAX = 16
 )
 (
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS_SC:S_AXIS_SIGNAL:S_AXIS_DDS_N2:M_AXIS_X:M_AXIS_Y:M_AXIS_Sref" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS_SC:S_AXIS_SIGNAL:S_AXIS_DDS_N2:M_AXIS_A2:M_AXIS_X:M_AXIS_Y:M_AXIS_Sref:M_AXIS_SDref" *)
     input a_clk,
     
     // SIGNAL
@@ -46,6 +46,8 @@ module axis_py_lockin#(
     input wire           S_AXIS_DDS_N2_tvalid,
     
     // XY Output
+    output wire [LCK_CORRSUM_WIDTH-1:0]  M_AXIS_A2_tdata,
+    output wire                          M_AXIS_A2_tvalid,
     output wire [LCK_CORRSUM_WIDTH-1:0]  M_AXIS_X_tdata,
     output wire                          M_AXIS_X_tvalid,
     output wire [LCK_CORRSUM_WIDTH-1:0]  M_AXIS_Y_tdata,
@@ -53,17 +55,21 @@ module axis_py_lockin#(
     
     // S ref out
     output wire [32-1:0]  M_AXIS_Sref_tdata,
-    output wire           M_AXIS_Sref_tvalid
+    output wire           M_AXIS_Sref_tvalid,
+    // SDeci ref out
+    output wire [32-1:0]  M_AXIS_SDref_tdata,
+    output wire           M_AXIS_SDref_tvalid
     );
 
     // Lock-In
     // ========================================================
     // Calculated and internal width and sizes 
     localparam integer LCK_BUFFER_LEN   = (1<<LCK_BUFFER_LEN2);
-    localparam integer LCK_SUM_WIDTH    = (LCK_CORRSUM_WIDTH+LCK_BUFFER_LEN);
+    localparam integer LCK_SUM_WIDTH    = (LCK_CORRSUM_WIDTH+LCK_BUFFER_LEN2);
        
     reg signed [SC_DATA_WIDTH-1:0] s=0; // Q SC (25Q24)
     reg signed [SC_DATA_WIDTH-1:0] c=0; // Q SC (25Q24)
+    reg signed [31:0] sd=0; // dbg only
 
     reg signed [LCK_Q_WIDTH-1:0] sig_in     = 0;
     reg signed [LCK_Q_WIDTH-1:0] signal     = 0;
@@ -80,46 +86,70 @@ module axis_py_lockin#(
     reg signed [LCK_CORRSUM_WIDTH-1:0] LckX_mem [LCK_BUFFER_LEN-1:0];
     reg signed [LCK_CORRSUM_WIDTH-1:0] LckY_mem [LCK_BUFFER_LEN-1:0];
 
-    reg [16-1 : 0] dds_n2=8;
-    reg [LCK_BUFFER_LEN2-1 : 0] dds_n=16;
+    reg signed [LCK_CORRSUM_WIDTH-1:0] a=0;
+    reg signed [LCK_CORRSUM_WIDTH-1:0] b=0;
+    reg [2*(LCK_CORRSUM_WIDTH-1)+1-1:0] ampl2=0; // Q LMS Squared 
+    reg [2*(LCK_CORRSUM_WIDTH-1)+1-1:0] a2=0; 
+    reg [2*(LCK_CORRSUM_WIDTH-1)+1-1:0] b2=0; 
+    reg signed [LCK_CORRSUM_WIDTH+2-1:0] x=0; 
+    reg signed [LCK_CORRSUM_WIDTH+2-1:0] y=0; 
+
+    reg [16-1 : 0] dds_n2=0;
+    reg [16-1 : 0] dds_n2_last=0;
+    reg [LCK_BUFFER_LEN2-1 : 0] dds_n=0;
     reg [LCK_BUFFER_LEN2+1-1 : 0] i=0;
 
     reg [6-1:0] decii2 = 5;
-    reg [DECII2_MAX-1:0] decii  = (1 << 5) - 1;
+    reg [DECII2_MAX-1:0] decii  = 0;
     reg [DECII2_MAX-1:0] rdecii = 0;
+
+    integer ii;
+    initial begin
+        for (ii=0; ii<LCK_BUFFER_LEN; ii=ii+1)
+        begin
+            LckX_mem [ii] = 0;
+            LckY_mem [ii] = 0;
+        end     
+    end
 
     
     always @ (posedge a_clk)
     begin
-        sig_in <= S_AXIS_SIGNAL_tdata[S_AXIS_SIGNAL_TDATA_WIDTH-1:S_AXIS_SIGNAL_TDATA_WIDTH-LCK_Q_WIDTH];
+        // Sin, Cos
+        c <= S_AXIS_SC_tdata[                        SC_DATA_WIDTH-1 :                       0];  // 25Q24 full dynamic range, proper rounding   24: 0
+        s <= S_AXIS_SC_tdata[S_AXIS_SC_TDATA_WIDTH/2+SC_DATA_WIDTH-1 : S_AXIS_SC_TDATA_WIDTH/2];  // 25Q24 full dynamic range, proper rounding   56:32
+        // signal
+        sig_in <= S_AXIS_SIGNAL_tdata[S_AXIS_SIGNAL_TDATA_WIDTH-1:S_AXIS_SIGNAL_TDATA_WIDTH-LCK_Q_WIDTH];   
         
         // DDS N / cycle
         dds_n2 <= S_AXIS_DDS_N2_tdata;
-
-        if (dds_n2 > LCK_BUFFER_LEN2)
+        if (dds_n2 != dds_n2_last)
         begin
-            decii2 <= dds_n2 - LCK_BUFFER_LEN2;
-            decii  <= (1 << decii2) - 1; 
-            dds_n  <= (1 << LCK_BUFFER_LEN2) - 1;
-        end else begin
-            decii2 <= 0;
-            decii  <= 0; 
-            dds_n  <= (1 << dds_n2) - 1;
-        end
-        
-        if (rdecii == decii)
+            dds_n2_last <= dds_n2;
+            if (dds_n2 > LCK_BUFFER_LEN2)
+            begin
+                decii2 <= dds_n2 - LCK_BUFFER_LEN2;
+                decii  <= (1 << decii2) - 1; 
+                dds_n  <= (1 << LCK_BUFFER_LEN2) - 1;
+            end else begin
+                decii2 <= 0;
+                decii  <= 0; 
+                dds_n  <= (1 << dds_n2) - 1;
+            end
+        end     
+        if (rdecii == 0)
         begin
-            rdecii <= 0;
-            
+            rdecii <= decii; // reload
             signal_dec <= sig_in; // start new sum
             signal <= signal_dec >>> decii2;
             
             // LockIn ====
-            // Sin, Cos
-            c <= S_AXIS_SC_tdata[                        SC_DATA_WIDTH-1 :                       0];  // 25Q24 full dynamic range, proper rounding   24: 0
-            s <= S_AXIS_SC_tdata[S_AXIS_SC_TDATA_WIDTH/2+SC_DATA_WIDTH-1 : S_AXIS_SC_TDATA_WIDTH/2];  // 25Q24 full dynamic range, proper rounding   56:32
             
-            signal   <= S_AXIS_SIGNAL_tdata[S_AXIS_SIGNAL_TDATA_WIDTH-1:S_AXIS_SIGNAL_TDATA_WIDTH-LCK_Q_WIDTH];
+            if (i==0)
+                sd <= 1<<26; // dbg purpose only
+            else
+                sd <= s; // dbg purpose only
+            signal   <= S_AXIS_SIGNAL_tdata[S_AXIS_SIGNAL_TDATA_WIDTH-1:S_AXIS_SIGNAL_TDATA_WIDTH-LCK_Q_WIDTH]; // top bits as of LCK_Q_WIDTH
 
             // Quad Correlation Products
             LckXcorrpW <= s * signal; // SC_Q_WIDTH x LMS_DATA_WIDTH , LMS_Q_WIDTH
@@ -141,19 +171,33 @@ module axis_py_lockin#(
 
             i <= (i+1) & dds_n;
     
+            // need to normalize:
+            a <= LckX_sum >>> dds_n;
+            b <= LckY_sum >>> dds_n;
+            a2 <= a*a;
+            b2 <= b*b;
+            ampl2 <= a2 + b2; // 1Q44
+            y     <= a - b;
+            x     <= a + b;
+   
         end
         else
         begin
-            rdecii <= rdecii+1;
+            rdecii <= rdecii-1; // dec
             signal_dec <= signal_dec + sig_in; // sum
         end     
     end
     
-    assign M_AXIS_X_tdata  = LckX_sum;
+    assign M_AXIS_A2_tdata  = ampl2;
+    assign M_AXIS_A2_tvalid = 1;
+    assign M_AXIS_X_tdata  = i; // x // testing
     assign M_AXIS_X_tvalid = 1;
-    assign M_AXIS_Y_tdata  = LckY_sum;
+    assign M_AXIS_Y_tdata  = y;
     assign M_AXIS_Y_tvalid = 1;
 
-    assign M_AXIS_Sref     = { {(32-SC_DATA_WIDTH){s[SC_DATA_WIDTH-1]}}, s[SC_DATA_WIDTH-1:0] };
+    assign M_AXIS_Sref_tdata = {{(32-SC_DATA_WIDTH){c[SC_DATA_WIDTH-1]}}, {c[SC_DATA_WIDTH-1:0]}};
+    assign M_AXIS_Sref_tvalid = 1;
+    assign M_AXIS_SDref_tdata = sd;
+    assign M_AXIS_SDref_valid = 1;
 
 endmodule

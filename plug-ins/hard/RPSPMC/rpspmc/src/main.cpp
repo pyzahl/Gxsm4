@@ -1483,6 +1483,8 @@ void UpdateParams(void){
 // RPSPMC Check New Parameters
 // ****************************************
 void OnNewParams_RPSPMC(void){
+        static int do_rotate=0;
+        
         if (SPMC_BIAS.IsNewValue()){
                 SPMC_BIAS.Update ();
                 //fprintf(stderr, "New Bias = %g V\n", SPMC_BIAS.Value());
@@ -1516,9 +1518,9 @@ void OnNewParams_RPSPMC(void){
         }
         
 
-        if (SPMC_ALPHA.IsNewValue ()){
+        if (SPMC_ALPHA.IsNewValue () || do_rotate){
                 SPMC_ALPHA.Update ();
-                rp_spmc_set_rotation (SPMC_ALPHA.Value ());
+                do_rotate = rp_spmc_set_rotation (SPMC_ALPHA.Value (), SPMC_SET_OFFSET_XY_SLEW.Value ());
         }
         
         if (SPMC_SLOPE_DZX.IsNewValue () || SPMC_SLOPE_DZY.IsNewValue () || SPMC_SLOPE_SLEW.IsNewValue ()){

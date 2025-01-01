@@ -879,10 +879,44 @@ void rp_set_gvp_stream_mux_selector (unsigned long selector){
 }
 
 // RPSPMC Location and Geometry
-void rp_spmc_set_rotation (double alpha){
-        if (verbose > 1) fprintf(stderr, "** set rotation %g\n", alpha);
-        set_gpio_cfgreg_int32 (SPMC_ROTM_XX, (int)round (Q_XY_PRECISION*cos(alpha)));
-        set_gpio_cfgreg_int32 (SPMC_ROTM_XY, (int)round (Q_XY_PRECISION*sin(alpha)));
+int rp_spmc_set_rotation (double alpha, double slew){
+        static double current_alpha=0.0;
+        int ret = -1;
+        
+        if (verbose > 1) fprintf(stderr, "** adjusting rotation to %g\n", alpha);
+
+        double delta = alpha - current_alpha;
+
+        if (fabs (delta) < 1e-3){
+                current_alpha = alpha;
+                ret=0; // done
+        } else {
+                double xs = rpspmc_to_volts (read_gpio_reg_int32 (1,0)); // (0,0 in FPGA-DIA)
+                double ys = rpspmc_to_volts (read_gpio_reg_int32 (1,1));
+                double r  = sqrt(xs*xs + ys*ys);
+
+                if (r < 1e-4){
+                        current_alpha = alpha;
+                        ret=0; // done, at rot invariant position
+                } else {
+                        // radiant from volts to rotate at current radius at xy_move slew speed / update interval
+                        double dphi  = slew*(PARAMETER_UPDATE_INTERVAL/1000.) / (delta*r); // PARAMETER_UPDATE_INTERVAL is 200ms
+                        
+                        if (fabs(delta) <= dphi){
+                                current_alpha = alpha;
+                                ret=0; // done next
+                        } else {
+                                if (delta > 0)
+                                        current_alpha += dphi;
+                                else
+                                        current_alpha -= dphi;
+                        }
+                }
+        }
+        
+        set_gpio_cfgreg_int32 (SPMC_ROTM_XX, (int)round (Q_XY_PRECISION*cos(current_alpha)));
+        set_gpio_cfgreg_int32 (SPMC_ROTM_XY, (int)round (Q_XY_PRECISION*sin(current_alpha)));
+        return ret;
 }
 
 void rp_spmc_set_slope (double dzx, double dzy, double dzxy_slew){

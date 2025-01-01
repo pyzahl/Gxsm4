@@ -46,6 +46,13 @@ module axis_FIR #(
     reg signed [SAXIS_TDATA_WIDTH-1:0] fir_buffer[FIR_DECI-1:0];
     reg signed [SAXIS_TDATA_WIDTH-1:0] data_in;
     reg signed [MAXIS_TDATA_WIDTH-1:0] buffer; 
+    
+    integer i;
+    initial begin
+        for (i=0; i<FIR_DECI; i=i+1)
+            fir_buffer[i] = 0;
+    end
+    
     always @ (posedge next_dv)
     begin
         if (S_AXIS_tvalid)

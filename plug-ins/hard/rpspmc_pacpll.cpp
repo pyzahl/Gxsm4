@@ -181,30 +181,30 @@ SOURCE_SIGNAL_DEF swappable_signals[] = {                                       
         { 0x00000001, "Excitation",  " ", "mV", "mV", (1.0/((1L<<RP_FPGA_QEXEC)-1)),                  1 },
         { 0x00000002, "Phase",       " ", "deg", UTF8_DEGREE, (180.0/(M_PI*((1L<<RP_FPGA_QATAN)-1))), 2 },
         { 0x00000003, "Amplitude",   " ", "mV", "mV", (1.0/((1L<<RP_FPGA_QSQRT)-1)),                  3 },
-        { 0x00000004, "dFreq-Control", " ", "mV", "mV", (1.0),                                        4 },
-        { 0x00000005, "Test05",      " ", "mV", "mV", (1.0),                                         -1 },
+        { 0x00000004, "dFreq-Control", " ", "mV", "mV", (1000*SPMC_AD5791_to_volts),                       4 },
+        { 0x00000005, "Test05",      " ", "V", "V", (1.0),                                         -1 },
         { 0x00000006, "Test06",      " ", "mV", "mV", (1.0),                                         -1 },
         { 0x00000007, "Test07",      " ", "mV", "mV", (1.0),                                         -1 },
-        { 0x00000008, "Test08",      " ", "mV", "mV", (1.0),                                         -1 },
-        { 0x00000009, "Test09",      " ", "mV", "mV", (1.0),                                         -1 },
-        { 0x00000010, "Test10",      " ", "mV", "mV", (1.0),                                         -1 },
-        { 0x00000011, "SineRef",     " ",  "V",  "V", (SPMC_AD5791_to_volts),                                         -1 },
-        { 0x00000012, "LockInX",     " ", "dV", "dV", (SPMC_RPIN12_to_volts),                        -1 },
-        { 0x00000013, "LockInY",     " ", "dV", "dV", (SPMC_RPIN12_to_volts),                        -1 },
-        { 0x00000014, "IN1noFIR",    " ",  "V",  "V", (SPMC_RPIN12_to_volts),                                         -1 },
-        { 0x00000015, "ZwSlope-OUT",  " ", "mV", "mV", (SPMC_AD5791_to_volts),                         5 },
+        { 0x00000008, "Test08SD",    " ", "V", "V", (1.0),                                         -1 },
+        { 0x00000009, "Test09Zmon",  " ", "V", "V", (1.0),                                         -1 },
+        { 0x00000010, "LockInY",     " ", "V", "V", (SPMC_RPIN12_to_volts),                        -1 },
+        { 0x00000011, "LockInX",     " ", "V", "V", (SPMC_RPIN12_to_volts),                        -1 },
+        { 0x00000012, "LockInA2",    " ", "V", "V", (SPMC_RPIN12_to_volts),                        -1 },
+        { 0x00000013, "SineRef",     " ", "V",   "V", (SPMC_RPIN12_to_volts),                        -1 },
+        { 0x00000014, "IN1noFIR",    " ", "V",   "V", (SPMC_RPIN12_to_volts),                        -1 },
+        { 0x00000015, "ZwSlope-OUT", " ", "V",   "V", (SPMC_AD5791_to_volts),                         5 },
         { 0x00000016,  NULL, NULL, NULL, NULL, 0.0, 0 }
 };
 
 SOURCE_SIGNAL_DEF modulation_targets[] = {
         //  SIGNAL #  Name               Units.... Scale
-        { 0x00000000, "None/OFF",    " ",  "-",  "-", (1.0),                          0, 0 },
-        { 0x00000001, "X-Scan",      " ", "AA", UTF8_ANGSTROEM, SPMC_AD5791_to_volts, 0, 0 },
-        { 0x00000002, "Y-Scan",      " ", "AA", UTF8_ANGSTROEM, SPMC_AD5791_to_volts, 0, 0 },
-        { 0x00000003, "Z-Scan",      " ", "AA", UTF8_ANGSTROEM, SPMC_AD5791_to_volts, 0, 0 },
-        { 0x00000004, "Bias",        " ", "mV",           "mV", SPMC_AD5791_to_volts, 0, 0 },
-        //{ 0x00000005, "A",           " ", "V",             "V", SPMC_AD5791_to_volts, 0, 0 },
-        //{ 0x00000006, "B",           " ", "V",             "V", SPMC_AD5791_to_volts, 0, 0 },
+        { 0x00000000, "None/OFF",    " ",  "-",  "-", 0.0,                          0, 0 },
+        { 0x00000001, "X-Scan",      " ", "AA", UTF8_ANGSTROEM, 1./XAngFac, 0, 0 }, // scale_factor to get "Volts" or RP base unit for signal
+        { 0x00000002, "Y-Scan",      " ", "AA", UTF8_ANGSTROEM, 1./YAngFac, 0, 0 },
+        { 0x00000003, "Z-Scan",      " ", "AA", UTF8_ANGSTROEM, 1./ZAngFac, 0, 0 },
+        { 0x00000004, "Bias",        " ", "mV",           "mV", 1e-3/BiasFac, 0, 0 },
+        //{ 0x00000005, "A",           " ", "V",             "V", 0, 0, 0 },
+        //{ 0x00000006, "B",           " ", "V",             "V", 0, 0, 0 },
         { 0x00000016,  NULL, NULL, NULL, NULL, 0.0, 0 }
 };
 
@@ -2305,7 +2305,7 @@ void RPSPMC_Control::create_folder (){
                                                           );
         bp->pop_grid ();
         bp->new_line ();
-        bp->new_grid_with_frame ("Plot / Save current data in buffer");
+        bp->new_grid_with_frame ("Plot / Save current data in buffer -- for convenience: extra Execute GVP button");
 
 	bp->grid_add_button ("Plot");
 	g_signal_connect (G_OBJECT (bp->button), "clicked",
@@ -2315,6 +2315,11 @@ void RPSPMC_Control::create_folder (){
 	g_signal_connect (G_OBJECT (bp->button), "clicked",
                           G_CALLBACK (RPSPMC_Control::Probing_save_callback), this);
 
+
+	bp->grid_add_button ("Execute GVP");
+	g_signal_connect (G_OBJECT (bp->button), "clicked",
+                          GCallback (RPSPMC_Control::Probing_exec_GVP_callback), this);
+        
         bp->notebook_tab_show_all ();
         bp->pop_grid ();
 
@@ -2921,10 +2926,8 @@ void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, gpointer data){
 	RPSPMC_Control *self = (RPSPMC_Control*)data;
         if (rpspmc_pacpll){
                 rpspmc_pacpll->write_parameter ("SPMC_SC_LCK_FREQUENCY", spmc_parameters.sc_lck_frequency);
-                double scale[LCK_NUM_TARGETS] = { 0.0, XAngFac, YAngFac, ZAngFac, BiasFac, 1.0, 1.0, 1.0 }; 
                 if  (self->LCK_Target > 0 && self->LCK_Target < LCK_NUM_TARGETS){ 
-                        spmc_parameters.sc_lck_volume = self->LCK_Volume[self->LCK_Target] / scale[self->LCK_Target];
-                        rpspmc_pacpll->write_parameter ("SPMC_SC_LCK_VOLUME", spmc_parameters.sc_lck_volume); // => Volts
+                        rpspmc_pacpll->write_parameter ("SPMC_SC_LCK_VOLUME", modulation_targets[self->LCK_Target].scale_factor * self->LCK_Volume[self->LCK_Target]); // => Volts
                 }
                 rpspmc_pacpll->write_parameter ("SPMC_SC_LCK_TAU", spmc_parameters.sc_lck_tau);
                 g_message ("ADJ LOCKIN FRQ %g Hz, target=%d vol=%g V", spmc_parameters.sc_lck_frequency, self->LCK_Target, spmc_parameters.sc_lck_volume);

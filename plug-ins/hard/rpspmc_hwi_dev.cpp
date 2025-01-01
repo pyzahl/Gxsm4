@@ -1615,17 +1615,17 @@ int rpspmc_hwi_dev::read_GVP_data_block_to_position_vector (int offset, gboolean
                                                                               offset, GVP_stream_buffer_position,
                                                                               GVP_vp_header_current.srcs_mask_vector, GVP_vp_header_current.srcs,
                                                                               GVP_vp_header_current.ilast, GVP_vp_header_current.i);
-                                                status_append (tmp, true);
-                                                if (offset > 64)
-                                                        status_append_int32 (&GVP_stream_buffer[offset-64], 10*16, true, offset-64, true);
-                                                else
-                                                        status_append_int32 (&GVP_stream_buffer[0], 10*16, true, 0, true);
+                                                //status_append (tmp, true); // this is effn out gtk shit even in idle callback
+                                                //if (offset > 64)
+                                                //        status_append_int32 (&GVP_stream_buffer[offset-64], 10*16, true, offset-64, true);
+                                                //else
+                                                //        status_append_int32 (&GVP_stream_buffer[0], 10*16, true, 0, true);
                                                 g_warning (tmp);
                                                 g_free (tmp);
                                         }
                                         if (--retry > 0){ //  try to recover
                                                 gchar *tmp = g_strdup_printf ("Trying to recover stream from missing/bogus data. retry=%d\n", retry);
-                                                status_append (tmp, true);
+                                                //status_append (tmp, true);
                                                 g_warning (tmp);
                                                 g_free (tmp);
                                                 if (GVP_vp_header_current.i >= 0 && GVP_vp_header_current.i < GVP_vp_header_current.n)
@@ -1648,11 +1648,11 @@ int rpspmc_hwi_dev::read_GVP_data_block_to_position_vector (int offset, gboolean
                                               offset, GVP_stream_buffer_position,
                                               GVP_vp_header_current.srcs_mask_vector, GVP_vp_header_current.srcs,
                                               GVP_vp_header_current.ilast, GVP_vp_header_current.i, GVP_vp_header_current.index);
-                status_append (tmp, true);
-                if (offset > 64)
-                        status_append_int32 (&GVP_stream_buffer[offset-64], 10*16, true, offset-64, true);
-                else
-                        status_append_int32 (&GVP_stream_buffer[0], 10*16, true, 0, true);
+                //status_append (tmp, true); // this is effn out gtk shit even in idle callback
+                //if (offset > 64)
+                //        status_append_int32 (&GVP_stream_buffer[offset-64], 10*16, true, offset-64, true);
+                //else
+                //        status_append_int32 (&GVP_stream_buffer[0], 10*16, true, 0, true);
                 g_warning (tmp);
                 g_free (tmp);
                 GVP_vp_header_current.index = 0; // to prevent issues
@@ -1688,7 +1688,7 @@ int rpspmc_hwi_dev::read_GVP_data_block_to_position_vector (int offset, gboolean
                 g_free (tmp);
                 if (--retry > 0){
                         gchar *tmp = g_strdup_printf ("Trying to recover stream from missing/bogus data. retry=%d\n", retry);
-                        //status_append (tmp, true);
+                        //status_append (tmp, true);  // this is effn out gtk shit even in idle callback
                         g_warning (tmp);
                         g_free (tmp);
                         g_mutex_unlock (&GVP_stream_buffer_mutex);
