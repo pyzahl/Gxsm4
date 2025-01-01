@@ -464,14 +464,14 @@ axis_AD5791 axis_AD5791_1
     
 */
 
-/*
+
 axis_spm_control axis_spm_control_tb
 (
     .a_clk(pclk),
     .S_AXIS_Xs_tdata(wx),
     .S_AXIS_Xs_tvalid(1),
     .S_AXIS_Ys_tdata(wy),
-    .S_AXIS_Ys_tvalid(q),
+    .S_AXIS_Ys_tvalid(1),
     .S_AXIS_Zs_tdata(0),
     .S_AXIS_Zs_tvalid(1),
     
@@ -542,7 +542,7 @@ axis_spm_control axis_spm_control_tb
        .M_AXIS_SC_tdata (SCp),
       .M_AXIS_SC_tvalid (SCpv)
 );
-*/
+
 
 //def adjust (hz)
 //    fclk = 1e6 

@@ -286,8 +286,8 @@ module axis_spm_control#(
     assign M_AXIS_Z0MON_tdata  = mz0; // Z Offset aka Z0
     assign M_AXIS_Z0MON_tvalid = 1;
 
-    assign M_AXIS_ZSLOPE_tdata  = `SATURATE_32 (z_slope); // slope compensation signal to be added saturation to z_sum before out
-    assign M_AXIS_ZSLOPE_tvalid = 1;
+    assign M_AXIS_Z_SLOPE_tdata  = `SATURATE_32 (z_slope); // slope compensation signal to be added saturation to z_sum before out
+    assign M_AXIS_Z_SLOPE_tvalid = 1;
 
     
     assign M_AXIS4_tdata  = `SATURATE_32 (ru);

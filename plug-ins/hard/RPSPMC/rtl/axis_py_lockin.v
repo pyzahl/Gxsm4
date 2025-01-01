@@ -145,7 +145,7 @@ module axis_py_lockin#(
             
             // LockIn ====
             
-            if (i==0)
+            if (i<16)
                 sd <= 1<<26; // dbg purpose only
             else
                 sd <= s; // dbg purpose only
