@@ -356,21 +356,23 @@ public:
         void store_graphs_values ();
         void restore_graphs_values ();
 
-        static int config_options_callback (GtkWidget *widget, RPSPMC_Control *dspc);
+        void Init_SPMC_on_connect ();
+        
+        static int config_options_callback (GtkWidget *widget, RPSPMC_Control *self);
         
 	//static void ChangedWaveOut(Param_Control* pcs, gpointer data);
 	//static int config_waveform (GtkWidget *widget, RPSPMC_Control *spmsc);
 	static void configure_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
-        static int choice_Ampl_callback(GtkWidget *widget, RPSPMC_Control *spmsc);
-        static int choice_scansource_callback (GtkWidget *widget, RPSPMC_Control *dspc);
+        static int choice_Ampl_callback(GtkWidget *widget, RPSPMC_Control *self);
+        static int choice_scansource_callback (GtkWidget *widget, RPSPMC_Control *self);
 
-	static int DSP_cret_callback (GtkWidget *widget, RPSPMC_Control *dspc);
-	static int DSP_slope_callback (GtkWidget *widget, RPSPMC_Control *dspc);
+	static int DSP_cret_callback (GtkWidget *widget, RPSPMC_Control *self);
+	static int DSP_slope_callback (GtkWidget *widget, RPSPMC_Control *self);
 
-        static int ldc_callback(GtkWidget *widget, RPSPMC_Control *dspc);
+        static int ldc_callback(GtkWidget *widget, RPSPMC_Control *self);
 
-        static void lockin_adjust_callback(Param_Control* pcs, gpointer data);
-        static int choice_mod_target_callback (GtkWidget *widget, RPSPMC_Control *dspc);
+        static void lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *self);
+        static int choice_mod_target_callback (GtkWidget *widget, RPSPMC_Control *self);
 
         static void show_tab_to_configure (GtkWidget* w, gpointer data){
                 gtk_widget_show (GTK_WIDGET (g_object_get_data (G_OBJECT (w), "TabGrid")));
@@ -397,51 +399,50 @@ public:
         static void ChangedNotifyVP(Param_Control* pcs, RPSPMC_Control* self);
         
 	void update_zpos_readings ();
-	static guint refresh_zpos_readings(RPSPMC_Control *dspc);
-        static int zpos_monitor_callback(GtkWidget *widget, RPSPMC_Control *dspc);
-        static int choice_mixmode_callback (GtkWidget *widget, RPSPMC_Control *dspc);
-        static int choice_prbsource_callback(GtkWidget *widget, RPSPMC_Control *dspc);
+	static guint refresh_zpos_readings(RPSPMC_Control *self);
+        static int zpos_monitor_callback(GtkWidget *widget, RPSPMC_Control *self);
+        static int choice_mixmode_callback (GtkWidget *widget, RPSPMC_Control *self);
+        static int choice_prbsource_callback(GtkWidget *widget, RPSPMC_Control *self);
 
-        static int auto_probe_callback(GtkWidget *widget, RPSPMC_Control *dspc);
-	static int Probing_graph_callback(GtkWidget *widget, RPSPMC_Control *dspc, int finish_flag=0);
+        static int auto_probe_callback(GtkWidget *widget, RPSPMC_Control *self);
+	static int Probing_graph_callback(GtkWidget *widget, RPSPMC_Control *self, int finish_flag=0);
         static int Probing_event_setup_scan (int ch, const gchar *titleprefix, const gchar *name, const gchar *unit, const gchar *label, double d2u, int nvalues);
-	static int Probing_eventcheck_callback(GtkWidget *widget, RPSPMC_Control *dspc);
-	static int Probing_exec_ABORT_callback(GtkWidget *widget, RPSPMC_Control *dspc);
-	static int Probing_save_callback(GtkWidget *widget, RPSPMC_Control *dspc);
-	static int Probing_abort_callback(GtkWidget *widget, RPSPMC_Control *dspc);
+	static int Probing_eventcheck_callback(GtkWidget *widget, RPSPMC_Control *self);
+	static int Probing_exec_ABORT_callback(GtkWidget *widget, RPSPMC_Control *self);
+	static int Probing_save_callback(GtkWidget *widget, RPSPMC_Control *self);
+	static int Probing_abort_callback(GtkWidget *widget, RPSPMC_Control *self);
 
-	static int Probing_exec_IV_callback(GtkWidget *widget, RPSPMC_Control *dspc);
-	static int Probing_write_IV_callback(GtkWidget *widget, RPSPMC_Control *dspc);
-	static int callback_change_IV_option_flags (GtkWidget *widget, RPSPMC_Control *dspc);
-	static int callback_change_IV_auto_flags (GtkWidget *widget, RPSPMC_Control *dspc);
+	static int Probing_exec_IV_callback(GtkWidget *widget, RPSPMC_Control *self);
+	static int Probing_write_IV_callback(GtkWidget *widget, RPSPMC_Control *self);
+	static int callback_change_IV_option_flags (GtkWidget *widget, RPSPMC_Control *self);
+	static int callback_change_IV_auto_flags (GtkWidget *widget, RPSPMC_Control *self);
 
-	static int Probing_exec_GVP_callback(GtkWidget *widget, RPSPMC_Control *dspc);
-	static int Probing_write_GVP_callback(GtkWidget *widget, RPSPMC_Control *dspc);
+	static int Probing_exec_GVP_callback(GtkWidget *widget, RPSPMC_Control *self);
+	static int Probing_write_GVP_callback(GtkWidget *widget, RPSPMC_Control *self);
         
-        static int callback_change_GVP_vpc_option_flags (GtkWidget *widget, RPSPMC_Control *dspc);
-	static int callback_update_GVP_vpc_option_checkbox (GtkWidget *widget, RPSPMC_Control *dspc);
-	static int callback_change_GVP_option_flags (GtkWidget *widget, RPSPMC_Control *dspc);
-	static int callback_change_GVP_auto_flags (GtkWidget *widget, RPSPMC_Control *dspc);
-	static int callback_edit_GVP (GtkWidget *widget, RPSPMC_Control *dspc);
-	static int callback_GVP_store_vp (GtkWidget *widget, RPSPMC_Control *dspc);
-	static int callback_GVP_restore_vp (GtkWidget *widget, RPSPMC_Control *dspc);
+        static int callback_change_GVP_vpc_option_flags (GtkWidget *widget, RPSPMC_Control *self);
+	static int callback_update_GVP_vpc_option_checkbox (GtkWidget *widget, RPSPMC_Control *self);
+	static int callback_change_GVP_option_flags (GtkWidget *widget, RPSPMC_Control *self);
+	static int callback_change_GVP_auto_flags (GtkWidget *widget, RPSPMC_Control *self);
+	static int callback_edit_GVP (GtkWidget *widget, RPSPMC_Control *self);
+	static int callback_GVP_store_vp (GtkWidget *widget, RPSPMC_Control *self);
+	static int callback_GVP_restore_vp (GtkWidget *widget, RPSPMC_Control *self);
 
-        static int change_source_callback (GtkWidget *widget, RPSPMC_Control *dspc);
-	static int callback_XJoin (GtkWidget *widget, RPSPMC_Control *dspc);
-	static int callback_GrMatWindow (GtkWidget *widget, RPSPMC_Control *dspc);
+        static int change_source_callback (GtkWidget *widget, RPSPMC_Control *self);
+	static int callback_XJoin (GtkWidget *widget, RPSPMC_Control *self);
+	static int callback_GrMatWindow (GtkWidget *widget, RPSPMC_Control *self);
 
 	static gboolean idle_callback (gpointer data){
-		RPSPMC_Control *dspc = (RPSPMC_Control*) data;
+		RPSPMC_Control *self = (RPSPMC_Control*) data;
 
                 // make probe vector data is not locked for vector manipulations, wait until available (fast)
-                while (dspc->pv_lock)
+                while (self->pv_lock)
                         usleep (1000);
 
-                dspc->gr_lock = TRUE;
-		dspc->Probing_graph_callback (NULL, dspc, dspc->idle_callback_data_ff);
-                dspc->gr_lock = FALSE;
-                
-		dspc->idle_id = 0; // done.
+                self->gr_lock = TRUE;
+		self->Probing_graph_callback (NULL, self, self->idle_callback_data_ff);
+                self->gr_lock = FALSE;
+		self->idle_id = 0; // done.
 
 		return FALSE;
 	};
@@ -1071,6 +1072,7 @@ public:
         static void choice_auto_set_callback (GtkWidget *widget, RPspmc_pacpll *self);
 
 	void send_all_parameters ();
+	void update_SPMC_parameters ();
 
         void save_values (NcFile *ncf);
         

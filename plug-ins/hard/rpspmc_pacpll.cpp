@@ -947,7 +947,7 @@ void RPSPMC_Control::GVP_restore_vp (const gchar *key){
 	update_GUI ();
 }
 
-int RPSPMC_Control::callback_edit_GVP (GtkWidget *widget, RPSPMC_Control *dspc){
+int RPSPMC_Control::callback_edit_GVP (GtkWidget *widget, RPSPMC_Control *self){
         //        PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);
         int x=1, y=10;
 	int ki = GPOINTER_TO_INT (g_object_get_data(G_OBJECT(widget), "VPC"));
@@ -955,24 +955,24 @@ int RPSPMC_Control::callback_edit_GVP (GtkWidget *widget, RPSPMC_Control *dspc){
 
 	if (ki < 0){
 		const int VPT_YPAD=0;
-		int c = GPOINTER_TO_INT (g_object_get_data(G_OBJECT(dspc->VPprogram[0]), "CF"));
+		int c = GPOINTER_TO_INT (g_object_get_data(G_OBJECT(self->VPprogram[0]), "CF"));
 		int cw = 1;
-		if (dspc->VPprogram[1]){
+		if (self->VPprogram[1]){
 			for (int j=1; j<10; ++j)
-				if (dspc->VPprogram[j]){
+				if (self->VPprogram[j]){
                                         // FIX-ME GTK4 ???
-					gtk_window_destroy (GTK_WINDOW (dspc->VPprogram[j]));
-					dspc->VPprogram[j] = NULL;
+					gtk_window_destroy (GTK_WINDOW (self->VPprogram[j]));
+					self->VPprogram[j] = NULL;
 				}
 		} else
 			for (int k=0; k<N_GVP_VECTORS && cw < 10; ++k){
-				if (dspc->GVP_vpcjr[k] < 0){
+				if (self->GVP_vpcjr[k] < 0){
 					int kf=k;
-					int ki=k+dspc->GVP_vpcjr[k];
+					int ki=k+self->GVP_vpcjr[k];
 					if (kf >= 0){
                                                 // fix!! todo
-						//** ADD_BUTTON_GRID ("arrow-up-symbolic", "Loop",   dspc->VPprogram[0], x+0, y+ki+1, 1, kf-ki+2, -2, NULL, NULL, dspc->VPprogram[cw]);
-                                                //ADD_BUTTON_TAB(GTK_ARROW_UP, "Loop",   dspc->VPprogram[0], c+0, c+1, ki+1, kf+2, GTK_FILL, GTK_FILL, 0, VPT_YPAD, -1, -2, NULL, NULL, dspc->VPprogram[cw]);
+						//** ADD_BUTTON_GRID ("arrow-up-symbolic", "Loop",   self->VPprogram[0], x+0, y+ki+1, 1, kf-ki+2, -2, NULL, NULL, self->VPprogram[cw]);
+                                                //ADD_BUTTON_TAB(GTK_ARROW_UP, "Loop",   self->VPprogram[0], c+0, c+1, ki+1, kf+2, GTK_FILL, GTK_FILL, 0, VPT_YPAD, -1, -2, NULL, NULL, self->VPprogram[cw]);
 						++c; ++cw;
 					}
 				}
@@ -983,34 +983,34 @@ int RPSPMC_Control::callback_edit_GVP (GtkWidget *widget, RPSPMC_Control *dspc){
 	if (a == GVP_SHIFT_UP && ki >= 1 && ki < N_GVP_VECTORS)
 		for (int k=ki-1; k < N_GVP_VECTORS-1; ++k){
 			int ks = k+1;
-			dspc->GVP_du[k] = dspc->GVP_du[ks];
-			dspc->GVP_dx[k] = dspc->GVP_dx[ks];
-			dspc->GVP_dy[k] = dspc->GVP_dy[ks];
-			dspc->GVP_dz[k] = dspc->GVP_dz[ks];
-			dspc->GVP_da[k] = dspc->GVP_da[ks];
-			dspc->GVP_db[k] = dspc->GVP_db[ks];
-			dspc->GVP_ts[k]  = dspc->GVP_ts[ks];
-			dspc->GVP_points[k] = dspc->GVP_points[ks];
-			dspc->GVP_opt[k] = dspc->GVP_opt[ks];
-			dspc->GVP_vnrep[k] = dspc->GVP_vnrep[ks];
-			dspc->GVP_vpcjr[k] = dspc->GVP_vpcjr[ks];
+			self->GVP_du[k] = self->GVP_du[ks];
+			self->GVP_dx[k] = self->GVP_dx[ks];
+			self->GVP_dy[k] = self->GVP_dy[ks];
+			self->GVP_dz[k] = self->GVP_dz[ks];
+			self->GVP_da[k] = self->GVP_da[ks];
+			self->GVP_db[k] = self->GVP_db[ks];
+			self->GVP_ts[k]  = self->GVP_ts[ks];
+			self->GVP_points[k] = self->GVP_points[ks];
+			self->GVP_opt[k] = self->GVP_opt[ks];
+			self->GVP_vnrep[k] = self->GVP_vnrep[ks];
+			self->GVP_vpcjr[k] = self->GVP_vpcjr[ks];
 		} 
 	else if (a == GVP_SHIFT_DN && ki >= 0 && ki < N_GVP_VECTORS-2)
 		for (int k=N_GVP_VECTORS-1; k > ki; --k){
 			int ks = k-1;
-			dspc->GVP_du[k] = dspc->GVP_du[ks];
-			dspc->GVP_dx[k] = dspc->GVP_dx[ks];
-			dspc->GVP_dy[k] = dspc->GVP_dy[ks];
-			dspc->GVP_dz[k] = dspc->GVP_dz[ks];
-			dspc->GVP_da[k] = dspc->GVP_da[ks];
-			dspc->GVP_db[k] = dspc->GVP_db[ks];
-			dspc->GVP_ts[k]  = dspc->GVP_ts[ks];
-			dspc->GVP_points[k] = dspc->GVP_points[ks];
-			dspc->GVP_opt[k] = dspc->GVP_opt[ks];
-			dspc->GVP_vnrep[k] = dspc->GVP_vnrep[ks];
-			dspc->GVP_vpcjr[k] = dspc->GVP_vpcjr[ks];
+			self->GVP_du[k] = self->GVP_du[ks];
+			self->GVP_dx[k] = self->GVP_dx[ks];
+			self->GVP_dy[k] = self->GVP_dy[ks];
+			self->GVP_dz[k] = self->GVP_dz[ks];
+			self->GVP_da[k] = self->GVP_da[ks];
+			self->GVP_db[k] = self->GVP_db[ks];
+			self->GVP_ts[k]  = self->GVP_ts[ks];
+			self->GVP_points[k] = self->GVP_points[ks];
+			self->GVP_opt[k] = self->GVP_opt[ks];
+			self->GVP_vnrep[k] = self->GVP_vnrep[ks];
+			self->GVP_vpcjr[k] = self->GVP_vpcjr[ks];
 		}
-	dspc->update_GUI ();
+	self->update_GUI ();
         return 0;
 }
 
@@ -1623,7 +1623,7 @@ void RPSPMC_Control::create_folder (){
 
 	// ========================================
 
-        PI_DEBUG (DBG_L4, "DSPC----SCAN ------------------------------- ");
+        PI_DEBUG (DBG_L4, "SPMC----SCAN ------------------------------- ");
         bp->pop_grid ();
         bp->new_line ();
         bp->new_grid_with_frame ("Scan Characteristics");
@@ -1672,7 +1672,7 @@ void RPSPMC_Control::create_folder (){
         //                 G_OBJECT (GTK_CHECK_BUTTON (bp->button)), "active",
         //                 G_SETTINGS_BIND_DEFAULT);
 
-        PI_DEBUG (DBG_L4, "DSPC----FB-CONTROL -- INPUT-SRCS ----------------------------- ");
+        PI_DEBUG (DBG_L4, "SPMC----FB-CONTROL -- INPUT-SRCS ----------------------------- ");
 
 	// ========== SCAN CHANNEL INPUT SOURCE CONFIGURATION MENUS
         bp->pop_grid ();
@@ -1800,7 +1800,7 @@ void RPSPMC_Control::create_folder (){
         
 // ==== Folder Set for Vector Probe ========================================
 // ==== Folder: I-V STS setup ========================================
-        PI_DEBUG (DBG_L4, "DSPC----TAB-IV ------------------------------- ");
+        PI_DEBUG (DBG_L4, "SPMC----TAB-IV ------------------------------- ");
 
         bp->new_grid ();
         bp->start_notebook_tab (notebook, "STS", "rpspmc-tab-sts", hwi_settings);
@@ -1848,7 +1848,7 @@ void RPSPMC_Control::create_folder (){
         bp->new_grid ();
         bp->start_notebook_tab (notebook, "GVP", "rpspmc-tab-gvp", hwi_settings);
 
-        PI_DEBUG (DBG_L4, "DSPC----TAB-VP ------------------------------- ");
+        PI_DEBUG (DBG_L4, "SPMC----TAB-VP ------------------------------- ");
 
  	bp->new_grid_with_frame ("Generic Vector Program (VP) Probe and Manipulation");
  	// g_print ("================== TAB 'GVP' ============= Generic Vector Program (VP) Probe and Manipulation\n");
@@ -2140,7 +2140,7 @@ void RPSPMC_Control::create_folder (){
         bp->new_grid ();
         bp->start_notebook_tab (notebook, "Graphs", "rpspmc-tab-graphs", hwi_settings);
 
-        PI_DEBUG (DBG_L4, "DSPC----TAB-GRAPHS ------------------------------- ");
+        PI_DEBUG (DBG_L4, "SPMC----TAB-GRAPHS ------------------------------- ");
 
  	bp->new_grid_with_frame ("Probe Sources & Graph Setup");
 
@@ -2176,7 +2176,7 @@ void RPSPMC_Control::create_folder (){
 #endif
         bp->new_line ();
 
-        PI_DEBUG (DBG_L4, "DSPC----TAB-GRAPHS TOGGELS  ------------------------------- ");
+        PI_DEBUG (DBG_L4, "SPMC----TAB-GRAPHS TOGGELS  ------------------------------- ");
 
         gint y = bp->y;
         gint mm=0;
@@ -2328,7 +2328,7 @@ void RPSPMC_Control::create_folder (){
         bp->new_grid ();
         bp->start_notebook_tab (notebook, "RedPitaya Web Socket", "rpspmc-tab-system", hwi_settings);
 
-        PI_DEBUG (DBG_L4, "DSPC----TAB-SYSTEM ------------------------------- ");
+        PI_DEBUG (DBG_L4, "SPMC----TAB-SYSTEM ------------------------------- ");
 
         bp->new_grid_with_frame ("RedPitaya Web Socket Address for JSON talk", 10);
 
@@ -2420,6 +2420,18 @@ void RPSPMC_Control::create_folder (){
         
         AppWindowInit (NULL); // stage two
         set_window_geometry ("rpspmc-main-control"); // must add key to xml file: core-sources/org.gnome.gxsm4.window-geometry.gschema.xml
+}
+
+void RPSPMC_Control::Init_SPMC_on_connect (){
+        // fix-me -- need life readback once life re-connect works!
+        if (rpspmc_pacpll){
+                rpspmc_pacpll->write_parameter ("SPMC_GVP_RESET_OPTIONS", 0); // default, FB hold=off!
+        
+                Slope_dZX_Changed(NULL, this);
+                Slope_dZY_Changed(NULL, this);
+                ZPosSetChanged(NULL, this);
+                ZServoParamChanged(NULL, this);
+        }
 }
 
 int RPSPMC_Control::DSP_cret_callback (GtkWidget *widget, RPSPMC_Control *self){
@@ -2916,8 +2928,7 @@ int RPSPMC_Control::callback_GrMatWindow (GtkWidget *widget, RPSPMC_Control *sel
 }
 
 
-void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, gpointer data){
-	RPSPMC_Control *self = (RPSPMC_Control*)data;
+void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *self){
         if (rpspmc_pacpll){
                 rpspmc_pacpll->write_parameter ("SPMC_SC_LCK_FREQUENCY", spmc_parameters.sc_lck_frequency);
                 if  (self->LCK_Target > 0 && self->LCK_Target < LCK_NUM_TARGETS){ 
@@ -4267,6 +4278,10 @@ void RPspmc_pacpll::send_all_parameters (){
         dfreq_gain_changed (NULL, this);
 }
 
+void RPspmc_pacpll::update_SPMC_parameters (){
+        RPSPMC_ControlClass->Init_SPMC_on_connect ();
+}
+
 void RPspmc_pacpll::choice_operation_callback (GtkWidget *widget, RPspmc_pacpll *self){
         self->operation_mode = gtk_combo_box_get_active (GTK_COMBO_BOX (widget));
         self->write_parameter ("OPERATION", self->operation_mode);
@@ -4686,8 +4701,12 @@ void RPspmc_pacpll::on_connect_actions(){
         
         gtk_combo_box_set_active (GTK_COMBO_BOX (update_op_widget), 5); // STREAMING OPERATION
         gtk_combo_box_set_active (GTK_COMBO_BOX (update_ts_widget), 18); // select 19 (typical scan decimation/time scale filter)
-
+        
         status_append (" * RedPitaya SPM Control: PAC-PLL is ready.\n");
+        status_append (" * RedPitaya SPM Control, SPMC init...\n");
+
+        update_SPMC_parameters ();
+        status_append (" * RedPitaya SPM Control ready. Connecting Stream..\n");
 }
 
 

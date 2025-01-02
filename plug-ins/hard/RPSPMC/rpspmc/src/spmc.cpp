@@ -874,7 +874,7 @@ void rp_set_gvp_stream_mux_selector (int s9, int s10, int s11, int s12){
 */
 
 void rp_set_gvp_stream_mux_selector (unsigned long selector){
-        if (verbose > 1) fprintf(stderr, "** set gvp stream mux 0x%06x\n", selector);
+        if (verbose > 1) fprintf(stderr, "** set gvp stream mux 0x%06x\n", (unsigned int)selector);
         set_gpio_cfgreg_int32 (SPMC_CFG_GVP_STREAM_MUX6_SELECTOR, selector);
 }
 

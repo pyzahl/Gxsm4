@@ -1450,6 +1450,7 @@ void rpspmc_hwi_dev::GVP_execute_vector_program(){
 void rpspmc_hwi_dev::GVP_abort_vector_program (){
         g_message ("rpspmc_hwi_dev::GVP_abort_vector_program ()");
         rpspmc_pacpll->write_parameter ("SPMC_GVP_CONTROL", SPMC_GVP_CONTROL_RESET);
+        rpspmc_pacpll->write_parameter ("SPMC_GVP_RESET_OPTIONS", 0); // default, FB hold=off!
         abort_GVP_flag = true;
 }
 

@@ -148,8 +148,8 @@ module axis_spm_control#(
     //reg signed [32-1:0] rz=0;
     reg signed [32+2-1:0] ru=0;
 
-    reg signed [32-1:0] slx; // SQ31
-    reg signed [32-1:0] sly; // SQ31
+    reg signed [32-1:0] slx=0; // SQ31
+    reg signed [32-1:0] sly=0; // SQ31
     
     reg signed [32-1:0] z_servo=0;
     reg signed [32-1:0] dZx=0;

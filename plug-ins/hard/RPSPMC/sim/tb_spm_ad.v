@@ -267,7 +267,7 @@ print (adjust (100))
         //            decii       **     **     **     BB     AA     du     dz     dy     dx       Next    Nrep,  Options, nii,   N,  [Vadr]
         vector = {32'd250, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0,  32'd8589935, -32'd0, -32'd0,  32'd858993, -32'd0, -32'd000, 32'h801,  32'd4,  32'd9, -32'd0}; // Vector #0
         prg=1; #10 prg=0; #10
-        vector = {32'd250, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd8589935, -32'd0, -32'd0, -32'd858993, -32'd0, -32'd000, 32'h801,  32'd4,  32'd9,  32'd1}; // Vector #1
+        vector = {32'd250, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd16589935, -32'd0, -32'd0, -32'd858993, -32'd0, -32'd000, 32'h801,  32'd4,  32'd9,  32'd1}; // Vector #1
         prg=1; #10 prg=0; #10
         vector = {32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd1, 32'd0, 32'd0, 32'd2}; // Vector #2
         prg=1; #10 prg=0; #10
@@ -332,7 +332,7 @@ print (adjust (100))
         prg=1; #10 prg=0; #10
         vector = {32'd0000, 160'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0000,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd05 }; #2
         prg=1; #10 prg=0; #10
-        vector = {32'd0000, 160'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0000,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd06 }; #2
+        vector = {32'd0000, 1600'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0000,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd06 }; #2
         prg=1; #10 prg=0; #10
         vector = {32'd0000, 160'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0000,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd07 }; #2
         prg=1; #10 prg=0; #10
@@ -468,7 +468,7 @@ axis_AD5791 axis_AD5791_1
 axis_spm_control axis_spm_control_tb
 (
     .a_clk(pclk),
-    .S_AXIS_Xs_tdata(wx),
+    .S_AXIS_Xs_tdata(wu),
     .S_AXIS_Xs_tvalid(1),
     .S_AXIS_Ys_tdata(wy),
     .S_AXIS_Ys_tvalid(1),
@@ -494,12 +494,12 @@ axis_spm_control axis_spm_control_tb
     
 
     // scan rotation (yx=-xy, yy=xx)
-    .rotmxx(1), // =cos(alpha)
+    .rotmxx(1<<28), // =cos(alpha)
     .rotmxy(0), // =sin(alpha)
 
     // slope -- always applied in global XY plane ???
-    .slope_x(1000), // SQ28
-    .slope_y(1000), // SQ28
+    .slope_x(-10000), // SQ28
+    .slope_y(0), // SQ28
 
     // SCAN OFFSET / POSITION COMPONENTS, ABSOLUTE COORDS
     .x0(0), // vector components

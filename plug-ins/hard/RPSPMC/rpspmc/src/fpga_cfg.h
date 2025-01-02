@@ -166,7 +166,7 @@
 // SPMControl Core, GVP
 
 #define SPMC_BASE                     PACPLL_CFG3_OFFSET
-#define SPMC_GVP_CONTROL              (SPMC_BASE + 0) // 0: reset 1: setvec
+#define SPMC_GVP_CONTROL              (SPMC_BASE + 0) // 0: reset 1: setvec | 16-31: GVP reset options
 #define SPMC_GVP_VECTOR_DATA          (SPMC_BASE + 1) // 1..16 // 512 bits (16x32)
 
 // GVP VCETOR COMPONETS IN ARRAY AT OFFESTS
