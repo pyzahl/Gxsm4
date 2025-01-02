@@ -141,9 +141,12 @@ module axis_selector #(
 // use buffer           
 reg [SAXIS_TDATA_WIDTH-1:0]  ALL_AXIS_tdata[15:0];
 reg [1:0]  ALL_AXIS_tvalid[15:0];
+reg [32-1:0] sel;
 
     always @ (posedge a_clk)
     begin
+        sel <= axis_selector;
+        
         ALL_AXIS_tdata[0]  <= S_AXIS_00_tdata;
         ALL_AXIS_tdata[1]  <= S_AXIS_01_tdata;
         ALL_AXIS_tdata[2]  <= S_AXIS_02_tdata;
@@ -179,19 +182,19 @@ reg [1:0]  ALL_AXIS_tvalid[15:0];
         ALL_AXIS_tvalid[15] <= S_AXIS_15_tvalid;
     end
 
-assign  M_AXIS_1_tdata = ALL_AXIS_tdata [axis_selector[4-1:0]];
-assign  M_AXIS_2_tdata = ALL_AXIS_tdata [axis_selector[8-1:4]];
-assign  M_AXIS_3_tdata = ALL_AXIS_tdata [axis_selector[12-1:8]];
-assign  M_AXIS_4_tdata = ALL_AXIS_tdata [axis_selector[16-1:12]];
-assign  M_AXIS_5_tdata = ALL_AXIS_tdata [axis_selector[20-1:16]];
-assign  M_AXIS_6_tdata = ALL_AXIS_tdata [axis_selector[24-1:20]];
+assign  M_AXIS_1_tdata = ALL_AXIS_tdata [sel[4-1:0]];
+assign  M_AXIS_2_tdata = ALL_AXIS_tdata [sel[8-1:4]];
+assign  M_AXIS_3_tdata = ALL_AXIS_tdata [sel[12-1:8]];
+assign  M_AXIS_4_tdata = ALL_AXIS_tdata [sel[16-1:12]];
+assign  M_AXIS_5_tdata = ALL_AXIS_tdata [sel[20-1:16]];
+assign  M_AXIS_6_tdata = ALL_AXIS_tdata [sel[24-1:20]];
 
-assign  M_AXIS_1_tvalid = ALL_AXIS_tvalid [axis_selector[4-1:0]];
-assign  M_AXIS_2_tvalid = ALL_AXIS_tvalid [axis_selector[8-1:4]];
-assign  M_AXIS_3_tvalid = ALL_AXIS_tvalid [axis_selector[12-1:8]];
-assign  M_AXIS_4_tvalid = ALL_AXIS_tvalid [axis_selector[16-1:12]];
-assign  M_AXIS_5_tvalid = ALL_AXIS_tvalid [axis_selector[20-1:16]];
-assign  M_AXIS_6_tvalid = ALL_AXIS_tvalid [axis_selector[24-1:20]];
+assign  M_AXIS_1_tvalid = ALL_AXIS_tvalid [sel[4-1:0]];
+assign  M_AXIS_2_tvalid = ALL_AXIS_tvalid [sel[8-1:4]];
+assign  M_AXIS_3_tvalid = ALL_AXIS_tvalid [sel[12-1:8]];
+assign  M_AXIS_4_tvalid = ALL_AXIS_tvalid [sel[16-1:12]];
+assign  M_AXIS_5_tvalid = ALL_AXIS_tvalid [sel[20-1:16]];
+assign  M_AXIS_6_tvalid = ALL_AXIS_tvalid [sel[24-1:20]];
     
 
 endmodule

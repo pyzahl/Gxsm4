@@ -142,7 +142,7 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
         if (started && (DDposition_prev != DDposition)){
                 // clear/invalidate already send mem with 0xdddddddd
                 int n  = DDposition_prev < DDposition ? DDposition - DDposition_prev : 0;
-                fprintf(stderr, "*** Clearing Send Block w DDDDDDDD: [%08x : %08x] size= %d ***\n", DDposition_prev, DDposition, n);
+                // fprintf(stderr, "*** Clearing Send Block w DDDDDDDD: [%08x : %08x] size= %d ***\n", DDposition_prev, DDposition, n);
                 if (n > 0){
 #ifdef MEM_DUMP_ON
                         if (stream_debug_flags & 4)

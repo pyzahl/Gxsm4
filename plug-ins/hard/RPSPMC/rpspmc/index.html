@@ -4,7 +4,7 @@
 <head>
     <meta http-equiv="content-type" content="text/html; charset=utf-8"></meta>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <title>PACPLL4 V0.0</title>
+    <title>RPSPMC ** Please use the GXSM4 SPM Control GUI</title>
     <link rel="stylesheet" href="../assets/bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" href="../assets/loader.css?1" type="text/css">
     <link rel="stylesheet" href="../assets/popupstack.css" type="text/css" />
@@ -273,7 +273,7 @@
 		      <option value="2">RUN SCOPE</option>
 		      <option value="3">INIT BRAM TRANSPORT</option>
 		      <option value="4">SINGLE SHOT</option>
-		      <option value="5">START BRAM LOOP</option>
+		      <option value="5">STREAMING OPERATION</option>
 		      <option value="6">RUN TUNE</option>
 		    </select>
 		  </div>
@@ -289,14 +289,14 @@
 		    <p id="field_descr_text">BRAM TRANSPORT MODE BLOCK S1,S2</p>
 		    <select size="1" id="transport_mode_set">
 		      <option selected value="0">0: IN1, IN2</option>
-		      <option value="1">1: PHASE, AMPL</option>
-		      <option value="2">2: IN1, AMPL (AC)</option>
-		      <option value="3">3: IN2, PHASE (AC)</option>
-		      <option value="4">4: Exec,Freq</option>
-		      <option value="5">5: Ampl, Exec</option>
-		      <option value="6">6: Phase, Freq</option>
-		      <option value="7">7: M-DC, AMPL</option>
-		      <option value="8">8: GPIO,pxclk</option>
+		      <option value="1">1: IN1: AC,DC</option>
+		      <option value="2">2: AMC: AMPL, EXEC</option>
+		      <option value="3">3: PHC: PHASE, dFREQ</option>
+		      <option value="4">4: PHASE, AMPL</option>
+		      <option value="5">5: PHASE, dFREQ, AMPL, EXEC</option>
+		      <option value="6">6: DHC: dFREQ, dFControl</option>
+		      <option value="7">7: DDR IN1,IN2</option>
+		      <option value="8">8: AXS7,AXS8</option>
 		    </select>
 		  </div>
 		</div>

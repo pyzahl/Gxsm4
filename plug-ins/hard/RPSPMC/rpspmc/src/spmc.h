@@ -84,11 +84,17 @@ extern "C" {
                                      double da, double db, double slew,
                                      bool update_life);
 
-        void rp_spmc_set_rotation (double alpha);
+        int rp_spmc_set_rotation (double alpha, double slew);
         void rp_spmc_set_slope (double dzx, double dzy);
         void rp_spmc_set_offsets (double x0, double y0, double z0, double xy_move_slew, double z_move_slew);
         void rp_spmc_set_scanpos (double xs, double ys, double slew);
-        
+
+        double rp_spmc_set_lck_modulation_frequency (double freq);
+        void rp_spmc_set_lck_volume (double volume);
+        void rp_spmc_set_lck_target (int target);
+        void rp_spmc_set_lck_tau (double tau);
+        void rp_spmc_set_lck_phase (double phase);
+
         void rp_spmc_update_readings ();
 
 #ifdef __cplusplus

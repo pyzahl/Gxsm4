@@ -160,6 +160,9 @@ public:
                 vpg_app_window = NULL;
                 vpg_grid = NULL;
 
+                zpos_refresh_timer_id = 0;
+                delayed_vector_update_timer_id = 0;
+
                 // need to create according xml recource files for this to make work....
                 hwi_settings = g_settings_new (GXSM_RES_BASE_PATH_DOT".hwi.rpspmc-control");
                 Unity    = new UnitObj(" "," ");
@@ -389,9 +392,10 @@ public:
         static void Slope_dZX_Changed(Param_Control* pcs, RPSPMC_Control* self);
         static void Slope_dZY_Changed(Param_Control* pcs, RPSPMC_Control* self);
         
-        static void ChangedNotify(Param_Control* pcs, gpointer data);
-        static void ChangedNotifyVP(Param_Control* pcs, gpointer data);
-        static int ChangedAction(GtkWidget *widget, RPSPMC_Control *dspc);
+        static void ChangedNotifyScanSpeed(Param_Control* pcs, RPSPMC_Control* self);
+        static void ChangedNotifyMoveSpeed(Param_Control* pcs, RPSPMC_Control* self);
+        static void ChangedNotifyVP(Param_Control* pcs, RPSPMC_Control* self);
+        
 	void update_zpos_readings ();
 	static guint refresh_zpos_readings(RPSPMC_Control *dspc);
         static int zpos_monitor_callback(GtkWidget *widget, RPSPMC_Control *dspc);
@@ -573,7 +577,10 @@ public:
                 }
 	};
 
-        void update_controller ();
+	void delayed_vector_update ();
+	static guint delayed_vector_update_callback (RPSPMC_Control *dspc);
+        gint delayed_vector_update_timer_id;
+        void update_scan_speed_vectors ();
         
         GUI_Builder *bp;
 

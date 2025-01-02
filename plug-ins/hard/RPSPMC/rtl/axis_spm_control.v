@@ -53,25 +53,25 @@ module axis_spm_control#(
     // SC Lock-In Reference and controls
     input wire [S_AXIS_SC_TDATA_WIDTH-1:0]  S_AXIS_SC_tdata,
     input wire                              S_AXIS_SC_tvalid,
-    input [32-1:0] modulation_volume, // volume for modulation Q31
+    input signed [32-1:0] modulation_volume, // volume for modulation Q31
     input [32-1:0] modulation_target, // target signal for mod (#XYZUAB)
     
 
     // scan rotation (yx=-xy, yy=xx)
-    input [32-1:0] rotmxx, // =cos(alpha)
-    input [32-1:0] rotmxy, // =sin(alpha)
+    input signed [32-1:0] rotmxx, // =cos(alpha)
+    input signed [32-1:0] rotmxy, // =sin(alpha)
 
     // slope -- always applied in global XY plane ???
-    input [32-1:0] slope_x, // SQ28
-    input [32-1:0] slope_y, // SQ28
+    input signed [32-1:0] slope_x, // SQSLOPE (31)
+    input signed [32-1:0] slope_y, // SQSLOPE (31)
 
     // SCAN OFFSET / POSITION COMPONENTS, ABSOLUTE COORDS
-    input [32-1:0] x0, // vector components
-    input [32-1:0] y0, // ..
-    input [32-1:0] z0, // ..
-    input [32-1:0] u0, // Bias Reference
-    input [32-1:0] xy_offset_step, // @Q31 => Q31 / 120M => [18 sec full scale swin @ step 1 decii = 0]  x RDECI
-    input [32-1:0] z_offset_step, // @Q31 => Q31 / 120M => [18 sec full scale swin @ step 1 decii = 0]  x RDECI
+    input signed [32-1:0] x0, // vector components
+    input signed [32-1:0] y0, // ..
+    input signed [32-1:0] z0, // ..
+    input signed [32-1:0] u0, // Bias Reference
+    input signed [32-1:0] xy_offset_step, // @Q31 => Q31 / 120M => [18 sec full scale swin @ step 1 decii = 0]  x RDECI
+    input signed [32-1:0] z_offset_step, // @Q31 => Q31 / 120M => [18 sec full scale swin @ step 1 decii = 0]  x RDECI
 
     output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS1_tdata,
     output wire                          M_AXIS1_tvalid,
@@ -164,8 +164,8 @@ module axis_spm_control#(
     reg signed [32-1:0] z_offset=0;
     reg signed [36-1:0] z_sum=0;
 
-    reg signed [32+2+QSLOPE+1-1:0] dZmx=0;
-    reg signed [32+2+QSLOPE+1-1:0] dZmy=0;
+    reg signed [32+QSLOPE+1-1:0] dZmx=0;
+    reg signed [32+QSLOPE+1-1:0] dZmy=0;
     
     
     reg signed [SC_DATA_WIDTH-1:0] s=0; // Q SC (25Q24)
@@ -212,10 +212,10 @@ module axis_spm_control#(
             xy_move_step <= xy_offset_step; // XY offset adjuster speed limit (max step)
             z_move_step  <= z_offset_step; // Z offset / slope comp. speed limit (max step) when adjusting
 
-            x <= S_AXIS_Xs_tdata;
-            y <= S_AXIS_Ys_tdata;
-            z_gvp <= S_AXIS_Zs_tdata;
-            u <= S_AXIS_U_tdata;
+            x <= S_AXIS_Xs_tdata[SAXIS_TDATA_WIDTH-1:0];
+            y <= S_AXIS_Ys_tdata[SAXIS_TDATA_WIDTH-1:0];
+            z_gvp <= S_AXIS_Zs_tdata[SAXIS_TDATA_WIDTH-1:0];
+            u <= S_AXIS_U_tdata[SAXIS_TDATA_WIDTH-1:0];
             
             mxx <= rotmxx;
             mxy <= rotmxy;

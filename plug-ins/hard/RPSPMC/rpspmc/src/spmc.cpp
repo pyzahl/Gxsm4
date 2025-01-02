@@ -527,7 +527,7 @@ int32_t ad5791_setup(int axis,
 void rp_spmc_AD5791_init (){
         fprintf(stderr, "##rp_spmc_AD5791_init\n");
 
-        rp_spmc_set_rotation (0.0);
+        rp_spmc_set_rotation (0.0, -1.0);
 
         // power up one by one
         ad5791_setup(0,0);
@@ -885,6 +885,13 @@ int rp_spmc_set_rotation (double alpha, double slew){
         
         if (verbose > 1) fprintf(stderr, "** adjusting rotation to %g\n", alpha);
 
+        if (slew < 0.){ // FORCE SET/INIT
+                current_alpha = alpha;
+                set_gpio_cfgreg_int32 (SPMC_ROTM_XX, (int)round (Q_XY_PRECISION*cos(current_alpha)));
+                set_gpio_cfgreg_int32 (SPMC_ROTM_XY, (int)round (Q_XY_PRECISION*sin(current_alpha)));
+                return 0;
+        }
+        
         double delta = alpha - current_alpha;
 
         if (fabs (delta) < 1e-3){

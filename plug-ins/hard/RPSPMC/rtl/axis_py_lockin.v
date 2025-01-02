@@ -97,7 +97,7 @@ module axis_py_lockin#(
     reg [16-1 : 0] dds_n2=0;
     reg [16-1 : 0] dds_n2_last=0;
     reg [LCK_BUFFER_LEN2-1 : 0] dds_n=0;
-    reg [LCK_BUFFER_LEN2+1-1 : 0] i=0;
+    reg [LCK_BUFFER_LEN2-1 : 0] i=0;
 
     reg [6-1:0] decii2 = 5;
     reg [DECII2_MAX-1:0] decii  = 0;
@@ -145,10 +145,7 @@ module axis_py_lockin#(
             
             // LockIn ====
             
-            if (i<16)
-                sd <= 1<<26; // dbg purpose only
-            else
-                sd <= s; // dbg purpose only
+            sd <= s; // dbg purpose only
             signal   <= S_AXIS_SIGNAL_tdata[S_AXIS_SIGNAL_TDATA_WIDTH-1:S_AXIS_SIGNAL_TDATA_WIDTH-LCK_Q_WIDTH]; // top bits as of LCK_Q_WIDTH
 
             // Quad Correlation Products

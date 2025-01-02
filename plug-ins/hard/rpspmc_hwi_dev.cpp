@@ -730,7 +730,7 @@ gpointer ProbeDataReadThread (void *ptr_hwi){
 int rpspmc_hwi_dev::on_new_data (gconstpointer contents, gsize len, bool init){
         static int position=0; // internal write position
 
-        g_message ("on_new_data(len=%u) pos=0x%08x", len, position);
+        //g_message ("on_new_data(len=%u) pos=0x%08x", len, position);
         
         if (init){
                 g_message ("on_new_data(INIT)");

@@ -46,11 +46,14 @@ int thread_data__tune_control=0;
 #include <fcntl.h>
 #include <pthread.h>
 
-#define REDPACPLL_DATE    0x20241224
+#define REDPACPLL_DATE    0x20250101
 #define REDPACPLL_VERSION 0x00160000
-#define RPSPMC_VERSION    0x00010014
-#define RPSPMC_VNAME      "Evaluation Regime SG20241224"
+#define RPSPMC_VERSION    0x00010015
+#define RPSPMC_VNAME      "Evaluation Regime SG20250101"
 #define RPSPMC_SRCS_INFO  "Bit0..3: XYZU | Bit4-7: IN1,2,3,4 | Bit8-11: dFREQ,EXEC,PHASE,AMPL | Bit 12..15: LckA,B, TIME64"
+
+#define PARAMETER_UPDATE_INTERVAL 200 // ms
+#define SIGNAL_UPDATE_INTERVAL    200 // ms
 
 #include "main.h"
 #include "fpga_cfg.h"
@@ -139,8 +142,6 @@ Network 1
 //Signal size
 #define SIGNAL_SIZE_DEFAULT       1024
 #define TUNE_SIGNAL_SIZE_DEFAULT  1024
-#define PARAMETER_UPDATE_INTERVAL 200 // ms
-#define SIGNAL_UPDATE_INTERVAL    200 // ms
 
 #define SIGNAL_SIZE_GPIOX 16
 

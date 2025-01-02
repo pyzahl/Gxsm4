@@ -181,15 +181,15 @@ SOURCE_SIGNAL_DEF swappable_signals[] = {                                       
         { 0x00000001, "Excitation",  " ", "mV", "mV", (1.0/((1L<<RP_FPGA_QEXEC)-1)),                  1 },
         { 0x00000002, "Phase",       " ", "deg", UTF8_DEGREE, (180.0/(M_PI*((1L<<RP_FPGA_QATAN)-1))), 2 },
         { 0x00000003, "Amplitude",   " ", "mV", "mV", (1.0/((1L<<RP_FPGA_QSQRT)-1)),                  3 },
-        { 0x00000004, "dFreq-Control", " ", "mV", "mV", (1000*SPMC_AD5791_to_volts),                       4 },
-        { 0x00000005, "Test05",      " ", "V", "V", (1.0),                                         -1 },
+        { 0x00000004, "dFreq-Control", " ", "mV", "mV", (1000*SPMC_AD5791_to_volts),                  4 },
+        { 0x00000005, "Test05",      " ", "V", "V", (1.0),                                            5 },
         { 0x00000006, "Test06",      " ", "mV", "mV", (1.0),                                         -1 },
         { 0x00000007, "Test07",      " ", "mV", "mV", (1.0),                                         -1 },
-        { 0x00000008, "Test08SD",    " ", "V", "V", (1.0),                                         -1 },
-        { 0x00000009, "Test09Zmon",  " ", "V", "V", (1.0),                                         -1 },
-        { 0x00000010, "LockInY",     " ", "V", "V", (SPMC_RPIN12_to_volts),                        -1 },
-        { 0x00000011, "LockInX",     " ", "V", "V", (SPMC_RPIN12_to_volts),                        -1 },
-        { 0x00000012, "LockInA2",    " ", "V", "V", (SPMC_RPIN12_to_volts),                        -1 },
+        { 0x00000008, "Test08SD",    " ", "V", "V", (1.0),                                           -1 },
+        { 0x00000009, "Test09Zmon",  " ", "V", "V", (1.0),                                           -1 },
+        { 0x00000010, "LockInY",     " ", "V", "V", (SPMC_RPIN12_to_volts),                          -1 },
+        { 0x00000011, "LockInX",     " ", "V", "V", (SPMC_RPIN12_to_volts),                          -1 },
+        { 0x00000012, "LockInA2",    " ", "V", "V", (SPMC_RPIN12_to_volts),                          -1 },
         { 0x00000013, "SineRef",     " ", "V",   "V", (SPMC_RPIN12_to_volts),                        -1 },
         { 0x00000014, "IN1noFIR",    " ", "V",   "V", (SPMC_RPIN12_to_volts),                        -1 },
         { 0x00000015, "ZwSlope-OUT", " ", "V",   "V", (SPMC_AD5791_to_volts),                         5 },
@@ -1466,7 +1466,6 @@ void RPSPMC_Control::create_folder (){
         bp->set_input_width_chars (12);
         bp->set_label_width_chars (10);
 
-        //bp->set_default_ec_change_notice_fkt (RPSPMC_Control::ChangedNotify, this);
         bp->set_default_ec_change_notice_fkt (RPSPMC_Control::BiasChanged, this);
         bp->grid_add_ec_with_scale ("Bias", Volt, &bias, -10., 10., "4g", 0.001, 0.01, "fbs-bias");
         //        bp->ec->set_adjustment_mode (PARAM_CONTROL_ADJUSTMENT_LOG | PARAM_CONTROL_ADJUSTMENT_LOG_SYM | PARAM_CONTROL_ADJUSTMENT_DUAL_RANGE | PARAM_CONTROL_ADJUSTMENT_ADD_MARKS );
@@ -1488,7 +1487,6 @@ void RPSPMC_Control::create_folder (){
                  
         bp->set_input_width_chars (12);
         bp->set_input_nx ();
-        bp->set_default_ec_change_notice_fkt (RPSPMC_Control::ChangedNotify, this);
 
 	bp->grid_add_check_button ("Z-Pos Monitor",
                                    "Z Position Monitor. Disable to set Z-Position Setpoint for const height mode. "
@@ -1624,7 +1622,6 @@ void RPSPMC_Control::create_folder (){
 
 
 	// ========================================
-        bp->set_default_ec_change_notice_fkt (RPSPMC_Control::ChangedNotify, this);
 
         PI_DEBUG (DBG_L4, "DSPC----SCAN ------------------------------- ");
         bp->pop_grid ();
@@ -1636,10 +1633,12 @@ void RPSPMC_Control::create_folder (){
 
         bp->set_configure_list_mode_on ();
 
+        bp->set_default_ec_change_notice_fkt (RPSPMC_Control::ChangedNotifyMoveSpeed, this);
 	bp->grid_add_ec_with_scale ("MoveSpd", Speed, &move_speed_x, 0.1, 10000., "5g", 1., 10., "fbs-scan-speed-move");
         bp->new_line ();
         bp->set_configure_list_mode_off ();
 
+        bp->set_default_ec_change_notice_fkt (RPSPMC_Control::ChangedNotifyScanSpeed, this);
 	bp->grid_add_ec_with_scale ("ScanSpd", Speed, &scan_speed_x_requested, 0.1, 100000., "5g", 1., 10., "fbs-scan-speed-scan");
         scan_speed_ec = bp->ec;
 
@@ -1665,13 +1664,13 @@ void RPSPMC_Control::create_folder (){
         bp->set_scale_nx ();
         bp->new_line (0,2);
 
-        bp->set_default_ec_change_notice_fkt (RPSPMC_Control::ChangedNotify, this); // set default handler
+        //bp->set_default_ec_change_notice_fkt (RPSPMC_Control::ChangedNotify, this); // set default handler
 
-        bp->grid_add_check_button ("Enable automatic Tip return to center", "enable auto tip return to center after scan", 1,
-                                       G_CALLBACK(RPSPMC_Control::DSP_cret_callback), this, center_return_flag, 0);
-        g_settings_bind (hwi_settings, "adv-enable-tip-return-to-center",
-                         G_OBJECT (GTK_CHECK_BUTTON (bp->button)), "active",
-                         G_SETTINGS_BIND_DEFAULT);
+        //bp->grid_add_check_button ("Enable automatic Tip return to center", "enable auto tip return to center after scan", 1,
+        //                               G_CALLBACK(RPSPMC_Control::DSP_cret_callback), this, center_return_flag, 0);
+        //g_settings_bind (hwi_settings, "adv-enable-tip-return-to-center",
+        //                 G_OBJECT (GTK_CHECK_BUTTON (bp->button)), "active",
+        //                 G_SETTINGS_BIND_DEFAULT);
 
         PI_DEBUG (DBG_L4, "DSPC----FB-CONTROL -- INPUT-SRCS ----------------------------- ");
 
@@ -2423,13 +2422,6 @@ void RPSPMC_Control::create_folder (){
         set_window_geometry ("rpspmc-main-control"); // must add key to xml file: core-sources/org.gnome.gxsm4.window-geometry.gschema.xml
 }
 
-int RPSPMC_Control::DSP_slope_callback (GtkWidget *widget, RPSPMC_Control *self){
-        PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);
-	self->area_slope_compensation_flag = gtk_check_button_get_active (GTK_CHECK_BUTTON (widget));	
-	self->update_controller();
-        return 0;
-}
-
 int RPSPMC_Control::DSP_cret_callback (GtkWidget *widget, RPSPMC_Control *self){
         PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);
 	self->center_return_flag = gtk_check_button_get_active (GTK_CHECK_BUTTON (widget));	
@@ -2439,18 +2431,8 @@ int RPSPMC_Control::DSP_cret_callback (GtkWidget *widget, RPSPMC_Control *self){
 
 int RPSPMC_Control::ldc_callback(GtkWidget *widget, RPSPMC_Control *self){
         PI_DEBUG_GP (DBG_L4, "%s \n",__FUNCTION__);
-	self->update_controller();
+	//self->update_controller();
 	return 0;
-}
-
-
-int RPSPMC_Control::ChangedAction(GtkWidget *widget, RPSPMC_Control *self){
-	self->update_controller ();
-	return 0;
-}
-
-void RPSPMC_Control::ChangedNotify(Param_Control* pcs, gpointer self){
-	((RPSPMC_Control*)self)->update_controller (); // update basic SPM Control Parameters
 }
 
 void RPSPMC_Control::BiasChanged(Param_Control* pcs, RPSPMC_Control* self){
@@ -2479,66 +2461,80 @@ void RPSPMC_Control::Slope_dZY_Changed(Param_Control* pcs, RPSPMC_Control* self)
 
 void RPSPMC_Control::ZPosSetChanged(Param_Control* pcs, RPSPMC_Control *self){
         if (rpspmc_pacpll){
-                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_SETPOINT_CZ", main_get_gapp()->xsm->Inst->ZA2Volt(self->zpos_ref));
-                if (self->mix_level[0] > 0.){
-                        rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_UPPER", main_get_gapp()->xsm->Inst->ZA2Volt(self->zpos_ref));
-                        usleep (100000);
-                        rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_SETPOINT", main_get_gapp()->xsm->Inst->nAmpere2V(self->mix_level[0]));
-                }
+                const gchar *SPMC_SET_ZPOS_SERVO_COMPONENTS[] = {
+                        "SPMC_Z_SERVO_SETPOINT_CZ",
+                        "SPMC_Z_SERVO_SETPOINT",
+                        "SPMC_Z_SERVO_UPPER", 
+                        NULL };
+                double jdata[6];
+                jdata[0] = main_get_gapp()->xsm->Inst->ZA2Volt(self->zpos_ref);
+                jdata[1] = self->mix_level[0] > 0.
+                        ? main_get_gapp()->xsm->Inst->nAmpere2V(self->mix_level[0])
+                        : main_get_gapp()->xsm->Inst->nAmpere2V(self->mix_set_point[0]);
+                jdata[2]   = self->mix_level[0] > 0.
+                        ? main_get_gapp()->xsm->Inst->ZA2Volt(self->zpos_ref)
+                        : 5.; // UPPER
+
+                rpspmc_pacpll->write_array (SPMC_SET_ZPOS_SERVO_COMPONENTS, 0, NULL,  3, jdata);
         }
 }
 
 void RPSPMC_Control::ZServoParamChanged(Param_Control* pcs, RPSPMC_Control *self){
         if (rpspmc_pacpll){
-                // (((RPSPMC_Control*)self)->mix_gain[ch]) // N/A
+
+                const gchar *SPMC_SET_Z_SERVO_COMPONENTS[] = {
+                        "SPMC_Z_SERVO_MODE", 
+                        "SPMC_Z_SERVO_SETPOINT",
+                        "SPMC_Z_SERVO_LEVEL", 
+                        "SPMC_Z_SERVO_CP", 
+                        "SPMC_Z_SERVO_CI", 
+                        "SPMC_Z_SERVO_UPPER", 
+                        "SPMC_Z_SERVO_LOWER", 
+                        NULL };
+                double jdata[6];
+                int jdata_i[1];
+
+                // obsolete invert, critical/no good here. Add final Z-polarity at very end
                 self->z_servo[SERVO_CP] = spmc_parameters.z_servo_invert * pow (10., spmc_parameters.z_servo_cp_db/20.);
                 self->z_servo[SERVO_CI] = spmc_parameters.z_servo_invert * pow (10., spmc_parameters.z_servo_ci_db/20.);
-                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_SETPOINT", main_get_gapp()->xsm->Inst->nAmpere2V(self->mix_set_point[0]));
-                //rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_MODE",     self->mix_transform_mode[0]);
-                //rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_LEVEL",    main_get_gapp()->xsm->Inst->nAmpere2V(self->mix_level[0]));
-                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_LEVEL",    main_get_gapp()->xsm->Inst->nAmpere2V(-0.013));
-                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_CP",       self->z_servo[SERVO_CP]);
-                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_CI",       self->z_servo[SERVO_CI]);
-                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_UPPER",  5.0);
-                if (self->mix_level[0] > 0.){
-                        rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_UPPER", main_get_gapp()->xsm->Inst->ZA2Volt(self->zpos_ref));
-                        usleep (100000);
-                        rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_SETPOINT", main_get_gapp()->xsm->Inst->nAmpere2V(self->mix_level[0]));
-                } else {
-                        rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_SETPOINT", main_get_gapp()->xsm->Inst->nAmpere2V(self->mix_set_point[0]));
-                        usleep (100000);
-                        rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_LOWER", -5.0);
-                }
-        }
-}
-void RPSPMC_Control::ZServoControl (GtkWidget *widget, RPSPMC_Control *self){
-        if (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget))){
-                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_MODE", MM_OFF);
-                // set MixMode to grey/inconsistent
-        } else {
-                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_MODE", self->mix_transform_mode[0]);
-                // update MixMode
+
+                jdata_i[0] = self->mix_transform_mode[0];
+                jdata[0]   = self->mix_level[0] > 0.
+                        ? main_get_gapp()->xsm->Inst->nAmpere2V(self->mix_level[0])
+                        : main_get_gapp()->xsm->Inst->nAmpere2V(self->mix_set_point[0]);
+                jdata[1]   = main_get_gapp()->xsm->Inst->nAmpere2V(self->mix_level[0]);
+                jdata[2]   = self->z_servo[SERVO_CP];
+                jdata[3]   = self->z_servo[SERVO_CI];
+                jdata[4]   = self->mix_level[0] > 0.
+                           ? main_get_gapp()->xsm->Inst->ZA2Volt(self->zpos_ref)
+                           :  5.; // UPPER
+                jdata[5]   = -5.; // LOWER
+
+                rpspmc_pacpll->write_array (SPMC_SET_Z_SERVO_COMPONENTS, 1, jdata_i,  6, jdata);
         }
 }
 
-void RPSPMC_Control::ZServoControlInv (GtkWidget *widget, RPSPMC_Control *self){
+
+void RPSPMC_Control::ZServoControl (GtkWidget *widget, RPSPMC_Control *self){
+        /*
+        if (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget))){
+                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_MODE", self->mix_transform_mode[0]);
+                // set MixMode to grey/inconsistent
+        } else {
+                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_MODE", MM_OFF);
+                // update MixMode
+        }
+        */
+}
+
+void RPSPMC_Control::ZServoControlInv (GtkWidget *widget, RPSPMC_Control* self){
         spmc_parameters.z_servo_invert = gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)) ? -1.:1.;
         self->ZServoParamChanged (NULL, self);
 }
 
 
-void RPSPMC_Control::ChangedNotifyVP(Param_Control* pcs, gpointer self){
+void RPSPMC_Control::ChangedNotifyVP(Param_Control* pcs, RPSPMC_Control* self){
         g_message ("**ChangedNotifyVP**");
-#if 0
-        for (int k=0; k<8; k++)
-                g_message ("**VP[%02d] %8gV %8gA %8gs np%4d nr%4d",
-                           k,
-                           ((RPSPMC_Control*)self)->GVP_du[k],
-                           ((RPSPMC_Control*)self)->GVP_dz[k],
-                           ((RPSPMC_Control*)self)->GVP_ts[k],
-                           ((RPSPMC_Control*)self)->GVP_points[k],
-                           ((RPSPMC_Control*)self)->GVP_vnrep[k]);
-#endif
 }
 
 int RPSPMC_Control::choice_mixmode_callback (GtkWidget *widget, RPSPMC_Control *self){
@@ -2560,9 +2556,7 @@ int RPSPMC_Control::choice_mixmode_callback (GtkWidget *widget, RPSPMC_Control *
         }
         PI_DEBUG_GP (DBG_L4, "%s ** 2\n",__FUNCTION__);
 
-	self->update_controller ();
         self->ZServoParamChanged (NULL, self);
-        //g_print ("DSP READBACK MIX%d MT=%d\n", channel, (int)sranger_common_hwi->read_dsp_feedback ("MT", channel));
 
         PI_DEBUG_GP (DBG_L4, "%s **3 done\n",__FUNCTION__);
         return 0;
@@ -2949,25 +2943,47 @@ int RPSPMC_Control::choice_mod_target_callback (GtkWidget *widget, RPSPMC_Contro
         return 0;
 }
 
-void RPSPMC_Control::update_controller () {
-
+void RPSPMC_Control::delayed_vector_update (){
         // SCAN SPEED COMPUTATIONS
         double slew[2];
         slew[0] = scan_speed_x = scan_speed_x_requested;
         slew[1] = fast_return * scan_speed_x_requested;
         scanpixelrate = slew[0]/main_get_gapp()->xsm->data.s.rx*main_get_gapp()->xsm->data.s.nx;
-
+        
         gchar *info = g_strdup_printf (" (%g A/s, %g ms/pix)", scan_speed_x, scanpixelrate*1e3);
         scan_speed_ec->set_info (info);
+        g_message ("Delayed Scan Speed Update: rewriting GVP Scan code for %s", info);
         g_free (info);
 
         if (rpspmc_hwi->is_scanning()) // only if scanning!
                 write_spm_scan_vector_program (main_get_gapp()->xsm->data.s.rx, main_get_gapp()->xsm->data.s.ry,
                                                main_get_gapp()->xsm->data.s.nx, main_get_gapp()->xsm->data.s.ny,
                                                slew, NULL, NULL);
+        delayed_vector_update_timer_id = 0; // done.
 }
 
+guint RPSPMC_Control::delayed_vector_update_callback (RPSPMC_Control *self){
+        self->delayed_vector_update ();
+	return FALSE;
+}
 
+void RPSPMC_Control::ChangedNotifyScanSpeed(Param_Control* pcs, RPSPMC_Control *self){
+        if (!rpspmc_hwi->is_scanning()) // only if scanning!
+                return;
+
+        // if not already scheduled, schedule delayed scan speed vector update to avoid messageover load via many slider events
+        if (!self->delayed_vector_update_timer_id)
+                self->delayed_vector_update_timer_id = g_timeout_add (500, (GSourceFunc)RPSPMC_Control::delayed_vector_update_callback, self);
+
+        //if (self->delayed_vector_update_timer_id){
+        //        g_source_remove (self->delayed_vector_update_timer_id);
+        //        self->delayed_vector_update_timer_id = 0;
+        // }
+}
+
+void RPSPMC_Control::ChangedNotifyMoveSpeed(Param_Control* pcs, RPSPMC_Control *self){
+        // obsolete, always done together with XY Offset adjustments
+}
 
 
 
