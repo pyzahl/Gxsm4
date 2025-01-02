@@ -54,8 +54,8 @@ module axis_sadd #(
 
     always @ (posedge a_clk)
     begin
-        a <= S_AXIS_A_tdata;
-        b <= S_AXIS_B_tdata;
+        a <= $signed(S_AXIS_A_tdata);
+        b <= $signed(S_AXIS_B_tdata);
         sum <= a + b;
     end
     

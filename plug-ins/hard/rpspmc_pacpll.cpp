@@ -4706,7 +4706,7 @@ void RPspmc_pacpll::on_connect_actions(){
         status_append (" * RedPitaya SPM Control, SPMC init...\n");
 
         update_SPMC_parameters ();
-        status_append (" * RedPitaya SPM Control ready. Connecting Stream..\n");
+        status_append (" * RedPitaya SPM Control ready. NEXT: Please Check Connect Stream.\n");
 }
 
 

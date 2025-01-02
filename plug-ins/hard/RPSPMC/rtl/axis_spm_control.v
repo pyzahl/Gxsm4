@@ -23,13 +23,14 @@ module axis_spm_control#(
     parameter SAXIS_TDATA_WIDTH = 32,
     parameter QROTM = 28,
     parameter QSLOPE = 31,
-    parameter S_AXIS_SC_TDATA_WIDTH = 64,
-    parameter SC_DATA_WIDTH  = 25,  // SC 25Q24
-    parameter SC_Q_WIDTH     = 24,  // SC 25Q24
+    parameter QSIGNALS = 31,
+    parameter S_AXIS_SREF_TDATA_WIDTH = 32,
+    parameter SREF_DATA_WIDTH  = 25,  // SC 25Q24
+    parameter SREF_Q_WIDTH     = 24,  // SC 25Q24
     parameter RDECI  = 5   // reduced rate decimation bits 1= 1/2 ...
 )
 (
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS_Xs:S_AXIS_Ys:S_AXIS_Zs:S_AXIS_U:S_AXIS_SC:S_AXIS_Z:M_AXIS1:M_AXIS2:M_AXIS3:M_AXIS4:M_AXIS_XSMON:M_AXIS_YSMON:M_AXIS_ZSMON:M_AXIS_X0MON:M_AXIS_Z_SLOPE:M_AXIS_Y0MON:M_AXIS_Z0MON:M_AXIS_UrefMON:M_AXIS_SC" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS_Xs:S_AXIS_Ys:S_AXIS_Zs:S_AXIS_U:S_AXIS_SREF:S_AXIS_Z:M_AXIS1:M_AXIS2:M_AXIS3:M_AXIS4:M_AXIS_XSMON:M_AXIS_YSMON:M_AXIS_ZSMON:M_AXIS_X0MON:M_AXIS_Z_SLOPE:M_AXIS_Y0MON:M_AXIS_Z0MON:M_AXIS_UrefMON" *)
     input a_clk,
     // GVP/SCAN COMPONENTS, ROTATED RELATIVE COORDS TO SCAN CENTER
     input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS_Xs_tdata,
@@ -51,8 +52,8 @@ module axis_spm_control#(
     //input wire                          S_AXIS_M2_tvalid,
     
     // SC Lock-In Reference and controls
-    input wire [S_AXIS_SC_TDATA_WIDTH-1:0]  S_AXIS_SC_tdata,
-    input wire                              S_AXIS_SC_tvalid,
+    input wire [S_AXIS_SREF_TDATA_WIDTH-1:0]  S_AXIS_SREF_tdata,
+    input wire                                S_AXIS_SREF_tvalid,
     input signed [32-1:0] modulation_volume, // volume for modulation Q31
     input [32-1:0] modulation_target, // target signal for mod (#XYZUAB)
     
@@ -101,10 +102,7 @@ module axis_spm_control#(
     output wire                          M_AXIS_Z_SLOPE_tvalid,
     
     output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS_UrefMON_tdata,
-    output wire                          M_AXIS_UrefMON_tvalid,
-
-    output wire [S_AXIS_SC_TDATA_WIDTH-1:0]  M_AXIS_SC_tdata,
-    output wire                              M_AXIS_SC_tvalid
+    output wire                          M_AXIS_UrefMON_tvalid
     );
     
     // Xr  =   rotmxx*xs + rotmxy*ys
@@ -168,12 +166,11 @@ module axis_spm_control#(
     reg signed [32+QSLOPE+1-1:0] dZmy=0;
     
     
-    reg signed [SC_DATA_WIDTH-1:0] s=0; // Q SC (25Q24)
-    reg signed [SC_DATA_WIDTH-1:0] c=0; // Q SC (25Q24)
-    reg signed [SC_DATA_WIDTH-1:0] mv=0;
-    reg signed [3-1:0] mt=0;
+    reg signed [SREF_DATA_WIDTH-1:0] s=0; // Q SC (25Q24)
+    reg signed [SREF_DATA_WIDTH-1:0] mv=0;
+    reg [4-1:0] mt=0;
 
-    reg signed [2*SC_DATA_WIDTH-1:0] mod_tmp=0;
+    reg signed [2*SREF_DATA_WIDTH-1:0] mod_tmp=0;
     reg signed [32-1:0] modulation=0;
    
     reg [RDECI:0] rdecii = 0;
@@ -200,13 +197,12 @@ module axis_spm_control#(
         rdecii <= rdecii+1; // rdecii 00 01 *10 11 00 ...
         if (rdecii == 0)
         begin
-            // LockIn Sin, Cos from DDS
-            c <= S_AXIS_SC_tdata[                        SC_DATA_WIDTH-1 : 0]; // 25Q24 full dynamic range, proper rounding   24: 0
-            s <= S_AXIS_SC_tdata[S_AXIS_SC_TDATA_WIDTH/2+SC_DATA_WIDTH-1 : S_AXIS_SC_TDATA_WIDTH/2]; // 25Q24 full dynamic range, proper rounding   56:32
-            mv <= modulation_volume[32-1 : 32-SC_DATA_WIDTH];
-            mt <= modulation_target[3-1:0];
+            // LockIn Sin Ref from DDS
+            s  <= $signed (S_AXIS_SREF_tdata[SREF_DATA_WIDTH-1:0]); // SRef is 32bit wide, but only SREF_DATA_WIDTH-1:0 used
+            mv <= $signed(modulation_volume[32-1 : 32-SREF_DATA_WIDTH]); // SQ31 value, truncating.
+            mt <= modulation_target[4-1:0];
             mod_tmp    <= mv * s;
-            modulation <= mod_tmp >>> SC_Q_WIDTH; // remap to default 32
+            modulation <= mod_tmp >>> (SREF_Q_WIDTH - (QSIGNALS-SREF_Q_WIDTH)); // remap to default 32:   2*SREF_Q>> << SIGNALS_Q = >>> 24 - 31-24
             
             // always buffer locally
             xy_move_step <= xy_offset_step; // XY offset adjuster speed limit (max step)
@@ -295,10 +291,6 @@ module axis_spm_control#(
     
     assign M_AXIS_UrefMON_tdata  = mu0s;
     assign M_AXIS_UrefMON_tvalid = 1;
-
-    // pass to LockIn 
-    assign M_AXIS_SC_tdata  = S_AXIS_SC_tdata;
-    assign M_AXIS_SC_tvalid = S_AXIS_SC_tvalid; 
 
     
 endmodule
