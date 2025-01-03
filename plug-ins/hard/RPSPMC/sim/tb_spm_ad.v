@@ -145,6 +145,9 @@ module tb_spm_ad(
 
     reg [47:0] ddsph=0;
 
+    reg [64:0] clicks=0;
+    reg [15:0] amptest=4;
+
     initial 
     begin       
         tb_ACLK = 1'b0;
@@ -158,8 +161,13 @@ module tb_spm_ad(
         pclk = 1; #1;
         pclk = 0; #1;
         ddsph = ddsph + dphiQ44; 
-        sc  = { SinCos[63:32]>>7, SinCos[31:0]>>7 };
-        sig = SinCos[63:32];
+        sc  = { SinCos[63:32]>>>7, SinCos[31:0]>>>7 };
+        
+        clicks <= clicks+1;
+        
+        if (clicks > 331072)
+            amptest <= 5;
+        sig = $signed(SinCos[63:32])>>>amptest;
     end
 
     always begin
@@ -202,13 +210,18 @@ print (adjust (100))
         
         //fclk:  125000000.0  Hz
         //dphi =  5.026548245743669e-06  rad
-        dphiQ44 =  14073749;
-        deltasRe =  2147483646;
-        deltasIm =  10794;
-
+        //dphiQ44 =  17179869184 ; // @Q44 phase
         
-        deltasRe = 2145957801;
-        deltasIm = 80939050;
+        //deltasRe =  2147443221 ; // SDB
+        //deltasIm =  13176711 ; // SDB
+        //ddsn2   =  34 ;
+
+        dphiQ44 =  134217728 ; // @Q44 phase
+        ddsn2   =  27 ;
+        deltasRe =  2147483644 ; // SDB
+        deltasIm =  102943 ; // SDB
+        
+
         deltasReIm = { deltasRe, deltasIm };
 
 
@@ -343,6 +356,8 @@ print (adjust (100))
         #20
         r=1; // reset to hold
 
+        
+
         $display ("Simulation 2 completed");
         $stop;
     end
@@ -403,6 +418,20 @@ axis_bram_stream_srcs axis_bram_stream_srcs_tb
         .stall(dma_stall)
     );
 
+    wire [31:0] la2;   
+    wire la2v;  
+    wire [31:0] lx;   
+    wire lxv;  
+    wire [31:0] ly;   
+    wire lyv;  
+    wire [31:0] lsref;   
+    wire lsrefv;  
+    wire [31:0] lsd2;   
+    wire lsdv;  
+    wire [31:0] lso2;   
+    wire lsov;  
+    wire [31:0] li;   
+    wire liv;  
 
 axis_py_lockin lockin
     (
@@ -426,10 +455,16 @@ axis_py_lockin lockin
     
     // S ref out
     .M_AXIS_Sref_tdata(lsref),
-    .M_AXIS_Sref_tvalid(lsrv),
+    .M_AXIS_Sref_tvalid(lsrefv),
     // SDeci ref out
     .M_AXIS_SDref_tdata(lsd),
-    .M_AXIS_SDref_tvalid(lsdv)
+    .M_AXIS_SDref_tvalid(lsdv),
+    // Signal out
+    .M_AXIS_SignalOut_tdata(lso),
+    .M_AXIS_SignalOut_tvalid(lsov),
+    // i out
+    .M_AXIS_i_tdata(li),
+    .M_AXIS_i_tvalid(liv)
 );    
 
 
@@ -487,8 +522,8 @@ axis_spm_control axis_spm_control_tb
     //input wire                          S_AXIS_M2_tvalid,
     
     // SC Lock-In Reference and controls
-    .S_AXIS_SC_tdata(SinCos),
-    .S_AXIS_SC_tvalid(1),
+    .S_AXIS_SREF_tdata(SinCos[31:0]),
+    .S_AXIS_SREF_tvalid(1),
     .modulation_volume(10000), // volume for modulation Q31
     .modulation_target(4), // target signal for mod (#XYZUAB)
     
@@ -537,10 +572,7 @@ axis_spm_control axis_spm_control_tb
   .M_AXIS_Z_SLOPE_tvalid(spm_Zslopev),
     
   .M_AXIS_UrefMON_tdata (spm_Urm),
-  .M_AXIS_UrefMON_tvalid(spm_Urmv),
-
-       .M_AXIS_SC_tdata (SCp),
-      .M_AXIS_SC_tvalid (SCpv)
+  .M_AXIS_UrefMON_tvalid(spm_Urmv)
 );
 
 

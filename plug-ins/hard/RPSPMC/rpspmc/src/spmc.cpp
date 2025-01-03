@@ -1019,17 +1019,17 @@ void rp_spmc_set_scanpos (double xs, double ys, double slew, int opts){
 
 double rp_spmc_set_lck_modulation_frequency (double freq){
         // 44 Bit Phase, using 48bit tdata
-        unsigned int n = round (log2(dds_phaseinc (freq)));
+        unsigned int n2 = round (log2(dds_phaseinc (freq)));
         unsigned long long phase_inc = 1LL << n;
         double fact = dds_phaseinc_to_freq (phase_inc);
         
         if (verbose > 1){
                 double ferr = fact - freq;
-                fprintf(stderr, "##Configure: LCK DDS IDEAL Freq= %g Hz [%lld, N2=%d, M=%lld]  Actual f=%g Hz  Delta=%g Hz  (using power of 2 phase_inc)\n", freq, phase_inc, n, QQ44/phase_inc, fact, ferr);
+                fprintf(stderr, "##Configure: LCK DDS IDEAL Freq= %g Hz [%lld, N2=%d, decii=%d, M=%lld]  Actual f=%g Hz  Delta=%g Hz  (using power of 2 phase_inc)\n", freq, phase_inc, n2, n2>10? 1<<(n2-10):0, QQ44/phase_inc, fact, ferr);
                 // Configure: LCK DDS IDEAL Freq= 100 Hz [16777216, N2=24, M=1048576]  Actual f=119.209 Hz  Delta=19.2093 Hz  (using power of 2 phase_inc)
         }
         
-        set_gpio_cfgreg_int48_16 (SPMC_CFG_SC_LCK_DDS_PHASEINC, phase_inc, n);
+        set_gpio_cfgreg_int48_16 (SPMC_CFG_SC_LCK_DDS_PHASEINC, phase_inc, n2);
 
         return fact;
 }

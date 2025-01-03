@@ -87,7 +87,7 @@ void RPSPMC_Control::make_auto_n_vector_elments (double fnum){
 // Options:
 // Ramp-Mode: MAKE_VEC_FLAG_RAMP, auto n computation
 // FixV-Mode: MAKE_VEC_FLAG_VHOLD, fix bias, only compute "speed" by Ui,Uf,slope
-double RPSPMC_Control::make_Vdz_vector (double Ui, double Uf, double dZ, int n, double slope, int source, int options, double long &duration, make_vector_flags flags){
+double RPSPMC_Control::make_Vdz_vector (double Ui, double Uf, double dZ, int n, double slope, int source, int options, double &duration, make_vector_flags flags){
 	double dv = fabs (Uf - Ui);
 
 	if (dv < 1e-6)
@@ -119,7 +119,7 @@ double RPSPMC_Control::make_Vdz_vector (double Ui, double Uf, double dZ, int n, 
 }	
 
 // Copy of Vdz above, but the du steps were used for dx0
-double RPSPMC_Control::make_Vdx0_vector (double Ui, double Uf, double dZ, int n, double slope, int source, int options, double long &duration, make_vector_flags flags
+double RPSPMC_Control::make_Vdx0_vector (double Ui, double Uf, double dZ, int n, double slope, int source, int options, double &duration, make_vector_flags flags
                                      ){
         double dv = fabs (Uf - Ui);
         if (flags & MAKE_VEC_FLAG_RAMP || n < 2)
@@ -148,7 +148,7 @@ double RPSPMC_Control::make_Vdx0_vector (double Ui, double Uf, double dZ, int n,
 }       
 
 // Copy of Vdz above, but the du steps were used for dx0
-double RPSPMC_Control::make_dx0_vector (double X0i, double X0f, int n, double slope, int source, int options, double long &duration, make_vector_flags flags
+double RPSPMC_Control::make_dx0_vector (double X0i, double X0f, int n, double slope, int source, int options, double &duration, make_vector_flags flags
                                     ){
         double dv = fabs (X0f - X0i);
         if (flags & MAKE_VEC_FLAG_RAMP || n < 2)
@@ -392,13 +392,11 @@ void RPSPMC_Control::write_spm_vector_program (int start, pv_mode pvm){
 	int ramp_points;
 	int recover_options=0;
 	int vector_index = 0;
-	double vp_duration_0 = 0;
-	double vp_duration_1 = 0;
-	double vp_duration_2 = 0;
-	double vp_duration = 0;
-	double dU_IV=0.;
-	double dU_step=0.;
-	int vpci;
+        int vpci=0;
+	double vp_duration_0 = 0.;
+	double vp_duration_1 = 0.;
+	double vp_duration_2 = 0.;
+	double vp_duration = 0.;
 	double vp_dt_sec=0.;
 	gboolean remote_set_post_start = FALSE;
         int warn_flag=FALSE;
@@ -423,7 +421,303 @@ void RPSPMC_Control::write_spm_vector_program (int start, pv_mode pvm){
 
 		vpci = vector_index;
 		vp_duration_0 =	vp_duration;
-                break;
+
+#if 0	
+
+		// do we need to split up if crossing zero?
+		if (fabs (IV_dz) > 0.001 && ((IV_end[0] < 0. && IV_start[0] > 0.) || (IV_end[0] > 0. && IV_start[0] < 0.)) && (bias != 0.)){
+			int vpc=0;
+			// compute sections   
+			// z = z0 + dz * ( 1 - | U / Bias | )
+			// dz_bi := dz*(1-|Ui/Bias|) - 0
+			// dz_i0 := dz - dz_bi
+			// dz_0f := dz*(1-|Uf/Bias|) - (dz_bi + dz_i0)
+			double ui,u0,uf;
+			double dz_bi, dz_i0, dz_0f;
+			int n12, n23;
+			ui = IV_start[0]; 
+			u0 = 0.;
+			uf = IV_end[0];
+			n12 = (int)(round ((double)IV_points[0]*fabs (ui/(uf-ui))));
+			n23 = (int)(round ((double)IV_points[0]*fabs (uf/(uf-ui))));
+
+			dz_bi = IV_dz*(1.-fabs (ui/bias));
+			dz_i0 = IV_dz - dz_bi;
+			dz_0f = IV_dz*(1.-fabs (uf/bias)) - (dz_bi + dz_i0);
+
+			vp_duration_1 =	vp_duration;
+			vp_duration_2 =	vp_duration;
+
+			make_Vdz_vector (bias, ui, dz_bi, -1, IV_slope_ramp, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_RAMP);
+			write_program_vector (vector_index++);
+
+			make_Vdz_vector (ui, u0, dz_i0, n12, IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+			write_program_vector (vector_index++);
+
+			make_Vdz_vector (u0, uf, dz_0f, n23, IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+			write_program_vector (vector_index++);
+
+			if (IV_option_flags & FLAG_DUAL) {
+				// run also reverse probe ramp in dual mode
+				make_Vdz_vector (uf, u0, -dz_0f, n23, IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+				write_program_vector (vector_index++);
+
+				make_Vdz_vector (u0, ui, -dz_i0, n12, IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+				write_program_vector (vector_index++);
+
+				// Ramp back to given bias voltage   
+				make_Vdz_vector (ui, bias, -dz_bi, -1, IV_slope_ramp, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_RAMP);
+				write_program_vector (vector_index++);
+
+			} else {
+				make_Vdz_vector (uf, bias, -(dz_bi+dz_i0+dz_0f), -1, IV_slope_ramp, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_RAMP);
+				write_program_vector (vector_index++);
+			}
+
+			if (IV_repetitions > 1){
+				// Final vector, gives the IVC some time to recover   
+				make_delay_vector (IV_final_delay, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+				write_program_vector (vector_index++);
+				make_delay_vector (IV_recover_delay, ramp_sources, recover_options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+				program_vector.repetitions = IV_repetitions-1;
+				program_vector.ptr_next = -vector_index; // go to start
+				vp_duration +=	(IV_repetitions-1)*(vp_duration - vp_duration_1);
+				write_program_vector (vector_index++);
+			} else {
+				make_delay_vector (IV_final_delay, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+				write_program_vector (vector_index++);
+				make_delay_vector (IV_recover_delay, ramp_sources, recover_options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+				write_program_vector (vector_index++);
+			}
+			// add automatic conductivity measurement rho(Z) -- HOLD Bias fixed now!
+			if (IVdz_repetitions > 0){
+				vp_duration_2 =	vp_duration;
+				// don't know the reason, but the following delay vector is needed to separate dI/dU and dI/dz
+				make_delay_vector (0., ramp_sources, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+				write_program_vector (vector_index++);
+
+				// in case of rep > 1 the DSP will jump back to this point
+				vpc = vector_index;
+	
+				make_Vdz_vector (bias, ui, dz_bi, -1, IV_slope_ramp, ramp_sources, options, vp_duration, (make_vector_flags)(MAKE_VEC_FLAG_RAMP | MAKE_VEC_FLAG_VHOLD));
+				write_program_vector (vector_index++);
+	
+				make_Vdz_vector (ui, u0, dz_i0, n12, IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_VHOLD);
+				write_program_vector (vector_index++);
+	
+				make_Vdz_vector (u0, uf, dz_0f, n23, IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_VHOLD);
+				write_program_vector (vector_index++);
+	
+				if (IV_option_flags & FLAG_DUAL) {
+					make_Vdz_vector (uf, u0, -dz_0f, n23, IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_VHOLD);
+					write_program_vector (vector_index++);
+	
+					make_Vdz_vector (u0, ui, -dz_i0, n12, IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_VHOLD);
+					write_program_vector (vector_index++);
+	
+					make_Vdz_vector (ui, bias, -dz_bi, -1, IV_slope_ramp, ramp_sources, options, vp_duration, (make_vector_flags)(MAKE_VEC_FLAG_RAMP | MAKE_VEC_FLAG_VHOLD));
+					write_program_vector (vector_index++);
+				} else {
+					make_Vdz_vector (uf, bias, -(dz_bi+dz_i0+dz_0f), -1, IV_slope_ramp, ramp_sources, options, vp_duration, (make_vector_flags)(MAKE_VEC_FLAG_RAMP | MAKE_VEC_FLAG_VHOLD));
+					write_program_vector (vector_index++);
+				}
+	
+				if (IVdz_repetitions > 1){
+					// Final vector, gives the IVC some time to recover   
+					make_delay_vector (IV_final_delay, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+					write_program_vector (vector_index++);
+	
+					make_delay_vector (IV_recover_delay, ramp_sources, recover_options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+					program_vector.repetitions = IVdz_repetitions-1;
+					program_vector.ptr_next = -(vector_index-vpc); // go to rho start
+					vp_duration +=	(IVdz_repetitions-1)*(vp_duration - vp_duration_2);
+					write_program_vector (vector_index++);
+				} else {
+					make_delay_vector (IV_final_delay, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+					write_program_vector (vector_index++);
+					make_delay_vector (IV_recover_delay, ramp_sources, recover_options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+					write_program_vector (vector_index++);
+				}
+			}
+
+		} else {
+			// compute sections   
+			// z = z0 + dz * ( 1 - | U / Bias | )
+			// dz_bi := dz*(1-|Ui/Bias|) - 0
+			double ui,uf;
+			double dz_bi, dz_if;
+			int vpc=0;
+
+			vp_duration_1 =	vp_duration;
+			vp_duration_2 =	vp_duration;
+
+			for (int IVs=0; IVs<IV_sections; ++IVs){
+				if (!multiIV_mode && IVs > 0) break;
+				ui = IV_start[IVs]; 
+				uf = IV_end[IVs];
+				double bias_prev = IVs > 0 ? IV_option_flags & FLAG_DUAL ? IV_start[IVs-1]:IV_end[IVs-1]:bias;
+
+				if (bias_prev != 0.){
+					dz_bi = IV_dz*(1.-fabs (ui/bias_prev));
+					dz_if = IV_dz*(1.-fabs (uf/bias_prev)) - dz_bi;
+				} else {
+					dz_bi = dz_if = 0.;
+				}
+
+				make_Vdz_vector (bias_prev, ui, dz_bi, -1, IV_slope_ramp, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_RAMP);
+				write_program_vector (vector_index++);
+
+				make_Vdz_vector (ui, uf, dz_if, IV_points[IVs], IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+				write_program_vector (vector_index++);
+			
+			
+				// add vector for reverse return ramp? -- Force return path if dz != 0
+				if (IV_option_flags & FLAG_DUAL) {
+					// run also reverse probe ramp in dual mode
+					make_Vdz_vector (uf, ui, -dz_if, IV_points[IVs], IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+					write_program_vector (vector_index++);
+					
+					if (IVs == (IV_sections-1)){
+						// Ramp back to given bias voltage   
+						make_Vdz_vector (ui, bias, -dz_bi, -1, IV_slope_ramp, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_RAMP);
+						write_program_vector (vector_index++);
+					}
+				} else {
+					if (IVs == (IV_sections-1)){
+						// Ramp back to given bias voltage   
+						make_Vdz_vector (uf, bias, -(dz_if+dz_bi), -1, IV_slope_ramp, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_RAMP);
+						write_program_vector (vector_index++);
+					}
+				}
+				if (IV_repetitions > 1){
+					// Final vector, gives the IVC some time to recover   
+					make_delay_vector (IV_final_delay, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+					write_program_vector (vector_index++);
+					
+					if (IVs == (IV_sections-1)){
+						make_delay_vector (IV_recover_delay, ramp_sources, recover_options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+						program_vector.repetitions = IV_repetitions-1;
+						program_vector.ptr_next = -vector_index; // go to start
+						vp_duration +=	(IV_repetitions-1)*(vp_duration - vp_duration_1);
+						write_program_vector (vector_index++);
+					}
+				} else {
+					make_delay_vector (IV_final_delay, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+					write_program_vector (vector_index++);
+					if (IVs == (IV_sections-1)){
+						make_delay_vector (IV_recover_delay, ramp_sources, recover_options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+						write_program_vector (vector_index++);
+					}
+				}
+			}
+
+			// add automatic conductivity measurement rho(Z) -- HOLD Bias fixed now!
+			if ((IVdz_repetitions > 0) && (fabs (IV_dz) > 0.001) && (bias != 0.)){
+				vp_duration_2 =	vp_duration;
+				// don't know the reason, but the following delay vector is needed to separate dI/dU and dI/dz
+				make_delay_vector (0., ramp_sources, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+				write_program_vector (vector_index++);
+
+				// in case of rep > 1 the DSP will jump back to this point
+				vpc = vector_index;
+	
+				make_Vdz_vector (bias, ui, dz_bi, -1, IV_slope_ramp, ramp_sources, options, vp_duration, (make_vector_flags)(MAKE_VEC_FLAG_RAMP | MAKE_VEC_FLAG_VHOLD));
+				write_program_vector (vector_index++);
+
+				make_Vdz_vector (ui, uf, dz_if, IV_points[0], IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_VHOLD);
+				write_program_vector (vector_index++);
+			
+				if (IV_option_flags & FLAG_DUAL) {
+					make_Vdz_vector (uf, ui, -dz_if, IV_points[0], IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_VHOLD);
+					write_program_vector (vector_index++);
+
+					// Ramp back to given bias voltage   
+					make_Vdz_vector (ui, bias, -dz_bi, -1, IV_slope_ramp, ramp_sources, options, vp_duration, (make_vector_flags)(MAKE_VEC_FLAG_RAMP | MAKE_VEC_FLAG_VHOLD));
+					write_program_vector (vector_index++);
+				} else {
+					make_Vdz_vector (uf, bias, -(dz_if+dz_bi), -1, IV_slope_ramp, ramp_sources, options, vp_duration, (make_vector_flags)(MAKE_VEC_FLAG_RAMP | MAKE_VEC_FLAG_VHOLD));
+					write_program_vector (vector_index++);
+				}
+	
+				if (IVdz_repetitions > 1 ){
+					// Final vector, gives the IVC some time to recover   
+					make_delay_vector (IV_final_delay, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+					write_program_vector (vector_index++);
+	
+					make_delay_vector (IV_recover_delay, ramp_sources, recover_options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+					program_vector.repetitions = IVdz_repetitions-1;
+					program_vector.ptr_next = -(vector_index-vpc); // go to rho start
+					vp_duration +=	(IVdz_repetitions-1)*(vp_duration - vp_duration_2);
+					write_program_vector (vector_index++);
+				} else {
+					make_delay_vector (IV_final_delay, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+					write_program_vector (vector_index++);
+					make_delay_vector (IV_recover_delay, ramp_sources, recover_options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+					write_program_vector (vector_index++);
+				}
+			}
+		}
+
+		// Step and Repeat along Line defined by dx dy -- if dxy points > 1, auto return?
+		if (IV_dxy_points > 1){
+
+			// Move probe to next position and setup auto repeat!
+			make_ZXYramp_vector (0., IV_dx/(IV_dxy_points-1), IV_dy/(IV_dxy_points-1), 100, IV_dxy_slope, 
+					     ramp_sources, options, vp_duration, MAKE_VEC_FLAG_RAMP);
+
+			write_program_vector (vector_index++);
+			make_delay_vector (IV_dxy_delay, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_RAMP);
+			program_vector.repetitions = IV_dxy_points-1;
+			program_vector.ptr_next = -(vector_index-vpci); // go to initial IV start for full repeat
+			write_program_vector (vector_index++);
+			vp_duration +=	(IV_dxy_points-1)*(vp_duration - vp_duration_0);
+
+			// add vector for full reverse return path -- YES!, always auto return!
+			make_ZXYramp_vector (0., 
+					     -IV_dx*(IV_dxy_points)/(IV_dxy_points-1.), 
+					     -IV_dy*(IV_dxy_points)/(IV_dxy_points-1.), 100, IV_dxy_slope, 
+					     ramp_sources, options, vp_duration, MAKE_VEC_FLAG_RAMP);
+			write_program_vector (vector_index++);
+		}
+#endif
+		// Final vector
+		make_delay_vector (0., ramp_sources, options, vp_duration, MAKE_VEC_FLAG_END);
+		write_program_vector (vector_index++);
+
+		append_null_vector (options, vector_index);
+
+
+                if (IV_status){
+                        gtk_entry_buffer_set_text (GTK_ENTRY_BUFFER (gtk_entry_get_buffer (GTK_ENTRY(IV_status))), info, -1);
+
+#if 0
+                        GtkStyle *style;
+                        GdkColor ct, cbg;
+                        style = gtk_style_copy (gtk_widget_get_style(IV_status));
+                        if (warn_flag){
+                                ct.red = 0xffff;
+                                ct.green = 0x0;
+                                ct.blue = 0x0;
+                                cbg.red = 0xffff;
+                                cbg.green = 0x9999;
+                                cbg.blue = 0xffff;
+                        }else{
+                                ct.red = 0x0;
+                                ct.green = 0x0;
+                                ct.blue = 0x0;
+                                cbg.red = 0xeeee;
+                                cbg.green = 0xdddd;
+                                cbg.blue = 0xdddd;
+                        }
+                        // GTK3QQQ AgRArajhagfzjs
+                        // gdk_color_alloc (gtk_widget_get_colormap(IV_status), &ct);
+                        // gdk_color_alloc (gtk_widget_get_colormap(IV_status), &cbg);
+                        style->text[GTK_STATE_NORMAL] = ct;
+                        style->bg[GTK_STATE_NORMAL] = cbg;
+                        gtk_widget_set_style(IV_status, style);
+#endif
+                }
+		break;
                 
 	case PV_MODE_GVP: // ------------ Special Vector Setup for GVP (general vector probe)
                 g_free (vp_exec_mode_name); vp_exec_mode_name = g_strdup ("VP: Vector Program");

@@ -314,7 +314,7 @@
       <description>pcs0000, PCS Remote-ID: 'rp-pacpll-scope_height', Default: 256, Adjustment PCS Name: 'rp-pacpll-scope-height' </description>
     </key>
 
-    <key name="dsp-rp-verbose-level" type="d">
+    <key name="rp-verbose-level" type="d">
       <default>0</default>
       <summary>PCS Remote-ID: 'dsp-rp-verbose-level', Default/U: 0     </summary>
       <description>pcs0000, PCS Remote-ID: 'rp-pacpll-verbose-level', Default: 0, Adjustment PCS Name: 'rp-pacpll-verbose-level' </description>
@@ -535,6 +535,7 @@
       <description>pcs0000, PCS Remote-ID: 'dsp-IV-Slope', Default/U:   0.1 V/s    , Adjustment PCS Name: 'dsp-IV-Slope' </description>
     </key>
 
+    
     <key name="dsp-iv-slope-ramp" type="d">
       <default>0.5</default>
       <summary>PCS Remote-ID: 'dsp-IV-Slope-Ramp', Default/U:   0.5 V/s     </summary>
@@ -547,6 +548,81 @@
       <description>pcs0000, PCS Remote-ID: 'dsp-IV-rep', Default/U:   1      , Adjustment PCS Name: 'dsp-IV-rep' </description>
     </key>
 
+
+    <key name="dsp-iv-sections" type="d">
+      <default>1</default>
+      <summary>PCS Remote-ID: 'dsp-IV-Sections', Default/U:  1       </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-IV-Sections', Default/U:  1      , Adjustment PCS Name: 'dsp-IV-Sections' </description>
+    </key>
+
+    <key name="dsp-iv-start00" type="ad">
+      <default>[-1,-1,-1,-1,-1,-1]</default>
+      <summary>PCS Remote-ID: 'spmc-6-IV-Start05', Default/U:    -1 V     </summary>
+      <description>pcs0000, Array-N: 6, PCS Remote-ID: 'spmc-6-IV-Start05', Default/U:    -1 V    , Adjustment PCS Name: 'spmc-6-IV-Start05' </description>
+    </key>
+
+    <key name="dsp-iv-end00" type="ad">
+      <default>[1,1,1,1,1,1]</default>
+      <summary>PCS Remote-ID: 'spmc-6-IV-End05', Default/U:     1 V     </summary>
+      <description>pcs0000, Array-N: 6, PCS Remote-ID: 'spmc-6-IV-End05', Default/U:     1 V    , Adjustment PCS Name: 'spmc-6-IV-End05' </description>
+    </key>
+
+    <key name="dsp-iv-points00" type="ad">
+      <default>[100,100,100,100,100,100]</default>
+      <summary>PCS Remote-ID: 'spmc-6-IV-Points05', Default/U:   100       </summary>
+      <description>pcs0000, Array-N: 6, PCS Remote-ID: 'spmc-6-IV-Points05', Default/U:   100      , Adjustment PCS Name: 'spmc-6-IV-Points05' </description>
+    </key>
+
+    <key name="dsp-iv-dz" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'dsp-IV-dz', Default/U:     0 Å     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-IV-dz', Default/U:     0 Å    , Adjustment PCS Name: 'dsp-IV-dz' </description>
+    </key>
+
+    <key name="dsp-iv-dz-rep" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'dsp-IV-dz-rep', Default/U:   0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-IV-dz-rep', Default/U:   0      , Adjustment PCS Name: 'dsp-IV-dz-rep' </description>
+    </key>
+
+    <key name="dsp-iv-line-d-x" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'dsp-IV-Line-dX', Default/U:     0 Å     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-IV-Line-dX', Default/U:     0 Å    , Adjustment PCS Name: 'dsp-IV-Line-dX' </description>
+    </key>
+
+    <key name="dsp-iv-line-d-y" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'dsp-IV-Line-dY', Default/U:     0 Å     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-IV-Line-dY', Default/U:     0 Å    , Adjustment PCS Name: 'dsp-IV-Line-dY' </description>
+    </key>
+
+    <key name="dsp-iv-line-slope" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'dsp-IV-Line-slope', Default/U:     0 Å/s     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-IV-Line-slope', Default/U:     0 Å/s    , Adjustment PCS Name: 'dsp-IV-Line-slope' </description>
+    </key>
+
+    <key name="dsp-iv-line-final-delay" type="d">
+      <default>1</default>
+      <summary>PCS Remote-ID: 'dsp-IV-Line-Final-Delay', Default/U:   1 s     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-IV-Line-Final-Delay', Default/U:   1 s    , Adjustment PCS Name: 'dsp-IV-Line-Final-Delay' </description>
+    </key>
+
+    <key name="dsp-iv-final-delay" type="d">
+      <default>0.01</default>
+      <summary>PCS Remote-ID: 'dsp-IV-Final-Delay', Default/U:  0.01 s     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-IV-Final-Delay', Default/U:  0.01 s    , Adjustment PCS Name: 'dsp-IV-Final-Delay' </description>
+    </key>
+
+    <key name="dsp-iv-recover-delay" type="d">
+      <default>0.3</default>
+      <summary>PCS Remote-ID: 'dsp-IV-Recover-Delay', Default/U:   0.3 s     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-IV-Recover-Delay', Default/U:   0.3 s    , Adjustment PCS Name: 'dsp-IV-Recover-Delay' </description>
+    </key>
+    
+
+    
     <key name="dsp-gvp-du00" type="ad">
       <default>[0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,0]</default>
       <summary>PCS Remote-ID: 'dsp-gvp-du16', Default/U:      0 V     </summary>

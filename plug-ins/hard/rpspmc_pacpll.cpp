@@ -182,17 +182,17 @@ SOURCE_SIGNAL_DEF swappable_signals[] = {                                       
         { 0x00000002, "Phase",       " ", "deg", UTF8_DEGREE, (180.0/(M_PI*((1L<<RP_FPGA_QATAN)-1))), 2 },
         { 0x00000003, "Amplitude",   " ", "mV", "mV", (1.0/((1L<<RP_FPGA_QSQRT)-1)),                  3 },
         { 0x00000004, "dFreq-Control", " ", "mV", "mV", (1000*SPMC_AD5791_to_volts),                  4 },
-        { 0x00000005, "Test05",      " ", "V", "V", (1.0),                                            5 },
-        { 0x00000006, "Test06",      " ", "mV", "mV", (1.0),                                         -1 },
-        { 0x00000007, "Test07",      " ", "mV", "mV", (1.0),                                         -1 },
-        { 0x00000008, "Test08SD",    " ", "V", "V", (1.0),                                           -1 },
-        { 0x00000009, "Test09Zmon",  " ", "V", "V", (1.0),                                           -1 },
-        { 0x00000010, "LockInY",     " ", "V", "V", (SPMC_RPIN12_to_volts),                          -1 },
-        { 0x00000011, "LockInX",     " ", "V", "V", (SPMC_RPIN12_to_volts),                          -1 },
-        { 0x00000012, "LockInA2",    " ", "V", "V", (SPMC_RPIN12_to_volts),                          -1 },
-        { 0x00000013, "SineRef",     " ", "V",   "V", (SPMC_RPIN12_to_volts),                        -1 },
-        { 0x00000014, "IN1noFIR",    " ", "V",   "V", (SPMC_RPIN12_to_volts),                        -1 },
-        { 0x00000015, "ZwSlope-OUT", " ", "V",   "V", (SPMC_AD5791_to_volts),                         5 },
+        { 0x00000005, "05----",       " ", "V", "V", (1.0),                                            5 },
+        { 0x00000006, "06-LCKSignalDec", " ", "V", "V", (1.0),                                         -1 },
+        { 0x00000007, "07-LCKi",        " ", "V", "V", (1.0),                                         -1 },
+        { 0x00000008, "08-SDRef",       " ", "V", "V", (1.0),                                           -1 },
+        { 0x00000009, "09-ZSmon",       " ", "V", "V", (1.0),                                           -1 },
+        { 0x00000010, "10-LockInY",     " ", "V", "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),                          -1 },
+        { 0x00000011, "11-LockInX",     " ", "V", "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),                          -1 },
+        { 0x00000012, "12-LockInMag",   " ", "V", "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),                          -1 },
+        { 0x00000013, "13-SineRef",     " ", "V",   "V", (SPMC_RPIN12_to_volts),                        -1 },
+        { 0x00000014, "14-IN1noFIR",    " ", "V",   "V", (SPMC_RPIN12_to_volts),                        -1 },
+        { 0x00000015, "15-ZwSlope-OUT", " ", "V",   "V", (SPMC_AD5791_to_volts),                         5 },
         { 0x00000016,  NULL, NULL, NULL, NULL, 0.0, 0 }
 };
 
@@ -1435,7 +1435,7 @@ int RPSPMC_Control::config_options_callback (GtkWidget *widget, RPSPMC_Control *
 void RPSPMC_Control::create_folder (){
         GtkWidget *notebook;
  	GSList *zpos_control_list=NULL;
-
+	GSList *multi_IVsec_list=NULL;
 
         AppWindowInit ("RP-SPM Control Window");
         
@@ -1807,7 +1807,7 @@ void RPSPMC_Control::create_folder (){
 	// ==================================================
         bp->new_grid_with_frame ("I-V Type Spectroscopy");
 	// ==================================================
-
+#if 0 // SIMPLE IV
 	bp->grid_add_label ("IV Probe"); bp->grid_add_label ("Start"); bp->grid_add_label ("End");  bp->grid_add_label ("Points");
         bp->new_line ();
 
@@ -1823,7 +1823,77 @@ void RPSPMC_Control::create_folder (){
         bp->set_configure_list_mode_on ();
 	bp->grid_add_ec ("#IV sets", Unity, &IV_repetitions, 1, 100, "3g", "IV-rep");
         bp->set_configure_list_mode_off ();
+#endif
 
+	bp->grid_add_ec ("Sections", Unity, &IV_sections, 1,6, "2g", "IV-Sections");
+        GtkWidget *multiIV_checkbutton = bp->grid_add_check_button ("Multi-IV mode", "enable muli section IV curve mode", 1,
+                                                                    G_CALLBACK(RPSPMC_Control::Probing_multiIV_callback), this, IV_sections-1);
+
+        bp->new_line ();
+	bp->grid_add_label ("IV Probe"); bp->grid_add_label ("Start"); bp->grid_add_label ("End");  bp->grid_add_label ("Points");
+	for (int i=0; i<6; ++i) {
+                bp->new_line ();
+
+                gchar *tmp = g_strdup_printf("IV[%d]", i+1);
+                bp->grid_add_label (tmp);
+                if (i>0) multi_IVsec_list = g_slist_prepend (multi_IVsec_list, bp->label);
+                g_free(tmp);
+
+                if (i > 0){
+                        tmp = g_strdup_printf("dsp-", i+1);
+                        bp->set_pcs_remote_prefix (tmp);
+                        g_free(tmp);
+                }
+                
+                bp->grid_add_ec (NULL, Volt, &IV_start[i], -10.0, 10., "5.3g", 0.1, 0.025, "IV-Start", i);
+                if (i == 5) bp->init_ec_array ();
+                if (i>0) multi_IVsec_list = g_slist_prepend (multi_IVsec_list, bp->input);
+
+                bp->grid_add_ec (NULL, Volt, &IV_end[i], -10.0, 10.0, "5.3g", 0.1, 0.025, "IV-End", i);
+                if (i == 5) bp->init_ec_array ();
+                if (i>0) multi_IVsec_list = g_slist_prepend (multi_IVsec_list, bp->input);
+
+                bp->grid_add_ec (NULL, Unity, &IV_points[i], 1, 1000, "5g", "IV-Points", i);
+                if (i == 5) bp->init_ec_array ();
+                if (i>0) multi_IVsec_list = g_slist_prepend (multi_IVsec_list, bp->input);
+        }
+        bp->set_pcs_remote_prefix ("dsp-");
+        
+        bp->new_line ();
+
+        bp->set_configure_list_mode_on ();
+	bp->grid_add_ec ("dz", Angstroem, &IV_dz, -1000.0, 1000.0, "5.4g", 1., 2., "IV-dz");
+	bp->grid_add_ec ("#dZ probes", Unity, &IVdz_repetitions, 0, 100, "3g", "IV-dz-rep");
+        bp->set_configure_list_mode_off ();
+
+        bp->new_line ();
+	bp->grid_add_ec ("Slope", Vslope, &IV_slope,0.1,1000.0, "5.3g", 1., 10., "IV-Slope");
+	bp->grid_add_ec ("Slope Ramp", Vslope, &IV_slope_ramp,0.1,1000.0, "5.3g", 1., 10., "IV-Slope-Ramp");
+        bp->new_line ();
+        bp->set_configure_list_mode_on ();
+	bp->grid_add_ec ("#IV sets", Unity, &IV_repetitions, 1, 100, "3g", "IV-rep");
+
+        bp->new_line ();
+	bp->grid_add_ec ("Line-dX", Angstroem, &IV_dx, -1e6, 1e6, "5.3g", 1., 10., "IV-Line-dX");
+        bp->grid_add_ec ("dY",  Angstroem, &IV_dy, -1e6, 1e6, "5.3g", 1., 10.,  "IV-Line-dY");
+#ifdef MOTOR_CONTROL
+	bp->grid_add_ec ("Line-dM",  Volt, &IV_dM, -1e6, 1e6, "5.3g", 1., 10.,  "IV-Line-dM");
+#else
+	IV_dM = 0.;
+#endif
+        bp->new_line ();
+        bp->grid_add_ec ("Points", Unity, &IV_dxy_points, 1, 1000, "3g" "IV-Line-Pts");
+	bp->grid_add_ec ("Slope", Speed, &IV_dxy_slope, -1e6, 1e6, "5.3g", 1., 10.,  "IV-Line-slope");
+        bp->new_line ();
+        bp->grid_add_ec ("Delay", Time, &IV_dxy_delay, 0., 10., "3g", 0.01, 0.1,  "IV-Line-Final-Delay");
+
+        bp->new_line ();
+	bp->grid_add_ec ("Final Delay", Time, &IV_final_delay, 0., 1., "5.3g", 0.001, 0.01,  "IV-Final-Delay");
+	bp->grid_add_ec ("IV-Recover-Delay", Time, &IV_recover_delay, 0., 1., "5.3g", 0.001, 0.01,  "IV-Recover-Delay");
+        bp->set_configure_list_mode_off ();
+        
+
+        // *************** IV controls
         bp->new_line ();
 
 	IV_status = bp->grid_add_probe_status ("Status");
@@ -2325,6 +2395,7 @@ void RPSPMC_Control::create_folder (){
 
 
 // ==== Folder: RT System Connection ========================================
+        bp->set_pcs_remote_prefix ("");
         bp->new_grid ();
         bp->start_notebook_tab (notebook, "RedPitaya Web Socket", "rpspmc-tab-system", hwi_settings);
 
@@ -2355,6 +2426,7 @@ void RPSPMC_Control::create_folder (){
 #endif
         bp->grid_add_check_button ( N_("Connect Stream"), "Check to initiate stream connection, uncheck to close connection.", 1,
                                     G_CALLBACK (rpspmc_hwi_dev::spmc_stream_connect_cb), rpspmc_hwi);
+        stream_connect_button=bp->button;
 
         bp->new_line ();
         bp->grid_add_check_button ( N_("Debug"), "Enable debugging LV1.", 1,
@@ -2414,6 +2486,7 @@ void RPSPMC_Control::create_folder (){
         configure_callback (NULL, NULL, this); // configure "false"
 
 	g_object_set_data( G_OBJECT (window), "DSP_EC_list", bp->get_ec_list_head ());
+        g_object_set_data( G_OBJECT (multiIV_checkbutton), "DSP_multiIV_list", multi_IVsec_list);
 	g_object_set_data( G_OBJECT (zposmon_checkbutton), "DSP_zpos_control_list", zpos_control_list);
         
 	GUI_ready = TRUE;
@@ -2425,7 +2498,7 @@ void RPSPMC_Control::create_folder (){
 void RPSPMC_Control::Init_SPMC_on_connect (){
         // fix-me -- need life readback once life re-connect works!
         if (rpspmc_pacpll){
-                rpspmc_pacpll->write_parameter ("SPMC_GVP_RESET_OPTIONS", 0); // default, FB hold=off!
+                rpspmc_pacpll->write_parameter ("SPMC_GVP_RESET_OPTIONS", 0x0001); // default, FB ON!
         
                 Slope_dZX_Changed(NULL, this);
                 Slope_dZY_Changed(NULL, this);
@@ -2697,6 +2770,19 @@ int RPSPMC_Control::callback_change_IV_auto_flags (GtkWidget *widget, RPSPMC_Con
 	//	self->raster_auto_flags = self->IV_auto_flags;
 
         self->set_tab_settings ("IV", self->IV_option_flags, self->IV_auto_flags, self->IV_glock_data);
+        return 0;
+}
+
+int RPSPMC_Control::Probing_multiIV_callback(GtkWidget *widget, RPSPMC_Control *self){
+        PI_DEBUG_GP (DBG_L4, "%s \n",__FUNCTION__);
+        if (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)))
+		g_slist_foreach((GSList*)g_object_get_data( G_OBJECT (widget), "DSP_multiIV_list"),
+				(GFunc) gtk_widget_show, NULL);
+	else
+		g_slist_foreach((GSList*)g_object_get_data( G_OBJECT (widget), "DSP_multiIV_list"),
+				(GFunc) gtk_widget_hide, NULL);
+
+        self->multiIV_mode = gtk_check_button_get_active (GTK_CHECK_BUTTON (widget));
         return 0;
 }
 
@@ -4706,7 +4792,10 @@ void RPspmc_pacpll::on_connect_actions(){
         status_append (" * RedPitaya SPM Control, SPMC init...\n");
 
         update_SPMC_parameters ();
-        status_append (" * RedPitaya SPM Control ready. NEXT: Please Check Connect Stream.\n");
+        //status_append (" * RedPitaya SPM Control ready. NEXT: Please Check Connect Stream.\n");
+        status_append (" * RedPitaya SPM Control ready. Connecting SPMC Data Stream...\n");
+
+        gtk_check_button_set_active (GTK_CHECK_BUTTON (RPSPMC_ControlClass->stream_connect_button), true);
 }
 
 

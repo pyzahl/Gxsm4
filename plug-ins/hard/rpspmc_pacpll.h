@@ -252,10 +252,30 @@ public:
 
 
 	// STS (I-V)
+#if 0
                 IV_start = -1, IV_end = 1, IV_slope = 0.1, IV_slope_ramp = 0.5, IV_final_delay=0.1, IV_recover_delay=0.1;
                 IV_points = 2000;
                 IV_repetitions = 1;
-
+#endif
+                IV_sections=1;
+                multiIV_mode=0;
+                for (int i=0; i<8; ++i){
+                        IV_start[i]=-1.0;
+                        IV_end[i]=1.0;
+                        IV_points[i]=100;
+                }
+                IV_repetitions=1;
+                IV_dz=0.0;
+                IVdz_repetitions=0;
+                IV_slope=1.0; // V/s
+                IV_slope_ramp=5.0;
+                IV_final_delay=0.01;
+                IV_recover_delay=0.3;
+                IV_dxy_delay=1.0;
+                IV_dxy_points=1;
+                
+                // GVP
+                
                 for (int i=0; i<N_GVP_VECTORS; ++i){
                         GVP_du[i] = 0;
                         GVP_dx[i] = 0;
@@ -419,6 +439,7 @@ public:
 
 	static int Probing_exec_GVP_callback(GtkWidget *widget, RPSPMC_Control *self);
 	static int Probing_write_GVP_callback(GtkWidget *widget, RPSPMC_Control *self);
+        static int Probing_multiIV_callback(GtkWidget *widget, RPSPMC_Control *self);
         
         static int callback_change_GVP_vpc_option_flags (GtkWidget *widget, RPSPMC_Control *self);
 	static int callback_update_GVP_vpc_option_checkbox (GtkWidget *widget, RPSPMC_Control *self);
@@ -692,9 +713,21 @@ public:
 	PROBE_VECTOR_GENERIC program_vector;
 
 	// STS (I-V)
-	double IV_start, IV_end, IV_slope, IV_slope_ramp, IV_final_delay, IV_recover_delay;
+        int    multiIV_mode;
+	int    IV_sections; // 1 .. 8max
+	double IV_start[8], IV_end[8], IV_slope, IV_slope_ramp, IV_final_delay, IV_recover_delay;
+	double IV_dz, IV_dM;
+	int    IV_points[8];
+	int    IV_repetitions;
+	int    IVdz_repetitions;
+	double IV_dx, IV_dy, IV_dxy_slope, IV_dxy_delay;
+	int    IV_dxy_points;
+
+#if 0 // SIMPLE
+        double IV_start, IV_end, IV_slope, IV_slope_ramp, IV_final_delay, IV_recover_delay;
 	int    IV_points;
 	int    IV_repetitions;
+#endif
 	guint64 IV_option_flags;
 	guint64 IV_auto_flags;
 	GtkWidget *IV_status;
@@ -757,8 +790,9 @@ public:
         double sim_bias[2];  // per tab -- simulation
         double sim_speed[2]; // per tab -- simulation
         gint options;
-        
 
+public:
+        GtkWidget *stream_connect_button;
         
 protected:
 	void read_spm_vector_program ();
