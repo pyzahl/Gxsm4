@@ -416,12 +416,13 @@ CDoubleParameter  SPMC_SET_OFFSET_Z_SLEW("SPMC_SET_OFFSET_Z_SLEW", CBaseParamete
 // MODULATION, LOCK-IN
 
 CDoubleParameter  SPMC_SC_LCK_FREQUENCY("SPMC_SC_LCK_FREQUENCY", CBaseParameter::RW, 0.0, 0, 0.0, 30e6); // Hz
-CDoubleParameter  SPMC_SC_LCK_VOLUME("SPMC_SC_LCK_VOLUME", CBaseParameter::RW, 0.0, 0, 0.0, 5000.0); //  mV
-CIntParameter     SPMC_SC_LCK_TARGET("SPMC_SC_LCK_TARGET", CBaseParameter::RW, 0, 0, 0, 16); // # 0=NONE, 1:X, 2:Y, 3:Z, 4:U
+CDoubleParameter  SPMC_SC_LCK_VOLUME(   "SPMC_SC_LCK_VOLUME", CBaseParameter::RW, 0.0, 0, 0.0, 5000.0); //  mV
+CIntParameter     SPMC_SC_LCK_TARGET(   "SPMC_SC_LCK_TARGET", CBaseParameter::RW, 0, 0, 0, 16); // # 0=NONE, 1:X, 2:Y, 3:Z, 4:U
+CDoubleParameter  SPMC_SC_LCK_GAIN(     "SPMC_SC_LCK_GAIN", CBaseParameter::RW, 0.0, 0, -1e10, 1e10); // Q
 
-CDoubleParameter  SPMC_SC_LCK_F0BQ_TAU("SPMC_SC_LCK_F0BQ_TAU", CBaseParameter::RW, 0.0, 0, 0.0, 1e6); // ms
-CDoubleParameter  SPMC_SC_LCK_F0BQ_Q(  "SPMC_SC_LCK_F0BQ_Q", CBaseParameter::RW, 0.0, 0, 0.0, 1e10); // Q
-CDoubleParameter  SPMC_SC_LCK_F0BQ_IIR("SPMC_SC_LCK_F0BQ_IIR", CBaseParameter::RW, 0.0, 0, 0.0, 1e6); // ms 0: pass mode
+CDoubleParameter  SPMC_SC_LCK_F0BQ_TAU("SPMC_SC_LCK_F0BQ_TAU", CBaseParameter::RW, 0.0, 0, 0.0, 1e10); // ms
+CDoubleParameter  SPMC_SC_LCK_F0BQ_Q(  "SPMC_SC_LCK_F0BQ_Q", CBaseParameter::RW, 0.0, 0, -1e10, 1e10); // Q
+CDoubleParameter  SPMC_SC_LCK_F0BQ_IIR("SPMC_SC_LCK_F0BQ_IIR", CBaseParameter::RW, 0.0, 0, 0.0, 1e10); // ms 0: pass mode
 
 
 // *** RP SPMC::GPIO MONITORS ***
@@ -1668,23 +1669,41 @@ void OnNewParams_RPSPMC(void){
                 SPMC_SC_LCK_TARGET.Update ();
                 rp_spmc_set_lck_target (SPMC_SC_LCK_TARGET.Value ());
         }
+        if (SPMC_SC_LCK_GAIN.IsNewValue ()){
+                SPMC_SC_LCK_GAIN.Update ();
+                if (SPMC_SC_LCK_GAIN.Value () == 0) // gain 1
+                        rp_spmc_set_lck_gaincontrol (SPMC_SC_LCK_GAIN.Value (), 0, SPMC_LOCKIN_F0_CONTROL_REG);
+                else if (SPMC_SC_LCK_GAIN.Value () > 0) // parameter gain
+                        rp_spmc_set_lck_gaincontrol (SPMC_SC_LCK_GAIN.Value (), 1, SPMC_LOCKIN_F0_CONTROL_REG);
+                else if (SPMC_SC_LCK_GAIN.Value () < 0) // via signal A
+                        rp_spmc_set_lck_gaincontrol (SPMC_SC_LCK_GAIN.Value (), 2, SPMC_LOCKIN_F0_CONTROL_REG);
+        }
 
+        // LockIn Signal Out BiQuad Filter
         if (SPMC_SC_LCK_F0BQ_TAU.IsNewValue ()){
                 SPMC_SC_LCK_F0BQ_TAU.Update ();
                 SPMC_SC_LCK_F0BQ_Q.Update ();
-                rp_spmc_set_biqad_Lck_F0 (1000./SPMC_SC_LCK_F0BQ_TAU.Value (), SPMC_SC_LCK_F0BQ_Q.Value (), SPMC_CLK, SPMC_BIQUAD_F0_CONTROL);
+                rp_spmc_set_biqad_Lck_F0 (1000./SPMC_SC_LCK_F0BQ_TAU.Value (), SPMC_SC_LCK_F0BQ_Q.Value (), SPMC_CLK, SPMC_BIQUAD_F0_CONTROL_REG);
         }
         if (SPMC_SC_LCK_F0BQ_Q.IsNewValue ()){
                 SPMC_SC_LCK_F0BQ_Q.Update ();
                 SPMC_SC_LCK_F0BQ_TAU.Update ();
-                rp_spmc_set_biqad_Lck_F0 (1000./SPMC_SC_LCK_F0BQ_TAU.Value (), SPMC_SC_LCK_F0BQ_Q.Value (), SPMC_CLK, SPMC_BIQUAD_F0_CONTROL);
+                if (SPMC_SC_LCK_F0BQ_Q.Value () < 1.){
+                        if (SPMC_SC_LCK_F0BQ_TAU.Value () > 0)
+                                rp_spmc_set_biqad_Lck_F0_IIR (1000./SPMC_SC_LCK_F0BQ_TAU.Value (), SPMC_CLK, SPMC_BIQUAD_F0_CONTROL_REG);
+                        else
+                                rp_spmc_set_biqad_Lck_F0_pass (SPMC_BIQUAD_F0_CONTROL_REG);
+                } else {
+                        rp_spmc_set_biqad_Lck_F0 (1000./SPMC_SC_LCK_F0BQ_TAU.Value (), SPMC_SC_LCK_F0BQ_Q.Value (), SPMC_CLK, SPMC_BIQUAD_F0_CONTROL_REG);
+                }
         }
+        // *** managed via Q=0
         if (SPMC_SC_LCK_F0BQ_IIR.IsNewValue ()){
                 SPMC_SC_LCK_F0BQ_IIR.Update ();
                 if (SPMC_SC_LCK_F0BQ_IIR.Value () > 0)
-                        rp_spmc_set_biqad_Lck_F0_IIR (1000./SPMC_SC_LCK_F0BQ_IIR.Value (), SPMC_CLK, SPMC_SC_LCK_F0BQ_IIR.Value ());
+                        rp_spmc_set_biqad_Lck_F0_IIR (1000./SPMC_SC_LCK_F0BQ_IIR.Value (), SPMC_CLK, SPMC_BIQUAD_F0_CONTROL_REG);
                 else
-                        rp_spmc_set_biqad_Lck_F0_pass (SPMC_BIQUAD_F0_CONTROL);
+                        rp_spmc_set_biqad_Lck_F0_pass (SPMC_BIQUAD_F0_CONTROL_REG);
         }
         
 }

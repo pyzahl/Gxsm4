@@ -29,7 +29,7 @@ module gvp #(
     parameter vector_preset_address  = 4
 )
 (
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF M_AXIS_X:M_AXIS_Y:M_AXIS_Z:M_AXIS_U:M_AXIS_SRCS:M_AXIS_INDEX:M_AXIS_GVP_TIME" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF M_AXIS_X:M_AXIS_Y:M_AXIS_Z:M_AXIS_U:M_AXIS_A:M_AXIS_B:M_AXIS_SRCS:M_AXIS_INDEX:M_AXIS_GVP_TIME" *)
     input		 a_clk, // clocking up to aclk
     //input		 reset, // put into reset mode (set program and hold)
     //input		 pause, // put/release into/from pause mode -- always completes the "ii" nop cycles!
@@ -63,7 +63,8 @@ module gvp #(
     output wire	         M_AXIS_index_tvalid,
     output wire	[48-1:0] M_AXIS_gvp_time_tdata,
     output wire	         M_AXIS_gvp_time_tvalid,
-    output wire [32-1:0] dbg_status
+    output wire [32-1:0] dbg_status,
+    output wire reset_state
     );
 
     // buffers
@@ -320,6 +321,8 @@ module gvp #(
     assign M_AXIS_index_tvalid = 1;
     assign M_AXIS_gvp_time_tdata = vec_gvp_time;
     assign M_AXIS_gvp_time_tvalid = 1;
+    
+    assign reset_state = reset;
     
     assign dbg_status = {sec[32-4:0], setvec_flg, reset_flg, pause, ~finished };
     

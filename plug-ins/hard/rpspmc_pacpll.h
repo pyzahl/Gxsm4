@@ -46,7 +46,7 @@
 #include "rpspmc_stream.h"
 
 
-#define MAX_PROGRAM_VECTORS 16
+#define MAX_PROGRAM_VECTORS 32
 #define i_X 0
 #define i_Y 1
 #define i_Z 2

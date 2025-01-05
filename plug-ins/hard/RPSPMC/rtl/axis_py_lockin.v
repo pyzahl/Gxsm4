@@ -34,7 +34,7 @@ module axis_py_lockin#(
     parameter configuration_address = 999
 )
 (
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS_SC:S_AXIS_SIGNAL:S_AXIS_DDS_N2:M_AXIS_A2:M_AXIS_X:M_AXIS_Y:M_AXIS_Sref:M_AXIS_SDref:M_AXIS_SignalOut:M_AXIS_i" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS_SC:S_AXIS_SIGNAL:S_AXIS_GAIN:S_AXIS_DDS_N2:M_AXIS_A2:M_AXIS_X:M_AXIS_Y:M_AXIS_Sref:M_AXIS_SDref:M_AXIS_SignalOut:M_AXIS_i" *)
     input a_clk,
 
     input [32-1:0]  config_addr,
@@ -87,10 +87,12 @@ module axis_py_lockin#(
     reg signed [31:0] sd=0; // dbg only
 
     reg signed [31:0] gain = Q24;
-    reg signed [SC_DATA_WIDTH-1:0] sig_in     = 0;
-    reg signed [SC_DATA_WIDTH-1:0] signal     = 0;
-    reg signed [SC_DATA_WIDTH+DECII2_MAX-1:0] signal_dec  = 0;
-    reg signed [SC_DATA_WIDTH+DECII2_MAX-1:0] signal_dec2 = 0;
+    reg signed [SC_DATA_WIDTH-1:0] signal_in  = 0;        // input signal
+    reg signed [SC_DATA_WIDTH+24-1:0] sig_in_x_gain = 0;  // x gain tmp
+    reg signed [SC_DATA_WIDTH-1:0] sig_in     = 0;        // ready for pre-processing/decimation
+    reg signed [SC_DATA_WIDTH+DECII2_MAX-1:0] signal_dec  = 0; // decimation tmp
+    reg signed [SC_DATA_WIDTH+DECII2_MAX-1:0] signal_dec2 = 0; // decimation tmp
+    reg signed [SC_DATA_WIDTH-1:0] signal     = 0;        // ready for correleation
 
     reg signed [2*SC_DATA_WIDTH-1:0] LckXcorrpW=0;
     reg signed [2*SC_DATA_WIDTH-1:0] LckYcorrpW=0; // Q SC^2
@@ -123,6 +125,7 @@ module axis_py_lockin#(
     reg [4-1:0] finishthis=0;
 
     reg [31:0] lck_config=0;
+    reg [31:0] lck_gain=Q24;
 
     integer ii;
     initial begin
@@ -135,16 +138,25 @@ module axis_py_lockin#(
 
     always @ (posedge a_clk)
     begin
+    
+        // module configuration
         if (config_addr == configuration_address) // BQ configuration, and auto reset
         begin
-            lck_config <= config_data[1*32-1 : 0*32];
+            lck_config <= config_data[1*32-1 : 0*32]; // options: Bit0: use gain control, Bit1: use gain programmed
+            lck_gain   <= config_data[1*32-2 : 1*32]; // programmed gain, Q24
         end
+        
         if (lck_config[0])
             gain <= S_AXIS_GAIN_tdata;
+        else if (lck_config[1])
+            gain <= lck_gain;
         else      
             gain <= Q24;
+            
         // signal
-        sig_in <= (gain * $signed(S_AXIS_SIGNAL_tdata[S_AXIS_SIGNAL_TDATA_WIDTH-1:S_AXIS_SIGNAL_TDATA_WIDTH-SC_DATA_WIDTH])) >> 24;   
+        signal_in <= $signed(S_AXIS_SIGNAL_tdata[S_AXIS_SIGNAL_TDATA_WIDTH-1:S_AXIS_SIGNAL_TDATA_WIDTH-SC_DATA_WIDTH]);   
+        sig_in_x_gain <= gain * signal_in;
+        sig_in <= sig_in_x_gain >>> 24;  
     end
 
     

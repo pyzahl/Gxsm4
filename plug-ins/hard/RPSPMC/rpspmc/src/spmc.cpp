@@ -612,38 +612,41 @@ void rp_spmc_gvp_module_write_config_data (int addr){
         set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, 0);    // and disable config bus again
 }
 
-void rp_spmc_gvp_module_config_int32 (int addr, int data){
+void rp_spmc_gvp_module_config_int32 (int addr, int data, int pos=0){
+        if (pos > 15 || pos < 0) return;
         set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, 0);    // make sure all modules configs are disabled
         usleep(MODULE_ADDR_SETTLE_TIME);
-        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA, data); // set config data -- only 1st 32 of 512
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA+pos, data); // set config data at pos
         usleep(MODULE_ADDR_SETTLE_TIME);
         set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, addr); // set address, will fetch data
         usleep(MODULE_ADDR_SETTLE_TIME);
         set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, 0);    // and disable config bus again
 }
 
-void rp_spmc_gvp_module_config_uint32 (int addr, unsigned int data){
+void rp_spmc_gvp_module_config_uint32 (int addr, unsigned int data, int pos=0){
+        if (pos > 15 || pos < 0) return;
         set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, 0);    // make sure all modules configs are disabled
         usleep(MODULE_ADDR_SETTLE_TIME);
-        set_gpio_cfgreg_uint32 (SPMC_MODULE_CONFIG_DATA, data); // set config data -- only 1st 32 of 512
+        set_gpio_cfgreg_uint32 (SPMC_MODULE_CONFIG_DATA+pos, data); // set config data at pos
         usleep(MODULE_ADDR_SETTLE_TIME);
         set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, addr); // set address, will fetch data
         usleep(MODULE_ADDR_SETTLE_TIME);
         set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, 0);    // and disable config bus again
 }
 
-void rp_spmc_gvp_module_config_vector_Q31 (int addr, double data[16], int n){
+void rp_spmc_gvp_module_config_Qn (int addr, double data, int pos=0, double Qn=Q31){
+        if (pos > 15 || pos < 0) return;
         set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, 0);    // make sure all modules configs are disabled
         usleep(MODULE_ADDR_SETTLE_TIME);
-        for (int i=0; i<n; i++)
-                set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA+i, int(round(Q31*data[i]))); // set config data -- only 1st 32 of 512
+        set_gpio_cfgreg_uint32 (SPMC_MODULE_CONFIG_DATA+pos,  int(round(Qn*data))); // set config data at pos
         usleep(MODULE_ADDR_SETTLE_TIME);
         set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, addr); // set address, will fetch data
         usleep(MODULE_ADDR_SETTLE_TIME);
         set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, 0);    // and disable config bus again
 }
 
-void rp_spmc_gvp_module_config_vector_Qn (int addr, double data[16], int n, double Qn){
+void rp_spmc_gvp_module_config_vector_Qn (int addr, double data[16], int n, double Qn=Q31){
+        if (n > 16 || n < 1) return;
         set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, 0);    // make sure all modules configs are disabled
         usleep(MODULE_ADDR_SETTLE_TIME);
         for (int i=0; i<n; i++)
@@ -689,7 +692,7 @@ void rp_spmc_gvp_init (){
         // Program GVP with Null vectors for sanity:
         rp_spmc_gvp_module_start_config ();
         // write vector data using set_gpio_cfgreg_uint32 (SPMC_MODULE_CONFIG_DATA+N, data); // set config data 0..15 x 32bit
-        for (int pc=0; pc<8; ++pc){
+        for (int pc=0; pc<MAX_NUM_PROGRAN_VECTORS; ++pc){
                 if (verbose > 1) fprintf(stderr, "Init Vector[PC=%03d] to zero, decii=%d\n", pc, SPMC_GVP_MIN_DECII);
                 // write GVP-Vector [vector[0]] components
                 //                   decii      du        dz        dy        dx     Next       Nrep,   Options,     nii,      N,    [Vadr]
@@ -702,7 +705,7 @@ void rp_spmc_gvp_init (){
         rp_spmc_gvp_module_write_config_data (SPMC_GVP_VECTOR_DATA_REG);
 
         double data[16] = { 0.,0.,0.,0., 0.,0.,0.,0., 0.,0.,0.,0., 0.,0.,0.,0. };
-        rp_spmc_gvp_module_config_vector_Q31 (SPMC_GVP_RESET_VECTOR_REG, data, 6);
+        rp_spmc_gvp_module_config_vector_Qn (SPMC_GVP_RESET_VECTOR_REG, data, 6);
 }
 
 // pc: ProgramCounter (Vector #)
@@ -1106,18 +1109,13 @@ void rp_spmc_set_lck_target (int target){
         set_gpio_cfgreg_int32 (SPMC_CFG_SC_LCK_TARGET, target&0x0f);
 }
 
-void rp_spmc_set_lck_tau (double tau){
-        if (verbose > 1) fprintf(stderr, "##Configure: LCK TAU: %g ms\n", tau);
-        set_gpio_cfgreg_int32 (SPMC_CFG_SC_LCK_TAU, (int)round(Q31 * tau));
-}
-
-void rp_spmc_set_lck_phase (double phase){
-        if (verbose > 1) fprintf(stderr, "##Configure: LCK PHASE: %g deg\n", phase);
-        set_gpio_cfgreg_int32 (SPMC_CFG_SC_LCK_PHASE, (int)round(Q31 * phase));
+void rp_spmc_set_lck_gaincontrol (double gain, unsigned int mode, int LCKID){
+        rp_spmc_gvp_module_config_uint32 (LCKID, mode, 0);
+        rp_spmc_gvp_module_config_Qn (LCKID, gain, 1, Q24);
 }
 
 // set BiQuad to low pass at f_cut, with Quality Factor Q and at sampling rate Fs Hz
-void rp_spmc_set_biqad_Lck_F0 (double f_cut, double Q, double Fs, int BIQID=SPMC_BIQUAD_F0_CONTROL){
+void rp_spmc_set_biqad_Lck_F0 (double f_cut, double Q, double Fs, int BIQID){
         double b0, b1, b2, a0, a1, a2;
 
         // 2nd order BiQuad Low Pass parameters
@@ -1134,17 +1132,17 @@ void rp_spmc_set_biqad_Lck_F0 (double f_cut, double Q, double Fs, int BIQID=SPMC
         a2 = 1.0-a;
         
         double data[16] = { b0, b1, b2, a0, a1,a2,0.,0., 0.,0.,0.,0., 0.,0.,0.,0. };
-        rp_spmc_gvp_module_config_vector_Q31 (BIQID, data, 6);
+        rp_spmc_gvp_module_config_vector_Qn (BIQID, data, 6);
 }
 
 // set BiQuad to pass
-void rp_spmc_set_biqad_Lck_F0_pass (int BIQID=SPMC_BIQUAD_F0_CONTROL){
+void rp_spmc_set_biqad_Lck_F0_pass (int BIQID){
         double data[16] = { 1.0, 0.0, 0.0, 0.0, 0.0,0.0,0.,0., 0.,0.,0.,0., 0.,0.,0.,0. };
-        rp_spmc_gvp_module_config_vector_Q31 (BIQID, data, 6);
+        rp_spmc_gvp_module_config_vector_Qn (BIQID, data, 6);
 }
 
 // set BiQuad to IIR 1st order LP
-void rp_spmc_set_biqad_Lck_F0_IIR (double f_cut, double Fs, int BIQID=SPMC_BIQUAD_F0_CONTROL){
+void rp_spmc_set_biqad_Lck_F0_IIR (double f_cut, double Fs, int BIQID){
         double b0, b1;
 
         // 2nd order BiQuad Low Pass parameters
@@ -1156,7 +1154,7 @@ void rp_spmc_set_biqad_Lck_F0_IIR (double f_cut, double Fs, int BIQID=SPMC_BIQUA
         b1 = xc;
         
         double data[16] = { b0, b1, 0.0, 0.0, 0.0,0.0,0.,0., 0.,0.,0.,0., 0.,0.,0.,0. };
-        rp_spmc_gvp_module_config_vector_Q31 (BIQID, data, 6);
+        rp_spmc_gvp_module_config_vector_Qn (BIQID, data, 6);
 }
 
 

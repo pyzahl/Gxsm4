@@ -200,10 +200,10 @@
 
 
 // LOCKIN MODULE @ CONFIG ADDRESS
-#define SPMC_LOCKIN_F0_CONTROL   1000 // LockIn Config Reg (Gain Control, enable, input gain Q24)
+#define SPMC_LOCKIN_F0_CONTROL_REG   1000 // LockIn Config Reg (Gain Control, enable, input gain Q24)
 
 // BIQUAD  MODULE @ CONFIG ADDRESS
-#define SPMC_BIQUAD_F0_CONTROL   1001 //  BiQuad Parameters b0, b1, b2, a0, a1
+#define SPMC_BIQUAD_F0_CONTROL_REG   1001 //  BiQuad Parameters b0, b1, b2, a0, a1
 
 
 
@@ -247,7 +247,7 @@
 #define SPMC_GVP_REGULAR_MIN_DECII 128 // about 1MHz max for ADCs
 #define SPMC_GVP_CLK    ((double)SPMC_ACLK_MHZ*1e6) // /2 for decii i noutside block only (old)
 
-#define MAX_NUM_PROGRAN_VECTORS 16
+#define MAX_NUM_PROGRAN_VECTORS 32
 #define Q_XY_PRECISION Q28
 #define Q_Z_SLOPE_PRECISION Q31
 

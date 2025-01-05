@@ -1791,7 +1791,9 @@ void RPSPMC_Control::create_folder (){
         bp->new_line ();
 	bp->grid_add_ec ("Time Const", new UnitObj("ms","ms"), &spmc_parameters.sc_lck_tau, 0., 1e6, "5g", 1e-6, 10e3, "SPMC-LCK-TAU");
         bp->new_line ();
-	bp->grid_add_ec ("Phase", new UnitObj(UTF8_DEGREE,"Deg"), &spmc_parameters.sc_lck_phase, 0., 360., "5g", 0.1, 5.0, "SPMC-LCK-PHASE");
+	bp->grid_add_ec ("BiQaud Q", new UnitObj(" Q"," Q"), &spmc_parameters.sc_lck_q, 0., 1e6, "5g", 0.1, 5.0, "SPMC-LCK-Q");
+        bp->new_line ();
+	bp->grid_add_ec ("Gain Ctrl.", new UnitObj(" x"," x"), &spmc_parameters.sc_lck_gain, -1e9, 1e9, "6g", 0.1, 5.0, "SPMC-LCK-GAIN");
 
         
         bp->notebook_tab_show_all ();
@@ -2488,11 +2490,13 @@ void RPSPMC_Control::create_folder (){
 	g_object_set_data( G_OBJECT (window), "DSP_EC_list", bp->get_ec_list_head ());
         g_object_set_data( G_OBJECT (multiIV_checkbutton), "DSP_multiIV_list", multi_IVsec_list);
 	g_object_set_data( G_OBJECT (zposmon_checkbutton), "DSP_zpos_control_list", zpos_control_list);
-        
+                
 	GUI_ready = TRUE;
         
         AppWindowInit (NULL); // stage two
         set_window_geometry ("rpspmc-main-control"); // must add key to xml file: core-sources/org.gnome.gxsm4.window-geometry.gschema.xml
+
+        Probing_multiIV_callback (multiIV_checkbutton, this); // update
 }
 
 void RPSPMC_Control::Init_SPMC_on_connect (){
@@ -3021,7 +3025,9 @@ void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *
                 if  (self->LCK_Target > 0 && self->LCK_Target < LCK_NUM_TARGETS){ 
                         rpspmc_pacpll->write_parameter ("SPMC_SC_LCK_VOLUME", modulation_targets[self->LCK_Target].scale_factor * self->LCK_Volume[self->LCK_Target]); // => Volts
                 }
-                rpspmc_pacpll->write_parameter ("SPMC_SC_LCK_TAU", spmc_parameters.sc_lck_tau);
+                rpspmc_pacpll->write_parameter ("SPMC_SC_F0BQ_LCK_TAU", spmc_parameters.sc_lck_tau);
+                rpspmc_pacpll->write_parameter ("SPMC_SC_F0BQ_LCK_Q", spmc_parameters.sc_lck_q);
+                rpspmc_pacpll->write_parameter ("SPMC_SC_LCK_GAIN", spmc_parameters.sc_lck_gain);
                 g_message ("ADJ LOCKIN FRQ %g Hz, target=%d vol=%g V", spmc_parameters.sc_lck_frequency, self->LCK_Target, spmc_parameters.sc_lck_volume);
         }
 }

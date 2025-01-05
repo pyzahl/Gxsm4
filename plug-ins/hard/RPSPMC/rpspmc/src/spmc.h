@@ -76,9 +76,9 @@ extern "C" {
 
         void rp_spmc_gvp_module_start_config ();
         void rp_spmc_gvp_module_write_config_data (int addr);
-        void rp_spmc_gvp_module_config_int32 (int addr, int data);
-        void rp_spmc_gvp_module_config_uint32 (int addr, unsigned int data);
-        void rp_spmc_gvp_module_config_vector_Q31 (int addr, double data[16], int n);
+        void rp_spmc_gvp_module_config_int32 (int addr, int data, int pos);
+        void rp_spmc_gvp_module_config_uint32 (int addr, unsigned int data, int pos);
+        void rp_spmc_gvp_module_config_Qn (int addr, double data, int pos, double Qn);
         void rp_spmc_gvp_module_config_vector_Qn (int addr, double data[16], int n, double Qn);
 
         void rp_spmc_set_zservo_controller (double setpoint, double cp, double ci, double upper, double lower);
@@ -99,10 +99,12 @@ extern "C" {
         double rp_spmc_set_lck_modulation_frequency (double freq);
         void rp_spmc_set_lck_volume (double volume);
         void rp_spmc_set_lck_target (int target);
-        void rp_spmc_set_lck_tau (double tau);
-        void rp_spmc_set_lck_phase (double phase);
+        void rp_spmc_set_lck_gaincontrol (double gain, unsigned int mode, int LCKID);
 
-        void rp_spmc_set_biqad_Lck_F0 (double fcut);
+        void rp_spmc_set_biqad_Lck_F0 (double f_cut, double Q, double Fs, int BIQID);
+        void rp_spmc_set_biqad_Lck_F0_pass (int BIQID);
+        void rp_spmc_set_biqad_Lck_F0_IIR (double f_cut, double Fs, int BIQID);
+
 
         void rp_spmc_update_readings ();
 
