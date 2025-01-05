@@ -56,205 +56,6 @@ void RPSPMC_Control::read_spm_vector_program (){
 	if (!rpspmc_hwi) return; 
 }
 
-#if 0
-
-// make automatic n and dnx from float number of steps, keep n below 1000.
-void RPSPMC_Control::make_auto_n_vector_elments (double fnum){
-	program_vector.n = 1;
-	program_vector.dnx = 0;
-	if (fnum >= 1.){
-		if (fnum <= 1000.){ // automatic n ramp limiter
-			program_vector.n = (gint32)round (fnum);
-			program_vector.dnx = 0;
-		} else if (fnum <= 10000.){
-			program_vector.n = (gint32)round (fnum/10.);
-			program_vector.dnx = 10;
-		} else if (fnum <= 100000.){
-			program_vector.n = (gint32)round (fnum/100.);
-			program_vector.dnx = 100;
-		} else if (fnum <= 1000000.){
-			program_vector.n = (gint32)round (fnum/1000.);
-			program_vector.dnx = 1000;
-		} else{
-			program_vector.n = (gint32)round (fnum/10000.);
-			program_vector.dnx = 10000;
-		}
-	}
-	++program_vector.n;
-}
-
-// make IV and dz (optional) vector from U_initial, U_final, dZ, n points and V-slope
-// Options:
-// Ramp-Mode: MAKE_VEC_FLAG_RAMP, auto n computation
-// FixV-Mode: MAKE_VEC_FLAG_VHOLD, fix bias, only compute "speed" by Ui,Uf,slope
-double RPSPMC_Control::make_Vdz_vector (double Ui, double Uf, double dZ, int n, double slope, int source, int options, double &duration, make_vector_flags flags){
-	double dv = fabs (Uf - Ui);
-
-	if (dv < 1e-6)
-		return make_delay_vector ((double)n*256./rpspmc_hwi->get_GVP_frq_ref (), source, options, duration, flags, n);
-
-	if (flags & MAKE_VEC_FLAG_RAMP || n < 2)
-		make_auto_n_vector_elments (dv/slope*rpspmc_hwi->get_GVP_frq_ref ());
-	else {
-		program_vector.n = n; // number of data points
-                //		++program_vector.n;
-		program_vector.dnx = abs((gint32)round ((Uf - Ui)*rpspmc_hwi->get_GVP_frq_ref ()/(slope*program_vector.n))); // number of steps between data points
-	}
-	double steps = (double)(program_vector.n) * (double)(program_vector.dnx+1);	//total number of steps
-
-	duration += (double long) steps;
-	program_vector.srcs = source & 0xffff; // source channel coding
-	program_vector.options = options;
-	program_vector.repetitions = 0;
-	program_vector.ptr_next = 0x0;
-	program_vector.ptr_final = flags & MAKE_VEC_FLAG_END ? 0:1; // VPC relative branch to next vector
-	program_vector.f_du = flags & MAKE_VEC_FLAG_VHOLD ? 0 : ((Uf-Ui)/main_get_gapp()->xsm->Inst->BiasGainV2V ())/steps;
-	program_vector.f_dz = main_get_gapp()->xsm->Inst->ZA2Volt (dZ/steps);
-	program_vector.f_dx = 0.0;
-	program_vector.f_dy = 0.0;
-	program_vector.f_dx0 = 0.0;
-	program_vector.f_dy0 = 0.0;
-	program_vector.f_dz0 = 0.0;
-	return main_get_gapp()->xsm->Inst->V2BiasV (Ui + program_vector.f_du*steps);
-}	
-
-// Copy of Vdz above, but the du steps were used for dx0
-double RPSPMC_Control::make_Vdx0_vector (double Ui, double Uf, double dZ, int n, double slope, int source, int options, double &duration, make_vector_flags flags
-                                     ){
-        double dv = fabs (Uf - Ui);
-        if (flags & MAKE_VEC_FLAG_RAMP || n < 2)
-                make_auto_n_vector_elments (dv/slope*rpspmc_hwi->get_GVP_frq_ref ());
-        else {
-                program_vector.n = n; // number of data points
-                //              ++program_vector.n;
-                program_vector.dnx = abs((gint32)round ((Uf - Ui)*rpspmc_hwi->get_GVP_frq_ref ()/(slope*program_vector.n))); // number of steps between data points
-        }
-        double steps = (double)(program_vector.n) * (double)(program_vector.dnx+1);     //total number of steps
-
-        duration += (double long) steps;
-        program_vector.srcs = source & 0xffff; // source channel coding
-        program_vector.options = options;
-	program_vector.repetitions = 0;
-	program_vector.ptr_next = 0x0;
-        program_vector.ptr_final = flags & MAKE_VEC_FLAG_END ? 0:1; // VPC relative branch to next vector
-        program_vector.f_dx0 = flags & MAKE_VEC_FLAG_VHOLD ? 0 : ((Uf-Ui)/main_get_gapp()->xsm->Inst->BiasGainV2V ())/steps; // !!!!!x ????
-        program_vector.f_dz = main_get_gapp()->xsm->Inst->ZA2Volt (dZ/steps);
-        program_vector.f_dx = 0.0;
-        program_vector.f_dy = 0.0;
-        program_vector.f_du = 0.0;
-        program_vector.f_dy0 = 0.0;
-        program_vector.f_dz0 = 0.0;
-        return main_get_gapp()->xsm->Inst->V2BiasV (Ui + program_vector.f_du*steps);
-}       
-
-// Copy of Vdz above, but the du steps were used for dx0
-double RPSPMC_Control::make_dx0_vector (double X0i, double X0f, int n, double slope, int source, int options, double &duration, make_vector_flags flags
-                                    ){
-        double dv = fabs (X0f - X0i);
-        if (flags & MAKE_VEC_FLAG_RAMP || n < 2)
-                make_auto_n_vector_elments (dv/slope*rpspmc_hwi->get_GVP_frq_ref ());
-        else {
-                program_vector.n = n; // number of data points
-                //              ++program_vector.n;
-                program_vector.dnx = abs((gint32)round ((X0f - X0i)*rpspmc_hwi->get_GVP_frq_ref ()/(slope*program_vector.n))); // number of steps between data points
-        }
-        double steps = (double)(program_vector.n) * (double)(program_vector.dnx+1);     //total number of steps
-
-        duration += (double long) steps;
-        program_vector.srcs = source & 0xffff; // source channel coding
-        program_vector.options = options;
-	program_vector.repetitions = 0;
-	program_vector.ptr_next = 0x0;
-        program_vector.ptr_final = flags & MAKE_VEC_FLAG_END ? 0:1; // VPC relative branch to next vector
-        program_vector.f_du = 0.0;
-        program_vector.f_dx0 = flags & MAKE_VEC_FLAG_VHOLD ? 0.0 : (X0f-X0i)/steps;
-        program_vector.f_dz = 0.0;
-        program_vector.f_dx = 0.0;
-        program_vector.f_dy = 0.0;
-        program_vector.f_dy0 = 0.0;
-        program_vector.f_dz0 = 0.0;
-        return main_get_gapp()->xsm->Inst->V2BiasV (X0i + program_vector.f_dx0*steps);
-}       
-#endif
-
-// make dZ/dX/dY vector from n point (if > 2, else automatic n) and (dX,dY,dZ) slope
-double RPSPMC_Control::make_ZXYramp_vector (double dZ, double dX, double dY, int n, double slope, int source, int options, double &duration, make_vector_flags flags){
-	double dr = sqrt(dZ*dZ + dX*dX + dY*dY);
-        double tm = dr/slope;
-        
-        program_vector.n = n;
-        program_vector.slew = n/tm;
-	duration += tm;
-	program_vector.srcs = source & 0xffff;
-	program_vector.options = options;
-	program_vector.repetitions = 0;
-	program_vector.ptr_next = 0x0;
-	program_vector.f_du = 0.0;
-	program_vector.f_dx = main_get_gapp()->xsm->Inst->XA2Volt (dX);
-	program_vector.f_dy = main_get_gapp()->xsm->Inst->YA2Volt (dY);
-	program_vector.f_dz = main_get_gapp()->xsm->Inst->ZA2Volt (dZ);
-	program_vector.f_da = 0.0;
-	program_vector.f_db = 0.0;
-
-	return main_get_gapp()->xsm->Inst->Volt2ZA (program_vector.f_dz);
-}
-
-// make dU/dZ/dX/dY vector for n points and ts time per segment
-double RPSPMC_Control::make_UZXYramp_vector (double dU, double dZ, double dX, double dY, double da, double db, int n, int nrep, int ptr_next, double ts, int source, int options){
-	program_vector.n = n;
-	program_vector.slew = n/ts;
-	program_vector.srcs = source;
-	program_vector.options = options;
-	program_vector.repetitions = nrep;
-	program_vector.ptr_next = ptr_next;
-
-	program_vector.f_du = dU/main_get_gapp()->xsm->Inst->BiasGainV2V ();
-	program_vector.f_dx = main_get_gapp()->xsm->Inst->XA2Volt (dX);
-	program_vector.f_dy = main_get_gapp()->xsm->Inst->YA2Volt (dY);
-	program_vector.f_dz = main_get_gapp()->xsm->Inst->ZA2Volt (dZ);
-	program_vector.f_da = da;
-	program_vector.f_db = db;
-
-	return ts;
-}
-
-
-// Make a delay Vector
-double RPSPMC_Control::make_delay_vector (double delay, int source, int options, double &duration, make_vector_flags flags, int points){
-	duration += delay;
-	program_vector.n = points;
-	program_vector.slew = points/delay;
-	program_vector.srcs = source;
-	program_vector.options = options;
-	program_vector.repetitions = 0; // number of repetitions, not used yet
-	program_vector.ptr_next = 0x0;  // pointer to next vector -- not used, only for loops
-	program_vector.f_du = 0.0;
-	program_vector.f_dz = 0.0;
-	program_vector.f_dx = 0.0;
-	program_vector.f_dy = 0.0;
-	program_vector.f_da = 0.0;
-	program_vector.f_db = 0.0;
-	return delay;
-}
-
-// Make Vector Table End
-void RPSPMC_Control::append_null_vector (int options, int index){
-	// NULL vector -- just to clean vector table
-	program_vector.n = 0;
-	program_vector.slew = 0.0;
-	program_vector.n = 0;
-	program_vector.srcs = 0x0000;
-	program_vector.options = options;
-	program_vector.repetitions = 0; // number of repetitions
-	program_vector.ptr_next = 0;  // END
-	program_vector.f_dx = 0.0;
-	program_vector.f_dy = 0.0;
-	program_vector.f_dz = 0.0;
-	program_vector.f_du = 0.0;
-	program_vector.f_da = 0.0;
-	program_vector.f_db = 0.0;
-	write_program_vector (index);
-}
 
 static void via_remote_list_Check_ec(Gtk_EntryControl* ec, remote_args* ra){
 	ec->CheckRemoteCmd (ra);
@@ -273,6 +74,129 @@ static void via_remote_list_Check_ec(Gtk_EntryControl* ec, remote_args* ra){
         dspc->GVP_vnrep[PC] = VNR;                                      \
         dspc->GVP_vpcjr[PC] = VPCJ;                                     \
         }                                                               \
+
+
+double RPSPMC_Control::make_Udz_vector (double Ui, double Uf, double dZ, int n, double slope, int source, int options, double &duration, gvp_vector_flags flags){
+        double dv = Uf - Ui;
+        double slew = 100.;
+        if (n < 2 || flags == MAKE_VEC_FLAG_RAMP) n=100;
+
+        if (fabs (dv) > 1e-6 && slope > 1e-6)
+                slew = n/(slope*fabs(dv));
+
+        if (flags == MAKE_VEC_FLAG_VHOLD) dv=0.0;
+
+        g_message ("VVVVV::make_Udz_vector  dv=%g slew=%g pts/s, slope=%g V/s n=%d", dv, slew, slope, n);
+        
+        program_vector.n = n;
+        program_vector.slew = slew;
+        program_vector.srcs = source;
+        program_vector.options = options;
+        program_vector.repetitions = 0;
+        program_vector.ptr_next = 0;
+                
+        program_vector.f_du = dv/main_get_gapp()->xsm->Inst->BiasGainV2V ();
+        program_vector.f_dx = 0.0;
+        program_vector.f_dy = 0.0;
+        program_vector.f_dz = main_get_gapp()->xsm->Inst->ZA2Volt (dZ);
+        program_vector.f_da = 0.0;
+        program_vector.f_db = 0.0;
+
+        duration += fabs(dv)/slope;
+
+        return Ui + dv;
+}
+
+// make ZXY rampe vector w slope
+double RPSPMC_Control::make_ZXYramp_vector (double dZ, double dX, double dY, int n, double slope, int source, int options, double &duration, gvp_vector_flags flags){
+        double dr = sqrt(dZ*dZ + dX*dX + dY*dY);
+        double tm = dr/slope;
+
+        program_vector.n = n;
+        program_vector.slew = n/tm;
+        program_vector.srcs = source;
+        program_vector.options = options;
+        program_vector.repetitions = 0;
+        program_vector.ptr_next = 0x0;
+        program_vector.f_du = 0.0;
+        program_vector.f_dx = main_get_gapp()->xsm->Inst->XA2Volt (dX);
+        program_vector.f_dy = main_get_gapp()->xsm->Inst->YA2Volt (dY);
+        program_vector.f_dz = main_get_gapp()->xsm->Inst->ZA2Volt (dZ);
+        program_vector.f_da = 0.0;
+        program_vector.f_db = 0.0;
+
+        duration += tm;
+
+        return dZ;
+}
+        
+// make dU/dZ/dX/dY vector for n points and ts time per segment
+double RPSPMC_Control::make_UZXYramp_vector (double dU, double dZ, double dX, double dY, double da, double db, int n, int nrep, int ptr_next, double ts, int source, int options){
+        program_vector.n = n;
+        program_vector.slew = n/ts;
+        program_vector.srcs = source;
+        program_vector.options = options;
+        program_vector.repetitions = nrep;
+        program_vector.ptr_next = ptr_next;
+
+        program_vector.f_du = dU/main_get_gapp()->xsm->Inst->BiasGainV2V ();
+        program_vector.f_dx = main_get_gapp()->xsm->Inst->XA2Volt (dX);
+        program_vector.f_dy = main_get_gapp()->xsm->Inst->YA2Volt (dY);
+        program_vector.f_dz = main_get_gapp()->xsm->Inst->ZA2Volt (dZ);
+        program_vector.f_da = da;
+        program_vector.f_db = db;
+
+        return ts;
+}
+        
+// Make a delay Vector
+double RPSPMC_Control::make_delay_vector (double delay, int source, int options, double &duration, gvp_vector_flags flags, int points=0){
+        if (points < 2) points = 100;
+        if (delay < 1e-7){
+                g_warning ("VVVVV::make_delay_vector delay too small, auto adjusting. asking for %g s", delay);
+                delay = 1e-6;
+        }
+        double slew = points/delay;
+
+        g_message ("VVVVV::make_delay_vector %g pts/s dt=%g n=%d", slew, delay, points);
+
+        program_vector.n = points;
+        program_vector.slew = slew;
+        program_vector.srcs = source;
+        program_vector.options = options;
+        program_vector.repetitions = 0; // number of repetitions, not used yet
+        program_vector.ptr_next = 0x0;  // pointer to next vector -- not used, only for loops
+        program_vector.f_du = 0.0;
+        program_vector.f_dz = 0.0;
+        program_vector.f_dx = 0.0;
+        program_vector.f_dy = 0.0;
+        program_vector.f_da = 0.0;
+        program_vector.f_db = 0.0;
+
+        duration += delay;
+
+        return delay;
+}
+
+// Make Vector Table End
+void RPSPMC_Control::append_null_vector (int options, int index){
+        // NULL vector -- just to clean vector table
+        program_vector.n = 0;
+        program_vector.slew = 0.0;
+        program_vector.n = 0;
+        program_vector.srcs = 0x0000;
+        program_vector.options = options;
+        program_vector.repetitions = 0; // number of repetitions
+        program_vector.ptr_next = 0;  // END
+        program_vector.f_dx = 0.0;
+        program_vector.f_dy = 0.0;
+        program_vector.f_dz = 0.0;
+        program_vector.f_du = 0.0;
+        program_vector.f_da = 0.0;
+        program_vector.f_db = 0.0;
+        write_program_vector (index);
+}
+
 
 
 void RPSPMC_Control::write_spm_scan_vector_program (double rx, double ry, int nx, int ny, double slew[2], int subscan[4], long int srcs[4], int gvp_options){
@@ -422,8 +346,6 @@ void RPSPMC_Control::write_spm_vector_program (int start, pv_mode pvm){
 		vpci = vector_index;
 		vp_duration_0 =	vp_duration;
 
-#if 0	
-
 		// do we need to split up if crossing zero?
 		if (fabs (IV_dz) > 0.001 && ((IV_end[0] < 0. && IV_start[0] > 0.) || (IV_end[0] > 0. && IV_start[0] < 0.)) && (bias != 0.)){
 			int vpc=0;
@@ -448,95 +370,107 @@ void RPSPMC_Control::write_spm_vector_program (int start, pv_mode pvm){
 			vp_duration_1 =	vp_duration;
 			vp_duration_2 =	vp_duration;
 
-			make_Vdz_vector (bias, ui, dz_bi, -1, IV_slope_ramp, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_RAMP);
+			make_Udz_vector (bias, ui, dz_bi, -1, IV_slope_ramp, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_RAMP);
 			write_program_vector (vector_index++);
 
-			make_Vdz_vector (ui, u0, dz_i0, n12, IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+			make_Udz_vector (ui, u0, dz_i0, n12, IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
 			write_program_vector (vector_index++);
 
-			make_Vdz_vector (u0, uf, dz_0f, n23, IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+			make_Udz_vector (u0, uf, dz_0f, n23, IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
 			write_program_vector (vector_index++);
 
 			if (IV_option_flags & FLAG_DUAL) {
 				// run also reverse probe ramp in dual mode
-				make_Vdz_vector (uf, u0, -dz_0f, n23, IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+				make_Udz_vector (uf, u0, -dz_0f, n23, IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
 				write_program_vector (vector_index++);
 
-				make_Vdz_vector (u0, ui, -dz_i0, n12, IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+				make_Udz_vector (u0, ui, -dz_i0, n12, IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
 				write_program_vector (vector_index++);
 
 				// Ramp back to given bias voltage   
-				make_Vdz_vector (ui, bias, -dz_bi, -1, IV_slope_ramp, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_RAMP);
+				make_Udz_vector (ui, bias, -dz_bi, -1, IV_slope_ramp, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_RAMP);
 				write_program_vector (vector_index++);
 
 			} else {
-				make_Vdz_vector (uf, bias, -(dz_bi+dz_i0+dz_0f), -1, IV_slope_ramp, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_RAMP);
+				make_Udz_vector (uf, bias, -(dz_bi+dz_i0+dz_0f), -1, IV_slope_ramp, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_RAMP);
 				write_program_vector (vector_index++);
 			}
 
 			if (IV_repetitions > 1){
 				// Final vector, gives the IVC some time to recover   
-				make_delay_vector (IV_final_delay, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
-				write_program_vector (vector_index++);
-				make_delay_vector (IV_recover_delay, ramp_sources, recover_options, vp_duration, MAKE_VEC_FLAG_NORMAL);
-				program_vector.repetitions = IV_repetitions-1;
+                                if (IV_final_delay > 1e-4){
+                                        make_delay_vector (IV_final_delay, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+                                        write_program_vector (vector_index++);
+                                }
+                                if (IV_recover_delay < 1e-4)
+                                        IV_recover_delay = 1e-6;
+                                make_delay_vector (IV_recover_delay, ramp_sources, recover_options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+                                program_vector.repetitions = IV_repetitions-1;
 				program_vector.ptr_next = -vector_index; // go to start
 				vp_duration +=	(IV_repetitions-1)*(vp_duration - vp_duration_1);
 				write_program_vector (vector_index++);
 			} else {
-				make_delay_vector (IV_final_delay, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
-				write_program_vector (vector_index++);
-				make_delay_vector (IV_recover_delay, ramp_sources, recover_options, vp_duration, MAKE_VEC_FLAG_NORMAL);
-				write_program_vector (vector_index++);
+                                if (IV_final_delay > 1e-4){
+                                        make_delay_vector (IV_final_delay, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+                                        write_program_vector (vector_index++);
+                                }
+                                if (IV_recover_delay > 1e-4){
+                                        make_delay_vector (IV_recover_delay, ramp_sources, recover_options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+                                        write_program_vector (vector_index++);
+                                }
 			}
 			// add automatic conductivity measurement rho(Z) -- HOLD Bias fixed now!
 			if (IVdz_repetitions > 0){
 				vp_duration_2 =	vp_duration;
-				// don't know the reason, but the following delay vector is needed to separate dI/dU and dI/dz
-				make_delay_vector (0., ramp_sources, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
-				write_program_vector (vector_index++);
 
 				// in case of rep > 1 the DSP will jump back to this point
 				vpc = vector_index;
 	
-				make_Vdz_vector (bias, ui, dz_bi, -1, IV_slope_ramp, ramp_sources, options, vp_duration, (make_vector_flags)(MAKE_VEC_FLAG_RAMP | MAKE_VEC_FLAG_VHOLD));
+				make_Udz_vector (bias, ui, dz_bi, -1, IV_slope_ramp, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_RAMP_VHOLD);
 				write_program_vector (vector_index++);
 	
-				make_Vdz_vector (ui, u0, dz_i0, n12, IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_VHOLD);
+				make_Udz_vector (ui, u0, dz_i0, n12, IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_VHOLD);
 				write_program_vector (vector_index++);
 	
-				make_Vdz_vector (u0, uf, dz_0f, n23, IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_VHOLD);
+				make_Udz_vector (u0, uf, dz_0f, n23, IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_VHOLD);
 				write_program_vector (vector_index++);
 	
 				if (IV_option_flags & FLAG_DUAL) {
-					make_Vdz_vector (uf, u0, -dz_0f, n23, IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_VHOLD);
+					make_Udz_vector (uf, u0, -dz_0f, n23, IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_VHOLD);
 					write_program_vector (vector_index++);
 	
-					make_Vdz_vector (u0, ui, -dz_i0, n12, IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_VHOLD);
+					make_Udz_vector (u0, ui, -dz_i0, n12, IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_VHOLD);
 					write_program_vector (vector_index++);
 	
-					make_Vdz_vector (ui, bias, -dz_bi, -1, IV_slope_ramp, ramp_sources, options, vp_duration, (make_vector_flags)(MAKE_VEC_FLAG_RAMP | MAKE_VEC_FLAG_VHOLD));
+					make_Udz_vector (ui, bias, -dz_bi, -1, IV_slope_ramp, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_RAMP_VHOLD);
 					write_program_vector (vector_index++);
 				} else {
-					make_Vdz_vector (uf, bias, -(dz_bi+dz_i0+dz_0f), -1, IV_slope_ramp, ramp_sources, options, vp_duration, (make_vector_flags)(MAKE_VEC_FLAG_RAMP | MAKE_VEC_FLAG_VHOLD));
+					make_Udz_vector (uf, bias, -(dz_bi+dz_i0+dz_0f), -1, IV_slope_ramp, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_RAMP_VHOLD);
 					write_program_vector (vector_index++);
 				}
 	
 				if (IVdz_repetitions > 1){
 					// Final vector, gives the IVC some time to recover   
-					make_delay_vector (IV_final_delay, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
-					write_program_vector (vector_index++);
-	
-					make_delay_vector (IV_recover_delay, ramp_sources, recover_options, vp_duration, MAKE_VEC_FLAG_NORMAL);
-					program_vector.repetitions = IVdz_repetitions-1;
+                                        if (IV_final_delay > 1e-4){
+                                                make_delay_vector (IV_final_delay, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+                                                write_program_vector (vector_index++);
+                                        }
+                                        if (IV_recover_delay < 1e-4)
+                                                IV_recover_delay = 1e-6;
+                                        make_delay_vector (IV_recover_delay, ramp_sources, recover_options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+                                        program_vector.repetitions = IVdz_repetitions-1;
 					program_vector.ptr_next = -(vector_index-vpc); // go to rho start
 					vp_duration +=	(IVdz_repetitions-1)*(vp_duration - vp_duration_2);
 					write_program_vector (vector_index++);
 				} else {
-					make_delay_vector (IV_final_delay, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
-					write_program_vector (vector_index++);
-					make_delay_vector (IV_recover_delay, ramp_sources, recover_options, vp_duration, MAKE_VEC_FLAG_NORMAL);
-					write_program_vector (vector_index++);
+                                        if (IV_final_delay > 1e-4){
+                                                make_delay_vector (IV_final_delay, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+                                                write_program_vector (vector_index++);
+                                        }
+                                        if (IV_recover_delay > 1e-4){
+                                                make_delay_vector (IV_recover_delay, ramp_sources, recover_options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+                                                write_program_vector (vector_index++);
+                                        }
 				}
 			}
 
@@ -564,37 +498,41 @@ void RPSPMC_Control::write_spm_vector_program (int start, pv_mode pvm){
 					dz_bi = dz_if = 0.;
 				}
 
-				make_Vdz_vector (bias_prev, ui, dz_bi, -1, IV_slope_ramp, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_RAMP);
+				make_Udz_vector (bias_prev, ui, dz_bi, -1, IV_slope_ramp, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_RAMP);
 				write_program_vector (vector_index++);
 
-				make_Vdz_vector (ui, uf, dz_if, IV_points[IVs], IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+				make_Udz_vector (ui, uf, dz_if, IV_points[IVs], IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
 				write_program_vector (vector_index++);
 			
 			
 				// add vector for reverse return ramp? -- Force return path if dz != 0
 				if (IV_option_flags & FLAG_DUAL) {
 					// run also reverse probe ramp in dual mode
-					make_Vdz_vector (uf, ui, -dz_if, IV_points[IVs], IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+					make_Udz_vector (uf, ui, -dz_if, IV_points[IVs], IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
 					write_program_vector (vector_index++);
 					
 					if (IVs == (IV_sections-1)){
 						// Ramp back to given bias voltage   
-						make_Vdz_vector (ui, bias, -dz_bi, -1, IV_slope_ramp, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_RAMP);
+						make_Udz_vector (ui, bias, -dz_bi, -1, IV_slope_ramp, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_RAMP);
 						write_program_vector (vector_index++);
 					}
 				} else {
 					if (IVs == (IV_sections-1)){
 						// Ramp back to given bias voltage   
-						make_Vdz_vector (uf, bias, -(dz_if+dz_bi), -1, IV_slope_ramp, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_RAMP);
+						make_Udz_vector (uf, bias, -(dz_if+dz_bi), -1, IV_slope_ramp, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_RAMP);
 						write_program_vector (vector_index++);
 					}
 				}
+
 				if (IV_repetitions > 1){
 					// Final vector, gives the IVC some time to recover   
-					make_delay_vector (IV_final_delay, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
-					write_program_vector (vector_index++);
-					
+                                        if (IV_final_delay > 1e-4){
+                                                make_delay_vector (IV_final_delay, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+                                                write_program_vector (vector_index++);
+					}
 					if (IVs == (IV_sections-1)){
+                                                if (IV_recover_delay < 1e-4)
+                                                        IV_recover_delay = 1e-6;
 						make_delay_vector (IV_recover_delay, ramp_sources, recover_options, vp_duration, MAKE_VEC_FLAG_NORMAL);
 						program_vector.repetitions = IV_repetitions-1;
 						program_vector.ptr_next = -vector_index; // go to start
@@ -602,11 +540,15 @@ void RPSPMC_Control::write_spm_vector_program (int start, pv_mode pvm){
 						write_program_vector (vector_index++);
 					}
 				} else {
-					make_delay_vector (IV_final_delay, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
-					write_program_vector (vector_index++);
+                                        if (IV_final_delay > 1e-4){
+                                                make_delay_vector (IV_final_delay, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+                                                write_program_vector (vector_index++);
+                                        }
 					if (IVs == (IV_sections-1)){
-						make_delay_vector (IV_recover_delay, ramp_sources, recover_options, vp_duration, MAKE_VEC_FLAG_NORMAL);
-						write_program_vector (vector_index++);
+                                                if (IV_recover_delay > 1e-4){
+                                                        make_delay_vector (IV_recover_delay, ramp_sources, recover_options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+                                                        write_program_vector (vector_index++);
+                                                }
 					}
 				}
 			}
@@ -614,46 +556,50 @@ void RPSPMC_Control::write_spm_vector_program (int start, pv_mode pvm){
 			// add automatic conductivity measurement rho(Z) -- HOLD Bias fixed now!
 			if ((IVdz_repetitions > 0) && (fabs (IV_dz) > 0.001) && (bias != 0.)){
 				vp_duration_2 =	vp_duration;
-				// don't know the reason, but the following delay vector is needed to separate dI/dU and dI/dz
-				make_delay_vector (0., ramp_sources, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
-				write_program_vector (vector_index++);
 
 				// in case of rep > 1 the DSP will jump back to this point
 				vpc = vector_index;
 	
-				make_Vdz_vector (bias, ui, dz_bi, -1, IV_slope_ramp, ramp_sources, options, vp_duration, (make_vector_flags)(MAKE_VEC_FLAG_RAMP | MAKE_VEC_FLAG_VHOLD));
+				make_Udz_vector (bias, ui, dz_bi, -1, IV_slope_ramp, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_RAMP_VHOLD);
 				write_program_vector (vector_index++);
 
-				make_Vdz_vector (ui, uf, dz_if, IV_points[0], IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_VHOLD);
+				make_Udz_vector (ui, uf, dz_if, IV_points[0], IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_VHOLD);
 				write_program_vector (vector_index++);
 			
 				if (IV_option_flags & FLAG_DUAL) {
-					make_Vdz_vector (uf, ui, -dz_if, IV_points[0], IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_VHOLD);
+					make_Udz_vector (uf, ui, -dz_if, IV_points[0], IV_slope, vis_Source, options, vp_duration, MAKE_VEC_FLAG_VHOLD);
 					write_program_vector (vector_index++);
 
 					// Ramp back to given bias voltage   
-					make_Vdz_vector (ui, bias, -dz_bi, -1, IV_slope_ramp, ramp_sources, options, vp_duration, (make_vector_flags)(MAKE_VEC_FLAG_RAMP | MAKE_VEC_FLAG_VHOLD));
+					make_Udz_vector (ui, bias, -dz_bi, -1, IV_slope_ramp, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_RAMP_VHOLD);
 					write_program_vector (vector_index++);
 				} else {
-					make_Vdz_vector (uf, bias, -(dz_if+dz_bi), -1, IV_slope_ramp, ramp_sources, options, vp_duration, (make_vector_flags)(MAKE_VEC_FLAG_RAMP | MAKE_VEC_FLAG_VHOLD));
+					make_Udz_vector (uf, bias, -(dz_if+dz_bi), -1, IV_slope_ramp, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_RAMP_VHOLD);
 					write_program_vector (vector_index++);
 				}
 	
 				if (IVdz_repetitions > 1 ){
 					// Final vector, gives the IVC some time to recover   
-					make_delay_vector (IV_final_delay, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
-					write_program_vector (vector_index++);
-	
+                                        if (IV_final_delay > 1e-4){
+                                                make_delay_vector (IV_final_delay, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+                                                write_program_vector (vector_index++);
+                                        }
+                                        if (IV_recover_delay < 1e-4)
+                                                IV_recover_delay = 1e-6;
 					make_delay_vector (IV_recover_delay, ramp_sources, recover_options, vp_duration, MAKE_VEC_FLAG_NORMAL);
 					program_vector.repetitions = IVdz_repetitions-1;
 					program_vector.ptr_next = -(vector_index-vpc); // go to rho start
 					vp_duration +=	(IVdz_repetitions-1)*(vp_duration - vp_duration_2);
 					write_program_vector (vector_index++);
 				} else {
-					make_delay_vector (IV_final_delay, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
-					write_program_vector (vector_index++);
-					make_delay_vector (IV_recover_delay, ramp_sources, recover_options, vp_duration, MAKE_VEC_FLAG_NORMAL);
-					write_program_vector (vector_index++);
+                                        if (IV_final_delay > 1e-4){
+                                                make_delay_vector (IV_final_delay, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+                                                write_program_vector (vector_index++);
+                                        }
+                                        if (IV_recover_delay > 1e-4){
+                                                make_delay_vector (IV_recover_delay, ramp_sources, recover_options, vp_duration, MAKE_VEC_FLAG_NORMAL);
+                                                write_program_vector (vector_index++);
+                                        }
 				}
 			}
 		}
@@ -666,6 +612,8 @@ void RPSPMC_Control::write_spm_vector_program (int start, pv_mode pvm){
 					     ramp_sources, options, vp_duration, MAKE_VEC_FLAG_RAMP);
 
 			write_program_vector (vector_index++);
+                        if (IV_dxy_delay < 1e-4)
+                                IV_dxy_delay = 1e-6;
 			make_delay_vector (IV_dxy_delay, ramp_sources, options, vp_duration, MAKE_VEC_FLAG_RAMP);
 			program_vector.repetitions = IV_dxy_points-1;
 			program_vector.ptr_next = -(vector_index-vpci); // go to initial IV start for full repeat
@@ -679,12 +627,10 @@ void RPSPMC_Control::write_spm_vector_program (int start, pv_mode pvm){
 					     ramp_sources, options, vp_duration, MAKE_VEC_FLAG_RAMP);
 			write_program_vector (vector_index++);
 		}
-#endif
-		// Final vector
-		make_delay_vector (0., ramp_sources, options, vp_duration, MAKE_VEC_FLAG_END);
-		write_program_vector (vector_index++);
 
+		// Final vector
 		append_null_vector (options, vector_index);
+                write_program_vector (vector_index++);
 
 
                 if (IV_status){
@@ -726,7 +672,7 @@ void RPSPMC_Control::write_spm_vector_program (int start, pv_mode pvm){
 		{
 			double vpd[N_GVP_VECTORS];
 			int k=0;
-			for (k=0; k<N_GVP_VECTORS; ++k){
+			for (k=0; k<N_GVP_VECTORS-1; ++k){ // last must be NULL Vector
 				vpd[k] = vp_duration;
 
 				if (GVP_ts[k] <= 0. && GVP_points[k] == 0) // end VP mark found
@@ -747,6 +693,7 @@ void RPSPMC_Control::write_spm_vector_program (int start, pv_mode pvm){
 		}
 
 		append_null_vector (options, vector_index);
+                write_program_vector (vector_index++);
 
 		//rpspmc_hwi->probe_time_estimate = (int)vp_duration; // used for timeout check
 

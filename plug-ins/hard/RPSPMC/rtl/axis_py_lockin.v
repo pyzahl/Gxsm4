@@ -143,7 +143,7 @@ module axis_py_lockin#(
         if (config_addr == configuration_address) // BQ configuration, and auto reset
         begin
             lck_config <= config_data[1*32-1 : 0*32]; // options: Bit0: use gain control, Bit1: use gain programmed
-            lck_gain   <= config_data[1*32-2 : 1*32]; // programmed gain, Q24
+            lck_gain   <= config_data[2*32-2 : 1*32]; // programmed gain, Q24
         end
         
         if (lck_config[0])

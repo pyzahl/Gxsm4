@@ -699,15 +699,21 @@ public:
 	gchar *probe_fname;
 	int probe_findex;
 
-	// vector generation helpers
-	void make_auto_n_vector_elments (double fnum);
-	double make_Vdz_vector (double Ui, double Uf, double dZ, int n, double slope, int source, int options, double &duration, make_vector_flags flags);
-	double make_Vdx0_vector (double Ui, double Uf, double dZ, int n, double slope, int source, int options, double &duration, make_vector_flags flags);
-	double make_dx0_vector (double X0i, double X0f, int n, double slope, int source, int options, double &duration, make_vector_flags flags);
-	double make_ZXYramp_vector (double dZ, double dX, double dY, int n, double slope, int source, int options, double &duration, make_vector_flags flags);
+        // make IV and dz (optional) vector from U_initial, U_final, dZ, n points and V-slope
+        // FLAG_RAMP  => auto set points
+        // FLAG_VHOLD => set dv to zero, use slope + Ui-Uf for duration/slew auto set points
+	double make_Udz_vector (double Ui, double Uf, double dZ, int n, double slope, int source, int options, double &duration, gvp_vector_flags flags);
+
+        // make ZXY rampe vector w slope
+	double make_ZXYramp_vector (double dZ, double dX, double dY, int n, double slope, int source, int options, double &duration, gvp_vector_flags flags);
+        
+        // make dU/dZ/dX/dY vector for n points and ts time per segment
 	double make_UZXYramp_vector (double dU, double dZ, double dX, double dY, double da, double db, int n, int nrep, int ptr_next, double ts, int source, int options);
-	double make_phase_vector (double dPhi, int n, double slope, int source, int options, double &duration, make_vector_flags flags);
-	double make_delay_vector (double delay, int source, int options, double &duration, make_vector_flags flags, int points=0);
+        
+        // Make a delay Vector
+	double make_delay_vector (double delay, int source, int options, double &duration, gvp_vector_flags flags, int points=0);
+
+        // Make Vector Table End
 	void append_null_vector (int options, int index);
 
 	PROBE_VECTOR_GENERIC program_vector;
