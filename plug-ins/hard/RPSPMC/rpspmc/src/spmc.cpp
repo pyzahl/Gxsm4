@@ -597,45 +597,112 @@ void rp_spmc_set_zservo_gxsm_speciality_setting (int mode, double z_setpoint, do
 
 //#define DBG_SETUPGVP
 
+
+// SPMC module configuration, mastering CONFIG BUS
+#define MODULE_ADDR_SETTLE_TIME 5000
+
+void rp_spmc_gvp_module_start_config (){
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, 0);    // make sure all modules configs are disabled
+        usleep(MODULE_ADDR_SETTLE_TIME);
+}
+void rp_spmc_gvp_module_write_config_data (int addr){
+        usleep(MODULE_ADDR_SETTLE_TIME);
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, addr); // set address, will fetch data
+        usleep(MODULE_ADDR_SETTLE_TIME);
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, 0);    // and disable config bus again
+}
+
+void rp_spmc_gvp_module_config_int32 (int addr, int data){
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, 0);    // make sure all modules configs are disabled
+        usleep(MODULE_ADDR_SETTLE_TIME);
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA, data); // set config data -- only 1st 32 of 512
+        usleep(MODULE_ADDR_SETTLE_TIME);
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, addr); // set address, will fetch data
+        usleep(MODULE_ADDR_SETTLE_TIME);
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, 0);    // and disable config bus again
+}
+
+void rp_spmc_gvp_module_config_uint32 (int addr, unsigned int data){
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, 0);    // make sure all modules configs are disabled
+        usleep(MODULE_ADDR_SETTLE_TIME);
+        set_gpio_cfgreg_uint32 (SPMC_MODULE_CONFIG_DATA, data); // set config data -- only 1st 32 of 512
+        usleep(MODULE_ADDR_SETTLE_TIME);
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, addr); // set address, will fetch data
+        usleep(MODULE_ADDR_SETTLE_TIME);
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, 0);    // and disable config bus again
+}
+
+void rp_spmc_gvp_module_config_vector_Q31 (int addr, double data[16], int n){
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, 0);    // make sure all modules configs are disabled
+        usleep(MODULE_ADDR_SETTLE_TIME);
+        for (int i=0; i<n; i++)
+                set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA+i, int(round(Q31*data[i]))); // set config data -- only 1st 32 of 512
+        usleep(MODULE_ADDR_SETTLE_TIME);
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, addr); // set address, will fetch data
+        usleep(MODULE_ADDR_SETTLE_TIME);
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, 0);    // and disable config bus again
+}
+
+void rp_spmc_gvp_module_config_vector_Qn (int addr, double data[16], int n, double Qn){
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, 0);    // make sure all modules configs are disabled
+        usleep(MODULE_ADDR_SETTLE_TIME);
+        for (int i=0; i<n; i++)
+                set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA+i, int(round(Qn*data[i]))); // set config data -- only 1st 32 of 512
+        usleep(MODULE_ADDR_SETTLE_TIME);
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, addr); // set address, will fetch data
+        usleep(MODULE_ADDR_SETTLE_TIME);
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, 0);    // and disable config bus again
+}
+
 // RPSPMC GVP Engine Management
-void rp_spmc_gvp_config (bool reset=true, bool program=false, bool pause=false, int reset_options=-1){
-        static int r_options = 0;
-        
-        if (reset_options >= 0)
-                r_options = reset_options&0xffff;
+void rp_spmc_gvp_config (bool reset=true, bool pause=false, int reset_options=-1){
         
         if (!reset){
                 rp_spmc_AD5791_set_stream_mode (); // enable streaming for AD5791 DAC's from FPGA now!
-                //usleep(1000);
+                //usleep(MODULE_ADDR_SETTLE_TIME);
         }
-        int cfg = (reset ? 1:0) | (program ? 2:0) | (pause ? 4:0) | (r_options << 16);
-        set_gpio_cfgreg_int32 (SPMC_GVP_CONTROL, cfg);
+        //int cfg = (reset ? 1:0) | (program ? 2:0) | (pause ? 4:0) | (r_options << 16);
+        //set_gpio_cfgreg_int32 (SPMC_GVP_CONTROL, cfg);
+        //usleep(MODULE_ADDR_SETTLE_TIME);
+
+        rp_spmc_gvp_module_config_int32 (SPMC_GVP_CONTROL_REG, (reset ? 1:0) | (pause ? 2:0));
+
+        if (reset_options >= 0)
+                rp_spmc_gvp_module_config_int32 (SPMC_GVP_RESET_OPTIONS_REG, reset_options);
+
+
+        // Program GVP:
+        // rp_spmc_gvp_module_start_config ();
+        // write vector data using set_gpio_cfgreg_uint32 (SPMC_MODULE_CONFIG_DATA+N, data); // set config data 0..15 x 32bit
+        // rp_spmc_gvp_module_write_config_data (SPMC_GVP_VECTOR_DATA);     
         
-        usleep(1000);
-#ifdef DBG_SETUPGVP
-        if (verbose > 1){
-                char s8[9]; memset(s8, 0, 9);
-                fprintf(stderr, "##Configure GVP: %08x => [Paus Prg Res] %s\n", cfg, int_to_binary(s8, cfg, 3));
-                rp_spmc_update_readings ();
-        }
-#endif
+        if (verbose > 0)
+                fprintf(stderr, "##Configure GVP: %s\n", reset ? "Reset" : pause ? "Pause":"Run");
 }
 
 void rp_spmc_gvp_init (){
+        if (verbose > 0)
+                fprintf(stderr, "##**** GVP INIT\n");
+
         rp_spmc_gvp_config (); // assure reset+hold mode
 
+        // Program GVP with Null vectors for sanity:
+        rp_spmc_gvp_module_start_config ();
+        // write vector data using set_gpio_cfgreg_uint32 (SPMC_MODULE_CONFIG_DATA+N, data); // set config data 0..15 x 32bit
         for (int pc=0; pc<8; ++pc){
                 if (verbose > 1) fprintf(stderr, "Init Vector[PC=%03d] to zero, decii=%d\n", pc, SPMC_GVP_MIN_DECII);
                 // write GVP-Vector [vector[0]] components
                 //                   decii      du        dz        dy        dx     Next       Nrep,   Options,     nii,      N,    [Vadr]
                 //data = {160'd0, 32'd0064, 32'd0000, 32'd0000, -32'd0002, -32'd0002,  32'd0, 32'd0000,   32'h001, 32'd0128, 32'd005, 32'd00 };
-                set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_VADR, pc);
+                set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_VADR, pc);
                 for (int i=1; i<16; ++i)
-                        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + i, 0);
-                set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_DECII, SPMC_GVP_MIN_DECII);  // decimation
-                rp_spmc_gvp_config (true, true); // load vector
-                rp_spmc_gvp_config (true, false);
+                        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + i, 0);
+                set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_DECII, SPMC_GVP_MIN_DECII);  // decimation
         }
+        rp_spmc_gvp_module_write_config_data (SPMC_GVP_VECTOR_DATA_REG);
+
+        double data[16] = { 0.,0.,0.,0., 0.,0.,0.,0., 0.,0.,0.,0., 0.,0.,0.,0. };
+        rp_spmc_gvp_module_config_vector_Q31 (SPMC_GVP_RESET_VECTOR_REG, data, 6);
 }
 
 // pc: ProgramCounter (Vector #)
@@ -790,49 +857,53 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
         //           decii  ******     du        dz        dy        dx       Next      Nrep,   Options,     nii,      N,  [Vadr]
         // data = {32'd016, 160'd0, 32'd0004, 32'd0003, 32'd0064, 32'd0001,  32'd0, 32'd0000,   32'h0100, 32'd02, 32'd005, 32'd00 }; // 000
 
-        
+        rp_spmc_gvp_module_start_config ();
+
         int idv[16];
-        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_VADR, idv[0]=pc);
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_VADR, idv[0]=pc);
 
         if (verbose > 1) fprintf(stderr, "%04d, ", n);
-        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_N, idv[1]=n > 0 ? n-1 : 0); // *** see above note
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_N, idv[1]=n > 0 ? n-1 : 0); // *** see above note
 
         if (verbose > 1) fprintf(stderr, "%04d, ", nii);
-        set_gpio_cfgreg_uint32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_NII, idv[2]=nii > 0 ? nii-1 : 0); // *** see above note nii > 1 for normal vector, need that time for logic
+        set_gpio_cfgreg_uint32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_NII, idv[2]=nii > 0 ? nii-1 : 0); // *** see above note nii > 1 for normal vector, need that time for logic
 
         if (verbose > 1) fprintf(stderr, "%08x, ", opts);
-        set_gpio_cfgreg_uint32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_OPT, idv[3]=opts);
+        set_gpio_cfgreg_uint32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_OPT, idv[3]=opts);
 
         if (verbose > 1) fprintf(stderr, "%04d, ", nrp);
-        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_NREP, idv[4]=nrp);
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_NREP, idv[4]=nrp);
 
         if (verbose > 1) fprintf(stderr, "%04d, ", nxt);
-        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_NEXT, idv[5]=nxt);
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_NEXT, idv[5]=nxt);
 
         if (verbose > 1) fprintf(stderr, "dX %8.10g uV, ", 1e6*dx/Nsteps);
-        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_DX, idv[6]=(int)round(Q31*dx/Nsteps/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_DX, idv[6]=(int)round(Q31*dx/Nsteps/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
 
         if (verbose > 1) fprintf(stderr, "dY %8.10g uV, ", 1e6*dy/Nsteps);
-        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_DY, idv[7]=(int)round(Q31*dy/Nsteps/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_DY, idv[7]=(int)round(Q31*dy/Nsteps/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
 
         if (verbose > 1) fprintf(stderr, "dZ %8.10g uV, ", 1e6*dz/Nsteps);
-        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_DZ, idv[8]=(int)round(Q31*dz/Nsteps/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_DZ, idv[8]=(int)round(Q31*dz/Nsteps/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
 
         if (verbose > 1) fprintf(stderr, "dU %8.10g uV, ", 1e6*du/Nsteps);
-        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_DU, idv[9]=(int)round(Q31*du/Nsteps/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_DU, idv[9]=(int)round(Q31*du/Nsteps/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
 
         if (verbose > 1) fprintf(stderr, "dA %8.10g uV, ", 1e6*da/Nsteps);
-        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_DA, idv[10]=(int)round(Q31*da/Nsteps/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_DA, idv[10]=(int)round(Q31*da/Nsteps/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
         
         if (verbose > 1) fprintf(stderr, "dB %8.10g uV, ", 1e6*db/Nsteps);
-        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_DB, idv[11]=(int)round(Q31*db/Nsteps/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_DB, idv[11]=(int)round(Q31*db/Nsteps/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
         
-        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_012, idv[12]=0);  // clear bits -- not yet used componets
-        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_013, idv[13]=0);  // clear bits
-        set_gpio_cfgreg_int32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_014, idv[14]=0);  // clear bits
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_012, idv[12]=0);  // clear bits -- not yet used componets
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_013, idv[13]=0);  // clear bits
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_014, idv[14]=0);  // clear bits
 
         if (verbose > 1) fprintf(stderr, "0,0,0, decii=%d]\n", idv[15]=decii); // last vector component is decii
-        set_gpio_cfgreg_uint32 (SPMC_GVP_VECTOR_DATA + GVP_VEC_DECII, decii);  // decimation
+        set_gpio_cfgreg_uint32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_DECII, decii);  // decimation
+
+        // and load vector data to module
+        rp_spmc_gvp_module_write_config_data (SPMC_GVP_VECTOR_DATA_REG);
 
         //<< std::setfill('0') << std::hex << std::setw(8) << data
         
@@ -854,15 +925,6 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
                 }
                 vector_def << "}; // Vector #" << pc;
                 spmc_stream_server_instance.add_vector (vector_def.str());
-        }
-
-        
-        if (update_life){
-                rp_spmc_gvp_config (false, true);  // set vector
-                rp_spmc_gvp_config (false, false); // continue
-        } else {
-                rp_spmc_gvp_config (true, true); // load vector
-                rp_spmc_gvp_config (true, false);
         }
 }
 
@@ -1020,7 +1082,7 @@ void rp_spmc_set_scanpos (double xs, double ys, double slew, int opts){
 double rp_spmc_set_lck_modulation_frequency (double freq){
         // 44 Bit Phase, using 48bit tdata
         unsigned int n2 = round (log2(dds_phaseinc (freq)));
-        unsigned long long phase_inc = 1LL << n;
+        unsigned long long phase_inc = 1LL << n2;
         double fact = dds_phaseinc_to_freq (phase_inc);
         
         if (verbose > 1){
@@ -1054,11 +1116,48 @@ void rp_spmc_set_lck_phase (double phase){
         set_gpio_cfgreg_int32 (SPMC_CFG_SC_LCK_PHASE, (int)round(Q31 * phase));
 }
 
+// set BiQuad to low pass at f_cut, with Quality Factor Q and at sampling rate Fs Hz
+void rp_spmc_set_biqad_Lck_F0 (double f_cut, double Q, double Fs, int BIQID=SPMC_BIQUAD_F0_CONTROL){
+        double b0, b1, b2, a0, a1, a2;
 
+        // 2nd order BiQuad Low Pass parameters
+        double w0 = 2.*M_PI*f_cut/Fs; // 125MHz -- decimate as needed!
+        double c  = cos (w0);
+        double xc = 1.0 - c;
+        double a  = sin (w0) / (2.0 * Q);
+        
+        b0 = 0.5*xc;
+        b1 = xc;
+        b2 = b0;
+        a0 = 1.0+a;
+        a1 = -2.0*c;
+        a2 = 1.0-a;
+        
+        double data[16] = { b0, b1, b2, a0, a1,a2,0.,0., 0.,0.,0.,0., 0.,0.,0.,0. };
+        rp_spmc_gvp_module_config_vector_Q31 (BIQID, data, 6);
+}
 
+// set BiQuad to pass
+void rp_spmc_set_biqad_Lck_F0_pass (int BIQID=SPMC_BIQUAD_F0_CONTROL){
+        double data[16] = { 1.0, 0.0, 0.0, 0.0, 0.0,0.0,0.,0., 0.,0.,0.,0., 0.,0.,0.,0. };
+        rp_spmc_gvp_module_config_vector_Q31 (BIQID, data, 6);
+}
 
+// set BiQuad to IIR 1st order LP
+void rp_spmc_set_biqad_Lck_F0_IIR (double f_cut, double Fs, int BIQID=SPMC_BIQUAD_F0_CONTROL){
+        double b0, b1;
 
-
+        // 2nd order BiQuad Low Pass parameters
+        double w0 = 2.*M_PI*f_cut/Fs; // 125MHz
+        double c  = cos (w0);
+        double xc = 1.0 - c;
+        
+        b0 = 0.5*xc;
+        b1 = xc;
+        
+        double data[16] = { b0, b1, 0.0, 0.0, 0.0,0.0,0.,0., 0.,0.,0.,0., 0.,0.,0.,0. };
+        rp_spmc_gvp_module_config_vector_Q31 (BIQID, data, 6);
+}
 
 
 /*

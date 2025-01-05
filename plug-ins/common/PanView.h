@@ -98,6 +98,7 @@ private:
         cairo_item  *tip_marker_z;      // Z-scan pos indication
         cairo_item  *tip_marker_z0;     // Z0 pos indication
         cairo_item  *DSP_status_indicator[16]; // { FB, SCAN, PROBE, ... }
+        cairo_item_text  *DSP_status_indicator_ID[16];
         cairo_item  *DSP_gpio_indicator[16]; // { IO bits }
         cairo_item  *pan_area;
         cairo_item  *pan_area_extends;  // extends offset + scan beyond "200V"/full gain -- possible from DSP point of view

@@ -339,9 +339,11 @@ PanView::PanView (Gxsm4app *app):AppBase(app){
 
 	timer_id = 0;
 
-	for(i=0; i<16; ++i)
+	for(i=0; i<16; ++i){
 		DSP_status_indicator[i] = NULL;
-
+                DSP_status_indicator_ID[i] = NULL;
+        }
+        
 	for(i=0; i<16; ++i)
 		DSP_gpio_indicator[i] = NULL;
 
@@ -452,6 +454,7 @@ PanView::~PanView (){
 
 	for (int i=0; i<16; ++i){
                 UNREF_DELETE_CAIRO_ITEM (DSP_status_indicator[i], canvas);
+                UNREF_DELETE_CAIRO_ITEM (DSP_status_indicator_ID[i], canvas);
         }
 	for (int i=0; i<16; ++i){
                 UNREF_DELETE_CAIRO_ITEM (DSP_gpio_indicator[i], canvas);
@@ -588,10 +591,13 @@ gboolean PanView::canvas_draw_function (GtkDrawingArea *area,
 
         // text in PIXEL coordinates (+/-WXS/2, +/-WYS/2), 0,0 is center.
 
-	for (int i=0; i<16; ++i)
+	for (int i=0; i<16; ++i){
                 if (pv->DSP_status_indicator[i])
                         pv->DSP_status_indicator[i]->draw (cr);
-
+                if (pv->DSP_status_indicator_ID[i])
+                        pv->DSP_status_indicator_ID[i]->draw (cr);
+        }
+        
 	for (int i=0; i<16; ++i)
                 if (pv->DSP_gpio_indicator[i])
                         pv->DSP_gpio_indicator[i]->draw (cr);
@@ -850,7 +856,12 @@ void PanView :: tip_refresh()
                                                  -1 };
 
                 main_get_gapp()->set_dsp_scan_in_progress (status & 6 ? true : false);
-                
+
+                // Servo (FB), GVP, Hold (Pause), Move
+                const gchar *indicator_id[16] = { "S","G","H","P",
+                                                  "M","","","",
+                                                  "","","","",
+                                                  "","","","" };
                 for (int i=0; status_id[i]>=0; ++i){
                         const double w=WXS/2./12.;
                     	if (DSP_status_indicator[status_id[i]] == NULL){
@@ -858,6 +869,10 @@ void PanView :: tip_refresh()
                                 DSP_status_indicator[status_id[i]]->set_position (-WXS/2+i*w*1.05, -WYS/2.);
                                 DSP_status_indicator[status_id[i]]->set_stroke_rgba (CAIRO_COLOR_WHITE);
                                 DSP_status_indicator[status_id[i]]->set_line_width (get_lw (0.5));
+                                DSP_status_indicator_ID[i] = new cairo_item_text (-WXS/2+i*w*1.05+w/2, -WYS/2.+w, indicator_id[i]);
+                                DSP_status_indicator_ID[i]->set_font_face_size ("Unutu", 7);
+                                DSP_status_indicator_ID[i]->set_angle (90);
+                                DSP_status_indicator_ID[i]->set_stroke_rgba (CAIRO_COLOR_WHITE);
                         }
                         if (status &  status_bm_a[i])
                                 DSP_status_indicator[status_id[i]]->set_fill_rgba (CAIRO_BASIC_COLOR (status_on_color[i]));

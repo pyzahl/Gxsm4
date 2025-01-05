@@ -74,10 +74,17 @@ extern "C" {
         void rp_spmc_set_bias (double bias);
         void rp_spmc_set_xyzu (double ux, double uy, double uz, double bias);  // WARNING -- instant setting in config mode (test only)
 
+        void rp_spmc_gvp_module_start_config ();
+        void rp_spmc_gvp_module_write_config_data (int addr);
+        void rp_spmc_gvp_module_config_int32 (int addr, int data);
+        void rp_spmc_gvp_module_config_uint32 (int addr, unsigned int data);
+        void rp_spmc_gvp_module_config_vector_Q31 (int addr, double data[16], int n);
+        void rp_spmc_gvp_module_config_vector_Qn (int addr, double data[16], int n, double Qn);
+
         void rp_spmc_set_zservo_controller (double setpoint, double cp, double ci, double upper, double lower);
         void rp_spmc_set_zservo_gxsm_speciality_setting (int mode, double z_setpoint, double level);
 
-        void rp_spmc_gvp_config (bool reset, bool program, bool pause, int reset_options); // taking out of reset starts GVP!
+        void rp_spmc_gvp_config (bool reset, bool pause, int reset_options); // taking out of reset starts GVP!
         //void rp_spmc_set_gvp_vector (CFloatSignal &vector);
         void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
                                      double dx, double dy, double dz, double du,
@@ -94,6 +101,8 @@ extern "C" {
         void rp_spmc_set_lck_target (int target);
         void rp_spmc_set_lck_tau (double tau);
         void rp_spmc_set_lck_phase (double phase);
+
+        void rp_spmc_set_biqad_Lck_F0 (double fcut);
 
         void rp_spmc_update_readings ();
 

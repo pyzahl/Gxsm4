@@ -2692,7 +2692,8 @@ void RPSPMC_Control::update_GUI(){
 void RPSPMC_Control::update_zpos_readings(){
         double zp,a,b;
         main_get_gapp()->xsm->hardware->RTQuery ("z", zp, a, b);
-        gchar *info = g_strdup_printf (" (%g Ang)", main_get_gapp()->xsm->Inst->V2ZAng(zp));
+        zpos_mon = main_get_gapp()->xsm->Inst->V2ZAng(zp);
+        gchar *info = g_strdup_printf (" (%g Ang)", zpos_mon);
         ZPos_ec->set_info (info);
         ZPos_ec->Put_Value ();
         g_free (info);

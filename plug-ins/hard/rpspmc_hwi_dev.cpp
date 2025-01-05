@@ -1214,13 +1214,12 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2,
                 }
                 // build status flags
                 int statusbits = round(spmc_parameters.gvp_status);
-		val3 = (double)(statusbits>>8);   //  assign dbg_status = {sec[32-3:0], reset, pause, ~finished };
+		val3 = (double)(statusbits>>8);   //  assign dbg_status = {sec[32-4:0], setvec, reset, pause, ~finished };
 		val2 = (double)(statusbits&0xff);
-		val1 = (double)(    (statusbits&0x01 && ((int)(spmc_parameters.z_servo_mode) & MM_ON)
-                                     ? 1:0)      // (Z Servo Feedback Active: Bit0)
-				+ ((((statusbits>>8)&0x04) ? 1:0) << 1)  // Scan/GVP Stop/Reset    (Scan)
-                                + ((((statusbits>>8)&0x02) ? 1:0) << 2)  // Scan/GVP Pause         (Scan)
-				+ ((((statusbits>>8)&0x01) ? 1:0) << 3)  // Scan/GVP not finished  (Probing)
+		val1 = (double)(  (((statusbits&0x01) && !(statusbits&0x08)) ? 1:0)      // (Z Servo Feedback Active, No Hold: Bit0 && !Bit4)
+				+ ((((statusbits>>8)&0x01 == 0) ? 1:0) << 1)  // Scan/GVP Running       (Scan, Probe, ...) (! finsihed)
+                                + ((((statusbits>>8)&0x02) ? 1:0) << 2)       // Scan/GVP Pause         (Scan)
+				+ ((((statusbits>>8)&0x04) ? 1:0) << 3)       // Scan/GVP Programming in progress
 				//+ (( MoveInProgress     ? 1:0) << 4)
 				//+ (( PLLActive          ? 1:0) << 5)
 				//+ (( ZPOS-Adjuster      ? 1:0) << 6)
@@ -1438,8 +1437,6 @@ int rpspmc_hwi_dev::read_actual_module_configuration (){
 #define SPMC_GVP_CONTROL_EXECUTE   1   
 #define SPMC_GVP_CONTROL_PAUSE     2
 #define SPMC_GVP_CONTROL_RESUME    3
-#define SPMC_GVP_CONTROL_PROGRAM   4
-
 
 
 void rpspmc_hwi_dev::GVP_execute_vector_program(){
@@ -1450,7 +1447,6 @@ void rpspmc_hwi_dev::GVP_execute_vector_program(){
 void rpspmc_hwi_dev::GVP_abort_vector_program (){
         g_message ("rpspmc_hwi_dev::GVP_abort_vector_program ()");
         rpspmc_pacpll->write_parameter ("SPMC_GVP_CONTROL", SPMC_GVP_CONTROL_RESET);
-        rpspmc_pacpll->write_parameter ("SPMC_GVP_RESET_OPTIONS", 0); // default, FB hold=off!
         abort_GVP_flag = true;
 }
 

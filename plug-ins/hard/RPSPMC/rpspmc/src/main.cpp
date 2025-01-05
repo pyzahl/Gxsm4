@@ -373,7 +373,6 @@ CDoubleParameter  SPMC_Z_SERVO_LEVEL("SPMC_Z_SERVO_LEVEL", CBaseParameter::RW, 0
 #define SPMC_GVP_CONTROL_EXECUTE   1   
 #define SPMC_GVP_CONTROL_PAUSE     2
 #define SPMC_GVP_CONTROL_RESUME    3
-#define SPMC_GVP_CONTROL_PROGRAM   4
 
 CIntParameter     SPMC_GVP_STREAM_MUX("SPMC_GVP_STREAM_MUX", CBaseParameter::RW, 0, 0, 0, 0xffffff); //
 
@@ -419,9 +418,10 @@ CDoubleParameter  SPMC_SET_OFFSET_Z_SLEW("SPMC_SET_OFFSET_Z_SLEW", CBaseParamete
 CDoubleParameter  SPMC_SC_LCK_FREQUENCY("SPMC_SC_LCK_FREQUENCY", CBaseParameter::RW, 0.0, 0, 0.0, 30e6); // Hz
 CDoubleParameter  SPMC_SC_LCK_VOLUME("SPMC_SC_LCK_VOLUME", CBaseParameter::RW, 0.0, 0, 0.0, 5000.0); //  mV
 CIntParameter     SPMC_SC_LCK_TARGET("SPMC_SC_LCK_TARGET", CBaseParameter::RW, 0, 0, 0, 16); // # 0=NONE, 1:X, 2:Y, 3:Z, 4:U
-CDoubleParameter  SPMC_SC_LCK_PHASE("SPMC_SC_LCK_PHASE", CBaseParameter::RW, 0.0, 0, 0.0, 360.0); // deg
-CDoubleParameter  SPMC_SC_LCK_TAU("SPMC_SC_LCK_TAU", CBaseParameter::RW, 0.0, 0, 0.0, 10000.0); // ms
 
+CDoubleParameter  SPMC_SC_LCK_F0BQ_TAU("SPMC_SC_LCK_F0BQ_TAU", CBaseParameter::RW, 0.0, 0, 0.0, 1e6); // ms
+CDoubleParameter  SPMC_SC_LCK_F0BQ_Q(  "SPMC_SC_LCK_F0BQ_Q", CBaseParameter::RW, 0.0, 0, 0.0, 1e10); // Q
+CDoubleParameter  SPMC_SC_LCK_F0BQ_IIR("SPMC_SC_LCK_F0BQ_IIR", CBaseParameter::RW, 0.0, 0, 0.0, 1e6); // ms 0: pass mode
 
 
 // *** RP SPMC::GPIO MONITORS ***
@@ -1599,6 +1599,10 @@ void OnNewParams_RPSPMC(void){
                 rp_set_gvp_stream_mux_selector (SPMC_GVP_STREAM_MUX.Value ());
         }
 
+        if (SPMC_GVP_RESET_OPTIONS.IsNewValue ()){
+                SPMC_GVP_RESET_OPTIONS.Update ();
+                rp_spmc_gvp_config (true, false, SPMC_GVP_RESET_OPTIONS.Value ());
+        }
         
         if (SPMC_GVP_CONTROL_MODE.IsNewValue ()){
                 std::stringstream info;
@@ -1608,36 +1612,42 @@ void OnNewParams_RPSPMC(void){
                 switch (SPMC_GVP_CONTROL_MODE.Value ()){
 
                 case SPMC_GVP_CONTROL_RESET:
-                        if (SPMC_GVP_RESET_OPTIONS.IsNewValue ()){
-                                SPMC_GVP_RESET_OPTIONS.Update ();
-                                rp_spmc_gvp_config (true, false, false, SPMC_GVP_RESET_OPTIONS.Value ());
-                        }  else rp_spmc_gvp_config (true, false, false);
-                        fprintf(stderr, "*** GVP Control Mode: set RESET, force stop stream server.\n");
+                        rp_spmc_gvp_config (true, false);
+                        fprintf(stderr, "*** GVP Control Mode RESET, force stop stream server.\n");
                         info << "set RESET, force stop stream server";
                         stream_server_control = (stream_server_control & 0x01) | 4; // set stop bit
                         break;
                         
                 case SPMC_GVP_CONTROL_EXECUTE:
-                        fprintf(stderr, "*** GVP Control Mode: START 1 (make sure stream server is stopped)\n");
+                        rp_spmc_gvp_config (true, false);
+                        fprintf(stderr, "*** GVP Control Mode EXEC: set GVP to RESET\n");
+                        usleep(10000);
+                        fprintf(stderr, "*** GVP Control Mode EXEC: reset stream server, clear buffer)\n");
                         stream_server_control = (stream_server_control & 0x01) | 4; // set stop bit
                         usleep(100000);
                         spm_dma_instance->clear_buffer (); // clean buffer now!
 
-                        rp_spmc_gvp_config (true, false, false); // make sure it is in reset state before
-                        fprintf(stderr, "*** GVP Control Mode: START 2 (assure RESET state first), start stream server\n");
-                        usleep(100000);
+                        //rp_spmc_gvp_config (true, false); // make sure GVP is in reset state before
+                        fprintf(stderr, "*** GVP Control Mode EXEC: START DMA+stream server\n");
+                        //usleep(100000);
 
                         spm_dma_instance->start_dma (); // get DMA ready to take data
                         stream_server_control = (stream_server_control & 0x01) | 2; // set start bit
+                        usleep(10000);
 
-                        rp_spmc_gvp_config (false, false, false); // take out of reset -> release GVP to start executing VPC
-                        fprintf(stderr, "*** GVP Control Mode: START 3 (taking out of RESET)\n");
+                        rp_spmc_gvp_config (false, false); // take GVP out of reset -> release GVP to start executing VPC now
+                        fprintf(stderr, "*** GVP Control Mode EXEC: START 3 (taking out of RESET)\n");
 
                         info << "EXECUTE: RESET, start stream server, out of RESET";
                         break;
-                case SPMC_GVP_CONTROL_PAUSE:   rp_spmc_gvp_config (false, false, true ); fprintf(stderr, "*** GVP Control Mode: PAUSE\n"); info << "set PAUSE"; break; // SET PAUSE active
-                case SPMC_GVP_CONTROL_RESUME:  rp_spmc_gvp_config (false, false, false); fprintf(stderr, "*** GVP Control Mode: unset PAUSE, RESUME EXECUTE\n"); info << "unset PAUSE"; break; // UNSET PAUSE
-                case SPMC_GVP_CONTROL_PROGRAM: rp_spmc_gvp_config (false, true,  false); fprintf(stderr, "*** GVP Control Mode: PROGRAM\n"); info << "set PROGRAM"; break; // SETVECTOR, RESET IGNORE, MAY BE LIVE!
+                case SPMC_GVP_CONTROL_PAUSE:
+                        rp_spmc_gvp_config (false, true );
+                        fprintf(stderr, "*** GVP Control Mode PAUSE\n"); info << "set PAUSE"; // SET PAUSE active
+                        break;
+                case SPMC_GVP_CONTROL_RESUME:
+                        rp_spmc_gvp_config (false, false);
+                        fprintf(stderr, "*** GVP Control Mode RESUME EXECUTE\n"); info << "unset PAUSE"; // UNSET PAUSE
+                        break;
                 default: info << "INVALID MODE"; break;
                 }
 
@@ -1658,16 +1668,24 @@ void OnNewParams_RPSPMC(void){
                 SPMC_SC_LCK_TARGET.Update ();
                 rp_spmc_set_lck_target (SPMC_SC_LCK_TARGET.Value ());
         }
-        if (SPMC_SC_LCK_PHASE.IsNewValue ()){
-                SPMC_SC_LCK_PHASE.Update ();
-                rp_spmc_set_lck_phase (SPMC_SC_LCK_PHASE.Value ());
-        }
-        if (SPMC_SC_LCK_TAU.IsNewValue ()){
-                SPMC_SC_LCK_TAU.Update ();
-                rp_spmc_set_lck_tau (SPMC_SC_LCK_TAU.Value ());
-        }
 
-
+        if (SPMC_SC_LCK_F0BQ_TAU.IsNewValue ()){
+                SPMC_SC_LCK_F0BQ_TAU.Update ();
+                SPMC_SC_LCK_F0BQ_Q.Update ();
+                rp_spmc_set_biqad_Lck_F0 (1000./SPMC_SC_LCK_F0BQ_TAU.Value (), SPMC_SC_LCK_F0BQ_Q.Value (), SPMC_CLK, SPMC_BIQUAD_F0_CONTROL);
+        }
+        if (SPMC_SC_LCK_F0BQ_Q.IsNewValue ()){
+                SPMC_SC_LCK_F0BQ_Q.Update ();
+                SPMC_SC_LCK_F0BQ_TAU.Update ();
+                rp_spmc_set_biqad_Lck_F0 (1000./SPMC_SC_LCK_F0BQ_TAU.Value (), SPMC_SC_LCK_F0BQ_Q.Value (), SPMC_CLK, SPMC_BIQUAD_F0_CONTROL);
+        }
+        if (SPMC_SC_LCK_F0BQ_IIR.IsNewValue ()){
+                SPMC_SC_LCK_F0BQ_IIR.Update ();
+                if (SPMC_SC_LCK_F0BQ_IIR.Value () > 0)
+                        rp_spmc_set_biqad_Lck_F0_IIR (1000./SPMC_SC_LCK_F0BQ_IIR.Value (), SPMC_CLK, SPMC_SC_LCK_F0BQ_IIR.Value ());
+                else
+                        rp_spmc_set_biqad_Lck_F0_pass (SPMC_BIQUAD_F0_CONTROL);
+        }
         
 }
 

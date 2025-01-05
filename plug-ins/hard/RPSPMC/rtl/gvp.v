@@ -22,16 +22,22 @@
 
 module gvp #(
     parameter NUM_VECTORS_N2 = 4,
-    parameter NUM_VECTORS    = 16
+    parameter NUM_VECTORS    = 16,
+    parameter control_reg_address = 1,
+    parameter reset_options_reg_address = 2,
+    parameter vector_programming_reg_address  = 3,
+    parameter vector_preset_address  = 4
 )
 (
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF M_AXIS_X:M_AXIS_Y:M_AXIS_Z:M_AXIS_U:M_AXIS_SRCS:M_AXIS_INDEX:M_AXIS_GVP_TIME" *)
     input		 a_clk, // clocking up to aclk
-    input		 reset, // put into reset mode (set program and hold)
-    input		 pause, // put/release into/from pause mode -- always completes the "ii" nop cycles!
-    input		 setvec, // program vector data using vp_set data
-    input [512-1:0]	 vp_set, // [VAdr], [N, NII, Options, Nrep, Next, dx, dy, dz, du] ** full vector data set block **
-    input [16-1:0]	 reset_options, // option (fb hold/go, srcs... to pass when idle or in reset mode
+    //input		 reset, // put into reset mode (set program and hold)
+    //input		 pause, // put/release into/from pause mode -- always completes the "ii" nop cycles!
+    //input		 setvec, // program vector data using vp_set data
+    input [32-1:0]  config_addr,
+    input [512-1:0] config_data,
+    //input [512-1:0]	 vp_set, // [VAdr], [N, NII, Options, Nrep, Next, dx, dy, dz, du] ** full vector data set block **
+    //input [16-1:0]	 reset_options, // option (fb hold/go, srcs... to pass when idle or in reset mode
 
     input        stall, // asserted by stream srcs when AXI DMA / FIFO is not ready to accept data -- should never happen, but prevents data loss/gap 
     
@@ -43,6 +49,10 @@ module gvp #(
     output wire		     M_AXIS_Z_tvalid,
     output wire [32-1:0] M_AXIS_U_tdata, // ..
     output wire		     M_AXIS_U_tvalid,
+    output wire [32-1:0] M_AXIS_A_tdata, // ..
+    output wire		     M_AXIS_A_tvalid,
+    output wire [32-1:0] M_AXIS_B_tdata, // ..
+    output wire		     M_AXIS_B_tvalid,
     output wire	[32-1:0] M_AXIS_SRCS_tdata,
     output wire	         M_AXIS_SRCS_tvalid,
     output wire [32-1:0] options, // section options: FB, ... (flags) and source selections bits
@@ -57,10 +67,13 @@ module gvp #(
     );
 
     // buffers
+    reg pause=0;
+    reg reset=1;
     reg reset_flg=1;  // put into reset mode (set program and hold)
     reg pause_flg=0;  // put/release into/from pause mode -- always completes the "ii" nop cycles!
     reg setvec_flg=0; // program vector data using vp_set data
-    //reg [512-1:0] vp_set_data; // [VAdr], [N, NII, Options, Nrep, Next, dx, dy, dz, du] ** full vector data set block **
+    reg [512-1:0] vp_set; // [VAdr], [N, NII, Options, Nrep, Next, dx, dy, dz, du] ** full vector data set block **
+    reg [16-1:0] reset_options; // option (fb hold/go, srcs... to pass when idle or in reset mode
     
     //localparam integer NUM_VECTORS = 1 << NUM_VECTORS_N2;
     reg [32-1:0] decimation=0;
@@ -86,6 +99,8 @@ module gvp #(
     reg signed [32-1:0]  vec_dy[NUM_VECTORS-1:0];
     reg signed [32-1:0]  vec_dz[NUM_VECTORS-1:0];
     reg signed [32-1:0]  vec_du[NUM_VECTORS-1:0];
+    reg signed [32-1:0]  vec_da[NUM_VECTORS-1:0];
+    reg signed [32-1:0]  vec_db[NUM_VECTORS-1:0];
     
     reg signed [NUM_VECTORS_N2:0] pvc=0; // program counter. 0...NUM_VECTORS-1 "+ signuma bit"
 
@@ -94,6 +109,8 @@ module gvp #(
     reg signed [32-1:0]  vec_y=0;
     reg signed [32-1:0]  vec_z=0;
     reg signed [32-1:0]  vec_u=0;
+    reg signed [32-1:0]  vec_a=0;
+    reg signed [32-1:0]  vec_b=0;
 
     reg [32-1:0] set_options=0;
     reg [48-1:0] vec_gvp_time=0;
@@ -102,24 +119,6 @@ module gvp #(
     reg [1:0] store = 0;       
     
     // for vector programming -- in reset mode to be safe -- but shoudl work also for live updates -- caution, check!
-/*
-    always @(posedge setvec)
-    begin
-        vec_n[vp_set [NUM_VECTORS_N2:0]]       <= vp_set [2*32-1:1*32];
-        vec_iin[vp_set [NUM_VECTORS_N2:0]]     <= vp_set [3*32-1:2*32];
-        vec_options[vp_set [NUM_VECTORS_N2:0]] <= vp_set [4*32-1:3*32];
-        
-        vec_nrep[vp_set [NUM_VECTORS_N2:0]]    <= vp_set [5*32-1:4*32];
-        vec_i[vp_set [NUM_VECTORS_N2:0]]       <= vp_set [5*32-1:4*32];
-        
-        vec_next[vp_set [NUM_VECTORS_N2:0]]    <= vp_set [6*32-1:5*32];
-        vec_dx[vp_set [NUM_VECTORS_N2:0]]      <= vp_set [7*32-1:6*32];
-        vec_dy[vp_set [NUM_VECTORS_N2:0]]      <= vp_set [8*32-1:7*32];
-        vec_dz[vp_set [NUM_VECTORS_N2:0]]      <= vp_set [9*32-1:8*32];
-        vec_du[vp_set [NUM_VECTORS_N2:0]]      <= vp_set [10*32-1:9*32];
-    end
-*/
-
     reg [8:0] rd=511;
 
     always @ (posedge a_clk) // 120MHz
@@ -127,17 +126,53 @@ module gvp #(
         if (reset_flg) // reset mode / hold
         begin
             vec_gvp_time <= 0;
-            vec_u <= 0; // always reset U
         end
         else
         begin
             vec_gvp_time <= vec_gvp_time+1;
         end
-        rd[0] <= reset; rd[1] <= rd[0]; rd[2] <= rd[1]; rd[3] <= rd[2]; rd[4] <= rd[3]; rd[5] <= rd[4];  rd[6] <= rd[5]; rd[7] <= rd[6]; rd[8] <= rd[7];
+
+        // module configuration
+        case (config_addr)
+            control_reg_address:
+            begin
+                reset <= config_data[0]; //reset;
+                pause <= config_data[1]; //pause;
+                setvec_flg <= 0;
+            end
+
+            reset_options_reg_address: 
+            begin
+                reset_options <= config_data[15:0]; // GVP options assigned when in reset mode/finished
+                setvec_flg <= 0;
+            end
+            
+            vector_preset_address: // set GVP vector variable registers to presets
+            begin
+                // place holders, but do not... for xyz
+                //vec_x <= config_data[1*32-1 : 0*32]; // DO NEVER JUMP on XYZ!!
+                //vec_y <= config_data[2*32-1 : 1*32]; // DO NEVER JUMP on XYZ!!
+                //vec_z <= config_data[3*32-1 : 2*32]; // DO NEVER JUMP on XYZ!!
+                vec_u <= config_data[4*32-1 : 3*32]; // always reset U
+                vec_a <= config_data[5*32-1 : 4*32]; // always reset A
+                vec_b <= config_data[6*32-1 : 5*32]; // always reset B
+            end
+            
+            vector_programming_reg_address: // enter vector programming load mode
+            begin
+                vp_set <= config_data; // [VAdr], [N, NII, Options, Nrep, Next, dx, dy, dz, du] ** full vector data set block **
+                setvec_flg <= 1; //setvec; // program vector data using vp_set data
+            end 
+            default:
+            begin 
+                setvec_flg <= 0; // make sure done.
+            end
+        endcase
+            
+        rd[0] <= reset;  rd[1] <= rd[0]; rd[2] <= rd[1]; rd[3] <= rd[2]; rd[4] <= rd[3]; rd[5] <= rd[4];  rd[6] <= rd[5]; rd[7] <= rd[6]; rd[8] <= rd[7];
         reset_flg  <= rd[8];  // put into reset mode (set program and hold)
-        
         pause_flg  <= pause || stall;  // put/release into/from pause mode -- always completes the "ii" nop cycles!
-        setvec_flg <= setvec; // program vector data using vp_set data
+            
         if (rdecii == 0)
         begin
             rdecii <= decimation;
@@ -166,6 +201,8 @@ module gvp #(
                 vec_dy[vp_set [NUM_VECTORS_N2:0]]      <= vp_set [8*32-1:7*32];
                 vec_dz[vp_set [NUM_VECTORS_N2:0]]      <= vp_set [9*32-1:8*32];
                 vec_du[vp_set [NUM_VECTORS_N2:0]]      <= vp_set [10*32-1:9*32];
+                vec_da[vp_set [NUM_VECTORS_N2:0]]      <= vp_set [11*32-1:10*32];
+                vec_db[vp_set [NUM_VECTORS_N2:0]]      <= vp_set [12*32-1:11*32];
             end
             else
             begin
@@ -214,6 +251,8 @@ module gvp #(
                             vec_y <= vec_y + vec_dy[pvc];
                             vec_z <= vec_z + vec_dz[pvc];
                             vec_u <= vec_u + vec_du[pvc];
+                            vec_a <= vec_a + vec_da[pvc];
+                            vec_b <= vec_b + vec_db[pvc];
                             
                             if (ii) // do intermediate step(s) ?
                             begin
@@ -265,6 +304,10 @@ module gvp #(
     assign M_AXIS_Z_tvalid = 1;
     assign M_AXIS_U_tdata = vec_u;
     assign M_AXIS_U_tvalid = 1;
+    assign M_AXIS_A_tdata = vec_a;
+    assign M_AXIS_A_tvalid = 1;
+    assign M_AXIS_B_tdata = vec_b;
+    assign M_AXIS_B_tvalid = 1;
     assign M_AXIS_SRCS_tdata = set_options;
     assign M_AXIS_SRCS_tvalid = 1;
     
@@ -278,6 +321,6 @@ module gvp #(
     assign M_AXIS_gvp_time_tdata = vec_gvp_time;
     assign M_AXIS_gvp_time_tvalid = 1;
     
-    assign dbg_status = {sec[32-3:0], reset, pause, ~finished };
+    assign dbg_status = {sec[32-4:0], setvec_flg, reset_flg, pause, ~finished };
     
 endmodule

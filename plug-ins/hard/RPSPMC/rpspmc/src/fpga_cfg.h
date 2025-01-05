@@ -166,10 +166,20 @@
 // SPMControl Core, GVP
 
 #define SPMC_BASE                     PACPLL_CFG3_OFFSET
-#define SPMC_GVP_CONTROL              (SPMC_BASE + 0) // 0: reset 1: setvec | 16-31: GVP reset options
-#define SPMC_GVP_VECTOR_DATA          (SPMC_BASE + 1) // 1..16 // 512 bits (16x32)
 
-// GVP VCETOR COMPONETS IN ARRAY AT OFFESTS
+// SPMC CONGIGUARTION BUS SYSTEM at
+#define SPMC_MODULE_CONFIG_ADDR    (SPMC_BASE + 0) // COMPLEX MODULE CONFIGURATION ADDRESS, (SLOW/OCCASIOANLLY). 0 := NON, 1: GVP, ...
+#define SPMC_MODULE_CONFIG_DATA    (SPMC_BASE + 1) // CONFIGURATION DATA VECTOR 1..16 // 512 bits (16x32)
+
+// NOTHING at CONFIG ADDR = 0 => standy/disabled
+
+// GVP MODULE AT CONFIGURATION ADDRs  1,2,3,4
+#define SPMC_GVP_CONTROL_REG          1   // CONTROL CONFIG REG: B0: reset, B1: Pause
+#define SPMC_GVP_RESET_OPTIONS_REG    2   // RESET OPTIONS REG:  reset options
+#define SPMC_GVP_VECTOR_DATA_REG      3   // VECTOR PROGRAM REG: 1..16 // 512 bits (16x32)
+#define SPMC_GVP_RESET_VECTOR_REG     4   // [XYZ]UAB
+
+// GVP VCETOR COMPONETS IN ARRAY AT OFFESTS in CONFIG_REG (512bits)
 //                   decii      du        dz        dy        dx     Next       Nrep,   Options,     nii,      N,    [Vadr]
 #define GVP_VEC_VADR   0
 #define GVP_VEC_N      1
@@ -188,6 +198,12 @@
 #define GVP_VEC_014   14
 #define GVP_VEC_DECII 15
 
+
+// LOCKIN MODULE @ CONFIG ADDRESS
+#define SPMC_LOCKIN_F0_CONTROL   1000 // LockIn Config Reg (Gain Control, enable, input gain Q24)
+
+// BIQUAD  MODULE @ CONFIG ADDRESS
+#define SPMC_BIQUAD_F0_CONTROL   1001 //  BiQuad Parameters b0, b1, b2, a0, a1
 
 
 

@@ -30,15 +30,22 @@ module axis_py_lockin#(
     parameter DPHASE_WIDTH    = 44, // 44 for delta phase width
     parameter AM2_DATA_WIDTH  = 48, // 48 for amplitude squared
     parameter LCK_BUFFER_LEN2 = 10, // **** need to decimate 100Hz min: log2(1<<44 / (1<<24)) => 20 *** LCK DDS IDEAL Freq= 100 Hz [16777216, N2=24, M=1048576]  Actual f=119.209 Hz  Delta=19.2093 Hz  (using power of 2 phase_inc)
-    parameter DECII2_MAX = 32
+    parameter DECII2_MAX = 32,
+    parameter configuration_address = 999
 )
 (
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS_SC:S_AXIS_SIGNAL:S_AXIS_DDS_N2:M_AXIS_A2:M_AXIS_X:M_AXIS_Y:M_AXIS_Sref:M_AXIS_SDref:M_AXIS_SignalOut:M_AXIS_i" *)
     input a_clk,
+
+    input [32-1:0]  config_addr,
+    input [512-1:0] config_data,
     
     // SIGNAL
     input wire [S_AXIS_SIGNAL_TDATA_WIDTH-1:0]  S_AXIS_SIGNAL_tdata,
     input wire                                  S_AXIS_SIGNAL_tvalid,
+    // digial gain
+    input wire [S_AXIS_SIGNAL_TDATA_WIDTH-1:0]  S_AXIS_GAIN_tdata, // S31Q24
+    input wire                                  S_AXIS_GAIN_tvalid,
     
     // SC Lock-In Reference and controls
     input wire [S_AXIS_SC_TDATA_WIDTH-1:0]  S_AXIS_SC_tdata,
@@ -73,11 +80,13 @@ module axis_py_lockin#(
     // Calculated and internal width and sizes 
     localparam integer LCK_BUFFER_LEN   = (1<<LCK_BUFFER_LEN2);
     localparam integer LCK_SUM_WIDTH    = (LCK_CORRSUM_WIDTH+LCK_BUFFER_LEN2);
+    localparam integer Q24 = ((1<<24)-1);
        
     reg signed [SC_DATA_WIDTH-1:0] s=0; // Q SC (25Q24)
     reg signed [SC_DATA_WIDTH-1:0] c=0; // Q SC (25Q24)
     reg signed [31:0] sd=0; // dbg only
 
+    reg signed [31:0] gain = Q24;
     reg signed [SC_DATA_WIDTH-1:0] sig_in     = 0;
     reg signed [SC_DATA_WIDTH-1:0] signal     = 0;
     reg signed [SC_DATA_WIDTH+DECII2_MAX-1:0] signal_dec  = 0;
@@ -113,6 +122,8 @@ module axis_py_lockin#(
 
     reg [4-1:0] finishthis=0;
 
+    reg [31:0] lck_config=0;
+
     integer ii;
     initial begin
         for (ii=0; ii<LCK_BUFFER_LEN; ii=ii+1)
@@ -122,14 +133,26 @@ module axis_py_lockin#(
         end     
     end
 
+    always @ (posedge a_clk)
+    begin
+        if (config_addr == configuration_address) // BQ configuration, and auto reset
+        begin
+            lck_config <= config_data[1*32-1 : 0*32];
+        end
+        if (lck_config[0])
+            gain <= S_AXIS_GAIN_tdata;
+        else      
+            gain <= Q24;
+        // signal
+        sig_in <= (gain * $signed(S_AXIS_SIGNAL_tdata[S_AXIS_SIGNAL_TDATA_WIDTH-1:S_AXIS_SIGNAL_TDATA_WIDTH-SC_DATA_WIDTH])) >> 24;   
+    end
+
     
     always @ (posedge a_clk)
     begin
         // Sin, Cos
         c <= S_AXIS_SC_tdata[                        SC_DATA_WIDTH-1 :                       0];  // 25Q24 full dynamic range, proper rounding   24: 0
         s <= S_AXIS_SC_tdata[S_AXIS_SC_TDATA_WIDTH/2+SC_DATA_WIDTH-1 : S_AXIS_SC_TDATA_WIDTH/2];  // 25Q24 full dynamic range, proper rounding   56:32
-        // signal
-        sig_in <= $signed(S_AXIS_SIGNAL_tdata[S_AXIS_SIGNAL_TDATA_WIDTH-1:S_AXIS_SIGNAL_TDATA_WIDTH-SC_DATA_WIDTH]);   
                 
         // DDS N / cycle
         dds_n2 <= S_AXIS_DDS_N2_tdata;
@@ -162,7 +185,7 @@ module axis_py_lockin#(
                 rdecii <= 0; // reset
                 // 1
                 signal <= signal_dec >>> decii2;
-                signal_dec <= sig_in; // start new sum
+                signal_dec <= sig_in;; // start new sum
             end
             else
             begin

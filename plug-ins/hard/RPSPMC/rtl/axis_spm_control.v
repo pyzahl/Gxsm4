@@ -45,6 +45,11 @@ module axis_spm_control#(
     // Bias
     input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS_U_tdata,
     input wire                          S_AXIS_U_tvalid,
+    // A,B vector channels
+    input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS_A_tdata,
+    input wire                          S_AXIS_A_tvalid,
+    input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS_B_tdata,
+    input wire                          S_AXIS_B_tvalid,
     // two future control components using optional (DAC #5, #6) "Motor1, Motor2"
     //input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS_M1_tdata,
     //input wire                          S_AXIS_M1_tvalid,
@@ -82,6 +87,10 @@ module axis_spm_control#(
     output wire                          M_AXIS3_tvalid,
     output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS4_tdata,
     output wire                          M_AXIS4_tvalid,
+    output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS5_tdata,
+    output wire                          M_AXIS5_tvalid,
+    output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS6_tdata,
+    output wire                          M_AXIS6_tvalid,
 
     output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS_XSMON_tdata,
     output wire                          M_AXIS_XSMON_tvalid,
@@ -292,5 +301,11 @@ module axis_spm_control#(
     assign M_AXIS_UrefMON_tdata  = mu0s;
     assign M_AXIS_UrefMON_tvalid = 1;
 
+    // A
+    assign M_AXIS5_tdata  = S_AXIS_A_tdata;
+    assign M_AXIS5_tvalid = S_AXIS_A_tvalid;
+    // B
+    assign M_AXIS6_tdata  = S_AXIS_B_tdata;
+    assign M_AXIS6_tvalid = S_AXIS_B_tvalid;
     
 endmodule
