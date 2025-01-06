@@ -1,4 +1,5 @@
 # **ATTENTION:**
+![gxsm4-rp-icon](https://github.com/user-attachments/assets/3965aa8b-5241-44a0-87de-178a100f6803)
 
 RedPitaya SPM-Control-PACPLL-Pulse Project
 
