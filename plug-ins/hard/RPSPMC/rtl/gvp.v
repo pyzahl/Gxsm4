@@ -67,6 +67,10 @@ module gvp #(
     output wire reset_state
     );
 
+// Saturated result to 32bit
+`define SATURATE_32(REG) (REG > 33'sd2147483647 ? 32'sd2147483647 : REG < -33'sd2147483647 ? -32'sd2147483647 : REG[32-1:0]) 
+
+
     // buffers
     reg pause=0;
     reg reset=1;
@@ -96,6 +100,7 @@ module gvp #(
     reg [32-1:0]  vec_deci[NUM_VECTORS-1:0];
     reg signed [NUM_VECTORS_N2:0] vec_next[NUM_VECTORS-1:0];
 
+
     reg signed [32-1:0]  vec_dx[NUM_VECTORS-1:0];
     reg signed [32-1:0]  vec_dy[NUM_VECTORS-1:0];
     reg signed [32-1:0]  vec_dz[NUM_VECTORS-1:0];
@@ -105,13 +110,19 @@ module gvp #(
     
     reg signed [NUM_VECTORS_N2:0] pvc=0; // program counter. 0...NUM_VECTORS-1 "+ signuma bit"
 
+    // extra bits for vector components. 
+    // ATTENTION: NO SATURATION WHILE VPC!
+    // Saturation on outputs ONLY!
+    
+    localparam integer VEC_OV_BITS = 2;
+
     // data vector register
-    reg signed [32-1:0]  vec_x=0;
-    reg signed [32-1:0]  vec_y=0;
-    reg signed [32-1:0]  vec_z=0;
-    reg signed [32-1:0]  vec_u=0;
-    reg signed [32-1:0]  vec_a=0;
-    reg signed [32-1:0]  vec_b=0;
+    reg signed [32+VEC_OV_BITS-1:0]  vec_x=0;
+    reg signed [32+VEC_OV_BITS-1:0]  vec_y=0;
+    reg signed [32+VEC_OV_BITS-1:0]  vec_z=0;
+    reg signed [32+VEC_OV_BITS-1:0]  vec_u=0;
+    reg signed [32+VEC_OV_BITS-1:0]  vec_a=0;
+    reg signed [32+VEC_OV_BITS-1:0]  vec_b=0;
 
     reg [32-1:0] set_options=0;
     reg [48-1:0] vec_gvp_time=0;
@@ -297,17 +308,17 @@ module gvp #(
         end
     end    
     
-    assign M_AXIS_X_tdata = vec_x;
+    assign M_AXIS_X_tdata = SATURATE_32(vec_x);
     assign M_AXIS_X_tvalid = 1;
-    assign M_AXIS_Y_tdata = vec_y;
+    assign M_AXIS_Y_tdata = SATURATE_32(vec_y);
     assign M_AXIS_Y_tvalid = 1;
-    assign M_AXIS_Z_tdata = vec_z;
+    assign M_AXIS_Z_tdata = SATURATE_32(vec_z);
     assign M_AXIS_Z_tvalid = 1;
-    assign M_AXIS_U_tdata = vec_u;
+    assign M_AXIS_U_tdata = SATURATE_32(vec_u);
     assign M_AXIS_U_tvalid = 1;
-    assign M_AXIS_A_tdata = vec_a;
+    assign M_AXIS_A_tdata = SATURATE_32(vec_a);
     assign M_AXIS_A_tvalid = 1;
-    assign M_AXIS_B_tdata = vec_b;
+    assign M_AXIS_B_tdata = SATURATE_32(vec_b);
     assign M_AXIS_B_tvalid = 1;
     assign M_AXIS_SRCS_tdata = set_options;
     assign M_AXIS_SRCS_tvalid = 1;

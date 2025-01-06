@@ -138,20 +138,17 @@ module axis_selector #(
 */
     
 // use buffer           
-reg [SAXIS_TDATA_WIDTH-1:0]  ALL_AXIS_tdata[15:0];
-reg [1:0]  ALL_AXIS_tvalid[15:0];
-reg [32-1:0] sel=0;
+reg [SAXIS_TDATA_WIDTH-1:0] ALL_AXIS_tdata[15:0];
+reg ALL_AXIS_tvalid[15:0];
 
-reg [32-1:0] axis_selector=0; // # AXIS S to connect 1...10 to AXIS M 1..6:  M1=# M2=... M6=# 4 bits each: bits 0..23
-
+reg [32-1:0] axis_selector=32'h00ba3210; // # AXIS S to connect 00..15 to AXIS M 1..6:  M1=# M2=... M6=# 4 bits each: bits 0..23
 reg [32-1:0] axis_test=0;
 reg [32-1:0] axis_test_value=0;
 
     always @ (posedge a_clk)
     begin
-    
         // module configuration
-        if (config_addr == configuration_address) // BQ configuration, and auto reset
+        if (config_addr == configuration_address) // 16 -> 6 MUX configuration and test modes
         begin
             axis_selector    <= config_data[1*32-1 : 0*32]; // options: Bit0: use gain control, Bit1: use gain programmed
             axis_test        <= config_data[2*32-2 : 1*32]; // programmed test mode
@@ -159,11 +156,8 @@ reg [32-1:0] axis_test_value=0;
         end
     end
 
-
     always @ (posedge a_clk)
     begin
-        sel <= axis_selector;
-        
         ALL_AXIS_tdata[0]  <= S_AXIS_00_tdata;
         ALL_AXIS_tdata[1]  <= S_AXIS_01_tdata;
         ALL_AXIS_tdata[2]  <= S_AXIS_02_tdata;
@@ -199,19 +193,18 @@ reg [32-1:0] axis_test_value=0;
         ALL_AXIS_tvalid[15] <= S_AXIS_15_tvalid;
     end
 
-assign  M_AXIS_1_tdata = axis_test == 1 ? axis_test_value : ALL_AXIS_tdata [sel[4-1:0]];
-assign  M_AXIS_2_tdata = axis_test == 2 ? axis_test_value : ALL_AXIS_tdata [sel[8-1:4]];
-assign  M_AXIS_3_tdata = axis_test == 3 ? axis_test_value : ALL_AXIS_tdata [sel[12-1:8]];
-assign  M_AXIS_4_tdata = axis_test == 4 ? axis_test_value : ALL_AXIS_tdata [sel[16-1:12]];
-assign  M_AXIS_5_tdata = axis_test == 5 ? axis_test_value : ALL_AXIS_tdata [sel[20-1:16]];
-assign  M_AXIS_6_tdata = axis_test == 6 ? axis_test_value : ALL_AXIS_tdata [sel[24-1:20]];
+assign  M_AXIS_1_tdata = axis_test == 1 ? axis_test_value : ALL_AXIS_tdata [axis_selector[4-1:0]];
+assign  M_AXIS_2_tdata = axis_test == 2 ? axis_test_value : ALL_AXIS_tdata [axis_selector[8-1:4]];
+assign  M_AXIS_3_tdata = axis_test == 3 ? axis_test_value : ALL_AXIS_tdata [axis_selector[12-1:8]];
+assign  M_AXIS_4_tdata = axis_test == 4 ? axis_test_value : ALL_AXIS_tdata [axis_selector[16-1:12]];
+assign  M_AXIS_5_tdata = axis_test == 5 ? axis_test_value : ALL_AXIS_tdata [axis_selector[20-1:16]];
+assign  M_AXIS_6_tdata = axis_test == 6 ? axis_test_value : ALL_AXIS_tdata [axis_selector[24-1:20]];
 
-assign  M_AXIS_1_tvalid = ALL_AXIS_tvalid [sel[4-1:0]];
-assign  M_AXIS_2_tvalid = ALL_AXIS_tvalid [sel[8-1:4]];
-assign  M_AXIS_3_tvalid = ALL_AXIS_tvalid [sel[12-1:8]];
-assign  M_AXIS_4_tvalid = ALL_AXIS_tvalid [sel[16-1:12]];
-assign  M_AXIS_5_tvalid = ALL_AXIS_tvalid [sel[20-1:16]];
-assign  M_AXIS_6_tvalid = ALL_AXIS_tvalid [sel[24-1:20]];
-    
+assign  M_AXIS_1_tvalid = ALL_AXIS_tvalid [axis_selector[4-1:0]];
+assign  M_AXIS_2_tvalid = ALL_AXIS_tvalid [axis_selector[8-1:4]];
+assign  M_AXIS_3_tvalid = ALL_AXIS_tvalid [axis_selector[12-1:8]];
+assign  M_AXIS_4_tvalid = ALL_AXIS_tvalid [axis_selector[16-1:12]];
+assign  M_AXIS_5_tvalid = ALL_AXIS_tvalid [axis_selector[20-1:16]];
+assign  M_AXIS_6_tvalid = ALL_AXIS_tvalid [axis_selector[24-1:20]];
 
 endmodule

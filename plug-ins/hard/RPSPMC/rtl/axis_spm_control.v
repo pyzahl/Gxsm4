@@ -207,7 +207,7 @@ module axis_spm_control#(
     always @ (posedge a_clk)
     begin
         // module configuration
-        case (config_addr) // BQ configuration, and auto reset
+        case (config_addr) // manage MAIN SPM CONTROL configuration registers
         xyzu_offset_reg_address:
         begin
             // SCAN OFFSET / POSITION COMPONENTS, ABSOLUTE COORDS
@@ -242,7 +242,6 @@ module axis_spm_control#(
         end
         endcase
     end
-
 
     always @ (posedge a_clk)
     begin
