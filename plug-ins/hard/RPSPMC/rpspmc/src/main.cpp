@@ -1487,12 +1487,6 @@ void UpdateParams(void){
 void OnNewParams_RPSPMC(void){
         static int do_rotate=0;
         
-        if (SPMC_BIAS.IsNewValue()){
-                SPMC_BIAS.Update ();
-                //fprintf(stderr, "New Bias = %g V\n", SPMC_BIAS.Value());
-                rp_spmc_set_bias (SPMC_BIAS.Value());
-        }
-
         //SPMC_GVP_STATUS.Update ();
 
         if (SPMC_Z_SERVO_SETPOINT.IsNewValue()
@@ -1532,10 +1526,12 @@ void OnNewParams_RPSPMC(void){
                 rp_spmc_set_slope (SPMC_SLOPE_DZX.Value (), SPMC_SLOPE_DZY.Value (), SPMC_SLOPE_SLEW.Value ());
         }
         
-        if (SPMC_SET_OFFSET_X.IsNewValue ()
+        if (SPMC_BIAS.IsNewValue()
+            || SPMC_SET_OFFSET_X.IsNewValue ()
             || SPMC_SET_OFFSET_Y.IsNewValue ()
             || SPMC_SET_OFFSET_Z.IsNewValue ()
             ){
+                SPMC_BIAS.Update ();
                 SPMC_SET_OFFSET_X.Update ();
                 SPMC_SET_OFFSET_Y.Update ();
                 SPMC_SET_OFFSET_Z.Update ();
@@ -1544,6 +1540,7 @@ void OnNewParams_RPSPMC(void){
                 rp_spmc_set_offsets (SPMC_SET_OFFSET_X.Value (),
                                      SPMC_SET_OFFSET_Y.Value (),
                                      SPMC_SET_OFFSET_Z.Value (),
+                                     SPMC_BIAS.Value(),
                                      SPMC_SET_OFFSET_XY_SLEW.Value (),
                                      SPMC_SET_OFFSET_Z_SLEW.Value ()
                                      );
@@ -1657,26 +1654,22 @@ void OnNewParams_RPSPMC(void){
         }
 
         // RPSPMC Lock-In...
-        if (SPMC_SC_LCK_FREQUENCY.IsNewValue ()){
+        if (SPMC_SC_LCK_FREQUENCY.IsNewValue () || SPMC_SC_LCK_GAIN.IsNewValue ()){
                 SPMC_SC_LCK_FREQUENCY.Update ();
-                rp_spmc_set_lck_modulation_frequency (SPMC_SC_LCK_FREQUENCY.Value ());
-        }
-        if (SPMC_SC_LCK_VOLUME.IsNewValue ()){
-                SPMC_SC_LCK_VOLUME.Update ();
-                rp_spmc_set_lck_volume (SPMC_SC_LCK_VOLUME.Value ());
-        }
-        if (SPMC_SC_LCK_TARGET.IsNewValue ()){
-                SPMC_SC_LCK_TARGET.Update ();
-                rp_spmc_set_lck_target (SPMC_SC_LCK_TARGET.Value ());
-        }
-        if (SPMC_SC_LCK_GAIN.IsNewValue ()){
                 SPMC_SC_LCK_GAIN.Update ();
-                if (SPMC_SC_LCK_GAIN.Value () == 0) // gain 1
-                        rp_spmc_set_lck_gaincontrol (SPMC_SC_LCK_GAIN.Value (), 0, SPMC_LOCKIN_F0_CONTROL_REG);
-                else if (SPMC_SC_LCK_GAIN.Value () > 0) // parameter gain
-                        rp_spmc_set_lck_gaincontrol (SPMC_SC_LCK_GAIN.Value (), 1, SPMC_LOCKIN_F0_CONTROL_REG);
-                else if (SPMC_SC_LCK_GAIN.Value () < 0) // via signal A
-                        rp_spmc_set_lck_gaincontrol (SPMC_SC_LCK_GAIN.Value (), 2, SPMC_LOCKIN_F0_CONTROL_REG);
+                double gain = SPMC_SC_LCK_GAIN.Value ();
+                int mode = 0;
+                if (gain > 0) // parameter gain
+                        mode = 1;
+                else if (gain < 0) // via signal A
+                        mode = 2;
+                rp_spmc_configure_lockin (SPMC_SC_LCK_FREQUENCY.Value (), gain, mode, SPMC_LOCKIN_F0_CONTROL_REG);
+        }
+
+        if (SPMC_SC_LCK_TARGET.IsNewValue () || SPMC_SC_LCK_VOLUME.IsNewValue ()){
+                SPMC_SC_LCK_TARGET.Update ();
+                SPMC_SC_LCK_VOLUME.Update ();
+                rp_spmc_set_modulation (SPMC_SC_LCK_VOLUME.Value (), SPMC_SC_LCK_TARGET.Value ());
         }
 
         // LockIn Signal Out BiQuad Filter

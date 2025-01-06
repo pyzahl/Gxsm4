@@ -21,13 +21,14 @@
 
 module axis_selector #(
     parameter SAXIS_TDATA_WIDTH = 32,
-    parameter MAXIS_TDATA_WIDTH = 32
-)
-(
+    parameter MAXIS_TDATA_WIDTH = 32,
+    parameter configuration_address = 2000
+)(
     // (* X_INTERFACE_PARAMETER = "FREQ_HZ 125000000" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF S_AXIS_00:S_AXIS_01:S_AXIS_02:S_AXIS_03:S_AXIS_04:S_AXIS_05:S_AXIS_06:S_AXIS_07:S_AXIS_08:S_AXIS_09:S_AXIS_10:S_AXIS_11:S_AXIS_12:S_AXIS_13:S_AXIS_14:S_AXIS_15:M_AXIS_1:M_AXIS_2:M_AXIS_3:M_AXIS_4:M_AXIS_5:M_AXIS_6" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS_00:S_AXIS_01:S_AXIS_02:S_AXIS_03:S_AXIS_04:S_AXIS_05:S_AXIS_06:S_AXIS_07:S_AXIS_08:S_AXIS_09:S_AXIS_10:S_AXIS_11:S_AXIS_12:S_AXIS_13:S_AXIS_14:S_AXIS_15:M_AXIS_1:M_AXIS_2:M_AXIS_3:M_AXIS_4:M_AXIS_5:M_AXIS_6" *)
     input a_clk,
+    input [32-1:0]  config_addr,
+    input [512-1:0] config_data,
     
     input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS_00_tdata,
     input wire                          S_AXIS_00_tvalid,
@@ -61,8 +62,6 @@ module axis_selector #(
     input wire                          S_AXIS_14_tvalid,
     input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS_15_tdata,
     input wire                          S_AXIS_15_tvalid,
-
-    input [32-1:0] axis_selector, // # AXIS S to connect 1...10 to AXIS M 1..6:  M1=# M2=... M6=# 4 bits each: bits 0..23
 
     output wire [MAXIS_TDATA_WIDTH-1:0] M_AXIS_1_tdata,
     output wire                         M_AXIS_1_tvalid,
@@ -141,7 +140,25 @@ module axis_selector #(
 // use buffer           
 reg [SAXIS_TDATA_WIDTH-1:0]  ALL_AXIS_tdata[15:0];
 reg [1:0]  ALL_AXIS_tvalid[15:0];
-reg [32-1:0] sel;
+reg [32-1:0] sel=0;
+
+reg [32-1:0] axis_selector=0; // # AXIS S to connect 1...10 to AXIS M 1..6:  M1=# M2=... M6=# 4 bits each: bits 0..23
+
+reg [32-1:0] axis_test=0;
+reg [32-1:0] axis_test_value=0;
+
+    always @ (posedge a_clk)
+    begin
+    
+        // module configuration
+        if (config_addr == configuration_address) // BQ configuration, and auto reset
+        begin
+            axis_selector    <= config_data[1*32-1 : 0*32]; // options: Bit0: use gain control, Bit1: use gain programmed
+            axis_test        <= config_data[2*32-2 : 1*32]; // programmed test mode
+            axis_test_value  <= config_data[3*32-2 : 2*32]; // programmed test value
+        end
+    end
+
 
     always @ (posedge a_clk)
     begin
@@ -182,12 +199,12 @@ reg [32-1:0] sel;
         ALL_AXIS_tvalid[15] <= S_AXIS_15_tvalid;
     end
 
-assign  M_AXIS_1_tdata = ALL_AXIS_tdata [sel[4-1:0]];
-assign  M_AXIS_2_tdata = ALL_AXIS_tdata [sel[8-1:4]];
-assign  M_AXIS_3_tdata = ALL_AXIS_tdata [sel[12-1:8]];
-assign  M_AXIS_4_tdata = ALL_AXIS_tdata [sel[16-1:12]];
-assign  M_AXIS_5_tdata = ALL_AXIS_tdata [sel[20-1:16]];
-assign  M_AXIS_6_tdata = ALL_AXIS_tdata [sel[24-1:20]];
+assign  M_AXIS_1_tdata = axis_test == 1 ? axis_test_value : ALL_AXIS_tdata [sel[4-1:0]];
+assign  M_AXIS_2_tdata = axis_test == 2 ? axis_test_value : ALL_AXIS_tdata [sel[8-1:4]];
+assign  M_AXIS_3_tdata = axis_test == 3 ? axis_test_value : ALL_AXIS_tdata [sel[12-1:8]];
+assign  M_AXIS_4_tdata = axis_test == 4 ? axis_test_value : ALL_AXIS_tdata [sel[16-1:12]];
+assign  M_AXIS_5_tdata = axis_test == 5 ? axis_test_value : ALL_AXIS_tdata [sel[20-1:16]];
+assign  M_AXIS_6_tdata = axis_test == 6 ? axis_test_value : ALL_AXIS_tdata [sel[24-1:20]];
 
 assign  M_AXIS_1_tvalid = ALL_AXIS_tvalid [sel[4-1:0]];
 assign  M_AXIS_2_tvalid = ALL_AXIS_tvalid [sel[8-1:4]];

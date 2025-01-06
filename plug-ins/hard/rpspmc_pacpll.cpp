@@ -2502,7 +2502,7 @@ void RPSPMC_Control::create_folder (){
 void RPSPMC_Control::Init_SPMC_on_connect (){
         // fix-me -- need life readback once life re-connect works!
         if (rpspmc_pacpll){
-                rpspmc_pacpll->write_parameter ("SPMC_GVP_RESET_OPTIONS", 0x0001); // default, FB ON!
+                rpspmc_pacpll->write_parameter ("SPMC_GVP_RESET_OPTIONS", 0x0001); // default/reset GVP OPTIONS: Feedback ON! *** WATCH THIS ***
         
                 Slope_dZX_Changed(NULL, this);
                 Slope_dZY_Changed(NULL, this);
@@ -3046,6 +3046,7 @@ int RPSPMC_Control::choice_mod_target_callback (GtkWidget *widget, RPSPMC_Contro
         }
         return 0;
 }
+
 
 void RPSPMC_Control::delayed_vector_update (){
         // SCAN SPEED COMPUTATIONS

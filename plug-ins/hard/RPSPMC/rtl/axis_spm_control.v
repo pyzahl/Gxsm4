@@ -27,11 +27,17 @@ module axis_spm_control#(
     parameter S_AXIS_SREF_TDATA_WIDTH = 32,
     parameter SREF_DATA_WIDTH  = 25,  // SC 25Q24
     parameter SREF_Q_WIDTH     = 24,  // SC 25Q24
-    parameter RDECI  = 5   // reduced rate decimation bits 1= 1/2 ...
-)
-(
+    parameter RDECI  = 5,   // reduced rate decimation bits 1= 1/2 ...
+    parameter xyzu_offset_reg_address = 1100,
+    parameter rotm_reg_address = 1101,
+    parameter slope_reg_address = 1102,
+    parameter modulation_reg_address = 1103
+)(
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS_Xs:S_AXIS_Ys:S_AXIS_Zs:S_AXIS_U:S_AXIS_A:S_AXIS_B:S_AXIS_SREF:S_AXIS_Z:M_AXIS1:M_AXIS2:M_AXIS3:M_AXIS4:M_AXIS3:M_AXIS5:M_AXIS3:M_AXIS6:M_AXIS_XSMON:M_AXIS_YSMON:M_AXIS_ZSMON:M_AXIS_X0MON:M_AXIS_Z_SLOPE:M_AXIS_Y0MON:M_AXIS_Z0MON:M_AXIS_UrefMON" *)
     input a_clk,
+    input [32-1:0]  config_addr,
+    input [512-1:0] config_data,
+
     // GVP/SCAN COMPONENTS, ROTATED RELATIVE COORDS TO SCAN CENTER
     input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS_Xs_tdata,
     input wire                          S_AXIS_Xs_tvalid,
@@ -50,34 +56,10 @@ module axis_spm_control#(
     input wire                          S_AXIS_A_tvalid,
     input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS_B_tdata,
     input wire                          S_AXIS_B_tvalid,
-    // two future control components using optional (DAC #5, #6) "Motor1, Motor2"
-    //input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS_M1_tdata,
-    //input wire                          S_AXIS_M1_tvalid,
-    //input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS_M2_tdata,
-    //input wire                          S_AXIS_M2_tvalid,
     
     // SC Lock-In Reference and controls
     input wire [S_AXIS_SREF_TDATA_WIDTH-1:0]  S_AXIS_SREF_tdata,
     input wire                                S_AXIS_SREF_tvalid,
-    input signed [32-1:0] modulation_volume, // volume for modulation Q31
-    input [32-1:0] modulation_target, // target signal for mod (#XYZUAB)
-    
-
-    // scan rotation (yx=-xy, yy=xx)
-    input signed [32-1:0] rotmxx, // =cos(alpha)
-    input signed [32-1:0] rotmxy, // =sin(alpha)
-
-    // slope -- always applied in global XY plane ???
-    input signed [32-1:0] slope_x, // SQSLOPE (31)
-    input signed [32-1:0] slope_y, // SQSLOPE (31)
-
-    // SCAN OFFSET / POSITION COMPONENTS, ABSOLUTE COORDS
-    input signed [32-1:0] x0, // vector components
-    input signed [32-1:0] y0, // ..
-    input signed [32-1:0] z0, // ..
-    input signed [32-1:0] u0, // Bias Reference
-    input signed [32-1:0] xy_offset_step, // @Q31 => Q31 / 120M => [18 sec full scale swin @ step 1 decii = 0]  x RDECI
-    input signed [32-1:0] z_offset_step, // @Q31 => Q31 / 120M => [18 sec full scale swin @ step 1 decii = 0]  x RDECI
 
     output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS1_tdata,
     output wire                          M_AXIS1_tvalid,
@@ -120,6 +102,27 @@ module axis_spm_control#(
     // X   = Y0 + Yr 
     // Zsxy = slope_x * Xr + slope_y * Yr 
     // Z    = Z0 + z + Zsxy
+
+    reg signed [32-1:0] modulation_volume; // volume for modulation Q31
+    reg [4-1:0] modulation_target; // target signal for mod (#XYZUAB)
+
+    // scan rotation (yx=-xy; yy=xx)
+    reg signed [32-1:0] rotmxx; // =cos(alpha)
+    reg signed [32-1:0] rotmxy; // =sin(alpha)
+
+    // slope -- always applied in global XY plane ???
+    reg signed [32-1:0] slope_x; // SQSLOPE (31)
+    reg signed [32-1:0] slope_y; // SQSLOPE (31)
+
+    // SCAN OFFSET / POSITION COMPONENTS; ABSOLUTE COORDS
+    reg signed [32-1:0] x0; // vector components
+    reg signed [32-1:0] y0; // ..
+    reg signed [32-1:0] z0; // ..
+    reg signed [32-1:0] u0; // Bias Reference
+    reg signed [32-1:0] xy_offset_step; // @Q31 => Q31 / 120M => [18 sec full scale swin @ step 1 decii = 0]  x RDECI
+    reg signed [32-1:0] z_offset_step; // @Q31 => Q31 / 120M => [18 sec full scale swin @ step 1 decii = 0]  x RDECI
+
+
 
     reg signed [32-1:0] xy_move_step = 32;
     reg signed [32-1:0] z_move_step = 1;
@@ -200,7 +203,47 @@ module axis_spm_control#(
 // Saturated result to 32bit
 `define SATURATE_32(REG) (REG > 33'sd2147483647 ? 32'sd2147483647 : REG < -33'sd2147483647 ? -32'sd2147483647 : REG[32-1:0]) 
 
-    //always @ (posedge rdecii[RDECI])
+
+    always @ (posedge a_clk)
+    begin
+        // module configuration
+        case (config_addr) // BQ configuration, and auto reset
+        xyzu_offset_reg_address:
+        begin
+            // SCAN OFFSET / POSITION COMPONENTS, ABSOLUTE COORDS
+            x0 <= config_data[1*32-1 : 0*32]; // vector components
+            y0 <= config_data[2*32-1 : 1*32]; // ..
+            z0 <= config_data[3*32-1 : 2*32]; // ..
+            u0 <= config_data[4*32-1 : 3*32]; // Bias Reference
+            
+            xy_offset_step <= config_data[5*32-1 : 4*32]; // @Q31 => Q31 / 120M => [18 sec full scale swin @ step 1 decii = 0]  x RDECI
+            z_offset_step  <= config_data[6*32-1 : 5*32]; // @Q31 => Q31 / 120M => [18 sec full scale swin @ step 1 decii = 0]  x RDECI
+        end
+
+        rotm_reg_address:
+        begin
+            // scan rotation (yx=-xy, yy=xx)
+            rotmxx <= config_data[1*32-1 : 0*32]; // =cos(alpha)
+            rotmxy <= config_data[2*32-1 : 1*32]; // =sin(alpha)
+        end
+
+        slope_reg_address:
+        begin
+            // slope -- always applied in global XY plane ???
+            slope_x <= config_data[1*32-1 : 0*32]; // SQSLOPE (31)
+            slope_y <= config_data[2*32-1 : 1*32]; // SQSLOPE (31)
+        end
+
+        modulation_reg_address:
+        begin
+            // modulation control
+            modulation_volume <= config_data[11*32-1 : 10*32]; // volume for modulation Q31
+            modulation_target <= config_data[12*32-1 : 11*32]; // target signal for mod (#XYZUAB)
+        end
+        endcase
+    end
+
+
     always @ (posedge a_clk)
     begin
         rdecii <= rdecii+1; // rdecii 00 01 *10 11 00 ...

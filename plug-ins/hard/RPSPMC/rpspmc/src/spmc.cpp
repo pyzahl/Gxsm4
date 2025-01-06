@@ -548,10 +548,6 @@ void rp_spmc_AD5791_init (){
         rp_spmc_AD5791_set_stream_mode (); // enable streaming for AD5791 DAC's from FPGA now!
 }
 
-void rp_spmc_set_bias (double bias){
-        if (verbose > 1) fprintf(stderr, "##Configure mode set AD5971 AXIS3 (Bias) to %g V\n", bias);
-        set_gpio_cfgreg_int32 (SPMC_BIAS_REF, bias_buf = volts_to_rpspmc (bias));
-}
 
 // WARNING: FOR TEST/CALIBARTION ONLY, direct DAC write via config mode!!!
 void rp_spmc_set_xyzu (double ux, double uy, double uz, double bias){
@@ -599,7 +595,6 @@ void rp_spmc_set_zservo_gxsm_speciality_setting (int mode, double z_setpoint, do
 
 
 // SPMC module configuration, mastering CONFIG BUS
-#define MODULE_ADDR_SETTLE_TIME 5000
 
 void rp_spmc_gvp_module_start_config (){
         set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, 0);    // make sure all modules configs are disabled
@@ -612,49 +607,47 @@ void rp_spmc_gvp_module_write_config_data (int addr){
         set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, 0);    // and disable config bus again
 }
 
-void rp_spmc_gvp_module_config_int32 (int addr, int data, int pos=0){
+void rp_spmc_gvp_module_config_int32 (int addr, int data, int pos=MODULE_START_VECTOR){
         if (pos > 15 || pos < 0) return;
-        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, 0);    // make sure all modules configs are disabled
-        usleep(MODULE_ADDR_SETTLE_TIME);
+        if (pos == MODULE_START_VECTOR) rp_spmc_gvp_module_start_config ();
         set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA+pos, data); // set config data at pos
-        usleep(MODULE_ADDR_SETTLE_TIME);
-        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, addr); // set address, will fetch data
-        usleep(MODULE_ADDR_SETTLE_TIME);
-        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, 0);    // and disable config bus again
+        if (addr) rp_spmc_gvp_module_write_config_data (addr); // and finish write
 }
 
-void rp_spmc_gvp_module_config_uint32 (int addr, unsigned int data, int pos=0){
+void rp_spmc_gvp_module_config_uint32 (int addr, unsigned int data, int pos=MODULE_START_VECTOR){
         if (pos > 15 || pos < 0) return;
-        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, 0);    // make sure all modules configs are disabled
-        usleep(MODULE_ADDR_SETTLE_TIME);
+        if (pos == MODULE_START_VECTOR) rp_spmc_gvp_module_start_config ();
         set_gpio_cfgreg_uint32 (SPMC_MODULE_CONFIG_DATA+pos, data); // set config data at pos
-        usleep(MODULE_ADDR_SETTLE_TIME);
-        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, addr); // set address, will fetch data
-        usleep(MODULE_ADDR_SETTLE_TIME);
-        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, 0);    // and disable config bus again
+        if (addr) rp_spmc_gvp_module_write_config_data (addr); // and finish write
 }
 
-void rp_spmc_gvp_module_config_Qn (int addr, double data, int pos=0, double Qn=Q31){
+void rp_spmc_gvp_module_config_int64 (int addr, long long data, int pos=MODULE_START_VECTOR){
+        if (pos > 14 || pos < 0) return;
+        if (pos == MODULE_START_VECTOR) rp_spmc_gvp_module_start_config ();
+        set_gpio_cfgreg_int64 (SPMC_MODULE_CONFIG_DATA+pos, data); // set config data at pos
+        if (addr) rp_spmc_gvp_module_write_config_data (addr); // and finish write
+}
+
+void rp_spmc_gvp_module_config_int48_16 (int addr,  unsigned long long value, unsigned int n, int pos=MODULE_START_VECTOR){
+        if (pos > 14 || pos < 0) return;
+        if (pos == MODULE_START_VECTOR) rp_spmc_gvp_module_start_config ();
+        set_gpio_cfgreg_int48_16 (SPMC_MODULE_CONFIG_DATA+pos, value, n); // set config data at pos
+        if (addr) rp_spmc_gvp_module_write_config_data (addr); // and finish write
+}
+
+void rp_spmc_gvp_module_config_Qn (int addr, double data, int pos=MODULE_START_VECTOR, double Qn=Q31){
         if (pos > 15 || pos < 0) return;
-        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, 0);    // make sure all modules configs are disabled
-        usleep(MODULE_ADDR_SETTLE_TIME);
+        if (pos == MODULE_START_VECTOR) rp_spmc_gvp_module_start_config ();
         set_gpio_cfgreg_uint32 (SPMC_MODULE_CONFIG_DATA+pos,  int(round(Qn*data))); // set config data at pos
-        usleep(MODULE_ADDR_SETTLE_TIME);
-        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, addr); // set address, will fetch data
-        usleep(MODULE_ADDR_SETTLE_TIME);
-        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, 0);    // and disable config bus again
+        if (addr) rp_spmc_gvp_module_write_config_data (addr); // and finish write
 }
 
 void rp_spmc_gvp_module_config_vector_Qn (int addr, double data[16], int n, double Qn=Q31){
         if (n > 16 || n < 1) return;
-        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, 0);    // make sure all modules configs are disabled
-        usleep(MODULE_ADDR_SETTLE_TIME);
+        rp_spmc_gvp_module_start_config ();
         for (int i=0; i<n; i++)
                 set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA+i, int(round(Qn*data[i]))); // set config data -- only 1st 32 of 512
-        usleep(MODULE_ADDR_SETTLE_TIME);
-        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, addr); // set address, will fetch data
-        usleep(MODULE_ADDR_SETTLE_TIME);
-        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, 0);    // and disable config bus again
+        if (addr) rp_spmc_gvp_module_write_config_data (addr); // and finish write
 }
 
 // RPSPMC GVP Engine Management
@@ -662,11 +655,7 @@ void rp_spmc_gvp_config (bool reset=true, bool pause=false, int reset_options=-1
         
         if (!reset){
                 rp_spmc_AD5791_set_stream_mode (); // enable streaming for AD5791 DAC's from FPGA now!
-                //usleep(MODULE_ADDR_SETTLE_TIME);
         }
-        //int cfg = (reset ? 1:0) | (program ? 2:0) | (pause ? 4:0) | (r_options << 16);
-        //set_gpio_cfgreg_int32 (SPMC_GVP_CONTROL, cfg);
-        //usleep(MODULE_ADDR_SETTLE_TIME);
 
         rp_spmc_gvp_module_config_int32 (SPMC_GVP_CONTROL_REG, (reset ? 1:0) | (pause ? 2:0));
 
@@ -931,16 +920,10 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
         }
 }
 
-/*
-void rp_set_gvp_stream_mux_selector (int s9, int s10, int s11, int s12){
-        if (verbose > 1) fprintf(stderr, "** set gvp stream mux %d %d %d %d\n", s9,s10,s11,s12);
-        set_gpio_cfgreg_int32 (SPMC_CFG_GVP_STREAM_MUX6_SELECTOR, .. | ((s12 & 0xf)<<12) | ((s11 & 0xf)<<8) | ((s10 & 0xf)<<4) | (s9 & 0xf) );
-}
-*/
 
-void rp_set_gvp_stream_mux_selector (unsigned long selector){
+void rp_set_gvp_stream_mux_selector (unsigned long selector, unsigned long test_mode=0, int testval=0){
         if (verbose > 1) fprintf(stderr, "** set gvp stream mux 0x%06x\n", (unsigned int)selector);
-        set_gpio_cfgreg_int32 (SPMC_CFG_GVP_STREAM_MUX6_SELECTOR, selector);
+        rp_spmc_gvp_module_config_uint32 (SPMC_MUX16_6_SRCS_CONTROL_REG, selector, 0);
 }
 
 // RPSPMC Location and Geometry
@@ -986,20 +969,23 @@ int rp_spmc_set_rotation (double alpha, double slew){
                 }
         }
         
-        set_gpio_cfgreg_int32 (SPMC_ROTM_XX, (int)round (Q_XY_PRECISION*cos(current_alpha)));
-        set_gpio_cfgreg_int32 (SPMC_ROTM_XY, (int)round (Q_XY_PRECISION*sin(current_alpha)));
+        double data[16] = { cos(current_alpha), sin(current_alpha),0.,0., 0.,0.,0.,0., 0.,0.,0.,0., 0.,0.,0.,0. };
+        rp_spmc_gvp_module_config_vector_Qn (SPMC_MAIN_CONTROL_ROTM_REG, data, 2, Q_XY_PRECISION);
+
         return ret;
 }
 
 void rp_spmc_set_slope (double dzx, double dzy, double dzxy_slew){
-        int dzxy_step = 1+(int)round (Q_Z_SLOPE_PRECISION*dzxy_slew/SPMC_CLK);
-        if (verbose > 1) fprintf(stderr, "** set dZxy slopes %g, %g ** dZ-step: %g => %d\n", dzx, dzy, dzxy_slew, dzxy_step);
-        set_gpio_cfgreg_int32 (SPMC_Z_MOVE_STEP, dzxy_step);
-        set_gpio_cfgreg_int32 (SPMC_SLOPE_X, (int)round (Q_Z_SLOPE_PRECISION*dzx));
-        set_gpio_cfgreg_int32 (SPMC_SLOPE_Y, (int)round (Q_Z_SLOPE_PRECISION*dzy));
+        if (verbose > 1){
+                int dzxy_step = 1+(int)round (Q_Z_SLOPE_PRECISION*dzxy_slew/SPMC_CLK);
+                fprintf(stderr, "** set dZxy slopes %g, %g ** dZ-step: %g => %d\n", dzx, dzy, dzxy_slew, dzxy_step);
+        }
+        
+        double data[16] = { dzx, dzy, dzxy_slew/SPMC_CLK,0., 0.,0.,0.,0., 0.,0.,0.,0., 0.,0.,0.,0. };
+        rp_spmc_gvp_module_config_vector_Qn (SPMC_MAIN_CONTROL_SLOPE_REG, data, 2, Q_Z_SLOPE_PRECISION);
 }
 
-void rp_spmc_set_offsets (double x0, double y0, double z0, double xy_move_slew, double z_move_slew){
+void rp_spmc_set_offsets (double x0, double y0, double z0, double bias, double xy_move_slew, double z_move_slew){
         static int xy_step = 1+(int)(volts_to_rpspmc (0.5/SPMC_CLK));
         static int z_step = 1+(int)(volts_to_rpspmc (0.2/SPMC_CLK));
 
@@ -1009,14 +995,26 @@ void rp_spmc_set_offsets (double x0, double y0, double z0, double xy_move_slew, 
         if (z_move_slew >= 0.0)
                 z_step = 1+(int)(volts_to_rpspmc (z_move_slew/SPMC_CLK));
 
-        if (verbose > 1) fprintf(stderr, "** set offsets [%g %g %g]V {%d %d}/cycle\n", x0, y0, z0, xy_step, z_step);
+        if (verbose > 1) fprintf(stderr, "##Configure XYZU [%g %g %g Bias=%g]V {%d %d}/cycle\n", x0, y0, z0, bias, xy_step, z_step);
 
-        set_gpio_cfgreg_int32 (SPMC_OFFSET_X, x0_buf = volts_to_rpspmc (x0));
-        set_gpio_cfgreg_int32 (SPMC_OFFSET_Y, y0_buf = volts_to_rpspmc (y0));
-        set_gpio_cfgreg_int32 (SPMC_OFFSET_Z, z0_buf = volts_to_rpspmc (z0));
-        set_gpio_cfgreg_int32 (SPMC_XY_MOVE_STEP, xy_step);
-        //set_gpio_cfgreg_int32 (SPMC_Z_MOVE_STEP, z_step);
+        rp_spmc_gvp_module_config_uint32 (MODULE_SETUP, x0_buf = volts_to_rpspmc (x0), MODULE_START_VECTOR); // first, init ** X0
+        rp_spmc_gvp_module_config_uint32 (MODULE_SETUP, y0_buf = volts_to_rpspmc (y0), MODULE_SETUP_VECTOR(1)); // setup...    ** Y0
+        rp_spmc_gvp_module_config_uint32 (MODULE_SETUP, z0_buf = volts_to_rpspmc (z0), MODULE_SETUP_VECTOR(2)); // setup...    ** Z0
+        rp_spmc_gvp_module_config_uint32 (MODULE_SETUP, bias_buf = volts_to_rpspmc (bias), MODULE_SETUP_VECTOR(3)); // setup...    ** U0=BiasRef
+        rp_spmc_gvp_module_config_uint32 (MODULE_SETUP, xy_step, MODULE_SETUP_VECTOR(4)); // setup...        ** xy_offset_step/moveto adjuster speed
+        rp_spmc_gvp_module_config_uint32 (SPMC_MAIN_CONTROL_XYZU_OFFSET_REG, z_step,  MODULE_SETUP_VECTOR(5));  // last, write all ** xy_offset_step/moveto adjuster speed
 }
+
+/* TEST XY MOVE
+PC=0: stream_debug_flags = opts = 0xc03b01, Write Vector[PC=000] = [Auto calc decii: slew=50 pts/s, dmin=0.5285 V, dt=0.02 s, ##=2.5e+06, Nsteps=350 {ddmin=0.01057 uV #4.53978e+06 ddmax=0.0415 uV #1.78241e+07}
+Life Vector Update is ON
+0050, 0007, 00c03b01, 0000, 0000, dX     1510 uV, dY -5928.571429 uV, dZ        0 uV, dU        0 uV, dA        0 uV, dB        0 uV, 0,0,0, decii=357143]
+Write Vector[PC=001] = [Life Vector Update is ON
+0000, 0000, 00000000, 0000, 0000, dX        0 uV, dY        0 uV, dZ        0 uV, dU        0 uV, dA        0 uV, dB        0 uV, 0,0,0, decii=128]
+Write Vector[PC=001] = [Life Vector Update is ON
+0000, 0000, 00000000, 0000, 0000, dX        0 uV, dY        0 uV, dZ        0 uV, dU        0 uV, dA        0 uV, dB        0 uV, 0,0,0, decii=128]
+##Configure GVP: Reset
+*/
 
 void rp_spmc_set_scanpos (double xs, double ys, double slew, int opts){
         // setup GVP to do so...
@@ -1025,64 +1023,71 @@ void rp_spmc_set_scanpos (double xs, double ys, double slew, int opts){
         double dy = ys - rpspmc_to_volts (read_gpio_reg_int32 (1,1));
 
         double dist = sqrt(dx*dx + dy*dy);
-        double eps = ad5791_dac_to_volts (16); // arbitrary limit 4bit to ignore delta
-        int n = 10+int(1000*dist);
+        double eps = ad5791_dac_to_volts (16); // arbitrary limit 4bit to ignore delta **** WATCH ME ****
+        int n = 50;
         
-        // slew comes in V/s => px/s
-        slew = n*slew/dist; // convert A/s to slew rate in N/dt per vector
-        
-        if (verbose > 1) fprintf(stderr, "** set scanpos [%g V, %g V @%g s/Vec]V ** dxy: |%g, %g| = %g  ** %s\n", xs, ys, slew, dx,dy, dist, dist < eps ? "At Position.":"Loading GVP...");
-
         if (dist < eps)
                 return;
-        
-        rp_spmc_gvp_config (true, false, false); // reset any GVP now!
-        if (verbose > 1) fprintf(stderr, "** set scanpos GVP reset **\n");
-        usleep(100000);
 
+        // convert slew comes in A/s => px/s
+        slew /= dist; // convert A/s to slew rate in N/dt or pts/s per vector
+        
+        if (verbose > 1) fprintf(stderr, "** set scanpos [%g V, %g V @%g s/Vec]V ** dxy: |%g, %g| = %g  ** %s\n", xs, ys, slew, dx,dy, dist, dist < eps ? "At Position.":"Loading GVP...");
+        
+        rp_spmc_gvp_config (true, false); // reset any GVP now!
+        //if (verbose > 1) fprintf(stderr, "** set scanpos GVP reset **\n");
+        usleep(1000);
 
         // make vector to new scan pos requested:
         rp_spmc_set_gvp_vector (0, n, 0, 0, 0,
                                 dx, dy, 0.0, 0.0,
                                 0.0, 0.0,
                                 slew, false);
-        rp_spmc_set_gvp_vector (0, 0, 0, 0, 0,
+        rp_spmc_set_gvp_vector (1, 0, 0, 0, 0,
+                                0.0, 0.0, 0.0, 0.0,
+                                0.0, 0.0,
+                                0.0, false);
+        rp_spmc_set_gvp_vector (2, 0, 0, 0, 0,
                                 0.0, 0.0, 0.0, 0.0,
                                 0.0, 0.0,
                                 0.0, false);
 
-        if (verbose > 1) fprintf(stderr, "** set scanpos GVP vectors programmed **\n");
-        usleep(100000);
+        if (verbose > 1) fprintf(stderr, "** set scanpos GVP vectors programmed, exec... **\n");
+        usleep(1000);
 
-#if 1
-        if (verbose > 2) fprintf(stderr, "*** GVP Control Mode: START 1 (make sure stream server is stopped)\n");
+#if 0 // ** START RECORDING ** possible...
+        fprintf(stderr, "*** GVP Control Mode EXEC: reset stream server, clear buffer)\n");
         stream_server_control = (stream_server_control & 0x01) | 4; // set stop bit
         usleep(100000);
         spm_dma_instance->clear_buffer (); // clean buffer now!
 
-        rp_spmc_gvp_config (true, false, false); // make sure it is in reset state before
-        if (verbose > 2) fprintf(stderr, "*** GVP Control Mode: START 2 (assure RESET state first), start stream server\n");
-        usleep(100000);
+        fprintf(stderr, "*** GVP Control Mode EXEC: START DMA+stream server\n");
 
         spm_dma_instance->start_dma (); // get DMA ready to take data
         stream_server_control = (stream_server_control & 0x01) | 2; // set start bit
+        usleep(10000);
 
-        rp_spmc_gvp_config (false, false, false); // take out of reset -> release GVP to start executing VPC
-        if (verbose > 2) fprintf(stderr, "*** GVP Control Mode: START 3 (taking out of RESET)\n");
-
-        usleep(100000);
+        rp_spmc_gvp_config (false, false); // take GVP out of reset -> release GVP to start executing VPC now
+        fprintf(stderr, "*** GVP Control Mode EXEC: START 3 (taking out of RESET)\n");
 #else
-        usleep(100000);
         // and execute
-        rp_spmc_gvp_config (false, false, false);
-        if (verbose > 1) fprintf(stderr, "** set scanpos GVP started **\n");
+        rp_spmc_gvp_config (false, false);
+        //if (verbose > 1) fprintf(stderr, "** set scanpos GVP started **\n");
 #endif
 }
 
+void rp_spmc_set_modulation (double volume, int target){
+        if (verbose > 1) fprintf(stderr, "##Configure: LCK VOLUME volume= %g V, TARGET: #%d\n", volume, target);
+
+        rp_spmc_gvp_module_config_uint32 (MODULE_SETUP, volts_to_rpspmc(volume), MODULE_START_VECTOR);
+        rp_spmc_gvp_module_config_uint32 (SPMC_MAIN_CONTROL_MODULATION_REG, target&0x0f, MODULE_SETUP_VECTOR(1));
+}
+
+
 
 // Lock In / Modulation
-
-double rp_spmc_set_lck_modulation_frequency (double freq){
+ 
+double rp_spmc_configure_lockin (double freq, double gain, unsigned int mode, int LCKID){
         // 44 Bit Phase, using 48bit tdata
         unsigned int n2 = round (log2(dds_phaseinc (freq)));
         unsigned long long phase_inc = 1LL << n2;
@@ -1094,24 +1099,11 @@ double rp_spmc_set_lck_modulation_frequency (double freq){
                 // Configure: LCK DDS IDEAL Freq= 100 Hz [16777216, N2=24, M=1048576]  Actual f=119.209 Hz  Delta=19.2093 Hz  (using power of 2 phase_inc)
         }
         
-        set_gpio_cfgreg_int48_16 (SPMC_CFG_SC_LCK_DDS_PHASEINC, phase_inc, n2);
+        rp_spmc_gvp_module_config_uint32 (MODULE_SETUP, mode, MODULE_START_VECTOR); // first, init
+        rp_spmc_gvp_module_config_Qn (MODULE_SETUP, gain, MODULE_SETUP_VECTOR(1), Q24); // set...
+        rp_spmc_gvp_module_config_int48_16 (LCKID, phase_inc, n2, MODULE_SETUP_VECTOR(2)); // last, write
 
         return fact;
-}
-
-void rp_spmc_set_lck_volume (double volume){
-        if (verbose > 1) fprintf(stderr, "##Configure: LCK VOLUME volume= %g V\n", volume);
-        set_gpio_cfgreg_int32 (SPMC_CFG_SC_LCK_VOLUME, volts_to_rpspmc(volume));
-}
-
-void rp_spmc_set_lck_target (int target){
-        if (verbose > 1) fprintf(stderr, "##Configure: LCK TARGET: #%d\n", target);
-        set_gpio_cfgreg_int32 (SPMC_CFG_SC_LCK_TARGET, target&0x0f);
-}
-
-void rp_spmc_set_lck_gaincontrol (double gain, unsigned int mode, int LCKID){
-        rp_spmc_gvp_module_config_uint32 (LCKID, mode, 0);
-        rp_spmc_gvp_module_config_Qn (LCKID, gain, 1, Q24);
 }
 
 // set BiQuad to low pass at f_cut, with Quality Factor Q and at sampling rate Fs Hz

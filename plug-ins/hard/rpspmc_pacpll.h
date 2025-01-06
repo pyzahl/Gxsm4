@@ -901,8 +901,14 @@ public:
 	virtual int RotateStepwise(int exec=1); // rotation not implemented in simulation, if required set/update scan angle here
 
 	virtual gboolean SetOffset(double x, double y); // set offset to coordinated (non rotated)
-	virtual gboolean MovetoXY (double x, double y); // set tip position in scan coordinate system (potentially rotated)
 
+        virtual gboolean MovetoXY (double x, double y); // set tip position in scan coordinate system (potentially rotated)
+
+	void delayed_tip_move_update ();
+	static guint delayed_tip_move_update_callback (rpspmc_hwi_dev *dspc);
+        gint delayed_tip_move_update_timer_id;
+        double requested_tip_move_xy[2];
+        
 	virtual void StartScan2D() { PauseFlg=0; ScanningFlg=1; KillFlg=FALSE; };
         // EndScan2D() is been called until it returns TRUE from scan control idle task until it returns FALSE (indicating it's completed)
 	virtual gboolean EndScan2D() { ScanningFlg=0; GVP_abort_vector_program (); return FALSE; };

@@ -74,9 +74,18 @@ extern "C" {
         void rp_spmc_set_bias (double bias);
         void rp_spmc_set_xyzu (double ux, double uy, double uz, double bias);  // WARNING -- instant setting in config mode (test only)
 
+#define MODULE_ADDR_SETTLE_TIME 5000
+        
+#define MODULE_SETUP 0
+#define MODULE_START_VECTOR    (0)  // ALWAYS start write @POS=0, keep addr=0 for loading data block
+#define MODULE_SETUP_VECTOR(N) (N)  // when last write, set addr to module target addr (>0)
+
         void rp_spmc_gvp_module_start_config ();
         void rp_spmc_gvp_module_write_config_data (int addr);
         void rp_spmc_gvp_module_config_int32 (int addr, int data, int pos);
+        void rp_spmc_gvp_module_config_int64 (int addr, long long data, int pos);
+        void rp_spmc_gvp_module_config_int48_16 (int addr,  unsigned long long value, unsigned int n, int pos);
+
         void rp_spmc_gvp_module_config_uint32 (int addr, unsigned int data, int pos);
         void rp_spmc_gvp_module_config_Qn (int addr, double data, int pos, double Qn);
         void rp_spmc_gvp_module_config_vector_Qn (int addr, double data[16], int n, double Qn);
@@ -90,16 +99,17 @@ extern "C" {
                                      double dx, double dy, double dz, double du,
                                      double da, double db, double slew,
                                      bool update_life);
+        
+        void rp_set_gvp_stream_mux_selector (unsigned long selector, unsigned long test_mode, int testval);
 
         int rp_spmc_set_rotation (double alpha, double slew);
-        void rp_spmc_set_slope (double dzx, double dzy);
-        void rp_spmc_set_offsets (double x0, double y0, double z0, double xy_move_slew, double z_move_slew);
+        void rp_spmc_set_slope (double dzx, double dzy, double dzxy_slew);
+        void rp_spmc_set_offsets (double x0, double y0, double z0, double bias, double xy_move_slew, double z_move_slew);
         void rp_spmc_set_scanpos (double xs, double ys, double slew);
 
-        double rp_spmc_set_lck_modulation_frequency (double freq);
-        void rp_spmc_set_lck_volume (double volume);
-        void rp_spmc_set_lck_target (int target);
-        void rp_spmc_set_lck_gaincontrol (double gain, unsigned int mode, int LCKID);
+        void rp_spmc_set_modulation (double volume, int target);
+
+        double rp_spmc_configure_lockin (double freq, double gain, unsigned int mode, int LCKID);
 
         void rp_spmc_set_biqad_Lck_F0 (double f_cut, double Q, double Fs, int BIQID);
         void rp_spmc_set_biqad_Lck_F0_pass (int BIQID);

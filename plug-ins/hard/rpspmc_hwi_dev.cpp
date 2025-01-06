@@ -134,6 +134,8 @@ MOD_INPUT mod_input_list[] = {
 
 rpspmc_hwi_dev::rpspmc_hwi_dev():RP_stream(this){
 
+        delayed_tip_move_update_timer_id = 0;
+        
         // auto adjust and override preferences
         main_get_gapp()->xsm->Inst->override_dig_range (1<<19, xsmres); // gxsm does precision sanity checks and trys to round to best fit grid
         main_get_gapp()->xsm->Inst->override_volt_in_range (1.0, xsmres);
@@ -246,22 +248,48 @@ gboolean rpspmc_hwi_dev::SetOffset(double x, double y){ // in "DIG"
         return FALSE;
 }
 
-gboolean rpspmc_hwi_dev::MovetoXY (double x, double y){
+void rpspmc_hwi_dev::delayed_tip_move_update (){
         if (!ScanningFlg){
                 double jdata[3];
                 int jdata_i[1];
-                jdata[0] = main_get_gapp()->xsm->Inst->XA2Volt (main_get_gapp()->xsm->Inst->Dig2XA (x));
-                jdata[1] = main_get_gapp()->xsm->Inst->YA2Volt (main_get_gapp()->xsm->Inst->Dig2YA (y));
-                jdata[2] = main_get_gapp()->xsm->Inst->XA2Volt (RPSPMC_ControlClass->scan_speed_x_requested);
-                jdata_i[0] = 0;
+
+                jdata_i[0] = 0x0001; // GVP OPTIONS: Feedback ON! *** WATCH THIS ***
+                jdata[0] = main_get_gapp()->xsm->Inst->XA2Volt (main_get_gapp()->xsm->Inst->Dig2XA (requested_tip_move_xy[0]));
+                jdata[1] = main_get_gapp()->xsm->Inst->YA2Volt (main_get_gapp()->xsm->Inst->Dig2YA (requested_tip_move_xy[1]));
+                jdata[2] = RPSPMC_ControlClass->scan_speed_x_requested;
                 
-                g_message ("Set ScanPosXY: %g, %g D => %g, %g V @%gV/s", x,y, jdata[0], jdata[1], jdata[2]);
+                g_message ("Set ScanPosXY (delayed): %g, %g D => %g, %g V @%gV/s", requested_tip_move_xy[0], requested_tip_move_xy[1], jdata[0], jdata[1], jdata[2]);
 
                 if (rpspmc_pacpll)
                         rpspmc_pacpll->write_array (SPMC_SET_SCANPOS_COMPONENTS, 1, jdata_i,  3, jdata); // { OPTS, X, Y, SLEW }
         }
+        delayed_tip_move_update_timer_id = 0; // done.
+}
+
+guint rpspmc_hwi_dev::delayed_tip_move_update_callback (rpspmc_hwi_dev *self){
+        self->delayed_tip_move_update ();
+	return G_SOURCE_REMOVE;
+}
+
+gboolean rpspmc_hwi_dev::MovetoXY (double x, double y){
+        static gint64 t0=0;
+
+        if (!ScanningFlg){
+                requested_tip_move_xy[0]=x; // update
+                requested_tip_move_xy[1]=y; // update
+                g_message ("Update ScanPosXY: %g, %g Dt %g ms", requested_tip_move_xy[0], requested_tip_move_xy[1], (g_get_real_time ()-t0)*1e-3);
+                // if not already scheduled, schedule delayed tip position moveto
+                if (!delayed_tip_move_update_timer_id){ // schedule delayed, takes current/latest updated xy so!
+                        t0 = g_get_real_time (); // us
+                        g_message ("Scheduling Tip Move in 1s...");
+                        delayed_tip_move_update_timer_id = g_timeout_add (1000, (GSourceFunc)rpspmc_hwi_dev::delayed_tip_move_update_callback, this);
+                }
+        }
         return FALSE;
 }
+
+
+
 
 
 

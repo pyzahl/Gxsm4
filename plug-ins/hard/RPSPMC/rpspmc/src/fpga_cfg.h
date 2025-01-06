@@ -111,12 +111,8 @@
 #define SPMC_CFG_SC_LCK_DDS_PHASEINC        (PACPLL_CFG1_OFFSET + 20) // 20,21: Frequency 64bit LockIn (DDS Phase Inc)
 #define SPMC_CFG_SC_LCK_VOLUME              (PACPLL_CFG1_OFFSET + 22) // 22: SC Volume 
 #define SPMC_CFG_SC_LCK_TARGET              (PACPLL_CFG1_OFFSET + 23) // 23: Target for mixing 1..4 so far, 0=NONE / OFF
-#define SPMC_CFG_SC_LCK_TAU                 (PACPLL_CFG1_OFFSET + 24) // 24: Tau/Time const in ms
-#define SPMC_CFG_SC_LCK_PHASE               (PACPLL_CFG1_OFFSET + 25) // 25: Phase
 
-// CFG1 26...29 available
-
-#define SPMC_CFG_GVP_STREAM_MUX6_SELECTOR   (PACPLL_CFG1_OFFSET + 30) // 30: GVP SRCS MUX 16->6 -|-|4|4|4|4|4|4
+// CFG1 26...31 available
 
 
 // CFG DATA REGISTER 2 [1023:0]
@@ -200,12 +196,57 @@
 
 
 // LOCKIN MODULE @ CONFIG ADDRESS
-#define SPMC_LOCKIN_F0_CONTROL_REG   1000 // LockIn Config Reg (Gain Control, enable, input gain Q24)
+#define SPMC_LOCKIN_F0_CONTROL_REG      1000 // [0] LockIn Config Reg (Gain Control, B0: enable gain AXIS, B1: progammed gain Q24)
+                                             // [1] Fixed Gain, Q24
+                                             // [2] PhaseInc [PH48, DDSN2_16]
 
 // BIQUAD  MODULE @ CONFIG ADDRESS
-#define SPMC_BIQUAD_F0_CONTROL_REG   1001 //  BiQuad Parameters b0, b1, b2, a0, a1
+#define SPMC_BIQUAD_F0_CONTROL_REG      1001 //  BiQuad Parameters b0, b1, b2, a0, a1
 
+#define SPMC_MAIN_CONTROL_XYZU_OFFSET_REG  1100 //  SPMC MAIN CONTROL IP REGISTERS
+#define SPMC_MAIN_CONTROL_ROTM_REG         1101 //  SPMC MAIN CONTROL IP REGISTERS
+#define SPMC_MAIN_CONTROL_SLOPE_REG        1102 //  SPMC MAIN CONTROL IP REGISTERS
+#define SPMC_MAIN_CONTROL_MODULATION_REG   1103 //  SPMC MAIN CONTROL IP REGISTERS
+/*
+        case (config_addr) // BQ configuration, and auto reset
+        xyzu_offset_reg_address: // == 1100
+        begin
+            // SCAN OFFSET / POSITION COMPONENTS, ABSOLUTE COORDS
+            x0 <= config_data[1*32-1 : 0*32]; // vector components
+            y0 <= config_data[2*32-1 : 1*32]; // ..
+            z0 <= config_data[3*32-1 : 2*32]; // ..
+            u0 <= config_data[4*32-1 : 3*32]; // Bias Reference
+            
+            xy_offset_step <= config_data[5*32-1 : 4*32]; // @Q31 => Q31 / 120M => [18 sec full scale swin @ step 1 decii = 0]  x RDECI
+            z_offset_step  <= config_data[6*32-1 : 5*32]; // @Q31 => Q31 / 120M => [18 sec full scale swin @ step 1 decii = 0]  x RDECI
+        end
 
+        rotm_reg_address: // == 1101
+        begin
+            // scan rotation (yx=-xy, yy=xx)
+            rotmxx <= config_data[1*32-1 : 0*32]; // =cos(alpha)
+            rotmxy <= config_data[2*32-1 : 1*32]; // =sin(alpha)
+        end
+
+        slope_reg_address: // == 1102
+        begin
+            // slope -- always applied in global XY plane ???
+            slope_x <= config_data[1*32-1 : 0*32]; // SQSLOPE (31)
+            slope_y <= config_data[2*32-1 : 1*32]; // SQSLOPE (31)
+        end
+
+        modulation_reg_address: // == 1103
+        begin
+            // modulation control
+            modulation_volume <= config_data[11*32-1 : 10*32]; // volume for modulation Q31
+            modulation_target <= config_data[12*32-1 : 11*32]; // target signal for mod (#XYZUAB)
+        end
+        endcase
+*/
+
+// 16 to 6 MUX to SRCS-STREAMING  MODULE @ CONFIG ADDRESS
+#define SPMC_MUX16_6_SRCS_CONTROL_REG   2000 // MUX selection, test mode, test value.
+                                             // GVP SRCS selections: 16->6 -|-|4|4|4|4|4|4
 
 
 

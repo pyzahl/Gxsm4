@@ -34,7 +34,7 @@ module axis_py_lockin#(
     parameter configuration_address = 999
 )
 (
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS_SC:S_AXIS_SIGNAL:S_AXIS_GAIN:S_AXIS_DDS_N2:M_AXIS_A2:M_AXIS_X:M_AXIS_Y:M_AXIS_Sref:M_AXIS_SDref:M_AXIS_SignalOut:M_AXIS_i" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS_SC:S_AXIS_SIGNAL:S_AXIS_GAIN:M_AXIS_DDSPhaseInc:M_AXIS_A2:M_AXIS_X:M_AXIS_Y:M_AXIS_Sref:M_AXIS_SDref:M_AXIS_SignalOut:M_AXIS_i" *)
     input a_clk,
 
     input [32-1:0]  config_addr,
@@ -50,9 +50,11 @@ module axis_py_lockin#(
     // SC Lock-In Reference and controls
     input wire [S_AXIS_SC_TDATA_WIDTH-1:0]  S_AXIS_SC_tdata,
     input wire                              S_AXIS_SC_tvalid,
-    input wire [16-1:0]  S_AXIS_DDS_N2_tdata,
-    input wire           S_AXIS_DDS_N2_tvalid,
     
+    // DDS PhaseInc Control
+    output wire [48-1:0]  M_AXIS_DDSPhaseInc_tdata,
+    output wire           M_AXIS_DDSPhaseInc_tvalid,
+
     // XY Output
     output wire [AM2_DATA_WIDTH-1:0]  M_AXIS_A2_tdata,
     output wire                       M_AXIS_A2_tvalid,
@@ -74,6 +76,9 @@ module axis_py_lockin#(
     output wire [32-1:0]  M_AXIS_i_tdata,
     output wire           M_AXIS_i_tvalid
     );
+
+    // DDS Control
+    reg [48-1:0] dds_PhaseInc = 1;
 
     // Lock-In
     // ========================================================
@@ -142,8 +147,10 @@ module axis_py_lockin#(
         // module configuration
         if (config_addr == configuration_address) // BQ configuration, and auto reset
         begin
-            lck_config <= config_data[1*32-1 : 0*32]; // options: Bit0: use gain control, Bit1: use gain programmed
-            lck_gain   <= config_data[2*32-2 : 1*32]; // programmed gain, Q24
+            lck_config    <= config_data[1*32-1 : 0*32]; // options: Bit0: use gain control, Bit1: use gain programmed
+            lck_gain      <= config_data[2*32-1 : 1*32]; // programmed gain, Q24
+            dds_n2        <= config_data[2*32+16-1 : 2*32];       // Phase Inc N2 lower 16 bits
+            dds_PhaseInc  <= config_data[2*32+64-1 : 2*32+64-48]; // Phase Inc Width: top 48 bits
         end
         
         if (lck_config[0])
@@ -167,8 +174,8 @@ module axis_py_lockin#(
         s <= S_AXIS_SC_tdata[S_AXIS_SC_TDATA_WIDTH/2+SC_DATA_WIDTH-1 : S_AXIS_SC_TDATA_WIDTH/2];  // 25Q24 full dynamic range, proper rounding   56:32
                 
         // DDS N / cycle
-        dds_n2 <= S_AXIS_DDS_N2_tdata;
-        decii2 <= 44 - LCK_BUFFER_LEN2 - $signed(dds_n2);
+        // dds_n2 <= S_AXIS_DDS_N2_tdata;
+        decii2 <= 44 - LCK_BUFFER_LEN2 - dds_n2;
         if (decii2_last != decii2 || finishthis > 0)
         begin
             decii2_last <= decii2;
@@ -242,6 +249,10 @@ module axis_py_lockin#(
             end     
         end
     end
+    
+    assign M_AXIS_DDSPhaseInc_tdata  = dds_PhaseInc;
+    assign M_AXIS_DDSPhaseInc_tvalid = 1;
+    
     assign M_AXIS_A2_tdata  = ampl2;
     assign M_AXIS_A2_tvalid = 1;
     assign M_AXIS_X_tdata  = x;
