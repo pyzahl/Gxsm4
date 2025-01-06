@@ -5,7 +5,7 @@ RedPitaya SPM-Control-PACPLL-Pulse Project
 
 Experimental and development code only
 
-(C) PyZahl 2023-08-15
+(C) PyZahl 2025-01-05
 
 # 1. General Information
 
