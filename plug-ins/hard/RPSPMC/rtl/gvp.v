@@ -308,17 +308,17 @@ module gvp #(
         end
     end    
     
-    assign M_AXIS_X_tdata = SATURATE_32(vec_x);
+    assign M_AXIS_X_tdata = `SATURATE_32(vec_x);
     assign M_AXIS_X_tvalid = 1;
-    assign M_AXIS_Y_tdata = SATURATE_32(vec_y);
+    assign M_AXIS_Y_tdata = `SATURATE_32(vec_y);
     assign M_AXIS_Y_tvalid = 1;
-    assign M_AXIS_Z_tdata = SATURATE_32(vec_z);
+    assign M_AXIS_Z_tdata = `SATURATE_32(vec_z);
     assign M_AXIS_Z_tvalid = 1;
-    assign M_AXIS_U_tdata = SATURATE_32(vec_u);
+    assign M_AXIS_U_tdata = `SATURATE_32(vec_u);
     assign M_AXIS_U_tvalid = 1;
-    assign M_AXIS_A_tdata = SATURATE_32(vec_a);
+    assign M_AXIS_A_tdata = `SATURATE_32(vec_a);
     assign M_AXIS_A_tvalid = 1;
-    assign M_AXIS_B_tdata = SATURATE_32(vec_b);
+    assign M_AXIS_B_tdata = `SATURATE_32(vec_b);
     assign M_AXIS_B_tvalid = 1;
     assign M_AXIS_SRCS_tdata = set_options;
     assign M_AXIS_SRCS_tvalid = 1;
