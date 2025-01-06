@@ -22,6 +22,7 @@ http://www.ventiotec.de/linux/GXSM-Linux.iso
 GXSM Web Site: http://gxsm.sf.net
 
 # 2. Installation
+You will need to grab the free version of Vivado from AMD / Xilinx. I am using 2023.1, but newer shall do also.
 
 vivado -source make_all.tcl
 
