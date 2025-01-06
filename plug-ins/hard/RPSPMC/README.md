@@ -1,10 +1,11 @@
 # **ATTENTION:**
+![gxsm4-rp-icon](https://github.com/user-attachments/assets/3965aa8b-5241-44a0-87de-178a100f6803)
 
 RedPitaya SPM-Control-PACPLL-Pulse Project
 
 Experimental and development code only
 
-(C) PyZahl 2023-08-15
+(C) PyZahl 2025-01-05
 
 # 1. General Information
 
