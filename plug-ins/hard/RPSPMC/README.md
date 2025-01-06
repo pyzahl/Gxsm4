@@ -41,3 +41,20 @@ Set the "root" (or start vivado form there) "here" where this README.md file is 
 Vivado tcl command:
 
 write_project_tcl recreated-new-version.tcl
+
+
+# 4. A global design overview at Block and Interface Level:
+
+![Screenshot from 2025-01-06 12-41-03](https://github.com/user-attachments/assets/6ca60d98-c22e-41b5-a974-3a3a0460623a)
+
+PAC-PLL Block:
+![Screenshot from 2025-01-06 12-53-27](https://github.com/user-attachments/assets/da044cf5-2aad-40fc-b1a9-e925d70069a6)
+
+SPMC Main Block:
+![Screenshot from 2025-01-06 13-05-21](https://github.com/user-attachments/assets/4fdd3691-850d-4284-9ffc-14a9efa70e19)
+
+Z-Servo Controller Block:
+![Screenshot from 2025-01-06 13-09-56](https://github.com/user-attachments/assets/cc823f36-4cd9-4d33-bbfb-c968eb557e47)
+
+
+
