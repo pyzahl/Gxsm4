@@ -237,8 +237,8 @@ module axis_spm_control#(
         modulation_reg_address:
         begin
             // modulation control
-            modulation_volume <= config_data[11*32-1 : 10*32]; // volume for modulation Q31
-            modulation_target <= config_data[12*32-1 : 11*32]; // target signal for mod (#XYZUAB)
+            modulation_volume <= config_data[1*32-1 : 0*32]; // volume for modulation Q31
+            modulation_target <= config_data[2*32-1 : 1*32]; // target signal for mod (#XYZUAB)
         end
         endcase
     end

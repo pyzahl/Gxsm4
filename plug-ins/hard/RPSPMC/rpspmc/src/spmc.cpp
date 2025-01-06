@@ -920,10 +920,12 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
         }
 }
 
-
+// SPMC GVP STREAM SOURCE MUX 16 to 6
 void rp_set_gvp_stream_mux_selector (unsigned long selector, unsigned long test_mode=0, int testval=0){
         if (verbose > 1) fprintf(stderr, "** set gvp stream mux 0x%06x\n", (unsigned int)selector);
-        rp_spmc_gvp_module_config_uint32 (SPMC_MUX16_6_SRCS_CONTROL_REG, selector, 0);
+        rp_spmc_gvp_module_config_uint32 (MODULE_SETUP, selector, MODULE_START_VECTOR);
+        rp_spmc_gvp_module_config_uint32 (MODULE_SETUP, test_mode, MODULE_SETUP_VECTOR(1));
+        rp_spmc_gvp_module_config_uint32 (SPMC_MUX16_6_SRCS_CONTROL_REG, testval, MODULE_SETUP_VECTOR(2));
 }
 
 // RPSPMC Location and Geometry
@@ -935,8 +937,8 @@ int rp_spmc_set_rotation (double alpha, double slew){
 
         if (slew < 0.){ // FORCE SET/INIT
                 current_alpha = alpha;
-                set_gpio_cfgreg_int32 (SPMC_ROTM_XX, (int)round (Q_XY_PRECISION*cos(current_alpha)));
-                set_gpio_cfgreg_int32 (SPMC_ROTM_XY, (int)round (Q_XY_PRECISION*sin(current_alpha)));
+                double data[16] = { cos(current_alpha), sin(current_alpha),0.,0., 0.,0.,0.,0., 0.,0.,0.,0., 0.,0.,0.,0. };
+                rp_spmc_gvp_module_config_vector_Qn (SPMC_MAIN_CONTROL_ROTM_REG, data, 2, Q_XY_PRECISION);
                 return 0;
         }
         
