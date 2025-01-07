@@ -192,8 +192,13 @@ SOURCE_SIGNAL_DEF swappable_signals[] = {                                       
         { 0x00000012, "12-LockInMag",   " ", "V", "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),                          -1 },
         { 0x00000013, "13-SineRef",     " ", "V",   "V", (SPMC_RPIN12_to_volts),                        -1 },
         { 0x00000014, "14-IN1noFIR",    " ", "V",   "V", (SPMC_RPIN12_to_volts),                        -1 },
-        { 0x00000015, "15-ZwSlope-OUT", " ", "V",   "V", (SPMC_AD5791_to_volts),                         5 },
-        { 0x00000016,  NULL, NULL, NULL, NULL, 0.0, 0 }
+        { 0x00000015, "15-ZwSlope-OUT", " ", "V",   "V", (SPMC_AD5791_to_volts),                        -1 },
+        { 0x00000016, "X-TestSignal = 0", " ", "V",   "V", (1.0),                         -1 },
+        { 0x00000017, "X-TestSignal = 1", " ", "V",   "V", (1.0),                         -1 },
+        { 0x00000018, "X-TestSignal = -1", " ", "V",   "V", (1.0),                         -1 },
+        { 0x00000019, "X-TestSignal = 99", " ", "V",   "V", (1.0),                        -1 },
+        { 0x00000020, "X-TestSignal = -99", " ", "V",   "V", (1.0),                        -1 },
+        { 0x00000021,  NULL, NULL, NULL, NULL, 0.0, 0 }
 };
 
 SOURCE_SIGNAL_DEF modulation_targets[] = {
@@ -209,7 +214,31 @@ SOURCE_SIGNAL_DEF modulation_targets[] = {
 };
 
 // helper func to assemble mux value from selctions
-int __GVP_selection_muxval(int selection[6]) { int mux=0; for (int i=0; i<6; i++) mux |= (selection[i] & 0x0f)<<(4*i); return mux; }
+int __GVP_selection_muxval (int selection[6]) {
+        int mux=0;
+        for (int i=0; i<6; i++)
+                if (selection[i] < 16)
+                        mux |= (selection[i] & 0x0f)<<(4*i); // regular MUX control
+        return mux;
+}
+
+// make MUX HVAL for TEST
+int __GVP_selection_muxHval (int selection[6]) {
+        int muxh=0;
+        int axis_test=0;
+        int axis_value=0;
+        for (int i=0; i<6; i++)
+                if (selection[i] >= 16)
+                        switch (selection[i]-16){
+                        case 0: axis_test = i+1; axis_value = 0; break;
+                        case 1: axis_test = i+1; axis_value = 1; break;
+                        case 2: axis_test = i+1; axis_value = -1; break;
+                        case 3: axis_test = i+1; axis_value = 99; break;
+                        case 4: axis_test = i+1; axis_value = -99; break;
+                        default: continue;
+                        }
+        return ((axis_value & 0xfffffff) << 4) | (axis_test&0xf);
+}
 
 extern int debug_level;
 extern int force_gxsm_defaults;
@@ -936,9 +965,9 @@ void RPSPMC_Control::GVP_restore_vp (const gchar *key){
         // update Graphs
         for (int i=0; graphs_matrix[0][i]; ++i)
                 if (graphs_matrix[0][i]){
-                        gtk_check_button_set_active (GTK_CHECK_BUTTON (graphs_matrix[0][i]),  Source & rpspmc_source_signals[i].mask);
-                        gtk_check_button_set_active (GTK_CHECK_BUTTON (graphs_matrix[1][i]), XSource & rpspmc_source_signals[i].mask);
-                        gtk_check_button_set_active (GTK_CHECK_BUTTON (graphs_matrix[2][i]), PSource & rpspmc_source_signals[i].mask);
+                        gtk_check_button_set_active (GTK_CHECK_BUTTON (graphs_matrix[0][i]),  Source & rpspmc_source_signals[i].mask?true:false);
+                        gtk_check_button_set_active (GTK_CHECK_BUTTON (graphs_matrix[1][i]), XSource & rpspmc_source_signals[i].mask?true:false);
+                        gtk_check_button_set_active (GTK_CHECK_BUTTON (graphs_matrix[2][i]), PSource & rpspmc_source_signals[i].mask?true:false);
                         // ..
                  }
 
@@ -2739,9 +2768,16 @@ int RPSPMC_Control::choice_prbsource_callback (GtkWidget *widget, RPSPMC_Control
 	self->probe_source[channel] = selection;
 
         rpspmc_hwi->set_spmc_signal_mux (RPSPMC_ControlClass->probe_source);
-        if (rpspmc_pacpll)
-                rpspmc_pacpll->write_parameter ("SPMC_GVP_STREAM_MUX", __GVP_selection_muxval (self->probe_source));
-
+        if (rpspmc_pacpll){
+                const gchar *SPMC_SET_MUX_COMPONENTS[] = {
+                        "SPMC_GVP_STREAM_MUX",
+                        "SPMC_GVP_STREAM_MUXH",
+                        NULL };
+                int jdata_i[2];
+                jdata_i[0] = __GVP_selection_muxval (self->probe_source);
+                jdata_i[1] = __GVP_selection_muxHval (self->probe_source);
+                rpspmc_pacpll->write_array (SPMC_SET_MUX_COMPONENTS, 2, jdata_i,  0, NULL);
+        }
         g_message ("RPSPMC_Control::choice_prbsource_callback: probe_source[%d] = %d [%s] MUX=%08x", channel, selection,
                    swappable_signals[selection].label,
                    __GVP_selection_muxval (self->probe_source));

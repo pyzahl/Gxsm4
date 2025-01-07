@@ -32,9 +32,7 @@ module QControl #(
     parameter QC_PHASE_LEN2    = 13
 )
 (
-    //(* X_INTERFACE_PARAMETER = "FREQ_HZ 62500000" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF S_AXIS_SIGNAL_M" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS_SIGNAL_M" *)
     input a_clk,
     input wire [SIGNAL_M_WIDTH-1:0]    S_AXIS_SIGNAL_M_tdata,
     input wire                         S_AXIS_SIGNAL_M_tvalid,
@@ -43,10 +41,8 @@ module QControl #(
     input wire [16-1:0]  QC_gain,
     input wire [16-1:0]  QC_delay,
 
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN adc_clk" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF M_AXIS" *)
-     input adc_clk,
-    //(* X_INTERFACE_PARAMETER = "FREQ_HZ 125000000" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN adc_clk, ASSOCIATED_BUSIF M_AXIS" *)
+    input adc_clk,
     output [AXIS_TDATA_WIDTH-1:0]      M_AXIS_tdata,
     output                             M_AXIS_tvalid
 );

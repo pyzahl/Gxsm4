@@ -222,7 +222,7 @@ CIntParameter BRAM_SCOPE_SHIFT_POINTS("BRAM_SCOPE_SHIFT_POINTS", CBaseParameter:
 CIntParameter BRAM_WRITE_ADR("BRAM_WRITE_ADR", CBaseParameter::RW, 0, 0, 0, 1<<16);
 CIntParameter BRAM_SAMPLE_POS("BRAM_SAMPLE_POS", CBaseParameter::RW, 0, 0, 0, 1<<16);
 CIntParameter BRAM_FINISHED("BRAM_FINISHED", CBaseParameter::RW, 0, 0, 0, 1);
-CIntParameter BRAM_DEC_COUNT("BRAM_DEC_COUNT", CBaseParameter::RW, 0, 0, 0, 0xffffffff);
+CIntParameter BRAM_DEC_COUNT("BRAM_DEC_COUNT", CBaseParameter::RW, 0, 0, -2147483648,2147483647);
 
 CFloatParameter DC_OFFSET("DC_OFFSET", CBaseParameter::RW, 0, 0, -1000.0, 1000.0); // mV
 
@@ -374,7 +374,8 @@ CDoubleParameter  SPMC_Z_SERVO_LEVEL("SPMC_Z_SERVO_LEVEL", CBaseParameter::RW, 0
 #define SPMC_GVP_CONTROL_PAUSE     2
 #define SPMC_GVP_CONTROL_RESUME    3
 
-CIntParameter     SPMC_GVP_STREAM_MUX("SPMC_GVP_STREAM_MUX", CBaseParameter::RW, 0, 0, 0, 0xffffff); //
+CIntParameter    SPMC_GVP_STREAM_MUX("SPMC_GVP_STREAM_MUX",   CBaseParameter::RW, 0, 0, -2147483648,2147483647); //
+CIntParameter    SPMC_GVP_STREAM_MUXH("SPMC_GVP_STREAM_MUXH", CBaseParameter::RW, 0, 0, -2147483648,2147483647); //
 
 CIntParameter     SPMC_GVP_CONTROL_MODE("SPMC_GVP_CONTROL", CBaseParameter::RW, 0, 0, 0, 0xffff);
 CBooleanParameter SPMC_GVP_LIVE_VECTOR_UPDATE("SPMC_GVP_LIVE_VECTOR_UPDATE", CBaseParameter::RW, true, 0);
@@ -1591,10 +1592,15 @@ void OnNewParams_RPSPMC(void){
                                         );
         }
 
-        if (SPMC_GVP_STREAM_MUX.IsNewValue ()){
+        if (SPMC_GVP_STREAM_MUX.IsNewValue () || SPMC_GVP_STREAM_MUXH.IsNewValue ()){
                 SPMC_GVP_STREAM_MUX.Update ();
-                fprintf(stderr, "*** SPMC_GVP_STREAM_MUX.IsNew Value = %06x\n", SPMC_GVP_STREAM_MUX.Value ());
-                rp_set_gvp_stream_mux_selector (SPMC_GVP_STREAM_MUX.Value ());
+                SPMC_GVP_STREAM_MUXH.Update ();
+                int mux  = SPMC_GVP_STREAM_MUX.Value ();
+                int muxh = SPMC_GVP_STREAM_MUXH.Value ();
+                int axis_test=muxh&0xf;
+                int axis_value=muxh>>4;
+                fprintf(stderr, "*** SPMC_GVP_STREAM_MUX: %08x-%08x (AXIS[%d] <= %d)\n", muxh, mux, axis_test, axis_value);
+                rp_set_gvp_stream_mux_selector (mux, axis_test, axis_value);
         }
 
         if (SPMC_GVP_RESET_OPTIONS.IsNewValue ()){

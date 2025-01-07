@@ -26,8 +26,7 @@ module axis_ctrlsrc_select #(
     parameter ADD_OFFSET = 1
 )
 (
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF S_AXIS:S_AXIS_LN:M_AXIS_ABS:M_AXIS_MON:M_AXIS" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS:S_AXIS_LN:M_AXIS_ABS:M_AXIS_MON:M_AXIS" *)
     input a_clk,
     input wire [SAXIS_DATA_WIDTH-1:0]  S_AXIS_tdata,
     input wire                         S_AXIS_tvalid,

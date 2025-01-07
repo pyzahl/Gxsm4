@@ -49,7 +49,6 @@ module phase_unwrap #(
     parameter PHU_DISABLE = 0          // FORCE STATIC DISABLED
 )
 (
-    // (* X_INTERFACE_PARAMETER = "FREQ_HZ 125000000" *)
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN aclk" *)
     input aclk,
 
@@ -72,13 +71,6 @@ module phase_unwrap #(
 
     reg [1:0] rdecii = 0;
 
-/*
-    always @ (posedge aclk)
-    begin
-        rdecii <= rdecii+1;
-    end
-*/
-    //always @ (posedge rdecii[1])
     always @ (posedge aclk)
     begin
         rdecii <= rdecii+1; // rdecii 00 01 *10 11 00 ...

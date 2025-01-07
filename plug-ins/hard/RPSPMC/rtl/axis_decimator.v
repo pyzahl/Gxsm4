@@ -52,15 +52,13 @@ module axis_decimator #
 )
 (
     // Source side
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN adc_clk" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF S_AXIS_SIGNAL" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN adc_clk, ASSOCIATED_BUSIF S_AXIS_SIGNAL" *)
     input adc_clk,
     input wire [AXIS_SIGNAL_TDATA_WIDTH-1:0]  S_AXIS_SIGNAL_tdata,
     input wire                                S_AXIS_SIGNAL_tvalid,
 
     // Master side
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN aclk" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF M_AXIS_S0:M_AXIS_S1:M_AXIS_S01" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN aclk, ASSOCIATED_BUSIF M_AXIS_S0:M_AXIS_S1:M_AXIS_S01" *)
     input aclk,
 
     //(* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN aclk" *)

@@ -81,8 +81,6 @@ module axis_dc_filter #
     
 );
 
-    reg reg_sc_zero;
-    
     reg signed [31:0] reg_dc_tau; // Q31 tau DC iir at cos-sin zero x
     reg signed [LMS_DATA_WIDTH-1:0] reg_dc; // Q22
 
@@ -101,19 +99,11 @@ module axis_dc_filter #
 
     reg [1:0] rdecii = 0;
 
-/*
-    always @ (posedge aclk)
-    begin
-        rdecii <= rdecii+1;
-    end
-*/
-    //always @ (posedge rdecii[1])
     always @ (posedge aclk)
     begin
         rdecii <= rdecii+1; // rdecii 00 01 *10 11 00 ...
         if (rdecii[1]==1)
         begin
-            reg_sc_zero <= sc_zero;
             reg_dc_tau  <= dc_tau; // Q31 tau DC iir at cos-sin zero x
             reg_dc      <= {dc[LMS_DATA_WIDTH-1], dc[LMS_DATA_WIDTH-2:0]}; // Q22 -> QLMS (26.Q22)
     

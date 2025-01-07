@@ -204,7 +204,7 @@ module axis_py_lockin#(
                 rdecii <= 0; // reset
                 // 1
                 signal <= signal_dec >>> decii2;
-                signal_dec <= sig_in;; // start new sum
+                signal_dec <= sig_in; // start new sum
             end
             else
             begin
