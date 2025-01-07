@@ -47,8 +47,7 @@ module amplitude_good#(
     parameter AXIS_TDATA_WIDTH = 32
 )
 (
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN aclk" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF S_AXIS_AM:S_AXIS_AMTHR" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN aclk, ASSOCIATED_BUSIF S_AXIS_AM:S_AXIS_AMTHR" *)
     input aclk,
     input wire [AXIS_TDATA_WIDTH-1:0]  S_AXIS_AM_tdata, // Amplitude Reading
     input wire                         S_AXIS_AM_tvalid,

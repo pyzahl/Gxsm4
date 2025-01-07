@@ -135,8 +135,8 @@ module axis_biquad_iir_filter #(
           output_pipe1 <= 0;
           output_pipe2 <= 0;
         end
-        else
-          if (S_AXIS_tvalid) begin
+        else if (S_AXIS_tvalid) 
+        begin
 
             /* resize signals to internal width */
             input_int    <= { {(internal_integer_width-inout_integer_width){S_AXIS_tdata[inout_width-1]}},
@@ -146,12 +146,9 @@ module axis_biquad_iir_filter #(
             input_pipe2  <= input_pipe1;
             output_pipe1 <= (input_b0 + input_b1 + input_b2 - output_a1 - output_a2) >>> (internal_decimal_width); //output_int;
             output_pipe2 <= output_pipe1;
-          end
-    end
+        end
             
     // compute IIR kernels
-    always @(posedge aclk)
-    begin
         if (!resetn) begin
             input_b0  <= 0;
             input_b1  <= 0;
@@ -160,11 +157,11 @@ module axis_biquad_iir_filter #(
             output_a2 <= 0;
         end
         else begin
-            input_b0  <=    input_int * b0_int; // IIR 1st stage (n)
-            input_b1  <=  input_pipe1 * b1_int; // IIR 1st stage (n-1)
-            input_b2  <=  input_pipe2 * b2_int;
-            output_a1 <= output_pipe1 * a1_int;
-            output_a2 <= output_pipe2 * a2_int;    
+            input_b0  <= b0_int * input_int;   // IIR 1st stage (n)
+            input_b1  <= b1_int * input_pipe1; // IIR 1st stage (n-1)
+            input_b2  <= b2_int * input_pipe2;
+            output_a1 <= a1_int * output_pipe1;
+            output_a2 <= a2_int * output_pipe2;    
             //output_2int <= (input_b0 + input_b1 + input_b2 - output_a1 - output_a2);
             //output_int <= output_2int >>> (internal_decimal_width);
         end

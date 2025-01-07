@@ -85,8 +85,7 @@ module axis_4s_combine #(
 )
 (
     // (* X_INTERFACE_PARAMETER = "FREQ_HZ 125000000" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF S_AXIS1:S_AXIS1S:S_AXIS2:S_AXIS3:S_AXIS4:S_AXIS5:S_AXIS6:S_AXIS7:S_AXIS8:M_AXIS_CH1:M_AXIS_CH2:M_AXIS_CH3:M_AXIS_CH4:M_AXIS_DFREQ_DEC:M_AXIS_DFREQ_DEC2" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS1:S_AXIS1S:S_AXIS2:S_AXIS3:S_AXIS4:S_AXIS5:S_AXIS6:S_AXIS7:S_AXIS8:M_AXIS_CH1:M_AXIS_CH2:M_AXIS_CH3:M_AXIS_CH4:M_AXIS_DFREQ_DEC:M_AXIS_DFREQ_DEC2" *)
     input a_clk,
     // input a_resetn
     
@@ -210,13 +209,6 @@ module axis_4s_combine #(
     reg i_zero_spcp1 = 0;
     reg zero_x_s = 0;
 
-
-/*
-    always @ (posedge a_clk)
-    begin
-        rdecii <= rdecii+1;
-    end
-*/
 
     always @ (posedge a_clk)
     begin
@@ -393,7 +385,7 @@ module axis_4s_combine #(
                 end
                 else begin
                     // normalize and store summed data data 
-                    chPHs <= (chPH >>> reg_shift);   // PHC Phase (24) =>  32
+                    chPHs <= (chPH >>> reg_shift);   // PHC Phase (24) =>  32 *** not used ***
                     chDFs <= (chDF >>> reg_shift);   // Freq (48) - Center (48)
                     chAMs <= (chAM >>> reg_shift);   // AMPL ch3s
                     chEXs <= (chEX >>> reg_shift);   // EXEC ch4s

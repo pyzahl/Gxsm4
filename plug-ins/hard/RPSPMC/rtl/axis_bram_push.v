@@ -71,17 +71,19 @@ module axis_bram_push #(
     input wire push_next,
     input wire reset,
     
-    // BRAM PORT A
-    (* X_INTERFACE_PARAMETER = "FREQ_HZ 125000000, ASSOCIATED_CLKEN a2_clk, ASSOCIATED_BUSIF BRAM_PORTA" *)
+    // INPUT
+    (* X_INTERFACE_PARAMETER = "FREQ_HZ 125000000, ASSOCIATED_CLKEN a2_clk, ASSOCIATED_BUSIF ch1s:ch2s" *)
     input a2_clk, // double a_clk used for BRAM (125MHz)
     
-    output wire                        BRAM_PORTA_clk,
-    output wire [BRAM_ADDR_WIDTH-1:0]  BRAM_PORTA_addr,
-    output wire [BRAM_DATA_WIDTH-1:0]  BRAM_PORTA_din,
+    // BRAM PORT A
+    (* X_INTERFACE_PARAMETER = "FREQ_HZ 125000000, ASSOCIATED_CLKEN BRAM_PORTA_clka, ASSOCIATED_BUSIF BRAM_PORTA" *)
+    output wire                        BRAM_PORTA_clka,
+    output wire [BRAM_ADDR_WIDTH-1:0]  BRAM_PORTA_addra,
+    output wire [BRAM_DATA_WIDTH-1:0]  BRAM_PORTA_dina,
     // input  wire [BRAM_DATA_WIDTH-1:0]  BRAM_PORTA_rddata,
-    // output wire                        BRAM_PORTA_rst,
-    output wire                        BRAM_PORTA_en,
-    output wire                        BRAM_PORTA_we,
+    // output wire       BRAM_PORTA_rst,
+    output wire       BRAM_PORTA_ena,
+    output wire [0:0] BRAM_PORTA_wea,
 
     output wire [16-1:0]  last_write_addr,
     output wire ready
@@ -101,14 +103,14 @@ module axis_bram_push #(
 
     reg status_ready=1;
 
-    assign BRAM_PORTA_clk = a2_clk;
+    assign BRAM_PORTA_clka = a2_clk;
     // assign BRAM_PORTA_rst = ~a_resetn;
-    assign BRAM_PORTA_we = bram_wren;
-    assign BRAM_PORTA_en = bram_wren;
-    assign BRAM_PORTA_addr = bram_addr;
-    assign BRAM_PORTA_din = bram_data;
+    assign BRAM_PORTA_wea = bram_wren;
+    assign BRAM_PORTA_ena = bram_wren;
+    assign BRAM_PORTA_addra = bram_addr;
+    assign BRAM_PORTA_dina = bram_data;
 
-    assign last_write_addr = {{(16-BRAM_ADDR_WIDTH){0'b0}}, bram_addr[BRAM_ADDR_WIDTH-1:0]};
+    assign last_write_addr = {{(16-BRAM_ADDR_WIDTH){1'b0}}, bram_addr[BRAM_ADDR_WIDTH-1:0]};
         
     assign ready = status_ready;
 

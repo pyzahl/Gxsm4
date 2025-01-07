@@ -31,9 +31,7 @@ module VolumeAdjuster16_14 #(
     parameter VAXIS_DATA_Q     = 14
 )
 (
-    //(* X_INTERFACE_PARAMETER = "FREQ_HZ 62500000" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF S_AXIS:SV_AXIS:S_AXIS_SIGNAL_M" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS:SV_AXIS:S_AXIS_SIGNAL_M" *)
     input a_clk,
     input wire [AXIS_TDATA_WIDTH-1:0]  S_AXIS_tdata,
     input wire                         S_AXIS_tvalid,
@@ -41,10 +39,8 @@ module VolumeAdjuster16_14 #(
     input wire [VAXIS_DATA_WIDTH-1:0]  SV_AXIS_tdata,
     input wire                         SV_AXIS_tvalid,
 
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN adc_clk" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF M_AXIS" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN adc_clk, ASSOCIATED_BUSIF M_AXIS" *)
      input adc_clk,
-    //(* X_INTERFACE_PARAMETER = "FREQ_HZ 125000000" *)
     output [AXIS_TDATA_WIDTH-1:0]      M_AXIS_tdata,
     output                             M_AXIS_tvalid
 );

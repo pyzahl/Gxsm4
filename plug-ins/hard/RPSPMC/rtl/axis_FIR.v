@@ -27,9 +27,7 @@ module axis_FIR #(
     parameter FIR_DECI_L = 6 // extra bits to accomodate FIR_DECI number 
 )
 (
-    // (* X_INTERFACE_PARAMETER = "FREQ_HZ 125000000" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF S_AXIS:M_AXIS:M_AXIS2" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS:M_AXIS:M_AXIS2" *)
     input a_clk,
     input next_dv,
     
