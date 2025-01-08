@@ -216,7 +216,8 @@ struct SPMC_parameters {
         double sc_lck_frequency;
         double sc_lck_volume;
         double sc_lck_target;
-        double sc_lck_tau;
+        double sc_lck_bq_tau;
+        double sc_lck_iir_tau;
         double sc_lck_q;
         double sc_lck_gain;
 };

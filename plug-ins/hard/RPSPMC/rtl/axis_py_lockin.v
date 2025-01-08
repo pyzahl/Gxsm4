@@ -74,7 +74,11 @@ module axis_py_lockin#(
     output wire           M_AXIS_SignalOut_tvalid,
     // i out
     output wire [32-1:0]  M_AXIS_i_tdata,
-    output wire           M_AXIS_i_tvalid
+    output wire           M_AXIS_i_tvalid,
+
+    (* X_INTERFACE_PARAMETER = "FREQ_HZ 2000000, ASSOCIATED_CLKEN axis_deci_clk" *)
+    output wire           axis_deci_clk
+
     );
 
     // DDS Control
@@ -89,7 +93,6 @@ module axis_py_lockin#(
        
     reg signed [SC_DATA_WIDTH-1:0] s=0; // Q SC (25Q24)
     reg signed [SC_DATA_WIDTH-1:0] c=0; // Q SC (25Q24)
-    reg signed [31:0] sd=0; // dbg only
 
     reg signed [31:0] gain = Q24;
     reg signed [SC_DATA_WIDTH-1:0] signal_in  = 0;        // input signal
@@ -127,6 +130,8 @@ module axis_py_lockin#(
     reg [DECII2_MAX-1:0] decii  = 0;
     reg [DECII2_MAX-1:0] rdecii = 0;
 
+    reg decii_clk=0;
+
     reg [4-1:0] finishthis=0;
 
     reg [31:0] lck_config=0;
@@ -140,6 +145,7 @@ module axis_py_lockin#(
             LckY_mem [ii] = 0;
         end     
     end
+
 
     always @ (posedge a_clk)
     begin
@@ -164,11 +170,8 @@ module axis_py_lockin#(
         signal_in <= $signed(S_AXIS_SIGNAL_tdata[S_AXIS_SIGNAL_TDATA_WIDTH-1:S_AXIS_SIGNAL_TDATA_WIDTH-SC_DATA_WIDTH]);   
         sig_in_x_gain <= gain * signal_in;
         sig_in <= sig_in_x_gain >>> 24;  
-    end
 
-    
-    always @ (posedge a_clk)
-    begin
+
         // Sin, Cos
         c <= S_AXIS_SC_tdata[                        SC_DATA_WIDTH-1 :                       0];  // 25Q24 full dynamic range, proper rounding   24: 0
         s <= S_AXIS_SC_tdata[S_AXIS_SC_TDATA_WIDTH/2+SC_DATA_WIDTH-1 : S_AXIS_SC_TDATA_WIDTH/2];  // 25Q24 full dynamic range, proper rounding   56:32
@@ -215,8 +218,8 @@ module axis_py_lockin#(
                 // LockIn ====
                 case (rdecii)
                 0: begin
+                    decii_clk <= 0;
                     // Quad Correlation Products
-                    sd <= signal; // dbg purpose only
                     LckXcorrpW <= s * signal; // SC_Q_WIDTH x LMS_DATA_WIDTH , LMS_Q_WIDTH
                     LckYcorrpW <= c * signal; //
                 end
@@ -243,6 +246,7 @@ module axis_py_lockin#(
                     x  <= a + b;
                 end
                 5: begin                    
+                    decii_clk <= 1;
                     ampl2 <= (a2 + b2) >>> (2*(LCK_CORRSUM_WIDTH-1)+1 - AM2_DATA_WIDTH); // Q48 for SQRT
                 end
                 endcase
@@ -263,14 +267,15 @@ module axis_py_lockin#(
     assign M_AXIS_Sref_tdata = {{(32-SC_DATA_WIDTH){c[SC_DATA_WIDTH-1]}}, {c[SC_DATA_WIDTH-1:0]}};
     assign M_AXIS_Sref_tvalid = 1;
     // test, dec s
-    assign M_AXIS_SDref_tdata = a;
+    assign M_AXIS_SDref_tdata = {{(32-SC_DATA_WIDTH){sig_in[SC_DATA_WIDTH-1]}}, {sig_in[SC_DATA_WIDTH-1:0]}};
     assign M_AXIS_SDref_valid = 1;
     // dec signal
-    assign M_AXIS_SignalDec_tdata = {{(32-SC_DATA_WIDTH){signal[SC_DATA_WIDTH-1]}}, {signal[SC_DATA_WIDTH-1:0]}};
-    assign M_AXIS_SignalDec_tvalid = 1;
+    assign M_AXIS_SignalOut_tdata = {{(32-SC_DATA_WIDTH){signal[SC_DATA_WIDTH-1]}}, {signal[SC_DATA_WIDTH-1:0]}};
+    assign M_AXIS_SignalOut_tvalid = 1;
     // i out
     assign M_AXIS_i_tdata  = i;
     assign M_AXIS_i_tvalid = 1;
 
+    assign axis_deci_clk = decii_clk;
 
 endmodule

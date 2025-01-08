@@ -50,7 +50,7 @@ module axis_biquad_iir_filter #(
     /* config address */
     parameter configuration_address = 999
     )(
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN aclk, ASSOCIATED_BUSIF S_AXIS:M_AXIS" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN aclk, ASSOCIATED_BUSIF S_AXIS:M_AXIS:M_AXIS_pass" *)
     input aclk,
     
     input [32-1:0]  config_addr,
@@ -59,10 +59,15 @@ module axis_biquad_iir_filter #(
     /* slave axis interface */
     input [inout_width-1:0] S_AXIS_tdata,
     input S_AXIS_tvalid,
+
+    input wire axis_decii_clk,
     
     /* master axis interface */
     output [inout_width-1:0] M_AXIS_tdata,
-    output M_AXIS_tvalid
+    output M_AXIS_tvalid,
+    
+    output [inout_width-1:0] M_AXIS_pass_tdata,
+    output M_AXIS_pass_tvalid
     );
     
     localparam inout_integer_width = inout_width - inout_decimal_width; /* compute integer width */
@@ -94,8 +99,13 @@ module axis_biquad_iir_filter #(
     reg signed [internal_width + internal_width-1:0] output_a2=0; /* product output */
     //reg signed [internal_width + internal_width-1:0] output_2int=0; /* adder output */
     
+    reg decii_clk=0;
+    reg run=0;
+    
     assign M_AXIS_tvalid = S_AXIS_tvalid;
 
+    assign M_AXIS_pass_tdata  = S_AXIS_tdata;
+    assign M_AXIS_pass_tvalid = S_AXIS_tvalid;
 
 
     /* pipeline registers */
@@ -122,22 +132,30 @@ module axis_biquad_iir_filter #(
             resetn <= 0;                     
         end
         else // run
-            resetn <= 1;                     
+            resetn <= 1;
+            decii_clk <= axis_decii_clk;                     
     end    
 
     
     // pipeline of registers
+
     always @(posedge aclk)
+    //always @(posedge axis_decii_clk)
     begin
+        if (decii_clk) // run at decimated rate as given by axis_decii_clk
+            run <= 1;
+        
+        if (run)
+            run <= 0;
+            
         if (!resetn) begin
           input_pipe1 <= 0;
           input_pipe2 <= 0;
           output_pipe1 <= 0;
           output_pipe2 <= 0;
         end
-        else if (S_AXIS_tvalid) 
+        else if (S_AXIS_tvalid && run) 
         begin
-
             /* resize signals to internal width */
             input_int    <= { {(internal_integer_width-inout_integer_width){S_AXIS_tdata[inout_width-1]}},
                                S_AXIS_tdata,
@@ -156,7 +174,8 @@ module axis_biquad_iir_filter #(
             output_a1 <= 0;
             output_a2 <= 0;
         end
-        else begin
+        else if (run) 
+        begin
             input_b0  <= b0_int * input_int;   // IIR 1st stage (n)
             input_b1  <= b1_int * input_pipe1; // IIR 1st stage (n-1)
             input_b2  <= b2_int * input_pipe2;

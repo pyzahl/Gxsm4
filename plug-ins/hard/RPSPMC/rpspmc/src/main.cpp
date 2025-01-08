@@ -422,7 +422,7 @@ CIntParameter     SPMC_SC_LCK_TARGET(   "SPMC_SC_LCK_TARGET", CBaseParameter::RW
 CDoubleParameter  SPMC_SC_LCK_GAIN(     "SPMC_SC_LCK_GAIN", CBaseParameter::RW, 0.0, 0, -1e10, 1e10); // Q
 
 CDoubleParameter  SPMC_SC_LCK_F0BQ_TAU("SPMC_SC_LCK_F0BQ_TAU", CBaseParameter::RW, 0.0, 0, 0.0, 1e10); // ms
-CDoubleParameter  SPMC_SC_LCK_F0BQ_Q(  "SPMC_SC_LCK_F0BQ_Q", CBaseParameter::RW, 0.0, 0, -1e10, 1e10); // Q
+CDoubleParameter  SPMC_SC_LCK_F0BQ_Q(  "SPMC_SC_LCK_F0BQ_Q", CBaseParameter::RW, 0.0, 0, -1e10, 1e10); // BQ Q
 CDoubleParameter  SPMC_SC_LCK_F0BQ_IIR("SPMC_SC_LCK_F0BQ_IIR", CBaseParameter::RW, 0.0, 0, 0.0, 1e10); // ms 0: pass mode
 
 
@@ -1487,6 +1487,7 @@ void UpdateParams(void){
 // ****************************************
 void OnNewParams_RPSPMC(void){
         static int do_rotate=0;
+        static double lck_f0_frq=0;
         
         //SPMC_GVP_STATUS.Update ();
 
@@ -1669,7 +1670,7 @@ void OnNewParams_RPSPMC(void){
                         mode = 1;
                 else if (gain < 0) // via signal A
                         mode = 2;
-                rp_spmc_configure_lockin (SPMC_SC_LCK_FREQUENCY.Value (), gain, mode, SPMC_LOCKIN_F0_CONTROL_REG);
+                lck_f0_frq = rp_spmc_configure_lockin (SPMC_SC_LCK_FREQUENCY.Value (), gain, mode, SPMC_LOCKIN_F0_CONTROL_REG);
         }
 
         if (SPMC_SC_LCK_TARGET.IsNewValue () || SPMC_SC_LCK_VOLUME.IsNewValue ()){
@@ -1682,27 +1683,25 @@ void OnNewParams_RPSPMC(void){
         if (SPMC_SC_LCK_F0BQ_TAU.IsNewValue ()){
                 SPMC_SC_LCK_F0BQ_TAU.Update ();
                 SPMC_SC_LCK_F0BQ_Q.Update ();
-                rp_spmc_set_biqad_Lck_F0 (1000./SPMC_SC_LCK_F0BQ_TAU.Value (), SPMC_SC_LCK_F0BQ_Q.Value (), SPMC_CLK, SPMC_BIQUAD_F0_CONTROL_REG);
+                rp_spmc_set_biqad_Lck_F0 (1000./SPMC_SC_LCK_F0BQ_TAU.Value (), SPMC_SC_LCK_F0BQ_Q.Value (), lck_f0_frq, SPMC_BIQUAD_F0_CONTROL_REG);
         }
-        if (SPMC_SC_LCK_F0BQ_Q.IsNewValue ()){
+        if (SPMC_SC_LCK_F0BQ_Q.IsNewValue () || SPMC_SC_LCK_F0BQ_TAU.IsNewValue ()){
                 SPMC_SC_LCK_F0BQ_Q.Update ();
                 SPMC_SC_LCK_F0BQ_TAU.Update ();
-                if (SPMC_SC_LCK_F0BQ_Q.Value () < 1.){
-                        if (SPMC_SC_LCK_F0BQ_TAU.Value () > 0)
-                                rp_spmc_set_biqad_Lck_F0_IIR (1000./SPMC_SC_LCK_F0BQ_TAU.Value (), SPMC_CLK, SPMC_BIQUAD_F0_CONTROL_REG);
-                        else
+                if (SPMC_SC_LCK_F0BQ_Q.Value () > 0.1 && SPMC_SC_LCK_F0BQ_TAU.Value () > 0.0)
+                        rp_spmc_set_biqad_Lck_F0 (1000./SPMC_SC_LCK_F0BQ_TAU.Value (), SPMC_SC_LCK_F0BQ_Q.Value (), lck_f0_frq, SPMC_BIQUAD_F0_CONTROL_REG);
+                else
+                        if (SPMC_SC_LCK_F0BQ_TAU.Value () <= 0. && SPMC_SC_LCK_F0BQ_IIR.Value () <= 0.)
                                 rp_spmc_set_biqad_Lck_F0_pass (SPMC_BIQUAD_F0_CONTROL_REG);
-                } else {
-                        rp_spmc_set_biqad_Lck_F0 (1000./SPMC_SC_LCK_F0BQ_TAU.Value (), SPMC_SC_LCK_F0BQ_Q.Value (), SPMC_CLK, SPMC_BIQUAD_F0_CONTROL_REG);
-                }
         }
-        // *** managed via Q=0
+
         if (SPMC_SC_LCK_F0BQ_IIR.IsNewValue ()){
                 SPMC_SC_LCK_F0BQ_IIR.Update ();
-                if (SPMC_SC_LCK_F0BQ_IIR.Value () > 0)
-                        rp_spmc_set_biqad_Lck_F0_IIR (1000./SPMC_SC_LCK_F0BQ_IIR.Value (), SPMC_CLK, SPMC_BIQUAD_F0_CONTROL_REG);
+                if (SPMC_SC_LCK_F0BQ_IIR.Value () > 0.0)
+                        rp_spmc_set_biqad_Lck_F0_IIR (1000./SPMC_SC_LCK_F0BQ_IIR.Value (), lck_f0_frq, SPMC_BIQUAD_F0_CONTROL_REG);
                 else
-                        rp_spmc_set_biqad_Lck_F0_pass (SPMC_BIQUAD_F0_CONTROL_REG);
+                        if (SPMC_SC_LCK_F0BQ_TAU.Value () <= 0. && SPMC_SC_LCK_F0BQ_IIR.Value () <= 0.)
+                                rp_spmc_set_biqad_Lck_F0_pass (SPMC_BIQUAD_F0_CONTROL_REG);
         }
         
 }

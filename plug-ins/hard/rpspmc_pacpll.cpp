@@ -1818,7 +1818,9 @@ void RPSPMC_Control::create_folder (){
         }
         
         bp->new_line ();
-	bp->grid_add_ec ("Time Const", new UnitObj("ms","ms"), &spmc_parameters.sc_lck_tau, 0., 1e6, "5g", 1e-6, 10e3, "SPMC-LCK-TAU");
+	bp->grid_add_ec ("Time Const BQ", new UnitObj("ms","ms"), &spmc_parameters.sc_lck_bq_tau, 0., 1e6, "5g", 1e-6, 10e3, "SPMC-LCK-BQ-TAU");
+        bp->new_line ();
+	bp->grid_add_ec ("Time Const IIR", new UnitObj("ms","ms"), &spmc_parameters.sc_lck_iir_tau, 0., 1e6, "5g", 1e-6, 10e3, "SPMC-LCK-IIR-TAU");
         bp->new_line ();
 	bp->grid_add_ec ("BiQaud Q", new UnitObj(" Q"," Q"), &spmc_parameters.sc_lck_q, 0., 1e6, "5g", 0.1, 5.0, "SPMC-LCK-Q");
         bp->new_line ();
@@ -3057,14 +3059,53 @@ int RPSPMC_Control::callback_GrMatWindow (GtkWidget *widget, RPSPMC_Control *sel
 
 void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *self){
         if (rpspmc_pacpll){
-                rpspmc_pacpll->write_parameter ("SPMC_SC_LCK_FREQUENCY", spmc_parameters.sc_lck_frequency);
-                if  (self->LCK_Target > 0 && self->LCK_Target < LCK_NUM_TARGETS){ 
-                        rpspmc_pacpll->write_parameter ("SPMC_SC_LCK_VOLUME", modulation_targets[self->LCK_Target].scale_factor * self->LCK_Volume[self->LCK_Target]); // => Volts
-                }
-                rpspmc_pacpll->write_parameter ("SPMC_SC_F0BQ_LCK_TAU", spmc_parameters.sc_lck_tau);
-                rpspmc_pacpll->write_parameter ("SPMC_SC_F0BQ_LCK_Q", spmc_parameters.sc_lck_q);
-                rpspmc_pacpll->write_parameter ("SPMC_SC_LCK_GAIN", spmc_parameters.sc_lck_gain);
+                const gchar *SPMC_SET_LCK_BQ_COMPONENTS[] = {
+                        "SPMC_SC_LCK_FREQUENCY",
+                        "SPMC_SC_LCK_VOLUME",
+                        "SPMC_SC_LCK_F0BQ_TAU",
+                        "SPMC_SC_LCK_F0BQ_IIR",
+                        "SPMC_SC_LCK_F0BQ_Q",
+                        "SPMC_SC_LCK_GAIN",
+                        NULL };
+                double jdata[6];
+                jdata[0] =  spmc_parameters.sc_lck_frequency;
+
+                if  (self->LCK_Target > 0 && self->LCK_Target < LCK_NUM_TARGETS)
+                        jdata[1] = modulation_targets[self->LCK_Target].scale_factor * self->LCK_Volume[self->LCK_Target]; // => Volts
+                else
+                        jdata[1] = 0.;
+                
+                jdata[2] = spmc_parameters.sc_lck_bq_tau;
+                jdata[3] = spmc_parameters.sc_lck_iir_tau;
+                jdata[4] = spmc_parameters.sc_lck_q;
+                jdata[5] = spmc_parameters.sc_lck_gain;
+                
                 g_message ("ADJ LOCKIN FRQ %g Hz, target=%d vol=%g V", spmc_parameters.sc_lck_frequency, self->LCK_Target, spmc_parameters.sc_lck_volume);
+
+                if (spmc_parameters.sc_lck_q > 0. && spmc_parameters.sc_lck_bq_tau > 0.)
+                { // INFO
+                        double b0, b1, b2, a0, a1, a2;
+                        double f_cut = 1000./spmc_parameters.sc_lck_bq_tau;
+                        double Fs = spmc_parameters.sc_lck_frequency;
+                        double Q  = spmc_parameters.sc_lck_q;
+                        // 2nd order BiQuad Low Pass parameters
+                        double w0 = 2.*M_PI*f_cut/Fs; // 125MHz -- decimate as needed!
+                        double c  = cos (w0);
+                        double xc = 1.0 - c;
+                        double a  = sin (w0) / (2.0 * Q);
+        
+                        b0 = 0.5*xc;
+                        b1 = xc;
+                        b2 = b0;
+                        a0 = 1.0+a;
+                        a1 = -2.0*c;
+                        a2 = 1.0-a;
+        
+                        g_message ("##Configure: BiQuad Fc=%g Hz  Q=%g, Fs=%g Hz:\n", f_cut, Q, Fs);
+                        g_message ("## b0=%g b1=%g b2=%g  a0=%g a1=%g a2=%g\n", b0, b1, b2, a0, a1, a2);
+                }
+                
+                rpspmc_pacpll->write_array (SPMC_SET_LCK_BQ_COMPONENTS, 0, NULL,  6, jdata);
         }
 }
 
