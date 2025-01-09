@@ -35,77 +35,65 @@ x[n-2]  --- *b2 ---> + <-- -a2* ---   y[n-2]
 */
 
 module axis_biquad_iir_filter #(
-    parameter inout_width = 32,
-    parameter inout_decimal_width = 31,
+    parameter signal_width = 32,
     parameter coefficient_width = 32,
-    parameter coefficient_decimal_width = 31,
-    parameter internal_width = 32,
-    parameter internal_decimal_width = 31,
-    /* coefficients */
-    parameter signed b0 = 0,
-    parameter signed b1 = 0,
-    parameter signed b2 = 0,
-    parameter signed a1 = 0,
-    parameter signed a2 = 0,
+    parameter coefficient_Q = 28,
     /* config address */
     parameter configuration_address = 999
     )(
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN aclk, ASSOCIATED_BUSIF S_AXIS:M_AXIS:M_AXIS_pass" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN aclk, ASSOCIATED_BUSIF S_AXIS_in:M_AXIS_out:M_AXIS_pass" *)
     input aclk,
     
     input [32-1:0]  config_addr,
     input [512-1:0] config_data,
     
     /* slave axis interface */
-    input [inout_width-1:0] S_AXIS_tdata,
-    input S_AXIS_tvalid,
+    input [signal_width-1:0] S_AXIS_in_tdata,
+    input                    S_AXIS_in_tvalid,
 
     input wire axis_decii_clk,
     
     /* master axis interface */
-    output [inout_width-1:0] M_AXIS_tdata,
-    output M_AXIS_tvalid,
+    output [signal_width-1:0] M_AXIS_out_tdata,
+    output                    M_AXIS_out_tvalid,
     
-    output [inout_width-1:0] M_AXIS_pass_tdata,
-    output M_AXIS_pass_tvalid
+    output [signal_width-1:0] M_AXIS_pass_tdata,
+    output                    M_AXIS_pass_tvalid
     );
     
-    localparam inout_integer_width = inout_width - inout_decimal_width; /* compute integer width */
-    localparam coefficient_integer_width = coefficient_width - coefficient_decimal_width; /* compute integer width */
-    localparam internal_integer_width = internal_width - internal_decimal_width; /* compute integer width */
-    localparam Q31 = ((1<<31)-1);
+    localparam internal_extra = 4;
+    localparam ONE = ((1<<coefficient_Q)-1);
     
     reg resetn=0;
     
-    reg signed [internal_width-1:0] input_int; /* input data internal size */ // was wire
+    reg signed [signal_width-1:0] x; /* input data internal size */ // was wire
+    reg signed [signal_width-1:0] y; /* input data internal size */ // was wire
     
-    reg signed [internal_width-1:0] b0_int=Q31; /* coefficient internal size */
-    reg signed [internal_width-1:0] b1_int=0; /* coefficient internal size */
-    reg signed [internal_width-1:0] b2_int=0; /* coefficient internal size */
-    reg signed [internal_width-1:0] a1_int=0; /* coefficient internal size */
-    reg signed [internal_width-1:0] a2_int=0; /* coefficient internal size */
+    reg signed [coefficient_width-1:0] b0=ONE; /* coefficient internal size */
+    reg signed [coefficient_width-1:0] b1=0; /* coefficient internal size */
+    reg signed [coefficient_width-1:0] b2=0; /* coefficient internal size */
+    reg signed [coefficient_width-1:0] a0=0; /* coefficient internal size */
+    reg signed [coefficient_width-1:0] a1=0; /* coefficient internal size */
+    reg signed [coefficient_width-1:0] a2=0; /* coefficient internal size */
 
-    //wire signed [internal_width-1:0] output_int; /* output internal size */
     
-    reg signed [internal_width-1:0] input_pipe1=0; /* input data pipeline */
-    reg signed [internal_width-1:0] input_pipe2=0; /* input data pipeline */
-    reg signed [internal_width-1:0] output_pipe1=0; /* output data pipeline */
-    reg signed [internal_width-1:0] output_pipe2=0; /* output data pipeline */
+    reg signed [signal_width+internal_extra-1:0] x1=0; /* input data pipeline */
+    reg signed [signal_width+internal_extra-1:0] x2=0; /* input data pipeline */
+    reg signed [signal_width+internal_extra-1:0] y1=0; /* output data pipeline */
+    reg signed [signal_width+internal_extra-1:0] y2=0; /* output data pipeline */
     
-    reg signed [internal_width + internal_width-1:0] input_b0=0; /* product input */
-    reg signed [internal_width + internal_width-1:0] input_b1=0; /* product input */
-    reg signed [internal_width + internal_width-1:0] input_b2=0; /* product input */
-    reg signed [internal_width + internal_width-1:0] output_a1=0; /* product output */
-    reg signed [internal_width + internal_width-1:0] output_a2=0; /* product output */
-    //reg signed [internal_width + internal_width-1:0] output_2int=0; /* adder output */
+    reg signed [signal_width+internal_extra + coefficient_width-1:0] x_b0=0; /* product input */
+    reg signed [signal_width+internal_extra + coefficient_width-1:0] x_b1=0; /* product input */
+    reg signed [signal_width+internal_extra + coefficient_width-1:0] x_b2=0; /* product input */
+    reg signed [signal_width+internal_extra + coefficient_width-1:0] y_a1=0; /* product output */
+    reg signed [signal_width+internal_extra + coefficient_width-1:0] y_a2=0; /* product output */
     
     reg decii_clk=0;
     reg run=0;
     
-    assign M_AXIS_tvalid = S_AXIS_tvalid;
 
-    assign M_AXIS_pass_tdata  = S_AXIS_tdata;
-    assign M_AXIS_pass_tvalid = S_AXIS_tvalid;
+    assign M_AXIS_pass_tdata  = S_AXIS_in_tdata;
+    assign M_AXIS_pass_tvalid = S_AXIS_in_tvalid;
 
 
     /* pipeline registers */
@@ -114,21 +102,12 @@ module axis_biquad_iir_filter #(
         // module configuration
         if (config_addr == configuration_address) // BQ configuration, and auto reset
         begin
-            b0_int <= { {(internal_integer_width-coefficient_integer_width){b0[coefficient_width-1]}}, 
-                        config_data[1*32-1 : 0*32], // b0   <= config_32[0] 
-                        {(internal_decimal_width-coefficient_decimal_width){1'b0}} };
-            b1_int <= { {(internal_integer_width-coefficient_integer_width){b1[coefficient_width-1]}},
-                        config_data[2*32-1 : 1*32], // b1   <= config_32[1]
-                        {(internal_decimal_width-coefficient_decimal_width){1'b0}} };
-            b2_int <= { {(internal_integer_width-coefficient_integer_width){b2[coefficient_width-1]}},
-                        config_data[3*32-1 : 2*32], // b2   <= config_32[2]
-                        {(internal_decimal_width-coefficient_decimal_width){1'b0}} };
-            a1_int <= { {(internal_integer_width-coefficient_integer_width){a1[coefficient_width-1]}},
-                        config_data[4*32-1 : 3*32], // a1   <= config_32[3]
-                        {(internal_decimal_width-coefficient_decimal_width){1'b0}} };
-            a2_int <= { {(internal_integer_width-coefficient_integer_width){a2[coefficient_width-1]}},
-                        config_data[5*32-1 : 4*32], // a2    <= config_32[4]
-                        {(internal_decimal_width-coefficient_decimal_width){1'b0}} };
+            b0 <= config_data[1*32-1 : 0*32]; // assuming all 32bits.
+            b1 <= config_data[2*32-1 : 1*32];
+            b2 <= config_data[3*32-1 : 2*32];
+            a0 <= config_data[4*32-1 : 3*32]; // *** not used here, template
+            a1 <= config_data[5*32-1 : 4*32];
+            a2 <= config_data[6*32-1 : 5*32];
             resetn <= 0;                     
         end
         else // run
@@ -149,46 +128,41 @@ module axis_biquad_iir_filter #(
             run <= 0;
             
         if (!resetn) begin
-          input_pipe1 <= 0;
-          input_pipe2 <= 0;
-          output_pipe1 <= 0;
-          output_pipe2 <= 0;
+          x1 <= 0;
+          x2 <= 0;
+          y1 <= 0;
+          y2 <= 0;
         end
-        else if (S_AXIS_tvalid && run) 
+        else if (S_AXIS_in_tvalid && run) 
         begin
-            /* resize signals to internal width */
-            input_int    <= { {(internal_integer_width-inout_integer_width){S_AXIS_tdata[inout_width-1]}},
-                               S_AXIS_tdata,
-                              {(internal_decimal_width-inout_decimal_width){1'b0}} };
-            input_pipe1  <= input_int;
-            input_pipe2  <= input_pipe1;
-            output_pipe1 <= (input_b0 + input_b1 + input_b2 - output_a1 - output_a2) >>> (internal_decimal_width); //output_int;
-            output_pipe2 <= output_pipe1;
+            x   <= S_AXIS_in_tdata;
+            x1  <= x;
+            x2  <= x1;
+            y1  <= (x_b0 + x_b1 + x_b2 - y_a1 - y_a2) >>> (coefficient_Q);
+            y2  <= y1;
+            
+            y <= y1 >>> (internal_extra);
         end
             
     // compute IIR kernels
         if (!resetn) begin
-            input_b0  <= 0;
-            input_b1  <= 0;
-            input_b2  <= 0;
-            output_a1 <= 0;
-            output_a2 <= 0;
+            x_b0  <= 0;
+            x_b1  <= 0;
+            x_b2  <= 0;
+            y_a1 <= 0;
+            y_a2 <= 0;
         end
         else if (run) 
         begin
-            input_b0  <= b0_int * input_int;   // IIR 1st stage (n)
-            input_b1  <= b1_int * input_pipe1; // IIR 1st stage (n-1)
-            input_b2  <= b2_int * input_pipe2;
-            output_a1 <= a1_int * output_pipe1;
-            output_a2 <= a2_int * output_pipe2;    
-            //output_2int <= (input_b0 + input_b1 + input_b2 - output_a1 - output_a2);
-            //output_int <= output_2int >>> (internal_decimal_width);
+            x_b0  <= b0 * x;   // IIR 1st stage (n)
+            x_b1  <= b1 * x1; // IIR 1st stage (n-1)
+            x_b2  <= b2 * x2;
+            y_a1 <= a1 * y1;
+            y_a2 <= a2 * y2;    
         end
     end
-        
-    //assign output_2int = input_b0 + input_b1 + input_b2 - output_a1 - output_a2;
-    //assign output_int = output_2int >>> (internal_decimal_width);
    
-    assign M_AXIS_tdata = output_pipe1 >>> (internal_decimal_width-inout_decimal_width);
-    
+    assign M_AXIS_out_tdata  = y;
+    assign M_AXIS_out_tvalid = 1;
+      
 endmodule

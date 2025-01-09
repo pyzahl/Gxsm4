@@ -42,6 +42,9 @@ Vivado tcl command:
 
 write_project_tcl recreated-new-version.tcl
 
+to update/over write:
+write_project_tcl -force recreate-rpspmc-pacpll-vivado-project.tcl
+
 
 # 4. A global design overview at Block and Interface Level:
 

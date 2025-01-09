@@ -3103,6 +3103,7 @@ void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *
         
                         g_message ("##Configure: BiQuad Fc=%g Hz  Q=%g, Fs=%g Hz:\n", f_cut, Q, Fs);
                         g_message ("## b0=%g b1=%g b2=%g  a0=%g a1=%g a2=%g\n", b0, b1, b2, a0, a1, a2);
+                        g_message ("##NORM b0=%g b1=%g b2=%g  a0=%g a1=%g a2=%g\n", b0/a0, b1/a0, b2/a0, a0/a0, a1/a0, a2/a0);
                 }
                 
                 rpspmc_pacpll->write_array (SPMC_SET_LCK_BQ_COMPONENTS, 0, NULL,  6, jdata);

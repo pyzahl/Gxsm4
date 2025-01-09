@@ -1108,6 +1108,23 @@ double rp_spmc_configure_lockin (double freq, double gain, unsigned int mode, in
         return fact;
 }
 
+/*
+BiQuad Direct form 1
+y[n] = b0 x[n] + b1 x[n-1] + b2 x[n-2] - a1 y[n-1] - a2 y[n-2]
+
+Normalized so a0=1
+
+x[n] ------ *b0 ---> + -------------> y[n]
+        |            |            |
+input   z  pipe1     |            z   output pipe1
+        |            |            |
+x[n-1]  --- *b1 ---> + <-- -a1* ---   y[n-1]
+        |            |            |
+input   z  pipe2     |            z   output pipe2
+        |            |            |
+x[n-2]  --- *b2 ---> + <-- -a2* ---   y[n-2]
+*/
+
 // set BiQuad to low pass at f_cut, with Quality Factor Q and at sampling rate Fs Hz
 void rp_spmc_set_biqad_Lck_F0 (double f_cut, double Q, double Fs, int BIQID){
         double b0, b1, b2, a0, a1, a2;
@@ -1130,8 +1147,8 @@ void rp_spmc_set_biqad_Lck_F0 (double f_cut, double Q, double Fs, int BIQID){
                 fprintf(stderr, "## b0=%g b1=%g b2=%g  a0=%g a1=%g a2=%g\n", b0, b1, b2, a0, a1, a2);
         }
 
-        double data[16] = { b0, b1, b2, a0, a1,a2,0.,0., 0.,0.,0.,0., 0.,0.,0.,0. };
-        rp_spmc_gvp_module_config_vector_Qn (BIQID, data, 6);
+        double data[16] = { b0/a0, b1/a0, b2/a0, 1.0, a1/a0,a2/a0,0.,0., 0.,0.,0.,0., 0.,0.,0.,0. };
+        rp_spmc_gvp_module_config_vector_Qn (BIQID, data, 6, Q28);
 }
 
 // set BiQuad to pass
@@ -1141,7 +1158,7 @@ void rp_spmc_set_biqad_Lck_F0_pass (int BIQID){
                 fprintf(stderr, "##Configure: BiQuad to pass mode:\n");
                 fprintf(stderr, "## b0=1.0 ...=0\n");
         }
-        rp_spmc_gvp_module_config_vector_Qn (BIQID, data, 6);
+        rp_spmc_gvp_module_config_vector_Qn (BIQID, data, 6, Q28);
 }
 
 // set BiQuad to IIR 1st order LP
@@ -1150,11 +1167,11 @@ void rp_spmc_set_biqad_Lck_F0_IIR (double f_cut, double Fs, int BIQID){
 
         // 2nd order BiQuad Low Pass parameters
         double w0 = 2.*M_PI*f_cut/Fs; // 125MHz
-        double c  = cos (w0);
+        double c  = cos (w0); // near 1 for f_c/Fs << 1
         double xc = 1.0 - c;
         
-        b0 = 0.5*xc;
-        b1 = xc;
+        b0 = xc; // new    //0.5*xc;
+        b1 = c;  // last   //xc;
         
         if (verbose > 1){
                 fprintf(stderr, "##Configure: BiQuad to IIR 1st order mode. Fc=%g Hz, Fs=%g Hz\n", f_cut, Fs);
@@ -1162,7 +1179,7 @@ void rp_spmc_set_biqad_Lck_F0_IIR (double f_cut, double Fs, int BIQID){
         }
 
         double data[16] = { b0, b1, 0.0, 0.0, 0.0,0.0,0.,0., 0.,0.,0.,0., 0.,0.,0.,0. };
-        rp_spmc_gvp_module_config_vector_Qn (BIQID, data, 6);
+        rp_spmc_gvp_module_config_vector_Qn (BIQID, data, 6, Q28);
 }
 
 

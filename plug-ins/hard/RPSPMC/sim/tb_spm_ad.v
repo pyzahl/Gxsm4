@@ -51,6 +51,7 @@ module tb_spm_ad(
     reg r=1;
     reg prg=0;
     reg pause=0;
+    reg [31:0] confaddr;
     reg [512-1:0] vector; // [VAdr], [N, NII, Nrep, Options, Next, dx, dy, dz, du] ** full vector data set block **
 
     reg dma_ready=1;
@@ -59,6 +60,8 @@ module tb_spm_ad(
     wire [31:0] wy; // ..
     wire [31:0] wz; // ..
     wire [31:0] wu; // ..
+    wire [31:0] wa; // ..
+    wire [31:0] wb; // ..
     wire [47:0] gvp_time;
     wire [31:0] gvp_index;
     wire [31:0] wopt;  // section options: FB, ...
@@ -148,6 +151,60 @@ module tb_spm_ad(
     reg [64:0] clicks=0;
     reg [15:0] amptest=4;
 
+
+
+
+
+reg [31:0] mux00td;    
+reg        mux00tv;   
+reg [31:0] mux01td;    
+reg        mux01tv;   
+reg [31:0] mux02td;    
+reg        mux02tv;   
+reg [31:0] mux03td;    
+reg        mux03tv;   
+reg [31:0] mux04td;    
+reg        mux04tv;   
+reg [31:0] mux05td;    
+reg        mux05tv;   
+reg [31:0] mux06td;    
+reg        mux06tv;   
+reg [31:0] mux07td;    
+reg        mux07tv;   
+reg [31:0] mux08td;    
+reg        mux08tv;   
+reg [31:0] mux09td;    
+reg        mux09tv;   
+reg [31:0] mux10td;    
+reg        mux10tv;   
+reg [31:0] mux11td;    
+reg        mux11tv;   
+reg [31:0] mux12td;    
+reg        mux12tv;   
+reg [31:0] mux13td;    
+reg        mux13tv;   
+reg [31:0] mux14td;    
+reg        mux14tv;   
+reg [31:0] mux15td;    
+reg        mux15tv; 
+              
+wire [31:0] mux_out01td; 
+wire        mux_out01tv;
+wire [31:0] mux_out02td;
+wire        mux_out02tv;
+wire [31:0] mux_out03td;
+wire        mux_out03tv;
+wire [31:0] mux_out04td;
+wire        mux_out04tv;
+wire [31:0] mux_out05td;
+wire        mux_out05tv;
+wire [31:0] mux_out06td;
+wire        mux_out06tv;
+
+
+
+
+
     initial 
     begin       
         tb_ACLK = 1'b0;
@@ -175,6 +232,41 @@ module tb_spm_ad(
         sclk = 0; #1;
     end
 
+    always begin
+        mux00td <= wx;
+        mux01td <= wy;
+        mux02td <= wz;
+        mux03td <= wu;
+        mux04td <= wa;
+        mux05td <= wb;
+        mux06td <= wb;
+        mux07td <= wb;
+        mux08td <= wb;
+        mux09td <= wb;
+        mux10td <= wb;
+        mux11td <= wb;
+        mux12td <= wb;
+        mux13td <= wb;
+        mux14td <= wb;
+        mux15td <= wb;
+        mux00tv <= 1;
+        mux01tv <= 1;
+        mux02tv <= 1;
+        mux03tv <= 1;
+        mux04tv <= 1;
+        mux05tv <= 1;
+        mux06tv <= 1;
+        mux07tv <= 1;
+        mux08tv <= 1;
+        mux09tv <= 1;
+        mux10tv <= 1;
+        mux11tv <= 1;
+        mux12tv <= 1;
+        mux13tv <= 1;
+        mux14tv <= 1;
+        mux15tv <= 1;
+        #1;
+    end
 
     initial
     begin
@@ -224,81 +316,73 @@ print (adjust (100))
 
         deltasReIm = { deltasRe, deltasIm };
 
+        // MODUL CONFIG
+        confaddr=0; #10 vector = 123456789;#1 confaddr=99999; #10 confaddr=0; #10 // module config cycle
+
+        // MUX SETUP
+        confaddr=0; #10 vector = 32'h00543021; #1 confaddr=2000; #10 confaddr=0; #10 // module config cycle
 
         // INIT GVP
-        r=1; #10 prg=0; #10
-        //                  decii                                      du      dz      dy      dx    Next      Nrep,   Options,    nii,      N,    [Vadr]
-        vector = {32'd16,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd10,  32'd0,  32'd0,  32'd0,  32'd0,  32'd000, 32'hc00801,  32'd02,  32'd4, -32'd0}; // Vector #0
+        confaddr=0; #10 vector = 1;#1 confaddr=1; #10 confaddr=0; #10 // reset to GVP
+
+        //         decii                               db       da       du       dz       dy       dx     Next     Nrep,    Options,    nii,      N,    [Vadr]
+        vector = {32'd16,  32'd0,  32'd0,  32'd0,  32'd00,  32'd00,  32'd10,  32'd00,  32'd00,  32'd00,  32'd00, 32'd000, 32'hc00801,  32'd02,  32'd4,   32'd0}; // Vector #0
         //vector = {32'd16, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0,  32'd10, -32'd0, -32'd0, -32'd0, -32'd0, -32'd000, 32'hc0801,  32'd02,  32'd16, -32'd0}; // Vector #0
-        #10 prg=1; #10 prg=0; #10
-        vector = {32'd16, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd10, -32'd0, -32'd0, -32'd0, -32'd0, -32'd000, 32'hc00801,  32'd02,  32'd16,  32'd1}; // Vector #1
-        #10 prg=1; #10 prg=0; #10
-        vector = {32'd16, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd000, 32'h1, -32'd0, -32'd0,  32'd2}; // Vector #2
-        #10 prg=1; #10 prg=0; #10
-        r=0; // release reset to run
+        #10 confaddr=3; #10 confaddr=0; #10; // vec-set
+
+        vector = {32'd16,  32'd0,  32'd0,  32'd0,  32'd00,  32'd00, -32'sd10,  32'd00,  32'd00,  32'd00,  32'd00, 32'd000, 32'hc00801,  32'd02,  32'd16,  32'd1}; // Vector #1
+        #10 confaddr=3; #10 confaddr=0; #10; // vec-set
+
+        vector = {32'd16,  32'd0,  32'd0,  32'd0,  32'd00,  32'd00,  32'd00,  32'd00,  32'd00,  32'd00,  32'd00, 32'd000, 32'h000000,  32'd00,  32'h00,  32'd2}; // END
+        #10 confaddr=3; #10 confaddr=0; #10 // vec-set
+        vector = {32'd16,  32'd0,  32'd0,  32'd0,  32'd00,  32'd00,  32'd00,  32'd00,  32'd00,  32'd00,  32'd00, 32'd000, 32'h000000,  32'd00,  32'h00,  32'd3}; // 000
+        #10 confaddr=3; #10 confaddr=0; #10 // vec-set
+
+        #10 confaddr=0; #10 vector = 0;#1 confaddr=1; #10 confaddr=0; #10 // run to GVP (out of reset)
         wait (fin);
         #2000
-        r=1; // reset to hold
+        #10 confaddr=0; #10 vector = 2;#1 confaddr=1; #10 confaddr=0; #10 // pause to GVP
         #2000
-    
+        #10 confaddr=0; #10 vector = 1;#1 confaddr=1; #10 confaddr=0; #10 // reset to GVP
 
 
         // INIT GVP
-        r=1; #10 prg=0; #10
-        //                  decii       du        dz        dy        dx     Next       Nrep,   Options,     nii,      N,    [Vadr]
-        vector = {32'd016, 160'd0, 32'd0004, 32'd0003, 32'd002, 32'd0001,  32'd0, 32'd0000,   32'h0801, 32'd02, 32'd005, 32'd00 }; // 000 Bias Mask "08xx"
-        #10 prg=1; #10 prg=0; #10
-        vector = {32'd016, 160'd0, -32'd0004,-32'd0003,-32'd002,-32'd0001, 32'd0, 32'd0000,   32'h0901, 32'd02, 32'd005, 32'd01 }; // END Bias + X mask "09xx"
-        #10 prg=1; #10 prg=0; #10
-        vector = {32'd016, 160'd0, -32'd0000,-32'd0000,-32'd0000,-32'd0000, 32'd0, 32'd0000,   32'h0000, 32'd00, 32'd000, 32'd02 }; // END
-        #10 prg=1; #10 prg=0; #10
+        #10 confaddr=0; #10 vector = 1; #1 confaddr=1; #10 confaddr=0; #10 // reset to GVP
+        //         decii                              db       da       du       dz       dy       dx    Next      Nrep,   Options,    nii,      N,    [Vadr]
+        vector = {32'd16,  32'd0,  32'd0,  32'd0,  32'd30,  32'd20,  32'd10,  32'd03,  32'd02,  32'd01,  32'd0,  32'd000, 32'hc00801,  32'd02,  32'd20, 32'd0}; // Vector #0
+        #10 confaddr=3; #10 confaddr=0; #10; // vec-set
+        vector = {32'd16,  32'd0,  32'd0,  32'd0, -32'sd30, -32'sd20, -32'sd10, -32'sd03, -32'd02, -32'sd01, -32'sd1,  32'd002, 32'hc00801,  32'd02,  32'd20, 32'd1}; // Vector #0
+        #10 confaddr=3; #10 confaddr=0; #10; // vec-set
+        vector = {32'd16,  32'd0,  32'd0,  32'd0,  32'd00,  32'd00,  32'd00,  32'd00,  32'd00,  32'd00,  32'd00, 32'd000, 32'h000000,  32'd00,  32'h00, 32'd2}; // END
+        #10 confaddr=3; #10 confaddr=0; #10; // vec-set
+        vector = {32'd16,  32'd0,  32'd0,  32'd0,  32'd00,  32'd00,  32'd00,  32'd00,  32'd00,  32'd00,  32'd00, 32'd000, 32'h000000,  32'd00,  32'h00, 32'd3}; // 000
+        #10 confaddr=3; #10 confaddr=0; #10 // vec-set
 
-        vector = {32'd016, 160'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0000,  32'd0, 32'd0000,   32'h0000, 32'd000, 32'd000, 32'd03 }; #2
-        prg=1; #10 prg=0; #10
-        vector = {32'd0016, 160'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0000,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd04 }; #2
-        prg=1; #10 prg=0; #10
-        vector = {32'd0016, 160'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0000,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd05 }; #2
-        prg=1; #10 prg=0; #10
-        vector = {32'd0016, 160'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0000,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd06 }; #2
-        prg=1; #10 prg=0; #10
-        vector = {32'd0016, 160'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0000,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd07 }; #2
-        prg=1; #10 prg=0; #10
+        #10 vector = 0; #1 confaddr=1; #10 confaddr=0; #10 // run to GVP (out of reset)
+        #2000
 
-        r=0; // release reset to run
+        #10 vector = 1;#1 confaddr=1; #10 confaddr=0; #10 // reset to GVP
         wait (fin);
-        #20
-        r=1; // reset to hold
-        #20
-        r=0; // release reset to run again
-        wait (fin);
-        #20
-        r=1; // reset to hold
-        #20
 
         // INIT GVP
-        r=1; #10 prg=0; #10
-        //            decii       **     **     **     BB     AA     du     dz     dy     dx       Next    Nrep,  Options, nii,   N,  [Vadr]
+        vector = 1;#1 confaddr=1; #10 confaddr=0; #10 // reset to GVP
+        //         decii                              db       da       du         dz       dy       dx        Next      Nrep,   Options,    nii,    N,   [Vadr]
         vector = {32'd250, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0,  32'd8589935, -32'd0, -32'd0,  32'd858993, -32'd0, -32'd000, 32'h801,  32'd4,  32'd9, -32'd0}; // Vector #0
-        prg=1; #10 prg=0; #10
-        vector = {32'd250, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd16589935, -32'd0, -32'd0, -32'd858993, -32'd0, -32'd000, 32'h801,  32'd4,  32'd9,  32'd1}; // Vector #1
-        prg=1; #10 prg=0; #10
+        confaddr=3;#10 confaddr=0; #10; // vec-set
+        vector = {32'd250, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'sd16589935, -32'd0, -32'd0, -32'sd858993, -32'd0, -32'd000, 32'h801,  32'd4,  32'd9,  32'd1}; // Vector #1
+        confaddr=3;#10 confaddr=0; #10; // vec-set
         vector = {32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd1, 32'd0, 32'd0, 32'd2}; // Vector #2
-        prg=1; #10 prg=0; #10
+        confaddr=3;#10 confaddr=0; #10; // vec-set
         vector = {32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd1, 32'd0, 32'd0, 32'd3}; // Vector #3
-        prg=1; #10 prg=0; #10
+        confaddr=3;#10 confaddr=0; #10; // vec-set
         vector = {32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd1, 32'd0, 32'd0, 32'd4}; // Vector #4
-        prg=1; #10 prg=0; #10
+        confaddr=3;#10 confaddr=0; #10; // vec-set
 
-        r=0; // release reset to run
+        confaddr=3;#10 confaddr=0; #10; // vec-set
+
+        vector = 0;#1 confaddr=1; #10 confaddr=0; #10 // run to GVP (out of reset)
+        #2000
         wait (fin);
-        #20
-        r=1; // reset to hold
-        #20
-        r=0; // release reset to run again
-        wait (fin);
-        #20
-        r=1; // reset to hold
-        #20
 
         // TEST AD SERIAL OUT
         dac_cmode = 1; // DACs put in config mode (hold) unless reprogrammed      
@@ -371,21 +455,27 @@ print (adjust (100))
 gvp gvp_1
     (
         .a_clk(pclk),    // clocking up to aclk
-        .reset(r),  // put into reset mode (hold)
-        .setvec(prg), // program vector data using vp_set data
-        .vp_set(vector), // [VAdr], [N, NII, Nrep, Options, Next, dx, dy, dz, du] ** full vector data set block **
-        .reset_options(1), // option (fb hold/go, srcs... to pass when idle or in reset mode
+        .config_addr(confaddr),
+        .config_data(vector),
+        //.reset(r),  // put into reset mode (hold)
+        //.setvec(prg), // program vector data using vp_set data
+        //.vp_set(vector), // [VAdr], [N, NII, Nrep, Options, Next, dx, dy, dz, du] ** full vector data set block **
+        //.reset_options(1), // option (fb hold/go, srcs... to pass when idle or in reset mode
         .M_AXIS_X_tdata(wx), // vector components
         .M_AXIS_Y_tdata(wy), // ..
         .M_AXIS_Z_tdata(wz), // ..
         .M_AXIS_U_tdata(wu), // ..
+        .M_AXIS_A_tdata(wa), // ..
+        .M_AXIS_B_tdata(wb), // ..
         .M_AXIS_index_tdata(gvp_index),
         .M_AXIS_gvp_time_tdata(gvp_time),
         .options(wopt),  // section options: FB, ...
-        .pause(pause),
+        //.pause(pause),
         .stall(dma_stall),
         .store_data(sto), // trigger to store data:: 2: full vector header, 1: data sources
-        .gvp_finished(fin)      // finished 
+        .gvp_finished(fin),      // finished 
+        .gvp_hold(gvphold),      // finished 
+        .reset_state(gvpres)
 );
 
 axis_bram_stream_srcs axis_bram_stream_srcs_tb
@@ -432,8 +522,9 @@ axis_bram_stream_srcs axis_bram_stream_srcs_tb
     wire lsov;  
     wire [31:0] li;   
     wire liv;  
+    wire ldclk;
 
-axis_py_lockin lockin
+axis_py_lockin lockin_tb
     (
     .a_clk(pclk),    // clocking up to aclk
     .S_AXIS_SIGNAL_tdata(sig),
@@ -442,8 +533,6 @@ axis_py_lockin lockin
     // SC Lock-In Reference and controls
     .S_AXIS_SC_tdata(sc),
     .S_AXIS_SC_tvalid(1),
-    .S_AXIS_DDS_N2_tdata(ddsn2),
-    .S_AXIS_DDS_N2_tvalid(1),
     
     // XY Output
     .M_AXIS_A2_tdata(la2),
@@ -464,13 +553,86 @@ axis_py_lockin lockin
     .M_AXIS_SignalOut_tvalid(lsov),
     // i out
     .M_AXIS_i_tdata(li),
-    .M_AXIS_i_tvalid(liv)
+    .M_AXIS_i_tvalid(liv),
+    
+    .axis_deci_clk(ldclk)
+);    
+
+    wire [31:0] bqd;
+    wire bqdv; 
+    wire [31:0] bqsp;
+    wire bqspv; 
+
+axis_biquad_iir_filter biquad(
+    .aclk(pclk),
+    
+    .config_addr(confaddr),
+    .config_data(vector),
+    
+    .S_AXIS_tdata(lso),
+    .S_AXIS_tvalid(lsov),
+
+    .axis_decii_clk(ldclk),
+    
+    .M_AXIS_tdata(bqd),
+    .M_AXIS_tvalid(bqdv),
+    
+    .M_AXIS_pass_tdata(bqsp),
+    .M_AXIS_pass_tvalid(bqspv)
 );    
 
 
-
-
+axis_selector mux(
+    .a_clk(pclk),
+    .config_addr(confaddr),
+    .config_data(vector),
     
+    .S_AXIS_00_tdata(mux00td),
+    .S_AXIS_00_tvalid(mux00tv),
+    .S_AXIS_01_tdata(mux01td),
+    .S_AXIS_01_tvalid(mux01tv),
+    .S_AXIS_02_tdata(mux02td),
+    .S_AXIS_02_tvalid(mux02tv),
+    .S_AXIS_03_tdata(mux03td),
+    .S_AXIS_03_tvalid(mux03tv),
+    .S_AXIS_04_tdata(mux04td),
+    .S_AXIS_04_tvalid(mux04tv),
+    .S_AXIS_05_tdata(mux05td),
+    .S_AXIS_05_tvalid(mux05tv),
+    .S_AXIS_06_tdata(mux06td),
+    .S_AXIS_06_tvalid(mux06tv),
+    .S_AXIS_07_tdata(mux07td),
+    .S_AXIS_07_tvalid(mux07tv),
+    .S_AXIS_08_tdata(mux08td),
+    .S_AXIS_08_tvalid(mux08tv),
+    .S_AXIS_09_tdata(mux09td),
+    .S_AXIS_09_tvalid(mux09tv),
+    .S_AXIS_10_tdata(mux10td),
+    .S_AXIS_10_tvalid(mux10tv),
+    .S_AXIS_11_tdata(mux11td),
+    .S_AXIS_11_tvalid(mux11tv),
+    .S_AXIS_12_tdata(mux12td),
+    .S_AXIS_12_tvalid(mux12tv),
+    .S_AXIS_13_tdata(mux13td),
+    .S_AXIS_13_tvalid(mux13tv),
+    .S_AXIS_14_tdata(mux14td),
+    .S_AXIS_14_tvalid(mux14tv),
+    .S_AXIS_15_tdata(mux15td),
+    .S_AXIS_15_tvalid(mux15tv),
+
+    .M_AXIS_1_tdata(mux_out01td),
+    .M_AXIS_1_tvalid(mux_out01tv),
+    .M_AXIS_2_tdata(mux_out02td),
+    .M_AXIS_2_tvalid(mux_out02tv),
+    .M_AXIS_3_tdata(mux_out03td),
+    .M_AXIS_3_tvalid(mux_out03tv),
+    .M_AXIS_4_tdata(mux_out04td),
+    .M_AXIS_4_tvalid(mux_out04tv),
+    .M_AXIS_5_tdata(mux_out05td),
+    .M_AXIS_5_tvalid(mux_out05tv),
+    .M_AXIS_6_tdata(mux_out06td),
+    .M_AXIS_6_tvalid(mux_out06tv)
+    );    
 
 /*
 axis_AD5791 axis_AD5791_1 
@@ -503,6 +665,9 @@ axis_AD5791 axis_AD5791_1
 axis_spm_control axis_spm_control_tb
 (
     .a_clk(pclk),
+    .config_addr(confaddr),
+    .config_data(vector),
+
     .S_AXIS_Xs_tdata(wu),
     .S_AXIS_Xs_tvalid(1),
     .S_AXIS_Ys_tdata(wy),
@@ -524,77 +689,58 @@ axis_spm_control axis_spm_control_tb
     // SC Lock-In Reference and controls
     .S_AXIS_SREF_tdata(SinCos[31:0]),
     .S_AXIS_SREF_tvalid(1),
-    .modulation_volume(10000), // volume for modulation Q31
-    .modulation_target(4), // target signal for mod (#XYZUAB)
+
+    .M_AXIS1_tdata  (spm_rx),  
+    .M_AXIS1_tvalid (spm_rxv), 
+    .M_AXIS2_tdata  (spm_ry),  
+    .M_AXIS2_tvalid (spm_ryv), 
+    .M_AXIS3_tdata  (spm_rz),  
+    .M_AXIS3_tvalid (spm_rzv), 
+    .M_AXIS4_tdata  (spm_ru),  
+    .M_AXIS4_tvalid (spm_ruv), 
+
+    .M_AXIS_XSMON_tdata  (spm_mrx),  
+    .M_AXIS_XSMON_tvalid (spm_mrxv),
+    .M_AXIS_YSMON_tdata  (spm_mry),  
+    .M_AXIS_YSMON_tvalid (spm_mryv),
+    .M_AXIS_ZSMON_tdata  (spm_mrz),  
+    .M_AXIS_ZSMON_tvalid (spm_mrzv),
+
+    .M_AXIS_X0MON_tdata  (spm_mx0), 
+    .M_AXIS_X0MON_tvalid (spm_mx0v),
+    .M_AXIS_Y0MON_tdata  (spm_my0),
+    .M_AXIS_Y0MON_tvalid (spm_my0v),
     
-
-    // scan rotation (yx=-xy, yy=xx)
-    .rotmxx(1<<28), // =cos(alpha)
-    .rotmxy(0), // =sin(alpha)
-
-    // slope -- always applied in global XY plane ???
-    .slope_x(-10000), // SQ28
-    .slope_y(0), // SQ28
-
-    // SCAN OFFSET / POSITION COMPONENTS, ABSOLUTE COORDS
-    .x0(0), // vector components
-    .y0(0), // ..
-    .z0(0), // ..
-    .u0(0), // Bias Reference
-    .xy_offset_step(100), // @Q31 => Q31 / 120M => [18 sec full scale swin @ step 1 decii = 0]  x RDECI
-    .z_offset_step(100), // @Q31 => Q31 / 120M => [18 sec full scale swin @ step 1 decii = 0]  x RDECI
-
-    .M_AXIS1_tdata (spm_rx),  
-    .M_AXIS1_tvalid(spm_rxv), 
-    .M_AXIS2_tdata (spm_ry),  
-    .M_AXIS2_tvalid(spm_ryv), 
-    .M_AXIS3_tdata (spm_rz),  
-    .M_AXIS3_tvalid(spm_rzv), 
-    .M_AXIS4_tdata (spm_ru),  
-    .M_AXIS4_tvalid(spm_ruv), 
-
-    .M_AXIS_XSMON_tdata (spm_mrx),  
-    .M_AXIS_XSMON_tvalid(spm_mrxv),
-    .M_AXIS_YSMON_tdata (spm_mry),  
-    .M_AXIS_YSMON_tvalid(spm_mryv),
-    .M_AXIS_ZSMON_tdata (spm_mrz),  
-    .M_AXIS_ZSMON_tvalid(spm_mrzv),
-
-    .M_AXIS_X0MON_tdata (spm_mx0), 
-    .M_AXIS_X0MON_tvalid(spm_mx0v),
-    .M_AXIS_Y0MON_tdata (spm_my0),
-    .M_AXIS_Y0MON_tvalid(spm_my0v),
+    .M_AXIS_Z0MON_tdata  (spm_mz0),
+    .M_AXIS_Z0MON_tvalid (spm_mz0v),
     
-    .M_AXIS_Z0MON_tdata (spm_mz0),
-    .M_AXIS_Z0MON_tvalid(spm_mz0v),
+  .M_AXIS_Z_SLOPE_tdata  (spm_Zslope),
+  .M_AXIS_Z_SLOPE_tvalid (spm_Zslopev),
     
-  .M_AXIS_Z_SLOPE_tdata (spm_Zslope),
-  .M_AXIS_Z_SLOPE_tvalid(spm_Zslopev),
-    
-  .M_AXIS_UrefMON_tdata (spm_Urm),
-  .M_AXIS_UrefMON_tvalid(spm_Urmv)
+  .M_AXIS_UrefMON_tdata  (spm_Urm),
+  .M_AXIS_UrefMON_tvalid (spm_Urmv)
 );
 
 
-//def adjust (hz)
+//def adjust reg (hz)
 //    fclk = 1e6 
-//    dphi = 2.*pi*(hz/fclk)
-//    dRe = int (Q31 * cos (dphi))
-//    dIm = int (Q31 * sin (dphi))
-//    return (dRe, dIm)
-//Q31 = 0x7FFFFFFF # ((1<<31)-1);
-//Q32 = 0xFFFFFFFF # ((1<<32)-1);
-//cr = Q31 # ((1<<32)-1);
+//    dphi = 2.*pi*reg (hz/fclk)
+//    dRe = int reg (Q31 * cos reg (dphi))
+//    dIm = int reg (Q31 * sin reg (dphi))
+//    return reg (dRe, dIm)
+//Q31 = 0x7FFFFFFF # reg (reg (1<<31)-1);
+//Q32 = 0xFFFFFFFF # reg (reg (1<<32)-1);
+//cr = Q31 # reg (reg (1<<32)-1);
 //ci = 0;
 
 
 SineSDB64 SDB_tb
 (
     .aclk (pclk),
-    .S_AXIS_DELTAS_tdata(deltasReIm), // deltas(Re,Im) vector
-    .S_AXIS_DELTAS_tvalid(1),
-    .M_AXIS_SC_tdata(SinCos), // (Sine, Cosine) vector
-    .M_AXIS_SC_tvalid(SCtv)
+    .S_AXIS_DELTAS_tdata (deltasReIm), // deltasreg (Re,Im) vector
+    .S_AXIS_DELTAS_tvalid (1),
+    .M_AXIS_SC_tdata (SinCos), // reg (Sine, Cosine) vector
+    .M_AXIS_SC_tvalid (SCtv)
 );
 
 endmodule
