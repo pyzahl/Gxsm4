@@ -11,6 +11,210 @@
 		(company "PyZahl@BNL")
 	)
 	(lib_symbols
+		(symbol "Connector:Conn_01x03_Socket"
+			(pin_names
+				(offset 1.016) hide)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(property "Reference" "J"
+				(at 0 5.08 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "Conn_01x03_Socket"
+				(at 0 -5.08 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" "~"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" "Generic connector, single row, 01x03, script generated"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_locked" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "connector"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_fp_filters" "Connector*:*_1x??_*"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "Conn_01x03_Socket_1_1"
+				(arc
+					(start 0 -2.032)
+					(mid -0.5058 -2.54)
+					(end 0 -3.048)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.27 -2.54) (xy -0.508 -2.54)
+					)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.27 0) (xy -0.508 0)
+					)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.27 2.54) (xy -0.508 2.54)
+					)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start 0 0.508)
+					(mid -0.5058 0)
+					(end 0 -0.508)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start 0 3.048)
+					(mid -0.5058 2.54)
+					(end 0 2.032)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(pin passive line
+					(at -5.08 2.54 0)
+					(length 3.81)
+					(name "Pin_1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -5.08 0 0)
+					(length 3.81)
+					(name "Pin_2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -5.08 -2.54 0)
+					(length 3.81)
+					(name "Pin_3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+		)
 		(symbol "Connector:Samtec_ASP-134486-01"
 			(pin_names
 				(offset 1.016) hide)
@@ -22043,6 +22247,16 @@
 	)
 	(wire
 		(pts
+			(xy 121.92 11.43) (xy 121.92 17.78)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "3983cc36-7f12-47fa-b890-8727d1fd72d2")
+	)
+	(wire
+		(pts
 			(xy 220.98 69.85) (xy 224.79 69.85)
 		)
 		(stroke
@@ -23410,6 +23624,16 @@
 			(type default)
 		)
 		(uuid "85200c2c-5e5e-48cb-bfea-a9a3cf1957d0")
+	)
+	(wire
+		(pts
+			(xy 87.63 7.62) (xy 88.9 7.62)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "85811b23-61b0-4d07-bde5-3648172c04c4")
 	)
 	(wire
 		(pts
@@ -47696,6 +47920,16 @@
 			"VP1/4b0aO1y4JQIAAAAASUVORK5CYII="
 		)
 	)
+	(text "USB 5V\n3.3V Regulator\nModule Option"
+		(exclude_from_sim no)
+		(at 91.186 18.542 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "71894d41-d7e2-4cb1-acf7-0dbd02983c04")
+	)
 	(global_label "D0P RP"
 		(shape input)
 		(at 96.52 68.58 0)
@@ -49324,6 +49558,28 @@
 			)
 		)
 	)
+	(global_label "EXT 3.3V DAC"
+		(shape input)
+		(at 88.9 10.16 180)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "bd0ed113-8029-45d7-843c-c171b9398c6d")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 72.9125 10.16 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+				(hide yes)
+			)
+		)
+	)
 	(global_label "D3P RP"
 		(shape input)
 		(at 96.52 60.96 0)
@@ -49962,6 +50218,28 @@
 			)
 		)
 	)
+	(global_label "5V USB"
+		(shape input)
+		(at 88.9 12.7 180)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "edcfe633-75a2-468b-a69b-8d987af015f1")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 78.8391 12.7 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+				(hide yes)
+			)
+		)
+	)
 	(global_label "SDI1 PMOD"
 		(shape input)
 		(at 83.82 66.04 180)
@@ -50369,7 +50647,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "11cb6d34-a1e1-4373-b94f-a8559627370e")
-		(property "Reference" "JPMD6"
+		(property "Reference" "PMD6"
 			(at 53.34 162.56 0)
 			(effects
 				(font
@@ -50451,7 +50729,7 @@
 		(instances
 			(project ""
 				(path "/63df56e0-33e2-40b2-bbfc-0201c9a11b00"
-					(reference "JPMD6")
+					(reference "PMD6")
 					(unit 1)
 				)
 			)
@@ -50598,7 +50876,7 @@
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
-		(dnp no)
+		(dnp yes)
 		(fields_autoplaced yes)
 		(uuid "21549da3-a128-42b5-853e-71e1306bb80a")
 		(property "Reference" "J2-FMC-RP1"
@@ -52186,7 +52464,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "278086ea-7e59-4e1e-a7eb-1ecee7b0f63d")
-		(property "Reference" "JPMD5"
+		(property "Reference" "PMD5"
 			(at 53.34 133.35 0)
 			(effects
 				(font
@@ -52268,7 +52546,7 @@
 		(instances
 			(project ""
 				(path "/63df56e0-33e2-40b2-bbfc-0201c9a11b00"
-					(reference "JPMD5")
+					(reference "PMD5")
 					(unit 1)
 				)
 			)
@@ -60568,7 +60846,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "6868a339-136a-4ae1-ad38-e675e56f8105")
-		(property "Reference" "JPMD4"
+		(property "Reference" "PMD4"
 			(at 53.34 104.14 0)
 			(effects
 				(font
@@ -60650,7 +60928,7 @@
 		(instances
 			(project ""
 				(path "/63df56e0-33e2-40b2-bbfc-0201c9a11b00"
-					(reference "JPMD4")
+					(reference "PMD4")
 					(unit 1)
 				)
 			)
@@ -62080,7 +62358,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" "Capacitor_THT:C_Rect_L4.6mm_W2.0mm_P2.50mm_MKS02_FKP02"
+		(property "Footprint" "Capacitor_SMD:C_1206_3216Metric_Pad1.33x1.80mm_HandSolder"
 			(at 129.8448 205.74 0)
 			(effects
 				(font
@@ -62265,7 +62543,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "7e6732c4-8fbf-4feb-ab20-6576b7bb0440")
-		(property "Reference" "JPMD1"
+		(property "Reference" "PMD1"
 			(at 53.34 5.08 0)
 			(effects
 				(font
@@ -62347,7 +62625,7 @@
 		(instances
 			(project ""
 				(path "/63df56e0-33e2-40b2-bbfc-0201c9a11b00"
-					(reference "JPMD1")
+					(reference "PMD1")
 					(unit 1)
 				)
 			)
@@ -63825,8 +64103,9 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "9200a647-33d3-4050-b127-59cf1e9ff23c")
-		(property "Reference" "TP-CLK1"
+		(property "Reference" "TP-CLK"
 			(at 39.37 60.9599 90)
+			(do_not_autoplace yes)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -63877,7 +64156,80 @@
 		(instances
 			(project ""
 				(path "/63df56e0-33e2-40b2-bbfc-0201c9a11b00"
-					(reference "TP-CLK1")
+					(reference "TP-CLK")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Connector:Conn_01x03_Socket")
+		(at 93.98 10.16 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp yes)
+		(fields_autoplaced yes)
+		(uuid "95c4a49a-d92d-42c6-9790-6d1091f944ca")
+		(property "Reference" "J2"
+			(at 95.25 8.8899 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "Conn_01x03_Socket"
+			(at 95.25 11.4299 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Connector_PinSocket_2.54mm:PinSocket_1x03_P2.54mm_Vertical"
+			(at 93.98 10.16 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 93.98 10.16 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Generic connector, single row, 01x03, script generated"
+			(at 93.98 10.16 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "2"
+			(uuid "82c03f4b-b514-46ae-ae19-09b93957b6cc")
+		)
+		(pin "1"
+			(uuid "7412234f-8c1f-413c-83ce-af431c1bec55")
+		)
+		(pin "3"
+			(uuid "6bbe4503-623a-4d7b-aa60-ec8a72526f26")
+		)
+		(instances
+			(project ""
+				(path "/63df56e0-33e2-40b2-bbfc-0201c9a11b00"
+					(reference "J2")
 					(unit 1)
 				)
 			)
@@ -63977,7 +64329,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" "Capacitor_THT:C_Rect_L4.6mm_W2.0mm_P2.50mm_MKS02_FKP02"
+		(property "Footprint" "Capacitor_SMD:C_1206_3216Metric_Pad1.33x1.80mm_HandSolder"
 			(at 123.4948 205.74 0)
 			(effects
 				(font
@@ -65916,7 +66268,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" "Capacitor_THT:C_Rect_L4.6mm_W2.0mm_P2.50mm_MKS02_FKP02"
+		(property "Footprint" "Capacitor_SMD:C_1206_3216Metric_Pad1.33x1.80mm_HandSolder"
 			(at 98.0948 205.74 0)
 			(effects
 				(font
@@ -66053,7 +66405,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" "Capacitor_THT:C_Rect_L4.6mm_W2.0mm_P2.50mm_MKS02_FKP02"
+		(property "Footprint" "Capacitor_SMD:C_1206_3216Metric_Pad1.33x1.80mm_HandSolder"
 			(at 110.7948 205.74 0)
 			(effects
 				(font
@@ -66123,7 +66475,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" "Capacitor_THT:C_Rect_L4.6mm_W2.0mm_P2.50mm_MKS02_FKP02"
+		(property "Footprint" "Capacitor_SMD:C_1206_3216Metric_Pad1.33x1.80mm_HandSolder"
 			(at 117.1448 205.74 0)
 			(effects
 				(font
@@ -66308,7 +66660,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "d24b99f0-3ce1-48e6-9e29-7339bcdb5450")
-		(property "Reference" "JPMD3"
+		(property "Reference" "PMD3"
 			(at 53.34 73.66 0)
 			(effects
 				(font
@@ -66390,7 +66742,7 @@
 		(instances
 			(project ""
 				(path "/63df56e0-33e2-40b2-bbfc-0201c9a11b00"
-					(reference "JPMD3")
+					(reference "PMD3")
 					(unit 1)
 				)
 			)
@@ -66490,7 +66842,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" "Capacitor_THT:C_Rect_L4.6mm_W2.0mm_P2.50mm_MKS02_FKP02"
+		(property "Footprint" "Capacitor_SMD:C_1206_3216Metric_Pad1.33x1.80mm_HandSolder"
 			(at 104.4448 205.74 0)
 			(effects
 				(font
@@ -66609,8 +66961,9 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "d856a76e-d300-4ad1-943d-03e0b6fcb0d4")
-		(property "Reference" "TP-SYNC1"
+		(property "Reference" "TP-SYNC"
 			(at 27.178 58.42 90)
+			(do_not_autoplace yes)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -66659,7 +67012,7 @@
 		(instances
 			(project "rpZ7020_adda_io_shield"
 				(path "/63df56e0-33e2-40b2-bbfc-0201c9a11b00"
-					(reference "TP-SYNC1")
+					(reference "TP-SYNC")
 					(unit 1)
 				)
 			)
@@ -66959,6 +67312,73 @@
 			(project "rpZ7020_adda_io_shield"
 				(path "/63df56e0-33e2-40b2-bbfc-0201c9a11b00"
 					(reference "#PWR027")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:GND")
+		(at 87.63 7.62 270)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "dfad987d-659f-4a3f-9b3f-ca934a9908a4")
+		(property "Reference" "#PWR031"
+			(at 81.28 7.62 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "GND"
+			(at 83.82 7.6199 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(property "Footprint" ""
+			(at 87.63 7.62 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 87.63 7.62 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" ""
+			(at 87.63 7.62 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "9438fdfd-bea9-48e3-8d48-5fda3152c0ac")
+		)
+		(instances
+			(project "rpZ7020_adda_io_shield"
+				(path "/63df56e0-33e2-40b2-bbfc-0201c9a11b00"
+					(reference "#PWR031")
 					(unit 1)
 				)
 			)
@@ -67308,7 +67728,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "f56d27c1-dec4-4916-8d5f-54497858f45f")
-		(property "Reference" "JPMD2"
+		(property "Reference" "PMD2"
 			(at 53.34 31.75 0)
 			(effects
 				(font
@@ -67390,7 +67810,7 @@
 		(instances
 			(project ""
 				(path "/63df56e0-33e2-40b2-bbfc-0201c9a11b00"
-					(reference "JPMD2")
+					(reference "PMD2")
 					(unit 1)
 				)
 			)
