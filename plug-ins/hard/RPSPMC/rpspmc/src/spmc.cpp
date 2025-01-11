@@ -572,25 +572,6 @@ void rp_spmc_set_xyzu (double ux, double uy, double uz, double bias){
 
 }
 
-
-// Main SPM Z Feedback Servo Control
-// CONTROL[32] OUT[32]   m[24]  x  c[32]  = 56 M: 24{Q32},  P: 44{Q14}
-void rp_spmc_set_zservo_controller (double setpoint, double cp, double ci, double upper, double lower){
-        if (verbose > 1) fprintf(stderr, "##Configure RP SPMC Z-Servo Controller: set= %g  cp=%g ci=%g upper=%g lower=%g\n", setpoint, cp, ci, upper, lower); 
-        set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_CONTROLLER + SPMC_CFG_SET,   volts_to_rpspmc_FIR32IN1 (setpoint)); // RP IN1 -- SQ31  ((FPGA internal converted via float/log using 24.8) @ about 1V
-        set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_CONTROLLER + SPMC_CFG_CP,    (int)round (QZSCOEF * cp)); // Q31
-        set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_CONTROLLER + SPMC_CFG_CI,    (int)round (QZSCOEF * ci)); // Q31
-        set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_CONTROLLER + SPMC_CFG_UPPER, volts_to_rpspmc (upper));
-        set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_CONTROLLER + SPMC_CFG_LOWER, volts_to_rpspmc (lower));
-}
-
-void rp_spmc_set_zservo_gxsm_speciality_setting (int mode, double z_setpoint, double level){
-        if (verbose > 1) fprintf(stderr, "##Configure RP SPMC Z-Servo Controller: mode= %d  Zset=%g level=%g\n", mode, z_setpoint, level); 
-        set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_MODE, mode);
-        set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_ZSETPOINT, volts_to_rpspmc (z_setpoint));
-        set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_LEVEL, volts_to_rpspmc (level));
-}
-
 //#define DBG_SETUPGVP
 
 
@@ -650,6 +631,40 @@ void rp_spmc_gvp_module_config_vector_Qn (int addr, double data[16], int n, doub
         if (addr) rp_spmc_gvp_module_write_config_data (addr); // and finish write
 }
 
+
+
+// Main SPM Z Feedback Servo Control
+// CONTROL[32] OUT[32]   m[24]  x  c[32]  = 56 M: 24{Q32},  P: 44{Q14}
+void rp_spmc_set_zservo_controller (double setpoint, double cp, double ci, double upper, double lower){
+        if (verbose > 1) fprintf(stderr, "##Configure RP SPMC Z-Servo Controller: set= %g  cp=%g ci=%g upper=%g lower=%g\n", setpoint, cp, ci, upper, lower); 
+        //set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_CONTROLLER + SPMC_CFG_SET,   volts_to_rpspmc_FIR32IN1 (setpoint)); // RP IN1 -- SQ31  ((FPGA internal converted via float/log using 24.8) @ about 1V
+        //set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_CONTROLLER + SPMC_CFG_CP,    (int)round (QZSCOEF * cp)); // Q31
+        //set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_CONTROLLER + SPMC_CFG_CI,    (int)round (QZSCOEF * ci)); // Q31
+        //set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_CONTROLLER + SPMC_CFG_UPPER, volts_to_rpspmc (upper));
+        //set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_CONTROLLER + SPMC_CFG_LOWER, volts_to_rpspmc (lower));
+
+        rp_spmc_gvp_module_config_uint32 (MODULE_SETUP, volts_to_rpspmc_FIR32IN1 (setpoint), MODULE_START_VECTOR);
+        rp_spmc_gvp_module_config_Qn (MODULE_SETUP, cp, MODULE_SETUP_VECTOR(1), QZSCOEF);
+        rp_spmc_gvp_module_config_Qn (MODULE_SETUP, ci, MODULE_SETUP_VECTOR(2), QZSCOEF);
+        rp_spmc_gvp_module_config_uint32 (MODULE_SETUP,             volts_to_rpspmc (upper), MODULE_SETUP_VECTOR(3));
+        rp_spmc_gvp_module_config_uint32 (SPMC_Z_SERVO_CONTROL_REG, volts_to_rpspmc (lower), MODULE_SETUP_VECTOR(4));
+}
+
+void rp_spmc_set_zservo_gxsm_speciality_setting (int mode, double z_setpoint, double level){
+        if (verbose > 1) fprintf(stderr, "##Configure RP SPMC Z-Servo Controller: mode= %d  Zset=%g level=%g\n", mode, z_setpoint, level); 
+        //set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_MODE, mode);
+        //set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_ZSETPOINT, volts_to_rpspmc (z_setpoint));
+        //set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_LEVEL, volts_to_rpspmc (level));
+
+        rp_spmc_gvp_module_config_uint32 (MODULE_SETUP, volts_to_rpspmc (level), MODULE_START_VECTOR); // control input offset
+        rp_spmc_gvp_module_config_uint32 (MODULE_SETUP, 0, MODULE_SETUP_VECTOR(1)); // control setpoint offset = 0 always.
+        rp_spmc_gvp_module_config_uint32 (MODULE_SETUP, volts_to_rpspmc (z_setpoint), MODULE_SETUP_VECTOR(2));
+        rp_spmc_gvp_module_config_uint32 (SPMC_Z_SERVO_MODE_CONTROL_REG, mode, MODULE_SETUP_VECTOR(3));
+}
+
+
+
+
 // RPSPMC GVP Engine Management
 void rp_spmc_gvp_config (bool reset=true, bool pause=false, int reset_options=-1){
         
@@ -662,21 +677,15 @@ void rp_spmc_gvp_config (bool reset=true, bool pause=false, int reset_options=-1
         if (reset_options >= 0)
                 rp_spmc_gvp_module_config_int32 (SPMC_GVP_RESET_OPTIONS_REG, reset_options);
 
-
-        // Program GVP:
-        // rp_spmc_gvp_module_start_config ();
-        // write vector data using set_gpio_cfgreg_uint32 (SPMC_MODULE_CONFIG_DATA+N, data); // set config data 0..15 x 32bit
-        // rp_spmc_gvp_module_write_config_data (SPMC_GVP_VECTOR_DATA);     
-        
         if (verbose > 0)
-                fprintf(stderr, "##Configure GVP: %s\n", reset ? "Reset" : pause ? "Pause":"Run");
+                fprintf(stderr, "##Configure GVP: %s RO[%d]\n", reset ? "Reset" : pause ? "Pause":"Run", reset_options);
 }
 
 void rp_spmc_gvp_init (){
         if (verbose > 0)
                 fprintf(stderr, "##**** GVP INIT\n");
 
-        rp_spmc_gvp_config (); // assure reset+hold mode
+        rp_spmc_gvp_config (true, false, 0x0000); // assure reset mode, FB not in hold
 
         // Program GVP with Null vectors for sanity:
         rp_spmc_gvp_module_start_config ();
@@ -712,18 +721,18 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
 
         if ((pc&0xff) == 0){
                 stream_debug_flags = opts;
-                if (verbose > 1) fprintf(stderr, "PC=0: stream_debug_flags = opts = 0x%04x, ", stream_debug_flags);
+                if (verbose > 1) fprintf(stderr, "\n** WRITE GVP: PC=0: stream_debug_flags = opts = 0x%04x\n", stream_debug_flags);
         }
                 
         if (pc&0x1000){ // special auto vector delta computation mode
-                if (verbose > 1) fprintf(stderr, "**Auto calc init vector to absolute position [%g %g %g %g] V\n", dx, dy, dz, du);
+                if (verbose > 1) fprintf(stderr, "** Auto calc init vector to absolute position [%g %g %g %g] V\n", dx, dy, dz, du);
                 double x = rpspmc_to_volts (read_gpio_reg_int32 (1,0));
                 double y = rpspmc_to_volts (read_gpio_reg_int32 (1,1));
                 double z = rpspmc_to_volts (read_gpio_reg_int32 (10,0));
                 double u = rpspmc_to_volts (read_gpio_reg_int32 (8,0)); // Bias sum from SET and GVP
                 double bias = rpspmc_to_volts (bias_buf);
 
-                if (verbose > 1) fprintf(stderr, "**XYZU readings are => [%g %g %g %g] V, bias buffer=%g V\n", x, y, z, u, bias);
+                if (verbose > 1) fprintf(stderr, "** XYZU readings are => [%g %g %g %g] V, bias buffer=%g V\n", x, y, z, u, bias);
 
                 dx -= x;
                 dy -= y;
@@ -744,11 +753,9 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
                 if ((pc&0x1020) == 0x1020)
                         db = 0.;
                 pc=0; // set PC = 0. Remove special mask
-                if (verbose > 1) fprintf(stderr, "Write Vector[PC=%03d] **{dXYZU => [%g %g %g %g] V} = [", pc, dx, dy, dz, du);
-
+                if (verbose > 1)
+                        fprintf(stderr, ">>>>>>>>>>>>[PC=%03d] AUTO INIT **{dXYZU => [%g %g %g %g] V}\n", pc, dx, dy, dz, du);
                 // da, db not managed yet
-        }else{
-                if (verbose > 1) fprintf(stderr, "Write Vector[PC=%03d] = [", pc);
         }
 
         unsigned int nii   = 0;
@@ -830,16 +837,16 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
                 // total vector steps:
                 Nsteps = nii * n;
 
-                if (verbose > 1) fprintf(stderr, "Auto calc decii: slew=%g pts/s, dmin=%g V, dt=%g s, ##=%g, Nsteps=%g {ddmin=%g uV #%g ddmax=%g uV #%g}\n",
+                if (verbose > 1) fprintf(stderr, "    ** Auto calc decii: slew=%g pts/s, dmin=%g V, dt=%g s, ##=%g, Nsteps=%g {ddmin=%g uV #%g ddmax=%g uV #%g}\n",
                                          slew, dmin, dt, NII_total, Nsteps, ddmin, ddmin/Vstep_prec_Q31, ddmax, ddmax/Vstep_prec_Q31);
 
                 
         }
 
-        if (!update_life)
-                rp_spmc_gvp_config (); // assure reset+hold mode // NOT REQUIRED
-        else
-                if (verbose > 1) fprintf(stderr, "Life Vector Update is ON\n");
+        //if (!update_life)
+        //        rp_spmc_gvp_config (); // assure reset+hold mode // NOT REQUIRED
+
+        if (verbose > 1) fprintf(stderr, "\nWrite Vector[PC=%03d] = [", pc);
 
         // *** IMPORTANT GVP BEHAVIOR PER DESIGN ***
         // N=5 ii=2 ==> 3 inter vec add steps (2 extra waits), 6 (points) x3 (inter) delta vectors added for section
@@ -1210,7 +1217,7 @@ void rp_spmc_update_readings (){
 
         SPMC_X0_MONITOR.Value () = rpspmc_to_volts (x0_buf); // ** mirror
         SPMC_Y0_MONITOR.Value () = rpspmc_to_volts (y0_buf); // ** mirror
-        SPMC_Z0_MONITOR.Value () = rpspmc_to_volts (read_gpio_reg_int32 (10,1));
+        SPMC_Z0_MONITOR.Value () = 0.0; // rpspmc_to_volts (read_gpio_reg_int32 (10,1));
 
         SPMC_SIGNAL_MONITOR.Value () = rpspmc_CONTROL_SELECT_ZS_to_volts (read_gpio_reg_int32 (7,1)); // SQ8.24 
 }

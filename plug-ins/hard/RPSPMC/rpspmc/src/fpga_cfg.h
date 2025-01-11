@@ -194,7 +194,29 @@
 #define GVP_VEC_014   14
 #define GVP_VEC_DECII 15
 
-
+// Z_SERVO @ CONFIG ADDRESS
+#define SPMC_Z_SERVO_CONTROL_REG              100
+#define SPMC_Z_SERVO_MODE_CONTROL_REG         101
+/*
+        z_servo_control_reg_address:
+        begin
+            r_control_setpoint <= config_data[1*32-1 : 0*32];
+            r_cp               <= config_data[2*32-1 : 1*32];
+            r_ci               <= config_data[3*32-1 : 2*32];
+            r_upper            <= config_data[4*32-1 : 3*32];
+            r_lower            <= config_data[5*32-1 : 4*32];
+        end   
+          
+        z_servo_modes_reg_address:
+        begin
+            r_signal_offset    <= config_data[1*32-1 : 0*32];
+            r_control_signal_offset <= config_data[2*32-1 : 1*32]; // normally 0 
+            r_z_setpoint       <= config_data[3*32-1 : 2*32];
+            r_transfer_mode    <= config_data[4*32-1 : 3*32];
+        end     
+        endcase
+*/
+        
 // LOCKIN MODULE @ CONFIG ADDRESS
 #define SPMC_LOCKIN_F0_CONTROL_REG      1000 // [0] LockIn Config Reg (Gain Control, B0: enable gain AXIS, B1: progammed gain Q24)
                                              // [1] Fixed Gain, Q24

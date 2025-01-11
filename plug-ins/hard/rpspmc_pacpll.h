@@ -43,7 +43,9 @@
 #include "rpspmc_hwi_structs.h"
 
 #include "json_talk.h"
+
 #include "rpspmc_stream.h"
+#include "rpspmc_hwi_dev.h"
 
 
 #define MAX_PROGRAM_VECTORS 32
@@ -702,20 +704,30 @@ public:
         // make IV and dz (optional) vector from U_initial, U_final, dZ, n points and V-slope
         // FLAG_RAMP  => auto set points
         // FLAG_VHOLD => set dv to zero, use slope + Ui-Uf for duration/slew auto set points
-	double make_Udz_vector (double Ui, double Uf, double dZ, int n, double slope, int source, int options, double &duration, gvp_vector_flags flags);
+	double make_dUdz_vector (int index, double dU, double dZ, int n, double slope, int source, int options);
+	double make_Udz_vector (int index, double Ui, double Uf, double dZ, int n, double slope, int source, int options){
+                make_dUdz_vector (index, Uf - Ui, dZ, n, slope, source, options);
+        };
 
         // make ZXY rampe vector w slope
-	double make_ZXYramp_vector (double dZ, double dX, double dY, int n, double slope, int source, int options, double &duration, gvp_vector_flags flags);
+	double make_ZXYramp_vector (int index, double dZ, double dX, double dY, int n, double slope, int source, int options);
         
         // make dU/dZ/dX/dY vector for n points and ts time per segment
-	double make_UZXYramp_vector (double dU, double dZ, double dX, double dY, double da, double db, int n, int nrep, int ptr_next, double ts, int source, int options);
+	double make_dUZXYAB_vector (int index, double dU, double dZ, double dX, double dY, double da, double db, int n, int nrep, int ptr_next, double ts, int source, int options);
         
         // Make a delay Vector
-	double make_delay_vector (double delay, int source, int options, double &duration, gvp_vector_flags flags, int points=0);
+	double make_delay_vector (int index, double delay, int source, int options, int nrep, int ptr_next, int points);
 
         // Make Vector Table End
-	void append_null_vector (int options, int index);
+	void append_null_vector (int index, int options);
 
+        void print_vector (const gchar *msg, int i){
+                g_message ("%s PV[%d] [N=%04d] [%10g pts/s, S:%08x, O:%08x, #%03d, J%02d, dU %6g V, dX %6g V, dY %6g V, dZ %6g V, dA %6g V, dB %6g V]",
+                           msg, i, program_vector.n,
+                           program_vector.slew, program_vector.srcs, program_vector.options, program_vector.repetitions, program_vector.ptr_next,
+                           program_vector.f_du, program_vector.f_dx, program_vector.f_dy, program_vector.f_dz, program_vector.f_da, program_vector.f_db);
+        };
+        
 	PROBE_VECTOR_GENERIC program_vector;
 
 	// STS (I-V)
@@ -842,192 +854,6 @@ private:
 	UnitObj *Unity, *Volt, *Velocity, *dB;
         UnitObj *Angstroem, *Frq, *Time, *TimeUms, *msTime, *minTime, *Deg, *Current, *Current_pA, *Speed, *PhiSpeed, *Vslope, *Hex;
 };
-
-
-
-/*
- * RPSPMC hardware interface class -- derived from GXSM XSM_hardware abstraction class
- * =======================================================================
- */
-class rpspmc_hwi_dev : public XSM_Hardware, public RP_stream{
-
-public: 
-	friend class RPSPMC_Control;
-
-	rpspmc_hwi_dev();
-	virtual ~rpspmc_hwi_dev();
-
-        static void spmc_stream_connect_cb (GtkWidget *widget, rpspmc_hwi_dev *self);
-        virtual const gchar *get_rp_address ();
-
-        static gboolean update_status_idle(gpointer self);
-        virtual void status_append (const gchar *msg, bool schedule_from_thread=false);
-        virtual void on_connect_actions();
-        virtual int on_new_data (gconstpointer contents, gsize len, bool init=false);
-        
-	/* Parameter  */
-	virtual long GetMaxLines(){ return 32000; };
-
-	virtual const gchar* get_info() { return "SPM Template V0.0"; };
-
-	/* Hardware realtime monitoring -- all optional */
-	/* default properties are
-	 * "X" -> current realtime tip position in X, inclusive rotation and offset
-	 * "Y" -> current realtime tip position in Y, inclusive rotation and offset
-	 * "Z" -> current realtime tip position in Z
-	 * "xy" -> X and Y
-	 * "zxy" -> Z, X, Y  in Volts!
-         * "O" -> Offset -> z0, x0, y0 (Volts)
-         * "f0I" -> 
-	 * "U" -> current bias
-         * "W" -> WatchDog
-	 */
-	virtual gint RTQuery (const gchar *property, double &val1, double &val2, double &val3);
-
-	virtual gint RTQuery () { return RPSPMC_data_y_index + subscan_data_y_index_offset; }; // actual progress on scan -- y-index mirror from FIFO read
-
-	/* high level calls for instrtument condition checks */
-	virtual gint RTQuery_clear_to_start_scan (){ return 1; };
-	virtual gint RTQuery_clear_to_start_probe (){ return 1; };
-	virtual gint RTQuery_clear_to_move_tip (){ return 1; };
-
-	int is_scanning() { return ScanningFlg; };
-
-	virtual double GetUserParam (gint n, gchar *id=NULL) { return 0.; };
-	virtual gint   SetUserParam (gint n, gchar *id=NULL, double value=0.) { return 0; };
-	
-	virtual double GetScanrate () { return 1.; }; // query current set scan rate in s/pixel
-
-	virtual int RotateStepwise(int exec=1); // rotation not implemented in simulation, if required set/update scan angle here
-
-	virtual gboolean SetOffset(double x, double y); // set offset to coordinated (non rotated)
-
-        virtual gboolean MovetoXY (double x, double y); // set tip position in scan coordinate system (potentially rotated)
-
-	void delayed_tip_move_update ();
-	static guint delayed_tip_move_update_callback (rpspmc_hwi_dev *dspc);
-        gint delayed_tip_move_update_timer_id;
-        double requested_tip_move_xy[2];
-        
-	virtual void StartScan2D() { PauseFlg=0; ScanningFlg=1; KillFlg=FALSE; };
-        // EndScan2D() is been called until it returns TRUE from scan control idle task until it returns FALSE (indicating it's completed)
-	virtual gboolean EndScan2D() { ScanningFlg=0; GVP_abort_vector_program (); return FALSE; };
-	virtual void PauseScan2D()   { PauseFlg=1; };
-	virtual void ResumeScan2D()  { PauseFlg=0; };
-	virtual void KillScan2D()    { PauseFlg=0; KillFlg=TRUE; };
-
-        // ScanLineM():
-        // Scan setup: (yindex=-2),
-        // Scan init: (first call with yindex >= 0)
-        // while scanning following calls are progress checks (return FALSE when yindex line data transfer is completed to go to next line for checking, else return TRUE to continue with this index!
-	virtual gboolean ScanLineM(int yindex, int xdir, int muxmode, //srcs_mask, // muxmode
-				   Mem2d *Mob[MAX_SRCS_CHANNELS],
-				   int ixy_sub[4]);
-
-        int start_data_read (int y_start, 
-                             int num_srcs0, int num_srcs1, int num_srcs2, int num_srcs3, 
-                             Mem2d **Mob0, Mem2d **Mob1, Mem2d **Mob2, Mem2d **Mob3);
-
-	virtual int ReadProbeData (int dspdev=0, int control=0);
-
-        int GVP_expect_header(double *pv, int &index_all);
-        int GVP_expect_point(double *pv, int &index_all);
-
-
-        
-	int probe_fifo_thread_active;
-	int fifo_data_y_index;
-
-	int fifo_data_num_srcs[4]; // 0: XP, 1: XM, 2: 2ND_XP, 3: 2ND_XM
-	Mem2d **fifo_data_Mobp[4]; // 0: XP, 1: XM, 2: 2ND_XP, 3: 2ND_XM
-
-
-        
-        // dummy template signal management
-	// SIGNAL MANAGEMENT
-
-        void set_spmc_signal_mux (int source[6]);
-        
-	virtual void read_dsp_signals () { read_signal_lookup (); read_actual_module_configuration (); };
-
-	virtual int lookup_signal_by_ptr(gint64 sigptr);
-	virtual int lookup_signal_by_name(const gchar *sig_name);
-	virtual const gchar *lookup_signal_name_by_index(int i);
-	virtual const gchar *lookup_signal_unit_by_index(int i);
-	virtual double lookup_signal_scale_by_index(int i);
-	virtual int change_signal_input(int signal_index, gint32 input_id, gint32 voffset=0);
-	virtual int query_module_signal_input(gint32 input_id);
-	int read_signal_lookup ();
-	int read_actual_module_configuration ();
-
-	DSP_SIG_UNIVERSAL *lookup_dsp_signal_managed(gint i){
-                if (i<NUM_SIGNALS_UNIVERSAL)
-                        return &dsp_signal_lookup_managed[i];
-                else
-                        return NULL;
-	};
-
-        int read_GVP_data_block_to_position_vector (int offset, gboolean expect_full_header=false);
-       
-        int subscan_data_y_index_offset;
-
-   	Mem2d **Mob_dir[4]; // reference to scan memory object (mem2d)
-	long srcs_dir[4]; // souce channel coding
-	int nsrcs_dir[4]; // number of source channes active
-        gint ScanningFlg;
-        gint PauseFlg;
-
-protected:
-	int thread_sim; // connection to SRanger used by thread
-        DSP_SIG_UNIVERSAL dsp_signal_lookup_managed[NUM_SIGNALS_UNIVERSAL]; // signals, generic version
-
-private:
-	GThread *data_read_thread;
-	GThread *probe_data_read_thread;
-        gboolean KillFlg;
-
-
-        gint32 GVP_stream_buffer[EXPAND_MULTIPLES*DMA_SIZE];
-        GMutex GVP_stream_buffer_mutex;
-        int GVP_stream_buffer_offset;
-        int GVP_stream_buffer_AB;
-        int GVP_stream_buffer_position;
-        int GVP_stream_status;
-        
-public:
-        gint last_vector_index;
- 
-        //SPM_emulator *spm_emu; // DSP emulator for dummy data generation and minimal SPM behavior
-        void GVP_execute_vector_program(); // non blocking
-        void GVP_vp_init ();
-        void GVP_start_data_read(); // non blocking
-        
-        PROBE_HEADER_POSITIONVECTOR GVP_vp_header_current;
-
-	int GVP_read_program_vector(int i, PROBE_VECTOR_GENERIC *v){
-		if (i >= MAX_PROGRAM_VECTORS || i < 0)
-			return 0;
-                // NOTE: READINGN BACK NOT YET USED NOR SUPPORTED BY RPSPMC !!!
-		// memcpy (v, &vector_program[i], sizeof (PROBE_VECTOR_GENERIC));
-		return -1;
-	};
-	int GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v);
-	void GVP_abort_vector_program ();
-
-        gint RPSPMC_GVP_section_count;
-        gint RPSPMC_GVP_n;
-        
-        gint RPSPMC_GVP_secn;
-        gint RPSPMC_data_y_count;
-        gint RPSPMC_data_z_value;
-        gint RPSPMC_data_y_index;
-        gint RPSPMC_data_x_index;
-
-        gboolean abort_GVP_flag;
-};
-
-        
-
 
 
 /* RP-PACPLL and RP-SPMC communication -> -dev */

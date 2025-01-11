@@ -858,8 +858,8 @@ void PanView :: tip_refresh()
                 main_get_gapp()->set_dsp_scan_in_progress (status & 6 ? true : false);
 
                 // Servo (FB), GVP, Hold (Pause), Move
-                const gchar *indicator_id[16] = { "S","G","H","P",
-                                                  "M","","","",
+                const gchar *indicator_id[16] = { "Z","G","P","R",
+                                                  "F","H","H","",
                                                   "","","","",
                                                   "","","","" };
                 for (int i=0; status_id[i]>=0; ++i){

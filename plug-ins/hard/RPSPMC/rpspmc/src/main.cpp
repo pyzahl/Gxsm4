@@ -340,7 +340,7 @@ CDoubleParameter DDS_FREQ_MONITOR("DDS_FREQ_MONITOR", CBaseParameter::RW, 0, 0, 
                                                                                                               //                                                            (5,0); // GPIO X9 : DDS Phase Inc (Freq.) lower 32 bits of 44 (unsigned)
 CDoubleParameter PHASE_MONITOR("PHASE_MONITOR", CBaseParameter::RW, 0, 0, -180.0, 180.0);                     // deg ** gpio_reading_FIRV_vector[GPIO_READING_PHASE]        (5,1); // GPIO X10: CORDIC ATAN(X/Y)
 CDoubleParameter DFREQ_MONITOR("DFREQ_MONITOR", CBaseParameter::RW, 0, 0, -1000.0, 1000.0);                   // Hz  ** gpio_reading_FIRV_vector[GPIO_READING_DDS_FREQ]     (6,0); // GPIO X11: dFreq
-// *** DBG ***                                                                                                //        -----------------------                             (6,1); // GPIO X12: --- Transport Status: writeposition
+// *** DBG ***                                                                                                //        -----------------------                             (6,1); // GPIO X12: --- Transport Status: writeposition BRAM
 CDoubleParameter CONTROL_DFREQ_MONITOR("CONTROL_DFREQ_MONITOR", CBaseParameter::RW, 0, 0, -10000.0, 10000.0); // mV  **  gpio_re..._FIRV_vector[GPIO_READING_CONTROL_DFREQ] (7,0); // GPIO X13: control dFreq value
 // *** DBG ***                                                                                                //        -----------------------                             (7,1); // GPIO X14: --- SIGNAL PASS [IN2] (Current, FB SRC)
 // *** DBG ***                                                                                                //        -----------------------                             (8,0); // GPIO X15: --- UMON Bias
@@ -348,11 +348,11 @@ CDoubleParameter CONTROL_DFREQ_MONITOR("CONTROL_DFREQ_MONITOR", CBaseParameter::
 // *** DBG ***                                                                                                //        -----------------------                             (9,0); // GPIO X17: --- YMON
 // *** DBG ***                                                                                                //        -----------------------                             (9,1); // GPIO X18: --- ZMON   (Z total at DAC3)
 // *** DBG ***                                                                                                //        -----------------------                            (10,0); // GPIO X19: --- ZS-MON (Z-GVP)
-// *** DBG ***                                                                                                //        -----------------------                            (10,1); // GPIO X20: --- Z0-MON (Z-Offset)
+// *** DBG ***                                                                                                //        -----------------------                            (10,1); // GPIO X20: --- CONFIG READ-BACK --- ***//Z0-MON (Z-Offset)
 // *** DBG ***                                                                                                //        -----------------------                            (11,0); // GPIO X21: --- SPMC BRAM LAST WRITE ADDRESS (0..16383)
 // *** DBG ***                                                                                                //        -----------------------                            (11,1); // GPIO X22: --- Z-Sum to DAC MON
-// *** DBG ***                                                                                                //        -----------------------                            (12,0); // GPIO X23: --- Fifo RC
-// *** DBG ***                                                                                                //        -----------------------                            (12,1); // GPIO X24: --- Fifo WC
+// *** DBG ***                                                                                                //        -----------------------                            (12,0); // GPIO X23: --- AMON
+// *** DBG ***                                                                                                //        -----------------------                            (12,1); // GPIO X24: --- BMON
 
 
 

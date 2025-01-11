@@ -1242,12 +1242,17 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2,
                 }
                 // build status flags
                 int statusbits = round(spmc_parameters.gvp_status);
-		val3 = (double)(statusbits>>8);   //  assign dbg_status = {sec[32-4:0], setvec, reset, pause, ~finished };
-		val2 = (double)(statusbits&0xff);
-		val1 = (double)(  (((statusbits&0x01) && !(statusbits&0x08)) ? 1:0)      // (Z Servo Feedback Active, No Hold: Bit0 && !Bit4)
-				+ ((((statusbits>>8)&0x01 == 0) ? 1:0) << 1)  // Scan/GVP Running       (Scan, Probe, ...) (! finsihed)
-                                + ((((statusbits>>8)&0x02) ? 1:0) << 2)       // Scan/GVP Pause         (Scan)
-				+ ((((statusbits>>8)&0x04) ? 1:0) << 3)       // Scan/GVP Programming in progress
+                int Sgvp = (statusbits>>8) & 0xf;  // assign GVP_status = { sec[32-4:0], setvec, reset, pause, ~finished };
+                int Sspm = statusbits & 0xff;      // assign SPM status = { ...SPM Z Servo Hold, GVP-FB-Hold, GVP-Finished, Z Servo EN }
+		val3 = (double)Sgvp;  
+		val2 = (double)Sspm; // assign
+		val1 = (double)(   (((Sspm & 0x01) && !(Sspm & 0x04) && !(Sspm & 0x04) && !(Sspm & 0x08)) ? 1:0)   // Z Servo: active
+                                  + ((Sgvp & 0x01 ? 1:0) << 1)  // GVP !FINISHED **Scan/GVP Running
+                                  + ((Sgvp & 0x02 ? 1:0) << 2)  // GVP: GVP Pause         (Scan)
+                                  + ((Sgvp & 0x04 ? 1:0) << 3)  // GVP: Reset
+                                  + ((Sspm & 0x02 ? 1:0) << 4)  // GVP: GVP Finished
+                                  + ((Sspm & 0x04 ? 1:0) << 5)  // GVP: GVP-FB-Hold
+                                  + ((Sspm & 0x08 ? 1:0) << 6)  // GVP: SPM-FB-Hold
 				//+ (( MoveInProgress     ? 1:0) << 4)
 				//+ (( PLLActive          ? 1:0) << 5)
 				//+ (( ZPOS-Adjuster      ? 1:0) << 6)
@@ -1535,7 +1540,7 @@ int rpspmc_hwi_dev::GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v){
         gvp_vector_i [I_GVP_PC_INDEX] = i;
         gvp_vector_i [I_GVP_N       ] = v->n;
         gvp_vector_i [I_GVP_OPTIONS ] = ((v->srcs & 0xffffff) << 8) | (v->options & 0xff); //   ((v->options & VP_FEEDBACK_HOLD) ? 0:1) | (1<<7) | (1<<6) | (1<<5);
-        g_message ("GVP_write_program_vector[%d]: srcs = 0x%08x", i, gvp_vector_i [I_GVP_OPTIONS ] );
+        // g_message ("GVP_write_program_vector[%d]: srcs = 0x%08x", i, gvp_vector_i [I_GVP_OPTIONS ] );
         gvp_vector_i [I_GVP_NREP    ] = v->repetitions > 1 ? v->repetitions-1 : 0;
         gvp_vector_i [I_GVP_NEXT    ] = v->ptr_next;
 

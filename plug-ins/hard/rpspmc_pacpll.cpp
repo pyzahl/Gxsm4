@@ -189,9 +189,9 @@ SOURCE_SIGNAL_DEF swappable_signals[] = {                                       
         { 0x00000009, "09-ZSmon",       " ", "V", "V", (1.0),                                           -1 },
         { 0x00000010, "10-LockInY",     " ", "V", "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),                          -1 },
         { 0x00000011, "11-LockInX",     " ", "V", "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),                          -1 },
-        { 0x00000012, "12-LockInMag",   " ", "V", "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),                          -1 },
+        { 0x00000012, "12-LockInMagIIR",   " ", "V", "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),                          -1 },
         { 0x00000013, "13-SineRef",     " ", "V",   "V", (SPMC_RPIN12_to_volts),                        -1 },
-        { 0x00000014, "14-IN1noFIR",    " ", "V",   "V", (SPMC_RPIN12_to_volts),                        -1 },
+        { 0x00000014, "14-LockInMag",    " ", "V",   "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),                        -1 },
         { 0x00000015, "15-ZwSlope-OUT", " ", "V",   "V", (SPMC_AD5791_to_volts),                        -1 },
         { 0x00000016, "X-TestSignal = 0", " ", "V",   "V", (1.0),                         -1 },
         { 0x00000017, "X-TestSignal = 1", " ", "V",   "V", (1.0),                         -1 },
@@ -1840,26 +1840,35 @@ void RPSPMC_Control::create_folder (){
 	// ==================================================
         bp->new_grid_with_frame ("I-V Type Spectroscopy");
 	// ==================================================
-#if 0 // SIMPLE IV
-	bp->grid_add_label ("IV Probe"); bp->grid_add_label ("Start"); bp->grid_add_label ("End");  bp->grid_add_label ("Points");
+        GtkWidget *multiIV_checkbutton = NULL;
+#if 1 // SIMPLE IV
+        IV_sections  = 0;  // simple mode
+        multiIV_mode = -1; // simple mode
+        
+	bp->grid_add_label ("Start"); bp->grid_add_label ("End");  bp->grid_add_label ("Points");
         bp->new_line ();
 
-        bp->grid_add_ec (NULL, Volt, &IV_start, -10.0, 10., "5.3g", 0.1, 0.025, "IV-Start");
-        bp->grid_add_ec (NULL, Volt, &IV_end, -10.0, 10.0, "5.3g", 0.1, 0.025, "IV-End");
-        bp->grid_add_ec (NULL, Unity, &IV_points, 1, 1000, "5g", "IV-Points");
+        bp->grid_add_ec (NULL, Volt, &IV_start[0], -10.0, 10., "5.3g", 0.1, 0.025, "IV-Start");
+        bp->grid_add_ec (NULL, Volt, &IV_end[0], -10.0, 10.0, "5.3g", 0.1, 0.025, "IV-End");
+        bp->grid_add_ec (NULL, Unity, &IV_points[0], 1, 1000, "5g", "IV-Points");
         
         bp->new_line ();
 
 	bp->grid_add_ec ("Slope", Vslope, &IV_slope,0.1,1000.0, "5.3g", 1., 10., "IV-Slope");
+        bp->new_line ();
 	bp->grid_add_ec ("Slope Ramp", Vslope, &IV_slope_ramp,0.1,1000.0, "5.3g", 1., 10., "IV-Slope-Ramp");
         bp->new_line ();
         bp->set_configure_list_mode_on ();
+	bp->grid_add_ec ("dz", Angstroem, &IV_dz, -1000.0, 1000.0, "5.4g", 1., 2., "IV-dz");
+        bp->new_line ();
 	bp->grid_add_ec ("#IV sets", Unity, &IV_repetitions, 1, 100, "3g", "IV-rep");
+        bp->new_line ();
+	bp->grid_add_ec ("IV-Recover-Delay", Time, &IV_recover_delay, 0., 10., "5.3g", 0.001, 0.01,  "IV-Recover-Delay");
         bp->set_configure_list_mode_off ();
-#endif
-
+#else
+      
 	bp->grid_add_ec ("Sections", Unity, &IV_sections, 1,6, "2g", "IV-Sections");
-        GtkWidget *multiIV_checkbutton = bp->grid_add_check_button ("Multi-IV mode", "enable muli section IV curve mode", 1,
+        multiIV_checkbutton = bp->grid_add_check_button ("Multi-IV mode", "enable muli section IV curve mode", 1,
                                                                     G_CALLBACK(RPSPMC_Control::Probing_multiIV_callback), this, IV_sections-1);
 
         bp->new_line ();
@@ -1925,6 +1934,7 @@ void RPSPMC_Control::create_folder (){
 	bp->grid_add_ec ("IV-Recover-Delay", Time, &IV_recover_delay, 0., 1., "5.3g", 0.001, 0.01,  "IV-Recover-Delay");
         bp->set_configure_list_mode_off ();
         
+#endif
 
         // *************** IV controls
         bp->new_line ();
@@ -2519,7 +2529,8 @@ void RPSPMC_Control::create_folder (){
         configure_callback (NULL, NULL, this); // configure "false"
 
 	g_object_set_data( G_OBJECT (window), "DSP_EC_list", bp->get_ec_list_head ());
-        g_object_set_data( G_OBJECT (multiIV_checkbutton), "DSP_multiIV_list", multi_IVsec_list);
+        if (multiIV_checkbutton)
+                g_object_set_data( G_OBJECT (multiIV_checkbutton), "DSP_multiIV_list", multi_IVsec_list);
 	g_object_set_data( G_OBJECT (zposmon_checkbutton), "DSP_zpos_control_list", zpos_control_list);
                 
 	GUI_ready = TRUE;
@@ -2831,7 +2842,6 @@ int RPSPMC_Control::Probing_multiIV_callback(GtkWidget *widget, RPSPMC_Control *
 
 
 int RPSPMC_Control::Probing_exec_IV_callback( GtkWidget *widget, RPSPMC_Control *self){
-        PI_DEBUG_GP (DBG_L4, "%s \n",__FUNCTION__);
 	self->current_auto_flags = self->IV_auto_flags;
 
 	if (self->check_vp_in_progress ()) 
@@ -2848,10 +2858,6 @@ int RPSPMC_Control::Probing_exec_IV_callback( GtkWidget *widget, RPSPMC_Control 
                 main_get_gapp()->SignalRemoteActionToPlugins (&tmp);
                 g_free (tmp);
         }
-
-        // ** TEMPLATE DUMMY **
-        // write code to controller
-        //self->write_spm_vector_program (0, PV_MODE_NONE);
 
 	if (self->IV_auto_flags & FLAG_AUTO_GLOCK){
 		self->vis_Source  = self->IV_glock_data[0];

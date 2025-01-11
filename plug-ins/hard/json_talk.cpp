@@ -353,7 +353,8 @@ void  RP_JSON_talk::write_array (const gchar *parameter_id[], int i_size, int *i
                         }
                 g_string_append_printf (list, "}}");
                 soup_websocket_connection_send_text (client, list->str);
-                g_print ("%s\n",list->str);
+                if  (debug_level > 1)
+                        g_print ("%s\n",list->str);
                 g_string_free (list, true);
         }
 }

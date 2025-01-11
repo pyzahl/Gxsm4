@@ -1,0 +1,110 @@
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
+// Create Date: 01/11/2025 12:04:22 AM
+// Design Name: 
+// Module Name: z_servo_configuration
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+
+
+module z_servo_configuration#(
+    /* config address */
+    parameter z_servo_control_reg_address = 100,
+    parameter z_servo_modes_reg_address = 101
+    )(
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN aclk, ASSOCIATED_BUSIF M_AXIS_setpoint:M_AXIS_zreset" *)
+    input aclk,
+    
+    input [32-1:0]  config_addr,
+    input [512-1:0] config_data,
+    
+    input [32-1:0] gvp_options,
+    
+    output wire [32-1:0] M_AXIS_setpoint_tdata,
+    output wire          M_AXIS_setpoint_tvalid,
+    output wire [32-1:0] cp,
+    output wire [32-1:0] ci,
+    output wire [32-1:0] upper,
+    output wire [32-1:0] lower,
+
+    output wire [32-1:0] signal_offset,
+    output wire [32-1:0] control_signal_offset,
+    output wire [32-1:0] M_AXIS_zreset_tdata,
+    output wire          M_AXIS_zreset_tvalid,
+    output wire servo_enable,
+    output wire servo_log,
+    output wire servo_fcz,
+    output wire servo_hold);
+        
+    reg [32-1:0] r_control_setpoint = 0;
+    reg [32-1:0] r_cp = 0;
+    reg [32-1:0] r_ci = 0;
+    reg [32-1:0] r_upper = 0;
+    reg [32-1:0] r_lower = 0;
+
+    reg signed [32-1:0] r_signal_offset = 0;
+    reg signed [32-1:0] r_control_signal_offset = 0;
+    reg signed [32-1:0] r_z_setpoint = 0;
+    reg [32-1:0] r_transfer_mode = 0;
+    
+    reg [32-1:0] r_gvp_options = 0;
+
+
+    assign M_AXIS_setpoint_tdata  = r_control_setpoint;
+    assign M_AXIS_setpoint_tvalid = 1;
+    assign cp = r_cp;
+    assign ci = r_ci;
+    assign upper = r_upper;
+    assign lower = r_lower;
+
+    assign signal_offset = r_signal_offset;
+    assign control_signal_offset = r_control_signal_offset;
+    assign M_AXIS_zreset_tdata  = r_z_setpoint;
+    assign M_AXIS_zreset_tvalid = 1;
+
+    assign servo_enable = r_transfer_mode[0:0];
+    assign servo_log    = r_transfer_mode[1:1];
+    assign servo_fcz    = r_transfer_mode[2:2];
+
+    assign servo_hold   = r_transfer_mode[3:3] | r_gvp_options[0:0];
+
+
+    always @(posedge aclk)
+    begin
+        // module configuration
+        case (config_addr)
+        z_servo_control_reg_address:
+        begin
+            r_control_setpoint <= config_data[1*32-1 : 0*32];
+            r_cp               <= config_data[2*32-1 : 1*32];
+            r_ci               <= config_data[3*32-1 : 2*32];
+            r_upper            <= config_data[4*32-1 : 3*32];
+            r_lower            <= config_data[5*32-1 : 4*32];
+        end   
+          
+        z_servo_modes_reg_address:
+        begin
+            r_signal_offset    <= config_data[1*32-1 : 0*32];
+            r_control_signal_offset <= config_data[2*32-1 : 1*32]; // normally 0 
+            r_z_setpoint       <= config_data[3*32-1 : 2*32];
+            r_transfer_mode    <= config_data[4*32-1 : 3*32];
+        end     
+        endcase
+        
+        r_gvp_options <= gvp_options; // buffer
+    end    
+    
+endmodule

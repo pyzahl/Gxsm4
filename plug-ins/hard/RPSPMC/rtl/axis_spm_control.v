@@ -37,6 +37,7 @@ module axis_spm_control#(
     input a_clk,
     input [32-1:0]  config_addr,
     input [512-1:0] config_data,
+    //output wire [32-1:0] config_readback, // default = 0; or 'Z' ??? possible
 
     // GVP/SCAN COMPONENTS, ROTATED RELATIVE COORDS TO SCAN CENTER
     input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS_Xs_tdata,
@@ -95,6 +96,9 @@ module axis_spm_control#(
     output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS_UrefMON_tdata,
     output wire                          M_AXIS_UrefMON_tvalid
     );
+    
+    //reg [32-1:0] reg_config_readback = 0;
+    
     
     // Xr  =   rotmxx*xs + rotmxy*ys
     // Yr  =  -rotmxy*xs + rotmxx*ys
@@ -203,6 +207,7 @@ module axis_spm_control#(
 // Saturated result to 32bit
 `define SATURATE_32(REG) (REG > 33'sd2147483647 ? 32'sd2147483647 : REG < -33'sd2147483647 ? -32'sd2147483647 : REG[32-1:0]) 
 
+//assign config_readback = reg_config_readback;
 
     always @ (posedge a_clk)
     begin
@@ -240,9 +245,14 @@ module axis_spm_control#(
             modulation_volume <= config_data[1*32-1 : 0*32]; // volume for modulation Q31
             modulation_target <= config_data[2*32-1 : 1*32]; // target signal for mod (#XYZUAB)
         end
+
+        //default:
+        //    reg_config_readback <= 0;
+        
         endcase
     end
-
+ 
+        
     always @ (posedge a_clk)
     begin
         rdecii <= rdecii+1; // rdecii 00 01 *10 11 00 ...
