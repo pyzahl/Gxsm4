@@ -50,21 +50,7 @@
 
 #include "spmc_stream_server.h"
 
-// RPSPMC
-//RDECI=4
-//    reg [RDECI:0] rdecii = 0;
-//    always @ (posedge a_clk) # 125 MHZ
-//    begin
-//        rdecii <= rdecii+1;
-//    end
-//    always @ (posedge rdecii[RDECI]) ...
-
-//RDECI=   1               2         3           4
-//[1:0] => 2 bits => 1/4   3 => 1/8  4 => 1/16   5 => 1/32
-//00 01 10 11  00 01 10 11  ...
-// X  X  X  X   X  X  X  X
-//       R            R
-
+#include "AD5791_lib.cpp"
 
 
 
@@ -96,112 +82,6 @@ int z0_buf = 0;
 int bias_buf = 0;
 
 
-// Integer to binary string. Writes a string of n "bit" characters '1' or '0' as of x&[1<<(N-1)]] to b[0..n-1] and terminating b[n]=0.
-// NOTE: b[] must be at least n+1 bytes long, termination 0 is written to b[n].
-// Returns passed b pointer for convenience
-// Example: { char b16[17]; printf("%s", int_to_binary(b, 1234, 16); }
-
-const char *int_to_binary (char b[], int x, int n){
-        char *p = b;
-	for (int z = 1<<(n-1); z > 0; z >>= 1)
-                *p++ = (x & z) ? '1' : '0';
-        *p = 0;
-	return b;
-}
-
-const char *uint_to_binary (char b[], unsigned int x, int n){
-        char *p = b;
-	for (int z = 1<<(n-1); z > 0; z >>= 1)
-                *p++ = (x & z) ? '1' : '0';
-        *p = 0;
-	return b;
-}
-
-
-/* ****
-       // TEST AD SERIAL OUT
-        dac_send = 0;      
-        dac_axis = 0;      
-        dac_cfg = 0;
-        dac_cfgv = 1;
-        #10;
-
-        dac_axis = 0;      
-        dac_cfg = 32;
-        #10;
-        dac_send = 1;      
-        #128;
-        dac_send = 0;      
-        dac_cmode = 0;      
-
-        r=1;
-        #20
-
-        // TEST GVP SCAN
-        prg=0;
-        #20
-        // move to start point
-        //                  du        dz        dy        dx     Next       Nrep,   Options,     nii,      N,    [Vadr]
-        data = {192'd0, 32'd0000, 32'd0000, -32'd0002, -32'd0002,  32'd0, 32'd0000,   32'h001, 32'd0128, 32'd005, 32'd00 };
-        #2
-        prg=1;
-        #20
-        prg=0;
-        #20
-
-        data = {192'd0, 32'd0004, 32'd0003, 32'd0002, 32'd0001,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd01 }; // END
-        #2
-        prg=1;
-        #20
-        prg=0;
-        #20
-
-        r=0; // release reset to run
-        #20
-
-        wait (fin);
-
-        r=1; // put into reset/hold
-        #20
-
-        prg=0;
-        #20
-
-        // scan procedure
-        // GVP Vector [512 bit max, 10x32 used currently per vector, Num Vectors=8 Currently ]
-        // [32bit]-000-fill    9,        8,       7,         6,       5,        4,         3,       2,       1       0
-        //                  du        dz        dy        dx     Next       Nrep,   Options,     nii,      N,    [Vadr]
-        data = {192'd0, 32'd0000, 32'd0000, 32'd0000, 32'd0256,  32'd0, 32'd0000,   32'h001, 32'd128, 32'd010, 32'd00 };
-        #2
-        prg=1;
-        #20
-        prg=0;
-        #20
-        
-        data = {192'd0, 32'd0000, 32'd0000, 32'd0000, -32'sd0256,  32'd0, 32'd0000,   32'h001, 32'd128, 32'd010, 32'd01 };
-        #2
-        prg=1;
-        #20
-        prg=0;
-        #20
-
-        data = {192'd0, 32'd0000, 32'd0000, 32'd0064, 32'd0000,  -32'sd2, 32'd0010,   32'h001, 32'd128, 32'd001, 32'd02 };
-        #2
-        prg=1;
-        #20
-        prg=0;
-        #20
-
-        data = {192'd0, 32'd0004, 32'd0003, 32'd0064, 32'd0001,  32'd0, 32'd0000,   32'h000, 32'd000, 32'd000, 32'd03 }; // END
-        #2
-        prg=1;
-        #20
-        prg=0;
-        #20
-
-        r=0; // release reset to run
-        wait (fin);
-******** */
 
 
 /*
@@ -211,181 +91,7 @@ const char *uint_to_binary (char b[], unsigned int x, int n){
 
 /* RP SPMC FPGA Engine Configuration and Control */
 
-// RP SPMC PMOD AD5791 management functions
-// THIS SETS the FPGA SPI interface to configuration mode, direct writes to AD!
-void rp_spmc_AD5791_set_configuration_mode (bool cmode=true, bool send=false, int axis=-1){
-        static int rp_spmc_AD5791_configuration_axis=0;
-        static bool rp_spmc_AD5791_configuration_mode=false;
-        static bool rp_spmc_AD5791_configuration_send=false;
-        
-        rp_spmc_AD5791_configuration_mode = cmode;
-        rp_spmc_AD5791_configuration_send = send;
-        if (axis >= 0)
-                rp_spmc_AD5791_configuration_axis = axis; // change axis
-        
-        set_gpio_cfgreg_uint32 (SPMC_CFG_AD5791_DAC_CONTROL,
-                                (  rp_spmc_AD5791_configuration_axis & 0b111)
-                                | (rp_spmc_AD5791_configuration_mode ? (1<<3):0)
-                                | (rp_spmc_AD5791_configuration_send ? (1<<4):0)
-                                );
-        usleep(10000);
-        //if (verbose > 1) fprintf(stderr, "##  FPGA AD5781 to %s mode, send %d, axis %d\n", cmode?"config":"streaming", send?1:0, axis);
-}
 
-// enable AD5791 FPGA to stream mdoe and flow contol (fast)
-void rp_spmc_AD5791_set_stream_mode (){
-        rp_spmc_AD5791_set_configuration_mode (false); // disable configuration mode, enable FPGA level control
-}
-
-// puts ALL AD5791 DACs on hold and set axis dac for config data to load, does not send it yet, all axis are loaded serially
-void rp_spmc_AD5791_set_axis_data (int axis, uint32_t data){
-        rp_spmc_AD5791_set_configuration_mode (true, false, axis);  // enter/stay in config mode, set axis
-        set_gpio_cfgreg_uint32 (SPMC_CFG_AD5791_DAC_AXIS_DATA, data); // set configuration data
-        if (verbose > 1) fprintf(stderr, "##  Set axis data to AD5781 axis %d to %08x\n", axis, data);
-}
-
-// puts ALL AD5791 DACs on hold and into configuration mode, sets axiss data and sends alwasy all axis cfg data as set last
-void rp_spmc_AD5791_send_axis_data (int axis, uint32_t data){
-        rp_spmc_AD5791_set_configuration_mode (true, false, axis);  // enter/stay in config mode, set axis
-        set_gpio_cfgreg_uint32 (SPMC_CFG_AD5791_DAC_AXIS_DATA, data); // set configuration data
-        usleep(10000);
-        rp_spmc_AD5791_set_configuration_mode (true, true); // enter/stay in config mode, enter send data mode, will go into hold mode after data send
-        if (verbose > 1) fprintf(stderr, "## Send axis data to AD5781 axis %d to %08x\n", axis, data);
-}
-
-
-
-/***************************************************************************//**
- * @brief Writes data into a register.
- *
- * @param dev              - The device structure.
- * @param register_address - Address of the register.
- *                          Example:
- *                          AD5791_REG_DAC          - DAC register
- *                          AD5791_REG_CTRL         - Control register
- *                          AD5791_REG_CLR_CODE     - Clearcode register
- *                          AD5791_CMD_WR_SOFT_CTRL - Software control register
- * @param register_value   - Value of the register.
- *
- * @return Returns 0 in case of success or negative error code.
-*******************************************************************************/
-int32_t ad5791_set_register_value(int axis,
-				  uint8_t register_address,
-				  uint32_t register_value)
-{
-	uint32_t spi_word = 0;
-
-	spi_word = AD5791_WRITE |
-		   AD5791_ADDR_REG(register_address) |
-		   (register_value & 0xFFFFF);
-        
-        rp_spmc_AD5791_send_axis_data (axis, spi_word); // set and send
-        
-	return 0;
-}
-int32_t ad5791_prepare_register_value(int axis,
-                                      uint8_t register_address,
-                                      uint32_t register_value)
-{
-	uint32_t spi_word = 0;
-
-	spi_word = AD5791_WRITE |
-		   AD5791_ADDR_REG(register_address) |
-		   (register_value & 0xFFFFF);
-        
-        rp_spmc_AD5791_set_axis_data (axis, spi_word); // not sending out, but setting up FPGA channel data
-        
-	return 0;
-}
-
-
-/***************************************************************************//**
- * @brief Reads the value of a register.
- *
- * @param dev              - The device structure.
- * @param register_address - Address of the register.
- *                          Example:
- *                          AD5791_REG_DAC          - DAC register
- *                          AD5791_REG_CTRL         - Control register
- *                          AD5791_REG_CLR_CODE     - Clearcode register
- *                          AD5791_CMD_WR_SOFT_CTRL - Software control register
- *
- * @return dataRead        - The register's value or negative error code.
-*******************************************************************************/
-int32_t ad5791_get_register_value(int axis,
-				  uint8_t register_address)
-{
-#if 0  // no read back serial data connected to FPGA. N/A
-	uint8_t register_word[3] = {0, 0, 0};
-	uint32_t data_read = 0x0;
-	int8_t status = 0;
-
-	register_word[0] = (AD5791_READ | AD5791_ADDR_REG(register_address)) >> 16;
-
-        //rp_spmc_AD5791_send_axis_data (axis, spi_word);
-        status = spi_write_and_read(axis,
-				    register_word,
-				    3);
-	if(status != 3) {
-		return -1;
-	}
-	register_word[0] = 0x00;
-	register_word[1] = 0x00;
-	register_word[2] = 0x00;
-	status = spi_write_and_read(axis,
-				    register_word,
-				    3);
-	if(status != 3) {
-		return -1;
-	}
-	data_read = ((int32_t)register_word[0] << 16) |
-		    ((int32_t)register_word[1] <<  8) |
-		    ((int32_t)register_word[2] <<  0);
-
-	return data_read;
-#endif
-        return 0;
-}
-
-/***************************************************************************//**
- * @brief Sets the DAC output in one of the three states.
- *
- * @param dev   - The device structure.
- * @param state - The output state.
- *                Example:
- *                AD5791_OUT_NORMAL     - normal operation mode
- *                AD5791_OUT_CLAMPED_6K - output is clamped via ~6KOhm to AGND
- *                AD5791_OUT_TRISTATE   - output is in tristate
- *
- * @return Negative error code or 0 in case of success.
-*******************************************************************************/
-int32_t ad5791_dac_ouput_state(int axis,
-			       uint8_t state)
-{
-	int32_t status = 0;
-#if 0
-	uint32_t old_ctrl = 0;
-	uint32_t new_ctrl = 0;
-	status = ad5791_get_register_value(axis,
-					   AD5791_REG_CTRL);
-	if(status < 0) {
-		return status;
-	}
-	old_ctrl = status;
-	/* Clear DACTRI and OPGND bits. */
-	old_ctrl = old_ctrl & ~(AD5791_CTRL_DACTRI | AD5791_CTRL_OPGND);
-	/* Sets the new state provided by the user. */
-	new_ctrl = old_ctrl |
-		   ((state << 2) & (AD5791_CTRL_DACTRI | AD5791_CTRL_OPGND));
-	status = ad5791_set_register_value(axis,
-					   AD5791_REG_CTRL,
-					   new_ctrl);
-#endif
-	return status;
-}
-
-inline double ad5791_dac_to_volts (int value){ return SPMC_AD5791_REFV*(double)value / Q19; }
-inline int volts_to_ad5791_dac (double volts){ return (int)round(Q19*volts/SPMC_AD5791_REFV); }
 
 inline double rpspmc_to_volts (int value){ return SPMC_AD5791_REFV*(double)value / Q31; }
 inline int volts_to_rpspmc (double volts){ return (int)round(Q31*volts/SPMC_AD5791_REFV); }
@@ -395,135 +101,8 @@ inline double rpspmc_FIR32IN1_to_volts (int value){ return SPMC_IN01_REFV*(doubl
 inline double volts_to_rpspmc_FIR32IN1 (double volts){ return (int)round(Q31*volts/SPMC_IN01_REFV); }
 
 
-/***************************************************************************//**
- * @brief Writes to the DAC register.
- *
- * @param dev   - The device structure.
- * @param value - The value to be written to DAC. In Volts, [-5:+5]V
- *
- * @return Negative error code or 0 in case of success.
-*******************************************************************************/
-int32_t ad5791_set_dac_value(int axis,
-			     double volts)
-{
-	int32_t status = 0;
-        union { int i; unsigned int ui; }u;
 
-        u.i = volts_to_ad5791_dac (volts);
-
-        /* 
-        if (verbose > 0){
-                char s32[33]; memset(s32, 0, 33);
-                fprintf(stderr, "##ad5791setdac: %g V in Q19 int = %08x 0b%s\n", volts, u.i, int_to_binary(s32, u.i, 32)); 
-                //fprintf(stderr, "##ad5791setdac: %g V in Q19 int = %08x 0b%s\n", volts, u.ui, uint_to_binary(s32, u.ui, 32)); 
-        }
-        */
-        
-	status = ad5791_set_register_value (axis,
-                                            AD5791_REG_DAC,
-                                            (uint32_t)u.ui);
-
-	return status;
-}
-int32_t ad5791_prepare_dac_value(int axis,
-                                 double volts)
-{
-	int32_t status = 0;
-        union { int i; unsigned int ui; }u;
-        
-        u.i = volts_to_ad5791_dac (volts);
-
-        if (verbose > 1){
-                char s32[33]; memset(s32, 0, 33);
-                fprintf(stderr, "##ad5791setdac: %g V in Q19 int = %08x 0b%s\n", volts, u.i, int_to_binary(s32, u.i, 32)); 
-                //fprintf(stderr, "##ad5791setdac: %g V in Q19 int = %08x 0b%s\n", volts, u.ui, uint_to_binary(s32, u.ui, 32)); 
-        }
-
-	status = ad5791_prepare_register_value (axis,
-                                                AD5791_REG_DAC,
-                                                (uint32_t)u.ui);
-
-	return status;
-}
-
-
-
-/***************************************************************************//**
- * @brief Asserts RESET, CLR or LDAC in a software manner.
- *
- * @param dev             - The device structure.
- * @param instruction_bit - A Software Control Register bit.
- *                         Example:
- *                         AD5791_SOFT_CTRL_LDAC  - Load DAC
- *                         AD5791_SOFT_CTRL_CLR   - Clear
- *                         AD5791_SOFT_CTRL_RESET - Reset
- *
- * @return Negative error code or 0 in case of success.
-*******************************************************************************/
-int32_t ad5791_soft_instruction(int axis,
-				uint8_t instruction_bit)
-{
-	int32_t status = 0;
-
-	status = ad5791_set_register_value(axis,
-					   AD5791_CMD_WR_SOFT_CTRL,
-					   instruction_bit);
-	if(status < 0) {
-		return status;
-	}
-	//mdelay(1);    // Wait for the instruction to take effect.
-
-	return status;
-}
-
-/***************************************************************************//**
- * @brief Configures the output amplifier, DAC coding, SDO state and the
- *        linearity error compensation.
- *
- * @param dev        - The device structure.
- * @param setup_word - Is a 24-bit value that sets or clears the Control Register
- *                    bits : RBUF bit(AD5791_CTRL_RBUF),
- *                           BIN/2sC bit(AD5791_CTRL_BIN2SC),
- *                           SDODIS bit(AD5791_CTRL_SDODIS) and
- *                           LINCOMP bits(AD5791_CTRL_LINCOMP(x)).
- *                    Example: AD5791_CTRL_BIN2SC | AD5791_CTRL_RBUF - sets
- *                             the DAC register to use offset binary coding and
- *                             powers down the internal output amplifier.
- *
- * @return Negative error code or 0 in case of success.
-*******************************************************************************/
-int32_t ad5791_setup(int axis,
-		     uint32_t setup_word)
-{
-	uint32_t old_ctrl = 0;
-	uint32_t new_ctrl = 0;
-	int32_t status = 0;
-
-	/* Reads the control register in order to save the options related to the
-	   DAC output state that may have been configured previously. */
-	//status = ad5791_get_register_value(axis,
-	//				   AD5791_REG_CTRL);
-	//if(status < 0) {
-	//	return status;
-	//}
-	//old_ctrl = status;
-        old_ctrl = 0b000000000000000000111110; // power up is ---0000111110
-	/* Clear LINCOMP, SDODIS, BIN2SC and RBUF bits. */
-	old_ctrl = old_ctrl & ~(AD5791_CTRL_LINCOMP(-1) |
-				AD5791_CTRL_SDODIS |
-				AD5791_CTRL_BIN2SC |
-				AD5791_CTRL_RBUF);
-	/* Sets the new state provided by the user. */
-	//new_ctrl = old_ctrl | setup_word;
-	new_ctrl = AD5791_CTRL_SDODIS;
-	status = ad5791_set_register_value(axis,
-					   AD5791_REG_CTRL,
-					   new_ctrl);
-
-	return status;
-}
-
-// initialize/reset all AD5791 channels
+// initialize/reset all AD5791 channels and set SPMC to streaming
 void rp_spmc_AD5791_init (){
         fprintf(stderr, "##rp_spmc_AD5791_init\n");
 
@@ -534,6 +113,8 @@ void rp_spmc_AD5791_init (){
         ad5791_setup(1,0);
         ad5791_setup(2,0);
         ad5791_setup(3,0);
+        ad5791_setup(4,0);
+        ad5791_setup(5,0);
 
         usleep(10000);
 
@@ -619,7 +200,7 @@ void rp_spmc_gvp_module_config_int48_16 (int addr,  unsigned long long value, un
 void rp_spmc_gvp_module_config_Qn (int addr, double data, int pos=MODULE_START_VECTOR, double Qn=Q31){
         if (pos > 15 || pos < 0) return;
         if (pos == MODULE_START_VECTOR) rp_spmc_gvp_module_start_config ();
-        set_gpio_cfgreg_uint32 (SPMC_MODULE_CONFIG_DATA+pos,  int(round(Qn*data))); // set config data at pos
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA+pos,  int(round(Qn*data))); // set config data at pos
         if (addr) rp_spmc_gvp_module_write_config_data (addr); // and finish write
 }
 
@@ -631,34 +212,35 @@ void rp_spmc_gvp_module_config_vector_Qn (int addr, double data[16], int n, doub
         if (addr) rp_spmc_gvp_module_write_config_data (addr); // and finish write
 }
 
+// Readback Module Configuration Data, 2x 32bit/address via regA, regB
+
+void rp_spmc_gvp_module_read_config_data (int addr, int *regA, int *regB){
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, addr); // set address, will prepare data to fetch
+        usleep(MODULE_ADDR_SETTLE_TIME);
+        *regA = read_gpio_reg_int32 (10,0); // GPIO X19 <= RegA (addr)
+        *regB = read_gpio_reg_int32 (10,1); // GPIO X20 <= RegB (addr)
+        set_gpio_cfgreg_int32 (0, addr);    // got it, disable
+}
 
 
 // Main SPM Z Feedback Servo Control
 // CONTROL[32] OUT[32]   m[24]  x  c[32]  = 56 M: 24{Q32},  P: 44{Q14}
 void rp_spmc_set_zservo_controller (double setpoint, double cp, double ci, double upper, double lower){
         if (verbose > 1) fprintf(stderr, "##Configure RP SPMC Z-Servo Controller: set= %g  cp=%g ci=%g upper=%g lower=%g\n", setpoint, cp, ci, upper, lower); 
-        //set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_CONTROLLER + SPMC_CFG_SET,   volts_to_rpspmc_FIR32IN1 (setpoint)); // RP IN1 -- SQ31  ((FPGA internal converted via float/log using 24.8) @ about 1V
-        //set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_CONTROLLER + SPMC_CFG_CP,    (int)round (QZSCOEF * cp)); // Q31
-        //set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_CONTROLLER + SPMC_CFG_CI,    (int)round (QZSCOEF * ci)); // Q31
-        //set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_CONTROLLER + SPMC_CFG_UPPER, volts_to_rpspmc (upper));
-        //set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_CONTROLLER + SPMC_CFG_LOWER, volts_to_rpspmc (lower));
 
-        rp_spmc_gvp_module_config_uint32 (MODULE_SETUP, volts_to_rpspmc_FIR32IN1 (setpoint), MODULE_START_VECTOR);
+        rp_spmc_gvp_module_config_int32 (MODULE_SETUP, volts_to_rpspmc_FIR32IN1 (setpoint), MODULE_START_VECTOR);
         rp_spmc_gvp_module_config_Qn (MODULE_SETUP, cp, MODULE_SETUP_VECTOR(1), QZSCOEF);
         rp_spmc_gvp_module_config_Qn (MODULE_SETUP, ci, MODULE_SETUP_VECTOR(2), QZSCOEF);
-        rp_spmc_gvp_module_config_uint32 (MODULE_SETUP,             volts_to_rpspmc (upper), MODULE_SETUP_VECTOR(3));
-        rp_spmc_gvp_module_config_uint32 (SPMC_Z_SERVO_CONTROL_REG, volts_to_rpspmc (lower), MODULE_SETUP_VECTOR(4));
+        rp_spmc_gvp_module_config_int32 (MODULE_SETUP,             volts_to_rpspmc (upper), MODULE_SETUP_VECTOR(3));
+        rp_spmc_gvp_module_config_int32 (SPMC_Z_SERVO_CONTROL_REG, volts_to_rpspmc (lower), MODULE_SETUP_VECTOR(4));
 }
 
-void rp_spmc_set_zservo_gxsm_speciality_setting (int mode, double z_setpoint, double level){
-        if (verbose > 1) fprintf(stderr, "##Configure RP SPMC Z-Servo Controller: mode= %d  Zset=%g level=%g\n", mode, z_setpoint, level); 
-        //set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_MODE, mode);
-        //set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_ZSETPOINT, volts_to_rpspmc (z_setpoint));
-        //set_gpio_cfgreg_int32 (SPMC_CFG_Z_SERVO_LEVEL, volts_to_rpspmc (level));
+void rp_spmc_set_zservo_gxsm_speciality_setting (int mode, double z_setpoint, double in_offset_comp){
+        if (verbose > 1) fprintf(stderr, "##Configure RP SPMC Z-Servo Controller: mode= %d  Zset=%g offset_comp=%g\n", mode, z_setpoint, in_offset_comp); 
 
-        rp_spmc_gvp_module_config_uint32 (MODULE_SETUP, volts_to_rpspmc (level), MODULE_START_VECTOR); // control input offset
-        rp_spmc_gvp_module_config_uint32 (MODULE_SETUP, 0, MODULE_SETUP_VECTOR(1)); // control setpoint offset = 0 always.
-        rp_spmc_gvp_module_config_uint32 (MODULE_SETUP, volts_to_rpspmc (z_setpoint), MODULE_SETUP_VECTOR(2));
+        rp_spmc_gvp_module_config_int32 (MODULE_SETUP, volts_to_rpspmc (in_offset_comp), MODULE_START_VECTOR); // control input offset
+        rp_spmc_gvp_module_config_int32 (MODULE_SETUP, 0, MODULE_SETUP_VECTOR(1)); // control setpoint offset = 0 always.
+        rp_spmc_gvp_module_config_int32 (MODULE_SETUP, volts_to_rpspmc (z_setpoint), MODULE_SETUP_VECTOR(2));
         rp_spmc_gvp_module_config_uint32 (SPMC_Z_SERVO_MODE_CONTROL_REG, mode, MODULE_SETUP_VECTOR(3));
 }
 
@@ -672,10 +254,10 @@ void rp_spmc_gvp_config (bool reset=true, bool pause=false, int reset_options=-1
                 rp_spmc_AD5791_set_stream_mode (); // enable streaming for AD5791 DAC's from FPGA now!
         }
 
-        rp_spmc_gvp_module_config_int32 (SPMC_GVP_CONTROL_REG, (reset ? 1:0) | (pause ? 2:0));
+        rp_spmc_gvp_module_config_uint32 (SPMC_GVP_CONTROL_REG, (reset ? 1:0) | (pause ? 2:0));
 
         if (reset_options >= 0)
-                rp_spmc_gvp_module_config_int32 (SPMC_GVP_RESET_OPTIONS_REG, reset_options);
+                rp_spmc_gvp_module_config_uint32 (SPMC_GVP_RESET_OPTIONS_REG, reset_options);
 
         if (verbose > 0)
                 fprintf(stderr, "##Configure GVP: %s RO[%d]\n", reset ? "Reset" : pause ? "Pause":"Run", reset_options);
@@ -714,7 +296,7 @@ void rp_spmc_gvp_init (){
 // deltas: for dx,dy,dz,du, da,db
 // slew: data points/second / vector
 // update_file: allow update while in progress (scan speed adjust, etc.), applied on FPGA level at next vector start!
-void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
+void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, unsigned int srcs, int nrp, int nxt,
                              double dx, double dy, double dz, double du,
                              double da, double db,
                              double slew, bool update_life=false){
@@ -858,47 +440,52 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
 
         rp_spmc_gvp_module_start_config ();
 
-        int idv[16];
+        int idv[17];
         set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_VADR, idv[0]=pc);
 
-        if (verbose > 1) fprintf(stderr, "%04d, ", n);
+        if (verbose > 1) fprintf(stderr, "[%04d], ", n);
         set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_N, idv[1]=n > 0 ? n-1 : 0); // *** see above note
 
-        if (verbose > 1) fprintf(stderr, "%04d, ", nii);
+        if (verbose > 1) fprintf(stderr, "{%04d}, ", nii);
         set_gpio_cfgreg_uint32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_NII, idv[2]=nii > 0 ? nii-1 : 0); // *** see above note nii > 1 for normal vector, need that time for logic
 
-        if (verbose > 1) fprintf(stderr, "%08x, ", opts);
+        if (verbose > 1) fprintf(stderr, "Op%08x, ", opts);
         set_gpio_cfgreg_uint32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_OPT, idv[3]=opts);
 
-        if (verbose > 1) fprintf(stderr, "%04d, ", nrp);
-        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_NREP, idv[4]=nrp);
+        // preparing to add/disentangle SRCS from opts
+        //if (verbose > 1) fprintf(stderr, "Sr%08x, ", srcs);
+        //set_gpio_cfgreg_uint32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_SRC, idv[4]=srcs);
+        idv[4]=srcs;
+        
+        if (verbose > 1) fprintf(stderr, "#%04d, ", nrp);
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_NREP, idv[5]=nrp);
 
         if (verbose > 1) fprintf(stderr, "%04d, ", nxt);
-        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_NEXT, idv[5]=nxt);
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_NEXT, idv[6]=nxt);
 
         if (verbose > 1) fprintf(stderr, "dX %8.10g uV, ", 1e6*dx/Nsteps);
-        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_DX, idv[6]=(int)round(Q31*dx/Nsteps/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_DX, idv[7]=(int)round(Q31*dx/Nsteps/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
 
         if (verbose > 1) fprintf(stderr, "dY %8.10g uV, ", 1e6*dy/Nsteps);
-        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_DY, idv[7]=(int)round(Q31*dy/Nsteps/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_DY, idv[8]=(int)round(Q31*dy/Nsteps/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
 
         if (verbose > 1) fprintf(stderr, "dZ %8.10g uV, ", 1e6*dz/Nsteps);
-        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_DZ, idv[8]=(int)round(Q31*dz/Nsteps/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_DZ, idv[9]=(int)round(Q31*dz/Nsteps/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
 
         if (verbose > 1) fprintf(stderr, "dU %8.10g uV, ", 1e6*du/Nsteps);
-        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_DU, idv[9]=(int)round(Q31*du/Nsteps/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_DU, idv[10]=(int)round(Q31*du/Nsteps/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
 
         if (verbose > 1) fprintf(stderr, "dA %8.10g uV, ", 1e6*da/Nsteps);
-        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_DA, idv[10]=(int)round(Q31*da/Nsteps/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_DA, idv[11]=(int)round(Q31*da/Nsteps/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
         
         if (verbose > 1) fprintf(stderr, "dB %8.10g uV, ", 1e6*db/Nsteps);
-        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_DB, idv[11]=(int)round(Q31*db/Nsteps/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_DB, idv[12]=(int)round(Q31*db/Nsteps/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
         
-        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_012, idv[12]=0);  // clear bits -- not yet used componets
-        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_013, idv[13]=0);  // clear bits
-        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_014, idv[14]=0);  // clear bits
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_012, idv[13]=0);  // clear bits -- not yet used componets
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_013, idv[14]=0);  // clear bits
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_014, idv[15]=0);  // clear bits
 
-        if (verbose > 1) fprintf(stderr, "0,0,0, decii=%d]\n", idv[15]=decii); // last vector component is decii
+        if (verbose > 1) fprintf(stderr, "0,0,0, decii=%d]\n", idv[16]=decii); // last vector component is decii
         set_gpio_cfgreg_uint32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_DECII, decii);  // decimation
 
         // and load vector data to module
@@ -911,10 +498,11 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
                 if (pc == 0)
                         //             vector =   {32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd000, 32'h1001, -32'd0, -32'd0,  32'd1}; // Vector #1
                         vector_def << "VectorDef: { Decii, 0,0,0, dB,dA,dU,dZ,dY,dX, nxt,reps,opts,nii,n, pc}\n";
-                vector_def << "vector = {32'd" << ((unsigned int)idv[15]); // decii
-                for (int i=14; i>=0; i--){
+                vector_def << "vector = {32'd" << ((unsigned int)idv[16]); // decii
+                for (int i=15; i>=0; i--){
                         switch (i){
                         case 3:
+                        case 4:
                                 vector_def << std::setfill('0') << std::setw(8) << std::hex << ", 32'h" << ((unsigned int)idv[i]); // SRCS, OPTIONS
                                 break;
                         default:
@@ -932,7 +520,7 @@ void rp_set_gvp_stream_mux_selector (unsigned long selector, unsigned long test_
         if (verbose > 1) fprintf(stderr, "** set gvp stream mux 0x%06x\n", (unsigned int)selector);
         rp_spmc_gvp_module_config_uint32 (MODULE_SETUP, selector, MODULE_START_VECTOR);
         rp_spmc_gvp_module_config_uint32 (MODULE_SETUP, test_mode, MODULE_SETUP_VECTOR(1));
-        rp_spmc_gvp_module_config_uint32 (SPMC_MUX16_6_SRCS_CONTROL_REG, testval, MODULE_SETUP_VECTOR(2));
+        rp_spmc_gvp_module_config_int32 (SPMC_MUX16_6_SRCS_CONTROL_REG, testval, MODULE_SETUP_VECTOR(2));
 }
 
 // RPSPMC Location and Geometry
@@ -1006,12 +594,12 @@ void rp_spmc_set_offsets (double x0, double y0, double z0, double bias, double x
 
         if (verbose > 1) fprintf(stderr, "##Configure XYZU [%g %g %g Bias=%g]V {%d %d}/cycle\n", x0, y0, z0, bias, xy_step, z_step);
 
-        rp_spmc_gvp_module_config_uint32 (MODULE_SETUP, x0_buf = volts_to_rpspmc (x0), MODULE_START_VECTOR); // first, init ** X0
-        rp_spmc_gvp_module_config_uint32 (MODULE_SETUP, y0_buf = volts_to_rpspmc (y0), MODULE_SETUP_VECTOR(1)); // setup...    ** Y0
-        rp_spmc_gvp_module_config_uint32 (MODULE_SETUP, z0_buf = volts_to_rpspmc (z0), MODULE_SETUP_VECTOR(2)); // setup...    ** Z0
-        rp_spmc_gvp_module_config_uint32 (MODULE_SETUP, bias_buf = volts_to_rpspmc (bias), MODULE_SETUP_VECTOR(3)); // setup...    ** U0=BiasRef
-        rp_spmc_gvp_module_config_uint32 (MODULE_SETUP, xy_step, MODULE_SETUP_VECTOR(4)); // setup...        ** xy_offset_step/moveto adjuster speed
-        rp_spmc_gvp_module_config_uint32 (SPMC_MAIN_CONTROL_XYZU_OFFSET_REG, z_step,  MODULE_SETUP_VECTOR(5));  // last, write all ** xy_offset_step/moveto adjuster speed
+        rp_spmc_gvp_module_config_int32 (MODULE_SETUP, x0_buf = volts_to_rpspmc (x0), MODULE_START_VECTOR); // first, init ** X0
+        rp_spmc_gvp_module_config_int32 (MODULE_SETUP, y0_buf = volts_to_rpspmc (y0), MODULE_SETUP_VECTOR(1)); // setup...    ** Y0
+        rp_spmc_gvp_module_config_int32 (MODULE_SETUP, z0_buf = volts_to_rpspmc (z0), MODULE_SETUP_VECTOR(2)); // setup...    ** Z0
+        rp_spmc_gvp_module_config_int32 (MODULE_SETUP, bias_buf = volts_to_rpspmc (bias), MODULE_SETUP_VECTOR(3)); // setup...    ** U0=BiasRef
+        rp_spmc_gvp_module_config_int32 (MODULE_SETUP, xy_step, MODULE_SETUP_VECTOR(4)); // setup...        ** xy_offset_step/moveto adjuster speed
+        rp_spmc_gvp_module_config_int32 (SPMC_MAIN_CONTROL_XYZU_OFFSET_REG, z_step,  MODULE_SETUP_VECTOR(5));  // last, write all ** xy_offset_step/moveto adjuster speed
 }
 
 /* TEST XY MOVE
@@ -1048,15 +636,15 @@ void rp_spmc_set_scanpos (double xs, double ys, double slew, int opts){
         usleep(1000);
 
         // make vector to new scan pos requested:
-        rp_spmc_set_gvp_vector (0, n, 0, 0, 0,
+        rp_spmc_set_gvp_vector (0, n, opts, 0, 0, 0,
                                 dx, dy, 0.0, 0.0,
                                 0.0, 0.0,
                                 slew, false);
-        rp_spmc_set_gvp_vector (1, 0, 0, 0, 0,
+        rp_spmc_set_gvp_vector (1, 0, 0, 0, 0, 0,
                                 0.0, 0.0, 0.0, 0.0,
                                 0.0, 0.0,
                                 0.0, false);
-        rp_spmc_set_gvp_vector (2, 0, 0, 0, 0,
+        rp_spmc_set_gvp_vector (2, 0, 0, 0, 0, 0,
                                 0.0, 0.0, 0.0, 0.0,
                                 0.0, 0.0,
                                 0.0, false);
@@ -1088,7 +676,7 @@ void rp_spmc_set_scanpos (double xs, double ys, double slew, int opts){
 void rp_spmc_set_modulation (double volume, int target){
         if (verbose > 1) fprintf(stderr, "##Configure: LCK VOLUME volume= %g V, TARGET: #%d\n", volume, target);
 
-        rp_spmc_gvp_module_config_uint32 (MODULE_SETUP, volts_to_rpspmc(volume), MODULE_START_VECTOR);
+        rp_spmc_gvp_module_config_int32 (MODULE_SETUP, volts_to_rpspmc(volume), MODULE_START_VECTOR);
         rp_spmc_gvp_module_config_uint32 (SPMC_MAIN_CONTROL_MODULATION_REG, target&0x0f, MODULE_SETUP_VECTOR(1));
 }
 
@@ -1213,11 +801,17 @@ void rp_spmc_update_readings (){
 
         SPMC_XS_MONITOR.Value () = rpspmc_to_volts (read_gpio_reg_int32 (1,0)); // (0,0 in FPGA-DIA)
         SPMC_YS_MONITOR.Value () = rpspmc_to_volts (read_gpio_reg_int32 (1,1));
-        SPMC_ZS_MONITOR.Value () = rpspmc_to_volts (read_gpio_reg_int32 (10,0));
+        //SPMC_ZS_MONITOR.Value () = rpspmc_to_volts (read_gpio_reg_int32 (10,0));
 
+        int regA, regB;
+        rp_spmc_gvp_module_read_config_data (SPMC_READBACK_Z_REG, &regA, &regB);
+        SPMC_ZS_MONITOR.Value () = rpspmc_to_volts (regB); // Z-GVP
+        SPMC_Z0_MONITOR.Value () = rpspmc_to_volts (regA); // Z-slope component
+
+        
         SPMC_X0_MONITOR.Value () = rpspmc_to_volts (x0_buf); // ** mirror
         SPMC_Y0_MONITOR.Value () = rpspmc_to_volts (y0_buf); // ** mirror
-        SPMC_Z0_MONITOR.Value () = 0.0; // rpspmc_to_volts (read_gpio_reg_int32 (10,1));
+        //SPMC_Z0_MONITOR.Value () = 0.0; // rpspmc_to_volts (read_gpio_reg_int32 (10,1));
 
         SPMC_SIGNAL_MONITOR.Value () = rpspmc_CONTROL_SELECT_ZS_to_volts (read_gpio_reg_int32 (7,1)); // SQ8.24 
 }

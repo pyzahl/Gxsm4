@@ -33,7 +33,7 @@ module axis_spm_control#(
     parameter slope_reg_address = 1102,
     parameter modulation_reg_address = 1103
 )(
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS_Xs:S_AXIS_Ys:S_AXIS_Zs:S_AXIS_U:S_AXIS_A:S_AXIS_B:S_AXIS_SREF:S_AXIS_Z:M_AXIS1:M_AXIS2:M_AXIS3:M_AXIS4:M_AXIS3:M_AXIS5:M_AXIS3:M_AXIS6:M_AXIS_XSMON:M_AXIS_YSMON:M_AXIS_ZSMON:M_AXIS_X0MON:M_AXIS_Z_SLOPE:M_AXIS_Y0MON:M_AXIS_Z0MON:M_AXIS_UrefMON" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS_Xs:S_AXIS_Ys:S_AXIS_Zs:S_AXIS_U:S_AXIS_A:S_AXIS_B:S_AXIS_SREF:S_AXIS_Z:M_AXIS1:M_AXIS2:M_AXIS3:M_AXIS4:M_AXIS3:M_AXIS5:M_AXIS3:M_AXIS6:M_AXIS_XSMON:M_AXIS_YSMON:M_AXIS_ZSMON:M_AXIS_X0MON:M_AXIS_Z_SLOPE:M_AXIS_Y0MON:M_AXIS_ZGVPMON:M_AXIS_UGVPMON" *)
     input a_clk,
     input [32-1:0]  config_addr,
     input [512-1:0] config_data,
@@ -86,15 +86,14 @@ module axis_spm_control#(
     output wire                          M_AXIS_X0MON_tvalid,
     output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS_Y0MON_tdata,
     output wire                          M_AXIS_Y0MON_tvalid,
-    
-    output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS_Z0MON_tdata,
-    output wire                          M_AXIS_Z0MON_tvalid,
+    output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS_ZGVPMON_tdata,
+    output wire                          M_AXIS_ZGVPMON_tvalid,
     
     output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS_Z_SLOPE_tdata,
     output wire                          M_AXIS_Z_SLOPE_tvalid,
     
-    output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS_UrefMON_tdata,
-    output wire                          M_AXIS_UrefMON_tvalid
+    output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS_UGVPMON_tdata,
+    output wire                          M_AXIS_UGVPMON_tvalid
     );
     
     //reg [32-1:0] reg_config_readback = 0;
@@ -107,52 +106,45 @@ module axis_spm_control#(
     // Zsxy = slope_x * Xr + slope_y * Yr 
     // Z    = Z0 + z + Zsxy
 
-    reg signed [32-1:0] modulation_volume; // volume for modulation Q31
-    reg [4-1:0] modulation_target; // target signal for mod (#XYZUAB)
+    reg signed [32-1:0] modulation_volume=0; // volume for modulation Q31
+    reg [4-1:0] modulation_target=0; // target signal for mod (#XYZUAB)
 
     // scan rotation (yx=-xy; yy=xx)
-    reg signed [32-1:0] rotmxx; // =cos(alpha)
-    reg signed [32-1:0] rotmxy; // =sin(alpha)
+    reg signed [32-1:0] rotmxx=0; // =cos(alpha) Q20
+    reg signed [32-1:0] rotmxy=1<<20; // =sin(alpha) Q20
 
     // slope -- always applied in global XY plane ???
-    reg signed [32-1:0] slope_x; // SQSLOPE (31)
-    reg signed [32-1:0] slope_y; // SQSLOPE (31)
+    reg signed [32-1:0] slope_x=0; // SQSLOPE (31)
+    reg signed [32-1:0] slope_y=0; // SQSLOPE (31)
 
     // SCAN OFFSET / POSITION COMPONENTS; ABSOLUTE COORDS
-    reg signed [32-1:0] x0; // vector components
-    reg signed [32-1:0] y0; // ..
-    reg signed [32-1:0] z0; // ..
-    reg signed [32-1:0] u0; // Bias Reference
-    reg signed [32-1:0] xy_offset_step; // @Q31 => Q31 / 120M => [18 sec full scale swin @ step 1 decii = 0]  x RDECI
-    reg signed [32-1:0] z_offset_step; // @Q31 => Q31 / 120M => [18 sec full scale swin @ step 1 decii = 0]  x RDECI
-
-
+    reg signed [32-1:0] x0=0; // vector components
+    reg signed [32-1:0] y0=0; // ..
+    reg signed [32-1:0] z0=0; // ..
+    reg signed [32-1:0] u0=0; // Bias Reference
+    reg signed [32-1:0] xy_offset_step=32; // @Q31 => Q31 / 120M => [18 sec full scale swin @ step 1 decii = 0]  x RDECI
+    reg signed [32-1:0] z_offset_step=32; // @Q31 => Q31 / 120M => [18 sec full scale swin @ step 1 decii = 0]  x RDECI
 
     reg signed [32-1:0] xy_move_step = 32;
     reg signed [32-1:0] z_move_step = 1;
     
-    reg signed [32-1:0] mx0s = 0;
-    reg signed [32-1:0] my0s = 0;
-    reg signed [32-1:0] mz0s = 0;
-    reg signed [32-1:0] mu0s = 0;
-
+    // adjuster tmp's
     reg signed [32+1-1:0] mx0p = 0;
     reg signed [32+1-1:0] my0p = 0;
     reg signed [32+1-1:0] mz0p = 0;
     reg signed [32+1-1:0] mx0m = 0;
     reg signed [32+1-1:0] my0m = 0;
     reg signed [32+1-1:0] mz0m = 0;
-    reg signed [32-1:0] mx0 = 0;
-    reg signed [32-1:0] my0 = 0;
-    reg signed [32-1:0] mz0 = 0;
-
-    reg signed [32-1:0] mxx=0; // Q20
-    reg signed [32-1:0] mxy=1<<20; // Q20
+    reg signed [32+1-1:0] mx0 = 0;
+    reg signed [32+1-1:0] my0 = 0;
 
 
+
+    // GVP controls
     reg signed [32-1:0] x=0;
     reg signed [32-1:0] y=0;
-    reg signed [32-1:0] u=0;
+    reg signed [32-1:0] z_gvp=0;
+    reg signed [32-1:0] u_gvp=0;
     
     reg signed [32+QROTM+2-1:0] rrx=0;
     reg signed [32+QROTM+2-1:0] rry=0;
@@ -161,6 +153,12 @@ module axis_spm_control#(
     reg signed [32+2-1:0] ry=0;
     //reg signed [32-1:0] rz=0;
     reg signed [32+2-1:0] ru=0;
+
+    reg signed [32-1:0] AXa=0;
+    reg signed [32-1:0] AXb=0;
+    reg signed [32+1-1:0] rA=0;
+    reg signed [32+1-1:0] rB=0;
+
 
     reg signed [32-1:0] slx=0; // SQ31
     reg signed [32-1:0] sly=0; // SQ31
@@ -173,9 +171,6 @@ module axis_spm_control#(
     reg signed [32-1:0] dZy_p=0;
     reg signed [32-1:0] dZy_m=0;
     reg signed [32+1-1:0] z_slope=0;
-    reg signed [32+1-1:0] z_gvp=0;
-    reg signed [32+1-1:0] z_scan=0;
-    reg signed [32-1:0] z_offset=0;
     reg signed [36-1:0] z_sum=0;
 
     reg signed [32+QSLOPE+1-1:0] dZmx=0;
@@ -216,33 +211,33 @@ module axis_spm_control#(
         xyzu_offset_reg_address:
         begin
             // SCAN OFFSET / POSITION COMPONENTS, ABSOLUTE COORDS
-            x0 <= config_data[1*32-1 : 0*32]; // vector components
-            y0 <= config_data[2*32-1 : 1*32]; // ..
-            z0 <= config_data[3*32-1 : 2*32]; // ..
-            u0 <= config_data[4*32-1 : 3*32]; // Bias Reference
+            x0 <= $signed(config_data[1*32-1 : 0*32]); // vector components
+            y0 <= $signed(config_data[2*32-1 : 1*32]); // ..
+            z0 <= $signed(config_data[3*32-1 : 2*32]); // ..
+            u0 <= $signed(config_data[4*32-1 : 3*32]); // Bias Reference
             
-            xy_offset_step <= config_data[5*32-1 : 4*32]; // @Q31 => Q31 / 120M => [18 sec full scale swin @ step 1 decii = 0]  x RDECI
-            z_offset_step  <= config_data[6*32-1 : 5*32]; // @Q31 => Q31 / 120M => [18 sec full scale swin @ step 1 decii = 0]  x RDECI
+            xy_offset_step <= $signed(config_data[5*32-1 : 4*32]); // @Q31 => Q31 / 120M => [18 sec full scale swin @ step 1 decii = 0]  x RDECI
+            z_offset_step  <= $signed(config_data[6*32-1 : 5*32]); // @Q31 => Q31 / 120M => [18 sec full scale swin @ step 1 decii = 0]  x RDECI
         end
 
         rotm_reg_address:
         begin
             // scan rotation (yx=-xy, yy=xx)
-            rotmxx <= config_data[1*32-1 : 0*32]; // =cos(alpha)
-            rotmxy <= config_data[2*32-1 : 1*32]; // =sin(alpha)
+            rotmxx <= $signed(config_data[1*32-1 : 0*32]); // =cos(alpha)
+            rotmxy <= $signed(config_data[2*32-1 : 1*32]); // =sin(alpha)
         end
 
         slope_reg_address:
         begin
             // slope -- always applied in global XY plane ???
-            slope_x <= config_data[1*32-1 : 0*32]; // SQSLOPE (31)
-            slope_y <= config_data[2*32-1 : 1*32]; // SQSLOPE (31)
+            slope_x <= $signed(config_data[1*32-1 : 0*32]); // SQSLOPE (31)
+            slope_y <= $signed(config_data[2*32-1 : 1*32]); // SQSLOPE (31)
         end
 
         modulation_reg_address:
         begin
             // modulation control
-            modulation_volume <= config_data[1*32-1 : 0*32]; // volume for modulation Q31
+            modulation_volume <= $signed(config_data[1*32-1 : 0*32]); // volume for modulation Q31
             modulation_target <= config_data[2*32-1 : 1*32]; // target signal for mod (#XYZUAB)
         end
 
@@ -260,65 +255,64 @@ module axis_spm_control#(
         begin
             // LockIn Sin Ref from DDS
             s  <= $signed (S_AXIS_SREF_tdata[SREF_DATA_WIDTH-1:0]); // SRef is 32bit wide, but only SREF_DATA_WIDTH-1:0 used
-            mv <= $signed(modulation_volume[32-1 : 32-SREF_DATA_WIDTH]); // SQ31 value, truncating.
+            mv <= $signed (modulation_volume[32-1 : 32-SREF_DATA_WIDTH]); // SQ31 value, truncating.
             mt <= modulation_target[4-1:0];
             mod_tmp    <= mv * s;
             modulation <= mod_tmp >>> (SREF_Q_WIDTH - (QSIGNALS-SREF_Q_WIDTH)); // remap to default 32:   2*SREF_Q>> << SIGNALS_Q = >>> 24 - 31-24
             
-            // always buffer locally
+            // buffer locally
             xy_move_step <= xy_offset_step; // XY offset adjuster speed limit (max step)
             z_move_step  <= z_offset_step; // Z offset / slope comp. speed limit (max step) when adjusting
 
-            x <= S_AXIS_Xs_tdata[SAXIS_TDATA_WIDTH-1:0];
-            y <= S_AXIS_Ys_tdata[SAXIS_TDATA_WIDTH-1:0];
+            // GVP CONTROL COMPONENTS:
+            x     <= S_AXIS_Xs_tdata[SAXIS_TDATA_WIDTH-1:0];
+            y     <= S_AXIS_Ys_tdata[SAXIS_TDATA_WIDTH-1:0];
             z_gvp <= S_AXIS_Zs_tdata[SAXIS_TDATA_WIDTH-1:0];
-            u <= S_AXIS_U_tdata[SAXIS_TDATA_WIDTH-1:0];
-            
-            mxx <= rotmxx;
-            mxy <= rotmxy;
-    
-            slx <= slope_x;
-            sly <= slope_y;
-    
-            // XYZ Offset Adjusters -- Zoffset curretnly not used/obsolete
-            mx0s <= x0;
-            my0s <= y0;
-            mz0s <= z0;
-            mu0s <= u0;
-            
-             // MUST ASSURE mx0+/-xy_move_step never exceeds +/-Q31 -- exta bit used + saturation as assign -- to avoid over flow else a PBC jump will happen! 
-            `ADJUSTER (mx0, mx0p, mx0m, xy_move_step, mx0s)
-            `ADJUSTER (my0, my0p, my0m, xy_move_step, my0s)
-            `ADJUSTER (mz0, mz0p, mz0m, z_move_step, mz0s)
+            u_gvp <= S_AXIS_U_tdata[SAXIS_TDATA_WIDTH-1:0];
+            AXa   <= S_AXIS_A_tdata[SAXIS_TDATA_WIDTH-1:0];
+            AXb   <= S_AXIS_B_tdata[SAXIS_TDATA_WIDTH-1:0];
+
+            // Z Servo Control Component
+            z_servo  <= S_AXIS_Z_tdata;
+
+            // XYZ Offset Adjusters -- Zoffset currenly not used/obsolete
+
+            // MUST ASSURE mx0+/-xy_move_step never exceeds +/-Q31 -- exta bit used + saturation as assign -- to avoid over flow else a PBC jump will happen! 
+            `ADJUSTER (mx0, mx0p, mx0m, xy_move_step, x0)
+            `ADJUSTER (my0, my0p, my0m, xy_move_step, y0)
+            // `ADJUSTER (mz0, mz0p, mz0m, z_move_step, z0)
                         
             // slope_x, y adjusters for smooth op
-            `ADJUSTER (dZx, dZx_p, dZx_m, z_move_step, slx)
-            `ADJUSTER (dZy, dZy_p, dZy_m, z_move_step, sly)
+            `ADJUSTER (dZx, dZx_p, dZx_m, z_move_step, slope_x)
+            `ADJUSTER (dZy, dZy_p, dZy_m, z_move_step, slope_y)
 
-            // Bias set
-            ru <= mu0s + u + (mt == 4 ? modulation : 0);
-    
             // Scan Rotation
-            rrx <=  mxx*x + mxy*y;
-            rry <= -mxy*x + mxx*y;
+            rrx <=  rotmxx*x + rotmxy*y;
+            rry <= -rotmxy*x + rotmxx*y;
             
             rx <= (rrx >>> QROTM) + mx0 + (mt == 1 ? modulation : 0); // final global X pos
             ry <= (rry >>> QROTM) + my0 + (mt == 2 ? modulation : 0); // final global Y pos
             
-            // Z and slope comensation in global X,Y and in non rot coords. sys 0,0=invariant point
-            z_servo  <= S_AXIS_Z_tdata;
-
             // Z slope calculation (plane)
             dZmx <= dZx * rx;
             dZmy <= dZy * ry;
             
+            // Z and slope comensation in global X,Y and in non rot coords. sys 0,0=invariant point
             z_slope <= (dZmx >>> QSLOPE) + (dZmy >>> QSLOPE);
-            z_scan  <= z_gvp + z_servo + (mt == 3 ? modulation : 0);
-            z_sum   <= z_gvp + z_servo + (mt == 3 ? modulation : 0) + mz0;
-            //z_sum    <= mz0 + z_gvp + z_servo + Z_slope;
+            z_sum   <= z_gvp + z_servo + (mt == 3 ? modulation : 0); // + mz0;
+            //z_sum   <= z_gvp + z_servo + Z_slope;
+
+            // Bias := u0 (User Bias by GXSM) + u_gvp (GVP bias manipulation component) + LockIn Mod 
+            ru <= u0 + u_gvp + ((mt == 4 || mt == 7 )? modulation : 0);
+    
+
+            // AUX AXIS A,B
+            rA  <= AXa + (mt == 5 ? modulation : 0) + (mt == 7 ? mv >>> 2 : 0);
+            rB  <= AXb + (mt == 6 ? modulation : 0);
         end
     end    
-    
+
+// X    
     assign M_AXIS1_tdata  = `SATURATE_32 (rx);
     assign M_AXIS1_tvalid = 1;
     assign M_AXIS_X0MON_tdata  = mx0;
@@ -326,38 +320,37 @@ module axis_spm_control#(
     assign M_AXIS_XSMON_tdata  = x;
     assign M_AXIS_XSMON_tvalid = 1;
     
+// Y    
     assign M_AXIS2_tdata  = `SATURATE_32 (ry);
     assign M_AXIS2_tvalid = 1;
-    
     assign M_AXIS_Y0MON_tdata  = my0;
     assign M_AXIS_Y0MON_tvalid = 1;
     assign M_AXIS_YSMON_tdata  = y;
     assign M_AXIS_YSMON_tvalid = 1;
-    
-    assign M_AXIS3_tdata  = `SATURATE_32 (z_sum);
+
+// Z    
+    assign M_AXIS3_tdata  = `SATURATE_32 (z_sum); // Z total
     assign M_AXIS3_tvalid = 1;
-
-    assign M_AXIS_ZSMON_tdata  = `SATURATE_32 (z_scan);
+    assign M_AXIS_ZGVPMON_tdata  = z_gvp;
+    assign M_AXIS_ZGVPMON_tvalid = 1;
+    assign M_AXIS_ZSMON_tdata  = `SATURATE_32 (z_sum);
     assign M_AXIS_ZSMON_tvalid = 1;
-
-    assign M_AXIS_Z0MON_tdata  = mz0; // Z Offset aka Z0
-    assign M_AXIS_Z0MON_tvalid = 1;
 
     assign M_AXIS_Z_SLOPE_tdata  = `SATURATE_32 (z_slope); // slope compensation signal to be added saturation to z_sum before out
     assign M_AXIS_Z_SLOPE_tvalid = 1;
-
     
-    assign M_AXIS4_tdata  = `SATURATE_32 (ru);
+// U/BIAS    
+    assign M_AXIS4_tdata  = `SATURATE_32 (ru); // Bias total
     assign M_AXIS4_tvalid = 1;
     
-    assign M_AXIS_UrefMON_tdata  = mu0s;
-    assign M_AXIS_UrefMON_tvalid = 1;
+    assign M_AXIS_UGVPMON_tdata  = u_gvp;
+    assign M_AXIS_UGVPMON_tvalid = 1;
 
-    // A
-    assign M_AXIS5_tdata  = S_AXIS_A_tdata;
+// A
+    assign M_AXIS5_tdata  = `SATURATE_32 (rA);
     assign M_AXIS5_tvalid = S_AXIS_A_tvalid;
-    // B
-    assign M_AXIS6_tdata  = S_AXIS_B_tdata;
+// B
+    assign M_AXIS6_tdata  = `SATURATE_32 (rB);
     assign M_AXIS6_tvalid = S_AXIS_B_tvalid;
     
 endmodule

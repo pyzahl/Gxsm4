@@ -26,7 +26,8 @@ module gvp #(
     parameter control_reg_address = 1,
     parameter reset_options_reg_address = 2,
     parameter vector_programming_reg_address  = 3,
-    parameter vector_preset_address  = 4
+    parameter vector_set_reg_address  = 4,
+    parameter vectorX_programming_reg_address  = 5
 )
 (
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF M_AXIS_X:M_AXIS_Y:M_AXIS_Z:M_AXIS_U:M_AXIS_A:M_AXIS_B:M_AXIS_SRCS:M_AXIS_INDEX:M_AXIS_GVP_TIME" *)
@@ -159,7 +160,7 @@ module gvp #(
                 setvec_flg <= 0;
             end
             
-            vector_preset_address: // set GVP vector variable registers to presets
+            vector_set_reg_address: // set GVP vector variable registers to presets
             begin
                 // place holders, but do not... for xyz
                 //vec_x <= config_data[1*32-1 : 0*32]; // DO NEVER JUMP on XYZ!!
@@ -175,6 +176,7 @@ module gvp #(
                 vp_set <= config_data; // [VAdr], [N, NII, Options, Nrep, Next, dx, dy, dz, du] ** full vector data set block **
                 setvec_flg <= 1; //setvec; // program vector data using vp_set data
             end 
+            //vectorX_programming_reg_address: // enter vector Ext programming load mode
             default:
             begin 
                 setvec_flg <= 0; // make sure done.

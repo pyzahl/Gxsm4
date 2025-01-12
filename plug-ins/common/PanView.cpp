@@ -859,7 +859,7 @@ void PanView :: tip_refresh()
 
                 // Servo (FB), GVP, Hold (Pause), Move
                 const gchar *indicator_id[16] = { "Z","G","P","R",
-                                                  "F","H","H","",
+                                                  "F","H","h","",
                                                   "","","","",
                                                   "","","","" };
                 for (int i=0; status_id[i]>=0; ++i){

@@ -208,8 +208,9 @@ SOURCE_SIGNAL_DEF modulation_targets[] = {
         { 0x00000002, "Y-Scan",      " ", "AA", UTF8_ANGSTROEM, 1./YAngFac, 0, 0 },
         { 0x00000003, "Z-Scan",      " ", "AA", UTF8_ANGSTROEM, 1./ZAngFac, 0, 0 },
         { 0x00000004, "Bias",        " ", "mV",           "mV", 1e-3/BiasFac, 0, 0 },
-        //{ 0x00000005, "A",           " ", "V",             "V", 0, 0, 0 },
-        //{ 0x00000006, "B",           " ", "V",             "V", 0, 0, 0 },
+        { 0x00000005, "A",           " ", "V",             "V", 1., 0, 0 },
+        { 0x00000006, "B",           " ", "V",             "V", 1., 0, 0 },
+        { 0x00000007, "Bias-Aref",   " ", "mV",           "mV", 1e-3/BiasFac, 0, 0 },
         { 0x00000016,  NULL, NULL, NULL, NULL, 0.0, 0 }
 };
 
@@ -620,10 +621,10 @@ void GUI_Builder::grid_add_probe_controls (gboolean have_dual,
                                                "take reverse data to start.", 1,
                                                GCallback (option_cb), cb_data, option_flags, FLAG_DUAL); 
         }                                                       
-        grid_add_check_button_guint64 ("Oversampling", "Check do enable DSP data oversampling:\n"
-                                       "integrates data at intermediate points (averaging).\n"
-                                       "(recommended)", 1,
-                                       GCallback (option_cb), cb_data, option_flags, FLAG_INTEGRATE); 
+        //grid_add_check_button_guint64 ("Oversampling", "Check do enable DSP data oversampling:\n"
+        //                               "integrates data at intermediate points (averaging).\n"
+        //                               "(recommended)", 1,
+        //                               GCallback (option_cb), cb_data, option_flags, FLAG_INTEGRATE); 
         grid_add_check_button_guint64 ("Full Ramp", "Check do enable data acquisition on all probe segments:\n"
                                        "including start/end ramps and delays.", 1,
                                        GCallback (option_cb), cb_data, option_flags, FLAG_SHOW_RAMP); 
@@ -1540,7 +1541,8 @@ void RPSPMC_Control::create_folder (){
         bp->set_configure_list_mode_on ();
         bp->set_input_width_chars (6);
         bp->set_label_width_chars (6);
-        bp->grid_add_label ("Gain");
+        //bp->grid_add_label ("Gain");
+        bp->grid_add_label ("In-Offset");
         bp->grid_add_label ("Fuzzy-Level");
         bp->grid_add_label ("Transfer");
         bp->set_configure_list_mode_off ();
@@ -1554,6 +1556,7 @@ void RPSPMC_Control::create_folder (){
         const gchar *mixer_channel_label[4] = { "STM Current", "AFM/Force", "Mix2", "Mix3" };
         const gchar *mixer_remote_id_set[4] = { "fbs-mx0-current-set",  "fbs-mx1-freq-set",   "fbs-mx2-set",   "fbs-mx3-set" };
         const gchar *mixer_remote_id_gn[4]  = { "fbs-mx0-current-gain" ,"fbs-mx1-freq-gain",  "fbs-mx2-gain",  "fbs-mx3-gain" };
+        const gchar *mixer_remote_id_oc[4]  = { "fbs-mx0-current-oc" ,"fbs-mx1-freq-oc",  "fbs-mx2-oc",  "fbs-mx3-oc" };
         const gchar *mixer_remote_id_fl[4]  = { "fbs-mx0-current-level","fbs-mx1-freq-level", "fbs-mx2-level", "fbs-mx3-level" };
 
         bp->set_default_ec_change_notice_fkt (RPSPMC_Control::ZServoParamChanged, this);
@@ -1603,7 +1606,8 @@ void RPSPMC_Control::create_folder (){
                 // bp->add_to_configure_hide_list (bp->scale);
                 bp->set_input_width_chars (6);
                 bp->set_configure_list_mode_on ();
-                bp->grid_add_ec (NULL, Unity, &mix_gain[ch], -1.0, 1.0, "5g", 0.001, 0.01, mixer_remote_id_gn[ch]);
+                //bp->grid_add_ec (NULL, Unity, &mix_gain[ch], -1.0, 1.0, "5g", 0.001, 0.01, mixer_remote_id_gn[ch]);
+                bp->grid_add_ec (NULL, mixer_unit[ch], &mix_in_offsetcomp[ch], -1.0, 1.0, "5g", 0.001, 0.01, mixer_remote_id_oc[ch]);
                 bp->grid_add_ec (NULL, mixer_unit[ch], &mix_level[ch], -100.0, 100.0, "5g", 0.001, 0.01, mixer_remote_id_fl[ch]);
 
                 if (tmp) delete (tmp); // done setting unit -- if custom
@@ -1794,11 +1798,11 @@ void RPSPMC_Control::create_folder (){
         bp->pop_grid ();
 
         // ==== Folder: LockIn  ========================================
-        bp->new_grid ();
+        bp->new_grid (); // x=y=1  set_xy (x,y)
         bp->start_notebook_tab (notebook, "Lock-In", "rpspmc-tab-lockin", hwi_settings);
 
- 	bp->new_grid_with_frame ("RP SPMC Lock-In Control and Routing");
         bp->set_default_ec_change_notice_fkt (RPSPMC_Control::lockin_adjust_callback, this);
+ 	bp->new_grid_with_frame ("Lock-In Control and Routing");
         
         bp->new_line ();
 	bp->grid_add_ec ("Modulation Frequency", new UnitObj("Hz","Hz"), &spmc_parameters.sc_lck_frequency, 0.0, 30e6, "5g", 1.0, 100.0, "SPMC-LCK-FREQ");
@@ -1815,9 +1819,12 @@ void RPSPMC_Control::create_folder (){
                 g_free (lab);
                 g_free (id);
                 LCK_VolumeEntry[jj]=bp->input;
+                gtk_widget_set_sensitive (bp->input, false);
         }
-        
-        bp->new_line ();
+
+        bp->pop_grid (); bp->set_xy (2,2);
+ 	bp->new_grid_with_frame ("Bi-Quad IIR Filter");
+        //bp->new_line ();
 	bp->grid_add_ec ("Time Const BQ", new UnitObj("ms","ms"), &spmc_parameters.sc_lck_bq_tau, 0., 1e6, "5g", 1e-6, 10e3, "SPMC-LCK-BQ-TAU");
         bp->new_line ();
 	bp->grid_add_ec ("Time Const IIR", new UnitObj("ms","ms"), &spmc_parameters.sc_lck_iir_tau, 0., 1e6, "5g", 1e-6, 10e3, "SPMC-LCK-IIR-TAU");
@@ -1845,21 +1852,20 @@ void RPSPMC_Control::create_folder (){
         IV_sections  = 0;  // simple mode
         multiIV_mode = -1; // simple mode
         
-	bp->grid_add_label ("Start"); bp->grid_add_label ("End");  bp->grid_add_label ("Points");
+	bp->grid_add_label ("Start"); bp->grid_add_label ("End");  bp->grid_add_label ("Points"); bp->grid_add_label ("Slope"); bp->grid_add_label ("dZ");
         bp->new_line ();
 
         bp->grid_add_ec (NULL, Volt, &IV_start[0], -10.0, 10., "5.3g", 0.1, 0.025, "IV-Start");
         bp->grid_add_ec (NULL, Volt, &IV_end[0], -10.0, 10.0, "5.3g", 0.1, 0.025, "IV-End");
         bp->grid_add_ec (NULL, Unity, &IV_points[0], 1, 1000, "5g", "IV-Points");
+	bp->grid_add_ec (NULL, Vslope, &IV_slope,0.1,1000.0, "5.3g", 1., 10., "IV-Slope");
+	bp->grid_add_ec (NULL, Angstroem, &IV_dz, -1000.0, 1000.0, "5.4g", 1., 2., "IV-dz");
         
         bp->new_line ();
-
-	bp->grid_add_ec ("Slope", Vslope, &IV_slope,0.1,1000.0, "5.3g", 1., 10., "IV-Slope");
-        bp->new_line ();
 	bp->grid_add_ec ("Slope Ramp", Vslope, &IV_slope_ramp,0.1,1000.0, "5.3g", 1., 10., "IV-Slope-Ramp");
-        bp->new_line ();
+        bp->grid_add_check_button ("FB off", "disable Z Servo Feedback for going to IV Start Bias @ Slope Ramp rate", 1,
+                                   G_CALLBACK(RPSPMC_Control::Probing_RampFBoff_callback), this, 0);
         bp->set_configure_list_mode_on ();
-	bp->grid_add_ec ("dz", Angstroem, &IV_dz, -1000.0, 1000.0, "5.4g", 1., 2., "IV-dz");
         bp->new_line ();
 	bp->grid_add_ec ("#IV sets", Unity, &IV_repetitions, 1, 100, "3g", "IV-rep");
         bp->new_line ();
@@ -1869,7 +1875,7 @@ void RPSPMC_Control::create_folder (){
       
 	bp->grid_add_ec ("Sections", Unity, &IV_sections, 1,6, "2g", "IV-Sections");
         multiIV_checkbutton = bp->grid_add_check_button ("Multi-IV mode", "enable muli section IV curve mode", 1,
-                                                                    G_CALLBACK(RPSPMC_Control::Probing_multiIV_callback), this, IV_sections-1);
+                                                         G_CALLBACK(RPSPMC_Control::Probing_multiIV_callback), this, IV_sections-1);
 
         bp->new_line ();
 	bp->grid_add_label ("IV Probe"); bp->grid_add_label ("Start"); bp->grid_add_label ("End");  bp->grid_add_label ("Points");
@@ -2538,18 +2544,34 @@ void RPSPMC_Control::create_folder (){
         AppWindowInit (NULL); // stage two
         set_window_geometry ("rpspmc-main-control"); // must add key to xml file: core-sources/org.gnome.gxsm4.window-geometry.gschema.xml
 
+        Probing_RampFBoff_callback (multiIV_checkbutton, this); // update
         Probing_multiIV_callback (multiIV_checkbutton, this); // update
 }
 
 void RPSPMC_Control::Init_SPMC_on_connect (){
         // fix-me -- need life readback once life re-connect works!
-        if (rpspmc_pacpll){
-                rpspmc_pacpll->write_parameter ("SPMC_GVP_RESET_OPTIONS", 0x0001); // default/reset GVP OPTIONS: Feedback ON! *** WATCH THIS ***
+        if (rpspmc_pacpll && rpspmc_hwi){
+                rpspmc_pacpll->write_parameter ("SPMC_GVP_RESET_OPTIONS", 0x0000); // default/reset GVP OPTIONS: Feedback ON! *** WATCH THIS ***
         
+                BiasChanged(NULL, this);
                 Slope_dZX_Changed(NULL, this);
                 Slope_dZY_Changed(NULL, this);
                 ZPosSetChanged(NULL, this);
                 ZServoParamChanged(NULL, this);
+
+                // reset GVP
+                int vector_index=0;
+                int gvp_options=0;
+
+                rpspmc_hwi->resetVPCconfirmed ();
+                make_dUZXYAB_vector (vector_index++,
+                                     0., 0., // GVP_du[k], GVP_dz[k],
+                                     0., 0., 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
+                                     100, 0, 0, 0.5, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
+                                     0, VP_INITIAL_SET_VEC | gvp_options);
+                append_null_vector (vector_index, gvp_options);
+                rpspmc_hwi->GVP_vp_init ();
+                rpspmc_hwi->GVP_execute_vector_program(); // non blocking
         }
 }
 
@@ -2599,9 +2621,7 @@ void RPSPMC_Control::ZPosSetChanged(Param_Control* pcs, RPSPMC_Control *self){
                         NULL };
                 double jdata[6];
                 jdata[0] = main_get_gapp()->xsm->Inst->ZA2Volt(self->zpos_ref);
-                jdata[1] = self->mix_level[0] > 0.
-                        ? main_get_gapp()->xsm->Inst->nAmpere2V(self->mix_level[0])
-                        : main_get_gapp()->xsm->Inst->nAmpere2V(self->mix_set_point[0]);
+                jdata[1] = main_get_gapp()->xsm->Inst->nAmpere2V(self->mix_set_point[0]);
                 jdata[2]   = self->mix_level[0] > 0.
                         ? main_get_gapp()->xsm->Inst->ZA2Volt(self->zpos_ref)
                         : 5.; // UPPER
@@ -2616,7 +2636,7 @@ void RPSPMC_Control::ZServoParamChanged(Param_Control* pcs, RPSPMC_Control *self
                 const gchar *SPMC_SET_Z_SERVO_COMPONENTS[] = {
                         "SPMC_Z_SERVO_MODE", 
                         "SPMC_Z_SERVO_SETPOINT",
-                        "SPMC_Z_SERVO_LEVEL", 
+                        "SPMC_Z_SERVO_IN_OFFSETCOMP", 
                         "SPMC_Z_SERVO_CP", 
                         "SPMC_Z_SERVO_CI", 
                         "SPMC_Z_SERVO_UPPER", 
@@ -2630,10 +2650,8 @@ void RPSPMC_Control::ZServoParamChanged(Param_Control* pcs, RPSPMC_Control *self
                 self->z_servo[SERVO_CI] = spmc_parameters.z_servo_invert * pow (10., spmc_parameters.z_servo_ci_db/20.);
 
                 jdata_i[0] = self->mix_transform_mode[0];
-                jdata[0]   = self->mix_level[0] > 0.
-                        ? main_get_gapp()->xsm->Inst->nAmpere2V(self->mix_level[0])
-                        : main_get_gapp()->xsm->Inst->nAmpere2V(self->mix_set_point[0]);
-                jdata[1]   = main_get_gapp()->xsm->Inst->nAmpere2V(self->mix_level[0]);
+                jdata[0]   = main_get_gapp()->xsm->Inst->nAmpere2V(self->mix_set_point[0]);
+                jdata[1]   = main_get_gapp()->xsm->Inst->nAmpere2V(self->mix_in_offsetcomp[0]);
                 jdata[2]   = self->z_servo[SERVO_CP];
                 jdata[3]   = self->z_servo[SERVO_CI];
                 jdata[4]   = self->mix_level[0] > 0.
@@ -2824,6 +2842,12 @@ int RPSPMC_Control::callback_change_IV_auto_flags (GtkWidget *widget, RPSPMC_Con
 	//	self->raster_auto_flags = self->IV_auto_flags;
 
         self->set_tab_settings ("IV", self->IV_option_flags, self->IV_auto_flags, self->IV_glock_data);
+        return 0;
+}
+
+int RPSPMC_Control::Probing_RampFBoff_callback(GtkWidget *widget, RPSPMC_Control *self){
+        PI_DEBUG_GP (DBG_L4, "%s \n",__FUNCTION__);
+        self->RampFBoff_mode = gtk_check_button_get_active (GTK_CHECK_BUTTON (widget));
         return 0;
 }
 

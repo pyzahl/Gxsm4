@@ -347,8 +347,8 @@ CDoubleParameter CONTROL_DFREQ_MONITOR("CONTROL_DFREQ_MONITOR", CBaseParameter::
 // *** DBG ***                                                                                                //        -----------------------                             (8,1); // GPIO X16: --- XMON
 // *** DBG ***                                                                                                //        -----------------------                             (9,0); // GPIO X17: --- YMON
 // *** DBG ***                                                                                                //        -----------------------                             (9,1); // GPIO X18: --- ZMON   (Z total at DAC3)
-// *** DBG ***                                                                                                //        -----------------------                            (10,0); // GPIO X19: --- ZS-MON (Z-GVP)
-// *** DBG ***                                                                                                //        -----------------------                            (10,1); // GPIO X20: --- CONFIG READ-BACK --- ***//Z0-MON (Z-Offset)
+// *** DBG ***                                                                                                //        -----------------------                            (10,0); // GPIO X19: --- CONFIG READ-BACK REG A --- ***//0-MON (Z-Offset) *** ZS-MON (Z-GVP)
+// *** DBG ***                                                                                                //        -----------------------                            (10,1); // GPIO X20: --- CONFIG READ-BACK REG B --- ***//Z0-MON (Z-Offset)
 // *** DBG ***                                                                                                //        -----------------------                            (11,0); // GPIO X21: --- SPMC BRAM LAST WRITE ADDRESS (0..16383)
 // *** DBG ***                                                                                                //        -----------------------                            (11,1); // GPIO X22: --- Z-Sum to DAC MON
 // *** DBG ***                                                                                                //        -----------------------                            (12,0); // GPIO X23: --- AMON
@@ -367,7 +367,7 @@ CDoubleParameter  SPMC_Z_SERVO_CI("SPMC_Z_SERVO_CI", CBaseParameter::RW, 0.0, 0,
 CDoubleParameter  SPMC_Z_SERVO_UPPER("SPMC_Z_SERVO_UPPER", CBaseParameter::RW, 0.0, 0, -5.0, 5.0); // Volts
 CDoubleParameter  SPMC_Z_SERVO_LOWER("SPMC_Z_SERVO_LOWER", CBaseParameter::RW, 0.0, 0, -5.0, 5.0); // Volts
 CDoubleParameter  SPMC_Z_SERVO_SETPOINT_CZ("SPMC_Z_SERVO_SETPOINT_CZ", CBaseParameter::RW, 0.0, 0, -5.0, 5.0); // Volts
-CDoubleParameter  SPMC_Z_SERVO_LEVEL("SPMC_Z_SERVO_LEVEL", CBaseParameter::RW, 0.0, 0, -5.0, 5.0); // Volts
+CDoubleParameter  SPMC_Z_SERVO_IN_OFFSETCOMP("SPMC_Z_SERVO_IN_OFFSETCOMP", CBaseParameter::RW, 0.0, 0, -5.0, 5.0); // Volts
 
 #define SPMC_GVP_CONTROL_RESET     0
 #define SPMC_GVP_CONTROL_EXECUTE   1   
@@ -387,6 +387,7 @@ CFloatSignal SPMC_GVP_VECTOR("SPMC_GVP_VECTOR", GVP_VECTOR_SIZE, 0.0f); // vecto
 CIntParameter     SPMC_GVP_VECTOR_PC("SPMC_GVP_VECTOR_PC", CBaseParameter::RW, 0, 0, -2147483648,2147483647); // Vector[PC] to set
 CIntParameter     SPMC_GVP_VECTOR__N("SPMC_GVP_VECTOR__N", CBaseParameter::RW, 0, 0, -2147483648,2147483647); // # points
 CIntParameter     SPMC_GVP_VECTOR__O("SPMC_GVP_VECTOR__O", CBaseParameter::RW, 0, 0, -2147483648,2147483647); // options [Z-Servo Hold, ... , SRCS bits]
+CIntParameter     SPMC_GVP_VECTORSRC("SPMC_GVP_VECTORSRC", CBaseParameter::RW, 0, 0, -2147483648,2147483647); // SRCS bits (new, preparing to separate from opt)
 CIntParameter     SPMC_GVP_VECTORNRP("SPMC_GVP_VECTORNRP", CBaseParameter::RW, 0, 0, -2147483648,2147483647); // # repetitions
 CIntParameter     SPMC_GVP_VECTORNXT("SPMC_GVP_VECTORNXT", CBaseParameter::RW, 0, 0, -2147483648,2147483647); // loop jump rel to PC to next vector
 CDoubleParameter  SPMC_GVP_VECTOR_DX("SPMC_GVP_VECTOR_DX", CBaseParameter::RW, 0, 0, -10.0, 10.0); // DX in Volts total length of vector component
@@ -1497,7 +1498,7 @@ void OnNewParams_RPSPMC(void){
             || SPMC_Z_SERVO_UPPER.IsNewValue()
             || SPMC_Z_SERVO_LOWER.IsNewValue()
             || SPMC_Z_SERVO_SETPOINT_CZ.IsNewValue()
-            || SPMC_Z_SERVO_LEVEL.IsNewValue()
+            || SPMC_Z_SERVO_IN_OFFSETCOMP.IsNewValue()
             || SPMC_Z_SERVO_MODE.IsNewValue()
             ){
                 SPMC_Z_SERVO_SETPOINT.Update ();
@@ -1506,13 +1507,13 @@ void OnNewParams_RPSPMC(void){
                 SPMC_Z_SERVO_UPPER.Update ();
                 SPMC_Z_SERVO_LOWER.Update ();
                 SPMC_Z_SERVO_SETPOINT_CZ.Update ();
-                SPMC_Z_SERVO_LEVEL.Update ();
+                SPMC_Z_SERVO_IN_OFFSETCOMP.Update ();
                 SPMC_Z_SERVO_MODE.Update ();
 
                 fprintf(stderr, "Z Servo Mode = %d\n", SPMC_Z_SERVO_MODE.Value());
 
                 rp_spmc_set_zservo_controller (SPMC_Z_SERVO_SETPOINT.Value(), SPMC_Z_SERVO_CP.Value(), SPMC_Z_SERVO_CI.Value(), SPMC_Z_SERVO_UPPER.Value(), SPMC_Z_SERVO_LOWER.Value());
-                rp_spmc_set_zservo_gxsm_speciality_setting (SPMC_Z_SERVO_MODE.Value(), SPMC_Z_SERVO_SETPOINT_CZ.Value(), SPMC_Z_SERVO_LEVEL.Value());
+                rp_spmc_set_zservo_gxsm_speciality_setting (SPMC_Z_SERVO_MODE.Value(), SPMC_Z_SERVO_SETPOINT_CZ.Value(), SPMC_Z_SERVO_IN_OFFSETCOMP.Value());
         }
         
 
@@ -1565,6 +1566,7 @@ void OnNewParams_RPSPMC(void){
         if (SPMC_GVP_VECTOR_PC.IsNewValue ()){ SPMC_GVP_VECTOR_PC.Update (); ++dirty; }
         if (SPMC_GVP_VECTOR__N.IsNewValue ()){ SPMC_GVP_VECTOR__N.Update (); ++dirty; }
         if (SPMC_GVP_VECTOR__O.IsNewValue ()){ SPMC_GVP_VECTOR__O.Update (); ++dirty; }
+        if (SPMC_GVP_VECTORSRC.IsNewValue ()){ SPMC_GVP_VECTORSRC.Update (); ++dirty; }
         if (SPMC_GVP_VECTORNRP.IsNewValue ()){ SPMC_GVP_VECTORNRP.Update (); ++dirty; }
         if (SPMC_GVP_VECTORNXT.IsNewValue ()){ SPMC_GVP_VECTORNXT.Update (); ++dirty; }
         if (SPMC_GVP_VECTOR_DX.IsNewValue ()){ SPMC_GVP_VECTOR_DX.Update (); ++dirty; }
@@ -1580,6 +1582,7 @@ void OnNewParams_RPSPMC(void){
                 rp_spmc_set_gvp_vector (SPMC_GVP_VECTOR_PC.Value (),
                                         SPMC_GVP_VECTOR__N.Value (),
                                         (unsigned int)SPMC_GVP_VECTOR__O.Value (),
+                                        (unsigned int)SPMC_GVP_VECTORSRC.Value (),
                                         SPMC_GVP_VECTORNRP.Value (),
                                         SPMC_GVP_VECTORNXT.Value (),
                                         SPMC_GVP_VECTOR_DX.Value (),

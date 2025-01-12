@@ -90,12 +90,14 @@ extern "C" {
         void rp_spmc_gvp_module_config_Qn (int addr, double data, int pos, double Qn);
         void rp_spmc_gvp_module_config_vector_Qn (int addr, double data[16], int n, double Qn);
 
+        void rp_spmc_gvp_module_read_config_data (int addr, int *regA, int *regB);
+        
         void rp_spmc_set_zservo_controller (double setpoint, double cp, double ci, double upper, double lower);
-        void rp_spmc_set_zservo_gxsm_speciality_setting (int mode, double z_setpoint, double level);
+        void rp_spmc_set_zservo_gxsm_speciality_setting (int mode, double z_setpoint, double in_offset_comp);
 
         void rp_spmc_gvp_config (bool reset, bool pause, int reset_options); // taking out of reset starts GVP!
         //void rp_spmc_set_gvp_vector (CFloatSignal &vector);
-        void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, int nrp, int nxt,
+        void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, unsigned int srcs, int nrp, int nxt,
                                      double dx, double dy, double dz, double du,
                                      double da, double db, double slew,
                                      bool update_life);

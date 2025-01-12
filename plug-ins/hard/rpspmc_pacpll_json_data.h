@@ -171,6 +171,7 @@ struct SPMC_parameters {
         double z_servo_lower;
         double z_servo_setpoint_cz;
         double z_servo_level;
+        double z_servo_in_offsetcomp;
 
         double gvp_control;
         //double gvp_execute;
@@ -198,7 +199,7 @@ struct SPMC_parameters {
         double set_offset_xy_slew;
         double set_offset_z_slew;
 
-        double v[16];
+        double v[17];
         
         // RP SPMC Monitors
         double bias_monitor;

@@ -356,7 +356,7 @@ void RPSPMC_Control::write_spm_vector_program (int start, pv_mode pvm){
                 g_free (vp_exec_mode_name); vp_exec_mode_name = g_strdup ("VP: STS");
 		options      = (IV_option_flags & FLAG_FB_ON     ? 0          : VP_FEEDBACK_HOLD);
 		ramp_sources = (IV_option_flags & FLAG_SHOW_RAMP ? vis_Source : 0x00000000);
-                ramp_options = (IV_option_flags & FLAG_INTEGRATE ? 0 : VP_FEEDBACK_HOLD); // TEST NEW! INT => FB on for RAMP!
+                ramp_options = (RampFBoff_mode ? VP_FEEDBACK_HOLD : 0); // FB on/off for RAMP!
 
 		recover_options = 0; // FeedBack On for recovery!
 

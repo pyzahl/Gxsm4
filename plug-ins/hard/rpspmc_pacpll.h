@@ -201,6 +201,7 @@ public:
                         mix_set_point[i] = 0;
                         mix_gain[i] = 1;
                         mix_level[i] = 0;
+                        mix_in_offsetcomp[i] = 0;
                         mix_transform_mode[i] = 0;
                 }
 
@@ -261,6 +262,7 @@ public:
 #endif
                 IV_sections=1;
                 multiIV_mode=0;
+                RampFBoff_mode=0;
                 for (int i=0; i<8; ++i){
                         IV_start[i]=-1.0;
                         IV_end[i]=1.0;
@@ -441,6 +443,7 @@ public:
 
 	static int Probing_exec_GVP_callback(GtkWidget *widget, RPSPMC_Control *self);
 	static int Probing_write_GVP_callback(GtkWidget *widget, RPSPMC_Control *self);
+        static int Probing_RampFBoff_callback(GtkWidget *widget, RPSPMC_Control *self);
         static int Probing_multiIV_callback(GtkWidget *widget, RPSPMC_Control *self);
         
         static int callback_change_GVP_vpc_option_flags (GtkWidget *widget, RPSPMC_Control *self);
@@ -623,6 +626,7 @@ public:
 	double mix_set_point[4]; // on default: [0] Current Setpoint (STM; log mode) [1..3]: off
 	double mix_gain[4];      // Mixing Gains: 0=OFF, 1=100%, note: can be > 1 or even negative for scaling purposes
 	double mix_level[4];     // fuzzy mixing control via level, applied only if fuzzy flag set
+	double mix_in_offsetcomp[4]; // in offset compensation value
 	// -- may not yet be applied to all signal --> check with DSP code
 	int    mix_transform_mode[4]; //!< transformation mode on/off log/lin iir/full fuzzy/normal
 
@@ -731,6 +735,7 @@ public:
 	PROBE_VECTOR_GENERIC program_vector;
 
 	// STS (I-V)
+        int    RampFBoff_mode;
         int    multiIV_mode;
 	int    IV_sections; // 1 .. 8max
 	double IV_start[8], IV_end[8], IV_slope, IV_slope_ramp, IV_final_delay, IV_recover_delay;

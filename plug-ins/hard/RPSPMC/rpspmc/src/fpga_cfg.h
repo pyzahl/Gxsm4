@@ -97,6 +97,8 @@
 #define SPMC_CFG_UPPER 3 // 3,4 64bit
 #define SPMC_CFG_LOWER 5 // 5,6 64bit
 
+
+/* MOVED TO MODULE CONFIG
 // SPM Z-CONTROL SERVO
 #define SPMC_CFG_Z_SERVO_CONTROLLER         (PACPLL_CFG1_OFFSET + 10) // 10:16
 #define SPMC_CFG_Z_SERVO_ZSETPOINT          (PACPLL_CFG1_OFFSET + 17) // 17
@@ -108,9 +110,11 @@
 // Bit2: Fuzzy CZ mode
 #define SPMC_CFG_Z_SERVO_MODE               (PACPLL_CFG1_OFFSET + 19) // 19: SERVO CONTROL REGISTER
 
+
 #define SPMC_CFG_SC_LCK_DDS_PHASEINC        (PACPLL_CFG1_OFFSET + 20) // 20,21: Frequency 64bit LockIn (DDS Phase Inc)
 #define SPMC_CFG_SC_LCK_VOLUME              (PACPLL_CFG1_OFFSET + 22) // 22: SC Volume 
 #define SPMC_CFG_SC_LCK_TARGET              (PACPLL_CFG1_OFFSET + 23) // 23: Target for mixing 1..4 so far, 0=NONE / OFF
+*/
 
 // CFG1 26...31 available
 
@@ -174,6 +178,7 @@
 #define SPMC_GVP_RESET_OPTIONS_REG    2   // RESET OPTIONS REG:  reset options
 #define SPMC_GVP_VECTOR_DATA_REG      3   // VECTOR PROGRAM REG: 1..16 // 512 bits (16x32)
 #define SPMC_GVP_RESET_VECTOR_REG     4   // [XYZ]UAB
+#define SPMC_GVP_VECTORX_DATA_REG     5   // VECTORX PROGRAM REG -- Vector Extension Components
 
 // GVP VCETOR COMPONETS IN ARRAY AT OFFESTS in CONFIG_REG (512bits)
 //                   decii      du        dz        dy        dx     Next       Nrep,   Options,     nii,      N,    [Vadr]
@@ -181,6 +186,7 @@
 #define GVP_VEC_N      1
 #define GVP_VEC_NII    2
 #define GVP_VEC_OPT    3
+//#define GVP_VEC_SRC    4
 #define GVP_VEC_NREP   4
 #define GVP_VEC_NEXT   5
 #define GVP_VEC_DX     6
@@ -193,6 +199,8 @@
 #define GVP_VEC_013   13
 #define GVP_VEC_014   14
 #define GVP_VEC_DECII 15
+#define GVP_VECX_SRC   0
+
 
 // Z_SERVO @ CONFIG ADDRESS
 #define SPMC_Z_SERVO_CONTROL_REG              100
@@ -271,12 +279,29 @@
                                              // GVP SRCS selections: 16->6 -|-|4|4|4|4|4|4
 
 
+// MODULE READBACK REGISTER A,B ADRESS MAPPINGS
+#define SPMC_READBACK_Z_REG            100001
+#define SPMC_READBACK_BIAS_REG         100002
+#define SPMC_READBACK_XX_REG           100999
 
+/*
+    input wire [32-1:0] Z_GVP_mon,   ==> A
+    input wire [32-1:0] Z_slope_mon, ==> B
+
+    input wire [32-1:0] Bias_mon,    ==> A
+    input wire [32-1:0] Bias_GVP_mon,==> B
+
+    input wire [32-1:0] rbXa, ==> A
+    input wire [32-1:0] rbXb  ==> B
+*/
+
+// ****** FIXED CONFIGURATIONS
 
 #define SPMC_CFG_AD5791_DAC_AXIS_DATA (SPMC_BASE + 17) // 32bits
 #define SPMC_CFG_AD5791_DAC_CONTROL   (SPMC_BASE + 18) // bits 0,1,2: axis; bit 3: config mode; bit 4: send config data, MUST reset "send bit in config mode to resend next, on hold between"
 
 
+/* MOVED TO MODULE CONFIG BUS
 // SPMC Transformations Core
 #define SPMC_ROTM_XX             (SPMC_BASE + 20)  // cos(Alpha)
 #define SPMC_ROTM_XY             (SPMC_BASE + 21)  // sin(Alpha)
@@ -292,7 +317,7 @@
 
 #define SPMC_XY_MOVE_STEP        (SPMC_BASE + 28)
 #define SPMC_Z_MOVE_STEP         (SPMC_BASE + 29)
-
+*/
 
 
 

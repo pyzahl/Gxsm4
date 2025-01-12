@@ -1246,13 +1246,13 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2,
                 int Sspm = statusbits & 0xff;      // assign SPM status = { ...SPM Z Servo Hold, GVP-FB-Hold, GVP-Finished, Z Servo EN }
 		val3 = (double)Sgvp;  
 		val2 = (double)Sspm; // assign
-		val1 = (double)(   (((Sspm & 0x01) && !(Sspm & 0x04) && !(Sspm & 0x04) && !(Sspm & 0x08)) ? 1:0)   // Z Servo: active
-                                  + ((Sgvp & 0x01 ? 1:0) << 1)  // GVP !FINISHED **Scan/GVP Running
-                                  + ((Sgvp & 0x02 ? 1:0) << 2)  // GVP: GVP Pause         (Scan)
-                                  + ((Sgvp & 0x04 ? 1:0) << 3)  // GVP: Reset
-                                  + ((Sspm & 0x02 ? 1:0) << 4)  // GVP: GVP Finished
-                                  + ((Sspm & 0x04 ? 1:0) << 5)  // GVP: GVP-FB-Hold
-                                  + ((Sspm & 0x08 ? 1:0) << 6)  // GVP: SPM-FB-Hold
+		val1 = (double)(   (((Sspm & 0x01) && !(Sspm & 0x04) && !(Sspm & 0x04) && !(Sspm & 0x08)) ? 1:0)   // Z: Z Servo: active
+                                  + ((Sgvp & 0x01 ? 1:0) << 1)  // G GVP !FINISHED **Scan/GVP Running
+                                  + ((Sgvp & 0x02 ? 1:0) << 2)  // P GVP: GVP Pause         (Scan)
+                                  + ((Sgvp & 0x04 ? 1:0) << 3)  // R GVP: Reset
+                                  + ((Sspm & 0x02 ? 1:0) << 4)  // F GVP: GVP Finished
+                                  + ((Sspm & 0x04 ? 1:0) << 5)  // H GVP: GVP-FB-Hold
+                                  + ((Sspm & 0x08 ? 1:0) << 6)  // h GVP: SPM-FB-Hold
 				//+ (( MoveInProgress     ? 1:0) << 4)
 				//+ (( PLLActive          ? 1:0) << 5)
 				//+ (( ZPOS-Adjuster      ? 1:0) << 6)
@@ -1520,8 +1520,9 @@ int rpspmc_hwi_dev::GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v){
 #define I_GVP_PC_INDEX  0
 #define I_GVP_N         1
 #define I_GVP_OPTIONS   2
-#define I_GVP_NREP      3
-#define I_GVP_NEXT      4
+#define I_GVP_SRCS      3
+#define I_GVP_NREP      4
+#define I_GVP_NEXT      5
 #define I_GVP_SIZE (I_GVP_NEXT+1)
         
 #define D_GVP_DX        0
@@ -1540,6 +1541,7 @@ int rpspmc_hwi_dev::GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v){
         gvp_vector_i [I_GVP_PC_INDEX] = i;
         gvp_vector_i [I_GVP_N       ] = v->n;
         gvp_vector_i [I_GVP_OPTIONS ] = ((v->srcs & 0xffffff) << 8) | (v->options & 0xff); //   ((v->options & VP_FEEDBACK_HOLD) ? 0:1) | (1<<7) | (1<<6) | (1<<5);
+        gvp_vector_i [I_GVP_SRCS    ] = v->srcs & 0xffffffff;
         // g_message ("GVP_write_program_vector[%d]: srcs = 0x%08x", i, gvp_vector_i [I_GVP_OPTIONS ] );
         gvp_vector_i [I_GVP_NREP    ] = v->repetitions > 1 ? v->repetitions-1 : 0;
         gvp_vector_i [I_GVP_NEXT    ] = v->ptr_next;
@@ -1550,10 +1552,10 @@ int rpspmc_hwi_dev::GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v){
                 // componets can be masked to set=0 via dX=0 0x1001, dY=0 0x1002, dZ=0 0x1004, du=0 0x1008,da=0  0x1010, db=0 0x1020
         }
 
-        g_print ("Vec[%2d] XYZU: %g %g %g %g V  [#%d, R%d J%d SRCS=%08x] initial Msk=%04x\n",
+        g_print ("Vec[%2d] XYZU: %g %g %g %g V  [#%d, R%d J%d OPT=%08x SRCS=%08x] initial Msk=%04x\n",
                  i,
                  v->f_dx, v->f_dy, v->f_dz, v->f_du,
-                 gvp_vector_i [I_GVP_N       ], gvp_vector_i [I_GVP_NREP    ], gvp_vector_i [I_GVP_NEXT    ], gvp_vector_i [I_GVP_OPTIONS ],
+                 gvp_vector_i [I_GVP_N       ], gvp_vector_i [I_GVP_NREP    ], gvp_vector_i [I_GVP_NEXT    ], gvp_vector_i [I_GVP_OPTIONS ], gvp_vector_i [I_GVP_SRCS ],
                  gvp_vector_i [I_GVP_PC_INDEX]);
         // Vector Components are all in Volts
         gvp_vector_d [D_GVP_DX      ] = v->f_dx;

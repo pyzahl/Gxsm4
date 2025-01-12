@@ -132,8 +132,5 @@ set_property PACKAGE_PIN C2 [get_ports {DDR_dqs_p[0]}]
 set_property PACKAGE_PIN G2 [get_ports {DDR_dqs_p[1]}]
 set_property PACKAGE_PIN R2 [get_ports {DDR_dqs_p[2]}]
 
-
-create_clock -period 16.000 -name dec_aclk -waveform {0.000 8.000} [get_nets system_i/axis_decimator_0/dec_aclk]
-
-create_clock -period 8.000 -name BRAM_PORTA_clk -waveform {0.000 8.000} [get_nets system/axis_bram_stream_srcs_0/BRAM_PORTA_clk]
+create_clock -period 8.000 -name BRAM_PORTA_clk -waveform {0.000 8.000} [get_nets system/axis_bram_push2ch64/BRAM_PORTA_clk]
 

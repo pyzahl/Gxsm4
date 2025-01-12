@@ -139,7 +139,7 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         { "SPMC_Z_SERVO_UPPER", &spmc_parameters.z_servo_upper, false },
         { "SPMC_Z_SERVO_LOWER", &spmc_parameters.z_servo_lower, false },
         { "SPMC_Z_SERVO_SETPOINT_CZ", &spmc_parameters.z_servo_setpoint_cz, false },
-        { "SPMC_Z_SERVO_LEVEL", &spmc_parameters.z_servo_level, false },
+        { "SPMC_Z_SERVO_IN_OFFSETCOMP", &spmc_parameters.z_servo_in_offsetcomp, false },
 
 
         { "SPMC_GVP_EXECUTE", &spmc_parameters.gvp_control, 0 },
@@ -154,15 +154,16 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         { "SPMC_GVP_VECTOR_PC", &spmc_parameters.v[0], false }, // INT Vector[PC] to set
         { "SPMC_GVP_VECTOR__N", &spmc_parameters.v[1], false }, // INT # points
         { "SPMC_GVP_VECTOR__O", &spmc_parameters.v[2], false }, // INT options [Z-Servo Hold, ... , SRCS bits]
-        { "SPMC_GVP_VECTORNRP", &spmc_parameters.v[3], false }, // INT # repetitions (0=none, i.e. execute and proceed with to next vector)
-        { "SPMC_GVP_VECTORNXT", &spmc_parameters.v[4], false }, // INT # loop jump rel to PC to next vector
-        { "SPMC_GVP_VECTOR_DX", &spmc_parameters.v[5], false }, // Float: DX in Volts total length of vector component
-        { "SPMC_GVP_VECTOR_DY", &spmc_parameters.v[6], false }, // Float: DY in Volts total length of vector component
-        { "SPMC_GVP_VECTOR_DZ", &spmc_parameters.v[7], false }, // Float: DZ in Volts total length of vector component
-        { "SPMC_GVP_VECTOR_DU", &spmc_parameters.v[8], false }, // Float: DU (Bias) adjust rel to Bias ref in Volts total length of vector component
-        { "SPMC_GVP_VECTOR_AA", &spmc_parameters.v[9], false }, // Float: AA (Aux Channel ADC #5) -- reserved
-        { "SPMC_GVP_VECTOR_BB", &spmc_parameters.v[10], false }, // Float: BB (Aux Channel ADC #6) -- reserved
-        { "SPMC_GVP_VECTORSLW", &spmc_parameters.v[11], false }, // Float: slew rate in #points / sec
+        { "SPMC_GVP_VECTORSRC", &spmc_parameters.v[3], false }, // INT options [Z-Servo Hold, ... , SRCS bits]
+        { "SPMC_GVP_VECTORNRP", &spmc_parameters.v[4], false }, // INT # repetitions (0=none, i.e. execute and proceed with to next vector)
+        { "SPMC_GVP_VECTORNXT", &spmc_parameters.v[5], false }, // INT # loop jump rel to PC to next vector
+        { "SPMC_GVP_VECTOR_DX", &spmc_parameters.v[6], false }, // Float: DX in Volts total length of vector component
+        { "SPMC_GVP_VECTOR_DY", &spmc_parameters.v[7], false }, // Float: DY in Volts total length of vector component
+        { "SPMC_GVP_VECTOR_DZ", &spmc_parameters.v[8], false }, // Float: DZ in Volts total length of vector component
+        { "SPMC_GVP_VECTOR_DU", &spmc_parameters.v[9], false }, // Float: DU (Bias) adjust rel to Bias ref in Volts total length of vector component
+        { "SPMC_GVP_VECTOR_AA", &spmc_parameters.v[10], false }, // Float: AA (Aux Channel ADC #5) -- reserved
+        { "SPMC_GVP_VECTOR_BB", &spmc_parameters.v[11], false }, // Float: BB (Aux Channel ADC #6) -- reserved
+        { "SPMC_GVP_VECTORSLW", &spmc_parameters.v[12], false }, // Float: slew rate in #points / sec
 
         { "SPMC_ALPHA", &spmc_parameters.alpha, false },
         
@@ -216,6 +217,7 @@ const gchar *SPMC_GVP_VECTOR_COMPONENTS[] = {
         "SPMC_GVP_VECTOR_PC", 
         "SPMC_GVP_VECTOR__N", 
         "SPMC_GVP_VECTOR__O", 
+        "SPMC_GVP_VECTORSRC", 
         "SPMC_GVP_VECTORNRP", 
         "SPMC_GVP_VECTORNXT", 
         "SPMC_GVP_VECTOR_DX", 

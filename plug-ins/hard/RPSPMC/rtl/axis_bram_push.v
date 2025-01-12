@@ -69,7 +69,7 @@ module axis_bram_push #(
     input wire [32-1:0] ch1s,
     input wire [32-1:0] ch2s,
     input wire push_next,
-    input wire reset,
+    input wire BR_wpos_reset,
     
     // INPUT
     (* X_INTERFACE_PARAMETER = "FREQ_HZ 125000000, ASSOCIATED_CLKEN a2_clk, ASSOCIATED_BUSIF ch1s:ch2s" *)
@@ -124,10 +124,10 @@ module axis_bram_push #(
         // bramwr_sms <= (push_next && bramwr_sms == 0)  ? 3'd1 : reset ? 3'd0 : bramwr_sms_next; // SMS Control: start, reset, next
       
         // BRAM STORE MACHINE
-        case(reset ? 0 : bramwr_sms)
+        case(BR_wpos_reset ? 0 : bramwr_sms)
             0:    // Begin/reset/wait state
             begin
-                if (reset)
+                if (BR_wpos_reset)
                 begin
                     bram_wren_next  <= 1'b0;
                     bram_addr_next  <= {(BRAM_ADDR_WIDTH){1'b0}}; // idle, reset addr pointer
