@@ -34,6 +34,7 @@ install_data(
         'utilities-system-monitor-symbolic.svg',
         'window-close-symbolic.svg',
         'xymode-symbolic.svg',
+	'gxsm4-rp-icon.svg',
     ],
     install_dir : get_option('datadir') / 'icons' / 'hicolor' / 'scalable' / 'apps'
 )
@@ -43,6 +44,7 @@ install_data(
         'gxsm4-icon.svg',
         'gxsm4-splash.svg',
         'gxsm-icon.svg',
+	'gxsm4-rp-icon.svg',
     ],
     install_dir : get_option('datadir') / 'gxsm4' / 'icons'
 )

@@ -13,6 +13,15 @@
     </section>
   </menu>
 
+  <menu id="hwi-gvpmover-popup-menu">
+    <section>
+      <item>
+	<attribute name="label" translatable="yes">Configure</attribute>
+	<attribute name="action">win.gvp-mover-configure</attribute>
+      </item>
+    </section>
+  </menu>
+
   <menu id="hwi-control-popup-menu">
     <section>
       <item>

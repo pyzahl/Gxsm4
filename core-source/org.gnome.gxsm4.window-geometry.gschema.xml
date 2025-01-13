@@ -153,6 +153,11 @@
       <summary>show/hide state, option, X,Y, H,W</summary>
       <description>geometry</description>
     </key>
+    <key name="gvp-mover-control" type="ai">
+      <default>[0,0, 0,0,0,0]</default>
+      <summary>show/hide state, option, X,Y, H,W</summary>
+      <description>geometry</description>
+    </key>
     <key name="dsp-pac-control" type="ai">
       <default>[0,0, 0,0,0,0]</default>
       <summary>show/hide state, option, X,Y, H,W</summary>

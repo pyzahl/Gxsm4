@@ -373,6 +373,7 @@ public:
         GObject *get_view3d_menu () { return view3d_menu; };
         GObject *get_profile_popup_menu () { return profile_popup_menu; };
 
+        //GObject *get_hwi_gvpmover_popup_menu () { return hwi_gvpmover_popup_menu; };
         GObject *get_hwi_mover_popup_menu () { return hwi_mover_popup_menu; };
         GObject *get_hwi_control_popup_menu () { return hwi_control_popup_menu; };
 
@@ -391,6 +392,7 @@ public:
         GObject *set_profile_popup_menu (GObject *o=NULL) { if (o) { profile_popup_menu=o; g_object_ref (o); } return profile_popup_menu; };
 
         GObject *set_hwi_mover_popup_menu (GObject *o=NULL) { if (o) { hwi_mover_popup_menu=o; g_object_ref (o); } return hwi_mover_popup_menu; };
+        //GObject *set_hwi_gvpmover_popup_menu (GObject *o=NULL) { if (o) { hwi_gvpmover_popup_menu=o; g_object_ref (o); } return hwi_gvpmover_popup_menu; };
         GObject *set_hwi_control_popup_menu (GObject *o=NULL) { if (o) { hwi_control_popup_menu=o; g_object_ref (o); } return hwi_control_popup_menu; };
 
         GObject *set_plugin_pyremote_file_menu (GObject *o=NULL) { if (o) { plugin_pyremote_file_menu=o; g_object_ref (o); } return plugin_pyremote_file_menu; };
@@ -438,6 +440,7 @@ private:
         GObject*   profile_popup_menu;
 
         GObject*   hwi_mover_popup_menu;
+        //GObject*   hwi_gvpmover_popup_menu;
         GObject*   hwi_control_popup_menu;
 
         GObject*   plugin_pyremote_file_menu;

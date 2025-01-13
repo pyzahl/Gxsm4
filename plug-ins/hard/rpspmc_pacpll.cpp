@@ -77,6 +77,8 @@ RP data streaming
 #include "../common/pyremote.h"
 
 #include "rpspmc_pacpll.h"
+#include "rpspmc_gvpmover.h"
+
 #include "plug-ins/control/resonance_fit.h"
 
 
@@ -105,6 +107,12 @@ RP data streaming
 #define RP_FPGA_QFREQ 44 // Q DIFF FREQ READING              -- 125MHz/(2^RP_FPGA_QFREQ-1) well number should not exceed 32bit 
 
 #define DSP32Qs15dot16TO_Volt (50/(32767.*(1<<16)))
+
+typedef union {
+        struct { unsigned char ch, x, y, z; } s;
+        unsigned long   l;
+} AmpIndex;
+
 
 /*
   // DATA SIGNAL MAPPING DEFINED in FPGA STREAM_SRCS RTL module:
@@ -338,7 +346,8 @@ static const char *about_text = N_("RPSPMC PACPLL Control Plugin\n\n"
 /* Here we go... */
 
 RPSPMC_Control *RPSPMC_ControlClass = NULL;
-
+GVPMoverControl *rpspmc_gvpmover = NULL;
+        
 // event hooks
 static void RPSPMC_Control_StartScan_callback ( gpointer );
 static void RPSPMC_Control_SaveValues_callback ( gpointer );
@@ -411,12 +420,14 @@ static void rpspmc_pacpll_hwi_query(void)
         // second
 	RPSPMC_ControlClass = new RPSPMC_Control (main_get_gapp() -> get_app ());
         
+        // third
+        rpspmc_gvpmover = new GVPMoverControl (main_get_gapp() -> get_app ());
+
 	rpspmc_pacpll_hwi_pi.status = g_strconcat(N_("Plugin query has attached "),
-                                     rpspmc_pacpll_hwi_pi.name, 
+                                                  rpspmc_pacpll_hwi_pi.name, 
                                                   N_(": " THIS_HWI_PREFIX "-Control is created."),
                                                   NULL);
-
-
+        
 	PI_DEBUG (DBG_L2, "rpspmc_pacpll_query:res" );
 	
 	rpspmc_pacpll_hwi_pi.app->ConnectPluginToCDFSaveEvent (rpspmc_pacpll_hwi_SaveValues_callback);
@@ -460,6 +471,9 @@ static void rpspmc_pacpll_hwi_configure(void)
 static void rpspmc_pacpll_hwi_cleanup(void)
 {
 	// delete ...
+        if (rpspmc_gvpmover)
+                delete rpspmc_gvpmover ;
+        
 	if( rpspmc_pacpll )
 		delete rpspmc_pacpll ;
 
@@ -1408,11 +1422,6 @@ void RPSPMC_Control::AppWindowInit(const gchar *title){
                 gtk_widget_show (header_menu_button);
         }
 }
-
-typedef union {
-        struct { unsigned char ch, x, y, z; } s;
-        unsigned long   l;
-} AmpIndex;
 
 int RPSPMC_Control::choice_Ampl_callback (GtkWidget *widget, RPSPMC_Control *spmsc){
         PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);
@@ -2482,6 +2491,15 @@ void RPSPMC_Control::create_folder (){
                                     G_CALLBACK (rpspmc_hwi_dev::spmc_stream_connect_cb), rpspmc_hwi);
         stream_connect_button=bp->button;
 
+        GtkWidget *button;
+        bp->grid_add_widget (button=gtk_button_new_from_icon_name ("process-stopall-symbolic"));
+        //bp->grid_add_widget (button=gtk_button_new_from_icon_name ("gxsm4-rp-icon"));
+	g_object_set_data( G_OBJECT (stream_connect_button), "ICON-BUTTON", button);
+        g_signal_connect ( G_OBJECT (button), "clicked",
+                           G_CALLBACK (RPSPMC_Control::RPSPMC_AllZero),
+                           this);
+                        
+        
         bp->new_line ();
         bp->grid_add_check_button ( N_("Debug"), "Enable debugging LV1.", 1,
                                     G_CALLBACK (RPspmc_pacpll::dbg_l1), rpspmc_pacpll);
@@ -2583,6 +2601,11 @@ void RPSPMC_Control::GVP_zero_all_smooth (){
         append_null_vector (vector_index, gvp_options);
         rpspmc_hwi->GVP_vp_init ();
         rpspmc_hwi->GVP_execute_vector_program(); // non blocking
+}
+
+int RPSPMC_Control::RPSPMC_AllZero (GtkWidget *widget, RPSPMC_Control *self){
+        self->GVP_zero_all_smooth ();
+        rpspmc_hwi->GVP_reset_UAB ();
 }
 
 int RPSPMC_Control::DSP_cret_callback (GtkWidget *widget, RPSPMC_Control *self){
@@ -4054,6 +4077,14 @@ RPspmc_pacpll::~RPspmc_pacpll (){
 void RPspmc_pacpll::connect_cb (GtkWidget *widget, RPspmc_pacpll *self){
         self->json_talk_connect_cb (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)),
                                     GPOINTER_TO_INT (g_object_get_data( G_OBJECT (widget), "RESTART"))); // connect (checked) or dissconnect
+
+        if (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)))
+                gtk_button_set_child (GTK_BUTTON (g_object_get_data( G_OBJECT (widget), "ICON-BUTTON")),
+                                      gtk_image_new_from_icon_name ("gxsm4-rp-icon"));
+        else
+                gtk_button_set_child (GTK_BUTTON (g_object_get_data( G_OBJECT (widget), "ICON-BUTTON")),
+                                      gtk_image_new_from_icon_name ("process-stopall-symbolic"));
+           
 }
 
 

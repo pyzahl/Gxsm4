@@ -357,6 +357,14 @@ gxsm4_app_startup (GApplication *app)
         else
                 gapp -> set_hwi_mover_popup_menu (hwi_mover_popup_menu);
 
+        /*
+        GObject *hwi_gvpmover_popup_menu = gtk_builder_get_object (builder, "hwi-gvpmover-popup-menu");
+        if (!hwi_gvpmover_popup_menu)
+                PI_DEBUG_GP_ERROR (DBG_L1, "id hwi-gvpmover-popup-menu not found in resource.\n");
+        else
+                gapp -> set_hwi_mover_popup_menu (hwi_mover_popup_menu);
+        */
+        
         GObject *hwi_control_popup_menu = gtk_builder_get_object (builder, "hwi-control-popup-menu");
         if (!hwi_control_popup_menu)
                 PI_DEBUG_GP_ERROR (DBG_L1, "id hwi-control-popup_menu not found in resource.\n");

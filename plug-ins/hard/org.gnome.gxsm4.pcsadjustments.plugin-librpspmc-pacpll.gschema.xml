@@ -735,6 +735,446 @@
       <description>Configuration for GXSM Entry with ID 'dsp-gvp-pcjr00'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
     </key>
 
+
+    <key name="gvpmover-xy-max-steps" type="ad">
+      <default>[5000, 1, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-xy-max-steps' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-xy-max-steps'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-xy-amplitude" type="ad">
+      <default>[20, -20, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-xy-amplitude' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-xy-amplitude'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-xy-duration" type="ad">
+      <default>[110, 0.1, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-xy-duration' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-xy-duration'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-xy-gpio" type="ad">
+      <default>[65535, 0, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-xy-gpio' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-xy-gpio'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-xy-axis-x" type="ad">
+      <default>[1e+07, -1e+07, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-xy-axis-x' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-xy-axis-x'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-xy-axis-y" type="ad">
+      <default>[1e+07, -1e+07, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-xy-axis-y' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-xy-axis-y'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-xy-axis-z" type="ad">
+      <default>[1e+07, -1e+07, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-xy-axis-z' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-xy-axis-z'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-rot-max-steps" type="ad">
+      <default>[5000, 1, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-rot-max-steps' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-rot-max-steps'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-rot-amplitude" type="ad">
+      <default>[20, -20, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-rot-amplitude' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-rot-amplitude'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-rot-duration" type="ad">
+      <default>[110, 0.1, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-rot-duration' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-rot-duration'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-rot-gpio" type="ad">
+      <default>[65535, 0, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-rot-gpio' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-rot-gpio'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-rot-axis-x" type="ad">
+      <default>[1e+07, -1e+07, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-rot-axis-x' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-rot-axis-x'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-rot-axis-y" type="ad">
+      <default>[1e+07, -1e+07, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-rot-axis-y' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-rot-axis-y'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-rot-axis-z" type="ad">
+      <default>[1e+07, -1e+07, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-rot-axis-z' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-rot-axis-z'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-psd-max-steps" type="ad">
+      <default>[5000, 1, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-psd-max-steps' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-psd-max-steps'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-psd-amplitude" type="ad">
+      <default>[20, -20, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-psd-amplitude' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-psd-amplitude'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-psd-duration" type="ad">
+      <default>[110, 0.1, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-psd-duration' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-psd-duration'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-psd-gpio" type="ad">
+      <default>[65535, 0, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-psd-gpio' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-psd-gpio'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-psd-axis-x" type="ad">
+      <default>[1e+07, -1e+07, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-psd-axis-x' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-psd-axis-x'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-psd-axis-y" type="ad">
+      <default>[1e+07, -1e+07, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-psd-axis-y' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-psd-axis-y'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-psd-axis-z" type="ad">
+      <default>[1e+07, -1e+07, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-psd-axis-z' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-psd-axis-z'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-lens-max-steps" type="ad">
+      <default>[5000, 1, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-lens-max-steps' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-lens-max-steps'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-lens-amplitude" type="ad">
+      <default>[20, -20, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-lens-amplitude' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-lens-amplitude'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-lens-duration" type="ad">
+      <default>[110, 0.1, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-lens-duration' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-lens-duration'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-lens-gpio" type="ad">
+      <default>[65535, 0, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-lens-gpio' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-lens-gpio'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-lens-axis-x" type="ad">
+      <default>[1e+07, -1e+07, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-lens-axis-x' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-lens-axis-x'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-lens-axis-y" type="ad">
+      <default>[1e+07, -1e+07, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-lens-axis-y' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-lens-axis-y'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-lens-axis-z" type="ad">
+      <default>[1e+07, -1e+07, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-lens-axis-z' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-lens-axis-z'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-auto-max-steps" type="ad">
+      <default>[5000, 1, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-auto-max-steps' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-auto-max-steps'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-auto-amplitude" type="ad">
+      <default>[20, -20, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-auto-amplitude' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-auto-amplitude'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-auto-duration" type="ad">
+      <default>[110, 0.1, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-auto-duration' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-auto-duration'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-auto-gpio" type="ad">
+      <default>[65535, 0, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-auto-gpio' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-auto-gpio'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-config-auto-app-delay" type="ad">
+      <default>[430, 0, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-config-auto-app-delay' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-config-auto-app-delay'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-config-auto-app-max-settling-time" type="ad">
+      <default>[10000, 0, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-config-auto-app-max-settling-time' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-config-auto-app-max-settling-time'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-config-auto-app-retract-ci" type="ad">
+      <default>[500, 0, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-config-auto-app-retract-ci' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-config-auto-app-retract-ci'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-auto-axis-x" type="ad">
+      <default>[1e+07, -1e+07, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-auto-axis-x' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-auto-axis-x'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-auto-axis-y" type="ad">
+      <default>[1e+07, -1e+07, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-auto-axis-y' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-auto-axis-y'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-auto-axis-z" type="ad">
+      <default>[1e+07, -1e+07, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-auto-axis-z' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-auto-axis-z'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-z0-range" type="ad">
+      <default>[50000, 1, 1e+111, -1e+111, 1e+111, 1e+111, 10, 100, 1000, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-z0-range' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-z0-range'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-z0-speed" type="ad">
+      <default>[5000, 0.1, 1e+111, -1e+111, 1e+111, 1e+111, 10, 100, 1000, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-z0-speed' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-z0-speed'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-z0-goto" type="ad">
+      <default>[1e+06, -1e+06, 1e+111, -1e+111, 1e+111, 1e+111, 10, 100, 1000, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-z0-goto' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-z0-goto'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-config-wave-space" type="ad">
+      <default>[1000, 0, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-config-wave-space' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-config-wave-space'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-config-wave-offset" type="ad">
+      <default>[10, -10, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-config-wave-offset' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-config-wave-offset'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-config-iw-phase" type="ad">
+      <default>[360, 0, 1e+111, -1e+111, 1e+111, 1e+111, 1, 60, 600, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-config-iw-phase' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-config-iw-phase'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-config-besocke-z-jump-ratio" type="ad">
+      <default>[1, 0, 1e+111, -1e+111, 1e+111, 1e+111, 0.01, 0.1, 1, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-config-besocke-z-jump-ratio' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-config-besocke-z-jump-ratio'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-config-besocke-t1" type="ad">
+      <default>[1, 0, 1e+111, -1e+111, 1e+111, 1e+111, 0.001, 0.01, 0.1, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-config-besocke-t1' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-config-besocke-t1'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-config-besocke-t2" type="ad">
+      <default>[1, 0, 1e+111, -1e+111, 1e+111, 1e+111, 0.001, 0.01, 0.1, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-config-besocke-t2' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-config-besocke-t2'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-config-wave-out0-ch-x" type="ad">
+      <default>[17, 0, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-config-wave-out0-ch-x' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-config-wave-out0-ch-x'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-config-wave-out0-ch-y" type="ad">
+      <default>[17, 0, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-config-wave-out0-ch-y' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-config-wave-out0-ch-y'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-config-wave-out0-ch-z" type="ad">
+      <default>[17, 0, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-config-wave-out0-ch-z' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-config-wave-out0-ch-z'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-config-wave-out1-ch-x" type="ad">
+      <default>[17, 0, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-config-wave-out1-ch-x' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-config-wave-out1-ch-x'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-config-wave-out1-ch-y" type="ad">
+      <default>[17, 0, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-config-wave-out1-ch-y' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-config-wave-out1-ch-y'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-config-wave-out1-ch-z" type="ad">
+      <default>[17, 0, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-config-wave-out1-ch-z' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-config-wave-out1-ch-z'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-config-wave-out2-ch-x" type="ad">
+      <default>[17, 0, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-config-wave-out2-ch-x' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-config-wave-out2-ch-x'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-config-wave-out2-ch-y" type="ad">
+      <default>[17, 0, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-config-wave-out2-ch-y' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-config-wave-out2-ch-y'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-config-wave-out2-ch-z" type="ad">
+      <default>[17, 0, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-config-wave-out2-ch-z' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-config-wave-out2-ch-z'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-config-wave-out3-ch-x" type="ad">
+      <default>[17, 0, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-config-wave-out3-ch-x' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-config-wave-out3-ch-x'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-config-wave-out3-ch-y" type="ad">
+      <default>[17, 0, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-config-wave-out3-ch-y' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-config-wave-out3-ch-y'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-config-wave-out3-ch-z" type="ad">
+      <default>[17, 0, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-config-wave-out3-ch-z' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-config-wave-out3-ch-z'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-config-wave-out4-ch-x" type="ad">
+      <default>[17, 0, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-config-wave-out4-ch-x' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-config-wave-out4-ch-x'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-config-wave-out4-ch-y" type="ad">
+      <default>[17, 0, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-config-wave-out4-ch-y' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-config-wave-out4-ch-y'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-config-wave-out4-ch-z" type="ad">
+      <default>[17, 0, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-config-wave-out4-ch-z' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-config-wave-out4-ch-z'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-config-wave-out5-ch-x" type="ad">
+      <default>[17, 0, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-config-wave-out5-ch-x' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-config-wave-out5-ch-x'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-config-wave-out5-ch-y" type="ad">
+      <default>[17, 0, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-config-wave-out5-ch-y' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-config-wave-out5-ch-y'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-config-wave-out5-ch-z" type="ad">
+      <default>[17, 0, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-config-wave-out5-ch-z' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-config-wave-out5-ch-z'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-config-gpio-on" type="ad">
+      <default>[65535, 0, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-config-gpio-on' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-config-gpio-on'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-config-gpio-off" type="ad">
+      <default>[65535, 0, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-config-gpio-off' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-config-gpio-off'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-config-gpio-reset" type="ad">
+      <default>[65535, 0, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-config-gpio-reset' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-config-gpio-reset'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-config-gpio-direction" type="ad">
+      <default>[65535, 0, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-config-gpio-direction' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-config-gpio-direction'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-config-gpio-scan" type="ad">
+      <default>[65535, 0, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-config-gpio-scan' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-config-gpio-scan'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-config-gpio-tmp1" type="ad">
+      <default>[65535, 0, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-config-gpio-tmp1' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-config-gpio-tmp1'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-config-gpio-tmp2" type="ad">
+      <default>[65535, 0, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-config-gpio-tmp2' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-config-gpio-tmp2'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="gvpmover-config-gpio-delay" type="ad">
+      <default>[1000, 0, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'gvpmover-config-gpio-delay' </summary>
+      <description>Configuration for GXSM Entry with ID 'gvpmover-config-gpio-delay'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    
   </schema>
 </schemalist>
 

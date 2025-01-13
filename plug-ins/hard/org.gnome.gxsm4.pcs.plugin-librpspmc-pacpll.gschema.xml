@@ -737,6 +737,445 @@
       <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-pcjr16', Default/U: 0      , Adjustment PCS Name: 'dsp-gvp-pcjr16' </description>
     </key>
 
+    <key name="gvpmover-xy-max-steps" type="d">
+      <default>10</default>
+      <summary>PCS Remote-ID: 'gvpmover-xy-max-steps', Default/U:   10       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-xy-max-steps', Default/U:   10      , Adjustment PCS Name: 'gvpmover-xy-max-steps' </description>
+    </key>
+
+    <key name="gvpmover-xy-amplitude" type="d">
+      <default>1</default>
+      <summary>PCS Remote-ID: 'gvpmover-xy-amplitude', Default/U:  1.00 V     </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-xy-amplitude', Default/U:  1.00 V    , Adjustment PCS Name: 'gvpmover-xy-amplitude' </description>
+    </key>
+
+    <key name="gvpmover-xy-duration" type="d">
+      <default>3</default>
+      <summary>PCS Remote-ID: 'gvpmover-xy-duration', Default/U: 3.000 ms     </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-xy-duration', Default/U: 3.000 ms    , Adjustment PCS Name: 'gvpmover-xy-duration' </description>
+    </key>
+
+    <key name="gvpmover-xy-gpio" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-xy-gpio', Default/U: 0000 h     </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-xy-gpio', Default/U: 0000 h    , Adjustment PCS Name: 'gvpmover-xy-gpio' </description>
+    </key>
+
+    <key name="gvpmover-xy-axis-x" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-xy-axis-X', Default/U: 0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-xy-axis-X', Default/U: 0      , Adjustment PCS Name: 'gvpmover-xy-axis-X' </description>
+    </key>
+
+    <key name="gvpmover-xy-axis-y" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-xy-axis-Y', Default/U: 0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-xy-axis-Y', Default/U: 0      , Adjustment PCS Name: 'gvpmover-xy-axis-Y' </description>
+    </key>
+
+    <key name="gvpmover-xy-axis-z" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-xy-axis-Z', Default/U: 0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-xy-axis-Z', Default/U: 0      , Adjustment PCS Name: 'gvpmover-xy-axis-Z' </description>
+    </key>
+
+    <key name="gvpmover-rot-max-steps" type="d">
+      <default>10</default>
+      <summary>PCS Remote-ID: 'gvpmover-rot-max-steps', Default/U:   10       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-rot-max-steps', Default/U:   10      , Adjustment PCS Name: 'gvpmover-rot-max-steps' </description>
+    </key>
+
+    <key name="gvpmover-rot-amplitude" type="d">
+      <default>1</default>
+      <summary>PCS Remote-ID: 'gvpmover-rot-amplitude', Default/U:  1.00 V     </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-rot-amplitude', Default/U:  1.00 V    , Adjustment PCS Name: 'gvpmover-rot-amplitude' </description>
+    </key>
+
+    <key name="gvpmover-rot-duration" type="d">
+      <default>3</default>
+      <summary>PCS Remote-ID: 'gvpmover-rot-duration', Default/U: 3.000 ms     </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-rot-duration', Default/U: 3.000 ms    , Adjustment PCS Name: 'gvpmover-rot-duration' </description>
+    </key>
+
+    <key name="gvpmover-rot-gpio" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-rot-gpio', Default/U: 0000 h     </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-rot-gpio', Default/U: 0000 h    , Adjustment PCS Name: 'gvpmover-rot-gpio' </description>
+    </key>
+
+    <key name="gvpmover-rot-axis-x" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-rot-axis-X', Default/U: 0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-rot-axis-X', Default/U: 0      , Adjustment PCS Name: 'gvpmover-rot-axis-X' </description>
+    </key>
+
+    <key name="gvpmover-rot-axis-y" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-rot-axis-Y', Default/U: 0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-rot-axis-Y', Default/U: 0      , Adjustment PCS Name: 'gvpmover-rot-axis-Y' </description>
+    </key>
+
+    <key name="gvpmover-rot-axis-z" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-rot-axis-Z', Default/U: 0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-rot-axis-Z', Default/U: 0      , Adjustment PCS Name: 'gvpmover-rot-axis-Z' </description>
+    </key>
+
+    <key name="gvpmover-psd-max-steps" type="d">
+      <default>10</default>
+      <summary>PCS Remote-ID: 'gvpmover-psd-max-steps', Default/U:   10       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-psd-max-steps', Default/U:   10      , Adjustment PCS Name: 'gvpmover-psd-max-steps' </description>
+    </key>
+
+    <key name="gvpmover-psd-amplitude" type="d">
+      <default>1</default>
+      <summary>PCS Remote-ID: 'gvpmover-psd-amplitude', Default/U:  1.00 V     </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-psd-amplitude', Default/U:  1.00 V    , Adjustment PCS Name: 'gvpmover-psd-amplitude' </description>
+    </key>
+
+    <key name="gvpmover-psd-duration" type="d">
+      <default>3</default>
+      <summary>PCS Remote-ID: 'gvpmover-psd-duration', Default/U: 3.000 ms     </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-psd-duration', Default/U: 3.000 ms    , Adjustment PCS Name: 'gvpmover-psd-duration' </description>
+    </key>
+
+    <key name="gvpmover-psd-gpio" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-psd-gpio', Default/U: 0000 h     </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-psd-gpio', Default/U: 0000 h    , Adjustment PCS Name: 'gvpmover-psd-gpio' </description>
+    </key>
+
+    <key name="gvpmover-psd-axis-x" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-psd-axis-X', Default/U: 0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-psd-axis-X', Default/U: 0      , Adjustment PCS Name: 'gvpmover-psd-axis-X' </description>
+    </key>
+
+    <key name="gvpmover-psd-axis-y" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-psd-axis-Y', Default/U: 0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-psd-axis-Y', Default/U: 0      , Adjustment PCS Name: 'gvpmover-psd-axis-Y' </description>
+    </key>
+
+    <key name="gvpmover-psd-axis-z" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-psd-axis-Z', Default/U: 0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-psd-axis-Z', Default/U: 0      , Adjustment PCS Name: 'gvpmover-psd-axis-Z' </description>
+    </key>
+
+    <key name="gvpmover-lens-max-steps" type="d">
+      <default>10</default>
+      <summary>PCS Remote-ID: 'gvpmover-lens-max-steps', Default/U:   10       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-lens-max-steps', Default/U:   10      , Adjustment PCS Name: 'gvpmover-lens-max-steps' </description>
+    </key>
+
+    <key name="gvpmover-lens-amplitude" type="d">
+      <default>1</default>
+      <summary>PCS Remote-ID: 'gvpmover-lens-amplitude', Default/U:  1.00 V     </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-lens-amplitude', Default/U:  1.00 V    , Adjustment PCS Name: 'gvpmover-lens-amplitude' </description>
+    </key>
+
+    <key name="gvpmover-lens-duration" type="d">
+      <default>3</default>
+      <summary>PCS Remote-ID: 'gvpmover-lens-duration', Default/U: 3.000 ms     </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-lens-duration', Default/U: 3.000 ms    , Adjustment PCS Name: 'gvpmover-lens-duration' </description>
+    </key>
+
+    <key name="gvpmover-lens-gpio" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-lens-gpio', Default/U: 0000 h     </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-lens-gpio', Default/U: 0000 h    , Adjustment PCS Name: 'gvpmover-lens-gpio' </description>
+    </key>
+
+    <key name="gvpmover-lens-axis-x" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-lens-axis-X', Default/U: 0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-lens-axis-X', Default/U: 0      , Adjustment PCS Name: 'gvpmover-lens-axis-X' </description>
+    </key>
+
+    <key name="gvpmover-lens-axis-y" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-lens-axis-Y', Default/U: 0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-lens-axis-Y', Default/U: 0      , Adjustment PCS Name: 'gvpmover-lens-axis-Y' </description>
+    </key>
+
+    <key name="gvpmover-lens-axis-z" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-lens-axis-Z', Default/U: 0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-lens-axis-Z', Default/U: 0      , Adjustment PCS Name: 'gvpmover-lens-axis-Z' </description>
+    </key>
+
+    <key name="gvpmover-auto-max-steps" type="d">
+      <default>10</default>
+      <summary>PCS Remote-ID: 'gvpmover-auto-max-steps', Default/U:   10       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-auto-max-steps', Default/U:   10      , Adjustment PCS Name: 'gvpmover-auto-max-steps' </description>
+    </key>
+
+    <key name="gvpmover-auto-amplitude" type="d">
+      <default>1</default>
+      <summary>PCS Remote-ID: 'gvpmover-auto-amplitude', Default/U:  1.00 V     </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-auto-amplitude', Default/U:  1.00 V    , Adjustment PCS Name: 'gvpmover-auto-amplitude' </description>
+    </key>
+
+    <key name="gvpmover-auto-duration" type="d">
+      <default>3</default>
+      <summary>PCS Remote-ID: 'gvpmover-auto-duration', Default/U: 3.000 ms     </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-auto-duration', Default/U: 3.000 ms    , Adjustment PCS Name: 'gvpmover-auto-duration' </description>
+    </key>
+
+    <key name="gvpmover-auto-gpio" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-auto-gpio', Default/U: 0000 h     </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-auto-gpio', Default/U: 0000 h    , Adjustment PCS Name: 'gvpmover-auto-gpio' </description>
+    </key>
+
+    <key name="gvpmover-config-auto-app-delay" type="d">
+      <default>50</default>
+      <summary>PCS Remote-ID: 'gvpmover-config-Auto-App-Delay', Default/U: 50.0 ms     </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-config-Auto-App-Delay', Default/U: 50.0 ms    , Adjustment PCS Name: 'gvpmover-config-Auto-App-Delay' </description>
+    </key>
+
+    <key name="gvpmover-config-auto-app-max-settling-time" type="d">
+      <default>1000</default>
+      <summary>PCS Remote-ID: 'gvpmover-config-Auto-App-Max-Settling-Time', Default/U: 1000.0 ms     </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-config-Auto-App-Max-Settling-Time', Default/U: 1000.0 ms    , Adjustment PCS Name: 'gvpmover-config-Auto-App-Max-Settling-Time' </description>
+    </key>
+
+    <key name="gvpmover-config-auto-app-retract-ci" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-config-Auto-App-Retract-CI', Default/U:   0.0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-config-Auto-App-Retract-CI', Default/U:   0.0      , Adjustment PCS Name: 'gvpmover-config-Auto-App-Retract-CI' </description>
+    </key>
+
+    <key name="gvpmover-auto-axis-x" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-auto-axis-X', Default/U: 0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-auto-axis-X', Default/U: 0      , Adjustment PCS Name: 'gvpmover-auto-axis-X' </description>
+    </key>
+
+    <key name="gvpmover-auto-axis-y" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-auto-axis-Y', Default/U: 0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-auto-axis-Y', Default/U: 0      , Adjustment PCS Name: 'gvpmover-auto-axis-Y' </description>
+    </key>
+
+    <key name="gvpmover-auto-axis-z" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-auto-axis-Z', Default/U: 0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-auto-axis-Z', Default/U: 0      , Adjustment PCS Name: 'gvpmover-auto-axis-Z' </description>
+    </key>
+
+    <key name="gvpmover-z0-range" type="d">
+      <default>500</default>
+      <summary>PCS Remote-ID: 'gvpmover-z0-range', Default/U:  500 Å     </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-z0-range', Default/U:  500 Å    , Adjustment PCS Name: 'gvpmover-z0-range' </description>
+    </key>
+
+    <key name="gvpmover-z0-speed" type="d">
+      <default>500</default>
+      <summary>PCS Remote-ID: 'gvpmover-z0-speed', Default/U: 500.0 Å/s     </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-z0-speed', Default/U: 500.0 Å/s    , Adjustment PCS Name: 'gvpmover-z0-speed' </description>
+    </key>
+
+    <key name="gvpmover-z0-goto" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-z0-goto', Default/U:      0.0 Å     </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-z0-goto', Default/U:      0.0 Å    , Adjustment PCS Name: 'gvpmover-z0-goto' </description>
+    </key>
+
+    <key name="gvpmover-config-wave-space" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-config-Wave-Space', Default/U: 0.000 ms     </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-config-Wave-Space', Default/U: 0.000 ms    , Adjustment PCS Name: 'gvpmover-config-Wave-Space' </description>
+    </key>
+
+    <key name="gvpmover-config-wave-offset" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-config-Wave-Offset', Default/U: 0.00       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-config-Wave-Offset', Default/U: 0.00      , Adjustment PCS Name: 'gvpmover-config-Wave-Offset' </description>
+    </key>
+
+    <key name="gvpmover-config-iw-phase" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-config-IW-Phase', Default/U:   0 °     </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-config-IW-Phase', Default/U:   0 °    , Adjustment PCS Name: 'gvpmover-config-IW-Phase' </description>
+    </key>
+
+    <key name="gvpmover-config-besocke-z-jump-ratio" type="d">
+      <default>0.1</default>
+      <summary>PCS Remote-ID: 'gvpmover-config-besocke-z-jump-ratio', Default/U: 0.10       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-config-besocke-z-jump-ratio', Default/U: 0.10      , Adjustment PCS Name: 'gvpmover-config-besocke-z-jump-ratio' </description>
+    </key>
+
+    <key name="gvpmover-config-besocke-t1" type="d">
+      <default>0.09</default>
+      <summary>PCS Remote-ID: 'gvpmover-config-besocke-t1', Default/U: 0.090 ms     </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-config-besocke-t1', Default/U: 0.090 ms    , Adjustment PCS Name: 'gvpmover-config-besocke-t1' </description>
+    </key>
+
+    <key name="gvpmover-config-besocke-t2" type="d">
+      <default>0.09</default>
+      <summary>PCS Remote-ID: 'gvpmover-config-besocke-t2', Default/U: 0.090 ms     </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-config-besocke-t2', Default/U: 0.090 ms    , Adjustment PCS Name: 'gvpmover-config-besocke-t2' </description>
+    </key>
+
+    <key name="gvpmover-config-wave-out0-ch-x" type="d">
+      <default>3</default>
+      <summary>PCS Remote-ID: 'gvpmover-config-wave-out0-ch-x', Default/U: 3       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-config-wave-out0-ch-x', Default/U: 3      , Adjustment PCS Name: 'gvpmover-config-wave-out0-ch-x' </description>
+    </key>
+
+    <key name="gvpmover-config-wave-out0-ch-y" type="d">
+      <default>4</default>
+      <summary>PCS Remote-ID: 'gvpmover-config-wave-out0-ch-y', Default/U: 4       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-config-wave-out0-ch-y', Default/U: 4      , Adjustment PCS Name: 'gvpmover-config-wave-out0-ch-y' </description>
+    </key>
+
+    <key name="gvpmover-config-wave-out0-ch-z" type="d">
+      <default>3</default>
+      <summary>PCS Remote-ID: 'gvpmover-config-wave-out0-ch-z', Default/U: 3       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-config-wave-out0-ch-z', Default/U: 3      , Adjustment PCS Name: 'gvpmover-config-wave-out0-ch-z' </description>
+    </key>
+
+    <key name="gvpmover-config-wave-out1-ch-x" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-config-wave-out1-ch-x', Default/U: 0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-config-wave-out1-ch-x', Default/U: 0      , Adjustment PCS Name: 'gvpmover-config-wave-out1-ch-x' </description>
+    </key>
+
+    <key name="gvpmover-config-wave-out1-ch-y" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-config-wave-out1-ch-y', Default/U: 0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-config-wave-out1-ch-y', Default/U: 0      , Adjustment PCS Name: 'gvpmover-config-wave-out1-ch-y' </description>
+    </key>
+
+    <key name="gvpmover-config-wave-out1-ch-z" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-config-wave-out1-ch-z', Default/U: 0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-config-wave-out1-ch-z', Default/U: 0      , Adjustment PCS Name: 'gvpmover-config-wave-out1-ch-z' </description>
+    </key>
+
+    <key name="gvpmover-config-wave-out2-ch-x" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-config-wave-out2-ch-x', Default/U: 0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-config-wave-out2-ch-x', Default/U: 0      , Adjustment PCS Name: 'gvpmover-config-wave-out2-ch-x' </description>
+    </key>
+
+    <key name="gvpmover-config-wave-out2-ch-y" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-config-wave-out2-ch-y', Default/U: 0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-config-wave-out2-ch-y', Default/U: 0      , Adjustment PCS Name: 'gvpmover-config-wave-out2-ch-y' </description>
+    </key>
+
+    <key name="gvpmover-config-wave-out2-ch-z" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-config-wave-out2-ch-z', Default/U: 0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-config-wave-out2-ch-z', Default/U: 0      , Adjustment PCS Name: 'gvpmover-config-wave-out2-ch-z' </description>
+    </key>
+
+    <key name="gvpmover-config-wave-out3-ch-x" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-config-wave-out3-ch-x', Default/U: 0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-config-wave-out3-ch-x', Default/U: 0      , Adjustment PCS Name: 'gvpmover-config-wave-out3-ch-x' </description>
+    </key>
+
+    <key name="gvpmover-config-wave-out3-ch-y" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-config-wave-out3-ch-y', Default/U: 0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-config-wave-out3-ch-y', Default/U: 0      , Adjustment PCS Name: 'gvpmover-config-wave-out3-ch-y' </description>
+    </key>
+
+    <key name="gvpmover-config-wave-out3-ch-z" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-config-wave-out3-ch-z', Default/U: 0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-config-wave-out3-ch-z', Default/U: 0      , Adjustment PCS Name: 'gvpmover-config-wave-out3-ch-z' </description>
+    </key>
+
+    <key name="gvpmover-config-wave-out4-ch-x" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-config-wave-out4-ch-x', Default/U: 0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-config-wave-out4-ch-x', Default/U: 0      , Adjustment PCS Name: 'gvpmover-config-wave-out4-ch-x' </description>
+    </key>
+
+    <key name="gvpmover-config-wave-out4-ch-y" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-config-wave-out4-ch-y', Default/U: 0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-config-wave-out4-ch-y', Default/U: 0      , Adjustment PCS Name: 'gvpmover-config-wave-out4-ch-y' </description>
+    </key>
+
+    <key name="gvpmover-config-wave-out4-ch-z" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-config-wave-out4-ch-z', Default/U: 0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-config-wave-out4-ch-z', Default/U: 0      , Adjustment PCS Name: 'gvpmover-config-wave-out4-ch-z' </description>
+    </key>
+
+    <key name="gvpmover-config-wave-out5-ch-x" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-config-wave-out5-ch-x', Default/U: 0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-config-wave-out5-ch-x', Default/U: 0      , Adjustment PCS Name: 'gvpmover-config-wave-out5-ch-x' </description>
+    </key>
+
+    <key name="gvpmover-config-wave-out5-ch-y" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-config-wave-out5-ch-y', Default/U: 0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-config-wave-out5-ch-y', Default/U: 0      , Adjustment PCS Name: 'gvpmover-config-wave-out5-ch-y' </description>
+    </key>
+
+    <key name="gvpmover-config-wave-out5-ch-z" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-config-wave-out5-ch-z', Default/U: 0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-config-wave-out5-ch-z', Default/U: 0      , Adjustment PCS Name: 'gvpmover-config-wave-out5-ch-z' </description>
+    </key>
+
+    <key name="gvpmover-config-gpio-on" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-config-GPIO-on', Default/U: 0000 h     </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-config-GPIO-on', Default/U: 0000 h    , Adjustment PCS Name: 'gvpmover-config-GPIO-on' </description>
+    </key>
+
+    <key name="gvpmover-config-gpio-off" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-config-GPIO-off', Default/U: 0000 h     </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-config-GPIO-off', Default/U: 0000 h    , Adjustment PCS Name: 'gvpmover-config-GPIO-off' </description>
+    </key>
+
+    <key name="gvpmover-config-gpio-reset" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-config-GPIO-reset', Default/U: 0000 h     </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-config-GPIO-reset', Default/U: 0000 h    , Adjustment PCS Name: 'gvpmover-config-GPIO-reset' </description>
+    </key>
+
+    <key name="gvpmover-config-gpio-direction" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-config-GPIO-direction', Default/U: 0000 h     </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-config-GPIO-direction', Default/U: 0000 h    , Adjustment PCS Name: 'gvpmover-config-GPIO-direction' </description>
+    </key>
+
+    <key name="gvpmover-config-gpio-scan" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-config-GPIO-scan', Default/U: 0000 h     </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-config-GPIO-scan', Default/U: 0000 h    , Adjustment PCS Name: 'gvpmover-config-GPIO-scan' </description>
+    </key>
+
+    <key name="gvpmover-config-gpio-tmp1" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-config-GPIO-tmp1', Default/U: 0000 h     </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-config-GPIO-tmp1', Default/U: 0000 h    , Adjustment PCS Name: 'gvpmover-config-GPIO-tmp1' </description>
+    </key>
+
+    <key name="gvpmover-config-gpio-tmp2" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-config-GPIO-tmp2', Default/U: 0000 h     </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-config-GPIO-tmp2', Default/U: 0000 h    , Adjustment PCS Name: 'gvpmover-config-GPIO-tmp2' </description>
+    </key>
+
+    <key name="gvpmover-config-gpio-delay" type="d">
+      <default>250</default>
+      <summary>PCS Remote-ID: 'gvpmover-config-GPIO-delay', Default/U: 250.0 ms     </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-config-GPIO-delay', Default/U: 250.0 ms    , Adjustment PCS Name: 'gvpmover-config-GPIO-delay' </description>
+    </key>
+
+    
   </schema>
 
 </schemalist>

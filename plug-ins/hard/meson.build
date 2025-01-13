@@ -45,11 +45,16 @@ if gsl.found() and soup.found() and websocketpp.found()
 		   'rpspmc_hwi_dev.cpp',
 		   'rpspmc_stream.cpp',
 		   'rpspmc_hwi_eventhandling.cpp',
-		   'rpspmc_hwi_vectorgen.cpp'],
+		   'rpspmc_hwi_vectorgen.cpp',
+		   'rpspmc_gvpmover.cpp'
+		   ],
       'deps': [ soup, gsl, lz, websocketpp ],	
       'gschemas': [ 'org.gnome.gxsm4.rpspmc-pacpll-settings.gschema.xml',
                     'org.gnome.gxsm4.pcs.plugin-librpspmc-pacpll.gschema.xml',
-                    'org.gnome.gxsm4.pcsadjustments.plugin-librpspmc-pacpll.gschema.xml' ] },
+                    'org.gnome.gxsm4.pcsadjustments.plugin-librpspmc-pacpll.gschema.xml',
+		    'org.gnome.gxsm4.hwi.rpspmc-gvpmover.gschema.xml',
+                    'org.gnome.gxsm4.pcsadjustments.plugin-librpspmc-gvpmover.gschema.xml'
+		    ] },
     ]
 endif
 
