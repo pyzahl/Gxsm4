@@ -24,6 +24,8 @@ module readback_configuration#(
     /* module readback register addresses */
     parameter readback_Z_reg_address    = 100001,
     parameter readback_Bias_reg_address = 100002,
+    parameter readbackTimingTest_reg_address  = 101999,
+    parameter readbackTimingReset_reg_address = 102000,
     parameter readbackX_reg_address = 100999
     )(
     input aclk,
@@ -71,11 +73,20 @@ module readback_configuration#(
             reg_A <= rbXa;
             reg_B <= rbXb;
 	    end
-
+        readbackTimingReset_reg_address:
+	    begin
+            reg_A <= 0; 
+            reg_B <= 0; 
+	    end
+        readbackTimingTest_reg_address:
+	    begin
+            reg_A <= 125000000; 
+            reg_B <= reg_A; 
+	    end
 	default:
 	  begin
-            reg_A <= 1;
-            reg_B <= 2;
+            reg_A <= reg_A+1;
+            reg_B <= reg_A+13;
 	  end
         endcase
     end    

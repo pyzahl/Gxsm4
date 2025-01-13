@@ -74,7 +74,10 @@ module axis_selector #(
     output wire [MAXIS_TDATA_WIDTH-1:0] M_AXIS_5_tdata,
     output wire                         M_AXIS_5_tvalid,
     output wire [MAXIS_TDATA_WIDTH-1:0] M_AXIS_6_tdata,
-    output wire                         M_AXIS_6_tvalid
+    output wire                         M_AXIS_6_tvalid,
+
+    output wire [32-1:0] mux_ch
+
     );
    
 /*
@@ -207,5 +210,7 @@ assign  M_AXIS_3_tvalid = ALL_AXIS_tvalid [mux_axis_select[12-1:8]];
 assign  M_AXIS_4_tvalid = ALL_AXIS_tvalid [mux_axis_select[16-1:12]];
 assign  M_AXIS_5_tvalid = ALL_AXIS_tvalid [mux_axis_select[20-1:16]];
 assign  M_AXIS_6_tvalid = ALL_AXIS_tvalid [mux_axis_select[24-1:20]];
+
+assign mux_ch = mux_axis_select;
 
 endmodule

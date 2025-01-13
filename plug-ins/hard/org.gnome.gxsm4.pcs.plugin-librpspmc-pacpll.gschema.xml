@@ -417,6 +417,18 @@
       <description>pcs0000, PCS Remote-ID: 'fbs-ci', Default/U: 10   , Adjustment PCS Name: 'fbs-ci' </description>
     </key>
 
+    <key name="dsp-fbs-upper" type="d">
+      <default>5</default>
+      <summary>PCS Remote-ID: 'dsp-fbs-upper', Default/U:     0 V     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-fbs-upper', Default/U:     0 V    , Adjustment PCS Name: 'dsp-fbs-upper' </description>
+    </key>
+
+    <key name="dsp-fbs-lower" type="d">
+      <default>-5</default>
+      <summary>PCS Remote-ID: 'dsp-fbs-lower', Default/U:     0 V     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-fbs-lower', Default/U:     0 V    , Adjustment PCS Name: 'dsp-fbs-lower' </description>
+    </key>
+
     <key name="dsp-fbs-scan-speed-move" type="d">
       <default>500.0</default>
       <summary>PCS Remote-ID: 'fbs-scan-speed-move', Default/U:     500 Å/s     </summary>

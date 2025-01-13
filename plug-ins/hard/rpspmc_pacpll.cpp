@@ -1634,9 +1634,14 @@ void RPSPMC_Control::create_folder (){
         bp->set_configure_list_mode_on ();
 	bp->grid_add_ec_with_scale ("CP", dB, &spmc_parameters.z_servo_cp_db, -100., 20., "5g", 1.0, 0.1, "fbs-cp"); // z_servo[SERVO_CP]
         GtkWidget *ZServoCP = bp->input;
+
+        mix_level[2] = 5.;
+        mix_level[3] = -5.;
+        bp->grid_add_ec ("Z Upper", Volt, &spmc_parameters.z_servo_upper, -5.0, 5.0, "5g", 0.001, 0.01,"fbs-upper");
         bp->new_line ();
         bp->set_configure_list_mode_off ();
         bp->grid_add_ec_with_scale ("CI", dB, &spmc_parameters.z_servo_ci_db, -100., 20., "5g", 1.0, 0.1, "fbs-ci"); // z_servo[SERVO_CI
+        bp->grid_add_ec ("Z Lower", Volt, &spmc_parameters.z_servo_lower, -5.0, 5.0, "5g", 0.001, 0.01,"fbs-lower");
         GtkWidget *ZServoCI = bp->input;
 
         //g_object_set_data( G_OBJECT (ZServoCI), "HasClient", ZServoCP);
@@ -2559,20 +2564,25 @@ void RPSPMC_Control::Init_SPMC_on_connect (){
                 ZPosSetChanged(NULL, this);
                 ZServoParamChanged(NULL, this);
 
-                // reset GVP
-                int vector_index=0;
-                int gvp_options=0;
-
-                rpspmc_hwi->resetVPCconfirmed ();
-                make_dUZXYAB_vector (vector_index++,
-                                     0., 0., // GVP_du[k], GVP_dz[k],
-                                     0., 0., 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
-                                     100, 0, 0, 0.5, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
-                                     0, VP_INITIAL_SET_VEC | gvp_options);
-                append_null_vector (vector_index, gvp_options);
-                rpspmc_hwi->GVP_vp_init ();
-                rpspmc_hwi->GVP_execute_vector_program(); // non blocking
+                // reset and zero GVP
+                GVP_zero_all_smooth ();
         }
+}
+
+void RPSPMC_Control::GVP_zero_all_smooth (){
+        // reset GVP
+        int vector_index=0;
+        int gvp_options=0;
+
+        rpspmc_hwi->resetVPCconfirmed ();
+        make_dUZXYAB_vector (vector_index++,
+                             0., 0., // GVP_du[k], GVP_dz[k],
+                             0., 0., 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
+                             100, 0, 0, 0.5, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
+                             0, VP_INITIAL_SET_VEC | gvp_options);
+        append_null_vector (vector_index, gvp_options);
+        rpspmc_hwi->GVP_vp_init ();
+        rpspmc_hwi->GVP_execute_vector_program(); // non blocking
 }
 
 int RPSPMC_Control::DSP_cret_callback (GtkWidget *widget, RPSPMC_Control *self){
@@ -2624,7 +2634,7 @@ void RPSPMC_Control::ZPosSetChanged(Param_Control* pcs, RPSPMC_Control *self){
                 jdata[1] = main_get_gapp()->xsm->Inst->nAmpere2V(self->mix_set_point[0]);
                 jdata[2]   = self->mix_level[0] > 0.
                         ? main_get_gapp()->xsm->Inst->ZA2Volt(self->zpos_ref)
-                        : 5.; // UPPER
+                        : spmc_parameters.z_servo_upper; //5.; // UPPER
 
                 rpspmc_pacpll->write_array (SPMC_SET_ZPOS_SERVO_COMPONENTS, 0, NULL,  3, jdata);
         }
@@ -2656,8 +2666,8 @@ void RPSPMC_Control::ZServoParamChanged(Param_Control* pcs, RPSPMC_Control *self
                 jdata[3]   = self->z_servo[SERVO_CI];
                 jdata[4]   = self->mix_level[0] > 0.
                            ? main_get_gapp()->xsm->Inst->ZA2Volt(self->zpos_ref)
-                           :  5.; // UPPER
-                jdata[5]   = -5.; // LOWER
+                        :  spmc_parameters.z_servo_upper;   // 5.; // UPPER
+                jdata[5]   = spmc_parameters.z_servo_lower; // -5.; // LOWER
 
                 rpspmc_pacpll->write_array (SPMC_SET_Z_SERVO_COMPONENTS, 1, jdata_i,  6, jdata);
         }

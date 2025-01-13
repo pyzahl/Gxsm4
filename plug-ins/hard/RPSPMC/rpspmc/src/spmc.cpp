@@ -25,6 +25,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#include <time.h>
 #include <limits.h>
 #include <math.h>
 #include <stdio.h>
@@ -59,6 +60,8 @@
 
 extern CIntParameter     SPMC_GVP_STATUS;
 extern CDoubleParameter  SPMC_BIAS_MONITOR;
+extern CDoubleParameter  SPMC_BIAS_REG_MONITOR;
+extern CDoubleParameter  SPMC_BIAS_GVP_MONITOR;
 extern CDoubleParameter  SPMC_SIGNAL_MONITOR;
 
 extern CDoubleParameter  SPMC_X_MONITOR;
@@ -219,7 +222,100 @@ void rp_spmc_gvp_module_read_config_data (int addr, int *regA, int *regB){
         usleep(MODULE_ADDR_SETTLE_TIME);
         *regA = read_gpio_reg_int32 (10,0); // GPIO X19 <= RegA (addr)
         *regB = read_gpio_reg_int32 (10,1); // GPIO X20 <= RegB (addr)
-        set_gpio_cfgreg_int32 (0, addr);    // got it, disable
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, 0);    // and disable config bus again
+}
+
+void rp_spmc_gvp_module_read_config_data_timing_test (){
+        int i=0;
+        int regA[200], regB[200];
+        clock_t t=clock();
+        clock_t tlim=t+CLOCKS_PER_SEC/10;
+        clock_t t1, t2, t3, t4;
+        int     i1, i2, i3, i4;
+        clock_t regT[200];
+        
+        regA[i] = read_gpio_reg_int32 (10,0); // GPIO X19 <= RegA (addr)
+        regB[i] = read_gpio_reg_int32 (10,1); // GPIO X20 <= RegB (addr)
+        regT[i] = clock();
+        regA[++i] = read_gpio_reg_int32 (10,0); // GPIO X19 <= RegA (addr)
+        regB[i] = read_gpio_reg_int32 (10,1); // GPIO X20 <= RegB (addr)
+        regT[i] = clock();
+        regA[++i] = read_gpio_reg_int32 (10,0); // GPIO X19 <= RegA (addr)
+        regB[i] = read_gpio_reg_int32 (10,1); // GPIO X20 <= RegB (addr)
+        regT[i] = clock();
+        regA[++i] = read_gpio_reg_int32 (10,0); // GPIO X19 <= RegA (addr)
+        regB[i] = read_gpio_reg_int32 (10,1); // GPIO X20 <= RegB (addr)
+        regT[i] = clock();
+        regA[++i] = read_gpio_reg_int32 (10,0); // GPIO X19 <= RegA (addr)
+        regB[i] = read_gpio_reg_int32 (10,1); // GPIO X20 <= RegB (addr)
+        regT[i] = clock(); 
+
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, 0);    // and disable config bus again
+        usleep(MODULE_ADDR_SETTLE_TIME);
+
+        regA[++i] = read_gpio_reg_int32 (10,0); // GPIO X19 <= RegA (addr)
+        regB[i]   = read_gpio_reg_int32 (10,1); // GPIO X20 <= RegB (addr)
+        regT[i] = clock();
+
+        i1=i; t1 = clock();
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, SPMC_READBACK_TEST_RESET_REG);
+        //usleep(MODULE_ADDR_SETTLE_TIME);
+        do {
+                regA[++i] = read_gpio_reg_int32 (10,0); // GPIO X19 <= RegA (addr)
+                regB[i]   = read_gpio_reg_int32 (10,1); // GPIO X20 <= RegB (addr)
+                regT[i] = clock();
+        } while ((regA[i] || regB[i]) && clock() < tlim && i < 190);
+        t2 = clock(); i2=i;
+        
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, SPMC_READBACK_TEST_VALUE_REG);
+        //usleep(MODULE_ADDR_SETTLE_TIME);
+        do {
+                regA[++i] = read_gpio_reg_int32 (10,0); // GPIO X19 <= RegA (addr)
+                regB[i]   = read_gpio_reg_int32 (10,1); // GPIO X20 <= RegB (addr)
+                regT[i] = clock();
+        } while ((regA[i]==0 && regB[i]==0) && clock() < tlim && i < 190);
+        t3 = clock(); i3=i;
+        
+        regA[++i] = read_gpio_reg_int32 (10,0); // GPIO X19 <= RegA (addr)
+        regB[i]   = read_gpio_reg_int32 (10,1); // GPIO X20 <= RegB (addr)
+        regT[i] = clock();
+
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, 0);    // and disable config bus again
+
+        regA[++i] = read_gpio_reg_int32 (10,0); // GPIO X19 <= RegA (addr)
+        regB[i]   = read_gpio_reg_int32 (10,1); // GPIO X20 <= RegB (addr)
+        regT[i] = clock();
+        t4 = clock(); i4=i;
+
+        regA[++i] = read_gpio_reg_int32 (10,0); // GPIO X19 <= RegA (addr)
+        regB[i]   = read_gpio_reg_int32 (10,1); // GPIO X20 <= RegB (addr)
+        regT[i] = clock();
+        regA[++i] = read_gpio_reg_int32 (10,0); // GPIO X19 <= RegA (addr)
+        regB[i]   = read_gpio_reg_int32 (10,1); // GPIO X20 <= RegB (addr)
+        regT[i] = clock();
+        regA[++i] = read_gpio_reg_int32 (10,0); // GPIO X19 <= RegA (addr)
+        regB[i]   = read_gpio_reg_int32 (10,1); // GPIO X20 <= RegB (addr)
+        regT[i] = clock();
+
+        
+        fprintf(stderr, "\n *** rp_spmc_gvp_module_read_config_data_timing_test result ***\n");
+        fprintf(stderr, "T1[%02d] = %g us\n", i1, 1e6*(t1 - t)/CLOCKS_PER_SEC);
+        fprintf(stderr, "T2[%02d] = %g us\n", i2, 1e6*(t2 - t)/CLOCKS_PER_SEC);
+        fprintf(stderr, "T2-T1 until set = %g us\n", 1e6*(t2 - t1)/CLOCKS_PER_SEC);
+        fprintf(stderr, "T3[%02d] = %g us\n", i3, 1e6*(t3 - t)/CLOCKS_PER_SEC);
+        fprintf(stderr, "T3-T2 until set = %g us\n", 1e6*(t3 - t2)/CLOCKS_PER_SEC);
+        fprintf(stderr, "T4[%02d] = %g us\n", i4, 1e6*(t4 - t)/CLOCKS_PER_SEC);
+
+        int ra,rb;
+        ra=rb=-1;
+        fprintf(stderr, "INDEX\t TIME in us\t RegA     \t RegB\t diffs...\n");
+        for (int j=0; j <= i; ++j){
+                if (ra == regA[j] && rb == regB[j]) continue;
+                int da = regA[j]-ra;
+                ra=regA[j], rb=regB[j];
+                fprintf(stderr, "%05d\t %10g\t %08d\t %08d\t dt %04d\t %g us\n", j, 1e6*(regT[j] - t)/CLOCKS_PER_SEC, ra, rb, fabs(da) < 10000?da:0, fabs(da) < 10000?da/125.0:0);
+        }
+        fprintf(stderr, "***\n");
 }
 
 
@@ -263,6 +359,11 @@ void rp_spmc_gvp_config (bool reset=true, bool pause=false, int reset_options=-1
                 fprintf(stderr, "##Configure GVP: %s RO[%d]\n", reset ? "Reset" : pause ? "Pause":"Run", reset_options);
 }
 
+void reset_gvp_positions_uab(){
+        double data[16] = { 0.,0.,0.,0., 0.,0.,0.,0., 0.,0.,0.,0., 0.,0.,0.,0. };
+        rp_spmc_gvp_module_config_vector_Qn (SPMC_GVP_RESET_VECTOR_REG, data, 6);
+}
+
 void rp_spmc_gvp_init (){
         if (verbose > 0)
                 fprintf(stderr, "##**** GVP INIT\n");
@@ -284,8 +385,7 @@ void rp_spmc_gvp_init (){
         }
         rp_spmc_gvp_module_write_config_data (SPMC_GVP_VECTOR_DATA_REG);
 
-        double data[16] = { 0.,0.,0.,0., 0.,0.,0.,0., 0.,0.,0.,0., 0.,0.,0.,0. };
-        rp_spmc_gvp_module_config_vector_Qn (SPMC_GVP_RESET_VECTOR_REG, data, 6);
+        reset_gvp_positions_uab();
 }
 
 // pc: ProgramCounter (Vector #)
@@ -521,6 +621,11 @@ void rp_set_gvp_stream_mux_selector (unsigned long selector, unsigned long test_
         rp_spmc_gvp_module_config_uint32 (MODULE_SETUP, selector, MODULE_START_VECTOR);
         rp_spmc_gvp_module_config_uint32 (MODULE_SETUP, test_mode, MODULE_SETUP_VECTOR(1));
         rp_spmc_gvp_module_config_int32 (SPMC_MUX16_6_SRCS_CONTROL_REG, testval, MODULE_SETUP_VECTOR(2));
+
+        int a,b;
+        rp_spmc_gvp_module_read_config_data (SPMC_READBACK_XX_REG, &a, &b);
+        if (verbose > 1) fprintf(stderr, "** FPGA MUX selector is %08x\n", (unsigned int)a);
+
 }
 
 // RPSPMC Location and Geometry
@@ -808,6 +913,9 @@ void rp_spmc_update_readings (){
         SPMC_ZS_MONITOR.Value () = rpspmc_to_volts (regB); // Z-GVP
         SPMC_Z0_MONITOR.Value () = rpspmc_to_volts (regA); // Z-slope component
 
+        rp_spmc_gvp_module_read_config_data (SPMC_READBACK_BIAS_REG, &regA, &regB); // Bias, Bias-GVP Comp
+        SPMC_BIAS_REG_MONITOR.Value () = rpspmc_to_volts (regA);
+        SPMC_BIAS_GVP_MONITOR.Value () = rpspmc_to_volts (regB);
         
         SPMC_X0_MONITOR.Value () = rpspmc_to_volts (x0_buf); // ** mirror
         SPMC_Y0_MONITOR.Value () = rpspmc_to_volts (y0_buf); // ** mirror

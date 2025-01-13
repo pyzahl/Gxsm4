@@ -373,6 +373,7 @@ CDoubleParameter  SPMC_Z_SERVO_IN_OFFSETCOMP("SPMC_Z_SERVO_IN_OFFSETCOMP", CBase
 #define SPMC_GVP_CONTROL_EXECUTE   1   
 #define SPMC_GVP_CONTROL_PAUSE     2
 #define SPMC_GVP_CONTROL_RESUME    3
+#define SPMC_GVP_CONTROL_RESET_UAB 4
 
 CIntParameter    SPMC_GVP_STREAM_MUX("SPMC_GVP_STREAM_MUX",   CBaseParameter::RW, 0, 0, -2147483648,2147483647); //
 CIntParameter    SPMC_GVP_STREAM_MUXH("SPMC_GVP_STREAM_MUXH", CBaseParameter::RW, 0, 0, -2147483648,2147483647); //
@@ -429,6 +430,8 @@ CDoubleParameter  SPMC_SC_LCK_F0BQ_IIR("SPMC_SC_LCK_F0BQ_IIR", CBaseParameter::R
 
 // *** RP SPMC::GPIO MONITORS ***
 CDoubleParameter  SPMC_BIAS_MONITOR("SPMC_BIAS_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
+CDoubleParameter  SPMC_BIAS_REG_MONITOR("SPMC_BIAS_REG_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
+CDoubleParameter  SPMC_BIAS_GVP_MONITOR("SPMC_BIAS_GVP_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 CDoubleParameter  SPMC_SIGNAL_MONITOR("SPMC_SIGNAL_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 CDoubleParameter  SPMC_X_MONITOR("SPMC_X_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 CDoubleParameter  SPMC_Y_MONITOR("SPMC_Y_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
@@ -1656,6 +1659,9 @@ void OnNewParams_RPSPMC(void){
                         rp_spmc_gvp_config (false, false);
                         fprintf(stderr, "*** GVP Control Mode RESUME EXECUTE\n"); info << "unset PAUSE"; // UNSET PAUSE
                         break;
+                case SPMC_GVP_CONTROL_RESET_UAB:
+                        reset_gvp_positions_uab();
+                        break;
                 default: info << "INVALID MODE"; break;
                 }
 
@@ -1680,30 +1686,22 @@ void OnNewParams_RPSPMC(void){
                 SPMC_SC_LCK_TARGET.Update ();
                 SPMC_SC_LCK_VOLUME.Update ();
                 rp_spmc_set_modulation (SPMC_SC_LCK_VOLUME.Value (), SPMC_SC_LCK_TARGET.Value ());
+
+                if ((int)SPMC_SC_LCK_TARGET.Value () == 7)
+                        rp_spmc_gvp_module_read_config_data_timing_test ();
         }
 
         // LockIn Signal Out BiQuad Filter
-        if (SPMC_SC_LCK_F0BQ_TAU.IsNewValue ()){
-                SPMC_SC_LCK_F0BQ_TAU.Update ();
-                SPMC_SC_LCK_F0BQ_Q.Update ();
-                rp_spmc_set_biqad_Lck_F0 (1000./SPMC_SC_LCK_F0BQ_TAU.Value (), SPMC_SC_LCK_F0BQ_Q.Value (), lck_f0_frq, SPMC_BIQUAD_F0_CONTROL_REG);
-        }
-        if (SPMC_SC_LCK_F0BQ_Q.IsNewValue () || SPMC_SC_LCK_F0BQ_TAU.IsNewValue ()){
+        if (SPMC_SC_LCK_F0BQ_Q.IsNewValue () || SPMC_SC_LCK_F0BQ_TAU.IsNewValue () || SPMC_SC_LCK_F0BQ_IIR.IsNewValue ()){
                 SPMC_SC_LCK_F0BQ_Q.Update ();
                 SPMC_SC_LCK_F0BQ_TAU.Update ();
-                if (SPMC_SC_LCK_F0BQ_Q.Value () > 0.1 && SPMC_SC_LCK_F0BQ_TAU.Value () > 0.0)
+                SPMC_SC_LCK_F0BQ_IIR.Update ();
+                if (SPMC_SC_LCK_F0BQ_Q.Value () > 0.0 && SPMC_SC_LCK_F0BQ_TAU.Value () > 0.0) // BiQuad mode ?
                         rp_spmc_set_biqad_Lck_F0 (1000./SPMC_SC_LCK_F0BQ_TAU.Value (), SPMC_SC_LCK_F0BQ_Q.Value (), lck_f0_frq, SPMC_BIQUAD_F0_CONTROL_REG);
                 else
-                        if (SPMC_SC_LCK_F0BQ_TAU.Value () <= 0. && SPMC_SC_LCK_F0BQ_IIR.Value () <= 0.)
-                                rp_spmc_set_biqad_Lck_F0_pass (SPMC_BIQUAD_F0_CONTROL_REG);
-        }
-
-        if (SPMC_SC_LCK_F0BQ_IIR.IsNewValue ()){
-                SPMC_SC_LCK_F0BQ_IIR.Update ();
-                if (SPMC_SC_LCK_F0BQ_IIR.Value () > 0.0)
-                        rp_spmc_set_biqad_Lck_F0_IIR (1000./SPMC_SC_LCK_F0BQ_IIR.Value (), lck_f0_frq, SPMC_BIQUAD_F0_CONTROL_REG);
-                else
-                        if (SPMC_SC_LCK_F0BQ_TAU.Value () <= 0. && SPMC_SC_LCK_F0BQ_IIR.Value () <= 0.)
+                        if (SPMC_SC_LCK_F0BQ_IIR.Value () > 0.0) // IIR mode ?
+                                rp_spmc_set_biqad_Lck_F0_IIR (1000./SPMC_SC_LCK_F0BQ_IIR.Value (), lck_f0_frq, SPMC_BIQUAD_F0_CONTROL_REG);
+                        else // pass mode
                                 rp_spmc_set_biqad_Lck_F0_pass (SPMC_BIQUAD_F0_CONTROL_REG);
         }
         

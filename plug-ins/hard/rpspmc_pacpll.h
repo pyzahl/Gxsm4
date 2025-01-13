@@ -381,7 +381,9 @@ public:
         void restore_graphs_values ();
 
         void Init_SPMC_on_connect ();
-        
+
+        void GVP_zero_all_smooth ();
+
         static int config_options_callback (GtkWidget *widget, RPSPMC_Control *self);
         
 	//static void ChangedWaveOut(Param_Control* pcs, gpointer data);

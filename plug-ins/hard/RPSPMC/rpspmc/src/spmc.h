@@ -74,7 +74,7 @@ extern "C" {
         void rp_spmc_set_bias (double bias);
         void rp_spmc_set_xyzu (double ux, double uy, double uz, double bias);  // WARNING -- instant setting in config mode (test only)
 
-#define MODULE_ADDR_SETTLE_TIME 5000
+#define MODULE_ADDR_SETTLE_TIME 200
         
 #define MODULE_SETUP 0
 #define MODULE_START_VECTOR    (0)  // ALWAYS start write @POS=0, keep addr=0 for loading data block
@@ -95,6 +95,7 @@ extern "C" {
         void rp_spmc_set_zservo_controller (double setpoint, double cp, double ci, double upper, double lower);
         void rp_spmc_set_zservo_gxsm_speciality_setting (int mode, double z_setpoint, double in_offset_comp);
 
+        void reset_gvp_positions_uab();
         void rp_spmc_gvp_config (bool reset, bool pause, int reset_options); // taking out of reset starts GVP!
         //void rp_spmc_set_gvp_vector (CFloatSignal &vector);
         void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, unsigned int srcs, int nrp, int nxt,

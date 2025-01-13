@@ -256,20 +256,27 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
                 //spm_dma_instance->print_check_dma_all();
                 fprintf(stderr, "GVP data[0]=%08x, data[WPos%d] = %08x\n", dma_mem[0], position, dma_mem[position]);
 #endif
-                // WAIT FOR LAST DATA HACK -- NO GOOD FOR CYCLIC
+                // WAIT FOR LAST DATA HACK -- need to fix via DMA WRITE ADDRESS (spm_dma_instance->get_dmaps_DAn_offset(0)) ?!?!
                 if (data_valid && gvp_finished ()){
+
                         position = stream_lastwrite_address();
                         fprintf(stderr, "GVP Finished pos=0x%08x\n", position);
                         position_info << "END,FinishedNext:{true}" << std::hex <<  ",Position:{0x" << position << std::dec << "},Count:{" << count << "},";
 
                         // wait for DMA to complete last bytes if any
-                        // HACK -- need to fix via DMA WRITE ADDRESS (spm_dma_instance->get_dmaps_DAn_offset(0))
                         int k=20;
-                        while (k && dma_mem[position] == 0xdddddddd){
-                                usleep(10000); --k;
-                        }
-                        position = stream_lastwrite_address();
-                        fprintf(stderr, "GVP FINISHED ** CHECKING END OF DATA @ position = %08x\n", position);
+                        int lag=0;
+                        do{
+                                lag=0;
+                                position = stream_lastwrite_address();
+                                position += BLKSIZE;
+                                while (position > (BLKSIZE>>1) && dma_mem[position%BLKSIZE] == 0xdddddddd && dma_mem[(position-1)%BLKSIZE] == 0xdddddddd)
+                                        position--, lag++;
+                                position = position % BLKSIZE;
+                                fprintf(stderr, "GVP FINISHED ** WAITING FOR DMA TO COMPLETE @ position = %08x, lag = %d\n", position, lag);
+                                if (lag > 0) usleep(10000);
+                        } while (lag > 0 && k-- > 0);
+
                         while (position > 1 && dma_mem[position] == 0xdddddddd){
                                 position--;
                                 fprintf(stderr, "FIN ** position-- %08x\n", position);

@@ -229,7 +229,10 @@ public:
         void GVP_execute_vector_program(); // non blocking
         void GVP_vp_init ();
         void GVP_start_data_read(); // non blocking
-        
+
+        void GVP_reset_UAB ();
+
+	
         PROBE_HEADER_POSITIONVECTOR GVP_vp_header_current;
 
 	int GVP_read_program_vector(int i, PROBE_VECTOR_GENERIC *v){

@@ -62,10 +62,6 @@ extern "C++" {
         extern GxsmPlugin rpspmc_hwi_pi;
 }
 
-extern const gchar *SPMC_GVP_VECTOR_COMPONENTS[];
-extern const gchar *SPMC_SET_OFFSET_COMPONENTS[];
-extern const gchar *SPMC_SET_SCANPOS_COMPONENTS[];
-
 MOD_INPUT mod_input_list[] = {
         //## [ MODULE_SIGNAL_INPUT_ID, name, actual hooked signal address ]
         { DSP_SIGNAL_Z_SERVO_INPUT_ID, "Z_SERVO", 0 },
@@ -235,6 +231,11 @@ int rpspmc_hwi_dev::RotateStepwise(int exec) {
 }
 
 gboolean rpspmc_hwi_dev::SetOffset(double x, double y){ // in "DIG"
+        const gchar *SPMC_SET_OFFSET_COMPONENTS[] = {
+                "SPMC_SET_OFFSET_X", 
+                "SPMC_SET_OFFSET_Y", 
+                "SPMC_SET_OFFSET_XY_SLEW",
+                NULL };
         double jdata[3];
         jdata[0] = main_get_gapp()->xsm->Inst->XA2Volt (main_get_gapp()->xsm->Inst->Dig2XA (x));
         jdata[1] = main_get_gapp()->xsm->Inst->YA2Volt (main_get_gapp()->xsm->Inst->Dig2YA (y));
@@ -250,6 +251,13 @@ gboolean rpspmc_hwi_dev::SetOffset(double x, double y){ // in "DIG"
 
 void rpspmc_hwi_dev::delayed_tip_move_update (){
         if (!ScanningFlg){
+                const gchar *SPMC_SET_SCANPOS_COMPONENTS[] = {
+                        "SPMC_SET_SCANPOS_OPTS", 
+                        "SPMC_SET_SCANPOS_X", 
+                        "SPMC_SET_SCANPOS_Y", 
+                        "SPMC_SET_SCANPOS_SLEW", 
+                        NULL };
+
                 double jdata[3];
                 int jdata_i[1];
 
@@ -1282,8 +1290,8 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2,
         }
         if (*property == 'B'){ // Monitors: Bias, ...
                 val1 = spmc_parameters.bias_monitor;
-                val2 = 0.0;
-                val3 = 0.0;
+                val2 = spmc_parameters.bias_reg_monitor;
+                val3 = spmc_parameters.bias_gvp_monitor;
 		return TRUE;
         }
 //	printf ("ZXY: %g %g %g\n", val1, val2, val3);
@@ -1470,6 +1478,7 @@ int rpspmc_hwi_dev::read_actual_module_configuration (){
 #define SPMC_GVP_CONTROL_EXECUTE   1   
 #define SPMC_GVP_CONTROL_PAUSE     2
 #define SPMC_GVP_CONTROL_RESUME    3
+#define SPMC_GVP_CONTROL_RESET_UAB 4
 
 
 void rpspmc_hwi_dev::GVP_execute_vector_program(){
@@ -1483,6 +1492,10 @@ void rpspmc_hwi_dev::GVP_abort_vector_program (){
         abort_GVP_flag = true;
 }
 
+void rpspmc_hwi_dev::GVP_reset_UAB (){
+        g_message ("rpspmc_hwi_dev::GVP_abort_vector_program ()");
+        rpspmc_pacpll->write_parameter ("SPMC_GVP_CONTROL", SPMC_GVP_CONTROL_RESET_UAB);
+}
 
 void rpspmc_hwi_dev::GVP_vp_init (){
         // reset GVP stream buffer read count
@@ -1534,6 +1547,22 @@ int rpspmc_hwi_dev::GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v){
 #define D_GVP_SLW       6
 #define D_GVP_SIZE (D_GVP_SLW+1)
         
+        const gchar *SPMC_GVP_VECTOR_COMPONENTS[] = {
+                "SPMC_GVP_VECTOR_PC", 
+                "SPMC_GVP_VECTOR__N", 
+                "SPMC_GVP_VECTOR__O", 
+                "SPMC_GVP_VECTORSRC", 
+                "SPMC_GVP_VECTORNRP", 
+                "SPMC_GVP_VECTORNXT", 
+                "SPMC_GVP_VECTOR_DX", 
+                "SPMC_GVP_VECTOR_DY", 
+                "SPMC_GVP_VECTOR_DZ", 
+                "SPMC_GVP_VECTOR_DU", 
+                "SPMC_GVP_VECTOR_AA", 
+                "SPMC_GVP_VECTOR_BB", 
+                "SPMC_GVP_VECTORSLW", 
+                NULL };
+
         int gvp_vector_i[I_GVP_SIZE];
         double gvp_vector_d[D_GVP_SIZE];
 

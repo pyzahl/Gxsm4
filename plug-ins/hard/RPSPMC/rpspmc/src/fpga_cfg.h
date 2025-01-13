@@ -284,6 +284,9 @@
 #define SPMC_READBACK_BIAS_REG         100002
 #define SPMC_READBACK_XX_REG           100999
 
+#define SPMC_READBACK_TEST_RESET_REG           102000
+#define SPMC_READBACK_TEST_VALUE_REG           101999
+
 /*
     input wire [32-1:0] Z_GVP_mon,   ==> A
     input wire [32-1:0] Z_slope_mon, ==> B

@@ -185,6 +185,8 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         
         // RP SPMC Monitors
         { "SPMC_BIAS_MONITOR", &spmc_parameters.bias_monitor, true },
+        { "SPMC_BIAS_REG_MONITOR", &spmc_parameters.bias_reg_monitor, true },
+        { "SPMC_BIAS_GVP_MONITOR", &spmc_parameters.bias_gvp_monitor, true },
         { "SPMC_SIGNAL_MONITOR", &spmc_parameters.signal_monitor, true }, // Z servo input signal (current, ...)
 
         { "SPMC_X_MONITOR", &spmc_parameters.x_monitor, true }, // FINAL XYZ POS at DACs
@@ -212,35 +214,6 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         
         { NULL, NULL, true }
 };
-
-const gchar *SPMC_GVP_VECTOR_COMPONENTS[] = {
-        "SPMC_GVP_VECTOR_PC", 
-        "SPMC_GVP_VECTOR__N", 
-        "SPMC_GVP_VECTOR__O", 
-        "SPMC_GVP_VECTORSRC", 
-        "SPMC_GVP_VECTORNRP", 
-        "SPMC_GVP_VECTORNXT", 
-        "SPMC_GVP_VECTOR_DX", 
-        "SPMC_GVP_VECTOR_DY", 
-        "SPMC_GVP_VECTOR_DZ", 
-        "SPMC_GVP_VECTOR_DU", 
-        "SPMC_GVP_VECTOR_AA", 
-        "SPMC_GVP_VECTOR_BB", 
-        "SPMC_GVP_VECTORSLW", 
-        NULL };
-
-const gchar *SPMC_SET_OFFSET_COMPONENTS[] = {
-        "SPMC_SET_OFFSET_X", 
-        "SPMC_SET_OFFSET_Y", 
-        "SPMC_SET_OFFSET_XY_SLEW",
-        NULL };
-
-const gchar *SPMC_SET_SCANPOS_COMPONENTS[] = {
-        "SPMC_SET_SCANPOS_OPTS", 
-        "SPMC_SET_SCANPOS_X", 
-        "SPMC_SET_SCANPOS_Y", 
-        "SPMC_SET_SCANPOS_SLEW", 
-        NULL };
 
 JSON_signal PACPLL_JSON_signals[] = {
         { "SIGNAL_CH1", 1024, pacpll_signals.signal_ch1 },
