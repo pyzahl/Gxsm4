@@ -166,8 +166,10 @@ gxsm4_app_startup (GApplication *app)
 
         /* add additional stylings */
         GtkCssProvider* provider = gtk_css_provider_new();
-        gtk_css_provider_load_from_resource (GTK_CSS_PROVIDER(provider), "/" GXSM_RES_BASE_PATH "/gxsm4-styles.css");
-
+        //gtk_css_provider_load_from_resource (GTK_CSS_PROVIDER(provider), "/" GXSM_RES_BASE_PATH "/gxsm4-styles.css");
+        gtk_css_provider_load_from_resource (GTK_CSS_PROVIDER(provider), "/" GXSM_RES_BASE_PATH "/css/styles.css");
+        gtk_style_context_add_provider_for_display(gdk_display_get_default(), GTK_STYLE_PROVIDER(provider), GTK_STYLE_PROVIDER_PRIORITY_USER);
+        
         // https://developer.gnome.org/gtk3/stable/chap-css-overview.html
         /*
         gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(provider),
@@ -177,7 +179,8 @@ gxsm4_app_startup (GApplication *app)
                                         "\n",
                                         -1, NULL);
         */
-        g_object_unref(provider);
+        //g_object_unref(provider);
+        
         // GXSM core application -- NOT the G APPLCIATION/WINDOW MANAGEMENT
         XSM_DEBUG(DBG_L2, "gxsm4 core startup" );
        

@@ -2003,7 +2003,19 @@ void RPSPMC_Control::create_folder (){
 
         bp->set_input_width_chars (7);
         bp->set_label_width_chars (7);
-        bp->grid_add_label ("VP-dU", "vec-du (Bias, DAC CH4)");
+
+        //GtkCssProvider  *provider;
+        //gtk_css_provider_load_from_data (provider,
+        //                                 "#green { background-image: none; background-color: #00aa00; color: white; font-weight: bold; border-radius: 6px; margin-left: 4px; } "
+        //                                 "#red { background-image: none; background-color: #cc0000; color: white; font-weight: bold; border-radius: 6px; margin-left: 4px;}",
+        //                                 -1);
+        bp->grid_add_button ("VP-dU", "vec-du (Bias, DAC CH4)", 1, G_CALLBACK (callback_GVP_preview_me), this);
+        gtk_widget_set_name (bp->button, "normal");
+        g_object_set_data (G_OBJECT(bp->button), "AXIS", GINT_TO_POINTER (1));
+        //gtk_style_context_add_provider (gtk_widget_get_style_context(bp->button), GTK_STYLE_PROVIDER(provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+
+        
+        //bp->grid_add_label ("VP-dU", "vec-du (Bias, DAC CH4)");
         bp->grid_add_label ("VP-dX", "vec-dx (X-Scan, *Mrot + X0, DAC CH1)");
         bp->grid_add_label ("VP-dY", "vec-dy (Y-Scan, *Mrot + Y0, DAC CH2)");
         bp->grid_add_label ("VP-dZ", "vec-dz (Z-Probe + Z-Servo + Z0, DAC CH3)");
@@ -2994,6 +3006,20 @@ int RPSPMC_Control::callback_GVP_restore_vp (GtkWidget *widget, RPSPMC_Control *
 	self->GVP_restore_vp ((const gchar*)g_object_get_data(G_OBJECT(widget), "key"));
         return 0;
 }
+
+
+int RPSPMC_Control::callback_GVP_preview_me (GtkWidget *widget, RPSPMC_Control *self){
+        int i= GPOINTER_TO_INT (g_object_get_data(G_OBJECT(widget), "AXIS"))-1;
+        if (i>=0 && i < 6)
+                self->GVP_preview_on[i] = self->GVP_preview_on[i] ? 0:1;
+
+        if (self->GVP_preview_on[i])
+                gtk_widget_set_name (widget, "red");
+        else
+                gtk_widget_set_name (widget, "normal");
+        return 0;
+}
+
 
 int RPSPMC_Control::callback_change_GVP_auto_flags (GtkWidget *widget, RPSPMC_Control *self){
         PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);

@@ -13,9 +13,29 @@
 
 #normal { }
 
-#red { background-image: none; background-color: #e81b1b; color: white; font-weight: bold; border-radius: 6px; margin-left: 4px;}
+#red { background-image: none; background-color: #e81b1b; color: white; font-weight: bold; border-radius: 6px; margin-left: 4px; }
 #yellow { background-image: none; background-color: #e8e01b; color: white; font-weight: bold; border-radius: 6px; margin-left: 4px; }
 #green { background-image: none; background-color: #69e81b; color: white; font-weight: bold; border-radius: 6px; margin-left: 4px; }
+#cyan { background-image: none; background-color: #1be5e8; color: white; font-weight: bold; border-radius: 6px; margin-left: 4px; }
 #blue { background-image: none; background-color: #1b82e8; color: white; font-weight: bold; border-radius: 6px; margin-left: 4px; }
+#purple { background-image: none; background-color: #c61be8; color: white; font-weight: bold; border-radius: 6px; margin-left: 4px; }
 #bgrey { background-image: none; background-color: #bbd0e6; color: white; font-weight: bold; border-radius: 6px; margin-left: 4px; }
 #grey { background-image: none; background-color: #9b9b9b; color: white; font-weight: bold; border-radius: 6px; margin-left: 4px; }
+#view-headerbar-tip-follow:checked{
+    color: #dd0000;
+}
+
+#view-start-stop-scan:checked{
+    color: #dd0000;
+}
+
+
+#probe-indicator-button:checked{
+    color: #dd0000;
+}
+
+#normal { }
+
+#green { background-image: none; background-color: #00aa00; color: white; font-weight: bold; border-radius: 6px; margin-left: 4px; }
+
+#red { background-image: none; background-color: #cc0000; color: white; font-weight: bold; border-radius: 6px; margin-left: 4px;}

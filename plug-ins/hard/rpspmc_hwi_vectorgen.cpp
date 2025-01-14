@@ -775,9 +775,6 @@ void RPSPMC_Control::gvp_preview_draw_function (GtkDrawingArea *area, cairo_t *c
                         pc = self->next_section(pc);
                 }
 
-                if (N < 300)
-                        n=300; // nicer aspect
-                
                 cairo_item_path *bias_wave = new cairo_item_path (N);
                 bias_wave->set_line_width (2.0);
                 bias_wave->set_stroke_rgba (CAIRO_COLOR_BLUE);
@@ -795,22 +792,34 @@ void RPSPMC_Control::gvp_preview_draw_function (GtkDrawingArea *area, cairo_t *c
                 pc=0;
                 cairo_item_text *tms = new cairo_item_text ();
                 cairo_item_path *sec = new cairo_item_path (2);
+                #define GVPPREVIEW_MAX_ANNOTATIONS 20
+                double anno_tyy[GVPPREVIEW_MAX_ANNOTATIONS][1+6];
+                int i_anno=0;
+                double tp=0.;
+                PROBE_VECTOR_GENERIC vp = { 0,0.,0,0, 0,0,0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
                 for (int i=0; i<N; i++){
                         PROBE_VECTOR_GENERIC v = { 0,0.,0,0, 0,0,0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
                         t = self->simulate_vector_program(i, &v, &pc, &il);
                         //g_print ("%03d %02d l{%03d} %g:  %6.3g %6.3g %6.3g %6.3g\n", i, pc, self->program_vector_list[pc].iloop, t, v.f_du,v.f_dx,v.f_dy,v.f_dz);
                         bias_wave->set_xy_fast (i, n*t/Tfin, v.f_du);
                         Z_wave->set_xy_fast (i, n*t/Tfin, v.f_dz);
+                        if (i == N-1){ tp=t; memcpy (&vp, &v, sizeof(vp)); } // use last!
                         if (pcp != pc || i == N-1){
                                 sec->set_line_width (0.5);
                                 sec->set_stroke_rgba (CAIRO_COLOR_BLACK);
+
+                                if (i_anno < GVPPREVIEW_MAX_ANNOTATIONS){
+                                        anno_tyy [i_anno][0]=n*tp/Tfin;
+                                        anno_tyy [i_anno][1]=vp.f_du;
+                                        anno_tyy [i_anno++][2]=vp.f_dz;
+                                }
                                 sec->set_xy_fast (0,n*t/Tfin,-m/2);
                                 sec->set_xy_fast (1,n*t/Tfin,m/2);
                                 sec->draw (cr);
                                 tms->set_font_face_size ("Ununtu", 8.);
                                 tms->set_anchor (CAIRO_ANCHOR_W);
                                 tms->set_stroke_rgba (CAIRO_COLOR_BLACK);
-                                const gchar* lab=g_strdup_printf("%g ms",1e3*t);
+                                const gchar* lab=g_strdup_printf("%g ms",1e3*tp);
                                 tms->set_text (n*t/Tfin+2, 60, lab);
                                 tms->draw (cr);
                                 g_free (lab);
@@ -826,11 +835,13 @@ void RPSPMC_Control::gvp_preview_draw_function (GtkDrawingArea *area, cairo_t *c
                                 }
                                 pcp = pc;
                         }
+                        tp=t; memcpy (&vp, &v, sizeof(vp));
                 }
                 delete sec;
-                double bias_amax = bias_wave->auto_range_y (-(m-mar)/2.);
+                double skl = -(m-mar)/2.;
+                double bias_amax = bias_wave->auto_range_y (skl);
                 bias_wave->draw (cr);
-                double Z_amax = Z_wave->auto_range_y (-(m-mar)/2.);
+                double Z_amax = Z_wave->auto_range_y (skl);
                 Z_wave->draw (cr);
 
                 tms->set_anchor (CAIRO_ANCHOR_W);
@@ -847,6 +858,20 @@ void RPSPMC_Control::gvp_preview_draw_function (GtkDrawingArea *area, cairo_t *c
                 tms->draw (cr);
                 g_free (lab);
 
+                for (int i=0; i<i_anno; ++i){
+                        tms->set_anchor (CAIRO_ANCHOR_W);
+                        tms->set_stroke_rgba (CAIRO_COLOR_BLUE);
+                        const gchar* lab=g_strdup_printf("%.3g V",anno_tyy [i][1]);
+                        tms->set_text (anno_tyy [i][0]+20, anno_tyy [i][1]/bias_amax*skl, lab);
+                        tms->draw (cr);
+                        g_free (lab);
+
+                        tms->set_stroke_rgba (CAIRO_COLOR_RED);
+                        lab=g_strdup_printf("%.3g V",anno_tyy [i][2]);
+                        tms->set_text (anno_tyy [i][0]+20, anno_tyy [i][2]/Z_amax*skl, lab);
+                        tms->draw (cr);
+                        g_free (lab);
+                }
                 
                 delete tms;
                 delete bias_wave;
