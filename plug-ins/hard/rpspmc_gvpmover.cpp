@@ -1158,6 +1158,22 @@ void GVPMoverControl::create_folder (){
 
                         mov_bp->set_configure_hide_list_b_mode_on ();
                         mov_bp->set_input_width_chars (3);
+
+#if 0
+                        mov_bp->set_input_width_chars (7);
+                        mov_bp->set_label_width_chars (7);
+                        for(int axis=0; axis<3; ++axis){
+                                for (int k=0; k<6; ++k){
+                                        gchar *wchlab= g_strdup_printf("Wave %d: X", k);
+                                        gchar *wchid = g_strdup_printf("wave-out%d-ch-x", k);
+                                        //mov_bp->set-xy(k+1, axis+1)
+                                        mov_bp->grid_add_ec (NULL, Volt, &MOV_wave_GVP_components[axis][k], -10.0,   10.0, "6.4g", 1., 10., wchid); 
+                                        g_free (wchid);
+                                        g_free (wchlab);
+                                }
+                        }
+
+#else
                         for (int k=0; k<6; ++k){
                                 gchar *wchlab= g_strdup_printf("Wave %d: X", k);
                                 gchar *wchid = g_strdup_printf("wave-out%d-ch-x", k);
@@ -1173,7 +1189,7 @@ void GVPMoverControl::create_folder (){
                                 gtk_widget_set_tooltip_text (mov_bp->input, "map wave N onto DAC channel 0-6 for Z direction move action.\n MK2: add 10 for adding mode. 10=CH0, 11=CH1,.. with adding wave to current output signal");
                                 g_free (wchid);
                                 g_free (wchlab);
-
+#endif
                                 GtkWidget *wave_preview_area = gtk_drawing_area_new ();
 				gtk_widget_set_size_request (wave_preview_area, 128, 34); // ?!?!?
                                 gtk_drawing_area_set_content_width (GTK_DRAWING_AREA (wave_preview_area), 128);
