@@ -383,7 +383,7 @@ public:
         void Init_SPMC_on_connect ();
 
         void GVP_zero_all_smooth ();
-        static int RPSPMC_AllZero (GtkWidget *widget, RPSPMC_Control *self);
+        static int GVP_AllZero (GtkWidget *widget, RPSPMC_Control *self);
         static int config_options_callback (GtkWidget *widget, RPSPMC_Control *self);
         
 	//static void ChangedWaveOut(Param_Control* pcs, gpointer data);
@@ -563,6 +563,43 @@ public:
                          }
                  }
                  return pc;
+        };
+
+        void re_init_vector_program(){
+                for (int i=0; i<MAX_PROGRAM_VECTORS; ++i)
+                        program_vector_list[i].iloop = program_vector.repetitions; // init
+        };
+
+        // calculate vector program result at position i, starts at vector v state, result in v, returns time
+        double simulate_vector_program(int i, PROBE_VECTOR_GENERIC *v, int *pc_f){
+                int pc=0;
+                int x=0;
+                double t=0.;
+                re_init_vector_program();
+
+                for (; program_vector_list[pc].n;){
+                        int n = program_vector_list[pc].n;
+                        double l=1.;
+                        if (i > x+n){
+                                x += n;
+                        } else {
+                                i -= x;
+                                l = (double)i/n;
+                                i = 0;
+                        }
+                        t += l*n/program_vector_list[pc].slew;  // program_vector.slew = n/ts;
+                        v->f_du += l*program_vector_list[pc].f_du;
+                        v->f_dx += l*program_vector_list[pc].f_dx;
+                        v->f_dy += l*program_vector_list[pc].f_dy;
+                        v->f_dz += l*program_vector_list[pc].f_dz;
+                        v->f_da += l*program_vector_list[pc].f_da;
+                        v->f_db += l*program_vector_list[pc].f_db;
+                        if (i==0) break;
+                        pc = next_section(pc);
+                }
+                *pc_f = pc;
+                re_init_vector_program();
+                return t;
         };
         
 	void add_probe_hdr(double pv[NUM_PV_HEADER_SIGNALS]);
@@ -818,6 +855,7 @@ public:
 
 public:
         GtkWidget *stream_connect_button;
+        GtkWidget *GVP_stop_all_zero_button;
         
 protected:
 	void read_spm_vector_program ();

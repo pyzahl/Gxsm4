@@ -190,14 +190,14 @@ SOURCE_SIGNAL_DEF swappable_signals[] = {                                       
         { 0x00000002, "Phase",       " ", "deg", UTF8_DEGREE, (180.0/(M_PI*((1L<<RP_FPGA_QATAN)-1))), 2 },
         { 0x00000003, "Amplitude",   " ", "mV", "mV", (1.0/((1L<<RP_FPGA_QSQRT)-1)),                  3 },
         { 0x00000004, "dFreq-Control", " ", "mV", "mV", (1000*SPMC_AD5791_to_volts),                  4 },
-        { 0x00000005, "05----",       " ", "V", "V", (1.0),                                            5 },
+        { 0x00000005, "05-IN1-",       " ", "V", "V", (1.0),                                            5 },
         { 0x00000006, "06-LCKSignalDec", " ", "V", "V", (1.0),                                         -1 },
         { 0x00000007, "07-LCKi",        " ", "V", "V", (1.0),                                         -1 },
         { 0x00000008, "08-SDRef",       " ", "V", "V", (1.0),                                           -1 },
         { 0x00000009, "09-ZSmon",       " ", "V", "V", (1.0),                                           -1 },
         { 0x00000010, "10-LockInY",     " ", "V", "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),                          -1 },
         { 0x00000011, "11-LockInX",     " ", "V", "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),                          -1 },
-        { 0x00000012, "12-LockInMagIIR",   " ", "V", "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),                          -1 },
+        { 0x00000012, "12-LockInMagBQIIR",   " ", "V", "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),                          -1 },
         { 0x00000013, "13-SineRef",     " ", "V",   "V", (SPMC_RPIN12_to_volts),                        -1 },
         { 0x00000014, "14-LockInMag",    " ", "V",   "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),                        -1 },
         { 0x00000015, "15-ZwSlope-OUT", " ", "V",   "V", (SPMC_AD5791_to_volts),                        -1 },
@@ -2491,14 +2491,8 @@ void RPSPMC_Control::create_folder (){
                                     G_CALLBACK (rpspmc_hwi_dev::spmc_stream_connect_cb), rpspmc_hwi);
         stream_connect_button=bp->button;
 
-        GtkWidget *button;
-        bp->grid_add_widget (button=gtk_button_new_from_icon_name ("process-stopall-symbolic"));
-        //bp->grid_add_widget (button=gtk_button_new_from_icon_name ("gxsm4-rp-icon"));
-	g_object_set_data( G_OBJECT (stream_connect_button), "ICON-BUTTON", button);
-        g_signal_connect ( G_OBJECT (button), "clicked",
-                           G_CALLBACK (RPSPMC_Control::RPSPMC_AllZero),
-                           this);
-                        
+        bp->grid_add_widget (GVP_stop_all_zero_button=gtk_button_new_from_icon_name ("process-stopall-symbolic"));
+        g_signal_connect (G_OBJECT (bp->button), "clicked", G_CALLBACK (RPSPMC_Control::GVP_AllZero), this);
         
         bp->new_line ();
         bp->grid_add_check_button ( N_("Debug"), "Enable debugging LV1.", 1,
@@ -2603,9 +2597,12 @@ void RPSPMC_Control::GVP_zero_all_smooth (){
         rpspmc_hwi->GVP_execute_vector_program(); // non blocking
 }
 
-int RPSPMC_Control::RPSPMC_AllZero (GtkWidget *widget, RPSPMC_Control *self){
-        self->GVP_zero_all_smooth ();
-        rpspmc_hwi->GVP_reset_UAB ();
+int RPSPMC_Control::GVP_AllZero (GtkWidget *widget, RPSPMC_Control *self){
+        PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);
+        g_message ("STOP: gvp STOP and all zero");
+        //rpspmc_hwi->GVP_abort_vector_program ();
+        //self->GVP_zero_all_smooth ();
+        //rpspmc_hwi->GVP_reset_UAB ();
 }
 
 int RPSPMC_Control::DSP_cret_callback (GtkWidget *widget, RPSPMC_Control *self){
@@ -4076,15 +4073,7 @@ RPspmc_pacpll::~RPspmc_pacpll (){
 
 void RPspmc_pacpll::connect_cb (GtkWidget *widget, RPspmc_pacpll *self){
         self->json_talk_connect_cb (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)),
-                                    GPOINTER_TO_INT (g_object_get_data( G_OBJECT (widget), "RESTART"))); // connect (checked) or dissconnect
-
-        if (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)))
-                gtk_button_set_child (GTK_BUTTON (g_object_get_data( G_OBJECT (widget), "ICON-BUTTON")),
-                                      gtk_image_new_from_icon_name ("gxsm4-rp-icon"));
-        else
-                gtk_button_set_child (GTK_BUTTON (g_object_get_data( G_OBJECT (widget), "ICON-BUTTON")),
-                                      gtk_image_new_from_icon_name ("process-stopall-symbolic"));
-           
+                                    GPOINTER_TO_INT (g_object_get_data( G_OBJECT (widget), "RESTART"))); // connect (checked) or dissconnect    
 }
 
 
@@ -4953,6 +4942,8 @@ void RPspmc_pacpll::on_connect_actions(){
         status_append (" * RedPitaya SPM Control ready. Connecting SPMC Data Stream...\n");
 
         gtk_check_button_set_active (GTK_CHECK_BUTTON (RPSPMC_ControlClass->stream_connect_button), true);
+
+        gtk_button_set_child (GTK_BUTTON (RPSPMC_ControlClass->GVP_stop_all_zero_button), gtk_image_new_from_icon_name ("gxsm4-rp-icon"));
 }
 
 

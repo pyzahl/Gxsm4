@@ -108,6 +108,8 @@ typedef struct{
 #define MOV_AUTO_APP_MODE 0x0100
         
 	int MOV_output, MOV_waveform_id;
+        double MOV_wave_GVP_components[3][6]; // GVP Wave Gen Components
+
         int wave_out_channels_used;
 	int wave_out_channel_xyz[6][3];
 	int MOV_wave_len;
@@ -144,35 +146,35 @@ public:
 	static void ExecCmd(int cmd);
 	static void ChangedNotify(Param_Control* pcs, gpointer data);
 	static void ChangedWaveOut(Param_Control* pcs, gpointer data);
-	static int config_waveform (GtkWidget *widget, GVPMoverControl *dspc);
+	static int config_waveform (GtkWidget *widget, GVPMoverControl *self);
 	int configure_waveform (GtkWidget *widget);
         static void wave_preview_draw_function (GtkDrawingArea *area, cairo_t *cr,
                                                     int             width,
                                                     int             height,
-                                                    GVPMoverControl *dspc);
-	static int config_output (GtkWidget *widget, GVPMoverControl *dspc);
-	static int CmdAction(GtkWidget *widget, GVPMoverControl *dspc);
+                                                    GVPMoverControl *self);
+	static int config_output (GtkWidget *widget, GVPMoverControl *self);
+	static int CmdAction(GtkWidget *widget, GVPMoverControl *self);
 
 #if 0
-        static void direction_button_pressed_cb (GtkGesture *gesture, int n_press, double x, double y, GVPMoverControl *dspc){
+        static void direction_button_pressed_cb (GtkGesture *gesture, int n_press, double x, double y, GVPMoverControl *self){
                 g_message ("PRESSED,  CMD=%d", GPOINTER_TO_INT (g_object_get_data(g_object_get_data( G_OBJECT (gesture), "Button"), "GVP_cmd")));
-                dspc->CmdAction (g_object_get_data( G_OBJECT (gesture), "Button"), dspc);
+                self->CmdAction (g_object_get_data( G_OBJECT (gesture), "Button"), self);
         };
-        static void direction_button_stopped_cb (GtkGesture *gesture, GVPMoverControl *dspc){
+        static void direction_button_stopped_cb (GtkGesture *gesture, GVPMoverControl *self){
                 g_message ("STOPPED,  CMD=%d", GPOINTER_TO_INT (g_object_get_data(g_object_get_data( G_OBJECT (gesture), "Button"), "GVP_cmd")));
-                //dspc->CmdAction (g_object_get_data( G_OBJECT (gesture), "Button"), dspc);
+                //self->CmdAction (g_object_get_data( G_OBJECT (gesture), "Button"), self);
         };
-        static void direction_button_released_cb (GtkGesture *gesture, int n_press, double x, double y, GVPMoverControl *dspc){
+        static void direction_button_released_cb (GtkGesture *gesture, int n_press, double x, double y, GVPMoverControl *self){
                 g_message ("RELEASED, CMD=%d", GPOINTER_TO_INT (g_object_get_data(g_object_get_data( G_OBJECT (gesture), "Button"), "GVP_cmd")));
-                dspc->StopAction (g_object_get_data( G_OBJECT (gesture), "Button"), dspc);
+                self->StopAction (g_object_get_data( G_OBJECT (gesture), "Button"), self);
         };
-        static void direction_button_clicked_cb (GtkWidget *button, GVPMoverControl *dspc){
+        static void direction_button_clicked_cb (GtkWidget *button, GVPMoverControl *self){
                 g_message ("CLICKED, CMD=%d", GPOINTER_TO_INT (g_object_get_data(G_OBJECT (button), "GVP_cmd")));
-                dspc->StopAction (button, dspc);
+                self->StopAction (button, self);
         };
 #endif
-	static int StopAction(GtkWidget *widget, GVPMoverControl *dspc);
-        static int RampspeedUpdate(GtkWidget *widget, GVPMoverControl *dspc);
+	static int StopAction(GtkWidget *widget, GVPMoverControl *self);
+        static int RampspeedUpdate(GtkWidget *widget, GVPMoverControl *self);
         
 	static void configure_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
 

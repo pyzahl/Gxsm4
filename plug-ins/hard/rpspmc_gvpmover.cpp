@@ -34,12 +34,12 @@
  * All "% OptPlugInXXX" tags are optional
  * --------------------------------------------------------------------------------
 % BeginPlugInDocuSection
-% PlugInDocuCaption: RPSPMC PACPLL
+% PlugInDocuCaption: RPSPMC PACPLL GVP Mover
 % PlugInName: rpspmc_pacpll
 % PlugInAuthor: Percy Zahl
 % PlugInAuthorEmail: zahl@users.sf.net
-% PlugInMenuPath: windows-section RPSPMC PACPLL
-RP data streaming
+% PlugInMenuPath: windows-section Mover
+Mover/Slider analog signal/wave generation via GVP.
 
 % PlugInDescription
 
@@ -76,14 +76,9 @@ RP data streaming
 
 #include "../common/pyremote.h"
 
+#include "rpspmc_hwi_structs.h"
 #include "rpspmc_pacpll.h"
 #include "rpspmc_gvpmover.h"
-
-
-// Define HwI PlugIn reference name here, this is what is listed later within "Preferenced Dialog"
-// i.e. the string selected for "Hardware/Card"!
-#define THIS_HWI_PLUGIN_NAME "RPSPMC:SPM"
-#define THIS_HWI_PREFIX      "RPSPMC_HwI"
 
 
 extern int debug_level;
@@ -91,9 +86,11 @@ extern int force_gxsm_defaults;
 
 
 extern "C++" {
+        extern RPSPMC_Control *RPSPMC_ControlClass;
         extern RPspmc_pacpll *rpspmc_pacpll;
         extern GxsmPlugin rpspmc_pacpll_hwi_pi;
 	extern GVPMoverControl *rpspmc_gvpmover;
+        extern rpspmc_hwi_dev *rpspmc_hwi;
 }
 
 GVPMoverControl *this_mover_control=NULL;	 
@@ -311,7 +308,7 @@ int GVPMoverControl::create_waveform (double amp, double duration, int space){
                     mover_param.MOV_waveform_id,  wave_form_options[k].wave_form_label,
                     channels);
 
-	double GVP_frequency_ref = 1e4;
+	double GVP_frequency_ref = 100e3;
 	
         if (space >= 0)
                 space_len = channels * space;
@@ -349,9 +346,67 @@ int GVPMoverControl::create_waveform (double amp, double duration, int space){
         double phase = mover_param.inch_worm_phase/360.;
         //int   iphase = (int)(phase*kn);
 
+        double wo = mover_param.Wave_offset;
+        double t_space = mover_param.Wave_space*1e-3; // sec
+        double t_jump  = 0.1e-6; // sec
+        double t_wave  = duration*1e-3 - t_jump; // sec
+        int    n_reps  = 5;
+        
+        int vector_index=0;
+        int gvp_options=0;
+        int SRCS=0x0000c03f;
+        //rpspmc_hwi->resetVPCconfirmed ();
+
 	switch (mover_param.MOV_waveform_id){
 	case MOV_WAVE_SAWTOOTH:
                 PI_DEBUG_GP (DBG_L2, " ** SAWTOOTH WAVEFORM CALC\n");
+                {
+                        double vp_duration=0.;
+                        double p[6]  = { 0.,0.,0., pointing > 0 ? amp : -amp, 0.,0.}; // pointing vector [x, dy, dz, du, da, db]
+                        double pi[6]; for (int i=0; i<6; ++i) pi[i] = wo*p[i];
+                        // Init
+                        vp_duration += RPSPMC_ControlClass->make_dUZXYAB_vector (vector_index++,
+                                                            pi[3], pi[2], pi[0], pi[1], pi[4], pi[5], //  GVP_du[k], GVP_dz[k], GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
+                                                            10, 0, 0, 0.001, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
+                                                            SRCS, VP_INITIAL_SET_VEC | gvp_options);
+                        // Ramp
+                        vp_duration += RPSPMC_ControlClass->make_dUZXYAB_vector (vector_index++,
+                                                            p[3], p[2], p[0], p[1], p[4], p[5], // GVP_du[k], GVP_dz[k], GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
+                                                            100, 0, 0, 0.5*t_wave, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
+                                                            SRCS, gvp_options);
+                        // Jump
+                        vp_duration += RPSPMC_ControlClass->make_dUZXYAB_vector (vector_index++,
+                                                            -2*p[3], -2*p[2], -2*p[0], -2*p[1], -2*p[4], -2*p[5], // GVP_du[k], GVP_dz[k], GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
+                                                            2, 0, 0, t_jump, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
+                                                            SRCS, gvp_options);
+                        // Ramp
+                        vp_duration += RPSPMC_ControlClass->make_dUZXYAB_vector (vector_index++,
+                                                            p[3], p[2], p[0], p[1], p[4], p[5], // GVP_du[k], GVP_dz[k], GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
+                                                            100, 0, 0, 0.5*t_wave, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
+                                                            SRCS, gvp_options);
+                        // Space, Repeat
+                        vp_duration += RPSPMC_ControlClass->make_dUZXYAB_vector (vector_index++,
+                                                            0., 0., 0., 0., 0., 0., //  GVP_du[k], GVP_dz[k], GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
+                                                            10, n_reps, -3, t_space, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
+                                                            SRCS, gvp_options);
+                        // total GVP points: 10 + Reps*(100 + 2 + 100 + 10) => 222 at end of 1st rep
+                }
+                RPSPMC_ControlClass->append_null_vector (vector_index, gvp_options);
+
+                {
+                        //PROBE_VECTOR_GENERIC v = { 0,0.,0,0, 0,0,0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+                        double t=0;
+                        int pc=0;
+                        for (int i=0; i<222; i++){
+                                PROBE_VECTOR_GENERIC v = { 0,0.,0,0, 0,0,0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+                                t = RPSPMC_ControlClass->simulate_vector_program(i, &v, &pc);
+                                g_print ("%03d %02d %g:  %6.3g %6.3g %6.3g %6.3g\n", i, pc, t, v.f_du,v.f_dx,v.f_dy,v.f_dz);
+                        }
+                }
+                // TEST
+                //rpspmc_hwi->start_data_read (0, 0,0,0,0, NULL,NULL,NULL,NULL);
+
+#if 1
                 if (pointing > 0) // wave for forward direction
                         for (int i=0; i < mover_param.MOV_wave_len; i += channels, t+=1.){
                                 for (int k=0; k<channels; ++k)
@@ -362,6 +417,7 @@ int GVPMoverControl::create_waveform (double amp, double duration, int space){
                                 for (int k=0; k<channels; ++k)
                                         mover_param.MOV_waveform[i+k] = (short)round (SR_VFAC*amp*(((double)(t<n2? -t : n-t)/n2)+mover_param.Wave_offset));
                         }
+#endif
 		break;
 	case MOV_WAVE_SINE:
                 PI_DEBUG_GP (DBG_L2, " ** SINE WAVEFORM CALC\n");
@@ -1778,8 +1834,8 @@ void GVPMoverControl::updateDSP(int sliderno){
 }
 
 
-int GVPMoverControl::config_waveform(GtkWidget *widget, GVPMoverControl *dspc){
-        return dspc->configure_waveform (widget);
+int GVPMoverControl::config_waveform(GtkWidget *widget, GVPMoverControl *self){
+        return self->configure_waveform (widget);
 }
 
 int GVPMoverControl::configure_waveform(GtkWidget *widget){
@@ -1887,16 +1943,18 @@ int GVPMoverControl::configure_waveform(GtkWidget *widget){
 void GVPMoverControl::wave_preview_draw_function (GtkDrawingArea *area, cairo_t *cr,
                                                   int             width,
                                                   int             height,
-                                                  GVPMoverControl *dspc){
+                                                  GVPMoverControl *self){
         int wn = GPOINTER_TO_INT (g_object_get_data  (G_OBJECT (area), "wave_ch"));
-        int nch = dspc->create_waveform (1.,1., 1); // preview params only, full scale, 1ms equiv. points -- Fwd. -->
-        int n =  dspc->mover_param.MOV_wave_len/nch; // samples/ch
+        int nch = self->create_waveform (1.,1., 1); // preview params only, full scale, 1ms equiv. points -- Fwd. -->
+        int n =  self->mover_param.MOV_wave_len/nch; // samples/ch
         gtk_drawing_area_set_content_width (area, n+2);
         gtk_drawing_area_set_content_height (area, 34);
 
+        g_message ("wave_preview_draw_function  %d x %d", n+2, 34);
+        
         cairo_translate (cr, 1., 17.);
         cairo_scale (cr, 1., 1.);
-        double yr=-16./(SR_VFAC+fabs(SR_VFAC*dspc->mover_param.Wave_offset));
+        double yr=-16./(SR_VFAC+fabs(SR_VFAC*self->mover_param.Wave_offset));
         cairo_save (cr);
 
         cairo_item_path *wave = new cairo_item_path (2);
@@ -1910,12 +1968,12 @@ void GVPMoverControl::wave_preview_draw_function (GtkDrawingArea *area, cairo_t 
         wave = new cairo_item_path (n);
         wave->set_line_width (2.0);
         wave->set_stroke_rgba (CAIRO_COLOR_RED);
-        for (int k=0; k<n; ++k) wave->set_xy_fast (k,k,yr*dspc->mover_param.MOV_waveform[k*nch+wn]);
+        for (int k=0; k<n; ++k) wave->set_xy_fast (k,k,yr*self->mover_param.MOV_waveform[k*nch+wn]);
         wave->draw (cr);
 
-        nch = dspc->create_waveform (1.,-1., 1); // preview params only, full scale, 1ms equiv. points -- Rev. <--
+        nch = self->create_waveform (1.,-1., 1); // preview params only, full scale, 1ms equiv. points -- Rev. <--
         wave->set_stroke_rgba (CAIRO_COLOR_BLUE);
-        for (int k=0; k<n; ++k) wave->set_xy_fast (k,k,yr*dspc->mover_param.MOV_waveform[k*nch+wn]);
+        for (int k=0; k<n; ++k) wave->set_xy_fast (k,k,yr*self->mover_param.MOV_waveform[k*nch+wn]);
         wave->draw (cr);
 
         delete wave;
@@ -1952,7 +2010,7 @@ void GVPMoverControl::updateAxisCounts (GtkWidget* w, int idx, int cmd){
         }
 }
 
-int GVPMoverControl::CmdAction(GtkWidget *widget, GVPMoverControl *dspc){
+int GVPMoverControl::CmdAction(GtkWidget *widget, GVPMoverControl *self){
 #if 0
 	int idx=-1;
 	int cmd;
@@ -1965,7 +2023,7 @@ int GVPMoverControl::CmdAction(GtkWidget *widget, GVPMoverControl *dspc){
 
 	if (idx < 10 || idx == 100)
 	{
-		dspc->updateDSP(idx);
+		self->updateDSP(idx);
 	}
 
         
@@ -1975,71 +2033,71 @@ int GVPMoverControl::CmdAction(GtkWidget *widget, GVPMoverControl *dspc){
         
         switch (cmd){
         case GVP_CMD_AFM_MOV_XM:
-                dspc->mover_param.MOV_angle = 180.;
+                self->mover_param.MOV_angle = 180.;
                 break;
         case GVP_CMD_AFM_MOV_XP:
-                dspc->mover_param.MOV_angle = 0.;
+                self->mover_param.MOV_angle = 0.;
                 break;
         case GVP_CMD_AFM_MOV_YM:
-                dspc->mover_param.MOV_angle = (-90.);
+                self->mover_param.MOV_angle = (-90.);
                 break;
         case GVP_CMD_AFM_MOV_YP:
-                dspc->mover_param.MOV_angle = 90.;
+                self->mover_param.MOV_angle = 90.;
                 break;
         case GVP_CMD_AFM_MOV_ZM:
-                dspc->mover_param.MOV_angle = (-200.);
+                self->mover_param.MOV_angle = (-200.);
                 break;
         case GVP_CMD_AFM_MOV_ZP:
         default:
-                dspc->mover_param.MOV_angle = 200.;
+                self->mover_param.MOV_angle = 200.;
                 break;
         }
         
 
-        dspc->updateAxisCounts (widget, idx, cmd);
+        self->updateAxisCounts (widget, idx, cmd);
 
         if(cmd>0){
-		dspc->ExecCmd(GVP_CMD_GPIO_SETUP);
-		dspc->ExecCmd(cmd);
+		self->ExecCmd(GVP_CMD_GPIO_SETUP);
+		self->ExecCmd(cmd);
 	}
 	PI_DEBUG (DBG_L2, "cmd=" << cmd << " Mover=" << idx );
 #endif
 	return 0;
 }
 
-int GVPMoverControl::StopAction(GtkWidget *widget, GVPMoverControl *dspc){
+int GVPMoverControl::StopAction(GtkWidget *widget, GVPMoverControl *self){
 	PI_DEBUG (DBG_L2, "GVPMoverControl::StopAction" );
 
 	// GVP STOP
 	
-        //dspc->updateAxisCounts (widget, idx, 0);
+        //self->updateAxisCounts (widget, idx, 0);
 
 	return 0;
 }
 
-int GVPMoverControl::RampspeedUpdate(GtkWidget *widget, GVPMoverControl *dspc){
+int GVPMoverControl::RampspeedUpdate(GtkWidget *widget, GVPMoverControl *self){
 
         int idx = GPOINTER_TO_INT(g_object_get_data( G_OBJECT (widget), "MoverNo"));
-        dspc->updateDSP(idx);
+        self->updateDSP(idx);
 
         PI_DEBUG_GP (DBG_L2, "GVPMoverControl::RampspeedUpdate t1=%f  t2=%f  duration=%f  amp=%f  idx=%d \n", 
-                                        dspc->mover_param.time_delay_1, 
-                                        dspc->mover_param.time_delay_2, 
-                                        dspc->mover_param.AFM_Speed, 
-                                        dspc->mover_param.AFM_Amp,
+                                        self->mover_param.time_delay_1, 
+                                        self->mover_param.time_delay_2, 
+                                        self->mover_param.AFM_Speed, 
+                                        self->mover_param.AFM_Amp,
                                         idx);
 
         // new besocke ramp speed
         gchar *tmp = g_strdup_printf ("%.2f V/ms",
-                                      (dspc->mover_param.AFM_Amp/2)
-                                      / ((dspc->mover_param.AFM_Speed - 2*dspc->mover_param.time_delay_1 - dspc->mover_param.time_delay_2)/2));
-        gtk_label_set_text (GTK_LABEL(dspc->mc_rampspeed_label), tmp);
+                                      (self->mover_param.AFM_Amp/2)
+                                      / ((self->mover_param.AFM_Speed - 2*self->mover_param.time_delay_1 - self->mover_param.time_delay_2)/2));
+        gtk_label_set_text (GTK_LABEL(self->mc_rampspeed_label), tmp);
         g_free (tmp);
 
         return 0;
 }
 
-void GVPMoverControl::ChangedNotify(Param_Control* pcs, gpointer dspc){
+void GVPMoverControl::ChangedNotify(Param_Control* pcs, gpointer self){
 	int idx=-1;
 	gchar *us=pcs->Get_UsrString();
 	PI_DEBUG (DBG_L2, "MoverCrtl:: Param Changed: " << us );
@@ -2048,7 +2106,7 @@ void GVPMoverControl::ChangedNotify(Param_Control* pcs, gpointer dspc){
 	if(IS_MOVER_CTRL)
 		idx = GPOINTER_TO_INT(pcs->GetEntryData("MoverNo"));
 
-        ((GVPMoverControl*)dspc)->updateDSP(idx);
+        ((GVPMoverControl*)self)->updateDSP(idx);
 }
 
 void GVPMoverControl::ExecCmd(int cmd){

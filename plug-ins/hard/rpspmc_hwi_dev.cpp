@@ -1493,7 +1493,7 @@ void rpspmc_hwi_dev::GVP_abort_vector_program (){
 }
 
 void rpspmc_hwi_dev::GVP_reset_UAB (){
-        g_message ("rpspmc_hwi_dev::GVP_abort_vector_program ()");
+        g_message ("rpspmc_hwi_dev::GVP_reset_UAB ()");
         rpspmc_pacpll->write_parameter ("SPMC_GVP_CONTROL", SPMC_GVP_CONTROL_RESET_UAB);
 }
 
