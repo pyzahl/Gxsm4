@@ -298,10 +298,6 @@ public:
                 // init all vars with last used values is done via dconf / schemata
                 // -- BUT not at very first generation via auto write schemata, will get random memory eventually to edit manually later....
                 
-                sim_speed[0]=sim_speed[1]=2000.0; // per tab
-                sim_bias[0]=sim_bias[1]=1.0;
-                options = 0x03;
-
                 get_tab_settings ("IV", IV_option_flags, IV_auto_flags, IV_glock_data);
                 get_tab_settings ("VP", GVP_option_flags, GVP_auto_flags, GVP_glock_data);
                 GVP_restore_vp ("VP_set_last"); // last in view
@@ -384,7 +380,6 @@ public:
 
         void GVP_zero_all_smooth ();
         static int GVP_AllZero (GtkWidget *widget, RPSPMC_Control *self);
-        static int config_options_callback (GtkWidget *widget, RPSPMC_Control *self);
         
 	//static void ChangedWaveOut(Param_Control* pcs, gpointer data);
 	//static int config_waveform (GtkWidget *widget, RPSPMC_Control *spmsc);
@@ -567,16 +562,15 @@ public:
 
         void re_init_vector_program(){
                 for (int i=0; i<MAX_PROGRAM_VECTORS; ++i)
-                        program_vector_list[i].iloop = program_vector.repetitions; // init
+                        program_vector_list[i].iloop = program_vector_list[i].repetitions; // init
         };
 
         // calculate vector program result at position i, starts at vector v state, result in v, returns time
-        double simulate_vector_program(int i, PROBE_VECTOR_GENERIC *v, int *pc_f){
+        double simulate_vector_program(int i, PROBE_VECTOR_GENERIC *v, int *pc_f, int *il=NULL){
                 int pc=0;
                 int x=0;
                 double t=0.;
                 re_init_vector_program();
-
                 for (; program_vector_list[pc].n;){
                         int n = program_vector_list[pc].n;
                         double l=1.;
@@ -596,6 +590,7 @@ public:
                         v->f_db += l*program_vector_list[pc].f_db;
                         if (i==0) break;
                         pc = next_section(pc);
+                        if (il) *il = program_vector_list[pc].iloop;
                 }
                 *pc_f = pc;
                 re_init_vector_program();
@@ -810,6 +805,12 @@ public:
 	guint64    GVP_auto_flags;
 	GtkWidget *VPprogram[10];
 	GtkWidget *GVP_status;
+        //gtk_widget_queue_draw (gvp_preview_are); // update wave
+        GtkWidget *gvp_preview_area;
+        static void gvp_preview_draw_function (GtkDrawingArea *area, cairo_t *cr,
+                                               int             width,
+                                               int             height,
+                                               RPSPMC_Control *self);
         GtkWidget *graphs_matrix[5][32];
 	guint64    GVP_glock_data[6];
 	void GVP_store_vp (const gchar *key);
@@ -845,13 +846,6 @@ public:
 
 	gboolean        pv_lock;
 	gboolean        gr_lock;
-
-
-        
-        // Simultaor only (GUI)
-        double sim_bias[2];  // per tab -- simulation
-        double sim_speed[2]; // per tab -- simulation
-        gint options;
 
 public:
         GtkWidget *stream_connect_button;

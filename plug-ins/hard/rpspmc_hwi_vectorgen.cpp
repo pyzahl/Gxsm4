@@ -319,7 +319,7 @@ vector = {32'd000032,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  3
                              10, subscan_buffer[3], -2, tfwd/ny, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
                              srcs_buffer[0], gvp_options); // vis_Source, GVP_opt[k]);
 
-        append_null_vector (vector_index, options);
+        append_null_vector (vector_index, gvp_options);
 }
 
 
@@ -730,6 +730,128 @@ void RPSPMC_Control::write_spm_vector_program (int start, pv_mode pvm){
 
 	// Update from DSP
 	read_spm_vector_program ();
+}
+
+
+
+
+void RPSPMC_Control::gvp_preview_draw_function (GtkDrawingArea *area, cairo_t *cr,
+                                                int             width,
+                                                int             height,
+                                                RPSPMC_Control *self){
+        int n=850;
+        int m=128;
+        int mar=18;
+        
+        gtk_drawing_area_set_content_width (area, n+100);
+        gtk_drawing_area_set_content_height (area, m);
+
+        cairo_translate (cr, 50., m/2);
+        cairo_scale (cr, 1., 1.);
+        cairo_save (cr);
+
+        cairo_item_path *wave = new cairo_item_path (2);
+        wave->set_line_width (0.5);
+        wave->set_stroke_rgba (CAIRO_COLOR_BLACK);
+        wave->set_xy_fast (0,0,0);
+        wave->set_xy_fast (1,n-1,0);
+        wave->draw (cr);
+        wave->set_stroke_rgba (CAIRO_COLOR_BLACK);
+        wave->set_xy_fast (0,0,(m-mar)/2);
+        wave->set_xy_fast (1,n-1,(m-mar)/2);
+        wave->draw (cr);
+        wave->set_stroke_rgba (CAIRO_COLOR_BLACK);
+        wave->set_xy_fast (0,0,-(m-mar)/2);
+        wave->set_xy_fast (1,n-1,-(m-mar)/2);
+        wave->draw (cr);
+        delete wave;
+        
+        if (self->program_vector_list[0].n){
+
+                int N=0;
+                self->re_init_vector_program();
+                for (int pc=0; self->program_vector_list[pc].n; ){
+                        N += self->program_vector_list[pc].n;
+                        pc = self->next_section(pc);
+                }
+
+                if (N < 300)
+                        n=300; // nicer aspect
+                
+                cairo_item_path *bias_wave = new cairo_item_path (N);
+                bias_wave->set_line_width (2.0);
+                bias_wave->set_stroke_rgba (CAIRO_COLOR_BLUE);
+
+                cairo_item_path *Z_wave = new cairo_item_path (N);
+                Z_wave->set_line_width (2.0);
+                Z_wave->set_stroke_rgba (CAIRO_COLOR_RED);
+
+                double t=0;
+                int pcp=-1;
+                int pc=0;
+                int il=0;
+                PROBE_VECTOR_GENERIC v = { 0,0.,0,0, 0,0,0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+                double Tfin = self->simulate_vector_program(N, &v, &pc);
+                pc=0;
+                cairo_item_text *tms = new cairo_item_text ();
+                cairo_item_path *sec = new cairo_item_path (2);
+                for (int i=0; i<N; i++){
+                        PROBE_VECTOR_GENERIC v = { 0,0.,0,0, 0,0,0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+                        t = self->simulate_vector_program(i, &v, &pc, &il);
+                        //g_print ("%03d %02d l{%03d} %g:  %6.3g %6.3g %6.3g %6.3g\n", i, pc, self->program_vector_list[pc].iloop, t, v.f_du,v.f_dx,v.f_dy,v.f_dz);
+                        bias_wave->set_xy_fast (i, n*t/Tfin, v.f_du);
+                        Z_wave->set_xy_fast (i, n*t/Tfin, v.f_dz);
+                        if (pcp != pc || i == N-1){
+                                sec->set_line_width (0.5);
+                                sec->set_stroke_rgba (CAIRO_COLOR_BLACK);
+                                sec->set_xy_fast (0,n*t/Tfin,-m/2);
+                                sec->set_xy_fast (1,n*t/Tfin,m/2);
+                                sec->draw (cr);
+                                tms->set_font_face_size ("Ununtu", 8.);
+                                tms->set_anchor (CAIRO_ANCHOR_W);
+                                tms->set_stroke_rgba (CAIRO_COLOR_BLACK);
+                                const gchar* lab=g_strdup_printf("%g ms",1e3*t);
+                                tms->set_text (n*t/Tfin+2, 60, lab);
+                                tms->draw (cr);
+                                g_free (lab);
+                                if (i != N-1){
+                                        tms->set_stroke_rgba (CAIRO_COLOR_RED);
+                                        if (il>0)
+                                                lab=g_strdup_printf("%d %d",pc, il);
+                                        else
+                                                lab=g_strdup_printf("%d",pc);
+                                        tms->set_text (n*t/Tfin+2, -60, lab);
+                                        tms->draw (cr);
+                                        g_free (lab);
+                                }
+                                pcp = pc;
+                        }
+                }
+                delete sec;
+                double bias_amax = bias_wave->auto_range_y (-(m-mar)/2.);
+                bias_wave->draw (cr);
+                double Z_amax = Z_wave->auto_range_y (-(m-mar)/2.);
+                Z_wave->draw (cr);
+
+                tms->set_anchor (CAIRO_ANCHOR_W);
+                tms->set_stroke_rgba (CAIRO_COLOR_BLUE);
+                const gchar* lab=g_strdup_printf("U %.3g V",bias_amax);
+                tms->set_text (n+2, -55, lab);
+                tms->draw (cr);
+                g_free (lab);
+
+                tms->set_anchor (CAIRO_ANCHOR_E);
+                tms->set_stroke_rgba (CAIRO_COLOR_RED);
+                lab=g_strdup_printf("Z %.3g V",Z_amax);
+                tms->set_text (-2,-55, lab);
+                tms->draw (cr);
+                g_free (lab);
+
+                
+                delete tms;
+                delete bias_wave;
+                delete Z_wave;
+        }
 }
 
 

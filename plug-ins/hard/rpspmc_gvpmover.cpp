@@ -394,7 +394,6 @@ int GVPMoverControl::create_waveform (double amp, double duration, int space){
                 RPSPMC_ControlClass->append_null_vector (vector_index, gvp_options);
 
                 {
-                        //PROBE_VECTOR_GENERIC v = { 0,0.,0,0, 0,0,0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
                         double t=0;
                         int pc=0;
                         for (int i=0; i<222; i++){

@@ -23,6 +23,7 @@
 module axis_py_lockin#(
     parameter S_AXIS_SIGNAL_TDATA_WIDTH = 32, 
     parameter LCK_CORRSUM_WIDTH = 32,  // Final Precision
+    parameter LCK_CORRSUM_Q_WIDTH = 31,  // Final Precision
     parameter S_AXIS_SC_TDATA_WIDTH = 64,
     parameter SC_DATA_WIDTH  = 25,  // SC 25Q24
     parameter SC_Q_WIDTH     = 24,  // SC 25Q24
@@ -134,7 +135,7 @@ module axis_py_lockin#(
 
     reg [4-1:0] finishthis=0;
 
-    reg [31:0] lck_config=0;
+    reg [2-1:0] lck_config=0;
     reg [31:0] lck_gain=Q24;
 
     integer ii;
@@ -153,7 +154,7 @@ module axis_py_lockin#(
         // module configuration
         if (config_addr == configuration_address) // BQ configuration, and auto reset
         begin
-            lck_config    <= config_data[1*32-1 : 0*32]; // options: Bit0: use gain control, Bit1: use gain programmed
+            lck_config    <= config_data[2-1:0]; // options: Bit0: use gain control, Bit1: use gain programmed
             lck_gain      <= config_data[2*32-1 : 1*32]; // programmed gain, Q24
             dds_n2        <= config_data[2*32+16-1 : 2*32];       // Phase Inc N2 lower 16 bits
             dds_PhaseInc  <= config_data[2*32+64-1 : 2*32+64-48]; // Phase Inc Width: top 48 bits
@@ -216,7 +217,7 @@ module axis_py_lockin#(
 
                 // now we have time steps to run the calculation pipeline... but only one shot
                 // LockIn ====
-                case (rdecii)
+                case (rdecii) // single shot "pipeline" triggered after each decii completed
                 0: begin
                     decii_clk <= 0;
                     // Quad Correlation Products
@@ -225,8 +226,8 @@ module axis_py_lockin#(
                 end
                 1: begin               
                     // Normalize to LCK_CORRSUM_WIDTH
-                    LckXcorrp <= LckXcorrpW >>> (2*SC_DATA_WIDTH-LCK_CORRSUM_WIDTH);
-                    LckYcorrp <= LckYcorrpW >>> (2*SC_DATA_WIDTH-LCK_CORRSUM_WIDTH);
+                    LckXcorrp <= LckXcorrpW >>> (2*SC_Q_WIDTH-LCK_CORRSUM_Q_WIDTH); // reduce product width to CK_CORRSUM_WIDTH (32bit)
+                    LckYcorrp <= LckYcorrpW >>> (2*SC_Q_WIDTH-LCK_CORRSUM_Q_WIDTH);
                 end
                 2: begin // calculate moving "integral" running over exactly the last period ++ add new point -- sub the memorized one dropping out
                     LckX_sum <= LckX_sum + LckXcorrp - LckX_mem [i]; // current [i] has oldest in ring buffer
@@ -268,7 +269,7 @@ module axis_py_lockin#(
     assign M_AXIS_Sref_tvalid = 1;
     // test, dec s
     assign M_AXIS_SDref_tdata = {{(32-SC_DATA_WIDTH){sig_in[SC_DATA_WIDTH-1]}}, {sig_in[SC_DATA_WIDTH-1:0]}};
-    assign M_AXIS_SDref_valid = 1;
+    assign M_AXIS_SDref_tvalid = 1;
     // dec signal
     assign M_AXIS_SignalOut_tdata = {{(32-SC_DATA_WIDTH){signal[SC_DATA_WIDTH-1]}}, {signal[SC_DATA_WIDTH-1:0]}};
     assign M_AXIS_SignalOut_tvalid = 1;

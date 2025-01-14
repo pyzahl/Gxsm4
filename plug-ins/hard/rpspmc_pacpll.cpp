@@ -1460,17 +1460,6 @@ int RPSPMC_Control::choice_Ampl_callback (GtkWidget *widget, RPSPMC_Control *spm
 	return 0;
 }
 
-int RPSPMC_Control::config_options_callback (GtkWidget *widget, RPSPMC_Control *ssc){
-	if (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)))
-                ssc->options |= GPOINTER_TO_INT (g_object_get_data( G_OBJECT (widget),"Bit_Mask"));
-        else
-                ssc->options &= ~GPOINTER_TO_INT (g_object_get_data( G_OBJECT (widget),"Bit_Mask"));
-        
-        g_message ("RPSPMC_Control::config_options_callback -> %04x", ssc->options);
-        return 0;
-}
-
-
 void RPSPMC_Control::create_folder (){
         GtkWidget *notebook;
  	GSList *zpos_control_list=NULL;
@@ -2248,10 +2237,19 @@ void RPSPMC_Control::create_folder (){
         bp->pop_grid ();
         bp->new_line ();
 
-	bp->new_grid_with_frame ("VP Status");
+	bp->new_grid_with_frame ("GVP Wave Preview");
+	//bp->new_grid_with_frame ("VP Status");
+	//GVP_status = bp->grid_add_probe_status ("Status");
 
-	GVP_status = bp->grid_add_probe_status ("Status");
-
+        gvp_preview_area = gtk_drawing_area_new ();
+        gtk_widget_set_size_request (gvp_preview_area, 800, 128);
+        gtk_drawing_area_set_content_width (GTK_DRAWING_AREA (gvp_preview_area), 512);
+        gtk_drawing_area_set_content_height (GTK_DRAWING_AREA (gvp_preview_area), 128);
+        gtk_drawing_area_set_draw_func (GTK_DRAWING_AREA (gvp_preview_area),
+                                        GtkDrawingAreaDrawFunc (RPSPMC_Control::gvp_preview_draw_function),
+                                        this, NULL);
+        bp->grid_add_widget (gvp_preview_area);
+        
         bp->pop_grid ();
         bp->new_line ();
 
@@ -3057,6 +3055,9 @@ int RPSPMC_Control::Probing_exec_GVP_callback( GtkWidget *widget, RPSPMC_Control
 int RPSPMC_Control::Probing_write_GVP_callback( GtkWidget *widget, RPSPMC_Control *self){
         // write GVP code to controller
         self->write_spm_vector_program (0, PV_MODE_GVP);
+
+        gtk_widget_queue_draw (self->gvp_preview_area); // update wave
+
         return 0;
 }
 

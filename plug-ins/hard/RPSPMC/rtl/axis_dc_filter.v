@@ -53,8 +53,8 @@ module axis_dc_filter #
 )
 (
     // (* X_INTERFACE_PARAMETER = "FREQ_HZ 62500000" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN aclk" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF S_AXIS:M_AXIS_AC_LMS:M_AXIS_AC16:M_AXIS_ACDC" *)
+    (* X_INTERFACE_PARAMETER = "" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN aclk, ASSOCIATED_BUSIF S_AXIS:M_AXIS_AC_LMS:M_AXIS_AC16:M_AXIS_ACDC" *)
     input aclk,
     input wire [S_AXIS_DATA_WIDTH-1:0]  S_AXIS_tdata,
     input wire                          S_AXIS_tvalid,
