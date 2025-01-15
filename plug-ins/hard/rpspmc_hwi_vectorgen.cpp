@@ -807,15 +807,9 @@ void RPSPMC_Control::gvp_preview_draw_function (GtkDrawingArea *area, cairo_t *c
         wave->set_xy_fast (1,n-1,-(m-mar)/2);
         wave->draw (cr);
         delete wave;
-        
-        if (self->program_vector_list[0].n){
 
-                int N=0;
-                self->re_init_vector_program();
-                for (int pc=0; self->program_vector_list[pc].n; ){
-                        N += self->program_vector_list[pc].n;
-                        pc = self->next_section(pc);
-                }
+        int N = self->calculate_GVP_total_number_points();
+        if ( N > 0){
                 // gvp waves
                 for (int k=0; k<ns; ++k){
                         gvp_wave[k] = new cairo_item_path (N);
