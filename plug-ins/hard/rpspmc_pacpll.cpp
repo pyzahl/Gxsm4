@@ -2644,6 +2644,7 @@ int RPSPMC_Control::ldc_callback(GtkWidget *widget, RPSPMC_Control *self){
 
 void RPSPMC_Control::BiasChanged(Param_Control* pcs, RPSPMC_Control* self){
         int j=0;
+        spmc_parameters.bias_monitor = self->bias;
         if (rpspmc_pacpll)
                 rpspmc_pacpll->write_parameter ("SPMC_BIAS", self->bias);
 }

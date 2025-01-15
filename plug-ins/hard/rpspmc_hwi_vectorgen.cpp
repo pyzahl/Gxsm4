@@ -751,12 +751,17 @@ void RPSPMC_Control::gvp_preview_draw_function (GtkDrawingArea *area, cairo_t *c
         const gchar* gvpcolors[7] = { NULL, "#e8e01b","#69e81b","#e81b1b","#1b82e8","#1be5e8","#c61be8" }; 
 
         // prepare job lookups
+        PROBE_VECTOR_GENERIC vi = { 0,0.,0,0, 0,0,0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
         PROBE_VECTOR_GENERIC vp = { 0,0.,0,0, 0,0,0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
         PROBE_VECTOR_GENERIC v = { 0,0.,0,0, 0,0,0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
         double *gvp_y[6] = { NULL, NULL, NULL, NULL, NULL, NULL };
         double *gvp_yp[6] = { NULL, NULL, NULL, NULL, NULL, NULL };
         const gchar *gvp_color[6] = { NULL, NULL, NULL, NULL, NULL, NULL };
         cairo_item_path *gvp_wave[6] = { NULL, NULL, NULL, NULL, NULL, NULL };
+
+        double dumy1, dumy2;
+        main_get_gapp()->xsm->hardware->RTQuery ("zxy",  vi.f_dz,  vi.f_dx,  vi.f_dy); // get tip position in volts
+        main_get_gapp()->xsm->hardware->RTQuery ("B", vi.f_du, dumy1, dumy2); // Bias, ...
         
         int ns=0; // num selected channels
         for (int i=1; i<=6; ++i)
@@ -836,7 +841,8 @@ void RPSPMC_Control::gvp_preview_draw_function (GtkDrawingArea *area, cairo_t *c
                 int i_anno=0;
                 double tp=0.;
                 for (int i=0; i<N; i++){
-                        memset (&v, 0, sizeof(v));
+                        memcpy (&v, &vi, sizeof(v));
+                        //memset (&v, 0, sizeof(v));
                         t = self->simulate_vector_program(i, &v, &pc, &il);
                         //g_print ("%03d %02d l{%03d} %g:  %6.3g %6.3g %6.3g %6.3g\n", i, pc, self->program_vector_list[pc].iloop, t, v.f_du,v.f_dx,v.f_dy,v.f_dz);
                         for (int k=0; k<ns; ++k)
