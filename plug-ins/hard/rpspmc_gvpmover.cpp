@@ -359,16 +359,6 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
                 }
                 RPSPMC_ControlClass->append_null_vector (vector_index, gvp_options);
 
-                if (0)
-                {
-                        double t=0;
-                        int pc=0;
-                        for (int i=0; i<222; i++){
-                                PROBE_VECTOR_GENERIC v = { 0,0.,0,0, 0,0,0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
-                                t = RPSPMC_ControlClass->simulate_vector_program(i, &v, &pc);
-                                g_print ("%03d %02d %g:  %6.3g %6.3g %6.3g %6.3g\n", i, pc, t, v.f_du,v.f_dx,v.f_dy,v.f_dz);
-                        }
-                }
                 // TEST
                 //rpspmc_hwi->start_data_read (0, 0,0,0,0, NULL,NULL,NULL,NULL);
 		break;
@@ -1732,80 +1722,29 @@ void GVPMoverControl::update(){
 
 void GVPMoverControl::updateDSP(int sliderno){
 	PI_DEBUG (DBG_L2, "update: Mover No:" << sliderno );
-#if 0
+
 	if (sliderno == 100){
-	        // auto offset ZERO
-		sranger_common_hwi->SetOffset (0,0); // set
-		sranger_common_hwi->SetOffset (0,0); // wait for finish
-		if (mover_param.AFM_GPIO_setting != mover_param.GPIO_scan){
-			if ( mover_param.GPIO_tmp1 ){ // unmask special bit from value
-				mover_param.AFM_GPIO_setting = mover_param.GPIO_scan | mover_param.GPIO_tmp1;
-				ExecCmd(GVP_CMD_GPIO_SETUP);
-				mover_param.AFM_GPIO_setting = mover_param.GPIO_scan;
-				ExecCmd(GVP_CMD_GPIO_SETUP);
-			} else if ( mover_param.GPIO_tmp2 ){ // invert action unmask special bit from value
-			        mover_param.AFM_GPIO_setting = mover_param.GPIO_scan;
-				ExecCmd(GVP_CMD_GPIO_SETUP);
-				mover_param.AFM_GPIO_setting = mover_param.GPIO_scan | mover_param.GPIO_tmp2;
-				ExecCmd(GVP_CMD_GPIO_SETUP);
-			} else {
- 			        mover_param.AFM_GPIO_setting = mover_param.GPIO_scan;
-			}
-		}
-                g_settings_set_int (hwi_settings, "mover-gpio-last", mover_param.AFM_GPIO_setting);
+	        // auto offset ZERO, GPIO... N/A
 		return;
 	}
 
 	if (mover_param.AFM_GPIO_setting == mover_param.GPIO_scan 
 	    && ((sliderno >= 0 && sliderno < GVP_AFMMOV_MODES)? mover_param.AFM_GPIO_usr_setting[sliderno] : mover_param.MOV_GPIO_setting) != mover_param.GPIO_scan){
 	        // auto offset ZERO
-		sranger_common_hwi->MovetoXY (0,0); // set
-		sranger_common_hwi->SetOffset (0,0); // set
-		sranger_common_hwi->SetOffset (0,0); // wait for finish
-		
-		if ( mover_param.GPIO_tmp1 ){ // unmask special bit from value
-		        mover_param.AFM_GPIO_setting = mover_param.GPIO_scan | mover_param.GPIO_tmp1;
-			ExecCmd(GVP_CMD_GPIO_SETUP);
-			mover_param.AFM_GPIO_setting = mover_param.GPIO_scan;
-			ExecCmd(GVP_CMD_GPIO_SETUP);
-		} else if ( mover_param.GPIO_tmp2 ){ // invert action unmask special bit from value
-		        mover_param.AFM_GPIO_setting = mover_param.GPIO_scan;
-			ExecCmd(GVP_CMD_GPIO_SETUP);
-			mover_param.AFM_GPIO_setting = mover_param.GPIO_scan | mover_param.GPIO_tmp2;
-			ExecCmd(GVP_CMD_GPIO_SETUP);
-		} else {
-		        mover_param.AFM_GPIO_setting = mover_param.GPIO_scan;
-		}
+		//sranger_common_hwi->MovetoXY (0,0); // set
+		//sranger_common_hwi->SetOffset (0,0); // wait for finish
+		// GPIO... N/A
 	}
 	if (sliderno >= 0 && sliderno < GVP_AFMMOV_MODES){
 	        // auto scan XY and offset to ZERO
-                sranger_common_hwi->MovetoXY (0,0);
-		sranger_common_hwi->SetOffset (0,0); // set
-		sranger_common_hwi->SetOffset (0,0); // wait for finish
+                //sranger_common_hwi->MovetoXY (0,0);
+		//sranger_common_hwi->SetOffset (0,0); // wait for finish
 		mover_param.AFM_Amp   = mover_param.AFM_usrAmp  [sliderno];
 		mover_param.AFM_Speed = mover_param.AFM_usrSpeed[sliderno];
 		mover_param.AFM_Steps = mover_param.AFM_usrSteps[sliderno];
-
-		if ( mover_param.GPIO_tmp1 ){ // unmask special bit from value
-		        if ( mover_param.AFM_GPIO_setting != mover_param.AFM_GPIO_usr_setting[sliderno] ){
-			        mover_param.AFM_GPIO_setting = mover_param.AFM_GPIO_usr_setting[sliderno] | mover_param.GPIO_tmp1;
-				ExecCmd(GVP_CMD_GPIO_SETUP);
-				mover_param.AFM_GPIO_setting = mover_param.AFM_GPIO_usr_setting[sliderno];
-			        ExecCmd(GVP_CMD_GPIO_SETUP);
-			}
-		} else if ( mover_param.GPIO_tmp2 ){ // invert action unmask special bit from value
-		        if ( mover_param.AFM_GPIO_setting != (mover_param.AFM_GPIO_usr_setting[sliderno] | mover_param.GPIO_tmp2 )){
-			        mover_param.AFM_GPIO_setting = mover_param.AFM_GPIO_usr_setting[sliderno];
-				ExecCmd(GVP_CMD_GPIO_SETUP);
-				mover_param.AFM_GPIO_setting = mover_param.AFM_GPIO_usr_setting[sliderno] | mover_param.GPIO_tmp2;
-				ExecCmd(GVP_CMD_GPIO_SETUP);
-			}
-		} else {
-		        mover_param.AFM_GPIO_setting = mover_param.AFM_GPIO_usr_setting[sliderno];
-		}
+                // GPIO... N/A
 	}
         g_settings_set_int (hwi_settings, "mover-gpio-last", mover_param.AFM_GPIO_setting);
-#endif
 }
 
 
@@ -2032,25 +1971,19 @@ void GVPMoverControl::updateAxisCounts (GtkWidget* w, int idx, int cmd){
 }
 
 int GVPMoverControl::CmdAction(GtkWidget *widget, GVPMoverControl *self){
-#if 0
 	int idx=-1;
 	int cmd;
 	PI_DEBUG (DBG_L2, "MoverCrtl::CmdAction " ); 
 
 	if(IS_MOVER_CTRL)
-	{
 		idx = GPOINTER_TO_INT(g_object_get_data( G_OBJECT (widget), "MoverNo"));
-	}
 
-	if (idx < 10 || idx == 100)
-	{
-		self->updateDSP(idx);
-	}
-
+        // not GPIO on RPSPMC, so no selection (idx)
+        // ...
         
 	cmd = GPOINTER_TO_INT(g_object_get_data( G_OBJECT (widget), "GVP_cmd"));
 
-        g_message ("MOVER CMD ACTION: %d CMD: %d", idx, cmd);
+        g_message ("MOVER CMD ACTION: on mover id %d (no selection yet via RPSPMC) CMD: %d", idx, cmd);
         
         switch (cmd){
         case GVP_CMD_AFM_MOV_XM:
@@ -2060,13 +1993,13 @@ int GVPMoverControl::CmdAction(GtkWidget *widget, GVPMoverControl *self){
                 self->mover_param.MOV_angle = 0.;
                 break;
         case GVP_CMD_AFM_MOV_YM:
-                self->mover_param.MOV_angle = (-90.);
+                self->mover_param.MOV_angle = -90.;
                 break;
         case GVP_CMD_AFM_MOV_YP:
                 self->mover_param.MOV_angle = 90.;
                 break;
         case GVP_CMD_AFM_MOV_ZM:
-                self->mover_param.MOV_angle = (-200.);
+                self->mover_param.MOV_angle = -200.;
                 break;
         case GVP_CMD_AFM_MOV_ZP:
         default:
@@ -2074,15 +2007,12 @@ int GVPMoverControl::CmdAction(GtkWidget *widget, GVPMoverControl *self){
                 break;
         }
         
-
         self->updateAxisCounts (widget, idx, cmd);
 
         if(cmd>0){
-		self->ExecCmd(GVP_CMD_GPIO_SETUP);
+		// self->ExecCmd(GVP_CMD_GPIO_SETUP); // no GPIO on RPSPMC available
 		self->ExecCmd(cmd);
 	}
-	PI_DEBUG (DBG_L2, "cmd=" << cmd << " Mover=" << idx );
-#endif
 	return 0;
 }
 
@@ -2133,10 +2063,7 @@ void GVPMoverControl::ChangedNotify(Param_Control* pcs, gpointer self){
 void GVPMoverControl::ExecCmd(int cmd){
 	PI_DEBUG (DBG_L2, "GVPMoverControl::ExecCmd ==> >" << cmd);
 
-        //<< " Amp=" << sranger_common_hwi->mover_param.AFM_Amp
-        //<< " Speed=" << sranger_common_hwi->mover_param.AFM_Speed
-        //<< " Steps=" << sranger_common_hwi->mover_param.AFM_Steps
-        //<< " GPIO=0x" << std::hex << sranger_common_hwi->mover_param.AFM_GPIO_setting << std::dec
-                
-        // rpspmc_pacpll_hwi_pi->ExecCmd (cmd);
+        create_waveform (mover_param.AFM_Amp, mover_param.AFM_Speed, mover_param.AFM_Steps);
+        rpspmc_hwi->start_data_read (0, 0,0,0,0, NULL,NULL,NULL,NULL);
+
 }

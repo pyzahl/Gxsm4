@@ -143,7 +143,7 @@ public:
 	void update();
 	void updateDSP(int sliderno=-1);
         void updateAxisCounts (GtkWidget* w, int idx, int cmd);
-	static void ExecCmd(int cmd);
+	void ExecCmd(int cmd);
 	static void ChangedNotify(Param_Control* pcs, gpointer data);
 	static void ChangedWaveOut(Param_Control* pcs, gpointer data);
 	static int config_waveform (GtkWidget *widget, GVPMoverControl *self);
