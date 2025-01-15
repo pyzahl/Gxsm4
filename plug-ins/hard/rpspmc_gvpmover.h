@@ -108,14 +108,14 @@ typedef struct{
 #define MOV_AUTO_APP_MODE 0x0100
         
 	int MOV_output, MOV_waveform_id;
-        double MOV_wave_GVP_components[3][6]; // GVP Wave Gen Components
-
         int wave_out_channels_used;
 	int wave_out_channel_xyz[6][3];
 	int MOV_wave_len;
 	int MOV_wave_speed_fac;
 	short MOV_waveform[MOV_MAXWAVELEN];
         double MOV_angle;          //0° -> X-direction      90° -> Y-direction                   [(-180)°; 180°] -> xy-plane         <(-180): (-Z)-direction        >180°:(+Z)-direction
+        int MOV_pointing;
+        int MOV_axis;
 	double final_delay;
 	double max_settling_time;
         double retract_ci;
@@ -188,7 +188,7 @@ public:
                         gtk_widget_hide (GTK_WIDGET (g_object_get_data (G_OBJECT (w), "TabGrid")));
         };
 
-	int create_waveform (double amp, double duration, int limit_cycles=5);
+	int create_waveform (double amp, double duration, int limit_cycles=5, int pointing=1, int axis=0);
 	Mover_Param mover_param;
 	double Z0_speed, Z0_adjust, Z0_goto;
 

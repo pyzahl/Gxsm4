@@ -953,15 +953,7 @@ int RPSPMC_Control::Probing_graph_callback( GtkWidget *widget, RPSPMC_Control *d
 // abort probe and stop fifo read, plot data until then
 int RPSPMC_Control::Probing_abort_callback( GtkWidget *widget, RPSPMC_Control *dspc){
         rpspmc_hwi->GVP_abort_vector_program ();
-
 	dspc->Probing_graph_callback (widget, dspc);
-        
-	// can not simply cancel a DSP vector program in progress -- well can, but: this leaves it in an undefined state of all effected outputs incl.
-	// ==> feedback state ON or OFF. SO AFTER THAT -- CHEC and eventually manually recover settings!
-	// but aborting on your request
-
-	// **** dspc->Probing_exec_ABORT_callback (widget, dspc);
-        
         return 0;
 }
 
@@ -977,9 +969,6 @@ int RPSPMC_Control::Probing_save_callback( GtkWidget *widget, RPSPMC_Control *ds
 	const gchar *separator = "\t";
 
 	std::ofstream f;
-
-	// XsmRescourceManager xrm("FilingPathMemory");
-	// gchar *path = xrm.GetStr ("Probe_DataSavePath", xsmres.DataPath);
 
 	gchar *fntmp = g_strdup_printf ("%s/%s%03d-VP%03d-%s.vpdata", 
 					// path, 
