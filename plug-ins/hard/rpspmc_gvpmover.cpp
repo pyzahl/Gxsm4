@@ -286,11 +286,10 @@ short steppermotor_func (double amplitude, double phi){
 }
 
 // duration in ms
-// amp in V SR out (+/-2.05V max)
-int GVPMoverControl::create_waveform (double amp, double duration, int wave_id){
+int GVPMoverControl::create_waveform (double amp, double duration, int limit_cycles){
 
         double pointing = duration > 0. ? 1. : -1.;
-
+        
         // check and find wave valid wave form id "k"
         int k=0;
         for (k=0; wave_form_options[k].wave_form_label; ++k)
@@ -305,45 +304,50 @@ int GVPMoverControl::create_waveform (double amp, double duration, int wave_id){
         double wo = mover_param.Wave_offset;
         double t_space = mover_param.Wave_space*1e-3; // sec
         double t_jump  = 0.1e-6; // sec
-        double t_wave  = duration*1e-3 - t_jump; // sec
-        int    n_reps  = 5;
+        double t_wave  = fabs(duration)*1e-3 - t_jump; // sec
+        int    n_reps  = limit_cycles;
         
         int vector_index=0;
         int gvp_options=0;
         int SRCS=0x0000c03f;
         //rpspmc_hwi->resetVPCconfirmed ();
 
+        // loookups
+        double pa[6]  = { 0.,0.,0.,0., 0.,0.}; // pointing ampl. vector [x, dy, dz, du, da, db]
+        double p0[6]  = { 0.,0.,0.,0., 0.,0.}; // offset vector [x, dy, dz, du, da, db]
+        int chi[3];
+        for (int j=0; j < wave_form_options[k].num_waves && j < 3; ++j){
+                int ch = mover_param.wave_out_channel_xyz[k][j]-1;
+                if (ch >= 0 && ch < 6) {
+                        pa[ch] = pointing * amp;
+                        p0[ch] = wo;
+                        chi[j] = ch;
+                } else { chi[j]=0; }
+        }
+        
 	switch (mover_param.MOV_waveform_id){
 	case MOV_WAVE_SAWTOOTH:
                 PI_DEBUG_GP (DBG_L2, " ** SAWTOOTH WAVEFORM CALC\n");
                 {
                         double vp_duration=0.;
-                        double p[6]  = { 0.,0.,0.,0., 0.,0.}; // pointing vector [x, dy, dz, du, da, db]
-                        double pi[6];
-                        for (int j=0; j< wave_form_options[k].num_waves && j < 3; ++j)
-                                if (mover_param.wave_out_channel_xyz[k][j] >= 1 && mover_param.wave_out_channel_xyz[k][j] <= 6)
-                                        p[mover_param.wave_out_channel_xyz[k][j]-1] = pointing > 0 ? amp : -amp;
-                        for (int i=0; i<6; ++i){
-                                pi[i] = wo*p[i];
-                        }
                         // Init
                         vp_duration += RPSPMC_ControlClass->make_dUZXYAB_vector (vector_index++,
-                                                            pi[3], pi[2], pi[0], pi[1], pi[4], pi[5], //  GVP_du[k], GVP_dz[k], GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
-                                                            10, 0, 0, 0.001, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
+                                                            p0[3], p0[2], p0[0], p0[1], p0[4], p0[5], //  GVP_du[k], GVP_dz[k], GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
+                                                            10, 0, 0, t_wave/20, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
                                                             SRCS, VP_INITIAL_SET_VEC | gvp_options);
                         // Ramp
                         vp_duration += RPSPMC_ControlClass->make_dUZXYAB_vector (vector_index++,
-                                                            p[3], p[2], p[0], p[1], p[4], p[5], // GVP_du[k], GVP_dz[k], GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
-                                                            100, 0, 0, 0.5*t_wave, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
+                                                            pa[3], pa[2], pa[0], pa[1], pa[4], pa[5], // GVP_du[k], GVP_dz[k], GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
+                                                            100, 0, 0, 0.5*t_wave, // GVP_points[k], GVP_vnrepa[k], GVP_vpcjr[k], GVP_ts[k],
                                                             SRCS, gvp_options);
                         // Jump
                         vp_duration += RPSPMC_ControlClass->make_dUZXYAB_vector (vector_index++,
-                                                            -2*p[3], -2*p[2], -2*p[0], -2*p[1], -2*p[4], -2*p[5], // GVP_du[k], GVP_dz[k], GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
+                                                            -2*pa[3], -2*pa[2], -2*pa[0], -2*pa[1], -2*pa[4], -2*pa[5], // GVP_du[k], GVP_dz[k], GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
                                                             2, 0, 0, t_jump, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
                                                             SRCS, gvp_options);
                         // Ramp
                         vp_duration += RPSPMC_ControlClass->make_dUZXYAB_vector (vector_index++,
-                                                            p[3], p[2], p[0], p[1], p[4], p[5], // GVP_du[k], GVP_dz[k], GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
+                                                            pa[3], pa[2], pa[0], pa[1], pa[4], pa[5], // GVP_du[k], GVP_dz[k], GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
                                                             100, 0, 0, 0.5*t_wave, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
                                                             SRCS, gvp_options);
                         // Space, Repeat
@@ -372,45 +376,40 @@ int GVPMoverControl::create_waveform (double amp, double duration, int wave_id){
                 PI_DEBUG_GP (DBG_L2, " ** SINE WAVEFORM CALC\n");
                 {
                         double vp_duration=0.;
-                        double p[6]  = { 0.,0.,0.,0., 0.,0.}; // pointing vector [x, dy, dz, du, da, db]
-                        double pi[6];
-                        for (int j=0; j < wave_form_options[k].num_waves && j < 3; ++j)
-                                if (mover_param.wave_out_channel_xyz[k][j] >= 1 && mover_param.wave_out_channel_xyz[k][j] <= 6)
-                                        p[mover_param.wave_out_channel_xyz[k][j]-1] = pointing > 0 ? amp : -amp;
-                        for (int i=0; i<6; ++i){
-                                pi[i] = wo*p[i];
-                        }
+                        double p[6]  = { 0.,0.,0.,0.,0.,0.}; // ch/pointing vector [x, dy, dz, du, da, db]
+                        
                         // Init
-                        vp_duration += RPSPMC_ControlClass->make_dUZXYAB_vector (vector_index++,
-                                                            pi[3], pi[2], pi[0], pi[1], pi[4], pi[5], //  GVP_du[k], GVP_dz[k], GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
-                                                            10, 0, 0, 0.001, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
-                                                            SRCS, VP_INITIAL_SET_VEC | gvp_options);
-
                         double phi[3], yp[3], y[3];
                         for (int j=0; j<wave_form_options[k].num_waves && j < 3; ++j){
-                                phi[j] = j*phase*2.0*M_PI;
-                                yp[j]  = amp*sin (phi[j]);
+                                phi[j]    = j*phase*2.0*M_PI;
+                                p[chi[j]] = yp[j] = wo + pointing*amp*sin (phi[j]);
                         }
+                        vp_duration += RPSPMC_ControlClass->make_dUZXYAB_vector (vector_index++,
+                                                                                 p[3], p[2], p[0], p[1], p[4], p[5],
+                                                                                 10, 0, 0, t_wave/20,
+                                                                                 SRCS, VP_INITIAL_SET_VEC | gvp_options);
                         int NumVecs = 28;
-                        for (int t=0; t < NumVecs; ++t){
-                                for (int j=0; j<wave_form_options[k].num_waves && j < 3; ++j)
-                                        y[j] = amp*sin (phi[j] + (double)t*2.*M_PI/NumVecs) * (pointing > 0 ? 1:-1);
-                                // make differentials
-                                for (int i=0; i<6; ++i){
-                                        pi[i] = y[i] - yp[i];
-                                        yp[i] = y[i];
+                        for (int t=0; t <= NumVecs; ++t){
+                                for (int j=0; j<wave_form_options[k].num_waves && j < 3; ++j){
+                                        y[j] = pointing*amp*sin (phi[j] + (double)t*2.*M_PI/NumVecs);
+                                        p[chi[j]] = y[j] - yp[j];
+                                        yp[j] = y[j];
                                 }
                                 // Ramp to next point
+                                int nr=0;
+                                int jmp=0;
+                                if (t == NumVecs && t_space <= 1e-6){ nr = n_reps; jmp = -(NumVecs-1); }
                                 vp_duration += RPSPMC_ControlClass->make_dUZXYAB_vector (vector_index++,
-                                                                                         p[3], p[2], p[0], p[1], p[4], p[5], // GVP_du[k], GVP_dz[k], GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
-                                                                                         10, 0, 0, t_wave/NumVecs, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
+                                                                                         p[3], p[2], p[0], p[1], p[4], p[5],
+                                                                                         10, nr, jmp, t_wave/NumVecs,
                                                                                          SRCS, gvp_options);
                         }
                         // Space, Repeat
-                        vp_duration += RPSPMC_ControlClass->make_dUZXYAB_vector (vector_index++,
-                                                            0., 0., 0., 0., 0., 0., //  GVP_du[k], GVP_dz[k], GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
-                                                            10, n_reps, -NumVecs, t_space, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
-                                                            SRCS, gvp_options);
+                        if (t_space > 1e-6)
+                                vp_duration += RPSPMC_ControlClass->make_dUZXYAB_vector (vector_index++,
+                                                                                         0., 0., 0., 0., 0., 0., //  GVP_du[k], GVP_dz[k], GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
+                                                                                         10, n_reps, -NumVecs, t_space, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
+                                                                                         SRCS, gvp_options);
                         RPSPMC_ControlClass->append_null_vector (vector_index, gvp_options);
                         // total GVP points: 10 + Reps*(100 + 2 + 100 + 10) => 222 at end of 1st rep
                 }
@@ -1138,15 +1137,15 @@ void GVPMoverControl::create_folder (){
                                 gchar *wchlab= g_strdup_printf("Wave %d: X", k);
                                 gchar *wchid = g_strdup_printf("wave-out%d-ch-x", k);
                                 mov_bp->grid_add_ec (wchlab, Unity, &mover_param.wave_out_channel_xyz[k][0], 0, 17, ".0f", wchid);
-                                gtk_widget_set_tooltip_text (mov_bp->input, "map wave N onto DAC channel (GVP component XYZUAB=1-6) for X direction move action.\n MK2: add 10 for adding mode. with adding wave to current output signal");
+                                gtk_widget_set_tooltip_text (mov_bp->input, "map wave N onto DAC channel (GVP component XYZUAB=1-6) for X direction move action.");
                                 g_free (wchid);
                                 wchid = g_strdup_printf("wave-out%d-ch-y", k);
                                 mov_bp->grid_add_ec ("Y", Unity, &mover_param.wave_out_channel_xyz[k][1], 0, 17, ".0f", wchid);
-                                gtk_widget_set_tooltip_text (mov_bp->input, "map wave N onto DAC channel (GVP component XYZUAB=1-6) for Y direction move action.\n MK2: add 10 for adding mode. with adding wave to current output signal");
+                                gtk_widget_set_tooltip_text (mov_bp->input, "map wave N onto DAC channel (GVP component XYZUAB=1-6) for Y direction move action.");
                                 g_free (wchid);
                                 wchid = g_strdup_printf("wave-out%d-ch-z", k);
                                 mov_bp->grid_add_ec ("Z", Unity, &mover_param.wave_out_channel_xyz[k][2], 0, 17, ".0f", wchid);
-                                gtk_widget_set_tooltip_text (mov_bp->input, "map wave N onto DAC channel (GVP component XYZUAB=1-6) for Z direction move action.\n MK2: add 10 for adding mode. with adding wave to current output signal");
+                                gtk_widget_set_tooltip_text (mov_bp->input, "map wave N onto DAC channel (GVP component XYZUAB=1-6) for Z direction move action.");
                                 g_free (wchid);
                                 g_free (wchlab);
 
@@ -1921,82 +1920,82 @@ void GVPMoverControl::wave_preview_draw_function (GtkDrawingArea *area, cairo_t 
                                                   int             height,
                                                   GVPMoverControl *self){
 
-        const gchar* gvpcolors[7] = { NULL, "#e8e01b","#69e81b","#e81b1b","#1b82e8","#1be5e8","#c61be8" }; 
-        const gchar *gvp_color[6] = { NULL, NULL, NULL, NULL, NULL, NULL };
-
         // prepare job lookups
         PROBE_VECTOR_GENERIC v = { 0,0.,0,0, 0,0,0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
         double *gvp_y[6] = { NULL, NULL, NULL, NULL, NULL, NULL };
-        double *gvp_yp[6] = { NULL, NULL, NULL, NULL, NULL, NULL };
-        cairo_item_path *gvp_wave[6] = { NULL, NULL, NULL, NULL, NULL, NULL };
         int k=0;
 
+        // find wave form index by id
         for (k=0; wave_form_options[k].wave_form_label; ++k)
                 if (self->mover_param.MOV_waveform_id == wave_form_options[k].curve_id)
                         break;
-
+        // get num waves
         int ns=wave_form_options[k].num_waves; // num selected channels
-
-        for (int i=1; i<=6; ++i)
-                for (int j=0; j < ns && j < 3; ++j)
-                        if (self->mover_param.wave_out_channel_xyz[k][j] >= 1 && self->mover_param.wave_out_channel_xyz[k][j] <= 6){
-                                gvp_color[j] = gvpcolors[self->mover_param.wave_out_channel_xyz[k][j]];
-                                switch (i){
-                                case 1: gvp_y[j] = &v.f_dx; break;
-                                case 2: gvp_y[j] = &v.f_dy; break;
-                                case 3: gvp_y[j] = &v.f_dz; break;
-                                case 4: gvp_y[j] = &v.f_du; break;
-                                case 5: gvp_y[j] = &v.f_da; break;
-                                case 6: gvp_y[j] = &v.f_db; break;
-                                }
-                        }
-
         if (ns < 1) return;
-        
+
+        // wave form to preview
         int wn = GPOINTER_TO_INT (g_object_get_data  (G_OBJECT (area), "wave_ch"));
-        int nch = self->create_waveform (1.,1.); // preview params only, full scale, 1ms equiv. points -- Fwd. -->
+
+        // setup lookups
+        for (int i=1; i<=6; ++i){
+                switch (i){
+                case 1: gvp_y[0] = &v.f_dx; break;
+                case 2: gvp_y[1] = &v.f_dy; break;
+                case 3: gvp_y[2] = &v.f_dz; break;
+                case 4: gvp_y[3] = &v.f_du; break;
+                case 5: gvp_y[4] = &v.f_da; break;
+                case 6: gvp_y[5] = &v.f_db; break;
+                }
+        }
+
+        // setup drawing
         int m = 34;
         int n = 128;
-        gtk_drawing_area_set_content_width (area, n+2);
-        gtk_drawing_area_set_content_height (area, m);
+        gtk_drawing_area_set_content_width (area, n+10);
+        gtk_drawing_area_set_content_height (area, m+6);
 
         g_message ("wave_preview_draw_function  %d x %d", n+2, m);
         
-        cairo_translate (cr, 1., 17.);
+        cairo_translate (cr, 5.,3+ m/2);
         cairo_scale (cr, 1., 1.);
         cairo_save (cr);
 
+        // create GVP and simulate
+        for (int j=0; j<2; ++j){ // fwd, rev
+                // create GVP
 
-        int N=RPSPMC_ControlClass->calculate_GVP_total_number_points();
-        if ( N > 1){
-                // gvp waves
-                for (int j=0; j<ns; ++j){
-                        gvp_wave[j] = new cairo_item_path (N);
-                        gvp_wave[j]->set_line_width (2.0);
-                        gvp_wave[j]->set_stroke_rgba (gvp_color[j]);
+                int vch = self->mover_param.wave_out_channel_xyz[k][wn]-1;
+                if (vch < 0 || vch > 5){
+                        g_message ("DBG: k %d, wn %d", k, wn);
+                        g_message ("DBG: gvp_ch %d", self->mover_param.wave_out_channel_xyz[k][wn]);
+                        g_warning ("==> Wrong GVP DAC Channel selected: %d, fallback to ch=1 for display", vch+1);
+                        vch=0;
                 }
-                double t=0;
-                int pc=0;
-                double Tfin = RPSPMC_ControlClass->simulate_vector_program(N, &v, &pc);
-                pc=0;
-                for (int i=0; i<N; i++){
-                        memset (&v, 0, sizeof(v));
-                        t =  RPSPMC_ControlClass->simulate_vector_program(i, &v, &pc);
-                        //g_print ("%03d %02d l{%03d} %g:  %6.3g %6.3g %6.3g %6.3g\n", i, pc, self->program_vector_list[pc].iloop, t, v.f_du,v.f_dx,v.f_dy,v.f_dz);
-                        for (int j=0; j<ns; ++j)
-                                if (gvp_y[j])
-                                        gvp_wave[j]->set_xy_fast (i, n*t/Tfin, *gvp_y[j]);
-                                else
-                                        g_warning ("gvp_y[%d] is NULL", j);
-                }
-                double skl = -m/2.;
 
-                // auto scaling + max U label
-                double gvpy_amax[6];
-                for (int j=0; j<ns; ++j){
-                        gvpy_amax[j] = gvp_wave[j]->auto_range_y (skl);
-                        gvp_wave[j]->draw (cr);
-                        delete gvp_wave[j];
+                self->create_waveform (1., j==0 ? 5. : -5., 2); // preview params only, full scale, 5ms equiv. points -- Fwd. -->
+                int N=RPSPMC_ControlClass->calculate_GVP_total_number_points();
+                if ( N > 1){
+                        cairo_item_path *gvp_wave = new cairo_item_path (N);
+                        gvp_wave->set_line_width (2.0);
+                        gvp_wave->set_stroke_rgba (j==0 ? CAIRO_COLOR_BLUE : CAIRO_COLOR_RED);
+
+                        // simulate GVP
+                        double t=0;
+                        int pc=0;
+                        double Tfin = RPSPMC_ControlClass->simulate_vector_program(N, &v, &pc);
+                        pc=0;
+                        for (int i=0; i<N; i++){
+                                memset (&v, 0, sizeof(v));
+                                t =  RPSPMC_ControlClass->simulate_vector_program(i, &v, &pc);
+                                gvp_wave->set_xy_fast (i, n*t/Tfin, *gvp_y[vch]);
+                        }
+                        double skl = -m/2.;
+
+                        // auto scaling, draw wave
+                        double gvpy_amax;
+                        gvpy_amax = gvp_wave->auto_range_y (skl);
+                        gvp_wave->draw (cr);
+                        delete gvp_wave;
                 }
         }
 }
