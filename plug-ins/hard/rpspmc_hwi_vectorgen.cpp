@@ -739,10 +739,46 @@ void RPSPMC_Control::gvp_preview_draw_function (GtkDrawingArea *area, cairo_t *c
                                                 int             width,
                                                 int             height,
                                                 RPSPMC_Control *self){
+        /* from css/styles.css
+#gvpcolor1 { background-image: none; background-color: #e8e01b; color: white; font-weight: bold; border-radius: 6px; margin-left: 4px; }
+#gvpcolor2 { background-image: none; background-color: #69e81b; color: white; font-weight: bold; border-radius: 6px; margin-left: 4px; }
+#gvpcolor3 { background-image: none; background-color: #e81b1b; color: white; font-weight: bold; border-radius: 6px; margin-left: 4px; }
+#gvpcolor4 { background-image: none; background-color: #1b82e8; color: white; font-weight: bold; border-radius: 6px; margin-left: 4px; }
+#gvpcolor5 { background-image: none; background-color: #1be5e8; color: white; font-weight: bold; border-radius: 6px; margin-left: 4px; }
+#gvpcolor6 { background-image: none; background-color: #c61be8; color: white; font-weight: bold; border-radius: 6px; margin-left: 4px; }
+        */
+        // match CSS, no clue how to read that back in or use w cairo
+        const gchar* gvpcolors[7] = { NULL, "#e8e01b","#69e81b","#e81b1b","#1b82e8","#1be5e8","#c61be8" }; 
+
+        // prepare job lookups
+        PROBE_VECTOR_GENERIC vp = { 0,0.,0,0, 0,0,0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+        PROBE_VECTOR_GENERIC v = { 0,0.,0,0, 0,0,0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+        double *gvp_y[6] = { NULL, NULL, NULL, NULL, NULL, NULL };
+        double *gvp_yp[6] = { NULL, NULL, NULL, NULL, NULL, NULL };
+        const gchar *gvp_color[6] = { NULL, NULL, NULL, NULL, NULL, NULL };
+        cairo_item_path *gvp_wave[6] = { NULL, NULL, NULL, NULL, NULL, NULL };
+        
+        int ns=0; // num selected channels
+        for (int i=1; i<=6; ++i)
+                if (self->GVP_preview_on[i]){
+                        gvp_color[ns] = gvpcolors[i];
+                        switch (i){
+                        case 1: gvp_y[ns] = &v.f_dx; gvp_yp[ns] = &vp.f_dx; break;
+                        case 2: gvp_y[ns] = &v.f_dy; gvp_yp[ns] = &vp.f_dy; break;
+                        case 3: gvp_y[ns] = &v.f_dz; gvp_yp[ns] = &vp.f_dz; break;
+                        case 4: gvp_y[ns] = &v.f_du; gvp_yp[ns] = &vp.f_du; break;
+                        case 5: gvp_y[ns] = &v.f_da; gvp_yp[ns] = &vp.f_da; break;
+                        case 6: gvp_y[ns] = &v.f_db; gvp_yp[ns] = &vp.f_db; break;
+                        }
+                        ++ns;
+                }
+
+        if (ns < 1) return;
+        
         int n=850;
         int m=128;
         int mar=18;
-        
+
         gtk_drawing_area_set_content_width (area, n+100);
         gtk_drawing_area_set_content_height (area, m);
 
@@ -750,6 +786,7 @@ void RPSPMC_Control::gvp_preview_draw_function (GtkDrawingArea *area, cairo_t *c
         cairo_scale (cr, 1., 1.);
         cairo_save (cr);
 
+        // coordinate system lines
         cairo_item_path *wave = new cairo_item_path (2);
         wave->set_line_width (0.5);
         wave->set_stroke_rgba (CAIRO_COLOR_BLACK);
@@ -774,49 +811,48 @@ void RPSPMC_Control::gvp_preview_draw_function (GtkDrawingArea *area, cairo_t *c
                         N += self->program_vector_list[pc].n;
                         pc = self->next_section(pc);
                 }
-
-                cairo_item_path *bias_wave = new cairo_item_path (N);
-                bias_wave->set_line_width (2.0);
-                bias_wave->set_stroke_rgba (CAIRO_COLOR_BLUE);
-
-                cairo_item_path *Z_wave = new cairo_item_path (N);
-                Z_wave->set_line_width (2.0);
-                Z_wave->set_stroke_rgba (CAIRO_COLOR_RED);
-
+                // gvp waves
+                for (int k=0; k<ns; ++k){
+                        gvp_wave[k] = new cairo_item_path (N);
+                        gvp_wave[k]->set_line_width (2.0);
+                        gvp_wave[k]->set_stroke_rgba (gvp_color[k]);
+                }
                 double t=0;
                 int pcp=-1;
                 int pc=0;
                 int il=0;
-                PROBE_VECTOR_GENERIC v = { 0,0.,0,0, 0,0,0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
                 double Tfin = self->simulate_vector_program(N, &v, &pc);
                 pc=0;
+
+                // annotations
                 cairo_item_text *tms = new cairo_item_text ();
+                tms->set_font_face_size ("Ununtu", 8.);
                 cairo_item_path *sec = new cairo_item_path (2);
+                sec->set_line_width (0.5);
+                sec->set_stroke_rgba (CAIRO_COLOR_BLACK);
+                
                 #define GVPPREVIEW_MAX_ANNOTATIONS 20
                 double anno_tyy[GVPPREVIEW_MAX_ANNOTATIONS][1+6];
                 int i_anno=0;
                 double tp=0.;
-                PROBE_VECTOR_GENERIC vp = { 0,0.,0,0, 0,0,0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
                 for (int i=0; i<N; i++){
-                        PROBE_VECTOR_GENERIC v = { 0,0.,0,0, 0,0,0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+                        memset (&v, 0, sizeof(v));
                         t = self->simulate_vector_program(i, &v, &pc, &il);
                         //g_print ("%03d %02d l{%03d} %g:  %6.3g %6.3g %6.3g %6.3g\n", i, pc, self->program_vector_list[pc].iloop, t, v.f_du,v.f_dx,v.f_dy,v.f_dz);
-                        bias_wave->set_xy_fast (i, n*t/Tfin, v.f_du);
-                        Z_wave->set_xy_fast (i, n*t/Tfin, v.f_dz);
-                        if (i == N-1){ tp=t; memcpy (&vp, &v, sizeof(vp)); } // use last!
-                        if (pcp != pc || i == N-1){
-                                sec->set_line_width (0.5);
-                                sec->set_stroke_rgba (CAIRO_COLOR_BLACK);
+                        for (int k=0; k<ns; ++k)
+                                gvp_wave[k]->set_xy_fast (i, n*t/Tfin, *gvp_y[k]);
 
+                        if (i == N-1){ tp=t; memcpy (&vp, &v, sizeof(vp)); } // use last!
+                        if (pcp != pc || i == N-1){ // section annotations
                                 if (i_anno < GVPPREVIEW_MAX_ANNOTATIONS){
                                         anno_tyy [i_anno][0]=n*tp/Tfin;
-                                        anno_tyy [i_anno][1]=vp.f_du;
-                                        anno_tyy [i_anno++][2]=vp.f_dz;
+                                        for (int k=0; k<ns; ++k)
+                                                anno_tyy [i_anno][1+k] = *gvp_yp[k];
+                                        i_anno++;
                                 }
                                 sec->set_xy_fast (0,n*t/Tfin,-m/2);
                                 sec->set_xy_fast (1,n*t/Tfin,m/2);
                                 sec->draw (cr);
-                                tms->set_font_face_size ("Ununtu", 8.);
                                 tms->set_anchor (CAIRO_ANCHOR_W);
                                 tms->set_stroke_rgba (CAIRO_COLOR_BLACK);
                                 const gchar* lab=g_strdup_printf("%g ms",1e3*tp);
@@ -839,43 +875,37 @@ void RPSPMC_Control::gvp_preview_draw_function (GtkDrawingArea *area, cairo_t *c
                 }
                 delete sec;
                 double skl = -(m-mar)/2.;
-                double bias_amax = bias_wave->auto_range_y (skl);
-                bias_wave->draw (cr);
-                double Z_amax = Z_wave->auto_range_y (skl);
-                Z_wave->draw (cr);
 
+                // auto scaling + max U label
+                double gvpy_amax[6];
+                for (int k=0; k<ns; ++k){
+                        gvpy_amax[k] = gvp_wave[k]->auto_range_y (skl);
+                        gvp_wave[k]->draw (cr);
+                        delete gvp_wave[k];
+
+                        //tms->set_anchor (k&1 ? CAIRO_ANCHOR_E : CAIRO_ANCHOR_W);
+                        tms->set_anchor (CAIRO_ANCHOR_E);
+                        tms->set_stroke_rgba (gvp_color[k]);
+                        const gchar* lab=g_strdup_printf("%.3g V",gvpy_amax[k]);
+                        //tms->set_text (k&1 ? -2 : n+2, -55+(k/2)*8, lab);
+                        tms->set_text (-2, -55+k*8, lab);
+                        tms->draw (cr);
+                        g_free (lab);
+
+                }
+                // turn points U labels
                 tms->set_anchor (CAIRO_ANCHOR_W);
-                tms->set_stroke_rgba (CAIRO_COLOR_BLUE);
-                const gchar* lab=g_strdup_printf("U %.3g V",bias_amax);
-                tms->set_text (n+2, -55, lab);
-                tms->draw (cr);
-                g_free (lab);
-
-                tms->set_anchor (CAIRO_ANCHOR_E);
-                tms->set_stroke_rgba (CAIRO_COLOR_RED);
-                lab=g_strdup_printf("Z %.3g V",Z_amax);
-                tms->set_text (-2,-55, lab);
-                tms->draw (cr);
-                g_free (lab);
-
                 for (int i=0; i<i_anno; ++i){
-                        tms->set_anchor (CAIRO_ANCHOR_W);
-                        tms->set_stroke_rgba (CAIRO_COLOR_BLUE);
-                        const gchar* lab=g_strdup_printf("%.3g V",anno_tyy [i][1]);
-                        tms->set_text (anno_tyy [i][0]+20, anno_tyy [i][1]/bias_amax*skl, lab);
-                        tms->draw (cr);
-                        g_free (lab);
-
-                        tms->set_stroke_rgba (CAIRO_COLOR_RED);
-                        lab=g_strdup_printf("%.3g V",anno_tyy [i][2]);
-                        tms->set_text (anno_tyy [i][0]+20, anno_tyy [i][2]/Z_amax*skl, lab);
-                        tms->draw (cr);
-                        g_free (lab);
+                        for (int k=0; k<ns; ++k){
+                                tms->set_stroke_rgba (gvp_color[k]);
+                                const gchar* lab=g_strdup_printf("%.3g V",anno_tyy [i][1+k]);
+                                tms->set_text (anno_tyy [i+k][0]+20, anno_tyy [i][1+k]/gvpy_amax[k]*skl, lab);
+                                tms->draw (cr);
+                                g_free (lab);
+                        }
                 }
                 
                 delete tms;
-                delete bias_wave;
-                delete Z_wave;
         }
 }
 

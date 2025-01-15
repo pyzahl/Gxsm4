@@ -452,7 +452,7 @@ public:
 	static int callback_GVP_restore_vp (GtkWidget *widget, RPSPMC_Control *self);
 
 	static int callback_GVP_preview_me (GtkWidget *widget, RPSPMC_Control *self);
-        int GVP_preview_on[6];
+        int GVP_preview_on[7];
         
         static int change_source_callback (GtkWidget *widget, RPSPMC_Control *self);
 	static int callback_XJoin (GtkWidget *widget, RPSPMC_Control *self);
