@@ -415,7 +415,7 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
         
         int vector_index=0;
         int gvp_options=0;
-        int SRCS=0x0000c03f;
+        int SRCS=0x0000c03f; // FIXED SRCS
         //rpspmc_hwi->resetVPCconfirmed ();
 
         // loookups
@@ -424,11 +424,11 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
         double p0[MAX_CH]  = { 0.,0.,0.,0., 0.,0.}; // offset vector [x, dy, dz, du, da, db]
         int chi[MAX_CH];
         for (int j=0; j < num_waves && j < MAX_CH; ++j){ // up to 6 Waves the same time possible
-                int ch = mover_param.wave_out_channel_xyz[j][axis]-1;
+                int ch = mover_param.wave_out_channel_xyz[j][axis]-1; // mover_param.wave_out_channel_xyz: 1..6 => 0..5
                 if (ch >= 0 && ch < 6) {
                         pa[ch] = pointing * amp;
                         p0[ch] = wo;
-                        chi[j] = ch;
+                        chi[j] = ch; // chi[wave-id] => GVP Channel
                 } else { chi[j]=0; }
         }
         
@@ -636,7 +636,7 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
 
                                 if (tv == 0){ // Init
                                         for (int j=0; j<num_waves && j < MAX_CH; ++j)
-                                                p[chi[j]] = yi[j] = yp[j] = y[j];
+                                                p[chi[j]] = yi[j] = yp[j] = wo + y[j];
                                         tp = t;
                                         vp_duration += RPSPMC_ControlClass->make_dUZXYAB_vector_all_volts (vector_index++,
                                                                                                  p[3], p[2], p[0], p[1], p[4], p[5],
@@ -644,8 +644,8 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
                                                                                                  SRCS, VP_INITIAL_SET_VEC | gvp_options);
                                 } else {
                                         for (int j=0; j<num_waves && j < MAX_CH; ++j){
-                                                p[chi[j]] = y[j] - yp[j]; // differentials
-                                                yp[j] = y[j];
+                                                p[chi[j]] = (wo + y[j]) - yp[j]; // differentials
+                                                yp[j] = (wo + y[j]);
                                         }
                                         // Ramp to next point
                                         vp_duration += RPSPMC_ControlClass->make_dUZXYAB_vector_all_volts (vector_index++,
@@ -654,8 +654,8 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
                                                                                                  SRCS, gvp_options);
                                         if (jump==1){ // add jump vector to inverse
                                                 for (int j=0; j<num_waves && j < MAX_CH; ++j){
-                                                        p[chi[j]] = -y[j] - yp[j]; // differentials
-                                                        yp[j] = -y[j];
+                                                        p[chi[j]] = wo - y[j] - yp[j]; // differentials
+                                                        yp[j] = wo - y[j];
                                                 }
                                                 vp_duration += RPSPMC_ControlClass->make_dUZXYAB_vector_all_volts (vector_index++,
                                                                                                          p[3], p[2], p[0], p[1], p[4], p[5],
@@ -679,7 +679,7 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
                         // Space, Repeat
                         if (t_space < t_jump)
                                 t_space = t_jump;
-                        int jmp=1-vector_index; // -NumVecs-1
+                        int jmp=-(vector_index-1); // -NumVecs-1
                         vp_duration += RPSPMC_ControlClass->make_dUZXYAB_vector_all_volts (vector_index++,
                                                                                  0., 0., 0., 0., 0., 0., //  GVP_du[k], GVP_dz[k], GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
                                                                                  10, n_reps, jmp, t_space, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
@@ -687,181 +687,6 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
                         RPSPMC_ControlClass->append_null_vector (vector_index, gvp_options);
                 }
 		break;
-#if 0 // OLD DSP Wave Version
-	case MOV_WAVE_STEP:
-                PI_DEBUG_GP (DBG_L2, " ** STEP CALC\n");
-                for (int i=0; i < mover_param.MOV_wave_len; i += channels){
-                        double x = (double)i/mover_param.MOV_wave_len;
-                        for (int k=0; k<channels; ++k){
-                                double xx = x+k*phase;
-                                if (i==0 || i ==  mover_param.MOV_wave_len-1)
-                                        mover_param.MOV_waveform[i+k] = 0;
-                                else
-                                        mover_param.MOV_waveform[i+k] = (short)round(SR_VFAC*pointing*amp*(round(xx - floor(xx))));
-                        }
-                }
-		break;
-	case MOV_WAVE_STEPPERMOTOR:
-               PI_DEBUG_GP (DBG_L2, " ** STEPPER MOTOR CALC\n");
-               PI_DEBUG_GP (DBG_L2, "case StepperMotor channel=%d amp=%f pointing=%f MOV_wave_len=%d \n",
-                                channels,
-                                amp,
-                                pointing,
-                                mover_param.MOV_wave_len);
-                for (int i=0; i < mover_param.MOV_wave_len; i += channels){
-                        double x = (double)2.*M_PI*i/mover_param.MOV_wave_len;
-                        for (int k=0; k<channels; ++k){                        
-                                if (i ==  mover_param.MOV_wave_len-1){
-                                // just make sure that there is not voltage at the end of the pulses
-                                        mover_param.MOV_waveform[i+k] = (short) (0.0);
-                                } else {
-                                        mover_param.MOV_waveform[i+k] = steppermotor_func(SR_VFAC*amp, x+k*pointing*M_PI/4.0);
-                                        PI_DEBUG_GP (DBG_L2, "case i=%d, x=%f, wave=%d \n",
-                                i+k,x,mover_param.MOV_waveform[i+k]);
-                                }
-                        }
-                }
-		break;
-
-	case MOV_WAVE_PULSE:
-                PI_DEBUG_GP (DBG_L2, " ** PULSE CALC\n");
-                for (int i=0; i < mover_param.MOV_wave_len; i += channels){
-                        double x = (double)i/mover_param.MOV_wave_len;
-                        for (int k=0; k<channels; ++k){
-                                double xx = x+k*phase;
-                                if (i==0 || i ==  mover_param.MOV_wave_len-1)
-                                        mover_param.MOV_waveform[i+k] = 0;
-                                else
-                                        mover_param.MOV_waveform[i+k] = (short)round(SR_VFAC*amp*(round(xx - floor(xx))));
-                        }
-                }
-		break;
-
-	case MOV_WAVE_KOALA:
-                PI_DEBUG_GP (DBG_L2, " ** KOALA CALC\n");
-                {             
-                int i=0;
-                for (; i <= mover_param.MOV_wave_len; i += channels)
-                        for (int k=0; k<channels; ++k)
-                                if (pointing > 0) // wave for forward direction 
-                                        mover_param.MOV_waveform[i+k]      = koala_func (SR_VFAC*amp, (double)i*3.*M_PI/kn + 2*k*M_PI);
-                                else
-                                        mover_param.MOV_waveform[imax-i+k] = koala_func (SR_VFAC*amp, (double)i*3.*M_PI/kn + 2*k*M_PI);
-                }
-		break;
-        
-	case MOV_WAVE_BESOCKE:
-                PI_DEBUG_GP (DBG_L2, " ** BESOCKE CALC\n");
-                {
-                double pduration;               // positive duration of the waveform
-                double tramp ;                  // duration of ramps before and after the jump
-                double tt1 = mover_param.time_delay_1;
-                double tt2 = mover_param.time_delay_2;        
-                        
-                // calculate time in ms for ramps                 
-                pduration = abs(duration);
-                if (pduration > 2*abs(tt1)+abs(tt2)) {
-                        PI_DEBUG_GP (DBG_L2,"duration is longer than expected delay times");
-                        tramp=(pduration - 2*abs(tt1) - abs(tt2))/2;
-                } else {
-                        // do not allow for negative times!
-                        PI_DEBUG_GP (DBG_L2,"duration is too short");
-                        tramp=pduration/2;
-                        tt1 = 0;
-                        tt2 = 0;                
-                }
-
-                // define individual time steps within the signal
-                int besocke_step_a; // steps until end of first ramp                
-                besocke_step_a = (int) round((double) tramp / pduration * mover_param.MOV_wave_len);
-                int besocke_step_b; // (total number of) steps to wait before z-jump
-                besocke_step_b = besocke_step_a + (int) round((double) tt1 / pduration * mover_param.MOV_wave_len);
-                int besocke_step_c; // (total number of) steps to wait after z-jump, before xy-motion
-                besocke_step_c = besocke_step_b + (int) round((double) tt2 / pduration * mover_param.MOV_wave_len);
-                int besocke_step_d; // (total number of) steps to wait after xy-motion, before final ramp
-                besocke_step_d = besocke_step_c + (int) round((double) tt1 / pduration * mover_param.MOV_wave_len);
-
-                double R=mover_param.z_Rate;           //ratio between z-jump and xy-motion
-                        
-
-                PI_DEBUG_GP (DBG_L2, "case BESOCKE t0=%f (ramp time) t1=%f (settling time) t2=%f (period of fall) pduration=%f  amp=%f  z-Rate=%f  MOV_wave_len=%d \n", 
-                                tramp,                                
-                                tt1, 
-                                tt2, 
-                                pduration, 
-                                amp,
-                                mover_param.z_Rate,
-                                mover_param.MOV_wave_len);
-                PI_DEBUG_GP (DBG_L2,"step_a %d step_b %d step_c %d step_d %d\n", besocke_step_a, besocke_step_b, besocke_step_c, besocke_step_d); 
- 
-                //if (pointing < 0)
-                //     amp = -amp; // invert
-
-                // generate fundamental waveforms xy and z
-                for (int i = 0; i <= mover_param.MOV_wave_len; i += channels){
-                        if (i <= besocke_step_a){ // first ramp
-                                // xy signal stored in channel #1                                        
-                                mover_param.MOV_waveform[i] = (short)round(SR_VFAC*amp/2.0*((double)i/(double)besocke_step_a));
-                                // z signal stored in channel #3                
-                                mover_param.MOV_waveform[i+2] = (short)round((-1.0)*SR_VFAC*abs(amp)*R*((double)i/(double)besocke_step_a));  
-                                // channel #2 only set for debuggin
-                                //mover_param.MOV_waveform[i+1] = (short)round(SR_VFAC*(1.0)*amp);              
-                        }
-                        if (besocke_step_a < i && i <= besocke_step_b) { // first delay, set constant values
-                                mover_param.MOV_waveform[i] = (short)round(SR_VFAC*amp/2.0);
-                                mover_param.MOV_waveform[i+2] = (short)round((-1.0)*SR_VFAC*abs(amp)*R);
-                                //mover_param.MOV_waveform[i+1] = (short)round(SR_VFAC*(1.0)*amp);
-                        }
-                        if (besocke_step_b < i && i <= besocke_step_c) { // second delay, z-jump, constant values
-                                mover_param.MOV_waveform[i] = (short)round(SR_VFAC*amp/2.0);
-                                mover_param.MOV_waveform[i+2] = (short) 0.0;
-                                //mover_param.MOV_waveform[i+1] = (short)round(SR_VFAC*(1.0)*amp);
-                        }
-                        if (besocke_step_c < i && i <= besocke_step_d) { // third delay, xy-jump, constant values
-                                mover_param.MOV_waveform[i] = (short)round((-1.0)*SR_VFAC*amp/2.0);
-                                mover_param.MOV_waveform[i+2] = (short) 0.0;
-                                //mover_param.MOV_waveform[i+1] = (short)round(SR_VFAC*(-1.0)*amp);
-                        }
-                        if (besocke_step_d < i) { // last ramp
-                                mover_param.MOV_waveform[i] = (-1.0)*mover_param.MOV_waveform[mover_param.MOV_wave_len-i];
-                                mover_param.MOV_waveform[i+2] = (short) 0.0;
-                                //mover_param.MOV_waveform[i+1] = (short)round(SR_VFAC*(-1.0)*amp);
-                        }
-                }
-
-                
-                if (mover_param.MOV_angle < (-180.)) mover_param.MOV_angle=(-180.);                 //cases for Z-direction
-                else if (mover_param.MOV_angle > (180.)) mover_param.MOV_angle=(0.);
-
-                double cosinus=cos(mover_param.MOV_angle*M_PI/180);
-                double sinus=sin(mover_param.MOV_angle*M_PI/180);
-                
-                for (int i=0; i < mover_param.MOV_wave_len; i += channels)
-                {
-                        short mov = mover_param.MOV_waveform[i];
-                        short jump = mover_param.MOV_waveform[i+2];
-                        // make sure that values stay within limits of short integer                        
-                        long temp;
-                        temp = (long) round (cosinus*mov + sinus*(-1)*mov/2 + jump);
-                        temp = temp > SHRT_MAX ? SHRT_MAX : temp;
-                        temp = temp < SHRT_MIN ? SHRT_MIN : temp;
-                        mover_param.MOV_waveform[i] = (short) temp;
-                        temp = (long) round (sinus*mov + jump);
-                        temp = temp > SHRT_MAX ? SHRT_MAX : temp;
-                        temp = temp < SHRT_MIN ? SHRT_MIN : temp;
-                        mover_param.MOV_waveform[i+1] = (short) temp;
-                        temp = (long) round (cosinus*(-1)*mov + sinus*(-1)*mov/2 + jump);
-                        temp = temp > SHRT_MAX ? SHRT_MAX : temp;
-                        temp = temp < SHRT_MIN ? SHRT_MIN : temp;
-                        mover_param.MOV_waveform[i+2] = (short) temp;
-                }
-                                
-                /*Now Ch0 ... X+
-                      Ch1 ... Y+
-                      Ch2 --- X-*/ 
-                }   
-		break;
-#endif
         }
 	
         return 0;
@@ -1319,7 +1144,7 @@ void GVPMoverControl::create_folder (){
                         // ===
                         mov_bp->new_line ();
                         // ======================================== Wave Output Setup ========================================
-			mov_bp->new_grid_with_frame ("#wave/direction(xyz)->DAC(0-6) * Preview for a 5ms Duration Wave, 2 cycles");
+			mov_bp->new_grid_with_frame ("#wave/direction(xyz)->DAC(0-6) * Preview for a 5ms Duration Wave, 2 cycles, Ch mapped to Axis X");
                         gtk_widget_set_tooltip_text (mov_bp->frame,"rows: waveform, columns: direction, cells: output channel; channel 7 does not work as it is overwritten by another signal."); 
 
                         mov_bp->new_line ();
@@ -2154,7 +1979,7 @@ void GVPMoverControl::wave_preview_draw_function (GtkDrawingArea *area, cairo_t 
                         for (int i=0; i<N; i++){
                                 memset (&v, 0, sizeof(v));
                                 t =  RPSPMC_ControlClass->simulate_vector_program(i, &v, &pc);
-                                gvp_wave->set_xy_fast (i, n*t/Tfin, -(*gvp_y[vch]));
+                                gvp_wave->set_xy_fast (i, n*t/Tfin, *gvp_y[vch]);
                                 if (pc == 1 && ti < 0.) ti = t;
                                 if (pcp != pc || i == N-1){ // section marks
                                         g_message ("SSS %d %d %g %g", pc, i, n*t/Tfin, t);
