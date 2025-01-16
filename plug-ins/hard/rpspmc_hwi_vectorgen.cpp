@@ -159,7 +159,37 @@ double RPSPMC_Control::make_dUZXYAB_vector (int index, double dU, double dZ, dou
         
         return ts;
 }
+
+// make dU/dZ/dX/dY vector for n points and ts time per segment
+double RPSPMC_Control::make_dUZXYAB_vector_all_volts (int index, double dU, double dZ, double dX, double dY, double da, double db, int n, int nrep, int ptr_next, double ts, int source, int options){
+        program_vector.n = n;
+
+//** WARNING ** make_dUZXYAB_vector[0]: slew or n out of range. [n=1000, ts=0.1 s] slew=10000 pts/s-- using safety fallback
         
+        if (ts < 1e-9 || n > (1<<30) || n < 2){
+                g_warning ("make_dUZXYAB_vector[%d]: slew or n out of range. [n=%d, ts=%g s] slew=%g pts/s ** using safety fallback slew=1000 pts/s.", index, n, ts, program_vector.slew);
+                program_vector.slew = 1000.;
+        } else
+                program_vector.slew = n/ts;
+        program_vector.srcs = source;
+        program_vector.options = options;
+        program_vector.repetitions = nrep;
+        program_vector.ptr_next = ptr_next;
+
+        program_vector.f_du = dU;
+        program_vector.f_dx = dX;
+        program_vector.f_dy = dY;
+        program_vector.f_dz = dZ;
+        program_vector.f_da = da;
+        program_vector.f_db = db;
+
+        print_vector ("make_dUZXYAB_vector", index);
+        write_program_vector (index);
+        
+        return ts;
+}
+
+
 // Make a delay Vector
 double RPSPMC_Control::make_delay_vector (int index, double delay, int source, int options, int nrep=0, int ptr_next=0, int points=100){
         if (points < 2) points = 100;

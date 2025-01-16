@@ -767,6 +767,8 @@ public:
         
         // make dU/dZ/dX/dY vector for n points and ts time per segment
 	double make_dUZXYAB_vector (int index, double dU, double dZ, double dX, double dY, double da, double db, int n, int nrep, int ptr_next, double ts, int source, int options);
+        double make_dUZXYAB_vector_all_volts (int index, double dU, double dZ, double dX, double dY, double da, double db, int n, int nrep, int ptr_next, double ts, int source, int options);
+
         
         // Make a delay Vector
 	double make_delay_vector (int index, double delay, int source, int options, int nrep, int ptr_next, int points);
