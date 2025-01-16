@@ -396,21 +396,22 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
         for (k=0; wave_form_options[k].wave_form_label; ++k)
                 if (mover_param.MOV_waveform_id == wave_form_options[k].curve_id)
                         break;
+
+        double phase = mover_param.inch_worm_phase/360.;
         int num_waves = wave_form_options[k].num_waves;
         
-        PI_DEBUG_GP(DBG_L2, "GVPMoverControl::create_waveform ID=%d  %s #Waves=%d\n", mover_param.MOV_waveform_id,  wave_form_options[k].wave_form_label, wave_form_options[k].num_waves);
-        g_message ("GVPMoverControl::create_waveform ID=%d  %s #Waves=%d", mover_param.MOV_waveform_id,  wave_form_options[k].wave_form_label, wave_form_options[k].num_waves);
+        PI_DEBUG_GP(DBG_L2, "GVPMoverControl::create_waveform ID=%d  %s #Waves=%d norm-ph=%g\n", mover_param.MOV_waveform_id,  wave_form_options[k].wave_form_label, num_waves, phase);
+        g_message ("GVPMoverControl::create_waveform ID=%d  %s #Waves=%d norm-ph=%g", mover_param.MOV_waveform_id,  wave_form_options[k].wave_form_label, num_waves, phase);
 
         // wave_out_channel_xyz[nth-wave 0..5=GVP CH][axis: XYZ 0..2];
  
-        double phase = mover_param.inch_worm_phase/360.;
 
         double wo = mover_param.Wave_offset;
         double t_space = mover_param.Wave_space*1e-3; // sec
         double t_jump  = 0.1e-6; // sec
-        double t_wave  = fabs(duration)*1e-3 - t_jump; // sec
+        double t_wave  = fabs(duration)*1e-3; // sec
         int    n_reps  = limit_cycles;
-        double t_delta2 = 0.5*t_space+t_jump;
+        double t_delta2 = 0.5*t_space+t_jump; // min t_jump
         
         int vector_index=0;
         int gvp_options=0;
@@ -519,10 +520,11 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
                         int NumVecs2 = 14;
                         int nr=0;
                         double yp[MAX_CH], y[MAX_CH], yi[MAX_CH];
-                        double tp;
+                        double tp=0.0;
                         double t=0.0;
                         double it=0.;
-                        double dt = 1./NumVecs;
+                        double dt = t_wave/NumVecs;
+                        double dit = 1./NumVecs;
                         int jump = 0;
                         double t4 = 0.;
                         double c=0.;
@@ -537,7 +539,7 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
                                 switch (mover_param.MOV_waveform_id){
                                 case MOV_WAVE_CYCLO_MI: mi = -1.;
                                 case MOV_WAVE_CYCLO_PL:
-                                        t = sqrt(sqrt(it)); // calculate inverse to have equidist moves in y vs. x per vector! Cycloid like t^4 +/-
+                                        t = t_wave * sqrt(sqrt(it)); // calculate inverse to have equidist moves in y vs. x per vector! Cycloid like t^4 +/-
                                         t4 = it; //t*t*t*t;
                                         for (int j=0; j<num_waves && j < MAX_CH; ++j){
                                                 if (pointing > 0)
@@ -546,14 +548,14 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
                                                         y[j] = -mi*amp*(1.-t4);
                                         }
                                         //g_print ("CyclPM %d it %g t %g t4 %g y %g\n", tv, it, t, t4, y[0]);
-                                        it += dt;
+                                        it += dit;
                                         if (tv == NumVecs) jump = 2;
                                         else jump = 0;
                                         break;
                                 
                                 case MOV_WAVE_CYCLO:
                                         //double dt = M_PI/(NumVecs - 1);
-                                        t = acos(1.-it)/M_PI; // calculate inverse to have equidist moves in y vs. x per vector! Cycloid/Rollcurve symmetric
+                                        t = t_wave*acos(1.-it)/M_PI; // calculate inverse to have equidist moves in y vs. x per vector! Cycloid/Rollcurve symmetric (1 ... -1) -> 0..1
                                         c = 1.-it; //cos (t);
                                         if (tv == NumVecs2) jump = 1; // jump
                                         else jump = 0;
@@ -564,19 +566,19 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
                                                         y[j] = -pointing*amp*(1.+c);
                                         }
                                         //g_print ("CyclS %d it %g t %g c %g y %g\n", tv, it, t, c, y[0]);
-                                        it += 2*dt;
+                                        it += 2*dit; // 0...2
                                         break;
                                 
                                 case MOV_WAVE_PULSE: pointing = 1.; // no pointing for pulse
                                 case MOV_WAVE_STEP:
                                         for (int j=0; j<num_waves && j < MAX_CH; ++j){
                                                 switch (tv){
-                                                case 0: t=0.;      y[j]=0; break;
-                                                case 1: t=t_jump+phase*j*t_wave; y[j]=0.; break;
-                                                case 2: t+=t_jump; y[j]=pointing*amp; break;
-                                                case 3: t+=0.5;    y[j]=pointing*amp; break;
-                                                case 4: t+t_jump;  y[j]=0.; break;
-                                                case 5: t=1.0;     y[j]=0.0; tv=NumVecs; break;
+                                                case 0: t=0.;                                y[j]=0; break;
+                                                case 1: t=1*t_jump+phase*(j+1)*t_wave;       y[j]=0.; break;
+                                                case 2: t=2*t_jump+phase*(j+1)*t_wave;       y[j]=pointing*amp; break;
+                                                case 3: t=2*t_jump+(0.5+phase*(j+1))*t_wave; y[j]=pointing*amp; break;
+                                                case 4: t=3*t_jump+(0.5+phase*(j+1))*t_wave; y[j]=0.; break;
+                                                case 5: t=t_wave;                            y[j]=0.0; tv=NumVecs; break;
                                                 default: break;
                                                 }
                                         }
@@ -591,12 +593,12 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
                                 case MOV_WAVE_DELTA:
                                         for (int j=0; j<num_waves && j < MAX_CH; ++j){
                                                 switch (tv){
-                                                case 0: t=0.;        y[j]=0; break;
-                                                case 1: t=t_jump+0.2*j*t_wave; y[j]=0.; break;
-                                                case 2: t+=t_jump;   y[j]=pointing*amp; break;
-                                                case 3: t+=t_delta2; y[j]=pointing*amp; break;
-                                                case 4: t+t_jump;    y[j]=0.; break;
-                                                case 5: t=1.0;       y[j]=0.0; tv=NumVecs; break;
+                                                case 0: t=0.;                                         y[j]=0; break;
+                                                case 1: t=1*t_jump+(0.5+phase*(j+1))*t_wave;          y[j]=0.; break;
+                                                case 2: t=2*t_jump+(0.5+phase*(j+1))*t_wave;          y[j]=pointing*amp; g_message("j: %d %g => t=%g s",j,phase,t); break;
+                                                case 3: t=t_delta2+2*t_jump+(0.5+phase*(j+1))*t_wave; y[j]=pointing*amp; break;
+                                                case 4: t=t_delta2+3*t_jump+(0.5+phase*(j+1))*t_wave; y[j]=0.; break;
+                                                case 5: t=t_wave;                                     y[j]=0.0; tv=NumVecs; break;
                                                 default: break;
                                                 }
                                         }
@@ -604,25 +606,28 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
 
                                 case MOV_WAVE_STEPPERMOTOR:
                                         for (int j=0; j<num_waves && j < MAX_CH; ++j){
-                                                t = (double)tv/NumVecs;
-                                                y[j] = steppermotor_func (amp, 2*M_PI*t+j*pointing*M_PI/4.0);
+                                                t = (double)tv/NumVecs*t_wave;
+                                                double t1 = (double)tv/NumVecs;
+                                                y[j] = steppermotor_func (amp, 2*M_PI*t1+j*pointing*M_PI/4.0);
                                         }
                                         break;
 
                                 case MOV_WAVE_KOALA:
                                         for (int j=0; j<num_waves && j < MAX_CH; ++j){
-                                                t = (double)tv/NumVecs;
+                                                t = (double)tv/NumVecs*t_wave;
+                                                double t1 = (double)tv/NumVecs;
                                                 if (pointing > 0)
-                                                        y[j] = koala_func (amp, (double)t*3.*M_PI + 2*j*M_PI);
+                                                        y[j] = koala_func (amp, (double)t1*3.*M_PI + 2*j*M_PI);
                                                 else
-                                                        y[j] = koala_func (amp, (double)(1.0-t)*3.*M_PI + 2*j*M_PI);
+                                                        y[j] = koala_func (amp, (double)(1.0-t1)*3.*M_PI + 2*j*M_PI);
                                         }
                                         break;
                                         
                                 case MOV_WAVE_BESOCKE:
                                         for (int j=0; j<num_waves && j < MAX_CH; ++j){
-                                                t = (double)tv/NumVecs;
-                                                y[j] = besocke_func (pointing*amp, duration, t, mover_param.time_delay_1, mover_param.time_delay_2, mover_param.z_Rate, j, mover_param.MOV_angle);
+                                                t = (double)tv/NumVecs*t_wave;
+                                                double t1 = (double)tv/NumVecs;
+                                                y[j] = besocke_func (pointing*amp, duration, t1, mover_param.time_delay_1, mover_param.time_delay_2, mover_param.z_Rate, j, mover_param.MOV_angle);
                                         }
                                         break;
 
@@ -645,7 +650,7 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
                                         // Ramp to next point
                                         vp_duration += RPSPMC_ControlClass->make_dUZXYAB_vector_all_volts (vector_index++,
                                                                                                  p[3], p[2], p[0], p[1], p[4], p[5],
-                                                                                                 10, 0, 0, fabs(t-tp)*t_wave+t_jump,
+                                                                                                 10, 0, 0, fabs(t-tp)+t_jump,
                                                                                                  SRCS, gvp_options);
                                         if (jump==1){ // add jump vector to inverse
                                                 for (int j=0; j<num_waves && j < MAX_CH; ++j){
