@@ -2359,6 +2359,7 @@ void RPSPMC_Control::create_folder (){
                 }
 
                 if (k >= 0){
+                        if (!swappable_signals[k].label) { g_warning ("GVP SOURCE MUX/SWPS INIT ** i=%d k=%d SWPS invalid/NULL", i,k); break; }
                       //rpspmc_source_signals[i].name         = swappable_signals[k].name;
                         rpspmc_source_signals[i].label        = swappable_signals[k].label;
                         rpspmc_source_signals[i].unit         = swappable_signals[k].unit;
