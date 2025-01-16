@@ -905,6 +905,48 @@
       <description>pcs0000, PCS Remote-ID: 'gvpmover-lens-axis-Z', Default/U: 0      , Adjustment PCS Name: 'gvpmover-lens-axis-Z' </description>
     </key>
 
+    <key name="gvpmover-sm-max-steps" type="d">
+      <default>10</default>
+      <summary>PCS Remote-ID: 'gvpmover-sm-max-steps', Default/U:   10       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-sm-max-steps', Default/U:   10      , Adjustment PCS Name: 'gvpmover-sm-max-steps' </description>
+    </key>
+
+    <key name="gvpmover-sm-amplitude" type="d">
+      <default>1</default>
+      <summary>PCS Remote-ID: 'gvpmover-sm-amplitude', Default/U:  1.00 V     </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-sm-amplitude', Default/U:  1.00 V    , Adjustment PCS Name: 'gvpmover-sm-amplitude' </description>
+    </key>
+
+    <key name="gvpmover-sm-duration" type="d">
+      <default>3</default>
+      <summary>PCS Remote-ID: 'gvpmover-sm-duration', Default/U: 3.000 ms     </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-sm-duration', Default/U: 3.000 ms    , Adjustment PCS Name: 'gvpmover-sm-duration' </description>
+    </key>
+
+    <key name="gvpmover-sm-gpio" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-sm-gpio', Default/U: 0000 h     </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-sm-gpio', Default/U: 0000 h    , Adjustment PCS Name: 'gvpmover-sm-gpio' </description>
+    </key>
+
+    <key name="gvpmover-sm-axis-x" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-sm-axis-X', Default/U: 0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-sm-axis-X', Default/U: 0      , Adjustment PCS Name: 'gvpmover-sm-axis-X' </description>
+    </key>
+
+    <key name="gvpmover-sm-axis-y" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-sm-axis-Y', Default/U: 0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-sm-axis-Y', Default/U: 0      , Adjustment PCS Name: 'gvpmover-sm-axis-Y' </description>
+    </key>
+
+    <key name="gvpmover-sm-axis-z" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'gvpmover-sm-axis-Z', Default/U: 0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'gvpmover-sm-axis-Z', Default/U: 0      , Adjustment PCS Name: 'gvpmover-sm-axis-Z' </description>
+    </key>
+
     <key name="gvpmover-auto-max-steps" type="d">
       <default>10</default>
       <summary>PCS Remote-ID: 'gvpmover-auto-max-steps', Default/U:   10       </summary>
