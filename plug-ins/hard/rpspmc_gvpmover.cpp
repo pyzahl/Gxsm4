@@ -108,10 +108,8 @@ static WAVE_FORM_CONFIG_OPTIONS wave_form_options[] = {
         { MOV_WAVE_CYCLO, "Cycloide", "Support for stick-slip motion based on a cycloidic signal - full range", 1 },
         { MOV_WAVE_CYCLO_PL, "Cycloide+", "Support for stick-slip motion based on a positively accelarating signal and finally jump to zero.", 1 },
         { MOV_WAVE_CYCLO_MI, "Cycloide-", "Support for stick-slip motion based on a negatively accelarating signal and finally jump to zero.", 1 },
-        //{ MOV_WAVE_CYCLO_IPL, "Inv. Cycloide+", "Support for stick-slip motion based on a cycloidic signal, inverted - positve values.", 1 },
-        //{ MOV_WAVE_CYCLO_IMI, "Inv. Cycloide-", "Support for stick-slip motion based on a cycloidic signal, inverted - negative values.", 1 },
-        { MOV_WAVE_KOALA, "Koala", "Support for Koala type STM heads.", 2 },
-        { MOV_WAVE_BESOCKE, "Besocke", "Support for bettle type STM heads with 3fold segmented piezos for the coarse approach without inner z-electrode.", 3 },
+        { MOV_WAVE_KOALA, "Koala **", "Support for Koala type STM heads. INITIAL PORT FROM GXSM3 to 4 and GVP. Needs opt of jumps/Vector dt's", 2 },
+        { MOV_WAVE_BESOCKE, "Besocke **", "Support for bettle type STM heads with 3fold segmented piezos for the coarse approach without inner z-electrode. INITIAL PORT FROM GXSM3 to 4 and GVP. NEEDS some work, please see code notes.", 3 },
         { MOV_WAVE_PULSE, "Pulse",	 "Support for arbitrary rectangular pulses.", 1 },
 
         { MOV_WAVE_STEP, "Stepfunc", "Support for step function.", 1 },
@@ -119,9 +117,9 @@ static WAVE_FORM_CONFIG_OPTIONS wave_form_options[] = {
         // positive pluse: base line is zero, pulse as height given by amplitude
         // ratio between on/off: 1:1
         // total time = ton + toff
+        { MOV_WAVE_DELTA, "Delta Function", "Support for delta function series.", 6 },
 
         { MOV_WAVE_STEPPERMOTOR, "Stepper Motor", "Support for stepper motor (2 channel).", 2 },
-        { MOV_WAVE_GPIO, "(none) GPIO Mode", "Custom GPIO", 0 },
         { -1, NULL, NULL, 0 },
 };
 
@@ -285,6 +283,111 @@ short steppermotor_func (double amplitude, double phi){
         else return (short)(round(amplitude));
 }
 
+// port of Besocke Function -- needs some work to optimize vector distributions (dT's) vs fixed grid, address preview/angle ?!?
+// phase: 0..1 normalized time/phase
+// may inv ampl
+double besocke_func (double amp, double pduration, double phase, double tt1, double tt2, double z_Rate, int channel, double angle){
+        //double pduration;          // positive duration of the waveform
+        //double tt1 = mover_param.time_delay_1;
+        //double tt2 = mover_param.time_delay_2;        
+        static double tramp ;         // duration of ramps before and after the jump
+        static int init=1;
+        static double besocke_step_a; // until end of first ramp                
+        static double besocke_step_b; // wait before z-jump
+        static double besocke_step_c; // wait after z-jump, before xy-motion
+        static double besocke_step_d; // wait after xy-motion, before final ramp
+        static double R;              // ratio between z-jump and xy-motion
+                        
+        if (channel < 0 || init) { // init only
+                // calculate time in ms for ramps                 
+                if (pduration > 2*fabs(tt1)+fabs(tt2)) {
+                        PI_DEBUG_GP (DBG_L2,"duration is longer than expected delay times");
+                        tramp=(pduration - 2*fabs(tt1) - fabs(tt2))/2;
+                } else {
+                        // do not allow for negative times!
+                        PI_DEBUG_GP (DBG_L2,"duration is too short");
+                        tramp=pduration/2;
+                        tt1 = 0;
+                        tt2 = 0;                
+                }
+
+                // define individual time steps within the signal
+                besocke_step_a = tramp / pduration;
+                besocke_step_b = besocke_step_a + tt1 / pduration;
+                besocke_step_c = besocke_step_b + tt2 / pduration;
+                besocke_step_d = besocke_step_c + tt1 / pduration;
+
+                R=z_Rate;           //ratio between z-jump and xy-motion
+
+                PI_DEBUG_GP (DBG_L2, "case BESOCKE t0=%f (ramp time) t1=%f (settling time) t2=%f (period of fall) pduration=%f  amp=%f  z-Rate=%f\n", 
+                             tramp,                                
+                             tt1, 
+                             tt2, 
+                             pduration, 
+                             amp,
+                             z_Rate);
+                PI_DEBUG_GP (DBG_L2,"step_a %d step_b %d step_c %d step_d %d\n", besocke_step_a, besocke_step_b, besocke_step_c, besocke_step_d); 
+                init = 0;
+                return 0.;
+        } 
+        //if (pointing < 0)
+        //     amp = -amp; // invert
+
+        double y[3] = {0.,0.,0.};
+        
+        // generate fundamental waveforms xy and z
+        if (phase <= besocke_step_a){ // first ramp
+                switch (channel){
+                case 0: y[0] = 0.5*amp*phase/besocke_step_a; // xy signal stored in channel #1                                        
+                case 2: y[2] = -R*fabs (amp)*phase/besocke_step_a; // z signal stored in channel #3                
+                case 1: y[1] = amp; // channel #2 only set for debugging
+                }
+        } else if (besocke_step_a < phase && phase <= besocke_step_b) { // first delay, set constant values
+                switch (channel){
+                case 0: y[0] = amp/2.;
+                case 2: y[2] = R*fabs(amp);
+                case 1: y[1] = amp;
+                }
+        } else if (besocke_step_b < phase && phase <= besocke_step_c) { // second delay, z-jump, constant values
+                switch (channel){
+                case 0: y[0] = amp/2.;
+                case 2: y[2] = 0.0;
+                case 1: y[1] = amp;
+                }
+        } else if (besocke_step_c < phase && phase <= besocke_step_d) { // third delay, xy-jump, constant values
+                switch (channel){
+                case 0: y[0] = -amp/2.;
+                case 2: y[2] = 0.0;
+                case 1: y[1] = amp;
+                }
+        } else if (besocke_step_d < phase) { // last ramp
+                switch (channel){
+                case 0: y[0] = -0.5*amp*(1.-phase)/besocke_step_a; //mover_param.MOV_waveform[i] = -mover_param.MOV_waveform[mover_param.MOV_wave_len-i];
+                case 2: y[2] = 0.0;
+                case 1: y[1] = -amp;
+                }
+        }
+                
+        if (angle < -180.) angle=-180.;                 //cases for Z-direction
+        else if (angle > 180.) angle=0.;
+
+        double c=cos (angle*M_PI/180);
+        double s=sin (angle*M_PI/180);
+        
+        double mov = y[0];
+        double jump = y[2];
+        double temp;
+        switch (channel){
+        case 0: return c*mov - 0.5*s*mov + jump;   // Ch0 ... X+
+        case 1: return s*mov + jump;               // Ch1 ... Y+
+        case 2: return -c*mov - 0.5*s*mov + jump;  // Ch2 --- X-
+        }
+
+        return 0.;
+}   
+
+
+
 // Parametric Generation of GVP for Wave Forms
 // duration in ms
 int GVPMoverControl::create_waveform (double amp, double duration, int limit_cycles, int pointing, int axis){
@@ -307,6 +410,7 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
         double t_jump  = 0.1e-6; // sec
         double t_wave  = fabs(duration)*1e-3 - t_jump; // sec
         int    n_reps  = limit_cycles;
+        double t_delta2 = 0.5*t_space+t_jump;
         
         int vector_index=0;
         int gvp_options=0;
@@ -350,7 +454,7 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
                         // Ramp
                         int nr=0;
                         int jmp=0;
-                        if (t_space <= 1e-6){ nr = n_reps; jmp = -2; } // repeat from here
+                        if (t_space <= t_jump){ nr = n_reps; jmp = -2; } // repeat from here
                         vp_duration += RPSPMC_ControlClass->make_dUZXYAB_vector_all_volts (vector_index++,
                                                                                  pa[3], pa[2], pa[0], pa[1], pa[4], pa[5], // GVP_du[k], GVP_dz[k], GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
                                                                                  100, nr, jmp, 0.5*t_wave, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
@@ -391,7 +495,7 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
                                 // Ramp to next point
                                 nr=0;
                                 int jmp=0;
-                                if (t == NumVecs && t_space <= 1e-6){ nr = n_reps; jmp = -(NumVecs-1); }
+                                if (t == NumVecs && t_space <= t_jump){ nr = n_reps; jmp = -(NumVecs-1); }
                                 vp_duration += RPSPMC_ControlClass->make_dUZXYAB_vector_all_volts (vector_index++,
                                                                                          p[3], p[2], p[0], p[1], p[4], p[5],
                                                                                          10, nr, jmp, t_wave/NumVecs,
@@ -423,6 +527,10 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
                         double t4 = 0.;
                         double c=0.;
                         double mi=1;
+
+                        if (mover_param.MOV_waveform_id == MOV_WAVE_BESOCKE)
+                                besocke_func (amp, duration, t, mover_param.time_delay_1, mover_param.time_delay_2, mover_param.z_Rate, -1, mover_param.MOV_angle); // init
+
                         for (int tv=0; tv <= NumVecs; ++tv){
                                 // template to construct any funcion with potential steps
                                 // calculate function y[j](t) = ...
@@ -433,7 +541,7 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
                                         t4 = it; //t*t*t*t;
                                         for (int j=0; j<num_waves && j < MAX_CH; ++j){
                                                 if (pointing > 0)
-                                                        y[j] = mi*amp*t4;
+                                                        y[j] = -mi*amp*t4;
                                                 else
                                                         y[j] = -mi*amp*(1.-t4);
                                         }
@@ -463,21 +571,35 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
                                 case MOV_WAVE_STEP:
                                         for (int j=0; j<num_waves && j < MAX_CH; ++j){
                                                 switch (tv){
-                                                case 0: t=0.; y[j]=0; break;
-                                                case 1: t=1e-6+phase; y[j]=0.; break;
-                                                case 2: t+=1e-6; y[j]=pointing*amp; break;
-                                                case 3: t+=0.5; y[j]=pointing*amp; break;
-                                                case 4: t+1e-6; y[j]=0.; break;
-                                                case 5: t=1.0; y[j]=0.0; tv=NumVecs; break;
+                                                case 0: t=0.;      y[j]=0; break;
+                                                case 1: t=t_jump+phase*j*t_wave; y[j]=0.; break;
+                                                case 2: t+=t_jump; y[j]=pointing*amp; break;
+                                                case 3: t+=0.5;    y[j]=pointing*amp; break;
+                                                case 4: t+t_jump;  y[j]=0.; break;
+                                                case 5: t=1.0;     y[j]=0.0; tv=NumVecs; break;
                                                 default: break;
                                                 }
                                         }
-#if 0                                                
+#if 0 // FUNCTIONAL, RAMP JUMP RATE LIMITED BY dT GRID                                                
                                         for (int j=0; j<num_waves && j < MAX_CH; ++j){
-                                                t = ((double)tv/NumVecs)+j*phase;
+                                                t = ((double)tv/NumVecs)+j*phase*t_wave;
                                                 y[j] = pointing*amp*(round(t - floor(t)));
                                         }
 #endif
+                                        break;
+
+                                case MOV_WAVE_DELTA:
+                                        for (int j=0; j<num_waves && j < MAX_CH; ++j){
+                                                switch (tv){
+                                                case 0: t=0.;        y[j]=0; break;
+                                                case 1: t=t_jump+0.2*j*t_wave; y[j]=0.; break;
+                                                case 2: t+=t_jump;   y[j]=pointing*amp; break;
+                                                case 3: t+=t_delta2; y[j]=pointing*amp; break;
+                                                case 4: t+t_jump;    y[j]=0.; break;
+                                                case 5: t=1.0;       y[j]=0.0; tv=NumVecs; break;
+                                                default: break;
+                                                }
+                                        }
                                         break;
 
                                 case MOV_WAVE_STEPPERMOTOR:
@@ -495,8 +617,15 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
                                                 else
                                                         y[j] = koala_func (amp, (double)(1.0-t)*3.*M_PI + 2*j*M_PI);
                                         }
-                                
-                                
+                                        break;
+                                        
+                                case MOV_WAVE_BESOCKE:
+                                        for (int j=0; j<num_waves && j < MAX_CH; ++j){
+                                                t = (double)tv/NumVecs;
+                                                y[j] = besocke_func (pointing*amp, duration, t, mover_param.time_delay_1, mover_param.time_delay_2, mover_param.z_Rate, j, mover_param.MOV_angle);
+                                        }
+                                        break;
+
                                 default: break;
                                 }
 
@@ -506,7 +635,7 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
                                         tp = t;
                                         vp_duration += RPSPMC_ControlClass->make_dUZXYAB_vector_all_volts (vector_index++,
                                                                                                  p[3], p[2], p[0], p[1], p[4], p[5],
-                                                                                                 10, 0, 0, t_wave/20,
+                                                                                                 10, 0, 0, t_jump,
                                                                                                  SRCS, VP_INITIAL_SET_VEC | gvp_options);
                                 } else {
                                         for (int j=0; j<num_waves && j < MAX_CH; ++j){
@@ -516,7 +645,7 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
                                         // Ramp to next point
                                         vp_duration += RPSPMC_ControlClass->make_dUZXYAB_vector_all_volts (vector_index++,
                                                                                                  p[3], p[2], p[0], p[1], p[4], p[5],
-                                                                                                 10, 0, 0, fabs(t-tp)*t_wave+1e-6,
+                                                                                                 10, 0, 0, fabs(t-tp)*t_wave+t_jump,
                                                                                                  SRCS, gvp_options);
                                         if (jump==1){ // add jump vector to inverse
                                                 for (int j=0; j<num_waves && j < MAX_CH; ++j){
@@ -525,7 +654,7 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
                                                 }
                                                 vp_duration += RPSPMC_ControlClass->make_dUZXYAB_vector_all_volts (vector_index++,
                                                                                                          p[3], p[2], p[0], p[1], p[4], p[5],
-                                                                                                         2, 0, 0, 1e-6,
+                                                                                                         2, 0, 0, t_jump,
                                                                                                          SRCS, gvp_options);
                                         }
 
@@ -536,15 +665,15 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
                                                 }
                                                 vp_duration += RPSPMC_ControlClass->make_dUZXYAB_vector_all_volts (vector_index++,
                                                                                                          p[3], p[2], p[0], p[1], p[4], p[5],
-                                                                                                         2, 0, 0, 1e-6,
+                                                                                                         2, 0, 0, t_jump,
                                                                                                          SRCS, gvp_options);
                                         }
                                         tp = t;
                                 }
                         }
                         // Space, Repeat
-                        if (t_space < 1e-6)
-                                t_space = 1e-6;
+                        if (t_space < t_jump)
+                                t_space = t_jump;
                         int jmp=1-vector_index; // -NumVecs-1
                         vp_duration += RPSPMC_ControlClass->make_dUZXYAB_vector_all_volts (vector_index++,
                                                                                  0., 0., 0., 0., 0., 0., //  GVP_du[k], GVP_dz[k], GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
@@ -553,7 +682,7 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
                         RPSPMC_ControlClass->append_null_vector (vector_index, gvp_options);
                 }
 		break;
-#if 0
+#if 0 // OLD DSP Wave Version
 	case MOV_WAVE_STEP:
                 PI_DEBUG_GP (DBG_L2, " ** STEP CALC\n");
                 for (int i=0; i < mover_param.MOV_wave_len; i += channels){
@@ -1921,8 +2050,8 @@ int GVPMoverControl::configure_waveform(GtkWidget *widget){
                 gtk_widget_hide ((GtkWidget*) g_slist_nth_data (wc, 3+q));
                 gtk_widget_hide ((GtkWidget*) g_slist_nth_data (wc, 4+q));
                 gtk_widget_hide ((GtkWidget*) g_slist_nth_data (wc, 5+q));
-                gtk_widget_hide ((GtkWidget*) g_slist_nth_data (wc, 6+q));
-                gtk_widget_hide ((GtkWidget*) g_slist_nth_data (wc, 7+q));
+                gtk_widget_show ((GtkWidget*) g_slist_nth_data (wc, 6+q));
+                gtk_widget_show ((GtkWidget*) g_slist_nth_data (wc, 7+q));
         }        
 
         return 1;
@@ -1938,7 +2067,6 @@ void GVPMoverControl::wave_preview_draw_function (GtkDrawingArea *area, cairo_t 
         PROBE_VECTOR_GENERIC v = { 0,0.,0,0, 0,0,0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
         double *gvp_y[6] = { NULL, NULL, NULL, NULL, NULL, NULL };
         int k=0;
-
         // find wave form index by id
         for (k=0; wave_form_options[k].wave_form_label; ++k)
                 if (self->mover_param.MOV_waveform_id == wave_form_options[k].curve_id)
@@ -1963,8 +2091,9 @@ void GVPMoverControl::wave_preview_draw_function (GtkDrawingArea *area, cairo_t 
         }
 
         // setup drawing
-        int m = 34;
-        int n = 128;
+        int m = 64;
+        int n = 256;
+        int mar=0;
         gtk_drawing_area_set_content_width (area, n+10);
         gtk_drawing_area_set_content_height (area, m+6);
 
@@ -1974,6 +2103,22 @@ void GVPMoverControl::wave_preview_draw_function (GtkDrawingArea *area, cairo_t 
         cairo_scale (cr, 1., 1.);
         cairo_save (cr);
 
+        cairo_item_path *sec = new cairo_item_path (2);
+        sec->set_line_width (0.5);
+        sec->set_stroke_rgba (CAIRO_COLOR_BLACK);
+        sec->set_xy_fast (0,0,0);
+        sec->set_xy_fast (1,n-1,0);
+        sec->draw (cr);
+        sec->set_stroke_rgba (CAIRO_COLOR_BLACK);
+        sec->set_xy_fast (0,0,(m-mar)/2);
+        sec->set_xy_fast (1,n-1,(m-mar)/2);
+        sec->draw (cr);
+        sec->set_stroke_rgba (CAIRO_COLOR_BLACK);
+        sec->set_xy_fast (0,0,-(m-mar)/2);
+        sec->set_xy_fast (1,n-1,-(m-mar)/2);
+        sec->draw (cr);
+        sec->set_stroke_rgba (CAIRO_COLOR_GREEN);
+        
         // create GVP and simulate
         for (int j=0; j<2; ++j){ // fwd, rev
                 // create GVP
@@ -1988,30 +2133,58 @@ void GVPMoverControl::wave_preview_draw_function (GtkDrawingArea *area, cairo_t 
 
                 self->create_waveform (1., 5., 2, j==0 ? 1 : -1, axis); // preview params only, scale 1V, 5ms, 2 cycles, Fwd/Rev, axis=0
                 int N=RPSPMC_ControlClass->calculate_GVP_total_number_points();
+
                 if ( N > 1){
                         cairo_item_path *gvp_wave = new cairo_item_path (N);
                         gvp_wave->set_line_width (2.0);
-                        gvp_wave->set_stroke_rgba (j==0 ? CAIRO_COLOR_BLUE : CAIRO_COLOR_RED);
+                        gvp_wave->set_stroke_rgba (j==0 ? CAIRO_COLOR_RED : CAIRO_COLOR_BLUE);
 
                         // simulate GVP
                         double t=0;
                         int pc=0;
+                        int pcp=-1;
+                        double ti=-1.;
                         double Tfin = RPSPMC_ControlClass->simulate_vector_program(N, &v, &pc);
                         pc=0;
                         for (int i=0; i<N; i++){
                                 memset (&v, 0, sizeof(v));
                                 t =  RPSPMC_ControlClass->simulate_vector_program(i, &v, &pc);
-                                gvp_wave->set_xy_fast (i, n*t/Tfin, *gvp_y[vch]);
+                                gvp_wave->set_xy_fast (i, n*t/Tfin, -(*gvp_y[vch]));
+                                if (pc == 1 && ti < 0.) ti = t;
+                                if (pcp != pc || i == N-1){ // section marks
+                                        g_message ("SSS %d %d %g %g", pc, i, n*t/Tfin, t);
+                                        sec->set_xy_fast (0,n*t/Tfin,(m-mar)/2);
+                                        sec->set_xy_fast (1,n*t/Tfin,-(m-mar)/2);
+                                        sec->draw (cr);
+                                        pcp = pc;
+                                }
                         }
-                        double skl = -m/2.;
+                                
+                        double skl = -(m-mar)/2.;
 
                         // auto scaling, draw wave
                         double gvpy_amax;
                         gvpy_amax = gvp_wave->auto_range_y (skl);
                         gvp_wave->draw (cr);
                         delete gvp_wave;
+
+                        cairo_item_text *tms = new cairo_item_text ();
+                        tms->set_font_face_size ("Ununtu", 8.);
+                        tms->set_anchor (CAIRO_ANCHOR_W);
+                        tms->set_stroke_rgba (CAIRO_COLOR_BLACK);
+                        const gchar* lab=g_strdup_printf("%.2g ms",1e3*ti/2);
+                        tms->set_text (n*ti/Tfin, (m-mar)/2-8, lab);
+                        tms->draw (cr);
+                        g_free (lab);
+                        lab=g_strdup_printf("%.2g ms",1e3*(t-ti)/2);
+                        tms->set_text (n*t/Tfin/2, (m-mar)/2-8, lab);
+                        tms->draw (cr);
+                        g_free (lab);
+                        delete tms;
+
                 }
         }
+        delete sec;
 }
 
 void GVPMoverControl::updateAxisCounts (GtkWidget* w, int idx, int cmd){

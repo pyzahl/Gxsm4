@@ -100,7 +100,7 @@ typedef struct{
 #define MOV_WAVE_USER_TTL 10
 #define MOV_WAVE_KOALA    11
 #define MOV_WAVE_BESOCKE  12
-#define MOV_WAVE_PULSEX   13
+#define MOV_WAVE_DELTA    13
 #define MOV_WAVE_GPIO     14
 #define MOV_WAVE_STEPPERMOTOR 15
 #define MOV_WAVE_LAST     16
