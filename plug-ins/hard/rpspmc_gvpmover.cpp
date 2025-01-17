@@ -253,34 +253,34 @@ GVPMoverControl::GVPMoverControl (Gxsm4app *app):AppBase(app)
 	rpspmc_pacpll_hwi_pi.app->ConnectPluginToStopScanEvent (GVPMoverControl_Thaw_callback);
 }
 
-short koala_func (double amplitude, double phi){
+double koala_func (double amplitude, double phi){
         // 1/6 ... 1/2 ... 1
         if (phi > 3.*M_PI)
                 phi -= 3.*M_PI;
         if (phi < 0.)
                 phi += 3.*M_PI;
         if (phi < 3.*M_PI/6.)
-                return (short)round (amplitude * sin (phi));
+                return amplitude * sin (phi);
         else if (phi < 3.*M_PI/2.)
-                return (short)round (amplitude);
+                return amplitude;
         else
-                return (short)round (amplitude * sin (phi-M_PI));
+                return amplitude * sin (phi-M_PI);
 }
 
-short steppermotor_func (double amplitude, double phi){
+double steppermotor_func (double amplitude, double phi){
         while (phi > 2.*M_PI)
                 phi -= 2.*M_PI;
         while (phi < 0.)
                 phi += 2.*M_PI;
         if (phi < M_PI/2.0)
-                return (short)(round(amplitude));
+                return amplitude;
         else if (phi < M_PI*0.75)
-                return (short)(round(0.0));
+                return 0.0;
         else if (phi < M_PI*1.5)
-                return (short)(round(-amplitude));
+                return -amplitude;
         else if (phi < M_PI*1.75)
-                return (short)(round (0.0));
-        else return (short)(round(amplitude));
+                return 0.0;
+        else return amplitude;
 }
 
 // port of Besocke Function -- needs some work to optimize vector distributions (dT's) vs fixed grid, address preview/angle ?!?
@@ -435,8 +435,8 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
         double vp_duration=0.;
 	switch (mover_param.MOV_waveform_id){
 	case MOV_WAVE_SAWTOOTH:
-                PI_DEBUG_GP (DBG_L2, " ** SAWTOOTH WAVEFORM CALC\n");
-                {
+                PI_DEBUG_GP (DBG_L2, " ** SAWTOOTH GVP WAVEFORM CALC\n");
+                { // direct GVP writing
                         // Init
                         vp_duration += RPSPMC_ControlClass->make_dUZXYAB_vector_all_volts (vector_index++,
                                                                                  p0[3], p0[2], p0[0], p0[1], p0[4], p0[5], //  GVP_du[k], GVP_dz[k], GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
@@ -472,7 +472,7 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
 		break;
 	case MOV_WAVE_SINE:
                 PI_DEBUG_GP (DBG_L2, " ** SINE WAVEFORM CALC\n");
-                {
+                { // GVP via function on NumVecs (28) grid, keep in mind: current max 32 GVP vectors incl start and final Null vector.
                         double p[MAX_CH]  = { 0.,0.,0.,0.,0.,0.}; // ch/pointing vector [x, dy, dz, du, da, db]
                         
                         // Init
@@ -511,7 +511,7 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
                         RPSPMC_ControlClass->append_null_vector (vector_index, gvp_options);
                 }
 		break;
-	default: // othere func like:
+	default: // other func like wave forms, t ma ybe adjusted and fast slew jumps include, see Pulse examples:
                 PI_DEBUG_GP (DBG_L2, " ** CYCLO* CALC\n");
                 {
                         double p[MAX_CH]  = { 0.,0.,0.,0.,0.,0.}; // ch/pointing vector [x, dy, dz, du, da, db]
@@ -536,6 +536,7 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
                         for (int tv=0; tv <= NumVecs; ++tv){
                                 // template to construct any funcion with potential steps
                                 // calculate function y[j](t) = ...
+                                // t can be set to any increasing time value with tv
                                 switch (mover_param.MOV_waveform_id){
                                 case MOV_WAVE_CYCLO_MI: mi = -1.;
                                 case MOV_WAVE_CYCLO_PL:
@@ -572,13 +573,13 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
                                 case MOV_WAVE_PULSE: pointing = 1.; // no pointing for pulse
                                 case MOV_WAVE_STEP:
                                         for (int j=0; j<num_waves && j < MAX_CH; ++j){
-                                                switch (tv){
+                                                switch (tv){ // taking discrete actions at "points", t intervals can be non linear!
                                                 case 0: t=0.;                                y[j]=0; break;
                                                 case 1: t=1*t_jump+phase*(j+1)*t_wave;       y[j]=0.; break;
                                                 case 2: t=2*t_jump+phase*(j+1)*t_wave;       y[j]=pointing*amp; break;
                                                 case 3: t=2*t_jump+(0.5+phase*(j+1))*t_wave; y[j]=pointing*amp; break;
                                                 case 4: t=3*t_jump+(0.5+phase*(j+1))*t_wave; y[j]=0.; break;
-                                                case 5: t=t_wave;                            y[j]=0.0; tv=NumVecs; break;
+                                                case 5: t=t_wave;                            y[j]=0.0; tv=NumVecs; break; // Here we are done, skipping tv to END!
                                                 default: break;
                                                 }
                                         }
@@ -617,9 +618,9 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
                                                 t = (double)tv/NumVecs*t_wave;
                                                 double t1 = (double)tv/NumVecs;
                                                 if (pointing > 0)
-                                                        y[j] = koala_func (amp, (double)t1*3.*M_PI + 2*j*M_PI);
+                                                        y[j] = koala_func (amp, t1*3.*M_PI + 2*j*M_PI);
                                                 else
-                                                        y[j] = koala_func (amp, (double)(1.0-t1)*3.*M_PI + 2*j*M_PI);
+                                                        y[j] = koala_func (amp, (1.0-t1)*3.*M_PI + 2*j*M_PI);
                                         }
                                         break;
                                         
