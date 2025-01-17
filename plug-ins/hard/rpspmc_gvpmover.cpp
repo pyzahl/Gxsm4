@@ -411,7 +411,7 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
         double t_jump  = 0.1e-6; // sec
         double t_wave  = fabs(duration)*1e-3; // sec
         int    n_reps  = limit_cycles;
-        double t_delta2 = 0.5*t_space+t_jump; // min t_jump
+        double t_delta2 = 0.5*t_space; // min t_jump
         
         int vector_index=0;
         int gvp_options=0;
@@ -529,7 +529,7 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
                         double t4 = 0.;
                         double c=0.;
                         double mi=1;
-
+                        
                         if (mover_param.MOV_waveform_id == MOV_WAVE_BESOCKE)
                                 besocke_func (amp, duration, t, mover_param.time_delay_1, mover_param.time_delay_2, mover_param.z_Rate, -1, mover_param.MOV_angle); // init
 
@@ -572,16 +572,30 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
                                 
                                 case MOV_WAVE_PULSE: pointing = 1.; // no pointing for pulse
                                 case MOV_WAVE_STEP:
-                                        for (int j=0; j<num_waves && j < MAX_CH; ++j){
-                                                switch (tv){ // taking discrete actions at "points", t intervals can be non linear!
-                                                case 0: t=0.;                                y[j]=0; break;
-                                                case 1: t=1*t_jump+phase*(j+1)*t_wave;       y[j]=0.; break;
-                                                case 2: t=2*t_jump+phase*(j+1)*t_wave;       y[j]=pointing*amp; break;
-                                                case 3: t=2*t_jump+(0.5+phase*(j+1))*t_wave; y[j]=pointing*amp; break;
-                                                case 4: t=3*t_jump+(0.5+phase*(j+1))*t_wave; y[j]=0.; break;
-                                                case 5: t=t_wave;                            y[j]=0.0; tv=NumVecs; break; // Here we are done, skipping tv to END!
-                                                default: break;
+                                        {
+                                                int tvn=7;
+                                                for (int j=0; j<num_waves && j < MAX_CH; ++j){
+                                                        double t1 = 0.;
+                                                        double p0 = phase*(j+1);
+                                                        double yt0 = 0.;
+                                                        double tstepup =        p0 *t_wave;
+                                                        double tstepdn = (0.5 + p0)*t_wave;
+
+                                                        if (p0 > 0.5) { yt0 = pointing*amp; t1=(p0-0.5)*t_wave; tvn=6; }
+                                                        
+                                                        switch (tv){ // taking discrete actions at "points", t intervals can be non linear!
+                                                        case 0: t=0.;                         y[j]=yt0; break;
+                                                        case 1: t=t1;                         y[j]=yt0; break;
+                                                        case 2: t=t1+1*t_jump;                y[j]=0.; break;
+                                                        case 3: t=2*t_jump+tstepup;           y[j]=0.; break;
+                                                        case 4: t=3*t_jump+tstepup+t_jump;    y[j]=pointing*amp; break;
+                                                        case 5: t=3*t_jump+tstepdn-t1;        y[j]=pointing*amp; break;
+                                                        case 6: t=4*t_jump+tstepdn-t1+t_jump; y[j]=yt0; break;
+                                                        case 7: t=t_wave;                     y[j]=yt0; break; // Here we are done, skipping tv to END!
+                                                        default: break;
+                                                        }
                                                 }
+                                                if (tv == tvn) tv=NumVecs;
                                         }
 #if 0 // FUNCTIONAL, RAMP JUMP RATE LIMITED BY dT GRID                                                
                                         for (int j=0; j<num_waves && j < MAX_CH; ++j){
@@ -593,16 +607,19 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
 
                                 case MOV_WAVE_DELTA:
                                         for (int j=0; j<num_waves && j < MAX_CH; ++j){
+                                                double tdelta = (0.5 + phase*(j+1))*t_wave;
                                                 switch (tv){
-                                                case 0: t=0.;                                         y[j]=0; break;
-                                                case 1: t=1*t_jump+(0.5+phase*(j+1))*t_wave;          y[j]=0.; break;
-                                                case 2: t=2*t_jump+(0.5+phase*(j+1))*t_wave;          y[j]=pointing*amp; g_message("j: %d %g => t=%g s",j,phase,t); break;
-                                                case 3: t=t_delta2+2*t_jump+(0.5+phase*(j+1))*t_wave; y[j]=pointing*amp; break;
-                                                case 4: t=t_delta2+3*t_jump+(0.5+phase*(j+1))*t_wave; y[j]=0.; break;
-                                                case 5: t=t_wave;                                     y[j]=0.0; tv=NumVecs; break;
+                                                case 0: t=0.;                     y[j]=0; break;
+                                                case 1: t=tdelta-t_delta2-t_jump; y[j]=0.; break;
+                                                case 2: t=tdelta-t_delta2;        y[j]=pointing*amp; break;
+                                                case 3: t=tdelta+t_delta2;        y[j]=pointing*amp; break;
+                                                case 4: t=tdelta+t_delta2+t_jump; y[j]=0.; break;
+                                                case 5: t=t_wave;                 y[j]=0.; break;
                                                 default: break;
                                                 }
+                                                g_message ("Delta: {%d} %d %g %g %g %g ms %g",tv, j,t*1000,tdelta*1000, t_delta2*1000, t_wave*1000, phase);
                                         }
+                                        if (tv == 5) tv=NumVecs;
                                         break;
 
                                 case MOV_WAVE_STEPPERMOTOR:
@@ -678,7 +695,7 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
                                 }
                         }
                         // Space, Repeat
-                        if (t_space < t_jump)
+                        if (t_space < t_jump || mover_param.MOV_waveform_id == MOV_WAVE_DELTA) //!! No space for delta, used for width instead !!
                                 t_space = t_jump;
                         int jmp=-(vector_index-1); // -NumVecs-1
                         vp_duration += RPSPMC_ControlClass->make_dUZXYAB_vector_all_volts (vector_index++,
@@ -1115,7 +1132,7 @@ void GVPMoverControl::create_folder (){
 
                         // config options, managed -- moved here
 	                mov_bp->set_configure_hide_list_b_mode_on ();
-                        mov_bp->grid_add_ec ("Phase", Phase, &mover_param.inch_worm_phase, 0., 360., "3.0f", 1., 60., "IW-Phase");
+                        mov_bp->grid_add_ec ("Phase", Phase, &mover_param.inch_worm_phase, -360., 360., "3.0f", 1., 60., "IW-Phase");
 	                gtk_widget_set_tooltip_text (mov_bp->input,
                                                      "Generic Phase value may be used by custom wave form generation.\n"
                                                      "Used by Sine and Pulse\n");
@@ -1953,7 +1970,8 @@ void GVPMoverControl::wave_preview_draw_function (GtkDrawingArea *area, cairo_t 
         // create GVP and simulate
         for (int j=0; j<2; ++j){ // fwd, rev
                 // create GVP
-                int axis = 0;
+                int axis   = self->mover_param.GPIO_tmp2 > 0 && self->mover_param.GPIO_tmp2 < 6 ? self->mover_param.GPIO_tmp2 : 0;
+                int cycles = self->mover_param.GPIO_tmp1 > 0 ? self->mover_param.GPIO_tmp1 : 2;
                 int vch = self->mover_param.wave_out_channel_xyz[wn][axis]-1;
                 if (vch < 0 || vch > 5){
                         g_message ("DBG: k %d, wn %d", k, wn);
@@ -1962,7 +1980,7 @@ void GVPMoverControl::wave_preview_draw_function (GtkDrawingArea *area, cairo_t 
                         vch=0;
                 }
 
-                self->create_waveform (1., 5., 2, j==0 ? 1 : -1, axis); // preview params only, scale 1V, 5ms, 2 cycles, Fwd/Rev, axis=0
+                self->create_waveform (1., 5., cycles, j==0 ? 1 : -1, axis); // preview params only, scale 1V, 5ms, 2 cycles, Fwd/Rev, axis=0
                 int N=RPSPMC_ControlClass->calculate_GVP_total_number_points();
 
                 if ( N > 1){
@@ -1983,7 +2001,7 @@ void GVPMoverControl::wave_preview_draw_function (GtkDrawingArea *area, cairo_t 
                                 gvp_wave->set_xy_fast (i, n*t/Tfin, *gvp_y[vch]);
                                 if (pc == 1 && ti < 0.) ti = t;
                                 if (pcp != pc || i == N-1){ // section marks
-                                        g_message ("SSS %d %d %g %g", pc, i, n*t/Tfin, t);
+                                        //g_message ("SSS %d %d %g %g", pc, i, n*t/Tfin, t);
                                         sec->set_xy_fast (0,n*t/Tfin,(m-mar)/2);
                                         sec->set_xy_fast (1,n*t/Tfin,-(m-mar)/2);
                                         sec->draw (cr);
@@ -2160,7 +2178,34 @@ void GVPMoverControl::ChangedNotify(Param_Control* pcs, gpointer self){
 void GVPMoverControl::ExecCmd(int cmd){
 	PI_DEBUG (DBG_L2, "GVPMoverControl::ExecCmd ==> >" << cmd);
 
-        create_waveform (mover_param.AFM_Amp, mover_param.AFM_Speed, mover_param.AFM_Steps, mover_param.MOV_pointing, mover_param.MOV_axis);
-        rpspmc_hwi->start_data_read (0, 0,0,0,0, NULL,NULL,NULL,NULL);
+        static clock_t tlast=0;
+        static int    last_MOV_waveform_id=-1;
+        static double last_AFM_Amp=0;;
+        static double last_AFM_Speed=0;
+        static double last_AFM_Steps=0;
+        static double last_MOV_pointing=0;
+        static double last_MOV_axis=0;
+
+        if (   tlast + 5*CLOCKS_PER_SEC < clock ()
+            || last_MOV_waveform_id != mover_param.MOV_waveform_id
+            || last_AFM_Amp != mover_param.AFM_Amp
+            || last_AFM_Speed != mover_param.AFM_Speed
+            || last_AFM_Steps != mover_param.AFM_Steps
+            || last_MOV_pointing != mover_param.MOV_pointing
+            || last_MOV_axis != mover_param.MOV_axis
+            ){
+                create_waveform (mover_param.AFM_Amp, mover_param.AFM_Speed, mover_param.AFM_Steps, mover_param.MOV_pointing, mover_param.MOV_axis);
+                tlast=clock ();
+                last_MOV_waveform_id = mover_param.MOV_waveform_id;
+                last_AFM_Amp = mover_param.AFM_Amp;
+                last_AFM_Speed = mover_param.AFM_Speed;
+                last_AFM_Steps = mover_param.AFM_Steps;
+                last_MOV_pointing = mover_param.MOV_pointing;
+                last_MOV_axis = mover_param.MOV_axis;
+        }
+
+        rpspmc_hwi->GVP_abort_vector_program ();
+        rpspmc_hwi->GVP_execute_vector_program(); // just fire up
+        //rpspmc_hwi->start_data_read (0, 0,0,0,0, NULL,NULL,NULL,NULL); // start and read data is totally possible....
 
 }

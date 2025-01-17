@@ -864,6 +864,10 @@ void RPSPMC_Control::gvp_preview_draw_function (GtkDrawingArea *area, cairo_t *c
                 double anno_tyy[GVPPREVIEW_MAX_ANNOTATIONS][1+6];
                 int i_anno=0;
                 double tp=0.;
+                double pcxyp=-100;
+                double txyp=-100;
+                int    tlabposy=0;
+                int    pclabposy=0;
                 for (int i=0; i<N; i++){
                         memcpy (&v, &vi, sizeof(v));
                         //memset (&v, 0, sizeof(v));
@@ -886,16 +890,26 @@ void RPSPMC_Control::gvp_preview_draw_function (GtkDrawingArea *area, cairo_t *c
                                 tms->set_anchor (CAIRO_ANCHOR_W);
                                 tms->set_stroke_rgba (CAIRO_COLOR_BLACK);
                                 const gchar* lab=g_strdup_printf("%g ms",1e3*tp);
-                                tms->set_text (n*t/Tfin+2, 60, lab);
-                                tms->draw (cr);
-                                g_free (lab);
+                                {
+                                        double tlabposx=n*t/Tfin+2;
+                                        if (txyp+35 > tlabposx) ++tlabposy%=4; // try to not overlap
+                                        else tlabposy=0;
+                                        txyp=tlabposx;
+                                        tms->set_text (tlabposx, 60-10*tlabposy, lab);
+                                        tms->draw (cr);
+                                        g_free (lab);
+                                }
                                 if (i != N-1){
                                         tms->set_stroke_rgba (CAIRO_COLOR_RED);
                                         if (il>0)
                                                 lab=g_strdup_printf("%d %d",pc, il);
                                         else
                                                 lab=g_strdup_printf("%d",pc);
-                                        tms->set_text (n*t/Tfin+2, -60, lab);
+                                        double tlabposx=n*t/Tfin+2;
+                                        if (pcxyp+8 > tlabposx) ++pclabposy%=3; // try to not overlap
+                                        else pclabposy=0;
+                                        pcxyp=tlabposx;
+                                        tms->set_text (tlabposx, -60+10*pclabposy, lab);
                                         tms->draw (cr);
                                         g_free (lab);
                                 }
