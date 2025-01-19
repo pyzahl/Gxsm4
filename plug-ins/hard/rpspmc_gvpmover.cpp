@@ -390,7 +390,7 @@ double besocke_func (double amp, double pduration, double phase, double tt1, dou
 
 // Parametric Generation of GVP for Wave Forms
 // duration in ms
-int GVPMoverControl::create_waveform (double amp, double duration, int limit_cycles, int pointing, int axis){
+int GVPMoverControl::create_waveform (double amp, double duration, int limit_cycles, int pointing, int axis, int SRCS, int options){
         // check and find wave valid wave form id "k"
         int k=0;
         for (k=0; wave_form_options[k].wave_form_label; ++k)
@@ -414,8 +414,7 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
         double t_delta2 = 0.5*t_space; // min t_jump
         
         int vector_index=0;
-        int gvp_options=0;
-        int SRCS=0x0000c03f; // FIXED SRCS
+        int gvp_options=options;
         //rpspmc_hwi->resetVPCconfirmed ();
 
         // loookups
@@ -652,13 +651,13 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
                                 default: break;
                                 }
 
-                                if (tv == 0){ // Init
+                                if (tv == 0){ // Slew at wavte/10 to initial volatages!
                                         for (int j=0; j<num_waves && j < MAX_CH; ++j)
                                                 p[chi[j]] = yi[j] = yp[j] = wo + y[j];
                                         tp = t;
                                         vp_duration += RPSPMC_ControlClass->make_dUZXYAB_vector_all_volts (vector_index++,
                                                                                                  p[3], p[2], p[0], p[1], p[4], p[5],
-                                                                                                 10, 0, 0, t_jump,
+                                                                                                 10, 0, 0, t_wave/10,
                                                                                                  SRCS, VP_INITIAL_SET_VEC | gvp_options);
                                 } else {
                                         for (int j=0; j<num_waves && j < MAX_CH; ++j){
@@ -1254,29 +1253,31 @@ void GVPMoverControl::create_folder (){
                         mov_bp->new_line ();
                         // ======================================== GPIO ========================================
                         //mov_bp->new_line ();
-			mov_bp->new_grid_with_frame ("GPIO Configuration");
+			mov_bp->new_grid_with_frame ("Preview Parameters ** GPIO Configuration (no IO with RPSPMC)");
 
-			mov_bp->grid_add_ec ("IO-dir", Hex, &mover_param.GPIO_direction, 0x0000, 0xffff, "04X", "GPIO-direction");
+                        // REUSING PCS RESCOURCES, DO NOT CHANGE IDs -- for now
+                        mover_param.GPIO_direction = 0x0000c03f;
+			mov_bp->grid_add_ec ("GVP SRCS", Hex, &mover_param.GPIO_direction, 0x0000000000, 0xffffffff, "04X", "GPIO-direction");
 			g_object_set_data( G_OBJECT (mov_bp->input), "GPIO_direction", GINT_TO_POINTER (i));
-			gtk_widget_set_tooltip_text (mov_bp->input, "GPIO direction (in/out) configuration\nWARNING: DO NOT TOUCH IF UNSURE.\nPut 0 for all inputs (safe), but no action (will also disable use of GPIO).");
+			gtk_widget_set_tooltip_text (mov_bp->input, "GVP Srcs = 0x0000c03f default.");
 
-			mov_bp->grid_add_ec ("XY-scan", Hex, &mover_param.GPIO_scan, 0x0000, 0xffff, "04X", "GPIO-scan"); 
+			mov_bp->grid_add_ec ("GVP Opt", Hex, &mover_param.GPIO_scan, 0x0000, 0xffff, "04X", "GPIO-scan"); 
                         g_object_set_data( G_OBJECT (mov_bp->input), "GPIO_scan", GINT_TO_POINTER (i));
-			gtk_widget_set_tooltip_text (mov_bp->input, "GPIO setting for regular XY-scan mode [XY, Main].");
+			gtk_widget_set_tooltip_text (mov_bp->input, "GVP Options");
                         mov_bp->new_line ();
 
-			mov_bp->grid_add_ec ("tmp1", Hex, &mover_param.GPIO_tmp1, 0x0000, 0xffff, "04X", "GPIO-tmp1");
+			mov_bp->grid_add_ec ("Preview #", Hex, &mover_param.GPIO_tmp1, 0x0000, 0xffff, "04X", "GPIO-tmp1");
 			g_object_set_data( G_OBJECT (mov_bp->input), "GPIO_tmp1", GINT_TO_POINTER (i));
-			gtk_widget_set_tooltip_text (mov_bp->input, "GPIO intermediate setting 1 for switching to XY-scan mode [XY, Main].");
+			gtk_widget_set_tooltip_text (mov_bp->input, "Preview # wave repetitions/cycles max");
 
-			mov_bp->grid_add_ec ("tmp2", Hex, &mover_param.GPIO_tmp2, 0x0000, 0xffff, "04X", "GPIO-tmp2");
+			mov_bp->grid_add_ec ("Preview Axis", Hex, &mover_param.GPIO_tmp2, 0x0000, 0xffff, "04X", "GPIO-tmp2");
 			g_object_set_data( G_OBJECT (mov_bp->input), "GPIO_tmp2", GINT_TO_POINTER (i));
-			gtk_widget_set_tooltip_text (mov_bp->input, "GPIO intermediate setting 2 for switching to XY-scan mode [XY, Main].");
+			gtk_widget_set_tooltip_text (mov_bp->input, "Preview Axis: 0..2 = >XYZ< -- NOT CHANNEL, DIRECTIN BUTTONs");
                         mov_bp->new_line ();
 
-			mov_bp->grid_add_ec ("SW delay", Time, &mover_param.GPIO_delay, 0.,1000., ".1f", 1., 10., "GPIO-delay"); 
+			mov_bp->grid_add_ec ("Preview Period", Time, &mover_param.GPIO_delay, 0.,1000., ".1f", 1., 10., "GPIO-delay"); 
 			g_object_set_data( G_OBJECT (mov_bp->input), "GPIO_delay", GINT_TO_POINTER (i));
-			gtk_widget_set_tooltip_text (mov_bp->input, "GPIO delay: delay in milliseconds after switching bits.");
+			gtk_widget_set_tooltip_text (mov_bp->input, "GVP Wave Preview Period");
 
                         mov_bp->pop_grid ();
 #endif
@@ -1972,6 +1973,10 @@ void GVPMoverControl::wave_preview_draw_function (GtkDrawingArea *area, cairo_t 
                 // create GVP
                 int axis   = self->mover_param.GPIO_tmp2 > 0 && self->mover_param.GPIO_tmp2 < 6 ? self->mover_param.GPIO_tmp2 : 0;
                 int cycles = self->mover_param.GPIO_tmp1 > 0 ? self->mover_param.GPIO_tmp1 : 2;
+                double period = self->mover_param.GPIO_delay > 0 && self->mover_param.GPIO_delay < 200. ? self->mover_param.GPIO_delay : 5.;
+                int SRCS=self->mover_param.GPIO_direction; // 0x0000c03f; // FIXED SRCS
+                int opt=self->mover_param.GPIO_scan; // 0
+                
                 int vch = self->mover_param.wave_out_channel_xyz[wn][axis]-1;
                 if (vch < 0 || vch > 5){
                         g_message ("DBG: k %d, wn %d", k, wn);
@@ -1980,7 +1985,7 @@ void GVPMoverControl::wave_preview_draw_function (GtkDrawingArea *area, cairo_t 
                         vch=0;
                 }
 
-                self->create_waveform (1., 5., cycles, j==0 ? 1 : -1, axis); // preview params only, scale 1V, 5ms, 2 cycles, Fwd/Rev, axis=0
+                self->create_waveform (1., period, cycles, j==0 ? 1 : -1, axis, SRCS, opt); // preview params only, scale 1V, 5ms, 2 cycles, Fwd/Rev, axis=0
                 int N=RPSPMC_ControlClass->calculate_GVP_total_number_points();
 
                 if ( N > 1){
@@ -2133,8 +2138,8 @@ int GVPMoverControl::StopAction(GtkWidget *widget, GVPMoverControl *self){
 	PI_DEBUG (DBG_L2, "GVPMoverControl::StopAction" );
 
 	// GVP STOP
-        rpspmc_hwi->GVP_abort_vector_program ();
-        RPSPMC_ControlClass->GVP_zero_all_smooth ();
+        rpspmc_hwi->GVP_reset_vector_program ();
+        //RPSPMC_ControlClass->GVP_zero_all_smooth ();
          
         //self->updateAxisCounts (widget, idx, 0);
 
@@ -2186,6 +2191,7 @@ void GVPMoverControl::ExecCmd(int cmd){
         static double last_MOV_pointing=0;
         static double last_MOV_axis=0;
 
+        rpspmc_hwi->GVP_abort_vector_program ();
         if (   tlast + 5*CLOCKS_PER_SEC < clock ()
             || last_MOV_waveform_id != mover_param.MOV_waveform_id
             || last_AFM_Amp != mover_param.AFM_Amp
@@ -2194,7 +2200,7 @@ void GVPMoverControl::ExecCmd(int cmd){
             || last_MOV_pointing != mover_param.MOV_pointing
             || last_MOV_axis != mover_param.MOV_axis
             ){
-                create_waveform (mover_param.AFM_Amp, mover_param.AFM_Speed, mover_param.AFM_Steps, mover_param.MOV_pointing, mover_param.MOV_axis);
+                create_waveform (mover_param.AFM_Amp, mover_param.AFM_Speed, mover_param.AFM_Steps, mover_param.MOV_pointing, mover_param.MOV_axis, 0, 0);
                 tlast=clock ();
                 last_MOV_waveform_id = mover_param.MOV_waveform_id;
                 last_AFM_Amp = mover_param.AFM_Amp;
@@ -2204,8 +2210,7 @@ void GVPMoverControl::ExecCmd(int cmd){
                 last_MOV_axis = mover_param.MOV_axis;
         }
 
-        rpspmc_hwi->GVP_abort_vector_program ();
-        rpspmc_hwi->GVP_execute_vector_program(); // just fire up
+        rpspmc_hwi->GVP_execute_only_vector_program (); // just fire up
         //rpspmc_hwi->start_data_read (0, 0,0,0,0, NULL,NULL,NULL,NULL); // start and read data is totally possible....
 
 }

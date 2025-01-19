@@ -374,6 +374,8 @@ CDoubleParameter  SPMC_Z_SERVO_IN_OFFSETCOMP("SPMC_Z_SERVO_IN_OFFSETCOMP", CBase
 #define SPMC_GVP_CONTROL_PAUSE     2
 #define SPMC_GVP_CONTROL_RESUME    3
 #define SPMC_GVP_CONTROL_RESET_UAB 4
+#define SPMC_GVP_CONTROL_GVP_EXECUTE_NO_DMA 5   
+#define SPMC_GVP_CONTROL_GVP_RESET_ONLY     6   
 
 CIntParameter    SPMC_GVP_STREAM_MUX("SPMC_GVP_STREAM_MUX",   CBaseParameter::RW, 0, 0, -2147483648,2147483647); //
 CIntParameter    SPMC_GVP_STREAM_MUXH("SPMC_GVP_STREAM_MUXH", CBaseParameter::RW, 0, 0, -2147483648,2147483647); //
@@ -431,7 +433,11 @@ CDoubleParameter  SPMC_SC_LCK_F0BQ_IIR("SPMC_SC_LCK_F0BQ_IIR", CBaseParameter::R
 // *** RP SPMC::GPIO MONITORS ***
 CDoubleParameter  SPMC_BIAS_MONITOR("SPMC_BIAS_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 CDoubleParameter  SPMC_BIAS_REG_MONITOR("SPMC_BIAS_REG_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
-CDoubleParameter  SPMC_BIAS_GVP_MONITOR("SPMC_BIAS_GVP_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
+CDoubleParameter  SPMC_BIAS_SET_MONITOR("SPMC_BIAS_SET_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
+CDoubleParameter  SPMC_GVPU_MONITOR("SPMC_GVPU_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
+CDoubleParameter  SPMC_GVPA_MONITOR("SPMC_GVPA_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
+CDoubleParameter  SPMC_GVPB_MONITOR("SPMC_GVPB_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
+CIntParameter     SPMC_MUX_MONITOR("SPMC_MUX_MONITOR", CBaseParameter::RW, 0, 0, -2147483648,2147483647); // MUX code
 CDoubleParameter  SPMC_SIGNAL_MONITOR("SPMC_SIGNAL_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 CDoubleParameter  SPMC_X_MONITOR("SPMC_X_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 CDoubleParameter  SPMC_Y_MONITOR("SPMC_Y_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
@@ -1532,8 +1538,7 @@ void OnNewParams_RPSPMC(void){
                 rp_spmc_set_slope (SPMC_SLOPE_DZX.Value (), SPMC_SLOPE_DZY.Value (), SPMC_SLOPE_SLEW.Value ());
         }
         
-        if (SPMC_BIAS.IsNewValue()
-            || SPMC_SET_OFFSET_X.IsNewValue ()
+        if (SPMC_SET_OFFSET_X.IsNewValue ()
             || SPMC_SET_OFFSET_Y.IsNewValue ()
             || SPMC_SET_OFFSET_Z.IsNewValue ()
             ){
@@ -1550,7 +1555,11 @@ void OnNewParams_RPSPMC(void){
                                      SPMC_SET_OFFSET_XY_SLEW.Value (),
                                      SPMC_SET_OFFSET_Z_SLEW.Value ()
                                      );
+        } else if (SPMC_BIAS.IsNewValue()){
+                SPMC_BIAS.Update ();
+                rp_spmc_set_bias (SPMC_BIAS.Value());
         }
+        
 
         if (SPMC_SET_SCANPOS_X.IsNewValue () || SPMC_SET_SCANPOS_Y.IsNewValue ()){
                 SPMC_SET_SCANPOS_SLEW.Update ();
@@ -1651,6 +1660,13 @@ void OnNewParams_RPSPMC(void){
 
                         info << "EXECUTE: RESET, start stream server, out of RESET";
                         break;
+                case SPMC_GVP_CONTROL_GVP_RESET_ONLY:
+                        rp_spmc_gvp_config (true, false);
+                        fprintf(stderr, "*** GVP Control Mode RESET ONLY -- NO DMA RESET\n");
+                case SPMC_GVP_CONTROL_GVP_EXECUTE_NO_DMA:
+                        rp_spmc_gvp_config (false, false); // take GVP out of reset -> release GVP to start executing VPC now
+                        fprintf(stderr, "*** GVP Control Mode EXECUTE -- NO DMA START\n");
+                        break;
                 case SPMC_GVP_CONTROL_PAUSE:
                         rp_spmc_gvp_config (false, true );
                         fprintf(stderr, "*** GVP Control Mode PAUSE\n"); info << "set PAUSE"; // SET PAUSE active
@@ -1688,7 +1704,7 @@ void OnNewParams_RPSPMC(void){
                 rp_spmc_set_modulation (SPMC_SC_LCK_VOLUME.Value (), SPMC_SC_LCK_TARGET.Value ());
 
                 if ((int)SPMC_SC_LCK_TARGET.Value () == 7)
-                        rp_spmc_gvp_module_read_config_data_timing_test ();
+                        rp_spmc_module_read_config_data_timing_test ();
         }
 
         // LockIn Signal Out BiQuad Filter

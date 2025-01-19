@@ -23,11 +23,11 @@
 module gvp #(
     parameter NUM_VECTORS_N2 = 4,
     parameter NUM_VECTORS    = 16,
-    parameter control_reg_address = 1,
-    parameter reset_options_reg_address = 2,
-    parameter vector_programming_reg_address  = 3,
-    parameter vector_set_reg_address  = 4,
-    parameter vectorX_programming_reg_address  = 5
+    parameter control_reg_address = 5001,
+    parameter reset_options_reg_address = 5002,
+    parameter vector_programming_reg_address  = 5003,
+    parameter vector_set_reg_address  = 5004,
+    parameter vectorX_programming_reg_address  = 5005
 )
 (
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF M_AXIS_X:M_AXIS_Y:M_AXIS_Z:M_AXIS_U:M_AXIS_A:M_AXIS_B:M_AXIS_SRCS:M_AXIS_INDEX:M_AXIS_GVP_TIME" *)
@@ -72,12 +72,15 @@ module gvp #(
 `define SATURATE_32(REG) (REG > 33'sd2147483647 ? 32'sd2147483647 : REG < -33'sd2147483647 ? -32'sd2147483647 : REG[32-1:0]) 
 
 
+    reg [32-1:0]  config_addr_reg=0;
+    reg [512-1:0] config_data_reg=0;
+
     // buffers
     reg pause=0;
     reg reset=1;
     reg reset_flg=1;  // put into reset mode (set program and hold)
     reg pause_flg=0;  // put/release into/from pause mode -- always completes the "ii" nop cycles!
-    reg setvec_flg=0; // program vector data using vp_set data
+    reg [4-1:0] setvec_mode=0; // program vector data using vp_set data
     reg [512-1:0] vp_set; // [VAdr], [N, NII, Options, Nrep, Next, dx, dy, dz, du] ** full vector data set block **
     reg [16-1:0] reset_options; // option (fb hold/go, srcs... to pass when idle or in reset mode
     
@@ -145,43 +148,67 @@ module gvp #(
             vec_gvp_time <= vec_gvp_time+1;
         end
 
+        config_addr_reg <= config_addr;
+        config_data_reg <= config_data;
+
         // module configuration
-        case (config_addr)
+        case (config_addr_reg)
             control_reg_address:
             begin
-                reset <= config_data[0]; //reset;
-                pause <= config_data[1]; //pause;
-                setvec_flg <= 0;
+                reset <= config_data_reg[0:0]; //reset;
+                pause <= config_data_reg[1:1]; //pause;
             end
 
             reset_options_reg_address: 
             begin
-                reset_options <= config_data[15:0]; // GVP options assigned when in reset mode/finished
-                setvec_flg <= 0;
+                reset_options <= config_data_reg[15:0]; // GVP options assigned when in reset mode/finished
             end
             
             vector_set_reg_address: // set GVP vector variable registers to presets
             begin
                 // place holders, but do not... for xyz
-                //vec_x <= config_data[1*32-1 : 0*32]; // DO NEVER JUMP on XYZ!!
-                //vec_y <= config_data[2*32-1 : 1*32]; // DO NEVER JUMP on XYZ!!
-                //vec_z <= config_data[3*32-1 : 2*32]; // DO NEVER JUMP on XYZ!!
-                vec_u <= config_data[4*32-1 : 3*32]; // always reset U
-                vec_a <= config_data[5*32-1 : 4*32]; // always reset A
-                vec_b <= config_data[6*32-1 : 5*32]; // always reset B
+                //vec_x <= config_data_reg[1*32-1 : 0*32]; // DO NEVER JUMP on XYZ!!
+                //vec_y <= config_data_reg[2*32-1 : 1*32]; // DO NEVER JUMP on XYZ!!
+                //vec_z <= config_data_reg[3*32-1 : 2*32]; // DO NEVER JUMP on XYZ!!
+                vec_u <= config_data_reg[4*32-1 : 3*32]; // always reset U
+                vec_a <= config_data_reg[5*32-1 : 4*32]; // always reset A
+                vec_b <= config_data_reg[6*32-1 : 5*32]; // always reset B
             end
             
             vector_programming_reg_address: // enter vector programming load mode
             begin
-                vp_set <= config_data; // [VAdr], [N, NII, Options, Nrep, Next, dx, dy, dz, du] ** full vector data set block **
-                setvec_flg <= 1; //setvec; // program vector data using vp_set data
-            end 
-            //vectorX_programming_reg_address: // enter vector Ext programming load mode
-            default:
-            begin 
-                setvec_flg <= 0; // make sure done.
+                case (setvec_mode)
+                    0: // fetch and stage update
+                    begin
+                        vp_set <= config_data_reg; // [VAdr], [N, NII, Options, Nrep, Next, dx, dy, dz, du] ** full vector data set block **
+                        setvec_mode <= 1; //setvec; // program vector data using vp_set data
+                    end
+                    1: // update vector[vp_set [NUM_VECTORS_N2:0]]
+                    begin  
+                        vec_n[vp_set [NUM_VECTORS_N2:0]]       <= vp_set [2*32-1:1*32];
+                        vec_iin[vp_set [NUM_VECTORS_N2:0]]     <= vp_set [3*32-1:2*32];
+                        vec_options[vp_set [NUM_VECTORS_N2:0]] <= vp_set [4*32-1:3*32];
+                        
+                        vec_nrep[vp_set [NUM_VECTORS_N2:0]]    <= vp_set [5*32-1:4*32];
+                        vec_i[vp_set [NUM_VECTORS_N2:0]]       <= vp_set [5*32-1:4*32];
+            
+                        vec_deci[vp_set [NUM_VECTORS_N2:0]]    <= vp_set [16*32-1:15*32]; // all over process decimation adjust
+                        
+                        vec_next[vp_set [NUM_VECTORS_N2:0]]    <= vp_set [5*32+NUM_VECTORS_N2:5*32]; // limited to +/- NUM_VECTORS
+                        vec_dx[vp_set [NUM_VECTORS_N2:0]]      <= vp_set [7*32-1:6*32];
+                        vec_dy[vp_set [NUM_VECTORS_N2:0]]      <= vp_set [8*32-1:7*32];
+                        vec_dz[vp_set [NUM_VECTORS_N2:0]]      <= vp_set [9*32-1:8*32];
+                        vec_du[vp_set [NUM_VECTORS_N2:0]]      <= vp_set [10*32-1:9*32];
+                        vec_da[vp_set [NUM_VECTORS_N2:0]]      <= vp_set [11*32-1:10*32];
+                        vec_db[vp_set [NUM_VECTORS_N2:0]]      <= vp_set [12*32-1:11*32];
+                        setvec_mode <= 2; // done, next load only possible after address=0 cycle (default below)
+                    end
+                endcase             
             end
+            default:
+                setvec_mode <= 0;
         endcase
+
             
         rd[0] <= reset;  rd[1] <= rd[0]; rd[2] <= rd[1]; rd[3] <= rd[2]; rd[4] <= rd[3]; rd[5] <= rd[4];  rd[6] <= rd[5]; rd[7] <= rd[6]; rd[8] <= rd[7];
         reset_flg  <= rd[8];  // put into reset mode (set program and hold)
@@ -190,119 +217,90 @@ module gvp #(
         if (rdecii == 0)
         begin
             rdecii <= decimation;
-            //clk <= !clk;
-            //if (setvec_flg)
-            //begin
-                //vp_set_data <= vp_set; // buffer
-            //end
 
-    // runs GVP code if out of reset mode until finished!
-    //always @(posedge clk) // run on decimated clk as required
-    //begin
-            if (setvec_flg)
+            // runs GVP code if out of reset mode until finished!
+            if (reset_flg) // reset mode / hold
             begin
-                vec_n[vp_set [NUM_VECTORS_N2:0]]       <= vp_set [2*32-1:1*32];
-                vec_iin[vp_set [NUM_VECTORS_N2:0]]     <= vp_set [3*32-1:2*32];
-                vec_options[vp_set [NUM_VECTORS_N2:0]] <= vp_set [4*32-1:3*32];
-                
-                vec_nrep[vp_set [NUM_VECTORS_N2:0]]    <= vp_set [5*32-1:4*32];
-                vec_i[vp_set [NUM_VECTORS_N2:0]]       <= vp_set [5*32-1:4*32];
-    
-                vec_deci[vp_set [NUM_VECTORS_N2:0]]    <= vp_set [16*32-1:15*32]; // all over process decimation adjust
-                
-                vec_next[vp_set [NUM_VECTORS_N2:0]]    <= vp_set [5*32+NUM_VECTORS_N2:5*32]; // limited to +/- NUM_VECTORS
-                vec_dx[vp_set [NUM_VECTORS_N2:0]]      <= vp_set [7*32-1:6*32];
-                vec_dy[vp_set [NUM_VECTORS_N2:0]]      <= vp_set [8*32-1:7*32];
-                vec_dz[vp_set [NUM_VECTORS_N2:0]]      <= vp_set [9*32-1:8*32];
-                vec_du[vp_set [NUM_VECTORS_N2:0]]      <= vp_set [10*32-1:9*32];
-                vec_da[vp_set [NUM_VECTORS_N2:0]]      <= vp_set [11*32-1:10*32];
-                vec_db[vp_set [NUM_VECTORS_N2:0]]      <= vp_set [12*32-1:11*32];
+                pvc <= 0;
+                sec <= 0;
+                store <= 0;
+                finished <= 0;
+                load_next_vector <= 1;
+                set_options <= reset_options;
             end
-            else
+            else // run program step
             begin
-                if (reset_flg) // reset mode / hold
+                if (finished)
                 begin
-                    pvc <= 0;
-                    sec <= 0;
-                    store <= 0;
-                    finished <= 0;
-                    load_next_vector <= 1;
+                    store <= 0; // hold finsihed state -- until reset
+                    decimation <= 1; // reset to fast 
                     set_options <= reset_options;
-                end
-                else // run program step
+                end            
+                else
                 begin
-                    if (finished)
+                    if (load_next_vector || finished) // load next vector
                     begin
-                        store <= 0; // hold finsihed state -- until reset
-                        decimation <= 1; // reset to fast 
-                        set_options <= reset_options;
-                    end            
-                    else
-                    begin
-                        if (load_next_vector || finished) // load next vector
+                        load_next_vector <= 0;
+                        i   <= vec_n[pvc];
+                        ii  <= vec_iin[pvc];
+                        if (vec_n[pvc] == 0) // n == 0: END OF VECTOR PROGRAM REACHED
                         begin
-                            load_next_vector <= 0;
-                            i   <= vec_n[pvc];
-                            ii  <= vec_iin[pvc];
-                            if (vec_n[pvc] == 0) // n == 0: END OF VECTOR PROGRAM REACHED
-                            begin
-                                finished <= 1;
-                                store <= 3; // finshed -- store full header (push trigger) and GVP end mark
-                                set_options <= 32'hffffffff;
-                            end 
-                            else
-                            begin
-                                store <= 2; // store full header (push trigger)
-                                decimation <= vec_deci[pvc];
-                                set_options <= vec_options[pvc];
-                            end
-                        end
+                            finished <= 1;
+                            store <= 3; // finshed -- store full header (push trigger) and GVP end mark
+                            set_options <= 32'hffffffff;
+                        end 
                         else
-                        if (!pause_flg)        
-                        begin // go...
-                            // add vector
-                            vec_x <= vec_x + vec_dx[pvc];
-                            vec_y <= vec_y + vec_dy[pvc];
-                            vec_z <= vec_z + vec_dz[pvc];
-                            vec_u <= vec_u + vec_du[pvc];
-                            vec_a <= vec_a + vec_da[pvc];
-                            vec_b <= vec_b + vec_db[pvc];
-                            
-                            if (ii) // do intermediate step(s) ?
-                            begin
-                                store <= 0;
-                                ii <= ii-1;
-                            end
-                            else
-                            begin // arrived at data point
-                                if (i) // advance to next point...
-                                begin
-                                    store <= 1; // store data sources (push trigger)
-                                    ii <= vec_iin[pvc];
-                                    i <= i-1;
-                                end
-                                else
-                                begin // finsihed section, next vector -- if n != 0...
-                                    store <= 0; // full store data sources at next section start (push trigger)
-                                    sec <= sec + 1;
-                                    if (vec_i[pvc] > 0) // do next loop?
-                                    begin
-                                        vec_i[pvc] <= vec_i[pvc] - 1;
-                                        pvc <= pvc + vec_next[pvc]; // jump to loop head
-                                        load_next_vector <= 1;
-                                    end
-                                    else // next vector in vector program list
-                                    begin
-                                        vec_i[pvc] <= vec_nrep[pvc]; // reload loop counter for next time now!
-                                        pvc <= pvc + 1; // next vector index
-                                        load_next_vector <= 1;
-                                    end
-                                end            
-                            end
+                        begin
+                            store <= 2; // store full header (push trigger)
+                            decimation <= vec_deci[pvc];
+                            set_options <= vec_options[pvc];
                         end
                     end
-                end       
-            end     
+                    else
+                    if (!pause_flg)        
+                    begin // go...
+                        // add vector
+                        vec_x <= vec_x + vec_dx[pvc];
+                        vec_y <= vec_y + vec_dy[pvc];
+                        vec_z <= vec_z + vec_dz[pvc];
+                        vec_u <= vec_u + vec_du[pvc];
+                        vec_a <= vec_a + vec_da[pvc];
+                        vec_b <= vec_b + vec_db[pvc];
+                        
+                        if (ii) // do intermediate step(s) ?
+                        begin
+                            store <= 0;
+                            ii <= ii-1;
+                        end
+                        else
+                        begin // arrived at data point
+                            if (i) // advance to next point...
+                            begin
+                                store <= 1; // store data sources (push trigger)
+                                ii <= vec_iin[pvc];
+                                i <= i-1;
+                            end
+                            else
+                            begin // finsihed section, next vector -- if n != 0...
+                                store <= 0; // full store data sources at next section start (push trigger)
+                                sec <= sec + 1;
+                                if (vec_i[pvc] > 0) // do next loop?
+                                begin
+                                    vec_i[pvc] <= vec_i[pvc] - 1;
+                                    pvc <= pvc + vec_next[pvc]; // jump to loop head
+                                    load_next_vector <= 1;
+                                end
+                                else // next vector in vector program list
+                                begin
+                                    vec_i[pvc] <= vec_nrep[pvc]; // reload loop counter for next time now!
+                                    pvc <= pvc + 1; // next vector index
+                                    load_next_vector <= 1;
+                                end
+                            end            
+                        end
+                    end
+                end
+            end       
         end
         else
         begin
@@ -337,6 +335,6 @@ module gvp #(
     
     assign reset_state = reset;
     
-    assign dbg_status = {sec[32-4:0], setvec_flg, reset_flg, pause, ~finished };
+    assign dbg_status = {sec[32-4:0], setvec_mode[0], reset_flg, pause, ~finished };
     
 endmodule

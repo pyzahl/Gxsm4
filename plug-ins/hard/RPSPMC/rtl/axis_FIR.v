@@ -45,28 +45,39 @@ module axis_FIR #(
     reg signed [SAXIS_TDATA_WIDTH-1:0] data_in;
     reg signed [MAXIS_TDATA_WIDTH-1:0] buffer; 
     
+    reg fetch=0;
+    reg [1:0] state=0;
+    
     integer k;
     initial begin
         for (k=0; k<FIR_DECI; k=k+1)
             fir_buffer[k] = 0;
     end
     
-    always @ (posedge next_dv)
+    always @ (posedge a_clk)
     begin
         if (S_AXIS_tvalid)
         begin
             data_in       <= $signed(S_AXIS_tdata);
-            sum           <= sum - fir_buffer[i] + data_in;
-            fir_buffer[i] <= data_in;
+            if (next_dv)
+                if (state == 0)
+                begin
+                    state <= 1;
+                    fir_buffer[i] <= data_in;
+                    sum    <= sum - fir_buffer[i] + data_in;
+                    i      <= i+1;
+                    buffer <= sum[SAXIS_TDATA_WIDTH+FIR_DECI_L-1:FIR_DECI_L+SAXIS_TDATA_WIDTH-MAXIS_TDATA_WIDTH];
+                end
+            else
+                state <= 0;
         end
         else
-        begin
-            fir_buffer[i] <= 0;
+        begin // reset, empty buffer
             sum           <= 0;
             data_in       <= 0;
+            fir_buffer[i] <= 0;
+            i             <= i+1;
         end
-        i <= i+1;
-        buffer <= sum[SAXIS_TDATA_WIDTH+FIR_DECI_L-1:FIR_DECI_L+SAXIS_TDATA_WIDTH-MAXIS_TDATA_WIDTH];
     end
     
     assign M_AXIS_tdata  = buffer;

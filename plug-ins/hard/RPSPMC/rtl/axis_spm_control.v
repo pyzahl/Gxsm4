@@ -31,9 +31,10 @@ module axis_spm_control#(
     parameter xyzu_offset_reg_address = 1100,
     parameter rotm_reg_address = 1101,
     parameter slope_reg_address = 1102,
-    parameter modulation_reg_address = 1103
+    parameter modulation_reg_address = 1103,
+    parameter bias_reg_address = 1104
 )(
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS_Xs:S_AXIS_Ys:S_AXIS_Zs:S_AXIS_U:S_AXIS_A:S_AXIS_B:S_AXIS_SREF:S_AXIS_Z:M_AXIS1:M_AXIS2:M_AXIS3:M_AXIS4:M_AXIS3:M_AXIS5:M_AXIS3:M_AXIS6:M_AXIS_XSMON:M_AXIS_YSMON:M_AXIS_ZSMON:M_AXIS_X0MON:M_AXIS_Z_SLOPE:M_AXIS_Y0MON:M_AXIS_ZGVPMON:M_AXIS_UGVPMON" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS_Xs:S_AXIS_Ys:S_AXIS_Zs:S_AXIS_U:S_AXIS_A:S_AXIS_B:S_AXIS_SREF:S_AXIS_Z:M_AXIS1:M_AXIS2:M_AXIS3:M_AXIS4:M_AXIS3:M_AXIS5:M_AXIS3:M_AXIS6:M_AXIS_XSMON:M_AXIS_YSMON:M_AXIS_ZSMON:M_AXIS_X0MON:M_AXIS_Z_SLOPE:M_AXIS_Y0MON:M_AXIS_ZGVPMON:M_AXIS_UGVPMON:M_AXIS_U0BIASMON" *)
     input a_clk,
     input [32-1:0]  config_addr,
     input [512-1:0] config_data,
@@ -93,7 +94,9 @@ module axis_spm_control#(
     output wire                          M_AXIS_Z_SLOPE_tvalid,
     
     output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS_UGVPMON_tdata,
-    output wire                          M_AXIS_UGVPMON_tvalid
+    output wire                          M_AXIS_UGVPMON_tvalid,
+    output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS_U0BIASMON_tdata,
+    output wire                          M_AXIS_U0BIASMON_tvalid
     );
     
     //reg [32-1:0] reg_config_readback = 0;
@@ -121,7 +124,7 @@ module axis_spm_control#(
     reg signed [32-1:0] x0=0; // vector components
     reg signed [32-1:0] y0=0; // ..
     reg signed [32-1:0] z0=0; // ..
-    reg signed [32-1:0] u0=0; // Bias Reference
+    reg signed [32-1:0] u0_bias=0; // Bias Reference, GXSM Bias Set Value
     reg signed [32-1:0] xy_offset_step=32; // @Q31 => Q31 / 120M => [18 sec full scale swin @ step 1 decii = 0]  x RDECI
     reg signed [32-1:0] z_offset_step=32; // @Q31 => Q31 / 120M => [18 sec full scale swin @ step 1 decii = 0]  x RDECI
 
@@ -152,6 +155,7 @@ module axis_spm_control#(
     reg signed [32+2-1:0] rx=0;
     reg signed [32+2-1:0] ry=0;
     //reg signed [32-1:0] rz=0;
+    //reg signed [32+2-1:0] ru2=0;
     reg signed [32+2-1:0] ru=0;
 
     reg signed [32-1:0] AXa=0;
@@ -208,17 +212,23 @@ module axis_spm_control#(
     begin
         // module configuration
         case (config_addr) // manage MAIN SPM CONTROL configuration registers
+        bias_reg_address: // Bias only
+        begin
+            u0_bias <= $signed(config_data[1*32-1 : 0*32]); // Gxsm Bias Reference
+        end
+
         xyzu_offset_reg_address:
         begin
             // SCAN OFFSET / POSITION COMPONENTS, ABSOLUTE COORDS
             x0 <= $signed(config_data[1*32-1 : 0*32]); // vector components
             y0 <= $signed(config_data[2*32-1 : 1*32]); // ..
             z0 <= $signed(config_data[3*32-1 : 2*32]); // ..
-            u0 <= $signed(config_data[4*32-1 : 3*32]); // Bias Reference
+            u0_bias <= $signed(config_data[4*32-1 : 3*32]); // Gxsm Bias Reference
             
             xy_offset_step <= $signed(config_data[5*32-1 : 4*32]); // @Q31 => Q31 / 120M => [18 sec full scale swin @ step 1 decii = 0]  x RDECI
             z_offset_step  <= $signed(config_data[6*32-1 : 5*32]); // @Q31 => Q31 / 120M => [18 sec full scale swin @ step 1 decii = 0]  x RDECI
         end
+
 
         rotm_reg_address:
         begin
@@ -241,15 +251,9 @@ module axis_spm_control#(
             modulation_target <= config_data[2*32-1 : 1*32]; // target signal for mod (#XYZUAB)
         end
 
-        //default:
-        //    reg_config_readback <= 0;
-        
         endcase
-    end
- 
-        
-    always @ (posedge a_clk)
-    begin
+
+
         rdecii <= rdecii+1; // rdecii 00 01 *10 11 00 ...
         if (rdecii == 0)
         begin
@@ -302,8 +306,8 @@ module axis_spm_control#(
             z_sum   <= z_gvp + z_servo + (mt == 3 ? modulation : 0); // + mz0;
             //z_sum   <= z_gvp + z_servo + Z_slope;
 
-            // Bias := u0 (User Bias by GXSM) + u_gvp (GVP bias manipulation component) + LockIn Mod 
-            ru <= u0 + u_gvp + ((mt == 4 || mt == 7 )? modulation : 0);
+            // Bias := u0_bias (User Bias by GXSM) + u_gvp (GVP bias manipulation component) + LockIn Mod 
+            ru  <= u0_bias + u_gvp + ((mt == 4 || mt == 7 )? modulation : 0);
     
 
             // AUX AXIS A,B
@@ -345,6 +349,8 @@ module axis_spm_control#(
     
     assign M_AXIS_UGVPMON_tdata  = u_gvp;
     assign M_AXIS_UGVPMON_tvalid = 1;
+    assign M_AXIS_U0BIASMON_tdata  = u0_bias;
+    assign M_AXIS_U0BIASMON_tvalid = 1;
 
 // A
     assign M_AXIS5_tdata  = `SATURATE_32 (rA);

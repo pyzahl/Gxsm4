@@ -183,10 +183,11 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         { "SPMC_SET_OFFSET_XY_SLEW", &spmc_parameters.set_offset_xy_slew, false },
         { "SPMC_SET_OFFSET_Z_SLEW", &spmc_parameters.set_offset_z_slew, false },
         
-        // RP SPMC Monitors
-        { "SPMC_BIAS_MONITOR", &spmc_parameters.bias_monitor, true },
-        { "SPMC_BIAS_REG_MONITOR", &spmc_parameters.bias_reg_monitor, true },
-        { "SPMC_BIAS_GVP_MONITOR", &spmc_parameters.bias_gvp_monitor, true },
+        // RP SPMC Monitors -- GPIO
+        { "SPMC_BIAS_MONITOR", &spmc_parameters.bias_monitor, true }, // GPIO MONITOR: U0, aka Bias as set by GXSM
+
+
+
         { "SPMC_SIGNAL_MONITOR", &spmc_parameters.signal_monitor, true }, // Z servo input signal (current, ...)
 
         { "SPMC_X_MONITOR", &spmc_parameters.x_monitor, true }, // FINAL XYZ POS at DACs
@@ -203,6 +204,18 @@ JSON_parameter PACPLL_JSON_parameters[] = {
 
         { "SPMC_GVP_DATA_POSITION", &spmc_parameters.gvp_data_position, true },
 
+        // FPGA Module Register Monitors
+        { "SPMC_BIAS_REG_MONITOR", &spmc_parameters.bias_reg_monitor, true }, // Bias Sum, OUT4
+        { "SPMC_BIAS_SET_MONITOR", &spmc_parameters.bias_set_monitor, true }, // U0, aka Bias as set by GXSM
+
+        { "SPMC_GVPU_MONITOR", &spmc_parameters.gvpu_monitor, true },
+        { "SPMC_GVPA_MONITOR", &spmc_parameters.gvpa_monitor, true },
+        { "SPMC_GVPB_MONITOR", &spmc_parameters.gvpb_monitor, true },
+
+        { "SPMC_MUX_MONITOR", &spmc_parameters.mux_monitor, true },
+        
+
+        
         // RP SPMC Lock-In
         { "SPMC_SC_LCK_FREQUENCY", &spmc_parameters.sc_lck_frequency, false }, // manual/tune frequency
         { "SPMC_SC_LCK_VOLUME",    &spmc_parameters.sc_lck_volume, false },    // amplitude

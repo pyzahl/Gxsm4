@@ -585,7 +585,19 @@ public:
                 int pc=0;
                 int x=0;
                 double t=0.;
+                PROBE_VECTOR_GENERIC vec_initial;
+
+                memcpy (&vec_initial, &program_vector_list[0], sizeof (vec_initial)); // backup
                 re_init_vector_program();
+                
+                if (program_vector_list[0].options & VP_INITIAL_SET_VEC){ // calculate diffs of initial vector been a set vector 
+                        program_vector_list[0].f_dx = program_vector_list[0].f_dx - v->f_dx;
+                        program_vector_list[0].f_dy = program_vector_list[0].f_dy - v->f_dy;
+                        program_vector_list[0].f_dz = program_vector_list[0].f_dz - v->f_dz;
+                        program_vector_list[0].f_du = program_vector_list[0].f_du - v->f_du;
+                        program_vector_list[0].f_da = program_vector_list[0].f_da - v->f_da;
+                        program_vector_list[0].f_db = program_vector_list[0].f_db - v->f_db;
+                }
                 for (; program_vector_list[pc].n;){
                         int n = program_vector_list[pc].n;
                         double l=1.;
@@ -597,10 +609,10 @@ public:
                                 i = 0;
                         }
                         t += l*n/program_vector_list[pc].slew;  // program_vector.slew = n/ts;
-                        v->f_du += l*program_vector_list[pc].f_du;
                         v->f_dx += l*program_vector_list[pc].f_dx;
                         v->f_dy += l*program_vector_list[pc].f_dy;
                         v->f_dz += l*program_vector_list[pc].f_dz;
+                        v->f_du += l*program_vector_list[pc].f_du;
                         v->f_da += l*program_vector_list[pc].f_da;
                         v->f_db += l*program_vector_list[pc].f_db;
                         if (i==0) break;
@@ -608,7 +620,10 @@ public:
                         if (il) *il = program_vector_list[pc].iloop;
                 }
                 *pc_f = pc;
+                
                 re_init_vector_program();
+                memcpy (&program_vector_list[0], &vec_initial, sizeof (vec_initial)); // restore
+                
                 return t;
         };
         

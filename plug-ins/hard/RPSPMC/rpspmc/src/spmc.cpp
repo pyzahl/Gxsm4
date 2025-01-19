@@ -61,7 +61,11 @@
 extern CIntParameter     SPMC_GVP_STATUS;
 extern CDoubleParameter  SPMC_BIAS_MONITOR;
 extern CDoubleParameter  SPMC_BIAS_REG_MONITOR;
-extern CDoubleParameter  SPMC_BIAS_GVP_MONITOR;
+extern CDoubleParameter  SPMC_BIAS_SET_MONITOR;
+extern CDoubleParameter  SPMC_GVPU_MONITOR;
+extern CDoubleParameter  SPMC_GVPA_MONITOR;
+extern CDoubleParameter  SPMC_GVPB_MONITOR;
+extern CIntParameter     SPMC_MUX_MONITOR;
 extern CDoubleParameter  SPMC_SIGNAL_MONITOR;
 
 extern CDoubleParameter  SPMC_X_MONITOR;
@@ -134,7 +138,7 @@ void rp_spmc_AD5791_init (){
 
 
 // WARNING: FOR TEST/CALIBARTION ONLY, direct DAC write via config mode!!!
-void rp_spmc_set_xyzu (double ux, double uy, double uz, double bias){
+void rp_spmc_set_xyzu_DIRECT (double ux, double uy, double uz, double bias){
         if (verbose > 1) fprintf(stderr, "##Configure mode set AD5971 AXIS0,1,2,3 (XYZU) to %g V, %g V, %g V, %g V\n", ux, uy, uz, bias);
 
         ad5791_prepare_dac_value (0, ux);
@@ -161,63 +165,63 @@ void rp_spmc_set_xyzu (double ux, double uy, double uz, double bias){
 
 // SPMC module configuration, mastering CONFIG BUS
 
-void rp_spmc_gvp_module_start_config (){
+void rp_spmc_module_start_config (){
         set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, 0);    // make sure all modules configs are disabled
         usleep(MODULE_ADDR_SETTLE_TIME);
 }
-void rp_spmc_gvp_module_write_config_data (int addr){
+void rp_spmc_module_write_config_data (int addr){
         usleep(MODULE_ADDR_SETTLE_TIME);
         set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, addr); // set address, will fetch data
         usleep(MODULE_ADDR_SETTLE_TIME);
         set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, 0);    // and disable config bus again
 }
 
-void rp_spmc_gvp_module_config_int32 (int addr, int data, int pos=MODULE_START_VECTOR){
+void rp_spmc_module_config_int32 (int addr, int data, int pos=MODULE_START_VECTOR){
         if (pos > 15 || pos < 0) return;
-        if (pos == MODULE_START_VECTOR) rp_spmc_gvp_module_start_config ();
+        if (pos == MODULE_START_VECTOR) rp_spmc_module_start_config ();
         set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA+pos, data); // set config data at pos
-        if (addr) rp_spmc_gvp_module_write_config_data (addr); // and finish write
+        if (addr) rp_spmc_module_write_config_data (addr); // and finish write
 }
 
-void rp_spmc_gvp_module_config_uint32 (int addr, unsigned int data, int pos=MODULE_START_VECTOR){
+void rp_spmc_module_config_uint32 (int addr, unsigned int data, int pos=MODULE_START_VECTOR){
         if (pos > 15 || pos < 0) return;
-        if (pos == MODULE_START_VECTOR) rp_spmc_gvp_module_start_config ();
+        if (pos == MODULE_START_VECTOR) rp_spmc_module_start_config ();
         set_gpio_cfgreg_uint32 (SPMC_MODULE_CONFIG_DATA+pos, data); // set config data at pos
-        if (addr) rp_spmc_gvp_module_write_config_data (addr); // and finish write
+        if (addr) rp_spmc_module_write_config_data (addr); // and finish write
 }
 
-void rp_spmc_gvp_module_config_int64 (int addr, long long data, int pos=MODULE_START_VECTOR){
+void rp_spmc_module_config_int64 (int addr, long long data, int pos=MODULE_START_VECTOR){
         if (pos > 14 || pos < 0) return;
-        if (pos == MODULE_START_VECTOR) rp_spmc_gvp_module_start_config ();
+        if (pos == MODULE_START_VECTOR) rp_spmc_module_start_config ();
         set_gpio_cfgreg_int64 (SPMC_MODULE_CONFIG_DATA+pos, data); // set config data at pos
-        if (addr) rp_spmc_gvp_module_write_config_data (addr); // and finish write
+        if (addr) rp_spmc_module_write_config_data (addr); // and finish write
 }
 
-void rp_spmc_gvp_module_config_int48_16 (int addr,  unsigned long long value, unsigned int n, int pos=MODULE_START_VECTOR){
+void rp_spmc_module_config_int48_16 (int addr,  unsigned long long value, unsigned int n, int pos=MODULE_START_VECTOR){
         if (pos > 14 || pos < 0) return;
-        if (pos == MODULE_START_VECTOR) rp_spmc_gvp_module_start_config ();
+        if (pos == MODULE_START_VECTOR) rp_spmc_module_start_config ();
         set_gpio_cfgreg_int48_16 (SPMC_MODULE_CONFIG_DATA+pos, value, n); // set config data at pos
-        if (addr) rp_spmc_gvp_module_write_config_data (addr); // and finish write
+        if (addr) rp_spmc_module_write_config_data (addr); // and finish write
 }
 
-void rp_spmc_gvp_module_config_Qn (int addr, double data, int pos=MODULE_START_VECTOR, double Qn=Q31){
+void rp_spmc_module_config_Qn (int addr, double data, int pos=MODULE_START_VECTOR, double Qn=Q31){
         if (pos > 15 || pos < 0) return;
-        if (pos == MODULE_START_VECTOR) rp_spmc_gvp_module_start_config ();
+        if (pos == MODULE_START_VECTOR) rp_spmc_module_start_config ();
         set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA+pos,  int(round(Qn*data))); // set config data at pos
-        if (addr) rp_spmc_gvp_module_write_config_data (addr); // and finish write
+        if (addr) rp_spmc_module_write_config_data (addr); // and finish write
 }
 
-void rp_spmc_gvp_module_config_vector_Qn (int addr, double data[16], int n, double Qn=Q31){
+void rp_spmc_module_config_vector_Qn (int addr, double data[16], int n, double Qn=Q31){
         if (n > 16 || n < 1) return;
-        rp_spmc_gvp_module_start_config ();
+        rp_spmc_module_start_config ();
         for (int i=0; i<n; i++)
                 set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA+i, int(round(Qn*data[i]))); // set config data -- only 1st 32 of 512
-        if (addr) rp_spmc_gvp_module_write_config_data (addr); // and finish write
+        if (addr) rp_spmc_module_write_config_data (addr); // and finish write
 }
 
 // Readback Module Configuration Data, 2x 32bit/address via regA, regB
 
-void rp_spmc_gvp_module_read_config_data (int addr, int *regA, int *regB){
+void rp_spmc_module_read_config_data (int addr, int *regA, int *regB){
         set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, addr); // set address, will prepare data to fetch
         usleep(MODULE_ADDR_SETTLE_TIME);
         *regA = read_gpio_reg_int32 (10,0); // GPIO X19 <= RegA (addr)
@@ -225,7 +229,7 @@ void rp_spmc_gvp_module_read_config_data (int addr, int *regA, int *regB){
         set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, 0);    // and disable config bus again
 }
 
-void rp_spmc_gvp_module_read_config_data_timing_test (){
+void rp_spmc_module_read_config_data_timing_test (){
         int i=0;
         int regA[200], regB[200];
         clock_t t=clock();
@@ -298,7 +302,7 @@ void rp_spmc_gvp_module_read_config_data_timing_test (){
         regT[i] = clock();
 
         
-        fprintf(stderr, "\n *** rp_spmc_gvp_module_read_config_data_timing_test result ***\n");
+        fprintf(stderr, "\n *** rp_spmc_module_read_config_data_timing_test result ***\n");
         fprintf(stderr, "T1[%02d] = %g us\n", i1, 1e6*(t1 - t)/CLOCKS_PER_SEC);
         fprintf(stderr, "T2[%02d] = %g us\n", i2, 1e6*(t2 - t)/CLOCKS_PER_SEC);
         fprintf(stderr, "T2-T1 until set = %g us\n", 1e6*(t2 - t1)/CLOCKS_PER_SEC);
@@ -324,20 +328,20 @@ void rp_spmc_gvp_module_read_config_data_timing_test (){
 void rp_spmc_set_zservo_controller (double setpoint, double cp, double ci, double upper, double lower){
         if (verbose > 1) fprintf(stderr, "##Configure RP SPMC Z-Servo Controller: set= %g  cp=%g ci=%g upper=%g lower=%g\n", setpoint, cp, ci, upper, lower); 
 
-        rp_spmc_gvp_module_config_int32 (MODULE_SETUP, volts_to_rpspmc_FIR32IN1 (setpoint), MODULE_START_VECTOR);
-        rp_spmc_gvp_module_config_Qn (MODULE_SETUP, cp, MODULE_SETUP_VECTOR(1), QZSCOEF);
-        rp_spmc_gvp_module_config_Qn (MODULE_SETUP, ci, MODULE_SETUP_VECTOR(2), QZSCOEF);
-        rp_spmc_gvp_module_config_int32 (MODULE_SETUP,             volts_to_rpspmc (upper), MODULE_SETUP_VECTOR(3));
-        rp_spmc_gvp_module_config_int32 (SPMC_Z_SERVO_CONTROL_REG, volts_to_rpspmc (lower), MODULE_SETUP_VECTOR(4));
+        rp_spmc_module_config_int32 (MODULE_SETUP, volts_to_rpspmc_FIR32IN1 (setpoint), MODULE_START_VECTOR);
+        rp_spmc_module_config_Qn (MODULE_SETUP, cp, MODULE_SETUP_VECTOR(1), QZSCOEF);
+        rp_spmc_module_config_Qn (MODULE_SETUP, ci, MODULE_SETUP_VECTOR(2), QZSCOEF);
+        rp_spmc_module_config_int32 (MODULE_SETUP,             volts_to_rpspmc (upper), MODULE_SETUP_VECTOR(3));
+        rp_spmc_module_config_int32 (SPMC_Z_SERVO_CONTROL_REG, volts_to_rpspmc (lower), MODULE_SETUP_VECTOR(4));
 }
 
 void rp_spmc_set_zservo_gxsm_speciality_setting (int mode, double z_setpoint, double in_offset_comp){
         if (verbose > 1) fprintf(stderr, "##Configure RP SPMC Z-Servo Controller: mode= %d  Zset=%g offset_comp=%g\n", mode, z_setpoint, in_offset_comp); 
 
-        rp_spmc_gvp_module_config_int32 (MODULE_SETUP, volts_to_rpspmc (in_offset_comp), MODULE_START_VECTOR); // control input offset
-        rp_spmc_gvp_module_config_int32 (MODULE_SETUP, 0, MODULE_SETUP_VECTOR(1)); // control setpoint offset = 0 always.
-        rp_spmc_gvp_module_config_int32 (MODULE_SETUP, volts_to_rpspmc (z_setpoint), MODULE_SETUP_VECTOR(2));
-        rp_spmc_gvp_module_config_uint32 (SPMC_Z_SERVO_MODE_CONTROL_REG, mode, MODULE_SETUP_VECTOR(3));
+        rp_spmc_module_config_int32 (MODULE_SETUP, volts_to_rpspmc (in_offset_comp), MODULE_START_VECTOR); // control input offset
+        rp_spmc_module_config_int32 (MODULE_SETUP, 0, MODULE_SETUP_VECTOR(1)); // control setpoint offset = 0 always.
+        rp_spmc_module_config_int32 (MODULE_SETUP, volts_to_rpspmc (z_setpoint), MODULE_SETUP_VECTOR(2));
+        rp_spmc_module_config_uint32 (SPMC_Z_SERVO_MODE_CONTROL_REG, mode, MODULE_SETUP_VECTOR(3));
 }
 
 
@@ -350,10 +354,10 @@ void rp_spmc_gvp_config (bool reset=true, bool pause=false, int reset_options=-1
                 rp_spmc_AD5791_set_stream_mode (); // enable streaming for AD5791 DAC's from FPGA now!
         }
 
-        rp_spmc_gvp_module_config_uint32 (SPMC_GVP_CONTROL_REG, (reset ? 1:0) | (pause ? 2:0));
+        rp_spmc_module_config_uint32 (SPMC_GVP_CONTROL_REG, (reset ? 1:0) | (pause ? 2:0));
 
         if (reset_options >= 0)
-                rp_spmc_gvp_module_config_uint32 (SPMC_GVP_RESET_OPTIONS_REG, reset_options);
+                rp_spmc_module_config_uint32 (SPMC_GVP_RESET_OPTIONS_REG, reset_options);
 
         if (verbose > 0)
                 fprintf(stderr, "##Configure GVP: %s RO[%d]\n", reset ? "Reset" : pause ? "Pause":"Run", reset_options);
@@ -361,17 +365,19 @@ void rp_spmc_gvp_config (bool reset=true, bool pause=false, int reset_options=-1
 
 void reset_gvp_positions_uab(){
         double data[16] = { 0.,0.,0.,0., 0.,0.,0.,0., 0.,0.,0.,0., 0.,0.,0.,0. };
-        rp_spmc_gvp_module_config_vector_Qn (SPMC_GVP_RESET_VECTOR_REG, data, 6);
+        rp_spmc_module_config_vector_Qn (SPMC_GVP_RESET_VECTOR_REG, data, 6);
 }
 
 void rp_spmc_gvp_init (){
         if (verbose > 0)
                 fprintf(stderr, "##**** GVP INIT\n");
 
+        reset_gvp_positions_uab();
+
         rp_spmc_gvp_config (true, false, 0x0000); // assure reset mode, FB not in hold
 
         // Program GVP with Null vectors for sanity:
-        rp_spmc_gvp_module_start_config ();
+        rp_spmc_module_start_config ();
         // write vector data using set_gpio_cfgreg_uint32 (SPMC_MODULE_CONFIG_DATA+N, data); // set config data 0..15 x 32bit
         for (int pc=0; pc<MAX_NUM_PROGRAN_VECTORS; ++pc){
                 if (verbose > 1) fprintf(stderr, "Init Vector[PC=%03d] to zero, decii=%d\n", pc, SPMC_GVP_MIN_DECII);
@@ -383,9 +389,8 @@ void rp_spmc_gvp_init (){
                         set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + i, 0);
                 set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_DECII, SPMC_GVP_MIN_DECII);  // decimation
         }
-        rp_spmc_gvp_module_write_config_data (SPMC_GVP_VECTOR_DATA_REG);
+        rp_spmc_module_write_config_data (SPMC_GVP_VECTOR_DATA_REG);
 
-        reset_gvp_positions_uab();
 }
 
 // pc: ProgramCounter (Vector #)
@@ -538,7 +543,7 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, unsigned int srcs
         //           decii  ******     du        dz        dy        dx       Next      Nrep,   Options,     nii,      N,  [Vadr]
         // data = {32'd016, 160'd0, 32'd0004, 32'd0003, 32'd0064, 32'd0001,  32'd0, 32'd0000,   32'h0100, 32'd02, 32'd005, 32'd00 }; // 000
 
-        rp_spmc_gvp_module_start_config ();
+        rp_spmc_module_start_config ();
 
         int idv[17];
         set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_VADR, idv[0]=pc);
@@ -589,7 +594,7 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, unsigned int srcs
         set_gpio_cfgreg_uint32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_DECII, decii);  // decimation
 
         // and load vector data to module
-        rp_spmc_gvp_module_write_config_data (SPMC_GVP_VECTOR_DATA_REG);
+        rp_spmc_module_write_config_data (SPMC_GVP_VECTOR_DATA_REG);
 
         //<< std::setfill('0') << std::hex << std::setw(8) << data
         
@@ -618,12 +623,12 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, unsigned int srcs
 // SPMC GVP STREAM SOURCE MUX 16 to 6
 void rp_set_gvp_stream_mux_selector (unsigned long selector, unsigned long test_mode=0, int testval=0){
         if (verbose > 1) fprintf(stderr, "** set gvp stream mux 0x%06x\n", (unsigned int)selector);
-        rp_spmc_gvp_module_config_uint32 (MODULE_SETUP, selector, MODULE_START_VECTOR);
-        rp_spmc_gvp_module_config_uint32 (MODULE_SETUP, test_mode, MODULE_SETUP_VECTOR(1));
-        rp_spmc_gvp_module_config_int32 (SPMC_MUX16_6_SRCS_CONTROL_REG, testval, MODULE_SETUP_VECTOR(2));
+        rp_spmc_module_config_uint32 (MODULE_SETUP, selector, MODULE_START_VECTOR);
+        rp_spmc_module_config_uint32 (MODULE_SETUP, test_mode, MODULE_SETUP_VECTOR(1));
+        rp_spmc_module_config_int32 (SPMC_MUX16_6_SRCS_CONTROL_REG, testval, MODULE_SETUP_VECTOR(2));
 
         int a,b;
-        rp_spmc_gvp_module_read_config_data (SPMC_READBACK_XX_REG, &a, &b);
+        rp_spmc_module_read_config_data (SPMC_READBACK_XX_REG, &a, &b);
         if (verbose > 1) fprintf(stderr, "** FPGA MUX selector is %08x\n", (unsigned int)a);
 
 }
@@ -634,11 +639,11 @@ int rp_spmc_set_rotation (double alpha, double slew){
         int ret = -1;
         
         if (verbose > 1) fprintf(stderr, "** adjusting rotation to %g\n", alpha);
-
+#ifdef ROTATE_SMOOTH
         if (slew < 0.){ // FORCE SET/INIT
                 current_alpha = alpha;
                 double data[16] = { cos(current_alpha), sin(current_alpha),0.,0., 0.,0.,0.,0., 0.,0.,0.,0., 0.,0.,0.,0. };
-                rp_spmc_gvp_module_config_vector_Qn (SPMC_MAIN_CONTROL_ROTM_REG, data, 2, Q_XY_PRECISION);
+                rp_spmc_module_config_vector_Qn (SPMC_MAIN_CONTROL_ROTM_REG, data, 2, Q_XY_PRECISION);
                 return 0;
         }
         
@@ -670,9 +675,11 @@ int rp_spmc_set_rotation (double alpha, double slew){
                         }
                 }
         }
-        
+#else
+        current_alpha = alpha;
+#endif        
         double data[16] = { cos(current_alpha), sin(current_alpha),0.,0., 0.,0.,0.,0., 0.,0.,0.,0., 0.,0.,0.,0. };
-        rp_spmc_gvp_module_config_vector_Qn (SPMC_MAIN_CONTROL_ROTM_REG, data, 2, Q_XY_PRECISION);
+        rp_spmc_module_config_vector_Qn (SPMC_MAIN_CONTROL_ROTM_REG, data, 2, Q_XY_PRECISION);
 
         return ret;
 }
@@ -684,7 +691,13 @@ void rp_spmc_set_slope (double dzx, double dzy, double dzxy_slew){
         }
         
         double data[16] = { dzx, dzy, dzxy_slew/SPMC_CLK,0., 0.,0.,0.,0., 0.,0.,0.,0., 0.,0.,0.,0. };
-        rp_spmc_gvp_module_config_vector_Qn (SPMC_MAIN_CONTROL_SLOPE_REG, data, 2, Q_Z_SLOPE_PRECISION);
+        rp_spmc_module_config_vector_Qn (SPMC_MAIN_CONTROL_SLOPE_REG, data, 2, Q_Z_SLOPE_PRECISION);
+}
+
+
+void rp_spmc_set_bias (double bias){
+        if (verbose > 1) fprintf(stderr, "##Configure SPMC Bias=%g V\n", bias);
+        rp_spmc_module_config_int32 (SPMC_MAIN_CONTROL_BIAS_REG, bias_buf = volts_to_rpspmc (bias)); // Set U0 = Gxsm BiasRef
 }
 
 void rp_spmc_set_offsets (double x0, double y0, double z0, double bias, double xy_move_slew, double z_move_slew){
@@ -699,12 +712,12 @@ void rp_spmc_set_offsets (double x0, double y0, double z0, double bias, double x
 
         if (verbose > 1) fprintf(stderr, "##Configure XYZU [%g %g %g Bias=%g]V {%d %d}/cycle\n", x0, y0, z0, bias, xy_step, z_step);
 
-        rp_spmc_gvp_module_config_int32 (MODULE_SETUP, x0_buf = volts_to_rpspmc (x0), MODULE_START_VECTOR); // first, init ** X0
-        rp_spmc_gvp_module_config_int32 (MODULE_SETUP, y0_buf = volts_to_rpspmc (y0), MODULE_SETUP_VECTOR(1)); // setup...    ** Y0
-        rp_spmc_gvp_module_config_int32 (MODULE_SETUP, z0_buf = volts_to_rpspmc (z0), MODULE_SETUP_VECTOR(2)); // setup...    ** Z0
-        rp_spmc_gvp_module_config_int32 (MODULE_SETUP, bias_buf = volts_to_rpspmc (bias), MODULE_SETUP_VECTOR(3)); // setup...    ** U0=BiasRef
-        rp_spmc_gvp_module_config_int32 (MODULE_SETUP, xy_step, MODULE_SETUP_VECTOR(4)); // setup...        ** xy_offset_step/moveto adjuster speed
-        rp_spmc_gvp_module_config_int32 (SPMC_MAIN_CONTROL_XYZU_OFFSET_REG, z_step,  MODULE_SETUP_VECTOR(5));  // last, write all ** xy_offset_step/moveto adjuster speed
+        rp_spmc_module_config_int32 (MODULE_SETUP, x0_buf = volts_to_rpspmc (x0), MODULE_START_VECTOR); // first, init ** X0
+        rp_spmc_module_config_int32 (MODULE_SETUP, y0_buf = volts_to_rpspmc (y0), MODULE_SETUP_VECTOR(1)); // setup...    ** Y0
+        rp_spmc_module_config_int32 (MODULE_SETUP, z0_buf = volts_to_rpspmc (z0), MODULE_SETUP_VECTOR(2)); // setup...    ** Z0
+        rp_spmc_module_config_int32 (MODULE_SETUP, bias_buf = volts_to_rpspmc (bias), MODULE_SETUP_VECTOR(3)); // setup...    ** U0=BiasRef
+        rp_spmc_module_config_int32 (MODULE_SETUP, xy_step, MODULE_SETUP_VECTOR(4)); // setup...        ** xy_offset_step/moveto adjuster speed
+        rp_spmc_module_config_int32 (SPMC_MAIN_CONTROL_XYZU_OFFSET_REG, z_step,  MODULE_SETUP_VECTOR(5));  // last, write all ** xy_offset_step/moveto adjuster speed
 }
 
 /* TEST XY MOVE
@@ -781,8 +794,8 @@ void rp_spmc_set_scanpos (double xs, double ys, double slew, int opts){
 void rp_spmc_set_modulation (double volume, int target){
         if (verbose > 1) fprintf(stderr, "##Configure: LCK VOLUME volume= %g V, TARGET: #%d\n", volume, target);
 
-        rp_spmc_gvp_module_config_int32 (MODULE_SETUP, volts_to_rpspmc(volume), MODULE_START_VECTOR);
-        rp_spmc_gvp_module_config_uint32 (SPMC_MAIN_CONTROL_MODULATION_REG, target&0x0f, MODULE_SETUP_VECTOR(1));
+        rp_spmc_module_config_int32 (MODULE_SETUP, volts_to_rpspmc(volume), MODULE_START_VECTOR);
+        rp_spmc_module_config_uint32 (SPMC_MAIN_CONTROL_MODULATION_REG, target&0x0f, MODULE_SETUP_VECTOR(1));
 }
 
 
@@ -801,9 +814,9 @@ double rp_spmc_configure_lockin (double freq, double gain, unsigned int mode, in
                 // Configure: LCK DDS IDEAL Freq= 100 Hz [16777216, N2=24, M=1048576]  Actual f=119.209 Hz  Delta=19.2093 Hz  (using power of 2 phase_inc)
         }
         
-        rp_spmc_gvp_module_config_uint32 (MODULE_SETUP, mode, MODULE_START_VECTOR); // first, init
-        rp_spmc_gvp_module_config_Qn (MODULE_SETUP, gain, MODULE_SETUP_VECTOR(1), Q24); // set...
-        rp_spmc_gvp_module_config_int48_16 (LCKID, phase_inc, n2, MODULE_SETUP_VECTOR(2)); // last, write
+        rp_spmc_module_config_uint32 (MODULE_SETUP, mode, MODULE_START_VECTOR); // first, init
+        rp_spmc_module_config_Qn (MODULE_SETUP, gain, MODULE_SETUP_VECTOR(1), Q24); // set...
+        rp_spmc_module_config_int48_16 (LCKID, phase_inc, n2, MODULE_SETUP_VECTOR(2)); // last, write
 
         return fact;
 }
@@ -848,7 +861,7 @@ void rp_spmc_set_biqad_Lck_F0 (double f_cut, double Q, double Fs, int BIQID){
         }
 
         double data[16] = { b0/a0, b1/a0, b2/a0, 1.0, a1/a0,a2/a0,0.,0., 0.,0.,0.,0., 0.,0.,0.,0. };
-        rp_spmc_gvp_module_config_vector_Qn (BIQID, data, 6, Q28);
+        rp_spmc_module_config_vector_Qn (BIQID, data, 6, Q28);
 }
 
 // set BiQuad to pass
@@ -858,7 +871,7 @@ void rp_spmc_set_biqad_Lck_F0_pass (int BIQID){
                 fprintf(stderr, "##Configure: BiQuad to pass mode:\n");
                 fprintf(stderr, "## b0=1.0 ...=0\n");
         }
-        rp_spmc_gvp_module_config_vector_Qn (BIQID, data, 6, Q28);
+        rp_spmc_module_config_vector_Qn (BIQID, data, 6, Q28);
 }
 
 // set BiQuad to IIR 1st order LP
@@ -879,7 +892,7 @@ void rp_spmc_set_biqad_Lck_F0_IIR (double f_cut, double Fs, int BIQID){
         }
 
         double data[16] = { b0, b1, 0.0, 0.0, 0.0,0.0,0.,0., 0.,0.,0.,0., 0.,0.,0.,0. };
-        rp_spmc_gvp_module_config_vector_Qn (BIQID, data, 6, Q28);
+        rp_spmc_module_config_vector_Qn (BIQID, data, 6, Q28);
 }
 
 
@@ -909,13 +922,21 @@ void rp_spmc_update_readings (){
         //SPMC_ZS_MONITOR.Value () = rpspmc_to_volts (read_gpio_reg_int32 (10,0));
 
         int regA, regB;
-        rp_spmc_gvp_module_read_config_data (SPMC_READBACK_Z_REG, &regA, &regB);
+        rp_spmc_module_read_config_data (SPMC_READBACK_Z_REG, &regA, &regB);
         SPMC_ZS_MONITOR.Value () = rpspmc_to_volts (regB); // Z-GVP
         SPMC_Z0_MONITOR.Value () = rpspmc_to_volts (regA); // Z-slope component
 
-        rp_spmc_gvp_module_read_config_data (SPMC_READBACK_BIAS_REG, &regA, &regB); // Bias, Bias-GVP Comp
+        rp_spmc_module_read_config_data (SPMC_READBACK_BIAS_REG, &regA, &regB); // Bias Sum Reading, Bias U0 Set Val
         SPMC_BIAS_REG_MONITOR.Value () = rpspmc_to_volts (regA);
-        SPMC_BIAS_GVP_MONITOR.Value () = rpspmc_to_volts (regB);
+        SPMC_BIAS_SET_MONITOR.Value () = rpspmc_to_volts (regB);
+        
+        rp_spmc_module_read_config_data (SPMC_READBACK_GVPBIAS_REG, &regA, &regB); // GVP Bias Comp, GVP-A
+        SPMC_GVPU_MONITOR.Value () = rpspmc_to_volts (regA);
+        SPMC_GVPA_MONITOR.Value () = rpspmc_to_volts (regB);
+
+        rp_spmc_module_read_config_data (SPMC_READBACK_XX_REG, &regA, &regB); // Srcs-MUX, GVP-B
+        SPMC_MUX_MONITOR.Value ()  = rpspmc_to_volts (regA);
+        SPMC_GVPB_MONITOR.Value () = rpspmc_to_volts (regB);
         
         SPMC_X0_MONITOR.Value () = rpspmc_to_volts (x0_buf); // ** mirror
         SPMC_Y0_MONITOR.Value () = rpspmc_to_volts (y0_buf); // ** mirror

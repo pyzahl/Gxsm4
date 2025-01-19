@@ -338,7 +338,6 @@ module axis_4s_combine #(
             // ===============================================================================================
             begin   
                  // Summing: Measure, (Box Carr Average) / Decimate
-                decimate_count <= decimate_count + 1; // next sample
 
                 if (decimate_count < reg_ndecimate)
                 begin
@@ -380,6 +379,7 @@ module axis_4s_combine #(
                         end
                     endcase
 
+                    decimate_count <= decimate_count + 1; // next sample
                     bram_next <= 0; // hold BRAM write next
                     fir_next  <= 0; // hold FIR
                 end

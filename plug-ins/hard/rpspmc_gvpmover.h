@@ -188,7 +188,7 @@ public:
                         gtk_widget_hide (GTK_WIDGET (g_object_get_data (G_OBJECT (w), "TabGrid")));
         };
 
-	int create_waveform (double amp, double duration, int limit_cycles=5, int pointing=1, int axis=0);
+	int create_waveform (double amp, double duration, int limit_cycles=5, int pointing=1, int axis=0, int SRCS=0x0000c03f, int options=0);
 	Mover_Param mover_param;
 	double Z0_speed, Z0_adjust, Z0_goto;
 

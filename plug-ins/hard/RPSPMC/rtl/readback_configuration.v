@@ -24,6 +24,7 @@ module readback_configuration#(
     /* module readback register addresses */
     parameter readback_Z_reg_address    = 100001,
     parameter readback_Bias_reg_address = 100002,
+    parameter readback_GVPBias_reg_address = 100003,
     parameter readbackTimingTest_reg_address  = 101999,
     parameter readbackTimingReset_reg_address = 102000,
     parameter readbackX_reg_address = 100999
@@ -37,9 +38,11 @@ module readback_configuration#(
     input wire [32-1:0] Z_GVP_mon,
     input wire [32-1:0] Z_slope_mon,
 
-    input wire [32-1:0] Bias_mon,
-    input wire [32-1:0] Bias_GVP_mon,
+    input wire [32-1:0] Bias_SUM_mon,    // Total Bias Sum: U0+GVP+Mod
+    input wire [32-1:0] Bias_U0BIAS_mon, // GXSM Bias Set Value
 
+    input wire [32-1:0] Bias_GVP_mon,    // GVP genertae Bias Offset
+    input wire [32-1:0] Bias_MOD_mon,    // Bias AUX/Modifiers, LockIn,...
 
     input wire [32-1:0] rbXa,
     input wire [32-1:0] rbXb
@@ -64,8 +67,14 @@ module readback_configuration#(
 
         readback_Bias_reg_address:
         begin
-            reg_A <= Bias_mon;
-            reg_B <= Bias_GVP_mon;
+            reg_A <= Bias_SUM_mon;
+            reg_B <= Bias_U0BIAS_mon;
+	    end
+	  
+        readback_GVPBias_reg_address:
+        begin
+            reg_A <= Bias_GVP_mon;
+            reg_B <= Bias_MOD_mon;
 	    end
 	  
         readbackX_reg_address:

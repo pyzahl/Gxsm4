@@ -560,7 +560,7 @@ class BuildParam{
                 return button;
         };
 
-
+//#define FIREBUTTON_MESSAGES_ON
 
         static void
         fire_icon_pressed (GtkGesture *gesture, int n_press, double x, double y, gpointer user_data)
@@ -574,7 +574,9 @@ class BuildParam{
                                             user_data);
                         }
                 }
+#ifdef FIREBUTTON_MESSAGES_ON
                 g_message ("Fire Button:  Pressed (%g,%g) [%s]", x,y,  (const gchar*)g_object_get_data( G_OBJECT (gesture), "icon-pressed"));
+#endif
         };
 
         static void
@@ -589,7 +591,9 @@ class BuildParam{
                                              user_data);
                         }
                 }
+#ifdef FIREBUTTON_MESSAGES_ON
                 g_message ("Fire Button:  Released (%g,%g) [%s]", x,y, (const gchar*)g_object_get_data( G_OBJECT (gesture), "icon-normal"));
+#endif
         };
 
         static void
@@ -598,7 +602,9 @@ class BuildParam{
                 if (g_object_get_data( G_OBJECT (motion), "icon"))
                         gtk_image_set_from_icon_name (GTK_IMAGE (G_OBJECT (g_object_get_data( G_OBJECT (motion), "icon"))),
                                                       (const gchar*)g_object_get_data( G_OBJECT (motion), "icon-enter"));
+#ifdef FIREBUTTON_MESSAGES_ON
                 g_message ("Fire Button: Focus Enter (%g,%g)  [%s]", x,y,  (const gchar*)g_object_get_data( G_OBJECT (motion), "icon-enter"));
+#endif
         };
 
         static void
@@ -607,7 +613,9 @@ class BuildParam{
                 if (g_object_get_data( G_OBJECT (motion), "icon"))
                         gtk_image_set_from_icon_name (GTK_IMAGE (G_OBJECT (g_object_get_data( G_OBJECT (motion), "icon"))),
                                                       (const gchar*)g_object_get_data( G_OBJECT (motion), "icon-normal"));
+#ifdef FIREBUTTON_MESSAGES_ON
                 g_message ("Fire Button: Focus Leave (%g,%g) [%s]", x,y, (const gchar*)g_object_get_data( G_OBJECT (motion), "icon-normal"));
+#endif
         };
 
 

@@ -174,11 +174,11 @@
 // NOTHING at CONFIG ADDR = 0 => standy/disabled
 
 // GVP MODULE AT CONFIGURATION ADDRs  1,2,3,4
-#define SPMC_GVP_CONTROL_REG          1   // CONTROL CONFIG REG: B0: reset, B1: Pause
-#define SPMC_GVP_RESET_OPTIONS_REG    2   // RESET OPTIONS REG:  reset options
-#define SPMC_GVP_VECTOR_DATA_REG      3   // VECTOR PROGRAM REG: 1..16 // 512 bits (16x32)
-#define SPMC_GVP_RESET_VECTOR_REG     4   // [XYZ]UAB
-#define SPMC_GVP_VECTORX_DATA_REG     5   // VECTORX PROGRAM REG -- Vector Extension Components
+#define SPMC_GVP_CONTROL_REG          5001   // CONTROL CONFIG REG: B0: reset, B1: Pause
+#define SPMC_GVP_RESET_OPTIONS_REG    5002   // RESET OPTIONS REG:  reset options
+#define SPMC_GVP_VECTOR_DATA_REG      5003   // VECTOR PROGRAM REG: 1..16 // 512 bits (16x32)
+#define SPMC_GVP_RESET_VECTOR_REG     5004   // [XYZ]UAB
+#define SPMC_GVP_VECTORX_DATA_REG     5005   // VECTORX PROGRAM REG -- Vector Extension Components
 
 // GVP VCETOR COMPONETS IN ARRAY AT OFFESTS in CONFIG_REG (512bits)
 //                   decii      du        dz        dy        dx     Next       Nrep,   Options,     nii,      N,    [Vadr]
@@ -237,6 +237,7 @@
 #define SPMC_MAIN_CONTROL_ROTM_REG         1101 //  SPMC MAIN CONTROL IP REGISTERS
 #define SPMC_MAIN_CONTROL_SLOPE_REG        1102 //  SPMC MAIN CONTROL IP REGISTERS
 #define SPMC_MAIN_CONTROL_MODULATION_REG   1103 //  SPMC MAIN CONTROL IP REGISTERS
+#define SPMC_MAIN_CONTROL_BIAS_REG         1104 //  SPMC MAIN CONTROL IP REGISTERS -- Gxsm set Bias onyl (U), included in XYZU as well
 /*
         case (config_addr) // BQ configuration, and auto reset
         xyzu_offset_reg_address: // == 1100
@@ -281,8 +282,10 @@
 
 // MODULE READBACK REGISTER A,B ADRESS MAPPINGS
 #define SPMC_READBACK_Z_REG            100001
-#define SPMC_READBACK_BIAS_REG         100002
-#define SPMC_READBACK_XX_REG           100999
+#define SPMC_READBACK_BIAS_REG         100002 // Bias Sum, Gxsm Bias "U0" Set
+#define SPMC_READBACK_GVPBIAS_REG      100003 // Bias GVP Comp., Bias MOD (DBG: currently = GVP-A)
+#define SPMC_READBACK_MUX_REG          100004 // SRCS-MUX, --
+#define SPMC_READBACK_XX_REG           100999 // DBG: SrcsMUX sel, GVP-B
 
 #define SPMC_READBACK_TEST_RESET_REG           102000
 #define SPMC_READBACK_TEST_VALUE_REG           101999

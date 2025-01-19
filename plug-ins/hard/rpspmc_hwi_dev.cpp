@@ -1196,6 +1196,7 @@ gboolean rpspmc_hwi_dev::ScanLineM(int yindex, int xdir, int muxmode, //srcs_mas
  "p" :                X,Y Scan/Probe Coords in Pixel, 0,0 is center, DSP Scan Coords
  "P" :                X,Y Scan/Probe Coords in Pixel, 0,0 is top left [indices]
  "B" :                Bias
+ "G" :                GVP
 */
 
 gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2, double &val3){
@@ -1288,10 +1289,16 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2,
                 val3 = (double)RPSPMC_data_z_value;
 		return TRUE;
         }
-        if (*property == 'B'){ // Monitors: Bias, ...
+        if (*property == 'B'){ // Monitors: Bias
                 val1 = spmc_parameters.bias_monitor;
                 val2 = spmc_parameters.bias_reg_monitor;
-                val3 = spmc_parameters.bias_gvp_monitor;
+                val3 = spmc_parameters.bias_set_monitor;
+		return TRUE;
+        }
+        if (*property == 'G'){ // Monitors: GVP
+                val1 = spmc_parameters.gvpu_monitor;
+                val2 = spmc_parameters.gvpa_monitor;
+                val3 = spmc_parameters.gvpb_monitor;
 		return TRUE;
         }
 //	printf ("ZXY: %g %g %g\n", val1, val2, val3);
@@ -1480,9 +1487,16 @@ int rpspmc_hwi_dev::read_actual_module_configuration (){
 #define SPMC_GVP_CONTROL_PAUSE     2
 #define SPMC_GVP_CONTROL_RESUME    3
 #define SPMC_GVP_CONTROL_RESET_UAB 4
+#define SPMC_GVP_CONTROL_GVP_EXECUTE_NO_DMA 5   
+#define SPMC_GVP_CONTROL_GVP_RESET_ONLY     6   
 
 
-void rpspmc_hwi_dev::GVP_execute_vector_program(){
+void rpspmc_hwi_dev::GVP_execute_vector_program(){ // init DMA and start GVP
+        g_message ("rpspmc_hwi_dev::GVP_execute_vector_program ()");
+        rpspmc_pacpll->write_parameter ("SPMC_GVP_CONTROL", SPMC_GVP_CONTROL_EXECUTE);
+}
+
+void rpspmc_hwi_dev::GVP_execute_only_vector_program(){ // only start GVP, no read back DMA initiated
         g_message ("rpspmc_hwi_dev::GVP_execute_vector_program ()");
         rpspmc_pacpll->write_parameter ("SPMC_GVP_CONTROL", SPMC_GVP_CONTROL_EXECUTE);
 }
@@ -1490,6 +1504,12 @@ void rpspmc_hwi_dev::GVP_execute_vector_program(){
 void rpspmc_hwi_dev::GVP_abort_vector_program (){
         g_message ("rpspmc_hwi_dev::GVP_abort_vector_program ()");
         rpspmc_pacpll->write_parameter ("SPMC_GVP_CONTROL", SPMC_GVP_CONTROL_RESET);
+        abort_GVP_flag = true;
+}
+
+void rpspmc_hwi_dev::GVP_reset_vector_program (){ // ONLY GVP CORE RESET, NO DMA, etc. managed or reset
+        g_message ("rpspmc_hwi_dev::GVP_reset_vector_program ()");
+        rpspmc_pacpll->write_parameter ("SPMC_GVP_CONTROL", SPMC_GVP_CONTROL_GVP_RESET_ONLY);
         abort_GVP_flag = true;
 }
 

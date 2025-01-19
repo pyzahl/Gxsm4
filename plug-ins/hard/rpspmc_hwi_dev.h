@@ -226,7 +226,12 @@ public:
         gint last_vector_index;
  
         //SPM_emulator *spm_emu; // DSP emulator for dummy data generation and minimal SPM behavior
-        void GVP_execute_vector_program(); // non blocking
+        void GVP_execute_vector_program(); // non blocking, initializes and starts DMA <-> FPGA,stream server and then initiated GVP execution
+	void GVP_abort_vector_program (); // stops GVP and DMA streaming
+
+        void GVP_execute_only_vector_program(); // GVP execute only, no read back (data is been ignored)
+        void GVP_reset_vector_program (); // reset GVP only, no DMA abort, etc
+
         void GVP_vp_init ();
         void GVP_start_data_read(); // non blocking
 
@@ -243,7 +248,6 @@ public:
 		return -1;
 	};
 	int GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v);
-	void GVP_abort_vector_program ();
 
         gint RPSPMC_GVP_section_count;
         gint RPSPMC_GVP_n;

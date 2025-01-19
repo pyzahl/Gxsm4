@@ -204,7 +204,11 @@ struct SPMC_parameters {
         // RP SPMC Monitors
         double bias_monitor;
         double bias_reg_monitor;
-        double bias_gvp_monitor;
+        double bias_set_monitor;
+        double gvpu_monitor;
+        double gvpa_monitor;
+        double gvpb_monitor;
+        double mux_monitor;
         double signal_monitor;
         double x_monitor; // final XYZ = VecOffset + VecScan + Vec(0,0,Zslope)
         double y_monitor;
