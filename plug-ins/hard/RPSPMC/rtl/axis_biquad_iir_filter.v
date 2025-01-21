@@ -133,12 +133,12 @@ module axis_biquad_iir_filter #(
           y1 <= 0;
           y2 <= 0;
         end
-        else if (S_AXIS_in_tvalid && run) 
+        else if (run) 
         begin
             x   <= S_AXIS_in_tdata;
             x1  <= x;
             x2  <= x1;
-            y1  <= (x_b0 + x_b1 + x_b2 - y_a1 - y_a2) >>> (coefficient_Q);
+            y1  <= (x_b0 + x_b1 + x_b2 - y_a1 - y_a2) >>> (coefficient_Q-internal_extra);
             y2  <= y1;
             
             y <= y1 >>> (internal_extra);
@@ -163,6 +163,6 @@ module axis_biquad_iir_filter #(
     end
    
     assign M_AXIS_out_tdata  = y;
-    assign M_AXIS_out_tvalid = 1;
+    assign M_AXIS_out_tvalid = S_AXIS_in_tvalid;
       
 endmodule

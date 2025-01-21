@@ -84,7 +84,8 @@ spmc_dma_support *spm_dma_instance = NULL;
 // make clean; make INSTALL_DIR=/opt/redpitaya
 
 // update fpga.bit only:
-// Gxsm4/plug-ins/hard/RPSPMC/rpspmc$ scp ../project_RP-SPMC-RedPACPLL-202308-test/project_RP-SPMC-RedPACPLL-202308-test.runs/impl_1/system_wrapper.bit root@rp-f09296.local:/opt/redpitaya/www/apps/rpspmc/fpga.bit
+// Gxsm4/plug-ins/hard/RPSPMC/rpspmc$ 
+// scp ../project_RP-SPMC-PACPLL-Gxsm4/project_RP-SPMC-PACPLL-Gxsm4.runs/impl_1/system_wrapper.bit  root@rp-f09296.local:/opt/redpitaya/www/apps/rpspmc/fpga.bit
 
 // copy sources:
 // pzahl@phenom:~/SVN/Gxsm4/plug-ins/hard/RPSPMC/rpspmc$ scp src/*.h src/*.cpp root@rp-f09296.local:/opt/redpitaya/www/apps/rpspmc/src

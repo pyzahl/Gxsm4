@@ -264,17 +264,18 @@ module axis_4s_combine #(
             // ===============================================================================================
             0: // RESET STATE
             begin
+                fir_next      <= 1; // empty and zero FIR 
                 zero_x_s      <= 0;
                 bram_reset    <= 1'b1;
                 finished      <= 1'b0;
                 dec_sms_next  <= 3'd1; // ready, now wait for release of reset operation to enagage trigger and arm
                 sample_count  <= 32'd0;
-                fir_next      <= ~fir_next; // clock FIR for rest cycle
             end
             // ===============================================================================================
             1:    // Wait for trigger
             begin
-            
+                fir_next      <= 0; // clock FIR for reset cycle [~fir_next]
+
                 // trigger and pulse arm logic
                 if(reg_operation[0]) // operation mode: tigger start running
                 begin
@@ -341,6 +342,9 @@ module axis_4s_combine #(
 
                 if (decimate_count < reg_ndecimate)
                 begin
+                    fir_next  <= 0; // hold FIR
+                    bram_next <= 0; // hold BRAM write next
+
                     // decimate sum for all PAC-PLL channels
                     chPH <= chPH + $signed(S_AXIS4_tdata[SAXIS_4_DATA_WIDTH-1:0]);  // PHC Phase (24) =>  32
                     chDF <= chDF + reg_delta_freq;                                  // Freq (48) - Center (48)
@@ -380,18 +384,17 @@ module axis_4s_combine #(
                     endcase
 
                     decimate_count <= decimate_count + 1; // next sample
-                    bram_next <= 0; // hold BRAM write next
-                    fir_next  <= 0; // hold FIR
                 end
                 else begin
+                    fir_next  <= 1; // load next into FIR
+                    bram_next <= 1; // initate BRAM write data cycles
+
                     // normalize and store summed data data 
                     chPHs <= (chPH >>> reg_shift);   // PHC Phase (24) =>  32 *** not used ***
                     chDFs <= (chDF >>> reg_shift);   // Freq (48) - Center (48)
                     chAMs <= (chAM >>> reg_shift);   // AMPL ch3s
                     chEXs <= (chEX >>> reg_shift);   // EXEC ch4s
 
-                    bram_next <= 1; // initate BRAM write data cycles
-                    fir_next  <= 1; // load next into FIR
                     sample_count <= sample_count + 1;
                   
                     // check on sample count if in single shot mode, else continue  
@@ -401,7 +404,7 @@ module axis_4s_combine #(
                         if (sample_count >= reg_nsamples) // run mode 1 single shot, finish, else LOOP/FIFO mode for ever
                         begin
                             dec_sms_next  <= 3'd4; // finished, needs reset to restart and re-arm.
-                            dec_sms       <= 3'd4; // finished, needs reset to restart and re-arm.
+                            //dec_sms       <= 3'd4; // finished, needs reset to restart and re-arm. *** not good, double drv theoretically
                         end
                     end
 

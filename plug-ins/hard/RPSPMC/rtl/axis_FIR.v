@@ -29,7 +29,7 @@ module axis_FIR #(
 (
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS:M_AXIS:M_AXIS2" *)
     input a_clk,
-    input next_dv,
+    input next_data,
     
     input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS_tdata,
     input wire                          S_AXIS_tvalid,
@@ -44,9 +44,8 @@ module axis_FIR #(
     reg signed [SAXIS_TDATA_WIDTH-1:0] fir_buffer[FIR_DECI-1:0];
     reg signed [SAXIS_TDATA_WIDTH-1:0] data_in;
     reg signed [MAXIS_TDATA_WIDTH-1:0] buffer; 
-    
-    reg fetch=0;
-    reg [1:0] state=0;
+
+    reg run=1;
     
     integer k;
     initial begin
@@ -54,30 +53,29 @@ module axis_FIR #(
             fir_buffer[k] = 0;
     end
     
+    //always @ (posedge next_data)
+    
     always @ (posedge a_clk)
     begin
-        if (S_AXIS_tvalid)
+        if (next_data) // run at decimated rate as given by axis_decii_clk
         begin
-            data_in       <= $signed(S_AXIS_tdata);
-            if (next_dv)
-                if (state == 0)
-                begin
-                    state <= 1;
-                    fir_buffer[i] <= data_in;
-                    sum    <= sum - fir_buffer[i] + data_in;
-                    i      <= i+1;
-                    buffer <= sum[SAXIS_TDATA_WIDTH+FIR_DECI_L-1:FIR_DECI_L+SAXIS_TDATA_WIDTH-MAXIS_TDATA_WIDTH];
-                end
+            if (S_AXIS_tvalid)
+                data_in <= $signed(S_AXIS_tdata);
             else
-                state <= 0;
+                data_in <= 0;
+            run <= 1;
         end
         else
-        begin // reset, empty buffer
-            sum           <= 0;
-            data_in       <= 0;
-            fir_buffer[i] <= 0;
-            i             <= i+1;
+            run <= 0;
+
+        if (run)
+        begin
+            //data_in       <= $signed(S_AXIS_tdata);
+            sum           <= sum - fir_buffer[i] + data_in;
+            fir_buffer[i] <= data_in;
+            i <= i+1;
         end
+        buffer <= sum[SAXIS_TDATA_WIDTH+FIR_DECI_L-1:FIR_DECI_L+SAXIS_TDATA_WIDTH-MAXIS_TDATA_WIDTH];
     end
     
     assign M_AXIS_tdata  = buffer;
