@@ -36,10 +36,21 @@ module cfg_to_axis #(
     
     output wire [DST_WIDTH-1:0] data
 );
+
+    // buffer in register to relaxtiming requiremnets for distributed placing
+    reg [DST_WIDTH-1:0] cfg_dst_reg;
+
+    always @ (posedge a_clk)
+    begin
+        cfg_dst_reg <= cfg[SRC_ADDR*32+SRC_BITS-1:SRC_ADDR*32+SRC_BITS-DST_WIDTH];
+    end
+
     assign M_AXIS_tdata = {
-        {(MAXIS_TDATA_WIDTH-DST_WIDTH){cfg[SRC_ADDR*32+SRC_BITS-1]}}, cfg[SRC_ADDR*32+SRC_BITS-1:SRC_ADDR*32+SRC_BITS-DST_WIDTH]
+        {(MAXIS_TDATA_WIDTH-DST_WIDTH){cfg[SRC_ADDR*32+SRC_BITS-1]}}, cfg_dst_reg
+        //{(MAXIS_TDATA_WIDTH-DST_WIDTH){cfg[SRC_ADDR*32+SRC_BITS-1]}}, cfg[SRC_ADDR*32+SRC_BITS-1:SRC_ADDR*32+SRC_BITS-DST_WIDTH]
     };
     assign M_AXIS_tvalid = 1;
-    assign data = cfg[SRC_ADDR*32+SRC_BITS-1:SRC_ADDR*32+SRC_BITS-DST_WIDTH];
+    assign data = cfg_dst_reg;
+    //assign data = cfg[SRC_ADDR*32+SRC_BITS-1:SRC_ADDR*32+SRC_BITS-DST_WIDTH];
 
 endmodule

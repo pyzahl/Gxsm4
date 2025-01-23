@@ -695,9 +695,50 @@ void rp_spmc_set_slope (double dzx, double dzy, double dzxy_slew){
 }
 
 
-void rp_spmc_set_bias (double bias){
-        if (verbose > 1) fprintf(stderr, "##Configure SPMC Bias=%g V\n", bias);
+
+double rp_spmc_set_bias_test (double bias){
+        double v=0.;
         rp_spmc_module_config_int32 (SPMC_MAIN_CONTROL_BIAS_REG, bias_buf = volts_to_rpspmc (bias)); // Set U0 = Gxsm BiasRef
+        
+        usleep(MODULE_ADDR_SETTLE_TIME);
+        int regA, regB;
+        rp_spmc_module_read_config_data (SPMC_READBACK_BIAS_REG, &regA, &regB); // Bias Sum Reading, Bias U0 Set Val
+        v = rpspmc_to_volts (regA);
+
+        return v-bias;
+}
+
+void rp_spmc_set_bias (double bias){
+        int n=2;
+        double v=0.;
+        do {
+                usleep(MODULE_ADDR_SETTLE_TIME);
+                if (verbose > 1) fprintf(stderr, "##Configure SPMC Bias=%g V...", bias);
+                rp_spmc_module_config_int32 (SPMC_MAIN_CONTROL_BIAS_REG, bias_buf = volts_to_rpspmc (bias)); // Set U0 = Gxsm BiasRef
+        
+                if (verbose > 1){
+                        usleep(MODULE_ADDR_SETTLE_TIME);
+                        int regA, regB;
+                        rp_spmc_module_read_config_data (SPMC_READBACK_BIAS_REG, &regA, &regB); // Bias Sum Reading, Bias U0 Set Val
+                        v = rpspmc_to_volts (regA);
+                        fprintf(stderr, "[%d] Verify: Bias=%g V Bbuf: %d regA: %d ERROR=%d regB: %d\n",
+                                2-n, v,      bias_buf, regA,  regA-bias_buf, regB);
+                }
+        }while (--n && fabs(v-bias)>1e-4);
+
+        if (bias == -5.0){
+                fprintf(stderr, "\n ** BIAS SET TEST CYCLE ** \n");
+                double dv;
+                int e=0;
+                for (v=-5.; v<=5; v+=0.01){
+                        dv = rp_spmc_set_bias_test (v);
+                        if (fabs (dv > 1e-4)){
+                                e++;
+                                fprintf(stderr, "%d %g @%g V\n", e, dv, v);
+                        }
+                }
+
+        }
 }
 
 void rp_spmc_set_offsets (double x0, double y0, double z0, double bias, double xy_move_slew, double z_move_slew){
