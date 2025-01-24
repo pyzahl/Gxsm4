@@ -212,6 +212,8 @@ module lms_phase_amplitude_detector #(
     reg signed [SC_DATA_WIDTH+LMS_DATA_WIDTH-1:0] Acb_1=0;
     reg signed [LMS_DATA_WIDTH-1:0] predict_err_2=0; 
     reg signed [LMS_DATA_WIDTH-1:0] Apredict_err_2=0; 
+    reg signed [LMS_DATA_WIDTH+LMS_DATA_WIDTH-1:0] d_mu_e_3p=0; 
+    reg signed [LMS_DATA_WIDTH+LMS_DATA_WIDTH-1:0] Ad_mu_e_3p=0;
     reg signed [LMS_DATA_WIDTH+LMS_DATA_WIDTH-1:0] d_mu_e_3=0; 
     reg signed [LMS_DATA_WIDTH+LMS_DATA_WIDTH-1:0] Ad_mu_e_3=0;
     reg signed [SC_DATA_WIDTH+LMS_DATA_WIDTH-1:0] Sd_mu_e_4=0; 
@@ -384,11 +386,18 @@ module lms_phase_amplitude_detector #(
             //== d_mu_e3 <= ((signal1 - predict1) * Rtau + QHALF) >>> LMS_Q_WIDTH;
             //d_mu_e_3 <= (predict_err_2 * Rtau + LMSQHALF) >>> LMS_Q_WIDTH;
             //d_mu_e_3 <= (predict_err_2 * Rtau + LMSQHALF); // ) >>> LMS_Q_WIDTH;
-            d_mu_e_3 <= predict_err_2 * Rtau + LMSQHALF; // ** test w o rounding
+            
+            //**d_mu_e_3 <= predict_err_2 * Rtau + LMSQHALF; // ** test w o rounding
+            // added one pipline stage
+            d_mu_e_3p <= predict_err_2 * Rtau; // ** test w o rounding
+            d_mu_e_3 <= d_mu_e_3p + LMSQHALF; // ** test w o rounding
             if (USE_DUAL_PAC)
             begin
                 //Ad_mu_e1 <= ((m1-Apredict1) * Atau + 45'sh200000) >>> 22;
-                Ad_mu_e_3 <= Apredict_err_2 * RAtau + LMSQHALF; //) >>> LMS_Q_WIDTH;
+                //**Ad_mu_e_3 <= Apredict_err_2 * RAtau + LMSQHALF; //) >>> LMS_Q_WIDTH;
+                // added one pipline stage
+                Ad_mu_e_3p <= Apredict_err_2 * RAtau; //) >>> LMS_Q_WIDTH;
+                Ad_mu_e_3 <= Ad_mu_e_3p + LMSQHALF; //) >>> LMS_Q_WIDTH;
             end
             
             // Compute LMS

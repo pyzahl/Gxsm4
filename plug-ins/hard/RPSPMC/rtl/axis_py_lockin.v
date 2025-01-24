@@ -250,6 +250,8 @@ module axis_py_lockin#(
                     decii_clk <= 1;
                     ampl2 <= (a2 + b2) >>> (2*(LCK_CORRSUM_WIDTH-1)+1 - AM2_DATA_WIDTH); // Q48 for SQRT
                 end
+                default:
+                    decii_clk <= 0;
                 endcase
             end     
         end

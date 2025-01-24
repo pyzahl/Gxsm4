@@ -21,8 +21,8 @@
 
 module axis_spm_control#(
     parameter SAXIS_TDATA_WIDTH = 32,
-    parameter QROTM = 28,
-    parameter QSLOPE = 31,
+    parameter QROTM = 24,
+    parameter QSLOPE = 24,
     parameter QSIGNALS = 31,
     parameter S_AXIS_SREF_TDATA_WIDTH = 32,
     parameter SREF_DATA_WIDTH  = 25,  // SC 25Q24
@@ -113,12 +113,12 @@ module axis_spm_control#(
     reg [4-1:0] modulation_target=0; // target signal for mod (#XYZUAB)
 
     // scan rotation (yx=-xy; yy=xx)
-    reg signed [32-1:0] rotmxx=0; // =cos(alpha) Q20
-    reg signed [32-1:0] rotmxy=1<<20; // =sin(alpha) Q20
+    reg signed [QROTM+1-1:0] rotmxx=0; // =cos(alpha) Q20
+    reg signed [QROTM+1-1:0] rotmxy=1<<QROTM; // =sin(alpha) Q20
 
     // slope -- always applied in global XY plane ???
-    reg signed [32-1:0] slope_x=0; // SQSLOPE (31)
-    reg signed [32-1:0] slope_y=0; // SQSLOPE (31)
+    reg signed [QSLOPE+1-1:0] slope_x=0; // SQSLOPE (31)
+    reg signed [QSLOPE+1-1:0] slope_y=0; // SQSLOPE (31)
 
     // SCAN OFFSET / POSITION COMPONENTS; ABSOLUTE COORDS
     reg signed [32-1:0] x0=0; // vector components
@@ -149,9 +149,13 @@ module axis_spm_control#(
     reg signed [32-1:0] z_gvp=0;
     reg signed [32-1:0] u_gvp=0;
     
-    reg signed [32+QROTM+2-1:0] rrx=0;
-    reg signed [32+QROTM+2-1:0] rry=0;
+    reg signed [32+QROTM+2-1:0] rrxxx=0;
+    reg signed [32+QROTM+2-1:0] rryxy=0;
+    reg signed [32+QROTM+2-1:0] rrxyx=0;
+    reg signed [32+QROTM+2-1:0] rryyy=0;
 
+    reg signed [32+2-1:0] srx=0;
+    reg signed [32+2-1:0] sry=0;
     reg signed [32+2-1:0] rx=0;
     reg signed [32+2-1:0] ry=0;
     //reg signed [32-1:0] rz=0;
@@ -233,15 +237,15 @@ module axis_spm_control#(
         rotm_reg_address:
         begin
             // scan rotation (yx=-xy, yy=xx)
-            rotmxx <= $signed(config_data[1*32-1 : 0*32]); // =cos(alpha)
-            rotmxy <= $signed(config_data[2*32-1 : 1*32]); // =sin(alpha)
+            rotmxx <= $signed(config_data[0*32+QROTM+1-1 : 0*32]); // =cos(alpha) // QROTM
+            rotmxy <= $signed(config_data[1*32+QROTM+1-1 : 1*32]); // =sin(alpha)
         end
 
         slope_reg_address:
         begin
             // slope -- always applied in global XY plane ???
-            slope_x <= $signed(config_data[1*32-1 : 0*32]); // SQSLOPE (31)
-            slope_y <= $signed(config_data[2*32-1 : 1*32]); // SQSLOPE (31)
+            slope_x <= $signed(config_data[0*32+QSLOPE+1-1 : 0*32]); // SQSLOPE (31)
+            slope_y <= $signed(config_data[1*32+QSLOPE+1-1 : 1*32]); // SQSLOPE (31)
         end
 
         modulation_reg_address:
@@ -291,11 +295,16 @@ module axis_spm_control#(
             `ADJUSTER (dZy, dZy_p, dZy_m, z_move_step, slope_y)
 
             // Scan Rotation
-            rrx <=  rotmxx*x + rotmxy*y;
-            rry <= -rotmxy*x + rotmxx*y;
-            
-            rx <= (rrx >>> QROTM) + mx0 + (mt == 1 ? modulation : 0); // final global X pos
-            ry <= (rry >>> QROTM) + my0 + (mt == 2 ? modulation : 0); // final global Y pos
+            //rrx <=  rotmxx*x + rotmxy*y;
+            //rry <= -rotmxy*x + rotmxx*y;
+            rrxxx <=  rotmxx*x;
+            rryxy <=  rotmxy*y;
+            rrxyx <= -rotmxy*x;
+            rryyy <=  rotmxx*y;
+            srx <= (rrxxx+rryxy) >>> QROTM;
+            sry <= (rrxyx+rryyy) >>> QROTM;
+            rx <= srx + mx0 + (mt == 1 ? modulation : 0); // final global X pos
+            ry <= sry + my0 + (mt == 2 ? modulation : 0); // final global Y pos
             
             // Z slope calculation (plane)
             dZmx <= dZx * rx;

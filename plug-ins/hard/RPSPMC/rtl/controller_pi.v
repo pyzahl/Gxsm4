@@ -122,7 +122,9 @@ module controller_pi #(
     reg signed [zW_ERROR-1:0] error_next=0;
     reg signed [zW_ERROR-1:0] reg_setpoint;
     reg signed [zW_ERROR-1:0] error_level=0;
-    reg signed [zW_CONTROL_INT-1:0] upper, lower, reset;
+    reg signed [zW_CONTROL_INT-1:0] upper, lower;
+    reg signed [zW_CONTROL_INT-1:0] reset = 0;
+    reg signed [zW_CONTROL_INT-1:0] diff_control_reset_cie = 0;
     reg signed [zW_CONTROL_INT-1:0] control=0;
     reg signed [zW_CONTROL_INT-1:0] control_next=0;
     reg signed [zW_CONTROL_INT-1:0] control_cie=0;
@@ -135,7 +137,6 @@ module controller_pi #(
     reg control_min;
     reg reg_enable;
     reg reg_hold;
-    reg fuzzy_cr_active=0;
 
     assign M_AXIS_PASS_tdata  = S_AXIS_tdata; // pass
     assign M_AXIS_PASS_tvalid = S_AXIS_tvalid; // pass
@@ -249,33 +250,53 @@ always @(posedge i_clk)
             // calculate error
             error_next   <= reg_setpoint - m; // IN_W + 1  (zW_ERROR)
 
-            if (FUZZY_CONST_CONTROL_MODE && fuzzy_cr_mode && reg_enable && !reg_hold)
+            if (FUZZY_CONST_CONTROL_MODE) // IF enabled by PARAMETER use this processing block
             begin
-                error_level <= reg_setpoint >>> 7; // about 1% of setpoint (1/128)            
-                if (error > error_level) // assuming positive signal and setpoint, assuming signal < set_point (1% tolerance for erro within normal regulation) => FUZZY on and try to shift Z to reset value
+                if(reg_enable && !reg_hold)
                 begin
-                    controlint_next <= controlint + reg_ci*(reset - controlint); // saturation via extended range and limiter // Q64.. += Q31 x Q22
-                    control_next    <= controlint; 
-                    fuzzy_cr_active <= 1;
+                    error_level <= reg_setpoint >>> 7; // about 1% of setpoint (1/128)            
+                    if(fuzzy_cr_mode && error > error_level) // assuming positive signal and setpoint, assuming signal < set_point (1% tolerance for erro within normal regulation) => FUZZY on and try to shift Z to reset value
+                    begin // FUZZY MODE on CONST RESET POS
+                        diff_control_reset_cie <= reset - controlint;
+                        if (diff_control_reset_cie > 0)
+                            controlint_next <= controlint + reg_ci; // saturation via extended range and limiter // Q64.. += Q31 x Q22
+                        else    
+                            controlint_next <= controlint - reg_ci; // saturation via extended range and limiter // Q64.. += Q31 x Q22
+                        control_next    <= controlint; 
+                    end
+                    else
+                    begin // normal mode
+                        control_cie <= reg_ci*error; // ciX*error // saturation via extended range and limiter // Q64.. += Q31 x Q22
+                        control_cpe <= reg_cp*error; // cpX*error // saturation via extended range and limiter // Q64.. += Q31 x Q22
+                        controlint_next <= controlint + control_cie; // saturation via extended range and limiter // Q64.. += Q31 x Q22
+                        control_next    <= controlint + control_cpe; // 
+                    end
+                end 
+                else // pass reset value as control
+                begin
+                    if (!reg_enable)
+                    begin
+                        controlint_next <= reset;
+                        control_next    <= reset;
+                    end
                 end
-                else
-                begin
-                    fuzzy_cr_active <= 0;
-                end             
-            end
-            if (!fuzzy_cr_active && reg_enable && !reg_hold) // run controller, integrate and prepare control output
-            begin
-                control_cie <= reg_ci*error; // ciX*error // saturation via extended range and limiter // Q64.. += Q31 x Q22
-                control_cpe <= reg_cp*error; // cpX*error // saturation via extended range and limiter // Q64.. += Q31 x Q22
-                controlint_next <= controlint + control_cie; // saturation via extended range and limiter // Q64.. += Q31 x Q22
-                control_next    <= controlint + control_cpe; // 
             end 
-            else // pass reset value as control
+            else // ELSE only normal control mode
             begin
-                if (!reg_enable)
+                if (reg_enable && !reg_hold) // run controller, integrate and prepare control output
                 begin
-                    controlint_next <= reset;
-                    control_next    <= reset;
+                    control_cie <= reg_ci*error; // ciX*error // saturation via extended range and limiter // Q64.. += Q31 x Q22
+                    control_cpe <= reg_cp*error; // cpX*error // saturation via extended range and limiter // Q64.. += Q31 x Q22
+                    controlint_next <= controlint + control_cie; // saturation via extended range and limiter // Q64.. += Q31 x Q22
+                    control_next    <= controlint + control_cpe; // 
+                end 
+                else // pass reset value as control
+                begin
+                    if (!reg_enable)
+                    begin
+                        controlint_next <= reset;
+                        control_next    <= reset;
+                    end
                 end
             end
         end     

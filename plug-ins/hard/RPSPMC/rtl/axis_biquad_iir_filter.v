@@ -80,6 +80,8 @@ module axis_biquad_iir_filter #(
     reg signed [signal_width+internal_extra-1:0] x1=0; /* input data pipeline */
     reg signed [signal_width+internal_extra-1:0] x2=0; /* input data pipeline */
     reg signed [signal_width+internal_extra-1:0] y1=0; /* output data pipeline */
+    reg signed [signal_width+internal_extra-1:0] y1_tmpx=0; /* output data pipeline */
+    reg signed [signal_width+internal_extra-1:0] y1_tmpy=0; /* output data pipeline */
     reg signed [signal_width+internal_extra-1:0] y2=0; /* output data pipeline */
     
     reg signed [signal_width+internal_extra + coefficient_width-1:0] x_b0=0; /* product input */
@@ -89,7 +91,7 @@ module axis_biquad_iir_filter #(
     reg signed [signal_width+internal_extra + coefficient_width-1:0] y_a2=0; /* product output */
     
     reg decii_clk=0;
-    reg run=0;
+    reg [1:0] run=0;
     
 
     assign M_AXIS_pass_tdata  = S_AXIS_in_tdata;
@@ -120,47 +122,57 @@ module axis_biquad_iir_filter #(
 
     always @(posedge aclk)
     //always @(posedge axis_decii_clk)
-    begin
-        if (decii_clk) // run at decimated rate as given by axis_decii_clk
-            run <= 1;
-        
-        if (run)
-            run <= 0;
-            
+    begin              
         if (!resetn) begin
-          x1 <= 0;
-          x2 <= 0;
-          y1 <= 0;
-          y2 <= 0;
-        end
-        else if (run) 
-        begin
-            x   <= S_AXIS_in_tdata;
-            x1  <= x;
-            x2  <= x1;
-            y1  <= (x_b0 + x_b1 + x_b2 - y_a1 - y_a2) >>> (coefficient_Q-internal_extra);
-            y2  <= y1;
-            
-            y <= y1 >>> (internal_extra);
-        end
-            
-    // compute IIR kernels
-        if (!resetn) begin
+            x1 <= 0;
+            x2 <= 0;
+            y1 <= 0;
+            y2 <= 0;
             x_b0  <= 0;
             x_b1  <= 0;
             x_b2  <= 0;
             y_a1 <= 0;
             y_a2 <= 0;
         end
-        else if (run) 
+        else
         begin
-            x_b0  <= b0 * x;   // IIR 1st stage (n)
-            x_b1  <= b1 * x1; // IIR 1st stage (n-1)
-            x_b2  <= b2 * x2;
-            y_a1 <= a1 * y1;
-            y_a2 <= a2 * y2;    
-        end
-    end
+            if (decii_clk) // run at decimated rate as given by axis_decii_clk
+            begin
+                run <= 1; // start
+            end
+            else
+            begin         
+                case (run) // split up in two steps as we are always highly deciamted plenty of time
+                    1:
+                    begin 
+                        run <= run+1;
+                        x   <= S_AXIS_in_tdata; // load next input
+                        x1  <= x;               // stage input pipe line with x
+                        x2  <= x1;
+
+                        x_b0  <= b0 * x;   // IIR 1st stage (n)
+                        x_b1  <= b1 * x1; // IIR 1st stage (n-1)
+                        x_b2  <= b2 * x2;
+
+                        //y1  <= (x_b0 + x_b1 + x_b2 - y_a1 - y_a2) >>> (coefficient_Q-internal_extra);
+                        y1_tmpx  <= x_b0 + x_b1 + x_b2;
+                        y1_tmpy  <= y_a1 + y_a2;
+                    end                
+                    2: // continue with results
+                    begin
+                        run <= 0;
+                        y1  <= (y1_tmpx - y1_tmpy) >>> (coefficient_Q-internal_extra);
+                        y2  <= y1;
+                        
+                        y_a1 <= a1 * y1;
+                        y_a2 <= a2 * y2;    
+                    end                
+                endcase
+            end
+        end    
+
+        y <= y1 >>> (internal_extra);
+    end       
    
     assign M_AXIS_out_tdata  = y;
     assign M_AXIS_out_tvalid = S_AXIS_in_tvalid;
