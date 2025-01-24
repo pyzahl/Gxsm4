@@ -297,12 +297,12 @@ module axis_spm_control#(
             // Scan Rotation
             //rrx <=  rotmxx*x + rotmxy*y;
             //rry <= -rotmxy*x + rotmxx*y;
-            rrxxx <=  rotmxx*x;
-            rryxy <=  rotmxy*y;
-            rrxyx <= -rotmxy*x;
-            rryyy <=  rotmxx*y;
-            srx <= (rrxxx+rryxy) >>> QROTM;
-            sry <= (rrxyx+rryyy) >>> QROTM;
+            rrxxx <= rotmxx*x;
+            rryxy <= rotmxy*y;
+            rrxyx <= rotmxy*x;
+            rryyy <= rotmxx*y;
+            srx <= ( rrxxx+rryxy) >>> QROTM;
+            sry <= (-rrxyx+rryyy) >>> QROTM;
             rx <= srx + mx0 + (mt == 1 ? modulation : 0); // final global X pos
             ry <= sry + my0 + (mt == 2 ? modulation : 0); // final global Y pos
             
