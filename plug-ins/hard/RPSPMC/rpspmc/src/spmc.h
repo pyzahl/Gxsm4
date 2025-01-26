@@ -73,25 +73,6 @@ extern "C" {
         void rp_spmc_AD5791_init ();
         void rp_spmc_set_bias (double bias);
         void rp_spmc_set_xyzu_DIRECT (double ux, double uy, double uz, double bias);  // WARNING -- instant setting in config mode (test only)
-
-#define MODULE_ADDR_SETTLE_TIME 200
-        
-#define MODULE_SETUP 0
-#define MODULE_START_VECTOR    (0)  // ALWAYS start write @POS=0, keep addr=0 for loading data block
-#define MODULE_SETUP_VECTOR(N) (N)  // when last write, set addr to module target addr (>0)
-
-        void rp_spmc_module_start_config ();
-        void rp_spmc_module_write_config_data (int addr);
-        void rp_spmc_module_config_int32 (int addr, int data, int pos);
-        void rp_spmc_module_config_int64 (int addr, long long data, int pos);
-        void rp_spmc_module_config_int48_16 (int addr,  unsigned long long value, unsigned int n, int pos);
-
-        void rp_spmc_module_config_uint32 (int addr, unsigned int data, int pos);
-        void rp_spmc_module_config_Qn (int addr, double data, int pos, double Qn);
-        void rp_spmc_module_config_vector_Qn (int addr, double data[16], int n, double Qn);
-
-        void rp_spmc_module_read_config_data (int addr, int *regA, int *regB);
-
         
         void rp_spmc_set_zservo_controller (double setpoint, double cp, double ci, double upper, double lower);
         void rp_spmc_set_zservo_gxsm_speciality_setting (int mode, double z_setpoint, double in_offset_comp);

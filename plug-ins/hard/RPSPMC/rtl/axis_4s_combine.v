@@ -63,6 +63,7 @@
 
 
 module axis_4s_combine #(
+    parameter transport_4s_address = 20020,
     parameter SAXIS_1_DATA_WIDTH  = 16,
     parameter SAXIS_1_TDATA_WIDTH = 32,
     parameter SAXIS_2_DATA_WIDTH  = 32,
@@ -84,6 +85,8 @@ module axis_4s_combine #(
     parameter integer LCK_ENABLE = 0
 )
 (
+    input [32-1:0]  config_addr,
+    input [512-1:0] config_data,
     // (* X_INTERFACE_PARAMETER = "FREQ_HZ 125000000" *)
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS1:S_AXIS1S:S_AXIS2:S_AXIS3:S_AXIS4:S_AXIS5:S_AXIS6:S_AXIS7:S_AXIS8:M_AXIS_CH1:M_AXIS_CH2:M_AXIS_CH3:M_AXIS_CH4:M_AXIS_DFREQ_DEC:M_AXIS_DFREQ_DEC2" *)
     input a_clk,
@@ -108,13 +111,8 @@ module axis_4s_combine #(
     input wire [SAXIS_78_TDATA_WIDTH-1:0]  S_AXIS8_tdata, // Lck-Y
     input wire                             S_AXIS8_tvalid,
 
-    input wire [SAXIS_3_DATA_WIDTH-1:0] axis3_center,
     input wire [2:0] zero_spcp,
 
-    input wire [32-1:0]  operation, // 0..7 control bits 0: 1=start 1: 1=single shot/0=fifo loop 2, 4: 16=init/reset , [31:8] DATA ACCUMULATOR (64) SHR   [0] start/stop, [1] ss/loop, [2], [3], [4] reset
-    input wire [32-1:0]  ndecimate,
-    input wire [32-1:0]  nsamples,
-    input wire [32-1:0]  channel_selector,
     input wire           ext_trigger, // =0 for free run, auto trigger, 1= to hold trigger (until next pix, etc.)
     
     output wire          finished_state,
@@ -191,7 +189,7 @@ module axis_4s_combine #(
     //wire signed [64-1:0] Q31HALF = { {(64-31){1'b0}}, 1'b1, {(31-1){1'b0}} };
 
     
-    assign init_state = operation[0];
+    assign init_state = reg_operation[0];
     assign finished_state = finished;
     assign writeposition = { sample_count[15:0], finished, BR_wpos[14:0] };   
     
@@ -212,19 +210,40 @@ module axis_4s_combine #(
 
     always @ (posedge a_clk)
     begin
+    
+    
+            // module configuration
+        case (config_addr)
+            transport_4s_address:
+            begin
+//    input wire [32-1:0]  operation, // 0..7 control bits 0: 1=start 1: 1=single shot/0=fifo loop 2, 4: 16=init/reset , [31:8] DATA ACCUMULATOR (64) SHR   [0] start/stop, [1] ss/loop, [2], [3], [4] reset
+//    input wire [32-1:0]  ndecimate,
+//    input wire [32-1:0]  nsamples,
+//    input wire [32-1:0]  channel_selector,
+                reg_channel_selector  <= config_data[0*32+4-1 : 0*32]; //channel_selector[4-1:0];
+                reg_ndecimate         <= config_data[2*32-1   : 1*32]; //ndecimate;
+                reg_nsamples          <= config_data[3*32-1   : 2*32]+1; //nsamples+1;
+                reg_operation         <= config_data[3*32+8-1 : 3*32]; //operation[7:0];
+                reg_shift             <= config_data[4*32+24-1: 4*32]; //operation[31:8];
+//    reg_freq_center <= {{(64-SAXIS_3_DATA_WIDTH){1'b0}},  axis3_center[SAXIS_3_DATA_WIDTH-1:0]}; // expand to 64 bit, signed but always pos
+                reg_freq_center       <= {{(64-SAXIS_3_DATA_WIDTH){1'b0}},  config_data[5*32+SAXIS_3_DATA_WIDTH-1 : 5*32]}; // expand to 64 bit, signed but always pos
+            end   
+        endcase
+
+    
+    
         rdecii <= rdecii+1; // rdecii 00 01 *10 11 00 ...
         if (rdecii == 1)
         begin
             // buffer in local register
-            reg_channel_selector <= channel_selector[4-1:0];
+            //reg_channel_selector <= channel_selector[4-1:0];
             reg_ext_trigger <= ext_trigger;
-            reg_operation <= operation[7:0];
-            reg_shift     <= operation[31:8];
-            reg_ndecimate <= ndecimate;
-            reg_nsamples  <= nsamples+1;
+            //reg_operation <= operation[7:0];
+            //reg_shift     <= operation[31:8];
+            //reg_ndecimate <= ndecimate;
+            //reg_nsamples  <= nsamples+1;
     
             // map data sources and calculate delta Freq
-            reg_freq_center <= {{(64-SAXIS_3_DATA_WIDTH){1'b0}},  axis3_center[SAXIS_3_DATA_WIDTH-1:0]}; // expand to 64 bit, signed but always pos
             reg_freq        <= {{(64-SAXIS_3_DATA_WIDTH){1'b0}}, S_AXIS3_tdata[SAXIS_3_DATA_WIDTH-1:0]}; // expand to 64 bit, signed but always pos
             reg_delta_freq  <= reg_freq - reg_freq_center; // compute delta frequency -- should need way less than actual 48bits now! But here we go will full range. Deciamtion may overrun is delta is way way off normal.
         end

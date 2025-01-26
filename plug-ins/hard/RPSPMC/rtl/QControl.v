@@ -23,6 +23,7 @@
 
 
 module QControl #(
+    parameter qcontrol_address = 20030,
     parameter ADC_WIDTH        = 14,
     parameter SIGNAL_M_WIDTH   = 16,
     parameter AXIS_DATA_WIDTH  = 16,
@@ -32,14 +33,12 @@ module QControl #(
     parameter QC_PHASE_LEN2    = 13
 )
 (
+    input [32-1:0]  config_addr,
+    input [512-1:0] config_data,
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS_SIGNAL_M" *)
     input a_clk,
     input wire [SIGNAL_M_WIDTH-1:0]    S_AXIS_SIGNAL_M_tdata,
     input wire                         S_AXIS_SIGNAL_M_tvalid,
-
-    input wire QC_enable,
-    input wire [16-1:0]  QC_gain,
-    input wire [16-1:0]  QC_delay,
 
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN adc_clk, ASSOCIATED_BUSIF M_AXIS" *)
     input adc_clk,
@@ -47,7 +46,7 @@ module QControl #(
     output                             M_AXIS_tvalid
 );
 
-    reg reg_QC_enable;
+    reg reg_QC_enable=0;
 
     reg signed [ADC_WIDTH-1:0] x=0;
     reg signed [VAXIS_DATA_Q-1:0] v=0;
@@ -65,14 +64,19 @@ module QControl #(
 
     always @ (posedge a_clk)
     begin
+    
+        // module configuration
+        if (config_addr == qcontrol_address) // QC configuration
+        begin
+            reg_QC_enable <= config_data[0*32      : 0*32]; //QC_enable;
+            reg_QC_gain   <= config_data[1*32+16-1 : 1*32]; //QC_gain;
+            reg_QC_delay  <= config_data[2*32+16-1 : 2*32]; //QC_delay[QC_PHASE_LEN2-1:0];
+        end
+    
         rdecii <= rdecii+1;
         if (rdecii[1])
         begin
-            reg_QC_enable <= QC_enable;
-            reg_QC_gain   <= QC_gain;
-            reg_QC_delay  <= QC_delay[QC_PHASE_LEN2-1:0];
             // Q-Control Mixer
-            
             signal   <= {S_AXIS_SIGNAL_M_tdata[SIGNAL_M_WIDTH-1 : 0]};
             delayline[i] <= signal;
             

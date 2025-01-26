@@ -21,18 +21,20 @@
 
 
 module PulseForm #(
+    parameter pulse_form_config_address = 20010,
+    parameter pulse_form_wh_arr_address = 20011,
     parameter M_AXIS_DATA_WIDTH = 16,
     parameter ENABLE_ADC_OUT    = 1
 )
 (
+    input [32-1:0]  config_addr,
+    input [512-1:0] config_data,
    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk" *)
    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF M_AXIS" *)
    input a_clk,
    input single_shot,
    input run,
    input wire [2:0] zero_spcp,
-   input wire [31:0] pulse_12_delay,
-   input wire [14*32-1:0] pulse_12_width_height_array,
 
    //input wire [7:0]                     pre_shr,
    output [M_AXIS_DATA_WIDTH-1:0]      M_AXIS_tdata,
@@ -72,6 +74,37 @@ module PulseForm #(
         rdecii <= rdecii+1;
     end
 */
+
+
+    always @ (posedge a_clk)
+    begin
+        // module configuration
+        case (config_addr)
+            pulse_form_wh_arr_address:
+            begin
+                {  p12_wh_arr[0],  p12_wh_arr[1] } <= config_data[ 1*32-1 : 0];    // 0W 1,2 =pWIF
+                {  p12_wh_arr[2],  p12_wh_arr[3] } <= config_data[ 2*32-1 : 1*32]; // 0H 1,2 =pIHF
+                {  p12_wh_arr[4],  p12_wh_arr[5] } <= config_data[ 3*32-1 : 2*32]; // 1W =pWIF
+                {  p12_wh_arr[6],  p12_wh_arr[7] } <= config_data[ 4*32-1 : 3*32]; // 1H =pWIF
+                {  p12_wh_arr[8],  p12_wh_arr[9] } <= config_data[ 5*32-1 : 4*32]; // 2W =WIF
+                { p12_wh_arr[10], p12_wh_arr[11] } <= config_data[ 6*32-1 : 5*32]; // 2H =HIF
+                { p12_wh_arr[12], p12_wh_arr[13] } <= config_data[ 7*32-1 : 6*32]; // 3W =pW
+                { p12_wh_arr[14], p12_wh_arr[15] } <= config_data[ 8*32-1 : 7*32]; // 3H =pH
+                { p12_wh_arr[16], p12_wh_arr[17] } <= config_data[ 9*32-1 : 8*32]; // 4W =pWIF
+                { p12_wh_arr[18], p12_wh_arr[19] } <= config_data[10*32-1 : 9*32]; // 4H =pHIF
+                { p12_wh_arr[20], p12_wh_arr[21] } <= config_data[11*32-1 :10*32]; // 5W =WIF
+                { p12_wh_arr[22], p12_wh_arr[23] } <= config_data[12*32-1 :11*32]; // 5H =HIF
+                { p12_wh_arr[24], p12_wh_arr[25] } <= config_data[13*32-1 :12*32]; // Bias pre
+                { p12_wh_arr[26], p12_wh_arr[27] } <= config_data[14*32-1 :13*32]; // Bias post
+            end   
+            pulse_form_config_address:
+            begin
+                p12_delay <= config_data[1*32-1 : 0*32];
+            end   
+        endcase
+    end
+
+/*
     always @ (*) // Latch
     begin
         p12_delay <= pulse_12_delay;
@@ -90,7 +123,7 @@ module PulseForm #(
         { p12_wh_arr[24], p12_wh_arr[25] } <= pulse_12_width_height_array[13*32-1 :12*32]; // Bias pre
         { p12_wh_arr[26], p12_wh_arr[27] } <= pulse_12_width_height_array[14*32-1 :13*32]; // Bias post
     end
-
+*/
     //always @ (posedge rdecii[1])
     always @ (posedge a_clk)
     begin

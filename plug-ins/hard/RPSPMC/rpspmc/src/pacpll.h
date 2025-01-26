@@ -99,14 +99,14 @@ extern "C" {
   void rp_PAC_set_volume (double volume);
   void rp_PAC_configure_switches (int phase_ctrl, int am_ctrl, int phase_unwrap_always, int qcontrol, int lck_amp, int lck_phase, int dfreq_ctrl);
   void rp_PAC_set_qcontrol (double gain, double phase);
-  void rp_PAC_set_pactau (double tau, double atau, double dc_tau);
-  void rp_PAC_set_dcoff (double dc);
+  void rp_PAC_set_pactau (double tau, double atau, int modes);
+  void rp_PAC_set_dc_filter (double dc, double dc_tau);
 
   void rp_PAC_auto_dc_offset_adjust ();
   void rp_PAC_auto_dc_offset_correct ();
   
-  void rp_PAC_set_amplitude_controller (double setpoint, double cp, double ci, double upper, double lower);
-  void rp_PAC_set_phase_controller (double setpoint, double cp, double ci, double upper, double lower, double am_threashold);
+  void rp_PAC_set_amplitude_controller (double setpoint, double cp, double ci, double upper, double lower, double manual_volume, int enable);
+  void rp_PAC_set_phase_controller (double setpoint, double cp, double ci, double upper, double lower, double am_threashold, double freq_manual, int enable);
   
   void rp_PAC_set_pulse_form (double bias0, double bias1,
 			      double phase0, double phase1,
@@ -122,7 +122,7 @@ extern "C" {
   void rp_PAC_start_transport (int control_mode, int nsamples, int tr_mode);
   int bram_ready();
   int bram_status(int bram_status[3]);
-  void rp_PAC_set_dfreq_controller (double setpoint, double cp, double ci, double upper, double lower);
+  void rp_PAC_set_dfreq_controller (double setpoint, double cp, double ci, double upper, double lower, double reset_value, int enable);
   void *thread_gpio_reading_FIR(void *arg) ;
   void rp_PAC_get_single_reading_FIR (double reading_vector[READING_MAX_VALUES]);
 

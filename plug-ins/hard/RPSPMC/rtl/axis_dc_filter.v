@@ -45,6 +45,7 @@
 
 module axis_dc_filter #
 (
+    parameter dc_filter_address = 20040,
     parameter S_AXIS_DATA_WIDTH = 16,
     parameter S_AXIS_SIGNAL_SIGNIFICANT_DATA_WIDTH = 16, // 14, now decimated 4x to 16 bits
     parameter M_AXIS_DATA_WIDTH = 32,
@@ -52,17 +53,14 @@ module axis_dc_filter #
     parameter LMS_Q_WIDTH = 22  // do not change
 )
 (
-    // (* X_INTERFACE_PARAMETER = "FREQ_HZ 62500000" *)
-    (* X_INTERFACE_PARAMETER = "" *)
+    input [32-1:0]  config_addr,
+    input [512-1:0] config_data,
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN aclk, ASSOCIATED_BUSIF S_AXIS:M_AXIS_AC_LMS:M_AXIS_AC16:M_AXIS_ACDC" *)
     input aclk,
     input wire [S_AXIS_DATA_WIDTH-1:0]  S_AXIS_tdata,
     input wire                          S_AXIS_tvalid,
 
     input sc_zero,
-    input signed [31:0] dc_tau, // Q31 tau DC iir at cos-sin zero x
-    input signed [31:0] dc, // Q22
-
 
      // Master side
     // AC signal of CH0 prepared at LMS width
@@ -101,11 +99,20 @@ module axis_dc_filter #
 
     always @ (posedge aclk)
     begin
+        case (config_addr)
+        dc_filter_address:
+        begin
+            reg_dc_tau  <= config_data[1*32-1 : 0*32]; // Q31 tau DC iir at cos-sin zero x
+            reg_dc      <= config_data[1*32+LMS_DATA_WIDTH-1 : 1*32]; // Q22
+        end   
+        endcase
+
+    
         rdecii <= rdecii+1; // rdecii 00 01 *10 11 00 ...
         if (rdecii[1]==1)
         begin
-            reg_dc_tau  <= dc_tau; // Q31 tau DC iir at cos-sin zero x
-            reg_dc      <= {dc[LMS_DATA_WIDTH-1], dc[LMS_DATA_WIDTH-2:0]}; // Q22 -> QLMS (26.Q22)
+            //reg_dc_tau  <= dc_tau; // Q31 tau DC iir at cos-sin zero x
+            //reg_dc      <= {dc[LMS_DATA_WIDTH-1], dc[LMS_DATA_WIDTH-2:0]}; // Q22 -> QLMS (26.Q22)
     
             m <= {{(LMS_DATA_WIDTH-LMS_Q_WIDTH-1){S_AXIS_tdata[S_AXIS_SIGNAL_SIGNIFICANT_DATA_WIDTH-1]}}, // signum bit 13 extend to LMS_DATA_WIDTH
                                                  {S_AXIS_tdata[S_AXIS_SIGNAL_SIGNIFICANT_DATA_WIDTH-1 : 0]}, // 14bit ADC -now-> 16bit decimated ADC data bits: 15..0

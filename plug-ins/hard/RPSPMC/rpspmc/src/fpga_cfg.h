@@ -48,6 +48,81 @@
 #define PACPLL_CFG_PACTAU        4 // (actual Q22 mu)
 #define PACPLL_CFG_DC_OFFSET     5
 
+// MODULE CONFIGURATION ** NEW
+// MODULE PHASE_AMPLITUDE_DETECTOR
+#define LMS_PHASE_AMPLITUDE_DETECTOR_ADDRESS  20000
+#define LMS_PACPLL_CFG_PACTAU        0 // (actual Q22 mu) Phase mu
+#define LMS_PACPLL_CFG_PACATAU       1 // (actual Q22 mu) Amplitude mu
+#define LMS_PACPLL_CFG_LCK_AM_PH     2 // Bit0: Ampl Bit1: Phase (if enabled in build, option to use LockIn)
+
+
+#define PACPLL_CFG_DDS_PHASEINC  0    // 64bit wide
+#define PACPLL_CFG_VOLUME_SINE   2    // 32bit wide (default)
+#define PACPLL_CFG_CONTROL_LOOPS 3
+
+// MODULE TRANSPORT 4S COMBINE
+#define TRANSPORT_4S_COMBINE_ADDRESS 20020
+#define TRANSPORT_CHANNEL_SELECTOR  0  // 4-1:0
+#define TRANSPORT_NDECIMATE         1
+#define TRANSPORT_NSAMPLES          2
+#define TRANSPORT_OPERATION         3
+#define TRANSPORT_SHIFT             4
+#define TRANSPORT_FREQ_CENTER       5  // 48-1:0
+
+
+// MODULE AMPLITUDE CONTROLLER
+#define AMPLITUDE_CONTROLLER_ADDRESS   20001
+#define AMPLITUDE_CONTROLLER_M_ADDRESS 20002
+#define PHASE_CONTROLLER_ADDRESS       20003
+#define PHASE_CONTROLLER_M_ADDRESS     20004
+#define DFREQ_CONTROLLER_ADDRESS       20005
+#define DFREQ_CONTROLLER_M_ADDRESS     20006
+
+#define CONTROLLER_SETPOINT     0  // [2*32-1 : 2*32-width_setpoint] ** all regs 64bit, value top aligned
+#define CONTROLLER_CP           2  // [2*32-1 : 2*32-width_const]
+#define CONTROLLER_CI           4  // [2*32-1 : 2*32-width_const]
+#define CONTROLLER_UPPER        6  // [2*32-1 : 2*32-width_limits]
+#define CONTROLLER_LOWER        8  // [2*32-1 : 2*32-width_limits]
+#define CONTROLLER_M_RESET_VAL  0  // [2*32-1 : 2*32-width_limits]
+#define CONTROLLER_M_MODE       3  // [2*32-1 : 2*32-width_limits]
+#define CONTROLLER_M_THREASHOLD 4  // [2*32-1 : 2*32-width_limits] ** PH: 23:0
+
+/*
+        case (config_addr)
+        controller_reg_address:
+        begin
+            r_control_setpoint <= config_data[2*32-1 : 2*32-width_setpoint]; //cfg[SRC_ADDR*32+SRC_BITS-1:SRC_ADDR*32+SRC_BITS-DST_WIDTH]
+            r_cp               <= config_data[4*32-1 : 4*32-width_consts];
+            r_ci               <= config_data[6*32-1 : 6*32-width_consts];
+            r_upper            <= config_data[8*32-1 : 8*32-width_limits];
+            r_lower            <= config_data[10*32-1: 10*32-width_limits];
+        end   
+          
+        controller_modes_reg_address:
+        begin
+            r_reset_value        <= config_data[2*32-1 : 2*32-width_limits];
+            r_controller_mode    <= config_data[4*32-1 : 3*32];
+            r_threshold          <= config_data[6*32-1 : 6*32-width_threshold];  
+        end     
+        endcase
+*/
+
+// MODULE PULSE FORMER
+#define PULSE_FORMER_DL_ADDRESS  20010
+#define PULSE_FORMER_WH_ADDRESS  20011
+
+// MODULE Q-CONTROL
+#define QCONTROL_ADDRESS         20030
+#define QCONTROL_ENABLE              0
+#define QCONTROL_GAIN                1
+#define QCONTROL_DELAY               2
+
+
+// MODULE DC_FILTER
+#define DC_FILTER_ADDRESS        20040
+#define DC_FILTER_TAU                0
+#define DC_FILTER_OFFSET             1
+
 
 #define PACPLL_CFG_TRANSPORT_CONTROL         6 // function bits masks in pacpll.h ...RESET/STRAT/SINGLE
 #define PACPLL_CFG_TRANSPORT_SAMPLES         7
@@ -69,8 +144,6 @@
 // 17,18,19 -
 #define PACPLL_CFG_AMPLITUDE_CONTROLLER 20 //20:26 (20,21,22,23:24,25:26)
 
-#define PACPLL_CFG_PACATAU      27
-#define PACPLL_CFG_PAC_DCTAU    28
 
 #define QCONTROL_CFG_GAIN_DELAY 29
 

@@ -77,6 +77,7 @@
 */
 
 module lms_phase_amplitude_detector #(
+    parameter lms_phase_amplitude_detector_address = 20000,
     parameter S_AXIS_SIGNAL_TDATA_WIDTH = 32, // actually used: LMS DATA WIDTH and Q
     parameter S_AXIS_SC_TDATA_WIDTH = 64,
     parameter M_AXIS_SC_TDATA_WIDTH = 64,
@@ -93,6 +94,8 @@ module lms_phase_amplitude_detector #(
     parameter COMPUTE_LOCKIN = 1
 )
 (
+    input [32-1:0]  config_addr,
+    input [512-1:0] config_data,
     //(* X_INTERFACE_PARAMETER = "FREQ_HZ 62500000" *)
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN aclk, ASSOCIATED_BUSIF S_AXIS_SIGNAL:S_AXIS_SC:M_AXIS_SC:S_AXIS_DDS_dphi:M_AXIS_XY:M_AXIS_AM2:M_AXIS_Aout:M_AXIS_Bout:M_AXIS_LockInX:M_AXIS_LockInY" *)
     input aclk,
@@ -101,14 +104,9 @@ module lms_phase_amplitude_detector #(
 
     input wire [S_AXIS_SC_TDATA_WIDTH-1:0]  S_AXIS_SC_tdata,
     input wire                              S_AXIS_SC_tvalid,
-    input signed [31:0] tau, // Q22 tau phase
-    input signed [31:0] Atau, // Q22 tau amplitude
     
     input wire [48-1:0]  S_AXIS_DDS_dphi_tdata,
-    input wire           S_AXIS_DDS_dphi_tvalid,
-    
-    input lck_ampl,
-    input lck_phase,
+    input wire           S_AXIS_DDS_dphi_tvalid,  
 
     output wire [M_AXIS_SC_TDATA_WIDTH-1:0] M_AXIS_SC_tdata, // (Sine, Cosine) vector pass through
     output wire                             M_AXIS_SC_tvalid,
@@ -182,6 +180,9 @@ module lms_phase_amplitude_detector #(
 
     reg signed [31:0] Rtau=0; // Q22 tau phase
     reg signed [31:0] RAtau=0; // Q22 tau amplitude
+
+    reg lck_ampl=0;
+    reg lck_phase=0;
 
     reg signed [LMS_DATA_WIDTH-1:0] signal=0;  // 26Q22   LMS  Q22
     reg signed [LMS_DATA_WIDTH-1:0] signal_1=0; // 26Q22
@@ -279,7 +280,7 @@ module lms_phase_amplitude_detector #(
     
     assign M_AXIS_SC_tdata  = S_AXIS_SC_tdata; // pass
     assign M_AXIS_SC_tvalid = S_AXIS_SC_tvalid; // pass
-   
+      
     integer i;
     // initial for (i=0; i<PH_DELAY; i=i+1) dds_dphi[i] = 0;
     //initial for (i=0; i<(1<<LCK_BUFFER_LEN2); i=i+1) LckDdphi[i] = 0;
@@ -291,6 +292,18 @@ module lms_phase_amplitude_detector #(
 
     always @ (posedge aclk)
     begin
+
+        case (config_addr)
+        lms_phase_amplitude_detector_address:
+        begin
+            // cfg[SRC_ADDR*32+SRC_BITS-1:SRC_ADDR*32+SRC_BITS-DST_WIDTH] // old, using DST_WIDTH upper bits form cfg reg
+            Rtau      <= config_data[1*32-1 : 0*32]; //  tau: buffer to register -- Q22 tau phase
+            RAtau     <= config_data[2*32-1 : 1*32]; // Atau: buffer to register -- Q22 tau amplitude
+            lck_ampl  <= config_data[2*32   : 2*32];
+            lck_phase <= config_data[2*32+1 : 2*32+1];
+        end   
+        endcase
+
         rdecii <= rdecii+1;
         // rdecii 00 01 *10 11 00 ...
         if (rdecii == 3)
@@ -301,8 +314,6 @@ module lms_phase_amplitude_detector #(
         end
         if (rdecii[1]==1)
         begin
-            Rtau  <= tau;  // buffer to register -- Q22 tau phase
-            RAtau <= Atau; // buffer to register -- Q22 tau amplitude
             
         //  special IIR DC filter DC error on average of samples at 0,90,180,270
             if (sc_zero)

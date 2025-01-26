@@ -70,8 +70,13 @@ spmc_dma_support *spm_dma_instance = NULL;
 // In Makefile: CXXSOURCES=main.cpp fpga_cfg.cpp pacpll.cpp spmc.cpp
 // Thus this primitive alternative assembly here
 #include "fpga_cfg.cpp"
+
+#include "spmc_module_config_utils.h"
+#include "spmc_module_config_utils.cpp"
+
 #include "pacpll.cpp"
 #include "spmc_stream_server.cpp"
+
 
 
 #include "spmc.cpp"
@@ -668,76 +673,127 @@ void set_PAC_config()
         else
                 trigger_delay = 0;
         
+        OPERATION.Update ();
+        
+        if ( OPERATION.Value () != 4  ){
+                if( SHR_DEC_DATA.IsNewValue ()
+                    || TRANSPORT_DECIMATION.IsNewValue ()
+                    || TRANSPORT_MODE.IsNewValue ()
+                    || FREQUENCY_CENTER.IsNewValue ()
+                    ){
+                        SHR_DEC_DATA.Update ();
+                        TRANSPORT_DECIMATION.Update ();
+                        TRANSPORT_MODE.Update ();
+                        FREQUENCY_CENTER.Update ();
 
-        // prepare for trigger
-        /*
-        if ( OPERATION.Value () == 2 || OPERATION.Value () == 4 ){ // auto SINGLE SHOT only on OP Param change or always in SCOPE mode
-                if ( AM_set_prev != AMPLITUDE_FB_SETPOINT.Value () || VOL_set_prev != VOLUME_MANUAL.Value() || PH_set_prev != PHASE_FB_SETPOINT.Value () || OPERATION.Value () == 4 ){
-                        if (SET_SINGLESHOT_TRANSPORT_TRIGGER.Value () && bram_ready ()){
-                                // Reset and rearm -- Auto Re-Trigger SCOPE in SS Mode if ready
-                                rp_PAC_configure_transport (PACPLL_CFG_TRANSPORT_RESET,
-                                                            SHR_DEC_DATA.Value (), 4096, TRANSPORT_DECIMATION.Value (), TRANSPORT_MODE.Value (), AUX_SCALE.Value (), FREQUENCY_CENTER.Value());
-                        }
+                        rp_PAC_configure_transport (-1,
+                                                    SHR_DEC_DATA.Value (),
+                                                    -1,
+                                                    TRANSPORT_DECIMATION.Value (),
+                                                    TRANSPORT_MODE.Value (),
+                                                    FREQUENCY_CENTER.Value()
+                                                    );
                 }
-        } else { // update transport settings on the fly
-                rp_PAC_configure_transport (-1,
-                                            SHR_DEC_DATA.Value (),
-                                            -1,
-                                            TRANSPORT_DECIMATION.Value (),
-                                            TRANSPORT_MODE.Value (),
-                                            AUX_SCALE.Value (),
-                                            FREQUENCY_CENTER.Value()
-                                            );
         }
-        */
-        if ( OPERATION.Value () != 4  )
-                rp_PAC_configure_transport (-1,
-                                            SHR_DEC_DATA.Value (),
-                                            -1,
-                                            TRANSPORT_DECIMATION.Value (),
-                                            TRANSPORT_MODE.Value (),
-                                            AUX_SCALE.Value (),
-                                            FREQUENCY_CENTER.Value()
-                                            );
-
 
         if (AM_set_prev != AMPLITUDE_FB_SETPOINT.Value () && OPERATION.Value () == 4 && SET_SINGLESHOT_TRANSPORT_TRIGGER.Value ()){
                 rp_PAC_start_transport (PACPLL_CFG_TRANSPORT_SINGLE, 4096, TRANSPORT_MODE.Value ());
-                usleep(trigger_delay);
+                usleep (trigger_delay);
         }
-        rp_PAC_set_amplitude_controller (
-                                         AMPLITUDE_FB_SETPOINT.Value ()/1000., // mv to V
-                                         AMPLITUDE_FB_CP.Value (),
-                                         AMPLITUDE_FB_CI.Value (),
-                                         EXEC_FB_UPPER.Value ()/1000., // mV -> +/-1V
-                                         EXEC_FB_LOWER.Value ()/1000.
-                                         );
-        AM_set_prev = AMPLITUDE_FB_SETPOINT.Value ();
+        if (AMPLITUDE_FB_SETPOINT.IsNewValue ()
+            || AMPLITUDE_FB_CP.IsNewValue ()
+            || AMPLITUDE_FB_CI.IsNewValue ()
+            || EXEC_FB_UPPER.IsNewValue ()
+            || EXEC_FB_LOWER.IsNewValue ()
+            || VOLUME_MANUAL.IsNewValue ()
+            || AMPLITUDE_CONTROLLER.IsNewValue () ){
+
+                AMPLITUDE_FB_SETPOINT.Update ();
+                AMPLITUDE_FB_CP.Update ();
+                AMPLITUDE_FB_CI.Update ();
+                EXEC_FB_UPPER.Update ();
+                EXEC_FB_LOWER.Update ();
+                VOLUME_MANUAL.Update ();
+                AMPLITUDE_CONTROLLER.Update ();
+                
+                rp_PAC_set_amplitude_controller (
+                                                 AMPLITUDE_FB_SETPOINT.Value ()/1000., // mv to V
+                                                 AMPLITUDE_FB_CP.Value (),
+                                                 AMPLITUDE_FB_CI.Value (),
+                                                 EXEC_FB_UPPER.Value ()/1000., // mV -> +/-1V
+                                                 EXEC_FB_LOWER.Value ()/1000.,
+                                                 VOLUME_MANUAL.Value() / 1000., // mV -> V in reset mode
+                                                 OPERATION.Value() < 6 ? AMPLITUDE_CONTROLLER.Value () : 0 // enable? (in tune mode auto off)
+                                                 );
+        }
+        
+        VOL_set_prev = VOLUME_MANUAL.Value();
+        AM_set_prev  = AMPLITUDE_FB_SETPOINT.Value ();
         
         if (PH_set_prev != PHASE_FB_SETPOINT.Value () && OPERATION.Value () == 4 && SET_SINGLESHOT_TRANSPORT_TRIGGER.Value ()){
                 rp_PAC_start_transport (PACPLL_CFG_TRANSPORT_SINGLE, 4096, TRANSPORT_MODE.Value ());
                 usleep(trigger_delay);
         }
-        rp_PAC_set_phase_controller (
-                                     PHASE_FB_SETPOINT.Value ()/180.*M_PI, // Phase
-                                     PHASE_FB_CP.Value (),
-                                     PHASE_FB_CI.Value (),
-                                     FREQ_FB_UPPER.Value (), // Hz
-                                     FREQ_FB_LOWER.Value (),
-                                     PHASE_HOLD_AM_NOISE_LIMIT.Value ()/1000. // mV to V
-                                     );
-        PH_set_prev = PHASE_FB_SETPOINT.Value ();
+
+        // in tune mode disable controllers autmatically and do not touch DDS settings, but allow Q Control
+        if (OPERATION.Value() < 6) // do not update here in tune mode!
+                if (PHASE_FB_SETPOINT.IsNewValue ()
+                    || PHASE_FB_CP.IsNewValue ()
+                    || PHASE_FB_CI.IsNewValue ()
+                    || FREQ_FB_UPPER.IsNewValue ()
+                    || FREQ_FB_LOWER.IsNewValue ()
+                    || PHASE_HOLD_AM_NOISE_LIMIT.IsNewValue ()
+                    || FREQUENCY_MANUAL.IsNewValue ()
+                    || PHASE_CONTROLLER.IsNewValue ()
+                    || PHASE_UNWRAPPING_ALWAYS.IsNewValue () ){
+
+                        PHASE_FB_SETPOINT.Update ();
+                        PHASE_FB_CP.Update ();
+                        PHASE_FB_CI.Update ();
+                        FREQ_FB_UPPER.Update ();
+                        FREQ_FB_LOWER.Update ();
+                        PHASE_HOLD_AM_NOISE_LIMIT.Update ();
+                        FREQUENCY_MANUAL.Update ();
+                        PHASE_CONTROLLER.Update ();
+                        PHASE_UNWRAPPING_ALWAYS.Update ();
+                        rp_PAC_set_phase_controller (
+                                             PHASE_FB_SETPOINT.Value ()/180.*M_PI, // Phase
+                                             PHASE_FB_CP.Value (),
+                                             PHASE_FB_CI.Value (),
+                                             FREQ_FB_UPPER.Value (), // Hz
+                                             FREQ_FB_LOWER.Value (),
+                                             PHASE_HOLD_AM_NOISE_LIMIT.Value ()/1000., // mV to V
+                                             FREQUENCY_MANUAL.Value (), // manul freq in reset mode
+                                             PHASE_CONTROLLER.Value () ? 1 : 0 // enable ?
+                                             | PHASE_UNWRAPPING_ALWAYS.Value ()?4:0
+                                             );
+                        PH_set_prev = PHASE_FB_SETPOINT.Value ();
+                }
         
         if (VOL_set_prev != VOLUME_MANUAL.Value() && OPERATION.Value () == 4 && SET_SINGLESHOT_TRANSPORT_TRIGGER.Value ()){
                 rp_PAC_start_transport (PACPLL_CFG_TRANSPORT_SINGLE, 4096, TRANSPORT_MODE.Value ());
                 usleep(trigger_delay);
         }
-        rp_PAC_set_volume (VOLUME_MANUAL.Value() / 1000.); // mV -> V
-        VOL_set_prev = VOLUME_MANUAL.Value();
 
-        rp_PAC_set_pactau (PACTAU.Value(), PACATAU.Value(), PAC_DCTAU.Value() * 1e-3); // periods, periods, ms -> s
+        if (PACTAU.IsNewValue() || PACATAU.IsNewValue() || LCK_PHASE.IsNewValue () || LCK_AMPLITUDE.IsNewValue ()){
+                PACTAU.Update ();
+                PACATAU.Update ();
+                LCK_AMPLITUDE.Update ();
+                LCK_PHASE.Update ();
+                rp_PAC_set_pactau (PACTAU.Value(), PACATAU.Value(), LCK_AMPLITUDE.Value ()? 1:0 | LCK_PHASE.Value ()? 2:0); // periods, periods, ms -> s
+        }
 
-        rp_PAC_set_qcontrol (QC_GAIN.Value (), QC_PHASE.Value ());
+        if (PAC_DCTAU.IsNewValue ()){
+                PAC_DCTAU.Update ();
+                rp_PAC_set_dc_filter (signal_dc_measured, PAC_DCTAU.Value() * 1e-3);
+        }
+
+        if (QC_GAIN.IsNewValue () || QC_PHASE.IsNewValue () || QCONTROL.IsNewValue ()){
+                QC_GAIN.Update ();
+                QC_PHASE.Update ();
+                QCONTROL.Update ();
+                rp_PAC_set_qcontrol (QC_GAIN.Value (), QC_PHASE.Value (), QCONTROL.Value ());
+        }
 
         if ( (AM_sw_prev != AMPLITUDE_CONTROLLER.Value() || PH_sw_prev!= PHASE_CONTROLLER.Value () || uw_sw_prev != PHASE_UNWRAPPING_ALWAYS.Value ())
              && OPERATION.Value () == 4 && SET_SINGLESHOT_TRANSPORT_TRIGGER.Value ()){
@@ -747,59 +803,85 @@ void set_PAC_config()
                 rp_PAC_start_transport (PACPLL_CFG_TRANSPORT_SINGLE, 4096, TRANSPORT_MODE.Value ());
                 usleep(trigger_delay);
         }
-        
-        // in tune mode disable controllers autmatically and do not touch DDS settings, but allow Q Control
-        if (OPERATION.Value() < 6){
-                if (verbose > 2) fprintf(stderr, "** DDS: FREQUENCY_MANUAL **\n");
-                rp_PAC_adjust_dds (FREQUENCY_MANUAL.Value());
 
-                if (verbose > 2) fprintf(stderr, "** CONF SWITCHES **\n");
-                rp_PAC_configure_switches (PHASE_CONTROLLER.Value ()?1:0,
-                                           AMPLITUDE_CONTROLLER.Value ()?1:0,
-                                           PHASE_UNWRAPPING_ALWAYS.Value ()?1:0,
-                                           QCONTROL.Value ()?1:0,
-                                           LCK_AMPLITUDE.Value ()?1:0,
-                                           LCK_PHASE.Value ()?1:0,
-                                           DFREQ_CONTROLLER.Value ()?1:0);
-        } else {
-                rp_PAC_configure_switches (0, 0, PHASE_UNWRAPPING_ALWAYS.Value ()?1:0, QCONTROL.Value ()?1:0, LCK_AMPLITUDE.Value ()?1:0, LCK_PHASE.Value ()?1:0, 0);
+        if (   DFREQ_FB_SETPOINT.IsNewValue ()
+            || DFREQ_FB_CP.IsNewValue ()
+            || DFREQ_FB_CI.IsNewValue ()
+            || DFREQ_FB_UPPER.IsNewValue ()
+            || DFREQ_FB_LOWER.IsNewValue ()
+            || DFREQ_CONTROLLER.IsNewValue ()
+               ){
+                DFREQ_FB_SETPOINT.Update ();
+                DFREQ_FB_CP.Update ();
+                DFREQ_FB_CI.Update ();
+                DFREQ_FB_UPPER.Update ();
+                DFREQ_FB_LOWER.Update ();
+                DFREQ_CONTROLLER.Update ();
+                
+                rp_PAC_set_dfreq_controller (
+                                             DFREQ_FB_SETPOINT.Value (), // dHz -> ...
+                                             DFREQ_FB_CP.Value (),
+                                             DFREQ_FB_CI.Value (),
+                                             DFREQ_FB_UPPER.Value ()/1000., // mV -> V
+                                             DFREQ_FB_LOWER.Value ()/1000.,
+                                             0.,
+                                             DFREQ_CONTROLLER.Value ()
+                                             );
         }
+        
+        if (   PULSE_FORM_BIAS0.IsNewValue ()
+            || PULSE_FORM_BIAS1.IsNewValue ()
+            || PULSE_FORM_PHASE0.IsNewValue ()
+            || PULSE_FORM_PHASE1.IsNewValue ()
+            || PULSE_FORM_WIDTH0.IsNewValue ()
+            || PULSE_FORM_WIDTH1.IsNewValue ()
+            || PULSE_FORM_HEIGHT0.IsNewValue ()
+            || PULSE_FORM_HEIGHT1.IsNewValue ()
+            || PULSE_FORM_WIDTH0IF.IsNewValue ()
+            || PULSE_FORM_WIDTH1IF.IsNewValue ()
+            || PULSE_FORM_HEIGHT0IF.IsNewValue ()
+            || PULSE_FORM_HEIGHT1IF.IsNewValue ()
+            || PULSE_FORM_SHAPEXW.IsNewValue ()
+            || PULSE_FORM_SHAPEXWIF.IsNewValue ()
+            || PULSE_FORM_SHAPEX.IsNewValue ()
+            || PULSE_FORM_SHAPEXIF.IsNewValue ()
+            ){
+                PULSE_FORM_BIAS0.Update ();
+                PULSE_FORM_BIAS1.Update ();
+                PULSE_FORM_PHASE0.Update ();
+                PULSE_FORM_PHASE1.Update ();
+                PULSE_FORM_WIDTH0.Update ();
+                PULSE_FORM_WIDTH1.Update ();
+                PULSE_FORM_HEIGHT0.Update ();
+                PULSE_FORM_HEIGHT1.Update ();
+                PULSE_FORM_WIDTH0IF.Update ();
+                PULSE_FORM_WIDTH1IF.Update ();
+                PULSE_FORM_HEIGHT0IF.Update ();
+                PULSE_FORM_HEIGHT1IF.Update ();
+                PULSE_FORM_SHAPEXW.Update ();
+                PULSE_FORM_SHAPEXWIF.Update ();
+                PULSE_FORM_SHAPEX.Update ();
+                PULSE_FORM_SHAPEXIF.Update ();
 
-        /*
-        rp_PAC_set_tau_transport (
-                                  TRANSPORT_TAU_DFREQ.Value (), // tau given in ms (1-e3)
-                                  TRANSPORT_TAU_PHASE.Value (),
-                                  TRANSPORT_TAU_EXEC.Value (),
-                                  TRANSPORT_TAU_AMPL.Value ()
-                                  );
-        */                        
-
-        rp_PAC_set_dfreq_controller (
-                                     DFREQ_FB_SETPOINT.Value (), // dHz -> ...
-                                     DFREQ_FB_CP.Value (),
-                                     DFREQ_FB_CI.Value (),
-                                     DFREQ_FB_UPPER.Value ()/1000., // mV -> V
-                                     DFREQ_FB_LOWER.Value ()/1000.
-                                     );
-
-        rp_PAC_set_pulse_form (
-                               PULSE_FORM_BIAS0.Value (),
-                               PULSE_FORM_BIAS1.Value (),
-                               PULSE_FORM_PHASE0.Value (),
-                               PULSE_FORM_PHASE1.Value (),
-                               PULSE_FORM_WIDTH0.Value (),
-                               PULSE_FORM_WIDTH0IF.Value (),
-                               PULSE_FORM_WIDTH1.Value (),
-                               PULSE_FORM_WIDTH1IF.Value (),
-                               PULSE_FORM_HEIGHT0.Value (),
-                               PULSE_FORM_HEIGHT0IF.Value (),
-                               PULSE_FORM_HEIGHT1.Value (),
-                               PULSE_FORM_HEIGHT1IF.Value (),
-                               PULSE_FORM_SHAPEXW.Value (),
-                               PULSE_FORM_SHAPEXWIF.Value (),
-                               PULSE_FORM_SHAPEX.Value (),
-                               PULSE_FORM_SHAPEXIF.Value ()
-                               );
+                rp_PAC_set_pulse_form (
+                                       PULSE_FORM_BIAS0.Value (),
+                                       PULSE_FORM_BIAS1.Value (),
+                                       PULSE_FORM_PHASE0.Value (),
+                                       PULSE_FORM_PHASE1.Value (),
+                                       PULSE_FORM_WIDTH0.Value (),
+                                       PULSE_FORM_WIDTH0IF.Value (),
+                                       PULSE_FORM_WIDTH1.Value (),
+                                       PULSE_FORM_WIDTH1IF.Value (),
+                                       PULSE_FORM_HEIGHT0.Value (),
+                                       PULSE_FORM_HEIGHT0IF.Value (),
+                                       PULSE_FORM_HEIGHT1.Value (),
+                                       PULSE_FORM_HEIGHT1IF.Value (),
+                                       PULSE_FORM_SHAPEXW.Value (),
+                                       PULSE_FORM_SHAPEXWIF.Value (),
+                                       PULSE_FORM_SHAPEX.Value (),
+                                       PULSE_FORM_SHAPEXIF.Value ()
+                                       );
+        }
 }
 
 
@@ -1209,7 +1291,21 @@ void *thread_tuning(void *arg) {
         f_prev = 0.;
 
         // get intial reading
-        rp_PAC_adjust_dds (FREQUENCY_MANUAL.Value() + f);
+        // adjust DDS via controller reset value ManualFreq + f and enable = 0
+        rp_PAC_set_phase_controller (
+                                     PHASE_FB_SETPOINT.Value ()/180.*M_PI, // Phase
+                                     PHASE_FB_CP.Value (),
+                                     PHASE_FB_CI.Value (),
+                                     FREQ_FB_UPPER.Value (), // Hz
+                                     FREQ_FB_LOWER.Value (),
+                                     PHASE_HOLD_AM_NOISE_LIMIT.Value ()/1000., // mV to V
+                                     FREQUENCY_MANUAL.Value () + f, // manul freq in reset mode
+                                     0 // disable, use manual freq
+                                     | PHASE_UNWRAPPING_ALWAYS.Value ()?4:0
+                                     );
+
+
+
         FREQUENCY_TUNE.Value() = f;
         usleep (25000); // min recover time
         measure_and_read_phase_ampl_buffer_avg (ampl, phase);
@@ -1286,7 +1382,19 @@ void *thread_tuning(void *arg) {
                 if (verbose > 1) fprintf(stderr, "Tuning at: %g \n", FREQUENCY_MANUAL.Value() + f);
 
                 // adjust DDS
-                rp_PAC_adjust_dds (FREQUENCY_MANUAL.Value() + f);
+                //rp_PAC_adjust_dds (FREQUENCY_MANUAL.Value() + f);
+                // adjust DDS via controller reset value ManualFreq + f and enable = 0
+                rp_PAC_set_phase_controller (
+                                             PHASE_FB_SETPOINT.Value ()/180.*M_PI, // Phase
+                                             PHASE_FB_CP.Value (),
+                                             PHASE_FB_CI.Value (),
+                                             FREQ_FB_UPPER.Value (), // Hz
+                                             FREQ_FB_LOWER.Value (),
+                                             PHASE_HOLD_AM_NOISE_LIMIT.Value ()/1000., // mV to V
+                                             FREQUENCY_MANUAL.Value () + f, // manul freq in reset mode
+                                             0 // disable, use manual freq
+                                             | PHASE_UNWRAPPING_ALWAYS.Value ()?4:0
+                                             );
                 FREQUENCY_TUNE.Value() = f;
 
                 // min recover time after adjusting tune
@@ -1761,85 +1869,22 @@ void OnNewParams_PACPLL(void){
         GAIN3.Update ();
         GAIN4.Update ();
         GAIN5.Update ();
-        SHR_DEC_DATA.Update ();
         TUNE_SPAN.Update ();
         TUNE_DFREQ.Update ();
 
-        FREQUENCY_MANUAL.Update ();
-        FREQUENCY_CENTER.Update ();
-        AUX_SCALE.Update ();
-        VOLUME_MANUAL.Update ();
-        PACTAU.Update ();
-        PACATAU.Update ();
-        PAC_DCTAU.Update ();
-
-        QC_GAIN.Update ();
-        QC_PHASE.Update ();
-        QCONTROL.Update ();
-        
-        PHASE_CONTROLLER.Update ();
-        AMPLITUDE_CONTROLLER.Update ();
         SET_SINGLESHOT_TRANSPORT_TRIGGER.Update ();
         SET_SINGLESHOT_TRIGGER_POST_TIME.Update ();
-        PHASE_UNWRAPPING_ALWAYS.Update ();
-        LCK_AMPLITUDE.Update ();
-        LCK_PHASE.Update ();
-        DFREQ_CONTROLLER.Update ();
-        
-        AMPLITUDE_FB_SETPOINT.Update ();
-        AMPLITUDE_FB_CP.Update ();
-        AMPLITUDE_FB_CI.Update ();
-        EXEC_FB_UPPER.Update ();
-        EXEC_FB_LOWER.Update ();
-
-        PHASE_FB_SETPOINT.Update ();
-        PHASE_FB_CP.Update ();
-        PHASE_FB_CI.Update ();
-        FREQ_FB_UPPER.Update ();
-        FREQ_FB_LOWER.Update ();
-        PHASE_HOLD_AM_NOISE_LIMIT.Update ();
-        
 
         BRAM_SCOPE_TRIGGER_MODE.Update ();
         BRAM_SCOPE_TRIGGER_POS.Update ();
         BRAM_SCOPE_TRIGGER_LEVEL.Update ();
         BRAM_SCOPE_SHIFT_POINTS.Update ();
         
-        TRANSPORT_DECIMATION.Update ();
-        TRANSPORT_MODE.Update ();
         TRANSPORT_CH3.Update ();
         TRANSPORT_CH4.Update ();
         TRANSPORT_CH5.Update ();
 
-        /*
-        TRANSPORT_TAU_DFREQ.Update ();
-        TRANSPORT_TAU_PHASE.Update ();
-        TRANSPORT_TAU_EXEC.Update ();
-        TRANSPORT_TAU_AMPL.Update ();
-        */
-        
-        DFREQ_FB_SETPOINT.Update ();
-        DFREQ_FB_CP.Update ();
-        DFREQ_FB_CI.Update ();
-        DFREQ_FB_UPPER.Update ();
-        DFREQ_FB_LOWER.Update ();
 
-        PULSE_FORM_BIAS0.Update ();
-        PULSE_FORM_BIAS1.Update ();
-        PULSE_FORM_PHASE0.Update ();
-        PULSE_FORM_PHASE1.Update ();
-        PULSE_FORM_WIDTH0.Update ();
-        PULSE_FORM_WIDTH1.Update ();
-        PULSE_FORM_HEIGHT0.Update ();
-        PULSE_FORM_HEIGHT1.Update ();
-        PULSE_FORM_WIDTH0IF.Update ();
-        PULSE_FORM_WIDTH1IF.Update ();
-        PULSE_FORM_HEIGHT0IF.Update ();
-        PULSE_FORM_HEIGHT1IF.Update ();
-        PULSE_FORM_SHAPEXW.Update ();
-        PULSE_FORM_SHAPEXWIF.Update ();
-        PULSE_FORM_SHAPEX.Update ();
-        PULSE_FORM_SHAPEXIF.Update ();
 
         if ( OPERATION.Value () > 0 && OPERATION.Value () != operation ){
                 operation = OPERATION.Value ();
