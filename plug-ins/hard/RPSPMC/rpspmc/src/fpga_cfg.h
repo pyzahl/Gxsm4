@@ -29,24 +29,21 @@
 
 // ************* RPSPMC + PACPLL FPGA GPIO CONFIGURATION MAPPINGS
 
-#define PACPLL_CFG0_OFFSET 0
-#define PACPLL_CFG1_OFFSET 32
-#define PACPLL_CFG2_OFFSET 64
-#define PACPLL_CFG3_OFFSET 128
-
-// ===== PACPLL
 
 // CONFIGURATION (CFG) DATA REGISTER 0 [1023:0] x 4 = 4k
-// PAC-PLL Control Core
 
-// ===== CFG0 =====
-// PACPLL core controls
-#define PACPLL_CFG_DDS_PHASEINC  0    // 64bit wide
-#define PACPLL_CFG_VOLUME_SINE   2    // 32bit wide (default)
-#define PACPLL_CFG_CONTROL_LOOPS 3
+// ===== SPMC
+// ===== PACPLL
 
-#define PACPLL_CFG_PACTAU        4 // (actual Q22 mu)
-#define PACPLL_CFG_DC_OFFSET     5
+// SPMControl Core, GVP
+
+#define SPMC_BASE   0   // CFG_REG_OFFSET   [2048-1:0]
+
+// SPMC CONGIGUARTION BUS SYSTEM at
+#define SPMC_MODULE_CONFIG_ADDR    (SPMC_BASE + 0) // COMPLEX MODULE CONFIGURATION ADDRESS, (SLOW/OCCASIOANLLY). 0 := NON, 1: GVP, ...
+#define SPMC_MODULE_CONFIG_DATA    (SPMC_BASE + 1) // CONFIGURATION DATA VECTOR 1..16 // 512 bits (16x32)
+
+// NOTHING at CONFIG ADDR = 0 => standy/disabled
 
 // MODULE CONFIGURATION ** NEW
 // MODULE PHASE_AMPLITUDE_DETECTOR
@@ -55,10 +52,33 @@
 #define LMS_PACPLL_CFG_PACATAU       1 // (actual Q22 mu) Amplitude mu
 #define LMS_PACPLL_CFG_LCK_AM_PH     2 // Bit0: Ampl Bit1: Phase (if enabled in build, option to use LockIn)
 
+// MODULE AMPLITUDE CONTROLLER
+#define AMPLITUDE_CONTROLLER_ADDRESS   20002 // C32/L16/S24
+#define AMPLITUDE_CONTROLLER_M_ADDRESS 20001 // L16
 
-#define PACPLL_CFG_DDS_PHASEINC  0    // 64bit wide
-#define PACPLL_CFG_VOLUME_SINE   2    // 32bit wide (default)
-#define PACPLL_CFG_CONTROL_LOOPS 3
+// MODULE PHASE CONTROLLER
+#define PHASE_CONTROLLER_ADDRESS       20004 // C32/L48/S32
+#define PHASE_CONTROLLER_M_ADDRESS     20003 // L48/T24
+
+// MODULE DFREQ CONTROLLER
+#define DFREQ_CONTROLLER_ADDRESS       20006 // C32/L32/S32
+#define DFREQ_CONTROLLER_M_ADDRESS     20005 // L32
+
+// CONTROLLER CONFIG MODULE POSITIONS
+// REG ADDRESS
+#define CONTROLLER_SETPOINT     0  // [width_setpoint]
+#define CONTROLLER_CP           1  // [width_const]
+#define CONTROLLER_CI           2  // [width_const]
+#define CONTROLLER_UPPER        3  // [width_limits] ** limit regs are 64bit
+#define CONTROLLER_LOWER        5  // [width_limits]
+// REG_M ADDRESS
+#define CONTROLLER_M_RESET_VAL  0  // [width_limits]
+#define CONTROLLER_M_MODE       2  // [32]
+#define CONTROLLER_M_THREASHOLD 4  // [threshold_limits]
+
+// MODULE PULSE FORMER
+#define PULSE_FORMER_DL_ADDRESS  20010
+#define PULSE_FORMER_WH_ADDRESS  20011
 
 // MODULE TRANSPORT 4S COMBINE
 #define TRANSPORT_4S_COMBINE_ADDRESS 20020
@@ -68,48 +88,6 @@
 #define TRANSPORT_OPERATION         3
 #define TRANSPORT_SHIFT             4
 #define TRANSPORT_FREQ_CENTER       5  // 48-1:0
-
-
-// MODULE AMPLITUDE CONTROLLER
-#define AMPLITUDE_CONTROLLER_ADDRESS   20001
-#define AMPLITUDE_CONTROLLER_M_ADDRESS 20002
-#define PHASE_CONTROLLER_ADDRESS       20003
-#define PHASE_CONTROLLER_M_ADDRESS     20004
-#define DFREQ_CONTROLLER_ADDRESS       20005
-#define DFREQ_CONTROLLER_M_ADDRESS     20006
-
-#define CONTROLLER_SETPOINT     0  // [2*32-1 : 2*32-width_setpoint] ** all regs 64bit, value top aligned
-#define CONTROLLER_CP           2  // [2*32-1 : 2*32-width_const]
-#define CONTROLLER_CI           4  // [2*32-1 : 2*32-width_const]
-#define CONTROLLER_UPPER        6  // [2*32-1 : 2*32-width_limits]
-#define CONTROLLER_LOWER        8  // [2*32-1 : 2*32-width_limits]
-#define CONTROLLER_M_RESET_VAL  0  // [2*32-1 : 2*32-width_limits]
-#define CONTROLLER_M_MODE       3  // [2*32-1 : 2*32-width_limits]
-#define CONTROLLER_M_THREASHOLD 4  // [2*32-1 : 2*32-width_limits] ** PH: 23:0
-
-/*
-        case (config_addr)
-        controller_reg_address:
-        begin
-            r_control_setpoint <= config_data[2*32-1 : 2*32-width_setpoint]; //cfg[SRC_ADDR*32+SRC_BITS-1:SRC_ADDR*32+SRC_BITS-DST_WIDTH]
-            r_cp               <= config_data[4*32-1 : 4*32-width_consts];
-            r_ci               <= config_data[6*32-1 : 6*32-width_consts];
-            r_upper            <= config_data[8*32-1 : 8*32-width_limits];
-            r_lower            <= config_data[10*32-1: 10*32-width_limits];
-        end   
-          
-        controller_modes_reg_address:
-        begin
-            r_reset_value        <= config_data[2*32-1 : 2*32-width_limits];
-            r_controller_mode    <= config_data[4*32-1 : 3*32];
-            r_threshold          <= config_data[6*32-1 : 6*32-width_threshold];  
-        end     
-        endcase
-*/
-
-// MODULE PULSE FORMER
-#define PULSE_FORMER_DL_ADDRESS  20010
-#define PULSE_FORMER_WH_ADDRESS  20011
 
 // MODULE Q-CONTROL
 #define QCONTROL_ADDRESS         20030
@@ -136,115 +114,8 @@
 #define PACPLL_CFG_UPPER 3 // 3,4 64bit
 #define PACPLL_CFG_LOWER 5 // 5,6 64bit
 
-// [CFG0]+10 AMPL Controller
-// [CFG0]+20 PHASE Controller
-// [CFG1]+00 dFREQ Controller   
-// +0 Set, +2 CP, +4 CI, +6 UPPER, +8 LOWER
-#define PACPLL_CFG_PHASE_CONTROLLER     10 //10:16 (10,11,12,13:14,15:16)
-// 17,18,19 -
-#define PACPLL_CFG_AMPLITUDE_CONTROLLER 20 //20:26 (20,21,22,23:24,25:26)
 
 
-#define QCONTROL_CFG_GAIN_DELAY 29
-
-// general control paging (future options)
-//#define PACPLL_CFG_PAGE_CONTROL  30   // 32bit wide
-//#define PACPLL_CFG_PAGE          31   // 32bit wide
-
-
-
-// CFG DATA REGISTER 1 [1023:0]
-
-// ===== CFG1 =====
-
-#define PACPLL_CFG_DFREQ_CONTROLLER         (PACPLL_CFG1_OFFSET + 0) // 00:06
-#define PACPLL_CFG_PHASE_CONTROL_THREASHOLD (PACPLL_CFG1_OFFSET + 8) // 08
-
-// + 9 avilable
-
-// +0 Set, +2 CP, +4 CI, +6 UPPER, +8 LOWER
-// Controller Core (Servos) Relative Block Offsets:
-#define SPMC_CFG_SET   0
-#define SPMC_CFG_CP    1
-#define SPMC_CFG_CI    2
-#define SPMC_CFG_UPPER 3 // 3,4 64bit
-#define SPMC_CFG_LOWER 5 // 5,6 64bit
-
-
-/* MOVED TO MODULE CONFIG
-// SPM Z-CONTROL SERVO
-#define SPMC_CFG_Z_SERVO_CONTROLLER         (PACPLL_CFG1_OFFSET + 10) // 10:16
-#define SPMC_CFG_Z_SERVO_ZSETPOINT          (PACPLL_CFG1_OFFSET + 17) // 17
-#define SPMC_CFG_Z_SERVO_LEVEL              (PACPLL_CFG1_OFFSET + 18) // 18 -- kinda obsolete -> program limits
-
-// CONTROL REGISTER 19:
-// Bit0: SERVO CONTROL (enable)
-// Bit1: LN (log mode) if set: Ln (ABS (INPUT 32bit)) in 8.24 Fractional (32bit) MUST CONVERT SETPOINT ACCORDINGLY!!!, else linear (32bit signed)
-// Bit2: Fuzzy CZ mode
-#define SPMC_CFG_Z_SERVO_MODE               (PACPLL_CFG1_OFFSET + 19) // 19: SERVO CONTROL REGISTER
-
-
-#define SPMC_CFG_SC_LCK_DDS_PHASEINC        (PACPLL_CFG1_OFFSET + 20) // 20,21: Frequency 64bit LockIn (DDS Phase Inc)
-#define SPMC_CFG_SC_LCK_VOLUME              (PACPLL_CFG1_OFFSET + 22) // 22: SC Volume 
-#define SPMC_CFG_SC_LCK_TARGET              (PACPLL_CFG1_OFFSET + 23) // 23: Target for mixing 1..4 so far, 0=NONE / OFF
-*/
-
-// CFG1 26...31 available
-
-
-// CFG DATA REGISTER 2 [1023:0]
-
-// ===== CFG2 =====
-
-// PACPLL-PulseFormer Control Core
-
-#define PACPLL_CFG_PULSE_FORM_BASE      (PACPLL_CFG2_OFFSET + 0)
-#define PACPLL_CFG_PULSE_FORM_DELAY_01  0 // [ 31..16 Delay P0, 15..0 Delay P1 ] 32bit
-#define PACPLL_CFG_PULSE_FORM_WH01_ARR  1 // [ 31..16 Width_n P0, 15..0 Width_n P1; 31..16 Height_n P0, 15..0 Height_n P1, ... [n=0,1,2]] 14x32 bit
-// pulse_12_width_height_array[ 1*32-1 : 0];    // 0W 1,2 =pWIF
-// pulse_12_width_height_array[ 2*32-1 : 1*32]; // 0H 1,2 =pIHF
-// pulse_12_width_height_array[ 3*32-1 : 2*32]; // 1W =pWIF
-// pulse_12_width_height_array[ 4*32-1 : 3*32]; // 1H =pWIF
-// pulse_12_width_height_array[ 5*32-1 : 4*32]; // 2W =WIF
-// pulse_12_width_height_array[ 6*32-1 : 5*32]; // 2H =HIF
-// pulse_12_width_height_array[ 7*32-1 : 6*32]; // 3W =pW
-// pulse_12_width_height_array[ 8*32-1 : 7*32]; // 3H =pH
-// pulse_12_width_height_array[ 9*32-1 : 8*32]; // 4W =pWIF
-// pulse_12_width_height_array[10*32-1 : 9*32]; // 4H =pHIF
-// pulse_12_width_height_array[11*32-1 :10*32]; // 5W =WIF
-// pulse_12_width_height_array[12*32-1 :11*32]; // 5H =HIF
-// pulse_12_width_height_array[13*32-1 :12*32]; // Bias pre
-// pulse_12_width_height_array[14*32-1 :13*32]; // Bias post
-
-
-
-#if 0
-// ---------- NOT IMPLEMENTED/NO ROOM left / Z10  ---------------------
-// using fixed length FIR filters 
-// Configure transport tau: time const or high speed IIR filter stages
-#define PACPLL_CFG_TRANSPORT_TAU_DFREQ   (PACPLL_CFG1_OFFSET + 0)
-#define PACPLL_CFG_TRANSPORT_TAU_PHASE   (PACPLL_CFG1_OFFSET + 1)
-#define PACPLL_CFG_TRANSPORT_TAU_EXEC    (PACPLL_CFG1_OFFSET + 2)
-#define PACPLL_CFG_TRANSPORT_TAU_AMPL    (PACPLL_CFG1_OFFSET + 3)
-#endif
-
-
-
-// ===== SPMC
-
-// CFG DATA REGISTER 3 [1023:0]
-
-// ===== CFG3 =====
-
-// SPMControl Core, GVP
-
-#define SPMC_BASE                     PACPLL_CFG3_OFFSET
-
-// SPMC CONGIGUARTION BUS SYSTEM at
-#define SPMC_MODULE_CONFIG_ADDR    (SPMC_BASE + 0) // COMPLEX MODULE CONFIGURATION ADDRESS, (SLOW/OCCASIOANLLY). 0 := NON, 1: GVP, ...
-#define SPMC_MODULE_CONFIG_DATA    (SPMC_BASE + 1) // CONFIGURATION DATA VECTOR 1..16 // 512 bits (16x32)
-
-// NOTHING at CONFIG ADDR = 0 => standy/disabled
 
 // GVP MODULE AT CONFIGURATION ADDRs  1,2,3,4
 #define SPMC_GVP_CONTROL_REG          5001   // CONTROL CONFIG REG: B0: reset, B1: Pause

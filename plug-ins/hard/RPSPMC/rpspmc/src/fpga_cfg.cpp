@@ -47,8 +47,7 @@
 
 extern void *FPGA_PACPLL_bram;
 extern volatile uint8_t *FPGA_SPMC_bram;
-extern void *FPGA_PACPLL_cfg1;
-extern void *FPGA_PACPLL_cfg2;
+extern void *FPGA_PACPLL_cfg_reg;
 extern void *FPGA_PACPLL_gpio;
 
 // extern int verbose;
@@ -56,12 +55,7 @@ extern void *FPGA_PACPLL_gpio;
 inline uint8_t* cfg_reg_adr(int cfg_slot){
         size_t off;
         off = cfg_slot * 4;
-        if (cfg_slot < 128)
-                return ((uint8_t*)FPGA_PACPLL_cfg1 + off);
-        else{
-                off = (cfg_slot-128) * 4;
-                return ((uint8_t*)FPGA_PACPLL_cfg2 + off);
-        }
+        return ((uint8_t*)FPGA_PACPLL_cfg_reg + off);
 }
 
 inline void set_gpio_cfgreg_int32 (int cfg_slot, int value){

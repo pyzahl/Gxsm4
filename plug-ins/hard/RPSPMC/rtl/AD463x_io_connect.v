@@ -28,13 +28,13 @@ module AD463x_io_connect #(
 (
     inout [8-1:0]  exp_p_io,
     (* X_INTERFACE_PARAMETER = "FREQ_HZ 30000000, ASSOCIATED_CLKEN SPI_sck, ASSOCIATED_BUSIF SPI" *)
-    output SPI_sck,
-    output SPI_cs,
-    input  SPI_busy,
-    output SPI_cnv,
-    output SPI_reset,
-    input  SPI_SDI_data,
-    output [NUM_LANES*NUM_DACS-1:0] SPI_SDn_data
+    input SPI_sck,
+    input SPI_cs,
+    output  SPI_busy,
+    input SPI_cnv,
+    input SPI_reset,
+    input  SPI_sdi,
+    output [NUM_LANES*NUM_DACS-1:0] SPI_sdn
 );
 
    wire [8-1:0] RP_exp_out;
@@ -59,14 +59,14 @@ module AD463x_io_connect #(
 // ===========================================================================
 
 // FIXED ASSIGNMNETS for one data lane each on SD0, SD4 => D0P, D1P
-IOBUF dac_read_iobuf (.O(SPI_SDn_data[0]),   .IO(exp_p_io[0]), .I(0), .T(1) );
-IOBUF dac_read_iobuf (.O(SPI_SDn_data[1]),   .IO(exp_p_io[1]), .I(0), .T(1) );
-IOBUF dac_read_iobuf (.O(SPI_busy[4]),       .IO(exp_p_io[4]), .I(0), .T(1) );
+IOBUF dac_read_iobuf (.O(SPI_sdn[0]),  .IO(exp_p_io[0]), .I(0), .T(1) );
+IOBUF dac_read_iobuf (.O(SPI_sdn[1]),  .IO(exp_p_io[1]), .I(0), .T(1) );
+IOBUF dac_read_iobuf (.O(SPI_busy[4]), .IO(exp_p_io[4]), .I(0), .T(1) );
    
 IOBUF rst_iobuf  (.O(RP_exp_out[2]),   .IO(exp_p_io[2]), .I(SPI_reset),    .T(0) );
 IOBUF cs_iobuf   (.O(RP_exp_out[3]),   .IO(exp_p_io[3]), .I(SPI_cs),       .T(0) );
 IOBUF cnv_iobuf  (.O(RP_exp_out[5]),   .IO(exp_p_io[5]), .I(SPI_cnv),      .T(0) );
-IOBUF sdi_iobuf  (.O(RP_exp_out[6]),   .IO(exp_p_io[6]), .I(SPI_SDI_data), .T(0) );
+IOBUF sdi_iobuf  (.O(RP_exp_out[6]),   .IO(exp_p_io[6]), .I(SPI_sdi),      .T(0) );
 IOBUF sck_iobuf  (.O(RP_exp_out[7]),   .IO(exp_p_io[7]), .I(SPI_sck),      .T(0) );
 
 //IOBUF dac_read_iobuf (.O(PMD_dac_data_read),   .IO(exp_p_io[7]), .I(0), .T(1) );

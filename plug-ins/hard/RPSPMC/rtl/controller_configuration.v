@@ -88,18 +88,18 @@ module controller_configuration#(
         case (config_addr)
         controller_reg_address:
         begin
-            r_control_setpoint <= config_data[2*32-1 : 2*32-width_setpoint]; //cfg[SRC_ADDR*32+SRC_BITS-1:SRC_ADDR*32+SRC_BITS-DST_WIDTH]
-            r_cp               <= config_data[4*32-1 : 4*32-width_consts];
-            r_ci               <= config_data[6*32-1 : 6*32-width_consts];
-            r_upper            <= config_data[8*32-1 : 8*32-width_limits];
-            r_lower            <= config_data[10*32-1: 10*32-width_limits];
+            r_control_setpoint <= config_data[0*32+width_setpoint-1 : 0*32]; // up to 32bit
+            r_cp               <= config_data[1*32+width_consts-1   : 1*32];
+            r_ci               <= config_data[2*32+width_consts-1   : 2*32];
+            r_upper            <= config_data[3*32+width_limits-1   : 3*32]; // up to 64bit
+            r_lower            <= config_data[5*32+width_limits-1   : 5*32]; // up to 64bit
         end   
           
         controller_modes_reg_address:
         begin
-            r_reset_value        <= config_data[2*32-1 : 2*32-width_limits];
-            r_controller_mode    <= config_data[4*32-1 : 3*32];
-            r_threshold          <= config_data[6*32-1 : 6*32-width_threshold];  
+            r_reset_value        <= config_data[0*32+width_limits-1 : 0*32]; // up to 64bit
+            r_controller_mode    <= config_data[3*32-1 : 2*32];
+            r_threshold          <= config_data[3*32+width_threshold-1 : 3*32];  
         end     
         endcase
         

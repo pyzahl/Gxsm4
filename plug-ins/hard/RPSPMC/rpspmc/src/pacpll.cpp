@@ -134,39 +134,22 @@ void config_transport (int channelsel, int ndecimate, int nsamples, int opmode, 
         rp_spmc_module_config_int32 (MODULE_SETUP, nsamples,   TRANSPORT_NSAMPLES);
         rp_spmc_module_config_int32 (MODULE_SETUP, opmode,     TRANSPORT_OPERATION);
         rp_spmc_module_config_int32 (MODULE_SETUP, shift,      TRANSPORT_SHIFT);
-        rp_spmc_module_config_int48_16 (TRANSPORT_4S_COMBINE_ADDRESS, fcenter, 0, TRANSPORT_FREQ_CENTER); // WRITE
+        rp_spmc_module_config_int64 (TRANSPORT_4S_COMBINE_ADDRESS, fcenter, TRANSPORT_FREQ_CENTER); // WRITE
 }
 
-void config_controller32 (int addr, int setpoint, int cp, int ci, int upper, int lower){
-        rp_spmc_module_config_int32 (MODULE_SETUP, 0, MODULE_START_VECTOR);
-        rp_spmc_module_config_int32 (MODULE_SETUP, setpoint, CONTROLLER_SETPOINT+1);
-        rp_spmc_module_config_int32 (MODULE_SETUP, cp,    CONTROLLER_CP+1);
-        rp_spmc_module_config_int32 (MODULE_SETUP, ci,    CONTROLLER_CI+1);
-        rp_spmc_module_config_int32 (MODULE_SETUP, upper, CONTROLLER_UPPER+1);
-        rp_spmc_module_config_int32 (addr,         lower, CONTROLLER_LOWER+1); // WRITE
-}
-void config_controller48 (int addr, int setpoint, int cp, int ci, unsigned long long upper, unsigned long long lower){
-        rp_spmc_module_config_int32 (MODULE_SETUP, 0, MODULE_START_VECTOR);
-        rp_spmc_module_config_int32 (MODULE_SETUP, setpoint,    CONTROLLER_SETPOINT+1); // MODULE_START_VECTOR=0
-        rp_spmc_module_config_int32 (MODULE_SETUP, cp,          CONTROLLER_CP+1);
-        rp_spmc_module_config_int32 (MODULE_SETUP, ci,          CONTROLLER_CI+1);
-        rp_spmc_module_config_int48_16 (MODULE_SETUP, upper, 0, CONTROLLER_UPPER+1);
-        rp_spmc_module_config_int48_16 (addr,         lower, 0, CONTROLLER_LOWER+1); // WRITE
+void config_controller (int addr, int setpoint, int cp, int ci, long long upper, long long lower){
+        rp_spmc_module_config_int32 (MODULE_SETUP, setpoint,    CONTROLLER_SETPOINT); // MODULE_START_VECTOR=0
+        rp_spmc_module_config_int32 (MODULE_SETUP, cp,          CONTROLLER_CP);
+        rp_spmc_module_config_int32 (MODULE_SETUP, ci,          CONTROLLER_CI);
+        rp_spmc_module_config_int64 (MODULE_SETUP, upper, CONTROLLER_UPPER);
+        rp_spmc_module_config_int64 (addr,         lower, CONTROLLER_LOWER); // WRITE
 }
 
-void config_controller_m32 (int addr, int resetval, int mode, int threshold=0){
-        rp_spmc_module_config_int32 (MODULE_SETUP, 0, MODULE_START_VECTOR);
-        rp_spmc_module_config_int64 (MODULE_SETUP, resetval,  CONTROLLER_M_RESET_VAL+1);
+void config_controller_m (int addr, long long resetval, int mode, unsigned int threshold=0){
+        rp_spmc_module_config_int64 (MODULE_SETUP, resetval,  CONTROLLER_M_RESET_VAL); // MODULE_START_VECTOR=0
         rp_spmc_module_config_int32 (MODULE_SETUP, mode,      CONTROLLER_M_MODE);
         rp_spmc_module_config_int32 (addr,         threshold, CONTROLLER_M_THREASHOLD); // WRITE
 }
-void config_controller_m48 (int addr, long long resetval, int mode, int threshold=0){
-        rp_spmc_module_config_int48_16 (MODULE_SETUP, resetval, 0, CONTROLLER_M_RESET_VAL); // MODULE_START_VECTOR=0
-        rp_spmc_module_config_int32 (MODULE_SETUP, mode,      CONTROLLER_M_MODE);
-        rp_spmc_module_config_int32 (addr,         threshold, CONTROLLER_M_THREASHOLD); // WRITE
-}
-
-
 
 
 /*
@@ -261,7 +244,7 @@ double mu_opt (double periods){
 // Set "manual" DC offset used if dc_tau (see above) signum bit is set (neg).
 
 void rp_PAC_set_pactau (double tau, double atau, int modes){
-        if (verbose > 2) fprintf(stderr, "##Configure: tau= %g  Q22: %d\n", tau, (int)(Q22 * tau)); 
+        if (verbose > 1) fprintf(stderr, "##Configure PAC TAU: %g us, %g us, M=%x\n", tau, atau, modes);
 
         config_lms ((int)(Q22/ADC_SAMPLING_RATE/(1e-6*tau)), // PH TAU in tau s (us) -> mu
                     (int)(Q22/ADC_SAMPLING_RATE/(1e-6*atau)), // AM TAU  in tau s (us) -> mu
@@ -271,7 +254,7 @@ void rp_PAC_set_pactau (double tau, double atau, int modes){
 
 // Set "manual" DC offset used if dc_tau (see above) signum bit is set (neg).
 void rp_PAC_set_dc_filter (double dc, double dc_tau){
-        if (verbose > 2) fprintf(stderr, "##Configure: dc= %g  Q22: %d\n", dc, (int)(Q22 * dc)); 
+        if (verbose > 3) fprintf(stderr, "##Configure DC-FILTER: dc=%g, dc-tau=%g s\n", dc, dc_tau); 
         //set_gpio_cfgreg_int32 (PACPLL_CFG_DC_OFFSET, (int)(Q22 * dc));
 
         // Q22 significant from top -- dc_tau is tau for DC FIR-IIR Filter on phase aligned decimated data:
@@ -380,7 +363,8 @@ void rp_PAC_auto_dc_offset_correct (){
 // Amplitude Controller
 // AMPL from CORDIC: 24bit Q23 -- QCORDICSQRT
 void rp_PAC_set_amplitude_controller (double setpoint, double cp, double ci, double upper, double lower, double manual_volume, int enable){
-        if (verbose > 2) fprintf(stderr, "##Configure Controller: set= %g  Q22: %d    cp=%g ci=%g upper=%g lower=%g\n", setpoint, (int)(Q22 * setpoint), cp, ci, upper, lower); 
+        if (verbose > 1) fprintf(stderr, "##Configure AM-Controller: setpt=%g, cp=%g ci=%g, upper=%g lower=%g volume=%g V, en=%d\n",
+                                 setpoint, cp, ci, upper, lower, manual_volume, enable); 
         /*
         double Q = pll.Qfactor;     // Q-factor
         double F0 = pll.FSineHz; // Res. Freq
@@ -401,23 +385,24 @@ void rp_PAC_set_amplitude_controller (double setpoint, double cp, double ci, dou
         //set_gpio_cfgreg_int32 (PACPLL_CFG_AMPLITUDE_CONTROLLER + PACPLL_CFG_UPPER, ((int)(QEXEC * upper)));
         //set_gpio_cfgreg_int32 (PACPLL_CFG_AMPLITUDE_CONTROLLER + PACPLL_CFG_LOWER, ((int)(QEXEC * lower)));
 
-        config_controller32 (AMPLITUDE_CONTROLLER_ADDRESS,
-                             ((int)(QCORDICSQRT * setpoint))<<(32-BITS_CORDICSQRT),
-                             ((int)(QAMCOEF * cp)),
-                             ((int)(QAMCOEF * ci)),
-                             ((int)(QEXEC * upper)),
-                             ((int)(QEXEC * lower)));
+        config_controller (AMPLITUDE_CONTROLLER_ADDRESS,
+                           (int)(QCORDICSQRT * setpoint),
+                           (int)(QAMCOEF * cp),
+                           (int)(QAMCOEF * ci),
+                           (long long)(QEXEC_L * upper),
+                           (long long)(QEXEC_L * lower));
         
-        config_controller_m32 (AMPLITUDE_CONTROLLER_M_ADDRESS,
-                               (int)(Q31 * manual_volume), // Volume Sine Manual -- when in reset mode
-                               enable ? 1:0,
-                               0);
+        config_controller_m (AMPLITUDE_CONTROLLER_M_ADDRESS,
+                             (long long)(QEXEC_L * manual_volume), // Volume Sine Manual -- when in reset mode // Reset is 16bit
+                             enable ? 1:0,
+                             0);
         }
 
 // Phase Controller
 // CONTROL[75] OUT[44] : [75-1-1:75-44]=43+1   m[24]  x  c[32]  = 56 M: 24{Q32},  P: 44{Q14}
 void rp_PAC_set_phase_controller (double setpoint, double cp, double ci, double upper, double lower, double am_threashold, double freq_manual, int enable){
-        if (verbose > 2) fprintf(stderr, "##Configure Controller: set= %g  Q22: %d    cp=%g ci=%g upper=%g lower=%g\n", setpoint, (int)(Q22 * setpoint), cp, ci, upper, lower); 
+        if (verbose > 1) fprintf(stderr, "##Configure PH-Controller: setpt=%g, cp=%g ci=%g, upper=%g lower=%g, amth=%g, frq=%g, en=%d\n",
+                                 setpoint, cp, ci, upper, lower, am_threashold, freq_manual, enable);
 
         /*
         double cp = 20. * log10 (1.6575e-5  * pll.auto_set_BW_Phase);
@@ -436,22 +421,22 @@ void rp_PAC_set_phase_controller (double setpoint, double cp, double ci, double 
         //set_gpio_cfgreg_int48 (PACPLL_CFG_PHASE_CONTROLLER + PACPLL_CFG_UPPER, (unsigned long long)round (dds_phaseinc (upper))); // => 44bit phase
         //set_gpio_cfgreg_int48 (PACPLL_CFG_PHASE_CONTROLLER + PACPLL_CFG_LOWER, (unsigned long long)round (dds_phaseinc (lower)));
 
-        config_controller48 (PHASE_CONTROLLER_ADDRESS,
-                             (phase_setpoint_qcordicatan = (int)(QCORDICATAN * setpoint)), // <<(32-BITS_CORDICATAN));
-                             ((int)(QPHCOEF * cp)),
-                             ((int)(QPHCOEF * ci)),
-                             ((unsigned long long)(QEXEC * upper)),
-                             ((unsigned long long)(QEXEC * lower)));
+        config_controller (PHASE_CONTROLLER_ADDRESS,
+                           (phase_setpoint_qcordicatan = (int)(QCORDICATAN * setpoint)),
+                           (int)(QPHCOEF * cp),
+                           (int)(QPHCOEF * ci),
+                           (long long)round (dds_phaseinc (upper)),
+                           (long long)round (dds_phaseinc (lower)));
 
         
 // PHASE_CONTROLLER_THREASHOLD for hold control if amplituide drops into noise regime to avoid run away
 // AMPL from CORDIC: 24bit Q23 -- QCORDICSQRT
         //set_gpio_cfgreg_int32 (PACPLL_CFG_PHASE_CONTROL_THREASHOLD,   ((int)(QCORDICSQRT * am_threashold))<<(32-BITS_CORDICSQRT));
 
-        config_controller_m48 (PHASE_CONTROLLER_M_ADDRESS,
-                               (unsigned long long)round (dds_phaseinc (freq_manual)),
-                               enable ? 1:0,
-                               ((int)(QCORDICSQRT * am_threashold))<<(32-BITS_CORDICSQRT));
+        config_controller_m (PHASE_CONTROLLER_M_ADDRESS,
+                             (long long)round (dds_phaseinc (freq_manual)),
+                             enable ? 1:0,
+                             (int)(QCORDICSQRT * am_threashold)); // AM Threashold
         
 }
 
@@ -519,48 +504,49 @@ void rp_PAC_set_pulse_form (double bias0, double bias1,
 
  */
 
-int __rp_pactransport_shr_dec_hi=0;
+// buffers
+int                rp_pactransport_opmode    =0;
+int                rp_pactransport_chansel   =0;
+int                rp_pactransport_decimation=0;
+int                rp_pactransport_shr_dec   =0;
+int                rp_pactransport_nsamples  =0;
+unsigned long long rp_pactransport_fcenter   =0;
 
 // Configure BRAM Data Transport Mode
 void rp_PAC_transport_set_control (int control){
-        static int control_reg=0;
-
+        if (verbose > 2) fprintf(stderr, "##Configure TRANSPORT: SET CONTROL %d", control);
+        
         if (control >= 0){
-                control_reg = control;
+                rp_pactransport_opmode = control;
                 if (verbose == 1) fprintf(stderr, "TR: RESET: %s, START: %s, MODE: %s\n",
-                                          control_reg & PACPLL_CFG_TRANSPORT_RESET ? "SET  " : "READY",
-                                          control_reg & PACPLL_CFG_TRANSPORT_START ? "GO" : "ARMED",
-                                          control_reg & PACPLL_CFG_TRANSPORT_SINGLE ? "SINGLE":"LOOP");
+                                          control & PACPLL_CFG_TRANSPORT_RESET ? "SET  " : "READY",
+                                          control & PACPLL_CFG_TRANSPORT_START ? "GO" : "ARMED",
+                                          control & PACPLL_CFG_TRANSPORT_SINGLE ? "SINGLE":"LOOP");
+
+                // udpate control bits in opmode 
+                config_transport (rp_pactransport_chansel, rp_pactransport_decimation, rp_pactransport_nsamples, rp_pactransport_opmode,  rp_pactransport_shr_dec,  rp_pactransport_fcenter);
         }
-        set_gpio_cfgreg_uint32 (PACPLL_CFG_TRANSPORT_CONTROL, (control_reg & 0xff) | __rp_pactransport_shr_dec_hi);
 }
 
 void rp_PAC_configure_transport (int control, int shr_dec_data, int nsamples, int decimation, int channel_select, double center){
-        __rp_pactransport_shr_dec_hi = channel_select > 7 ? 0 : ((shr_dec_data >= 0 && shr_dec_data <= 24) ? shr_dec_data : 0) << 8; // keep memory, do not shift DBG data
+        rp_pactransport_shr_dec = channel_select > 7 ? 0 : ((shr_dec_data >= 0 && shr_dec_data <= 24) ? shr_dec_data : 0); // keep memory, do not shift DBG data
+        if (verbose == 1) fprintf(stderr, "##Configure TRANSPORT: dec=%d, shr=%d, CHM=%d N=%d\n", decimation, shr_dec_data, channel_select, nsamples);
         
-        if (verbose == 1) fprintf(stderr, "Configure transport: dec=%d, shr=%d, CHM=%d N=%d\n", decimation, shr_dec_data, channel_select, nsamples);
+        if (control >= 0) // update ?
+                rp_pactransport_opmode     = control;
+
+        if (nsamples > 0) // update?
+                rp_pactransport_nsamples = nsamples;
+
+        rp_pactransport_chansel    = channel_select;
+        rp_pactransport_decimation = decimation;
+        rp_pactransport_fcenter    = (unsigned long long)round (dds_phaseinc (center)); // => 44bit phase f0 center ref for delta_freq calculation on FPGA
         
-        if (nsamples > 0){
-                set_gpio_cfgreg_int32 (PACPLL_CFG_TRANSPORT_SAMPLES, nsamples);
-        }
-        
-        set_gpio_cfgreg_int32 (PACPLL_CFG_TRANSPORT_DECIMATION, decimation);
-
-#ifdef REMAP_TO_OLD_FPGA_VERSION
-        //           old mapping  IN12 PA 1A 1P AF AE PF MA DBG -
-        //                 from   { 0, 1, 2, 3, 4, 5, 6, 7, 8  }
-        //             remap to   { 0, 4, 2, 3, 3, 2, 5, 1, 8, 0 }; // best match
-        static int remap_ch[10] = { 0, 7, 2, 3, 1, 6, 5, 1, 8, 0 };
-        channel_select = remap_ch[channel_select];
-#endif
-        set_gpio_cfgreg_int32 (PACPLL_CFG_TRANSPORT_CHANNEL_SELECT, channel_select);
-
-        //set_gpio_cfgreg_int48 (PACPLL_CFG_TRANSPORT_AUX_CENTER, (unsigned long long)round (dds_phaseinc (center))); // => 44bit phase f0 center ref for delta_freq calculation on FPGA
-
-        rp_PAC_transport_set_control (control);
+        config_transport (rp_pactransport_chansel, rp_pactransport_decimation, rp_pactransport_nsamples, rp_pactransport_opmode,  rp_pactransport_shr_dec,  rp_pactransport_fcenter);
 }
 
 void rp_PAC_start_transport (int control_mode, int nsamples, int tr_mode){
+        
         // RESET TRANSPORT
         rp_PAC_configure_transport (PACPLL_CFG_TRANSPORT_RESET,
                                     SHR_DEC_DATA.Value (),
@@ -636,13 +622,13 @@ void rp_PAC_set_tau_transport (double tau_dfreq, double tau_phase, double tau_ex
         // = PSign * CPN(29)*pow(10.,Pgain/20.);
         */
 
-        config_controller32 (DFREQ_CONTROLLER_ADDRESS,
-                             (int) round (dds_phaseinc (setpoint)),
-                             (int) round (QDFCOEF * cp),
-                             (int) round (QDFCOEF * ci),
-                             (int) round (Q31*upper/10.0),   // *** FIX ME 10V -> 5V ??
-                             (int) round (Q31*lower/10.0));
-        config_controller_m32 (DFREQ_CONTROLLER_M_ADDRESS, (int) round(Q31*reset_value/10.0), enable ? 1:0);
+        config_controller (DFREQ_CONTROLLER_ADDRESS,
+                           (int) round (dds_phaseinc (setpoint)),
+                           (int) round (QDFCOEF * cp),
+                           (int) round (QDFCOEF * ci),
+                           (long long) round (Q31*upper/10.0),   // *** FIX ME 10V -> 5V ??
+                           (long long) round (Q31*lower/10.0));
+        config_controller_m (DFREQ_CONTROLLER_M_ADDRESS, (long long) round(Q31*reset_value/10.0), enable ? 1:0);
 
         //set_gpio_cfgreg_int32 (PACPLL_CFG_DFREQ_CONTROLLER + PACPLL_CFG_SET,   (long long)(round(dds_phaseinc (setpoint)))); // 32bit dFreq (Full range is Q44)
         //set_gpio_cfgreg_int32 (PACPLL_CFG_DFREQ_CONTROLLER + PACPLL_CFG_CP,    (long long)(QDFCOEF * cp)); // {32}

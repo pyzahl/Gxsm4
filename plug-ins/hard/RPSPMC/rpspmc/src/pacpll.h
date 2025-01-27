@@ -54,7 +54,9 @@
 #define QCORDICATANFIR QN(32-3)
 
 
+
 #define QEXEC   Q31
+#define QEXEC_L Q15
 #define QAMCOEF Q31
 #define QFREQ   Q47
 #define QPHCOEF Q31

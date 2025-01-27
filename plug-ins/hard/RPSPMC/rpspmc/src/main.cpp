@@ -132,13 +132,8 @@ Network 1
 #define FPGA_BRAM_PACPLL_BASE    0x40000000 // 2M (0x4000_0000 ... 0x401F_FFFF)
 #define FPGA_BRAM_PACPLL_PAGES   2048       // 2M
 
-//
-//#define FPGA_BRAM_SPMC_BASE      0x50000000 // 2M (0x4000_0000 ... 0x401F_FFFF)
-//#define FPGA_BRAM_SPMC_PAGES     2048       // 2M
-//
 
-#define FPGA_CFG_REG1     0x42000000 // 4k (0x4200_0000 ... _0FFF)
-#define FPGA_CFG_REG2     0x43000000 // 4k (0x4200_0000 ... _0FFF)
+#define FPGA_CFG_REG      0x43000000 // 4k (0x4200_0000 ... _0FFF)
 #define FPGA_CFG_PAGES    1          // 1 pages assigned, 4k
 
 #define FPGA_GPIO_BASE    0x42002000 // 11 pages @4k each (=0x1000) 0x4200_2000 .. 0x4200_BFFF
@@ -490,8 +485,7 @@ CDoubleParameter counter("COUNTER", CBaseParameter::RW, 1, 0, 1e-12, 1e+12);
 const char *FPGA_PACPLL_A9_name = "/dev/mem";
 void *FPGA_PACPLL_bram = NULL;
 //volatile uint8_t *FPGA_SPMC_bram = NULL;
-void *FPGA_PACPLL_cfg1 = NULL;
-void *FPGA_PACPLL_cfg2 = NULL;
+void *FPGA_PACPLL_cfg_reg = NULL;
 void *FPGA_PACPLL_gpio = NULL;
 void *FPGA_PACPLL_gpio2 = NULL;
 size_t FPGA_PACPLL_CFG_block_size  = 0; // CFG space 
@@ -545,24 +539,9 @@ int rp_PAC_App_Init(){
                 return RP_EOOR;
         }
 
-#if 0 // NO BRAM ANY MORE -> DMA
-        FPGA_SPMC_bram = (volatile uint8_t*) mmap (NULL, FPGA_SPMC_BRAM_block_size,
-                               PROT_READ|PROT_WRITE , MAP_SHARED, fd, FPGA_BRAM_SPMC_BASE);
-        if (FPGA_SPMC_bram == MAP_FAILED){
-                fprintf(stderr, "EE *** FPGA MMAP SPMC_BRAM block failed ***\n");
-                return RP_EOOR;
-        }
-#endif   
-        FPGA_PACPLL_cfg1 = mmap (NULL, FPGA_PACPLL_CFG_block_size,
-                                PROT_READ|PROT_WRITE,  MAP_SHARED, fd, FPGA_CFG_REG1);
-        if (FPGA_PACPLL_cfg1 == MAP_FAILED){
-                fprintf(stderr, "EE *** FPGA MMAP PACPLL_CFG1 block failed ***\n");
-                return RP_EOOR;
-        }
-        
-        FPGA_PACPLL_cfg2 = mmap (NULL, FPGA_PACPLL_CFG_block_size,
-                                PROT_READ|PROT_WRITE,  MAP_SHARED, fd, FPGA_CFG_REG2);
-        if (FPGA_PACPLL_cfg2 == MAP_FAILED){
+        FPGA_PACPLL_cfg_reg = mmap (NULL, FPGA_PACPLL_CFG_block_size,
+                                    PROT_READ|PROT_WRITE,  MAP_SHARED, fd, FPGA_CFG_REG);
+        if (FPGA_PACPLL_cfg_reg == MAP_FAILED){
                 fprintf(stderr, "EE *** FPGA MMAP PACPLL_CFG2 block failed ***\n");
                 return RP_EOOR;
         }
@@ -580,9 +559,7 @@ int rp_PAC_App_Init(){
         fprintf(stderr, "INIT RP FPGA RPSPMC PACPLL. --- FPGA MEMORY MAPPING ---\n");
         fprintf(stderr, "RP FPGA RPSPMC PACPLL PAGESIZE:        0x%08lx\n", (unsigned long)(sysconf (_SC_PAGESIZE)));
         fprintf(stderr, "RP FPGA RPSPMC PACPLL BRAM PLL  mapped 0x%08lx - 0x%08lx   block length: 0x%08lx\n", (unsigned long)FPGA_BRAM_PACPLL_BASE, (unsigned long)(FPGA_BRAM_PACPLL_BASE + FPGA_PACPLL_BRAM_block_size-1), (unsigned long)(FPGA_PACPLL_BRAM_block_size));
-        //fprintf(stderr, "RP FPGA RPSPMC PACPLL BRAM SPMC mapped 0x%08lx - 0x%08lx   block length: 0x%08lx\n", (unsigned long)FPGA_BRAM_SPMC_BASE, (unsigned long)(FPGA_BRAM_SPMC_BASE + FPGA_SPMC_BRAM_block_size-1), (unsigned long)(FPGA_SPMC_BRAM_block_size));
-        fprintf(stderr, "RP FPGA RPSPMC PACPLL CFG REG1  mapped 0x%08lx - 0x%08lx   block length: 0x%08lx\n", (unsigned long)FPGA_CFG_REG1,   (unsigned long)(FPGA_CFG_REG1 + FPGA_PACPLL_CFG_block_size-1),  (unsigned long)(FPGA_PACPLL_CFG_block_size));
-        fprintf(stderr, "RP FPGA RPSPMC PACPLL CFG REG2  mapped 0x%08lx - 0x%08lx   block length: 0x%08lx\n", (unsigned long)FPGA_CFG_REG2,   (unsigned long)(FPGA_CFG_REG2 + FPGA_PACPLL_CFG_block_size-1),  (unsigned long)(FPGA_PACPLL_CFG_block_size));
+        fprintf(stderr, "RP FPGA RPSPMC PACPLL CFG REG   mapped 0x%08lx - 0x%08lx   block length: 0x%08lx\n", (unsigned long)FPGA_CFG_REG,   (unsigned long)(FPGA_CFG_REG + FPGA_PACPLL_CFG_block_size-1),  (unsigned long)(FPGA_PACPLL_CFG_block_size));
         fprintf(stderr, "RP FPGA RPSPMC PACPLL GPIO REGs mapped 0x%08lx - 0x%08lx   block length: 0x%08lx\n", (unsigned long)FPGA_GPIO_BASE, (unsigned long)(FPGA_GPIO_BASE + FPGA_PACPLL_GPIO_block_size-1), (unsigned long)(FPGA_PACPLL_GPIO_block_size));
 #endif
 
@@ -623,9 +600,7 @@ void rp_PAC_App_Release(){
         pthread_mutex_destroy (&stream_server_mutexsum);
 
         munmap (FPGA_PACPLL_gpio, FPGA_PACPLL_GPIO_block_size);
-        munmap (FPGA_PACPLL_cfg1, FPGA_PACPLL_CFG_block_size);
-        munmap (FPGA_PACPLL_cfg2, FPGA_PACPLL_CFG_block_size);
-        //munmap ((void*)FPGA_SPMC_bram, FPGA_SPMC_BRAM_block_size);
+        munmap (FPGA_PACPLL_cfg_reg, FPGA_PACPLL_CFG_block_size);
         munmap (FPGA_PACPLL_bram, FPGA_PACPLL_BRAM_block_size);
 #ifdef DEVELOPMENT_PACPLL_OP
         fprintf(stderr, "RP FPGA maps unmapped.\n");
