@@ -569,13 +569,13 @@ axis_biquad_iir_filter biquad(
     .config_addr(confaddr),
     .config_data(vector),
     
-    .S_AXIS_tdata(lso),
-    .S_AXIS_tvalid(lsov),
+    .S_AXIS_in_tdata(lso),
+    .S_AXIS_in_tvalid(lsov),
 
     .axis_decii_clk(ldclk),
     
-    .M_AXIS_tdata(bqd),
-    .M_AXIS_tvalid(bqdv),
+    .M_AXIS_out_tdata(bqd),
+    .M_AXIS_out_tvalid(bqdv),
     
     .M_AXIS_pass_tdata(bqsp),
     .M_AXIS_pass_tvalid(bqspv)
@@ -711,14 +711,14 @@ axis_spm_control axis_spm_control_tb
     .M_AXIS_Y0MON_tdata  (spm_my0),
     .M_AXIS_Y0MON_tvalid (spm_my0v),
     
-    .M_AXIS_Z0MON_tdata  (spm_mz0),
-    .M_AXIS_Z0MON_tvalid (spm_mz0v),
+    .M_AXIS_ZGVPMON_tdata  (spm_mz0),
+    .M_AXIS_ZGVPMON_tvalid (spm_mz0v),
     
   .M_AXIS_Z_SLOPE_tdata  (spm_Zslope),
   .M_AXIS_Z_SLOPE_tvalid (spm_Zslopev),
     
-  .M_AXIS_UrefMON_tdata  (spm_Urm),
-  .M_AXIS_UrefMON_tvalid (spm_Urmv)
+  .M_AXIS_UGVPMON_tdata  (spm_Urm),
+  .M_AXIS_UGVPMON_tvalid (spm_Urmv)
 );
 
 
