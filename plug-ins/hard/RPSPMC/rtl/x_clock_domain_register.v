@@ -31,13 +31,12 @@ module x_clock_domain_register #(
     output [DATA_WIDTH-1:0] out_data
 );
 
-    // buffer in register to relaxtiming requiremnets for distributed placing
-   reg [DATA_WIDTH-1:0]	   in_reg[2:0];
+   reg [DATA_WIDTH-1:0]	   in_reg[2:0]; // pipeline for integrity check
    reg [DATA_WIDTH-1:0]	   oreg;
 
     always @ (posedge in_clk)
     begin
-       in_reg[0] <= cfg;
+       in_reg[0] <= in_data;
        in_reg[1] <= in_reg[0];
        in_reg[2] <= in_reg[1];
     end
