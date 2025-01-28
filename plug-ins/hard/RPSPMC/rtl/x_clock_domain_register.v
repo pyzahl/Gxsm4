@@ -24,23 +24,28 @@ module x_clock_domain_register #(
     parameter DATA_WIDTH = 1024
 )
 (
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS_in" *)
-    input  a_clk,
-    input [DATA_WIDTH-1:0]  S_AXIS_in_tdata,
-    input                   S_AXIS_in_tvalid,
-    output                  S_AXIS_in_tready,
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk" *)
+    input  in_clk,
+    input  out_clk,
+    input [DATA_WIDTH-1:0]  in_data,
     output [DATA_WIDTH-1:0] out_data
 );
 
-    assign S_AXIS_in_tready = 1;
-
     // buffer in register to relaxtiming requiremnets for distributed placing
+   reg [DATA_WIDTH-1:0]	   in_reg[2:0];
    reg [DATA_WIDTH-1:0]	   oreg;
 
-    always @ (posedge a_clk)
+    always @ (posedge in_clk)
     begin
-        if (S_AXIS_in_tvalid)
-            oreg <= S_AXIS_in_tdata;
+       in_reg[0] <= in_data;
+       in_reg[1] <= in_reg[0];
+       in_reg[2] <= in_reg[1];
+    end
+
+    always @ (posedge out_clk)
+    begin
+	 if (in_reg[1] == in_reg[2])
+	       oreg <= in_reg[2];
     end
 
     assign out_data = oreg;
