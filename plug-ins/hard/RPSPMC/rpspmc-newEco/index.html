@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"></meta>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>RPSPMC ** Please use the GXSM4 SPM Control GUI</title>
+    <link rel="stylesheet" href="../assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../assets/loader.css?1" type="text/css">
+    <link rel="stylesheet" href="../assets/popupstack.css" type="text/css" />
+    <link rel="stylesheet" href="../assets/help-system/help-system.css" type="text/css" />
+    <link rel="stylesheet" href="css/style.css?112">
+    <script src="js/jquery-2.1.3.min.js"></script>
+    <script src="js/jquery.flot.js"></script>
+    <script src="js/pako.js"></script>
+    <script src="js/app.js"></script>
+</head>
+
+<body>
+  <div id="header">
+    <div id="connection_meter" title="It seems like your connection is ok"><img src="../assets/images/good_net.png" id="connection_icon" width="20px"><span id="throughput_view2">22.54kB/s</span></div>
+    <div id="description">&nbsp;</div>
+    <div id="hello_message">Connecting...</div>
+  </div>
+  <div class="full-content">
+    <div class="container-fluid">
+      <div class="navbar navbar-inverse" role="navigation">
+	<div class="container">
+          <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+              <span class="sr-only">T</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">
+              <img class="back-btn" src="../assets/images/navigation_arrow_left.png">
+            </a>
+            <img class="logo" width="110" src="../assets/images/navigation_logo.png">
+            <img class="logo" width="80" src="images/gxsm3-pacpll-icon.png">
+          </div>
+          <div class="collapse navbar-collapse">
+            <ul class="nav navbar-nav">
+              <li class="dropdown">
+		<a class="btn btn-default dropdown-toggle" type="button" id="dd_menu" data-toggle="dropdown" style="padding-left: 20px;">EXPORT<span class="caret"></span></a>
+		<ul class="dropdown-menu" role="menu" aria-labelledby="menu1" style="background: #cdcccc; min-width: 0px;">
+                  <li><a id="PACPLL_SAVEGRAPH" href="#">Graph</a></li>
+                  <li><a id="PACPLL_SAVECSV" href="#">Data in CSV</a></li>
+		</ul>
+              </li>
+              <li>
+		<a id="PACPLL_RUN" href="#" style="display: none;">RUN</a>
+		<a id="PACPLL_STOP" href="#" style="display: block;">STOP</a>
+              </li>
+            </ul>
+          </div>
+	</div>
+      </div>
+      
+      <div class="container">
+	<div id='placeholder' style="position: relative; left: 0px;"></div>
+	  <div class="menu-content">
+            <div id="control_menu" class="row right-menu-cont">
+	      <div class="row right-menu-cont">
+		<div class="col-xs-6 option-content">
+		  <div class="panel_button_field" ;="" id="full_button">
+		    <button id='pac_menu' type="button">PAC</button>
+		  </div>
+		</div>
+		<div class="col-xs-6 option-content">
+		  <div class="panel_button_field" ;="" id="full_button">
+		    <button id='dbg_menu' type="button">DBG</button>
+		  </div>
+		</div>
+		<div class="col-xs-6 option-content">
+		  <div class="panel_button_field" ;="" id="full_button">
+		    <button id='ampl_menu' type="button">Ampl Control</button>
+		  </div>
+		</div>
+		<div class="col-xs-6 option-content">
+		  <div class="panel_button_field" ;="" id="full_button">
+		    <button id='phase_menu' type="button">Phase Control</button>
+		  </div>
+		</div>
+		<div class="col-xs-6 option-content">
+		  <div class="panel_button_field" ;="" id="full_button">
+		    <button id='plotter_menu' type="button">Plotter Control</button>
+		  </div>
+		</div>
+	      </div>
+	    </div>
+            <div id="ampl_control" class="row right-menu-cont" hidden>
+	      <p id="field_descr_hdr"><b>Amplitude Control</b></p>
+	      <div class="row right-menu-cont">
+		<div class="col-xs-12 option-content">
+		  <div class="panel_input_field" ;="" id="full_input">
+		    <p id="field_descr_text">Setpoint <span id='ampl_setpoint_value'></span></p>
+		    <div class="input_entry_full" id="input_entry"><input id='ampl_setpoint_set' type="number" size="2" value="40" min = "0.001" max = "1000"></div>
+		  </div>
+		</div>
+		<div class="col-xs-12 option-content">
+		  <div class="panel_input_field" ;="" id="full_input">
+		    <p id="field_descr_text">Upper Exec. Limit <span id='exec_upper_value'></span></p>
+		    <div class="input_entry_full" id="input_entry"><input id='exec_upper_set' type="number" size="2" value="500" min = "-1000" max = "1000"></div>
+		  </div>
+		</div>
+		<div class="col-xs-12 option-content">
+		  <div class="panel_input_field" ;="" id="full_input">
+		    <p id="field_descr_text">Lower Exec. Limit <span id='exec_lower_value'></span></p>
+		    <div class="input_entry_full" id="input_entry"><input id='exec_lower_set' type="number" size="2" value="-100" min = "-1000" max = "1000"></div>
+		  </div>
+		</div>
+		<div class="col-xs-12 option-content">
+		  <div class="panel_input_field" ;="" id="full_input">
+		    <p id="field_descr_text">CP gain <span id='ampl_cp_gain_value'></span></p>
+		    <div class="input_entry_full" id="input_entry"><input id='ampl_cp_gain_set' type="number" size="2" value="-50" min = "-200" max = "100"> dB</div>
+		    <div class="input_check_full"><input id="ampl_cp_gain_inv" type="checkbox">Inv</div>
+		  </div>
+		</div>
+		<div class="col-xs-12 option-content">
+		  <div class="panel_input_field" ;="" id="full_input">
+		    <p id="field_descr_text">CI gain <span id='ampl_ci_gain_value'></span></p>
+		    <div class="input_entry_full" id="input_entry"><input id='ampl_ci_gain_set' type="number" size="2" value="-60" min = "-200" max = "100"> dB</div>
+		    <div class="input_check_full"><input id="ampl_ci_gain_inv" type="checkbox">Inv</div>
+		  </div>
+		</div>
+		<div class="col-xs-12 option-content">
+		  <div class="panel_input_field" ;="" id="full_input">
+		    <p id="field_descr_text">Enable Loop Control</p>
+		    <div class="input_check_full"><input id="ampl_control_on" type="checkbox">Feedback</div>
+		  </div>
+		</div>
+	      </div>
+	    </div>
+
+	    <div id="phase_control" class="row right-menu-cont" hidden>
+	      <p id="field_descr_hdr"><b>Phase Control</b></p>
+	      <div class="row right-menu-cont">
+		<div class="col-xs-12 option-content">
+		  <div class="panel_input_field" ;="" id="full_input">
+		    <p id="field_descr_text">Setpoint <span id='phase_setpoint_value'></span></p>
+		    <div class="input_entry_full" id="input_entry"><input id='phase_setpoint_set' type="number" size="2" value="50" min = "-180" max = "180"></div>
+		  </div>
+		</div>
+		<div class="col-xs-12 option-content">
+		  <div class="panel_input_field" ;="" id="full_input">
+		    <p id="field_descr_text">Upper Freq Limit <span id='freq_upper_value'></span></p>
+		    <div class="input_entry_full" id="input_entry"><input id='freq_upper_set' type="number" size="2" value="40e3" min = "0.01" max = "20e6"></div>
+		  </div>
+		</div>
+		<div class="col-xs-12 option-content">
+		  <div class="panel_input_field" ;="" id="full_input">
+		    <p id="field_descr_text">Lower Freq Limit <span id='freq_lower_value'></span></p>
+		    <div class="input_entry_full" id="input_entry"><input id='freq_lower_set' type="number" size="2" value="30e3" min = "0.01" max = "10e6"></div>
+		  </div>
+		</div>
+		<div class="col-xs-12 option-content">
+		  <div class="panel_input_field" ;="" id="full_input">
+		    <p id="field_descr_text">CP gain <span id='phase_cp_gain_value'></span></p>
+		    <div class="input_entry_full" id="input_entry"><input id='phase_cp_gain_set' type="number" size="2" value="-180" min = "-220" max = "100"> dB</div>
+		    <div class="input_check_full"> <input id="phase_cp_gain_inv" type="checkbox">Inv</div>
+		  </div>
+		</div>
+		<div class="col-xs-12 option-content">
+		  <div class="panel_input_field" ;="" id="full_input">
+		    <p id="field_descr_text">CI gain <span id='phase_ci_gain_value'></span></p>
+		    <div class="input_entry_full" id="input_entry"><input id='phase_ci_gain_set' type="number" size="2" value="-180" min = "-220" max = "100"> dB</div>
+		    <div class="input_check_full"> <input id="phase_ci_gain_inv" type="checkbox">Inv</div>
+		  </div>
+		</div>
+		<div class="col-xs-12 option-content">
+		  <div class="panel_input_field" ;="" id="full_input">
+		    <p id="field_descr_text">Enable Loop Control</p>
+		    <div class="input_check_full"> <input id="phase_control_on" type="checkbox">Feedback</div>
+		  </div>
+		</div>
+	      </div>
+	    </div>
+
+            <div id="pac_control" class="row right-menu-cont">
+	      <div class="row right-menu-cont">
+	      <p id="field_descr_hdr"><b>PAC Configuation/Sweep</b></p>
+		<div class="col-xs-12 option-content">
+		  <div class="panel_input_field" ;="" id="full_input">
+		    <p id="field_descr_text">DC-Tau in ms <span id='dctau_value'></span></p>
+		    <div class="input_entry_full" id="input_entry"><input id='dctau_set' type="number" step="1.0" size="2" value="100.0" min = "-1" max = "100000"></div>
+		  </div>
+		</div>
+		<div class="col-xs-12 option-content">
+		  <div class="panel_input_field" ;="" id="full_input">
+		    <p id="field_descr_text">PAC-Tau in us <span id='pactau_value'></span></p>
+		    <div class="input_entry_full" id="input_entry"><input id='pactau_set' type="number" step="1.0" size="2" value="50.0" min = "1" max = "100000"></div>
+		  </div>
+		</div>
+		<div class="col-xs-12 option-content">
+		  <div class="panel_input_field" ;="" id="full_input">
+		    <p id="field_descr_text">PAC-ATau in us <span id='pacatau_value'></span></p>
+		    <div class="input_entry_full" id="input_entry"><input id='pacatau_set' type="number" step="1.0" size="2" value="20.0" min = "1" max = "100000"></div>
+		  </div>
+		</div>
+		<div class="col-xs-12 option-content">
+		  <div class="panel_input_field" ;="" id="full_input">
+		    <p id="field_descr_text">Frequency Center <span id='frequency_value'></span> Hz</p>
+		    <div class="input_entry_full" id="input_entry"><input id='frequency_set' type="number" step="0.1" size="2" value="32766.0" min = "0.1" max = "20e6"></div>
+		  </div>
+		</div>
+		<div class="col-xs-12 option-content">
+		  <div class="panel_input_field" ;="" id="full_input">
+		    <p id="field_descr_text">Frequency Span <span id='frequency_span_value'></span> Hz</p>
+		    <div class="input_entry_full" id="input_entry"><input id='frequency_span_set' type="number" step="0.1" size="2" value="50.0" min = "0.0" max = "8e6.0"></div>
+		  </div>
+		</div>
+                <div class="col-xs-12 option-content">
+                  <div class="panel_input_field" ;="" id="full_input">
+                    <p id="field_descr_text">Volume <span id='volume_value'></span> mV</p>
+                    <div class="input_entry_full" id="input_entry"><input id='volume_set' type="range" step="1.0" size="2" value="500" min = "0" max = "1000.0"></div>
+                  </div>
+                </div>
+ 		<div class="col-xs-12 option-content">
+		  <div class="panel_input_field" ;="" id="full_input">
+		    <p id="field_descr_text">dFreq <span id='df_value'></span> Hz</p>
+		    <div class="input_entry_full" id="input_entry"><input id='df_set' type="number" step="0.01" size="2" value="0.1" min = "0.0001" max = "1000.0"></div>
+		  </div>
+		</div>
+		<div class="col-xs-12 option-content">
+		  <div class="panel_input_field" ;="" id="full_input">
+		    <p id="field_descr_text">Interval <span id='interval_value'></span> ms</p>
+		    <div class="input_entry_full" id="input_entry"><input id='interval_set' type="number" step="0.01" size="2" value="0.1" min = "0.1" max = "10000.0"></div>
+		  </div>
+		</div>
+	      </div>
+	    </div>
+	    <div id="dbg_info" class="row right-menu-cont" >
+	      <p>FPGA Life Readings:</p>
+	      <div class="container">
+		<div class="fpga_readings">Value CH1=<span id="ch1_reading"></span></div>
+		<div class="fpga_readings">Value CH2=<span id="ch2_reading"></span></div>
+		<div class="fpga_readings">Value CH3=<span id="ch3_reading"></span></div>
+		<div class="fpga_readings">Value CH4=<span id="ch4_reading"></span></div>
+		<div class="fpga_readings">Value CH5=<span id="ch5_reading"></span></div>
+		<div class="fpga_readings">DC Offset IN1=<span id="dc_offset"></span></div>
+		<div class="fpga_readings">dF tune=<span id="df_tune_reading"></span></div>
+		<div class="fpga_readings">Exec Amp Mon=<span id="exec_amp_mon"></span></div>
+		<div class="fpga_readings">DDS Freq Mon=<span id="dds_freq_mon"></span></div>
+		<div class="fpga_readings">DDS Volume Mon=<span id="dds_volume_mon"></span></div>
+		<div class="fpga_readings">Phase Mon=<span id="phase_mon"></span></div>
+	      </div>
+	      <hr/>
+	      <p>A9 Linux Box Status:</p>
+	      <div class="container">
+		<div class="fpga_readings">A9-CPU=<span id="info_cpu"></span></div>
+		<div class="fpga_readings">A9-RAM=<span id="info_ram"></span></div>
+		<div class="fpga_readings">FPGA COUNTER=<span id="info_counter"></span></div>
+		<div class="fpga_readings">FPGA INFO=<span id="info_text"></span></div>
+		<div class="fpga_readings">PERIOD=<span id="info_period"></span></div>
+	      </div>
+	      <div class="col-xs-12 option-content">
+		<div class="panel_input_field" ;="" id="full_button">
+		  <p id="field_descr_text">Verbose Logging Level <span id='pacverbose_value'></span></p>
+		  <div class="input_entry_full" id="input_entry"><input id='pacverbose_set' type="range" size="2" value="0" min = "0" max = "10"></div>
+		</div>
+	      </div>
+	    </div>
+            <div id="plotter_control" class="row right-menu-cont" hidden>
+	      <p id="field_descr_hdr"><b>Plotter Control</b></p>
+	      <div class="row right-menu-cont">
+		<div class="col-xs-12 option-content">
+		  <div class="panel_input_field" ;="" id="full_input">
+		    <p id="field_descr_text">Operation Modes</p>
+		    <select size="1" id="operation_set">
+		      <option selected value="0">MANUAL</option>
+		      <option value="1">MEASURE DC_OFFSET</option>
+		      <option value="2">RUN SCOPE</option>
+		      <option value="3">INIT BRAM TRANSPORT</option>
+		      <option value="4">SINGLE SHOT</option>
+		      <option value="5">STREAMING OPERATION</option>
+		      <option value="6">RUN TUNE</option>
+		    </select>
+		  </div>
+		</div>
+		<div class="col-xs-12 option-content">
+		  <div class="panel_input_field" ;="" id="full_input">
+		    <p id="field_descr_text">Decimation  <span id='decimation_value'></span></p>
+		    <div class="input_entry_full" id="input_entry"><input id='decimation_set' type="number" step="1" size="2" value="16" min = "1" max = "100000.0"></div>
+		  </div>
+		</div>
+		<div class="col-xs-12 option-content">
+		  <div class="panel_input_field" ;="" id="full_input">
+		    <p id="field_descr_text">BRAM TRANSPORT MODE BLOCK S1,S2</p>
+		    <select size="1" id="transport_mode_set">
+		      <option selected value="0">0: IN1, IN2</option>
+		      <option value="1">1: IN1: AC,DC</option>
+		      <option value="2">2: AMC: AMPL, EXEC</option>
+		      <option value="3">3: PHC: PHASE, dFREQ</option>
+		      <option value="4">4: PHASE, AMPL</option>
+		      <option value="5">5: PHASE, dFREQ, AMPL, EXEC</option>
+		      <option value="6">6: DHC: dFREQ, dFControl</option>
+		      <option value="7">7: DDR IN1,IN2</option>
+		      <option value="8">8: AXS7,AXS8</option>
+		    </select>
+		  </div>
+		</div>
+		<div class="col-xs-12 option-content">
+		  <div class="panel_input_field" ;="" id="full_input">
+		    <p id="field_descr_text">GainS1 <span id='gain1_value'></span></p>
+		    <div class="input_entry_full" id="input_entry"><input id='gain1_set' type="range" size="2" value="1" min = "1" max = "10000"></div>
+		    <p id="field_descr_text">SHR-DEC <span id='shr_dec_value'></span></p>
+		    <div class="input_entry_full" id="input_entry"><input id='shr_dec_set' type="range" size="2" value="4" min = "0" max = "64"></div>
+		  </div>
+		</div>
+		<div class="col-xs-12 option-content">
+		  <div class="panel_input_field" ;="" id="full_input">
+		    <p id="field_descr_text">GainS2 <span id='gain2_value'></span></p>
+		    <div class="input_entry_full" id="input_entry"><input id='gain2_set' type="range" size="2" value="1" min = "1" max = "10000"></div>
+		  </div>
+		</div>
+		<div class="col-xs-12 option-content">
+		  <div class="panel_input_field" ;="" id="full_input">
+		    <p id="field_descr_text">CH3 from GPIO MONITOR</p>
+		    <select size="1" id="transport_ch3_set">
+		      <option selected value="0">LMS Amplitude from A,B</option>
+		      <option value="1">LMS Phase from A,B</option>
+		      <option value="2">LMS A</option>
+		      <option value="3">LMS B</option>
+		      <option value="4">SQRT Amplitude Monitor</option>
+		      <option value="5">ATAN Phase Monitor</option>
+		      <option value="6">X5</option>
+		      <option value="7">X6</option>
+		      <option value="8">Exec Amplitude</option>
+		      <option value="9">DDS Freq Monitor</option>
+		      <option value="10">X3 M (LMS Input)</option>
+		      <option value="11">X5 M1 (LMS Input Signal-DC)</option>
+		      <option value="12">X11 WBRAM WP</option>
+		      <option value="13">X12 WBRAM DEC</option>
+		    </select>
+		  </div>
+		</div>
+		<div class="col-xs-12 option-content">
+		  <div class="panel_input_field" ;="" id="full_input">
+		    <p id="field_descr_text">Gain CH3 <span id='gain3_value'></span></p>
+		    <div class="input_entry_full" id="input_entry"><input id='gain3_set' type="range" size="2" value="1" min = "1" max = "10000"></div>
+		  </div>
+		</div>
+		<div class="col-xs-12 option-content">
+		  <div class="panel_input_field" ;="" id="full_input">
+		    <p id="field_descr_text">CH4 from GPIO MONITOR</p>
+		    <select size="1" id="transport_ch4_set">
+		      <option value="0">LMS Amplitude from A,B</option>
+		      <option selected value="1">LMS Phase from A,B</option>
+		      <option value="2">LMS A</option>
+		      <option value="3">LMS B</option>
+		      <option value="4">SQRT Amplitude Monitor</option>
+		      <option value="5">ATAN Phase Monitor</option>
+		      <option value="6">X5</option>
+		      <option value="7">X6</option>
+		      <option value="8">Exec Amplitude</option>
+		      <option value="9">DDS Freq Monitor</option>
+		      <option value="10">X3 M (LMS Input)</option>
+		      <option value="11">X5 M1 (LMS Input Signal-DC)</option>
+		      <option value="12">X11 WBRAM WP</option>
+		      <option value="13">X12 WBRAM DEC</option>
+		    </select>
+		  </div>
+		</div>
+		<div class="col-xs-12 option-content">
+		  <div class="panel_input_field" ;="" id="full_input">
+		    <p id="field_descr_text">Gain CH4 <span id='gain4_value'></span></p>
+		    <div class="input_entry_full" id="input_entry"><input id='gain4_set' type="range" size="2" value="1" min = "1" max = "10000"></div>
+		  </div>
+		</div>
+		<div class="col-xs-12 option-content">
+		  <div class="panel_input_field" ;="" id="full_input">
+		    <p id="field_descr_text">CH5 from GPIO MONITOR</p>
+		    <select size="1" id="transport_ch5_set">
+		      <option value="0">LMS Amplitude from A,B</option>
+		      <option value="1">LMS Phase from A,B</option>
+		      <option value="2">LMS A</option>
+		      <option value="3">LMS B</option>
+		      <option value="4">SQRT Amplitude Monitor</option>
+		      <option selected value="5">ATAN Phase Monitor</option>
+		      <option value="6">X5</option>
+		      <option value="7">X6</option>
+		      <option value="8">Exec Amplitude</option>
+		      <option value="9">DDS Freq Monitor</option>
+		      <option value="10">X3 M (LMS Input)</option>
+		      <option value="11">X5 M1 (LMS Input Signal-DC)</option>
+		      <option value="12">X11 WBRAM WP</option>
+		      <option value="13">X12 WBRAM DEC</option>
+		    </select>
+		  </div>
+		</div>
+		<div class="col-xs-12 option-content">
+		  <div class="panel_input_field" ;="" id="full_input">
+		    <p id="field_descr_text">Gain CH5 <span id='gain5_value'></span></p>
+		    <div class="input_entry_full" id="input_entry"><input id='gain5_set' type="range" size="2" value="1" min = "1" max = "10000"></div>
+		  </div>
+		</div>
+	      </div>
+	    </div>
+	  </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
