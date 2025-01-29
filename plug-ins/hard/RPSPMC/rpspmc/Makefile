@@ -1,26 +1,28 @@
-MODEL ?= Z10
+#
+# $Id: Makefile 1235 2014-02-21 16:44:10Z ales.bardorfer $
+#
+# Red Pitaya specific application Makefile.
+#
 
-CFLAGS  = -std=gnu11 -Wall ## -Werror
-CFLAGS += -I/opt/redpitaya/include -D$(MODEL)
-LDFLAGS = -L/opt/redpitaya/lib
-LDLIBS = -static -lrp -lrp-hw-calib -lrp-hw-profiles
+APP=$(notdir $(CURDIR:%/=%))
 
-INCLUDE += -I/opt/redpitaya/include/api250-12
-LDLIBS += -lrp-gpio -lrp-i2c
-LDLIBS += -lrp-hw -lm -lstdc++ -lpthread -li2c
+# Versioning system
+BUILD_NUMBER ?= 0
+REVISION ?= devbuild
+VER:=$(shell cat info/info.json | grep version | sed -e 's/.*:\ *\"//' | sed -e 's/-.*//')
 
-# List of compiled object files (not yet linked to executable)
+INSTALL_DIR ?= /opt/redpitaya/
 
-PRGS = src
+CONTROLLERHF = controllerhf.so
 
-OBJS := $(patsubst %,%.o,$(PRGS))
-SRC := $(patsubst %,%.c,$(PRGS))
+CFLAGS += -DVERSION=$(VER)-$(BUILD_NUMBER) -DREVISION=$(REVISION)
+export CFLAGS
 
-all: $(PRGS)
+all: $(CONTROLLERHF)
 
-$(PRGS): %: %.c
-    $(CC) $< $(CFLAGS) $(LDFLAGS) $(LDLIBS) -o $@
+$(CONTROLLERHF):
+	$(MAKE) -C src
 
 clean:
-    $(RM) *.o
-    $(RM) $(OBJS)
+	$(MAKE) -C src clean
+	-$(RM) *.so

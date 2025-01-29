@@ -1,6 +1,8 @@
 CXX=$(CROSS_COMPILE)g++
 RM=rm
 
+INSTALL_DIR ?= /opt/redpitaya/
+
 CXXSOURCES=main.cpp
 
 INCLUDE =  -I$(INSTALL_DIR)/include
@@ -12,11 +14,11 @@ INCLUDE += -I$(INSTALL_DIR)/rp_sdk/libjson
 LIBS = -L$(INSTALL_DIR)/lib
 LIBS += -L$(INSTALL_DIR)/rp_sdk
 
-COMMON_FLAGS+=-Wall -fPIC -Os -s -Wno-reorder
-CXXFLAGS+=$(COMMON_FLAGS) -g -std=c++11 $(INCLUDE)
+COMMON_FLAGS+=-Wall -fPIC -Os -s
+CXXFLAGS+=$(COMMON_FLAGS) -std=c++11 $(INCLUDE)
 LDFLAGS = -shared $(COMMON_FLAGS) $(LIBS)
 LDFLAGS+= -Wl,--whole-archive,--no-as-needed
-LDFLAGS+= -lcryptopp -lrpapp -lrp -lrp_sdk
+LDFLAGS+= -lcryptopp -lrpapp -lrp -lrp_sdk -lrp-hw-calib -lrp-hw-profiles
 LDFLAGS+= -Wl,--no-whole-archive
 
 CXXOBJECTS=$(CXXSOURCES:.cpp=.o)
