@@ -121,7 +121,11 @@ double dds_phaseinc_rel_to_freq (long long ddsphaseincQ44){
 }
 
 
-
+void reset_lms (){
+        rp_spmc_module_config_int32 (RESET_LMS_PHASE_AMPLITUDE_DETECTOR_ADDRESS, 1); // WRITE: SET RESETN
+        rp_spmc_module_config_int32 (RESET_LMS_PHASE_AMPLITUDE_DETECTOR_ADDRESS, 0); // WRITE: RELEASE RESETN
+}
+        
 void config_lms (int pactau_ph, int pactau_am, int modes){
         rp_spmc_module_config_int32 (MODULE_SETUP, pactau_ph, LMS_PACPLL_CFG_PACTAU);
         rp_spmc_module_config_int32 (MODULE_SETUP, pactau_am, LMS_PACPLL_CFG_PACATAU);

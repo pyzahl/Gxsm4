@@ -1483,7 +1483,9 @@ void UpdateSignals(void)
                     if ( pthread_join ( tune_thread, NULL ) ) {
                             fprintf(stderr, "Error joining tune thread.\n");
                     }
-                }
+                    fprintf(stderr, "Resetting LMS.\n");
+                    rp_PAC_reset_lms ();
+                 }
                 //clear_tune_data = 1;
                 //if (verbose > 3) fprintf(stderr, "UpdateSignals get GPIO reading:\n");
 

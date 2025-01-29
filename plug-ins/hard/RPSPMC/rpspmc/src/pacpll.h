@@ -97,6 +97,9 @@ extern "C" {
   double dds_phaseinc (double freq);
   double dds_phaseinc_to_freq (unsigned long long ddsphaseincQ44);
   double dds_phaseinc_rel_to_freq (long long ddsphaseincQ44);
+  void reset_lms ();
+
+  void rp_PAC_reset_lms () { reset_lms(); };
   void rp_PAC_adjust_dds (double freq);
   void rp_PAC_set_volume (double volume);
   void rp_PAC_configure_switches (int phase_ctrl, int am_ctrl, int phase_unwrap_always, int qcontrol, int lck_amp, int lck_phase, int dfreq_ctrl);

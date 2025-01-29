@@ -47,7 +47,8 @@
 
 // MODULE CONFIGURATION ** NEW
 // MODULE PHASE_AMPLITUDE_DETECTOR
-#define LMS_PHASE_AMPLITUDE_DETECTOR_ADDRESS  20000
+#define RESET_LMS_PHASE_AMPLITUDE_DETECTOR_ADDRESS  19999
+#define LMS_PHASE_AMPLITUDE_DETECTOR_ADDRESS        20000
 #define LMS_PACPLL_CFG_PACTAU        0 // (actual Q22 mu) Phase mu
 #define LMS_PACPLL_CFG_PACATAU       1 // (actual Q22 mu) Amplitude mu
 #define LMS_PACPLL_CFG_LCK_AM_PH     2 // Bit0: Ampl Bit1: Phase (if enabled in build, option to use LockIn)
