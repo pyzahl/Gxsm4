@@ -1,15 +1,42 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
+// Company:  BNL
+// Engineer: Percy Zahl
+// 
+/* Gxsm - Gnome X Scanning Microscopy 
+ * ** FPGA Implementaions RPSPMC aka RedPitaya Scanning Probe Control **
+ * universal STM/AFM/SARLS/SPALEED/... controlling and
+ * data analysis software
+ * 
+ * Copyright (C) 1999-2025 by Percy Zahl
+ *
+ * Authors: Percy Zahl <zahl@users.sf.net>
+ * WWW Home: http://gxsm.sf.net
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
+ */
+// 
+// Create Date: 01/11/2025 12:04:22 AM
+// Design Name:    part of RPSPMC
+// Module Name:    AD463x io connect to RP modules
+// Project Name:   RPSPMC 4 GXSM
+// Target Devices: Zynq z7020
+// Tool Versions:  Vivado 2023.1
+// Description:    IO connection assignments
 // Company: 
 // Engineer: 
-// 
-// Create Date: 11/26/2017 08:20:47 PM
-// Design Name: 
-// Module Name: signal_combine
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: get top most bits from config
 // 
 // Dependencies: 
 // 
@@ -59,9 +86,9 @@ module AD463x_io_connect #(
 // ===========================================================================
 
 // FIXED ASSIGNMNETS for one data lane each on SD0, SD4 => D0P, D1P
-IOBUF dac_read_iobuf (.O(SPI_sdn[0]),  .IO(exp_p_io[0]), .I(0), .T(1) );
-IOBUF dac_read_iobuf (.O(SPI_sdn[1]),  .IO(exp_p_io[1]), .I(0), .T(1) );
-IOBUF dac_read_iobuf (.O(SPI_busy[4]), .IO(exp_p_io[4]), .I(0), .T(1) );
+IOBUF dac_read_iobuf_AD_CH0  (.O(SPI_sdn[0]),  .IO(exp_p_io[0]), .I(0), .T(1) );
+IOBUF dac_read_iobuf_AD_CH1  (.O(SPI_sdn[1]),  .IO(exp_p_io[1]), .I(0), .T(1) );
+IOBUF dac_read_iobuf_AD_Busy (.O(SPI_busy),    .IO(exp_p_io[4]), .I(0), .T(1) );
    
 IOBUF rst_iobuf  (.O(RP_exp_out[2]),   .IO(exp_p_io[2]), .I(SPI_reset),    .T(0) );
 IOBUF cs_iobuf   (.O(RP_exp_out[3]),   .IO(exp_p_io[3]), .I(SPI_cs),       .T(0) );

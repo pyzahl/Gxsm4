@@ -1,12 +1,14 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-/* Gxsm - Gnome X Scanning Microscopy
+// Company:  BNL
+// Engineer: Percy Zahl
+// 
+/* Gxsm - Gnome X Scanning Microscopy 
+ * ** FPGA Implementaions RPSPMC aka RedPitaya Scanning Probe Control **
  * universal STM/AFM/SARLS/SPALEED/... controlling and
  * data analysis software
  * 
- * Copyright (C) 1999,2000,2001,2002,2003 Percy Zahl
+ * Copyright (C) 1999-2025 by Percy Zahl
  *
  * Authors: Percy Zahl <zahl@users.sf.net>
  * WWW Home: http://gxsm.sf.net
@@ -27,11 +29,11 @@
  */
 // 
 // Create Date: 11/26/2017 09:10:43 PM
-// Design Name: 
-// Module Name: lms_phase_amplitude_detector
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
+// Design Name:    part of RPSPMC
+// Module Name:    phase unwrapping
+// Project Name:   RPSPMC 4 GXSM
+// Target Devices: Zynq z7020
+// Tool Versions:  Vivado 2023.1
 // Description: 
 // 
 // Dependencies: 
