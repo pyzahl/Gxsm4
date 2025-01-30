@@ -405,7 +405,7 @@ void rp_PAC_set_amplitude_controller (double setpoint, double cp, double ci, dou
 // Phase Controller
 // CONTROL[75] OUT[44] : [75-1-1:75-44]=43+1   m[24]  x  c[32]  = 56 M: 24{Q32},  P: 44{Q14}
 void rp_PAC_set_phase_controller (double setpoint, double cp, double ci, double upper, double lower, double am_threashold, double freq_manual, int enable){
-        if (verbose > 1) fprintf(stderr, "##Configure PH-Controller: setpt=%g, cp=%g ci=%g, upper=%g lower=%g, amth=%g, frq=%g, en=%d\n",
+        if (verbose > 2) fprintf(stderr, "##Configure PH-Controller: setpt=%g, cp=%g ci=%g, upper=%g lower=%g, amth=%g, frq=%g, en=%d\n",
                                  setpoint, cp, ci, upper, lower, am_threashold, freq_manual, enable);
 
         /*

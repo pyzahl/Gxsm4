@@ -1163,14 +1163,14 @@ int wait_for_data(int max_wait_ms){
 void measure_and_read_phase_ampl_buffer_avg (double &ampl, double &phase){
         int k=0;
         
-        if (verbose > 1) fprintf(stderr, "initiate_bram_write_measurements. RESET and start SINGLE.\n");
+        if (verbose > 2) fprintf(stderr, "initiate_bram_write_measurements. RESET and start SINGLE.\n");
         rp_PAC_start_transport (PACPLL_CFG_TRANSPORT_SINGLE, 4096, 4); // TransferMode=4: configure for PHASE, AMPL
         usleep(5000);
 
         if (wait_for_data (500)){
                 size_t i = 12+8*512; // skip
                 int count=0;
-                if (verbose > 1) fprintf(stderr, " measure_and_read_phase_ampl_buffer_avg. reading BRAM...\n");
+                if (verbose > 2) fprintf(stderr, " measure_and_read_phase_ampl_buffer_avg. reading BRAM...\n");
                 // read data
                 ampl=0.;
                 phase=0.;
@@ -1185,7 +1185,7 @@ void measure_and_read_phase_ampl_buffer_avg (double &ampl, double &phase){
                 ampl  /= count;
         } else {
                 //double reading_vector[READING_MAX_VALUES];
-                if (verbose > 1) fprintf(stderr, " measure_and_read_phase_ampl_buffer_avg. Failed. Using GPIO fallback snapshot!\n");
+                if (verbose > 2) fprintf(stderr, " measure_and_read_phase_ampl_buffer_avg. Failed. Using GPIO fallback snapshot!\n");
                 // try reinitialize transport
                 rp_PAC_start_transport (PACPLL_CFG_TRANSPORT_SINGLE, 4096, 4); // configure for PHASE, AMPL
                 usleep(2000);
@@ -1354,7 +1354,7 @@ void *thread_tuning(void *arg) {
                         }
                 }
                 // next
-                if (verbose > 1) fprintf(stderr, "Tuning at: %g \n", FREQUENCY_MANUAL.Value() + f);
+                if (verbose > 2) fprintf(stderr, "Tuning at: %g \n", FREQUENCY_MANUAL.Value() + f);
 
                 // adjust DDS
                 //rp_PAC_adjust_dds (FREQUENCY_MANUAL.Value() + f);
