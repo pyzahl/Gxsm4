@@ -89,15 +89,23 @@ module axis_FIR #(
             else
                 data_in <= 0;
             run <= 1;
-        end
+        end         
         else
             run <= 0;
 
         if (run)
         begin
-            //data_in       <= $signed(S_AXIS_tdata);
-            sum           <= sum - fir_buffer[i] + data_in;
-            fir_buffer[i] <= data_in;
+            if (S_AXIS_tvalid)
+            begin
+                //data_in       <= $signed(S_AXIS_tdata);
+                sum           <= sum - fir_buffer[i] + data_in;
+                fir_buffer[i] <= data_in;
+            end
+            else        
+            begin
+                fir_buffer[i] <= 0;
+                sum <= 0;
+            end
             i <= i+1;
         end
         buffer <= sum[SAXIS_TDATA_WIDTH+FIR_DECI_L-1:FIR_DECI_L+SAXIS_TDATA_WIDTH-MAXIS_TDATA_WIDTH];
