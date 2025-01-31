@@ -195,6 +195,7 @@ module axis_4s_combine #(
     assign init_state = reg_operation[0];
     assign finished_state = finished;
     assign writeposition = { sample_count[15:0], finished, BR_wpos[14:0] };   
+
     
     assign FIR_next = fir_next;
     
@@ -286,7 +287,7 @@ module axis_4s_combine #(
             // ===============================================================================================
             0: // RESET STATE
             begin
-                fir_next      <= 1; // empty and zero FIR 
+                fir_next      <= ~fir_next; // clock FIR to empty and zero FIR 
                 zero_x_s      <= 0;
                 bram_reset    <= 1'b1;
                 finished      <= 1'b0;
@@ -348,9 +349,9 @@ module axis_4s_combine #(
                 if(trigger) // start job
                 begin
                     sample_count <= 32'd0;
-                    fir_next     <= 0;      // FIR start and hold
                     bram_reset   <= 1'b0;   // take BRAM controller out of reset
                     bram_next    <= 0;      // hold BRAM write next
+                    fir_next     <= 0;      // FIR start and hold
                     finished     <= 1'b0;
                     dec_sms_next <= 3'd2; // go, init decimation
                     decimate_count      <= reg_ndecimate; // initialize samples for deciamtion first
@@ -364,8 +365,8 @@ module axis_4s_combine #(
 
                 if (decimate_count < reg_ndecimate)
                 begin
-                    fir_next  <= 0; // hold FIR
                     bram_next <= 0; // hold BRAM write next
+                    fir_next  <= 0; // hold FIR
 
                     // decimate sum for all PAC-PLL channels
                     chPH <= chPH + $signed(S_AXIS4_tdata[SAXIS_4_DATA_WIDTH-1:0]);  // PHC Phase (24) =>  32
@@ -408,8 +409,8 @@ module axis_4s_combine #(
                     decimate_count <= decimate_count + 1; // next sample
                 end
                 else begin
-                    fir_next  <= 1; // load next into FIR
                     bram_next <= 1; // initate BRAM write data cycles
+                    fir_next  <= 1; // load next into FIR
 
                     // normalize and store summed data data 
                     chPHs <= (chPH >>> reg_shift);   // PHC Phase (24) =>  32 *** not used ***

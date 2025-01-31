@@ -24,8 +24,17 @@ module tb_spm_ad(
 
     );
 
+    parameter gvp_control_reg_address = 5001;
+    parameter gvp_reset_options_reg_address = 5002;
+    parameter gvp_vector_programming_reg_address  = 5003;
+    parameter gvp_vector_set_reg_address  = 5004;
+    parameter gvp_vectorX_programming_reg_address  = 500;
+
+
     reg tb_ACLK;
     reg tb_ARESETn;
+
+
 
     parameter AXIS_TDATA_WIDTH = 64;
     parameter signed CR_INIT = 32'h7FFFFFFF;  // ((1<<31)-1)
@@ -201,6 +210,10 @@ wire        mux_out05tv;
 wire [31:0] mux_out06td;
 wire        mux_out06tv;
 
+wire [31:0]FIR_wu;
+wire       FIR_twu;
+wire [31:0]FIR2_wu;
+wire       FIR2_twu;
 
 
 
@@ -321,66 +334,71 @@ print (adjust (100))
 
         // MUX SETUP
         confaddr=0; #10 vector = 32'h00543021; #1 confaddr=2000; #10 confaddr=0; #10 // module config cycle
+        //parameter gvp_control_reg_address = 5001;
+        //parameter gvp_reset_options_reg_address = 5002;
+        //parameter gvp_vector_programming_reg_address  = 5003;
+        //parameter gvp_vector_set_reg_address  = 5004;
+        //parameter gvp_vectorX_programming_reg_address  = 500;
 
         // INIT GVP
-        confaddr=0; #10 vector = 1;#1 confaddr=1; #10 confaddr=0; #10 // reset to GVP
+        confaddr=0; #10 vector = 1;#1 confaddr=gvp_control_reg_address; #10 confaddr=0; #10 // reset to GVP
 
         //         decii                               db       da       du       dz       dy       dx     Next     Nrep,    Options,    nii,      N,    [Vadr]
-        vector = {32'd16,  32'd0,  32'd0,  32'd0,  32'd00,  32'd00,  32'd10,  32'd00,  32'd00,  32'd00,  32'd00, 32'd000, 32'hc00801,  32'd02,  32'd4,   32'd0}; // Vector #0
+        vector = {32'd16,  32'd0,  32'd0,  32'd0,  32'd30,  32'd20,  32'd10,  32'd03,  32'd02,  32'd01,  32'd00, 32'd000, 32'hc00801,  32'd02,  32'd20,   32'd0}; // Vector #0
         //vector = {32'd16, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0,  32'd10, -32'd0, -32'd0, -32'd0, -32'd0, -32'd000, 32'hc0801,  32'd02,  32'd16, -32'd0}; // Vector #0
-        #10 confaddr=3; #10 confaddr=0; #10; // vec-set
+        #10 confaddr=gvp_vector_programming_reg_address; #10 confaddr=0; #10; // vec-set
 
-        vector = {32'd16,  32'd0,  32'd0,  32'd0,  32'd00,  32'd00, -32'sd10,  32'd00,  32'd00,  32'd00,  32'd00, 32'd000, 32'hc00801,  32'd02,  32'd16,  32'd1}; // Vector #1
-        #10 confaddr=3; #10 confaddr=0; #10; // vec-set
+        vector = {32'd16,  32'd0,  32'd0,  32'd0,  32'd01,  32'd02, -32'sd10,  -32'd03,  32'd00,  -32'd01, -32'd01, 32'd005, 32'hc00801,  32'd02,  32'd20,  32'd1}; // Vector #1
+        #10 confaddr=gvp_vector_programming_reg_address; #10 confaddr=0; #10; // vec-set
 
         vector = {32'd16,  32'd0,  32'd0,  32'd0,  32'd00,  32'd00,  32'd00,  32'd00,  32'd00,  32'd00,  32'd00, 32'd000, 32'h000000,  32'd00,  32'h00,  32'd2}; // END
-        #10 confaddr=3; #10 confaddr=0; #10 // vec-set
+        #10 confaddr=gvp_vector_programming_reg_address; #10 confaddr=0; #10 // vec-set
         vector = {32'd16,  32'd0,  32'd0,  32'd0,  32'd00,  32'd00,  32'd00,  32'd00,  32'd00,  32'd00,  32'd00, 32'd000, 32'h000000,  32'd00,  32'h00,  32'd3}; // 000
-        #10 confaddr=3; #10 confaddr=0; #10 // vec-set
+        #10 confaddr=gvp_vector_programming_reg_address; #10 confaddr=0; #10 // vec-set
 
-        #10 confaddr=0; #10 vector = 0;#1 confaddr=1; #10 confaddr=0; #10 // run to GVP (out of reset)
+        #10 confaddr=0; #10 vector = 0;#1 confaddr=gvp_control_reg_address; #10 confaddr=0; #10 // run to GVP (out of reset)
         wait (fin);
         #2000
-        #10 confaddr=0; #10 vector = 2;#1 confaddr=1; #10 confaddr=0; #10 // pause to GVP
+        #10 confaddr=0; #10 vector = 2;#1 confaddr=gvp_control_reg_address; #10 confaddr=0; #10 // pause to GVP
         #2000
-        #10 confaddr=0; #10 vector = 1;#1 confaddr=1; #10 confaddr=0; #10 // reset to GVP
+        #10 confaddr=0; #10 vector = 1;#1 confaddr=gvp_control_reg_address; #10 confaddr=0; #10 // reset to GVP
 
 
         // INIT GVP
-        #10 confaddr=0; #10 vector = 1; #1 confaddr=1; #10 confaddr=0; #10 // reset to GVP
+        #10 confaddr=0; #10 vector = 1; #1 confaddr=gvp_control_reg_address; #10 confaddr=0; #10 // reset to GVP
         //         decii                              db       da       du       dz       dy       dx    Next      Nrep,   Options,    nii,      N,    [Vadr]
         vector = {32'd16,  32'd0,  32'd0,  32'd0,  32'd30,  32'd20,  32'd10,  32'd03,  32'd02,  32'd01,  32'd0,  32'd000, 32'hc00801,  32'd02,  32'd20, 32'd0}; // Vector #0
-        #10 confaddr=3; #10 confaddr=0; #10; // vec-set
+        #10 confaddr=gvp_vector_programming_reg_address; #10 confaddr=0; #10; // vec-set
         vector = {32'd16,  32'd0,  32'd0,  32'd0, -32'sd30, -32'sd20, -32'sd10, -32'sd03, -32'd02, -32'sd01, -32'sd1,  32'd002, 32'hc00801,  32'd02,  32'd20, 32'd1}; // Vector #0
-        #10 confaddr=3; #10 confaddr=0; #10; // vec-set
+        #10 confaddr=gvp_vector_programming_reg_address; #10 confaddr=0; #10; // vec-set
         vector = {32'd16,  32'd0,  32'd0,  32'd0,  32'd00,  32'd00,  32'd00,  32'd00,  32'd00,  32'd00,  32'd00, 32'd000, 32'h000000,  32'd00,  32'h00, 32'd2}; // END
-        #10 confaddr=3; #10 confaddr=0; #10; // vec-set
+        #10 confaddr=gvp_vector_programming_reg_address; #10 confaddr=0; #10; // vec-set
         vector = {32'd16,  32'd0,  32'd0,  32'd0,  32'd00,  32'd00,  32'd00,  32'd00,  32'd00,  32'd00,  32'd00, 32'd000, 32'h000000,  32'd00,  32'h00, 32'd3}; // 000
-        #10 confaddr=3; #10 confaddr=0; #10 // vec-set
+        #10 confaddr=gvp_vector_programming_reg_address; #10 confaddr=0; #10 // vec-set
 
-        #10 vector = 0; #1 confaddr=1; #10 confaddr=0; #10 // run to GVP (out of reset)
+        #10 vector = 0; #1 confaddr=gvp_control_reg_address; #10 confaddr=0; #10 // run to GVP (out of reset)
         #2000
 
-        #10 vector = 1;#1 confaddr=1; #10 confaddr=0; #10 // reset to GVP
+        #10 vector = 1;#1 confaddr=gvp_control_reg_address; #10 confaddr=0; #10 // reset to GVP
         wait (fin);
 
         // INIT GVP
-        vector = 1;#1 confaddr=1; #10 confaddr=0; #10 // reset to GVP
+        vector = 1;#1 confaddr=gvp_control_reg_address; #10 confaddr=0; #10 // reset to GVP
         //         decii                              db       da       du         dz       dy       dx        Next      Nrep,   Options,    nii,    N,   [Vadr]
         vector = {32'd250, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0,  32'd8589935, -32'd0, -32'd0,  32'd858993, -32'd0, -32'd000, 32'h801,  32'd4,  32'd9, -32'd0}; // Vector #0
-        confaddr=3;#10 confaddr=0; #10; // vec-set
+        confaddr=gvp_vector_programming_reg_address;#10 confaddr=0; #10; // vec-set
         vector = {32'd250, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'sd16589935, -32'd0, -32'd0, -32'sd858993, -32'd0, -32'd000, 32'h801,  32'd4,  32'd9,  32'd1}; // Vector #1
-        confaddr=3;#10 confaddr=0; #10; // vec-set
+        confaddr=gvp_vector_programming_reg_address;#10 confaddr=0; #10; // vec-set
         vector = {32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd1, 32'd0, 32'd0, 32'd2}; // Vector #2
-        confaddr=3;#10 confaddr=0; #10; // vec-set
+        confaddr=gvp_vector_programming_reg_address;#10 confaddr=0; #10; // vec-set
         vector = {32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd1, 32'd0, 32'd0, 32'd3}; // Vector #3
-        confaddr=3;#10 confaddr=0; #10; // vec-set
+        confaddr=gvp_vector_programming_reg_address;#10 confaddr=0; #10; // vec-set
         vector = {32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd0, 32'd1, 32'd0, 32'd0, 32'd4}; // Vector #4
-        confaddr=3;#10 confaddr=0; #10; // vec-set
+        confaddr=gvp_vector_programming_reg_address;#10 confaddr=0; #10; // vec-set
 
-        confaddr=3;#10 confaddr=0; #10; // vec-set
+        confaddr=gvp_vector_programming_reg_address;#10 confaddr=0; #10; // vec-set
 
-        vector = 0;#1 confaddr=1; #10 confaddr=0; #10 // run to GVP (out of reset)
+        vector = 0;#1 confaddr=gvp_control_reg_address; #10 confaddr=0; #10 // run to GVP (out of reset)
         #2000
         wait (fin);
 
@@ -476,6 +494,20 @@ gvp gvp_1
         .gvp_finished(fin),      // finished 
         .gvp_hold(gvphold),      // finished 
         .reset_state(gvpres)
+);
+
+
+
+axis_FIR axis_FIR_tb
+(
+    .a_clk(pclk),    // clocking up to aclk
+    .next_data(sto),
+    .S_AXIS_tdata(wu),
+    .S_AXIS_tvalid(1),
+    .M_AXIS_tdata(FIR_wu),
+    .M_AXIS_tvalid(FIR_twu),
+    .M_AXIS2_tdata(FIR2_wu),
+    .M_AXIS2_tvalid(FIR2_twu)
 );
 
 axis_bram_stream_srcs axis_bram_stream_srcs_tb

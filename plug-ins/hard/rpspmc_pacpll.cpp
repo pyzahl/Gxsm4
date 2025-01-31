@@ -186,10 +186,10 @@ SOURCE_SIGNAL_DEF rpspmc_source_signals[] = {
 SOURCE_SIGNAL_DEF swappable_signals[] = {                                                                 // DEFAULT MUX MAP, 16 signals max 
         //  SIGNAL #  Name               Units.... Scale                                         DEFAULT ASSIGN
         { 0x00000000, "dFrequency",  " ", "Hz", "Hz", (125e6/((1L<<RP_FPGA_QFREQ)-1)),                0 },
-        { 0x00000001, "Excitation",  " ", "mV", "mV", (1.0/((1L<<RP_FPGA_QEXEC)-1)),                  1 },
+        { 0x00000001, "Excitation",  " ", "mV", "mV", (1000.0/((1L<<RP_FPGA_QEXEC)-1)),                  1 },
         { 0x00000002, "Phase",       " ", "deg", UTF8_DEGREE, (180.0/(M_PI*((1L<<RP_FPGA_QATAN)-1))), 2 },
-        { 0x00000003, "Amplitude",   " ", "mV", "mV", (1.0/((1L<<RP_FPGA_QSQRT)-1)),                  3 },
-        { 0x00000004, "dFreq-Control", " ", "mV", "mV", (1000*SPMC_AD5791_to_volts),                  4 },
+        { 0x00000003, "Amplitude",   " ", "mV", "mV", (1000.0/((1L<<RP_FPGA_QSQRT)-1)),                  3 },
+        { 0x00000004, "dFreq-Control", " ", "mV", "mV", (1000*SPMC_AD5791_to_volts),                  4 }, // *** still assuming +/-10V range in PAC Control mappted to 5V here
         { 0x00000005, "05-IN1-",       " ", "V", "V", (1.0),                                            5 },
         { 0x00000006, "06-LCKSignalDec", " ", "V", "V", (1.0),                                         -1 },
         { 0x00000007, "07-LCKi",        " ", "V", "V", (1.0),                                         -1 },

@@ -67,8 +67,8 @@ module axis_FIR #(
     reg [FIR_DECI_L-1:0] i = 0;
     reg signed [SAXIS_TDATA_WIDTH+FIR_DECI_L-1:0] sum = 0;
     reg signed [SAXIS_TDATA_WIDTH-1:0] fir_buffer[FIR_DECI-1:0];
-    reg signed [SAXIS_TDATA_WIDTH-1:0] data_in;
-    reg signed [MAXIS_TDATA_WIDTH-1:0] buffer; 
+    reg signed [SAXIS_TDATA_WIDTH-1:0] data_in = 0;
+    reg signed [MAXIS_TDATA_WIDTH-1:0] buffer = 0; 
 
     reg run=1;
     
@@ -107,8 +107,8 @@ module axis_FIR #(
                 sum <= 0;
             end
             i <= i+1;
+            buffer <= sum >>> (FIR_DECI_L+SAXIS_TDATA_WIDTH-MAXIS_TDATA_WIDTH);   //[SAXIS_TDATA_WIDTH+FIR_DECI_L-1:FIR_DECI_L+SAXIS_TDATA_WIDTH-MAXIS_TDATA_WIDTH];
         end
-        buffer <= sum[SAXIS_TDATA_WIDTH+FIR_DECI_L-1:FIR_DECI_L+SAXIS_TDATA_WIDTH-MAXIS_TDATA_WIDTH];
     end
     
     assign M_AXIS_tdata  = buffer;
