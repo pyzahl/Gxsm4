@@ -1779,8 +1779,12 @@ void OnNewParams_RPSPMC(void){
                 int mode = 0;
                 if (gain > 0) // parameter gain
                         mode = 1;
-                else if (gain < 0) // via signal A
+                else if (gain == 0) // via signal A
                         mode = 2;
+                else if (gain < 0){ // via signal FM
+                        mode = 4;
+                        gain = -gain;
+                }
                 lck_f0_frq = rp_spmc_configure_lockin (SPMC_SC_LCK_FREQUENCY.Value (), gain, mode, SPMC_LOCKIN_F0_CONTROL_REG);
         }
 

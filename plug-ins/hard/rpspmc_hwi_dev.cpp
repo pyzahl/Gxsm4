@@ -361,12 +361,12 @@ int rpspmc_hwi_dev::GVP_expect_header(double *pv, int &index_all){
                                 pv[PROBEDATA_ARRAY_S6]    = GVP_vp_header_current.dataexpanded[5]; // IN2
                                 pv[PROBEDATA_ARRAY_S7]    = GVP_vp_header_current.dataexpanded[6]; // IN3 **
                                 pv[PROBEDATA_ARRAY_S8]    = GVP_vp_header_current.dataexpanded[7]; // IN4 **
-                                pv[PROBEDATA_ARRAY_S9]    = GVP_vp_header_current.dataexpanded[8]; // DFREQ
-                                pv[PROBEDATA_ARRAY_S10]   = GVP_vp_header_current.dataexpanded[9]; // EXEC
-                                pv[PROBEDATA_ARRAY_S11]   = GVP_vp_header_current.dataexpanded[10]; // PHASE
-                                pv[PROBEDATA_ARRAY_S12]   = GVP_vp_header_current.dataexpanded[11]; // AMPL
-                                pv[PROBEDATA_ARRAY_S13]   = GVP_vp_header_current.dataexpanded[12]; // LCKInA
-                                pv[PROBEDATA_ARRAY_S14]   = GVP_vp_header_current.dataexpanded[13]; // dFreqCtrl
+                                pv[PROBEDATA_ARRAY_S9]    = GVP_vp_header_current.dataexpanded[8]; // DFREQ* (MUX0)
+                                pv[PROBEDATA_ARRAY_S10]   = GVP_vp_header_current.dataexpanded[9]; // EXEC*  (MUX1)
+                                pv[PROBEDATA_ARRAY_S11]   = GVP_vp_header_current.dataexpanded[10]; // PHASE* (MUX2)
+                                pv[PROBEDATA_ARRAY_S12]   = GVP_vp_header_current.dataexpanded[11]; // AMPL*  (MUX3)
+                                pv[PROBEDATA_ARRAY_S13]   = GVP_vp_header_current.dataexpanded[12]; // LCKInA* (MUX4)
+                                pv[PROBEDATA_ARRAY_S14]   = GVP_vp_header_current.dataexpanded[13]; // dFreqCtrl* (MUX5)
                                 pv[PROBEDATA_ARRAY_TIME]  = GVP_vp_header_current.dataexpanded[14]; // time in ms
 
 #if GVP_DEBUG_VERBOSE > 2
@@ -1319,12 +1319,12 @@ void rpspmc_hwi_dev::set_spmc_signal_mux (int source[6]){
         for (int i=0; rpspmc_source_signals[i].label; ++i){ // name
                 k=-1;
                 switch (rpspmc_source_signals[i].mask){
-                case 0x0100: k=0; break;
-                case 0x0200: k=1; break;
+                case 0x0100: k=0; break; // SWP*00=MUX00
+                case 0x0200: k=1; break; //..
                 case 0x0400: k=2; break;
                 case 0x0800: k=3; break;
                 case 0x1000: k=4; break;
-                case 0x2000: k=5; break;
+                case 0x2000: k=5; break; // SWP*05=MUX05
                 default: continue;
                 }
                 k = source[k];
@@ -1755,6 +1755,12 @@ int rpspmc_hwi_dev::read_GVP_data_block_to_position_vector (int offset, gboolean
                 GVP_vp_header_current.chNs[ich] = GVP_stream_buffer[1+ch_index+offset];
                 if (ich < 14){ // ICH 14,15 -> 64bit time
                         GVP_vp_header_current.dataexpanded[ich] = rpspmc_source_signals[ich+SIGNAL_INDEX_ICH0].scale_factor*GVP_vp_header_current.chNs[ich]; // in units, base units Volts used for XYZ. etc.
+#if 0
+                        if (ich == 8){
+                                GVP_vp_header_current.dataexpanded[ich] = 1.0*GVP_vp_header_current.chNs[ich];
+                                g_message ("ICH%d s:%g x:%d sx:%g ", ich, rpspmc_source_signals[ich+SIGNAL_INDEX_ICH0].scale_factor, GVP_vp_header_current.chNs[ich],  GVP_vp_header_current.dataexpanded[ich]);
+                        }
+#endif
                 }
         }
 

@@ -108,6 +108,9 @@ module axis_py_lockin#(
     );
 
     // DDS Control
+    reg [48-1:0] dds_PhaseIncRef = 1;
+    reg [48-1:0] dds_FM_Scale = 1;
+    reg [48-1:0] dds_FM = 0;
     reg [48-1:0] dds_PhaseInc = 1;
 
     // Lock-In
@@ -160,7 +163,7 @@ module axis_py_lockin#(
 
     reg [4-1:0] finishthis=0;
 
-    reg [2-1:0] lck_config=0;
+    reg [4-1:0] lck_config=0;
     reg [31:0] lck_gain=Q24;
 
     integer ii;
@@ -179,18 +182,26 @@ module axis_py_lockin#(
         // module configuration
         if (config_addr == configuration_address) // BQ configuration, and auto reset
         begin
-            lck_config    <= config_data[2-1:0]; // options: Bit0: use gain control, Bit1: use gain programmed
-            lck_gain      <= config_data[2*32-1 : 1*32]; // programmed gain, Q24
-            dds_n2        <= config_data[2*32+16-1 : 2*32];       // Phase Inc N2 lower 16 bits
-            dds_PhaseInc  <= config_data[2*32+64-1 : 2*32+64-48]; // Phase Inc Width: top 48 bits
+            lck_config      <= config_data[4-1       : 0]; // options: Bit0: use gain control, Bit1: use gain programmed
+            lck_gain        <= config_data[2*32-1    : 1*32]; // programmed gain, Q24
+            dds_n2          <= config_data[2*32+16-1 : 2*32];       // Phase Inc N2 lower 16 bits
+            dds_PhaseIncRef <= config_data[3*32+48-1 : 3*32]; // Phase Inc Width: 48 bits
+            dds_FM_Scale    <= config_data[6*32-1    : 5*32]; // Phase Inc Scale for FM
         end
         
-        if (lck_config[0])
+        if (lck_config[0]) // AM mod?
             gain <= S_AXIS_GAIN_tdata;
         else if (lck_config[1])
             gain <= lck_gain;
         else      
             gain <= Q24;
+
+        if (lck_config[2]) // FM mod?
+            dds_FM <= dds_FM_Scale*S_AXIS_GAIN_tdata;
+        else
+            dds_FM <= 0; 
+
+        dds_PhaseInc <= dds_PhaseIncRef + dds_FM; 
             
         // signal
         signal_in <= $signed(S_AXIS_SIGNAL_tdata[S_AXIS_SIGNAL_TDATA_WIDTH-1:S_AXIS_SIGNAL_TDATA_WIDTH-SC_DATA_WIDTH]);   

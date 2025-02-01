@@ -697,8 +697,10 @@ double rp_spmc_configure_lockin (double freq, double gain, unsigned int mode, in
         }
         
         rp_spmc_module_config_uint32 (MODULE_SETUP, mode, MODULE_START_VECTOR); // first, init
-        rp_spmc_module_config_Qn (MODULE_SETUP, gain, MODULE_SETUP_VECTOR(1), Q24); // set...
-        rp_spmc_module_config_int48_16 (LCKID, phase_inc, n2, MODULE_SETUP_VECTOR(2)); // last, write
+        rp_spmc_module_config_Qn     (MODULE_SETUP, gain, MODULE_SETUP_VECTOR(1), Q24); // set... 
+        rp_spmc_module_config_int32  (MODULE_SETUP, n2, MODULE_SETUP_VECTOR(2)); // last, write
+        rp_spmc_module_config_int64  (MODULE_SETUP, phase_inc, MODULE_SETUP_VECTOR(3)); // last, write
+        rp_spmc_module_config_int32  (LCKID, (int)gain, MODULE_SETUP_VECTOR(3)); // last, write
 
         return fact;
 }
