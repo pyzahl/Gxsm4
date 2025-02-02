@@ -53,6 +53,7 @@ module readback_configuration#(
     parameter readback_AD463x_address         = 100100,
     parameter readbackTimingTest_reg_address  = 101999,
     parameter readbackTimingReset_reg_address = 102000,
+    parameter readback_RPSPMC_PACPLL_Version  = 199997,
     parameter readbackX_reg_address = 100999
     )(
     input aclk,
@@ -120,6 +121,11 @@ module readback_configuration#(
 	    begin
             reg_A <= 125000000; 
             reg_B <= reg_A; 
+	    end
+	    readback_RPSPMC_PACPLL_Version:
+	    begin
+            reg_A <= 32'hEC010099; 
+            reg_B <= 32'h20250202;
 	    end
 	default:
 	  begin

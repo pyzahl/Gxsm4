@@ -1755,7 +1755,7 @@ int rpspmc_hwi_dev::read_GVP_data_block_to_position_vector (int offset, gboolean
                 GVP_vp_header_current.chNs[ich] = GVP_stream_buffer[1+ch_index+offset];
                 if (ich < 14){ // ICH 14,15 -> 64bit time
                         GVP_vp_header_current.dataexpanded[ich] = rpspmc_source_signals[ich+SIGNAL_INDEX_ICH0].scale_factor*GVP_vp_header_current.chNs[ich]; // in units, base units Volts used for XYZ. etc.
-#if 0 // THIS DATA ASSIGNMENT AND SCALING IS CORRECT
+#if 1 // THIS DATA ASSIGNMENT AND SCALING IS CORRECT
                         if (ich >= 8){
                                 GVP_vp_header_current.dataexpanded[ich] = rpspmc_source_signals[ich+SIGNAL_INDEX_ICH0].scale_factor*GVP_vp_header_current.chNs[ich];
                                 g_message ("GVP DATA [%d] ICH%d %s s:%g x:%d sx:%g %s", ch_index, ich,
