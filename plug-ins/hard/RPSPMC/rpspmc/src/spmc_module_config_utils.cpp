@@ -35,6 +35,10 @@
 #include <sys/sysinfo.h>
 #include <vector>
 #include <sys/mman.h>
+#include <mutex>
+
+std::mutex cfg_mutex; // Create a mutex object to prohibit threadded interleaving of FPGA configuration bus rescource access mixups
+
 
 #include "fpga_cfg.h"
 #include "spmc_module_config_utils.h"
@@ -50,14 +54,19 @@
 // SPMC module configuration, mastering CONFIG BUS
 
 void rp_spmc_module_start_config (){
+        cfg_mutex.lock(); // claim and lock mutex  ** MUST FINISH WITH module_write_config_data **
+
         set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, 0);    // make sure all modules configs are disabled
         usleep(MODULE_ADDR_SETTLE_TIME);
 }
+
 void rp_spmc_module_write_config_data (int addr){
         usleep(MODULE_ADDR_SETTLE_TIME);
         set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, addr); // set address, will fetch data
         usleep(MODULE_ADDR_SETTLE_TIME);
         set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, 0);    // and disable config bus again
+
+        cfg_mutex.unlock(); // release mutex ** UNLOCK from module_start_config **
 }
 
 void rp_spmc_module_config_int32 (int addr, int data, int pos=MODULE_START_VECTOR){
@@ -122,11 +131,15 @@ void rp_spmc_module_config_uint16_uint16 (int addr, guint16 dataH, guint16 dataL
 // Readback Module Configuration Data, 2x 32bit/address via regA, regB
 
 void rp_spmc_module_read_config_data (int addr, int *regA, int *regB){
+        cfg_mutex.lock(); // ** claim mutex and lock FPGA config bus access **
+
         set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, addr); // set address, will prepare data to fetch
         usleep(MODULE_ADDR_SETTLE_TIME);
         *regA = read_gpio_reg_int32 (10,0); // GPIO X19 <= RegA (addr)
         *regB = read_gpio_reg_int32 (10,1); // GPIO X20 <= RegB (addr)
         set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, 0);    // and disable config bus again
+
+        cfg_mutex.unlock(); // ** unlock FPGA config bus ** 
 }
 
 void rp_spmc_module_read_config_data_timing_test (){
@@ -138,6 +151,8 @@ void rp_spmc_module_read_config_data_timing_test (){
         int     i1, i2, i3, i4;
         clock_t regT[200];
         
+        cfg_mutex.lock(); // ** claim mutex and lock FPGA config bus access **
+
         regA[i] = read_gpio_reg_int32 (10,0); // GPIO X19 <= RegA (addr)
         regB[i] = read_gpio_reg_int32 (10,1); // GPIO X20 <= RegB (addr)
         regT[i] = clock();
@@ -163,7 +178,6 @@ void rp_spmc_module_read_config_data_timing_test (){
 
         i1=i; t1 = clock();
         set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, SPMC_READBACK_TEST_RESET_REG);
-        //usleep(MODULE_ADDR_SETTLE_TIME);
         do {
                 regA[++i] = read_gpio_reg_int32 (10,0); // GPIO X19 <= RegA (addr)
                 regB[i]   = read_gpio_reg_int32 (10,1); // GPIO X20 <= RegB (addr)
@@ -172,7 +186,6 @@ void rp_spmc_module_read_config_data_timing_test (){
         t2 = clock(); i2=i;
         
         set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, SPMC_READBACK_TEST_VALUE_REG);
-        //usleep(MODULE_ADDR_SETTLE_TIME);
         do {
                 regA[++i] = read_gpio_reg_int32 (10,0); // GPIO X19 <= RegA (addr)
                 regB[i]   = read_gpio_reg_int32 (10,1); // GPIO X20 <= RegB (addr)
@@ -201,6 +214,7 @@ void rp_spmc_module_read_config_data_timing_test (){
         regB[i]   = read_gpio_reg_int32 (10,1); // GPIO X20 <= RegB (addr)
         regT[i] = clock();
 
+        cfg_mutex.unlock(); // ** unlock FPGA config bus access **
         
         fprintf(stderr, "\n *** rp_spmc_module_read_config_data_timing_test result ***\n");
         fprintf(stderr, "T1[%02d] = %g us\n", i1, 1e6*(t1 - t)/CLOCKS_PER_SEC);

@@ -684,15 +684,18 @@ void rp_spmc_set_modulation (double volume, int target){
 
 // Lock In / Modulation
  
-double rp_spmc_configure_lockin (double freq, double gain, unsigned int mode, int LCKID){
+double rp_spmc_configure_lockin (double freq, double gain, double FM_scale, unsigned int mode, int LCKID){
         // 44 Bit Phase, using 48bit tdata
         unsigned int n2 = round (log2(dds_phaseinc (freq)));
         unsigned long long phase_inc = 1LL << n2;
         double fact = dds_phaseinc_to_freq (phase_inc);
+        double hzv = dds_phaseinc (1.) / volts_to_rpspmc(1.); // 1V Ramp => 1Hz
         
         if (verbose > 1){
                 double ferr = fact - freq;
                 fprintf(stderr, "##Configure: LCK DDS IDEAL Freq= %g Hz [%lld, N2=%d, decii=%d, M=%lld]  Actual f=%g Hz  Delta=%g Hz  (using power of 2 phase_inc)\n", freq, phase_inc, n2, n2>10? 1<<(n2-10):0, QQ44/phase_inc, fact, ferr);
+                if (mode)
+                        fprintf(stderr, "##Configure: LCK DDS MODE 0x%x FMS: %g V/Hz hzv*FMS: %g, gain: %g x\n", mode, FM_scale, hzv*FM_scale, gain);
                 // Configure: LCK DDS IDEAL Freq= 100 Hz [16777216, N2=24, M=1048576]  Actual f=119.209 Hz  Delta=19.2093 Hz  (using power of 2 phase_inc)
         }
         
@@ -700,7 +703,8 @@ double rp_spmc_configure_lockin (double freq, double gain, unsigned int mode, in
         rp_spmc_module_config_Qn     (MODULE_SETUP, gain, MODULE_SETUP_VECTOR(1), Q24); // set... 
         rp_spmc_module_config_int32  (MODULE_SETUP, n2, MODULE_SETUP_VECTOR(2)); // last, write
         rp_spmc_module_config_int64  (MODULE_SETUP, phase_inc, MODULE_SETUP_VECTOR(3)); // last, write
-        rp_spmc_module_config_int32  (LCKID, (int)gain, MODULE_SETUP_VECTOR(3)); // last, write
+
+        rp_spmc_module_config_Qn     (LCKID, hzv*FM_scale, MODULE_SETUP_VECTOR(5), Q20); // last, write *** Hz/V
 
         return fact;
 }

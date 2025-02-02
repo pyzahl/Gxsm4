@@ -80,7 +80,8 @@ module axis_AD463x #(
     
     reg configuration_mode=0;
     reg configuration_send=0;
-    
+    reg [31:0] configuration_data=0;
+    reg manual_cnv=0;
     
     reg SPI_sck=0;   // SPI CLK pin AD463x
     reg SPI_sdi=1;   // SPI SDI pin AD463x
@@ -91,6 +92,7 @@ module axis_AD463x #(
     
     reg [DAC_WORD_WIDTH-1:0] reg_dac_data[NUM_DAC-1:0];
     reg [DAC_WORD_WIDTH-1:0] reg_dac_data_buf[NUM_DAC-1:0];
+    reg [DAC_WORD_WIDTH-1:0] reg_dac_data_cfg;
     
     reg cfg_mode_job=0;
     reg sync=1;
@@ -120,6 +122,9 @@ module axis_AD463x #(
         begin
             configuration_mode <= config_data[0*32 : 0*32]; // up to 32bit 
             configuration_send <= config_data[1*32 : 1*32];
+            configuration_data <= config_data[3*32 : 2*32]; // cfg data 32bit
+            manual_cnv         <= config_data[3*32 : 3*32]; // manual convert
+            SPI_reset         <= ~config_data[4*32 : 4*32]; // reset
         end   
         endcase
 
@@ -139,7 +144,7 @@ module axis_AD463x #(
             begin
                 if (configuration_mode)
                 begin
-                    ;
+                    SPI_cnv <= manual_cnv;
                 end
                 else
                 begin

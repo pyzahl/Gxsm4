@@ -36,7 +36,7 @@ typedef short gint16;
 extern "C" {
 #endif
 
-#define MODULE_ADDR_SETTLE_TIME 200
+#define MODULE_ADDR_SETTLE_TIME 10
         
 #define MODULE_SETUP 0
 #define MODULE_START_VECTOR    (0)  // ALWAYS start write @POS=0, keep addr=0 for loading data block

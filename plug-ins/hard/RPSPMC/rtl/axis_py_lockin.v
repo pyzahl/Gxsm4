@@ -60,7 +60,7 @@ module axis_py_lockin#(
     parameter configuration_address = 999
 )
 (
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS_SC:S_AXIS_SIGNAL:S_AXIS_GAIN:M_AXIS_DDSPhaseInc:M_AXIS_A2:M_AXIS_X:M_AXIS_Y:M_AXIS_Sref:M_AXIS_SDref:M_AXIS_SignalOut:M_AXIS_i" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS_SC:S_AXIS_SIGNAL:S_AXIS_AMC:S_AXIS_FMC:M_AXIS_DDSPhaseInc:M_AXIS_A2:M_AXIS_X:M_AXIS_Y:M_AXIS_Sref:M_AXIS_SDref:M_AXIS_SignalOut:M_AXIS_i" *)
     input a_clk,
 
     input [32-1:0]  config_addr,
@@ -69,9 +69,12 @@ module axis_py_lockin#(
     // SIGNAL
     input wire [S_AXIS_SIGNAL_TDATA_WIDTH-1:0]  S_AXIS_SIGNAL_tdata,
     input wire                                  S_AXIS_SIGNAL_tvalid,
-    // digial gain
-    input wire [S_AXIS_SIGNAL_TDATA_WIDTH-1:0]  S_AXIS_GAIN_tdata, // S31Q24
-    input wire                                  S_AXIS_GAIN_tvalid,
+    // digial AM
+    input wire [S_AXIS_SIGNAL_TDATA_WIDTH-1:0]  S_AXIS_AMC_tdata, // S31Q24
+    input wire                                  S_AXIS_AMC_tvalid,
+    // digial FM
+    input wire [S_AXIS_SIGNAL_TDATA_WIDTH-1:0]  S_AXIS_FMC_tdata, // S31Q24
+    input wire                                  S_AXIS_FMC_tvalid,
     
     // SC Lock-In Reference and controls
     input wire [S_AXIS_SC_TDATA_WIDTH-1:0]  S_AXIS_SC_tdata,
@@ -107,9 +110,14 @@ module axis_py_lockin#(
 
     );
 
+    localparam integer Q20onek = 1000*(1<<20);
+
     // DDS Control
+    reg signed [31:0] amc = 0;
+    reg signed [31:0] fmc = 0;
+    reg signed [31:0] dds_FM_Scale = Q20onek; // 1kHz/V
+    reg signed [63:0] fmc_scaled=0;
     reg [48-1:0] dds_PhaseIncRef = 1;
-    reg [48-1:0] dds_FM_Scale = 1;
     reg [48-1:0] dds_FM = 0;
     reg [48-1:0] dds_PhaseInc = 1;
 
@@ -122,6 +130,7 @@ module axis_py_lockin#(
        
     reg signed [SC_DATA_WIDTH-1:0] s=0; // Q SC (25Q24)
     reg signed [SC_DATA_WIDTH-1:0] c=0; // Q SC (25Q24)
+    reg signed [SC_DATA_WIDTH-1:0] SigRef=0; // Q SC (25Q24)
 
     reg signed [31:0] gain = Q24;
     reg signed [SC_DATA_WIDTH-1:0] signal_in  = 0;        // input signal
@@ -163,7 +172,7 @@ module axis_py_lockin#(
 
     reg [4-1:0] finishthis=0;
 
-    reg [4-1:0] lck_config=0;
+    reg [8-1:0] lck_config=0;
     reg [31:0] lck_gain=Q24;
 
     integer ii;
@@ -182,37 +191,38 @@ module axis_py_lockin#(
         // module configuration
         if (config_addr == configuration_address) // BQ configuration, and auto reset
         begin
-            lck_config      <= config_data[4-1       : 0]; // options: Bit0: use gain control, Bit1: use gain programmed
-            lck_gain        <= config_data[2*32-1    : 1*32]; // programmed gain, Q24
+            lck_config      <= config_data[8-1       : 0];    // options: Bit0: AM, Bit2: FM control
+            gain            <= config_data[2*32-1    : 1*32]; // programmed gain, Q24
             dds_n2          <= config_data[2*32+16-1 : 2*32];       // Phase Inc N2 lower 16 bits
             dds_PhaseIncRef <= config_data[3*32+48-1 : 3*32]; // Phase Inc Width: 48 bits
-            dds_FM_Scale    <= config_data[6*32-1    : 5*32]; // Phase Inc Scale for FM
+            dds_FM_Scale    <= config_data[6*32-1    : 5*32]; // Phase Inc FM Scale for FM -- Q20
         end
         
         if (lck_config[0]) // AM mod?
-            gain <= S_AXIS_GAIN_tdata;
-        else if (lck_config[1])
-            gain <= lck_gain;
-        else      
-            gain <= Q24;
+            amc <= (S_AXIS_AMC_tdata * 5) >>> 7; // "1V" => Q24 => 1V/5V * Q31 * x = Q24
+        else
+            amc <= Q24;
 
         if (lck_config[2]) // FM mod?
-            dds_FM <= dds_FM_Scale*S_AXIS_GAIN_tdata;
-        else
+        begin
+            fmc <= S_AXIS_FMC_tdata;
+            fmc_scaled <= dds_FM_Scale*fmc; // scale fmc to range
+            dds_FM <= fmc_scaled >>> 20; // FM-Scale: Q20
+        end else
             dds_FM <= 0; 
 
         dds_PhaseInc <= dds_PhaseIncRef + dds_FM; 
             
         // signal
-        signal_in <= $signed(S_AXIS_SIGNAL_tdata[S_AXIS_SIGNAL_TDATA_WIDTH-1:S_AXIS_SIGNAL_TDATA_WIDTH-SC_DATA_WIDTH]);   
-        sig_in_x_gain <= gain * signal_in;
-        sig_in <= sig_in_x_gain >>> 24;  
-
+        sig_in <= $signed(S_AXIS_SIGNAL_tdata[S_AXIS_SIGNAL_TDATA_WIDTH-1:S_AXIS_SIGNAL_TDATA_WIDTH-SC_DATA_WIDTH]);   
 
         // Sin, Cos
         c <= S_AXIS_SC_tdata[                        SC_DATA_WIDTH-1 :                       0];  // 25Q24 full dynamic range, proper rounding   24: 0
         s <= S_AXIS_SC_tdata[S_AXIS_SC_TDATA_WIDTH/2+SC_DATA_WIDTH-1 : S_AXIS_SC_TDATA_WIDTH/2];  // 25Q24 full dynamic range, proper rounding   56:32
                 
+            
+        SigRef <= (c * amc) >>> 24; // GeneratedSignal Out with AM and FM mod
+                     
         // DDS N / cycle
         // dds_n2 <= S_AXIS_DDS_N2_tdata;
         decii2 <= 44 - LCK_BUFFER_LEN2 - dds_n2;
@@ -303,7 +313,7 @@ module axis_py_lockin#(
     assign M_AXIS_Y_tdata  = y;
     assign M_AXIS_Y_tvalid = 1;
 
-    assign M_AXIS_Sref_tdata = {{(32-SC_DATA_WIDTH){c[SC_DATA_WIDTH-1]}}, {c[SC_DATA_WIDTH-1:0]}};
+    assign M_AXIS_Sref_tdata = {{(32-SC_DATA_WIDTH){SigRef[SC_DATA_WIDTH-1]}}, {SigRef[SC_DATA_WIDTH-1:0]}};
     assign M_AXIS_Sref_tvalid = 1;
     // test, dec s
     assign M_AXIS_SDref_tdata = {{(32-SC_DATA_WIDTH){sig_in[SC_DATA_WIDTH-1]}}, {sig_in[SC_DATA_WIDTH-1:0]}};

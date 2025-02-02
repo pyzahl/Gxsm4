@@ -171,9 +171,12 @@
 */
         
 // LOCKIN MODULE @ CONFIG ADDRESS
-#define SPMC_LOCKIN_F0_CONTROL_REG      1000 // [0] LockIn Config Reg (Gain Control, B0: enable gain AXIS, B1: progammed gain Q24)
+#define SPMC_LOCKIN_F0_CONTROL_REG      1000 // [0] LockIn Config Reg (Gain Control, B0: enable AM control via (1V=1x GVP-A), B2: enable FM control)
                                              // [1] Fixed Gain, Q24
-                                             // [2] PhaseInc [PH48, DDSN2_16]
+                                             // [2] DDSN2 (16)
+                                             // [3] PHASE INC (48)
+                                             // [4] FM Scale (Q24) (control via GVP-B, Frq shift in V/Hz)
+
 
 // BIQUAD  MODULE @ CONFIG ADDRESS
 #define SPMC_BIQUAD_F0_CONTROL_REG      1001 //  BiQuad Parameters b0, b1, b2, a0, a1

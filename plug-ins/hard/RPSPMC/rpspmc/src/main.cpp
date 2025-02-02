@@ -424,7 +424,8 @@ CDoubleParameter  SPMC_SET_OFFSET_Z_SLEW("SPMC_SET_OFFSET_Z_SLEW", CBaseParamete
 CDoubleParameter  SPMC_SC_LCK_FREQUENCY("SPMC_SC_LCK_FREQUENCY", CBaseParameter::RW, 0.0, 0, 0.0, 30e6); // Hz
 CDoubleParameter  SPMC_SC_LCK_VOLUME(   "SPMC_SC_LCK_VOLUME", CBaseParameter::RW, 0.0, 0, 0.0, 5000.0); //  mV
 CIntParameter     SPMC_SC_LCK_TARGET(   "SPMC_SC_LCK_TARGET", CBaseParameter::RW, 0, 0, 0, 16); // # 0=NONE, 1:X, 2:Y, 3:Z, 4:U
-CDoubleParameter  SPMC_SC_LCK_GAIN(     "SPMC_SC_LCK_GAIN", CBaseParameter::RW, 0.0, 0, -1e10, 1e10); // Q
+CDoubleParameter  SPMC_SC_LCK_GAIN(     "SPMC_SC_LCK_GAIN", CBaseParameter::RW, 0.0, 0, -1e10, 1e10); // Q24
+CDoubleParameter  SPMC_SC_LCK_FMSCALE(  "SPMC_SC_LCK_FMSCALE", CBaseParameter::RW, 0.0, 0, -1e10, 1e10); // Q24
 
 CDoubleParameter  SPMC_SC_LCK_F0BQ_TAU("SPMC_SC_LCK_F0BQ_TAU", CBaseParameter::RW, 0.0, 0, 0.0, 1e10); // ms
 CDoubleParameter  SPMC_SC_LCK_F0BQ_Q(  "SPMC_SC_LCK_F0BQ_Q", CBaseParameter::RW, 0.0, 0, -1e10, 1e10); // BQ Q
@@ -1772,20 +1773,18 @@ void OnNewParams_RPSPMC(void){
         }
 
         // RPSPMC Lock-In...
-        if (SPMC_SC_LCK_FREQUENCY.IsNewValue () || SPMC_SC_LCK_GAIN.IsNewValue ()){
+        if (SPMC_SC_LCK_FREQUENCY.IsNewValue () || SPMC_SC_LCK_GAIN.IsNewValue () || SPMC_SC_LCK_FMSCALE.IsNewValue ()){
                 SPMC_SC_LCK_FREQUENCY.Update ();
                 SPMC_SC_LCK_GAIN.Update ();
+                SPMC_SC_LCK_FMSCALE.Update ();
+                double fms  = SPMC_SC_LCK_FMSCALE.Value ();
                 double gain = SPMC_SC_LCK_GAIN.Value ();
                 int mode = 0;
                 if (gain > 0) // parameter gain
                         mode = 1;
-                else if (gain == 0) // via signal A
-                        mode = 2;
-                else if (gain < 0){ // via signal FM
-                        mode = 4;
-                        gain = -gain;
-                }
-                lck_f0_frq = rp_spmc_configure_lockin (SPMC_SC_LCK_FREQUENCY.Value (), gain, mode, SPMC_LOCKIN_F0_CONTROL_REG);
+                if (fms > 0) // via signal FM
+                        mode |= 4;
+                lck_f0_frq = rp_spmc_configure_lockin (SPMC_SC_LCK_FREQUENCY.Value (), gain, fms, mode, SPMC_LOCKIN_F0_CONTROL_REG);
         }
 
         if (SPMC_SC_LCK_TARGET.IsNewValue () || SPMC_SC_LCK_VOLUME.IsNewValue ()){

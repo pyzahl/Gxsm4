@@ -227,6 +227,7 @@ struct SPMC_parameters {
         double sc_lck_iir_tau;
         double sc_lck_q;
         double sc_lck_gain;
+        double sc_lck_fmscale;
 };
 
 #define MAX_GVP_VECTORS   32
