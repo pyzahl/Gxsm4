@@ -58,7 +58,8 @@ module axis_spm_control#(
     parameter rotm_reg_address = 1101,
     parameter slope_reg_address = 1102,
     parameter modulation_reg_address = 1103,
-    parameter bias_reg_address = 1104
+    parameter bias_reg_address = 1104,
+    parameter z_polarity_configuration = 1105
 )(
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS_Xs:S_AXIS_Ys:S_AXIS_Zs:S_AXIS_U:S_AXIS_A:S_AXIS_B:S_AXIS_SREF:S_AXIS_Z:M_AXIS1:M_AXIS2:M_AXIS3:M_AXIS4:M_AXIS3:M_AXIS5:M_AXIS3:M_AXIS6:M_AXIS_XSMON:M_AXIS_YSMON:M_AXIS_ZSMON:M_AXIS_X0MON:M_AXIS_Z_SLOPE:M_AXIS_Y0MON:M_AXIS_ZGVPMON:M_AXIS_UGVPMON:M_AXIS_U0BIASMON" *)
     input a_clk,
@@ -119,6 +120,8 @@ module axis_spm_control#(
     output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS_Z_SLOPE_tdata,
     output wire                          M_AXIS_Z_SLOPE_tvalid,
     
+    output wire z_polarity,
+
     output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS_UGVPMON_tdata,
     output wire                          M_AXIS_UGVPMON_tvalid,
     output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS_U0BIASMON_tdata,
@@ -137,6 +140,8 @@ module axis_spm_control#(
 
     reg signed [32-1:0] modulation_volume=0; // volume for modulation Q31
     reg [4-1:0] modulation_target=0; // target signal for mod (#XYZUAB)
+
+    reg negate_z=1;
 
     // scan rotation (yx=-xy; yy=xx)
     reg signed [QROTM+1-1:0] rotmxx=0; // =cos(alpha) Q20
@@ -281,6 +286,10 @@ module axis_spm_control#(
             modulation_target <= config_data[2*32-1 : 1*32]; // target signal for mod (#XYZUAB)
         end
 
+        z_polarity_configuration:
+        begin
+            negate_z <= config_data[0*32 : 0*32];  // WARNING: Adjusting this will casue a Z jump depending on Z+Slope been non zero. Do once at startup ONLY when Z+Slope = 0! Default: -1
+        end
         endcase
 
 
@@ -377,6 +386,8 @@ module axis_spm_control#(
 
     assign M_AXIS_Z_SLOPE_tdata  = `SATURATE_32 (z_slope); // slope compensation signal to be added saturation to z_sum before out
     assign M_AXIS_Z_SLOPE_tvalid = 1;
+
+    assign z_polarity = negate_z; // Z Polarity. Applied in S_ADD to both: +/-(slope+Z)
     
 // U/BIAS    
     assign M_AXIS4_tdata  = `SATURATE_32 (ru); // Bias total

@@ -58,10 +58,10 @@ module axis_AD463x #(
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF M_AXIS1:M_AXIS2" *)
     input a_clk,
 
-    output wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS1_tdata,
-    output wire                          S_AXIS1_tvalid,
-    output wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS2_tdata,
-    output wire                          S_AXIS2_tvalid,
+    output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS1_tdata,
+    output wire                          M_AXIS1_tvalid,
+    output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS2_tdata,
+    output wire                          M_AXIS2_tvalid,
     
     (* X_INTERFACE_PARAMETER = "FREQ_HZ 30000000, ASSOCIATED_CLKEN wire_SPI_sck, ASSOCIATED_BUSIF wire_SPI" *)
     output wire wire_SPI_sck,
@@ -79,36 +79,41 @@ module axis_AD463x #(
     );
     
     reg configuration_mode=0;
-    reg configuration_send=0;
-    reg [31:0] configuration_data=0;
+    reg configuration_read=0;
+    reg configuration_write=0;
+    reg [24:0] configuration_addr_read=0;
+    reg [24:0] configuration_addr_wdata=0;
     reg manual_cnv=0;
+    reg stream_cnv=0;
+    reg run=0;
     
     reg SPI_sck=0;   // SPI CLK pin AD463x
-    reg SPI_sdi=1;   // SPI SDI pin AD463x
-    reg SPI_cs=1;    // SPI CS  pin AD463x
+    reg SPI_sdi=0;   // SPI SDI pin AD463x
+    reg SPI_cs=0;    // SPI CS  pin AD463x
     reg SPI_cnv=0;   // SPI CVN pin AD463x
     reg SPI_reset=0; // SPI RESET pin AD463x
-    reg SPI_sdn [NUM_DAC-1:0]; // SPI DATA ADC[1..2] pin AD463x
     
+    reg [DAC_WORD_WIDTH-1:0] reg_dac_data_ser[NUM_DAC-1:0];
     reg [DAC_WORD_WIDTH-1:0] reg_dac_data[NUM_DAC-1:0];
-    reg [DAC_WORD_WIDTH-1:0] reg_dac_data_buf[NUM_DAC-1:0];
-    reg [DAC_WORD_WIDTH-1:0] reg_dac_data_cfg;
+    reg [64-1:0] reg_data_in;
+    reg [64-1:0] reg_dac_data_cfg;
+    reg [7:0] n_bytesX8=1;
     
     reg cfg_mode_job=0;
-    reg sync=1;
-    reg start=0;
-    reg [6-1:0] frame_bit_counter=0;
-    reg [4-1:0] state_load_dacs=0;
+    reg [6-1:0] frame_bit_counter_out=0;
+    reg [6-1:0] frame_bit_counter_in=0;
+    reg [4-1:0] state_read=0;
+    reg [4-1:0] state_write=0;
+    reg [4-1:0] state_single=0;
+    reg [4-1:0] state_stream=0;
     
-    reg [3-1:0] rdecii = 0; //4bit 1/4clk for testing slow  ** 2bit: PMD clock 31.25MHz max = 125MHz/4
+    reg rdecii = 0; // MAX SCK 80MHz
 
     integer i;
     initial begin
       for (i=0;i<NUM_DAC;i=i+1)
       begin
             reg_dac_data[i] = 0;
-            reg_dac_data_buf[i] = 0;
-            SPI_sdn[i]=0;
       end     
     end
 
@@ -120,137 +125,178 @@ module axis_AD463x #(
         case (config_addr)
         AD463x_address:
         begin
-            configuration_mode <= config_data[0*32 : 0*32]; // up to 32bit 
-            configuration_send <= config_data[1*32 : 1*32];
-            configuration_data <= config_data[3*32 : 2*32]; // cfg data 32bit
-            manual_cnv         <= config_data[3*32 : 3*32]; // manual convert
-            SPI_reset         <= ~config_data[4*32 : 4*32]; // reset
-        end   
+            configuration_mode       <= config_data[0:0]; // activate configuration mode 
+            configuration_read       <= config_data[1:1]; // read config
+            configuration_write      <= config_data[2:2]; // write config 
+                                                          // enter configuration mode by CS=0, SCK start: SDI=1,0,1 min 4 SCK POS EDGES (up to 24 ok) = READ 01xxx
+                                                          // exit configuration mode by writing 0x01 to Register Address 0x0014
+            manual_cnv               <= config_data[3:3]; // trigger one manual convert
+            stream_cnv               <= config_data[4:4]; // start auto convert and stream to AXI
+            if (config_data[5:5]) // reset config mode to start a new
+                cfg_mode_job <= 0;
+            SPI_reset                <= ~config_data[7:7]; // manual reset
+            configuration_addr_read  <= config_data[1*32+16-1 : 1*32]; // Config Read Address: Bit "A15": R=1 (send first), A14..A0  (16 BIT total), Then 8bit DATA in on SD0 from SCK17 .. 24
+            configuration_addr_wdata <= config_data[2*32+24-1 : 2*32]; // Config Write Address: Bit 23 is "A15": W=0 (send first), Bit 22:8: are A14..A0, Bit 7:0 are data D7:0 (24 BIT total Addr + Data)
+            n_bytesX8                <= config_data[3*32+8-1  : 3*32] << 3; // number bytes to read/write in config mode => in bits
+        end
         endcase
 
-        // WORK IN PROGRESS: HOOK UP SPI, CREATE CONFIGURATION/TEST OP MODE AND STREAMING TO AXIS 
-        if (0)
+        if (configuration_mode && !rdecii && !state_read && !state_write && !state_single && !state_stream && !cfg_mode_job)
         begin
-
-        //if (rdecii == 4) // [2] 1/4 => 30MHz  , [4] 1/16: testing slow
-        //begin
-        //    rdecii <= 0;
-        //    PMD_clk <= ~PMD_clk;
-        //end
-        rdecii <= rdecii+1; // 3bits 0...7...   2bits 0...3...
-        case (rdecii)
-            // 0: PMD_CLK=0 ... 4: PMD_CLK=1 ... 7: rdecii=0
-            1:  // load data from FPGA AXIS to buffer reg for processing. DAC is fetching this register at SYNC start, any potenial new data inbetween is ignored 
+            cfg_mode_job <= 1; // only once, until reset via config for next op!
+            
+            if (manual_cnv)
             begin
-                if (configuration_mode)
-                begin
-                    SPI_cnv <= manual_cnv;
-                end
-                else
-                begin
-                    if (S_AXIS1_tvalid)
-                    begin            
-                        //                       send to data register 24 bits:         0 001 20-bit-data
-                        reg_dac_data[0] <= {{(DAC_WORD_WIDTH-DAC_DATA_WIDTH-1 ){1'b0}}, 1'b1, S_AXIS1_tdata[SAXIS_TDATA_WIDTH-1:SAXIS_TDATA_WIDTH-DAC_DATA_WIDTH]};
-                    end
-                    if (S_AXIS2_tvalid)
-                    begin            
-                        reg_dac_data[1] <= {{(DAC_WORD_WIDTH-DAC_DATA_WIDTH-1 ){1'b0}}, 1'b1, S_AXIS2_tdata[SAXIS_TDATA_WIDTH-1:SAXIS_TDATA_WIDTH-DAC_DATA_WIDTH]};
-                    end
-                end
-            end     
-
-            4: // always @(posedge PMD_clk)  // SPI transmit: data setup edge
+                state_stream <= 0; // disable streaming
+                state_single <= 1;
+            end
+            else
             begin
-                SPI_sck <= 1;
-                //SPI_sync   <= sync;
-                //PMD_dac[0] <= reg_dac_data_buf[0][frame_bit_counter];
-                //PMD_dac[1] <= reg_dac_data_buf[1][frame_bit_counter];
+                state_stream <= stream_cnv ? 1:0; // enable streaming
             end
             
-            0:   // always @(negedge PMD_clk) // SPI clock, prepare data, manage
+            if (configuration_read)
             begin
-                SPI_sck <= 0;
+                state_read <= 1;
+                frame_bit_counter_out <= 15; // 1 bit "R"=1 and 15 bit address to send => 16 total
+                frame_bit_counter_in  <= 7;  // n_bytesX8 - 1;  // 8 bit data in
+                SPI_cs <= 0; // initiate
+                cfg_mode_job <= 1;
+                reg_dac_data_cfg <= 0; // clear data
+            end
+            else
+            begin
+                if (configuration_write)
+                begin
+                    state_write <= 1;
+                    frame_bit_counter_out <= 23; // 1 bit "R"=1 and 15 bit address + 8 bit data to send => 24 total
+                    frame_bit_counter_in  <= 0;  // 0 bit in
+                    SPI_cs <= 0; // initiate
+                    cfg_mode_job <= 1;
+                    reg_dac_data_cfg <= 0; // clear data
+                end
+            end
+        end
 
-                // clkr <= 0; // generate clkr
-                // Detect Frame Sync
-                case (state_load_dacs)
-                    0: // reset mode, wait for new data
-                    begin
-                        sync <= 1;
-                        if (reg_dac_data_buf[0] != reg_dac_data[0] || reg_dac_data_buf[1] != reg_dac_data[1])
-                        begin
-                            if (configuration_mode)
-                            begin // load only on configuration_send pos edge
-                                if (configuration_send)
-                                begin
-                                    if (!cfg_mode_job)
-                                    begin
-                                        cfg_mode_job <= 1;
-                                        state_load_dacs <= 1;
-                                    end
-                                end
-                                else
-                                begin
-                                    cfg_mode_job <= 0; // do not repat sending! "send bit" must be reset while in config mode
-                                end
-                            end
-                            else // auto load and start sending on new data
-                            begin
-                                state_load_dacs <= 1;
-                            end
-                        end
-                    end
-                    1: // load dac start
-                    begin
-                        sync <= 1;
-                        frame_bit_counter <= 10'd23; // 24 bits to send
+        rdecii <= ~rdecii; // 0,1,0,1,...
+        case (rdecii)
+            1: // @(posedge SCK)  // SPI transmit/receive: data setup edge
+            begin
+                SPI_sck <= 1; // gen SPI SCK, action state to latch data in/out
+            end
             
-                        // Latch Axis Data at Frame Sync Pulse and initial data serialization
-                        reg_dac_data_buf[0] <= reg_dac_data[0];
-                        reg_dac_data_buf[1] <= reg_dac_data[1];
-        
-                        state_load_dacs <= 2;
-                    end
-                    2:
+            0:   // @(negedge SCK) // SPI clock, prepare data, manage
+            begin
+                SPI_sck <= 0; // gen SPI SCK, setup state
+
+                case (state_read)
+                    1: // serialize read address data
                     begin
-                        sync <= 0;
-                        state_load_dacs <= 3; // one more sync high cycle
+                        SPI_sdi <= configuration_addr_read [frame_bit_counter_out];
+                        frame_bit_counter_out <= frame_bit_counter_out - 1;
+                        if (!frame_bit_counter_out) 
+                            state_read <= 2;
                     end
-                    3:
+                    2: // un-serialize read data
                     begin
-                        // completed?
-                        if (frame_bit_counter == 10'b0)
+                        reg_data_in[frame_bit_counter_in] <= wire_SPI_sdn[0];
+                        frame_bit_counter_in <= frame_bit_counter_in - 1;
+                        if (!frame_bit_counter_in)
+                            state_read <= 3; // completed
+                    end
+                    3:  // completed
+                    begin
+                        reg_dac_data_cfg <= reg_data_in;
+                        SPI_cs <= 1; // deassert
+                        state_read <= 0; // idle
+                    end
+                endcase
+
+                case (state_write)
+                    1: // serialize read address data
+                    begin
+                        SPI_sdi <= configuration_addr_wdata [frame_bit_counter_out];
+                        frame_bit_counter_out <= frame_bit_counter_out - 1;
+                        if (!frame_bit_counter_out) 
+                            state_read <= 3;
+                    end
+                    3:  // completed
+                    begin
+                        SPI_cs <= 1; // deassert
+                        state_read <= 0; // idle
+                    end
+                endcase
+
+                case (state_stream) // keep triggering single concersions
+                    1:
+                    begin
+                        if (!state_single) // Ready? Restart!
+                            state_single <= 1;
+                    end                 
+                endcase
+                
+                case (state_single) // start single conversion and read
+                    1: // initiate, clear data
+                    begin
+                        SPI_cnv <= 1; // start CNV
+                        reg_dac_data_ser[0] <= 0;
+                        reg_dac_data_ser[1] <= 0;
+                        state_single <= 2;
+                    end                 
+                    2:  // wait for conversion result
+                    begin
+                        SPI_cnv <= 0; // wait busy
+                        if (!wire_SPI_busy)
                         begin
-                            state_load_dacs <= 4; // finish
-                        end else
-                        begin
-                            // next bit
-                            frame_bit_counter <= frame_bit_counter - 1;
+                            SPI_cs <= 0; // initiate
+                            frame_bit_counter_in  <= 24;
+                            state_single <= 3;
                         end
-                    end   
-                    4:
+                    end                 
+                    3: // serialize read address data
                     begin
-                        sync <= 1;
-                        state_load_dacs <= 0; // completed, standy next
-                    end   
+                        reg_dac_data_ser[frame_bit_counter_in][0] <= wire_SPI_sdn[0];
+                        reg_dac_data_ser[frame_bit_counter_in][1] <= wire_SPI_sdn[1];
+                        frame_bit_counter_in <= frame_bit_counter_in - 1;
+                        if (!frame_bit_counter_in)
+                            state_single <= 4; // completed
+                    end
+                    4:  // completed, store data
+                    begin
+                        reg_dac_data_cfg <= reg_data_in;
+                        SPI_cs <= 1; // deassert
+                        state_read <= 0; // idle
+                        reg_dac_data[0] <= reg_dac_data_ser[0];
+                        reg_dac_data[1] <= reg_dac_data_ser[1];
+                        state_single <= 5;
+                    end
+                    5:  // quite period
+                    begin
+                        state_single <= 6;
+                    end
+                    6:  // quite period
+                    begin
+                        state_single <= 0;
+                    end
                 endcase
             end
         endcase
-        
-        end
     end
 
+assign M_AXIS1_tdata  = reg_dac_data[0];
+assign M_AXIS1_tvalid = 1;
+assign M_AXIS2_tdata  = reg_dac_data[1];
+assign M_AXIS2_tvalid = 1;
     
-assign ready = (state_load_dacs == 1'b0000);
+assign ready = (!state_read && !state_write && !state_single && !state_stream);
 
 assign wire_SPI_sck   = SPI_sck;
-assign wire_SPI_sync  = SPI_cs;
+assign wire_SPI_cs    = SPI_cs;
 assign wire_SPI_reset = SPI_reset;
 assign wire_SPI_cnv   = SPI_cnv;
 assign wire_SPI_sdi   = SPI_sdi;
   
-assign mon0 = { reg_dac_data_buf[0][19:0], {(32-24){1'b0}}, reg_dac_data_buf[0][23:20] };
-assign mon1 = { reg_dac_data_buf[1][19:0], {(32-24){1'b0}}, reg_dac_data_buf[1][23:20] };
+assign mon0 = configuration_mode ? reg_dac_data_cfg [32-1: 0] : reg_dac_data[0];
+assign mon1 = configuration_mode ? reg_dac_data_cfg [64-1:32] : reg_dac_data[1];
     
 endmodule

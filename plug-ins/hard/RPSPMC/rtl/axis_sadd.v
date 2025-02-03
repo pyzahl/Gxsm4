@@ -62,6 +62,7 @@ module axis_sadd #(
     input wire                          S_AXIS_A_tvalid,
     input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS_B_tdata,
     input wire                          S_AXIS_B_tvalid,
+    input wire                          negate_sum,
     output wire [MAXIS_TDATA_WIDTH-1:0] M_AXIS_SUM_tdata,
     output wire                         M_AXIS_SUM_tvalid
     );
@@ -79,8 +80,8 @@ module axis_sadd #(
 
     always @ (posedge a_clk)
     begin
-        a <= $signed(S_AXIS_A_tdata);
-        b <= $signed(S_AXIS_B_tdata);
+        a <= negate_sum ? -$signed(S_AXIS_A_tdata) : $signed(S_AXIS_A_tdata);
+        b <= negate_sum ? -$signed(S_AXIS_B_tdata) : $signed(S_AXIS_A_tdata);
         sum <= a + b;
     end
     
