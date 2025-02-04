@@ -48,12 +48,17 @@
 
 
 module AD463x_io_connect #(
+// AD5791_io_connect
+    parameter NUM_DAC = 6,
+// AD463x_io_connect
     parameter NUM_DACS  = 2,
-    parameter NUM_LANES = 1,
+    parameter NUM_LANES = 4,
     parameter USE_RP_DIGITAL_IO = 1
 )
 (
-    inout [8-1:0]  exp_p_io,
+// AD463x_io_connect
+    inout [10:0]  exp_p_io,
+    inout [10:0]  exp_n_io,
     (* X_INTERFACE_PARAMETER = "FREQ_HZ 30000000, ASSOCIATED_CLKEN SPI_sck, ASSOCIATED_BUSIF SPI" *)
     input SPI_sck,
     input SPI_cs,
@@ -61,11 +66,52 @@ module AD463x_io_connect #(
     input SPI_cnv,
     input SPI_reset,
     input  SPI_sdi,
-    output [NUM_LANES*NUM_DACS-1:0] SPI_sdn
+    output [NUM_LANES*NUM_DACS-1:0] SPI_sdn,
+
+// AD5791_io_connect
+    (* X_INTERFACE_PARAMETER = "FREQ_HZ 30000000, ASSOCIATED_CLKEN PMD_clk, ASSOCIATED_BUSIF PMD" *)
+    input PMD_clk,
+    input PMD_sync,
+    input [NUM_DAC-1:0] PMD_dac
 );
 
-   wire [8-1:0] RP_exp_out;
+   wire [7:0] RP_exp_out;
+   wire [4:0] RP_exp_out_p;
    
+
+// PMODS: AD5791_io_connect
+// ===========================================================================
+
+// IOBUF macro, .T(0) : Output direction. IO = I, O = I (passed)
+// IOBUF macro, .T(1) : Input direction.  IO = Z (high imp), O = IO (passed), I=X
+
+// PMOD AD
+// 7N CLK
+// 6N SYNC
+// 0..5N SDATA DAC1..6
+// 7P SDATA OUT common
+
+// V1.0 interface AD5791 x 4
+// ===========================================================================
+
+IOBUF dac0_iobuf (.O(RP_exp_out[0]),   .IO(exp_n_io[0]), .I(PMD_dac[0]), .T(0) );
+IOBUF dac1_iobuf (.O(RP_exp_out[1]),   .IO(exp_n_io[1]), .I(PMD_dac[1]), .T(0) );
+IOBUF dac2_iobuf (.O(RP_exp_out[2]),   .IO(exp_n_io[2]), .I(PMD_dac[2]), .T(0) );
+IOBUF dac3_iobuf (.O(RP_exp_out[3]),   .IO(exp_n_io[3]), .I(PMD_dac[3]), .T(0) );
+IOBUF dac4_iobuf (.O(RP_exp_out[4]),   .IO(exp_n_io[4]), .I(PMD_dac[4]), .T(0) );
+IOBUF dac5_iobuf (.O(RP_exp_out[5]),   .IO(exp_n_io[5]), .I(PMD_dac[5]), .T(0) );
+IOBUF sync_iobuf (.O(RP_exp_out[6]),   .IO(exp_n_io[6]), .I(PMD_sync),   .T(0) );
+IOBUF clk_iobuf  (.O(RP_exp_out[7]),   .IO(exp_n_io[7]), .I(PMD_clk),    .T(0) );
+
+//IOBUF dac_read_iobuf (.O(PMD_dac_data_read),   .IO(exp_p_io[7]), .I(0), .T(1) );
+
+
+// ***** need to merge ******
+
+
+// AD463x_io_connect
+// ===========================================================================
+
 
 // IOBUF macro, .T(0) : Output direction. IO = I, O = I (passed)
 // IOBUF macro, .T(1) : Input direction.  IO = Z (high imp), O = IO (passed), I=X
@@ -86,15 +132,23 @@ module AD463x_io_connect #(
 // ===========================================================================
 
 // FIXED ASSIGNMNETS for one data lane each on SD0, SD4 => D0P, D1P
-IOBUF dac_read_iobuf_AD_CH0  (.O(SPI_sdn[0]),  .IO(exp_p_io[0]), .I(0), .T(1) );
-IOBUF dac_read_iobuf_AD_CH1  (.O(SPI_sdn[1]),  .IO(exp_p_io[1]), .I(0), .T(1) );
+IOBUF dac_read_iobuf_AD_CH0   (.O(SPI_sdn[0]),  .IO(exp_p_io[0]), .I(0), .T(1) );
+IOBUF dac_read_iobuf_AD_CH01  (.O(SPI_sdn[2]),  .IO(exp_n_io[10]), .I(0), .T(1) );
+IOBUF dac_read_iobuf_AD_CH02  (.O(SPI_sdn[4]),  .IO(exp_n_io[9]), .I(0), .T(1) );
+IOBUF dac_read_iobuf_AD_CH03  (.O(SPI_sdn[6]),  .IO(exp_n_io[8]), .I(0), .T(1) );
+
+IOBUF dac_read_iobuf_AD_CH1   (.O(SPI_sdn[1]),  .IO(exp_p_io[1]), .I(0), .T(1) );
+IOBUF dac_read_iobuf_AD_CH11  (.O(SPI_sdn[3]),  .IO(exp_p_io[8]), .I(0), .T(1) );
+IOBUF dac_read_iobuf_AD_CH12  (.O(SPI_sdn[5]),  .IO(exp_p_io[9]), .I(0), .T(1) );
+IOBUF dac_read_iobuf_AD_CH13  (.O(SPI_sdn[7]),  .IO(exp_p_io[10]), .I(0), .T(1) );
+
 IOBUF dac_read_iobuf_AD_Busy (.O(SPI_busy),    .IO(exp_p_io[4]), .I(0), .T(1) );
    
-IOBUF rst_iobuf  (.O(RP_exp_out[2]),   .IO(exp_p_io[2]), .I(SPI_reset),    .T(0) );
-IOBUF cs_iobuf   (.O(RP_exp_out[3]),   .IO(exp_p_io[3]), .I(SPI_cs),       .T(0) );
-IOBUF cnv_iobuf  (.O(RP_exp_out[5]),   .IO(exp_p_io[5]), .I(SPI_cnv),      .T(0) );
-IOBUF sdi_iobuf  (.O(RP_exp_out[6]),   .IO(exp_p_io[6]), .I(SPI_sdi),      .T(0) );
-IOBUF sck_iobuf  (.O(RP_exp_out[7]),   .IO(exp_p_io[7]), .I(SPI_sck),      .T(0) );
+IOBUF rst_iobuf  (.O(RP_exp_out_p[0]),   .IO(exp_p_io[2]), .I(SPI_reset),    .T(0) );
+IOBUF cs_iobuf   (.O(RP_exp_out_p[1]),   .IO(exp_p_io[3]), .I(SPI_cs),       .T(0) );
+IOBUF cnv_iobuf  (.O(RP_exp_out_p[2]),   .IO(exp_p_io[5]), .I(SPI_cnv),      .T(0) );
+IOBUF sdi_iobuf  (.O(RP_exp_out_p[3]),   .IO(exp_p_io[6]), .I(SPI_sdi),      .T(0) );
+IOBUF sck_iobuf  (.O(RP_exp_out_p[4]),   .IO(exp_p_io[7]), .I(SPI_sck),      .T(0) );
 
 //IOBUF dac_read_iobuf (.O(PMD_dac_data_read),   .IO(exp_p_io[7]), .I(0), .T(1) );
 

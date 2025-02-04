@@ -49,12 +49,12 @@ module AD5791_io_connect #(
     parameter USE_RP_DIGITAL_IO = 1
 )
 (
-    inout [8-1:0]  exp_n_io,
+    inout [7:0]  exp_n_io,
     (* X_INTERFACE_PARAMETER = "FREQ_HZ 30000000, ASSOCIATED_CLKEN PMD_clk, ASSOCIATED_BUSIF PMD" *)
     input PMD_clk,
     input PMD_sync,
     input [NUM_DAC-1:0] PMD_dac,
-    output [8-1:0] RP_exp_out
+    output [7:0] RP_exp_out
 );
 
 

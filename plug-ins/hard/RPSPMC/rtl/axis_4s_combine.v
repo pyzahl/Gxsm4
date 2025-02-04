@@ -116,7 +116,7 @@ module axis_4s_combine #(
 
     input wire [2:0] zero_spcp,
 
-    input wire           ext_trigger, // =0 for free run, auto trigger, 1= to hold trigger (until next pix, etc.)
+    //input wire           ext_trigger, // =0 for free run, auto trigger, 1= to hold trigger (until next pix, etc.)
     
     output wire          finished_state,
     output wire          init_state,
@@ -170,7 +170,7 @@ module axis_4s_combine #(
     reg [32-1:0] reg_ndecimate;
     reg [32-1:0] reg_nsamples;
     reg [ 4-1:0] reg_channel_selector;
-    reg          reg_ext_trigger;
+    //reg          reg_ext_trigger;
 
 
     reg finished=1'b0;
@@ -241,7 +241,7 @@ module axis_4s_combine #(
         begin
             // buffer in local register
             //reg_channel_selector <= channel_selector[4-1:0];
-            reg_ext_trigger <= ext_trigger;
+            //** McBSP **  reg_ext_trigger <= ext_trigger;
             //reg_operation <= operation[7:0];
             //reg_shift     <= operation[31:8];
             //reg_ndecimate <= ndecimate;
@@ -341,7 +341,8 @@ module axis_4s_combine #(
                         end
                     end         
                 end else begin
-                    trigger <= reg_ext_trigger; // PL TRIGGER: (McBSP hardware trigger mode)
+                    // ** McBSP triggered ** trigger <= reg_ext_trigger; // PL TRIGGER: (McBSP hardware trigger mode)
+                    trigger <= 1; // Allways
                     reg_pulse_arm_single <= 0;
                     reg_pulse_run <= 1;
                 end

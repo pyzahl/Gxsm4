@@ -48,6 +48,7 @@
 module axis_AD463x #(
     parameter AD463x_address = 50000,
     parameter NUM_DAC = 2,
+    parameter NUM_LANES = 4,
     parameter DAC_DATA_WIDTH = 24,
     parameter DAC_WORD_WIDTH = 32,
     parameter SAXIS_TDATA_WIDTH = 32
@@ -70,7 +71,7 @@ module axis_AD463x #(
     output wire wire_SPI_reset,
     output wire wire_SPI_cnv,
     input wire  wire_SPI_busy,
-    input wire [NUM_DAC-1:0] wire_SPI_sdn,
+    input wire [NUM_DAC*NUM_LANES-1:0] wire_SPI_sdn,
     
     output wire [31:0] mon0,
     output wire [31:0] mon1,
