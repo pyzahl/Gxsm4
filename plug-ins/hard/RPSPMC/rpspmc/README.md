@@ -1,10 +1,10 @@
-# ** ATTENTION ** VERY EXPERIMENTAL **
+# ** ATTENTION ** EXPERIMENTAL BETA VERSION **
 
 RedPitaya SPM-Control-PACPLL-Pulse Project
 
 Experimental and development code only
 
-(C) PyZahl 2023-08-15
+(C) PyZahl 2023-08-15 - 2025
 
 # 1. General Information
 
