@@ -23,8 +23,10 @@ GXSM Web Site: http://gxsm.sf.net
 # 2. Installation
 
 1. Build the FPGA bitstream "system_wrapper.bit" using Vivado as of instructions in the parent folder.
+2. UPDATE: for the latest 2.0 RedPitaya EcoSystem the Vivado output system_wrapper.bit file has to be converted into a .bit.bin file using the provided script "convert_cpy_fpga_system.sh". You will have to edit and adjust teh destination RP's IP address for install via ssh/scp. Also the script does require the conversion tool from Xilinx/AMD what comes with Vivado and can be found (adjust path) in the according "Xilinx/Vivad/bin" location.
 
-2. Copy/Link the resulting implemenation/FPGA code here to fpga.bit (please adjust "project_RP-SPMC-RedPACPLL-202308-test/project_RP-SPMC-RedPACPLL-202308-test" to your current project folder name):
+
+4. Copy/Link the resulting implemenation/FPGA code here to fpga.bit (please adjust "project_RP-SPMC-RedPACPLL-202308-test/project_RP-SPMC-RedPACPLL-202308-test" to your current project folder name):
 
 $ ln -s ../project_RP-SPMC-RedPACPLL-202308-test/project_RP-SPMC-RedPACPLL-202308-test.runs/impl_1/system_wrapper.bit fpga.bit
 
