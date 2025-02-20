@@ -228,11 +228,35 @@
                                              // GVP SRCS selections: 16->6 -|-|4|4|4|4|4|4
 
 
+
+// AD463x SPI control/configuration
+#define SPMC_AD463X_CONTROL_REG            50000
+#define SPMC_AD463X_CONFIG_MODE            0 // Bit0: activate config mode, Bit1: read config, Bit2: write config, Bit3: manual convert, Bit4: enable streaming to AXI, Bit7: SPI AD reset
+#define SPMC_AD463X_CONFIG_MODE_CONFIG  0x01
+#define SPMC_AD463X_CONFIG_MODE_READ    0x02
+#define SPMC_AD463X_CONFIG_MODE_WRITE   0x04
+#define SPMC_AD463X_CONFIG_MODE_CNV     0x08
+#define SPMC_AD463X_CONFIG_MODE_AXI     0x10
+#define SPMC_AD463X_CONFIG_MODE_B5      0x20
+#define SPMC_AD463X_CONFIG_MODE_B6      0x40
+#define SPMC_AD463X_CONFIG_MODE_RESET   0x80
+
+#define SPMC_AD463X_CONFIG_READ_ADDRESS    1 // address to read ************ Config Read  Address: Bit "A15": R=1 (send first), A14..A0  (16 BIT total), Then 8bit DATA in on SD0 from SCK17 .. 24
+#define SPMC_AD463X_CONFIG_WRITE_DATA      2 // address to write and data ** Config Write Address: Bit 23 is "A15": W=0 (send first), Bit 22:8: are A14..A0, Bit 7:0 are data D7:0 (24 BIT total Addr + Data)
+#define SPMC_AD463X_CONFIG_N_BYTES         3 // num bytes to read/write in config mode (** not yet used, fixed **) 
+
 // MODULE READBACK REGISTER A,B ADRESS MAPPINGS
 #define SPMC_READBACK_Z_REG            100001
 #define SPMC_READBACK_BIAS_REG         100002 // Bias Sum, Gxsm Bias "U0" Set
 #define SPMC_READBACK_GVPBIAS_REG      100003 // Bias GVP Comp., Bias MOD (DBG: currently = GVP-A)
-#define SPMC_READBACK_MUX_REG          100004 // SRCS-MUX, --
+//#define SPMC_READBACK_MUX_REG          100004 // SRCS-MUX, --
+#define SPMC_READBACK_AD463X_REG       100100 // AD463x read back config data/value
+
+#define SPMC_READBACK_TIMINGTEST_REG   101999
+#define SPMC_READBACK_TIMINGRESET_REG  102000
+
+#define SPMC_READBACK_RPSPMC_PACPLL_VERSION_REG 199997                              
+
 #define SPMC_READBACK_XX_REG           100999 // DBG: SrcsMUX sel, GVP-B
 
 #define SPMC_READBACK_TEST_RESET_REG           102000
@@ -248,6 +272,9 @@
     input wire [32-1:0] rbXa, ==> A
     input wire [32-1:0] rbXb  ==> B
 */
+
+
+
 
 // ****** FIXED CONFIGURATIONS
 

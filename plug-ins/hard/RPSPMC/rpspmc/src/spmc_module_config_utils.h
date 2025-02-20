@@ -57,6 +57,7 @@ extern "C" {
 
         
         void rp_spmc_module_read_config_data (int addr, int *regA, int *regB);
+        void rp_spmc_module_read_config_data_u (int addr, unsigned int *regA, unsigned int *regB);
 
 #ifdef __cplusplus
 }

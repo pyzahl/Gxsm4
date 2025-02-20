@@ -142,6 +142,18 @@ void rp_spmc_module_read_config_data (int addr, int *regA, int *regB){
         cfg_mutex.unlock(); // ** unlock FPGA config bus ** 
 }
 
+void rp_spmc_module_read_config_data_u (int addr, unsigned int *regA, unsigned int *regB){
+        cfg_mutex.lock(); // ** claim mutex and lock FPGA config bus access **
+
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, addr); // set address, will prepare data to fetch
+        usleep(MODULE_ADDR_SETTLE_TIME);
+        *regA = read_gpio_reg_uint32 (10,0); // GPIO X19 <= RegA (addr)
+        *regB = read_gpio_reg_uint32 (10,1); // GPIO X20 <= RegB (addr)
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_ADDR, 0);    // and disable config bus again
+
+        cfg_mutex.unlock(); // ** unlock FPGA config bus ** 
+}
+
 void rp_spmc_module_read_config_data_timing_test (){
         int i=0;
         int regA[200], regB[200];

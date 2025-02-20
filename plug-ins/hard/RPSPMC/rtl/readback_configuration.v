@@ -106,6 +106,12 @@ module readback_configuration#(
             reg_A <= Bias_GVP_mon;
             reg_B <= Bias_MOD_mon;
 	    end
+
+        readback_AD463x_address: 
+        begin
+            reg_A <= AD463x_CH1;
+            reg_B <= AD463x_CH2;
+	    end
 	  
         readbackX_reg_address:
 	    begin
