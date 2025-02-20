@@ -152,13 +152,14 @@ set_property PACKAGE_PIN M14 [get_ports {exp_p_io[7]}]
 set_property PACKAGE_PIN M15 [get_ports {exp_n_io[7]}]
 
 # Z7020 extra IO
+####
 set_property PACKAGE_PIN Y9 [get_ports {exp_p_io[8]}]
 set_property PACKAGE_PIN Y8 [get_ports {exp_n_io[8]}]
 set_property PACKAGE_PIN Y12 [get_ports {exp_p_io[9]}]
 set_property PACKAGE_PIN Y13 [get_ports {exp_n_io[9]}]
 set_property PACKAGE_PIN Y7 [get_ports {exp_p_io[10]}]
 set_property PACKAGE_PIN Y6 [get_ports {exp_n_io[10]}]
-
+####
 
 
 #########################################################
