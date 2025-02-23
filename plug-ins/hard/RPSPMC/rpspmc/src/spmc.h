@@ -67,10 +67,14 @@ extern "C" {
 #endif
 
         void rp_spmc_AD5791_set_configuration_mode (bool cmode, bool send, int axis);
-        void rp_spmc_AD5791_set_stream_mode ();
+        void rp_spmc_AD5791_set_stream_mode (); // AXI
         void rp_spmc_AD5791_set_axis_data (int axis, int data);
         void rp_spmc_AD5791_send_axis_data (int axis, int data);
         void rp_spmc_AD5791_init ();
+
+        void rp_spmc_AD463x_init ();
+        void rp_spmc_AD463x_set_stream_mode (); // AXI
+        
         void rp_spmc_set_bias (double bias);
         void rp_spmc_set_xyzu_DIRECT (double ux, double uy, double uz, double bias);  // WARNING -- instant setting in config mode (test only)
         
@@ -86,6 +90,7 @@ extern "C" {
                                      bool update_life);
         
         void rp_set_gvp_stream_mux_selector (unsigned long selector, unsigned long test_mode, int testval);
+        void rp_set_z_servo_stream_mux_selector (unsigned long selector, unsigned long test_mode, int testval);
 
         int rp_spmc_set_rotation (double alpha, double slew);
         void rp_spmc_set_slope (double dzx, double dzy, double dzxy_slew);

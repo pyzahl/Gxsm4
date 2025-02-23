@@ -77,7 +77,8 @@ spmc_dma_support *spm_dma_instance = NULL;
 #include "pacpll.cpp"
 #include "spmc_stream_server.cpp"
 
-
+#include "no_os_util.cpp"
+#include "ad463x.cpp"
 
 #include "spmc.cpp"
 
@@ -369,6 +370,10 @@ CDoubleParameter  SPMC_Z_SERVO_UPPER("SPMC_Z_SERVO_UPPER", CBaseParameter::RW, 0
 CDoubleParameter  SPMC_Z_SERVO_LOWER("SPMC_Z_SERVO_LOWER", CBaseParameter::RW, 0.0, 0, -5.0, 5.0); // Volts
 CDoubleParameter  SPMC_Z_SERVO_SETPOINT_CZ("SPMC_Z_SERVO_SETPOINT_CZ", CBaseParameter::RW, 0.0, 0, -5.0, 5.0); // Volts
 CDoubleParameter  SPMC_Z_SERVO_IN_OFFSETCOMP("SPMC_Z_SERVO_IN_OFFSETCOMP", CBaseParameter::RW, 0.0, 0, -5.0, 5.0); // Volts
+
+CIntParameter     SPMC_Z_SERVO_SRC_MUX("SPMC_Z_SERVO_SRC_MUX", CBaseParameter::RW, 0, 0, -2147483648,2147483647); //
+CIntParameter     SPMC_Z_SERVO_SRC_MUX_TESTV("SPMC_Z_SERVO_SRC_MUX_TESTV", CBaseParameter::RW, 0, 0, -2147483648,2147483647); //
+CIntParameter     SPMC_ADC_MODE("SPMC_ADC_MODE", CBaseParameter::RW, 0, 0, -2147483648,2147483647); //
 
 #define SPMC_GVP_CONTROL_RESET     0
 #define SPMC_GVP_CONTROL_EXECUTE   1   
@@ -893,7 +898,7 @@ int rp_app_init(void)
 
         // Init SPMC
         rp_spmc_AD5791_init ();
-
+        rp_spmc_AD463x_init ();
         rp_spmc_gvp_init ();
 
         fprintf(stderr, "Red Pitaya RPSPMC PACPLL API init completed!\n");
@@ -1704,6 +1709,14 @@ void OnNewParams_RPSPMC(void){
                 int axis_value=muxh>>4;
                 fprintf(stderr, "*** SPMC_GVP_STREAM_MUX: %08x-%08x (AXIS[%d] <= %d)\n", muxh, mux, axis_test, axis_value);
                 rp_set_gvp_stream_mux_selector (mux, axis_test, axis_value);
+        }
+
+        if (SPMC_Z_SERVO_SRC_MUX.IsNewValue ()){
+                SPMC_Z_SERVO_SRC_MUX.Update ();
+                SPMC_Z_SERVO_SRC_MUX_TESTV.Update ();
+                int mux  = SPMC_Z_SERVO_SRC_MUX.Value ();
+                fprintf(stderr, "*** SPMC_Z_SERVO_SRC_MUX: %d textv: %d\n", mux, SPMC_Z_SERVO_SRC_MUX_TESTV.Value());
+                rp_set_z_servo_stream_mux_selector (mux, mux<0?1:0, SPMC_Z_SERVO_SRC_MUX_TESTV.Value());
         }
 
         if (SPMC_GVP_RESET_OPTIONS.IsNewValue ()){

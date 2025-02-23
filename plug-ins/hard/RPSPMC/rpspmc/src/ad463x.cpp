@@ -297,6 +297,7 @@ int32_t ad463x_exit_reg_cfg_mode(struct ad463x_dev *dev)
 	if (ret != 0)
 		return ret;
 
+#if 0
 	if (dev->offload_enable) {
 		ret = spi_engine_set_transfer_width(dev->spi_desc,
 						    dev->capture_data_width);
@@ -305,7 +306,8 @@ int32_t ad463x_exit_reg_cfg_mode(struct ad463x_dev *dev)
 
 		spi_engine_set_speed(dev->spi_desc, dev->spi_desc->max_speed_hz);
 	}
-
+#endif
+	
 	return ret;
 }
 
@@ -605,6 +607,7 @@ static int32_t ad463x_read_single_sample(struct ad463x_dev *dev,
 	return 0;
 }
 
+#if 0
 /**
  * @brief Read from device using dma
  * @param dev - ad469x_dev device handler.
@@ -625,7 +628,8 @@ static int32_t ad463x_read_data_dma(struct ad463x_dev *dev,
 	if (!dev)
 		return -EINVAL;
 
-	rx_buf = no_os_calloc(1, samples * dev->read_bytes_no);
+	//rx_buf = no_os_calloc(1, samples * dev->read_bytes_no);
+	rx_buf = calloc(1, samples * dev->read_bytes_no);
 	if (!rx_buf)
 		return -ENOMEM;
 
@@ -652,9 +656,11 @@ static int32_t ad463x_read_data_dma(struct ad463x_dev *dev,
 		p_buf += 2;
 	}
 out:
-	no_os_free(rx_buf);
+	//no_os_free(rx_buf);
+	free(rx_buf);
 	return ret;
 }
+#endif
 
 /**
  * @brief Read from device.
@@ -674,11 +680,11 @@ int32_t ad463x_read_data(struct ad463x_dev *dev,
 	if (!dev)
 		return -EINVAL;
 
-	if (dev->offload_enable)
-		return ad463x_read_data_offload(dev, buf, samples);
+	//if (dev->offload_enable)
+	//	return ad463x_read_data_offload(dev, buf, samples);
 
-	if (dev->spi_dma_enable)
-		return ad463x_read_data_dma(dev, buf, samples);
+	//if (dev->spi_dma_enable)
+	//	return ad463x_read_data_dma(dev, buf, samples);
 
 	for (i = 0, p_buf = buf; i < samples; i++, p_buf += 2) {
 		ret = ad463x_read_single_sample(dev, p_buf, p_buf + 1);
@@ -693,7 +699,13 @@ int32_t ad463x_read_data(struct ad463x_dev *dev,
  * @param dev - Pointer to the device handler.
  * @return None.
  */
-static void ad463x_fill_scale_tbl(struct ad463x_dev *dev)
+
+// FIXME
+#define MILLI 1 // ???? undef
+#define MICRO 1 // ???? undef
+#define NANO  1 // ???? undef
+
+static int ad463x_fill_scale_tbl(struct ad463x_dev *dev)
 {
 	int val, val2, tmp0;
 	int32_t tmp1;
@@ -733,14 +745,16 @@ int32_t ad463x_init(struct ad463x_dev **device,
 
 	if (!init_param || !device)
 		return -1;
-
+#if 0
 	if (init_param->clock_mode == AD463X_SPI_COMPATIBLE_MODE &&
 	    init_param->data_rate == AD463X_DDR_MODE) {
 		pr_err("DDR_MODE not available when clock mode is SPI_COMPATIBLE\n");
 		return -1;
 	}
-
-	dev = (struct ad463x_dev *)no_os_calloc(1, sizeof(*dev));
+#endif
+	
+	//dev = (struct ad463x_dev *)no_os_calloc(1, sizeof(*dev));
+	dev = (struct ad463x_dev *)calloc(1, sizeof(*dev));
 	if (!dev)
 		return -ENOMEM;
 
@@ -758,6 +772,7 @@ int32_t ad463x_init(struct ad463x_dev **device,
 	dev->device_id = init_param->device_id;
 	dev->dcache_invalidate_range = init_param->dcache_invalidate_range;
 
+#if 0
 	/** Perform Hardware Reset and configure pins */
 	ret = ad463x_init_gpio(dev, init_param);
 	if (ret != 0)
@@ -783,6 +798,8 @@ int32_t ad463x_init(struct ad463x_dev **device,
 	if (ret != 0)
 		goto error_clkgen;
 
+#endif
+	
 	if (dev->output_mode > AD463X_16_DIFF_8_COM)
 		sample_width = 32;
 	else
@@ -844,6 +861,7 @@ int32_t ad463x_init(struct ad463x_dev **device,
 		dev->has_pgia = false;
 	}
 
+#if 0
 	if (dev->offload_enable) {
 		ret = spi_engine_set_transfer_width(dev->spi_desc, dev->reg_data_width);
 		if (ret != 0)
@@ -851,7 +869,8 @@ int32_t ad463x_init(struct ad463x_dev **device,
 
 		spi_engine_set_speed(dev->spi_desc, dev->reg_access_speed);
 	}
-
+#endif
+	
 	ret = ad463x_spi_reg_read(dev, AD463X_CONFIG_TIMING, &data);
 	if (ret != 0)
 		goto error_spi;
@@ -865,7 +884,8 @@ int32_t ad463x_init(struct ad463x_dev **device,
 		goto error_spi;
 
 	if (data != AD463x_TEST_DATA) {
-		pr_err("Test Data read failed.\n");
+	        // pr_err("Test Data read failed.\n");
+		fprintf(stderr,"Test Data read failed.\n");
 		goto error_spi;
 	}
 	ret = ad463x_spi_reg_write_masked(dev, AD463X_REG_MODES, AD463X_LANE_MODE_MSK,
@@ -888,33 +908,36 @@ int32_t ad463x_init(struct ad463x_dev **device,
 	if (ret != 0)
 		return ret;
 
+#if 0
 	if (dev->spi_dma_enable || dev->offload_enable) {
 		ret = no_os_pwm_init(&dev->trigger_pwm_desc,
 				     init_param->trigger_pwm_init);
 		if (ret != 0)
 			goto error_spi;
 	}
-
+#endif
 	*device = dev;
 
 	return ret;
 
 error_spi:
-	no_os_spi_remove(dev->spi_desc);
+	//no_os_spi_remove(dev->spi_desc);
 error_clkgen:
-	if (dev->offload_enable)
-		axi_clkgen_remove(dev->clkgen);
+	//if (dev->offload_enable)
+	//	axi_clkgen_remove(dev->clkgen);
 error_gpio:
-	no_os_gpio_remove(dev->gpio_resetn);
-	no_os_gpio_remove(dev->gpio_cnv);
-	no_os_gpio_remove(dev->gpio_pgia_a0);
-	no_os_gpio_remove(dev->gpio_pgia_a1);
+	//no_os_gpio_remove(dev->gpio_resetn);
+	//no_os_gpio_remove(dev->gpio_cnv);
+	//no_os_gpio_remove(dev->gpio_pgia_a0);
+	//no_os_gpio_remove(dev->gpio_pgia_a1);
 error_dev:
-	no_os_free(dev);
+	//no_os_free(dev);
+	free(dev);
 
 	return -1;
 }
 
+#if 0
 /**
  * @brief Calculate the PGIA gain.
  * @param gain_int - Interger part of the gain.
@@ -940,11 +963,13 @@ int32_t ad463x_calc_pgia_gain(int32_t gain_int, int32_t gain_fract,
 	tmp = gain_nano << precision;
 	tmp = NO_OS_DIV_ROUND_CLOSEST_ULL(tmp, NANO);
 	gain_nano = NO_OS_DIV_ROUND_CLOSEST_ULL(vref * 2, tmp);
-	*gain_idx = no_os_find_closest(gain_nano,
+	*gain_idx = no_os_find_closest((int)gain_nano, // !!!
 				       ad463x_gains,
 				       NO_OS_ARRAY_SIZE(ad463x_gains));
 	return 0;
 }
+
+#endif
 
 /**
  * @brief Set the PGIA gain.
@@ -966,6 +991,8 @@ int32_t ad463x_set_pgia_gain(struct ad463x_dev *dev,
 	if (gain_idx > 3)
 		return -EINVAL;
 
+#if 0
+	
 	/** update gain index value in the device handler */
 	dev->pgia_idx = gain_idx;
 	/** Set A0 and A1 pins according to gain index value */
@@ -975,6 +1002,8 @@ int32_t ad463x_set_pgia_gain(struct ad463x_dev *dev,
 		return ret;
 	return no_os_gpio_set_value(dev->gpio_pgia_a1, no_os_field_get(NO_OS_BIT(1),
 				    gain_idx));
+
+#endif
 }
 
 /**
@@ -988,7 +1017,7 @@ int32_t ad463x_remove(struct ad463x_dev *dev)
 
 	if (!dev)
 		return -1;
-
+#if 0
 	ret = no_os_pwm_remove(dev->trigger_pwm_desc);
 	if (ret != 0)
 		return ret;
@@ -1018,8 +1047,9 @@ int32_t ad463x_remove(struct ad463x_dev *dev)
 		if (ret != 0)
 			return ret;
 	}
-
-	no_os_free(dev);
+#endif
+	//no_os_free(dev);
+	free(dev);
 
 	return ret;
 }

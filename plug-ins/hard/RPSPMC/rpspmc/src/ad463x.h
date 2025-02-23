@@ -38,10 +38,12 @@
 /******************************************************************************/
 #include <stdint.h>
 #include "no_os_util.h"
-#include "spi_engine.h"
-#include "clk_axi_clkgen.h"
-#include "no_os_pwm.h"
-#include "no_os_gpio.h"
+//#include "spi_engine.h"
+//#include "clk_axi_clkgen.h"
+//#include "no_os_pwm.h"
+//#include "no_os_gpio.h"
+
+
 
 /******************************************************************************/
 /********************** Macros and Types Declarations *************************/

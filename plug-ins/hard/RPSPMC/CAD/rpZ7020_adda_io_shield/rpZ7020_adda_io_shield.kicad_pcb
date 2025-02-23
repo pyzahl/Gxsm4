@@ -14730,16 +14730,6 @@
 		(uuid "4b2a20a1-0d39-43fb-bb52-d5cd8ef55a04")
 	)
 	(gr_line
-		(start 173.477 133.365)
-		(end 173.477 134.635)
-		(stroke
-			(width 0.2)
-			(type default)
-		)
-		(layer "B.Cu")
-		(uuid "5838c344-b952-487f-9df6-df1e9e59bdfe")
-	)
-	(gr_line
 		(start 150.617 133.365)
 		(end 150.617 134.635)
 		(stroke
@@ -14788,16 +14778,6 @@
 		)
 		(layer "B.Cu")
 		(uuid "a9dd503a-7619-4e73-b268-7cca3b2deb5f")
-	)
-	(gr_line
-		(start 170.937 133.365)
-		(end 170.937 134.635)
-		(stroke
-			(width 0.2)
-			(type default)
-		)
-		(layer "B.Cu")
-		(uuid "ae12e476-4da2-4234-b9f6-a90885497586")
 	)
 	(gr_line
 		(start 145.537 133.365)

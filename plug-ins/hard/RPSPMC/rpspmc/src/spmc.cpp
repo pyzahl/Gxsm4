@@ -137,6 +137,36 @@ void rp_spmc_AD5791_init (){
         rp_spmc_AD5791_set_stream_mode (); // enable streaming for AD5791 DAC's from FPGA now!
 }
 
+void rp_spmc_AD463x_init (){
+        if (verbose > 1) fprintf(stderr, "##rp_spmc_AD463x_init\n");
+        ad463x_dev *dev=NULL;
+        ad463x_init_param init_param;
+        memset (&init_param, 0, sizeof(init_param));
+        
+        init_param.device_id   = ID_AD4630_24;
+        init_param.clock_mode  = AD463X_SPI_COMPATIBLE_MODE;
+        init_param.lane_mode   = AD463X_ONE_LANE_PER_CH;
+        init_param.output_mode = AD463X_24_DIFF;
+        init_param.data_rate   = AD463X_SDR_MODE; // AD463X_DDR_MODE
+                
+        ad463x_init(&dev, &init_param);
+
+        if (verbose > 1) fprintf(stderr, "##rp_spmc_AD463x_init ** (24_DIFF, ONE_LANE, SDR_MODE) ** TEST READINGS:\n");
+        for (int i=0; i<100; ++i){
+                uint32_t ch0, ch1;
+                ad463x_read_single_sample (dev, &ch0, &ch1);
+                fprintf (stderr, "%03d: %10d  %10d\n", i, ch0, ch1);
+        }
+        rp_spmc_AD463x_set_stream_mode ();
+}
+
+void rp_spmc_AD463x_set_stream_mode (){
+	rp_spmc_module_config_int32 (MODULE_SETUP, SPMC_AD463X_CONFIG_MODE_AXI, MODULE_START_VECTOR); // DISABLE CONFIG MODE, ENABLE AXI for streaming
+	rp_spmc_module_config_int32 (MODULE_SETUP, 0,            MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_READ_ADDRESS));
+	rp_spmc_module_config_int32 (MODULE_SETUP, 0,            MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_WRITE_DATA));
+	rp_spmc_module_config_int32 (SPMC_AD463X_CONTROL_REG, 3, MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_N_BYTES));
+}
+
 
 // WARNING: FOR TEST/CALIBARTION ONLY, direct DAC write via config mode!!!
 void rp_spmc_set_xyzu_DIRECT (double ux, double uy, double uz, double bias){
@@ -471,6 +501,17 @@ void rp_set_gvp_stream_mux_selector (unsigned long selector, unsigned long test_
         int a,b;
         rp_spmc_module_read_config_data (SPMC_READBACK_XX_REG, &a, &b);
         if (verbose > 1) fprintf(stderr, "** FPGA MUX selector is %08x\n", (unsigned int)a);
+
+}
+
+// SPMC GVP STREAM SOURCE MUX 16 to 6
+void rp_set_z_servo_stream_mux_selector (unsigned long selector, unsigned long test_mode=0, int testval=0){
+        if (verbose > 1) fprintf(stderr, "** set gvp stream mux 0x%06x\n", (unsigned int)selector);
+        rp_spmc_module_config_uint32 (MODULE_SETUP, selector, MODULE_START_VECTOR);
+        rp_spmc_module_config_uint32 (MODULE_SETUP, test_mode, MODULE_SETUP_VECTOR(1));
+        rp_spmc_module_config_int32 (SPMC_MUX2_Z_SERVO_CONTROL_REG, testval, MODULE_SETUP_VECTOR(2));
+
+        if (verbose > 1) fprintf(stderr, "** Z_SERVO MUX selector is %08x\n", (unsigned int)selector);
 
 }
 

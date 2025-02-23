@@ -227,6 +227,8 @@
 #define SPMC_MUX16_6_SRCS_CONTROL_REG   2000 // MUX selection, test mode, test value.
                                              // GVP SRCS selections: 16->6 -|-|4|4|4|4|4|4
 
+#define SPMC_MUX2_Z_SERVO_CONTROL_REG   2001 // MUX selection, test mode, test value.
+                                             // Z-SERVO INPUT RP_CH1 | ADC463x_CH0
 
 
 // AD463x SPI control/configuration
