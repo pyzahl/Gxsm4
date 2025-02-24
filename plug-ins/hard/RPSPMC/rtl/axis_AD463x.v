@@ -90,7 +90,7 @@ module axis_AD463x #(
     
     reg SPI_sck=0;   // SPI CLK pin AD463x
     reg SPI_sdi=0;   // SPI SDI pin AD463x
-    reg SPI_cs=0;    // SPI CS  pin AD463x
+    reg SPI_cs=1;    // SPI CS  pin AD463x
     reg SPI_cnv=0;   // SPI CVN pin AD463x
     reg SPI_reset=0; // SPI RESET pin AD463x
     
@@ -100,7 +100,7 @@ module axis_AD463x #(
     reg [64-1:0] reg_dac_data_cfg;
     reg [7:0] n_bytesX8=1;
     
-    reg cfg_mode_job=0;
+    reg cfg_mode_job=1;
     reg [6-1:0] frame_bit_counter_out=0;
     reg [6-1:0] frame_bit_counter_in=0;
     reg [4-1:0] state_read=0;
@@ -109,6 +109,7 @@ module axis_AD463x #(
     reg [4-1:0] state_stream=0;
     
     reg rdecii = 0; // MAX SCK 80MHz
+    reg [1:0] rdecii_cfg = 0; // MAX SCK 20MHz
 
     integer i;
     initial begin
@@ -123,8 +124,7 @@ module axis_AD463x #(
     begin
 
         // module configuration
-        case (config_addr)
-        AD463x_address:
+        if (config_addr == AD463x_address)
         begin
             configuration_mode       <= config_data[0:0]; // activate configuration mode 
             configuration_read       <= config_data[1:1]; // read config
@@ -133,57 +133,71 @@ module axis_AD463x #(
                                                           // exit configuration mode by writing 0x01 to Register Address 0x0014
             manual_cnv               <= config_data[3:3]; // trigger one manual convert
             stream_cnv               <= config_data[4:4]; // start auto convert and stream to AXI
-            if (config_data[5:5]) // reset config mode to start a new
-                cfg_mode_job <= 0;
             SPI_reset                <= ~config_data[7:7]; // manual reset
             configuration_addr_read  <= config_data[1*32+16-1 : 1*32]; // Config Read Address: Bit "A15": R=1 (send first), A14..A0  (16 BIT total), Then 8bit DATA in on SD0 from SCK17 .. 24
             configuration_addr_wdata <= config_data[2*32+24-1 : 2*32]; // Config Write Address: Bit 23 is "A15": W=0 (send first), Bit 22:8: are A14..A0, Bit 7:0 are data D7:0 (24 BIT total Addr + Data)
             n_bytesX8                <= config_data[3*32+8-1  : 3*32] << 3; // number bytes to read/write in config mode => in bits
+            cfg_mode_job <= 1;
+            SPI_cs <= 1;
         end
-        endcase
-
-        if (configuration_mode && !rdecii && !state_read && !state_write && !state_single && !state_stream && !cfg_mode_job)
-        begin
-            cfg_mode_job <= 1; // only once, until reset via config for next op!
-            
-            if (manual_cnv)
+        else
+        begin      
+            if (configuration_mode && !rdecii && !state_read && !state_write && !state_single && !state_stream && cfg_mode_job)
             begin
-                state_stream <= 0; // disable streaming
-                state_single <= 1;
-            end
-            else
-            begin
-                state_stream <= stream_cnv ? 1:0; // enable streaming
-            end
-            
-            if (configuration_read)
-            begin
-                state_read <= 1;
-                frame_bit_counter_out <= 15; // 1 bit "R"=1 and 15 bit address to send => 16 total
-                frame_bit_counter_in  <= 7;  // n_bytesX8 - 1;  // 8 bit data in
-                SPI_cs <= 0; // initiate
-                cfg_mode_job <= 1;
-                reg_dac_data_cfg <= 0; // clear data
-            end
-            else
-            begin
-                if (configuration_write)
+                cfg_mode_job <= 0; // only once, until reset via new config request for next op!
+                SPI_cs <= 0; // initiate and assert CS
+                
+                if (manual_cnv)
                 begin
-                    state_write <= 1;
-                    frame_bit_counter_out <= 23; // 1 bit "R"=1 and 15 bit address + 8 bit data to send => 24 total
-                    frame_bit_counter_in  <= 0;  // 0 bit in
-                    SPI_cs <= 0; // initiate
-                    cfg_mode_job <= 1;
-                    reg_dac_data_cfg <= 0; // clear data
+                    state_stream <= 0; // disable streaming
+                    state_single <= 1;
                 end
+                else
+                begin
+                    state_stream <= stream_cnv ? 1:0; // enable streaming
+                end
+                
+                if (configuration_read)
+                begin
+                    state_read <= 1;
+                    frame_bit_counter_out <= 15; // 1 bit "R"=1 and 15 bit address to send => 16 total
+                    frame_bit_counter_in  <= 7;  // n_bytesX8 - 1;  // 8 bit data in
+                    reg_data_in <= 0; // clear data
+                    reg_dac_data_cfg <= 0;
+                end
+                else
+                begin
+                    if (configuration_write)
+                    begin
+                        state_write <= 1;
+                        frame_bit_counter_out <= 23; // 1 bit "R"=1 and 15 bit address + 8 bit data to send => 24 total
+                        frame_bit_counter_in  <= 0;  // 0 bit in
+                    end
+                end
+                rdecii <= 0; // start with setup data
             end
+            else
+            begin
+                if (configuration_mode)
+                begin
+                    rdecii_cfg <= rdecii_cfg+1;
+                    if (rdecii_cfg == 0)
+                        rdecii <= ~rdecii; // 0,1,0,1,...
+                end
+                else 
+                begin
+                    rdecii_cfg <= 0;
+                    rdecii <= ~rdecii; // 0,1,0,1,...
+                end
+            end             
         end
-
-        rdecii <= ~rdecii; // 0,1,0,1,...
-        case (rdecii)
+        
+       if (rdecii_cfg == 0) 
+       case (rdecii)
             1: // @(posedge SCK)  // SPI transmit/receive: data setup edge
             begin
-                SPI_sck <= 1; // gen SPI SCK, action state to latch data in/out
+                if (!SPI_cs && (state_read || state_write || state_single))
+                    SPI_sck <= 1; // gen SPI SCK, action state to latch data in/out
             end
             
             0:   // @(negedge SCK) // SPI clock, prepare data, manage
@@ -219,12 +233,12 @@ module axis_AD463x #(
                         SPI_sdi <= configuration_addr_wdata [frame_bit_counter_out];
                         frame_bit_counter_out <= frame_bit_counter_out - 1;
                         if (!frame_bit_counter_out) 
-                            state_read <= 3;
+                            state_write <= 3;
                     end
                     3:  // completed
                     begin
                         SPI_cs <= 1; // deassert
-                        state_read <= 0; // idle
+                        state_write <= 0; // idle
                     end
                 endcase
 
@@ -232,7 +246,10 @@ module axis_AD463x #(
                     1:
                     begin
                         if (!state_single) // Ready? Restart!
+                        begin
                             state_single <= 1;
+                            SPI_cs <= 0; // assert
+                        end
                     end                 
                 endcase
                 

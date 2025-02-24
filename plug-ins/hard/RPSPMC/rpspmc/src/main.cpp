@@ -210,6 +210,11 @@ CIntParameter PACVERBOSE("PACVERBOSE", CBaseParameter::RW, 0, 0, 0, 10);
  *  ... modes to be added for FIFO contineous operation mode
  */
 
+CIntParameter RPSPMC_SERVER_VERSION ("RPSPMC_SERVER_VERSION", CBaseParameter::RW, 0, 0, -2147483648,2147483647);
+CIntParameter RPSPMC_SERVER_DATE    ("RPSPMC_SERVER_DATE", CBaseParameter::RW, 0, 0, -2147483648,2147483647);
+CIntParameter RPSPMC_FPGAIMPL_VERSION("RPSPMC_FPGAIMPL_VERSION", CBaseParameter::RW, 0, 0, -2147483648,2147483647);
+CIntParameter RPSPMC_FPGAIMPL_DATE   ("RPSPMC_FPGAIMPL_DATE", CBaseParameter::RW, 0, 0, -2147483648,2147483647);
+
 CIntParameter TRANSPORT_CH3("TRANSPORT_CH3", CBaseParameter::RW, 0, 0, 0, 19);
 CIntParameter TRANSPORT_CH4("TRANSPORT_CH4", CBaseParameter::RW, 1, 0, 0, 19);
 CIntParameter TRANSPORT_CH5("TRANSPORT_CH5", CBaseParameter::RW, 1, 0, 0, 19);
@@ -569,6 +574,14 @@ int rp_PAC_App_Init(){
         fprintf(stderr, "RP FPGA RPSPMC PACPLL GPIO REGs mapped 0x%08lx - 0x%08lx   block length: 0x%08lx\n", (unsigned long)FPGA_GPIO_BASE, (unsigned long)(FPGA_GPIO_BASE + FPGA_PACPLL_GPIO_block_size-1), (unsigned long)(FPGA_PACPLL_GPIO_block_size));
 #endif
 
+        unsigned int v, vd;
+        rp_spmc_module_read_config_data_u (SPMC_READBACK_RPSPMC_PACPLL_VERSION_REG, &v, &vd);
+        fprintf (stderr, "\n**RP FPGA RPSPMC Version: %08X %08X **\n\n", v, vd);
+        RPSPMC_FPGAIMPL_VERSION.Value () = v;
+        RPSPMC_FPGAIMPL_DATE.Value ()    = vd;
+        RPSPMC_SERVER_VERSION.Value ()   = REDPACPLL_VERSION;
+        RPSPMC_SERVER_DATE.Value ()      = REDPACPLL_DATE;
+                
         rp_spmc_gvp_config (); // assure GVP is in reset mode
         
         fprintf(stderr, "INIT RP FPGA RPSPMC PACPLL: initializing DMA support.\n");

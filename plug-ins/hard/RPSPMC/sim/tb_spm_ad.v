@@ -216,6 +216,23 @@ wire [31:0]FIR2_wu;
 wire       FIR2_twu;
 
 
+wire [31:0] ad_ch1;
+wire ad_ch1v;
+wire [31:0] ad_ch2;
+wire ad_ch2v;
+    
+wire w_spi_sck;
+wire w_spi_cs;
+wire w_spi_sdi;
+wire w_spi_reset;
+wire w_spi_cnv;
+wire w_spi_busy;
+wire [7:0] w_spi_sdn;
+
+wire [31:0] ad_mon0;
+wire [31:0] ad_mon1;
+
+wire ad_ready;
 
 
     initial 
@@ -339,6 +356,41 @@ print (adjust (100))
         //parameter gvp_vector_programming_reg_address  = 5003;
         //parameter gvp_vector_set_reg_address  = 5004;
         //parameter gvp_vectorX_programming_reg_address  = 500;
+
+        // INIT AD463x
+        // RESET
+        confaddr=0; #10 
+        vector = {32'd3,  32'd0, 32'h00000, 32'h81 }; #1 
+        confaddr=50000; #10 
+        confaddr=0; #200 // module config cycle done
+
+        vector = {32'd3,  32'd0, 32'h00000, 32'h01 }; #1 
+        confaddr=50000; #10 
+        confaddr=0; #200 // module config cycle done
+
+        // CONF MODE WRITE
+        confaddr=0; #10 
+        vector = {32'd3,  32'd0, 32'h0a000, 32'h05 }; #1 
+        confaddr=50000; #10 
+        confaddr=0; #200 // module config cycle done
+
+        // CONF MODE READ
+        confaddr=0; #10 
+        vector = {32'd3,  32'd0, 32'h0a000, 32'h03 }; #1 
+        confaddr=50000; #10 
+        confaddr=0; #200 // module config cycle done
+    
+        // CNV single
+        vector = {32'd3,  32'd0, 32'h00000, 32'h09 }; #1 
+        confaddr=50000; #10 
+        confaddr=0; #200 // module config cycle done
+
+        // AXI STREAMING
+        vector = {32'd3,  32'd0, 32'h00000, 32'h10 }; #1 
+        confaddr=50000; #10 
+        confaddr=0; #200 // module config cycle done
+
+
 
         // INIT GVP
         confaddr=0; #10 vector = 1;#1 confaddr=gvp_control_reg_address; #10 confaddr=0; #10 // reset to GVP
@@ -693,7 +745,31 @@ axis_AD5791 axis_AD5791_1
     
 */
 
+axis_AD463x axis_AD463_tb
+(
+    .a_clk(pclk),
+    .config_addr(confaddr),
+    .config_data(vector),
 
+    .M_AXIS1_tdata(ad_ch1),
+    .M_AXIS1_tvalid(ad_ch1v),
+    .M_AXIS2_tdata(ad_ch2),
+    .M_AXIS2_tvalid(ad_ch2v),
+    
+    .wire_SPI_sck(w_spi_sck),
+    .wire_SPI_cs(w_spi_cs),
+    .wire_SPI_sdi(w_spi_sdi),
+    .wire_SPI_reset(w_spi_reset),
+    .wire_SPI_cnv(w_spi_cnv),
+    .wire_SPI_busy(w_spi_busy),
+    .wire_SPI_sdn(w_spi_sdn),
+    
+    .mon0(ad_mon0),
+    .mon1(ad_mon1),
+    
+    .ready(ad_ready)
+    );
+    
 axis_spm_control axis_spm_control_tb
 (
     .a_clk(pclk),

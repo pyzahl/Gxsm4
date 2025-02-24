@@ -651,6 +651,8 @@ void *thread_gpio_reading_FIR(void *arg) {
 
 	//fprintf(stderr, "thread_gpio_reading_FIR started\n");
 	
+        pthread_mutex_lock (&gpio_reading_mutexsum);
+        
         for (j=0; j<GPIO_FIR_LEN; j++){
                 gpio_reading_FIRV_buffer[GPIO_READING_DDS_X8][j] = 0;
                 gpio_reading_FIRV_buffer[GPIO_READING_DDS_X9][j] = 0;
@@ -663,6 +665,8 @@ void *thread_gpio_reading_FIR(void *arg) {
 	gpio_reading_FIRV_vector_CH3_mapping = gpio_reading_FIRV_vector_CH4_mapping = gpio_reading_FIRV_vector_CH5_mapping = 0.0; 
 	for (j=0; j<GPIO_FIR_LEN; j++)
 	  gpio_reading_FIRV_buffer_CH3_mapping[j] = gpio_reading_FIRV_buffer_CH4_mapping[j] = gpio_reading_FIRV_buffer_CH5_mapping[j] = 0.0;
+
+        pthread_mutex_unlock (&gpio_reading_mutexsum);
 
         for(j=0; gpio_reading_control; ){
 
@@ -736,8 +740,6 @@ void *thread_gpio_reading_FIR(void *arg) {
                 gpio_reading_FIRV_vector_CH5_mapping += (double)x;
                 gpio_reading_FIRV_buffer_CH5_mapping[j] = x;
 
-
-		
                 pthread_mutex_unlock (&gpio_reading_mutexsum);
 
                 ++j;

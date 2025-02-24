@@ -131,7 +131,7 @@ module readback_configuration#(
 	    readback_RPSPMC_PACPLL_Version:
 	    begin
             reg_A <= 32'hEC010099; 
-            reg_B <= 32'h20250202;
+            reg_B <= 32'h20250223;
 	    end
 	default:
 	  begin
