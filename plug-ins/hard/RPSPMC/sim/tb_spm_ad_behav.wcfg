@@ -11,15 +11,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="1,319,938.166 ns"></ZoomStartTime>
-      <ZoomEndTime time="1,320,081.967 ns"></ZoomEndTime>
-      <Cursor1Time time="1,320,058.000 ns"></Cursor1Time>
+      <ZoomStartTime time="162.960 ns"></ZoomStartTime>
+      <ZoomEndTime time="1,555.461 ns"></ZoomEndTime>
+      <Cursor1Time time="56,000.000 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
-      <NameColumnWidth column_width="322"></NameColumnWidth>
-      <ValueColumnWidth column_width="120"></ValueColumnWidth>
+      <NameColumnWidth column_width="405"></NameColumnWidth>
+      <ValueColumnWidth column_width="155"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="56" />
+   <WVObjectSize size="59" />
    <wvobject type="logic" fp_name="/tb_spm_ad/pclk">
       <obj_property name="ElementShortName">pclk</obj_property>
       <obj_property name="ObjectShortName">pclk</obj_property>
@@ -325,5 +325,17 @@
    <wvobject type="logic" fp_name="/tb_spm_ad/axis_AD463_tb/cfg_mode_job">
       <obj_property name="ElementShortName">cfg_mode_job</obj_property>
       <obj_property name="ObjectShortName">cfg_mode_job</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_spm_ad/axis_AD463_tb/configuration_mode">
+      <obj_property name="ElementShortName">configuration_mode</obj_property>
+      <obj_property name="ObjectShortName">configuration_mode</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_spm_ad/axis_AD463_tb/configuration_read">
+      <obj_property name="ElementShortName">configuration_read</obj_property>
+      <obj_property name="ObjectShortName">configuration_read</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_spm_ad/axis_AD463_tb/configuration_write">
+      <obj_property name="ElementShortName">configuration_write</obj_property>
+      <obj_property name="ObjectShortName">configuration_write</obj_property>
    </wvobject>
 </wave_config>

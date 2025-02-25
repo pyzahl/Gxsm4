@@ -959,11 +959,11 @@ error_spi:
 	fprintf(stderr,"AD463x SPI ERROR\n");
 	//no_os_spi_remove(dev->spi_desc);
 error_clkgen:
-	fprintf(stderr,"AD463x CLKGEN ERROR\n");
+	//fprintf(stderr,"AD463x CLKGEN ERROR\n");
 	//if (dev->offload_enable)
 	//	axi_clkgen_remove(dev->clkgen);
 error_gpio:
-	fprintf(stderr,"AD463x GPIO ERROR\n");
+	//fprintf(stderr,"AD463x GPIO ERROR\n");
 	//no_os_gpio_remove(dev->gpio_resetn);
 	//no_os_gpio_remove(dev->gpio_cnv);
 	//no_os_gpio_remove(dev->gpio_pgia_a0);

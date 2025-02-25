@@ -359,31 +359,33 @@ print (adjust (100))
 
         // INIT AD463x
         // RESET
+        vector = {32'd3,  32'd0, 32'h00000, 32'h00 }; #1 
+        confaddr=50000; #10 
+        confaddr=0; #50 // module config cycle done
         confaddr=0; #10 
         vector = {32'd3,  32'd0, 32'h00000, 32'h81 }; #1 
         confaddr=50000; #10 
-        confaddr=0; #200 // module config cycle done
-
-        vector = {32'd3,  32'd0, 32'h00000, 32'h01 }; #1 
+        confaddr=0; #50 // module config cycle done
+        vector = {32'd3,  32'd0, 32'h00000, 32'h00 }; #1 
         confaddr=50000; #10 
-        confaddr=0; #200 // module config cycle done
+        confaddr=0; #50 // module config cycle done
 
         // CONF MODE WRITE
         confaddr=0; #10 
         vector = {32'd3,  32'd0, 32'h0a000, 32'h05 }; #1 
         confaddr=50000; #10 
-        confaddr=0; #200 // module config cycle done
+        confaddr=0; #600 // module config cycle done
 
         // CONF MODE READ
         confaddr=0; #10 
         vector = {32'd3,  32'd0, 32'h0a000, 32'h03 }; #1 
         confaddr=50000; #10 
-        confaddr=0; #200 // module config cycle done
+        confaddr=0; #600 // module config cycle done
     
         // CNV single
         vector = {32'd3,  32'd0, 32'h00000, 32'h09 }; #1 
         confaddr=50000; #10 
-        confaddr=0; #200 // module config cycle done
+        confaddr=0; #600 // module config cycle done
 
         // AXI STREAMING
         vector = {32'd3,  32'd0, 32'h00000, 32'h10 }; #1 

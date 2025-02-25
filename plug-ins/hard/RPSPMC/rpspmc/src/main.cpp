@@ -1820,6 +1820,11 @@ void OnNewParams_RPSPMC(void){
 
                 if ((int)SPMC_SC_LCK_TARGET.Value () == 7)
                         rp_spmc_module_read_config_data_timing_test ();
+
+                // TESTING
+                rp_spmc_AD463x_init ();
+
+
         }
 
         // LockIn Signal Out BiQuad Filter
