@@ -1,3 +1,5 @@
+### PIN CONNECTIONS
+
 set_property PACKAGE_PIN T16 [get_ports {adc_dat_a_i[12]}]
 set_property PACKAGE_PIN V16 [get_ports {adc_dat_a_i[13]}]
 set_property PACKAGE_PIN W16 [get_ports {adc_dat_a_i[1]}]
@@ -159,7 +161,6 @@ set_property PACKAGE_PIN Y13 [get_ports {exp_n_io[9]}]
 set_property PACKAGE_PIN Y7 [get_ports {exp_p_io[10]}]
 set_property PACKAGE_PIN Y6 [get_ports {exp_n_io[10]}]
 
-
 #########################################################
 ### Expansion connector
 
@@ -242,13 +243,4 @@ set_property PACKAGE_PIN G14 [get_ports {led_o[5]}]
 set_property PACKAGE_PIN J15 [get_ports {led_o[6]}]
 set_property PACKAGE_PIN J14 [get_ports {led_o[7]}]
 
-
-
-
-
-
-
-
-
-
-
+### END
