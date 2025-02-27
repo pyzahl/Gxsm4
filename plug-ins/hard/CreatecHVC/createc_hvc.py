@@ -134,7 +134,7 @@ class THV5():
 
         # gain: 3,6,12,24  filters: 'ON','OFF' 
         def SetTHVGain(self, gainx, gainy, gainz, filter, filter2nd, coarseboard, coarsevoltage):
-                return self.request ('f1={}&f2={}&g0={}&g1=&g2={}&v={}'.format(filter, filter2nd, gainx, gainy, gainz, coarseboard, coarsevoltage))
+                return self.request ('f1={}&f2={}&g0={}&g1=&g2={}&v{}={}'.format(filter, filter2nd, gainx, gainy, gainz, coarseboard, coarsevoltage))
 
         def SetTHVCoarseMove(self, channel, direction, burstcount, period, start):
                 if self.besocke:
