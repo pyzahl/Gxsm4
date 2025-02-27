@@ -89,8 +89,12 @@ module axis_AD463x #(
     reg run=0;
     
     reg SPI_sck=0;   // SPI CLK pin AD463x
+    reg sck=0;       // SPI CLOCK dly
+    reg sck1=0;       // SPI CLOCK dly
     reg SPI_sdi=0;   // SPI SDI pin AD463x
     reg SPI_cs=1;    // SPI CS  pin AD463x
+    reg cs=0;
+    reg cs1=0;
     reg SPI_cnv=0;   // SPI CVN pin AD463x
     reg SPI_reset=0; // SPI RESET pin AD463x
     
@@ -138,14 +142,14 @@ module axis_AD463x #(
             configuration_addr_wdata <= config_data[2*32+24-1 : 2*32]; // Config Write Address: Bit 23 is "A15": W=0 (send first), Bit 22:8: are A14..A0, Bit 7:0 are data D7:0 (24 BIT total Addr + Data)
             n_bytesX8                <= config_data[3*32+8-1  : 3*32] << 3; // number bytes to read/write in config mode => in bits
             cfg_mode_job <= 1;
-            SPI_cs <= 1;
+            cs <= 1;
         end
         else
         begin      
             if (configuration_mode && !rdecii && !state_read && !state_write && !state_single && !state_stream && cfg_mode_job)
             begin
                 cfg_mode_job <= 0; // only once, until reset via new config request for next op!
-                SPI_cs <= 0; // initiate and assert CS
+                cs <= 0; // initiate and assert CS
                 
                 if (manual_cnv)
                 begin
@@ -174,7 +178,8 @@ module axis_AD463x #(
                         frame_bit_counter_in  <= 0;  // 0 bit in
                     end
                 end
-                rdecii <= 0; // start with setup data
+                rdecii <= 1; // start with setup data
+                rdecii_cfg <= 1;
             end
             else
             begin
@@ -192,115 +197,126 @@ module axis_AD463x #(
             end             
         end
         
-       if (rdecii_cfg == 0) 
-       case (rdecii)
-            1: // @(posedge SCK)  // SPI transmit/receive: data setup edge
-            begin
-                if (!SPI_cs && (state_read || state_write || state_single))
-                    SPI_sck <= 1; // gen SPI SCK, action state to latch data in/out
-            end
-            
-            0:   // @(negedge SCK) // SPI clock, prepare data, manage
-            begin
-                SPI_sck <= 0; // gen SPI SCK, setup state
-
-                case (state_read)
-                    1: // serialize read address data
+       if (rdecii_cfg == 0)
+       begin
+           sck1 <= sck;
+           SPI_sck <= sck1; // delay SCK to setup
+           
+           SPI_cs <= cs;
+           
+           case (rdecii)
+                1: // @(posedge SCK)  // SPI transmit/receive: data setup edge
+                begin
+                    if (!cs && (state_read || state_write || state_single))
                     begin
-                        SPI_sdi <= configuration_addr_read [frame_bit_counter_out];
-                        frame_bit_counter_out <= frame_bit_counter_out - 1;
-                        if (!frame_bit_counter_out) 
-                            state_read <= 2;
+                        sck <= 1; // gen SPI SCK, action state to latch data in/out
                     end
-                    2: // un-serialize read data
-                    begin
-                        reg_data_in[frame_bit_counter_in] <= wire_SPI_sdn[0];
-                        frame_bit_counter_in <= frame_bit_counter_in - 1;
-                        if (!frame_bit_counter_in)
-                            state_read <= 3; // completed
-                    end
-                    3:  // completed
-                    begin
-                        reg_dac_data_cfg <= reg_data_in;
-                        SPI_cs <= 1; // deassert
-                        state_read <= 0; // idle
-                    end
-                endcase
-
-                case (state_write)
-                    1: // serialize read address data
-                    begin
-                        SPI_sdi <= configuration_addr_wdata [frame_bit_counter_out];
-                        frame_bit_counter_out <= frame_bit_counter_out - 1;
-                        if (!frame_bit_counter_out) 
-                            state_write <= 3;
-                    end
-                    3:  // completed
-                    begin
-                        SPI_cs <= 1; // deassert
-                        state_write <= 0; // idle
-                    end
-                endcase
-
-                case (state_stream) // keep triggering single concersions
-                    1:
-                    begin
-                        if (!state_single) // Ready? Restart!
-                        begin
-                            state_single <= 1;
-                            SPI_cs <= 0; // assert
-                        end
-                    end                 
-                endcase
+                    else                                 
+                        cs <= 1; // deassert
+                end
                 
-                case (state_single) // start single conversion and read
-                    1: // initiate, clear data
-                    begin
-                        SPI_cnv <= 1; // start CNV
-                        reg_dac_data_ser[0] <= 0;
-                        reg_dac_data_ser[1] <= 0;
-                        state_single <= 2;
-                    end                 
-                    2:  // wait for conversion result
-                    begin
-                        SPI_cnv <= 0; // wait busy
-                        if (!wire_SPI_busy)
+                0:   // @(negedge SCK) // SPI clock, prepare data, manage
+                begin
+                    sck <= 0; // gen SPI SCK, setup state
+    
+                    case (state_read)
+                        1: // serialize read address data
                         begin
-                            SPI_cs <= 0; // initiate
-                            frame_bit_counter_in  <= 24;
-                            state_single <= 3;
+                            SPI_sdi <= configuration_addr_read [frame_bit_counter_out];
+                            if (!frame_bit_counter_out)
+                                state_read <= 2;
+                            else
+                                frame_bit_counter_out <= frame_bit_counter_out - 1;
                         end
-                    end                 
-                    3: // serialize read address data
-                    begin
-                        reg_dac_data_ser[frame_bit_counter_in][0] <= wire_SPI_sdn[0];
-                        reg_dac_data_ser[frame_bit_counter_in][1] <= wire_SPI_sdn[1];
-                        frame_bit_counter_in <= frame_bit_counter_in - 1;
-                        if (!frame_bit_counter_in)
-                            state_single <= 4; // completed
-                    end
-                    4:  // completed, store data
-                    begin
-                        reg_dac_data_cfg <= reg_data_in;
-                        SPI_cs <= 1; // deassert
-                        state_read <= 0; // idle
-                        reg_dac_data[0] <= reg_dac_data_ser[0];
-                        reg_dac_data[1] <= reg_dac_data_ser[1];
-                        state_single <= 5;
-                    end
-                    5:  // quite period
-                    begin
-                        state_single <= 6;
-                    end
-                    6:  // quite period
-                    begin
-                        state_single <= 0;
-                    end
-                endcase
-            end
-        endcase
+                        2: // un-serialize read data
+                        begin
+                            reg_data_in[frame_bit_counter_in] <= wire_SPI_sdn[0];
+                            if (!frame_bit_counter_in)
+                            begin
+                                state_read <= 0; // completed
+                                reg_dac_data_cfg <= reg_data_in;
+                                //state_read <= 0; // idle
+                            end
+                            else                     
+                                frame_bit_counter_in <= frame_bit_counter_in - 1;
+                        end
+                        3:  // completed
+                        begin
+                        end
+                    endcase
+    
+                    case (state_write)
+                        1: // serialize read address data
+                        begin
+                            SPI_sdi <= configuration_addr_wdata [frame_bit_counter_out];
+                            if (!frame_bit_counter_out)
+                                state_write <= 0; // idle
+                            else
+                                frame_bit_counter_out <= frame_bit_counter_out - 1;
+                        end
+                    endcase
+    
+                    case (state_stream) // keep triggering single concersions
+                        1:
+                        begin
+                            if (!state_single) // Ready? Restart!
+                            begin
+                                state_single <= 1;
+                            end
+                        end                 
+                    endcase
+                    
+                    case (state_single) // start single conversion and read
+                        1: // initiate, clear data
+                        begin
+                            cs  <= 0; // assert
+                            SPI_cnv <= 1; // start CNV
+                            reg_dac_data_ser[0] <= 0;
+                            reg_dac_data_ser[1] <= 0;
+                            state_single <= 2;
+                        end                 
+                        2:  // wait for conversion result
+                        begin
+                            SPI_cnv <= 0; // wait busy
+                            if (!wire_SPI_busy)
+                            begin
+                                frame_bit_counter_in  <= 24;
+                                state_single <= 3;
+                            end
+                        end                 
+                        3: // serialize read address data
+                        begin
+                            reg_dac_data_ser[frame_bit_counter_in][0] <= wire_SPI_sdn[0];
+                            reg_dac_data_ser[frame_bit_counter_in][1] <= wire_SPI_sdn[1];
+                            if (!frame_bit_counter_in)
+                            begin
+                                state_single <= 4; // completed
+                            end
+                            else                
+                                frame_bit_counter_in <= frame_bit_counter_in - 1;
+                        end
+                        4:  // completed, store data
+                        begin
+                            reg_dac_data_cfg <= reg_data_in;
+                            state_read <= 0; // idle
+                            reg_dac_data[0] <= reg_dac_data_ser[0];
+                            reg_dac_data[1] <= reg_dac_data_ser[1];
+                            state_single <= 5;
+                        end
+                        5:  // quite period
+                        begin
+                            state_single <= 6;
+                        end
+                        6:  // quite period
+                        begin
+                            state_single <= 0;
+                        end
+                    endcase
+                end
+            endcase
+        end
     end
-
+    
 assign M_AXIS1_tdata  = reg_dac_data[0];
 assign M_AXIS1_tvalid = 1;
 assign M_AXIS2_tdata  = reg_dac_data[1];

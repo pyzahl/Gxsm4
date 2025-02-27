@@ -226,8 +226,8 @@ wire w_spi_cs;
 wire w_spi_sdi;
 wire w_spi_reset;
 wire w_spi_cnv;
-wire w_spi_busy;
-wire [7:0] w_spi_sdn;
+wire w_spi_busy=0;
+wire [7:0] w_spi_sdn=1;
 
 wire [31:0] ad_mon0;
 wire [31:0] ad_mon1;
@@ -365,10 +365,23 @@ print (adjust (100))
         confaddr=0; #10 
         vector = {32'd3,  32'd0, 32'h00000, 32'h81 }; #1 
         confaddr=50000; #10 
-        confaddr=0; #50 // module config cycle done
+        confaddr=0; #10 // module config cycle done
         vector = {32'd3,  32'd0, 32'h00000, 32'h00 }; #1 
         confaddr=50000; #10 
         confaddr=0; #50 // module config cycle done
+
+        // RESET MARK
+        vector = {32'd3,  32'd0, 32'h00000, 32'h00 }; #1 
+        confaddr=50000; #2
+        confaddr=0; #50 // module config cycle done
+        confaddr=0; #10 
+        vector = {32'd3,  32'd0, 32'h00000, 32'h81 }; #1 
+        confaddr=50000; #2 
+        confaddr=0; #10 // module config cycle done
+        vector = {32'd3,  32'd0, 32'h00000, 32'h00 }; #1 
+        confaddr=50000; #2 
+        confaddr=0; #50 // module config cycle done
+        // ====
 
         // CONF MODE WRITE
         confaddr=0; #10 
@@ -376,13 +389,39 @@ print (adjust (100))
         confaddr=50000; #10 
         confaddr=0; #600 // module config cycle done
 
-        // CONF MODE READ
+         // RESET MARK
+        vector = {32'd3,  32'd0, 32'h00000, 32'h00 }; #1 
+        confaddr=50000; #2
+        confaddr=0; #50 // module config cycle done
         confaddr=0; #10 
-        vector = {32'd3,  32'd0, 32'h0a000, 32'h03 }; #1 
+        vector = {32'd3,  32'd0, 32'h00000, 32'h81 }; #1 
+        confaddr=50000; #2
+        confaddr=0; #10 // module config cycle done
+        vector = {32'd3,  32'd0, 32'h00000, 32'h00 }; #1 
+        confaddr=50000; #2 
+        confaddr=0; #50 // module config cycle done
+        // ====
+
+       // CONF MODE READ
+        confaddr=0; #10 
+        vector = {32'd3,  32'd0, 32'h0a001, 32'h03 }; #1 
         confaddr=50000; #10 
         confaddr=0; #600 // module config cycle done
     
-        // CNV single
+         // RESET MARK
+        vector = {32'd3,  32'd0, 32'h00000, 32'h00 }; #1 
+        confaddr=50000; #2
+        confaddr=0; #50 // module config cycle done
+        confaddr=0; #10 
+        vector = {32'd3,  32'd0, 32'h00000, 32'h81 }; #1 
+        confaddr=50000; #2 
+        confaddr=0; #10 // module config cycle done
+        vector = {32'd3,  32'd0, 32'h00000, 32'h00 }; #1 
+        confaddr=50000; #2 
+        confaddr=0; #50 // module config cycle done
+        // ====
+
+       // CNV single
         vector = {32'd3,  32'd0, 32'h00000, 32'h09 }; #1 
         confaddr=50000; #10 
         confaddr=0; #600 // module config cycle done

@@ -11,15 +11,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="162.960 ns"></ZoomStartTime>
-      <ZoomEndTime time="1,555.461 ns"></ZoomEndTime>
-      <Cursor1Time time="56,000.000 ns"></Cursor1Time>
+      <ZoomStartTime time="778.800 ns"></ZoomStartTime>
+      <ZoomEndTime time="1,367.401 ns"></ZoomEndTime>
+      <Cursor1Time time="6,000.000 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
-      <NameColumnWidth column_width="405"></NameColumnWidth>
-      <ValueColumnWidth column_width="155"></ValueColumnWidth>
+      <NameColumnWidth column_width="313"></NameColumnWidth>
+      <ValueColumnWidth column_width="147"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="59" />
+   <WVObjectSize size="64" />
    <wvobject type="logic" fp_name="/tb_spm_ad/pclk">
       <obj_property name="ElementShortName">pclk</obj_property>
       <obj_property name="ObjectShortName">pclk</obj_property>
@@ -337,5 +337,35 @@
    <wvobject type="logic" fp_name="/tb_spm_ad/axis_AD463_tb/configuration_write">
       <obj_property name="ElementShortName">configuration_write</obj_property>
       <obj_property name="ObjectShortName">configuration_write</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_AD463_tb/configuration_addr_read">
+      <obj_property name="ElementShortName">configuration_addr_read[24:0]</obj_property>
+      <obj_property name="ObjectShortName">configuration_addr_read[24:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_AD463_tb/configuration_addr_wdata">
+      <obj_property name="ElementShortName">configuration_addr_wdata[24:0]</obj_property>
+      <obj_property name="ObjectShortName">configuration_addr_wdata[24:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_AD463_tb/reg_dac_data_ser">
+      <obj_property name="ElementShortName">reg_dac_data_ser[1:0][31:0]</obj_property>
+      <obj_property name="ObjectShortName">reg_dac_data_ser[1:0][31:0]</obj_property>
+      <wvobject type="array" fp_name="/tb_spm_ad/axis_AD463_tb/reg_dac_data_ser[1]">
+         <obj_property name="ElementShortName">[1][31:0]</obj_property>
+         <obj_property name="ObjectShortName">[1][31:0]</obj_property>
+         <obj_property name="isExpanded"></obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_spm_ad/axis_AD463_tb/reg_dac_data_ser[0]">
+         <obj_property name="ElementShortName">[0][31:0]</obj_property>
+         <obj_property name="ObjectShortName">[0][31:0]</obj_property>
+         <obj_property name="isExpanded"></obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_AD463_tb/reg_dac_data">
+      <obj_property name="ElementShortName">reg_dac_data[1:0][31:0]</obj_property>
+      <obj_property name="ObjectShortName">reg_dac_data[1:0][31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_AD463_tb/reg_data_in">
+      <obj_property name="ElementShortName">reg_data_in[63:0]</obj_property>
+      <obj_property name="ObjectShortName">reg_data_in[63:0]</obj_property>
    </wvobject>
 </wave_config>
