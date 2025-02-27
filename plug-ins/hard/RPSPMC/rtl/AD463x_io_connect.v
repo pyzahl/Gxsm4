@@ -75,12 +75,17 @@ module AD463x_io_connect #(
     (* X_INTERFACE_PARAMETER = "FREQ_HZ 30000000, ASSOCIATED_CLKEN PMD_clk, ASSOCIATED_BUSIF PMD" *)
     input PMD_clk,
     input PMD_sync,
-    input [NUM_DAC-1:0] PMD_dac
+    input [NUM_DAC-1:0] PMD_dac,
+
+// dummy
+   output [7:0] RP_exp_out,
+   output [4:0] RP_exp_out_p
+
 );
 
-   wire [7:0] RP_exp_out;
-   wire [4:0] RP_exp_out_p;
-   
+   //wire [7:0] RP_exp_out;
+   //wire [4:0] RP_exp_out_p;
+
 
 // PMODS: AD5791_io_connect
 // ===========================================================================
