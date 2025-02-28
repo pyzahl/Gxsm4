@@ -142,16 +142,16 @@ IOBUF clk_iobuf  (.O(RP_exp_out[7]),   .IO(exp_n_io[7]), .I(PMD_clk),    .T(0) )
 // FIXED ASSIGNMNETS for one data lane each on SD0, SD4 => D0P, D1P
 IOBUF dac_read_iobuf_AD_CH0   (.O(SPI_sdn[0]),  .IO(exp_p_io[0]), .I(0), .T(1) );
 IOBUF dac_read_iobuf_AD_CH1   (.O(SPI_sdn[1]),  .IO(exp_p_io[1]), .I(0), .T(1) );
-if (EXP_IO_WIDTH > 8)
-begin
-    //IOBUF dac_read_iobuf_AD_CH01  (.O(SPI_sdn[2]),  .IO(exp_n_io[10]),.I(0), .T(1) );
-    //IOBUF dac_read_iobuf_AD_CH02  (.O(SPI_sdn[4]),  .IO(exp_n_io[9]), .I(0), .T(1) );
-    //IOBUF dac_read_iobuf_AD_CH03  (.O(SPI_sdn[6]),  .IO(exp_n_io[8]), .I(0), .T(1) );
+//if (EXP_IO_WIDTH > 8)
+//begin
+    IOBUF dac_read_iobuf_AD_CH01  (.O(SPI_sdn[2]),  .IO(exp_n_io[10]),.I(0), .T(1) );
+    IOBUF dac_read_iobuf_AD_CH02  (.O(SPI_sdn[4]),  .IO(exp_n_io[9]), .I(0), .T(1) );
+    IOBUF dac_read_iobuf_AD_CH03  (.O(SPI_sdn[6]),  .IO(exp_n_io[8]), .I(0), .T(1) );
     
-    //IOBUF dac_read_iobuf_AD_CH11  (.O(SPI_sdn[3]),  .IO(exp_p_io[8]), .I(0), .T(1) );
-    //IOBUF dac_read_iobuf_AD_CH12  (.O(SPI_sdn[5]),  .IO(exp_p_io[9]), .I(0), .T(1) );
-    //IOBUF dac_read_iobuf_AD_CH13  (.O(SPI_sdn[7]),  .IO(exp_p_io[10]),.I(0), .T(1) );
-end
+    IOBUF dac_read_iobuf_AD_CH11  (.O(SPI_sdn[3]),  .IO(exp_p_io[8]), .I(0), .T(1) );
+    IOBUF dac_read_iobuf_AD_CH12  (.O(SPI_sdn[5]),  .IO(exp_p_io[9]), .I(0), .T(1) );
+    IOBUF dac_read_iobuf_AD_CH13  (.O(SPI_sdn[7]),  .IO(exp_p_io[10]),.I(0), .T(1) );
+//end
 IOBUF dac_read_iobuf_AD_Busy  (.O(SPI_busy),    .IO(exp_p_io[4]), .I(0), .T(1) );
    
 IOBUF rst_iobuf  (.O(RP_exp_out_p[0]),   .IO(exp_p_io[2]), .I(SPI_reset),    .T(0) );
