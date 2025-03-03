@@ -76,8 +76,7 @@ set_property DRIVE 8 [get_ports adc_csn_o]
 
 # data
 
-set_property IOSTANDARD LVCMOS18 [get_ports {dac_dat_o[*]}]
-##set_property IOSTANDARD LVCMOS33 [get_ports {dac_dat_o[*]}] ## DEFAULT
+set_property IOSTANDARD LVCMOS33 [get_ports {dac_dat_o[*]}]
 set_property SLEW FAST [get_ports {dac_dat_o[*]}]
 set_property DRIVE 8 [get_ports {dac_dat_o[*]}]
 # set_property IOB TRUE [get_ports {dac_dat_o[*]}]
@@ -99,11 +98,10 @@ set_property PACKAGE_PIN D19 [get_ports {dac_dat_o[13]}]
 
 # control
 
-## default: all LVCMOS33 
-set_property IOSTANDARD LVCMOS18 [get_ports dac_clk_o]
-set_property IOSTANDARD LVCMOS18 [get_ports dac_rst_o]
-set_property IOSTANDARD LVCMOS18 [get_ports dac_sel_o]
-set_property IOSTANDARD LVCMOS18 [get_ports dac_wrt_o]
+set_property IOSTANDARD LVCMOS33 [get_ports dac_clk_o]
+set_property IOSTANDARD LVCMOS33 [get_ports dac_rst_o]
+set_property IOSTANDARD LVCMOS33 [get_ports dac_sel_o]
+set_property IOSTANDARD LVCMOS33 [get_ports dac_wrt_o]
 set_property SLEW FAST [get_ports dac_*_o]
 set_property DRIVE 8 [get_ports dac_clk_o]
 set_property DRIVE 8 [get_ports dac_rst_o]
@@ -133,12 +131,13 @@ set_property PACKAGE_PIN U13 [get_ports {dac_pwm_o[3]}]
 ### exp_p[0..7], 8..10, exp_n[8..10]:  AD463x 1.8V
 
 ### Expansion connector -- RPSPMC hat
-set_property IOSTANDARD LVCMOS18 [get_ports {exp_p_io[*]}]
-set_property IOSTANDARD LVCMOS18 [get_ports {exp_n_io[*]}]
+
+### PMODs  on exp_n_io[0..7] are LVCMOS33 or LVCOMS18 OK
+### AD463x on exp_p_io[0..7] + [exp_n_io8..10, expo_p_io_8..10] must be LVCMOS18 (or level converted -- at up to 100MHz SPI clock ideally)
 
 ### Expansion connector
-### set_property IOSTANDARD LVCMOS33 [get_ports {exp_p_io[*]}] ## default
-### set_property IOSTANDARD LVCMOS33 [get_ports {exp_n_io[*]}] ## default
+set_property IOSTANDARD LVCMOS33 [get_ports {exp_p_io[*]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {exp_n_io[*]}]
 set_property SLEW FAST [get_ports {exp_p_io[*]}]
 set_property SLEW FAST [get_ports {exp_n_io[*]}]
 set_property DRIVE 8 [get_ports {exp_p_io[*]}]
@@ -238,8 +237,7 @@ set_property PACKAGE_PIN P19 [get_ports {daisy_n_i[1]}]
 
 ### LED
 
-set_property IOSTANDARD LVCMOS18 [get_ports {led_o[*]}]
-##set_property IOSTANDARD LVCMOS33 [get_ports {led_o[*]}] ## default
+set_property IOSTANDARD LVCMOS33 [get_ports {led_o[*]}]
 set_property SLEW SLOW [get_ports {led_o[*]}]
 set_property DRIVE 8 [get_ports {led_o[*]}]
 

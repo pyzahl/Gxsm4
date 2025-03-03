@@ -65,6 +65,8 @@ module tb_spm_ad(
 
     reg dma_ready=1;
 
+    reg [16:0] spi_waits=(2*32+10)*32;
+
     wire [31:0] wx; // vector components
     wire [31:0] wy; // ..
     wire [31:0] wz; // ..
@@ -360,76 +362,97 @@ print (adjust (100))
         // INIT AD463x
         // RESET
         vector = {32'd3,  32'd0, 32'h00000, 32'h00 }; #1 
-        confaddr=50000; #10 
-        confaddr=0; #50 // module config cycle done
-        confaddr=0; #10 
-        vector = {32'd3,  32'd0, 32'h00000, 32'h81 }; #1 
-        confaddr=50000; #10 
-        confaddr=0; #10 // module config cycle done
+        confaddr=50000; #10; confaddr=0; #50 // module config cycle done
+        vector = {32'd3,  32'd0, 32'h00000, 32'h80 }; #1 
+        confaddr=50000; #30; confaddr=0; #10 // module config cycle done
         vector = {32'd3,  32'd0, 32'h00000, 32'h00 }; #1 
-        confaddr=50000; #10 
-        confaddr=0; #50 // module config cycle done
+        confaddr=50000; #10; confaddr=0; #50 // module config cycle done
+
+        #100;
 
         // RESET MARK
         vector = {32'd3,  32'd0, 32'h00000, 32'h00 }; #1 
-        confaddr=50000; #2
-        confaddr=0; #50 // module config cycle done
-        confaddr=0; #10 
-        vector = {32'd3,  32'd0, 32'h00000, 32'h81 }; #1 
-        confaddr=50000; #2 
-        confaddr=0; #10 // module config cycle done
+        confaddr=50000; #2; confaddr=0; #50 // module config cycle done
+        vector = {32'd3,  32'd0, 32'h00000, 32'h80 }; #1 
+        confaddr=50000; #10; confaddr=0; #10 // module config cycle done
         vector = {32'd3,  32'd0, 32'h00000, 32'h00 }; #1 
-        confaddr=50000; #2 
-        confaddr=0; #50 // module config cycle done
+        confaddr=50000; #2; confaddr=0; #50 // module config cycle done
         // ====
 
-        // CONF MODE WRITE
+        // CONF MODE WRITE -- INIT
         confaddr=0; #10 
         vector = {32'd3,  32'd0, 32'h0a000, 32'h05 }; #1 
         confaddr=50000; #10 
-        confaddr=0; #600 // module config cycle done
+        confaddr=0; #spi_waits // module config cycle done
 
-         // RESET MARK
+         // RESET MARK SHORT
         vector = {32'd3,  32'd0, 32'h00000, 32'h00 }; #1 
-        confaddr=50000; #2
-        confaddr=0; #50 // module config cycle done
-        confaddr=0; #10 
-        vector = {32'd3,  32'd0, 32'h00000, 32'h81 }; #1 
-        confaddr=50000; #2
-        confaddr=0; #10 // module config cycle done
+        confaddr=50000; #2; confaddr=0; #50 // module config cycle done
+        confaddr=0; #10; vector = {32'd3,  32'd0, 32'h00000, 32'h80 }; #1 
+        confaddr=50000; #2; confaddr=0; #10 // module config cycle done
         vector = {32'd3,  32'd0, 32'h00000, 32'h00 }; #1 
-        confaddr=50000; #2 
-        confaddr=0; #50 // module config cycle done
+        confaddr=50000; #2; confaddr=0; #50 // module config cycle done
         // ====
 
-       // CONF MODE READ
+       // CONF MODE WRITE TEST a000
+        confaddr=0; #10 
+        vector = {32'd3,  32'h0a00000, 32'h0, 32'h05 }; #1 
+        confaddr=50000; #10 
+        confaddr=0; #spi_waits // module config cycle done
+
+       // CONF MODE WRITE TEST a010
+        confaddr=0; #10 
+        vector = {32'd3,  32'h0a010aa, 32'h0, 32'h05 }; #1 
+        confaddr=50000; #10 
+        confaddr=0; #spi_waits // module config cycle done
+    
+       // CONF MODE WRITE TEST a010
+        confaddr=0; #10 
+        vector = {32'd3,  32'h0a0a0ee, 32'h0, 32'h05 }; #1 
+        confaddr=50000; #10 
+        confaddr=0; #spi_waits // module config cycle done
+
+         // RESET MARK SHORT
+        vector = {32'd3,  32'd0, 32'h00000, 32'h00 }; #1 
+        confaddr=50000; #2; confaddr=0; #50 // module config cycle done
+        confaddr=0; #10; vector = {32'd3,  32'd0, 32'h00000, 32'h80 }; #1 
+        confaddr=50000; #2; confaddr=0; #10 // module config cycle done
+        vector = {32'd3,  32'd0, 32'h00000, 32'h00 }; #1 
+        confaddr=50000; #2; confaddr=0; #50 // module config cycle done
+        // ====
+         // RESET MARK SHORT
+        vector = {32'd3,  32'd0, 32'h00000, 32'h00 }; #1 
+        confaddr=50000; #2; confaddr=0; #50 // module config cycle done
+        confaddr=0; #10; vector = {32'd3,  32'd0, 32'h00000, 32'h80 }; #1 
+        confaddr=50000; #2; confaddr=0; #10 // module config cycle done
+        vector = {32'd3,  32'd0, 32'h00000, 32'h00 }; #1 
+        confaddr=50000; #2; confaddr=0; #50 // module config cycle done
+        // ====
+
+       // CONF MODE READ TEST a001
         confaddr=0; #10 
         vector = {32'd3,  32'd0, 32'h0a001, 32'h03 }; #1 
         confaddr=50000; #10 
-        confaddr=0; #600 // module config cycle done
+        confaddr=0; #spi_waits // module config cycle done
     
-         // RESET MARK
+         // RESET MARK SHORT
         vector = {32'd3,  32'd0, 32'h00000, 32'h00 }; #1 
-        confaddr=50000; #2
-        confaddr=0; #50 // module config cycle done
-        confaddr=0; #10 
-        vector = {32'd3,  32'd0, 32'h00000, 32'h81 }; #1 
-        confaddr=50000; #2 
-        confaddr=0; #10 // module config cycle done
+        confaddr=50000; #2; confaddr=0; #50 // module config cycle done
+        confaddr=0; #10; vector = {32'd3,  32'd0, 32'h00000, 32'h80 }; #1 
+        confaddr=50000; #2; confaddr=0; #10 // module config cycle done
         vector = {32'd3,  32'd0, 32'h00000, 32'h00 }; #1 
-        confaddr=50000; #2 
-        confaddr=0; #50 // module config cycle done
+        confaddr=50000; #2; confaddr=0; #50 // module config cycle done
         // ====
 
        // CNV single
         vector = {32'd3,  32'd0, 32'h00000, 32'h09 }; #1 
         confaddr=50000; #10 
-        confaddr=0; #600 // module config cycle done
+        confaddr=0; #spi_waits // module config cycle done
 
         // AXI STREAMING
         vector = {32'd3,  32'd0, 32'h00000, 32'h10 }; #1 
         confaddr=50000; #10 
-        confaddr=0; #200 // module config cycle done
+        confaddr=0; #spi_waits // module config cycle done
 
 
 

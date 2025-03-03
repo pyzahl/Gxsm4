@@ -131,6 +131,7 @@
 #define AD463X_REG_READ_DUMMY		0x00
 #define AD463X_REG_WRITE        	0x00
 #define AD463X_REG_READ		    	NO_OS_BIT(7)
+#define AD463X_REG_READ_B15     	NO_OS_BIT(15)
 #define AD463X_REG_CHAN_OFFSET(ch, pos)	(AD463X_REG_OFFSET_BASE + (3 * ch) + pos)
 #define AD463X_REG_CHAN_GAIN(ch, pos)	(AD463X_REG_GAIN_BASE + (2 * ch) + pos)
 /* IO */
