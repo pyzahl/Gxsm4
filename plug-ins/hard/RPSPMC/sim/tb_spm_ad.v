@@ -360,92 +360,49 @@ print (adjust (100))
         //parameter gvp_vectorX_programming_reg_address  = 500;
 
         // INIT AD463x
-        // RESET
-        vector = {32'd3,  32'd0, 32'h00000, 32'h00 }; #1 
-        confaddr=50000; #10; confaddr=0; #50 // module config cycle done
-        vector = {32'd3,  32'd0, 32'h00000, 32'h80 }; #1 
-        confaddr=50000; #30; confaddr=0; #10 // module config cycle done
-        vector = {32'd3,  32'd0, 32'h00000, 32'h00 }; #1 
-        confaddr=50000; #10; confaddr=0; #50 // module config cycle done
+        // RESET MARK
+        vector = {32'd0,  32'h0000000, 32'h00 }; #1; confaddr=50000; #10; confaddr=0; #50 // make sure reset deasserted
+        vector = {32'd0,  32'h0000000, 32'h80 }; #1; confaddr=50000; #10; confaddr=0; #50 // assert RESET
+        vector = {32'd0,  32'h0000000, 32'h00 }; #1; confaddr=50000; #10; confaddr=0; #50 // release RESET
 
         #100;
 
         // RESET MARK
-        vector = {32'd3,  32'd0, 32'h00000, 32'h00 }; #1 
-        confaddr=50000; #2; confaddr=0; #50 // module config cycle done
-        vector = {32'd3,  32'd0, 32'h00000, 32'h80 }; #1 
-        confaddr=50000; #10; confaddr=0; #10 // module config cycle done
-        vector = {32'd3,  32'd0, 32'h00000, 32'h00 }; #1 
-        confaddr=50000; #2; confaddr=0; #50 // module config cycle done
+        vector = {32'd0,  32'h00000000, 32'h00 }; #1; confaddr=50000; #10; confaddr=0; #50 // make sure reset deasserted
+        vector = {32'd0,  32'h00000000, 32'h80 }; #1; confaddr=50000; #10; confaddr=0; #30 // assert RESET
+        vector = {32'd0,  32'h00000000, 32'h00 }; #1; confaddr=50000; #10; confaddr=0; #50 // release RESET
         // ====
 
-        // CONF MODE WRITE -- INIT
-        confaddr=0; #10 
-        vector = {32'd3,  32'd0, 32'h0a000, 32'h05 }; #1 
-        confaddr=50000; #10 
-        confaddr=0; #spi_waits // module config cycle done
+        // CONF MODE WRITE -- INIT  W: { 1'b0, 0x7FFF (Address 16'b) , 0x00 (data 8'b)}
+        vector = {32'd24, 32'h00a00001, 32'h03 }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // let SPI finish
 
-         // RESET MARK SHORT
-        vector = {32'd3,  32'd0, 32'h00000, 32'h00 }; #1 
-        confaddr=50000; #2; confaddr=0; #50 // module config cycle done
-        confaddr=0; #10; vector = {32'd3,  32'd0, 32'h00000, 32'h80 }; #1 
-        confaddr=50000; #2; confaddr=0; #10 // module config cycle done
-        vector = {32'd3,  32'd0, 32'h00000, 32'h00 }; #1 
-        confaddr=50000; #2; confaddr=0; #50 // module config cycle done
+        // RESET MARK
+        vector = {32'd0,  32'h00000000, 32'h00 }; #1; confaddr=50000; #10; confaddr=0; #50 // make sure reset deasserted
+        vector = {32'd0,  32'h00000000, 32'h80 }; #1; confaddr=50000; #10; confaddr=0; #10 // assert RESET
+        vector = {32'd0,  32'h00000000, 32'h00 }; #1; confaddr=50000; #10; confaddr=0; #50 // release RESET
         // ====
 
-       // CONF MODE WRITE TEST a000
-        confaddr=0; #10 
-        vector = {32'd3,  32'h0a00000, 32'h0, 32'h05 }; #1 
-        confaddr=50000; #10 
-        confaddr=0; #spi_waits // module config cycle done
+       // CONF MODE WRITE TEST a000,00
+        vector = {32'd24,  32'h00a00000, 32'h03 }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // let SPI finish
 
        // CONF MODE WRITE TEST a010
-        confaddr=0; #10 
-        vector = {32'd3,  32'h0a010aa, 32'h0, 32'h05 }; #1 
-        confaddr=50000; #10 
-        confaddr=0; #spi_waits // module config cycle done
+        vector = {32'd24,  32'h00a010aa, 32'h03 }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // let SPI finish
     
-       // CONF MODE WRITE TEST a010
-        confaddr=0; #10 
-        vector = {32'd3,  32'h0a0a0ee, 32'h0, 32'h05 }; #1 
-        confaddr=50000; #10 
-        confaddr=0; #spi_waits // module config cycle done
+       // CONF MODE WRITE TEST a0a0ee
+        vector = {32'd24,  32'h0000a0ee, 32'h03 }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // let SPI finish
 
-         // RESET MARK SHORT
-        vector = {32'd3,  32'd0, 32'h00000, 32'h00 }; #1 
-        confaddr=50000; #2; confaddr=0; #50 // module config cycle done
-        confaddr=0; #10; vector = {32'd3,  32'd0, 32'h00000, 32'h80 }; #1 
-        confaddr=50000; #2; confaddr=0; #10 // module config cycle done
-        vector = {32'd3,  32'd0, 32'h00000, 32'h00 }; #1 
-        confaddr=50000; #2; confaddr=0; #50 // module config cycle done
-        // ====
-         // RESET MARK SHORT
-        vector = {32'd3,  32'd0, 32'h00000, 32'h00 }; #1 
-        confaddr=50000; #2; confaddr=0; #50 // module config cycle done
-        confaddr=0; #10; vector = {32'd3,  32'd0, 32'h00000, 32'h80 }; #1 
-        confaddr=50000; #2; confaddr=0; #10 // module config cycle done
-        vector = {32'd3,  32'd0, 32'h00000, 32'h00 }; #1 
-        confaddr=50000; #2; confaddr=0; #50 // module config cycle done
+        // RESET MARK
+        vector = {32'd0,  32'h00000000, 32'h00 }; #1; confaddr=50000; #10; confaddr=0; #50 // make sure reset deasserted
+        vector = {32'd0,  32'h00000000, 32'h80 }; #1; confaddr=50000; #10; confaddr=0; #10 // assert RESET
+        vector = {32'd0,  32'h00000000, 32'h00 }; #1; confaddr=50000; #10; confaddr=0; #50 // release RESET
         // ====
 
-       // CONF MODE READ TEST a001
-        confaddr=0; #10 
-        vector = {32'd3,  32'd0, 32'h0a001, 32'h03 }; #1 
-        confaddr=50000; #10 
-        confaddr=0; #spi_waits // module config cycle done
-    
-         // RESET MARK SHORT
-        vector = {32'd3,  32'd0, 32'h00000, 32'h00 }; #1 
-        confaddr=50000; #2; confaddr=0; #50 // module config cycle done
-        confaddr=0; #10; vector = {32'd3,  32'd0, 32'h00000, 32'h80 }; #1 
-        confaddr=50000; #2; confaddr=0; #10 // module config cycle done
-        vector = {32'd3,  32'd0, 32'h00000, 32'h00 }; #1 
-        confaddr=50000; #2; confaddr=0; #50 // module config cycle done
-        // ====
+       // CONF MODE READ TEST a0a000
+        vector = {32'd24,  32'h0001a000, 32'h03 }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // let SPI finish
+
 
        // CNV single
-        vector = {32'd3,  32'd0, 32'h00000, 32'h09 }; #1 
+        vector = {32'd24,  32'h00000, 32'h09 }; #1 
         confaddr=50000; #10 
         confaddr=0; #spi_waits // module config cycle done
 
