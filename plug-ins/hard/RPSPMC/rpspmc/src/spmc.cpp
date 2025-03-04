@@ -148,23 +148,39 @@ void rp_spmc_AD463x_init (){
         init_param.lane_mode   = AD463X_ONE_LANE_PER_CH;
         init_param.output_mode = AD463X_24_DIFF;
         init_param.data_rate   = AD463X_SDR_MODE; // AD463X_DDR_MODE
-                
+        init_param.spi_clock_divider = 125/5;
         ad463x_init(&dev, &init_param);
 
+
+#if 1 // TESTING
+        if (verbose > 1) fprintf(stderr, "##rp_spmc_AD463x_init ** TEST CONFIG RW **\n");
+	int32_t ret;
+	uint8_t data = 0;
+	uint32_t ch0, ch1;
+	ad463x_enter_config_mode (dev);
+	ad463x_spi_reg_read(dev, AD463X_CONFIG_TIMING, &data);
+	ad463x_spi_reg_write(dev, AD463X_REG_SCRATCH_PAD, AD463x_TEST_DATA);
+	ad463x_spi_reg_read(dev, AD463X_REG_SCRATCH_PAD, &data);
+
+        ad463x_read_single_sample (dev, &ch0, &ch1);
+        ad463x_read_single_sample (dev, &ch0, &ch1);
+        ad463x_read_single_sample (dev, &ch0, &ch1);
+        
         if (verbose > 1) fprintf(stderr, "##rp_spmc_AD463x_init ** (24_DIFF, ONE_LANE, SDR_MODE) ** TEST READINGS:\n");
-        for (int i=0; i<100; ++i){
-                uint32_t ch0, ch1;
+        for (int i=0; i<4; ++i){
                 ad463x_read_single_sample (dev, &ch0, &ch1);
                 fprintf (stderr, "%03d: %10d  %10d\n", i, ch0, ch1);
         }
-        rp_spmc_AD463x_set_stream_mode ();
+#endif
+        //rp_spmc_AD463x_set_stream_mode ();
 }
 
 void rp_spmc_AD463x_set_stream_mode (){
-	rp_spmc_module_config_int32 (MODULE_SETUP, SPMC_AD463X_CONFIG_MODE_AXI, MODULE_START_VECTOR); // DISABLE CONFIG MODE, ENABLE AXI for streaming
-	rp_spmc_module_config_int32 (MODULE_SETUP, 0,            MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_READ_ADDRESS));
-	rp_spmc_module_config_int32 (MODULE_SETUP, 0,            MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_WRITE_DATA));
-	rp_spmc_module_config_int32 (SPMC_AD463X_CONTROL_REG, 3, MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_N_BYTES));
+	rp_spmc_module_config_uint32 (MODULE_SETUP, SPMC_AD463X_CONFIG_MODE_CONFIG | SPMC_AD463X_CONFIG_MODE_AXI, MODULE_START_VECTOR); // DISABLE CONFIG MODE, ENABLE AXI for streaming
+	rp_spmc_module_config_uint32 (MODULE_SETUP, 0,             MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_WR_DATA));
+	rp_spmc_module_config_uint32 (MODULE_SETUP, 16,            MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_N_DECII));
+	rp_spmc_module_config_uint32 (SPMC_AD463X_CONTROL_REG, 24, MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_N_BITS));
+        
 }
 
 

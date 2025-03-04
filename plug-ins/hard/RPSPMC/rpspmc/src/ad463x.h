@@ -225,6 +225,8 @@ struct ad463x_init_param {
 	int32_t vref;
 	/** Output Mode */
 	uint8_t output_mode;
+	/** spi clock divider from 125MHz */
+        uint8_t spi_clock_divider;
 	/** enable spi dma */
 	bool spi_dma_enable;
 	/** enable spi engine offload */
@@ -279,6 +281,8 @@ struct ad463x_dev {
 	uint8_t real_bits_precision;
 	/** pgia availability */
 	bool has_pgia;
+	/** spi clock divider from 125MHz */
+        uint8_t spi_clock_divider;
 	/** enable spi dma */
 	bool spi_dma_enable;
 	/** enable spi engine offload */

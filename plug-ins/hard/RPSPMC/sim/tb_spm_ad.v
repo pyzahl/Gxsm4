@@ -361,56 +361,66 @@ print (adjust (100))
 
         // INIT AD463x
         // RESET MARK
-        vector = {32'd0,  32'h0000000, 32'h00 }; #1; confaddr=50000; #10; confaddr=0; #50 // make sure reset deasserted
-        vector = {32'd0,  32'h0000000, 32'h80 }; #1; confaddr=50000; #10; confaddr=0; #50 // assert RESET
-        vector = {32'd0,  32'h0000000, 32'h00 }; #1; confaddr=50000; #10; confaddr=0; #50 // release RESET
+        vector = {32'd8, 32'd0,  32'h0000000, 32'h00 }; #1; confaddr=50000; #10; confaddr=0; #50 // make sure reset deasserted
+        vector = {32'd8, 32'd0,  32'h0000000, 32'h80 }; #1; confaddr=50000; #10; confaddr=0; #50 // assert RESET
+        vector = {32'd8, 32'd0,  32'h0000000, 32'h00 }; #1; confaddr=50000; #10; confaddr=0; #50 // release RESET
 
         #100;
 
         // RESET MARK
-        vector = {32'd0,  32'h00000000, 32'h00 }; #1; confaddr=50000; #10; confaddr=0; #50 // make sure reset deasserted
-        vector = {32'd0,  32'h00000000, 32'h80 }; #1; confaddr=50000; #10; confaddr=0; #30 // assert RESET
-        vector = {32'd0,  32'h00000000, 32'h00 }; #1; confaddr=50000; #10; confaddr=0; #50 // release RESET
+        vector = {32'd8, 32'd0,  32'h00000000, 32'h00 }; #1; confaddr=50000; #10; confaddr=0; #50 // make sure reset deasserted
+        vector = {32'd8, 32'd0,  32'h00000000, 32'h80 }; #1; confaddr=50000; #10; confaddr=0; #30 // assert RESET
+        vector = {32'd8, 32'd0,  32'h00000000, 32'h00 }; #1; confaddr=50000; #10; confaddr=0; #50 // release RESET
         // ====
 
         // CONF MODE WRITE -- INIT  W: { 1'b0, 0x7FFF (Address 16'b) , 0x00 (data 8'b)}
-        vector = {32'd24, 32'h00a00001, 32'h03 }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // let SPI finish
+        vector = {32'd8, 32'd24, 32'h00a00001, 32'h03 }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // let SPI finish
 
         // RESET MARK
-        vector = {32'd0,  32'h00000000, 32'h00 }; #1; confaddr=50000; #10; confaddr=0; #50 // make sure reset deasserted
-        vector = {32'd0,  32'h00000000, 32'h80 }; #1; confaddr=50000; #10; confaddr=0; #10 // assert RESET
-        vector = {32'd0,  32'h00000000, 32'h00 }; #1; confaddr=50000; #10; confaddr=0; #50 // release RESET
+        vector = {32'd8, 32'd0,  32'h00000000, 32'h00 }; #1; confaddr=50000; #10; confaddr=0; #50 // make sure reset deasserted
+        vector = {32'd8, 32'd0,  32'h00000000, 32'h80 }; #1; confaddr=50000; #10; confaddr=0; #10 // assert RESET
+        vector = {32'd8, 32'd0,  32'h00000000, 32'h00 }; #1; confaddr=50000; #10; confaddr=0; #50 // release RESET
         // ====
 
        // CONF MODE WRITE TEST a000,00
-        vector = {32'd24,  32'h00a00000, 32'h03 }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // let SPI finish
+        vector = {32'd8, 32'd24,  32'h00a00000, 32'h03 }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // let SPI finish
 
        // CONF MODE WRITE TEST a010
-        vector = {32'd24,  32'h00a010aa, 32'h03 }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // let SPI finish
+        vector = {32'd8, 32'd24,  32'h00a010aa, 32'h03 }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // let SPI finish
     
        // CONF MODE WRITE TEST a0a0ee
-        vector = {32'd24,  32'h0000a0ee, 32'h03 }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // let SPI finish
+        vector = {32'd8, 32'd24,  32'h0000a0ee, 32'h03 }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // let SPI finish
 
         // RESET MARK
-        vector = {32'd0,  32'h00000000, 32'h00 }; #1; confaddr=50000; #10; confaddr=0; #50 // make sure reset deasserted
-        vector = {32'd0,  32'h00000000, 32'h80 }; #1; confaddr=50000; #10; confaddr=0; #10 // assert RESET
-        vector = {32'd0,  32'h00000000, 32'h00 }; #1; confaddr=50000; #10; confaddr=0; #50 // release RESET
+        vector = {32'd8, 32'd0,  32'h00000000, 32'h00 }; #1; confaddr=50000; #10; confaddr=0; #50 // make sure reset deasserted
+        vector = {32'd8, 32'd0,  32'h00000000, 32'h80 }; #1; confaddr=50000; #10; confaddr=0; #10 // assert RESET
+        vector = {32'd8, 32'd0,  32'h00000000, 32'h00 }; #1; confaddr=50000; #10; confaddr=0; #50 // release RESET
         // ====
 
        // CONF MODE READ TEST a0a000
-        vector = {32'd24,  32'h0001a000, 32'h03 }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // let SPI finish
+        vector = {32'd8, 32'd24,  32'h0001a000, 32'h03 }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // let SPI finish
 
 
        // CNV single
-        vector = {32'd24,  32'h00000, 32'h09 }; #1 
+        vector = {32'd8, 32'd24,  32'h00000, 32'h09 }; #1 
         confaddr=50000; #10 
         confaddr=0; #spi_waits // module config cycle done
 
         // AXI STREAMING
-        vector = {32'd3,  32'd0, 32'h00000, 32'h10 }; #1 
+        vector = {32'd4, 32'd24,  32'h00000, 32'h11 }; #1 
         confaddr=50000; #10 
         confaddr=0; #spi_waits // module config cycle done
 
+        #1500;
+
+        // RESET MARK
+        vector = {32'd8, 32'd0,  32'h00000000, 32'h00 }; #1; confaddr=50000; #10; confaddr=0; #50 // make sure reset deasserted
+        vector = {32'd8, 32'd0,  32'h00000000, 32'h80 }; #1; confaddr=50000; #10; confaddr=0; #10 // assert RESET
+        vector = {32'd8, 32'd0,  32'h00000000, 32'h00 }; #1; confaddr=50000; #10; confaddr=0; #50 // release RESET
+        // ====
+
+       // CONF MODE READ TEST a0a000
+        vector = {32'd8, 32'd24,  32'h0001a000, 32'h03 }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // let SPI finish
 
 
         // INIT GVP

@@ -235,18 +235,17 @@
 #define SPMC_AD463X_CONTROL_REG            50000
 #define SPMC_AD463X_CONFIG_MODE            0 // Bit0: activate config mode, Bit1: read config, Bit2: write config, Bit3: manual convert, Bit4: enable streaming to AXI, Bit7: SPI AD reset
 #define SPMC_AD463X_CONFIG_MODE_CONFIG  0x01
-#define SPMC_AD463X_CONFIG_MODE_READ    0x02
-#define SPMC_AD463X_CONFIG_MODE_WRITE   0x04
+#define SPMC_AD463X_CONFIG_MODE_RW      0x02
 #define SPMC_AD463X_CONFIG_MODE_CNV     0x08
 #define SPMC_AD463X_CONFIG_MODE_AXI     0x10
 #define SPMC_AD463X_CONFIG_MODE_B5      0x20
 #define SPMC_AD463X_CONFIG_MODE_B6      0x40
 #define SPMC_AD463X_CONFIG_MODE_RESET   0x80
 
-#define SPMC_AD463X_CONFIG_READ_ADDRESS    1 // address to read ************ Config Read  Address: Bit "A15": R=1 (send first), A14..A0  (16 BIT total), Then 8bit DATA in on SD0 from SCK17 .. 24
-#define SPMC_AD463X_CONFIG_WRITE_DATA      2 // address to write and data ** Config Write Address: Bit 23 is "A15": W=0 (send first), Bit 22:8: are A14..A0, Bit 7:0 are data D7:0 (24 BIT total Addr + Data)
-#define SPMC_AD463X_CONFIG_N_BYTES         3 // num bytes to read/write in config mode (** not yet used, fixed **) 
-
+#define SPMC_AD463X_CONFIG_WR_DATA         1 // address to write and data ** Config Write Address: Bit 23 is "A15": W=0/R=1 (send first), Bit 22:8: are A14..A0, Bit 7:0 are data D7:0 (24 BIT total Addr + Data)
+#define SPMC_AD463X_CONFIG_N_BITS          2 // total num bits to read/write in config mode, cnv and AXI stream more
+#define SPMC_AD463X_CONFIG_N_DECII         3 // SPI clock divider from 125 MHz
+                                             
 // MODULE READBACK REGISTER A,B ADRESS MAPPINGS
 #define SPMC_READBACK_Z_REG            100001
 #define SPMC_READBACK_BIAS_REG         100002 // Bias Sum, Gxsm Bias "U0" Set

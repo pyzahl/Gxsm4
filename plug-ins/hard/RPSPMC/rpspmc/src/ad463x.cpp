@@ -102,17 +102,17 @@ int32_t ad463x_spi_reg_read(struct ad463x_dev *dev,
 	*reg_data = buf[2];
 #endif
 
-	rp_spmc_module_config_uint32 (MODULE_SETUP, SPMC_AD463X_CONFIG_MODE_CONFIG | SPMC_AD463X_CONFIG_MODE_READ, MODULE_START_VECTOR); // SET CONFIG MODE for READ
-	rp_spmc_module_config_uint32 (MODULE_SETUP, (AD463X_REG_READ_B15) | (reg_addr & 0x7fff), MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_READ_ADDRESS));
-	rp_spmc_module_config_uint32 (MODULE_SETUP, 0,                                           MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_WRITE_DATA));
-	rp_spmc_module_config_uint32 (SPMC_AD463X_CONTROL_REG, 3,                                MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_N_BYTES));
+	rp_spmc_module_config_uint32 (MODULE_SETUP, SPMC_AD463X_CONFIG_MODE_CONFIG | SPMC_AD463X_CONFIG_MODE_RW, MODULE_START_VECTOR); // SET CONFIG MODE for READ
+	rp_spmc_module_config_uint32 (MODULE_SETUP, ((AD463X_REG_READ_B15) | (reg_addr & 0x7fff)) << 8, MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_WR_DATA));
+	rp_spmc_module_config_uint32 (MODULE_SETUP, dev->spi_clock_divider, MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_N_DECII));
+	rp_spmc_module_config_uint32 (SPMC_AD463X_CONTROL_REG, 24,                                      MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_N_BITS));
         unsigned int a,b;
         rp_spmc_module_read_config_data_u (SPMC_READBACK_AD463X_REG, &a, &b);
 	
 	*reg_data = a & 0xff;
 	
 	if (verbose > DBG_V_LEVEL)
-	  fprintf (stderr,"ad463x_spi_reg_read:  RA:%04x D:%02x => X:%08x\n", reg_addr, a, (AD463X_REG_READ_B15) | (reg_addr & 0x7fff));
+	  fprintf (stderr,"ad463x_spi_reg_read:  RA:%04x D:%02x => X:%08x [%08x %08x]\n", reg_addr, a&0xff, ((AD463X_REG_READ_B15) | (reg_addr & 0x7fff)) << 8, a, b);
 	
 	return 0;
 }
@@ -138,13 +138,20 @@ int32_t ad463x_spi_reg_write(struct ad463x_dev *dev,
 	return no_os_spi_write_and_read(dev->spi_desc, buf, 3); // ad463x_spi_reg_write PORTED BELOW
 #endif
 
-	if (verbose > DBG_V_LEVEL)
-	  fprintf (stderr,"ad463x_spi_reg_write: WA:%04x D:%02x => X:%08x\n", reg_addr, reg_data, ((reg_addr & 0x7fff) << 8) | reg_data);
+	//	if (verbose > DBG_V_LEVEL)
+	//	  fprintf (stderr,"ad463x_spi_reg_write: WA:%04x D:%02x => X:%08x\n", reg_addr, reg_data&0xff, ((reg_addr & 0x7fff) << 8) | (reg_data&0xff));
 
-	rp_spmc_module_config_uint32 (MODULE_SETUP, SPMC_AD463X_CONFIG_MODE_CONFIG | SPMC_AD463X_CONFIG_MODE_WRITE, MODULE_START_VECTOR); // SET CONFIG MODE for WRITE+data
-	rp_spmc_module_config_uint32 (MODULE_SETUP, 0,                                          MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_READ_ADDRESS));
-	rp_spmc_module_config_uint32 (MODULE_SETUP, ((reg_addr & 0x7fff) << 8) | reg_data,      MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_WRITE_DATA));
-	rp_spmc_module_config_uint32 (SPMC_AD463X_CONTROL_REG, 3,                               MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_N_BYTES));
+	rp_spmc_module_config_uint32 (MODULE_SETUP, SPMC_AD463X_CONFIG_MODE_CONFIG | SPMC_AD463X_CONFIG_MODE_RW, MODULE_START_VECTOR); // SET CONFIG MODE for WRITE+data
+	rp_spmc_module_config_uint32 (MODULE_SETUP, ((reg_addr & 0x7fff) << 8) | (reg_data & 0xff),  MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_WR_DATA));
+	rp_spmc_module_config_uint32 (MODULE_SETUP, dev->spi_clock_divider, MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_N_DECII));
+	rp_spmc_module_config_uint32 (SPMC_AD463X_CONTROL_REG, 24,                                   MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_N_BITS));
+
+#if 1 // TEST ONLY
+        unsigned int a,b;
+        rp_spmc_module_read_config_data_u (SPMC_READBACK_AD463X_REG, &a, &b);
+	fprintf (stderr,"ad463x_spi_reg_write: WA:%04x D:%02x => X:%08x [%08x %08x]\n", reg_addr, reg_data&0xff, ((reg_addr & 0x7fff) << 8) | (reg_data&0xff), a, b);
+#endif
+
 	return 0;
 }
 
@@ -171,10 +178,10 @@ int32_t ad463x_enter_config_mode(struct ad463x_dev *dev)
 	if (verbose > DBG_V_LEVEL)
 	  fprintf (stderr,"ad463x_enter_config_mode. WA: 0xA000\n");
 
-	rp_spmc_module_config_uint32 (MODULE_SETUP, SPMC_AD463X_CONFIG_MODE_CONFIG | SPMC_AD463X_CONFIG_MODE_WRITE, MODULE_START_VECTOR); // SET CONFIG MODE for WRITE+data
-	rp_spmc_module_config_uint32 (MODULE_SETUP, 0,            MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_READ_ADDRESS));
-	rp_spmc_module_config_uint32 (MODULE_SETUP, 0xA000 << 8,  MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_WRITE_DATA));
-	rp_spmc_module_config_uint32 (SPMC_AD463X_CONTROL_REG, 3, MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_N_BYTES));
+	rp_spmc_module_config_uint32 (MODULE_SETUP, SPMC_AD463X_CONFIG_MODE_CONFIG | SPMC_AD463X_CONFIG_MODE_RW, MODULE_START_VECTOR); // SET CONFIG MODE for WRITE+data
+	rp_spmc_module_config_uint32 (MODULE_SETUP, 0xA000 << 8,   MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_WR_DATA));
+	rp_spmc_module_config_uint32 (MODULE_SETUP, dev->spi_clock_divider, MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_N_DECII));
+	rp_spmc_module_config_uint32 (SPMC_AD463X_CONTROL_REG, 24, MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_N_BITS));
 
 	return 0;
 }
@@ -613,9 +620,9 @@ static int32_t ad463x_read_single_sample(struct ad463x_dev *dev,
 #endif
 
 	rp_spmc_module_config_uint32 (MODULE_SETUP, SPMC_AD463X_CONFIG_MODE_CONFIG | SPMC_AD463X_CONFIG_MODE_CNV, MODULE_START_VECTOR); // SET CONFIG MODE for CNV
-	rp_spmc_module_config_uint32 (MODULE_SETUP, 0,            MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_READ_ADDRESS));
-	rp_spmc_module_config_uint32 (MODULE_SETUP, 0,            MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_WRITE_DATA));
-	rp_spmc_module_config_uint32 (SPMC_AD463X_CONTROL_REG, 3, MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_N_BYTES));
+	rp_spmc_module_config_uint32 (MODULE_SETUP, 0,             MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_WR_DATA));
+	rp_spmc_module_config_uint32 (MODULE_SETUP, dev->spi_clock_divider, MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_N_DECII));
+	rp_spmc_module_config_uint32 (SPMC_AD463X_CONTROL_REG, 24, MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_N_BITS));
         rp_spmc_module_read_config_data_u (SPMC_READBACK_AD463X_REG, ch0_out, ch1_out);
 
 	if (verbose > DBG_V_LEVEL)
@@ -745,6 +752,33 @@ static int ad463x_fill_scale_tbl(struct ad463x_dev *dev)
 	}
 }
 
+void ad463x_reset (struct ad463x_dev *dev)
+{
+	/** Perform Hardware Reset of AD463x */
+	// release RESET
+	rp_spmc_module_config_uint32 (MODULE_SETUP, 0,             MODULE_START_VECTOR); // SET CONFIG MODE for CNV
+	rp_spmc_module_config_uint32 (MODULE_SETUP, 0,             MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_WR_DATA));
+	rp_spmc_module_config_uint32 (MODULE_SETUP, dev->spi_clock_divider, MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_N_DECII));
+	rp_spmc_module_config_uint32 (SPMC_AD463X_CONTROL_REG, 24, MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_N_BITS));
+
+	usleep (1);
+
+	// assert RESET
+	rp_spmc_module_config_uint32 (MODULE_SETUP, SPMC_AD463X_CONFIG_MODE_RESET, MODULE_START_VECTOR); // SET CONFIG MODE for CNV
+	rp_spmc_module_config_uint32 (MODULE_SETUP, 0,             MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_WR_DATA));
+	rp_spmc_module_config_uint32 (MODULE_SETUP, dev->spi_clock_divider, MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_N_DECII));
+	rp_spmc_module_config_uint32 (SPMC_AD463X_CONTROL_REG, 24, MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_N_BITS));
+
+	usleep (1);
+	
+	// release RESET
+	rp_spmc_module_config_uint32 (MODULE_SETUP, 0,             MODULE_START_VECTOR); // SET CONFIG MODE for CNV
+	rp_spmc_module_config_uint32 (MODULE_SETUP, 0,             MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_WR_DATA));
+	rp_spmc_module_config_uint32 (MODULE_SETUP, dev->spi_clock_divider, MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_N_DECII));
+	rp_spmc_module_config_uint32 (SPMC_AD463X_CONTROL_REG, 24, MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_N_BITS));
+}
+
+
 /**
  * @brief Initialize the device.
  * @param [out] device - The device structure.
@@ -790,32 +824,11 @@ int32_t ad463x_init(struct ad463x_dev **device,
 	dev->data_rate = init_param->data_rate;
 	dev->device_id = init_param->device_id;
 	dev->dcache_invalidate_range = init_param->dcache_invalidate_range;
+	dev->spi_clock_divider = init_param->spi_clock_divider;
 
 	fprintf(stderr,"AD463x_init -- performing reset\n");
+	ad463x_reset (dev);
 
-	/** Perform Hardware Reset of AD463x */
-	// release RESET
-	rp_spmc_module_config_uint32 (MODULE_SETUP, 0,            MODULE_START_VECTOR); // SET CONFIG MODE for CNV
-	rp_spmc_module_config_uint32 (MODULE_SETUP, 0,            MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_READ_ADDRESS));
-	rp_spmc_module_config_uint32 (MODULE_SETUP, 0,            MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_WRITE_DATA));
-	rp_spmc_module_config_uint32 (SPMC_AD463X_CONTROL_REG, 3, MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_N_BYTES));
-
-	usleep (10);
-
-	// assert RESET
-	rp_spmc_module_config_uint32 (MODULE_SETUP, SPMC_AD463X_CONFIG_MODE_RESET, MODULE_START_VECTOR); // SET CONFIG MODE for CNV
-	rp_spmc_module_config_uint32 (MODULE_SETUP, 0,            MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_READ_ADDRESS));
-	rp_spmc_module_config_uint32 (MODULE_SETUP, 0,            MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_WRITE_DATA));
-	rp_spmc_module_config_uint32 (SPMC_AD463X_CONTROL_REG, 3, MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_N_BYTES));
-
-	usleep (10);
-	
-	// release RESET
-	rp_spmc_module_config_uint32 (MODULE_SETUP, 0,            MODULE_START_VECTOR); // SET CONFIG MODE for CNV
-	rp_spmc_module_config_uint32 (MODULE_SETUP, 0,            MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_READ_ADDRESS));
-	rp_spmc_module_config_uint32 (MODULE_SETUP, 0,            MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_WRITE_DATA));
-	rp_spmc_module_config_uint32 (SPMC_AD463X_CONTROL_REG, 3, MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_N_BYTES));
-	
 #if 0
 	/** Perform Hardware Reset and configure pins */
 	ret = ad463x_init_gpio(dev, init_param);
@@ -971,6 +984,8 @@ int32_t ad463x_init(struct ad463x_dev **device,
 error_spi:
 	fprintf(stderr,"AD463x SPI ERROR\n");
 	//no_os_spi_remove(dev->spi_desc);
+	*device = dev;
+	return ret;
 error_clkgen:
 	//fprintf(stderr,"AD463x CLKGEN ERROR\n");
 	//if (dev->offload_enable)

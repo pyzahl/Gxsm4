@@ -110,7 +110,8 @@ module axis_AD463x #(
     reg [4-1:0] state_stream=0;
     
     reg rdecii = 0; // MAX SCK 80MHz
-    reg [3:0] rdecii_cfg = 0; // MAX SCK 20MHz
+    reg [8:0] rdecii_cfg_n = 16;
+    reg [8:0] rdecii_cfg = 0; // MAX SCK 20MHz 3:0    1 2 4 8
 
     integer i;
     initial begin
@@ -137,8 +138,13 @@ module axis_AD463x #(
             configuration_addr_data_write <= config_data[1*32+32-1 : 1*32]; // Config Read/Write Address: Bit 23 is "A15": R=1 (send first), Bit 22:8A are A14..A0  (16 BIT total), Then 8bit DATA in on SD0 from SCK17 .. 24
             //;                                                             // Config Read/Write Address: Bit 23 is "A15": W=0 (send first), Bit 22:8: are A14..A0, (16 BIT total), Then 8Bit DATA 7:0 are data D7:0 (24 BIT total Addr + Data)
             n_bits                   <= config_data[2*32+8-1  : 2*32]; // number bytes to read/write in config mode => in bits
+            rdecii_cfg_n             <= config_data[3*32+8-1  : 3*32] ? config_data[3*32+8-1  : 3*32] : 10;
+
             if (config_data[0:0]) 
                 cfg_mode_job <= 1;
+            if (~config_data[4:4]) 
+                state_stream <= 0;
+            
             cs <= 1;
         end
         else
@@ -166,15 +172,16 @@ module axis_AD463x #(
                     reg_dac_data[0] <= 0;
                 end
                 rdecii <= 1; // start with setup data
-                rdecii_cfg <= 1;
+                rdecii_cfg <= rdecii_cfg_n; // 1
             end
             else
             begin
                 if (configuration_mode || state_stream)
                 begin
-                    rdecii_cfg <= rdecii_cfg+1;
+                    rdecii_cfg <= rdecii_cfg-1;
                     if (rdecii_cfg == 0)
                     begin
+                        rdecii_cfg <= rdecii_cfg_n;
                         rdecii <= ~rdecii; // 0,1,0,1,...
 
                         sck1 <= sck;
