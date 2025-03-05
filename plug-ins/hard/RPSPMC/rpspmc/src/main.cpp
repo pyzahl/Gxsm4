@@ -58,6 +58,7 @@ int thread_data__tune_control=0;
 #include "main.h"
 #include "fpga_cfg.h"
 #include "pacpll.h"
+#include "ad463x.h"
 #include "spmc.h"
 #include "spmc_dma.h"
 #include "spmc_stream_server.h"
@@ -504,6 +505,8 @@ size_t FPGA_PACPLL_GPIO_block_size  = 0; // GPIO space
 size_t FPGA_PACPLL_BRAM_block_size = 0; // BRAM space PACPLL
 size_t FPGA_SPMC_BRAM_block_size = 0; // BRAM space SPMC
 
+ad463x_dev *ad464x_dev_IN34=NULL;
+
 #define DEVELOPMENT_PACPLL_OP
 
 //fprintf(stderr, "");
@@ -911,7 +914,7 @@ int rp_app_init(void)
 
         // Init SPMC
         rp_spmc_AD5791_init ();
-        rp_spmc_AD463x_init ();
+        ad464x_dev_IN34 = rp_spmc_AD463x_init ();
         rp_spmc_gvp_init ();
 
         fprintf(stderr, "Red Pitaya RPSPMC PACPLL API init completed!\n");
@@ -1822,8 +1825,7 @@ void OnNewParams_RPSPMC(void){
                         rp_spmc_module_read_config_data_timing_test ();
 
                 // TESTING
-                rp_spmc_AD463x_init ();
-
+                rp_spmc_AD463x_test (ad464x_dev_IN34);
 
         }
 

@@ -137,7 +137,7 @@ void rp_spmc_AD5791_init (){
         rp_spmc_AD5791_set_stream_mode (); // enable streaming for AD5791 DAC's from FPGA now!
 }
 
-void rp_spmc_AD463x_init (){
+ad463x_dev* rp_spmc_AD463x_init (){
         if (verbose > 1) fprintf(stderr, "##rp_spmc_AD463x_init\n");
         ad463x_dev *dev=NULL;
         ad463x_init_param init_param;
@@ -150,36 +150,52 @@ void rp_spmc_AD463x_init (){
         init_param.data_rate   = AD463X_SDR_MODE; // AD463X_DDR_MODE
         init_param.spi_clock_divider = 125/5;
         ad463x_init(&dev, &init_param);
+        ad463x_exit_reg_cfg_mode(dev);
+        rp_spmc_AD463x_set_stream_mode (dev);
 
+        return dev;
+}
 
-#if 1 // TESTING
-        if (verbose > 1) fprintf(stderr, "##rp_spmc_AD463x_init ** TEST CONFIG RW **\n");
+void rp_spmc_AD463x_test (struct ad463x_dev *dev){
 	int32_t ret;
 	uint8_t data = 0;
 	uint32_t ch0, ch1;
-	ad463x_enter_config_mode (dev);
-	ad463x_spi_reg_read(dev, AD463X_CONFIG_TIMING, &data);
-	ad463x_spi_reg_write(dev, AD463X_REG_SCRATCH_PAD, AD463x_TEST_DATA);
-	ad463x_spi_reg_read(dev, AD463X_REG_SCRATCH_PAD, &data);
+
+        if (verbose > 1) fprintf(stderr, "##rp_spmc_AD463x_test\n");
+
+	ad463x_enter_config_mode (dev); // added
+	
+
+	fprintf(stderr,"AD463x WRITE TEST TO SCRATCH PAD\n");
+	ret = ad463x_spi_reg_write(dev, AD463X_REG_SCRATCH_PAD, AD463x_TEST_DATA);
+
+	ret = ad463x_spi_reg_read(dev, AD463X_REG_SCRATCH_PAD, &data);
+
+	if (data != AD463x_TEST_DATA) {
+	  // pr_err("Test Data read failed.\n");
+	  fprintf(stderr,"AD463x Test Data read failed: %08x expected: %08x\n", data, AD463x_TEST_DATA);
+	}
+
+        if (verbose > 1) fprintf(stderr, "AD463x ** (24_DIFF, ONE_LANE, SDR_MODE) ** TEST READINGS:\n");
 
         ad463x_read_single_sample (dev, &ch0, &ch1);
-        ad463x_read_single_sample (dev, &ch0, &ch1);
-        ad463x_read_single_sample (dev, &ch0, &ch1);
         
-        if (verbose > 1) fprintf(stderr, "##rp_spmc_AD463x_init ** (24_DIFF, ONE_LANE, SDR_MODE) ** TEST READINGS:\n");
         for (int i=0; i<4; ++i){
                 ad463x_read_single_sample (dev, &ch0, &ch1);
                 fprintf (stderr, "%03d: %10d  %10d\n", i, ch0, ch1);
         }
-#endif
-        //rp_spmc_AD463x_set_stream_mode ();
+
+        ad463x_exit_reg_cfg_mode(dev);
 }
 
-void rp_spmc_AD463x_set_stream_mode (){
+
+
+
+void rp_spmc_AD463x_set_stream_mode (struct ad463x_dev *dev){
 	rp_spmc_module_config_uint32 (MODULE_SETUP, SPMC_AD463X_CONFIG_MODE_CONFIG | SPMC_AD463X_CONFIG_MODE_AXI, MODULE_START_VECTOR); // DISABLE CONFIG MODE, ENABLE AXI for streaming
-	rp_spmc_module_config_uint32 (MODULE_SETUP, 0,             MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_WR_DATA));
-	rp_spmc_module_config_uint32 (MODULE_SETUP, 16,            MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_N_DECII));
-	rp_spmc_module_config_uint32 (SPMC_AD463X_CONTROL_REG, 24, MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_N_BITS));
+	rp_spmc_module_config_uint32 (MODULE_SETUP, 0,                       MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_WR_DATA));
+	rp_spmc_module_config_uint32 (MODULE_SETUP, dev->spi_clock_divider,  MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_N_DECII));
+	rp_spmc_module_config_uint32 (SPMC_AD463X_CONTROL_REG, 24,           MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_N_BITS));
         
 }
 

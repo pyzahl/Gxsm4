@@ -72,9 +72,10 @@ extern "C" {
         void rp_spmc_AD5791_send_axis_data (int axis, int data);
         void rp_spmc_AD5791_init ();
 
-        void rp_spmc_AD463x_init ();
-        void rp_spmc_AD463x_set_stream_mode (); // AXI
-        
+        ad463x_dev* rp_spmc_AD463x_init ();
+        void rp_spmc_AD463x_set_stream_mode (struct ad463x_dev *dev); // AXI
+        void rp_spmc_AD463x_test (struct ad463x_dev *dev);
+
         void rp_spmc_set_bias (double bias);
         void rp_spmc_set_xyzu_DIRECT (double ux, double uy, double uz, double bias);  // WARNING -- instant setting in config mode (test only)
         
