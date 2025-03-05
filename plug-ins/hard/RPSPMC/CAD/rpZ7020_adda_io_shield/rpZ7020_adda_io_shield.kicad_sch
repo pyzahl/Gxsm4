@@ -25023,6 +25023,16 @@
 	)
 	(wire
 		(pts
+			(xy 226.06 128.27) (xy 232.41 128.27)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "b470c114-c46f-46a9-8f5b-a4e4adf0c1ff")
+	)
+	(wire
+		(pts
 			(xy 266.7 6.35) (xy 260.35 6.35)
 		)
 		(stroke
@@ -68398,7 +68408,7 @@
 	)
 	(global_label "RESET FMC"
 		(shape input)
-		(at 232.41 128.27 180)
+		(at 226.06 128.27 180)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -68408,7 +68418,7 @@
 		)
 		(uuid "e6c809ae-b14b-4b98-97a0-a2540372af4d")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 218.9021 128.27 0)
+			(at 212.5521 128.27 0)
 			(effects
 				(font
 					(size 1.27 1.27)

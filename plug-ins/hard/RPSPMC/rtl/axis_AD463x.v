@@ -93,10 +93,10 @@ module axis_AD463x #(
     reg sck1=0;       // SPI CLOCK dly
     reg SPI_sdi=0;   // SPI SDI pin AD463x
     reg SPI_cs=1;    // SPI CS  pin AD463x
-    reg cs=0;
-    reg cs1=0;
+    reg cs=1;
+    reg cs1=1;
     reg SPI_cnv=0;   // SPI CVN pin AD463x
-    reg SPI_reset=0; // SPI RESET pin AD463x
+    reg SPI_reset=1; // SPI RESET pin AD463x
     
     reg [DAC_WORD_WIDTH-1:0] reg_dac_data_ser[NUM_DAC-1:0];
     reg [DAC_WORD_WIDTH-1:0] reg_dac_data[NUM_DAC-1:0];
