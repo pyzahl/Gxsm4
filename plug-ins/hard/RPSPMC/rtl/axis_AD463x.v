@@ -77,6 +77,7 @@ module axis_AD463x #(
     output wire [31:0] mon1,
     output wire [31:0] cfg_word,
     
+    output wire [7:0] bt_dbg,
     output wire ready
     );
     
@@ -85,6 +86,7 @@ module axis_AD463x #(
     reg [32-1:0] configuration_addr_data_write=0;
     reg [32-1:0] configuration_addr_data_read=0;
     reg manual_cnv=0;
+    reg manual_stream_cnv=0;
     reg stream_cnv=0;
     reg run=0;
     
@@ -102,6 +104,7 @@ module axis_AD463x #(
     reg [DAC_WORD_WIDTH-1:0] reg_dac_data[NUM_DAC-1:0];
     reg [64-1:0] reg_data_in;
     reg [7:0] n_bits=24;
+    reg [7:0] busy_timeout=0;
     
     reg cfg_mode_job=1;
     reg [5-1:0] frame_bit_counter=0;
@@ -128,13 +131,18 @@ module axis_AD463x #(
         // module configuration
         if (config_addr == AD463x_address)
         begin
-            configuration_mode       <= config_data[0:0]; //  1: activate configuration mode 
-            configuration_rw         <= config_data[1:1]; //  2: read/write config
-                                                          // enter configuration mode by CS=0, SCK start: SDI=1,0,1 min 4 SCK POS EDGES (up to 24 ok) = READ 01xxx
-                                                          // exit configuration mode by writing 0x01 to Register Address 0x0014
-            manual_cnv               <= config_data[3:3]; //  8: trigger one manual convert
-            stream_cnv               <= config_data[4:4]; // 10: start auto convert and stream to AXI
-            SPI_reset                <= ~config_data[7:7]; // 80: manual reset
+            configuration_mode       <= config_data[0:0];  //  1: activate configuration mode 
+            configuration_rw         <= config_data[1:1];  //  2: read/write config
+                                                           // enter configuration mode by CS=0, SCK start: SDI=1,0,1 min 4 SCK POS EDGES (up to 24 ok) = READ 01xxx
+                                                           // exit configuration mode by writing 0x01 to Register Address 0x0014
+            manual_stream_cnv        <= config_data[2:2];  //  4: use stream CNV mode/read mode: reading last value while converting next, else read immediate result after conversion (waiting for it)
+            manual_cnv               <= config_data[3:3];  //  8: trigger one manual convert
+            stream_cnv               <= config_data[4:4];  // 10: start auto convert and stream to AXI
+            SPI_reset                <= ~config_data[7:7]; // 80: manual reset control
+            SPI_cs  <= 1; // disable
+            SPI_sck <= 0; // 0...
+            SPI_sdi <= 0;
+            SPI_cnv <= 0; 
             configuration_addr_data_write <= config_data[1*32+32-1 : 1*32]; // Config Read/Write Address: Bit 23 is "A15": R=1 (send first), Bit 22:8A are A14..A0  (16 BIT total), Then 8bit DATA in on SD0 from SCK17 .. 24
             //;                                                             // Config Read/Write Address: Bit 23 is "A15": W=0 (send first), Bit 22:8: are A14..A0, (16 BIT total), Then 8Bit DATA 7:0 are data D7:0 (24 BIT total Addr + Data)
             n_bits                   <= config_data[2*32+8-1  : 2*32]; // number bytes to read/write in config mode => in bits
@@ -145,14 +153,14 @@ module axis_AD463x #(
             if (~config_data[4:4]) 
                 state_stream <= 0;
             
-            cs <= 1;
+            cs      <= 1; // next
+
         end
         else
         begin      
             if (configuration_mode && !rdecii && !state_rw && !state_single && !state_stream && cfg_mode_job)
             begin
                 cfg_mode_job <= 0; // only once, until reset via new config request for next op!
-                cs <= 0; // initiate and assert CS
                 
                 if (manual_cnv)
                 begin
@@ -166,6 +174,7 @@ module axis_AD463x #(
                 
                 if (configuration_rw)
                 begin
+                    cs <= 0; // initiate and assert CS
                     state_rw <= 1;
                     frame_bit_counter <= n_bits-1; // send whole word 24/32 bits
                     reg_data_in <= 0; // clear data
@@ -191,7 +200,7 @@ module axis_AD463x #(
                         case (rdecii)
                             1: // @(posedge SCK)  // SPI transmit/receive: data setup edge
                             begin
-                                if (!cs && (state_rw || state_single))
+                                if (!cs && (state_rw || state_single[2])) // equiv to state_single > 3
                                 begin
                                     sck <= 1; // gen SPI SCK, action state to latch data in/out
                                 end
@@ -219,6 +228,7 @@ module axis_AD463x #(
                                 end
                                 else if (state_stream && !state_single)
                                 begin
+                                    SPI_sdi <= 0;
                                     state_single <= 1;
                                 end
                                 else
@@ -226,22 +236,31 @@ module axis_AD463x #(
                                     case (state_single) // start single conversion and read
                                         1: // initiate, clear data
                                         begin
-                                            cs  <= 0; // assert
+                                            cs  <= 1; // keep de-asserted until ready
                                             SPI_cnv <= 1; // start CNV
+                                            busy_timeout <= 8'hff;
+                                            frame_bit_counter  <= n_bits-1;
                                             reg_dac_data_ser[0] <= 0;
                                             reg_dac_data_ser[1] <= 0;
-                                            state_single <= 2;
+                                            state_single <= manual_stream_cnv ? 3:2; // stream CNV mode => reading last value while converting, else read immediate result after conversion (waiting for it)
+                                            SPI_sdi <= 0; // keep down, not needed here
                                         end                 
                                         2:  // wait for conversion result
                                         begin
                                             SPI_cnv <= 0; // wait busy
-                                            if (!wire_SPI_busy)
+                                            if (!wire_SPI_busy || !busy_timeout)
                                             begin
-                                                frame_bit_counter  <= n_bits-1;
                                                 state_single <= 3;
                                             end
+                                            else
+                                                busy_timeout <= busy_timeout-1;
                                         end                 
                                         3: // serialize read address data
+                                        begin
+                                                cs  <= 0; // assert
+                                                state_single <= 4; // get read to read after 1st clock out
+                                        end
+                                        4: // serialize read address data
                                         begin
                                             reg_dac_data_ser[frame_bit_counter][0] <= wire_SPI_sdn[0];
                                             reg_dac_data_ser[frame_bit_counter][1] <= wire_SPI_sdn[1];
@@ -250,12 +269,12 @@ module axis_AD463x #(
                                                 // completed, store data -- use latest last bit now!
                                                 reg_dac_data[0] <= { reg_dac_data_ser[0], wire_SPI_sdn[0] }; // complete now!
                                                 reg_dac_data[1] <= { reg_dac_data_ser[1], wire_SPI_sdn[1] };
-                                                state_single <= 4; // completed
+                                                state_single <= 5; // completed
                                             end
                                             else                
                                                 frame_bit_counter <= frame_bit_counter - 1;
                                         end
-                                        4:  // quiet period
+                                        5:  // quiet period
                                         begin
                                             state_single <= 0;
                                         end
@@ -291,5 +310,8 @@ assign wire_SPI_sdi   = SPI_sdi;
 assign mon0 = reg_dac_data[0];
 assign mon1 = reg_dac_data[1];
 assign cfg_word = configuration_addr_data_read;
+    
+    
+assign bt_dbg = busy_timeout;
     
 endmodule

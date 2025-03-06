@@ -148,9 +148,10 @@ ad463x_dev* rp_spmc_AD463x_init (){
         init_param.lane_mode   = AD463X_ONE_LANE_PER_CH;
         init_param.output_mode = AD463X_24_DIFF;
         init_param.data_rate   = AD463X_SDR_MODE; // AD463X_DDR_MODE
-        init_param.spi_clock_divider = 125/5;
+        init_param.spi_clock_divider = 3;
         ad463x_init(&dev, &init_param);
         ad463x_exit_reg_cfg_mode(dev);
+
         rp_spmc_AD463x_set_stream_mode (dev);
 
         return dev;
@@ -164,7 +165,6 @@ void rp_spmc_AD463x_test (struct ad463x_dev *dev){
         if (verbose > 1) fprintf(stderr, "##rp_spmc_AD463x_test\n");
 
 	ad463x_enter_config_mode (dev); // added
-	
 
 	fprintf(stderr,"AD463x WRITE TEST TO SCRATCH PAD\n");
 	ret = ad463x_spi_reg_write(dev, AD463X_REG_SCRATCH_PAD, AD463x_TEST_DATA);
@@ -177,22 +177,23 @@ void rp_spmc_AD463x_test (struct ad463x_dev *dev){
 	}
 
         if (verbose > 1) fprintf(stderr, "AD463x ** (24_DIFF, ONE_LANE, SDR_MODE) ** TEST READINGS:\n");
-
-        ad463x_read_single_sample (dev, &ch0, &ch1);
         
-        for (int i=0; i<4; ++i){
+        for (int i=0; i<20; ++i){
                 ad463x_read_single_sample (dev, &ch0, &ch1);
                 fprintf (stderr, "%03d: %10d  %10d\n", i, ch0, ch1);
         }
 
         ad463x_exit_reg_cfg_mode(dev);
+
+        //rp_spmc_AD463x_set_stream_mode (dev);
+
 }
 
 
 
 
 void rp_spmc_AD463x_set_stream_mode (struct ad463x_dev *dev){
-	rp_spmc_module_config_uint32 (MODULE_SETUP, SPMC_AD463X_CONFIG_MODE_CONFIG | SPMC_AD463X_CONFIG_MODE_AXI, MODULE_START_VECTOR); // DISABLE CONFIG MODE, ENABLE AXI for streaming
+	rp_spmc_module_config_uint32 (MODULE_SETUP, SPMC_AD463X_CONFIG_MODE_CONFIG | SPMC_AD463X_CONFIG_MODE_AXI | SPMC_AD463X_CONFIG_MODE_STREAM, MODULE_START_VECTOR); // DISABLE CONFIG MODE, ENABLE AXI for streaming
 	rp_spmc_module_config_uint32 (MODULE_SETUP, 0,                       MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_WR_DATA));
 	rp_spmc_module_config_uint32 (MODULE_SETUP, dev->spi_clock_divider,  MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_N_DECII));
 	rp_spmc_module_config_uint32 (SPMC_AD463X_CONTROL_REG, 24,           MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_N_BITS));

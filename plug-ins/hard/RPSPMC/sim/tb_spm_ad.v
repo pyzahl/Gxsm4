@@ -228,12 +228,13 @@ wire w_spi_cs;
 wire w_spi_sdi;
 wire w_spi_reset;
 wire w_spi_cnv;
-wire w_spi_busy=0;
-wire [7:0] w_spi_sdn=1;
+reg  w_spi_busy=0;
+reg [7:0] w_spi_sdn=1;
 
 wire [31:0] ad_mon0;
 wire [31:0] ad_mon1;
 
+wire [7:0] ad_bt_dbg;
 wire ad_ready;
 
 
@@ -263,6 +264,12 @@ wire ad_ready;
         sclk = 1; #1;
         sclk = 0; #1;
     end
+        
+    always begin
+        w_spi_busy <= ad_bt_dbg > 8'hf0 ? 1:0; #2;
+    end
+
+
 
     always begin
         mux00td <= wx;
@@ -828,6 +835,7 @@ axis_AD463x axis_AD463_tb
     .mon0(ad_mon0),
     .mon1(ad_mon1),
     
+    .bt_dbg(ad_bt_dbg),
     .ready(ad_ready)
     );
     

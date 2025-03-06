@@ -236,6 +236,7 @@
 #define SPMC_AD463X_CONFIG_MODE            0 // Bit0: activate config mode, Bit1: read config, Bit2: write config, Bit3: manual convert, Bit4: enable streaming to AXI, Bit7: SPI AD reset
 #define SPMC_AD463X_CONFIG_MODE_CONFIG  0x01
 #define SPMC_AD463X_CONFIG_MODE_RW      0x02
+#define SPMC_AD463X_CONFIG_MODE_STREAM  0x04
 #define SPMC_AD463X_CONFIG_MODE_CNV     0x08
 #define SPMC_AD463X_CONFIG_MODE_AXI     0x10
 #define SPMC_AD463X_CONFIG_MODE_B5      0x20

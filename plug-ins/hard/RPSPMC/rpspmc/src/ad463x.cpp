@@ -592,10 +592,11 @@ static void ad463x_pext_sample(struct ad463x_dev *dev,
  * @param dev - ad469x_dev device handler.
  * @param ch0_out - pointer to store channel 0 data
  * @param ch1_out - pointer to store channel 1 data
+ * @stream_mode =0 normal immediate read, wait for result, =1 read last value while conversion
+ * 
  * @return 0 in case of success, negative value otherwise.
  */
-static int32_t ad463x_read_single_sample(struct ad463x_dev *dev,
-		uint32_t *ch0_out,  uint32_t *ch1_out)
+static int32_t ad463x_read_single_sample(struct ad463x_dev *dev, uint32_t *ch0_out,  uint32_t *ch1_out, int stream_mode=0)
 {
 #if 0
 	uint8_t data[8] = {0};
@@ -619,7 +620,8 @@ static int32_t ad463x_read_single_sample(struct ad463x_dev *dev,
 	ad463x_pext_sample(dev, data, dev->read_bytes_no, ch0_out, ch1_out);
 #endif
 
-	rp_spmc_module_config_uint32 (MODULE_SETUP, SPMC_AD463X_CONFIG_MODE_CONFIG | SPMC_AD463X_CONFIG_MODE_CNV, MODULE_START_VECTOR); // SET CONFIG MODE for CNV
+	rp_spmc_module_config_uint32 (MODULE_SETUP, SPMC_AD463X_CONFIG_MODE_CONFIG | SPMC_AD463X_CONFIG_MODE_CNV | (stream_mode ? SPMC_AD463X_CONFIG_MODE_STREAM:0),
+				      MODULE_START_VECTOR); // SET CONFIG MODE for CNV
 	rp_spmc_module_config_uint32 (MODULE_SETUP, 0,             MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_WR_DATA));
 	rp_spmc_module_config_uint32 (MODULE_SETUP, dev->spi_clock_divider, MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_N_DECII));
 	rp_spmc_module_config_uint32 (SPMC_AD463X_CONTROL_REG, 24, MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_N_BITS));
