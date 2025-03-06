@@ -108,8 +108,11 @@ module axis_AD463x #(
     
     reg cfg_mode_job=1;
     reg [5-1:0] frame_bit_counter=0;
+    reg [5-1:0] frame_bit_counter_rd=0;
     reg [4-1:0] state_rw=0;
+    reg [4-1:0] state_rw2=0;
     reg [4-1:0] state_single=0;
+    reg [4-1:0] state_single2=0;
     reg [4-1:0] state_stream=0;
     
     reg rdecii = 0; // MAX SCK 80MHz
@@ -165,7 +168,7 @@ module axis_AD463x #(
                 if (manual_cnv)
                 begin
                     state_stream <= 0; // disable streaming
-                    state_single <= 1;
+                    state_single <= 1; // lauch single shot
                 end
                 else
                 begin
@@ -188,39 +191,61 @@ module axis_AD463x #(
                 if (configuration_mode || state_stream)
                 begin
                     rdecii_cfg <= rdecii_cfg-1;
-                    if (rdecii_cfg == 0)
+                    if (rdecii_cfg == 0) // @(posedge SCK)
                     begin
                         rdecii_cfg <= rdecii_cfg_n;
                         rdecii <= ~rdecii; // 0,1,0,1,...
 
-                        sck1 <= sck;
+                        sck1    <= sck;
                         SPI_sck <= sck1; // delay SCK to setup
-                        SPI_cs <= cs;    // delay 1/2 SCK
-                       
+                        SPI_cs  <= cs;    // delay 1/2 SCK
+                        state_rw2 <= state_rw;
+                        state_single2 <= state_single;
                         case (rdecii)
                             1: // @(posedge SCK)  // SPI transmit/receive: data setup edge
                             begin
-                                if (!cs && (state_rw || state_single[2])) // equiv to state_single > 3
+                                if (!cs && (state_rw || state_single == 4)) // equiv to state_single > 3
                                 begin
                                     sck <= 1; // gen SPI SCK, action state to latch data in/out
                                 end
-                                else                                 
+                                else
+                                begin                                 
                                     cs <= 1; // deassert
+                                end
+                                if (state_rw2)
+                                begin
+                                    configuration_addr_data_read <= { reg_data_in[32-1:1], wire_SPI_sdn[0] };
+                                    reg_data_in[frame_bit_counter_rd] <= wire_SPI_sdn[0];
+                                    if (!frame_bit_counter_rd)
+                                        reg_dac_data[0] <= { reg_data_in[32-1:1], wire_SPI_sdn[0] };
+                                end
+                                else
+                                if (state_single2 == 4)  // un-serialize read address data
+                                begin
+                                    reg_dac_data_ser[frame_bit_counter_rd][1] <= wire_SPI_sdn[1];
+                                    reg_dac_data_ser[frame_bit_counter_rd][0] <= wire_SPI_sdn[0];
+                                    if (!frame_bit_counter_rd)
+                                    begin
+                                        // completed, store data -- use latest last bit now!
+                                        reg_dac_data[0] <= { reg_dac_data_ser[0], wire_SPI_sdn[0] }; // complete now!
+                                        reg_dac_data[1] <= { reg_dac_data_ser[1], wire_SPI_sdn[1] };
+                                    end
+                                end
                             end
                             
                             0:   // @(negedge SCK) // SPI clock, prepare data, manage
                             begin
                                 sck <= 0; // gen SPI SCK, setup state
+                                frame_bit_counter_rd <= frame_bit_counter;
                 
                                 if (state_rw)
                                 begin
                                     cs  <= 0; // assert
                                     SPI_sdi <= configuration_addr_data_write [frame_bit_counter];
-                                    reg_data_in[frame_bit_counter] <= wire_SPI_sdn[0];
+                                    // un-serialoize data on other clock edge above
                                     if (!frame_bit_counter)
                                     begin
                                         reg_dac_data[0] <= { reg_data_in[32-1:1], wire_SPI_sdn[0] };
-                                        configuration_addr_data_read <= { reg_data_in[32-1:1], wire_SPI_sdn[0] };
                                         state_rw <= 0; // completed
                                     end
                                     else
@@ -234,6 +259,10 @@ module axis_AD463x #(
                                 else
                                 begin              
                                     case (state_single) // start single conversion and read
+                                        0:
+                                        begin
+                                            SPI_sdi <= 0;
+                                        end
                                         1: // initiate, clear data
                                         begin
                                             cs  <= 1; // keep de-asserted until ready
@@ -255,20 +284,20 @@ module axis_AD463x #(
                                             else
                                                 busy_timeout <= busy_timeout-1;
                                         end                 
-                                        3: // serialize read address data
+                                        3: // un-serialize read data -- at other clock edge above!
                                         begin
+                                                SPI_cnv <= 0; // wait busy
                                                 cs  <= 0; // assert
                                                 state_single <= 4; // get read to read after 1st clock out
                                         end
                                         4: // serialize read address data
                                         begin
-                                            reg_dac_data_ser[frame_bit_counter][0] <= wire_SPI_sdn[0];
-                                            reg_dac_data_ser[frame_bit_counter][1] <= wire_SPI_sdn[1];
                                             if (!frame_bit_counter)
                                             begin
                                                 // completed, store data -- use latest last bit now!
                                                 reg_dac_data[0] <= { reg_dac_data_ser[0], wire_SPI_sdn[0] }; // complete now!
                                                 reg_dac_data[1] <= { reg_dac_data_ser[1], wire_SPI_sdn[1] };
+                                                busy_timeout <= 8'h04; // setup quiet period delay
                                                 state_single <= 5; // completed
                                             end
                                             else                
@@ -276,7 +305,12 @@ module axis_AD463x #(
                                         end
                                         5:  // quiet period
                                         begin
-                                            state_single <= 0;
+                                            if (!busy_timeout) // delay?
+                                            begin
+                                                state_single <= 0; // completed
+                                            end
+                                            else
+                                                busy_timeout <= busy_timeout-1;
                                         end
                                     endcase
                                 end

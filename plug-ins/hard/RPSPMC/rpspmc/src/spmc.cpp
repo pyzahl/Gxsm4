@@ -148,7 +148,7 @@ ad463x_dev* rp_spmc_AD463x_init (){
         init_param.lane_mode   = AD463X_ONE_LANE_PER_CH;
         init_param.output_mode = AD463X_24_DIFF;
         init_param.data_rate   = AD463X_SDR_MODE; // AD463X_DDR_MODE
-        init_param.spi_clock_divider = 3;
+        init_param.spi_clock_divider = 10;
         ad463x_init(&dev, &init_param);
         ad463x_exit_reg_cfg_mode(dev);
 
