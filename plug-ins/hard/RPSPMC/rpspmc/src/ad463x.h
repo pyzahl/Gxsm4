@@ -125,6 +125,8 @@
 #define AD463X_SPI_COMPATIBLE_MODE	0x00
 #define AD463X_ECHO_CLOCK_MODE		NO_OS_BIT(4)
 #define AD463X_CLOCK_MASTER_MODE	NO_OS_BIT(5)
+
+
 /* POWER MODE */
 #define AD463X_NORMAL_MODE 		0x00
 #define AD463X_LOW_POWER_MODE		(NO_OS_BIT(1) | NO_OS_BIT(0))
@@ -300,12 +302,15 @@ struct ad463x_dev {
 /** Read device register. */
 int32_t ad463x_spi_reg_read(struct ad463x_dev *dev,
 			    uint16_t reg_addr,
-			    uint8_t *reg_data);
+			    uint8_t *reg_data,
+			    int xverbose
+);
 
 /** Write device register */
 int32_t ad463x_spi_reg_write(struct ad463x_dev *dev,
 			     uint16_t reg_addr,
-			     uint8_t reg_data);
+			     uint8_t reg_data,
+			    int xverbose);
 
 /** Read from device using a mask */
 int32_t ad463x_spi_reg_read_masked(struct ad463x_dev *dev,

@@ -140,8 +140,10 @@ typedef union {
 */
 #define SPMC_AD5791_REFV 5.0 // DAC AD5791 Reference Volatge is 5.000000V (+/-5V Range)
 #define SPMC_AD5791_to_volts (SPMC_AD5791_REFV / QN(31))
-#define SPMC_RPIN12_REFV 1.0 // RP FAT DACs Reference Voltage is 1.0V (+/-1V Range)
+#define SPMC_RPIN12_REFV 1.0 // RP RF DACs Reference Voltage is 1.0V (+/-1V Range)
 #define SPMC_RPIN12_to_volts (SPMC_RPIN12_REFV / QN(31))
+#define SPMC_RPIN34_REFV 5.0 // RP AD463-24 DACs Reference Voltage is 5.0V (Differential +/-5V Range)
+#define SPMC_RPIN34_to_volts (SPMC_RPIN34_REFV / QN(31))
 
 // Masks MUST BE unique **** max # signal: 32  (graphs_matrix[][32] fix size! Unused=uninitialized.)
 SOURCE_SIGNAL_DEF rpspmc_source_signals[] = {
@@ -168,8 +170,8 @@ SOURCE_SIGNAL_DEF rpspmc_source_signals[] = {
         { 0x00000008, "Bias-Mon",     " ", "V",             "V",                   SPMC_AD5791_to_volts, PROBEDATA_ARRAY_S4,  4 }, // BiasFac, see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x00000010, "In1-Signal",   " ", "V",             "V",                   SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S5,  5 },
         { 0x00000020, "In2-Current",  " ", "nA",           "nA",               256*SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S6,  6 }, // CurrFac, see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
-        { 0x00000040, "In3-**",       " ", "V",             "V",                   SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S7,  7 },
-        { 0x00000080, "In4-**",       " ", "V",             "V",                   SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S8,  8 },
+        { 0x00000040, "In3-AD463-24-CH1", " ", "V",         "V",                   SPMC_RPIN34_to_volts, PROBEDATA_ARRAY_S7,  7 },
+        { 0x00000080, "In4-AD463-24-CH2", " ", "V",         "V",                   SPMC_RPIN34_to_volts, PROBEDATA_ARRAY_S8,  8 },
         { 0x00000100, "SWP*00",       " ",  "V",            "V",                                    1.0, PROBEDATA_ARRAY_S9,  9 },  // ich= 8 ** swappable via GVP-SRC-MUX ** -- been replaced as set from swappable_signals[]
         { 0x00000200, "SWP*01",        " ", "V",            "V",                                    1.0, PROBEDATA_ARRAY_S10, 10 }, // ich= 9 ** swappable via GVP-SRC-MUX ** -- been replaced as set from swappable_signals[]
         { 0x00000400, "SWP*02",       " ",  "V",            "V",                                    1.0, PROBEDATA_ARRAY_S11, 11 }, // ich=10 ** swappable via GVP-SRC-MUX ** -- been replaced as set from swappable_signals[]

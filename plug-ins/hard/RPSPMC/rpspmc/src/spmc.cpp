@@ -148,7 +148,7 @@ ad463x_dev* rp_spmc_AD463x_init (){
         init_param.lane_mode   = AD463X_ONE_LANE_PER_CH;
         init_param.output_mode = AD463X_24_DIFF;
         init_param.data_rate   = AD463X_SDR_MODE; // AD463X_DDR_MODE
-        init_param.spi_clock_divider = 10;
+        init_param.spi_clock_divider = 3; // 3 should do, 10 works for testing
         ad463x_init(&dev, &init_param);
         ad463x_exit_reg_cfg_mode(dev);
 
@@ -160,32 +160,92 @@ ad463x_dev* rp_spmc_AD463x_init (){
 void rp_spmc_AD463x_test (struct ad463x_dev *dev){
 	int32_t ret;
 	uint8_t data = 0;
+	uint8_t pat[4];
 	uint32_t ch0, ch1;
 
-        if (verbose > 1) fprintf(stderr, "##rp_spmc_AD463x_test\n");
+        if (verbose > 1) fprintf(stderr, "##rp_spmc_AD463x_test *** SPI / AD463x TESTING ***\n");
 
 	ad463x_enter_config_mode (dev); // added
 
-	fprintf(stderr,"AD463x WRITE TEST TO SCRATCH PAD\n");
-	ret = ad463x_spi_reg_write(dev, AD463X_REG_SCRATCH_PAD, AD463x_TEST_DATA);
-
-	ret = ad463x_spi_reg_read(dev, AD463X_REG_SCRATCH_PAD, &data);
+	fprintf(stderr,"AD463x WRITE TEST TO SCRATCH PAD REG:\n");
+	ad463x_spi_reg_write(dev, AD463X_REG_SCRATCH_PAD, AD463x_TEST_DATA);
+	ad463x_spi_reg_read(dev, AD463X_REG_SCRATCH_PAD, &data);
 
 	if (data != AD463x_TEST_DATA) {
-	  // pr_err("Test Data read failed.\n");
-	  fprintf(stderr,"AD463x Test Data read failed: %08x expected: %08x\n", data, AD463x_TEST_DATA);
+                // pr_err("Test Data read failed.\n");
+                fprintf(stderr,"AD463x Test Data Read failed: %08x expected: %08x\n", data, AD463x_TEST_DATA);
+	} else {
+                fprintf(stderr,"AD463x Test Data Read: passed\n");
+                fprintf(stderr,"AD463x Test Data Read/Write extensive run...");
+                int errcount=0;
+                for (uint8_t x=0; ; x++){
+                        ad463x_spi_reg_write(dev, AD463X_REG_SCRATCH_PAD, x);
+                        ad463x_spi_reg_read(dev, AD463X_REG_SCRATCH_PAD, &data);
+                        if (data != x) {
+                                fprintf(stderr,"Scratch R/W fail for %02x expected: %02x\n", data, x);
+                                errcount++;
+                        }
+                        if (x==0xff) break;
+                }
+                if (errcount > 0)
+                        fprintf(stderr,"Scratch R/W extensive test fail # %d\n", errcount);
+                else
+                        fprintf(stderr,"Scratch R/W extensive test passed.\n");
+        }
+	ad463x_spi_reg_read(dev, AD463X_REG_PAT0, &pat[0]);
+	ad463x_spi_reg_read(dev, AD463X_REG_PAT1, &pat[1]);
+	ad463x_spi_reg_read(dev, AD463X_REG_PAT2, &pat[2]);
+	ad463x_spi_reg_read(dev, AD463X_REG_PAT3, &pat[3]);
+	fprintf(stderr,"AD463x AD463X_REG_TEST_PAT: %02x %02x %02x %02x\n", pat[3], pat[2], pat[1], pat[0]);
+
+	fprintf(stderr,"AD463x AD463X_REG_TEST_PAT ENABLED NOW\n");
+	ad463x_spi_reg_write_masked(dev, AD463X_REG_MODES, AD463X_OUT_DATA_MODE_MSK, AD463X_32_PATTERN);
+
+        ad463x_exit_reg_cfg_mode(dev);  // exit CFG mode to do test conversion reads
+        
+	fprintf(stderr,"AD463x 4 TEST PAT READINGS, 24BIT mode:\n");
+	{
+	  uint32_t ch0, ch1;
+	  ad463x_read_single_sample (dev, &ch0, &ch1, 0, 1);
+	  ad463x_read_single_sample (dev, &ch0, &ch1, 0, 1);
+	  ad463x_read_single_sample (dev, &ch0, &ch1, 0, 1);
+	  ad463x_read_single_sample (dev, &ch0, &ch1, 0, 1);
 	}
 
-        if (verbose > 1) fprintf(stderr, "AD463x ** (24_DIFF, ONE_LANE, SDR_MODE) ** TEST READINGS:\n");
-        
-        for (int i=0; i<20; ++i){
-                ad463x_read_single_sample (dev, &ch0, &ch1);
-                fprintf (stderr, "%03d: %10d  %10d\n", i, ch0, ch1);
-        }
+	fprintf(stderr,"AD463x 4 TEST PAT READINGS, 32BIT mode:\n");
+	{
+	  uint32_t ch0, ch1;
+	  ad463x_read_single_sample (dev, &ch0, &ch1, 0, 1, 32);
+	  ad463x_read_single_sample (dev, &ch0, &ch1, 0, 1, 32);
+	  ad463x_read_single_sample (dev, &ch0, &ch1, 0, 1, 32);
+	  ad463x_read_single_sample (dev, &ch0, &ch1, 0, 1, 32);
+	}
+	
+        // ***
+	
+	fprintf(stderr,"AD463x RE-CONFIGURING MODES FOR NORMAL OPERATION\n");
+	ad463x_enter_config_mode (dev); // added
+	ad463x_spi_reg_write_masked(dev, AD463X_REG_MODES, AD463X_OUT_DATA_MODE_MSK, dev->output_mode);
+	ret = ad463x_spi_reg_write_masked(dev, AD463X_REG_MODES, AD463X_LANE_MODE_MSK, dev->lane_mode);
+	ret = ad463x_spi_reg_write_masked(dev, AD463X_REG_MODES, AD463X_CLK_MODE_MSK, dev->clock_mode);
+	ret = ad463x_spi_reg_write_masked(dev, AD463X_REG_MODES, AD463X_DDR_MODE_MSK, dev->data_rate);
 
         ad463x_exit_reg_cfg_mode(dev);
 
-        //rp_spmc_AD463x_set_stream_mode (dev);
+	fprintf(stderr,"AD463x EXIT REGISTER R/W MODE\n");
+
+        if (verbose > 1) fprintf(stderr, "AD463x ** (24_DIFF, ONE_LANE, SDR_MODE) ** TEST READINGS:\n");
+        
+        ad463x_read_single_sample (dev, &ch0, &ch1, 0, 1);
+        ad463x_read_single_sample (dev, &ch0, &ch1, 0, 1);
+        for (int i=0; i<10; ++i){
+                ad463x_read_single_sample (dev, &ch0, &ch1, 1, 0);
+                fprintf (stderr, "%03d: %10d  %10d  \t %10g mV \t %10g mV\n", i, ch0, ch1, 2*5000.*((int32_t)ch0)/(1<<23), 2*5000.0*((int32_t)ch1)/(1<<23));
+        }
+
+       	fprintf(stderr,"AD463x ENTERING AXI STREAMING OPERATION\n");
+
+        rp_spmc_AD463x_set_stream_mode (dev);
 
 }
 
@@ -193,7 +253,7 @@ void rp_spmc_AD463x_test (struct ad463x_dev *dev){
 
 
 void rp_spmc_AD463x_set_stream_mode (struct ad463x_dev *dev){
-	rp_spmc_module_config_uint32 (MODULE_SETUP, SPMC_AD463X_CONFIG_MODE_CONFIG | SPMC_AD463X_CONFIG_MODE_AXI | SPMC_AD463X_CONFIG_MODE_STREAM, MODULE_START_VECTOR); // DISABLE CONFIG MODE, ENABLE AXI for streaming
+	rp_spmc_module_config_uint32 (MODULE_SETUP, SPMC_AD463X_CONFIG_MODE_AXI | SPMC_AD463X_CONFIG_MODE_STREAM, MODULE_START_VECTOR); // DISABLE CONFIG MODE, ENABLE AXI for streaming
 	rp_spmc_module_config_uint32 (MODULE_SETUP, 0,                       MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_WR_DATA));
 	rp_spmc_module_config_uint32 (MODULE_SETUP, dev->spi_clock_divider,  MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_N_DECII));
 	rp_spmc_module_config_uint32 (SPMC_AD463X_CONTROL_REG, 24,           MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_N_BITS));

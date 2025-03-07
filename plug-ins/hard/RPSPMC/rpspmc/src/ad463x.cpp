@@ -1,3 +1,5 @@
+/* -*- Mode: C++; indent-tabs-mode: nil; c-basic-offset: 8 c-style: "K&R" -*- */
+
 /***************************************************************************//**
  *   @file   ad463x.c
  *   @brief  Implementation of AD463x Driver.
@@ -88,7 +90,8 @@ static const int ad4630_gains_frac[4][2] = {
  */
 int32_t ad463x_spi_reg_read(struct ad463x_dev *dev,
 			    uint16_t reg_addr,
-			    uint8_t *reg_data)
+			    uint8_t *reg_data,
+			    int xverbose=0)
 {
 #if 0
 	int32_t ret=0;
@@ -111,8 +114,8 @@ int32_t ad463x_spi_reg_read(struct ad463x_dev *dev,
 	
 	*reg_data = a & 0xff;
 	
-	if (verbose > DBG_V_LEVEL)
-	  fprintf (stderr,"ad463x_spi_reg_read:  RA:%04x D:%02x => X:%08x [%08x %08x]\n", reg_addr, a&0xff, ((AD463X_REG_READ_B15) | (reg_addr & 0x7fff)) << 8, a, b);
+	if (xverbose && verbose > DBG_V_LEVEL)
+	  fprintf (stderr,"ad463x_spi_reg_read:  RA:%04x D:%02x => X:%08x [%08x]\n", reg_addr, a&0xff, ((AD463X_REG_READ_B15) | (reg_addr & 0x7fff)) << 8, a);
 	
 	return 0;
 }
@@ -126,7 +129,8 @@ int32_t ad463x_spi_reg_read(struct ad463x_dev *dev,
  */
 int32_t ad463x_spi_reg_write(struct ad463x_dev *dev,
 			     uint16_t reg_addr,
-			     uint8_t reg_data)
+			     uint8_t reg_data,
+			    int xverbose=0)
 {
 #if 0
 	uint8_t buf[3];
@@ -138,20 +142,16 @@ int32_t ad463x_spi_reg_write(struct ad463x_dev *dev,
 	return no_os_spi_write_and_read(dev->spi_desc, buf, 3); // ad463x_spi_reg_write PORTED BELOW
 #endif
 
-	//	if (verbose > DBG_V_LEVEL)
-	//	  fprintf (stderr,"ad463x_spi_reg_write: WA:%04x D:%02x => X:%08x\n", reg_addr, reg_data&0xff, ((reg_addr & 0x7fff) << 8) | (reg_data&0xff));
-
 	rp_spmc_module_config_uint32 (MODULE_SETUP, SPMC_AD463X_CONFIG_MODE_CONFIG | SPMC_AD463X_CONFIG_MODE_RW, MODULE_START_VECTOR); // SET CONFIG MODE for WRITE+data
 	rp_spmc_module_config_uint32 (MODULE_SETUP, ((reg_addr & 0x7fff) << 8) | (reg_data & 0xff),  MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_WR_DATA));
 	rp_spmc_module_config_uint32 (MODULE_SETUP, dev->spi_clock_divider, MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_N_DECII));
 	rp_spmc_module_config_uint32 (SPMC_AD463X_CONTROL_REG, 24,                                   MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_N_BITS));
 
-#if 1 // TEST ONLY
-        unsigned int a,b;
-        rp_spmc_module_read_config_data_u (SPMC_READBACK_AD463X_REG, &a, &b);
-	fprintf (stderr,"ad463x_spi_reg_write: WA:%04x D:%02x => X:%08x [%08x %08x]\n", reg_addr, reg_data&0xff, ((reg_addr & 0x7fff) << 8) | (reg_data&0xff), a, b);
-#endif
-
+	if (xverbose && verbose > DBG_V_LEVEL){
+	  unsigned int a,b;
+	  rp_spmc_module_read_config_data_u (SPMC_READBACK_AD463X_REG, &a, &b);
+	  fprintf (stderr,"ad463x_spi_reg_write: WA:%04x D:%02x => X:%08x [%08x]\n", reg_addr, reg_data&0xff, ((reg_addr & 0x7fff) << 8) | (reg_data&0xff), a);
+	}
 	return 0;
 }
 
@@ -596,7 +596,7 @@ static void ad463x_pext_sample(struct ad463x_dev *dev,
  * 
  * @return 0 in case of success, negative value otherwise.
  */
-static int32_t ad463x_read_single_sample(struct ad463x_dev *dev, uint32_t *ch0_out,  uint32_t *ch1_out, int stream_mode=0)
+static int32_t ad463x_read_single_sample(struct ad463x_dev *dev, uint32_t *ch0_out,  uint32_t *ch1_out, int stream_mode=0, int xverbose=1, int bits=24)
 {
 #if 0
 	uint8_t data[8] = {0};
@@ -624,10 +624,10 @@ static int32_t ad463x_read_single_sample(struct ad463x_dev *dev, uint32_t *ch0_o
 				      MODULE_START_VECTOR); // SET CONFIG MODE for CNV
 	rp_spmc_module_config_uint32 (MODULE_SETUP, 0,             MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_WR_DATA));
 	rp_spmc_module_config_uint32 (MODULE_SETUP, dev->spi_clock_divider, MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_N_DECII));
-	rp_spmc_module_config_uint32 (SPMC_AD463X_CONTROL_REG, 24, MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_N_BITS));
+	rp_spmc_module_config_uint32 (SPMC_AD463X_CONTROL_REG, bits, MODULE_SETUP_VECTOR(SPMC_AD463X_CONFIG_N_BITS));
         rp_spmc_module_read_config_data_u (SPMC_READBACK_AD463X_REG, ch0_out, ch1_out);
 
-	if (verbose > DBG_V_LEVEL)
+	if (xverbose && verbose > DBG_V_LEVEL)
 	  fprintf (stderr,"ad463x_read_single_sample. CNV: %08x  %08x\n", *ch0_out, *ch1_out);
 	
 	return 0;
@@ -794,6 +794,8 @@ int32_t ad463x_init(struct ad463x_dev **device,
 	struct ad463x_dev *dev;
 	int32_t ret;
 	uint8_t data = 0;
+	uint8_t data2 = 0;
+	uint8_t pat[4];
 	uint8_t sample_width;
 
 	if (!init_param || !device)
@@ -942,15 +944,67 @@ int32_t ad463x_init(struct ad463x_dev **device,
 	if (ret != 0)
 		goto error_spi;
 
-	ret = ad463x_spi_reg_read(dev, AD463X_REG_SCRATCH_PAD, &data);
+	ret = ad463x_spi_reg_read(dev, AD463X_REG_SCRATCH_PAD, &data, 1);
 	if (ret != 0)
 		goto error_spi;
 
 	if (data != AD463x_TEST_DATA) {
 	  // pr_err("Test Data read failed.\n");
-	  fprintf(stderr,"AD463x Test Data read failed: %08x expected: %08x\n", data, AD463x_TEST_DATA);
+	  fprintf(stderr,"AD463x Test Data Read: fail: %08x expected: %08x\n", data, AD463x_TEST_DATA);
 	  goto error_spi;
 	}
+	else
+	  fprintf(stderr,"AD463x Test Data Read: pass.\n");
+
+
+	ret = ad463x_spi_reg_read(dev, AD463X_REG_CHIP_TYPE, &data);
+	fprintf(stderr,"AD463x AD463X_REG_CHIP_TYPE: %02x\n", data);
+
+	ret = ad463x_spi_reg_read(dev, AD463X_REG_PRODUCT_ID_L, &data);
+	ret = ad463x_spi_reg_read(dev, AD463X_REG_PRODUCT_ID_H, &data2);
+	fprintf(stderr,"AD463x AD463X_REG_CHIP_TYPE_L,H: %02x %02x\n", data, data2);
+
+	ret = ad463x_spi_reg_read(dev, AD463X_REG_CHIP_GRADE, &data);
+	fprintf(stderr,"AD463x AD463X_REG_CHIP_GRADE: %02x, Rev: %d, Grade: %s\n", data, data&7, (data>>3)&2? "AD4632-24":"AD4630-24");
+
+	ret = ad463x_spi_reg_read(dev, AD463X_REG_VENDOR_L, &data);
+	ret = ad463x_spi_reg_read(dev, AD463X_REG_VENDOR_H, &data2);
+	fprintf(stderr,"AD463x AD463X_REG_VENDOR_L,H: %02x %02x\n", data, data2);
+
+	ret = ad463x_spi_reg_read(dev, AD463X_REG_AVG, &data);
+	fprintf(stderr,"AD463x AD463X_REG_AVG: %02x\n", data);
+
+	ret = ad463x_spi_reg_read(dev, AD463X_REG_STREAM_MODE, &data);
+	fprintf(stderr,"AD463x AD463X_REG_STREAM_MODE: %02x\n", data);
+	
+	ret = ad463x_spi_reg_read(dev, AD463X_REG_PAT0, &pat[0]);
+	ret = ad463x_spi_reg_read(dev, AD463X_REG_PAT1, &pat[1]);
+	ret = ad463x_spi_reg_read(dev, AD463X_REG_PAT2, &pat[2]);
+	ret = ad463x_spi_reg_read(dev, AD463X_REG_PAT3, &pat[3]);
+	fprintf(stderr,"AD463x AD463X_REG_TEST_PAT: %02x %02x %02x %02x\n", pat[3], pat[2], pat[1], pat[0]);
+
+	ret = ad463x_spi_reg_write_masked(dev, AD463X_REG_MODES, AD463X_LANE_MODE_MSK, dev->lane_mode);
+	ret = ad463x_spi_reg_write_masked(dev, AD463X_REG_MODES, AD463X_CLK_MODE_MSK, dev->clock_mode);
+	ret = ad463x_spi_reg_write_masked(dev, AD463X_REG_MODES, AD463X_DDR_MODE_MSK, dev->data_rate);
+	ret = ad463x_spi_reg_write_masked(dev, AD463X_REG_MODES, AD463X_OUT_DATA_MODE_MSK, AD463X_32_PATTERN);
+	fprintf(stderr,"AD463x AD463X_REG_TEST_PAT ENABLED NOW\n");
+
+	ad463x_exit_reg_cfg_mode(dev); // exit CFG mode to do test conversion reads
+
+	fprintf(stderr,"AD463x 4 TEST PAT READINGS, 32BIT mode:\n");
+	{
+	  uint32_t ch0, ch1;
+	  ad463x_read_single_sample (dev, &ch0, &ch1, 0, 1, 32);
+	  ad463x_read_single_sample (dev, &ch0, &ch1, 0, 1, 32);
+	  ad463x_read_single_sample (dev, &ch0, &ch1, 0, 1, 32);
+	  ad463x_read_single_sample (dev, &ch0, &ch1, 0, 1, 32);
+	}
+	
+	// ***
+	ad463x_enter_config_mode (dev);
+	
+	fprintf(stderr,"AD463x CONFIGURING MODES FOR NORMAL OPERATION\n");
+
 	ret = ad463x_spi_reg_write_masked(dev, AD463X_REG_MODES, AD463X_LANE_MODE_MSK,
 					  dev->lane_mode);
 	if (ret != 0)
@@ -979,6 +1033,16 @@ int32_t ad463x_init(struct ad463x_dev **device,
 			goto error_spi;
 	}
 #endif
+	fprintf(stderr,"** AD463x CONFIGURING COMPLETED **\n");
+
+	fprintf(stderr,"** AD463x TEST READS **\n");
+        for (int i=0; i<10; ++i){
+                uint32_t ch0, ch1;
+                ad463x_read_single_sample (dev, &ch0, &ch1, 1, 0);
+                fprintf (stderr, "%03d: %10d  %10d  \t %10g mV \t %10g mV\n", i, ch0, ch1, 2*5000.*((int32_t)ch0)/(1<<23), 2*5000.0*((int32_t)ch1)/(1<<23));
+        }
+
+	
 	*device = dev;
 
 	return ret;
