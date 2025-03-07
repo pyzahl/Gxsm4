@@ -59,6 +59,8 @@ module axis_AD463x #(
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF M_AXIS1:M_AXIS2" *)
     input a_clk,
 
+    input request_cnv,
+
     output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS1_tdata,
     output wire                          M_AXIS1_tvalid,
     output wire [SAXIS_TDATA_WIDTH-1:0]  M_AXIS2_tdata,
@@ -75,9 +77,9 @@ module axis_AD463x #(
     
     output wire [31:0] mon0,
     output wire [31:0] mon1,
-    output wire [7:0] bt_dbg
+    output wire [7:0] bt_dbg,
     //output wire [31:0] cfg_word,
-    //output wire ready
+    output wire cnv_ready
     );
     
     reg configuration_mode=0;
@@ -87,7 +89,7 @@ module axis_AD463x #(
     reg manual_cnv=0;
     reg manual_stream_cnv=0;
     reg stream_cnv=0;
-    reg run=0;
+    reg free_run=1;
     
     reg SPI_sck=0;   // SPI CLK pin AD463x
     reg sck=0;       // SPI CLOCK dly
@@ -119,6 +121,8 @@ module axis_AD463x #(
     reg [8:0] rdecii_cfg_n = 16;
     reg [8:0] rdecii_cfg = 0; // MAX SCK 20MHz 3:0    1 2 4 8
 
+    reg rdy = 0;
+
     integer i;
     initial begin
       for (i=0;i<NUM_DAC;i=i+1)
@@ -141,6 +145,7 @@ module axis_AD463x #(
             manual_stream_cnv        <= config_data[2:2];  //  4: use stream CNV mode/read mode: reading last value while converting next, else read immediate result after conversion (waiting for it)
             manual_cnv               <= config_data[3:3];  //  8: trigger one manual convert
             stream_cnv               <= config_data[4:4];  // 10: start auto convert and stream to AXI
+            free_run                 <= ~config_data[5:5]; // 20: run at max speed in AXI stream mode -- or on FPGA trigger "request_cnv" request pulse -- config bit 5 == 1 mean FPGA cnv request, 0, default = free running
             SPI_reset                <= ~config_data[7:7]; // 80: manual reset control
             SPI_cs  <= 1; // disable
             SPI_sck <= 0; // 0...
@@ -246,7 +251,8 @@ module axis_AD463x #(
                                 else if (stream_cnv && !state_single)
                                 begin
                                     SPI_sdi <= 0;
-                                    state_single <= 1;
+                                    if (request_cnv || free_run) // start conversion: free run @ max speed or on FPGA trigger
+                                        state_single <= 1;
                                 end
                                 else
                                 begin              
@@ -258,6 +264,7 @@ module axis_AD463x #(
                                         1: // initiate, clear data
                                         begin
                                             cs  <= 1; // keep de-asserted until ready
+                                            rdy <= 0;
                                             SPI_cnv <= 1; // start CNV
                                             busy_timeout <= 8'hff;
                                             frame_bit_counter  <= n_bits-1;
@@ -299,6 +306,7 @@ module axis_AD463x #(
                                             // completed, store data
                                             reg_dac_data[0] <= n_bits == 24 ? { reg_dac_data_ser[0][23:0], 8'h00 } : { reg_dac_data_ser[0][31:0] };
                                             reg_dac_data[1] <= n_bits == 24 ? { reg_dac_data_ser[1][23:0], 8'h00 } : { reg_dac_data_ser[1][31:0] };
+                                            rdy <= 1;
                                             if (!busy_timeout) // delay?
                                             begin
                                                 state_single <= 0; // completed
@@ -339,5 +347,7 @@ assign mon1 = reg_dac_data[1];
 
 //assign cfg_word = configuration_addr_data_read;
 assign bt_dbg = busy_timeout; // comment in for simulation!!
-    
+
+assign cnv_ready = rdy;
+   
 endmodule
