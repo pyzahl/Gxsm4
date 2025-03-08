@@ -230,7 +230,6 @@
 #define SPMC_MUX2_Z_SERVO_CONTROL_REG   2001 // MUX selection, test mode, test value.
                                              // Z-SERVO INPUT RP_CH1 | ADC463x_CH0
 
-
 // AD463x SPI control/configuration
 #define SPMC_AD463X_CONTROL_REG            50000
 #define SPMC_AD463X_CONFIG_MODE            0 // Bit0: activate config mode, Bit1: read config, Bit2: write config, Bit3: manual convert, Bit4: enable streaming to AXI, Bit7: SPI AD reset
@@ -239,7 +238,7 @@
 #define SPMC_AD463X_CONFIG_MODE_STREAM  0x04
 #define SPMC_AD463X_CONFIG_MODE_CNV     0x08
 #define SPMC_AD463X_CONFIG_MODE_AXI     0x10
-#define SPMC_AD463X_CONFIG_MODE_B5      0x20
+#define SPMC_AD463X_CONFIG_MODE_FPGA_CNV 0x20
 #define SPMC_AD463X_CONFIG_MODE_B6      0x40
 #define SPMC_AD463X_CONFIG_MODE_RESET   0x80
 
