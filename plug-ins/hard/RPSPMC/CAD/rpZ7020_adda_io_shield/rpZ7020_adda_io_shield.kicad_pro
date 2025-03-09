@@ -215,7 +215,15 @@
       "mpn": ""
     },
     "layer_presets": [],
-    "viewports": []
+    "viewports": [
+      {
+        "h": 78089850.49614115,
+        "name": "FrontCu",
+        "w": 129155551.34141862,
+        "x": 80394815.21499366,
+        "y": 73822274.75192861
+      }
+    ]
   },
   "boards": [],
   "cvpcb": {
@@ -484,7 +492,7 @@
   },
   "schematic": {
     "annotate_start_num": 0,
-    "bom_export_filename": "/home/percy/SVN/Gxsm4/plug-ins/hard/RPSPMC/CAD/rpZ7020_adda_io_shield/rpZ7020_adda_io_shield.csv",
+    "bom_export_filename": "/home/percy/SVN/Gxsm4/plug-ins/hard/RPSPMC/CAD/rpZ7020_adda_io_shield/rpZ7020_adda_io_shield2.csv",
     "bom_fmt_presets": [],
     "bom_fmt_settings": {
       "field_delimiter": ",",

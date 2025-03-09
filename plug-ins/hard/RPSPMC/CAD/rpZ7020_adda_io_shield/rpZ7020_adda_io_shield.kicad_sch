@@ -66313,6 +66313,28 @@
 	)
 	(global_label "VADJ"
 		(shape input)
+		(at 138.43 129.54 0)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "76463679-36bd-4dc4-9cc7-8f062820cb6c")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 145.83 129.54 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+				(hide yes)
+			)
+		)
+	)
+	(global_label "VADJ"
+		(shape input)
 		(at 175.26 100.33 180)
 		(fields_autoplaced yes)
 		(effects
