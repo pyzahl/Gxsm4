@@ -11371,7 +11371,7 @@
 			(pintype "passive")
 			(uuid "a099d3ed-50b0-47f2-8bcc-9ce7af9aef7f")
 		)
-		(model "${KICAD6_3DMODEL_DIR}/Connector_Samtec.3dshapes/Samtec_FMC_ASP-134486-01_10x40_P1.27mm_Vertical.wrl"
+		(model "/home/percy/SVN/Gxsm4/plug-ins/hard/RPSPMC/CAD/ASP-134486-01--3DModel-STEP-56544.STEP"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -11379,7 +11379,7 @@
 				(xyz 1 1 1)
 			)
 			(rotate
-				(xyz 0 0 0)
+				(xyz -90 0 0)
 			)
 		)
 	)
