@@ -59,5 +59,17 @@ SPMC Main Block:
 Z-Servo Controller Block:
 ![Screenshot from 2025-01-06 13-09-56](https://github.com/user-attachments/assets/cc823f36-4cd9-4d33-bbfb-c968eb557e47)
 
+# 5. Hardware:
+A analog IO adopting hat for the RP was designed.
+
+![rpZ7020_adda_io_shield-withRP-pmod-eval2](https://github.com/user-attachments/assets/8de8d4c9-3c87-4010-bda2-9541b2274633)
+
+![rpZ7020_adda_io_shield-withRP-box](https://github.com/user-attachments/assets/75f21c69-2a45-4e50-a219-35888e172a63)
+
+![Screenshot from 2025-03-09 11-12-35](https://github.com/user-attachments/assets/44f29106-87fb-4d10-8ead-d407623d7526)
+
+
+![PCBWay Link to RPSPMC hat rev 1.0.1](https://www.pcbway.com/project/shareproject/GXSM4_RPSPMC_hat_Rev1_0_1_199b9ff2.html)
+
 
 
