@@ -110,13 +110,16 @@ module axis_py_lockin#(
 
     );
 
-    localparam integer Q20onek = 1000*(1<<20);
-
     // DDS Control
-    reg signed [31:0] amc = 0;
-    reg signed [31:0] fmc = 0;
-    reg signed [31:0] dds_FM_Scale = Q20onek; // 1kHz/V
-    reg signed [63:0] fmc_scaled=0;
+    reg signed [24-1:0] dds_AM_Scale = 3355443;     // 1x/V (5V full scale => 5x/5V) in Q24 =: 1/5*((1<<24)-1);
+    reg signed [31-1:0] amcA  = 0;
+    reg signed [24-1:0] amf24 = 0;
+    reg signed [48-1:0] amcS  = 0;
+    reg signed [24-1:0] amc24 = 0;
+    reg signed [48-1:0] amc = 0;
+    reg signed [32-1:0] dds_FM_Scale = 0;     // 1kHz/V (5V full scale => 5KHz/5V) in Q31 =: 1/5000*((1<<31)-1);
+    reg signed [32-1:0] fmcB = 0;
+    reg signed [64-1:0] fmc = 0;
     reg [48-1:0] dds_PhaseIncRef = 1;
     reg [48-1:0] dds_FM = 0;
     reg [48-1:0] dds_PhaseInc = 1;
@@ -195,33 +198,39 @@ module axis_py_lockin#(
             gain            <= config_data[2*32-1    : 1*32]; // programmed gain, Q24
             dds_n2          <= config_data[2*32+16-1 : 2*32];       // Phase Inc N2 lower 16 bits
             dds_PhaseIncRef <= config_data[3*32+48-1 : 3*32]; // Phase Inc Width: 48 bits
-            dds_FM_Scale    <= config_data[6*32-1    : 5*32]; // Phase Inc FM Scale for FM -- Q20
+            dds_FM_Scale    <= config_data[5*32+32-1 : 5*32]; // Phase Inc FM Scale for FM -- Q24
         end
         
-        if (lck_config[0]) // AM mod?
-            amc <= (S_AXIS_AMC_tdata * 5) >>> 7; // "1V" => Q24 => 1V/5V * Q31 * x = Q24
-        else
-            amc <= Q24;
-
-        if (lck_config[2]) // FM mod?
-        begin
-            fmc <= S_AXIS_FMC_tdata;
-            fmc_scaled <= dds_FM_Scale*fmc; // scale fmc to range
-            dds_FM <= fmc_scaled >>> 20; // FM-Scale: Q20
-        end else
-            dds_FM <= 0; 
-
-        dds_PhaseInc <= dds_PhaseIncRef + dds_FM; 
-            
         // signal
         sig_in <= $signed(S_AXIS_SIGNAL_tdata[S_AXIS_SIGNAL_TDATA_WIDTH-1:S_AXIS_SIGNAL_TDATA_WIDTH-SC_DATA_WIDTH]);   
 
         // Sin, Cos
         c <= S_AXIS_SC_tdata[                        SC_DATA_WIDTH-1 :                       0];  // 25Q24 full dynamic range, proper rounding   24: 0
         s <= S_AXIS_SC_tdata[S_AXIS_SC_TDATA_WIDTH/2+SC_DATA_WIDTH-1 : S_AXIS_SC_TDATA_WIDTH/2];  // 25Q24 full dynamic range, proper rounding   56:32
-                
+
+        if (lck_config[0]) // AM mod?
+        begin     
+            amcA       <= S_AXIS_AMC_tdata; // ==> Q24   1x <=> 1V (Q24)
+            amf24      <= amcA >>> 8; // ==> Q24   1x <=> 1V (Q24)
+            amcS       <= dds_AM_Scale * amf24; // Q24 * Q24   == 1x <=> 1V (Q24)
+            amc24      <= amcS >>> 24;
+            amc        <= c * amc24;   // Q24 * Q24
+            SigRef     <= amc >>> 24; // GeneratedSignal with AM
+        end
+        else
+            SigRef <= c; // GeneratedSignal
+
+        if (lck_config[2]) // FM mod?
+        begin
+            // dds_FM_Scale: [Hz/V] * ((1<<44)-1)/125000000*5/(1<<(44-32))
+            fmcB         <= S_AXIS_FMC_tdata; // Q** *Q31 => Q48    == xxx Hz <=> 1V (Q24)  **** 1000Hz*((1<<44)-1)/125000000Hz
+            fmc          <= dds_FM_Scale * fmcB; // Q** *Q31 => Q48    == xxx Hz <=> 1V (Q24)  **** 1000Hz*((1<<44)-1)/125000000Hz
+            dds_FM       <= fmc >>> 19; // FM-Scale: Q44
+            dds_PhaseInc <= dds_PhaseIncRef + dds_FM; // dds_FM Q44
+        end else
+            dds_PhaseInc <= dds_PhaseIncRef; // DDS Freq (PhaseInc) 
+
             
-        SigRef <= (c * amc) >>> 24; // GeneratedSignal Out with AM and FM mod
                      
         // DDS N / cycle
         // dds_n2 <= S_AXIS_DDS_N2_tdata;

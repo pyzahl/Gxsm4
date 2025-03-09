@@ -224,6 +224,15 @@ SOURCE_SIGNAL_DEF modulation_targets[] = {
         { 0x00000016,  NULL, NULL, NULL, NULL, 0.0, 0 }
 };
 
+
+SOURCE_SIGNAL_DEF z_servo_current_source[] = {
+        //  SIGNAL #  Name               Units.... Scale
+        { 0x00000000, "RF-In2",    " ",  "nA",  "nA", 256*SPMC_RPIN12_to_volts, 0, 0 },
+        { 0x00000001, "AD24-In1",  " ",  "nA",  "nA",     SPMC_RPIN34_to_volts, 0, 0 },
+        { 0x00000016,  NULL, NULL, NULL, NULL, 0.0, 0 }
+};
+
+        
 // helper func to assemble mux value from selctions
 int __GVP_selection_muxval (int selection[6]) {
         int mux=0;
@@ -598,6 +607,28 @@ GtkWidget* GUI_Builder::grid_add_modulation_target_options (gint channel, gint p
                 
         g_signal_connect (G_OBJECT (cbtxt), "changed",	
                           G_CALLBACK (RPSPMC_Control::choice_mod_target_callback), 
+                          ref);				
+        grid_add_widget (cbtxt);
+        return cbtxt;
+};
+
+GtkWidget* GUI_Builder::grid_add_z_servo_current_source_options (gint channel, gint preset, gpointer ref){
+        GtkWidget *cbtxt = gtk_combo_box_text_new (); 
+        gtk_widget_set_size_request (cbtxt, 50, -1); 
+        g_object_set_data(G_OBJECT (cbtxt), "z_servo_current_source_id", GINT_TO_POINTER (channel)); 
+
+
+        for (int jj=0; z_servo_current_source[jj].label; ++jj){
+                gchar *id = g_strdup_printf ("%d", jj); gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, z_servo_current_source[jj].label); g_free (id);
+        }
+
+        if (preset >= 0)
+                gtk_combo_box_set_active (GTK_COMBO_BOX (cbtxt), preset); 
+        else
+                gtk_combo_box_set_active (GTK_COMBO_BOX (cbtxt), 4); // NULL SIGNAL [TESTING FALLBACK for -1/error]
+                
+        g_signal_connect (G_OBJECT (cbtxt), "changed",	
+                          G_CALLBACK (RPSPMC_Control::choice_z_servo_current_source_callback), 
                           ref);				
         grid_add_widget (cbtxt);
         return cbtxt;
@@ -1536,7 +1567,9 @@ void RPSPMC_Control::create_folder (){
         bp->set_input_width_chars (12);
         bp->set_label_width_chars (10);
 	bp->grid_add_label ("Z-Servo");
-        bp->grid_add_label ("Setpoint", NULL, 5);
+        bp->grid_add_z_servo_current_source_options (0, (int)spmc_parameters.z_servo_src_mux, this);
+
+        bp->grid_add_label ("Setpoint", NULL, 4);
 
         bp->set_configure_list_mode_on ();
         bp->set_input_width_chars (6);
@@ -3239,6 +3272,17 @@ int RPSPMC_Control::choice_mod_target_callback (GtkWidget *widget, RPSPMC_Contro
         return 0;
 }
 
+int RPSPMC_Control::choice_z_servo_current_source_callback (GtkWidget *widget, RPSPMC_Control *self){
+        PI_DEBUG_GP (DBG_L4, "%s \n",__FUNCTION__);
+
+	int id = gtk_combo_box_get_active (GTK_COMBO_BOX (widget));
+        
+        if (rpspmc_pacpll)
+                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_SRC_MUX", id);
+        
+        return 0;
+}
+
 
 void RPSPMC_Control::delayed_vector_update (){
         // SCAN SPEED COMPUTATIONS
@@ -3589,6 +3633,13 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
                                     G_CALLBACK (RPspmc_pacpll::dfreq_controller), this);
         bp->grid_add_check_button ( N_("Invert"), "Invert Dfreq Controller Gain. Normally positive.", 2,
                                     G_CALLBACK (RPspmc_pacpll::dfreq_controller_invert), this);
+
+        bp->new_line ();
+        bp->grid_add_check_button ( N_("Control Z"), bp->PYREMOTE_CHECK_HOOK_KEY_FUNC("Engage Dfreq Controller on Z","rp-pacpll-ZDFcontrol"), 2,
+                                    G_CALLBACK (RPspmc_pacpll::EnZdfreq_control), this);
+        bp->new_line ();
+        bp->grid_add_check_button ( N_("Control Bias"), bp->PYREMOTE_CHECK_HOOK_KEY_FUNC("Engage Dfreq Controller on Bias","rp-pacpll-UDFcontrol"), 2,
+                                    G_CALLBACK (RPspmc_pacpll::EnUdfreq_control), this);
 
         // =======================================
         bp->pop_grid ();
@@ -4724,6 +4775,16 @@ void RPspmc_pacpll::dfreq_controller_invert (GtkWidget *widget, RPspmc_pacpll *s
 void RPspmc_pacpll::dfreq_controller (GtkWidget *widget, RPspmc_pacpll *self){
         self->write_parameter ("DFREQ_CONTROLLER", gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)));
         self->parameters.dfreq_controller = gtk_check_button_get_active (GTK_CHECK_BUTTON (widget));
+}
+
+void RPspmc_pacpll::EnZdfreq_control (GtkWidget *widget, RPspmc_pacpll *self){
+        self->write_parameter ("DFREQ_CONTROL_Z", gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)));
+        self->parameters.Zdfreq_control = gtk_check_button_get_active (GTK_CHECK_BUTTON (widget));
+}
+
+void RPspmc_pacpll::EnUdfreq_control (GtkWidget *widget, RPspmc_pacpll *self){
+        self->write_parameter ("DFREQ_CONTROL_U", gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)));
+        self->parameters.Udfreq_control = gtk_check_button_get_active (GTK_CHECK_BUTTON (widget));
 }
 
 void RPspmc_pacpll::update(){

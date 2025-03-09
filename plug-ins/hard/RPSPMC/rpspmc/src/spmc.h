@@ -98,7 +98,7 @@ extern "C" {
         void rp_spmc_set_offsets (double x0, double y0, double z0, double bias, double xy_move_slew, double z_move_slew);
         void rp_spmc_set_scanpos (double xs, double ys, double slew);
 
-        void rp_spmc_set_modulation (double volume, int target);
+        void rp_spmc_set_modulation (double volume, int target, int dfc_target);
 
         double rp_spmc_configure_lockin (double freq, double gain, unsigned int mode, int LCKID);
 

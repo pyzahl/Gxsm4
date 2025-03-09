@@ -110,6 +110,8 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         { "DFREQ_FB_UPPER", &pacpll_parameters.control_dfreq_fb_upper, false },
         { "DFREQ_FB_LOWER", &pacpll_parameters.control_dfreq_fb_lower, false },
         { "DFREQ_CONTROLLER", &pacpll_parameters.dfreq_controller, false },
+        { "DFREQ_CONTROL_Z", &pacpll_parameters.Zdfreq_control, false },
+        { "DFREQ_CONTROL_U", &pacpll_parameters.Udfreq_control, false },
 
         { "PULSE_FORM_BIAS0", &pacpll_parameters.pulse_form_bias0, false },
         { "PULSE_FORM_BIAS1", &pacpll_parameters.pulse_form_bias1, false },
@@ -140,6 +142,7 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         { "SPMC_Z_SERVO_LOWER", &spmc_parameters.z_servo_lower, false },
         { "SPMC_Z_SERVO_SETPOINT_CZ", &spmc_parameters.z_servo_setpoint_cz, false },
         { "SPMC_Z_SERVO_IN_OFFSETCOMP", &spmc_parameters.z_servo_in_offsetcomp, false },
+        { "SPMC_Z_SERVO_SRC_MUX", &spmc_parameters.z_servo_src_mux, false },
 
 
         { "SPMC_GVP_EXECUTE", &spmc_parameters.gvp_control, 0 },

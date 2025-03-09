@@ -150,7 +150,6 @@ ad463x_dev* rp_spmc_AD463x_init (){
         init_param.data_rate   = AD463X_SDR_MODE; // AD463X_DDR_MODE
         init_param.spi_clock_divider = 3; // 3 should do, 10 works for testing
         ad463x_init(&dev, &init_param);
-        ad463x_exit_reg_cfg_mode(dev);
 
         rp_spmc_AD463x_set_stream_mode (dev);
 
@@ -807,11 +806,12 @@ void rp_spmc_set_scanpos (double xs, double ys, double slew, int opts){
 #endif
 }
 
-void rp_spmc_set_modulation (double volume, int target){
+void rp_spmc_set_modulation (double volume, int target, int dfc_target){
         if (verbose > 1) fprintf(stderr, "##Configure: LCK VOLUME volume= %g V, TARGET: #%d\n", volume, target);
 
-        rp_spmc_module_config_int32 (MODULE_SETUP, volts_to_rpspmc(volume), MODULE_START_VECTOR);
-        rp_spmc_module_config_uint32 (SPMC_MAIN_CONTROL_MODULATION_REG, target&0x0f, MODULE_SETUP_VECTOR(1));
+        rp_spmc_module_config_int32  (MODULE_SETUP, volts_to_rpspmc(volume), MODULE_START_VECTOR);
+        rp_spmc_module_config_uint32 (MODULE_SETUP, target&0x0f, MODULE_SETUP_VECTOR(1));
+        rp_spmc_module_config_uint32 (SPMC_MAIN_CONTROL_MODULATION_REG, dfc_target&0x0f, MODULE_SETUP_VECTOR(2));
 }
 
 
@@ -823,8 +823,9 @@ double rp_spmc_configure_lockin (double freq, double gain, double FM_scale, unsi
         unsigned int n2 = round (log2(dds_phaseinc (freq)));
         unsigned long long phase_inc = 1LL << n2;
         double fact = dds_phaseinc_to_freq (phase_inc);
-        double hzv = dds_phaseinc (1.) / volts_to_rpspmc(1.); // 1V Ramp => 1Hz
-        
+        //double hzv = dds_phaseinc (1.) / volts_to_rpspmc(1.); // 1V Ramp => 1Hz
+        double hzv = 171.798691839990234375; //((1<<44)-1)/125000000*5/(1<<(44-32))
+
         if (verbose > 1){
                 double ferr = fact - freq;
                 fprintf(stderr, "##Configure: LCK DDS IDEAL Freq= %g Hz [%lld, N2=%d, decii=%d, M=%lld]  Actual f=%g Hz  Delta=%g Hz  (using power of 2 phase_inc)\n", freq, phase_inc, n2, n2>10? 1<<(n2-10):0, QQ44/phase_inc, fact, ferr);
@@ -834,12 +835,16 @@ double rp_spmc_configure_lockin (double freq, double gain, double FM_scale, unsi
         }
         
         rp_spmc_module_config_uint32 (MODULE_SETUP, mode, MODULE_START_VECTOR); // first, init
-        rp_spmc_module_config_Qn     (MODULE_SETUP, gain, MODULE_SETUP_VECTOR(1), Q24); // set... 
+        rp_spmc_module_config_Qn     (MODULE_SETUP, gain, MODULE_SETUP_VECTOR(1), Q24); // GAIN
         rp_spmc_module_config_int32  (MODULE_SETUP, n2, MODULE_SETUP_VECTOR(2)); // last, write
         rp_spmc_module_config_int64  (MODULE_SETUP, phase_inc, MODULE_SETUP_VECTOR(3)); // last, write
 
-        rp_spmc_module_config_Qn     (LCKID, hzv*FM_scale, MODULE_SETUP_VECTOR(5), Q20); // last, write *** Hz/V
+        // dds_FM_Scale: [Hz/V] * ((1<<44)-1)/125000000*5/(1<<(44-32))
+        //    fmc          <= dds_FM_Scale * $signed(S_AXIS_FMC_tdata); // Q** *Q31 => Q48    == xxx Hz <=> 1V (Q24)  **** 1000Hz*((1<<44)-1)/125000000Hz
+        //    dds_FM       <= fmc >>> 20; // FM-Scale: Q44
 
+        rp_spmc_module_config_uint32 (LCKID, (unsigned int)(round(hzv*FM_scale)), MODULE_SETUP_VECTOR(5)); // last, write FM-Scale Hz/V
+        
         return fact;
 }
 
