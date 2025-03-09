@@ -69,7 +69,7 @@ A analog IO adopting hat for the RP was designed.
 ![Screenshot from 2025-03-09 11-12-35](https://github.com/user-attachments/assets/44f29106-87fb-4d10-8ead-d407623d7526)
 
 
-![PCBWay Link to RPSPMC hat rev 1.0.1](https://www.pcbway.com/project/shareproject/GXSM4_RPSPMC_hat_Rev1_0_1_199b9ff2.html)
+PCBWay Link to RPSPMC hat rev 1.0.1: https://www.pcbway.com/project/shareproject/GXSM4_RPSPMC_hat_Rev1_0_1_199b9ff2.html
 
 
 
