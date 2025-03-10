@@ -11,15 +11,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="39,375.420 ns"></ZoomStartTime>
-      <ZoomEndTime time="39,779.421 ns"></ZoomEndTime>
-      <Cursor1Time time="39,579.820 ns"></Cursor1Time>
+      <ZoomStartTime time="12,720.420 ns"></ZoomStartTime>
+      <ZoomEndTime time="13,364.821 ns"></ZoomEndTime>
+      <Cursor1Time time="12,794.000 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="313"></NameColumnWidth>
-      <ValueColumnWidth column_width="127"></ValueColumnWidth>
+      <ValueColumnWidth column_width="121"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="66" />
+   <WVObjectSize size="67" />
    <wvobject type="logic" fp_name="/tb_spm_ad/pclk">
       <obj_property name="ElementShortName">pclk</obj_property>
       <obj_property name="ObjectShortName">pclk</obj_property>
@@ -262,6 +262,10 @@
       <obj_property name="ElementShortName">dma_addr_next[31:0]</obj_property>
       <obj_property name="ObjectShortName">dma_addr_next[31:0]</obj_property>
    </wvobject>
+   <wvobject type="logic" fp_name="/tb_spm_ad/axis_AD463_tb/a_clk">
+      <obj_property name="ElementShortName">a_clk</obj_property>
+      <obj_property name="ObjectShortName">a_clk</obj_property>
+   </wvobject>
    <wvobject type="logic" fp_name="/tb_spm_ad/axis_AD463_tb/wire_SPI_sck">
       <obj_property name="ElementShortName">wire_SPI_sck</obj_property>
       <obj_property name="ObjectShortName">wire_SPI_sck</obj_property>
@@ -313,12 +317,8 @@
       <obj_property name="ObjectShortName">rdecii</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/tb_spm_ad/axis_AD463_tb/state_single">
-      <obj_property name="ElementShortName">state_single[3:0]</obj_property>
-      <obj_property name="ObjectShortName">state_single[3:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/tb_spm_ad/axis_AD463_tb/state_stream">
-      <obj_property name="ElementShortName">state_stream[3:0]</obj_property>
-      <obj_property name="ObjectShortName">state_stream[3:0]</obj_property>
+      <obj_property name="ElementShortName">state_single[2:0]</obj_property>
+      <obj_property name="ObjectShortName">state_single[2:0]</obj_property>
    </wvobject>
    <wvobject type="logic" fp_name="/tb_spm_ad/axis_AD463_tb/cfg_mode_job">
       <obj_property name="ElementShortName">cfg_mode_job</obj_property>
@@ -337,16 +337,16 @@
       <obj_property name="ObjectShortName">reg_dac_data[1:0][31:0]</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/tb_spm_ad/axis_AD463_tb/reg_data_in">
-      <obj_property name="ElementShortName">reg_data_in[63:0]</obj_property>
-      <obj_property name="ObjectShortName">reg_data_in[63:0]</obj_property>
+      <obj_property name="ElementShortName">reg_data_in[31:0]</obj_property>
+      <obj_property name="ObjectShortName">reg_data_in[31:0]</obj_property>
    </wvobject>
    <wvobject type="logic" fp_name="/tb_spm_ad/axis_AD463_tb/configuration_mode">
       <obj_property name="ElementShortName">configuration_mode</obj_property>
       <obj_property name="ObjectShortName">configuration_mode</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/tb_spm_ad/axis_AD463_tb/state_rw">
-      <obj_property name="ElementShortName">state_rw[3:0]</obj_property>
-      <obj_property name="ObjectShortName">state_rw[3:0]</obj_property>
+      <obj_property name="ElementShortName">state_rw[1:0]</obj_property>
+      <obj_property name="ObjectShortName">state_rw[1:0]</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/tb_spm_ad/axis_AD463_tb/frame_bit_counter">
       <obj_property name="ElementShortName">frame_bit_counter[4:0]</obj_property>
@@ -371,5 +371,9 @@
    <wvobject type="array" fp_name="/tb_spm_ad/ad_bt_dbg">
       <obj_property name="ElementShortName">ad_bt_dbg[7:0]</obj_property>
       <obj_property name="ObjectShortName">ad_bt_dbg[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_AD463_tb/rdecii_cfg_n">
+      <obj_property name="ElementShortName">rdecii_cfg_n[8:0]</obj_property>
+      <obj_property name="ObjectShortName">rdecii_cfg_n[8:0]</obj_property>
    </wvobject>
 </wave_config>
