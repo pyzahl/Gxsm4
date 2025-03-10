@@ -489,8 +489,6 @@ set_property -name "top" -value "ad5791_tb" -objects $obj
 set_property -name "top_auto_set" -value "0" -objects $obj
 set_property -name "top_lib" -value "xil_defaultlib" -objects $obj
 
-set_property -name "netlist_only" -value "0" -objects $file_obj
-
 
 
 # Adding sources referenced in BDs, if not already added
