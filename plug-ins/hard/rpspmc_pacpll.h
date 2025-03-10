@@ -113,6 +113,7 @@ public:
         GtkWidget* grid_add_scan_input_signal_options (gint channel, gint preset, gpointer ref);
         GtkWidget* grid_add_probe_source_signal_options (gint channel, gint preset, gpointer ref);
         GtkWidget* grid_add_modulation_target_options (gint channel, gint preset, gpointer ref);
+        GtkWidget* grid_add_z_servo_current_source_options (gint channel, gint preset, gpointer ref);
 
         GtkWidget* grid_add_probe_status (const gchar *status_label);
         void grid_add_probe_controls (gboolean have_dual,
@@ -394,6 +395,7 @@ public:
 
         static void lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *self);
         static int choice_mod_target_callback (GtkWidget *widget, RPSPMC_Control *self);
+        static int choice_z_servo_current_source_callback (GtkWidget *widget, RPSPMC_Control *self);
 
         static void show_tab_to_configure (GtkWidget* w, gpointer data){
                 gtk_widget_show (GTK_WIDGET (g_object_get_data (G_OBJECT (w), "TabGrid")));
@@ -984,6 +986,8 @@ public:
 	static void dfreq_gain_changed (Param_Control* pcs, gpointer user_data);
         static void dfreq_controller_invert (GtkWidget *widget, RPspmc_pacpll *self);
         static void dfreq_controller (GtkWidget *widget, RPspmc_pacpll *self);
+        static void EnZdfreq_control (GtkWidget *widget, RPspmc_pacpll *self);
+        static void EnUdfreq_control (GtkWidget *widget, RPspmc_pacpll *self);
 
 	static void pulse_form_parameter_changed (Param_Control* pcs, gpointer user_data);
         static void pulse_form_enable (GtkWidget *widget, RPspmc_pacpll *self);

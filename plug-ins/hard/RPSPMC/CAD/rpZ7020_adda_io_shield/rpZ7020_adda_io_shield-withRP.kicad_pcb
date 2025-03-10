@@ -7109,15 +7109,15 @@
 				(xyz 0 180 90)
 			)
 		)
-		(model "/home/percy/SVN/Gxsm4/plug-ins/hard/RPSPMC/CAD/RP-base.stp"
+		(model "/home/pzahl/SVN/Gxsm4/plug-ins/hard/RPSPMC/CAD/RP-base.stp"
 			(offset
-				(xyz 74 0 -28)
+				(xyz 80 0 -30)
 			)
 			(scale
 				(xyz 1 1 1)
 			)
 			(rotate
-				(xyz 0 180 -90)
+				(xyz 180 0 90)
 			)
 		)
 	)

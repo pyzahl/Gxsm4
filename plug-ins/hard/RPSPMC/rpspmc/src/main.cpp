@@ -269,6 +269,8 @@ CBooleanParameter QCONTROL("QCONTROL", CBaseParameter::RW, false, 0);
 CBooleanParameter LCK_AMPLITUDE("LCK_AMPLITUDE", CBaseParameter::RW, false, 0);
 CBooleanParameter LCK_PHASE("LCK_PHASE", CBaseParameter::RW, false, 0);
 CBooleanParameter DFREQ_CONTROLLER("DFREQ_CONTROLLER", CBaseParameter::RW, false, 0);
+CBooleanParameter DFREQ_CONTROL_Z("DFREQ_CONTROL_Z", CBaseParameter::RW, false, 0);
+CBooleanParameter DFREQ_CONTROL_U("DFREQ_CONTROL_U", CBaseParameter::RW, false, 0);
 
 //void rp_PAC_set_phase_controller64 (double setpoint, double cp, double ci, double upper, double lower)
 CDoubleParameter AMPLITUDE_FB_SETPOINT("AMPLITUDE_FB_SETPOINT", CBaseParameter::RW, 20, 0, 0, 1000); // mV
@@ -1809,23 +1811,25 @@ void OnNewParams_RPSPMC(void){
                 double fms  = SPMC_SC_LCK_FMSCALE.Value ();
                 double gain = SPMC_SC_LCK_GAIN.Value ();
                 int mode = 0;
-                if (gain > 0) // parameter gain
-                        mode = 1;
-                if (fms > 0) // via signal FM
+                if (gain > 0.) // parameter gain
+                        mode |= 1;
+                if (fms > 0.) // via signal FM
                         mode |= 4;
                 lck_f0_frq = rp_spmc_configure_lockin (SPMC_SC_LCK_FREQUENCY.Value (), gain, fms, mode, SPMC_LOCKIN_F0_CONTROL_REG);
         }
 
-        if (SPMC_SC_LCK_TARGET.IsNewValue () || SPMC_SC_LCK_VOLUME.IsNewValue ()){
+        if (SPMC_SC_LCK_TARGET.IsNewValue () || SPMC_SC_LCK_VOLUME.IsNewValue () || DFREQ_CONTROL_Z.IsNewValue () || DFREQ_CONTROL_U.IsNewValue ()){
                 SPMC_SC_LCK_TARGET.Update ();
                 SPMC_SC_LCK_VOLUME.Update ();
-                rp_spmc_set_modulation (SPMC_SC_LCK_VOLUME.Value (), SPMC_SC_LCK_TARGET.Value ());
+                DFREQ_CONTROL_Z.Update ();
+                DFREQ_CONTROL_U.Update ();
+                rp_spmc_set_modulation (SPMC_SC_LCK_VOLUME.Value (), SPMC_SC_LCK_TARGET.Value (), DFREQ_CONTROL_Z.Value () ? 1:0 | DFREQ_CONTROL_U.Value () ? 2:0 );
 
-                if ((int)SPMC_SC_LCK_TARGET.Value () == 7)
+                // TESTING MODE
+                if ((int)SPMC_SC_LCK_TARGET.Value () == 7){
                         rp_spmc_module_read_config_data_timing_test ();
-
-                // TESTING
-                rp_spmc_AD463x_test (ad464x_dev_IN34);
+                        rp_spmc_AD463x_test (ad464x_dev_IN34);
+                }
 
         }
 

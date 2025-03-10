@@ -1033,7 +1033,9 @@ int32_t ad463x_init(struct ad463x_dev **device,
 			goto error_spi;
 	}
 #endif
-	fprintf(stderr,"** AD463x CONFIGURING COMPLETED **\n");
+	fprintf(stderr,"** AD463x CONFIGURING COMPLETED -- CFG MODE EXIT **\n");
+
+	ad463x_exit_reg_cfg_mode(dev); // exit CFG mode to do test conversion reads
 
 	fprintf(stderr,"** AD463x TEST READS **\n");
         for (int i=0; i<10; ++i){

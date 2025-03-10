@@ -122,6 +122,8 @@ struct PACPLL_parameters {
         double dfreq_fb_cp;
         double dfreq_fb_ci;
         double dfreq_controller;
+        double Zdfreq_control;
+        double Udfreq_control;
         double control_dfreq_fb_upper;
         double control_dfreq_fb_lower;
         
@@ -172,7 +174,8 @@ struct SPMC_parameters {
         double z_servo_setpoint_cz;
         double z_servo_level;
         double z_servo_in_offsetcomp;
-
+        double z_servo_src_mux;
+        
         double gvp_control;
         //double gvp_execute;
         //double gvp_pause;

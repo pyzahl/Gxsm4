@@ -61,7 +61,7 @@ module axis_spm_control#(
     parameter bias_reg_address = 1104,
     parameter z_polarity_configuration = 1105
 )(
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS_Xs:S_AXIS_Ys:S_AXIS_Zs:S_AXIS_U:S_AXIS_A:S_AXIS_B:S_AXIS_SREF:S_AXIS_Z:M_AXIS1:M_AXIS2:M_AXIS3:M_AXIS4:M_AXIS3:M_AXIS5:M_AXIS3:M_AXIS6:M_AXIS_XSMON:M_AXIS_YSMON:M_AXIS_ZSMON:M_AXIS_X0MON:M_AXIS_Z_SLOPE:M_AXIS_Y0MON:M_AXIS_ZGVPMON:M_AXIS_UGVPMON:M_AXIS_U0BIASMON" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS_Xs:S_AXIS_Ys:S_AXIS_Zs:S_AXIS_U:S_AXIS_A:S_AXIS_B:S_AXIS_SREF:S_AXIS_Z:S_AXIS_dFC:M_AXIS1:M_AXIS2:M_AXIS3:M_AXIS4:M_AXIS3:M_AXIS5:M_AXIS3:M_AXIS6:M_AXIS_XSMON:M_AXIS_YSMON:M_AXIS_ZSMON:M_AXIS_X0MON:M_AXIS_Z_SLOPE:M_AXIS_Y0MON:M_AXIS_ZGVPMON:M_AXIS_UGVPMON:M_AXIS_U0BIASMON" *)
     input a_clk,
     input [32-1:0]  config_addr,
     input [512-1:0] config_data,
@@ -74,9 +74,12 @@ module axis_spm_control#(
     input wire                          S_AXIS_Ys_tvalid,
     input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS_Zs_tdata,
     input wire                          S_AXIS_Zs_tvalid,
-    // Z Feedback Servo
+    // Z Feedback Servo STM
     input  wire [SAXIS_TDATA_WIDTH-1:0] S_AXIS_Z_tdata,
     input  wire                         S_AXIS_Z_tvalid,
+    // Z Feedback Servo dFREQ
+    input  wire [SAXIS_TDATA_WIDTH-1:0] S_AXIS_dFC_tdata,
+    input  wire                         S_AXIS_dFC_tvalid,
     // Bias
     input wire [SAXIS_TDATA_WIDTH-1:0]  S_AXIS_U_tdata,
     input wire                          S_AXIS_U_tvalid,
@@ -140,6 +143,7 @@ module axis_spm_control#(
 
     reg signed [32-1:0] modulation_volume=0; // volume for modulation Q31
     reg [4-1:0] modulation_target=0; // target signal for mod (#XYZUAB)
+    reg [4-1:0] dFControl_target=0;  // target for dFControl: B0: Z, B1: Bias
 
     reg negate_z=1;
 
@@ -202,7 +206,8 @@ module axis_spm_control#(
     reg signed [32-1:0] slx=0; // SQ31
     reg signed [32-1:0] sly=0; // SQ31
     
-    reg signed [32-1:0] z_servo=0;
+    reg signed [32-1:0] z_servo_stm=0;
+    reg signed [32-1:0] servo_dFC=0;
     reg signed [32-1:0] dZx=0;
     reg signed [32-1:0] dZx_p=0;
     reg signed [32-1:0] dZx_m=0;
@@ -283,7 +288,8 @@ module axis_spm_control#(
         begin
             // modulation control
             modulation_volume <= $signed(config_data[1*32-1 : 0*32]); // volume for modulation Q31
-            modulation_target <= config_data[2*32-1 : 1*32]; // target signal for mod (#XYZUAB)
+            modulation_target <= config_data[1*32+4-1 : 1*32]; // target signal for mod (#XYZUAB)
+            dFControl_target  <= config_data[2*32+4-1 : 2*32]; // target for dFControl: B0: Z, B1: Bias
         end
 
         z_polarity_configuration:
@@ -315,8 +321,9 @@ module axis_spm_control#(
             AXa   <= S_AXIS_A_tdata[SAXIS_TDATA_WIDTH-1:0];
             AXb   <= S_AXIS_B_tdata[SAXIS_TDATA_WIDTH-1:0];
 
-            // Z Servo Control Component
-            z_servo  <= S_AXIS_Z_tdata;
+            // Z Servo Control Components
+            z_servo_stm  <= S_AXIS_Z_tdata;    // STM Control on Current
+            servo_dFC    <= S_AXIS_dFC_tdata;  // ZFM Control on dFreq or Bias Control on dFreq
 
             // XYZ Offset Adjusters -- Zoffset currenly not used/obsolete
 
@@ -347,11 +354,11 @@ module axis_spm_control#(
             
             // Z and slope comensation in global X,Y and in non rot coords. sys 0,0=invariant point
             z_slope <= (dZmx >>> QSLOPE) + (dZmy >>> QSLOPE);
-            z_sum   <= z_gvp + z_servo + (mt == 3 ? modulation : 0); // + mz0;
-            //z_sum   <= z_gvp + z_servo + Z_slope;
+            z_sum   <= z_gvp + z_servo_stm + (dFControl_target[0] ? servo_dFC : 0) + (mt == 3 ? modulation : 0); // + mz0;
+            //z_sum   <= z_gvp + z_servo + Z_slope; // slope is SAT-added externally later
 
             // Bias := u0_bias (User Bias by GXSM) + u_gvp (GVP bias manipulation component) + LockIn Mod 
-            ru  <= u0_bias + u_gvp + ((mt == 4 || mt == 7 )? modulation : 0);
+            ru  <= u0_bias + u_gvp + (dFControl_target[1] ? servo_dFC : 0) + ((mt == 4 || mt == 7 )? modulation : 0);
     
 
             // AUX AXIS A,B
