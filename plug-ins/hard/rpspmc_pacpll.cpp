@@ -680,9 +680,9 @@ void GUI_Builder::grid_add_probe_controls (gboolean have_dual,
                                        "disable to save resources and CPU time for huge data sets\n"
                                        "and use manual plot update if needed.", 1,
                                        GCallback (auto_cb), cb_data, auto_flags, FLAG_AUTO_PLOT); 
-        grid_add_check_button_guint64 ("Auto Save", "Enable save data auutomatically at competion.\n"
+        grid_add_check_button_guint64 ("Auto Save", "Enable save data automatically at competion.\n"
                                        "(recommended)", 1,
-                                       GCallback (auto_cb), cb_data, auto_flags, FLAG_AUTO_SAVE); 
+                                       GCallback (auto_cb), cb_data, auto_flags, FLAG_AUTO_SAVE, control_id); 
         grid_add_check_button_guint64 ("GLock", "Lock Data/Graphs Configuration.\n"
                                        "(recommended to check after setup and one test run)", 1,
                                        GCallback (auto_cb), cb_data, auto_flags, FLAG_AUTO_GLOCK); 
