@@ -50,7 +50,11 @@ module readback_configuration#(
     parameter readback_Z_reg_address          = 100001,
     parameter readback_Bias_reg_address       = 100002,
     parameter readback_GVPBias_reg_address    = 100003,
-    parameter readback_AD463x_address         = 100100,
+    parameter readback_PMD_DA56_reg_address   = 100004,
+    parameter readback_Z_SERVO_RB_reg_address = 100005,
+    parameter readback_SRCS_MUX_reg_address   = 100010,
+    parameter readback_IN_MUX_reg_address     = 100011,
+    parameter readback_AD463x_reg_address     = 100100,
     parameter readbackTimingTest_reg_address  = 101999,
     parameter readbackTimingReset_reg_address = 102000,
     parameter readback_RPSPMC_PACPLL_Version  = 199997,
@@ -71,8 +75,17 @@ module readback_configuration#(
     input wire [32-1:0] Bias_GVP_mon,    // GVP genertae Bias Offset
     input wire [32-1:0] Bias_MOD_mon,    // Bias AUX/Modifiers, LockIn,...
 
+    input wire [32-1:0] PMD_DA_5A,
+    input wire [32-1:0] PMD_DA_6B,
+
     input wire [32-1:0] AD463x_CH1,
     input wire [32-1:0] AD463x_CH2,
+
+    input wire [32-1:0] Z_SERVO_RB_A,
+    input wire [32-1:0] Z_SERVO_RB_B,
+
+    input wire [32-1:0] SRCS_MUX_SEL,
+    input wire [32-1:0] IN_MUX_SEL,
 
     input wire [32-1:0] rbXa,
     input wire [32-1:0] rbXb
@@ -107,7 +120,31 @@ module readback_configuration#(
             reg_B <= Bias_MOD_mon;
 	    end
 
-        readback_AD463x_address: 
+        readback_PMD_DA56_reg_address: 
+        begin
+            reg_A <=  PMD_DA_5A;
+            reg_B <=  PMD_DA_6B;
+	    end
+
+        readback_Z_SERVO_RB_reg_address: 
+        begin
+            reg_A <=  Z_SERVO_RB_A;
+            reg_B <=  Z_SERVO_RB_B;
+	    end
+
+        readback_SRCS_MUX_reg_address: 
+        begin
+            reg_A <=  SRCS_MUX_SEL;
+            reg_B <=  0;
+	    end
+
+        readback_IN_MUX_reg_address: 
+        begin
+            reg_A <=  IN_MUX_SEL;
+            reg_B <=  0;
+	    end
+
+        readback_AD463x_reg_address: 
         begin
             reg_A <= AD463x_CH1;
             reg_B <= AD463x_CH2;
@@ -131,7 +168,7 @@ module readback_configuration#(
 	    readback_RPSPMC_PACPLL_Version:
 	    begin
             reg_A <= 32'hEC010099; 
-            reg_B <= 32'h20250223;
+            reg_B <= 32'h20250312;
 	    end
 	default:
 	  begin

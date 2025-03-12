@@ -250,13 +250,17 @@
 #define SPMC_READBACK_Z_REG            100001
 #define SPMC_READBACK_BIAS_REG         100002 // Bias Sum, Gxsm Bias "U0" Set
 #define SPMC_READBACK_GVPBIAS_REG      100003 // Bias GVP Comp., Bias MOD (DBG: currently = GVP-A)
-//#define SPMC_READBACK_MUX_REG          100004 // SRCS-MUX, --
+#define SPMC_READBACK_PMD_DA56_REG     100004 // PMD AD MODULE 5,6 "A,B" 
+#define SPMC_READBACK_Z_SERVO_R_REG    100005 // Z_SERVO readback configuration -- setup >what< in Z_SERVO_CONFIG first!
+#define SPMC_READBACK_SRCS_MUX_REG     100010 // SRCS stream MUX selection
+#define SPMC_READBACK_IN_MUX_REG       100011 // IN AXIS AD data stream MUX selection
+
 #define SPMC_READBACK_AD463X_REG       100100 // AD463x read back config data/value
 
 #define SPMC_READBACK_TIMINGTEST_REG   101999
 #define SPMC_READBACK_TIMINGRESET_REG  102000
 
-#define SPMC_READBACK_RPSPMC_PACPLL_VERSION_REG 199997                              
+#define SPMC_READBACK_RPSPMC_PACPLL_VERSION_REG 199997  // READBACK: FPGA Version/Date
 
 #define SPMC_READBACK_XX_REG           100999 // DBG: SrcsMUX sel, GVP-B
 
