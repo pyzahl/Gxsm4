@@ -52,50 +52,53 @@ void RP_JSON_talk::json_talk_connect_cb (gboolean connect, gboolean restart){
                 // new soup session
                 session = soup_session_new ();
 
-
+                gchar *urlstart = NULL;
                 if (restart){
                         // request to fire up RedPitaya PACPLLL NGNIX server
-                        gchar *urlstart = g_strdup_printf ("http://%s/bazaar?start=rpspmc",get_rp_address ());
-                        status_append ("1. Requesting NGNIX RedPitaya RPSPMC-PACPLL Server Startup: ");
-                        status_append (urlstart);
-                        status_append ("\n");
-                        msg = soup_message_new ("GET", urlstart);
-                        g_free (urlstart);
-                        GInputStream *istream = soup_session_send (session, msg, NULL, &error);
+                        urlstart = g_strdup_printf ("http://%s/bazaar?start=rpspmc", get_rp_address ());
+                        status_append ("1. Requesting NGNIX RedPitaya RPSPMC-PACPLL Server Startup and full FPGA reload/reset:");
+                } else {
+                        urlstart = g_strdup_printf ("http://%s/bazaar?start=rpspmcrc", get_rp_address ());
+                        status_append ("1. Requesting NGNIX RedPitaya RPSPMC-PACPLL Server Startup and reconnect to running FPGA:");
+                }
 
+                status_append (urlstart);
+                status_append ("\n");
+                msg = soup_message_new ("GET", urlstart);
+                g_free (urlstart);
+                GInputStream *istream = soup_session_send (session, msg, NULL, &error);
+
+                if (error != NULL) {
+                        g_warning ("%s", error->message);
+                        status_append (error->message);
+                        status_append ("\n");
+                        update_health (error->message);
+                        return;
+                } else {
+                        gchar *buffer = g_new0 (gchar, 100);
+                        gssize num = g_input_stream_read (istream,
+                                                          (void *)buffer,
+                                                          100,
+                                                          NULL,
+                                                          &error);   
                         if (error != NULL) {
+                                update_health (error->message);
                                 g_warning ("%s", error->message);
                                 status_append (error->message);
                                 status_append ("\n");
-                                update_health (error->message);
+                                g_free (buffer);
                                 return;
                         } else {
-                                gchar *buffer = g_new0 (gchar, 100);
-                                gssize num = g_input_stream_read (istream,
-                                                                  (void *)buffer,
-                                                                  100,
-                                                                  NULL,
-                                                                  &error);   
-                                if (error != NULL) {
-                                        update_health (error->message);
-                                        g_warning ("%s", error->message);
-                                        status_append (error->message);
+                                status_append (" * Response: ");
+                                if (buffer){
+                                        status_append (buffer);
                                         status_append ("\n");
-                                        g_free (buffer);
-                                        return;
-                                } else {
-                                        status_append (" * Response: ");
-                                        if (buffer){
-                                                status_append (buffer);
-                                                status_append ("\n");
-                                                update_health (buffer);
-                                        }
+                                        update_health (buffer);
                                 }
-                                g_free (buffer);
                         }
-                } else {
-                        status_append ("1. Assuming NGNIX RedPitaya RPSPMC-PACPLL Server been Runnning. (Re-Connect Attempt)\n");
+                        g_free (buffer);
                 }
+
                 // then connect to NGNIX WebSocket on RP
                 status_append ("2. Connecting to NGNIX RedPitaya RPSPMC-PACPLL WebSocket: ");
                 gchar *url = g_strdup_printf ("ws://%s:%u", get_rp_address (), port);

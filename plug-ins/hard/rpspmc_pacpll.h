@@ -1144,6 +1144,9 @@ public:
         GtkWidget *input_rpaddress;
         GtkWidget *text_status;
 	GtkWidget *red_pitaya_health;
+
+        gint reconnect_mode;
+        
         gint debug_level; 
         int scan_gvp_options;
         double rp_verbose_level; 

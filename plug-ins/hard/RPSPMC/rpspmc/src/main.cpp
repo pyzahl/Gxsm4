@@ -907,6 +907,11 @@ int rp_app_init(void)
         fprintf (stderr, "\n** RP FPGA RPSPMC Version........ :  %08X %08X **", v, vd);
         fprintf (stderr, "\n** RP FPGA RPSPMC System State .. : #%08X %08X **", sys_state, sys_startup);
 
+        if ((v & 0xffff0000) != 0xEC010000){
+                fprintf (stderr, "\n** RP FPGA RPSPMC FPGA SYSTEM ERROR: wrong RPSPMC id [%08x] != EC01xxxx -- invalid RPSPMC FPGA configuration.\n** EXITING SERVER.\n\n", v);
+                return EXIT_FAILURE;
+        }
+        
         RPSPMC_FPGA_STARTUP.Value ()    = sys_startup;
         RPSPMC_FPGA_STARTUPCNT.Value () = sys_state;
          

@@ -231,6 +231,13 @@ struct SPMC_parameters {
         double sc_lck_q;
         double sc_lck_gain;
         double sc_lck_fmscale;
+
+        double rpspmc_version;
+        double rpspmc_date;
+        double rpspmc_fpgaimpl;
+        double rpspmc_fpgaimpl_date;
+        double rpspmc_fpgastartup;
+        double rpspmc_fpgastartupcnt;
 };
 
 #define MAX_GVP_VECTORS   32

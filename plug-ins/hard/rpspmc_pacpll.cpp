@@ -2546,8 +2546,8 @@ void RPSPMC_Control::create_folder (){
                                     G_CALLBACK (RPspmc_pacpll::connect_cb), rpspmc_pacpll);
 	g_object_set_data( G_OBJECT (bp->button), "RESTART", GINT_TO_POINTER (1));
 
-#if 0 // life reconnect not yet functional, TDB
-        bp->grid_add_check_button ( N_("Connect"), "Check to re-initiate connection, uncheck to close connection.", 1,
+#if 1 // life reconnect not yet functional, TDB
+        bp->grid_add_check_button ( N_("Re-Connect"), "Check to re-initiate connection, uncheck to close connection.", 1,
                                     G_CALLBACK (RPspmc_pacpll::connect_cb), rpspmc_pacpll);
 	g_object_set_data( G_OBJECT (bp->button), "RESTART", GINT_TO_POINTER (0));
 #endif
@@ -4177,8 +4177,10 @@ RPspmc_pacpll::~RPspmc_pacpll (){
 }
 
 void RPspmc_pacpll::connect_cb (GtkWidget *widget, RPspmc_pacpll *self){
-        self->json_talk_connect_cb (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)),
-                                    GPOINTER_TO_INT (g_object_get_data( G_OBJECT (widget), "RESTART"))); // connect (checked) or dissconnect    
+        // get connect type request (restart or reconnect button was clicked)
+        self->reconnect_mode = GPOINTER_TO_INT (g_object_get_data( G_OBJECT (widget), "RESTART"));
+        // connect (checked) or dissconnect    
+        self->json_talk_connect_cb (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)), self->reconnect_mode);
 }
 
 
@@ -5016,7 +5018,16 @@ void RPspmc_pacpll::status_append (const gchar *msg){
 
 void RPspmc_pacpll::on_connect_actions(){
         status_append ("3. RedPitaya SPM Control, PAC-PLL loading configuration:\n");
-        send_all_parameters ();
+
+        // reconnect_mode: 0 = RECONNECT attempt to runnign FPGA, may fail if not running!
+        //                 1 = COLD START/FPGA RELOAD=FULL RESET
+
+        if (reconnect_mode){ // only of cold start
+                send_all_parameters (); // PAC-PLL
+        } else {
+                send_all_parameters (); // PAC-PLL -- for now: alway update
+        }
+        
         while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
 
         status_append (" * RedPitaya SPM Control, PAC-PLL init, DEC FAST (12)...\n");
@@ -5052,7 +5063,31 @@ void RPspmc_pacpll::on_connect_actions(){
         status_append (" * RedPitaya SPM Control: PAC-PLL is ready.\n");
         status_append (" * RedPitaya SPM Control, SPMC init...\n");
 
-        update_SPMC_parameters ();
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Version.....: 0x%08x\n", (int)spmc_parameters.rpspmc_version); status_append (tmp); g_free (tmp); }
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC VDate.......: 0x%08x\n", (int)spmc_parameters.rpspmc_date); status_append (tmp); g_free (tmp); }
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC FPGAIMPL....: 0x%08x\n", (int)spmc_parameters.rpspmc_fpgaimpl); status_append (tmp); g_free (tmp); }
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC FPGAIMPL_D..: 0x%08x\n", (int)spmc_parameters.rpspmc_fpgaimpl_date); status_append (tmp); g_free (tmp); }
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC FPGA_STAUP..: 0x%08x\n", (int)spmc_parameters.rpspmc_fpgastartup); status_append (tmp); g_free (tmp); }
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC FPGA_RSC#...: 0x%08x\n", (int)spmc_parameters.rpspmc_fpgastartupcnt); status_append (tmp); g_free (tmp); }
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO_MODE: 0x%08x\n", (int)spmc_parameters.z_servo_mode); status_append (tmp); g_free (tmp); }        
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO_SET.: %g Veq\n", (int)spmc_parameters.z_servo_setpoint); status_append (tmp); g_free (tmp); }
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO_CP..: %g\n", (int)spmc_parameters.z_servo_cp); status_append (tmp); g_free (tmp); }
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO_CI..: %g\n", (int)spmc_parameters.z_servo_ci); status_append (tmp); g_free (tmp); }
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO_UPR.: %g V\n", (int)spmc_parameters.z_servo_upper); status_append (tmp); g_free (tmp); }
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO_LOR.: %g V\n", (int)spmc_parameters.z_servo_lower); status_append (tmp); g_free (tmp); }
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO IN..: %08x MUX selection\n", (int)spmc_parameters.z_servo_src_mux); status_append (tmp); g_free (tmp); }
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC GVP SRCS MUX: %08x MUX selection code\n", (int)spmc_parameters.gvp_stream_mux); status_append (tmp); g_free (tmp); }
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC BIAS........: %g V\n", (int)spmc_parameters.bias); status_append (tmp); g_free (tmp); }
+
+        if (reconnect_mode){ // only of cold start
+                update_SPMC_parameters ();
+        } else {
+                // update GUI! (mission critical: Z-SERVO mainly)
+                status_append (" * RedPitaya SPM Control: RECONNECTING/READBACK Z-SERVO STATUS...\n");
+                // ...
+                update_SPMC_parameters (); // then send all other less critical parameters to make sure all is in sync
+        }
+        
         //status_append (" * RedPitaya SPM Control ready. NEXT: Please Check Connect Stream.\n");
         status_append (" * RedPitaya SPM Control ready. Connecting SPMC Data Stream...\n");
 
