@@ -150,6 +150,9 @@
 // Z_SERVO @ CONFIG ADDRESS
 #define SPMC_Z_SERVO_CONTROL_REG              100
 #define SPMC_Z_SERVO_MODE_CONTROL_REG         101
+#define SPMC_Z_SERVO_SELECT_RB_SETPOINT_MODES_REG   110 // readback selection
+#define SPMC_Z_SERVO_SELECT_RB_CPI_REG              111 // readback selection
+#define SPMC_Z_SERVO_SELECT_RB_LIMITS_REG           112 // readback selection
 /*
         z_servo_control_reg_address:
         begin
@@ -251,7 +254,7 @@
 #define SPMC_READBACK_BIAS_REG         100002 // Bias Sum, Gxsm Bias "U0" Set
 #define SPMC_READBACK_GVPBIAS_REG      100003 // Bias GVP Comp., Bias MOD (DBG: currently = GVP-A)
 #define SPMC_READBACK_PMD_DA56_REG     100004 // PMD AD MODULE 5,6 "A,B" 
-#define SPMC_READBACK_Z_SERVO_R_REG    100005 // Z_SERVO readback configuration -- setup >what< in Z_SERVO_CONFIG first!
+#define SPMC_READBACK_Z_SERVO_REG      100005 // Z_SERVO readback configuration -- setup >what< in Z_SERVO_CONFIG first!
 #define SPMC_READBACK_SRCS_MUX_REG     100010 // SRCS stream MUX selection
 #define SPMC_READBACK_IN_MUX_REG       100011 // IN AXIS AD data stream MUX selection
 
@@ -261,11 +264,12 @@
 #define SPMC_READBACK_TIMINGRESET_REG  102000
 
 #define SPMC_READBACK_RPSPMC_PACPLL_VERSION_REG 199997  // READBACK: FPGA Version/Date
+#define SPMC_READBACK_RPSPMC_SYSTEM_STATE       199999
 
-#define SPMC_READBACK_XX_REG           100999 // DBG: SrcsMUX sel, GVP-B
+#define SPMC_READBACK_XX_REG                    100999 // Debugging use, temp assignments
 
-#define SPMC_READBACK_TEST_RESET_REG           102000
-#define SPMC_READBACK_TEST_VALUE_REG           101999
+#define SPMC_READBACK_TEST_RESET_REG            102000
+#define SPMC_READBACK_TEST_VALUE_REG             101999
 
 /*
     input wire [32-1:0] Z_GVP_mon,   ==> A

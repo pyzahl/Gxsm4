@@ -58,6 +58,7 @@ module readback_configuration#(
     parameter readbackTimingTest_reg_address  = 101999,
     parameter readbackTimingReset_reg_address = 102000,
     parameter readback_RPSPMC_PACPLL_Version  = 199997,
+    parameter readback_system_state           = 199999,
     parameter readbackX_reg_address = 100999
     )(
     input aclk,
@@ -94,6 +95,9 @@ module readback_configuration#(
     reg [32-1:0]		reg_A=0;
     reg [32-1:0]		reg_B=0;
    
+    reg [32-1:0]        reg_system_state=0;
+    reg                 reg_system_startup=1;
+    reg                 once=0;
         
     assign gpio_dataA = reg_A;
     assign gpio_dataB = reg_B;
@@ -169,12 +173,29 @@ module readback_configuration#(
 	    begin
             reg_A <= 32'hEC010099; 
             reg_B <= 32'h20250312;
+            
+            if (reg_system_startup) // once ever after FPGA init (=1 inititially) and version read
+                reg_system_startup <= 0; // never again
+
 	    end
-	default:
-	  begin
+	    
+	    readback_system_state: // system cold start detection logic: control of system_state register
+	    begin
+	       reg_A <= reg_system_state;
+	       reg_B <= { 31'h0, reg_system_startup };
+
+	       if (once)
+	       begin
+	           reg_system_state   <= reg_system_state+1; // increment at each readback_system_state reading
+	           once               <= 0;
+            end           
+        end
+        default:
+        begin
             reg_A <= reg_A+1;
             reg_B <= reg_A+13;
-	  end
+            once  <= 1;
+        end
         endcase
     end    
     

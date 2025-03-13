@@ -215,6 +215,8 @@ CIntParameter RPSPMC_SERVER_VERSION ("RPSPMC_SERVER_VERSION", CBaseParameter::RW
 CIntParameter RPSPMC_SERVER_DATE    ("RPSPMC_SERVER_DATE", CBaseParameter::RW, 0, 0, -2147483648,2147483647);
 CIntParameter RPSPMC_FPGAIMPL_VERSION("RPSPMC_FPGAIMPL_VERSION", CBaseParameter::RW, 0, 0, -2147483648,2147483647);
 CIntParameter RPSPMC_FPGAIMPL_DATE   ("RPSPMC_FPGAIMPL_DATE", CBaseParameter::RW, 0, 0, -2147483648,2147483647);
+CIntParameter RPSPMC_FPGA_STARTUP    ("RPSPMC_FPGA_STARTUP", CBaseParameter::RW, 0, 0, -2147483648,2147483647);
+CIntParameter RPSPMC_FPGA_STARTUPCNT ("RPSPMC_FPGA_STARTUPCNT", CBaseParameter::RW, 0, 0, -2147483648,2147483647);
 
 CIntParameter TRANSPORT_CH3("TRANSPORT_CH3", CBaseParameter::RW, 0, 0, 0, 19);
 CIntParameter TRANSPORT_CH4("TRANSPORT_CH4", CBaseParameter::RW, 1, 0, 0, 19);
@@ -579,13 +581,6 @@ int rp_PAC_App_Init(){
         fprintf(stderr, "RP FPGA RPSPMC PACPLL GPIO REGs mapped 0x%08lx - 0x%08lx   block length: 0x%08lx\n", (unsigned long)FPGA_GPIO_BASE, (unsigned long)(FPGA_GPIO_BASE + FPGA_PACPLL_GPIO_block_size-1), (unsigned long)(FPGA_PACPLL_GPIO_block_size));
 #endif
 
-        unsigned int v, vd;
-        rp_spmc_module_read_config_data_u (SPMC_READBACK_RPSPMC_PACPLL_VERSION_REG, &v, &vd);
-        fprintf (stderr, "\n**RP FPGA RPSPMC Version: %08X %08X **\n\n", v, vd);
-        RPSPMC_FPGAIMPL_VERSION.Value () = v;
-        RPSPMC_FPGAIMPL_DATE.Value ()    = vd;
-        RPSPMC_SERVER_VERSION.Value ()   = REDPACPLL_VERSION;
-        RPSPMC_SERVER_DATE.Value ()      = REDPACPLL_DATE;
                 
         rp_spmc_gvp_config (); // assure GVP is in reset mode
         
@@ -608,7 +603,7 @@ int rp_PAC_App_Init(){
         pthread_create ( &stream_server_thread, &stream_server_attr, thread_stream_server, NULL); // start stream server
         pthread_attr_destroy (&stream_server_attr);
         
-        fprintf(stderr, "INIT RP FPGA RPSPMC PACPLL completed.\n");
+        fprintf(stderr, "INIT RP FPGA RPSPMC PACPLL: threads init completed.\n");
 
         return RP_OK;
 }
@@ -902,6 +897,77 @@ int rp_app_init(void)
                 }
         else fprintf(stderr, "Red Pitaya RPSPMC PACPLL API init memory mappings success!\n");
 
+
+
+
+        unsigned int sys_state, sys_startup;
+        rp_spmc_module_read_config_data_u (SPMC_READBACK_RPSPMC_SYSTEM_STATE, &sys_state, &sys_startup);
+        unsigned int v, vd;
+        rp_spmc_module_read_config_data_u (SPMC_READBACK_RPSPMC_PACPLL_VERSION_REG, &v, &vd);
+        fprintf (stderr, "\n** RP FPGA RPSPMC Version........ :  %08X %08X **", v, vd);
+        fprintf (stderr, "\n** RP FPGA RPSPMC System State .. : #%08X %08X **", sys_state, sys_startup);
+
+        RPSPMC_FPGA_STARTUP.Value ()    = sys_startup;
+        RPSPMC_FPGA_STARTUPCNT.Value () = sys_state;
+         
+        rp_spmc_update_readings ();
+
+        if (sys_startup){ // "cold start" FPGA first start detected
+                fprintf (stderr, "\n** RP FPGA RPSPMC COLD START:   FPGA reset/reloaded, full init **");
+
+                // Init SPMC
+                fprintf (stderr, "\n** RP FPGA RPSPMC AD/DA: full analog module initializations **\n");
+                rp_spmc_AD5791_init ();
+                ad464x_dev_IN34 = rp_spmc_AD463x_init ();
+                fprintf (stderr, "\n** RP FPGA RPSPMC: GVP init **\n");
+                rp_spmc_gvp_init ();
+        } else { // "WARM START" FPGA was running: no reset/reload -- reconnecting!
+                fprintf (stderr, "\n** RP FPGA RPSPMC WARM START:   FPGA is running **\n");
+        }        
+
+        // readback
+        {
+                int srcs_mux, in_mux, regB;
+                double setpoint, cp, ci, upper, lower;
+                unsigned int modes;
+                fprintf (stderr, "\n** RP FPGA RPSPMC STATUS READBACK **\n");
+                rp_spmc_get_zservo_controller (setpoint, cp, ci, upper, lower, modes); // read back
+                fprintf (stderr,
+                         "\n"
+                         "***** Z-SERVO STATUS:\n"
+                         "***** Setpoint..... : %g V equiv.\n"
+                         "***** CP, CI....... : %g, %g\n"
+                         "***** Range........ : %g .. %g V\n"
+                         "***** Modes........ : 0x%08x\n"
+                         "\n",  setpoint, cp, ci, upper, lower, modes);
+
+                SPMC_Z_SERVO_SETPOINT.Value() = setpoint;
+                SPMC_Z_SERVO_CP.Value() = cp;
+                SPMC_Z_SERVO_CI.Value() = ci;
+                SPMC_Z_SERVO_UPPER.Value() = upper;
+                SPMC_Z_SERVO_LOWER.Value() = lower;
+                SPMC_Z_SERVO_MODE.Value() = modes;
+                        
+                // readback signal MUXes
+                rp_spmc_module_read_config_data (SPMC_READBACK_SRCS_MUX_REG, &srcs_mux, &regB); // read data set
+                rp_spmc_module_read_config_data (SPMC_READBACK_IN_MUX_REG, &in_mux, &regB); // read data set
+                fprintf (stderr,
+                         "\n"
+                         "***** SRCS-MUX selection: 0x%08x\n"
+                         "*****   IN-MUX selection: 0x%08x\n"
+                         "\n",  srcs_mux, in_mux);
+
+                SPMC_GVP_STREAM_MUX.Value ()  = srcs_mux;
+                SPMC_Z_SERVO_SRC_MUX.Value () = in_mux;
+        }
+        
+        RPSPMC_FPGAIMPL_VERSION.Value () = v;
+        RPSPMC_FPGAIMPL_DATE.Value ()    = vd;
+        RPSPMC_SERVER_VERSION.Value ()   = REDPACPLL_VERSION;
+        RPSPMC_SERVER_DATE.Value ()      = REDPACPLL_DATE;
+                
+        //rp_spmc_gvp_config (); // assure GVP is in reset mode
+
         rp_PAC_auto_dc_offset_adjust ();
 
         //Set signal update interval
@@ -914,10 +980,6 @@ int rp_app_init(void)
         // init block transport for scope
         rp_PAC_start_transport (PACPLL_CFG_TRANSPORT_LOOP, 4096, TRANSPORT_MODE.Value ());
 
-        // Init SPMC
-        rp_spmc_AD5791_init ();
-        ad464x_dev_IN34 = rp_spmc_AD463x_init ();
-        rp_spmc_gvp_init ();
 
         fprintf(stderr, "Red Pitaya RPSPMC PACPLL API init completed!\n");
         return 0;

@@ -682,7 +682,7 @@ void GUI_Builder::grid_add_probe_controls (gboolean have_dual,
                                        GCallback (auto_cb), cb_data, auto_flags, FLAG_AUTO_PLOT); 
         grid_add_check_button_guint64 ("Auto Save", "Enable save data automatically at competion.\n"
                                        "(recommended)", 1,
-                                       GCallback (auto_cb), cb_data, auto_flags, FLAG_AUTO_SAVE, control_id); 
+                                       GCallback (auto_cb), cb_data, auto_flags, FLAG_AUTO_SAVE); 
         grid_add_check_button_guint64 ("GLock", "Lock Data/Graphs Configuration.\n"
                                        "(recommended to check after setup and one test run)", 1,
                                        GCallback (auto_cb), cb_data, auto_flags, FLAG_AUTO_GLOCK); 

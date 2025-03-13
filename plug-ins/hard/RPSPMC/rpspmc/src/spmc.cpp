@@ -108,7 +108,7 @@ inline double rpspmc_CONTROL_SELECT_ZS_to_volts (int value){ return SPMC_IN01_RE
 inline double rpspmc_FIR32IN1_to_volts (int value){ return SPMC_IN01_REFV*(double)(value) / Q31; } // SQ24.8
 inline double volts_to_rpspmc_FIR32IN1 (double volts){ return (int)round(Q31*volts/SPMC_IN01_REFV); }
 
-
+// f(x)=ax, x = f(x)/a -> x = f(x) / f(1)
 
 // initialize/reset all AD5791 channels and set SPMC to streaming
 void rp_spmc_AD5791_init (){
@@ -285,6 +285,25 @@ void rp_spmc_set_xyzu_DIRECT (double ux, double uy, double uz, double bias){
 
 //#define DBG_SETUPGVP
 
+void rp_spmc_get_zservo_controller (double &setpoint, double &cp, double &ci, double &upper, double &lower, unsigned int &modes){
+        int regA, regB;
+
+        // readback Z-Servo configuration
+        rp_spmc_module_config_int32 (SPMC_Z_SERVO_SELECT_RB_SETPOINT_MODES_REG, 0, MODULE_START_VECTOR); // select data set
+        rp_spmc_module_read_config_data (SPMC_READBACK_Z_SERVO_REG, &regA, &regB); // read data set
+        setpoint = (double)regA / rpspmc_FIR32IN1_to_volts (1.);
+        modes    = regB;
+        
+        rp_spmc_module_config_int32 (SPMC_Z_SERVO_SELECT_RB_CPI_REG, 0, MODULE_START_VECTOR);
+        rp_spmc_module_read_config_data (SPMC_READBACK_Z_SERVO_REG, &regA, &regB);
+        cp = (double)regA / (double) QZSCOEF;
+        ci = (double)regB / (double) QZSCOEF;
+
+        rp_spmc_module_config_int32 (SPMC_Z_SERVO_SELECT_RB_LIMITS_REG, 0, MODULE_START_VECTOR);
+        rp_spmc_module_read_config_data (SPMC_READBACK_Z_SERVO_REG, &regA, &regB);
+        upper = (double)regA / volts_to_rpspmc (1.);
+        lower = (double)regB / volts_to_rpspmc (1.);
+}
 
 // Main SPM Z Feedback Servo Control
 // CONTROL[32] OUT[32]   m[24]  x  c[32]  = 56 M: 24{Q32},  P: 44{Q14}
@@ -343,7 +362,7 @@ void rp_spmc_gvp_init (){
         rp_spmc_module_start_config ();
         // write vector data using set_gpio_cfgreg_uint32 (SPMC_MODULE_CONFIG_DATA+N, data); // set config data 0..15 x 32bit
         for (int pc=0; pc<MAX_NUM_PROGRAN_VECTORS; ++pc){
-                if (verbose > 1) fprintf(stderr, "Init Vector[PC=%03d] to zero, decii=%d\n", pc, SPMC_GVP_MIN_DECII);
+                if (verbose > 2) fprintf(stderr, "Init Vector[PC=%03d] to zero, decii=%d\n", pc, SPMC_GVP_MIN_DECII);
                 // write GVP-Vector [vector[0]] components
                 //                   decii      du        dz        dy        dx     Next       Nrep,   Options,     nii,      N,    [Vadr]
                 //data = {160'd0, 32'd0064, 32'd0000, 32'd0000, -32'd0002, -32'd0002,  32'd0, 32'd0000,   32'h001, 32'd0128, 32'd005, 32'd00 };
