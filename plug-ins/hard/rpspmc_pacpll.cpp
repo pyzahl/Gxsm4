@@ -1697,7 +1697,7 @@ void RPSPMC_Control::create_folder (){
                                    G_CALLBACK(RPSPMC_Control::ZServoControl), this, ((int)spmc_parameters.gvp_status)&1, 0);
 #endif
         spmc_parameters.z_servo_invert = 1.;
-        bp->grid_add_check_button ("Invert", "invert Z servo control.", 1,
+        bp->grid_add_check_button ("Invert Z Polarity", "Set Negative Z Polarity\n** WARNING: on change Z will jump to inverse! **", 1,
                                    G_CALLBACK(RPSPMC_Control::ZServoControlInv), this, spmc_parameters.z_servo_invert < 0.0, 0);
 
 
@@ -2790,12 +2790,12 @@ void RPSPMC_Control::ZServoControlInv (GtkWidget *widget, RPSPMC_Control* self){
         // CONFIRMATION DLG
         if (spmc_parameters.z_servo_invert)
                 if ( gapp->question_yes_no ("WARNING: Please confirm Z-Polarity set to NEGATIVE."))
-                        rpspmc_pacpll->write_parameter ("(SPMC_Z_POLARITY", -1);
+                        rpspmc_pacpll->write_parameter ("SPMC_Z_POLARITY", -1);
                 else
                         gtk_check_button_set_active (GTK_CHECK_BUTTON (widget), (spmc_parameters.z_servo_invert = old));
         else
                 if ( gapp->question_yes_no ("WARNING: Please confirm Z-Polarity set to POSITIV."))
-                        rpspmc_pacpll->write_parameter ("(SPMC_Z_POLARITY", 1);
+                        rpspmc_pacpll->write_parameter ("SPMC_Z_POLARITY", 1);
                 else
                         gtk_check_button_set_active (GTK_CHECK_BUTTON (widget), (spmc_parameters.z_servo_invert = old));
         
@@ -2879,8 +2879,12 @@ void RPSPMC_Control::update_GUI_from_fpga (){
         //zpos_ref = 0.; // ** via limits
         bias = spmc_parameters.bias_monitor; // Volts direct
         mix_set_point[0] = spmc_parameters.z_servo_setpoint / main_get_gapp()->xsm->Inst->nAmpere2V(1.0); // convert nA!!
-        spmc_parameters.z_servo_cp_db = 20.* log10(spmc_parameters.z_servo_cp); // convert to dB *** pow (10., spmc_parameters.z_servo_cp_db/20.);
-        spmc_parameters.z_servo_ci_db = 20.* log10(spmc_parameters.z_servo_ci); // convert to dB
+
+        if (spmc_parameters.z_servo_cp > 0.0)
+                spmc_parameters.z_servo_cp_db = 20.* log10(spmc_parameters.z_servo_cp); // convert to dB *** pow (10., spmc_parameters.z_servo_cp_db/20.);
+        if (spmc_parameters.z_servo_ci > 0.0)
+                spmc_parameters.z_servo_ci_db = 20.* log10(spmc_parameters.z_servo_ci); // convert to dB
+        
         g_slist_foreach ((GSList*)g_object_get_data (G_OBJECT (window), "FPGA_readback_update_list"), (GFunc) App::update_ec, NULL); // UPDATE GUI!
 }
 
@@ -5117,19 +5121,24 @@ void RPspmc_pacpll::on_connect_actions(){
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z0[z-slope].: %g V\n", spmc_parameters.z0_monitor); status_append (tmp); g_free (tmp); }
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC BIAS........: %g V\n", spmc_parameters.bias_monitor); status_append (tmp); g_free (tmp); }
 
-        RPSPMC_ControlClass->update_GUI_from_fpga ();
         
-        status_append (" * RedPitaya SPM RPSPMC: Readback completed and ackowldeged. Releasing normal control.\n");
-        write_parameter ("RPSPMC_INITITAL_TRANSFER_ACK", 99); // Acknoledge inital parameters received, release server parameter updates
 
         if (reconnect_mode){ // only if cold start
+                status_append (" * RedPitaya SPM RPSPMC: Init completed and ackowldeged. Releasing normal control. Updating all from GXSM parameters.\n");
+                write_parameter ("RPSPMC_INITITAL_TRANSFER_ACK", 99); // Acknoledge inital parameters received, release server parameter updates
                 update_SPMC_parameters ();
         } else {
                 // update GUI! (mission critical: Z-SERVO mainly)
+                RPSPMC_ControlClass->update_GUI_from_fpga ();
                 status_append (" * RedPitaya SPM Control: RECONNECTING/READBACK Z-SERVO STATUS...\n");
                 // ...
                 update_SPMC_parameters (); // then send all other less critical parameters to make sure all is in sync
+
+                //
+                status_append (" * RedPitaya SPM RPSPMC: Readback completed and ackowldeged. Releasing normal control. No FPGA parameter update from GXSM!\n");
+                write_parameter ("RPSPMC_INITITAL_TRANSFER_ACK", 99); // Acknoledge inital parameters received, release server parameter updates
         }
+
         
         //status_append (" * RedPitaya SPM Control ready. NEXT: Please Check Connect Stream.\n");
         status_append (" * RedPitaya SPM Control ready. Connecting SPMC Data Stream...\n");
