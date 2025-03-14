@@ -1498,6 +1498,8 @@ void RPSPMC_Control::create_folder (){
  	GSList *zpos_control_list=NULL;
 	GSList *multi_IVsec_list=NULL;
 
+        GSList *FPGA_readback_update_list=NULL;
+
         AppWindowInit ("RP-SPM Control Window");
         
         // ========================================
@@ -1529,6 +1531,7 @@ void RPSPMC_Control::create_folder (){
 
         bp->set_default_ec_change_notice_fkt (RPSPMC_Control::BiasChanged, this);
         bp->grid_add_ec_with_scale ("Bias", Volt, &bias, -10., 10., "4g", 0.001, 0.01, "fbs-bias");
+        FPGA_readback_update_list = g_slist_prepend (FPGA_readback_update_list, bp->ec); // add to FPGA reconnect readback parameter list
         //        bp->ec->set_adjustment_mode (PARAM_CONTROL_ADJUSTMENT_LOG | PARAM_CONTROL_ADJUSTMENT_LOG_SYM | PARAM_CONTROL_ADJUSTMENT_DUAL_RANGE | PARAM_CONTROL_ADJUSTMENT_ADD_MARKS );
         bp->ec->SetScaleWidget (bp->scale, 0);
         bp->ec->set_logscale_min (1e-3);
@@ -1539,13 +1542,14 @@ void RPSPMC_Control::create_folder (){
         //bp->set_input_width_chars (20);
         //bp->set_input_nx (2);
         bp->grid_add_ec_with_scale ("Z-Pos/Setpoint", Angstroem, &zpos_ref, -1000., 1000., "6g", 0.01, 0.1, "adv-dsp-zpos-ref");
+        FPGA_readback_update_list = g_slist_prepend (FPGA_readback_update_list, bp->ec); // add to FPGA reconnect readback parameter list
         bp->ec->SetScaleWidget (bp->scale, 0);
         gtk_scale_set_digits (GTK_SCALE (bp->scale), 5);
         //ZPos_ec = bp->ec;
         bp->grid_add_ec ("", Angstroem, &zpos_mon, -1000., 1000., "6g", 0.01, 0.1, "adv-dsp-zpos-mon");
         ZPos_ec = bp->ec;
         zpos_control_list = g_slist_prepend (zpos_control_list, bp->ec);
-                 
+
         bp->set_input_width_chars (12);
         bp->set_input_nx ();
 
@@ -1626,6 +1630,7 @@ void RPSPMC_Control::create_folder (){
 #endif
 
                 bp->grid_add_ec_with_scale (NULL, mixer_unit[ch], &mix_set_point[ch], ch==0? 0.0:-100.0, 100., "4g", 0.001, 0.01, mixer_remote_id_set[ch]);
+                FPGA_readback_update_list = g_slist_prepend (FPGA_readback_update_list, bp->ec); // add to FPGA reconnect readback parameter list
                 // bp->ec->set_adjustment_mode (PARAM_CONTROL_ADJUSTMENT_LOG | PARAM_CONTROL_ADJUSTMENT_ADD_MARKS );
                 bp->ec->SetScaleWidget (bp->scale, 0);
                 bp->ec->set_logscale_min (1e-4);
@@ -1666,15 +1671,19 @@ void RPSPMC_Control::create_folder (){
 
         bp->set_configure_list_mode_on ();
 	bp->grid_add_ec_with_scale ("CP", dB, &spmc_parameters.z_servo_cp_db, -100., 20., "5g", 1.0, 0.1, "fbs-cp"); // z_servo[SERVO_CP]
+        FPGA_readback_update_list = g_slist_prepend (FPGA_readback_update_list, bp->ec); // add to FPGA reconnect readback parameter list
         GtkWidget *ZServoCP = bp->input;
 
         mix_level[2] = 5.;
         mix_level[3] = -5.;
         bp->grid_add_ec ("Z Upper", Volt, &spmc_parameters.z_servo_upper, -5.0, 5.0, "5g", 0.001, 0.01,"fbs-upper");
+        FPGA_readback_update_list = g_slist_prepend (FPGA_readback_update_list, bp->ec); // add to FPGA reconnect readback parameter list
         bp->new_line ();
         bp->set_configure_list_mode_off ();
         bp->grid_add_ec_with_scale ("CI", dB, &spmc_parameters.z_servo_ci_db, -100., 20., "5g", 1.0, 0.1, "fbs-ci"); // z_servo[SERVO_CI
+        FPGA_readback_update_list = g_slist_prepend (FPGA_readback_update_list, bp->ec); // add to FPGA reconnect readback parameter list
         bp->grid_add_ec ("Z Lower", Volt, &spmc_parameters.z_servo_lower, -5.0, 5.0, "5g", 0.001, 0.01,"fbs-lower");
+        FPGA_readback_update_list = g_slist_prepend (FPGA_readback_update_list, bp->ec); // add to FPGA reconnect readback parameter list
         GtkWidget *ZServoCI = bp->input;
 
         //g_object_set_data( G_OBJECT (ZServoCI), "HasClient", ZServoCP);
@@ -1688,7 +1697,7 @@ void RPSPMC_Control::create_folder (){
                                    G_CALLBACK(RPSPMC_Control::ZServoControl), this, ((int)spmc_parameters.gvp_status)&1, 0);
 #endif
         spmc_parameters.z_servo_invert = 1.;
-        bp->grid_add_check_button ("Invert", "invert Z servo control.", 1,
+        bp->grid_add_check_button ("Invert Z Polarity", "Set Negative Z Polarity\n** WARNING: on change Z will jump to inverse! **", 1,
                                    G_CALLBACK(RPSPMC_Control::ZServoControlInv), this, spmc_parameters.z_servo_invert < 0.0, 0);
 
 
@@ -2619,7 +2628,10 @@ void RPSPMC_Control::create_folder (){
         if (multiIV_checkbutton)
                 g_object_set_data( G_OBJECT (multiIV_checkbutton), "DSP_multiIV_list", multi_IVsec_list);
 	g_object_set_data( G_OBJECT (zposmon_checkbutton), "DSP_zpos_control_list", zpos_control_list);
-                
+
+
+	g_object_set_data( G_OBJECT (window), "FPGA_readback_update_list", FPGA_readback_update_list);
+        
 	GUI_ready = TRUE;
         
         AppWindowInit (NULL); // stage two
@@ -2741,8 +2753,8 @@ void RPSPMC_Control::ZServoParamChanged(Param_Control* pcs, RPSPMC_Control *self
                 int jdata_i[1];
 
                 // obsolete invert, critical/no good here. Add final Z-polarity at very end
-                self->z_servo[SERVO_CP] = spmc_parameters.z_servo_invert * pow (10., spmc_parameters.z_servo_cp_db/20.);
-                self->z_servo[SERVO_CI] = spmc_parameters.z_servo_invert * pow (10., spmc_parameters.z_servo_ci_db/20.);
+                self->z_servo[SERVO_CP] = pow (10., spmc_parameters.z_servo_cp_db/20.); // spmc_parameters.z_servo_invert * ... --- NOT HERE, ONLY FINAL Z MAY BE INVERTED
+                self->z_servo[SERVO_CI] = pow (10., spmc_parameters.z_servo_ci_db/20.);
 
                 jdata_i[0] = self->mix_transform_mode[0];
                 jdata[0]   = main_get_gapp()->xsm->Inst->nAmpere2V(self->mix_set_point[0]);
@@ -2772,8 +2784,22 @@ void RPSPMC_Control::ZServoControl (GtkWidget *widget, RPSPMC_Control *self){
 }
 
 void RPSPMC_Control::ZServoControlInv (GtkWidget *widget, RPSPMC_Control* self){
-        spmc_parameters.z_servo_invert = gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)) ? -1.:1.;
-        self->ZServoParamChanged (NULL, self);
+        int old = spmc_parameters.z_servo_invert;
+        spmc_parameters.z_servo_invert = gtk_check_button_get_active (GTK_CHECK_BUTTON (widget));
+
+        // CONFIRMATION DLG
+        if (spmc_parameters.z_servo_invert)
+                if ( gapp->question_yes_no ("WARNING: Please confirm Z-Polarity set to NEGATIVE."))
+                        rpspmc_pacpll->write_parameter ("SPMC_Z_POLARITY", -1);
+                else
+                        gtk_check_button_set_active (GTK_CHECK_BUTTON (widget), (spmc_parameters.z_servo_invert = old));
+        else
+                if ( gapp->question_yes_no ("WARNING: Please confirm Z-Polarity set to POSITIV."))
+                        rpspmc_pacpll->write_parameter ("SPMC_Z_POLARITY", 1);
+                else
+                        gtk_check_button_set_active (GTK_CHECK_BUTTON (widget), (spmc_parameters.z_servo_invert = old));
+        
+        //self->ZServoParamChanged (NULL, self);
 }
 
 
@@ -2846,6 +2872,20 @@ void RPSPMC_Control::update_GUI(){
 			(GFunc) App::update_ec, NULL);
 	g_slist_foreach((GSList*)g_object_get_data( G_OBJECT (window), "DSP_VPC_OPTIONS_list"),
 			(GFunc) callback_update_GVP_vpc_option_checkbox, this);
+}
+
+
+void RPSPMC_Control::update_GUI_from_fpga (){
+        //zpos_ref = 0.; // ** via limits
+        bias = spmc_parameters.bias_monitor; // Volts direct
+        mix_set_point[0] = spmc_parameters.z_servo_setpoint / main_get_gapp()->xsm->Inst->nAmpere2V(1.0); // convert nA!!
+
+        if (spmc_parameters.z_servo_cp > 0.0)
+                spmc_parameters.z_servo_cp_db = 20.* log10(spmc_parameters.z_servo_cp); // convert to dB *** pow (10., spmc_parameters.z_servo_cp_db/20.);
+        if (spmc_parameters.z_servo_ci > 0.0)
+                spmc_parameters.z_servo_ci_db = 20.* log10(spmc_parameters.z_servo_ci); // convert to dB
+        
+        g_slist_foreach ((GSList*)g_object_get_data (G_OBJECT (window), "FPGA_readback_update_list"), (GFunc) App::update_ec, NULL); // UPDATE GUI!
 }
 
 void RPSPMC_Control::update_zpos_readings(){
@@ -5070,23 +5110,35 @@ void RPspmc_pacpll::on_connect_actions(){
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC FPGA_STAUP..: 0x%08x\n", (int)spmc_parameters.rpspmc_fpgastartup); status_append (tmp); g_free (tmp); }
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC FPGA_RSC#...: 0x%08x\n", (int)spmc_parameters.rpspmc_fpgastartupcnt); status_append (tmp); g_free (tmp); }
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO_MODE: 0x%08x\n", (int)spmc_parameters.z_servo_mode); status_append (tmp); g_free (tmp); }        
-        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO_SET.: %g Veq\n", (int)spmc_parameters.z_servo_setpoint); status_append (tmp); g_free (tmp); }
-        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO_CP..: %g\n", (int)spmc_parameters.z_servo_cp); status_append (tmp); g_free (tmp); }
-        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO_CI..: %g\n", (int)spmc_parameters.z_servo_ci); status_append (tmp); g_free (tmp); }
-        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO_UPR.: %g V\n", (int)spmc_parameters.z_servo_upper); status_append (tmp); g_free (tmp); }
-        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO_LOR.: %g V\n", (int)spmc_parameters.z_servo_lower); status_append (tmp); g_free (tmp); }
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO_SET.: %g Veq\n", spmc_parameters.z_servo_setpoint); status_append (tmp); g_free (tmp); }
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO_CP..: %g\n", spmc_parameters.z_servo_cp); status_append (tmp); g_free (tmp); }
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO_CI..: %g\n", spmc_parameters.z_servo_ci); status_append (tmp); g_free (tmp); }
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO_UPR.: %g V\n", spmc_parameters.z_servo_upper); status_append (tmp); g_free (tmp); }
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO_LOR.: %g V\n", spmc_parameters.z_servo_lower); status_append (tmp); g_free (tmp); }
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO IN..: %08x MUX selection\n", (int)spmc_parameters.z_servo_src_mux); status_append (tmp); g_free (tmp); }
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC GVP SRCS MUX: %08x MUX selection code\n", (int)spmc_parameters.gvp_stream_mux); status_append (tmp); g_free (tmp); }
-        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC BIAS........: %g V\n", (int)spmc_parameters.bias); status_append (tmp); g_free (tmp); }
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC X,Y,Z.......: %g %g %g V\n", spmc_parameters.x_monitor, spmc_parameters.y_monitor, spmc_parameters.z_monitor); status_append (tmp); g_free (tmp); }
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z0[z-slope].: %g V\n", spmc_parameters.z0_monitor); status_append (tmp); g_free (tmp); }
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC BIAS........: %g V\n", spmc_parameters.bias_monitor); status_append (tmp); g_free (tmp); }
 
-        if (reconnect_mode){ // only of cold start
+        
+
+        if (reconnect_mode){ // only if cold start
+                status_append (" * RedPitaya SPM RPSPMC: Init completed and ackowldeged. Releasing normal control. Updating all from GXSM parameters.\n");
+                write_parameter ("RPSPMC_INITITAL_TRANSFER_ACK", 99); // Acknoledge inital parameters received, release server parameter updates
                 update_SPMC_parameters ();
         } else {
                 // update GUI! (mission critical: Z-SERVO mainly)
+                RPSPMC_ControlClass->update_GUI_from_fpga ();
                 status_append (" * RedPitaya SPM Control: RECONNECTING/READBACK Z-SERVO STATUS...\n");
                 // ...
                 update_SPMC_parameters (); // then send all other less critical parameters to make sure all is in sync
+
+                //
+                status_append (" * RedPitaya SPM RPSPMC: Readback completed and ackowldeged. Releasing normal control. No FPGA parameter update from GXSM!\n");
+                write_parameter ("RPSPMC_INITITAL_TRANSFER_ACK", 99); // Acknoledge inital parameters received, release server parameter updates
         }
+
         
         //status_append (" * RedPitaya SPM Control ready. NEXT: Please Check Connect Stream.\n");
         status_append (" * RedPitaya SPM Control ready. Connecting SPMC Data Stream...\n");

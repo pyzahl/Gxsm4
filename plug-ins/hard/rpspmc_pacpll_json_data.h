@@ -162,6 +162,8 @@ struct SPMC_parameters {
 
         double gvp_stream_mux;
         
+        double z_polarity;
+
         double z_servo_mode;
         double z_servo_setpoint;
         double z_servo_cp;
@@ -238,6 +240,8 @@ struct SPMC_parameters {
         double rpspmc_fpgaimpl_date;
         double rpspmc_fpgastartup;
         double rpspmc_fpgastartupcnt;
+
+        double rpspmc_initial_transfer_ack;
 };
 
 #define MAX_GVP_VECTORS   32

@@ -291,7 +291,7 @@ void rp_spmc_get_zservo_controller (double &setpoint, double &cp, double &ci, do
         // readback Z-Servo configuration
         rp_spmc_module_config_int32 (SPMC_Z_SERVO_SELECT_RB_SETPOINT_MODES_REG, 0, MODULE_START_VECTOR); // select data set
         rp_spmc_module_read_config_data (SPMC_READBACK_Z_SERVO_REG, &regA, &regB); // read data set
-        setpoint = (double)regA / rpspmc_FIR32IN1_to_volts (1.);
+        setpoint = (double)regA / volts_to_rpspmc_FIR32IN1 (1.);
         modes    = regB;
         
         rp_spmc_module_config_int32 (SPMC_Z_SERVO_SELECT_RB_CPI_REG, 0, MODULE_START_VECTOR);
@@ -687,6 +687,14 @@ void rp_spmc_set_slope (double dzx, double dzy, double dzxy_slew){
         rp_spmc_module_config_vector_Qn (SPMC_MAIN_CONTROL_SLOPE_REG, data, 2, Q_Z_SLOPE_PRECISION);
 }
 
+// 1+ / -1 (=negate)
+void rp_spmc_set_z_polarity (int z_polarity){
+        if (verbose > 1){
+                fprintf(stderr, "** WARNING: NON LINEAR. Setting Z-Polarity to %d.\n", z_polarity);
+        }
+        
+        rp_spmc_module_config_int32 (SPMC_MAIN_CONTROL_Z_POLARITY_REG, z_polarity < 0 ? 1:0); // negate final Z? (Bit 0 = 1 for YES)
+}
 
 
 double rp_spmc_set_bias_test (double bias){

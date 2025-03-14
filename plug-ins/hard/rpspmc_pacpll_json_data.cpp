@@ -134,6 +134,8 @@ JSON_parameter PACPLL_JSON_parameters[] = {
 
         { "SPMC_GVP_STREAM_MUX", &spmc_parameters.gvp_stream_mux, false },
 
+        { "SPMC_Z_POLARITY", &spmc_parameters.z_polarity, false },
+
         { "SPMC_Z_SERVO_MODE", &spmc_parameters.z_servo_mode, false },
         { "SPMC_Z_SERVO_SETPOINT", &spmc_parameters.z_servo_setpoint, false },
         { "SPMC_Z_SERVO_CP", &spmc_parameters.z_servo_cp, false },
@@ -235,6 +237,8 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         { "RPSPMC_FPGAIMPL_DATE",    &spmc_parameters.rpspmc_fpgaimpl_date, false },
         { "RPSPMC_FPGA_STARTUP",     &spmc_parameters.rpspmc_fpgastartup, false },
         { "RPSPMC_FPGA_STARTUPCNT",  &spmc_parameters.rpspmc_fpgastartupcnt, false },
+
+        { "RPSPMC_INITITAL_TRANSFER_ACK",  &spmc_parameters.rpspmc_initial_transfer_ack, false },
 
         
         { NULL, NULL, true }

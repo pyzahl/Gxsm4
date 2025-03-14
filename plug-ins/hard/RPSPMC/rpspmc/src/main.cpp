@@ -218,6 +218,8 @@ CIntParameter RPSPMC_FPGAIMPL_DATE   ("RPSPMC_FPGAIMPL_DATE", CBaseParameter::RW
 CIntParameter RPSPMC_FPGA_STARTUP    ("RPSPMC_FPGA_STARTUP", CBaseParameter::RW, 0, 0, -2147483648,2147483647);
 CIntParameter RPSPMC_FPGA_STARTUPCNT ("RPSPMC_FPGA_STARTUPCNT", CBaseParameter::RW, 0, 0, -2147483648,2147483647);
 
+CIntParameter RPSPMC_INITITAL_TRANSFER_ACK ("RPSPMC_INITITAL_TRANSFER_ACK", CBaseParameter::RW, 0, 0, -2147483648,2147483647);
+
 CIntParameter TRANSPORT_CH3("TRANSPORT_CH3", CBaseParameter::RW, 0, 0, 0, 19);
 CIntParameter TRANSPORT_CH4("TRANSPORT_CH4", CBaseParameter::RW, 1, 0, 0, 19);
 CIntParameter TRANSPORT_CH5("TRANSPORT_CH5", CBaseParameter::RW, 1, 0, 0, 19);
@@ -371,6 +373,8 @@ CDoubleParameter CONTROL_DFREQ_MONITOR("CONTROL_DFREQ_MONITOR", CBaseParameter::
 /* SPMC Parameters */
 
 CDoubleParameter  SPMC_BIAS("SPMC_BIAS", CBaseParameter::RW, 0.0, 0, -5.0, 5.0); // Volts
+
+CIntParameter     SPMC_Z_POLARITY("SPMC_Z_POLARITY", CBaseParameter::RW, 1, 0, -10, 10);
 
 CIntParameter     SPMC_Z_SERVO_MODE("SPMC_Z_SERVO_MODE", CBaseParameter::RW, 0, 0, 0, 0xffff);
 CDoubleParameter  SPMC_Z_SERVO_SETPOINT("SPMC_Z_SERVO_SETPOINT", CBaseParameter::RW, 0.0, 0, -5.0, 5.0); // Volts
@@ -896,8 +900,6 @@ int rp_app_init(void)
                         return EXIT_FAILURE;
                 }
         else fprintf(stderr, "Red Pitaya RPSPMC PACPLL API init memory mappings success!\n");
-
-
 
 
         unsigned int sys_state, sys_startup;
@@ -1678,6 +1680,13 @@ void OnNewParams_RPSPMC(void){
         
         //SPMC_GVP_STATUS.Update ();
 
+        if (RPSPMC_INITITAL_TRANSFER_ACK.IsNewValue())
+                RPSPMC_INITITAL_TRANSFER_ACK.Update();
+
+        if (RPSPMC_INITITAL_TRANSFER_ACK.Value() < 10) // wait for init transfer and client startup confirmed before any SPMC parameter updates
+                return;
+
+                        
         if (SPMC_Z_SERVO_SETPOINT.IsNewValue()
             || SPMC_Z_SERVO_CP.IsNewValue()
             || SPMC_Z_SERVO_CI.IsNewValue()
@@ -1912,6 +1921,11 @@ void OnNewParams_RPSPMC(void){
                                 rp_spmc_set_biqad_Lck_F0_IIR (1000./SPMC_SC_LCK_F0BQ_IIR.Value (), lck_f0_frq, SPMC_BIQUAD_F0_CONTROL_REG);
                         else // pass mode
                                 rp_spmc_set_biqad_Lck_F0_pass (SPMC_BIQUAD_F0_CONTROL_REG);
+        }
+
+        if (SPMC_Z_POLARITY.IsNewValue()){
+                SPMC_Z_POLARITY.Update();
+                rp_spmc_set_z_polarity (SPMC_Z_POLARITY.Value());
         }
         
 }
