@@ -236,6 +236,8 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         { "RPSPMC_FPGA_STARTUP",     &spmc_parameters.rpspmc_fpgastartup, false },
         { "RPSPMC_FPGA_STARTUPCNT",  &spmc_parameters.rpspmc_fpgastartupcnt, false },
 
+        { "RPSPMC_INITITAL_TRANSFER_ACK",  &spmc_parameters.rpspmc_initial_transfer_ack, false },
+
         
         { NULL, NULL, true }
 };

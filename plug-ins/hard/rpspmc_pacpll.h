@@ -799,6 +799,8 @@ public:
                            program_vector.slew, program_vector.srcs, program_vector.options, program_vector.repetitions, program_vector.ptr_next,
                            program_vector.f_du, program_vector.f_dx, program_vector.f_dy, program_vector.f_dz, program_vector.f_da, program_vector.f_db);
         };
+
+        void update_GUI_from_fpga ();
         
 	PROBE_VECTOR_GENERIC program_vector;
 

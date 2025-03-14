@@ -189,6 +189,7 @@
 #define SPMC_MAIN_CONTROL_SLOPE_REG        1102 //  SPMC MAIN CONTROL IP REGISTERS
 #define SPMC_MAIN_CONTROL_MODULATION_REG   1103 //  SPMC MAIN CONTROL IP REGISTERS
 #define SPMC_MAIN_CONTROL_BIAS_REG         1104 //  SPMC MAIN CONTROL IP REGISTERS -- Gxsm set Bias onyl (U), included in XYZU as well
+#define SPMC_MAIN_CONTROL_Z_POLARITY_REG   1105 //  SPMC MAIN CONTROL IP REGISTERS
 /*
         case (config_addr) // BQ configuration, and auto reset
         xyzu_offset_reg_address: // == 1100

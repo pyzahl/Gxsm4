@@ -238,6 +238,8 @@ struct SPMC_parameters {
         double rpspmc_fpgaimpl_date;
         double rpspmc_fpgastartup;
         double rpspmc_fpgastartupcnt;
+
+        double rpspmc_initial_transfer_ack;
 };
 
 #define MAX_GVP_VECTORS   32
