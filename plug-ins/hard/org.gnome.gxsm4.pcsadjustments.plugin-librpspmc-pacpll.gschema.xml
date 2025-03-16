@@ -584,6 +584,12 @@
       <description>Configuration for GXSM Entry with ID 'dsp-lck-freq'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
     </key>
 
+    <key name="dsp-spmc-lck-rf-freq" type="ad">
+      <default>[62.5e7, 0, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1.0, 1.0, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'dsp-lck-rf-freq' </summary>
+      <description>Configuration for GXSM Entry with ID 'dsp-lck-rf-freq'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
     <key name="dsp-spmc-lck-modvolume-x-scan" type="ad">
       <default>[1e6, 0, 1e+111, -1e+111, 1e+111, 1e+111, 0.001, 0.01, 0.1, 0,  0, 0      ]      </default>
       <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'dsp-lck-modvolume-x-scan' </summary>

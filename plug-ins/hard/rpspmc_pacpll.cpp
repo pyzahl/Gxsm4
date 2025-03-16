@@ -1899,13 +1899,15 @@ void RPSPMC_Control::create_folder (){
         }
 
         bp->pop_grid (); bp->set_xy (2,2);
- 	bp->new_grid_with_frame ("Bi-Quad IIR Filter");
+ 	bp->new_grid_with_frame ("Bi-Quad IIR Filter, RF-Gen");
         //bp->new_line ();
 	bp->grid_add_ec ("Time Const BQ", new UnitObj("ms","ms"), &spmc_parameters.sc_lck_bq_tau, 0., 1e6, "5g", 1e-6, 10e3, "SPMC-LCK-BQ-TAU");
         bp->new_line ();
 	bp->grid_add_ec ("Time Const IIR", new UnitObj("ms","ms"), &spmc_parameters.sc_lck_iir_tau, 0., 1e6, "5g", 1e-6, 10e3, "SPMC-LCK-IIR-TAU");
         bp->new_line ();
 	bp->grid_add_ec ("BiQaud Q", new UnitObj(" Q"," Q"), &spmc_parameters.sc_lck_q, 0., 1e6, "5g", 0.1, 5.0, "SPMC-LCK-Q");
+        bp->new_line ();
+	bp->grid_add_ec ("RF Gen Ref Frequency", new UnitObj("Hz","Hz"), &spmc_parameters.sc_lck_rf_frequency, 0.0, 30e6, "5g", 1.0, 100.0, "SPMC-LCK-RF-FREQ");
         bp->new_line ();
 	bp->grid_add_label ("Gain and Modualtion Options:");
         bp->new_line ();

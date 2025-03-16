@@ -179,6 +179,7 @@
                                              // [2] DDSN2 (16)
                                              // [3] PHASE INC (48)
                                              // [4] FM Scale (Q24) (control via GVP-B, Frq shift in V/Hz)
+                                             // [5] RF GEN PHASE INC (32)
 
 
 // BIQUAD  MODULE @ CONFIG ADDRESS

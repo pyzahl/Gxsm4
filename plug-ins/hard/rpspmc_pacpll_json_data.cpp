@@ -231,6 +231,7 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         { "SPMC_SC_LCK_F0BQ_IIR",  &spmc_parameters.sc_lck_iir_tau, false },   // IIR time const
         { "SPMC_SC_LCK_F0BQ_Q",    &spmc_parameters.sc_lck_q, false },         // Q for IIR
 
+        { "SPMC_SC_LCK_RF_FREQUENCY", &spmc_parameters.sc_lck_rf_frequency, false }, // manual/tune RF Gen frequency
         { "SPMC_RF_GEN_OUT_MUX", &spmc_parameters.rf_gen_out_mux, false },
 
         

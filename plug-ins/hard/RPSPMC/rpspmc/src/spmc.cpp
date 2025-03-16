@@ -856,7 +856,7 @@ void rp_spmc_set_modulation (double volume, int target, int dfc_target){
 
 // Lock In / Modulation
  
-double rp_spmc_configure_lockin (double freq, double gain, double FM_scale, unsigned int mode, int LCKID){
+double rp_spmc_configure_lockin (double freq, double gain, double FM_scale, unsigned int mode, double RF_ref_freq, int LCKID){
         // 44 Bit Phase, using 48bit tdata
         unsigned int n2 = round (log2(dds_phaseinc (freq)));
         unsigned long long phase_inc = 1LL << n2;
@@ -881,7 +881,9 @@ double rp_spmc_configure_lockin (double freq, double gain, double FM_scale, unsi
         //    fmc          <= dds_FM_Scale * $signed(S_AXIS_FMC_tdata); // Q** *Q31 => Q48    == xxx Hz <=> 1V (Q24)  **** 1000Hz*((1<<44)-1)/125000000Hz
         //    dds_FM       <= fmc >>> 20; // FM-Scale: Q44
 
-        rp_spmc_module_config_uint32 (LCKID, (unsigned int)(round(hzv*FM_scale)), MODULE_SETUP_VECTOR(5)); // last, write FM-Scale Hz/V
+        rp_spmc_module_config_uint32 (MODULE_SETUP, (unsigned int)(round(hzv*FM_scale)), MODULE_SETUP_VECTOR(5)); // write FM-Scale Hz/V
+        rp_spmc_module_config_uint32 (LCKID, (unsigned int)(round((1<<32)-1)*RF_ref_freq/125e6), MODULE_SETUP_VECTOR(6)); // last, write RF-DDS PHASE INC
+
         
         return fact;
 }

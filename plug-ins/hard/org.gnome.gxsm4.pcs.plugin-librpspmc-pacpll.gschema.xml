@@ -492,6 +492,12 @@
       <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-FREQ', Default/U:     300 Hz    , Adjustment PCS Name: 'dsp-SPMC-LCK-FREQ' </description>
     </key>
 
+    <key name="dsp-spmc-lck-rf-freq" type="d">
+      <default>1e6</default>
+      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-RF-FREQ', Default/U:     1e6 Hz     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-RF-FREQ', Default/U:     300 Hz    , Adjustment PCS Name: 'dsp-SPMC-LCK-RF-FREQ' </description>
+    </key>
+
     <key name="dsp-spmc-lck-mod-volume-x-scan" type="d">
       <default>0</default>
       <summary>PCS Remote-ID: 'dsp-SPMC-LCK-ModVolume-X-Scan', Default/U:     0 AA     </summary>

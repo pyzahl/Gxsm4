@@ -446,6 +446,8 @@ CIntParameter     SPMC_SC_LCK_TARGET(   "SPMC_SC_LCK_TARGET", CBaseParameter::RW
 CDoubleParameter  SPMC_SC_LCK_GAIN(     "SPMC_SC_LCK_GAIN", CBaseParameter::RW, 0.0, 0, -1e10, 1e10); // Q24
 CDoubleParameter  SPMC_SC_LCK_FMSCALE(  "SPMC_SC_LCK_FMSCALE", CBaseParameter::RW, 0.0, 0, -1e10, 1e10); // Q24
 
+CDoubleParameter  SPMC_SC_LCK_RF_FREQUENCY("SPMC_SC_LCK_RF_FREQUENCY", CBaseParameter::RW, 0.0, 0, 0.0, 0.5*125e6); // Hz
+
 CDoubleParameter  SPMC_SC_LCK_F0BQ_TAU("SPMC_SC_LCK_F0BQ_TAU", CBaseParameter::RW, 0.0, 0, 0.0, 1e10); // ms
 CDoubleParameter  SPMC_SC_LCK_F0BQ_Q(  "SPMC_SC_LCK_F0BQ_Q", CBaseParameter::RW, 0.0, 0, -1e10, 1e10); // BQ Q
 CDoubleParameter  SPMC_SC_LCK_F0BQ_IIR("SPMC_SC_LCK_F0BQ_IIR", CBaseParameter::RW, 0.0, 0, 0.0, 1e10); // ms 0: pass mode
@@ -1882,10 +1884,12 @@ void OnNewParams_RPSPMC(void){
         }
 
         // RPSPMC Lock-In...
-        if (SPMC_SC_LCK_FREQUENCY.IsNewValue () || SPMC_SC_LCK_GAIN.IsNewValue () || SPMC_SC_LCK_FMSCALE.IsNewValue ()){
+        if (SPMC_SC_LCK_FREQUENCY.IsNewValue () || SPMC_SC_LCK_GAIN.IsNewValue () || SPMC_SC_LCK_FMSCALE.IsNewValue () || SPMC_SC_LCK_RF_FREQUENCY.IsNewValue()){
                 SPMC_SC_LCK_FREQUENCY.Update ();
                 SPMC_SC_LCK_GAIN.Update ();
                 SPMC_SC_LCK_FMSCALE.Update ();
+                SPMC_SC_LCK_RF_FREQUENCY.Update ();
+
                 double fms  = SPMC_SC_LCK_FMSCALE.Value ();
                 double gain = SPMC_SC_LCK_GAIN.Value ();
                 int mode = 0;
@@ -1893,7 +1897,7 @@ void OnNewParams_RPSPMC(void){
                         mode |= 1;
                 if (fms > 0.) // via signal FM
                         mode |= 4;
-                lck_f0_frq = rp_spmc_configure_lockin (SPMC_SC_LCK_FREQUENCY.Value (), 0., fms, mode, SPMC_LOCKIN_F0_CONTROL_REG);
+                lck_f0_frq = rp_spmc_configure_lockin (SPMC_SC_LCK_FREQUENCY.Value (), 0., fms, mode, SPMC_SC_LCK_RF_FREQUENCY.Value(), SPMC_LOCKIN_F0_CONTROL_REG);
         }
 
         if (SPMC_SC_LCK_TARGET.IsNewValue () || SPMC_SC_LCK_VOLUME.IsNewValue () || DFREQ_CONTROL_Z.IsNewValue () || DFREQ_CONTROL_U.IsNewValue ()){
