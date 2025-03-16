@@ -60,7 +60,7 @@ module axis_py_lockin#(
     parameter configuration_address = 999
 )
 (
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS_SC:S_AXIS_SIGNAL:S_AXIS_AMC:S_AXIS_FMC:M_AXIS_DDSPhaseInc:M_AXIS_A2:M_AXIS_X:M_AXIS_Y:M_AXIS_Sref:M_AXIS_SDref:M_AXIS_SignalOut:M_AXIS_i" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS_SC:S_AXIS_SIGNAL:S_AXIS_AMC:S_AXIS_FMC:M_AXIS_DDSPhaseInc:M_AXIS_A2:M_AXIS_X:M_AXIS_Y:M_AXIS_Sref:M_AXIS_SDref:M_AXIS_RFgen:M_AXIS_SignalOut:M_AXIS_i" *)
     input a_clk,
 
     input [32-1:0]  config_addr,
@@ -95,6 +95,9 @@ module axis_py_lockin#(
     // S ref out
     output wire [32-1:0]  M_AXIS_Sref_tdata,
     output wire           M_AXIS_Sref_tvalid,
+    // RF gen 
+    output wire [16-1:0]  M_AXIS_RFgen_tdata,
+    output wire           M_AXIS_RFgen_tvalid,
     // SDeci ref out
     output wire [32-1:0]  M_AXIS_SDref_tdata,
     output wire           M_AXIS_SDref_tvalid,
@@ -199,6 +202,7 @@ module axis_py_lockin#(
             dds_n2          <= config_data[2*32+16-1 : 2*32];       // Phase Inc N2 lower 16 bits
             dds_PhaseIncRef <= config_data[3*32+48-1 : 3*32]; // Phase Inc Width: 48 bits
             dds_FM_Scale    <= config_data[5*32+32-1 : 5*32]; // Phase Inc FM Scale for FM -- Q24
+            //dds_AM_Scale    <= config_data[6*32+32-1 : 6*32]; // AM Scale -- Q24
         end
         
         // signal
@@ -210,12 +214,12 @@ module axis_py_lockin#(
 
         if (lck_config[0]) // AM mod?
         begin     
-            amcA       <= S_AXIS_AMC_tdata; // ==> Q24   1x <=> 1V (Q24)
-            amf24      <= amcA >>> 8; // ==> Q24   1x <=> 1V (Q24)
-            amcS       <= dds_AM_Scale * amf24; // Q24 * Q24   == 1x <=> 1V (Q24)
-            amc24      <= amcS >>> 24;
-            amc        <= c * amc24;   // Q24 * Q24
-            SigRef     <= amc >>> 24; // GeneratedSignal with AM
+            amcA       <= S_AXIS_AMC_tdata; // Q31 = 5V -> 1x
+            amf24      <= amcA >>> 9; // ==> Q24   1x <=> 1V (Q24)
+            //amcS       <= dds_AM_Scale * amf24; // Q24 * Q24   == 1x <=> 1V (Q24)
+            //amc24      <= amcS >>> 24;
+            amc        <= c * amf24;   // Q24 * Q24  [attenuate 1x .. 0x]
+            SigRef     <= amc >>> 24; // GeneratedSignal with AM -- Q24
         end
         else
             SigRef <= c; // GeneratedSignal
@@ -223,9 +227,9 @@ module axis_py_lockin#(
         if (lck_config[2]) // FM mod?
         begin
             // dds_FM_Scale: [Hz/V] * ((1<<44)-1)/125000000*5/(1<<(44-32))
-            fmcB         <= S_AXIS_FMC_tdata; // Q** *Q31 => Q48    == xxx Hz <=> 1V (Q24)  **** 1000Hz*((1<<44)-1)/125000000Hz
-            fmc          <= dds_FM_Scale * fmcB; // Q** *Q31 => Q48    == xxx Hz <=> 1V (Q24)  **** 1000Hz*((1<<44)-1)/125000000Hz
-            dds_FM       <= fmc >>> 19; // FM-Scale: Q44
+            fmcB         <= S_AXIS_FMC_tdata; // Q31 = 5V
+            fmc          <= dds_FM_Scale * fmcB; //fmc[64]  Q** *Q31 => Q48    == xxx Hz <=> 1V (Q24)  **** 1000Hz*((1<<44)-1)/125000000Hz
+            dds_FM       <= fmc >>> 19; // FM-Scale: Q44   Q[63-44=19]
             dds_PhaseInc <= dds_PhaseIncRef + dds_FM; // dds_FM Q44
         end else
             dds_PhaseInc <= dds_PhaseIncRef; // DDS Freq (PhaseInc) 
@@ -324,6 +328,10 @@ module axis_py_lockin#(
 
     assign M_AXIS_Sref_tdata = {{(32-SC_DATA_WIDTH){SigRef[SC_DATA_WIDTH-1]}}, {SigRef[SC_DATA_WIDTH-1:0]}};
     assign M_AXIS_Sref_tvalid = 1;
+
+    assign M_AXIS_RFgen_tdata = {{(32-16){SigRef[SC_DATA_WIDTH-1]}}, {SigRef[SC_DATA_WIDTH-1:SC_DATA_WIDTH-16]}}; // 16
+    assign M_AXIS_RFgen_tvalid = 1;
+
     // test, dec s
     assign M_AXIS_SDref_tdata = {{(32-SC_DATA_WIDTH){sig_in[SC_DATA_WIDTH-1]}}, {sig_in[SC_DATA_WIDTH-1:0]}};
     assign M_AXIS_SDref_tvalid = 1;

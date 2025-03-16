@@ -626,6 +626,17 @@ void rp_set_z_servo_stream_mux_selector (unsigned long selector, unsigned long t
 
 }
 
+// SPMC GVP STREAM SOURCE MUX 16 to 6
+void rp_set_rf_out_mux_selector (unsigned long selector, unsigned long test_mode=0, int testval=0){
+        if (verbose > 1) fprintf(stderr, "** set gvp stream mux 0x%06x\n", (unsigned int)selector);
+        rp_spmc_module_config_uint32 (MODULE_SETUP, selector, MODULE_START_VECTOR);
+        rp_spmc_module_config_uint32 (MODULE_SETUP, test_mode, MODULE_SETUP_VECTOR(1));
+        rp_spmc_module_config_int32 (SPMC_MUX2_RF_OUT_CONTROL_REG, testval, MODULE_SETUP_VECTOR(2));
+
+        if (verbose > 1) fprintf(stderr, "** Z_SERVO MUX selector is %08x\n", (unsigned int)selector);
+
+}
+
 // RPSPMC Location and Geometry
 int rp_spmc_set_rotation (double alpha, double slew){
         static double current_alpha=0.0;
@@ -986,11 +997,20 @@ void rp_spmc_update_readings (){
         
         rp_spmc_module_read_config_data (SPMC_READBACK_GVPBIAS_REG, &regA, &regB); // GVP Bias Comp, GVP-A
         SPMC_GVPU_MONITOR.Value () = rpspmc_to_volts (regA);
-        SPMC_GVPA_MONITOR.Value () = rpspmc_to_volts (regB);
+        //SPMC_ MOD _MONITOR.Value () = rpspmc_to_volts (regB); // modulation monitor
 
-        rp_spmc_module_read_config_data (SPMC_READBACK_XX_REG, &regA, &regB); // Srcs-MUX, GVP-B
+        rp_spmc_module_read_config_data (SPMC_READBACK_SRCS_MUX_REG, &regA, &regB); // Srcs-MUX, GVP-B
         SPMC_MUX_MONITOR.Value ()  = rpspmc_to_volts (regA);
+        // 0
+        
+        //rp_spmc_module_read_config_data (SPMC_READBACK_IN_MUX_REG, &regA, &regB); // Srcs-MUX, GVP-B
+        //SPMC_MUX_IN_MONITOR.Value ()  = rpspmc_to_volts (regA);
+        // 0
+
+        rp_spmc_module_read_config_data (SPMC_READBACK_PMD_DA56_REG, &regA, &regB); // GVP-A, GVP-B
+        SPMC_GVPA_MONITOR.Value () = rpspmc_to_volts (regA);
         SPMC_GVPB_MONITOR.Value () = rpspmc_to_volts (regB);
+
         
         SPMC_X0_MONITOR.Value () = rpspmc_to_volts (x0_buf); // ** mirror
         SPMC_Y0_MONITOR.Value () = rpspmc_to_volts (y0_buf); // ** mirror

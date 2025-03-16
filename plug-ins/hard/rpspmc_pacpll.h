@@ -114,6 +114,7 @@ public:
         GtkWidget* grid_add_probe_source_signal_options (gint channel, gint preset, gpointer ref);
         GtkWidget* grid_add_modulation_target_options (gint channel, gint preset, gpointer ref);
         GtkWidget* grid_add_z_servo_current_source_options (gint channel, gint preset, gpointer ref);
+        GtkWidget* grid_add_rf_gen_out_options (gint channel, gint preset, gpointer ref);
 
         GtkWidget* grid_add_probe_status (const gchar *status_label);
         void grid_add_probe_controls (gboolean have_dual,
@@ -397,6 +398,8 @@ public:
         static int choice_mod_target_callback (GtkWidget *widget, RPSPMC_Control *self);
         static int choice_z_servo_current_source_callback (GtkWidget *widget, RPSPMC_Control *self);
 
+        static int choice_rf_gen_out_callback (GtkWidget *widget, RPSPMC_Control *self);
+        
         static void show_tab_to_configure (GtkWidget* w, gpointer data){
                 gtk_widget_show (GTK_WIDGET (g_object_get_data (G_OBJECT (w), "TabGrid")));
         };

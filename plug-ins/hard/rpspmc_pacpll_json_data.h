@@ -234,6 +234,8 @@ struct SPMC_parameters {
         double sc_lck_gain;
         double sc_lck_fmscale;
 
+        double rf_gen_out_mux;
+        
         double rpspmc_version;
         double rpspmc_date;
         double rpspmc_fpgaimpl;

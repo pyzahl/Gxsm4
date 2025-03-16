@@ -139,7 +139,7 @@ module readback_configuration#(
         readback_SRCS_MUX_reg_address: 
         begin
             reg_A <=  SRCS_MUX_SEL;
-            reg_B <=  0;
+            reg_B <=  IN_MUX_SEL;
 	    end
 
         readback_IN_MUX_reg_address: 

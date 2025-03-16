@@ -450,6 +450,8 @@ CDoubleParameter  SPMC_SC_LCK_F0BQ_TAU("SPMC_SC_LCK_F0BQ_TAU", CBaseParameter::R
 CDoubleParameter  SPMC_SC_LCK_F0BQ_Q(  "SPMC_SC_LCK_F0BQ_Q", CBaseParameter::RW, 0.0, 0, -1e10, 1e10); // BQ Q
 CDoubleParameter  SPMC_SC_LCK_F0BQ_IIR("SPMC_SC_LCK_F0BQ_IIR", CBaseParameter::RW, 0.0, 0, 0.0, 1e10); // ms 0: pass mode
 
+CIntParameter     SPMC_RF_GEN_OUT_MUX("SPMC_RF_GEN_OUT_MUX", CBaseParameter::RW, 0, 0, -2147483648,2147483647); // RF Gen Output MUX selector
+
 
 // *** RP SPMC::GPIO MONITORS ***
 CDoubleParameter  SPMC_BIAS_MONITOR("SPMC_BIAS_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
@@ -1891,7 +1893,7 @@ void OnNewParams_RPSPMC(void){
                         mode |= 1;
                 if (fms > 0.) // via signal FM
                         mode |= 4;
-                lck_f0_frq = rp_spmc_configure_lockin (SPMC_SC_LCK_FREQUENCY.Value (), gain, fms, mode, SPMC_LOCKIN_F0_CONTROL_REG);
+                lck_f0_frq = rp_spmc_configure_lockin (SPMC_SC_LCK_FREQUENCY.Value (), 0., fms, mode, SPMC_LOCKIN_F0_CONTROL_REG);
         }
 
         if (SPMC_SC_LCK_TARGET.IsNewValue () || SPMC_SC_LCK_VOLUME.IsNewValue () || DFREQ_CONTROL_Z.IsNewValue () || DFREQ_CONTROL_U.IsNewValue ()){
@@ -1923,6 +1925,11 @@ void OnNewParams_RPSPMC(void){
                                 rp_spmc_set_biqad_Lck_F0_pass (SPMC_BIQUAD_F0_CONTROL_REG);
         }
 
+        if (SPMC_RF_GEN_OUT_MUX.IsNewValue()){
+                SPMC_RF_GEN_OUT_MUX.Update();
+                rp_set_rf_out_mux_selector (SPMC_RF_GEN_OUT_MUX.Value());
+        }
+        
         if (SPMC_Z_POLARITY.IsNewValue()){
                 SPMC_Z_POLARITY.Update();
                 rp_spmc_set_z_polarity (SPMC_Z_POLARITY.Value());

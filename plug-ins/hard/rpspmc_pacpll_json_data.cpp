@@ -231,6 +231,9 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         { "SPMC_SC_LCK_F0BQ_IIR",  &spmc_parameters.sc_lck_iir_tau, false },   // IIR time const
         { "SPMC_SC_LCK_F0BQ_Q",    &spmc_parameters.sc_lck_q, false },         // Q for IIR
 
+        { "SPMC_RF_GEN_OUT_MUX", &spmc_parameters.rf_gen_out_mux, false },
+
+        
         { "RPSPMC_SERVER_VERSION",   &spmc_parameters.rpspmc_version, false },
         { "RPSPMC_SERVER_DATE",      &spmc_parameters.rpspmc_date, false },
         { "RPSPMC_FPGAIMPL_VERSION", &spmc_parameters.rpspmc_fpgaimpl, false },

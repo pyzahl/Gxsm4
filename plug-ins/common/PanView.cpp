@@ -841,9 +841,11 @@ void PanView :: tip_refresh()
                 else
                         tmp = g_strdup_printf ("I: %8.4f nA\ndF: %8.1f Hz\nZ: %8.4f " UTF8_ANGSTROEM
                                                "\nU: %8.4f V\n %g %g"
+                                               "\nGVP-U: %8.4f A: %8.4f B: %8.4f V\n"
                                                "\nIN2: %8.4f V\nh%04x %02x",
                                                y,       x, main_get_gapp()->xsm->Inst->V2ZAng(z),
                                                u, v,w,
+                                               gu, ga, gb,
                                                q, (int)s2, (int)s3);
 
                 info->set_text (tmp);

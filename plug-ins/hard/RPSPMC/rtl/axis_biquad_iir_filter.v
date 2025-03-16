@@ -138,66 +138,61 @@ module axis_biquad_iir_filter #(
             a2 <= config_data[6*32-1 : 5*32];
             resetn <= 0;                     
         end
-        else // run
+        else
+        begin // run
             resetn <= 1;
             decii_clk <= axis_decii_clk;                     
-    end    
 
-    
-    // pipeline of registers
-
-    always @(posedge aclk)
-    //always @(posedge axis_decii_clk)
-    begin              
-        if (!resetn) begin
-            x1 <= 0;
-            x2 <= 0;
-            y1 <= 0;
-            y2 <= 0;
-            x_b0  <= 0;
-            x_b1  <= 0;
-            x_b2  <= 0;
-            y_a1 <= 0;
-            y_a2 <= 0;
-        end
-        else
-        begin
-            if (decii_clk) // run at decimated rate as given by axis_decii_clk
-            begin
-                run <= 1; // start
+            if (!resetn) begin
+                x1 <= 0;
+                x2 <= 0;
+                y1 <= 0;
+                y2 <= 0;
+                x_b0  <= 0;
+                x_b1  <= 0;
+                x_b2  <= 0;
+                y_a1 <= 0;
+                y_a2 <= 0;
+                run <= 0;
             end
             else
-            begin         
-                case (run) // split up in two steps as we are always highly deciamted plenty of time
-                    1:
-                    begin 
-                        run <= run+1;
-                        x   <= S_AXIS_in_tdata; // load next input
-                        x1  <= x;               // stage input pipe line with x
-                        x2  <= x1;
-
-                        x_b0  <= b0 * x;   // IIR 1st stage (n)
-                        x_b1  <= b1 * x1; // IIR 1st stage (n-1)
-                        x_b2  <= b2 * x2;
-
-                        //y1  <= (x_b0 + x_b1 + x_b2 - y_a1 - y_a2) >>> (coefficient_Q-internal_extra);
-                        y1_tmpx  <= x_b0 + x_b1 + x_b2;
-                        y1_tmpy  <= y_a1 + y_a2;
-                    end                
-                    2: // continue with results
-                    begin
-                        run <= 0;
-                        y1  <= (y1_tmpx - y1_tmpy) >>> (coefficient_Q-internal_extra);
-                        y2  <= y1;
-                        
-                        y_a1 <= a1 * y1;
-                        y_a2 <= a2 * y2;    
-                    end                
-                endcase
-            end
-        end    
-
-        y <= y1 >>> (internal_extra);
+            begin
+                if (decii_clk) // run at decimated rate as given by axis_decii_clk
+                begin
+                    run <= 1; // start
+                end
+                else
+                begin         
+                    case (run) // split up in two steps as we are always highly deciamted plenty of time
+                        1:
+                        begin 
+                            run <= run+1;
+                            x   <= S_AXIS_in_tdata; // load next input
+                            x1  <= x;               // stage input pipe line with x
+                            x2  <= x1;
+    
+                            x_b0  <= b0 * x;   // IIR 1st stage (n)
+                            x_b1  <= b1 * x1; // IIR 1st stage (n-1)
+                            x_b2  <= b2 * x2;
+    
+                            //y1  <= (x_b0 + x_b1 + x_b2 - y_a1 - y_a2) >>> (coefficient_Q-internal_extra);
+                            y1_tmpx  <= x_b0 + x_b1 + x_b2;
+                            y1_tmpy  <= y_a1 + y_a2;
+                        end                
+                        2: // continue with results
+                        begin
+                            run <= 0;
+                            y1  <= (y1_tmpx - y1_tmpy) >>> (coefficient_Q-internal_extra);
+                            y2  <= y1;
+                            
+                            y_a1 <= a1 * y1;
+                            y_a2 <= a2 * y2;    
+                        end                
+                    endcase
+                end
+            end    
+            y <= y1 >>> (internal_extra);
+        end
     end       
    
     assign M_AXIS_out_tdata  = y;

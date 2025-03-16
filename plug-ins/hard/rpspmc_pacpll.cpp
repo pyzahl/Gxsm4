@@ -232,6 +232,13 @@ SOURCE_SIGNAL_DEF z_servo_current_source[] = {
         { 0x00000016,  NULL, NULL, NULL, NULL, 0.0, 0 }
 };
 
+SOURCE_SIGNAL_DEF rf_gen_out_dest[] = {
+        //  SIGNAL #  Name               Units.... Scale
+        { 0x00000000, "RP-Out1",    " ",  "V",  "V", SPMC_RPIN12_to_volts, 0, 0 },
+        { 0x00000001, "PMOD-DAC5",  " ",  "V",  "V", SPMC_RPIN34_to_volts, 0, 0 },
+        { 0x00000016,  NULL, NULL, NULL, NULL, 0.0, 0 }
+};
+
         
 // helper func to assemble mux value from selctions
 int __GVP_selection_muxval (int selection[6]) {
@@ -629,6 +636,28 @@ GtkWidget* GUI_Builder::grid_add_z_servo_current_source_options (gint channel, g
                 
         g_signal_connect (G_OBJECT (cbtxt), "changed",	
                           G_CALLBACK (RPSPMC_Control::choice_z_servo_current_source_callback), 
+                          ref);				
+        grid_add_widget (cbtxt);
+        return cbtxt;
+};
+
+GtkWidget* GUI_Builder::grid_add_rf_gen_out_options (gint channel, gint preset, gpointer ref){
+        GtkWidget *cbtxt = gtk_combo_box_text_new (); 
+        gtk_widget_set_size_request (cbtxt, 50, -1); 
+        g_object_set_data(G_OBJECT (cbtxt), "z_servo_current_source_id", GINT_TO_POINTER (channel)); 
+
+
+        for (int jj=0; rf_gen_out_dest[jj].label; ++jj){
+                gchar *id = g_strdup_printf ("%d", jj); gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id,  rf_gen_out_dest[jj].label); g_free (id);
+        }
+
+        if (preset >= 0)
+                gtk_combo_box_set_active (GTK_COMBO_BOX (cbtxt), preset); 
+        else
+                gtk_combo_box_set_active (GTK_COMBO_BOX (cbtxt), 4); // NULL SIGNAL [TESTING FALLBACK for -1/error]
+                
+        g_signal_connect (G_OBJECT (cbtxt), "changed",	
+                          G_CALLBACK (RPSPMC_Control::choice_rf_gen_out_callback), 
                           ref);				
         grid_add_widget (cbtxt);
         return cbtxt;
@@ -1884,6 +1913,10 @@ void RPSPMC_Control::create_folder (){
         bp->new_line ();
 	bp->grid_add_ec ("FM Mod Scale.", new UnitObj("Hz/V","Hz/V"), &spmc_parameters.sc_lck_fmscale, -1e9, 1e9, "6g", 0.1, 5.0, "SPMC-LCK-FMSCALE");
 
+        bp->new_line ();
+        bp->set_label_width_chars (10);
+	bp->grid_add_label ("RF Gen Output on");
+        bp->grid_add_rf_gen_out_options (0, (int)spmc_parameters.rf_gen_out_mux, this);
         
         bp->notebook_tab_show_all ();
         bp->pop_grid ();
@@ -3319,6 +3352,17 @@ int RPSPMC_Control::choice_z_servo_current_source_callback (GtkWidget *widget, R
         
         if (rpspmc_pacpll)
                 rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_SRC_MUX", id);
+        
+        return 0;
+}
+
+int RPSPMC_Control::choice_rf_gen_out_callback (GtkWidget *widget, RPSPMC_Control *self){
+        PI_DEBUG_GP (DBG_L4, "%s \n",__FUNCTION__);
+
+	int id = gtk_combo_box_get_active (GTK_COMBO_BOX (widget));
+        
+        if (rpspmc_pacpll)
+                rpspmc_pacpll->write_parameter ("SPMC_RF_GEN_OUT_MUX", id);
         
         return 0;
 }
