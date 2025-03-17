@@ -1908,10 +1908,10 @@ void OnNewParams_RPSPMC(void){
                 rp_spmc_set_modulation (SPMC_SC_LCK_VOLUME.Value (), SPMC_SC_LCK_TARGET.Value (), DFREQ_CONTROL_Z.Value () ? 1:0 | DFREQ_CONTROL_U.Value () ? 2:0 );
 
                 // TESTING MODE
-                if ((int)SPMC_SC_LCK_TARGET.Value () == 7){
-                        rp_spmc_module_read_config_data_timing_test ();
-                        rp_spmc_AD463x_test (ad464x_dev_IN34);
-                }
+                //if ((int)SPMC_SC_LCK_TARGET.Value () == 7){
+                //        rp_spmc_module_read_config_data_timing_test ();
+                //        rp_spmc_AD463x_test (ad464x_dev_IN34);
+                // }
 
         }
 

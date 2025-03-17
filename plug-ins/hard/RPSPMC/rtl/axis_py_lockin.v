@@ -127,15 +127,10 @@ module axis_py_lockin#(
     );
 
     // DDS Control
-    reg signed [24-1:0] dds_AM_Scale = 3355443;     // 1x/V (5V full scale => 5x/5V) in Q24 =: 1/5*((1<<24)-1);
-    reg signed [31-1:0] amcA  = 0;
-    reg signed [24-1:0] amf24 = 0;
-    reg signed [48-1:0] amc = 0;
-    reg signed [32-1:0] dds_FM_Scale = 0;     // 1kHz/V (5V full scale => 5KHz/5V) in Q31 =: 1/5000*((1<<31)-1);
+    reg signed [16-1:0] amcA16 = 0;
+    reg signed [32-1:0] amcA32 = 0;
     reg signed [32-1:0] fmcB = 0;
     reg signed [64-1:0] fmc = 0;
-    reg [48-1:0] dds_PhaseIncRef = 1;
-    reg [48-1:0] dds_FM = 0;
     reg [48-1:0] dds_PhaseInc = 1;
 
     // RF Gen
@@ -143,6 +138,8 @@ module axis_py_lockin#(
     reg signed [16-1:0] SigRF=0; // Q RF_SC (14Q13)
     reg [32-1:0] rf_dds_PhaseIncRef = 1024;
     reg [32-1:0] rf_dds_PhaseInc = 1024;
+    reg signed [32-1:0] rf_dds_FM_Scale = 0;     // 1kHz/V (5V full scale => 5KHz/5V) in Q31 =: 1/5000*((1<<31)-1);
+    reg [32-1:0] dds_FM = 0;
 
     // Lock-In
     // ========================================================
@@ -219,8 +216,8 @@ module axis_py_lockin#(
             lck_config      <= config_data[8-1       : 0];    // options: Bit0: AM, Bit2: FM control
             gain            <= config_data[2*32-1    : 1*32]; // programmed gain, Q24
             dds_n2          <= config_data[2*32+16-1 : 2*32];       // Phase Inc N2 lower 16 bits
-            dds_PhaseIncRef <= config_data[3*32+48-1 : 3*32]; // Phase Inc Width: 48 bits
-            dds_FM_Scale    <= config_data[5*32+32-1 : 5*32]; // Phase Inc FM Scale for FM -- Q24
+            dds_PhaseInc    <= config_data[3*32+48-1 : 3*32]; // Phase Inc Width: 48 bits
+            rf_dds_FM_Scale    <= config_data[5*32+32-1 : 5*32]; // Phase Inc FM Scale for FM -- Q24
             rf_dds_PhaseIncRef <= config_data[6*32+32-1 : 6*32]; // Phase Inc RF-DDS 32bit 
 
         end
@@ -232,14 +229,13 @@ module axis_py_lockin#(
         c <= S_AXIS_SC_tdata[                        SC_DATA_WIDTH-1 :                       0];  // 25Q24 full dynamic range, proper rounding   24: 0
         s <= S_AXIS_SC_tdata[S_AXIS_SC_TDATA_WIDTH/2+SC_DATA_WIDTH-1 : S_AXIS_SC_TDATA_WIDTH/2];  // 25Q24 full dynamic range, proper rounding   56:32
 
-        sRF <= S_AXIS_RF_SC_tdata[RF_SC_DATA_WIDTH-1 : 0]; 
+        sRF <= $signed(S_AXIS_RF_SC_tdata[RF_SC_DATA_WIDTH-1 : 0]); 
 
         if (lck_config[0]) // AM mod?
         begin     
-            amcA       <= S_AXIS_AMC_tdata; // Q31 = 5V -> 1x
-            amf24      <= amcA >>> 9; // ==> Q24   1x <=> 1V (Q24)
-            amc        <= sRF * amf24;   // Q24 * Q24  [attenuate 1x .. 0x]
-            SigRF      <= amc >>> 22; // GeneratedSignal with AM -- Q24  14 -> 16  
+            amcA16   <= S_AXIS_AMC_tdata >>> 16; // S32Q31 = 5V -> 1x
+            amcA32   <= sRF * amcA16;  // S14Q13 S16Q15
+            SigRF    <= amcA32 >>> 13; // GeneratedSignal with AM -- 14 -> 16  
         end
         else
             SigRF <= sRF <<< 2; // GeneratedSignal with AM -- Q24 => 14 -> 16
@@ -248,17 +244,13 @@ module axis_py_lockin#(
 
         if (lck_config[2]) // FM mod?
         begin
-            // dds_FM_Scale: [Hz/V] * ((1<<44)-1)/125000000*5/(1<<(44-32))
-            fmcB         <= S_AXIS_FMC_tdata; // Q31 = 5V
-            fmc          <= dds_FM_Scale * fmcB; //fmc[64]  Q** *Q31 => Q48    == xxx Hz <=> 1V (Q24)  **** 1000Hz*((1<<44)-1)/125000000Hz
-            //dds_FM       <= fmc >>> 19; // FM-Scale: Q44   Q[63-44=19]
+            // dds_FM_Scale: [Hz/V] * ((1<<32)-1) / 125000000*5
+            fmcB         <= S_AXIS_FMC_tdata; // S32Q31 = 5V
+            fmc          <= rf_dds_FM_Scale * fmcB; //fmc[64]  Q** *Q31 => Q48    == xxx Hz <=> 1V (Q24)  **** 1000Hz*((1<<44)-1)/125000000Hz
             dds_FM       <= fmc >>> 31; // FM-Scale: Q44   Q[63-32=31]
             rf_dds_PhaseInc <= rf_dds_PhaseIncRef + dds_FM; // RF dds_FM Q32 
         end
         
-        dds_PhaseInc <= dds_PhaseIncRef; // DDS Freq (PhaseInc) 
-
-            
                      
         // DDS N / cycle
         // dds_n2 <= S_AXIS_DDS_N2_tdata;

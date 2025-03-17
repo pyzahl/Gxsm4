@@ -867,6 +867,7 @@ double rp_spmc_configure_lockin (double freq, double gain, double FM_scale, unsi
         if (verbose > 1){
                 double ferr = fact - freq;
                 fprintf(stderr, "##Configure: LCK DDS IDEAL Freq= %g Hz [%lld, N2=%d, decii=%d, M=%lld]  Actual f=%g Hz  Delta=%g Hz  (using power of 2 phase_inc)\n", freq, phase_inc, n2, n2>10? 1<<(n2-10):0, QQ44/phase_inc, fact, ferr);
+                fprintf(stderr, "##Configure: RF Gen Freq= %g Hz PhInc=%g\n", RF_ref_freq, round(4294967295. * RF_ref_freq/125000000.));
                 if (mode)
                         fprintf(stderr, "##Configure: LCK DDS MODE 0x%x FMS: %g V/Hz hzv*FMS: %g, gain: %g x\n", mode, FM_scale, hzv*FM_scale, gain);
                 // Configure: LCK DDS IDEAL Freq= 100 Hz [16777216, N2=24, M=1048576]  Actual f=119.209 Hz  Delta=19.2093 Hz  (using power of 2 phase_inc)
@@ -882,7 +883,7 @@ double rp_spmc_configure_lockin (double freq, double gain, double FM_scale, unsi
         //    dds_FM       <= fmc >>> 20; // FM-Scale: Q44
 
         rp_spmc_module_config_uint32 (MODULE_SETUP, (unsigned int)(round(hzv*FM_scale)), MODULE_SETUP_VECTOR(5)); // write FM-Scale Hz/V
-        rp_spmc_module_config_uint32 (LCKID, (unsigned int)(round((1<<32)-1)*RF_ref_freq/125e6), MODULE_SETUP_VECTOR(6)); // last, write RF-DDS PHASE INC
+        rp_spmc_module_config_uint32 (LCKID, (unsigned int)round(4294967295. * RF_ref_freq/125000000.), MODULE_SETUP_VECTOR(6)); // last, write RF-DDS PHASE INC
 
         
         return fact;

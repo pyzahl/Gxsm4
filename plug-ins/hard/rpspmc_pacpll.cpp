@@ -3287,8 +3287,9 @@ void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *
                         "SPMC_SC_LCK_F0BQ_Q",
                         "SPMC_SC_LCK_GAIN",
                         "SPMC_SC_LCK_FMSCALE",
+                        "SPMC_SC_LCK_RF_FREQUENCY",
                         NULL };
-                double jdata[7];
+                double jdata[8];
                 jdata[0] =  spmc_parameters.sc_lck_frequency;
 
                 if  (self->LCK_Target > 0 && self->LCK_Target < LCK_NUM_TARGETS)
@@ -3301,8 +3302,8 @@ void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *
                 jdata[4] = spmc_parameters.sc_lck_q;
                 jdata[5] = spmc_parameters.sc_lck_gain;
                 jdata[6] = spmc_parameters.sc_lck_fmscale;
-                
-                g_message ("ADJ LOCKIN FRQ %g Hz, target=%d vol=%g V", spmc_parameters.sc_lck_frequency, self->LCK_Target, spmc_parameters.sc_lck_volume);
+                jdata[7] = spmc_parameters.sc_lck_rf_frequency;
+                g_message ("ADJ LOCKIN FRQ %g Hz, target=%d vol=%g V, RF=%g Hz", spmc_parameters.sc_lck_frequency, self->LCK_Target, spmc_parameters.sc_lck_volume, spmc_parameters.sc_lck_rf_frequency);
 
                 if (spmc_parameters.sc_lck_q > 0. && spmc_parameters.sc_lck_bq_tau > 0.)
                 { // INFO
@@ -3328,7 +3329,7 @@ void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *
                         g_message ("##NORM b0=%g b1=%g b2=%g  a0=%g a1=%g a2=%g\n", b0/a0, b1/a0, b2/a0, a0/a0, a1/a0, a2/a0);
                 }
                 
-                rpspmc_pacpll->write_array (SPMC_SET_LCK_BQ_COMPONENTS, 0, NULL,  7, jdata);
+                rpspmc_pacpll->write_array (SPMC_SET_LCK_BQ_COMPONENTS, 0, NULL,  8, jdata);
         }
 }
 

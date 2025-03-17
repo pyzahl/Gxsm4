@@ -64991,6 +64991,16 @@
 		)
 		(uuid "c2bfe2d4-a7e5-4e02-9677-2e1c0e9a0c17")
 	)
+	(text "NOTE on PMD Power:\nappox 65mA / PMD module  (0.717A RP total w 4x PMD, 0.593mA w 2x PMD via USB meter @ 4.85V)"
+		(exclude_from_sim no)
+		(at 101.854 2.54 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "ec68275d-2da9-4880-9a5a-86f25d338c7c")
+	)
 	(global_label "SCLK PMOD"
 		(shape input)
 		(at 44.45 58.42 0)
