@@ -1014,10 +1014,12 @@ void rp_spmc_update_readings (){
         //SPMC_MUX_IN_MONITOR.Value ()  = rpspmc_to_volts (regA);
         // 0
 
+        regA=regB=0;
         rp_spmc_module_read_config_data (SPMC_READBACK_PMD_DA56_REG, &regA, &regB); // GVP-A, GVP-B
         SPMC_GVPA_MONITOR.Value () = rpspmc_to_volts (regA);
         SPMC_GVPB_MONITOR.Value () = rpspmc_to_volts (regB);
 
+        regA=regB=0;
         rp_spmc_module_read_config_data (SPMC_READBACK_GVP_AMC_FMC_REG, &regA, &regB); // GVP-AMC, GVP-FMC
         SPMC_GVPAMC_MONITOR.Value () = rpspmc_to_volts (regA);
         SPMC_GVPFMC_MONITOR.Value () = rpspmc_to_volts (regB);

@@ -130,32 +130,32 @@ module readback_configuration#(
 
         readback_PMD_DA56_reg_address: 
         begin
-            reg_A <=  PMD_DA_5A;
-            reg_B <=  PMD_DA_6B;
+            reg_A <= PMD_DA_5A;
+            reg_B <= PMD_DA_6B;
 	    end
 
         readback_Z_SERVO_RB_reg_address: 
         begin
-            reg_A <=  Z_SERVO_RB_A;
-            reg_B <=  Z_SERVO_RB_B;
+            reg_A <= Z_SERVO_RB_A;
+            reg_B <= Z_SERVO_RB_B;
 	    end
 	    
         readback_AMC_FMC_reg_address:
         begin
-            reg_A <=  GVP_AMC;
-            reg_B <=  GVP_FMC;
+            reg_A <= GVP_AMC;
+            reg_B <= GVP_FMC;
 	    end
         
         readback_SRCS_MUX_reg_address: 
         begin
-            reg_A <=  SRCS_MUX_SEL;
-            reg_B <=  IN_MUX_SEL;
+            reg_A <= SRCS_MUX_SEL;
+            reg_B <= IN_MUX_SEL;
 	    end
 
         readback_IN_MUX_reg_address: 
         begin
-            reg_A <=  IN_MUX_SEL;
-            reg_B <=  0;
+            reg_A <= IN_MUX_SEL;
+            reg_B <= 0;
 	    end
 
         readback_AD463x_reg_address: 
