@@ -52,6 +52,7 @@ module readback_configuration#(
     parameter readback_GVPBias_reg_address    = 100003,
     parameter readback_PMD_DA56_reg_address   = 100004,
     parameter readback_Z_SERVO_RB_reg_address = 100005,
+    parameter readback_AMC_FMC_reg_address    = 100006,
     parameter readback_SRCS_MUX_reg_address   = 100010,
     parameter readback_IN_MUX_reg_address     = 100011,
     parameter readback_AD463x_reg_address     = 100100,
@@ -78,6 +79,9 @@ module readback_configuration#(
 
     input wire [32-1:0] PMD_DA_5A,
     input wire [32-1:0] PMD_DA_6B,
+
+    input wire [32-1:0] GVP_AMC,
+    input wire [32-1:0] GVP_FMC,
 
     input wire [32-1:0] AD463x_CH1,
     input wire [32-1:0] AD463x_CH2,
@@ -135,7 +139,13 @@ module readback_configuration#(
             reg_A <=  Z_SERVO_RB_A;
             reg_B <=  Z_SERVO_RB_B;
 	    end
-
+	    
+        readback_AMC_FMC_reg_address:
+        begin
+            reg_A <=  GVP_AMC;
+            reg_B <=  GVP_FMC;
+	    end
+        
         readback_SRCS_MUX_reg_address: 
         begin
             reg_A <=  SRCS_MUX_SEL;

@@ -234,8 +234,10 @@ SOURCE_SIGNAL_DEF z_servo_current_source[] = {
 
 SOURCE_SIGNAL_DEF rf_gen_out_dest[] = {
         //  SIGNAL #  Name               Units.... Scale
-        { 0x00000000, "RP-Out1",    " ",  "V",  "V", SPMC_RPIN12_to_volts, 0, 0 },
-        { 0x00000001, "PMOD-DAC5",  " ",  "V",  "V", SPMC_RPIN34_to_volts, 0, 0 },
+        { 0x00000000, "PForm-Out1",  " ",  "V",  "V", SPMC_RPIN34_to_volts, 0, 0 },
+        { 0x00000001, "RFgen-Out1",  " ",  "V",  "V", SPMC_RPIN12_to_volts, 0, 0 },
+        { 0x00000002, "PF+RF-Out1",  " ",  "V",  "V", SPMC_RPIN12_to_volts, 0, 0 },
+        { 0x00000003, "PF/2+RF/2-Out1",  " ",  "V",  "V", SPMC_RPIN12_to_volts, 0, 0 },
         { 0x00000016,  NULL, NULL, NULL, NULL, 0.0, 0 }
 };
 
@@ -907,6 +909,8 @@ void RPSPMC_Control::GVP_store_vp (const gchar *key){
         GVariant *pc_array_dz = g_variant_new_fixed_array (g_variant_type_new ("d"), GVP_dz, n, sizeof (double));
         GVariant *pc_array_da = g_variant_new_fixed_array (g_variant_type_new ("d"), GVP_da, n, sizeof (double));
         GVariant *pc_array_db = g_variant_new_fixed_array (g_variant_type_new ("d"), GVP_db, n, sizeof (double));
+        GVariant *pc_array_dam = g_variant_new_fixed_array (g_variant_type_new ("d"), GVP_da, n, sizeof (double));
+        GVariant *pc_array_dfm = g_variant_new_fixed_array (g_variant_type_new ("d"), GVP_db, n, sizeof (double));
         GVariant *pc_array_ts = g_variant_new_fixed_array (g_variant_type_new ("d"), GVP_ts, n, sizeof (double));
         GVariant *pc_array_pn = g_variant_new_fixed_array (g_variant_type_new ("i"), GVP_points, n, sizeof (gint32));
         GVariant *pc_array_op = g_variant_new_fixed_array (g_variant_type_new ("i"), GVP_opt, n, sizeof (gint32));
@@ -916,11 +920,12 @@ void RPSPMC_Control::GVP_store_vp (const gchar *key){
         GVP_glock_data[0] = Source; GVP_glock_data[1] = XSource; GVP_glock_data[2] = PSource; GVP_glock_data[3] = XJoin; GVP_glock_data[4] = PlotAvg; GVP_glock_data[5] = PlotSec;
         GVariant *pc_array_grm = g_variant_new_fixed_array (g_variant_type_new ("t"), GVP_glock_data, 6, sizeof (guint64));
         
-        GVariant *pc_array[] = { pc_array_du, pc_array_dx, pc_array_dy, pc_array_dz, pc_array_da, pc_array_db, pc_array_ts,
+        GVariant *pc_array[] = { pc_array_du, pc_array_dx, pc_array_dy, pc_array_dz, pc_array_da, pc_array_db, pc_array_dam, pc_array_dfm,
+                                 pc_array_ts,
                                  pc_array_pn, pc_array_op, pc_array_vn, pc_array_vp,
                                  pc_array_grm,
                                  NULL };
-        const gchar *vckey[] = { "du", "dx", "dy", "dz", "da", "db", "ts", "pn", "op", "vn", "vp", "grm", NULL };
+        const gchar *vckey[] = { "du", "dx", "dy", "dz", "da", "db", "dam", "dfm", "ts", "pn", "op", "vn", "vp", "grm", NULL };
 
         for (int i=0; vckey[i] && pc_array[i]; ++i){
                 gchar *m_vckey = g_strdup_printf ("%s-%s", vckey[i], key);
@@ -962,13 +967,13 @@ void RPSPMC_Control::GVP_restore_vp (const gchar *key){
                 return;
         }
         gsize  n; // == N_GVP_VECTORS;
-        GVariant *vd[7];
+        GVariant *vd[9];
         GVariant *vi[4];
-        double *pc_array_d[7];
+        double *pc_array_d[9];
         gint32 *pc_array_i[5];
-        const gchar *vckey_d[] = { "du", "dx", "dy", "dz", "da", "db", "ts", NULL };
+        const gchar *vckey_d[] = { "du", "dx", "dy", "dz", "da", "db", "dam", "dfm", "ts", NULL };
         const gchar *vckey_i[] = { "pn", "op", "vn", "vp", NULL };
-        double *GVPd[] = { GVP_du, GVP_dx, GVP_dy, GVP_dz, GVP_da, GVP_db, GVP_ts, NULL };
+        double *GVPd[] = { GVP_du, GVP_dx, GVP_dy, GVP_dz, GVP_da, GVP_db, GVP_dam, GVP_dfm, GVP_ts, NULL };
         gint32 *GVPi[] = { GVP_points, GVP_opt, GVP_vnrep, GVP_vpcjr, NULL };
         gint32 vp_program_length=0;
         
@@ -1095,6 +1100,8 @@ int RPSPMC_Control::callback_edit_GVP (GtkWidget *widget, RPSPMC_Control *self){
 			self->GVP_dz[k] = self->GVP_dz[ks];
 			self->GVP_da[k] = self->GVP_da[ks];
 			self->GVP_db[k] = self->GVP_db[ks];
+			self->GVP_dam[k] = self->GVP_dam[ks];
+			self->GVP_dfm[k] = self->GVP_dfm[ks];
 			self->GVP_ts[k]  = self->GVP_ts[ks];
 			self->GVP_points[k] = self->GVP_points[ks];
 			self->GVP_opt[k] = self->GVP_opt[ks];
@@ -1110,6 +1117,8 @@ int RPSPMC_Control::callback_edit_GVP (GtkWidget *widget, RPSPMC_Control *self){
 			self->GVP_dz[k] = self->GVP_dz[ks];
 			self->GVP_da[k] = self->GVP_da[ks];
 			self->GVP_db[k] = self->GVP_db[ks];
+			self->GVP_dam[k] = self->GVP_dam[ks];
+			self->GVP_dfm[k] = self->GVP_dfm[ks];
 			self->GVP_ts[k]  = self->GVP_ts[ks];
 			self->GVP_points[k] = self->GVP_points[ks];
 			self->GVP_opt[k] = self->GVP_opt[ks];
@@ -2119,6 +2128,16 @@ void RPSPMC_Control::create_folder (){
         gtk_widget_set_name (bp->button, "normal"); GVP_preview_on[6]=0;
         g_object_set_data (G_OBJECT(bp->button), "AXIS", GINT_TO_POINTER (6));
 
+        //bp->grid_add_label ("VP-dAM", "vec-dAM (**RF-AM control)");
+        bp->grid_add_button ("VP-dAM", "vec-dAM (**RF-AMP control)", 1, G_CALLBACK (callback_GVP_preview_me), this);
+        gtk_widget_set_name (bp->button, "normal"); GVP_preview_on[7]=0;
+        g_object_set_data (G_OBJECT(bp->button), "AXIS", GINT_TO_POINTER (7));
+
+        //bp->grid_add_label ("VP-dFM", "vec-dFM (**RF-FM control)");
+        bp->grid_add_button ("VP-dFM", "vec-dFM (**RF-FM control)", 1, G_CALLBACK (callback_GVP_preview_me), this);
+        gtk_widget_set_name (bp->button, "normal"); GVP_preview_on[8]=0;
+        g_object_set_data (G_OBJECT(bp->button), "AXIS", GINT_TO_POINTER (8));
+
         bp->set_configure_list_mode_off ();
         bp->grid_add_label ("time", "total time for VP section");
         bp->grid_add_label ("points", "points (# vectors to add)");
@@ -2174,6 +2193,10 @@ void RPSPMC_Control::create_folder (){
 		bp->grid_add_ec (NULL,    Volt, &GVP_da[k], -10.0, 10.0, "6.4g",1., 10., "gvp-da", k); 
                 if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
 		bp->grid_add_ec (NULL,    Volt, &GVP_db[k], -10.0, 10.0, "6.4g",1., 10., "gvp-db", k); 
+                if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
+		bp->grid_add_ec (NULL,    Volt, &GVP_dam[k], -10.0, 10.0, "6.4g",1., 10., "gvp-dam", k); 
+                if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
+		bp->grid_add_ec (NULL,    Volt, &GVP_dfm[k], -10.0, 10.0, "6.4g",1., 10., "gvp-dfm", k); 
                 if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
                 bp->set_configure_list_mode_off (); // ========================================================
 
@@ -2700,7 +2723,7 @@ void RPSPMC_Control::GVP_zero_all_smooth (){
         rpspmc_hwi->resetVPCconfirmed ();
         make_dUZXYAB_vector (vector_index++,
                              0., 0., // GVP_du[k], GVP_dz[k],
-                             0., 0., 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
+                             0., 0., 0., 0., 0., 0.,  // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k], AM, FM
                              100, 0, 0, 0.5, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
                              0, VP_INITIAL_SET_VEC | gvp_options);
         append_null_vector (vector_index, gvp_options);
@@ -3140,7 +3163,7 @@ int RPSPMC_Control::callback_GVP_restore_vp (GtkWidget *widget, RPSPMC_Control *
 
 int RPSPMC_Control::callback_GVP_preview_me (GtkWidget *widget, RPSPMC_Control *self){
         int i = GPOINTER_TO_INT (g_object_get_data(G_OBJECT(widget), "AXIS"));
-        if (i>0 && i <= 6){
+        if (i>0 && i <= 8){
                 self->GVP_preview_on[i] = self->GVP_preview_on[i] ? 0:1;
 
                 if (self->GVP_preview_on[i]){

@@ -47,6 +47,7 @@
 module axis_selector2_1 #(
     parameter SAXIS_TDATA_WIDTH = 32,
     parameter MAXIS_TDATA_WIDTH = 32,
+    parameter ADD_OPTION = 0,
     parameter configuration_address = 2000
 )(
     // (* X_INTERFACE_PARAMETER = "FREQ_HZ 125000000" *)
@@ -69,7 +70,7 @@ module axis_selector2_1 #(
    
     
 // use buffer           
-reg [SAXIS_TDATA_WIDTH-1:0] ALL_AXIS_tdata[1:0];
+reg [SAXIS_TDATA_WIDTH-1:0] ALL_AXIS_tdata[3:0];
 reg ALL_AXIS_tvalid[1:0];
 
 reg [32-1:0] mux_axis_select=32'h00ba3210; // # AXIS S to connect 00..15 to AXIS M 1..6:  M1=# M2=... M6=# 4 bits each: bits 0..23
@@ -95,11 +96,19 @@ reg [32-1:0] axis_test_value=0;
 
         ALL_AXIS_tvalid[0]  <= S_AXIS_00_tvalid;
         ALL_AXIS_tvalid[1]  <= S_AXIS_01_tvalid;
+        
+        if (ADD_OPTION)
+        begin
+            ALL_AXIS_tdata[2]   <= $signed(S_AXIS_01_tdata) + $signed(S_AXIS_00_tdata);
+            ALL_AXIS_tvalid[2]  <= S_AXIS_01_tvalid && S_AXIS_00_tvalid;
+            ALL_AXIS_tdata[3]   <= ($signed(S_AXIS_01_tdata)>>>1) + ($signed(S_AXIS_00_tdata)>>>1);
+            ALL_AXIS_tvalid[3]  <= S_AXIS_01_tvalid && S_AXIS_00_tvalid;
+        end
     end
 
-assign  M_AXIS_1_tdata = axis_test == 1 ? axis_test_value : ALL_AXIS_tdata [mux_axis_select[1-1:0]];
+assign  M_AXIS_1_tdata = axis_test == 1 ? axis_test_value : ALL_AXIS_tdata [mux_axis_select[2-1:0]];
 
-assign  M_AXIS_1_tvalid = ALL_AXIS_tvalid [mux_axis_select[1-1:0]];
+assign  M_AXIS_1_tvalid = ALL_AXIS_tvalid [mux_axis_select[2-1:0]];
 
 assign mux_ch = mux_axis_select;
 

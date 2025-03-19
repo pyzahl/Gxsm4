@@ -59,7 +59,7 @@ module gvp #(
     parameter vectorX_programming_reg_address  = 5005
 )
 (
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF M_AXIS_X:M_AXIS_Y:M_AXIS_Z:M_AXIS_U:M_AXIS_A:M_AXIS_B:M_AXIS_SRCS:M_AXIS_INDEX:M_AXIS_GVP_TIME" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF M_AXIS_X:M_AXIS_Y:M_AXIS_Z:M_AXIS_U:M_AXIS_A:M_AXIS_B:M_AXIS_AM:M_AXIS_FM:M_AXIS_SRCS:M_AXIS_INDEX:M_AXIS_GVP_TIME" *)
     input		 a_clk, // clocking up to aclk
     //input		 reset, // put into reset mode (set program and hold)
     //input		 pause, // put/release into/from pause mode -- always completes the "ii" nop cycles!
@@ -83,6 +83,10 @@ module gvp #(
     output wire		     M_AXIS_A_tvalid,
     output wire [32-1:0] M_AXIS_B_tdata, // ..
     output wire		     M_AXIS_B_tvalid,
+    output wire [32-1:0] M_AXIS_AM_tdata, // ..
+    output wire		     M_AXIS_AM_tvalid,
+    output wire [32-1:0] M_AXIS_FM_tdata, // ..
+    output wire		     M_AXIS_FM_tvalid,
     output wire	[32-1:0] M_AXIS_SRCS_tdata,
     output wire	         M_AXIS_SRCS_tvalid,
     output wire [32-1:0] options, // section options: FB, ... (flags) and source selections bits
@@ -140,7 +144,9 @@ module gvp #(
     reg signed [32-1:0]  vec_du[NUM_VECTORS-1:0];
     reg signed [32-1:0]  vec_da[NUM_VECTORS-1:0];
     reg signed [32-1:0]  vec_db[NUM_VECTORS-1:0];
-    
+    reg signed [32-1:0]  vec_dam[NUM_VECTORS-1:0];
+    reg signed [32-1:0]  vec_dfm[NUM_VECTORS-1:0];
+
     reg signed [NUM_VECTORS_N2:0] pvc=0; // program counter. 0...NUM_VECTORS-1 "+ signuma bit"
 
     // extra bits for vector components. 
@@ -156,6 +162,8 @@ module gvp #(
     reg signed [32+VEC_OV_BITS-1:0]  vec_u=0;
     reg signed [32+VEC_OV_BITS-1:0]  vec_a=0;
     reg signed [32+VEC_OV_BITS-1:0]  vec_b=0;
+    reg signed [32+VEC_OV_BITS-1:0]  vec_am=0;
+    reg signed [32+VEC_OV_BITS-1:0]  vec_fm=0;
 
     reg [32-1:0] set_options=0;
     reg [48-1:0] vec_gvp_time=0;
@@ -202,6 +210,8 @@ module gvp #(
                 vec_u <= config_data_reg[4*32-1 : 3*32]; // always reset U
                 vec_a <= config_data_reg[5*32-1 : 4*32]; // always reset A
                 vec_b <= config_data_reg[6*32-1 : 5*32]; // always reset B
+                vec_am <= config_data_reg[7*32-1 : 6*32]; // always reset AM
+                vec_fm <= config_data_reg[8*32-1 : 7*32]; // always reset FM
             end
             
             vector_programming_reg_address: // enter vector programming load mode
@@ -230,6 +240,8 @@ module gvp #(
                         vec_du[vp_set [NUM_VECTORS_N2:0]]      <= vp_set [10*32-1:9*32];
                         vec_da[vp_set [NUM_VECTORS_N2:0]]      <= vp_set [11*32-1:10*32];
                         vec_db[vp_set [NUM_VECTORS_N2:0]]      <= vp_set [12*32-1:11*32];
+                        vec_dam[vp_set [NUM_VECTORS_N2:0]]     <= vp_set [13*32-1:12*32];
+                        vec_dfm[vp_set [NUM_VECTORS_N2:0]]     <= vp_set [14*32-1:13*32];
                         setvec_mode <= 2; // done, next load only possible after address=0 cycle (default below)
                     end
                 endcase             
@@ -295,6 +307,8 @@ module gvp #(
                         vec_u <= vec_u + vec_du[pvc];
                         vec_a <= vec_a + vec_da[pvc];
                         vec_b <= vec_b + vec_db[pvc];
+                        vec_am <= vec_am + vec_dam[pvc];
+                        vec_fm <= vec_fm + vec_dfm[pvc];
                         
                         if (ii) // do intermediate step(s) ?
                         begin
@@ -349,6 +363,10 @@ module gvp #(
     assign M_AXIS_A_tvalid = 1;
     assign M_AXIS_B_tdata = `SATURATE_32(vec_b);
     assign M_AXIS_B_tvalid = 1;
+    assign M_AXIS_AM_tdata = `SATURATE_32(vec_am);
+    assign M_AXIS_AM_tvalid = 1;
+    assign M_AXIS_FM_tdata = `SATURATE_32(vec_fm);
+    assign M_AXIS_FM_tvalid = 1;
     assign M_AXIS_SRCS_tdata = set_options;
     assign M_AXIS_SRCS_tvalid = 1;
     

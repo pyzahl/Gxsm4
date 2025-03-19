@@ -168,7 +168,9 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         { "SPMC_GVP_VECTOR_DU", &spmc_parameters.v[9], false }, // Float: DU (Bias) adjust rel to Bias ref in Volts total length of vector component
         { "SPMC_GVP_VECTOR_AA", &spmc_parameters.v[10], false }, // Float: AA (Aux Channel ADC #5) -- reserved
         { "SPMC_GVP_VECTOR_BB", &spmc_parameters.v[11], false }, // Float: BB (Aux Channel ADC #6) -- reserved
-        { "SPMC_GVP_VECTORSLW", &spmc_parameters.v[12], false }, // Float: slew rate in #points / sec
+        { "SPMC_GVP_VECTOR_AM", &spmc_parameters.v[12], false }, // Float: AM RF=AM control
+        { "SPMC_GVP_VECTOR_FM", &spmc_parameters.v[13], false }, // Float: FM RF=FM control
+        { "SPMC_GVP_VECTORSLW", &spmc_parameters.v[14], false }, // Float: slew rate in #points / sec
 
         { "SPMC_ALPHA", &spmc_parameters.alpha, false },
         
@@ -216,6 +218,9 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         { "SPMC_GVPU_MONITOR", &spmc_parameters.gvpu_monitor, true },
         { "SPMC_GVPA_MONITOR", &spmc_parameters.gvpa_monitor, true },
         { "SPMC_GVPB_MONITOR", &spmc_parameters.gvpb_monitor, true },
+        
+        { "SPMC_GVPAMC_MONITOR", &spmc_parameters.gvpamc_monitor, true },
+        { "SPMC_GVPFMC_MONITOR", &spmc_parameters.gvpfmc_monitor, true },
 
         { "SPMC_MUX_MONITOR", &spmc_parameters.mux_monitor, true },
         

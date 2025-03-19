@@ -68,6 +68,8 @@ static void via_remote_list_Check_ec(Gtk_EntryControl* ec, remote_args* ra){
         dspc->GVP_dz[PC] = DZ;                                          \
         dspc->GVP_da[PC] = DA;                                          \
         dspc->GVP_db[PC] = DB;                                          \
+        dspc->GVP_dam[PC] = 0;                                          \
+        dspc->GVP_dfm[PC] = 0;                                          \
         dspc->GVP_ts[PC] = TS;                                          \
         dspc->GVP_points[PC] = PTS;                                     \
         dspc->GVP_opt[PC] = OPT;                                        \
@@ -100,6 +102,8 @@ double RPSPMC_Control::make_dUdz_vector (int index, double dU, double dZ, int n,
         program_vector.f_dz = main_get_gapp()->xsm->Inst->ZA2Volt (dZ);
         program_vector.f_da = 0.0;
         program_vector.f_db = 0.0;
+        program_vector.f_dam = 0.0;
+        program_vector.f_dfm = 0.0;
 
         print_vector ("make_Udz_vector", index);
         write_program_vector (index);
@@ -124,6 +128,8 @@ double RPSPMC_Control::make_ZXYramp_vector (int index, double dZ, double dX, dou
         program_vector.f_dz = main_get_gapp()->xsm->Inst->ZA2Volt (dZ);
         program_vector.f_da = 0.0;
         program_vector.f_db = 0.0;
+        program_vector.f_dam = 0.0;
+        program_vector.f_dfm = 0.0;
 
         print_vector ("make_ZXYramp_vector", index);
         write_program_vector (index);
@@ -132,7 +138,7 @@ double RPSPMC_Control::make_ZXYramp_vector (int index, double dZ, double dX, dou
 }
         
 // make dU/dZ/dX/dY vector for n points and ts time per segment
-double RPSPMC_Control::make_dUZXYAB_vector (int index, double dU, double dZ, double dX, double dY, double da, double db, int n, int nrep, int ptr_next, double ts, int source, int options){
+double RPSPMC_Control::make_dUZXYAB_vector (int index, double dU, double dZ, double dX, double dY, double da, double db, double dam, double dfm, int n, int nrep, int ptr_next, double ts, int source, int options){
         program_vector.n = n;
 
 //** WARNING ** make_dUZXYAB_vector[0]: slew or n out of range. [n=1000, ts=0.1 s] slew=10000 pts/s-- using safety fallback
@@ -153,6 +159,8 @@ double RPSPMC_Control::make_dUZXYAB_vector (int index, double dU, double dZ, dou
         program_vector.f_dz = main_get_gapp()->xsm->Inst->ZA2Volt (dZ);
         program_vector.f_da = da;
         program_vector.f_db = db;
+        program_vector.f_dam = dam;
+        program_vector.f_dfm = dfm;
 
         print_vector ("make_dUZXYAB_vector", index);
         write_program_vector (index);
@@ -161,7 +169,7 @@ double RPSPMC_Control::make_dUZXYAB_vector (int index, double dU, double dZ, dou
 }
 
 // make dU/dZ/dX/dY vector for n points and ts time per segment
-double RPSPMC_Control::make_dUZXYAB_vector_all_volts (int index, double dU, double dZ, double dX, double dY, double da, double db, int n, int nrep, int ptr_next, double ts, int source, int options){
+double RPSPMC_Control::make_dUZXYAB_vector_all_volts (int index, double dU, double dZ, double dX, double dY, double da, double db, double dam, double dfm, int n, int nrep, int ptr_next, double ts, int source, int options){
         program_vector.n = n;
 
 //** WARNING ** make_dUZXYAB_vector[0]: slew or n out of range. [n=1000, ts=0.1 s] slew=10000 pts/s-- using safety fallback
@@ -182,6 +190,8 @@ double RPSPMC_Control::make_dUZXYAB_vector_all_volts (int index, double dU, doub
         program_vector.f_dz = dZ;
         program_vector.f_da = da;
         program_vector.f_db = db;
+        program_vector.f_dam = dam;
+        program_vector.f_dfm = dfm;
 
         print_vector ("make_dUZXYAB_vector", index);
         write_program_vector (index);
@@ -213,6 +223,8 @@ double RPSPMC_Control::make_delay_vector (int index, double delay, int source, i
         program_vector.f_dy = 0.0;
         program_vector.f_da = 0.0;
         program_vector.f_db = 0.0;
+        program_vector.f_dam = 0.0;
+        program_vector.f_dfm = 0.0;
 
         print_vector ("make_delay_vector", index);
         write_program_vector (index);
@@ -236,6 +248,8 @@ void RPSPMC_Control::append_null_vector (int index, int options){
         program_vector.f_du = 0.0;
         program_vector.f_da = 0.0;
         program_vector.f_db = 0.0;
+        program_vector.f_dam = 0.0;
+        program_vector.f_dfm = 0.0;
 
         print_vector ("append_null_vector", index);
         write_program_vector (index);
@@ -318,7 +332,7 @@ vector = {32'd000032,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  3
 
         make_dUZXYAB_vector (vector_index++,
                              0., 0., // GVP_du[k], GVP_dz[k],
-                             xi, yi, 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
+                             xi, yi, 0., 0., 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k], am, fm
                              100, 0, 0, ti, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
                              srcs_buffer[0], VP_INITIAL_SET_VEC | gvp_options);
 
@@ -329,7 +343,7 @@ vector = {32'd000032,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  3
         // fwd scan "->"
         make_dUZXYAB_vector (vector_index++,
                              0., 0., // GVP_du[k], GVP_dz[k],
-                             dx, 0, 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
+                             dx, 0, 0., 0., 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k], am, fm
                              subscan_buffer[1], 0, 0, tfwd, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
                              srcs_buffer[0], gvp_options); // vis_Source, GVP_opt[k]);
 
@@ -338,14 +352,14 @@ vector = {32'd000032,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  3
         // rev scan "<-"
         make_dUZXYAB_vector (vector_index++,
                              0., 0., // GVP_du[k], GVP_dz[k],
-                             -dx, 0, 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
+                             -dx, 0, 0., 0., 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k], am, fm
                              subscan_buffer[1], 0, 0, trev, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
                              srcs_buffer[1], gvp_options); // vis_Source, GVP_opt[k]);
 
         // next line with repeat for all lines from VPC-2 ny times
         make_dUZXYAB_vector (vector_index++,
                              0., 0., // GVP_du[k], GVP_dz[k],
-                             0., -dy/(subscan_buffer[3]-1), 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
+                             0., -dy/(subscan_buffer[3]-1), 0., 0., 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k], am, fm
                              10, subscan_buffer[3], -2, tfwd/ny, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
                              srcs_buffer[0], gvp_options); // vis_Source, GVP_opt[k]);
 
@@ -419,21 +433,21 @@ void RPSPMC_Control::write_spm_vector_program (int start, pv_mode pvm){
                         //double u0=0.0;
                         if (fabs(ui-bias) > 0.0)
                                 vp_duration += make_dUZXYAB_vector (vector_index++,
-                                                                    ui-bias, 0.0,   0.0, 0.0, 0.0, 0.0,
+                                                                    ui-bias, 0.0,   0.0, 0.0, 0.0, 0.0, 0., 0.,
                                                                     100, 0, 0, 0.1+fabs(ui-bias)/IV_slope_ramp,
                                                                     ramp_sources,     // ramp sources
                                                                     ramp_options^1);  // invert FB flag in bit0, FPGA GVP FB=1 => FB-hold
                         
                         if (fabs(ui)>0.0)
                                 vp_duration += make_dUZXYAB_vector (vector_index++,
-                                                                    -ui, IV_dz,   0.0, 0.0, 0.0, 0.0,
+                                                                    -ui, IV_dz,   0.0, 0.0, 0.0, 0.0, 0., 0.,
                                                                     ni0, 0, 0, fabs(ui/IV_slope),
                                                                     vis_sources,     // ramp sources
                                                                     options^1);  // invert FB flag in bit0, FPGA GVP FB=1 => FB-hold
 
                         if (fabs(uf)>0.0)
                                 vp_duration += make_dUZXYAB_vector (vector_index++,
-                                                                    uf, -IV_dz,   0.0, 0.0, 0.0, 0.0,
+                                                                    uf, -IV_dz,   0.0, 0.0, 0.0, 0.0, 0., 0.,
                                                                     n0f, 0, 0, fabs(uf/IV_slope),
                                                                     vis_sources,     // ramp sources
                                                                     options^1);  // invert FB flag in bit0, FPGA GVP FB=1 => FB-hold
@@ -442,26 +456,26 @@ void RPSPMC_Control::write_spm_vector_program (int start, pv_mode pvm){
                                 // run also reverse probe ramp in dual mode
                                 if (fabs(uf)>0.0)
                                         vp_duration += make_dUZXYAB_vector (vector_index++,
-                                                                            -uf, IV_dz,   0.0, 0.0, 0.0, 0.0,
+                                                                            -uf, IV_dz,   0.0, 0.0, 0.0, 0.0, 0., 0.,
                                                                             n0f, 0, 0, fabs(ui/IV_slope),
                                                                             vis_sources,     // ramp sources
                                                                             options^1);  // invert FB flag in bit0, FPGA GVP FB=1 => FB-hold
                                 if (fabs(ui)>0.0)
                                         vp_duration += make_dUZXYAB_vector (vector_index++,
-                                                                            ui, -IV_dz,   0.0, 0.0, 0.0, 0.0,
+                                                                            ui, -IV_dz,   0.0, 0.0, 0.0, 0.0, 0., 0.,
                                                                             ni0, 0, 0, fabs(ui/IV_slope),
                                                                             vis_sources,     // ramp sources
                                                                             options^1);  // invert FB flag in bit0, FPGA GVP FB=1 => FB-hold
                                 if (fabs(bias-ui) > 0.0)
                                         vp_duration += make_dUZXYAB_vector (vector_index++,
-                                                                            bias-ui, 0.0,   0.0, 0.0, 0.0, 0.0,
+                                                                            bias-ui, 0.0,   0.0, 0.0, 0.0, 0.0, 0., 0.,
                                                                             100, 0, 0, 0.1+fabs((bias-ui)/IV_slope_ramp),
                                                                             ramp_sources,     // ramp sources
                                                                             ramp_options^1);  // invert FB flag in bit0, FPGA GVP FB=1 => FB-hold
                         } else {
                                 if (fabs(uf)>0.0)
                                         vp_duration += make_dUZXYAB_vector (vector_index++,
-                                                                           bias-uf, 0.0,   0.0, 0.0, 0.0, 0.0,
+                                                                           bias-uf, 0.0,   0.0, 0.0, 0.0, 0.0, 0., 0.,
                                                                             100, 0, 0, 0.1+fabs((uf-bias)/IV_slope_ramp),
                                                                            ramp_sources,
                                                                            ramp_options^1);
@@ -472,7 +486,7 @@ void RPSPMC_Control::write_spm_vector_program (int start, pv_mode pvm){
                                 if (IV_recover_delay < 1e-4)
                                         IV_recover_delay = 1e-6;
                                 vp_duration += make_dUZXYAB_vector (vector_index++,
-                                                                    0.0, 0.0,   0.0, 0.0, 0.0, 0.0,
+                                                                    0.0, 0.0,   0.0, 0.0, 0.0, 0.0, 0., 0.,
                                                                     100, IV_repetitions, -vector_index, IV_recover_delay,
                                                                     ramp_sources,     // ramp sources
                                                                     ramp_options^1);  // invert FB flag in bit0, FPGA GVP FB=1 => FB-hold
@@ -481,7 +495,7 @@ void RPSPMC_Control::write_spm_vector_program (int start, pv_mode pvm){
                                 if (IV_recover_delay > 1e-4){
                                         //make_delay_vector (IV_recover_delay, ramp_sources, recover_options, vp_duration, MAKE_VEC_FLAG_NORMAL);
                                         vp_duration += make_dUZXYAB_vector (vector_index++,
-                                                                            0.0, 0.0,   0.0, 0.0, 0.0, 0.0,
+                                                                            0.0, 0.0,   0.0, 0.0, 0.0, 0.0, 0., 0.,
                                                                             100, 0.0, 0, IV_recover_delay,
                                                                             ramp_sources,     // ramp sources
                                                                             ramp_options^1);  // invert FB flag in bit0, FPGA GVP FB=1 => FB-hold
@@ -723,7 +737,7 @@ void RPSPMC_Control::write_spm_vector_program (int start, pv_mode pvm){
 					GVP_vpcjr[k] = -vector_index; // defaults to start
 
 				vp_duration += make_dUZXYAB_vector (vector_index++,
-                                                                    GVP_du[k], GVP_dz[k], GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
+                                                                    GVP_du[k], GVP_dz[k], GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k], GVP_dam[k], GVP_dfm[k],
                                                                     GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
                                                                     vis_Source, GVP_opt[k]^1); // invert FB flag in bit0, FPGA GVP FB=1 => FB-hold
 				if (GVP_vnrep[k]-1 > 0)	
@@ -778,23 +792,23 @@ void RPSPMC_Control::gvp_preview_draw_function (GtkDrawingArea *area, cairo_t *c
 #gvpcolor6 { background-image: none; background-color: #c61be8; color: white; font-weight: bold; border-radius: 6px; margin-left: 4px; }
         */
         // match CSS, no clue how to read that back in or use w cairo
-        const gchar* gvpcolors[7] = { NULL, "#e8e01b","#69e81b","#e81b1b","#1b82e8","#1be5e8","#c61be8" }; 
+        const gchar* gvpcolors[9] = { NULL, "#e8e01b","#69e81b","#e81b1b","#1b82e8","#1be5e8","#c61be8","#053b58","#1b06e8" }; 
 
         // prepare job lookups
-        PROBE_VECTOR_GENERIC vi = { 0,0.,0,0, 0,0,0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
-        PROBE_VECTOR_GENERIC vp = { 0,0.,0,0, 0,0,0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
-        PROBE_VECTOR_GENERIC v = { 0,0.,0,0, 0,0,0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
-        double *gvp_y[6] = { NULL, NULL, NULL, NULL, NULL, NULL };
-        double *gvp_yp[6] = { NULL, NULL, NULL, NULL, NULL, NULL };
-        const gchar *gvp_color[6] = { NULL, NULL, NULL, NULL, NULL, NULL };
-        cairo_item_path *gvp_wave[6] = { NULL, NULL, NULL, NULL, NULL, NULL };
+        PROBE_VECTOR_GENERIC vi = { 0,0.,0,0, 0,0,0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+        PROBE_VECTOR_GENERIC vp = { 0,0.,0,0, 0,0,0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+        PROBE_VECTOR_GENERIC v = { 0,0.,0,0, 0,0,0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+        double *gvp_y[8] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+        double *gvp_yp[8] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+        const gchar *gvp_color[8] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+        cairo_item_path *gvp_wave[8] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 
         double dumy1, dumy2;
         main_get_gapp()->xsm->hardware->RTQuery ("zxy",  vi.f_dz,  vi.f_dx,  vi.f_dy); // get tip position in volts
         main_get_gapp()->xsm->hardware->RTQuery ("B", vi.f_du, dumy1, dumy2); // Bias, ...
         
         int ns=0; // num selected channels
-        for (int i=1; i<=6; ++i)
+        for (int i=1; i<=8; ++i)
                 if (self->GVP_preview_on[i]){
                         gvp_color[ns] = gvpcolors[i];
                         switch (i){
@@ -804,6 +818,8 @@ void RPSPMC_Control::gvp_preview_draw_function (GtkDrawingArea *area, cairo_t *c
                         case 4: gvp_y[ns] = &v.f_du; gvp_yp[ns] = &vp.f_du; break;
                         case 5: gvp_y[ns] = &v.f_da; gvp_yp[ns] = &vp.f_da; break;
                         case 6: gvp_y[ns] = &v.f_db; gvp_yp[ns] = &vp.f_db; break;
+                        case 7: gvp_y[ns] = &v.f_dam; gvp_yp[ns] = &vp.f_dam; break;
+                        case 8: gvp_y[ns] = &v.f_dfm; gvp_yp[ns] = &vp.f_dfm; break;
                         }
                         ++ns;
                 }
@@ -921,7 +937,7 @@ void RPSPMC_Control::gvp_preview_draw_function (GtkDrawingArea *area, cairo_t *c
                 double skl = -(m-mar)/2.;
 
                 // auto scaling + max U label
-                double gvpy_amax[6];
+                double gvpy_amax[8];
                 for (int k=0; k<ns; ++k){
                         gvpy_amax[k] = gvp_wave[k]->auto_range_y (skl);
                         gvp_wave[k]->draw (cr);
@@ -973,18 +989,20 @@ void RPSPMC_Control::write_program_vector (int index){
 	program_vector_list[index].f_dz = program_vector.f_dz;
 	program_vector_list[index].f_da = program_vector.f_da;
 	program_vector_list[index].f_db = program_vector.f_db;
+	program_vector_list[index].f_dam = program_vector.f_dam;
+	program_vector_list[index].f_dfm = program_vector.f_dfm;
 
         rpspmc_hwi->last_vector_index = index;
 
 	{ 
 		gchar *pvi = g_strdup_printf ("ProbeVector[pc%02d]", index);
 		gchar *pvd = g_strdup_printf ("(n:%05d, slew: %g pts/s, 0x%04x, 0x%04x, rep:%4d, jrvpc:%d),"
-					      "(dU:%6.4f V, dxzy:%6.4f, %6.4f, %6.4f V, da: %6.4f db: %6.4f V)", 
+					      "(dU:%6.4f V, dxzy:%6.4f, %6.4f, %6.4f V, da: %6.4f db: %6.4f V, dAMC: %6.4f dFMC: %6.4f Veq)", 
 					      program_vector.n, program_vector.slew,
 					      program_vector.srcs, program_vector.options,
 					      program_vector.repetitions, program_vector.ptr_next,
 					      program_vector.f_du, program_vector.f_dx, program_vector.f_dy, program_vector.f_dz,
-					      program_vector.f_da, program_vector.f_db
+					      program_vector.f_da, program_vector.f_db, program_vector.f_dam, program_vector.f_dfm
                                               );
 
 		main_get_gapp()->monitorcontrol->LogEvent (pvi, pvd, 2);

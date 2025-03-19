@@ -719,6 +719,18 @@
       <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-dsig16', Default/U:      0 V    , Adjustment PCS Name: 'dsp-gvp-dsig16' </description>
     </key>
 
+    <key name="dsp-gvp-dam00" type="ad">
+      <default>[0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,0]</default>
+      <summary>PCS Remote-ID: 'dsp-gvp-dam16', Default/U:      0 V     </summary>
+      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-dsig16', Default/U:      0 V    , Adjustment PCS Name: 'dsp-gvp-dsig16' </description>
+    </key>
+
+    <key name="dsp-gvp-dfm00" type="ad">
+      <default>[0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,0]</default>
+      <summary>PCS Remote-ID: 'dsp-gvp-dfm16', Default/U:      0 V     </summary>
+      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-dsig16', Default/U:      0 V    , Adjustment PCS Name: 'dsp-gvp-dsig16' </description>
+    </key>
+
     <key name="dsp-gvp-dt00" type="ad">
       <default>[0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,0]</default>
       <summary>PCS Remote-ID: 'dsp-gvp-dt16', Default/U:     0 s     </summary>

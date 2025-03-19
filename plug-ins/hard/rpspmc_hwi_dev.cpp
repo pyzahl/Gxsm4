@@ -1197,6 +1197,7 @@ gboolean rpspmc_hwi_dev::ScanLineM(int yindex, int xdir, int muxmode, //srcs_mas
  "P" :                X,Y Scan/Probe Coords in Pixel, 0,0 is top left [indices]
  "B" :                Bias
  "G" :                GVP
+ "F" :                GVP-AMC-FMC
 */
 
 gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2, double &val3){
@@ -1299,6 +1300,12 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2,
                 val1 = spmc_parameters.gvpu_monitor;
                 val2 = spmc_parameters.gvpa_monitor;
                 val3 = spmc_parameters.gvpb_monitor;
+		return TRUE;
+        }
+        if (*property == 'F'){ // Monitors: GVP-AMC-FMC
+                val1 = spmc_parameters.gvpamc_monitor;
+                val2 = spmc_parameters.gvpfmc_monitor;
+                val3 = 0.;
 		return TRUE;
         }
 //	printf ("ZXY: %g %g %g\n", val1, val2, val3);
@@ -1565,7 +1572,9 @@ int rpspmc_hwi_dev::GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v){
 #define D_GVP_DU        3
 #define D_GVP_AA        4
 #define D_GVP_BB        5
-#define D_GVP_SLW       6
+#define D_GVP_AM        6
+#define D_GVP_FM        7
+#define D_GVP_SLW       8
 #define D_GVP_SIZE (D_GVP_SLW+1)
         
         const gchar *SPMC_GVP_VECTOR_COMPONENTS[] = {
@@ -1581,6 +1590,8 @@ int rpspmc_hwi_dev::GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v){
                 "SPMC_GVP_VECTOR_DU", 
                 "SPMC_GVP_VECTOR_AA", 
                 "SPMC_GVP_VECTOR_BB", 
+                "SPMC_GVP_VECTOR_AM", 
+                "SPMC_GVP_VECTOR_FM", 
                 "SPMC_GVP_VECTORSLW", 
                 NULL };
 
@@ -1614,6 +1625,8 @@ int rpspmc_hwi_dev::GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v){
         gvp_vector_d [D_GVP_DU      ] = v->f_du;
         gvp_vector_d [D_GVP_AA      ] = v->f_da;
         gvp_vector_d [D_GVP_BB      ] = v->f_db;
+        gvp_vector_d [D_GVP_AM      ] = v->f_dam;
+        gvp_vector_d [D_GVP_FM      ] = v->f_dfm;
         gvp_vector_d [D_GVP_SLW     ] = v->slew;
         
         // send it down

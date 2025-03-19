@@ -66,6 +66,8 @@ extern CDoubleParameter  SPMC_BIAS_SET_MONITOR;
 extern CDoubleParameter  SPMC_GVPU_MONITOR;
 extern CDoubleParameter  SPMC_GVPA_MONITOR;
 extern CDoubleParameter  SPMC_GVPB_MONITOR;
+extern CDoubleParameter  SPMC_GVPAMC_MONITOR;
+extern CDoubleParameter  SPMC_GVPFMC_MONITOR;
 extern CIntParameter     SPMC_MUX_MONITOR;
 extern CDoubleParameter  SPMC_SIGNAL_MONITOR;
 
@@ -385,7 +387,7 @@ void rp_spmc_gvp_init (){
 // update_file: allow update while in progress (scan speed adjust, etc.), applied on FPGA level at next vector start!
 void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, unsigned int srcs, int nrp, int nxt,
                              double dx, double dy, double dz, double du,
-                             double da, double db,
+                             double da, double db, double dam, double dfm,
                              double slew, bool update_life=false){
 
         if ((pc&0xff) == 0){
@@ -451,10 +453,10 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, unsigned int srcs
         if (n > 0 && slew > 0.0){
                 // find smallest non null delta component
                 double dt = 0.0;
-                double deltas[6] = { dx,dy,dz,du,da,db };
+                double deltas[8] = { dx,dy,dz,du,da,db,dam,dfm };
                 double dmin = 10.0; // Volts here, +/-5V is max range
                 double dmax =  0.0; // Volts here, +/-5V is max range
-                for (int i=0; i<6; ++i){
+                for (int i=0; i<8; ++i){
                         double x = fabs(deltas[i]);
                         if (x > 1e-8 && dmin > x)
                                 dmin = x;
@@ -524,7 +526,7 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, unsigned int srcs
         // write GVP-Vector [vector[0]] components
         //           decii  ******     du        dz        dy        dx       Next      Nrep,   Options,     nii,      N,  [Vadr]
         // data = {32'd016, 160'd0, 32'd0004, 32'd0003, 32'd0064, 32'd0001,  32'd0, 32'd0000,   32'h0100, 32'd02, 32'd005, 32'd00 }; // 000
-
+        
         rp_spmc_module_start_config ();
 
         int idv[17];
@@ -568,8 +570,10 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, unsigned int srcs
         if (verbose > 1) fprintf(stderr, "dB %8.10g uV, ", 1e6*db/Nsteps);
         set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_DB, idv[12]=(int)round(Q31*db/Nsteps/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
         
-        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_012, idv[13]=0);  // clear bits -- not yet used componets
-        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_013, idv[14]=0);  // clear bits
+        if (verbose > 1) fprintf(stderr, "dAMc %8.10g uV, ", 1e6*dam/Nsteps);
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_DAM, idv[13]=(int)round(Q31*dam/Nsteps/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
+        if (verbose > 1) fprintf(stderr, "dFMc %8.10g uV, ", 1e6*dfm/Nsteps);
+        set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_DFM, idv[14]=(int)round(Q31*dfm/Nsteps/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
         set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_014, idv[15]=0);  // clear bits
 
         if (verbose > 1) fprintf(stderr, "0,0,0, decii=%d]\n", idv[16]=decii); // last vector component is decii
@@ -809,15 +813,15 @@ void rp_spmc_set_scanpos (double xs, double ys, double slew, int opts){
         // make vector to new scan pos requested:
         rp_spmc_set_gvp_vector (0, n, opts, 0, 0, 0,
                                 dx, dy, 0.0, 0.0,
-                                0.0, 0.0,
+                                0.0, 0.0, 0.0, 0.0,
                                 slew, false);
         rp_spmc_set_gvp_vector (1, 0, 0, 0, 0, 0,
                                 0.0, 0.0, 0.0, 0.0,
-                                0.0, 0.0,
+                                0.0, 0.0, 0.0, 0.0,
                                 0.0, false);
         rp_spmc_set_gvp_vector (2, 0, 0, 0, 0, 0,
                                 0.0, 0.0, 0.0, 0.0,
-                                0.0, 0.0,
+                                0.0, 0.0, 0.0, 0.0,
                                 0.0, false);
 
         if (verbose > 1) fprintf(stderr, "** set scanpos GVP vectors programmed, exec... **\n");
@@ -862,7 +866,7 @@ double rp_spmc_configure_lockin (double freq, double gain, double FM_scale, unsi
         unsigned long long phase_inc = 1LL << n2;
         double fact = dds_phaseinc_to_freq (phase_inc);
         //double hzv = dds_phaseinc (1.) / volts_to_rpspmc(1.); // 1V Ramp => 1Hz
-        double hzv = 171.798691839990234375; //((1<<44)-1)/125000000*5/(1<<(44-32))
+        double hzv = 171.798691839990234375; //((1<<32)-1)/125000000*5   Hz / V in phase inc
 
         if (verbose > 1){
                 double ferr = fact - freq;
@@ -1013,6 +1017,10 @@ void rp_spmc_update_readings (){
         rp_spmc_module_read_config_data (SPMC_READBACK_PMD_DA56_REG, &regA, &regB); // GVP-A, GVP-B
         SPMC_GVPA_MONITOR.Value () = rpspmc_to_volts (regA);
         SPMC_GVPB_MONITOR.Value () = rpspmc_to_volts (regB);
+
+        rp_spmc_module_read_config_data (SPMC_READBACK_GVP_AMC_FMC_REG, &regA, &regB); // GVP-AMC, GVP-FMC
+        SPMC_GVPAMC_MONITOR.Value () = rpspmc_to_volts (regA);
+        SPMC_GVPFMC_MONITOR.Value () = rpspmc_to_volts (regB);
 
         
         SPMC_X0_MONITOR.Value () = rpspmc_to_volts (x0_buf); // ** mirror

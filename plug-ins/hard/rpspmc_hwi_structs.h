@@ -313,6 +313,8 @@ typedef struct{
 	double    f_dz;          // dZ full vector delta in Volts
 	double    f_da;          // dA aux channel A full vector delta in Volts
 	double    f_db;          // dB aux channel B full vector delta in Volts
+	double    f_dam;         // dAM RF-AM control (Volts equiv, attenuation only)
+	double    f_dfm;         // dFM RF-FM control (Volts equiv for digital VCO)
 } PROBE_VECTOR_GENERIC;
 
 /**

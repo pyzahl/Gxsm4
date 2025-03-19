@@ -417,8 +417,10 @@ CDoubleParameter  SPMC_GVP_VECTOR_DX("SPMC_GVP_VECTOR_DX", CBaseParameter::RW, 0
 CDoubleParameter  SPMC_GVP_VECTOR_DY("SPMC_GVP_VECTOR_DY", CBaseParameter::RW, 0, 0, -10.0, 10.0); // DY in Volts total length of vector component
 CDoubleParameter  SPMC_GVP_VECTOR_DZ("SPMC_GVP_VECTOR_DZ", CBaseParameter::RW, 0, 0, -10.0, 10.0); // DZ in Volts total length of vector component
 CDoubleParameter  SPMC_GVP_VECTOR_DU("SPMC_GVP_VECTOR_DU", CBaseParameter::RW, 0, 0, -10.0, 10.0); // DU (=Bias) adjust rel to Bias Ref in Volts total length of vector component
-CDoubleParameter  SPMC_GVP_VECTOR_AA("SPMC_GVP_VECTOR_AA", CBaseParameter::RW, 0, 0, -10.0, 10.0); // AA (Aux Channel ADC #5) -- reserved
-CDoubleParameter  SPMC_GVP_VECTOR_BB("SPMC_GVP_VECTOR_BB", CBaseParameter::RW, 0, 0, -10.0, 10.0); // BB (Aux Channel ADC #6) -- reserved
+CDoubleParameter  SPMC_GVP_VECTOR_AA("SPMC_GVP_VECTOR_AA", CBaseParameter::RW, 0, 0, -10.0, 10.0); // AA (Aux Channel ADC #5)
+CDoubleParameter  SPMC_GVP_VECTOR_BB("SPMC_GVP_VECTOR_BB", CBaseParameter::RW, 0, 0, -10.0, 10.0); // BB (Aux Channel ADC #6)
+CDoubleParameter  SPMC_GVP_VECTOR_AM("SPMC_GVP_VECTOR_AM", CBaseParameter::RW, 0, 0, -10.0, 10.0); // AM Channel RF-AM control
+CDoubleParameter  SPMC_GVP_VECTOR_FM("SPMC_GVP_VECTOR_FM", CBaseParameter::RW, 0, 0, -10.0, 10.0); // FM Channel RF-FM control
 CDoubleParameter  SPMC_GVP_VECTORSLW("SPMC_GVP_VECTORSLW", CBaseParameter::RW, 0, 0,   0.0, 1e6);  // slew rate in #points / sec -- max: 1 MSPS
 
 CDoubleParameter  SPMC_ALPHA("SPMC_ALPHA", CBaseParameter::RW, 0.0, 0, -360, +360); // deg
@@ -462,6 +464,8 @@ CDoubleParameter  SPMC_BIAS_SET_MONITOR("SPMC_BIAS_SET_MONITOR", CBaseParameter:
 CDoubleParameter  SPMC_GVPU_MONITOR("SPMC_GVPU_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 CDoubleParameter  SPMC_GVPA_MONITOR("SPMC_GVPA_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 CDoubleParameter  SPMC_GVPB_MONITOR("SPMC_GVPB_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
+CDoubleParameter  SPMC_GVPAMC_MONITOR("SPMC_GVPAMC_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
+CDoubleParameter  SPMC_GVPFMC_MONITOR("SPMC_GVPFMC_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 CIntParameter     SPMC_MUX_MONITOR("SPMC_MUX_MONITOR", CBaseParameter::RW, 0, 0, -2147483648,2147483647); // MUX code
 CDoubleParameter  SPMC_SIGNAL_MONITOR("SPMC_SIGNAL_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 CDoubleParameter  SPMC_X_MONITOR("SPMC_X_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
@@ -1777,6 +1781,8 @@ void OnNewParams_RPSPMC(void){
         if (SPMC_GVP_VECTOR_DU.IsNewValue ()){ SPMC_GVP_VECTOR_DU.Update (); ++dirty; }
         if (SPMC_GVP_VECTOR_AA.IsNewValue ()){ SPMC_GVP_VECTOR_AA.Update (); ++dirty; }
         if (SPMC_GVP_VECTOR_BB.IsNewValue ()){ SPMC_GVP_VECTOR_BB.Update (); ++dirty; }
+        if (SPMC_GVP_VECTOR_AM.IsNewValue ()){ SPMC_GVP_VECTOR_AM.Update (); ++dirty; }
+        if (SPMC_GVP_VECTOR_FM.IsNewValue ()){ SPMC_GVP_VECTOR_FM.Update (); ++dirty; }
         if (SPMC_GVP_VECTORSLW.IsNewValue ()){ SPMC_GVP_VECTORSLW.Update (); ++dirty; }
 
         if (dirty>0){
@@ -1793,6 +1799,8 @@ void OnNewParams_RPSPMC(void){
                                         SPMC_GVP_VECTOR_DU.Value (),
                                         SPMC_GVP_VECTOR_AA.Value (),
                                         SPMC_GVP_VECTOR_BB.Value (),
+                                        SPMC_GVP_VECTOR_AM.Value (),
+                                        SPMC_GVP_VECTOR_FM.Value (),
                                         SPMC_GVP_VECTORSLW.Value (),
                                         SPMC_GVP_LIVE_VECTOR_UPDATE.Value ()
                                         );

@@ -140,8 +140,8 @@
 #define GVP_VEC_DU     9
 #define GVP_VEC_DA    10
 #define GVP_VEC_DB    11
-#define GVP_VEC_012   12
-#define GVP_VEC_013   13
+#define GVP_VEC_DAM   12
+#define GVP_VEC_DFM   13
 #define GVP_VEC_014   14
 #define GVP_VEC_DECII 15
 #define GVP_VECX_SRC   0
@@ -261,6 +261,7 @@
 #define SPMC_READBACK_GVPBIAS_REG      100003 // Bias GVP Comp., Bias MOD (DBG: currently = GVP-A)
 #define SPMC_READBACK_PMD_DA56_REG     100004 // PMD AD MODULE 5,6 "A,B" 
 #define SPMC_READBACK_Z_SERVO_REG      100005 // Z_SERVO readback configuration -- setup >what< in Z_SERVO_CONFIG first!
+#define SPMC_READBACK_GVP_AMC_FMC_REG  100006 // GVP AMC, FMC
 #define SPMC_READBACK_SRCS_MUX_REG     100010 // SRCS stream MUX selection
 #define SPMC_READBACK_IN_MUX_REG       100011 // IN AXIS AD data stream MUX selection
 

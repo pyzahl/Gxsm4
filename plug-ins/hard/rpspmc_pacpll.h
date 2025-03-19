@@ -289,6 +289,8 @@ public:
                         GVP_dz[i] = 0;
                         GVP_da[i] = 0;
                         GVP_db[i] = 0;
+                        GVP_dam[i] = 0;
+                        GVP_dfm[i] = 0;
                         GVP_ts[i] = 0;
                         GVP_points[i] = 0;
                         GVP_opt[i] = 0;
@@ -457,7 +459,7 @@ public:
 	static int callback_GVP_restore_vp (GtkWidget *widget, RPSPMC_Control *self);
 
 	static int callback_GVP_preview_me (GtkWidget *widget, RPSPMC_Control *self);
-        int GVP_preview_on[7];
+        int GVP_preview_on[9];
         
         static int change_source_callback (GtkWidget *widget, RPSPMC_Control *self);
 	static int callback_XJoin (GtkWidget *widget, RPSPMC_Control *self);
@@ -602,6 +604,8 @@ public:
                         program_vector_list[0].f_du = program_vector_list[0].f_du - v->f_du;
                         program_vector_list[0].f_da = program_vector_list[0].f_da - v->f_da;
                         program_vector_list[0].f_db = program_vector_list[0].f_db - v->f_db;
+                        program_vector_list[0].f_dam = program_vector_list[0].f_dam - v->f_dam;
+                        program_vector_list[0].f_dfm = program_vector_list[0].f_dfm - v->f_dfm;
                 }
                 for (; program_vector_list[pc].n;){
                         int n = program_vector_list[pc].n;
@@ -620,6 +624,8 @@ public:
                         v->f_du += l*program_vector_list[pc].f_du;
                         v->f_da += l*program_vector_list[pc].f_da;
                         v->f_db += l*program_vector_list[pc].f_db;
+                        v->f_dam += l*program_vector_list[pc].f_dam;
+                        v->f_dfm += l*program_vector_list[pc].f_dfm;
                         if (i==0) break;
                         pc = next_section(pc);
                         if (il) *il = program_vector_list[pc].iloop;
@@ -786,8 +792,8 @@ public:
 	double make_ZXYramp_vector (int index, double dZ, double dX, double dY, int n, double slope, int source, int options);
         
         // make dU/dZ/dX/dY vector for n points and ts time per segment
-	double make_dUZXYAB_vector (int index, double dU, double dZ, double dX, double dY, double da, double db, int n, int nrep, int ptr_next, double ts, int source, int options);
-        double make_dUZXYAB_vector_all_volts (int index, double dU, double dZ, double dX, double dY, double da, double db, int n, int nrep, int ptr_next, double ts, int source, int options);
+	double make_dUZXYAB_vector (int index, double dU, double dZ, double dX, double dY, double da, double db, double dam, double dfm, int n, int nrep, int ptr_next, double ts, int source, int options);
+        double make_dUZXYAB_vector_all_volts (int index, double dU, double dZ, double dX, double dY, double da, double db, double dam, double dfm, int n, int nrep, int ptr_next, double ts, int source, int options);
 
         
         // Make a delay Vector
@@ -797,10 +803,10 @@ public:
 	void append_null_vector (int index, int options);
 
         void print_vector (const gchar *msg, int i){
-                g_message ("%s PV[%d] [N=%04d] [%10g pts/s, S:%08x, O:%08x, #%03d, J%02d, dU %6g V, dX %6g V, dY %6g V, dZ %6g V, dA %6g V, dB %6g V]",
+                g_message ("%s PV[%d] [N=%04d] [%10g pts/s, S:%08x, O:%08x, #%03d, J%02d, dU %6g V, dX %6g V, dY %6g V, dZ %6g V, dA %6g V, dB %6g V, dAM %6g Veq, dFM %6g Veq]",
                            msg, i, program_vector.n,
                            program_vector.slew, program_vector.srcs, program_vector.options, program_vector.repetitions, program_vector.ptr_next,
-                           program_vector.f_du, program_vector.f_dx, program_vector.f_dy, program_vector.f_dz, program_vector.f_da, program_vector.f_db);
+                           program_vector.f_du, program_vector.f_dx, program_vector.f_dy, program_vector.f_dz, program_vector.f_da, program_vector.f_db, program_vector.f_dam, program_vector.f_dfm);
         };
 
         void update_GUI_from_fpga ();
@@ -834,6 +840,7 @@ public:
 #define N_GVP_VECTORS MAX_PROGRAM_VECTORS
 	double GVP_du[N_GVP_VECTORS], GVP_dx[N_GVP_VECTORS], GVP_dy[N_GVP_VECTORS], GVP_dz[N_GVP_VECTORS];
         double GVP_da[N_GVP_VECTORS],  GVP_db[N_GVP_VECTORS];
+        double GVP_dam[N_GVP_VECTORS],  GVP_dfm[N_GVP_VECTORS];
         double GVP_ts[N_GVP_VECTORS];
 	gint32 GVP_points[N_GVP_VECTORS];
 	gint32 GVP_opt[N_GVP_VECTORS];   // options

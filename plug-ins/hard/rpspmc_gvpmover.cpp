@@ -438,33 +438,33 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
                 { // direct GVP writing
                         // Init
                         vp_duration += RPSPMC_ControlClass->make_dUZXYAB_vector_all_volts (vector_index++,
-                                                                                 p0[3], p0[2], p0[0], p0[1], p0[4], p0[5], //  GVP_du[k], GVP_dz[k], GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
-                                                                                 10, 0, 0, t_wave/20, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
-                                                                                 SRCS, VP_INITIAL_SET_VEC | gvp_options);
+                                                                                           p0[3], p0[2], p0[0], p0[1], p0[4], p0[5], 0.,0., //  GVP_du[k], GVP_dz[k], GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
+                                                                                           10, 0, 0, t_wave/20, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
+                                                                                           SRCS, VP_INITIAL_SET_VEC | gvp_options);
                         // Ramp
                         vp_duration += RPSPMC_ControlClass->make_dUZXYAB_vector_all_volts (vector_index++,
-                                                                                 pa[3], pa[2], pa[0], pa[1], pa[4], pa[5], // GVP_du[k], GVP_dz[k], GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
-                                                                                 100, 0, 0, 0.5*t_wave, // GVP_points[k], GVP_vnrepa[k], GVP_vpcjr[k], GVP_ts[k],
-                                                                                 SRCS, gvp_options);
+                                                                                           pa[3], pa[2], pa[0], pa[1], pa[4], pa[5], 0.,0., // GVP_du[k], GVP_dz[k], GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
+                                                                                           100, 0, 0, 0.5*t_wave, // GVP_points[k], GVP_vnrepa[k], GVP_vpcjr[k], GVP_ts[k],
+                                                                                           SRCS, gvp_options);
                         // Jump
                         vp_duration += RPSPMC_ControlClass->make_dUZXYAB_vector_all_volts (vector_index++,
-                                                                                 -2*pa[3], -2*pa[2], -2*pa[0], -2*pa[1], -2*pa[4], -2*pa[5], // GVP_du[k], GVP_dz[k], GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
-                                                                                 2, 0, 0, t_jump, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
-                                                                                 SRCS, gvp_options);
+                                                                                           -2*pa[3], -2*pa[2], -2*pa[0], -2*pa[1], -2*pa[4], -2*pa[5], 0.,0.,// GVP_du[k], GVP_dz[k], GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
+                                                                                           2, 0, 0, t_jump, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
+                                                                                           SRCS, gvp_options);
                         // Ramp
                         int nr=0;
                         int jmp=0;
                         if (t_space <= t_jump){ nr = n_reps; jmp = -2; } // repeat from here
                         vp_duration += RPSPMC_ControlClass->make_dUZXYAB_vector_all_volts (vector_index++,
-                                                                                 pa[3], pa[2], pa[0], pa[1], pa[4], pa[5], // GVP_du[k], GVP_dz[k], GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
-                                                                                 100, nr, jmp, 0.5*t_wave, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
-                                                                                 SRCS, gvp_options);
+                                                                                           pa[3], pa[2], pa[0], pa[1], pa[4], pa[5], 0., 0., // GVP_du[k], GVP_dz[k], GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
+                                                                                           100, nr, jmp, 0.5*t_wave, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
+                                                                                           SRCS, gvp_options);
                         // add space, repeat
                         if (nr == 0)
                                 vp_duration += RPSPMC_ControlClass->make_dUZXYAB_vector_all_volts (vector_index++,
-                                                                                         0., 0., 0., 0., 0., 0., //  GVP_du[k], GVP_dz[k], GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
-                                                                                         10, n_reps, -3, t_space, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
-                                                                                         SRCS, gvp_options);
+                                                                                                   0., 0., 0., 0., 0., 0., 0., 0., //  GVP_du[k], GVP_dz[k], GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
+                                                                                                   10, n_reps, -3, t_space, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
+                                                                                                   SRCS, gvp_options);
                         // total GVP points: 10 + Reps*(100 + 2 + 100 + 10) => 222 at end of 1st rep
                 }
                 RPSPMC_ControlClass->append_null_vector (vector_index, gvp_options);
@@ -481,9 +481,9 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
                                 p[chi[j]] = yp[j] = wo + pointing*amp*sin (phi[j]);
                         }
                         vp_duration += RPSPMC_ControlClass->make_dUZXYAB_vector_all_volts (vector_index++,
-                                                                                 p[3], p[2], p[0], p[1], p[4], p[5],
-                                                                                 10, 0, 0, t_wave/20,
-                                                                                 SRCS, VP_INITIAL_SET_VEC | gvp_options);
+                                                                                           p[3], p[2], p[0], p[1], p[4], p[5], 0., 0.,
+                                                                                           10, 0, 0, t_wave/20,
+                                                                                           SRCS, VP_INITIAL_SET_VEC | gvp_options);
                         int NumVecs = 28;
                         int nr=0;
                         for (int t=0; t <= NumVecs; ++t){
@@ -497,16 +497,16 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
                                 int jmp=0;
                                 if (t == NumVecs && t_space <= t_jump){ nr = n_reps; jmp = -(NumVecs-1); }
                                 vp_duration += RPSPMC_ControlClass->make_dUZXYAB_vector_all_volts (vector_index++,
-                                                                                         p[3], p[2], p[0], p[1], p[4], p[5],
-                                                                                         10, nr, jmp, t_wave/NumVecs,
-                                                                                         SRCS, gvp_options);
+                                                                                                   p[3], p[2], p[0], p[1], p[4], p[5], 0., 0.,
+                                                                                                   10, nr, jmp, t_wave/NumVecs,
+                                                                                                   SRCS, gvp_options);
                         }
                         // Space, Repeat
                         if (nr == 0)
                                 vp_duration += RPSPMC_ControlClass->make_dUZXYAB_vector_all_volts (vector_index++,
-                                                                                         0., 0., 0., 0., 0., 0., //  GVP_du[k], GVP_dz[k], GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
-                                                                                         10, n_reps, -NumVecs, t_space, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
-                                                                                         SRCS, gvp_options);
+                                                                                                   0., 0., 0., 0., 0., 0., 0., 0., //  GVP_du[k], GVP_dz[k], GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
+                                                                                                   10, n_reps, -NumVecs, t_space, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
+                                                                                                   SRCS, gvp_options);
                         RPSPMC_ControlClass->append_null_vector (vector_index, gvp_options);
                 }
 		break;
@@ -656,9 +656,9 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
                                                 p[chi[j]] = yi[j] = yp[j] = wo + y[j];
                                         tp = t;
                                         vp_duration += RPSPMC_ControlClass->make_dUZXYAB_vector_all_volts (vector_index++,
-                                                                                                 p[3], p[2], p[0], p[1], p[4], p[5],
-                                                                                                 10, 0, 0, t_wave/10,
-                                                                                                 SRCS, VP_INITIAL_SET_VEC | gvp_options);
+                                                                                                           p[3], p[2], p[0], p[1], p[4], p[5], 0., 0.,
+                                                                                                           10, 0, 0, t_wave/10,
+                                                                                                           SRCS, VP_INITIAL_SET_VEC | gvp_options);
                                 } else {
                                         for (int j=0; j<num_waves && j < MAX_CH; ++j){
                                                 p[chi[j]] = (wo + y[j]) - yp[j]; // differentials
@@ -666,18 +666,18 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
                                         }
                                         // Ramp to next point
                                         vp_duration += RPSPMC_ControlClass->make_dUZXYAB_vector_all_volts (vector_index++,
-                                                                                                 p[3], p[2], p[0], p[1], p[4], p[5],
-                                                                                                 10, 0, 0, fabs(t-tp)+t_jump,
-                                                                                                 SRCS, gvp_options);
+                                                                                                           p[3], p[2], p[0], p[1], p[4], p[5], 0., 0.,
+                                                                                                           10, 0, 0, fabs(t-tp)+t_jump,
+                                                                                                           SRCS, gvp_options);
                                         if (jump==1){ // add jump vector to inverse
                                                 for (int j=0; j<num_waves && j < MAX_CH; ++j){
                                                         p[chi[j]] = wo - y[j] - yp[j]; // differentials
                                                         yp[j] = wo - y[j];
                                                 }
                                                 vp_duration += RPSPMC_ControlClass->make_dUZXYAB_vector_all_volts (vector_index++,
-                                                                                                         p[3], p[2], p[0], p[1], p[4], p[5],
-                                                                                                         2, 0, 0, t_jump,
-                                                                                                         SRCS, gvp_options);
+                                                                                                                   p[3], p[2], p[0], p[1], p[4], p[5], 0., 0.,
+                                                                                                                   2, 0, 0, t_jump,
+                                                                                                                   SRCS, gvp_options);
                                         }
 
                                         if (jump==2){ // jump to initial
@@ -686,9 +686,9 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
                                                         yp[j] = yi[j];
                                                 }
                                                 vp_duration += RPSPMC_ControlClass->make_dUZXYAB_vector_all_volts (vector_index++,
-                                                                                                         p[3], p[2], p[0], p[1], p[4], p[5],
-                                                                                                         2, 0, 0, t_jump,
-                                                                                                         SRCS, gvp_options);
+                                                                                                                   p[3], p[2], p[0], p[1], p[4], p[5], 0., 0.,
+                                                                                                                   2, 0, 0, t_jump,
+                                                                                                                   SRCS, gvp_options);
                                         }
                                         tp = t;
                                 }
@@ -698,9 +698,9 @@ int GVPMoverControl::create_waveform (double amp, double duration, int limit_cyc
                                 t_space = t_jump;
                         int jmp=-(vector_index-1); // -NumVecs-1
                         vp_duration += RPSPMC_ControlClass->make_dUZXYAB_vector_all_volts (vector_index++,
-                                                                                 0., 0., 0., 0., 0., 0., //  GVP_du[k], GVP_dz[k], GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
-                                                                                 10, n_reps, jmp, t_space, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
-                                                                                 SRCS, gvp_options);
+                                                                                           0., 0., 0., 0., 0., 0., 0., 0.,//  GVP_du[k], GVP_dz[k], GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
+                                                                                           10, n_reps, jmp, t_space, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
+                                                                                           SRCS, gvp_options);
                         RPSPMC_ControlClass->append_null_vector (vector_index, gvp_options);
                 }
 		break;
@@ -1913,8 +1913,8 @@ void GVPMoverControl::wave_preview_draw_function (GtkDrawingArea *area, cairo_t 
                                                   GVPMoverControl *self){
 
         // prepare job lookups
-        PROBE_VECTOR_GENERIC v = { 0,0.,0,0, 0,0,0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
-        double *gvp_y[6] = { NULL, NULL, NULL, NULL, NULL, NULL };
+        PROBE_VECTOR_GENERIC v = { 0,0.,0,0, 0,0,0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+        double *gvp_y[8] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
         int k=0;
         // find wave form index by id
         for (k=0; wave_form_options[k].wave_form_label; ++k)
@@ -1928,7 +1928,7 @@ void GVPMoverControl::wave_preview_draw_function (GtkDrawingArea *area, cairo_t 
         int wn = GPOINTER_TO_INT (g_object_get_data  (G_OBJECT (area), "wave_ch"));
 
         // setup lookups
-        for (int i=1; i<=6; ++i){
+        for (int i=1; i<=8; ++i){
                 switch (i){
                 case 1: gvp_y[0] = &v.f_dx; break;
                 case 2: gvp_y[1] = &v.f_dy; break;
@@ -1936,6 +1936,8 @@ void GVPMoverControl::wave_preview_draw_function (GtkDrawingArea *area, cairo_t 
                 case 4: gvp_y[3] = &v.f_du; break;
                 case 5: gvp_y[4] = &v.f_da; break;
                 case 6: gvp_y[5] = &v.f_db; break;
+                case 7: gvp_y[6] = &v.f_dam; break;
+                case 8: gvp_y[7] = &v.f_dfm; break;
                 }
         }
 
