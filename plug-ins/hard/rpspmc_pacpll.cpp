@@ -169,7 +169,7 @@ SOURCE_SIGNAL_DEF rpspmc_source_signals[] = {
         { 0x00000004, "ZS-Topo",      " ", "AA", UTF8_ANGSTROEM,                   SPMC_AD5791_to_volts, PROBEDATA_ARRAY_S3,  3 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x00000008, "Bias-Mon",     " ", "V",             "V",                   SPMC_AD5791_to_volts, PROBEDATA_ARRAY_S4,  4 }, // BiasFac, see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x00000010, "In1-Signal",   " ", "V",             "V",                   SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S5,  5 },
-        { 0x00000020, "In2-Current",  " ", "nA",           "nA",               256*SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S6,  6 }, // CurrFac, see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
+        { 0x00000020, "In2-Current",  " ", "nA",           "nA",                   SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S6,  6 }, // CurrFac, see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x00000040, "In3-AD463-24-CH1", " ", "V",         "V",                   SPMC_RPIN34_to_volts, PROBEDATA_ARRAY_S7,  7 },
         { 0x00000080, "In4-AD463-24-CH2", " ", "V",         "V",                   SPMC_RPIN34_to_volts, PROBEDATA_ARRAY_S8,  8 },
         { 0x00000100, "SWP*00",       " ",  "V",            "V",                                    1.0, PROBEDATA_ARRAY_S9,  9 },  // ich= 8 ** swappable via GVP-SRC-MUX ** -- been replaced as set from swappable_signals[]
