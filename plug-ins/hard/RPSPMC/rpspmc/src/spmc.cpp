@@ -347,6 +347,11 @@ void rp_spmc_gvp_config (bool reset=true, bool pause=false, int reset_options=-1
                 fprintf(stderr, "##Configure GVP: %s RO[%d]\n", reset ? "Reset" : pause ? "Pause":"Run", reset_options);
 }
 
+void rp_spmc_gvp_xzy_reset (){
+        rp_spmc_module_config_uint32 (SPMC_GVP_RESET_XZY_REG, reset_options);
+}
+
+
 void reset_gvp_positions_uab(){
         double data[16] = { 0.,0.,0.,0., 0.,0.,0.,0., 0.,0.,0.,0., 0.,0.,0.,0. };
         rp_spmc_module_config_vector_Qn (SPMC_GVP_RESET_VECTOR_REG, data, 6);

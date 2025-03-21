@@ -56,7 +56,8 @@ module gvp #(
     parameter reset_options_reg_address = 5002,
     parameter vector_programming_reg_address  = 5003,
     parameter vector_set_reg_address  = 5004,
-    parameter vectorX_programming_reg_address  = 5005
+    parameter vectorX_programming_reg_address  = 5005,
+    parameter vector_reset_xyz_reg_address = 5009
 )
 (
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF M_AXIS_X:M_AXIS_Y:M_AXIS_Z:M_AXIS_U:M_AXIS_A:M_AXIS_B:M_AXIS_AM:M_AXIS_FM:M_AXIS_SRCS:M_AXIS_INDEX:M_AXIS_GVP_TIME" *)
@@ -201,6 +202,13 @@ module gvp #(
                 reset_options <= config_data_reg[15:0]; // GVP options assigned when in reset mode/finished
             end
             
+            vector_reset_xyz_reg_address: // WARNING: THIS SETA ALL VEC COMPONETS TO ZERO INSTANTLY (particular used by MOVER to assure all 0 after abort/stop)
+            begin                         // WARNING: DO NOT USE WHILE NORMAL SPM OPERATOPM
+                vec_x <= 0;
+                vec_y <= 0;
+                vec_z <= 0;
+            end
+
             vector_set_reg_address: // set GVP vector variable registers to presets
             begin
                 // place holders, but do not... for xyz
