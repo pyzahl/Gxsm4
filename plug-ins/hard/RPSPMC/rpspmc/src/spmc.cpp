@@ -347,8 +347,9 @@ void rp_spmc_gvp_config (bool reset=true, bool pause=false, int reset_options=-1
                 fprintf(stderr, "##Configure GVP: %s RO[%d]\n", reset ? "Reset" : pause ? "Pause":"Run", reset_options);
 }
 
-void rp_spmc_gvp_xzy_reset (){
-        rp_spmc_module_config_uint32 (SPMC_GVP_RESET_XZY_REG, reset_options);
+// resets components by mask. (x=0 y=0, .. no change for mask = 0x03
+void rp_spmc_gvp_reset_components (int mask){
+        rp_spmc_module_config_uint32 (SPMC_GVP_RESET_COMPONENTS_REG, mask);
 }
 
 

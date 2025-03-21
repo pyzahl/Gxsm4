@@ -231,6 +231,7 @@ public:
 
         void GVP_execute_only_vector_program(); // GVP execute only, no read back (data is been ignored)
         void GVP_reset_vector_program (); // reset GVP only, no DMA abort, etc
+        void GVP_reset_vector_components (int mask); // reset GVP components my mask
 
         void GVP_vp_init ();
         void GVP_start_data_read(); // non blocking

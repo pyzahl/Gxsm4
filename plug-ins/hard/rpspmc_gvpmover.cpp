@@ -2121,9 +2121,9 @@ int GVPMoverControl::CmdAction(GtkWidget *widget, GVPMoverControl *self){
                 self->mover_param.MOV_angle = 200.;
                 break;
         default:
-                self->mover_param.MOV_axis = 3;
-                self->mover_param.MOV_pointing = 1.;
-                self->mover_param.MOV_angle = 200.;
+                //self->mover_param.MOV_axis = 3;
+                //self->mover_param.MOV_pointing = 1.;
+                //self->mover_param.MOV_angle = 200.;
                 break;
         }
         
@@ -2140,8 +2140,10 @@ int GVPMoverControl::StopAction(GtkWidget *widget, GVPMoverControl *self){
 	PI_DEBUG (DBG_L2, "GVPMoverControl::StopAction" );
 
 	// GVP STOP
-        rpspmc_hwi->GVP_reset_vector_program ();
+        //rpspmc_hwi->GVP_reset_vector_program ();
+        rpspmc_hwi->GVP_abort_vector_program ();
         //RPSPMC_ControlClass->GVP_zero_all_smooth ();
+        rpspmc_hwi->GVP_reset_vector_components (0xf);
          
         //self->updateAxisCounts (widget, idx, 0);
 
@@ -2212,6 +2214,7 @@ void GVPMoverControl::ExecCmd(int cmd){
                 last_MOV_axis = mover_param.MOV_axis;
         }
 
+        rpspmc_hwi->GVP_reset_vector_components (0xf);
         rpspmc_hwi->GVP_execute_only_vector_program (); // just fire up
         //rpspmc_hwi->start_data_read (0, 0,0,0,0, NULL,NULL,NULL,NULL); // start and read data is totally possible....
 

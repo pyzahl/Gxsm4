@@ -83,7 +83,7 @@ extern "C" {
         void rp_spmc_set_zservo_gxsm_speciality_setting (int mode, double z_setpoint, double in_offset_comp);
 
         void reset_gvp_positions_uab();
-        void rp_spmc_gvp_xzy_reset (); // WARNING!! For corase/mover actions only!
+        void rp_spmc_gvp_reset_components (int mask); // WARNING!! For corase/mover actions only!
         void rp_spmc_gvp_config (bool reset, bool pause, int reset_options); // taking out of reset starts GVP!
         //void rp_spmc_set_gvp_vector (CFloatSignal &vector);
         void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, unsigned int srcs, int nrp, int nxt,

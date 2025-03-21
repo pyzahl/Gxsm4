@@ -1496,6 +1496,7 @@ int rpspmc_hwi_dev::read_actual_module_configuration (){
 #define SPMC_GVP_CONTROL_RESET_UAB 4
 #define SPMC_GVP_CONTROL_GVP_EXECUTE_NO_DMA 5   
 #define SPMC_GVP_CONTROL_GVP_RESET_ONLY     6   
+#define SPMC_GVP_CONTROL_RESET_COMPONENTS   9
 
 
 void rpspmc_hwi_dev::GVP_execute_vector_program(){ // init DMA and start GVP
@@ -1519,6 +1520,12 @@ void rpspmc_hwi_dev::GVP_reset_vector_program (){ // ONLY GVP CORE RESET, NO DMA
         rpspmc_pacpll->write_parameter ("SPMC_GVP_CONTROL", SPMC_GVP_CONTROL_GVP_RESET_ONLY);
         abort_GVP_flag = true;
 }
+
+void rpspmc_hwi_dev::GVP_reset_vector_components (int mask){
+        g_message ("rpspmc_hwi_dev::GVP_reset_vector_components (0x%02x)", mask);
+        rpspmc_pacpll->write_parameter ("SPMC_GVP_CONTROL", (mask << 8) | SPMC_GVP_CONTROL_RESET_COMPONENTS);
+}
+
 
 void rpspmc_hwi_dev::GVP_reset_UAB (){
         g_message ("rpspmc_hwi_dev::GVP_reset_UAB ()");

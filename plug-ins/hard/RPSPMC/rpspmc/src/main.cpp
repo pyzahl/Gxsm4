@@ -394,7 +394,7 @@ CIntParameter     SPMC_ADC_MODE("SPMC_ADC_MODE", CBaseParameter::RW, 0, 0, -2147
 #define SPMC_GVP_CONTROL_PAUSE     2
 #define SPMC_GVP_CONTROL_RESUME    3
 #define SPMC_GVP_CONTROL_RESET_UAB 4
-#define SPMC_GVP_CONTROL_RESET_XYZ 9
+#define SPMC_GVP_CONTROL_RESET_COMPONENTS 9
 #define SPMC_GVP_CONTROL_GVP_EXECUTE_NO_DMA 5   
 #define SPMC_GVP_CONTROL_GVP_RESET_ONLY     6   
 
@@ -1836,7 +1836,7 @@ void OnNewParams_RPSPMC(void){
                 info << "SPMC_GVP_CONTROL_MODE: {";
                 // rp_spmc_gvp_config (reset, program, pause, [resetoptions]);
                 SPMC_GVP_CONTROL_MODE.Update ();
-                switch (SPMC_GVP_CONTROL_MODE.Value ()){
+                switch (SPMC_GVP_CONTROL_MODE.Value () & 0x00ff){
 
                 case SPMC_GVP_CONTROL_RESET:
                         rp_spmc_gvp_config (true, false);
@@ -1885,8 +1885,8 @@ void OnNewParams_RPSPMC(void){
                 case SPMC_GVP_CONTROL_RESET_UAB:
                         reset_gvp_positions_uab();
                         break;
-                case SPMC_GVP_CONTROL_RESET_XYZ: // WARNING! MOVER/COARSE ONLY
-                        reset_gvp_xyz_reset();
+                case SPMC_GVP_CONTROL_RESET_COMPONENTS: // WARNING! MOVER/COARSE ONLY
+                        rp_spmc_gvp_reset_components((SPMC_GVP_CONTROL_MODE.Value () >> 8) & 0xff); // reset components by mask
                         break;
                 default: info << "INVALID MODE"; break;
                 }

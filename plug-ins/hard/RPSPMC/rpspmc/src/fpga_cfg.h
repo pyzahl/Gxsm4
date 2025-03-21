@@ -124,7 +124,7 @@
 #define SPMC_GVP_VECTOR_DATA_REG      5003   // VECTOR PROGRAM REG: 1..16 // 512 bits (16x32)
 #define SPMC_GVP_RESET_VECTOR_REG     5004   // [XYZ]UAB
 #define SPMC_GVP_VECTORX_DATA_REG     5005   // VECTORX PROGRAM REG -- Vector Extension Components
-#define SPMC_GVP_RESET_XZY_REG        5009   // RESET XYZ to ZERO -- WARNING, never use except for Mover/Coarse purposes!
+#define SPMC_GVP_RESET_COMPONENTS_REG 5009   // RESET COMNPONENTS to ZERO by mask -- WARNING, never use except for Mover/Coarse purposes!
 
 // GVP VCETOR COMPONETS IN ARRAY AT OFFESTS in CONFIG_REG (512bits)
 //                   decii      du        dz        dy        dx     Next       Nrep,   Options,     nii,      N,    [Vadr]
