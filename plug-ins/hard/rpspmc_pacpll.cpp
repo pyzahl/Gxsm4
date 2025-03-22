@@ -1537,7 +1537,8 @@ void RPSPMC_Control::create_folder (){
 	GSList *multi_IVsec_list=NULL;
 
         GSList *FPGA_readback_update_list=NULL;
-
+        GSList *EC_GVP_MON_list = NULL;
+        
         AppWindowInit ("RP-SPM Control Window");
         
         // ========================================
@@ -2091,12 +2092,45 @@ void RPSPMC_Control::create_folder (){
         
         bp->set_input_width_chars (3);
         bp->set_label_width_chars (3);
+
+        bp->grid_add_ec ("Mon:", Volt, &spmc_parameters.gvpu_monitor, -10.0, 10.0, "g", 0.1, 1., "GVP-U-MONITOR");
+        EC_GVP_MON_list = g_slist_prepend( EC_GVP_MON_list, bp->ec);
+        bp->ec->Freeze ();
+        bp->grid_add_ec (NULL, Volt, &spmc_parameters.xs_monitor, -10.0, 10.0, "g", 0.1, 1., "GVP-XS-MONITOR");
+        EC_GVP_MON_list = g_slist_prepend( EC_GVP_MON_list, bp->ec);
+        bp->ec->Freeze ();
+        bp->grid_add_ec (NULL, Volt, &spmc_parameters.ys_monitor, -10.0, 10.0, "g", 0.1, 1., "GVP-YS-MONITOR");
+        EC_GVP_MON_list = g_slist_prepend( EC_GVP_MON_list, bp->ec);
+        bp->ec->Freeze ();
+        bp->grid_add_ec (NULL, Volt, &spmc_parameters.zs_monitor, -10.0, 10.0, "g", 0.1, 1., "GVP-ZS-MONITOR");
+        EC_GVP_MON_list = g_slist_prepend( EC_GVP_MON_list, bp->ec);
+        bp->ec->Freeze ();
+        bp->grid_add_ec (NULL, Volt, &spmc_parameters.gvpa_monitor, -10.0, 10.0, "g", 0.1, 1., "GVP-A-MONITOR");
+        EC_GVP_MON_list = g_slist_prepend( EC_GVP_MON_list, bp->ec);
+        bp->ec->Freeze ();
+        bp->grid_add_ec (NULL, Volt, &spmc_parameters.gvpb_monitor, -10.0, 10.0, "g", 0.1, 1., "GVP-B-MONITOR");
+        EC_GVP_MON_list = g_slist_prepend( EC_GVP_MON_list, bp->ec);
+        bp->ec->Freeze ();
+        bp->grid_add_ec (NULL, Volt, &spmc_parameters.gvpamc_monitor, -10.0, 10.0, "g", 0.1, 1., "GVP-AMC-MONITOR");
+        EC_GVP_MON_list = g_slist_prepend( EC_GVP_MON_list, bp->ec);
+        bp->ec->Freeze ();
+        bp->grid_add_ec (NULL, Volt, &spmc_parameters.gvpfmc_monitor, -10.0, 10.0, "g", 0.1, 1., "GVP-FMC-MONITOR");
+        EC_GVP_MON_list = g_slist_prepend( EC_GVP_MON_list, bp->ec);
+        bp->ec->Freeze ();
+        bp->grid_add_ec (NULL, Unity, &spmc_parameters.z_servo_mode, 0, 0xffff, "x", 0.1, 1., "GVP-ZSERVO-MONITOR");
+        EC_GVP_MON_list = g_slist_prepend( EC_GVP_MON_list, bp->ec);
+        bp->ec->Freeze ();
+        
+	g_object_set_data (G_OBJECT (window), "GVP_VEC_MONITOR_list", EC_GVP_MON_list);
+
+        bp->new_line ();
         bp->grid_add_label ("VPC", "Vector Program Counter");
 
         bp->set_input_width_chars (7);
         bp->set_label_width_chars (7);
 
         GVP_preview_on[0]=0; // not used
+        
         //bp->grid_add_label ("VP-dU", "vec-du (Bias, DAC CH4)");
         bp->grid_add_button ("VP-dU", "vec-du (Bias, DAC CH4)", 1, G_CALLBACK (callback_GVP_preview_me), this);
         gtk_widget_set_name (bp->button, "gvpcolor4"); GVP_preview_on[4]=1;
@@ -4907,6 +4941,8 @@ void RPspmc_pacpll::update(){
 
 void RPspmc_pacpll::update_monitoring_parameters(){
 
+        // RPSPMC-PACPLL
+        
         // mirror global parameters to private
         parameters.dc_offset = pacpll_parameters.dc_offset;
         parameters.exec_amplitude_monitor = pacpll_parameters.exec_amplitude_monitor;
@@ -4926,6 +4962,7 @@ void RPspmc_pacpll::update_monitoring_parameters(){
         if (G_IS_OBJECT (window))
 		g_slist_foreach((GSList*)g_object_get_data( G_OBJECT (window), "RPSPMCONTROL_EC_READINGS_list"),
 				(GFunc) App::update_ec, NULL);
+
 }
 
 void RPspmc_pacpll::copy_f0_callback (GtkWidget *widget, RPspmc_pacpll *self){

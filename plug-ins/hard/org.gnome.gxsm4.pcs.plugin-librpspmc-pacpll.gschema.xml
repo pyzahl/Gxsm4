@@ -681,6 +681,60 @@
       <description>pcs0000, PCS Remote-ID: 'dsp-IV-Recover-Delay', Default/U:   0.3 s    , Adjustment PCS Name: 'dsp-IV-Recover-Delay' </description>
     </key>
     
+    <key name="dsp-gvp-u-monitor" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'dsp-GVP-U-MONITOR', Default/U: 0 V     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-GVP-U-MONITOR', Default/U: 0 V    , Adjustment PCS Name: 'dsp-GVP-U-MONITOR' </description>
+    </key>
+
+    <key name="dsp-gvp-xs-monitor" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'dsp-GVP-XS-MONITOR', Default/U: 0 V     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-GVP-XS-MONITOR', Default/U: 0 V    , Adjustment PCS Name: 'dsp-GVP-XS-MONITOR' </description>
+    </key>
+
+    <key name="dsp-gvp-ys-monitor" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'dsp-GVP-YS-MONITOR', Default/U: 0 V     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-GVP-YS-MONITOR', Default/U: 0 V    , Adjustment PCS Name: 'dsp-GVP-YS-MONITOR' </description>
+    </key>
+
+    <key name="dsp-gvp-zs-monitor" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'dsp-GVP-ZS-MONITOR', Default/U: 0 V     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-GVP-ZS-MONITOR', Default/U: 0 V    , Adjustment PCS Name: 'dsp-GVP-ZS-MONITOR' </description>
+    </key>
+
+    <key name="dsp-gvp-a-monitor" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'dsp-GVP-A-MONITOR', Default/U: 0 V     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-GVP-A-MONITOR', Default/U: 0 V    , Adjustment PCS Name: 'dsp-GVP-A-MONITOR' </description>
+    </key>
+
+    <key name="dsp-gvp-b-monitor" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'dsp-GVP-B-MONITOR', Default/U: 0 V     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-GVP-B-MONITOR', Default/U: 0 V    , Adjustment PCS Name: 'dsp-GVP-B-MONITOR' </description>
+    </key>
+
+    <key name="dsp-gvp-amc-monitor" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'dsp-GVP-AMC-MONITOR', Default/U: 0 V     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-GVP-AMC-MONITOR', Default/U: 0 V    , Adjustment PCS Name: 'dsp-GVP-AMC-MONITOR' </description>
+    </key>
+
+    <key name="dsp-gvp-fmc-monitor" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'dsp-GVP-FMC-MONITOR', Default/U: 0 V     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-GVP-FMC-MONITOR', Default/U: 0 V    , Adjustment PCS Name: 'dsp-GVP-FMC-MONITOR' </description>
+    </key>
+
+    <key name="dsp-gvp-zservo-monitor" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'dsp-GVP-ZSERVO-MONITOR', Default/U: 0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-GVP-ZSERVO-MONITOR', Default/U: 0      , Adjustment PCS Name: 'dsp-GVP-ZSERVO-MONITOR' </description>
+    </key>
+
 
     
     <key name="dsp-gvp-du00" type="ad">

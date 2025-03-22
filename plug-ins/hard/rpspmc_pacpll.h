@@ -864,6 +864,14 @@ public:
 
         void write_spm_scan_vector_program (double rx, double ry, int nx, int ny, double slew[2], int subscan[4], long int srcs[4], int gvp_options=0);
 
+        void on_new_data (){
+                g_message ("on new data RPSPMC-GVP MON UPDATE");
+                // RPSPM-GVP
+                if (G_IS_OBJECT (window))
+                        g_slist_foreach((GSList*)g_object_get_data( G_OBJECT (window), "GVP_VEC_MONITOR_list"),
+                                        (GFunc) App::update_ec, NULL);
+        };
+        
         
 	// -- Profile Displays
 	int last_probe_data_index;
@@ -1065,6 +1073,8 @@ public:
 
                 //self->stream_data ();
                 update_health ();
+
+                RPSPMC_ControlClass->on_new_data ();
         };
         
         double unwrap (int k, double phi);
