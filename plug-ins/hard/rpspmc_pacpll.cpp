@@ -2133,9 +2133,14 @@ void RPSPMC_Control::create_folder (){
         bp->ec->Freeze ();
         bp->set_configure_list_mode_off ();
         mon_FB = 0;
-        bp->grid_add_ec ("FB:", Unity, &mon_FB, -9999, 9999, ".0f", "GVP-ZSERVO-MONITOR");
+        bp->set_input_nx (5);
+        bp->grid_add_ec ("FB: ", Unity, &mon_FB, -9999, 9999, ".0f", "GVP-ZSERVO-MONITOR");
+        gvp_monitor_fb_label = bp->label;
+        gvp_monitor_fb_info_ec = bp->ec;
+
         EC_GVP_MON_list = g_slist_prepend( EC_GVP_MON_list, bp->ec);
         bp->ec->Freeze ();
+        bp->set_input_nx ();
         
 	g_object_set_data (G_OBJECT (window), "GVP_VEC_MONITOR_list", EC_GVP_MON_list);
 

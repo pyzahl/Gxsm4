@@ -209,7 +209,7 @@ class BuildParam{
         };
 
         GtkWidget* grid_add_input(const gchar* labeltxt=NULL, gint nx=1, GtkWidget *opt_label_widget=NULL, gint lwx=1){
-                GtkWidget *label;
+                //GtkWidget *label;
 
                 if (labeltxt){
                         label = gtk_label_new (labeltxt);

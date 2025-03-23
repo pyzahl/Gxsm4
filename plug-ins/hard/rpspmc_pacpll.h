@@ -854,6 +854,8 @@ public:
         int mon_FB;
         //gtk_widget_queue_draw (gvp_preview_are); // update wave
         GtkWidget *gvp_preview_area;
+        Gtk_EntryControl *gvp_monitor_fb_info_ec;
+        GtkWidget *gvp_monitor_fb_label;
         static void gvp_preview_draw_function (GtkDrawingArea *area, cairo_t *cr,
                                                int             width,
                                                int             height,
@@ -870,10 +872,22 @@ public:
                 int Sgvp = (s>>8) & 0xf;  // assign GVP_status = { sec[32-4:0], setvec, reset, pause, ~finished };
                 int Sspm = s & 0xff;      // assign SPM status = { ...SPM Z Servo Hold, GVP-FB-Hold, GVP-Finished, Z Servo EN }
 
-                mon_FB =  ((Sspm & 0x01) && !(Sspm & 0x04) && !(Sspm & 0x04) && !(Sspm & 0x08)) ? 1:0
+                int fb=0;
+                mon_FB =  (fb=((Sspm & 0x01) && !(Sspm & 0x04) && !(Sspm & 0x04) && !(Sspm & 0x08)) ? 1:0)
                         + ((Sgvp & 0x01 ? 1:0) << 1);
 
-                //g_message ("on new data, GVP status: %x %x %x %d", s, Sgvp,Sspm, mon_FB);
+                gchar *gvp_status = g_strdup_printf (" VPC: %d B: %d I:%d",
+                                                     current_probe_section,
+                                                     current_probe_block_index,
+                                                     current_probe_data_index);
+
+                if (fb)
+                        gtk_widget_set_name (gvp_monitor_fb_label, "green");
+                else
+                        gtk_widget_set_name (gvp_monitor_fb_label, "red");
+
+                gvp_monitor_fb_info_ec->set_info(gvp_status);
+                g_free (gvp_status);
                 
                 // RPSPM-GVP
                 if (G_IS_OBJECT (window))
