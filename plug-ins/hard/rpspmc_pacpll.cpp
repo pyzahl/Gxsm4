@@ -1609,8 +1609,10 @@ void RPSPMC_Control::create_folder (){
 
         bp->set_input_width_chars (12);
         bp->set_label_width_chars (10);
+        bp->set_configure_list_mode_on ();
 	bp->grid_add_label ("Z-Servo");
         bp->grid_add_z_servo_current_source_options (0, (int)spmc_parameters.z_servo_src_mux, this);
+        bp->set_configure_list_mode_off ();
 
         bp->grid_add_label ("Setpoint", NULL, 4);
 
@@ -1618,7 +1620,11 @@ void RPSPMC_Control::create_folder (){
         bp->set_input_width_chars (6);
         bp->set_label_width_chars (6);
         //bp->grid_add_label ("Gain");
+
+        bp->set_configure_list_mode_on ();
         bp->grid_add_label ("In-Offset");
+        bp->set_configure_list_mode_off ();
+        
         bp->grid_add_label ("Fuzzy-Level");
         bp->grid_add_label ("Transfer");
         bp->set_configure_list_mode_off ();
@@ -1684,7 +1690,9 @@ void RPSPMC_Control::create_folder (){
                 bp->set_input_width_chars (6);
                 bp->set_configure_list_mode_on ();
                 //bp->grid_add_ec (NULL, Unity, &mix_gain[ch], -1.0, 1.0, "5g", 0.001, 0.01, mixer_remote_id_gn[ch]);
+                bp->set_configure_list_mode_on ();
                 bp->grid_add_ec (NULL, mixer_unit[ch], &mix_in_offsetcomp[ch], -1.0, 1.0, "5g", 0.001, 0.01, mixer_remote_id_oc[ch]);
+                bp->set_configure_list_mode_off ();
                 bp->grid_add_ec (NULL, mixer_unit[ch], &mix_level[ch], -100.0, 100.0, "5g", 0.001, 0.01, mixer_remote_id_fl[ch]);
 
                 if (tmp) delete (tmp); // done setting unit -- if custom
@@ -1710,24 +1718,26 @@ void RPSPMC_Control::create_folder (){
 
         bp->set_configure_list_mode_on ();
 	bp->grid_add_ec_with_scale ("CP", dB, &spmc_parameters.z_servo_cp_db, -100., 20., "5g", 1.0, 0.1, "fbs-cp"); // z_servo[SERVO_CP]
-        FPGA_readback_update_list = g_slist_prepend (FPGA_readback_update_list, bp->ec); // add to FPGA reconnect readback parameter list
         GtkWidget *ZServoCP = bp->input;
+        FPGA_readback_update_list = g_slist_prepend (FPGA_readback_update_list, bp->ec); // add to FPGA reconnect readback parameter list
+        bp->set_configure_list_mode_off ();
 
         mix_level[2] = 5.;
         mix_level[3] = -5.;
         bp->grid_add_ec ("Z Upper", Volt, &spmc_parameters.z_servo_upper, -5.0, 5.0, "5g", 0.001, 0.01,"fbs-upper");
         FPGA_readback_update_list = g_slist_prepend (FPGA_readback_update_list, bp->ec); // add to FPGA reconnect readback parameter list
+
         bp->new_line ();
-        bp->set_configure_list_mode_off ();
         bp->grid_add_ec_with_scale ("CI", dB, &spmc_parameters.z_servo_ci_db, -100., 20., "5g", 1.0, 0.1, "fbs-ci"); // z_servo[SERVO_CI
+        GtkWidget *ZServoCI = bp->input;
         FPGA_readback_update_list = g_slist_prepend (FPGA_readback_update_list, bp->ec); // add to FPGA reconnect readback parameter list
+
+        g_object_set_data( G_OBJECT (ZServoCI), "HasClient", ZServoCP);
+        g_object_set_data( G_OBJECT (ZServoCP), "HasMaster", ZServoCI);
+        g_object_set_data( G_OBJECT (ZServoCI), "HasRatio", GINT_TO_POINTER((guint)round(1000.*spmc_parameters.z_servo_cp_db/spmc_parameters.z_servo_ci_db)));
+        
         bp->grid_add_ec ("Z Lower", Volt, &spmc_parameters.z_servo_lower, -5.0, 5.0, "5g", 0.001, 0.01,"fbs-lower");
         FPGA_readback_update_list = g_slist_prepend (FPGA_readback_update_list, bp->ec); // add to FPGA reconnect readback parameter list
-        GtkWidget *ZServoCI = bp->input;
-
-        //g_object_set_data( G_OBJECT (ZServoCI), "HasClient", ZServoCP);
-        //g_object_set_data( G_OBJECT (ZServoCP), "HasMaster", ZServoCI);
-        //g_object_set_data( G_OBJECT (ZServoCI), "HasRatio", GINT_TO_POINTER((guint)round(1000.*z_servo[SERVO_CP]/z_servo[SERVO_CI])));
         
         bp->new_line ();
         bp->set_label_width_chars ();
@@ -1736,8 +1746,10 @@ void RPSPMC_Control::create_folder (){
                                    G_CALLBACK(RPSPMC_Control::ZServoControl), this, ((int)spmc_parameters.gvp_status)&1, 0);
 #endif
         spmc_parameters.z_servo_invert = 1.;
+        bp->set_configure_list_mode_on ();
         bp->grid_add_check_button ("Invert Z Polarity", "Set Negative Z Polarity\n** WARNING: on change Z will jump to inverse! **", 1,
                                    G_CALLBACK(RPSPMC_Control::ZServoControlInv), this, spmc_parameters.z_servo_invert < 0.0, 0);
+        bp->set_configure_list_mode_off ();
 
 
 	// ========================================
@@ -2106,6 +2118,7 @@ void RPSPMC_Control::create_folder (){
         bp->grid_add_ec (NULL, Volt, &spmc_parameters.zs_monitor, -10.0, 10.0, ".03g", 0.1, 1., "GVP-ZS-MONITOR");
         EC_GVP_MON_list = g_slist_prepend( EC_GVP_MON_list, bp->ec);
         bp->ec->Freeze ();
+        bp->set_configure_list_mode_on ();
         bp->grid_add_ec (NULL, Volt, &spmc_parameters.gvpa_monitor, -10.0, 10.0, ".03g", 0.1, 1., "GVP-A-MONITOR");
         EC_GVP_MON_list = g_slist_prepend( EC_GVP_MON_list, bp->ec);
         bp->ec->Freeze ();
@@ -2118,6 +2131,7 @@ void RPSPMC_Control::create_folder (){
         bp->grid_add_ec (NULL, Volt, &spmc_parameters.gvpfmc_monitor, -10.0, 10.0, ".03g", 0.1, 1., "GVP-FMC-MONITOR");
         EC_GVP_MON_list = g_slist_prepend( EC_GVP_MON_list, bp->ec);
         bp->ec->Freeze ();
+        bp->set_configure_list_mode_off ();
         mon_FB = 0;
         bp->grid_add_ec ("FB:", Unity, &mon_FB, -9999, 9999, ".0f", "GVP-ZSERVO-MONITOR");
         EC_GVP_MON_list = g_slist_prepend( EC_GVP_MON_list, bp->ec);
