@@ -1731,7 +1731,7 @@ void RPSPMC_Control::create_folder (){
         
         bp->new_line ();
         bp->set_label_width_chars ();
-#if 1
+#if 0
         bp->grid_add_check_button ("Enable", "enable Z servo feedback controller." PYREMOTE_CHECK_HOOK_KEY("MainZservo"), 1,
                                    G_CALLBACK(RPSPMC_Control::ZServoControl), this, ((int)spmc_parameters.gvp_status)&1, 0);
 #endif
@@ -2118,7 +2118,8 @@ void RPSPMC_Control::create_folder (){
         bp->grid_add_ec (NULL, Volt, &spmc_parameters.gvpfmc_monitor, -10.0, 10.0, ".03g", 0.1, 1., "GVP-FMC-MONITOR");
         EC_GVP_MON_list = g_slist_prepend( EC_GVP_MON_list, bp->ec);
         bp->ec->Freeze ();
-        bp->grid_add_ec (NULL, Unity, &spmc_parameters.gvp_status, 0., (double)0xffff, ".0f", 0.1, 1., "GVP-ZSERVO-MONITOR");
+        mon_FB = 0;
+        bp->grid_add_ec ("FB:", Unity, &mon_FB, -9999, 9999, ".0f", "GVP-ZSERVO-MONITOR");
         EC_GVP_MON_list = g_slist_prepend( EC_GVP_MON_list, bp->ec);
         bp->ec->Freeze ();
         

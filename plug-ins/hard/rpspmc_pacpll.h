@@ -851,6 +851,7 @@ public:
 	guint64    GVP_auto_flags;
 	GtkWidget *VPprogram[10];
 	GtkWidget *GVP_status;
+        int mon_FB;
         //gtk_widget_queue_draw (gvp_preview_are); // update wave
         GtkWidget *gvp_preview_area;
         static void gvp_preview_draw_function (GtkDrawingArea *area, cairo_t *cr,
@@ -865,6 +866,15 @@ public:
         void write_spm_scan_vector_program (double rx, double ry, int nx, int ny, double slew[2], int subscan[4], long int srcs[4], int gvp_options=0);
 
         void on_new_data (){
+                int s=(int)round(spmc_parameters.gvp_status);
+                int Sgvp = (s>>8) & 0xf;  // assign GVP_status = { sec[32-4:0], setvec, reset, pause, ~finished };
+                int Sspm = s & 0xff;      // assign SPM status = { ...SPM Z Servo Hold, GVP-FB-Hold, GVP-Finished, Z Servo EN }
+
+                mon_FB =  ((Sspm & 0x01) && !(Sspm & 0x04) && !(Sspm & 0x04) && !(Sspm & 0x08)) ? 1:0
+                        + ((Sgvp & 0x01 ? 1:0) << 1);
+
+                //g_message ("on new data, GVP status: %x %x %x %d", s, Sgvp,Sspm, mon_FB);
+                
                 // RPSPM-GVP
                 if (G_IS_OBJECT (window))
                         g_slist_foreach((GSList*)g_object_get_data( G_OBJECT (window), "GVP_VEC_MONITOR_list"),
