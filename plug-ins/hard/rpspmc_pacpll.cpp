@@ -2429,16 +2429,32 @@ void RPSPMC_Control::create_folder (){
 	//GVP_status = bp->grid_add_probe_status ("Status");
 
         gvp_preview_area = gtk_drawing_area_new ();
-        gtk_drawing_area_set_content_width (GTK_DRAWING_AREA (gvp_preview_area), 512);
+        //gtk_drawing_area_set_content_width (GTK_DRAWING_AREA (gvp_preview_area), 512);
         gtk_drawing_area_set_content_height (GTK_DRAWING_AREA (gvp_preview_area), 128);
         //gtk_widget_set_size_request (gvp_preview_area, -1, 128);
-        gtk_widget_set_hexpand (gvp_preview_area, true);
+        //gtk_widget_set_hexpand (gvp_preview_area, true);
         //gtk_widget_compute_expand (gvp_preview_area, GTK_ORIENTATION_HORIZONTAL);
+
+	GtkWidget *scrollarea = gtk_scrolled_window_new ();
+
+        gtk_widget_set_hexpand (scrollarea, TRUE);
+        gtk_widget_set_vexpand (scrollarea, TRUE);
         
+	/* the policy is one of GTK_POLICY AUTOMATIC, or GTK_POLICY_ALWAYS.
+	 * GTK_POLICY_AUTOMATIC will automatically decide whether you need
+	 * scrollbars, whereas GTK_POLICY_ALWAYS will always leave the scrollbars
+	 * there.  The first one is the horizontal scrollbar, the second, 
+	 * the vertical. */
+	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrollarea),
+					GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+	gtk_scrolled_window_set_child (GTK_SCROLLED_WINDOW (scrollarea), gvp_preview_area);
+        
+        bp->grid_add_widget (scrollarea);
+        //bp->grid_add_widget (gvp_preview_area);
+
         gtk_drawing_area_set_draw_func (GTK_DRAWING_AREA (gvp_preview_area),
                                         GtkDrawingAreaDrawFunc (RPSPMC_Control::gvp_preview_draw_function),
                                         this, NULL);
-        bp->grid_add_widget (gvp_preview_area);
         
         bp->pop_grid ();
         bp->new_line ();

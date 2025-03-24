@@ -835,7 +835,7 @@ void RPSPMC_Control::gvp_preview_draw_function (GtkDrawingArea *area, cairo_t *c
         int m=128;
         int mar=18;
 
-        gtk_drawing_area_set_content_width (area, n+100);
+        //gtk_drawing_area_set_content_width (area, n+100);
         gtk_drawing_area_set_content_height (area, m);
 
         cairo_translate (cr, 50., m/2);
