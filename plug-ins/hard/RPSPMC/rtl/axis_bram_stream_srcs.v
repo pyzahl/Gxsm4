@@ -113,7 +113,8 @@ module axis_bram_stream_srcs #(
     input wire [32-1:0] S_AXIS_chDs_tdata, // LockInA 0x1000  LockIn X (ToDo)                                         | MUXABLE
     input wire          S_AXIS_chDs_tvalid,
     input wire [32-1:0] S_AXIS_chEs_tdata, // LockInB 0x2000  LocKin R (ToDo)                                         | MUXABLE
-
+    input wire          S_AXIS_chEs_tvalid,
+    
 /* 
  ========================================
  MUX 16 => 6 on ch9s ... chEs
