@@ -90,30 +90,54 @@ module axis_bram_stream_srcs #(
     input wire          S_AXIS_ch1s_tvalid,
     input wire [32-1:0] S_AXIS_ch2s_tdata, // YS      0x0002  Y in Scan coords
     input wire          S_AXIS_ch2s_tvalid,
-    input wire [32-1:0] S_AXIS_ch3s_tdata, // ZS      0x0004  Z
+    input wire [32-1:0] S_AXIS_ch3s_tdata, // ZS      0x0004  Z-Scan/Topo w/o plane
     input wire          S_AXIS_ch3s_tvalid,
     input wire [32-1:0] S_AXIS_ch4s_tdata, // U       0x0008  Bias
     input wire          S_AXIS_ch4s_tvalid,
-    input wire [32-1:0] S_AXIS_ch5s_tdata, // IN1     0x0010  IN1 RP (Signal) -- PLL Signal
+    input wire [32-1:0] S_AXIS_ch5s_tdata, // IN1     0x0010  processed tunnel current signal 
     input wire          S_AXIS_ch5s_tvalid,
-    input wire [32-1:0] S_AXIS_ch6s_tdata, // IN2     0x0020  IN2 RP (Current -- after FIR, OFFSET COMP in SQ8.24)
+    input wire [32-1:0] S_AXIS_ch6s_tdata, // IN2     0x0020  IN2 RP 125MSPS (RF input, FIR, routable to Z-Servo Control as tunnel current signal)
     input wire          S_AXIS_ch6s_tvalid,
-    input wire [32-1:0] S_AXIS_ch7s_tdata, // IN3     0x0040  reserved, N/A at this time [NOW: IN2-Z-SERVO-PASS]
+    input wire [32-1:0] S_AXIS_ch7s_tdata, // IN3     0x0040  IN3 ADC4630-24 2MSPS (routable to Z-Servo Control as tunnel current signal)
     input wire          S_AXIS_ch7s_tvalid,
-    input wire [32-1:0] S_AXIS_ch8s_tdata, // IN4     0x0080  reserved, N/A at this time [NOW: Z-SLOPE]
+    input wire [32-1:0] S_AXIS_ch8s_tdata, // IN4     0x0080  IN4 ADC4630-24 2MSPS
     input wire          S_AXIS_ch8s_tvalid,
-    input wire [32-1:0] S_AXIS_ch9s_tdata, // DFREQ   0x0100  via PACPLL FIR1 ** via transport / decimation selector  | MUXABLE in Future
+    input wire [32-1:0] S_AXIS_ch9s_tdata, // DFREQ   0x0100  via PACPLL FIR1 ** via transport / decimation selector  | MUXABLE with other signal...
     input wire          S_AXIS_ch9s_tvalid,
-    input wire [32-1:0] S_AXIS_chAs_tdata, // EXEC    0x0200  via PACPLL FIR2 ** via transport / decimation selector  | MUXABLE in Future
+    input wire [32-1:0] S_AXIS_chAs_tdata, // EXEC    0x0200  via PACPLL FIR2 ** via transport / decimation selector  | MUXABLE
     input wire          S_AXIS_chAs_tvalid,
-    input wire [32-1:0] S_AXIS_chBs_tdata, // PHASE   0x0400  via PACPLL FIR3 ** via transport / decimation selector  | MUXABLE in Future
+    input wire [32-1:0] S_AXIS_chBs_tdata, // PHASE   0x0400  via PACPLL FIR3 ** via transport / decimation selector  | MUXABLE
     input wire          S_AXIS_chBs_tvalid,
-    input wire [32-1:0] S_AXIS_chCs_tdata, // AMPL    0x0800  via PACPLL FIR4 ** via transport / decimation selector  | MUXABLE in Future
+    input wire [32-1:0] S_AXIS_chCs_tdata, // AMPL    0x0800  via PACPLL FIR4 ** via transport / decimation selector  | MUXABLE
     input wire          S_AXIS_chCs_tvalid,
-    input wire [32-1:0] S_AXIS_chDs_tdata, // LockInA 0x1000  LockIn X (ToDo) | MUXABLE in Future [NOW: IN2 NO FIR]
+    input wire [32-1:0] S_AXIS_chDs_tdata, // LockInA 0x1000  LockIn X (ToDo)                                         | MUXABLE
     input wire          S_AXIS_chDs_tvalid,
-    input wire [32-1:0] S_AXIS_chEs_tdata, // LockInB 0x2000  LocKin R (ToDo) | MUXABLE in Future [NOW: dFreq CTRL]
-    input wire          S_AXIS_chEs_tvalid,
+    input wire [32-1:0] S_AXIS_chEs_tdata, // LockInB 0x2000  LocKin R (ToDo)                                         | MUXABLE
+
+/* 
+ ========================================
+ MUX 16 => 6 on ch9s ... chEs
+ ========================================
+MUX00   ---   FIR_CH2_DFRQ
+MUX01   ---   FIR_CH4_EXEC
+MUX02   ---   FIR_CH1_PHASE
+MUX03   ---   FIR_CH3_AMPL
+MUX04   ---   FIR_CH2_DFREQ_CTRL_VAL : can be added to Z-control for true Z AFM mode in freq regulation, or addded to Bias for SQDM mode
+MUX05   ---   IN1 FBW **** IN1 RP 125MSPS (Signal) -- PLL Signal (FBW)
+MUX06   ---   IN1 FIR **** IN1 RP 125MSPS (Signal) -- PLL Signal (FIR)
+MUX07   ---   IN2 FBW
+MUX08   ---   LCK-Mag/BiQuad/IIR
+MUX09   ---   LCK-X -- needs filter, route to BiQuad?
+MUX10   ---   LCK-Y -- need filter
+MUX11   ---   IN4 FIR
+MUX12   ---   **  Lck-i ** dbg
+MUX13   ---   ** SD-Ref ** dbg
+MUX14   ---   ** LCK-Mag-BiQuad-pass ** dbg
+MUX15   ---   Z-with-slope
+ ========================================
+*/	  
+
+
     // from below
     // gvp_time[32-1: 0]      // TIME  0x4000 // lower 32
     // gvp_time[48-1:32]      // TIME  0x8000 // upper 32 (16 lower only)

@@ -168,16 +168,16 @@ SOURCE_SIGNAL_DEF rpspmc_source_signals[] = {
         { 0x00000002, "YS-Mon",       " ", "AA", UTF8_ANGSTROEM,                   SPMC_AD5791_to_volts, PROBEDATA_ARRAY_S2,  2 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x00000004, "ZS-Topo",      " ", "AA", UTF8_ANGSTROEM,                   SPMC_AD5791_to_volts, PROBEDATA_ARRAY_S3,  3 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x00000008, "Bias-Mon",     " ", "V",             "V",                   SPMC_AD5791_to_volts, PROBEDATA_ARRAY_S4,  4 }, // BiasFac, see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
-        { 0x00000010, "In1-Signal",   " ", "V",             "V",                   SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S5,  5 },
-        { 0x00000020, "In2-Current",  " ", "nA",           "nA",                   SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S6,  6 }, // CurrFac, see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
-        { 0x00000040, "In3-AD463-24-CH1", " ", "V",         "V",                   SPMC_RPIN34_to_volts, PROBEDATA_ARRAY_S7,  7 },
-        { 0x00000080, "In4-AD463-24-CH2", " ", "V",         "V",                   SPMC_RPIN34_to_volts, PROBEDATA_ARRAY_S8,  8 },
-        { 0x00000100, "SWP*00",       " ",  "V",            "V",                                    1.0, PROBEDATA_ARRAY_S9,  9 },  // ich= 8 ** swappable via GVP-SRC-MUX ** -- been replaced as set from swappable_signals[]
-        { 0x00000200, "SWP*01",        " ", "V",            "V",                                    1.0, PROBEDATA_ARRAY_S10, 10 }, // ich= 9 ** swappable via GVP-SRC-MUX ** -- been replaced as set from swappable_signals[]
-        { 0x00000400, "SWP*02",       " ",  "V",            "V",                                    1.0, PROBEDATA_ARRAY_S11, 11 }, // ich=10 ** swappable via GVP-SRC-MUX ** -- been replaced as set from swappable_signals[]
-        { 0x00000800, "SWP*03",       " ",  "V",            "V",                                    1.0, PROBEDATA_ARRAY_S12, 12 }, // ich=11 ** swappable via GVP-SRC-MUX ** -- been replaced as set from swappable_signals[]
-        { 0x00001000, "SWP*04",       " ",  "V",            "V",                                    1.0, PROBEDATA_ARRAY_S13, 13 }, // ich=12 ** swappable via GVP-SRC-MUX ** -- been replaced as set from swappable_signals[]
-        { 0x00002000, "SWP*05",       " ",  "V",            "V",                                    1.0, PROBEDATA_ARRAY_S14, 14 }, // ich=13 ** swappable via GVP-SRC-MUX ** -- been replaced as set from swappable_signals[]
+        { 0x00000010, "Current",      " ", "nA",           "nA",                   SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S5,  5 }, // processed tunnel current signal "Volts" here, to nA/pA later!!!
+        { 0x00000020, "In2-FIR",      " ", "V",             "V",                   SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S6,  6 }, // IN2 RP 125MSPS (RF input, FIR, routable to Z-Servo Control as tunnel current signal)!
+        { 0x00000040, "In3-AD463-24-CH1", " ", "V",         "V",                   SPMC_RPIN34_to_volts, PROBEDATA_ARRAY_S7,  7 }, // IN3 ADC4630-24 2MSPS (routable to Z-Servo Control as tunnel current signal)
+        { 0x00000080, "In4-AD463-24-CH2", " ", "V",         "V",                   SPMC_RPIN34_to_volts, PROBEDATA_ARRAY_S8,  8 }, // IN4 ADC4630-24 2MSPS
+        { 0x00000100, "SWP*00",       " ",  "V",            "V",                                    1.0, PROBEDATA_ARRAY_S9,  9 },  // ich= 8 ** swappable via GVP-SRC-MUX1 ** -- been replaced as set from swappable_signals[]
+        { 0x00000200, "SWP*01",        " ", "V",            "V",                                    1.0, PROBEDATA_ARRAY_S10, 10 }, // ich= 9 ** swappable via GVP-SRC-MUX2 ** -- been replaced as set from swappable_signals[]
+        { 0x00000400, "SWP*02",       " ",  "V",            "V",                                    1.0, PROBEDATA_ARRAY_S11, 11 }, // ich=10 ** swappable via GVP-SRC-MUX3 ** -- been replaced as set from swappable_signals[]
+        { 0x00000800, "SWP*03",       " ",  "V",            "V",                                    1.0, PROBEDATA_ARRAY_S12, 12 }, // ich=11 ** swappable via GVP-SRC-MUX4 ** -- been replaced as set from swappable_signals[]
+        { 0x00001000, "SWP*04",       " ",  "V",            "V",                                    1.0, PROBEDATA_ARRAY_S13, 13 }, // ich=12 ** swappable via GVP-SRC-MUX5 ** -- been replaced as set from swappable_signals[]
+        { 0x00002000, "SWP*05",       " ",  "V",            "V",                                    1.0, PROBEDATA_ARRAY_S14, 14 }, // ich=13 ** swappable via GVP-SRC-MUX6 ** -- been replaced as set from swappable_signals[]
         { 0x00004000, "--",           " ", "V",             "V",                                    1.0, PROBEDATA_ARRAY_S15,   -1 }, // -- DUMMY SO FAR
         { 0x00008000, "--",           " ", "V",             "V",                                    1.0, PROBEDATA_ARRAY_COUNT, -1 }, // -- DUMMY SO FAR
         { 0x80000000, "BlockI",       " ", "i#",           "i#",                                    1.0, PROBEDATA_ARRAY_BLOCK, -1 }, // MUST BE ALWAYS LAST AND IN HERE!! END MARK.
@@ -187,22 +187,23 @@ SOURCE_SIGNAL_DEF rpspmc_source_signals[] = {
 // so far fixed to swappable 4 signals as of GUI design!
 SOURCE_SIGNAL_DEF swappable_signals[] = {                                                                 // DEFAULT MUX MAP, 16 signals max 
         //  SIGNAL #  Name               Units.... Scale                                         DEFAULT ASSIGN
-        { 0x00000000, "dFrequency",  " ", "Hz", "Hz", (125e6/((1L<<RP_FPGA_QFREQ)-1)),                0, -1 },
-        { 0x00000001, "Excitation",  " ", "mV", "mV", (1000.0/((1L<<RP_FPGA_QEXEC)-1)),                  1, -1 },
-        { 0x00000002, "Phase",       " ", "deg", UTF8_DEGREE, (180.0/(M_PI*((1L<<RP_FPGA_QATAN)-1))), 2, -1 },
-        { 0x00000003, "Amplitude",   " ", "mV", "mV", (1000.0/((1L<<RP_FPGA_QSQRT)-1)),                  3, -1 },
-        { 0x00000004, "dFreq-Control", " ", "mV", "mV", (1000.0*SPMC_AD5791_to_volts),                   4, -1 }, // *** still assuming +/-10V range in PAC Control mappted to 5V here
-        { 0x00000005, "05-IN1-",       " ", "V", "V", (1.0),                                          5, -1 },
-        { 0x00000006, "06-LCKSignalDec", " ", "V", "V", (1.0),                                       -1, -1 },
-        { 0x00000007, "07-LCKi",        " ", "V", "V", (1.0),                                        -1, -1 },
-        { 0x00000008, "08-SDRef",       " ", "V", "V", (1.0),                                        -1, -1 },
-        { 0x00000009, "09-ZSmon",       " ", "V", "V", (1.0),                                        -1, -1 },
-        { 0x00000010, "10-LockInY",     " ", "V", "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),          -1, -1 },
-        { 0x00000011, "11-LockInX",     " ", "V", "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),          -1, -1 },
-        { 0x00000012, "12-LockInMagBQIIR",   " ", "V", "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),     -1, -1 },
-        { 0x00000013, "13-SineRef",     " ", "V",   "V", (SPMC_RPIN12_to_volts),                     -1, -1 },
-        { 0x00000014, "14-LockInMag",    " ", "V",   "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),       -1, -1 },
-        { 0x00000015, "15-ZwSlope-OUT", " ", "V",   "V", (SPMC_AD5791_to_volts),                     -1, -1 },
+        { 0x00000000, "dFrequency",  " ", "Hz", "Hz", (125e6/((1L<<RP_FPGA_QFREQ)-1)),                0, -1 },   // dFREQ via PACPLL FIR_CH2 ** via transport / decimation selector 
+        { 0x00000001, "Excitation",  " ", "mV", "mV", (1000.0/((1L<<RP_FPGA_QEXEC)-1)),               1, -1 },   // EXEC  via PACPLL FIR_CH4 ** via transport / decimation selector 
+        { 0x00000002, "Phase",       " ", "deg", UTF8_DEGREE, (180.0/(M_PI*((1L<<RP_FPGA_QATAN)-1))), 2, -1 },   // PHASE via PACPLL FIR_CH1 ** via transport / decimation selector 
+        { 0x00000003, "Amplitude",   " ", "mV", "mV", (1000.0/((1L<<RP_FPGA_QSQRT)-1)),               3, -1 },   // AMPL  via PACPLL FIR_CH3 ** via transport / decimation selector 
+        { 0x00000004, "dFreq-Control", " ", "mV", "mV", (1000.0*SPMC_AD5791_to_volts),                4, -1 },   // IR_CH2_DFREQ_CTRL_VAL : can be added to Z-control for true Z AFM mode in freq regulation, or addded to Bias for SQDM mode
+                                                                                                                 // *** still assuming +/-10V range in PAC Control mappted to 5V here
+        { 0x00000005, "05-IN1-FBW",     " ", "V", "V", SPMC_RPIN12_to_volts,                          5, -1 },   // IN1 FBW **** IN1 RP 125MSPS (Signal) -- PLL Signal (FBW)
+        { 0x00000006, "06-IN1-FIR",     " ", "V", "V", SPMC_RPIN12_to_volts,                         -1, -1 },   // IN1 FIR **** IN1 RP 125MSPS (Signal) -- PLL Signal (FIR)
+        { 0x00000007, "07-IN2-FBW",     " ", "V", "V", SPMC_RPIN12_to_volts,                         -1, -1 },   // IN2 FBW
+        { 0x00000008, "08-LockIn-Mag-BQ",  " ", "V", "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),       -1, -1 },   // LCK-Mag/BiQuad/IIR
+        { 0x00000009, "09-LockIn-X",    " ", "V", "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),          -1, -1 },   // LCK-X -- needs filter, route to BiQuad?
+        { 0x00000010, "10-LockIn-Y",    " ", "V", "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),          -1, -1 },   // LCK-Y -- need filter
+        { 0x00000011, "11-IN4-FIR",     " ", "V", "V", SPMC_RPIN34_to_volts,                         -1, -1 },   // IN4 FIR
+        { 0x00000012, "12-LCK-i",       " ", "V", "V", (1.0),                                        -1, -1 },   // ** Lck-i ** dbg
+        { 0x00000013, "13-SineRef",     " ", "V",   "V", (SPMC_RPIN12_to_volts),                     -1, -1 },   // ** SD-Ref ** dbg
+        { 0x00000014, "14-LockInMag-pass", " ", "V",   "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),     -1, -1 },   // LCK-Mag-BiQuad-pass ** dbg
+        { 0x00000015, "15-ZwSlope-OUT", " ", "V",   "V", (SPMC_AD5791_to_volts),                     -1, -1 },   // Z-with-slope
         { 0x00000016, "X-TestSignal = 0", " ", "V",   "V", (1.0),                         -1, -1 },
         { 0x00000017, "X-TestSignal = 1", " ", "V",   "V", (1.0),                         -1, -1 },
         { 0x00000018, "X-TestSignal = -1", " ", "V",   "V", (1.0),                        -1, -1 },
@@ -227,7 +228,7 @@ SOURCE_SIGNAL_DEF modulation_targets[] = {
 
 SOURCE_SIGNAL_DEF z_servo_current_source[] = {
         //  SIGNAL #  Name               Units.... Scale
-        { 0x00000000, "RF-In2",    " ",  "nA",  "nA", 256*SPMC_RPIN12_to_volts, 0, 0 },
+        { 0x00000000, "RF-In2",    " ",  "nA",  "nA",     SPMC_RPIN12_to_volts, 0, 0 },
         { 0x00000001, "AD24-In1",  " ",  "nA",  "nA",     SPMC_RPIN34_to_volts, 0, 0 },
         { 0x00000016,  NULL, NULL, NULL, NULL, 0.0, 0 }
 };

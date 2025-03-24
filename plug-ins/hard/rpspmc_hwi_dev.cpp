@@ -1425,7 +1425,7 @@ int rpspmc_hwi_dev::read_signal_lookup (){
 		dsp_signal_lookup_managed[i].p = dsp_signal_list[i].p;
 		dsp_signal_lookup_managed[i].dim   = dsp_signal_lookup[i].dim;
 		dsp_signal_lookup_managed[i].label = g_strdup(dsp_signal_lookup[i].label);
-                if (i==0){ // IN0 dedicated to tunnel current via IVC
+                if (i==0){ //dedicated to tunnel current via IVC
                         // g_print ("1nA to Volt=%g  1pA to Volt=%g",main_get_gapp()->xsm->Inst->nAmpere2V (1.),main_get_gapp()->xsm->Inst->nAmpere2V (1e-3));
                         if (main_get_gapp()->xsm->Inst->nAmpere2V (1.) > 1.){
                                 dsp_signal_lookup_managed[i].unit  = g_strdup("pA"); // use pA scale
