@@ -1988,7 +1988,8 @@ void GVPMoverControl::wave_preview_draw_function (GtkDrawingArea *area, cairo_t 
                 }
 
                 self->create_waveform (1., period, cycles, j==0 ? 1 : -1, axis, SRCS, opt); // preview params only, scale 1V, 5ms, 2 cycles, Fwd/Rev, axis=0
-                int N=RPSPMC_ControlClass->calculate_GVP_total_number_points();
+                int Ns;
+                int N=RPSPMC_ControlClass->calculate_GVP_total_number_points (Ns);
 
                 if ( N > 1){
                         cairo_item_path *gvp_wave = new cairo_item_path (N);

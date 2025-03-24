@@ -783,6 +783,11 @@ void RPSPMC_Control::gvp_preview_draw_function (GtkDrawingArea *area, cairo_t *c
                                                 int             width,
                                                 int             height,
                                                 RPSPMC_Control *self){
+
+        // DO NEVER RUN SIMULATE WHILE GVP IS ACTIVE!
+        if (rpspmc_hwi->is_scanning ())
+                return;
+
         /* from css/styles.css
 #gvpcolor1 { background-image: none; background-color: #e8e01b; color: white; font-weight: bold; border-radius: 6px; margin-left: 4px; }
 #gvpcolor2 { background-image: none; background-color: #69e81b; color: white; font-weight: bold; border-radius: 6px; margin-left: 4px; }
@@ -826,7 +831,7 @@ void RPSPMC_Control::gvp_preview_draw_function (GtkDrawingArea *area, cairo_t *c
 
         if (ns < 1) return;
         
-        int n=850;
+        int n=width-100; //850;
         int m=128;
         int mar=18;
 
@@ -854,8 +859,11 @@ void RPSPMC_Control::gvp_preview_draw_function (GtkDrawingArea *area, cairo_t *c
         wave->draw (cr);
         delete wave;
 
-        int N = self->calculate_GVP_total_number_points();
+        int Ns;
+        int N = self->calculate_GVP_total_number_points (Ns);
+        // g_message ("N=%d, Ns=%d, W:%d", N, Ns, width);
         if ( N > 0){
+                int Nsc=0;
                 // gvp waves
                 for (int k=0; k<ns; ++k){
                         gvp_wave[k] = new cairo_item_path (N);
@@ -911,7 +919,17 @@ void RPSPMC_Control::gvp_preview_draw_function (GtkDrawingArea *area, cairo_t *c
                                         if (txyp+35 > tlabposx) ++tlabposy%=4; // try to not overlap
                                         else tlabposy=0;
                                         txyp=tlabposx;
-                                        tms->set_text (tlabposx, 60-10*tlabposy, lab);
+                                        if (++Nsc > 200){
+                                                g_message ("Annotaions / Section Count Limit reached for meaningful visualization. #S=%d. Stopping plot here.", Nsc);
+                                                tms->set_stroke_rgba (CAIRO_COLOR_RED);
+                                                tms->set_font_face_size ("Ununtu", 18.);
+                                                tms->set_text (100, -10, "STOPPING PLOT: Section Count Limit reached.");
+                                                tms->draw (cr);
+                                                g_free (lab);
+                                                tms->set_font_face_size ("Ununtu", 8.);
+                                                break;
+                                        } else
+                                                tms->set_text (tlabposx, 60-10*tlabposy, lab);
                                         tms->draw (cr);
                                         g_free (lab);
                                 }

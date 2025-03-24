@@ -2134,7 +2134,7 @@ void RPSPMC_Control::create_folder (){
         bp->set_configure_list_mode_off ();
         mon_FB = 0;
         bp->set_input_nx (5);
-        bp->grid_add_ec ("FB: ", Unity, &mon_FB, -9999, 9999, ".0f", "GVP-ZSERVO-MONITOR");
+        bp->grid_add_ec (" FB: ", Unity, &mon_FB, -9999, 9999, ".0f", "GVP-ZSERVO-MONITOR");
         gvp_monitor_fb_label = bp->label;
         gvp_monitor_fb_info_ec = bp->ec;
 
@@ -2429,9 +2429,12 @@ void RPSPMC_Control::create_folder (){
 	//GVP_status = bp->grid_add_probe_status ("Status");
 
         gvp_preview_area = gtk_drawing_area_new ();
-        gtk_widget_set_size_request (gvp_preview_area, 800, 128);
         gtk_drawing_area_set_content_width (GTK_DRAWING_AREA (gvp_preview_area), 512);
         gtk_drawing_area_set_content_height (GTK_DRAWING_AREA (gvp_preview_area), 128);
+        //gtk_widget_set_size_request (gvp_preview_area, -1, 128);
+        gtk_widget_set_hexpand (gvp_preview_area, true);
+        //gtk_widget_compute_expand (gvp_preview_area, GTK_ORIENTATION_HORIZONTAL);
+        
         gtk_drawing_area_set_draw_func (GTK_DRAWING_AREA (gvp_preview_area),
                                         GtkDrawingAreaDrawFunc (RPSPMC_Control::gvp_preview_draw_function),
                                         this, NULL);

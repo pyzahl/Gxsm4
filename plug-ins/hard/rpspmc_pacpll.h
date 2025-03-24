@@ -575,13 +575,15 @@ public:
                         program_vector_list[i].iloop = program_vector_list[i].repetitions; // init
         };
 
-        int calculate_GVP_total_number_points(){
+        int calculate_GVP_total_number_points(int &Ns){
                 int N=0;
+                Ns=0;
                 if (program_vector_list[0].n){
                         re_init_vector_program();
                         for (int pc=0; RPSPMC_ControlClass->program_vector_list[pc].n; ){
                                 N += RPSPMC_ControlClass->program_vector_list[pc].n;
                                 pc = RPSPMC_ControlClass->next_section(pc);
+                                Ns++;
                         }
                 }
                 return N;
