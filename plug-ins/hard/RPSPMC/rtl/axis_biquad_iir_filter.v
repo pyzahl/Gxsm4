@@ -102,19 +102,18 @@ module axis_biquad_iir_filter #(
     reg signed [coefficient_width-1:0] a1=0; /* coefficient internal size */
     reg signed [coefficient_width-1:0] a2=0; /* coefficient internal size */
 
+    reg signed [signal_width+coefficient_width-1:0] x_b0=0; /* product input */
+    reg signed [signal_width+coefficient_width-1:0] x_b1=0; /* product input */
+    reg signed [signal_width+coefficient_width-1:0] x_b2=0; /* product input */
+    reg signed [signal_width+coefficient_width-1:0] y_a1=0; /* product output */
+    reg signed [signal_width+coefficient_width-1:0] y_a2=0; /* product output */
     
-    reg signed [signal_width+internal_extra-1:0] x1=0; /* input data pipeline */
-    reg signed [signal_width+internal_extra-1:0] x2=0; /* input data pipeline */
+    reg signed [signal_width-1:0] x1=0; /* input data pipeline */
+    reg signed [signal_width-1:0] x2=0; /* input data pipeline */
+    reg signed [signal_width+coefficient_width+internal_extra-1:0] y1_tmpx=0; /* output data pipeline prod tmp */
+    reg signed [signal_width+coefficient_width+internal_extra-1:0] y1_tmpy=0; /* output data pipeline prod tmp */
     reg signed [signal_width+internal_extra-1:0] y1=0; /* output data pipeline */
-    reg signed [signal_width+internal_extra-1:0] y1_tmpx=0; /* output data pipeline */
-    reg signed [signal_width+internal_extra-1:0] y1_tmpy=0; /* output data pipeline */
     reg signed [signal_width+internal_extra-1:0] y2=0; /* output data pipeline */
-    
-    reg signed [signal_width+internal_extra + coefficient_width-1:0] x_b0=0; /* product input */
-    reg signed [signal_width+internal_extra + coefficient_width-1:0] x_b1=0; /* product input */
-    reg signed [signal_width+internal_extra + coefficient_width-1:0] x_b2=0; /* product input */
-    reg signed [signal_width+internal_extra + coefficient_width-1:0] y_a1=0; /* product output */
-    reg signed [signal_width+internal_extra + coefficient_width-1:0] y_a2=0; /* product output */
     
     reg decii_clk=0;
     reg [1:0] run=0;
@@ -165,31 +164,31 @@ module axis_biquad_iir_filter #(
                         if (decii_clk) // run at decimated rate as given by axis_decii_clk
                         begin
                             run <= 1; // start
-                            x   <= S_AXIS_in_tdata; // load next input
-                            x1  <= x;               // stage input pipe line with x
-                            x2  <= x1;
+                            x   <= S_AXIS_in_tdata; // load next input                [signal_width]  SQ32
+                            x1  <= x;               // stage input pipe line  n-1    ""
+                            x2  <= x1;              // stage input pipe line  n-2    ""
     
-                            x_b0  <= b0 * x;  // IIR 1st stage (n)
-                            x_b1  <= b1 * x1; // IIR 1st stage (n-1)
-                            x_b2  <= b2 * x2;
+                            x_b0  <= b0 * x;  // IIR 0st stage (n) compute:            [signal_width+coefficient_width]  SQ 32 + 32 = SQ64
+                            x_b1  <= b1 * x1; // IIR 1st stage (n-1)                          ""
+                            x_b2  <= b2 * x2; // IIR 2nd stage (n-2)                          ""
     
                             //y1  <= (x_b0 + x_b1 + x_b2 - y_a1 - y_a2) >>> (coefficient_Q-internal_extra);
-                            y1_tmpx  <= x_b0 + x_b1 + x_b2;
-                            y1_tmpy  <= y_a1 + y_a2;
+                            y1_tmpx  <= x_b0 + x_b1 + x_b2; // tmp summing point LHS:   [signal_width+coefficient_width+internal_extra] = SQ68
+                            y1_tmpy  <= y_a1 + y_a2;        // tmp summing point RHS:   [signal_width+coefficient_width+internal_extra] = SQ68
                         end
                     end                 
                     1: // continue with results
                     begin
                         run <= 0; // done, wait for next trigger/new data
-                        y1  <= (y1_tmpx - y1_tmpy) >>> (coefficient_Q-internal_extra);
-                        y2  <= y1;
+                        y1  <= (y1_tmpx - y1_tmpy) >>> (coefficient_Q-internal_extra); // compute result y[n], normalize  => [signal_width+internal_extra]  SQ32 + 4 = SQ 36
+                        y2  <= y1;       // 2nd stage result pipe line (n-2)
                         
-                        y_a1 <= a1 * y1;
-                        y_a2 <= a2 * y2;    
+                        y_a1 <= a1 * y1; // compute RHS 1st stage  (n-1)  [signal_width+coefficient_width]  SQ 32 + 32 = SQ64
+                        y_a2 <= a2 * y2; // compute RHS 2nd stage  (n-2)  [signal_width+coefficient_width]  SQ 32 + 32 = SQ64    
                     end                
                 endcase
             end    
-            y <= y1 >>> (internal_extra);
+            y <= y1 >>> (internal_extra); // update output, normalize from internal width
         end
     end       
    
