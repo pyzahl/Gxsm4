@@ -143,6 +143,7 @@ module axis_biquad_iir_filter #(
             decii_clk <= axis_decii_clk;                     
 
             if (!resetn) begin
+                x  <= 0;
                 x1 <= 0;
                 x2 <= 0;
                 y1 <= 0;
