@@ -253,8 +253,7 @@ public:
 
 	// Graphs used life -- dep. on GLOCK if copy of user settings or memorized last setting
                 vis_Source = vis_XSource = vis_XJoin = vis_PSource = 0;
-                vis_PlotAvg = vis_PlotSec = 0;
-
+                vis_PlotAvg = vis_PlotSec = 0;                
 
 	// STS (I-V)
 #if 0
@@ -712,6 +711,8 @@ public:
 
 	int    scan_source[6];    // scan source mapping signal index for imaging
 	int    probe_source[6];   // probe source mapping signal index for 32bit data channels [0..3]
+        GtkWidget* z_servo_current_source_options_selector;
+        GtkWidget* z_servo_options_selector[4];
 
 	int    vp_input_id_cache[4];  // cache VP input config;
 	int    DSP_vpdata_ij[2];
@@ -773,6 +774,7 @@ public:
 	guint64 Source, XSource, PSource;
 	guint64 PlotAvg, PlotSec;
         gboolean XJoin, GrMatWin;
+        GtkWidget* probe_source_signal_selector[6];
 
 	// Graphs used life -- dep. on GLOCK if copy of user settings or memorized last setting
 	int vis_Source, vis_XSource, vis_XJoin, vis_PSource;

@@ -217,6 +217,7 @@ struct SPMC_parameters {
         double gvpfmc_monitor;
         double mux_monitor;
         double signal_monitor;
+        double ad463x_monitor[2];
         double x_monitor; // final XYZ = VecOffset + VecScan + Vec(0,0,Zslope)
         double y_monitor;
         double z_monitor;

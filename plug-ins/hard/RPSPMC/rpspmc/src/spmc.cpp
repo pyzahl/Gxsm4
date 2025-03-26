@@ -69,7 +69,6 @@ extern CDoubleParameter  SPMC_GVPB_MONITOR;
 extern CDoubleParameter  SPMC_GVPAMC_MONITOR;
 extern CDoubleParameter  SPMC_GVPFMC_MONITOR;
 extern CIntParameter     SPMC_MUX_MONITOR;
-extern CDoubleParameter  SPMC_SIGNAL_MONITOR;
 
 extern CDoubleParameter  SPMC_X_MONITOR;
 extern CDoubleParameter  SPMC_Y_MONITOR;
@@ -82,6 +81,11 @@ extern CDoubleParameter  SPMC_ZS_MONITOR;
 extern CDoubleParameter  SPMC_X0_MONITOR;
 extern CDoubleParameter  SPMC_Y0_MONITOR;
 extern CDoubleParameter  SPMC_Z0_MONITOR;
+
+extern CDoubleParameter  SPMC_SIGNAL_MONITOR;
+extern CDoubleParameter  SPMC_AD463X_CH1_MONITOR;
+extern CDoubleParameter  SPMC_AD463X_CH2_MONITOR;
+
 
 extern int stream_server_control;
 extern spmc_stream_server spmc_stream_server_instance;
@@ -1019,7 +1023,7 @@ void rp_spmc_update_readings (){
         //rp_spmc_module_read_config_data (SPMC_READBACK_IN_MUX_REG, &regA, &regB); // Srcs-MUX, GVP-B
         //SPMC_MUX_IN_MONITOR.Value ()  = rpspmc_to_volts (regA);
         // 0
-
+        
         regA=regB=0;
         rp_spmc_module_read_config_data (SPMC_READBACK_PMD_DA56_REG, &regA, &regB); // GVP-A, GVP-B
         SPMC_GVPA_MONITOR.Value () = rpspmc_to_volts (regA);
@@ -1030,11 +1034,15 @@ void rp_spmc_update_readings (){
         SPMC_GVPAMC_MONITOR.Value () = rpspmc_to_volts (regA);
         SPMC_GVPFMC_MONITOR.Value () = rpspmc_to_volts (regB);
 
-        
+        regA=regB=0;
+        rp_spmc_module_read_config_data (SPMC_READBACK_AD463X_REG, &regA, &regB); // AD463x CH1, CH2 readings
+        SPMC_AD463X_CH1_MONITOR.Value () = rpspmc_to_volts (regA);
+        SPMC_AD463X_CH2_MONITOR.Value () = rpspmc_to_volts (regB);
+
         SPMC_X0_MONITOR.Value () = rpspmc_to_volts (x0_buf); // ** mirror
         SPMC_Y0_MONITOR.Value () = rpspmc_to_volts (y0_buf); // ** mirror
         //SPMC_Z0_MONITOR.Value () = 0.0; // rpspmc_to_volts (read_gpio_reg_int32 (10,1));
 
-        SPMC_SIGNAL_MONITOR.Value () = rpspmc_CONTROL_SELECT_ZS_to_volts (read_gpio_reg_int32 (7,1)); // SQ8.24 
+        SPMC_SIGNAL_MONITOR.Value () = rpspmc_CONTROL_SELECT_ZS_to_volts (read_gpio_reg_int32 (7,1)); // SQ8.24 (Z-Servo Input Signal, processed)
 }
 

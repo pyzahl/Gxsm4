@@ -195,7 +195,9 @@ JSON_parameter PACPLL_JSON_parameters[] = {
 
 
 
-        { "SPMC_SIGNAL_MONITOR", &spmc_parameters.signal_monitor, true }, // Z servo input signal (current, ...)
+        { "SPMC_SIGNAL_MONITOR", &spmc_parameters.signal_monitor, true }, // Z servo input signal (current, ... -- processed)
+        { "SPMC_AD463X_CH1_MONITOR", &spmc_parameters.ad463x_monitor[0], true }, // AD463X_CH1
+        { "SPMC_AD463X_CH2_MONITOR", &spmc_parameters.ad463x_monitor[1], true }, // AD463X_CH2
 
         { "SPMC_X_MONITOR", &spmc_parameters.x_monitor, true }, // FINAL XYZ POS at DACs
         { "SPMC_Y_MONITOR", &spmc_parameters.y_monitor, true },

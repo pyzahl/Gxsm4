@@ -468,7 +468,6 @@ CDoubleParameter  SPMC_GVPB_MONITOR("SPMC_GVPB_MONITOR", CBaseParameter::RW, 0.0
 CDoubleParameter  SPMC_GVPAMC_MONITOR("SPMC_GVPAMC_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 CDoubleParameter  SPMC_GVPFMC_MONITOR("SPMC_GVPFMC_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 CIntParameter     SPMC_MUX_MONITOR("SPMC_MUX_MONITOR", CBaseParameter::RW, 0, 0, -2147483648,2147483647); // MUX code
-CDoubleParameter  SPMC_SIGNAL_MONITOR("SPMC_SIGNAL_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 CDoubleParameter  SPMC_X_MONITOR("SPMC_X_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 CDoubleParameter  SPMC_Y_MONITOR("SPMC_Y_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 CDoubleParameter  SPMC_Z_MONITOR("SPMC_Z_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
@@ -479,6 +478,9 @@ CDoubleParameter  SPMC_XS_MONITOR("SPMC_XS_MONITOR", CBaseParameter::RW, 0.0, 0,
 CDoubleParameter  SPMC_YS_MONITOR("SPMC_YS_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 CDoubleParameter  SPMC_ZS_MONITOR("SPMC_ZS_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 
+CDoubleParameter  SPMC_SIGNAL_MONITOR("SPMC_SIGNAL_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
+CDoubleParameter  SPMC_AD463X_CH1_MONITOR("SPMC_AD463X_CH1_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
+CDoubleParameter  SPMC_AD463X_CH2_MONITOR("SPMC_AD463X_CH2_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 
 
 

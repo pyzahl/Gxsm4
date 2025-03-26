@@ -242,7 +242,8 @@ SOURCE_SIGNAL_DEF rf_gen_out_dest[] = {
         { 0x00000016,  NULL, NULL, NULL, NULL, 0.0, 0 }
 };
 
-        
+
+
 // helper func to assemble mux value from selctions
 int __GVP_selection_muxval (int selection[6]) {
         int mux=0;
@@ -1612,7 +1613,7 @@ void RPSPMC_Control::create_folder (){
         bp->set_label_width_chars (10);
         bp->set_configure_list_mode_on ();
 	bp->grid_add_label ("Z-Servo");
-        bp->grid_add_z_servo_current_source_options (0, (int)spmc_parameters.z_servo_src_mux, this);
+        z_servo_current_source_options_selector = bp->grid_add_z_servo_current_source_options (0, (int)spmc_parameters.z_servo_src_mux, this);
         bp->set_configure_list_mode_off ();
 
         bp->grid_add_label ("Setpoint", NULL, 4);
@@ -1701,7 +1702,7 @@ void RPSPMC_Control::create_folder (){
                 if (signal_select_widget)
                         g_object_set_data (G_OBJECT (signal_select_widget), "related_ec_level", bp->ec);
                 
-                bp->grid_add_mixer_options (ch, mix_transform_mode[ch], this);
+                z_servo_options_selector[ch] = bp->grid_add_mixer_options (ch, mix_transform_mode[ch], this);
                 bp->set_configure_list_mode_off ();
                 bp->new_line ();
         }
@@ -2570,7 +2571,7 @@ void RPSPMC_Control::create_folder (){
                 // source selection for SWPS?:
                 if (k >= 0){ // swappable flex source
                         //g_message("bp->grid_add_probe_source_signal_options m=%d  %s => %d %s", k, rpspmc_source_signals[i].label,  probe_source[k], swappable_signals[k].label);
-                        bp->grid_add_probe_source_signal_options (k, probe_source[k], this);
+                        probe_source_signal_selector[k] = bp->grid_add_probe_source_signal_options (k, probe_source[k], this);
                 }else { // or fixed assignment
                         bp->grid_add_label (rpspmc_source_signals[i].label, NULL, 1, 0.);
                 }
@@ -5265,11 +5266,29 @@ void RPspmc_pacpll::on_connect_actions(){
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO_LOR.: %g V\n", spmc_parameters.z_servo_lower); status_append (tmp); g_free (tmp); }
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO IN..: %08x MUX selection\n", (int)spmc_parameters.z_servo_src_mux); status_append (tmp); g_free (tmp); }
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC GVP SRCS MUX: %08x MUX selection code\n", (int)spmc_parameters.gvp_stream_mux); status_append (tmp); g_free (tmp); }
+
+        int i=(int)spmc_parameters.z_servo_mode & 3;
+        if (i>=0 && i <= 3) 
+                gtk_combo_box_set_active (GTK_COMBO_BOX (RPSPMC_ControlClass->z_servo_options_selector[0]), RPSPMC_ControlClass->mix_transform_mode[0] = i);
+        else
+                status_append ("EE: Invalid Z-Servo-Setting read back.\n");
+
+        if (i>=0 && i <= 1)
+                gtk_combo_box_set_active (GTK_COMBO_BOX (RPSPMC_ControlClass->z_servo_current_source_options_selector), (int)spmc_parameters.z_servo_src_mux);
+        else
+                status_append ("EE: Invalid Z-Servo-Source MUX read back.\n");
+
+        
+        int mux=(int)spmc_parameters.gvp_stream_mux;
+        for (int k=0; k<6; ++k){
+                RPSPMC_ControlClass->probe_source[k] = (mux >> (4*k)) & 0x0f;
+                gtk_combo_box_set_active (GTK_COMBO_BOX (RPSPMC_ControlClass->probe_source_signal_selector[k]), RPSPMC_ControlClass->probe_source[k]);
+                { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC GVP SRCS MUX[%d]: %d => %s\n", k, RPSPMC_ControlClass->probe_source[k], swappable_signals[RPSPMC_ControlClass->probe_source[k]].label); status_append (tmp); g_free (tmp); }
+        }
+
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC X,Y,Z.......: %g %g %g V\n", spmc_parameters.x_monitor, spmc_parameters.y_monitor, spmc_parameters.z_monitor); status_append (tmp); g_free (tmp); }
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z0[z-slope].: %g V\n", spmc_parameters.z0_monitor); status_append (tmp); g_free (tmp); }
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC BIAS........: %g V\n", spmc_parameters.bias_monitor); status_append (tmp); g_free (tmp); }
-
-        
 
         if (reconnect_mode){ // only if cold start
                 status_append (" * RedPitaya SPM RPSPMC: Init completed and ackowldeged. Releasing normal control. Updating all from GXSM parameters.\n");
