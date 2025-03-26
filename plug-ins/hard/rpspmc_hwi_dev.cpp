@@ -1198,6 +1198,7 @@ gboolean rpspmc_hwi_dev::ScanLineM(int yindex, int xdir, int muxmode, //srcs_mas
  "B" :                Bias
  "G" :                GVP
  "F" :                GVP-AMC-FMC
+ "V" :                ADC IN1, IN2 Voltages
 */
 
 gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2, double &val3){
@@ -1305,6 +1306,12 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2,
         if (*property == 'F'){ // Monitors: GVP-AMC-FMC
                 val1 = spmc_parameters.gvpamc_monitor;
                 val2 = spmc_parameters.gvpfmc_monitor;
+                val3 = 0.;
+		return TRUE;
+        }
+        if (*property == 'V'){ // Monitors: Volatges
+                val1 = spmc_parameters.ad463x_monitor[0];
+                val2 = spmc_parameters.ad463x_monitor[1];
                 val3 = 0.;
 		return TRUE;
         }
