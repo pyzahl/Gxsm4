@@ -5252,38 +5252,44 @@ void RPspmc_pacpll::on_connect_actions(){
         status_append (" * RedPitaya SPM Control: PAC-PLL is ready.\n");
         status_append (" * RedPitaya SPM Control, SPMC init...\n");
 
+        int i=0;
+        
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Version.....: 0x%08x\n", (int)spmc_parameters.rpspmc_version); status_append (tmp); g_free (tmp); }
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC VDate.......: 0x%08x\n", (int)spmc_parameters.rpspmc_date); status_append (tmp); g_free (tmp); }
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC FPGAIMPL....: 0x%08x\n", (int)spmc_parameters.rpspmc_fpgaimpl); status_append (tmp); g_free (tmp); }
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC FPGAIMPL_D..: 0x%08x\n", (int)spmc_parameters.rpspmc_fpgaimpl_date); status_append (tmp); g_free (tmp); }
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC FPGA_STAUP..: 0x%08x\n", (int)spmc_parameters.rpspmc_fpgastartup); status_append (tmp); g_free (tmp); }
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC FPGA_RSC#...: 0x%08x\n", (int)spmc_parameters.rpspmc_fpgastartupcnt); status_append (tmp); g_free (tmp); }
-        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO_MODE: 0x%08x\n", (int)spmc_parameters.z_servo_mode); status_append (tmp); g_free (tmp); }        
+
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO_MODE: 0x%08x\n", i=(int)spmc_parameters.z_servo_mode); status_append (tmp); g_free (tmp); }        
+        i=i&7;
+        if (i>=0 && i <= 7){
+                RPSPMC_ControlClass->mix_transform_mode[0] = i;
+                { gchar *tmp = g_strdup_printf (" *                                 ==> %s%s\n", i&MM_ON? i&MM_LOG?"LOG":"LIN":"OFF", i&MM_FCZ && i&MM_ON? "-FCZ":""); status_append (tmp); g_free (tmp); }        
+                { gchar *tmp = g_strdup_printf ("%d",i); gtk_combo_box_set_active_id (GTK_COMBO_BOX (RPSPMC_ControlClass->z_servo_options_selector[0]), tmp); g_free (tmp); }
+        } else
+                status_append ("EE: Invalid Z-Servo-Mode Setting read back.\n");
+
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO_SET.: %g Veq\n", spmc_parameters.z_servo_setpoint); status_append (tmp); g_free (tmp); }
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO_CP..: %g\n", spmc_parameters.z_servo_cp); status_append (tmp); g_free (tmp); }
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO_CI..: %g\n", spmc_parameters.z_servo_ci); status_append (tmp); g_free (tmp); }
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO_UPR.: %g V\n", spmc_parameters.z_servo_upper); status_append (tmp); g_free (tmp); }
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO_LOR.: %g V\n", spmc_parameters.z_servo_lower); status_append (tmp); g_free (tmp); }
-        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO IN..: %08x MUX selection\n", (int)spmc_parameters.z_servo_src_mux); status_append (tmp); g_free (tmp); }
-        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC GVP SRCS MUX: %08x MUX selection code\n", (int)spmc_parameters.gvp_stream_mux); status_append (tmp); g_free (tmp); }
 
-        int i=(int)spmc_parameters.z_servo_mode & 3;
-        if (i>=0 && i <= 3) 
-                gtk_combo_box_set_active (GTK_COMBO_BOX (RPSPMC_ControlClass->z_servo_options_selector[0]), RPSPMC_ControlClass->mix_transform_mode[0] = i);
-        else
-                status_append ("EE: Invalid Z-Servo-Setting read back.\n");
-
-        if (i>=0 && i <= 1)
-                gtk_combo_box_set_active (GTK_COMBO_BOX (RPSPMC_ControlClass->z_servo_current_source_options_selector), (int)spmc_parameters.z_servo_src_mux);
-        else
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO IN..: %08x MUX selection\n", i=(int)spmc_parameters.z_servo_src_mux); status_append (tmp); g_free (tmp); }
+        if (i>=0 && i <= 1){
+                { gchar *tmp = g_strdup_printf (" *                                 ==> %s\n", i==0? "RF-IN2":"AD4630-24-In1"); status_append (tmp); g_free (tmp); }        
+                gtk_combo_box_set_active (GTK_COMBO_BOX (RPSPMC_ControlClass->z_servo_current_source_options_selector), i);
+        } else
                 status_append ("EE: Invalid Z-Servo-Source MUX read back.\n");
 
         
-        int mux=(int)spmc_parameters.gvp_stream_mux;
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC GVP SRCS MUX: %08x MUX selection code\n", i=(int)spmc_parameters.gvp_stream_mux); status_append (tmp); g_free (tmp); }
+        int mux=i;
         for (int k=0; k<6; ++k){
                 RPSPMC_ControlClass->probe_source[k] = (mux >> (4*k)) & 0x0f;
                 gtk_combo_box_set_active (GTK_COMBO_BOX (RPSPMC_ControlClass->probe_source_signal_selector[k]), RPSPMC_ControlClass->probe_source[k]);
-                { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC GVP SRCS MUX[%d]: %d => %s\n", k, RPSPMC_ControlClass->probe_source[k], swappable_signals[RPSPMC_ControlClass->probe_source[k]].label); status_append (tmp); g_free (tmp); }
+                { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC GVP SRCS MUX[%d]: %02d <=> %s\n", k, RPSPMC_ControlClass->probe_source[k], swappable_signals[RPSPMC_ControlClass->probe_source[k]].label); status_append (tmp); g_free (tmp); }
         }
 
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC X,Y,Z.......: %g %g %g V\n", spmc_parameters.x_monitor, spmc_parameters.y_monitor, spmc_parameters.z_monitor); status_append (tmp); g_free (tmp); }
