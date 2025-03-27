@@ -480,7 +480,7 @@ CDoubleParameter  SPMC_ZS_MONITOR("SPMC_ZS_MONITOR", CBaseParameter::RW, 0.0, 0,
 
 CDoubleParameter  SPMC_SIGNAL_MONITOR("SPMC_SIGNAL_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 CDoubleParameter  SPMC_AD463X_CH1_MONITOR("SPMC_AD463X_CH1_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
-CDoubleParameter  SPMC_("SPMC_AD463X_CH2_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
+CDoubleParameter  SPMC_AD463X_CH2_MONITOR("SPMC_AD463X_CH2_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 
 
 

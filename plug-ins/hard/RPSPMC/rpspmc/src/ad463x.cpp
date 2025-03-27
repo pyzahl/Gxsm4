@@ -752,6 +752,7 @@ static int ad463x_fill_scale_tbl(struct ad463x_dev *dev)
 		dev->scale_table[i][0] = tmp0; /* Integer part */
 		dev->scale_table[i][1] = abs(tmp1); /* Fractional part */
 	}
+        return 0;
 }
 
 void ad463x_reset (struct ad463x_dev *dev)
