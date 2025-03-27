@@ -409,16 +409,23 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, unsigned int srcs
                 if (verbose > 1) fprintf(stderr, "** Auto calc init vector to absolute position [%g %g %g %g] V\n", dx, dy, dz, du);
                 double x = rpspmc_to_volts (read_gpio_reg_int32 (1,0));
                 double y = rpspmc_to_volts (read_gpio_reg_int32 (1,1));
-                double z = rpspmc_to_volts (read_gpio_reg_int32 (10,0));
-                double u = rpspmc_to_volts (read_gpio_reg_int32 (8,0)); // Bias sum from SET and GVP
+                //double z = rpspmc_to_volts (read_gpio_reg_int32 (10,0));
+                //double u = rpspmc_to_volts (read_gpio_reg_int32 (8,0)); // Bias sum from SET and GVP
                 double bias = rpspmc_to_volts (bias_buf);
 
-                if (verbose > 1) fprintf(stderr, "** XYZU readings are => [%g %g %g %g] V, bias buffer=%g V\n", x, y, z, u, bias);
+                int regA, regB;
+                rp_spmc_module_read_config_data (SPMC_READBACK_Z_REG, &regA, &regB);
+                double z_gvp = rpspmc_to_volts (regB); // Z-GVP
+
+                rp_spmc_module_read_config_data (SPMC_READBACK_GVPBIAS_REG, &regA, &regB); // GVP Bias Comp, GVP-A
+                double u_gvp = rpspmc_to_volts (regA);
+
+                if (verbose > 1) fprintf(stderr, "** XYZU-GVP readings are => [%g %g %g %g] V, Bias (actual)=%g V\n", x, y, z_gvp, u_gvp, bias);
 
                 dx -= x;
                 dy -= y;
-                dz -= z;
-                du -= u-bias;
+                dz -= z_gvp;
+                du -= u_gvp;
 
                 // selection flags to clear auto delta to only adjust selected component
                 if ((pc&0x1001) == 0x1001)

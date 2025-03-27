@@ -1747,11 +1747,9 @@ void RPSPMC_Control::create_folder (){
         bp->grid_add_check_button ("Enable", "enable Z servo feedback controller." PYREMOTE_CHECK_HOOK_KEY("MainZservo"), 1,
                                    G_CALLBACK(RPSPMC_Control::ZServoControl), this, ((int)spmc_parameters.gvp_status)&1, 0);
 #endif
-        spmc_parameters.z_servo_invert = 1.;
-        bp->set_configure_list_mode_on ();
-        bp->grid_add_check_button ("Invert Z Polarity", "Set Negative Z Polarity\n** WARNING: on change Z will jump to inverse! **", 1,
-                                   G_CALLBACK(RPSPMC_Control::ZServoControlInv), this, spmc_parameters.z_servo_invert < 0.0, 0);
-        bp->set_configure_list_mode_off ();
+        // Z OUPUT POLARITY:
+        spmc_parameters.z_polarity      = xsmres.ScannerZPolarity ? 1 : -1; // 1: pos, 0: neg (bool) -- adjust zpos_ref accordingly!
+        spmc_parameters.gxsm_z_polarity = xsmres.ScannerZPolarity ? 1 : -1; // 1: pos, 0: neg (bool) -- adjust zpos_ref accordingly!
 
 
 	// ========================================
@@ -2887,7 +2885,7 @@ void RPSPMC_Control::ZServoParamChanged(Param_Control* pcs, RPSPMC_Control *self
                 int jdata_i[1];
 
                 // obsolete invert, critical/no good here. Add final Z-polarity at very end
-                self->z_servo[SERVO_CP] = pow (10., spmc_parameters.z_servo_cp_db/20.); // spmc_parameters.z_servo_invert * ... --- NOT HERE, ONLY FINAL Z MAY BE INVERTED
+                self->z_servo[SERVO_CP] = pow (10., spmc_parameters.z_servo_cp_db/20.); 
                 self->z_servo[SERVO_CI] = pow (10., spmc_parameters.z_servo_ci_db/20.);
 
                 jdata_i[0] = self->mix_transform_mode[0];
@@ -2917,23 +2915,21 @@ void RPSPMC_Control::ZServoControl (GtkWidget *widget, RPSPMC_Control *self){
         */
 }
 
+// ** THIS INVERTS ONYL THE Z OUTPUT, does NOT effect any internal behaviors!
 void RPSPMC_Control::ZServoControlInv (GtkWidget *widget, RPSPMC_Control* self){
-        int old = spmc_parameters.z_servo_invert;
-        spmc_parameters.z_servo_invert = gtk_check_button_get_active (GTK_CHECK_BUTTON (widget));
+        int flg = gtk_check_button_get_active (GTK_CHECK_BUTTON (widget));
 
         // CONFIRMATION DLG
-        if (spmc_parameters.z_servo_invert)
+        if (flg)
                 if ( gapp->question_yes_no ("WARNING: Please confirm Z-Polarity set to NEGATIVE."))
                         rpspmc_pacpll->write_parameter ("SPMC_Z_POLARITY", -1);
                 else
-                        gtk_check_button_set_active (GTK_CHECK_BUTTON (widget), (spmc_parameters.z_servo_invert = old));
+                        gtk_check_button_set_active (GTK_CHECK_BUTTON (widget), true);
         else
                 if ( gapp->question_yes_no ("WARNING: Please confirm Z-Polarity set to POSITIV."))
                         rpspmc_pacpll->write_parameter ("SPMC_Z_POLARITY", 1);
                 else
-                        gtk_check_button_set_active (GTK_CHECK_BUTTON (widget), (spmc_parameters.z_servo_invert = old));
-        
-        //self->ZServoParamChanged (NULL, self);
+                        gtk_check_button_set_active (GTK_CHECK_BUTTON (widget), false);
 }
 
 
@@ -5270,6 +5266,27 @@ void RPspmc_pacpll::on_connect_actions(){
         } else
                 status_append ("EE: Invalid Z-Servo-Mode Setting read back.\n");
 
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_POLARITY..: %s\n", ((int)spmc_parameters.gvp_status)&(1<<7) ? "NEG":"POS"); status_append (tmp); g_free (tmp); }        
+        spmc_parameters.gxsm_z_polarity = ((int)spmc_parameters.gvp_status)&(1<<7) ? -1:1;
+        int gxsm_preferences_polarity = xsmres.ScannerZPolarity ? 1 : -1; // 1: pos, 0: neg (bool) -- adjust zpos_ref accordingly!
+
+        // VERIFY IF CORRECT, ASK TO ADJUST IF MISMATCH
+        if (spmc_parameters.gxsm_z_polarity != gxsm_preferences_polarity &&  gxsm_preferences_polarity < 0)
+                if ( gapp->question_yes_no ("WARNING: Gxsm Preferences indicate NEGATIVE Z Polarity.\nPlease confirm to set Z-Polarity set to NEGATIVE.")){
+                        rpspmc_pacpll->write_parameter ("SPMC_Z_POLARITY", -1);
+                        spmc_parameters.gxsm_z_polarity = -1;
+                }
+
+        if (spmc_parameters.gxsm_z_polarity != gxsm_preferences_polarity &&  gxsm_preferences_polarity > 0)
+                if ( gapp->question_yes_no ("WARNING: Gxsm Preferences indicate POSITIVE Z Polarity.\nPlease confirm to set Z-Polarity set to POSITIVE.")){
+                        rpspmc_pacpll->write_parameter ("SPMC_Z_POLARITY", 1);
+                        spmc_parameters.gxsm_z_polarity = 1;
+                }
+        
+        if (spmc_parameters.gxsm_z_polarity != gxsm_preferences_polarity){
+                g_warning (" Z-Polarity was not changed. ");
+        }
+                 
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO_SET.: %g Veq\n", spmc_parameters.z_servo_setpoint); status_append (tmp); g_free (tmp); }
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO_CP..: %g\n", spmc_parameters.z_servo_cp); status_append (tmp); g_free (tmp); }
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO_CI..: %g\n", spmc_parameters.z_servo_ci); status_append (tmp); g_free (tmp); }

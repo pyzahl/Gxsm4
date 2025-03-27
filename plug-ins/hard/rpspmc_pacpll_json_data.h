@@ -163,6 +163,7 @@ struct SPMC_parameters {
         double gvp_stream_mux;
         
         double z_polarity;
+        int gxsm_z_polarity;
 
         double z_servo_mode;
         double z_servo_setpoint;
@@ -170,7 +171,6 @@ struct SPMC_parameters {
         double z_servo_ci;
         double z_servo_cp_db;
         double z_servo_ci_db;
-        double z_servo_invert;
         double z_servo_upper;
         double z_servo_lower;
         double z_servo_setpoint_cz;

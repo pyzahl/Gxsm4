@@ -1358,13 +1358,13 @@ void RPSPMC_Control::add_probevector(){
 			val += program_vector_list[current_probe_section].f_db*multi;
 			break;
 		case PROBEDATA_ARRAY_XS:
-			val -= program_vector_list[current_probe_section].f_dx*multi;
+			val += program_vector_list[current_probe_section].f_dx*multi;
 			break;
 		case PROBEDATA_ARRAY_YS:
-			val -= program_vector_list[current_probe_section].f_dy*multi;
+			val += program_vector_list[current_probe_section].f_dy*multi;
 			break;
 		case PROBEDATA_ARRAY_ZS:
-			val -= program_vector_list[current_probe_section].f_dz*multi;
+			val += program_vector_list[current_probe_section].f_dz*multi;
 			break;
 		case PROBEDATA_ARRAY_U:
 			val += program_vector_list[current_probe_section].f_du*multi;
