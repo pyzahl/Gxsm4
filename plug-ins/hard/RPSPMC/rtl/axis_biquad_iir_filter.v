@@ -116,6 +116,7 @@ module axis_biquad_iir_filter #(
     reg signed [signal_width+internal_extra-1:0] y2=0; /* output data pipeline */
     
     reg decii_clk=0;
+    reg decii_clk1=0;
     reg [1:0] run=0;
     
 
@@ -126,6 +127,7 @@ module axis_biquad_iir_filter #(
     /* pipeline registers */
     always @(posedge aclk)
     begin
+        decii_clk <= axis_decii_clk;
         // module configuration
         if (config_addr == configuration_address) // BQ configuration, and auto reset
         begin
@@ -140,8 +142,6 @@ module axis_biquad_iir_filter #(
         else
         begin // run
             resetn <= 1;
-            decii_clk <= axis_decii_clk;                     
-
             if (!resetn) begin
                 x  <= 0;
                 x1 <= 0;
@@ -155,32 +155,34 @@ module axis_biquad_iir_filter #(
                 y_a2 <= 0;
                 y1_tmpx <= 0; 
                 y1_tmpy <= 0; 
-                run <= 0;
+                run <= decii_clk;
             end
             else
             begin
-                case (run) // split up in two steps as we are always highly deciamted plenty of time
+                case (run) // split up in wait and two steps as we are always highly deciamted plenty of time
                     0:
                     begin
-                        if (decii_clk) // run at decimated rate as given by axis_decii_clk
-                        begin
-                            run <= 1; // start
-                            x   <= S_AXIS_in_tdata; // load next input                [signal_width]  SQ32
-                            x1  <= x;               // stage input pipe line  n-1    ""
-                            x2  <= x1;              // stage input pipe line  n-2    ""
-    
-                            x_b0  <= b0 * x;  // IIR 0st stage (n) compute:            [signal_width+coefficient_width]  SQ 32 + 32 = SQ64
-                            x_b1  <= b1 * x1; // IIR 1st stage (n-1)                          ""
-                            x_b2  <= b2 * x2; // IIR 2nd stage (n-2)                          ""
-    
-                            //y1  <= (x_b0 + x_b1 + x_b2 - y_a1 - y_a2) >>> (coefficient_Q-internal_extra);
-                            y1_tmpx  <= x_b0 + x_b1 + x_b2; // tmp summing point LHS:   [signal_width+coefficient_width+internal_extra] = SQ68
-                            y1_tmpy  <= y_a1 + y_a2;        // tmp summing point RHS:   [signal_width+coefficient_width+internal_extra] = SQ68
-                        end
+                        run = decii_clk ? 1:0; // wait for next trigger/new data
+                    end
+                    1:
+                    begin // start processing run at decimated rate as given by axis_decii_clk
+                        run <= 2; // state 2 to finsh processing next
+                        decii_clk1 <= decii_clk;
+                        x   <= S_AXIS_in_tdata; // load next input                [signal_width]  SQ32
+                        x1  <= x;               // stage input pipe line  n-1    ""
+                        x2  <= x1;              // stage input pipe line  n-2    ""
+
+                        x_b0  <= b0 * x;  // IIR 0st stage (n) compute:            [signal_width+coefficient_width]  SQ 32 + 32 = SQ64
+                        x_b1  <= b1 * x1; // IIR 1st stage (n-1)                          ""
+                        x_b2  <= b2 * x2; // IIR 2nd stage (n-2)                          ""
+
+                        //y1  <= (x_b0 + x_b1 + x_b2 - y_a1 - y_a2) >>> (coefficient_Q-internal_extra);
+                        y1_tmpx  <= x_b0 + x_b1 + x_b2; // tmp summing point LHS:   [signal_width+coefficient_width+internal_extra] = SQ68
+                        y1_tmpy  <= y_a1 + y_a2;        // tmp summing point RHS:   [signal_width+coefficient_width+internal_extra] = SQ68
                     end                 
-                    1: // continue with results
+                    2: // continue with results
                     begin
-                        run <= 0; // done, wait for next trigger/new data
+                        run = decii_clk || decii_clk1 ? 1:0; // wait for next trigger/new data
                         y1  <= (y1_tmpx - y1_tmpy) >>> (coefficient_Q-internal_extra); // compute result y[n], normalize  => [signal_width+internal_extra]  SQ32 + 4 = SQ 36
                         y2  <= y1;       // 2nd stage result pipe line (n-2)
                         
