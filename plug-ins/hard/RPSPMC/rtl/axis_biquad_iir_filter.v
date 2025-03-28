@@ -105,8 +105,8 @@ module axis_biquad_iir_filter #(
     reg signed [signal_width+coefficient_width-1:0] x_b0=0; /* product input */
     reg signed [signal_width+coefficient_width-1:0] x_b1=0; /* product input */
     reg signed [signal_width+coefficient_width-1:0] x_b2=0; /* product input */
-    reg signed [signal_width+coefficient_width-1:0] y_a1=0; /* product output */
-    reg signed [signal_width+coefficient_width-1:0] y_a2=0; /* product output */
+    reg signed [signal_width+coefficient_width+internal_extra-1:0] y_a1=0; /* product output */
+    reg signed [signal_width+coefficient_width+internal_extra-1:0] y_a2=0; /* product output */
     
     reg signed [signal_width-1:0] x1=0; /* input data pipeline */
     reg signed [signal_width-1:0] x2=0; /* input data pipeline */
@@ -162,7 +162,7 @@ module axis_biquad_iir_filter #(
                 case (run) // split up in wait and two steps as we are always highly deciamted plenty of time
                     0:
                     begin
-                        run = decii_clk ? 1:0; // wait for next trigger/new data
+                        run <= decii_clk ? 1:0; // wait for next trigger/new data
                     end
                     1:
                     begin // start processing run at decimated rate as given by axis_decii_clk
@@ -176,18 +176,19 @@ module axis_biquad_iir_filter #(
                         x_b1  <= b1 * x1; // IIR 1st stage (n-1)                          ""
                         x_b2  <= b2 * x2; // IIR 2nd stage (n-2)                          ""
 
+                        // summing with internal_extra
                         //y1  <= (x_b0 + x_b1 + x_b2 - y_a1 - y_a2) >>> (coefficient_Q-internal_extra);
-                        y1_tmpx  <= x_b0 + x_b1 + x_b2; // tmp summing point LHS:   [signal_width+coefficient_width+internal_extra] = SQ68
-                        y1_tmpy  <= y_a1 + y_a2;        // tmp summing point RHS:   [signal_width+coefficient_width+internal_extra] = SQ68
+                        y1_tmpx  <= (x_b0 + x_b1 + x_b2) <<< (internal_extra); // tmp summing point LHS:   [signal_width+coefficient_width+internal_extra] = SQ68 -- bring up to internal width
+                        y1_tmpy  <=  y_a1 + y_a2;                              // tmp summing point RHS:   [signal_width+coefficient_width+internal_extra] = SQ68
                     end                 
                     2: // continue with results
                     begin
                         run = decii_clk || decii_clk1 ? 1:0; // wait for next trigger/new data
-                        y1  <= (y1_tmpx - y1_tmpy) >>> (coefficient_Q-internal_extra); // compute result y[n], normalize  => [signal_width+internal_extra]  SQ32 + 4 = SQ 36
+                        y1  <= (y1_tmpx - y1_tmpy) >>> coefficient_Q; // compute result y[n], normalize  => [signal_width+internal_extra]  SQ32 + 4 = SQ 36
                         y2  <= y1;       // 2nd stage result pipe line (n-2)
                         
-                        y_a1 <= a1 * y1; // compute RHS 1st stage  (n-1)  [signal_width+coefficient_width]  SQ 32 + 32 = SQ64
-                        y_a2 <= a2 * y2; // compute RHS 2nd stage  (n-2)  [signal_width+coefficient_width]  SQ 32 + 32 = SQ64    
+                        y_a1 <= a1 * y1; // compute RHS 1st stage  (n-1)  [signal_width+internal_extra + coefficient_width]  SQ 32 + 32 = SQ64
+                        y_a2 <= a2 * y2; // compute RHS 2nd stage  (n-2)  [signal_width+internal_extra + coefficient_width]  SQ 32 + 32 = SQ64    
                     end                
                 endcase
             end    

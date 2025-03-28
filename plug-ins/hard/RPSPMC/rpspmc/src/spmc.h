@@ -104,9 +104,9 @@ extern "C" {
 
         double rp_spmc_configure_lockin (double freq, double gain, unsigned int mode, double RF_ref_freq, int LCKID);
 
-        void rp_spmc_set_biqad_Lck_F0 (double f_cut, double Q, double Fs, int BIQID);
+        void rp_spmc_set_biqad_Lck_F0 (double f_cut, double Q, int BIQID);
         void rp_spmc_set_biqad_Lck_F0_pass (int BIQID);
-        void rp_spmc_set_biqad_Lck_F0_IIR (double f_cut, double Fs, int BIQID);
+        void rp_spmc_set_biqad_Lck_F0_IIR (double f_cut, int BIQID);
 
 
         void rp_spmc_update_readings ();

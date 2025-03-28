@@ -402,7 +402,7 @@ int32_t ad463x_set_ch_offset(struct ad463x_dev *dev, uint8_t ch_idx,
 static int32_t ad463x_init_gpio(struct ad463x_dev *dev,
 				struct ad463x_init_param *init_param)
 {
-	int32_t ret;
+	int32_t re=0;
 	/* configure reset pin */
 	ret = no_os_gpio_get_optional(&dev->gpio_resetn, init_param->gpio_resetn);
 	if (ret != 0)
@@ -512,7 +512,6 @@ int32_t ad463x_read_data_offload(struct ad463x_dev *dev,
 
 	return ret;
 }
-#endif
 
 /**
  * @brief Parallel Bits Extract
@@ -586,6 +585,7 @@ static void ad463x_pext_sample(struct ad463x_dev *dev,
 		*ch0_out >>= shift;
 	}
 }
+#endif
 
 /**
  * @brief read a single sample of data
@@ -793,7 +793,7 @@ int32_t ad463x_init(struct ad463x_dev **device,
 		    struct ad463x_init_param *init_param)
 {
 	struct ad463x_dev *dev;
-	int32_t ret;
+	int32_t ret=0;
 	uint8_t data = 0;
 	uint8_t data2 = 0;
 	uint8_t pat[4];
@@ -1055,20 +1055,20 @@ error_spi:
 	//no_os_spi_remove(dev->spi_desc);
 	*device = dev;
 	return ret;
-error_clkgen:
+//error_clkgen:
 	//fprintf(stderr,"AD463x CLKGEN ERROR\n");
 	//if (dev->offload_enable)
 	//	axi_clkgen_remove(dev->clkgen);
-error_gpio:
+//error_gpio:
 	//fprintf(stderr,"AD463x GPIO ERROR\n");
 	//no_os_gpio_remove(dev->gpio_resetn);
 	//no_os_gpio_remove(dev->gpio_cnv);
 	//no_os_gpio_remove(dev->gpio_pgia_a0);
 	//no_os_gpio_remove(dev->gpio_pgia_a1);
-error_dev:
-	fprintf(stderr,"AD463x DEV ERROR\n");
+//error_dev:
+	//fprintf(stderr,"AD463x DEV ERROR\n");
 	//no_os_free(dev);
-	free(dev);
+	//free(dev);
 
 	return -1;
 }
@@ -1140,6 +1140,7 @@ int32_t ad463x_set_pgia_gain(struct ad463x_dev *dev,
 				    gain_idx));
 
 #endif
+        return 0;
 }
 
 /**
@@ -1149,7 +1150,7 @@ int32_t ad463x_set_pgia_gain(struct ad463x_dev *dev,
  */
 int32_t ad463x_remove(struct ad463x_dev *dev)
 {
-	int32_t ret;
+	int32_t ret=0;
 
 	if (!dev)
 		return -1;

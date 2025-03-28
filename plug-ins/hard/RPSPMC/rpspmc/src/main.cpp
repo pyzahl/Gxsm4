@@ -945,7 +945,7 @@ int rp_app_init(void)
 
         // readback
         {
-                int srcs_mux, in_mux, regB;
+                int srcs_mux, in_mux, regB1, regB2;
                 double setpoint, cp, ci, upper, lower;
                 unsigned int modes;
                 fprintf (stderr, "\n** RP FPGA RPSPMC STATUS READBACK **\n");
@@ -967,13 +967,14 @@ int rp_app_init(void)
                 SPMC_Z_SERVO_MODE.Value() = modes;
                         
                 // readback signal MUXes
-                rp_spmc_module_read_config_data (SPMC_READBACK_SRCS_MUX_REG, &srcs_mux, &regB); // read data set
-                rp_spmc_module_read_config_data (SPMC_READBACK_IN_MUX_REG, &in_mux, &regB); // read data set
+                rp_spmc_module_read_config_data (SPMC_READBACK_SRCS_MUX_REG, &srcs_mux, &regB1); // read data set
+                rp_spmc_module_read_config_data (SPMC_READBACK_IN_MUX_REG, &in_mux, &regB2); // read data set
                 fprintf (stderr,
                          "\n"
                          "***** SRCS-MUX selection: 0x%08x\n"
                          "*****   IN-MUX selection: 0x%08x\n"
-                         "\n",  srcs_mux, in_mux);
+                         "***** RB: 0x%08x,  0x%08x\n"
+                         "\n",  srcs_mux, in_mux, regB1, regB2);
 
                 SPMC_GVP_STREAM_MUX.Value ()  = srcs_mux;
                 SPMC_Z_SERVO_SRC_MUX.Value () = in_mux;
@@ -1687,7 +1688,6 @@ void UpdateParams(void){
 // ****************************************
 void OnNewParams_RPSPMC(void){
         static int do_rotate=0;
-        static double lck_f0_frq=0;
         
         //SPMC_GVP_STATUS.Update ();
 
@@ -1911,7 +1911,7 @@ void OnNewParams_RPSPMC(void){
                         mode |= 1;
                 if (fms > 0.) // via signal FM
                         mode |= 4;
-                lck_f0_frq = rp_spmc_configure_lockin (SPMC_SC_LCK_FREQUENCY.Value (), 0., fms, mode, SPMC_SC_LCK_RF_FREQUENCY.Value(), SPMC_LOCKIN_F0_CONTROL_REG);
+                rp_spmc_configure_lockin (SPMC_SC_LCK_FREQUENCY.Value (), 0., fms, mode, SPMC_SC_LCK_RF_FREQUENCY.Value(), SPMC_LOCKIN_F0_CONTROL_REG);
         }
 
         if (SPMC_SC_LCK_TARGET.IsNewValue () || SPMC_SC_LCK_VOLUME.IsNewValue () || DFREQ_CONTROL_Z.IsNewValue () || DFREQ_CONTROL_U.IsNewValue ()){
@@ -1935,10 +1935,10 @@ void OnNewParams_RPSPMC(void){
                 SPMC_SC_LCK_F0BQ_TAU.Update ();
                 SPMC_SC_LCK_F0BQ_IIR.Update ();
                 if (SPMC_SC_LCK_F0BQ_Q.Value () > 0.0 && SPMC_SC_LCK_F0BQ_TAU.Value () > 0.0) // BiQuad mode ?
-                        rp_spmc_set_biqad_Lck_F0 (1000./SPMC_SC_LCK_F0BQ_TAU.Value (), SPMC_SC_LCK_F0BQ_Q.Value (), lck_f0_frq, SPMC_BIQUAD_F0_CONTROL_REG);
+                        rp_spmc_set_biqad_Lck_F0 (1000./SPMC_SC_LCK_F0BQ_TAU.Value (), SPMC_SC_LCK_F0BQ_Q.Value (), SPMC_BIQUAD_F0_CONTROL_REG);
                 else
                         if (SPMC_SC_LCK_F0BQ_IIR.Value () > 0.0) // IIR mode ?
-                                rp_spmc_set_biqad_Lck_F0_IIR (1000./SPMC_SC_LCK_F0BQ_IIR.Value (), lck_f0_frq, SPMC_BIQUAD_F0_CONTROL_REG);
+                                rp_spmc_set_biqad_Lck_F0_IIR (1000./SPMC_SC_LCK_F0BQ_IIR.Value (), SPMC_BIQUAD_F0_CONTROL_REG);
                         else // pass mode
                                 rp_spmc_set_biqad_Lck_F0_pass (SPMC_BIQUAD_F0_CONTROL_REG);
         }

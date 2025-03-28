@@ -213,10 +213,10 @@ module axis_py_lockin#(
         // module configuration
         if (config_addr == configuration_address) // BQ configuration, and auto reset
         begin
-            lck_config      <= config_data[8-1       : 0];    // options: Bit0: AM, Bit2: FM control
-            gain            <= config_data[2*32-1    : 1*32]; // programmed gain, Q24
-            dds_n2          <= config_data[2*32+16-1 : 2*32];       // Phase Inc N2 lower 16 bits
-            dds_PhaseInc    <= config_data[3*32+48-1 : 3*32]; // Phase Inc Width: 48 bits
+            lck_config      <= config_data[8-1       : 0];       // options: Bit0: AM, Bit2: FM control
+            gain            <= config_data[2*32-1    : 1*32];    // programmed gain, Q24
+            dds_n2          <= config_data[2*32+16-1 : 2*32];    // Phase Inc N2 lower 16 bits
+            dds_PhaseInc    <= config_data[3*32+48-1 : 3*32];    // Phase Inc Width: 48 bits
             rf_dds_FM_Scale    <= config_data[5*32+32-1 : 5*32]; // Phase Inc FM Scale for FM -- Q24
             rf_dds_PhaseIncRef <= config_data[6*32+32-1 : 6*32]; // Phase Inc RF-DDS 32bit 
 

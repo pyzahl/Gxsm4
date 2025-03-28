@@ -163,7 +163,6 @@ ad463x_dev* rp_spmc_AD463x_init (){
 }
 
 void rp_spmc_AD463x_test (struct ad463x_dev *dev){
-	int32_t ret;
 	uint8_t data = 0;
 	uint8_t pat[4];
 	uint32_t ch0, ch1;
@@ -231,9 +230,9 @@ void rp_spmc_AD463x_test (struct ad463x_dev *dev){
 	fprintf(stderr,"AD463x RE-CONFIGURING MODES FOR NORMAL OPERATION\n");
 	ad463x_enter_config_mode (dev); // added
 	ad463x_spi_reg_write_masked(dev, AD463X_REG_MODES, AD463X_OUT_DATA_MODE_MSK, dev->output_mode);
-	ret = ad463x_spi_reg_write_masked(dev, AD463X_REG_MODES, AD463X_LANE_MODE_MSK, dev->lane_mode);
-	ret = ad463x_spi_reg_write_masked(dev, AD463X_REG_MODES, AD463X_CLK_MODE_MSK, dev->clock_mode);
-	ret = ad463x_spi_reg_write_masked(dev, AD463X_REG_MODES, AD463X_DDR_MODE_MSK, dev->data_rate);
+	ad463x_spi_reg_write_masked(dev, AD463X_REG_MODES, AD463X_LANE_MODE_MSK, dev->lane_mode);
+	ad463x_spi_reg_write_masked(dev, AD463X_REG_MODES, AD463X_CLK_MODE_MSK, dev->clock_mode);
+	ad463x_spi_reg_write_masked(dev, AD463X_REG_MODES, AD463X_DDR_MODE_MSK, dev->data_rate);
 
         ad463x_exit_reg_cfg_mode(dev);
 
@@ -876,7 +875,9 @@ void rp_spmc_set_modulation (double volume, int target, int dfc_target){
 
 
 // Lock In / Modulation
- 
+
+double lck_decimation_factor = 1.0;
+
 double rp_spmc_configure_lockin (double freq, double gain, double FM_scale, unsigned int mode, double RF_ref_freq, int LCKID){
         // 44 Bit Phase, using 48bit tdata
         unsigned int n2 = round (log2(dds_phaseinc (freq)));
@@ -885,12 +886,16 @@ double rp_spmc_configure_lockin (double freq, double gain, double FM_scale, unsi
         //double hzv = dds_phaseinc (1.) / volts_to_rpspmc(1.); // 1V Ramp => 1Hz
         double hzv = 171.798691839990234375; //((1<<32)-1)/125000000*5   Hz / V in phase inc
 
+        //parameter LCK_BUFFER_LEN2 = 10, // **** need to decimate 100Hz min: log2(1<<44 / (1<<24)) => 20 *** LCK DDS IDEAL Freq= 100 Hz [16777216, N2=24, M=1048576]  Actual f=119.209 Hz  Delta=19.2093 Hz  (using power of 2 phase_inc)
+        //decii2 <= 44 - LCK_BUFFER_LEN2 - dds_n2;
+        lck_decimation_factor = (1 << (44 - 10 - n2)) - 1.;
+ 
         if (verbose > 1){
                 double ferr = fact - freq;
                 fprintf(stderr, "##Configure: LCK DDS IDEAL Freq= %g Hz [%lld, N2=%d, decii=%d, M=%lld]  Actual f=%g Hz  Delta=%g Hz  (using power of 2 phase_inc)\n", freq, phase_inc, n2, n2>10? 1<<(n2-10):0, QQ44/phase_inc, fact, ferr);
                 fprintf(stderr, "##Configure: RF Gen Freq= %g Hz PhInc=%g\n", RF_ref_freq, round(4294967295. * RF_ref_freq/125000000.));
                 if (mode)
-                        fprintf(stderr, "##Configure: LCK DDS MODE 0x%x FMS: %g V/Hz hzv*FMS: %g, gain: %g x\n", mode, FM_scale, hzv*FM_scale, gain);
+                        fprintf(stderr, "##Configure: LCK DDS MODE 0x%x FMS: %g V/Hz hzv*FMS: %g, gain: %g x  LckDecFac: %g\n", mode, FM_scale, hzv*FM_scale, gain, lck_decimation_factor);
                 // Configure: LCK DDS IDEAL Freq= 100 Hz [16777216, N2=24, M=1048576]  Actual f=119.209 Hz  Delta=19.2093 Hz  (using power of 2 phase_inc)
         }
         
@@ -908,6 +913,43 @@ double rp_spmc_configure_lockin (double freq, double gain, double FM_scale, unsi
 
         
         return fact;
+}
+
+
+// set BiQuad to pass
+void rp_spmc_set_biqad_Lck_F0_pass (int BIQID){
+        double data[16] = { 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.,0., 0.,0.,0.,0., 0.,0.,0.,0. };
+        if (verbose > 1){
+                fprintf(stderr, "##Configure: BiQuad to pass mode:\n");
+                fprintf(stderr, "## b0=1, b1=b2=0 a0=1, a1=a2=0\n");
+        }
+        rp_spmc_module_config_vector_Qn (BIQID, data, 6, Q28);
+}
+
+// set BiQuad to IIR 1st order LP
+void rp_spmc_set_biqad_Lck_F0_IIR (double f_cut, int BIQID){
+        double b0, b1, b2, a0, a1, a2;
+        b0=1.0;
+        b1=b2=0.0;
+        a0=1.0;
+        a1=a2=0.0;
+        
+        // 2nd order BiQuad Low Pass parameters
+        double wc = 2.*M_PI*f_cut/(125e6 / lck_decimation_factor); // 125MHz
+        //double c  = cos (wc); // near 1 for f_c/Fs << 1 *** or wc/(1+wc)
+        //double xc = 1.0 - c;
+        
+        b0 = wc/(1+wc);  // new    //0.5*xc;
+        a1 = -(1.0-b0);  // last   //xc;
+        
+        if (verbose > 1){
+                fprintf(stderr, "##Configure: BiQuad to IIR 1st order mode. Fc=%g Hz, Fs=%g Hz\n", f_cut,  125e6/lck_decimation_factor);
+                fprintf(stderr, "## b0=%g b1=%g b2=%g  a0=%g a1=%g a2=%g\n", b0, b1, b2, a0, a1, a2);
+                fprintf(stderr, "##Q28: b0=%08x a1=%08x\n", (int)round(b0*Q28),  (int)round(a1*Q28));
+        }
+
+        double data[16] = { b0/a0, b1/a0, b2/a0, 1.0, a1/a0,a2/a0,0.,0., 0.,0.,0.,0., 0.,0.,0.,0. };
+        rp_spmc_module_config_vector_Qn (BIQID, data, 6, Q28);
 }
 
 /*
@@ -928,11 +970,13 @@ x[n-2]  --- *b2 ---> + <-- -a2* ---   y[n-2]
 */
 
 // set BiQuad to low pass at f_cut, with Quality Factor Q and at sampling rate Fs Hz
-void rp_spmc_set_biqad_Lck_F0 (double f_cut, double Q, double Fs, int BIQID){
+void rp_spmc_set_biqad_Lck_F0 (double f_cut, double Q, int BIQID){
         double b0, b1, b2, a0, a1, a2;
 
         // 2nd order BiQuad Low Pass parameters
-        double w0 = 2.*M_PI*f_cut/Fs; // 125MHz -- decimate as needed!
+        double w0 = 2.*M_PI*f_cut/(125e6 / lck_decimation_factor); // 125MHz -- decimate as needed!
+
+        /*
         double c  = cos (w0);
         double xc = 1.0 - c;
         double a  = sin (w0) / (2.0 * Q);
@@ -943,47 +987,28 @@ void rp_spmc_set_biqad_Lck_F0 (double f_cut, double Q, double Fs, int BIQID){
         a0 = 1.0+a;
         a1 = -2.0*c;
         a2 = 1.0-a;
+        */
+
+        //double Q = f_cut/BW;
+        double w024 = w0*w0/4.;
+        double Qdn = (1. + 1./Q + w024);
+        double Qmn = (1. - 1./Q + w024);
+        b0 = 1./Qdn;
+        b1 = 2.*(1.-w024)/Qdn;
+        b2 = b0;
+        a0 = 1.;
+        a1 = 2*(w024-1.)/Qdn;
+        a2 = Qmn/Qdn;
         
         if (verbose > 1){
-                fprintf(stderr, "##Configure: BiQuad Fc=%g Hz  Q=%g, Fs=%g Hz:\n", f_cut, Q, Fs);
+                fprintf(stderr, "##Configure: BiQuad Fc=%g Hz  Q=%g, Fs=%g Hz:\n", f_cut, Q, 125e6/lck_decimation_factor);
                 fprintf(stderr, "## b0=%g b1=%g b2=%g  a0=%g a1=%g a2=%g\n", b0, b1, b2, a0, a1, a2);
+                fprintf(stderr, "##Q28: b0=%08x b1=%08x a1=%08x a2=%08x\n", (int)round(b0*Q28),(int)round(b1*Q28), (int)round(a1*Q28),(int)round(a2*Q28));
         }
 
         double data[16] = { b0/a0, b1/a0, b2/a0, 1.0, a1/a0,a2/a0,0.,0., 0.,0.,0.,0., 0.,0.,0.,0. };
         rp_spmc_module_config_vector_Qn (BIQID, data, 6, Q28);
 }
-
-// set BiQuad to pass
-void rp_spmc_set_biqad_Lck_F0_pass (int BIQID){
-        double data[16] = { 1.0, 0.0, 0.0, 0.0, 0.0,0.0,0.,0., 0.,0.,0.,0., 0.,0.,0.,0. };
-        if (verbose > 1){
-                fprintf(stderr, "##Configure: BiQuad to pass mode:\n");
-                fprintf(stderr, "## b0=1.0 ...=0\n");
-        }
-        rp_spmc_module_config_vector_Qn (BIQID, data, 6, Q28);
-}
-
-// set BiQuad to IIR 1st order LP
-void rp_spmc_set_biqad_Lck_F0_IIR (double f_cut, double Fs, int BIQID){
-        double b0, b1;
-
-        // 2nd order BiQuad Low Pass parameters
-        double w0 = 2.*M_PI*f_cut/Fs; // 125MHz
-        double c  = cos (w0); // near 1 for f_c/Fs << 1
-        double xc = 1.0 - c;
-        
-        b0 = xc; // new    //0.5*xc;
-        b1 = c;  // last   //xc;
-        
-        if (verbose > 1){
-                fprintf(stderr, "##Configure: BiQuad to IIR 1st order mode. Fc=%g Hz, Fs=%g Hz\n", f_cut, Fs);
-                fprintf(stderr, "## b0=%g b1=%g ...=0\n", b0, b1);
-        }
-
-        double data[16] = { b0, b1, 0.0, 0.0, 0.0,0.0,0.,0., 0.,0.,0.,0., 0.,0.,0.,0. };
-        rp_spmc_module_config_vector_Qn (BIQID, data, 6, Q28);
-}
-
 
 /*
   Signal Monitoring via GPIO:

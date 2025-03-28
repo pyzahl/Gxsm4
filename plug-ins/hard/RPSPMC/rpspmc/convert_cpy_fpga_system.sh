@@ -1,5 +1,13 @@
 #!/bin/sh
 
+BL="\e[34m"
+YE="\e[33m"
+RD="\e[31m"
+GN="\e[32m"
+MG="\e[35m"
+CY="\e[36m"
+N="\e[0m"
+
 echo
 echo "  ************************************************************"
 echo "  *** RedPitaya Ecosystem auto update/install script"
@@ -47,7 +55,7 @@ case `hostname` in
 esac
 
 echo
-echo "  *** Attempting making RP FS rw ***"
+echo "${BL}  *** Attempting making RP FS rw ***${N}"
 sshpass -p $rpp ssh root@$rp "mount -o rw,remount /opt/redpitaya/"
 echo
 echo "  *** copy to RP root@"$rp;
@@ -61,11 +69,20 @@ case $yn in
 	    echo "  ...  in /opt/redpitaya/www/apps/rpspmc/"
 	    echo "  ...  on your RP to rebuild & update your RP's RPSPMC server.";
 	    echo "  ***"
-	    echo "  *** Attempting to remote build/install ***"
-	    echo
+	    echo "${BL}  *** Attempting to remote build/install ***${N}"
+	    echo	
 	    sshpass -p $rpp ssh root@$rp "cd /opt/redpitaya/www/apps/rpspmc/; make clean; make"
+	    status=$?
+
 	    echo
-	    echo "  *** Update/install completed if no errors above. ***"
+	    echo
+	    
+	    if [ $status -eq 0 ]; then
+	      echo "${GN}  *** Update/install completed successfully, copying controllerhf.so to ../rpspmcrc/${N}"
+ 	      sshpass -p $rpp ssh root@$rp "cd /opt/redpitaya/www/apps/rpspmc/; cp controllerhf.so ../rpspmcrc/"
+	      else
+	        echo "${RD}  *** Update/install failed with errors, exit status $status -- please check for compile errors.${N}"
+		fi
 	    break;;
 esac
 
