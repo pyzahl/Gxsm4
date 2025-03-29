@@ -228,9 +228,11 @@ struct SPMC_parameters {
         double ys_monitor;
         double zs_monitor;
 
+        double sc_lck_filter_mode;
         double sc_lck_frequency;
         double sc_lck_volume;
         double sc_lck_target;
+        double sc_lck_bq_coef[6]; // b0,1,2, [a0 := 1],1,2
         double sc_lck_bq_tau;
         double sc_lck_iir_tau;
         double sc_lck_q;

@@ -62,7 +62,8 @@ echo "  *** copy to RP root@"$rp;
 sshpass -p $rpp scp fpga.bit.bin root@$rp:/opt/redpitaya/www/apps/rpspmc; 
 case $yn in
     [Yy]* ) echo "Copying sources..."; 
-    	    sshpass -p $rpp scp src/*.h src/*.cpp root@$rp:/opt/redpitaya/www/apps/rpspmc/src;
+    	    sshpass -p $rpp scp Makefile root@$rp:/opt/redpitaya/www/apps/rpspmc;
+    	    sshpass -p $rpp scp src/Makefile src/*.h src/*.cpp root@$rp:/opt/redpitaya/www/apps/rpspmc/src;
 	    echo
 	    echo "  ***"
 	    echo "  Now run:   make clean; make";

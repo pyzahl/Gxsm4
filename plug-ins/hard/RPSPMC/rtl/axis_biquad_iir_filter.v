@@ -67,7 +67,7 @@ module axis_biquad_iir_filter #(
     /* config address */
     parameter configuration_address = 999
     )(
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN aclk, ASSOCIATED_BUSIF S_AXIS_in:M_AXIS_out:M_AXIS_pass" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN aclk, ASSOCIATED_BUSIF S_AXIS_in:S_AXIS_test:M_AXIS_out:M_AXIS_pass" *)
     input aclk,
     
     input [32-1:0]  config_addr,
@@ -78,6 +78,11 @@ module axis_biquad_iir_filter #(
     input                    S_AXIS_in_tvalid,
 
     input wire axis_decii_clk,
+
+    /* slave axis interface */
+    input [16-1:0] S_AXIS_test_tdata,
+    input          S_AXIS_test_tvalid,
+
     
     /* master axis interface */
     output [signal_width-1:0] M_AXIS_out_tdata,
@@ -102,6 +107,8 @@ module axis_biquad_iir_filter #(
     reg signed [coefficient_width-1:0] a1=0; /* coefficient internal size */
     reg signed [coefficient_width-1:0] a2=0; /* coefficient internal size */
 
+    reg signed [16-1:0] test=0; /* coefficient internal size */
+
     reg signed [signal_width+coefficient_width-1:0] x_b0=0; /* product input */
     reg signed [signal_width+coefficient_width-1:0] x_b1=0; /* product input */
     reg signed [signal_width+coefficient_width-1:0] x_b2=0; /* product input */
@@ -120,9 +127,6 @@ module axis_biquad_iir_filter #(
     reg [1:0] run=0;
     
 
-    assign M_AXIS_pass_tdata  = S_AXIS_in_tdata;
-    assign M_AXIS_pass_tvalid = S_AXIS_in_tvalid;
-
 
     /* pipeline registers */
     always @(posedge aclk)
@@ -137,6 +141,7 @@ module axis_biquad_iir_filter #(
             a0 <= config_data[4*32-1 : 3*32]; // *** not used here, template
             a1 <= config_data[5*32-1 : 4*32];
             a2 <= config_data[6*32-1 : 5*32];
+            test <= config_data[6*32+16-1 : 6*32];
             resetn <= 0;                     
         end
         else
@@ -168,7 +173,10 @@ module axis_biquad_iir_filter #(
                     begin // start processing run at decimated rate as given by axis_decii_clk
                         run <= 2; // state 2 to finsh processing next
                         decii_clk1 <= decii_clk;
-                        x   <= S_AXIS_in_tdata; // load next input                [signal_width]  SQ32
+                        if (test > 0)
+                            x   <= $signed(S_AXIS_test_tdata) <<< (signal_width-16); // load next input from test signal
+                        else
+                            x   <= S_AXIS_in_tdata; // load next input                [signal_width]  SQ32
                         x1  <= x;               // stage input pipe line  n-1    ""
                         x2  <= x1;              // stage input pipe line  n-2    ""
 
@@ -198,5 +206,8 @@ module axis_biquad_iir_filter #(
    
     assign M_AXIS_out_tdata  = y;
     assign M_AXIS_out_tvalid = S_AXIS_in_tvalid;
+
+    assign M_AXIS_pass_tdata  = x;
+    assign M_AXIS_pass_tvalid = S_AXIS_in_tvalid;
       
 endmodule

@@ -222,6 +222,7 @@ SOURCE_SIGNAL_DEF modulation_targets[] = {
         { 0x00000005, "A",           " ", "V",             "V", 1., 0, 0 },
         { 0x00000006, "B",           " ", "V",             "V", 1., 0, 0 },
         { 0x00000007, "Bias-Aref",   " ", "mV",           "mV", 1e-3/BiasFac, 0, 0 },
+        { 0x00000008, "Filter-Test", " ", "mV",           "mV", 1., 0, 0 },
         { 0x00000016,  NULL, NULL, NULL, NULL, 0.0, 0 }
 };
 
@@ -1908,7 +1909,7 @@ void RPSPMC_Control::create_folder (){
         bp->grid_add_label ("Modulation on");
         bp->grid_add_modulation_target_options (0, (int)spmc_parameters.sc_lck_target, this);
 
-        for (int jj=1; modulation_targets[jj].label; ++jj){
+        for (int jj=1; modulation_targets[jj].label && jj < LCK_NUM_TARGETS; ++jj){
                 bp->new_line ();
                 gchar *lab = g_strdup_printf ("Volume for %s", modulation_targets[jj].label);
                 gchar *id = g_strdup_printf ("SPMC-LCK-ModVolume-%s", modulation_targets[jj].label);
@@ -1921,7 +1922,22 @@ void RPSPMC_Control::create_folder (){
         }
 
         bp->pop_grid (); bp->set_xy (2,2);
- 	bp->new_grid_with_frame ("Bi-Quad IIR Filter, RF-Gen");
+ 	bp->new_grid_with_frame ("Filter, RF-Gen");
+
+
+        bp->grid_add_label ("Modulation on");
+        GtkWidget *cbBQmode = gtk_combo_box_text_new ();
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbBQmode), "0", "Non/Pass");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbBQmode), "1", "IIR");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbBQmode), "2", "BiQuad");
+        gtk_combo_box_set_active_id (GTK_COMBO_BOX (cbBQmode), "1");
+        g_signal_connect (G_OBJECT (cbBQmode),"changed",	
+                          G_CALLBACK (RPSPMC_Control::choice_BQmode_callback), 
+                          this);				
+                
+        bp->grid_add_widget (cbBQmode);
+        bp->new_line ();
+        
         //bp->new_line ();
 	bp->grid_add_ec ("Time Const BQ", new UnitObj("ms","ms"), &spmc_parameters.sc_lck_bq_tau, 0., 1e6, "5g", 1e-6, 10e3, "SPMC-LCK-BQ-TAU");
         bp->new_line ();
@@ -3433,7 +3449,7 @@ int RPSPMC_Control::choice_mod_target_callback (GtkWidget *widget, RPSPMC_Contro
 
 	self->LCK_Target = gtk_combo_box_get_active (GTK_COMBO_BOX (widget));
         
-        for (int jj=1; modulation_targets[jj].label; ++jj)
+        for (int jj=1; modulation_targets[jj].label && jj < LCK_NUM_TARGETS; ++jj) //  ** omit last!
                 gtk_widget_set_sensitive (self->LCK_VolumeEntry[jj], jj == self->LCK_Target);
         
         if (rpspmc_pacpll){
@@ -3442,6 +3458,13 @@ int RPSPMC_Control::choice_mod_target_callback (GtkWidget *widget, RPSPMC_Contro
         }
         return 0;
 }
+
+int RPSPMC_Control::choice_BQmode_callback (GtkWidget *widget, RPSPMC_Control *self){
+	int id = gtk_combo_box_get_active (GTK_COMBO_BOX (widget));
+        if (rpspmc_pacpll)
+                rpspmc_pacpll->write_parameter ("SPMC_SC_LCK_FILTER_MODE", id);
+}
+
 
 int RPSPMC_Control::choice_z_servo_current_source_callback (GtkWidget *widget, RPSPMC_Control *self){
         PI_DEBUG_GP (DBG_L4, "%s \n",__FUNCTION__);

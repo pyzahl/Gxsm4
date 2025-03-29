@@ -917,8 +917,8 @@ double rp_spmc_configure_lockin (double freq, double gain, double FM_scale, unsi
 
 
 // set BiQuad to pass
-void rp_spmc_set_biqad_Lck_F0_pass (int BIQID){
-        double data[16] = { 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.,0., 0.,0.,0.,0., 0.,0.,0.,0. };
+void rp_spmc_set_biqad_Lck_F0_pass (int BIQID, int test_mode){
+        double data[16] = { 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, (double)test_mode,0., 0.,0.,0.,0., 0.,0.,0.,0. };
         if (verbose > 1){
                 fprintf(stderr, "##Configure: BiQuad to pass mode:\n");
                 fprintf(stderr, "## b0=1, b1=b2=0 a0=1, a1=a2=0\n");
@@ -927,7 +927,7 @@ void rp_spmc_set_biqad_Lck_F0_pass (int BIQID){
 }
 
 // set BiQuad to IIR 1st order LP
-void rp_spmc_set_biqad_Lck_F0_IIR (double f_cut, int BIQID){
+void rp_spmc_set_biqad_Lck_F0_IIR (double f_cut, int BIQID, int test_mode){
         double b0, b1, b2, a0, a1, a2;
         b0=1.0;
         b1=b2=0.0;
@@ -948,7 +948,7 @@ void rp_spmc_set_biqad_Lck_F0_IIR (double f_cut, int BIQID){
                 fprintf(stderr, "##Q28: b0=%08x a1=%08x\n", (int)round(b0*Q28),  (int)round(a1*Q28));
         }
 
-        double data[16] = { b0/a0, b1/a0, b2/a0, 1.0, a1/a0,a2/a0,0.,0., 0.,0.,0.,0., 0.,0.,0.,0. };
+        double data[16] = { b0/a0, b1/a0, b2/a0, 1.0, a1/a0,a2/a0, (double)test_mode,0., 0.,0.,0.,0., 0.,0.,0.,0. };
         rp_spmc_module_config_vector_Qn (BIQID, data, 6, Q28);
 }
 
@@ -970,13 +970,13 @@ x[n-2]  --- *b2 ---> + <-- -a2* ---   y[n-2]
 */
 
 // set BiQuad to low pass at f_cut, with Quality Factor Q and at sampling rate Fs Hz
-void rp_spmc_set_biqad_Lck_F0 (double f_cut, double Q, int BIQID){
+void rp_spmc_set_biqad_Lck_F0 (double f_cut, double Q, int BIQID, int test_mode){
         double b0, b1, b2, a0, a1, a2;
 
         // 2nd order BiQuad Low Pass parameters
         double w0 = 2.*M_PI*f_cut/(125e6 / lck_decimation_factor); // 125MHz -- decimate as needed!
 
-        /*
+#if 1
         double c  = cos (w0);
         double xc = 1.0 - c;
         double a  = sin (w0) / (2.0 * Q);
@@ -987,26 +987,27 @@ void rp_spmc_set_biqad_Lck_F0 (double f_cut, double Q, int BIQID){
         a0 = 1.0+a;
         a1 = -2.0*c;
         a2 = 1.0-a;
-        */
+
+#else
 
         //double Q = f_cut/BW;
         double w024 = w0*w0/4.;
         double Qdn = (1. + 1./Q + w024);
         double Qmn = (1. - 1./Q + w024);
-        b0 = 1./Qdn;
-        b1 = 2.*(1.-w024)/Qdn;
+        b0 = 1.;
+        b1 = 2.*(1.-w024);
         b2 = b0;
-        a0 = 1.;
-        a1 = 2*(w024-1.)/Qdn;
-        a2 = Qmn/Qdn;
-        
+        a0 = Qdn;
+        a1 = 2*(w024-1.);
+        a2 = Qmn;
+#endif   
         if (verbose > 1){
                 fprintf(stderr, "##Configure: BiQuad Fc=%g Hz  Q=%g, Fs=%g Hz:\n", f_cut, Q, 125e6/lck_decimation_factor);
                 fprintf(stderr, "## b0=%g b1=%g b2=%g  a0=%g a1=%g a2=%g\n", b0, b1, b2, a0, a1, a2);
                 fprintf(stderr, "##Q28: b0=%08x b1=%08x a1=%08x a2=%08x\n", (int)round(b0*Q28),(int)round(b1*Q28), (int)round(a1*Q28),(int)round(a2*Q28));
         }
 
-        double data[16] = { b0/a0, b1/a0, b2/a0, 1.0, a1/a0,a2/a0,0.,0., 0.,0.,0.,0., 0.,0.,0.,0. };
+        double data[16] = { b0/a0, b1/a0, b2/a0, 1.0, a1/a0,a2/a0, (double)test_mode,0., 0.,0.,0.,0., 0.,0.,0.,0. };
         rp_spmc_module_config_vector_Qn (BIQID, data, 6, Q28);
 }
 
