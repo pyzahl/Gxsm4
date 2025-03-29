@@ -1927,10 +1927,10 @@ void RPSPMC_Control::create_folder (){
 
         bp->grid_add_label ("Modulation on");
         GtkWidget *cbBQmode = gtk_combo_box_text_new ();
-        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbBQmode), "0", "Non/Pass");
-        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbBQmode), "1", "IIR");
-        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbBQmode), "2", "BiQuad");
-        gtk_combo_box_set_active_id (GTK_COMBO_BOX (cbBQmode), "1");
+        { gchar *id = g_strdup_printf ("%d", 0); gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbBQmode), id, "Non/Pass"); g_free (id); }
+        { gchar *id = g_strdup_printf ("%d", 1); gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbBQmode), id, "IIR"); g_free (id); }
+        { gchar *id = g_strdup_printf ("%d", 2); gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbBQmode), id, "BiQuad"); g_free (id); }
+        gtk_combo_box_set_active (GTK_COMBO_BOX (cbBQmode), 1);
         g_signal_connect (G_OBJECT (cbBQmode),"changed",	
                           G_CALLBACK (RPSPMC_Control::choice_BQmode_callback), 
                           this);				
@@ -3460,9 +3460,13 @@ int RPSPMC_Control::choice_mod_target_callback (GtkWidget *widget, RPSPMC_Contro
 }
 
 int RPSPMC_Control::choice_BQmode_callback (GtkWidget *widget, RPSPMC_Control *self){
+        g_message ("RPSPMC_Control::choice_BQmode_callback");
 	int id = gtk_combo_box_get_active (GTK_COMBO_BOX (widget));
+        g_message ("RPSPMC_Control::choice_BQmode_callback id=%d", id);
         if (rpspmc_pacpll)
                 rpspmc_pacpll->write_parameter ("SPMC_SC_LCK_FILTER_MODE", id);
+        
+        g_message ("RPSPMC_Control::choice_BQmode_callback setting SPMC_SC_LCK_FILTER_MODE = %d done.", id);
 }
 
 
