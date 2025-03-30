@@ -1955,6 +1955,7 @@ void OnNewParams_RPSPMC(void){
                 case 0: rp_spmc_set_biqad_Lck_F0_pass (SPMC_BIQUAD_F0_CONTROL_REG, test_mode); break;
                 case 1: rp_spmc_set_biqad_Lck_F0_IIR (1000./SPMC_SC_LCK_F0BQ_IIR.Value (), SPMC_BIQUAD_F0_CONTROL_REG, test_mode); break;
                 case 2: rp_spmc_set_biqad_Lck_F0 (1000./SPMC_SC_LCK_F0BQ_TAU.Value (), SPMC_SC_LCK_F0BQ_Q.Value (), SPMC_BIQUAD_F0_CONTROL_REG, test_mode); break;
+                case 3: rp_spmc_set_biqad_Lck_AB (SPMC_BIQUAD_F0_CONTROL_REG, test_mode); break;
                 }
         }
 

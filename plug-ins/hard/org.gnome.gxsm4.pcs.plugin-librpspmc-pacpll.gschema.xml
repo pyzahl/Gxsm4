@@ -558,6 +558,12 @@
       <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-Q', Default/U:     0    , Adjustment PCS Name: 'dsp-SPMC-LCK-Q' </description>
     </key>
 
+    <key name="dsp-spmc-lck-bq-coef-ba00" type="ad">
+      <default>[1,0,0, 0,0,0]</default>
+      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-BQ-COEF-BA6', Default/U:     0     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-BQ-COEF-BA', Default/U:     0    , Adjustment PCS Name: 'dsp-SPMC-LCK-BQ-COEF-BA' </description>
+    </key>
+
     <key name="dsp-spmc-lck-gain" type="d">
       <default>1</default>
       <summary>PCS Remote-ID: 'dsp-SPMC-LCK-GAIN', Default/U:     1     </summary>

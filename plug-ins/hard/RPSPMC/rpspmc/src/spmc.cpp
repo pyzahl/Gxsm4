@@ -86,6 +86,14 @@ extern CDoubleParameter  SPMC_SIGNAL_MONITOR;
 extern CDoubleParameter  SPMC_AD463X_CH1_MONITOR;
 extern CDoubleParameter  SPMC_AD463X_CH2_MONITOR;
 
+extern CDoubleParameter  SPMC_SC_LCK_BQ_COEF_B0;
+extern CDoubleParameter  SPMC_SC_LCK_BQ_COEF_B1;
+extern CDoubleParameter  SPMC_SC_LCK_BQ_COEF_B2;
+extern CDoubleParameter  SPMC_SC_LCK_BQ_COEF_A0;
+extern CDoubleParameter  SPMC_SC_LCK_BQ_COEF_A1;
+extern CDoubleParameter  SPMC_SC_LCK_BQ_COEF_A2;
+
+
 
 extern int stream_server_control;
 extern spmc_stream_server spmc_stream_server_instance;
@@ -1010,6 +1018,28 @@ void rp_spmc_set_biqad_Lck_F0 (double f_cut, double Q, int BIQID, int test_mode)
         double data[16] = { b0/a0, b1/a0, b2/a0, 1.0, a1/a0,a2/a0, (double)test_mode,0., 0.,0.,0.,0., 0.,0.,0.,0. };
         rp_spmc_module_config_vector_Qn (BIQID, data, 6, Q28);
 }
+
+void rp_spmc_set_biqad_Lck_AB (int BIQID, int test_mode){
+        double b0, b1, b2, a0, a1, a2;
+
+        b0 = SPMC_SC_LCK_BQ_COEF_B0.Value ();
+        b1 = SPMC_SC_LCK_BQ_COEF_B1.Value ();
+        b2 = SPMC_SC_LCK_BQ_COEF_B2.Value ();
+        a0 = SPMC_SC_LCK_BQ_COEF_A0.Value ();
+        a1 = SPMC_SC_LCK_BQ_COEF_A1.Value ();
+        a2 = SPMC_SC_LCK_BQ_COEF_A2.Value ();
+
+        if (verbose > 1){
+                fprintf(stderr, "##Configure: BiQuad AB Fs=%g Hz test=%d:\n", 125e6/lck_decimation_factor, test_mode);
+                fprintf(stderr, "## b0=%g b1=%g b2=%g  a0=%g a1=%g a2=%g\n", b0/a0, b1/a0, b2/a0, a0/a0, a1/a0, a2/a0);
+                fprintf(stderr, "##Q28: b0=%08x b1=%08x a1=%08x a2=%08x\n", (int)round(b0/a0*Q28),(int)round(b1/a0*Q28), (int)round(a1/a0*Q28),(int)round(a2/a0*Q28));
+        }
+
+        double data[16] = { b0/a0, b1/a0, b2/a0, 1.0, a1/a0,a2/a0, (double)test_mode,0., 0.,0.,0.,0., 0.,0.,0.,0. };
+        rp_spmc_module_config_vector_Qn (BIQID, data, 6, Q28);
+}
+
+
 
 /*
   Signal Monitoring via GPIO:
