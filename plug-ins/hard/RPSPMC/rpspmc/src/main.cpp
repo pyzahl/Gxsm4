@@ -1943,6 +1943,7 @@ void OnNewParams_RPSPMC(void){
         if (SPMC_SC_LCK_F0BQ_Q.IsNewValue () || SPMC_SC_LCK_F0BQ_TAU.IsNewValue () || SPMC_SC_LCK_F0BQ_IIR.IsNewValue ()
             || SPMC_SC_LCK_FILTER_MODE.IsNewValue ()){
 
+                SPMC_SC_LCK_TARGET.Update ();
                 SPMC_SC_LCK_FILTER_MODE.Update ();
                 SPMC_SC_LCK_F0BQ_Q.Update ();
                 SPMC_SC_LCK_F0BQ_TAU.Update ();

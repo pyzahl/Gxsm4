@@ -399,7 +399,7 @@ public:
         static int choice_mod_target_callback (GtkWidget *widget, RPSPMC_Control *self);
         static int choice_z_servo_current_source_callback (GtkWidget *widget, RPSPMC_Control *self);
 
-        static int choice_BQmode_callback (GtkWidget *widget, RPSPMC_Control *self);
+        static int choice_BQfilter_type_callback (GtkWidget *widget, RPSPMC_Control *self);
         static int choice_rf_gen_out_callback (GtkWidget *widget, RPSPMC_Control *self);
         
         static void show_tab_to_configure (GtkWidget* w, gpointer data){
