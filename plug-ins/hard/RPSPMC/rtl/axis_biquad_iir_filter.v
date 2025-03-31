@@ -141,7 +141,7 @@ module axis_biquad_iir_filter #(
             a0 <= config_data[4*32-1 : 3*32]; // *** not used here, template
             a1 <= config_data[5*32-1 : 4*32];
             a2 <= config_data[6*32-1 : 5*32];
-            test <= config_data[7*32-1 : 6*32] != 0 ? 1:0;
+            test <= config_data[6*32 : 6*32];
             resetn <= 0;                     
         end
         else
@@ -173,10 +173,7 @@ module axis_biquad_iir_filter #(
                     begin // start processing run at decimated rate as given by axis_decii_clk
                         run <= 2; // state 2 to finsh processing next
                         decii_clk1 <= decii_clk;
-                        if (test)
-                            x   <= $signed(S_AXIS_test_tdata) <<< (signal_width-16); // load next input from test signal
-                        else
-                            x   <= S_AXIS_in_tdata; // load next input                [signal_width]  SQ32
+                        x   <= test ? $signed(S_AXIS_test_tdata) <<< (signal_width-16) : S_AXIS_in_tdata; // load next input from test signal or LockIn
                         x1  <= x;               // stage input pipe line  n-1    ""
                         x2  <= x1;              // stage input pipe line  n-2    ""
 

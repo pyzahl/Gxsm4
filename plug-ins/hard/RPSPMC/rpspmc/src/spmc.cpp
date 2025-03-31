@@ -926,12 +926,13 @@ double rp_spmc_configure_lockin (double freq, double gain, double FM_scale, unsi
 
 // set BiQuad to pass
 void rp_spmc_set_biqad_Lck_F0_pass (int BIQID, int test_mode){
-        double data[16] = { 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, (double)test_mode,0., 0.,0.,0.,0., 0.,0.,0.,0. };
+        double data[16] = { 1.0, 0.0, 0.0,  1.0, 0.0, 0.0,  0.,0., 0.,0.,0.,0., 0.,0.,0.,0. };
         if (verbose > 1){
                 fprintf(stderr, "##Configure: BiQuad to pass mode: (test=%d)\n", test_mode);
                 fprintf(stderr, "## b0=1, b1=b2=0 a0=1, a1=a2=0\n");
         }
-        rp_spmc_module_config_vector_Qn (BIQID, data, 6, Q28);
+        rp_spmc_module_config_vector_Qn (MODULE_SETUP, data, 6, Q28);
+        rp_spmc_module_config_uint32 (BIQID, test_mode, MODULE_SETUP_VECTOR(6)); // last, write test_mode
 }
 
 // set BiQuad to IIR 1st order LP
@@ -956,8 +957,9 @@ void rp_spmc_set_biqad_Lck_F0_IIR (double f_cut, int BIQID, int test_mode){
                 fprintf(stderr, "##Q28: b0=%08x a1=%08x\n", (int)round(b0*Q28),  (int)round(a1*Q28));
         }
 
-        double data[16] = { b0/a0, b1/a0, b2/a0, 1.0, a1/a0,a2/a0, (double)test_mode,0., 0.,0.,0.,0., 0.,0.,0.,0. };
-        rp_spmc_module_config_vector_Qn (BIQID, data, 6, Q28);
+        double data[16] = { b0/a0, b1/a0, b2/a0, 1.0, a1/a0,a2/a0,  0.,0., 0.,0.,0.,0., 0.,0.,0.,0. };
+        rp_spmc_module_config_vector_Qn (MODULE_SETUP, data, 6, Q28);
+        rp_spmc_module_config_uint32 (BIQID, test_mode, MODULE_SETUP_VECTOR(6)); // last, write test_mode
 }
 
 /*
@@ -1016,7 +1018,8 @@ void rp_spmc_set_biqad_Lck_F0 (double f_cut, double Q, int BIQID, int test_mode)
         }
 
         double data[16] = { b0/a0, b1/a0, b2/a0, 1.0, a1/a0,a2/a0, (double)test_mode,0., 0.,0.,0.,0., 0.,0.,0.,0. };
-        rp_spmc_module_config_vector_Qn (BIQID, data, 6, Q28);
+        rp_spmc_module_config_vector_Qn (MODULE_SETUP, data, 6, Q28);
+        rp_spmc_module_config_uint32 (BIQID, test_mode, MODULE_SETUP_VECTOR(6)); // last, write test_mode
 }
 
 void rp_spmc_set_biqad_Lck_AB (int BIQID, int test_mode){
@@ -1036,7 +1039,8 @@ void rp_spmc_set_biqad_Lck_AB (int BIQID, int test_mode){
         }
 
         double data[16] = { b0/a0, b1/a0, b2/a0, 1.0, a1/a0,a2/a0, (double)test_mode,0., 0.,0.,0.,0., 0.,0.,0.,0. };
-        rp_spmc_module_config_vector_Qn (BIQID, data, 6, Q28);
+        rp_spmc_module_config_vector_Qn (MODULE_SETUP, data, 6, Q28);
+        rp_spmc_module_config_uint32 (BIQID, test_mode, MODULE_SETUP_VECTOR(6)); // last, write test_mode
 }
 
 

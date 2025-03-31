@@ -59,8 +59,8 @@ good starting point.
 
 
 // PCS debugging/watching
-#define DEBUG_PCS_LOG
-#define DEBUG_PCS_PERF
+//#define DEBUG_PCS_LOG
+//#define DEBUG_PCS_PERF
 
 
 int total_message_count = 0;
