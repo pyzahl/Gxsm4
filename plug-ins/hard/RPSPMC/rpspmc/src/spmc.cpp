@@ -93,7 +93,7 @@ extern CDoubleParameter  SPMC_SC_LCK_BQ_COEF_A0;
 extern CDoubleParameter  SPMC_SC_LCK_BQ_COEF_A1;
 extern CDoubleParameter  SPMC_SC_LCK_BQ_COEF_A2;
 
-
+extern CDoubleParameter  SPMC_SC_LCK_RF_FREQUENCY;
 
 extern int stream_server_control;
 extern spmc_stream_server spmc_stream_server_instance;
@@ -932,7 +932,9 @@ void rp_spmc_set_biqad_Lck_F0_pass (int BIQID, int test_mode){
                 fprintf(stderr, "## b0=1, b1=b2=0 a0=1, a1=a2=0\n");
         }
         rp_spmc_module_config_vector_Qn (MODULE_SETUP, data, 6, Q28);
-        rp_spmc_module_config_uint32 (BIQID, test_mode, MODULE_SETUP_VECTOR(6)); // last, write test_mode
+        rp_spmc_module_config_uint32 (MODULE_SETUP, test_mode, MODULE_SETUP_VECTOR(6));
+        int test_deci = (int)(lck_decimation_factor * 16);   // 1+(int)(125e6 / SPMC_SC_LCK_RF_FREQUENCY.Value () / 1024.);
+        rp_spmc_module_config_uint32 (BIQID, test_deci, MODULE_SETUP_VECTOR(7));
 }
 
 // set BiQuad to IIR 1st order LP
@@ -944,7 +946,7 @@ void rp_spmc_set_biqad_Lck_F0_IIR (double f_cut, int BIQID, int test_mode){
         a1=a2=0.0;
         
         // 2nd order BiQuad Low Pass parameters
-        double wc = 2.*M_PI*f_cut/(125e6 / lck_decimation_factor); // 125MHz
+        double wc = 2.*M_PI*f_cut/(125e6 / lck_decimation_factor / 64); // 125MHz  LockIn Dec + FIR DECI (64x)
         //double c  = cos (wc); // near 1 for f_c/Fs << 1 *** or wc/(1+wc)
         //double xc = 1.0 - c;
         
@@ -959,7 +961,9 @@ void rp_spmc_set_biqad_Lck_F0_IIR (double f_cut, int BIQID, int test_mode){
 
         double data[16] = { b0/a0, b1/a0, b2/a0, 1.0, a1/a0,a2/a0,  0.,0., 0.,0.,0.,0., 0.,0.,0.,0. };
         rp_spmc_module_config_vector_Qn (MODULE_SETUP, data, 6, Q28);
-        rp_spmc_module_config_uint32 (BIQID, test_mode, MODULE_SETUP_VECTOR(6)); // last, write test_mode
+        rp_spmc_module_config_uint32 (MODULE_SETUP, test_mode, MODULE_SETUP_VECTOR(6));
+        int test_deci = (int)(lck_decimation_factor * 16);   // 1+(int)(125e6 / SPMC_SC_LCK_RF_FREQUENCY.Value () / 1024.);
+        rp_spmc_module_config_uint32 (BIQID, test_deci, MODULE_SETUP_VECTOR(7));
 }
 
 /*
@@ -984,7 +988,7 @@ void rp_spmc_set_biqad_Lck_F0 (double f_cut, double Q, int BIQID, int test_mode)
         double b0, b1, b2, a0, a1, a2;
 
         // 2nd order BiQuad Low Pass parameters
-        double w0 = 2.*M_PI*f_cut/(125e6 / lck_decimation_factor); // 125MHz -- decimate as needed!
+        double w0 = 2.*M_PI*f_cut/(125e6 / lck_decimation_factor / 64); // 125MHz  LockIn Dec + FIR DECI (64x)
 
 #if 1
         double c  = cos (w0);
@@ -1019,7 +1023,9 @@ void rp_spmc_set_biqad_Lck_F0 (double f_cut, double Q, int BIQID, int test_mode)
 
         double data[16] = { b0/a0, b1/a0, b2/a0, 1.0, a1/a0,a2/a0, (double)test_mode,0., 0.,0.,0.,0., 0.,0.,0.,0. };
         rp_spmc_module_config_vector_Qn (MODULE_SETUP, data, 6, Q28);
-        rp_spmc_module_config_uint32 (BIQID, test_mode, MODULE_SETUP_VECTOR(6)); // last, write test_mode
+        rp_spmc_module_config_uint32 (MODULE_SETUP, test_mode, MODULE_SETUP_VECTOR(6));
+        int test_deci = (int)(lck_decimation_factor * 16);   // 1+(125e6 / SPMC_SC_LCK_RF_FREQUENCY.Value () / 1024.);
+        rp_spmc_module_config_uint32 (BIQID, test_deci, MODULE_SETUP_VECTOR(7));
 }
 
 void rp_spmc_set_biqad_Lck_AB (int BIQID, int test_mode){
@@ -1040,7 +1046,9 @@ void rp_spmc_set_biqad_Lck_AB (int BIQID, int test_mode){
 
         double data[16] = { b0/a0, b1/a0, b2/a0, 1.0, a1/a0,a2/a0, (double)test_mode,0., 0.,0.,0.,0., 0.,0.,0.,0. };
         rp_spmc_module_config_vector_Qn (MODULE_SETUP, data, 6, Q28);
-        rp_spmc_module_config_uint32 (BIQID, test_mode, MODULE_SETUP_VECTOR(6)); // last, write test_mode
+        rp_spmc_module_config_uint32 (MODULE_SETUP, test_mode, MODULE_SETUP_VECTOR(6));
+        int test_deci = (int)(lck_decimation_factor * 16);   // 1+(125e6 / SPMC_SC_LCK_RF_FREQUENCY.Value () / 1024.);
+        rp_spmc_module_config_uint32 (BIQID, test_deci, MODULE_SETUP_VECTOR(7));
 }
 
 
@@ -1072,8 +1080,8 @@ void rp_spmc_update_readings (){
 
         int regA, regB;
         rp_spmc_module_read_config_data (SPMC_READBACK_Z_REG, &regA, &regB);
-        SPMC_ZS_MONITOR.Value () = rpspmc_to_volts (regB); // Z-GVP
         SPMC_Z0_MONITOR.Value () = rpspmc_to_volts (regA); // Z-slope component
+        SPMC_ZS_MONITOR.Value () = rpspmc_to_volts (regB); // Z-GVP
 
         rp_spmc_module_read_config_data (SPMC_READBACK_BIAS_REG, &regA, &regB); // Bias Sum Reading, Bias U0 Set Val
         SPMC_BIAS_REG_MONITOR.Value () = rpspmc_to_volts (regA);

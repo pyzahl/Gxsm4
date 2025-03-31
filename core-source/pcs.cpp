@@ -188,6 +188,8 @@ Param_Control::~Param_Control(){
 void Param_Control::Init(){
 	Current_Dval = -9e999; // internal buffer
 
+        Set_Force_ChangeNoticeFkt (xsmres.gui_pcs_force); // set force to false
+
 	set_exclude ();
 	color = NULL;
 	warn_color[0] = NULL;
@@ -385,7 +387,8 @@ gboolean Param_Control::Set_FromValue(double nVal){
         if (StringVal)
                 return false;
 
-        if (nVal == Current_Dval){
+        if (nVal == Current_Dval && !force_full_update){
+                g_message ("=== Param_Control::Set_FromValue(%g) *** no change for >%s<, no ChangeNotice. current val=%g", nVal, refname, Current_Dval);
 #if 0
                 if (strncmp(refname, "dsp-gvp", 7)==0) // weird patch
                         g_message ("Param_Control::Set_FromValue: same value[%s]: %g", refname, Current_Dval); // TEST

@@ -147,6 +147,8 @@ class Param_Control{
 	virtual void Set_Parameter(double value=0., int flg=FALSE, int usr2base=FALSE);
 	virtual gpointer GetEntryData(const gchar *txtid){ return NULL; };
 
+        virtual void Set_Force_ChangeNoticeFkt(gboolean force = false) { force_full_update=force; };
+        gboolean force_full_update;
 	virtual void Set_ChangeNoticeFkt(void (*NewChangeNoticeFkt)(Param_Control* pcs, gpointer data), gpointer data){
 		ChangeNoticeFkt = NewChangeNoticeFkt;
 		FktData = data;

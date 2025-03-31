@@ -61,7 +61,8 @@ module axis_FIR #(
     output wire [MAXIS_TDATA_WIDTH-1:0] M_AXIS_tdata,
     output wire                         M_AXIS_tvalid,
     output wire [MAXIS_TDATA_WIDTH-1:0] M_AXIS2_tdata,
-    output wire                         M_AXIS2_tvalid
+    output wire                         M_AXIS2_tvalid,
+    output wire dec_indicator
     );
     
     reg [FIR_DECI_L-1:0] i = 0;
@@ -116,4 +117,5 @@ module axis_FIR #(
     assign M_AXIS2_tdata  = buffer;
     assign M_AXIS2_tvalid = S_AXIS_tvalid;
     
+    assign dec_indicator = i == 0 ? 1:0;
 endmodule

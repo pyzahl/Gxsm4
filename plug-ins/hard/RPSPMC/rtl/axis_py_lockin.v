@@ -213,7 +213,7 @@ module axis_py_lockin#(
         // module configuration
         if (config_addr == configuration_address) // BQ configuration, and auto reset
         begin
-            lck_config      <= config_data[8-1       : 0];       // options: Bit0: AM, Bit2: FM control
+            lck_config      <= config_data[8-1       : 0];       // options: Bit0: AM, Bit1: FM control
             gain            <= config_data[2*32-1    : 1*32];    // programmed gain, Q24
             dds_n2          <= config_data[2*32+16-1 : 2*32];    // Phase Inc N2 lower 16 bits
             dds_PhaseInc    <= config_data[3*32+48-1 : 3*32];    // Phase Inc Width: 48 bits
@@ -242,7 +242,7 @@ module axis_py_lockin#(
 
         SigRef <= c; // GeneratedSignal
 
-        if (lck_config[2]) // FM mod?
+        if (lck_config[1]) // FM mod?
         begin
             // dds_FM_Scale: [Hz/V] * ((1<<32)-1) / 125000000*5
             fmcB         <= S_AXIS_FMC_tdata; // S32Q31 = 5V
@@ -250,6 +250,8 @@ module axis_py_lockin#(
             dds_FM       <= fmc >>> 31; // FM-Scale: Q44   Q[63-32=31]
             rf_dds_PhaseInc <= rf_dds_PhaseIncRef + dds_FM; // RF dds_FM Q32 
         end
+        else
+            rf_dds_PhaseInc <= rf_dds_PhaseIncRef; // RF dds_FM Q32 
         
                      
         // DDS N / cycle

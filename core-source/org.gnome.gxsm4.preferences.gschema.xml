@@ -1809,6 +1809,14 @@ Only on the fly applied at scan laod time. But you may save the file again, then
   </schema>
 
   <schema id="org.gnome.gxsm4.preferences.gui" path="/org/gnome/gxsm4/preferences/gui/">
+    <key name="pcs-forceupdate" type="b">
+      <default>true</default>
+      <summary>true: Forces PCS Entry Value to update on any event/focus/click regardless value changed. (EXPERIMENTAL, not recommended for SRanger)</summary>
+      <description>
+        true: Forces PCS Entry Value to update on any event/focus/click regardless value changed. (EXPERIMENTAL, not recommended for SRanger)
+	false: Onle updated Hardware (or calls ChangeNoticeFuntion()) when the value got actually changed.
+      </description>
+    </key>
     <key name="layerfields" type="b">
       <default>true</default>
       <summary>Select here, if you want use layered (3d) scans.</summary>

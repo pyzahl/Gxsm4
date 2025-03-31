@@ -193,16 +193,16 @@ SOURCE_SIGNAL_DEF swappable_signals[] = {                                       
         { 0x00000003, "Amplitude",   " ", "mV", "mV", (1000.0/((1L<<RP_FPGA_QSQRT)-1)),               3, -1 },   // AMPL  via PACPLL FIR_CH3 ** via transport / decimation selector 
         { 0x00000004, "dFreq-Control", " ", "mV", "mV", (1000.0*SPMC_AD5791_to_volts),                4, -1 },   // IR_CH2_DFREQ_CTRL_VAL : can be added to Z-control for true Z AFM mode in freq regulation, or addded to Bias for SQDM mode
                                                                                                                  // *** still assuming +/-10V range in PAC Control mappted to 5V here
-        { 0x00000005, "05-IN1-FBW",     " ", "V", "V", SPMC_RPIN12_to_volts,                          5, -1 },   // IN1 FBW **** IN1 RP 125MSPS (Signal) -- PLL Signal (FBW)
+        { 0x00000005, "05-IN1-FBW",     " ", "V", "V", SPMC_RPIN12_to_volts,                         -1, -1 },   // IN1 FBW **** IN1 RP 125MSPS (Signal) -- PLL Signal (FBW)
         { 0x00000006, "06-IN1-FIR",     " ", "V", "V", SPMC_RPIN12_to_volts,                         -1, -1 },   // IN1 FIR **** IN1 RP 125MSPS (Signal) -- PLL Signal (FIR)
         { 0x00000007, "07-IN2-FBW",     " ", "V", "V", SPMC_RPIN12_to_volts,                         -1, -1 },   // IN2 FBW
-        { 0x00000008, "08-LockIn-Mag-BQ",  " ", "V", "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),       -1, -1 },   // LCK-Mag/BiQuad/IIR
+        { 0x00000008, "08-LockIn-Mag-BQ",  " ", "V", "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),        5, -1 },   // LCK-Mag/BiQuad/IIR
         { 0x00000009, "09-LockIn-X",    " ", "V", "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),          -1, -1 },   // LCK-X -- needs filter, route to BiQuad?
         { 0x00000010, "10-LockIn-Y",    " ", "V", "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),          -1, -1 },   // LCK-Y -- need filter
         { 0x00000011, "11-IN4-FIR",     " ", "V", "V", SPMC_RPIN34_to_volts,                         -1, -1 },   // IN4 FIR
         { 0x00000012, "12-LCK-i",       " ", "V", "V", (1.0),                                        -1, -1 },   // ** Lck-i ** dbg
         { 0x00000013, "13-SineRef",     " ", "V",   "V", (SPMC_RPIN12_to_volts),                     -1, -1 },   // ** SD-Ref ** dbg
-        { 0x00000014, "14-LockInMag-pass", " ", "V",   "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),     -1, -1 },   // LCK-Mag-BiQuad-pass ** dbg
+        { 0x00000014, "14-LockIn-Mag-pass", " ", "V",   "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),     -1, -1 },   // LCK-Mag-BiQuad-pass ** dbg
         { 0x00000015, "15-ZwSlope-OUT", " ", "V",   "V", (SPMC_AD5791_to_volts),                     -1, -1 },   // Z-with-slope
         { 0x00000016, "X-TestSignal = 0", " ", "V",   "V", (1.0),                         -1, -1 },
         { 0x00000017, "X-TestSignal = 1", " ", "V",   "V", (1.0),                         -1, -1 },
@@ -2142,7 +2142,7 @@ void RPSPMC_Control::create_folder (){
         bp->set_input_width_chars (3);
         bp->set_label_width_chars (3);
 
-        bp->grid_add_ec ("Mon:", Volt, &spmc_parameters.bias_monitor, -10.0, 10.0, ".03g", 0.1, 1., "GVP-U-MONITOR");
+        bp->grid_add_ec ("Mon", Volt, &spmc_parameters.bias_monitor, -10.0, 10.0, ".03g", 0.1, 1., "GVP-U-MONITOR");
         //bp->grid_add_ec ("Mon:", Volt, &spmc_parameters.gvpu_monitor, -10.0, 10.0, ".03g", 0.1, 1., "GVP-U-MONITOR");
         EC_GVP_MON_list = g_slist_prepend( EC_GVP_MON_list, bp->ec);
         bp->ec->Freeze ();

@@ -108,6 +108,8 @@ module axis_biquad_iir_filter #(
     reg signed [coefficient_width-1:0] a2=0; /* coefficient internal size */
 
     reg test=0; /* use test signal input */
+    reg [31:0] test_dec=0;
+    reg [31:0] test_decii=0;
 
     reg signed [signal_width+coefficient_width-1:0] x_b0=0; /* product input */
     reg signed [signal_width+coefficient_width-1:0] x_b1=0; /* product input */
@@ -142,6 +144,7 @@ module axis_biquad_iir_filter #(
             a1 <= config_data[5*32-1 : 4*32];
             a2 <= config_data[6*32-1 : 5*32];
             test <= config_data[6*32 : 6*32];
+            test_dec <= config_data[8*32-1 : 7*32];
             resetn <= 0;                     
         end
         else
@@ -160,14 +163,28 @@ module axis_biquad_iir_filter #(
                 y_a2 <= 0;
                 y1_tmpx <= 0; 
                 y1_tmpy <= 0; 
-                run <= decii_clk;
+                run <= 0;
             end
             else
             begin
                 case (run) // split up in wait and two steps as we are always highly deciamted plenty of time
                     0:
                     begin
-                        run <= decii_clk ? 1:0; // wait for next trigger/new data
+                        if (test)
+                        begin
+                            if (test_decii == 0)
+                            begin
+                                test_decii <= test_dec;
+                                run <= 1;
+                            end 
+                            else
+                            begin
+                                test_decii <= test_decii-1;
+                                run <= 0;
+                            end
+                        end
+                        else
+                            run <= decii_clk ? 1:0; // wait for next trigger/new data
                     end
                     1:
                     begin // start processing run at decimated rate as given by axis_decii_clk
@@ -188,7 +205,10 @@ module axis_biquad_iir_filter #(
                     end                 
                     2: // continue with results
                     begin
-                        run = decii_clk || decii_clk1 ? 1:0; // wait for next trigger/new data
+                        if (test)
+                            run <= 0;
+                        else
+                            run = decii_clk || decii_clk1 ? 1:0; // wait for next trigger/new data
                         y1  <= (y1_tmpx - y1_tmpy) >>> coefficient_Q; // compute result y[n], normalize  => [signal_width+internal_extra]  SQ32 + 4 = SQ 36
                         y2  <= y1;       // 2nd stage result pipe line (n-2)
                         
