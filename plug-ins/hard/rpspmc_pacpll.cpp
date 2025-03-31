@@ -1905,6 +1905,8 @@ void RPSPMC_Control::create_folder (){
         
         bp->new_line ();
 	bp->grid_add_ec ("Modulation Frequency", new UnitObj("Hz","Hz"), &spmc_parameters.sc_lck_frequency, 0.0, 30e6, "5g", 1.0, 100.0, "SPMC-LCK-FREQ");
+        LCK_ModFrq = bp->ec;
+        
         bp->new_line ();
         bp->grid_add_label ("Modulation on");
         bp->grid_add_modulation_target_options (0, (int)spmc_parameters.sc_lck_target, this);
@@ -3406,6 +3408,13 @@ int RPSPMC_Control::callback_GrMatWindow (GtkWidget *widget, RPSPMC_Control *sel
         return 0;
 }
 
+#define QQ44 (1LL<<44)
+
+// Q44: 32766.0000 Hz -> phase_inc=4611404543  0000000112dc72ff
+double dds_phaseinc (double freq){
+        double fclk = 125e6; //ADC_SAMPLING_RATE;
+        return QQ44*freq/fclk;
+}
 
 void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *self){
         if (rpspmc_pacpll){
@@ -3445,11 +3454,23 @@ void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *
                 jdata[i++] = spmc_parameters.sc_lck_rf_frequency;
                 g_message ("ADJ LOCKIN FRQ %g Hz, target=%d vol=%g V, RF=%g Hz", spmc_parameters.sc_lck_frequency, self->LCK_Target, spmc_parameters.sc_lck_volume, spmc_parameters.sc_lck_rf_frequency);
 
+                unsigned int n2 = round (log2(dds_phaseinc (spmc_parameters.sc_lck_frequency)));
+                double lck_decimation_factor = (1 << (44 - 10 - n2)) - 1.;
+                double Fs = 125e6 / lck_decimation_factor;
+
+                gchar *info = g_strdup_printf ("Fs=%g Hz", Fs);
+                self->LCK_ModFrq->set_info (info);
+                g_free (info);
+
+                g_print ("BiQ Coef: BA = [");
+                for (int k=0;k<6; ++k)
+                        g_print ("%g%s ", spmc_parameters.sc_lck_bq_coef[k], k==2?"][":k<5?",":"]");
+                g_print (", Fs=%g Hz\n", Fs);
+                
                 if (spmc_parameters.sc_lck_q > 0. && spmc_parameters.sc_lck_bq_tau > 0.)
                 { // INFO
                         double b0, b1, b2, a0, a1, a2;
                         double f_cut = 1000./spmc_parameters.sc_lck_bq_tau;
-                        double Fs = spmc_parameters.sc_lck_frequency;
                         double Q  = spmc_parameters.sc_lck_q;
                         // 2nd order BiQuad Low Pass parameters
                         double w0 = 2.*M_PI*f_cut/Fs; // 125MHz -- decimate as needed!

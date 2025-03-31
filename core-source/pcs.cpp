@@ -59,7 +59,8 @@ good starting point.
 
 
 // PCS debugging/watching
-// #define DEBUG_PCS_LOG
+#define DEBUG_PCS_LOG
+#define DEBUG_PCS_PERF
 
 
 int total_message_count = 0;
@@ -1017,7 +1018,7 @@ void Gtk_EntryControl::Set_Parameter(double Value=0., int flg=FALSE, int usr2bas
         g_message ("Gtk_EntryControl::Set_Parameter value=%g [%s] flg=%d ?-> usr2base=%d", value, refname, flg, usr2base);
 #endif
         
-	if (Set_FromValue (value)){ // preoceed only with updated and potential client if new value was accepted
+	if (Set_FromValue (value)){ // proceed only with updated and potential client if new value was accepted
                 update_value_in_settings ();
 
                 if ((c=(GtkWidget*)g_object_get_data( G_OBJECT (entry), "HasMaster"))){

@@ -1941,7 +1941,10 @@ void OnNewParams_RPSPMC(void){
 
         // LockIn Signal Out BiQuad Filter
         if (SPMC_SC_LCK_F0BQ_Q.IsNewValue () || SPMC_SC_LCK_F0BQ_TAU.IsNewValue () || SPMC_SC_LCK_F0BQ_IIR.IsNewValue ()
-            || SPMC_SC_LCK_FILTER_MODE.IsNewValue ()){
+            || SPMC_SC_LCK_FILTER_MODE.IsNewValue ()
+            || SPMC_SC_LCK_BQ_COEF_B0.IsNewValue ()|| SPMC_SC_LCK_BQ_COEF_B1.IsNewValue ()|| SPMC_SC_LCK_BQ_COEF_B2.IsNewValue ()
+            || SPMC_SC_LCK_BQ_COEF_A0.IsNewValue ()|| SPMC_SC_LCK_BQ_COEF_A1.IsNewValue ()|| SPMC_SC_LCK_BQ_COEF_A2.IsNewValue ()
+            ){
 
                 SPMC_SC_LCK_TARGET.Update ();
                 SPMC_SC_LCK_FILTER_MODE.Update ();
@@ -1949,6 +1952,13 @@ void OnNewParams_RPSPMC(void){
                 SPMC_SC_LCK_F0BQ_TAU.Update ();
                 SPMC_SC_LCK_F0BQ_IIR.Update ();
 
+                SPMC_SC_LCK_BQ_COEF_B0.Update ();
+                SPMC_SC_LCK_BQ_COEF_B1.Update ();
+                SPMC_SC_LCK_BQ_COEF_B2.Update ();
+                SPMC_SC_LCK_BQ_COEF_A0.Update ();
+                SPMC_SC_LCK_BQ_COEF_A1.Update ();
+                SPMC_SC_LCK_BQ_COEF_A2.Update ();
+                
                 int test_mode =  SPMC_SC_LCK_TARGET.Value () == 8 ? 1:0;
                 
                 switch (SPMC_SC_LCK_FILTER_MODE.Value ()){

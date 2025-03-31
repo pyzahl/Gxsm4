@@ -764,6 +764,7 @@ public:
         int LCK_Target;
 	double    LCK_Volume[LCK_NUM_TARGETS];
         GtkWidget *LCK_VolumeEntry[LCK_NUM_TARGETS];
+        Param_Control *LCK_ModFrq;
         
 	// Probing
 	int probe_trigger_raster_points_user;
