@@ -381,6 +381,8 @@ public:
 
         void Init_SPMC_on_connect ();
 
+        static void spmc_server_control_callback (GtkWidget *widget,  RPSPMC_Control *self);
+
         void GVP_zero_all_smooth ();
         static int GVP_AllZero (GtkWidget *widget, RPSPMC_Control *self);
         
@@ -901,6 +903,7 @@ public:
                                         (GFunc) App::update_ec, NULL);
         };
         
+        double rp_verbose_level; 
         
 	// -- Profile Displays
 	int last_probe_data_index;
@@ -1200,7 +1203,6 @@ public:
         
         gint debug_level; 
         int scan_gvp_options;
-        double rp_verbose_level; 
         GSettings *inet_json_settings;
 };
 

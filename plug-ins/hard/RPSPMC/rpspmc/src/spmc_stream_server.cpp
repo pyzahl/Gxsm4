@@ -71,7 +71,9 @@
 
 pthread_attr_t stream_server_attr;
 pthread_mutex_t stream_server_mutexsum;
-int stream_server_control = 1;
+int stream_server_control  = 1;
+int spmc_dma_pull_interval = 100; // 100ms default DMA pull/check intervall to push to socket
+
 static pthread_t stream_server_thread;
 
 extern spmc_stream_server spmc_stream_server_instance;
@@ -108,7 +110,7 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
                 // there was an error, stop telemetry
                 m_endpoint.get_alog().write(websocketpp::log::alevel::app,
                                             "Stream Server Timer Error: "+ec.message());
-                set_timer(100);
+                set_timer (spmc_dma_pull_interval);
                 return;
         }
 
@@ -116,8 +118,8 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
         {       // make sure all got send
                 size_t webs_nbuf=getBufferedAmount();
                 if (webs_nbuf > 0){
-                        fprintf(stderr, "** Skipping ** WebSocket Buffered Amount: %d\n", webs_nbuf);
-                        set_timer(100);
+                        fprintf (stderr, "** Skipping ** WebSocket Buffered Amount: %d\n", webs_nbuf);
+                        set_timer (spmc_dma_pull_interval);
                         return;
                 }
         }
@@ -400,7 +402,7 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
         clear_info_stream ();
 
         // set timer for next telemetry
-        set_timer(100);
+        set_timer (spmc_dma_pull_interval);
 }
 
 

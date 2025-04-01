@@ -1156,15 +1156,15 @@ gboolean rpspmc_hwi_dev::ScanLineM(int yindex, int xdir, int muxmode, //srcs_mas
         // ACTUAL SCAN PROGRESS CHECK on line basis
         if (ScanningFlg){ // make sure we did not got aborted and completed already!
 
-                //g_print ("rpspmc_hwi_spm::ScanLineM(yindex=%d [fifo-y=%d], xdir=%d, ydir=%d, lssrcs=%x) checking...\n", yindex, data_y_index, xdir, ydir, srcs_mask);
                 y_current = RPSPMC_data_y_index;
+                g_print ("current RPSPMC_data_y_index: %04d ** rpspmc_hwi_spm::ScanLineM (yindex=%04d, xdir=%d, ydir=%d, lssrcs=%x) checking...\n", RPSPMC_data_y_index, yindex, xdir, ydir, srcs_mask);
 
                 if (ydir > 0 && yindex <= RPSPMC_data_y_index){
-                        //g_print ("\r * rpspmc_hwi_spm::ScanLineM(yindex=%04d [fifo-y=%04d], xdir=%d, ydir=%d, lssrcs=0x%08x) top-down completed.\n", yindex, RPSPMC_data_y_index, xdir, ydir, srcs_mask);
+                        g_print ("\r * top-down completed.\n");
                         return FALSE; // line completed top-down
                 }
                 if (ydir < 0 && yindex >= RPSPMC_data_y_index){
-                        //g_print ("\r * rpspmc_hwi_spm::ScanLineM(yindex=%04d [fifo-y=%04d], xdir=%d, ydir=%d, lssrcs=0x%08x) bottom-up completed.\n", yindex, RPSPMC_data_y_index, xdir, ydir, srcs_mask);
+                        g_print ("\r * bottom-up completed.\n");
                         return FALSE; // line completed bot-up
                 }
 
@@ -1785,9 +1785,9 @@ int rpspmc_hwi_dev::read_GVP_data_block_to_position_vector (int offset, gboolean
 #if 1 // THIS DATA ASSIGNMENT AND SCALING IS CORRECT
                         if (ich >= 8){
                                 GVP_vp_header_current.dataexpanded[ich] = rpspmc_source_signals[ich+SIGNAL_INDEX_ICH0].scale_factor*GVP_vp_header_current.chNs[ich];
-                                g_message ("GVP DATA [%d] ICH%d %s s:%g x:%d sx:%g %s", ch_index, ich,
-                                           rpspmc_source_signals[ich+SIGNAL_INDEX_ICH0].label, rpspmc_source_signals[ich+SIGNAL_INDEX_ICH0].scale_factor, GVP_vp_header_current.chNs[ich],
-                                           GVP_vp_header_current.dataexpanded[ich], rpspmc_source_signals[ich+SIGNAL_INDEX_ICH0].unit);
+                                //g_message ("GVP DATA [%d] ICH%d %s s:%g x:%d sx:%g %s", ch_index, ich,
+                                //           rpspmc_source_signals[ich+SIGNAL_INDEX_ICH0].label, rpspmc_source_signals[ich+SIGNAL_INDEX_ICH0].scale_factor, GVP_vp_header_current.chNs[ich],
+                                //           GVP_vp_header_current.dataexpanded[ich], rpspmc_source_signals[ich+SIGNAL_INDEX_ICH0].unit);
                         }
 #endif
                 }

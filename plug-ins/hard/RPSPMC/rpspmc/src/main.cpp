@@ -65,7 +65,7 @@ int thread_data__tune_control=0;
 
 spmc_stream_server spmc_stream_server_instance;
 spmc_dma_support *spm_dma_instance = NULL;
-
+extern int spmc_dma_pull_interval;
 
 // Some thing is off while Linking, application does NOT (terminated with unkown error a tload time) work with compliled separate and linked to lib
 // In Makefile: CXXSOURCES=main.cpp fpga_cfg.cpp pacpll.cpp spmc.cpp
@@ -219,6 +219,9 @@ CIntParameter RPSPMC_FPGA_STARTUP    ("RPSPMC_FPGA_STARTUP", CBaseParameter::RW,
 CIntParameter RPSPMC_FPGA_STARTUPCNT ("RPSPMC_FPGA_STARTUPCNT", CBaseParameter::RW, 0, 0, -2147483648,2147483647);
 
 CIntParameter RPSPMC_INITITAL_TRANSFER_ACK ("RPSPMC_INITITAL_TRANSFER_ACK", CBaseParameter::RW, 0, 0, -2147483648,2147483647);
+
+CIntParameter RPSPMC_DMA_PULL_INTERVAL("RPSPMC_DMA_PULL_INTERVAL", CBaseParameter::RW, 100, 0, 5, 250);
+
 
 CIntParameter TRANSPORT_CH3("TRANSPORT_CH3", CBaseParameter::RW, 0, 0, 0, 19);
 CIntParameter TRANSPORT_CH4("TRANSPORT_CH4", CBaseParameter::RW, 1, 0, 0, 19);
@@ -1651,10 +1654,16 @@ void UpdateSignals(void)
 
 
 void UpdateParams(void){
-        //if (verbose > 2) fprintf(stderr, "** Update Params **\n");
-	CDataManager::GetInstance()->SetParamInterval (parameter_updatePeriod.Value());
-	CDataManager::GetInstance()->SetSignalInterval (signal_updatePeriod.Value());
 
+        if (parameter_updatePeriod.IsNewValue() || signal_updatePeriod.IsNewValue()){
+                parameter_updatePeriod.Update();
+                signal_updatePeriod.Update();
+                if (verbose > 2)
+                        fprintf(stderr, "** Update Interval Params: %d ms, Signals: %d ms\n", parameter_updatePeriod.Value(), signal_updatePeriod.Value());
+                CDataManager::GetInstance()->SetParamInterval (parameter_updatePeriod.Value());
+                CDataManager::GetInstance()->SetSignalInterval (signal_updatePeriod.Value());
+        }
+        
         DC_OFFSET.Value() = (float)(1000.*signal_dc_measured); // mV
    	
         FILE *fp = fopen("/proc/stat","r");
@@ -1698,6 +1707,12 @@ void UpdateParams(void){
 // ****************************************
 void OnNewParams_RPSPMC(void){
         static int do_rotate=0;
+
+        if ( RPSPMC_DMA_PULL_INTERVAL.IsNewValue()){
+                RPSPMC_DMA_PULL_INTERVAL.Update();
+                fprintf(stderr, "RPSPMC DMA pull and send every %d ms\n", RPSPMC_DMA_PULL_INTERVAL.Value());
+                spmc_dma_pull_interval = RPSPMC_DMA_PULL_INTERVAL.Value ();
+        }
         
         //SPMC_GVP_STATUS.Update ();
 
@@ -1985,29 +2000,22 @@ void OnNewParams_RPSPMC(void){
 // ****************************************
 void OnNewParams_PACPLL(void){
         if (verbose > 2) fprintf(stderr, "** New Params **\n");
-        //int x=0;
-        //static int ppv=0;
-        //static int spv=0;
         static int operation=0;
-        //double reading_vector[READING_MAX_VALUES];
 
         PACVERBOSE.Update ();
 
         // keep fixed for debugging
-        //verbose = PACVERBOSE.Value ();
-
+        verbose = PACVERBOSE.Value ();
         
 #if 0
-        if (ppv == 0) { ppv=parameter_updatePeriod.Value(); parameter_updatePeriod.Update (); }
-        if (spv == 0) { spv=signal_updatePeriod.Value(); signal_updatePeriod.Update (); }
-        
-        if (ppv != parameter_updatePeriod.Value ()){
+        // done in UpdateParams ()
+        if ( parameter_updatePeriod.IsNewValue () ){
+                parameter_updatePeriod.Update ();
                 CDataManager::GetInstance()->SetParamInterval (parameter_updatePeriod.Value());
-                ppv = parameter_updatePeriod.Value ();
         }
-        if (spv != signal_updatePeriod.Value ()){
+        if ( signal_updatePeriod.IsNewValue ()){
+                signal_updatePeriod.Update ();
                 CDataManager::GetInstance()->SetSignalInterval (signal_updatePeriod.Value());
-                spv = signal_updatePeriod.Value ();
         }
 #endif
         

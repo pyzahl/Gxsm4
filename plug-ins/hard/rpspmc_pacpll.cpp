@@ -1540,10 +1540,11 @@ void RPSPMC_Control::create_folder (){
 	GSList *multi_IVsec_list=NULL;
 
         GSList *FPGA_readback_update_list=NULL;
+        GSList *EC_FPGA_SPMC_server_settings_list=NULL;
         GSList *EC_GVP_MON_list = NULL;
         
         AppWindowInit ("RP-SPM Control Window");
-        
+
         // ========================================
         notebook = gtk_notebook_new ();
         gtk_notebook_set_scrollable (GTK_NOTEBOOK (notebook), TRUE);
@@ -2733,9 +2734,20 @@ void RPSPMC_Control::create_folder (){
                                     G_CALLBACK (rpspmc_hwi_dev::spmc_stream_connect_cb), rpspmc_hwi);
         stream_connect_button=bp->button;
 
+
+        spmc_parameters.rpspmc_dma_pull_interval = 100.0;
+        bp->set_input_width_chars (2);
+        bp->set_default_ec_change_notice_fkt (RPSPMC_Control::spmc_server_control_callback, this);
+  	bp->grid_add_ec ("DMA rate limit", msTime, &spmc_parameters.rpspmc_dma_pull_interval, 100., 10., ".0f", 5., 250., "RP-DMA-PULL-INTERVAL");        
+        EC_FPGA_SPMC_server_settings_list = g_slist_prepend(EC_FPGA_SPMC_server_settings_list, bp->ec);
+        
         bp->grid_add_widget (GVP_stop_all_zero_button=gtk_button_new_from_icon_name ("process-stopall-symbolic"));
         g_signal_connect (G_OBJECT (bp->button), "clicked", G_CALLBACK (RPSPMC_Control::GVP_AllZero), this);
-        
+        //g_signal_connect (G_OBJECT (bp->button), "clicked", G_CALLBACK (RPSPMC_Control_pacpll::spmc_server_control_callback), this);
+        gtk_widget_set_tooltip_text (bp->button, "Click to force reset GVP (WARNING: XYZ JUMP possible)!");
+        //gtk_widget_set_tooltip_text (bp->button, "Click to push update off Verbose Level and RPSPMC DMA rate limit / pull interval.");
+
+
         bp->new_line ();
         bp->grid_add_check_button ( N_("Debug"), "Enable debugging LV1.", 1,
                                     G_CALLBACK (RPspmc_pacpll::dbg_l1), rpspmc_pacpll);
@@ -2747,9 +2759,10 @@ void RPSPMC_Control::create_folder (){
                                     G_CALLBACK (RPspmc_pacpll::scan_gvp_opt6), rpspmc_pacpll);
         bp->grid_add_check_button ( N_("GVP7"), "Set GVP Option Bit 7 for scan", 1,
                                     G_CALLBACK (RPspmc_pacpll::scan_gvp_opt7), rpspmc_pacpll);
-        rpspmc_pacpll->rp_verbose_level = 0.0;
+        rp_verbose_level = 0.0;
         bp->set_input_width_chars (2);
-  	bp->grid_add_ec ("V", Unity, &rpspmc_pacpll->rp_verbose_level, 0., 10., ".0f", 1., 1., "RP-VERBOSE-LEVEL");        
+  	bp->grid_add_ec ("Verbosity", Unity, &rp_verbose_level, 0., 10., ".0f", 1., 1., "RP-VERBOSE-LEVEL");        
+        EC_FPGA_SPMC_server_settings_list = g_slist_prepend(EC_FPGA_SPMC_server_settings_list, bp->ec);
         //bp->new_line ();
         //tmp=bp->grid_add_button ( N_("Read"), "TEST READ", 1,
         //                          G_CALLBACK (RPspmc_pacpll::read_cb), this);
@@ -2800,6 +2813,7 @@ void RPSPMC_Control::create_folder (){
 
 
 	g_object_set_data( G_OBJECT (window), "FPGA_readback_update_list", FPGA_readback_update_list);
+        g_object_set_data( G_OBJECT (window), "EC_FPGA_SPMC_server_settings_list", EC_FPGA_SPMC_server_settings_list);
         
 	GUI_ready = TRUE;
         
@@ -2823,6 +2837,15 @@ void RPSPMC_Control::Init_SPMC_on_connect (){
 
                 // reset and zero GVP
                 GVP_zero_all_smooth ();
+        }
+}
+
+void  RPSPMC_Control::spmc_server_control_callback (GtkWidget *widget, RPSPMC_Control *self){
+        g_message ("RPSPMC+Control::spmc_server_control_callback DMA: %d ms, VL: %d",(int)spmc_parameters.rpspmc_dma_pull_interval, (int)self->rp_verbose_level);
+        //RPSPMC_Control::GVP_AllZero (self);
+        if (rpspmc_pacpll){
+                rpspmc_pacpll->write_parameter ("RPSPMC_DMA_PULL_INTERVAL", (int)spmc_parameters.rpspmc_dma_pull_interval);
+                rpspmc_pacpll->write_parameter ("PACVERBOSE", (int)self->rp_verbose_level);
         }
 }
 
@@ -4907,10 +4930,10 @@ void RPspmc_pacpll::update_SPMC_parameters (){
         RPSPMC_ControlClass->Init_SPMC_on_connect ();
 }
 
+
 void RPspmc_pacpll::choice_operation_callback (GtkWidget *widget, RPspmc_pacpll *self){
         self->operation_mode = gtk_combo_box_get_active (GTK_COMBO_BOX (widget));
         self->write_parameter ("OPERATION", self->operation_mode);
-        self->write_parameter ("PACVERBOSE", (int)self->rp_verbose_level);
 }
 
 void RPspmc_pacpll::choice_update_ts_callback (GtkWidget *widget, RPspmc_pacpll *self){
@@ -5192,6 +5215,7 @@ void RPspmc_pacpll::scope_fft_time_zoom_callback (GtkWidget *widget, RPspmc_pacp
 void RPspmc_pacpll::update_health (const gchar *msg){
         if (msg){
                 gtk_entry_buffer_set_text (GTK_ENTRY_BUFFER (gtk_entry_get_buffer (GTK_ENTRY((red_pitaya_health)))), msg, -1);
+                g_slist_foreach ((GSList*)g_object_get_data (G_OBJECT (window), "EC_FPGA_SPMC_server_settings_list"), (GFunc) App::update_ec, NULL); // UPDATE GUI!
         } else {
 #if 0
                 gchar *gpiox_string = NULL;
