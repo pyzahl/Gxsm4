@@ -111,18 +111,18 @@ module axis_biquad_iir_filter #(
     reg [31:0] test_dec=0;
     reg [31:0] test_decii=0;
 
-    reg signed [signal_width+coefficient_width-1:0] x_b0=0; /* product input */
-    reg signed [signal_width+coefficient_width-1:0] x_b1=0; /* product input */
-    reg signed [signal_width+coefficient_width-1:0] x_b2=0; /* product input */
-    reg signed [signal_width+coefficient_width+internal_extra-1:0] y_a1=0; /* product output */
-    reg signed [signal_width+coefficient_width+internal_extra-1:0] y_a2=0; /* product output */
+    reg signed [signal_width+coefficient_width+internal_extra-1:0] x_b0=0; /* product input */
+    reg signed [signal_width+coefficient_width+internal_extra-1:0] x_b1=0; /* product input */
+    reg signed [signal_width+coefficient_width+internal_extra-1:0] x_b2=0; /* product input */
+    reg signed [signal_width+coefficient_width+2*internal_extra-1:0] y_a1=0; /* product output */
+    reg signed [signal_width+coefficient_width+2*internal_extra-1:0] y_a2=0; /* product output */
     
     reg signed [signal_width-1:0] x1=0; /* input data pipeline */
     reg signed [signal_width-1:0] x2=0; /* input data pipeline */
-    reg signed [signal_width+coefficient_width+internal_extra-1:0] y1_tmpx=0; /* output data pipeline prod tmp */
-    reg signed [signal_width+coefficient_width+internal_extra-1:0] y1_tmpy=0; /* output data pipeline prod tmp */
-    reg signed [signal_width+internal_extra-1:0] y1=0; /* output data pipeline */
-    reg signed [signal_width+internal_extra-1:0] y2=0; /* output data pipeline */
+    reg signed [signal_width+coefficient_width+2*internal_extra-1:0] y1_tmpx=0; /* output data pipeline prod tmp */
+    reg signed [signal_width+coefficient_width+2*internal_extra-1:0] y1_tmpy=0; /* output data pipeline prod tmp */
+    reg signed [signal_width+2*internal_extra-1:0] y1=0; /* output data pipeline */
+    reg signed [signal_width+2*internal_extra-1:0] y2=0; /* output data pipeline */
     
     reg decii_clk=0;
     reg decii_clk1=0;

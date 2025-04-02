@@ -2735,10 +2735,10 @@ void RPSPMC_Control::create_folder (){
         stream_connect_button=bp->button;
 
 
-        spmc_parameters.rpspmc_dma_pull_interval = 100.0;
+        spmc_parameters.rpspmc_dma_pull_interval = 10.0;
         bp->set_input_width_chars (2);
         bp->set_default_ec_change_notice_fkt (RPSPMC_Control::spmc_server_control_callback, this);
-  	bp->grid_add_ec ("DMA rate limit", msTime, &spmc_parameters.rpspmc_dma_pull_interval, 100., 10., ".0f", 5., 250., "RP-DMA-PULL-INTERVAL");        
+  	bp->grid_add_ec ("DMA rate limit", msTime, &spmc_parameters.rpspmc_dma_pull_interval, 10., 10., ".0f", 5., 250., "RP-DMA-PULL-INTERVAL");        
         EC_FPGA_SPMC_server_settings_list = g_slist_prepend(EC_FPGA_SPMC_server_settings_list, bp->ec);
         
         bp->grid_add_widget (GVP_stop_all_zero_button=gtk_button_new_from_icon_name ("process-stopall-symbolic"));

@@ -72,7 +72,7 @@
 pthread_attr_t stream_server_attr;
 pthread_mutex_t stream_server_mutexsum;
 int stream_server_control  = 1;
-int spmc_dma_pull_interval = 100; // 100ms default DMA pull/check intervall to push to socket
+int spmc_dma_pull_interval = 10; // 10ms and less: hi performace data moving mode, 100ms works great as conservative default DMA pull/check intervall to push to socket
 
 static pthread_t stream_server_thread;
 

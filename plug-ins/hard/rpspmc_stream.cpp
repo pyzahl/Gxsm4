@@ -326,7 +326,12 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
                                 g_message ("** VECTOR #%02d confirmed.", self->last_vector_pc_confirmed);
                         }
                 }
-               
+
+                //if (g_strrstr (contents, "{XYZInfo: {")){
+                //        self->status_append (contents, true);
+                //        g_message (contents);
+                //}
+                
 #ifdef USE_WEBSOCKETPP
         } else {
                 contents = msg->get_payload().c_str();

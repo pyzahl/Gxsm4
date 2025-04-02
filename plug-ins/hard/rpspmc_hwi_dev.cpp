@@ -1280,16 +1280,29 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2,
 	}
 
         if (*property == 'p'){ // SCAN DATA INDEX, CENTERED range: +/- NX/2, +/-NY/2
+#if 0
                 val1 = (double)( RPSPMC_data_x_index - (main_get_gapp()->xsm->data.s.nx/2 - 1) + 1);
                 val2 = (double)(-RPSPMC_data_y_index + (main_get_gapp()->xsm->data.s.ny/2 - 1) + 1);
                 val3 = (double)RPSPMC_data_z_value;
+#else
+		val1 = main_get_gapp()->xsm->Inst->Volt2XA (spmc_parameters.xs_monitor)/main_get_gapp()->xsm->data.s.rx * main_get_gapp()->xsm->data.s.nx;
+                val2 = -main_get_gapp()->xsm->Inst->Volt2YA (spmc_parameters.ys_monitor)/main_get_gapp()->xsm->data.s.ry * main_get_gapp()->xsm->data.s.ny;
+                val3 = main_get_gapp()->xsm->Inst->Volt2ZA (spmc_parameters.zs_monitor);
+#endif
 		return TRUE;
         }
         if (*property == 'P'){ // SCAN DATA INDEX, range: 0..NX, 0..NY
+#if 0
                 val1 = (double)(RPSPMC_data_x_index);
                 val2 = (double)(RPSPMC_data_y_index);
                 val3 = (double)RPSPMC_data_z_value;
-		return TRUE;
+#else
+		val1 = (main_get_gapp()->xsm->Inst->Volt2XA (spmc_parameters.xs_monitor)/main_get_gapp()->xsm->data.s.rx+0.5) * main_get_gapp()->xsm->data.s.nx;
+                val2 = (-main_get_gapp()->xsm->Inst->Volt2YA (spmc_parameters.ys_monitor)/main_get_gapp()->xsm->data.s.ry+0.5) * main_get_gapp()->xsm->data.s.ny;
+                val3 = main_get_gapp()->xsm->Inst->Volt2ZA (spmc_parameters.zs_monitor);
+#endif
+
+                return TRUE;
         }
         if (*property == 'B'){ // Monitors: Bias
                 val1 = spmc_parameters.bias_monitor;

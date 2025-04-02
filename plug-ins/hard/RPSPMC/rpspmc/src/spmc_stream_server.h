@@ -177,6 +177,10 @@ public:
                 info_stream << "{Info: {" << info << "}}" << std::endl;
                 info_count++;
         };
+        void add_xyz_info (double x, double y, double z){
+                info_stream << "{XYZInfo: {" << x << ',' << y << ',' << z << "}}" << std::endl;
+                info_count++;
+        };
         void clear_info_stream(){
                 info_stream.str("");
                 info_count=0;

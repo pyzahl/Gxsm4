@@ -52,7 +52,7 @@ int thread_data__tune_control=0;
 #define RPSPMC_VNAME      "Evaluation Regime SG20250101"
 #define RPSPMC_SRCS_INFO  "Bit0..3: XYZU | Bit4-7: IN1,2,3,4 | Bit8-11: dFREQ,EXEC,PHASE,AMPL | Bit 12..15: LckA,B, TIME64"
 
-#define PARAMETER_UPDATE_INTERVAL 200 // ms
+#define PARAMETER_UPDATE_INTERVAL 100 // ms
 #define SIGNAL_UPDATE_INTERVAL    200 // ms
 
 #include "main.h"
@@ -220,7 +220,7 @@ CIntParameter RPSPMC_FPGA_STARTUPCNT ("RPSPMC_FPGA_STARTUPCNT", CBaseParameter::
 
 CIntParameter RPSPMC_INITITAL_TRANSFER_ACK ("RPSPMC_INITITAL_TRANSFER_ACK", CBaseParameter::RW, 0, 0, -2147483648,2147483647);
 
-CIntParameter RPSPMC_DMA_PULL_INTERVAL("RPSPMC_DMA_PULL_INTERVAL", CBaseParameter::RW, 100, 0, 5, 250);
+CIntParameter RPSPMC_DMA_PULL_INTERVAL("RPSPMC_DMA_PULL_INTERVAL", CBaseParameter::RW, 10, 0, 5, 250);
 
 
 CIntParameter TRANSPORT_CH3("TRANSPORT_CH3", CBaseParameter::RW, 0, 0, 0, 19);

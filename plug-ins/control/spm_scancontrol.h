@@ -38,6 +38,14 @@ typedef enum { SCAN_DIR_TOPDOWN, SCAN_DIR_TOPDOWN_BOTUP, SCAN_DIR_BOTUP } SCAN_D
 typedef enum { SCAN_FLAG_READY, SCAN_FLAG_STOP,  SCAN_FLAG_PAUSE,  SCAN_FLAG_RUN } SCAN_FLAG;
 typedef enum { SCAN_LINESCAN, SCAN_FRAMECAPTURE } SCAN_DT_TYPE;
 
+// data passed to "idle" function call, used to refresh/draw while waiting for data
+typedef struct {
+	GSList *scan_list; // scans to update
+	GFunc  UpdateFunc; // function to call for background updating
+	gpointer data; // additional data (here: reference to the current SPM_ScanControl object)
+} IdleRefreshFuncData;
+
+
 class MultiVoltEntry{
 public:
 	MultiVoltEntry (BuildParam *bp, UnitObj *Volt, int i, double v=0.) { 
@@ -199,6 +207,7 @@ public:
 		sc->stop (((SPM_ScanControl*)data)->scan_flag == SCAN_FLAG_STOP 
 			  && ((SPM_ScanControl*)data)->last_scan_dir == SCAN_DIR_TOPDOWN,
 			  ((SPM_ScanControl*)data)->line);
+                sc->draw(); // final update
 	};
 
 	void SetScanDir (GtkWidget *w) { 

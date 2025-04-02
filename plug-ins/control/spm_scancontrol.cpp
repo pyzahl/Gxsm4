@@ -196,12 +196,6 @@ GxsmPlugin *get_gxsm_plugin_info ( void ){
 	return &spm_scancontrol_pi; 
 }
 
-// data passed to "idle" function call, used to refresh/draw while waiting for data
-typedef struct {
-	GSList *scan_list; // scans to update
-	GFunc  UpdateFunc; // function to call for background updating
-	gpointer data; // additional data (here: reference to the current SPM_ScanControl object)
-} IdleRefreshFuncData;
 
 SPM_ScanControl *spm_scancontrol = NULL;
 
@@ -1436,7 +1430,7 @@ gboolean SPM_ScanControl::do_scanline (int init){
 	static Mem2d **m2d_xm=NULL;
 	static Mem2d **m2d_2nd_xp=NULL;
 	static Mem2d **m2d_2nd_xm=NULL;
-	static IdleRefreshFuncData idf_data;
+	static IdleRefreshFuncData idf_data; // moved to class
         static int scanning_task_section=0;
 
         PI_DEBUG_GM (DBG_L3, "SPM_SCANCONTROL::do_scanline init=%d, scanning_task_section=%d", init, scanning_task_section);
@@ -1605,7 +1599,7 @@ gboolean SPM_ScanControl::do_scanline (int init){
                 return FALSE; // done.
         }
         
-        const gint64 max_age = 100000; // 100ms
+        const gint64 max_age = 50000; // 100ms
         static gint64 time_of_last_update = 0;
         if ( (time_of_last_update+max_age) < g_get_real_time () ){ // throttle
                 time_of_last_update = g_get_real_time ();

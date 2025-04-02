@@ -1064,6 +1064,10 @@ void rp_spmc_set_biqad_Lck_AB (int BIQID, int test_mode){
 
 void rp_spmc_update_readings (){
 
+        //spmc_stream_server_instance.add_xyz_info ( rpspmc_to_volts (read_gpio_reg_int32 (8,1)),
+        //                                           rpspmc_to_volts (read_gpio_reg_int32 (9,0)),
+        //                                           rpspmc_to_volts (read_gpio_reg_int32 (9,1)));
+      
         SPMC_GVP_STATUS.Value () = read_gpio_reg_int32 (3,1);
         //assign dbg_status = { GVP-STATUS, 0,0,0,0,  0, GVP-hold, GVP-finished, z-servo };
         //                      |= { sec[32-3], reset, pause, ~finished }[23:0]

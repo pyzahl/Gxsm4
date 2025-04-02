@@ -315,7 +315,7 @@
     </key>
 
     <key name="rp-dma-pull-interval" type="d">
-      <default>100</default>
+      <default>10</default>
       <summary>PCS Remote-ID: 'rp-dma-pull-interval', Default/U: 0     </summary>
       <description>pcs0000, PCS Remote-ID: 'rp-dma-pull-interval', Default: 0, Adjustment PCS Name: 'rp-dma-pull-interval' </description>
     </key>
