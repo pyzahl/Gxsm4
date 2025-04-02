@@ -559,7 +559,9 @@ gpointer ScanDataReadThread (void *ptr_hwi){
 #endif
                 usleep(20000);
         }
-        g_message ("GVP been written and confirmed for vector #%d. Executing GVP now.", hwi->getVPCconfirmed ());
+        g_message ("GVP been written and confirmed for vector #%d. Init GVP. Executing GVP now.", hwi->getVPCconfirmed ());
+
+        hwi->RPSPMC_data_y_index = hwi->RPSPMC_data_y_count == 0 ?  y0 : y0+ny-1;
 
         // start GVP
         hwi->GVP_vp_init ();
@@ -586,6 +588,7 @@ gpointer ScanDataReadThread (void *ptr_hwi){
         g_message("FifoReadThread Scanning %s: %d", hwi->RPSPMC_data_y_count == 0 ? "Top Down" : "Bottom Up", hwi->ScanningFlg);
 
         int ydir = hwi->RPSPMC_data_y_count == 0 ? 1:-1;
+
 
         for (int yi=hwi->RPSPMC_data_y_count == 0 ?  y0 : y0+ny-1;     // ? top down : bottom up
              hwi->RPSPMC_data_y_count == 0 ? yi < y0+ny : yi-y0 >= 0;
@@ -1554,6 +1557,7 @@ void rpspmc_hwi_dev::GVP_reset_UAB (){
 
 void rpspmc_hwi_dev::GVP_vp_init (){
         // reset GVP stream buffer read count
+        g_message ("*** rpspmc_hwi_dev::GVP_vp_init () ***");
         GVP_stream_buffer_AB = -2;
         GVP_stream_buffer_position = 0;
         GVP_stream_buffer_offset = 0; // 0x100   //  =0x00 **** TESTING BRAM ISSUE -- FIX ME !!! *****

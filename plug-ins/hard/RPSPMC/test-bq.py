@@ -11,7 +11,8 @@ def Fs():
 	freq = float(gxsm.get("dsp-SPMC-LCK-FREQ"))
 	n2 = round (math.log2(dds_phaseinc (freq)))
 	lck_decimation_factor = (1 << (44 - 10 - n2)) - 1.
-	return 125e6 / lck_decimation_factor
+	print ('Flck is ', freq, ' Hz', 'lck_dec * 16 is ', lck_decimation_factor*16 )
+	return 125e6 /(lck_decimation_factor*16)
 
 print ('Fs is ', Fs (), ' Hz')
 
@@ -21,6 +22,13 @@ def butterworth_filter(order=2, cutoff=0.3, filter_type='low', fs=1.0):
     normal_cutoff = cutoff / nyquist
     b, a = butter(order, normal_cutoff, btype=filter_type, analog=False)
     return b, a
+
+def ellips_filter(order=2, cutoff=0.3, filter_type='low', fs=1.0):
+    nyquist = 0.5 * fs  # Nyquist frequency
+    normal_cutoff = cutoff / nyquist
+    b, a = butter(order, normal_cutoff, btype=filter_type, analog=False)
+    return b, a
+
 
 # Compute and plot the frequency response
 def plot_frequency_response(b, a, cutoff):
@@ -35,9 +43,10 @@ def plot_frequency_response(b, a, cutoff):
     plt.show()
 
 # Example usage
-fc = 100000
+fc = 18000
 fc_norm = fc/Fs()
-b, a = butterworth_filter(order=2, cutoff=fc_norm)
+#b, a = butterworth_filter(order=1, cutoff=fc_norm)
+b, a = ellipse_filter(order=1, cutoff=fc_norm)
 print ('fCut_norm=', fc_norm, ' b=',b,' a=',a)
 print (b.size)
 
@@ -69,4 +78,4 @@ if a.size>2:
 	gxsm.set("dsp-SPMC-LCK-BQ-COEF-BA05", str(a[2]))
 
 
-plot_frequency_response(b, a, fc_norm)
+#plot_frequency_response(b, a, fc_norm)
