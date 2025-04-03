@@ -62,68 +62,6 @@ extern "C++" {
         extern GxsmPlugin rpspmc_hwi_pi;
 }
 
-MOD_INPUT mod_input_list[] = {
-        //## [ MODULE_SIGNAL_INPUT_ID, name, actual hooked signal address ]
-        { DSP_SIGNAL_Z_SERVO_INPUT_ID, "Z_SERVO", 0 },
-        { DSP_SIGNAL_M_SERVO_INPUT_ID, "M_SERVO", 0 },
-        { DSP_SIGNAL_MIXER0_INPUT_ID, "MIXER0", 0 },
-        { DSP_SIGNAL_MIXER1_INPUT_ID, "MIXER1", 0 },
-        { DSP_SIGNAL_MIXER2_INPUT_ID, "MIXER2", 0 },
-        { DSP_SIGNAL_MIXER3_INPUT_ID, "MIXER3", 0 },
-
-        { DSP_SIGNAL_DIFF_IN0_ID, "DIFF_IN0", 0 },
-        { DSP_SIGNAL_DIFF_IN1_ID, "DIFF_IN1", 0 },
-        { DSP_SIGNAL_DIFF_IN2_ID, "DIFF_IN2", 0 },
-        { DSP_SIGNAL_DIFF_IN3_ID, "DIFF_IN3", 0 },
-
-        { DSP_SIGNAL_SCAN_CHANNEL_MAP0_ID, "SCAN_CHMAP0", 0 },
-        { DSP_SIGNAL_SCAN_CHANNEL_MAP1_ID, "SCAN_CHMAP1", 0 },
-        { DSP_SIGNAL_SCAN_CHANNEL_MAP2_ID, "SCAN_CHMAP2", 0 },
-        { DSP_SIGNAL_SCAN_CHANNEL_MAP3_ID, "SCAN_CHMAP3", 0 },
-
-        { DSP_SIGNAL_LOCKIN_A_INPUT_ID, "LOCKIN_A", 0 },
-        { DSP_SIGNAL_LOCKIN_B_INPUT_ID, "LOCKIN_B", 0 },
-        { DSP_SIGNAL_VECPROBE0_INPUT_ID, "VECPROBE0", 0 },
-        { DSP_SIGNAL_VECPROBE1_INPUT_ID, "VECPROBE1", 0 },
-        { DSP_SIGNAL_VECPROBE2_INPUT_ID, "VECPROBE2", 0 },
-        { DSP_SIGNAL_VECPROBE3_INPUT_ID, "VECPROBE3", 0 },
-        { DSP_SIGNAL_VECPROBE0_CONTROL_ID, "VECPROBE0_C", 0 },
-        { DSP_SIGNAL_VECPROBE1_CONTROL_ID, "VECPROBE1_C", 0 },
-        { DSP_SIGNAL_VECPROBE2_CONTROL_ID, "VECPROBE2_C", 0 },
-        { DSP_SIGNAL_VECPROBE3_CONTROL_ID, "VECPROBE3_C", 0 },
-
-        { DSP_SIGNAL_OUTMIX_CH5_INPUT_ID, "OUTMIX_CH5", 0 },
-        { DSP_SIGNAL_OUTMIX_CH5_ADD_A_INPUT_ID, "OUTMIX_CH5_ADD_A", 0 },
-        { DSP_SIGNAL_OUTMIX_CH5_SUB_B_INPUT_ID, "OUTMIX_CH5_SUB_B", 0 },
-        { DSP_SIGNAL_OUTMIX_CH5_SMAC_A_INPUT_ID, "OUTMIX_CH5_SMAC_A", 0 },
-        { DSP_SIGNAL_OUTMIX_CH5_SMAC_B_INPUT_ID, "OUTMIX_CH5_SMAC_B", 0 },
-
-        { DSP_SIGNAL_OUTMIX_CH6_INPUT_ID, "OUTMIX_CH6", 0 },
-        { DSP_SIGNAL_OUTMIX_CH6_ADD_A_INPUT_ID, "OUTMIX_CH6_ADD_A", 0 },
-        { DSP_SIGNAL_OUTMIX_CH6_SUB_B_INPUT_ID, "OUTMIX_CH6_SUB_B", 0 },
-        { DSP_SIGNAL_OUTMIX_CH6_SMAC_A_INPUT_ID, "OUTMIX_CH6_SMAC_A", 0 },
-        { DSP_SIGNAL_OUTMIX_CH6_SMAC_B_INPUT_ID, "OUTMIX_CH6_SMAC_B", 0 },
-
-        { DSP_SIGNAL_OUTMIX_CH7_INPUT_ID, "OUTMIX_CH7", 0 },
-        { DSP_SIGNAL_OUTMIX_CH7_ADD_A_INPUT_ID, "OUTMIX_CH7_ADD_A", 0 },
-        { DSP_SIGNAL_OUTMIX_CH7_SUB_B_INPUT_ID, "OUTMIX_CH7_SUB_B", 0 },
-        { DSP_SIGNAL_OUTMIX_CH7_SMAC_A_INPUT_ID, "OUTMIX_CH7_SMAC_A", 0 },
-        { DSP_SIGNAL_OUTMIX_CH7_SMAC_B_INPUT_ID, "OUTMIX_CH7_SMAC_B", 0 },
-
-        { DSP_SIGNAL_OUTMIX_CH8_INPUT_ID, "OUTMIX_CH8_INPUT", 0 },
-        { DSP_SIGNAL_OUTMIX_CH8_ADD_A_INPUT_ID, "OUTMIX_CH8_ADD_A_INPUT", 0 },
-        { DSP_SIGNAL_OUTMIX_CH9_INPUT_ID, "OUTMIX_CH9_INPUT", 0 },
-        { DSP_SIGNAL_OUTMIX_CH9_ADD_A_INPUT_ID, "OUTMIX_CH9_ADD_A_INPUT", 0 },
-
-        { DSP_SIGNAL_ANALOG_AVG_INPUT_ID, "ANALOG_AVG_INPUT", 0 },
-        { DSP_SIGNAL_SCOPE_SIGNAL1_INPUT_ID, "SCOPE_SIGNAL1_INPUT", 0 },
-        { DSP_SIGNAL_SCOPE_SIGNAL2_INPUT_ID, "SCOPE_SIGNAL2_INPUT", 0 },
-
-        { 0, "END", 0 }
-};
-
-
-
 
 // HwI Implementation
 // ================================================================================
@@ -133,9 +71,9 @@ rpspmc_hwi_dev::rpspmc_hwi_dev():RP_stream(this){
         delayed_tip_move_update_timer_id = 0;
         
         // auto adjust and override preferences
-        main_get_gapp()->xsm->Inst->override_dig_range (1<<19, xsmres); // gxsm does precision sanity checks and trys to round to best fit grid
-        main_get_gapp()->xsm->Inst->override_volt_in_range (1.0, xsmres);
-        main_get_gapp()->xsm->Inst->override_volt_out_range (5.0, xsmres);
+        main_get_gapp()->xsm->Inst->override_dig_range (1<<20, xsmres);    // gxsm does precision sanity checks and trys to round to best fit grid
+        main_get_gapp()->xsm->Inst->override_volt_in_range (5.0, xsmres);  // FOR AD4630-24 24bit
+        main_get_gapp()->xsm->Inst->override_volt_out_range (5.0, xsmres); // PMODs AD5791-20 20bit
 
         // SRCS Mapping for Scan Channels as set via Channelselector (independing from Graphs/GVP) in Gxsm, but here same masks as same GVP is used
 
@@ -1366,148 +1304,6 @@ void rpspmc_hwi_dev::set_spmc_signal_mux (int source[6]){
                 rpspmc_source_signals[i].scale_factor = swappable_signals[k].scale_factor;
                 g_message ("GVP SOURCE MUX/SWPS INIT ** i=%d k=%d {%s} sfac=%g", i, k, rpspmc_source_signals[i].label, rpspmc_source_signals[i].scale_factor);
         }
-}
-
-
-
-int rpspmc_hwi_dev::lookup_signal_by_ptr(gint64 sigptr){
-	for (int i=0; i<NUM_SIGNALS; ++i){
-		if (dsp_signal_lookup_managed[i].dim == 1 && sigptr == dsp_signal_lookup_managed[i].p)
-			return i;
-		gint64 offset = sigptr - (gint64)dsp_signal_lookup_managed[i].p;
-		if (sigptr >= dsp_signal_lookup_managed[i].p && offset < 4*dsp_signal_lookup_managed[i].dim){
-			dsp_signal_lookup_managed[i].index = offset/4;
-			return i;
-		}
-	}
-	return -1;
-}
-
-int rpspmc_hwi_dev::lookup_signal_by_name(const gchar *sig_name){
-	for (int i=0; i<NUM_SIGNALS; ++i)
-		if (!strcmp (sig_name, dsp_signal_lookup_managed[i].label))
-			return i;
-	return -1;
-}
-
-const gchar *rpspmc_hwi_dev::lookup_signal_name_by_index(int i){
-	if (i<NUM_SIGNALS && i >= 0){
-		// dsp_signal_lookup_managed[i].index
-		return (const gchar*)dsp_signal_lookup_managed[i].label;
-	} else
-		return "INVALID INDEX";
-}
-
-const gchar *rpspmc_hwi_dev::lookup_signal_unit_by_index(int i){
-	if (i<NUM_SIGNALS && i >= 0)
-		return (const gchar*)dsp_signal_lookup_managed[i].unit;
-	else
-		return "INVALID INDEX";
-}
-
-double rpspmc_hwi_dev::lookup_signal_scale_by_index(int i){
-	if (i<NUM_SIGNALS && i >= 0)
-		return dsp_signal_lookup_managed[i].scale;
-	else
-		return 0.;
-}
-
-int rpspmc_hwi_dev::change_signal_input(int signal_index, gint32 input_id, gint32 voffset){
-	gint32 si = signal_index | (voffset >= 0 && voffset < dsp_signal_lookup_managed[signal_index].dim ? voffset<<16 : 0); 
-	SIGNAL_MANAGE sm = { input_id, si, 0, 0 }; // for read/write control part of signal_monitor only
-	PI_DEBUG_GM (DBG_L3, "XX::change_module_signal_input");
-
-        //
-        // dummy
-        // must adjust signal configurayion on controller here
-        //
-        
-	PI_DEBUG_GM (DBG_L3, "XX::change_module_signal_input done: [%d,%d,0x%x,0x%x]",
-                     sm.mindex,sm.signal_id,sm.act_address_input_set,sm.act_address_signal);
-	return 0;
-}
-
-int rpspmc_hwi_dev::query_module_signal_input(gint32 input_id){
-        int mode=0;
-        int ret;
-
-        // template dummy -- query controller here:
-        // read signal address at input_id, then lookup signal by address from map
-
-        // use dummy list
-	int signal_index = mod_input_list[input_id].id; // lookup_signal_by_ptr (sm.act_address_signal);
-
-	return signal_index;
-}
-
-int rpspmc_hwi_dev::read_signal_lookup (){
-        // read actual signal list from controller and manage a copy
-#if 0
-	for (int i=0; i<NUM_SIGNALS; ++i){
-		CONV_32 (dsp_signal_list[i].p);
-		dsp_signal_lookup_managed[i].p = dsp_signal_list[i].p;
-		dsp_signal_lookup_managed[i].dim   = dsp_signal_lookup[i].dim;
-		dsp_signal_lookup_managed[i].label = g_strdup(dsp_signal_lookup[i].label);
-                if (i==0){ //dedicated to tunnel current via IVC
-                        // g_print ("1nA to Volt=%g  1pA to Volt=%g",main_get_gapp()->xsm->Inst->nAmpere2V (1.),main_get_gapp()->xsm->Inst->nAmpere2V (1e-3));
-                        if (main_get_gapp()->xsm->Inst->nAmpere2V (1.) > 1.){
-                                dsp_signal_lookup_managed[i].unit  = g_strdup("pA"); // use pA scale
-                                dsp_signal_lookup_managed[i].scale = dsp_signal_lookup[i].scale; // -> Volts
-                                dsp_signal_lookup_managed[i].scale /= main_get_gapp()->xsm->Inst->nAmpere2V (1); // values are always in nA
-                        } else {
-                                dsp_signal_lookup_managed[i].unit  = g_strdup("nA");
-                                dsp_signal_lookup_managed[i].scale = dsp_signal_lookup[i].scale; // -> Volts
-                                dsp_signal_lookup_managed[i].scale /= main_get_gapp()->xsm->Inst->nAmpere2V (1.); // nA
-                        }
-                } else {
-                        dsp_signal_lookup_managed[i].unit  = g_strdup(dsp_signal_lookup[i].unit);
-                        dsp_signal_lookup_managed[i].scale = dsp_signal_lookup[i].scale;
-                }
-		dsp_signal_lookup_managed[i].module  = g_strdup(dsp_signal_lookup[i].module);
-		dsp_signal_lookup_managed[i].index  = -1;
-                PI_DEBUG_PLAIN (DBG_L2,
-                                "Sig[" << i << "]: ptr=" << dsp_signal_lookup_managed[i].p 
-                                << ", " << dsp_signal_lookup_managed[i].dim 
-                                << ", " << dsp_signal_lookup_managed[i].label 
-                                << " [v" << dsp_signal_lookup_managed[i].index << "] "
-                                << ", " << dsp_signal_lookup_managed[i].unit
-                                << ", " << dsp_signal_lookup_managed[i].scale
-                                << ", " << dsp_signal_lookup_managed[i].module
-                                << "\n"
-                                );
-		for (int k=0; k<i; ++k)
-			if (dsp_signal_lookup_managed[k].p == dsp_signal_lookup_managed[i].p){
-                                PI_DEBUG_PLAIN (DBG_L2,
-                                                "Sig[" << i << "]: ptr=" << dsp_signal_lookup_managed[i].p 
-                                                << " identical with Sig[" << k << "]: ptr=" << dsp_signal_lookup_managed[k].p 
-                                                << " ==> POSSIBLE ERROR IN SIGNAL TABLE <== GXSM is aborting here, suspicious DSP data.\n"
-                                                );
-                                g_warning ("DSP SIGNAL TABLE finding: Sig[%d] '%s': ptr=%x is identical with Sig[%d] '%s': ptr=%x",
-                                           i, dsp_signal_lookup_managed[i].label, dsp_signal_lookup_managed[i].p,
-                                           k, dsp_signal_lookup_managed[k].label, dsp_signal_lookup_managed[k].p);
-				// exit (-1);
-			}
-	}
-#endif
-	return 0;
-}
-
-int rpspmc_hwi_dev::read_actual_module_configuration (){
-	for (int i=0; mod_input_list[i].id; ++i){
-		int si = query_module_signal_input (mod_input_list[i].id);
-		if (si >= 0 && si < NUM_SIGNALS){
-                        PI_DEBUG_GM (DBG_L2, "INPUT %s (%04X) is set to %s",
-                                     mod_input_list[i].name, mod_input_list[i].id,
-                                     dsp_signal_lookup_managed[si].label );
-		} else {
-                        if (si == SIGNAL_INPUT_DISABLED)
-                                PI_DEBUG_GM (DBG_L2, "INPUT %s (%04X) is DISABLED", mod_input_list[i].name, mod_input_list[i].id);
-                        else
-                                PI_DEBUG_GM (DBG_L2, "INPUT %s (%04X) -- ERROR DETECTED", mod_input_list[i].name, mod_input_list[i].id);
-		}
-	}
-
-	return 0;
 }
 
 

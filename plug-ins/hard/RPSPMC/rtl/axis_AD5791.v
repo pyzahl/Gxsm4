@@ -159,7 +159,7 @@ module axis_AD5791 #(
                     begin            
                         reg_dac_data[4] <= {{(DAC_WORD_WIDTH-DAC_DATA_WIDTH-1 ){1'b0}}, 1'b1, S_AXIS5_tdata[SAXIS_TDATA_WIDTH-1:SAXIS_TDATA_WIDTH-DAC_DATA_WIDTH]};
                     end
-                    if (S_AXIS5_tvalid)
+                    if (S_AXIS6_tvalid)
                     begin            
                         reg_dac_data[5] <= {{(DAC_WORD_WIDTH-DAC_DATA_WIDTH-1 ){1'b0}}, 1'b1, S_AXIS6_tdata[SAXIS_TDATA_WIDTH-1:SAXIS_TDATA_WIDTH-DAC_DATA_WIDTH]};
                     end

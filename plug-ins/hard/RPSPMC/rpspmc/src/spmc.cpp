@@ -144,7 +144,16 @@ void rp_spmc_AD5791_init (){
         ad5791_prepare_dac_value (0, 0.0);
         ad5791_prepare_dac_value (1, 0.0);
         ad5791_prepare_dac_value (2, 0.0);
+        ad5791_prepare_dac_value (3, 0.0);
+        ad5791_prepare_dac_value (4, 0.0);
+        ad5791_prepare_dac_value (5, 0.0);
+
+        ad5791_set_dac_value (0, 0.0);
+        ad5791_set_dac_value (1, 0.0);
+        ad5791_set_dac_value (2, 0.0);
         ad5791_set_dac_value (3, 0.0);
+        ad5791_set_dac_value (4, 0.0);
+        ad5791_set_dac_value (5, 0.0);
 
         usleep(10000);
 

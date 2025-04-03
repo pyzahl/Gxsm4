@@ -1,7 +1,7 @@
 (kicad_pcb
-	(version 20240108)
+	(version 20241229)
 	(generator "pcbnew")
-	(generator_version "8.0")
+	(generator_version "9.0")
 	(general
 		(thickness 1.6)
 		(legacy_teardrops no)
@@ -9,36 +9,36 @@
 	(paper "A4")
 	(layers
 		(0 "F.Cu" signal)
-		(1 "In1.Cu" signal)
-		(2 "In2.Cu" signal)
-		(31 "B.Cu" signal)
-		(32 "B.Adhes" user "B.Adhesive")
-		(33 "F.Adhes" user "F.Adhesive")
-		(34 "B.Paste" user)
-		(35 "F.Paste" user)
-		(36 "B.SilkS" user "B.Silkscreen")
-		(37 "F.SilkS" user "F.Silkscreen")
-		(38 "B.Mask" user)
-		(39 "F.Mask" user)
-		(40 "Dwgs.User" user "User.Drawings")
-		(41 "Cmts.User" user "User.Comments")
-		(42 "Eco1.User" user "User.Eco1")
-		(43 "Eco2.User" user "User.Eco2")
-		(44 "Edge.Cuts" user)
-		(45 "Margin" user)
-		(46 "B.CrtYd" user "B.Courtyard")
-		(47 "F.CrtYd" user "F.Courtyard")
-		(48 "B.Fab" user)
-		(49 "F.Fab" user)
-		(50 "User.1" user)
-		(51 "User.2" user)
-		(52 "User.3" user)
-		(53 "User.4" user)
-		(54 "User.5" user)
-		(55 "User.6" user)
-		(56 "User.7" user)
-		(57 "User.8" user)
-		(58 "User.9" user)
+		(4 "In1.Cu" signal)
+		(6 "In2.Cu" signal)
+		(2 "B.Cu" signal)
+		(9 "F.Adhes" user "F.Adhesive")
+		(11 "B.Adhes" user "B.Adhesive")
+		(13 "F.Paste" user)
+		(15 "B.Paste" user)
+		(5 "F.SilkS" user "F.Silkscreen")
+		(7 "B.SilkS" user "B.Silkscreen")
+		(1 "F.Mask" user)
+		(3 "B.Mask" user)
+		(17 "Dwgs.User" user "User.Drawings")
+		(19 "Cmts.User" user "User.Comments")
+		(21 "Eco1.User" user "User.Eco1")
+		(23 "Eco2.User" user "User.Eco2")
+		(25 "Edge.Cuts" user)
+		(27 "Margin" user)
+		(31 "F.CrtYd" user "F.Courtyard")
+		(29 "B.CrtYd" user "B.Courtyard")
+		(35 "F.Fab" user)
+		(33 "B.Fab" user)
+		(39 "User.1" user)
+		(41 "User.2" user)
+		(43 "User.3" user)
+		(45 "User.4" user)
+		(47 "User.5" user)
+		(49 "User.6" user)
+		(51 "User.7" user)
+		(53 "User.8" user)
+		(55 "User.9" user)
 	)
 	(setup
 		(stackup
@@ -104,10 +104,11 @@
 		)
 		(pad_to_mask_clearance 0)
 		(allow_soldermask_bridges_in_footprints no)
+		(tenting front back)
 		(grid_origin 121.915 83.835)
 		(pcbplotparams
-			(layerselection 0x00010fc_ffffffff)
-			(plot_on_all_layers_selection 0x0000000_00000000)
+			(layerselection 0x00000000_00000000_55555555_5755f5ff)
+			(plot_on_all_layers_selection 0x00000000_00000000_00000000_00000000)
 			(disableapertmacros no)
 			(usegerberextensions no)
 			(usegerberattributes yes)
@@ -117,7 +118,6 @@
 			(dashed_line_gap_ratio 3.000000)
 			(svgprecision 6)
 			(plotframeref no)
-			(viasonmask no)
 			(mode 1)
 			(useauxorigin no)
 			(hpglpennumber 1)
@@ -125,16 +125,20 @@
 			(hpglpendiameter 15.000000)
 			(pdf_front_fp_property_popups yes)
 			(pdf_back_fp_property_popups yes)
+			(pdf_metadata yes)
+			(pdf_single_document no)
 			(dxfpolygonmode yes)
 			(dxfimperialunits yes)
 			(dxfusepcbnewfont yes)
 			(psnegative no)
 			(psa4output no)
-			(plotreference yes)
-			(plotvalue yes)
-			(plotfptext yes)
+			(plot_black_and_white yes)
 			(plotinvisibletext no)
 			(sketchpadsonfab no)
+			(plotpadnumbers no)
+			(hidednponfab no)
+			(sketchdnponfab yes)
+			(crossoutdnponfab yes)
 			(subtractmaskfromsilk no)
 			(outputformat 1)
 			(mirror no)
@@ -491,19 +495,6 @@
 				)
 			)
 		)
-		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
-			(at 0 0 0)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "cffaa605-1349-4cea-bf51-53c82efd93fc")
-			(effects
-				(font
-					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-			)
-		)
 		(property "Datasheet" ""
 			(at 0 0 0)
 			(unlocked yes)
@@ -649,7 +640,7 @@
 		(pad "1" smd roundrect
 			(at -0.9125 0)
 			(size 1.025 1.4)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.243902)
 			(net 293 "RP 3.3V")
 			(pintype "passive")
@@ -658,12 +649,13 @@
 		(pad "2" smd roundrect
 			(at 0.9125 0)
 			(size 1.025 1.4)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.243902)
 			(net 311 "I2C SCL RP")
 			(pintype "passive")
 			(uuid "25a23b85-cb2e-4f66-b6e7-68092da7cda7")
 		)
+		(embedded_fonts no)
 		(model "${KICAD8_3DMODEL_DIR}/Resistor_SMD.3dshapes/R_0805_2012Metric.wrl"
 			(offset
 				(xyz 0 0 0)
@@ -701,18 +693,6 @@
 			(effects
 				(font
 					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_2x13_P2.54mm_Vertical"
-			(at 0 0 0)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "5ce6297b-fa12-470e-b7dd-6a0831f7ac50")
-			(effects
-				(font
-					(size 1.27 1.27)
 					(thickness 0.15)
 				)
 			)
@@ -1213,6 +1193,7 @@
 			(pintype "passive")
 			(uuid "ddc5b723-222d-4eb4-bbdf-7a27156346a5")
 		)
+		(embedded_fonts no)
 		(model "${KICAD6_3DMODEL_DIR}/Connector_PinHeader_2.54mm.3dshapes/PinHeader_2x13_P2.54mm_Vertical.wrl"
 			(offset
 				(xyz 0 0 0)
@@ -1255,19 +1236,6 @@
 				)
 			)
 		)
-		(property "Footprint" "MountingHole:MountingHole_3.2mm_M3"
-			(at 0 0 0)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "48d26efe-f329-49fd-bade-3b556d73a2fb")
-			(effects
-				(font
-					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-			)
-		)
 		(property "Datasheet" ""
 			(at 0 0 0)
 			(unlocked yes)
@@ -1302,7 +1270,7 @@
 				(width 0.15)
 				(type solid)
 			)
-			(fill none)
+			(fill no)
 			(layer "Cmts.User")
 			(uuid "d4e8da4e-666c-4b21-910a-7e71046257a3")
 		)
@@ -1313,7 +1281,7 @@
 				(width 0.05)
 				(type solid)
 			)
-			(fill none)
+			(fill no)
 			(layer "F.CrtYd")
 			(uuid "52fee6fb-b995-442f-a14d-1bc532c3f098")
 		)
@@ -1335,6 +1303,7 @@
 			(layers "*.Cu" "*.Mask")
 			(uuid "9c66fb19-76c2-49ee-8b47-76afcac862ea")
 		)
+		(embedded_fonts no)
 	)
 	(footprint "Connector_PinSocket_2.54mm:PinSocket_2x06_P2.54mm_Vertical"
 		(layer "F.Cu")
@@ -1361,19 +1330,6 @@
 			(effects
 				(font
 					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Footprint" "Connector_PinSocket_2.54mm:PinSocket_2x06_P2.54mm_Vertical"
-			(at 0 0 90)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "803b87d2-01a9-4c58-b023-0642d304687b")
-			(effects
-				(font
-					(size 1.27 1.27)
 					(thickness 0.15)
 				)
 			)
@@ -1722,6 +1678,7 @@
 			(pintype "passive")
 			(uuid "ff23576e-66ad-40fb-b70d-523c26270318")
 		)
+		(embedded_fonts no)
 		(model "${KICAD8_3DMODEL_DIR}/Connector_PinSocket_2.54mm.3dshapes/PinSocket_2x06_P2.54mm_Vertical.wrl"
 			(offset
 				(xyz 0 0 0)
@@ -1758,19 +1715,6 @@
 			(effects
 				(font
 					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Footprint" "Capacitor_SMD:C_1206_3216Metric_Pad1.33x1.80mm_HandSolder"
-			(at 0 0 0)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "ab0e2fc5-d0b7-409b-9a49-f376ea862add")
-			(effects
-				(font
-					(size 1.27 1.27)
 					(thickness 0.15)
 				)
 			)
@@ -1920,7 +1864,7 @@
 		(pad "1" smd roundrect
 			(at -1.5625 0)
 			(size 1.325 1.8)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.188679)
 			(net 64 "GND")
 			(pintype "passive")
@@ -1929,12 +1873,13 @@
 		(pad "2" smd roundrect
 			(at 1.5625 0)
 			(size 1.325 1.8)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.188679)
 			(net 71 "+3.3V")
 			(pintype "passive")
 			(uuid "285c1bae-955a-48b3-a70c-734f314042d1")
 		)
+		(embedded_fonts no)
 		(model "${KICAD8_3DMODEL_DIR}/Capacitor_SMD.3dshapes/C_1206_3216Metric.wrl"
 			(offset
 				(xyz 0 0 0)
@@ -1972,19 +1917,6 @@
 			(effects
 				(font
 					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Footprint" "Connector_JST:JST_PH_B3B-PH-K_1x03_P2.00mm_Vertical"
-			(at 0 0 90)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "b6eb6ab7-92a4-4676-adf5-e797ab425ee7")
-			(effects
-				(font
-					(size 1.27 1.27)
 					(thickness 0.15)
 				)
 			)
@@ -2455,6 +2387,7 @@
 			(pintype "passive")
 			(uuid "735ea55c-c583-46d1-b0cc-dc4333f78c1c")
 		)
+		(embedded_fonts no)
 		(model "${KICAD8_3DMODEL_DIR}/Connector_JST.3dshapes/JST_PH_B3B-PH-K_1x03_P2.00mm_Vertical.wrl"
 			(offset
 				(xyz 0 0 0)
@@ -2491,19 +2424,6 @@
 			(effects
 				(font
 					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Footprint" "Capacitor_SMD:C_1206_3216Metric_Pad1.33x1.80mm_HandSolder"
-			(at 0 0 0)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "a45775f0-d2a9-4e18-8061-19a8723bdee7")
-			(effects
-				(font
-					(size 1.27 1.27)
 					(thickness 0.15)
 				)
 			)
@@ -2653,7 +2573,7 @@
 		(pad "1" smd roundrect
 			(at -1.5625 0)
 			(size 1.325 1.8)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.188679)
 			(net 64 "GND")
 			(pintype "passive")
@@ -2662,12 +2582,13 @@
 		(pad "2" smd roundrect
 			(at 1.5625 0)
 			(size 1.325 1.8)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.188679)
 			(net 71 "+3.3V")
 			(pintype "passive")
 			(uuid "17322a06-3752-4bc7-b44d-66fb94e50726")
 		)
+		(embedded_fonts no)
 		(model "${KICAD8_3DMODEL_DIR}/Capacitor_SMD.3dshapes/C_1206_3216Metric.wrl"
 			(offset
 				(xyz 0 0 0)
@@ -2710,19 +2631,6 @@
 				)
 			)
 		)
-		(property "Footprint" "MountingHole:MountingHole_3.2mm_M3"
-			(at 0 0 0)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "48d26efe-f329-49fd-bade-3b556d73a2fb")
-			(effects
-				(font
-					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-			)
-		)
 		(property "Datasheet" ""
 			(at 0 0 0)
 			(unlocked yes)
@@ -2757,7 +2665,7 @@
 				(width 0.15)
 				(type solid)
 			)
-			(fill none)
+			(fill no)
 			(layer "Cmts.User")
 			(uuid "b5262523-4382-4789-924e-71c94a864311")
 		)
@@ -2768,7 +2676,7 @@
 				(width 0.05)
 				(type solid)
 			)
-			(fill none)
+			(fill no)
 			(layer "F.CrtYd")
 			(uuid "1e1a1108-0612-4544-8f9e-8ee7cd5c72a6")
 		)
@@ -2790,6 +2698,7 @@
 			(layers "*.Cu" "*.Mask")
 			(uuid "84810473-8ae9-4235-b436-ed8c0978f840")
 		)
+		(embedded_fonts no)
 	)
 	(footprint "Connector_PinSocket_2.54mm:PinSocket_2x06_P2.54mm_Vertical"
 		(layer "F.Cu")
@@ -2816,19 +2725,6 @@
 			(effects
 				(font
 					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Footprint" "Connector_PinSocket_2.54mm:PinSocket_2x06_P2.54mm_Vertical"
-			(at 0 0 90)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "ade3c59b-b65a-4931-8b6e-c3afd94f9c6d")
-			(effects
-				(font
-					(size 1.27 1.27)
 					(thickness 0.15)
 				)
 			)
@@ -3177,6 +3073,7 @@
 			(pintype "passive")
 			(uuid "f9dc3233-09c2-4b32-a053-d84e89b4e32c")
 		)
+		(embedded_fonts no)
 		(model "${KICAD8_3DMODEL_DIR}/Connector_PinSocket_2.54mm.3dshapes/PinSocket_2x06_P2.54mm_Vertical.wrl"
 			(offset
 				(xyz 0 0 0)
@@ -3213,19 +3110,6 @@
 			(effects
 				(font
 					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Footprint" "Capacitor_SMD:C_1206_3216Metric_Pad1.33x1.80mm_HandSolder"
-			(at 0 0 0)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "052ffc1f-47a3-44df-b38c-556b94df1160")
-			(effects
-				(font
-					(size 1.27 1.27)
 					(thickness 0.15)
 				)
 			)
@@ -3375,7 +3259,7 @@
 		(pad "1" smd roundrect
 			(at -1.5625 0)
 			(size 1.325 1.8)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.188679)
 			(net 64 "GND")
 			(pintype "passive")
@@ -3384,12 +3268,13 @@
 		(pad "2" smd roundrect
 			(at 1.5625 0)
 			(size 1.325 1.8)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.188679)
 			(net 71 "+3.3V")
 			(pintype "passive")
 			(uuid "986cdbea-70a0-40fb-ba1e-b69f3b020059")
 		)
+		(embedded_fonts no)
 		(model "${KICAD8_3DMODEL_DIR}/Capacitor_SMD.3dshapes/C_1206_3216Metric.wrl"
 			(offset
 				(xyz 0 0 0)
@@ -3427,19 +3312,6 @@
 			(effects
 				(font
 					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Footprint" "Connector_PinSocket_2.54mm:PinSocket_2x06_P2.54mm_Vertical"
-			(at 0 0 90)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "c0a0bd19-b032-4793-94d3-22e810d3098c")
-			(effects
-				(font
-					(size 1.27 1.27)
 					(thickness 0.15)
 				)
 			)
@@ -3788,6 +3660,7 @@
 			(pintype "passive")
 			(uuid "fabd4606-e66b-4f7f-8f66-7d94d7ae4fbf")
 		)
+		(embedded_fonts no)
 		(model "${KICAD8_3DMODEL_DIR}/Connector_PinSocket_2.54mm.3dshapes/PinSocket_2x06_P2.54mm_Vertical.wrl"
 			(offset
 				(xyz 0 0 0)
@@ -3825,19 +3698,6 @@
 			(effects
 				(font
 					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Footprint" "Connector_PinSocket_2.54mm:PinSocket_1x03_P2.54mm_Vertical"
-			(at 0 0 180)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "f76614ea-a350-4822-a3b8-576e1f361059")
-			(effects
-				(font
-					(size 1.27 1.27)
 					(thickness 0.15)
 				)
 			)
@@ -4067,6 +3927,7 @@
 			(pintype "passive")
 			(uuid "c044548f-2cc1-4b8b-bafc-88a3a10ee3bc")
 		)
+		(embedded_fonts no)
 		(model "${KICAD8_3DMODEL_DIR}/Connector_PinSocket_2.54mm.3dshapes/PinSocket_1x03_P2.54mm_Vertical.wrl"
 			(offset
 				(xyz 0 0 0)
@@ -4086,7 +3947,7 @@
 		(descr "Through hole straight pin header, 2x06, 2.54mm pitch, double rows")
 		(tags "Through hole pin header THT 2x06 2.54mm double row")
 		(property "Reference" "J4-FMC-AUX1"
-			(at 1.54 -2.96 -90)
+			(at 1.54 -2.96 270)
 			(layer "F.SilkS")
 			(uuid "47cddb35-4da3-4446-a810-a994c5e44ec2")
 			(effects
@@ -4108,21 +3969,8 @@
 				)
 			)
 		)
-		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_2x06_P2.54mm_Vertical"
-			(at 0 0 -90)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "cfb7abef-3dcc-4283-a76b-4e2f18c3cc2e")
-			(effects
-				(font
-					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-			)
-		)
 		(property "Datasheet" ""
-			(at 0 0 -90)
+			(at 0 0 270)
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
@@ -4135,7 +3983,7 @@
 			)
 		)
 		(property "Description" "Generic connector, double row, 02x06, odd/even pin numbering scheme (row 1 odd numbers, row 2 even numbers), script generated (kicad-library-utils/schlib/autogen/connector/)"
-			(at 0 0 -90)
+			(at 0 0 270)
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
@@ -4465,6 +4313,7 @@
 			(pintype "passive")
 			(uuid "64673736-16d3-47d4-8f18-eb077c1427dc")
 		)
+		(embedded_fonts no)
 		(model "${KICAD8_3DMODEL_DIR}/Connector_PinHeader_2.54mm.3dshapes/PinHeader_2x06_P2.54mm_Vertical.wrl"
 			(offset
 				(xyz 0 0 0)
@@ -4503,19 +4352,6 @@
 			(effects
 				(font
 					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Footprint" "Connector_Pin:Pin_D0.7mm_L6.5mm_W1.8mm_FlatFork"
-			(at 0 0 0)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "47770306-d2cb-4e93-8c26-0967b13be101")
-			(effects
-				(font
-					(size 1.27 1.27)
 					(thickness 0.15)
 				)
 			)
@@ -4692,6 +4528,7 @@
 			(pintype "passive")
 			(uuid "13c277a0-9172-4f0a-9c9f-3340499103c1")
 		)
+		(embedded_fonts no)
 		(model "${KICAD8_3DMODEL_DIR}/Connector_Pin.3dshapes/Pin_D0.7mm_L6.5mm_W1.8mm_FlatFork.wrl"
 			(offset
 				(xyz 0 0 0)
@@ -4723,7 +4560,7 @@
 			)
 		)
 		(property "Value" "Jumper_3_Bridged12"
-			(at 0 7.41 -90)
+			(at 0 7.41 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "1ab88c3b-f28f-4c3b-a389-c18f1cc612fb")
@@ -4734,21 +4571,8 @@
 				)
 			)
 		)
-		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical"
-			(at 0 0 -90)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "02081ad2-63b8-48af-b78e-56d70afbbf6d")
-			(effects
-				(font
-					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-			)
-		)
 		(property "Datasheet" ""
-			(at 0 0 -90)
+			(at 0 0 270)
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
@@ -4761,7 +4585,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 0 0 -90)
+			(at 0 0 270)
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
@@ -4972,6 +4796,7 @@
 			(pintype "passive")
 			(uuid "5095baa5-afb7-4bff-8b9f-8a356fa9a0f2")
 		)
+		(embedded_fonts no)
 		(model "${KICAD8_3DMODEL_DIR}/Connector_PinHeader_2.54mm.3dshapes/PinHeader_1x03_P2.54mm_Vertical.wrl"
 			(offset
 				(xyz 0 0 0)
@@ -5009,19 +4834,6 @@
 			(effects
 				(font
 					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Footprint" "Connector_PinSocket_2.54mm:PinSocket_2x06_P2.54mm_Vertical"
-			(at 0 0 90)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "7c10a6ad-5a88-4d17-b23b-b14d6254a793")
-			(effects
-				(font
-					(size 1.27 1.27)
 					(thickness 0.15)
 				)
 			)
@@ -5370,6 +5182,7 @@
 			(pintype "passive")
 			(uuid "83bc9a76-e65d-4648-95ba-43cc7ba90f9e")
 		)
+		(embedded_fonts no)
 		(model "${KICAD8_3DMODEL_DIR}/Connector_PinSocket_2.54mm.3dshapes/PinSocket_2x06_P2.54mm_Vertical.wrl"
 			(offset
 				(xyz 0 0 0)
@@ -5389,7 +5202,7 @@
 		(descr "Through hole straight pin header, 2x06, 2.54mm pitch, double rows")
 		(tags "Through hole pin header THT 2x06 2.54mm double row")
 		(property "Reference" "J3-FMC-POWER1"
-			(at 2.5 -2.96 -90)
+			(at 2.5 -2.96 270)
 			(layer "F.SilkS")
 			(uuid "1eab134b-56bd-4c36-a1f3-e82e33cf2773")
 			(effects
@@ -5411,21 +5224,8 @@
 				)
 			)
 		)
-		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_2x06_P2.54mm_Vertical"
-			(at 0 0 -90)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "6f809852-cedf-46e8-9fc7-4a687be6fb5f")
-			(effects
-				(font
-					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-			)
-		)
 		(property "Datasheet" ""
-			(at 0 0 -90)
+			(at 0 0 270)
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
@@ -5438,7 +5238,7 @@
 			)
 		)
 		(property "Description" "Generic connector, double row, 02x06, odd/even pin numbering scheme (row 1 odd numbers, row 2 even numbers), script generated (kicad-library-utils/schlib/autogen/connector/)"
-			(at 0 0 -90)
+			(at 0 0 270)
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
@@ -5768,6 +5568,7 @@
 			(pintype "passive")
 			(uuid "2f87068e-0987-4b18-815d-b3a8c99b5ee7")
 		)
+		(embedded_fonts no)
 		(model "${KICAD8_3DMODEL_DIR}/Connector_PinHeader_2.54mm.3dshapes/PinHeader_2x06_P2.54mm_Vertical.wrl"
 			(offset
 				(xyz 0 0 0)
@@ -5810,19 +5611,6 @@
 				)
 			)
 		)
-		(property "Footprint" "MountingHole:MountingHole_3.2mm_M3"
-			(at 0 0 0)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "48d26efe-f329-49fd-bade-3b556d73a2fb")
-			(effects
-				(font
-					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-			)
-		)
 		(property "Datasheet" ""
 			(at 0 0 0)
 			(unlocked yes)
@@ -5857,7 +5645,7 @@
 				(width 0.15)
 				(type solid)
 			)
-			(fill none)
+			(fill no)
 			(layer "Cmts.User")
 			(uuid "1cbc3159-8065-4083-9cdf-68dc158a8ff7")
 		)
@@ -5868,7 +5656,7 @@
 				(width 0.05)
 				(type solid)
 			)
-			(fill none)
+			(fill no)
 			(layer "F.CrtYd")
 			(uuid "90cea743-7a9e-47fd-9a6c-ad9eb69a93bd")
 		)
@@ -5890,6 +5678,7 @@
 			(layers "*.Cu" "*.Mask")
 			(uuid "b2e41503-67d6-49a0-b8be-18b561582c1e")
 		)
+		(embedded_fonts no)
 	)
 	(footprint "Resistor_SMD:R_0805_2012Metric"
 		(layer "F.Cu")
@@ -5915,19 +5704,6 @@
 			(effects
 				(font
 					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
-			(at 0 0 0)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "da21b394-3c9d-4ef8-a3ee-ff10c778d81c")
-			(effects
-				(font
-					(size 1.27 1.27)
 					(thickness 0.15)
 				)
 			)
@@ -6077,7 +5853,7 @@
 		(pad "1" smd roundrect
 			(at -0.9125 0)
 			(size 1.025 1.4)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.243902)
 			(net 293 "RP 3.3V")
 			(pintype "passive")
@@ -6086,12 +5862,13 @@
 		(pad "2" smd roundrect
 			(at 0.9125 0)
 			(size 1.025 1.4)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.243902)
 			(net 310 "I2C SDA RP")
 			(pintype "passive")
 			(uuid "3d9cee4e-9ec6-431c-b5c5-bd138d17a74b")
 		)
+		(embedded_fonts no)
 		(model "${KICAD8_3DMODEL_DIR}/Resistor_SMD.3dshapes/R_0805_2012Metric.wrl"
 			(offset
 				(xyz 0 0 0)
@@ -6129,18 +5906,6 @@
 			(effects
 				(font
 					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_2x13_P2.54mm_Vertical"
-			(at 0 0 0)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "d8b53699-6cb9-41a8-a9a1-af49bce1e93c")
-			(effects
-				(font
-					(size 1.27 1.27)
 					(thickness 0.15)
 				)
 			)
@@ -6641,6 +6406,7 @@
 			(pintype "passive")
 			(uuid "61ed0afd-d66b-4c78-b907-ade63208df57")
 		)
+		(embedded_fonts no)
 		(model "${KICAD6_3DMODEL_DIR}/Connector_PinHeader_2.54mm.3dshapes/PinHeader_2x13_P2.54mm_Vertical.wrl"
 			(offset
 				(xyz 0 0 0)
@@ -6677,19 +6443,6 @@
 			(effects
 				(font
 					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Footprint" "Capacitor_SMD:C_1206_3216Metric_Pad1.33x1.80mm_HandSolder"
-			(at 0 0 0)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "bfc1f405-3259-42b9-b06e-48c4733d684b")
-			(effects
-				(font
-					(size 1.27 1.27)
 					(thickness 0.15)
 				)
 			)
@@ -6839,7 +6592,7 @@
 		(pad "1" smd roundrect
 			(at -1.5625 0)
 			(size 1.325 1.8)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.188679)
 			(net 64 "GND")
 			(pintype "passive")
@@ -6848,12 +6601,13 @@
 		(pad "2" smd roundrect
 			(at 1.5625 0)
 			(size 1.325 1.8)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.188679)
 			(net 71 "+3.3V")
 			(pintype "passive")
 			(uuid "e1d9c2c6-af48-4b4c-a1e5-39fed08788ae")
 		)
+		(embedded_fonts no)
 		(model "${KICAD8_3DMODEL_DIR}/Capacitor_SMD.3dshapes/C_1206_3216Metric.wrl"
 			(offset
 				(xyz 0 0 0)
@@ -6891,19 +6645,6 @@
 			(effects
 				(font
 					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Footprint" "Connector_JST:JST_PH_B2B-PH-K_1x02_P2.00mm_Vertical"
-			(at 0 0 90)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "4ad9b82e-f6c3-4b10-83fd-9c7ab064d38f")
-			(effects
-				(font
-					(size 1.27 1.27)
 					(thickness 0.15)
 				)
 			)
@@ -7323,6 +7064,7 @@
 			(pintype "passive")
 			(uuid "7c37c518-8c53-4df6-9919-ae2beff5de83")
 		)
+		(embedded_fonts no)
 		(model "${KICAD8_3DMODEL_DIR}/Connector_JST.3dshapes/JST_PH_B2B-PH-K_1x02_P2.00mm_Vertical.wrl"
 			(offset
 				(xyz 0 0 0)
@@ -7365,19 +7107,6 @@
 				)
 			)
 		)
-		(property "Footprint" "MountingHole:MountingHole_3.2mm_M3"
-			(at 0 0 0)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "48d26efe-f329-49fd-bade-3b556d73a2fb")
-			(effects
-				(font
-					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-			)
-		)
 		(property "Datasheet" ""
 			(at 0 0 0)
 			(unlocked yes)
@@ -7412,7 +7141,7 @@
 				(width 0.15)
 				(type solid)
 			)
-			(fill none)
+			(fill no)
 			(layer "Cmts.User")
 			(uuid "36326a66-01c5-4f74-9e0c-a733e3f7ef11")
 		)
@@ -7423,7 +7152,7 @@
 				(width 0.05)
 				(type solid)
 			)
-			(fill none)
+			(fill no)
 			(layer "F.CrtYd")
 			(uuid "4625e1a1-2113-43d6-a673-da4c9fb1fe89")
 		)
@@ -7445,6 +7174,7 @@
 			(layers "*.Cu" "*.Mask")
 			(uuid "31c4fd03-827a-403d-8303-2469e4a98880")
 		)
+		(embedded_fonts no)
 	)
 	(footprint "Connector_Samtec:Samtec_FMC_ASP-134486-01_10x40_P1.27mm_Vertical"
 		(layer "F.Cu")
@@ -7470,18 +7200,6 @@
 			(effects
 				(font
 					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Footprint" "Connector_Samtec:Samtec_FMC_ASP-134486-01_10x40_P1.27mm_Vertical"
-			(at 0 0 0)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "f08409c2-4707-445c-a3cd-e3115b4196b6")
-			(effects
-				(font
-					(size 1.27 1.27)
 					(thickness 0.15)
 				)
 			)
@@ -7773,7 +7491,7 @@
 		(pad "A1" smd circle
 			(at -24.765 -5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_1")
 			(pintype "passive")
@@ -7782,7 +7500,7 @@
 		(pad "A2" smd circle
 			(at -23.495 -5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 45 "unconnected-(J1A-Pin_2-PadA2)")
 			(pinfunction "Pin_2")
 			(pintype "passive")
@@ -7791,7 +7509,7 @@
 		(pad "A3" smd circle
 			(at -22.225 -5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 242 "unconnected-(J1A-Pin_3-PadA3)")
 			(pinfunction "Pin_3")
 			(pintype "passive")
@@ -7800,7 +7518,7 @@
 		(pad "A4" smd circle
 			(at -20.955 -5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_4")
 			(pintype "passive")
@@ -7809,7 +7527,7 @@
 		(pad "A5" smd circle
 			(at -19.685 -5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_5")
 			(pintype "passive")
@@ -7818,7 +7536,7 @@
 		(pad "A6" smd circle
 			(at -18.415 -5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 47 "unconnected-(J1A-Pin_6-PadA6)")
 			(pinfunction "Pin_6")
 			(pintype "passive")
@@ -7827,7 +7545,7 @@
 		(pad "A7" smd circle
 			(at -17.145 -5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 229 "unconnected-(J1A-Pin_7-PadA7)")
 			(pinfunction "Pin_7")
 			(pintype "passive")
@@ -7836,7 +7554,7 @@
 		(pad "A8" smd circle
 			(at -15.875 -5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_8")
 			(pintype "passive")
@@ -7845,7 +7563,7 @@
 		(pad "A9" smd circle
 			(at -14.605 -5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_9")
 			(pintype "passive")
@@ -7854,7 +7572,7 @@
 		(pad "A10" smd circle
 			(at -13.335 -5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 237 "unconnected-(J1A-Pin_10-PadA10)")
 			(pinfunction "Pin_10")
 			(pintype "passive")
@@ -7863,7 +7581,7 @@
 		(pad "A11" smd circle
 			(at -12.065 -5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 102 "unconnected-(J1A-Pin_11-PadA11)")
 			(pinfunction "Pin_11")
 			(pintype "passive")
@@ -7872,7 +7590,7 @@
 		(pad "A12" smd circle
 			(at -10.795 -5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_12")
 			(pintype "passive")
@@ -7881,7 +7599,7 @@
 		(pad "A13" smd circle
 			(at -9.525 -5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_13")
 			(pintype "passive")
@@ -7890,7 +7608,7 @@
 		(pad "A14" smd circle
 			(at -8.255 -5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 76 "unconnected-(J1A-Pin_14-PadA14)")
 			(pinfunction "Pin_14")
 			(pintype "passive")
@@ -7899,7 +7617,7 @@
 		(pad "A15" smd circle
 			(at -6.985 -5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 145 "unconnected-(J1A-Pin_15-PadA15)")
 			(pinfunction "Pin_15")
 			(pintype "passive")
@@ -7908,7 +7626,7 @@
 		(pad "A16" smd circle
 			(at -5.715 -5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_16")
 			(pintype "passive")
@@ -7917,7 +7635,7 @@
 		(pad "A17" smd circle
 			(at -4.445 -5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_17")
 			(pintype "passive")
@@ -7926,7 +7644,7 @@
 		(pad "A18" smd circle
 			(at -3.175 -5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 160 "unconnected-(J1A-Pin_18-PadA18)")
 			(pinfunction "Pin_18")
 			(pintype "passive")
@@ -7935,7 +7653,7 @@
 		(pad "A19" smd circle
 			(at -1.905 -5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 134 "unconnected-(J1A-Pin_19-PadA19)")
 			(pinfunction "Pin_19")
 			(pintype "passive")
@@ -7944,7 +7662,7 @@
 		(pad "A20" smd circle
 			(at -0.64 -5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_20")
 			(pintype "passive")
@@ -7953,7 +7671,7 @@
 		(pad "A21" smd circle
 			(at 0.64 -5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_21")
 			(pintype "passive")
@@ -7962,7 +7680,7 @@
 		(pad "A22" smd circle
 			(at 1.905 -5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 255 "unconnected-(J1A-Pin_22-PadA22)")
 			(pinfunction "Pin_22")
 			(pintype "passive")
@@ -7971,7 +7689,7 @@
 		(pad "A23" smd circle
 			(at 3.175 -5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 256 "unconnected-(J1A-Pin_23-PadA23)")
 			(pinfunction "Pin_23")
 			(pintype "passive")
@@ -7980,7 +7698,7 @@
 		(pad "A24" smd circle
 			(at 4.445 -5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_24")
 			(pintype "passive")
@@ -7989,7 +7707,7 @@
 		(pad "A25" smd circle
 			(at 5.715 -5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_25")
 			(pintype "passive")
@@ -7998,7 +7716,7 @@
 		(pad "A26" smd circle
 			(at 6.985 -5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 239 "unconnected-(J1A-Pin_26-PadA26)")
 			(pinfunction "Pin_26")
 			(pintype "passive")
@@ -8007,7 +7725,7 @@
 		(pad "A27" smd circle
 			(at 8.255 -5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 224 "unconnected-(J1A-Pin_27-PadA27)")
 			(pinfunction "Pin_27")
 			(pintype "passive")
@@ -8016,7 +7734,7 @@
 		(pad "A28" smd circle
 			(at 9.525 -5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_28")
 			(pintype "passive")
@@ -8025,7 +7743,7 @@
 		(pad "A29" smd circle
 			(at 10.795 -5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_29")
 			(pintype "passive")
@@ -8034,7 +7752,7 @@
 		(pad "A30" smd circle
 			(at 12.065 -5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 233 "unconnected-(J1A-Pin_30-PadA30)")
 			(pinfunction "Pin_30")
 			(pintype "passive")
@@ -8043,7 +7761,7 @@
 		(pad "A31" smd circle
 			(at 13.335 -5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 144 "unconnected-(J1A-Pin_31-PadA31)")
 			(pinfunction "Pin_31")
 			(pintype "passive")
@@ -8052,7 +7770,7 @@
 		(pad "A32" smd circle
 			(at 14.605 -5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_32")
 			(pintype "passive")
@@ -8061,7 +7779,7 @@
 		(pad "A33" smd circle
 			(at 15.875 -5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_33")
 			(pintype "passive")
@@ -8070,7 +7788,7 @@
 		(pad "A34" smd circle
 			(at 17.145 -5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 88 "unconnected-(J1A-Pin_34-PadA34)")
 			(pinfunction "Pin_34")
 			(pintype "passive")
@@ -8079,7 +7797,7 @@
 		(pad "A35" smd circle
 			(at 18.415 -5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 73 "unconnected-(J1A-Pin_35-PadA35)")
 			(pinfunction "Pin_35")
 			(pintype "passive")
@@ -8088,7 +7806,7 @@
 		(pad "A36" smd circle
 			(at 19.685 -5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_36")
 			(pintype "passive")
@@ -8097,7 +7815,7 @@
 		(pad "A37" smd circle
 			(at 20.955 -5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_37")
 			(pintype "passive")
@@ -8106,7 +7824,7 @@
 		(pad "A38" smd circle
 			(at 22.225 -5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 70 "unconnected-(J1A-Pin_38-PadA38)")
 			(pinfunction "Pin_38")
 			(pintype "passive")
@@ -8115,7 +7833,7 @@
 		(pad "A39" smd circle
 			(at 23.495 -5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 163 "unconnected-(J1A-Pin_39-PadA39)")
 			(pinfunction "Pin_39")
 			(pintype "passive")
@@ -8124,7 +7842,7 @@
 		(pad "A40" smd circle
 			(at 24.765 -5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_40")
 			(pintype "passive")
@@ -8133,7 +7851,7 @@
 		(pad "B1" smd circle
 			(at -24.765 -4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_1")
 			(pintype "passive")
@@ -8142,7 +7860,7 @@
 		(pad "B2" smd circle
 			(at -23.495 -4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 159 "unconnected-(J1B-Pin_2-PadB2)")
 			(pinfunction "Pin_2")
 			(pintype "passive")
@@ -8151,7 +7869,7 @@
 		(pad "B3" smd circle
 			(at -22.225 -4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 246 "unconnected-(J1B-Pin_3-PadB3)")
 			(pinfunction "Pin_3")
 			(pintype "passive")
@@ -8160,7 +7878,7 @@
 		(pad "B4" smd circle
 			(at -20.955 -4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_4")
 			(pintype "passive")
@@ -8169,7 +7887,7 @@
 		(pad "B5" smd circle
 			(at -19.685 -4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_5")
 			(pintype "passive")
@@ -8178,7 +7896,7 @@
 		(pad "B6" smd circle
 			(at -18.415 -4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 125 "unconnected-(J1B-Pin_6-PadB6)")
 			(pinfunction "Pin_6")
 			(pintype "passive")
@@ -8187,7 +7905,7 @@
 		(pad "B7" smd circle
 			(at -17.145 -4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 105 "unconnected-(J1B-Pin_7-PadB7)")
 			(pinfunction "Pin_7")
 			(pintype "passive")
@@ -8196,7 +7914,7 @@
 		(pad "B8" smd circle
 			(at -15.875 -4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_8")
 			(pintype "passive")
@@ -8205,7 +7923,7 @@
 		(pad "B9" smd circle
 			(at -14.605 -4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_9")
 			(pintype "passive")
@@ -8214,7 +7932,7 @@
 		(pad "B10" smd circle
 			(at -13.335 -4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 34 "unconnected-(J1B-Pin_10-PadB10)")
 			(pinfunction "Pin_10")
 			(pintype "passive")
@@ -8223,7 +7941,7 @@
 		(pad "B11" smd circle
 			(at -12.065 -4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 141 "unconnected-(J1B-Pin_11-PadB11)")
 			(pinfunction "Pin_11")
 			(pintype "passive")
@@ -8232,7 +7950,7 @@
 		(pad "B12" smd circle
 			(at -10.795 -4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_12")
 			(pintype "passive")
@@ -8241,7 +7959,7 @@
 		(pad "B13" smd circle
 			(at -9.525 -4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_13")
 			(pintype "passive")
@@ -8250,7 +7968,7 @@
 		(pad "B14" smd circle
 			(at -8.255 -4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 94 "unconnected-(J1B-Pin_14-PadB14)")
 			(pinfunction "Pin_14")
 			(pintype "passive")
@@ -8259,7 +7977,7 @@
 		(pad "B15" smd circle
 			(at -6.985 -4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 36 "unconnected-(J1B-Pin_15-PadB15)")
 			(pinfunction "Pin_15")
 			(pintype "passive")
@@ -8268,7 +7986,7 @@
 		(pad "B16" smd circle
 			(at -5.715 -4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_16")
 			(pintype "passive")
@@ -8277,7 +7995,7 @@
 		(pad "B17" smd circle
 			(at -4.445 -4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_17")
 			(pintype "passive")
@@ -8286,7 +8004,7 @@
 		(pad "B18" smd circle
 			(at -3.175 -4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 91 "unconnected-(J1B-Pin_18-PadB18)")
 			(pinfunction "Pin_18")
 			(pintype "passive")
@@ -8295,7 +8013,7 @@
 		(pad "B19" smd circle
 			(at -1.905 -4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 60 "unconnected-(J1B-Pin_19-PadB19)")
 			(pinfunction "Pin_19")
 			(pintype "passive")
@@ -8304,7 +8022,7 @@
 		(pad "B20" smd circle
 			(at -0.64 -4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_20")
 			(pintype "passive")
@@ -8313,7 +8031,7 @@
 		(pad "B21" smd circle
 			(at 0.64 -4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_21")
 			(pintype "passive")
@@ -8322,7 +8040,7 @@
 		(pad "B22" smd circle
 			(at 1.905 -4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 254 "unconnected-(J1B-Pin_22-PadB22)")
 			(pinfunction "Pin_22")
 			(pintype "passive")
@@ -8331,7 +8049,7 @@
 		(pad "B23" smd circle
 			(at 3.175 -4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 227 "unconnected-(J1B-Pin_23-PadB23)")
 			(pinfunction "Pin_23")
 			(pintype "passive")
@@ -8340,7 +8058,7 @@
 		(pad "B24" smd circle
 			(at 4.445 -4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_24")
 			(pintype "passive")
@@ -8349,7 +8067,7 @@
 		(pad "B25" smd circle
 			(at 5.715 -4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_25")
 			(pintype "passive")
@@ -8358,7 +8076,7 @@
 		(pad "B26" smd circle
 			(at 6.985 -4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 79 "unconnected-(J1B-Pin_26-PadB26)")
 			(pinfunction "Pin_26")
 			(pintype "passive")
@@ -8367,7 +8085,7 @@
 		(pad "B27" smd circle
 			(at 8.255 -4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 180 "unconnected-(J1B-Pin_27-PadB27)")
 			(pinfunction "Pin_27")
 			(pintype "passive")
@@ -8376,7 +8094,7 @@
 		(pad "B28" smd circle
 			(at 9.525 -4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_28")
 			(pintype "passive")
@@ -8385,7 +8103,7 @@
 		(pad "B29" smd circle
 			(at 10.795 -4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_29")
 			(pintype "passive")
@@ -8394,7 +8112,7 @@
 		(pad "B30" smd circle
 			(at 12.065 -4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 121 "unconnected-(J1B-Pin_30-PadB30)")
 			(pinfunction "Pin_30")
 			(pintype "passive")
@@ -8403,7 +8121,7 @@
 		(pad "B31" smd circle
 			(at 13.335 -4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 132 "unconnected-(J1B-Pin_31-PadB31)")
 			(pinfunction "Pin_31")
 			(pintype "passive")
@@ -8412,7 +8130,7 @@
 		(pad "B32" smd circle
 			(at 14.605 -4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_32")
 			(pintype "passive")
@@ -8421,7 +8139,7 @@
 		(pad "B33" smd circle
 			(at 15.875 -4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_33")
 			(pintype "passive")
@@ -8430,7 +8148,7 @@
 		(pad "B34" smd circle
 			(at 17.145 -4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 198 "unconnected-(J1B-Pin_34-PadB34)")
 			(pinfunction "Pin_34")
 			(pintype "passive")
@@ -8439,7 +8157,7 @@
 		(pad "B35" smd circle
 			(at 18.415 -4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 178 "unconnected-(J1B-Pin_35-PadB35)")
 			(pinfunction "Pin_35")
 			(pintype "passive")
@@ -8448,7 +8166,7 @@
 		(pad "B36" smd circle
 			(at 19.685 -4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_36")
 			(pintype "passive")
@@ -8457,7 +8175,7 @@
 		(pad "B37" smd circle
 			(at 20.955 -4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_37")
 			(pintype "passive")
@@ -8466,7 +8184,7 @@
 		(pad "B38" smd circle
 			(at 22.225 -4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 140 "unconnected-(J1B-Pin_38-PadB38)")
 			(pinfunction "Pin_38")
 			(pintype "passive")
@@ -8475,7 +8193,7 @@
 		(pad "B39" smd circle
 			(at 23.495 -4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 66 "unconnected-(J1B-Pin_39-PadB39)")
 			(pinfunction "Pin_39")
 			(pintype "passive")
@@ -8484,7 +8202,7 @@
 		(pad "B40" smd circle
 			(at 24.765 -4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_40")
 			(pintype "passive")
@@ -8493,7 +8211,7 @@
 		(pad "C1" smd circle
 			(at -24.765 -3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_1")
 			(pintype "passive")
@@ -8502,7 +8220,7 @@
 		(pad "C2" smd circle
 			(at -23.495 -3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 210 "unconnected-(J1C-Pin_2-PadC2)")
 			(pinfunction "Pin_2")
 			(pintype "passive")
@@ -8511,7 +8229,7 @@
 		(pad "C3" smd circle
 			(at -22.225 -3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 151 "unconnected-(J1C-Pin_3-PadC3)")
 			(pinfunction "Pin_3")
 			(pintype "passive")
@@ -8520,7 +8238,7 @@
 		(pad "C4" smd circle
 			(at -20.955 -3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_4")
 			(pintype "passive")
@@ -8529,7 +8247,7 @@
 		(pad "C5" smd circle
 			(at -19.685 -3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_5")
 			(pintype "passive")
@@ -8538,7 +8256,7 @@
 		(pad "C6" smd circle
 			(at -18.415 -3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 117 "unconnected-(J1C-Pin_6-PadC6)")
 			(pinfunction "Pin_6")
 			(pintype "passive")
@@ -8547,7 +8265,7 @@
 		(pad "C7" smd circle
 			(at -17.145 -3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 89 "unconnected-(J1C-Pin_7-PadC7)")
 			(pinfunction "Pin_7")
 			(pintype "passive")
@@ -8556,7 +8274,7 @@
 		(pad "C8" smd circle
 			(at -15.875 -3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_8")
 			(pintype "passive")
@@ -8565,7 +8283,7 @@
 		(pad "C9" smd circle
 			(at -14.605 -3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_9")
 			(pintype "passive")
@@ -8574,7 +8292,7 @@
 		(pad "C10" smd circle
 			(at -13.335 -3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 39 "unconnected-(J1C-Pin_10-PadC10)")
 			(pinfunction "Pin_10")
 			(pintype "passive")
@@ -8583,7 +8301,7 @@
 		(pad "C11" smd circle
 			(at -12.065 -3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 21 "SDI FMC")
 			(pinfunction "Pin_11")
 			(pintype "passive")
@@ -8592,7 +8310,7 @@
 		(pad "C12" smd circle
 			(at -10.795 -3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_12")
 			(pintype "passive")
@@ -8601,7 +8319,7 @@
 		(pad "C13" smd circle
 			(at -9.525 -3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_13")
 			(pintype "passive")
@@ -8610,7 +8328,7 @@
 		(pad "C14" smd circle
 			(at -8.255 -3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 142 "unconnected-(J1C-Pin_14-PadC14)")
 			(pinfunction "Pin_14")
 			(pintype "passive")
@@ -8619,7 +8337,7 @@
 		(pad "C15" smd circle
 			(at -6.985 -3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 106 "unconnected-(J1C-Pin_15-PadC15)")
 			(pinfunction "Pin_15")
 			(pintype "passive")
@@ -8628,7 +8346,7 @@
 		(pad "C16" smd circle
 			(at -5.715 -3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_16")
 			(pintype "passive")
@@ -8637,7 +8355,7 @@
 		(pad "C17" smd circle
 			(at -4.445 -3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 214 "unconnected-(J1C-Pin_17-PadC17)")
 			(pinfunction "Pin_17")
 			(pintype "passive")
@@ -8646,7 +8364,7 @@
 		(pad "C18" smd circle
 			(at -3.175 -3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 184 "unconnected-(J1C-Pin_18-PadC18)")
 			(pinfunction "Pin_18")
 			(pintype "passive")
@@ -8655,7 +8373,7 @@
 		(pad "C19" smd circle
 			(at -1.905 -3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 231 "unconnected-(J1C-Pin_19-PadC19)")
 			(pinfunction "Pin_19")
 			(pintype "passive")
@@ -8664,7 +8382,7 @@
 		(pad "C20" smd circle
 			(at -0.64 -3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_20")
 			(pintype "passive")
@@ -8673,7 +8391,7 @@
 		(pad "C21" smd circle
 			(at 0.64 -3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_21")
 			(pintype "passive")
@@ -8682,7 +8400,7 @@
 		(pad "C22" smd circle
 			(at 1.905 -3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 65 "BUSY FMC")
 			(pinfunction "Pin_22")
 			(pintype "passive")
@@ -8691,7 +8409,7 @@
 		(pad "C23" smd circle
 			(at 3.175 -3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 115 "unconnected-(J1C-Pin_23-PadC23)")
 			(pinfunction "Pin_23")
 			(pintype "passive")
@@ -8700,7 +8418,7 @@
 		(pad "C24" smd circle
 			(at 4.445 -3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_24")
 			(pintype "passive")
@@ -8709,7 +8427,7 @@
 		(pad "C25" smd circle
 			(at 5.715 -3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_25")
 			(pintype "passive")
@@ -8718,7 +8436,7 @@
 		(pad "C26" smd circle
 			(at 6.985 -3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 51 "unconnected-(J1C-Pin_26-PadC26)")
 			(pinfunction "Pin_26")
 			(pintype "passive")
@@ -8727,7 +8445,7 @@
 		(pad "C27" smd circle
 			(at 8.255 -3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 250 "unconnected-(J1C-Pin_27-PadC27)")
 			(pinfunction "Pin_27")
 			(pintype "passive")
@@ -8736,7 +8454,7 @@
 		(pad "C28" smd circle
 			(at 9.525 -3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_28")
 			(pintype "passive")
@@ -8745,7 +8463,7 @@
 		(pad "C29" smd circle
 			(at 10.795 -3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_29")
 			(pintype "passive")
@@ -8754,7 +8472,7 @@
 		(pad "C30" smd circle
 			(at 12.065 -3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 264 "SCL EE")
 			(pinfunction "Pin_30")
 			(pintype "passive")
@@ -8763,7 +8481,7 @@
 		(pad "C31" smd circle
 			(at 13.335 -3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 265 "SDA EE")
 			(pinfunction "Pin_31")
 			(pintype "passive")
@@ -8772,7 +8490,7 @@
 		(pad "C32" smd circle
 			(at 14.605 -3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_32")
 			(pintype "passive")
@@ -8781,7 +8499,7 @@
 		(pad "C33" smd circle
 			(at 15.875 -3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_33")
 			(pintype "passive")
@@ -8790,7 +8508,7 @@
 		(pad "C34" smd circle
 			(at 17.145 -3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 266 "A0 EE")
 			(pinfunction "Pin_34")
 			(pintype "passive")
@@ -8799,7 +8517,7 @@
 		(pad "C35" smd circle
 			(at 18.415 -3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 267 "+12V FMC")
 			(pinfunction "Pin_35")
 			(pintype "passive")
@@ -8808,7 +8526,7 @@
 		(pad "C36" smd circle
 			(at 19.685 -3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_36")
 			(pintype "passive")
@@ -8817,7 +8535,7 @@
 		(pad "C37" smd circle
 			(at 20.955 -3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 267 "+12V FMC")
 			(pinfunction "Pin_37")
 			(pintype "passive")
@@ -8826,7 +8544,7 @@
 		(pad "C38" smd circle
 			(at 22.225 -3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_38")
 			(pintype "passive")
@@ -8835,7 +8553,7 @@
 		(pad "C39" smd circle
 			(at 23.495 -3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 205 "unconnected-(J1C-Pin_39-PadC39)")
 			(pinfunction "Pin_39")
 			(pintype "passive")
@@ -8844,7 +8562,7 @@
 		(pad "C40" smd circle
 			(at 24.765 -3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_40")
 			(pintype "passive")
@@ -8853,7 +8571,7 @@
 		(pad "D1" smd circle
 			(at -24.765 -1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 75 "EN")
 			(pinfunction "Pin_1")
 			(pintype "passive")
@@ -8862,7 +8580,7 @@
 		(pad "D2" smd circle
 			(at -23.495 -1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_2")
 			(pintype "passive")
@@ -8871,7 +8589,7 @@
 		(pad "D3" smd circle
 			(at -22.225 -1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_3")
 			(pintype "passive")
@@ -8880,7 +8598,7 @@
 		(pad "D4" smd circle
 			(at -20.955 -1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 107 "unconnected-(J1D-Pin_4-PadD4)")
 			(pinfunction "Pin_4")
 			(pintype "passive")
@@ -8889,7 +8607,7 @@
 		(pad "D5" smd circle
 			(at -19.685 -1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 37 "unconnected-(J1D-Pin_5-PadD5)")
 			(pinfunction "Pin_5")
 			(pintype "passive")
@@ -8898,7 +8616,7 @@
 		(pad "D6" smd circle
 			(at -18.415 -1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_6")
 			(pintype "passive")
@@ -8907,7 +8625,7 @@
 		(pad "D7" smd circle
 			(at -17.145 -1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_7")
 			(pintype "passive")
@@ -8916,7 +8634,7 @@
 		(pad "D8" smd circle
 			(at -15.875 -1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 24 "CNV FMC")
 			(pinfunction "Pin_8")
 			(pintype "passive")
@@ -8925,7 +8643,7 @@
 		(pad "D9" smd circle
 			(at -14.605 -1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 80 "RESET FMC")
 			(pinfunction "Pin_9")
 			(pintype "passive")
@@ -8934,7 +8652,7 @@
 		(pad "D10" smd circle
 			(at -13.335 -1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_10")
 			(pintype "passive")
@@ -8943,7 +8661,7 @@
 		(pad "D11" smd circle
 			(at -12.065 -1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 83 "SDO6 FMC")
 			(pinfunction "Pin_11")
 			(pintype "passive")
@@ -8952,7 +8670,7 @@
 		(pad "D12" smd circle
 			(at -10.795 -1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 84 "SDO7 FMC")
 			(pinfunction "Pin_12")
 			(pintype "passive")
@@ -8961,7 +8679,7 @@
 		(pad "D13" smd circle
 			(at -9.525 -1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_13")
 			(pintype "passive")
@@ -8970,7 +8688,7 @@
 		(pad "D14" smd circle
 			(at -8.255 -1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 226 "unconnected-(J1D-Pin_14-PadD14)")
 			(pinfunction "Pin_14")
 			(pintype "passive")
@@ -8979,7 +8697,7 @@
 		(pad "D15" smd circle
 			(at -6.985 -1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 127 "unconnected-(J1D-Pin_15-PadD15)")
 			(pinfunction "Pin_15")
 			(pintype "passive")
@@ -8988,7 +8706,7 @@
 		(pad "D16" smd circle
 			(at -5.715 -1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_16")
 			(pintype "passive")
@@ -8997,7 +8715,7 @@
 		(pad "D17" smd circle
 			(at -4.445 -1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 162 "unconnected-(J1D-Pin_17-PadD17)")
 			(pinfunction "Pin_17")
 			(pintype "passive")
@@ -9006,7 +8724,7 @@
 		(pad "D18" smd circle
 			(at -3.175 -1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 53 "unconnected-(J1D-Pin_18-PadD18)")
 			(pinfunction "Pin_18")
 			(pintype "passive")
@@ -9015,7 +8733,7 @@
 		(pad "D19" smd circle
 			(at -1.905 -1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_19")
 			(pintype "passive")
@@ -9024,7 +8742,7 @@
 		(pad "D20" smd circle
 			(at -0.64 -1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 95 "SCK OUT FMC")
 			(pinfunction "Pin_20")
 			(pintype "passive")
@@ -9033,7 +8751,7 @@
 		(pad "D21" smd circle
 			(at 0.64 -1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 48 "unconnected-(J1D-Pin_21-PadD21)")
 			(pinfunction "Pin_21")
 			(pintype "passive")
@@ -9042,7 +8760,7 @@
 		(pad "D22" smd circle
 			(at 1.905 -1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_22")
 			(pintype "passive")
@@ -9051,7 +8769,7 @@
 		(pad "D23" smd circle
 			(at 3.175 -1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 244 "unconnected-(J1D-Pin_23-PadD23)")
 			(pinfunction "Pin_23")
 			(pintype "passive")
@@ -9060,7 +8778,7 @@
 		(pad "D24" smd circle
 			(at 4.445 -1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 118 "unconnected-(J1D-Pin_24-PadD24)")
 			(pinfunction "Pin_24")
 			(pintype "passive")
@@ -9069,7 +8787,7 @@
 		(pad "D25" smd circle
 			(at 5.715 -1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_25")
 			(pintype "passive")
@@ -9078,7 +8796,7 @@
 		(pad "D26" smd circle
 			(at 6.985 -1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 87 "unconnected-(J1D-Pin_26-PadD26)")
 			(pinfunction "Pin_26")
 			(pintype "passive")
@@ -9087,7 +8805,7 @@
 		(pad "D27" smd circle
 			(at 8.255 -1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 59 "unconnected-(J1D-Pin_27-PadD27)")
 			(pinfunction "Pin_27")
 			(pintype "passive")
@@ -9096,7 +8814,7 @@
 		(pad "D28" smd circle
 			(at 9.525 -1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_28")
 			(pintype "passive")
@@ -9105,7 +8823,7 @@
 		(pad "D29" smd circle
 			(at 10.795 -1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 74 "unconnected-(J1D-Pin_29-PadD29)")
 			(pinfunction "Pin_29")
 			(pintype "passive")
@@ -9114,7 +8832,7 @@
 		(pad "D30" smd circle
 			(at 12.065 -1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 204 "unconnected-(J1D-Pin_30-PadD30)")
 			(pinfunction "Pin_30")
 			(pintype "passive")
@@ -9123,7 +8841,7 @@
 		(pad "D31" smd circle
 			(at 13.335 -1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 137 "unconnected-(J1D-Pin_31-PadD31)")
 			(pinfunction "Pin_31")
 			(pintype "passive")
@@ -9132,7 +8850,7 @@
 		(pad "D32" smd circle
 			(at 14.605 -1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 268 "AUX 3.3V EE")
 			(pinfunction "Pin_32")
 			(pintype "passive")
@@ -9141,7 +8859,7 @@
 		(pad "D33" smd circle
 			(at 15.875 -1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 149 "unconnected-(J1D-Pin_33-PadD33)")
 			(pinfunction "Pin_33")
 			(pintype "passive")
@@ -9150,7 +8868,7 @@
 		(pad "D34" smd circle
 			(at 17.145 -1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 41 "unconnected-(J1D-Pin_34-PadD34)")
 			(pinfunction "Pin_34")
 			(pintype "passive")
@@ -9159,7 +8877,7 @@
 		(pad "D35" smd circle
 			(at 18.415 -1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 269 "A1 EE")
 			(pinfunction "Pin_35")
 			(pintype "passive")
@@ -9168,7 +8886,7 @@
 		(pad "D36" smd circle
 			(at 19.685 -1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 63 "unconnected-(J1D-Pin_36-PadD36)")
 			(pinfunction "Pin_36")
 			(pintype "passive")
@@ -9177,7 +8895,7 @@
 		(pad "D37" smd circle
 			(at 20.955 -1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_37")
 			(pintype "passive")
@@ -9186,7 +8904,7 @@
 		(pad "D38" smd circle
 			(at 22.225 -1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 200 "unconnected-(J1D-Pin_38-PadD38)")
 			(pinfunction "Pin_38")
 			(pintype "passive")
@@ -9195,7 +8913,7 @@
 		(pad "D39" smd circle
 			(at 23.495 -1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_39")
 			(pintype "passive")
@@ -9204,7 +8922,7 @@
 		(pad "D40" smd circle
 			(at 24.765 -1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 216 "unconnected-(J1D-Pin_40-PadD40)")
 			(pinfunction "Pin_40")
 			(pintype "passive")
@@ -9213,7 +8931,7 @@
 		(pad "E1" smd circle
 			(at -24.765 -0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_1")
 			(pintype "passive")
@@ -9222,7 +8940,7 @@
 		(pad "E2" smd circle
 			(at -23.495 -0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 147 "unconnected-(J1E-Pin_2-PadE2)")
 			(pinfunction "Pin_2")
 			(pintype "passive")
@@ -9231,7 +8949,7 @@
 		(pad "E3" smd circle
 			(at -22.225 -0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 186 "unconnected-(J1E-Pin_3-PadE3)")
 			(pinfunction "Pin_3")
 			(pintype "passive")
@@ -9240,7 +8958,7 @@
 		(pad "E4" smd circle
 			(at -20.955 -0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_4")
 			(pintype "passive")
@@ -9249,7 +8967,7 @@
 		(pad "E5" smd circle
 			(at -19.685 -0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_5")
 			(pintype "passive")
@@ -9258,7 +8976,7 @@
 		(pad "E6" smd circle
 			(at -18.415 -0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 35 "unconnected-(J1E-Pin_6-PadE6)")
 			(pinfunction "Pin_6")
 			(pintype "passive")
@@ -9267,7 +8985,7 @@
 		(pad "E7" smd circle
 			(at -17.145 -0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 52 "unconnected-(J1E-Pin_7-PadE7)")
 			(pinfunction "Pin_7")
 			(pintype "passive")
@@ -9276,7 +8994,7 @@
 		(pad "E8" smd circle
 			(at -15.875 -0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_8")
 			(pintype "passive")
@@ -9285,7 +9003,7 @@
 		(pad "E9" smd circle
 			(at -14.605 -0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 202 "unconnected-(J1E-Pin_9-PadE9)")
 			(pinfunction "Pin_9")
 			(pintype "passive")
@@ -9294,7 +9012,7 @@
 		(pad "E10" smd circle
 			(at -13.335 -0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 201 "unconnected-(J1E-Pin_10-PadE10)")
 			(pinfunction "Pin_10")
 			(pintype "passive")
@@ -9303,7 +9021,7 @@
 		(pad "E11" smd circle
 			(at -12.065 -0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_11")
 			(pintype "passive")
@@ -9312,7 +9030,7 @@
 		(pad "E12" smd circle
 			(at -10.795 -0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 126 "unconnected-(J1E-Pin_12-PadE12)")
 			(pinfunction "Pin_12")
 			(pintype "passive")
@@ -9321,7 +9039,7 @@
 		(pad "E13" smd circle
 			(at -9.525 -0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 222 "unconnected-(J1E-Pin_13-PadE13)")
 			(pinfunction "Pin_13")
 			(pintype "passive")
@@ -9330,7 +9048,7 @@
 		(pad "E14" smd circle
 			(at -8.255 -0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_14")
 			(pintype "passive")
@@ -9339,7 +9057,7 @@
 		(pad "E15" smd circle
 			(at -6.985 -0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 169 "unconnected-(J1E-Pin_15-PadE15)")
 			(pinfunction "Pin_15")
 			(pintype "passive")
@@ -9348,7 +9066,7 @@
 		(pad "E16" smd circle
 			(at -5.715 -0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 206 "unconnected-(J1E-Pin_16-PadE16)")
 			(pinfunction "Pin_16")
 			(pintype "passive")
@@ -9357,7 +9075,7 @@
 		(pad "E17" smd circle
 			(at -4.445 -0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_17")
 			(pintype "passive")
@@ -9366,7 +9084,7 @@
 		(pad "E18" smd circle
 			(at -3.175 -0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 259 "unconnected-(J1E-Pin_18-PadE18)")
 			(pinfunction "Pin_18")
 			(pintype "passive")
@@ -9375,7 +9093,7 @@
 		(pad "E19" smd circle
 			(at -1.905 -0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 223 "unconnected-(J1E-Pin_19-PadE19)")
 			(pinfunction "Pin_19")
 			(pintype "passive")
@@ -9384,7 +9102,7 @@
 		(pad "E20" smd circle
 			(at -0.64 -0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_20")
 			(pintype "passive")
@@ -9393,7 +9111,7 @@
 		(pad "E21" smd circle
 			(at 0.64 -0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 199 "unconnected-(J1E-Pin_21-PadE21)")
 			(pinfunction "Pin_21")
 			(pintype "passive")
@@ -9402,7 +9120,7 @@
 		(pad "E22" smd circle
 			(at 1.905 -0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 215 "unconnected-(J1E-Pin_22-PadE22)")
 			(pinfunction "Pin_22")
 			(pintype "passive")
@@ -9411,7 +9129,7 @@
 		(pad "E23" smd circle
 			(at 3.175 -0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_23")
 			(pintype "passive")
@@ -9420,7 +9138,7 @@
 		(pad "E24" smd circle
 			(at 4.445 -0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 228 "unconnected-(J1E-Pin_24-PadE24)")
 			(pinfunction "Pin_24")
 			(pintype "passive")
@@ -9429,7 +9147,7 @@
 		(pad "E25" smd circle
 			(at 5.715 -0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 240 "unconnected-(J1E-Pin_25-PadE25)")
 			(pinfunction "Pin_25")
 			(pintype "passive")
@@ -9438,7 +9156,7 @@
 		(pad "E26" smd circle
 			(at 6.985 -0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_26")
 			(pintype "passive")
@@ -9447,7 +9165,7 @@
 		(pad "E27" smd circle
 			(at 8.255 -0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 111 "unconnected-(J1E-Pin_27-PadE27)")
 			(pinfunction "Pin_27")
 			(pintype "passive")
@@ -9456,7 +9174,7 @@
 		(pad "E28" smd circle
 			(at 9.525 -0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 150 "unconnected-(J1E-Pin_28-PadE28)")
 			(pinfunction "Pin_28")
 			(pintype "passive")
@@ -9465,7 +9183,7 @@
 		(pad "E29" smd circle
 			(at 10.795 -0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_29")
 			(pintype "passive")
@@ -9474,7 +9192,7 @@
 		(pad "E30" smd circle
 			(at 12.065 -0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 130 "unconnected-(J1E-Pin_30-PadE30)")
 			(pinfunction "Pin_30")
 			(pintype "passive")
@@ -9483,7 +9201,7 @@
 		(pad "E31" smd circle
 			(at 13.335 -0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 209 "unconnected-(J1E-Pin_31-PadE31)")
 			(pinfunction "Pin_31")
 			(pintype "passive")
@@ -9492,7 +9210,7 @@
 		(pad "E32" smd circle
 			(at 14.605 -0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_32")
 			(pintype "passive")
@@ -9501,7 +9219,7 @@
 		(pad "E33" smd circle
 			(at 15.875 -0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 133 "unconnected-(J1E-Pin_33-PadE33)")
 			(pinfunction "Pin_33")
 			(pintype "passive")
@@ -9510,7 +9228,7 @@
 		(pad "E34" smd circle
 			(at 17.145 -0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 217 "unconnected-(J1E-Pin_34-PadE34)")
 			(pinfunction "Pin_34")
 			(pintype "passive")
@@ -9519,7 +9237,7 @@
 		(pad "E35" smd circle
 			(at 18.415 -0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_35")
 			(pintype "passive")
@@ -9528,7 +9246,7 @@
 		(pad "E36" smd circle
 			(at 19.685 -0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 123 "unconnected-(J1E-Pin_36-PadE36)")
 			(pinfunction "Pin_36")
 			(pintype "passive")
@@ -9537,7 +9255,7 @@
 		(pad "E37" smd circle
 			(at 20.955 -0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 90 "unconnected-(J1E-Pin_37-PadE37)")
 			(pinfunction "Pin_37")
 			(pintype "passive")
@@ -9546,7 +9264,7 @@
 		(pad "E38" smd circle
 			(at 22.225 -0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_38")
 			(pintype "passive")
@@ -9555,7 +9273,7 @@
 		(pad "E39" smd circle
 			(at 23.495 -0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 253 "unconnected-(J1E-Pin_39-PadE39)")
 			(pinfunction "Pin_39")
 			(pintype "passive")
@@ -9564,7 +9282,7 @@
 		(pad "E40" smd circle
 			(at 24.765 -0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_40")
 			(pintype "passive")
@@ -9573,7 +9291,7 @@
 		(pad "F1" smd circle
 			(at -24.765 0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 156 "unconnected-(J1F-Pin_1-PadF1)")
 			(pinfunction "Pin_1")
 			(pintype "passive")
@@ -9582,7 +9300,7 @@
 		(pad "F2" smd circle
 			(at -23.495 0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_2")
 			(pintype "passive")
@@ -9591,7 +9309,7 @@
 		(pad "F3" smd circle
 			(at -22.225 0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_3")
 			(pintype "passive")
@@ -9600,7 +9318,7 @@
 		(pad "F4" smd circle
 			(at -20.955 0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 183 "unconnected-(J1F-Pin_4-PadF4)")
 			(pinfunction "Pin_4")
 			(pintype "passive")
@@ -9609,7 +9327,7 @@
 		(pad "F5" smd circle
 			(at -19.685 0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 40 "unconnected-(J1F-Pin_5-PadF5)")
 			(pinfunction "Pin_5")
 			(pintype "passive")
@@ -9618,7 +9336,7 @@
 		(pad "F6" smd circle
 			(at -18.415 0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_6")
 			(pintype "passive")
@@ -9627,7 +9345,7 @@
 		(pad "F7" smd circle
 			(at -17.145 0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 192 "unconnected-(J1F-Pin_7-PadF7)")
 			(pinfunction "Pin_7")
 			(pintype "passive")
@@ -9636,7 +9354,7 @@
 		(pad "F8" smd circle
 			(at -15.875 0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 174 "unconnected-(J1F-Pin_8-PadF8)")
 			(pinfunction "Pin_8")
 			(pintype "passive")
@@ -9645,7 +9363,7 @@
 		(pad "F9" smd circle
 			(at -14.605 0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_9")
 			(pintype "passive")
@@ -9654,7 +9372,7 @@
 		(pad "F10" smd circle
 			(at -13.335 0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 236 "unconnected-(J1F-Pin_10-PadF10)")
 			(pinfunction "Pin_10")
 			(pintype "passive")
@@ -9663,7 +9381,7 @@
 		(pad "F11" smd circle
 			(at -12.065 0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 187 "unconnected-(J1F-Pin_11-PadF11)")
 			(pinfunction "Pin_11")
 			(pintype "passive")
@@ -9672,7 +9390,7 @@
 		(pad "F12" smd circle
 			(at -10.795 0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_12")
 			(pintype "passive")
@@ -9681,7 +9399,7 @@
 		(pad "F13" smd circle
 			(at -9.525 0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 177 "unconnected-(J1F-Pin_13-PadF13)")
 			(pinfunction "Pin_13")
 			(pintype "passive")
@@ -9690,7 +9408,7 @@
 		(pad "F14" smd circle
 			(at -8.255 0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 103 "unconnected-(J1F-Pin_14-PadF14)")
 			(pinfunction "Pin_14")
 			(pintype "passive")
@@ -9699,7 +9417,7 @@
 		(pad "F15" smd circle
 			(at -6.985 0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_15")
 			(pintype "passive")
@@ -9708,7 +9426,7 @@
 		(pad "F16" smd circle
 			(at -5.715 0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 99 "unconnected-(J1F-Pin_16-PadF16)")
 			(pinfunction "Pin_16")
 			(pintype "passive")
@@ -9717,7 +9435,7 @@
 		(pad "F17" smd circle
 			(at -4.445 0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 241 "unconnected-(J1F-Pin_17-PadF17)")
 			(pinfunction "Pin_17")
 			(pintype "passive")
@@ -9726,7 +9444,7 @@
 		(pad "F18" smd circle
 			(at -3.175 0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_18")
 			(pintype "passive")
@@ -9735,7 +9453,7 @@
 		(pad "F19" smd circle
 			(at -1.905 0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 243 "unconnected-(J1F-Pin_19-PadF19)")
 			(pinfunction "Pin_19")
 			(pintype "passive")
@@ -9744,7 +9462,7 @@
 		(pad "F20" smd circle
 			(at -0.64 0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 114 "unconnected-(J1F-Pin_20-PadF20)")
 			(pinfunction "Pin_20")
 			(pintype "passive")
@@ -9753,7 +9471,7 @@
 		(pad "F21" smd circle
 			(at 0.64 0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_21")
 			(pintype "passive")
@@ -9762,7 +9480,7 @@
 		(pad "F22" smd circle
 			(at 1.905 0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 143 "unconnected-(J1F-Pin_22-PadF22)")
 			(pinfunction "Pin_22")
 			(pintype "passive")
@@ -9771,7 +9489,7 @@
 		(pad "F23" smd circle
 			(at 3.175 0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 122 "unconnected-(J1F-Pin_23-PadF23)")
 			(pinfunction "Pin_23")
 			(pintype "passive")
@@ -9780,7 +9498,7 @@
 		(pad "F24" smd circle
 			(at 4.445 0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_24")
 			(pintype "passive")
@@ -9789,7 +9507,7 @@
 		(pad "F25" smd circle
 			(at 5.715 0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 98 "unconnected-(J1F-Pin_25-PadF25)")
 			(pinfunction "Pin_25")
 			(pintype "passive")
@@ -9798,7 +9516,7 @@
 		(pad "F26" smd circle
 			(at 6.985 0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 218 "unconnected-(J1F-Pin_26-PadF26)")
 			(pinfunction "Pin_26")
 			(pintype "passive")
@@ -9807,7 +9525,7 @@
 		(pad "F27" smd circle
 			(at 8.255 0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_27")
 			(pintype "passive")
@@ -9816,7 +9534,7 @@
 		(pad "F28" smd circle
 			(at 9.525 0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 189 "unconnected-(J1F-Pin_28-PadF28)")
 			(pinfunction "Pin_28")
 			(pintype "passive")
@@ -9825,7 +9543,7 @@
 		(pad "F29" smd circle
 			(at 10.795 0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 33 "unconnected-(J1F-Pin_29-PadF29)")
 			(pinfunction "Pin_29")
 			(pintype "passive")
@@ -9834,7 +9552,7 @@
 		(pad "F30" smd circle
 			(at 12.065 0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_30")
 			(pintype "passive")
@@ -9843,7 +9561,7 @@
 		(pad "F31" smd circle
 			(at 13.335 0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 82 "unconnected-(J1F-Pin_31-PadF31)")
 			(pinfunction "Pin_31")
 			(pintype "passive")
@@ -9852,7 +9570,7 @@
 		(pad "F32" smd circle
 			(at 14.605 0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 167 "unconnected-(J1F-Pin_32-PadF32)")
 			(pinfunction "Pin_32")
 			(pintype "passive")
@@ -9861,7 +9579,7 @@
 		(pad "F33" smd circle
 			(at 15.875 0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_33")
 			(pintype "passive")
@@ -9870,7 +9588,7 @@
 		(pad "F34" smd circle
 			(at 17.145 0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 138 "unconnected-(J1F-Pin_34-PadF34)")
 			(pinfunction "Pin_34")
 			(pintype "passive")
@@ -9879,7 +9597,7 @@
 		(pad "F35" smd circle
 			(at 18.415 0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 154 "unconnected-(J1F-Pin_35-PadF35)")
 			(pinfunction "Pin_35")
 			(pintype "passive")
@@ -9888,7 +9606,7 @@
 		(pad "F36" smd circle
 			(at 19.685 0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_36")
 			(pintype "passive")
@@ -9897,7 +9615,7 @@
 		(pad "F37" smd circle
 			(at 20.955 0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 58 "unconnected-(J1F-Pin_37-PadF37)")
 			(pinfunction "Pin_37")
 			(pintype "passive")
@@ -9906,7 +9624,7 @@
 		(pad "F38" smd circle
 			(at 22.225 0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 207 "unconnected-(J1F-Pin_38-PadF38)")
 			(pinfunction "Pin_38")
 			(pintype "passive")
@@ -9915,7 +9633,7 @@
 		(pad "F39" smd circle
 			(at 23.495 0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_39")
 			(pintype "passive")
@@ -9924,7 +9642,7 @@
 		(pad "F40" smd circle
 			(at 24.765 0.64)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 252 "unconnected-(J1F-Pin_40-PadF40)")
 			(pinfunction "Pin_40")
 			(pintype "passive")
@@ -9933,7 +9651,7 @@
 		(pad "G1" smd circle
 			(at -24.765 1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_1")
 			(pintype "passive")
@@ -9942,7 +9660,7 @@
 		(pad "G2" smd circle
 			(at -23.495 1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 235 "unconnected-(J1G-Pin_2-PadG2)")
 			(pinfunction "Pin_2")
 			(pintype "passive")
@@ -9951,7 +9669,7 @@
 		(pad "G3" smd circle
 			(at -22.225 1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 72 "unconnected-(J1G-Pin_3-PadG3)")
 			(pinfunction "Pin_3")
 			(pintype "passive")
@@ -9960,7 +9678,7 @@
 		(pad "G4" smd circle
 			(at -20.955 1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_4")
 			(pintype "passive")
@@ -9969,7 +9687,7 @@
 		(pad "G5" smd circle
 			(at -19.685 1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_5")
 			(pintype "passive")
@@ -9978,7 +9696,7 @@
 		(pad "G6" smd circle
 			(at -18.415 1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 6 "SCK FMC")
 			(pinfunction "Pin_6")
 			(pintype "passive")
@@ -9987,7 +9705,7 @@
 		(pad "G7" smd circle
 			(at -17.145 1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 9 "CS FMC")
 			(pinfunction "Pin_7")
 			(pintype "passive")
@@ -9996,7 +9714,7 @@
 		(pad "G8" smd circle
 			(at -15.875 1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_8")
 			(pintype "passive")
@@ -10005,7 +9723,7 @@
 		(pad "G9" smd circle
 			(at -14.605 1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 170 "SDO2 FMC")
 			(pinfunction "Pin_9")
 			(pintype "passive")
@@ -10014,7 +9732,7 @@
 		(pad "G10" smd circle
 			(at -13.335 1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 171 "SDO3 FMC")
 			(pinfunction "Pin_10")
 			(pintype "passive")
@@ -10023,7 +9741,7 @@
 		(pad "G11" smd circle
 			(at -12.065 1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_11")
 			(pintype "passive")
@@ -10032,7 +9750,7 @@
 		(pad "G12" smd circle
 			(at -10.795 1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 258 "unconnected-(J1G-Pin_12-PadG12)")
 			(pinfunction "Pin_12")
 			(pintype "passive")
@@ -10041,7 +9759,7 @@
 		(pad "G13" smd circle
 			(at -9.525 1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 219 "unconnected-(J1G-Pin_13-PadG13)")
 			(pinfunction "Pin_13")
 			(pintype "passive")
@@ -10050,7 +9768,7 @@
 		(pad "G14" smd circle
 			(at -8.255 1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_14")
 			(pintype "passive")
@@ -10059,7 +9777,7 @@
 		(pad "G15" smd circle
 			(at -6.985 1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 116 "unconnected-(J1G-Pin_15-PadG15)")
 			(pinfunction "Pin_15")
 			(pintype "passive")
@@ -10068,7 +9786,7 @@
 		(pad "G16" smd circle
 			(at -5.715 1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 221 "unconnected-(J1G-Pin_16-PadG16)")
 			(pinfunction "Pin_16")
 			(pintype "passive")
@@ -10077,7 +9795,7 @@
 		(pad "G17" smd circle
 			(at -4.445 1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_17")
 			(pintype "passive")
@@ -10086,7 +9804,7 @@
 		(pad "G18" smd circle
 			(at -3.175 1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 56 "unconnected-(J1G-Pin_18-PadG18)")
 			(pinfunction "Pin_18")
 			(pintype "passive")
@@ -10095,7 +9813,7 @@
 		(pad "G19" smd circle
 			(at -1.905 1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 120 "unconnected-(J1G-Pin_19-PadG19)")
 			(pinfunction "Pin_19")
 			(pintype "passive")
@@ -10104,7 +9822,7 @@
 		(pad "G20" smd circle
 			(at -0.64 1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_20")
 			(pintype "passive")
@@ -10113,7 +9831,7 @@
 		(pad "G21" smd circle
 			(at 0.64 1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 197 "unconnected-(J1G-Pin_21-PadG21)")
 			(pinfunction "Pin_21")
 			(pintype "passive")
@@ -10122,7 +9840,7 @@
 		(pad "G22" smd circle
 			(at 1.905 1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 113 "unconnected-(J1G-Pin_22-PadG22)")
 			(pinfunction "Pin_22")
 			(pintype "passive")
@@ -10131,7 +9849,7 @@
 		(pad "G23" smd circle
 			(at 3.175 1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_23")
 			(pintype "passive")
@@ -10140,7 +9858,7 @@
 		(pad "G24" smd circle
 			(at 4.445 1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 190 "unconnected-(J1G-Pin_24-PadG24)")
 			(pinfunction "Pin_24")
 			(pintype "passive")
@@ -10149,7 +9867,7 @@
 		(pad "G25" smd circle
 			(at 5.715 1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 32 "unconnected-(J1G-Pin_25-PadG25)")
 			(pinfunction "Pin_25")
 			(pintype "passive")
@@ -10158,7 +9876,7 @@
 		(pad "G26" smd circle
 			(at 6.985 1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_26")
 			(pintype "passive")
@@ -10167,7 +9885,7 @@
 		(pad "G27" smd circle
 			(at 8.255 1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 181 "unconnected-(J1G-Pin_27-PadG27)")
 			(pinfunction "Pin_27")
 			(pintype "passive")
@@ -10176,7 +9894,7 @@
 		(pad "G28" smd circle
 			(at 9.525 1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 62 "unconnected-(J1G-Pin_28-PadG28)")
 			(pinfunction "Pin_28")
 			(pintype "passive")
@@ -10185,7 +9903,7 @@
 		(pad "G29" smd circle
 			(at 10.795 1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_29")
 			(pintype "passive")
@@ -10194,7 +9912,7 @@
 		(pad "G30" smd circle
 			(at 12.065 1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 50 "unconnected-(J1G-Pin_30-PadG30)")
 			(pinfunction "Pin_30")
 			(pintype "passive")
@@ -10203,7 +9921,7 @@
 		(pad "G31" smd circle
 			(at 13.335 1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 179 "unconnected-(J1G-Pin_31-PadG31)")
 			(pinfunction "Pin_31")
 			(pintype "passive")
@@ -10212,7 +9930,7 @@
 		(pad "G32" smd circle
 			(at 14.605 1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_32")
 			(pintype "passive")
@@ -10221,7 +9939,7 @@
 		(pad "G33" smd circle
 			(at 15.875 1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 61 "unconnected-(J1G-Pin_33-PadG33)")
 			(pinfunction "Pin_33")
 			(pintype "passive")
@@ -10230,7 +9948,7 @@
 		(pad "G34" smd circle
 			(at 17.145 1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 168 "unconnected-(J1G-Pin_34-PadG34)")
 			(pinfunction "Pin_34")
 			(pintype "passive")
@@ -10239,7 +9957,7 @@
 		(pad "G35" smd circle
 			(at 18.415 1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_35")
 			(pintype "passive")
@@ -10248,7 +9966,7 @@
 		(pad "G36" smd circle
 			(at 19.685 1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 176 "unconnected-(J1G-Pin_36-PadG36)")
 			(pinfunction "Pin_36")
 			(pintype "passive")
@@ -10257,7 +9975,7 @@
 		(pad "G37" smd circle
 			(at 20.955 1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 220 "unconnected-(J1G-Pin_37-PadG37)")
 			(pinfunction "Pin_37")
 			(pintype "passive")
@@ -10266,7 +9984,7 @@
 		(pad "G38" smd circle
 			(at 22.225 1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_38")
 			(pintype "passive")
@@ -10275,7 +9993,7 @@
 		(pad "G39" smd circle
 			(at 23.495 1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 270 "VADJ")
 			(pinfunction "Pin_39")
 			(pintype "passive")
@@ -10284,7 +10002,7 @@
 		(pad "G40" smd circle
 			(at 24.765 1.905)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_40")
 			(pintype "passive")
@@ -10293,7 +10011,7 @@
 		(pad "H1" smd circle
 			(at -24.765 3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 196 "unconnected-(J1H-Pin_1-PadH1)")
 			(pinfunction "Pin_1")
 			(pintype "passive")
@@ -10302,7 +10020,7 @@
 		(pad "H2" smd circle
 			(at -23.495 3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_2")
 			(pintype "passive")
@@ -10311,7 +10029,7 @@
 		(pad "H3" smd circle
 			(at -22.225 3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_3")
 			(pintype "passive")
@@ -10320,7 +10038,7 @@
 		(pad "H4" smd circle
 			(at -20.955 3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 191 "CLK-ADC")
 			(pinfunction "Pin_4")
 			(pintype "passive")
@@ -10329,7 +10047,7 @@
 		(pad "H5" smd circle
 			(at -19.685 3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 225 "unconnected-(J1H-Pin_5-PadH5)")
 			(pinfunction "Pin_5")
 			(pintype "passive")
@@ -10338,7 +10056,7 @@
 		(pad "H6" smd circle
 			(at -18.415 3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_6")
 			(pintype "passive")
@@ -10347,7 +10065,7 @@
 		(pad "H7" smd circle
 			(at -17.145 3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 31 "SDO0 FMC")
 			(pinfunction "Pin_7")
 			(pintype "passive")
@@ -10356,7 +10074,7 @@
 		(pad "H8" smd circle
 			(at -15.875 3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 193 "SDO1 FMC")
 			(pinfunction "Pin_8")
 			(pintype "passive")
@@ -10365,7 +10083,7 @@
 		(pad "H9" smd circle
 			(at -14.605 3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_9")
 			(pintype "passive")
@@ -10374,7 +10092,7 @@
 		(pad "H10" smd circle
 			(at -13.335 3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 29 "SDO4 FMC")
 			(pinfunction "Pin_10")
 			(pintype "passive")
@@ -10383,7 +10101,7 @@
 		(pad "H11" smd circle
 			(at -12.065 3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 194 "SDO5 FMC")
 			(pinfunction "Pin_11")
 			(pintype "passive")
@@ -10392,7 +10110,7 @@
 		(pad "H12" smd circle
 			(at -10.795 3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_12")
 			(pintype "passive")
@@ -10401,7 +10119,7 @@
 		(pad "H13" smd circle
 			(at -9.525 3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 44 "unconnected-(J1H-Pin_13-PadH13)")
 			(pinfunction "Pin_13")
 			(pintype "passive")
@@ -10410,7 +10128,7 @@
 		(pad "H14" smd circle
 			(at -8.255 3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 136 "unconnected-(J1H-Pin_14-PadH14)")
 			(pinfunction "Pin_14")
 			(pintype "passive")
@@ -10419,7 +10137,7 @@
 		(pad "H15" smd circle
 			(at -6.985 3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_15")
 			(pintype "passive")
@@ -10428,7 +10146,7 @@
 		(pad "H16" smd circle
 			(at -5.715 3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 203 "unconnected-(J1H-Pin_16-PadH16)")
 			(pinfunction "Pin_16")
 			(pintype "passive")
@@ -10437,7 +10155,7 @@
 		(pad "H17" smd circle
 			(at -4.445 3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 182 "unconnected-(J1H-Pin_17-PadH17)")
 			(pinfunction "Pin_17")
 			(pintype "passive")
@@ -10446,7 +10164,7 @@
 		(pad "H18" smd circle
 			(at -3.175 3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_18")
 			(pintype "passive")
@@ -10455,7 +10173,7 @@
 		(pad "H19" smd circle
 			(at -1.905 3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 248 "unconnected-(J1H-Pin_19-PadH19)")
 			(pinfunction "Pin_19")
 			(pintype "passive")
@@ -10464,7 +10182,7 @@
 		(pad "H20" smd circle
 			(at -0.64 3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 68 "unconnected-(J1H-Pin_20-PadH20)")
 			(pinfunction "Pin_20")
 			(pintype "passive")
@@ -10473,7 +10191,7 @@
 		(pad "H21" smd circle
 			(at 0.64 3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_21")
 			(pintype "passive")
@@ -10482,7 +10200,7 @@
 		(pad "H22" smd circle
 			(at 1.905 3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 245 "unconnected-(J1H-Pin_22-PadH22)")
 			(pinfunction "Pin_22")
 			(pintype "passive")
@@ -10491,7 +10209,7 @@
 		(pad "H23" smd circle
 			(at 3.175 3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 212 "unconnected-(J1H-Pin_23-PadH23)")
 			(pinfunction "Pin_23")
 			(pintype "passive")
@@ -10500,7 +10218,7 @@
 		(pad "H24" smd circle
 			(at 4.445 3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_24")
 			(pintype "passive")
@@ -10509,7 +10227,7 @@
 		(pad "H25" smd circle
 			(at 5.715 3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 185 "unconnected-(J1H-Pin_25-PadH25)")
 			(pinfunction "Pin_25")
 			(pintype "passive")
@@ -10518,7 +10236,7 @@
 		(pad "H26" smd circle
 			(at 6.985 3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 112 "unconnected-(J1H-Pin_26-PadH26)")
 			(pinfunction "Pin_26")
 			(pintype "passive")
@@ -10527,7 +10245,7 @@
 		(pad "H27" smd circle
 			(at 8.255 3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_27")
 			(pintype "passive")
@@ -10536,7 +10254,7 @@
 		(pad "H28" smd circle
 			(at 9.525 3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 100 "unconnected-(J1H-Pin_28-PadH28)")
 			(pinfunction "Pin_28")
 			(pintype "passive")
@@ -10545,7 +10263,7 @@
 		(pad "H29" smd circle
 			(at 10.795 3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 81 "unconnected-(J1H-Pin_29-PadH29)")
 			(pinfunction "Pin_29")
 			(pintype "passive")
@@ -10554,7 +10272,7 @@
 		(pad "H30" smd circle
 			(at 12.065 3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_30")
 			(pintype "passive")
@@ -10563,7 +10281,7 @@
 		(pad "H31" smd circle
 			(at 13.335 3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 234 "unconnected-(J1H-Pin_31-PadH31)")
 			(pinfunction "Pin_31")
 			(pintype "passive")
@@ -10572,7 +10290,7 @@
 		(pad "H32" smd circle
 			(at 14.605 3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 92 "unconnected-(J1H-Pin_32-PadH32)")
 			(pinfunction "Pin_32")
 			(pintype "passive")
@@ -10581,7 +10299,7 @@
 		(pad "H33" smd circle
 			(at 15.875 3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_33")
 			(pintype "passive")
@@ -10590,7 +10308,7 @@
 		(pad "H34" smd circle
 			(at 17.145 3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 148 "unconnected-(J1H-Pin_34-PadH34)")
 			(pinfunction "Pin_34")
 			(pintype "passive")
@@ -10599,7 +10317,7 @@
 		(pad "H35" smd circle
 			(at 18.415 3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 139 "unconnected-(J1H-Pin_35-PadH35)")
 			(pinfunction "Pin_35")
 			(pintype "passive")
@@ -10608,7 +10326,7 @@
 		(pad "H36" smd circle
 			(at 19.685 3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_36")
 			(pintype "passive")
@@ -10617,7 +10335,7 @@
 		(pad "H37" smd circle
 			(at 20.955 3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 152 "unconnected-(J1H-Pin_37-PadH37)")
 			(pinfunction "Pin_37")
 			(pintype "passive")
@@ -10626,7 +10344,7 @@
 		(pad "H38" smd circle
 			(at 22.225 3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 69 "unconnected-(J1H-Pin_38-PadH38)")
 			(pinfunction "Pin_38")
 			(pintype "passive")
@@ -10635,7 +10353,7 @@
 		(pad "H39" smd circle
 			(at 23.495 3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_39")
 			(pintype "passive")
@@ -10644,7 +10362,7 @@
 		(pad "H40" smd circle
 			(at 24.765 3.175)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 270 "VADJ")
 			(pinfunction "Pin_40")
 			(pintype "passive")
@@ -10653,7 +10371,7 @@
 		(pad "J1" smd circle
 			(at -24.765 4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_1")
 			(pintype "passive")
@@ -10662,7 +10380,7 @@
 		(pad "J2" smd circle
 			(at -23.495 4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 211 "unconnected-(J1I-Pin_2-PadJ2)")
 			(pinfunction "Pin_2")
 			(pintype "passive")
@@ -10671,7 +10389,7 @@
 		(pad "J3" smd circle
 			(at -22.225 4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 230 "unconnected-(J1I-Pin_3-PadJ3)")
 			(pinfunction "Pin_3")
 			(pintype "passive")
@@ -10680,7 +10398,7 @@
 		(pad "J4" smd circle
 			(at -20.955 4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_4")
 			(pintype "passive")
@@ -10689,7 +10407,7 @@
 		(pad "J5" smd circle
 			(at -19.685 4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_5")
 			(pintype "passive")
@@ -10698,7 +10416,7 @@
 		(pad "J6" smd circle
 			(at -18.415 4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 155 "unconnected-(J1I-Pin_6-PadJ6)")
 			(pinfunction "Pin_6")
 			(pintype "passive")
@@ -10707,7 +10425,7 @@
 		(pad "J7" smd circle
 			(at -17.145 4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 232 "unconnected-(J1I-Pin_7-PadJ7)")
 			(pinfunction "Pin_7")
 			(pintype "passive")
@@ -10716,7 +10434,7 @@
 		(pad "J8" smd circle
 			(at -15.875 4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_8")
 			(pintype "passive")
@@ -10725,7 +10443,7 @@
 		(pad "J9" smd circle
 			(at -14.605 4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 104 "unconnected-(J1I-Pin_9-PadJ9)")
 			(pinfunction "Pin_9")
 			(pintype "passive")
@@ -10734,7 +10452,7 @@
 		(pad "J10" smd circle
 			(at -13.335 4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 165 "unconnected-(J1I-Pin_10-PadJ10)")
 			(pinfunction "Pin_10")
 			(pintype "passive")
@@ -10743,7 +10461,7 @@
 		(pad "J11" smd circle
 			(at -12.065 4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_11")
 			(pintype "passive")
@@ -10752,7 +10470,7 @@
 		(pad "J12" smd circle
 			(at -10.795 4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 86 "unconnected-(J1I-Pin_12-PadJ12)")
 			(pinfunction "Pin_12")
 			(pintype "passive")
@@ -10761,7 +10479,7 @@
 		(pad "J13" smd circle
 			(at -9.525 4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 108 "unconnected-(J1I-Pin_13-PadJ13)")
 			(pinfunction "Pin_13")
 			(pintype "passive")
@@ -10770,7 +10488,7 @@
 		(pad "J14" smd circle
 			(at -8.255 4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_14")
 			(pintype "passive")
@@ -10779,7 +10497,7 @@
 		(pad "J15" smd circle
 			(at -6.985 4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 251 "unconnected-(J1I-Pin_15-PadJ15)")
 			(pinfunction "Pin_15")
 			(pintype "passive")
@@ -10788,7 +10506,7 @@
 		(pad "J16" smd circle
 			(at -5.715 4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 247 "unconnected-(J1I-Pin_16-PadJ16)")
 			(pinfunction "Pin_16")
 			(pintype "passive")
@@ -10797,7 +10515,7 @@
 		(pad "J17" smd circle
 			(at -4.445 4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_17")
 			(pintype "passive")
@@ -10806,7 +10524,7 @@
 		(pad "J18" smd circle
 			(at -3.175 4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 110 "unconnected-(J1I-Pin_18-PadJ18)")
 			(pinfunction "Pin_18")
 			(pintype "passive")
@@ -10815,7 +10533,7 @@
 		(pad "J19" smd circle
 			(at -1.905 4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 43 "unconnected-(J1I-Pin_19-PadJ19)")
 			(pinfunction "Pin_19")
 			(pintype "passive")
@@ -10824,7 +10542,7 @@
 		(pad "J20" smd circle
 			(at -0.64 4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_20")
 			(pintype "passive")
@@ -10833,7 +10551,7 @@
 		(pad "J21" smd circle
 			(at 0.64 4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 173 "unconnected-(J1I-Pin_21-PadJ21)")
 			(pinfunction "Pin_21")
 			(pintype "passive")
@@ -10842,7 +10560,7 @@
 		(pad "J22" smd circle
 			(at 1.905 4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 93 "unconnected-(J1I-Pin_22-PadJ22)")
 			(pinfunction "Pin_22")
 			(pintype "passive")
@@ -10851,7 +10569,7 @@
 		(pad "J23" smd circle
 			(at 3.175 4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_23")
 			(pintype "passive")
@@ -10860,7 +10578,7 @@
 		(pad "J24" smd circle
 			(at 4.445 4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 55 "unconnected-(J1I-Pin_24-PadJ24)")
 			(pinfunction "Pin_24")
 			(pintype "passive")
@@ -10869,7 +10587,7 @@
 		(pad "J25" smd circle
 			(at 5.715 4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 135 "unconnected-(J1I-Pin_25-PadJ25)")
 			(pinfunction "Pin_25")
 			(pintype "passive")
@@ -10878,7 +10596,7 @@
 		(pad "J26" smd circle
 			(at 6.985 4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_26")
 			(pintype "passive")
@@ -10887,7 +10605,7 @@
 		(pad "J27" smd circle
 			(at 8.255 4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 42 "unconnected-(J1I-Pin_27-PadJ27)")
 			(pinfunction "Pin_27")
 			(pintype "passive")
@@ -10896,7 +10614,7 @@
 		(pad "J28" smd circle
 			(at 9.525 4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 54 "unconnected-(J1I-Pin_28-PadJ28)")
 			(pinfunction "Pin_28")
 			(pintype "passive")
@@ -10905,7 +10623,7 @@
 		(pad "J29" smd circle
 			(at 10.795 4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_29")
 			(pintype "passive")
@@ -10914,7 +10632,7 @@
 		(pad "J30" smd circle
 			(at 12.065 4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 208 "unconnected-(J1I-Pin_30-PadJ30)")
 			(pinfunction "Pin_30")
 			(pintype "passive")
@@ -10923,7 +10641,7 @@
 		(pad "J31" smd circle
 			(at 13.335 4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 101 "unconnected-(J1I-Pin_31-PadJ31)")
 			(pinfunction "Pin_31")
 			(pintype "passive")
@@ -10932,7 +10650,7 @@
 		(pad "J32" smd circle
 			(at 14.605 4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_32")
 			(pintype "passive")
@@ -10941,7 +10659,7 @@
 		(pad "J33" smd circle
 			(at 15.875 4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 38 "unconnected-(J1I-Pin_33-PadJ33)")
 			(pinfunction "Pin_33")
 			(pintype "passive")
@@ -10950,7 +10668,7 @@
 		(pad "J34" smd circle
 			(at 17.145 4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 131 "unconnected-(J1I-Pin_34-PadJ34)")
 			(pinfunction "Pin_34")
 			(pintype "passive")
@@ -10959,7 +10677,7 @@
 		(pad "J35" smd circle
 			(at 18.415 4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_35")
 			(pintype "passive")
@@ -10968,7 +10686,7 @@
 		(pad "J36" smd circle
 			(at 19.685 4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 124 "unconnected-(J1I-Pin_36-PadJ36)")
 			(pinfunction "Pin_36")
 			(pintype "passive")
@@ -10977,7 +10695,7 @@
 		(pad "J37" smd circle
 			(at 20.955 4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 164 "unconnected-(J1I-Pin_37-PadJ37)")
 			(pinfunction "Pin_37")
 			(pintype "passive")
@@ -10986,7 +10704,7 @@
 		(pad "J38" smd circle
 			(at 22.225 4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_38")
 			(pintype "passive")
@@ -10995,7 +10713,7 @@
 		(pad "J39" smd circle
 			(at 23.495 4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 238 "unconnected-(J1I-Pin_39-PadJ39)")
 			(pinfunction "Pin_39")
 			(pintype "passive")
@@ -11004,7 +10722,7 @@
 		(pad "J40" smd circle
 			(at 24.765 4.445)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_40")
 			(pintype "passive")
@@ -11013,7 +10731,7 @@
 		(pad "K1" smd circle
 			(at -24.765 5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 188 "unconnected-(J1J-Pin_1-PadK1)")
 			(pinfunction "Pin_1")
 			(pintype "passive")
@@ -11022,7 +10740,7 @@
 		(pad "K2" smd circle
 			(at -23.495 5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_2")
 			(pintype "passive")
@@ -11031,7 +10749,7 @@
 		(pad "K3" smd circle
 			(at -22.225 5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_3")
 			(pintype "passive")
@@ -11040,7 +10758,7 @@
 		(pad "K4" smd circle
 			(at -20.955 5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 157 "unconnected-(J1J-Pin_4-PadK4)")
 			(pinfunction "Pin_4")
 			(pintype "passive")
@@ -11049,7 +10767,7 @@
 		(pad "K5" smd circle
 			(at -19.685 5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 153 "unconnected-(J1J-Pin_5-PadK5)")
 			(pinfunction "Pin_5")
 			(pintype "passive")
@@ -11058,7 +10776,7 @@
 		(pad "K6" smd circle
 			(at -18.415 5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_6")
 			(pintype "passive")
@@ -11067,7 +10785,7 @@
 		(pad "K7" smd circle
 			(at -17.145 5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 158 "unconnected-(J1J-Pin_7-PadK7)")
 			(pinfunction "Pin_7")
 			(pintype "passive")
@@ -11076,7 +10794,7 @@
 		(pad "K8" smd circle
 			(at -15.875 5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 85 "unconnected-(J1J-Pin_8-PadK8)")
 			(pinfunction "Pin_8")
 			(pintype "passive")
@@ -11085,7 +10803,7 @@
 		(pad "K9" smd circle
 			(at -14.605 5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_9")
 			(pintype "passive")
@@ -11094,7 +10812,7 @@
 		(pad "K10" smd circle
 			(at -13.335 5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 213 "unconnected-(J1J-Pin_10-PadK10)")
 			(pinfunction "Pin_10")
 			(pintype "passive")
@@ -11103,7 +10821,7 @@
 		(pad "K11" smd circle
 			(at -12.065 5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 257 "unconnected-(J1J-Pin_11-PadK11)")
 			(pinfunction "Pin_11")
 			(pintype "passive")
@@ -11112,7 +10830,7 @@
 		(pad "K12" smd circle
 			(at -10.795 5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_12")
 			(pintype "passive")
@@ -11121,7 +10839,7 @@
 		(pad "K13" smd circle
 			(at -9.525 5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 46 "unconnected-(J1J-Pin_13-PadK13)")
 			(pinfunction "Pin_13")
 			(pintype "passive")
@@ -11130,7 +10848,7 @@
 		(pad "K14" smd circle
 			(at -8.255 5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 129 "unconnected-(J1J-Pin_14-PadK14)")
 			(pinfunction "Pin_14")
 			(pintype "passive")
@@ -11139,7 +10857,7 @@
 		(pad "K15" smd circle
 			(at -6.985 5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_15")
 			(pintype "passive")
@@ -11148,7 +10866,7 @@
 		(pad "K16" smd circle
 			(at -5.715 5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 195 "unconnected-(J1J-Pin_16-PadK16)")
 			(pinfunction "Pin_16")
 			(pintype "passive")
@@ -11157,7 +10875,7 @@
 		(pad "K17" smd circle
 			(at -4.445 5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 57 "unconnected-(J1J-Pin_17-PadK17)")
 			(pinfunction "Pin_17")
 			(pintype "passive")
@@ -11166,7 +10884,7 @@
 		(pad "K18" smd circle
 			(at -3.175 5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_18")
 			(pintype "passive")
@@ -11175,7 +10893,7 @@
 		(pad "K19" smd circle
 			(at -1.905 5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 67 "unconnected-(J1J-Pin_19-PadK19)")
 			(pinfunction "Pin_19")
 			(pintype "passive")
@@ -11184,7 +10902,7 @@
 		(pad "K20" smd circle
 			(at -0.64 5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 49 "unconnected-(J1J-Pin_20-PadK20)")
 			(pinfunction "Pin_20")
 			(pintype "passive")
@@ -11193,7 +10911,7 @@
 		(pad "K21" smd circle
 			(at 0.64 5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_21")
 			(pintype "passive")
@@ -11202,7 +10920,7 @@
 		(pad "K22" smd circle
 			(at 1.905 5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 249 "unconnected-(J1J-Pin_22-PadK22)")
 			(pinfunction "Pin_22")
 			(pintype "passive")
@@ -11211,7 +10929,7 @@
 		(pad "K23" smd circle
 			(at 3.175 5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 146 "unconnected-(J1J-Pin_23-PadK23)")
 			(pinfunction "Pin_23")
 			(pintype "passive")
@@ -11220,7 +10938,7 @@
 		(pad "K24" smd circle
 			(at 4.445 5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_24")
 			(pintype "passive")
@@ -11229,7 +10947,7 @@
 		(pad "K25" smd circle
 			(at 5.715 5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 97 "unconnected-(J1J-Pin_25-PadK25)")
 			(pinfunction "Pin_25")
 			(pintype "passive")
@@ -11238,7 +10956,7 @@
 		(pad "K26" smd circle
 			(at 6.985 5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 119 "unconnected-(J1J-Pin_26-PadK26)")
 			(pinfunction "Pin_26")
 			(pintype "passive")
@@ -11247,7 +10965,7 @@
 		(pad "K27" smd circle
 			(at 8.255 5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_27")
 			(pintype "passive")
@@ -11256,7 +10974,7 @@
 		(pad "K28" smd circle
 			(at 9.525 5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 77 "unconnected-(J1J-Pin_28-PadK28)")
 			(pinfunction "Pin_28")
 			(pintype "passive")
@@ -11265,7 +10983,7 @@
 		(pad "K29" smd circle
 			(at 10.795 5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 109 "unconnected-(J1J-Pin_29-PadK29)")
 			(pinfunction "Pin_29")
 			(pintype "passive")
@@ -11274,7 +10992,7 @@
 		(pad "K30" smd circle
 			(at 12.065 5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_30")
 			(pintype "passive")
@@ -11283,7 +11001,7 @@
 		(pad "K31" smd circle
 			(at 13.335 5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 78 "unconnected-(J1J-Pin_31-PadK31)")
 			(pinfunction "Pin_31")
 			(pintype "passive")
@@ -11292,7 +11010,7 @@
 		(pad "K32" smd circle
 			(at 14.605 5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 96 "unconnected-(J1J-Pin_32-PadK32)")
 			(pinfunction "Pin_32")
 			(pintype "passive")
@@ -11301,7 +11019,7 @@
 		(pad "K33" smd circle
 			(at 15.875 5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_33")
 			(pintype "passive")
@@ -11310,7 +11028,7 @@
 		(pad "K34" smd circle
 			(at 17.145 5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 128 "unconnected-(J1J-Pin_34-PadK34)")
 			(pinfunction "Pin_34")
 			(pintype "passive")
@@ -11319,7 +11037,7 @@
 		(pad "K35" smd circle
 			(at 18.415 5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 166 "unconnected-(J1J-Pin_35-PadK35)")
 			(pinfunction "Pin_35")
 			(pintype "passive")
@@ -11328,7 +11046,7 @@
 		(pad "K36" smd circle
 			(at 19.685 5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_36")
 			(pintype "passive")
@@ -11337,7 +11055,7 @@
 		(pad "K37" smd circle
 			(at 20.955 5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 175 "unconnected-(J1J-Pin_37-PadK37)")
 			(pinfunction "Pin_37")
 			(pintype "passive")
@@ -11346,7 +11064,7 @@
 		(pad "K38" smd circle
 			(at 22.225 5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 161 "unconnected-(J1J-Pin_38-PadK38)")
 			(pinfunction "Pin_38")
 			(pintype "passive")
@@ -11355,7 +11073,7 @@
 		(pad "K39" smd circle
 			(at 23.495 5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 64 "GND")
 			(pinfunction "Pin_39")
 			(pintype "passive")
@@ -11364,12 +11082,13 @@
 		(pad "K40" smd circle
 			(at 24.765 5.715)
 			(size 0.64 0.64)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net 172 "unconnected-(J1J-Pin_40-PadK40)")
 			(pinfunction "Pin_40")
 			(pintype "passive")
 			(uuid "a099d3ed-50b0-47f2-8bcc-9ce7af9aef7f")
 		)
+		(embedded_fonts no)
 		(model "/home/pzahl/SVN/Gxsm4/plug-ins/hard/RPSPMC/CAD/ASP-134486-01--3DModel-STEP-56544.STEP"
 			(offset
 				(xyz 0 0 0)
@@ -11407,19 +11126,6 @@
 			(effects
 				(font
 					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Footprint" "Connector_PinSocket_2.54mm:PinSocket_2x06_P2.54mm_Vertical"
-			(at 0 0 90)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "93d70a16-9b4f-454d-8d69-7f6fba3129a9")
-			(effects
-				(font
-					(size 1.27 1.27)
 					(thickness 0.15)
 				)
 			)
@@ -11768,6 +11474,7 @@
 			(pintype "passive")
 			(uuid "c6c26ef5-326f-47fe-b172-8a9ad707fd15")
 		)
+		(embedded_fonts no)
 		(model "${KICAD8_3DMODEL_DIR}/Connector_PinSocket_2.54mm.3dshapes/PinSocket_2x06_P2.54mm_Vertical.wrl"
 			(offset
 				(xyz 0 0 0)
@@ -11804,19 +11511,6 @@
 			(effects
 				(font
 					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Footprint" "Capacitor_SMD:C_1206_3216Metric_Pad1.33x1.80mm_HandSolder"
-			(at 0 0 0)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "d3cbb82d-e600-44fb-8e42-c0c005576618")
-			(effects
-				(font
-					(size 1.27 1.27)
 					(thickness 0.15)
 				)
 			)
@@ -11966,7 +11660,7 @@
 		(pad "1" smd roundrect
 			(at -1.5625 0)
 			(size 1.325 1.8)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.188679)
 			(net 64 "GND")
 			(pintype "passive")
@@ -11975,12 +11669,13 @@
 		(pad "2" smd roundrect
 			(at 1.5625 0)
 			(size 1.325 1.8)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.188679)
 			(net 71 "+3.3V")
 			(pintype "passive")
 			(uuid "d13b5504-343c-4700-8eed-00b997042b78")
 		)
+		(embedded_fonts no)
 		(model "${KICAD8_3DMODEL_DIR}/Capacitor_SMD.3dshapes/C_1206_3216Metric.wrl"
 			(offset
 				(xyz 0 0 0)
@@ -12018,19 +11713,6 @@
 			(effects
 				(font
 					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_2x20_P2.54mm_Vertical"
-			(at 0 0 90)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "2e8b0bbb-8a53-4227-8235-14a18764ab07")
-			(effects
-				(font
-					(size 1.27 1.27)
 					(thickness 0.15)
 				)
 			)
@@ -12688,6 +12370,7 @@
 			(pintype "passive")
 			(uuid "42f36e73-e386-4c30-9e3a-18100afbf548")
 		)
+		(embedded_fonts no)
 		(model "${KICAD8_3DMODEL_DIR}/Connector_PinHeader_2.54mm.3dshapes/PinHeader_2x20_P2.54mm_Vertical.wrl"
 			(offset
 				(xyz 0 0 0)
@@ -12726,19 +12409,6 @@
 			(effects
 				(font
 					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Footprint" "Connector_Pin:Pin_D0.7mm_L6.5mm_W1.8mm_FlatFork"
-			(at 0 0 0)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "fffa01e5-a26e-4599-869e-92f2d931b2b4")
-			(effects
-				(font
-					(size 1.27 1.27)
 					(thickness 0.15)
 				)
 			)
@@ -12915,6 +12585,7 @@
 			(pintype "passive")
 			(uuid "8dcc3d9e-ba5e-4894-b53a-431ca40bb86d")
 		)
+		(embedded_fonts no)
 		(model "${KICAD8_3DMODEL_DIR}/Connector_Pin.3dshapes/Pin_D0.7mm_L6.5mm_W1.8mm_FlatFork.wrl"
 			(offset
 				(xyz 0 0 0)
@@ -12952,19 +12623,6 @@
 			(effects
 				(font
 					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Footprint" "Connector_PinSocket_2.54mm:PinSocket_2x06_P2.54mm_Vertical"
-			(at 0 0 90)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "e41461cd-2717-41f1-a03f-a6471eb64c39")
-			(effects
-				(font
-					(size 1.27 1.27)
 					(thickness 0.15)
 				)
 			)
@@ -13313,6 +12971,7 @@
 			(pintype "passive")
 			(uuid "9e60385e-ed6e-43c3-b15e-b338e751540d")
 		)
+		(embedded_fonts no)
 		(model "${KICAD8_3DMODEL_DIR}/Connector_PinSocket_2.54mm.3dshapes/PinSocket_2x06_P2.54mm_Vertical.wrl"
 			(offset
 				(xyz 0 0 0)
@@ -13355,19 +13014,6 @@
 				)
 			)
 		)
-		(property "Footprint" "MountingHole:MountingHole_3.2mm_M3"
-			(at 0 0 0)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "48d26efe-f329-49fd-bade-3b556d73a2fb")
-			(effects
-				(font
-					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-			)
-		)
 		(property "Datasheet" ""
 			(at 0 0 0)
 			(unlocked yes)
@@ -13402,7 +13048,7 @@
 				(width 0.15)
 				(type solid)
 			)
-			(fill none)
+			(fill no)
 			(layer "Cmts.User")
 			(uuid "c0f834ff-5c11-4b6e-a6ec-960951e465eb")
 		)
@@ -13413,7 +13059,7 @@
 				(width 0.05)
 				(type solid)
 			)
-			(fill none)
+			(fill no)
 			(layer "F.CrtYd")
 			(uuid "1388ef25-0235-47ca-a77c-15a650b6f58a")
 		)
@@ -13435,6 +13081,7 @@
 			(layers "*.Cu" "*.Mask")
 			(uuid "90b489ea-0841-482c-9127-0d75ba90dc75")
 		)
+		(embedded_fonts no)
 	)
 	(footprint "MountingHole:MountingHole_3.2mm_M3"
 		(layer "F.Cu")
@@ -13462,19 +13109,6 @@
 			(effects
 				(font
 					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Footprint" "MountingHole:MountingHole_3.2mm_M3"
-			(at 0 0 0)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "d47f39f0-4088-4077-9b4d-4184aafb5f58")
-			(effects
-				(font
-					(size 1.27 1.27)
 					(thickness 0.15)
 				)
 			)
@@ -13513,7 +13147,7 @@
 				(width 0.15)
 				(type solid)
 			)
-			(fill none)
+			(fill no)
 			(layer "Cmts.User")
 			(uuid "38033dfb-4582-40e6-a5f3-921f01c71372")
 		)
@@ -13524,7 +13158,7 @@
 				(width 0.05)
 				(type solid)
 			)
-			(fill none)
+			(fill no)
 			(layer "F.CrtYd")
 			(uuid "33c3f1c1-a6b8-4742-8889-6b99c765c9e4")
 		)
@@ -13546,6 +13180,7 @@
 			(layers "*.Cu" "*.Mask")
 			(uuid "1fbc47aa-18c6-4da5-affe-b12cb8ea522a")
 		)
+		(embedded_fonts no)
 	)
 	(footprint "Connector_Pin:Pin_D0.7mm_L6.5mm_W1.8mm_FlatFork"
 		(layer "F.Cu")
@@ -13572,19 +13207,6 @@
 			(effects
 				(font
 					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Footprint" "Connector_Pin:Pin_D0.7mm_L6.5mm_W1.8mm_FlatFork"
-			(at 0 0 0)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "9888bf04-1123-441c-ae3d-626b9908bc48")
-			(effects
-				(font
-					(size 1.27 1.27)
 					(thickness 0.15)
 				)
 			)
@@ -13772,6 +13394,7 @@
 			(pintype "passive")
 			(uuid "7a3c5c21-6455-4d83-98b6-5f4fbbbb6ce6")
 		)
+		(embedded_fonts no)
 		(model "${KICAD8_3DMODEL_DIR}/Connector_Pin.3dshapes/Pin_D0.7mm_L6.5mm_W1.8mm_FlatFork.wrl"
 			(offset
 				(xyz 0 0 0)
@@ -13810,19 +13433,6 @@
 			(effects
 				(font
 					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Footprint" "Connector_Pin:Pin_D0.7mm_L6.5mm_W1.8mm_FlatFork"
-			(at 0 0 0)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "28037e27-1bf8-4727-afaa-1dd7854157cd")
-			(effects
-				(font
-					(size 1.27 1.27)
 					(thickness 0.15)
 				)
 			)
@@ -13999,6 +13609,7 @@
 			(pintype "passive")
 			(uuid "bb277e97-59ce-4639-ade7-06696329f1ca")
 		)
+		(embedded_fonts no)
 		(model "${KICAD8_3DMODEL_DIR}/Connector_Pin.3dshapes/Pin_D0.7mm_L6.5mm_W1.8mm_FlatFork.wrl"
 			(offset
 				(xyz 0 0 0)
@@ -14036,19 +13647,6 @@
 			(effects
 				(font
 					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Footprint" "Connector_Pin:Pin_D0.7mm_L6.5mm_W1.8mm_FlatFork"
-			(at 0 0 0)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "54694748-1614-4e8c-859c-2bdd3458ae39")
-			(effects
-				(font
-					(size 1.27 1.27)
 					(thickness 0.15)
 				)
 			)
@@ -14236,6 +13834,7 @@
 			(pintype "passive")
 			(uuid "fc013e0d-3d86-4a4d-a1c0-809484975b32")
 		)
+		(embedded_fonts no)
 		(model "${KICAD8_3DMODEL_DIR}/Connector_Pin.3dshapes/Pin_D0.7mm_L6.5mm_W1.8mm_FlatFork.wrl"
 			(offset
 				(xyz 0 0 0)
@@ -14273,19 +13872,6 @@
 			(effects
 				(font
 					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Footprint" "Connector_Pin:Pin_D0.7mm_L6.5mm_W1.8mm_FlatFork"
-			(at 0 0 0)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "55489379-2634-4048-b10d-5243cf17dc29")
-			(effects
-				(font
-					(size 1.27 1.27)
 					(thickness 0.15)
 				)
 			)
@@ -14474,6 +14060,7 @@
 			(pintype "passive")
 			(uuid "ffcf1860-d0d7-4147-abb9-80a77eae1e83")
 		)
+		(embedded_fonts no)
 		(model "${KICAD8_3DMODEL_DIR}/Connector_Pin.3dshapes/Pin_D0.7mm_L6.5mm_W1.8mm_FlatFork.wrl"
 			(offset
 				(xyz 0 0 0)
@@ -14510,19 +14097,6 @@
 			(effects
 				(font
 					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Footprint" "Capacitor_SMD:C_1206_3216Metric_Pad1.33x1.80mm_HandSolder"
-			(at 0 0 0)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "282b293a-62ee-49d0-953e-fff59af1c9d1")
-			(effects
-				(font
-					(size 1.27 1.27)
 					(thickness 0.15)
 				)
 			)
@@ -14672,7 +14246,7 @@
 		(pad "1" smd roundrect
 			(at -1.5625 0)
 			(size 1.325 1.8)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.188679)
 			(net 64 "GND")
 			(pintype "passive")
@@ -14681,12 +14255,13 @@
 		(pad "2" smd roundrect
 			(at 1.5625 0)
 			(size 1.325 1.8)
-			(layers "F.Cu" "F.Paste" "F.Mask")
+			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.188679)
 			(net 71 "+3.3V")
 			(pintype "passive")
 			(uuid "71ee3e11-e5d2-4c8e-aa35-b8ff8a2666c3")
 		)
+		(embedded_fonts no)
 		(model "${KICAD8_3DMODEL_DIR}/Capacitor_SMD.3dshapes/C_1206_3216Metric.wrl"
 			(offset
 				(xyz 0 0 0)
@@ -14886,7 +14461,7 @@
 			(width 0.1)
 			(type default)
 		)
-		(fill none)
+		(fill no)
 		(layer "Edge.Cuts")
 		(uuid "fe27ff9e-2cae-42ca-bdef-d65a74cc35f5")
 	)
@@ -16085,46 +15660,6 @@
 		(uuid "3537abff-d4d4-4d35-a21a-569ba4f953b9")
 	)
 	(segment
-		(start 142.955 131.666)
-		(end 138.228 126.939)
-		(width 0.25)
-		(layer "In2.Cu")
-		(net 1)
-		(uuid "142b6723-4c40-45c0-9e68-5e1db6258a44")
-	)
-	(segment
-		(start 138.228 126.939)
-		(end 138.228 106.976)
-		(width 0.25)
-		(layer "In2.Cu")
-		(net 1)
-		(uuid "28804a41-0743-42b7-88fe-7aa9734da2b1")
-	)
-	(segment
-		(start 142.955 132.795)
-		(end 142.955 131.666)
-		(width 0.25)
-		(layer "In2.Cu")
-		(net 1)
-		(uuid "96efddfa-e294-49ce-a486-dcc45eabb568")
-	)
-	(segment
-		(start 138.228 106.976)
-		(end 140.62 104.583)
-		(width 0.25)
-		(layer "In2.Cu")
-		(net 1)
-		(uuid "9a617eaf-694f-470d-9343-923feb8c21de")
-	)
-	(segment
-		(start 140.62 104.583)
-		(end 140.62 98.6185)
-		(width 0.25)
-		(layer "In2.Cu")
-		(net 1)
-		(uuid "bf807761-75d3-48b2-a9be-9de4012c8ab9")
-	)
-	(segment
 		(start 140.62 97.3629)
 		(end 139.871 96.6131)
 		(width 0.25)
@@ -16163,6 +15698,46 @@
 		(layer "B.Cu")
 		(net 1)
 		(uuid "98da4cc2-318a-43db-bc37-85c8e9c10d08")
+	)
+	(segment
+		(start 142.955 131.666)
+		(end 138.228 126.939)
+		(width 0.25)
+		(layer "In2.Cu")
+		(net 1)
+		(uuid "142b6723-4c40-45c0-9e68-5e1db6258a44")
+	)
+	(segment
+		(start 138.228 126.939)
+		(end 138.228 106.976)
+		(width 0.25)
+		(layer "In2.Cu")
+		(net 1)
+		(uuid "28804a41-0743-42b7-88fe-7aa9734da2b1")
+	)
+	(segment
+		(start 142.955 132.795)
+		(end 142.955 131.666)
+		(width 0.25)
+		(layer "In2.Cu")
+		(net 1)
+		(uuid "96efddfa-e294-49ce-a486-dcc45eabb568")
+	)
+	(segment
+		(start 138.228 106.976)
+		(end 140.62 104.583)
+		(width 0.25)
+		(layer "In2.Cu")
+		(net 1)
+		(uuid "9a617eaf-694f-470d-9343-923feb8c21de")
+	)
+	(segment
+		(start 140.62 104.583)
+		(end 140.62 98.6185)
+		(width 0.25)
+		(layer "In2.Cu")
+		(net 1)
+		(uuid "bf807761-75d3-48b2-a9be-9de4012c8ab9")
 	)
 	(segment
 		(start 118.765 92.0646)
@@ -20669,6 +20244,86 @@
 		(uuid "ff75689b-76e4-4409-a7d3-6eac4bf64cd8")
 	)
 	(segment
+		(start 118.689 134.171)
+		(end 117.064 135.797)
+		(width 0.25)
+		(layer "B.Cu")
+		(net 64)
+		(uuid "2ccade3b-d4f3-46c8-bced-e01ca32657af")
+	)
+	(segment
+		(start 172.639 76.469)
+		(end 172.6388 76.469)
+		(width 0.25)
+		(layer "B.Cu")
+		(net 64)
+		(uuid "36823b71-e2ef-49fd-b11b-2cb7e3619403")
+	)
+	(segment
+		(start 177.744 127.955)
+		(end 172.995 127.955)
+		(width 0.25)
+		(layer "B.Cu")
+		(net 64)
+		(uuid "45601151-ae52-4cfa-9860-f00e689b84dc")
+	)
+	(segment
+		(start 172.995 127.955)
+		(end 170.915 125.875)
+		(width 0.25)
+		(layer "B.Cu")
+		(net 64)
+		(uuid "5e5c2cf6-ff69-4231-ae6d-6460a998514f")
+	)
+	(segment
+		(start 163.444 76.469)
+		(end 163.317 76.342)
+		(width 0.25)
+		(layer "B.Cu")
+		(net 64)
+		(uuid "8544713c-f56b-46c6-a4e6-a5c17fa78db3")
+	)
+	(segment
+		(start 117.343 126.746)
+		(end 118.689 128.092)
+		(width 0.25)
+		(layer "B.Cu")
+		(net 64)
+		(uuid "92417134-3200-48ca-9d1c-1684e4ca3dd6")
+	)
+	(segment
+		(start 118.689 128.092)
+		(end 118.689 134.171)
+		(width 0.25)
+		(layer "B.Cu")
+		(net 64)
+		(uuid "b3a9992b-68cd-43f4-acf4-0520a5f91dfd")
+	)
+	(segment
+		(start 172.6388 76.469)
+		(end 163.444 76.469)
+		(width 0.25)
+		(layer "B.Cu")
+		(net 64)
+		(uuid "fb5aaa7e-2707-4a97-8631-52a7e5dead01")
+	)
+	(segment
+		(start 180.005 125.694)
+		(end 180.0048 125.6942)
+		(width 0.25)
+		(layer "B.Cu")
+		(net 64)
+		(uuid "fb844f67-4791-4378-82a3-81f19e7b0bce")
+	)
+	(segment
+		(start 180.0048 125.6942)
+		(end 177.744 127.955)
+		(width 0.25)
+		(layer "B.Cu")
+		(net 64)
+		(uuid "fc321460-e006-4d22-a516-bbedade47799")
+	)
+	(segment
 		(start 175.415 88.915)
 		(end 172.875 88.915)
 		(width 0.25)
@@ -21093,86 +20748,6 @@
 		(uuid "e41bcb20-7656-4e04-bfee-030d0dc70d78")
 	)
 	(segment
-		(start 118.689 134.171)
-		(end 117.064 135.797)
-		(width 0.25)
-		(layer "B.Cu")
-		(net 64)
-		(uuid "2ccade3b-d4f3-46c8-bced-e01ca32657af")
-	)
-	(segment
-		(start 172.639 76.469)
-		(end 172.6388 76.469)
-		(width 0.25)
-		(layer "B.Cu")
-		(net 64)
-		(uuid "36823b71-e2ef-49fd-b11b-2cb7e3619403")
-	)
-	(segment
-		(start 177.744 127.955)
-		(end 172.995 127.955)
-		(width 0.25)
-		(layer "B.Cu")
-		(net 64)
-		(uuid "45601151-ae52-4cfa-9860-f00e689b84dc")
-	)
-	(segment
-		(start 172.995 127.955)
-		(end 170.915 125.875)
-		(width 0.25)
-		(layer "B.Cu")
-		(net 64)
-		(uuid "5e5c2cf6-ff69-4231-ae6d-6460a998514f")
-	)
-	(segment
-		(start 163.444 76.469)
-		(end 163.317 76.342)
-		(width 0.25)
-		(layer "B.Cu")
-		(net 64)
-		(uuid "8544713c-f56b-46c6-a4e6-a5c17fa78db3")
-	)
-	(segment
-		(start 117.343 126.746)
-		(end 118.689 128.092)
-		(width 0.25)
-		(layer "B.Cu")
-		(net 64)
-		(uuid "92417134-3200-48ca-9d1c-1684e4ca3dd6")
-	)
-	(segment
-		(start 118.689 128.092)
-		(end 118.689 134.171)
-		(width 0.25)
-		(layer "B.Cu")
-		(net 64)
-		(uuid "b3a9992b-68cd-43f4-acf4-0520a5f91dfd")
-	)
-	(segment
-		(start 172.6388 76.469)
-		(end 163.444 76.469)
-		(width 0.25)
-		(layer "B.Cu")
-		(net 64)
-		(uuid "fb5aaa7e-2707-4a97-8631-52a7e5dead01")
-	)
-	(segment
-		(start 180.005 125.694)
-		(end 180.0048 125.6942)
-		(width 0.25)
-		(layer "B.Cu")
-		(net 64)
-		(uuid "fb844f67-4791-4378-82a3-81f19e7b0bce")
-	)
-	(segment
-		(start 180.0048 125.6942)
-		(end 177.744 127.955)
-		(width 0.25)
-		(layer "B.Cu")
-		(net 64)
-		(uuid "fc321460-e006-4d22-a516-bbedade47799")
-	)
-	(segment
 		(start 148.035 136.464)
 		(end 148.035 135.335)
 		(width 0.25)
@@ -21509,6 +21084,86 @@
 		(uuid "ffb7e3a8-08e4-4063-9afa-eb5197c71498")
 	)
 	(segment
+		(start 132.415 118.928)
+		(end 133.222 118.121)
+		(width 0.5)
+		(layer "B.Cu")
+		(net 71)
+		(uuid "49f1b7b2-8846-496e-989f-799b0795a1eb")
+	)
+	(segment
+		(start 167.535 113.835)
+		(end 167.138 114.232)
+		(width 0.25)
+		(layer "B.Cu")
+		(net 71)
+		(uuid "92df1bfc-b76c-47eb-9b51-5f066eba2be3")
+	)
+	(segment
+		(start 132.415 120.335)
+		(end 132.415 118.928)
+		(width 0.5)
+		(layer "B.Cu")
+		(net 71)
+		(uuid "ad107a61-1ffe-421d-80bb-a215d06e8ca5")
+	)
+	(segment
+		(start 144.594 116.474)
+		(end 141.955 113.835)
+		(width 0.5)
+		(layer "B.Cu")
+		(net 71)
+		(uuid "c2c2dd32-33b3-4f4d-9576-3287a34f69ee")
+	)
+	(segment
+		(start 167.762 114.062)
+		(end 167.138 114.686)
+		(width 0.5)
+		(layer "B.Cu")
+		(net 71)
+		(uuid "ce9579d8-23b8-4068-9a84-61ab7587df49")
+	)
+	(segment
+		(start 167.138 114.232)
+		(end 167.138 114.686)
+		(width 0.25)
+		(layer "B.Cu")
+		(net 71)
+		(uuid "e9cf2fb0-018b-402b-922f-a7fe2cde03b9")
+	)
+	(segment
+		(start 133.222 118.121)
+		(end 137.669 118.121)
+		(width 0.5)
+		(layer "B.Cu")
+		(net 71)
+		(uuid "eb894c2b-3104-4cfa-b0cf-ee8c1a30832f")
+	)
+	(segment
+		(start 167.138 114.686)
+		(end 165.349 116.474)
+		(width 0.5)
+		(layer "B.Cu")
+		(net 71)
+		(uuid "ed4e40e4-5e23-4258-aacc-1223c76774ab")
+	)
+	(segment
+		(start 137.669 118.121)
+		(end 141.955 113.835)
+		(width 0.5)
+		(layer "B.Cu")
+		(net 71)
+		(uuid "f21eae93-517e-4fa8-a3f2-6c93e70b7c99")
+	)
+	(segment
+		(start 165.349 116.474)
+		(end 144.594 116.474)
+		(width 0.5)
+		(layer "B.Cu")
+		(net 71)
+		(uuid "f8e735b6-c832-477f-af06-906f484baef4")
+	)
+	(segment
 		(start 167.508 113.808)
 		(end 167.535 113.835)
 		(width 0.25)
@@ -21683,86 +21338,6 @@
 		(layer "In2.Cu")
 		(net 71)
 		(uuid "fccd730d-e790-46cb-9bba-fd843e9a9e42")
-	)
-	(segment
-		(start 132.415 118.928)
-		(end 133.222 118.121)
-		(width 0.5)
-		(layer "B.Cu")
-		(net 71)
-		(uuid "49f1b7b2-8846-496e-989f-799b0795a1eb")
-	)
-	(segment
-		(start 167.535 113.835)
-		(end 167.138 114.232)
-		(width 0.25)
-		(layer "B.Cu")
-		(net 71)
-		(uuid "92df1bfc-b76c-47eb-9b51-5f066eba2be3")
-	)
-	(segment
-		(start 132.415 120.335)
-		(end 132.415 118.928)
-		(width 0.5)
-		(layer "B.Cu")
-		(net 71)
-		(uuid "ad107a61-1ffe-421d-80bb-a215d06e8ca5")
-	)
-	(segment
-		(start 144.594 116.474)
-		(end 141.955 113.835)
-		(width 0.5)
-		(layer "B.Cu")
-		(net 71)
-		(uuid "c2c2dd32-33b3-4f4d-9576-3287a34f69ee")
-	)
-	(segment
-		(start 167.762 114.062)
-		(end 167.138 114.686)
-		(width 0.5)
-		(layer "B.Cu")
-		(net 71)
-		(uuid "ce9579d8-23b8-4068-9a84-61ab7587df49")
-	)
-	(segment
-		(start 167.138 114.232)
-		(end 167.138 114.686)
-		(width 0.25)
-		(layer "B.Cu")
-		(net 71)
-		(uuid "e9cf2fb0-018b-402b-922f-a7fe2cde03b9")
-	)
-	(segment
-		(start 133.222 118.121)
-		(end 137.669 118.121)
-		(width 0.5)
-		(layer "B.Cu")
-		(net 71)
-		(uuid "eb894c2b-3104-4cfa-b0cf-ee8c1a30832f")
-	)
-	(segment
-		(start 167.138 114.686)
-		(end 165.349 116.474)
-		(width 0.5)
-		(layer "B.Cu")
-		(net 71)
-		(uuid "ed4e40e4-5e23-4258-aacc-1223c76774ab")
-	)
-	(segment
-		(start 137.669 118.121)
-		(end 141.955 113.835)
-		(width 0.5)
-		(layer "B.Cu")
-		(net 71)
-		(uuid "f21eae93-517e-4fa8-a3f2-6c93e70b7c99")
-	)
-	(segment
-		(start 165.349 116.474)
-		(end 144.594 116.474)
-		(width 0.5)
-		(layer "B.Cu")
-		(net 71)
-		(uuid "f8e735b6-c832-477f-af06-906f484baef4")
 	)
 	(segment
 		(start 145.0512 124.5512)
@@ -23165,6 +22740,38 @@
 		(uuid "f8af1a66-736c-43e0-b972-9e740f17224e")
 	)
 	(segment
+		(start 163.546 121.046)
+		(end 165.835 123.335)
+		(width 0.25)
+		(layer "B.Cu")
+		(net 293)
+		(uuid "12f8ef9c-40b8-498e-a41d-a7fce87c06aa")
+	)
+	(segment
+		(start 146.336 123.295)
+		(end 148.585 121.046)
+		(width 0.25)
+		(layer "B.Cu")
+		(net 293)
+		(uuid "21e45813-1220-4b64-acdb-a395b0a4cbd3")
+	)
+	(segment
+		(start 146.335 123.295)
+		(end 146.336 123.295)
+		(width 0.25)
+		(layer "B.Cu")
+		(net 293)
+		(uuid "5b2bcbf4-63d8-43d4-ad1e-555f76e88c6b")
+	)
+	(segment
+		(start 148.585 121.046)
+		(end 163.546 121.046)
+		(width 0.25)
+		(layer "B.Cu")
+		(net 293)
+		(uuid "98fd8992-f19c-4b77-ab1b-e9670ae68097")
+	)
+	(segment
 		(start 134.955 119.575)
 		(end 134.955 120.335)
 		(width 0.5)
@@ -23291,38 +22898,6 @@
 		(layer "In2.Cu")
 		(net 293)
 		(uuid "ea310c86-9ade-4711-87c3-3068b293d7c2")
-	)
-	(segment
-		(start 163.546 121.046)
-		(end 165.835 123.335)
-		(width 0.25)
-		(layer "B.Cu")
-		(net 293)
-		(uuid "12f8ef9c-40b8-498e-a41d-a7fce87c06aa")
-	)
-	(segment
-		(start 146.336 123.295)
-		(end 148.585 121.046)
-		(width 0.25)
-		(layer "B.Cu")
-		(net 293)
-		(uuid "21e45813-1220-4b64-acdb-a395b0a4cbd3")
-	)
-	(segment
-		(start 146.335 123.295)
-		(end 146.336 123.295)
-		(width 0.25)
-		(layer "B.Cu")
-		(net 293)
-		(uuid "5b2bcbf4-63d8-43d4-ad1e-555f76e88c6b")
-	)
-	(segment
-		(start 148.585 121.046)
-		(end 163.546 121.046)
-		(width 0.25)
-		(layer "B.Cu")
-		(net 293)
-		(uuid "98fd8992-f19c-4b77-ab1b-e9670ae68097")
 	)
 	(segment
 		(start 126.462 123.882)
@@ -24143,7 +23718,7 @@
 	(zone
 		(net 64)
 		(net_name "GND")
-		(layers "F&B.Cu")
+		(layers "F.Cu" "B.Cu")
 		(uuid "359b7d6b-cdaf-4b54-b7ba-597aceb4c599")
 		(hatch edge 0.5)
 		(connect_pads
@@ -30691,4 +30266,5 @@
 			)
 		)
 	)
+	(embedded_fonts no)
 )

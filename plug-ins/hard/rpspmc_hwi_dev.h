@@ -175,25 +175,6 @@ public:
 	// SIGNAL MANAGEMENT
 
         void set_spmc_signal_mux (int source[6]);
-        
-	virtual void read_dsp_signals () { read_signal_lookup (); read_actual_module_configuration (); };
-
-	virtual int lookup_signal_by_ptr(gint64 sigptr);
-	virtual int lookup_signal_by_name(const gchar *sig_name);
-	virtual const gchar *lookup_signal_name_by_index(int i);
-	virtual const gchar *lookup_signal_unit_by_index(int i);
-	virtual double lookup_signal_scale_by_index(int i);
-	virtual int change_signal_input(int signal_index, gint32 input_id, gint32 voffset=0);
-	virtual int query_module_signal_input(gint32 input_id);
-	int read_signal_lookup ();
-	int read_actual_module_configuration ();
-
-	DSP_SIG_UNIVERSAL *lookup_dsp_signal_managed(gint i){
-                if (i<NUM_SIGNALS_UNIVERSAL)
-                        return &dsp_signal_lookup_managed[i];
-                else
-                        return NULL;
-	};
 
         int read_GVP_data_block_to_position_vector (int offset, gboolean expect_full_header=false);
        
