@@ -851,7 +851,7 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
                         g_message ("Waiting for vectors confirmed. #[%d] ** last vector confirmed: %d, need %d", jj, getVPCconfirmed (), last_vector_index);
                         
                         if (jj > 99){
-                                g_message ( "VECROR WRITE TIMEOUT, ABROTING -- FR::FINISH-OK");
+                                g_message ( "VECTOR WRITE TIMEOUT, ABROTING -- FR::FINISH-OK");
                                 return RET_FR_FCT_END; // finish OK.
                         }
                 }

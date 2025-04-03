@@ -1545,7 +1545,7 @@ void UpdateSignals(void)
         int status[3];
         static int last_op=0;
         
-        if (verbose > 2) fprintf(stderr, "** Update Signals **\n");
+        //if (verbose > 2) fprintf(stderr, "** Update Signals **\n");
 
         bram_status(status);
         BRAM_WRITE_ADR.Value ()  = status[0];

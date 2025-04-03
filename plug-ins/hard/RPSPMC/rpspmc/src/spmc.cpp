@@ -514,10 +514,19 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, unsigned int srcs
                 if (ddmin > 2e-6) // 1uV steps min
                         nii = (int)round(ddmin * 1e6);
                 */
-                
-                nii = 3+(unsigned int)round(ddmin/Vstep_prec_Q31)/1e6; // Error < relative 1e6
 
-                decii = (unsigned int)round(NII_total / nii);
+                if (round(ddmin/Vstep_prec_Q31)/1e6 > 4294967294.){  // maxed out?? (1<<32)-1 is max
+                        nii = 4294967294;
+                        if (verbose > 1) fprintf(stderr, "    ** WARNING NII MAX LIMITER ** Smalled full step ddmin=%g => %g\n", ddmin, nii*Vstep_prec_Q31*1e6);
+                } else
+                        nii = 3+(unsigned int)round(ddmin/Vstep_prec_Q31)/1e6; // Error < relative 1e6
+
+                
+                if ((NII_total / nii) > 4294967294.){ // maxed out?? (1<<32)-1 is max
+                        decii = 4294967294; // limit and warn
+                        if (verbose > 1) fprintf(stderr, "    ** WARNING DECII MAX LIMITER ** nii=%g NII/nii=%g NII_total=%g nii=%d\n", round (ddmin/Vstep_prec_Q31)/1e6, NII_total/nii, NII_total, nii);
+                } else
+                        decii = (unsigned int)round(NII_total / nii);
 
                 // check for limits, auto adjust
                 if (decii < min_decii){
@@ -526,7 +535,9 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, unsigned int srcs
                         nii = (unsigned int)round(NII_total / decii);
                         if (nii < 2)
                                 nii=3;
+                        if (verbose > 1) fprintf(stderr, "    ** WARNING DECII MIN LIMITER ** nii=%d\n", nii);
                 }
+                
                 //double deciiE = (double)decii - NII_total / nii;
 
                 // total vector steps:
@@ -600,34 +611,32 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, unsigned int srcs
         set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_DFM, idv[14]=(int)round(Q31*dfm/Nsteps/SPMC_AD5791_REFV));  // => 23.1 S23Q8 @ +/-5V range in Q31
         set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_014, idv[15]=0);  // clear bits
 
-        if (verbose > 1) fprintf(stderr, "0,0,0, decii=%d]\n", idv[16]=decii); // last vector component is decii
-        set_gpio_cfgreg_uint32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_DECII, decii);  // decimation
+        if (verbose > 1) fprintf(stderr, "0,0,0, decii=%d]\n", decii); // last vector component is decii
+        set_gpio_cfgreg_uint32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_DECII, idv[16]=decii);  // decimation
 
         // and load vector data to module
         rp_spmc_module_write_config_data (SPMC_GVP_VECTOR_DATA_REG);
 
         //<< std::setfill('0') << std::hex << std::setw(8) << data
         
-        if (verbose > 0){
-                std::stringstream vector_def;
-                if (pc == 0)
-                        //             vector =   {32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd000, 32'h1001, -32'd0, -32'd0,  32'd1}; // Vector #1
-                        vector_def << "VectorDef: { Decii, 0,0,0, dB,dA,dU,dZ,dY,dX, nxt,reps,opts,nii,n, pc}\n";
-                vector_def << "vector = {32'd" << ((unsigned int)idv[16]); // decii
-                for (int i=15; i>=0; i--){
-                        switch (i){
-                        case 3:
-                        case 4:
-                                vector_def << std::setfill('0') << std::setw(8) << std::hex << ", 32'h" << ((unsigned int)idv[i]); // SRCS, OPTIONS
-                                break;
-                        default:
-                                vector_def << ((idv[i] < 0) ?", -":",  ") << std::setfill('0') << std::dec << "32'd" << (abs(idv[i]));
-                                break;
-                        }
+        std::stringstream vector_def;
+        if (pc == 0)
+                //             vector =   {32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0, -32'd000, 32'h1001, -32'd0, -32'd0,  32'd1}; // Vector #1
+                vector_def << "VectorDef: { Decii, 0,0,0, dB,dA,dU,dZ,dY,dX, nxt,reps,opts,nii,n, pc}\n";
+        vector_def << "vector = {32'd" << ((unsigned int)idv[16]); // decii
+        for (int i=15; i>=0; i--){
+                switch (i){
+                case 3:
+                case 4:
+                        vector_def << std::setfill('0') << std::setw(8) << std::hex << ", 32'h" << ((unsigned int)idv[i]); // SRCS, OPTIONS
+                        break;
+                default:
+                        vector_def << ((idv[i] < 0) ?", -":",  ") << std::setfill('0') << std::dec << "32'd" << (abs(idv[i]));
+                        break;
                 }
-                vector_def << "}; // Vector #" << pc;
-                spmc_stream_server_instance.add_vector (vector_def.str());
         }
+        vector_def << "}; // Vector #" << pc;
+        spmc_stream_server_instance.add_vector (vector_def.str());
 }
 
 // SPMC GVP STREAM SOURCE MUX 16 to 6

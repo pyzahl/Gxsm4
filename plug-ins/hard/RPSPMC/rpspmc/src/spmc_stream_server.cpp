@@ -181,6 +181,13 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
         
         int position = stream_lastwrite_address();
 
+#if 0
+        if (position_prev == position){ // nothing new? return and wait.
+                set_timer (spmc_dma_pull_interval);
+                return;
+        }
+#endif
+        
 //#define POSITION_TICS
 #ifdef  POSITION_TICS
         static int p__pos=0;
@@ -230,14 +237,15 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
 
                 if (!data_valid && (dma_mem[0] & 0xffff) == 0xffff)
                         data_valid = true;
-
-                if (data_valid){
+               
+                if (data_valid && position_prev != position){
                         int lag=0;
 #ifdef DBG_PRINT_LAG
                         fprintf(stderr, "*** Detecting DMA stream END lag ***\n");
 #endif
                         position += BLKSIZE;
-                        while (position > (BLKSIZE>>1) && dma_mem[position%BLKSIZE] == 0xdddddddd && dma_mem[(position-1)%BLKSIZE] == 0xdddddddd)
+                        //while (position > (BLKSIZE>>1) && dma_mem[position%BLKSIZE] == 0xdddddddd && dma_mem[(position-1)%BLKSIZE] == 0xdddddddd)
+                        while (dma_mem[position%BLKSIZE] == 0xdddddddd && dma_mem[(position-1)%BLKSIZE] == 0xdddddddd) // check two consecutive positions been reset
                                 position--, lag++;
                         position = position % BLKSIZE;
                         if (lag){
@@ -259,7 +267,7 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
                 fprintf(stderr, "GVP data[0]=%08x, data[WPos%d] = %08x\n", dma_mem[0], position, dma_mem[position]);
 #endif
                 // WAIT FOR LAST DATA HACK -- need to fix via DMA WRITE ADDRESS (spm_dma_instance->get_dmaps_DAn_offset(0)) ?!?!
-                if (data_valid && gvp_finished ()){
+                if (data_valid && gvp_finished () && position_prev != position){
 
                         position = stream_lastwrite_address();
                         fprintf(stderr, "GVP Finished pos=0x%08x\n", position);

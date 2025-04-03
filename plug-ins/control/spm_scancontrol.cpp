@@ -1733,7 +1733,7 @@ gboolean SPM_ScanControl::scanning_control_run (){
                                 last_scan_dir == SCAN_DIR_TOPDOWN ? ++line : --line;
                                 if (fabs (line - main_get_gapp()->xsm->hardware->RTQuery ()) > 2){
                                         g_message (" SPM_ScanControl::scanning_control_run line=%d   actual=%d  scanning_task_line= %d", line,  main_get_gapp()->xsm->hardware->RTQuery (), scanning_task_line);
-                                        line = main_get_gapp()->xsm->hardware->RTQuery () + (SCAN_DIR_TOPDOWN ? 1 : -1);
+                                        line = main_get_gapp()->xsm->hardware->RTQuery () + (SCAN_DIR_TOPDOWN ? -1 : +1);
                                 }
                         }
 		}
