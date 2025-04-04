@@ -2918,7 +2918,7 @@ void RPSPMC_Control::ZPosSetChanged(Param_Control* pcs, RPSPMC_Control *self){
                         "SPMC_Z_SERVO_SETPOINT",
                         "SPMC_Z_SERVO_UPPER", 
                         NULL };
-                double jdata[6];
+                double jdata[3];
                 jdata[0] = main_get_gapp()->xsm->Inst->ZA2Volt(self->zpos_ref);
                 jdata[1] = main_get_gapp()->xsm->Inst->nAmpere2V(self->mix_set_point[0]);
                 jdata[2]   = self->mix_level[0] > 0.
