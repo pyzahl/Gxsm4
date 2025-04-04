@@ -133,7 +133,7 @@ module axis_AD5791 #(
                 begin
                     if (S_AXISCFG_tvalid)
                     begin
-                        reg_dac_data[configuration_axis[1:0]] <= S_AXISCFG_tdata[DAC_WORD_WIDTH-1:0];
+                        reg_dac_data[configuration_axis[2:0]] <= S_AXISCFG_tdata[DAC_WORD_WIDTH-1:0];
                     end
                 end
                 else
