@@ -228,9 +228,9 @@ SOURCE_SIGNAL_DEF modulation_targets[] = {
 
 
 SOURCE_SIGNAL_DEF z_servo_current_source[] = {
-        //  SIGNAL #  Name               Units.... Scale
+        //  SIGNAL #  Name               Units.... Scale (not needed or used from here)
         { 0x00000000, "RF-In2",    " ",  "nA",  "nA",     SPMC_RPIN12_to_volts, 0, 0 },
-        { 0x00000001, "AD24-In1",  " ",  "nA",  "nA",     SPMC_RPIN34_to_volts, 0, 0 },
+        { 0x00000001, "AD24-In3",  " ",  "nA",  "nA",     SPMC_RPIN34_to_volts, 0, 0 },
         { 0x00000016,  NULL, NULL, NULL, NULL, 0.0, 0 }
 };
 
@@ -650,7 +650,7 @@ GtkWidget* GUI_Builder::grid_add_z_servo_current_source_options (gint channel, g
 GtkWidget* GUI_Builder::grid_add_rf_gen_out_options (gint channel, gint preset, gpointer ref){
         GtkWidget *cbtxt = gtk_combo_box_text_new (); 
         gtk_widget_set_size_request (cbtxt, 50, -1); 
-        g_object_set_data(G_OBJECT (cbtxt), "z_servo_current_source_id", GINT_TO_POINTER (channel)); 
+        g_object_set_data(G_OBJECT (cbtxt), "rf_gen_out_dest_id", GINT_TO_POINTER (channel)); 
 
 
         for (int jj=0; rf_gen_out_dest[jj].label; ++jj){
@@ -3066,7 +3066,28 @@ void RPSPMC_Control::update_GUI(){
 }
 
 
-void RPSPMC_Control::update_GUI_from_fpga (){
+void RPSPMC_Control::update_FPGA_from_GUI (){ // after cold start
+        //zpos_ref = 0.; // ** via limits
+        g_slist_foreach ((GSList*)g_object_get_data (G_OBJECT (window), "FPGA_readback_update_list"), (GFunc) App::update_parameter, NULL); // UPDATE PARAMETRE form GUI!
+
+        bias = spmc_parameters.bias_monitor; // Volts direct
+        mix_set_point[0] = spmc_parameters.z_servo_setpoint / main_get_gapp()->xsm->Inst->nAmpere2V(1.0); // convert nA!!
+
+        if (spmc_parameters.z_servo_cp > 0.0)
+                spmc_parameters.z_servo_cp_db = 20.* log10(spmc_parameters.z_servo_cp); // convert to dB *** pow (10., spmc_parameters.z_servo_cp_db/20.);
+        if (spmc_parameters.z_servo_ci > 0.0)
+                spmc_parameters.z_servo_ci_db = 20.* log10(spmc_parameters.z_servo_ci); // convert to dB
+
+        // push to FPGA
+        BiasChanged(NULL, this);
+        ZServoParamChanged (NULL, this);
+        Slope_dZX_Changed(NULL, this);
+        Slope_dZY_Changed(NULL, this);
+        ZPosSetChanged(NULL, this);
+        ZServoControl (NULL, this);
+}
+
+void RPSPMC_Control::update_GUI_from_FPGA (){ // after warm start or re-connect
         //zpos_ref = 0.; // ** via limits
         bias = spmc_parameters.bias_monitor; // Volts direct
         mix_set_point[0] = spmc_parameters.z_servo_setpoint / main_get_gapp()->xsm->Inst->nAmpere2V(1.0); // convert nA!!
@@ -5339,7 +5360,7 @@ void RPspmc_pacpll::on_connect_actions(){
         if (reconnect_mode){ // only of cold start
                 send_all_parameters (); // PAC-PLL
         } else {
-                send_all_parameters (); // PAC-PLL -- for now: alway update
+                send_all_parameters (); // PAC-PLL -- always update
         }
         
         while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
@@ -5446,10 +5467,11 @@ void RPspmc_pacpll::on_connect_actions(){
         if (reconnect_mode){ // only if cold start
                 status_append (" * RedPitaya SPM RPSPMC: Init completed and ackowldeged. Releasing normal control. Updating all from GXSM parameters.\n");
                 write_parameter ("RPSPMC_INITITAL_TRANSFER_ACK", 99); // Acknoledge inital parameters received, release server parameter updates
+                RPSPMC_ControlClass->update_FPGA_from_GUI ();
                 update_SPMC_parameters ();
         } else {
                 // update GUI! (mission critical: Z-SERVO mainly)
-                RPSPMC_ControlClass->update_GUI_from_fpga ();
+                RPSPMC_ControlClass->update_GUI_from_FPGA ();
                 status_append (" * RedPitaya SPM Control: RECONNECTING/READBACK Z-SERVO STATUS...\n");
                 // ...
                 update_SPMC_parameters (); // then send all other less critical parameters to make sure all is in sync

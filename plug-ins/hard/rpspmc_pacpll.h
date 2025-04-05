@@ -817,7 +817,8 @@ public:
                            program_vector.f_du, program_vector.f_dx, program_vector.f_dy, program_vector.f_dz, program_vector.f_da, program_vector.f_db, program_vector.f_dam, program_vector.f_dfm);
         };
 
-        void update_GUI_from_fpga ();
+        void update_GUI_from_FPGA (); // warm start/reconnect
+        void update_FPGA_from_GUI (); // cold start
         
 	PROBE_VECTOR_GENERIC program_vector;
 

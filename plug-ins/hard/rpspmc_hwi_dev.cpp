@@ -51,6 +51,7 @@
 extern int debug_level;
 extern SOURCE_SIGNAL_DEF rpspmc_source_signals[];
 extern SOURCE_SIGNAL_DEF swappable_signals[];
+extern SOURCE_SIGNAL_DEF z_servo_current_source[];
 
 extern "C++" {
         extern RPspmc_pacpll *rpspmc_pacpll;
@@ -1129,7 +1130,7 @@ gboolean rpspmc_hwi_dev::ScanLineM(int yindex, int xdir, int muxmode, //srcs_mas
  "z" :                ZS, XS, YS  with offset!! -- in volts after piezo amplifier
  "o" :                Z0, X0, Y0  offset -- in volts after piezo amplifier
  "R" :                Scan Pos ZS, XS, YS -- in Angstroem/base unit
- "f" :                dFreq, I-avg, I-RMS
+ "f" :                dFreq, I reading in nA, "I" input reading in Volts
  "s","S" :            DSP Statemachine Status Bits, DSP load, DSP load peak
  "Z" :                probe Z Position
  "i" :                GPIO (high level speudo monitor)
@@ -1167,15 +1168,9 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2,
         }
 
         if (*property == 'f'){
-                val1 = pacpll_parameters.dfreq_monitor; // qf - DSPPACClass->pll.Reference[0]; // Freq Shift
-#if 0
-                if ((int)(spmc_parameters.z_servo_mode) & MM_LOG) // values are in 8.24 fractional
-                        val2 = exp(spmc_parameters.signal_monitor/(double)(1<<24)) / main_get_gapp()->xsm->Inst->nAmpere2V (1.); // actual nA reading
-                else
-                        val2 = spmc_parameters.signal_monitor / main_get_gapp()->xsm->Inst->nAmpere2V (1.); // actual nA reading
-#endif
-                val2 = spmc_parameters.signal_monitor / main_get_gapp()->xsm->Inst->nAmpere2V (1.); // actual nA reading
-		val3 = spmc_parameters.signal_monitor;
+                val1 = pacpll_parameters.dfreq_monitor; // Freq Shift
+                val2 = spmc_parameters.signal_monitor / main_get_gapp()->xsm->Inst->nAmpere2V (1.0); // Reading converted to nA
+		val3 = spmc_parameters.signal_monitor; // Current Input reading in Volts (+/-1 V for RF-IN2, +/-5V for AD24-IN3
 		return TRUE;
 	}
 

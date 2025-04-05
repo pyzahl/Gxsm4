@@ -339,6 +339,7 @@
 
 #define SPMC_IN01_REFV   1.13 // RP IN1,2 REF Volatge is 1.0V (+/-1V Range)
 #define SPMC_AD5791_REFV 5.0 // DAC AD5791 Reference Volatge is 5.000000V (+/-5V Range)
+#define SPMC_AD463_REFV  5.0 // DAC AD463 Reference Volatge is 5.000000V (+/-5V Range)
 #define QZSCOEF Q31 // Q Z-Servo Controller
 
 

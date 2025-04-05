@@ -988,7 +988,7 @@ void Gtk_EntryControl::Put_Value(){
 #endif
 }
 
-void Gtk_EntryControl::Set_Parameter(double Value=0., int flg=FALSE, int usr2base=FALSE){
+void Gtk_EntryControl::Set_Parameter(double Value, int flg, int usr2base){
 	if (ShowMessage_flag) return;	//do nothing if a message dialog is active
 	double value;
 	GtkWidget *c;

@@ -385,7 +385,7 @@ class Gtk_EntryControl : public Param_Control{
 	};
 
 	virtual void Put_Value();
-	virtual void Set_Parameter(double Value, int flg, int usr2base);
+	virtual void Set_Parameter(double value=0., int flg=FALSE, int usr2base=FALSE);
 
         virtual void init_pcs_gsettings_path_and_key ();
 	virtual void write_pcs_gschema (int array_flag=false);

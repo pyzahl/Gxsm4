@@ -113,14 +113,11 @@ int bias_buf = 0;
 
 /* RP SPMC FPGA Engine Configuration and Control */
 
-
-
 inline double rpspmc_to_volts (int value){ return SPMC_AD5791_REFV*(double)value / Q31; }
 inline int volts_to_rpspmc (double volts){ return (int)round(Q31*volts/SPMC_AD5791_REFV); }
 
-inline double rpspmc_CONTROL_SELECT_ZS_to_volts (int value){ return SPMC_IN01_REFV*(double)(value*256) / Q31; }
-inline double rpspmc_FIR32IN1_to_volts (int value){ return SPMC_IN01_REFV*(double)(value) / Q31; } // SQ24.8
-inline double volts_to_rpspmc_FIR32IN1 (double volts){ return (int)round(Q31*volts/SPMC_IN01_REFV); }
+inline double rpspmc_CONTROL_SELECT_ZS_to_volts (int source_id, int value){ return (source_id == 1 ? SPMC_AD463_REFV : SPMC_IN01_REFV)*(double)value*256. / Q31; } // SQ24.8 internally in Z_SERVO rtl
+inline double volts_to_rpspmc_CONTROL_SELECT_ZS (int source_id, double volts){ return round(Q31*volts/(source_id == 1 ? SPMC_AD463_REFV : SPMC_IN01_REFV)); }
 
 // f(x)=ax, x = f(x)/a -> x = f(x) / f(1)
 
@@ -311,9 +308,13 @@ void rp_spmc_get_zservo_controller (double &setpoint, double &cp, double &ci, do
         int regA, regB;
 
         // readback Z-Servo configuration
+        int mux_in;
+        rp_spmc_module_read_config_data (SPMC_READBACK_IN_MUX_REG, &mux_in, &regB); // z_servo_src_mux, dum -- get input selection, need to range scaling 1V/5V!
+        //volts_to_rpspmc_CONTROL_SELECT_ZS (regA (setpoint))
+
         rp_spmc_module_config_int32 (SPMC_Z_SERVO_SELECT_RB_SETPOINT_MODES_REG, 0, MODULE_START_VECTOR); // select data set
         rp_spmc_module_read_config_data (SPMC_READBACK_Z_SERVO_REG, &regA, &regB); // read data set
-        setpoint = (double)regA / volts_to_rpspmc_FIR32IN1 (1.);
+        setpoint = (double)regA / volts_to_rpspmc_CONTROL_SELECT_ZS (mux_in, 1.0);
         modes    = regB;
         
         rp_spmc_module_config_int32 (SPMC_Z_SERVO_SELECT_RB_CPI_REG, 0, MODULE_START_VECTOR);
@@ -332,7 +333,10 @@ void rp_spmc_get_zservo_controller (double &setpoint, double &cp, double &ci, do
 void rp_spmc_set_zservo_controller (double setpoint, double cp, double ci, double upper, double lower){
         if (verbose > 1) fprintf(stderr, "##Configure RP SPMC Z-Servo Controller: set= %g  cp=%g ci=%g upper=%g lower=%g\n", setpoint, cp, ci, upper, lower); 
 
-        rp_spmc_module_config_int32 (MODULE_SETUP, volts_to_rpspmc_FIR32IN1 (setpoint), MODULE_START_VECTOR);
+        int mux_in, regB;
+        rp_spmc_module_read_config_data (SPMC_READBACK_IN_MUX_REG, &mux_in, &regB); // z_servo_src_mux, dum -- get input selection, need to range scaling 1V/5V!
+        rp_spmc_module_config_int32 (MODULE_SETUP, volts_to_rpspmc_CONTROL_SELECT_ZS (mux_in, setpoint), MODULE_START_VECTOR);
+        
         rp_spmc_module_config_Qn (MODULE_SETUP, cp, MODULE_SETUP_VECTOR(1), QZSCOEF);
         rp_spmc_module_config_Qn (MODULE_SETUP, ci, MODULE_SETUP_VECTOR(2), QZSCOEF);
         rp_spmc_module_config_int32 (MODULE_SETUP,             volts_to_rpspmc (upper), MODULE_SETUP_VECTOR(3));
@@ -1140,6 +1144,7 @@ void rp_spmc_update_readings (){
         SPMC_Y0_MONITOR.Value () = rpspmc_to_volts (y0_buf); // ** mirror
         //SPMC_Z0_MONITOR.Value () = 0.0; // rpspmc_to_volts (read_gpio_reg_int32 (10,1));
 
-        SPMC_SIGNAL_MONITOR.Value () = rpspmc_CONTROL_SELECT_ZS_to_volts (read_gpio_reg_int32 (7,1)); // SQ8.24 (Z-Servo Input Signal, processed)
+        rp_spmc_module_read_config_data (SPMC_READBACK_IN_MUX_REG, &regA, &regB); // z_servo_src_mux, dum
+        SPMC_SIGNAL_MONITOR.Value () = rpspmc_CONTROL_SELECT_ZS_to_volts (regA, read_gpio_reg_int32 (7,1)); // SQ8.24 (Z-Servo Input Signal, processed)
 }
 
