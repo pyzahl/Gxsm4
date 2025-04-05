@@ -343,7 +343,7 @@ gchar *Param_Control::get_refname(){
 	return txt;
 }
 
-
+// returns string and gives up ownvership -- free after done with it!
 gchar *Param_Control::Get_UsrString(){
 	gchar *warn;
 	if (color) g_free (color);
@@ -1589,6 +1589,15 @@ ec_pcs_adjustment_configure (GtkWidget *menuitem, Gtk_EntryControl *gpcs){
 	gpcs->pcs_adjustment_configure ();
 }
 
+void Gtk_EntryControl::entry_scroll_cb (GtkEventController *controller, gdouble dx, gdouble dy, Gtk_EntryControl *gpcs){
+        gchar *tmp = gpcs->Get_UsrString();
+        g_message ("SCROLL: %s gVal[%g] %g %g => %g", tmp, gpcs->Get_dValue(), dx, dy, gpcs->Get_dValue() + dy * gpcs->step);
+        g_free(tmp);
+
+        gpcs->Set_FromValue (gpcs->Get_dValue() + dy * gpcs->step);
+}
+
+
 void Gtk_EntryControl::InitRegisterCb(double AdjStep, double AdjPage, double AdjProg){
         af_update_handler_id[0] = af_update_handler_id[1] = 0;
         ec_io_handler_id[0] = ec_io_handler_id[1] = 0;
@@ -1655,6 +1664,13 @@ void Gtk_EntryControl::InitRegisterCb(double AdjStep, double AdjPage, double Adj
                 GtkEventController *focus = gtk_event_controller_focus_new ();
                 af_update_handler_id[1] = g_signal_connect (focus, "leave", G_CALLBACK (&Gtk_EntryControl::entry_focus_leave_callback), entry);
                 gtk_widget_add_controller (entry, GTK_EVENT_CONTROLLER (focus));
+
+
+                // EXPERIMENTAL adding SCROLL feature in a new way
+                GtkEventController *scroll = gtk_event_controller_scroll_new (GTK_EVENT_CONTROLLER_SCROLL_VERTICAL | GTK_EVENT_CONTROLLER_SCROLL_DISCRETE); // _KINETIC
+                g_signal_connect (scroll, "scroll", G_CALLBACK (entry_scroll_cb), this);
+                gtk_widget_add_controller (GTK_WIDGET (entry), GTK_EVENT_CONTROLLER (scroll));
+                
         }
         
         XSM_DEBUG (DBG_L8, "InitRegisterCb -- put value");

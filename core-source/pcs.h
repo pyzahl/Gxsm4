@@ -332,6 +332,8 @@ class Gtk_EntryControl : public Param_Control{
                 }
                 return (v);
         };
+
+        static void entry_scroll_cb (GtkEventController *controller, gdouble dx, gdouble dy, Gtk_EntryControl *gpcs);
         
 	GtkAdjustment* GetAdjustment(){ return adj; };
 	void SetExtraWidget(GtkWidget *e){ extra = e; };
