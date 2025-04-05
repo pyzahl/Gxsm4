@@ -547,6 +547,7 @@ GtkWidget*  GUI_Builder::grid_add_mixer_options (gint channel, gint preset, gpoi
         id = g_strdup_printf ("%d", MM_ON);         gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, "LIN"); g_free (id); 
         id = g_strdup_printf ("%d", MM_ON | MM_LOG);          gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, "LOG"); g_free (id); 
         id = g_strdup_printf ("%d", MM_ON | MM_LOG | MM_FCZ); gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, "FCZ-LOG"); g_free (id); 
+        id = g_strdup_printf ("%d", MM_ON | MM_FCZ); gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, "FCZ-LIN"); g_free (id); 
 
         gchar *preset_id = g_strdup_printf ("%d", preset); 
         gtk_combo_box_set_active_id (GTK_COMBO_BOX (cbtxt), preset_id);
@@ -5386,13 +5387,14 @@ void RPspmc_pacpll::on_connect_actions(){
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC FPGA_RSC#...: 0x%08x\n", (int)spmc_parameters.rpspmc_fpgastartupcnt); status_append (tmp); g_free (tmp); }
 
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO_MODE: 0x%08x\n", i=(int)spmc_parameters.z_servo_mode); status_append (tmp); g_free (tmp); }        
-        i=i&7;
-        if (i>=0 && i <= 7){
-                RPSPMC_ControlClass->mix_transform_mode[0] = i;
-                { gchar *tmp = g_strdup_printf (" *                                 ==> %s%s\n", i&MM_ON? i&MM_LOG?"LOG":"LIN":"OFF", i&MM_FCZ && i&MM_ON? "-FCZ":""); status_append (tmp); g_free (tmp); }        
-                { gchar *tmp = g_strdup_printf ("%d",i); gtk_combo_box_set_active_id (GTK_COMBO_BOX (RPSPMC_ControlClass->z_servo_options_selector[0]), tmp); g_free (tmp); }
-        } else
-                status_append ("EE: Invalid Z-Servo-Mode Setting read back.\n");
+        i &= MM_ON | MM_LOG | MM_FCZ | MM_RESET;
+        RPSPMC_ControlClass->mix_transform_mode[0] = i;
+        { gchar *tmp = g_strdup_printf ("%d", i & (MM_ON | MM_LOG | MM_FCZ)); gtk_combo_box_set_active_id (GTK_COMBO_BOX (RPSPMC_ControlClass->z_servo_options_selector[0]), tmp); g_free (tmp); }
+        ;
+        { gchar *tmp = g_strdup_printf (" *                                 ==> %s%s [%s]\n",
+                                        i&MM_ON ? i&MM_LOG  ?"LOG":"LIN":"OFF",
+                                        i&MM_FCZ && i&MM_ON ? "-FCZ":"",
+                                        i&MM_RESET          ? "RESET":"NORMAL"); status_append (tmp); g_free (tmp); }        
 
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_POLARITY..: %s\n", ((int)spmc_parameters.gvp_status)&(1<<7) ? "NEG":"POS"); status_append (tmp); g_free (tmp); }        
         spmc_parameters.gxsm_z_polarity = ((int)spmc_parameters.gvp_status)&(1<<7) ? -1:1;
