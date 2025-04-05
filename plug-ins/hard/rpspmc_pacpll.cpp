@@ -2920,10 +2920,10 @@ void RPSPMC_Control::ZPosSetChanged(Param_Control* pcs, RPSPMC_Control *self){
                         "SPMC_Z_SERVO_UPPER", 
                         NULL };
                 double jdata[3];
-                jdata[0] = main_get_gapp()->xsm->Inst->ZA2Volt(self->zpos_ref);
+                jdata[0] = main_get_gapp()->xsm->Inst->ZA2Volt(self->zpos_ref * spmc_parameters.gxsm_z_polarity);
                 jdata[1] = main_get_gapp()->xsm->Inst->nAmpere2V(self->mix_set_point[0]);
                 jdata[2]   = self->mix_level[0] > 0.
-                        ? main_get_gapp()->xsm->Inst->ZA2Volt(self->zpos_ref)
+                        ? main_get_gapp()->xsm->Inst->ZA2Volt(self->zpos_ref * spmc_parameters.gxsm_z_polarity)
                         : spmc_parameters.z_servo_upper; //5.; // UPPER
 
                 rpspmc_pacpll->write_array (SPMC_SET_ZPOS_SERVO_COMPONENTS, 0, NULL,  3, jdata);
@@ -2955,7 +2955,7 @@ void RPSPMC_Control::ZServoParamChanged(Param_Control* pcs, RPSPMC_Control *self
                 jdata[2]   = self->z_servo[SERVO_CP];
                 jdata[3]   = self->z_servo[SERVO_CI];
                 jdata[4]   = self->mix_level[0] > 0.
-                           ? main_get_gapp()->xsm->Inst->ZA2Volt(self->zpos_ref)
+                           ? main_get_gapp()->xsm->Inst->ZA2Volt(self->zpos_ref * spmc_parameters.gxsm_z_polarity)
                         :  spmc_parameters.z_servo_upper;   // 5.; // UPPER
                 jdata[5]   = spmc_parameters.z_servo_lower; // -5.; // LOWER
 
