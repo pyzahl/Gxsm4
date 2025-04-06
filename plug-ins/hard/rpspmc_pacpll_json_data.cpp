@@ -277,6 +277,8 @@ JSON_signal PACPLL_JSON_signals[] = {
 
         { "SPMC_GVP_VECTOR", GVP_VECTOR_SIZE, spmc_signals.gvp_vector},
 
+        { "SIGNAL_XYZ_METER", 9, spmc_signals.xyz_meter},
+
         { NULL, 0, NULL }
 };
 

@@ -55,6 +55,9 @@ int thread_data__tune_control=0;
 #define PARAMETER_UPDATE_INTERVAL 100 // ms
 #define SIGNAL_UPDATE_INTERVAL    200 // ms
 
+// #define SPMC_RUN_METER_THREAD // experimental
+
+
 #include "main.h"
 #include "fpga_cfg.h"
 #include "pacpll.h"
@@ -178,6 +181,8 @@ std::vector<float> g_data_signal_time(SIGNAL_SIZE_DEFAULT);
 
 CIntSignal SIGNAL_GPIOX("SIGNAL_GPIOX",  SIGNAL_SIZE_GPIOX, 0);
 std::vector<int> g_data_signal_gpiox(SIGNAL_SIZE_GPIOX);
+
+CFloatSignal SIGNAL_XYZ_METER("SIGNAL_XYZ_METER", 9, 0);
 
 double signal_dc_measured = 0.0;
 
@@ -552,6 +557,10 @@ extern double gpio_reading_FIRV_vector_CH4_mapping;
 extern double gpio_reading_FIRV_vector_CH5_mapping;
 extern pthread_t gpio_reading_thread;
 
+extern int xyz_meter_reading_control;
+extern pthread_attr_t xyz_meter_reading_attr;
+extern pthread_t xyz_meter_reading_thread;
+
 extern pthread_attr_t stream_server_attr;
 extern pthread_mutex_t stream_server_mutexsum;
 extern int stream_server_control;
@@ -625,6 +634,13 @@ int rp_PAC_App_Init(){
         pthread_create ( &gpio_reading_thread, &gpio_reading_attr, thread_gpio_reading_FIR, NULL); // start GPIO reading thread FIRs
         pthread_attr_destroy (&gpio_reading_attr);
 
+#ifdef SPMC_RUN_METER_THREAD
+        xyz_meter_reading_control = 1;
+        pthread_attr_init (&xyz_meter_reading_attr);
+        pthread_attr_setdetachstate (&xyz_meter_reading_attr, PTHREAD_CREATE_JOINABLE);
+        pthread_create ( &xyz_meter_reading_thread, &xyz_meter_reading_attr, thread_xyz_meter_reading, NULL); // start XYZ meter reading thread
+#endif
+        
         pthread_mutex_init (&stream_server_mutexsum, NULL);
         pthread_attr_init (&stream_server_attr);
         pthread_attr_setdetachstate (&stream_server_attr, PTHREAD_CREATE_JOINABLE);
@@ -638,6 +654,12 @@ int rp_PAC_App_Init(){
 
 void rp_PAC_App_Release(){
         void *status;
+        
+        xyz_meter_reading_control = 0;
+#ifdef SPMC_RUN_METER_THREAD
+        pthread_join (xyz_meter_reading_thread, &status);
+#endif
+        
         gpio_reading_control = 0;
         pthread_join (gpio_reading_thread, &status);
         pthread_mutex_destroy (&gpio_reading_mutexsum);

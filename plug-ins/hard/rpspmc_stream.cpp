@@ -283,6 +283,9 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
 	if (type == SOUP_WEBSOCKET_DATA_TEXT) {
 		contents = g_bytes_get_data (message, &len);
 #endif
+
+                puts(contents);
+                
                 gchar *p;
                 if (g_strrstr (contents, "#***")){
                         tmp = g_strdup_printf ("** WS TEXT MESSAGE **\n%s", (gchar*)contents);
@@ -303,10 +306,12 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
                 }
                 
                 if ((p=g_strrstr(contents, "Position:{0x"))){ // SIMPLE JSON BLOCK
-                        position = strtoul (p+10, NULL, 16); // effin addr hacks pactches!!!
+                        position = strtoul (p+10, NULL, 16);
                         if ((p=g_strrstr (contents, "Count:{")))
                                 count = atoi (p+7);
                         //g_message("*** ==> pos: 0x%06x #%d", position, count);
+                        //g_message ("** POS: %s **", contents);
+                        //puts(contents);
                         //{ gchar *tmp; self->status_append (tmp=g_strdup_printf("*** ==> pos: 0x%06x #%d\n", position, count), true); g_free(tmp); }
                 }
 
@@ -324,6 +329,8 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
                         if ((p = g_strrstr (contents, "// Vector #"))){
                                 self->last_vector_pc_confirmed = atoi (p+11);
                                 g_message ("** VECTOR #%02d confirmed.", self->last_vector_pc_confirmed);
+                                g_message ("** VECTOR: %s **", contents);
+                                //{ gchar *tmp; self->status_append (tmp=g_strdup_printf("%s\n", contents)); g_free(tmp); }
                         }
                 }
 
@@ -340,8 +347,8 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
 	} else if (type == SOUP_WEBSOCKET_DATA_BINARY) {
 		contents = g_bytes_get_data (message, &len);
 #endif
-
-                self->on_new_data (contents, len);
+                if (len)
+                        self->on_new_data (contents, len);
         }
 }
 

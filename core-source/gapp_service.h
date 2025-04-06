@@ -283,12 +283,15 @@ class BuildParam{
                         rid = g_strconcat (remote_prefix, remote_id, arr, NULL); // do not free, keep
                 if (arr)
                         g_free (arr);
-                
+
+#if 1 // disable/obsolete SPIN variante
+                input = grid_add_input (N_(label), input_nx);
+#else
                 if (no_spin)
                         input = grid_add_input (N_(label), input_nx);
                 else
                         input = grid_add_spin_input (N_(label), input_nx);
-
+#endif
                 if (input_width_chars > 0)
                         gtk_editable_set_width_chars (GTK_EDITABLE (input), input_width_chars);
                 
@@ -497,7 +500,7 @@ class BuildParam{
 
         // generate ID-KEY for tooltip remote hook
         const gchar* PYREMOTE_CHECK_HOOK_KEY_FUNC(const gchar* tt, const gchar *idkey, int k=-1){
-                g_message ("PYREMOTE_CHECK_HOOK_KEY_FUNC: %s. %s%s%02d)",tt,PYREMOTE_CHECK_HOOK_KEY_PREFIX,idkey,k);
+                //g_message ("PYREMOTE_CHECK_HOOK_KEY_FUNC: %s. %s%s%02d)",tt,PYREMOTE_CHECK_HOOK_KEY_PREFIX,idkey,k);
                 if (k >= 0)
                         return g_strdup_printf ("%s. %s%s%02d)",tt,PYREMOTE_CHECK_HOOK_KEY_PREFIX,idkey,k);
                 else

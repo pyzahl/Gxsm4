@@ -187,12 +187,14 @@ public:
                         return;
                 sc->memo_y = y_realtime;
                 
+#if 0
                 // "Tip" and data aupdate frequency control/limit
                 if (sc->get_last_line_updated() == y_update && sc->get_last_line_updated_time_delta () < 200000) return; // nothing to update
+#endif
                 sc->set_last_line_updated(y_update);
 		// std::cout << __func__ << " y_realtime=" << y_realtime << " y_update=" << y_update << std::endl;
 		if (y_realtime >= 0 && fabs ((double)(y_realtime-y_update)) < 2) // single new line only
-			sc->draw ( y_update, y_update+1); // force line only refresh ### y,y+1
+			sc->draw ( y_update, y_update+1); // force line only refresh ### y,y+1 -- only this single line mode triggers RedLine update
 		else
                         sc->draw (); // full image update
                 /*

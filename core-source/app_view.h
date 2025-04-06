@@ -223,6 +223,9 @@ public:
                                           int             height,
                                           ViewControl *vc);
 
+        void force_redraw (){ gtk_widget_queue_draw (canvas); };
+
+        
         static void display_changed_hl_callback (Param_Control *pc, gpointer vc);
         static void display_changed_vr_callback (Param_Control *pc, gpointer vc);
         static void display_changed_sh_callback (Param_Control *pc, gpointer vc);

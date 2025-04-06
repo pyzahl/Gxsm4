@@ -169,9 +169,9 @@ SOURCE_SIGNAL_DEF rpspmc_source_signals[] = {
         { 0x00000004, "ZS-Topo",      " ", "AA", UTF8_ANGSTROEM,                   SPMC_AD5791_to_volts, PROBEDATA_ARRAY_S3,  3 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x00000008, "Bias-Mon",     " ", "V",             "V",                   SPMC_AD5791_to_volts, PROBEDATA_ARRAY_S4,  4 }, // BiasFac, see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x00000010, "Current",      " ", "nA",           "nA",                   SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S5,  5 }, // processed tunnel current signal "Volts" here, to nA/pA later!!!
-        { 0x00000020, "In2-FIR",      " ", "V",             "V",                   SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S6,  6 }, // IN2 RP 125MSPS (RF input, FIR, routable to Z-Servo Control as tunnel current signal)!
-        { 0x00000040, "In3-AD463-24-CH1", " ", "V",         "V",                   SPMC_RPIN34_to_volts, PROBEDATA_ARRAY_S7,  7 }, // IN3 ADC4630-24 2MSPS (routable to Z-Servo Control as tunnel current signal)
-        { 0x00000080, "In4-AD463-24-CH2", " ", "V",         "V",                   SPMC_RPIN34_to_volts, PROBEDATA_ARRAY_S8,  8 }, // IN4 ADC4630-24 2MSPS
+        { 0x00000020, "IN2-RF-FIR",   " ", "V",             "V",                   SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S6,  6 }, // IN2 RP 125MSPS (RF input, FIR, routable to Z-Servo Control as tunnel current signal)!
+        { 0x00000040, "IN3-AD463-24-CHA", " ", "V",         "V",                   SPMC_RPIN34_to_volts, PROBEDATA_ARRAY_S7,  7 }, // IN3 ADC4630-24-A 2MSPS (routable to Z-Servo Control as tunnel current signal)
+        { 0x00000080, "IN4-AD463-24-CHB", " ", "V",         "V",                   SPMC_RPIN34_to_volts, PROBEDATA_ARRAY_S8,  8 }, // IN4 ADC4630-24-B 2MSPS
         { 0x00000100, "SWP*00",       " ",  "V",            "V",                                    1.0, PROBEDATA_ARRAY_S9,  9 },  // ich= 8 ** swappable via GVP-SRC-MUX1 ** -- been replaced as set from swappable_signals[]
         { 0x00000200, "SWP*01",        " ", "V",            "V",                                    1.0, PROBEDATA_ARRAY_S10, 10 }, // ich= 9 ** swappable via GVP-SRC-MUX2 ** -- been replaced as set from swappable_signals[]
         { 0x00000400, "SWP*02",       " ",  "V",            "V",                                    1.0, PROBEDATA_ARRAY_S11, 11 }, // ich=10 ** swappable via GVP-SRC-MUX3 ** -- been replaced as set from swappable_signals[]
@@ -193,9 +193,9 @@ SOURCE_SIGNAL_DEF swappable_signals[] = {                                       
         { 0x00000003, "Amplitude",   " ", "mV", "mV", (1000.0/((1L<<RP_FPGA_QSQRT)-1)),               3, -1 },   // AMPL  via PACPLL FIR_CH3 ** via transport / decimation selector 
         { 0x00000004, "dFreq-Control", " ", "mV", "mV", (1000.0*SPMC_AD5791_to_volts),                4, -1 },   // IR_CH2_DFREQ_CTRL_VAL : can be added to Z-control for true Z AFM mode in freq regulation, or addded to Bias for SQDM mode
                                                                                                                  // *** still assuming +/-10V range in PAC Control mappted to 5V here
-        { 0x00000005, "05-IN1-FBW",     " ", "V", "V", SPMC_RPIN12_to_volts,                         -1, -1 },   // IN1 FBW **** IN1 RP 125MSPS (Signal) -- PLL Signal (FBW)
-        { 0x00000006, "06-IN1-FIR",     " ", "V", "V", SPMC_RPIN12_to_volts,                         -1, -1 },   // IN1 FIR **** IN1 RP 125MSPS (Signal) -- PLL Signal (FIR)
-        { 0x00000007, "07-IN2-FBW",     " ", "V", "V", SPMC_RPIN12_to_volts,                         -1, -1 },   // IN2 FBW
+        { 0x00000005, "05-IN1-RF-FBW",     " ", "V", "V", SPMC_RPIN12_to_volts,                         -1, -1 },   // IN1 FBW **** IN1 RP 125MSPS (Signal) -- PLL Signal (FBW)
+        { 0x00000006, "06-IN1-RF-FIR",     " ", "V", "V", SPMC_RPIN12_to_volts,                         -1, -1 },   // IN1 FIR **** IN1 RP 125MSPS (Signal) -- PLL Signal (FIR)
+        { 0x00000007, "07-IN2-RF-FBW",     " ", "V", "V", SPMC_RPIN12_to_volts,                         -1, -1 },   // IN2 FBW
         { 0x00000008, "08-LockIn-Mag-BQ",  " ", "V", "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),        5, -1 },   // LCK-Mag/BiQuad/IIR
         { 0x00000009, "09-LockIn-X",    " ", "V", "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),          -1, -1 },   // LCK-X -- needs filter, route to BiQuad?
         { 0x00000010, "10-LockIn-Y",    " ", "V", "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),          -1, -1 },   // LCK-Y -- need filter
@@ -229,8 +229,8 @@ SOURCE_SIGNAL_DEF modulation_targets[] = {
 
 SOURCE_SIGNAL_DEF z_servo_current_source[] = {
         //  SIGNAL #  Name               Units.... Scale (not needed or used from here)
-        { 0x00000000, "RF-In2",    " ",  "nA",  "nA",     SPMC_RPIN12_to_volts, 0, 0 },
-        { 0x00000001, "AD24-In3",  " ",  "nA",  "nA",     SPMC_RPIN34_to_volts, 0, 0 },
+        { 0x00000000, "IN2-RF",          " ",  "nA",  "nA",     SPMC_RPIN12_to_volts, 0, 0 },
+        { 0x00000001, "IN3-AD463-24-CHA"," ",  "nA",  "nA",     SPMC_RPIN34_to_volts, 0, 0 },
         { 0x00000016,  NULL, NULL, NULL, NULL, 0.0, 0 }
 };
 
@@ -1154,7 +1154,7 @@ NcVar* rpspmc_pacpll_hwi_ncaddvar (NcFile *ncf, const gchar *varname, const gcha
 	return ncv;
 }
 
-#define SPMTMPL_ID "rpspmc_pacpll_hwi_"
+#define SPMTMPL_ID "rpspmc_hwi_"
 
 void RPSPMC_Control::save_values (NcFile *ncf){
 	NcVar *ncv;
@@ -1172,41 +1172,23 @@ void RPSPMC_Control::save_values (NcFile *ncf){
 
 // Basic Feedback/Scan Parameter ============================================================
 
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"bias", "V", "SRanger: (Sampel or Tip) Bias Voltage", "Bias", bias);
+	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"Bias", "V", "RPSPMC: (Sampel or Tip) Bias Voltage", "Bias", bias);
 	ncv->add_att ("label", "Bias");
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"z_setpoint", "A", "SRanger: auxillary/Z setpoint", "Z Set Point", zpos_ref);
+	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"Z_Servo_FCZ_Setpoint", "A", "RPSPMC: Z-Servo FCZ Setpoint", "FCZ Set Point", zpos_ref);
 	ncv->add_att ("label", "Z Setpoint");
 
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"mix0_set_point", "nA", "SRanger: Mix0: Current set point", "Current Setpt.", mix_set_point[0]);
+	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"Z_Servo_Set_Point", "nA", "RPSPMC: Z-Servo Current Set Point", "Current Setpt.", mix_set_point[0]);
 	ncv->add_att ("label", "Current");
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"mix1_set_point", "Hz", "SRanger: Mix1: Voltage set point", "Voltage Setpt.", mix_set_point[1]);
-	ncv->add_att ("label", "VoltSetpt.");
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"mix2_set_point", "V", "SRanger: Mix2: Aux2 set point", "Aux2 Setpt.", mix_set_point[2]);
-	ncv->add_att ("label", "Aux2 Setpt.");
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"mix3_set_point", "V", "SRanger: Mix3: Aux3 set point", "Aux3 Setpt.", mix_set_point[3]);
-	ncv->add_att ("label", "Aux3 Setpt.");
 
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"mix0_mix_gain", "1", "SRanger: Mix0 gain", "Current gain", mix_gain[0]);
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"mix1_mix_gain", "1", "SRanger: Mix1 gain", "Voltage gain", mix_gain[1]);
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"mix2_mix_gain", "1", "SRanger: Mix2 gain", "Aux2 gain", mix_gain[2]);
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"mix3_mix_gain", "1", "SRanger: Mix3 gain", "Aux3 gain", mix_gain[3]);
+	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"Z_Servo_FLevel", "1", "Z-Servo RPSPMC: FLevel", "Current level", mix_level[0]);
 
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"mix0_mix_level", "1", "SRanger: Mix0 level", "Current level", mix_level[0]);
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"mix1_mix_level", "1", "SRanger: Mix1 level", "Voltage level", mix_level[1]);
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"mix2_mix_level", "1", "SRanger: Mix2 level", "Aux2 level", mix_level[2]);
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"mix3_mix_level", "1", "SRanger: Mix3 level", "Aux3 level", mix_level[3]);
+	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"Z-Servo_Transfer_Mode", "BC", "RPSPMC: Z-Servo Transfer Mode", "Z-Servo Transfer Mode", (double)mix_transform_mode[0]);
+	ncv->add_att ("mode_bcoding", "0:Off, 1:On, 2:Log, 4:FCZ");
 
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"mix0_current_mix_transform_mode", "BC", "SRanger: Mix0 transform_mode", "Current transform_mode", (double)mix_transform_mode[0]);
-	ncv->add_att ("mode_bcoding", "0:Off, 1:On, 2:Log, 4:IIR, 8:FUZZY");
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"mix1_voltage_mix_transform_mode", "BC", "SRanger: Mix1 transform_mode", "Voltage transform_mode", (double)mix_transform_mode[1]);
-	ncv->add_att ("mode_bcoding", "0:Off, 1:On, 2:Log, 4:IIR, 8:FUZZY");
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"mix2_aux2_mix_transform_mode", "BC", "SRanger: Mix2 transform_mode", "Aux2 transform_mode", (double)mix_transform_mode[2]);
-	ncv->add_att ("mode_bcoding", "0:Off, 1:On, 2:Log, 4:IIR, 8:FUZZY");
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"mix3_aux3_mix_transform_mode", "BC", "SRanger: Mix3 transform_mode", "Aux3 transform_mode", (double)mix_transform_mode[3]);
-	ncv->add_att ("mode_bcoding", "0:Off, 1:On, 2:Log, 4:IIR, 8:FUZZY");
+	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"scan_speed_x", "A/s", "RPSPMC: Scan speed X", "Xs Velocity", scan_speed_x);
+	ncv->add_att ("label", "Velocity Xm");
 
-
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"move_speed_x", "A/s", "SRanger: Move speed X", "Xm Velocity", move_speed_x);
+	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"move_speed_x", "A/s", "RPSPMC: Move speed X", "Xm Velocity", move_speed_x);
 	ncv->add_att ("label", "Velocity Xm");
 
 
@@ -1224,7 +1206,6 @@ void RPSPMC_Control::load_values (NcFile *ncf){
 	// OK -- but will be obsoleted and removed at any later point -- PZ
 	NC_GET_VARIABLE ("rpspmc_pacpll_hwi_bias", &bias);
 	NC_GET_VARIABLE ("rpspmc_pacpll_hwi_bias", &main_get_gapp()->xsm->data.s.Bias);
-        NC_GET_VARIABLE ("rpspmc_pacpll_hwi_set_point1", &mix_set_point[1]);
         NC_GET_VARIABLE ("rpspmc_pacpll_hwi_set_point0", &mix_set_point[0]);
 
 	update_GUI ();
@@ -2242,7 +2223,7 @@ void RPSPMC_Control::create_folder (){
         bp->grid_add_label ("VSet", "Treat this as a initial set position, vector differential from current position are computed!");
         bp->set_configure_list_mode_on ();
         bp->grid_add_label ("7", "Option bit 7");
-        bp->grid_add_label ("6", "Option bit 6");
+        bp->grid_add_label ("6", "Option bit 6 -- Enable Max Sampling");
         bp->grid_add_label ("5", "Option bit 5");
         bp->grid_add_label ("4", "Option bit 4");
         bp->grid_add_label ("3", "Option bit 3");
@@ -3618,7 +3599,7 @@ int RPSPMC_Control::choice_rf_gen_out_callback (GtkWidget *widget, RPSPMC_Contro
 void RPSPMC_Control::delayed_vector_update (){
         // SCAN SPEED COMPUTATIONS
         double slew[2];
-        slew[0] = scan_speed_x = scan_speed_x_requested;
+        slew[0] = scan_speed_x = scan_speed_x_requested; // FIX ME -- recalc actual scan speed from vectors -> scan_speed_x!
         slew[1] = fast_return * scan_speed_x_requested;
         scanpixelrate = slew[0]/main_get_gapp()->xsm->data.s.rx*main_get_gapp()->xsm->data.s.nx;
         
@@ -5445,12 +5426,9 @@ void RPspmc_pacpll::on_connect_actions(){
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO_LOR.: %g V\n", spmc_parameters.z_servo_lower); status_append (tmp); g_free (tmp); }
 
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO IN..: %08x MUX selection\n", i=(int)spmc_parameters.z_servo_src_mux); status_append (tmp); g_free (tmp); }
-        if (i>=0 && i <= 1){
-                { gchar *tmp = g_strdup_printf (" *                                 ==> %s\n", i==0? "RF-IN2":"AD4630-24-In1"); status_append (tmp); g_free (tmp); }        
-                gtk_combo_box_set_active (GTK_COMBO_BOX (RPSPMC_ControlClass->z_servo_current_source_options_selector), i);
-        } else
-                status_append ("EE: Invalid Z-Servo-Source MUX read back.\n");
-
+        i &= 1; // only bit 0
+        { gchar *tmp = g_strdup_printf (" *                                 ==> %s\n", i==0? "IN2-RF":"IN3-AD4630-24A"); status_append (tmp); g_free (tmp); }        
+        gtk_combo_box_set_active (GTK_COMBO_BOX (RPSPMC_ControlClass->z_servo_current_source_options_selector), i);
         
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC GVP SRCS MUX: %08x MUX selection code\n", i=(int)spmc_parameters.gvp_stream_mux); status_append (tmp); g_free (tmp); }
         int mux=i;

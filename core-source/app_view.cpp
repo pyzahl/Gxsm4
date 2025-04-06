@@ -2557,7 +2557,6 @@ void ViewControl::SetActive(int flg){
 	}
 }
 
-
 void ViewControl::CheckRedLine(){
 	if(RedLine){
 		if (vinfo->sc->RedLineActive)

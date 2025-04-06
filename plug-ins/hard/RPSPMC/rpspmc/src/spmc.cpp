@@ -95,8 +95,16 @@ extern CDoubleParameter  SPMC_SC_LCK_BQ_COEF_A2;
 
 extern CDoubleParameter  SPMC_SC_LCK_RF_FREQUENCY;
 
+extern CFloatSignal SIGNAL_XYZ_METER;
+
+
 extern int stream_server_control;
 extern spmc_stream_server spmc_stream_server_instance;
+
+int xyz_meter_reading_control=1;
+pthread_attr_t xyz_meter_reading_attr;
+pthread_t xyz_meter_reading_thread;
+
 
 int x0_buf = 0;
 int y0_buf = 0;
@@ -346,6 +354,7 @@ void rp_spmc_set_zservo_controller (double setpoint, double cp, double ci, doubl
 void rp_spmc_set_zservo_gxsm_speciality_setting (int mode, double z_setpoint, double in_offset_comp){
         if (verbose > 1) fprintf(stderr, "##Configure RP SPMC Z-Servo Controller: mode= %d  Zset=%g offset_comp=%g\n", mode, z_setpoint, in_offset_comp); 
 
+        int mux_in, regB;
         rp_spmc_module_read_config_data (SPMC_READBACK_IN_MUX_REG, &mux_in, &regB); // z_servo_src_mux, dum -- get input selection, need to range scaling 1V/5V!
         rp_spmc_module_config_int32 (MODULE_SETUP, volts_to_rpspmc_CONTROL_SELECT_ZS (mux_in, in_offset_comp), MODULE_START_VECTOR); // control input offset
         rp_spmc_module_config_int32 (MODULE_SETUP, 0, MODULE_SETUP_VECTOR(1)); // control setpoint offset = 0 always.
@@ -1149,3 +1158,23 @@ void rp_spmc_update_readings (){
         SPMC_SIGNAL_MONITOR.Value () = rpspmc_CONTROL_SELECT_ZS_to_volts (regA, read_gpio_reg_int32 (7,1)); // SQ8.24 (Z-Servo Input Signal, processed)
 }
 
+
+void *thread_xyz_meter_reading(void *arg) {
+        static double xyz[3][3];
+
+        for (; xyz_meter_reading_control; ){
+                xyz[0][0] = rpspmc_to_volts (read_gpio_reg_int32 (8,1)); // X
+                xyz[1][0] = rpspmc_to_volts (read_gpio_reg_int32 (9,0)); // Y
+                xyz[2][0] = rpspmc_to_volts (read_gpio_reg_int32 (9,1)); // Z
+
+                for (int i=0; i<3; ++i){
+                        if (xyz[i][0] > xyz[i][1]) xyz[i][1] = xyz[i][0]; else xyz[i][1] = 0.999*xyz[i][1] + 0.001*xyz[i][0]; // inst MAX, slow converge back
+                        if (xyz[i][0] < xyz[i][2]) xyz[i][2] = xyz[i][0]; else xyz[i][2] = 0.999*xyz[i][2] + 0.001*xyz[i][0]; // inst MIN, slow converge back
+                        SIGNAL_XYZ_METER[3*i+0] = (float)xyz[i][0]; 
+                        SIGNAL_XYZ_METER[3*i+1] = (float)xyz[i][1]; 
+                        SIGNAL_XYZ_METER[3*i+2] = (float)xyz[i][2]; 
+                }
+                usleep (1000); // updated every 1ms
+        }
+        return (NULL);
+}

@@ -1099,14 +1099,15 @@ gboolean rpspmc_hwi_dev::ScanLineM(int yindex, int xdir, int muxmode, //srcs_mas
         if (ScanningFlg){ // make sure we did not got aborted and completed already!
 
                 y_current = RPSPMC_data_y_index;
-                g_print ("current RPSPMC_data_y_index: %04d ** rpspmc_hwi_spm::ScanLineM (yindex=%04d, xdir=%d, ydir=%d, lssrcs=%x) checking...\n", RPSPMC_data_y_index, yindex, xdir, ydir, srcs_mask);
-
+                //g_print ("current RPSPMC_data_y_index: %04d ** rpspmc_hwi_spm::ScanLineM (yindex=%04d, xdir=%d, ydir=%d, lssrcs=%x) checking...\n", RPSPMC_data_y_index, yindex, xdir, ydir, srcs_mask);
+                g_print (".");
+                
                 if (ydir > 0 && yindex <= RPSPMC_data_y_index){
-                        g_print ("\r * top-down completed.\n");
+                        g_print ("\r * top-down line %04d completed.\n", yindex);
                         return FALSE; // line completed top-down
                 }
                 if (ydir < 0 && yindex >= RPSPMC_data_y_index){
-                        g_print ("\r * bottom-up completed.\n");
+                        g_print ("\r * bottom-up line %04d completed.\n", yindex);
                         return FALSE; // line completed bot-up
                 }
 
@@ -1118,7 +1119,7 @@ gboolean rpspmc_hwi_dev::ScanLineM(int yindex, int xdir, int muxmode, //srcs_mas
                 
                 return TRUE;
         }
-        return FALSE; // scan was stopped by users
+        return FALSE; // scan was stopped by user
 }
 
 

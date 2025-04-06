@@ -494,7 +494,7 @@ void Param_Control::Set_Parameter(double value, int flg, int usr2base){
 		Set_FromValue(unit->Usr2Base(ctxt));
                 g_free (ctxt);
 	}
-	if(ChangeNoticeFkt)
+	if (ChangeNoticeFkt)
 		(*ChangeNoticeFkt)(this, FktData);
 }
 
@@ -1590,11 +1590,12 @@ ec_pcs_adjustment_configure (GtkWidget *menuitem, Gtk_EntryControl *gpcs){
 }
 
 void Gtk_EntryControl::entry_scroll_cb (GtkEventController *controller, gdouble dx, gdouble dy, Gtk_EntryControl *gpcs){
-        gchar *tmp = gpcs->Get_UsrString();
-        g_message ("SCROLL: %s gVal[%g] %g %g => %g", tmp, gpcs->Get_dValue(), dx, dy, gpcs->Get_dValue() + dy * gpcs->step);
-        g_free(tmp);
-
-        gpcs->Set_FromValue (gpcs->Get_dValue() + dy * gpcs->step);
+        //gchar *tmp = gpcs->Get_UsrString();
+        //g_message ("SCROLL: %s gVal[%g] %g %g => %g", tmp, gpcs->Get_dValue(), dx, dy, gpcs->Get_dValue() + dy * gpcs->step);
+        //g_free(tmp);
+        gpcs->Set_FromValue (gpcs->Get_dValue() - dy * gpcs->step);
+	if (gpcs->ChangeNoticeFkt)
+		(*gpcs->ChangeNoticeFkt)(gpcs, gpcs->FktData);       
 }
 
 
@@ -1635,7 +1636,8 @@ void Gtk_EntryControl::InitRegisterCb(double AdjStep, double AdjPage, double Adj
                 //g_signal_connect (menu_item_config, "activate", G_CALLBACK (ec_pcs_adjustment_configure), this);
                 g_menu_append_item (menu, menu_item_config);
 		if (GTK_IS_SPIN_BUTTON (entry)){
-                        ;// on_set_extra_menu (GTK_ENTRY (entry), G_MENU_MODEL (menu)); // need equivalent function for spin button!!
+                        //on_set_extra_menu (GTK_ENTRY (entry), G_MENU_MODEL (menu)); // need equivalent function for spin button!!
+                        gtk_entry_set_extra_menu (GTK_ENTRY (entry), G_MENU_MODEL (menu));
                 } else
                         gtk_entry_set_extra_menu (GTK_ENTRY (entry), G_MENU_MODEL (menu));
                 g_object_unref (menu_item_config);

@@ -260,6 +260,7 @@ struct SPMC_parameters {
 
 struct SPMC_signals {
         double gvp_vector[GVP_VECTOR_SIZE];
+        double xyz_meter[9]; // { X[3], Y[3], Z[3] } [actual, max , min]
 };
 
 #endif
