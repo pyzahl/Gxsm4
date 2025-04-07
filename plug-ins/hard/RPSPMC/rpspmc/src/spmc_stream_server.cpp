@@ -203,6 +203,7 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
                         int lag=0;
 
                         // check data: three consecutive positions been reset until valid data detected *** or if non <==> max lag <==> emptied BUFFER, wait!
+                        position += BLKSIZE; // cycling save pos side
                         while (dma_mem[(position)%BLKSIZE] == 0xdddddddd && dma_mem[(position+1)%BLKSIZE] == 0xdddddddd && dma_mem[(position+2)%BLKSIZE] == 0xdddddddd && lag < 202)
                                 position--, lag++;
 
@@ -233,7 +234,7 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
                                 position = stream_lastwrite_address();
                                 position += BLKSIZE;
                                 //while (position > (BLKSIZE>>1) && dma_mem[position%BLKSIZE] == 0xdddddddd && dma_mem[(position-1)%BLKSIZE] == 0xdddddddd)
-                                while (dma_mem[position%BLKSIZE] == 0xdddddddd && dma_mem[(position-1)%BLKSIZE] == 0xdddddddd && dma_mem[(position-2)%BLKSIZE] == 0xdddddddd && lag < 202) // check three consecutive positions been reset
+                                while (dma_mem[position%BLKSIZE] == 0xdddddddd && dma_mem[(position+1)%BLKSIZE] == 0xdddddddd && dma_mem[(position+2)%BLKSIZE] == 0xdddddddd && lag < 202) // check three consecutive positions been reset
                                         position--, lag++;
                                 position = position % BLKSIZE;
 
@@ -241,10 +242,10 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
                                 if (lag > 0) usleep(10000);
                         } while (lag > 0 && k-- > 0);
 
-                        while (position > 1 && dma_mem[position] == 0xdddddddd){
-                                position--;
-                                fprintf(stderr, "FIN ** position-- %08x\n", position);
-                        }
+                        //while (position > 1 && dma_mem[position] == 0xdddddddd){
+                        //        position--;
+                        //        fprintf(stderr, "FIN ** position-- %08x\n", position);
+                        //}
                         fprintf(stderr, "GVP FINISHED. Stream server on standy after last package send out.\n");
 
                         stream_server_control = (stream_server_control & 0x01) | 4; // set stop bit
