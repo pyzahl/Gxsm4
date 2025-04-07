@@ -107,7 +107,7 @@ module readback_configuration#(
     reg                 reg_system_startup=1;
     reg                 once=0;
 
-    reg [32-1:0]        seconds_deci=125000000-1;
+    reg [32-1:0]        seconds_deci=0;
     reg [32-1:0]        seconds_up=0;
         
     assign gpio_dataA = reg_A;
@@ -223,7 +223,7 @@ module readback_configuration#(
         // FPGA uptime and clock base
         if (seconds_deci == 0)
         begin       
-            seconds_deci <= 125000000-1;
+            seconds_deci <= 32'd124999999;
             seconds_up   <= seconds_up + 1;
         end 
         else

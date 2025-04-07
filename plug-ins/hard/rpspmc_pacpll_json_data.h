@@ -251,7 +251,7 @@ struct SPMC_parameters {
         double rpspmc_fpgaimpl_date;
         double rpspmc_fpgastartup;
         double rpspmc_fpgastartupcnt;
-
+        double uptime_seconds;
         double rpspmc_initial_transfer_ack;
 };
 

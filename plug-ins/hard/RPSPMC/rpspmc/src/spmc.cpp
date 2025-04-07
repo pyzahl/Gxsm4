@@ -95,6 +95,8 @@ extern CDoubleParameter  SPMC_SC_LCK_BQ_COEF_A2;
 
 extern CDoubleParameter  SPMC_SC_LCK_RF_FREQUENCY;
 
+extern CIntParameter     SPMC_UPTIME_SECONDS;
+
 extern CFloatSignal SIGNAL_XYZ_METER;
 
 
@@ -1156,6 +1158,9 @@ void rp_spmc_update_readings (){
 
         rp_spmc_module_read_config_data (SPMC_READBACK_IN_MUX_REG, &regA, &regB); // z_servo_src_mux, dum
         SPMC_SIGNAL_MONITOR.Value () = rpspmc_CONTROL_SELECT_ZS_to_volts (regA, read_gpio_reg_int32 (7,1)); // SQ8.24 (Z-Servo Input Signal, processed)
+
+        rp_spmc_module_read_config_data (SPMC_READBACK_UPTIME_CLOCK_REG, &regA, &regB); // uptime, clock 8ns/sec
+        SPMC_UPTIME_SECONDS.Value () = regA;
 }
 
 

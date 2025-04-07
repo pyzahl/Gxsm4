@@ -500,6 +500,7 @@ CDoubleParameter  SPMC_SIGNAL_MONITOR("SPMC_SIGNAL_MONITOR", CBaseParameter::RW,
 CDoubleParameter  SPMC_AD463X_CH1_MONITOR("SPMC_AD463X_CH1_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 CDoubleParameter  SPMC_AD463X_CH2_MONITOR("SPMC_AD463X_CH2_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 
+CIntParameter     SPMC_UPTIME_SECONDS("SPMC_UPTIME_SECONDS", CBaseParameter::RW, 0, 0, -2147483648,2147483647); // FPGA Update in sec
 
 
 // PHASE Valid for PAC time constant set to 15us:

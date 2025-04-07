@@ -228,7 +228,7 @@ JSON_parameter PACPLL_JSON_parameters[] = {
 
         { "SPMC_MUX_MONITOR", &spmc_parameters.mux_monitor, true },
         
-
+        { "SPMC_UPTIME_SECONDS", &spmc_parameters.uptime_seconds, true },
         
         // RP SPMC Lock-In
         { "SPMC_SC_LCK_FREQUENCY", &spmc_parameters.sc_lck_frequency, false }, // manual/tune frequency

@@ -268,6 +268,8 @@
 
 #define SPMC_READBACK_AD463X_REG       100100 // AD463x read back config data/value
 
+#define SPMC_READBACK_UPTIME_CLOCK_REG 101900 // seconds_up, 8ns tics/sec (deci)
+
 #define SPMC_READBACK_TIMINGTEST_REG   101999
 #define SPMC_READBACK_TIMINGRESET_REG  102000
 

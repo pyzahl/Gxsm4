@@ -5220,16 +5220,30 @@ void RPspmc_pacpll::update_health (const gchar *msg){
                                                         (int)pacpll_signals.signal_gpiox[14], (int)pacpll_signals.signal_gpiox[15]
                                                         );
                 }
-                gchar *health_string = g_strdup_printf ("CPU: %03.0f%% Free: %6.1f MB %s #%g",
+                int S = rpspmc_parameters.uptime_seconds;
+                int d = S%(3600*24);
+                int h = (S-d*24*3600)%3600;
+                int m = (S-d*24*3600-h*3600)%60;
+                int s = (S-d*24*3600-h*3600-m*60);
+                gchar *health_string = g_strdup_printf ("CPU: %03.0f%% Free: %6.1f MB %s #%g Up:%d d %02d:%02d:%02d",
                                                         pacpll_parameters.cpu_load,
                                                         pacpll_parameters.free_ram/1024/1024,
-                                                        gpiox_string?gpiox_string:"[]", pacpll_parameters.counter);
+                                                        gpiox_string?gpiox_string:"[]", pacpll_parameters.counter,
+                                                        d,h,m,s
+                                                        );
                 g_free (gpiox_string);
 #else
-                gchar *health_string = g_strdup_printf ("CPU: %03.0f%% Free: %6.1f MB #%g",
+                int S = spmc_parameters.uptime_seconds;
+                int d = S%(3600*24);
+                int h = (S-d*24*3600)%3600;
+                int m = (S-d*24*3600-h*3600)%60;
+                int s = (S-d*24*3600-h*3600-m*60);
+                gchar *health_string = g_strdup_printf ("CPU: %03.0f%% Free: %6.1f MB #%g Up:%d d %02d:%02d:%02d",
                                                         pacpll_parameters.cpu_load,
                                                         pacpll_parameters.free_ram/1024/1024,
-                                                        pacpll_parameters.counter);
+                                                        pacpll_parameters.counter,
+                                                        d,h,m,s
+                                                        );
 #endif
                 gtk_entry_buffer_set_text (GTK_ENTRY_BUFFER (gtk_entry_get_buffer (GTK_ENTRY((red_pitaya_health)))), health_string, -1);
                 g_free (health_string);
