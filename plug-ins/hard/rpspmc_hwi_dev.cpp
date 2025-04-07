@@ -109,16 +109,12 @@ rpspmc_hwi_dev::~rpspmc_hwi_dev(){
 }
 
 
+// use SOURCE_SIGNAL_DEF rpspmc_source_signals[] table to auto configure (Scan Sources Configurations mapping)
 void rpspmc_hwi_dev::update_hardware_mapping_to_rpspmc_source_signals (){
-        // use SOURCE_SIGNAL_DEF rpspmc_source_signals[] table to auto configure (Scan Sources Configrations)
         for (int i=0; rpspmc_source_signals[i].label; ++i){ // name
                 g_message ("Reading SOURCE_SIGNALS[%d]",i);
                 g_message ("Reading SOURCE_SIGNALS[%d].mask %x",i,rpspmc_source_signals[i].mask);
                 g_message ("Reading SOURCE_SIGNALS[%d].label >%s<",i,rpspmc_source_signals[i].label);
-                g_message ("SOURCE_SIGNAL_DEF %02d for %s mask: 0x%08x L: %s U: %s  x %g",
-                           rpspmc_source_signals[i].scan_source_pos-1,
-                           rpspmc_source_signals[i].label, rpspmc_source_signals[i].mask, // name
-                           rpspmc_source_signals[i].label, rpspmc_source_signals[i].unit, rpspmc_source_signals[i].scale_factor);
                 if (rpspmc_source_signals[i].scan_source_pos > 0){
                         double volt_to_unit = 1.0;
                         switch (rpspmc_source_signals[i].mask){
@@ -132,6 +128,10 @@ void rpspmc_hwi_dev::update_hardware_mapping_to_rpspmc_source_signals (){
                                                                                     rpspmc_source_signals[i].label, rpspmc_source_signals[i].mask, // name
                                                                                     rpspmc_source_signals[i].label,
                                                                                     rpspmc_source_signals[i].unit, volt_to_unit); // conversion to Base Units in Volts is in stream expansion applied
+                g_message ("SOURCE_SIGNAL_DEF %02d for %s mask: 0x%08x L: %s U: %s  x %g [to V] x %g [to %s]",
+                           rpspmc_source_signals[i].scan_source_pos-1,
+                           rpspmc_source_signals[i].label, rpspmc_source_signals[i].mask, // name
+                           rpspmc_source_signals[i].label, rpspmc_source_signals[i].unit, rpspmc_source_signals[i].scale_factor, volt_to_unit, rpspmc_source_signals[i].unit);
                 }
         }
 }

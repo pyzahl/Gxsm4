@@ -62,19 +62,6 @@ gfloat color_gray[4]    = { .3, .3, .3, 0.8 };
 gfloat color_red[4]     = { 1., 0., 0., 1.0 };
 gfloat color_yellow[4]  = { 1., 1., 0., 1.0 };
 
-// SR specific conversions and lookups
-
-#define DSP_FRQ_REF 75000.0
-
-#define SRV2     (2.05/32767.)
-#define SRV10    (10.0/32767.)
-#define PhaseFac (1./16.)
-#define BiasFac  (main_get_gapp()->xsm->Inst->Dig2VoltOut (1.) * main_get_gapp()->xsm->Inst->BiasGainV2V ())
-#define BiasOffset (main_get_gapp()->xsm->Inst->Dig2VoltOut (1.) * main_get_gapp()->xsm->Inst->BiasV2V (0.))
-#define ZAngFac  (main_get_gapp()->xsm->Inst->Dig2ZA (1))
-#define XAngFac  (main_get_gapp()->xsm->Inst->Dig2XA (1))
-#define YAngFac  (main_get_gapp()->xsm->Inst->Dig2YA (1))
-
 extern SOURCE_SIGNAL_DEF rpspmc_source_signals[];
 
 //#define XSM_DEBUG_PG(X)  std::cout << X << std::endl;
@@ -1136,10 +1123,8 @@ int RPSPMC_Control::Probing_save_callback( GtkWidget *widget, RPSPMC_Control *ds
 		val[3] = g_array_index (dspc->garray_probe_hdrlist[PROBEDATA_ARRAY_ZS], double, i);
 		val[4] = g_array_index (dspc->garray_probe_hdrlist[PROBEDATA_ARRAY_SEC], double, i);
 
-// 1e3/DSP_FRQ_REF, XAngFac, YAngFac, ZAngFac,
-                
 		f << "#  " << std::setw(6) << i << "\t "
-		  << std::setw(10) << val[0] * 1e3/DSP_FRQ_REF << "\t " << std::setw(10) << (val[0]-t0) * 1e3/DSP_FRQ_REF << "\t "
+		  << std::setw(10) << val[0] << "\t " << std::setw(10) << (val[0]-t0) << "\t "
 		  << std::setw(10) << val[1] * XAngFac << "\t "
 		  << std::setw(10) << val[2] * YAngFac << "\t "
 		  << std::setw(10) << val[3] * ZAngFac << "\t "
@@ -1451,9 +1436,8 @@ void RPSPMC_Control::dump_probe_hdr(){
 		val[4] = g_array_index (garray_probe_hdrlist[PROBEDATA_ARRAY_SEC], double, i);
 
 #ifdef DUMP_TERM
-// 1e3/DSP_FRQ_REF, XAngFac, YAngFac, ZAngFac,
 		std::cout << std::setw(6) << i << "\t "
-			  << std::setw(10) << val[0] * 1e3/DSP_FRQ_REF << "\t " << std::setw(10) << (val[0]-t0) * 1e3/DSP_FRQ_REF << "\t "
+			  << std::setw(10) << val[0] << "\t " << std::setw(10) << (val[0]-t0) << "\t "
 			  << std::setw(10) << val[1] * XAngFac << "\t "
 			  << std::setw(10) << val[2] * YAngFac << "\t "
 			  << std::setw(10) << val[3] * ZAngFac << "\t "
@@ -1477,7 +1461,7 @@ void RPSPMC_Control::dump_probe_hdr(){
 
 			// only put new marker/update/rotate if more than a pixel moved!
 			if (s2 > 2.*main_get_gapp()->xsm->MasterScan->data.s.dx*main_get_gapp()->xsm->MasterScan->data.s.dx+main_get_gapp()->xsm->MasterScan->data.s.dy*main_get_gapp()->xsm->MasterScan->data.s.dy){
-				gchar *info = g_strdup_printf ("TrkPt# %d %.1fms", i, val[0]*1e3/DSP_FRQ_REF);
+				gchar *info = g_strdup_printf ("TrkPt# %d %.1fms", i, val[0]);
 				double xyz[3] = {
 					main_get_gapp()->xsm->Inst->Dig2XA ((long) round (val[1])) + main_get_gapp()->xsm->data.s.x0,
 					main_get_gapp()->xsm->Inst->Dig2YA ((long) round (val[2])) + main_get_gapp()->xsm->data.s.y0,

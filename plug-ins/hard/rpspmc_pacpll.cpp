@@ -206,8 +206,8 @@ SOURCE_SIGNAL_DEF modulation_targets[] = {
 
 SOURCE_SIGNAL_DEF z_servo_current_source[] = {
         //  SIGNAL #  Name               Units.... Scale (not needed or used from here)
-        { 0x00000000, "IN2-RF",          " ",  "nA",  "nA", 256.*SPMC_RPIN12_to_volts, 0, 0 },
-        { 0x00000001, "IN3-AD463-24-CHA"," ",  "nA",  "nA", 256.*SPMC_RPIN34_to_volts, 0, 0 },
+        { 0x00000000, "IN2-RF",          " ",  "nA",  "nA", 256.*SPMC_RPIN12_to_volts, 0, 0 }, // 24.8 Z-Servo internal signal '(32-8) -> x 256
+        { 0x00000001, "IN3-AD463-24-CHA"," ",  "nA",  "nA", 256.*SPMC_RPIN34_to_volts, 0, 0 }, // 24.8 Z-Servo internal signal '(32-8) -> x 256
         { 0x00000016,  NULL, NULL, NULL, NULL, 0.0, 0 }
 };
 
