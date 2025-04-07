@@ -1001,20 +1001,20 @@ int RPSPMC_Control::Probing_save_callback( GtkWidget *widget, RPSPMC_Control *ds
 	}
         f.precision (12);
 	f << "# view via: xmgrace -graph 0 -pexec 'title \"GXSM Vector Probe Data: " << fntmp << "\"' -block " << fntmp  << " -bxy 2:4 ..." << std::endl;
-	f << "# GXSM Vector Probe Data :: VPVersion=00.02 vdate=20070227" << std::endl;
+	f << "# GXSM Vector Probe Data :: VPVersion=00.03 vdate=20250406 GVP RPSPMC" << std::endl;
 	f << "# Date                   :: date=" << ctime(&t) << "#" << std::endl;
 	f << "# FileName               :: name=" << fntmp << std::endl;
 	f << "# GXSM-Main-Offset       :: X0=" <<  x0 << " Ang" <<  "  Y0=" << y0 << " Ang" 
 	  << ", iX0=" << ix << " Pix iX0=" << iy << " Pix"
 	  << std::endl;
         if (main_get_gapp()->xsm->MasterScan)
-                f << "# DSP SCANCOORD POSITION :: DSP-XSpos="  // FIXME!!!!
+                f << "# SCANCOORD POSITION :: RPSPMC-XSpos="  // FIXME!!!!
                   << (((int)g_array_index (dspc->garray_probe_hdrlist[PROBEDATA_ARRAY_XS], double, 0)<<16)/dspc->mirror_dsp_scan_dx32 + main_get_gapp()->xsm->MasterScan->data.s.nx/2 - 1)
-                  << " DSP-YSpos=" 
+                  << " RPSPMC-YSpos=" 
                   << ((main_get_gapp()->xsm->MasterScan->data.s.nx/2 - 1) - ((int)g_array_index (dspc->garray_probe_hdrlist[PROBEDATA_ARRAY_YS], double, 0)<<16)/dspc->mirror_dsp_scan_dy32)
-                  << " CENTER-DSP-XSpos=" 
+                  << " CENTER-RPSPMC-XSpos=" 
                   << (((int)g_array_index (dspc->garray_probe_hdrlist[PROBEDATA_ARRAY_XS], double, 0)<<16)/dspc->mirror_dsp_scan_dx32)
-                  << " CENTER-DSP-YSpos=" 
+                  << " CENTER-RPSPMC-YSpos=" 
                   << (((int)g_array_index (dspc->garray_probe_hdrlist[PROBEDATA_ARRAY_YS], double, 0)<<16)/dspc->mirror_dsp_scan_dy32)
                   << std::endl;
         else
@@ -1040,7 +1040,7 @@ int RPSPMC_Control::Probing_save_callback( GtkWidget *widget, RPSPMC_Control *ds
 	f << "# Data Sources Mask      :: Source=" << dspc->vis_Source << std::endl;
 	f << "# X-map Sources Mask     :: XSource=" << dspc->vis_XSource << std::endl;
 	f << "#C " << std::endl;
-	f << "#C VP Channel Map and Units lookup table used:=table [## msk expdi, lab, DAC2U, unit/DAC, Active]" << std::endl;
+	f << "#C VP Channel Map and Units lookup table used:=table [## msk expdi, lab, V2U, unit/V, Active]" << std::endl;
 
 	for (int i=0; dspc->msklookup[i] >= 0; ++i)
 		f << "# Cmap[" << i << "]" << separator 
@@ -1048,7 +1048,7 @@ int RPSPMC_Control::Probing_save_callback( GtkWidget *widget, RPSPMC_Control *ds
 		  << dspc->expdi_lookup[i] << separator 
 		  << dspc->vp_label_lookup (i) << separator 
 		  << dspc->vp_scale_lookup (i) << separator 
-		  << dspc->vp_unit_lookup (i) << "/DAC" << separator 
+		  << dspc->vp_unit_lookup (i) << "/V" << separator 
 		  << (dspc->vis_Source & dspc->msklookup[i] ? "Yes":"No") << std::endl;
 
 	f << "#C " << std::endl;
@@ -1080,25 +1080,27 @@ int RPSPMC_Control::Probing_save_callback( GtkWidget *widget, RPSPMC_Control *ds
         f << std::scientific;
 	for (int i = -1; i < dspc->current_probe_data_index; i++){
 		if (i == -1)
-			f << "#C Index" << separator;
+			f << "#C Idx" << separator;
 		else
 			f << i << separator;
 
 		for (int xmap=0; dspc->msklookup[xmap]>=0; ++xmap)
 			if ((dspc->vis_XSource & dspc->msklookup[xmap]) && (dspc->vis_Source & dspc->msklookup[xmap])){
 				double xmult = dspc->vp_scale_lookup (xmap);
-				if (i == -1)
-					f << "\"" << dspc->vp_label_lookup (xmap) << " (" << dspc->vp_unit_lookup (xmap) << ")\"" << separator;
-				else
+				if (i == -1){
+                                        gchar *h = g_strdup_printf ("\"%12s (%s)\"", dspc->vp_label_lookup (xmap), dspc->vp_unit_lookup (xmap));
+					f << h << separator; g_free(h);
+				} else
 					f << (xmult * g_array_index (dspc->garray_probedata [dspc->expdi_lookup[xmap]], double, i)) << separator;
 			}
 
 		for (int src=0; dspc->msklookup[src]>=0; ++src)
 			if (dspc->vis_Source & dspc->msklookup[src]){
 				double ymult = dspc->vp_scale_lookup (src);
-				if (i == -1)
-					f << "\"" << dspc->vp_label_lookup (src) << " (" << dspc->vp_unit_lookup (src) << ")\"" << separator;
-				else
+				if (i == -1){
+                                        gchar *h = g_strdup_printf ("\"%12s (%s)\"", dspc->vp_label_lookup (src), dspc->vp_unit_lookup (src));
+					f << h << separator; g_free(h);
+                                } else
 					f << (ymult * g_array_index (dspc->garray_probedata [dspc->expdi_lookup[src]], double, i)) << separator;
 			}
 
@@ -1114,7 +1116,7 @@ int RPSPMC_Control::Probing_save_callback( GtkWidget *widget, RPSPMC_Control *ds
 	f << "#C START OF HEADER LIST APPENDIX" << std::endl;
 
 	f << "#C Vector Probe Header List -----------------" << std::endl;
-	f << "#C # ####\t time[ms]  \t dt[ms]    \t X[Ang]   \t Y[Ang]   \t Z[Ang]    \t Sec" << std::endl;
+	f << "#C # ####\t         time (ms)\t           dt (ms)\t            X (Ang)\t          Y (Ang)\t            Z (Ang)\t             t (s)" << std::endl;
 	for (int i=0; i<dspc->nun_valid_hdr; ++i){
 		double val[10];
 		val[0] = g_array_index (dspc->garray_probe_hdrlist[PROBEDATA_ARRAY_TIME], double, i);
