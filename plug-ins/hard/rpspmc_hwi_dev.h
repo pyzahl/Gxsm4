@@ -97,8 +97,10 @@ public:
         
 	/* Parameter  */
 	virtual long GetMaxLines(){ return 32000; };
-
-	virtual const gchar* get_info() { return "SPM Template V0.0"; };
+        
+	virtual const gchar* get_info() { return info_blob ? info_blob : "RPSPMC 4 GXSM ** not connected: Check Restart or Re-Connect in SPM Control Window, Tab: RedPitaya Web Socket to establish connection."; };
+        void info_append (const gchar *s) { if (s) { gchar *ns = g_strdup_printf ("%s%s", info_blob?info_blob:" ", s); g_free (info_blob); info_blob = ns; } else  { g_free (info_blob); info_blob = NULL; }};
+        gchar *info_blob;
 
 	/* Hardware realtime monitoring -- all optional */
 	/* default properties are

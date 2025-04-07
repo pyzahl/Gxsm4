@@ -340,7 +340,7 @@ GxsmPlugin rpspmc_pacpll_hwi_pi = {
 
 // Text used in Aboutbox, please update!!
 static const char *about_text = N_("RPSPMC PACPLL Control Plugin\n\n"
-                                   "This plugin manages externa Scan Data Sources.\n"
+                                   "Complete FPGA SPM Control using Red Pitaya + Analog Modules.\n"
 	);
 
 /* Here we go... */
@@ -5365,14 +5365,17 @@ void RPspmc_pacpll::on_connect_actions(){
         status_append (" * RedPitaya SPM Control: PAC-PLL is ready.\n");
         status_append (" * RedPitaya SPM Control, SPMC init...\n");
 
+        rpspmc_hwi->info_append (NULL); // clear
+        rpspmc_hwi->info_append ("RPSPMC+PACPALL is connected.");
+ 
         int i=0;
         
-        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Version.....: 0x%08x\n", (int)spmc_parameters.rpspmc_version); status_append (tmp); g_free (tmp); }
-        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC VDate.......: 0x%08x\n", (int)spmc_parameters.rpspmc_date); status_append (tmp); g_free (tmp); }
-        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC FPGAIMPL....: 0x%08x\n", (int)spmc_parameters.rpspmc_fpgaimpl); status_append (tmp); g_free (tmp); }
-        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC FPGAIMPL_D..: 0x%08x\n", (int)spmc_parameters.rpspmc_fpgaimpl_date); status_append (tmp); g_free (tmp); }
-        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC FPGA_STAUP..: 0x%08x\n", (int)spmc_parameters.rpspmc_fpgastartup); status_append (tmp); g_free (tmp); }
-        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC FPGA_RSC#...: 0x%08x\n", (int)spmc_parameters.rpspmc_fpgastartupcnt); status_append (tmp); g_free (tmp); }
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Version.....: 0x%08x\n", (int)spmc_parameters.rpspmc_version); status_append (tmp);  rpspmc_hwi->info_append (tmp); g_free (tmp); }
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC VDate.......: 0x%08x\n", (int)spmc_parameters.rpspmc_date); status_append (tmp);  rpspmc_hwi->info_append (tmp); g_free (tmp); }
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC FPGAIMPL....: 0x%08x\n", (int)spmc_parameters.rpspmc_fpgaimpl); status_append (tmp);  rpspmc_hwi->info_append (tmp); g_free (tmp); }
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC FPGAIMPL_D..: 0x%08x\n", (int)spmc_parameters.rpspmc_fpgaimpl_date); status_append (tmp);  rpspmc_hwi->info_append (tmp); g_free (tmp); }
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC FPGA_STAUP..: 0x%08x\n", (int)spmc_parameters.rpspmc_fpgastartup); status_append (tmp);  rpspmc_hwi->info_append (tmp); g_free (tmp); }
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC FPGA_RSC#...: 0x%08x\n", (int)spmc_parameters.rpspmc_fpgastartupcnt); status_append (tmp);  rpspmc_hwi->info_append (tmp); g_free (tmp); }
 
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO_MODE: 0x%08x\n", i=(int)spmc_parameters.z_servo_mode); status_append (tmp); g_free (tmp); }        
         i &= MM_ON | MM_LOG | MM_FCZ | MM_RESET;
@@ -5382,9 +5385,9 @@ void RPspmc_pacpll::on_connect_actions(){
         { gchar *tmp = g_strdup_printf (" *                                 ==> %s%s [%s]\n",
                                         i&MM_ON ? i&MM_LOG  ?"LOG":"LIN":"OFF",
                                         i&MM_FCZ && i&MM_ON ? "-FCZ":"",
-                                        i&MM_RESET          ? "RESET":"NORMAL"); status_append (tmp); g_free (tmp); }        
+                                        i&MM_RESET          ? "RESET":"NORMAL"); status_append (tmp);  rpspmc_hwi->info_append (tmp); g_free (tmp); }        
 
-        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_POLARITY..: %s\n", ((int)spmc_parameters.gvp_status)&(1<<7) ? "NEG":"POS"); status_append (tmp); g_free (tmp); }        
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_POLARITY..: %s\n", ((int)spmc_parameters.gvp_status)&(1<<7) ? "NEG":"POS"); status_append (tmp);  rpspmc_hwi->info_append (tmp); g_free (tmp); }        
         spmc_parameters.gxsm_z_polarity = ((int)spmc_parameters.gvp_status)&(1<<7) ? -1:1;
         int gxsm_preferences_polarity = xsmres.ScannerZPolarity ? 1 : -1; // 1: pos, 0: neg (bool) -- adjust zpos_ref accordingly!
 
@@ -5411,7 +5414,7 @@ void RPspmc_pacpll::on_connect_actions(){
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO_UPR.: %g V\n", spmc_parameters.z_servo_upper); status_append (tmp); g_free (tmp); }
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO_LOR.: %g V\n", spmc_parameters.z_servo_lower); status_append (tmp); g_free (tmp); }
 
-        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO IN..: %08x MUX selection\n", i=(int)spmc_parameters.z_servo_src_mux); status_append (tmp); g_free (tmp); }
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO IN..: %08x MUX selection\n", i=(int)spmc_parameters.z_servo_src_mux); status_append (tmp);  rpspmc_hwi->info_append (tmp); g_free (tmp); }
         i &= 1; // only bit 0
         { gchar *tmp = g_strdup_printf (" *                                 ==> %s\n", i==0? "IN2-RF":"IN3-AD4630-24A"); status_append (tmp); g_free (tmp); }        
         gtk_combo_box_set_active (GTK_COMBO_BOX (RPSPMC_ControlClass->z_servo_current_source_options_selector), i);
@@ -5449,6 +5452,8 @@ void RPspmc_pacpll::on_connect_actions(){
         //status_append (" * RedPitaya SPM Control ready. NEXT: Please Check Connect Stream.\n");
         status_append (" * RedPitaya SPM Control ready. Connecting SPMC Data Stream...\n");
 
+        rpspmc_hwi->info_append (" * RPSPMC is READY *");
+ 
         gtk_check_button_set_active (GTK_CHECK_BUTTON (RPSPMC_ControlClass->stream_connect_button), true);
 
         gtk_button_set_child (GTK_BUTTON (RPSPMC_ControlClass->GVP_stop_all_zero_button), gtk_image_new_from_icon_name ("gxsm4-rp-icon"));

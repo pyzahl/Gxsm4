@@ -68,7 +68,8 @@ extern "C++" {
 // ================================================================================
 
 rpspmc_hwi_dev::rpspmc_hwi_dev():RP_stream(this){
-
+        info_blob = NULL;
+        
         delayed_tip_move_update_timer_id = 0;
         
         // auto adjust and override preferences

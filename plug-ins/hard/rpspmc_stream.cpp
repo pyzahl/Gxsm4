@@ -183,6 +183,8 @@ void RP_stream::stream_connect_cb (gboolean connect){
                 // tear down connection
                 status_append ("Dissconnecting...\n ", true);
 
+                rpspmc_hwi->info_append (NULL); // clear
+                
                 //g_clear_object (&listener);
                 g_clear_object (&client);
                 g_clear_error (&client_error);
