@@ -773,13 +773,16 @@ gboolean SPM_ScanControl::spm_scancontrol_run_scans_task (gpointer data){
                 //return TRUE;
         case 30:
                 if (((SPM_ScanControl*)data) -> MovieMode() && !((SPM_ScanControl*)data) -> scan_stopped_by_user){
+                        puts ("** SPM_ScanControl::spm_scancontrol_run_scans_task **30** MOVIE MODE: next frame **");
                         runmode = 11;
                         return TRUE;
                 }
                 if (((SPM_ScanControl*)data) -> MultiVoltMode() && i<l){
+                        puts ("** SPM_ScanControl::spm_scancontrol_run_scans_task **30** MULTI VOLT MODE: next frame **");
                         runmode = 10;
                         return TRUE;
                 }
+                puts ("** SPM_ScanControl::spm_scancontrol_run_scans_task **30** SCAN COMPLETED AUTO-SAVE+REPEAT CHECK **");
 		if(main_get_gapp()->xsm->IsMode(MODE_AUTOSAVE)){
                         main_get_gapp()->auto_save_scans ();
                 }

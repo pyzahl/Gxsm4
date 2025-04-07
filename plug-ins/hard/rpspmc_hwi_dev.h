@@ -85,6 +85,8 @@ public:
 	rpspmc_hwi_dev();
 	virtual ~rpspmc_hwi_dev();
 
+        void update_hardware_mapping_to_rpspmc_source_signals ();
+        
         static void spmc_stream_connect_cb (GtkWidget *widget, rpspmc_hwi_dev *self);
         virtual const gchar *get_rp_address ();
 

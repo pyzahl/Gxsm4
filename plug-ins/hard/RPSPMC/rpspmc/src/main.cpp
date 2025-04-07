@@ -46,11 +46,11 @@ int thread_data__tune_control=0;
 #include <fcntl.h>
 #include <pthread.h>
 
-#define REDPACPLL_DATE    0x20250101
+#define REDPACPLL_DATE    0x20250406
 #define REDPACPLL_VERSION 0x00160000
-#define RPSPMC_VERSION    0x00010015
-#define RPSPMC_VNAME      "Evaluation Regime SG20250101"
-#define RPSPMC_SRCS_INFO  "Bit0..3: XYZU | Bit4-7: IN1,2,3,4 | Bit8-11: dFREQ,EXEC,PHASE,AMPL | Bit 12..15: LckA,B, TIME64"
+#define RPSPMC_VERSION    0x00010016
+#define RPSPMC_VNAME      "Evaluation Regime SG20250406"
+#define RPSPMC_SRCS_INFO  "Bit0..3: XYZU | Bit4-7: IN1,2,3,4 | Bit8-14: MUX-SRCS: [dFreq,Exec,Phase,Ampl,dFCtrl,...x16] | Bit 15,16, TIME64"
 
 #define PARAMETER_UPDATE_INTERVAL 100 // ms
 #define SIGNAL_UPDATE_INTERVAL    200 // ms

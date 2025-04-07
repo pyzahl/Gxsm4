@@ -74,6 +74,36 @@ extern "C++" {
 #define DMA_SIZE         0x40000            // 20bit count of 32bit words ==> 1MB DMA Block:  2 x 0x80000 bytes
 #define EXPAND_MULTIPLES 32
 
+
+
+#define CPN(N) ((double)(1LL<<(N))-1.)
+
+// WARNING WARNING WARNING.. not working life if table is initialized with this
+#define BiasFac    (main_get_gapp()->xsm->Inst->BiasGainV2V ())
+#define CurrFac    (1./main_get_gapp()->xsm->Inst->nAmpere2V (1.))
+#define ZAngFac    (main_get_gapp()->xsm->Inst->Volt2ZA (1.))
+#define XAngFac    (main_get_gapp()->xsm->Inst->Volt2XA (1.))
+#define YAngFac    (main_get_gapp()->xsm->Inst->Volt2YA (1.))
+
+#define CPN(N) ((double)(1LL<<(N))-1.)
+
+#define RP_FPGA_QEXEC 31 // Q EXEC READING Controller        -- 1V/(2^RP_FPGA_QEXEC-1)
+#define RP_FPGA_QSQRT 23 // Q CORDIC SQRT Amplitude Reading  -- 1V/(2^RP_FPGA_QSQRT-1)
+#define RP_FPGA_QATAN 21 // Q CORDIC ATAN Phase Reading      -- 180deg/(PI*(2^RP_FPGA_QATAN-1))
+#define RP_FPGA_QFREQ 44 // Q DIFF FREQ READING              -- 125MHz/(2^RP_FPGA_QFREQ-1) well number should not exceed 32bit 
+
+#define DSP32Qs15dot16TO_Volt (50/(32767.*(1<<16)))
+
+#define SPMC_AD5791_REFV 5.0 // DAC AD5791 Reference Volatge is 5.000000V (+/-5V Range)
+#define SPMC_AD5791_to_volts (SPMC_AD5791_REFV / QN(31))
+#define SPMC_RPIN12_REFV 1.0 // RP RF DACs Reference Voltage is 1.0V (+/-1V Range)
+#define SPMC_RPIN12_to_volts (SPMC_RPIN12_REFV / QN(31))
+#define SPMC_RPIN34_REFV 5.0 // RP AD463-24 DACs Reference Voltage is 5.0V (Differential +/-5V Range)
+#define SPMC_RPIN34_to_volts (SPMC_RPIN34_REFV / QN(31))
+
+
+
+
 // GUI builder helper
 class GUI_Builder : public BuildParam{
 public:

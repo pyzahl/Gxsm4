@@ -90,23 +90,6 @@ RP data streaming
 #define GVP_SHIFT_UP  1
 #define GVP_SHIFT_DN -1
 
-#define CPN(N) ((double)(1LL<<(N))-1.)
-
-// WARNING WARNIN WARNING.. not working life
-#define BiasFac    main_get_gapp()->xsm->Inst->BiasGainV2V ()
-#define CurrFac    (1./main_get_gapp()->xsm->Inst->nAmpere2V (1.))
-#define ZAngFac    (main_get_gapp()->xsm->Inst->Volt2ZA (1))
-#define XAngFac    (main_get_gapp()->xsm->Inst->Volt2XA (1))
-#define YAngFac    (main_get_gapp()->xsm->Inst->Volt2YA (1))
-
-#define CPN(N) ((double)(1LL<<(N))-1.)
-
-#define RP_FPGA_QEXEC 31 // Q EXEC READING Controller        -- 1V/(2^RP_FPGA_QEXEC-1)
-#define RP_FPGA_QSQRT 23 // Q CORDIC SQRT Amplitude Reading  -- 1V/(2^RP_FPGA_QSQRT-1)
-#define RP_FPGA_QATAN 21 // Q CORDIC ATAN Phase Reading      -- 180deg/(PI*(2^RP_FPGA_QATAN-1))
-#define RP_FPGA_QFREQ 44 // Q DIFF FREQ READING              -- 125MHz/(2^RP_FPGA_QFREQ-1) well number should not exceed 32bit 
-
-#define DSP32Qs15dot16TO_Volt (50/(32767.*(1<<16)))
 
 typedef union {
         struct { unsigned char ch, x, y, z; } s;
@@ -138,12 +121,6 @@ typedef union {
     // gvp_time[48-1:32]      // TIME  0x8000 // upper 32 (16 lower only)
     input wire [48-1:0] S_AXIS_gvp_time_tdata,  // time since GVP start in 1/125MHz units
 */
-#define SPMC_AD5791_REFV 5.0 // DAC AD5791 Reference Volatge is 5.000000V (+/-5V Range)
-#define SPMC_AD5791_to_volts (SPMC_AD5791_REFV / QN(31))
-#define SPMC_RPIN12_REFV 1.0 // RP RF DACs Reference Voltage is 1.0V (+/-1V Range)
-#define SPMC_RPIN12_to_volts (SPMC_RPIN12_REFV / QN(31))
-#define SPMC_RPIN34_REFV 5.0 // RP AD463-24 DACs Reference Voltage is 5.0V (Differential +/-5V Range)
-#define SPMC_RPIN34_to_volts (SPMC_RPIN34_REFV / QN(31))
 
 // Masks MUST BE unique **** max # signal: 32  (graphs_matrix[][32] fix size! Unused=uninitialized.)
 SOURCE_SIGNAL_DEF rpspmc_source_signals[] = {
@@ -157,7 +134,7 @@ SOURCE_SIGNAL_DEF rpspmc_source_signals[] = {
         { 0x00100000, "X-Scan",   " ", "AA", UTF8_ANGSTROEM, SPMC_AD5791_to_volts, PROBEDATA_ARRAY_XS, 0 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x00200000, "Y-Scan",   " ", "AA", UTF8_ANGSTROEM, SPMC_AD5791_to_volts, PROBEDATA_ARRAY_YS, 0 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x00400000, "Z-Scan",   " ", "AA", UTF8_ANGSTROEM, SPMC_AD5791_to_volts, PROBEDATA_ARRAY_ZS, 0 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
-        { 0x00800000, "Bias",     " ", "V",             "V", SPMC_AD5791_to_volts, PROBEDATA_ARRAY_U,  0 },
+        { 0x00800000, "Bias",     " ", "V",             "V", SPMC_AD5791_to_volts, PROBEDATA_ARRAY_U,  0 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x08000000, "AA",       " ", "V",             "V", SPMC_AD5791_to_volts, PROBEDATA_ARRAY_AA, -1 },
         { 0x10000000, "BB",       " ", "V",             "V", SPMC_AD5791_to_volts, PROBEDATA_ARRAY_BB, -1 },
         { 0x20000000, "PHI",      " ", "deg",         "deg",                  1.0, PROBEDATA_ARRAY_PHI, -1 },
@@ -168,7 +145,7 @@ SOURCE_SIGNAL_DEF rpspmc_source_signals[] = {
         { 0x00000002, "YS-Mon",       " ", "AA", UTF8_ANGSTROEM,                   SPMC_AD5791_to_volts, PROBEDATA_ARRAY_S2,  2 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x00000004, "ZS-Topo",      " ", "AA", UTF8_ANGSTROEM,                   SPMC_AD5791_to_volts, PROBEDATA_ARRAY_S3,  3 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x00000008, "Bias-Mon",     " ", "V",             "V",                   SPMC_AD5791_to_volts, PROBEDATA_ARRAY_S4,  4 }, // BiasFac, see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
-        { 0x00000010, "Current",      " ", "nA",           "nA",                   SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S5,  5 }, // processed tunnel current signal "Volts" here, to nA/pA later!!!
+        { 0x00000010, "Current",      " ", "nA",           "nA",              256.*SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S5,  5 }, // processed tunnel current signal "Volts" here, to nA/pA later!!! ADJUST W MUX!!!
         { 0x00000020, "IN2-RF-FIR",   " ", "V",             "V",                   SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S6,  6 }, // IN2 RP 125MSPS (RF input, FIR, routable to Z-Servo Control as tunnel current signal)!
         { 0x00000040, "IN3-AD463-24-CHA", " ", "V",         "V",                   SPMC_RPIN34_to_volts, PROBEDATA_ARRAY_S7,  7 }, // IN3 ADC4630-24-A 2MSPS (routable to Z-Servo Control as tunnel current signal)
         { 0x00000080, "IN4-AD463-24-CHB", " ", "V",         "V",                   SPMC_RPIN34_to_volts, PROBEDATA_ARRAY_S8,  8 }, // IN4 ADC4630-24-B 2MSPS
@@ -215,9 +192,9 @@ SOURCE_SIGNAL_DEF swappable_signals[] = {                                       
 SOURCE_SIGNAL_DEF modulation_targets[] = {
         //  SIGNAL #  Name               Units.... Scale
         { 0x00000000, "None/OFF",    " ",  "-",  "-", 0.0,                          0, 0 },
-        { 0x00000001, "X-Scan",      " ", "AA", UTF8_ANGSTROEM, 1./XAngFac, 0, 0 }, // scale_factor to get "Volts" or RP base unit for signal
-        { 0x00000002, "Y-Scan",      " ", "AA", UTF8_ANGSTROEM, 1./YAngFac, 0, 0 },
-        { 0x00000003, "Z-Scan",      " ", "AA", UTF8_ANGSTROEM, 1./ZAngFac, 0, 0 },
+        { 0x00000001, "X-Scan",      " ", "AA", UTF8_ANGSTROEM, 1., 0, 0 }, // scale_factor to get "Volts" or RP base unit for signal
+        { 0x00000002, "Y-Scan",      " ", "AA", UTF8_ANGSTROEM, 1., 0, 0 }, //
+        { 0x00000003, "Z-Scan",      " ", "AA", UTF8_ANGSTROEM, 1., 0, 0 }, //
         { 0x00000004, "Bias",        " ", "mV",           "mV", 1e-3/BiasFac, 0, 0 },
         { 0x00000005, "A",           " ", "V",             "V", 1., 0, 0 },
         { 0x00000006, "B",           " ", "V",             "V", 1., 0, 0 },
@@ -229,8 +206,8 @@ SOURCE_SIGNAL_DEF modulation_targets[] = {
 
 SOURCE_SIGNAL_DEF z_servo_current_source[] = {
         //  SIGNAL #  Name               Units.... Scale (not needed or used from here)
-        { 0x00000000, "IN2-RF",          " ",  "nA",  "nA",     SPMC_RPIN12_to_volts, 0, 0 },
-        { 0x00000001, "IN3-AD463-24-CHA"," ",  "nA",  "nA",     SPMC_RPIN34_to_volts, 0, 0 },
+        { 0x00000000, "IN2-RF",          " ",  "nA",  "nA", 256.*SPMC_RPIN12_to_volts, 0, 0 },
+        { 0x00000001, "IN3-AD463-24-CHA"," ",  "nA",  "nA", 256.*SPMC_RPIN34_to_volts, 0, 0 },
         { 0x00000016,  NULL, NULL, NULL, NULL, 0.0, 0 }
 };
 
@@ -1512,6 +1489,8 @@ int RPSPMC_Control::choice_Ampl_callback (GtkWidget *widget, RPSPMC_Control *spm
 
 	PI_DEBUG (DBG_L2, "Ampl: Ch=" << j << " i=" << i );
 	rpspmc_pacpll_hwi_pi.app->spm_range_check(NULL, rpspmc_pacpll_hwi_pi.app);
+
+        rpspmc_hwi->update_hardware_mapping_to_rpspmc_source_signals ();
         
 	return 0;
 }
@@ -3580,7 +3559,14 @@ int RPSPMC_Control::choice_z_servo_current_source_callback (GtkWidget *widget, R
         
         if (rpspmc_pacpll)
                 rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_SRC_MUX", id);
-        
+
+        for (int k=0; rpspmc_source_signals[k].mask; ++k)
+                if (rpspmc_source_signals[k].mask == 0x00000010){ // update as of 1V/5V "Current Input" Volt Scale Range Change from signal list
+                        rpspmc_source_signals[k].scale_factor = z_servo_current_source[id].scale_factor; break;
+                }
+
+        // rpspmc_hwi->update_hardware_mapping_to_rpspmc_source_signals (); // not required as mapping to volts is done with the above
+
         return 0;
 }
 

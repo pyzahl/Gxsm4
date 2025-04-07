@@ -91,20 +91,7 @@ rpspmc_hwi_dev::rpspmc_hwi_dev():RP_stream(this){
                 set_spmc_signal_mux (defaults);
         }
         
-        // use SOURCE_SIGNAL_DEF rpspmc_source_signals[] table to auto configure
-        for (int i=0; rpspmc_source_signals[i].label; ++i){ // name
-                g_message ("Reading SOURCE_SIGNALS[%d]",i);
-                g_message ("Reading SOURCE_SIGNALS[%d].mask %x",i,rpspmc_source_signals[i].mask);
-                g_message ("Reading SOURCE_SIGNALS[%d].label >%s<",i,rpspmc_source_signals[i].label);
-                g_message ("SOURCE_SIGNAL_DEF %02d for %s mask: 0x%08x L: %s U: %s  x %g",
-                           rpspmc_source_signals[i].scan_source_pos-1,
-                           rpspmc_source_signals[i].label, rpspmc_source_signals[i].mask, // name
-                           rpspmc_source_signals[i].label, rpspmc_source_signals[i].unit, rpspmc_source_signals[i].scale_factor);
-                if (rpspmc_source_signals[i].scan_source_pos > 0)
-                        main_get_gapp()->channelselector->ConfigureHardwareMapping (rpspmc_source_signals[i].scan_source_pos-1,
-                                                                                    rpspmc_source_signals[i].label, rpspmc_source_signals[i].mask, // name
-                                                                                    rpspmc_source_signals[i].label, rpspmc_source_signals[i].unit, 1.0); // conversion to Base Units is in stream expansion applied
-                }
+        update_hardware_mapping_to_rpspmc_source_signals ();
 
         subscan_data_y_index_offset = 0;
         ScanningFlg=0;
@@ -119,6 +106,34 @@ rpspmc_hwi_dev::rpspmc_hwi_dev():RP_stream(this){
 }
 
 rpspmc_hwi_dev::~rpspmc_hwi_dev(){
+}
+
+
+void rpspmc_hwi_dev::update_hardware_mapping_to_rpspmc_source_signals (){
+        // use SOURCE_SIGNAL_DEF rpspmc_source_signals[] table to auto configure (Scan Sources Configrations)
+        for (int i=0; rpspmc_source_signals[i].label; ++i){ // name
+                g_message ("Reading SOURCE_SIGNALS[%d]",i);
+                g_message ("Reading SOURCE_SIGNALS[%d].mask %x",i,rpspmc_source_signals[i].mask);
+                g_message ("Reading SOURCE_SIGNALS[%d].label >%s<",i,rpspmc_source_signals[i].label);
+                g_message ("SOURCE_SIGNAL_DEF %02d for %s mask: 0x%08x L: %s U: %s  x %g",
+                           rpspmc_source_signals[i].scan_source_pos-1,
+                           rpspmc_source_signals[i].label, rpspmc_source_signals[i].mask, // name
+                           rpspmc_source_signals[i].label, rpspmc_source_signals[i].unit, rpspmc_source_signals[i].scale_factor);
+                if (rpspmc_source_signals[i].scan_source_pos > 0){
+                        double volt_to_unit = 1.0;
+                        switch (rpspmc_source_signals[i].mask){
+                        case 0x0001: volt_to_unit = XAngFac; break;
+                        case 0x0002: volt_to_unit = YAngFac; break;
+                        case 0x0004: volt_to_unit = spmc_parameters.gxsm_z_polarity*ZAngFac; break;
+                        case 0x0008: volt_to_unit = BiasFac; break;
+                        case 0x0010: volt_to_unit = CurrFac; break;
+                        }
+                        main_get_gapp()->channelselector->ConfigureHardwareMapping (rpspmc_source_signals[i].scan_source_pos-1,
+                                                                                    rpspmc_source_signals[i].label, rpspmc_source_signals[i].mask, // name
+                                                                                    rpspmc_source_signals[i].label,
+                                                                                    rpspmc_source_signals[i].unit, volt_to_unit); // conversion to Base Units in Volts is in stream expansion applied
+                }
+        }
 }
 
 
@@ -469,9 +484,9 @@ gpointer ScanDataReadThread (void *ptr_hwi){
                 }
         }
 
-        g_message("GVP Data Expanded Lookup table: PVLUT"); for (int dir = 0; dir < 4; ++dir){ for (int ch=0; ch<NUM_PV_DATA_SIGNALS; ch++){g_print ("%02d, ", pvlut[dir][ch]);}g_print ("\n");}
+        // g_message("GVP Data Expanded Lookup table: PVLUT"); for (int dir = 0; dir < 4; ++dir){ for (int ch=0; ch<NUM_PV_DATA_SIGNALS; ch++){g_print ("%02d, ", pvlut[dir][ch]);}g_print ("\n");}
         
-        g_message("FifoReadThread Start");
+        //g_message("FifoReadThread Start");
 
         if (hwi->Mob_dir[hwi->srcs_dir[0] ? 0:1]){
                 ny = hwi->Mob_dir[hwi->srcs_dir[0] ? 0:1][0]->GetNySub(); // number lines to transfer
@@ -588,7 +603,7 @@ gpointer ScanDataReadThread (void *ptr_hwi){
 #endif
                                                 if (hwi->Mob_dir[dir][ch]){
                                                         if (xi >=0 && yi >=0 && xi < hwi->Mob_dir[dir][ch]->GetNx ()  && yi < hwi->Mob_dir[dir][ch]->GetNy ())
-                                                                hwi->Mob_dir[dir][ch]->PutDataPkt (hwi->GVP_vp_header_current.dataexpanded [k], xi, yi); // direct use, skipping pv[] remapping
+                                                                hwi->Mob_dir[dir][ch]->PutDataPkt (hwi->GVP_vp_header_current.dataexpanded [k], xi, yi); // direct use, skipping pv[] remapping ** data is coming in RP base unit Volts
                                                         else
                                                                 g_message ("EEEE xi, yi index out of range: [0..%d-1, 0..%d-1]", hwi->Mob_dir[dir][ch]->GetNx (), hwi->Mob_dir[dir][ch]->GetNy ());
                                                 } else {

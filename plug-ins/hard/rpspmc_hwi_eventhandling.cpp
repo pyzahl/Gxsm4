@@ -131,34 +131,36 @@ const char* RPSPMC_Control::vp_unit_lookup(int i){
         return err_unknown_u;
 }
 
-double RPSPMC_Control::vp_scale_lookup(int i){ // 2nd level scalings to GXSM units, Volt to Ang, Volt to nA, etc.
+// apply life 2nd level scalings (may change at runtime, gains, ...) base Volts to GXSM units, Volt to Ang, Volt to nA, etc.
+double RPSPMC_Control::vp_scale_lookup(int i){
         for (int k=0; rpspmc_source_signals[k].mask; ++k){
                 //g_print ("looking for %d == [%d] in vpsl %20s  [%02d]: %08x,  %g\n",i, rpspmc_source_signals[k].garr_index, rpspmc_source_signals[k].label, i,rpspmc_source_signals[k].mask, rpspmc_source_signals[k].scale_factor);
                 if (rpspmc_source_signals[k].garr_index == i){
                         //g_print ("Found: vpsl[%d]: %08x, ScaleFac= %g\n",i,rpspmc_source_signals[k].mask, rpspmc_source_signals[k].scale_factor);
                         switch (rpspmc_source_signals[k].mask){
-                        case 0x00000010: // CUSTOM auto
-                                if (main_get_gapp()->xsm->Inst->nAmpere2V (1.) > 1.)
-                                        return main_get_gapp()->xsm->Inst->nAmpere2V (1e-3); // choose pA
-                                else
-                                        return main_get_gapp()->xsm->Inst->nAmpere2V (1.); // nA
+                        case 0x00000010: // CUSTOM auto -- must also change unit prefix! can't here
+                                //if (main_get_gapp()->xsm->Inst->nAmpere2V (1.) > 1.)
+                                //        return main_get_gapp()->xsm->Inst->nAmpere2V (1e-3); // choose pA
+                                //else
+                                //        return main_get_gapp()->xsm->Inst->nAmpere2V (1.); // nA
+                                return    CurrFac; // nA
                                 break;
                         case 0x00100000: // function calls...
                         case 0x00000001: 
-                                return main_get_gapp()->xsm->Inst->Volt2XA (1);
+                                return XAngFac;
                         case 0x00200000:
                         case 0x00000002:
-                                return main_get_gapp()->xsm->Inst->Volt2YA (1);
+                                return YAngFac;
                         case 0x00400000:
                         case 0x00000004:
-                                return main_get_gapp()->xsm->Inst->Volt2ZA (1);
+                                return ZAngFac;
                         case 0x00800000:
                         case 0x00000008:
-                                return main_get_gapp()->xsm->Inst->BiasGainV2V ();
+                                return BiasFac;
                         case 0x04000000: // ARRAY_SEC  -- SECTION
-                                return 1.0;
+                                return 1.;
                         default:
-                                return 1.0; // use as defined in source_signals, data is scaled while expanding to base units
+                                return 1.; // use as defined in source_signals, data is scaled while expanding to base units
                         }
                 }
         }
