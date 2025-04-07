@@ -1584,9 +1584,8 @@ ec_gtk_spin_button_sci_input (GtkSpinButton *spin_button,
                 return TRUE;
 }
 
-static void 
-ec_pcs_adjustment_configure (GtkWidget *menuitem, Gtk_EntryControl *gpcs){
-	gpcs->pcs_adjustment_configure ();
+void Gtk_EntryControl::ec_pcs_adjustment_configure_callback (GSimpleAction *action, GVariant *parameter, Gtk_EntryControl *gpcs){
+        gpcs->pcs_adjustment_configure ();
 }
 
 void Gtk_EntryControl::entry_scroll_cb (GtkEventController *controller, gdouble dx, gdouble dy, Gtk_EntryControl *gpcs){
@@ -1624,25 +1623,36 @@ void Gtk_EntryControl::InitRegisterCb(double AdjStep, double AdjPage, double Adj
 	if(fabs (AdjStep) > 1e-22 && get_count () <= 1){ // only master
                 XSM_DEBUG (DBG_L8, "InitRegisterCb -- hookup config menuitem");
 
-                // FIX-ME-GTK4 -- TESTING
-                gchar *cfg_label = g_strconcat ("Configure",
-                                                " ",
-                                                g_object_get_data( G_OBJECT (entry), 
-                                                                   "Adjustment_PCS_Name"),
-                                                NULL);
-                GMenu *menu = g_menu_new ();
-                GMenuItem *menu_item_config = g_menu_item_new (cfg_label, NULL);
-                // *** HOOK CONFIGURE MENUITEM TO ENTRY *** -- issue w gtk4, how???
-                //g_signal_connect (menu_item_config, "activate", G_CALLBACK (ec_pcs_adjustment_configure), this);
-                g_menu_append_item (menu, menu_item_config);
-		if (GTK_IS_SPIN_BUTTON (entry)){
-                        //on_set_extra_menu (GTK_ENTRY (entry), G_MENU_MODEL (menu)); // need equivalent function for spin button!!
-                        gtk_entry_set_extra_menu (GTK_ENTRY (entry), G_MENU_MODEL (menu));
-                } else
-                        gtk_entry_set_extra_menu (GTK_ENTRY (entry), G_MENU_MODEL (menu));
-                g_object_unref (menu_item_config);
-                // TESTING
-                
+
+                if (g_object_get_data( G_OBJECT (entry), "Adjustment_PCS_Name")){ // valid, non NULL?
+
+                        gchar *cfg_label = g_strconcat ("Configure",
+                                                        " ",
+                                                        g_object_get_data( G_OBJECT (entry), 
+                                                                           "Adjustment_PCS_Name"),
+                                                        NULL);
+                        // new G menu model
+                        GMenu *menu = g_menu_new ();
+                        gchar *appactionref = g_strdup_printf ("pcsconfig-%s", g_object_get_data( G_OBJECT (entry), "Adjustment_PCS_Name"));
+                        appactionref = g_ascii_strdown (appactionref, -1);
+                        gchar *appdotlabel = g_strdup_printf ("app.%s", appactionref);
+                        GMenuItem *menu_item_config = g_menu_item_new (cfg_label, appdotlabel);
+                        // HOOK CONFIGURE MENUITEM TO ENTRY's menu
+                        g_menu_append_item (menu, menu_item_config);
+                        g_object_unref (menu_item_config);
+
+                        if (GTK_IS_SPIN_BUTTON (entry)){
+                                //on_set_extra_menu (GTK_ENTRY (entry), G_MENU_MODEL (menu)); // need equivalent function for spin button!!
+                                gtk_entry_set_extra_menu (GTK_ENTRY (entry), G_MENU_MODEL (menu));
+                        } else
+                                gtk_entry_set_extra_menu (GTK_ENTRY (entry), G_MENU_MODEL (menu));
+
+                        // setup actions and hook up config callback 
+                        GSimpleAction *action_config = g_simple_action_new (appactionref, NULL);
+                        g_action_map_add_action (G_ACTION_MAP (main_get_gapp ()->get_application ()), G_ACTION (action_config));
+                        g_signal_connect (action_config, "activate", G_CALLBACK (ec_pcs_adjustment_configure_callback), this);
+                }
+
                 adj = gtk_adjustment_new( Get_dValue (), vMin, vMax, step, page, 0);
 
                 adjcb_handler_id = g_signal_connect (G_OBJECT (adj), "value_changed",

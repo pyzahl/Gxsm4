@@ -56,6 +56,7 @@ module readback_configuration#(
     parameter readback_SRCS_MUX_reg_address   = 100010,
     parameter readback_IN_MUX_reg_address     = 100011,
     parameter readback_AD463x_reg_address     = 100100,
+    parameter readback_uptime_address         = 101900,
     parameter readbackTimingTest_reg_address  = 101999,
     parameter readbackTimingReset_reg_address = 102000,
     parameter readback_RPSPMC_PACPLL_Version  = 199997,
@@ -93,7 +94,10 @@ module readback_configuration#(
     input wire [32-1:0] IN_MUX_SEL,
 
     input wire [32-1:0] rbXa,
-    input wire [32-1:0] rbXb
+    input wire [32-1:0] rbXb,
+    
+    output wire [32-1:0] clock_sec,
+    output wire [32-1:0] clock_8ns_tics
 );
 
     reg [32-1:0]		reg_A=0;
@@ -102,6 +106,9 @@ module readback_configuration#(
     reg [32-1:0]        reg_system_state=0;
     reg                 reg_system_startup=1;
     reg                 once=0;
+
+    reg [32-1:0]        seconds_deci=125000000-1;
+    reg [32-1:0]        seconds_up=0;
         
     assign gpio_dataA = reg_A;
     assign gpio_dataB = reg_B;
@@ -174,6 +181,11 @@ module readback_configuration#(
             reg_A <= 0; 
             reg_B <= 0; 
 	    end
+	    readback_uptime_address:
+	    begin
+            reg_A <= seconds_up;   // FPGA uptime in seconds or monotonouse clock (~136 years before cycling)
+            reg_B <= seconds_deci; // FPGA uptime fraction seconds in 8ns (1/125MHz)
+	    end
         readbackTimingTest_reg_address:
 	    begin
             reg_A <= 125000000; 
@@ -207,6 +219,20 @@ module readback_configuration#(
             once  <= 1;
         end
         endcase
+
+        // FPGA uptime and clock base
+        if (seconds_deci == 0)
+        begin       
+            seconds_deci <= 125000000-1;
+            seconds_up   <= seconds_up + 1;
+        end 
+        else
+        begin
+            seconds_deci <= seconds_deci-1;
+        end
     end    
+
+    assign clock_sec      = seconds_up;
+    assign clock_8ns_tics = seconds_deci;
     
 endmodule

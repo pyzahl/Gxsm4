@@ -293,6 +293,9 @@ class Gtk_EntryControl : public Param_Control{
         static void entry_focus_leave_callback (GtkEventController *controller, gpointer self);
 
 	static void adjustment_callback (GtkAdjustment *adj, Gtk_EntryControl *gpcs);
+
+        static void ec_pcs_adjustment_configure_callback (GSimpleAction *action, GVariant *parameter, Gtk_EntryControl *gpcs);
+        
         static void pcs_adjustment_configure_response_callback (GtkDialog *dialog, int response, gpointer user_data);
 	void pcs_adjustment_configure ();
 	void get_pcs_configuartion ();
