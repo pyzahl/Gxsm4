@@ -70,7 +70,7 @@ global CHV5_gain_list
 global CHV5_gains
 
 CHV5_configuration = {
-        'gain':  [3,3,3],
+        'gain':  [4,4,4],
         'filter': [0,0,0],
         'bw': [0,0,0],
         'target': [0.,0.,0.]
@@ -83,7 +83,7 @@ CHV5_monitor = {
         }
 
 CHV5_gain_list = [3,6,12,24]
-CHV5_gains = [24., 24., 24]
+CHV5_gains = [24., 24., 24.]
 
 
 CHV5_coarse = {
@@ -486,15 +486,14 @@ def on_bw_changed(combo, ii):
                 hv1_adjust (None, position, ii)
 
 
-        
 def get_status():
         global CHV5_monitor
         global xyz_shm
         global CHV5_gains
         xyz=np.ndarray((9,), dtype=np.double, buffer=xyz_shm.buf).reshape((3,3)).T  # X Mi Ma, Y Mi Ma, Z Mi Ma
         CHV5_monitor['monitor']=xyz[0] * CHV5_gains
-        CHV5_monitor['monitor_min']=xyz[1] * CHV5_gains
-        CHV5_monitor['monitor_max']=xyz[2] * CHV5_gains
+        CHV5_monitor['monitor_max']=xyz[1] * CHV5_gains
+        CHV5_monitor['monitor_min']=xyz[2] * CHV5_gains
         return 1
 
 def do_exit(button):

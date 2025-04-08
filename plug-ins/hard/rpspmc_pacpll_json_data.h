@@ -230,7 +230,8 @@ struct SPMC_parameters {
         double xs_monitor; // scan coords
         double ys_monitor;
         double zs_monitor;
-
+        //
+        
         double sc_lck_filter_mode;
         double sc_lck_frequency;
         double sc_lck_volume;

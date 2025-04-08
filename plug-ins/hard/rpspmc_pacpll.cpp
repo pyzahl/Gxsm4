@@ -6318,6 +6318,24 @@ void RPspmc_pacpll::dynamic_graph_draw_function (GtkDrawingArea *area, cairo_t *
         }
 }
 
+/*  SHM memory block for external apps providing all monitors in binary double
+ *
+### Python snippet to read XYZMaMi monitors:
+
+import requests
+import numpy as np
+from multiprocessing import shared_memory
+from multiprocessing.resource_tracker import unregister
+
+xyz_shm = shared_memory.SharedMemory(name='gxsm4rpspmc_monitors')
+unregister(xyz_shm._name, 'shared_memory') ## necessary to prevent python to destroy this shm block at exit :( :(
+
+print (xyz_shm)
+xyz=np.ndarray((9,), dtype=np.double, buffer=xyz_shm.buf).reshape((3,3)).T  # X Mi Ma, Y Mi Ma, Z Mi Ma
+print (xyz)
+
+ *  
+ */
 
 void RPspmc_pacpll::update_shm_monitors (int close_shm){
         const char *rpspmc_monitors = "/gxsm4rpspmc_monitors";
@@ -6348,7 +6366,13 @@ void RPspmc_pacpll::update_shm_monitors (int close_shm){
         }
 
         // Write data to the shared memory
+
+        // XYZ MAX MIN (3x3)
         memcpy  (shm_ptr, spmc_signals.xyz_meter, sizeof(spmc_signals.xyz_meter));
+
+        // Monitors: Bias, reg, set,   GPVU,A,B,AM,FM, MUX, Signal (Current), AD463x[2], XYZ, XYZ0, XYZS
+        memcpy  (shm_ptr+sizeof(spmc_signals.xyz_meter), &spmc_parameters.bias_monitor, 21*sizeof(double));
+
         /*
         sprintf (shm_ptr+512, "XYZ=[[%g %g %g] [%g %g %g] [%g %g %g]]\n",
                  spmc_signals.xyz_meter[0],spmc_signals.xyz_meter[1],spmc_signals.xyz_meter[2],
@@ -6357,6 +6381,8 @@ void RPspmc_pacpll::update_shm_monitors (int close_shm){
                  );
         */
 
+
+        
         if (close_shm){
         
                 // Unmap the shared memory object
