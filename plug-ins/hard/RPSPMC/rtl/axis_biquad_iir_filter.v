@@ -67,7 +67,7 @@ module axis_biquad_iir_filter #(
     /* config address */
     parameter configuration_address = 999
     )(
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN aclk, ASSOCIATED_BUSIF S_AXIS_in:M_AXIS_out:M_AXIS_pass" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN aclk, ASSOCIATED_BUSIF S_AXIS_in:S_AXIS_test:M_AXIS_out:M_AXIS_pass" *)
     input aclk,
     
     input [32-1:0]  config_addr,
@@ -78,6 +78,11 @@ module axis_biquad_iir_filter #(
     input                    S_AXIS_in_tvalid,
 
     input wire axis_decii_clk,
+
+    /* slave axis interface */
+    input [16-1:0] S_AXIS_test_tdata,
+    input          S_AXIS_test_tvalid,
+
     
     /* master axis interface */
     output [signal_width-1:0] M_AXIS_out_tdata,
@@ -102,31 +107,33 @@ module axis_biquad_iir_filter #(
     reg signed [coefficient_width-1:0] a1=0; /* coefficient internal size */
     reg signed [coefficient_width-1:0] a2=0; /* coefficient internal size */
 
+    reg test=0; /* use test signal input */
+    reg [31:0] test_dec=0;
+    reg [31:0] test_decii=0;
+
+    reg signed [signal_width+coefficient_width+internal_extra-1:0] x_b0=0; /* product input */
+    reg signed [signal_width+coefficient_width+internal_extra-1:0] x_b1=0; /* product input */
+    reg signed [signal_width+coefficient_width+internal_extra-1:0] x_b2=0; /* product input */
+    reg signed [signal_width+coefficient_width+2*internal_extra-1:0] y_a1=0; /* product output */
+    reg signed [signal_width+coefficient_width+2*internal_extra-1:0] y_a2=0; /* product output */
     
-    reg signed [signal_width+internal_extra-1:0] x1=0; /* input data pipeline */
-    reg signed [signal_width+internal_extra-1:0] x2=0; /* input data pipeline */
-    reg signed [signal_width+internal_extra-1:0] y1=0; /* output data pipeline */
-    reg signed [signal_width+internal_extra-1:0] y1_tmpx=0; /* output data pipeline */
-    reg signed [signal_width+internal_extra-1:0] y1_tmpy=0; /* output data pipeline */
-    reg signed [signal_width+internal_extra-1:0] y2=0; /* output data pipeline */
-    
-    reg signed [signal_width+internal_extra + coefficient_width-1:0] x_b0=0; /* product input */
-    reg signed [signal_width+internal_extra + coefficient_width-1:0] x_b1=0; /* product input */
-    reg signed [signal_width+internal_extra + coefficient_width-1:0] x_b2=0; /* product input */
-    reg signed [signal_width+internal_extra + coefficient_width-1:0] y_a1=0; /* product output */
-    reg signed [signal_width+internal_extra + coefficient_width-1:0] y_a2=0; /* product output */
+    reg signed [signal_width-1:0] x1=0; /* input data pipeline */
+    reg signed [signal_width-1:0] x2=0; /* input data pipeline */
+    reg signed [signal_width+coefficient_width+2*internal_extra-1:0] y1_tmpx=0; /* output data pipeline prod tmp */
+    reg signed [signal_width+coefficient_width+2*internal_extra-1:0] y1_tmpy=0; /* output data pipeline prod tmp */
+    reg signed [signal_width+2*internal_extra-1:0] y1=0; /* output data pipeline */
+    reg signed [signal_width+2*internal_extra-1:0] y2=0; /* output data pipeline */
     
     reg decii_clk=0;
+    reg decii_clk1=0;
     reg [1:0] run=0;
     
-
-    assign M_AXIS_pass_tdata  = S_AXIS_in_tdata;
-    assign M_AXIS_pass_tvalid = S_AXIS_in_tvalid;
 
 
     /* pipeline registers */
     always @(posedge aclk)
     begin
+        decii_clk <= axis_decii_clk;
         // module configuration
         if (config_addr == configuration_address) // BQ configuration, and auto reset
         begin
@@ -136,71 +143,88 @@ module axis_biquad_iir_filter #(
             a0 <= config_data[4*32-1 : 3*32]; // *** not used here, template
             a1 <= config_data[5*32-1 : 4*32];
             a2 <= config_data[6*32-1 : 5*32];
+            test <= config_data[6*32 : 6*32];
+            test_dec <= config_data[8*32-1 : 7*32];
             resetn <= 0;                     
         end
-        else // run
-            resetn <= 1;
-            decii_clk <= axis_decii_clk;                     
-    end    
-
-    
-    // pipeline of registers
-
-    always @(posedge aclk)
-    //always @(posedge axis_decii_clk)
-    begin              
-        if (!resetn) begin
-            x1 <= 0;
-            x2 <= 0;
-            y1 <= 0;
-            y2 <= 0;
-            x_b0  <= 0;
-            x_b1  <= 0;
-            x_b2  <= 0;
-            y_a1 <= 0;
-            y_a2 <= 0;
-        end
         else
-        begin
-            if (decii_clk) // run at decimated rate as given by axis_decii_clk
-            begin
-                run <= 1; // start
+        begin // run
+            resetn <= 1;
+            if (!resetn) begin
+                x  <= 0;
+                x1 <= 0;
+                x2 <= 0;
+                y1 <= 0;
+                y2 <= 0;
+                x_b0  <= 0;
+                x_b1  <= 0;
+                x_b2  <= 0;
+                y_a1 <= 0;
+                y_a2 <= 0;
+                y1_tmpx <= 0; 
+                y1_tmpy <= 0; 
+                run <= 0;
             end
             else
-            begin         
-                case (run) // split up in two steps as we are always highly deciamted plenty of time
+            begin
+                case (run) // split up in wait and two steps as we are always highly deciamted plenty of time
+                    0:
+                    begin
+                        if (test)
+                        begin
+                            if (test_decii == 0)
+                            begin
+                                test_decii <= test_dec;
+                                run <= 1;
+                            end 
+                            else
+                            begin
+                                test_decii <= test_decii-1;
+                                run <= 0;
+                            end
+                        end
+                        else
+                            run <= decii_clk ? 1:0; // wait for next trigger/new data
+                    end
                     1:
-                    begin 
-                        run <= run+1;
-                        x   <= S_AXIS_in_tdata; // load next input
-                        x1  <= x;               // stage input pipe line with x
-                        x2  <= x1;
+                    begin // start processing run at decimated rate as given by axis_decii_clk
+                        run <= 2; // state 2 to finsh processing next
+                        decii_clk1 <= decii_clk;
+                        x   <= test ? $signed(S_AXIS_test_tdata) <<< (signal_width-16) : S_AXIS_in_tdata; // load next input from test signal or LockIn
+                        x1  <= x;               // stage input pipe line  n-1    ""
+                        x2  <= x1;              // stage input pipe line  n-2    ""
 
-                        x_b0  <= b0 * x;   // IIR 1st stage (n)
-                        x_b1  <= b1 * x1; // IIR 1st stage (n-1)
-                        x_b2  <= b2 * x2;
+                        x_b0  <= b0 * x;  // IIR 0st stage (n) compute:            [signal_width+coefficient_width]  SQ 32 + 32 = SQ64
+                        x_b1  <= b1 * x1; // IIR 1st stage (n-1)                          ""
+                        x_b2  <= b2 * x2; // IIR 2nd stage (n-2)                          ""
 
+                        // summing with internal_extra
                         //y1  <= (x_b0 + x_b1 + x_b2 - y_a1 - y_a2) >>> (coefficient_Q-internal_extra);
-                        y1_tmpx  <= x_b0 + x_b1 + x_b2;
-                        y1_tmpy  <= y_a1 + y_a2;
-                    end                
+                        y1_tmpx  <= (x_b0 + x_b1 + x_b2) <<< (internal_extra); // tmp summing point LHS:   [signal_width+coefficient_width+internal_extra] = SQ68 -- bring up to internal width
+                        y1_tmpy  <=  y_a1 + y_a2;                              // tmp summing point RHS:   [signal_width+coefficient_width+internal_extra] = SQ68
+                    end                 
                     2: // continue with results
                     begin
-                        run <= 0;
-                        y1  <= (y1_tmpx - y1_tmpy) >>> (coefficient_Q-internal_extra);
-                        y2  <= y1;
+                        if (test)
+                            run <= 0;
+                        else
+                            run = decii_clk || decii_clk1 ? 1:0; // wait for next trigger/new data
+                        y1  <= (y1_tmpx - y1_tmpy) >>> coefficient_Q; // compute result y[n], normalize  => [signal_width+internal_extra]  SQ32 + 4 = SQ 36
+                        y2  <= y1;       // 2nd stage result pipe line (n-2)
                         
-                        y_a1 <= a1 * y1;
-                        y_a2 <= a2 * y2;    
+                        y_a1 <= a1 * y1; // compute RHS 1st stage  (n-1)  [signal_width+internal_extra + coefficient_width]  SQ 32 + 32 = SQ64
+                        y_a2 <= a2 * y2; // compute RHS 2nd stage  (n-2)  [signal_width+internal_extra + coefficient_width]  SQ 32 + 32 = SQ64    
                     end                
                 endcase
-            end
-        end    
-
-        y <= y1 >>> (internal_extra);
+            end    
+            y <= y1 >>> (internal_extra); // update output, normalize from internal width
+        end
     end       
    
     assign M_AXIS_out_tdata  = y;
     assign M_AXIS_out_tvalid = S_AXIS_in_tvalid;
+
+    assign M_AXIS_pass_tdata  = x;
+    assign M_AXIS_pass_tvalid = S_AXIS_in_tvalid;
       
 endmodule

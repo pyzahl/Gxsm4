@@ -209,7 +209,7 @@ class BuildParam{
         };
 
         GtkWidget* grid_add_input(const gchar* labeltxt=NULL, gint nx=1, GtkWidget *opt_label_widget=NULL, gint lwx=1){
-                GtkWidget *label;
+                //GtkWidget *label;
 
                 if (labeltxt){
                         label = gtk_label_new (labeltxt);
@@ -283,12 +283,15 @@ class BuildParam{
                         rid = g_strconcat (remote_prefix, remote_id, arr, NULL); // do not free, keep
                 if (arr)
                         g_free (arr);
-                
+
+#if 1 // disable/obsolete SPIN variante
+                input = grid_add_input (N_(label), input_nx);
+#else
                 if (no_spin)
                         input = grid_add_input (N_(label), input_nx);
                 else
                         input = grid_add_spin_input (N_(label), input_nx);
-
+#endif
                 if (input_width_chars > 0)
                         gtk_editable_set_width_chars (GTK_EDITABLE (input), input_width_chars);
                 
@@ -497,7 +500,7 @@ class BuildParam{
 
         // generate ID-KEY for tooltip remote hook
         const gchar* PYREMOTE_CHECK_HOOK_KEY_FUNC(const gchar* tt, const gchar *idkey, int k=-1){
-                g_message ("PYREMOTE_CHECK_HOOK_KEY_FUNC: %s. %s%s%02d)",tt,PYREMOTE_CHECK_HOOK_KEY_PREFIX,idkey,k);
+                //g_message ("PYREMOTE_CHECK_HOOK_KEY_FUNC: %s. %s%s%02d)",tt,PYREMOTE_CHECK_HOOK_KEY_PREFIX,idkey,k);
                 if (k >= 0)
                         return g_strdup_printf ("%s. %s%s%02d)",tt,PYREMOTE_CHECK_HOOK_KEY_PREFIX,idkey,k);
                 else
@@ -508,9 +511,11 @@ class BuildParam{
         GtkWidget* grid_add_check_button_remote_enabled (const gchar* labeltxt, const char *tooltip=NULL, int bwx=1,
                                                          GCallback cb=NULL, gpointer data=NULL, guint64 source=0, guint64 mask=0, const gchar *control_id=NULL);
         
-        GtkWidget* grid_add_check_button (const gchar* labeltxt, const char *tooltip=NULL, int bwx=1, GCallback cb=NULL, gpointer data=NULL, int source=0, int mask=0);
+        GtkWidget* grid_add_check_button_simple (const gchar* labeltxt, const gchar *tooltip=NULL, gboolean checked=false);
+        
+        GtkWidget* grid_add_check_button (const gchar* labeltxt, const gchar *tooltip=NULL, int bwx=1, GCallback cb=NULL, gpointer data=NULL, int source=0, int mask=0);
 
-        GtkWidget* grid_add_check_button_guint64(const gchar* labeltxt, const char *tooltip=NULL, int bwx=1, GCallback cb=NULL, gpointer data=NULL, guint64 source=0, guint64 mask=0, const gchar *control_id=NULL);
+        GtkWidget* grid_add_check_button_guint64(const gchar* labeltxt, const gchar *tooltip=NULL, int bwx=1, GCallback cb=NULL, gpointer data=NULL, guint64 source=0, guint64 mask=0, const gchar *control_id=NULL);
 
         GtkWidget* grid_add_exec_button (const gchar* labeltxt,
                                          GCallback exec_cb, gpointer cb_data, const gchar *control_id,
@@ -745,7 +750,8 @@ class BuildParam{
                 Gtk_EntryControl *ec_tmp = (Gtk_EntryControl*)data;
                 delete ec_tmp;
         };
-        static void update_ec(Gtk_EntryControl* ec, gpointer data){ ec->Put_Value(); };
+        static void update_parameter(Gtk_EntryControl* ec, gpointer data){ ec->Set_Parameter (); }; // force update parameter from entry text
+        static void update_ec(Gtk_EntryControl* ec, gpointer data){ ec->Put_Value (); }; // update entry text from parameter
         void update_all_ec () { g_slist_foreach (ec_list, (GFunc) BuildParam::update_ec, NULL); };
         void delete_all_ec () {
                g_slist_free_full (ec_list, BuildParam::delete_ec);

@@ -1717,6 +1717,9 @@ void VObPoint::update_scanposition(){
                ); // G-IDLE ME
 
 	main_get_gapp ()->spm_update_all ();
+
+        //main_get_gapp ()->xsm->RedrawScans (); // force redraw to update tip pos
+        
 }
 
 

@@ -116,7 +116,15 @@ public:
         GSList* GetActiveScanList(){ return active_scan_list;  };
   
         Scan *GetScanChannel (int ch) { if (ch >=0 && ch < MAX_CHANNELS) return scan[ch]; else return NULL; };
-  
+
+        void RedrawScans (){
+                for (int i=0; i<MAX_CHANNELS; ++i)
+                        if (ChannelMode[i] > ID_CH_M_X){ // scan data channel!
+                                g_message ("redrawing scan[%d]=%d", i, ChannelMode[i]);
+                                scan[i]->draw ();  // redraw
+                        }
+        };
+        
         /* Data */
 
         int  ActiveChannel;

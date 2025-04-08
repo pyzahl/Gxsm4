@@ -30,6 +30,9 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
+#pragma once
+
+
 #ifndef AD463X_H_
 #define AD463x_H_
 
@@ -122,6 +125,8 @@
 #define AD463X_SPI_COMPATIBLE_MODE	0x00
 #define AD463X_ECHO_CLOCK_MODE		NO_OS_BIT(4)
 #define AD463X_CLOCK_MASTER_MODE	NO_OS_BIT(5)
+
+
 /* POWER MODE */
 #define AD463X_NORMAL_MODE 		0x00
 #define AD463X_LOW_POWER_MODE		(NO_OS_BIT(1) | NO_OS_BIT(0))
@@ -131,6 +136,7 @@
 #define AD463X_REG_READ_DUMMY		0x00
 #define AD463X_REG_WRITE        	0x00
 #define AD463X_REG_READ		    	NO_OS_BIT(7)
+#define AD463X_REG_READ_B15     	NO_OS_BIT(15)
 #define AD463X_REG_CHAN_OFFSET(ch, pos)	(AD463X_REG_OFFSET_BASE + (3 * ch) + pos)
 #define AD463X_REG_CHAN_GAIN(ch, pos)	(AD463X_REG_GAIN_BASE + (2 * ch) + pos)
 /* IO */
@@ -224,6 +230,8 @@ struct ad463x_init_param {
 	int32_t vref;
 	/** Output Mode */
 	uint8_t output_mode;
+	/** spi clock divider from 125MHz */
+        uint8_t spi_clock_divider;
 	/** enable spi dma */
 	bool spi_dma_enable;
 	/** enable spi engine offload */
@@ -278,6 +286,8 @@ struct ad463x_dev {
 	uint8_t real_bits_precision;
 	/** pgia availability */
 	bool has_pgia;
+	/** spi clock divider from 125MHz */
+        uint8_t spi_clock_divider;
 	/** enable spi dma */
 	bool spi_dma_enable;
 	/** enable spi engine offload */
@@ -292,12 +302,15 @@ struct ad463x_dev {
 /** Read device register. */
 int32_t ad463x_spi_reg_read(struct ad463x_dev *dev,
 			    uint16_t reg_addr,
-			    uint8_t *reg_data);
+			    uint8_t *reg_data,
+			    int xverbose
+);
 
 /** Write device register */
 int32_t ad463x_spi_reg_write(struct ad463x_dev *dev,
 			     uint16_t reg_addr,
-			     uint8_t reg_data);
+			     uint8_t reg_data,
+			    int xverbose);
 
 /** Read from device using a mask */
 int32_t ad463x_spi_reg_read_masked(struct ad463x_dev *dev,

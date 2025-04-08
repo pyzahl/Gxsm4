@@ -71,7 +71,9 @@
 
 pthread_attr_t stream_server_attr;
 pthread_mutex_t stream_server_mutexsum;
-int stream_server_control = 1;
+int stream_server_control  = 1;
+int spmc_dma_pull_interval = 20; // 10ms and less: hi performace data moving mode, 100ms works great as conservative default DMA pull/check intervall to push to socket
+
 static pthread_t stream_server_thread;
 
 extern spmc_stream_server spmc_stream_server_instance;
@@ -104,30 +106,240 @@ inline unsigned int stream_lastwrite_address(){
 
 
 void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
+        static int millisec_since_last_send=0;
+        millisec_since_last_send += spmc_dma_pull_interval;
+
+        // Check of WebSocket Error Conditon
         if (ec) {
                 // there was an error, stop telemetry
                 m_endpoint.get_alog().write(websocketpp::log::alevel::app,
                                             "Stream Server Timer Error: "+ec.message());
-                set_timer(100);
+                set_timer (spmc_dma_pull_interval);
                 return;
         }
 
-#if 1
-        {       // make sure all got send
-                size_t webs_nbuf=getBufferedAmount();
-                if (webs_nbuf > 0){
-                        fprintf(stderr, "** Skipping ** WebSocket Buffered Amount: %d\n", webs_nbuf);
-                        set_timer(100);
-                        return;
-                }
+        // make sure all data got send out to Socket/Ethernet, if NOT -- post pone task by a update cycle
+        size_t webs_nbuf=getBufferedAmount();
+        if (webs_nbuf > 0){
+                fprintf (stderr, "** Skipping ** WebSocket Buffered Amount: %d\n", webs_nbuf);
+                set_timer (spmc_dma_pull_interval);
+                return;
         }
-#endif
         
         std::stringstream position_info;
         static bool started = false;
         static bool data_valid = false;
         static int position_prev=0;
         int stream_position_info_count=0;
+        int DMA_lag=-1;
+        static int DDposition = 0;
+        static int DDposition_prev = 0;
+        
+        unsigned int *dma_mem = spm_dma_instance->dma_memdest (); // 2M total, for descriptors (unavalabale for data) and two DMA blocks a 0x80000 bytes at this address
+
+        // HACK to manage DMA lag andposition as of "unknown" -- or no way figured to read the actual DMA last write position on A9 side visible
+        if (started && (DDposition_prev != DDposition)){
+                // clear/invalidate already send mem with 0xdddddddd
+                int n  = DDposition_prev < DDposition ? DDposition - DDposition_prev : 0;
+                // fprintf(stderr, "*** Clearing Send Block w DDDDDDDD: [%08x : %08x] size= %d ***\n", DDposition_prev, DDposition, n);
+                if (n > 0){
+                        if (!(stream_debug_flags & 2))
+                                memset((void*)(&dma_mem[DDposition_prev]), 0xdd, n*sizeof(uint32_t));
+                } else {
+                        fprintf(stderr, "*** DMA CYCLING detected [%08x : %08x] ***\n", DDposition_prev, DDposition);
+                        n = BLKSIZE-DDposition_prev;
+                        if (n > 0){
+                                if (!(stream_debug_flags & 2))
+                                        memset((void*)(&dma_mem[DDposition_prev]), 0xdd, n*sizeof(uint32_t));
+                        }
+                        n = DDposition;
+                        if (n > 0){
+                                if (!(stream_debug_flags & 2))
+                                        memset((void*)(&dma_mem[0]), 0xdd, n*sizeof(uint32_t));
+                        }
+                }
+                DDposition_prev = DDposition = 0;
+        }
+
+        // read current data position as of FPGA has pushed it into DMA from PL side, there is a small lag to when it show in PS side here!
+        int position = stream_lastwrite_address();
+        
+        // Start Stream Info Stream
+        position_info << "StreamInfo:{";
+
+        // Stream Server State Control
+        if (stream_server_control & 2){ // START SERVER!
+                stream_server_control ^= 2; // remove start flag now
+                count = 0;
+                position_prev=0;
+                DDposition = DDposition_prev = 0;
+                position_info << "RESET:{true},Position:{0x00},Count:{0}";
+                started = true;
+                data_valid = false;
+                stream_position_info_count++;
+        }
+        
+        if (stream_server_control & 4){ // STOP, ABORT or END SERVER task, idle!
+                stream_server_control = 1; // remove flags
+                position_info << "STOPPED:{true}";
+                started = false;
+                DDposition = 0;
+                DDposition_prev = 0;
+                stream_position_info_count++;
+        }
+
+        // new FPGA side data?
+        bool new_data = (position != position_prev);
+
+        // use delayed position_prev
+        if (started){ // started?
+
+                // check for valid header
+
+                if (!data_valid && (dma_mem[0] & 0xffff) == 0xffff)
+                        data_valid = true;
+               
+                if (data_valid && new_data){
+                        int lag=0;
+
+                        // check data: three consecutive positions been reset until valid data detected *** or if non <==> max lag <==> emptied BUFFER, wait!
+                        position += BLKSIZE; // cycling save pos side
+                        while (dma_mem[(position)%BLKSIZE] == 0xdddddddd && dma_mem[(position+1)%BLKSIZE] == 0xdddddddd && dma_mem[(position+2)%BLKSIZE] == 0xdddddddd && lag < 202)
+                                position--, lag++;
+
+                        position = position % BLKSIZE;
+
+                        if (lag > 200) { // can't find new data -- i.e. all send off, slow data stream -- wait!
+                                position = position_prev; // fall back, retry -- DMA BUFFER "empty" <=> looks like max lag situation
+                        }
+                        DMA_lag=lag; // should be less than about 30, typicall: 10..20
+                }
+
+                // udpate: do wehave actual new DMA moved, PS side data?
+                new_data = (position != position_prev); // update after lag adjust
+
+                
+                // WAIT FOR LAST DATA HACK -- need to fix via DMA WRITE ADDRESS (spm_dma_instance->get_dmaps_DAn_offset(0)) ?!?! no clue about the Arm catacombs here, did not worked, I tried and countless spend nights with frustration....
+                if (data_valid && new_data && gvp_finished ()){
+
+                        position = stream_lastwrite_address();
+                        fprintf(stderr, "GVP Finished pos=0x%08x\n", position);
+                        position_info << "END,FinishedNext:{true}" << std::hex <<  ",Position:{0x" << position << std::dec << "},Count:{" << count << "},";
+
+                        // wait for DMA to complete last bytes if any
+                        int k=20;
+                        int lag=0;
+                        do{
+                                lag=0;
+                                position = stream_lastwrite_address();
+                                position += BLKSIZE;
+                                while (dma_mem[position%BLKSIZE] == 0xdddddddd && dma_mem[(position+1)%BLKSIZE] == 0xdddddddd && dma_mem[(position+2)%BLKSIZE] == 0xdddddddd && lag < 202) // check three consecutive positions been reset
+                                        position--, lag++;
+                                position = position % BLKSIZE;
+
+                                fprintf(stderr, "GVP FINISHED ** WAITING FOR DMA TO COMPLETE @ position = %08x, lag = %d\n", position, lag);
+                                if (lag > 0) usleep(10000);
+                        } while (lag > 0 && k-- > 0);
+
+                        fprintf(stderr, "GVP FINISHED. Stream server on standy after last package send out.\n");
+
+                        stream_server_control = (stream_server_control & 0x01) | 4; // set stop bit
+                }
+        }
+
+        // Stream Position Info and Auto Throttle Control
+        if ( data_valid && new_data ){
+                int N = position_prev < position ? position - position_prev : position_prev - position;
+                if (N < 0x5000 && millisec_since_last_send < 100) // at least 5kB data or no later than 100ms -- else auto throttle
+                        new_data = false; // post pone!
+                else {
+                        position_info <<  std::hex <<  "Position:{0x" << position_prev << std::dec << "},Count:{" << count << "},DMAlag:{" << DMA_lag << "},tl:{" <<  millisec_since_last_send  << "ms}";
+                        stream_position_info_count++;
+                        millisec_since_last_send = 0; // clear as data is been send below now!
+                }
+        }
+        if (stream_position_info_count > 0) // terminate stream JSON syntax block
+                position_info << "}" << std::endl;
+
+        // Broadcast to all connections
+        con_list::iterator it;
+        int connection=false;
+        for (it = m_connections.begin(); it != m_connections.end(); ++it) {
+                if (it == m_connections.end()) break;
+                connection=true;
+                if (info_count > 0)
+                        m_endpoint.send(*it, info_stream.str(), websocketpp::frame::opcode::text);
+
+                if (stream_position_info_count > 0)
+                        m_endpoint.send(*it, position_info.str(), websocketpp::frame::opcode::text);
+
+                if (data_valid && new_data){
+                        // *** SEND NEW DATA ***
+                        
+                        int n  = position_prev < position ? position - position_prev : 0;
+                        
+                        // send full block(s) ** GOOD, SIMPLE, FAST :)
+                        if (n > 0){
+                                m_endpoint.send(*it, (void*)(&dma_mem[position_prev]), n*sizeof(uint32_t), websocketpp::frame::opcode::binary);
+                        } else {
+                                n = BLKSIZE-position_prev;
+                                if (n > 0)
+                                        m_endpoint.send(*it, (void*)(&dma_mem[position_prev]), n*sizeof(uint32_t), websocketpp::frame::opcode::binary);
+
+                                n = position;
+                                if (n > 0)
+                                        m_endpoint.send(*it, (void*)(&dma_mem[0]), n*sizeof(uint32_t), websocketpp::frame::opcode::binary);
+                                count++;
+                        }
+                } 
+        }
+        
+        if (connection){
+                if (data_valid && new_data){
+                        DDposition = position;
+                        DDposition_prev = position_prev;
+                        // update last position now
+                        position_prev=position;
+                }
+        }
+        
+        clear_info_stream ();
+
+        // set timer for next run
+        set_timer (spmc_dma_pull_interval);
+}
+
+
+
+#if 0 // ================ FULL VERSION WITH ALL DBG STUFF, STRIPPED ABOVE
+
+void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
+        static int millisec_since_last_send=0;
+        millisec_since_last_send += spmc_dma_pull_interval;
+
+        // Check of WebSocket Error Conditon
+        if (ec) {
+                // there was an error, stop telemetry
+                m_endpoint.get_alog().write(websocketpp::log::alevel::app,
+                                            "Stream Server Timer Error: "+ec.message());
+                set_timer (spmc_dma_pull_interval);
+                return;
+        }
+
+        // make sure all data got send out to Socket/Ethernet, if NOT -- post pone task by a update cycle
+        size_t webs_nbuf=getBufferedAmount();
+        if (webs_nbuf > 0){
+                fprintf (stderr, "** Skipping ** WebSocket Buffered Amount: %d\n", webs_nbuf);
+                set_timer (spmc_dma_pull_interval);
+                return;
+        }
+        
+        std::stringstream position_info;
+        static bool started = false;
+        static bool data_valid = false;
+        static int position_prev=0;
+        int stream_position_info_count=0;
+        int DMA_lag=-1;
         static int DDposition = 0;
         static int DDposition_prev = 0;
         
@@ -136,7 +348,8 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
         //#define DBG_PRINT_LAG
         //#define MEM_DUMP_ON
         //#define MEM_DUMP_CYCLE_ON
-        
+
+        // HACK to manage DMA lag andposition as of "unknown" -- or no way figured to read the actual DMA last write position on A9 side visible
 #define CLEAR_SEND_DMA_MEM
 #ifdef CLEAR_SEND_DMA_MEM
         if (started && (DDposition_prev != DDposition)){
@@ -175,10 +388,9 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
         }
 #endif
 
-
-        
+        // read current data position as of FPGA has pushed it into DMA from PL side, there is a small lag to when it show in PS side here!
         int position = stream_lastwrite_address();
-
+        
 //#define POSITION_TICS
 #ifdef  POSITION_TICS
         static int p__pos=0;
@@ -191,36 +403,34 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
                 p__sc  = stream_server_control;
         }
 #endif
-        
-        position_info << "{StreamInfo::";
 
-        if (stream_server_control == 1){
-                ; //started = false;
-        }                
-        
-        if (stream_server_control & 2){ // started!
+        // Start Stream Info Stream
+        position_info << "StreamInfo:{";
+
+        // Stream Server State Control
+        if (stream_server_control & 2){ // START SERVER!
                 stream_server_control ^= 2; // remove start flag now
                 count = 0;
-                position=0;
                 position_prev=0;
-                DDposition = 0;
-                DDposition_prev = 0;
-                position_info <<  std::hex <<  ",Position:{0x" << position_prev << std::dec << "},Count:{" << count << "}";
-                position_info << "RESET:{true},";
+                DDposition = DDposition_prev = 0;
+                position_info << "RESET:{true},Position:{0x00},Count:{0}";
                 started = true;
                 data_valid = false;
                 stream_position_info_count++;
         }
         
-        if (stream_server_control & 4){ // stopped!
+        if (stream_server_control & 4){ // STOP, ABORT or END SERVER task, idle!
                 stream_server_control = 1; // remove flags
-                position_info << "STOPPED:{true},";
+                position_info << "STOPPED:{true}";
                 started = false;
                 DDposition = 0;
                 DDposition_prev = 0;
                 stream_position_info_count++;
         }
-        
+
+        // new FPGA side data?
+        bool new_data = (position != position_prev);
+
         // use delayed position_prev
         if (started){ // started?
 
@@ -228,36 +438,46 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
 
                 if (!data_valid && (dma_mem[0] & 0xffff) == 0xffff)
                         data_valid = true;
-
-                if (data_valid){
+               
+                if (data_valid && new_data){
                         int lag=0;
-#ifdef DBG_PRINT_LAG
-                        fprintf(stderr, "*** Detecting DMA stream END lag ***\n");
-#endif
-                        position += BLKSIZE;
-                        while (position > (BLKSIZE>>1) && dma_mem[position%BLKSIZE] == 0xdddddddd && dma_mem[(position-1)%BLKSIZE] == 0xdddddddd)
+
+                        // check data: three consecutive positions been reset until valid data detected *** or if non <==> max lag <==> emptied BUFFER, wait!
+                        while (dma_mem[(position)%BLKSIZE] == 0xdddddddd && dma_mem[(position+1)%BLKSIZE] == 0xdddddddd && dma_mem[(position+2)%BLKSIZE] == 0xdddddddd && lag < 202)
                                 position--, lag++;
+
                         position = position % BLKSIZE;
-                        if (lag){
-#ifdef DBG_PRINT_LAG
-                                fprintf(stderr, "... position-- lag=%d pos=0x%08x ** DMA_DA0_off=0x%08x\n", lag, position, spm_dma_instance->get_dmaps_DAn_offset(0));
+
+                        if (lag > 200) { // can't find new data -- i.e. all send off, slow data stream -- wait!
+#if 0
+                                position_info << "DMA EMPTY: ALL SEND"; // only for testing, do not bother, do not send too much dbg garbage...
+                                stream_position_info_count++;
 #endif
+                                position = position_prev; // fall back, retry -- DMA BUFFER "empty" <=> looks like max lag situation
+                        }
+                        DMA_lag=lag; // should be less than about 30, typicall: 10..20
+                        
 #ifdef MEM_DUMP_ON
+                        if (lag){
                                 if (position > 64)
                                         if (stream_debug_flags & 5)
                                                 spm_dma_instance->memdump_from (dma_mem, lag+64, position-64);
                                 // for (int dn=0; dn<8; ++dn) fprintf(stderr, " ** DMA_DA%d_off=0x%06x\n", dn, spm_dma_instance->get_dmaps_DAn_offset(dn));
-#endif
                         }
+#endif
                 }
 
+                // udpate: do wehave actual new DMA moved, PS side data?
+                new_data = (position != position_prev); // update after lag adjust
+
+                
 #ifdef DBG_PRINT_LAG
                 fprintf(stderr, "GVP WPos: %x08x [<-%08x], A: %08x, B: %08x  *I: %08x Data: %s DA: %08x\n", position, position_prev, spm_dma_instance->get_s2mm_nth_status(0), spm_dma_instance->get_s2mm_nth_status(1), dma_mem[0], data_valid?"VALID":"WAITING", spm_dma_instance->get_s2mm_destination_address());
                 //spm_dma_instance->print_check_dma_all();
                 fprintf(stderr, "GVP data[0]=%08x, data[WPos%d] = %08x\n", dma_mem[0], position, dma_mem[position]);
 #endif
-                // WAIT FOR LAST DATA HACK -- need to fix via DMA WRITE ADDRESS (spm_dma_instance->get_dmaps_DAn_offset(0)) ?!?!
-                if (data_valid && gvp_finished ()){
+                // WAIT FOR LAST DATA HACK -- need to fix via DMA WRITE ADDRESS (spm_dma_instance->get_dmaps_DAn_offset(0)) ?!?! no clue about the Arm catacombs here, did not worked, I tried and countless spend nights with frustration....
+                if (data_valid && new_data && gvp_finished ()){
 
                         position = stream_lastwrite_address();
                         fprintf(stderr, "GVP Finished pos=0x%08x\n", position);
@@ -270,9 +490,11 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
                                 lag=0;
                                 position = stream_lastwrite_address();
                                 position += BLKSIZE;
-                                while (position > (BLKSIZE>>1) && dma_mem[position%BLKSIZE] == 0xdddddddd && dma_mem[(position-1)%BLKSIZE] == 0xdddddddd)
+                                //while (position > (BLKSIZE>>1) && dma_mem[position%BLKSIZE] == 0xdddddddd && dma_mem[(position-1)%BLKSIZE] == 0xdddddddd)
+                                while (dma_mem[position%BLKSIZE] == 0xdddddddd && dma_mem[(position-1)%BLKSIZE] == 0xdddddddd && dma_mem[(position-2)%BLKSIZE] == 0xdddddddd && lag < 202) // check three consecutive positions been reset
                                         position--, lag++;
                                 position = position % BLKSIZE;
+
                                 fprintf(stderr, "GVP FINISHED ** WAITING FOR DMA TO COMPLETE @ position = %08x, lag = %d\n", position, lag);
                                 if (lag > 0) usleep(10000);
                         } while (lag > 0 && k-- > 0);
@@ -287,11 +509,19 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
                 }
         }
 
-        if ( data_valid && position_prev != position ){
-                position_info <<  std::hex <<  ",Position:{0x" << position_prev << std::dec << "},Count:{" << count << "}";
-                stream_position_info_count++;
+        // Stream Position Info and Auto Throttle Control
+        if ( data_valid && new_data ){
+                int N = position_prev < position ? position - position_prev : position_prev - position;
+                if (N < 0x5000 && millisec_since_last_send < 100) // at least 5kB data or no later than 100ms -- else auto throttle
+                        new_data = false; // post pone!
+                else {
+                        position_info <<  std::hex <<  "Position:{0x" << position_prev << std::dec << "},Count:{" << count << "},DMAlag:{" << DMA_lag << "},tl:{" <<  millisec_since_last_send  << "ms}";
+                        stream_position_info_count++;
+                        millisec_since_last_send = 0; // clear as data is been send below now!
+                }
         }
-        position_info << "}" << std::endl;
+        if (stream_position_info_count > 0) // terminate stream JSON syntax block
+                position_info << "}" << std::endl;
 
         // Broadcast to all connections
         con_list::iterator it;
@@ -305,14 +535,15 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
                 if (stream_position_info_count > 0)
                         m_endpoint.send(*it, position_info.str(), websocketpp::frame::opcode::text);
 
-                if (data_valid && position_prev != position){
+                if (data_valid && new_data){
                         //fprintf(stderr, "*** SENDING NEW DATA ***\n");
 
                         //if (verbose > 3)
                         //        fprintf(stderr, "Buffered amount = %d\n", m_endpoint.get_con_from_hdl (*it)->get_buffered_amount());
                         
                         int n  = position_prev < position ? position - position_prev : 0;
-//#define LIMIT_MESSAGE_SIZE // break up and send in limited sizes chuncs
+                        
+//#define LIMIT_MESSAGE_SIZE // break up and send in limited sizes chuncs, no need with WebSocket++ on both ends
 #ifdef LIMIT_MESSAGE_SIZE
                         const int max_msg = 32768;
                         if (n > 0){
@@ -360,7 +591,7 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
                                 //fprintf(stderr, "send.\n");
                                 count++;
                         }
-#else // send full block(s)
+#else // just send full block(s) ** GOOD, SIMPLE, FAST :)
                         if (n > 0){
                                 //fprintf(stderr, "Block: [%08x : %08x] size= %d ... ", position_prev, position, n);
                                 //spm_dma_instance->memdump_from (dma_mem, n, position_prev);
@@ -384,7 +615,7 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
                 } 
         }
         if (connection){
-                if (data_valid && position_prev != position){
+                if (data_valid && new_data){
                         DDposition = position;
                         DDposition_prev = position_prev;
                         // update last position now
@@ -399,9 +630,12 @@ void spmc_stream_server::on_timer(websocketpp::lib::error_code const & ec) {
         
         clear_info_stream ();
 
-        // set timer for next telemetry
-        set_timer(100);
+        // set timer for next run
+        set_timer (spmc_dma_pull_interval);
 }
+
+#endif // ================ END FULL VERSION WITH ALL DBG STUFF, STRIPPED ABOVE
+
 
 
 void spmc_stream_server::on_http(connection_hdl hdl) {
@@ -464,6 +698,48 @@ void *thread_stream_server (void *arg) {
         if (verbose > 1) fprintf(stderr, "SPMC Stream server exiting.\n");
         return NULL;
 }
+
+
+/*
+ * GVP DATA STREAM SCHEME EXAMPLE:
+ *
+
+ 0          1        2  ...  0f 10
+ 0004 FFFF  0000 0000  1  ...  0e 0f
+index mask  full vector...
+
+ 11        12 13 14 15 16 17
+ 0003 0c0f 0  1  2  3  a  b
+index mask
+(N-2)    f=1  2  4  8  c:time (40+80)
+       |---------------|
+
+ 18        19    ....     1e
+ 0002 0c0f 0  1  2  3  a  b
+
+ 1f        20    ....     25
+ 0001 0c0f 0  1  2  3  a  b
+
+ 26        27    ....     2c
+ 0000 0c0f 0  1  2  3  a  b
+
+ 2d        2e    ....     3c  3d
+ 0004 ffff 0  ----------  e   b     0000 -->
+
+ 5a        fin(3) 5b ---a
+ fefefefe         0 ... f
+
+ end mark
+
+
+RESET
+Adr=ffff
+data=0000ffff
+ 
+ *
+ */
+
+
 
 /*
 https://adaptivesupport.amd.com/s/question/0D52E00006iHj3pSAC/axi-dma-sg-cyclic-mode-missing-data?language=en_US

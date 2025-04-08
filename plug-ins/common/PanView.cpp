@@ -824,26 +824,42 @@ void PanView :: tip_refresh()
 		gchar *tmp = NULL;
 
                 double u,v,w;
-		main_get_gapp()->xsm->hardware->RTQuery ("B", u, v, w); // Bias Monitors
+		main_get_gapp()->xsm->hardware->RTQuery ("B", u, v, w); // Bias Monitor, Bias Reg, Bias Set
+                double v1,v2,vdum;
+		main_get_gapp()->xsm->hardware->RTQuery ("V", v1, v2, vdum); // Volatges
                 double gu,ga,gb;
 		main_get_gapp()->xsm->hardware->RTQuery ("G", gu, ga, gb); // GVP
+                double gamc,gfmc,gdum;
+		main_get_gapp()->xsm->hardware->RTQuery ("F", gamc, gfmc, gdum); // GVP-AMC, FMC
                 double s1,s2,s3;
                 main_get_gapp()->xsm->hardware->RTQuery ("S", s1, s2, s3); // Status
                 if (fabs(y) < 0.25)
                         tmp = g_strdup_printf ("I: %8.1f pA\ndF: %8.1f Hz\nZ: %8.4f " UTF8_ANGSTROEM
-                                               "\nU: %8.4f V\n UMon: %g USet: %g"
-                                               "\nGVP-U: %8.4f A: %8.4f B: %8.4f V\n"
-                                               "\nIN2: %8.4f V\nh%04x %02x",
+                                               "\nBias: %8.4f V %8.4f V %8.4f V"
+                                               //"\n UMon: %g USet: %g"
+                                               //"\nGVPU: %6.4f A: %6.4f B: %6.4f V"
+                                               //"\nGVPAM: %6.4f FM: %6.4f Veq\n"
+                                               "\nV1: %8.4f V2: %8.4f"
+                                               "\nZSM: h%04x %02x",
                                                y*1000., x, main_get_gapp()->xsm->Inst->V2ZAng(z),
-                                               u, v,w,
-                                               gu, ga, gb,
+                                               u,v,w,
+                                               v1,v2,
+                                               //gu, ga, gb,
+                                               //gamc, gfmc,
                                                q, (int)s2, (int)s3);
                 else
                         tmp = g_strdup_printf ("I: %8.4f nA\ndF: %8.1f Hz\nZ: %8.4f " UTF8_ANGSTROEM
-                                               "\nU: %8.4f V\n %g %g"
-                                               "\nIN2: %8.4f V\nh%04x %02x",
+                                               "\nBias: %8.4f V %8.4f V %8.4f V"
+                                               //"\n %g %g"
+                                               //"\nGVPU: %6.4f A: %6.4f B: %6.4f V"
+                                               //"\nGVPAM: %6.4f FM: %6.4f Veq\n"
+                                               "\nV1: %8.4f V2: %8.4f"
+                                               "\nZSM: h%04x %02x",
                                                y,       x, main_get_gapp()->xsm->Inst->V2ZAng(z),
-                                               u, v,w,
+                                               u,v,w,
+                                               v1,v2,
+                                               //gu, ga, gb,
+                                               //gamc, gfmc,
                                                q, (int)s2, (int)s3);
 
                 info->set_text (tmp);

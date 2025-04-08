@@ -85,6 +85,8 @@ public:
 	rpspmc_hwi_dev();
 	virtual ~rpspmc_hwi_dev();
 
+        void update_hardware_mapping_to_rpspmc_source_signals ();
+        
         static void spmc_stream_connect_cb (GtkWidget *widget, rpspmc_hwi_dev *self);
         virtual const gchar *get_rp_address ();
 
@@ -95,8 +97,10 @@ public:
         
 	/* Parameter  */
 	virtual long GetMaxLines(){ return 32000; };
-
-	virtual const gchar* get_info() { return "SPM Template V0.0"; };
+        
+	virtual const gchar* get_info() { return info_blob ? info_blob : "RPSPMC 4 GXSM ** not connected: Check Restart or Re-Connect in SPM Control Window, Tab: RedPitaya Web Socket to establish connection."; };
+        void info_append (const gchar *s) { if (s) { gchar *ns = g_strdup_printf ("%s%s", info_blob?info_blob:" ", s); g_free (info_blob); info_blob = ns; } else  { g_free (info_blob); info_blob = NULL; }};
+        gchar *info_blob;
 
 	/* Hardware realtime monitoring -- all optional */
 	/* default properties are
@@ -175,25 +179,6 @@ public:
 	// SIGNAL MANAGEMENT
 
         void set_spmc_signal_mux (int source[6]);
-        
-	virtual void read_dsp_signals () { read_signal_lookup (); read_actual_module_configuration (); };
-
-	virtual int lookup_signal_by_ptr(gint64 sigptr);
-	virtual int lookup_signal_by_name(const gchar *sig_name);
-	virtual const gchar *lookup_signal_name_by_index(int i);
-	virtual const gchar *lookup_signal_unit_by_index(int i);
-	virtual double lookup_signal_scale_by_index(int i);
-	virtual int change_signal_input(int signal_index, gint32 input_id, gint32 voffset=0);
-	virtual int query_module_signal_input(gint32 input_id);
-	int read_signal_lookup ();
-	int read_actual_module_configuration ();
-
-	DSP_SIG_UNIVERSAL *lookup_dsp_signal_managed(gint i){
-                if (i<NUM_SIGNALS_UNIVERSAL)
-                        return &dsp_signal_lookup_managed[i];
-                else
-                        return NULL;
-	};
 
         int read_GVP_data_block_to_position_vector (int offset, gboolean expect_full_header=false);
        
@@ -231,6 +216,7 @@ public:
 
         void GVP_execute_only_vector_program(); // GVP execute only, no read back (data is been ignored)
         void GVP_reset_vector_program (); // reset GVP only, no DMA abort, etc
+        void GVP_reset_vector_components (int mask); // reset GVP components my mask
 
         void GVP_vp_init ();
         void GVP_start_data_read(); // non blocking

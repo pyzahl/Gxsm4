@@ -917,6 +917,7 @@ void App::spm_update_all(int Vflg){
 	
         ui_update();
         as_update();
+        
         XSM_DEBUG(DBG_L3, "App::spm_update_all done");
 }
 

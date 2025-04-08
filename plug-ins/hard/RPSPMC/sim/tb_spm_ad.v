@@ -65,6 +65,8 @@ module tb_spm_ad(
 
     reg dma_ready=1;
 
+    reg [16:0] spi_waits=(2*32+10)*32;
+
     wire [31:0] wx; // vector components
     wire [31:0] wy; // ..
     wire [31:0] wz; // ..
@@ -226,12 +228,13 @@ wire w_spi_cs;
 wire w_spi_sdi;
 wire w_spi_reset;
 wire w_spi_cnv;
-wire w_spi_busy;
-wire [7:0] w_spi_sdn;
+reg  w_spi_busy=0;
+reg [7:0] w_spi_sdn=8'hff;
 
 wire [31:0] ad_mon0;
 wire [31:0] ad_mon1;
 
+wire [7:0] ad_bt_dbg;
 wire ad_ready;
 
 
@@ -261,6 +264,12 @@ wire ad_ready;
         sclk = 1; #1;
         sclk = 0; #1;
     end
+        
+    always begin
+        w_spi_busy <= ad_bt_dbg > 8'hf0 ? 1:0; #2;
+    end
+
+
 
     always begin
         mux00td <= wx;
@@ -358,41 +367,85 @@ print (adjust (100))
         //parameter gvp_vectorX_programming_reg_address  = 500;
 
         // INIT AD463x
-        // RESET
-        vector = {32'd3,  32'd0, 32'h00000, 32'h00 }; #1 
-        confaddr=50000; #10 
-        confaddr=0; #50 // module config cycle done
-        confaddr=0; #10 
-        vector = {32'd3,  32'd0, 32'h00000, 32'h81 }; #1 
-        confaddr=50000; #10 
-        confaddr=0; #50 // module config cycle done
-        vector = {32'd3,  32'd0, 32'h00000, 32'h00 }; #1 
-        confaddr=50000; #10 
-        confaddr=0; #50 // module config cycle done
+        // RESET MARK
+        vector = {32'd8, 32'd0,  32'h0000000, 32'h00 }; #1; confaddr=50000; #10; confaddr=0; #50 // make sure reset deasserted
+        vector = {32'd8, 32'd0,  32'h0000000, 32'h80 }; #1; confaddr=50000; #10; confaddr=0; #50 // assert RESET
+        vector = {32'd8, 32'd0,  32'h0000000, 32'h00 }; #1; confaddr=50000; #10; confaddr=0; #50 // release RESET
 
-        // CONF MODE WRITE
-        confaddr=0; #10 
-        vector = {32'd3,  32'd0, 32'h0a000, 32'h05 }; #1 
-        confaddr=50000; #10 
-        confaddr=0; #600 // module config cycle done
+        #100;
 
-        // CONF MODE READ
-        confaddr=0; #10 
-        vector = {32'd3,  32'd0, 32'h0a000, 32'h03 }; #1 
-        confaddr=50000; #10 
-        confaddr=0; #600 // module config cycle done
-    
-        // CNV single
-        vector = {32'd3,  32'd0, 32'h00000, 32'h09 }; #1 
-        confaddr=50000; #10 
-        confaddr=0; #600 // module config cycle done
+
+        // ENTER CONF MODE WRITE -- INIT  W: { 1'b0, 0x7FFF (Address 16'b) , 0x00 (data 8'b)}
+        vector = {32'd3, 32'd24, 32'h00a00000, 32'h03 }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // let SPI finish
+        // READ TIMING 0x2000
+        vector = {32'd3, 32'd24, 32'h00A000aa, 32'h03 }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // let SPI finish
+        // WRITE SCRATCHPAD 0x000A
+        vector = {32'd3, 32'd24, 32'h00000Aaa, 32'h03 }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // let SPI finish
+        // READ SCRATCHPAD 0x000A
+        vector = {32'd3, 32'd24, 32'h00800Aaa, 32'h03 }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // let SPI finish
+
+        // WRITE MODES 0x0020
+        //vector = {32'd8, 32'd24, 32'h00000Aaa, 32'h03 }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // let SPI finish
+
+        // CNV, READ SINGLE SAMPLE
+        // CNV MANUAL 8    STREAM-READ 4    AXI 0x10
+        //vector = {32'd3, 32'd32, 32'h00000000, 32'h09 }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // let SPI finish
+        vector = {32'd3, 32'd24, 32'h00000000, 32'h09 }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // let SPI finish
+        //vector = {32'd3, 32'd24, 32'h00000000, 32'h0d }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // let SPI finish
+        //vector = {32'd3, 32'd24, 32'h00000000, 32'h0d }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // let SPI finish
+        //vector = {32'd3, 32'd32, 32'h00000000, 32'h0d }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // let SPI finish
+        //vector = {32'd3, 32'd32, 32'h00000000, 32'h0d }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // let SPI finish
+        //vector = {32'd3, 32'd24, 32'h00000000, 32'h10 }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // let SPI finish
+        vector = {32'd3, 32'd24, 32'h00000000, 32'h14 }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // let SPI finish
+        //vector = {32'd3, 32'd24, 32'h00000000, 32'h14 }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // let SPI finish
+        //vector = {32'd3, 32'd32, 32'h00000000, 32'h14 }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // let SPI finish
+        //vector = {32'd3, 32'd32, 32'h00000000, 32'h14 }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // let SPI finish
+        #10000;
+        vector = {32'd1, 32'd24, 32'h00000000, 32'h14 }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // let SPI finish
+        #10000;
+        vector = {32'd2, 32'd24, 32'h00000000, 32'h14 }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // let SPI finish
+        #10000;
+        vector = {32'd3, 32'd24, 32'h00000000, 32'h14 }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // let SPI finish
+        #10000;
+        vector = {32'd4, 32'd24, 32'h00000000, 32'h14 }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // let SPI finish
+        #10000;
+
+        // RESET MARK
+        vector = {32'd8, 32'd0,  32'h00000000, 32'h00 }; #1; confaddr=50000; #10; confaddr=0; #50 // make sure reset deasserted
+        vector = {32'd8, 32'd0,  32'h00000000, 32'h80 }; #1; confaddr=50000; #10; confaddr=0; #30 // assert RESET
+        vector = {32'd8, 32'd0,  32'h00000000, 32'h00 }; #1; confaddr=50000; #10; confaddr=0; #50 // release RESET
+        // ====
+
+        // CONF MODE WRITE -- INIT  W: { 1'b0, 0x7FFF (Address 16'b) , 0x00 (data 8'b)}
+        vector = {32'd3, 32'd24, 32'h00a00001, 32'h03 }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // let SPI finish
+
+       // CONF MODE READ TEST a0a000
+        vector = {32'd3, 32'd24,  32'h0001a000, 32'h03 }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // let SPI finish
+
+        // CNV, READ SINGLE SAMPLE
+        // CNV MANUAL 8    STREAM-READ 4    AXI 0x10
+        vector = {32'd3, 32'd24,  32'h00000, 32'h14 }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // module config cycle done
+        #500;
+        vector = {32'd3, 32'd24,  32'h00000, 32'h14 }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // module config cycle done
+        #500;
+
+        vector = {32'd3, 32'd32,  32'h00000, 32'h14 }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // module config cycle done
+        #1500;
+        vector = {32'd3, 32'd32,  32'h00000, 32'h14 }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // module config cycle done
+        #1500;
+
+        vector = {32'd3, 32'd24,  32'h00000, 32'h14 }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // module config cycle done
+        #1500;
+        vector = {32'd3, 32'd24,  32'h00000, 32'h14 }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // module config cycle done
+
+        #1500;
 
         // AXI STREAMING
-        vector = {32'd3,  32'd0, 32'h00000, 32'h10 }; #1 
-        confaddr=50000; #10 
-        confaddr=0; #200 // module config cycle done
+        vector = {32'd3, 32'd24,  32'h00000, 32'h14 }; #1; confaddr=50000; #10; confaddr=0; #spi_waits // module config cycle done
+        #1500;
 
 
+        // **********************
 
         // INIT GVP
         confaddr=0; #10 vector = 1;#1 confaddr=gvp_control_reg_address; #10 confaddr=0; #10 // reset to GVP
@@ -769,7 +822,7 @@ axis_AD463x axis_AD463_tb
     .mon0(ad_mon0),
     .mon1(ad_mon1),
     
-    .ready(ad_ready)
+    .bt_dbg(ad_bt_dbg) // UNCOMMENT DBG PORT IN IP TOI SIMULATE A DELAY!!
     );
     
 axis_spm_control axis_spm_control_tb

@@ -1583,15 +1583,27 @@ void ViewControl::canvas_draw_function (GtkDrawingArea *area,
         if (vc->destruction_in_progress)
                 return;
 
+
         int qf    = vc->vinfo->GetQfac ();
         double zf = vc->vinfo->GetZfac ();
+        double zfy = zf;
         if (vc->vinfo->get_userzoommode () == USER_ZOOM_WIDTH){
-                zf = (double)width / (double)(vc->rulewidth+2*vc->border/zf+vc->npx);
+                // fit to width/height
+                qf = 1;
+                double zfw = (double)width / (double)(vc->rulewidth+2*vc->border/zf+vc->npx);
+                double zfh = (double)height / (double)(vc->rulewidth+2*vc->border/zf+vc->npy);
+                zf = zfw > zfh ? zfh : zfw;
                 vc->vinfo->SetQfZf (qf, zf);
-                zf = vc->vinfo->GetZfac (); // check
+                zfy = 1.;
+        } else  {
+                // update required area size 
+                gtk_drawing_area_set_content_width (area, (int)(vc->npx * zf / qf + vc->rulewidth+2*vc->border/zf));
+                gtk_drawing_area_set_content_height (area, (int)(vc->npy * zf / qf + vc->rulewidth+2*vc->border/zf));
         }
-                 
-        XSM_DEBUG_GM (DBG_L3,  "ViewControl:::canvas_draw_callback ********************** SCAN DRAW, ZOOM [M%d]: %g : %d, DA-WIDTH: %d, NPX: %d *********************", vc->vinfo->get_userzoommode(), zf, qf, width, vc->npx);
+        
+        XSM_DEBUG_GM (DBG_L3,  "ViewControl:::canvas_draw_callback *** SCAN DRAW, ZOOM [M%d]: %g : %d, DA-DIM: (%d,%d) NP: (%d, %d) ***", vc->vinfo->get_userzoommode(), zf, qf, width, height, vc->npx, vc->npy);
+        // g_message ("ViewControl:::canvas_draw_callback *** SCAN DRAW, ZOOM [M%d]: %g : %d, DA-DIM: (%d,%d) NP: (%d, %d) ***", vc->vinfo->get_userzoommode(), zf, qf, width, height, vc->npx, vc->npy);
+
 
         if (area){
                 vc->ximg->set_translate_offset (vc->rulewidth+vc->border/zf, vc->rulewidth+vc->border/zf);
@@ -1614,8 +1626,8 @@ void ViewControl::canvas_draw_function (GtkDrawingArea *area,
                 cairo_set_source_rgb (cr, 1.0, 1.0, 0.0); // yellow
                 cairo_set_line_width (cr, 4.*vc->ActiveFrameWidth);
                 cairo_rectangle (cr, 
-                                 -vc->ActiveFrameWidth/2./zf,  -vc->ActiveFrameWidth/2./zf,
-                                 (vc->ActiveFrameWidth+vc->npx)/zf, (vc->ActiveFrameWidth+num_as_pixy)/zf);
+                                 -vc->ActiveFrameWidth/2./zfy,  -vc->ActiveFrameWidth/2./zfy,
+                                 (vc->ActiveFrameWidth+vc->npx)/zfy, (vc->ActiveFrameWidth+num_as_pixy)/zfy);
                 cairo_stroke(cr);
         }
         
@@ -1625,8 +1637,8 @@ void ViewControl::canvas_draw_function (GtkDrawingArea *area,
         // 3) draw legend items if eneabled
         if (vc->legend_items_code){
                 // make convenient coordinate system
-                double wx = (double)vc->npx/zf;
-                double wy = (double)num_as_pixy/zf;
+                double wx = (double)vc->npx/zfy;
+                double wy = (double)num_as_pixy/zfy;
                 double bar_len;
                 double bar_width=16.;
                 double bar_d=5.;
@@ -2556,7 +2568,6 @@ void ViewControl::SetActive(int flg){
 		gtk_statusbar_push(GTK_STATUSBAR(statusbar), statusid, "inactive");
 	}
 }
-
 
 void ViewControl::CheckRedLine(){
 	if(RedLine){

@@ -90,23 +90,6 @@ RP data streaming
 #define GVP_SHIFT_UP  1
 #define GVP_SHIFT_DN -1
 
-#define CPN(N) ((double)(1LL<<(N))-1.)
-
-// WARNING WARNIN WARNING.. not working life
-#define BiasFac    main_get_gapp()->xsm->Inst->BiasGainV2V ()
-#define CurrFac    (1./main_get_gapp()->xsm->Inst->nAmpere2V (1.))
-#define ZAngFac    (main_get_gapp()->xsm->Inst->Volt2ZA (1))
-#define XAngFac    (main_get_gapp()->xsm->Inst->Volt2XA (1))
-#define YAngFac    (main_get_gapp()->xsm->Inst->Volt2YA (1))
-
-#define CPN(N) ((double)(1LL<<(N))-1.)
-
-#define RP_FPGA_QEXEC 31 // Q EXEC READING Controller        -- 1V/(2^RP_FPGA_QEXEC-1)
-#define RP_FPGA_QSQRT 23 // Q CORDIC SQRT Amplitude Reading  -- 1V/(2^RP_FPGA_QSQRT-1)
-#define RP_FPGA_QATAN 21 // Q CORDIC ATAN Phase Reading      -- 180deg/(PI*(2^RP_FPGA_QATAN-1))
-#define RP_FPGA_QFREQ 44 // Q DIFF FREQ READING              -- 125MHz/(2^RP_FPGA_QFREQ-1) well number should not exceed 32bit 
-
-#define DSP32Qs15dot16TO_Volt (50/(32767.*(1<<16)))
 
 typedef union {
         struct { unsigned char ch, x, y, z; } s;
@@ -138,10 +121,6 @@ typedef union {
     // gvp_time[48-1:32]      // TIME  0x8000 // upper 32 (16 lower only)
     input wire [48-1:0] S_AXIS_gvp_time_tdata,  // time since GVP start in 1/125MHz units
 */
-#define SPMC_AD5791_REFV 5.0 // DAC AD5791 Reference Volatge is 5.000000V (+/-5V Range)
-#define SPMC_AD5791_to_volts (SPMC_AD5791_REFV / QN(31))
-#define SPMC_RPIN12_REFV 1.0 // RP FAT DACs Reference Voltage is 1.0V (+/-1V Range)
-#define SPMC_RPIN12_to_volts (SPMC_RPIN12_REFV / QN(31))
 
 // Masks MUST BE unique **** max # signal: 32  (graphs_matrix[][32] fix size! Unused=uninitialized.)
 SOURCE_SIGNAL_DEF rpspmc_source_signals[] = {
@@ -155,7 +134,7 @@ SOURCE_SIGNAL_DEF rpspmc_source_signals[] = {
         { 0x00100000, "X-Scan",   " ", "AA", UTF8_ANGSTROEM, SPMC_AD5791_to_volts, PROBEDATA_ARRAY_XS, 0 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x00200000, "Y-Scan",   " ", "AA", UTF8_ANGSTROEM, SPMC_AD5791_to_volts, PROBEDATA_ARRAY_YS, 0 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x00400000, "Z-Scan",   " ", "AA", UTF8_ANGSTROEM, SPMC_AD5791_to_volts, PROBEDATA_ARRAY_ZS, 0 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
-        { 0x00800000, "Bias",     " ", "V",             "V", SPMC_AD5791_to_volts, PROBEDATA_ARRAY_U,  0 },
+        { 0x00800000, "Bias",     " ", "V",             "V", SPMC_AD5791_to_volts, PROBEDATA_ARRAY_U,  0 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x08000000, "AA",       " ", "V",             "V", SPMC_AD5791_to_volts, PROBEDATA_ARRAY_AA, -1 },
         { 0x10000000, "BB",       " ", "V",             "V", SPMC_AD5791_to_volts, PROBEDATA_ARRAY_BB, -1 },
         { 0x20000000, "PHI",      " ", "deg",         "deg",                  1.0, PROBEDATA_ARRAY_PHI, -1 },
@@ -166,16 +145,16 @@ SOURCE_SIGNAL_DEF rpspmc_source_signals[] = {
         { 0x00000002, "YS-Mon",       " ", "AA", UTF8_ANGSTROEM,                   SPMC_AD5791_to_volts, PROBEDATA_ARRAY_S2,  2 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x00000004, "ZS-Topo",      " ", "AA", UTF8_ANGSTROEM,                   SPMC_AD5791_to_volts, PROBEDATA_ARRAY_S3,  3 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x00000008, "Bias-Mon",     " ", "V",             "V",                   SPMC_AD5791_to_volts, PROBEDATA_ARRAY_S4,  4 }, // BiasFac, see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
-        { 0x00000010, "In1-Signal",   " ", "V",             "V",                   SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S5,  5 },
-        { 0x00000020, "In2-Current",  " ", "nA",           "nA",               256*SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S6,  6 }, // CurrFac, see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
-        { 0x00000040, "In3-**",       " ", "V",             "V",                   SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S7,  7 },
-        { 0x00000080, "In4-**",       " ", "V",             "V",                   SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S8,  8 },
-        { 0x00000100, "SWP*00",       " ",  "V",            "V",                                    1.0, PROBEDATA_ARRAY_S9,  9 },  // ich= 8 ** swappable via GVP-SRC-MUX ** -- been replaced as set from swappable_signals[]
-        { 0x00000200, "SWP*01",        " ", "V",            "V",                                    1.0, PROBEDATA_ARRAY_S10, 10 }, // ich= 9 ** swappable via GVP-SRC-MUX ** -- been replaced as set from swappable_signals[]
-        { 0x00000400, "SWP*02",       " ",  "V",            "V",                                    1.0, PROBEDATA_ARRAY_S11, 11 }, // ich=10 ** swappable via GVP-SRC-MUX ** -- been replaced as set from swappable_signals[]
-        { 0x00000800, "SWP*03",       " ",  "V",            "V",                                    1.0, PROBEDATA_ARRAY_S12, 12 }, // ich=11 ** swappable via GVP-SRC-MUX ** -- been replaced as set from swappable_signals[]
-        { 0x00001000, "SWP*04",       " ",  "V",            "V",                                    1.0, PROBEDATA_ARRAY_S13, 13 }, // ich=12 ** swappable via GVP-SRC-MUX ** -- been replaced as set from swappable_signals[]
-        { 0x00002000, "SWP*05",       " ",  "V",            "V",                                    1.0, PROBEDATA_ARRAY_S14, 14 }, // ich=13 ** swappable via GVP-SRC-MUX ** -- been replaced as set from swappable_signals[]
+        { 0x00000010, "Current",      " ", "nA",           "nA",              256.*SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S5,  5 }, // processed tunnel current signal "Volts" here, to nA/pA later!!! ADJUST W MUX!!!
+        { 0x00000020, "IN2-RF-FIR",   " ", "V",             "V",                   SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S6,  6 }, // IN2 RP 125MSPS (RF input, FIR, routable to Z-Servo Control as tunnel current signal)!
+        { 0x00000040, "IN3-AD463-24-CHA", " ", "V",         "V",                   SPMC_RPIN34_to_volts, PROBEDATA_ARRAY_S7,  7 }, // IN3 ADC4630-24-A 2MSPS (routable to Z-Servo Control as tunnel current signal)
+        { 0x00000080, "IN4-AD463-24-CHB", " ", "V",         "V",                   SPMC_RPIN34_to_volts, PROBEDATA_ARRAY_S8,  8 }, // IN4 ADC4630-24-B 2MSPS
+        { 0x00000100, "SWP*00",       " ",  "V",            "V",                                    1.0, PROBEDATA_ARRAY_S9,  9 },  // ich= 8 ** swappable via GVP-SRC-MUX1 ** -- been replaced as set from swappable_signals[]
+        { 0x00000200, "SWP*01",        " ", "V",            "V",                                    1.0, PROBEDATA_ARRAY_S10, 10 }, // ich= 9 ** swappable via GVP-SRC-MUX2 ** -- been replaced as set from swappable_signals[]
+        { 0x00000400, "SWP*02",       " ",  "V",            "V",                                    1.0, PROBEDATA_ARRAY_S11, 11 }, // ich=10 ** swappable via GVP-SRC-MUX3 ** -- been replaced as set from swappable_signals[]
+        { 0x00000800, "SWP*03",       " ",  "V",            "V",                                    1.0, PROBEDATA_ARRAY_S12, 12 }, // ich=11 ** swappable via GVP-SRC-MUX4 ** -- been replaced as set from swappable_signals[]
+        { 0x00001000, "SWP*04",       " ",  "V",            "V",                                    1.0, PROBEDATA_ARRAY_S13, 13 }, // ich=12 ** swappable via GVP-SRC-MUX5 ** -- been replaced as set from swappable_signals[]
+        { 0x00002000, "SWP*05",       " ",  "V",            "V",                                    1.0, PROBEDATA_ARRAY_S14, 14 }, // ich=13 ** swappable via GVP-SRC-MUX6 ** -- been replaced as set from swappable_signals[]
         { 0x00004000, "--",           " ", "V",             "V",                                    1.0, PROBEDATA_ARRAY_S15,   -1 }, // -- DUMMY SO FAR
         { 0x00008000, "--",           " ", "V",             "V",                                    1.0, PROBEDATA_ARRAY_COUNT, -1 }, // -- DUMMY SO FAR
         { 0x80000000, "BlockI",       " ", "i#",           "i#",                                    1.0, PROBEDATA_ARRAY_BLOCK, -1 }, // MUST BE ALWAYS LAST AND IN HERE!! END MARK.
@@ -185,22 +164,23 @@ SOURCE_SIGNAL_DEF rpspmc_source_signals[] = {
 // so far fixed to swappable 4 signals as of GUI design!
 SOURCE_SIGNAL_DEF swappable_signals[] = {                                                                 // DEFAULT MUX MAP, 16 signals max 
         //  SIGNAL #  Name               Units.... Scale                                         DEFAULT ASSIGN
-        { 0x00000000, "dFrequency",  " ", "Hz", "Hz", (125e6/((1L<<RP_FPGA_QFREQ)-1)),                0, -1 },
-        { 0x00000001, "Excitation",  " ", "mV", "mV", (1000.0/((1L<<RP_FPGA_QEXEC)-1)),                  1, -1 },
-        { 0x00000002, "Phase",       " ", "deg", UTF8_DEGREE, (180.0/(M_PI*((1L<<RP_FPGA_QATAN)-1))), 2, -1 },
-        { 0x00000003, "Amplitude",   " ", "mV", "mV", (1000.0/((1L<<RP_FPGA_QSQRT)-1)),                  3, -1 },
-        { 0x00000004, "dFreq-Control", " ", "mV", "mV", (1000.0*SPMC_AD5791_to_volts),                   4, -1 }, // *** still assuming +/-10V range in PAC Control mappted to 5V here
-        { 0x00000005, "05-IN1-",       " ", "V", "V", (1.0),                                          5, -1 },
-        { 0x00000006, "06-LCKSignalDec", " ", "V", "V", (1.0),                                       -1, -1 },
-        { 0x00000007, "07-LCKi",        " ", "V", "V", (1.0),                                        -1, -1 },
-        { 0x00000008, "08-SDRef",       " ", "V", "V", (1.0),                                        -1, -1 },
-        { 0x00000009, "09-ZSmon",       " ", "V", "V", (1.0),                                        -1, -1 },
-        { 0x00000010, "10-LockInY",     " ", "V", "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),          -1, -1 },
-        { 0x00000011, "11-LockInX",     " ", "V", "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),          -1, -1 },
-        { 0x00000012, "12-LockInMagBQIIR",   " ", "V", "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),     -1, -1 },
-        { 0x00000013, "13-SineRef",     " ", "V",   "V", (SPMC_RPIN12_to_volts),                     -1, -1 },
-        { 0x00000014, "14-LockInMag",    " ", "V",   "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),       -1, -1 },
-        { 0x00000015, "15-ZwSlope-OUT", " ", "V",   "V", (SPMC_AD5791_to_volts),                     -1, -1 },
+        { 0x00000000, "dFrequency",  " ", "Hz", "Hz", (125e6/((1L<<RP_FPGA_QFREQ)-1)),                0, -1 },   // dFREQ via PACPLL FIR_CH2 ** via transport / decimation selector 
+        { 0x00000001, "Excitation",  " ", "mV", "mV", (1000.0/((1L<<RP_FPGA_QEXEC)-1)),               1, -1 },   // EXEC  via PACPLL FIR_CH4 ** via transport / decimation selector 
+        { 0x00000002, "Phase",       " ", "deg", UTF8_DEGREE, (180.0/(M_PI*((1L<<RP_FPGA_QATAN)-1))), 2, -1 },   // PHASE via PACPLL FIR_CH1 ** via transport / decimation selector 
+        { 0x00000003, "Amplitude",   " ", "mV", "mV", (1000.0/((1L<<RP_FPGA_QSQRT)-1)),               3, -1 },   // AMPL  via PACPLL FIR_CH3 ** via transport / decimation selector 
+        { 0x00000004, "dFreq-Control", " ", "mV", "mV", (1000.0*SPMC_AD5791_to_volts),                4, -1 },   // IR_CH2_DFREQ_CTRL_VAL : can be added to Z-control for true Z AFM mode in freq regulation, or addded to Bias for SQDM mode
+                                                                                                                 // *** still assuming +/-10V range in PAC Control mappted to 5V here
+        { 0x00000005, "05-IN1-RF-FBW",     " ", "V", "V", SPMC_RPIN12_to_volts,                         -1, -1 },   // IN1 FBW **** IN1 RP 125MSPS (Signal) -- PLL Signal (FBW)
+        { 0x00000006, "06-IN1-RF-FIR",     " ", "V", "V", SPMC_RPIN12_to_volts,                         -1, -1 },   // IN1 FIR **** IN1 RP 125MSPS (Signal) -- PLL Signal (FIR)
+        { 0x00000007, "07-IN2-RF-FBW",     " ", "V", "V", SPMC_RPIN12_to_volts,                         -1, -1 },   // IN2 FBW
+        { 0x00000008, "08-LockIn-Mag-BQ",  " ", "V", "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),        5, -1 },   // LCK-Mag/BiQuad/IIR
+        { 0x00000009, "09-LockIn-X",    " ", "V", "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),          -1, -1 },   // LCK-X -- needs filter, route to BiQuad?
+        { 0x00000010, "10-LockIn-Y",    " ", "V", "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),          -1, -1 },   // LCK-Y -- need filter
+        { 0x00000011, "11-IN4-FIR",     " ", "V", "V", SPMC_RPIN34_to_volts,                         -1, -1 },   // IN4 FIR
+        { 0x00000012, "12-LCK-i",       " ", "V", "V", (1.0),                                        -1, -1 },   // ** Lck-i ** dbg
+        { 0x00000013, "13-SineRef",     " ", "V",   "V", (SPMC_RPIN12_to_volts),                     -1, -1 },   // ** SD-Ref ** dbg
+        { 0x00000014, "14-LockIn-Mag-pass", " ", "V",   "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),     -1, -1 },   // LCK-Mag-BiQuad-pass ** dbg
+        { 0x00000015, "15-ZwSlope-OUT", " ", "V",   "V", (SPMC_AD5791_to_volts),                     -1, -1 },   // Z-with-slope
         { 0x00000016, "X-TestSignal = 0", " ", "V",   "V", (1.0),                         -1, -1 },
         { 0x00000017, "X-TestSignal = 1", " ", "V",   "V", (1.0),                         -1, -1 },
         { 0x00000018, "X-TestSignal = -1", " ", "V",   "V", (1.0),                        -1, -1 },
@@ -212,15 +192,35 @@ SOURCE_SIGNAL_DEF swappable_signals[] = {                                       
 SOURCE_SIGNAL_DEF modulation_targets[] = {
         //  SIGNAL #  Name               Units.... Scale
         { 0x00000000, "None/OFF",    " ",  "-",  "-", 0.0,                          0, 0 },
-        { 0x00000001, "X-Scan",      " ", "AA", UTF8_ANGSTROEM, 1./XAngFac, 0, 0 }, // scale_factor to get "Volts" or RP base unit for signal
-        { 0x00000002, "Y-Scan",      " ", "AA", UTF8_ANGSTROEM, 1./YAngFac, 0, 0 },
-        { 0x00000003, "Z-Scan",      " ", "AA", UTF8_ANGSTROEM, 1./ZAngFac, 0, 0 },
+        { 0x00000001, "X-Scan",      " ", "AA", UTF8_ANGSTROEM, 1., 0, 0 }, // scale_factor to get "Volts" or RP base unit for signal
+        { 0x00000002, "Y-Scan",      " ", "AA", UTF8_ANGSTROEM, 1., 0, 0 }, //
+        { 0x00000003, "Z-Scan",      " ", "AA", UTF8_ANGSTROEM, 1., 0, 0 }, //
         { 0x00000004, "Bias",        " ", "mV",           "mV", 1e-3/BiasFac, 0, 0 },
         { 0x00000005, "A",           " ", "V",             "V", 1., 0, 0 },
         { 0x00000006, "B",           " ", "V",             "V", 1., 0, 0 },
         { 0x00000007, "Bias-Aref",   " ", "mV",           "mV", 1e-3/BiasFac, 0, 0 },
+        { 0x00000008, "Filter-Test", " ", "mV",           "mV", 1., 0, 0 },
         { 0x00000016,  NULL, NULL, NULL, NULL, 0.0, 0 }
 };
+
+
+SOURCE_SIGNAL_DEF z_servo_current_source[] = {
+        //  SIGNAL #  Name               Units.... Scale (not needed or used from here)
+        { 0x00000000, "IN2-RF",          " ",  "nA",  "nA", 256.*SPMC_RPIN12_to_volts, 0, 0 }, // 24.8 Z-Servo internal signal '(32-8) -> x 256
+        { 0x00000001, "IN3-AD463-24-CHA"," ",  "nA",  "nA", 256.*SPMC_RPIN34_to_volts, 0, 0 }, // 24.8 Z-Servo internal signal '(32-8) -> x 256
+        { 0x00000016,  NULL, NULL, NULL, NULL, 0.0, 0 }
+};
+
+SOURCE_SIGNAL_DEF rf_gen_out_dest[] = {
+        //  SIGNAL #  Name               Units.... Scale
+        { 0x00000000, "PForm-Out1",  " ",  "V",  "V", SPMC_RPIN34_to_volts, 0, 0 },
+        { 0x00000001, "RFgen-Out1",  " ",  "V",  "V", SPMC_RPIN12_to_volts, 0, 0 },
+        { 0x00000002, "PF+RF-Out1",  " ",  "V",  "V", SPMC_RPIN12_to_volts, 0, 0 },
+        { 0x00000003, "PF/2+RF/2-Out1",  " ",  "V",  "V", SPMC_RPIN12_to_volts, 0, 0 },
+        { 0x00000016,  NULL, NULL, NULL, NULL, 0.0, 0 }
+};
+
+
 
 // helper func to assemble mux value from selctions
 int __GVP_selection_muxval (int selection[6]) {
@@ -340,7 +340,7 @@ GxsmPlugin rpspmc_pacpll_hwi_pi = {
 
 // Text used in Aboutbox, please update!!
 static const char *about_text = N_("RPSPMC PACPLL Control Plugin\n\n"
-                                   "This plugin manages externa Scan Data Sources.\n"
+                                   "Complete FPGA SPM Control using Red Pitaya + Analog Modules.\n"
 	);
 
 /* Here we go... */
@@ -524,6 +524,7 @@ GtkWidget*  GUI_Builder::grid_add_mixer_options (gint channel, gint preset, gpoi
         id = g_strdup_printf ("%d", MM_ON);         gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, "LIN"); g_free (id); 
         id = g_strdup_printf ("%d", MM_ON | MM_LOG);          gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, "LOG"); g_free (id); 
         id = g_strdup_printf ("%d", MM_ON | MM_LOG | MM_FCZ); gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, "FCZ-LOG"); g_free (id); 
+        id = g_strdup_printf ("%d", MM_ON | MM_FCZ); gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, "FCZ-LIN"); g_free (id); 
 
         gchar *preset_id = g_strdup_printf ("%d", preset); 
         gtk_combo_box_set_active_id (GTK_COMBO_BOX (cbtxt), preset_id);
@@ -601,6 +602,50 @@ GtkWidget* GUI_Builder::grid_add_modulation_target_options (gint channel, gint p
         return cbtxt;
 };
 
+GtkWidget* GUI_Builder::grid_add_z_servo_current_source_options (gint channel, gint preset, gpointer ref){
+        GtkWidget *cbtxt = gtk_combo_box_text_new (); 
+        gtk_widget_set_size_request (cbtxt, 50, -1); 
+        g_object_set_data(G_OBJECT (cbtxt), "z_servo_current_source_id", GINT_TO_POINTER (channel)); 
+
+
+        for (int jj=0; z_servo_current_source[jj].label; ++jj){
+                gchar *id = g_strdup_printf ("%d", jj); gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, z_servo_current_source[jj].label); g_free (id);
+        }
+
+        if (preset >= 0)
+                gtk_combo_box_set_active (GTK_COMBO_BOX (cbtxt), preset); 
+        else
+                gtk_combo_box_set_active (GTK_COMBO_BOX (cbtxt), 4); // NULL SIGNAL [TESTING FALLBACK for -1/error]
+                
+        g_signal_connect (G_OBJECT (cbtxt), "changed",	
+                          G_CALLBACK (RPSPMC_Control::choice_z_servo_current_source_callback), 
+                          ref);				
+        grid_add_widget (cbtxt);
+        return cbtxt;
+};
+
+GtkWidget* GUI_Builder::grid_add_rf_gen_out_options (gint channel, gint preset, gpointer ref){
+        GtkWidget *cbtxt = gtk_combo_box_text_new (); 
+        gtk_widget_set_size_request (cbtxt, 50, -1); 
+        g_object_set_data(G_OBJECT (cbtxt), "rf_gen_out_dest_id", GINT_TO_POINTER (channel)); 
+
+
+        for (int jj=0; rf_gen_out_dest[jj].label; ++jj){
+                gchar *id = g_strdup_printf ("%d", jj); gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id,  rf_gen_out_dest[jj].label); g_free (id);
+        }
+
+        if (preset >= 0)
+                gtk_combo_box_set_active (GTK_COMBO_BOX (cbtxt), preset); 
+        else
+                gtk_combo_box_set_active (GTK_COMBO_BOX (cbtxt), 4); // NULL SIGNAL [TESTING FALLBACK for -1/error]
+                
+        g_signal_connect (G_OBJECT (cbtxt), "changed",	
+                          G_CALLBACK (RPSPMC_Control::choice_rf_gen_out_callback), 
+                          ref);				
+        grid_add_widget (cbtxt);
+        return cbtxt;
+};
+
 
 
 
@@ -647,7 +692,7 @@ void GUI_Builder::grid_add_probe_controls (gboolean have_dual,
                                        "disable to save resources and CPU time for huge data sets\n"
                                        "and use manual plot update if needed.", 1,
                                        GCallback (auto_cb), cb_data, auto_flags, FLAG_AUTO_PLOT); 
-        grid_add_check_button_guint64 ("Auto Save", "Enable save data auutomatically at competion.\n"
+        grid_add_check_button_guint64 ("Auto Save", "Enable save data automatically at competion.\n"
                                        "(recommended)", 1,
                                        GCallback (auto_cb), cb_data, auto_flags, FLAG_AUTO_SAVE); 
         grid_add_check_button_guint64 ("GLock", "Lock Data/Graphs Configuration.\n"
@@ -845,6 +890,8 @@ void RPSPMC_Control::GVP_store_vp (const gchar *key){
         GVariant *pc_array_dz = g_variant_new_fixed_array (g_variant_type_new ("d"), GVP_dz, n, sizeof (double));
         GVariant *pc_array_da = g_variant_new_fixed_array (g_variant_type_new ("d"), GVP_da, n, sizeof (double));
         GVariant *pc_array_db = g_variant_new_fixed_array (g_variant_type_new ("d"), GVP_db, n, sizeof (double));
+        GVariant *pc_array_dam = g_variant_new_fixed_array (g_variant_type_new ("d"), GVP_da, n, sizeof (double));
+        GVariant *pc_array_dfm = g_variant_new_fixed_array (g_variant_type_new ("d"), GVP_db, n, sizeof (double));
         GVariant *pc_array_ts = g_variant_new_fixed_array (g_variant_type_new ("d"), GVP_ts, n, sizeof (double));
         GVariant *pc_array_pn = g_variant_new_fixed_array (g_variant_type_new ("i"), GVP_points, n, sizeof (gint32));
         GVariant *pc_array_op = g_variant_new_fixed_array (g_variant_type_new ("i"), GVP_opt, n, sizeof (gint32));
@@ -854,11 +901,12 @@ void RPSPMC_Control::GVP_store_vp (const gchar *key){
         GVP_glock_data[0] = Source; GVP_glock_data[1] = XSource; GVP_glock_data[2] = PSource; GVP_glock_data[3] = XJoin; GVP_glock_data[4] = PlotAvg; GVP_glock_data[5] = PlotSec;
         GVariant *pc_array_grm = g_variant_new_fixed_array (g_variant_type_new ("t"), GVP_glock_data, 6, sizeof (guint64));
         
-        GVariant *pc_array[] = { pc_array_du, pc_array_dx, pc_array_dy, pc_array_dz, pc_array_da, pc_array_db, pc_array_ts,
+        GVariant *pc_array[] = { pc_array_du, pc_array_dx, pc_array_dy, pc_array_dz, pc_array_da, pc_array_db, pc_array_dam, pc_array_dfm,
+                                 pc_array_ts,
                                  pc_array_pn, pc_array_op, pc_array_vn, pc_array_vp,
                                  pc_array_grm,
                                  NULL };
-        const gchar *vckey[] = { "du", "dx", "dy", "dz", "da", "db", "ts", "pn", "op", "vn", "vp", "grm", NULL };
+        const gchar *vckey[] = { "du", "dx", "dy", "dz", "da", "db", "dam", "dfm", "ts", "pn", "op", "vn", "vp", "grm", NULL };
 
         for (int i=0; vckey[i] && pc_array[i]; ++i){
                 gchar *m_vckey = g_strdup_printf ("%s-%s", vckey[i], key);
@@ -900,13 +948,13 @@ void RPSPMC_Control::GVP_restore_vp (const gchar *key){
                 return;
         }
         gsize  n; // == N_GVP_VECTORS;
-        GVariant *vd[7];
+        GVariant *vd[9];
         GVariant *vi[4];
-        double *pc_array_d[7];
+        double *pc_array_d[9];
         gint32 *pc_array_i[5];
-        const gchar *vckey_d[] = { "du", "dx", "dy", "dz", "da", "db", "ts", NULL };
+        const gchar *vckey_d[] = { "du", "dx", "dy", "dz", "da", "db", "dam", "dfm", "ts", NULL };
         const gchar *vckey_i[] = { "pn", "op", "vn", "vp", NULL };
-        double *GVPd[] = { GVP_du, GVP_dx, GVP_dy, GVP_dz, GVP_da, GVP_db, GVP_ts, NULL };
+        double *GVPd[] = { GVP_du, GVP_dx, GVP_dy, GVP_dz, GVP_da, GVP_db, GVP_dam, GVP_dfm, GVP_ts, NULL };
         gint32 *GVPi[] = { GVP_points, GVP_opt, GVP_vnrep, GVP_vpcjr, NULL };
         gint32 vp_program_length=0;
         
@@ -1033,6 +1081,8 @@ int RPSPMC_Control::callback_edit_GVP (GtkWidget *widget, RPSPMC_Control *self){
 			self->GVP_dz[k] = self->GVP_dz[ks];
 			self->GVP_da[k] = self->GVP_da[ks];
 			self->GVP_db[k] = self->GVP_db[ks];
+			self->GVP_dam[k] = self->GVP_dam[ks];
+			self->GVP_dfm[k] = self->GVP_dfm[ks];
 			self->GVP_ts[k]  = self->GVP_ts[ks];
 			self->GVP_points[k] = self->GVP_points[ks];
 			self->GVP_opt[k] = self->GVP_opt[ks];
@@ -1048,6 +1098,8 @@ int RPSPMC_Control::callback_edit_GVP (GtkWidget *widget, RPSPMC_Control *self){
 			self->GVP_dz[k] = self->GVP_dz[ks];
 			self->GVP_da[k] = self->GVP_da[ks];
 			self->GVP_db[k] = self->GVP_db[ks];
+			self->GVP_dam[k] = self->GVP_dam[ks];
+			self->GVP_dfm[k] = self->GVP_dfm[ks];
 			self->GVP_ts[k]  = self->GVP_ts[ks];
 			self->GVP_points[k] = self->GVP_points[ks];
 			self->GVP_opt[k] = self->GVP_opt[ks];
@@ -1079,7 +1131,7 @@ NcVar* rpspmc_pacpll_hwi_ncaddvar (NcFile *ncf, const gchar *varname, const gcha
 	return ncv;
 }
 
-#define SPMTMPL_ID "rpspmc_pacpll_hwi_"
+#define SPMTMPL_ID "rpspmc_hwi_"
 
 void RPSPMC_Control::save_values (NcFile *ncf){
 	NcVar *ncv;
@@ -1097,41 +1149,23 @@ void RPSPMC_Control::save_values (NcFile *ncf){
 
 // Basic Feedback/Scan Parameter ============================================================
 
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"bias", "V", "SRanger: (Sampel or Tip) Bias Voltage", "Bias", bias);
+	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"Bias", "V", "RPSPMC: (Sampel or Tip) Bias Voltage", "Bias", bias);
 	ncv->add_att ("label", "Bias");
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"z_setpoint", "A", "SRanger: auxillary/Z setpoint", "Z Set Point", zpos_ref);
+	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"Z_Servo_FCZ_Setpoint", "A", "RPSPMC: Z-Servo FCZ Setpoint", "FCZ Set Point", zpos_ref);
 	ncv->add_att ("label", "Z Setpoint");
 
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"mix0_set_point", "nA", "SRanger: Mix0: Current set point", "Current Setpt.", mix_set_point[0]);
+	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"Z_Servo_Set_Point", "nA", "RPSPMC: Z-Servo Current Set Point", "Current Setpt.", mix_set_point[0]);
 	ncv->add_att ("label", "Current");
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"mix1_set_point", "Hz", "SRanger: Mix1: Voltage set point", "Voltage Setpt.", mix_set_point[1]);
-	ncv->add_att ("label", "VoltSetpt.");
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"mix2_set_point", "V", "SRanger: Mix2: Aux2 set point", "Aux2 Setpt.", mix_set_point[2]);
-	ncv->add_att ("label", "Aux2 Setpt.");
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"mix3_set_point", "V", "SRanger: Mix3: Aux3 set point", "Aux3 Setpt.", mix_set_point[3]);
-	ncv->add_att ("label", "Aux3 Setpt.");
 
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"mix0_mix_gain", "1", "SRanger: Mix0 gain", "Current gain", mix_gain[0]);
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"mix1_mix_gain", "1", "SRanger: Mix1 gain", "Voltage gain", mix_gain[1]);
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"mix2_mix_gain", "1", "SRanger: Mix2 gain", "Aux2 gain", mix_gain[2]);
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"mix3_mix_gain", "1", "SRanger: Mix3 gain", "Aux3 gain", mix_gain[3]);
+	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"Z_Servo_FLevel", "1", "Z-Servo RPSPMC: FLevel", "Current level", mix_level[0]);
 
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"mix0_mix_level", "1", "SRanger: Mix0 level", "Current level", mix_level[0]);
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"mix1_mix_level", "1", "SRanger: Mix1 level", "Voltage level", mix_level[1]);
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"mix2_mix_level", "1", "SRanger: Mix2 level", "Aux2 level", mix_level[2]);
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"mix3_mix_level", "1", "SRanger: Mix3 level", "Aux3 level", mix_level[3]);
+	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"Z-Servo_Transfer_Mode", "BC", "RPSPMC: Z-Servo Transfer Mode", "Z-Servo Transfer Mode", (double)mix_transform_mode[0]);
+	ncv->add_att ("mode_bcoding", "0:Off, 1:On, 2:Log, 4:FCZ");
 
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"mix0_current_mix_transform_mode", "BC", "SRanger: Mix0 transform_mode", "Current transform_mode", (double)mix_transform_mode[0]);
-	ncv->add_att ("mode_bcoding", "0:Off, 1:On, 2:Log, 4:IIR, 8:FUZZY");
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"mix1_voltage_mix_transform_mode", "BC", "SRanger: Mix1 transform_mode", "Voltage transform_mode", (double)mix_transform_mode[1]);
-	ncv->add_att ("mode_bcoding", "0:Off, 1:On, 2:Log, 4:IIR, 8:FUZZY");
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"mix2_aux2_mix_transform_mode", "BC", "SRanger: Mix2 transform_mode", "Aux2 transform_mode", (double)mix_transform_mode[2]);
-	ncv->add_att ("mode_bcoding", "0:Off, 1:On, 2:Log, 4:IIR, 8:FUZZY");
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"mix3_aux3_mix_transform_mode", "BC", "SRanger: Mix3 transform_mode", "Aux3 transform_mode", (double)mix_transform_mode[3]);
-	ncv->add_att ("mode_bcoding", "0:Off, 1:On, 2:Log, 4:IIR, 8:FUZZY");
+	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"scan_speed_x", "A/s", "RPSPMC: Scan speed X", "Xs Velocity", scan_speed_x);
+	ncv->add_att ("label", "Velocity Xm");
 
-
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"move_speed_x", "A/s", "SRanger: Move speed X", "Xm Velocity", move_speed_x);
+	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"move_speed_x", "A/s", "RPSPMC: Move speed X", "Xm Velocity", move_speed_x);
 	ncv->add_att ("label", "Velocity Xm");
 
 
@@ -1149,7 +1183,6 @@ void RPSPMC_Control::load_values (NcFile *ncf){
 	// OK -- but will be obsoleted and removed at any later point -- PZ
 	NC_GET_VARIABLE ("rpspmc_pacpll_hwi_bias", &bias);
 	NC_GET_VARIABLE ("rpspmc_pacpll_hwi_bias", &main_get_gapp()->xsm->data.s.Bias);
-        NC_GET_VARIABLE ("rpspmc_pacpll_hwi_set_point1", &mix_set_point[1]);
         NC_GET_VARIABLE ("rpspmc_pacpll_hwi_set_point0", &mix_set_point[0]);
 
 	update_GUI ();
@@ -1456,6 +1489,8 @@ int RPSPMC_Control::choice_Ampl_callback (GtkWidget *widget, RPSPMC_Control *spm
 
 	PI_DEBUG (DBG_L2, "Ampl: Ch=" << j << " i=" << i );
 	rpspmc_pacpll_hwi_pi.app->spm_range_check(NULL, rpspmc_pacpll_hwi_pi.app);
+
+        rpspmc_hwi->update_hardware_mapping_to_rpspmc_source_signals ();
         
 	return 0;
 }
@@ -1465,8 +1500,12 @@ void RPSPMC_Control::create_folder (){
  	GSList *zpos_control_list=NULL;
 	GSList *multi_IVsec_list=NULL;
 
-        AppWindowInit ("RP-SPM Control Window");
+        GSList *FPGA_readback_update_list=NULL;
+        GSList *EC_FPGA_SPMC_server_settings_list=NULL;
+        GSList *EC_GVP_MON_list = NULL;
         
+        AppWindowInit ("RP-SPM Control Window");
+
         // ========================================
         notebook = gtk_notebook_new ();
         gtk_notebook_set_scrollable (GTK_NOTEBOOK (notebook), TRUE);
@@ -1496,6 +1535,7 @@ void RPSPMC_Control::create_folder (){
 
         bp->set_default_ec_change_notice_fkt (RPSPMC_Control::BiasChanged, this);
         bp->grid_add_ec_with_scale ("Bias", Volt, &bias, -10., 10., "4g", 0.001, 0.01, "fbs-bias");
+        FPGA_readback_update_list = g_slist_prepend (FPGA_readback_update_list, bp->ec); // add to FPGA reconnect readback parameter list
         //        bp->ec->set_adjustment_mode (PARAM_CONTROL_ADJUSTMENT_LOG | PARAM_CONTROL_ADJUSTMENT_LOG_SYM | PARAM_CONTROL_ADJUSTMENT_DUAL_RANGE | PARAM_CONTROL_ADJUSTMENT_ADD_MARKS );
         bp->ec->SetScaleWidget (bp->scale, 0);
         bp->ec->set_logscale_min (1e-3);
@@ -1506,13 +1546,14 @@ void RPSPMC_Control::create_folder (){
         //bp->set_input_width_chars (20);
         //bp->set_input_nx (2);
         bp->grid_add_ec_with_scale ("Z-Pos/Setpoint", Angstroem, &zpos_ref, -1000., 1000., "6g", 0.01, 0.1, "adv-dsp-zpos-ref");
+        FPGA_readback_update_list = g_slist_prepend (FPGA_readback_update_list, bp->ec); // add to FPGA reconnect readback parameter list
         bp->ec->SetScaleWidget (bp->scale, 0);
         gtk_scale_set_digits (GTK_SCALE (bp->scale), 5);
         //ZPos_ec = bp->ec;
         bp->grid_add_ec ("", Angstroem, &zpos_mon, -1000., 1000., "6g", 0.01, 0.1, "adv-dsp-zpos-mon");
         ZPos_ec = bp->ec;
         zpos_control_list = g_slist_prepend (zpos_control_list, bp->ec);
-                 
+
         bp->set_input_width_chars (12);
         bp->set_input_nx ();
 
@@ -1533,14 +1574,22 @@ void RPSPMC_Control::create_folder (){
 
         bp->set_input_width_chars (12);
         bp->set_label_width_chars (10);
+        bp->set_configure_list_mode_on ();
 	bp->grid_add_label ("Z-Servo");
-        bp->grid_add_label ("Setpoint", NULL, 5);
+        z_servo_current_source_options_selector = bp->grid_add_z_servo_current_source_options (0, (int)spmc_parameters.z_servo_src_mux, this);
+        bp->set_configure_list_mode_off ();
+
+        bp->grid_add_label ("Setpoint", NULL, 4);
 
         bp->set_configure_list_mode_on ();
         bp->set_input_width_chars (6);
         bp->set_label_width_chars (6);
         //bp->grid_add_label ("Gain");
+
+        bp->set_configure_list_mode_on ();
         bp->grid_add_label ("In-Offset");
+        bp->set_configure_list_mode_off ();
+        
         bp->grid_add_label ("Fuzzy-Level");
         bp->grid_add_label ("Transfer");
         bp->set_configure_list_mode_off ();
@@ -1591,6 +1640,7 @@ void RPSPMC_Control::create_folder (){
 #endif
 
                 bp->grid_add_ec_with_scale (NULL, mixer_unit[ch], &mix_set_point[ch], ch==0? 0.0:-100.0, 100., "4g", 0.001, 0.01, mixer_remote_id_set[ch]);
+                FPGA_readback_update_list = g_slist_prepend (FPGA_readback_update_list, bp->ec); // add to FPGA reconnect readback parameter list
                 // bp->ec->set_adjustment_mode (PARAM_CONTROL_ADJUSTMENT_LOG | PARAM_CONTROL_ADJUSTMENT_ADD_MARKS );
                 bp->ec->SetScaleWidget (bp->scale, 0);
                 bp->ec->set_logscale_min (1e-4);
@@ -1605,7 +1655,9 @@ void RPSPMC_Control::create_folder (){
                 bp->set_input_width_chars (6);
                 bp->set_configure_list_mode_on ();
                 //bp->grid_add_ec (NULL, Unity, &mix_gain[ch], -1.0, 1.0, "5g", 0.001, 0.01, mixer_remote_id_gn[ch]);
+                bp->set_configure_list_mode_on ();
                 bp->grid_add_ec (NULL, mixer_unit[ch], &mix_in_offsetcomp[ch], -1.0, 1.0, "5g", 0.001, 0.01, mixer_remote_id_oc[ch]);
+                bp->set_configure_list_mode_off ();
                 bp->grid_add_ec (NULL, mixer_unit[ch], &mix_level[ch], -100.0, 100.0, "5g", 0.001, 0.01, mixer_remote_id_fl[ch]);
 
                 if (tmp) delete (tmp); // done setting unit -- if custom
@@ -1613,7 +1665,7 @@ void RPSPMC_Control::create_folder (){
                 if (signal_select_widget)
                         g_object_set_data (G_OBJECT (signal_select_widget), "related_ec_level", bp->ec);
                 
-                bp->grid_add_mixer_options (ch, mix_transform_mode[ch], this);
+                z_servo_options_selector[ch] = bp->grid_add_mixer_options (ch, mix_transform_mode[ch], this);
                 bp->set_configure_list_mode_off ();
                 bp->new_line ();
         }
@@ -1632,29 +1684,35 @@ void RPSPMC_Control::create_folder (){
         bp->set_configure_list_mode_on ();
 	bp->grid_add_ec_with_scale ("CP", dB, &spmc_parameters.z_servo_cp_db, -100., 20., "5g", 1.0, 0.1, "fbs-cp"); // z_servo[SERVO_CP]
         GtkWidget *ZServoCP = bp->input;
+        FPGA_readback_update_list = g_slist_prepend (FPGA_readback_update_list, bp->ec); // add to FPGA reconnect readback parameter list
+        bp->set_configure_list_mode_off ();
 
         mix_level[2] = 5.;
         mix_level[3] = -5.;
         bp->grid_add_ec ("Z Upper", Volt, &spmc_parameters.z_servo_upper, -5.0, 5.0, "5g", 0.001, 0.01,"fbs-upper");
-        bp->new_line ();
-        bp->set_configure_list_mode_off ();
-        bp->grid_add_ec_with_scale ("CI", dB, &spmc_parameters.z_servo_ci_db, -100., 20., "5g", 1.0, 0.1, "fbs-ci"); // z_servo[SERVO_CI
-        bp->grid_add_ec ("Z Lower", Volt, &spmc_parameters.z_servo_lower, -5.0, 5.0, "5g", 0.001, 0.01,"fbs-lower");
-        GtkWidget *ZServoCI = bp->input;
+        FPGA_readback_update_list = g_slist_prepend (FPGA_readback_update_list, bp->ec); // add to FPGA reconnect readback parameter list
 
-        //g_object_set_data( G_OBJECT (ZServoCI), "HasClient", ZServoCP);
-        //g_object_set_data( G_OBJECT (ZServoCP), "HasMaster", ZServoCI);
-        //g_object_set_data( G_OBJECT (ZServoCI), "HasRatio", GINT_TO_POINTER((guint)round(1000.*z_servo[SERVO_CP]/z_servo[SERVO_CI])));
+        bp->new_line ();
+        bp->grid_add_ec_with_scale ("CI", dB, &spmc_parameters.z_servo_ci_db, -100., 20., "5g", 1.0, 0.1, "fbs-ci"); // z_servo[SERVO_CI
+        GtkWidget *ZServoCI = bp->input;
+        FPGA_readback_update_list = g_slist_prepend (FPGA_readback_update_list, bp->ec); // add to FPGA reconnect readback parameter list
+
+        g_object_set_data( G_OBJECT (ZServoCI), "HasClient", ZServoCP);
+        g_object_set_data( G_OBJECT (ZServoCP), "HasMaster", ZServoCI);
+        g_object_set_data( G_OBJECT (ZServoCI), "HasRatio", GINT_TO_POINTER((guint)round(1000.*spmc_parameters.z_servo_cp_db/spmc_parameters.z_servo_ci_db)));
+        
+        bp->grid_add_ec ("Z Lower", Volt, &spmc_parameters.z_servo_lower, -5.0, 5.0, "5g", 0.001, 0.01,"fbs-lower");
+        FPGA_readback_update_list = g_slist_prepend (FPGA_readback_update_list, bp->ec); // add to FPGA reconnect readback parameter list
         
         bp->new_line ();
         bp->set_label_width_chars ();
-#if 1
+#if 0
         bp->grid_add_check_button ("Enable", "enable Z servo feedback controller." PYREMOTE_CHECK_HOOK_KEY("MainZservo"), 1,
                                    G_CALLBACK(RPSPMC_Control::ZServoControl), this, ((int)spmc_parameters.gvp_status)&1, 0);
 #endif
-        spmc_parameters.z_servo_invert = 1.;
-        bp->grid_add_check_button ("Invert", "invert Z servo control.", 1,
-                                   G_CALLBACK(RPSPMC_Control::ZServoControlInv), this, spmc_parameters.z_servo_invert < 0.0, 0);
+        // Z OUPUT POLARITY:
+        spmc_parameters.z_polarity      = xsmres.ScannerZPolarity ? 1 : -1; // 1: pos, 0: neg (bool) -- adjust zpos_ref accordingly!
+        spmc_parameters.gxsm_z_polarity = xsmres.ScannerZPolarity ? 1 : -1; // 1: pos, 0: neg (bool) -- adjust zpos_ref accordingly!
 
 
 	// ========================================
@@ -1671,11 +1729,17 @@ void RPSPMC_Control::create_folder (){
 
         bp->set_default_ec_change_notice_fkt (RPSPMC_Control::ChangedNotifyMoveSpeed, this);
 	bp->grid_add_ec_with_scale ("MoveSpd", Speed, &move_speed_x, 0.1, 10000., "5g", 1., 10., "fbs-scan-speed-move");
+        bp->ec->SetScaleWidget (bp->scale, 0);
+        bp->ec->set_logscale_min (1);
+        gtk_scale_set_digits (GTK_SCALE (bp->scale), 5);
         bp->new_line ();
         bp->set_configure_list_mode_off ();
 
         bp->set_default_ec_change_notice_fkt (RPSPMC_Control::ChangedNotifyScanSpeed, this);
 	bp->grid_add_ec_with_scale ("ScanSpd", Speed, &scan_speed_x_requested, 0.1, 100000., "5g", 1., 10., "fbs-scan-speed-scan");
+        bp->ec->SetScaleWidget (bp->scale, 0);
+        bp->ec->set_logscale_min (1);
+        gtk_scale_set_digits (GTK_SCALE (bp->scale), 5);
         scan_speed_ec = bp->ec;
 
         bp->new_line ();
@@ -1809,11 +1873,13 @@ void RPSPMC_Control::create_folder (){
         
         bp->new_line ();
 	bp->grid_add_ec ("Modulation Frequency", new UnitObj("Hz","Hz"), &spmc_parameters.sc_lck_frequency, 0.0, 30e6, "5g", 1.0, 100.0, "SPMC-LCK-FREQ");
+        LCK_ModFrq = bp->ec;
+        
         bp->new_line ();
         bp->grid_add_label ("Modulation on");
         bp->grid_add_modulation_target_options (0, (int)spmc_parameters.sc_lck_target, this);
 
-        for (int jj=1; modulation_targets[jj].label; ++jj){
+        for (int jj=1; modulation_targets[jj].label && jj < LCK_NUM_TARGETS; ++jj){
                 bp->new_line ();
                 gchar *lab = g_strdup_printf ("Volume for %s", modulation_targets[jj].label);
                 gchar *id = g_strdup_printf ("SPMC-LCK-ModVolume-%s", modulation_targets[jj].label);
@@ -1826,13 +1892,49 @@ void RPSPMC_Control::create_folder (){
         }
 
         bp->pop_grid (); bp->set_xy (2,2);
- 	bp->new_grid_with_frame ("Bi-Quad IIR Filter");
-        //bp->new_line ();
-	bp->grid_add_ec ("Time Const BQ", new UnitObj("ms","ms"), &spmc_parameters.sc_lck_bq_tau, 0., 1e6, "5g", 1e-6, 10e3, "SPMC-LCK-BQ-TAU");
+ 	bp->new_grid_with_frame ("Filter, RF-Gen");
+
+
+        bp->grid_add_label ("Filter type");
+        const gchar *filter_types[] = { "None/Pass", "IIR", "BiQuad", "From AB", NULL };
+        GtkWidget *combo_bqfilter_type = gtk_combo_box_text_new ();
+        for (int jj=0; filter_types[jj]; ++jj){
+                gchar *id = g_strdup_printf ("%d", jj);
+                gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (combo_bqfilter_type), id, filter_types[jj]);
+                g_free (id);
+        }
+        gtk_combo_box_set_active (GTK_COMBO_BOX (combo_bqfilter_type), 1);
+        g_signal_connect (G_OBJECT (combo_bqfilter_type), "changed",
+                          G_CALLBACK (RPSPMC_Control::choice_BQfilter_type_callback),
+                          this);
+        bp->grid_add_widget (combo_bqfilter_type);
         bp->new_line ();
+        
+        //bp->new_line ();
 	bp->grid_add_ec ("Time Const IIR", new UnitObj("ms","ms"), &spmc_parameters.sc_lck_iir_tau, 0., 1e6, "5g", 1e-6, 10e3, "SPMC-LCK-IIR-TAU");
+	g_object_set_data (G_OBJECT (combo_bqfilter_type), "IIR-TC", bp->ec);
+        bp->new_line ();
+	bp->grid_add_ec ("Time Const BQ", new UnitObj("ms","ms"), &spmc_parameters.sc_lck_bq_tau, 0., 1e6, "5g", 1e-6, 10e3, "SPMC-LCK-BQ-TAU");
+	g_object_set_data (G_OBJECT (combo_bqfilter_type), "BQ-TC", bp->ec);
         bp->new_line ();
 	bp->grid_add_ec ("BiQaud Q", new UnitObj(" Q"," Q"), &spmc_parameters.sc_lck_q, 0., 1e6, "5g", 0.1, 5.0, "SPMC-LCK-Q");
+	g_object_set_data (G_OBJECT (combo_bqfilter_type), "BQ-Q", bp->ec);
+        bp->new_line ();
+        UnitObj *unity_unit = new UnitObj(" "," ");
+        for(int jj=0; jj<6; ++jj){
+                spmc_parameters.sc_lck_bq_coef[jj]=0.;
+                spmc_parameters.sc_lck_bq_coef[0]=1.;
+                gchar *l = g_strdup_printf ("BQ %s%d", jj<3?"b":"a", jj<3?jj:jj-3);
+                //gchar *l = g_strdup_printf ("BQ%d", jj);
+                gchar *id = g_strdup_printf ("SPMC-LCK-BQ-COEF-BA");
+                bp->grid_add_ec (l, unity_unit, &spmc_parameters.sc_lck_bq_coef[jj], -1e10, 1e10, "g", 1., 10., id, jj);
+                if (jj==5) bp->init_ec_array ();
+                g_object_set_data (G_OBJECT (combo_bqfilter_type), id, bp->ec);
+                g_free (l);
+                g_free (id);
+                bp->new_line ();
+        }	
+	bp->grid_add_ec ("RF Gen Ref Frequency", new UnitObj("Hz","Hz"), &spmc_parameters.sc_lck_rf_frequency, 0.0, 30e6, "5g", 1.0, 100.0, "SPMC-LCK-RF-FREQ");
         bp->new_line ();
 	bp->grid_add_label ("Gain and Modualtion Options:");
         bp->new_line ();
@@ -1840,6 +1942,10 @@ void RPSPMC_Control::create_folder (){
         bp->new_line ();
 	bp->grid_add_ec ("FM Mod Scale.", new UnitObj("Hz/V","Hz/V"), &spmc_parameters.sc_lck_fmscale, -1e9, 1e9, "6g", 0.1, 5.0, "SPMC-LCK-FMSCALE");
 
+        bp->new_line ();
+        bp->set_label_width_chars (10);
+	bp->grid_add_label ("RF Gen Output on");
+        bp->grid_add_rf_gen_out_options (0, (int)spmc_parameters.rf_gen_out_mux, this);
         
         bp->notebook_tab_show_all ();
         bp->pop_grid ();
@@ -2003,12 +2109,54 @@ void RPSPMC_Control::create_folder (){
         
         bp->set_input_width_chars (3);
         bp->set_label_width_chars (3);
+
+        bp->grid_add_ec ("Mon", Volt, &spmc_parameters.bias_monitor, -10.0, 10.0, ".03g", 0.1, 1., "GVP-U-MONITOR");
+        //bp->grid_add_ec ("Mon:", Volt, &spmc_parameters.gvpu_monitor, -10.0, 10.0, ".03g", 0.1, 1., "GVP-U-MONITOR");
+        EC_GVP_MON_list = g_slist_prepend( EC_GVP_MON_list, bp->ec);
+        bp->ec->Freeze ();
+        bp->grid_add_ec (NULL, Volt, &spmc_parameters.xs_monitor, -10.0, 10.0, ".03g", 0.1, 1., "GVP-XS-MONITOR");
+        EC_GVP_MON_list = g_slist_prepend( EC_GVP_MON_list, bp->ec);
+        bp->ec->Freeze ();
+        bp->grid_add_ec (NULL, Volt, &spmc_parameters.ys_monitor, -10.0, 10.0, ".03g", 0.1, 1., "GVP-YS-MONITOR");
+        EC_GVP_MON_list = g_slist_prepend( EC_GVP_MON_list, bp->ec);
+        bp->ec->Freeze ();
+        bp->grid_add_ec (NULL, Volt, &spmc_parameters.zs_monitor, -10.0, 10.0, ".03g", 0.1, 1., "GVP-ZS-MONITOR");
+        EC_GVP_MON_list = g_slist_prepend( EC_GVP_MON_list, bp->ec);
+        bp->ec->Freeze ();
+        bp->set_configure_list_mode_on ();
+        bp->grid_add_ec (NULL, Volt, &spmc_parameters.gvpa_monitor, -10.0, 10.0, ".03g", 0.1, 1., "GVP-A-MONITOR");
+        EC_GVP_MON_list = g_slist_prepend( EC_GVP_MON_list, bp->ec);
+        bp->ec->Freeze ();
+        bp->grid_add_ec (NULL, Volt, &spmc_parameters.gvpb_monitor, -10.0, 10.0, ".03g", 0.1, 1., "GVP-B-MONITOR");
+        EC_GVP_MON_list = g_slist_prepend( EC_GVP_MON_list, bp->ec);
+        bp->ec->Freeze ();
+        bp->grid_add_ec (NULL, Volt, &spmc_parameters.gvpamc_monitor, -10.0, 10.0, ".03g", 0.1, 1., "GVP-AMC-MONITOR");
+        EC_GVP_MON_list = g_slist_prepend( EC_GVP_MON_list, bp->ec);
+        bp->ec->Freeze ();
+        bp->grid_add_ec (NULL, Volt, &spmc_parameters.gvpfmc_monitor, -10.0, 10.0, ".03g", 0.1, 1., "GVP-FMC-MONITOR");
+        EC_GVP_MON_list = g_slist_prepend( EC_GVP_MON_list, bp->ec);
+        bp->ec->Freeze ();
+        bp->set_configure_list_mode_off ();
+        mon_FB = 0;
+        bp->set_input_nx (5);
+        bp->grid_add_ec (" FB: ", Unity, &mon_FB, -9999, 9999, ".0f", "GVP-ZSERVO-MONITOR");
+        gvp_monitor_fb_label = bp->label;
+        gvp_monitor_fb_info_ec = bp->ec;
+
+        EC_GVP_MON_list = g_slist_prepend( EC_GVP_MON_list, bp->ec);
+        bp->ec->Freeze ();
+        bp->set_input_nx ();
+        
+	g_object_set_data (G_OBJECT (window), "GVP_VEC_MONITOR_list", EC_GVP_MON_list);
+
+        bp->new_line ();
         bp->grid_add_label ("VPC", "Vector Program Counter");
 
         bp->set_input_width_chars (7);
         bp->set_label_width_chars (7);
 
         GVP_preview_on[0]=0; // not used
+        
         //bp->grid_add_label ("VP-dU", "vec-du (Bias, DAC CH4)");
         bp->grid_add_button ("VP-dU", "vec-du (Bias, DAC CH4)", 1, G_CALLBACK (callback_GVP_preview_me), this);
         gtk_widget_set_name (bp->button, "gvpcolor4"); GVP_preview_on[4]=1;
@@ -2040,6 +2188,16 @@ void RPSPMC_Control::create_folder (){
         gtk_widget_set_name (bp->button, "normal"); GVP_preview_on[6]=0;
         g_object_set_data (G_OBJECT(bp->button), "AXIS", GINT_TO_POINTER (6));
 
+        //bp->grid_add_label ("VP-dAM", "vec-dAM (**RF-AM control)");
+        bp->grid_add_button ("VP-dAM", "vec-dAM (**RF-AMP control)", 1, G_CALLBACK (callback_GVP_preview_me), this);
+        gtk_widget_set_name (bp->button, "normal"); GVP_preview_on[7]=0;
+        g_object_set_data (G_OBJECT(bp->button), "AXIS", GINT_TO_POINTER (7));
+
+        //bp->grid_add_label ("VP-dFM", "vec-dFM (**RF-FM control)");
+        bp->grid_add_button ("VP-dFM", "vec-dFM (**RF-FM control)", 1, G_CALLBACK (callback_GVP_preview_me), this);
+        gtk_widget_set_name (bp->button, "normal"); GVP_preview_on[8]=0;
+        g_object_set_data (G_OBJECT(bp->button), "AXIS", GINT_TO_POINTER (8));
+
         bp->set_configure_list_mode_off ();
         bp->grid_add_label ("time", "total time for VP section");
         bp->grid_add_label ("points", "points (# vectors to add)");
@@ -2050,7 +2208,7 @@ void RPSPMC_Control::create_folder (){
         bp->grid_add_label ("VSet", "Treat this as a initial set position, vector differential from current position are computed!");
         bp->set_configure_list_mode_on ();
         bp->grid_add_label ("7", "Option bit 7");
-        bp->grid_add_label ("6", "Option bit 6");
+        bp->grid_add_label ("6", "Option bit 6 -- Enable Max Sampling");
         bp->grid_add_label ("5", "Option bit 5");
         bp->grid_add_label ("4", "Option bit 4");
         bp->grid_add_label ("3", "Option bit 3");
@@ -2095,6 +2253,10 @@ void RPSPMC_Control::create_folder (){
 		bp->grid_add_ec (NULL,    Volt, &GVP_da[k], -10.0, 10.0, "6.4g",1., 10., "gvp-da", k); 
                 if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
 		bp->grid_add_ec (NULL,    Volt, &GVP_db[k], -10.0, 10.0, "6.4g",1., 10., "gvp-db", k); 
+                if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
+		bp->grid_add_ec (NULL,    Volt, &GVP_dam[k], -10.0, 10.0, "6.4g",1., 10., "gvp-dam", k); 
+                if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
+		bp->grid_add_ec (NULL,    Volt, &GVP_dfm[k], -10.0, 10.0, "6.4g",1., 10., "gvp-dfm", k); 
                 if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
                 bp->set_configure_list_mode_off (); // ========================================================
 
@@ -2272,13 +2434,32 @@ void RPSPMC_Control::create_folder (){
 	//GVP_status = bp->grid_add_probe_status ("Status");
 
         gvp_preview_area = gtk_drawing_area_new ();
-        gtk_widget_set_size_request (gvp_preview_area, 800, 128);
-        gtk_drawing_area_set_content_width (GTK_DRAWING_AREA (gvp_preview_area), 512);
+        //gtk_drawing_area_set_content_width (GTK_DRAWING_AREA (gvp_preview_area), 512);
         gtk_drawing_area_set_content_height (GTK_DRAWING_AREA (gvp_preview_area), 128);
+        //gtk_widget_set_size_request (gvp_preview_area, -1, 128);
+        //gtk_widget_set_hexpand (gvp_preview_area, true);
+        //gtk_widget_compute_expand (gvp_preview_area, GTK_ORIENTATION_HORIZONTAL);
+
+	GtkWidget *scrollarea = gtk_scrolled_window_new ();
+
+        gtk_widget_set_hexpand (scrollarea, TRUE);
+        gtk_widget_set_vexpand (scrollarea, TRUE);
+        
+	/* the policy is one of GTK_POLICY AUTOMATIC, or GTK_POLICY_ALWAYS.
+	 * GTK_POLICY_AUTOMATIC will automatically decide whether you need
+	 * scrollbars, whereas GTK_POLICY_ALWAYS will always leave the scrollbars
+	 * there.  The first one is the horizontal scrollbar, the second, 
+	 * the vertical. */
+	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrollarea),
+					GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+	gtk_scrolled_window_set_child (GTK_SCROLLED_WINDOW (scrollarea), gvp_preview_area);
+        
+        bp->grid_add_widget (scrollarea);
+        //bp->grid_add_widget (gvp_preview_area);
+
         gtk_drawing_area_set_draw_func (GTK_DRAWING_AREA (gvp_preview_area),
                                         GtkDrawingAreaDrawFunc (RPSPMC_Control::gvp_preview_draw_function),
                                         this, NULL);
-        bp->grid_add_widget (gvp_preview_area);
         
         bp->pop_grid ();
         bp->new_line ();
@@ -2393,7 +2574,7 @@ void RPSPMC_Control::create_folder (){
                 // source selection for SWPS?:
                 if (k >= 0){ // swappable flex source
                         //g_message("bp->grid_add_probe_source_signal_options m=%d  %s => %d %s", k, rpspmc_source_signals[i].label,  probe_source[k], swappable_signals[k].label);
-                        bp->grid_add_probe_source_signal_options (k, probe_source[k], this);
+                        probe_source_signal_selector[k] = bp->grid_add_probe_source_signal_options (k, probe_source[k], this);
                 }else { // or fixed assignment
                         bp->grid_add_label (rpspmc_source_signals[i].label, NULL, 1, 0.);
                 }
@@ -2511,8 +2692,8 @@ void RPSPMC_Control::create_folder (){
                                     G_CALLBACK (RPspmc_pacpll::connect_cb), rpspmc_pacpll);
 	g_object_set_data( G_OBJECT (bp->button), "RESTART", GINT_TO_POINTER (1));
 
-#if 0 // life reconnect not yet functional, TDB
-        bp->grid_add_check_button ( N_("Connect"), "Check to re-initiate connection, uncheck to close connection.", 1,
+#if 1 // life reconnect not yet functional, TDB
+        bp->grid_add_check_button ( N_("Re-Connect"), "Check to re-initiate connection, uncheck to close connection.", 1,
                                     G_CALLBACK (RPspmc_pacpll::connect_cb), rpspmc_pacpll);
 	g_object_set_data( G_OBJECT (bp->button), "RESTART", GINT_TO_POINTER (0));
 #endif
@@ -2520,9 +2701,20 @@ void RPSPMC_Control::create_folder (){
                                     G_CALLBACK (rpspmc_hwi_dev::spmc_stream_connect_cb), rpspmc_hwi);
         stream_connect_button=bp->button;
 
+
+        spmc_parameters.rpspmc_dma_pull_interval = 10.0;
+        bp->set_input_width_chars (2);
+        bp->set_default_ec_change_notice_fkt (RPSPMC_Control::spmc_server_control_callback, this);
+  	bp->grid_add_ec ("DMA rate limit", msTime, &spmc_parameters.rpspmc_dma_pull_interval, 10., 10., ".0f", 5., 250., "RP-DMA-PULL-INTERVAL");        
+        EC_FPGA_SPMC_server_settings_list = g_slist_prepend(EC_FPGA_SPMC_server_settings_list, bp->ec);
+        
         bp->grid_add_widget (GVP_stop_all_zero_button=gtk_button_new_from_icon_name ("process-stopall-symbolic"));
         g_signal_connect (G_OBJECT (bp->button), "clicked", G_CALLBACK (RPSPMC_Control::GVP_AllZero), this);
-        
+        //g_signal_connect (G_OBJECT (bp->button), "clicked", G_CALLBACK (RPSPMC_Control_pacpll::spmc_server_control_callback), this);
+        gtk_widget_set_tooltip_text (bp->button, "Click to force reset GVP (WARNING: XYZ JUMP possible)!");
+        //gtk_widget_set_tooltip_text (bp->button, "Click to push update off Verbose Level and RPSPMC DMA rate limit / pull interval.");
+
+
         bp->new_line ();
         bp->grid_add_check_button ( N_("Debug"), "Enable debugging LV1.", 1,
                                     G_CALLBACK (RPspmc_pacpll::dbg_l1), rpspmc_pacpll);
@@ -2534,9 +2726,10 @@ void RPSPMC_Control::create_folder (){
                                     G_CALLBACK (RPspmc_pacpll::scan_gvp_opt6), rpspmc_pacpll);
         bp->grid_add_check_button ( N_("GVP7"), "Set GVP Option Bit 7 for scan", 1,
                                     G_CALLBACK (RPspmc_pacpll::scan_gvp_opt7), rpspmc_pacpll);
-        rpspmc_pacpll->rp_verbose_level = 0.0;
+        rp_verbose_level = 0.0;
         bp->set_input_width_chars (2);
-  	bp->grid_add_ec ("V", Unity, &rpspmc_pacpll->rp_verbose_level, 0., 10., ".0f", 1., 1., "RP-VERBOSE-LEVEL");        
+  	bp->grid_add_ec ("Verbosity", Unity, &rp_verbose_level, 0., 10., ".0f", 1., 1., "RP-VERBOSE-LEVEL");        
+        EC_FPGA_SPMC_server_settings_list = g_slist_prepend(EC_FPGA_SPMC_server_settings_list, bp->ec);
         //bp->new_line ();
         //tmp=bp->grid_add_button ( N_("Read"), "TEST READ", 1,
         //                          G_CALLBACK (RPspmc_pacpll::read_cb), this);
@@ -2546,7 +2739,8 @@ void RPSPMC_Control::create_folder (){
         bp->new_line ();
         bp->set_input_width_chars (80);
         rpspmc_pacpll->red_pitaya_health = bp->grid_add_input ("RedPitaya Health",10);
-
+        gtk_widget_set_name (bp->input, "entry-mono-text-start");
+        
         PangoFontDescription *fontDesc = pango_font_description_from_string ("monospace 10");
         //gtk_widget_modify_font (red_pitaya_health, fontDesc);
         // ### GTK4 ??? CSS ??? ###  gtk_widget_override_font (red_pitaya_health, fontDesc); // use CSS, thx, annyoing garbage... ??!?!?!?
@@ -2584,7 +2778,11 @@ void RPSPMC_Control::create_folder (){
         if (multiIV_checkbutton)
                 g_object_set_data( G_OBJECT (multiIV_checkbutton), "DSP_multiIV_list", multi_IVsec_list);
 	g_object_set_data( G_OBJECT (zposmon_checkbutton), "DSP_zpos_control_list", zpos_control_list);
-                
+
+
+	g_object_set_data( G_OBJECT (window), "FPGA_readback_update_list", FPGA_readback_update_list);
+        g_object_set_data( G_OBJECT (window), "EC_FPGA_SPMC_server_settings_list", EC_FPGA_SPMC_server_settings_list);
+        
 	GUI_ready = TRUE;
         
         AppWindowInit (NULL); // stage two
@@ -2610,6 +2808,15 @@ void RPSPMC_Control::Init_SPMC_on_connect (){
         }
 }
 
+void  RPSPMC_Control::spmc_server_control_callback (GtkWidget *widget, RPSPMC_Control *self){
+        g_message ("RPSPMC+Control::spmc_server_control_callback DMA: %d ms, VL: %d",(int)spmc_parameters.rpspmc_dma_pull_interval, (int)self->rp_verbose_level);
+        //RPSPMC_Control::GVP_AllZero (self);
+        if (rpspmc_pacpll){
+                rpspmc_pacpll->write_parameter ("RPSPMC_DMA_PULL_INTERVAL", (int)spmc_parameters.rpspmc_dma_pull_interval);
+                rpspmc_pacpll->write_parameter ("PACVERBOSE", (int)self->rp_verbose_level);
+        }
+}
+
 void RPSPMC_Control::GVP_zero_all_smooth (){
         // reset GVP
         int vector_index=0;
@@ -2618,7 +2825,7 @@ void RPSPMC_Control::GVP_zero_all_smooth (){
         rpspmc_hwi->resetVPCconfirmed ();
         make_dUZXYAB_vector (vector_index++,
                              0., 0., // GVP_du[k], GVP_dz[k],
-                             0., 0., 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k],
+                             0., 0., 0., 0., 0., 0.,  // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k], AM, FM
                              100, 0, 0, 0.5, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
                              0, VP_INITIAL_SET_VEC | gvp_options);
         append_null_vector (vector_index, gvp_options);
@@ -2679,11 +2886,11 @@ void RPSPMC_Control::ZPosSetChanged(Param_Control* pcs, RPSPMC_Control *self){
                         "SPMC_Z_SERVO_SETPOINT",
                         "SPMC_Z_SERVO_UPPER", 
                         NULL };
-                double jdata[6];
-                jdata[0] = main_get_gapp()->xsm->Inst->ZA2Volt(self->zpos_ref);
+                double jdata[3];
+                jdata[0] = main_get_gapp()->xsm->Inst->ZA2Volt(self->zpos_ref * spmc_parameters.gxsm_z_polarity);
                 jdata[1] = main_get_gapp()->xsm->Inst->nAmpere2V(self->mix_set_point[0]);
                 jdata[2]   = self->mix_level[0] > 0.
-                        ? main_get_gapp()->xsm->Inst->ZA2Volt(self->zpos_ref)
+                        ? main_get_gapp()->xsm->Inst->ZA2Volt(self->zpos_ref * spmc_parameters.gxsm_z_polarity)
                         : spmc_parameters.z_servo_upper; //5.; // UPPER
 
                 rpspmc_pacpll->write_array (SPMC_SET_ZPOS_SERVO_COMPONENTS, 0, NULL,  3, jdata);
@@ -2706,8 +2913,8 @@ void RPSPMC_Control::ZServoParamChanged(Param_Control* pcs, RPSPMC_Control *self
                 int jdata_i[1];
 
                 // obsolete invert, critical/no good here. Add final Z-polarity at very end
-                self->z_servo[SERVO_CP] = spmc_parameters.z_servo_invert * pow (10., spmc_parameters.z_servo_cp_db/20.);
-                self->z_servo[SERVO_CI] = spmc_parameters.z_servo_invert * pow (10., spmc_parameters.z_servo_ci_db/20.);
+                self->z_servo[SERVO_CP] = pow (10., spmc_parameters.z_servo_cp_db/20.); 
+                self->z_servo[SERVO_CI] = pow (10., spmc_parameters.z_servo_ci_db/20.);
 
                 jdata_i[0] = self->mix_transform_mode[0];
                 jdata[0]   = main_get_gapp()->xsm->Inst->nAmpere2V(self->mix_set_point[0]);
@@ -2715,7 +2922,7 @@ void RPSPMC_Control::ZServoParamChanged(Param_Control* pcs, RPSPMC_Control *self
                 jdata[2]   = self->z_servo[SERVO_CP];
                 jdata[3]   = self->z_servo[SERVO_CI];
                 jdata[4]   = self->mix_level[0] > 0.
-                           ? main_get_gapp()->xsm->Inst->ZA2Volt(self->zpos_ref)
+                           ? main_get_gapp()->xsm->Inst->ZA2Volt(self->zpos_ref * spmc_parameters.gxsm_z_polarity)
                         :  spmc_parameters.z_servo_upper;   // 5.; // UPPER
                 jdata[5]   = spmc_parameters.z_servo_lower; // -5.; // LOWER
 
@@ -2736,9 +2943,21 @@ void RPSPMC_Control::ZServoControl (GtkWidget *widget, RPSPMC_Control *self){
         */
 }
 
+// ** THIS INVERTS ONYL THE Z OUTPUT, does NOT effect any internal behaviors!
 void RPSPMC_Control::ZServoControlInv (GtkWidget *widget, RPSPMC_Control* self){
-        spmc_parameters.z_servo_invert = gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)) ? -1.:1.;
-        self->ZServoParamChanged (NULL, self);
+        int flg = gtk_check_button_get_active (GTK_CHECK_BUTTON (widget));
+
+        // CONFIRMATION DLG
+        if (flg)
+                if ( gapp->question_yes_no ("WARNING: Please confirm Z-Polarity set to NEGATIVE."))
+                        rpspmc_pacpll->write_parameter ("SPMC_Z_POLARITY", -1);
+                else
+                        gtk_check_button_set_active (GTK_CHECK_BUTTON (widget), true);
+        else
+                if ( gapp->question_yes_no ("WARNING: Please confirm Z-Polarity set to POSITIV."))
+                        rpspmc_pacpll->write_parameter ("SPMC_Z_POLARITY", 1);
+                else
+                        gtk_check_button_set_active (GTK_CHECK_BUTTON (widget), false);
 }
 
 
@@ -2811,6 +3030,41 @@ void RPSPMC_Control::update_GUI(){
 			(GFunc) App::update_ec, NULL);
 	g_slist_foreach((GSList*)g_object_get_data( G_OBJECT (window), "DSP_VPC_OPTIONS_list"),
 			(GFunc) callback_update_GVP_vpc_option_checkbox, this);
+}
+
+
+void RPSPMC_Control::update_FPGA_from_GUI (){ // after cold start
+        //zpos_ref = 0.; // ** via limits
+        g_slist_foreach ((GSList*)g_object_get_data (G_OBJECT (window), "FPGA_readback_update_list"), (GFunc) App::update_parameter, NULL); // UPDATE PARAMETRE form GUI!
+
+        bias = spmc_parameters.bias_monitor; // Volts direct
+        mix_set_point[0] = spmc_parameters.z_servo_setpoint / main_get_gapp()->xsm->Inst->nAmpere2V(1.0); // convert nA!!
+
+        if (spmc_parameters.z_servo_cp > 0.0)
+                spmc_parameters.z_servo_cp_db = 20.* log10(spmc_parameters.z_servo_cp); // convert to dB *** pow (10., spmc_parameters.z_servo_cp_db/20.);
+        if (spmc_parameters.z_servo_ci > 0.0)
+                spmc_parameters.z_servo_ci_db = 20.* log10(spmc_parameters.z_servo_ci); // convert to dB
+
+        // push to FPGA
+        BiasChanged(NULL, this);
+        ZServoParamChanged (NULL, this);
+        Slope_dZX_Changed(NULL, this);
+        Slope_dZY_Changed(NULL, this);
+        ZPosSetChanged(NULL, this);
+        ZServoControl (NULL, this);
+}
+
+void RPSPMC_Control::update_GUI_from_FPGA (){ // after warm start or re-connect
+        //zpos_ref = 0.; // ** via limits
+        bias = spmc_parameters.bias_monitor; // Volts direct
+        mix_set_point[0] = spmc_parameters.z_servo_setpoint / main_get_gapp()->xsm->Inst->nAmpere2V(1.0); // convert nA!!
+
+        if (spmc_parameters.z_servo_cp > 0.0)
+                spmc_parameters.z_servo_cp_db = 20.* log10(spmc_parameters.z_servo_cp); // convert to dB *** pow (10., spmc_parameters.z_servo_cp_db/20.);
+        if (spmc_parameters.z_servo_ci > 0.0)
+                spmc_parameters.z_servo_ci_db = 20.* log10(spmc_parameters.z_servo_ci); // convert to dB
+        
+        g_slist_foreach ((GSList*)g_object_get_data (G_OBJECT (window), "FPGA_readback_update_list"), (GFunc) App::update_ec, NULL); // UPDATE GUI!
 }
 
 void RPSPMC_Control::update_zpos_readings(){
@@ -3030,7 +3284,7 @@ int RPSPMC_Control::callback_GVP_restore_vp (GtkWidget *widget, RPSPMC_Control *
 
 int RPSPMC_Control::callback_GVP_preview_me (GtkWidget *widget, RPSPMC_Control *self){
         int i = GPOINTER_TO_INT (g_object_get_data(G_OBJECT(widget), "AXIS"));
-        if (i>0 && i <= 6){
+        if (i>0 && i <= 8){
                 self->GVP_preview_on[i] = self->GVP_preview_on[i] ? 0:1;
 
                 if (self->GVP_preview_on[i]){
@@ -3166,10 +3420,23 @@ int RPSPMC_Control::callback_GrMatWindow (GtkWidget *widget, RPSPMC_Control *sel
         return 0;
 }
 
+#define QQ44 (1LL<<44)
+
+// Q44: 32766.0000 Hz -> phase_inc=4611404543  0000000112dc72ff
+double dds_phaseinc (double freq){
+        double fclk = 125e6; //ADC_SAMPLING_RATE;
+        return QQ44*freq/fclk;
+}
 
 void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *self){
         if (rpspmc_pacpll){
                 const gchar *SPMC_SET_LCK_BQ_COMPONENTS[] = {
+                        "SPMC_SC_LCK_BQ_COEF_B0", //spmc_parameters.sc_lck_bq_coef[0,1,2]
+                        "SPMC_SC_LCK_BQ_COEF_B1",
+                        "SPMC_SC_LCK_BQ_COEF_B2",
+                        "SPMC_SC_LCK_BQ_COEF_A0", //spmc_parameters.sc_lck_bq_coef[3,4,5]
+                        "SPMC_SC_LCK_BQ_COEF_A1",
+                        "SPMC_SC_LCK_BQ_COEF_A2",
                         "SPMC_SC_LCK_FREQUENCY",
                         "SPMC_SC_LCK_VOLUME",
                         "SPMC_SC_LCK_F0BQ_TAU",
@@ -3177,28 +3444,45 @@ void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *
                         "SPMC_SC_LCK_F0BQ_Q",
                         "SPMC_SC_LCK_GAIN",
                         "SPMC_SC_LCK_FMSCALE",
+                        "SPMC_SC_LCK_RF_FREQUENCY",
                         NULL };
-                double jdata[7];
-                jdata[0] =  spmc_parameters.sc_lck_frequency;
+                double jdata[6+8];
+                int i=0;
+                for (;i<6; ++i)
+                        jdata[i] = spmc_parameters.sc_lck_bq_coef[i];
+                i=6;
+                jdata[i++] =  spmc_parameters.sc_lck_frequency;
 
                 if  (self->LCK_Target > 0 && self->LCK_Target < LCK_NUM_TARGETS)
-                        jdata[1] = modulation_targets[self->LCK_Target].scale_factor * self->LCK_Volume[self->LCK_Target]; // => Volts
+                        jdata[i++] = modulation_targets[self->LCK_Target].scale_factor * self->LCK_Volume[self->LCK_Target]; // => Volts
                 else
-                        jdata[1] = 0.;
+                        jdata[i++] = 0.;
                 
-                jdata[2] = spmc_parameters.sc_lck_bq_tau;
-                jdata[3] = spmc_parameters.sc_lck_iir_tau;
-                jdata[4] = spmc_parameters.sc_lck_q;
-                jdata[5] = spmc_parameters.sc_lck_gain;
-                jdata[6] = spmc_parameters.sc_lck_fmscale;
-                
-                g_message ("ADJ LOCKIN FRQ %g Hz, target=%d vol=%g V", spmc_parameters.sc_lck_frequency, self->LCK_Target, spmc_parameters.sc_lck_volume);
+                jdata[i++] = spmc_parameters.sc_lck_bq_tau;
+                jdata[i++] = spmc_parameters.sc_lck_iir_tau;
+                jdata[i++] = spmc_parameters.sc_lck_q;
+                jdata[i++] = spmc_parameters.sc_lck_gain;
+                jdata[i++] = spmc_parameters.sc_lck_fmscale;
+                jdata[i++] = spmc_parameters.sc_lck_rf_frequency;
+                g_message ("ADJ LOCKIN FRQ %g Hz, target=%d vol=%g V, RF=%g Hz", spmc_parameters.sc_lck_frequency, self->LCK_Target, spmc_parameters.sc_lck_volume, spmc_parameters.sc_lck_rf_frequency);
 
+                unsigned int n2 = round (log2(dds_phaseinc (spmc_parameters.sc_lck_frequency)));
+                double lck_decimation_factor = (1 << (44 - 10 - n2)) - 1.;
+                double Fs = 125e6 / lck_decimation_factor;
+
+                gchar *info = g_strdup_printf ("Fs=%g Hz", Fs);
+                self->LCK_ModFrq->set_info (info);
+                g_free (info);
+
+                g_print ("BiQ Coef: BA = [");
+                for (int k=0;k<6; ++k)
+                        g_print ("%g%s ", spmc_parameters.sc_lck_bq_coef[k], k==2?"][":k<5?",":"]");
+                g_print (", Fs=%g Hz\n", Fs);
+                
                 if (spmc_parameters.sc_lck_q > 0. && spmc_parameters.sc_lck_bq_tau > 0.)
                 { // INFO
                         double b0, b1, b2, a0, a1, a2;
                         double f_cut = 1000./spmc_parameters.sc_lck_bq_tau;
-                        double Fs = spmc_parameters.sc_lck_frequency;
                         double Q  = spmc_parameters.sc_lck_q;
                         // 2nd order BiQuad Low Pass parameters
                         double w0 = 2.*M_PI*f_cut/Fs; // 125MHz -- decimate as needed!
@@ -3218,7 +3502,7 @@ void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *
                         g_message ("##NORM b0=%g b1=%g b2=%g  a0=%g a1=%g a2=%g\n", b0/a0, b1/a0, b2/a0, a0/a0, a1/a0, a2/a0);
                 }
                 
-                rpspmc_pacpll->write_array (SPMC_SET_LCK_BQ_COMPONENTS, 0, NULL,  7, jdata);
+                rpspmc_pacpll->write_array (SPMC_SET_LCK_BQ_COMPONENTS, 0, NULL,  i, jdata);
         }
 }
 
@@ -3227,7 +3511,7 @@ int RPSPMC_Control::choice_mod_target_callback (GtkWidget *widget, RPSPMC_Contro
 
 	self->LCK_Target = gtk_combo_box_get_active (GTK_COMBO_BOX (widget));
         
-        for (int jj=1; modulation_targets[jj].label; ++jj)
+        for (int jj=1; modulation_targets[jj].label && jj < LCK_NUM_TARGETS; ++jj) //  ** omit last!
                 gtk_widget_set_sensitive (self->LCK_VolumeEntry[jj], jj == self->LCK_Target);
         
         if (rpspmc_pacpll){
@@ -3237,11 +3521,78 @@ int RPSPMC_Control::choice_mod_target_callback (GtkWidget *widget, RPSPMC_Contro
         return 0;
 }
 
+int RPSPMC_Control::choice_BQfilter_type_callback (GtkWidget *widget, RPSPMC_Control *self){
+	int id = gtk_combo_box_get_active (GTK_COMBO_BOX (widget));
+        if (rpspmc_pacpll)
+                rpspmc_pacpll->write_parameter ("SPMC_SC_LCK_FILTER_MODE", id);
+
+        
+        switch (id){
+        case 0:
+                g_message ("BQ: PASS");
+                gtk_widget_set_sensitive (GTK_WIDGET (g_object_get_data (G_OBJECT (widget), "IIR-TC")), false);
+                gtk_widget_set_sensitive (GTK_WIDGET (g_object_get_data (G_OBJECT (widget), "BQ-TC")), false);
+                gtk_widget_set_sensitive (GTK_WIDGET (g_object_get_data (G_OBJECT (widget), "BQ-Q")), false);
+                break;
+        case 1:
+                g_message ("BQ: IIR 1st");
+                gtk_widget_set_sensitive (GTK_WIDGET (g_object_get_data (G_OBJECT (widget), "IIR-TC")), true);
+                gtk_widget_set_sensitive (GTK_WIDGET (g_object_get_data (G_OBJECT (widget), "BQ-TC")), false);
+                gtk_widget_set_sensitive (GTK_WIDGET (g_object_get_data (G_OBJECT (widget), "BQ-Q")), false);
+                break;
+        case 2:
+                g_message ("BQ: BiQuad 2nd");
+                gtk_widget_set_sensitive (GTK_WIDGET (g_object_get_data (G_OBJECT (widget), "IIR-TC")), false);
+                gtk_widget_set_sensitive (GTK_WIDGET (g_object_get_data (G_OBJECT (widget), "BQ-TC")), true);
+                gtk_widget_set_sensitive (GTK_WIDGET (g_object_get_data (G_OBJECT (widget), "BQ-Q")), true);
+                break;
+        case 3:
+                g_message ("BQ: BiQuad BA -- from a,b params");
+                gtk_widget_set_sensitive (GTK_WIDGET (g_object_get_data (G_OBJECT (widget), "IIR-TC")), false);
+                gtk_widget_set_sensitive (GTK_WIDGET (g_object_get_data (G_OBJECT (widget), "BQ-TC")), false);
+                gtk_widget_set_sensitive (GTK_WIDGET (g_object_get_data (G_OBJECT (widget), "BQ-Q")), false);
+                break;
+
+        }
+        
+        return 0;
+}
+
+
+int RPSPMC_Control::choice_z_servo_current_source_callback (GtkWidget *widget, RPSPMC_Control *self){
+        PI_DEBUG_GP (DBG_L4, "%s \n",__FUNCTION__);
+
+	int id = gtk_combo_box_get_active (GTK_COMBO_BOX (widget));
+        
+        if (rpspmc_pacpll)
+                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_SRC_MUX", id);
+
+        for (int k=0; rpspmc_source_signals[k].mask; ++k)
+                if (rpspmc_source_signals[k].mask == 0x00000010){ // update as of 1V/5V "Current Input" Volt Scale Range Change from signal list
+                        rpspmc_source_signals[k].scale_factor = z_servo_current_source[id].scale_factor; break;
+                }
+
+        // rpspmc_hwi->update_hardware_mapping_to_rpspmc_source_signals (); // not required as mapping to volts is done with the above
+
+        return 0;
+}
+
+int RPSPMC_Control::choice_rf_gen_out_callback (GtkWidget *widget, RPSPMC_Control *self){
+        PI_DEBUG_GP (DBG_L4, "%s \n",__FUNCTION__);
+
+	int id = gtk_combo_box_get_active (GTK_COMBO_BOX (widget));
+        
+        if (rpspmc_pacpll)
+                rpspmc_pacpll->write_parameter ("SPMC_RF_GEN_OUT_MUX", id);
+        
+        return 0;
+}
+
 
 void RPSPMC_Control::delayed_vector_update (){
         // SCAN SPEED COMPUTATIONS
         double slew[2];
-        slew[0] = scan_speed_x = scan_speed_x_requested;
+        slew[0] = scan_speed_x = scan_speed_x_requested; // FIX ME -- recalc actual scan speed from vectors -> scan_speed_x!
         slew[1] = fast_return * scan_speed_x_requested;
         scanpixelrate = slew[0]/main_get_gapp()->xsm->data.s.rx*main_get_gapp()->xsm->data.s.nx;
         
@@ -3587,6 +3938,13 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
                                     G_CALLBACK (RPspmc_pacpll::dfreq_controller), this);
         bp->grid_add_check_button ( N_("Invert"), "Invert Dfreq Controller Gain. Normally positive.", 2,
                                     G_CALLBACK (RPspmc_pacpll::dfreq_controller_invert), this);
+
+        bp->new_line ();
+        bp->grid_add_check_button ( N_("Control Z"), bp->PYREMOTE_CHECK_HOOK_KEY_FUNC("Engage Dfreq Controller on Z","rp-pacpll-ZDFcontrol"), 2,
+                                    G_CALLBACK (RPspmc_pacpll::EnZdfreq_control), this);
+        bp->new_line ();
+        bp->grid_add_check_button ( N_("Control Bias"), bp->PYREMOTE_CHECK_HOOK_KEY_FUNC("Engage Dfreq Controller on Bias","rp-pacpll-UDFcontrol"), 2,
+                                    G_CALLBACK (RPspmc_pacpll::EnUdfreq_control), this);
 
         // =======================================
         bp->pop_grid ();
@@ -4110,7 +4468,10 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
 }
 
 RPspmc_pacpll::~RPspmc_pacpll (){
-	delete mTime;
+
+        update_shm_monitors (1);
+
+        delete mTime;
 	delete uTime;
 	delete Time;
 	delete dB;
@@ -4124,8 +4485,10 @@ RPspmc_pacpll::~RPspmc_pacpll (){
 }
 
 void RPspmc_pacpll::connect_cb (GtkWidget *widget, RPspmc_pacpll *self){
-        self->json_talk_connect_cb (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)),
-                                    GPOINTER_TO_INT (g_object_get_data( G_OBJECT (widget), "RESTART"))); // connect (checked) or dissconnect    
+        // get connect type request (restart or reconnect button was clicked)
+        self->reconnect_mode = GPOINTER_TO_INT (g_object_get_data( G_OBJECT (widget), "RESTART"));
+        // connect (checked) or dissconnect    
+        self->json_talk_connect_cb (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)), self->reconnect_mode);
 }
 
 
@@ -4566,10 +4929,10 @@ void RPspmc_pacpll::update_SPMC_parameters (){
         RPSPMC_ControlClass->Init_SPMC_on_connect ();
 }
 
+
 void RPspmc_pacpll::choice_operation_callback (GtkWidget *widget, RPspmc_pacpll *self){
         self->operation_mode = gtk_combo_box_get_active (GTK_COMBO_BOX (widget));
         self->write_parameter ("OPERATION", self->operation_mode);
-        self->write_parameter ("PACVERBOSE", (int)self->rp_verbose_level);
 }
 
 void RPspmc_pacpll::choice_update_ts_callback (GtkWidget *widget, RPspmc_pacpll *self){
@@ -4724,6 +5087,16 @@ void RPspmc_pacpll::dfreq_controller (GtkWidget *widget, RPspmc_pacpll *self){
         self->parameters.dfreq_controller = gtk_check_button_get_active (GTK_CHECK_BUTTON (widget));
 }
 
+void RPspmc_pacpll::EnZdfreq_control (GtkWidget *widget, RPspmc_pacpll *self){
+        self->write_parameter ("DFREQ_CONTROL_Z", gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)));
+        self->parameters.Zdfreq_control = gtk_check_button_get_active (GTK_CHECK_BUTTON (widget));
+}
+
+void RPspmc_pacpll::EnUdfreq_control (GtkWidget *widget, RPspmc_pacpll *self){
+        self->write_parameter ("DFREQ_CONTROL_U", gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)));
+        self->parameters.Udfreq_control = gtk_check_button_get_active (GTK_CHECK_BUTTON (widget));
+}
+
 void RPspmc_pacpll::update(){
 	if (G_IS_OBJECT (window))
 		g_slist_foreach((GSList*)g_object_get_data( G_OBJECT (window), "RPSPMCONTROL_EC_list"),
@@ -4732,6 +5105,8 @@ void RPspmc_pacpll::update(){
 
 void RPspmc_pacpll::update_monitoring_parameters(){
 
+        // RPSPMC-PACPLL
+        
         // mirror global parameters to private
         parameters.dc_offset = pacpll_parameters.dc_offset;
         parameters.exec_amplitude_monitor = pacpll_parameters.exec_amplitude_monitor;
@@ -4751,6 +5126,7 @@ void RPspmc_pacpll::update_monitoring_parameters(){
         if (G_IS_OBJECT (window))
 		g_slist_foreach((GSList*)g_object_get_data( G_OBJECT (window), "RPSPMCONTROL_EC_READINGS_list"),
 				(GFunc) App::update_ec, NULL);
+
 }
 
 void RPspmc_pacpll::copy_f0_callback (GtkWidget *widget, RPspmc_pacpll *self){
@@ -4838,7 +5214,17 @@ void RPspmc_pacpll::scope_fft_time_zoom_callback (GtkWidget *widget, RPspmc_pacp
 void RPspmc_pacpll::update_health (const gchar *msg){
         if (msg){
                 gtk_entry_buffer_set_text (GTK_ENTRY_BUFFER (gtk_entry_get_buffer (GTK_ENTRY((red_pitaya_health)))), msg, -1);
+                g_slist_foreach ((GSList*)g_object_get_data (G_OBJECT (window), "EC_FPGA_SPMC_server_settings_list"), (GFunc) App::update_ec, NULL); // UPDATE GUI!
+                gtk_widget_set_name (GTK_WIDGET (red_pitaya_health), "entry-mono-text-msg");
         } else {
+                double sec;
+                double sec_dec = modf(spmc_parameters.uptime_seconds, &sec);
+                int S = (int)sec;
+                int tmp=3600*24;
+                int d = S/tmp;
+                int h = (tmp=(S-d*tmp))/3600;
+                int m = (tmp=(tmp-h*3600))/60;
+                double s = (tmp-m*60) + sec_dec;
 #if 0
                 gchar *gpiox_string = NULL;
                 if (scope_width_points > 1000){
@@ -4853,18 +5239,23 @@ void RPspmc_pacpll::update_health (const gchar *msg){
                                                         (int)pacpll_signals.signal_gpiox[14], (int)pacpll_signals.signal_gpiox[15]
                                                         );
                 }
-                gchar *health_string = g_strdup_printf ("CPU: %03.0f%% Free: %6.1f MB %s #%g",
+                gchar *health_string = g_strdup_printf ("CPU: %03.0f%% Free: %6.1f MB %s #%06.1f Up:%d d %02d:%02d:%04.1f FPGA clock tics: %.2f",
                                                         pacpll_parameters.cpu_load,
                                                         pacpll_parameters.free_ram/1024/1024,
-                                                        gpiox_string?gpiox_string:"[]", pacpll_parameters.counter);
+                                                        gpiox_string?gpiox_string:"[]", pacpll_parameters.counter,
+                                                        d,h,m,s, spmc_parameters.uptime_seconds
+                                                        );
                 g_free (gpiox_string);
 #else
-                gchar *health_string = g_strdup_printf ("CPU: %03.0f%% Free: %6.1f MB #%g",
+                gchar *health_string = g_strdup_printf ("CPU: %03.0f%% Free: %6.1f MB #%06.1f Up:%d d %02d:%02d:%04.1f",
                                                         pacpll_parameters.cpu_load,
                                                         pacpll_parameters.free_ram/1024/1024,
-                                                        pacpll_parameters.counter);
+                                                        pacpll_parameters.counter,
+                                                        d,h,m,s
+                                                        );
 #endif
                 gtk_entry_buffer_set_text (GTK_ENTRY_BUFFER (gtk_entry_get_buffer (GTK_ENTRY((red_pitaya_health)))), health_string, -1);
+                gtk_widget_set_name (GTK_WIDGET (red_pitaya_health), "entry-mono-text-health");
                 g_free (health_string);
         }
 }
@@ -4953,7 +5344,16 @@ void RPspmc_pacpll::status_append (const gchar *msg){
 
 void RPspmc_pacpll::on_connect_actions(){
         status_append ("3. RedPitaya SPM Control, PAC-PLL loading configuration:\n");
-        send_all_parameters ();
+
+        // reconnect_mode: 0 = RECONNECT attempt to runnign FPGA, may fail if not running!
+        //                 1 = COLD START/FPGA RELOAD=FULL RESET
+
+        if (reconnect_mode){ // only of cold start
+                send_all_parameters (); // PAC-PLL
+        } else {
+                send_all_parameters (); // PAC-PLL -- always update
+        }
+        
         while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
 
         status_append (" * RedPitaya SPM Control, PAC-PLL init, DEC FAST (12)...\n");
@@ -4989,10 +5389,95 @@ void RPspmc_pacpll::on_connect_actions(){
         status_append (" * RedPitaya SPM Control: PAC-PLL is ready.\n");
         status_append (" * RedPitaya SPM Control, SPMC init...\n");
 
-        update_SPMC_parameters ();
+        rpspmc_hwi->info_append (NULL); // clear
+        rpspmc_hwi->info_append ("RPSPMC+PACPALL is connected.");
+ 
+        int i=0;
+        
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Version.....: 0x%08x\n", (int)spmc_parameters.rpspmc_version); status_append (tmp);  rpspmc_hwi->info_append (tmp); g_free (tmp); }
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC VDate.......: 0x%08x\n", (int)spmc_parameters.rpspmc_date); status_append (tmp);  rpspmc_hwi->info_append (tmp); g_free (tmp); }
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC FPGAIMPL....: 0x%08x\n", (int)spmc_parameters.rpspmc_fpgaimpl); status_append (tmp);  rpspmc_hwi->info_append (tmp); g_free (tmp); }
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC FPGAIMPL_D..: 0x%08x\n", (int)spmc_parameters.rpspmc_fpgaimpl_date); status_append (tmp);  rpspmc_hwi->info_append (tmp); g_free (tmp); }
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC FPGA_STAUP..: 0x%08x\n", (int)spmc_parameters.rpspmc_fpgastartup); status_append (tmp);  rpspmc_hwi->info_append (tmp); g_free (tmp); }
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC FPGA_RSC#...: 0x%08x\n", (int)spmc_parameters.rpspmc_fpgastartupcnt); status_append (tmp);  rpspmc_hwi->info_append (tmp); g_free (tmp); }
+
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO_MODE: 0x%08x\n", i=(int)spmc_parameters.z_servo_mode); status_append (tmp); g_free (tmp); }        
+        i &= MM_ON | MM_LOG | MM_FCZ | MM_RESET;
+        RPSPMC_ControlClass->mix_transform_mode[0] = i;
+        { gchar *tmp = g_strdup_printf ("%d", i & (MM_ON | MM_LOG | MM_FCZ)); gtk_combo_box_set_active_id (GTK_COMBO_BOX (RPSPMC_ControlClass->z_servo_options_selector[0]), tmp); g_free (tmp); }
+        ;
+        { gchar *tmp = g_strdup_printf (" *                                 ==> %s%s [%s]\n",
+                                        i&MM_ON ? i&MM_LOG  ?"LOG":"LIN":"OFF",
+                                        i&MM_FCZ && i&MM_ON ? "-FCZ":"",
+                                        i&MM_RESET          ? "RESET":"NORMAL"); status_append (tmp);  rpspmc_hwi->info_append (tmp); g_free (tmp); }        
+
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_POLARITY..: %s\n", ((int)spmc_parameters.gvp_status)&(1<<7) ? "NEG":"POS"); status_append (tmp);  rpspmc_hwi->info_append (tmp); g_free (tmp); }        
+        spmc_parameters.gxsm_z_polarity = ((int)spmc_parameters.gvp_status)&(1<<7) ? -1:1;
+        int gxsm_preferences_polarity = xsmres.ScannerZPolarity ? 1 : -1; // 1: pos, 0: neg (bool) -- adjust zpos_ref accordingly!
+
+        // VERIFY IF CORRECT, ASK TO ADJUST IF MISMATCH
+        if (spmc_parameters.gxsm_z_polarity != gxsm_preferences_polarity &&  gxsm_preferences_polarity < 0)
+                if ( gapp->question_yes_no ("WARNING: Gxsm Preferences indicate NEGATIVE Z Polarity.\nPlease confirm to set Z-Polarity set to NEGATIVE.")){
+                        rpspmc_pacpll->write_parameter ("SPMC_Z_POLARITY", -1);
+                        spmc_parameters.gxsm_z_polarity = -1;
+                }
+
+        if (spmc_parameters.gxsm_z_polarity != gxsm_preferences_polarity &&  gxsm_preferences_polarity > 0)
+                if ( gapp->question_yes_no ("WARNING: Gxsm Preferences indicate POSITIVE Z Polarity.\nPlease confirm to set Z-Polarity set to POSITIVE.")){
+                        rpspmc_pacpll->write_parameter ("SPMC_Z_POLARITY", 1);
+                        spmc_parameters.gxsm_z_polarity = 1;
+                }
+        
+        if (spmc_parameters.gxsm_z_polarity != gxsm_preferences_polarity){
+                g_warning (" Z-Polarity was not changed. ");
+        }
+                 
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO_SET.: %g Veq\n", spmc_parameters.z_servo_setpoint); status_append (tmp); g_free (tmp); }
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO_CP..: %g\n", spmc_parameters.z_servo_cp); status_append (tmp); g_free (tmp); }
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO_CI..: %g\n", spmc_parameters.z_servo_ci); status_append (tmp); g_free (tmp); }
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO_UPR.: %g V\n", spmc_parameters.z_servo_upper); status_append (tmp); g_free (tmp); }
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO_LOR.: %g V\n", spmc_parameters.z_servo_lower); status_append (tmp); g_free (tmp); }
+
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO IN..: %08x MUX selection\n", i=(int)spmc_parameters.z_servo_src_mux); status_append (tmp);  rpspmc_hwi->info_append (tmp); g_free (tmp); }
+        i &= 1; // only bit 0
+        { gchar *tmp = g_strdup_printf (" *                                 ==> %s\n", i==0? "IN2-RF":"IN3-AD4630-24A"); status_append (tmp); g_free (tmp); }        
+        gtk_combo_box_set_active (GTK_COMBO_BOX (RPSPMC_ControlClass->z_servo_current_source_options_selector), i);
+        
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC GVP SRCS MUX: %08x MUX selection code\n", i=(int)spmc_parameters.gvp_stream_mux); status_append (tmp); g_free (tmp); }
+        int mux=i;
+        for (int k=0; k<6; ++k){
+                RPSPMC_ControlClass->probe_source[k] = (mux >> (4*k)) & 0x0f;
+                gtk_combo_box_set_active (GTK_COMBO_BOX (RPSPMC_ControlClass->probe_source_signal_selector[k]), RPSPMC_ControlClass->probe_source[k]);
+                { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC GVP SRCS MUX[%d]: %02d <=> %s\n", k, RPSPMC_ControlClass->probe_source[k], swappable_signals[RPSPMC_ControlClass->probe_source[k]].label); status_append (tmp); g_free (tmp); }
+        }
+
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC X,Y,Z.......: %g %g %g V\n", spmc_parameters.x_monitor, spmc_parameters.y_monitor, spmc_parameters.z_monitor); status_append (tmp); g_free (tmp); }
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z0[z-slope].: %g V\n", spmc_parameters.z0_monitor); status_append (tmp); g_free (tmp); }
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC BIAS........: %g V\n", spmc_parameters.bias_monitor); status_append (tmp); g_free (tmp); }
+
+        if (reconnect_mode){ // only if cold start
+                status_append (" * RedPitaya SPM RPSPMC: Init completed and ackowldeged. Releasing normal control. Updating all from GXSM parameters.\n");
+                write_parameter ("RPSPMC_INITITAL_TRANSFER_ACK", 99); // Acknoledge inital parameters received, release server parameter updates
+                RPSPMC_ControlClass->update_FPGA_from_GUI ();
+                update_SPMC_parameters ();
+        } else {
+                // update GUI! (mission critical: Z-SERVO mainly)
+                RPSPMC_ControlClass->update_GUI_from_FPGA ();
+                status_append (" * RedPitaya SPM Control: RECONNECTING/READBACK Z-SERVO STATUS...\n");
+                // ...
+                update_SPMC_parameters (); // then send all other less critical parameters to make sure all is in sync
+
+                //
+                status_append (" * RedPitaya SPM RPSPMC: Readback completed and ackowldeged. Releasing normal control. No FPGA parameter update from GXSM!\n");
+                write_parameter ("RPSPMC_INITITAL_TRANSFER_ACK", 99); // Acknoledge inital parameters received, release server parameter updates
+        }
+
+        
         //status_append (" * RedPitaya SPM Control ready. NEXT: Please Check Connect Stream.\n");
         status_append (" * RedPitaya SPM Control ready. Connecting SPMC Data Stream...\n");
 
+        rpspmc_hwi->info_append (" * RPSPMC is READY *");
+ 
         gtk_check_button_set_active (GTK_CHECK_BUTTON (RPSPMC_ControlClass->stream_connect_button), true);
 
         gtk_button_set_child (GTK_BUTTON (RPSPMC_ControlClass->GVP_stop_all_zero_button), gtk_image_new_from_icon_name ("gxsm4-rp-icon"));
@@ -5836,6 +6321,94 @@ void RPspmc_pacpll::dynamic_graph_draw_function (GtkDrawingArea *area, cairo_t *
                 gtk_drawing_area_set_content_width (area, 128);
                 gtk_drawing_area_set_content_height (area, 4);
                 current_width=0;
+        }
+}
+
+/*  SHM memory block for external apps providing all monitors in binary double
+ *
+### Python snippet to read XYZMaMi monitors:
+
+import requests
+import numpy as np
+from multiprocessing import shared_memory
+from multiprocessing.resource_tracker import unregister
+
+xyz_shm = shared_memory.SharedMemory(name='gxsm4rpspmc_monitors')
+unregister(xyz_shm._name, 'shared_memory') ## necessary to prevent python to destroy this shm block at exit :( :(
+
+print (xyz_shm)
+xyz=np.ndarray((9,), dtype=np.double, buffer=xyz_shm.buf).reshape((3,3)).T  # X Mi Ma, Y Mi Ma, Z Mi Ma
+print (xyz)
+
+ *  
+ */
+
+void RPspmc_pacpll::update_shm_monitors (int close_shm){
+        const char *rpspmc_monitors = "/gxsm4rpspmc_monitors";
+        static int shm_fd = -1;
+        static void *shm_ptr = NULL;
+        // Set the size of the shared memory region
+        static size_t shm_size = 1024;
+         
+        if (shm_fd == -1){
+                shm_fd = shm_open(rpspmc_monitors, O_CREAT | O_RDWR, 0666);
+                if (shm_fd == -1) {
+                        g_error ("Error shm_open of %s.", rpspmc_monitors);
+                        return;
+                }
+                
+                // Resize the shared memory object to the desired size
+                if (ftruncate (shm_fd, shm_size) == -1) {
+                        g_error ("Error ftruncate of %s.", rpspmc_monitors);
+                        return;
+                }
+
+                // Map the shared memory object into the process address space
+                shm_ptr = mmap(NULL, shm_size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
+                if (shm_ptr == MAP_FAILED) {
+                        g_error("Error mmap");
+                        return;
+                }
+        }
+
+        // Write data to the shared memory
+
+        // XYZ MAX MIN (3x3)
+        memcpy  (shm_ptr, spmc_signals.xyz_meter, sizeof(spmc_signals.xyz_meter));
+
+        // Monitors: Bias, reg, set,   GPVU,A,B,AM,FM, MUX, Signal (Current), AD463x[2], XYZ, XYZ0, XYZS
+        memcpy  (shm_ptr+sizeof(spmc_signals.xyz_meter), &spmc_parameters.bias_monitor, 21*sizeof(double));
+
+        /*
+        sprintf (shm_ptr+512, "XYZ=[[%g %g %g] [%g %g %g] [%g %g %g]]\n",
+                 spmc_signals.xyz_meter[0],spmc_signals.xyz_meter[1],spmc_signals.xyz_meter[2],
+                 spmc_signals.xyz_meter[3],spmc_signals.xyz_meter[4],spmc_signals.xyz_meter[5],
+                 spmc_signals.xyz_meter[6],spmc_signals.xyz_meter[7],spmc_signals.xyz_meter[8]
+                 );
+        */
+
+
+        
+        if (close_shm){
+        
+                // Unmap the shared memory object
+                if (munmap(shm_ptr, shm_size) == -1) {
+                        g_error("Error munmap");
+                        return;
+                }
+                // Close the shared memory file descriptor
+                if (close(shm_fd) == -1) {
+                        g_error("Error close");
+                        return 1;
+                }
+                
+                // Unlink the shared memory object
+                if (shm_unlink(rpspmc_monitors) == -1) {
+                        g_error("Error shm_unlink");
+                        return 1;
+                }
+                shm_ptr = NULL;
+                shm_fd = -1;
         }
 }
 

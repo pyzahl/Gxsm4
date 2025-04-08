@@ -124,6 +124,7 @@
 #define SPMC_GVP_VECTOR_DATA_REG      5003   // VECTOR PROGRAM REG: 1..16 // 512 bits (16x32)
 #define SPMC_GVP_RESET_VECTOR_REG     5004   // [XYZ]UAB
 #define SPMC_GVP_VECTORX_DATA_REG     5005   // VECTORX PROGRAM REG -- Vector Extension Components
+#define SPMC_GVP_RESET_COMPONENTS_REG 5009   // RESET COMNPONENTS to ZERO by mask -- WARNING, never use except for Mover/Coarse purposes!
 
 // GVP VCETOR COMPONETS IN ARRAY AT OFFESTS in CONFIG_REG (512bits)
 //                   decii      du        dz        dy        dx     Next       Nrep,   Options,     nii,      N,    [Vadr]
@@ -140,8 +141,8 @@
 #define GVP_VEC_DU     9
 #define GVP_VEC_DA    10
 #define GVP_VEC_DB    11
-#define GVP_VEC_012   12
-#define GVP_VEC_013   13
+#define GVP_VEC_DAM   12
+#define GVP_VEC_DFM   13
 #define GVP_VEC_014   14
 #define GVP_VEC_DECII 15
 #define GVP_VECX_SRC   0
@@ -150,6 +151,9 @@
 // Z_SERVO @ CONFIG ADDRESS
 #define SPMC_Z_SERVO_CONTROL_REG              100
 #define SPMC_Z_SERVO_MODE_CONTROL_REG         101
+#define SPMC_Z_SERVO_SELECT_RB_SETPOINT_MODES_REG   110 // readback selection
+#define SPMC_Z_SERVO_SELECT_RB_CPI_REG              111 // readback selection
+#define SPMC_Z_SERVO_SELECT_RB_LIMITS_REG           112 // readback selection
 /*
         z_servo_control_reg_address:
         begin
@@ -176,6 +180,7 @@
                                              // [2] DDSN2 (16)
                                              // [3] PHASE INC (48)
                                              // [4] FM Scale (Q24) (control via GVP-B, Frq shift in V/Hz)
+                                             // [5] RF GEN PHASE INC (32)
 
 
 // BIQUAD  MODULE @ CONFIG ADDRESS
@@ -186,6 +191,7 @@
 #define SPMC_MAIN_CONTROL_SLOPE_REG        1102 //  SPMC MAIN CONTROL IP REGISTERS
 #define SPMC_MAIN_CONTROL_MODULATION_REG   1103 //  SPMC MAIN CONTROL IP REGISTERS
 #define SPMC_MAIN_CONTROL_BIAS_REG         1104 //  SPMC MAIN CONTROL IP REGISTERS -- Gxsm set Bias onyl (U), included in XYZU as well
+#define SPMC_MAIN_CONTROL_Z_POLARITY_REG   1105 //  SPMC MAIN CONTROL IP REGISTERS
 /*
         case (config_addr) // BQ configuration, and auto reset
         xyzu_offset_reg_address: // == 1100
@@ -231,38 +237,49 @@
                                              // Z-SERVO INPUT RP_CH1 | ADC463x_CH0
 
 
+#define SPMC_MUX2_RF_OUT_CONTROL_REG    2002 // MUX selection, test mode, test value.
+                                             // RF (OUT1) AUX select: Pulse, RF sweep gen
+
 // AD463x SPI control/configuration
 #define SPMC_AD463X_CONTROL_REG            50000
 #define SPMC_AD463X_CONFIG_MODE            0 // Bit0: activate config mode, Bit1: read config, Bit2: write config, Bit3: manual convert, Bit4: enable streaming to AXI, Bit7: SPI AD reset
 #define SPMC_AD463X_CONFIG_MODE_CONFIG  0x01
-#define SPMC_AD463X_CONFIG_MODE_READ    0x02
-#define SPMC_AD463X_CONFIG_MODE_WRITE   0x04
+#define SPMC_AD463X_CONFIG_MODE_RW      0x02
+#define SPMC_AD463X_CONFIG_MODE_STREAM  0x04
 #define SPMC_AD463X_CONFIG_MODE_CNV     0x08
 #define SPMC_AD463X_CONFIG_MODE_AXI     0x10
-#define SPMC_AD463X_CONFIG_MODE_B5      0x20
+#define SPMC_AD463X_CONFIG_MODE_FPGA_CNV 0x20
 #define SPMC_AD463X_CONFIG_MODE_B6      0x40
 #define SPMC_AD463X_CONFIG_MODE_RESET   0x80
 
-#define SPMC_AD463X_CONFIG_READ_ADDRESS    1 // address to read ************ Config Read  Address: Bit "A15": R=1 (send first), A14..A0  (16 BIT total), Then 8bit DATA in on SD0 from SCK17 .. 24
-#define SPMC_AD463X_CONFIG_WRITE_DATA      2 // address to write and data ** Config Write Address: Bit 23 is "A15": W=0 (send first), Bit 22:8: are A14..A0, Bit 7:0 are data D7:0 (24 BIT total Addr + Data)
-#define SPMC_AD463X_CONFIG_N_BYTES         3 // num bytes to read/write in config mode (** not yet used, fixed **) 
-
+#define SPMC_AD463X_CONFIG_WR_DATA         1 // address to write and data ** Config Write Address: Bit 23 is "A15": W=0/R=1 (send first), Bit 22:8: are A14..A0, Bit 7:0 are data D7:0 (24 BIT total Addr + Data)
+#define SPMC_AD463X_CONFIG_N_BITS          2 // total num bits to read/write in config mode, cnv and AXI stream more
+#define SPMC_AD463X_CONFIG_N_DECII         3 // SPI clock divider from 125 MHz
+                                             
 // MODULE READBACK REGISTER A,B ADRESS MAPPINGS
 #define SPMC_READBACK_Z_REG            100001
 #define SPMC_READBACK_BIAS_REG         100002 // Bias Sum, Gxsm Bias "U0" Set
 #define SPMC_READBACK_GVPBIAS_REG      100003 // Bias GVP Comp., Bias MOD (DBG: currently = GVP-A)
-//#define SPMC_READBACK_MUX_REG          100004 // SRCS-MUX, --
+#define SPMC_READBACK_PMD_DA56_REG     100004 // PMD AD MODULE 5,6 "A,B" 
+#define SPMC_READBACK_Z_SERVO_REG      100005 // Z_SERVO readback configuration -- setup >what< in Z_SERVO_CONFIG first!
+#define SPMC_READBACK_GVP_AMC_FMC_REG  100006 // GVP AMC, FMC
+#define SPMC_READBACK_SRCS_MUX_REG     100010 // SRCS stream MUX selection
+#define SPMC_READBACK_IN_MUX_REG       100011 // IN AXIS AD data stream MUX selection
+
 #define SPMC_READBACK_AD463X_REG       100100 // AD463x read back config data/value
+
+#define SPMC_READBACK_UPTIME_CLOCK_REG 101900 // seconds_up, 8ns tics/sec (deci)
 
 #define SPMC_READBACK_TIMINGTEST_REG   101999
 #define SPMC_READBACK_TIMINGRESET_REG  102000
 
-#define SPMC_READBACK_RPSPMC_PACPLL_VERSION_REG 199997                              
+#define SPMC_READBACK_RPSPMC_PACPLL_VERSION_REG 199997  // READBACK: FPGA Version/Date
+#define SPMC_READBACK_RPSPMC_SYSTEM_STATE       199999
 
-#define SPMC_READBACK_XX_REG           100999 // DBG: SrcsMUX sel, GVP-B
+#define SPMC_READBACK_XX_REG                    100999 // Debugging use, temp assignments
 
-#define SPMC_READBACK_TEST_RESET_REG           102000
-#define SPMC_READBACK_TEST_VALUE_REG           101999
+#define SPMC_READBACK_TEST_RESET_REG            102000
+#define SPMC_READBACK_TEST_VALUE_REG             101999
 
 /*
     input wire [32-1:0] Z_GVP_mon,   ==> A
@@ -324,6 +341,7 @@
 
 #define SPMC_IN01_REFV   1.13 // RP IN1,2 REF Volatge is 1.0V (+/-1V Range)
 #define SPMC_AD5791_REFV 5.0 // DAC AD5791 Reference Volatge is 5.000000V (+/-5V Range)
+#define SPMC_AD463_REFV  5.0 // DAC AD463 Reference Volatge is 5.000000V (+/-5V Range)
 #define QZSCOEF Q31 // Q Z-Servo Controller
 
 

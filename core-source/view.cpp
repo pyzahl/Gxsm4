@@ -268,7 +268,10 @@ int Grey2D::update(int y1, int y2){
                         XImg->ShowSubPic(scan->ixy_sub[0]/QuenchFac, y1/QuenchFac,scan->ixy_sub[1]/QuenchFac,(y2+QuenchFac-y1-1)/QuenchFac, scan->ixy_sub[2]/QuenchFac, scan->ixy_sub[3]/QuenchFac);
                 else
                         XImg->ShowPic ();
-		return 0;
+
+                //viewcontrol -> force_redraw ();
+
+                return 0;
 	}
 	int j,k;
 	int nx;
@@ -327,6 +330,8 @@ int Grey2D::update(int y1, int y2){
 //		XImg->update_bbox ((y1-1)/QuenchFac, (y1+1)/QuenchFac);
 		viewcontrol -> CheckRedLine ();
 	}
+        
+        //viewcontrol -> force_redraw ();
 	return 0;
 }
 

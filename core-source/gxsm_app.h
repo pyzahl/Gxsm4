@@ -253,6 +253,7 @@ public:
         static void recalc_volt_from_new_Energy(double* x, double *Eneu);
 
         static void update_ec(Gtk_EntryControl* ec, gpointer data){ ec->Put_Value(); };
+        static void update_parameter(Gtk_EntryControl* ec, gpointer data){ ec->Set_Parameter (); }; // force update parameter from entry text
 
         ChannelSelector *channelselector;
         //  ProbeControl *probecontrol;

@@ -45,7 +45,10 @@ import array
 import math
 
 import requests
+import numpy as np
 
+from multiprocessing import shared_memory
+from multiprocessing.resource_tracker import unregister
 
 from meterwidget import *
 
@@ -56,15 +59,18 @@ TRUE  = -1
 
 # Createc HV Control
 
+# RPSPMC XYZ Monitors via GXSM4 
+global xyz_shm
 
 global CHV5_configuration
 global CHV5_driftcomp
 global CHV5_monitor
 global CHV5_coarse
-
+global CHV5_gain_list
+global CHV5_gains
 
 CHV5_configuration = {
-        'gain':  [3,3,3],
+        'gain':  [4,4,4],
         'filter': [0,0,0],
         'bw': [0,0,0],
         'target': [0.,0.,0.]
@@ -76,6 +82,10 @@ CHV5_monitor = {
         'monitor_max': [0.0,0.0,0.0],
         }
 
+CHV5_gain_list = [3,6,12,24]
+CHV5_gains = [24., 24., 24.]
+
+
 CHV5_coarse = {
         'steps': [100,100,5],
         'volts': [15.0,15.0,15.0],
@@ -84,8 +94,8 @@ CHV5_coarse = {
 
 CHV5_driftcomp = [ 0., 0., 0. ]
 
-DIGVfacM = 200./32767.
-DIGVfacO = 181.81818/32767.
+DIGVfacM = 1. #200./32767.
+DIGVfacO = 1. #181.81818/32767.
 
 scaleM = [ DIGVfacM, DIGVfacM, DIGVfacM ]
 scaleO = [ DIGVfacO, DIGVfacO, DIGVfacO ]
@@ -98,7 +108,14 @@ GXSM_Link_status = FALSE
 setup_list = []
 control_list = []
 
+# open shared memort to gxsm4 to RPSPMC's monitors
 
+xyz_shm = shared_memory.SharedMemory(name='gxsm4rpspmc_monitors')
+unregister(xyz_shm._name, 'shared_memory')
+
+print (xyz_shm)
+xyz=np.ndarray((9,), dtype=np.double, buffer=xyz_shm.buf).reshape((3,3)).T  # X Mi Ma, Y Mi Ma, Z Mi Ma
+print (xyz)
 
 
 
@@ -229,7 +246,7 @@ def _X_write_back_():
 def update_CHV5_monitor(_c1set, _c2set, _c3set):
         global CHV5_configuration
         global CHV5_monitor
-        
+
         _c1set (scaleM[0] * CHV5_monitor['monitor'][0], scaleM[0] * CHV5_monitor['monitor_min'][0], scaleM[0] * CHV5_monitor['monitor_max'][0])
         _c2set (scaleM[1] * CHV5_monitor['monitor'][1], scaleM[1] * CHV5_monitor['monitor_min'][1], scaleM[1] * CHV5_monitor['monitor_max'][1])
         _c3set (scaleM[2] * CHV5_monitor['monitor'][2], scaleM[2] * CHV5_monitor['monitor_min'][2], scaleM[2] * CHV5_monitor['monitor_max'][2])
@@ -264,10 +281,14 @@ def update_CHV5_monitor_full(_c1set, _c2set, _c3set):
 
 
 def hv1_adjust(_object, _value, _identifier):
+        global CHV5_gain_list
+        global CHV5_gains
         value = _value
         index = _identifier
         #if index >= ii_config_preset_X0 and index < ii_config_dum:
 
+        CHV5_gains[index] = CHV5_gain_list[value]
+        
         read_back ()
         return 1
 
@@ -465,12 +486,14 @@ def on_bw_changed(combo, ii):
                 hv1_adjust (None, position, ii)
 
 
-        
 def get_status():
         global CHV5_monitor
-        
-        #CHV5_monitor = struct.unpack (fmt_monitor, os.read (sr.fileno(), struct.calcsize (fmt_monitor)))
-        
+        global xyz_shm
+        global CHV5_gains
+        xyz=np.ndarray((9,), dtype=np.double, buffer=xyz_shm.buf).reshape((3,3)).T  # X Mi Ma, Y Mi Ma, Z Mi Ma
+        CHV5_monitor['monitor']=xyz[0] * CHV5_gains
+        CHV5_monitor['monitor_max']=xyz[1] * CHV5_gains
+        CHV5_monitor['monitor_min']=xyz[2] * CHV5_gains
         return 1
 
 def do_exit(button):
@@ -798,4 +821,7 @@ class HV5App(Gtk.Application):
 if __name__ == "__main__":
         app = HV5App()
         app.run()
+
+
+#xyz_shm.close()
 

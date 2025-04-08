@@ -314,6 +314,12 @@
       <description>pcs0000, PCS Remote-ID: 'rp-pacpll-scope_height', Default: 256, Adjustment PCS Name: 'rp-pacpll-scope-height' </description>
     </key>
 
+    <key name="rp-dma-pull-interval" type="d">
+      <default>10</default>
+      <summary>PCS Remote-ID: 'rp-dma-pull-interval', Default/U: 0     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-dma-pull-interval', Default: 0, Adjustment PCS Name: 'rp-dma-pull-interval' </description>
+    </key>
+
     <key name="rp-verbose-level" type="d">
       <default>0</default>
       <summary>PCS Remote-ID: 'dsp-rp-verbose-level', Default/U: 0     </summary>
@@ -492,6 +498,12 @@
       <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-FREQ', Default/U:     300 Hz    , Adjustment PCS Name: 'dsp-SPMC-LCK-FREQ' </description>
     </key>
 
+    <key name="dsp-spmc-lck-rf-freq" type="d">
+      <default>1e6</default>
+      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-RF-FREQ', Default/U:     1e6 Hz     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-RF-FREQ', Default/U:     300 Hz    , Adjustment PCS Name: 'dsp-SPMC-LCK-RF-FREQ' </description>
+    </key>
+
     <key name="dsp-spmc-lck-mod-volume-x-scan" type="d">
       <default>0</default>
       <summary>PCS Remote-ID: 'dsp-SPMC-LCK-ModVolume-X-Scan', Default/U:     0 AA     </summary>
@@ -550,6 +562,12 @@
       <default>0</default>
       <summary>PCS Remote-ID: 'dsp-SPMC-LCK-Q', Default/U:     0     </summary>
       <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-Q', Default/U:     0    , Adjustment PCS Name: 'dsp-SPMC-LCK-Q' </description>
+    </key>
+
+    <key name="dsp-spmc-lck-bq-coef-ba00" type="ad">
+      <default>[1,0,0, 0,0,0]</default>
+      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-BQ-COEF-BA6', Default/U:     0     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-BQ-COEF-BA', Default/U:     0    , Adjustment PCS Name: 'dsp-SPMC-LCK-BQ-COEF-BA' </description>
     </key>
 
     <key name="dsp-spmc-lck-gain" type="d">
@@ -675,6 +693,60 @@
       <description>pcs0000, PCS Remote-ID: 'dsp-IV-Recover-Delay', Default/U:   0.3 s    , Adjustment PCS Name: 'dsp-IV-Recover-Delay' </description>
     </key>
     
+    <key name="dsp-gvp-u-monitor" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'dsp-GVP-U-MONITOR', Default/U: 0 V     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-GVP-U-MONITOR', Default/U: 0 V    , Adjustment PCS Name: 'dsp-GVP-U-MONITOR' </description>
+    </key>
+
+    <key name="dsp-gvp-xs-monitor" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'dsp-GVP-XS-MONITOR', Default/U: 0 V     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-GVP-XS-MONITOR', Default/U: 0 V    , Adjustment PCS Name: 'dsp-GVP-XS-MONITOR' </description>
+    </key>
+
+    <key name="dsp-gvp-ys-monitor" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'dsp-GVP-YS-MONITOR', Default/U: 0 V     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-GVP-YS-MONITOR', Default/U: 0 V    , Adjustment PCS Name: 'dsp-GVP-YS-MONITOR' </description>
+    </key>
+
+    <key name="dsp-gvp-zs-monitor" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'dsp-GVP-ZS-MONITOR', Default/U: 0 V     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-GVP-ZS-MONITOR', Default/U: 0 V    , Adjustment PCS Name: 'dsp-GVP-ZS-MONITOR' </description>
+    </key>
+
+    <key name="dsp-gvp-a-monitor" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'dsp-GVP-A-MONITOR', Default/U: 0 V     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-GVP-A-MONITOR', Default/U: 0 V    , Adjustment PCS Name: 'dsp-GVP-A-MONITOR' </description>
+    </key>
+
+    <key name="dsp-gvp-b-monitor" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'dsp-GVP-B-MONITOR', Default/U: 0 V     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-GVP-B-MONITOR', Default/U: 0 V    , Adjustment PCS Name: 'dsp-GVP-B-MONITOR' </description>
+    </key>
+
+    <key name="dsp-gvp-amc-monitor" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'dsp-GVP-AMC-MONITOR', Default/U: 0 V     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-GVP-AMC-MONITOR', Default/U: 0 V    , Adjustment PCS Name: 'dsp-GVP-AMC-MONITOR' </description>
+    </key>
+
+    <key name="dsp-gvp-fmc-monitor" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'dsp-GVP-FMC-MONITOR', Default/U: 0 V     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-GVP-FMC-MONITOR', Default/U: 0 V    , Adjustment PCS Name: 'dsp-GVP-FMC-MONITOR' </description>
+    </key>
+
+    <key name="dsp-gvp-zservo-monitor" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'dsp-GVP-ZSERVO-MONITOR', Default/U: 0       </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-GVP-ZSERVO-MONITOR', Default/U: 0      , Adjustment PCS Name: 'dsp-GVP-ZSERVO-MONITOR' </description>
+    </key>
+
 
     
     <key name="dsp-gvp-du00" type="ad">
@@ -710,6 +782,18 @@
     <key name="dsp-gvp-db00" type="ad">
       <default>[0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,0]</default>
       <summary>PCS Remote-ID: 'dsp-gvp-db16', Default/U:      0 V     </summary>
+      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-dsig16', Default/U:      0 V    , Adjustment PCS Name: 'dsp-gvp-dsig16' </description>
+    </key>
+
+    <key name="dsp-gvp-dam00" type="ad">
+      <default>[0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,0]</default>
+      <summary>PCS Remote-ID: 'dsp-gvp-dam16', Default/U:      0 V     </summary>
+      <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-dsig16', Default/U:      0 V    , Adjustment PCS Name: 'dsp-gvp-dsig16' </description>
+    </key>
+
+    <key name="dsp-gvp-dfm00" type="ad">
+      <default>[0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,0]</default>
+      <summary>PCS Remote-ID: 'dsp-gvp-dfm16', Default/U:      0 V     </summary>
       <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-dsig16', Default/U:      0 V    , Adjustment PCS Name: 'dsp-gvp-dsig16' </description>
     </key>
 

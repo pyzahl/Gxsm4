@@ -51,6 +51,7 @@
 extern int debug_level;
 extern SOURCE_SIGNAL_DEF rpspmc_source_signals[];
 extern SOURCE_SIGNAL_DEF swappable_signals[];
+extern SOURCE_SIGNAL_DEF z_servo_current_source[];
 
 extern "C++" {
         extern RPspmc_pacpll *rpspmc_pacpll;
@@ -62,80 +63,19 @@ extern "C++" {
         extern GxsmPlugin rpspmc_hwi_pi;
 }
 
-MOD_INPUT mod_input_list[] = {
-        //## [ MODULE_SIGNAL_INPUT_ID, name, actual hooked signal address ]
-        { DSP_SIGNAL_Z_SERVO_INPUT_ID, "Z_SERVO", 0 },
-        { DSP_SIGNAL_M_SERVO_INPUT_ID, "M_SERVO", 0 },
-        { DSP_SIGNAL_MIXER0_INPUT_ID, "MIXER0", 0 },
-        { DSP_SIGNAL_MIXER1_INPUT_ID, "MIXER1", 0 },
-        { DSP_SIGNAL_MIXER2_INPUT_ID, "MIXER2", 0 },
-        { DSP_SIGNAL_MIXER3_INPUT_ID, "MIXER3", 0 },
-
-        { DSP_SIGNAL_DIFF_IN0_ID, "DIFF_IN0", 0 },
-        { DSP_SIGNAL_DIFF_IN1_ID, "DIFF_IN1", 0 },
-        { DSP_SIGNAL_DIFF_IN2_ID, "DIFF_IN2", 0 },
-        { DSP_SIGNAL_DIFF_IN3_ID, "DIFF_IN3", 0 },
-
-        { DSP_SIGNAL_SCAN_CHANNEL_MAP0_ID, "SCAN_CHMAP0", 0 },
-        { DSP_SIGNAL_SCAN_CHANNEL_MAP1_ID, "SCAN_CHMAP1", 0 },
-        { DSP_SIGNAL_SCAN_CHANNEL_MAP2_ID, "SCAN_CHMAP2", 0 },
-        { DSP_SIGNAL_SCAN_CHANNEL_MAP3_ID, "SCAN_CHMAP3", 0 },
-
-        { DSP_SIGNAL_LOCKIN_A_INPUT_ID, "LOCKIN_A", 0 },
-        { DSP_SIGNAL_LOCKIN_B_INPUT_ID, "LOCKIN_B", 0 },
-        { DSP_SIGNAL_VECPROBE0_INPUT_ID, "VECPROBE0", 0 },
-        { DSP_SIGNAL_VECPROBE1_INPUT_ID, "VECPROBE1", 0 },
-        { DSP_SIGNAL_VECPROBE2_INPUT_ID, "VECPROBE2", 0 },
-        { DSP_SIGNAL_VECPROBE3_INPUT_ID, "VECPROBE3", 0 },
-        { DSP_SIGNAL_VECPROBE0_CONTROL_ID, "VECPROBE0_C", 0 },
-        { DSP_SIGNAL_VECPROBE1_CONTROL_ID, "VECPROBE1_C", 0 },
-        { DSP_SIGNAL_VECPROBE2_CONTROL_ID, "VECPROBE2_C", 0 },
-        { DSP_SIGNAL_VECPROBE3_CONTROL_ID, "VECPROBE3_C", 0 },
-
-        { DSP_SIGNAL_OUTMIX_CH5_INPUT_ID, "OUTMIX_CH5", 0 },
-        { DSP_SIGNAL_OUTMIX_CH5_ADD_A_INPUT_ID, "OUTMIX_CH5_ADD_A", 0 },
-        { DSP_SIGNAL_OUTMIX_CH5_SUB_B_INPUT_ID, "OUTMIX_CH5_SUB_B", 0 },
-        { DSP_SIGNAL_OUTMIX_CH5_SMAC_A_INPUT_ID, "OUTMIX_CH5_SMAC_A", 0 },
-        { DSP_SIGNAL_OUTMIX_CH5_SMAC_B_INPUT_ID, "OUTMIX_CH5_SMAC_B", 0 },
-
-        { DSP_SIGNAL_OUTMIX_CH6_INPUT_ID, "OUTMIX_CH6", 0 },
-        { DSP_SIGNAL_OUTMIX_CH6_ADD_A_INPUT_ID, "OUTMIX_CH6_ADD_A", 0 },
-        { DSP_SIGNAL_OUTMIX_CH6_SUB_B_INPUT_ID, "OUTMIX_CH6_SUB_B", 0 },
-        { DSP_SIGNAL_OUTMIX_CH6_SMAC_A_INPUT_ID, "OUTMIX_CH6_SMAC_A", 0 },
-        { DSP_SIGNAL_OUTMIX_CH6_SMAC_B_INPUT_ID, "OUTMIX_CH6_SMAC_B", 0 },
-
-        { DSP_SIGNAL_OUTMIX_CH7_INPUT_ID, "OUTMIX_CH7", 0 },
-        { DSP_SIGNAL_OUTMIX_CH7_ADD_A_INPUT_ID, "OUTMIX_CH7_ADD_A", 0 },
-        { DSP_SIGNAL_OUTMIX_CH7_SUB_B_INPUT_ID, "OUTMIX_CH7_SUB_B", 0 },
-        { DSP_SIGNAL_OUTMIX_CH7_SMAC_A_INPUT_ID, "OUTMIX_CH7_SMAC_A", 0 },
-        { DSP_SIGNAL_OUTMIX_CH7_SMAC_B_INPUT_ID, "OUTMIX_CH7_SMAC_B", 0 },
-
-        { DSP_SIGNAL_OUTMIX_CH8_INPUT_ID, "OUTMIX_CH8_INPUT", 0 },
-        { DSP_SIGNAL_OUTMIX_CH8_ADD_A_INPUT_ID, "OUTMIX_CH8_ADD_A_INPUT", 0 },
-        { DSP_SIGNAL_OUTMIX_CH9_INPUT_ID, "OUTMIX_CH9_INPUT", 0 },
-        { DSP_SIGNAL_OUTMIX_CH9_ADD_A_INPUT_ID, "OUTMIX_CH9_ADD_A_INPUT", 0 },
-
-        { DSP_SIGNAL_ANALOG_AVG_INPUT_ID, "ANALOG_AVG_INPUT", 0 },
-        { DSP_SIGNAL_SCOPE_SIGNAL1_INPUT_ID, "SCOPE_SIGNAL1_INPUT", 0 },
-        { DSP_SIGNAL_SCOPE_SIGNAL2_INPUT_ID, "SCOPE_SIGNAL2_INPUT", 0 },
-
-        { 0, "END", 0 }
-};
-
-
-
 
 // HwI Implementation
 // ================================================================================
 
 rpspmc_hwi_dev::rpspmc_hwi_dev():RP_stream(this){
-
+        info_blob = NULL;
+        
         delayed_tip_move_update_timer_id = 0;
         
         // auto adjust and override preferences
-        main_get_gapp()->xsm->Inst->override_dig_range (1<<19, xsmres); // gxsm does precision sanity checks and trys to round to best fit grid
-        main_get_gapp()->xsm->Inst->override_volt_in_range (1.0, xsmres);
-        main_get_gapp()->xsm->Inst->override_volt_out_range (5.0, xsmres);
+        main_get_gapp()->xsm->Inst->override_dig_range (1<<20, xsmres);    // gxsm does precision sanity checks and trys to round to best fit grid
+        main_get_gapp()->xsm->Inst->override_volt_in_range (5.0, xsmres);  // FOR AD4630-24 24bit
+        main_get_gapp()->xsm->Inst->override_volt_out_range (5.0, xsmres); // PMODs AD5791-20 20bit
 
         // SRCS Mapping for Scan Channels as set via Channelselector (independing from Graphs/GVP) in Gxsm, but here same masks as same GVP is used
 
@@ -152,20 +92,7 @@ rpspmc_hwi_dev::rpspmc_hwi_dev():RP_stream(this){
                 set_spmc_signal_mux (defaults);
         }
         
-        // use SOURCE_SIGNAL_DEF rpspmc_source_signals[] table to auto configure
-        for (int i=0; rpspmc_source_signals[i].label; ++i){ // name
-                g_message ("Reading SOURCE_SIGNALS[%d]",i);
-                g_message ("Reading SOURCE_SIGNALS[%d].mask %x",i,rpspmc_source_signals[i].mask);
-                g_message ("Reading SOURCE_SIGNALS[%d].label >%s<",i,rpspmc_source_signals[i].label);
-                g_message ("SOURCE_SIGNAL_DEF %02d for %s mask: 0x%08x L: %s U: %s  x %g",
-                           rpspmc_source_signals[i].scan_source_pos-1,
-                           rpspmc_source_signals[i].label, rpspmc_source_signals[i].mask, // name
-                           rpspmc_source_signals[i].label, rpspmc_source_signals[i].unit, rpspmc_source_signals[i].scale_factor);
-                if (rpspmc_source_signals[i].scan_source_pos > 0)
-                        main_get_gapp()->channelselector->ConfigureHardwareMapping (rpspmc_source_signals[i].scan_source_pos-1,
-                                                                                    rpspmc_source_signals[i].label, rpspmc_source_signals[i].mask, // name
-                                                                                    rpspmc_source_signals[i].label, rpspmc_source_signals[i].unit, 1.0); // conversion to Base Units is in stream expansion applied
-                }
+        update_hardware_mapping_to_rpspmc_source_signals ();
 
         subscan_data_y_index_offset = 0;
         ScanningFlg=0;
@@ -180,6 +107,34 @@ rpspmc_hwi_dev::rpspmc_hwi_dev():RP_stream(this){
 }
 
 rpspmc_hwi_dev::~rpspmc_hwi_dev(){
+}
+
+
+// use SOURCE_SIGNAL_DEF rpspmc_source_signals[] table to auto configure (Scan Sources Configurations mapping)
+void rpspmc_hwi_dev::update_hardware_mapping_to_rpspmc_source_signals (){
+        for (int i=0; rpspmc_source_signals[i].label; ++i){ // name
+                g_message ("Reading SOURCE_SIGNALS[%d]",i);
+                g_message ("Reading SOURCE_SIGNALS[%d].mask %x",i,rpspmc_source_signals[i].mask);
+                g_message ("Reading SOURCE_SIGNALS[%d].label >%s<",i,rpspmc_source_signals[i].label);
+                if (rpspmc_source_signals[i].scan_source_pos > 0){
+                        double volt_to_unit = 1.0;
+                        switch (rpspmc_source_signals[i].mask){
+                        case 0x0001: volt_to_unit = XAngFac; break;
+                        case 0x0002: volt_to_unit = YAngFac; break;
+                        case 0x0004: volt_to_unit = spmc_parameters.gxsm_z_polarity*ZAngFac; break;
+                        case 0x0008: volt_to_unit = BiasFac; break;
+                        case 0x0010: volt_to_unit = CurrFac; break;
+                        }
+                        main_get_gapp()->channelselector->ConfigureHardwareMapping (rpspmc_source_signals[i].scan_source_pos-1,
+                                                                                    rpspmc_source_signals[i].label, rpspmc_source_signals[i].mask, // name
+                                                                                    rpspmc_source_signals[i].label,
+                                                                                    rpspmc_source_signals[i].unit, volt_to_unit); // conversion to Base Units in Volts is in stream expansion applied
+                g_message ("SOURCE_SIGNAL_DEF %02d for %s mask: 0x%08x L: %s U: %s  x %g [to V] x %g [to %s]",
+                           rpspmc_source_signals[i].scan_source_pos-1,
+                           rpspmc_source_signals[i].label, rpspmc_source_signals[i].mask, // name
+                           rpspmc_source_signals[i].label, rpspmc_source_signals[i].unit, rpspmc_source_signals[i].scale_factor, volt_to_unit, rpspmc_source_signals[i].unit);
+                }
+        }
 }
 
 
@@ -530,9 +485,9 @@ gpointer ScanDataReadThread (void *ptr_hwi){
                 }
         }
 
-        g_message("GVP Data Expanded Lookup table: PVLUT"); for (int dir = 0; dir < 4; ++dir){ for (int ch=0; ch<NUM_PV_DATA_SIGNALS; ch++){g_print ("%02d, ", pvlut[dir][ch]);}g_print ("\n");}
+        // g_message("GVP Data Expanded Lookup table: PVLUT"); for (int dir = 0; dir < 4; ++dir){ for (int ch=0; ch<NUM_PV_DATA_SIGNALS; ch++){g_print ("%02d, ", pvlut[dir][ch]);}g_print ("\n");}
         
-        g_message("FifoReadThread Start");
+        //g_message("FifoReadThread Start");
 
         if (hwi->Mob_dir[hwi->srcs_dir[0] ? 0:1]){
                 ny = hwi->Mob_dir[hwi->srcs_dir[0] ? 0:1][0]->GetNySub(); // number lines to transfer
@@ -559,7 +514,9 @@ gpointer ScanDataReadThread (void *ptr_hwi){
 #endif
                 usleep(20000);
         }
-        g_message ("GVP been written and confirmed for vector #%d. Executing GVP now.", hwi->getVPCconfirmed ());
+        g_message ("GVP been written and confirmed for vector #%d. Init GVP. Executing GVP now.", hwi->getVPCconfirmed ());
+
+        hwi->RPSPMC_data_y_index = hwi->RPSPMC_data_y_count == 0 ?  y0 : y0+ny-1;
 
         // start GVP
         hwi->GVP_vp_init ();
@@ -586,6 +543,7 @@ gpointer ScanDataReadThread (void *ptr_hwi){
         g_message("FifoReadThread Scanning %s: %d", hwi->RPSPMC_data_y_count == 0 ? "Top Down" : "Bottom Up", hwi->ScanningFlg);
 
         int ydir = hwi->RPSPMC_data_y_count == 0 ? 1:-1;
+
 
         for (int yi=hwi->RPSPMC_data_y_count == 0 ?  y0 : y0+ny-1;     // ? top down : bottom up
              hwi->RPSPMC_data_y_count == 0 ? yi < y0+ny : yi-y0 >= 0;
@@ -646,7 +604,7 @@ gpointer ScanDataReadThread (void *ptr_hwi){
 #endif
                                                 if (hwi->Mob_dir[dir][ch]){
                                                         if (xi >=0 && yi >=0 && xi < hwi->Mob_dir[dir][ch]->GetNx ()  && yi < hwi->Mob_dir[dir][ch]->GetNy ())
-                                                                hwi->Mob_dir[dir][ch]->PutDataPkt (hwi->GVP_vp_header_current.dataexpanded [k], xi, yi); // direct use, skipping pv[] remapping
+                                                                hwi->Mob_dir[dir][ch]->PutDataPkt (hwi->GVP_vp_header_current.dataexpanded [k], xi, yi); // direct use, skipping pv[] remapping ** data is coming in RP base unit Volts
                                                         else
                                                                 g_message ("EEEE xi, yi index out of range: [0..%d-1, 0..%d-1]", hwi->Mob_dir[dir][ch]->GetNx (), hwi->Mob_dir[dir][ch]->GetNy ());
                                                 } else {
@@ -848,7 +806,7 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
                         g_message ("Waiting for vectors confirmed. #[%d] ** last vector confirmed: %d, need %d", jj, getVPCconfirmed (), last_vector_index);
                         
                         if (jj > 99){
-                                g_message ( "VECROR WRITE TIMEOUT, ABROTING -- FR::FINISH-OK");
+                                g_message ( "VECTOR WRITE TIMEOUT, ABROTING -- FR::FINISH-OK");
                                 return RET_FR_FCT_END; // finish OK.
                         }
                 }
@@ -1156,15 +1114,16 @@ gboolean rpspmc_hwi_dev::ScanLineM(int yindex, int xdir, int muxmode, //srcs_mas
         // ACTUAL SCAN PROGRESS CHECK on line basis
         if (ScanningFlg){ // make sure we did not got aborted and completed already!
 
-                //g_print ("rpspmc_hwi_spm::ScanLineM(yindex=%d [fifo-y=%d], xdir=%d, ydir=%d, lssrcs=%x) checking...\n", yindex, data_y_index, xdir, ydir, srcs_mask);
                 y_current = RPSPMC_data_y_index;
-
+                //g_print ("current RPSPMC_data_y_index: %04d ** rpspmc_hwi_spm::ScanLineM (yindex=%04d, xdir=%d, ydir=%d, lssrcs=%x) checking...\n", RPSPMC_data_y_index, yindex, xdir, ydir, srcs_mask);
+                g_print (".");
+                
                 if (ydir > 0 && yindex <= RPSPMC_data_y_index){
-                        //g_print ("\r * rpspmc_hwi_spm::ScanLineM(yindex=%04d [fifo-y=%04d], xdir=%d, ydir=%d, lssrcs=0x%08x) top-down completed.\n", yindex, RPSPMC_data_y_index, xdir, ydir, srcs_mask);
+                        g_print ("\r * top-down line %04d completed.\n", yindex);
                         return FALSE; // line completed top-down
                 }
                 if (ydir < 0 && yindex >= RPSPMC_data_y_index){
-                        //g_print ("\r * rpspmc_hwi_spm::ScanLineM(yindex=%04d [fifo-y=%04d], xdir=%d, ydir=%d, lssrcs=0x%08x) bottom-up completed.\n", yindex, RPSPMC_data_y_index, xdir, ydir, srcs_mask);
+                        g_print ("\r * bottom-up line %04d completed.\n", yindex);
                         return FALSE; // line completed bot-up
                 }
 
@@ -1176,7 +1135,7 @@ gboolean rpspmc_hwi_dev::ScanLineM(int yindex, int xdir, int muxmode, //srcs_mas
                 
                 return TRUE;
         }
-        return FALSE; // scan was stopped by users
+        return FALSE; // scan was stopped by user
 }
 
 
@@ -1188,7 +1147,7 @@ gboolean rpspmc_hwi_dev::ScanLineM(int yindex, int xdir, int muxmode, //srcs_mas
  "z" :                ZS, XS, YS  with offset!! -- in volts after piezo amplifier
  "o" :                Z0, X0, Y0  offset -- in volts after piezo amplifier
  "R" :                Scan Pos ZS, XS, YS -- in Angstroem/base unit
- "f" :                dFreq, I-avg, I-RMS
+ "f" :                dFreq, I reading in nA, "I" input reading in Volts
  "s","S" :            DSP Statemachine Status Bits, DSP load, DSP load peak
  "Z" :                probe Z Position
  "i" :                GPIO (high level speudo monitor)
@@ -1197,6 +1156,8 @@ gboolean rpspmc_hwi_dev::ScanLineM(int yindex, int xdir, int muxmode, //srcs_mas
  "P" :                X,Y Scan/Probe Coords in Pixel, 0,0 is top left [indices]
  "B" :                Bias
  "G" :                GVP
+ "F" :                GVP-AMC-FMC
+ "V" :                ADC IN1, IN2 Voltages
 */
 
 gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2, double &val3){
@@ -1224,15 +1185,9 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2,
         }
 
         if (*property == 'f'){
-                val1 = pacpll_parameters.dfreq_monitor; // qf - DSPPACClass->pll.Reference[0]; // Freq Shift
-#if 0
-                if ((int)(spmc_parameters.z_servo_mode) & MM_LOG) // values are in 8.24 fractional
-                        val2 = exp(spmc_parameters.signal_monitor/(double)(1<<24)) / main_get_gapp()->xsm->Inst->nAmpere2V (1.); // actual nA reading
-                else
-                        val2 = spmc_parameters.signal_monitor / main_get_gapp()->xsm->Inst->nAmpere2V (1.); // actual nA reading
-#endif
-                val2 = spmc_parameters.signal_monitor / main_get_gapp()->xsm->Inst->nAmpere2V (1.); // actual nA reading
-		val3 = spmc_parameters.signal_monitor;
+                val1 = pacpll_parameters.dfreq_monitor; // Freq Shift
+                val2 = spmc_parameters.signal_monitor / main_get_gapp()->xsm->Inst->nAmpere2V (1.0); // Reading converted to nA
+		val3 = spmc_parameters.signal_monitor; // Current Input reading in Volts (+/-1 V for RF-IN2, +/-5V for AD24-IN3
 		return TRUE;
 	}
 
@@ -1278,16 +1233,29 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2,
 	}
 
         if (*property == 'p'){ // SCAN DATA INDEX, CENTERED range: +/- NX/2, +/-NY/2
+#if 0
                 val1 = (double)( RPSPMC_data_x_index - (main_get_gapp()->xsm->data.s.nx/2 - 1) + 1);
                 val2 = (double)(-RPSPMC_data_y_index + (main_get_gapp()->xsm->data.s.ny/2 - 1) + 1);
                 val3 = (double)RPSPMC_data_z_value;
+#else
+		val1 = main_get_gapp()->xsm->Inst->Volt2XA (spmc_parameters.xs_monitor)/main_get_gapp()->xsm->data.s.rx * main_get_gapp()->xsm->data.s.nx;
+                val2 = -main_get_gapp()->xsm->Inst->Volt2YA (spmc_parameters.ys_monitor)/main_get_gapp()->xsm->data.s.ry * main_get_gapp()->xsm->data.s.ny;
+                val3 = main_get_gapp()->xsm->Inst->Volt2ZA (spmc_parameters.zs_monitor);
+#endif
 		return TRUE;
         }
         if (*property == 'P'){ // SCAN DATA INDEX, range: 0..NX, 0..NY
+#if 0
                 val1 = (double)(RPSPMC_data_x_index);
                 val2 = (double)(RPSPMC_data_y_index);
                 val3 = (double)RPSPMC_data_z_value;
-		return TRUE;
+#else
+		val1 = (main_get_gapp()->xsm->Inst->Volt2XA (spmc_parameters.xs_monitor)/main_get_gapp()->xsm->data.s.rx+0.5) * main_get_gapp()->xsm->data.s.nx;
+                val2 = (-main_get_gapp()->xsm->Inst->Volt2YA (spmc_parameters.ys_monitor)/main_get_gapp()->xsm->data.s.ry+0.5) * main_get_gapp()->xsm->data.s.ny;
+                val3 = main_get_gapp()->xsm->Inst->Volt2ZA (spmc_parameters.zs_monitor);
+#endif
+
+                return TRUE;
         }
         if (*property == 'B'){ // Monitors: Bias
                 val1 = spmc_parameters.bias_monitor;
@@ -1299,6 +1267,18 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2,
                 val1 = spmc_parameters.gvpu_monitor;
                 val2 = spmc_parameters.gvpa_monitor;
                 val3 = spmc_parameters.gvpb_monitor;
+		return TRUE;
+        }
+        if (*property == 'F'){ // Monitors: GVP-AMC-FMC
+                val1 = spmc_parameters.gvpamc_monitor;
+                val2 = spmc_parameters.gvpfmc_monitor;
+                val3 = 0.;
+		return TRUE;
+        }
+        if (*property == 'V'){ // Monitors: Volatges
+                val1 = spmc_parameters.ad463x_monitor[0];
+                val2 = spmc_parameters.ad463x_monitor[1];
+                val3 = 0.;
 		return TRUE;
         }
 //	printf ("ZXY: %g %g %g\n", val1, val2, val3);
@@ -1339,148 +1319,6 @@ void rpspmc_hwi_dev::set_spmc_signal_mux (int source[6]){
 }
 
 
-
-int rpspmc_hwi_dev::lookup_signal_by_ptr(gint64 sigptr){
-	for (int i=0; i<NUM_SIGNALS; ++i){
-		if (dsp_signal_lookup_managed[i].dim == 1 && sigptr == dsp_signal_lookup_managed[i].p)
-			return i;
-		gint64 offset = sigptr - (gint64)dsp_signal_lookup_managed[i].p;
-		if (sigptr >= dsp_signal_lookup_managed[i].p && offset < 4*dsp_signal_lookup_managed[i].dim){
-			dsp_signal_lookup_managed[i].index = offset/4;
-			return i;
-		}
-	}
-	return -1;
-}
-
-int rpspmc_hwi_dev::lookup_signal_by_name(const gchar *sig_name){
-	for (int i=0; i<NUM_SIGNALS; ++i)
-		if (!strcmp (sig_name, dsp_signal_lookup_managed[i].label))
-			return i;
-	return -1;
-}
-
-const gchar *rpspmc_hwi_dev::lookup_signal_name_by_index(int i){
-	if (i<NUM_SIGNALS && i >= 0){
-		// dsp_signal_lookup_managed[i].index
-		return (const gchar*)dsp_signal_lookup_managed[i].label;
-	} else
-		return "INVALID INDEX";
-}
-
-const gchar *rpspmc_hwi_dev::lookup_signal_unit_by_index(int i){
-	if (i<NUM_SIGNALS && i >= 0)
-		return (const gchar*)dsp_signal_lookup_managed[i].unit;
-	else
-		return "INVALID INDEX";
-}
-
-double rpspmc_hwi_dev::lookup_signal_scale_by_index(int i){
-	if (i<NUM_SIGNALS && i >= 0)
-		return dsp_signal_lookup_managed[i].scale;
-	else
-		return 0.;
-}
-
-int rpspmc_hwi_dev::change_signal_input(int signal_index, gint32 input_id, gint32 voffset){
-	gint32 si = signal_index | (voffset >= 0 && voffset < dsp_signal_lookup_managed[signal_index].dim ? voffset<<16 : 0); 
-	SIGNAL_MANAGE sm = { input_id, si, 0, 0 }; // for read/write control part of signal_monitor only
-	PI_DEBUG_GM (DBG_L3, "XX::change_module_signal_input");
-
-        //
-        // dummy
-        // must adjust signal configurayion on controller here
-        //
-        
-	PI_DEBUG_GM (DBG_L3, "XX::change_module_signal_input done: [%d,%d,0x%x,0x%x]",
-                     sm.mindex,sm.signal_id,sm.act_address_input_set,sm.act_address_signal);
-	return 0;
-}
-
-int rpspmc_hwi_dev::query_module_signal_input(gint32 input_id){
-        int mode=0;
-        int ret;
-
-        // template dummy -- query controller here:
-        // read signal address at input_id, then lookup signal by address from map
-
-        // use dummy list
-	int signal_index = mod_input_list[input_id].id; // lookup_signal_by_ptr (sm.act_address_signal);
-
-	return signal_index;
-}
-
-int rpspmc_hwi_dev::read_signal_lookup (){
-        // read actual signal list from controller and manage a copy
-#if 0
-	for (int i=0; i<NUM_SIGNALS; ++i){
-		CONV_32 (dsp_signal_list[i].p);
-		dsp_signal_lookup_managed[i].p = dsp_signal_list[i].p;
-		dsp_signal_lookup_managed[i].dim   = dsp_signal_lookup[i].dim;
-		dsp_signal_lookup_managed[i].label = g_strdup(dsp_signal_lookup[i].label);
-                if (i==0){ // IN0 dedicated to tunnel current via IVC
-                        // g_print ("1nA to Volt=%g  1pA to Volt=%g",main_get_gapp()->xsm->Inst->nAmpere2V (1.),main_get_gapp()->xsm->Inst->nAmpere2V (1e-3));
-                        if (main_get_gapp()->xsm->Inst->nAmpere2V (1.) > 1.){
-                                dsp_signal_lookup_managed[i].unit  = g_strdup("pA"); // use pA scale
-                                dsp_signal_lookup_managed[i].scale = dsp_signal_lookup[i].scale; // -> Volts
-                                dsp_signal_lookup_managed[i].scale /= main_get_gapp()->xsm->Inst->nAmpere2V (1); // values are always in nA
-                        } else {
-                                dsp_signal_lookup_managed[i].unit  = g_strdup("nA");
-                                dsp_signal_lookup_managed[i].scale = dsp_signal_lookup[i].scale; // -> Volts
-                                dsp_signal_lookup_managed[i].scale /= main_get_gapp()->xsm->Inst->nAmpere2V (1.); // nA
-                        }
-                } else {
-                        dsp_signal_lookup_managed[i].unit  = g_strdup(dsp_signal_lookup[i].unit);
-                        dsp_signal_lookup_managed[i].scale = dsp_signal_lookup[i].scale;
-                }
-		dsp_signal_lookup_managed[i].module  = g_strdup(dsp_signal_lookup[i].module);
-		dsp_signal_lookup_managed[i].index  = -1;
-                PI_DEBUG_PLAIN (DBG_L2,
-                                "Sig[" << i << "]: ptr=" << dsp_signal_lookup_managed[i].p 
-                                << ", " << dsp_signal_lookup_managed[i].dim 
-                                << ", " << dsp_signal_lookup_managed[i].label 
-                                << " [v" << dsp_signal_lookup_managed[i].index << "] "
-                                << ", " << dsp_signal_lookup_managed[i].unit
-                                << ", " << dsp_signal_lookup_managed[i].scale
-                                << ", " << dsp_signal_lookup_managed[i].module
-                                << "\n"
-                                );
-		for (int k=0; k<i; ++k)
-			if (dsp_signal_lookup_managed[k].p == dsp_signal_lookup_managed[i].p){
-                                PI_DEBUG_PLAIN (DBG_L2,
-                                                "Sig[" << i << "]: ptr=" << dsp_signal_lookup_managed[i].p 
-                                                << " identical with Sig[" << k << "]: ptr=" << dsp_signal_lookup_managed[k].p 
-                                                << " ==> POSSIBLE ERROR IN SIGNAL TABLE <== GXSM is aborting here, suspicious DSP data.\n"
-                                                );
-                                g_warning ("DSP SIGNAL TABLE finding: Sig[%d] '%s': ptr=%x is identical with Sig[%d] '%s': ptr=%x",
-                                           i, dsp_signal_lookup_managed[i].label, dsp_signal_lookup_managed[i].p,
-                                           k, dsp_signal_lookup_managed[k].label, dsp_signal_lookup_managed[k].p);
-				// exit (-1);
-			}
-	}
-#endif
-	return 0;
-}
-
-int rpspmc_hwi_dev::read_actual_module_configuration (){
-	for (int i=0; mod_input_list[i].id; ++i){
-		int si = query_module_signal_input (mod_input_list[i].id);
-		if (si >= 0 && si < NUM_SIGNALS){
-                        PI_DEBUG_GM (DBG_L2, "INPUT %s (%04X) is set to %s",
-                                     mod_input_list[i].name, mod_input_list[i].id,
-                                     dsp_signal_lookup_managed[si].label );
-		} else {
-                        if (si == SIGNAL_INPUT_DISABLED)
-                                PI_DEBUG_GM (DBG_L2, "INPUT %s (%04X) is DISABLED", mod_input_list[i].name, mod_input_list[i].id);
-                        else
-                                PI_DEBUG_GM (DBG_L2, "INPUT %s (%04X) -- ERROR DETECTED", mod_input_list[i].name, mod_input_list[i].id);
-		}
-	}
-
-	return 0;
-}
-
-
 // GVP CONTROL MODES:
 #define SPMC_GVP_CONTROL_RESET     0
 #define SPMC_GVP_CONTROL_EXECUTE   1   
@@ -1489,6 +1327,7 @@ int rpspmc_hwi_dev::read_actual_module_configuration (){
 #define SPMC_GVP_CONTROL_RESET_UAB 4
 #define SPMC_GVP_CONTROL_GVP_EXECUTE_NO_DMA 5   
 #define SPMC_GVP_CONTROL_GVP_RESET_ONLY     6   
+#define SPMC_GVP_CONTROL_RESET_COMPONENTS   9
 
 
 void rpspmc_hwi_dev::GVP_execute_vector_program(){ // init DMA and start GVP
@@ -1513,6 +1352,12 @@ void rpspmc_hwi_dev::GVP_reset_vector_program (){ // ONLY GVP CORE RESET, NO DMA
         abort_GVP_flag = true;
 }
 
+void rpspmc_hwi_dev::GVP_reset_vector_components (int mask){
+        g_message ("rpspmc_hwi_dev::GVP_reset_vector_components (0x%02x)", mask);
+        rpspmc_pacpll->write_parameter ("SPMC_GVP_CONTROL", (mask << 8) | SPMC_GVP_CONTROL_RESET_COMPONENTS);
+}
+
+
 void rpspmc_hwi_dev::GVP_reset_UAB (){
         g_message ("rpspmc_hwi_dev::GVP_reset_UAB ()");
         rpspmc_pacpll->write_parameter ("SPMC_GVP_CONTROL", SPMC_GVP_CONTROL_RESET_UAB);
@@ -1520,6 +1365,7 @@ void rpspmc_hwi_dev::GVP_reset_UAB (){
 
 void rpspmc_hwi_dev::GVP_vp_init (){
         // reset GVP stream buffer read count
+        g_message ("*** rpspmc_hwi_dev::GVP_vp_init () ***");
         GVP_stream_buffer_AB = -2;
         GVP_stream_buffer_position = 0;
         GVP_stream_buffer_offset = 0; // 0x100   //  =0x00 **** TESTING BRAM ISSUE -- FIX ME !!! *****
@@ -1565,7 +1411,9 @@ int rpspmc_hwi_dev::GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v){
 #define D_GVP_DU        3
 #define D_GVP_AA        4
 #define D_GVP_BB        5
-#define D_GVP_SLW       6
+#define D_GVP_AM        6
+#define D_GVP_FM        7
+#define D_GVP_SLW       8
 #define D_GVP_SIZE (D_GVP_SLW+1)
         
         const gchar *SPMC_GVP_VECTOR_COMPONENTS[] = {
@@ -1581,6 +1429,8 @@ int rpspmc_hwi_dev::GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v){
                 "SPMC_GVP_VECTOR_DU", 
                 "SPMC_GVP_VECTOR_AA", 
                 "SPMC_GVP_VECTOR_BB", 
+                "SPMC_GVP_VECTOR_AM", 
+                "SPMC_GVP_VECTOR_FM", 
                 "SPMC_GVP_VECTORSLW", 
                 NULL };
 
@@ -1614,6 +1464,8 @@ int rpspmc_hwi_dev::GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v){
         gvp_vector_d [D_GVP_DU      ] = v->f_du;
         gvp_vector_d [D_GVP_AA      ] = v->f_da;
         gvp_vector_d [D_GVP_BB      ] = v->f_db;
+        gvp_vector_d [D_GVP_AM      ] = v->f_dam;
+        gvp_vector_d [D_GVP_FM      ] = v->f_dfm;
         gvp_vector_d [D_GVP_SLW     ] = v->slew;
         
         // send it down
@@ -1758,9 +1610,9 @@ int rpspmc_hwi_dev::read_GVP_data_block_to_position_vector (int offset, gboolean
 #if 1 // THIS DATA ASSIGNMENT AND SCALING IS CORRECT
                         if (ich >= 8){
                                 GVP_vp_header_current.dataexpanded[ich] = rpspmc_source_signals[ich+SIGNAL_INDEX_ICH0].scale_factor*GVP_vp_header_current.chNs[ich];
-                                g_message ("GVP DATA [%d] ICH%d %s s:%g x:%d sx:%g %s", ch_index, ich,
-                                           rpspmc_source_signals[ich+SIGNAL_INDEX_ICH0].label, rpspmc_source_signals[ich+SIGNAL_INDEX_ICH0].scale_factor, GVP_vp_header_current.chNs[ich],
-                                           GVP_vp_header_current.dataexpanded[ich], rpspmc_source_signals[ich+SIGNAL_INDEX_ICH0].unit);
+                                //g_message ("GVP DATA [%d] ICH%d %s s:%g x:%d sx:%g %s", ch_index, ich,
+                                //           rpspmc_source_signals[ich+SIGNAL_INDEX_ICH0].label, rpspmc_source_signals[ich+SIGNAL_INDEX_ICH0].scale_factor, GVP_vp_header_current.chNs[ich],
+                                //           GVP_vp_header_current.dataexpanded[ich], rpspmc_source_signals[ich+SIGNAL_INDEX_ICH0].unit);
                         }
 #endif
                 }

@@ -11,15 +11,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="162.960 ns"></ZoomStartTime>
-      <ZoomEndTime time="1,555.461 ns"></ZoomEndTime>
-      <Cursor1Time time="56,000.000 ns"></Cursor1Time>
+      <ZoomStartTime time="13,726.540 ns"></ZoomStartTime>
+      <ZoomEndTime time="15,447.041 ns"></ZoomEndTime>
+      <Cursor1Time time="14,842.000 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
-      <NameColumnWidth column_width="405"></NameColumnWidth>
-      <ValueColumnWidth column_width="155"></ValueColumnWidth>
+      <NameColumnWidth column_width="401"></NameColumnWidth>
+      <ValueColumnWidth column_width="1054"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="59" />
+   <WVObjectSize size="78" />
    <wvobject type="logic" fp_name="/tb_spm_ad/pclk">
       <obj_property name="ElementShortName">pclk</obj_property>
       <obj_property name="ObjectShortName">pclk</obj_property>
@@ -265,10 +265,14 @@
    <wvobject type="logic" fp_name="/tb_spm_ad/axis_AD463_tb/wire_SPI_sck">
       <obj_property name="ElementShortName">wire_SPI_sck</obj_property>
       <obj_property name="ObjectShortName">wire_SPI_sck</obj_property>
+      <obj_property name="CustomSignalColor">#F0E68C</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
    </wvobject>
    <wvobject type="logic" fp_name="/tb_spm_ad/axis_AD463_tb/wire_SPI_cs">
       <obj_property name="ElementShortName">wire_SPI_cs</obj_property>
       <obj_property name="ObjectShortName">wire_SPI_cs</obj_property>
+      <obj_property name="CustomSignalColor">#800080</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
    </wvobject>
    <wvobject type="logic" fp_name="/tb_spm_ad/axis_AD463_tb/wire_SPI_sdi">
       <obj_property name="ElementShortName">wire_SPI_sdi</obj_property>
@@ -278,9 +282,19 @@
       <obj_property name="ElementShortName">wire_SPI_reset</obj_property>
       <obj_property name="ObjectShortName">wire_SPI_reset</obj_property>
    </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_AD463_tb/frame_bit_counter">
+      <obj_property name="ElementShortName">frame_bit_counter[4:0]</obj_property>
+      <obj_property name="ObjectShortName">frame_bit_counter[4:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_AD463_tb/frame_bit_counter_rd">
+      <obj_property name="ElementShortName">frame_bit_counter_rd[4:0]</obj_property>
+      <obj_property name="ObjectShortName">frame_bit_counter_rd[4:0]</obj_property>
+   </wvobject>
    <wvobject type="logic" fp_name="/tb_spm_ad/axis_AD463_tb/wire_SPI_cnv">
       <obj_property name="ElementShortName">wire_SPI_cnv</obj_property>
       <obj_property name="ObjectShortName">wire_SPI_cnv</obj_property>
+      <obj_property name="CustomSignalColor">#00FFFF</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/tb_spm_ad/axis_AD463_tb/wire_SPI_sdn">
       <obj_property name="ElementShortName">wire_SPI_sdn[7:0]</obj_property>
@@ -298,29 +312,19 @@
       <obj_property name="ElementShortName">rdecii</obj_property>
       <obj_property name="ObjectShortName">rdecii</obj_property>
    </wvobject>
-   <wvobject type="array" fp_name="/tb_spm_ad/axis_AD463_tb/state_read">
-      <obj_property name="ElementShortName">state_read[3:0]</obj_property>
-      <obj_property name="ObjectShortName">state_read[3:0]</obj_property>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_AD463_tb/n_bits">
+      <obj_property name="ElementShortName">n_bits[7:0]</obj_property>
+      <obj_property name="ObjectShortName">n_bits[7:0]</obj_property>
+      <obj_property name="CustomSignalColor">#F0E68C</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
    </wvobject>
-   <wvobject type="array" fp_name="/tb_spm_ad/axis_AD463_tb/state_write">
-      <obj_property name="ElementShortName">state_write[3:0]</obj_property>
-      <obj_property name="ObjectShortName">state_write[3:0]</obj_property>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_AD463_tb/busy_timeout">
+      <obj_property name="ElementShortName">busy_timeout[7:0]</obj_property>
+      <obj_property name="ObjectShortName">busy_timeout[7:0]</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/tb_spm_ad/axis_AD463_tb/state_single">
-      <obj_property name="ElementShortName">state_single[3:0]</obj_property>
-      <obj_property name="ObjectShortName">state_single[3:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/tb_spm_ad/axis_AD463_tb/state_stream">
-      <obj_property name="ElementShortName">state_stream[3:0]</obj_property>
-      <obj_property name="ObjectShortName">state_stream[3:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/tb_spm_ad/axis_AD463_tb/frame_bit_counter_out">
-      <obj_property name="ElementShortName">frame_bit_counter_out[5:0]</obj_property>
-      <obj_property name="ObjectShortName">frame_bit_counter_out[5:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/tb_spm_ad/axis_AD463_tb/frame_bit_counter_in">
-      <obj_property name="ElementShortName">frame_bit_counter_in[5:0]</obj_property>
-      <obj_property name="ObjectShortName">frame_bit_counter_in[5:0]</obj_property>
+      <obj_property name="ElementShortName">state_single[2:0]</obj_property>
+      <obj_property name="ObjectShortName">state_single[2:0]</obj_property>
    </wvobject>
    <wvobject type="logic" fp_name="/tb_spm_ad/axis_AD463_tb/cfg_mode_job">
       <obj_property name="ElementShortName">cfg_mode_job</obj_property>
@@ -329,13 +333,99 @@
    <wvobject type="logic" fp_name="/tb_spm_ad/axis_AD463_tb/configuration_mode">
       <obj_property name="ElementShortName">configuration_mode</obj_property>
       <obj_property name="ObjectShortName">configuration_mode</obj_property>
+      <obj_property name="CustomSignalColor">#FAAFBE</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
    </wvobject>
-   <wvobject type="logic" fp_name="/tb_spm_ad/axis_AD463_tb/configuration_read">
-      <obj_property name="ElementShortName">configuration_read</obj_property>
-      <obj_property name="ObjectShortName">configuration_read</obj_property>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_AD463_tb/rdecii_cfg_n">
+      <obj_property name="ElementShortName">rdecii_cfg_n[8:0]</obj_property>
+      <obj_property name="ObjectShortName">rdecii_cfg_n[8:0]</obj_property>
    </wvobject>
-   <wvobject type="logic" fp_name="/tb_spm_ad/axis_AD463_tb/configuration_write">
-      <obj_property name="ElementShortName">configuration_write</obj_property>
-      <obj_property name="ObjectShortName">configuration_write</obj_property>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_AD463_tb/reg_dac_data_ser">
+      <obj_property name="ElementShortName">reg_dac_data_ser[1:0][31:0]</obj_property>
+      <obj_property name="ObjectShortName">reg_dac_data_ser[1:0][31:0]</obj_property>
+      <obj_property name="Radix">BINARYRADIX</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_AD463_tb/reg_dac_data">
+      <obj_property name="ElementShortName">reg_dac_data[1:0][31:0]</obj_property>
+      <obj_property name="ObjectShortName">reg_dac_data[1:0][31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_AD463_tb/reg_data_in">
+      <obj_property name="ElementShortName">reg_data_in[31:0]</obj_property>
+      <obj_property name="ObjectShortName">reg_data_in[31:0]</obj_property>
+      <obj_property name="Radix">BINARYRADIX</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_spm_ad/axis_AD463_tb/configuration_mode">
+      <obj_property name="ElementShortName">configuration_mode</obj_property>
+      <obj_property name="ObjectShortName">configuration_mode</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_spm_ad/axis_AD463_tb/configuration_rw">
+      <obj_property name="ElementShortName">configuration_rw</obj_property>
+      <obj_property name="ObjectShortName">configuration_rw</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_AD463_tb/configuration_addr_data_write">
+      <obj_property name="ElementShortName">configuration_addr_data_write[31:0]</obj_property>
+      <obj_property name="ObjectShortName">configuration_addr_data_write[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_AD463_tb/configuration_addr_data_read">
+      <obj_property name="ElementShortName">configuration_addr_data_read[31:0]</obj_property>
+      <obj_property name="ObjectShortName">configuration_addr_data_read[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_spm_ad/axis_AD463_tb/manual_cnv">
+      <obj_property name="ElementShortName">manual_cnv</obj_property>
+      <obj_property name="ObjectShortName">manual_cnv</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_spm_ad/axis_AD463_tb/stream_cnv">
+      <obj_property name="ElementShortName">stream_cnv</obj_property>
+      <obj_property name="ObjectShortName">stream_cnv</obj_property>
+      <obj_property name="CustomSignalColor">#00FFFF</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_spm_ad/axis_AD463_tb/cfg_mode_job">
+      <obj_property name="ElementShortName">cfg_mode_job</obj_property>
+      <obj_property name="ObjectShortName">cfg_mode_job</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_AD463_tb/state_single">
+      <obj_property name="ElementShortName">state_single[2:0]</obj_property>
+      <obj_property name="ObjectShortName">state_single[2:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_AD463_tb/state_rw">
+      <obj_property name="ElementShortName">state_rw[1:0]</obj_property>
+      <obj_property name="ObjectShortName">state_rw[1:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_AD463_tb/state_rw2">
+      <obj_property name="ElementShortName">state_rw2[1:0]</obj_property>
+      <obj_property name="ObjectShortName">state_rw2[1:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_AD463_tb/state_single">
+      <obj_property name="ElementShortName">state_single[2:0]</obj_property>
+      <obj_property name="ObjectShortName">state_single[2:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_spm_ad/axis_AD463_tb/manual_stream_cnv">
+      <obj_property name="ElementShortName">manual_stream_cnv</obj_property>
+      <obj_property name="ObjectShortName">manual_stream_cnv</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_AD463_tb/rdecii_cfg_n">
+      <obj_property name="ElementShortName">rdecii_cfg_n[8:0]</obj_property>
+      <obj_property name="ObjectShortName">rdecii_cfg_n[8:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_AD463_tb/rdecii_cfg">
+      <obj_property name="ElementShortName">rdecii_cfg[8:0]</obj_property>
+      <obj_property name="ObjectShortName">rdecii_cfg[8:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_AD463_tb/reg_dac_data_ser">
+      <obj_property name="ElementShortName">reg_dac_data_ser[1:0][31:0]</obj_property>
+      <obj_property name="ObjectShortName">reg_dac_data_ser[1:0][31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_AD463_tb/reg_dac_data">
+      <obj_property name="ElementShortName">reg_dac_data[1:0][31:0]</obj_property>
+      <obj_property name="ObjectShortName">reg_dac_data[1:0][31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_AD463_tb/reg_data_in">
+      <obj_property name="ElementShortName">reg_data_in[31:0]</obj_property>
+      <obj_property name="ObjectShortName">reg_data_in[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/axis_AD463_tb/busy_timeout">
+      <obj_property name="ElementShortName">busy_timeout[7:0]</obj_property>
+      <obj_property name="ObjectShortName">busy_timeout[7:0]</obj_property>
    </wvobject>
 </wave_config>

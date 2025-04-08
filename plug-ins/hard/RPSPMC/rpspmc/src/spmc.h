@@ -72,9 +72,10 @@ extern "C" {
         void rp_spmc_AD5791_send_axis_data (int axis, int data);
         void rp_spmc_AD5791_init ();
 
-        void rp_spmc_AD463x_init ();
-        void rp_spmc_AD463x_set_stream_mode (); // AXI
-        
+        ad463x_dev* rp_spmc_AD463x_init ();
+        void rp_spmc_AD463x_set_stream_mode (struct ad463x_dev *dev); // AXI
+        void rp_spmc_AD463x_test (struct ad463x_dev *dev);
+
         void rp_spmc_set_bias (double bias);
         void rp_spmc_set_xyzu_DIRECT (double ux, double uy, double uz, double bias);  // WARNING -- instant setting in config mode (test only)
         
@@ -82,11 +83,13 @@ extern "C" {
         void rp_spmc_set_zservo_gxsm_speciality_setting (int mode, double z_setpoint, double in_offset_comp);
 
         void reset_gvp_positions_uab();
+        void rp_spmc_gvp_reset_components (int mask); // WARNING!! For corase/mover actions only!
         void rp_spmc_gvp_config (bool reset, bool pause, int reset_options); // taking out of reset starts GVP!
         //void rp_spmc_set_gvp_vector (CFloatSignal &vector);
         void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, unsigned int srcs, int nrp, int nxt,
                                      double dx, double dy, double dz, double du,
-                                     double da, double db, double slew,
+                                     double da, double db, double dam, double dfm,
+                                     double slew,
                                      bool update_life);
         
         void rp_set_gvp_stream_mux_selector (unsigned long selector, unsigned long test_mode, int testval);
@@ -97,13 +100,14 @@ extern "C" {
         void rp_spmc_set_offsets (double x0, double y0, double z0, double bias, double xy_move_slew, double z_move_slew);
         void rp_spmc_set_scanpos (double xs, double ys, double slew);
 
-        void rp_spmc_set_modulation (double volume, int target);
+        void rp_spmc_set_modulation (double volume, int target, int dfc_target);
 
-        double rp_spmc_configure_lockin (double freq, double gain, unsigned int mode, int LCKID);
+        double rp_spmc_configure_lockin (double freq, double gain, unsigned int mode, double RF_ref_freq, int LCKID);
 
-        void rp_spmc_set_biqad_Lck_F0 (double f_cut, double Q, double Fs, int BIQID);
-        void rp_spmc_set_biqad_Lck_F0_pass (int BIQID);
-        void rp_spmc_set_biqad_Lck_F0_IIR (double f_cut, double Fs, int BIQID);
+        void rp_spmc_set_biqad_Lck_AB (int BIQID, int test_mode);
+        void rp_spmc_set_biqad_Lck_F0 (double f_cut, double Q, int BIQID, int test_mode);
+        void rp_spmc_set_biqad_Lck_F0_pass (int BIQID, int test_mode);
+        void rp_spmc_set_biqad_Lck_F0_IIR (double f_cut, int BIQID, int test_mode);
 
 
         void rp_spmc_update_readings ();

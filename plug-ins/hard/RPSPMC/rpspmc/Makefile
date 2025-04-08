@@ -15,7 +15,7 @@ INSTALL_DIR ?= /opt/redpitaya/
 
 CONTROLLERHF = controllerhf.so
 
-CFLAGS += -DVERSION=$(VER)-$(BUILD_NUMBER) -DREVISION=$(REVISION)
+CFLAGS += -DVERSION=$(VER)-$(BUILD_NUMBER) -DREVISION=$(REVISION) -Wno-reorder -Wno-deprecated
 export CFLAGS
 
 all: $(CONTROLLERHF)

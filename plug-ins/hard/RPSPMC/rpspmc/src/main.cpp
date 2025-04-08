@@ -46,25 +46,29 @@ int thread_data__tune_control=0;
 #include <fcntl.h>
 #include <pthread.h>
 
-#define REDPACPLL_DATE    0x20250101
+#define REDPACPLL_DATE    0x20250406
 #define REDPACPLL_VERSION 0x00160000
-#define RPSPMC_VERSION    0x00010015
-#define RPSPMC_VNAME      "Evaluation Regime SG20250101"
-#define RPSPMC_SRCS_INFO  "Bit0..3: XYZU | Bit4-7: IN1,2,3,4 | Bit8-11: dFREQ,EXEC,PHASE,AMPL | Bit 12..15: LckA,B, TIME64"
+#define RPSPMC_VERSION    0x00010016
+#define RPSPMC_VNAME      "Evaluation Regime SG20250406"
+#define RPSPMC_SRCS_INFO  "Bit0..3: XYZU | Bit4-7: IN1,2,3,4 | Bit8-14: MUX-SRCS: [dFreq,Exec,Phase,Ampl,dFCtrl,...x16] | Bit 15,16, TIME64"
 
-#define PARAMETER_UPDATE_INTERVAL 200 // ms
+#define PARAMETER_UPDATE_INTERVAL 100 // ms
 #define SIGNAL_UPDATE_INTERVAL    200 // ms
+
+#define SPMC_RUN_METER_THREAD // experimental
+
 
 #include "main.h"
 #include "fpga_cfg.h"
 #include "pacpll.h"
+#include "ad463x.h"
 #include "spmc.h"
 #include "spmc_dma.h"
 #include "spmc_stream_server.h"
 
 spmc_stream_server spmc_stream_server_instance;
 spmc_dma_support *spm_dma_instance = NULL;
-
+extern int spmc_dma_pull_interval;
 
 // Some thing is off while Linking, application does NOT (terminated with unkown error a tload time) work with compliled separate and linked to lib
 // In Makefile: CXXSOURCES=main.cpp fpga_cfg.cpp pacpll.cpp spmc.cpp
@@ -178,6 +182,8 @@ std::vector<float> g_data_signal_time(SIGNAL_SIZE_DEFAULT);
 CIntSignal SIGNAL_GPIOX("SIGNAL_GPIOX",  SIGNAL_SIZE_GPIOX, 0);
 std::vector<int> g_data_signal_gpiox(SIGNAL_SIZE_GPIOX);
 
+CFloatSignal SIGNAL_XYZ_METER("SIGNAL_XYZ_METER", 9, 0);
+
 double signal_dc_measured = 0.0;
 
 //Parameter
@@ -214,6 +220,13 @@ CIntParameter RPSPMC_SERVER_VERSION ("RPSPMC_SERVER_VERSION", CBaseParameter::RW
 CIntParameter RPSPMC_SERVER_DATE    ("RPSPMC_SERVER_DATE", CBaseParameter::RW, 0, 0, -2147483648,2147483647);
 CIntParameter RPSPMC_FPGAIMPL_VERSION("RPSPMC_FPGAIMPL_VERSION", CBaseParameter::RW, 0, 0, -2147483648,2147483647);
 CIntParameter RPSPMC_FPGAIMPL_DATE   ("RPSPMC_FPGAIMPL_DATE", CBaseParameter::RW, 0, 0, -2147483648,2147483647);
+CIntParameter RPSPMC_FPGA_STARTUP    ("RPSPMC_FPGA_STARTUP", CBaseParameter::RW, 0, 0, -2147483648,2147483647);
+CIntParameter RPSPMC_FPGA_STARTUPCNT ("RPSPMC_FPGA_STARTUPCNT", CBaseParameter::RW, 0, 0, -2147483648,2147483647);
+
+CIntParameter RPSPMC_INITITAL_TRANSFER_ACK ("RPSPMC_INITITAL_TRANSFER_ACK", CBaseParameter::RW, 0, 0, -2147483648,2147483647);
+
+CIntParameter RPSPMC_DMA_PULL_INTERVAL("RPSPMC_DMA_PULL_INTERVAL", CBaseParameter::RW, 10, 0, 5, 250);
+
 
 CIntParameter TRANSPORT_CH3("TRANSPORT_CH3", CBaseParameter::RW, 0, 0, 0, 19);
 CIntParameter TRANSPORT_CH4("TRANSPORT_CH4", CBaseParameter::RW, 1, 0, 0, 19);
@@ -268,6 +281,8 @@ CBooleanParameter QCONTROL("QCONTROL", CBaseParameter::RW, false, 0);
 CBooleanParameter LCK_AMPLITUDE("LCK_AMPLITUDE", CBaseParameter::RW, false, 0);
 CBooleanParameter LCK_PHASE("LCK_PHASE", CBaseParameter::RW, false, 0);
 CBooleanParameter DFREQ_CONTROLLER("DFREQ_CONTROLLER", CBaseParameter::RW, false, 0);
+CBooleanParameter DFREQ_CONTROL_Z("DFREQ_CONTROL_Z", CBaseParameter::RW, false, 0);
+CBooleanParameter DFREQ_CONTROL_U("DFREQ_CONTROL_U", CBaseParameter::RW, false, 0);
 
 //void rp_PAC_set_phase_controller64 (double setpoint, double cp, double ci, double upper, double lower)
 CDoubleParameter AMPLITUDE_FB_SETPOINT("AMPLITUDE_FB_SETPOINT", CBaseParameter::RW, 20, 0, 0, 1000); // mV
@@ -341,7 +356,7 @@ CDoubleParameter TRANSPORT_TAU_AMPL("TRANSPORT_TAU_AMPL", CBaseParameter::RW, 0.
 // *** DBG ***                                                                                                //        -----------------------                             (2,0); // GPIO X3 : DBG M
 CDoubleParameter VOLUME_MONITOR("VOLUME_MONITOR", CBaseParameter::RW, 0, 0, -1000.0, 1000.0);                 // mV  ** gpio_reading_FIRV_vector[GPIO_READING_AMPL]         (2,1); // GPIO X4 : CORDIC SQRT (AM2=A^2+B^2)
 // via  DC_OFFSET rp_PAC_auto_dc_offset_correct ()                                                                                                                          (3,0); // GPIO X5 : DC_OFFSET (M-DC)
-// *** DBG ***                                                                                                //        -----------------------                             (3,1); // GPIO X6 : --- SPMC STATUS [FB, GVP, AD5791, --]
+// *** DBG ***                                                                                                //        -----------------------                             (3,1); // GPIO X6 : --- SPMC STATUS [FB, GVP, AD5791, --, B7: Z-INV]
 CDoubleParameter EXEC_MONITOR("EXEC_MONITOR", CBaseParameter::RW, 0, 0, -1000.0, 1000.0);                     //  mV ** gpio_reading_FIRV_vector[GPIO_READING_EXEC]         (4,0); // GPIO X7 : Exec Ampl Control Signal (signed)
 CDoubleParameter DDS_FREQ_MONITOR("DDS_FREQ_MONITOR", CBaseParameter::RW, 0, 0, 0.0, 25e6);                   //  Hz ** gpio_reading_FIRV_vector[GPIO_READING_DDS_FREQ]     (4,1); // GPIO X8 : DDS Phase Inc (Freq.) upper 32 bits of 44 (unsigned)
                                                                                                               //                                                            (5,0); // GPIO X9 : DDS Phase Inc (Freq.) lower 32 bits of 44 (unsigned)
@@ -367,6 +382,8 @@ CDoubleParameter CONTROL_DFREQ_MONITOR("CONTROL_DFREQ_MONITOR", CBaseParameter::
 
 CDoubleParameter  SPMC_BIAS("SPMC_BIAS", CBaseParameter::RW, 0.0, 0, -5.0, 5.0); // Volts
 
+CIntParameter     SPMC_Z_POLARITY("SPMC_Z_POLARITY", CBaseParameter::RW, 1, 0, -10, 10);
+
 CIntParameter     SPMC_Z_SERVO_MODE("SPMC_Z_SERVO_MODE", CBaseParameter::RW, 0, 0, 0, 0xffff);
 CDoubleParameter  SPMC_Z_SERVO_SETPOINT("SPMC_Z_SERVO_SETPOINT", CBaseParameter::RW, 0.0, 0, -5.0, 5.0); // Volts
 CDoubleParameter  SPMC_Z_SERVO_CP("SPMC_Z_SERVO_CP", CBaseParameter::RW, 0.0, 0, -1000.0, 1000.0); // XXX
@@ -385,6 +402,7 @@ CIntParameter     SPMC_ADC_MODE("SPMC_ADC_MODE", CBaseParameter::RW, 0, 0, -2147
 #define SPMC_GVP_CONTROL_PAUSE     2
 #define SPMC_GVP_CONTROL_RESUME    3
 #define SPMC_GVP_CONTROL_RESET_UAB 4
+#define SPMC_GVP_CONTROL_RESET_COMPONENTS 9
 #define SPMC_GVP_CONTROL_GVP_EXECUTE_NO_DMA 5   
 #define SPMC_GVP_CONTROL_GVP_RESET_ONLY     6   
 
@@ -408,8 +426,10 @@ CDoubleParameter  SPMC_GVP_VECTOR_DX("SPMC_GVP_VECTOR_DX", CBaseParameter::RW, 0
 CDoubleParameter  SPMC_GVP_VECTOR_DY("SPMC_GVP_VECTOR_DY", CBaseParameter::RW, 0, 0, -10.0, 10.0); // DY in Volts total length of vector component
 CDoubleParameter  SPMC_GVP_VECTOR_DZ("SPMC_GVP_VECTOR_DZ", CBaseParameter::RW, 0, 0, -10.0, 10.0); // DZ in Volts total length of vector component
 CDoubleParameter  SPMC_GVP_VECTOR_DU("SPMC_GVP_VECTOR_DU", CBaseParameter::RW, 0, 0, -10.0, 10.0); // DU (=Bias) adjust rel to Bias Ref in Volts total length of vector component
-CDoubleParameter  SPMC_GVP_VECTOR_AA("SPMC_GVP_VECTOR_AA", CBaseParameter::RW, 0, 0, -10.0, 10.0); // AA (Aux Channel ADC #5) -- reserved
-CDoubleParameter  SPMC_GVP_VECTOR_BB("SPMC_GVP_VECTOR_BB", CBaseParameter::RW, 0, 0, -10.0, 10.0); // BB (Aux Channel ADC #6) -- reserved
+CDoubleParameter  SPMC_GVP_VECTOR_AA("SPMC_GVP_VECTOR_AA", CBaseParameter::RW, 0, 0, -10.0, 10.0); // AA (Aux Channel ADC #5)
+CDoubleParameter  SPMC_GVP_VECTOR_BB("SPMC_GVP_VECTOR_BB", CBaseParameter::RW, 0, 0, -10.0, 10.0); // BB (Aux Channel ADC #6)
+CDoubleParameter  SPMC_GVP_VECTOR_AM("SPMC_GVP_VECTOR_AM", CBaseParameter::RW, 0, 0, -10.0, 10.0); // AM Channel RF-AM control
+CDoubleParameter  SPMC_GVP_VECTOR_FM("SPMC_GVP_VECTOR_FM", CBaseParameter::RW, 0, 0, -10.0, 10.0); // FM Channel RF-FM control
 CDoubleParameter  SPMC_GVP_VECTORSLW("SPMC_GVP_VECTORSLW", CBaseParameter::RW, 0, 0,   0.0, 1e6);  // slew rate in #points / sec -- max: 1 MSPS
 
 CDoubleParameter  SPMC_ALPHA("SPMC_ALPHA", CBaseParameter::RW, 0.0, 0, -360, +360); // deg
@@ -433,13 +453,27 @@ CDoubleParameter  SPMC_SET_OFFSET_Z_SLEW("SPMC_SET_OFFSET_Z_SLEW", CBaseParamete
 
 CDoubleParameter  SPMC_SC_LCK_FREQUENCY("SPMC_SC_LCK_FREQUENCY", CBaseParameter::RW, 0.0, 0, 0.0, 30e6); // Hz
 CDoubleParameter  SPMC_SC_LCK_VOLUME(   "SPMC_SC_LCK_VOLUME", CBaseParameter::RW, 0.0, 0, 0.0, 5000.0); //  mV
-CIntParameter     SPMC_SC_LCK_TARGET(   "SPMC_SC_LCK_TARGET", CBaseParameter::RW, 0, 0, 0, 16); // # 0=NONE, 1:X, 2:Y, 3:Z, 4:U
+CIntParameter     SPMC_SC_LCK_TARGET(   "SPMC_SC_LCK_TARGET", CBaseParameter::RW, 0, 0, 0, 16); // # 0=NONE, 1:X, 2:Y, 3:Z, 4:U, 
 CDoubleParameter  SPMC_SC_LCK_GAIN(     "SPMC_SC_LCK_GAIN", CBaseParameter::RW, 0.0, 0, -1e10, 1e10); // Q24
 CDoubleParameter  SPMC_SC_LCK_FMSCALE(  "SPMC_SC_LCK_FMSCALE", CBaseParameter::RW, 0.0, 0, -1e10, 1e10); // Q24
+
+
+CIntParameter     SPMC_SC_LCK_FILTER_MODE("SPMC_SC_LCK_FILTER_MODE", CBaseParameter::RW, 0, 0, 0, 4); // # 0=NONE, 1:IIR, 2:BiQuad, 3: use coefs
+
+CDoubleParameter  SPMC_SC_LCK_BQ_COEF_B0("SPMC_SC_LCK_BQ_COEF_B0", CBaseParameter::RW, 0.0, 0, -1e10, 1e10); // BiQuad filter coef b0
+CDoubleParameter  SPMC_SC_LCK_BQ_COEF_B1("SPMC_SC_LCK_BQ_COEF_B1", CBaseParameter::RW, 0.0, 0, -1e10, 1e10); // BiQuad filter coef b1
+CDoubleParameter  SPMC_SC_LCK_BQ_COEF_B2("SPMC_SC_LCK_BQ_COEF_B2", CBaseParameter::RW, 0.0, 0, -1e10, 1e10); // BiQuad filter coef b2
+CDoubleParameter  SPMC_SC_LCK_BQ_COEF_A0("SPMC_SC_LCK_BQ_COEF_A0", CBaseParameter::RW, 0.0, 0, -1e10, 1e10); // BiQuad filter coef a0
+CDoubleParameter  SPMC_SC_LCK_BQ_COEF_A1("SPMC_SC_LCK_BQ_COEF_A1", CBaseParameter::RW, 0.0, 0, -1e10, 1e10); // BiQuad filter coef a1
+CDoubleParameter  SPMC_SC_LCK_BQ_COEF_A2("SPMC_SC_LCK_BQ_COEF_A2", CBaseParameter::RW, 0.0, 0, -1e10, 1e10); // BiQuad filter coef a2
 
 CDoubleParameter  SPMC_SC_LCK_F0BQ_TAU("SPMC_SC_LCK_F0BQ_TAU", CBaseParameter::RW, 0.0, 0, 0.0, 1e10); // ms
 CDoubleParameter  SPMC_SC_LCK_F0BQ_Q(  "SPMC_SC_LCK_F0BQ_Q", CBaseParameter::RW, 0.0, 0, -1e10, 1e10); // BQ Q
 CDoubleParameter  SPMC_SC_LCK_F0BQ_IIR("SPMC_SC_LCK_F0BQ_IIR", CBaseParameter::RW, 0.0, 0, 0.0, 1e10); // ms 0: pass mode
+
+CDoubleParameter  SPMC_SC_LCK_RF_FREQUENCY("SPMC_SC_LCK_RF_FREQUENCY", CBaseParameter::RW, 0.0, 0, 0.0, 0.5*125e6); // Hz
+
+CIntParameter     SPMC_RF_GEN_OUT_MUX("SPMC_RF_GEN_OUT_MUX", CBaseParameter::RW, 0, 0, -2147483648,2147483647); // RF Gen Output MUX selector
 
 
 // *** RP SPMC::GPIO MONITORS ***
@@ -449,8 +483,9 @@ CDoubleParameter  SPMC_BIAS_SET_MONITOR("SPMC_BIAS_SET_MONITOR", CBaseParameter:
 CDoubleParameter  SPMC_GVPU_MONITOR("SPMC_GVPU_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 CDoubleParameter  SPMC_GVPA_MONITOR("SPMC_GVPA_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 CDoubleParameter  SPMC_GVPB_MONITOR("SPMC_GVPB_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
+CDoubleParameter  SPMC_GVPAMC_MONITOR("SPMC_GVPAMC_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
+CDoubleParameter  SPMC_GVPFMC_MONITOR("SPMC_GVPFMC_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 CIntParameter     SPMC_MUX_MONITOR("SPMC_MUX_MONITOR", CBaseParameter::RW, 0, 0, -2147483648,2147483647); // MUX code
-CDoubleParameter  SPMC_SIGNAL_MONITOR("SPMC_SIGNAL_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 CDoubleParameter  SPMC_X_MONITOR("SPMC_X_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 CDoubleParameter  SPMC_Y_MONITOR("SPMC_Y_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 CDoubleParameter  SPMC_Z_MONITOR("SPMC_Z_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
@@ -461,7 +496,11 @@ CDoubleParameter  SPMC_XS_MONITOR("SPMC_XS_MONITOR", CBaseParameter::RW, 0.0, 0,
 CDoubleParameter  SPMC_YS_MONITOR("SPMC_YS_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 CDoubleParameter  SPMC_ZS_MONITOR("SPMC_ZS_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 
+CDoubleParameter  SPMC_SIGNAL_MONITOR("SPMC_SIGNAL_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
+CDoubleParameter  SPMC_AD463X_CH1_MONITOR("SPMC_AD463X_CH1_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
+CDoubleParameter  SPMC_AD463X_CH2_MONITOR("SPMC_AD463X_CH2_MONITOR", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
 
+CDoubleParameter     SPMC_UPTIME_SECONDS("SPMC_UPTIME_SECONDS", CBaseParameter::RW, 0, 0, 0, 4294967295.0); // FPGA Update in sec
 
 
 // PHASE Valid for PAC time constant set to 15us:
@@ -504,6 +543,8 @@ size_t FPGA_PACPLL_GPIO_block_size  = 0; // GPIO space
 size_t FPGA_PACPLL_BRAM_block_size = 0; // BRAM space PACPLL
 size_t FPGA_SPMC_BRAM_block_size = 0; // BRAM space SPMC
 
+ad463x_dev *ad464x_dev_IN34=NULL;
+
 #define DEVELOPMENT_PACPLL_OP
 
 //fprintf(stderr, "");
@@ -516,6 +557,10 @@ extern double gpio_reading_FIRV_vector_CH3_mapping;
 extern double gpio_reading_FIRV_vector_CH4_mapping;
 extern double gpio_reading_FIRV_vector_CH5_mapping;
 extern pthread_t gpio_reading_thread;
+
+extern int xyz_meter_reading_control;
+extern pthread_attr_t xyz_meter_reading_attr;
+extern pthread_t xyz_meter_reading_thread;
 
 extern pthread_attr_t stream_server_attr;
 extern pthread_mutex_t stream_server_mutexsum;
@@ -574,13 +619,6 @@ int rp_PAC_App_Init(){
         fprintf(stderr, "RP FPGA RPSPMC PACPLL GPIO REGs mapped 0x%08lx - 0x%08lx   block length: 0x%08lx\n", (unsigned long)FPGA_GPIO_BASE, (unsigned long)(FPGA_GPIO_BASE + FPGA_PACPLL_GPIO_block_size-1), (unsigned long)(FPGA_PACPLL_GPIO_block_size));
 #endif
 
-        unsigned int v, vd;
-        rp_spmc_module_read_config_data_u (SPMC_READBACK_RPSPMC_PACPLL_VERSION_REG, &v, &vd);
-        fprintf (stderr, "\n**RP FPGA RPSPMC Version: %08X %08X **\n\n", v, vd);
-        RPSPMC_FPGAIMPL_VERSION.Value () = v;
-        RPSPMC_FPGAIMPL_DATE.Value ()    = vd;
-        RPSPMC_SERVER_VERSION.Value ()   = REDPACPLL_VERSION;
-        RPSPMC_SERVER_DATE.Value ()      = REDPACPLL_DATE;
                 
         rp_spmc_gvp_config (); // assure GVP is in reset mode
         
@@ -597,19 +635,32 @@ int rp_PAC_App_Init(){
         pthread_create ( &gpio_reading_thread, &gpio_reading_attr, thread_gpio_reading_FIR, NULL); // start GPIO reading thread FIRs
         pthread_attr_destroy (&gpio_reading_attr);
 
+#ifdef SPMC_RUN_METER_THREAD
+        xyz_meter_reading_control = 1;
+        pthread_attr_init (&xyz_meter_reading_attr);
+        pthread_attr_setdetachstate (&xyz_meter_reading_attr, PTHREAD_CREATE_JOINABLE);
+        pthread_create ( &xyz_meter_reading_thread, &xyz_meter_reading_attr, thread_xyz_meter_reading, NULL); // start XYZ meter reading thread
+#endif
+        
         pthread_mutex_init (&stream_server_mutexsum, NULL);
         pthread_attr_init (&stream_server_attr);
         pthread_attr_setdetachstate (&stream_server_attr, PTHREAD_CREATE_JOINABLE);
         pthread_create ( &stream_server_thread, &stream_server_attr, thread_stream_server, NULL); // start stream server
         pthread_attr_destroy (&stream_server_attr);
         
-        fprintf(stderr, "INIT RP FPGA RPSPMC PACPLL completed.\n");
+        fprintf(stderr, "INIT RP FPGA RPSPMC PACPLL: threads init completed.\n");
 
         return RP_OK;
 }
 
 void rp_PAC_App_Release(){
         void *status;
+        
+        xyz_meter_reading_control = 0;
+#ifdef SPMC_RUN_METER_THREAD
+        pthread_join (xyz_meter_reading_thread, &status);
+#endif
+        
         gpio_reading_control = 0;
         pthread_join (gpio_reading_thread, &status);
         pthread_mutex_destroy (&gpio_reading_mutexsum);
@@ -897,6 +948,81 @@ int rp_app_init(void)
                 }
         else fprintf(stderr, "Red Pitaya RPSPMC PACPLL API init memory mappings success!\n");
 
+
+        unsigned int sys_state, sys_startup;
+        rp_spmc_module_read_config_data_u (SPMC_READBACK_RPSPMC_SYSTEM_STATE, &sys_state, &sys_startup);
+        unsigned int v, vd;
+        rp_spmc_module_read_config_data_u (SPMC_READBACK_RPSPMC_PACPLL_VERSION_REG, &v, &vd);
+        fprintf (stderr, "\n** RP FPGA RPSPMC Version........ :  %08X %08X **", v, vd);
+        fprintf (stderr, "\n** RP FPGA RPSPMC System State .. : #%08X %08X **", sys_state, sys_startup);
+
+        if ((v & 0xffff0000) != 0xEC010000){
+                fprintf (stderr, "\n** RP FPGA RPSPMC FPGA SYSTEM ERROR: wrong RPSPMC id [%08x] != EC01xxxx -- invalid RPSPMC FPGA configuration.\n** EXITING SERVER.\n\n", v);
+                return EXIT_FAILURE;
+        }
+        
+        RPSPMC_FPGA_STARTUP.Value ()    = sys_startup;
+        RPSPMC_FPGA_STARTUPCNT.Value () = sys_state;
+         
+        rp_spmc_update_readings ();
+
+        if (sys_startup){ // "cold start" FPGA first start detected
+                fprintf (stderr, "\n** RP FPGA RPSPMC COLD START:   FPGA reset/reloaded, full init **");
+
+                // Init SPMC
+                fprintf (stderr, "\n** RP FPGA RPSPMC AD/DA: full analog module initializations **\n");
+                rp_spmc_AD5791_init ();
+                ad464x_dev_IN34 = rp_spmc_AD463x_init ();
+                fprintf (stderr, "\n** RP FPGA RPSPMC: GVP init **\n");
+                rp_spmc_gvp_init ();
+        } else { // "WARM START" FPGA was running: no reset/reload -- reconnecting!
+                fprintf (stderr, "\n** RP FPGA RPSPMC WARM START:   FPGA is running **\n");
+        }        
+
+        // readback
+        {
+                int srcs_mux, in_mux, regB1, regB2;
+                double setpoint, cp, ci, upper, lower;
+                unsigned int modes;
+                fprintf (stderr, "\n** RP FPGA RPSPMC STATUS READBACK **\n");
+                rp_spmc_get_zservo_controller (setpoint, cp, ci, upper, lower, modes); // read back
+                fprintf (stderr,
+                         "\n"
+                         "***** Z-SERVO STATUS:\n"
+                         "***** Setpoint..... : %g V equiv.\n"
+                         "***** CP, CI....... : %g, %g\n"
+                         "***** Range........ : %g .. %g V\n"
+                         "***** Modes........ : 0x%08x\n"
+                         "\n",  setpoint, cp, ci, upper, lower, modes);
+
+                SPMC_Z_SERVO_SETPOINT.Value() = setpoint;
+                SPMC_Z_SERVO_CP.Value() = cp;
+                SPMC_Z_SERVO_CI.Value() = ci;
+                SPMC_Z_SERVO_UPPER.Value() = upper;
+                SPMC_Z_SERVO_LOWER.Value() = lower;
+                SPMC_Z_SERVO_MODE.Value() = modes;
+                        
+                // readback signal MUXes
+                rp_spmc_module_read_config_data (SPMC_READBACK_SRCS_MUX_REG, &srcs_mux, &regB1); // read data set
+                rp_spmc_module_read_config_data (SPMC_READBACK_IN_MUX_REG, &in_mux, &regB2); // read data set
+                fprintf (stderr,
+                         "\n"
+                         "***** SRCS-MUX selection: 0x%08x\n"
+                         "*****   IN-MUX selection: 0x%08x\n"
+                         "***** RB: 0x%08x,  0x%08x\n"
+                         "\n",  srcs_mux, in_mux, regB1, regB2);
+
+                SPMC_GVP_STREAM_MUX.Value ()  = srcs_mux;
+                SPMC_Z_SERVO_SRC_MUX.Value () = in_mux;
+        }
+        
+        RPSPMC_FPGAIMPL_VERSION.Value () = v;
+        RPSPMC_FPGAIMPL_DATE.Value ()    = vd;
+        RPSPMC_SERVER_VERSION.Value ()   = REDPACPLL_VERSION;
+        RPSPMC_SERVER_DATE.Value ()      = REDPACPLL_DATE;
+                
+        //rp_spmc_gvp_config (); // assure GVP is in reset mode
+
         rp_PAC_auto_dc_offset_adjust ();
 
         //Set signal update interval
@@ -909,10 +1035,6 @@ int rp_app_init(void)
         // init block transport for scope
         rp_PAC_start_transport (PACPLL_CFG_TRANSPORT_LOOP, 4096, TRANSPORT_MODE.Value ());
 
-        // Init SPMC
-        rp_spmc_AD5791_init ();
-        rp_spmc_AD463x_init ();
-        rp_spmc_gvp_init ();
 
         fprintf(stderr, "Red Pitaya RPSPMC PACPLL API init completed!\n");
         return 0;
@@ -1446,7 +1568,7 @@ void UpdateSignals(void)
         int status[3];
         static int last_op=0;
         
-        if (verbose > 2) fprintf(stderr, "** Update Signals **\n");
+        //if (verbose > 2) fprintf(stderr, "** Update Signals **\n");
 
         bram_status(status);
         BRAM_WRITE_ADR.Value ()  = status[0];
@@ -1555,10 +1677,16 @@ void UpdateSignals(void)
 
 
 void UpdateParams(void){
-        //if (verbose > 2) fprintf(stderr, "** Update Params **\n");
-	CDataManager::GetInstance()->SetParamInterval (parameter_updatePeriod.Value());
-	CDataManager::GetInstance()->SetSignalInterval (signal_updatePeriod.Value());
 
+        if (parameter_updatePeriod.IsNewValue() || signal_updatePeriod.IsNewValue()){
+                parameter_updatePeriod.Update();
+                signal_updatePeriod.Update();
+                if (verbose > 2)
+                        fprintf(stderr, "** Update Interval Params: %d ms, Signals: %d ms\n", parameter_updatePeriod.Value(), signal_updatePeriod.Value());
+                CDataManager::GetInstance()->SetParamInterval (parameter_updatePeriod.Value());
+                CDataManager::GetInstance()->SetSignalInterval (signal_updatePeriod.Value());
+        }
+        
         DC_OFFSET.Value() = (float)(1000.*signal_dc_measured); // mV
    	
         FILE *fp = fopen("/proc/stat","r");
@@ -1602,10 +1730,22 @@ void UpdateParams(void){
 // ****************************************
 void OnNewParams_RPSPMC(void){
         static int do_rotate=0;
-        static double lck_f0_frq=0;
+
+        if ( RPSPMC_DMA_PULL_INTERVAL.IsNewValue()){
+                RPSPMC_DMA_PULL_INTERVAL.Update();
+                fprintf(stderr, "RPSPMC DMA pull and send every %d ms\n", RPSPMC_DMA_PULL_INTERVAL.Value());
+                spmc_dma_pull_interval = RPSPMC_DMA_PULL_INTERVAL.Value ();
+        }
         
         //SPMC_GVP_STATUS.Update ();
 
+        if (RPSPMC_INITITAL_TRANSFER_ACK.IsNewValue())
+                RPSPMC_INITITAL_TRANSFER_ACK.Update();
+
+        if (RPSPMC_INITITAL_TRANSFER_ACK.Value() < 10) // wait for init transfer and client startup confirmed before any SPMC parameter updates
+                return;
+
+                        
         if (SPMC_Z_SERVO_SETPOINT.IsNewValue()
             || SPMC_Z_SERVO_CP.IsNewValue()
             || SPMC_Z_SERVO_CI.IsNewValue()
@@ -1692,6 +1832,8 @@ void OnNewParams_RPSPMC(void){
         if (SPMC_GVP_VECTOR_DU.IsNewValue ()){ SPMC_GVP_VECTOR_DU.Update (); ++dirty; }
         if (SPMC_GVP_VECTOR_AA.IsNewValue ()){ SPMC_GVP_VECTOR_AA.Update (); ++dirty; }
         if (SPMC_GVP_VECTOR_BB.IsNewValue ()){ SPMC_GVP_VECTOR_BB.Update (); ++dirty; }
+        if (SPMC_GVP_VECTOR_AM.IsNewValue ()){ SPMC_GVP_VECTOR_AM.Update (); ++dirty; }
+        if (SPMC_GVP_VECTOR_FM.IsNewValue ()){ SPMC_GVP_VECTOR_FM.Update (); ++dirty; }
         if (SPMC_GVP_VECTORSLW.IsNewValue ()){ SPMC_GVP_VECTORSLW.Update (); ++dirty; }
 
         if (dirty>0){
@@ -1708,6 +1850,8 @@ void OnNewParams_RPSPMC(void){
                                         SPMC_GVP_VECTOR_DU.Value (),
                                         SPMC_GVP_VECTOR_AA.Value (),
                                         SPMC_GVP_VECTOR_BB.Value (),
+                                        SPMC_GVP_VECTOR_AM.Value (),
+                                        SPMC_GVP_VECTOR_FM.Value (),
                                         SPMC_GVP_VECTORSLW.Value (),
                                         SPMC_GVP_LIVE_VECTOR_UPDATE.Value ()
                                         );
@@ -1742,7 +1886,7 @@ void OnNewParams_RPSPMC(void){
                 info << "SPMC_GVP_CONTROL_MODE: {";
                 // rp_spmc_gvp_config (reset, program, pause, [resetoptions]);
                 SPMC_GVP_CONTROL_MODE.Update ();
-                switch (SPMC_GVP_CONTROL_MODE.Value ()){
+                switch (SPMC_GVP_CONTROL_MODE.Value () & 0x00ff){
 
                 case SPMC_GVP_CONTROL_RESET:
                         rp_spmc_gvp_config (true, false);
@@ -1791,6 +1935,9 @@ void OnNewParams_RPSPMC(void){
                 case SPMC_GVP_CONTROL_RESET_UAB:
                         reset_gvp_positions_uab();
                         break;
+                case SPMC_GVP_CONTROL_RESET_COMPONENTS: // WARNING! MOVER/COARSE ONLY
+                        rp_spmc_gvp_reset_components((SPMC_GVP_CONTROL_MODE.Value () >> 8) & 0xff); // reset components by mask
+                        break;
                 default: info << "INVALID MODE"; break;
                 }
 
@@ -1799,46 +1946,75 @@ void OnNewParams_RPSPMC(void){
         }
 
         // RPSPMC Lock-In...
-        if (SPMC_SC_LCK_FREQUENCY.IsNewValue () || SPMC_SC_LCK_GAIN.IsNewValue () || SPMC_SC_LCK_FMSCALE.IsNewValue ()){
+        if (SPMC_SC_LCK_FREQUENCY.IsNewValue () || SPMC_SC_LCK_GAIN.IsNewValue () || SPMC_SC_LCK_FMSCALE.IsNewValue () || SPMC_SC_LCK_RF_FREQUENCY.IsNewValue()){
                 SPMC_SC_LCK_FREQUENCY.Update ();
                 SPMC_SC_LCK_GAIN.Update ();
                 SPMC_SC_LCK_FMSCALE.Update ();
+                SPMC_SC_LCK_RF_FREQUENCY.Update ();
+
                 double fms  = SPMC_SC_LCK_FMSCALE.Value ();
                 double gain = SPMC_SC_LCK_GAIN.Value ();
                 int mode = 0;
-                if (gain > 0) // parameter gain
-                        mode = 1;
-                if (fms > 0) // via signal FM
-                        mode |= 4;
-                lck_f0_frq = rp_spmc_configure_lockin (SPMC_SC_LCK_FREQUENCY.Value (), gain, fms, mode, SPMC_LOCKIN_F0_CONTROL_REG);
+                if (gain > 0.) // parameter gain
+                        mode |= 1;
+                if (fms > 0.) // via signal FM
+                        mode |= 2;
+                rp_spmc_configure_lockin (SPMC_SC_LCK_FREQUENCY.Value (), 0., fms, mode, SPMC_SC_LCK_RF_FREQUENCY.Value(), SPMC_LOCKIN_F0_CONTROL_REG);
         }
 
-        if (SPMC_SC_LCK_TARGET.IsNewValue () || SPMC_SC_LCK_VOLUME.IsNewValue ()){
+        if (SPMC_SC_LCK_TARGET.IsNewValue () || SPMC_SC_LCK_VOLUME.IsNewValue () || DFREQ_CONTROL_Z.IsNewValue () || DFREQ_CONTROL_U.IsNewValue ()){
                 SPMC_SC_LCK_TARGET.Update ();
                 SPMC_SC_LCK_VOLUME.Update ();
-                rp_spmc_set_modulation (SPMC_SC_LCK_VOLUME.Value (), SPMC_SC_LCK_TARGET.Value ());
+                DFREQ_CONTROL_Z.Update ();
+                DFREQ_CONTROL_U.Update ();
+                rp_spmc_set_modulation (SPMC_SC_LCK_VOLUME.Value (), SPMC_SC_LCK_TARGET.Value (), DFREQ_CONTROL_Z.Value () ? 1:0 | DFREQ_CONTROL_U.Value () ? 2:0 );
 
-                if ((int)SPMC_SC_LCK_TARGET.Value () == 7)
-                        rp_spmc_module_read_config_data_timing_test ();
-
-                // TESTING
-                rp_spmc_AD463x_init ();
-
+                // TESTING MODE
+                //if ((int)SPMC_SC_LCK_TARGET.Value () == 7){
+                //        rp_spmc_module_read_config_data_timing_test ();
+                //        rp_spmc_AD463x_test (ad464x_dev_IN34);
+                // }
 
         }
 
         // LockIn Signal Out BiQuad Filter
-        if (SPMC_SC_LCK_F0BQ_Q.IsNewValue () || SPMC_SC_LCK_F0BQ_TAU.IsNewValue () || SPMC_SC_LCK_F0BQ_IIR.IsNewValue ()){
+        if (SPMC_SC_LCK_F0BQ_Q.IsNewValue () || SPMC_SC_LCK_F0BQ_TAU.IsNewValue () || SPMC_SC_LCK_F0BQ_IIR.IsNewValue ()
+            || SPMC_SC_LCK_FILTER_MODE.IsNewValue ()
+            || SPMC_SC_LCK_BQ_COEF_B0.IsNewValue ()|| SPMC_SC_LCK_BQ_COEF_B1.IsNewValue ()|| SPMC_SC_LCK_BQ_COEF_B2.IsNewValue ()
+            || SPMC_SC_LCK_BQ_COEF_A0.IsNewValue ()|| SPMC_SC_LCK_BQ_COEF_A1.IsNewValue ()|| SPMC_SC_LCK_BQ_COEF_A2.IsNewValue ()
+            ){
+
+                SPMC_SC_LCK_TARGET.Update ();
+                SPMC_SC_LCK_FILTER_MODE.Update ();
                 SPMC_SC_LCK_F0BQ_Q.Update ();
                 SPMC_SC_LCK_F0BQ_TAU.Update ();
                 SPMC_SC_LCK_F0BQ_IIR.Update ();
-                if (SPMC_SC_LCK_F0BQ_Q.Value () > 0.0 && SPMC_SC_LCK_F0BQ_TAU.Value () > 0.0) // BiQuad mode ?
-                        rp_spmc_set_biqad_Lck_F0 (1000./SPMC_SC_LCK_F0BQ_TAU.Value (), SPMC_SC_LCK_F0BQ_Q.Value (), lck_f0_frq, SPMC_BIQUAD_F0_CONTROL_REG);
-                else
-                        if (SPMC_SC_LCK_F0BQ_IIR.Value () > 0.0) // IIR mode ?
-                                rp_spmc_set_biqad_Lck_F0_IIR (1000./SPMC_SC_LCK_F0BQ_IIR.Value (), lck_f0_frq, SPMC_BIQUAD_F0_CONTROL_REG);
-                        else // pass mode
-                                rp_spmc_set_biqad_Lck_F0_pass (SPMC_BIQUAD_F0_CONTROL_REG);
+
+                SPMC_SC_LCK_BQ_COEF_B0.Update ();
+                SPMC_SC_LCK_BQ_COEF_B1.Update ();
+                SPMC_SC_LCK_BQ_COEF_B2.Update ();
+                SPMC_SC_LCK_BQ_COEF_A0.Update ();
+                SPMC_SC_LCK_BQ_COEF_A1.Update ();
+                SPMC_SC_LCK_BQ_COEF_A2.Update ();
+                
+                int test_mode =  SPMC_SC_LCK_TARGET.Value () == 8 ? 1:0;
+                
+                switch (SPMC_SC_LCK_FILTER_MODE.Value ()){
+                case 0: rp_spmc_set_biqad_Lck_F0_pass (SPMC_BIQUAD_F0_CONTROL_REG, test_mode); break;
+                case 1: rp_spmc_set_biqad_Lck_F0_IIR (1000./SPMC_SC_LCK_F0BQ_IIR.Value (), SPMC_BIQUAD_F0_CONTROL_REG, test_mode); break;
+                case 2: rp_spmc_set_biqad_Lck_F0 (1000./SPMC_SC_LCK_F0BQ_TAU.Value (), SPMC_SC_LCK_F0BQ_Q.Value (), SPMC_BIQUAD_F0_CONTROL_REG, test_mode); break;
+                case 3: rp_spmc_set_biqad_Lck_AB (SPMC_BIQUAD_F0_CONTROL_REG, test_mode); break;
+                }
+        }
+
+        if (SPMC_RF_GEN_OUT_MUX.IsNewValue()){
+                SPMC_RF_GEN_OUT_MUX.Update();
+                rp_set_rf_out_mux_selector (SPMC_RF_GEN_OUT_MUX.Value());
+        }
+        
+        if (SPMC_Z_POLARITY.IsNewValue()){
+                SPMC_Z_POLARITY.Update();
+                rp_spmc_set_z_polarity (SPMC_Z_POLARITY.Value());
         }
         
 }
@@ -1847,29 +2023,22 @@ void OnNewParams_RPSPMC(void){
 // ****************************************
 void OnNewParams_PACPLL(void){
         if (verbose > 2) fprintf(stderr, "** New Params **\n");
-        //int x=0;
-        //static int ppv=0;
-        //static int spv=0;
         static int operation=0;
-        //double reading_vector[READING_MAX_VALUES];
 
         PACVERBOSE.Update ();
 
         // keep fixed for debugging
-        //verbose = PACVERBOSE.Value ();
-
+        verbose = PACVERBOSE.Value ();
         
 #if 0
-        if (ppv == 0) { ppv=parameter_updatePeriod.Value(); parameter_updatePeriod.Update (); }
-        if (spv == 0) { spv=signal_updatePeriod.Value(); signal_updatePeriod.Update (); }
-        
-        if (ppv != parameter_updatePeriod.Value ()){
+        // done in UpdateParams ()
+        if ( parameter_updatePeriod.IsNewValue () ){
+                parameter_updatePeriod.Update ();
                 CDataManager::GetInstance()->SetParamInterval (parameter_updatePeriod.Value());
-                ppv = parameter_updatePeriod.Value ();
         }
-        if (spv != signal_updatePeriod.Value ()){
+        if ( signal_updatePeriod.IsNewValue ()){
+                signal_updatePeriod.Update ();
                 CDataManager::GetInstance()->SetSignalInterval (signal_updatePeriod.Value());
-                spv = signal_updatePeriod.Value ();
         }
 #endif
         

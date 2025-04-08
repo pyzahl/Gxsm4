@@ -127,6 +127,13 @@ set_property PACKAGE_PIN P15 [get_ports {dac_pwm_o[2]}]
 set_property PACKAGE_PIN U13 [get_ports {dac_pwm_o[3]}]
 
 ### XADC
+### exp_n[0..7] :: PMD 3.3V 
+### exp_p[0..7], 8..10, exp_n[8..10]:  AD463x 1.8V
+
+### Expansion connector -- RPSPMC hat
+
+### PMODs  on exp_n_io[0..7] are LVCMOS33 or LVCOMS18 OK
+### AD463x on exp_p_io[0..7] + [exp_n_io8..10, expo_p_io_8..10] must be LVCMOS18 (or level converted -- at up to 100MHz SPI clock ideally)
 
 ### Expansion connector
 set_property IOSTANDARD LVCMOS33 [get_ports {exp_p_io[*]}]

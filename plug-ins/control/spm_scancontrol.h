@@ -38,6 +38,14 @@ typedef enum { SCAN_DIR_TOPDOWN, SCAN_DIR_TOPDOWN_BOTUP, SCAN_DIR_BOTUP } SCAN_D
 typedef enum { SCAN_FLAG_READY, SCAN_FLAG_STOP,  SCAN_FLAG_PAUSE,  SCAN_FLAG_RUN } SCAN_FLAG;
 typedef enum { SCAN_LINESCAN, SCAN_FRAMECAPTURE } SCAN_DT_TYPE;
 
+// data passed to "idle" function call, used to refresh/draw while waiting for data
+typedef struct {
+	GSList *scan_list; // scans to update
+	GFunc  UpdateFunc; // function to call for background updating
+	gpointer data; // additional data (here: reference to the current SPM_ScanControl object)
+} IdleRefreshFuncData;
+
+
 class MultiVoltEntry{
 public:
 	MultiVoltEntry (BuildParam *bp, UnitObj *Volt, int i, double v=0.) { 
@@ -179,12 +187,14 @@ public:
                         return;
                 sc->memo_y = y_realtime;
                 
+#if 0
                 // "Tip" and data aupdate frequency control/limit
                 if (sc->get_last_line_updated() == y_update && sc->get_last_line_updated_time_delta () < 200000) return; // nothing to update
+#endif
                 sc->set_last_line_updated(y_update);
 		// std::cout << __func__ << " y_realtime=" << y_realtime << " y_update=" << y_update << std::endl;
 		if (y_realtime >= 0 && fabs ((double)(y_realtime-y_update)) < 2) // single new line only
-			sc->draw ( y_update, y_update+1); // force line only refresh ### y,y+1
+			sc->draw ( y_update, y_update+1); // force line only refresh ### y,y+1 -- only this single line mode triggers RedLine update
 		else
                         sc->draw (); // full image update
                 /*
@@ -199,6 +209,7 @@ public:
 		sc->stop (((SPM_ScanControl*)data)->scan_flag == SCAN_FLAG_STOP 
 			  && ((SPM_ScanControl*)data)->last_scan_dir == SCAN_DIR_TOPDOWN,
 			  ((SPM_ScanControl*)data)->line);
+                sc->draw(); // final update
 	};
 
 	void SetScanDir (GtkWidget *w) { 

@@ -53,20 +53,21 @@ module AD463x_io_connect #(
 // AD463x_io_connect
     parameter NUM_DACS  = 2,
     parameter NUM_LANES = 4,
-    parameter USE_RP_DIGITAL_IO = 1
+    parameter USE_RP_DIGITAL_IO = 1,
+    parameter EXP_IO_WIDTH = 10
 )
 (
 // EXPANSION CONNECTOR IO
-    inout [10:0]  exp_p_io,
-    inout [10:0]  exp_n_io,
+    inout [EXP_IO_WIDTH-1:0]  exp_p_io,
+    inout [EXP_IO_WIDTH-1:0]  exp_n_io,
     
 // AD463x_io_connect
     (* X_INTERFACE_PARAMETER = "FREQ_HZ 60000000, ASSOCIATED_CLKEN SPI_sck, ASSOCIATED_BUSIF SPI" *)
-    input SPI_sck,
-    input SPI_cs,
-    output  SPI_busy,
-    input SPI_cnv,
-    input SPI_reset,
+    input  SPI_sck,
+    input  SPI_cs,
+    output SPI_busy,
+    input  SPI_cnv,
+    input  SPI_reset,
     input  SPI_sdi,
     output [NUM_LANES*NUM_DACS-1:0] SPI_sdn,
 
@@ -81,9 +82,6 @@ module AD463x_io_connect #(
    output [4:0] RP_exp_out_p
 
 );
-
-   //wire [7:0] RP_exp_out;
-   //wire [4:0] RP_exp_out_p;
 
 
 // PMODS: AD5791_io_connect
@@ -139,18 +137,21 @@ IOBUF clk_iobuf  (.O(RP_exp_out[7]),   .IO(exp_n_io[7]), .I(PMD_clk),    .T(0) )
 // ===========================================================================
 
 // FIXED ASSIGNMNETS for one data lane each on SD0, SD4 => D0P, D1P
-IOBUF dac_read_iobuf_AD_CH0   (.O(SPI_sdn[0]),  .IO(exp_p_io[0]), .I(0), .T(1) );
+IOBUF dac_read_iobuf_AD_CH00  (.O(SPI_sdn[0]),  .IO(exp_p_io[0]), .I(0), .T(1) );
+IOBUF dac_read_iobuf_AD_CH10  (.O(SPI_sdn[1]),  .IO(exp_p_io[1]), .I(0), .T(1) );
+//if (EXP_IO_WIDTH > 8)
+//begin
 IOBUF dac_read_iobuf_AD_CH01  (.O(SPI_sdn[2]),  .IO(exp_n_io[10]),.I(0), .T(1) );
 IOBUF dac_read_iobuf_AD_CH02  (.O(SPI_sdn[4]),  .IO(exp_n_io[9]), .I(0), .T(1) );
 IOBUF dac_read_iobuf_AD_CH03  (.O(SPI_sdn[6]),  .IO(exp_n_io[8]), .I(0), .T(1) );
-
-IOBUF dac_read_iobuf_AD_CH1   (.O(SPI_sdn[1]),  .IO(exp_p_io[1]), .I(0), .T(1) );
+    
 IOBUF dac_read_iobuf_AD_CH11  (.O(SPI_sdn[3]),  .IO(exp_p_io[8]), .I(0), .T(1) );
 IOBUF dac_read_iobuf_AD_CH12  (.O(SPI_sdn[5]),  .IO(exp_p_io[9]), .I(0), .T(1) );
 IOBUF dac_read_iobuf_AD_CH13  (.O(SPI_sdn[7]),  .IO(exp_p_io[10]),.I(0), .T(1) );
-
+//end
 IOBUF dac_read_iobuf_AD_Busy  (.O(SPI_busy),    .IO(exp_p_io[4]), .I(0), .T(1) );
    
+// OUTPUTS
 IOBUF rst_iobuf  (.O(RP_exp_out_p[0]),   .IO(exp_p_io[2]), .I(SPI_reset),    .T(0) );
 IOBUF cs_iobuf   (.O(RP_exp_out_p[1]),   .IO(exp_p_io[3]), .I(SPI_cs),       .T(0) );
 IOBUF cnv_iobuf  (.O(RP_exp_out_p[2]),   .IO(exp_p_io[5]), .I(SPI_cnv),      .T(0) );

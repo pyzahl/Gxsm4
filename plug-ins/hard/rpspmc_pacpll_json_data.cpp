@@ -110,6 +110,8 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         { "DFREQ_FB_UPPER", &pacpll_parameters.control_dfreq_fb_upper, false },
         { "DFREQ_FB_LOWER", &pacpll_parameters.control_dfreq_fb_lower, false },
         { "DFREQ_CONTROLLER", &pacpll_parameters.dfreq_controller, false },
+        { "DFREQ_CONTROL_Z", &pacpll_parameters.Zdfreq_control, false },
+        { "DFREQ_CONTROL_U", &pacpll_parameters.Udfreq_control, false },
 
         { "PULSE_FORM_BIAS0", &pacpll_parameters.pulse_form_bias0, false },
         { "PULSE_FORM_BIAS1", &pacpll_parameters.pulse_form_bias1, false },
@@ -128,9 +130,13 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         { "PULSE_FORM_SHAPEX", &pacpll_parameters.pulse_form_shapex, false },
         { "PULSE_FORM_SHAPEXIF", &pacpll_parameters.pulse_form_shapexif, false },
 
+        { "RPSPMC_DMA_PULL_INTERVAL", &spmc_parameters.rpspmc_dma_pull_interval, false },
+
         { "SPMC_BIAS", &spmc_parameters.bias, false },
 
         { "SPMC_GVP_STREAM_MUX", &spmc_parameters.gvp_stream_mux, false },
+
+        { "SPMC_Z_POLARITY", &spmc_parameters.z_polarity, false },
 
         { "SPMC_Z_SERVO_MODE", &spmc_parameters.z_servo_mode, false },
         { "SPMC_Z_SERVO_SETPOINT", &spmc_parameters.z_servo_setpoint, false },
@@ -140,6 +146,7 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         { "SPMC_Z_SERVO_LOWER", &spmc_parameters.z_servo_lower, false },
         { "SPMC_Z_SERVO_SETPOINT_CZ", &spmc_parameters.z_servo_setpoint_cz, false },
         { "SPMC_Z_SERVO_IN_OFFSETCOMP", &spmc_parameters.z_servo_in_offsetcomp, false },
+        { "SPMC_Z_SERVO_SRC_MUX", &spmc_parameters.z_servo_src_mux, false },
 
 
         { "SPMC_GVP_EXECUTE", &spmc_parameters.gvp_control, 0 },
@@ -163,7 +170,9 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         { "SPMC_GVP_VECTOR_DU", &spmc_parameters.v[9], false }, // Float: DU (Bias) adjust rel to Bias ref in Volts total length of vector component
         { "SPMC_GVP_VECTOR_AA", &spmc_parameters.v[10], false }, // Float: AA (Aux Channel ADC #5) -- reserved
         { "SPMC_GVP_VECTOR_BB", &spmc_parameters.v[11], false }, // Float: BB (Aux Channel ADC #6) -- reserved
-        { "SPMC_GVP_VECTORSLW", &spmc_parameters.v[12], false }, // Float: slew rate in #points / sec
+        { "SPMC_GVP_VECTOR_AM", &spmc_parameters.v[12], false }, // Float: AM RF=AM control
+        { "SPMC_GVP_VECTOR_FM", &spmc_parameters.v[13], false }, // Float: FM RF=FM control
+        { "SPMC_GVP_VECTORSLW", &spmc_parameters.v[14], false }, // Float: slew rate in #points / sec
 
         { "SPMC_ALPHA", &spmc_parameters.alpha, false },
         
@@ -188,7 +197,9 @@ JSON_parameter PACPLL_JSON_parameters[] = {
 
 
 
-        { "SPMC_SIGNAL_MONITOR", &spmc_parameters.signal_monitor, true }, // Z servo input signal (current, ...)
+        { "SPMC_SIGNAL_MONITOR", &spmc_parameters.signal_monitor, true }, // Z servo input signal (current, ... -- processed)
+        { "SPMC_AD463X_CH1_MONITOR", &spmc_parameters.ad463x_monitor[0], true }, // AD463X_CH1
+        { "SPMC_AD463X_CH2_MONITOR", &spmc_parameters.ad463x_monitor[1], true }, // AD463X_CH2
 
         { "SPMC_X_MONITOR", &spmc_parameters.x_monitor, true }, // FINAL XYZ POS at DACs
         { "SPMC_Y_MONITOR", &spmc_parameters.y_monitor, true },
@@ -211,10 +222,13 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         { "SPMC_GVPU_MONITOR", &spmc_parameters.gvpu_monitor, true },
         { "SPMC_GVPA_MONITOR", &spmc_parameters.gvpa_monitor, true },
         { "SPMC_GVPB_MONITOR", &spmc_parameters.gvpb_monitor, true },
+        
+        { "SPMC_GVPAMC_MONITOR", &spmc_parameters.gvpamc_monitor, true },
+        { "SPMC_GVPFMC_MONITOR", &spmc_parameters.gvpfmc_monitor, true },
 
         { "SPMC_MUX_MONITOR", &spmc_parameters.mux_monitor, true },
         
-
+        { "SPMC_UPTIME_SECONDS", &spmc_parameters.uptime_seconds, true },
         
         // RP SPMC Lock-In
         { "SPMC_SC_LCK_FREQUENCY", &spmc_parameters.sc_lck_frequency, false }, // manual/tune frequency
@@ -222,9 +236,30 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         { "SPMC_SC_LCK_TARGET",    &spmc_parameters.sc_lck_target, false },    // mixing to target
         { "SPMC_SC_LCK_GAIN",      &spmc_parameters.sc_lck_gain, false },      // digital Lck signal gain control
         { "SPMC_SC_LCK_FMSCALE",   &spmc_parameters.sc_lck_fmscale, false },   // digital FM Mod scale control
+        { "SPMC_SC_LCK_FILTER_MODE", &spmc_parameters.sc_lck_filter_mode, false },    // time const
+        { "SPMC_SC_LCK_BQ_COEF_B0",  &spmc_parameters.sc_lck_bq_coef[0], false },    // BQCOEFS
+        { "SPMC_SC_LCK_BQ_COEF_B1",  &spmc_parameters.sc_lck_bq_coef[1], false },    // BQCOEFS
+        { "SPMC_SC_LCK_BQ_COEF_B2",  &spmc_parameters.sc_lck_bq_coef[2], false },    // BQCOEFS
+        { "SPMC_SC_LCK_BQ_COEF_A0",  &spmc_parameters.sc_lck_bq_coef[3], false },    // BQCOEFS
+        { "SPMC_SC_LCK_BQ_COEF_A1",  &spmc_parameters.sc_lck_bq_coef[4], false },    // BQCOEFS
+        { "SPMC_SC_LCK_BQ_COEF_A2",  &spmc_parameters.sc_lck_bq_coef[5], false },    // BQCOEFS
         { "SPMC_SC_LCK_F0BQ_TAU",  &spmc_parameters.sc_lck_bq_tau, false },    // time const
         { "SPMC_SC_LCK_F0BQ_IIR",  &spmc_parameters.sc_lck_iir_tau, false },   // IIR time const
         { "SPMC_SC_LCK_F0BQ_Q",    &spmc_parameters.sc_lck_q, false },         // Q for IIR
+
+        { "SPMC_SC_LCK_RF_FREQUENCY", &spmc_parameters.sc_lck_rf_frequency, false }, // manual/tune RF Gen frequency
+        { "SPMC_RF_GEN_OUT_MUX", &spmc_parameters.rf_gen_out_mux, false },
+
+        
+        { "RPSPMC_SERVER_VERSION",   &spmc_parameters.rpspmc_version, false },
+        { "RPSPMC_SERVER_DATE",      &spmc_parameters.rpspmc_date, false },
+        { "RPSPMC_FPGAIMPL_VERSION", &spmc_parameters.rpspmc_fpgaimpl, false },
+        { "RPSPMC_FPGAIMPL_DATE",    &spmc_parameters.rpspmc_fpgaimpl_date, false },
+        { "RPSPMC_FPGA_STARTUP",     &spmc_parameters.rpspmc_fpgastartup, false },
+        { "RPSPMC_FPGA_STARTUPCNT",  &spmc_parameters.rpspmc_fpgastartupcnt, false },
+
+        { "RPSPMC_INITITAL_TRANSFER_ACK",  &spmc_parameters.rpspmc_initial_transfer_ack, false },
+
         
         { NULL, NULL, true }
 };
@@ -241,6 +276,8 @@ JSON_signal PACPLL_JSON_signals[] = {
         { "SIGNAL_GPIOX",  16, pacpll_signals.signal_gpiox },
 
         { "SPMC_GVP_VECTOR", GVP_VECTOR_SIZE, spmc_signals.gvp_vector},
+
+        { "SIGNAL_XYZ_METER", 9, spmc_signals.xyz_meter},
 
         { NULL, 0, NULL }
 };

@@ -59,7 +59,8 @@ good starting point.
 
 
 // PCS debugging/watching
-// #define DEBUG_PCS_LOG
+//#define DEBUG_PCS_LOG
+//#define DEBUG_PCS_PERF
 
 
 int total_message_count = 0;
@@ -186,6 +187,8 @@ Param_Control::~Param_Control(){
 
 void Param_Control::Init(){
 	Current_Dval = -9e999; // internal buffer
+
+        Set_Force_ChangeNoticeFkt (xsmres.gui_pcs_force); // set force to false
 
 	set_exclude ();
 	color = NULL;
@@ -340,7 +343,7 @@ gchar *Param_Control::get_refname(){
 	return txt;
 }
 
-
+// returns string and gives up ownvership -- free after done with it!
 gchar *Param_Control::Get_UsrString(){
 	gchar *warn;
 	if (color) g_free (color);
@@ -384,7 +387,8 @@ gboolean Param_Control::Set_FromValue(double nVal){
         if (StringVal)
                 return false;
 
-        if (nVal == Current_Dval){
+        if (nVal == Current_Dval && !force_full_update){
+                g_message ("=== Param_Control::Set_FromValue(%g) *** no change for >%s<, no ChangeNotice. current val=%g", nVal, refname, Current_Dval);
 #if 0
                 if (strncmp(refname, "dsp-gvp", 7)==0) // weird patch
                         g_message ("Param_Control::Set_FromValue: same value[%s]: %g", refname, Current_Dval); // TEST
@@ -490,7 +494,7 @@ void Param_Control::Set_Parameter(double value, int flg, int usr2base){
 		Set_FromValue(unit->Usr2Base(ctxt));
                 g_free (ctxt);
 	}
-	if(ChangeNoticeFkt)
+	if (ChangeNoticeFkt)
 		(*ChangeNoticeFkt)(this, FktData);
 }
 
@@ -984,7 +988,7 @@ void Gtk_EntryControl::Put_Value(){
 #endif
 }
 
-void Gtk_EntryControl::Set_Parameter(double Value=0., int flg=FALSE, int usr2base=FALSE){
+void Gtk_EntryControl::Set_Parameter(double Value, int flg, int usr2base){
 	if (ShowMessage_flag) return;	//do nothing if a message dialog is active
 	double value;
 	GtkWidget *c;
@@ -1017,7 +1021,7 @@ void Gtk_EntryControl::Set_Parameter(double Value=0., int flg=FALSE, int usr2bas
         g_message ("Gtk_EntryControl::Set_Parameter value=%g [%s] flg=%d ?-> usr2base=%d", value, refname, flg, usr2base);
 #endif
         
-	if (Set_FromValue (value)){ // preoceed only with updated and potential client if new value was accepted
+	if (Set_FromValue (value)){ // proceed only with updated and potential client if new value was accepted
                 update_value_in_settings ();
 
                 if ((c=(GtkWidget*)g_object_get_data( G_OBJECT (entry), "HasMaster"))){
@@ -1210,11 +1214,16 @@ void Gtk_EntryControl::pcs_adjustment_configure_response_callback (GtkDialog *di
                 }
         }
         gtk_window_destroy (GTK_WINDOW (dialog));
+
+        delete g_object_get_data  (G_OBJECT (dialog), "TMP-BP-REF"); // cleanup
 }
+
+void cb_dummy_callback (GtkWidget* widget, gpointer user_data){;}
 
 void Gtk_EntryControl::pcs_adjustment_configure (){
         static UnitObj *unity = new UnitObj(" "," ");
         gchar *tmp = NULL;
+        GtkWidget *cb;
 
 	if (! (tmp = (gchar*)g_object_get_data( G_OBJECT (entry), "Adjustment_PCS_Name")))
 		return;
@@ -1224,7 +1233,7 @@ void Gtk_EntryControl::pcs_adjustment_configure (){
 	tmp = g_strconcat (N_("Configure"), 
 			   " ",
 			   (gchar*) g_object_get_data( G_OBJECT (entry), 
-							 "Adjustment_PCS_Name"),
+                                                       "Adjustment_PCS_Name"),
 			   NULL);
 
 	GtkWidget *dialog = gtk_dialog_new_with_buttons (tmp,
@@ -1235,11 +1244,11 @@ void Gtk_EntryControl::pcs_adjustment_configure (){
 							 NULL);
 	g_free (tmp);
 
-        BuildParam bp;
+        BuildParam *bp = new BuildParam;
 
-        bp.set_error_text (N_("Value not allowed."));
+        bp->set_error_text (N_("Value not allowed."));
 
-        gtk_box_append (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (dialog))), bp.grid);
+        gtk_box_append (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (dialog))), bp->grid);
 
 	tmp = g_strdup_printf (N_("Warning: know what you are doing here!" \
                                   "\nInfo: You may use the dconf-editor." \
@@ -1247,54 +1256,50 @@ void Gtk_EntryControl::pcs_adjustment_configure (){
                                   "\n %s/%s [%d]"),
                                gsettings_path, gsettings_key, get_count () 
                                );
-        bp.grid_add_label (tmp, NULL, 2); bp.new_line ();
+        bp->grid_add_label (tmp, NULL, 2); bp->new_line ();
 	g_free (tmp);	
-	bp.grid_add_ec ("Upper Limit", unit, &vMax, -EC_INF, EC_INF, "8g"); bp.new_line ();
-	bp.grid_add_ec ("Upper Warn",  unit, &vMax_warn, -EC_INF, EC_INF, "8g"); bp.new_line ();
-	bp.grid_add_ec ("Lower Warn",  unit, &vMin_warn, -EC_INF, EC_INF, "8g"); bp.new_line ();
-	bp.grid_add_ec ("Lower Limit", unit, &vMin, -EC_INF, EC_INF, "8g"); bp.new_line ();
+	bp->grid_add_ec ("Upper Limit", unit, &vMax, -EC_INF, EC_INF, "8g"); bp->new_line ();
+	bp->grid_add_ec ("Upper Warn",  unit, &vMax_warn, -EC_INF, EC_INF, "8g"); bp->new_line ();
+	bp->grid_add_ec ("Lower Warn",  unit, &vMin_warn, -EC_INF, EC_INF, "8g"); bp->new_line ();
+	bp->grid_add_ec ("Lower Limit", unit, &vMin, -EC_INF, EC_INF, "8g"); bp->new_line ();
 
-        bp.grid_add_widget (gtk_separator_new (GTK_ORIENTATION_HORIZONTAL), 2); bp.new_line ();
-	bp.grid_add_ec ("Exclude Hi", unit, &v_ex_hi, -EC_INF, EC_INF, "8g"); bp.new_line ();
-	bp.grid_add_ec ("Exclude Lo", unit, &v_ex_lo, -EC_INF, EC_INF, "8g"); bp.new_line ();
+        bp->grid_add_widget (gtk_separator_new (GTK_ORIENTATION_HORIZONTAL), 2); bp->new_line ();
+	bp->grid_add_ec ("Exclude Hi", unit, &v_ex_hi, -EC_INF, EC_INF, "8g"); bp->new_line ();
+	bp->grid_add_ec ("Exclude Lo", unit, &v_ex_lo, -EC_INF, EC_INF, "8g"); bp->new_line ();
 
-        if (GTK_IS_SPIN_BUTTON (entry)){
-                bp.grid_add_widget (gtk_separator_new (GTK_ORIENTATION_HORIZONTAL), 2); bp.new_line ();
-                bp.grid_add_ec ("Step [B1]", unit, &step, -EC_INF, EC_INF, "8g"); bp.new_line ();
-                bp.grid_add_ec ("Page [B2]", unit, &page, -EC_INF, EC_INF, "8g"); bp.new_line ();
-                bp.grid_add_ec ("Pg10 [B3]", unit, &page10, -EC_INF, EC_INF, "8g"); bp.new_line ();
-                bp.grid_add_ec ("Progressive", unity, &progressive, 0., 10., "g"); bp.new_line ();
-#if 0
-                g_object_set_data  (G_OBJECT (dialog), "CB-LOG-SCALE",
-                                    bp.grid_add_check_button ("Log-Scale", "use slider in log scale mode.\n WARING: EXPERIMENTAL",
-                                                              1, NULL, NULL, (adj_mode & PARAM_CONTROL_ADJUSTMENT_LOG)?1:0
-                                                              ));
-                
-
-                bp.new_line ();
-                g_object_set_data  (G_OBJECT (dialog), "CB-LOG-SYM",
-                                    bp.grid_add_check_button ("Log-Sym", "use slider in log scale mode with zero at center. Left: log, neg val.\n WARING: EXPERIMENTAL",
-                                                              1, NULL, NULL, adj_mode & PARAM_CONTROL_ADJUSTMENT_LOG?1:0
-                                                              ));
-                bp.new_line ();
-                g_object_set_data  (G_OBJECT (dialog), "CB-DUAL-RANGE",
-                                    bp.grid_add_check_button ("Dual-Range", "use slider in log scale mode with zero at center. Left: log, neg val.\n WARING: EXPERIMENTAL",
-                                                              1, NULL, NULL, adj_mode & PARAM_CONTROL_ADJUSTMENT_LOG?1:0
-                                                              ));
-                bp.new_line ();
-                g_object_set_data  (G_OBJECT (dialog), "CB-TICKS",
-                                    bp.grid_add_check_button ("Add-Ticks", "add tick marks w. snapping to slider",
-                                                              1, NULL, NULL, adj_mode & PARAM_CONTROL_ADJUSTMENT_LOG?1:0
-                                                              ));
-#endif
-                bp.new_line ();
-        }
-
-        // FIX-ME GTK4 show all
+        bp->grid_add_widget (gtk_separator_new (GTK_ORIENTATION_HORIZONTAL), 2); bp->new_line ();
+        bp->grid_add_ec ("Step [B1]", unit, &step, -EC_INF, EC_INF, "8g"); bp->new_line ();
+        bp->grid_add_ec ("Page [B2]", unit, &page, -EC_INF, EC_INF, "8g"); bp->new_line ();
+        bp->grid_add_ec ("Pg10 [B3]", unit, &page10, -EC_INF, EC_INF, "8g"); bp->new_line ();
+        bp->grid_add_ec ("Progressive", unity, &progressive, 0., 10., "g"); bp->new_line ();
+        
+        bp->grid_add_widget (cb = gtk_check_button_new_with_label( N_("Use Log Scale"))); gtk_check_button_set_active (GTK_CHECK_BUTTON (cb), adj_mode & PARAM_CONTROL_ADJUSTMENT_LOG);
+        gtk_widget_set_tooltip_text (cb, N_("Make slider input option logaritmic"));
+        g_object_set_data  (G_OBJECT (dialog), "CB-LOG-SCALE", cb);
+        bp->new_line ();
+        bp->grid_add_widget (cb = gtk_check_button_new_with_label( N_("Use Log Symmetric"))); gtk_check_button_set_active (GTK_CHECK_BUTTON (cb), adj_mode & PARAM_CONTROL_ADJUSTMENT_LOG_SYM);
+        gtk_widget_set_tooltip_text (cb, N_("use slider in log scale mode with zero at center. Left: log, neg val.\n WARNING: EXPERIMENTAL"));
+        g_object_set_data  (G_OBJECT (dialog), "CB-LOG-SYM", cb);
+        bp->new_line ();
+        bp->grid_add_widget (cb = gtk_check_button_new_with_label( N_("Dual-Range"))); gtk_check_button_set_active (GTK_CHECK_BUTTON (cb), adj_mode & PARAM_CONTROL_ADJUSTMENT_DUAL_RANGE);
+        gtk_widget_set_tooltip_text (cb, N_("use slider in log scale mode with zero at center. Left: log, neg val.\n WARNING: EXPERIMENTAL"));
+        g_object_set_data  (G_OBJECT (dialog), "CB-DUAL-RANGE", cb);
+        bp->new_line ();
+        bp->grid_add_widget (cb = gtk_check_button_new_with_label( N_("Add Tick Marks"))); gtk_check_button_set_active (GTK_CHECK_BUTTON (cb), adj_mode & PARAM_CONTROL_ADJUSTMENT_ADD_MARKS);
+        gtk_widget_set_tooltip_text (cb, N_("add tick marks w. snapping slider"));
+        g_object_set_data  (G_OBJECT (dialog), "CB-TICKS", cb);
+        bp->new_line ();
+        
+        g_object_set_data  (G_OBJECT (dialog), "TMP-BP-REF", bp);
+                            
         gtk_widget_show (dialog);
         g_signal_connect (dialog, "response",
                           G_CALLBACK (Gtk_EntryControl::pcs_adjustment_configure_response_callback),
                           this);
+
+        g_message ("Gtk_EntryControl::pcs_adjustment_configure () -- Dialog build and started for: %s", (gchar*) g_object_get_data( G_OBJECT (entry), 
+                                                       "Adjustment_PCS_Name"));
+        
 }
 
 #define XRM_GET_WD(L, V) tdv = g_strdup_printf ("%g", V); xrm.Get (L, &V, tdv); g_free (tdv)
@@ -1580,10 +1585,19 @@ ec_gtk_spin_button_sci_input (GtkSpinButton *spin_button,
                 return TRUE;
 }
 
-static void 
-ec_pcs_adjustment_configure (GtkWidget *menuitem, Gtk_EntryControl *gpcs){
-	gpcs->pcs_adjustment_configure ();
+void Gtk_EntryControl::ec_pcs_adjustment_configure_callback (GSimpleAction *action, GVariant *parameter, Gtk_EntryControl *gpcs){
+        gpcs->pcs_adjustment_configure ();
 }
+
+void Gtk_EntryControl::entry_scroll_cb (GtkEventController *controller, gdouble dx, gdouble dy, Gtk_EntryControl *gpcs){
+        //gchar *tmp = gpcs->Get_UsrString();
+        //g_message ("SCROLL: %s gVal[%g] %g %g => %g", tmp, gpcs->Get_dValue(), dx, dy, gpcs->Get_dValue() + dy * gpcs->step);
+        //g_free(tmp);
+        gpcs->Set_FromValue (gpcs->Get_dValue() - dy * gpcs->step);
+	if (gpcs->ChangeNoticeFkt)
+		(*gpcs->ChangeNoticeFkt)(gpcs, gpcs->FktData);       
+}
+
 
 void Gtk_EntryControl::InitRegisterCb(double AdjStep, double AdjPage, double AdjProg){
         af_update_handler_id[0] = af_update_handler_id[1] = 0;
@@ -1610,24 +1624,36 @@ void Gtk_EntryControl::InitRegisterCb(double AdjStep, double AdjPage, double Adj
 	if(fabs (AdjStep) > 1e-22 && get_count () <= 1){ // only master
                 XSM_DEBUG (DBG_L8, "InitRegisterCb -- hookup config menuitem");
 
-                // FIX-ME-GTK4 -- TESTING
-                gchar *cfg_label = g_strconcat ("Configure",
-                                                " ",
-                                                g_object_get_data( G_OBJECT (entry), 
-                                                                   "Adjustment_PCS_Name"),
-                                                NULL);
-                GMenu *menu = g_menu_new ();
-                GMenuItem *menu_item_config = g_menu_item_new (cfg_label, NULL);
-                // *** HOOK CONFIGURE MENUITEM TO ENTRY *** -- issue w gtk4, how???
-                //g_signal_connect (menu_item_config, "activate", G_CALLBACK (ec_pcs_adjustment_configure), this);
-                g_menu_append_item (menu, menu_item_config);
-		if (GTK_IS_SPIN_BUTTON (entry)){
-                        ;// on_set_extra_menu (GTK_ENTRY (entry), G_MENU_MODEL (menu)); // need equivalent function for spin button!!
-                } else
-                        gtk_entry_set_extra_menu (GTK_ENTRY (entry), G_MENU_MODEL (menu));
-                g_object_unref (menu_item_config);
-                // TESTING
-                
+
+                if (g_object_get_data( G_OBJECT (entry), "Adjustment_PCS_Name")){ // valid, non NULL?
+
+                        gchar *cfg_label = g_strconcat ("Configure",
+                                                        " ",
+                                                        g_object_get_data( G_OBJECT (entry), 
+                                                                           "Adjustment_PCS_Name"),
+                                                        NULL);
+                        // new G menu model
+                        GMenu *menu = g_menu_new ();
+                        gchar *appactionref = g_strdup_printf ("pcsconfig-%s", g_object_get_data( G_OBJECT (entry), "Adjustment_PCS_Name"));
+                        appactionref = g_ascii_strdown (appactionref, -1);
+                        gchar *appdotlabel = g_strdup_printf ("app.%s", appactionref);
+                        GMenuItem *menu_item_config = g_menu_item_new (cfg_label, appdotlabel);
+                        // HOOK CONFIGURE MENUITEM TO ENTRY's menu
+                        g_menu_append_item (menu, menu_item_config);
+                        g_object_unref (menu_item_config);
+
+                        if (GTK_IS_SPIN_BUTTON (entry)){
+                                //on_set_extra_menu (GTK_ENTRY (entry), G_MENU_MODEL (menu)); // need equivalent function for spin button!!
+                                gtk_entry_set_extra_menu (GTK_ENTRY (entry), G_MENU_MODEL (menu));
+                        } else
+                                gtk_entry_set_extra_menu (GTK_ENTRY (entry), G_MENU_MODEL (menu));
+
+                        // setup actions and hook up config callback 
+                        GSimpleAction *action_config = g_simple_action_new (appactionref, NULL);
+                        g_action_map_add_action (G_ACTION_MAP (main_get_gapp ()->get_application ()), G_ACTION (action_config));
+                        g_signal_connect (action_config, "activate", G_CALLBACK (ec_pcs_adjustment_configure_callback), this);
+                }
+
                 adj = gtk_adjustment_new( Get_dValue (), vMin, vMax, step, page, 0);
 
                 adjcb_handler_id = g_signal_connect (G_OBJECT (adj), "value_changed",
@@ -1651,6 +1677,13 @@ void Gtk_EntryControl::InitRegisterCb(double AdjStep, double AdjPage, double Adj
                 GtkEventController *focus = gtk_event_controller_focus_new ();
                 af_update_handler_id[1] = g_signal_connect (focus, "leave", G_CALLBACK (&Gtk_EntryControl::entry_focus_leave_callback), entry);
                 gtk_widget_add_controller (entry, GTK_EVENT_CONTROLLER (focus));
+
+
+                // EXPERIMENTAL adding SCROLL feature in a new way
+                GtkEventController *scroll = gtk_event_controller_scroll_new (GTK_EVENT_CONTROLLER_SCROLL_VERTICAL | GTK_EVENT_CONTROLLER_SCROLL_DISCRETE); // _KINETIC
+                g_signal_connect (scroll, "scroll", G_CALLBACK (entry_scroll_cb), this);
+                gtk_widget_add_controller (GTK_WIDGET (entry), GTK_EVENT_CONTROLLER (scroll));
+                
         }
         
         XSM_DEBUG (DBG_L8, "InitRegisterCb -- put value");

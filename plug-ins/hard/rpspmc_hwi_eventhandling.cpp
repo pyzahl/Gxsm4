@@ -62,19 +62,6 @@ gfloat color_gray[4]    = { .3, .3, .3, 0.8 };
 gfloat color_red[4]     = { 1., 0., 0., 1.0 };
 gfloat color_yellow[4]  = { 1., 1., 0., 1.0 };
 
-// SR specific conversions and lookups
-
-#define DSP_FRQ_REF 75000.0
-
-#define SRV2     (2.05/32767.)
-#define SRV10    (10.0/32767.)
-#define PhaseFac (1./16.)
-#define BiasFac  (main_get_gapp()->xsm->Inst->Dig2VoltOut (1.) * main_get_gapp()->xsm->Inst->BiasGainV2V ())
-#define BiasOffset (main_get_gapp()->xsm->Inst->Dig2VoltOut (1.) * main_get_gapp()->xsm->Inst->BiasV2V (0.))
-#define ZAngFac  (main_get_gapp()->xsm->Inst->Dig2ZA (1))
-#define XAngFac  (main_get_gapp()->xsm->Inst->Dig2XA (1))
-#define YAngFac  (main_get_gapp()->xsm->Inst->Dig2YA (1))
-
 extern SOURCE_SIGNAL_DEF rpspmc_source_signals[];
 
 //#define XSM_DEBUG_PG(X)  std::cout << X << std::endl;
@@ -121,7 +108,7 @@ const char* RPSPMC_Control::vp_label_lookup(int i){
 const char* RPSPMC_Control::vp_unit_lookup(int i){
         for (int k=0; rpspmc_source_signals[k].mask; ++k)
                 if (rpspmc_source_signals[k].garr_index == i)
-                        if (rpspmc_source_signals[k].mask == 0x000020){ // CUSTOM auto
+                        if (rpspmc_source_signals[k].mask == 0x000010){ // CUSTOM auto
                                 if (main_get_gapp()->xsm->Inst->nAmpere2V (1.) > 1.)
                                         return str_pA;
                                 else
@@ -131,34 +118,36 @@ const char* RPSPMC_Control::vp_unit_lookup(int i){
         return err_unknown_u;
 }
 
-double RPSPMC_Control::vp_scale_lookup(int i){ // 2nd level scalings to GXSM units, Volt to Ang, Volt to nA, etc.
+// apply life 2nd level scalings (may change at runtime, gains, ...) base Volts to GXSM units, Volt to Ang, Volt to nA, etc.
+double RPSPMC_Control::vp_scale_lookup(int i){
         for (int k=0; rpspmc_source_signals[k].mask; ++k){
                 //g_print ("looking for %d == [%d] in vpsl %20s  [%02d]: %08x,  %g\n",i, rpspmc_source_signals[k].garr_index, rpspmc_source_signals[k].label, i,rpspmc_source_signals[k].mask, rpspmc_source_signals[k].scale_factor);
                 if (rpspmc_source_signals[k].garr_index == i){
                         //g_print ("Found: vpsl[%d]: %08x, ScaleFac= %g\n",i,rpspmc_source_signals[k].mask, rpspmc_source_signals[k].scale_factor);
                         switch (rpspmc_source_signals[k].mask){
-                        case 0x00000020: // CUSTOM auto
-                                if (main_get_gapp()->xsm->Inst->nAmpere2V (1.) > 1.)
-                                        return main_get_gapp()->xsm->Inst->nAmpere2V (1e-3); // choose pA
-                                else
-                                        return main_get_gapp()->xsm->Inst->nAmpere2V (1.); // nA
+                        case 0x00000010: // CUSTOM auto -- must also change unit prefix! can't here
+                                //if (main_get_gapp()->xsm->Inst->nAmpere2V (1.) > 1.)
+                                //        return main_get_gapp()->xsm->Inst->nAmpere2V (1e-3); // choose pA
+                                //else
+                                //        return main_get_gapp()->xsm->Inst->nAmpere2V (1.); // nA
+                                return    CurrFac; // nA
                                 break;
                         case 0x00100000: // function calls...
                         case 0x00000001: 
-                                return main_get_gapp()->xsm->Inst->Volt2XA (1);
+                                return XAngFac;
                         case 0x00200000:
                         case 0x00000002:
-                                return main_get_gapp()->xsm->Inst->Volt2YA (1);
+                                return YAngFac;
                         case 0x00400000:
                         case 0x00000004:
-                                return main_get_gapp()->xsm->Inst->Volt2ZA (1);
+                                return ZAngFac;
                         case 0x00800000:
                         case 0x00000008:
-                                return main_get_gapp()->xsm->Inst->BiasGainV2V ();
+                                return BiasFac;
                         case 0x04000000: // ARRAY_SEC  -- SECTION
-                                return 1.0;
+                                return 1.;
                         default:
-                                return 1.0; // use as defined in source_signals, data is scaled while expanding to base units
+                                return 1.; // use as defined in source_signals, data is scaled while expanding to base units
                         }
                 }
         }
@@ -1012,20 +1001,20 @@ int RPSPMC_Control::Probing_save_callback( GtkWidget *widget, RPSPMC_Control *ds
 	}
         f.precision (12);
 	f << "# view via: xmgrace -graph 0 -pexec 'title \"GXSM Vector Probe Data: " << fntmp << "\"' -block " << fntmp  << " -bxy 2:4 ..." << std::endl;
-	f << "# GXSM Vector Probe Data :: VPVersion=00.02 vdate=20070227" << std::endl;
+	f << "# GXSM Vector Probe Data :: VPVersion=00.03 vdate=20250406 GVP RPSPMC" << std::endl;
 	f << "# Date                   :: date=" << ctime(&t) << "#" << std::endl;
 	f << "# FileName               :: name=" << fntmp << std::endl;
 	f << "# GXSM-Main-Offset       :: X0=" <<  x0 << " Ang" <<  "  Y0=" << y0 << " Ang" 
 	  << ", iX0=" << ix << " Pix iX0=" << iy << " Pix"
 	  << std::endl;
         if (main_get_gapp()->xsm->MasterScan)
-                f << "# DSP SCANCOORD POSITION :: DSP-XSpos="  // FIXME!!!!
+                f << "# SCANCOORD POSITION :: RPSPMC-XSpos="  // FIXME!!!!
                   << (((int)g_array_index (dspc->garray_probe_hdrlist[PROBEDATA_ARRAY_XS], double, 0)<<16)/dspc->mirror_dsp_scan_dx32 + main_get_gapp()->xsm->MasterScan->data.s.nx/2 - 1)
-                  << " DSP-YSpos=" 
+                  << " RPSPMC-YSpos=" 
                   << ((main_get_gapp()->xsm->MasterScan->data.s.nx/2 - 1) - ((int)g_array_index (dspc->garray_probe_hdrlist[PROBEDATA_ARRAY_YS], double, 0)<<16)/dspc->mirror_dsp_scan_dy32)
-                  << " CENTER-DSP-XSpos=" 
+                  << " CENTER-RPSPMC-XSpos=" 
                   << (((int)g_array_index (dspc->garray_probe_hdrlist[PROBEDATA_ARRAY_XS], double, 0)<<16)/dspc->mirror_dsp_scan_dx32)
-                  << " CENTER-DSP-YSpos=" 
+                  << " CENTER-RPSPMC-YSpos=" 
                   << (((int)g_array_index (dspc->garray_probe_hdrlist[PROBEDATA_ARRAY_YS], double, 0)<<16)/dspc->mirror_dsp_scan_dy32)
                   << std::endl;
         else
@@ -1051,7 +1040,7 @@ int RPSPMC_Control::Probing_save_callback( GtkWidget *widget, RPSPMC_Control *ds
 	f << "# Data Sources Mask      :: Source=" << dspc->vis_Source << std::endl;
 	f << "# X-map Sources Mask     :: XSource=" << dspc->vis_XSource << std::endl;
 	f << "#C " << std::endl;
-	f << "#C VP Channel Map and Units lookup table used:=table [## msk expdi, lab, DAC2U, unit/DAC, Active]" << std::endl;
+	f << "#C VP Channel Map and Units lookup table used:=table [## msk expdi, lab, V2U, unit/V, Active]" << std::endl;
 
 	for (int i=0; dspc->msklookup[i] >= 0; ++i)
 		f << "# Cmap[" << i << "]" << separator 
@@ -1059,7 +1048,7 @@ int RPSPMC_Control::Probing_save_callback( GtkWidget *widget, RPSPMC_Control *ds
 		  << dspc->expdi_lookup[i] << separator 
 		  << dspc->vp_label_lookup (i) << separator 
 		  << dspc->vp_scale_lookup (i) << separator 
-		  << dspc->vp_unit_lookup (i) << "/DAC" << separator 
+		  << dspc->vp_unit_lookup (i) << "/V" << separator 
 		  << (dspc->vis_Source & dspc->msklookup[i] ? "Yes":"No") << std::endl;
 
 	f << "#C " << std::endl;
@@ -1091,25 +1080,27 @@ int RPSPMC_Control::Probing_save_callback( GtkWidget *widget, RPSPMC_Control *ds
         f << std::scientific;
 	for (int i = -1; i < dspc->current_probe_data_index; i++){
 		if (i == -1)
-			f << "#C Index" << separator;
+			f << "#C Idx" << separator;
 		else
 			f << i << separator;
 
 		for (int xmap=0; dspc->msklookup[xmap]>=0; ++xmap)
 			if ((dspc->vis_XSource & dspc->msklookup[xmap]) && (dspc->vis_Source & dspc->msklookup[xmap])){
 				double xmult = dspc->vp_scale_lookup (xmap);
-				if (i == -1)
-					f << "\"" << dspc->vp_label_lookup (xmap) << " (" << dspc->vp_unit_lookup (xmap) << ")\"" << separator;
-				else
+				if (i == -1){
+                                        gchar *h = g_strdup_printf ("\"%12s (%s)\"", dspc->vp_label_lookup (xmap), dspc->vp_unit_lookup (xmap));
+					f << h << separator; g_free(h);
+				} else
 					f << (xmult * g_array_index (dspc->garray_probedata [dspc->expdi_lookup[xmap]], double, i)) << separator;
 			}
 
 		for (int src=0; dspc->msklookup[src]>=0; ++src)
 			if (dspc->vis_Source & dspc->msklookup[src]){
 				double ymult = dspc->vp_scale_lookup (src);
-				if (i == -1)
-					f << "\"" << dspc->vp_label_lookup (src) << " (" << dspc->vp_unit_lookup (src) << ")\"" << separator;
-				else
+				if (i == -1){
+                                        gchar *h = g_strdup_printf ("\"%12s (%s)\"", dspc->vp_label_lookup (src), dspc->vp_unit_lookup (src));
+					f << h << separator; g_free(h);
+                                } else
 					f << (ymult * g_array_index (dspc->garray_probedata [dspc->expdi_lookup[src]], double, i)) << separator;
 			}
 
@@ -1125,7 +1116,7 @@ int RPSPMC_Control::Probing_save_callback( GtkWidget *widget, RPSPMC_Control *ds
 	f << "#C START OF HEADER LIST APPENDIX" << std::endl;
 
 	f << "#C Vector Probe Header List -----------------" << std::endl;
-	f << "#C # ####\t time[ms]  \t dt[ms]    \t X[Ang]   \t Y[Ang]   \t Z[Ang]    \t Sec" << std::endl;
+	f << "#C # ####\t         time (ms)\t           dt (ms)\t            X (Ang)\t          Y (Ang)\t            Z (Ang)\t             t (s)" << std::endl;
 	for (int i=0; i<dspc->nun_valid_hdr; ++i){
 		double val[10];
 		val[0] = g_array_index (dspc->garray_probe_hdrlist[PROBEDATA_ARRAY_TIME], double, i);
@@ -1134,10 +1125,8 @@ int RPSPMC_Control::Probing_save_callback( GtkWidget *widget, RPSPMC_Control *ds
 		val[3] = g_array_index (dspc->garray_probe_hdrlist[PROBEDATA_ARRAY_ZS], double, i);
 		val[4] = g_array_index (dspc->garray_probe_hdrlist[PROBEDATA_ARRAY_SEC], double, i);
 
-// 1e3/DSP_FRQ_REF, XAngFac, YAngFac, ZAngFac,
-                
 		f << "#  " << std::setw(6) << i << "\t "
-		  << std::setw(10) << val[0] * 1e3/DSP_FRQ_REF << "\t " << std::setw(10) << (val[0]-t0) * 1e3/DSP_FRQ_REF << "\t "
+		  << std::setw(10) << val[0] << "\t " << std::setw(10) << (val[0]-t0) << "\t "
 		  << std::setw(10) << val[1] * XAngFac << "\t "
 		  << std::setw(10) << val[2] * YAngFac << "\t "
 		  << std::setw(10) << val[3] * ZAngFac << "\t "
@@ -1358,13 +1347,13 @@ void RPSPMC_Control::add_probevector(){
 			val += program_vector_list[current_probe_section].f_db*multi;
 			break;
 		case PROBEDATA_ARRAY_XS:
-			val -= program_vector_list[current_probe_section].f_dx*multi;
+			val += program_vector_list[current_probe_section].f_dx*multi;
 			break;
 		case PROBEDATA_ARRAY_YS:
-			val -= program_vector_list[current_probe_section].f_dy*multi;
+			val += program_vector_list[current_probe_section].f_dy*multi;
 			break;
 		case PROBEDATA_ARRAY_ZS:
-			val -= program_vector_list[current_probe_section].f_dz*multi;
+			val += program_vector_list[current_probe_section].f_dz*multi;
 			break;
 		case PROBEDATA_ARRAY_U:
 			val += program_vector_list[current_probe_section].f_du*multi;
@@ -1449,9 +1438,8 @@ void RPSPMC_Control::dump_probe_hdr(){
 		val[4] = g_array_index (garray_probe_hdrlist[PROBEDATA_ARRAY_SEC], double, i);
 
 #ifdef DUMP_TERM
-// 1e3/DSP_FRQ_REF, XAngFac, YAngFac, ZAngFac,
 		std::cout << std::setw(6) << i << "\t "
-			  << std::setw(10) << val[0] * 1e3/DSP_FRQ_REF << "\t " << std::setw(10) << (val[0]-t0) * 1e3/DSP_FRQ_REF << "\t "
+			  << std::setw(10) << val[0] << "\t " << std::setw(10) << (val[0]-t0) << "\t "
 			  << std::setw(10) << val[1] * XAngFac << "\t "
 			  << std::setw(10) << val[2] * YAngFac << "\t "
 			  << std::setw(10) << val[3] * ZAngFac << "\t "
@@ -1475,7 +1463,7 @@ void RPSPMC_Control::dump_probe_hdr(){
 
 			// only put new marker/update/rotate if more than a pixel moved!
 			if (s2 > 2.*main_get_gapp()->xsm->MasterScan->data.s.dx*main_get_gapp()->xsm->MasterScan->data.s.dx+main_get_gapp()->xsm->MasterScan->data.s.dy*main_get_gapp()->xsm->MasterScan->data.s.dy){
-				gchar *info = g_strdup_printf ("TrkPt# %d %.1fms", i, val[0]*1e3/DSP_FRQ_REF);
+				gchar *info = g_strdup_printf ("TrkPt# %d %.1fms", i, val[0]);
 				double xyz[3] = {
 					main_get_gapp()->xsm->Inst->Dig2XA ((long) round (val[1])) + main_get_gapp()->xsm->data.s.x0,
 					main_get_gapp()->xsm->Inst->Dig2YA ((long) round (val[2])) + main_get_gapp()->xsm->data.s.y0,

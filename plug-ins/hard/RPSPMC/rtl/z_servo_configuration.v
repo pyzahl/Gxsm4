@@ -48,7 +48,10 @@
 module z_servo_configuration#(
     /* config address */
     parameter z_servo_control_reg_address = 100,
-    parameter z_servo_modes_reg_address = 101
+    parameter z_servo_modes_reg_address = 101,
+    parameter z_servo_select_rb_setpoint_modes_address = 110,
+    parameter z_servo_select_rb_cpi_address = 111,
+    parameter z_servo_select_rb_limits_address = 112
     )(
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN aclk, ASSOCIATED_BUSIF M_AXIS_setpoint:M_AXIS_zreset" *)
     input aclk,
@@ -69,11 +72,16 @@ module z_servo_configuration#(
     output wire [32-1:0] control_signal_offset,
     output wire [32-1:0] M_AXIS_zreset_tdata,
     output wire          M_AXIS_zreset_tvalid,
+
+    output wire [32-1:0] z_servo_rb_A,
+    output wire [32-1:0] z_servo_rb_B,
+
     output wire servo_enable,
     output wire servo_log,
     output wire servo_fcz,
     output wire servo_hold);
         
+
     reg [32-1:0] r_control_setpoint = 0;
     reg [32-1:0] r_cp = 0;
     reg [32-1:0] r_ci = 0;
@@ -87,6 +95,12 @@ module z_servo_configuration#(
     
     reg [32-1:0] r_gvp_options = 0;
 
+    reg [32-1:0] z_servo_rb_A_reg = 0;
+    reg [32-1:0] z_servo_rb_B_reg = 0;
+
+
+    assign z_servo_rb_A = z_servo_rb_A_reg;
+    assign z_servo_rb_B = z_servo_rb_B_reg;
 
     assign M_AXIS_setpoint_tdata  = r_control_setpoint;
     assign M_AXIS_setpoint_tvalid = 1;
@@ -127,6 +141,23 @@ module z_servo_configuration#(
             r_z_setpoint       <= config_data[3*32-1 : 2*32];
             r_transfer_mode    <= config_data[4*32-1 : 3*32];
         end     
+
+        z_servo_select_rb_setpoint_modes_address: // read back config
+        begin
+            z_servo_rb_A_reg <= r_control_setpoint;
+            z_servo_rb_B_reg <= r_transfer_mode;
+        end     
+        z_servo_select_rb_limits_address: // read back config
+        begin
+            z_servo_rb_A_reg <= r_upper;
+            z_servo_rb_B_reg <= r_lower;
+        end     
+        z_servo_select_rb_cpi_address: // read back config
+        begin
+            z_servo_rb_A_reg <= r_cp;
+            z_servo_rb_B_reg <= r_ci;
+        end     
+
         endcase
         
         r_gvp_options <= gvp_options; // buffer

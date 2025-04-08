@@ -178,7 +178,7 @@ public:
         static void obj_label_off(VObject *vo, ViewControl *vc){ vo->show_label(false); };
         static void delete_object(VObject *vo, ViewControl *vc){  // renamed function
                 if (vc->tmp_object_op == vo){
-                        gapp->message ("Ilya don't do that!");
+                        //gapp->message ("Ilya don't do that!");
                         vc->tmp_object_op = NULL;
                 }
                 vc->scan->del_object (vo);
@@ -223,6 +223,9 @@ public:
                                           int             height,
                                           ViewControl *vc);
 
+        void force_redraw (){ gtk_widget_queue_draw (canvas); };
+
+        
         static void display_changed_hl_callback (Param_Control *pc, gpointer vc);
         static void display_changed_vr_callback (Param_Control *pc, gpointer vc);
         static void display_changed_sh_callback (Param_Control *pc, gpointer vc);
