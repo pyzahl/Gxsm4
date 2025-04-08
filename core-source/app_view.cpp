@@ -1597,8 +1597,8 @@ void ViewControl::canvas_draw_function (GtkDrawingArea *area,
                 zfy = 1.;
         } else  {
                 // update required area size 
-                gtk_drawing_area_set_content_width (area, (int)(vc->npx * zf / qf + 10));
-                gtk_drawing_area_set_content_height (area, (int)(vc->npy * zf / qf + 10));
+                gtk_drawing_area_set_content_width (area, (int)(vc->npx * zf / qf + vc->rulewidth+2*vc->border/zf));
+                gtk_drawing_area_set_content_height (area, (int)(vc->npy * zf / qf + vc->rulewidth+2*vc->border/zf));
         }
         
         XSM_DEBUG_GM (DBG_L3,  "ViewControl:::canvas_draw_callback *** SCAN DRAW, ZOOM [M%d]: %g : %d, DA-DIM: (%d,%d) NP: (%d, %d) ***", vc->vinfo->get_userzoommode(), zf, qf, width, height, vc->npx, vc->npy);
