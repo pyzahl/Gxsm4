@@ -1218,9 +1218,12 @@ void Gtk_EntryControl::pcs_adjustment_configure_response_callback (GtkDialog *di
         delete g_object_get_data  (G_OBJECT (dialog), "TMP-BP-REF"); // cleanup
 }
 
+void cb_dummy_callback (GtkWidget* widget, gpointer user_data){;}
+
 void Gtk_EntryControl::pcs_adjustment_configure (){
         static UnitObj *unity = new UnitObj(" "," ");
         gchar *tmp = NULL;
+        GtkWidget *cb;
 
 	if (! (tmp = (gchar*)g_object_get_data( G_OBJECT (entry), "Adjustment_PCS_Name")))
 		return;
@@ -1264,34 +1267,28 @@ void Gtk_EntryControl::pcs_adjustment_configure (){
 	bp->grid_add_ec ("Exclude Hi", unit, &v_ex_hi, -EC_INF, EC_INF, "8g"); bp->new_line ();
 	bp->grid_add_ec ("Exclude Lo", unit, &v_ex_lo, -EC_INF, EC_INF, "8g"); bp->new_line ();
 
-        //if (GTK_IS_SPIN_BUTTON (entry)){
-        if (1){
-                bp->grid_add_widget (gtk_separator_new (GTK_ORIENTATION_HORIZONTAL), 2); bp->new_line ();
-                bp->grid_add_ec ("Step [B1]", unit, &step, -EC_INF, EC_INF, "8g"); bp->new_line ();
-                bp->grid_add_ec ("Page [B2]", unit, &page, -EC_INF, EC_INF, "8g"); bp->new_line ();
-                bp->grid_add_ec ("Pg10 [B3]", unit, &page10, -EC_INF, EC_INF, "8g"); bp->new_line ();
-                bp->grid_add_ec ("Progressive", unity, &progressive, 0., 10., "g"); bp->new_line ();
-#if 0
-                
-                g_object_set_data  (G_OBJECT (dialog), "CB-LOG-SCALE",
-                                    bp->grid_add_check_button_simple ("Log-Scale", "use slider in log scale mode.\n WARING: EXPERIMENTAL",
-                                                                     (adj_mode & PARAM_CONTROL_ADJUSTMENT_LOG)?true:false));
-                bp->new_line ();
-                g_object_set_data  (G_OBJECT (dialog), "CB-LOG-SYM",
-                                    bp->grid_add_check_button_simple ("Log-Sym", "use slider in log scale mode with zero at center. Left: log, neg val.\n WARING: EXPERIMENTAL",
-                                                                     (adj_mode & PARAM_CONTROL_ADJUSTMENT_LOG)?true:false));
-                bp->new_line ();
-                g_object_set_data  (G_OBJECT (dialog), "CB-DUAL-RANGE",
-                                    bp->grid_add_check_button_simple ("Dual-Range", "use slider in log scale mode with zero at center. Left: log, neg val.\n WARING: EXPERIMENTAL",
-                                                                     (adj_mode & PARAM_CONTROL_ADJUSTMENT_DUAL_RANGE)?true:false));
-                bp->new_line ();
-                g_object_set_data  (G_OBJECT (dialog), "CB-TICKS",
-                                    bp->grid_add_check_button_simple ("Add-Ticks", "add tick marks w. snapping to slider",
-                                                                     (adj_mode & PARAM_CONTROL_ADJUSTMENT_ADD_MARKS)?true:false));
-#endif
-                bp->new_line ();
-        }
-
+        bp->grid_add_widget (gtk_separator_new (GTK_ORIENTATION_HORIZONTAL), 2); bp->new_line ();
+        bp->grid_add_ec ("Step [B1]", unit, &step, -EC_INF, EC_INF, "8g"); bp->new_line ();
+        bp->grid_add_ec ("Page [B2]", unit, &page, -EC_INF, EC_INF, "8g"); bp->new_line ();
+        bp->grid_add_ec ("Pg10 [B3]", unit, &page10, -EC_INF, EC_INF, "8g"); bp->new_line ();
+        bp->grid_add_ec ("Progressive", unity, &progressive, 0., 10., "g"); bp->new_line ();
+        
+        bp->grid_add_widget (cb = gtk_check_button_new_with_label( N_("Use Log Scale"))); gtk_check_button_set_active (GTK_CHECK_BUTTON (cb), adj_mode & PARAM_CONTROL_ADJUSTMENT_LOG);
+        gtk_widget_set_tooltip_text (cb, N_("Make slider input option logaritmic"));
+        g_object_set_data  (G_OBJECT (dialog), "CB-LOG-SCALE", cb);
+        bp->new_line ();
+        bp->grid_add_widget (cb = gtk_check_button_new_with_label( N_("Use Log Symmetric"))); gtk_check_button_set_active (GTK_CHECK_BUTTON (cb), adj_mode & PARAM_CONTROL_ADJUSTMENT_LOG_SYM);
+        gtk_widget_set_tooltip_text (cb, N_("use slider in log scale mode with zero at center. Left: log, neg val.\n WARNING: EXPERIMENTAL"));
+        g_object_set_data  (G_OBJECT (dialog), "CB-LOG-SYM", cb);
+        bp->new_line ();
+        bp->grid_add_widget (cb = gtk_check_button_new_with_label( N_("Dual-Range"))); gtk_check_button_set_active (GTK_CHECK_BUTTON (cb), adj_mode & PARAM_CONTROL_ADJUSTMENT_DUAL_RANGE);
+        gtk_widget_set_tooltip_text (cb, N_("use slider in log scale mode with zero at center. Left: log, neg val.\n WARNING: EXPERIMENTAL"));
+        g_object_set_data  (G_OBJECT (dialog), "CB-DUAL-RANGE", cb);
+        bp->new_line ();
+        bp->grid_add_widget (cb = gtk_check_button_new_with_label( N_("Add Tick Marks"))); gtk_check_button_set_active (GTK_CHECK_BUTTON (cb), adj_mode & PARAM_CONTROL_ADJUSTMENT_ADD_MARKS);
+        gtk_widget_set_tooltip_text (cb, N_("add tick marks w. snapping slider"));
+        g_object_set_data  (G_OBJECT (dialog), "CB-TICKS", cb);
+        bp->new_line ();
         
         g_object_set_data  (G_OBJECT (dialog), "TMP-BP-REF", bp);
                             

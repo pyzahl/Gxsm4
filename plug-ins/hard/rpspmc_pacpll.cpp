@@ -1729,11 +1729,17 @@ void RPSPMC_Control::create_folder (){
 
         bp->set_default_ec_change_notice_fkt (RPSPMC_Control::ChangedNotifyMoveSpeed, this);
 	bp->grid_add_ec_with_scale ("MoveSpd", Speed, &move_speed_x, 0.1, 10000., "5g", 1., 10., "fbs-scan-speed-move");
+        bp->ec->SetScaleWidget (bp->scale, 0);
+        bp->ec->set_logscale_min (1);
+        gtk_scale_set_digits (GTK_SCALE (bp->scale), 5);
         bp->new_line ();
         bp->set_configure_list_mode_off ();
 
         bp->set_default_ec_change_notice_fkt (RPSPMC_Control::ChangedNotifyScanSpeed, this);
 	bp->grid_add_ec_with_scale ("ScanSpd", Speed, &scan_speed_x_requested, 0.1, 100000., "5g", 1., 10., "fbs-scan-speed-scan");
+        bp->ec->SetScaleWidget (bp->scale, 0);
+        bp->ec->set_logscale_min (1);
+        gtk_scale_set_digits (GTK_SCALE (bp->scale), 5);
         scan_speed_ec = bp->ec;
 
         bp->new_line ();
