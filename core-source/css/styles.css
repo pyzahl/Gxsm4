@@ -31,3 +31,7 @@
 #gvpcolor7 { background-image: none; background-color: #053b58; color: white; font-weight: bold; border-radius: 6px; margin-left: 4px; }
 #gvpcolor8 { background-image: none; background-color: #1b06e8; color: white; font-weight: bold; border-radius: 6px; margin-left: 4px; }
 
+#entry-mono-text { font-family: monospace; }
+#entry-mono-text-start  { font-family: monospace;  background-color: #1be5e8; color: white; font-weight: bold; }
+#entry-mono-text-info   { font-family: monospace;  background-color: #e8e01b; color: white; font-weight: bold; }
+#entry-mono-text-health { font-family: monospace;  background-color: #69e81b; color: white; font-weight: bold; }

@@ -2733,7 +2733,8 @@ void RPSPMC_Control::create_folder (){
         bp->new_line ();
         bp->set_input_width_chars (80);
         rpspmc_pacpll->red_pitaya_health = bp->grid_add_input ("RedPitaya Health",10);
-
+        gtk_widget_set_name (bp->input, "entry-mono-text-start");
+        
         PangoFontDescription *fontDesc = pango_font_description_from_string ("monospace 10");
         //gtk_widget_modify_font (red_pitaya_health, fontDesc);
         // ### GTK4 ??? CSS ??? ###  gtk_widget_override_font (red_pitaya_health, fontDesc); // use CSS, thx, annyoing garbage... ??!?!?!?
@@ -4461,7 +4462,10 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
 }
 
 RPspmc_pacpll::~RPspmc_pacpll (){
-	delete mTime;
+
+        update_shm_monitors (1);
+
+        delete mTime;
 	delete uTime;
 	delete Time;
 	delete dB;
@@ -5205,7 +5209,16 @@ void RPspmc_pacpll::update_health (const gchar *msg){
         if (msg){
                 gtk_entry_buffer_set_text (GTK_ENTRY_BUFFER (gtk_entry_get_buffer (GTK_ENTRY((red_pitaya_health)))), msg, -1);
                 g_slist_foreach ((GSList*)g_object_get_data (G_OBJECT (window), "EC_FPGA_SPMC_server_settings_list"), (GFunc) App::update_ec, NULL); // UPDATE GUI!
+                gtk_widget_set_name (GTK_WIDGET (red_pitaya_health), "entry-mono-text-msg");
         } else {
+                double sec;
+                double sec_dec = modf(spmc_parameters.uptime_seconds, &sec);
+                int S = (int)sec;
+                int tmp=3600*24;
+                int d = S/tmp;
+                int h = (tmp=(S-d*tmp))/3600;
+                int m = (tmp=(tmp-h*3600))/60;
+                double s = (tmp-m*60) + sec_dec;
 #if 0
                 gchar *gpiox_string = NULL;
                 if (scope_width_points > 1000){
@@ -5220,25 +5233,15 @@ void RPspmc_pacpll::update_health (const gchar *msg){
                                                         (int)pacpll_signals.signal_gpiox[14], (int)pacpll_signals.signal_gpiox[15]
                                                         );
                 }
-                int S = rpspmc_parameters.uptime_seconds;
-                int d = S%(3600*24);
-                int h = (S-d*24*3600)%3600;
-                int m = (S-d*24*3600-h*3600)%60;
-                int s = (S-d*24*3600-h*3600-m*60);
-                gchar *health_string = g_strdup_printf ("CPU: %03.0f%% Free: %6.1f MB %s #%g Up:%d d %02d:%02d:%02d",
+                gchar *health_string = g_strdup_printf ("CPU: %03.0f%% Free: %6.1f MB %s #%06.1f Up:%d d %02d:%02d:%04.1f FPGA clock tics: %.2f",
                                                         pacpll_parameters.cpu_load,
                                                         pacpll_parameters.free_ram/1024/1024,
                                                         gpiox_string?gpiox_string:"[]", pacpll_parameters.counter,
-                                                        d,h,m,s
+                                                        d,h,m,s, spmc_parameters.uptime_seconds
                                                         );
                 g_free (gpiox_string);
 #else
-                int S = spmc_parameters.uptime_seconds;
-                int d = S%(3600*24);
-                int h = (S-d*24*3600)%3600;
-                int m = (S-d*24*3600-h*3600)%60;
-                int s = (S-d*24*3600-h*3600-m*60);
-                gchar *health_string = g_strdup_printf ("CPU: %03.0f%% Free: %6.1f MB #%g Up:%d d %02d:%02d:%02d",
+                gchar *health_string = g_strdup_printf ("CPU: %03.0f%% Free: %6.1f MB #%06.1f Up:%d d %02d:%02d:%04.1f",
                                                         pacpll_parameters.cpu_load,
                                                         pacpll_parameters.free_ram/1024/1024,
                                                         pacpll_parameters.counter,
@@ -5246,6 +5249,7 @@ void RPspmc_pacpll::update_health (const gchar *msg){
                                                         );
 #endif
                 gtk_entry_buffer_set_text (GTK_ENTRY_BUFFER (gtk_entry_get_buffer (GTK_ENTRY((red_pitaya_health)))), health_string, -1);
+                gtk_widget_set_name (GTK_WIDGET (red_pitaya_health), "entry-mono-text-health");
                 g_free (health_string);
         }
 }
@@ -6311,6 +6315,68 @@ void RPspmc_pacpll::dynamic_graph_draw_function (GtkDrawingArea *area, cairo_t *
                 gtk_drawing_area_set_content_width (area, 128);
                 gtk_drawing_area_set_content_height (area, 4);
                 current_width=0;
+        }
+}
+
+
+void RPspmc_pacpll::update_shm_monitors (int close_shm){
+        const char *rpspmc_monitors = "/gxsm4rpspmc_monitors";
+        static int shm_fd = -1;
+        static void *shm_ptr = NULL;
+        // Set the size of the shared memory region
+        static size_t shm_size = 1024;
+         
+        if (shm_fd == -1){
+                shm_fd = shm_open(rpspmc_monitors, O_CREAT | O_RDWR, 0666);
+                if (shm_fd == -1) {
+                        g_error ("Error shm_open of %s.", rpspmc_monitors);
+                        return;
+                }
+                
+                // Resize the shared memory object to the desired size
+                if (ftruncate (shm_fd, shm_size) == -1) {
+                        g_error ("Error ftruncate of %s.", rpspmc_monitors);
+                        return;
+                }
+
+                // Map the shared memory object into the process address space
+                shm_ptr = mmap(NULL, shm_size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
+                if (shm_ptr == MAP_FAILED) {
+                        g_error("Error mmap");
+                        return;
+                }
+        }
+
+        // Write data to the shared memory
+        memcpy  (shm_ptr, spmc_signals.xyz_meter, sizeof(spmc_signals.xyz_meter));
+        /*
+        sprintf (shm_ptr+512, "XYZ=[[%g %g %g] [%g %g %g] [%g %g %g]]\n",
+                 spmc_signals.xyz_meter[0],spmc_signals.xyz_meter[1],spmc_signals.xyz_meter[2],
+                 spmc_signals.xyz_meter[3],spmc_signals.xyz_meter[4],spmc_signals.xyz_meter[5],
+                 spmc_signals.xyz_meter[6],spmc_signals.xyz_meter[7],spmc_signals.xyz_meter[8]
+                 );
+        */
+
+        if (close_shm){
+        
+                // Unmap the shared memory object
+                if (munmap(shm_ptr, shm_size) == -1) {
+                        g_error("Error munmap");
+                        return;
+                }
+                // Close the shared memory file descriptor
+                if (close(shm_fd) == -1) {
+                        g_error("Error close");
+                        return 1;
+                }
+                
+                // Unlink the shared memory object
+                if (shm_unlink(rpspmc_monitors) == -1) {
+                        g_error("Error shm_unlink");
+                        return 1;
+                }
+                shm_ptr = NULL;
+                shm_fd = -1;
         }
 }
 

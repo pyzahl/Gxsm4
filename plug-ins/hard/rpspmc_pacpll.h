@@ -1132,6 +1132,9 @@ public:
         
         virtual void on_new_data (){
                 update_monitoring_parameters();
+
+                update_shm_monitors ();
+
                 gtk_widget_queue_draw (signal_graph_area);
 
                 //self->stream_data ();
@@ -1139,6 +1142,9 @@ public:
 
                 RPSPMC_ControlClass->on_new_data ();
         };
+
+        void update_shm_monitors (int close=0);
+
         
         double unwrap (int k, double phi);
         
