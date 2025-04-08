@@ -1214,6 +1214,8 @@ void Gtk_EntryControl::pcs_adjustment_configure_response_callback (GtkDialog *di
                 }
         }
         gtk_window_destroy (GTK_WINDOW (dialog));
+
+        delete g_object_get_data  (G_OBJECT (dialog), "TMP-BP-REF"); // cleanup
 }
 
 void Gtk_EntryControl::pcs_adjustment_configure (){
@@ -1228,7 +1230,7 @@ void Gtk_EntryControl::pcs_adjustment_configure (){
 	tmp = g_strconcat (N_("Configure"), 
 			   " ",
 			   (gchar*) g_object_get_data( G_OBJECT (entry), 
-							 "Adjustment_PCS_Name"),
+                                                       "Adjustment_PCS_Name"),
 			   NULL);
 
 	GtkWidget *dialog = gtk_dialog_new_with_buttons (tmp,
@@ -1239,11 +1241,11 @@ void Gtk_EntryControl::pcs_adjustment_configure (){
 							 NULL);
 	g_free (tmp);
 
-        BuildParam bp;
+        BuildParam *bp = new BuildParam;
 
-        bp.set_error_text (N_("Value not allowed."));
+        bp->set_error_text (N_("Value not allowed."));
 
-        gtk_box_append (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (dialog))), bp.grid);
+        gtk_box_append (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (dialog))), bp->grid);
 
 	tmp = g_strdup_printf (N_("Warning: know what you are doing here!" \
                                   "\nInfo: You may use the dconf-editor." \
@@ -1251,54 +1253,56 @@ void Gtk_EntryControl::pcs_adjustment_configure (){
                                   "\n %s/%s [%d]"),
                                gsettings_path, gsettings_key, get_count () 
                                );
-        bp.grid_add_label (tmp, NULL, 2); bp.new_line ();
+        bp->grid_add_label (tmp, NULL, 2); bp->new_line ();
 	g_free (tmp);	
-	bp.grid_add_ec ("Upper Limit", unit, &vMax, -EC_INF, EC_INF, "8g"); bp.new_line ();
-	bp.grid_add_ec ("Upper Warn",  unit, &vMax_warn, -EC_INF, EC_INF, "8g"); bp.new_line ();
-	bp.grid_add_ec ("Lower Warn",  unit, &vMin_warn, -EC_INF, EC_INF, "8g"); bp.new_line ();
-	bp.grid_add_ec ("Lower Limit", unit, &vMin, -EC_INF, EC_INF, "8g"); bp.new_line ();
+	bp->grid_add_ec ("Upper Limit", unit, &vMax, -EC_INF, EC_INF, "8g"); bp->new_line ();
+	bp->grid_add_ec ("Upper Warn",  unit, &vMax_warn, -EC_INF, EC_INF, "8g"); bp->new_line ();
+	bp->grid_add_ec ("Lower Warn",  unit, &vMin_warn, -EC_INF, EC_INF, "8g"); bp->new_line ();
+	bp->grid_add_ec ("Lower Limit", unit, &vMin, -EC_INF, EC_INF, "8g"); bp->new_line ();
 
-        bp.grid_add_widget (gtk_separator_new (GTK_ORIENTATION_HORIZONTAL), 2); bp.new_line ();
-	bp.grid_add_ec ("Exclude Hi", unit, &v_ex_hi, -EC_INF, EC_INF, "8g"); bp.new_line ();
-	bp.grid_add_ec ("Exclude Lo", unit, &v_ex_lo, -EC_INF, EC_INF, "8g"); bp.new_line ();
+        bp->grid_add_widget (gtk_separator_new (GTK_ORIENTATION_HORIZONTAL), 2); bp->new_line ();
+	bp->grid_add_ec ("Exclude Hi", unit, &v_ex_hi, -EC_INF, EC_INF, "8g"); bp->new_line ();
+	bp->grid_add_ec ("Exclude Lo", unit, &v_ex_lo, -EC_INF, EC_INF, "8g"); bp->new_line ();
 
-        if (GTK_IS_SPIN_BUTTON (entry)){
-                bp.grid_add_widget (gtk_separator_new (GTK_ORIENTATION_HORIZONTAL), 2); bp.new_line ();
-                bp.grid_add_ec ("Step [B1]", unit, &step, -EC_INF, EC_INF, "8g"); bp.new_line ();
-                bp.grid_add_ec ("Page [B2]", unit, &page, -EC_INF, EC_INF, "8g"); bp.new_line ();
-                bp.grid_add_ec ("Pg10 [B3]", unit, &page10, -EC_INF, EC_INF, "8g"); bp.new_line ();
-                bp.grid_add_ec ("Progressive", unity, &progressive, 0., 10., "g"); bp.new_line ();
+        //if (GTK_IS_SPIN_BUTTON (entry)){
+        if (1){
+                bp->grid_add_widget (gtk_separator_new (GTK_ORIENTATION_HORIZONTAL), 2); bp->new_line ();
+                bp->grid_add_ec ("Step [B1]", unit, &step, -EC_INF, EC_INF, "8g"); bp->new_line ();
+                bp->grid_add_ec ("Page [B2]", unit, &page, -EC_INF, EC_INF, "8g"); bp->new_line ();
+                bp->grid_add_ec ("Pg10 [B3]", unit, &page10, -EC_INF, EC_INF, "8g"); bp->new_line ();
+                bp->grid_add_ec ("Progressive", unity, &progressive, 0., 10., "g"); bp->new_line ();
 #if 0
-                g_object_set_data  (G_OBJECT (dialog), "CB-LOG-SCALE",
-                                    bp.grid_add_check_button ("Log-Scale", "use slider in log scale mode.\n WARING: EXPERIMENTAL",
-                                                              1, NULL, NULL, (adj_mode & PARAM_CONTROL_ADJUSTMENT_LOG)?1:0
-                                                              ));
                 
-
-                bp.new_line ();
+                g_object_set_data  (G_OBJECT (dialog), "CB-LOG-SCALE",
+                                    bp->grid_add_check_button_simple ("Log-Scale", "use slider in log scale mode.\n WARING: EXPERIMENTAL",
+                                                                     (adj_mode & PARAM_CONTROL_ADJUSTMENT_LOG)?true:false));
+                bp->new_line ();
                 g_object_set_data  (G_OBJECT (dialog), "CB-LOG-SYM",
-                                    bp.grid_add_check_button ("Log-Sym", "use slider in log scale mode with zero at center. Left: log, neg val.\n WARING: EXPERIMENTAL",
-                                                              1, NULL, NULL, adj_mode & PARAM_CONTROL_ADJUSTMENT_LOG?1:0
-                                                              ));
-                bp.new_line ();
+                                    bp->grid_add_check_button_simple ("Log-Sym", "use slider in log scale mode with zero at center. Left: log, neg val.\n WARING: EXPERIMENTAL",
+                                                                     (adj_mode & PARAM_CONTROL_ADJUSTMENT_LOG)?true:false));
+                bp->new_line ();
                 g_object_set_data  (G_OBJECT (dialog), "CB-DUAL-RANGE",
-                                    bp.grid_add_check_button ("Dual-Range", "use slider in log scale mode with zero at center. Left: log, neg val.\n WARING: EXPERIMENTAL",
-                                                              1, NULL, NULL, adj_mode & PARAM_CONTROL_ADJUSTMENT_LOG?1:0
-                                                              ));
-                bp.new_line ();
+                                    bp->grid_add_check_button_simple ("Dual-Range", "use slider in log scale mode with zero at center. Left: log, neg val.\n WARING: EXPERIMENTAL",
+                                                                     (adj_mode & PARAM_CONTROL_ADJUSTMENT_DUAL_RANGE)?true:false));
+                bp->new_line ();
                 g_object_set_data  (G_OBJECT (dialog), "CB-TICKS",
-                                    bp.grid_add_check_button ("Add-Ticks", "add tick marks w. snapping to slider",
-                                                              1, NULL, NULL, adj_mode & PARAM_CONTROL_ADJUSTMENT_LOG?1:0
-                                                              ));
+                                    bp->grid_add_check_button_simple ("Add-Ticks", "add tick marks w. snapping to slider",
+                                                                     (adj_mode & PARAM_CONTROL_ADJUSTMENT_ADD_MARKS)?true:false));
 #endif
-                bp.new_line ();
+                bp->new_line ();
         }
 
-        // FIX-ME GTK4 show all
+        
+        g_object_set_data  (G_OBJECT (dialog), "TMP-BP-REF", bp);
+                            
         gtk_widget_show (dialog);
         g_signal_connect (dialog, "response",
                           G_CALLBACK (Gtk_EntryControl::pcs_adjustment_configure_response_callback),
                           this);
+
+        g_message ("Gtk_EntryControl::pcs_adjustment_configure () -- Dialog build and started for: %s", (gchar*) g_object_get_data( G_OBJECT (entry), 
+                                                       "Adjustment_PCS_Name"));
+        
 }
 
 #define XRM_GET_WD(L, V) tdv = g_strdup_printf ("%g", V); xrm.Get (L, &V, tdv); g_free (tdv)

@@ -1099,19 +1099,19 @@ static void remote_cb_uncheck( GtkWidget *widget, gpointer *data ){
 	gtk_check_button_set_active (GTK_CHECK_BUTTON (widget), false); 
 }
 
-GtkWidget* BuildParam::grid_add_check_button_remote_enabled (const gchar* labeltxt, const char *tooltip, int bwx,
+GtkWidget* BuildParam::grid_add_check_button_remote_enabled (const gchar* labeltxt, const gchar *tooltip, int bwx,
                                                              GCallback cb, gpointer cb_data, guint64 source, guint64 mask, const gchar *control_id){
 
         button = gtk_check_button_new_with_label (N_(labeltxt));
         if (!control_id && tooltip){ // tooltip with REMOTEID must be given like "Tooltip Text .... PyRemote:action([UN]CHECK-REMOTEID)" <= PYREMOTE_CHECK_HOOK_KEY
-                const char *cmd = strstr (tooltip, PYREMOTE_CHECK_HOOK_KEY_PREFIX); // -xxxx).  remote IDs: -> CHECK-REMOTEID, UNCHECK-REMOTEID
+                const gchar *cmd = strstr (tooltip, PYREMOTE_CHECK_HOOK_KEY_PREFIX); // -xxxx).  remote IDs: -> CHECK-REMOTEID, UNCHECK-REMOTEID
                 //if (cmd)
                 //        g_message ("check button L=(%s) TT=(%s) with hook: %s", labeltxt, tooltip, cmd);
                 //else
                 //        g_message ("check button L=(%s) TT=(%s) with no RemoteID hook", labeltxt, tooltip);
                 if (cmd){
-                        const char *cmd1 = strstr (cmd, "-");
-                        const char *cmd2 = strstr (cmd, ")");
+                        const gchar *cmd1 = strstr (cmd, "-");
+                        const gchar *cmd2 = strstr (cmd, ")");
                         control_id = g_strndup(cmd1+1, cmd2-cmd1-1);
                         //g_message ("Setting up check button (%s) with RemoteID: [UN]CHECK-%s", tooltip, control_id);
                 }
@@ -1152,11 +1152,14 @@ GtkWidget* BuildParam::grid_add_check_button_remote_enabled (const gchar* labelt
         return button;
 }
 
-GtkWidget* BuildParam::grid_add_check_button (const gchar* labeltxt, const char *tooltip, int bwx,
+GtkWidget* BuildParam::grid_add_check_button (const gchar* labeltxt, const gchar *tooltip, int bwx,
                                               GCallback cb, gpointer data, int source, int mask){
         return grid_add_check_button_remote_enabled (labeltxt, tooltip, bwx, cb, data, (guint64)source, (guint64)mask, NULL);
 }
-GtkWidget* BuildParam::grid_add_check_button_guint64(const gchar* labeltxt, const char *tooltip, int bwx,
+GtkWidget* BuildParam::grid_add_check_button_guint64(const gchar* labeltxt, const gchar *tooltip, int bwx,
                                                      GCallback cb, gpointer data, guint64 source, guint64 mask, const gchar *control_id){
         return grid_add_check_button_remote_enabled (labeltxt, tooltip, bwx, cb, data, source, mask, control_id);
+}
+GtkWidget* BuildParam::grid_add_check_button_simple (const gchar* labeltxt, const gchar *tooltip=NULL, gboolean checked=false){
+        return grid_add_check_button_remote_enabled (labeltxt, tooltip, 1, NULL, NULL, checked?1:0, 0);
 }

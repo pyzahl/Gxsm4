@@ -511,9 +511,11 @@ class BuildParam{
         GtkWidget* grid_add_check_button_remote_enabled (const gchar* labeltxt, const char *tooltip=NULL, int bwx=1,
                                                          GCallback cb=NULL, gpointer data=NULL, guint64 source=0, guint64 mask=0, const gchar *control_id=NULL);
         
-        GtkWidget* grid_add_check_button (const gchar* labeltxt, const char *tooltip=NULL, int bwx=1, GCallback cb=NULL, gpointer data=NULL, int source=0, int mask=0);
+        GtkWidget* grid_add_check_button_simple (const gchar* labeltxt, const gchar *tooltip=NULL, gboolean checked=false);
+        
+        GtkWidget* grid_add_check_button (const gchar* labeltxt, const gchar *tooltip=NULL, int bwx=1, GCallback cb=NULL, gpointer data=NULL, int source=0, int mask=0);
 
-        GtkWidget* grid_add_check_button_guint64(const gchar* labeltxt, const char *tooltip=NULL, int bwx=1, GCallback cb=NULL, gpointer data=NULL, guint64 source=0, guint64 mask=0, const gchar *control_id=NULL);
+        GtkWidget* grid_add_check_button_guint64(const gchar* labeltxt, const gchar *tooltip=NULL, int bwx=1, GCallback cb=NULL, gpointer data=NULL, guint64 source=0, guint64 mask=0, const gchar *control_id=NULL);
 
         GtkWidget* grid_add_exec_button (const gchar* labeltxt,
                                          GCallback exec_cb, gpointer cb_data, const gchar *control_id,
