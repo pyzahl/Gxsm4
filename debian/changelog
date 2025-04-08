@@ -1,3 +1,9 @@
+gxsm4 (4.0.0-0ubuntu9) noble; urgency=medium
+
+  * intermediate version
+
+ -- Thorsten Wagner <stm@users.sf.net>  Sat, 14 Dec 2024 18:28:04 +0100
+
 gxsm4 (4.0.0-0ubuntu8) noble; urgency=medium
 
   * fixed problem with shlibs
