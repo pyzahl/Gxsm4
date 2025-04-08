@@ -122,8 +122,10 @@ public:
                 con_list::iterator it;
                 size_t webs_nbuf=0;
                 for (it = m_connections.begin(); it != m_connections.end(); ++it) {
-                        server::connection_ptr connection = m_endpoint.get_con_from_hdl (*it);
-                        webs_nbuf += connection->get_buffered_amount();
+                        if (it != m_connections.end()){
+                                server::connection_ptr connection = m_endpoint.get_con_from_hdl (*it);
+                                webs_nbuf += connection->get_buffered_amount();
+                        }
                 }
 
                 // m_endpoint.get_con_from_hdl (*it)->get_buffered_amount();
@@ -162,9 +164,9 @@ public:
         };
 
         void add_greeting (){
-                info_stream << "\n***\nSPMC Stream Server is connected.\n***\n" << std::endl;
-                info_stream << "\n*** " RPSPMC_VNAME " ***\n" << std::endl;
-                info_stream << "\n*** SRCS Bit Mask Coding is '32b " RPSPMC_SRCS_INFO " ***\n" << std::endl;
+                info_stream << "#*** RPSPMC Stream Server is connected. ***" << std::endl;
+                info_stream << "#*** Version: " RPSPMC_VNAME << std::endl;
+                info_stream << "#*** SRCS Bit Mask Coding is " RPSPMC_SRCS_INFO << std::endl;
                 info_count++;
         };
         void add_vector (std::string vec){
@@ -173,6 +175,10 @@ public:
         };
         void add_info (std::string info){
                 info_stream << "{Info: {" << info << "}}" << std::endl;
+                info_count++;
+        };
+        void add_xyz_info (double x, double y, double z){
+                info_stream << "{XYZInfo: {" << x << ',' << y << ',' << z << "}}" << std::endl;
                 info_count++;
         };
         void clear_info_stream(){

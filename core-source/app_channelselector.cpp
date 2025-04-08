@@ -467,10 +467,32 @@ void ChannelSelector::SetView(int Channel, int View){
 }
 
 void ChannelSelector::SetInfo(int Channel, const gchar *info){
+#define SRCS_INFO_ON
+#ifdef SRCS_INFO_ON
+        gchar *infox = NULL;
+        gint mode_pos  = (gtk_combo_box_get_active (GTK_COMBO_BOX (ChModeWidget[Channel])));
+        int k = mode_pos - (ID_CH_M_LAST - 1);
+        if (k >= 0){
+                if (k < PIDCHMAX){
+                        infox = g_strdup_printf("%s [%08x]", info, xsmres.pidsrc_msk[k]);
+                } else {
+                        k -= PIDCHMAX;
+                        if (k < DAQCHMAX) {
+                                infox = g_strdup_printf("%s [%08x]", info, xsmres.daq_msk[k]);
+                        } else {
+                                k -= DAQCHMAX;
+                                infox = g_strdup_printf("%s [EXT%d]", info, k);
+                        }
+                }
+        } else infox = g_strdup_printf("%s [--]", info);
+        gtk_label_set_text (GTK_LABEL(ChInfoWidget[Channel]), infox);
+        g_free (infox);
+#else
         gtk_label_set_text (GTK_LABEL(ChInfoWidget[Channel]), info);
+#endif
 }
 
-
+// mode_id: combobox item position index
 void ChannelSelector::SetModeChannelSignal(int mode_id, const gchar* signal_name, const gchar* signal_label, const gchar *signal_unit, double d2unit){
 	int k,l;
 

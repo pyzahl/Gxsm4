@@ -1,12 +1,14 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-/* Gxsm - Gnome X Scanning Microscopy
+// Company:  BNL
+// Engineer: Percy Zahl
+// 
+/* Gxsm - Gnome X Scanning Microscopy 
+ * ** FPGA Implementaions RPSPMC aka RedPitaya Scanning Probe Control **
  * universal STM/AFM/SARLS/SPALEED/... controlling and
  * data analysis software
  * 
- * Copyright (C) 1999,2000,2001,2002,2003 Percy Zahl
+ * Copyright (C) 1999-2025 by Percy Zahl
  *
  * Authors: Percy Zahl <zahl@users.sf.net>
  * WWW Home: http://gxsm.sf.net
@@ -27,12 +29,12 @@
  */
 // 
 // Create Date: 11/26/2017 09:10:43 PM
-// Design Name: 
-// Module Name: axis_decimaor
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
+// Design Name:    part of RPSPMC
+// Module Name:    axis_dc_filter
+// Project Name:   RPSPMC 4 GXSM
+// Target Devices: Zynq z7020
+// Tool Versions:  Vivado 2023.1
+// Description:    DC removal/extraction filter (IIR)
 // 
 // Dependencies: 
 // 
@@ -45,6 +47,7 @@
 
 module axis_dc_filter #
 (
+    parameter dc_filter_address = 20040,
     parameter S_AXIS_DATA_WIDTH = 16,
     parameter S_AXIS_SIGNAL_SIGNIFICANT_DATA_WIDTH = 16, // 14, now decimated 4x to 16 bits
     parameter M_AXIS_DATA_WIDTH = 32,
@@ -52,17 +55,14 @@ module axis_dc_filter #
     parameter LMS_Q_WIDTH = 22  // do not change
 )
 (
-    // (* X_INTERFACE_PARAMETER = "FREQ_HZ 62500000" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN aclk" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF S_AXIS:M_AXIS_AC_LMS:M_AXIS_AC16:M_AXIS_ACDC" *)
+    input [32-1:0]  config_addr,
+    input [512-1:0] config_data,
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN aclk, ASSOCIATED_BUSIF S_AXIS:M_AXIS_AC_LMS:M_AXIS_AC16:M_AXIS_ACDC" *)
     input aclk,
     input wire [S_AXIS_DATA_WIDTH-1:0]  S_AXIS_tdata,
     input wire                          S_AXIS_tvalid,
 
     input sc_zero,
-    input signed [31:0] dc_tau, // Q31 tau DC iir at cos-sin zero x
-    input signed [31:0] dc, // Q22
-
 
      // Master side
     // AC signal of CH0 prepared at LMS width
@@ -81,8 +81,6 @@ module axis_dc_filter #
     
 );
 
-    reg reg_sc_zero;
-    
     reg signed [31:0] reg_dc_tau; // Q31 tau DC iir at cos-sin zero x
     reg signed [LMS_DATA_WIDTH-1:0] reg_dc; // Q22
 
@@ -103,47 +101,54 @@ module axis_dc_filter #
 
     always @ (posedge aclk)
     begin
-        rdecii <= rdecii+1;
-    end
-
-    always @ (posedge rdecii[1])
-    begin
-        reg_sc_zero <= sc_zero;
-        reg_dc_tau  <= dc_tau; // Q31 tau DC iir at cos-sin zero x
-        reg_dc      <= {dc[LMS_DATA_WIDTH-1], dc[LMS_DATA_WIDTH-2:0]}; // Q22 -> QLMS (26.Q22)
-
-        m <= {{(LMS_DATA_WIDTH-LMS_Q_WIDTH-1){S_AXIS_tdata[S_AXIS_SIGNAL_SIGNIFICANT_DATA_WIDTH-1]}}, // signum bit 13 extend to LMS_DATA_WIDTH
-                                             {S_AXIS_tdata[S_AXIS_SIGNAL_SIGNIFICANT_DATA_WIDTH-1 : 0]}, // 14bit ADC -now-> 16bit decimated ADC data bits: 15..0
-              {(LMS_Q_WIDTH+1-S_AXIS_SIGNAL_SIGNIFICANT_DATA_WIDTH){1'b0}} // fill remeining Q 0
-             }; // = LMS data size : 4Q22 from Q16 data = { S 4 expand, D16, fill 6 remaing Q bits w 0 }
-
-        //m <= {{(LMS_Q_WIDTH-S_AXIS_DATA_WIDTH){S_AXIS_tdata[S_AXIS_DATA_WIDTH-1]}}, // signum extend to LMS_DATA_Q_WIDTH
-        //      S_AXIS_tdata, // 16
-        //      {(LMS_DATA_WIDTH-LMS_Q_WIDTH){1'b0}} // fill 0  (4 bits prec)
-        //      };
-                 
-        //  special IIR DC filter DC error on average of samples at 0,90,180,270
-        // **** Consider a 4rth order IIR LP ****
-        if (sc_zero)
+        case (config_addr)
+        dc_filter_address:
         begin
-            // mdc_mue <= (m-mdc) * dc_tau;
-            mdc_mue_e1 <= m-mdc; // prepare for moving sum over period at 0,90,180,270
-            mdc_mue_e2 <= mdc_mue_e1;
-            mdc_mue_e3 <= mdc_mue_e2;
-            mdc_mue_e4 <= mdc_mue_e3;
-            mdc_mue_sum  <= mdc_mue_e1+mdc_mue_e2+mdc_mue_e3+mdc_mue_e4 + $signed(2);
-            mdc_mue <= (mdc_mue_sum>>>2) * reg_dc_tau;
-            mdc1 <= mdc2 + mdc_mue; // + $signed(58'sh80000000);
-        end
-        else
-        begin
-            mdc2 <= mdc1;
-            mdc  <= mdc1[LMS_DATA_WIDTH+32-1:32]; // (LMS_DATA_WIDTH-LMS_Q_WIDTH) Q LMS_Q_WIDTH = 22Q4
-        end
+            reg_dc_tau  <= config_data[1*32-1 : 0*32]; // Q31 tau DC iir at cos-sin zero x
+            reg_dc      <= config_data[1*32+LMS_DATA_WIDTH-1 : 1*32]; // Q22
+        end   
+        endcase
+
     
-        ac_signal <= m - $signed(reg_dc_tau[31] ? reg_dc : mdc); // auto IIR dc or manual dc
+        rdecii <= rdecii+1; // rdecii 00 01 *10 11 00 ...
+        if (rdecii[1]==1)
+        begin
+            //reg_dc_tau  <= dc_tau; // Q31 tau DC iir at cos-sin zero x
+            //reg_dc      <= {dc[LMS_DATA_WIDTH-1], dc[LMS_DATA_WIDTH-2:0]}; // Q22 -> QLMS (26.Q22)
+    
+            m <= {{(LMS_DATA_WIDTH-LMS_Q_WIDTH-1){S_AXIS_tdata[S_AXIS_SIGNAL_SIGNIFICANT_DATA_WIDTH-1]}}, // signum bit 13 extend to LMS_DATA_WIDTH
+                                                 {S_AXIS_tdata[S_AXIS_SIGNAL_SIGNIFICANT_DATA_WIDTH-1 : 0]}, // 14bit ADC -now-> 16bit decimated ADC data bits: 15..0
+                  {(LMS_Q_WIDTH+1-S_AXIS_SIGNAL_SIGNIFICANT_DATA_WIDTH){1'b0}} // fill remeining Q 0
+                 }; // = LMS data size : 4Q22 from Q16 data = { S 4 expand, D16, fill 6 remaing Q bits w 0 }
+    
+            //m <= {{(LMS_Q_WIDTH-S_AXIS_DATA_WIDTH){S_AXIS_tdata[S_AXIS_DATA_WIDTH-1]}}, // signum extend to LMS_DATA_Q_WIDTH
+            //      S_AXIS_tdata, // 16
+            //      {(LMS_DATA_WIDTH-LMS_Q_WIDTH){1'b0}} // fill 0  (4 bits prec)
+            //      };
+                     
+            //  special IIR DC filter DC error on average of samples at 0,90,180,270
+            // **** Consider a 4rth order IIR LP ****
+            if (sc_zero)
+            begin
+                // mdc_mue <= (m-mdc) * dc_tau;
+                mdc_mue_e1 <= m-mdc; // prepare for moving sum over period at 0,90,180,270
+                mdc_mue_e2 <= mdc_mue_e1;
+                mdc_mue_e3 <= mdc_mue_e2;
+                mdc_mue_e4 <= mdc_mue_e3;
+                mdc_mue_sum  <= mdc_mue_e1+mdc_mue_e2+mdc_mue_e3+mdc_mue_e4 + $signed(2);
+                mdc_mue <= (mdc_mue_sum>>>2) * reg_dc_tau;
+                mdc1 <= mdc2 + mdc_mue; // + $signed(58'sh80000000);
+            end
+            else
+            begin
+                mdc2 <= mdc1;
+                mdc  <= mdc1[LMS_DATA_WIDTH+32-1:32]; // (LMS_DATA_WIDTH-LMS_Q_WIDTH) Q LMS_Q_WIDTH = 22Q4
+            end
+        
+            ac_signal <= m - $signed(reg_dc_tau[31] ? reg_dc : mdc); // auto IIR dc or manual dc
+        end
     end
-
+    
     assign M_AXIS_AC_LMS_tdata = { {(M_AXIS_DATA_WIDTH-LMS_DATA_WIDTH){ac_signal[LMS_DATA_WIDTH-1]}}, ac_signal[LMS_DATA_WIDTH-1:0] }; // LMS [22.4] expanded to 32
     assign M_AXIS_AC_LMS_tvalid = 1;
 

@@ -65,6 +65,8 @@ static GActionEntry win_profile_popup_entries[] = {
         { "skl-Y-hold",  ProfileControl::yhold_callback, NULL, "false", NULL },
         { "skl-Y-expand",  ProfileControl::yexpand_callback, NULL, "false", NULL },
 
+        { "opt-X-last1000",  ProfileControl::last1000_callback, NULL, "false", NULL },
+        { "opt-X-last4000",  ProfileControl::last4000_callback, NULL, "false", NULL },
         { "opt-Y-linreg",  ProfileControl::linreg_callback, NULL, "false", NULL },
         { "opt-Y-diff",  ProfileControl::ydiff_callback, NULL, "false", NULL },
         { "opt-Y-ft",  ProfileControl::psd_callback, NULL, "false", NULL },
@@ -187,8 +189,12 @@ double ProfileElement::calc(gint64 ymode, int id, int binary_mask, double y_offs
 	if(ymode & PROFILE_MODE_XR_AB){
                 ix_left  = MIN (pctrl->CursorsIdx[0], pctrl->CursorsIdx[1]);
                 ix_right = MAX (pctrl->CursorsIdx[0], pctrl->CursorsIdx[1]);
+        } else if(ymode & PROFILE_MODE_XL1000){
+                ix_left  = MAX (0, ix_right-1000);
+        } else if(ymode & PROFILE_MODE_XL4000){
+                ix_left  = MAX (0, ix_right-4000);
         }
-        
+
  
         /*
          * unref, remove and delete unused paths
@@ -2829,6 +2835,48 @@ void ProfileControl::logy_callback (GSimpleAction *action, GVariant *parameter,
         pc->updateFrame ();
 	pc->UpdateArea ();
 }
+
+
+void ProfileControl::last1000_callback (GSimpleAction *action, GVariant *parameter, 
+                                        gpointer user_data){
+        ProfileControl *pc = (ProfileControl *) user_data;
+        GVariant *old_state, *new_state;
+
+        old_state = g_action_get_state (G_ACTION (action));
+        new_state = g_variant_new_boolean (!g_variant_get_boolean (old_state));
+ 
+        if (g_variant_get_boolean (new_state))
+		pc->mode = (pc->mode & ~PROFILE_MODE_XL1000) | PROFILE_MODE_XL1000;
+	else
+		pc->mode &= ~PROFILE_MODE_XL1000;
+
+        g_simple_action_set_state (action, new_state);
+        g_variant_unref (old_state);
+
+        pc->updateFrame ();
+	pc->UpdateArea ();
+}
+
+void ProfileControl::last4000_callback (GSimpleAction *action, GVariant *parameter, 
+                                        gpointer user_data){
+        ProfileControl *pc = (ProfileControl *) user_data;
+        GVariant *old_state, *new_state;
+
+        old_state = g_action_get_state (G_ACTION (action));
+        new_state = g_variant_new_boolean (!g_variant_get_boolean (old_state));
+ 
+        if (g_variant_get_boolean (new_state))
+		pc->mode = (pc->mode & ~PROFILE_MODE_XL4000) | PROFILE_MODE_XL4000;
+	else
+		pc->mode &= ~PROFILE_MODE_XL4000;
+
+        g_simple_action_set_state (action, new_state);
+        g_variant_unref (old_state);
+
+        pc->updateFrame ();
+	pc->UpdateArea ();
+}
+
 
 void ProfileControl::linreg_callback (GSimpleAction *action, GVariant *parameter, 
                                  gpointer user_data){

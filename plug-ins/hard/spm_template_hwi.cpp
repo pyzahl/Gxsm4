@@ -143,7 +143,7 @@ extern "C++" {
 #define YAngFac    (main_get_gapp()->xsm->Inst->Dig2YA (1))
 
 // Masks MUST BE unique
-SOURCE_SIGNAL_DEF source_signals[] = {
+SOURCE_SIGNAL_DEF template_source_signals[] = {
         // -- 8 vector generated signals (outputs/mapping) ==> must match: #define NUM_VECTOR_SIGNALS 8
         { 0x01000000, "Index",    " ", "#", "#", 1.0, PROBEDATA_ARRAY_INDEX },
         { 0x02000000, "Time",     " ", "ms", "ms", 1.0/75, PROBEDATA_ARRAY_TIME }, // 1000/emu->frq_ref => ms
@@ -2030,20 +2030,20 @@ void SPM_Template_Control::create_folder (){
 
         gint y = bp->y;
         gint mm=0;
-	for (int i=0; source_signals[i].mask; ++i) {
-                PI_DEBUG (DBG_L4, "GRAPHS*** i=" << i << " " << source_signals[i].label);
+	for (int i=0; template_source_signals[i].mask; ++i) {
+                PI_DEBUG (DBG_L4, "GRAPHS*** i=" << i << " " << template_source_signals[i].label);
 		int c=i/8; 
 		c*=11;
                 c++;
 		int m = -1;
                 for (int k=0; swappable_signals[k].mask; ++k){
-                        if (source_signals[i].mask == swappable_signals[k].mask){
-                                source_signals[i].label = swappable_signals[k].label;
-                                source_signals[i].unit  = swappable_signals[k].unit;
-                                source_signals[i].unit_sym = swappable_signals[k].unit_sym;
-                                source_signals[i].scale_factor = swappable_signals[k].scale_factor;
+                        if (template_source_signals[i].mask == swappable_signals[k].mask){
+                                template_source_signals[i].label = swappable_signals[k].label;
+                                template_source_signals[i].unit  = swappable_signals[k].unit;
+                                template_source_signals[i].unit_sym = swappable_signals[k].unit_sym;
+                                template_source_signals[i].scale_factor = swappable_signals[k].scale_factor;
                                 m = k;
-                                PI_DEBUG (DBG_L4, "GRAPHS*** SWPS init i=" << i << " k=" << k << " " << source_signals[i].label);
+                                PI_DEBUG (DBG_L4, "GRAPHS*** SWPS init i=" << i << " k=" << k << " " << template_source_signals[i].label);
                                 break;
                         }
                 }
@@ -2058,46 +2058,46 @@ void SPM_Template_Control::create_folder (){
                                                );
                 // source selection for SWPS?:
                 if (m >= 0){ // swappable flex source
-                        //g_message("bp->grid_add_probe_source_signal_options m=%d  %s => %d %s", m, source_signals[i].label,  probe_source[m], swappable_signals[m].label);
+                        //g_message("bp->grid_add_probe_source_signal_options m=%d  %s => %d %s", m, template_source_signals[i].label,  probe_source[m], swappable_signals[m].label);
                         bp->grid_add_probe_source_signal_options (m, probe_source[m], this);
                 }else { // or fixed assignment
-                        bp->grid_add_label (source_signals[i].label, NULL, 1, 0.);
+                        bp->grid_add_label (template_source_signals[i].label, NULL, 1, 0.);
                 }
                 //fixed assignment:
                 // bp->grid_add_label (lablookup[i], NULL, 1, 0.);
-                g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER ((int) source_signals[i].mask)); 
+                g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER ((int) template_source_signals[i].mask)); 
                 g_object_set_data (G_OBJECT(bp->button), "VPC", GINT_TO_POINTER (i)); 
                 
                 // use as X-Source
                 bp->grid_add_check_button ("", NULL, 1,
                                                GCallback (change_source_callback), this,
-                                               XSource, (((int) (X_SOURCE_MSK | source_signals[i].mask)) & 0xfffffff)
+                                               XSource, (((int) (X_SOURCE_MSK | template_source_signals[i].mask)) & 0xfffffff)
                                                );
-                g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER ((int) (X_SOURCE_MSK | source_signals[i].mask))); 
+                g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER ((int) (X_SOURCE_MSK | template_source_signals[i].mask))); 
                 g_object_set_data (G_OBJECT(bp->button), "VPC", GINT_TO_POINTER (i)); 
 
                 // use as Plot (Y)-Source
                 bp->grid_add_check_button ("", NULL, 1,
                                                G_CALLBACK (change_source_callback), this,
-                                               PSource, (((int) (P_SOURCE_MSK | source_signals[i].mask)) & 0xfffffff)
+                                               PSource, (((int) (P_SOURCE_MSK | template_source_signals[i].mask)) & 0xfffffff)
                                                );
-                g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER ((int) (P_SOURCE_MSK | source_signals[i].mask))); 
+                g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER ((int) (P_SOURCE_MSK | template_source_signals[i].mask))); 
                 g_object_set_data (G_OBJECT(bp->button), "VPC", GINT_TO_POINTER (i)); 
                 
                 // use as A-Source (Average)
                 bp->grid_add_check_button ("", NULL, 1,
                                                G_CALLBACK (change_source_callback), this,
-                                               PlotAvg, (((int) (A_SOURCE_MSK | source_signals[i].mask)) & 0xfffffff)
+                                               PlotAvg, (((int) (A_SOURCE_MSK | template_source_signals[i].mask)) & 0xfffffff)
                                                );
-                g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER ((int) (A_SOURCE_MSK | source_signals[i].mask))); 
+                g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER ((int) (A_SOURCE_MSK | template_source_signals[i].mask))); 
                 g_object_set_data (G_OBJECT(bp->button), "VPC", GINT_TO_POINTER (i)); 
                 
                 // use as S-Source (Section)
                 bp->grid_add_check_button ("", NULL, 1,
                                                G_CALLBACK (change_source_callback), this,
-                                               PlotSec, (((int) (S_SOURCE_MSK | source_signals[i].mask)) & 0xfffffff)
+                                               PlotSec, (((int) (S_SOURCE_MSK | template_source_signals[i].mask)) & 0xfffffff)
                                                );
-                g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER ((int) (S_SOURCE_MSK | source_signals[i].mask))); 
+                g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER ((int) (S_SOURCE_MSK | template_source_signals[i].mask))); 
                 g_object_set_data (G_OBJECT(bp->button), "VPC", GINT_TO_POINTER (i)); 
                 
                 // bp->grid_add_check_button_graph_matrix(lablookup[i], (int) msklookup[i], m, probe_source[m], i, this);

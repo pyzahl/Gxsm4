@@ -976,6 +976,13 @@ extern "C++" {
                   ),
 
                 GNOME_RES_ENTRY_AUTO_PATH_OPTION
+                ( GNOME_RES_BOOL, "GUI/PCS_ForceUpdate", "true", &xsmres.gui_pcs_force, TrueFalseList, N_("GUI"),
+                  N_("true: Forces PCS Entry Value to update on any event/focus/click regardless value changed. (EXPERIMENTAL, not recommended for SRanger)")
+                  ),
+
+                GNOME_RES_ENTRY_SEPARATOR (N_("GUI"), NULL),
+
+                GNOME_RES_ENTRY_AUTO_PATH_OPTION
                 ( GNOME_RES_BOOL, "GUI/layerfields", "true", &xsmres.gui_layerfields, TrueFalseList, N_("GUI"),
                   N_("Select here, if you want use layered (3d) scans.")
                   ),

@@ -90,8 +90,8 @@ module system_wrapper
   output [1:0]daisy_n_o;
   input [1:0]daisy_p_i;
   output [1:0]daisy_p_o;
-  inout [7:0]exp_n_io;
-  inout [7:0]exp_p_io;
+  inout [10:0]exp_n_io;
+  inout [10:0]exp_p_io;
   output [7:0]led_o;
   input reset_rtl_0;
 
@@ -133,8 +133,8 @@ module system_wrapper
   wire [1:0]daisy_n_o;
   wire [1:0]daisy_p_i;
   wire [1:0]daisy_p_o;
-  wire [7:0]exp_n_io;
-  wire [7:0]exp_p_io;
+  wire [10:0]exp_n_io;
+  wire [10:0]exp_p_io;
   wire [7:0]led_o;
   wire reset_rtl_0;
 

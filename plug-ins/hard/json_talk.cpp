@@ -52,60 +52,61 @@ void RP_JSON_talk::json_talk_connect_cb (gboolean connect, gboolean restart){
                 // new soup session
                 session = soup_session_new ();
 
-
+                gchar *urlstart = NULL;
                 if (restart){
                         // request to fire up RedPitaya PACPLLL NGNIX server
-                        gchar *urlstart = g_strdup_printf ("http://%s/bazaar?start=rpspmc",get_rp_address ());
-                        status_append ("1. Requesting NGNIX RedPitaya RPSPMC-PACPLL Server Startup:\n");
-                        status_append (urlstart);
-                        status_append ("\n ");
-                        msg = soup_message_new ("GET", urlstart);
-                        g_free (urlstart);
-                        GInputStream *istream = soup_session_send (session, msg, NULL, &error);
+                        urlstart = g_strdup_printf ("http://%s/bazaar?start=rpspmc", get_rp_address ());
+                        status_append ("1. Requesting NGNIX RedPitaya RPSPMC-PACPLL Server Startup and full FPGA reload/reset:");
+                } else {
+                        urlstart = g_strdup_printf ("http://%s/bazaar?start=rpspmcrc", get_rp_address ());
+                        status_append ("1. Requesting NGNIX RedPitaya RPSPMC-PACPLL Server Startup and reconnect to running FPGA:");
+                }
 
+                status_append (urlstart);
+                status_append ("\n");
+                msg = soup_message_new ("GET", urlstart);
+                g_free (urlstart);
+                GInputStream *istream = soup_session_send (session, msg, NULL, &error);
+
+                if (error != NULL) {
+                        g_warning ("%s", error->message);
+                        status_append (error->message);
+                        status_append ("\n");
+                        update_health (error->message);
+                        return;
+                } else {
+                        gchar *buffer = g_new0 (gchar, 100);
+                        gssize num = g_input_stream_read (istream,
+                                                          (void *)buffer,
+                                                          100,
+                                                          NULL,
+                                                          &error);   
                         if (error != NULL) {
+                                update_health (error->message);
                                 g_warning ("%s", error->message);
                                 status_append (error->message);
-                                status_append ("\n ");
-                                update_health (error->message);
+                                status_append ("\n");
+                                g_free (buffer);
                                 return;
                         } else {
-                                gchar *buffer = g_new0 (gchar, 100);
-                                gssize num = g_input_stream_read (istream,
-                                                                  (void *)buffer,
-                                                                  100,
-                                                                  NULL,
-                                                                  &error);   
-                                if (error != NULL) {
-                                        update_health (error->message);
-                                        g_warning ("%s", error->message);
-                                        status_append (error->message);
-                                        status_append ("\n ");
-                                        g_free (buffer);
-                                        return;
-                                } else {
-                                        status_append ("Response: ");
-                                        if (buffer){
-                                                status_append (buffer);
-                                                status_append ("\n ");
-                                                update_health (buffer);
-                                        }
+                                status_append (" * Response: ");
+                                if (buffer){
+                                        status_append (buffer);
+                                        status_append ("\n");
+                                        update_health (buffer);
                                 }
-                                g_free (buffer);
                         }
-                } else {
-                        status_append ("1. Assuming NGNIX RedPitaya RPSPMC-PACPLL Server been Runnning. (Re-Connect Attempt)\n");
+                        g_free (buffer);
                 }
+
                 // then connect to NGNIX WebSocket on RP
-                status_append ("2. Connecting to NGNIX RedPitaya RPSPMC-PACPLL WebSocket...\n");
+                status_append ("2. Connecting to NGNIX RedPitaya RPSPMC-PACPLL WebSocket: ");
                 gchar *url = g_strdup_printf ("ws://%s:%u", get_rp_address (), port);
                 status_append (url);
                 status_append ("\n");
-                // g_message ("Connecting to: %s", url);
                 
                 msg = soup_message_new ("GET", url);
                 g_free (url);
-                // g_message ("soup_message_new - OK");
                 soup_session_websocket_connect_async (session, msg, // SoupSession *session, SoupMessage *msg,
                                                       NULL, NULL, // const char *origin, char **protocols,
                                                       NULL,  RP_JSON_talk::got_client_connection, this); // GCancellable *cancellable, GAsyncReadyCallback callback, gpointer user_data
@@ -133,14 +134,12 @@ void  RP_JSON_talk::got_client_connection (GObject *object, GAsyncResult *result
                 self->status_append ("\n");
                 g_message ("%s", self->client_error->message);
         } else {
-                self->status_append ("RedPitaya WebSocket Connected!\n ");
+                self->status_append (" * RedPitaya WebSocket Connected!\n");
 		g_signal_connect(self->client, "closed",  G_CALLBACK( RP_JSON_talk::on_closed),  self);
 		g_signal_connect(self->client, "message", G_CALLBACK( RP_JSON_talk::on_message), self);
 		//g_signal_connect(connection, "closing", G_CALLBACK(on_closing_send_message), message);
 
                 self->on_connect_actions (); // setup instrument, send all params, ...
-
-                self->status_append ("RedPitaya SPM Control, PAC-PLL is ready.\n ");
         }
 }
 
@@ -270,7 +269,7 @@ void  RP_JSON_talk::on_closed (SoupWebsocketConnection *ws, gpointer user_data){
 
 void  RP_JSON_talk::json_parse_message (const char *json_string){
         jsmn_parser p;
-        jsmntok_t tok[10000]; /* We expect no more than 10000 tokens, signal array is 1024 * 5*/
+        jsmntok_t tok[20000]; /* We expect no more than 10000 tokens, signal array is 1024 * 5*/
 
         // typial data messages:
         // {"signals":{"SIGNAL_CH3":{"size":1024,"value":[0,0,...,0.543632,0.550415]},"SIGNAL_CH4":{"size":1024,"value":[0,0,... ,-94.156487]},"SIGNAL_CH5":{"size":1024,"value":[0,0,.. ,-91.376022,-94.156487]}}}
@@ -279,7 +278,18 @@ void  RP_JSON_talk::json_parse_message (const char *json_string){
         jsmn_init(&p);
         int ret = jsmn_parse(&p, json_string, strlen(json_string), tok, sizeof(tok)/sizeof(tok[0]));
         if (ret < 0) {
-                g_warning ("JSON PARSER:  Failed to parse JSON: %d\n%s\n", ret, json_string);
+                gchar *tmp = g_strndup (json_string, 80);
+                gint jn=strlen(json_string);
+                if (jn > 80){
+                        gint i = jn-10;
+                        while (i < 80) ++i;
+                        gchar *tmpX = g_strconcat (tmp, " .. ", &json_string[i], NULL);
+                        g_free (tmp);
+                        tmp = tmpX;
+                }
+                g_warning ("JSON PARSER:  Failed to parse JSON: ERR=%d %s jslen=%d\n%80s\n", ret, ret==-3?"JSMN_ERROR_PART":ret==-2?"JSMN_ERROR_INVAL":ret==-1?"JSMN_ERROR_NOMEM":"ERR??", strlen(json_string), tmp);
+                g_free (tmp);
+                //g_warning ("JSON PARSER:  Failed to parse JSON: %d\n%s\n", ret, json_string);
                 return;
         }
         /* Assume the top-level element is an object */
@@ -346,7 +356,8 @@ void  RP_JSON_talk::write_array (const gchar *parameter_id[], int i_size, int *i
                         }
                 g_string_append_printf (list, "}}");
                 soup_websocket_connection_send_text (client, list->str);
-                //g_print ("%s\n",list->str);
+                if  (debug_level > 1)
+                        g_print ("%s\n",list->str);
                 g_string_free (list, true);
         }
 }

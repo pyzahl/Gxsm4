@@ -147,6 +147,8 @@ class Param_Control{
 	virtual void Set_Parameter(double value=0., int flg=FALSE, int usr2base=FALSE);
 	virtual gpointer GetEntryData(const gchar *txtid){ return NULL; };
 
+        virtual void Set_Force_ChangeNoticeFkt(gboolean force = false) { force_full_update=force; };
+        gboolean force_full_update;
 	virtual void Set_ChangeNoticeFkt(void (*NewChangeNoticeFkt)(Param_Control* pcs, gpointer data), gpointer data){
 		ChangeNoticeFkt = NewChangeNoticeFkt;
 		FktData = data;
@@ -291,6 +293,9 @@ class Gtk_EntryControl : public Param_Control{
         static void entry_focus_leave_callback (GtkEventController *controller, gpointer self);
 
 	static void adjustment_callback (GtkAdjustment *adj, Gtk_EntryControl *gpcs);
+
+        static void ec_pcs_adjustment_configure_callback (GSimpleAction *action, GVariant *parameter, Gtk_EntryControl *gpcs);
+        
         static void pcs_adjustment_configure_response_callback (GtkDialog *dialog, int response, gpointer user_data);
 	void pcs_adjustment_configure ();
 	void get_pcs_configuartion ();
@@ -330,6 +335,8 @@ class Gtk_EntryControl : public Param_Control{
                 }
                 return (v);
         };
+
+        static void entry_scroll_cb (GtkEventController *controller, gdouble dx, gdouble dy, Gtk_EntryControl *gpcs);
         
 	GtkAdjustment* GetAdjustment(){ return adj; };
 	void SetExtraWidget(GtkWidget *e){ extra = e; };
@@ -383,7 +390,7 @@ class Gtk_EntryControl : public Param_Control{
 	};
 
 	virtual void Put_Value();
-	virtual void Set_Parameter(double Value, int flg, int usr2base);
+	virtual void Set_Parameter(double value=0., int flg=FALSE, int usr2base=FALSE);
 
         virtual void init_pcs_gsettings_path_and_key ();
 	virtual void write_pcs_gschema (int array_flag=false);

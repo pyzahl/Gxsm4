@@ -11,3 +11,11 @@
     color: #dd0000;
 }
 
+#normal { }
+
+#red { background-image: none; background-color: #e81b1b; color: white; font-weight: bold; border-radius: 6px; margin-left: 4px;}
+#yellow { background-image: none; background-color: #e8e01b; color: white; font-weight: bold; border-radius: 6px; margin-left: 4px; }
+#green { background-image: none; background-color: #69e81b; color: white; font-weight: bold; border-radius: 6px; margin-left: 4px; }
+#blue { background-image: none; background-color: #1b82e8; color: white; font-weight: bold; border-radius: 6px; margin-left: 4px; }
+#bgrey { background-image: none; background-color: #bbd0e6; color: white; font-weight: bold; border-radius: 6px; margin-left: 4px; }
+#grey { background-image: none; background-color: #9b9b9b; color: white; font-weight: bold; border-radius: 6px; margin-left: 4px; }

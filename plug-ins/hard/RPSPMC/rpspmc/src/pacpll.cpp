@@ -43,86 +43,9 @@
 #include "fpga_cfg.h"
 #include "pacpll.h"
 
-#define ADC_DECIMATING     1
-#define ADC_SAMPLING_RATE (125e6/ADC_DECIMATING)
+#include "spmc_module_config_utils.h"
 
 
-// CONFIGURATION (CFG) DATA REGISTER 0 [1023:0] x 4 = 4k
-// PAC-PLL Control Core
-
-// general control paging (future options)
-//#define PACPLL_CFG_PAGE_CONTROL  30   // 32bit wide
-//#define PACPLL_CFG_PAGE          31   // 32bit wide
-
-// PACPLL core controls
-#define PACPLL_CFG_DDS_PHASEINC  0    // 64bit wide
-#define PACPLL_CFG_VOLUME_SINE   2    // 32bit wide (default)
-#define PACPLL_CFG_CONTROL_LOOPS 3
-
-#define PACPLL_CFG_PACTAU        4 // (actual Q22 mu)
-#define PACPLL_CFG_DC_OFFSET     5
-
-#define PACPLL_CFG_PACATAU      27
-#define PACPLL_CFG_PAC_DCTAU    28
-
-// Controller Core (Servos) Relative Block Offsets:
-#define PACPLL_CFG_SET   0
-#define PACPLL_CFG_CP    1
-#define PACPLL_CFG_CI    2
-#define PACPLL_CFG_UPPER 3 // 3,4 64bit
-#define PACPLL_CFG_LOWER 5 // 5,6 64bit
-
-// [CFG0]+10 AMPL Controller
-// [CFG0]+20 PHASE Controller
-// [CFG1]+00 dFREQ Controller   
-// +0 Set, +2 CP, +4 CI, +6 UPPER, +8 LOWER
-#define PACPLL_CFG_PHASE_CONTROLLER     10 //10:16 (10,11,12,13:14,15:16)
-#define PACPLL_CFG_AMPLITUDE_CONTROLLER 20 //20:26 (20,21,22,23:24,25:26)
-
-
-// CFG DATA REGISTER 1 [1023:0]
-#define PACPLL_CFG_DFREQ_CONTROLLER         (PACPLL_CFG1_OFFSET + 0) // 00:06
-#define PACPLL_CFG_PHASE_CONTROL_THREASHOLD (PACPLL_CFG1_OFFSET + 8) // 08
-
-// CFG DATA REGISTER 2 [1023:0]
-// PACPLL-PulseFormer Control Core
-
-#define PACPLL_CFG_PULSE_FORM_BASE      (PACPLL_CFG2_OFFSET + 0)
-#define PACPLL_CFG_PULSE_FORM_DELAY_01  0  // [ 31..16 Delay P0, 15..0 Delay P1 ] 32bit
-#define PACPLL_CFG_PULSE_FORM_WH01_ARR  1 // [ 31..16 Width_n P0, 15..0 Width_n P1; 31..16 Height_n P0, 15..0 Height_n P1, ... [n=0,1,2]] 14x32 bit
-// pulse_12_width_height_array[ 1*32-1 : 0];    // 0W 1,2 =pWIF
-// pulse_12_width_height_array[ 2*32-1 : 1*32]; // 0H 1,2 =pIHF
-// pulse_12_width_height_array[ 3*32-1 : 2*32]; // 1W =pWIF
-// pulse_12_width_height_array[ 4*32-1 : 3*32]; // 1H =pWIF
-// pulse_12_width_height_array[ 5*32-1 : 4*32]; // 2W =WIF
-// pulse_12_width_height_array[ 6*32-1 : 5*32]; // 2H =HIF
-// pulse_12_width_height_array[ 7*32-1 : 6*32]; // 3W =pW
-// pulse_12_width_height_array[ 8*32-1 : 7*32]; // 3H =pH
-// pulse_12_width_height_array[ 9*32-1 : 8*32]; // 4W =pWIF
-// pulse_12_width_height_array[10*32-1 : 9*32]; // 4H =pHIF
-// pulse_12_width_height_array[11*32-1 :10*32]; // 5W =WIF
-// pulse_12_width_height_array[12*32-1 :11*32]; // 5H =HIF
-// pulse_12_width_height_array[13*32-1 :12*32]; // Bias pre
-// pulse_12_width_height_array[14*32-1 :13*32]; // Bias post
-
-
-
-
-// not used any more
-#define PACPLL_CFG_TRANSPORT_AUX_SCALE       17
-#define PACPLL_CFG_TRANSPORT_AUX_CENTER      18  // 18,19
-
-
-
-#if 0
-// ---------- NOT IMPLEMENTED/NO ROOM ---------------------
-// using fixed length FIR filters 
-// Configure transport tau: time const or high speed IIR filter stages
-#define PACPLL_CFG_TRANSPORT_TAU_DFREQ   (PACPLL_CFG1_OFFSET + 0)
-#define PACPLL_CFG_TRANSPORT_TAU_PHASE   (PACPLL_CFG1_OFFSET + 1)
-#define PACPLL_CFG_TRANSPORT_TAU_EXEC    (PACPLL_CFG1_OFFSET + 2)
-#define PACPLL_CFG_TRANSPORT_TAU_AMPL    (PACPLL_CFG1_OFFSET + 3)
-#endif
 
 pthread_attr_t gpio_reading_attr;
 pthread_mutex_t gpio_reading_mutexsum;
@@ -148,11 +71,9 @@ static pthread_t gpio_reading_thread;
  */
 
 
-#define BITS_AMPL_CONTROL   32
-#define BITS_PLHASE_CONTROL 48
 
 
-extern int verbose;
+// extern int verbose;
 extern double signal_dc_measured;
 extern int phase_setpoint_qcordicatan;
 
@@ -164,6 +85,7 @@ extern CIntParameter SHR_DEC_DATA;
 extern CIntParameter TRANSPORT_DECIMATION;
 extern CDoubleParameter AUX_SCALE;
 extern CDoubleParameter FREQUENCY_CENTER;
+extern CDoubleParameter PAC_DCTAU;
 
 extern CIntParameter TRANSPORT_CH3;
 extern CIntParameter TRANSPORT_CH4;
@@ -173,31 +95,68 @@ extern CIntParameter TRANSPORT_CH5;
 // Q44: 32766.0000 Hz -> phase_inc=4611404543  0000000112dc72ff
 double dds_phaseinc (double freq){
         double fclk = ADC_SAMPLING_RATE;
-        return Q44*freq/fclk;
+        return QQ44*freq/fclk;
 }
 
 double dds_phaseinc_to_freq (unsigned long long ddsphaseincQ44){
         double fclk = ADC_SAMPLING_RATE;
 #ifdef DEVELOPMENT_PACPLL_OP_V
-        double df = fclk*(double)ddsphaseincQ44/(double)(Q44);
-        fprintf(stderr, "##DDS Phase Inc abs to freq: df= %12.4f Hz <- Q44 phase_inc=%lld  %016llx\n", df, ddsphaseincQ44, ddsphaseincQ44phase_inc);
+        double df = fclk*(double)ddsphaseincQ44/(double)(QQ44);
+        fprintf(stderr, "##DDS Phase Inc abs to freq: df= %12.4f Hz <- QQ44 phase_inc=%lld  %016llx\n", df, ddsphaseincQ44, ddsphaseincQ44phase_inc);
         return df;
 #else
-        return fclk*(double)ddsphaseincQ44/(double)(Q44);
+        return fclk*(double)ddsphaseincQ44/(double)(QQ44);
 #endif
 }
 
 double dds_phaseinc_rel_to_freq (long long ddsphaseincQ44){
         double fclk = ADC_SAMPLING_RATE;
 #ifdef DEVELOPMENT_PACPLL_OP_V
-        double df = fclk*(double)ddsphaseincQ44/(double)(Q44);
+        double df = fclk*(double)ddsphaseincQ44/(double)(QQ44);
         fprintf(stderr, "##DDS Phase Inc rel to freq: df= %12.4f Hz <- Q44 phase_inc=%lld  %016llx\n", df, ddsphaseincQ44, ddsphaseincQ44phase_inc);
         return df;
 #else
-        return fclk*(double)ddsphaseincQ44/(double)(Q44);
+        return fclk*(double)ddsphaseincQ44/(double)(QQ44);
 #endif
 }
 
+
+void reset_lms (){
+        rp_spmc_module_config_int32 (RESET_LMS_PHASE_AMPLITUDE_DETECTOR_ADDRESS, 1); // WRITE: SET RESETN
+        rp_spmc_module_config_int32 (RESET_LMS_PHASE_AMPLITUDE_DETECTOR_ADDRESS, 0); // WRITE: RELEASE RESETN
+}
+        
+void config_lms (int pactau_ph, int pactau_am, int modes){
+        rp_spmc_module_config_int32 (MODULE_SETUP, pactau_ph, LMS_PACPLL_CFG_PACTAU);
+        rp_spmc_module_config_int32 (MODULE_SETUP, pactau_am, LMS_PACPLL_CFG_PACATAU);
+        rp_spmc_module_config_int32 (LMS_PHASE_AMPLITUDE_DETECTOR_ADDRESS, modes, LMS_PACPLL_CFG_LCK_AM_PH); // WRITE
+}
+
+void config_transport (int channelsel, int ndecimate, int nsamples, int opmode, int shift, unsigned long long fcenter){
+        rp_spmc_module_config_int32 (MODULE_SETUP, channelsel, TRANSPORT_CHANNEL_SELECTOR); // MODULE_START_VECTOR=0
+        rp_spmc_module_config_int32 (MODULE_SETUP, ndecimate,  TRANSPORT_NDECIMATE);
+        rp_spmc_module_config_int32 (MODULE_SETUP, nsamples,   TRANSPORT_NSAMPLES);
+        rp_spmc_module_config_int32 (MODULE_SETUP, opmode,     TRANSPORT_OPERATION);
+        rp_spmc_module_config_int32 (MODULE_SETUP, shift,      TRANSPORT_SHIFT);
+        rp_spmc_module_config_int64 (TRANSPORT_4S_COMBINE_ADDRESS, fcenter, TRANSPORT_FREQ_CENTER); // WRITE
+}
+
+void config_controller (int addr, int setpoint, int cp, int ci, long long upper, long long lower){
+        rp_spmc_module_config_int32 (MODULE_SETUP, setpoint,    CONTROLLER_SETPOINT); // MODULE_START_VECTOR=0
+        rp_spmc_module_config_int32 (MODULE_SETUP, cp,          CONTROLLER_CP);
+        rp_spmc_module_config_int32 (MODULE_SETUP, ci,          CONTROLLER_CI);
+        rp_spmc_module_config_int64 (MODULE_SETUP, upper, CONTROLLER_UPPER);
+        rp_spmc_module_config_int64 (addr,         lower, CONTROLLER_LOWER); // WRITE
+}
+
+void config_controller_m (int addr, long long resetval, int mode, unsigned int threshold=0){
+        rp_spmc_module_config_int64 (MODULE_SETUP, resetval,  CONTROLLER_M_RESET_VAL); // MODULE_START_VECTOR=0
+        rp_spmc_module_config_int32 (MODULE_SETUP, mode,      CONTROLLER_M_MODE);
+        rp_spmc_module_config_int32 (addr,         threshold, CONTROLLER_M_THREASHOLD); // WRITE
+}
+
+
+/*
 void rp_PAC_adjust_dds (double freq){
         // 44 Bit Phase, using 48bit tdata
         unsigned long long phase_inc = (unsigned long long)round (dds_phaseinc (freq));
@@ -208,7 +167,7 @@ void rp_PAC_adjust_dds (double freq){
         if (verbose > 2) fprintf(stderr, "##Adjust: f= %12.4f Hz -> Q44 phase_inc=%lld  %016llx\n", freq, phase_inc, phase_inc);
 #endif
         
-        set_gpio_cfgreg_int48 (PACPLL_CFG_DDS_PHASEINC, phase_inc);
+        set_gpio_cfgreg_int48 (PACPLL_CFG_DDS_PHASEINC, phase_inc); // DFREQ_RESET
 
 #ifdef DEVELOPMENT_PACPLL_OP
         if (verbose >= 2){
@@ -222,12 +181,15 @@ void rp_PAC_adjust_dds (double freq){
 #endif
 
 }
+*/
 
+/*
 void rp_PAC_set_volume (double volume){
         if (verbose > 2) fprintf(stderr, "##Configure: volume= %g V\n", volume); 
         set_gpio_cfgreg_int32 (PACPLL_CFG_VOLUME_SINE, (int)(Q31 * volume));
 }
-
+*/
+/*
 // Configure Control Switched: Loops Ampl and Phase On/Off, Unwrapping, QControl
 void rp_PAC_configure_switches (int phase_ctrl, int am_ctrl, int phase_unwrap_always, int qcontrol, int lck_amp, int lck_phase, int dfreq_ctrl){
         if (verbose > 2) fprintf(stderr, "##Configure loop controls: 0x%08x\n",  phase_ctrl ? 1:0 | am_ctrl ? 2:0); 
@@ -238,11 +200,13 @@ void rp_PAC_configure_switches (int phase_ctrl, int am_ctrl, int phase_unwrap_al
                                //(b7 ? 0x40:0) | (b8 ? 0x80:0)
                                (dfreq_ctrl ? 0x100:0)                                                   // Bit 9
                                );
-}
 
-#define QCONTROL_CFG_GAIN_DELAY 29
+        config_lms (int dctau, int dc_offset, int pactau_ph, int pactau_am, int modes);       
+}
+*/
+
 // Configure Q-Control Logic build into Volume Adjuster
-void rp_PAC_set_qcontrol (double gain, double phase){
+void rp_PAC_set_qcontrol (double gain, double phase, int enable){
         double samples_per_period = ADC_SAMPLING_RATE / FREQUENCY_MANUAL.Value ();
         int ndelay = int (samples_per_period * phase/360. + 0.5);
 
@@ -252,7 +216,12 @@ void rp_PAC_set_qcontrol (double gain, double phase){
         if (verbose > 2) fprintf(stderr, "##Configure: qcontrol= %d, %d\n", (int)(Q15*gain), ndelay); 
 
         ndelay = 8192-ndelay; // pre compute offset in ring buffer
-        set_gpio_cfgreg_int32 (QCONTROL_CFG_GAIN_DELAY, ((int)(Q10 * gain)<<16) | ndelay );
+        //set_gpio_cfgreg_int32 (QCONTROL_CFG_GAIN_DELAY, ((int)(Q10 * gain)<<16) | ndelay );
+
+        rp_spmc_module_config_int32 (MODULE_SETUP,          enable ? 1:0, QCONTROL_ENABLE); // 0: MODULE_START_VECTOR);
+        rp_spmc_module_config_int32 (MODULE_SETUP,     (int)(Q10 * gain), QCONTROL_GAIN);
+        rp_spmc_module_config_int32 (QCONTROL_ADDRESS,           ndelay , QCONTROL_DELAY);
+
 }
 
 #if 0
@@ -276,42 +245,31 @@ double mu_opt (double periods){
 #endif
 
 // tau in s for dual PAC and auto DC offset
-void rp_PAC_set_pactau (double tau, double atau, double dc_tau){
-        if (verbose > 2) fprintf(stderr, "##Configure: tau= %g  Q22: %d\n", tau, (int)(Q22 * tau)); 
+// Set "manual" DC offset used if dc_tau (see above) signum bit is set (neg).
 
-#if 1
-        // in tau s (us) -> mu
-        set_gpio_cfgreg_int32 (PACPLL_CFG_PACTAU, (int)(Q22/ADC_SAMPLING_RATE/(1e-6*tau))); // Q22 significant from top - tau for phase
-        set_gpio_cfgreg_int32 (PACPLL_CFG_PACATAU, (int)(Q22/ADC_SAMPLING_RATE/(1e-6*atau))); // Q22 significant from top -- atau is tau for amplitude
-#else
-        // in peridos relative to reference base frequency. Silently limit mu to opt mu.
-        // mu_opt = 11.9464 / (6.46178 + ADC_SAMPLE_FRQ/F_REF)
-        double spp = ADC_SAMPLING_RATE / FREQUENCY_MANUAL.Value (); // samples per period
-        double mu_fastest = mu_opt (spp);
-        double mu = mu_const (ADC_SAMPLING_RATE, tau/FREQUENCY_MANUAL.Value ()); // mu from user tau measured in periods of f-reference
-        if (verbose > 2) fprintf(stderr, "##Configure: pac PHtau   mu= %g, fastest=%g\n", mu, mu_fstest);
-        if (mu > mu_fastest) mu=mu_fastest;
-        set_gpio_cfgreg_int32 (PACPLL_CFG_PACTAU, (int)(Q22*mu)); // Q22 significant from top - tau for phase
+void rp_PAC_set_pactau (double tau, double atau, int modes){
+        if (verbose > 1) fprintf(stderr, "##Configure PAC TAU: %g us, %g us, M=%x\n", tau, atau, modes);
 
-        double mu = mu_const (ADC_SAMPLING_RATE, atau/FREQUENCY_MANUAL.Value ()); // mu from user tau measured in periods of f-reference
-        if (verbose > 2) fprintf(stderr, "##Configure: pac AMPtau   mu= %g, fastest=%g\n", mu, mu_fstest);
-        if (mu > mu_fastest) mu=mu_fastest;
-        set_gpio_cfgreg_int32 (PACPLL_CFG_PACATAU, (int)(Q22*mu)); // Q22 significant from top -- atau is tau for amplitude
-#endif
-        // Q22 significant from top -- dc_tau is tau for DC FIR-IIR Filter on phase aligned decimated data:
-        // at 4x Freq Ref sampling rate. Moving averaging FIR sampling at past 4 zero crossing of Sin Cos ref passed on to IIR with tau
-        if (dc_tau > 0.)
-                set_gpio_cfgreg_int32 (PACPLL_CFG_PAC_DCTAU, (int)(Q31/(4.*FREQUENCY_MANUAL.Value ())/dc_tau));
-        else if (dc_tau < 0.)
-                set_gpio_cfgreg_uint32 (PACPLL_CFG_PAC_DCTAU, 0xffffffff); // disable -- use manaul DC, set below
-        else
-                set_gpio_cfgreg_uint32 (PACPLL_CFG_PAC_DCTAU, 0); // freeze
+        config_lms ((int)(Q22/ADC_SAMPLING_RATE/(1e-6*tau)), // PH TAU in tau s (us) -> mu
+                    (int)(Q22/ADC_SAMPLING_RATE/(1e-6*atau)), // AM TAU  in tau s (us) -> mu
+                    modes);       
+
 }
 
 // Set "manual" DC offset used if dc_tau (see above) signum bit is set (neg).
-void rp_PAC_set_dcoff (double dc){
-        if (verbose > 2) fprintf(stderr, "##Configure: dc= %g  Q22: %d\n", dc, (int)(Q22 * dc)); 
-        set_gpio_cfgreg_int32 (PACPLL_CFG_DC_OFFSET, (int)(Q22 * dc));
+void rp_PAC_set_dc_filter (double dc, double dc_tau){
+        if (verbose > 3) fprintf(stderr, "##Configure DC-FILTER: dc=%g, dc-tau=%g s\n", dc, dc_tau); 
+        //set_gpio_cfgreg_int32 (PACPLL_CFG_DC_OFFSET, (int)(Q22 * dc));
+
+        // Q22 significant from top -- dc_tau is tau for DC FIR-IIR Filter on phase aligned decimated data:
+        // at 4x Freq Ref sampling rate. Moving averaging FIR sampling at past 4 zero crossing of Sin Cos ref passed on to IIR with tau
+        // dc offset (manual)
+        //        dc_tau > 0. ? (int)(Q31/(4.*FREQUENCY_MANUAL.Value ())/dc_tau) : dc_tau < 0. ? 0xffffffff : 0,  // set dc-tau, disable, freeze
+        //        (int)(Q22 * dc), 
+
+        rp_spmc_module_config_int32 (MODULE_SETUP, dc_tau > 0. ? (int)(Q31/(4.*FREQUENCY_MANUAL.Value ())/dc_tau) : dc_tau < 0. ? 0xffffffff : 0, DC_FILTER_TAU); // MODULE_START_VECTOR=0  ** set dc-tau, disable, freeze
+        rp_spmc_module_config_Qn (DC_FILTER_ADDRESS, dc, DC_FILTER_OFFSET, Q22); // Q22 DC Offset
+
 }
 
 // measure DC, update manual offset
@@ -320,7 +278,7 @@ void rp_PAC_auto_dc_offset_adjust (){
         int x,i,k;
         double x1;
 
-        rp_PAC_set_dcoff (0.0);
+        rp_PAC_set_dc_filter (0.0, -1.);
         usleep(10000);
         
         for (k=i=0; i<300000; ++i){
@@ -334,7 +292,7 @@ void rp_PAC_auto_dc_offset_adjust (){
         }
         dc /= k;
         if (verbose >= 1) fprintf(stderr, "RP PACPLL DC-Offset = %10.6f  {%d}\n", dc, k);
-        rp_PAC_set_dcoff (dc);
+        rp_PAC_set_dc_filter (dc, PAC_DCTAU.Value() * 1e-3);
 
         signal_dc_measured = dc;
 }
@@ -352,7 +310,7 @@ void rp_PAC_auto_dc_offset_correct (){
                 if (fabs(x1) < 0.1)
                         signal_dc_measured = q1*signal_dc_measured + q*x1;
         }
-        rp_PAC_set_dcoff (signal_dc_measured);
+        rp_PAC_set_dc_filter (signal_dc_measured, PAC_DCTAU.Value() * 1e-3);
 }
 
 // Controller Topology:
@@ -408,8 +366,9 @@ void rp_PAC_auto_dc_offset_correct (){
 
 // Amplitude Controller
 // AMPL from CORDIC: 24bit Q23 -- QCORDICSQRT
-void rp_PAC_set_amplitude_controller (double setpoint, double cp, double ci, double upper, double lower){
-        if (verbose > 2) fprintf(stderr, "##Configure Controller: set= %g  Q22: %d    cp=%g ci=%g upper=%g lower=%g\n", setpoint, (int)(Q22 * setpoint), cp, ci, upper, lower); 
+void rp_PAC_set_amplitude_controller (double setpoint, double cp, double ci, double upper, double lower, double manual_volume, int enable){
+        if (verbose > 1) fprintf(stderr, "##Configure AM-Controller: setpt=%g, cp=%g ci=%g, upper=%g lower=%g volume=%g V, en=%d\n",
+                                 setpoint, cp, ci, upper, lower, manual_volume, enable); 
         /*
         double Q = pll.Qfactor;     // Q-factor
         double F0 = pll.FSineHz; // Res. Freq
@@ -424,17 +383,30 @@ void rp_PAC_set_amplitude_controller (double setpoint, double cp, double ci, dou
         write_pll_variable32 (dsp_pll.pcoef_Amp, pll.signum_cp_Amp * CPN(29)*pow (10.,pll.cp_gain_Amp/20.));
         // = PSign * CPN(29)*pow(10.,Pgain/20.);
         */
-        set_gpio_cfgreg_int32 (PACPLL_CFG_AMPLITUDE_CONTROLLER + PACPLL_CFG_SET,   ((int)(QCORDICSQRT * setpoint))<<(32-BITS_CORDICSQRT));
-        set_gpio_cfgreg_int32 (PACPLL_CFG_AMPLITUDE_CONTROLLER + PACPLL_CFG_CP,    ((int)(QAMCOEF * cp)));
-        set_gpio_cfgreg_int32 (PACPLL_CFG_AMPLITUDE_CONTROLLER + PACPLL_CFG_CI,    ((int)(QAMCOEF * ci)));
-        set_gpio_cfgreg_int32 (PACPLL_CFG_AMPLITUDE_CONTROLLER + PACPLL_CFG_UPPER, ((int)(QEXEC * upper)));
-        set_gpio_cfgreg_int32 (PACPLL_CFG_AMPLITUDE_CONTROLLER + PACPLL_CFG_LOWER, ((int)(QEXEC * lower)));
-}
+        //set_gpio_cfgreg_int32 (PACPLL_CFG_AMPLITUDE_CONTROLLER + PACPLL_CFG_SET,   ((int)(QCORDICSQRT * setpoint))<<(32-BITS_CORDICSQRT));
+        //set_gpio_cfgreg_int32 (PACPLL_CFG_AMPLITUDE_CONTROLLER + PACPLL_CFG_CP,    ((int)(QAMCOEF * cp)));
+        //set_gpio_cfgreg_int32 (PACPLL_CFG_AMPLITUDE_CONTROLLER + PACPLL_CFG_CI,    ((int)(QAMCOEF * ci)));
+        //set_gpio_cfgreg_int32 (PACPLL_CFG_AMPLITUDE_CONTROLLER + PACPLL_CFG_UPPER, ((int)(QEXEC * upper)));
+        //set_gpio_cfgreg_int32 (PACPLL_CFG_AMPLITUDE_CONTROLLER + PACPLL_CFG_LOWER, ((int)(QEXEC * lower)));
+
+        config_controller (AMPLITUDE_CONTROLLER_ADDRESS,
+                           (int)(QCORDICSQRT * setpoint),
+                           (int)(QAMCOEF * cp),
+                           (int)(QAMCOEF * ci),
+                           (long long)(QEXEC_L * upper),
+                           (long long)(QEXEC_L * lower));
+        
+        config_controller_m (AMPLITUDE_CONTROLLER_M_ADDRESS,
+                             (long long)(QEXEC_L * manual_volume), // Volume Sine Manual -- when in reset mode // Reset is 16bit
+                             enable ? 1:0,
+                             0);
+        }
 
 // Phase Controller
 // CONTROL[75] OUT[44] : [75-1-1:75-44]=43+1   m[24]  x  c[32]  = 56 M: 24{Q32},  P: 44{Q14}
-void rp_PAC_set_phase_controller (double setpoint, double cp, double ci, double upper, double lower, double am_threashold){
-        if (verbose > 2) fprintf(stderr, "##Configure Controller: set= %g  Q22: %d    cp=%g ci=%g upper=%g lower=%g\n", setpoint, (int)(Q22 * setpoint), cp, ci, upper, lower); 
+void rp_PAC_set_phase_controller (double setpoint, double cp, double ci, double upper, double lower, double am_threashold, double freq_manual, int enable){
+        if (verbose > 2) fprintf(stderr, "##Configure PH-Controller: setpt=%g, cp=%g ci=%g, upper=%g lower=%g, amth=%g, frq=%g, en=%d\n",
+                                 setpoint, cp, ci, upper, lower, am_threashold, freq_manual, enable);
 
         /*
         double cp = 20. * log10 (1.6575e-5  * pll.auto_set_BW_Phase);
@@ -447,15 +419,29 @@ void rp_PAC_set_phase_controller (double setpoint, double cp, double ci, double 
         // = PSign * CPN(29)*pow(10.,Pgain/20.);
         */
 
-        set_gpio_cfgreg_int32 (PACPLL_CFG_PHASE_CONTROLLER + PACPLL_CFG_SET,   (phase_setpoint_qcordicatan = (int)(QCORDICATAN * setpoint))); // <<(32-BITS_CORDICATAN));
-        set_gpio_cfgreg_int32 (PACPLL_CFG_PHASE_CONTROLLER + PACPLL_CFG_CP,    (long long)(QPHCOEF * cp)); // {32}   22+1 bit error, 32bit CP,CI << 31 --  m[24]  x  cp|ci[32]  = 56 M: 24{Q32},  P: 44{Q14}, top S43
-        set_gpio_cfgreg_int32 (PACPLL_CFG_PHASE_CONTROLLER + PACPLL_CFG_CI,    (long long)(QPHCOEF * ci));
-        set_gpio_cfgreg_int48 (PACPLL_CFG_PHASE_CONTROLLER + PACPLL_CFG_UPPER, (unsigned long long)round (dds_phaseinc (upper))); // => 44bit phase
-        set_gpio_cfgreg_int48 (PACPLL_CFG_PHASE_CONTROLLER + PACPLL_CFG_LOWER, (unsigned long long)round (dds_phaseinc (lower)));
+        //set_gpio_cfgreg_int32 (PACPLL_CFG_PHASE_CONTROLLER + PACPLL_CFG_SET,   (phase_setpoint_qcordicatan = (int)(QCORDICATAN * setpoint))); // <<(32-BITS_CORDICATAN));
+        //set_gpio_cfgreg_int32 (PACPLL_CFG_PHASE_CONTROLLER + PACPLL_CFG_CP,    (long long)(QPHCOEF * cp)); // {32}   22+1 bit error, 32bit CP,CI << 31 --  m[24]  x  cp|ci[32]  = 56 M: 24{Q32},  P: 44{Q14}, top S43
+        //set_gpio_cfgreg_int32 (PACPLL_CFG_PHASE_CONTROLLER + PACPLL_CFG_CI,    (long long)(QPHCOEF * ci));
+        //set_gpio_cfgreg_int48 (PACPLL_CFG_PHASE_CONTROLLER + PACPLL_CFG_UPPER, (unsigned long long)round (dds_phaseinc (upper))); // => 44bit phase
+        //set_gpio_cfgreg_int48 (PACPLL_CFG_PHASE_CONTROLLER + PACPLL_CFG_LOWER, (unsigned long long)round (dds_phaseinc (lower)));
 
+        config_controller (PHASE_CONTROLLER_ADDRESS,
+                           (phase_setpoint_qcordicatan = (int)(QCORDICATAN * setpoint)),
+                           (int)(QPHCOEF * cp),
+                           (int)(QPHCOEF * ci),
+                           (long long)round (dds_phaseinc (upper)),
+                           (long long)round (dds_phaseinc (lower)));
+
+        
 // PHASE_CONTROLLER_THREASHOLD for hold control if amplituide drops into noise regime to avoid run away
 // AMPL from CORDIC: 24bit Q23 -- QCORDICSQRT
-        set_gpio_cfgreg_int32 (PACPLL_CFG_PHASE_CONTROL_THREASHOLD,   ((int)(QCORDICSQRT * am_threashold))<<(32-BITS_CORDICSQRT));
+        //set_gpio_cfgreg_int32 (PACPLL_CFG_PHASE_CONTROL_THREASHOLD,   ((int)(QCORDICSQRT * am_threashold))<<(32-BITS_CORDICSQRT));
+
+        config_controller_m (PHASE_CONTROLLER_M_ADDRESS,
+                             (long long)round (dds_phaseinc (freq_manual)),
+                             enable ? 1:0,
+                             (int)(QCORDICSQRT * am_threashold)); // AM Threashold
+        
 }
 
 
@@ -483,34 +469,34 @@ void rp_PAC_set_pulse_form (double bias0, double bias1,
         phase1 -= p1phws2/mfactor; if (phase1 < 0.) phase1 = 0.;
 
         // phase delay
-        set_gpio_cfgreg_uint16_uint16 (PACPLL_CFG_PULSE_FORM_BASE + PACPLL_CFG_PULSE_FORM_DELAY_01,   (guint16)(phase0*mfactor+0.5),    (guint16)(phase1*mfactor+0.5));     // do conversion phase angle in deg to phase steps
-
+        rp_spmc_module_config_uint16_uint16 (PULSE_FORMER_DL_ADDRESS, (guint16)(phase0*mfactor+0.5),    (guint16)(phase1*mfactor+0.5)); // do conversion phase angle in deg to phase steps ** WRITE
+        
         double rstif = shapexwif; // relative shaping pulse length time
         double pstif = 1.0 - rstif; // remaining pulse length time
         double rst = shapexw; // relative shaping pulse length time
         double pst = 1.0 - rst; // remaining pulse length time
         
         // pre pulse shaping pre pulse, then remaining pulse
-        set_gpio_cfgreg_uint16_uint16 (PACPLL_CFG_PULSE_FORM_BASE + PACPLL_CFG_PULSE_FORM_WH01_ARR+0, (guint16)(width0if*rstif*usfactor+0.5),     (guint16)(width1if*rstif*usfactor+0.5));  // 0,1: width in us to steps
-        set_gpio_cfgreg_int16_int16   (PACPLL_CFG_PULSE_FORM_BASE + PACPLL_CFG_PULSE_FORM_WH01_ARR+1, ( gint16)(height0if*shapexif*mVfactor),     ( gint16)(height1if*shapexif*mVfactor));     // 2,3: height in mV to 16bit (later 14bit on FPGA)
-        set_gpio_cfgreg_uint16_uint16 (PACPLL_CFG_PULSE_FORM_BASE + PACPLL_CFG_PULSE_FORM_WH01_ARR+2, (guint16)(width0if*pstif*usfactor+0.5),     (guint16)(width1if*pstif*usfactor+0.5));  // 0,1: width in us to steps
-        set_gpio_cfgreg_int16_int16   (PACPLL_CFG_PULSE_FORM_BASE + PACPLL_CFG_PULSE_FORM_WH01_ARR+3, ( gint16)(height0if*mVfactor),              ( gint16)(height1if*mVfactor));     // 2,3: height in mV to 16bit (later 14bit on FPGA)
+        rp_spmc_module_config_uint16_uint16 (MODULE_SETUP, (guint16)(width0if*rstif*usfactor+0.5),     (guint16)(width1if*rstif*usfactor+0.5), 0);  // 0,1: width in us to steps
+        rp_spmc_module_config_int16_int16   (MODULE_SETUP, ( gint16)(height0if*shapexif*mVfactor),     ( gint16)(height1if*shapexif*mVfactor), 1);  // 2,3: height in mV to 16bit (later 14bit on FPGA)
+        rp_spmc_module_config_uint16_uint16 (MODULE_SETUP, (guint16)(width0if*pstif*usfactor+0.5),     (guint16)(width1if*pstif*usfactor+0.5), 2);  // 0,1: width in us to steps
+        rp_spmc_module_config_int16_int16   (MODULE_SETUP, ( gint16)(height0if*mVfactor),              ( gint16)(height1if*mVfactor),          3);  // 2,3: height in mV to 16bit (later 14bit on FPGA)
 
         // pulse shaping pre pulse, then remaining pulse
-        set_gpio_cfgreg_uint16_uint16 (PACPLL_CFG_PULSE_FORM_BASE + PACPLL_CFG_PULSE_FORM_WH01_ARR+4, (guint16)(width0*rst*usfactor+0.5),         (guint16)(width1*rst*usfactor+0.5));    // 4,5: width in us to steps
-        set_gpio_cfgreg_int16_int16   (PACPLL_CFG_PULSE_FORM_BASE + PACPLL_CFG_PULSE_FORM_WH01_ARR+5, ( gint16)(height0*shapex*mVfactor),         ( gint16)(height1*shapex*mVfactor));       // 6,7: height in mV to 16bit (later 14bit on FPGA)
-        set_gpio_cfgreg_uint16_uint16 (PACPLL_CFG_PULSE_FORM_BASE + PACPLL_CFG_PULSE_FORM_WH01_ARR+6, (guint16)(width0*pst*usfactor+0.5),         (guint16)(width1*pst*usfactor+0.5));    // 4,5: width in us to steps
-        set_gpio_cfgreg_int16_int16   (PACPLL_CFG_PULSE_FORM_BASE + PACPLL_CFG_PULSE_FORM_WH01_ARR+7, ( gint16)(height0*mVfactor),                ( gint16)(height1*mVfactor));       // 6,7: height in mV to 16bit (later 14bit on FPGA)
+        rp_spmc_module_config_uint16_uint16 (MODULE_SETUP, (guint16)(width0*rst*usfactor+0.5),         (guint16)(width1*rst*usfactor+0.5),     4);  // 4,5: width in us to steps
+        rp_spmc_module_config_int16_int16   (MODULE_SETUP, ( gint16)(height0*shapex*mVfactor),         ( gint16)(height1*shapex*mVfactor),     5);  // 6,7: height in mV to 16bit (later 14bit on FPGA)
+        rp_spmc_module_config_uint16_uint16 (MODULE_SETUP, (guint16)(width0*pst*usfactor+0.5),         (guint16)(width1*pst*usfactor+0.5),     6);  // 4,5: width in us to steps
+        rp_spmc_module_config_int16_int16   (MODULE_SETUP, ( gint16)(height0*mVfactor),                ( gint16)(height1*mVfactor),            7);  // 6,7: height in mV to 16bit (later 14bit on FPGA)
 
         // post pulse shaping pre pulse, then remaining pulse
-        set_gpio_cfgreg_uint16_uint16 (PACPLL_CFG_PULSE_FORM_BASE + PACPLL_CFG_PULSE_FORM_WH01_ARR+8, (guint16)(width0if*rstif*usfactor+0.5),     (guint16)(width1if*rstif*usfactor+0.5));  // 8,9: width in us to steps
-        set_gpio_cfgreg_int16_int16   (PACPLL_CFG_PULSE_FORM_BASE + PACPLL_CFG_PULSE_FORM_WH01_ARR+9, ( gint16)(height0if*shapexif*mVfactor),     ( gint16)(height1if*shapexif*mVfactor));   // 10,11: height in mV to 16bit (later 14bit on FPGA)
-        set_gpio_cfgreg_uint16_uint16 (PACPLL_CFG_PULSE_FORM_BASE + PACPLL_CFG_PULSE_FORM_WH01_ARR+10,(guint16)(width0if*pstif*usfactor+0.5),     (guint16)(width1if*pstif*usfactor+0.5));  // 8,9: width in us to steps
-        set_gpio_cfgreg_int16_int16   (PACPLL_CFG_PULSE_FORM_BASE + PACPLL_CFG_PULSE_FORM_WH01_ARR+11,( gint16)(height0if*mVfactor),              ( gint16)(height1if*mVfactor));   // 10,11: height in mV to 16bit (later 14bit on FPGA)
-
+        rp_spmc_module_config_uint16_uint16 (MODULE_SETUP, (guint16)(width0if*rstif*usfactor+0.5),     (guint16)(width1if*rstif*usfactor+0.5), 8);  // 8,9: width in us to steps
+        rp_spmc_module_config_int16_int16   (MODULE_SETUP, ( gint16)(height0if*shapexif*mVfactor),     ( gint16)(height1if*shapexif*mVfactor), 9);  // 10,11: height in mV to 16bit (later 14bit on FPGA)
+        rp_spmc_module_config_uint16_uint16 (MODULE_SETUP, (guint16)(width0if*pstif*usfactor+0.5),     (guint16)(width1if*pstif*usfactor+0.5),10);  // 8,9: width in us to steps
+        rp_spmc_module_config_int16_int16   (MODULE_SETUP, ( gint16)(height0if*mVfactor),              ( gint16)(height1if*mVfactor),         11);  // 10,11: height in mV to 16bit (later 14bit on FPGA)
+       
         // offset/bias base lines pre/post
-        set_gpio_cfgreg_int16_int16   (PACPLL_CFG_PULSE_FORM_BASE + PACPLL_CFG_PULSE_FORM_WH01_ARR+12,( gint16)(bias0*mVfactor),        ( gint16)(bias1*mVfactor));       // 12,13: B height in mV to 16bit (later 14bit on FPGA)
-        set_gpio_cfgreg_int16_int16   (PACPLL_CFG_PULSE_FORM_BASE + PACPLL_CFG_PULSE_FORM_WH01_ARR+13,( gint16)(bias0*mVfactor),        ( gint16)(bias1*mVfactor));       // 14,15: B height in mV to 16bit (later 14bit on FPGA)
+        rp_spmc_module_config_int16_int16   (MODULE_SETUP,            ( gint16)(bias0*mVfactor),        ( gint16)(bias1*mVfactor),            12);   // 12,13: B height in mV to 16bit (later 14bit on FPGA)
+        rp_spmc_module_config_int16_int16   (PULSE_FORMER_WH_ADDRESS, ( gint16)(bias0*mVfactor),        ( gint16)(bias1*mVfactor),            13);   // 14,15: B height in mV to 16bit (later 14bit on FPGA) ** WRITE
 }
 
 
@@ -522,56 +508,55 @@ void rp_PAC_set_pulse_form (double bias0, double bias1,
 
  */
 
-int __rp_pactransport_shr_dec_hi=0;
+// buffers
+int                rp_pactransport_opmode    =0;
+int                rp_pactransport_chansel   =0;
+int                rp_pactransport_decimation=0;
+int                rp_pactransport_shr_dec   =0;
+int                rp_pactransport_nsamples  =0;
+unsigned long long rp_pactransport_fcenter   =0;
 
 // Configure BRAM Data Transport Mode
 void rp_PAC_transport_set_control (int control){
-        static int control_reg=0;
-
+        if (verbose > 2) fprintf(stderr, "##Configure TRANSPORT: SET CONTROL %d", control);
+        
         if (control >= 0){
-                control_reg = control;
+                rp_pactransport_opmode = control;
                 if (verbose == 1) fprintf(stderr, "TR: RESET: %s, START: %s, MODE: %s\n",
-                                          control_reg & PACPLL_CFG_TRANSPORT_RESET ? "SET  " : "READY",
-                                          control_reg & PACPLL_CFG_TRANSPORT_START ? "GO" : "ARMED",
-                                          control_reg & PACPLL_CFG_TRANSPORT_SINGLE ? "SINGLE":"LOOP");
+                                          control & PACPLL_CFG_TRANSPORT_RESET ? "SET  " : "READY",
+                                          control & PACPLL_CFG_TRANSPORT_START ? "GO" : "ARMED",
+                                          control & PACPLL_CFG_TRANSPORT_SINGLE ? "SINGLE":"LOOP");
+
+                // udpate control bits in opmode 
+                config_transport (rp_pactransport_chansel, rp_pactransport_decimation, rp_pactransport_nsamples, rp_pactransport_opmode,  rp_pactransport_shr_dec,  rp_pactransport_fcenter);
         }
-        set_gpio_cfgreg_uint32 (PACPLL_CFG_TRANSPORT_CONTROL, (control_reg & 0xff) | __rp_pactransport_shr_dec_hi);
 }
 
-void rp_PAC_configure_transport (int control, int shr_dec_data, int nsamples, int decimation, int channel_select, double scale, double center){
-        __rp_pactransport_shr_dec_hi = channel_select > 7 ? 0 : ((shr_dec_data >= 0 && shr_dec_data <= 24) ? shr_dec_data : 0) << 8; // keep memory, do not shift DBG data
+void rp_PAC_configure_transport (int control, int shr_dec_data, int nsamples, int decimation, int channel_select, double center){
+        rp_pactransport_shr_dec = channel_select > 7 ? 0 : ((shr_dec_data >= 0 && shr_dec_data <= 24) ? shr_dec_data : 0); // keep memory, do not shift DBG data
+        if (verbose == 1) fprintf(stderr, "##Configure TRANSPORT: dec=%d, shr=%d, CHM=%d N=%d\n", decimation, shr_dec_data, channel_select, nsamples);
         
-        if (verbose == 1) fprintf(stderr, "Configure transport: dec=%d, shr=%d, CHM=%d N=%d\n", decimation, shr_dec_data, channel_select, nsamples);
-        
-        if (nsamples > 0){
-                set_gpio_cfgreg_int32 (PACPLL_CFG_TRANSPORT_SAMPLES, nsamples);
-        }
-        
-        set_gpio_cfgreg_int32 (PACPLL_CFG_TRANSPORT_DECIMATION, decimation);
+        if (control >= 0) // update ?
+                rp_pactransport_opmode     = control;
 
-#ifdef REMAP_TO_OLD_FPGA_VERSION
-        //           old mapping  IN12 PA 1A 1P AF AE PF MA DBG -
-        //                 from   { 0, 1, 2, 3, 4, 5, 6, 7, 8  }
-        //             remap to   { 0, 4, 2, 3, 3, 2, 5, 1, 8, 0 }; // best match
-        static int remap_ch[10] = { 0, 7, 2, 3, 1, 6, 5, 1, 8, 0 };
-        channel_select = remap_ch[channel_select];
-#endif
-        set_gpio_cfgreg_int32 (PACPLL_CFG_TRANSPORT_CHANNEL_SELECT, channel_select);
-        // AUX scale, center
-        set_gpio_cfgreg_int32 (PACPLL_CFG_TRANSPORT_AUX_SCALE, (int)round(Q15*scale));
-        set_gpio_cfgreg_int48 (PACPLL_CFG_TRANSPORT_AUX_CENTER, (unsigned long long)round (dds_phaseinc (center))); // => 44bit phase f0 center ref for delta_freq calculation on FPGA
+        if (nsamples > 0) // update?
+                rp_pactransport_nsamples = nsamples;
 
-        rp_PAC_transport_set_control (control);
+        rp_pactransport_chansel    = channel_select;
+        rp_pactransport_decimation = decimation;
+        rp_pactransport_fcenter    = (unsigned long long)round (dds_phaseinc (center)); // => 44bit phase f0 center ref for delta_freq calculation on FPGA
+        
+        config_transport (rp_pactransport_chansel, rp_pactransport_decimation, rp_pactransport_nsamples, rp_pactransport_opmode,  rp_pactransport_shr_dec,  rp_pactransport_fcenter);
 }
 
 void rp_PAC_start_transport (int control_mode, int nsamples, int tr_mode){
+        
         // RESET TRANSPORT
         rp_PAC_configure_transport (PACPLL_CFG_TRANSPORT_RESET,
                                     SHR_DEC_DATA.Value (),
                                     nsamples,
                                     TRANSPORT_DECIMATION.Value (),
                                     tr_mode, // CHANNEL COMBINATION MODE
-                                    AUX_SCALE.Value (),
                                     FREQUENCY_CENTER.Value()
                                     );
         
@@ -627,7 +612,7 @@ void rp_PAC_set_tau_transport (double tau_dfreq, double tau_phase, double tau_ex
 
 // Phase Controller
 // CONTROL[75] OUT[44] : [75-1-1:75-44]=43+1   m[24]  x  c[32]  = 56 M: 24{Q32},  P: 44{Q14}
-void rp_PAC_set_dfreq_controller (double setpoint, double cp, double ci, double upper, double lower){
+ void rp_PAC_set_dfreq_controller (double setpoint, double cp, double ci, double upper, double lower, double reset_value, int enable){
         if (verbose > 2) fprintf(stderr, "##Configure Controller: set= %g  Q22: %d    cp=%g ci=%g upper=%g lower=%g\n", setpoint, (int)(Q22 * setpoint), cp, ci, upper, lower); 
 
         /*
@@ -641,11 +626,19 @@ void rp_PAC_set_dfreq_controller (double setpoint, double cp, double ci, double 
         // = PSign * CPN(29)*pow(10.,Pgain/20.);
         */
 
-        set_gpio_cfgreg_int32 (PACPLL_CFG_DFREQ_CONTROLLER + PACPLL_CFG_SET,   (long long)(round(dds_phaseinc (setpoint)))); // 32bit dFreq (Full range is Q44)
-        set_gpio_cfgreg_int32 (PACPLL_CFG_DFREQ_CONTROLLER + PACPLL_CFG_CP,    (long long)(QDFCOEF * cp)); // {32}
-        set_gpio_cfgreg_int32 (PACPLL_CFG_DFREQ_CONTROLLER + PACPLL_CFG_CI,    (long long)(QDFCOEF * ci));
-        set_gpio_cfgreg_int32 (PACPLL_CFG_DFREQ_CONTROLLER + PACPLL_CFG_UPPER, (long long)round (Q31*upper/10.0)); // => 15.16 32Q16 Control (Bias, Z, ...) @ +/-10V range in Q31
-        set_gpio_cfgreg_int32 (PACPLL_CFG_DFREQ_CONTROLLER + PACPLL_CFG_LOWER, (long long)round (Q31*lower/10.0));
+        config_controller (DFREQ_CONTROLLER_ADDRESS,
+                           (int) round (dds_phaseinc (setpoint)),
+                           (int) round (QDFCOEF * cp),
+                           (int) round (QDFCOEF * ci),
+                           (long long) round (Q31*upper/10.0),   // *** FIX ME 10V -> 5V ??
+                           (long long) round (Q31*lower/10.0));
+        config_controller_m (DFREQ_CONTROLLER_M_ADDRESS, (long long) round(Q31*reset_value/10.0), enable ? 1:0);
+
+        //set_gpio_cfgreg_int32 (PACPLL_CFG_DFREQ_CONTROLLER + PACPLL_CFG_SET,   (long long)(round(dds_phaseinc (setpoint)))); // 32bit dFreq (Full range is Q44)
+        //set_gpio_cfgreg_int32 (PACPLL_CFG_DFREQ_CONTROLLER + PACPLL_CFG_CP,    (long long)(QDFCOEF * cp)); // {32}
+        //set_gpio_cfgreg_int32 (PACPLL_CFG_DFREQ_CONTROLLER + PACPLL_CFG_CI,    (long long)(QDFCOEF * ci));
+        //set_gpio_cfgreg_int32 (PACPLL_CFG_DFREQ_CONTROLLER + PACPLL_CFG_UPPER, (long long)round (Q31*upper/10.0)); // => 15.16 32Q16 Control (Bias, Z, ...) @ +/-10V range in Q31
+        //set_gpio_cfgreg_int32 (PACPLL_CFG_DFREQ_CONTROLLER + PACPLL_CFG_LOWER, (long long)round (Q31*lower/10.0));
 }
 
 
@@ -658,6 +651,8 @@ void *thread_gpio_reading_FIR(void *arg) {
 
 	//fprintf(stderr, "thread_gpio_reading_FIR started\n");
 	
+        pthread_mutex_lock (&gpio_reading_mutexsum);
+        
         for (j=0; j<GPIO_FIR_LEN; j++){
                 gpio_reading_FIRV_buffer[GPIO_READING_DDS_X8][j] = 0;
                 gpio_reading_FIRV_buffer[GPIO_READING_DDS_X9][j] = 0;
@@ -670,6 +665,8 @@ void *thread_gpio_reading_FIR(void *arg) {
 	gpio_reading_FIRV_vector_CH3_mapping = gpio_reading_FIRV_vector_CH4_mapping = gpio_reading_FIRV_vector_CH5_mapping = 0.0; 
 	for (j=0; j<GPIO_FIR_LEN; j++)
 	  gpio_reading_FIRV_buffer_CH3_mapping[j] = gpio_reading_FIRV_buffer_CH4_mapping[j] = gpio_reading_FIRV_buffer_CH5_mapping[j] = 0.0;
+
+        pthread_mutex_unlock (&gpio_reading_mutexsum);
 
         for(j=0; gpio_reading_control; ){
 
@@ -743,8 +740,6 @@ void *thread_gpio_reading_FIR(void *arg) {
                 gpio_reading_FIRV_vector_CH5_mapping += (double)x;
                 gpio_reading_FIRV_buffer_CH5_mapping[j] = x;
 
-
-		
                 pthread_mutex_unlock (&gpio_reading_mutexsum);
 
                 ++j;

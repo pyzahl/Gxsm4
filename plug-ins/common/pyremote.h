@@ -33,11 +33,15 @@
 
 #include <gtk/gtk.h>
 
-struct remote_action_cb {
+typedef struct remote_action_cb {
         const gchar  *cmd;
         void (*RemoteCb)(GtkWidget *widget , void* data);
         GtkWidget *widget;
         gpointer data;
+        const gchar *return_data;
+        int ret;
+        int data_length;
+        double *data_vector[5];
 };
 
 #endif

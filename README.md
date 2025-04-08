@@ -1,10 +1,11 @@
-# **ATTENTION:**
+# Get excited: RPSPMC for GXSM4 is here!
 
-**THIS IS A BETA VERSION AND WORK IN PROGRESS of Gxsm4 ported to GTK4 from Gxsm-3.0 on SF (gxsm.sf.net).**
-There are minor gtk4 related issues and shortcomings at this time
+**Gxsm4 See also: gxsm.sf.net**
+
+This is port of Gxsm3 (gtk3) to gtk4. There are still minor gtk4 related issues and shortcomings at this time
 and this version is for evaluation and future migration readyness.
-See details of pending / not functional parts below in section 3.
-(C) PyZahl 2021-12-31
+See details of pending and know issues in section 3.
+(C) PyZahl 2025-04-07
 
 # 1. General Information
 
@@ -12,13 +13,10 @@ GXSM -- Gnome X Scanning Microscopy: A multi-channel image and vector-probe data
 
 Based on several hardware options it supports a commercially available DSP hardware (see https://www.softdb.com/scanning-probe-microscopy/) and provided also open source code for all the low level signal processing tasks and instrument controls in a most flexible and adaptable manner.
 
-All latest stable software is available now via GIT:
-(Gxsm4 Beta currently) https://github.com/pyzahl/Gxsm4
+BIG NEWS: RPSPMC for GXSM4 arrived from a vision reality made happen! Still under heavy testing ad njust about been depoyed to lab duty these days!
+Dive into it starting here: https://github.com/pyzahl/Gxsm4/tree/master/plug-ins/hard/RPSPMC
 
-or Live Demo/Install CD (with GXSM3):
-http://www.ventiotec.de/linux/GXSM-Linux.iso
-
-GXSM Web Site: http://gxsm.sf.net
+The GXSM Web Site historically remains hosted on SF: http://gxsm.sf.net
 
 # 2. Installation
 
@@ -58,17 +56,15 @@ Then run in the folder Gxsm4-git
 ``` 
  $ meson builddir
  $ cd builddir
- $ meson compile
- $ meson install
+ $ ninja install
 ```
-Here, "meson compile, meson install" calls ninja. You can simply call "ninja install" to do it all.
 
 To uninstall call in the buildir
 ``` 
 ninja uninstall
 ```
 
-## b) New package tool: Flatpak -- work in progress:
+## (NOT RECOMENEDED ANY MORE AS GTK4 BECOMES MAIN STREAM) b) New package tool: Flatpak -- work in progress:
 
 Install flatpak and flathub
 ``` 
@@ -104,7 +100,6 @@ Now install and run GXSM4 (assuming that the json-file/source is in the folder g
 	     Some thing seams slow here at build and update, or has post idel latency.
 
 - known GTK4 shortcomings so far noted: 
-  - Long popup/down selection lists, items out of "screen limits" are not sccessible, no/missing scrolling feature, etc.. No idea yet how to make this work right.
   - Rendering in cairo fall back mode (when using X11 export via ssh -X for example) is very slow -- some where around a magnitude (10x) slow! What makes remote work nearly impossible. However, varies a lot by "fetaure" used. Menu pop ups are very slow, take long to appear. GUI initial  build (many entries, etc.) takes a long time.
   - press/release signals not available for simple button widget. Work around assigning handlers does not work as expected. Work for a canvas "home made" button. Non perfec tbu tworkable workaround currently used: Arrow icons on button widget accept press and release events. (Needed for Mover Controls: "fire wave signal on DSP when pressed" direction buttons.
 

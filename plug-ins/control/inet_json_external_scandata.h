@@ -310,6 +310,7 @@ public:
 
 	static void pulse_form_parameter_changed (Param_Control* pcs, gpointer user_data);
         static void pulse_form_enable (GtkWidget *widget, Inet_Json_External_Scandata *self);
+        static void pulse_form_fire (GtkWidget *widget, Inet_Json_External_Scandata *self);
 
         static void choice_operation_callback (GtkWidget *widget, Inet_Json_External_Scandata *self);
         static void choice_transport_ch12_callback (GtkWidget *widget, Inet_Json_External_Scandata *self);
@@ -327,6 +328,7 @@ public:
         static void scope_z_ch2_callback (GtkWidget *widget, Inet_Json_External_Scandata *self);
 
         static void scope_buffer_position_callback (GtkWidget *widget, Inet_Json_External_Scandata *self);
+        static void scope_save_data_callback (GtkWidget *widget, Inet_Json_External_Scandata *self);
 
         
         static void choice_update_ts_callback (GtkWidget *widget, Inet_Json_External_Scandata *self);
@@ -335,6 +337,7 @@ public:
 
 	void send_all_parameters ();
         void save_values (NcFile *ncf);
+        void save_scope_data ();
         
 	void update (); // window update (inputs, etc. -- here currently not really necessary)
         void update_monitoring_parameters ();
@@ -566,6 +569,9 @@ private:
         double scope_dc_level[5];
         int transport;
         int bram_shift;
+        int trigger_mode;
+        double trigger_post_time;
+        double bram_saved_buffer[5][4096];
         double gain_scale[5];
         double time_scale[5];
         gboolean unwrap_phase_plot;

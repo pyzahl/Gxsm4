@@ -38,6 +38,14 @@ typedef enum { SCAN_DIR_TOPDOWN, SCAN_DIR_TOPDOWN_BOTUP, SCAN_DIR_BOTUP } SCAN_D
 typedef enum { SCAN_FLAG_READY, SCAN_FLAG_STOP,  SCAN_FLAG_PAUSE,  SCAN_FLAG_RUN } SCAN_FLAG;
 typedef enum { SCAN_LINESCAN, SCAN_FRAMECAPTURE } SCAN_DT_TYPE;
 
+// data passed to "idle" function call, used to refresh/draw while waiting for data
+typedef struct {
+	GSList *scan_list; // scans to update
+	GFunc  UpdateFunc; // function to call for background updating
+	gpointer data; // additional data (here: reference to the current SPM_ScanControl object)
+} IdleRefreshFuncData;
+
+
 class MultiVoltEntry{
 public:
 	MultiVoltEntry (BuildParam *bp, UnitObj *Volt, int i, double v=0.) { 
@@ -162,31 +170,46 @@ public:
 	// some helpers
 	static void call_scan_start (Scan* sc, gpointer data){ 
                 if (!sc) return;
+
 		if (data)
 			sc->start (((MultiVoltEntry*)data)->position (), ((MultiVoltEntry*)data)->volt ());
 		else
 			sc->start (0, gapp->xsm->data.s.Bias);
+
+                sc->memo_y = -1;
 	};
 	static void call_scan_draw_line (Scan* sc, gpointer data){
+                static gint y_last=-1;
 		gint y_realtime = gapp->xsm->hardware->RTQuery ();
-		gint y_update = ((SPM_ScanControl*)data)->line2update;
+		gint y_update = ((SPM_ScanControl*)data)->line2update; // may be skipping lines when busy/fast as we are here called only when idle
+
+                if (y_realtime == sc->memo_y)
+                        return;
+                sc->memo_y = y_realtime;
+                
+#if 0
                 // "Tip" and data aupdate frequency control/limit
-                if (sc->get_last_line_updated() == y_update && sc->get_last_line_updated_time_delta () < 200000) return;
+                if (sc->get_last_line_updated() == y_update && sc->get_last_line_updated_time_delta () < 200000) return; // nothing to update
+#endif
                 sc->set_last_line_updated(y_update);
 		// std::cout << __func__ << " y_realtime=" << y_realtime << " y_update=" << y_update << std::endl;
-		if (y_realtime >= 0 && fabs ((double)(y_realtime-y_update)) < 2)
-			sc->draw ( y_update, y_update+1); // force line only refresh ### y,y+1
+		if (y_realtime >= 0 && fabs ((double)(y_realtime-y_update)) < 2) // single new line only
+			sc->draw ( y_update, y_update+1); // force line only refresh ### y,y+1 -- only this single line mode triggers RedLine update
 		else
-			if (y_realtime >= 0 && fabs ((double)(y_realtime-y_update)) < 3){
+                        sc->draw (); // full image update
+                /*
+                        if (y_realtime >= 0 && fabs ((double)(y_realtime-y_update)) < 3){
 				sc->draw (); // image update
 				sc->draw ( y_update, y_update+1); // force line only refresh ### y+1, y+1
 			}
+                */
 	};
 	static void call_scan_stop (Scan* sc, gpointer data){ 
                 if (!sc) return;
 		sc->stop (((SPM_ScanControl*)data)->scan_flag == SCAN_FLAG_STOP 
 			  && ((SPM_ScanControl*)data)->last_scan_dir == SCAN_DIR_TOPDOWN,
 			  ((SPM_ScanControl*)data)->line);
+                sc->draw(); // final update
 	};
 
 	void SetScanDir (GtkWidget *w) { 

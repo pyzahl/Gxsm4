@@ -49,7 +49,7 @@
 #define THIS_HWI_PREFIX      "SPM_TEMPL_HwI"
 
 extern int debug_level;
-extern SOURCE_SIGNAL_DEF source_signals[];
+extern SOURCE_SIGNAL_DEF template_source_signals[];
 
 extern "C++" {
         extern SPM_Template_Control *Template_ControlClass;
@@ -435,8 +435,8 @@ int spm_template_hwi_dev::ReadProbeData (int dspdev, int control){
                         // analyze header and setup channel lookup table
                         number_channels=0;
                         LOGMSGS ( "FR::NEED_HDR: decoding DATA_SRCS to read..." << std::endl);
-                        for (int i = 0; source_signals[i+NUM_VECTOR_SIGNALS].mask && source_signals[i+NUM_VECTOR_SIGNALS].mask; ++i){
-                                if (spm_emu->vp_header_current.srcs & source_signals[i+NUM_VECTOR_SIGNALS].mask){
+                        for (int i = 0; template_source_signals[i+NUM_VECTOR_SIGNALS].mask && template_source_signals[i+NUM_VECTOR_SIGNALS].mask; ++i){
+                                if (spm_emu->vp_header_current.srcs & template_source_signals[i+NUM_VECTOR_SIGNALS].mask){
                                         ch_lut[number_channels] = i;
                                         ++number_channels;
                                 }

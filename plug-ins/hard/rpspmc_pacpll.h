@@ -43,10 +43,12 @@
 #include "rpspmc_hwi_structs.h"
 
 #include "json_talk.h"
+
 #include "rpspmc_stream.h"
+#include "rpspmc_hwi_dev.h"
 
 
-#define MAX_PROGRAM_VECTORS 16
+#define MAX_PROGRAM_VECTORS 32
 #define i_X 0
 #define i_Y 1
 #define i_Z 2
@@ -71,6 +73,36 @@ extern "C++" {
 
 #define DMA_SIZE         0x40000            // 20bit count of 32bit words ==> 1MB DMA Block:  2 x 0x80000 bytes
 #define EXPAND_MULTIPLES 32
+
+
+
+#define CPN(N) ((double)(1LL<<(N))-1.)
+
+// WARNING WARNING WARNING.. not working life if table is initialized with this
+#define BiasFac    (main_get_gapp()->xsm->Inst->BiasGainV2V ())
+#define CurrFac    (1./main_get_gapp()->xsm->Inst->nAmpere2V (1.))
+#define ZAngFac    (main_get_gapp()->xsm->Inst->Volt2ZA (1.))
+#define XAngFac    (main_get_gapp()->xsm->Inst->Volt2XA (1.))
+#define YAngFac    (main_get_gapp()->xsm->Inst->Volt2YA (1.))
+
+#define CPN(N) ((double)(1LL<<(N))-1.)
+
+#define RP_FPGA_QEXEC 31 // Q EXEC READING Controller        -- 1V/(2^RP_FPGA_QEXEC-1)
+#define RP_FPGA_QSQRT 23 // Q CORDIC SQRT Amplitude Reading  -- 1V/(2^RP_FPGA_QSQRT-1)
+#define RP_FPGA_QATAN 21 // Q CORDIC ATAN Phase Reading      -- 180deg/(PI*(2^RP_FPGA_QATAN-1))
+#define RP_FPGA_QFREQ 44 // Q DIFF FREQ READING              -- 125MHz/(2^RP_FPGA_QFREQ-1) well number should not exceed 32bit 
+
+#define DSP32Qs15dot16TO_Volt (50/(32767.*(1<<16)))
+
+#define SPMC_AD5791_REFV 5.0 // DAC AD5791 Reference Volatge is 5.000000V (+/-5V Range)
+#define SPMC_AD5791_to_volts (SPMC_AD5791_REFV / QN(31))
+#define SPMC_RPIN12_REFV 1.0 // RP RF DACs Reference Voltage is 1.0V (+/-1V Range)
+#define SPMC_RPIN12_to_volts (SPMC_RPIN12_REFV / QN(31))
+#define SPMC_RPIN34_REFV 5.0 // RP AD463-24 DACs Reference Voltage is 5.0V (Differential +/-5V Range)
+#define SPMC_RPIN34_to_volts (SPMC_RPIN34_REFV / QN(31))
+
+
+
 
 // GUI builder helper
 class GUI_Builder : public BuildParam{
@@ -110,6 +142,9 @@ public:
         GtkWidget* grid_add_mixer_options (gint channel, gint preset, gpointer ref);
         GtkWidget* grid_add_scan_input_signal_options (gint channel, gint preset, gpointer ref);
         GtkWidget* grid_add_probe_source_signal_options (gint channel, gint preset, gpointer ref);
+        GtkWidget* grid_add_modulation_target_options (gint channel, gint preset, gpointer ref);
+        GtkWidget* grid_add_z_servo_current_source_options (gint channel, gint preset, gpointer ref);
+        GtkWidget* grid_add_rf_gen_out_options (gint channel, gint preset, gpointer ref);
 
         GtkWidget* grid_add_probe_status (const gchar *status_label);
         void grid_add_probe_controls (gboolean have_dual,
@@ -159,6 +194,9 @@ public:
                 vpg_app_window = NULL;
                 vpg_grid = NULL;
 
+                zpos_refresh_timer_id = 0;
+                delayed_vector_update_timer_id = 0;
+
                 // need to create according xml recource files for this to make work....
                 hwi_settings = g_settings_new (GXSM_RES_BASE_PATH_DOT".hwi.rpspmc-control");
                 Unity    = new UnitObj(" "," ");
@@ -183,16 +221,19 @@ public:
                
                 bias = 0;
                 zpos_ref = 0;
+                zpos_mon = 0;
 
-                for (int i=0; i<4; ++i){
-                        scan_source[i] = i;
+                for (int i=0; i<6; ++i){
+                        scan_source[i]  = i;
                         probe_source[i] = i;
-                        
+                }
+                for (int i=0; i<4; ++i){
                         mix_fbsource[i] = 0;
                         mix_unit2volt_factor[i] = 1;
                         mix_set_point[i] = 0;
                         mix_gain[i] = 1;
                         mix_level[i] = 0;
+                        mix_in_offsetcomp[i] = 0;
                         mix_transform_mode[i] = 0;
                 }
 
@@ -234,13 +275,6 @@ public:
                 dydt = 0;
                 dzdt = 0;
 
-                
-                // LockIn
-                AC_amp[0] = 0;
-                AC_amp[1] = 0;
-                AC_amp[2] = 0;
-                AC_amp[3] = 0;
-                AC_frq = 330;
 
 	// Graphs Folder -- user settings origin
                 Source = XSource = PSource = 0;
@@ -249,14 +283,34 @@ public:
 
 	// Graphs used life -- dep. on GLOCK if copy of user settings or memorized last setting
                 vis_Source = vis_XSource = vis_XJoin = vis_PSource = 0;
-                vis_PlotAvg = vis_PlotSec = 0;
-
+                vis_PlotAvg = vis_PlotSec = 0;                
 
 	// STS (I-V)
+#if 0
                 IV_start = -1, IV_end = 1, IV_slope = 0.1, IV_slope_ramp = 0.5, IV_final_delay=0.1, IV_recover_delay=0.1;
                 IV_points = 2000;
                 IV_repetitions = 1;
-
+#endif
+                IV_sections=1;
+                multiIV_mode=0;
+                RampFBoff_mode=0;
+                for (int i=0; i<8; ++i){
+                        IV_start[i]=-1.0;
+                        IV_end[i]=1.0;
+                        IV_points[i]=100;
+                }
+                IV_repetitions=1;
+                IV_dz=0.0;
+                IVdz_repetitions=0;
+                IV_slope=1.0; // V/s
+                IV_slope_ramp=5.0;
+                IV_final_delay=0.01;
+                IV_recover_delay=0.3;
+                IV_dxy_delay=1.0;
+                IV_dxy_points=1;
+                
+                // GVP
+                
                 for (int i=0; i<N_GVP_VECTORS; ++i){
                         GVP_du[i] = 0;
                         GVP_dx[i] = 0;
@@ -264,6 +318,8 @@ public:
                         GVP_dz[i] = 0;
                         GVP_da[i] = 0;
                         GVP_db[i] = 0;
+                        GVP_dam[i] = 0;
+                        GVP_dfm[i] = 0;
                         GVP_ts[i] = 0;
                         GVP_points[i] = 0;
                         GVP_opt[i] = 0;
@@ -275,10 +331,6 @@ public:
                 // init all vars with last used values is done via dconf / schemata
                 // -- BUT not at very first generation via auto write schemata, will get random memory eventually to edit manually later....
                 
-                sim_speed[0]=sim_speed[1]=2000.0; // per tab
-                sim_bias[0]=sim_bias[1]=1.0;
-                options = 0x03;
-
                 get_tab_settings ("IV", IV_option_flags, IV_auto_flags, IV_glock_data);
                 get_tab_settings ("VP", GVP_option_flags, GVP_auto_flags, GVP_glock_data);
                 GVP_restore_vp ("VP_set_last"); // last in view
@@ -354,24 +406,34 @@ public:
 	void save_values (NcFile *ncf);
         void load_values (NcFile *ncf);
 
-        void store_values ();
+        void store_graphs_values ();
+        void restore_graphs_values ();
 
-        static int config_options_callback (GtkWidget *widget, RPSPMC_Control *dspc);
+        void Init_SPMC_on_connect ();
+
+        static void spmc_server_control_callback (GtkWidget *widget,  RPSPMC_Control *self);
+
+        void GVP_zero_all_smooth ();
+        static int GVP_AllZero (GtkWidget *widget, RPSPMC_Control *self);
         
 	//static void ChangedWaveOut(Param_Control* pcs, gpointer data);
 	//static int config_waveform (GtkWidget *widget, RPSPMC_Control *spmsc);
 	static void configure_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
-        static int choice_Ampl_callback(GtkWidget *widget, RPSPMC_Control *spmsc);
-        static int choice_scansource_callback (GtkWidget *widget, RPSPMC_Control *dspc);
+        static int choice_Ampl_callback(GtkWidget *widget, RPSPMC_Control *self);
+        static int choice_scansource_callback (GtkWidget *widget, RPSPMC_Control *self);
 
-	static int DSP_cret_callback (GtkWidget *widget, RPSPMC_Control *dspc);
-	static int DSP_slope_callback (GtkWidget *widget, RPSPMC_Control *dspc);
+	static int DSP_cret_callback (GtkWidget *widget, RPSPMC_Control *self);
+	static int DSP_slope_callback (GtkWidget *widget, RPSPMC_Control *self);
 
-        static int ldc_callback(GtkWidget *widget, RPSPMC_Control *dspc);
+        static int ldc_callback(GtkWidget *widget, RPSPMC_Control *self);
 
-        static void lockin_adjust_callback(Param_Control* pcs, gpointer data);
-        static int lockin_runfree_callback(GtkWidget *widget, RPSPMC_Control *dspc);
+        static void lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *self);
+        static int choice_mod_target_callback (GtkWidget *widget, RPSPMC_Control *self);
+        static int choice_z_servo_current_source_callback (GtkWidget *widget, RPSPMC_Control *self);
 
+        static int choice_BQfilter_type_callback (GtkWidget *widget, RPSPMC_Control *self);
+        static int choice_rf_gen_out_callback (GtkWidget *widget, RPSPMC_Control *self);
+        
         static void show_tab_to_configure (GtkWidget* w, gpointer data){
                 gtk_widget_show (GTK_WIDGET (g_object_get_data (G_OBJECT (w), "TabGrid")));
         };
@@ -389,55 +451,63 @@ public:
         static void ZServoControl(GtkWidget *widget, RPSPMC_Control *self);
         static void ZServoControlInv(GtkWidget *widget, RPSPMC_Control *self);
 
-        static void ChangedNotify(Param_Control* pcs, gpointer data);
-        static void ChangedNotifyVP(Param_Control* pcs, gpointer data);
-        static int ChangedAction(GtkWidget *widget, RPSPMC_Control *dspc);
-	void update_zpos_readings ();
-	static guint refresh_zpos_readings(RPSPMC_Control *dspc);
-        static int zpos_monitor_callback(GtkWidget *widget, RPSPMC_Control *dspc);
-        static int choice_mixmode_callback (GtkWidget *widget, RPSPMC_Control *dspc);
-        static int choice_prbsource_callback(GtkWidget *widget, RPSPMC_Control *dspc);
-
-        static int auto_probe_callback(GtkWidget *widget, RPSPMC_Control *dspc);
-	static int Probing_graph_callback(GtkWidget *widget, RPSPMC_Control *dspc, int finish_flag=0);
-        static int Probing_event_setup_scan (int ch, const gchar *titleprefix, const gchar *name, const gchar *unit, const gchar *label, double d2u, int nvalues);
-	static int Probing_eventcheck_callback(GtkWidget *widget, RPSPMC_Control *dspc);
-	static int Probing_exec_ABORT_callback(GtkWidget *widget, RPSPMC_Control *dspc);
-	static int Probing_save_callback(GtkWidget *widget, RPSPMC_Control *dspc);
-	static int Probing_abort_callback(GtkWidget *widget, RPSPMC_Control *dspc);
-
-	static int Probing_exec_IV_callback(GtkWidget *widget, RPSPMC_Control *dspc);
-	static int Probing_write_IV_callback(GtkWidget *widget, RPSPMC_Control *dspc);
-	static int callback_change_IV_option_flags (GtkWidget *widget, RPSPMC_Control *dspc);
-	static int callback_change_IV_auto_flags (GtkWidget *widget, RPSPMC_Control *dspc);
-
-	static int Probing_exec_GVP_callback(GtkWidget *widget, RPSPMC_Control *dspc);
-	static int Probing_write_GVP_callback(GtkWidget *widget, RPSPMC_Control *dspc);
+        static void Slope_dZX_Changed(Param_Control* pcs, RPSPMC_Control* self);
+        static void Slope_dZY_Changed(Param_Control* pcs, RPSPMC_Control* self);
         
-        static int callback_change_GVP_vpc_option_flags (GtkWidget *widget, RPSPMC_Control *dspc);
-	static int callback_update_GVP_vpc_option_checkbox (GtkWidget *widget, RPSPMC_Control *dspc);
-	static int callback_change_GVP_option_flags (GtkWidget *widget, RPSPMC_Control *dspc);
-	static int callback_change_GVP_auto_flags (GtkWidget *widget, RPSPMC_Control *dspc);
-	static int callback_edit_GVP (GtkWidget *widget, RPSPMC_Control *dspc);
-	static int callback_GVP_store_vp (GtkWidget *widget, RPSPMC_Control *dspc);
-	static int callback_GVP_restore_vp (GtkWidget *widget, RPSPMC_Control *dspc);
+        static void ChangedNotifyScanSpeed(Param_Control* pcs, RPSPMC_Control* self);
+        static void ChangedNotifyMoveSpeed(Param_Control* pcs, RPSPMC_Control* self);
+        static void ChangedNotifyVP(Param_Control* pcs, RPSPMC_Control* self);
+        
+	void update_zpos_readings ();
+	static guint refresh_zpos_readings(RPSPMC_Control *self);
+        static int zpos_monitor_callback(GtkWidget *widget, RPSPMC_Control *self);
+        static int choice_mixmode_callback (GtkWidget *widget, RPSPMC_Control *self);
+        static int choice_prbsource_callback(GtkWidget *widget, RPSPMC_Control *self);
 
-        static int change_source_callback (GtkWidget *widget, RPSPMC_Control *dspc);
-	static int callback_XJoin (GtkWidget *widget, RPSPMC_Control *dspc);
-	static int callback_GrMatWindow (GtkWidget *widget, RPSPMC_Control *dspc);
+        static int auto_probe_callback(GtkWidget *widget, RPSPMC_Control *self);
+	static int Probing_graph_callback(GtkWidget *widget, RPSPMC_Control *self, int finish_flag=0);
+        static int Probing_event_setup_scan (int ch, const gchar *titleprefix, const gchar *name, const gchar *unit, const gchar *label, double d2u, int nvalues);
+	static int Probing_eventcheck_callback(GtkWidget *widget, RPSPMC_Control *self);
+	static int Probing_exec_ABORT_callback(GtkWidget *widget, RPSPMC_Control *self);
+	static int Probing_save_callback(GtkWidget *widget, RPSPMC_Control *self);
+	static int Probing_abort_callback(GtkWidget *widget, RPSPMC_Control *self);
+
+	static int Probing_exec_IV_callback(GtkWidget *widget, RPSPMC_Control *self);
+	static int Probing_write_IV_callback(GtkWidget *widget, RPSPMC_Control *self);
+	static int callback_change_IV_option_flags (GtkWidget *widget, RPSPMC_Control *self);
+	static int callback_change_IV_auto_flags (GtkWidget *widget, RPSPMC_Control *self);
+
+	static int Probing_exec_GVP_callback(GtkWidget *widget, RPSPMC_Control *self);
+	static int Probing_write_GVP_callback(GtkWidget *widget, RPSPMC_Control *self);
+        static int Probing_RampFBoff_callback(GtkWidget *widget, RPSPMC_Control *self);
+        static int Probing_multiIV_callback(GtkWidget *widget, RPSPMC_Control *self);
+        
+        static int callback_change_GVP_vpc_option_flags (GtkWidget *widget, RPSPMC_Control *self);
+	static int callback_update_GVP_vpc_option_checkbox (GtkWidget *widget, RPSPMC_Control *self);
+	static int callback_change_GVP_option_flags (GtkWidget *widget, RPSPMC_Control *self);
+	static int callback_change_GVP_auto_flags (GtkWidget *widget, RPSPMC_Control *self);
+	static int callback_edit_GVP (GtkWidget *widget, RPSPMC_Control *self);
+	static int callback_GVP_store_vp (GtkWidget *widget, RPSPMC_Control *self);
+	static int callback_GVP_restore_vp (GtkWidget *widget, RPSPMC_Control *self);
+
+	static int callback_GVP_preview_me (GtkWidget *widget, RPSPMC_Control *self);
+        int GVP_preview_on[9];
+        
+        static int change_source_callback (GtkWidget *widget, RPSPMC_Control *self);
+	static int callback_XJoin (GtkWidget *widget, RPSPMC_Control *self);
+	static int callback_GrMatWindow (GtkWidget *widget, RPSPMC_Control *self);
 
 	static gboolean idle_callback (gpointer data){
-		RPSPMC_Control *dspc = (RPSPMC_Control*) data;
+		RPSPMC_Control *self = (RPSPMC_Control*) data;
 
                 // make probe vector data is not locked for vector manipulations, wait until available (fast)
-                while (dspc->pv_lock)
+                while (self->pv_lock)
                         usleep (1000);
 
-                dspc->gr_lock = TRUE;
-		dspc->Probing_graph_callback (NULL, dspc, dspc->idle_callback_data_ff);
-                dspc->gr_lock = FALSE;
-                
-		dspc->idle_id = 0; // done.
+                self->gr_lock = TRUE;
+		self->Probing_graph_callback (NULL, self, self->idle_callback_data_ff);
+                self->gr_lock = FALSE;
+		self->idle_id = 0; // done.
 
 		return FALSE;
 	};
@@ -531,6 +601,76 @@ public:
                  }
                  return pc;
         };
+
+        void re_init_vector_program(){
+                for (int i=0; i<MAX_PROGRAM_VECTORS; ++i)
+                        program_vector_list[i].iloop = program_vector_list[i].repetitions; // init
+        };
+
+        int calculate_GVP_total_number_points(int &Ns){
+                int N=0;
+                Ns=0;
+                if (program_vector_list[0].n){
+                        re_init_vector_program();
+                        for (int pc=0; RPSPMC_ControlClass->program_vector_list[pc].n; ){
+                                N += RPSPMC_ControlClass->program_vector_list[pc].n;
+                                pc = RPSPMC_ControlClass->next_section(pc);
+                                Ns++;
+                        }
+                }
+                return N;
+        };
+ 
+        // calculate vector program result at position i, starts at vector v state, result in v, returns time
+        double simulate_vector_program(int i, PROBE_VECTOR_GENERIC *v, int *pc_f, int *il=NULL){
+                int pc=0;
+                int x=0;
+                double t=0.;
+                PROBE_VECTOR_GENERIC vec_initial;
+
+                memcpy (&vec_initial, &program_vector_list[0], sizeof (vec_initial)); // backup
+                re_init_vector_program();
+                
+                if (program_vector_list[0].options & VP_INITIAL_SET_VEC){ // calculate diffs of initial vector been a set vector 
+                        program_vector_list[0].f_dx = program_vector_list[0].f_dx - v->f_dx;
+                        program_vector_list[0].f_dy = program_vector_list[0].f_dy - v->f_dy;
+                        program_vector_list[0].f_dz = program_vector_list[0].f_dz - v->f_dz;
+                        program_vector_list[0].f_du = program_vector_list[0].f_du - v->f_du;
+                        program_vector_list[0].f_da = program_vector_list[0].f_da - v->f_da;
+                        program_vector_list[0].f_db = program_vector_list[0].f_db - v->f_db;
+                        program_vector_list[0].f_dam = program_vector_list[0].f_dam - v->f_dam;
+                        program_vector_list[0].f_dfm = program_vector_list[0].f_dfm - v->f_dfm;
+                }
+                for (; program_vector_list[pc].n;){
+                        int n = program_vector_list[pc].n;
+                        double l=1.;
+                        if (i > x+n){
+                                x += n;
+                        } else {
+                                i -= x;
+                                l = (double)i/n;
+                                i = 0;
+                        }
+                        t += l*n/program_vector_list[pc].slew;  // program_vector.slew = n/ts;
+                        v->f_dx += l*program_vector_list[pc].f_dx;
+                        v->f_dy += l*program_vector_list[pc].f_dy;
+                        v->f_dz += l*program_vector_list[pc].f_dz;
+                        v->f_du += l*program_vector_list[pc].f_du;
+                        v->f_da += l*program_vector_list[pc].f_da;
+                        v->f_db += l*program_vector_list[pc].f_db;
+                        v->f_dam += l*program_vector_list[pc].f_dam;
+                        v->f_dfm += l*program_vector_list[pc].f_dfm;
+                        if (i==0) break;
+                        pc = next_section(pc);
+                        if (il) *il = program_vector_list[pc].iloop;
+                }
+                *pc_f = pc;
+                
+                re_init_vector_program();
+                memcpy (&program_vector_list[0], &vec_initial, sizeof (vec_initial)); // restore
+                
+                return t;
+        };
         
 	void add_probe_hdr(double pv[NUM_PV_HEADER_SIGNALS]);
 	void dump_probe_hdr();
@@ -542,13 +682,6 @@ public:
 				  int current_i, int si, int nas, gboolean join_same_x=FALSE,
                                   gint xmap=0, gint src=0, gint num_active_xmaps=1, gint num_active_sources=1);
 
-        int   msklookup[NUM_PROBEDATA_ARRAYS+1];
-        int   expdi_lookup[NUM_PROBEDATA_ARRAYS+1];
-        char* lablookup[NUM_PROBEDATA_ARRAYS+1];
-        char* unitlookup[NUM_PROBEDATA_ARRAYS+1];
-        double scalelookup[NUM_PROBEDATA_ARRAYS+1];
-        
-        double pv_tmp[NUM_PV_HEADER_SIGNALS];
 
         void init_vp_signal_info_lookup_cache();
    	const char* vp_label_lookup(int i);
@@ -580,7 +713,10 @@ public:
                 }
 	};
 
-        void update_controller ();
+	void delayed_vector_update ();
+	static guint delayed_vector_update_callback (RPSPMC_Control *dspc);
+        gint delayed_vector_update_timer_id;
+        void update_scan_speed_vectors ();
         
         GUI_Builder *bp;
 
@@ -590,6 +726,7 @@ public:
 
 	Gtk_EntryControl *ZPos_ec;
    	double zpos_ref;
+   	double zpos_mon;
 	gint   zpos_refresh_timer_id;
 	  
 	// -- FEEDBACK MIXER --
@@ -598,18 +735,21 @@ public:
 	double mix_set_point[4]; // on default: [0] Current Setpoint (STM; log mode) [1..3]: off
 	double mix_gain[4];      // Mixing Gains: 0=OFF, 1=100%, note: can be > 1 or even negative for scaling purposes
 	double mix_level[4];     // fuzzy mixing control via level, applied only if fuzzy flag set
+	double mix_in_offsetcomp[4]; // in offset compensation value
 	// -- may not yet be applied to all signal --> check with DSP code
 	int    mix_transform_mode[4]; //!< transformation mode on/off log/lin iir/full fuzzy/normal
 
         // Feedback (Z-Servo)
 	double z_servo[3];    // Z-Servo (Feedback) [0] (not used here), [1] Const Proportional, [2] Const Integral [user visible values]
 
-	int    scan_source[4];    // scan source mapping signal index for imaging
-	int    probe_source[4];   // probe source mapping signal index for 32bit data channels [0..3]
+	int    scan_source[6];    // scan source mapping signal index for imaging
+	int    probe_source[6];   // probe source mapping signal index for 32bit data channels [0..3]
+        GtkWidget* z_servo_current_source_options_selector;
+        GtkWidget* z_servo_options_selector[4];
 
 	int    vp_input_id_cache[4];  // cache VP input config;
 	int    DSP_vpdata_ij[2];
-	GtkWidget *VPSig_menu, *VPSig_mi[8], *VPScanSrcVPitem[4];
+	GtkWidget *VPSig_menu, *VPSig_mi[8], *VPScanSrcVPitem[6];
         
 	double fast_return;       //!< on-the-fly fast return option (scan retrace speed override factor, 1=normal)
 	double x2nd_Zoff;         //!< Z lift off for 2nd scan line (MFM etc...)
@@ -652,14 +792,12 @@ public:
 	double ue_slope_flg;
 
 	// LockIn
-	double    AC_amp[4], AC_frq, AC_phaseA, AC_phaseB;
-	Gtk_EntryControl *AC_frq_ec;
-	guint64   AC_option_flags;
-	guint64   AC_auto_flags;
-	GtkWidget *LockIn_mode;
-	GtkWidget *AC_status;
-	guint64   AC_glock_data[6];
-
+        #define LCK_NUM_TARGETS 8
+        int LCK_Target;
+	double    LCK_Volume[LCK_NUM_TARGETS];
+        GtkWidget *LCK_VolumeEntry[LCK_NUM_TARGETS];
+        Param_Control *LCK_ModFrq;
+        
 	// Probing
 	int probe_trigger_raster_points_user;
 	int probe_trigger_raster_points;
@@ -667,9 +805,10 @@ public:
 	int probe_trigger_single_shot;
 
 	// Graphs Folder -- user settings origin
-	int Source, XSource, PSource;
+	guint64 Source, XSource, PSource;
+	guint64 PlotAvg, PlotSec;
         gboolean XJoin, GrMatWin;
-	int PlotAvg, PlotSec;
+        GtkWidget* probe_source_signal_selector[6];
 
 	// Graphs used life -- dep. on GLOCK if copy of user settings or memorized last setting
 	int vis_Source, vis_XSource, vis_XJoin, vis_PSource;
@@ -679,23 +818,57 @@ public:
 	gchar *probe_fname;
 	int probe_findex;
 
-	// vector generation helpers
-	void make_auto_n_vector_elments (double fnum);
-	double make_Vdz_vector (double Ui, double Uf, double dZ, int n, double slope, int source, int options, double &duration, make_vector_flags flags);
-	double make_Vdx0_vector (double Ui, double Uf, double dZ, int n, double slope, int source, int options, double &duration, make_vector_flags flags);
-	double make_dx0_vector (double X0i, double X0f, int n, double slope, int source, int options, double &duration, make_vector_flags flags);
-	double make_ZXYramp_vector (double dZ, double dX, double dY, int n, double slope, int source, int options, double &duration, make_vector_flags flags);
-	double make_UZXYramp_vector (double dU, double dZ, double dX, double dY, double da, double db, int n, int nrep, int ptr_next, double ts, int source, int options);
-	double make_phase_vector (double dPhi, int n, double slope, int source, int options, double &duration, make_vector_flags flags);
-	double make_delay_vector (double delay, int source, int options, double &duration, make_vector_flags flags, int points=0);
-	void append_null_vector (int options, int index);
+        // make IV and dz (optional) vector from U_initial, U_final, dZ, n points and V-slope
+        // FLAG_RAMP  => auto set points
+        // FLAG_VHOLD => set dv to zero, use slope + Ui-Uf for duration/slew auto set points
+	double make_dUdz_vector (int index, double dU, double dZ, int n, double slope, int source, int options);
+	double make_Udz_vector (int index, double Ui, double Uf, double dZ, int n, double slope, int source, int options){
+                make_dUdz_vector (index, Uf - Ui, dZ, n, slope, source, options);
+        };
 
+        // make ZXY rampe vector w slope
+	double make_ZXYramp_vector (int index, double dZ, double dX, double dY, int n, double slope, int source, int options);
+        
+        // make dU/dZ/dX/dY vector for n points and ts time per segment
+	double make_dUZXYAB_vector (int index, double dU, double dZ, double dX, double dY, double da, double db, double dam, double dfm, int n, int nrep, int ptr_next, double ts, int source, int options);
+        double make_dUZXYAB_vector_all_volts (int index, double dU, double dZ, double dX, double dY, double da, double db, double dam, double dfm, int n, int nrep, int ptr_next, double ts, int source, int options);
+
+        
+        // Make a delay Vector
+	double make_delay_vector (int index, double delay, int source, int options, int nrep, int ptr_next, int points);
+
+        // Make Vector Table End
+	void append_null_vector (int index, int options);
+
+        void print_vector (const gchar *msg, int i){
+                g_message ("%s PV[%d] [N=%04d] [%10g pts/s, S:%08x, O:%08x, #%03d, J%02d, dU %6g V, dX %6g V, dY %6g V, dZ %6g V, dA %6g V, dB %6g V, dAM %6g Veq, dFM %6g Veq]",
+                           msg, i, program_vector.n,
+                           program_vector.slew, program_vector.srcs, program_vector.options, program_vector.repetitions, program_vector.ptr_next,
+                           program_vector.f_du, program_vector.f_dx, program_vector.f_dy, program_vector.f_dz, program_vector.f_da, program_vector.f_db, program_vector.f_dam, program_vector.f_dfm);
+        };
+
+        void update_GUI_from_FPGA (); // warm start/reconnect
+        void update_FPGA_from_GUI (); // cold start
+        
 	PROBE_VECTOR_GENERIC program_vector;
 
 	// STS (I-V)
-	double IV_start, IV_end, IV_slope, IV_slope_ramp, IV_final_delay, IV_recover_delay;
+        int    RampFBoff_mode;
+        int    multiIV_mode;
+	int    IV_sections; // 1 .. 8max
+	double IV_start[8], IV_end[8], IV_slope, IV_slope_ramp, IV_final_delay, IV_recover_delay;
+	double IV_dz, IV_dM;
+	int    IV_points[8];
+	int    IV_repetitions;
+	int    IVdz_repetitions;
+	double IV_dx, IV_dy, IV_dxy_slope, IV_dxy_delay;
+	int    IV_dxy_points;
+
+#if 0 // SIMPLE
+        double IV_start, IV_end, IV_slope, IV_slope_ramp, IV_final_delay, IV_recover_delay;
 	int    IV_points;
 	int    IV_repetitions;
+#endif
 	guint64 IV_option_flags;
 	guint64 IV_auto_flags;
 	GtkWidget *IV_status;
@@ -706,6 +879,7 @@ public:
 #define N_GVP_VECTORS MAX_PROGRAM_VECTORS
 	double GVP_du[N_GVP_VECTORS], GVP_dx[N_GVP_VECTORS], GVP_dy[N_GVP_VECTORS], GVP_dz[N_GVP_VECTORS];
         double GVP_da[N_GVP_VECTORS],  GVP_db[N_GVP_VECTORS];
+        double GVP_dam[N_GVP_VECTORS],  GVP_dfm[N_GVP_VECTORS];
         double GVP_ts[N_GVP_VECTORS];
 	gint32 GVP_points[N_GVP_VECTORS];
 	gint32 GVP_opt[N_GVP_VECTORS];   // options
@@ -716,12 +890,51 @@ public:
 	guint64    GVP_auto_flags;
 	GtkWidget *VPprogram[10];
 	GtkWidget *GVP_status;
+        int mon_FB;
+        //gtk_widget_queue_draw (gvp_preview_are); // update wave
+        GtkWidget *gvp_preview_area;
+        Gtk_EntryControl *gvp_monitor_fb_info_ec;
+        GtkWidget *gvp_monitor_fb_label;
+        static void gvp_preview_draw_function (GtkDrawingArea *area, cairo_t *cr,
+                                               int             width,
+                                               int             height,
+                                               RPSPMC_Control *self);
+        GtkWidget *graphs_matrix[5][32];
 	guint64    GVP_glock_data[6];
 	void GVP_store_vp (const gchar *key);
 	void GVP_restore_vp (const gchar *key);
 
-        void write_spm_scan_vector_program (double rx, double ry, int nx, int ny, double slew[2], int subscan[4], long int srcs[4]);
+        void write_spm_scan_vector_program (double rx, double ry, int nx, int ny, double slew[2], int subscan[4], long int srcs[4], int gvp_options=0);
 
+        void on_new_data (){
+                int s=(int)round(spmc_parameters.gvp_status);
+                int Sgvp = (s>>8) & 0xf;  // assign GVP_status = { sec[32-4:0], setvec, reset, pause, ~finished };
+                int Sspm = s & 0xff;      // assign SPM status = { ...SPM Z Servo Hold, GVP-FB-Hold, GVP-Finished, Z Servo EN }
+
+                int fb=0;
+                mon_FB =  (fb=((Sspm & 0x01) && !(Sspm & 0x04) && !(Sspm & 0x04) && !(Sspm & 0x08)) ? 1:0)
+                        + ((Sgvp & 0x01 ? 1:0) << 1);
+
+                gchar *gvp_status = g_strdup_printf (" VPC: %d B: %d I:%d",
+                                                     current_probe_section,
+                                                     current_probe_block_index,
+                                                     current_probe_data_index);
+
+                if (fb)
+                        gtk_widget_set_name (gvp_monitor_fb_label, "green");
+                else
+                        gtk_widget_set_name (gvp_monitor_fb_label, "red");
+
+                gvp_monitor_fb_info_ec->set_info(gvp_status);
+                g_free (gvp_status);
+                
+                // RPSPM-GVP
+                if (G_IS_OBJECT (window))
+                        g_slist_foreach((GSList*)g_object_get_data( G_OBJECT (window), "GVP_VEC_MONITOR_list"),
+                                        (GFunc) App::update_ec, NULL);
+        };
+        
+        double rp_verbose_level; 
         
 	// -- Profile Displays
 	int last_probe_data_index;
@@ -751,14 +964,9 @@ public:
 	gboolean        pv_lock;
 	gboolean        gr_lock;
 
-
-        
-        // Simultaor only (GUI)
-        double sim_bias[2];  // per tab -- simulation
-        double sim_speed[2]; // per tab -- simulation
-        gint options;
-        
-
+public:
+        GtkWidget *stream_connect_button;
+        GtkWidget *GVP_stop_all_zero_button;
         
 protected:
 	void read_spm_vector_program ();
@@ -778,6 +986,15 @@ protected:
 
 	gboolean GUI_ready;
 
+public:
+        int   msklookup[NUM_PROBEDATA_ARRAYS+1];
+        int   expdi_lookup[NUM_PROBEDATA_ARRAYS+1];
+        char* lablookup[NUM_PROBEDATA_ARRAYS+1];
+        char* unitlookup[NUM_PROBEDATA_ARRAYS+1];
+        double scalelookup[NUM_PROBEDATA_ARRAYS+1];
+        
+        double pv_tmp[NUM_PV_HEADER_SIGNALS];
+
 private:
 	PROBE_VECTOR_GENERIC     program_vector_list[MAX_PROGRAM_VECTORS]; // copy for GXSM internal use only
 
@@ -793,350 +1010,6 @@ private:
 	UnitObj *Unity, *Volt, *Velocity, *dB;
         UnitObj *Angstroem, *Frq, *Time, *TimeUms, *msTime, *minTime, *Deg, *Current, *Current_pA, *Speed, *PhiSpeed, *Vslope, *Hex;
 };
-
-
-
-/*
- * RPSPMC hardware interface class -- derived from GXSM XSM_hardware abstraction class
- * =======================================================================
- */
-class rpspmc_hwi_dev : public XSM_Hardware, public RP_stream{
-
-public: 
-	friend class RPSPMC_Control;
-
-	rpspmc_hwi_dev();
-	virtual ~rpspmc_hwi_dev();
-
-        static void spmc_stream_connect_cb (GtkWidget *widget, rpspmc_hwi_dev *self);
-        virtual const gchar *get_rp_address ();
-        virtual void status_append (const gchar *msg, bool schedule_from_thread=false);
-        virtual void on_connect_actions();
-        virtual int on_new_data (gconstpointer contents, gsize len, int position, int new_count=1, bool last=false);
-        
-	/* Parameter  */
-	virtual long GetMaxLines(){ return 32000; };
-
-	virtual const gchar* get_info() { return "SPM Template V0.0"; };
-
-	/* Hardware realtime monitoring -- all optional */
-	/* default properties are
-	 * "X" -> current realtime tip position in X, inclusive rotation and offset
-	 * "Y" -> current realtime tip position in Y, inclusive rotation and offset
-	 * "Z" -> current realtime tip position in Z
-	 * "xy" -> X and Y
-	 * "zxy" -> Z, X, Y  in Volts!
-         * "O" -> Offset -> z0, x0, y0 (Volts)
-         * "f0I" -> 
-	 * "U" -> current bias
-         * "W" -> WatchDog
-	 */
-	virtual gint RTQuery (const gchar *property, double &val1, double &val2, double &val3);
-
-	virtual gint RTQuery () { return 0; }; //spm_emu->data_y_index + subscan_data_y_index_offset; }; // actual progress on scan -- y-index mirror from FIFO read
-
-	/* high level calls for instrtument condition checks */
-	virtual gint RTQuery_clear_to_start_scan (){ return 1; };
-	virtual gint RTQuery_clear_to_start_probe (){ return 1; };
-	virtual gint RTQuery_clear_to_move_tip (){ return 1; };
-
-	int is_scanning() { return ScanningFlg; };
-
-	virtual double GetUserParam (gint n, gchar *id=NULL) { return 0.; };
-	virtual gint   SetUserParam (gint n, gchar *id=NULL, double value=0.) { return 0; };
-	
-	virtual double GetScanrate () { return 1.; }; // query current set scan rate in s/pixel
-
-	virtual int RotateStepwise(int exec=1); // rotation not implemented in simulation, if required set/update scan angle here
-
-	virtual gboolean SetOffset(double x, double y); // set offset to coordinated (non rotated)
-	virtual gboolean MovetoXY (double x, double y); // set tip position in scan coordinate system (potentially rotated)
-
-	virtual void StartScan2D() { PauseFlg=0; ScanningFlg=1; KillFlg=FALSE; };
-        // EndScan2D() is been called until it returns TRUE from scan control idle task until it returns FALSE (indicating it's completed)
-	virtual gboolean EndScan2D() { ScanningFlg=0; GVP_abort_vector_program (); return FALSE; };
-	virtual void PauseScan2D()   { PauseFlg=1; };
-	virtual void ResumeScan2D()  { PauseFlg=0; };
-	virtual void KillScan2D()    { PauseFlg=0; KillFlg=TRUE; };
-
-        // ScanLineM():
-        // Scan setup: (yindex=-2),
-        // Scan init: (first call with yindex >= 0)
-        // while scanning following calls are progress checks (return FALSE when yindex line data transfer is completed to go to next line for checking, else return TRUE to continue with this index!
-	virtual gboolean ScanLineM(int yindex, int xdir, int muxmode,
-				   Mem2d *Mob[MAX_SRCS_CHANNELS],
-				   int ixy_sub[4]);
-
-        int start_data_read (int y_start, 
-                             int num_srcs0, int num_srcs1, int num_srcs2, int num_srcs3, 
-                             Mem2d **Mob0, Mem2d **Mob1, Mem2d **Mob2, Mem2d **Mob3);
-
-	virtual int ReadProbeData (int dspdev=0, int control=0);
-
-        int GVP_expect_header(double *pv, int &index_all);
-        int GVP_expect_point(double *pv, int &index_all);
-
-
-        
-	int probe_fifo_thread_active;
-	int fifo_data_y_index;
-
-	int fifo_data_num_srcs[4]; // 0: XP, 1: XM, 2: 2ND_XP, 3: 2ND_XM
-	Mem2d **fifo_data_Mobp[4]; // 0: XP, 1: XM, 2: 2ND_XP, 3: 2ND_XM
-
-
-        
-        // dummy template signal management
-	// SIGNAL MANAGEMENT
-
-	virtual void read_dsp_signals () { read_signal_lookup (); read_actual_module_configuration (); };
-
-	virtual int lookup_signal_by_ptr(gint64 sigptr);
-	virtual int lookup_signal_by_name(const gchar *sig_name);
-	virtual const gchar *lookup_signal_name_by_index(int i);
-	virtual const gchar *lookup_signal_unit_by_index(int i);
-	virtual double lookup_signal_scale_by_index(int i);
-	virtual int change_signal_input(int signal_index, gint32 input_id, gint32 voffset=0);
-	virtual int query_module_signal_input(gint32 input_id);
-	int read_signal_lookup ();
-	int read_actual_module_configuration ();
-
-	DSP_SIG_UNIVERSAL *lookup_dsp_signal_managed(gint i){
-                if (i<NUM_SIGNALS_UNIVERSAL)
-                        return &dsp_signal_lookup_managed[i];
-                else
-                        return NULL;
-	};
-
-        int read_GVP_data_block_to_position_vector (int offset, gboolean expect_full_header=false){
-                static int retry = 3;
-                size_t ch_index;
-
-#if 0
-                if (expect_full_header || offset==0)
-                        status_append_int32 (&GVP_stream_buffer[offset], 10*16, true, offset, true);
-#endif
-                
-#if 0
-                if (offset < 0 || offset > (EXPAND_MULTIPLES*DMA_SIZE-20)){
-                        gchar *tmp = g_strdup_printf ("read_GVP_data_block_to_position_vector: Reading offset %08x out of range ERROR.",
-                                                      offset);
-                        status_append (tmp, true);
-                        g_warning (tmp);
-                        g_free (tmp);
-                        return -999;
-                }
-#endif
-                
-                if (offset >= GVP_stream_buffer_position){ // Buffer is huge now all pages concat
-#if 0
-                        gchar *tmp = g_strdup_printf ("read_GVP_data_block_to_position_vector: Reading offset %08x is beyond stream write position %08x. Awaiting data.\n",
-                                                      offset, GVP_stream_buffer_position);
-                        status_append (tmp, true);
-                        if (offset > 64)
-                                status_append_int32 (&GVP_stream_buffer[offset-64], 10*16, true, offset-64, true);
-                        else
-                                status_append_int32 (&GVP_stream_buffer[0], 10*16, true, 0, true);
-                        g_warning (tmp);
-                        g_free (tmp);
-#endif
-                        return -99; // OK -- but have wait and reprocess when data package is completed
-                }
-                
-                GVP_vp_header_current.srcs = GVP_stream_buffer[offset]&0xffff;
-
-                GVP_vp_header_current.i = (int)(((guint32)GVP_stream_buffer[offset])>>16);
-                if (GVP_vp_header_current.srcs == 0xffff){
-                        GVP_vp_header_current.n    = GVP_vp_header_current.i + 1;
-                        GVP_vp_header_current.endmark = 0;
-                        retry=3;
-                } else {
-                        if (GVP_stream_buffer[offset] == 0xfefefefe){
-                                GVP_vp_header_current.endmark = 1;
-                                GVP_vp_header_current.n = 0;
-                                GVP_vp_header_current.i = 0;
-                                GVP_vp_header_current.srcs = 0xffff;
-                        } else {
-                                if (GVP_vp_header_current.n = GVP_vp_header_current.i+2)
-                                        GVP_vp_header_current.srcs_mask_vector = GVP_vp_header_current.srcs;
-                                else {
-                                        if (GVP_vp_header_current.i != (GVP_vp_header_current.ilast+1)
-                                            ||
-                                            GVP_vp_header_current.srcs_mask_vector != GVP_vp_header_current.srcs){
-                                                // stream ERROR detected
-                                                gchar *tmp = g_strdup_printf ("read_GVP_data_block_to_position_vector: Stream ERROR at Reading offset %08x, write position %08x.\n"
-                                                                              "SRCS/index mismatch detected. %04x vs %04x, i %d -> %d\n",
-                                                                              offset, GVP_stream_buffer_position,
-                                                                              GVP_vp_header_current.srcs_mask_vector, GVP_vp_header_current.srcs,
-                                                                              GVP_vp_header_current.ilast, GVP_vp_header_current.i);
-                                                status_append (tmp, true);
-                                                if (offset > 64)
-                                                        status_append_int32 (&GVP_stream_buffer[offset-64], 10*16, true, offset-64, true);
-                                                else
-                                                        status_append_int32 (&GVP_stream_buffer[0], 10*16, true, 0, true);
-                                                g_warning (tmp);
-                                                g_free (tmp);
-                                                return (-98);
-                                        }
-                                }
-                        }
-                }
-                GVP_vp_header_current.ilast = GVP_vp_header_current.i;
-                        
-                GVP_vp_header_current.index = GVP_vp_header_current.n - GVP_vp_header_current.i;
-                if (GVP_vp_header_current.index < 0){
-                        gchar *tmp = g_strdup_printf ("read_GVP_data_block_to_position_vector: Stream ERROR at Reading offset %08x, write position %08x.\n"
-                                                      "SRCS/index mismatch detected. %04x vs %04x, i %d -> %d  => n=%d (<0 is illegal)\n",
-                                                      offset, GVP_stream_buffer_position,
-                                                      GVP_vp_header_current.srcs_mask_vector, GVP_vp_header_current.srcs,
-                                                      GVP_vp_header_current.ilast, GVP_vp_header_current.i, GVP_vp_header_current.index);
-                        status_append (tmp, true);
-                        if (offset > 64)
-                                status_append_int32 (&GVP_stream_buffer[offset-64], 10*16, true, offset-64, true);
-                        else
-                                status_append_int32 (&GVP_stream_buffer[0], 10*16, true, 0, true);
-                        g_warning (tmp);
-                        g_free (tmp);
-                        GVP_vp_header_current.index = 0; // to prevent issues
-                        if (--retry)
-                                return -99;
-                        else
-                                return (-95);
-                }
-                
-                GVP_vp_header_current.number_channels=0;
-                for (int i=0; i<16; i++){
-                        GVP_vp_header_current.ch_lut[i]=-1;
-                        if (GVP_vp_header_current.srcs & (1<<i))
-                                GVP_vp_header_current.ch_lut[GVP_vp_header_current.number_channels++] = i;
-                }
-
-                // expand data stream and sort into channels
-                for (ch_index=0; ch_index < GVP_vp_header_current.number_channels && ch_index+offset < GVP_stream_buffer_position; ++ch_index){
-                        int ich = GVP_vp_header_current.ch_lut[ch_index];
-                        GVP_vp_header_current.chNs[ich] = GVP_stream_buffer[1+ch_index+offset];
-                        if (ich < 14){
-                                if (ich > 4)
-                                        GVP_vp_header_current.dataexpanded[ich] = (double)GVP_vp_header_current.chNs[ich]; // raw // fix me -- apply conversion to units!
-                                else
-                                        GVP_vp_header_current.dataexpanded[ich] = rpspmc_to_volts (GVP_vp_header_current.chNs[ich]); // Volts
-                                //g_message ("%g V", GVP_vp_header_current.dataexpanded[ich]);
-                        }
-                }
-
-                if (expect_full_header && GVP_vp_header_current.srcs != 0xffff){
-                        gchar *tmp = g_strdup_printf ("ERROR: read_GVP_data_block_to_position_vector: Reading offset %08x, write position %08x. Expecting full header but found srcs=%04x, i=%d rty=%d\n",
-                                                      offset, GVP_stream_buffer_position,  GVP_vp_header_current.srcs, GVP_vp_header_current.i, retry);
-                        status_append (tmp, true);
-                        if (offset>64)
-                                status_append_int32 (&GVP_stream_buffer[offset-64], 10*16, true, offset-64, true);
-                        else
-                                status_append_int32 (&GVP_stream_buffer[0], 10*16, true, 0, true);
-                        g_warning (tmp);
-                        g_free (tmp);
-                        if (--retry)
-                                return -99;
-                        else
-                                return (-97);
-                }
-                
-
-#if 1
-                if (GVP_vp_header_current.srcs == 0xffff){
-                        GVP_vp_header_current.gvp_time = (((guint64)((guint32)GVP_vp_header_current.chNs[15]))<<32) | (guint64)((guint32)GVP_vp_header_current.chNs[14]);
-                        GVP_vp_header_current.dataexpanded[14] = (double)GVP_vp_header_current.gvp_time/125e3;
-                        if (GVP_vp_header_current.endmark)
-                                g_message ("N[ENDMARK] GVP_vp_header_current.srcs=%04x   Bias=%8g V    t=%8g ms",
-                                           GVP_vp_header_current.srcs,
-                                           rpspmc_to_volts (GVP_vp_header_current.chNs[3]),
-                                           GVP_vp_header_current.dataexpanded[14]
-                                           );
-                        else
-                                g_message ("N[%4d / %4d] GVP_vp_header_current.srcs=%04x   Bias=%8g V    t=%8g ms",
-                                           GVP_vp_header_current.index, GVP_vp_header_current.n, GVP_vp_header_current.srcs,
-                                           rpspmc_to_volts (GVP_vp_header_current.chNs[3]),
-                                           GVP_vp_header_current.dataexpanded[14]
-                                           );
-                }
-#endif                        
-
-                if (ch_index+offset < GVP_stream_buffer_position){
-                        if (GVP_vp_header_current.srcs & 0xc000){
-                                GVP_vp_header_current.gvp_time = (((guint64)((guint32)GVP_vp_header_current.chNs[15]))<<32) | (guint64)((guint32)GVP_vp_header_current.chNs[14]);
-                                GVP_vp_header_current.dataexpanded[14] = (double)GVP_vp_header_current.gvp_time/125e3;
-                        }
-                        retry=3;
-                        if (GVP_vp_header_current.srcs == 0xffff)
-                                return -1; // true for full position header update
-                        return ch_index;
-                }  else {
-                        // g_message ("[%08x] *** end of new data at ch=%d ** Must wait for next page/update send and retry.", offset, ch_index);
-                        return -99;
-                        // return ch_index; // number channels read until position
-                }
-        };
-       
-        int subscan_data_y_index_offset;
-
-   	Mem2d **Mob_dir[4]; // reference to scan memory object (mem2d)
-	long srcs_dir[4]; // souce channel coding
-	int nsrcs_dir[4]; // number of source channes active
-        gint ScanningFlg;
-        gint PauseFlg;
-
-protected:
-	int thread_sim; // connection to SRanger used by thread
-        DSP_SIG_UNIVERSAL dsp_signal_lookup_managed[NUM_SIGNALS_UNIVERSAL]; // signals, generic version
-
-private:
-	GThread *data_read_thread;
-	GThread *probe_data_read_thread;
-        gboolean KillFlg;
-
-
-        gint32 GVP_stream_buffer[EXPAND_MULTIPLES*DMA_SIZE];
-        int GVP_stream_buffer_offset;
-        int GVP_stream_buffer_AB;
-        int GVP_stream_buffer_position;
-        int GVP_stream_status;
-        
-public:
-        gint last_vector_index;
- 
-        //SPM_emulator *spm_emu; // DSP emulator for dummy data generation and minimal SPM behavior
-        void GVP_execute_vector_program(); // non blocking
-        void GVP_vp_init ();
-        void GVP_start_data_read(); // non blocking
-        
-        PROBE_HEADER_POSITIONVECTOR GVP_vp_header_current;
-
-	int GVP_read_program_vector(int i, PROBE_VECTOR_GENERIC *v){
-		if (i >= MAX_PROGRAM_VECTORS || i < 0)
-			return 0;
-                // NOTE: READINGN BACK NOT YET USED NOR SUPPORTED BY RPSPMC !!!
-		// memcpy (v, &vector_program[i], sizeof (PROBE_VECTOR_GENERIC));
-		return -1;
-	};
-	int GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v);
-	void GVP_abort_vector_program ();
-
-        void RPSPMC_set_bias (double bias) {};
-        void RPSPMC_set_current_sp (double sp) {};
-
-        gint RPSPMC_GVP_section_count;
-        gint RPSPMC_GVP_n;
-        
-        gint RPSPMC_GVP_secn;
-        gint RPSPMC_data_y_count;
-        gint RPSPMC_data_z_value;
-        gint RPSPMC_data_y_index;
-        gint RPSPMC_data_x_index;
-
-        gboolean abort_GVP_flag;
-};
-
-        
-
 
 
 /* RP-PACPLL and RP-SPMC communication -> -dev */
@@ -1163,6 +1036,8 @@ public:
         static void dbg_l2 (GtkWidget *widget, RPspmc_pacpll *self);
         static void dbg_l4 (GtkWidget *widget, RPspmc_pacpll *self);
 
+        static void scan_gvp_opt6 (GtkWidget *widget, RPspmc_pacpll *self);
+        static void scan_gvp_opt7 (GtkWidget *widget, RPspmc_pacpll *self);
         
 	static void scan_start_callback (gpointer user_data);
 	static void scan_stop_callback (gpointer user_data);
@@ -1194,9 +1069,12 @@ public:
 	static void dfreq_gain_changed (Param_Control* pcs, gpointer user_data);
         static void dfreq_controller_invert (GtkWidget *widget, RPspmc_pacpll *self);
         static void dfreq_controller (GtkWidget *widget, RPspmc_pacpll *self);
+        static void EnZdfreq_control (GtkWidget *widget, RPspmc_pacpll *self);
+        static void EnUdfreq_control (GtkWidget *widget, RPspmc_pacpll *self);
 
 	static void pulse_form_parameter_changed (Param_Control* pcs, gpointer user_data);
         static void pulse_form_enable (GtkWidget *widget, RPspmc_pacpll *self);
+        static void pulse_form_fire (GtkWidget *widget, RPspmc_pacpll *self);
 
         static void choice_operation_callback (GtkWidget *widget, RPspmc_pacpll *self);
         static void choice_transport_ch12_callback (GtkWidget *widget, RPspmc_pacpll *self);
@@ -1214,6 +1092,9 @@ public:
         static void scope_z_ch2_callback (GtkWidget *widget, RPspmc_pacpll *self);
 
         static void scope_buffer_position_callback (GtkWidget *widget, RPspmc_pacpll *self);
+        static void scope_save_data_callback (GtkWidget *widget, RPspmc_pacpll *self);
+
+        static void copy_f0_callback (GtkWidget *widget, RPspmc_pacpll *self);
 
         
         static void choice_update_ts_callback (GtkWidget *widget, RPspmc_pacpll *self);
@@ -1221,11 +1102,13 @@ public:
         static void choice_auto_set_callback (GtkWidget *widget, RPspmc_pacpll *self);
 
 	void send_all_parameters ();
+	void update_SPMC_parameters ();
 
         void save_values (NcFile *ncf);
         
 	void update (); // window update (inputs, etc. -- here currently not really necessary)
         void update_monitoring_parameters ();
+        void save_scope_data ();
 
         static void graph_draw_function (GtkDrawingArea *area, cairo_t *cr,
                                          int             width,
@@ -1249,11 +1132,19 @@ public:
         
         virtual void on_new_data (){
                 update_monitoring_parameters();
+
+                update_shm_monitors ();
+
                 gtk_widget_queue_draw (signal_graph_area);
 
                 //self->stream_data ();
                 update_health ();
+
+                RPSPMC_ControlClass->on_new_data ();
         };
+
+        void update_shm_monitors (int close=0);
+
         
         double unwrap (int k, double phi);
         
@@ -1296,6 +1187,9 @@ private:
         int channel_selections[7];
         int deg_extend;
 
+        double resonator_frequency_fitted;
+        double resonator_phase_fitted;
+        
         double bram_window_length; // scope window length in sec
         
         PACPLL_parameters parameters;
@@ -1312,6 +1206,9 @@ private:
         double scope_dc_level[5];
         int transport;
         int bram_shift;
+        int trigger_mode;
+        double trigger_post_time;
+        double bram_saved_buffer[5][4096];
         double gain_scale[5];
         double time_scale[5];
         gboolean unwrap_phase_plot;
@@ -1338,8 +1235,11 @@ public:
         GtkWidget *input_rpaddress;
         GtkWidget *text_status;
 	GtkWidget *red_pitaya_health;
+
+        gint reconnect_mode;
+        
         gint debug_level; 
-        double rp_verbose_level; 
+        int scan_gvp_options;
         GSettings *inet_json_settings;
 };
 

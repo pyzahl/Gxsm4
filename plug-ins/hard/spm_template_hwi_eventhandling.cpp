@@ -75,7 +75,7 @@ gfloat color_yellow[4]  = { 1., 1., 0., 1.0 };
 #define XAngFac  (main_get_gapp()->xsm->Inst->Dig2XA (1))
 #define YAngFac  (main_get_gapp()->xsm->Inst->Dig2YA (1))
 
-extern SOURCE_SIGNAL_DEF source_signals[];
+extern SOURCE_SIGNAL_DEF template_source_signals[];
 
 //#define XSM_DEBUG_PG(X)  std::cout << X << std::endl;
 #define XSM_DEBUG_PG(X) ;
@@ -93,12 +93,12 @@ void SPM_Template_Control::init_vp_signal_info_lookup_cache(){
                 lablookup[i]   = err_unknown_l;
                 unitlookup[i]  = err_unknown_u;
                 expdi_lookup[i] = PROBEDATA_ARRAY_INDEX; // safety/error fallback
-                for (int k=0; source_signals[k].mask; ++k)
-                        if (source_signals[k].garr_index == i){
-                               msklookup[i]   = source_signals[k].mask;
-                               lablookup[i]   = source_signals[k].label;
-                               unitlookup[i]  = source_signals[k].unit_sym;
-                               expdi_lookup[i] = source_signals[k].garr_index;
+                for (int k=0; template_source_signals[k].mask; ++k)
+                        if (template_source_signals[k].garr_index == i){
+                               msklookup[i]   = template_source_signals[k].mask;
+                               lablookup[i]   = template_source_signals[k].label;
+                               unitlookup[i]  = template_source_signals[k].unit_sym;
+                               expdi_lookup[i] = template_source_signals[k].garr_index;
                         }
                 g_print ("Mask[%02d] 0x%08x => %s\n",i,msklookup[i],lablookup[i]);
         }
@@ -110,35 +110,35 @@ void SPM_Template_Control::init_vp_signal_info_lookup_cache(){
 }
 
 const char* SPM_Template_Control::vp_label_lookup(int i){
-        for (int k=0; source_signals[k].mask; ++k)
-                if (source_signals[k].garr_index == i)
-                        return  source_signals[k].label;
+        for (int k=0; template_source_signals[k].mask; ++k)
+                if (template_source_signals[k].garr_index == i)
+                        return  template_source_signals[k].label;
         return err_unknown_l;
 }
 
 const char* SPM_Template_Control::vp_unit_lookup(int i){
-        for (int k=0; source_signals[k].mask; ++k)
-                if (source_signals[k].garr_index == i)
-                        if (source_signals[k].mask == 0x000010){ // CUSTOM auto
+        for (int k=0; template_source_signals[k].mask; ++k)
+                if (template_source_signals[k].garr_index == i)
+                        if (template_source_signals[k].mask == 0x000010){ // CUSTOM auto
                                 if (main_get_gapp()->xsm->Inst->nAmpere2V (1.) > 1.)
                                         return str_pA;
                                 else
                                         return str_nA;
                         } else
-                                return  source_signals[k].unit_sym;
+                                return  template_source_signals[k].unit_sym;
         return err_unknown_u;
 }
 
 double SPM_Template_Control::vp_scale_lookup(int i){
-        for (int k=0; source_signals[k].mask; ++k){
-                if (source_signals[k].garr_index == i){
-                        if (source_signals[k].mask == 0x000010){ // CUSTOM auto
+        for (int k=0; template_source_signals[k].mask; ++k){
+                if (template_source_signals[k].garr_index == i){
+                        if (template_source_signals[k].mask == 0x000010){ // CUSTOM auto
                                 if (main_get_gapp()->xsm->Inst->nAmpere2V (1.) > 1.)
-                                        return source_signals[k].scale_factor/main_get_gapp()->xsm->Inst->nAmpere2V (1e-3); // choose pA
+                                        return template_source_signals[k].scale_factor/main_get_gapp()->xsm->Inst->nAmpere2V (1e-3); // choose pA
                                 else
-                                        return source_signals[k].scale_factor/main_get_gapp()->xsm->Inst->nAmpere2V (1.); // nA
+                                        return template_source_signals[k].scale_factor/main_get_gapp()->xsm->Inst->nAmpere2V (1.); // nA
                         } else
-                                return  source_signals[k].scale_factor;
+                                return  template_source_signals[k].scale_factor;
                 }
         }
         g_warning ("vp_scale_lookup -- failed to find scale for garr index %d", i);

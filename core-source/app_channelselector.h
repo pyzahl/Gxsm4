@@ -32,6 +32,12 @@
 #include <config.h>
 #include "gapp_service.h"
 #include "xsm_limits.h"
+#include "action_id.h"
+#include "xsmtypes.h"
+
+extern "C++" {
+        extern XSMRESOURCES xsmres; // in xsmtypes.h
+}
 
 class ChannelSelector : public AppBase{
 public:
@@ -52,6 +58,23 @@ public:
 
         void SetModeChannelSignal(int mode_id, const gchar* signal_name, const gchar* signal_label, const gchar *signal_unit, double d2unit = 1.0);
 
+        // position is a running nummer of data sources from 0 .. 15 0..3 => PIDSRC, 4..11 => DAQSRC (historic grouping)
+        void ConfigureHardwareMapping(int position, const gchar* signal_name, guint64 msk, const gchar* signal_label, const gchar *signal_unit, double d2unit = 1.0){
+                g_message ("ChannelSelector::ConfigureHardwareMapping: %02d for %32s, 0x%08x at scale %g for %s", position, signal_name, msk, d2unit, signal_unit);
+                if (position >= 0 && position < 4){
+                        xsmres.pidsrc_msk[position] = msk;
+                        SetModeChannelSignal(position+ID_CH_M_LAST-1, signal_name, signal_label, signal_unit, d2unit);
+                        return;
+                }
+                if (position >= 4 && position < 16){
+                        xsmres.daq_msk[position-4] = msk;
+                        SetModeChannelSignal(position+ID_CH_M_LAST-1, signal_name, signal_label, signal_unit, d2unit);
+                        return;
+                }
+                g_warning ("ChannelSelector::ConfigureHardwareMapping: EEE invalid positon %d for %s, 0x%08x", position, signal_name, msk);
+        };
+
+        
         static void choice_ChView_callback (GtkWidget *widget, void *data);
         static void choice_ChMode_callback (GtkWidget *widget, void *data);
         static void choice_ChSDir_callback (GtkWidget *widget, void *data);

@@ -46,6 +46,8 @@
 #include "pcs.h"
 #include "glbvars.h"
 #include "surface.h"
+#include "remote.h"
+
 
 // ============================================================
 // GnomeAppService
@@ -1058,3 +1060,106 @@ gboolean AppBase::gapp_load_on_drop_files (GtkDropTarget *target, const GValue  
         return TRUE;
 }
      
+
+
+GtkWidget* BuildParam::grid_add_exec_button (const gchar* labeltxt,
+                                                  GCallback exec_cb, gpointer cb_data, const gchar *control_id,
+                                                  int bwx,
+                                                  const gchar *data_key, gpointer key_data){
+
+        remote_action_cb *ra = g_new( remote_action_cb, 1);     
+        ra -> cmd = g_strdup_printf("EXECUTE_%s", control_id); 
+        gchar *tooltip = g_strconcat ("Remote example: action (", ra->cmd, ")", NULL); 
+
+        button = gtk_button_new_with_label (N_(labeltxt));
+        g_signal_connect(G_OBJECT (button), "clicked", G_CALLBACK(exec_cb), cb_data);
+
+        ra -> RemoteCb = (void (*)(GtkWidget*, void*))exec_cb;  
+        ra -> widget = button;                                  
+        ra -> data = cb_data;                                      
+        ra -> return_data = NULL;
+        
+        if (data_key)
+                g_object_set_data (G_OBJECT (button), data_key, key_data);
+        gtk_widget_set_tooltip_text (button, tooltip);
+        g_free (tooltip);
+                
+        grid_add_widget (button, bwx);
+
+        gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, ra ); 
+                
+        return button;
+}
+
+
+static void remote_cb_check( GtkWidget *widget, gpointer *data ){
+	gtk_check_button_set_active (GTK_CHECK_BUTTON (widget), true); 
+}
+static void remote_cb_uncheck( GtkWidget *widget, gpointer *data ){
+	gtk_check_button_set_active (GTK_CHECK_BUTTON (widget), false); 
+}
+
+GtkWidget* BuildParam::grid_add_check_button_remote_enabled (const gchar* labeltxt, const gchar *tooltip, int bwx,
+                                                             GCallback cb, gpointer cb_data, guint64 source, guint64 mask, const gchar *control_id){
+
+        button = gtk_check_button_new_with_label (N_(labeltxt));
+        if (!control_id && tooltip){ // tooltip with REMOTEID must be given like "Tooltip Text .... PyRemote:action([UN]CHECK-REMOTEID)" <= PYREMOTE_CHECK_HOOK_KEY
+                const gchar *cmd = strstr (tooltip, PYREMOTE_CHECK_HOOK_KEY_PREFIX); // -xxxx).  remote IDs: -> CHECK-REMOTEID, UNCHECK-REMOTEID
+                //if (cmd)
+                //        g_message ("check button L=(%s) TT=(%s) with hook: %s", labeltxt, tooltip, cmd);
+                //else
+                //        g_message ("check button L=(%s) TT=(%s) with no RemoteID hook", labeltxt, tooltip);
+                if (cmd){
+                        const gchar *cmd1 = strstr (cmd, "-");
+                        const gchar *cmd2 = strstr (cmd, ")");
+                        control_id = g_strndup(cmd1+1, cmd2-cmd1-1);
+                        //g_message ("Setting up check button (%s) with RemoteID: [UN]CHECK-%s", tooltip, control_id);
+                }
+        }
+        if (control_id){
+                remote_action_cb *raC = g_new( remote_action_cb, 1);     
+                raC -> cmd = g_strdup_printf("CHECK-%s", control_id);
+                gchar *autotooltip = g_strconcat ("Remote example: action ([UN]", raC->cmd, ")", NULL); 
+                gtk_widget_set_tooltip_text (button, autotooltip);
+                g_free (autotooltip);
+                raC -> RemoteCb = (void (*)(GtkWidget*, void*))remote_cb_check;  
+                raC -> widget = button;                                  
+                raC -> data = cb_data;                                      
+                raC -> return_data = NULL;
+                gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, raC ); 
+
+                remote_action_cb *raUC = g_new( remote_action_cb, 1);     
+                raUC -> cmd = g_strdup_printf("UNCHECK-%s", control_id);
+                raUC -> RemoteCb = (void (*)(GtkWidget*, void*))remote_cb_uncheck;  
+                raUC -> widget = button;                                  
+                raUC -> data = cb_data;                                      
+                raUC -> return_data = NULL;
+                gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, raUC ); 
+        } else
+                if (tooltip)
+                        gtk_widget_set_tooltip_text (button, tooltip);
+        if (mask > 0){
+                g_object_set_data(G_OBJECT(button), "Bit_Mask", GUINT_TO_POINTER (mask));
+                gtk_check_button_set_active (GTK_CHECK_BUTTON (button), (((source) & (mask)) ? 1:0));
+        }
+        if (mask == 0){
+                gtk_check_button_set_active (GTK_CHECK_BUTTON (button), (source)? 1:0);
+        }
+        if (cb){
+                g_signal_connect(G_OBJECT (button), "toggled", G_CALLBACK(cb), cb_data);
+        }
+        grid_add_widget (button, bwx);
+        return button;
+}
+
+GtkWidget* BuildParam::grid_add_check_button (const gchar* labeltxt, const gchar *tooltip, int bwx,
+                                              GCallback cb, gpointer data, int source, int mask){
+        return grid_add_check_button_remote_enabled (labeltxt, tooltip, bwx, cb, data, (guint64)source, (guint64)mask, NULL);
+}
+GtkWidget* BuildParam::grid_add_check_button_guint64(const gchar* labeltxt, const gchar *tooltip, int bwx,
+                                                     GCallback cb, gpointer data, guint64 source, guint64 mask, const gchar *control_id){
+        return grid_add_check_button_remote_enabled (labeltxt, tooltip, bwx, cb, data, source, mask, control_id);
+}
+GtkWidget* BuildParam::grid_add_check_button_simple (const gchar* labeltxt, const gchar *tooltip=NULL, gboolean checked=false){
+        return grid_add_check_button_remote_enabled (labeltxt, tooltip, 1, NULL, NULL, checked?1:0, 0);
+}

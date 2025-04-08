@@ -339,9 +339,11 @@ PanView::PanView (Gxsm4app *app):AppBase(app){
 
 	timer_id = 0;
 
-	for(i=0; i<16; ++i)
+	for(i=0; i<16; ++i){
 		DSP_status_indicator[i] = NULL;
-
+                DSP_status_indicator_ID[i] = NULL;
+        }
+        
 	for(i=0; i<16; ++i)
 		DSP_gpio_indicator[i] = NULL;
 
@@ -452,6 +454,7 @@ PanView::~PanView (){
 
 	for (int i=0; i<16; ++i){
                 UNREF_DELETE_CAIRO_ITEM (DSP_status_indicator[i], canvas);
+                UNREF_DELETE_CAIRO_ITEM (DSP_status_indicator_ID[i], canvas);
         }
 	for (int i=0; i<16; ++i){
                 UNREF_DELETE_CAIRO_ITEM (DSP_gpio_indicator[i], canvas);
@@ -588,10 +591,13 @@ gboolean PanView::canvas_draw_function (GtkDrawingArea *area,
 
         // text in PIXEL coordinates (+/-WXS/2, +/-WYS/2), 0,0 is center.
 
-	for (int i=0; i<16; ++i)
+	for (int i=0; i<16; ++i){
                 if (pv->DSP_status_indicator[i])
                         pv->DSP_status_indicator[i]->draw (cr);
-
+                if (pv->DSP_status_indicator_ID[i])
+                        pv->DSP_status_indicator_ID[i]->draw (cr);
+        }
+        
 	for (int i=0; i<16; ++i)
                 if (pv->DSP_gpio_indicator[i])
                         pv->DSP_gpio_indicator[i]->draw (cr);
@@ -818,13 +824,43 @@ void PanView :: tip_refresh()
 		gchar *tmp = NULL;
 
                 double u,v,w;
-		main_get_gapp()->xsm->hardware->RTQuery ("B", u, v, w); // Bias, ...
+		main_get_gapp()->xsm->hardware->RTQuery ("B", u, v, w); // Bias Monitor, Bias Reg, Bias Set
+                double v1,v2,vdum;
+		main_get_gapp()->xsm->hardware->RTQuery ("V", v1, v2, vdum); // Volatges
+                double gu,ga,gb;
+		main_get_gapp()->xsm->hardware->RTQuery ("G", gu, ga, gb); // GVP
+                double gamc,gfmc,gdum;
+		main_get_gapp()->xsm->hardware->RTQuery ("F", gamc, gfmc, gdum); // GVP-AMC, FMC
                 double s1,s2,s3;
                 main_get_gapp()->xsm->hardware->RTQuery ("S", s1, s2, s3); // Status
                 if (fabs(y) < 0.25)
-                        tmp = g_strdup_printf ("I: %8.1f pA\ndF: %8.1f Hz\nZ: %8.4f" UTF8_ANGSTROEM "\nU: %8.4f V\nX%04x %02x", y*1000., x, main_get_gapp()->xsm->Inst->V2ZAng(z), u, (int)s2, (int)s3);
+                        tmp = g_strdup_printf ("I: %8.1f pA\ndF: %8.1f Hz\nZ: %8.4f " UTF8_ANGSTROEM
+                                               "\nBias: %8.4f V %8.4f V %8.4f V"
+                                               //"\n UMon: %g USet: %g"
+                                               //"\nGVPU: %6.4f A: %6.4f B: %6.4f V"
+                                               //"\nGVPAM: %6.4f FM: %6.4f Veq\n"
+                                               "\nV1: %8.4f V2: %8.4f"
+                                               "\nZSM: h%04x %02x",
+                                               y*1000., x, main_get_gapp()->xsm->Inst->V2ZAng(z),
+                                               u,v,w,
+                                               v1,v2,
+                                               //gu, ga, gb,
+                                               //gamc, gfmc,
+                                               q, (int)s2, (int)s3);
                 else
-                        tmp = g_strdup_printf ("I: %8.4f nA\ndF: %8.1f Hz\nZ: %8.4f" UTF8_ANGSTROEM "\nU: %8.4f V\nX%04x %02x", y, x, main_get_gapp()->xsm->Inst->V2ZAng(z), u, (int)s2, (int)s3);
+                        tmp = g_strdup_printf ("I: %8.4f nA\ndF: %8.1f Hz\nZ: %8.4f " UTF8_ANGSTROEM
+                                               "\nBias: %8.4f V %8.4f V %8.4f V"
+                                               //"\n %g %g"
+                                               //"\nGVPU: %6.4f A: %6.4f B: %6.4f V"
+                                               //"\nGVPAM: %6.4f FM: %6.4f Veq\n"
+                                               "\nV1: %8.4f V2: %8.4f"
+                                               "\nZSM: h%04x %02x",
+                                               y,       x, main_get_gapp()->xsm->Inst->V2ZAng(z),
+                                               u,v,w,
+                                               v1,v2,
+                                               //gu, ga, gb,
+                                               //gamc, gfmc,
+                                               q, (int)s2, (int)s3);
 
                 info->set_text (tmp);
                 info->queue_update (canvas);
@@ -850,7 +886,12 @@ void PanView :: tip_refresh()
                                                  -1 };
 
                 main_get_gapp()->set_dsp_scan_in_progress (status & 6 ? true : false);
-                
+
+                // Servo (FB), GVP, Hold (Pause), Move
+                const gchar *indicator_id[16] = { "Z","G","P","R",
+                                                  "F","H","h","",
+                                                  "","","","",
+                                                  "","","","" };
                 for (int i=0; status_id[i]>=0; ++i){
                         const double w=WXS/2./12.;
                     	if (DSP_status_indicator[status_id[i]] == NULL){
@@ -858,6 +899,10 @@ void PanView :: tip_refresh()
                                 DSP_status_indicator[status_id[i]]->set_position (-WXS/2+i*w*1.05, -WYS/2.);
                                 DSP_status_indicator[status_id[i]]->set_stroke_rgba (CAIRO_COLOR_WHITE);
                                 DSP_status_indicator[status_id[i]]->set_line_width (get_lw (0.5));
+                                DSP_status_indicator_ID[i] = new cairo_item_text (-WXS/2+i*w*1.05+w/2, -WYS/2.+w, indicator_id[i]);
+                                DSP_status_indicator_ID[i]->set_font_face_size ("Unutu", 7);
+                                DSP_status_indicator_ID[i]->set_angle (90);
+                                DSP_status_indicator_ID[i]->set_stroke_rgba (CAIRO_COLOR_WHITE);
                         }
                         if (status &  status_bm_a[i])
                                 DSP_status_indicator[status_id[i]]->set_fill_rgba (CAIRO_BASIC_COLOR (status_on_color[i]));

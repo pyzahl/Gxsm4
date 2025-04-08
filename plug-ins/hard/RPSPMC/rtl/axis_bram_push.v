@@ -1,13 +1,14 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
+// Company:  BNL
+// Engineer: Percy Zahl
 // 
-/* Gxsm - Gnome X Scanning Microscopy
+/* Gxsm - Gnome X Scanning Microscopy 
+ * ** FPGA Implementaions RPSPMC aka RedPitaya Scanning Probe Control **
  * universal STM/AFM/SARLS/SPALEED/... controlling and
  * data analysis software
  * 
- * Copyright (C) 1999,2000,2001,2002,2003 Percy Zahl
+ * Copyright (C) 1999-2025 by Percy Zahl
  *
  * Authors: Percy Zahl <zahl@users.sf.net>
  * WWW Home: http://gxsm.sf.net
@@ -26,13 +27,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
  */
+// 
 // Create Date: 11/26/2017 08:20:47 PM
-// Design Name: 
-// Module Name: signal_combine
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
+// Design Name:    part of RPSPMC
+// Module Name:    axis_bram_push
+// Project Name:   RPSPMC 4 GXSM
+// Target Devices: Zynq z7020
+// Tool Versions:  Vivado 2023.1
+// Description:    push axis data to bram (scope, etc.)
 // 
 // Dependencies: 
 // 
@@ -69,19 +71,21 @@ module axis_bram_push #(
     input wire [32-1:0] ch1s,
     input wire [32-1:0] ch2s,
     input wire push_next,
-    input wire reset,
+    input wire BR_wpos_reset,
     
-    // BRAM PORT A
-    (* X_INTERFACE_PARAMETER = "FREQ_HZ 125000000, ASSOCIATED_CLKEN a2_clk, ASSOCIATED_BUSIF BRAM_PORTA" *)
+    // INPUT
+    (* X_INTERFACE_PARAMETER = "FREQ_HZ 125000000, ASSOCIATED_CLKEN a2_clk, ASSOCIATED_BUSIF ch1s:ch2s" *)
     input a2_clk, // double a_clk used for BRAM (125MHz)
     
-    output wire                        BRAM_PORTA_clk,
-    output wire [BRAM_ADDR_WIDTH-1:0]  BRAM_PORTA_addr,
-    output wire [BRAM_DATA_WIDTH-1:0]  BRAM_PORTA_din,
+    // BRAM PORT A
+    (* X_INTERFACE_PARAMETER = "FREQ_HZ 125000000, ASSOCIATED_CLKEN BRAM_PORTA_clka, ASSOCIATED_BUSIF BRAM_PORTA" *)
+    output wire                        BRAM_PORTA_clka,
+    output wire [BRAM_ADDR_WIDTH-1:0]  BRAM_PORTA_addra,
+    output wire [BRAM_DATA_WIDTH-1:0]  BRAM_PORTA_dina,
     // input  wire [BRAM_DATA_WIDTH-1:0]  BRAM_PORTA_rddata,
-    // output wire                        BRAM_PORTA_rst,
-    output wire                        BRAM_PORTA_en,
-    output wire                        BRAM_PORTA_we,
+    // output wire       BRAM_PORTA_rst,
+    output wire       BRAM_PORTA_ena,
+    output wire [0:0] BRAM_PORTA_wea,
 
     output wire [16-1:0]  last_write_addr,
     output wire ready
@@ -101,14 +105,14 @@ module axis_bram_push #(
 
     reg status_ready=1;
 
-    assign BRAM_PORTA_clk = a2_clk;
+    assign BRAM_PORTA_clka = a2_clk;
     // assign BRAM_PORTA_rst = ~a_resetn;
-    assign BRAM_PORTA_we = bram_wren;
-    assign BRAM_PORTA_en = bram_wren;
-    assign BRAM_PORTA_addr = bram_addr;
-    assign BRAM_PORTA_din = bram_data;
+    assign BRAM_PORTA_wea = bram_wren;
+    assign BRAM_PORTA_ena = bram_wren;
+    assign BRAM_PORTA_addra = bram_addr;
+    assign BRAM_PORTA_dina = bram_data;
 
-    assign last_write_addr = {{(16-BRAM_ADDR_WIDTH){0'b0}}, bram_addr[BRAM_ADDR_WIDTH-1:0]};
+    assign last_write_addr = {{(16-BRAM_ADDR_WIDTH){1'b0}}, bram_addr[BRAM_ADDR_WIDTH-1:0]};
         
     assign ready = status_ready;
 
@@ -122,10 +126,10 @@ module axis_bram_push #(
         // bramwr_sms <= (push_next && bramwr_sms == 0)  ? 3'd1 : reset ? 3'd0 : bramwr_sms_next; // SMS Control: start, reset, next
       
         // BRAM STORE MACHINE
-        case(reset ? 0 : bramwr_sms)
+        case(BR_wpos_reset ? 0 : bramwr_sms)
             0:    // Begin/reset/wait state
             begin
-                if (reset)
+                if (BR_wpos_reset)
                 begin
                     bram_wren_next  <= 1'b0;
                     bram_addr_next  <= {(BRAM_ADDR_WIDTH){1'b0}}; // idle, reset addr pointer

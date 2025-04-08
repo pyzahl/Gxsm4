@@ -122,6 +122,8 @@ struct PACPLL_parameters {
         double dfreq_fb_cp;
         double dfreq_fb_ci;
         double dfreq_controller;
+        double Zdfreq_control;
+        double Udfreq_control;
         double control_dfreq_fb_upper;
         double control_dfreq_fb_lower;
         
@@ -157,18 +159,25 @@ struct PACPLL_signals {
 struct SPMC_parameters {
 // RP-SPMC module parameters
         double bias;
+
+        double gvp_stream_mux;
+        
+        double z_polarity;
+        int gxsm_z_polarity;
+
         double z_servo_mode;
         double z_servo_setpoint;
         double z_servo_cp;
         double z_servo_ci;
         double z_servo_cp_db;
         double z_servo_ci_db;
-        double z_servo_invert;
         double z_servo_upper;
         double z_servo_lower;
         double z_servo_setpoint_cz;
         double z_servo_level;
-
+        double z_servo_in_offsetcomp;
+        double z_servo_src_mux;
+        
         double gvp_control;
         //double gvp_execute;
         //double gvp_pause;
@@ -181,10 +190,12 @@ struct SPMC_parameters {
         double alpha;
         double slope_dzx;
         double slope_dzy;
+        double slope_slew;
 
         double set_scanpos_x;
         double set_scanpos_y;
         double set_scanpos_slew;
+        double set_scanpos_opts;
         
         double set_offset_x;
         double set_offset_y;
@@ -193,11 +204,23 @@ struct SPMC_parameters {
         double set_offset_xy_slew;
         double set_offset_z_slew;
 
-        double v[16];
+        double v[17];
+
+        // DMA rate limit control
+        double rpspmc_dma_pull_interval;
         
         // RP SPMC Monitors
         double bias_monitor;
+        double bias_reg_monitor;
+        double bias_set_monitor;
+        double gvpu_monitor;
+        double gvpa_monitor;
+        double gvpb_monitor;
+        double gvpamc_monitor;
+        double gvpfmc_monitor;
+        double mux_monitor;
         double signal_monitor;
+        double ad463x_monitor[2];
         double x_monitor; // final XYZ = VecOffset + VecScan + Vec(0,0,Zslope)
         double y_monitor;
         double z_monitor;
@@ -207,6 +230,30 @@ struct SPMC_parameters {
         double xs_monitor; // scan coords
         double ys_monitor;
         double zs_monitor;
+        //
+        
+        double sc_lck_filter_mode;
+        double sc_lck_frequency;
+        double sc_lck_volume;
+        double sc_lck_target;
+        double sc_lck_bq_coef[6]; // b0,1,2, [a0 := 1],1,2
+        double sc_lck_bq_tau;
+        double sc_lck_iir_tau;
+        double sc_lck_q;
+        double sc_lck_gain;
+        double sc_lck_fmscale;
+
+        double sc_lck_rf_frequency;
+        double rf_gen_out_mux;
+        
+        double rpspmc_version;
+        double rpspmc_date;
+        double rpspmc_fpgaimpl;
+        double rpspmc_fpgaimpl_date;
+        double rpspmc_fpgastartup;
+        double rpspmc_fpgastartupcnt;
+        double uptime_seconds;
+        double rpspmc_initial_transfer_ack;
 };
 
 #define MAX_GVP_VECTORS   32
@@ -214,6 +261,7 @@ struct SPMC_parameters {
 
 struct SPMC_signals {
         double gvp_vector[GVP_VECTOR_SIZE];
+        double xyz_meter[9]; // { X[3], Y[3], Z[3] } [actual, max , min]
 };
 
 #endif

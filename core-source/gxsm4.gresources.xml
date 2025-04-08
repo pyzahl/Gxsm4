@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gresources>
   <gresource prefix="/org/gnome/gxsm4">
-    <file>gxsm4-styles.css</file>
+    <file compressed="true">css/styles.css</file>
     <file preprocess="xml-stripblanks">gxsm4-menu.ui</file>
     <file preprocess="xml-stripblanks">gxsm4-popupmenus.ui</file>
     <file preprocess="xml-stripblanks">gxsm4-hwi-menus.ui</file>

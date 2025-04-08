@@ -30,9 +30,12 @@
 #ifndef __RPSPMC_STREAM_H
 #define __RPSPMC_STREAM_H
 
+#define USE_WEBSOCKETPP // libsoup otherwise
+
+
 #include <config.h>
 #include "../control/jsmn.h"
-#include <libsoup/soup.h>
+
 
 #include <cstdio>
 #include <iosfwd>
@@ -45,227 +48,87 @@
 
 #include "rpspmc_hwi_structs.h"
 
-//#define USE_WEBSOCKETPP // libsoup otherwise
+#ifdef USE_WEBSOCKETPP
+# include <websocketpp/config/asio_no_tls_client.hpp>
+# include <websocketpp/client.hpp>
+# include <iostream>
+#else
+# include <libsoup/soup.h>
+#endif
+
 
 #ifdef USE_WEBSOCKETPP
-
-#include <websocketpp/config/asio_no_tls_client.hpp>
-#include <websocketpp/client.hpp>
-
-// This header pulls in the WebSocket++ abstracted thread support that will
-// select between boost::thread and std::thread based on how the build system
-// is configured.
-#include <websocketpp/common/thread.hpp>
-
+        typedef websocketpp::client<websocketpp::config::asio_client> wsppclient;
+        typedef websocketpp::lib::lock_guard<websocketpp::lib::mutex> scoped_lock;
 #endif
 
-#if 0
-
-/**
- * Define a semi-cross platform helper method that waits/sleeps for a bit.
- */
-void wait_a_bit() {
-#ifdef WIN32
-    Sleep(1000);
-#else
-    sleep(1);
-#endif
-}
-
-/**
- * The telemetry client connects to a WebSocket server and sends a message every
- * second containing an integer count. This example can be used as the basis for
- * programs where a client connects and pushes data for logging, stress/load
- * testing, etc.
- */
-class telemetry_client {
-public:
-    typedef websocketpp::client<websocketpp::config::asio_client> client;
-    typedef websocketpp::lib::lock_guard<websocketpp::lib::mutex> scoped_lock;
-
-    telemetry_client() : m_open(false),m_done(false) {
-        // set up access channels to only log interesting things
-        m_client.clear_access_channels(websocketpp::log::alevel::all);
-        m_client.set_access_channels(websocketpp::log::alevel::connect);
-        m_client.set_access_channels(websocketpp::log::alevel::disconnect);
-        m_client.set_access_channels(websocketpp::log::alevel::app);
-
-        // Initialize the Asio transport policy
-        m_client.init_asio();
-
-        // Bind the handlers we are using
-        using websocketpp::lib::placeholders::_1;
-        using websocketpp::lib::bind;
-        m_client.set_open_handler(bind(&telemetry_client::on_open,this,_1));
-        m_client.set_close_handler(bind(&telemetry_client::on_close,this,_1));
-        m_client.set_fail_handler(bind(&telemetry_client::on_fail,this,_1));
-    }
-
-    // This method will block until the connection is complete
-    void run(const std::string & uri) {
-        // Create a new connection to the given URI
-        websocketpp::lib::error_code ec;
-        client::connection_ptr con = m_client.get_connection(uri, ec);
-        if (ec) {
-            m_client.get_alog().write(websocketpp::log::alevel::app,
-                    "Get Connection Error: "+ec.message());
-            return;
-        }
-
-        // Grab a handle for this connection so we can talk to it in a thread
-        // safe manor after the event loop starts.
-        m_hdl = con->get_handle();
-
-        // Queue the connection. No DNS queries or network connections will be
-        // made until the io_service event loop is run.
-        m_client.connect(con);
-
-        // Create a thread to run the ASIO io_service event loop
-        websocketpp::lib::thread asio_thread(&client::run, &m_client);
-
-        // Create a thread to run the telemetry loop
-        websocketpp::lib::thread telemetry_thread(&telemetry_client::telemetry_loop,this);
-
-        asio_thread.join();
-        telemetry_thread.join();
-    }
-
-    // The open handler will signal that we are ready to start sending telemetry
-    void on_open(websocketpp::connection_hdl) {
-        m_client.get_alog().write(websocketpp::log::alevel::app,
-            "Connection opened, starting telemetry!");
-
-        scoped_lock guard(m_lock);
-        m_open = true;
-    }
-
-    // The close handler will signal that we should stop sending telemetry
-    void on_close(websocketpp::connection_hdl) {
-        m_client.get_alog().write(websocketpp::log::alevel::app,
-            "Connection closed, stopping telemetry!");
-
-        scoped_lock guard(m_lock);
-        m_done = true;
-    }
-
-    // The fail handler will signal that we should stop sending telemetry
-    void on_fail(websocketpp::connection_hdl) {
-        m_client.get_alog().write(websocketpp::log::alevel::app,
-            "Connection failed, stopping telemetry!");
-
-        scoped_lock guard(m_lock);
-        m_done = true;
-    }
-
-    void telemetry_loop() {
-        uint64_t count = 0;
-        std::stringstream val;
-        websocketpp::lib::error_code ec;
-
-        while(1) {
-            bool wait = false;
-
-            {
-                scoped_lock guard(m_lock);
-                // If the connection has been closed, stop generating telemetry
-                if (m_done) {break;}
-
-                // If the connection hasn't been opened yet wait a bit and retry
-                if (!m_open) {
-                    wait = true;
-                }
-            }
-
-            if (wait) {
-                wait_a_bit();
-                continue;
-            }
-
-            val.str("");
-            val << "count is " << count++;
-
-            m_client.get_alog().write(websocketpp::log::alevel::app, val.str());
-            m_client.send(m_hdl,val.str(),websocketpp::frame::opcode::text,ec);
-
-            // The most likely error that we will get is that the connection is
-            // not in the right state. Usually this means we tried to send a
-            // message to a connection that was closed or in the process of
-            // closing. While many errors here can be easily recovered from,
-            // in this simple example, we'll stop the telemetry loop.
-            if (ec) {
-                m_client.get_alog().write(websocketpp::log::alevel::app,
-                    "Send Error: "+ec.message());
-                break;
-            }
-
-            wait_a_bit();
-        }
-    }
-private:
-    client m_client;
-    websocketpp::connection_hdl m_hdl;
-    websocketpp::lib::mutex m_lock;
-    bool m_open;
-    bool m_done;
-};
-
-int main(int argc, char* argv[]) {
-    telemetry_client c;
-
-    std::string uri = "ws://localhost:9002";
-
-    if (argc == 2) {
-        uri = argv[1];
-    }
-
-    c.run(uri);
-}
-
-
-#endif
-
-
-
-
+class rpspmc_hwi_dev;
 
 class RP_stream{
 public:
-#ifdef USE_WEBSOCKETPP
-        typedef websocketpp::client<websocketpp::config::asio_client> client;
-        typedef websocketpp::lib::lock_guard<websocketpp::lib::mutex> scoped_lock;
-#endif
-        RP_stream (){
+        RP_stream (rpspmc_hwi_dev *rp){
                 /* create a new connection, init */
 
-                listener=NULL;
+                rpspmc = rp;
+                
                 port=9003;
 
+#ifdef USE_WEBSOCKETPP
+                client = new wsppclient;
+
+                // Set logging to be pretty verbose (everything except message payloads)
+                client->set_access_channels(websocketpp::log::alevel::all);
+                client->clear_access_channels(websocketpp::log::alevel::frame_payload);
+                client->set_error_channels(websocketpp::log::elevel::all);
+                
+                // Initialize ASIO
+                client->init_asio();
+                //client->start_perpetual(); //*
+                //client->reset(new websocketpp::lib::thread(&wsppclient::run, &client)); //*
+                
+                // Register our message handler
+                //client->set_message_handler(&on_message);
+
+                // Set the on_message handler with a lambda that captures the user data
+                RP_stream *a=this;
+                client->set_message_handler([a](websocketpp::connection_hdl hdl, wsppclient::message_ptr msg) {
+                        on_message(a, hdl, msg);
+                });
+    
+                con=NULL;
+#else                
+                listener=NULL;
                 session=NULL;
                 msg=NULL;
                 client=NULL;
+#endif
                 client_error=NULL;
                 error=NULL;
-
                 last_vector_pc_confirmed = -1;
         };
         ~RP_stream (){};
         void stream_connect_cb (gboolean connect); // connect/dissconnect
+
+#ifdef USE_WEBSOCKETPP
+        static void got_client_connection (GObject *object, gpointer user_data);
+        static void on_message(RP_stream* self, websocketpp::connection_hdl hdl, wsppclient::message_ptr msg);
+        static void on_closed (GObject *object, gpointer user_data);
+#else
         static void got_client_connection (GObject *object, GAsyncResult *result, gpointer user_data);
         static void on_message(SoupWebsocketConnection *ws,
                                SoupWebsocketDataType type,
                                GBytes *message,
                                gpointer user_data);
         static void on_closed (SoupWebsocketConnection *ws, gpointer user_data);
-        
+#endif
 
         virtual const gchar *get_rp_address (){ return NULL; };
         virtual int get_debug_level() { return 0; };
 
-        virtual int on_new_data (gconstpointer contents, gsize len, int position, int new_count=1, bool last=false) {};
-        
-        virtual void status_append (const gchar *msg, bool schedule_from_thread=false){
-                g_message (msg);
-        };
+        virtual int on_new_data (gconstpointer contents, gsize len, bool init=false) {};
+
+        void status_append (const gchar *msg, bool schedule_from_thread=false);
+
         virtual void update_health (const gchar *msg=NULL){
                 g_message (msg);
         };
@@ -375,7 +238,9 @@ public:
         };
 
 #define SPMC_AD5791_REFV 5.0 // DAC AD5791 Reference Volatge is 5.000000V (+/-5V Range)
-        double rpspmc_to_volts (int value){ return SPMC_AD5791_REFV*(double)value / ((1<<31)-1); }
+        double rpspmc_to_volts (int value){ return SPMC_AD5791_REFV*(double)value / QN(31); }
+#define SPMC_RPIN12_REFV 1.0 // RP FAT DACs Reference Voltage is 1.0V (+/-1V Range)
+        double rpIN12_to_volts (int value){ return SPMC_RPIN12_REFV*(double)value / QN(31); } // +/-1 <=> 32bit signed
 
         void status_append_int32(const guint32 *data, size_t data_length, bool format = true, int offset=0, bool also_gprint = false) {
                 if (data_length < 1)
@@ -398,10 +263,8 @@ public:
 
                 if (also_gprint){
                         g_print (str.c_str());
-                        status_append (str.c_str(), true); // MUST SCHEDULE -- NOT THREAD SAFE
-                } else
-                        status_append (str.c_str()); // WARNING -- NOT THREAD SAFE
-                
+                        status_append (str.c_str(), true);
+                }                
         };
 
         void test_compression() {
@@ -428,17 +291,27 @@ public:
 
         
         /* Socket Connection */
-	GSocket *listener;
 	gushort port;
 
+#ifdef USE_WEBSOCKETPP
+        wsppclient *client;
+        wsppclient::connection_ptr con;
+        websocketpp::lib::thread asio_thread;
+        GThread *wspp_asio_gthread;
+        static gpointer wspp_asio_thread (void *ptr_rp_stream);
+
+#else
+	GSocket *listener;
 	SoupSession *session;
 	SoupSocket *socket;
 	SoupMessage *msg;
 	SoupWebsocketConnection *client;
+#endif
         GIOStream *JSON_raw_input_stream;
 	GError *client_error;
 	GError *error;
-        
+
+        rpspmc_hwi_dev *rpspmc;
 };
 
 

@@ -37,10 +37,21 @@
 #define SERVO_CP    1
 #define SERVO_CI    2
 
-#define X_SOURCE_MSK 0x10000000 // select for X-mapping
-#define P_SOURCE_MSK 0x20000000 // select for plotting
-#define A_SOURCE_MSK 0x40000000 // select for Avg plotting
-#define S_SOURCE_MSK 0x80000000 // select for Sec plotting
+// Source_Channel Mask with Mapping
+#define __SOURCE_MSK 0xF00000000 // mask for usage mode
+#define X_SOURCE_MSK 0x100000000 // select for X-mapping
+#define P_SOURCE_MSK 0x200000000 // select for plotting
+#define A_SOURCE_MSK 0x300000000 // select for Avg plotting
+#define S_SOURCE_MSK 0x400000000 // select for Sec plotting
+
+// Source_Mapping
+#define MAP_SOURCE_REC   0 // Record source
+#define MAP_SOURCE_X     1 // X mapping selected
+#define MAP_SOURCE_PLOTY 2 // PLOTY mapping selected
+#define MAP_SOURCE_AVG   3 // AVG mapping selected
+#define MAP_SOURCE_SEC   4 // Section mapping selected
+
+
 
 #define NUM_VECTOR_SIGNALS 8
 
@@ -88,16 +99,23 @@
 #define NUM_PV_DATA_SIGNALS (PROBEDATA_ARRAY_END-PROBEDATA_ARRAY_S1)
 
 
+#define QN(N) ((1<<(N))-1)
+
+
 // NEW: generalized signals
+
+#define SIGNAL_INDEX_ICH0 11
 
 typedef struct {
         guint32     mask;   // signal source mask, or signal id for swappable
+        //const gchar *name;  // signal name
         const gchar *label;  // label for signal | NULL for flex signal life swappable
         const gchar *description; // signal description
         const gchar *unit;  // gxsm signal unit symbolic id
         const gchar *unit_sym;  // gxsm signal unit symbol
         double scale_factor; // multiplier for raw value to unit conversion
         int garr_index; // expanded garray index lookup to store data
+        int scan_source_pos; // position (1-16) in scan data source list, 0: not mapped
 } SOURCE_SIGNAL_DEF;
 
 
@@ -243,7 +261,7 @@ typedef struct{
 
 
 typedef enum { PV_MODE_NONE, PV_MODE_IV, PV_MODE_FZ, PV_MODE_PL, PV_MODE_LP, PV_MODE_SP, PV_MODE_TS, PV_MODE_GVP, PV_MODE_AC, PV_MODE_AX, PV_MODE_TK, PV_MODE_ABORT } pv_mode;
-typedef enum { MAKE_VEC_FLAG_NORMAL=0, MAKE_VEC_FLAG_VHOLD=1, MAKE_VEC_FLAG_RAMP=2, MAKE_VEC_FLAG_END=4 } make_vector_flags;
+typedef enum { MAKE_VEC_FLAG_NORMAL=0, MAKE_VEC_FLAG_VHOLD=1, MAKE_VEC_FLAG_RAMP=2, MAKE_VEC_FLAG_RAMP_VHOLD=3, MAKE_VEC_FLAG_END=4 } gvp_vector_flags;
 
 #define FLAG_FB_ON       0x01 // FB on
 #define FLAG_DUAL        0x02 // Dual Data
@@ -295,6 +313,8 @@ typedef struct{
 	double    f_dz;          // dZ full vector delta in Volts
 	double    f_da;          // dA aux channel A full vector delta in Volts
 	double    f_db;          // dB aux channel B full vector delta in Volts
+	double    f_dam;         // dAM RF-AM control (Volts equiv, attenuation only)
+	double    f_dfm;         // dFM RF-FM control (Volts equiv for digital VCO)
 } PROBE_VECTOR_GENERIC;
 
 /**
@@ -323,12 +343,11 @@ typedef struct{
 } PROBE_HEADER_POSITIONVECTOR;
 
 
-#define MM_OFF     0x00  // ------
-#define MM_ON      0x01  // ON/OFF
-#define MM_LOG     0x02  // LOG/LIN
-#define MM_LV_FUZZY   0x04  // FUZZY-LV/NORMAL
-#define MM_CZ_FUZZY   0x08  // FUZZY-CZ/NORMAL
-#define MM_NEG     0x10  // NEGATE SOURCE (INPUT)
+#define MM_OFF     0x0000  // ------
+#define MM_ON      0x0001  // ON/OFF (LINEAR)
+#define MM_LOG     0x0002  // ENABLE LOG TRANSFER
+#define MM_FCZ     0x0004  // FUZZY-CZ/NORMAL
+#define MM_RESET   0x0100  // setbit 8 to put z-servo controller into RESET, WARNING: Z will go to Z-Setpoint what so ever.
 
 // GUI limit
 #define N_GVP_VECTORS 25 //  vectors max total, need a few extra for controls and finish.

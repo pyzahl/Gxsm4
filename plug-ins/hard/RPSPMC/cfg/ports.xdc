@@ -1,3 +1,6 @@
+### PIN CONNECTIONS
+
+set_property PACKAGE_PIN T16 [get_ports {adc_dat_a_i[12]}]
 set_property PACKAGE_PIN V16 [get_ports {adc_dat_a_i[13]}]
 set_property PACKAGE_PIN W16 [get_ports {adc_dat_a_i[1]}]
 set_property PACKAGE_PIN Y16 [get_ports {adc_dat_a_i[2]}]
@@ -6,12 +9,11 @@ set_property PACKAGE_PIN W14 [get_ports {adc_dat_a_i[4]}]
 set_property PACKAGE_PIN Y14 [get_ports {adc_dat_a_i[5]}]
 set_property PACKAGE_PIN W13 [get_ports {adc_dat_a_i[6]}]
 set_property PACKAGE_PIN V12 [get_ports {adc_dat_a_i[7]}]
-set_property PACKAGE_PIN V13 [get_ports {adc_dat_a_i[8]}]
 set_property PACKAGE_PIN Y17 [get_ports {adc_dat_a_i[0]}]
 set_property PACKAGE_PIN T15 [get_ports {adc_dat_a_i[10]}]
 set_property PACKAGE_PIN V15 [get_ports {adc_dat_a_i[11]}]
-set_property PACKAGE_PIN T16 [get_ports {adc_dat_a_i[12]}]
-set_property PACKAGE_PIN T14 [get_ports {adc_dat_a_i[9]}]
+set_property PACKAGE_PIN V13 [get_ports {adc_dat_a_i[8]}]
+set_property PACKAGE_PIN W18 [get_ports {adc_dat_b_i[12]}]
 set_property PACKAGE_PIN Y18 [get_ports {adc_dat_b_i[13]}]
 set_property PACKAGE_PIN P16 [get_ports {adc_dat_b_i[1]}]
 set_property PACKAGE_PIN P18 [get_ports {adc_dat_b_i[2]}]
@@ -20,11 +22,11 @@ set_property PACKAGE_PIN R19 [get_ports {adc_dat_b_i[4]}]
 set_property PACKAGE_PIN T20 [get_ports {adc_dat_b_i[5]}]
 set_property PACKAGE_PIN T19 [get_ports {adc_dat_b_i[6]}]
 set_property PACKAGE_PIN U20 [get_ports {adc_dat_b_i[7]}]
-set_property PACKAGE_PIN V20 [get_ports {adc_dat_b_i[8]}]
+set_property PACKAGE_PIN T14 [get_ports {adc_dat_a_i[9]}]
 set_property PACKAGE_PIN R18 [get_ports {adc_dat_b_i[0]}]
 set_property PACKAGE_PIN W19 [get_ports {adc_dat_b_i[10]}]
 set_property PACKAGE_PIN Y19 [get_ports {adc_dat_b_i[11]}]
-set_property PACKAGE_PIN W18 [get_ports {adc_dat_b_i[12]}]
+set_property PACKAGE_PIN V20 [get_ports {adc_dat_b_i[8]}]
 set_property PACKAGE_PIN W20 [get_ports {adc_dat_b_i[9]}]
 
 # set_property CFGBVS VCCO [current_design]
@@ -125,6 +127,13 @@ set_property PACKAGE_PIN P15 [get_ports {dac_pwm_o[2]}]
 set_property PACKAGE_PIN U13 [get_ports {dac_pwm_o[3]}]
 
 ### XADC
+### exp_n[0..7] :: PMD 3.3V 
+### exp_p[0..7], 8..10, exp_n[8..10]:  AD463x 1.8V
+
+### Expansion connector -- RPSPMC hat
+
+### PMODs  on exp_n_io[0..7] are LVCMOS33 or LVCOMS18 OK
+### AD463x on exp_p_io[0..7] + [exp_n_io8..10, expo_p_io_8..10] must be LVCMOS18 (or level converted -- at up to 100MHz SPI clock ideally)
 
 ### Expansion connector
 set_property IOSTANDARD LVCMOS33 [get_ports {exp_p_io[*]}]
@@ -150,6 +159,14 @@ set_property PACKAGE_PIN K16 [get_ports {exp_p_io[6]}]
 set_property PACKAGE_PIN J16 [get_ports {exp_n_io[6]}]
 set_property PACKAGE_PIN M14 [get_ports {exp_p_io[7]}]
 set_property PACKAGE_PIN M15 [get_ports {exp_n_io[7]}]
+
+# Z7020 extra IO
+set_property PACKAGE_PIN Y9 [get_ports {exp_p_io[8]}]
+set_property PACKAGE_PIN Y8 [get_ports {exp_n_io[8]}]
+set_property PACKAGE_PIN Y12 [get_ports {exp_p_io[9]}]
+set_property PACKAGE_PIN Y13 [get_ports {exp_n_io[9]}]
+set_property PACKAGE_PIN Y7 [get_ports {exp_p_io[10]}]
+set_property PACKAGE_PIN Y6 [get_ports {exp_n_io[10]}]
 
 #########################################################
 ### Expansion connector
@@ -233,12 +250,4 @@ set_property PACKAGE_PIN G14 [get_ports {led_o[5]}]
 set_property PACKAGE_PIN J15 [get_ports {led_o[6]}]
 set_property PACKAGE_PIN J14 [get_ports {led_o[7]}]
 
-
-
-
-
-
-
-
-
-
+### END

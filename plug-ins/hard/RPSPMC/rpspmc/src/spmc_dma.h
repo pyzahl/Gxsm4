@@ -176,6 +176,7 @@ XDMAPS_CC_0_OFFSET  0x00000408
 #define SPMC_DMA_AXI_DMA_ADDRESS	  0x40400000
 #define SPMC_DMA_HP0_ADDRESS 		  0x01000000 // reserved cache-coherent memory region (linux kernel does not use this memory!)
 
+#if 1 // OK ==============================
 #define SPMC_DMA_N_DESC 2
 #define SPMC_DMA_TRANSFER_BYTES 0x00080000 // 0.5M ****MAX WINDOW: 2M - DESCRIPTOR_BLOCK
 
@@ -184,6 +185,18 @@ XDMAPS_CC_0_OFFSET  0x00000408
 #define SPMC_DMA_SG_DMA_DESCRIPTORS_WIDTH  0x1000 // 4k  **64 KiB 
 #define SPMC_DMA_MEMBLOCK_SIZE             0x00200000 // Size of memory used by S2MM and MM2S (2 M total 0x0100_000 - 0x011F_FFFF)
 #define SPMC_DMA_BUFFER_BLOCK_SIZE         0x00080000 // Size of memory block per descriptor in bytes: 0.5 M -- two blocks, cyclic
+
+#else // FOR TESTING =====================
+
+#define SPMC_DMA_N_DESC 1
+#define SPMC_DMA_TRANSFER_BYTES 0x00100000 // 1M ****MAX WINDOW: 2M - DESCRIPTOR_BLOCK
+
+
+#define SPMC_DMA_DESCRIPTOR_REGISTERS_SIZE 0x1000 // 4k  **64 KiB 
+#define SPMC_DMA_SG_DMA_DESCRIPTORS_WIDTH  0x1000 // 4k  **64 KiB 
+#define SPMC_DMA_MEMBLOCK_SIZE             0x00200000 // Size of memory used by S2MM and MM2S (2 M total 0x0100_000 - 0x011F_FFFF)
+#define SPMC_DMA_BUFFER_BLOCK_SIZE         0x00100000 // Size of memory block per descriptor in bytes: 0.5 M -- two blocks, cyclic
+#endif
 
 //#define SPMC_DMA_MM2S_BASE_DESC_ADDR	  SPMC_DMA_HP0_ADDRESS
 #define SPMC_DMA_S2MM_BASE_DESC_ADDR	  SPMC_DMA_HP0_ADDRESS
@@ -233,8 +246,8 @@ XDMAPS_CC_0_OFFSET  0x00000408
 #define SPMC_DMA_CONTROL 	0x18 //Set transfer length, T/RXSOF and T/RXEOF 
 #define SPMC_DMA_STATUS 	0x1C //Descriptor status
 
-#define INFO_PRINTF(ARGS...)  fprintf(stderr, "SPMC DMA: " ARGS)
-#define X_PRINTF(ARGS...)  fprintf(stderr, ARGS)
+#define INFO_PRINTF(ARGS...)  if (verbose > 1) fprintf(stderr, "SPMC DMA: " ARGS)
+#define X_PRINTF(ARGS...)  if (verbose > 1) fprintf(stderr, ARGS)
 
 //root@rp-f09296:/opt/redpitaya/www/apps/rpspmc# cat /proc/2878/maps 
 //b6f9e000-b6f9f000 rw-s 01000000 00:06 16         /dev/mem
@@ -420,10 +433,11 @@ public:
                 print_check_dma_all();
 
                 // 2) START RS=1
+#if 0
                 INFO_PRINTF ("SET START DMA IN CONTROL RS=1\n");
                 set_offset (axi_dma, SPMC_DMA_S2MM_CONTROL_REGISTER, SPMC_DMA_RUN); 
                 print_check_dma_all();
-
+#endif
                 INFO_PRINTF ("SET START DMA IN CONTROL RS=1 + CYCLIC\n");
                 set_offset (axi_dma, SPMC_DMA_S2MM_CONTROL_REGISTER, SPMC_DMA_RUN | SPMC_DMA_CYCLIC_ENABLE); 
                 print_check_dma_all();
@@ -443,9 +457,16 @@ public:
                 */
                 INFO_PRINTF ("SET TAIL DESCRIPTOR ADDRESS (CYCLIC: any value not part of BD chain!)\n");
                 //set_offset (axi_dma, SPMC_DMA_S2MM_TAILDESC, s2mm_tail_descriptor_address); 
-                set_offset (axi_dma, SPMC_DMA_S2MM_TAILDESC, 0x50); 
+                //##set_offset (axi_dma, SPMC_DMA_S2MM_TAILDESC, 0x50); // 0x50
+                set_offset (axi_dma, SPMC_DMA_S2MM_TAILDESC, s2mm_tail_descriptor_address+0x50); 
                 print_check_dma_all();
 	};
+
+        void clear_buffer (){
+                // Clear Target Memory 
+                //INFO_PRINTF ("CLEAR TARGET MEMORY with 0xDDDD DDDD\n");
+                memset(dest_memory, 0xdd, SPMC_DMA_N_DESC*SPMC_DMA_BUFFER_BLOCK_SIZE); 
+        };
 
         void start_dma(){
                 //INFO_PRINTF ("RE-START DMA\n");
@@ -454,11 +475,11 @@ public:
                 // Full reset DMA
                 reset_all_dma ();
                 halt_dma (); // out of reset, halt
-                
+
                 // Clear Target Memory 
                 //INFO_PRINTF ("CLEAR TARGET MEMORY with 0xDDDD DDDD\n");
                 memset(dest_memory, 0xdd, SPMC_DMA_N_DESC*SPMC_DMA_BUFFER_BLOCK_SIZE); 
-                
+   
                 //print_check_dma_all();
 
                 //INFO_PRINTF ("SETUP DMA\n");
@@ -659,10 +680,14 @@ public:
                                 //Then it must point to the first descriptor in the chain, BD_0, 
                                 //located at (BASE_DESC_ADDR+0*0x40)
                                 //At least in cyclic mode, which is what we are using for the moment. 
-                                set_offset (descriptor_chain, SPMC_DMA_NEXT_DESC + i*0x40, BASE_DESC_ADDR);
+                                set_offset (descriptor_chain, SPMC_DMA_NEXT_DESC + i*0x40, BASE_DESC_ADDR); //+0*0x40);
                                 // no other function (remains zero)
                                 set_offset (descriptor_chain, SPMC_DMA_BUFF_ADDR + i*0x40, TARGET_ADDRESS+i*SPMC_DMA_TRANSFER_BYTES); // taildescr, not used data, but non zero		
-                                set_offset (descriptor_chain, SPMC_DMA_CONTROL + i*0x40, 0x50); // taildescr, not used data, but non zero
+                                //set_offset (descriptor_chain, SPMC_DMA_CONTROL + i*0x40, SPMC_DMA_TRANSFER_BYTES);
+                                //set_offset (descriptor_chain, SPMC_DMA_CONTROL + i*0x40, 0x00); // not cycling
+                                //set_offset (descriptor_chain, SPMC_DMA_CONTROL + i*0x40, 0x04); // one missing word 
+                                set_offset (descriptor_chain, SPMC_DMA_CONTROL + i*0x40, 0x04); //
+                                //##set_offset (descriptor_chain, SPMC_DMA_CONTROL + i*0x40, 0x50); // taildescr, not used data, but non zero
                                 INFO_PRINTF ("CYCLIC TAIL BD_%d @0x%08x:\n", i, BASE_DESC_ADDR+i*0x40);
                         }
 

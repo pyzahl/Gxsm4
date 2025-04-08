@@ -930,6 +930,14 @@
       <section>
 	<attribute name="id">profile-options-section</attribute>
 	<item>
+	  <attribute name="label" translatable="yes">Last 1000</attribute>
+	  <attribute name="action">profile.opt-X-last1000</attribute>
+	</item>
+	<item>
+	  <attribute name="label" translatable="yes">Last 4000</attribute>
+	  <attribute name="action">profile.opt-X-last4000</attribute>
+	</item>
+	<item>
 	  <attribute name="label" translatable="yes">Linregression</attribute>
 	  <attribute name="action">profile.opt-Y-linreg</attribute>
 	</item>

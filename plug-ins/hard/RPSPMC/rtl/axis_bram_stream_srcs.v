@@ -1,13 +1,14 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
+// Company:  BNL
+// Engineer: Percy Zahl
 // 
-/* Gxsm - Gnome X Scanning Microscopy
+/* Gxsm - Gnome X Scanning Microscopy 
+ * ** FPGA Implementaions RPSPMC aka RedPitaya Scanning Probe Control **
  * universal STM/AFM/SARLS/SPALEED/... controlling and
  * data analysis software
  * 
- * Copyright (C) 1999,2000,2001,2002,2003 Percy Zahl
+ * Copyright (C) 1999-2025 by Percy Zahl
  *
  * Authors: Percy Zahl <zahl@users.sf.net>
  * WWW Home: http://gxsm.sf.net
@@ -27,12 +28,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
  */
 // Create Date: 11/26/2017 08:20:47 PM
-// Design Name: 
-// Module Name: signal_combine
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
+// Design Name:    part of RPSPMC
+// Module Name:    axis bram stream srcs
+// Project Name:   RPSPMC 4 GXSM
+// Target Devices: Zynq z7020
+// Tool Versions:  Vivado 2023.1
+// Description:    prepare GVP data stream, with header and marks
 // 
 // Dependencies: 
 // 
@@ -89,30 +90,55 @@ module axis_bram_stream_srcs #(
     input wire          S_AXIS_ch1s_tvalid,
     input wire [32-1:0] S_AXIS_ch2s_tdata, // YS      0x0002  Y in Scan coords
     input wire          S_AXIS_ch2s_tvalid,
-    input wire [32-1:0] S_AXIS_ch3s_tdata, // ZS      0x0004  Z
+    input wire [32-1:0] S_AXIS_ch3s_tdata, // ZS      0x0004  Z-Scan/Topo w/o plane
     input wire          S_AXIS_ch3s_tvalid,
     input wire [32-1:0] S_AXIS_ch4s_tdata, // U       0x0008  Bias
     input wire          S_AXIS_ch4s_tvalid,
-    input wire [32-1:0] S_AXIS_ch5s_tdata, // IN1     0x0010  IN1 RP (Signal)
+    input wire [32-1:0] S_AXIS_ch5s_tdata, // IN1     0x0010  processed tunnel current signal 
     input wire          S_AXIS_ch5s_tvalid,
-    input wire [32-1:0] S_AXIS_ch6s_tdata, // IN2     0x0020  IN2 RP (Current)
+    input wire [32-1:0] S_AXIS_ch6s_tdata, // IN2     0x0020  IN2 RP 125MSPS (RF input, FIR, routable to Z-Servo Control as tunnel current signal)
     input wire          S_AXIS_ch6s_tvalid,
-    input wire [32-1:0] S_AXIS_ch7s_tdata, // IN3     0x0040  reserved, N/A at this time
+    input wire [32-1:0] S_AXIS_ch7s_tdata, // IN3     0x0040  IN3 ADC4630-24 2MSPS (routable to Z-Servo Control as tunnel current signal)
     input wire          S_AXIS_ch7s_tvalid,
-    input wire [32-1:0] S_AXIS_ch8s_tdata, // IN4     0x0080  reserved, N/A at this time
+    input wire [32-1:0] S_AXIS_ch8s_tdata, // IN4     0x0080  IN4 ADC4630-24 2MSPS
     input wire          S_AXIS_ch8s_tvalid,
-    input wire [32-1:0] S_AXIS_ch9s_tdata, // DFREQ   0x0100  via PACPLL FIR1 ** via transport / decimation selector
+    input wire [32-1:0] S_AXIS_ch9s_tdata, // DFREQ   0x0100  via PACPLL FIR1 ** via transport / decimation selector  | MUXABLE with other signal...
     input wire          S_AXIS_ch9s_tvalid,
-    input wire [32-1:0] S_AXIS_chAs_tdata, // EXEC    0x0200  via PACPLL FIR2
+    input wire [32-1:0] S_AXIS_chAs_tdata, // EXEC    0x0200  via PACPLL FIR2 ** via transport / decimation selector  | MUXABLE
     input wire          S_AXIS_chAs_tvalid,
-    input wire [32-1:0] S_AXIS_chBs_tdata, // PHASE   0x0400  via PACPLL FIR3
+    input wire [32-1:0] S_AXIS_chBs_tdata, // PHASE   0x0400  via PACPLL FIR3 ** via transport / decimation selector  | MUXABLE
     input wire          S_AXIS_chBs_tvalid,
-    input wire [32-1:0] S_AXIS_chCs_tdata, // AMPL    0x0800  via PACPLL FIR4
+    input wire [32-1:0] S_AXIS_chCs_tdata, // AMPL    0x0800  via PACPLL FIR4 ** via transport / decimation selector  | MUXABLE
     input wire          S_AXIS_chCs_tvalid,
-    input wire [32-1:0] S_AXIS_chDs_tdata, // LockInA 0x1000  LockIn X (ToDo)
+    input wire [32-1:0] S_AXIS_chDs_tdata, // LockInA 0x1000  LockIn X (ToDo)                                         | MUXABLE
     input wire          S_AXIS_chDs_tvalid,
-    input wire [32-1:0] S_AXIS_chEs_tdata, // LockInB 0x2000  LocKin R (ToDo)
+    input wire [32-1:0] S_AXIS_chEs_tdata, // LockInB 0x2000  LocKin R (ToDo)                                         | MUXABLE
     input wire          S_AXIS_chEs_tvalid,
+    
+/* 
+ ========================================
+ MUX 16 => 6 on ch9s ... chEs
+ ========================================
+MUX00   ---   FIR_CH2_DFRQ
+MUX01   ---   FIR_CH4_EXEC
+MUX02   ---   FIR_CH1_PHASE
+MUX03   ---   FIR_CH3_AMPL
+MUX04   ---   FIR_CH2_DFREQ_CTRL_VAL : can be added to Z-control for true Z AFM mode in freq regulation, or addded to Bias for SQDM mode
+MUX05   ---   IN1 FBW **** IN1 RP 125MSPS (Signal) -- PLL Signal (FBW)
+MUX06   ---   IN1 FIR **** IN1 RP 125MSPS (Signal) -- PLL Signal (FIR)
+MUX07   ---   IN2 FBW
+MUX08   ---   LCK-Mag/BiQuad/IIR
+MUX09   ---   LCK-X -- needs filter, route to BiQuad?
+MUX10   ---   LCK-Y -- need filter
+MUX11   ---   IN4 FIR
+MUX12   ---   **  Lck-i ** dbg
+MUX13   ---   ** SD-Ref ** dbg
+MUX14   ---   ** LCK-Mag-BiQuad-pass ** dbg
+MUX15   ---   Z-with-slope
+ ========================================
+*/	  
+
+
     // from below
     // gvp_time[32-1: 0]      // TIME  0x4000 // lower 32
     // gvp_time[48-1:32]      // TIME  0x8000 // upper 32 (16 lower only)
@@ -152,6 +178,7 @@ module axis_bram_stream_srcs #(
     reg [2-1:0] hdr_type=0;
 
     reg test_mode=0;
+    reg [32-1:0] test_count=0;
 
     reg last_packet=0; // last element of data block
     reg last=0; // last of whole transmission
@@ -159,6 +186,8 @@ module axis_bram_stream_srcs #(
     reg fifo_ready=0;
 
     reg [15:0] padding=0;
+    
+    reg [2:0] loop_fix=0;
 
 //    reg [1:0] rdecii = 0;
 //    always @ (posedge a2_clk)
@@ -185,160 +214,189 @@ module axis_bram_stream_srcs #(
     always @(posedge a2_clk)
     begin
         
-        push_mode <= push_next;
-        r <= reset;
-        fifo_ready <= M_AXIS_tready;
-
-        dma_wr    <= dma_wr_next;
-        
-        if (test_mode)
-            dma_data  <= dma_addr_next;
-        else
-            dma_data  <= dma_data_next;
-            
-        dma_addr  <= dma_addr_next;
-
-        if (r)
+        if ((dma_addr_next == 32'h40001 || dma_addr_next == 32'h80001 || dma_addr_next == 32'hc0001)  
+            && loop_fix < 2) // looping, need to send one dummy data word (getting lost)
         begin
-            dma_wr_next    <= 1'b0;
-            dma_data_next  <= 0;
-            dma_addr_next  <= 0;
-            bramwr_sms <= 0;
-            last <= 0;
-            once <= 1;
-            position <= 0;
+            case (loop_fix) // inject one dumm data value to get lost...
+                0:
+                begin
+                    dma_data  <= 32'h12345678;
+                    dma_addr  <= dma_addr_next;
+                    dma_wr    <= 1'b1;
+                    loop_fix <= 1;
+                end
+                1:
+                begin
+                    dma_wr <= 1'b0;
+                    loop_fix <= 2;
+                    if (dma_addr_next == 32'hc0001)
+                        dma_addr_next <= 1;
+                end
+            endcase
         end
         else
         begin
-            if (fifo_ready)
+            push_mode <= push_next;
+            r <= reset;
+            fifo_ready <= M_AXIS_tready;
+    
+            dma_wr    <= dma_wr_next;
+            
+            if (test_mode)
+                dma_data  <= dma_addr_next; // send a simple count only
+            else
+                dma_data  <= dma_data_next;
+                
+            dma_addr  <= dma_addr_next;
+    
+            if (r)
             begin
-                position <= dma_addr;
-                // BRAM STORE MACHINE
-                case(bramwr_sms)
-                    0:    // Begin/reset/wait state
-                    begin
-                        dma_wr_next <= 1'b0;
-                        last_packet <= 0;                 
-                        if (push_mode && once) // buffer data and start write cycle
+                dma_wr_next    <= 1'b0;
+                dma_data_next  <= 0;
+                dma_addr_next  <= 0;
+                bramwr_sms <= 0;
+                last <= 0;
+                once <= 1;
+                position <= 0;
+                test_count <= 0;
+                loop_fix <= 0;
+            end
+            else
+            begin
+                if (fifo_ready)
+                begin
+                    position <= dma_addr;
+                    // BRAM STORE MACHINE
+                    case(bramwr_sms)
+                        0:    // Begin/reset/wait state
                         begin
-                            hdr_type <= push_mode;
-                            status_ready <= 0;
-                            channel <= 0;
-                            once <= 0; // only one push!
-                            // buffer all data in order [] of srcs bits in mask
-                            stream_buffer[0] <= S_AXIS_ch1s_tdata[32-1:0]; // X
-                            stream_buffer[1] <= S_AXIS_ch2s_tdata[32-1:0]; // Y
-                            stream_buffer[2] <= S_AXIS_ch3s_tdata[32-1:0]; // Z
-                            stream_buffer[3] <= S_AXIS_ch4s_tdata[32-1:0]; // U
-                            stream_buffer[4] <= S_AXIS_ch5s_tdata[32-1:0]; // IN1
-                            stream_buffer[5] <= S_AXIS_ch6s_tdata[32-1:0]; // IN2
-                            stream_buffer[6] <= S_AXIS_ch7s_tdata[32-1:0];
-                            stream_buffer[7] <= S_AXIS_ch8s_tdata[32-1:0];
-                            stream_buffer[8] <= S_AXIS_ch9s_tdata[32-1:0]; // PACPLL
-                            stream_buffer[9] <= S_AXIS_chAs_tdata[32-1:0]; // PACPLL
-                            stream_buffer[10] <= S_AXIS_chBs_tdata[32-1:0]; // PACPLL
-                            stream_buffer[11] <= S_AXIS_chCs_tdata[32-1:0]; // PACPLL
-                            stream_buffer[12] <= S_AXIS_chDs_tdata[32-1:0];
-                            stream_buffer[13] <= S_AXIS_chEs_tdata[32-1:0];
-                            stream_buffer[14] <= S_AXIS_gvp_time_tdata[32-1:0];
-                            stream_buffer[15] <= { 16'd0, S_AXIS_gvp_time_tdata[48-1:32] };
-                            test_mode <= S_AXIS_srcs_tdata[7];
-                            bramwr_sms <= 3'd1; // write frame start info, then data
-                        end
-                        else
-                        begin
-                            status_ready <= 1;
-                            if (!push_next)
-                                once <= 1; // push_next is clear now, wait for next push!
-                            bramwr_sms <= 3'd0; // wait for next data
-                        end
-                    end
-                    1:    // Data prepare cycle HEADER
-                    begin
-                        dma_wr_next <= 1'b1;
-                        // prepare header -- full or normal point header
-                        case (hdr_type)
-                            1: 
-                            begin // normal data set as of srcs
-                                srcs_mask <= S_AXIS_srcs_tdata[32-1:8]; // 24 SRCS bits, 8 Option bits
-                                dma_data_next <= { S_AXIS_index_tdata[16-1:0], S_AXIS_srcs_tdata[32-8-1:8] }; // frame info: mask and type (header or data)
-                            end
-                            2:
-                            begin // full header info, all signals
-                                srcs_mask <= 24'h0ffff;// ALL 16
-                                dma_data_next <= { S_AXIS_index_tdata[16-1:0], 16'hffff }; // frame info: mask and type (header or data)
-                            end
-                            3:
-                            begin // full header info, all signals, + END MARKING
-                                test_mode <= 0;
-                                srcs_mask <= 24'hfffff;// ALL 16
-                                dma_data_next <= { 16'hfefe, 16'hfefe }; // frame info: END MARK, full vector position list follows
-                            end
-                        endcase
-                        dma_addr_next <= dma_addr_next + 1; //) & 16'h3fff;
-                        bramwr_sms <= 3'd2; // start pushing selected channels
-                    end
-                    2:    // Data prepare cycle DATA
-                    begin
-                        if (srcs_mask & (1<<channel))
-                        begin
-                            //dma_data_next <= channel; // DATA ALIGNMENT TEST
-                            dma_data_next <= stream_buffer[channel];
-                            dma_addr_next <= dma_addr_next + 1; //(..) & 16'h3fff; // next adr
-                            dma_wr_next <= 1'b1; // 1: selected data in this channel
-                            if (channel == 4'd15) // check if no more data to push or last 
+                            dma_wr_next <= 1'b0;
+                            last_packet <= 0;                 
+                            if (push_mode && once) // buffer data and start write cycle
                             begin
-                                last_packet <= 1;
-                                if (hdr_type == 3) // END MARK HDR
+                                hdr_type <= push_mode;
+                                status_ready <= 0;
+                                channel <= 0;
+                                once <= 0; // only one push!
+                                // buffer all data in order [] of srcs bits in mask
+                                stream_buffer[0]  <= S_AXIS_ch1s_tdata[32-1:0]; // X
+                                stream_buffer[1]  <= S_AXIS_ch2s_tdata[32-1:0]; // Y
+                                stream_buffer[2]  <= S_AXIS_ch3s_tdata[32-1:0]; // Z
+                                stream_buffer[3]  <= S_AXIS_ch4s_tdata[32-1:0]; // U
+                                stream_buffer[4]  <= S_AXIS_ch5s_tdata[32-1:0]; // IN1
+                                stream_buffer[5]  <= S_AXIS_ch6s_tdata[32-1:0]; // IN2
+                                stream_buffer[6]  <= S_AXIS_ch7s_tdata[32-1:0]; // IN3
+                                stream_buffer[7]  <= S_AXIS_ch8s_tdata[32-1:0]; // IN4
+                                stream_buffer[8]  <= S_AXIS_ch9s_tdata[32-1:0];  // PACPLL DFREQ | MUXABLE in Future
+                                stream_buffer[9]  <= S_AXIS_chAs_tdata[32-1:0];  // PACPLL EXEC  | MUXABLE in Future
+                                stream_buffer[10] <= S_AXIS_chBs_tdata[32-1:0]; // PACPLL PHASE | MUXABLE in Future
+                                stream_buffer[11] <= S_AXIS_chCs_tdata[32-1:0]; // PACPLL AMPL  | MUXABLE in Future
+                                stream_buffer[12] <= S_AXIS_chDs_tdata[32-1:0]; // LCK-X        | MUXABLE in Future
+                                stream_buffer[13] <= S_AXIS_chEs_tdata[32-1:0]; // LCK-R        | MUXABLE in Future
+                                stream_buffer[14] <= S_AXIS_gvp_time_tdata[32-1:0]; // TIME lower 32
+                                stream_buffer[15] <= { 16'd0, S_AXIS_gvp_time_tdata[48-1:32] }; // TIME upper
+                                test_mode <= S_AXIS_srcs_tdata[7];
+                                test_count <= test_count+1;
+                                bramwr_sms <= 3'd1; // write frame start info, then data
+                            end
+                            else
+                            begin
+                                status_ready <= 1;
+                                if (!push_next)
+                                    once <= 1; // push_next is clear now, wait for next push!
+                                bramwr_sms <= 3'd0; // wait for next data
+                            end
+                        end
+                        1:    // Data prepare cycle HEADER
+                        begin
+                            dma_wr_next <= 1'b1;
+                            // prepare header -- full or normal point header
+                            case (hdr_type)
+                                1: 
+                                begin // normal data set as of srcs
+                                    srcs_mask <= S_AXIS_srcs_tdata[32-1:8]; // 24 SRCS bits, 8 Option bits
+                                    dma_data_next <= { S_AXIS_index_tdata[16-1:0], S_AXIS_srcs_tdata[32-8-1:8] }; // frame info: mask and type (header or data)
+                                end
+                                2:
+                                begin // full header info, all signals
+                                    srcs_mask <= 24'h0ffff;// ALL 16
+                                    dma_data_next <= { S_AXIS_index_tdata[16-1:0], 16'hffff }; // frame info: mask and type (header or data)
+                                end
+                                3:
+                                begin // full header info, all signals, + END MARKING
+                                    test_mode <= 0; // disable test mode
+                                    srcs_mask <= 24'hfffff;// ALL 16
+                                    dma_data_next <= { 16'hfefe, 16'hfefe }; // frame info: END MARK, full vector position list follows
+                                end
+                            endcase
+                            dma_addr_next <= dma_addr_next + 1; //) & 16'h3fff;
+                            loop_fix <= 0;
+                            bramwr_sms <= 3'd2; // start pushing selected channels
+                        end
+                        2:    // Data prepare cycle DATA
+                        begin
+                            if (srcs_mask & (1<<channel))
+                            begin
+                                //dma_data_next <= channel; // DATA ALIGNMENT TEST
+                                dma_data_next <= stream_buffer[channel];
+                                dma_addr_next <= dma_addr_next + 1; //(..) & 16'h3fff; // next adr
+                                loop_fix <= 0;
+                                dma_wr_next <= 1'b1; // 1: selected data in this channel
+                                if (channel == 4'd15) // check if no more data to push or last 
                                 begin
-                                    padding <= 32;
-                                    bramwr_sms <= 3'd3; //6 0 add fifo padding to flush DMA buffers (32 long)
-                                end 
+                                    last_packet <= 1;
+                                    if (hdr_type == 3) // END MARK HDR
+                                    begin
+                                        padding <= 32;
+                                        bramwr_sms <= 3'd3; //6 0 add fifo padding to flush DMA buffers (32 long)
+                                    end 
+                                    else
+                                    begin
+                                        bramwr_sms <= 3'd0; //4 3 write last and finish frame
+                                    end
+                                end
                                 else
                                 begin
-                                    bramwr_sms <= 3'd0; //4 3 write last and finish frame
+                                    bramwr_sms <= 3'd2; //3 2 write and then repeat here
                                 end
                             end
                             else
                             begin
-                                bramwr_sms <= 3'd2; //3 2 write and then repeat here
+                                dma_wr_next <= 1'b0; // 0: no data in this channel
+                                if ((srcs_mask >> channel) == 0 || channel == 15) // check if no more data to push or last 
+                                begin
+                                    last_packet <= 1;          
+                                    bramwr_sms <= 3'd0; //6 0 finish frame
+                                end                     
+                                else
+                                begin
+                                    bramwr_sms <= 3'd2; //2 1 repeat here
+                                end                         
                             end
+                            channel <= channel + 1; // check next channel, no mode change or write
                         end
-                        else
+                        3:    // post data set stream padding
                         begin
-                            dma_wr_next <= 1'b0; // 0: no data in this channel
-                            if ((srcs_mask >> channel) == 0 || channel == 15) // check if no more data to push or last 
+                            if (padding > 0)
                             begin
-                                last_packet <= 1;          
-                                bramwr_sms <= 3'd0; //6 0 finish frame
-                            end                     
+                                if (padding > 16)                 
+                                    dma_data_next <= 32'hffffeeee;
+                                else
+                                    dma_data_next <= padding;
+                                dma_addr_next <= dma_addr_next + 1; // ***
+                                loop_fix <= 0;
+                                padding <= padding - 1;
+                            end
                             else
                             begin
-                                bramwr_sms <= 3'd2; //2 1 repeat here
-                            end                         
+                                last <= 1; // set TLAST
+                                dma_wr_next <= 1'b0; // 0: data to write done next this set
+                                bramwr_sms <= 3'd0; //6 0 finish
+                            end             
                         end
-                        channel <= channel + 1; // check next channel, no mode change or write
-                    end
-                    3:    // post data set stream padding
-                    begin
-                        if (padding > 0)
-                        begin
-                            if (padding > 16)                 
-                                dma_data_next <= 32'hffffeeee;
-                            else
-                                dma_data_next <= padding;
-                            //dma_addr_next <= dma_addr_next + 1;
-                            padding <= padding - 1;
-                        end
-                        else
-                        begin
-                            last <= 1; // set TLAST
-                            dma_wr_next <= 1'b0; // 0: data to write done next this set
-                            bramwr_sms <= 3'd0; //6 0 finish
-                        end             
-                    end
-                endcase
-            end
-       end
-  end  
+                    endcase
+                end
+           end
+      end
+    end   
 endmodule

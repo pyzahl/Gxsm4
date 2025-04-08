@@ -137,6 +137,15 @@ public:
         };
         virtual void set_xy (int i, double x, double y) { if (i >= 0 && i < n) xy[i].x=x, xy[i].y=y; };
         virtual void set_xy (int i, int j) { if (i >= 0 && i < n && j >= 0 && j < n) xy[i].x= xy[j].x, xy[i].y= xy[j].y; };
+        virtual double auto_range_y (double max) {
+                double amax = 0.;
+                for (int i=0; i<n; ++i)
+                        if (amax < fabs(xy[i].y))
+                                amax = fabs(xy[i].y);
+                for (int i=0; i<n; ++i)
+                        xy[i].y *= max/amax;
+                return amax;
+        };
         virtual void get_xy (int i, double &x, double &y) { if (i >= 0 && i < n) x=xy[i].x, y=xy[i].y; };
         void map_xy (void (*map_xy_func)(double &x, double &y)) {
                 for (int i=0; i<n; ++i)

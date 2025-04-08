@@ -1,13 +1,14 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
+// Company:  BNL
+// Engineer: Percy Zahl
 // 
-/* Gxsm - Gnome X Scanning Microscopy
+/* Gxsm - Gnome X Scanning Microscopy 
+ * ** FPGA Implementaions RPSPMC aka RedPitaya Scanning Probe Control **
  * universal STM/AFM/SARLS/SPALEED/... controlling and
  * data analysis software
  * 
- * Copyright (C) 1999,2000,2001,2002,2003 Percy Zahl
+ * Copyright (C) 1999-2025 by Percy Zahl
  *
  * Authors: Percy Zahl <zahl@users.sf.net>
  * WWW Home: http://gxsm.sf.net
@@ -26,13 +27,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
  */
+// 
 // Create Date: 11/26/2017 08:20:47 PM
-// Design Name: 
-// Module Name: signal_combine
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
+// Design Name:    part of RPSPMC
+// Module Name:    axis_4s_combine
+// Project Name:   RPSPMC 4 GXSM
+// Target Devices: Zynq z7020
+// Tool Versions:  Vivado 2023.1
+// Description:    multi channel (via selections) block averager and decimator
+//                 with HR-AFM specific fucntions/f0 subtract, etc.
 // 
 // Dependencies: 
 // 
@@ -63,6 +66,7 @@
 
 
 module axis_4s_combine #(
+    parameter transport_4s_address = 20020,
     parameter SAXIS_1_DATA_WIDTH  = 16,
     parameter SAXIS_1_TDATA_WIDTH = 32,
     parameter SAXIS_2_DATA_WIDTH  = 32,
@@ -84,9 +88,10 @@ module axis_4s_combine #(
     parameter integer LCK_ENABLE = 0
 )
 (
+    input [32-1:0]  config_addr,
+    input [512-1:0] config_data,
     // (* X_INTERFACE_PARAMETER = "FREQ_HZ 125000000" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF S_AXIS1:S_AXIS1S:S_AXIS2:S_AXIS3:S_AXIS4:S_AXIS5:S_AXIS6:S_AXIS7:S_AXIS8:M_AXIS_CH1:M_AXIS_CH2:M_AXIS_CH3:M_AXIS_CH4:M_AXIS_DFREQ_DEC:M_AXIS_DFREQ_DEC2" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS1:S_AXIS1S:S_AXIS2:S_AXIS3:S_AXIS4:S_AXIS5:S_AXIS6:S_AXIS7:S_AXIS8:M_AXIS_CH1:M_AXIS_CH2:M_AXIS_CH3:M_AXIS_CH4:M_AXIS_DFREQ_DEC:M_AXIS_DFREQ_DEC2" *)
     input a_clk,
     // input a_resetn
     
@@ -109,12 +114,9 @@ module axis_4s_combine #(
     input wire [SAXIS_78_TDATA_WIDTH-1:0]  S_AXIS8_tdata, // Lck-Y
     input wire                             S_AXIS8_tvalid,
 
-    input wire [SAXIS_3_DATA_WIDTH-1:0] axis3_center,  
-    input wire [32-1:0]  operation, // 0..7 control bits 0: 1=start 1: 1=single shot/0=fifo loop 2, 4: 16=init/reset , [31:8] DATA ACCUMULATOR (64) SHR   [0] start/stop, [1] ss/loop, [2], [3], [4] reset
-    input wire [32-1:0]  ndecimate,
-    input wire [32-1:0]  nsamples,
-    input wire [32-1:0]  channel_selector,
-    input wire           ext_trigger, // =0 for free run, auto trigger, 1= to hold trigger (until next pix, etc.)
+    input wire [2:0] zero_spcp,
+
+    //input wire           ext_trigger, // =0 for free run, auto trigger, 1= to hold trigger (until next pix, etc.)
     
     output wire          finished_state,
     output wire          init_state,
@@ -146,7 +148,9 @@ module axis_4s_combine #(
     output wire BR_next,
     output wire BR_reset,
     input  wire BR_ready,
-    input  wire [15:0] BR_wpos
+    input  wire [15:0] BR_wpos,
+    output wire pulse_arm_single,
+    output wire pulse_run    
     );
     
     reg [2:0] dec_sms=3'd0;
@@ -166,7 +170,7 @@ module axis_4s_combine #(
     reg [32-1:0] reg_ndecimate;
     reg [32-1:0] reg_nsamples;
     reg [ 4-1:0] reg_channel_selector;
-    reg          reg_ext_trigger;
+    //reg          reg_ext_trigger;
 
 
     reg finished=1'b0;
@@ -179,12 +183,19 @@ module axis_4s_combine #(
     reg bram_next=0;
     reg bram_retry=0;
 
+    reg reg_pulse_arm_single=0;
+    reg reg_pulse_run=1;
+
+    assign pulse_arm_single = reg_pulse_arm_single;
+    assign pulse_run = reg_pulse_run;
+
     //wire signed [64-1:0] Q31HALF = { {(64-31){1'b0}}, 1'b1, {(31-1){1'b0}} };
 
     
-    assign init_state = operation[0];
+    assign init_state = reg_operation[0];
     assign finished_state = finished;
     assign writeposition = { sample_count[15:0], finished, BR_wpos[14:0] };   
+
     
     assign FIR_next = fir_next;
     
@@ -197,30 +208,56 @@ module axis_4s_combine #(
 
     reg [1:0] rdecii = 0;
 
+    reg i_zero_spcp1 = 0;
+    reg zero_x_s = 0;
+
+
     always @ (posedge a_clk)
     begin
-        rdecii <= rdecii+1;
-    end
+    
+    
+            // module configuration
+        case (config_addr)
+            transport_4s_address:
+            begin
+//    input wire [32-1:0]  operation, // 0..7 control bits 0: 1=start 1: 1=single shot/0=fifo loop 2, 4: 16=init/reset , [31:8] DATA ACCUMULATOR (64) SHR   [0] start/stop, [1] ss/loop, [2], [3], [4] reset
+//    input wire [32-1:0]  ndecimate,
+//    input wire [32-1:0]  nsamples,
+//    input wire [32-1:0]  channel_selector,
+                reg_channel_selector  <= config_data[0*32+4-1 : 0*32]; //channel_selector[4-1:0];
+                reg_ndecimate         <= config_data[2*32-1   : 1*32]; //ndecimate;
+                reg_nsamples          <= config_data[3*32-1   : 2*32]+1; //nsamples+1;
+                reg_operation         <= config_data[3*32+8-1 : 3*32]; //operation[7:0];
+                reg_shift             <= config_data[4*32+24-1: 4*32]; //operation[31:8];
+//    reg_freq_center <= {{(64-SAXIS_3_DATA_WIDTH){1'b0}},  axis3_center[SAXIS_3_DATA_WIDTH-1:0]}; // expand to 64 bit, signed but always pos
+                reg_freq_center       <= {{(64-SAXIS_3_DATA_WIDTH){1'b0}},  config_data[5*32+SAXIS_3_DATA_WIDTH-1 : 5*32]}; // expand to 64 bit, signed but always pos
+            end   
+        endcase
 
+    
+    
+        rdecii <= rdecii+1; // rdecii 00 01 *10 11 00 ...
+        if (rdecii == 1)
+        begin
+            // buffer in local register
+            //reg_channel_selector <= channel_selector[4-1:0];
+            //** McBSP **  reg_ext_trigger <= ext_trigger;
+            //reg_operation <= operation[7:0];
+            //reg_shift     <= operation[31:8];
+            //reg_ndecimate <= ndecimate;
+            //reg_nsamples  <= nsamples+1;
+    
+            // map data sources and calculate delta Freq
+            reg_freq        <= {{(64-SAXIS_3_DATA_WIDTH){1'b0}}, S_AXIS3_tdata[SAXIS_3_DATA_WIDTH-1:0]}; // expand to 64 bit, signed but always pos
+            reg_delta_freq  <= reg_freq - reg_freq_center; // compute delta frequency -- should need way less than actual 48bits now! But here we go will full range. Deciamtion may overrun is delta is way way off normal.
+        end
 
-    always @ (posedge rdecii[1])
-    begin
-        // buffer in local register
-        reg_channel_selector <= channel_selector[4-1:0];
-        reg_ext_trigger <= ext_trigger;
-        reg_operation <= operation[7:0];
-        reg_shift     <= operation[31:8];
-        reg_ndecimate <= ndecimate;
-        reg_nsamples  <= nsamples;
-
-        // map data sources and calculate delta Freq
-        reg_freq_center <= {{(64-SAXIS_3_DATA_WIDTH){1'b0}},  axis3_center[SAXIS_3_DATA_WIDTH-1:0]}; // expand to 64 bit, signed but always pos
-        reg_freq        <= {{(64-SAXIS_3_DATA_WIDTH){1'b0}}, S_AXIS3_tdata[SAXIS_3_DATA_WIDTH-1:0]}; // expand to 64 bit, signed but always pos
-        reg_delta_freq  <= reg_freq - reg_freq_center; // compute delta frequency -- should need way less than actual 48bits now! But here we go will full range. Deciamtion may overrun is delta is way way off normal.
-    end
-
-    always @(posedge a_clk)
-    begin
+        if (i_zero_spcp1 != zero_spcp[1])
+        begin
+            i_zero_spcp1 <= zero_spcp[1];
+            if (zero_spcp[1] > 0)
+                zero_x_s <= 1;
+        end
 
         // ===============================================================================
         // MANAGE EXT CONTROLS [reset, operation, trigger] FOR DECIMATING STATE MACHINE
@@ -241,12 +278,6 @@ module axis_4s_combine #(
             dec_sms <= dec_sms_next; // go to next mode
         end
         
-        if(reg_operation[0]) // operation mode: tigger start running
-        begin
-            trigger <= trigger_next;    // GPIO TRIGGER: VIA SOFTWARE, AUTO RUN
-        end else begin
-            trigger <= reg_ext_trigger; // PL TRIGGER: (McBSP hardware trigger mode)
-        end
             
         // ===============================================================================
         // DECIMATING STATE MACHINE
@@ -256,21 +287,72 @@ module axis_4s_combine #(
             // ===============================================================================================
             0: // RESET STATE
             begin
+                fir_next      <= ~fir_next; // clock FIR to empty and zero FIR 
+                zero_x_s      <= 0;
                 bram_reset    <= 1'b1;
                 finished      <= 1'b0;
                 dec_sms_next  <= 3'd1; // ready, now wait for release of reset operation to enagage trigger and arm
                 sample_count  <= 32'd0;
-                fir_next      <= ~fir_next; // clock FIR for rest cycle
             end
             // ===============================================================================================
             1:    // Wait for trigger
             begin
-                if(trigger)
+                fir_next      <= 0; // clock FIR for reset cycle [~fir_next]
+
+                // trigger and pulse arm logic
+                if(reg_operation[0]) // operation mode: tigger start running
+                begin
+                    if (reg_operation[1]) // Scope Manual Single Shot Mode 
+                    begin
+                        if (zero_x_s) // wait for ref zero crossing
+                        begin
+                            zero_x_s <= 0;
+                            if (!trigger)
+                            begin
+                                reg_pulse_arm_single <= 1; // arm simple pulse
+                                reg_pulse_run <= 0;
+                            end                     
+                            trigger <= trigger_next;    // GPIO TRIGGER: VIA SOFTWARE, AUTO RUN
+                        end
+                        else
+                        begin
+                            trigger <= 0; // wait
+                            reg_pulse_arm_single <= 0; // disable pulse
+                            reg_pulse_run <= 0;
+                        end
+                    end
+                    else // Scope Auto Mode, but auto trigger on S
+                    begin
+                        if (zero_x_s) // wait for ref zero crossing
+                        begin
+                            zero_x_s <= 0;
+                            if (!trigger)
+                            begin
+                                reg_pulse_arm_single <= 0; // arm simple pulse
+                                reg_pulse_run <= 1;
+                            end                     
+                            trigger <= trigger_next;    // GPIO TRIGGER: VIA SOFTWARE, AUTO RUN
+                        end
+                        else
+                        begin
+                            trigger <= 0; // wait
+                            reg_pulse_arm_single <= 0;
+                            reg_pulse_run <= 1; // keep pulses running 
+                        end
+                    end         
+                end else begin
+                    // ** McBSP triggered ** trigger <= reg_ext_trigger; // PL TRIGGER: (McBSP hardware trigger mode)
+                    trigger <= 1; // Allways
+                    reg_pulse_arm_single <= 0;
+                    reg_pulse_run <= 1;
+                end
+            
+                if(trigger) // start job
                 begin
                     sample_count <= 32'd0;
-                    fir_next     <= 0;      // FIR start and hold
                     bram_reset   <= 1'b0;   // take BRAM controller out of reset
                     bram_next    <= 0;      // hold BRAM write next
+                    fir_next     <= 0;      // FIR start and hold
                     finished     <= 1'b0;
                     dec_sms_next <= 3'd2; // go, init decimation
                     decimate_count      <= reg_ndecimate; // initialize samples for deciamtion first
@@ -281,10 +363,12 @@ module axis_4s_combine #(
             // ===============================================================================================
             begin   
                  // Summing: Measure, (Box Carr Average) / Decimate
-                decimate_count <= decimate_count + 1; // next sample
 
                 if (decimate_count < reg_ndecimate)
                 begin
+                    bram_next <= 0; // hold BRAM write next
+                    fir_next  <= 0; // hold FIR
+
                     // decimate sum for all PAC-PLL channels
                     chPH <= chPH + $signed(S_AXIS4_tdata[SAXIS_4_DATA_WIDTH-1:0]);  // PHC Phase (24) =>  32
                     chDF <= chDF + reg_delta_freq;                                  // Freq (48) - Center (48)
@@ -323,18 +407,18 @@ module axis_4s_combine #(
                         end
                     endcase
 
-                    bram_next <= 0; // hold BRAM write next
-                    fir_next  <= 0; // hold FIR
+                    decimate_count <= decimate_count + 1; // next sample
                 end
                 else begin
+                    bram_next <= 1; // initate BRAM write data cycles
+                    fir_next  <= 1; // load next into FIR
+
                     // normalize and store summed data data 
-                    chPHs <= (chPH >>> reg_shift);   // PHC Phase (24) =>  32
+                    chPHs <= (chPH >>> reg_shift);   // PHC Phase (24) =>  32 *** not used ***
                     chDFs <= (chDF >>> reg_shift);   // Freq (48) - Center (48)
                     chAMs <= (chAM >>> reg_shift);   // AMPL ch3s
                     chEXs <= (chEX >>> reg_shift);   // EXEC ch4s
 
-                    bram_next <= 1; // initate BRAM write data cycles
-                    fir_next  <= 1; // load next into FIR
                     sample_count <= sample_count + 1;
                   
                     // check on sample count if in single shot mode, else continue  
@@ -344,7 +428,7 @@ module axis_4s_combine #(
                         if (sample_count >= reg_nsamples) // run mode 1 single shot, finish, else LOOP/FIFO mode for ever
                         begin
                             dec_sms_next  <= 3'd4; // finished, needs reset to restart and re-arm.
-                            dec_sms       <= 3'd4; // finished, needs reset to restart and re-arm.
+                            //dec_sms       <= 3'd4; // finished, needs reset to restart and re-arm. *** not good, double drv theoretically
                         end
                     end
 
@@ -423,7 +507,8 @@ module axis_4s_combine #(
             end
             // ===============================================================================================
             4:    // Finished State -- wait for new operation setup
-            begin   
+            begin
+                zero_x_s     <= 0;
                 bram_next    <= 0;    // hold BRAM write next
                 fir_next     <= 0;    // hold FIR
                 finished     <= 1'b1; // set finish flag

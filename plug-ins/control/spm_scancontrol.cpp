@@ -196,12 +196,6 @@ GxsmPlugin *get_gxsm_plugin_info ( void ){
 	return &spm_scancontrol_pi; 
 }
 
-// data passed to "idle" function call, used to refresh/draw while waiting for data
-typedef struct {
-	GSList *scan_list; // scans to update
-	GFunc  UpdateFunc; // function to call for background updating
-	gpointer data; // additional data (here: reference to the current SPM_ScanControl object)
-} IdleRefreshFuncData;
 
 SPM_ScanControl *spm_scancontrol = NULL;
 
@@ -420,7 +414,9 @@ SPM_ScanControl::SPM_ScanControl (Gxsm4app *app):AppBase(app)
 	spmsc_bp->new_line ();
 
         spmsc_bp->grid_add_check_button (N_("Repeat"),
-                                         N_("Auto Restart Scan after completion.\nWARNING:\n Script triggered scan start will\n"
+                                         N_("Auto Restart Scan after completion. "
+                                            PYREMOTE_CHECK_HOOK_KEY("SCAN-REPEAT")
+                                            "\nWARNING:\n Script triggered scan start will\n"
                                             "never go beyond that scan start comand\n and repeats as long as this is checked.") , 1,
                                          G_CALLBACK (cb_repeat_mode), this,
                                          RepeatMode ());
@@ -777,13 +773,16 @@ gboolean SPM_ScanControl::spm_scancontrol_run_scans_task (gpointer data){
                 //return TRUE;
         case 30:
                 if (((SPM_ScanControl*)data) -> MovieMode() && !((SPM_ScanControl*)data) -> scan_stopped_by_user){
+                        puts ("** SPM_ScanControl::spm_scancontrol_run_scans_task **30** MOVIE MODE: next frame **");
                         runmode = 11;
                         return TRUE;
                 }
                 if (((SPM_ScanControl*)data) -> MultiVoltMode() && i<l){
+                        puts ("** SPM_ScanControl::spm_scancontrol_run_scans_task **30** MULTI VOLT MODE: next frame **");
                         runmode = 10;
                         return TRUE;
                 }
+                puts ("** SPM_ScanControl::spm_scancontrol_run_scans_task **30** SCAN COMPLETED AUTO-SAVE+REPEAT CHECK **");
 		if(main_get_gapp()->xsm->IsMode(MODE_AUTOSAVE)){
                         main_get_gapp()->auto_save_scans ();
                 }
@@ -1434,7 +1433,7 @@ gboolean SPM_ScanControl::do_scanline (int init){
 	static Mem2d **m2d_xm=NULL;
 	static Mem2d **m2d_2nd_xp=NULL;
 	static Mem2d **m2d_2nd_xm=NULL;
-	static IdleRefreshFuncData idf_data;
+	static IdleRefreshFuncData idf_data; // moved to class
         static int scanning_task_section=0;
 
         PI_DEBUG_GM (DBG_L3, "SPM_SCANCONTROL::do_scanline init=%d, scanning_task_section=%d", init, scanning_task_section);
@@ -1603,8 +1602,13 @@ gboolean SPM_ScanControl::do_scanline (int init){
                 return FALSE; // done.
         }
         
-        if (idf_data.scan_list) IdleRefreshFunc (&idf_data);
-        // main_get_gapp()->check_events_self(); // FIX ME -- obsolete?
+        const gint64 max_age = 50000; // 100ms
+        static gint64 time_of_last_update = 0;
+        if ( (time_of_last_update+max_age) < g_get_real_time () ){ // throttle
+                time_of_last_update = g_get_real_time ();
+                if (idf_data.scan_list) IdleRefreshFunc (&idf_data);
+        }
+
         return TRUE;
 }
 
@@ -1730,9 +1734,14 @@ gboolean SPM_ScanControl::scanning_control_run (){
                                 // g_print ("scanning_control_run task_line#=%d  y-line=%d\n",scanning_task_line,line);
                                 scanning_task_line++;
                                 last_scan_dir == SCAN_DIR_TOPDOWN ? ++line : --line;
+                                if (fabs (line - main_get_gapp()->xsm->hardware->RTQuery ()) > 2){
+                                        g_message (" SPM_ScanControl::scanning_control_run line=%d   actual=%d  scanning_task_line= %d", line,  main_get_gapp()->xsm->hardware->RTQuery (), scanning_task_line);
+                                        line = main_get_gapp()->xsm->hardware->RTQuery () + (SCAN_DIR_TOPDOWN ? -1 : +1) - sls_config[2];
+                                }
                         }
 		}
 
+                
                 return TRUE; // continue!
 	}
 
