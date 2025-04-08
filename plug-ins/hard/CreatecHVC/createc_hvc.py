@@ -70,7 +70,7 @@ global CHV5_gain_list
 global CHV5_gains
 
 CHV5_configuration = {
-        'gain':  [4,4,4],
+        'gain':  [3,3,3],
         'filter': [0,0,0],
         'bw': [0,0,0],
         'target': [0.,0.,0.]
@@ -110,14 +110,15 @@ control_list = []
 
 # open shared memort to gxsm4 to RPSPMC's monitors
 
-xyz_shm = shared_memory.SharedMemory(name='gxsm4rpspmc_monitors')
-unregister(xyz_shm._name, 'shared_memory')
+try:
+        xyz_shm = shared_memory.SharedMemory(name='gxsm4rpspmc_monitors')
+        unregister(xyz_shm._name, 'shared_memory')
 
-print (xyz_shm)
-xyz=np.ndarray((9,), dtype=np.double, buffer=xyz_shm.buf).reshape((3,3)).T  # X Mi Ma, Y Mi Ma, Z Mi Ma
-print (xyz)
-
-
+        print (xyz_shm)
+        xyz=np.ndarray((9,), dtype=np.double, buffer=xyz_shm.buf).reshape((3,3)).T  # X Mi Ma, Y Mi Ma, Z Mi Ma
+        print (xyz)
+except FileNotFoundError:
+        print ("SharedMemory(name='gxsm4rpspmc_monitors') not available. Please start gxsm4 and connect RPSPMC.")
 
                
 #    // Sets HV gain parameters and filter settings
@@ -490,10 +491,22 @@ def get_status():
         global CHV5_monitor
         global xyz_shm
         global CHV5_gains
-        xyz=np.ndarray((9,), dtype=np.double, buffer=xyz_shm.buf).reshape((3,3)).T  # X Mi Ma, Y Mi Ma, Z Mi Ma
-        CHV5_monitor['monitor']=xyz[0] * CHV5_gains
-        CHV5_monitor['monitor_max']=xyz[1] * CHV5_gains
-        CHV5_monitor['monitor_min']=xyz[2] * CHV5_gains
+
+        try:
+                xyz=np.ndarray((9,), dtype=np.double, buffer=xyz_shm.buf).reshape((3,3)).T  # X Mi Ma, Y Mi Ma, Z Mi Ma
+                CHV5_monitor['monitor']=xyz[0] * CHV5_gains
+                CHV5_monitor['monitor_max']=xyz[1] * CHV5_gains
+                CHV5_monitor['monitor_min']=xyz[2] * CHV5_gains
+        except NameError:
+                try:
+                        xyz_shm = shared_memory.SharedMemory(name='gxsm4rpspmc_monitors')
+                        unregister(xyz_shm._name, 'shared_memory')
+                        print (xyz_shm)
+                        xyz=np.ndarray((9,), dtype=np.double, buffer=xyz_shm.buf).reshape((3,3)).T  # X Mi Ma, Y Mi Ma, Z Mi Ma
+                        print (xyz)
+                except FileNotFoundError:
+                        print ("SharedMemory(name='gxsm4rpspmc_monitors') not available. Please start gxsm4 and connect RPSPMC.")
+        
         return 1
 
 def do_exit(button):
