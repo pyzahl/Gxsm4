@@ -105,8 +105,8 @@ control_list = []
                
 #    // Sets HV gain parameters and filter settings
 #    // @param gainx,gainy,gainz - Gain values for each axis (1-255)
-#    // @param filter - Enable/disable primary filter
-#    // @param filter2nd - Enable/disable secondary filter
+#    // @param filter - Enable/disable primary filter XY
+#    // @param filter2nd - Enable/disable secondary filter Z
 #    // @param coarseboard - Board number for coarse voltage control
 #    // @param coarsevoltage - Voltage setting for coarse control (0-255)
 #    // @return 0 if successful

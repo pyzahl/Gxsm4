@@ -7,6 +7,6 @@ source make_cores.tcl
 
 source recreate-rpspmc-pacpll-vivado-project.tcl
 
-puts "Created $design_name"
+# puts "Created $design_name"
 
 
