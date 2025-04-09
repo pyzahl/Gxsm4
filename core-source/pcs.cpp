@@ -1271,7 +1271,7 @@ void Gtk_EntryControl::pcs_adjustment_configure (){
         bp->grid_add_ec ("Step [B1]", unit, &step, -EC_INF, EC_INF, "8g"); bp->new_line ();
         bp->grid_add_ec ("Page [B2]", unit, &page, -EC_INF, EC_INF, "8g"); bp->new_line ();
         bp->grid_add_ec ("Pg10 [B3]", unit, &page10, -EC_INF, EC_INF, "8g"); bp->new_line ();
-        bp->grid_add_ec ("Progressive", unity, &progressive, 0., 10., "g"); bp->new_line ();
+        //bp->grid_add_ec ("Progressive", unity, &progressive, 0., 10., "g"); bp->new_line ();
         
         bp->grid_add_widget (cb = gtk_check_button_new_with_label( N_("Use Log Scale"))); gtk_check_button_set_active (GTK_CHECK_BUTTON (cb), adj_mode & PARAM_CONTROL_ADJUSTMENT_LOG);
         gtk_widget_set_tooltip_text (cb, N_("Make slider input option logaritmic"));
@@ -1408,12 +1408,13 @@ void Gtk_EntryControl::get_pcs_configuartion (){
                   << step << ", "
                   << page << ", "
                   << page10 << ", "
-                  << progressive << ", "
+                //<< progressive << ", "
+                  << adj_mode << ", "
                   << " 0, 0"
                   << "      ]"
                   << "      </default>"
                   << std::endl
-                  << "      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for '" << name << "' </summary>"
+                  << "      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive/Adj-mode, 0,0] for '" << name << "' </summary>"
                   << std::endl
                   << "      <description>Configuration for GXSM Entry with ID '" << name << "'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>"
                   << std::endl
@@ -1469,7 +1470,7 @@ void Gtk_EntryControl::get_pcs_configuartion (){
                                 step = array[6];
                                 page = array[7];
                                 page10 = array[8];
-                                progressive = array[9];
+                                adj_mode = (int)array[9]; // progressive = array[9];
                         }  
 
                         g_clear_object (&tmp_settings);
@@ -1520,7 +1521,7 @@ void Gtk_EntryControl::put_pcs_configuartion (){
                 array[6] = step;
                 array[7] = page;
                 array[8] = page10;
-                array[9] = progressive;
+                array[9] = adj_mode; //progressive;
 
                 GSettings *tmp_settings = g_settings_new (dotpath);
                 GVariant *storage = g_variant_new_fixed_array (g_variant_type_new ("d"), array, n_stores, sizeof (gdouble));
@@ -1609,7 +1610,7 @@ void Gtk_EntryControl::InitRegisterCb(double AdjStep, double AdjPage, double Adj
 	page10 = 10.*AdjPage;
 	page   = AdjPage;
 	step   = AdjStep;
-	progressive = AdjProg;
+	progressive = AdjProg; // *** reusing dor adj_mode now as obsoleted
 
         XSM_DEBUG (DBG_L8, "InitRegisterCb -- enter");
         // only for head EC if EC is part of an iter/array

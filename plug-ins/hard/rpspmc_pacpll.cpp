@@ -60,6 +60,7 @@ RP data streaming
 #include <gio/gio.h>
 #include <libsoup/soup.h>
 #include <zlib.h>
+#include <gsl/gsl_rstat.h>
 
 #include "config.h"
 #include "plugin.h"
@@ -5212,6 +5213,35 @@ void RPspmc_pacpll::scope_fft_time_zoom_callback (GtkWidget *widget, RPspmc_pacp
 
 
 void RPspmc_pacpll::update_health (const gchar *msg){
+
+        static GDateTime *now = NULL;
+        static double t0_utc;
+        static double t0 = -1.;
+        static double t0_avg = 0.;
+        static int init_count = 500;
+        double deviation=0.;
+        int valid=0;
+        static double dev_med1k=0.;
+        static gsl_rstat_workspace *rstat_p = gsl_rstat_alloc();
+
+        /*
+        gsl_rstat_add(data[i], rstat_p);
+        mean = gsl_rstat_mean(rstat_p);
+        variance = gsl_rstat_variance(rstat_p);
+        largest  = gsl_rstat_max(rstat_p);
+        smallest = gsl_rstat_min(rstat_p);
+        median   = gsl_rstat_median(rstat_p);
+        sd       = gsl_rstat_sd(rstat_p);
+        sd_mean  = gsl_rstat_sd_mean(rstat_p);
+        skew     = gsl_rstat_skew(rstat_p);
+        rms      = gsl_rstat_rms(rstat_p);
+        kurtosis = gsl_rstat_kurtosis(rstat_p);
+        n        = gsl_rstat_n(rstat_p);
+        gsl_rstat_reset(rstat_p);
+        n = gsl_rstat_n(rstat_p);
+        gsl_rstat_free(rstat_p);
+        */
+        
         if (msg){
                 gtk_entry_buffer_set_text (GTK_ENTRY_BUFFER (gtk_entry_get_buffer (GTK_ENTRY((red_pitaya_health)))), msg, -1);
                 g_slist_foreach ((GSList*)g_object_get_data (G_OBJECT (window), "EC_FPGA_SPMC_server_settings_list"), (GFunc) App::update_ec, NULL); // UPDATE GUI!
@@ -5225,6 +5255,87 @@ void RPspmc_pacpll::update_health (const gchar *msg){
                 int h = (tmp=(S-d*tmp))/3600;
                 int m = (tmp=(tmp-h*3600))/60;
                 double s = (tmp-m*60) + sec_dec;
+
+                if (t0 < 0.){
+                        GDateTime *now = g_date_time_new_now_utc();
+                        t0_avg = spmc_parameters.uptime_seconds; // init to first reading
+                        if (t0_avg > 10.)
+                                t0 = t0_avg; // accept
+                        t0_utc = g_date_time_to_unix(now) + (double)g_date_time_get_microsecond(now) * 1e-6;
+                        g_date_time_unref(now);
+                        g_message ("t0_avg: %g,  t0_utc: %g", t0_avg, t0_utc);
+                } else {
+                        if (init_count){
+                                GDateTime *now = g_date_time_new_now_utc();
+                                double utc = g_date_time_to_unix(now) + (double)g_date_time_get_microsecond(now) * 1e-6;
+                                g_date_time_unref(now);
+                                double estimate = spmc_parameters.uptime_seconds - (utc - t0_utc);
+                                t0_avg = 0.99 * t0_avg + 0.01 * estimate;
+
+                                gsl_rstat_add(estimate, rstat_p);
+#if 0
+                                g_message ("[%d] t0_avg: %g,  d_utc: %g   gsl mean: %g med: %g rms: %g  var: %g  skew: %g #%d",
+                                           init_count, t0_avg, utc-t0_utc,
+                                           gsl_rstat_mean(rstat_p),
+                                           gsl_rstat_median(rstat_p),
+                                           gsl_rstat_rms(rstat_p),
+                                           gsl_rstat_variance(rstat_p),
+                                           gsl_rstat_skew(rstat_p),
+                                           gsl_rstat_n(rstat_p));
+#endif
+                                --init_count;
+                                if (init_count == 0){
+                                        t0_avg = gsl_rstat_median(rstat_p);
+                                        gsl_rstat_reset(rstat_p);
+                                }
+                        }
+                }
+
+                
+                //gsl_rstat_n(rstat_p));
+
+                
+                // Get the current date and time with microsecond precision.
+                GDateTime *now = g_date_time_new_now_utc();
+                double utc = g_date_time_to_unix(now) + (double)g_date_time_get_microsecond(now) * 1e-6;
+                g_date_time_unref(now);
+                double deviation = spmc_parameters.uptime_seconds - t0_avg - (utc - t0_utc);
+
+                if (init_count == 0){
+                        if (gsl_rstat_n(rstat_p) > 1000){
+                                dev_med1k=gsl_rstat_median(rstat_p); valid++;
+                                gsl_rstat_reset(rstat_p);
+                                gsl_rstat_add (dev_med1k, rstat_p);
+                        }
+                
+                        gsl_rstat_add (deviation, rstat_p);
+#if 0
+                        g_message ("[%d] %g ** mean: %g med: %g rms: %g  var: %g  skew: %g",
+                                   gsl_rstat_n(rstat_p), deviation,
+                                   gsl_rstat_mean(rstat_p),
+                                   gsl_rstat_median(rstat_p),
+                                   gsl_rstat_rms(rstat_p),
+                                   gsl_rstat_variance(rstat_p),
+                                   gsl_rstat_skew(rstat_p));
+#endif
+                }
+                
+                // Extract the timestamp as a 64-bit integer representing microseconds since the epoch.
+                //gint64 timestamp_us = g_date_time_to_unix(now) * 1000000 + g_date_time_get_microsecond(now);
+                //gint64 t0_us = (gint64)round(t0*1e6); // sec to us
+                        
+                // Print the timestamp.
+                //g_print("Timestamp (microseconds since epoch): %" G_GINT64_FORMAT "\n", timestamp_us);
+                        
+                // Format the time as a string.
+                //gchar *formatted_time = g_date_time_format(now, "%Y-%m-%d %H:%M:%S.%f %z");
+                //g_print("Formatted time: %s\n", formatted_time);
+                        
+                // Clean up.
+                //g_free(formatted_time);
+                //g_date_time_unref(now);
+
+
 #if 0
                 gchar *gpiox_string = NULL;
                 if (scope_width_points > 1000){
@@ -5247,11 +5358,12 @@ void RPspmc_pacpll::update_health (const gchar *msg){
                                                         );
                 g_free (gpiox_string);
 #else
-                gchar *health_string = g_strdup_printf ("CPU: %03.0f%% Free: %6.1f MB #%06.1f Up:%d d %02d:%02d:%04.1f",
+                gchar *health_string = g_strdup_printf ("CPU: %03.0f%% Free: %6.1f MB #%06.1f Up:%d d %02d:%02d:%04.1f   %s: %.4f s  [%.4f s as of %d]",
                                                         pacpll_parameters.cpu_load,
                                                         pacpll_parameters.free_ram/1024/1024,
                                                         pacpll_parameters.counter,
-                                                        d,h,m,s
+                                                        d,h,m,s, init_count ? "estimating precise t0":"delta UTC", dev_med1k,
+                                                        gsl_rstat_median(rstat_p), gsl_rstat_n(rstat_p)
                                                         );
 #endif
                 gtk_entry_buffer_set_text (GTK_ENTRY_BUFFER (gtk_entry_get_buffer (GTK_ENTRY((red_pitaya_health)))), health_string, -1);
