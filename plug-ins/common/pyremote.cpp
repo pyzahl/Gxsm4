@@ -4417,19 +4417,17 @@ void py_gxsm_console::AppWindowInit(const gchar *title, const gchar *sub_title){
 	v_grid = gtk_grid_new ();
         gtk_window_set_child (GTK_WINDOW (window), v_grid);
 	g_object_set_data (G_OBJECT (window), "v_grid", v_grid);
-	gtk_widget_show (v_grid);
 
 	gtk_widget_show (GTK_WIDGET (window));
 
-        PI_DEBUG_GM (DBG_L2, "pyremote Plugin :: AppWindoInit() -- building Console AppWindow -- calling GUI builder.");
+        PI_DEBUG_GM (DBG_L3, "pyremote Plugin :: AppWindoInit() -- building Console AppWindow -- calling GUI builder.");
         create_gui ();
-
         gui_ready = true;
-        PI_DEBUG_GM(DBG_L2, "pyremote Plugin :: AppWindoInit() -- Console AppWindow ready.");
+        PI_DEBUG_GM(DBG_L3, "pyremote Plugin :: AppWindoInit() -- Console AppWindow ready.");
 
         set_window_geometry ("python-console");
 
-        PI_DEBUG_GM(DBG_L2, "pyremote Plugin :: AppWindoInit() -- done.");
+        PI_DEBUG_GM(DBG_L3, "pyremote Plugin :: AppWindoInit() -- done.");
 }
 
 
@@ -4466,18 +4464,15 @@ void py_gxsm_console::create_gui ()
         gtk_widget_set_hexpand (hpaned_scpane, TRUE);
         bp->grid_add_widget (hpaned_scpane, 100);
 	gtk_widget_show (hpaned_scpane);
-        bp->grid_add_widget (hpaned_scpane, 100);
-
         
 	vpaned = gtk_paned_new (GTK_ORIENTATION_VERTICAL);
         gtk_widget_set_hexpand (vpaned, TRUE);
         gtk_widget_set_vexpand (vpaned, TRUE);
 	gtk_widget_show (vpaned);
-        //bp->grid_add_widget (vpaned, 100);
 
 	gtk_paned_set_start_child (GTK_PANED(hpaned_scpane), vpaned);
 	gtk_paned_set_end_child (GTK_PANED(hpaned_scpane), sc_grid);
-
+        
         bp->new_line ();
 
 	file_scrolledwin = gtk_scrolled_window_new();

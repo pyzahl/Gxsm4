@@ -1644,8 +1644,7 @@ void Gtk_EntryControl::InitRegisterCb(double AdjStep, double AdjPage, double Adj
                         g_object_unref (menu_item_config);
 
                         if (GTK_IS_SPIN_BUTTON (entry)){
-                                //on_set_extra_menu (GTK_ENTRY (entry), G_MENU_MODEL (menu)); // need equivalent function for spin button!!
-                                gtk_entry_set_extra_menu (GTK_ENTRY (entry), G_MENU_MODEL (menu));
+                                ;//on_set_extra_menu (GTK_ENTRY (entry), G_MENU_MODEL (menu)); // need equivalent function for spin button!!
                         } else
                                 gtk_entry_set_extra_menu (GTK_ENTRY (entry), G_MENU_MODEL (menu));
 

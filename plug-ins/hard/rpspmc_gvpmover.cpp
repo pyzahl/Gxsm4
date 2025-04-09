@@ -751,6 +751,9 @@ void GVPMoverControl::configure_callback (GSimpleAction *action, GVariant *param
         GVPMoverControl *mc = (GVPMoverControl *) user_data;
         GVariant *old_state, *new_state;
 
+        PI_DEBUG (DBG_L2, "GVPMoverControl::AppWindowInit -- GVPMoverControl::configure_callback tabs");
+
+        
         if (action){
                 old_state = g_action_get_state (G_ACTION (action));
                 new_state = g_variant_new_boolean (!g_variant_get_boolean (old_state));
@@ -792,6 +795,9 @@ void GVPMoverControl::configure_callback (GSimpleAction *action, GVariant *param
         if (!action){
                 g_variant_unref (new_state);
         }
+
+        PI_DEBUG (DBG_L2, "GVPMoverControl::AppWindowInit -- GVPMoverControl::configure_callback tabs done.");
+
 }
 
 void GVPMoverControl::AppWindowInit(const gchar *title, const gchar *sub_title){

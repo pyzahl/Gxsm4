@@ -469,7 +469,6 @@ PanView::~PanView (){
 
 void PanView::AppWindowInit(const gchar *title, const gchar *sub_title){
         PI_DEBUG (DBG_L2, "PanView::AppWindowInit -- header bar");
-        g_message("PanView::AppWindowInit -- header bar");
 
         app_window = gxsm4_app_window_new (GXSM4_APP (main_get_gapp()->get_application ()));
         window = GTK_WINDOW (app_window);

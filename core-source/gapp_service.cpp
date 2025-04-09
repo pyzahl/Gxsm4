@@ -636,6 +636,8 @@ AppBase::~AppBase(){
 }
 
 void AppBase::SetTitle(const gchar *title, const gchar *sub_title){
+	XSM_DEBUG_GM (DBG_L3, "AppBase::SetTitle >%s<_%s_", title, sub_title);
+
         if (title){
                 g_free (main_title_buffer);
                 main_title_buffer = g_strdup (title);
@@ -679,7 +681,6 @@ void AppBase::AppWindowInit(const gchar *title, const gchar *sub_title){
 	v_grid = gtk_grid_new ();
 	g_object_set_data (G_OBJECT (window), "v_grid", v_grid);
         gtk_window_set_child (GTK_WINDOW (window), v_grid);
-	gtk_widget_show (GTK_WIDGET (v_grid)); // FIX-ME GTK4 SHOWALL
 
         gtk_widget_show (GTK_WIDGET (window));
 }
@@ -844,7 +845,7 @@ int AppBase::set_window_geometry (const gchar *key, gint index, gboolean add_to_
         if (g_object_get_data (G_OBJECT (gxsm4app), "APP-MAIN"))
                 ((App*)g_object_get_data (G_OBJECT (gxsm4app), "APP-MAIN")) -> add_appwindow_to_list (this); // add self to gapp globale list
 
-        XSM_DEBUG_GM (DBG_L5, "AppBase::set_window_geometry ... done.");
+        XSM_DEBUG_GM (DBG_L5, "AppBase::set_window_geometry ... done. >%s<", key);
 	return 0;
 }
 

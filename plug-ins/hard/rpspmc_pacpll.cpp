@@ -2629,12 +2629,14 @@ void RPSPMC_Control::create_folder (){
                         bp->grid_add_widget (sep);
                 }
 	}
+        g_message ("GRAPHS MATRIX SELECTOR BUILD complete.");
 
         
         bp->pop_grid ();
         bp->new_line ();
         bp->new_grid_with_frame ("Plot Mode Configuration");
 
+        g_message ("GRAPHS PLOT CFG");
 	graphs_matrix[0][31] = bp->grid_add_check_button ("Join all graphs for same X", "Join all plots with same X.\n"
                                                           "Note: if auto scale (default) Y-scale\n"
                                                           "will only apply to 1st graph - use hold/exp. only for asolute scale.)", 1,
@@ -2650,6 +2652,7 @@ void RPSPMC_Control::create_folder (){
         bp->new_line ();
         bp->new_grid_with_frame ("Plot / Save current data in buffer -- for convenience: extra Execute GVP button");
 
+        g_message ("GRAPHS PLOT ACTIONS");
 	bp->grid_add_button ("Plot");
 	g_signal_connect (G_OBJECT (bp->button), "clicked",
                           G_CALLBACK (RPSPMC_Control::Probing_graph_callback), this);
@@ -2668,7 +2671,8 @@ void RPSPMC_Control::create_folder (){
 
 
 
-// ==== Folder: RT System Connection ========================================
+// ==== Folder: RPSPMC System Connection ========================================
+        g_message ("Folder: RPSPMC System Connection");
         bp->set_pcs_remote_prefix ("");
         bp->new_grid ();
         bp->start_notebook_tab (notebook, "RedPitaya Web Socket", "rpspmc-tab-system", hwi_settings);
@@ -2688,20 +2692,20 @@ void RPSPMC_Control::create_folder (){
         //gtk_entry_set_text (GTK_ENTRY (input_rpaddress), "http://rp-f05603.local/pacpll/?type=run");
         //gtk_entry_set_text (GTK_ENTRY (input_rpaddress), "130.199.243.200");
         //gtk_entry_set_text (GTK_ENTRY (input_rpaddress), "192.168.1.10");
-        
+
+        g_message ("Folder: RPSPMC CHECK CONNECT");
+
         bp->grid_add_check_button ( N_("Restart"), "Check to reload FPGA and initiate connection, uncheck to close connection.", 1,
                                     G_CALLBACK (RPspmc_pacpll::connect_cb), rpspmc_pacpll);
 	g_object_set_data( G_OBJECT (bp->button), "RESTART", GINT_TO_POINTER (1));
 
-#if 1 // life reconnect not yet functional, TDB
         bp->grid_add_check_button ( N_("Re-Connect"), "Check to re-initiate connection, uncheck to close connection.", 1,
                                     G_CALLBACK (RPspmc_pacpll::connect_cb), rpspmc_pacpll);
 	g_object_set_data( G_OBJECT (bp->button), "RESTART", GINT_TO_POINTER (0));
-#endif
+
         bp->grid_add_check_button ( N_("Connect Stream"), "Check to initiate stream connection, uncheck to close connection.", 1,
                                     G_CALLBACK (rpspmc_hwi_dev::spmc_stream_connect_cb), rpspmc_hwi);
         stream_connect_button=bp->button;
-
 
         spmc_parameters.rpspmc_dma_pull_interval = 10.0;
         bp->set_input_width_chars (2);
@@ -2710,11 +2714,10 @@ void RPSPMC_Control::create_folder (){
         EC_FPGA_SPMC_server_settings_list = g_slist_prepend(EC_FPGA_SPMC_server_settings_list, bp->ec);
         
         bp->grid_add_widget (GVP_stop_all_zero_button=gtk_button_new_from_icon_name ("process-stopall-symbolic"));
-        g_signal_connect (G_OBJECT (bp->button), "clicked", G_CALLBACK (RPSPMC_Control::GVP_AllZero), this);
-        //g_signal_connect (G_OBJECT (bp->button), "clicked", G_CALLBACK (RPSPMC_Control_pacpll::spmc_server_control_callback), this);
-        gtk_widget_set_tooltip_text (bp->button, "Click to force reset GVP (WARNING: XYZ JUMP possible)!");
-        //gtk_widget_set_tooltip_text (bp->button, "Click to push update off Verbose Level and RPSPMC DMA rate limit / pull interval.");
+        g_signal_connect (G_OBJECT (GVP_stop_all_zero_button), "clicked", G_CALLBACK (RPSPMC_Control::GVP_AllZero), this);
+        gtk_widget_set_tooltip_text (GVP_stop_all_zero_button, "Click to force reset GVP (WARNING: XYZ JUMP possible)!");
 
+        g_message ("Folder: RPSPMC DBG");
 
         bp->new_line ();
         bp->grid_add_check_button ( N_("Debug"), "Enable debugging LV1.", 1,
@@ -2752,6 +2755,8 @@ void RPSPMC_Control::create_folder (){
         rpspmc_pacpll->update_health ("Not connected.");
         bp->new_line ();
 
+        g_message ("Folder: RPSPMC LOG");
+        
         rpspmc_pacpll->text_status = gtk_text_view_new ();
  	gtk_text_view_set_editable (GTK_TEXT_VIEW (rpspmc_pacpll->text_status), FALSE);
         //gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (text_status), GTK_WRAP_WORD_CHAR);
@@ -2768,6 +2773,7 @@ void RPSPMC_Control::create_folder (){
         bp->pop_grid ();
         bp->show_all ();
 
+        g_message ("*** STORE LISTS ***");
 
         
 	// ============================================================
@@ -2789,8 +2795,12 @@ void RPSPMC_Control::create_folder (){
         AppWindowInit (NULL); // stage two
         set_window_geometry ("rpspmc-main-control"); // must add key to xml file: core-sources/org.gnome.gxsm4.window-geometry.gschema.xml
 
-        Probing_RampFBoff_callback (multiIV_checkbutton, this); // update
-        Probing_multiIV_callback (multiIV_checkbutton, this); // update
+        g_message ("RPSPMC CONTROL READY -- updating");
+       
+        //Probing_RampFBoff_callback (multiIV_checkbutton, this); // update
+        //Probing_multiIV_callback (multiIV_checkbutton, this); // update
+
+        g_message ("RPSPMC BUILD TABS DONE.");
 }
 
 void RPSPMC_Control::Init_SPMC_on_connect (){
@@ -2836,10 +2846,11 @@ void RPSPMC_Control::GVP_zero_all_smooth (){
 
 int RPSPMC_Control::GVP_AllZero (GtkWidget *widget, RPSPMC_Control *self){
         PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);
-        g_message ("STOP: gvp STOP and all zero");
+        g_message ("RPSPMC_Control::GVP_AllZero: GVP STOP and set ALL ZERO   ** DANGER IF IN OPERATION ** -- No Action here in productioin version!");
         //rpspmc_hwi->GVP_abort_vector_program ();
         //self->GVP_zero_all_smooth ();
         //rpspmc_hwi->GVP_reset_UAB ();
+        return 0;
 }
 
 int RPSPMC_Control::DSP_cret_callback (GtkWidget *widget, RPSPMC_Control *self){
