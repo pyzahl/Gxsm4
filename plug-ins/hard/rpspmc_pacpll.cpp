@@ -5299,7 +5299,8 @@ void RPspmc_pacpll::update_health (const gchar *msg){
                 GDateTime *now = g_date_time_new_now_utc();
                 double utc = g_date_time_to_unix(now) + (double)g_date_time_get_microsecond(now) * 1e-6;
                 g_date_time_unref(now);
-                double deviation = spmc_parameters.uptime_seconds - t0_avg - (utc - t0_utc);
+                double time_since_t0 = utc - t0_utc;
+                double deviation = spmc_parameters.uptime_seconds - t0_avg - time_since_t0;
 
                 if (init_count == 0){
                         if (gsl_rstat_n(rstat_p) > 1000){
@@ -5343,7 +5344,6 @@ void RPspmc_pacpll::update_health (const gchar *msg){
                                                         (int)pacpll_signals.signal_gpiox[0], (int)pacpll_signals.signal_gpiox[1],
                                                         (int)pacpll_signals.signal_gpiox[2], (int)pacpll_signals.signal_gpiox[3],
                                                         (int)pacpll_signals.signal_gpiox[4], (int)pacpll_signals.signal_gpiox[5],
-                                                        (int)pacpll_signals.signal_gpiox[6], (int)pacpll_signals.signal_gpiox[7],
                                                         (int)pacpll_signals.signal_gpiox[8], (int)pacpll_signals.signal_gpiox[9],
                                                         (int)pacpll_signals.signal_gpiox[10], (int)pacpll_signals.signal_gpiox[11],
                                                         (int)pacpll_signals.signal_gpiox[12], (int)pacpll_signals.signal_gpiox[13],
@@ -5358,13 +5358,17 @@ void RPspmc_pacpll::update_health (const gchar *msg){
                                                         );
                 g_free (gpiox_string);
 #else
-                gchar *health_string = g_strdup_printf ("CPU: %03.0f%% Free: %6.1f MB #%06.1f Up:%d d %02d:%02d:%04.1f   %s: %.4f s  [%.4f s as of %d]",
+                gchar *health_string = g_strdup_printf ("CPU: %03.0f%% Free: %6.1f MB #%06.1f Up:%d d %02d:%02d:%04.1f   %s: %g ppm  [%.4f s as of %d]",
                                                         pacpll_parameters.cpu_load,
                                                         pacpll_parameters.free_ram/1024/1024,
                                                         pacpll_parameters.counter,
-                                                        d,h,m,s, init_count ? "estimating precise t0":"delta UTC", dev_med1k,
-                                                        gsl_rstat_median(rstat_p), gsl_rstat_n(rstat_p)
+                                                        d,h,m,s, init_count ? "estimating precise t0":"delta UTC", 1e6*dev_med1k/time_since_t0,
+                                                        valid ? dev_med1k : gsl_rstat_median(rstat_p), valid ? 1000 : gsl_rstat_n(rstat_p)
                                                         );
+                if (valid){
+                        main_get_gapp()->monitorcontrol->LogEvent ("RPSPMC-HS-UpTime-PPM", health_string, 2);
+                        valid = 0;
+                }
 #endif
                 gtk_entry_buffer_set_text (GTK_ENTRY_BUFFER (gtk_entry_get_buffer (GTK_ENTRY((red_pitaya_health)))), health_string, -1);
                 gtk_widget_set_name (GTK_WIDGET (red_pitaya_health), "entry-mono-text-health");
