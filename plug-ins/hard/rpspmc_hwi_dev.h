@@ -116,7 +116,7 @@ public:
 	 */
 	virtual gint RTQuery (const gchar *property, double &val1, double &val2, double &val3);
 
-	virtual gint RTQuery () { return RPSPMC_data_y_index + subscan_data_y_index_offset; }; // actual progress on scan -- y-index mirror from FIFO read
+	virtual gint RTQuery () { return RPSPMC_data_y_index; }; // actual progress on scan -- y-index mirror from FIFO read
 
 	/* high level calls for instrtument condition checks */
 	virtual gint RTQuery_clear_to_start_scan (){ return 1; };
@@ -199,6 +199,7 @@ private:
 	GThread *probe_data_read_thread;
         gboolean KillFlg;
 
+        GMutex RTQmutex;
 
         gint32 GVP_stream_buffer[EXPAND_MULTIPLES*DMA_SIZE];
         GMutex GVP_stream_buffer_mutex;

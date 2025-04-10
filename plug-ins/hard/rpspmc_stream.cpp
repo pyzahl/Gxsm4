@@ -286,7 +286,7 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
 		contents = g_bytes_get_data (message, &len);
 #endif
 
-                puts(contents);
+                //puts(contents);
                 
                 gchar *p;
                 if (g_strrstr (contents, "#***")){

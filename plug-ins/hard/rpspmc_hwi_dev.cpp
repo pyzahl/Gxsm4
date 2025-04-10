@@ -68,6 +68,8 @@ extern "C++" {
 // ================================================================================
 
 rpspmc_hwi_dev::rpspmc_hwi_dev():RP_stream(this){
+        g_mutex_init (&RTQmutex);
+
         info_blob = NULL;
         
         delayed_tip_move_update_timer_id = 0;
@@ -550,7 +552,7 @@ gpointer ScanDataReadThread (void *ptr_hwi){
              yi += ydir){ // for all lines and directional passes [->, <-, [-2>, <2-]]
                 
 #if GVP_DEBUG_VERBOSE > 0
-                g_message ("*************************** scan line: #%d **********************", yi);
+                g_message ("*************************** scan line: #%d / %d   dyc: %d **********************", yi, ny+y0, hwi->RPSPMC_data_y_count);
 #endif
                 // for (int dir = 0; dir < 4 && hwi->ScanningFlg; ++dir){ // check for every pass -> <- 2> <2
                 for (int dir = 0; dir < 2 && hwi->ScanningFlg; ++dir){ // check for every pass -> <- for first test only
@@ -1116,14 +1118,14 @@ gboolean rpspmc_hwi_dev::ScanLineM(int yindex, int xdir, int muxmode, //srcs_mas
 
                 y_current = RPSPMC_data_y_index;
                 //g_print ("current RPSPMC_data_y_index: %04d ** rpspmc_hwi_spm::ScanLineM (yindex=%04d, xdir=%d, ydir=%d, lssrcs=%x) checking...\n", RPSPMC_data_y_index, yindex, xdir, ydir, srcs_mask);
-                g_print (".");
+                //g_print (".");
                 
                 if (ydir > 0 && yindex <= RPSPMC_data_y_index){
-                        g_print ("\r * top-down line %04d completed.\n", yindex);
+                        //g_print ("\r * top-down line %04d completed.\n", yindex);
                         return FALSE; // line completed top-down
                 }
                 if (ydir < 0 && yindex >= RPSPMC_data_y_index){
-                        g_print ("\r * bottom-up line %04d completed.\n", yindex);
+                        //g_print ("\r * bottom-up line %04d completed.\n", yindex);
                         return FALSE; // line completed bot-up
                 }
 

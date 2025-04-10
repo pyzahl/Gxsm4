@@ -1731,17 +1731,15 @@ gboolean SPM_ScanControl::scanning_control_run (){
 		if (scan_flag == SCAN_FLAG_RUN){
 			if (!do_scanline ()){
                                 // skip to next line
-                                // g_print ("scanning_control_run task_line#=%d  y-line=%d\n",scanning_task_line,line);
+                                // g_print ("scanning_control_run task_line#=%d  y-line=%d RTQy: %d  slsy: %d\n",scanning_task_line,line,main_get_gapp()->xsm->hardware->RTQuery (), sls_config[2]);
                                 scanning_task_line++;
                                 last_scan_dir == SCAN_DIR_TOPDOWN ? ++line : --line;
-                                if (fabs (line - main_get_gapp()->xsm->hardware->RTQuery ()) > 2){
-                                        g_message (" SPM_ScanControl::scanning_control_run line=%d   actual=%d  scanning_task_line= %d", line,  main_get_gapp()->xsm->hardware->RTQuery (), scanning_task_line);
-                                        line = main_get_gapp()->xsm->hardware->RTQuery () + (SCAN_DIR_TOPDOWN ? -1 : +1) - sls_config[2];
+                                if (fabs (line - (main_get_gapp()->xsm->hardware->RTQuery () - sls_config[2])) > 2){
+                                        // g_message (" SPM_ScanControl::scanning_control_run line=%d   actual=%d  scanning_task_line= %d", line,  main_get_gapp()->xsm->hardware->RTQuery (), scanning_task_line);
+                                        line = (main_get_gapp()->xsm->hardware->RTQuery () - sls_config[2]) + (SCAN_DIR_TOPDOWN ? -1 : +1);
                                 }
                         }
 		}
-
-                
                 return TRUE; // continue!
 	}
 
@@ -1873,7 +1871,8 @@ double SPM_ScanControl::update_status_info (int reset){
 		h = floor (s/3600.);
 		m = floor ((s-h*3600.)/60.);
 		s-= h*3600.+m*60.;
-		
+
+                // fix me for sub-scan SLS!
 		n_by_lines_to_do = (double)master_scan->data.s.ny
 			/ (double)(last_scan_dir == SCAN_DIR_TOPDOWN ?
 				   line+1 : master_scan->data.s.ny-line);

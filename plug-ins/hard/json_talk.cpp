@@ -317,7 +317,7 @@ void  RP_JSON_talk::write_parameter (const gchar *parameter_id, double value, co
         if (client){
                 gchar *json_string=NULL;
                 if (fmt){
-                        gchar *format = g_strdup_printf ("{ \"parameters\":{\"%s\":{\"value\":%s}}}", parameter_id, fmt);
+                       gchar *format = g_strdup_printf ("{ \"parameters\":{\"%s\":{\"value\":%s}}}", parameter_id, fmt);
                         json_string = g_strdup_printf (format, value);
                         g_free (format);
                 } else
