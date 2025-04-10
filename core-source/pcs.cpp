@@ -1194,7 +1194,9 @@ void Gtk_EntryControl::pcs_adjustment_configure_response_callback (GtkDialog *di
         Gtk_EntryControl *ec = (Gtk_EntryControl *) user_data;
         {
                 gint mode_tmp = PARAM_CONTROL_ADJUSTMENT_LINEAR; // = 0
-        
+
+                double v = ec->unit->Usr2Base (ec->Get_dValue ());
+                
                 if (g_object_get_data  (G_OBJECT (dialog), "CB-LOG-SCALE"))
                         if (gtk_check_button_get_active (GTK_CHECK_BUTTON (g_object_get_data  (G_OBJECT (dialog), "CB-LOG-SCALE"))))
                                 mode_tmp |= PARAM_CONTROL_ADJUSTMENT_LOG;
@@ -1207,10 +1209,16 @@ void Gtk_EntryControl::pcs_adjustment_configure_response_callback (GtkDialog *di
                 if (g_object_get_data  (G_OBJECT (dialog), "CB-TICKS"))
                         if (gtk_check_button_get_active (GTK_CHECK_BUTTON (g_object_get_data  (G_OBJECT (dialog), "CB-TICKS"))))
                                 mode_tmp |= PARAM_CONTROL_ADJUSTMENT_ADD_MARKS;
-                       
+
+
                 if (response == GTK_RESPONSE_ACCEPT){
                         ec->set_adjustment_mode (mode_tmp);
                         ec->put_pcs_configuartion ();
+                        if (ec->adj){ // force refresh -- iffy at random?!?!?
+                                ec->adjustment_callback(ec->adj, ec);
+                                gtk_adjustment_set_value (GTK_ADJUSTMENT(ec->adj), ec->value_to_adj (v));
+                        }
+                        
                 }
         }
         gtk_window_destroy (GTK_WINDOW (dialog));

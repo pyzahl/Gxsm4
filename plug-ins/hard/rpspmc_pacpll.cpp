@@ -5229,7 +5229,7 @@ void RPspmc_pacpll::update_health (const gchar *msg){
         static double t0_utc;
         static double t0 = -1.;
         static double t0_avg = 0.;
-        static int init_count = 500;
+        static int init_count = 2500;
         double deviation=0.;
         int valid=0;
         static double dev_med1k=0.;
@@ -5314,7 +5314,7 @@ void RPspmc_pacpll::update_health (const gchar *msg){
                 double deviation = spmc_parameters.uptime_seconds - t0_avg - time_since_t0;
 
                 if (init_count == 0){
-                        if (gsl_rstat_n(rstat_p) > 1000){
+                        if (gsl_rstat_n(rstat_p) > 3000){
                                 dev_med1k=gsl_rstat_median(rstat_p); valid++;
                                 gsl_rstat_reset(rstat_p);
                                 gsl_rstat_add (dev_med1k, rstat_p);
