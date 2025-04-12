@@ -38,7 +38,7 @@ foreach plugin : plugin_list
       args: [
         '--define', 'ORIGINALFILENAME_STR="@0@"'.format(plugin_name+'.exe'),
         '--define', 'INTERNALNAME_STR="@0@"'    .format(plugin_name),
-        '--define', 'TOP_SRCDIR="@0@"'          .format(meson.source_root()),
+        '--define', 'TOP_SRCDIR="@0@"'          .format(meson.current_source_dir()),
       ],
       include_directories: [
         rootInclude, appInclude,

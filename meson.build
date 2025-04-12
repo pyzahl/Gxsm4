@@ -1,5 +1,5 @@
-project('gxsm4', ['c','cpp'], version : '4.0.0')
-version_name = 'GXSM4GTK4 Beta Evaluation'
+project('gxsm4', ['c','cpp'], version : '4.1.0')
+version_name = 'Warp Speed Gxsm4RPSPMC'
 
 as_version = meson.project_version() # set in project() below
 ver_arr = as_version.split('.')
@@ -110,15 +110,15 @@ no_dep = dependency('', required: false)
 
 # Mandatory Dependencies
 math = cc.find_library('m')
-glib = dependency('glib-2.0')
-gio  = dependency('gio-2.0')
+glib = dependency('glib-2.0', required : true)
+gio  = dependency('gio-2.0', required : true)
 gtk  = dependency('gtk4', version : '>= 4.1')
 soup = dependency('libsoup-2.4', version : '>= 2.24')
 websocketpp = dependency('websocketpp', required : false) ## apt install libwebsocketpp-dev
-cairo = dependency('cairo-gobject')
-#cairo = dependency('cairo')
-freet = dependency('freetype2')
-gset  = dependency('gsettings-desktop-schemas')
+cairo = dependency('cairo-gobject', required : true)
+#cairo = dependency('cairo', required : true)
+freet = dependency('freetype2', required : true)
+gset  = dependency('gsettings-desktop-schemas', required : true)
 x11   = dependency('x11')
 glm   = dependency('glm')
 gl    = dependency(['gl'], required : false)
@@ -144,11 +144,11 @@ netcdf = declare_dependency(
 
 fontconfig = dependency('fontconfig')
 
-png   = dependency('libpng')
-fftw  = dependency('fftw3')
-xml   = dependency('libxml-2.0')
-gmod  = dependency('gmodule-2.0')
-gmodexp = dependency('gmodule-export-2.0')
+png   = dependency('libpng', required : true)
+fftw  = dependency('fftw3', required : true)
+xml   = dependency('libxml-2.0', required : true)
+gmod  = dependency('gmodule-2.0', required : true)
+gmodexp = dependency('gmodule-export-2.0', required : true)
 lz    = dependency('zlib', method : 'system')
 #lz    = cc.find_library('z')
 
@@ -168,10 +168,11 @@ endif
 gtksourceview = dependency('gtksourceview-5', version : '>= 5.0', required : false)
 python_install = pythonmod.find_installation('python3')
 python = python_install.dependency(embed : true, required : false)
-message(python_install.path())
-message(python_install.get_install_dir())
+
+
 incdir_numpy = run_command(python_install, ['-c', 'import os; os.chdir(".."); import numpy; print(numpy.get_include())'], check : true).stdout().strip()
-message(incdir_numpy)
+
+
 inc_np = include_directories(incdir_numpy)
 # gdkpixbu = dependency('gdk-pixbuf-2.0') ## default part of gtk4
 
@@ -231,7 +232,7 @@ localedir        = get_option('datadir') / 'locale'
 
 schemas_dir      = get_option('prefix') / get_option('datadir') / 'glib-2.0' / 'schemas'
 
-compile_schemas = find_program('glib-compile-schemas', required: false)
+compile_schemas = find_program('glib-compile-schemas', required: true)
 if compile_schemas.found()
   test('Validate schema file', compile_schemas,
     args: ['--strict', '--dry-run', meson.current_source_dir()]
@@ -308,7 +309,7 @@ conf.set_quoted('PACKAGE_GL400_DIR', absolute_data_dir+'/gl-400', description : 
 configure_file(output : 'config.h',
                configuration : conf)
 
-rootpath = meson.project_source_root()
+rootpath = meson.current_source_dir()  ## deprecated, not needed here either
 
 ### some issue here, does not find config.h
 configuration_inc = include_directories('.')
@@ -341,4 +342,18 @@ subdir('icons')
 
 gnome.post_install(glib_compile_schemas: true, gtk_update_icon_cache: true, update_desktop_database: true)
 
+message('**********************************************************************')
+message('* Gxsm4 Source Root Path is: ', rootpath)
+message('* External tool paths in use are: ************************************')
+message('* Python path found: ', python_install.full_path())
+message('* Python install dir found: ', python_install.get_install_dir())
+message('* Python numpy path found: ', incdir_numpy)
+message('*** Critical Note: Please do not mix numpy versions when using')
+message('***                Gxsm Remote Python in Gxsm VirtEnv')
+message('**********************************************************************')
 
+assert(websocketpp.found(), 'WARNING: Dependency "websocketpp" not found. => Required to build RPSPM HwI (Hint: apt install libwebsocketpp-dev)')
+
+message('')
+message('*** Run "ninja install" to build and install Gxsm4                 ***')
+message('')

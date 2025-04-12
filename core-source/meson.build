@@ -119,7 +119,7 @@ if gl.found() and glew.found() and build_gxsm_view3d
 #    warning ('GXSM is linked with GL-3DView:')
 #    warning (app_gxsm_sources)
 else
-    warning ('GXSM is linked without GL-3DView (v3dcontrol, vsurf3d, caps, compiler)')
+    warning ('(OK as 3D view port from Gxsm3 is pending) GXSM4 is currently been linked without GL-3DView (v3dcontrol, vsurf3d, caps, compiler)')
 endif
 
 
