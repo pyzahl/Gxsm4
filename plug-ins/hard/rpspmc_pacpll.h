@@ -241,6 +241,8 @@ public:
                 z_servo[1] = 0;
                 z_servo[2] = 0;
 
+                z_limit_upper_v = 5.;
+                
                 fast_return = 0;
                 x2nd_Zoff = 0;
 
@@ -741,6 +743,7 @@ public:
 
         // Feedback (Z-Servo)
 	double z_servo[3];    // Z-Servo (Feedback) [0] (not used here), [1] Const Proportional, [2] Const Integral [user visible values]
+        double z_limit_upper_v;
 
 	int    scan_source[6];    // scan source mapping signal index for imaging
 	int    probe_source[6];   // probe source mapping signal index for 32bit data channels [0..3]

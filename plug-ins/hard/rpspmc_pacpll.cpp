@@ -1660,7 +1660,6 @@ void RPSPMC_Control::create_folder (){
                 bp->grid_add_ec (NULL, mixer_unit[ch], &mix_in_offsetcomp[ch], -1.0, 1.0, "5g", 0.001, 0.01, mixer_remote_id_oc[ch]);
                 bp->set_configure_list_mode_off ();
                 bp->grid_add_ec (NULL, mixer_unit[ch], &mix_level[ch], -100.0, 100.0, "5g", 0.001, 0.01, mixer_remote_id_fl[ch]);
-
                 if (tmp) delete (tmp); // done setting unit -- if custom
                 
                 if (signal_select_widget)
@@ -1690,7 +1689,8 @@ void RPSPMC_Control::create_folder (){
 
         mix_level[2] = 5.;
         mix_level[3] = -5.;
-        bp->grid_add_ec ("Z Upper", Volt, &spmc_parameters.z_servo_upper, -5.0, 5.0, "5g", 0.001, 0.01,"fbs-upper");
+        // *** spmc_parameters.z_servo_upper *** readback also, alt control via Z-Position, so must unlink here
+        bp->grid_add_ec ("Z Upper", Volt, &z_limit_upper_v, -5.0, 5.0, "5g", 0.001, 0.01,"fbs-upper");
         FPGA_readback_update_list = g_slist_prepend (FPGA_readback_update_list, bp->ec); // add to FPGA reconnect readback parameter list
 
         bp->new_line ();
@@ -2900,10 +2900,11 @@ void RPSPMC_Control::ZPosSetChanged(Param_Control* pcs, RPSPMC_Control *self){
                         NULL };
                 double jdata[3];
                 jdata[0] = main_get_gapp()->xsm->Inst->ZA2Volt(self->zpos_ref * spmc_parameters.gxsm_z_polarity);
-                jdata[1] = main_get_gapp()->xsm->Inst->nAmpere2V(self->mix_set_point[0]);
-                jdata[2]   = self->mix_level[0] > 0.
+                jdata[1] = self->mix_level[0] > 0. ? main_get_gapp()->xsm->Inst->nAmpere2V(self->mix_level[0])
+                                                   : main_get_gapp()->xsm->Inst->nAmpere2V(self->mix_set_point[0]);
+                jdata[2] = self->mix_level[0] > 0.  // Manual CZ-Control of Upper limit via Z-Position?
                         ? main_get_gapp()->xsm->Inst->ZA2Volt(self->zpos_ref * spmc_parameters.gxsm_z_polarity)
-                        : spmc_parameters.z_servo_upper; //5.; // UPPER
+                        : self->z_limit_upper_v; //5.; // UPPER
 
                 rpspmc_pacpll->write_array (SPMC_SET_ZPOS_SERVO_COMPONENTS, 0, NULL,  3, jdata);
         }
@@ -2929,13 +2930,14 @@ void RPSPMC_Control::ZServoParamChanged(Param_Control* pcs, RPSPMC_Control *self
                 self->z_servo[SERVO_CI] = pow (10., spmc_parameters.z_servo_ci_db/20.);
 
                 jdata_i[0] = self->mix_transform_mode[0];
-                jdata[0]   = main_get_gapp()->xsm->Inst->nAmpere2V(self->mix_set_point[0]);
+                jdata[0]   = self->mix_level[0] > 0. ? main_get_gapp()->xsm->Inst->nAmpere2V(self->mix_level[0])
+                                                     : main_get_gapp()->xsm->Inst->nAmpere2V(self->mix_set_point[0]);
                 jdata[1]   = main_get_gapp()->xsm->Inst->nAmpere2V(self->mix_in_offsetcomp[0]);
                 jdata[2]   = self->z_servo[SERVO_CP];
                 jdata[3]   = self->z_servo[SERVO_CI];
-                jdata[4]   = self->mix_level[0] > 0.
-                           ? main_get_gapp()->xsm->Inst->ZA2Volt(self->zpos_ref * spmc_parameters.gxsm_z_polarity)
-                        :  spmc_parameters.z_servo_upper;   // 5.; // UPPER
+                jdata[4]   = self->mix_level[0] > 0.  // Manual CZ-Control of Upper limit via Z-Position?
+                        ? main_get_gapp()->xsm->Inst->ZA2Volt(self->zpos_ref * spmc_parameters.gxsm_z_polarity)
+                        : self->z_limit_upper_v; //5.; // UPPER
                 jdata[5]   = spmc_parameters.z_servo_lower; // -5.; // LOWER
 
                 rpspmc_pacpll->write_array (SPMC_SET_Z_SERVO_COMPONENTS, 1, jdata_i,  6, jdata);
@@ -3047,6 +3049,9 @@ void RPSPMC_Control::update_GUI(){
 
 void RPSPMC_Control::update_FPGA_from_GUI (){ // after cold start
         //zpos_ref = 0.; // ** via limits
+
+        z_limit_upper_v = spmc_parameters.z_servo_upper; //5.; // READBACK UPPER
+
         g_slist_foreach ((GSList*)g_object_get_data (G_OBJECT (window), "FPGA_readback_update_list"), (GFunc) App::update_parameter, NULL); // UPDATE PARAMETRE form GUI!
 
         bias = spmc_parameters.bias_monitor; // Volts direct
