@@ -1692,7 +1692,8 @@ void RPSPMC_Control::create_folder (){
         // *** spmc_parameters.z_servo_upper *** readback also, alt control via Z-Position, so must unlink here
         bp->grid_add_ec ("Z Upper", Volt, &z_limit_upper_v, -5.0, 5.0, "5g", 0.001, 0.01,"fbs-upper");
         FPGA_readback_update_list = g_slist_prepend (FPGA_readback_update_list, bp->ec); // add to FPGA reconnect readback parameter list
-
+        ec_z_upper = bp->ec;
+        
         bp->new_line ();
         bp->grid_add_ec_with_scale ("CI", dB, &spmc_parameters.z_servo_ci_db, -100., 20., "5g", 1.0, 0.1, "fbs-ci"); // z_servo[SERVO_CI
         GtkWidget *ZServoCI = bp->input;
@@ -2905,7 +2906,12 @@ void RPSPMC_Control::ZPosSetChanged(Param_Control* pcs, RPSPMC_Control *self){
                 jdata[2] = self->mix_level[0] > 0.  // Manual CZ-Control of Upper limit via Z-Position?
                         ? main_get_gapp()->xsm->Inst->ZA2Volt(self->zpos_ref * spmc_parameters.gxsm_z_polarity)
                         : self->z_limit_upper_v; //5.; // UPPER
+                if (self->mix_level[0] > 0.)
+                        self->ec_z_upper->Freeze();
+                else
+                        self->ec_z_upper->Thaw();
 
+                
                 rpspmc_pacpll->write_array (SPMC_SET_ZPOS_SERVO_COMPONENTS, 0, NULL,  3, jdata);
         }
 }
@@ -2940,6 +2946,11 @@ void RPSPMC_Control::ZServoParamChanged(Param_Control* pcs, RPSPMC_Control *self
                         : self->z_limit_upper_v; //5.; // UPPER
                 jdata[5]   = spmc_parameters.z_servo_lower; // -5.; // LOWER
 
+                if (self->mix_level[0] > 0.)
+                        self->ec_z_upper->Freeze();
+                else
+                        self->ec_z_upper->Thaw();
+                
                 rpspmc_pacpll->write_array (SPMC_SET_Z_SERVO_COMPONENTS, 1, jdata_i,  6, jdata);
         }
 }

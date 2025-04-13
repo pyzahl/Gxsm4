@@ -744,6 +744,7 @@ public:
         // Feedback (Z-Servo)
 	double z_servo[3];    // Z-Servo (Feedback) [0] (not used here), [1] Const Proportional, [2] Const Integral [user visible values]
         double z_limit_upper_v;
+        Gtk_EntryControl *ec_z_upper;
 
 	int    scan_source[6];    // scan source mapping signal index for imaging
 	int    probe_source[6];   // probe source mapping signal index for 32bit data channels [0..3]
