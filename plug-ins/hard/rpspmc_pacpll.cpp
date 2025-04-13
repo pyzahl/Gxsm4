@@ -150,12 +150,12 @@ SOURCE_SIGNAL_DEF rpspmc_source_signals[] = {
         { 0x00000020, "IN2-RF-FIR",   " ", "V",             "V",                   SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S6,  6 }, // IN2 RP 125MSPS (RF input, FIR, routable to Z-Servo Control as tunnel current signal)!
         { 0x00000040, "IN3-AD463-24-CHA", " ", "V",         "V",                   SPMC_RPIN34_to_volts, PROBEDATA_ARRAY_S7,  7 }, // IN3 ADC4630-24-A 2MSPS (routable to Z-Servo Control as tunnel current signal)
         { 0x00000080, "IN4-AD463-24-CHB", " ", "V",         "V",                   SPMC_RPIN34_to_volts, PROBEDATA_ARRAY_S8,  8 }, // IN4 ADC4630-24-B 2MSPS
-        { 0x00000100, "SWP*00",       " ",  "V",            "V",                                    1.0, PROBEDATA_ARRAY_S9,  9 },  // ich= 8 ** swappable via GVP-SRC-MUX1 ** -- been replaced as set from swappable_signals[]
-        { 0x00000200, "SWP*01",        " ", "V",            "V",                                    1.0, PROBEDATA_ARRAY_S10, 10 }, // ich= 9 ** swappable via GVP-SRC-MUX2 ** -- been replaced as set from swappable_signals[]
-        { 0x00000400, "SWP*02",       " ",  "V",            "V",                                    1.0, PROBEDATA_ARRAY_S11, 11 }, // ich=10 ** swappable via GVP-SRC-MUX3 ** -- been replaced as set from swappable_signals[]
-        { 0x00000800, "SWP*03",       " ",  "V",            "V",                                    1.0, PROBEDATA_ARRAY_S12, 12 }, // ich=11 ** swappable via GVP-SRC-MUX4 ** -- been replaced as set from swappable_signals[]
-        { 0x00001000, "SWP*04",       " ",  "V",            "V",                                    1.0, PROBEDATA_ARRAY_S13, 13 }, // ich=12 ** swappable via GVP-SRC-MUX5 ** -- been replaced as set from swappable_signals[]
-        { 0x00002000, "SWP*05",       " ",  "V",            "V",                                    1.0, PROBEDATA_ARRAY_S14, 14 }, // ich=13 ** swappable via GVP-SRC-MUX6 ** -- been replaced as set from swappable_signals[]
+        { 0x00000100, "SWP*00",       " ",  "V",            "V",                                    1.0, PROBEDATA_ARRAY_S9,  9 },  // ich= 8 ** swappable via GVP-SRC-MUX1 ** -- been replaced as set from rpspmc_swappable_signals[]
+        { 0x00000200, "SWP*01",        " ", "V",            "V",                                    1.0, PROBEDATA_ARRAY_S10, 10 }, // ich= 9 ** swappable via GVP-SRC-MUX2 ** -- been replaced as set from rpspmc_swappable_signals[]
+        { 0x00000400, "SWP*02",       " ",  "V",            "V",                                    1.0, PROBEDATA_ARRAY_S11, 11 }, // ich=10 ** swappable via GVP-SRC-MUX3 ** -- been replaced as set from rpspmc_swappable_signals[]
+        { 0x00000800, "SWP*03",       " ",  "V",            "V",                                    1.0, PROBEDATA_ARRAY_S12, 12 }, // ich=11 ** swappable via GVP-SRC-MUX4 ** -- been replaced as set from rpspmc_swappable_signals[]
+        { 0x00001000, "SWP*04",       " ",  "V",            "V",                                    1.0, PROBEDATA_ARRAY_S13, 13 }, // ich=12 ** swappable via GVP-SRC-MUX5 ** -- been replaced as set from rpspmc_swappable_signals[]
+        { 0x00002000, "SWP*05",       " ",  "V",            "V",                                    1.0, PROBEDATA_ARRAY_S14, 14 }, // ich=13 ** swappable via GVP-SRC-MUX6 ** -- been replaced as set from rpspmc_swappable_signals[]
         { 0x00004000, "--",           " ", "V",             "V",                                    1.0, PROBEDATA_ARRAY_S15,   -1 }, // -- DUMMY SO FAR
         { 0x00008000, "--",           " ", "V",             "V",                                    1.0, PROBEDATA_ARRAY_COUNT, -1 }, // -- DUMMY SO FAR
         { 0x80000000, "BlockI",       " ", "i#",           "i#",                                    1.0, PROBEDATA_ARRAY_BLOCK, -1 }, // MUST BE ALWAYS LAST AND IN HERE!! END MARK.
@@ -163,7 +163,7 @@ SOURCE_SIGNAL_DEF rpspmc_source_signals[] = {
 };
 
 // so far fixed to swappable 4 signals as of GUI design!
-SOURCE_SIGNAL_DEF swappable_signals[] = {                                                                 // DEFAULT MUX MAP, 16 signals max 
+SOURCE_SIGNAL_DEF rpspmc_swappable_signals[] = {                                                                 // DEFAULT MUX MAP, 16 signals max 
         //  SIGNAL #  Name               Units.... Scale                                         DEFAULT ASSIGN
         { 0x00000000, "dFrequency",  " ", "Hz", "Hz", (125e6/((1L<<RP_FPGA_QFREQ)-1)),                0, -1 },   // dFREQ via PACPLL FIR_CH2 ** via transport / decimation selector 
         { 0x00000001, "Excitation",  " ", "mV", "mV", (1000.0/((1L<<RP_FPGA_QEXEC)-1)),               1, -1 },   // EXEC  via PACPLL FIR_CH4 ** via transport / decimation selector 
@@ -546,8 +546,8 @@ GtkWidget* GUI_Builder::grid_add_scan_input_signal_options (gint channel, gint p
 
         int jj=0;
 
-        for (int jj=0; swappable_signals[jj].label; ++jj){
-                gchar *id = g_strdup_printf ("%d", jj); gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, swappable_signals[jj].label); g_free (id);
+        for (int jj=0; rpspmc_swappable_signals[jj].label; ++jj){
+                gchar *id = g_strdup_printf ("%d", jj); gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, rpspmc_swappable_signals[jj].label); g_free (id);
         }
         
         gtk_combo_box_set_active (GTK_COMBO_BOX (cbtxt), preset); 
@@ -565,8 +565,8 @@ GtkWidget* GUI_Builder::grid_add_probe_source_signal_options (gint channel, gint
         g_object_set_data(G_OBJECT (cbtxt), "prb_channel_source", GINT_TO_POINTER (channel)); 
 
 
-        for (int jj=0; swappable_signals[jj].label; ++jj){
-                gchar *id = g_strdup_printf ("%d", jj); gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, swappable_signals[jj].label); g_free (id);
+        for (int jj=0; rpspmc_swappable_signals[jj].label; ++jj){
+                gchar *id = g_strdup_printf ("%d", jj); gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, rpspmc_swappable_signals[jj].label); g_free (id);
         }
 
         if (preset >= 0)
@@ -2545,12 +2545,12 @@ void RPSPMC_Control::create_folder (){
                 }
 
                 if (k >= 0 && k < 6){
-                        if (!swappable_signals[k].label) { g_warning ("GVP SOURCE MUX/SWPS INIT ** i=%d k=%d SWPS invalid/NULL", i,k); break; }
-                      //rpspmc_source_signals[i].name         = swappable_signals[k].name;
-                        rpspmc_source_signals[i].label        = swappable_signals[k].label;
-                        rpspmc_source_signals[i].unit         = swappable_signals[k].unit;
-                        rpspmc_source_signals[i].unit_sym     = swappable_signals[k].unit_sym;
-                        rpspmc_source_signals[i].scale_factor = swappable_signals[k].scale_factor;
+                        if (!rpspmc_swappable_signals[k].label) { g_warning ("GVP SOURCE MUX/SWPS INIT ** i=%d k=%d SWPS invalid/NULL", i,k); break; }
+                      //rpspmc_source_signals[i].name         = rpspmc_swappable_signals[k].name;
+                        rpspmc_source_signals[i].label        = rpspmc_swappable_signals[k].label;
+                        rpspmc_source_signals[i].unit         = rpspmc_swappable_signals[k].unit;
+                        rpspmc_source_signals[i].unit_sym     = rpspmc_swappable_signals[k].unit_sym;
+                        rpspmc_source_signals[i].scale_factor = rpspmc_swappable_signals[k].scale_factor;
                         PI_DEBUG (DBG_L4, "GRAPHS*** SWPS init i=" << i << " k=" << k << " " << rpspmc_source_signals[i].label << " sfac=" << rpspmc_source_signals[i].scale_factor);
                         g_message ("GRAPHS*** SWPS init i=%d k=%d {%s} sfac=%g", i, k, rpspmc_source_signals[i].label,rpspmc_source_signals[i].scale_factor);
                 }
@@ -2574,7 +2574,7 @@ void RPSPMC_Control::create_folder (){
 
                 // source selection for SWPS?:
                 if (k >= 0 && k < 6){ // swappable flex source
-                        //g_message("bp->grid_add_probe_source_signal_options m=%d  %s => %d %s", k, rpspmc_source_signals[i].label,  probe_source[k], swappable_signals[k].label);
+                        //g_message("bp->grid_add_probe_source_signal_options m=%d  %s => %d %s", k, rpspmc_source_signals[i].label,  probe_source[k], rpspmc_swappable_signals[k].label);
                         probe_source_signal_selector[k] = bp->grid_add_probe_source_signal_options (k, probe_source[k], this);
                 }else { // or fixed assignment
                         bp->grid_add_label (rpspmc_source_signals[i].label, NULL, 1, 0.);
@@ -3015,9 +3015,9 @@ int RPSPMC_Control::choice_scansource_callback (GtkWidget *widget, RPSPMC_Contro
 
 	self->scan_source[channel] = selection;
 
-        g_message ("RPSPMC_Control::choice_scansource_callback: scan_source[%d] = %d [%s]", channel, selection, swappable_signals[selection].label);
+        g_message ("RPSPMC_Control::choice_scansource_callback: scan_source[%d] = %d [%s]", channel, selection, rpspmc_swappable_signals[selection].label);
 
-	PI_DEBUG_GP (DBG_L3, "GVP STREAM MUX SELECTOR:  [%d] %s ==> [%d]\n",signal, swappable_signals[selection].label, channel);
+	PI_DEBUG_GP (DBG_L3, "GVP STREAM MUX SELECTOR:  [%d] %s ==> [%d]\n",signal, rpspmc_swappable_signals[selection].label, channel);
 
         rpspmc_hwi->set_spmc_signal_mux (RPSPMC_ControlClass->scan_source);
 
@@ -3025,10 +3025,10 @@ int RPSPMC_Control::choice_scansource_callback (GtkWidget *widget, RPSPMC_Contro
                 rpspmc_pacpll->write_parameter ("SPMC_GVP_STREAM_MUX", __GVP_selection_muxval (self->scan_source));
 
         main_get_gapp()->channelselector->SetModeChannelSignal(13+channel,
-                                                               swappable_signals[selection].label,
-                                                               swappable_signals[selection].label,
-                                                               swappable_signals[selection].unit,
-                                                               swappable_signals[selection].scale_factor
+                                                               rpspmc_swappable_signals[selection].label,
+                                                               rpspmc_swappable_signals[selection].label,
+                                                               rpspmc_swappable_signals[selection].unit,
+                                                               rpspmc_swappable_signals[selection].scale_factor
                                                                );
 
         
@@ -3136,7 +3136,7 @@ int RPSPMC_Control::choice_prbsource_callback (GtkWidget *widget, RPSPMC_Control
                 rpspmc_pacpll->write_array (SPMC_SET_MUX_COMPONENTS, 2, jdata_i,  0, NULL);
         }
         g_message ("RPSPMC_Control::choice_prbsource_callback: probe_source[%d] = %d [%s] MUX=%08x", channel, selection,
-                   swappable_signals[selection].label,
+                   rpspmc_swappable_signals[selection].label,
                    __GVP_selection_muxval (self->probe_source));
 
         return 0;
@@ -5593,7 +5593,7 @@ void RPspmc_pacpll::on_connect_actions(){
         for (int k=0; k<6; ++k){
                 RPSPMC_ControlClass->probe_source[k] = (mux >> (4*k)) & 0x0f;
                 if (RPSPMC_ControlClass->probe_source[k] >= 0 && RPSPMC_ControlClass->probe_source[k] < 16){
-                        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC GVP SRCS MUX[%d]: %02d <=> %s\n", k, RPSPMC_ControlClass->probe_source[k], swappable_signals[RPSPMC_ControlClass->probe_source[k]].label); status_append (tmp); g_free (tmp); }
+                        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC GVP SRCS MUX[%d]: %02d <=> %s\n", k, RPSPMC_ControlClass->probe_source[k], rpspmc_swappable_signals[RPSPMC_ControlClass->probe_source[k]].label); status_append (tmp); g_free (tmp); }
                         gtk_combo_box_set_active (GTK_COMBO_BOX (RPSPMC_ControlClass->probe_source_signal_selector[k]), RPSPMC_ControlClass->probe_source[k]);
                 } else {
                         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC GVP SRCS MUX[%d]: %02d <=> FPGA DATA ERROR: INVALID SIGNAL\n", k, RPSPMC_ControlClass->probe_source[k]); status_append (tmp); g_free (tmp); }

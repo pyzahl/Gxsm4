@@ -174,7 +174,7 @@ SOURCE_SIGNAL_DEF template_source_signals[] = {
 };
 
 // so far fixed to swappable 4 signals as of GUI design!
-SOURCE_SIGNAL_DEF swappable_signals[] = {
+SOURCE_SIGNAL_DEF template_swappable_signals[] = {
         { 0x00001000, "Sig Index", " ", "-", "--", 1.0, 0 },
         { 0x00002000, "Sig SWP2", " ", "-", "--", ADCV10, 0 },
         { 0x00004000, "Sig SWP3", " ", "-", "--", ADCV10, 0 },
@@ -430,8 +430,8 @@ GtkWidget* GUI_Builder::grid_add_scan_input_signal_options (gint channel, gint p
 
         int jj=0;
 
-        for (int jj=0; swappable_signals[jj].label; ++jj){
-                gchar *id = g_strdup_printf ("%d", jj); gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, swappable_signals[jj].label); g_free (id);
+        for (int jj=0; template_swappable_signals[jj].label; ++jj){
+                gchar *id = g_strdup_printf ("%d", jj); gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, template_swappable_signals[jj].label); g_free (id);
         }
         
 #if 0 // actual MK3 code
@@ -480,8 +480,8 @@ GtkWidget* GUI_Builder::grid_add_probe_source_signal_options (gint channel, gint
         g_object_set_data(G_OBJECT (cbtxt), "prb_channel_source", GINT_TO_POINTER (channel)); 
 
 
-        for (int jj=0; swappable_signals[jj].label; ++jj){
-                gchar *id = g_strdup_printf ("%d", jj); gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, swappable_signals[jj].label); g_free (id);
+        for (int jj=0; template_swappable_signals[jj].label; ++jj){
+                gchar *id = g_strdup_printf ("%d", jj); gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, template_swappable_signals[jj].label); g_free (id);
         }
 
 #if 0        
@@ -2036,12 +2036,12 @@ void SPM_Template_Control::create_folder (){
 		c*=11;
                 c++;
 		int m = -1;
-                for (int k=0; swappable_signals[k].mask; ++k){
-                        if (template_source_signals[i].mask == swappable_signals[k].mask){
-                                template_source_signals[i].label = swappable_signals[k].label;
-                                template_source_signals[i].unit  = swappable_signals[k].unit;
-                                template_source_signals[i].unit_sym = swappable_signals[k].unit_sym;
-                                template_source_signals[i].scale_factor = swappable_signals[k].scale_factor;
+                for (int k=0; template_swappable_signals[k].mask; ++k){
+                        if (template_source_signals[i].mask == template_swappable_signals[k].mask){
+                                template_source_signals[i].label = template_swappable_signals[k].label;
+                                template_source_signals[i].unit  = template_swappable_signals[k].unit;
+                                template_source_signals[i].unit_sym = template_swappable_signals[k].unit_sym;
+                                template_source_signals[i].scale_factor = template_swappable_signals[k].scale_factor;
                                 m = k;
                                 PI_DEBUG (DBG_L4, "GRAPHS*** SWPS init i=" << i << " k=" << k << " " << template_source_signals[i].label);
                                 break;
@@ -2058,7 +2058,7 @@ void SPM_Template_Control::create_folder (){
                                                );
                 // source selection for SWPS?:
                 if (m >= 0){ // swappable flex source
-                        //g_message("bp->grid_add_probe_source_signal_options m=%d  %s => %d %s", m, template_source_signals[i].label,  probe_source[m], swappable_signals[m].label);
+                        //g_message("bp->grid_add_probe_source_signal_options m=%d  %s => %d %s", m, template_source_signals[i].label,  probe_source[m], template_swappable_signals[m].label);
                         bp->grid_add_probe_source_signal_options (m, probe_source[m], this);
                 }else { // or fixed assignment
                         bp->grid_add_label (template_source_signals[i].label, NULL, 1, 0.);
@@ -2315,10 +2315,10 @@ int SPM_Template_Control::choice_scansource_callback (GtkWidget *widget, SPM_Tem
                                                                );
 #else
         main_get_gapp()->channelselector->SetModeChannelSignal(17+channel,
-                                                               swappable_signals[signal].label,
-                                                               swappable_signals[signal].label,
-                                                               swappable_signals[signal].unit,
-                                                               swappable_signals[signal].scale_factor
+                                                               template_swappable_signals[signal].label,
+                                                               template_swappable_signals[signal].label,
+                                                               template_swappable_signals[signal].unit,
+                                                               template_swappable_signals[signal].scale_factor
                                                                );
 #endif
         

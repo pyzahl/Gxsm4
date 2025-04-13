@@ -50,7 +50,7 @@
 
 extern int debug_level;
 extern SOURCE_SIGNAL_DEF rpspmc_source_signals[];
-extern SOURCE_SIGNAL_DEF swappable_signals[];
+extern SOURCE_SIGNAL_DEF rpspmc_swappable_signals[];
 extern SOURCE_SIGNAL_DEF z_servo_current_source[];
 
 extern "C++" {
@@ -1310,12 +1310,12 @@ void rpspmc_hwi_dev::set_spmc_signal_mux (int source[6]){
                 default: continue;
                 }
                 k = source[k];
-                if (!swappable_signals[k].label) { g_warning ("GVP SOURCE MUX/SWPS INIT ** i=%d k=%d SWPS invalid/NULL", i,k); break; }
-                //rpspmc_source_signals[i].name         = swappable_signals[k].name;
-                rpspmc_source_signals[i].label        = swappable_signals[k].label;
-                rpspmc_source_signals[i].unit         = swappable_signals[k].unit;
-                rpspmc_source_signals[i].unit_sym     = swappable_signals[k].unit_sym;
-                rpspmc_source_signals[i].scale_factor = swappable_signals[k].scale_factor;
+                if (!rpspmc_swappable_signals[k].label) { g_warning ("GVP SOURCE MUX/SWPS INIT ** i=%d k=%d SWPS invalid/NULL", i,k); break; }
+                //rpspmc_source_signals[i].name         = rpspmc_swappable_signals[k].name;
+                rpspmc_source_signals[i].label        = rpspmc_swappable_signals[k].label;
+                rpspmc_source_signals[i].unit         = rpspmc_swappable_signals[k].unit;
+                rpspmc_source_signals[i].unit_sym     = rpspmc_swappable_signals[k].unit_sym;
+                rpspmc_source_signals[i].scale_factor = rpspmc_swappable_signals[k].scale_factor;
                 g_message ("GVP SOURCE MUX/SWPS INIT ** i=%d k=%d {%s} sfac=%g", i, k, rpspmc_source_signals[i].label, rpspmc_source_signals[i].scale_factor);
         }
 }
