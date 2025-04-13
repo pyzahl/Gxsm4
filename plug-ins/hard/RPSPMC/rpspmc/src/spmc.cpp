@@ -1118,8 +1118,8 @@ void rp_spmc_update_readings (){
 
         int regA, regB;
         rp_spmc_module_read_config_data (SPMC_READBACK_Z_REG, &regA, &regB);
-        SPMC_Z0_MONITOR.Value () = rpspmc_to_volts (regA); // Z-slope component
-        SPMC_ZS_MONITOR.Value () = rpspmc_to_volts (regB); // Z-GVP
+        SPMC_Z0_MONITOR.Value () = rpspmc_to_volts (regA); // Z-GVP
+        SPMC_ZS_MONITOR.Value () = rpspmc_to_volts (regB); // Z-slope component
 
         rp_spmc_module_read_config_data (SPMC_READBACK_BIAS_REG, &regA, &regB); // Bias Sum Reading, Bias U0 Set Val
         SPMC_BIAS_REG_MONITOR.Value () = rpspmc_to_volts (regA);

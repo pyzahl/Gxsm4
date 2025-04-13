@@ -2116,13 +2116,13 @@ void RPSPMC_Control::create_folder (){
         //bp->grid_add_ec ("Mon:", Volt, &spmc_parameters.gvpu_monitor, -10.0, 10.0, ".03g", 0.1, 1., "GVP-U-MONITOR");
         EC_GVP_MON_list = g_slist_prepend( EC_GVP_MON_list, bp->ec);
         bp->ec->Freeze ();
-        bp->grid_add_ec (NULL, Volt, &spmc_parameters.xs_monitor, -10.0, 10.0, ".03g", 0.1, 1., "GVP-XS-MONITOR");
+        bp->grid_add_ec (NULL, Angstroem, &GVP_XYZ_mon_AA[0], -1e10, 1e10, ".03g", 0.1, 1., "GVP-XS-MONITOR");
         EC_GVP_MON_list = g_slist_prepend( EC_GVP_MON_list, bp->ec);
         bp->ec->Freeze ();
-        bp->grid_add_ec (NULL, Volt, &spmc_parameters.ys_monitor, -10.0, 10.0, ".03g", 0.1, 1., "GVP-YS-MONITOR");
+        bp->grid_add_ec (NULL, Angstroem, &GVP_XYZ_mon_AA[1], -1e10, 1e10, ".03g", 0.1, 1., "GVP-YS-MONITOR");
         EC_GVP_MON_list = g_slist_prepend( EC_GVP_MON_list, bp->ec);
         bp->ec->Freeze ();
-        bp->grid_add_ec (NULL, Volt, &spmc_parameters.zs_monitor, -10.0, 10.0, ".03g", 0.1, 1., "GVP-ZS-MONITOR");
+        bp->grid_add_ec (NULL, Angstroem, &GVP_XYZ_mon_AA[2], -1e10, 1e10, ".03g", 0.1, 1., "GVP-ZS-MONITOR");
         EC_GVP_MON_list = g_slist_prepend( EC_GVP_MON_list, bp->ec);
         bp->ec->Freeze ();
         bp->set_configure_list_mode_on ();
@@ -3615,6 +3615,40 @@ int RPSPMC_Control::choice_rf_gen_out_callback (GtkWidget *widget, RPSPMC_Contro
         
         return 0;
 }
+
+
+void RPSPMC_Control::on_new_data (){
+        int s=(int)round(spmc_parameters.gvp_status);
+        int Sgvp = (s>>8) & 0xf;  // assign GVP_status = { sec[32-4:0], setvec, reset, pause, ~finished };
+        int Sspm = s & 0xff;      // assign SPM status = { ...SPM Z Servo Hold, GVP-FB-Hold, GVP-Finished, Z Servo EN }
+
+        int fb=0;
+        mon_FB =  (fb=((Sspm & 0x01) && !(Sspm & 0x04) && !(Sspm & 0x04) && !(Sspm & 0x08)) ? 1:0)
+                + ((Sgvp & 0x01 ? 1:0) << 1);
+
+        gchar *gvp_status = g_strdup_printf (" VPC: %d B: %d I:%d",
+                                             current_probe_section,
+                                             current_probe_block_index,
+                                             current_probe_data_index);
+
+        if (fb)
+                gtk_widget_set_name (gvp_monitor_fb_label, "green");
+        else
+                gtk_widget_set_name (gvp_monitor_fb_label, "red");
+
+        gvp_monitor_fb_info_ec->set_info(gvp_status);
+        g_free (gvp_status);
+
+        GVP_XYZ_mon_AA[0] = main_get_gapp()->xsm->Inst->V2XAng (spmc_parameters.xs_monitor);
+        GVP_XYZ_mon_AA[1] = main_get_gapp()->xsm->Inst->V2YAng (spmc_parameters.ys_monitor);
+        GVP_XYZ_mon_AA[2] = main_get_gapp()->xsm->Inst->V2ZAng (spmc_parameters.z0_monitor);
+                
+        // RPSPM-GVP
+        if (G_IS_OBJECT (window))
+                g_slist_foreach((GSList*)g_object_get_data( G_OBJECT (window), "GVP_VEC_MONITOR_list"),
+                                (GFunc) App::update_ec, NULL);
+}
+
 
 
 void RPSPMC_Control::delayed_vector_update (){
