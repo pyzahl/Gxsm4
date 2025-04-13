@@ -176,18 +176,18 @@ SOURCE_SIGNAL_DEF swappable_signals[] = {                                       
         { 0x00000007, "07-IN2-RF-FBW",     " ", "V", "V", SPMC_RPIN12_to_volts,                         -1, -1 },   // IN2 FBW
         { 0x00000008, "08-LockIn-Mag-BQ",  " ", "V", "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),        5, -1 },   // LCK-Mag/BiQuad/IIR
         { 0x00000009, "09-LockIn-X",    " ", "V", "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),          -1, -1 },   // LCK-X -- needs filter, route to BiQuad?
-        { 0x00000010, "10-LockIn-Y",    " ", "V", "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),          -1, -1 },   // LCK-Y -- need filter
-        { 0x00000011, "11-IN4-FIR",     " ", "V", "V", SPMC_RPIN34_to_volts,                         -1, -1 },   // IN4 FIR
-        { 0x00000012, "12-LCK-i",       " ", "V", "V", (1.0),                                        -1, -1 },   // ** Lck-i ** dbg
-        { 0x00000013, "13-SineRef",     " ", "V",   "V", (SPMC_RPIN12_to_volts),                     -1, -1 },   // ** SD-Ref ** dbg
-        { 0x00000014, "14-LockIn-Mag-pass", " ", "V",   "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),     -1, -1 },   // LCK-Mag-BiQuad-pass ** dbg
-        { 0x00000015, "15-ZwSlope-OUT", " ", "V",   "V", (SPMC_AD5791_to_volts),                     -1, -1 },   // Z-with-slope
-        { 0x00000016, "X-TestSignal = 0", " ", "V",   "V", (1.0),                         -1, -1 },
-        { 0x00000017, "X-TestSignal = 1", " ", "V",   "V", (1.0),                         -1, -1 },
-        { 0x00000018, "X-TestSignal = -1", " ", "V",   "V", (1.0),                        -1, -1 },
-        { 0x00000019, "X-TestSignal = 99", " ", "V",   "V", (1.0),                        -1, -1 },
-        { 0x00000020, "X-TestSignal = -99", " ", "V",   "V", (1.0),                       -1, -1 },
-        { 0x00000021,  NULL, NULL, NULL, NULL, 0.0, 0, 0 }
+        { 0x0000000A, "10-LockIn-Y",    " ", "V", "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),          -1, -1 },   // LCK-Y -- need filter
+        { 0x0000000B, "11-IN4-FIR",     " ", "V", "V", SPMC_RPIN34_to_volts,                         -1, -1 },   // IN4 FIR
+        { 0x0000000C, "12-LCK-i",       " ", "V", "V", (1.0),                                        -1, -1 },   // ** Lck-i ** dbg
+        { 0x0000000D, "13-SineRef",     " ", "V",   "V", (SPMC_RPIN12_to_volts),                     -1, -1 },   // ** SD-Ref ** dbg
+        { 0x0000000E, "14-LockIn-Mag-pass", " ", "V",   "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),     -1, -1 },   // LCK-Mag-BiQuad-pass ** dbg
+        { 0x0000000F, "15-ZwSlope-OUT", " ", "V",   "V", (SPMC_AD5791_to_volts),                     -1, -1 },   // Z-with-slope
+        { 0x00000010, "X-TestSignal = 0", " ", "V",   "V", (1.0),                         -1, -1 },
+        { 0x00000011, "X-TestSignal = 1", " ", "V",   "V", (1.0),                         -1, -1 },
+        { 0x00000012, "X-TestSignal = -1", " ", "V",   "V", (1.0),                        -1, -1 },
+        { 0x00000013, "X-TestSignal = 99", " ", "V",   "V", (1.0),                        -1, -1 },
+        { 0x00000014, "X-TestSignal = -99", " ", "V",   "V", (1.0),                       -1, -1 },
+        { 0x00000015,  NULL, NULL, NULL, NULL, 0.0, 0, 0 }
 };
 
 SOURCE_SIGNAL_DEF modulation_targets[] = {
@@ -2544,7 +2544,7 @@ void RPSPMC_Control::create_folder (){
                 case 0x2000: k=5; break;
                 }
 
-                if (k >= 0){
+                if (k >= 0 && k < 6){
                         if (!swappable_signals[k].label) { g_warning ("GVP SOURCE MUX/SWPS INIT ** i=%d k=%d SWPS invalid/NULL", i,k); break; }
                       //rpspmc_source_signals[i].name         = swappable_signals[k].name;
                         rpspmc_source_signals[i].label        = swappable_signals[k].label;
@@ -2573,7 +2573,7 @@ void RPSPMC_Control::create_folder (){
                 g_object_set_data (G_OBJECT(bp->button), "VPC", GINT_TO_POINTER (i)); 
 
                 // source selection for SWPS?:
-                if (k >= 0){ // swappable flex source
+                if (k >= 0 && k < 6){ // swappable flex source
                         //g_message("bp->grid_add_probe_source_signal_options m=%d  %s => %d %s", k, rpspmc_source_signals[i].label,  probe_source[k], swappable_signals[k].label);
                         probe_source_signal_selector[k] = bp->grid_add_probe_source_signal_options (k, probe_source[k], this);
                 }else { // or fixed assignment
@@ -5528,6 +5528,24 @@ void RPspmc_pacpll::on_connect_actions(){
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC FPGA_STAUP..: 0x%08x\n", (int)spmc_parameters.rpspmc_fpgastartup); status_append (tmp);  rpspmc_hwi->info_append (tmp); g_free (tmp); }
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC FPGA_RSC#...: 0x%08x\n", (int)spmc_parameters.rpspmc_fpgastartupcnt); status_append (tmp);  rpspmc_hwi->info_append (tmp); g_free (tmp); }
 
+        if ((int)spmc_parameters.rpspmc_fpgaimpl != 0xec010099 ||
+            (int)spmc_parameters.rpspmc_version < 0x00160000){
+                g_warning ("INVALID RPSPMC server or wrong FPGA implementaion loaded. -- trying to continue, may fail/crash at any point from here.");
+                { gchar *tmp = g_strdup_printf (" EE ERROR: RedPitaya SPMC Server or RPSPMC FPGA implementation invalid.\n *\n"); status_append (tmp);  rpspmc_hwi->info_append (tmp); g_free (tmp); }
+        } else {
+                { gchar *tmp = g_strdup_printf (" * RedPitaya SPMC Server and RPSPMC FPGA implementation accepted.\n *\n"); status_append (tmp);  rpspmc_hwi->info_append (tmp); g_free (tmp); }
+        }
+        
+        /*
+         * RedPitaya SPM RPSPMC Version.....: 0x00160000
+         * RedPitaya SPM RPSPMC VDate.......: 0x20250406
+         * RedPitaya SPM RPSPMC FPGAIMPL....: 0xec010099
+         * RedPitaya SPM RPSPMC FPGAIMPL_D..: 0x20250328
+         * RedPitaya SPM RPSPMC FPGA_STAUP..: 0x00000001
+         * RedPitaya SPM RPSPMC FPGA_RSC#...: 0x00000001
+         * RedPitaya SPM RPSPMC Z_SERVO_MODE: 0x00000000
+         */
+
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO_MODE: 0x%08x\n", i=(int)spmc_parameters.z_servo_mode); status_append (tmp); g_free (tmp); }        
         i &= MM_ON | MM_LOG | MM_FCZ | MM_RESET;
         RPSPMC_ControlClass->mix_transform_mode[0] = i;
@@ -5574,8 +5592,13 @@ void RPspmc_pacpll::on_connect_actions(){
         int mux=i;
         for (int k=0; k<6; ++k){
                 RPSPMC_ControlClass->probe_source[k] = (mux >> (4*k)) & 0x0f;
-                gtk_combo_box_set_active (GTK_COMBO_BOX (RPSPMC_ControlClass->probe_source_signal_selector[k]), RPSPMC_ControlClass->probe_source[k]);
-                { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC GVP SRCS MUX[%d]: %02d <=> %s\n", k, RPSPMC_ControlClass->probe_source[k], swappable_signals[RPSPMC_ControlClass->probe_source[k]].label); status_append (tmp); g_free (tmp); }
+                if (RPSPMC_ControlClass->probe_source[k] >= 0 && RPSPMC_ControlClass->probe_source[k] < 16){
+                        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC GVP SRCS MUX[%d]: %02d <=> %s\n", k, RPSPMC_ControlClass->probe_source[k], swappable_signals[RPSPMC_ControlClass->probe_source[k]].label); status_append (tmp); g_free (tmp); }
+                        gtk_combo_box_set_active (GTK_COMBO_BOX (RPSPMC_ControlClass->probe_source_signal_selector[k]), RPSPMC_ControlClass->probe_source[k]);
+                } else {
+                        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC GVP SRCS MUX[%d]: %02d <=> FPGA DATA ERROR: INVALID SIGNAL\n", k, RPSPMC_ControlClass->probe_source[k]); status_append (tmp); g_free (tmp); }
+                        gtk_combo_box_set_active (GTK_COMBO_BOX (RPSPMC_ControlClass->probe_source_signal_selector[k]), RPSPMC_ControlClass->probe_source[0]);
+                }
         }
 
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC X,Y,Z.......: %g %g %g V\n", spmc_parameters.x_monitor, spmc_parameters.y_monitor, spmc_parameters.z_monitor); status_append (tmp); g_free (tmp); }
