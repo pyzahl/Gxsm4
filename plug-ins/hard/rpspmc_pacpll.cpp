@@ -518,6 +518,8 @@ static void rpspmc_pacpll_hwi_show_callback(GSimpleAction *simple, GVariant *par
 GtkWidget*  GUI_Builder::grid_add_mixer_options (gint channel, gint preset, gpointer ref){
         gchar *id;
         GtkWidget *cbtxt = gtk_combo_box_text_new ();
+
+        g_message ("RPSPMC:: GUI_Builder::grid_add_mixer_options");
         
         g_object_set_data (G_OBJECT (cbtxt), "mix_channel", GINT_TO_POINTER (channel)); 
                                                                         
