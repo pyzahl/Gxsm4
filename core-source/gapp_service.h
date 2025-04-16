@@ -909,6 +909,7 @@ public:
 
 	void SaveGeometry(gboolean store_to_settings=TRUE);
 	void LoadGeometry();
+	void LoadGeometryWRefAutoPlace(const gchar *wref_key, const gchar *wref_key2nd=NULL);
 
 	/* action callbacks */
         static gboolean window_close_callback (GtkWidget *widget, AppBase *self);

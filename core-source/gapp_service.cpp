@@ -826,9 +826,9 @@ int AppBase::set_window_geometry (const gchar *key, gint index, gboolean add_to_
                 g_free (window_key);
         }
         
-        if (index >= 0 && index <= 6) // limit for now
+        if (index >= 0 && index <= 12) // limit for now
                 window_key = g_strdup_printf ("%s-%d", key, index);
-        else if (index > 6)
+        else if (index > 12)
                 return -1; // do not handle at this time.
         else
                 window_key = g_strdup (key);
@@ -990,6 +990,66 @@ void AppBase::SaveGeometry(gboolean store_to_settings){
 #else
         XSM_DEBUG_GM (DBG_L2, "AppBase::save_geometry ** ENABLE_GXSM_WINDOW_MANAGEMENT is disabled.");
 #endif
+}
+
+void AppBase::LoadGeometryWRefAutoPlace(const gchar *wref_key, const gchar *wref_key2nd){
+        int nth = 0;
+        if (strncmp (window_key, wref_key, strlen(wref_key))) // only proceed if match (same window base key)
+                return;
+        if (strlen (window_key) > strlen(wref_key)+1)
+                nth = atoi (window_key+strlen(wref_key)+1);
+        else
+                return;
+        if (nth <= 1 || nth > 16)
+                return;
+                        
+        if (!wref_key){
+                XSM_DEBUG_ERROR (DBG_L1, "AppBase::LoadGeometry ... error, no window_ref_key given.");
+                return;
+        }
+        XSM_DEBUG_GM (DBG_L2, "AppBase::LoadGeometry *** Load Geometry from window  ** %s +==> #%d **", wref_key, nth );
+
+        //g_signal_connect (window, "close-request",  G_CALLBACK (AppBase::window_close_callback), this);
+
+        gsize n_stores;
+
+        nth--;
+        double stack = 0.97;
+        int yn=0;
+        gchar *wk=NULL;
+        if (wref_key2nd){
+                yn  = 1;
+                wk = g_strdup_printf("%s-%d", nth, wref_key2nd);
+                nth = 1;
+                stack = 1.0;
+        } else
+                wk = g_strdup_printf("%s-1", wref_key);
+        GVariant *storage = g_settings_get_value (geometry_settings, wk);
+        g_free (wk);
+        gint32 *tmp = (gint32*) g_variant_get_fixed_array (storage, &n_stores, sizeof (gint32));
+
+        if (!window_geometry)
+                window_geometry = g_new (gint32, WGEO_SIZE);
+
+        memcpy (window_geometry, tmp, WGEO_SIZE*sizeof (gint32));
+
+        g_variant_unref (storage);
+
+        g_assert_cmpint (n_stores, ==, WGEO_SIZE);
+
+        //if (nth > 6) stack = 0.5;
+        
+        window_geometry[WGEO_XPOS] += (nth%6)*window_geometry[WGEO_WIDTH]*stack;
+        if (nth > 5)
+                window_geometry[WGEO_YPOS] += (nth/6)*window_geometry[WGEO_HEIGHT]*stack;
+        
+        position_auto ();
+        resize_auto ();
+
+        if (strcmp (window_key, "main"))
+                show_auto ();
+        else
+                XSM_DEBUG_GM (DBG_L2, "AppBase::AutoLoadGeometry ... MAIN window: show=always");
 }
 
 void AppBase::LoadGeometry(){

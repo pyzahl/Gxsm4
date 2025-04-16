@@ -135,6 +135,7 @@ public:
         static void options_preferences_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
         static void save_geometry_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
         static void load_geometry_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
+        static void auto_scanview_geometry_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
         static void help_about_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
 
         /* Window Delete Events */ 
@@ -186,8 +187,13 @@ public:
 
         static void call_save_geometry (AppBase* a, gpointer data){ a->SaveGeometry (); };
         static void call_load_geometry (AppBase* a, gpointer data){ a->LoadGeometry (); };
+        static void call_auto_scanview_geometry (AppBase* a, gpointer data){ a->LoadGeometryWRefAutoPlace ("view-scan2d"); };
         void save_app_geometry () { g_slist_foreach (gxsm_app_windows_list, (GFunc) App::call_save_geometry, NULL); };
         void load_app_geometry () { g_slist_foreach (gxsm_app_windows_list, (GFunc) App::call_load_geometry, NULL); };
+        void auto_scanview_geometry () {
+                save_app_geometry ();
+                g_slist_foreach (gxsm_app_windows_list, (GFunc) App::call_auto_scanview_geometry, NULL);
+        };
 
         /* Init Stuff */
         void gxsm_new_user_config (RES_ENTRY *res_def);

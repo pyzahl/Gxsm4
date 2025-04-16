@@ -383,6 +383,10 @@ void App::load_geometry_callback (GSimpleAction *simple, GVariant *parameter, gp
         main_get_gapp ()->load_app_geometry ();
 }
 
+void App::auto_scanview_geometry_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data){
+        main_get_gapp ()->auto_scanview_geometry ();
+}
+
 /* Help ================================================== */
 void App::help_about_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data){
         App *app = (App*)user_data;

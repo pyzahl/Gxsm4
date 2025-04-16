@@ -101,6 +101,7 @@ static GActionEntry app_gxsm_action_entries[] = {
         { "preferences", App::options_preferences_callback, NULL, NULL, NULL },
         { "save-geometry", App::save_geometry_callback, NULL, NULL, NULL },
         { "load-geometry", App::load_geometry_callback, NULL, NULL, NULL },
+        { "auto-scan-view-geometry", App::auto_scanview_geometry_callback, NULL, NULL, NULL },
         { "about", App::help_about_callback, NULL, NULL, NULL },
         { "quit", App::file_quit_callback, NULL, NULL, NULL }
 };

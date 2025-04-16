@@ -1944,7 +1944,15 @@ gint ProfileControl::updateTics (gboolean force)
 	const double TicL1 = 0.01;
 	const double TicL2 = 0.015;
 	XSM_DEBUG (DBG_L5, "ProfileElement::drawTics X");
- 
+        //g_message ("ProfileControl::updateTics *A*");
+        //if (scan1d)
+        //        g_message ("ProfileControl::updateTics %s (%s)", scan1d->data.Zunit->MakeLongLabel(), scan1d->data.Xunit->MakeLongLabel());
+        //else {
+        if (!scan1d){
+                g_message ("ProfileControl::updateTics scan1d=NULL!");
+                return -1;
+        }
+        
 	// rebuild only if needed !!
 	if(tic_x1 != xmin || tic_x2 != xmax || tic_xm != mode || Xtics[0]==NULL || force){ // *VG?uiv
 		tic_x1=xmin; tic_x2=xmax; tic_ym = mode;
@@ -1992,6 +2000,8 @@ gint ProfileControl::updateTics (gboolean force)
 				}
 			}
 		}
+		XSM_DEBUG (DBG_L5, "ProfileElement::drawTics - garbage collecting Xtics/labels");
+                //g_message ("ProfileControl::updateTics * XTics UNREF obsoleted from #%d,%d *", ixt, ixl);
 		while(Xtics[ixt]){
 			UNREF_DELETE_CAIRO_ITEM (Xtics[ixt], canvas);
 			ixt++;
@@ -2074,7 +2084,7 @@ gint ProfileControl::updateTics (gboolean force)
 			}
 		}
 
-		XSM_DEBUG (DBG_L5, "ProfileElement::drawTics - garbage collecting");
+		XSM_DEBUG (DBG_L5, "ProfileElement::drawTics - garbage collecting Ytics/labels");
 
 
 		while(Ytics[iyt]){
