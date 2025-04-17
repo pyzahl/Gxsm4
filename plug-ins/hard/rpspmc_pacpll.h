@@ -559,11 +559,6 @@ public:
 	};
 
 
-
-	//int check_vp_in_progress (const gchar *extra_info=NULL);
-
-
-
         
 	int probedata_length () { return current_probe_data_index; };
 	void push_probedata_arrays ();
@@ -574,7 +569,7 @@ public:
 	static void free_probehdr_array_set (GArray** garr, RPSPMC_Control *dc);
 	void free_probedata_arrays ();
 
-	int check_vp_in_progress (const gchar *extra_info=NULL) { return 0; }; // DUMMY -- check controller for !!
+	int check_vp_in_progress (const gchar *extra_info=NULL); // GVP active?
 
 	void add_probedata(double data[NUM_PV_DATA_SIGNALS], double pv[NUM_PV_HEADER_SIGNALS], gboolean set_pv=false, gboolean add_pv=true);
         // "set" and append PROBEDATA_ARRAY_INDEX, BLOCK, HEADER:[X,Y,Z,U,A,B]

@@ -432,6 +432,7 @@ static void rpspmc_pacpll_hwi_query(void)
 	PI_DEBUG (DBG_L2, "rpspmc_pacpll_query:res" );
 	
 	rpspmc_pacpll_hwi_pi.app->ConnectPluginToCDFSaveEvent (rpspmc_pacpll_hwi_SaveValues_callback);
+	//rpspmc_pacpll_hwi_pi.app->ConnectPluginToCDFLoadEvent (XXX_LoadValues_callback);
 }
 
 static void rpspmc_pacpll_hwi_SaveValues_callback ( gpointer gp_ncf ){
@@ -1710,9 +1711,16 @@ void RPSPMC_Control::create_folder (){
         
         bp->new_line ();
         bp->set_label_width_chars ();
-#if 0
+
+#define ENABLE_ZSERVO_POLARITY_BUTTON
+#ifdef  ENABLE_ZSERVO_POLARITY_BUTTON
         bp->grid_add_check_button ("Enable", "enable Z servo feedback controller." PYREMOTE_CHECK_HOOK_KEY("MainZservo"), 1,
                                    G_CALLBACK(RPSPMC_Control::ZServoControl), this, ((int)spmc_parameters.gvp_status)&1, 0);
+
+
+        bp->grid_add_check_button ( N_("Invert"), "Z-Output Polarity.", 1,
+                                    G_CALLBACK (RPSPMC_Control::ZServoControlInv), this);
+
 #endif
         // Z OUPUT POLARITY:
         spmc_parameters.z_polarity      = xsmres.ScannerZPolarity ? 1 : -1; // 1: pos, 0: neg (bool) -- adjust zpos_ref accordingly!
@@ -3227,10 +3235,21 @@ int RPSPMC_Control::Probing_multiIV_callback(GtkWidget *widget, RPSPMC_Control *
 
 
 int RPSPMC_Control::Probing_exec_IV_callback( GtkWidget *widget, RPSPMC_Control *self){
-	self->current_auto_flags = self->IV_auto_flags;
 
-	if (self->check_vp_in_progress ()) 
-		return -1;
+        if (rpspmc_hwi->is_scanning()){
+                g_message (" RPSCPM_Control::Probing_abort_callback ** RPSPMC is busy scanning. Please stop scanning for any GVP actions.");
+                //gapp->warning ("RPSPMC is busy scanning.\nPlease stop scanning and any GVP actions.", window);
+                return -1;
+        }
+
+	if (self->check_vp_in_progress ()){
+                g_message (" RPSCPM_Control::Probing_abort_callback ** RPSPMC is streaming GVP data -- ABORT FIRST");
+                return -1;
+        }
+
+        
+        self->current_auto_flags = self->IV_auto_flags;
+
 
         rpspmc_hwi->set_spmc_signal_mux (RPSPMC_ControlClass->probe_source);
         if (rpspmc_pacpll)
@@ -3270,6 +3289,16 @@ int RPSPMC_Control::Probing_exec_IV_callback( GtkWidget *widget, RPSPMC_Control 
 }
 
 int RPSPMC_Control::Probing_write_IV_callback( GtkWidget *widget, RPSPMC_Control *self){
+         if (rpspmc_hwi->is_scanning()){
+                g_message (" RPSCPM_Control::Probing_abort_callback ** RPSPMC is busy scanning. Please stop scanning for any GVP actions.");
+                //gapp->warning ("RPSPMC is busy scanning.\nPlease stop scanning and any GVP actions.", window);
+                return -1;
+        }
+
+        if (rpspmc_hwi->probe_fifo_thread_active>0){
+                g_message (" RPSCPM_Control::Probing_abort_callback ** RPSPMC is streaming GVP data -- FORCE UPDATE REQUESTED");
+        }
+
         // write GVP code to controller
         self->write_spm_vector_program (0, PV_MODE_IV);
         return 0;
@@ -3360,8 +3389,16 @@ int RPSPMC_Control::callback_change_GVP_auto_flags (GtkWidget *widget, RPSPMC_Co
 int RPSPMC_Control::Probing_exec_GVP_callback( GtkWidget *widget, RPSPMC_Control *self){
 	self->current_auto_flags = self->GVP_auto_flags;
 
-	if (self->check_vp_in_progress ()) 
-		return -1;
+        if (rpspmc_hwi->is_scanning()){
+                g_message (" RPSCPM_Control::Probing_abort_callback ** RPSPMC is busy scanning. Please stop scanning for any GVP actions.");
+                //gapp->warning ("RPSPMC is busy scanning.\nPlease stop scanning and any GVP actions.", window);
+                return -1;
+        }
+
+	if (self->check_vp_in_progress ()){ 
+                g_message (" RPSCPM_Control::Probing_abort_callback ** RPSPMC is streaming GVP data -- ABORT FIRST");
+                return -1;
+        }
 
         rpspmc_hwi->set_spmc_signal_mux (RPSPMC_ControlClass->probe_source);
         if (rpspmc_pacpll)
@@ -3403,6 +3440,16 @@ int RPSPMC_Control::Probing_exec_GVP_callback( GtkWidget *widget, RPSPMC_Control
 
 
 int RPSPMC_Control::Probing_write_GVP_callback( GtkWidget *widget, RPSPMC_Control *self){
+         if (rpspmc_hwi->is_scanning()){
+                g_message (" RPSCPM_Control::Probing_abort_callback ** RPSPMC is busy scanning. Please stop scanning for any GVP actions.");
+                //gapp->warning ("RPSPMC is busy scanning.\nPlease stop scanning and any GVP actions.", window);
+                return -1;
+        }
+
+        if (rpspmc_hwi->probe_fifo_thread_active>0){
+                g_message (" RPSCPM_Control::Probing_abort_callback ** RPSPMC is streaming GVP data -- FORCE UPDATE REQUESTED");
+        }
+
         // write GVP code to controller
         self->write_spm_vector_program (0, PV_MODE_GVP);
 
@@ -3711,6 +3758,17 @@ void RPSPMC_Control::ChangedNotifyScanSpeed(Param_Control* pcs, RPSPMC_Control *
 void RPSPMC_Control::ChangedNotifyMoveSpeed(Param_Control* pcs, RPSPMC_Control *self){
         // obsolete, always done together with XY Offset adjustments
 }
+
+
+int RPSPMC_Control::check_vp_in_progress (const gchar *extra_info=NULL) {
+        double a,b,c;
+        rpspmc_hwi->RTQuery ("s", a,b,c);
+
+        //g_message ("GVP status: %08x", (int)c);
+        
+        return ((int)c)&1 ? false : true;
+        //return rpspmc_hwi->probe_fifo_thread_active>0 ? true:false;
+} // GVP active?
 
 
 
@@ -4574,33 +4632,38 @@ void RPspmc_pacpll::connect_cb (GtkWidget *widget, RPspmc_pacpll *self){
 
 
 void RPspmc_pacpll::scan_start_callback (gpointer user_data){
-        //rpspmc_pacpll *self = (RPspmc_pacpll *)user_data;
-        RPspmc_pacpll *self = rpspmc_pacpll;
-        self->ch_freq = -1;
-        self->ch_ampl = -1;
-        self->streaming = 1;
-        //self->operation_mode = 0;
         g_message ("RPspmc_pacpll::scan_start_callback");
+
+        if (rpspmc_hwi->is_scanning()){
+                g_message ("RPspmc_pacpll::scan_start_callback ** RPSPMC scan in progress -- STOP FIRST TO RE-START SCAN.");
+                return -1;
+        }
+        if (RPSPMC_ControlClass->check_vp_in_progress ()){
+                g_message ("RPspmc_pacpll::scan_start_callback ** RPSPMC is streaming GVP data -- ABORT/STOP FIRST TO START SCAN.");
+                return -1;
+        }
+
+        rpspmc_pacpll->ch_freq = -1;
+        rpspmc_pacpll->ch_ampl = -1;
+        rpspmc_pacpll->streaming = 1;
+
 
         rpspmc_hwi->set_spmc_signal_mux (RPSPMC_ControlClass->scan_source);
         if (RPSPMC_ControlClass)
                 rpspmc_pacpll->write_parameter ("SPMC_GVP_STREAM_MUX", __GVP_selection_muxval (RPSPMC_ControlClass->scan_source));
 
-        
-#if 0
-        if ((self->ch_freq=main_get_gapp()->xsm->FindChan(xsmres.extchno[0])) >= 0)
-                self->setup_scan (self->ch_freq, "X+", "Ext1-Freq", "Hz", "Freq", 1.0);
-        if ((self->ch_ampl=main_get_gapp()->xsm->FindChan(xsmres.extchno[1])) >= 0)
-                self->setup_scan (self->ch_ampl, "X+", "Ext1-Ampl", "V", "Ampl", 1.0);
-#endif
 }
 
 void RPspmc_pacpll::scan_stop_callback (gpointer user_data){
-        //RPspmc_pacpll *self = (RPspmc_pacpll *)user_data;
-        RPspmc_pacpll *self = rpspmc_pacpll;
-        self->ch_freq = -1;
-        self->ch_ampl = -1;
-        self->streaming = 0;
+         if (! rpspmc_hwi->is_scanning()){
+                g_message ("RPspmc_pacpll::scan_stopt_callback ** RPSPMC is no scanning.");
+                return -1;
+        }
+
+        rpspmc_pacpll->ch_freq = -1;
+        rpspmc_pacpll->ch_ampl = -1;
+        rpspmc_pacpll->streaming = 0;
+
         g_message ("RPspmc_pacpll::scan_stop_callback");
 }
 
@@ -4611,61 +4674,8 @@ int RPspmc_pacpll::setup_scan (int ch,
 				 const gchar *label,
 				 double d2u
 	){
-#if 0
-	// did this scan already exists?
-	if ( ! main_get_gapp()->xsm->scan[ch]){ // make a new one ?
-		main_get_gapp()->xsm->scan[ch] = main_get_gapp()->xsm->NewScan (main_get_gapp()->xsm->ChannelView[ch], 
-							  main_get_gapp()->xsm->data.display.ViewFlg, 
-							  ch, 
-							  &main_get_gapp()->xsm->data);
-		// Error ?
-		if (!main_get_gapp()->xsm->scan[ch]){
-			XSM_SHOW_ALERT (ERR_SORRY, ERR_NOMEM,"",1);
-			return FALSE;
-		}
-	}
 
-
-	Mem2d *m=main_get_gapp()->xsm->scan[ch]->mem2d;
-        m->Resize (m->GetNx (), m->GetNy (), m->GetNv (), ZD_DOUBLE, false); // multilayerinfo=clean
-	
-	// Setup correct Z unit
-	UnitObj *u = main_get_gapp()->xsm->MakeUnit (unit, label);
-	main_get_gapp()->xsm->scan[ch]->data.SetZUnit (u);
-	delete u;
-		
-        main_get_gapp()->xsm->scan[ch]->create (TRUE, FALSE, strchr (titleprefix, '-') ? -1.:1., main_get_gapp()->xsm->hardware->IsFastScan ());
-
-	// setup dz from instrument definition or propagated via signal definition
-	if (fabs (d2u) > 0.)
-		main_get_gapp()->xsm->scan[ch]->data.s.dz = d2u;
-	else
-		main_get_gapp()->xsm->scan[ch]->data.s.dz = main_get_gapp()->xsm->Inst->ZResolution (unit);
-	
-	// set scan title, name, ... and draw it!
-
-	gchar *scantitle = NULL;
-	if (!main_get_gapp()->xsm->GetMasterScan ()){
-		main_get_gapp()->xsm->SetMasterScan (main_get_gapp()->xsm->scan[ch]);
-		scantitle = g_strdup_printf ("M %s %s", titleprefix, name);
-	} else {
-		scantitle = g_strdup_printf ("%s %s", titleprefix, name);
-	}
-	main_get_gapp()->xsm->scan[ch]->data.ui.SetName (scantitle);
-	main_get_gapp()->xsm->scan[ch]->data.ui.SetOriginalName ("unknown");
-	main_get_gapp()->xsm->scan[ch]->data.ui.SetTitle (scantitle);
-	main_get_gapp()->xsm->scan[ch]->data.ui.SetType (scantitle);
-	main_get_gapp()->xsm->scan[ch]->data.s.xdir = strchr (titleprefix, '-') ? -1.:1.;
-	main_get_gapp()->xsm->scan[ch]->data.s.ydir = main_get_gapp()->xsm->data.s.ydir;
-
-        streampos=x=y=0; // assume top down full size
-        
-	PI_DEBUG (DBG_L2, "setup_scan[" << ch << " ]: scantitle done: " << main_get_gapp()->xsm->scan[ch]->data.ui.type ); 
-
-	g_free (scantitle);
-	main_get_gapp()->xsm->scan[ch]->draw ();
-#endif
-        
+        // extra setup -- not needed
 	return 0;
 }
 
@@ -5634,12 +5644,16 @@ void RPspmc_pacpll::on_connect_actions(){
                 if ( gapp->question_yes_no ("WARNING: Gxsm Preferences indicate NEGATIVE Z Polarity.\nPlease confirm to set Z-Polarity set to NEGATIVE.")){
                         rpspmc_pacpll->write_parameter ("SPMC_Z_POLARITY", -1);
                         spmc_parameters.gxsm_z_polarity = -1;
+                        for (int i=0; i<10; ++i) { usleep (100000); gapp->check_events (); }
+                        { gchar *tmp = g_strdup_printf (" *** Adjusted (+=>-) SPM RPSPMC Z_POLARITY..: %s\n", ((int)spmc_parameters.gvp_status)&(1<<7) ? "NEG":"POS"); status_append (tmp);  rpspmc_hwi->info_append (tmp); g_free (tmp); }        
                 }
 
         if (spmc_parameters.gxsm_z_polarity != gxsm_preferences_polarity &&  gxsm_preferences_polarity > 0)
                 if ( gapp->question_yes_no ("WARNING: Gxsm Preferences indicate POSITIVE Z Polarity.\nPlease confirm to set Z-Polarity set to POSITIVE.")){
                         rpspmc_pacpll->write_parameter ("SPMC_Z_POLARITY", 1);
                         spmc_parameters.gxsm_z_polarity = 1;
+                        for (int i=0; i<10; ++i) { usleep (100000); gapp->check_events (); }
+                        { gchar *tmp = g_strdup_printf (" *** Adjusted (-=>+) SPM RPSPMC Z_POLARITY..: %s\n", ((int)spmc_parameters.gvp_status)&(1<<7) ? "NEG":"POS"); status_append (tmp);  rpspmc_hwi->info_append (tmp); g_free (tmp); }        
                 }
         
         if (spmc_parameters.gxsm_z_polarity != gxsm_preferences_polarity){

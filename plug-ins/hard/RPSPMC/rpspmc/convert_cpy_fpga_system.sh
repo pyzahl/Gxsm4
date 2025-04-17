@@ -22,7 +22,20 @@ echo "  ***"
 read -p "  Do you want to copy the source files in src/*.cpp, *.h also over? (y/n) " yn
 echo "  ***"
 echo
-cp ../project_RP-SPMC-PACPLL-Gxsm4/project_RP-SPMC-PACPLL-Gxsm4.runs/impl_1/system_wrapper.bit fpga.bit
+
+if test -f ../project_RP-SPMC-PACPLL-Gxsm4/project_RP-SPMC-PACPLL-Gxsm4.runs/impl_1/system_wrapper.bit; then
+    echo "  Copying FPGA bitfile: system_wrapper.bit to fpga.bit:"
+    cp ../project_RP-SPMC-PACPLL-Gxsm4/project_RP-SPMC-PACPLL-Gxsm4.runs/impl_1/system_wrapper.bit fpga.bit
+else
+    echo "  Require FPGA implemention bit file here:"
+    echo "    ../project_RP-SPMC-PACPLL-Gxsm4/project_RP-SPMC-PACPLL-Gxsm4.runs/impl_1/system_wrapper.bit"
+    echo "  ... looking for existing fpga.bit file in current working folder (here)"
+    if test -f fpga.bit; then
+	echo "  WARNING: using (old/existing) fpga.bit file."
+    fi
+fi
+
+#cp ../project_RP-SPMC-PACPLL-Gxsm4/project_RP-SPMC-PACPLL-Gxsm4.runs/impl_1/system_wrapper.bit fpga.bit
 echo -n "all:{ ./fpga.bit }" >  fpga.bif
 echo
 
@@ -39,11 +52,20 @@ case `hostname` in
 	break;;
 
     (bititan.cfn.bnl.gov) 
-	echo "on bititan: generating bit.bin:";
+	echo "on bititan: [130.199.243.191] generating bit.bin:";
 	/mnt/home-copy/Xilinx2023/Vivado/2023.1/bin/bootgen -image fpga.bif -arch zynq -process_bitstream bin -w -o fpga.bit.bin;
 	rp="130.199.243.110";   ## RP's IP
 	rpp="root4gxsm"
 	break;;
+
+    (ltncafm)   ## special case, DO NOT USE AS TEMPLATE
+	echo "on ltncafm: [lab] copy bit.bin only:";
+	#/home/percy/BNLBox/VivadoToolsBin/bootgen -image fpga.bif -arch zynq -process_bitstream bin -w -o fpga.bit.bin;
+	cp /home/percy/BNLBox/VivadoToolsBin/fpga.bit.bin .;
+	rp="130.199.242.146";   ## RP's IP in the lab
+	rpp="root4gxsm"
+	break;;
+    
     (your.gxsmhost.uni.net) ### TEMPLATE: COPY TO NEW CASE ITEM and UPDATE!
 	echo "on xyz host: generating bit.bin:";
 	/your-path-to/Vivado/2023.1/bin/bootgen -image fpga.bif -arch zynq -process_bitstream bin -w -o fpga.bit.bin;

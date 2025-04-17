@@ -118,7 +118,7 @@ public:
 
 	virtual gint RTQuery () { return RPSPMC_data_y_index; }; // actual progress on scan -- y-index mirror from FIFO read
 
-	/* high level calls for instrtument condition checks */
+	/* high level calls for instrument condition checks -- TODO */
 	virtual gint RTQuery_clear_to_start_scan (){ return 1; };
 	virtual gint RTQuery_clear_to_start_probe (){ return 1; };
 	virtual gint RTQuery_clear_to_move_tip (){ return 1; };

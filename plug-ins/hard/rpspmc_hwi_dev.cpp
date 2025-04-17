@@ -1392,7 +1392,6 @@ void rpspmc_hwi_dev::GVP_vp_init (){
         RPSPMC_GVP_section_count = 0;
         RPSPMC_GVP_n = 0;
 
-
         abort_GVP_flag = false;
 }
 

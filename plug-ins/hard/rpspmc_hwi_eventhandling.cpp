@@ -105,7 +105,7 @@ const char* RPSPMC_Control::vp_label_lookup(int i){
         return err_unknown_l;
 }
 
-#define AUTO_nA_pA
+//+#define AUTO_nA_pA
 const char* RPSPMC_Control::vp_unit_lookup(int i){
         for (int k=0; rpspmc_source_signals[k].mask; ++k)
                 if (rpspmc_source_signals[k].garr_index == i){
@@ -950,6 +950,17 @@ int RPSPMC_Control::Probing_graph_callback( GtkWidget *widget, RPSPMC_Control *d
 
 // abort probe and stop fifo read, plot data until then
 int RPSPMC_Control::Probing_abort_callback( GtkWidget *widget, RPSPMC_Control *dspc){
+
+        if (rpspmc_hwi->is_scanning()) {
+                g_message (" RPSCPM_Control::Probing_abort_callback ** RPSPMC is busy scanning. Please stop scanning for any GVP actions.");
+                //gapp->warning ("RPSPMC is busy scanning.\nPlease stop scanning and any GVP actions.", window);
+                return -1;
+        }
+
+        if (rpspmc_hwi->probe_fifo_thread_active>0){
+                g_message (" RPSCPM_Control::Probing_abort_callback ** RPSPMC is streaming GVP data -- ABORT REQUESTED");
+        }
+
         rpspmc_hwi->GVP_abort_vector_program ();
 	dspc->Probing_graph_callback (widget, dspc);
         return 0;

@@ -392,8 +392,9 @@ double besocke_func (double amp, double pduration, double phase, double tt1, dou
 // duration in ms
 int GVPMoverControl::create_waveform (double amp, double duration, int limit_cycles, int pointing, int axis, int SRCS, int options){
 
-        if (rpspmc_hwi->is_scanning()){
-                gapp->warning ("RPSPMC is busy scanning.\nPlease stop scanning and any GVP to activate mover actions.", window);
+        if (rpspmc_hwi->is_scanning() || rpspmc_hwi->probe_fifo_thread_active>0){
+                g_message (" GVPMoverControl::create_waveform ** RPSPMC is busy scanning. Please stop scanning and any GVP to activate mover actions.");
+                //gapp->warning ("RPSPMC is busy scanning.\nPlease stop scanning and any GVP to activate mover actions.", window);
                 return -1;
         }
 
@@ -1924,6 +1925,12 @@ void GVPMoverControl::wave_preview_draw_function (GtkDrawingArea *area, cairo_t 
                                                   int             height,
                                                   GVPMoverControl *self){
 
+        if (rpspmc_hwi->is_scanning() || rpspmc_hwi->probe_fifo_thread_active>0){
+                g_message (" GVPMoverControl::create_waveform ** RPSPMC is busy scanning. Please stop scanning and any GVP to activate mover actions.");
+                //gapp->warning ("RPSPMC is busy scanning.\nPlease stop scanning and any GVP to activate mover actions.", window);
+                return ;
+        }
+
         // prepare job lookups
         PROBE_VECTOR_GENERIC v = { 0,0.,0,0, 0,0,0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
         double *gvp_y[8] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
@@ -2152,6 +2159,12 @@ int GVPMoverControl::CmdAction(GtkWidget *widget, GVPMoverControl *self){
 int GVPMoverControl::StopAction(GtkWidget *widget, GVPMoverControl *self){
 	PI_DEBUG (DBG_L2, "GVPMoverControl::StopAction" );
 
+        if (rpspmc_hwi->is_scanning() || rpspmc_hwi->probe_fifo_thread_active>0){
+                g_message (" GVPMoverControl::create_waveform ** RPSPMC is busy scanning. Please stop scanning and any GVP to activate mover actions.");
+                //gapp->warning ("RPSPMC is busy scanning.\nPlease stop scanning and any GVP to activate mover actions.", window);
+                return -1;
+        }
+
 	// GVP STOP
         //rpspmc_hwi->GVP_reset_vector_program ();
         rpspmc_hwi->GVP_abort_vector_program ();
@@ -2208,6 +2221,12 @@ void GVPMoverControl::ExecCmd(int cmd){
         static double last_MOV_pointing=0;
         static double last_MOV_axis=0;
 
+        if (rpspmc_hwi->is_scanning() || rpspmc_hwi->probe_fifo_thread_active>0){
+                g_message (" GVPMoverControl::create_waveform ** RPSPMC is busy scanning. Please stop scanning and any GVP to activate mover actions.");
+                //gapp->warning ("RPSPMC is busy scanning.\nPlease stop scanning and any GVP to activate mover actions.", window);
+                return;
+        }
+        
         rpspmc_hwi->GVP_abort_vector_program ();
         if (   tlast + 5*CLOCKS_PER_SEC < clock ()
             || last_MOV_waveform_id != mover_param.MOV_waveform_id
