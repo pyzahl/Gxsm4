@@ -839,7 +839,7 @@ void PanView :: tip_refresh()
                                                //"\nGVPU: %6.4f A: %6.4f B: %6.4f V"
                                                //"\nGVPAM: %6.4f FM: %6.4f Veq\n"
                                                "\nV1: %8.4f V2: %8.4f"
-                                               "\nZSM: h%04x %02x",
+                                               "\nZSM: h%04x S%02x G%02x",
                                                y*1000., x, main_get_gapp()->xsm->Inst->V2ZAng(z),
                                                u,v,w,
                                                v1,v2,

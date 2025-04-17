@@ -3764,9 +3764,9 @@ int RPSPMC_Control::check_vp_in_progress (const gchar *extra_info=NULL) {
         double a,b,c;
         rpspmc_hwi->RTQuery ("s", a,b,c);
 
-        //g_message ("GVP status: %08x", (int)c);
+        g_message ("RPSPMC_Control::check_vp_in_progres ** GVP status: %02x == %s %s %s", (int)c, (int)c & 1? "GVP":"--", (int)c & 2? "PAUSE":"--", (int)c & 4? "RESET":"--");
         
-        return ((int)c)&1 ? false : true;
+        return false; //((int)c)&1 ? true : false;
         //return rpspmc_hwi->probe_fifo_thread_active>0 ? true:false;
 } // GVP active?
 
