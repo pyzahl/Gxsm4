@@ -105,9 +105,11 @@ const char* RPSPMC_Control::vp_label_lookup(int i){
         return err_unknown_l;
 }
 
+#define AUTO_nA_pA
 const char* RPSPMC_Control::vp_unit_lookup(int i){
         for (int k=0; rpspmc_source_signals[k].mask; ++k)
-                if (rpspmc_source_signals[k].garr_index == i)
+                if (rpspmc_source_signals[k].garr_index == i){
+#ifdef AUTO_nA_pA
                         if (rpspmc_source_signals[k].mask == 0x000010){ // CUSTOM auto
                                 if (main_get_gapp()->xsm->Inst->nAmpere2V (1.) > 1.)
                                         return str_pA;
@@ -115,6 +117,10 @@ const char* RPSPMC_Control::vp_unit_lookup(int i){
                                         return str_nA;
                         } else
                                 return  rpspmc_source_signals[k].unit_sym;
+#else
+                        return  rpspmc_source_signals[k].unit_sym;
+#endif
+                }
         return err_unknown_u;
 }
 
@@ -126,11 +132,14 @@ double RPSPMC_Control::vp_scale_lookup(int i){
                         //g_print ("Found: vpsl[%d]: %08x, ScaleFac= %g\n",i,rpspmc_source_signals[k].mask, rpspmc_source_signals[k].scale_factor);
                         switch (rpspmc_source_signals[k].mask){
                         case 0x00000010: // CUSTOM auto -- must also change unit prefix! can't here
-                                //if (main_get_gapp()->xsm->Inst->nAmpere2V (1.) > 1.)
-                                //        return main_get_gapp()->xsm->Inst->nAmpere2V (1e-3); // choose pA
-                                //else
-                                //        return main_get_gapp()->xsm->Inst->nAmpere2V (1.); // nA
+#ifdef AUTO_nA_pA
+                                if (main_get_gapp()->xsm->Inst->nAmpere2V (1.) > 1.)
+                                        return main_get_gapp()->xsm->Inst->nAmpere2V (1e-3); // choose pA
+                                else
+                                        return main_get_gapp()->xsm->Inst->nAmpere2V (1.); // nA
+#else
                                 return    CurrFac; // nA
+#endif
                                 break;
                         case 0x00100000: // function calls...
                         case 0x00000001: 

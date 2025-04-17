@@ -2843,7 +2843,24 @@ void RPSPMC_Control::GVP_zero_all_smooth (){
                              100, 0, 0, 0.5, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
                              0, VP_INITIAL_SET_VEC | gvp_options);
         append_null_vector (vector_index, gvp_options);
-        rpspmc_hwi->GVP_vp_init ();
+
+        g_message ("last vector confirmed: %d, need %d", rpspmc_hwi->getVPCconfirmed (), rpspmc_hwi->last_vector_index);
+
+        int timeout = 100;
+        while (rpspmc_hwi->getVPCconfirmed () < rpspmc_hwi->last_vector_index && timeout--){
+#if GVP_DEBUG_VERBOSE > 4
+                g_message ("GVP-ZERO: Waiting for GVP been written and confirmed. [Vector %d]", rpspmc_hwi->getVPCconfirmed ());
+#endif
+                usleep(20000);
+        }
+        if (timeout > 0)
+                g_message ("GVP-ZERO been written and confirmed for vector #%d. Init GVP. Executing GVP now.", rpspmc_hwi->getVPCconfirmed ());
+        else {
+                g_message ("GVP-ZERO program write and confirm failed. Aborting Scan.");
+                rpspmc_hwi->EndScan2D();
+                return NULL;
+        }
+
         rpspmc_hwi->GVP_execute_vector_program(); // non blocking
 }
 

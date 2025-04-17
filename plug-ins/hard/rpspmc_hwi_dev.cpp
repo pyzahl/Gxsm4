@@ -510,18 +510,22 @@ gpointer ScanDataReadThread (void *ptr_hwi){
 
         g_message ("last vector confirmed: %d, need %d", hwi->getVPCconfirmed (), hwi->last_vector_index);
 
+        int timeout = 0;
         while (hwi->getVPCconfirmed () < hwi->last_vector_index){
 #if GVP_DEBUG_VERBOSE > 4
-                g_message ("Waiting for GVP been written and confirmed. [Vector %d]", hwi->getVPCconfirmed ());
+                g_message ("Waiting for GVP-Scan been written and confirmed. [Vector %d/%d]", hwi->getVPCconfirmed (), hwi->last_vector_index);
 #endif
+                if (++timeout > 100){
+                        g_message ("GVP-Scan program write and confirm failed. Aborting Scan.");
+                        hwi->EndScan2D();
+                        return NULL;
+                }
                 usleep(20000);
         }
-        g_message ("GVP been written and confirmed for vector #%d. Init GVP. Executing GVP now.", hwi->getVPCconfirmed ());
-
+        g_message ("GVP-Scan been written and confirmed for vector #%d. Init GVP. Executing GVP now.", hwi->getVPCconfirmed ());
         hwi->RPSPMC_data_y_index = hwi->RPSPMC_data_y_count == 0 ?  y0 : y0+ny-1;
 
         // start GVP
-        hwi->GVP_vp_init ();
         hwi->GVP_execute_vector_program(); // non blocking
         
         g_message ("Expect header for move to initial scan point...");
@@ -805,15 +809,15 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
                 
                 for (int jj=0; jj<100 && getVPCconfirmed () < last_vector_index; jj++){
                         usleep(20000);
-                        g_message ("Waiting for vectors confirmed. #[%d] ** last vector confirmed: %d, need %d", jj, getVPCconfirmed (), last_vector_index);
-                        
+#if GVP_DEBUG_VERBOSE > 4
+                        g_message ("Waiting for GVP vectors confirmed. #[%d] ** last vector confirmed: %d, need %d", jj, getVPCconfirmed (), last_vector_index);
+#endif
                         if (jj > 99){
-                                g_message ( "VECTOR WRITE TIMEOUT, ABROTING -- FR::FINISH-OK");
+                                g_message ( "GVP VECTOR WRITE TIMEOUT, ABROTING -- FR::FINISH-OK");
                                 return RET_FR_FCT_END; // finish OK.
                         }
                 }
-                g_message ("GVP been written and confirmed for vector #%d. Executing GVP now.", getVPCconfirmed ());
-                GVP_vp_init (); // vectors should be written by now!
+                g_message ("GVP VECTORS been written and confirmed for vector #%d. Executing GVP now.", getVPCconfirmed ());
                 GVP_execute_vector_program(); // non blocking
 
                 index_all = 0;
@@ -1333,6 +1337,7 @@ void rpspmc_hwi_dev::set_spmc_signal_mux (int source[6]){
 
 
 void rpspmc_hwi_dev::GVP_execute_vector_program(){ // init DMA and start GVP
+        GVP_vp_init (); // prepare for streaming
         g_message ("rpspmc_hwi_dev::GVP_execute_vector_program ()");
         rpspmc_pacpll->write_parameter ("SPMC_GVP_CONTROL", SPMC_GVP_CONTROL_EXECUTE);
 }

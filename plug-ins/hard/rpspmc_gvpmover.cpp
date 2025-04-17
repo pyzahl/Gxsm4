@@ -391,6 +391,12 @@ double besocke_func (double amp, double pduration, double phase, double tt1, dou
 // Parametric Generation of GVP for Wave Forms
 // duration in ms
 int GVPMoverControl::create_waveform (double amp, double duration, int limit_cycles, int pointing, int axis, int SRCS, int options){
+
+        if (rpspmc_hwi->is_scanning()){
+                gapp->warning ("RPSPMC is busy scanning.\nPlease stop scanning and any GVP to activate mover actions.", window);
+                return -1;
+        }
+
         // check and find wave valid wave form id "k"
         int k=0;
         for (k=0; wave_form_options[k].wave_form_label; ++k)
@@ -2222,7 +2228,7 @@ void GVPMoverControl::ExecCmd(int cmd){
         }
 
         rpspmc_hwi->GVP_reset_vector_components (0xf);
-        rpspmc_hwi->GVP_execute_only_vector_program (); // just fire up
+        rpspmc_hwi->GVP_execute_only_vector_program (); // just fire up, no read back or streaming!
         //rpspmc_hwi->start_data_read (0, 0,0,0,0, NULL,NULL,NULL,NULL); // start and read data is totally possible....
 
 }
