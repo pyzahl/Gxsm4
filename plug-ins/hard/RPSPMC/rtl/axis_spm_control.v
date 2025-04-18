@@ -145,7 +145,7 @@ module axis_spm_control#(
     reg [4-1:0] modulation_target=0; // target signal for mod (#XYZUAB)
     reg [4-1:0] dFControl_target=0;  // target for dFControl: B0: Z, B1: Bias
 
-    reg negate_z=1;
+    reg negate_z=0;
 
     // scan rotation (yx=-xy; yy=xx)
     reg signed [QROTM+1-1:0] rotmxx=0; // =cos(alpha) Q20

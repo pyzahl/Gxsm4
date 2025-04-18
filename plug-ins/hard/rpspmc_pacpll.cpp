@@ -1712,19 +1712,20 @@ void RPSPMC_Control::create_folder (){
         bp->new_line ();
         bp->set_label_width_chars ();
 
-#define ENABLE_ZSERVO_POLARITY_BUTTON
+//#define ENABLE_ZSERVO_POLARITY_BUTTON  // only for development and testing
+        // Z OUPUT POLARITY:
+        spmc_parameters.z_polarity      = xsmres.ScannerZPolarity ? 1 : -1; // 1: pos, 0: neg (bool) -- adjust zpos_ref accordingly!
+        spmc_parameters.gxsm_z_polarity = xsmres.ScannerZPolarity ? 1 : -1; // 1: pos, 0: neg (bool) -- adjust zpos_ref accordingly!
+
 #ifdef  ENABLE_ZSERVO_POLARITY_BUTTON
         bp->grid_add_check_button ("Enable", "enable Z servo feedback controller." PYREMOTE_CHECK_HOOK_KEY("MainZservo"), 1,
                                    G_CALLBACK(RPSPMC_Control::ZServoControl), this, ((int)spmc_parameters.gvp_status)&1, 0);
 
 
-        bp->grid_add_check_button ( N_("Invert"), "Z-Output Polarity.", 1,
-                                    G_CALLBACK (RPSPMC_Control::ZServoControlInv), this);
+        bp->grid_add_check_button ( N_("Invert (Neg Polarity)"), "Z-Output Polarity. ** startup setting, does NOT for sure reflect actual setting unless toggled!", 1,
+                                    G_CALLBACK (RPSPMC_Control::ZServoControlInv), this, spmc_parameters.z_polarity > 1 ? 0:1 );
 
 #endif
-        // Z OUPUT POLARITY:
-        spmc_parameters.z_polarity      = xsmres.ScannerZPolarity ? 1 : -1; // 1: pos, 0: neg (bool) -- adjust zpos_ref accordingly!
-        spmc_parameters.gxsm_z_polarity = xsmres.ScannerZPolarity ? 1 : -1; // 1: pos, 0: neg (bool) -- adjust zpos_ref accordingly!
 
 
 	// ========================================
@@ -3764,9 +3765,13 @@ int RPSPMC_Control::check_vp_in_progress (const gchar *extra_info=NULL) {
         double a,b,c;
         rpspmc_hwi->RTQuery ("s", a,b,c);
 
-        g_message ("RPSPMC_Control::check_vp_in_progres ** GVP status: %02x == %s %s %s", (int)c, (int)c & 1? "GVP":"--", (int)c & 2? "PAUSE":"--", (int)c & 4? "RESET":"--");
+        int g = (int)c & 1; // GVP
+        int p = (int)c & 2; // PAUSE/STOPPED
+        int r = (int)c & 4; // RESET
         
-        return false; //((int)c)&1 ? true : false;
+        g_message ("RPSPMC_Control::check_vp_in_progres ** GVP status: %02x == %s %s %s", (int)c, g? "GVP":"--", p? "PAUSE":"--", r? "RESET":"--");
+        
+        return (g && !p && !r) ? true : false;
         //return rpspmc_hwi->probe_fifo_thread_active>0 ? true:false;
 } // GVP active?
 
