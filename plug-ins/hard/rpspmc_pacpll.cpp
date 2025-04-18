@@ -5643,27 +5643,6 @@ void RPspmc_pacpll::on_connect_actions(){
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_POLARITY..: %s\n", ((int)spmc_parameters.gvp_status)&(1<<7) ? "NEG":"POS"); status_append (tmp);  rpspmc_hwi->info_append (tmp); g_free (tmp); }        
         spmc_parameters.gxsm_z_polarity = ((int)spmc_parameters.gvp_status)&(1<<7) ? -1:1;
         int gxsm_preferences_polarity = xsmres.ScannerZPolarity ? 1 : -1; // 1: pos, 0: neg (bool) -- adjust zpos_ref accordingly!
-
-        // VERIFY IF CORRECT, ASK TO ADJUST IF MISMATCH
-        if (spmc_parameters.gxsm_z_polarity != gxsm_preferences_polarity &&  gxsm_preferences_polarity < 0)
-                if ( gapp->question_yes_no ("WARNING: Gxsm Preferences indicate NEGATIVE Z Polarity.\nPlease confirm to set Z-Polarity set to NEGATIVE.")){
-                        rpspmc_pacpll->write_parameter ("SPMC_Z_POLARITY", -1);
-                        spmc_parameters.gxsm_z_polarity = -1;
-                        for (int i=0; i<10; ++i) { usleep (100000); gapp->check_events (); }
-                        { gchar *tmp = g_strdup_printf (" *** Adjusted (+=>-) SPM RPSPMC Z_POLARITY..: %s\n", ((int)spmc_parameters.gvp_status)&(1<<7) ? "NEG":"POS"); status_append (tmp);  rpspmc_hwi->info_append (tmp); g_free (tmp); }        
-                }
-
-        if (spmc_parameters.gxsm_z_polarity != gxsm_preferences_polarity &&  gxsm_preferences_polarity > 0)
-                if ( gapp->question_yes_no ("WARNING: Gxsm Preferences indicate POSITIVE Z Polarity.\nPlease confirm to set Z-Polarity set to POSITIVE.")){
-                        rpspmc_pacpll->write_parameter ("SPMC_Z_POLARITY", 1);
-                        spmc_parameters.gxsm_z_polarity = 1;
-                        for (int i=0; i<10; ++i) { usleep (100000); gapp->check_events (); }
-                        { gchar *tmp = g_strdup_printf (" *** Adjusted (-=>+) SPM RPSPMC Z_POLARITY..: %s\n", ((int)spmc_parameters.gvp_status)&(1<<7) ? "NEG":"POS"); status_append (tmp);  rpspmc_hwi->info_append (tmp); g_free (tmp); }        
-                }
-        
-        if (spmc_parameters.gxsm_z_polarity != gxsm_preferences_polarity){
-                g_warning (" Z-Polarity was not changed. ");
-        }
                  
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO_SET.: %g Veq\n", spmc_parameters.z_servo_setpoint); status_append (tmp); g_free (tmp); }
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO_CP..: %g\n", spmc_parameters.z_servo_cp); status_append (tmp); g_free (tmp); }
@@ -5719,6 +5698,34 @@ void RPspmc_pacpll::on_connect_actions(){
         gtk_check_button_set_active (GTK_CHECK_BUTTON (RPSPMC_ControlClass->stream_connect_button), true);
 
         gtk_button_set_child (GTK_BUTTON (RPSPMC_ControlClass->GVP_stop_all_zero_button), gtk_image_new_from_icon_name ("gxsm4-rp-icon"));
+
+        gapp->check_events ();
+
+        // VERIFY IF CORRECT, ASK TO ADJUST IF MISMATCH
+        if (spmc_parameters.gxsm_z_polarity != gxsm_preferences_polarity &&  gxsm_preferences_polarity < 0)
+                if ( gapp->question_yes_no ("WARNING: Gxsm Preferences indicate NEGATIVE Z Polarity.\nPlease confirm to set Z-Polarity set to NEGATIVE.")){
+                        rpspmc_pacpll->write_parameter ("SPMC_Z_POLARITY", -1);
+                        spmc_parameters.gxsm_z_polarity = -1;
+                        for (int i=0; i<10; ++i) { usleep (100000); gapp->check_events (); }
+                        { gchar *tmp = g_strdup_printf (" *** Adjusted (+=>-) SPM RPSPMC Z_POLARITY..: %s\n", ((int)spmc_parameters.gvp_status)&(1<<7) ? "NEG":"POS"); status_append (tmp);  rpspmc_hwi->info_append (tmp); g_free (tmp); }        
+                }
+
+        gapp->check_events ();
+
+        if (spmc_parameters.gxsm_z_polarity != gxsm_preferences_polarity &&  gxsm_preferences_polarity > 0)
+                if ( gapp->question_yes_no ("WARNING: Gxsm Preferences indicate POSITIVE Z Polarity.\nPlease confirm to set Z-Polarity set to POSITIVE.")){
+                        rpspmc_pacpll->write_parameter ("SPMC_Z_POLARITY", 1);
+                        spmc_parameters.gxsm_z_polarity = 1;
+                        for (int i=0; i<10; ++i) { usleep (100000); gapp->check_events (); }
+                        { gchar *tmp = g_strdup_printf (" *** Adjusted (-=>+) SPM RPSPMC Z_POLARITY..: %s\n", ((int)spmc_parameters.gvp_status)&(1<<7) ? "NEG":"POS"); status_append (tmp);  rpspmc_hwi->info_append (tmp); g_free (tmp); }        
+                }
+
+        gapp->check_events ();
+        
+        if (spmc_parameters.gxsm_z_polarity != gxsm_preferences_polarity){
+                g_warning (" Z-Polarity was not changed. ");
+        }
+        
 }
 
 
