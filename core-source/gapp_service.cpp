@@ -1000,7 +1000,7 @@ void AppBase::LoadGeometryWRefAutoPlace(const gchar *wref_key, const gchar *wref
                 nth = atoi (window_key+strlen(wref_key)+1);
         else
                 return;
-        if (nth <= 1 || nth > 16)
+        if (nth <= 0 || nth > 16)
                 return;
                         
         if (!wref_key){
@@ -1013,17 +1013,27 @@ void AppBase::LoadGeometryWRefAutoPlace(const gchar *wref_key, const gchar *wref
 
         gsize n_stores;
 
-        nth--;
-        double stack = 0.97;
-        int yn=0;
+        double stack = 0.95;
+        double href = 0.;
         gchar *wk=NULL;
         if (wref_key2nd){
-                yn  = 1;
-                wk = g_strdup_printf("%s-%d", nth, wref_key2nd);
-                nth = 1;
-                stack = 1.0;
-        } else
+                GVariant *storage = g_settings_get_value (geometry_settings, window_key); // original geom
+                gint32 *tmp = (gint32*) g_variant_get_fixed_array (storage, &n_stores, sizeof (gint32));
+                if (!window_geometry)
+                        window_geometry = g_new (gint32, WGEO_SIZE);
+                memcpy (window_geometry, tmp, WGEO_SIZE*sizeof (gint32));
+                g_variant_unref (storage);
+                g_assert_cmpint (n_stores, ==, WGEO_SIZE);
+                href = window_geometry[WGEO_HEIGHT]; // keep
+
+                wk = g_strdup_printf("%s", wref_key2nd);
+                XSM_DEBUG_GM (DBG_L2, "AppBase::LoadGeometry *** Load Geometry relative to window  ** %s **", wk );
+                nth += 6;
+        } else {
+                if (nth == 1) return;
                 wk = g_strdup_printf("%s-1", wref_key);
+        }
+        nth--;
         GVariant *storage = g_settings_get_value (geometry_settings, wk);
         g_free (wk);
         gint32 *tmp = (gint32*) g_variant_get_fixed_array (storage, &n_stores, sizeof (gint32));
@@ -1042,6 +1052,9 @@ void AppBase::LoadGeometryWRefAutoPlace(const gchar *wref_key, const gchar *wref
         window_geometry[WGEO_XPOS] += (nth%6)*window_geometry[WGEO_WIDTH]*stack;
         if (nth > 5)
                 window_geometry[WGEO_YPOS] += (nth/6)*window_geometry[WGEO_HEIGHT]*stack;
+
+        if (href > 0)
+                window_geometry[WGEO_HEIGHT] = href;
         
         position_auto ();
         resize_auto ();

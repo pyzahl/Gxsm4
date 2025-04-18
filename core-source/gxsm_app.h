@@ -187,7 +187,10 @@ public:
 
         static void call_save_geometry (AppBase* a, gpointer data){ a->SaveGeometry (); };
         static void call_load_geometry (AppBase* a, gpointer data){ a->LoadGeometry (); };
-        static void call_auto_scanview_geometry (AppBase* a, gpointer data){ a->LoadGeometryWRefAutoPlace ("view-scan2d"); };
+        static void call_auto_scanview_geometry (AppBase* a, gpointer data){
+                a->LoadGeometryWRefAutoPlace ("view-scan2d");
+                a->LoadGeometryWRefAutoPlace ("view-profile-redline","view-scan2d-1");
+        };
         void save_app_geometry () { g_slist_foreach (gxsm_app_windows_list, (GFunc) App::call_save_geometry, NULL); };
         void load_app_geometry () { g_slist_foreach (gxsm_app_windows_list, (GFunc) App::call_load_geometry, NULL); };
         void auto_scanview_geometry () {
