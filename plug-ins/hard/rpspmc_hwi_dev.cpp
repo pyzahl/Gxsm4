@@ -69,7 +69,8 @@ extern "C++" {
 
 rpspmc_hwi_dev::rpspmc_hwi_dev():RP_stream(this){
         g_mutex_init (&RTQmutex);
-
+        
+        z_offset_internal = 0.;
         info_blob = NULL;
         
         delayed_tip_move_update_timer_id = 0;
@@ -186,6 +187,32 @@ int rpspmc_hwi_dev::RotateStepwise(int exec) {
         rpspmc_pacpll->write_parameter ("SPMC_ALPHA", Alpha);
         return 0;
 }
+
+gboolean rpspmc_hwi_dev::CenterZOffset(){
+        z_offset_internal = 0.;
+        ZOffsetMove (0.);
+        return TRUE;
+}
+
+gboolean rpspmc_hwi_dev::ZOffsetMove(double dv){
+        const gchar *SPMC_SET_ZOFFSET_COMPONENTS[] = {
+                "SPMC_SET_OFFSET_Z", 
+                "SPMC_SET_OFFSET_Z_SLEW",
+                NULL };
+        double jdata[2];
+
+        z_offset_internal += dv;
+        jdata[0] = main_get_gapp()->xsm->Inst->ZA2Volt (z_offset_internal);
+        jdata[1] = main_get_gapp()->xsm->Inst->ZA2Volt (100); // 100 A/s
+
+        g_message ("ZOffsetMove: %gV @%gV/s", jdata[0], jdata[1]);
+
+        if (rpspmc_pacpll)
+                rpspmc_pacpll->write_array (SPMC_SET_ZOFFSET_COMPONENTS, 0, NULL,  2, jdata);
+
+        return FALSE;
+}
+
 
 gboolean rpspmc_hwi_dev::SetOffset(double x, double y){ // in "DIG"
         const gchar *SPMC_SET_OFFSET_COMPONENTS[] = {
@@ -1399,7 +1426,7 @@ void rpspmc_hwi_dev::GVP_vp_init (){
 void rpspmc_hwi_dev::rpspmc_hwi_dev::GVP_start_data_read(){
 }
 
-int rpspmc_hwi_dev::GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v){
+int rpspmc_hwi_dev::GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v, PROBE_VECTOR_EXTENSION *vx){
         if (i >= MAX_PROGRAM_VECTORS || i < 0)
                 return 0;
 
@@ -1409,7 +1436,10 @@ int rpspmc_hwi_dev::GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v){
 #define I_GVP_SRCS      3
 #define I_GVP_NREP      4
 #define I_GVP_NEXT      5
-#define I_GVP_SIZE (I_GVP_NEXT+1)
+#define I_GVPX_OPCD     6
+#define I_GVPX_RCHI     7
+#define I_GVPX_JMPR     8
+#define I_GVP_SIZE (I_GVPX_JMPR+1)
         
 #define D_GVP_DX        0
 #define D_GVP_DY        1
@@ -1420,7 +1450,8 @@ int rpspmc_hwi_dev::GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v){
 #define D_GVP_AM        6
 #define D_GVP_FM        7
 #define D_GVP_SLW       8
-#define D_GVP_SIZE (D_GVP_SLW+1)
+#define D_GVPX_CMPV     9
+#define D_GVP_SIZE (D_GVPX_CMPV+1)
         
         const gchar *SPMC_GVP_VECTOR_COMPONENTS[] = {
                 "SPMC_GVP_VECTOR_PC", 
@@ -1429,6 +1460,9 @@ int rpspmc_hwi_dev::GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v){
                 "SPMC_GVP_VECTORSRC", 
                 "SPMC_GVP_VECTORNRP", 
                 "SPMC_GVP_VECTORNXT", 
+                "SPMC_GVP_XVECTOR_OPCD",
+                "SPMC_GVP_XVECTOR_RCHI",
+                "SPMC_GVP_XVECTOR_JMPR",
                 "SPMC_GVP_VECTOR_DX", 
                 "SPMC_GVP_VECTOR_DY", 
                 "SPMC_GVP_VECTOR_DZ", 
@@ -1438,19 +1472,28 @@ int rpspmc_hwi_dev::GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v){
                 "SPMC_GVP_VECTOR_AM", 
                 "SPMC_GVP_VECTOR_FM", 
                 "SPMC_GVP_VECTORSLW", 
+                "SPMC_GVP_XVECTOR_CMPV",
                 NULL };
 
         int gvp_vector_i[I_GVP_SIZE];
         double gvp_vector_d[D_GVP_SIZE];
 
+#define SPMC_GVP_VECTOR_EXTENSTION_BITMASK (1<<7)
+        
+        int vector_extension = vx && (v->options & SPMC_GVP_VECTOR_EXTENSTION_BITMASK) ? 1 : 0;
+        
         // Vector Program Code Setup
         gvp_vector_i [I_GVP_PC_INDEX] = i;
         gvp_vector_i [I_GVP_N       ] = v->n;
-        gvp_vector_i [I_GVP_OPTIONS ] = ((v->srcs & 0xffffff) << 8) | (v->options & 0xff); //   ((v->options & VP_FEEDBACK_HOLD) ? 0:1) | (1<<7) | (1<<6) | (1<<5);
-        gvp_vector_i [I_GVP_SRCS    ] = v->srcs & 0xffffffff;
+        //gvp_vector_i [I_GVP_OPTIONS ] = ((v->srcs & 0xffffff) << 8) | (v->options & 0xff); // 0: FB, 7: XVEC  **   ((v->options & VP_FEEDBACK_HOLD) ? 0:1) | (1<<7) | (1<<6) | (1<<5);
+        gvp_vector_i [I_GVP_OPTIONS ] = v->options; // currently only lowest 8 bits
+        gvp_vector_i [I_GVP_SRCS    ] = v->srcs & 0xffffffff; // currently only 24 bits
         // g_message ("GVP_write_program_vector[%d]: srcs = 0x%08x", i, gvp_vector_i [I_GVP_OPTIONS ] );
         gvp_vector_i [I_GVP_NREP    ] = v->repetitions > 1 ? v->repetitions-1 : 0;
         gvp_vector_i [I_GVP_NEXT    ] = v->ptr_next;
+        gvp_vector_i [I_GVPX_OPCD   ] = vector_extension ? vx->opcd : 0;
+        gvp_vector_i [I_GVPX_RCHI   ] = vector_extension ? vx->rchi : 0;
+        gvp_vector_i [I_GVPX_JMPR   ] = vector_extension ? vx->jmpr : 0;
 
 
         if (i == 0 && (v->options & VP_INITIAL_SET_VEC)){ // 1st vector is set postion vector? Get pos and calc differentials.
@@ -1473,6 +1516,7 @@ int rpspmc_hwi_dev::GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v){
         gvp_vector_d [D_GVP_AM      ] = v->f_dam;
         gvp_vector_d [D_GVP_FM      ] = v->f_dfm;
         gvp_vector_d [D_GVP_SLW     ] = v->slew;
+        gvp_vector_d [D_GVPX_CMPV   ] = vector_extension ? vx->cmpv : 0.;
         
         // send it down
         if (rpspmc_pacpll)

@@ -2108,6 +2108,8 @@ int GVPMoverControl::CmdAction(GtkWidget *widget, GVPMoverControl *self){
 	cmd = GPOINTER_TO_INT(g_object_get_data( G_OBJECT (widget), "GVP_cmd"));
 
         g_message ("MOVER CMD ACTION: on mover id %d (no selection yet via RPSPMC) CMD: %d", idx, cmd);
+
+        // Z-OFFSET: GVP_CMD_Z0_M/P
         
         switch (cmd){
         case GVP_CMD_AFM_MOV_XM:
@@ -2159,6 +2161,16 @@ int GVPMoverControl::CmdAction(GtkWidget *widget, GVPMoverControl *self){
 int GVPMoverControl::StopAction(GtkWidget *widget, GVPMoverControl *self){
 	PI_DEBUG (DBG_L2, "GVPMoverControl::StopAction" );
 
+        switch (self->last_cmd){
+        case GVP_CMD_Z0_STOP: g_message ("STOP-Z0"); return;
+        case GVP_CMD_Z0_CENTER: g_message ("STOP-Z0-CENTER"); return;
+        case GVP_CMD_Z0_AUTO: g_message ("STOP-Z0-AUTO"); return;
+        case GVP_CMD_Z0_P: g_message ("STOP-Z0++"); return;
+        case GVP_CMD_Z0_M: g_message ("STOP-Z0--"); return;
+        }
+
+        self->last_cmd = 0;
+        
         if (rpspmc_hwi->is_scanning() || rpspmc_hwi->probe_fifo_thread_active>0){
                 g_message (" GVPMoverControl::create_waveform ** RPSPMC is busy scanning. Please stop scanning and any GVP to activate mover actions.");
                 //gapp->warning ("RPSPMC is busy scanning.\nPlease stop scanning and any GVP to activate mover actions.", window);
@@ -2221,6 +2233,16 @@ void GVPMoverControl::ExecCmd(int cmd){
         static double last_MOV_pointing=0;
         static double last_MOV_axis=0;
 
+        last_cmd = cmd;
+
+        switch (cmd){
+        case GVP_CMD_Z0_STOP: g_message ("Z0-STOP"); return;
+        case GVP_CMD_Z0_CENTER: g_message ("Z0-CENTER"); rpspmc_hwi->CenterZOffset (); return;
+        case GVP_CMD_Z0_AUTO: g_message ("Z0-AUTO"); return;
+        case GVP_CMD_Z0_P: g_message ("Z0++"); rpspmc_hwi->ZOffsetMove (10); return;
+        case GVP_CMD_Z0_M: g_message ("Z0--"); rpspmc_hwi->ZOffsetMove (-10); return;
+        }
+        
         if (rpspmc_hwi->is_scanning() || rpspmc_hwi->probe_fifo_thread_active>0){
                 g_message (" GVPMoverControl::create_waveform ** RPSPMC is busy scanning. Please stop scanning and any GVP to activate mover actions.");
                 //gapp->warning ("RPSPMC is busy scanning.\nPlease stop scanning and any GVP to activate mover actions.", window);

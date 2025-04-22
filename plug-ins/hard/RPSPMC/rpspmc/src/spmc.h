@@ -87,6 +87,7 @@ extern "C" {
         void rp_spmc_gvp_config (bool reset, bool pause, int reset_options); // taking out of reset starts GVP!
         //void rp_spmc_set_gvp_vector (CFloatSignal &vector);
         void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, unsigned int srcs, int nrp, int nxt,
+                                     int x_opcd, double x_cmpv, int x_rchi, int x_jmpr,
                                      double dx, double dy, double dz, double du,
                                      double da, double db, double dam, double dfm,
                                      double slew,

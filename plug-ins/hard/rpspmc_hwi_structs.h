@@ -317,6 +317,14 @@ typedef struct{
 	double    f_dfm;         // dFM RF-FM control (Volts equiv for digital VCO)
 } PROBE_VECTOR_GENERIC;
 
+typedef struct{
+        gint32    opcd;          // GVP EXTENSION OPCODE
+        double    cmpv;          // GVP EXTENSION compare/operation value
+        gint32    rchi;          // GVP EXTENSION compare reference channel index -- aka SRCS[ch] 0..14
+        gint32    jmpr;          // GVP EXTENSION jump rel distance
+} PROBE_VECTOR_EXTENSION;
+
+
 /**
  * Vector Probe Vector
  */

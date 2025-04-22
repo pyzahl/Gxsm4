@@ -83,7 +83,7 @@ module axis_bram_stream_srcs #(
     output wire                        dma_fifo_resetn,
     
                              // CH      MASK
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS_ch1s:S_AXIS_ch2s:S_AXIS_ch3s:S_AXIS_ch4s:S_AXIS_ch5s:S_AXIS_ch6s:S_AXIS_ch7s:S_AXIS_ch8s:S_AXIS_ch9s:S_AXIS_chAs:S_AXIS_chBs:S_AXIS_chCs:S_AXIS_chDs:S_AXIS_chEs:S_AXIS_gvp_time:S_AXIS_srcs:S_AXIS_index" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS_ch1s:S_AXIS_ch2s:S_AXIS_ch3s:S_AXIS_ch4s:S_AXIS_ch5s:S_AXIS_ch6s:S_AXIS_ch7s:S_AXIS_ch8s:S_AXIS_ch9s:S_AXIS_chAs:S_AXIS_chBs:S_AXIS_chCs:S_AXIS_chDs:S_AXIS_chEs:S_AXIS_gvp_time:S_AXIS_srcs:S_AXIS_index:M_AXIS_gvp_x_value" *)
 
     input a2_clk, // double a_clk used for BRAM (125MHz)
     input wire [32-1:0] S_AXIS_ch1s_tdata, // XS      0x0001  X in Scan coords
@@ -150,7 +150,10 @@ MUX15   ---   Z-with-slope
     input wire          S_AXIS_index_tvalid,
     input wire [2-1:0]  push_next, // frame header/data point trigger control
     input wire reset,
-    
+
+    input  wire [4-1:0]   gvp_x_chindex, // GVP Extension: Channel (0..15) requested to watch on output    
+    output wire [32-1:0]  M_AXIS_gvp_x_value_tdata,   // GVP Extension: Value of Channel (0..15) requested to watch on output    
+    output wire           M_AXIS_gvp_x_value_tvalid,  // GVP Extension: Value of Channel (0..15) requested to watch on output    
 
     output wire [32-1:0]  last_write_addr,
     output wire stall
@@ -189,11 +192,6 @@ MUX15   ---   Z-with-slope
     
     reg [2:0] loop_fix=0;
 
-//    reg [1:0] rdecii = 0;
-//    always @ (posedge a2_clk)
-//    begin
-//        rdecii <= rdecii+1;
-//    end
 
     assign dma_data_clk = a2_clk;
 //    assign dma_data_clk = rdecii[1];
@@ -208,9 +206,23 @@ MUX15   ---   Z-with-slope
         
     assign stall = ~fifo_ready; // && status_ready;
       
+    // GVP Extension: Value of Channel (0..15) requested to watch on output
+    assign M_AXIS_gvp_x_value_tdata = gvp_x_chindex ==  0 ? S_AXIS_ch1s_tdata[32-1:0] : 
+                                      gvp_x_chindex ==  1 ? S_AXIS_ch2s_tdata[32-1:0] : 
+                                      gvp_x_chindex ==  2 ? S_AXIS_ch3s_tdata[32-1:0] : 
+                                      gvp_x_chindex ==  3 ? S_AXIS_ch4s_tdata[32-1:0] : 
+                                      gvp_x_chindex ==  4 ? S_AXIS_ch5s_tdata[32-1:0] : 
+                                      gvp_x_chindex ==  5 ? S_AXIS_ch6s_tdata[32-1:0] : 
+                                      gvp_x_chindex ==  6 ? S_AXIS_ch7s_tdata[32-1:0] :
+                                      gvp_x_chindex ==  7 ? S_AXIS_ch8s_tdata[32-1:0] :
+                                      gvp_x_chindex ==  8 ? S_AXIS_ch9s_tdata[32-1:0] :
+                                      gvp_x_chindex ==  9 ? S_AXIS_chAs_tdata[32-1:0] :
+                                      gvp_x_chindex == 10 ? S_AXIS_chBs_tdata[32-1:0] :
+                                      gvp_x_chindex == 12 ? S_AXIS_chCs_tdata[32-1:0] :
+                                      gvp_x_chindex == 13 ? S_AXIS_chDs_tdata[32-1:0] :
+                                      gvp_x_chindex == 14 ? S_AXIS_chEs_tdata[32-1:0] : 0;
+    assign M_AXIS_gvp_x_value_tvalid = 1;
 
-    // BRAM writer at a2_clk
-    //always @ (posedge rdecii[1])
     always @(posedge a2_clk)
     begin
         

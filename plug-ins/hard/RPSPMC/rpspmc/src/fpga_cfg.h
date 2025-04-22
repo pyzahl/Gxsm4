@@ -116,7 +116,7 @@
 #define PACPLL_CFG_LOWER 5 // 5,6 64bit
 
 
-
+#define SPMC_GVP_VECTOR_EXTENSTION_BITMASK (1<<7)
 
 // GVP MODULE AT CONFIGURATION ADDRs  1,2,3,4
 #define SPMC_GVP_CONTROL_REG          5001   // CONTROL CONFIG REG: B0: reset, B1: Pause
@@ -145,8 +145,14 @@
 #define GVP_VEC_DFM   13
 #define GVP_VEC_014   14
 #define GVP_VEC_DECII 15
-#define GVP_VECX_SRC   0
 
+#define GVP_VECX_VADR  0
+#define GVP_VECX_OPCD  1
+#define GVP_VECX_CMPV  2
+#define GVP_VECX_RCHI  3
+#define GVP_VECX_JMPR  4
+#define GVP_VECX_OPT   14
+#define GVP_VECX_SRC   15
 
 // Z_SERVO @ CONFIG ADDRESS
 #define SPMC_Z_SERVO_CONTROL_REG              100

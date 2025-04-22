@@ -175,6 +175,7 @@ module axis_spm_control#(
     reg signed [32+1-1:0] mz0m = 0;
     reg signed [32+1-1:0] mx0 = 0;
     reg signed [32+1-1:0] my0 = 0;
+    reg signed [32+1-1:0] mz0 = 0;
 
 
 
@@ -330,7 +331,7 @@ module axis_spm_control#(
             // MUST ASSURE mx0+/-xy_move_step never exceeds +/-Q31 -- exta bit used + saturation as assign -- to avoid over flow else a PBC jump will happen! 
             `ADJUSTER (mx0, mx0p, mx0m, xy_move_step, x0)
             `ADJUSTER (my0, my0p, my0m, xy_move_step, y0)
-            // `ADJUSTER (mz0, mz0p, mz0m, z_move_step, z0)
+            `ADJUSTER (mz0, mz0p, mz0m, z_move_step, z0)
                         
             // slope_x, y adjusters for smooth op
             `ADJUSTER (dZx, dZx_p, dZx_m, z_move_step, slope_x)
@@ -354,7 +355,7 @@ module axis_spm_control#(
             
             // Z and slope comensation in global X,Y and in non rot coords. sys 0,0=invariant point
             z_slope <= (dZmx >>> QSLOPE) + (dZmy >>> QSLOPE);
-            z_sum   <= z_gvp + z_servo_stm + (dFControl_target[0] ? servo_dFC : 0) + (mt == 3 ? modulation : 0); // + mz0;
+            z_sum   <= z_gvp + z_servo_stm + (dFControl_target[0] ? servo_dFC : 0) + (mt == 3 ? modulation : 0) + mz0;
             //z_sum   <= z_gvp + z_servo + Z_slope; // slope is SAT-added externally later
 
             // Bias := u0_bias (User Bias by GXSM) + u_gvp (GVP bias manipulation component) + LockIn Mod 

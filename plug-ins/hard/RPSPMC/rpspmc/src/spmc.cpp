@@ -428,6 +428,7 @@ void rp_spmc_gvp_init (){
 // slew: data points/second / vector
 // update_file: allow update while in progress (scan speed adjust, etc.), applied on FPGA level at next vector start!
 void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, unsigned int srcs, int nrp, int nxt,
+                             int x_opcd, double x_cmpv, int x_rchi, int x_jmpr,
                              double dx, double dy, double dz, double du,
                              double da, double db, double dam, double dfm,
                              double slew, bool update_life=false){
@@ -589,7 +590,7 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, unsigned int srcs
         
         rp_spmc_module_start_config ();
 
-        int idv[17];
+        int idv[32];
         set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_VADR, idv[0]=pc);
 
         if (verbose > 1) fprintf(stderr, "[%04d], ", n);
@@ -599,10 +600,13 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, unsigned int srcs
         set_gpio_cfgreg_uint32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_NII, idv[2]=nii > 0 ? nii-1 : 0); // *** see above note nii > 1 for normal vector, need that time for logic
 
         if (verbose > 1) fprintf(stderr, "Op%08x, ", opts);
-        set_gpio_cfgreg_uint32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_OPT, idv[3]=opts);
+        //set_gpio_cfgreg_uint32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_OPT, idv[3]=opts);
 
+        //gvp_vector_i [I_GVP_OPTIONS ] = ((v->srcs & 0xffffff) << 8) | (v->options & 0xff);
+        set_gpio_cfgreg_uint32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_OPT, idv[3]=((srcs & 0xffffff) << 8) | (opts & 0xff));
+        
         // preparing to add/disentangle SRCS from opts
-        //if (verbose > 1) fprintf(stderr, "Sr%08x, ", srcs);
+        if (verbose > 1) fprintf(stderr, "Sr%08x, ", srcs);
         //set_gpio_cfgreg_uint32 (SPMC_MODULE_CONFIG_DATA + GVP_VEC_SRC, idv[4]=srcs);
         idv[4]=srcs;
         
@@ -642,6 +646,20 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, unsigned int srcs
         // and load vector data to module
         rp_spmc_module_write_config_data (SPMC_GVP_VECTOR_DATA_REG);
 
+        // add Vector Extension Code?
+        if (opts & SPMC_GVP_VECTOR_EXTENSTION_BITMASK){
+                rp_spmc_module_start_config ();
+                set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VECX_VADR, pc);
+                set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VECX_OPCD, idv[17]=x_opcd);
+                set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VECX_CMPV, idv[18]=(int)round(Q31*x_cmpv/Nsteps/SPMC_AD5791_REFV));
+                set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VECX_RCHI, idv[19]=x_rchi);
+                set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VECX_JMPR, idv[20]=x_jmpr);
+                //set_gpio_cfgreg_uint32 (SPMC_MODULE_CONFIG_DATA + GVP_VECX_OPT, idv[30]=opts);
+                //set_gpio_cfgreg_uint32 (SPMC_MODULE_CONFIG_DATA + GVP_VECX_SRC, idv[31]=srcs);
+                // and load vector-extension data to module
+                rp_spmc_module_write_config_data (SPMC_GVP_VECTORX_DATA_REG);
+        }
+        
         //<< std::setfill('0') << std::hex << std::setw(8) << data
         
         std::stringstream vector_def;
@@ -659,6 +677,13 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, unsigned int srcs
                         vector_def << ((idv[i] < 0) ?", -":",  ") << std::setfill('0') << std::dec << "32'd" << (abs(idv[i]));
                         break;
                 }
+        }
+        if (opts & SPMC_GVP_VECTOR_EXTENSTION_BITMASK){
+                vector_def << ", vecx = {";
+                for (int i=20; i>=17; i--){
+                        vector_def << ((idv[i] < 0) ?", -":",  ") << std::setfill('0') << std::dec << "32'd" << (abs(idv[i]));
+                }
+                vector_def << "}";
         }
         vector_def << "}; // Vector #" << pc;
         spmc_stream_server_instance.add_vector (vector_def.str());
@@ -870,14 +895,17 @@ void rp_spmc_set_scanpos (double xs, double ys, double slew, int opts){
 
         // make vector to new scan pos requested:
         rp_spmc_set_gvp_vector (0, n, opts, 0, 0, 0,
+                                0, 0.0, 0, 0,
                                 dx, dy, 0.0, 0.0,
                                 0.0, 0.0, 0.0, 0.0,
                                 slew, false);
         rp_spmc_set_gvp_vector (1, 0, 0, 0, 0, 0,
+                                0, 0.0, 0, 0,
                                 0.0, 0.0, 0.0, 0.0,
                                 0.0, 0.0, 0.0, 0.0,
                                 0.0, false);
         rp_spmc_set_gvp_vector (2, 0, 0, 0, 0, 0,
+                                0, 0.0, 0, 0,
                                 0.0, 0.0, 0.0, 0.0,
                                 0.0, 0.0, 0.0, 0.0,
                                 0.0, false);

@@ -60,7 +60,7 @@ module gvp #(
     parameter vector_reset_components_reg_address = 5009
 )
 (
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF M_AXIS_X:M_AXIS_Y:M_AXIS_Z:M_AXIS_U:M_AXIS_A:M_AXIS_B:M_AXIS_AM:M_AXIS_FM:M_AXIS_SRCS:M_AXIS_INDEX:M_AXIS_GVP_TIME" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS_XV:M_AXIS_X:M_AXIS_Y:M_AXIS_Z:M_AXIS_U:M_AXIS_A:M_AXIS_B:M_AXIS_AM:M_AXIS_FM:M_AXIS_SRCS:M_AXIS_INDEX:M_AXIS_GVP_TIME" *)
     input		 a_clk, // clocking up to aclk
     //input		 reset, // put into reset mode (set program and hold)
     //input		 pause, // put/release into/from pause mode -- always completes the "ii" nop cycles!
@@ -71,6 +71,8 @@ module gvp #(
     //input [16-1:0]	 reset_options, // option (fb hold/go, srcs... to pass when idle or in reset mode
 
     input        stall, // asserted by stream srcs when AXI DMA / FIFO is not ready to accept data -- should never happen, but prevents data loss/gap 
+    input wire [32-1:0] S_AXIS_XV_tdata, // X-Value := SRCS[x_ch]
+    input wire		    S_AXIS_XV_tvalid,
     
     output wire [32-1:0] M_AXIS_X_tdata, // vector components
     output wire		     M_AXIS_X_tvalid,
@@ -99,6 +101,7 @@ module gvp #(
     output wire	[48-1:0] M_AXIS_gvp_time_tdata,
     output wire	         M_AXIS_gvp_time_tvalid,
     output wire [32-1:0] dbg_status,
+    output wire [4-1:0]  x_gvp_ch,
     output wire reset_state
     );
 
@@ -129,7 +132,15 @@ module gvp #(
     reg load_next_vector=0;
     reg finished=0;
     
+    reg [4-1:0] x_rchi = 0;
+    reg [32-1:0] X_value = 0;
+    reg until_flg = 0;
+    reg signed [NUM_VECTORS_N2:0] jump_rel = 0;
+    reg X_GE = 0;
+    reg X_LE = 0;
+    
     // vector program memory/list
+    // vpc control
     reg [32-1:0]  vec_i[NUM_VECTORS-1:0];
     reg [32-1:0]  vec_n[NUM_VECTORS-1:0];
     reg [32-1:0]  vec_iin[NUM_VECTORS-1:0];
@@ -138,7 +149,14 @@ module gvp #(
     reg [32-1:0]  vec_deci[NUM_VECTORS-1:0];
     reg signed [NUM_VECTORS_N2:0] vec_next[NUM_VECTORS-1:0];
 
+    // vector extension components -- only used/valid if X bit (bit15) set in OPTIONS
+    reg [32-1:0]  vecX_opcd[NUM_VECTORS-1:0]; // VECX opcode
+    reg [32-1:0]  vecX_cmpv[NUM_VECTORS-1:0]; // VECX value for X-operation
+    reg [32-1:0]  vecX_rchi[NUM_VECTORS-1:0]; // VECX reference SRCS index to work with
+    reg [32-1:0]  vecX_jmpn[NUM_VECTORS-1:0]; // VECX jump rel next
+    // ...
 
+    // diff components
     reg signed [32-1:0]  vec_dx[NUM_VECTORS-1:0];
     reg signed [32-1:0]  vec_dy[NUM_VECTORS-1:0];
     reg signed [32-1:0]  vec_dz[NUM_VECTORS-1:0];
@@ -175,8 +193,13 @@ module gvp #(
     // for vector programming -- in reset mode to be safe -- but shoudl work also for live updates -- caution, check!
     reg [8:0] rd=511;
 
+    assign x_gvp_chi = x_rchi;
+
     always @ (posedge a_clk) // 120MHz
     begin
+    
+        X_value <= S_AXIS_XV_tdata;
+    
         if (reset_flg) // reset mode / hold
         begin
             vec_gvp_time <= 0;
@@ -267,6 +290,27 @@ module gvp #(
                     end
                 endcase             
             end
+            
+            vectorX_programming_reg_address: // enter vector programming load mode: load vector extension: ONLY ACTIVE IF OPTIONS bit 15 is set
+            begin
+                case (setvec_mode)
+                    0: // fetch and stage update
+                    begin
+                        vp_set <= config_data_reg; // [VAdr]
+                        setvec_mode <= 1; //setvec; // program vector data using vp_set data
+                    end
+                    1: // update vector[vp_set [NUM_VECTORS_N2:0]]
+                    begin  
+                        vecX_opcd[vp_set [NUM_VECTORS_N2:0]]  <= vp_set [2*32-1:1*32]; // VECX opcode
+                        vecX_cmpv[vp_set [NUM_VECTORS_N2:0]]  <= vp_set [3*32-1:2*32]; // VECX value for X-operation
+                        vecX_rchi[vp_set [NUM_VECTORS_N2:0]]  <= vp_set [4*32-1:3*32]; // VECX reference SRCS index to work with
+                        vecX_jmpn[vp_set [NUM_VECTORS_N2:0]]  <= vp_set [5*32-1:4*32]; // VECX jump relative next
+                        setvec_mode <= 2; // done, next load only possible after address=0 cycle (default below)
+                    end
+                endcase             
+            end
+
+
             default:
                 setvec_mode <= 0;
         endcase
@@ -305,6 +349,7 @@ module gvp #(
                         load_next_vector <= 0;
                         i   <= vec_n[pvc];
                         ii  <= vec_iin[pvc];
+                        x_rchi <= vecX_rchi[pvc][3:0];
                         if (vec_n[pvc] == 0) // n == 0: END OF VECTOR PROGRAM REACHED
                         begin
                             finished <= 1;
@@ -331,21 +376,41 @@ module gvp #(
                         vec_am <= vec_am + vec_dam[pvc];
                         vec_fm <= vec_fm + vec_dfm[pvc];
                         
-                        if (ii) // do intermediate step(s) ?
+                        if (vec_options[pvc][7]) // process Vector Extension: Optional Process Controls
+                        begin
+                            X_GE <= X_value > vecX_cmpv[pvc] ? 1:0;
+                            X_LE <= X_value < vecX_cmpv[pvc] ? 1:0;
+                            // X_value, vecX_opcd, vecX_cmpv
+                            case (vecX_opcd[pvc][3:0])
+                                1: begin if (X_GE) until_flg <= 1; end  // UNTIL >
+                                2: begin if (X_LE) until_flg <= 1; end  // UNTIL <
+                                3: begin if (X_GE) jump_rel <= vecX_jmpn[pvc]; end  // JMP >
+                                4: begin if (X_LE) jump_rel <= vecX_jmpn[pvc]; end  // JMP <
+                                5: begin jump_rel <= vecX_jmpn[pvc]; end  // JMP
+                                default: begin until_flg <= 0; jump_rel  <= 0; end
+                            endcase
+                        end
+                        else
+                        begin
+                            until_flg <= 0;
+                            jump_rel  <= 0;
+                        end
+                        
+                        if (ii && !until_flg && !jump_rel) // do intermediate step(s) ?
                         begin
                             store <= 0;
                             ii <= ii-1;
                         end
                         else
                         begin // arrived at data point
-                            if (i) // advance to next point...
+                            if (i && !until_flg && !jump_rel) // advance to next point...
                             begin
                                 store <= 1; // store data sources (push trigger)
                                 ii <= vec_iin[pvc];
                                 i <= i-1;
                             end
                             else
-                            begin // finsihed section, next vector -- if n != 0...
+                            begin // finished section, next vector -- if n != 0...
                                 store <= 0; // full store data sources at next section start (push trigger)
                                 sec <= sec + 1;
                                 if (vec_i[pvc] > 0) // do next loop?
@@ -357,7 +422,7 @@ module gvp #(
                                 else // next vector in vector program list
                                 begin
                                     vec_i[pvc] <= vec_nrep[pvc]; // reload loop counter for next time now!
-                                    pvc <= pvc + 1; // next vector index
+                                    pvc <= pvc + 1 + jump_rel; // next vector index
                                     load_next_vector <= 1;
                                 end
                             end            

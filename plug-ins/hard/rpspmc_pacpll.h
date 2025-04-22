@@ -849,7 +849,8 @@ public:
         void update_GUI_from_FPGA (); // warm start/reconnect
         void update_FPGA_from_GUI (); // cold start
         
-	PROBE_VECTOR_GENERIC program_vector;
+	PROBE_VECTOR_GENERIC   program_vector;
+	PROBE_VECTOR_EXTENSION program_vectorX;
 
 	// STS (I-V)
         int    RampFBoff_mode;
@@ -971,6 +972,7 @@ public:
 
 private:
 	PROBE_VECTOR_GENERIC     program_vector_list[MAX_PROGRAM_VECTORS]; // copy for GXSM internal use only
+	PROBE_VECTOR_EXTENSION   program_vectorX_list[MAX_PROGRAM_VECTORS]; // copy for GXSM internal use only
 
 	GSettings *hwi_settings;
 

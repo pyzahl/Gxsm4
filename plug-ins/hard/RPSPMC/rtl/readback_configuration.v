@@ -194,7 +194,7 @@ module readback_configuration#(
 	    readback_RPSPMC_PACPLL_Version:
 	    begin
             reg_A <= 32'hEC010099; 
-            reg_B <= 32'h20250328;
+            reg_B <= 32'h20250421;
             
             if (reg_system_startup) // once ever after FPGA init (=1 inititially) and version read
                 reg_system_startup <= 0; // never again

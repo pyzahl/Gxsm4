@@ -46,7 +46,7 @@ int thread_data__tune_control=0;
 #include <fcntl.h>
 #include <pthread.h>
 
-#define REDPACPLL_DATE    0x20250406
+#define REDPACPLL_DATE    0x20250421
 #define REDPACPLL_VERSION 0x00160000
 #define RPSPMC_VERSION    0x00010016
 #define RPSPMC_VNAME      "Evaluation Regime SG20250406"
@@ -418,7 +418,7 @@ CFloatSignal SPMC_GVP_VECTOR("SPMC_GVP_VECTOR", GVP_VECTOR_SIZE, 0.0f); // vecto
 
 CIntParameter     SPMC_GVP_VECTOR_PC("SPMC_GVP_VECTOR_PC", CBaseParameter::RW, 0, 0, -2147483648,2147483647); // Vector[PC] to set
 CIntParameter     SPMC_GVP_VECTOR__N("SPMC_GVP_VECTOR__N", CBaseParameter::RW, 0, 0, -2147483648,2147483647); // # points
-CIntParameter     SPMC_GVP_VECTOR__O("SPMC_GVP_VECTOR__O", CBaseParameter::RW, 0, 0, -2147483648,2147483647); // options [Z-Servo Hold, ... , SRCS bits]
+CIntParameter     SPMC_GVP_VECTOR__O("SPMC_GVP_VECTOR__O", CBaseParameter::RW, 0, 0, -2147483648,2147483647); // options [Z-Servo Hold, ... , VECTOR EXT-BIT (15)]
 CIntParameter     SPMC_GVP_VECTORSRC("SPMC_GVP_VECTORSRC", CBaseParameter::RW, 0, 0, -2147483648,2147483647); // SRCS bits (new, preparing to separate from opt)
 CIntParameter     SPMC_GVP_VECTORNRP("SPMC_GVP_VECTORNRP", CBaseParameter::RW, 0, 0, -2147483648,2147483647); // # repetitions
 CIntParameter     SPMC_GVP_VECTORNXT("SPMC_GVP_VECTORNXT", CBaseParameter::RW, 0, 0, -2147483648,2147483647); // loop jump rel to PC to next vector
@@ -429,8 +429,14 @@ CDoubleParameter  SPMC_GVP_VECTOR_DU("SPMC_GVP_VECTOR_DU", CBaseParameter::RW, 0
 CDoubleParameter  SPMC_GVP_VECTOR_AA("SPMC_GVP_VECTOR_AA", CBaseParameter::RW, 0, 0, -10.0, 10.0); // AA (Aux Channel ADC #5)
 CDoubleParameter  SPMC_GVP_VECTOR_BB("SPMC_GVP_VECTOR_BB", CBaseParameter::RW, 0, 0, -10.0, 10.0); // BB (Aux Channel ADC #6)
 CDoubleParameter  SPMC_GVP_VECTOR_AM("SPMC_GVP_VECTOR_AM", CBaseParameter::RW, 0, 0, -10.0, 10.0); // AM Channel RF-AM control
-CDoubleParameter  SPMC_GVP_VECTOR_FM("SPMC_GVP_VECTOR_FM", CBaseParameter::RW, 0, 0, -10.0, 10.0); // FM Channel RF-FM control
+CDoubleParameter  SPMC_GVP_VECTOR_FM("SPMC_GVP_VECTOR_FM", CBaseParameter::RW, 0, 0, -10.0, 10.0); // FM Channel RF-FM control -- Volts mapping
 CDoubleParameter  SPMC_GVP_VECTORSLW("SPMC_GVP_VECTORSLW", CBaseParameter::RW, 0, 0,   0.0, 1e6);  // slew rate in #points / sec -- max: 1 MSPS
+
+CIntParameter     SPMC_GVP_XVECTOR_OPCD("SPMC_GVP_XVECTOR_OPCD", CBaseParameter::RW, 0, 0, -2147483648,2147483647); // VPC Extension Opcode (JPMR | CMP, JMP, ..)
+CDoubleParameter  SPMC_GVP_XVECTOR_CMPV("SPMC_GVP_XVECTOR_CMPV", CBaseParameter::RW, 0, 0, -10.0, 10.0); // VECTOR EXTENSION CMP VALUE -- Volts mapping
+CIntParameter     SPMC_GVP_XVECTOR_RCHI("SPMC_GVP_XVECTOR_RCHI", CBaseParameter::RW, 0, 0, -1, 256);     // VECTOR EXTENSION SRCS REFERENCE CHANNEL INDEX for logic operation
+CIntParameter     SPMC_GVP_XVECTOR_JMPR("SPMC_GVP_XVECTOR_JMPR", CBaseParameter::RW, 0, 0, -511, 511);   // VECTOR EXTENSION CMP JUMP REL
+
 
 CDoubleParameter  SPMC_ALPHA("SPMC_ALPHA", CBaseParameter::RW, 0.0, 0, -360, +360); // deg
 CDoubleParameter  SPMC_SLOPE_DZX("SPMC_SLOPE_DZX", CBaseParameter::RW, 0.0, 0, -1.0, +1.0); // slope in Volts Z / Volt X
@@ -1836,6 +1842,11 @@ void OnNewParams_RPSPMC(void){
         if (SPMC_GVP_VECTOR_FM.IsNewValue ()){ SPMC_GVP_VECTOR_FM.Update (); ++dirty; }
         if (SPMC_GVP_VECTORSLW.IsNewValue ()){ SPMC_GVP_VECTORSLW.Update (); ++dirty; }
 
+        if (SPMC_GVP_XVECTOR_OPCD.IsNewValue ()){ SPMC_GVP_XVECTOR_OPCD.Update (); ++dirty; }
+        if (SPMC_GVP_XVECTOR_CMPV.IsNewValue ()){ SPMC_GVP_XVECTOR_CMPV.Update (); ++dirty; }
+        if (SPMC_GVP_XVECTOR_RCHI.IsNewValue ()){ SPMC_GVP_XVECTOR_RCHI.Update (); ++dirty; }
+        if (SPMC_GVP_XVECTOR_JMPR.IsNewValue ()){ SPMC_GVP_XVECTOR_JMPR.Update (); ++dirty; }
+
         if (dirty>0){
                 SPMC_GVP_LIVE_VECTOR_UPDATE.Update ();
                 rp_spmc_set_gvp_vector (SPMC_GVP_VECTOR_PC.Value (),
@@ -1844,6 +1855,10 @@ void OnNewParams_RPSPMC(void){
                                         (unsigned int)SPMC_GVP_VECTORSRC.Value (),
                                         SPMC_GVP_VECTORNRP.Value (),
                                         SPMC_GVP_VECTORNXT.Value (),
+                                        SPMC_GVP_XVECTOR_OPCD.Value (),
+                                        SPMC_GVP_XVECTOR_CMPV.Value (),
+                                        SPMC_GVP_XVECTOR_RCHI.Value (),
+                                        SPMC_GVP_XVECTOR_JMPR.Value (),
                                         SPMC_GVP_VECTOR_DX.Value (),
                                         SPMC_GVP_VECTOR_DY.Value (),
                                         SPMC_GVP_VECTOR_DZ.Value (),

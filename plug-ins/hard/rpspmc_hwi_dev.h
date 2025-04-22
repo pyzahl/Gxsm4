@@ -136,6 +136,9 @@ public:
 
         virtual gboolean MovetoXY (double x, double y); // set tip position in scan coordinate system (potentially rotated)
 
+        gboolean CenterZOffset();
+        gboolean ZOffsetMove(double dv=0.);
+        
 	void delayed_tip_move_update ();
 	static guint delayed_tip_move_update_callback (rpspmc_hwi_dev *dspc);
         gint delayed_tip_move_update_timer_id;
@@ -207,6 +210,8 @@ private:
         int GVP_stream_buffer_AB;
         int GVP_stream_buffer_position;
         int GVP_stream_status;
+
+        double z_offset_internal;
         
 public:
         gint last_vector_index;
@@ -234,7 +239,7 @@ public:
 		// memcpy (v, &vector_program[i], sizeof (PROBE_VECTOR_GENERIC));
 		return -1;
 	};
-	int GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v);
+	int GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v, PROBE_VECTOR_EXTENSION *vx=NULL);
 
         gint RPSPMC_GVP_section_count;
         gint RPSPMC_GVP_n;

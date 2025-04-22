@@ -199,7 +199,9 @@ public:
         GtkWidget *mc_rampspeed_label;        
 
 private:
-	void create_folder();
+        int last_cmd;
+
+        void create_folder();
 	GSettings *hwi_settings;
 
 	UnitObj *Unity, *Hex, *Volt, *Time, *Phase, *Length, *Ang, *Speed;

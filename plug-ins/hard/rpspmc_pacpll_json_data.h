@@ -204,7 +204,7 @@ struct SPMC_parameters {
         double set_offset_xy_slew;
         double set_offset_z_slew;
 
-        double v[17];
+        double v[24];
 
         // DMA rate limit control
         double rpspmc_dma_pull_interval;

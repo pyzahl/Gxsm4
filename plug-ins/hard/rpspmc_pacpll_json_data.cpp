@@ -174,6 +174,12 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         { "SPMC_GVP_VECTOR_FM", &spmc_parameters.v[13], false }, // Float: FM RF=FM control
         { "SPMC_GVP_VECTORSLW", &spmc_parameters.v[14], false }, // Float: slew rate in #points / sec
 
+        { "SPMC_GVP_XVECTOR_OPCD", &spmc_parameters.v[15], false }, // INT: VECX OPCODE
+        { "SPMC_GVP_XVECTOR_RCHI", &spmc_parameters.v[16], false }, // INT: VECX Ref CH Index
+        { "SPMC_GVP_XVECTOR_JMPR", &spmc_parameters.v[17], false }, // INT: VECX JumpRel Dist
+        { "SPMC_GVP_XVECTOR_CMPV", &spmc_parameters.v[18], false }, // INT: VECX Compare Value
+
+        
         { "SPMC_ALPHA", &spmc_parameters.alpha, false },
         
         { "SPMC_SLOPE_DZX", &spmc_parameters.slope_dzx, false },
