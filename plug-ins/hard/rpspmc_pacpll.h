@@ -829,7 +829,7 @@ public:
 	double make_ZXYramp_vector (int index, double dZ, double dX, double dY, int n, double slope, int source, int options);
         
         // make dU/dZ/dX/dY vector for n points and ts time per segment
-	double make_dUZXYAB_vector (int index, double dU, double dZ, double dX, double dY, double da, double db, double dam, double dfm, int n, int nrep, int ptr_next, double ts, int source, int options);
+	double make_dUZXYAB_vector (int index, double dU, double dZ, double dX, double dY, double da, double db, double dam, double dfm, int n, int nrep, int ptr_next, double ts, int source, int options, int xopcd=0, double xval=0., int xrchi=0, int xjmpr=0);
         double make_dUZXYAB_vector_all_volts (int index, double dU, double dZ, double dX, double dY, double da, double db, double dam, double dfm, int n, int nrep, int ptr_next, double ts, int source, int options);
 
         

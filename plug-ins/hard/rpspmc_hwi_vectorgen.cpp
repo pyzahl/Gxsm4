@@ -138,7 +138,7 @@ double RPSPMC_Control::make_ZXYramp_vector (int index, double dZ, double dX, dou
 }
         
 // make dU/dZ/dX/dY vector for n points and ts time per segment
-double RPSPMC_Control::make_dUZXYAB_vector (int index, double dU, double dZ, double dX, double dY, double da, double db, double dam, double dfm, int n, int nrep, int ptr_next, double ts, int source, int options){
+double RPSPMC_Control::make_dUZXYAB_vector (int index, double dU, double dZ, double dX, double dY, double da, double db, double dam, double dfm, int n, int nrep, int ptr_next, double ts, int source, int options, int xopcd, double xval, int xrchi, int xjmpr){
         program_vector.n = n;
 
 //** WARNING ** make_dUZXYAB_vector[0]: slew or n out of range. [n=1000, ts=0.1 s] slew=10000 pts/s-- using safety fallback
@@ -162,6 +162,11 @@ double RPSPMC_Control::make_dUZXYAB_vector (int index, double dU, double dZ, dou
         program_vector.f_dam = dam;
         program_vector.f_dfm = dfm;
 
+        program_vectorX.opcd = xopcd;
+        program_vectorX.cmpv = xval;
+        program_vectorX.rchi = xrchi;
+        program_vectorX.jmpr = xjmpr;
+        
         print_vector ("make_dUZXYAB_vector", index);
         write_program_vector (index);
         
@@ -739,7 +744,8 @@ void RPSPMC_Control::write_spm_vector_program (int start, pv_mode pvm){
 				vp_duration += make_dUZXYAB_vector (vector_index++,
                                                                     GVP_du[k], GVP_dz[k], GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k], GVP_dam[k], GVP_dfm[k],
                                                                     GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
-                                                                    vis_Source, GVP_opt[k]^1); // invert FB flag in bit0, FPGA GVP FB=1 => FB-hold
+                                                                    vis_Source, GVP_opt[k]^1,     // invert FB flag in bit0, FPGA GVP FB=1 => FB-hold
+                                                                    GVPX_opcd[k], GVPX_cmpv[k], GVPX_rchi[k], GVPX_jmpr[k]);
 				if (GVP_vnrep[k]-1 > 0)	
 					vp_duration +=	(GVP_vnrep[k]-1)*(vp_duration - vpd[k+GVP_vpcjr[k]]);
 			}
@@ -991,7 +997,7 @@ void RPSPMC_Control::gvp_preview_draw_function (GtkDrawingArea *area, cairo_t *c
 void RPSPMC_Control::write_program_vector (int index){
         if (!rpspmc_hwi) return; 
 
-        rpspmc_hwi->GVP_write_program_vector (index, &program_vector);
+        rpspmc_hwi->GVP_write_program_vector (index, &program_vector, program_vector.options & (1<<7) ? &program_vectorX : NULL);
 
 	// update GXSM's internal copy of vector list
 	program_vector_list[index].n = program_vector.n;
@@ -1010,6 +1016,18 @@ void RPSPMC_Control::write_program_vector (int index){
 	program_vector_list[index].f_dam = program_vector.f_dam;
 	program_vector_list[index].f_dfm = program_vector.f_dfm;
 
+        if (program_vector.options & (1<<7)){
+                program_vectorX_list[index].opcd = program_vectorX.opcd;
+                program_vectorX_list[index].cmpv = program_vectorX.cmpv;
+                program_vectorX_list[index].rchi = program_vectorX.rchi;
+                program_vectorX_list[index].jmpr = program_vectorX.jmpr;
+        } else {
+                program_vectorX_list[index].opcd = 0;
+                program_vectorX_list[index].cmpv = 0;
+                program_vectorX_list[index].rchi = 0;
+                program_vectorX_list[index].jmpr = 0;
+        }
+        
         rpspmc_hwi->last_vector_index = index;
 
 	{ 
