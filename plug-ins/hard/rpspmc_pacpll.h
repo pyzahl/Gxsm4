@@ -883,6 +883,10 @@ public:
         double GVP_ts[N_GVP_VECTORS];
 	gint32 GVP_points[N_GVP_VECTORS];
 	gint32 GVP_opt[N_GVP_VECTORS];   // options
+        gint32 GVPX_opcd[N_GVP_VECTORS]; // VECX opcode
+        gint32 GVPX_rchi[N_GVP_VECTORS]; // VECX rchi (SRCS[index])
+        double GVPX_cmpv[N_GVP_VECTORS]; // VECX op value
+        gint32 GVPX_jmpr[N_GVP_VECTORS]; // VECX jmpr
 	gint32 GVP_data[N_GVP_VECTORS];  // GPIO data
 	gint32 GVP_vnrep[N_GVP_VECTORS]; // Vector N repetitions
 	gint32 GVP_vpcjr[N_GVP_VECTORS]; // VPC jump relative length

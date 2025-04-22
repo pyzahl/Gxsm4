@@ -54,7 +54,8 @@ case `hostname` in
     (bititan.cfn.bnl.gov) 
 	echo "on bititan: [130.199.243.191] generating bit.bin:";
 	/mnt/home-copy/Xilinx2023/Vivado/2023.1/bin/bootgen -image fpga.bif -arch zynq -process_bitstream bin -w -o fpga.bit.bin;
-	rp="130.199.243.110";   ## RP's IP
+	#rp="130.199.243.110";   ## RP's IP in offcie
+	rp="130.199.242.146";   ## RP's IP in the lab
 	rpp="root4gxsm"
 	break;;
 

@@ -1659,9 +1659,9 @@ void RPSPMC_Control::create_folder (){
                 bp->set_input_width_chars (6);
                 bp->set_configure_list_mode_on ();
                 //bp->grid_add_ec (NULL, Unity, &mix_gain[ch], -1.0, 1.0, "5g", 0.001, 0.01, mixer_remote_id_gn[ch]);
-                bp->set_configure_list_mode_on ();
+                //bp->set_configure_list_mode_on ();
                 bp->grid_add_ec (NULL, mixer_unit[ch], &mix_in_offsetcomp[ch], -1.0, 1.0, "5g", 0.001, 0.01, mixer_remote_id_oc[ch]);
-                bp->set_configure_list_mode_off ();
+                //bp->set_configure_list_mode_off ();
                 bp->grid_add_ec (NULL, mixer_unit[ch], &mix_level[ch], -100.0, 100.0, "5g", 0.001, 0.01, mixer_remote_id_fl[ch]);
                 if (tmp) delete (tmp); // done setting unit -- if custom
                 
@@ -1672,7 +1672,7 @@ void RPSPMC_Control::create_folder (){
                 bp->set_configure_list_mode_off ();
                 bp->new_line ();
         }
-        bp->set_configure_list_mode_off ();
+        //bp->set_configure_list_mode_off ();
 
         bp->set_input_width_chars ();
         
@@ -2218,10 +2218,17 @@ void RPSPMC_Control::create_folder (){
         bp->set_input_width_chars (3);
         bp->set_label_width_chars (3);
         bp->grid_add_label ("FB", "Feedback (Option bit 0), CHECKED=FB-OFF (for now)");
-        bp->grid_add_label ("VSet", "Treat this as a initial set position, vector differential from current position are computed!");
+        bp->grid_add_label ("VSet", "Treat this as a initial set position, vector differential from current position are computed!\nAttention: Does NOT apply to XYZ.");
         bp->set_configure_list_mode_on ();
-        bp->grid_add_label ("7", "Option bit 7");
-        bp->grid_add_label ("6", "Option bit 6 -- Enable Max Sampling");
+
+        GSList *EC_vpc_exthdr_list=NULL;
+        bp->grid_add_label ("OP", "X-OPCD"); EC_vpc_exthdr_list = g_slist_prepend( EC_vpc_exthdr_list, bp->label); gtk_widget_hide (bp->label);
+        bp->grid_add_label ("CI", "X-RCHI"); EC_vpc_exthdr_list = g_slist_prepend( EC_vpc_exthdr_list, bp->label); gtk_widget_hide (bp->label);
+        bp->grid_add_label ("VAL", "X-CMPV"); EC_vpc_exthdr_list = g_slist_prepend( EC_vpc_exthdr_list, bp->label); gtk_widget_hide (bp->label);
+        bp->grid_add_label ("JR", "X-JMPR"); EC_vpc_exthdr_list = g_slist_prepend( EC_vpc_exthdr_list, bp->label); gtk_widget_hide (bp->label);
+
+        bp->grid_add_label ("VX", "Enable VecEXtension OPCodes. Option bit 7");
+        bp->grid_add_label ("HS", "Enable Max Sampling. Option bit 6");
         bp->grid_add_label ("5", "Option bit 5");
         bp->grid_add_label ("4", "Option bit 4");
         bp->grid_add_label ("3", "Option bit 3");
@@ -2296,16 +2303,43 @@ void RPSPMC_Control::create_folder (){
                                            GVP_opt[k], VP_INITIAL_SET_VEC);
                 EC_vpc_opt_list = g_slist_prepend( EC_vpc_opt_list, bp->button);
                 g_object_set_data (G_OBJECT (bp->button), "VPC", GINT_TO_POINTER (k));
+
+
+                bp->set_input_width_chars (4);
+                bp->set_label_width_chars (4);
+                GSList *EC_vpc_ext_list=NULL;
+		bp->grid_add_ec (NULL, Unity, &GVPX_opcd[k],   0.,  5.,  ".0f", "gvp-xopcd", k); //
+                if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
+                EC_vpc_ext_list = g_slist_prepend( EC_vpc_ext_list, bp->input);
+		bp->grid_add_ec (NULL, Unity, &GVPX_rchi[k],   0., 14.,  ".0f", "gvp-xrchi", k); //
+                if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
+                EC_vpc_ext_list = g_slist_prepend( EC_vpc_ext_list, bp->input);
+                bp->set_input_width_chars (7);
+                bp->set_label_width_chars (7);
+                bp->grid_add_ec (NULL, Unity, &GVPX_cmpv[k], -1e6, 1e6,  "6.4g", 1., 10., "gvp-xcmpv", k); //
+                if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
+                EC_vpc_ext_list = g_slist_prepend( EC_vpc_ext_list, bp->input);
+                bp->set_input_width_chars (4);
+                bp->set_label_width_chars (4);
+		bp->grid_add_ec (NULL, Unity, &GVPX_jmpr[k], -32., 32.,  ".0f", "gvp-xjmpr", k); //
+                if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
+                EC_vpc_ext_list = g_slist_prepend( EC_vpc_ext_list, bp->input);
+
                 
+                bp->set_input_width_chars (2);
+                bp->set_label_width_chars (2);
+                GtkWidget *VX_b7=NULL;
                 for (int bit=7; bit >= 1; --bit){
                         bp->set_label_width_chars (1);
                         bp->grid_add_check_button ("", NULL, 1,
                                                    GCallback (callback_change_GVP_vpc_option_flags), this,
                                                    GVP_opt[k], (1<<bit));
+                        if (bit == 7) VX_b7 = bp->button;
                         EC_vpc_opt_list = g_slist_prepend( EC_vpc_opt_list, bp->button);
                         g_object_set_data (G_OBJECT (bp->button), "VPC", GINT_TO_POINTER (k));
                 }
-
+                g_object_set_data( G_OBJECT (VX_b7), "DSP_VPC_EXTOPC_list", EC_vpc_ext_list);
+                g_object_set_data( G_OBJECT (VX_b7), "DSP_VPC_EXTHDR_list", EC_vpc_exthdr_list);
 
                 bp->set_input_width_chars (4);
                 bp->set_label_width_chars (4);
@@ -3313,6 +3347,20 @@ int RPSPMC_Control::callback_update_GVP_vpc_option_checkbox (GtkWidget *widget, 
 	guint64 msk = (guint64) GPOINTER_TO_UINT (g_object_get_data(G_OBJECT(widget), "Bit_Mask"));
 	gtk_check_button_set_active (GTK_CHECK_BUTTON(widget), (self->GVP_opt[k] & msk) ? 1:0);
 
+	if( gtk_check_button_get_active (GTK_CHECK_BUTTON (widget))){
+		g_slist_foreach((GSList*)g_object_get_data (G_OBJECT(widget), "DSP_VPC_EXTOPC_list"),
+				(GFunc) gtk_widget_show, NULL);
+		g_slist_foreach((GSList*)g_object_get_data (G_OBJECT(widget), "DSP_VPC_EXTHDR_list"),
+				(GFunc) gtk_widget_show, NULL);
+	} else {
+		g_slist_foreach((GSList*)g_object_get_data (G_OBJECT(widget), "DSP_VPC_EXTOPC_list"),
+				(GFunc) gtk_widget_hide, NULL);
+		g_slist_foreach((GSList*)g_object_get_data (G_OBJECT(widget), "DSP_VPC_EXTHDR_list"),
+				(GFunc) gtk_widget_hide, NULL);
+        }
+
+
+        
         self->set_tab_settings ("VP", self->GVP_option_flags, self->GVP_auto_flags, self->GVP_glock_data);
         return 0;
 }
@@ -3320,14 +3368,24 @@ int RPSPMC_Control::callback_update_GVP_vpc_option_checkbox (GtkWidget *widget, 
 int RPSPMC_Control::callback_change_GVP_vpc_option_flags (GtkWidget *widget, RPSPMC_Control *self){
         //        PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);
 	int  k = GPOINTER_TO_INT (g_object_get_data(G_OBJECT(widget), "VPC"));
-	guint64 msk = (guint64) GPOINTER_TO_UINT (g_object_get_data(G_OBJECT(widget), "Bit_Mask"));
+	guint64 msk = (guint64) GPOINTER_TO_UINT (g_object_get_data (G_OBJECT(widget), "Bit_Mask"));
 
-	if( gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)))
+	if( gtk_check_button_get_active (GTK_CHECK_BUTTON (widget))){
 		self->GVP_opt[k] = (self->GVP_opt[k] & (~msk)) | msk;
-	else
+		g_slist_foreach((GSList*)g_object_get_data (G_OBJECT(widget), "DSP_VPC_EXTOPC_list"),
+				(GFunc) gtk_widget_show, NULL);
+		g_slist_foreach((GSList*)g_object_get_data (G_OBJECT(widget), "DSP_VPC_EXTHDR_list"),
+				(GFunc) gtk_widget_show, NULL);
+	} else {
 		self->GVP_opt[k] &= ~msk;
-
+		g_slist_foreach((GSList*)g_object_get_data (G_OBJECT(widget), "DSP_VPC_EXTOPC_list"),
+				(GFunc) gtk_widget_hide, NULL);
+		g_slist_foreach((GSList*)g_object_get_data (G_OBJECT(widget), "DSP_VPC_EXTHDR_list"),
+				(GFunc) gtk_widget_hide, NULL);
+        }
+        
         self->set_tab_settings ("VP", self->GVP_option_flags, self->GVP_auto_flags, self->GVP_glock_data);
+
         return 0;
 }
 

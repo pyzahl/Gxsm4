@@ -809,6 +809,31 @@
       <description>pcs0000, Array-N: 45, PCS Remote-ID: 'dsp-gvp-n16', Default/U:     0      , Adjustment PCS Name: 'dsp-gvp-n16' </description>
     </key>
 
+    <key name="dsp-gvp-xopcd00" type="ad">
+      <default>[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]</default>
+      <summary>PCS Remote-ID: 'dsp-gvp-xopcd31', Default/U: 0       </summary>
+      <description>pcs0000, Array-N: 32, PCS Remote-ID: 'dsp-gvp-xopcd31', Default/U: 0      , Adjustment PCS Name: 'dsp-gvp-xopcd31' </description>
+    </key>
+
+    <key name="dsp-gvp-xrchi00" type="ad">
+      <default>[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]</default>
+      <summary>PCS Remote-ID: 'dsp-gvp-xrchi31', Default/U: 0       </summary>
+      <description>pcs0000, Array-N: 32, PCS Remote-ID: 'dsp-gvp-xrchi31', Default/U: 0      , Adjustment PCS Name: 'dsp-gvp-xrchi31' </description>
+    </key>
+
+    <key name="dsp-gvp-xcmpv00" type="ad">
+      <default>[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]</default>
+      <summary>PCS Remote-ID: 'dsp-gvp-xcmpv31', Default/U:      0       </summary>
+      <description>pcs0000, Array-N: 32, PCS Remote-ID: 'dsp-gvp-xcmpv31', Default/U:      0      , Adjustment PCS Name: 'dsp-gvp-xcmpv31' </description>
+    </key>
+
+    <key name="dsp-gvp-xjmpr00" type="ad">
+      <default>[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]</default>
+      <summary>PCS Remote-ID: 'dsp-gvp-xjmpr31', Default/U: 0       </summary>
+      <description>pcs0000, Array-N: 32, PCS Remote-ID: 'dsp-gvp-xjmpr31', Default/U: 0      , Adjustment PCS Name: 'dsp-gvp-xjmpr31' </description>
+    </key>
+
+    
     <key name="dsp-gvp-data00" type="ad">
       <default>[0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,0]</default>
       <summary>PCS Remote-ID: 'dsp-gvp-data16', Default/U: 0000 h     </summary>
