@@ -4090,10 +4090,12 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
         //                            G_CALLBACK (RPspmc_pacpll::phase_unwrap_plot), this);
         GtkWidget *cbrotab = gtk_combo_box_text_new ();
         gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbrotab), "0", "r0");
-        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbrotab), "1", "r90");
-        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbrotab), "2", "r-90");
-        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbrotab), "3", "r45");
-        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbrotab), "4", "r-45");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbrotab), "1", "r45");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbrotab), "2", "r-45");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbrotab), "3", "r90");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbrotab), "4", "r-90");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbrotab), "5", "r180");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbrotab), "6", "r-180");
         g_signal_connect (G_OBJECT (cbrotab), "changed",
                           G_CALLBACK (RPspmc_pacpll::phase_rot_ab), 
                           this);				

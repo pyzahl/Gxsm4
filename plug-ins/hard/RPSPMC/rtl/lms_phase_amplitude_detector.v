@@ -182,7 +182,7 @@ module lms_phase_amplitude_detector #(
     reg signed [31:0] Rtau=0; // Q22 tau phase
     reg signed [31:0] RAtau=0; // Q22 tau amplitude
 
-    reg [2:0] rot_ab_pi4x=1;
+    reg [3:0] rot_ab_pi4x=1;
     reg lck_ampl=0;
     reg lck_phase=0;
 
@@ -304,7 +304,7 @@ module lms_phase_amplitude_detector #(
             RAtau       <= config_data[2*32-1 : 1*32]; // Atau: buffer to register -- Q22 tau amplitude
             lck_ampl    <= config_data[2*32   : 2*32];
             lck_phase   <= config_data[2*32+1 : 2*32+1];
-            rot_ab_pi4x <= config_data[3*32+2 : 3*32];
+            rot_ab_pi4x <= config_data[3*32+3 : 3*32];
         end   
         reset_lms_phase_amplitude_detector_address:
             resetn <= 0;
@@ -645,25 +645,35 @@ module lms_phase_amplitude_detector #(
                         y <= a;
                         x <= b;
                     end
-                    1: // 90
-                    begin
-                        y <= b;
-                        x <= a;
-                    end
-                    2: // -90
-                    begin
-                        y <= -b;
-                        x <= a;
-                    end
-                    3: // ORIGINAL 45 deg
+                    1: // ORIGINAL 45 deg
                     begin
                         y <= a-b;
                         x <= a+b;
                     end
-                    4: // -45
+                    2: // -45
                     begin
                         y <= b-a;
                         x <= a+b;
+                    end
+                    3: // 90
+                    begin
+                        y <= b;
+                        x <= a;
+                    end
+                    4: // -90
+                    begin
+                        y <= -b;
+                        x <= a;
+                    end
+                    5: // 180
+                    begin
+                        y <= -a;
+                        x <= b;
+                    end
+                    6: // -180
+                    begin
+                        y <= -a;
+                        x <= -b;
                     end
                     endcase
                 end 
