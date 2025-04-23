@@ -182,6 +182,7 @@ module lms_phase_amplitude_detector #(
     reg signed [31:0] Rtau=0; // Q22 tau phase
     reg signed [31:0] RAtau=0; // Q22 tau amplitude
 
+    reg [2:0] rot_ab_pi4x=1;
     reg lck_ampl=0;
     reg lck_phase=0;
 
@@ -299,10 +300,11 @@ module lms_phase_amplitude_detector #(
         lms_phase_amplitude_detector_address:
         begin
             // cfg[SRC_ADDR*32+SRC_BITS-1:SRC_ADDR*32+SRC_BITS-DST_WIDTH] // old, using DST_WIDTH upper bits form cfg reg
-            Rtau      <= config_data[1*32-1 : 0*32]; //  tau: buffer to register -- Q22 tau phase
-            RAtau     <= config_data[2*32-1 : 1*32]; // Atau: buffer to register -- Q22 tau amplitude
-            lck_ampl  <= config_data[2*32   : 2*32];
-            lck_phase <= config_data[2*32+1 : 2*32+1];
+            Rtau        <= config_data[1*32-1 : 0*32]; //  tau: buffer to register -- Q22 tau phase
+            RAtau       <= config_data[2*32-1 : 1*32]; // Atau: buffer to register -- Q22 tau amplitude
+            lck_ampl    <= config_data[2*32   : 2*32];
+            lck_phase   <= config_data[2*32+1 : 2*32+1];
+            rot_ab_pi4x <= config_data[3*32+2 : 3*32];
         end   
         reset_lms_phase_amplitude_detector_address:
             resetn <= 0;
@@ -637,8 +639,33 @@ module lms_phase_amplitude_detector #(
                     //== ampl2 <= Aa*Aa + Ab*Ab; // 1Q44
                     ampl2 <= a2 + b2; // 1Q44
                     // x,y (for phase)from 1st PAC
-                    y <= a-b;
-                    x <= a+b;
+                    case (rot_ab_pi4x)
+                    0: // ZERO DEG vs. SINE
+                    begin
+                        y <= a;
+                        x <= b;
+                    end
+                    1: // 90
+                    begin
+                        y <= b;
+                        x <= a;
+                    end
+                    2: // -90
+                    begin
+                        y <= -b;
+                        x <= a;
+                    end
+                    3: // ORIGINAL 45 deg
+                    begin
+                        y <= a-b;
+                        x <= a+b;
+                    end
+                    4: // -45
+                    begin
+                        y <= b-a;
+                        x <= a+b;
+                    end
+                    endcase
                 end 
                 else if (COMPUTE_LOCKIN)
                 begin

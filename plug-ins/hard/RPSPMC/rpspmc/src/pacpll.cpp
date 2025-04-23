@@ -129,7 +129,8 @@ void reset_lms (){
 void config_lms (int pactau_ph, int pactau_am, int modes){
         rp_spmc_module_config_int32 (MODULE_SETUP, pactau_ph, LMS_PACPLL_CFG_PACTAU);
         rp_spmc_module_config_int32 (MODULE_SETUP, pactau_am, LMS_PACPLL_CFG_PACATAU);
-        rp_spmc_module_config_int32 (LMS_PHASE_AMPLITUDE_DETECTOR_ADDRESS, modes, LMS_PACPLL_CFG_LCK_AM_PH); // WRITE
+        rp_spmc_module_config_int32 (MODULE_SETUP, modes&0x0F, LMS_PACPLL_CFG_LCK_AM_PH);
+        rp_spmc_module_config_int32 (LMS_PHASE_AMPLITUDE_DETECTOR_ADDRESS, (modes>>8)&0x0F, LMS_PACPLL_CFG_ROT_AB); // WRITE
 }
 
 void config_transport (int channelsel, int ndecimate, int nsamples, int opmode, int shift, unsigned long long fcenter){

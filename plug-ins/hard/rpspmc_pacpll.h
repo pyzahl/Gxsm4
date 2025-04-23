@@ -1042,9 +1042,9 @@ public:
         static void phase_controller_invert (GtkWidget *widget, RPspmc_pacpll *self);
         static void phase_controller (GtkWidget *widget, RPspmc_pacpll *self);
         static void phase_unwrapping_always (GtkWidget *widget, RPspmc_pacpll *self);
+        static void phase_rot_ab (GtkWidget *widget, RPspmc_pacpll *self);
         static void phase_unwrap_plot (GtkWidget *widget, RPspmc_pacpll *self);
         static void set_ss_auto_trigger (GtkWidget *widget, RPspmc_pacpll *self);
-
 	static void dfreq_ctrl_parameter_changed (Param_Control* pcs, gpointer user_data);
 	static void dfreq_gain_changed (Param_Control* pcs, gpointer user_data);
         static void dfreq_controller_invert (GtkWidget *widget, RPspmc_pacpll *self);

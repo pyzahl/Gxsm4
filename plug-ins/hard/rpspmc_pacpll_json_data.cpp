@@ -102,6 +102,7 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         { "PHASE_HOLD_AM_NOISE_LIMIT",  &pacpll_parameters.phase_hold_am_noise_limit, false },
         { "PHASE_CONTROLLER", &pacpll_parameters.phase_controller, false },
         { "PHASE_UNWRAPPING_ALWAYS", &pacpll_parameters.phase_unwrapping_always, false },
+        { "PAC_ROT_AB", &pacpll_parameters.phase_rot_ab, false },
         { "SET_SINGLESHOT_TRANSPORT_TRIGGER", &pacpll_parameters.set_singleshot_transport_trigger, false },
         
         { "DFREQ_FB_SETPOINT", &pacpll_parameters.dfreq_fb_setpoint, false },

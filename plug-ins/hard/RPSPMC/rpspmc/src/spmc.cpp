@@ -647,11 +647,11 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, unsigned int srcs
         rp_spmc_module_write_config_data (SPMC_GVP_VECTOR_DATA_REG);
 
         // add Vector Extension Code?
-        if (opts & SPMC_GVP_VECTOR_EXTENSTION_BITMASK){
+        if (opts & SPMC_GVP_VECTOR_EXT_BITMASK){
                 rp_spmc_module_start_config ();
                 set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VECX_VADR, pc);
                 set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VECX_OPCD, idv[17]=x_opcd);
-                set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VECX_CMPV, idv[18]=(int)round(Q31*x_cmpv/Nsteps/SPMC_AD5791_REFV));
+                set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VECX_CMPV, idv[18]=(int)round(Q31*x_cmpv/SPMC_AD5791_REFV));
                 set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VECX_RCHI, idv[19]=x_rchi);
                 set_gpio_cfgreg_int32 (SPMC_MODULE_CONFIG_DATA + GVP_VECX_JMPR, idv[20]=x_jmpr);
                 //set_gpio_cfgreg_uint32 (SPMC_MODULE_CONFIG_DATA + GVP_VECX_OPT, idv[30]=opts);
@@ -678,7 +678,7 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, unsigned int srcs
                         break;
                 }
         }
-        if (opts & SPMC_GVP_VECTOR_EXTENSTION_BITMASK){
+        if (opts & SPMC_GVP_VECTOR_EXT_BITMASK){
                 vector_def << ", vecx = {";
                 for (int i=20; i>=17; i--){
                         vector_def << ((idv[i] < 0) ?", -":",  ") << std::setfill('0') << std::dec << "32'd" << (abs(idv[i]));

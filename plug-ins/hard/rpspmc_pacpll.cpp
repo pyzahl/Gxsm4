@@ -4086,8 +4086,20 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
         bp->new_line ();
         bp->grid_add_check_button ( N_("Unwapping"), "Always unwrap phase/auto unwrap only if controller is enabled", 2,
                                     G_CALLBACK (RPspmc_pacpll::phase_unwrapping_always), this);
-        bp->grid_add_check_button ( N_("Unwap Plot"), "Unwrap plot at high level", 2,
-                                    G_CALLBACK (RPspmc_pacpll::phase_unwrap_plot), this);
+        //bp->grid_add_check_button ( N_("Unwap Plot"), "Unwrap plot at high level", 2,
+        //                            G_CALLBACK (RPspmc_pacpll::phase_unwrap_plot), this);
+        GtkWidget *cbrotab = gtk_combo_box_text_new ();
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbrotab), "0", "r0");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbrotab), "1", "r90");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbrotab), "2", "r-90");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbrotab), "3", "r45");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbrotab), "4", "r-45");
+        g_signal_connect (G_OBJECT (cbrotab), "changed",
+                          G_CALLBACK (RPspmc_pacpll::phase_rot_ab), 
+                          this);				
+        gtk_combo_box_set_active_id (GTK_COMBO_BOX (cbrotab), "0");
+        bp->grid_add_widget (cbrotab);
+
         bp->new_line ();
         bp->grid_add_check_button ( N_("Use LockIn Mode"), "Use LockIn Mode", 2,
                                     G_CALLBACK (RPspmc_pacpll::select_pac_lck_phase), this);
@@ -5215,6 +5227,10 @@ void RPspmc_pacpll::phase_controller (GtkWidget *widget, RPspmc_pacpll *self){
 void RPspmc_pacpll::phase_unwrapping_always (GtkWidget *widget, RPspmc_pacpll *self){
         self->write_parameter ("PHASE_UNWRAPPING_ALWAYS", gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)));
         self->parameters.phase_unwrapping_always = gtk_check_button_get_active (GTK_CHECK_BUTTON (widget));
+}
+
+void RPspmc_pacpll::phase_rot_ab (GtkWidget *widget, RPspmc_pacpll *self){
+        self->write_parameter ("PAC_ROT_AB", gtk_combo_box_get_active (GTK_COMBO_BOX (widget)));
 }
 
 void RPspmc_pacpll::phase_unwrap_plot (GtkWidget *widget, RPspmc_pacpll *self){

@@ -52,6 +52,7 @@
 #define LMS_PACPLL_CFG_PACTAU        0 // (actual Q22 mu) Phase mu
 #define LMS_PACPLL_CFG_PACATAU       1 // (actual Q22 mu) Amplitude mu
 #define LMS_PACPLL_CFG_LCK_AM_PH     2 // Bit0: Ampl Bit1: Phase (if enabled in build, option to use LockIn)
+#define LMS_PACPLL_CFG_ROT_AB        3 // rot AB by 0, 45, 90, 180 (2 bits)
 
 // MODULE AMPLITUDE CONTROLLER
 #define AMPLITUDE_CONTROLLER_ADDRESS   20002 // C32/L16/S24
@@ -116,7 +117,7 @@
 #define PACPLL_CFG_LOWER 5 // 5,6 64bit
 
 
-#define SPMC_GVP_VECTOR_EXTENSTION_BITMASK (1<<7)
+#define SPMC_GVP_VECTOR_EXT_BITMASK (1<<7)
 
 // GVP MODULE AT CONFIGURATION ADDRs  1,2,3,4
 #define SPMC_GVP_CONTROL_REG          5001   // CONTROL CONFIG REG: B0: reset, B1: Pause
