@@ -283,7 +283,7 @@ CBooleanParameter LCK_PHASE("LCK_PHASE", CBaseParameter::RW, false, 0);
 CBooleanParameter DFREQ_CONTROLLER("DFREQ_CONTROLLER", CBaseParameter::RW, false, 0);
 CBooleanParameter DFREQ_CONTROL_Z("DFREQ_CONTROL_Z", CBaseParameter::RW, false, 0);
 CBooleanParameter DFREQ_CONTROL_U("DFREQ_CONTROL_U", CBaseParameter::RW, false, 0);
-CIntParameter     PAC_ROT_AB("PAC_ROT_AB", CBaseParameter::RW, 0, 0, 0, 4);
+CIntParameter     PAC_ROT_AB("PAC_ROT_AB", CBaseParameter::RW, 0, 0, 0, 127);
 
 //void rp_PAC_set_phase_controller64 (double setpoint, double cp, double ci, double upper, double lower)
 CDoubleParameter AMPLITUDE_FB_SETPOINT("AMPLITUDE_FB_SETPOINT", CBaseParameter::RW, 20, 0, 0, 1000); // mV

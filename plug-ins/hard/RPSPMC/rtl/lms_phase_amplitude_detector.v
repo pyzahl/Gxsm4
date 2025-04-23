@@ -182,7 +182,7 @@ module lms_phase_amplitude_detector #(
     reg signed [31:0] Rtau=0; // Q22 tau phase
     reg signed [31:0] RAtau=0; // Q22 tau amplitude
 
-    reg [3:0] rot_ab_pi4x=1;
+    reg [4-1:0] rot_ab_pi4x=1;
     reg lck_ampl=0;
     reg lck_phase=0;
 
