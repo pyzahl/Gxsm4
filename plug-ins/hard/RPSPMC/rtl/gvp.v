@@ -349,7 +349,9 @@ module gvp #(
                         load_next_vector <= 0;
                         i   <= vec_n[pvc];
                         ii  <= vec_iin[pvc];
-                        x_rchi <= vecX_rchi[pvc][3:0];
+                        x_rchi    <= vecX_rchi[pvc][3:0];
+                        until_flg <= 0; 
+                        jump_rel  <= 0;
                         if (vec_n[pvc] == 0) // n == 0: END OF VECTOR PROGRAM REACHED
                         begin
                             finished <= 1;
@@ -382,21 +384,17 @@ module gvp #(
                             X_LE <= X_value < vecX_cmpv[pvc] ? 1:0;
                             // X_value, vecX_opcd, vecX_cmpv
                             case (vecX_opcd[pvc][3:0])
-                                1: begin if (X_GE) until_flg <= 1; end  // UNTIL >
-                                2: begin if (X_LE) until_flg <= 1; end  // UNTIL <
-                                3: begin if (X_GE) jump_rel <= vecX_jmpn[pvc]; end  // JMP >
-                                4: begin if (X_LE) jump_rel <= vecX_jmpn[pvc]; end  // JMP <
+                                0: begin until_flg <= 0; jump_rel <= 0; end // NOP
+                                1: begin if (X_GE) until_flg <= 1; jump_rel <= 0; end  // UNTIL >
+                                2: begin if (X_LE) until_flg <= 1; jump_rel <= 0; end  // UNTIL <
+                                3: begin if (X_GE) until_flg <= 0; jump_rel <= vecX_jmpn[pvc]; end  // JMP >
+                                4: begin if (X_LE) until_flg <= 0; jump_rel <= vecX_jmpn[pvc]; end  // JMP <
                                 5: begin jump_rel <= vecX_jmpn[pvc]; end  // JMP
-                                default: begin until_flg <= 0; jump_rel  <= 0; end
+                                default: begin until_flg <= 0; jump_rel <= 0; end
                             endcase
                         end
-                        else
-                        begin
-                            until_flg <= 0;
-                            jump_rel  <= 0;
-                        end
                         
-                        if (ii && !until_flg && !jump_rel) // do intermediate step(s) ?
+                        if (ii) // do intermediate step(s) ?
                         begin
                             store <= 0;
                             ii <= ii-1;
