@@ -70,7 +70,7 @@ global CHV5_gain_list
 global CHV5_gains
 
 CHV5_configuration = {
-        'gain':  [3,3,3],
+        'gain':  [2,2,2],
         'filter': [0,0,0],
         'bw': [0,0,0],
         'target': [0.,0.,0.]
@@ -83,7 +83,7 @@ CHV5_monitor = {
         }
 
 CHV5_gain_list = [3,6,12,24]
-CHV5_gains = [24., 24., 24.]
+CHV5_gains = [12., 12., 12.]
 
 
 CHV5_coarse = {
@@ -145,28 +145,60 @@ class THV5():
                 self.besocke = False
                 self.ip = ip
 
-        def request(self, data):
+        def request_stmafm(self, data):
                 #idhttp1.Get(ipstring + 'stmafm?' + command, ResponseStream);
                 print (self.ip + 'stmafm?' + data)
                 #return requests.get(self.ip + 'stmafm?' + data)
 
-        # gain: 3,6,12,24  filters: 'ON','OFF' 
-        def SetTHVGain(self, gainx, gainy, gainz, filter, filter2nd, coarseboard, coarsevoltage):
-                return self.request ('f1={}&f2={}&g0={}&g1=&g2={}&v{}={}'.format(filter, filter2nd, gainx, gainy, gainz, coarseboard, coarsevoltage))
+        def request(self, data):
+                #idhttp1.Get(ipstring + 'stmafm?' + command, ResponseStream);
+                print (self.ip + data)
+                return requests.get(self.ip + data)
 
-        def SetTHVCoarseMove(self, channel, direction, burstcount, period, start):
-                if self.besocke:
-                        # Besocke
-                        if start:
-                                return self.request ('k0={}&c0={}&p0={}&bb=0'.format(channel, burstcount*direction, period))
-                        else:
-                                return self.request ('k0={}&c0={}&p0={}'.format(channel, burstcount*direction, period))
+
+        def request_coarse(self, data):
+                #idhttp1.Get(ipstring + 'stmafm?' + command, ResponseStream);
+                print (self.ip + 'coarse?' + data)
+                #return requests.get(self.ip + 'stmafm?' + data)
+
+                #http://192.168.40.10/coarse?v0=150&p0=500&a0=Z&c0=33&bs=0
+
+        #http://192.168.40.10/gain?g0=12&l0=ON&e0=OFF&g1=12&l1=ON&e1=OFF&g2=12&l2=ON&e2=ON&g3=3&l3=OFF&e3=OFF
+        # X 12x, lowpass on, endfilter off
+        # Y 12x, lowpass on, endfilter off
+        # Z 12x, lowpass on, endfilter on
+        # AUX 3 off off
+                
+        # gain: 3,6,12,24  filters: 'ON','OFF' 
+        def SetTHVGain(self, gainx, gainy, gainz):
+                return self.request ('gain?gain?g0={}&l0=ON&e0=OFF&g1={}&l1=ON&e1=OFF&g2={}&l2=ON&e2=ON&g3=3&l3=OFF&e3=OFF'.format(gainx, gainy, gainz))
+                #return self.request ('gain?f1={}&f2={}&g0={}&g1=&g2={}&v{}={}'.format(filter, filter2nd, gainx, gainy, gainz, coarseboard, coarsevoltage))
+
+
+        # http://192.168.40.10/coarse?v0=150&p0=500&a0=Z&c0=10000
+        # http://192.168.40.10/coarse?v0=150&p0=500&a0=Z&c0=33&bs=0     150V 500 us Z 33 steps   START
+        # http://192.168.40.10/coarse?v0=150&p0=500&a0=X&c0=33&bs=0
+        # http://192.168.40.10/coarse?v0=150&p0=500&a0=Y&c0=33&bs=0
+        #
+        # http://192.168.40.10/coarse?v0=150&p0=500&a0=Y&c0=33          SAVE
+        #
+        # 
+        
+        def SetTHVCoarseMove(self, channel, direction, burstcount, period, voltage, start):
+                c=['X','Y','Z']
+                if start:
+                        return self.request ('coarse?v={}&p0={}&a0={}&c0={}&bs=0'.format(voltage, period, c[channel], burstcount*direction))
                 else:
-                        # Prizm
-                        if start:
-                                return self.request ('a0={}&c0={}&p0={}&bs=0'.format(channel, burstcount*direction, period))
-                        else:
-                                return self.request ('a0={}&c0={}&p0={}'.format(channel, burstcount*direction, period))
+                        return self.request ('coarse?v={}&p0={}&a0={}&c0={}&bs=0'.format(0, 0, c[channel], 0))
+
+        #return self.request ('k0={}&c0={}&p0={}&bb=0'.format(channel, burstcount*direction, period))
+        #return self.request ('k0={}&c0={}&p0={}'.format(channel, burstcount*direction, period))
+
+        # Prizm
+        #if start:
+        #        return self.request ('a0={}&c0={}&p0={}&bs=0'.format(channel, burstcount*direction, period))
+        #else:
+        #        return self.request ('a0={}&c0={}&p0={}'.format(channel, burstcount*direction, period))
 
         def THVReset (self):
                 return self.request ('fd=1')
@@ -289,7 +321,8 @@ def hv1_adjust(_object, _value, _identifier):
         #if index >= ii_config_preset_X0 and index < ii_config_dum:
 
         CHV5_gains[index] = CHV5_gain_list[value]
-        
+
+
         read_back ()
         return 1
 
@@ -467,7 +500,7 @@ def do_emergency(button,w,gl):
                 w.set_active(False)
         #goto_presets()
 
-def on_gain_changed(combo, ii):
+def on_gain_changed(combo, ii, self):
         tree_iter = combo.get_active_iter()
         if tree_iter is not None:
                 model = combo.get_model()
@@ -475,6 +508,7 @@ def on_gain_changed(combo, ii):
                 position = combo.get_active()
                 print("Gain {}: {} [{}]".format(ii,g,position))
                 hv1_adjust (None, position, ii)
+        self.set_gains()
 
 # besides print label, same code:                
 def on_bw_changed(combo, ii):
@@ -523,7 +557,7 @@ class HV5App(Gtk.Application):
         def __init__(self, *args, **kwargs):
                 super().__init__(*args, application_id="com.createc.hv5app", **kwargs)
 
-                self.thv = THV5('http://192.168.0.33/')
+                self.thv = THV5('http://192.168.40.10/')
                 get_status()
                 
                 self.window = None
@@ -543,15 +577,19 @@ class HV5App(Gtk.Application):
                         volts = float(ev[axis].get_text())
                         period = float(ep[axis].get_text())
                 print ('do coarse START', dir, steps, volts, period)
-                self.thv.SetTHVGain(3, 3, 3, 'OFF', 'OFF', axis+1, volts)
-                self.thv.SetTHVCoarseMove(axis+1, d, steps, period, True)
+                self.thv.SetTHVCoarseMove(axis, d, steps, period, volts, True)
                 
         def stop_coarse(self, button, a, dir, es, ev, ep):
                 print ('do coarse STOP', dir)
                 axis = 0
                 if abs(dir) > 0:
                         axis = abs(dir)-1
-                self.thv.SetTHVCoarseMove(axis+1, 1, 0, 3, False)
+                self.thv.SetTHVCoarseMove(axis, 1, 0, 0, 0, False)
+
+
+        def set_gains(self):
+                global CHV5_gains
+                self.thv.SetTHVGain(CHV5_gains[0], CHV5_gains[1], CHV5_gains[2])
 
                 
         def do_activate(self):
@@ -648,7 +686,7 @@ class HV5App(Gtk.Application):
                                 gain_select = []
                         for ci in range(0,3):
                                 opt = Gtk.ComboBox.new_with_model(gain_store)
-                                opt.connect("changed", on_gain_changed, ci)
+                                opt.connect("changed", on_gain_changed, ci, self)
                                 renderer_text = Gtk.CellRendererText()
                                 opt.pack_start(renderer_text, True)
                                 opt.add_attribute(renderer_text, "text", 0)
