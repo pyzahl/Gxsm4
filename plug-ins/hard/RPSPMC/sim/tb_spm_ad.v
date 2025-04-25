@@ -28,7 +28,8 @@ module tb_spm_ad(
     parameter gvp_reset_options_reg_address = 5002;
     parameter gvp_vector_programming_reg_address  = 5003;
     parameter gvp_vector_set_reg_address  = 5004;
-    parameter gvp_vectorX_programming_reg_address  = 500;
+    parameter gvp_vectorX_programming_reg_address  = 5005;
+    //parameter gvp_vectorX_programming_reg_address  = 500;
 
 
     reg tb_ACLK;
@@ -66,6 +67,9 @@ module tb_spm_ad(
     reg dma_ready=1;
 
     reg [16:0] spi_waits=(2*32+10)*32;
+
+    wire [31:0] xvalue;
+    wire [3:0] Xgvpch;
 
     wire [31:0] wx; // vector components
     wire [31:0] wy; // ..
@@ -455,8 +459,10 @@ print (adjust (100))
         //vector = {32'd16, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0,  32'd10, -32'd0, -32'd0, -32'd0, -32'd0, -32'd000, 32'hc0801,  32'd02,  32'd16, -32'd0}; // Vector #0
         #10 confaddr=gvp_vector_programming_reg_address; #10 confaddr=0; #10; // vec-set
 
-        vector = {32'd16,  32'd0,  32'd0,  32'd0,  32'd01,  32'd02, -32'sd10,  -32'd03,  32'd00,  -32'd01, -32'd01, 32'd005, 32'hc00801,  32'd02,  32'd20,  32'd1}; // Vector #1
+        vector = {32'd16,  32'd0,  32'd0,  32'd0,  32'd01,  32'd02, -32'sd10,  -32'd03,  32'd00,  -32'd01, -32'd01, 32'd005, 32'hc00881,  32'd02,  32'd20,  32'd1}; // Vector #1
         #10 confaddr=gvp_vector_programming_reg_address; #10 confaddr=0; #10; // vec-set
+        vector = {32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0, 32'd0,  32'd0,  32'd0,  32'd0, 32'd0, 32'd0, 32'd0,  32'd50,  32'd2,  32'd1}; // VectorX #1
+        #10 confaddr=gvp_vectorX_programming_reg_address; #10 confaddr=0; #10; // vec-set
 
         vector = {32'd16,  32'd0,  32'd0,  32'd0,  32'd00,  32'd00,  32'd00,  32'd00,  32'd00,  32'd00,  32'd00, 32'd000, 32'h000000,  32'd00,  32'h00,  32'd2}; // END
         #10 confaddr=gvp_vector_programming_reg_address; #10 confaddr=0; #10 // vec-set
@@ -576,7 +582,6 @@ print (adjust (100))
     assign temp_rstn = tb_ARESETn;
 
 
-
 gvp gvp_1
     (
         .a_clk(pclk),    // clocking up to aclk
@@ -600,6 +605,8 @@ gvp gvp_1
         .store_data(sto), // trigger to store data:: 2: full vector header, 1: data sources
         .gvp_finished(fin),      // finished 
         .gvp_hold(gvphold),      // finished 
+        .x_gvp_ch(Xgvpch),
+        .S_AXIS_XV_tdata(xvalue),
         .reset_state(gvpres)
 );
 
@@ -619,6 +626,8 @@ axis_FIR axis_FIR_tb
 
 axis_bram_stream_srcs axis_bram_stream_srcs_tb
 (                             // CH      MASK
+        .M_AXIS_gvp_x_value_tdata(xvalue),
+        .gvp_x_chindex(Xgvpch),
         .S_AXIS_ch1s_tdata(wx), // XS      0x0001  X in Scan coords
         .S_AXIS_ch2s_tdata(wy), // YS      0x0002  Y in Scan coords
         .S_AXIS_ch3s_tdata(wz), // ZS      0x0004  Z

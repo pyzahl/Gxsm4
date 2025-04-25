@@ -207,21 +207,32 @@ MUX15   ---   Z-with-slope
     assign stall = ~fifo_ready; // && status_ready;
       
     // GVP Extension: Value of Channel (0..15) requested to watch on output
-    assign M_AXIS_gvp_x_value_tdata = gvp_x_chindex ==  0 ? S_AXIS_ch1s_tdata[32-1:0] : 
-                                      gvp_x_chindex ==  1 ? S_AXIS_ch2s_tdata[32-1:0] : 
-                                      gvp_x_chindex ==  2 ? S_AXIS_ch3s_tdata[32-1:0] : 
-                                      gvp_x_chindex ==  3 ? S_AXIS_ch4s_tdata[32-1:0] : 
-                                      gvp_x_chindex ==  4 ? S_AXIS_ch5s_tdata[32-1:0] : 
-                                      gvp_x_chindex ==  5 ? S_AXIS_ch6s_tdata[32-1:0] : 
-                                      gvp_x_chindex ==  6 ? S_AXIS_ch7s_tdata[32-1:0] :
-                                      gvp_x_chindex ==  7 ? S_AXIS_ch8s_tdata[32-1:0] :
-                                      gvp_x_chindex ==  8 ? S_AXIS_ch9s_tdata[32-1:0] :
-                                      gvp_x_chindex ==  9 ? S_AXIS_chAs_tdata[32-1:0] :
-                                      gvp_x_chindex == 10 ? S_AXIS_chBs_tdata[32-1:0] :
-                                      gvp_x_chindex == 12 ? S_AXIS_chCs_tdata[32-1:0] :
-                                      gvp_x_chindex == 13 ? S_AXIS_chDs_tdata[32-1:0] :
-                                      gvp_x_chindex == 14 ? S_AXIS_chEs_tdata[32-1:0] : 0;
+    reg [4-1:0] gvp_xi=0;
+    reg [32-1:0] gvp_x_value=0;
+    assign M_AXIS_gvp_x_value_tdata = gvp_x_value;
     assign M_AXIS_gvp_x_value_tvalid = 1;
+
+    always @(posedge a2_clk)
+    begin
+        gvp_xi <= gvp_x_chindex; 
+        case (gvp_xi)
+            0: gvp_x_value <= S_AXIS_ch1s_tdata[32-1:0];
+            1: gvp_x_value <= S_AXIS_ch2s_tdata[32-1:0];
+            2: gvp_x_value <= S_AXIS_ch3s_tdata[32-1:0];
+            3: gvp_x_value <= S_AXIS_ch4s_tdata[32-1:0];
+            4: gvp_x_value <= S_AXIS_ch5s_tdata[32-1:0];
+            5: gvp_x_value <= S_AXIS_ch6s_tdata[32-1:0];
+            6: gvp_x_value <= S_AXIS_ch7s_tdata[32-1:0];
+            7: gvp_x_value <= S_AXIS_ch8s_tdata[32-1:0];
+            8: gvp_x_value <= S_AXIS_ch9s_tdata[32-1:0];
+            9: gvp_x_value <= S_AXIS_chAs_tdata[32-1:0];
+            10: gvp_x_value <= S_AXIS_chBs_tdata[32-1:0];
+            11: gvp_x_value <= S_AXIS_chCs_tdata[32-1:0];
+            12: gvp_x_value <= S_AXIS_chDs_tdata[32-1:0];
+            13: gvp_x_value <= S_AXIS_chEs_tdata[32-1:0];
+            default: gvp_x_value <= 0;
+        endcase
+    end
 
     always @(posedge a2_clk)
     begin

@@ -154,7 +154,7 @@ module gvp #(
     reg [32-1:0]  vecX_cmpv[NUM_VECTORS-1:0]; // VECX value for X-operation
     reg [32-1:0]  vecX_rchi[NUM_VECTORS-1:0]; // VECX reference SRCS index to work with
     reg [32-1:0]  vecX_jmpn[NUM_VECTORS-1:0]; // VECX jump rel next
-    // ...
+    // ...les
 
     // diff components
     reg signed [32-1:0]  vec_dx[NUM_VECTORS-1:0];
@@ -167,7 +167,31 @@ module gvp #(
     reg signed [32-1:0]  vec_dfm[NUM_VECTORS-1:0];
 
     reg signed [NUM_VECTORS_N2:0] pvc=0; // program counter. 0...NUM_VECTORS-1 "+ signuma bit"
-
+  
+    integer k;
+    initial begin
+        for (k=0; k<NUM_VECTORS; k=k+1)
+        begin
+            vec_i[k] = 0;
+            vec_n[k] = 0;
+            vec_iin[k] = 0;
+            vec_options[k] = 0;
+            vec_nrep[k] = 0;
+            vec_deci[k] = 0;
+            vec_next[k] = 0;
+            vec_du[k] = 0;
+            vec_dx[k] = 0;
+            vec_dy[k] = 0;
+            vec_dz[k] = 0;
+            vec_dam[k] = 0;
+            vec_dfm[k] = 0;
+            vecX_opcd[k] = 0;
+            vecX_cmpv[k] = 0;
+            vecX_rchi[k] = 0;
+            vecX_jmpn[k] = 0;
+        end
+    end
+  
     // extra bits for vector components. 
     // ATTENTION: NO SATURATION WHILE VPC!
     // Saturation on outputs ONLY!
@@ -193,7 +217,7 @@ module gvp #(
     // for vector programming -- in reset mode to be safe -- but shoudl work also for live updates -- caution, check!
     reg [8:0] rd=511;
 
-    assign x_gvp_chi = x_rchi;
+    assign x_gvp_ch = x_rchi;
 
     always @ (posedge a_clk) // 120MHz
     begin
@@ -286,6 +310,10 @@ module gvp #(
                         vec_db[vp_set [NUM_VECTORS_N2:0]]      <= vp_set [12*32-1:11*32];
                         vec_dam[vp_set [NUM_VECTORS_N2:0]]     <= vp_set [13*32-1:12*32];
                         vec_dfm[vp_set [NUM_VECTORS_N2:0]]     <= vp_set [14*32-1:13*32];
+                        vecX_opcd[vp_set [NUM_VECTORS_N2:0]]   <= 0; // VECX opcode *** RESET, MUST SET EXTENSION AFTER THIS!
+                        vecX_cmpv[vp_set [NUM_VECTORS_N2:0]]   <= 0; // VECX value for X-operation
+                        vecX_rchi[vp_set [NUM_VECTORS_N2:0]]   <= 0; // VECX reference SRCS index to work with
+                        vecX_jmpn[vp_set [NUM_VECTORS_N2:0]]   <= 0; // VECX jump relative next
                         setvec_mode <= 2; // done, next load only possible after address=0 cycle (default below)
                     end
                 endcase             
@@ -378,34 +406,38 @@ module gvp #(
                         vec_am <= vec_am + vec_dam[pvc];
                         vec_fm <= vec_fm + vec_dfm[pvc];
                         
-                        if (vec_options[pvc][7]) // process Vector Extension: Optional Process Controls
-                        begin
-                            X_GE <= X_value > vecX_cmpv[pvc] ? 1:0;
-                            X_LE <= X_value < vecX_cmpv[pvc] ? 1:0;
-                            // X_value, vecX_opcd, vecX_cmpv
-                            case (vecX_opcd[pvc][3:0])
-                                0: begin until_flg <= 0; jump_rel <= 0; end // NOP
-                                1: begin if (X_GE) until_flg <= 1; jump_rel <= 0; end  // UNTIL >
-                                2: begin if (X_LE) until_flg <= 1; jump_rel <= 0; end  // UNTIL <
-                                3: begin if (X_GE) until_flg <= 0; jump_rel <= vecX_jmpn[pvc]; end  // JMP >
-                                4: begin if (X_LE) until_flg <= 0; jump_rel <= vecX_jmpn[pvc]; end  // JMP <
-                                5: begin jump_rel <= vecX_jmpn[pvc]; end  // JMP
-                                default: begin until_flg <= 0; jump_rel <= 0; end
-                            endcase
-                        end
                         
                         if (ii) // do intermediate step(s) ?
                         begin
                             store <= 0;
-                            ii <= ii-1;
+                            
+                            if (vec_options[pvc][7]) // process Vector Extension: Optional Process Controls
+                            begin
+                                X_GE <= X_value > vecX_cmpv[pvc] ? 1:0;
+                                X_LE <= X_value < vecX_cmpv[pvc] ? 1:0;
+                                // X_value, vecX_opcd, vecX_cmpv
+                                case (vecX_opcd[pvc][3:0])
+                                    1: if (X_GE) begin until_flg <= 1; jump_rel <= 0; ii <= 0;              end else begin until_flg <= 0; jump_rel <= 0; ii <= ii-1; end // UNTIL >
+                                    2: if (X_LE) begin until_flg <= 1; jump_rel <= 0; ii <= 0;              end else begin until_flg <= 0; jump_rel <= 0; ii <= ii-1; end  // UNTIL <
+                                    3: if (X_GE) begin until_flg <= 0; jump_rel <= vecX_jmpn[pvc]; ii <= 0; end else begin until_flg <= 0; jump_rel <= 0; ii <= ii-1; end  // JMP >
+                                    4: if (X_LE) begin until_flg <= 0; jump_rel <= vecX_jmpn[pvc]; ii <= 0; end else begin until_flg <= 0; jump_rel <= 0; ii <= ii-1; end  // JMP <
+                                    5: begin           until_flg <= 0; jump_rel <= vecX_jmpn[pvc]; ii <= 0; end  // JMP always
+                                    default: begin     until_flg <= 0; jump_rel <= 0; ii <= ii-1; end // NOP
+                                endcase
+                            end
+                            else
+                                ii <= ii-1;
                         end
                         else
                         begin // arrived at data point
-                            if (i && !until_flg && !jump_rel) // advance to next point...
+                            if (i) // advance to next point...
                             begin
                                 store <= 1; // store data sources (push trigger)
+                                if (until_flg || jump_rel) // abort section
+                                    i <= 0;
+                                else
+                                    i <= i-1;
                                 ii <= vec_iin[pvc];
-                                i <= i-1;
                             end
                             else
                             begin // finished section, next vector -- if n != 0...

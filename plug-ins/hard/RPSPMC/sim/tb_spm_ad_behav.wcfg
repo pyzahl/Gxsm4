@@ -11,18 +11,73 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="13,726.540 ns"></ZoomStartTime>
-      <ZoomEndTime time="15,447.041 ns"></ZoomEndTime>
-      <Cursor1Time time="14,842.000 ns"></Cursor1Time>
+      <ZoomStartTime time="105,436.170 ns"></ZoomStartTime>
+      <ZoomEndTime time="107,898.863 ns"></ZoomEndTime>
+      <Cursor1Time time="261,000.000 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
-      <NameColumnWidth column_width="401"></NameColumnWidth>
-      <ValueColumnWidth column_width="1054"></ValueColumnWidth>
+      <NameColumnWidth column_width="433"></NameColumnWidth>
+      <ValueColumnWidth column_width="1134"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="78" />
+   <WVObjectSize size="91" />
    <wvobject type="logic" fp_name="/tb_spm_ad/pclk">
       <obj_property name="ElementShortName">pclk</obj_property>
       <obj_property name="ObjectShortName">pclk</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/gvp_1/config_addr">
+      <obj_property name="ElementShortName">config_addr[31:0]</obj_property>
+      <obj_property name="ObjectShortName">config_addr[31:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/gvp_1/vecX_opcd">
+      <obj_property name="ElementShortName">vecX_opcd[15:0][31:0]</obj_property>
+      <obj_property name="ObjectShortName">vecX_opcd[15:0][31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/gvp_1/vecX_cmpv">
+      <obj_property name="ElementShortName">vecX_cmpv[15:0][31:0]</obj_property>
+      <obj_property name="ObjectShortName">vecX_cmpv[15:0][31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/gvp_1/vecX_rchi">
+      <obj_property name="ElementShortName">vecX_rchi[15:0][31:0]</obj_property>
+      <obj_property name="ObjectShortName">vecX_rchi[15:0][31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/gvp_1/vecX_jmpn">
+      <obj_property name="ElementShortName">vecX_jmpn[15:0][31:0]</obj_property>
+      <obj_property name="ObjectShortName">vecX_jmpn[15:0][31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/gvp_1/x_gvp_ch">
+      <obj_property name="ElementShortName">x_gvp_ch[3:0]</obj_property>
+      <obj_property name="ObjectShortName">x_gvp_ch[3:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/gvp_1/x_rchi">
+      <obj_property name="ElementShortName">x_rchi[3:0]</obj_property>
+      <obj_property name="ObjectShortName">x_rchi[3:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/gvp_1/X_value">
+      <obj_property name="ElementShortName">X_value[31:0]</obj_property>
+      <obj_property name="ObjectShortName">X_value[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_spm_ad/gvp_1/until_flg">
+      <obj_property name="ElementShortName">until_flg</obj_property>
+      <obj_property name="ObjectShortName">until_flg</obj_property>
+      <obj_property name="CustomSignalColor">#FF00FF</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/gvp_1/jump_rel">
+      <obj_property name="ElementShortName">jump_rel[4:0]</obj_property>
+      <obj_property name="ObjectShortName">jump_rel[4:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_spm_ad/gvp_1/X_GE">
+      <obj_property name="ElementShortName">X_GE</obj_property>
+      <obj_property name="ObjectShortName">X_GE</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_spm_ad/gvp_1/X_LE">
+      <obj_property name="ElementShortName">X_LE</obj_property>
+      <obj_property name="ObjectShortName">X_LE</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_spm_ad/gvp_1/S_AXIS_XV_tdata">
+      <obj_property name="ElementShortName">S_AXIS_XV_tdata[31:0]</obj_property>
+      <obj_property name="ObjectShortName">S_AXIS_XV_tdata[31:0]</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/tb_spm_ad/wx">
       <obj_property name="ElementShortName">wx[31:0]</obj_property>
@@ -30,7 +85,7 @@
       <obj_property name="WaveformStyle">STYLE_ANALOG</obj_property>
       <obj_property name="CellHeight">100</obj_property>
       <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
-      <obj_property name="AnalogYRangeType">ANALOG_YRANGETYPE_FIXED</obj_property>
+      <obj_property name="AnalogYRangeType">ANALOG_YRANGETYPE_AUTO</obj_property>
       <obj_property name="AnalogYRangeMin">0.000000</obj_property>
       <obj_property name="AnalogYRRangeMax">20.000000</obj_property>
       <obj_property name="AnalogInterpolation">ANALOG_INTERPOLATION_HOLD</obj_property>
