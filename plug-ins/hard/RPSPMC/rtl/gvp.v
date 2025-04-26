@@ -135,7 +135,7 @@ module gvp #(
     reg finished=0;
     
     reg [4-1:0]  x_rchi = 0;  // SRCS CHANNEL INDEX FOR COMPARE VECX OPERATIONS
-    reg [32-1:0] X_value = 0; // SRCS CHANNEL X-Value
+    reg signed [32-1:0] X_value = 0; // SRCS CHANNEL X-Value
     reg X_GE = 0;
     reg X_LE = 0;
     
@@ -151,7 +151,7 @@ module gvp #(
 
     // vector extension components -- only used/valid if X bit (bit15) set in OPTIONS
     reg [32-1:0]  vecX_opcd[NUM_VECTORS-1:0]; // VECX opcode
-    reg [32-1:0]  vecX_cmpv[NUM_VECTORS-1:0]; // VECX value for X-operation
+    reg signed [32-1:0]  vecX_cmpv[NUM_VECTORS-1:0]; // VECX value for X-operation
     reg [32-1:0]  vecX_rchi[NUM_VECTORS-1:0]; // VECX reference SRCS index to work with
     reg [32-1:0]  vecX_jmpn[NUM_VECTORS-1:0]; // VECX jump rel next
     // ...les
@@ -358,6 +358,7 @@ module gvp #(
                 pvc <= 0;
                 sec <= 0;
                 store <= 0;
+                xflag <= 0;
                 finished <= 0;
                 load_next_vector <= 1;
                 set_options <= reset_options;
@@ -378,8 +379,8 @@ module gvp #(
                         i   <= vec_n[pvc];
                         ii  <= vec_iin[pvc];
                         ik  <= 2;
-                        xflag <= 0;
-                        x_rchi    <= vecX_rchi[pvc][3:0];
+                        xflag  <= 0;
+                        x_rchi <= vecX_rchi[pvc][3:0]; // set vexX SRCS index for requesting compare value for OpCode extension
                         if (vec_n[pvc] == 0) // n == 0: END OF VECTOR PROGRAM REACHED
                         begin
                             finished <= 1;
