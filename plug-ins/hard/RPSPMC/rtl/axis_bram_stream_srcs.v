@@ -67,11 +67,6 @@ module axis_bram_stream_srcs #(
     parameter integer DMA_ADDR_WIDTH = 32
 )
 (
-    // BRAM PORT A
-    // [IP_Flow 19-4751] Bus Interface 'DMA_PORTA_clk': FREQ_HZ bus parameter is missing for output clock interface.
-    //(* X_INTERFACE_INFO = "DMA_PORTA_clk CLK" *)
-    //(* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME DMA_PORTA, ASSOCIATED_BUSIF DMA_PORTA, ASSOCIATED_CLKEN DMA_PORTA_clk, FREQ_HZ 125000000" *)
-    
     (* X_INTERFACE_PARAMETER = "FREQ_HZ 125000000, ASSOCIATED_CLKEN dma_data_clk, ASSOCIATED_BUSIF M_AXIS" *)
     output wire                        dma_data_clk,
     output wire                        [DMA_DATA_WIDTH-1:0] M_AXIS_tdata,
@@ -180,8 +175,8 @@ MUX15   ---   Z-with-slope
     reg r=0;
     reg [2-1:0] hdr_type=0;
 
-    reg test_mode=0;
-    reg [32-1:0] test_count=0;
+    //reg test_mode=0;
+    //reg [32-1:0] test_count=0;
 
     reg last_packet=0; // last element of data block
     reg last=0; // last of whole transmission
@@ -209,7 +204,7 @@ MUX15   ---   Z-with-slope
     // GVP Extension: Value of Channel (0..15) requested to watch on output
     reg [4-1:0] gvp_xi=0;
     reg [32-1:0] gvp_x_value=0;
-    assign M_AXIS_gvp_x_value_tdata = gvp_x_value;
+    assign M_AXIS_gvp_x_value_tdata  = gvp_x_value;
     assign M_AXIS_gvp_x_value_tvalid = 1;
 
     always @(posedge a2_clk)
@@ -265,9 +260,9 @@ MUX15   ---   Z-with-slope
     
             dma_wr    <= dma_wr_next;
             
-            if (test_mode)
-                dma_data  <= dma_addr_next; // send a simple count only
-            else
+            //if (test_mode)
+            //    dma_data  <= dma_addr_next; // send a simple count only
+            //else
                 dma_data  <= dma_data_next;
                 
             dma_addr  <= dma_addr_next;
@@ -281,7 +276,7 @@ MUX15   ---   Z-with-slope
                 last <= 0;
                 once <= 1;
                 position <= 0;
-                test_count <= 0;
+                //test_count <= 0;
                 loop_fix <= 0;
             end
             else
@@ -318,8 +313,8 @@ MUX15   ---   Z-with-slope
                                 stream_buffer[13] <= S_AXIS_chEs_tdata[32-1:0]; // LCK-R        | MUXABLE in Future
                                 stream_buffer[14] <= S_AXIS_gvp_time_tdata[32-1:0]; // TIME lower 32
                                 stream_buffer[15] <= { 16'd0, S_AXIS_gvp_time_tdata[48-1:32] }; // TIME upper
-                                test_mode <= S_AXIS_srcs_tdata[7];
-                                test_count <= test_count+1;
+                                //test_mode <= S_AXIS_srcs_tdata[6];
+                                //test_count <= test_count+1;
                                 bramwr_sms <= 3'd1; // write frame start info, then data
                             end
                             else
@@ -347,7 +342,7 @@ MUX15   ---   Z-with-slope
                                 end
                                 3:
                                 begin // full header info, all signals, + END MARKING
-                                    test_mode <= 0; // disable test mode
+                                    //test_mode <= 0; // disable test mode
                                     srcs_mask <= 24'hfffff;// ALL 16
                                     dma_data_next <= { 16'hfefe, 16'hfefe }; // frame info: END MARK, full vector position list follows
                                 end

@@ -458,15 +458,18 @@ print (adjust (100))
         vector = {32'd16,  32'd0,  32'd0,  32'd0,  32'd30,  32'd20,  32'd10,  32'd03,  32'd02,  32'd01,  32'd00, 32'd000, 32'hc00801,  32'd02,  32'd20,   32'd0}; // Vector #0
         //vector = {32'd16, -32'd0, -32'd0, -32'd0, -32'd0, -32'd0,  32'd10, -32'd0, -32'd0, -32'd0, -32'd0, -32'd000, 32'hc0801,  32'd02,  32'd16, -32'd0}; // Vector #0
         #10 confaddr=gvp_vector_programming_reg_address; #10 confaddr=0; #10; // vec-set
-
-        vector = {32'd16,  32'd0,  32'd0,  32'd0,  32'd01,  32'd02, -32'sd10,  -32'd03,  32'd00,  -32'd01, -32'd01, 32'd005, 32'hc00881,  32'd02,  32'd20,  32'd1}; // Vector #1
+        //
+        vector = {32'd16,  32'd0,  32'd0,  32'd0,  32'd01,  32'd02, -32'd10,  -32'd03,  32'd00,  -32'd01, -32'd01, 32'd005, 32'hc00881,  32'd02,  32'd20,  32'd1}; // Vector #1
         #10 confaddr=gvp_vector_programming_reg_address; #10 confaddr=0; #10; // vec-set
-        vector = {32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0, 32'd0,  32'd0,  32'd0,  32'd0, 32'd0, 32'd0, 32'd0,  32'd50,  32'd2,  32'd1}; // VectorX #1
+        vector = {32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0, 32'd0,  32'd0,  32'd0,  32'd0, 32'd0, 32'd0, 32'd0,  32'h22,  32'd2,  32'd1}; // VectorX #1   XXXXXXXXXXXXXXXXX
         #10 confaddr=gvp_vectorX_programming_reg_address; #10 confaddr=0; #10; // vec-set
-
-        vector = {32'd16,  32'd0,  32'd0,  32'd0,  32'd00,  32'd00,  32'd00,  32'd00,  32'd00,  32'd00,  32'd00, 32'd000, 32'h000000,  32'd00,  32'h00,  32'd2}; // END
+        //
+        vector = {32'd16,  32'd0,  32'd0,  32'd0,  32'd30,  32'd20,  32'd20,  -32'd04,  32'd02,  32'd01,  32'd00, 32'd000, 32'hc00801,  32'd02,  32'd20,   32'd2}; // Vector #2
+        #10 confaddr=gvp_vector_programming_reg_address; #10 confaddr=0; #10; // vec-set
+        //
+        vector = {32'd16,  32'd0,  32'd0,  32'd0,  32'd00,  32'd00,  32'd00,  32'd00,  32'd00,  32'd00,  32'd00, 32'd000, 32'h000000,  32'd00,  32'h00,  32'd3}; // END
         #10 confaddr=gvp_vector_programming_reg_address; #10 confaddr=0; #10 // vec-set
-        vector = {32'd16,  32'd0,  32'd0,  32'd0,  32'd00,  32'd00,  32'd00,  32'd00,  32'd00,  32'd00,  32'd00, 32'd000, 32'h000000,  32'd00,  32'h00,  32'd3}; // 000
+        vector = {32'd16,  32'd0,  32'd0,  32'd0,  32'd00,  32'd00,  32'd00,  32'd00,  32'd00,  32'd00,  32'd00, 32'd000, 32'h000000,  32'd00,  32'h00,  32'd4}; // 000
         #10 confaddr=gvp_vector_programming_reg_address; #10 confaddr=0; #10 // vec-set
 
         #10 confaddr=0; #10 vector = 0;#1 confaddr=gvp_control_reg_address; #10 confaddr=0; #10 // run to GVP (out of reset)

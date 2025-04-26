@@ -751,6 +751,8 @@ gpointer ProbeDataReadThread (void *ptr_hwi){
 
         g_message("ProbeFifoReadThread EXIT");
 
+        hwi->GVP_abort_vector_program ();
+        
 	return NULL;
 }
 
@@ -782,7 +784,7 @@ int rpspmc_hwi_dev::on_new_data (gconstpointer contents, gsize len, bool init){
         position += len>>2; // update internal last write position
         GVP_stream_buffer_position = position; // update valid data position in stream
 
-#if 0
+#if GVP_DEBUG_VERBOSE > 5
         //gchar *tmp = g_strdup_printf ("WS-BUFFER-DATA_AB%03d_Off%0x08d_Pos0x%04x_GVPPos%0x08d.bin", AB, offset, position,  GVP_stream_buffer_position);
         gchar *tmp = g_strdup_printf ("GXSM-BUFFER-DATA_Off_%08d_GVPPos0x%08x.bin", position, GVP_stream_buffer_position);
         FILE *pFile = fopen(tmp, "wb");
@@ -1525,14 +1527,22 @@ int rpspmc_hwi_dev::GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v, PRO
         return -1;
 }
 
+//#define BBB_DBG
 
-
-#define RECOVERY_RETRYS 10
+#define RECOVERY_RETRYS 1
 int rpspmc_hwi_dev::read_GVP_data_block_to_position_vector (int offset, gboolean expect_full_header){
         static int retry = RECOVERY_RETRYS;
         size_t ch_index;
-
+#ifdef BBB_DBG
+        static int sec_hdr=0;
+        static int hdr=0;
+#endif
         g_mutex_lock (&GVP_stream_buffer_mutex);
+
+#ifdef BBB_DBG
+        if (offset == 0) sec_hdr=hdr=0;
+#endif
+
         
 #if 0
         if (expect_full_header || offset==0)
@@ -1584,12 +1594,15 @@ int rpspmc_hwi_dev::read_GVP_data_block_to_position_vector (int offset, gboolean
                         status_append ("GVP END MARK DETECTED", true);
                         g_message ("** GVP END MARK DETECTED **");
                         g_mutex_unlock (&GVP_stream_buffer_mutex);
+#ifdef BBB_DBG
+                        status_append_int32 (&GVP_stream_buffer[offset], 64, true, offset, true);
+#endif
                         return 0; // END OF GVP -- anywas a full position vector still follows, discarding now
                 } else {
                         if (GVP_vp_header_current.n == GVP_vp_header_current.i+2) // 2nd point, store srcs mask for verify
                                 GVP_vp_header_current.srcs_mask_vector = GVP_vp_header_current.srcs; // store ref mask
                         else { // normal GVP data stream, verify continuity
-                                if (GVP_vp_header_current.i != (GVP_vp_header_current.ilast-1)
+                                if ((GVP_vp_header_current.i != (GVP_vp_header_current.ilast-1) && GVP_vp_header_current.i != 0) // ** == 0 OK: as GVP VEC-X Until Abort Section OpCode induced
                                     ||
                                     GVP_vp_header_current.srcs_mask_vector != GVP_vp_header_current.srcs){
                                         // stream ERROR detected
@@ -1599,11 +1612,16 @@ int rpspmc_hwi_dev::read_GVP_data_block_to_position_vector (int offset, gboolean
                                                                               offset, GVP_stream_buffer_position,
                                                                               GVP_vp_header_current.srcs_mask_vector, GVP_vp_header_current.srcs,
                                                                               GVP_vp_header_current.ilast, GVP_vp_header_current.i);
-                                                //status_append (tmp, true); // this is effn out gtk shit even in idle callback
-                                                //if (offset > 64)
-                                                //        status_append_int32 (&GVP_stream_buffer[offset-64], 10*16, true, offset-64, true);
-                                                //else
-                                                //        status_append_int32 (&GVP_stream_buffer[0], 10*16, true, 0, true);
+#ifdef BBB_DBG
+                        status_append_int32 (&GVP_stream_buffer[offset], 256, true, offset, true);
+#endif
+#if GVP_DEBUG_VERBOSE > 3
+                                                status_append (tmp, true); // this is effn out gtk shit even in idle callback
+                                                if (offset > 64)
+                                                        status_append_int32 (&GVP_stream_buffer[offset-64], 10*16, true, offset-64, true);
+                                                else
+                                                        status_append_int32 (&GVP_stream_buffer[0], 10*16, true, 0, true);
+#endif
                                                 g_warning (tmp);
                                                 g_free (tmp);
                                         }
@@ -1624,7 +1642,12 @@ int rpspmc_hwi_dev::read_GVP_data_block_to_position_vector (int offset, gboolean
                         }
                 }
         }
-                        
+
+#ifdef BBB_DBG
+        if ((GVP_vp_header_current.ilast-1) > 0 && GVP_vp_header_current.i == 0)
+                g_message ("Vec-X Until/Jmp Section Abort Condition detected. i=0: END of SECTION.");
+#endif
+        
         GVP_vp_header_current.index = GVP_vp_header_current.n - GVP_vp_header_current.i;
         if (GVP_vp_header_current.index < 0){
                 gchar *tmp = g_strdup_printf ("read_GVP_data_block_to_position_vector: Stream ERROR at Reading offset %08x, write position %08x.\n"
@@ -1632,11 +1655,13 @@ int rpspmc_hwi_dev::read_GVP_data_block_to_position_vector (int offset, gboolean
                                               offset, GVP_stream_buffer_position,
                                               GVP_vp_header_current.srcs_mask_vector, GVP_vp_header_current.srcs,
                                               GVP_vp_header_current.ilast, GVP_vp_header_current.i, GVP_vp_header_current.index);
-                //status_append (tmp, true); // this is effn out gtk shit even in idle callback
-                //if (offset > 64)
-                //        status_append_int32 (&GVP_stream_buffer[offset-64], 10*16, true, offset-64, true);
-                //else
-                //        status_append_int32 (&GVP_stream_buffer[0], 10*16, true, 0, true);
+#if GVP_DEBUG_VERBOSE > 3
+                status_append (tmp, true); // this is effn out gtk shit even in idle callback
+                if (offset > 64)
+                        status_append_int32 (&GVP_stream_buffer[offset-64], 10*16, true, offset-64, true);
+                else
+                        status_append_int32 (&GVP_stream_buffer[0], 10*16, true, 0, true);
+#endif
                 g_warning (tmp);
                 g_free (tmp);
                 GVP_vp_header_current.index = 0; // to prevent issues
@@ -1727,6 +1752,12 @@ int rpspmc_hwi_dev::read_GVP_data_block_to_position_vector (int offset, gboolean
                 
                 GVP_vp_header_current.ilast = GVP_vp_header_current.i; // next point should be this - 1
 
+#ifdef BBB_DBG
+                status_append_int32 (&GVP_stream_buffer[hdr], ch_index+offset+1-hdr, true, hdr, true);
+                hdr = ch_index+offset+1; // next hdr
+#endif
+
+                
                 g_mutex_unlock (&GVP_stream_buffer_mutex);
                 return ch_index;
 
@@ -1737,3 +1768,131 @@ int rpspmc_hwi_dev::read_GVP_data_block_to_position_vector (int offset, gboolean
                 // return ch_index; // number channels read until position
         }
 };
+
+
+
+/*
+
+** Srcs: 0000c018 vSrcs: 0000c018
+** make_dUZXYAB_vector PV[0] [N=0010] [      1000 pts/s, S:0000c018, O:00000000, #000, J00, dU      0 V, dX      0 V, dY      0 V, dZ      0 V, dA      0 V, dB      0 V, dAM      0 Veq, dFM      0 Veq]
+Vec[ 0] XYZU: 0 0 0 0 V  [#10, R0 J0 OPT=00000000 SRCS=0000c018] initial Msk=0000
+** make_dUZXYAB_vector PV[1] [N=0010] [      1000 pts/s, S:0000c018, O:00000001, #000, J00, dU      3 V, dX      0 V, dY    0.2 V, dZ    0.2 V, dA      0 V, dB      0 V, dAM      0 Veq, dFM      0 Veq]
+Vec[ 1] XYZU: 0 0.2 0.2 3 V  [#10, R0 J0 OPT=00000001 SRCS=0000c018] initial Msk=0001
+** make_dUZXYAB_vector PV[2] [N=0010] [      1000 pts/s, S:0000c018, O:00000001, #000, J00, dU     -3 V, dX      0 V, dY   -0.2 V, dZ   -0.2 V, dA      0 V, dB      0 V, dAM      0 Veq, dFM      0 Veq]
+Vec[ 2] XYZU: 0 -0.2 -0.2 -3 V  [#10, R0 J0 OPT=00000001 SRCS=0000c018] initial Msk=0002
+** make_dUZXYAB_vector PV[3] [N=0010] [      1000 pts/s, S:0000c018, O:00000000, #000, J00, dU      0 V, dX      0 V, dY      0 V, dZ      0 V, dA      0 V, dB      0 V, dAM      0 Veq, dFM      0 Veq]
+Vec[ 3] XYZU: 0 0 0 0 V  [#10, R0 J0 OPT=00000000 SRCS=0000c018] initial Msk=0003
+** append_null_vector PV[4] [N=0000] [         0 pts/s, S:00000000, O:00000000, #000, J00, dU      0 V, dX      0 V, dY      0 V, dZ      0 V, dA      0 V, dB      0 V, dAM      0 Veq, dFM      0 Veq]
+Vec[ 4] XYZU: 0 0 0 0 V  [#0, R0 J0 OPT=00000000 SRCS=00000000] initial Msk=0004
+** Executing Vector Probe Now! Mode: VP: Vector Program
+
+  
+  #ifdef BBB_DBG:
+
+** WEBSOCKET STREAM TAG: RESET (GVP Start) Received.
+          10 data points per section (10-1=0009 is first index countign down to 0
+ADR-----: nnnnSRCS full header (ffff) and position vector (all sources) 16x32bit words are following ...
+SECTION1:                 X        Y        Z        U        I      IN2      IN3      IN4   MUX DF   MUX EX   MUX PH   MUX AM   MUX LA   MUX LB [TIME64bit =====]        
+00000000: 0009ffff 00000000 00000000 028f5c29 000d1b71 fffe4023 fe3e5e00 000fc800 fffefd00 000334c9 0ccc0000 000073f7 000c3743 000003b6 fffeef26 00000019 00000000
+          ####SRCS        U        I [TIME64bit======]  (as of c018)
+
+00000011: 0008c018 000d1b71 fffe3090 0001e964 00000000 
+00000016: 0007c018 000d1b71 fffe1b1c 0003d2c4 00000000 
+0000001b: 0006c018 000d1b71 fffe1db4 0005bc24 00000000 
+00000020: 0005c018 000d1b71 fffe2287 0007a584 00000000 
+00000025: 0004c018 000d1b71 fffe2c7a 00098ee4 00000000 
+0000002a: 0003c018 000d1b71 fffe3a9e 000b7844 00000000 
+0000002f: 0002c018 000d1b71 fffe2cd1 000d61a4 00000000 
+00000034: 0001c018 000d1b71 fffe2692 000f4b04 00000000 
+00000039: 0000c018 000d1b71 fffe20e1 00113464 00000000 
+
+SECTION2:
+0000003e: 0009ffff 00000000 00000000 028f5c29 000d1b71 fffe1b48 fe1c4c00 000f9f00 fffecf00 000334c9 0ccc0000 000073f1 000c374f 000003b6 fffee520 00131ee6
+0000004e: 00000000
+          0008c018 070873df fffe2054 0014dbfa 00000000 
+00000054: 0007c018 0eb68858 fffe350c 0016c451 00000000 
+00000059: 0006c018 16649cd1 fffe2d07 0018aca8 00000000 
+0000005e: 0005c018 1e12b14a fffe2052 001a94ff 00000000 
+00000063: 0004c018 25c0c5c3 fffe21b7 001c7d56 00000000 
+00000068: 0003c018 2d6eda3c fffe3662 001e65ad 00000000 
+0000006d: 0002c018 351ceeb5 fffe3ad5 00204e04 00000000 
+00000072: 0001c018 3ccb032e fffe2feb 0022365b 00000000 
+00000077: 0000c018 447917a7 fffe17ca 00241eb2 00000000 
+
+0000007c: 0009ffff 00000000 051eb842 07ae146b 4cd9e82b fffe2494 fe291200 4c0f5500 fffed600 000334c9 0ccc0000 000073f6 000c374b 000003b6 fffec6dc 0026336e
+0000008c: 00000000
+          0008c018 45de8fbd fffe3ed8 00281bc5 00000000 
+00000092: 0007c018 3e307b44 fffe34db 002a041c 00000000 
+00000097: 0006c018 368266cb fffe21ae 002bec73 00000000 
+0000009c: 0005c018 2ed45252 fffe2324 002dd4ca 00000000 
+000000a1: 0004c018 27263dd9 fffe3488 002fbd21 00000000 
+000000a6: 0003c018 1f782960 fffe2fd9 0031a578 00000000 
+000000ab: 0002c018 17ca14e7 fffe1ea7 00338dcf 00000000 
+000000b0: 0001c018 101c006e fffe200f 00357626 00000000 
+000000b5: 0000c018 086debf5 fffe3026 00375e7d 00000000 
+
+000000ba: 0009ffff 00000000 00000000 028f5c29 000d1b71 fffe3f06 fe43e600 000f7700 fffecf00 000334c9 0ccc0000 000073e2 000c374c 000003b6 fffecf16 00397339
+000000ca: 00000000
+          0008c018 000d1b71 fffe23c7 003b87dc 00000000 
+000000d0: 0007c018 000d1b71 fffe1f92 003d713c 00000000 
+000000d5: 0006c018 000d1b71 fffe23bd 003f5a9c 00000000 
+000000da: 0005c018 000d1b71 fffe330c 004143fc 00000000 
+000000df: 0004c018 000d1b71 fffe3e84 00432d5c 00000000 
+000000e4: 0003c018 000d1b71 fffe31f9 004516bc 00000000 
+000000e9: 0002c018 000d1b71 fffe2a99 0047001c 00000000 
+000000ee: 0001c018 000d1b71 fffe20d8 0048e97c 00000000 
+000000f3: 0000c018 000d1b71 fffe2668 004ad2dc 00000000
+
+GVP END MARK DETECTED
+ADR-----:  ENDMARK followed by full header and position vector (all sources) and time. Followed by additional GVP STREAM end marking pattern.
+000000f8: fefefefe 00000000 00000009 06a7ef89 00000001 000002d5 fe238a00 0002e200 ffff3f00 000334c9 0ccc0000 0000744e 000c353c fffff850 ffff3462 004cbd5e
+00000108: 00000000 ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee
+00000118: ffffeeee 00000010 0000000f 0000000e 0000000d 0000000c 0000000b 0000000a 00000009 00000008 00000007 00000006 00000005 00000004 00000003 00000002
+00000128: 00000001 eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee
+
+
+****
+===>>>> SET-VP  i[0] sec=0 t=0.0002 ms   #valid sec{1}
+00000000: 0009ffff 00000000 019521b7 083d1137 17bcf977 0017802f fe307400 17802f00 fffeea00 000334c9 0ccc0000 00007486 000c352a fffff83b fffed35c 00000019
+00000010: 00000000
+          0008c018 17bcf977 00178037 0001e964 00000000 
+00000016: 0007c018 17bcf977 00178069 0003d2c4 00000000 
+0000001b: 0006c018 17bcf977 00178047 0005bc24 00000000 
+00000020: 0005c018 17bcf977 00178049 0007a584 00000000 
+00000025: 0004c018 17bcf977 00178053 00098ee4 00000000 
+0000002a: 0003c018 17bcf977 001780c0 000b7844 00000000 
+0000002f: 0002c018 17bcf977 0017801a 000d61a4 00000000 
+00000034: 0001c018 17bcf977 0017807d 000f4b04 00000000 
+00000039: 0000c018 17bcf977 00178047 00113464 00000000 
+** Message: 12:56:28.909: VP: Waiting for Section Header [1] StreamPos=0x000000fc
+** Message: 12:56:28.909: VP: section header ** reading pos[00fc] off[003e] #AB=1
+** Message: 12:56:28.909: Reading VP section header...
+===>>>> SET-VP  i[10] sec=1 t=10.0248 ms   #valid sec{11}
+0000003e: 0009ffff 00000000 019521b7 083d1137 17bcf977 0017807d fe2a4e00 17807a00 ffff5a00 000334c9 0ccc0000 00007480 000c352a fffff83b ffff2b5c 00131ee6
+0000004e: 00000000
+          0008c018 1eb851e5 001e6901 0014dbfa 00000000 
+00000054: 0007c018 2666665e 002602ba 0016c451 00000000 
+00000059: 0006c018 2e147ad7 002d9c4c 0018aca8 00000000 
+0000005e: 0005c018 35c28f50 003535da 001a94ff 00000000 
+00000063: 0004c018 3d70a3c9 003ccf8e 001c7d56 00000000 
+00000068: 0003c018 451eb842 004468bc 001e65ad 00000000 
+0000006d: 0002c018 4cccccbb 004c0248 00204e04 00000000 
+00000072: 0001c018 547ae134 00539c00 0022365b 00000000 
+00000077: 0000c018 5c28f5ad 005b355b 00241eb2 00000000 
+** Message: 12:56:28.909: VP: Waiting for Section Header [1] StreamPos=0x000000fc
+** Message: 12:56:28.909: VP: section header ** reading pos[00fc] off[007c] #AB=1
+** Message: 12:56:28.909: Reading VP section header...
+
+0000007c: 0000007d 0000007e 0000007f 00000080 00000081 00000082 00000083 00000084 00000085 00000086 00000087 00000088 00000089 0000008a 0000008b 0000008c
+0000008c: 0000008d 0009ffff 00000000 06a7ef92 0d4fdf12 63d70a26 0062cf18 fe365200 62cf1800 ffff5600 000334c9 0ccc0000 00007475 000c3525 fffff83b ffff5b04
+0000009c: 00268c38 00000000 0008c018 63d70a26 0062cefc 0028a0db 00000000 0007c018 63d70a26 0062cf29 002a8a3b 00000000 0006c018 63d70a26 0062cf2c 002c739b
+000000ac: 00000000 0005c018 63d70a26 0062cf26 002e5cfb 00000000 0004c018 63d70a26 0062cf45 0030465b 00000000 0003c018 63d70a26 0062cf2d 00322fbb 00000000
+000000bc: 0002c018 63d70a26 0062cf14 0034191b 00000000 0001c018 63d70a26 0062cef5 0036027b 00000000 0000c018 63d70a26 0062cec3 0037ebdb 00000000 fefefefe
+000000cc: 00000000 06a7ef92 0d4fdf12 63d70a26 0062cef4 fe1ed400 62cef400 ffff2b00 000334c9 0ccc0000 00007469 000c3528 fffff83b ffff34de 0039d65d 00000000
+000000dc: ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee
+000000ec: 00000010 0000000f 0000000e 0000000d 0000000c 0000000b 0000000a 00000009 00000008 00000007 00000006 00000005 00000004 00000003 00000002 00000001
+000000fc: eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee
+
+
+
+ */

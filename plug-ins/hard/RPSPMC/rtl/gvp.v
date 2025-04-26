@@ -129,13 +129,13 @@ module gvp #(
     reg [32-1:0] i=0;
     reg [32-1:0] ii=0;
     reg [32-1:0] sec=0;
+    reg [4-1:0]  ik=0;
+    reg xflag=0;
     reg load_next_vector=0;
     reg finished=0;
     
-    reg [4-1:0] x_rchi = 0;
-    reg [32-1:0] X_value = 0;
-    reg until_flg = 0;
-    reg signed [NUM_VECTORS_N2:0] jump_rel = 0;
+    reg [4-1:0]  x_rchi = 0;  // SRCS CHANNEL INDEX FOR COMPARE VECX OPERATIONS
+    reg [32-1:0] X_value = 0; // SRCS CHANNEL X-Value
     reg X_GE = 0;
     reg X_LE = 0;
     
@@ -377,9 +377,9 @@ module gvp #(
                         load_next_vector <= 0;
                         i   <= vec_n[pvc];
                         ii  <= vec_iin[pvc];
+                        ik  <= 2;
+                        xflag <= 0;
                         x_rchi    <= vecX_rchi[pvc][3:0];
-                        until_flg <= 0; 
-                        jump_rel  <= 0;
                         if (vec_n[pvc] == 0) // n == 0: END OF VECTOR PROGRAM REACHED
                         begin
                             finished <= 1;
@@ -397,32 +397,32 @@ module gvp #(
                     if (!pause_flg)        
                     begin // go...
                         // add vector
-                        vec_x <= vec_x + vec_dx[pvc];
-                        vec_y <= vec_y + vec_dy[pvc];
-                        vec_z <= vec_z + vec_dz[pvc];
-                        vec_u <= vec_u + vec_du[pvc];
-                        vec_a <= vec_a + vec_da[pvc];
-                        vec_b <= vec_b + vec_db[pvc];
-                        vec_am <= vec_am + vec_dam[pvc];
-                        vec_fm <= vec_fm + vec_dfm[pvc];
-                        
+                        if (!xflag)
+                        begin
+                            vec_x <= vec_x + vec_dx[pvc];
+                            vec_y <= vec_y + vec_dy[pvc];
+                            vec_z <= vec_z + vec_dz[pvc];
+                            vec_u <= vec_u + vec_du[pvc];
+                            vec_a <= vec_a + vec_da[pvc];
+                            vec_b <= vec_b + vec_db[pvc];
+                            vec_am <= vec_am + vec_dam[pvc];
+                            vec_fm <= vec_fm + vec_dfm[pvc];
+                        end                        
                         
                         if (ii) // do intermediate step(s) ?
                         begin
                             store <= 0;
                             
-                            if (vec_options[pvc][7]) // process Vector Extension: Optional Process Controls
+                            if (!xflag && !ik && vec_options[pvc][7]) // process Vector Extension: Optional Process Controls
                             begin
                                 X_GE <= X_value > vecX_cmpv[pvc] ? 1:0;
                                 X_LE <= X_value < vecX_cmpv[pvc] ? 1:0;
                                 // X_value, vecX_opcd, vecX_cmpv
-                                case (vecX_opcd[pvc][3:0])
-                                    1: if (X_GE) begin until_flg <= 1; jump_rel <= 0; ii <= 0;              end else begin until_flg <= 0; jump_rel <= 0; ii <= ii-1; end // UNTIL >
-                                    2: if (X_LE) begin until_flg <= 1; jump_rel <= 0; ii <= 0;              end else begin until_flg <= 0; jump_rel <= 0; ii <= ii-1; end  // UNTIL <
-                                    3: if (X_GE) begin until_flg <= 0; jump_rel <= vecX_jmpn[pvc]; ii <= 0; end else begin until_flg <= 0; jump_rel <= 0; ii <= ii-1; end  // JMP >
-                                    4: if (X_LE) begin until_flg <= 0; jump_rel <= vecX_jmpn[pvc]; ii <= 0; end else begin until_flg <= 0; jump_rel <= 0; ii <= ii-1; end  // JMP <
-                                    5: begin           until_flg <= 0; jump_rel <= vecX_jmpn[pvc]; ii <= 0; end  // JMP always
-                                    default: begin     until_flg <= 0; jump_rel <= 0; ii <= ii-1; end // NOP
+                                case (vecX_opcd[pvc][3:0]) 
+                                    1: begin if (X_GE) begin xflag <= 1; i <= 1; ii <= 0; end else ii <= ii-1; end // next vector index, UNTIL X GE VAL, JUMP REL 
+                                    2: begin if (X_LE) begin xflag <= 1; i <= 1; ii <= 0; end else ii <= ii-1; end // next vector index, UNTIL X LE VAL, JUMP REL
+                                    5: begin                 xflag <= 1; i <= 1; ii <= 0; end // JUMP REL ALWAYS
+                                    default: ii <= ii-1; 
                                 endcase
                             end
                             else
@@ -433,11 +433,9 @@ module gvp #(
                             if (i) // advance to next point...
                             begin
                                 store <= 1; // store data sources (push trigger)
-                                if (until_flg || jump_rel) // abort section
-                                    i <= 0;
-                                else
-                                    i <= i-1;
+                                i  <= i-1;
                                 ii <= vec_iin[pvc];
+                                if (ik) ik <= ik-1;
                             end
                             else
                             begin // finished section, next vector -- if n != 0...
@@ -452,7 +450,7 @@ module gvp #(
                                 else // next vector in vector program list
                                 begin
                                     vec_i[pvc] <= vec_nrep[pvc]; // reload loop counter for next time now!
-                                    pvc <= pvc + 1 + jump_rel; // next vector index
+                                    pvc <= pvc + 1 + vecX_jmpn[pvc]; // next vector index
                                     load_next_vector <= 1;
                                 end
                             end            
