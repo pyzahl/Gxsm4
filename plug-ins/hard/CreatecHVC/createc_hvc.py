@@ -59,6 +59,8 @@ TRUE  = -1
 
 # Createc HV Control
 
+SWAP_CXY=1
+
 # RPSPMC XYZ Monitors via GXSM4 
 global xyz_shm
 
@@ -87,9 +89,9 @@ CHV5_gains = [12., 12., 12.]
 
 
 CHV5_coarse = {
-        'steps': [100,100,5],
-        'volts': [15.0,15.0,15.0],
-        'period': [3.0,3.0,3.0]
+        'steps': [10,10,5],
+        'volts': [100.0,100.0,15.0],
+        'period': [0.5,0.5,0.5]
         }
 
 CHV5_driftcomp = [ 0., 0., 0. ]
@@ -786,9 +788,9 @@ class HV5App(Gtk.Application):
                         es = [] ## Entry Steps
                         ev = [] ## Entry Volts
                         ep = [] ## Entro Periods
-                        grid.attach(Gtk.Label(label='Steps'), 16, 3, 1, 1)
-                        grid.attach(Gtk.Label(label='Volts'), 17, 3, 1, 1)
-                        grid.attach(Gtk.Label(label='Period'), 18, 3, 1, 1)
+                        grid.attach(Gtk.Label(label='# Steps'), 16, 3, 1, 1)
+                        grid.attach(Gtk.Label(label='Amplitude in V'), 17, 3, 1, 1)
+                        grid.attach(Gtk.Label(label='Period in µs'), 18, 3, 1, 1)
                         for i in range(0,3):
                                 es.append (Gtk.Entry())
                                 es[i].set_text("{}".format(CHV5_coarse['steps'][i]))
@@ -816,32 +818,39 @@ class HV5App(Gtk.Application):
 
                         button = Gtk.Button.new_from_icon_name("arrow-left")
                         click_gesture = Gtk.GestureClick()
-                        click_gesture.connect("pressed",  self.start_coarse, -1, es, ev, ep)
-                        click_gesture.connect("end",  self.stop_coarse, -1, es, ev, ep)
+                        if SWAP_CXY:
+                                DX=-2
+                                DY=-1
+                        else:
+                                DX=1
+                                DY=2
+                                
+                        click_gesture.connect("pressed",  self.start_coarse, -DX, es, ev, ep)
+                        click_gesture.connect("end",  self.stop_coarse, -DX, es, ev, ep)
                         button.get_child().add_controller(click_gesture)
                         #control_list.append (button)
                         grid.attach(button, 10, 6, 1, 1)
 
                         button = Gtk.Button.new_from_icon_name("arrow-right")
                         click_gesture = Gtk.GestureClick()
-                        click_gesture.connect("pressed",  self.start_coarse, 1, es, ev, ep)
-                        click_gesture.connect("end",  self.stop_coarse, 1, es, ev, ep)
+                        click_gesture.connect("pressed",  self.start_coarse, DX, es, ev, ep)
+                        click_gesture.connect("end",  self.stop_coarse, DX, es, ev, ep)
                         button.get_child().add_controller(click_gesture)
                         #control_list.append (button)
                         grid.attach(button, 12, 6, 1, 1)
 
                         button = Gtk.Button.new_from_icon_name("arrow-up")
                         click_gesture = Gtk.GestureClick()
-                        click_gesture.connect("pressed",  self.start_coarse, 2, es, ev, ep)
-                        click_gesture.connect("end",  self.stop_coarse, 2, es, ev, ep)
+                        click_gesture.connect("pressed",  self.start_coarse, DY, es, ev, ep)
+                        click_gesture.connect("end",  self.stop_coarse, DY, es, ev, ep)
                         button.get_child().add_controller(click_gesture)
                         #control_list.append (button)
                         grid.attach(button, 11, 5, 1, 1)
 
                         button = Gtk.Button.new_from_icon_name("arrow-down")
                         click_gesture = Gtk.GestureClick()
-                        click_gesture.connect("pressed",  self.start_coarse, -2, es, ev, ep)
-                        click_gesture.connect("end",  self.stop_coarse, -2, es, ev, ep)
+                        click_gesture.connect("pressed",  self.start_coarse, -DY, es, ev, ep)
+                        click_gesture.connect("end",  self.stop_coarse, -DY, es, ev, ep)
                         button.get_child().add_controller(click_gesture)
                         #control_list.append (button)
                         grid.attach(button, 11, 7, 1, 1)
