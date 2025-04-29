@@ -82,9 +82,9 @@ module axis_sadd #(
     always @ (posedge a_clk)
     begin
         neg <= negate_sum;
-        a <= S_AXIS_A_tdata;
-        b <= S_AXIS_B_tdata;
-        sum <= neg ? (-(a+b)) : (a+b);
+        a <= $signed(S_AXIS_A_tdata);
+        b <= $signed(S_AXIS_B_tdata);
+        sum <= neg ? (-a-b) : (a+b);
     end
     
     assign M_AXIS_SUM_tdata  = `SATURATE(sum);  // sum > POS_SATURATION_LIMIT ? POS_SATURATION_VALUE : sum < NEG_SATURATION_LIMIT ? NEG_SATURATION_VALUE : sum[MAXIS_TDATA_WIDTH-1:0]; // Saturate
