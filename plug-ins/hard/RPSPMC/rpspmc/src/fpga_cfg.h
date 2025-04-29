@@ -161,6 +161,8 @@
 #define SPMC_Z_SERVO_SELECT_RB_SETPOINT_MODES_REG   110 // readback selection
 #define SPMC_Z_SERVO_SELECT_RB_CPI_REG              111 // readback selection
 #define SPMC_Z_SERVO_SELECT_RB_LIMITS_REG           112 // readback selection
+
+
 /*
         z_servo_control_reg_address:
         begin
@@ -242,7 +244,6 @@
 
 #define SPMC_MUX2_Z_SERVO_CONTROL_REG   2001 // MUX selection, test mode, test value.
                                              // Z-SERVO INPUT RP_CH1 | ADC463x_CH0
-
 
 #define SPMC_MUX2_RF_OUT_CONTROL_REG    2002 // MUX selection, test mode, test value.
                                              // RF (OUT1) AUX select: Pulse, RF sweep gen

@@ -51,16 +51,19 @@ module axis_ctrlsrc_select #(
     parameter ADD_OFFSET = 1
 )
 (
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS:S_AXIS_LN:M_AXIS_ABS:M_AXIS_MON:M_AXIS" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_CLKEN a_clk, ASSOCIATED_BUSIF S_AXIS:S_AXIS_FIR:S_AXIS_LN:M_AXIS_ABS:M_AXIS_MON:M_AXIS" *)
     input a_clk,
     input wire [SAXIS_DATA_WIDTH-1:0]  S_AXIS_tdata,
     input wire                         S_AXIS_tvalid,
+    input wire [SAXIS_DATA_WIDTH-1:0]  S_AXIS_FIR_tdata,
+    input wire                         S_AXIS_FIR_tvalid,
     input wire [SAXIS_DATA_WIDTH-1:0]  signal_offset,
 
     input wire [32-1:0]  S_AXIS_LN_tdata,
     input wire           S_AXIS_LN_tvalid,
 
     input wire [1:0]  selection_ln,
+    input wire [1:0]  use_FIR,
 
     output [32-1:0]      M_AXIS_ABS_tdata,
     output               M_AXIS_ABS_tvalid,
@@ -74,13 +77,15 @@ module axis_ctrlsrc_select #(
 
     reg signed [SAXIS_DATA_WIDTH-1:0] x;
     reg signed [SAXIS_DATA_WIDTH-1:0] y;
+    reg [1:0] fir=0;
 
     always @ (posedge a_clk)
     begin
+        fir <= use_FIR;
         if (ADD_OFFSET)
-            x <= ($signed(S_AXIS_tdata) >>> 8 ) + ($signed(signal_offset) >>> 8); // REMOVE SIGNAL OFFSET
+            x <= ((fir?$signed(S_AXIS_FIR_tdata) : $signed(S_AXIS_tdata)) >>> 8 ) + ($signed(signal_offset) >>> 8); // REMOVE SIGNAL OFFSET
         else     
-            x <= $signed(S_AXIS_tdata) >>> 8;
+            x <= (fir?$signed(S_AXIS_FIR_tdata) : $signed(S_AXIS_tdata)) >>> 8;
         y <= x[SAXIS_DATA_WIDTH-1] ? -x : x; // ABS
     end
 

@@ -237,6 +237,8 @@ public:
                         mix_transform_mode[i] = 0;
                 }
 
+                I_fir = 0;
+                
                 z_servo[0] = 0;
                 z_servo[1] = 0;
                 z_servo[2] = 0;
@@ -736,6 +738,9 @@ public:
 	// -- may not yet be applied to all signal --> check with DSP code
 	int    mix_transform_mode[4]; //!< transformation mode on/off log/lin iir/full fuzzy/normal
 
+        int I_fir;
+
+        
         // Feedback (Z-Servo)
 	double z_servo[3];    // Z-Servo (Feedback) [0] (not used here), [1] Const Proportional, [2] Const Integral [user visible values]
         double z_limit_upper_v;

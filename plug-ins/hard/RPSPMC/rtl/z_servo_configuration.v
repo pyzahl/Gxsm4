@@ -79,7 +79,9 @@ module z_servo_configuration#(
     output wire servo_enable,
     output wire servo_log,
     output wire servo_fcz,
-    output wire servo_hold);
+    output wire servo_hold,
+    output wire [1:0] FIR_ctrl
+    );
         
 
     reg [32-1:0] r_control_setpoint = 0;
@@ -97,6 +99,8 @@ module z_servo_configuration#(
 
     reg [32-1:0] z_servo_rb_A_reg = 0;
     reg [32-1:0] z_servo_rb_B_reg = 0;
+
+    reg [1:0] r_fir_ctrl=0;
 
 
     assign z_servo_rb_A = z_servo_rb_A_reg;
@@ -120,6 +124,7 @@ module z_servo_configuration#(
 
     assign servo_hold   = r_transfer_mode[3:3] | r_gvp_options[0:0];
 
+    assign FIR_ctrl = r_fir_ctrl;
 
     always @(posedge aclk)
     begin
@@ -140,6 +145,7 @@ module z_servo_configuration#(
             r_control_signal_offset <= config_data[2*32-1 : 1*32]; // normally 0 
             r_z_setpoint       <= config_data[3*32-1 : 2*32];
             r_transfer_mode    <= config_data[4*32-1 : 3*32];
+            r_fir_ctrl         <= config_data[4*32+2-1: 4*32];
         end     
 
         z_servo_select_rb_setpoint_modes_address: // read back config
