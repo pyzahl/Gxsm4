@@ -2998,7 +2998,7 @@ void RPSPMC_Control::ZServoParamChanged(Param_Control* pcs, RPSPMC_Control *self
                 self->z_servo[SERVO_CP] = pow (10., spmc_parameters.z_servo_cp_db/20.); 
                 self->z_servo[SERVO_CI] = pow (10., spmc_parameters.z_servo_ci_db/20.);
 
-                jdata_i[0] = self->mix_transform_mode[0];
+                jdata_i[0] = self->mix_transform_mode[0] | (self->I_fir << 8); // TRANSFORM MDOE | FIR SELECTION
                 jdata[0]   = self->mix_level[0] > 0. ? main_get_gapp()->xsm->Inst->nAmpere2V(self->mix_level[0])
                                                      : main_get_gapp()->xsm->Inst->nAmpere2V(self->mix_set_point[0]);
                 jdata[1]   = main_get_gapp()->xsm->Inst->nAmpere2V(self->mix_in_offsetcomp[0]);
@@ -3068,7 +3068,7 @@ int RPSPMC_Control::choice_mixmode_callback (GtkWidget *widget, RPSPMC_Control *
 	self->mix_transform_mode[channel] = selection;
         if (channel == 0){
                 g_print ("Choice MIX%d MT=%d\n", channel, selection);
-                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_MODE", selection | (self->I_fir << 8)); // mapped to MM_LIN/LOG/FCZLOG (0,1,3)
+                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_MODE", selection | (self->I_fir << 8)); // mapped to MM_LIN/LOG/FCZLOG (0,1,3) | FIR SELECTION
         }
         PI_DEBUG_GP (DBG_L4, "%s ** 2\n",__FUNCTION__);
 

@@ -361,7 +361,7 @@ void rp_spmc_set_zservo_gxsm_speciality_setting (int mode, double z_setpoint, do
         rp_spmc_module_config_int32 (MODULE_SETUP, volts_to_rpspmc_CONTROL_SELECT_ZS (mux_in, in_offset_comp), MODULE_START_VECTOR); // control input offset
         rp_spmc_module_config_int32 (MODULE_SETUP, 0, MODULE_SETUP_VECTOR(1)); // control setpoint offset = 0 always.
         rp_spmc_module_config_int32 (MODULE_SETUP, volts_to_rpspmc (z_setpoint), MODULE_SETUP_VECTOR(2));
-        rp_spmc_module_config_uint32 (MODULE_SETUP, mode, MODULE_SETUP_VECTOR(3));
+        rp_spmc_module_config_uint32 (MODULE_SETUP, mode&0xff, MODULE_SETUP_VECTOR(3));
         rp_spmc_module_config_uint32 (SPMC_Z_SERVO_MODE_CONTROL_REG, (mode>>8)&0xff, MODULE_SETUP_VECTOR(4));
 }
 
