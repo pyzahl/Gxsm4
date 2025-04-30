@@ -201,7 +201,8 @@ always @(posedge i_clk)
     always @ (posedge aclk)
     begin
         rdecii <= rdecii+1; // rdecii 00 01 *10 11 00 ...
-        if (rdecii == RDECII)
+        //if (rdecii == RDECII)
+        if ((RDECII==0 && S_AXIS_tvalid) || (RDECII>0 && rdecii == RDECII))  
         begin
             upper <= {{(zW_EXTEND){       limit_upper[CONTROL_W-1]}},        limit_upper[CONTROL_W-1:0], {(zW_CONTROL_INT-CONTROL_W-zW_EXTEND){1'b0}}};  // sign extend and pad on right to control int width
             lower <= {{(zW_EXTEND){       limit_lower[CONTROL_W-1]}},        limit_lower[CONTROL_W-1:0], {(zW_CONTROL_INT-CONTROL_W-zW_EXTEND){1'b0}}};  // sign extend and pad on right to control int width

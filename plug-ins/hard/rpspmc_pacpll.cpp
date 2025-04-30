@@ -3724,9 +3724,11 @@ int RPSPMC_Control::choice_z_servo_current_source_callback (GtkWidget *widget, R
         } else {
                 self->I_fir = 0;
         }
-        if (rpspmc_pacpll)
+        if (rpspmc_pacpll){
+                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_MODE", self->mix_transform_mode[0] | (self->I_fir << 8)); // mapped to MM_LIN/LOG/FCZLOG (0,1,3) | FIR SELECTION
                 rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_SRC_MUX", id);
-
+        }
+        
         for (int k=0; rpspmc_source_signals[k].mask; ++k)
                 if (rpspmc_source_signals[k].mask == 0x00000010){ // update as of 1V/5V "Current Input" Volt Scale Range Change from signal list
                         rpspmc_source_signals[k].scale_factor = z_servo_current_source[id].scale_factor; break;

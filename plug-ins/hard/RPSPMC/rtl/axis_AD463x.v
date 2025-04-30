@@ -318,7 +318,11 @@ module axis_AD463x #(
                                 end
                             end
                         endcase
-                    end                 
+                    end
+                    else
+                    begin
+                        rdy <= 0;
+                    end                
                 end
                 else 
                 begin
