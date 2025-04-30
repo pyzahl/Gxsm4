@@ -114,6 +114,7 @@ int z0_buf = 0;
 int bias_buf = 0;
 
 
+extern std::stringstream rpspmc_init_info;
 
 
 /*
@@ -165,10 +166,15 @@ void rp_spmc_AD5791_init (){
         usleep(10000);
 
         rp_spmc_AD5791_set_stream_mode (); // enable streaming for AD5791 DAC's from FPGA now!
+
+        rpspmc_init_info << "\n** RPSPMC AD5791 PMODs INIT REPORT (blind) **\n";
+        rpspmc_init_info << "RPSPMC: AD5791 PMODs 1..6 (XYZUAB) init completed. FPGA AXI streaming enabled.\n";
+
 }
 
 ad463x_dev* rp_spmc_AD463x_init (){
         if (verbose > 1) fprintf(stderr, "##rp_spmc_AD463x_init\n");
+
         ad463x_dev *dev=NULL;
         ad463x_init_param init_param;
         memset (&init_param, 0, sizeof(init_param));
@@ -179,10 +185,17 @@ ad463x_dev* rp_spmc_AD463x_init (){
         init_param.output_mode = AD463X_24_DIFF;
         init_param.data_rate   = AD463X_SDR_MODE; // AD463X_DDR_MODE
         init_param.spi_clock_divider = 3; // 3 should do, 10 works for testing
-        ad463x_init(&dev, &init_param);
+
+        rpspmc_init_info << "\n** RPSPMC AD4630 INIT REPORT **\n";
+        rpspmc_init_info << "RPSPMC: AD4630-24 init: SPI, ONE LANE, 24_DIFF, SDR\n";
+
+        int ret=ad463x_init(&dev, &init_param);
 
         rp_spmc_AD463x_set_stream_mode (dev);
 
+        rpspmc_init_info << "RPSPMC: AD4630-24 init completed: " << (ret != 0 ? "INIT ERROR":"INIT OK") << "\n"
+                         << "     ...FPGA internal streaming enabled.\n";
+ 
         return dev;
 }
 
@@ -195,15 +208,20 @@ void rp_spmc_AD463x_test (struct ad463x_dev *dev){
 
 	ad463x_enter_config_mode (dev); // added
 
+        rpspmc_init_info << "RPSPMC: AD4630-24 testing:\n";
+
 	fprintf(stderr,"AD463x WRITE TEST TO SCRATCH PAD REG:\n");
+        rpspmc_init_info << "     SPI SCRATCH PAD READ WRITE TEST:";
 	ad463x_spi_reg_write(dev, AD463X_REG_SCRATCH_PAD, AD463x_TEST_DATA);
 	ad463x_spi_reg_read(dev, AD463X_REG_SCRATCH_PAD, &data);
 
 	if (data != AD463x_TEST_DATA) {
                 // pr_err("Test Data read failed.\n");
                 fprintf(stderr,"AD463x Test Data Read failed: %08x expected: %08x\n", data, AD463x_TEST_DATA);
+                rpspmc_init_info << "AD463x Test Data Read failed: " << std::hex << std::setw(8) << data << " expected: " << AD463x_TEST_DATA << "\n";
 	} else {
                 fprintf(stderr,"AD463x Test Data Read: passed\n");
+                rpspmc_init_info << "AD463x Test Data Read passed\n";
                 fprintf(stderr,"AD463x Test Data Read/Write extensive run...");
                 int errcount=0;
                 for (uint8_t x=0; ; x++){
@@ -215,10 +233,14 @@ void rp_spmc_AD463x_test (struct ad463x_dev *dev){
                         }
                         if (x==0xff) break;
                 }
-                if (errcount > 0)
+                if (errcount > 0) {
                         fprintf(stderr,"Scratch R/W extensive test fail # %d\n", errcount);
-                else
+                        rpspmc_init_info << "AD463x R/W extensive test failed. Err count: " << errcount << "\n";
+                }
+                else {
                         fprintf(stderr,"Scratch R/W extensive test passed.\n");
+                        rpspmc_init_info << "Scratch R/W extensive test passed.\n";
+                }
         }
 	ad463x_spi_reg_read(dev, AD463X_REG_PAT0, &pat[0]);
 	ad463x_spi_reg_read(dev, AD463X_REG_PAT1, &pat[1]);
@@ -266,12 +288,19 @@ void rp_spmc_AD463x_test (struct ad463x_dev *dev){
         
         ad463x_read_single_sample (dev, &ch0, &ch1, 0, 1);
         ad463x_read_single_sample (dev, &ch0, &ch1, 0, 1);
+
+        rpspmc_init_info << "AD4630-24 test readings:\n";
         for (int i=0; i<10; ++i){
                 ad463x_read_single_sample (dev, &ch0, &ch1, 1, 0);
                 fprintf (stderr, "%03d: %10d  %10d  \t %10g mV \t %10g mV\n", i, ch0, ch1, 2*5000.*((int32_t)ch0)/(1<<23), 2*5000.0*((int32_t)ch1)/(1<<23));
+                rpspmc_init_info << std::dec << std::setw(10) << i << ": "
+                                 << ch0 << ", " << ch1 << " => "
+                                 << (2*5000.*((int32_t)ch0)/(1<<23)) << "mV, "
+                                 << (2*5000.*((int32_t)ch0)/(1<<23)) << "mV\n";
         }
 
        	fprintf(stderr,"AD463x ENTERING AXI STREAMING OPERATION\n");
+        rpspmc_init_info << "AD4630-24: FPGA AXI streaming enabled.\n";
 
         rp_spmc_AD463x_set_stream_mode (dev);
 
@@ -418,6 +447,9 @@ void rp_spmc_gvp_init (){
         }
         rp_spmc_module_write_config_data (SPMC_GVP_VECTOR_DATA_REG);
 
+        rpspmc_init_info << "\n** RPSPMC GVP Engine INIT **\n";
+
+        
 }
 
 // pc: ProgramCounter (Vector #)

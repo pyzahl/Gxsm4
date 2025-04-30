@@ -60,6 +60,10 @@
 
 #define DBG_V_LEVEL 1
 
+
+extern std::stringstream rpspmc_init_info;
+
+
 /*
  * Gains computed as fractions of 1000 so they can be expressed by integers.
  */
@@ -945,6 +949,7 @@ int32_t ad463x_init(struct ad463x_dev **device,
 	if (ret != 0)
 		goto error_spi;
 
+        
 	ret = ad463x_spi_reg_read(dev, AD463X_REG_SCRATCH_PAD, &data, 1);
 	if (ret != 0)
 		goto error_spi;
@@ -957,6 +962,7 @@ int32_t ad463x_init(struct ad463x_dev **device,
 	else
 	  fprintf(stderr,"AD463x Test Data Read: pass.\n");
 
+        rpspmc_init_info << "AD463x Scratchpad SPI write/read test passed.\n";
 
 	ret = ad463x_spi_reg_read(dev, AD463X_REG_CHIP_TYPE, &data);
 	fprintf(stderr,"AD463x AD463X_REG_CHIP_TYPE: %02x\n", data);
@@ -993,12 +999,30 @@ int32_t ad463x_init(struct ad463x_dev **device,
 	ad463x_exit_reg_cfg_mode(dev); // exit CFG mode to do test conversion reads
 
 	fprintf(stderr,"AD463x 4 TEST PAT READINGS, 32BIT mode:\n");
+        rpspmc_init_info << "AD463x TEST PAT DATA READ TEST:\n";
+
 	{
 	  uint32_t ch0, ch1;
 	  ad463x_read_single_sample (dev, &ch0, &ch1, 0, 1, 32);
+          rpspmc_init_info << std::dec << std::setw(10) << ": "
+                           << ch0 << ", " << ch1 << " => "
+                           << (2*5000.*((int32_t)ch0)/(1<<23)) << "mV, "
+                           << (2*5000.*((int32_t)ch0)/(1<<23)) << "mV\n";
+          ad463x_read_single_sample (dev, &ch0, &ch1, 0, 1, 32);
+          rpspmc_init_info << std::dec << std::setw(10) << ": "
+                           << ch0 << ", " << ch1 << " => "
+                           << (2*5000.*((int32_t)ch0)/(1<<23)) << "mV, "
+                           << (2*5000.*((int32_t)ch0)/(1<<23)) << "mV\n";
 	  ad463x_read_single_sample (dev, &ch0, &ch1, 0, 1, 32);
+          rpspmc_init_info << std::dec << std::setw(10) << ": "
+                           << ch0 << ", " << ch1 << " => "
+                           << (2*5000.*((int32_t)ch0)/(1<<23)) << "mV, "
+                           << (2*5000.*((int32_t)ch0)/(1<<23)) << "mV\n";
 	  ad463x_read_single_sample (dev, &ch0, &ch1, 0, 1, 32);
-	  ad463x_read_single_sample (dev, &ch0, &ch1, 0, 1, 32);
+          rpspmc_init_info << std::dec << std::setw(10) << ": "
+                           << ch0 << ", " << ch1 << " => "
+                           << (2*5000.*((int32_t)ch0)/(1<<23)) << "mV, "
+                           << (2*5000.*((int32_t)ch0)/(1<<23)) << "mV\n";
 	}
 	
 	// ***
@@ -1039,10 +1063,15 @@ int32_t ad463x_init(struct ad463x_dev **device,
 	ad463x_exit_reg_cfg_mode(dev); // exit CFG mode to do test conversion reads
 
 	fprintf(stderr,"** AD463x TEST READS **\n");
+        rpspmc_init_info << "AD463x TEST CONVERSIONS:\n";
         for (int i=0; i<10; ++i){
                 uint32_t ch0, ch1;
                 ad463x_read_single_sample (dev, &ch0, &ch1, 1, 0);
                 fprintf (stderr, "%03d: %10d  %10d  \t %10g mV \t %10g mV\n", i, ch0, ch1, 2*5000.*((int32_t)ch0)/(1<<23), 2*5000.0*((int32_t)ch1)/(1<<23));
+                rpspmc_init_info << std::dec << std::setw(10) << i << ": "
+                                 << ch0 << ", " << ch1 << " => "
+                                 << (2*5000.*((int32_t)ch0)/(1<<23)) << "mV, "
+                                 << (2*5000.*((int32_t)ch0)/(1<<23)) << "mV\n";
         }
 
 	

@@ -84,6 +84,9 @@ extern spmc_dma_support *spm_dma_instance;
 //extern void *FPGA_SPMC_bram;
 
 extern CIntParameter SPMC_GVP_DATA_POSITION;
+extern std::stringstream rpspmc_init_info;
+
+
 
 //#define SPMC_DMA_BUFFER_BLOCK_SIZE         0x00080000 // Size of memory block per descriptor in bytes: 0.5 M -- two blocks, cyclic
 #define BLKSIZE ((SPMC_DMA_N_DESC*SPMC_DMA_BUFFER_BLOCK_SIZE)/4) // 2 * 0x00080000 / 4 = 0x40000
@@ -102,6 +105,14 @@ inline unsigned int stream_lastwrite_address(){
         }
 #endif
         return read_gpio_reg_int32 (11,0) & (BLKSIZE-1); // 20bit 0x3FFFF   // & BRAM_ADRESS_MASK;
+}
+
+void spmc_stream_server::add_greeting (){
+        info_stream << "#*** RPSPMC Stream Server is connected. ***" << std::endl;
+        info_stream << "#*** Version: " RPSPMC_VNAME << std::endl;
+        info_stream << "#*** SRCS Bit Mask Coding is " RPSPMC_SRCS_INFO << std::endl;
+        info_stream << rpspmc_init_info.str() << std::endl;
+        info_count++;
 }
 
 

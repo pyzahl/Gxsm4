@@ -163,12 +163,8 @@ public:
                 m_connections.erase(hdl);
         };
 
-        void add_greeting (){
-                info_stream << "#*** RPSPMC Stream Server is connected. ***" << std::endl;
-                info_stream << "#*** Version: " RPSPMC_VNAME << std::endl;
-                info_stream << "#*** SRCS Bit Mask Coding is " RPSPMC_SRCS_INFO << std::endl;
-                info_count++;
-        };
+        void add_greeting ();
+        
         void add_vector (std::string vec){
                 info_stream << vec << std::endl;
                 info_count++;

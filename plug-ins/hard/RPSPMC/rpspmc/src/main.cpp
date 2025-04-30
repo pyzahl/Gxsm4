@@ -70,6 +70,9 @@ spmc_stream_server spmc_stream_server_instance;
 spmc_dma_support *spm_dma_instance = NULL;
 extern int spmc_dma_pull_interval;
 
+std::stringstream rpspmc_init_info;
+
+
 // Some thing is off while Linking, application does NOT (terminated with unkown error a tload time) work with compliled separate and linked to lib
 // In Makefile: CXXSOURCES=main.cpp fpga_cfg.cpp pacpll.cpp spmc.cpp
 // Thus this primitive alternative assembly here
@@ -964,6 +967,8 @@ int rp_app_init(void)
         fprintf (stderr, "\n** RP FPGA RPSPMC Version........ :  %08X %08X **", v, vd);
         fprintf (stderr, "\n** RP FPGA RPSPMC System State .. : #%08X %08X **", sys_state, sys_startup);
 
+        rpspmc_init_info << "\n** RPSPMC FPGA INIT REPORT **\n";
+
         if ((v & 0xffff0000) != 0xEC010000){
                 fprintf (stderr, "\n** RP FPGA RPSPMC FPGA SYSTEM ERROR: wrong RPSPMC id [%08x] != EC01xxxx -- invalid RPSPMC FPGA configuration.\n** EXITING SERVER.\n\n", v);
                 return EXIT_FAILURE;
@@ -975,6 +980,7 @@ int rp_app_init(void)
         rp_spmc_update_readings ();
 
         if (sys_startup){ // "cold start" FPGA first start detected
+                rpspmc_init_info << "\n** RPSPMC FPGA COLD START/FULL RESET AND RE-INIT **\n";
                 fprintf (stderr, "\n** RP FPGA RPSPMC COLD START:   FPGA reset/reloaded, full init **");
 
                 // Init SPMC
@@ -985,6 +991,7 @@ int rp_app_init(void)
                 rp_spmc_gvp_init ();
         } else { // "WARM START" FPGA was running: no reset/reload -- reconnecting!
                 fprintf (stderr, "\n** RP FPGA RPSPMC WARM START:   FPGA is running **\n");
+                rpspmc_init_info << "\n** RPSPMC FPGA RECONNECT **\n";
         }        
 
         // readback
@@ -1032,12 +1039,14 @@ int rp_app_init(void)
         //rp_spmc_gvp_config (); // assure GVP is in reset mode
 
         rp_PAC_auto_dc_offset_adjust ();
+        rpspmc_init_info << "\n** AUTO PAC DC ADJUSTED **\n";
 
         //Set signal update interval
         CDataManager::GetInstance()->SetSignalInterval(SIGNAL_UPDATE_INTERVAL);
         CDataManager::GetInstance()->SetParamInterval(PARAMETER_UPDATE_INTERVAL);
 
         // Init PAC
+        rpspmc_init_info << "\n** AUTO PAC INIT **\n";
         set_PAC_config();
 
         // init block transport for scope
@@ -1045,6 +1054,8 @@ int rp_app_init(void)
 
 
         fprintf(stderr, "Red Pitaya RPSPMC PACPLL API init completed!\n");
+        rpspmc_init_info << "\n** RPSPMC IS READY **\n";
+        
         return 0;
 }
 
