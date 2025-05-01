@@ -443,8 +443,8 @@ CIntParameter     SPMC_GVP_XVECTOR_JMPR("SPMC_GVP_XVECTOR_JMPR", CBaseParameter:
 
 
 CDoubleParameter  SPMC_ALPHA("SPMC_ALPHA", CBaseParameter::RW, 0.0, 0, -360, +360); // deg
-CDoubleParameter  SPMC_SLOPE_DZX("SPMC_SLOPE_DZX", CBaseParameter::RW, 0.0, 0, -1.0, +1.0); // slope in Volts Z / Volt X
-CDoubleParameter  SPMC_SLOPE_DZY("SPMC_SLOPE_DZY", CBaseParameter::RW, 0.0, 0, -1.0, +1.0); // slope in Volts Z / Volt X
+CDoubleParameter  SPMC_SLOPE_DZX("SPMC_SLOPE_DZX", CBaseParameter::RW, 0.0, 0, -10.0, +10.0); // slope in Volts Z / Volt X
+CDoubleParameter  SPMC_SLOPE_DZY("SPMC_SLOPE_DZY", CBaseParameter::RW, 0.0, 0, -10.0, +10.0); // slope in Volts Z / Volt X
 CDoubleParameter  SPMC_SLOPE_SLEW("SPMC_SLOPE_SLEW", CBaseParameter::RW, 0.0, 0, 0.0, +1e6); // slope in 1 / sec
 
 CDoubleParameter  SPMC_SET_SCANPOS_X("SPMC_SET_SCANPOS_X", CBaseParameter::RW, 0.0, 0, -5.0, +5.0); // Volts
@@ -1795,7 +1795,7 @@ void OnNewParams_RPSPMC(void){
                 do_rotate = rp_spmc_set_rotation (SPMC_ALPHA.Value (), SPMC_SET_OFFSET_XY_SLEW.Value ());
         }
         
-        if (SPMC_SLOPE_DZX.IsNewValue () || SPMC_SLOPE_DZY.IsNewValue () || SPMC_SLOPE_SLEW.IsNewValue ()){
+        if (SPMC_SLOPE_DZX.IsNewValue () || SPMC_SLOPE_DZY.IsNewValue ()){
                 SPMC_SLOPE_SLEW.Update ();
                 SPMC_SLOPE_DZX.Update ();
                 SPMC_SLOPE_DZY.Update ();

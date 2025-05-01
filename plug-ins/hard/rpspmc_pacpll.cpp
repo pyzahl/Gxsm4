@@ -2939,18 +2939,18 @@ void RPSPMC_Control::BiasChanged(Param_Control* pcs, RPSPMC_Control* self){
 
 void RPSPMC_Control::Slope_dZX_Changed(Param_Control* pcs, RPSPMC_Control* self){
         if (rpspmc_pacpll){
-                double zx_ratio = main_get_gapp()->xsm->Inst->XResolution () / main_get_gapp()->xsm->Inst->ZModResolution (); 
-                rpspmc_pacpll->write_parameter ("SPMC_SLOPE_SLEW", 2.0);
-                usleep (100000);
+                double zx_ratio = main_get_gapp()->xsm->Inst->XResolution () / main_get_gapp()->xsm->Inst->ZResolution (); 
+                //rpspmc_pacpll->write_parameter ("SPMC_SLOPE_SLEW", 100.0);
+                //usleep (100000);
                 rpspmc_pacpll->write_parameter ("SPMC_SLOPE_DZX", zx_ratio * self->area_slope_x);
         }
 }
 
 void RPSPMC_Control::Slope_dZY_Changed(Param_Control* pcs, RPSPMC_Control* self){
         if (rpspmc_pacpll){
-                double zy_ratio = main_get_gapp()->xsm->Inst->YResolution () / main_get_gapp()->xsm->Inst->ZModResolution ();
-                rpspmc_pacpll->write_parameter ("SPMC_SLOPE_SLEW", 2.0);
-                usleep (100000);
+                double zy_ratio = main_get_gapp()->xsm->Inst->YResolution () / main_get_gapp()->xsm->Inst->ZResolution ();
+                //rpspmc_pacpll->write_parameter ("SPMC_SLOPE_SLEW", 100.0); // MIN 10
+                //usleep (100000);
                 rpspmc_pacpll->write_parameter ("SPMC_SLOPE_DZY", zy_ratio * self->area_slope_y);
         }
 }

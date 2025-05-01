@@ -203,7 +203,7 @@ gboolean rpspmc_hwi_dev::ZOffsetMove(double dv){
 
         z_offset_internal += dv;
         jdata[0] = main_get_gapp()->xsm->Inst->ZA2Volt (z_offset_internal);
-        jdata[1] = main_get_gapp()->xsm->Inst->ZA2Volt (100); // 100 A/s
+        jdata[1] = main_get_gapp()->xsm->Inst->ZA2Volt (100.0); // 100 A/s
 
         g_message ("ZOffsetMove: %gV @%gV/s", jdata[0], jdata[1]);
 
