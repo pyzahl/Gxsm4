@@ -481,7 +481,7 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, unsigned int srcs
 
                 int regA, regB;
                 rp_spmc_module_read_config_data (SPMC_READBACK_Z_REG, &regA, &regB);
-                double z_gvp = rpspmc_to_volts (regB); // Z-GVP
+                double z_gvp = rpspmc_to_volts (regA); // Z-GVP
 
                 rp_spmc_module_read_config_data (SPMC_READBACK_GVPBIAS_REG, &regA, &regB); // GVP Bias Comp, GVP-A
                 double u_gvp = rpspmc_to_volts (regA);
