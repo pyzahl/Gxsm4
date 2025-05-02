@@ -65,25 +65,15 @@ module phase_unwrap #(
     
     reg signed [M_AXIS_TDATA_WIDTH-1:0] p0=0;
     reg signed [M_AXIS_TDATA_WIDTH-1:0] p1=0;
-    reg signed [M_AXIS_TDATA_WIDTH-1:0] p2=0;
     reg signed [M_AXIS_TDATA_WIDTH-1:0] dp01=0;
     reg signed [M_AXIS_TDATA_WIDTH-1:0] phase_wrap=0;
     reg signed [M_AXIS_TDATA_WIDTH-1:0] phase_unwrapped=0;
     reg reg_unwrap_enable;
 
-    reg [1:0] rdecii = 0;
-
     always @ (posedge aclk)
     begin
-        rdecii <= rdecii+1; // rdecii 00 01 *10 11 00 ...
-        if (rdecii == 1)
-        begin
-            reg_unwrap_enable <= enable;
-        end
-    end
-    
-    always @ (posedge aclk)
-    begin
+        reg_unwrap_enable <= enable;
+        
         p0 <= $signed ({{(M_AXIS_TDATA_WIDTH-S_AXIS_TDATA_WIDTH){S_AXIS_tdata[S_AXIS_TDATA_WIDTH-1]}}, S_AXIS_tdata[S_AXIS_TDATA_WIDTH-1:0]});
         
         if (PHU_DISABLE)
@@ -92,27 +82,26 @@ module phase_unwrap #(
         end
         else
         begin             
-            p1 <= p0;
-            p2 <= p1;
-            
+            p1   <= p0;
             dp01 <= p0-p1;
             if (reg_unwrap_enable)
             begin
-                if (dp01 > 25'sd6588397)                      // > pi : (1<<21)*pi = 6588397.3
+                if (dp01 > 25'sd6588397)                      // p0-p1 > pi : (1<<21)*pi = 6588397.3
                 begin
-                    phase_wrap <= phase_wrap - 25'sd13176795; // 2pi : (1<<21)*pi = 13176794.6
+                    phase_wrap <= phase_wrap - 25'sd13176795; // -2pi : (1<<21)*pi = 13176794.6
                 end
-                if (dp01 < -25'sd6588397)                     // > pi  (1<<21)*pi = 6588397.3
+                if (dp01 < -25'sd6588397)                     // > p0-p1 < pi  (1<<21)*pi = 6588397.3
                 begin
-                    phase_wrap <= phase_wrap + 25'sd13176795;
+                    phase_wrap <= phase_wrap + 25'sd13176795;  // +2pi
                 end
+                phase_unwrapped <= p0 + phase_wrap;
             end
             else
             begin
-                phase_wrap <= 0;
+                phase_unwrapped <= p0;
+                phase_wrap <= 0; // reset phase wrap
             end
     
-            phase_unwrapped <= p2 + phase_wrap; 
         end            
     end
     
