@@ -71,6 +71,9 @@ module tb_spm_ad(
     wire [31:0] xvalue;
     wire [3:0] Xgvpch;
 
+
+
+
     wire [31:0] wx; // vector components
     wire [31:0] wy; // ..
     wire [31:0] wz; // ..
@@ -272,6 +275,39 @@ wire ad_ready;
     always begin
         w_spi_busy <= ad_bt_dbg > 8'hf0 ? 1:0; #2;
     end
+
+
+    reg  signed [31:0] servo_set =40000000;
+    reg  signed [31:0] servo_setP=40000010;
+    reg  signed [31:0] servo_setM=39999990;
+    reg  signed [31:0] servo_sig =40000000;
+    reg  signed [31:0] servo_in  =40000000;
+    reg  signed [31:0] servo_d   =2;
+    reg         servo_in_tvalid=1;
+    wire signed [31:0] servo_ctrl=0;   
+
+    // PI Controller aka Servo test
+    reg  [15:0] sdec=0; 
+    always begin
+        if (sdec==0)
+        begin
+            sdec <= 10;
+            if (servo_sig > servo_setP)
+                servo_d <= -1;
+            if (servo_sig < servo_setM)
+                servo_d <= 1;
+            servo_sig <= servo_sig + servo_d;
+            servo_in_tvalid <= 1;
+        end           
+        else
+        begin
+            servo_in_tvalid <= 0;
+            sdec <= sdec-1;
+        end
+        servo_in <= servo_sig;
+        #1;
+    end
+
 
 
 
@@ -917,6 +953,96 @@ SineSDB64 SDB_tb
     .M_AXIS_SC_tdata (SinCos), // reg (Sine, Cosine) vector
     .M_AXIS_SC_tvalid (SCtv)
 );
+
+
+
+controller_pi#(
+        .AXIS_TDATA_WIDTH(32),  
+        .M_AXIS_CONTROL_TDATA_WIDTH(32),
+        .M_AXIS_CONTROL2_TDATA_WIDTH(32),
+        .M_AXIS_CONTROL2_TDATA_WIDTH(32),
+        .COEF_Q(31),
+        .COEF_W(32),
+        .IN_Q(31),
+        .IN_W(32),
+        .CONTROL_Q(31),
+        .CONTROL_W(32),
+        .CONTROL2_W(32),
+        .FUZZY_CONST_CONTROL_MODE(1),
+        .Rdeci(8),
+        .Rdecii(0)
+    ) servo_tb
+/*
+(
+    parameter AXIS_TDATA_WIDTH = 32,            // INPUT AXIS DATA WIDTH                          PH: 32  AM: 24
+    parameter M_AXIS_CONTROL_TDATA_WIDTH = 48,  // SERVO AXIS CONTROL DATA WIDTH OF AXIS          PH: 48  AM: 16
+    parameter M_AXIS_CONTROL2_TDATA_WIDTH = 48, // INTERNAL CONTROl DATA WIDTH MAPPED             PH: 48  AM: 32
+		                                // TO AXIS FOR READOUT not including extend
+    parameter IN_Q = 22,       // Q of Controller Input Signal                                    PH: 22  AM: 22
+    parameter IN_W = 23,       // Width of Controller Input Signal                                PH: 23  AM: 23
+    parameter COEF_Q = 31,     // Q of CP, CI's                                                   PH: 31  AM: 31
+    parameter COEF_W = 32,     // Width of CP, CI's                                               PH: 31  AM: 31
+    parameter CONTROL_Q = 31,  // Q of Controlvalue                                               PH: 31  AM: 15
+    parameter CONTROL_W = 44,  // Significant Width of Control Output Data                        PH: 44  AM: 16
+    parameter CONTROL2_W = 32, // max passed outside control width, must be <= CONTROL2_WIDTH     PH: 32  AM: 16
+    parameter AMCONTROL_ALLOW_NEG_SPECIAL = 0, // special AM controller behavior                       0      1
+    parameter AUTO_RESET_AT_LIMIT  = 0,        // optional behavior instead of saturation at limits,   X      0
+		                                       //  push control back to reset value
+    parameter USE_RESET_DATA_INPUT = 1,        // has reset value AXIS input,                          1      1
+    parameter FUZZY_CONST_CONTROL_MODE = 0,    // if enabled trys to maintain "reset" value if not exceeding setpoint as a limit, if so, normal regulation operation 
+
+    parameter RDECI  = 1,  // reduced rate decimation bits 1= 1/2 ...
+    parameter RDECII = 1   // reduced rate decimation bits 1= 1/2 ...
+    // Calculated and fixed Parameters -- ignore and do not change in bogus GUI: zW_XXXXX -- or better hand caclulate and check! Unclear/false behavior :( 
+    //parameter zW_ERROR         = IN_W + 1,               // ACTUAL CONTROL ERROR WIDTH REQUIRED as of significant data range
+    //parameter zW_EXTEND        = 1,                      // FOR SATURATION CHECK PURPOSE 
+    //parameter zW_CONTROL_INT   = COEF_W+IN_W+zW_EXTEND  // INTERNAL CONTROL INTEGRATOR WIDTH
+)
+*/
+(
+    .aclk(pclk),
+    .S_AXIS_tdata(servo_in), // Controller data input
+    .S_AXIS_tvalid(servo_in_tvalid),
+
+    .setpoint(servo_set), // Controller Setpoint
+    .cp(2147484), // Controller Parameter Proportional // -60dB
+    .ci(2147484), // Controller Parameter Integral
+    .limit_upper( 2100000000), // Upper Control Limit
+    .limit_lower(-2100000000), // Lower Control Limit
+
+    .S_AXIS_reset_tdata(0), // Controller Reset/Start, i.e. disabled control output value
+    .S_AXIS_reset_tvalid(1),
+    .enable(1),
+    .control_hold(0),
+    .fuzzy_cr_mode(0), // reset value is use as "Z" target unles setpoint limit is reached
+
+    .M_AXIS_CONTROL_tdata(servo_ctrl)  // control output, may be less precision
+
+/*    
+    .M_AXIS_PASS_tdata, // passed input
+    .M_AXIS_PASS_tvalid,
+    .M_AXIS_PASS2_tdata, // passed input
+    .M_AXIS_PASS2_tvalid,
+    .M_AXIS_CONTROL_tdata,  // control output, may be less precision
+    .M_AXIS_CONTROL_tvalid,
+    .M_AXIS_CONTROL2_tdata, // control output, full precision without over flow bit
+    .M_AXIS_CONTROL2_tvalid,
+    .M_AXIS_CONTROL3_tdata, // control output, full precision without over flow bit
+    .M_AXIS_CONTROL3_tvalid,
+
+    .mon_signal,
+    .mon_error,
+    .mon_control,
+    .mon_control_lower32,
+    .mon_control_B,
+
+    .status_max,
+    .status_min
+    */
+    );
+
+
+
 
 endmodule
 

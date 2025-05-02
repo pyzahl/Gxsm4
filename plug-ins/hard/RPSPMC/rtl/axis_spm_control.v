@@ -154,6 +154,7 @@ module axis_spm_control#(
     // slope -- always applied in global XY plane ???
     reg signed [QSLOPE+1-1:0] slope_x=0; // SQSLOPE (31)
     reg signed [QSLOPE+1-1:0] slope_y=0; // SQSLOPE (31)
+    reg signed [QSLOPE+1-1:0] dzxy_slope_step = 8;
 
     // SCAN OFFSET / POSITION COMPONENTS; ABSOLUTE COORDS
     reg signed [32-1:0] x0=0; // vector components
@@ -164,7 +165,7 @@ module axis_spm_control#(
     reg signed [32-1:0] z_offset_step=32; // @Q31 => Q31 / 120M => [18 sec full scale swin @ step 1 decii = 0]  x RDECI
 
     reg signed [32-1:0] xy_move_step = 32;
-    reg signed [32-1:0] z_move_step = 1;
+    reg signed [32-1:0] z_move_step = 8;
     
     // adjuster tmp's
     reg signed [32+1-1:0] mx0p = 0;
@@ -281,8 +282,9 @@ module axis_spm_control#(
         slope_reg_address:
         begin
             // slope -- always applied in global XY plane ???
-            slope_x <= $signed(config_data[0*32+QSLOPE+1-1 : 0*32]); // SQSLOPE (31)
-            slope_y <= $signed(config_data[1*32+QSLOPE+1-1 : 1*32]); // SQSLOPE (31)
+            slope_x         <= $signed(config_data[0*32+QSLOPE : 0*32]); // SQSLOPE (31)
+            slope_y         <= $signed(config_data[1*32+QSLOPE : 1*32]); // SQSLOPE (31)
+            dzxy_slope_step <=         config_data[2*32+QSLOPE : 2*32]; // SQSLOPE (31)
         end
 
         modulation_reg_address:
@@ -334,8 +336,8 @@ module axis_spm_control#(
             `ADJUSTER (mz0, mz0p, mz0m, z_move_step, z0)
                         
             // slope_x, y adjusters for smooth op
-            `ADJUSTER (dZx, dZx_p, dZx_m, z_move_step, slope_x)
-            `ADJUSTER (dZy, dZy_p, dZy_m, z_move_step, slope_y)
+            `ADJUSTER (dZx, dZx_p, dZx_m, dzxy_slope_step, slope_x)
+            `ADJUSTER (dZy, dZy_p, dZy_m, dzxy_slope_step, slope_y)
 
             // Scan Rotation
             //rrx <=  rotmxx*x + rotmxy*y;

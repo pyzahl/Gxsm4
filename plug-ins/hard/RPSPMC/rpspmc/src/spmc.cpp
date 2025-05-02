@@ -819,8 +819,8 @@ void rp_spmc_set_slope (double dzx, double dzy, double dzxy_slew){ // slope in V
         //z_step = 1+(int)(volts_to_rpspmc (z_move_slew/SPMC_CLK));
         
         //double data[16] = { dzx, dzy, dzxy_slew/SPMC_CLK,0., 0.,0.,0.,0., 0.,0.,0.,0., 0.,0.,0.,0. };
-        double data[16] = { dzx, dzy, 10./Q_Z_SLOPE_PRECISION, 0., 0.,0.,0.,0., 0.,0.,0.,0., 0.,0.,0.,0. };
-        rp_spmc_module_config_vector_Qn (SPMC_MAIN_CONTROL_SLOPE_REG, data, 2, Q_Z_SLOPE_PRECISION);
+        double data[16] = { dzx, dzy, 8./Q_Z_SLOPE_PRECISION, 0., 0.,0.,0.,0., 0.,0.,0.,0., 0.,0.,0.,0. };
+        rp_spmc_module_config_vector_Qn (SPMC_MAIN_CONTROL_SLOPE_REG, data, 3, Q_Z_SLOPE_PRECISION);
 }
 
 // 1+ / -1 (=negate)

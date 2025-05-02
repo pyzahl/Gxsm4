@@ -153,10 +153,10 @@ module controller_pi #(
 
     reg signed [zW_ERROR-1:0] m=0;
     reg signed [zW_ERROR-1:0] error=0;
-    reg signed [zW_ERROR-1:0] error_next=0;
-    reg signed [zW_ERROR-1:0] reg_setpoint;
+    reg signed [zW_ERROR-1:0] reg_setpoint=0;
     reg signed [zW_ERROR-1:0] error_level=0;
-    reg signed [zW_CONTROL_INT-1:0] upper, lower;
+    reg signed [zW_CONTROL_INT-1:0] upper=0;
+    reg signed [zW_CONTROL_INT-1:0] lower=0;
     reg signed [zW_CONTROL_INT-1:0] reset = 0;
     reg signed [zW_CONTROL_INT-1:0] diff_control_reset_cie = 0;
     reg signed [zW_CONTROL_INT-1:0] control=0;
@@ -165,12 +165,12 @@ module controller_pi #(
     reg signed [zW_CONTROL_INT-1:0] control_cpe=0;
     reg signed [zW_CONTROL_INT-1:0] controlint=0;
     reg signed [zW_CONTROL_INT-1:0] controlint_next=0;
-    reg signed [COEF_W-1:0]  reg_cp;
-    reg signed [COEF_W-1:0]  reg_ci;
-    reg control_max;
-    reg control_min;
-    reg reg_enable;
-    reg reg_hold;
+    reg signed [COEF_W-1:0]  reg_cp=0;
+    reg signed [COEF_W-1:0]  reg_ci=0;
+    reg control_max=0;
+    reg control_min=0;
+    reg reg_enable=0;
+    reg reg_hold=0;
 
     assign M_AXIS_PASS_tdata  = S_AXIS_tdata; // pass
     assign M_AXIS_PASS_tvalid = S_AXIS_tvalid; // pass
@@ -201,6 +201,19 @@ always @(posedge i_clk)
     always @ (posedge aclk)
     begin
         rdecii <= rdecii+1; // rdecii 00 01 *10 11 00 ...
+
+
+        // prepare data to internal error data width zW_ERROR, signum extended
+        m            <= {{(zW_ERROR-IN_W+1){S_AXIS_tdata[AXIS_TDATA_WIDTH-1]}},   S_AXIS_tdata[IN_W-1:0]};
+        reg_setpoint <= {{(zW_ERROR-IN_W+1){setpoint[AXIS_TDATA_WIDTH-1]}},       setpoint[IN_W-1:0]};
+        
+        // calculate error
+        error        <= reg_setpoint - m; // IN_W + 1  (zW_ERROR)
+
+        // prepare coefficients * error
+        control_cie <= reg_ci*error; // ciX*error // saturation via extended range and limiter // Q64.. += Q31 x Q22
+        control_cpe <= reg_cp*error; // cpX*error // saturation via extended range and limiter // Q64.. += Q31 x Q22
+
         //if (rdecii == RDECII)
         if ((RDECII==0 && S_AXIS_tvalid) || (RDECII>0 && rdecii == RDECII))  
         begin
@@ -212,7 +225,6 @@ always @(posedge i_clk)
             end else begin
                 reset <= 0;
             end
-            error <= error_next;
     
             reg_cp <= cp;
             reg_ci <= ci;
@@ -257,7 +269,7 @@ always @(posedge i_clk)
                 begin
                     if (AMCONTROL_ALLOW_NEG_SPECIAL)
                     begin
-                        if (error_next > $signed(0) && control_next < $signed(0)) // auto reset condition for amplitude control to preven negative phase, but allow active "damping"
+                        if (error > $signed(0) && control_next < $signed(0)) // auto reset condition for amplitude control to preven negative phase, but allow active "damping"
                         begin
                             control      <= 0;
                             controlint   <= 0;
@@ -279,11 +291,6 @@ always @(posedge i_clk)
                     end
                 end
             end
-            // prepare data to internal error data width zW_ERROR, signum extended
-            m            <= {{(zW_ERROR-IN_W+1){S_AXIS_tdata[AXIS_TDATA_WIDTH-1]}},   S_AXIS_tdata[IN_W-1:0]};
-            reg_setpoint <= {{(zW_ERROR-IN_W+1){setpoint[AXIS_TDATA_WIDTH-1]}},       setpoint[IN_W-1:0]};
-            // calculate error
-            error_next   <= reg_setpoint - m; // IN_W + 1  (zW_ERROR)
 
             if (FUZZY_CONST_CONTROL_MODE) // IF enabled by PARAMETER use this processing block
             begin
@@ -301,8 +308,6 @@ always @(posedge i_clk)
                     end
                     else
                     begin // normal mode
-                        control_cie <= reg_ci*error; // ciX*error // saturation via extended range and limiter // Q64.. += Q31 x Q22
-                        control_cpe <= reg_cp*error; // cpX*error // saturation via extended range and limiter // Q64.. += Q31 x Q22
                         controlint_next <= controlint + control_cie; // saturation via extended range and limiter // Q64.. += Q31 x Q22
                         control_next    <= controlint + control_cpe; // 
                     end
@@ -320,8 +325,6 @@ always @(posedge i_clk)
             begin
                 if (reg_enable && !reg_hold) // run controller, integrate and prepare control output
                 begin
-                    control_cie <= reg_ci*error; // ciX*error // saturation via extended range and limiter // Q64.. += Q31 x Q22
-                    control_cpe <= reg_cp*error; // cpX*error // saturation via extended range and limiter // Q64.. += Q31 x Q22
                     controlint_next <= controlint + control_cie; // saturation via extended range and limiter // Q64.. += Q31 x Q22
                     control_next    <= controlint + control_cpe; // 
                 end 
@@ -338,7 +341,7 @@ always @(posedge i_clk)
     end   
      
     //assign M_AXIS_CONTROL_tdata   = {control[zW_CONTROL_INT-1], control[zW_CONTROL_INT-zW_EXTEND-2 : zW_CONTROL_INT-zW_EXTEND-CONTROL_W]}; // strip extension
-    assign M_AXIS_CONTROL_tdata   = {{(M_AXIS_CONTROL_TDATA_WIDTH-CONTROL_W){control[zW_CONTROL_INT-1]}}, control[zW_CONTROL_INT-zW_EXTEND-1 : zW_CONTROL_INT-zW_EXTEND-CONTROL_W]}; // strip extension, expand to TDATA WIDTH
+    assign M_AXIS_CONTROL_tdata   = control >>> (zW_CONTROL_INT-zW_EXTEND-CONTROL_W); //{{(M_AXIS_CONTROL_TDATA_WIDTH-CONTROL_W){control[zW_CONTROL_INT-1]}}, control[zW_CONTROL_INT-zW_EXTEND-1 : zW_CONTROL_INT-zW_EXTEND-CONTROL_W]}; // strip extension, expand to TDATA WIDTH
     assign M_AXIS_CONTROL_tvalid  = 1'b1;
     //assign M_AXIS_CONTROL2_tdata  = {control[zW_CONTROL_INT-1], control[zW_CONTROL_INT-zW_EXTEND-2 : zW_CONTROL_INT-zW_EXTEND-CONTROL2_W]}; // strip extension
     assign M_AXIS_CONTROL2_tdata  = {{(M_AXIS_CONTROL_TDATA_WIDTH-CONTROL2_W){control[zW_CONTROL_INT-1]}}, control[zW_CONTROL_INT-zW_EXTEND-1 : zW_CONTROL_INT-zW_EXTEND-CONTROL2_W]}; // strip extension, expand to TDATA WIDTH
