@@ -78,13 +78,13 @@ module controller_configuration#(
     output wire controller_option_th,
     output wire controller_hold);
         
-    reg [width_setpoint-1:0] r_control_setpoint = 0;
-    reg [width_limits-1:0] r_reset_value = 0;
-    reg [width_consts-1:0] r_cp = 0;
-    reg [width_consts-1:0] r_ci = 0;
-    reg [width_limits-1:0] r_upper = 0;
-    reg [width_limits-1:0] r_lower = 0;
-    reg [width_threshold-1:0] r_threshold;
+    reg signed [width_setpoint-1:0] r_control_setpoint = 0;
+    reg signed [width_limits-1:0] r_reset_value = 0;
+    reg signed [width_consts-1:0] r_cp = 0;
+    reg signed [width_consts-1:0] r_ci = 0;
+    reg signed [width_limits-1:0] r_upper = 0;
+    reg signed [width_limits-1:0] r_lower = 0;
+    reg signed [width_threshold-1:0] r_threshold;
 
     reg [32-1:0] r_controller_mode = 0;
 

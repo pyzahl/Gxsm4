@@ -405,9 +405,9 @@ void rp_PAC_set_amplitude_controller (double setpoint, double cp, double ci, dou
 
 // Phase Controller
 // CONTROL[75] OUT[44] : [75-1-1:75-44]=43+1   m[24]  x  c[32]  = 56 M: 24{Q32},  P: 44{Q14}
-void rp_PAC_set_phase_controller (double setpoint, double cp, double ci, double upper, double lower, double am_threashold, double freq_manual, int enable){
+void rp_PAC_set_phase_controller (double setpoint, double cp, double ci, double upper, double lower, double am_threashold, double freq_manual, int enable_mode){
         if (verbose > 2) fprintf(stderr, "##Configure PH-Controller: setpt=%g, cp=%g ci=%g, upper=%g lower=%g, amth=%g, frq=%g, en=%d\n",
-                                 setpoint, cp, ci, upper, lower, am_threashold, freq_manual, enable);
+                                 setpoint, cp, ci, upper, lower, am_threashold, freq_manual, enable_mode);
 
         /*
         double cp = 20. * log10 (1.6575e-5  * pll.auto_set_BW_Phase);
@@ -440,7 +440,7 @@ void rp_PAC_set_phase_controller (double setpoint, double cp, double ci, double 
 
         config_controller_m (PHASE_CONTROLLER_M_ADDRESS,
                              (long long)round (dds_phaseinc (freq_manual)),
-                             enable ? 1:0,
+                             enable_mode,
                              (int)(QCORDICSQRT * am_threashold)); // AM Threashold
         
 }
@@ -633,7 +633,7 @@ void rp_PAC_set_tau_transport (double tau_dfreq, double tau_phase, double tau_ex
                            (int) round (QDFCOEF * ci),
                            (long long) round (Q31*upper/10.0),   // *** FIX ME 10V -> 5V ??
                            (long long) round (Q31*lower/10.0));
-        config_controller_m (DFREQ_CONTROLLER_M_ADDRESS, (long long) round(Q31*reset_value/10.0), enable ? 1:0);
+        config_controller_m (DFREQ_CONTROLLER_M_ADDRESS, (long long) round(Q31*reset_value/10.0), enable);
 
         //set_gpio_cfgreg_int32 (PACPLL_CFG_DFREQ_CONTROLLER + PACPLL_CFG_SET,   (long long)(round(dds_phaseinc (setpoint)))); // 32bit dFreq (Full range is Q44)
         //set_gpio_cfgreg_int32 (PACPLL_CFG_DFREQ_CONTROLLER + PACPLL_CFG_CP,    (long long)(QDFCOEF * cp)); // {32}

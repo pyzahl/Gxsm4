@@ -4093,7 +4093,7 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
         bp->grid_add_check_button ( N_("Invert"), "Invert Phase Controller Gain. Normally positive.", 2,
                                     G_CALLBACK (RPspmc_pacpll::phase_controller_invert), this);
         bp->new_line ();
-        bp->grid_add_check_button ( N_("Unwapping"), "Always unwrap phase/auto unwrap only if controller is enabled", 2,
+        bp->grid_add_check_button ( N_("Unwrapping"), "Always unwrap phase/auto unwrap only if controller is enabled", 2,
                                     G_CALLBACK (RPspmc_pacpll::phase_unwrapping_always), this);
         //bp->grid_add_check_button ( N_("Unwap Plot"), "Unwrap plot at high level", 2,
         //                            G_CALLBACK (RPspmc_pacpll::phase_unwrap_plot), this);
@@ -5967,6 +5967,7 @@ double RPspmc_pacpll::unwrap (int k, double phi){
         static int side=1;
         static double pphi;
         
+#if 0
         if (!unwrap_phase_plot) return phi;
 
         if (k==0){ // choose start
@@ -5987,6 +5988,7 @@ double RPspmc_pacpll::unwrap (int k, double phi){
                 if (phi > 0.) side = 1; else side = -1;
         }
         pk=k; pphi=phi;
+#endif
         return (phi);
 }
 
