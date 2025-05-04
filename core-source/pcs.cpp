@@ -1604,7 +1604,7 @@ void Gtk_EntryControl::entry_scroll_cb (GtkEventController *controller, gdouble 
         //g_free(tmp);
         gpcs->Set_FromValue (gpcs->Get_dValue() - dy * gpcs->step);
 	if (gpcs->ChangeNoticeFkt)
-		(*gpcs->ChangeNoticeFkt)(gpcs, gpcs->FktData);       
+		(*gpcs->ChangeNoticeFkt)(gpcs, gpcs->FktData);
 }
 
 

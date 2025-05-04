@@ -1500,6 +1500,10 @@ int RPSPMC_Control::choice_Ampl_callback (GtkWidget *widget, RPSPMC_Control *spm
 	return 0;
 }
 
+// No-op to prevent w from propagating "scroll" events it receives.
+
+void disable_scroll_cb( GtkWidget *w ) {}
+
 void RPSPMC_Control::create_folder (){
         GtkWidget *notebook;
  	GSList *zpos_control_list=NULL;
@@ -2113,6 +2117,14 @@ void RPSPMC_Control::create_folder (){
         gtk_widget_set_vexpand (bp->grid, TRUE);
         bp->grid_add_widget (vp); // only widget in bp->grid
 
+        // catch and disable scroll on wheel
+        GtkEventController *gec;
+        gec = gtk_event_controller_scroll_new( GTK_EVENT_CONTROLLER_SCROLL_VERTICAL );
+        gtk_event_controller_set_propagation_phase( gec, GTK_PHASE_CAPTURE );
+        g_signal_connect( gec, "scroll", G_CALLBACK( disable_scroll_cb ), vp );
+        gtk_widget_add_controller( vp, gec );
+        
+        
         bp->new_grid ();
 	gtk_scrolled_window_set_child (GTK_SCROLLED_WINDOW (vp), bp->grid);
         
