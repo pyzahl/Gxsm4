@@ -188,8 +188,9 @@ class THV5():
         
         def SetTHVCoarseMove(self, channel, direction, burstcount, period, voltage, start):
                 c=['X','Y','Z']
+                ## http://192.168.40.10/coarse?v0=15&p0=500&a0=Z&c0=1&bs=0
                 if start:
-                        return self.request ('coarse?v={}&p0={}&a0={}&c0={}&bs=0'.format(voltage, period, c[channel], burstcount*direction))
+                        return self.request ('coarse?v={}&p0={}&a0={}&c0={}&bs=0'.format(int(voltage), int(1000*period), c[channel], burstcount*direction))
                 else:
                         return self.request ('coarse?v={}&p0={}&a0={}&c0={}&bs=0'.format(0, 0, c[channel], 0))
 
@@ -785,28 +786,31 @@ class HV5App(Gtk.Application):
 
                         #### Coarse Controller
 
+                        grid_chv5c = Gtk.Grid()
+                        grid.attach(grid_chv5c, 10, 0, 10, 5)
+
                         es = [] ## Entry Steps
                         ev = [] ## Entry Volts
                         ep = [] ## Entro Periods
-                        grid.attach(Gtk.Label(label='# Steps'), 16, 3, 1, 1)
-                        grid.attach(Gtk.Label(label='Amplitude in V'), 17, 3, 1, 1)
-                        grid.attach(Gtk.Label(label='Period in µs'), 18, 3, 1, 1)
+                        grid_chv5c.attach(Gtk.Label(label='# Steps'), 16, 3, 1, 1)
+                        grid_chv5c.attach(Gtk.Label(label='Amplitude in V'), 17, 3, 1, 1)
+                        grid_chv5c.attach(Gtk.Label(label='Period in µs'), 18, 3, 1, 1)
                         for i in range(0,3):
                                 es.append (Gtk.Entry())
                                 es[i].set_text("{}".format(CHV5_coarse['steps'][i]))
                                 es[i].set_width_chars(8)
                                 #control_list.append (eo[i])
-                                grid.attach(es[i], 16, 5+i, 1, 1)
+                                grid_chv5c.attach(es[i], 16, 5+i, 1, 1)
                                 ev.append (Gtk.Entry())
                                 ev[i].set_text("{}".format(CHV5_coarse['volts'][i]))
                                 ev[i].set_width_chars(8)
                                 #control_list.append (evo[i])
-                                grid.attach(ev[i], 17, 5+i, 1, 1)
+                                grid_chv5c.attach(ev[i], 17, 5+i, 1, 1)
                                 ep.append (Gtk.Entry())
                                 ep[i].set_text("{}".format(CHV5_coarse['period'][i]))
                                 ep[i].set_width_chars(8)
                                 #control_list.append (ep[i])
-                                grid.attach(ep[i], 18, 5+i, 1, 1)
+                                grid_chv5c.attach(ep[i], 18, 5+i, 1, 1)
 
                         button = Gtk.Button.new_from_icon_name("media-playback-stop")
                         click_gesture = Gtk.GestureClick()
@@ -814,7 +818,7 @@ class HV5App(Gtk.Application):
                         click_gesture.connect("end",  self.stop_coarse, 0, es, ev, ep)
                         button.get_child().add_controller(click_gesture)
                         #control_list.append (button)
-                        grid.attach(button, 11, 6, 1, 1)
+                        grid_chv5c.attach(button, 11, 6, 1, 1)
 
                         button = Gtk.Button.new_from_icon_name("arrow-left")
                         click_gesture = Gtk.GestureClick()
@@ -829,7 +833,7 @@ class HV5App(Gtk.Application):
                         click_gesture.connect("end",  self.stop_coarse, -DX, es, ev, ep)
                         button.get_child().add_controller(click_gesture)
                         #control_list.append (button)
-                        grid.attach(button, 10, 6, 1, 1)
+                        grid_chv5c.attach(button, 10, 6, 1, 1)
 
                         button = Gtk.Button.new_from_icon_name("arrow-right")
                         click_gesture = Gtk.GestureClick()
@@ -837,7 +841,7 @@ class HV5App(Gtk.Application):
                         click_gesture.connect("end",  self.stop_coarse, DX, es, ev, ep)
                         button.get_child().add_controller(click_gesture)
                         #control_list.append (button)
-                        grid.attach(button, 12, 6, 1, 1)
+                        grid_chv5c.attach(button, 12, 6, 1, 1)
 
                         button = Gtk.Button.new_from_icon_name("arrow-up")
                         click_gesture = Gtk.GestureClick()
@@ -845,7 +849,7 @@ class HV5App(Gtk.Application):
                         click_gesture.connect("end",  self.stop_coarse, DY, es, ev, ep)
                         button.get_child().add_controller(click_gesture)
                         #control_list.append (button)
-                        grid.attach(button, 11, 5, 1, 1)
+                        grid_chv5c.attach(button, 11, 5, 1, 1)
 
                         button = Gtk.Button.new_from_icon_name("arrow-down")
                         click_gesture = Gtk.GestureClick()
@@ -853,7 +857,7 @@ class HV5App(Gtk.Application):
                         click_gesture.connect("end",  self.stop_coarse, -DY, es, ev, ep)
                         button.get_child().add_controller(click_gesture)
                         #control_list.append (button)
-                        grid.attach(button, 11, 7, 1, 1)
+                        grid_chv5c.attach(button, 11, 7, 1, 1)
                         
 
                         button = Gtk.Button.new_from_icon_name("arrow-up")
@@ -862,7 +866,7 @@ class HV5App(Gtk.Application):
                         click_gesture.connect("end",  self.stop_coarse, 3, es, ev, ep)
                         button.get_child().add_controller(click_gesture)
                         #control_list.append (button)
-                        grid.attach(button, 15, 5, 1, 1)
+                        grid_chv5c.attach(button, 15, 5, 1, 1)
 
                         button = Gtk.Button.new_from_icon_name("arrow-down")
                         click_gesture = Gtk.GestureClick()
@@ -870,7 +874,7 @@ class HV5App(Gtk.Application):
                         click_gesture.connect("end",  self.stop_coarse, -3, es, ev, ep)
                         button.get_child().add_controller(click_gesture)
                         #control_list.append (button)
-                        grid.attach(button, 15, 7, 1, 1)
+                        grid_chv5c.attach(button, 15, 7, 1, 1)
 
                         ###########
 
