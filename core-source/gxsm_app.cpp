@@ -588,6 +588,8 @@ void App::MAINAppWindowInit(Gxsm4appWindow* win, const gchar *title, const gchar
         g_action_map_add_action_entries (G_ACTION_MAP (gxsm4app),
                                          app_gxsm_action_entries, G_N_ELEMENTS (app_gxsm_action_entries),
                                          this);
+        // app.auto-scan-view-geometry
+	add_accelerator (G_APPLICATION (gxsm4app), "app.auto-scan-view-geometry", "F2");
 
         // create window PopUp menu  ---------------------------------------------------------------------
         XSM_DEBUG_GM (DBG_L3,  "App::AppWindowInit main menu" );
