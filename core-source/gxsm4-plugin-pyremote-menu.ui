@@ -158,6 +158,16 @@
 		<attribute name="action">win.pyfile-action-use</attribute>
 		<attribute name="target">gxsm4-control-gxsm-sok-server</attribute>
 	      </item>
+	      <item>
+		<attribute name="label" translatable="yes"> Createc THV5 Auto App</attribute>
+		<attribute name="action">win.pyfile-action-use</attribute>
+		<attribute name="target">gxsm4-control-thv5-autoapp</attribute>
+	      </item>
+	      <item>
+		<attribute name="label" translatable="yes"> GVP Manage Tool</attribute>
+		<attribute name="action">win.pyfile-action-use</attribute>
+		<attribute name="target">gxsm4-control-gvp-manage</attribute>
+	      </item>
 	    </section>
 	  </submenu>
 	  <submenu>

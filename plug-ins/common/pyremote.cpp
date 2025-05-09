@@ -966,6 +966,20 @@ public:
                                                 example_file << "# Gxsm Python Script file " << script_filename << " was created.\n";
                                                 example_file << template_gxsm_sok_server;
                                                 example_file.close();
+                                        } else if (strstr (script_filename, "gxsm4-control-thv5-autoapp")){
+                                                // make sample
+                                                std::ofstream example_file;
+                                                example_file.open(script_filename);
+                                                example_file << "# Gxsm Python Script file " << script_filename << " was created.\n";
+                                                example_file << template_thv5_autoapp_script;
+                                                example_file.close();
+                                        } else if (strstr (script_filename, "gxsm4-control-gvp-manage")){
+                                                // make sample
+                                                std::ofstream example_file;
+                                                example_file.open(script_filename);
+                                                example_file << "# Gxsm Python Script file " << script_filename << " was created.\n";
+                                                example_file << template_gvp_save_restore_script;
+                                                example_file.close();
                                         } else if (strstr (script_filename, "gxsm4-data-cfextract-simple")){
                                                 // make sample
                                                 std::ofstream example_file;
