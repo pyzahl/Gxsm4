@@ -1,1 +1,2 @@
 pg-recreate-rpspmc-pacpll-vivado-project.tcl filter=git-crypt diff=git-crypt
+rtl/gvp.v filter=git-crypt diff=git-crypt

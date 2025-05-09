@@ -882,6 +882,7 @@ public:
 
 	// GVP (General Vector Probe)
 #define N_GVP_VECTORS MAX_PROGRAM_VECTORS
+        Gtk_EntryControl *GVP_V0Set_ec[8];
 	double GVP_du[N_GVP_VECTORS], GVP_dx[N_GVP_VECTORS], GVP_dy[N_GVP_VECTORS], GVP_dz[N_GVP_VECTORS];
         double GVP_da[N_GVP_VECTORS],  GVP_db[N_GVP_VECTORS];
         double GVP_dam[N_GVP_VECTORS],  GVP_dfm[N_GVP_VECTORS];

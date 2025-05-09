@@ -1499,11 +1499,11 @@ int rpspmc_hwi_dev::GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v, PRO
 
 
         if (i == 0 && (v->options & VP_INITIAL_SET_VEC)){ // 1st vector is set postion vector? Get pos and calc differentials.
-                gvp_vector_i [I_GVP_PC_INDEX] = 0x1000; // all componets are absolute set coordnates!
+                gvp_vector_i [I_GVP_PC_INDEX] = 0x1000 | ((v->options>>16)&0xff); // all componets are absolute set coordnates!
                 // componets can be masked to set=0 via dX=0 0x1001, dY=0 0x1002, dZ=0 0x1004, du=0 0x1008,da=0  0x1010, db=0 0x1020
         }
 
-        g_print ("Vec[%2d] XYZU: %g %g %g %g V  [#%d, R%d J%d OPT=%08x SRCS=%08x] initial Msk=%04x\n",
+        g_print ("Vec[%2d] XYZU: %g %g %g %g V  [#%d, R%d J%d OPT=%08x SRCS=%08x] PC*initial Msk=%04x\n",
                  i,
                  v->f_dx, v->f_dy, v->f_dz, v->f_du,
                  gvp_vector_i [I_GVP_N       ], gvp_vector_i [I_GVP_NREP    ], gvp_vector_i [I_GVP_NEXT    ], gvp_vector_i [I_GVP_OPTIONS ], gvp_vector_i [I_GVP_SRCS ],

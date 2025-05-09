@@ -99,6 +99,7 @@ class Param_Control{
 	void setMin(double VMi, double Vmin_warn = -1e111, const gchar* w_color=NULL);
 	void set_exclude(double V_ex_lo = 1e111, double V_ex_hi = 1e111);
 	void set_info (const gchar* Info);
+	const gchar *get_info (){ return info; };
 	void set_adjustment_mode (int m, int magprefixshift = 0) {
                 mag_prefix_shift = magprefixshift;
                 // reset limits
@@ -359,6 +360,12 @@ class Gtk_EntryControl : public Param_Control{
 		if (extra)
 			gtk_widget_set_sensitive (extra, FALSE);
 	};
+        void set_css_name(const gchar *css_id=NULL) {
+                if (css_id)
+                        gtk_widget_set_name (entry, css_id);
+                else
+                        gtk_widget_set_name (entry, "normal");
+        };
 	virtual gpointer GetEntryData(const gchar *txtid){ 
 		return g_object_get_data( G_OBJECT (entry), txtid);
 	};

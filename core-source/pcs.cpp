@@ -1007,11 +1007,21 @@ void Gtk_EntryControl::Set_Parameter(double Value, int flg, int usr2base){
                 }
                 else{
                         const gchar *ctxt = gtk_entry_buffer_get_text (GTK_ENTRY_BUFFER (gtk_entry_get_buffer (GTK_ENTRY (entry))));
+                        g_message ("%s: %s [%s]", refname, ctxt, info);
                         if (strncmp (prec, "04X", 3) == 0){
                                 int h;
                                 sscanf (ctxt, "%x", &h);
                                 value=(double)h;
                                 XSM_DEBUG (DBG_L1, "Gtk_EntryControl::Set_Parameter -- PCS H: " << ctxt << " ==> " << value);
+                        } else if (ctxt[0] == 'S' || ctxt[0] == 's'){
+                                set_info("Set");
+                                value=unit->Usr2Base (&ctxt[1]);
+                        } else if (ctxt[0] == 'X' || ctxt[0] == 'x'){
+                                set_info("XX");
+                                value=0.0;
+                        } else if (ctxt[0] == 'C' || ctxt[0] == 'c'){
+                                set_info(NULL);
+                                value=unit->Usr2Base (&ctxt[1]);
                         } else
                                 value=unit->Usr2Base (ctxt);
                 }

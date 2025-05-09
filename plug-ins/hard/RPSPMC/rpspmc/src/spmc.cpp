@@ -488,28 +488,20 @@ void rp_spmc_set_gvp_vector (int pc, int n, unsigned int opts, unsigned int srcs
 
                 if (verbose > 1) fprintf(stderr, "** XYZU-GVP readings are => [%g %g %g %g] V, Bias (actual)=%g V\n", x, y, z_gvp, u_gvp, bias);
 
-                dx -= x;
-                dy -= y;
-                dz -= z_gvp;
-                du -= u_gvp;
+                // selection flags to auto delta compute, else normal differential
+                if (pc & 0x01) dx -= x;
+                if (pc & 0x02) dy -= y;
+                if (pc & 0x04) dz -= z_gvp;
+                if (pc & 0x08) du -= u_gvp+bias; // include bias to abs bias set
 
-                // selection flags to clear auto delta to only adjust selected component
-                if ((pc&0x1001) == 0x1001)
-                        dx = 0.;
-                if ((pc&0x1002) == 0x1002)
-                        dy = 0.;
-                if ((pc&0x1004) == 0x1004)
-                        dz = 0.;
-                if ((pc&0x1008) == 0x1008)
-                        du = 0.;
-                if ((pc&0x1010) == 0x1010)
-                        da = 0.;
-                if ((pc&0x1020) == 0x1020)
-                        db = 0.;
-                pc=0; // set PC = 0. Remove special mask
+                if (pc & 0x10) da  -= SPMC_GVPA_MONITOR.Value ();
+                if (pc & 0x20) db  -= SPMC_GVPB_MONITOR.Value ();
+                if (pc & 0x40) dam -= SPMC_GVPAMC_MONITOR.Value ();
+                if (pc & 0x80) dfm -= SPMC_GVPFMC_MONITOR.Value ();
+                
                 if (verbose > 1)
-                        fprintf(stderr, ">>>>>>>>>>>>[PC=%03d] AUTO INIT **{dXYZU => [%g %g %g %g] V}\n", pc, dx, dy, dz, du);
-                // da, db not managed yet
+                        fprintf(stderr, ">>>>>>>>>>>>[PC=0,setMSK:%04x] AUTO INIT **{dXYZU => [%g %g %g %g]  dA %g dB %g dAM %g dFM %g] V}\n", pc, dx, dy, dz, du, da, db, dam, dfm);
+                pc=0; // set PC = 0. Remove special mask
         }
 
         unsigned int nii   = 0;
@@ -938,11 +930,6 @@ void rp_spmc_set_scanpos (double xs, double ys, double slew, int opts){
                                 0.0, 0.0, 0.0, 0.0,
                                 slew, false);
         rp_spmc_set_gvp_vector (1, 0, 0, 0, 0, 0,
-                                0, 0.0, 0, 0,
-                                0.0, 0.0, 0.0, 0.0,
-                                0.0, 0.0, 0.0, 0.0,
-                                0.0, false);
-        rp_spmc_set_gvp_vector (2, 0, 0, 0, 0, 0,
                                 0, 0.0, 0, 0,
                                 0.0, 0.0, 0.0, 0.0,
                                 0.0, 0.0, 0.0, 0.0,

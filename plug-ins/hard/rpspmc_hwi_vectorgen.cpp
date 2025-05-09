@@ -436,54 +436,47 @@ void RPSPMC_Control::write_spm_vector_program (int start, pv_mode pvm){
                         vp_duration_1 =	vp_duration;
 
                         //double u0=0.0;
-                        if (fabs(ui-bias) > 0.0)
-                                vp_duration += make_dUZXYAB_vector (vector_index++,
-                                                                    ui-bias, 0.0,   0.0, 0.0, 0.0, 0.0, 0., 0.,
-                                                                    100, 0, 0, 0.1+fabs(ui-bias)/IV_slope_ramp,
-                                                                    ramp_sources,     // ramp sources
-                                                                    ramp_options^1);  // invert FB flag in bit0, FPGA GVP FB=1 => FB-hold
+                        vp_duration += make_dUZXYAB_vector (vector_index++,
+                                                            ui, 0.0,   0.0, 0.0, 0.0, 0.0, 0., 0., // SET Bias using VP_INITIAL
+                                                            100, 0, 0, 0.1+(0.01+fabs(ui-bias))/IV_slope_ramp,
+                                                            ramp_sources,     // ramp sources
+                                                            ramp_options | VP_INITIAL_SET_VEC | (0x08<<16));  // invert FB flag in bit0, FPGA GVP FB=1 => FB-hold, VPSET Bias
                         
-                        if (fabs(ui)>0.0)
-                                vp_duration += make_dUZXYAB_vector (vector_index++,
-                                                                    -ui, IV_dz,   0.0, 0.0, 0.0, 0.0, 0., 0.,
-                                                                    ni0, 0, 0, fabs(ui/IV_slope),
-                                                                    vis_sources,     // ramp sources
-                                                                    options^1);  // invert FB flag in bit0, FPGA GVP FB=1 => FB-hold
+                        vp_duration += make_dUZXYAB_vector (vector_index++,
+                                                            -ui, IV_dz,   0.0, 0.0, 0.0, 0.0, 0., 0.,
+                                                            ni0, 0, 0, (1e-6+fabs(ui))/IV_slope,
+                                                            vis_sources,     // ramp sources
+                                                            options);  // invert FB flag in bit0, FPGA GVP FB=1 => FB-hold
 
-                        if (fabs(uf)>0.0)
-                                vp_duration += make_dUZXYAB_vector (vector_index++,
-                                                                    uf, -IV_dz,   0.0, 0.0, 0.0, 0.0, 0., 0.,
-                                                                    n0f, 0, 0, fabs(uf/IV_slope),
-                                                                    vis_sources,     // ramp sources
-                                                                    options^1);  // invert FB flag in bit0, FPGA GVP FB=1 => FB-hold
+                        vp_duration += make_dUZXYAB_vector (vector_index++,
+                                                            uf, -IV_dz,   0.0, 0.0, 0.0, 0.0, 0., 0.,
+                                                            n0f, 0, 0, (1e-6+fabs(uf))/IV_slope,
+                                                            vis_sources,     // ramp sources
+                                                            options);  // invert FB flag in bit0, FPGA GVP FB=1 => FB-hold
 
                         if (IV_option_flags & FLAG_DUAL) {
                                 // run also reverse probe ramp in dual mode
-                                if (fabs(uf)>0.0)
-                                        vp_duration += make_dUZXYAB_vector (vector_index++,
-                                                                            -uf, IV_dz,   0.0, 0.0, 0.0, 0.0, 0., 0.,
-                                                                            n0f, 0, 0, fabs(ui/IV_slope),
-                                                                            vis_sources,     // ramp sources
-                                                                            options^1);  // invert FB flag in bit0, FPGA GVP FB=1 => FB-hold
-                                if (fabs(ui)>0.0)
-                                        vp_duration += make_dUZXYAB_vector (vector_index++,
-                                                                            ui, -IV_dz,   0.0, 0.0, 0.0, 0.0, 0., 0.,
-                                                                            ni0, 0, 0, fabs(ui/IV_slope),
-                                                                            vis_sources,     // ramp sources
-                                                                            options^1);  // invert FB flag in bit0, FPGA GVP FB=1 => FB-hold
-                                if (fabs(bias-ui) > 0.0)
-                                        vp_duration += make_dUZXYAB_vector (vector_index++,
-                                                                            bias-ui, 0.0,   0.0, 0.0, 0.0, 0.0, 0., 0.,
-                                                                            100, 0, 0, 0.1+fabs((bias-ui)/IV_slope_ramp),
-                                                                            ramp_sources,     // ramp sources
-                                                                            ramp_options^1);  // invert FB flag in bit0, FPGA GVP FB=1 => FB-hold
+                                vp_duration += make_dUZXYAB_vector (vector_index++,
+                                                                    -uf, IV_dz,   0.0, 0.0, 0.0, 0.0, 0., 0.,
+                                                                    n0f, 0, 0, (1e-6+fabs(ui))/IV_slope,
+                                                                    vis_sources,     // ramp sources
+                                                                    options);  // invert FB flag in bit0, FPGA GVP FB=1 => FB-hold
+                                vp_duration += make_dUZXYAB_vector (vector_index++,
+                                                                    ui, -IV_dz,   0.0, 0.0, 0.0, 0.0, 0., 0.,
+                                                                    ni0, 0, 0, (1e-6+fabs(ui))/IV_slope,
+                                                                    vis_sources,     // ramp sources
+                                                                    options);  // invert FB flag in bit0, FPGA GVP FB=1 => FB-hold
+                                vp_duration += make_dUZXYAB_vector (vector_index++,
+                                                                    bias-ui, 0.0,   0.0, 0.0, 0.0, 0.0, 0., 0.,
+                                                                    100, 0, 0, 0.1+(1e-6+fabs(bias-ui))/IV_slope_ramp,
+                                                                    ramp_sources,     // ramp sources
+                                                                    ramp_options);  // invert FB flag in bit0, FPGA GVP FB=1 => FB-hold
                         } else {
-                                if (fabs(uf)>0.0)
-                                        vp_duration += make_dUZXYAB_vector (vector_index++,
-                                                                           bias-uf, 0.0,   0.0, 0.0, 0.0, 0.0, 0., 0.,
-                                                                            100, 0, 0, 0.1+fabs((uf-bias)/IV_slope_ramp),
-                                                                           ramp_sources,
-                                                                           ramp_options^1);
+                                vp_duration += make_dUZXYAB_vector (vector_index++,
+                                                                    bias-uf, 0.0,   0.0, 0.0, 0.0, 0.0, 0., 0.,
+                                                                    100, 0, 0, 0.1+(1e-6+fabs(uf-bias))/IV_slope_ramp,
+                                                                    ramp_sources,
+                                                                    ramp_options);
                         }
 
                         if (IV_repetitions > 1){
@@ -494,7 +487,7 @@ void RPSPMC_Control::write_spm_vector_program (int start, pv_mode pvm){
                                                                     0.0, 0.0,   0.0, 0.0, 0.0, 0.0, 0., 0.,
                                                                     100, IV_repetitions, -vector_index, IV_recover_delay,
                                                                     ramp_sources,     // ramp sources
-                                                                    ramp_options^1);  // invert FB flag in bit0, FPGA GVP FB=1 => FB-hold
+                                                                    ramp_options);  // invert FB flag in bit0, FPGA GVP FB=1 => FB-hold
                                 vp_duration +=	(IV_repetitions-1)*(vp_duration - vp_duration_1);
                         } else {
                                 if (IV_recover_delay > 1e-4){
@@ -503,7 +496,7 @@ void RPSPMC_Control::write_spm_vector_program (int start, pv_mode pvm){
                                                                             0.0, 0.0,   0.0, 0.0, 0.0, 0.0, 0., 0.,
                                                                             100, 0.0, 0, IV_recover_delay,
                                                                             ramp_sources,     // ramp sources
-                                                                            ramp_options^1);  // invert FB flag in bit0, FPGA GVP FB=1 => FB-hold
+                                                                            ramp_options);  // invert FB flag in bit0, FPGA GVP FB=1 => FB-hold
                                 }
                         }
                         append_null_vector (vector_index, options);
@@ -740,11 +733,20 @@ void RPSPMC_Control::write_spm_vector_program (int start, pv_mode pvm){
 					GVP_vnrep[k] = 0;
 				if (GVP_vpcjr[k] < -vector_index || GVP_vpcjr[k] > 0) // origin of VP, no forward jump
 					GVP_vpcjr[k] = -vector_index; // defaults to start
-
+                                
+                                int viset = 0;
+                                if (k==0){
+                                        for (int jj=0; jj<8; ++jj){
+                                                const gchar *info=GVP_V0Set_ec[jj]->get_info();
+                                                if (info)
+                                                        if (info[0]=='S')
+                                                                viset |= 1<<jj;
+                                        }
+                                }
 				vp_duration += make_dUZXYAB_vector (vector_index++,
                                                                     GVP_du[k], GVP_dz[k], GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k], GVP_dam[k], GVP_dfm[k],
                                                                     GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
-                                                                    vis_Source, GVP_opt[k]^1,     // invert FB flag in bit0, FPGA GVP FB=1 => FB-hold
+                                                                    vis_Source, GVP_opt[k]^1 | (viset<<16),     // invert FB flag in bit0, FPGA GVP FB=1 => FB-hold
                                                                     GVPX_opcd[k], GVPX_cmpv[k], GVPX_rchi[k], GVPX_jmpr[k]);
 				if (GVP_vnrep[k]-1 > 0)	
 					vp_duration +=	(GVP_vnrep[k]-1)*(vp_duration - vpd[k+GVP_vpcjr[k]]);

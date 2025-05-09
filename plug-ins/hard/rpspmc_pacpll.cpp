@@ -2270,26 +2270,34 @@ void RPSPMC_Control::create_folder (){
                 
                 bp->set_input_width_chars (7);
                 bp->set_label_width_chars (7);
-		bp->grid_add_ec (NULL,      Volt, &GVP_du[k], -10.0,   10.0,   "6.4g", 1., 10., "gvp-du", k); 
+		bp->grid_add_ec (NULL,      Volt, &GVP_du[k], -10.0,   10.0,   "6.4g", 1., 10., "gvp-du", k);
+                if (k == 0) GVP_V0Set_ec[3] = bp->ec;
                 if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
 
 		bp->grid_add_ec (NULL, Angstroem, &GVP_dx[k], -1000000.0, 1000000.0, "6.4g", 1., 10., "gvp-dx", k); 
+                if (k == 0) GVP_V0Set_ec[0] = bp->ec;
                 if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
 
 		bp->grid_add_ec (NULL, Angstroem, &GVP_dy[k], -1000000.0, 1000000.0, "6.4g", 1., 10., "gvp-dy", k); 
+                if (k == 0) GVP_V0Set_ec[1] = bp->ec;
                 if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
 
 		bp->grid_add_ec (NULL, Angstroem, &GVP_dz[k], -1000000.0, 1000000.0, "6.4g", 1., 10., "gvp-dz", k); 
+                if (k == 0) GVP_V0Set_ec[2] = bp->ec;
                 if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
 
                 bp->set_configure_list_mode_on (); // === advanced ===========================================
 		bp->grid_add_ec (NULL,    Volt, &GVP_da[k], -10.0, 10.0, "6.4g",1., 10., "gvp-da", k); 
+                if (k == 0) GVP_V0Set_ec[4] = bp->ec;
                 if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
 		bp->grid_add_ec (NULL,    Volt, &GVP_db[k], -10.0, 10.0, "6.4g",1., 10., "gvp-db", k); 
+                if (k == 0) GVP_V0Set_ec[5] = bp->ec;
                 if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
 		bp->grid_add_ec (NULL,    Volt, &GVP_dam[k], -10.0, 10.0, "6.4g",1., 10., "gvp-dam", k); 
+                if (k == 0) GVP_V0Set_ec[6] = bp->ec;
                 if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
 		bp->grid_add_ec (NULL,    Volt, &GVP_dfm[k], -10.0, 10.0, "6.4g",1., 10., "gvp-dfm", k); 
+                if (k ==0 ) GVP_V0Set_ec[7] = bp->ec;
                 if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
                 bp->set_configure_list_mode_off (); // ========================================================
 
@@ -3063,6 +3071,20 @@ void RPSPMC_Control::ZServoControlInv (GtkWidget *widget, RPSPMC_Control* self){
 
 void RPSPMC_Control::ChangedNotifyVP(Param_Control* pcs, RPSPMC_Control* self){
         g_message ("**ChangedNotifyVP**");
+
+        for (int j=0; j<8; ++j)
+                if (pcs == self->GVP_V0Set_ec[j]){
+                        const gchar *info=self->GVP_V0Set_ec[j]->get_info();
+                        if (info)
+                                switch (info[0]){
+                                case 'X': self->GVP_V0Set_ec[j]->set_css_name("bgrey"); break;
+                                case 'S': self->GVP_V0Set_ec[j]->set_css_name("orange"); break;
+                                default: self->GVP_V0Set_ec[j]->set_css_name("normal"); break;
+                                }
+                        else
+                                self->GVP_V0Set_ec[j]->set_css_name("normal");
+                        self->GVP_V0Set_ec[j]->Put_Value (); // update
+                }
 }
 
 int RPSPMC_Control::choice_mixmode_callback (GtkWidget *widget, RPSPMC_Control *self){
@@ -3383,21 +3405,54 @@ int RPSPMC_Control::callback_change_GVP_vpc_option_flags (GtkWidget *widget, RPS
 	int  k = GPOINTER_TO_INT (g_object_get_data(G_OBJECT(widget), "VPC"));
 	guint64 msk = (guint64) GPOINTER_TO_UINT (g_object_get_data (G_OBJECT(widget), "Bit_Mask"));
 
+        int x=self->GVP_opt[k];
+        //g_message (" RPSPMC_Control::callback_change_GVP_vpc_option_flags :: changed [%d] %04x ^ %04x",k,x,msk);
 	if( gtk_check_button_get_active (GTK_CHECK_BUTTON (widget))){
 		self->GVP_opt[k] = (self->GVP_opt[k] & (~msk)) | msk;
-		g_slist_foreach((GSList*)g_object_get_data (G_OBJECT(widget), "DSP_VPC_EXTOPC_list"),
-				(GFunc) gtk_widget_show, NULL);
-		g_slist_foreach((GSList*)g_object_get_data (G_OBJECT(widget), "DSP_VPC_EXTHDR_list"),
-				(GFunc) gtk_widget_show, NULL);
+                if (msk & (1<<7)){
+                        g_slist_foreach((GSList*)g_object_get_data (G_OBJECT(widget), "DSP_VPC_EXTOPC_list"),
+                                        (GFunc) gtk_widget_show, NULL);
+                        g_slist_foreach((GSList*)g_object_get_data (G_OBJECT(widget), "DSP_VPC_EXTHDR_list"),
+                                        (GFunc) gtk_widget_show, NULL);
+                }
 	} else {
 		self->GVP_opt[k] &= ~msk;
-		g_slist_foreach((GSList*)g_object_get_data (G_OBJECT(widget), "DSP_VPC_EXTOPC_list"),
-				(GFunc) gtk_widget_hide, NULL);
-		g_slist_foreach((GSList*)g_object_get_data (G_OBJECT(widget), "DSP_VPC_EXTHDR_list"),
-				(GFunc) gtk_widget_hide, NULL);
+                if (msk & (1<<7) && x & (1<<7)){
+                        //g_message (" RPSPMC_Control::callback_change_GVP_vpc_option_flags :: uncheck VX [%d]",k);
+                        g_slist_foreach((GSList*)g_object_get_data (G_OBJECT(widget), "DSP_VPC_EXTOPC_list"),
+                                        (GFunc) gtk_widget_hide, NULL);
+                        int vx=0;
+                        for (int j=0; j < N_GVP_VECTORS; ++j) 
+                                if (self->GVP_opt[j]&(1<<7)) { vx++; break; }
+                        if (!vx)
+                                g_slist_foreach((GSList*)g_object_get_data (G_OBJECT(widget), "DSP_VPC_EXTHDR_list"),
+                                                (GFunc) gtk_widget_hide, NULL);
+                }
         }
         
         self->set_tab_settings ("VP", self->GVP_option_flags, self->GVP_auto_flags, self->GVP_glock_data);
+
+        if (k==0)
+                if ((msk & VP_INITIAL_SET_VEC) && (x & VP_INITIAL_SET_VEC)) // un-checked
+                        for (int j=0; j<8; ++j){
+                                self->GVP_V0Set_ec[j]->set_info(NULL);
+                                self->GVP_V0Set_ec[j]->set_css_name("normal");
+                                self->GVP_V0Set_ec[j]->Put_Value (); // update
+                        }
+                else if ((msk & VP_INITIAL_SET_VEC) && !(x & VP_INITIAL_SET_VEC)) // checked
+                        for (int j=0; j<8; ++j){
+                                switch (j){
+                                case 0: case 1:
+                                        self->GVP_V0Set_ec[j]->set_info("X");
+                                        self->GVP_V0Set_ec[j]->set_css_name("bgrey");
+                                        break;
+                                default:
+                                        self->GVP_V0Set_ec[j]->set_info("Set");
+                                        self->GVP_V0Set_ec[j]->set_css_name("orange");
+                                        break;
+                                }
+                                self->GVP_V0Set_ec[j]->Put_Value (); // update
+                        }
 
         return 0;
 }
@@ -3785,9 +3840,9 @@ void RPSPMC_Control::on_new_data (){
         gvp_monitor_fb_info_ec->set_info(gvp_status);
         g_free (gvp_status);
 
-        GVP_XYZ_mon_AA[0] = main_get_gapp()->xsm->Inst->V2XAng (spmc_parameters.xs_monitor);
-        GVP_XYZ_mon_AA[1] = main_get_gapp()->xsm->Inst->V2YAng (spmc_parameters.ys_monitor);
-        GVP_XYZ_mon_AA[2] = main_get_gapp()->xsm->Inst->V2ZAng (spmc_parameters.z0_monitor);
+        GVP_XYZ_mon_AA[0] = main_get_gapp()->xsm->Inst->Volt2XA (spmc_parameters.xs_monitor);
+        GVP_XYZ_mon_AA[1] = main_get_gapp()->xsm->Inst->Volt2YA (spmc_parameters.ys_monitor);
+        GVP_XYZ_mon_AA[2] = main_get_gapp()->xsm->Inst->Volt2ZA (spmc_parameters.z0_monitor);
                 
         // RPSPM-GVP
         if (G_IS_OBJECT (window))
