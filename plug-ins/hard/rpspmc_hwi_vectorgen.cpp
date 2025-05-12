@@ -339,7 +339,7 @@ vector = {32'd000032,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  3
                              0., 0., // GVP_du[k], GVP_dz[k],
                              xi, yi, 0., 0., 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k], am, fm
                              100, 0, 0, ti, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
-                             srcs_buffer[0], VP_INITIAL_SET_VEC | gvp_options);
+                             srcs_buffer[0], VP_INITIAL_SET_VEC | gvp_options | (3 << 16));
 
         //DEBUG_GVP_SCAN (PC,         DU, DX, DY, DZ, DA, DB,  TS, PTS, OPT,                VNR, VPCJ)
         //DEBUG_GVP_SCAN (vector_index, 0., xi, xi,  0., 0., 0., ti, 100, VP_INITIAL_SET_VEC,   0,   0);

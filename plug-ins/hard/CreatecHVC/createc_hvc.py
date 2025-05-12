@@ -72,7 +72,7 @@ global CHV5_gain_list
 global CHV5_gains
 
 CHV5_configuration = {
-        'gain':  [2,2,2],
+        'gain':  [2,2,3],
         'filter': [0,0,0],
         'bw': [0,0,0],
         'target': [0.,0.,0.]
@@ -85,13 +85,13 @@ CHV5_monitor = {
         }
 
 CHV5_gain_list = [3,6,12,24]
-CHV5_gains = [12., 12., 12.]
+CHV5_gains = [12., 12., 24.]
 
 
 CHV5_coarse = {
         'steps': [10,10,5],
-        'volts': [100.0,100.0,15.0],
-        'period': [0.5,0.5,0.5]
+        'volts': [100.0,100.0,75.0],
+        'period': [500,500,500]
         }
 
 CHV5_driftcomp = [ 0., 0., 0. ]
@@ -190,7 +190,7 @@ class THV5():
                 c=['X','Y','Z']
                 ## http://192.168.40.10/coarse?v0=15&p0=500&a0=Z&c0=1&bs=0
                 if start:
-                        return self.request ('coarse?v={}&p0={}&a0={}&c0={}&bs=0'.format(int(voltage), int(1000*period), c[channel], burstcount*direction))
+                        return self.request ('coarse?v={}&p0={}&a0={}&c0={}&bs=0'.format(int(voltage), int(period), c[channel], burstcount*direction))
                 else:
                         return self.request ('coarse?v={}&p0={}&a0={}&c0={}&bs=0'.format(0, 0, c[channel], 0))
 
@@ -569,8 +569,8 @@ class HV5App(Gtk.Application):
         def start_coarse(self, button, a,b,c, dir, es, ev, ep):
                 axis = 0
                 steps = 0
-                volts = 0.0
-                period = 3.0
+                volts = 0
+                period = 500
                 d=1
                 if abs(dir) > 0:
                         axis = abs(dir)-1
@@ -789,28 +789,36 @@ class HV5App(Gtk.Application):
                         grid_chv5c = Gtk.Grid()
                         grid.attach(grid_chv5c, 10, 0, 10, 5)
 
-                        es = [] ## Entry Steps
-                        ev = [] ## Entry Volts
-                        ep = [] ## Entro Periods
+                        if SWAP_CXY:
+                                DX=-2
+                                DY=-1
+                                axis = [1,0,2]
+                        else:
+                                DX=1
+                                DY=2
+                                axis = [0,1,2]
+
+                                
+                        es = [Gtk.Entry(), Gtk.Entry(), Gtk.Entry()] ## Entry Steps
+                        ev = [Gtk.Entry(), Gtk.Entry(), Gtk.Entry()] ## Entry Volts
+                        ep = [Gtk.Entry(), Gtk.Entry(), Gtk.Entry()] ## Entro Periods
                         grid_chv5c.attach(Gtk.Label(label='# Steps'), 16, 3, 1, 1)
                         grid_chv5c.attach(Gtk.Label(label='Amplitude in V'), 17, 3, 1, 1)
                         grid_chv5c.attach(Gtk.Label(label='Period in µs'), 18, 3, 1, 1)
-                        for i in range(0,3):
-                                es.append (Gtk.Entry())
+                        for r in range(0,3):
+                                i = axis[r]
                                 es[i].set_text("{}".format(CHV5_coarse['steps'][i]))
                                 es[i].set_width_chars(8)
                                 #control_list.append (eo[i])
-                                grid_chv5c.attach(es[i], 16, 5+i, 1, 1)
-                                ev.append (Gtk.Entry())
+                                grid_chv5c.attach(es[i], 16, 5+r, 1, 1)
                                 ev[i].set_text("{}".format(CHV5_coarse['volts'][i]))
                                 ev[i].set_width_chars(8)
                                 #control_list.append (evo[i])
-                                grid_chv5c.attach(ev[i], 17, 5+i, 1, 1)
-                                ep.append (Gtk.Entry())
+                                grid_chv5c.attach(ev[i], 17, 5+r, 1, 1)
                                 ep[i].set_text("{}".format(CHV5_coarse['period'][i]))
                                 ep[i].set_width_chars(8)
                                 #control_list.append (ep[i])
-                                grid_chv5c.attach(ep[i], 18, 5+i, 1, 1)
+                                grid_chv5c.attach(ep[i], 18, 5+r, 1, 1)
 
                         button = Gtk.Button.new_from_icon_name("media-playback-stop")
                         click_gesture = Gtk.GestureClick()
@@ -822,12 +830,6 @@ class HV5App(Gtk.Application):
 
                         button = Gtk.Button.new_from_icon_name("arrow-left")
                         click_gesture = Gtk.GestureClick()
-                        if SWAP_CXY:
-                                DX=-2
-                                DY=-1
-                        else:
-                                DX=1
-                                DY=2
                                 
                         click_gesture.connect("pressed",  self.start_coarse, -DX, es, ev, ep)
                         click_gesture.connect("end",  self.stop_coarse, -DX, es, ev, ep)
