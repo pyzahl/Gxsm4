@@ -25,6 +25,6 @@ GXSM Web Site: http://gxsm.sf.net
 
 ![Screenshot from 2025-01-06 12-41-03](https://github.com/user-attachments/assets/6ca60d98-c22e-41b5-a974-3a3a0460623a)
 
-
-
+# 5. NOTE:
+We are currently discussing protective measures for our new hardware RPSPMC. Please contact us for details.
 
