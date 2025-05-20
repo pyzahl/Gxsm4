@@ -1315,8 +1315,8 @@ void RPSPMC_Control::set_probevector(double pv[NUM_PV_HEADER_SIGNALS]){
 	g_array_append_val (garray_probedata [PROBEDATA_ARRAY_INDEX], dind);
         g_array_append_val (garray_probedata [PROBEDATA_ARRAY_BLOCK], dind); // same, start index of section
 
-        for (int i=0; i<NUM_PV_HEADER_SIGNALS; ++i)
-                pv_tmp[i] = pv[i];
+        //for (int i=0; i<NUM_PV_HEADER_SIGNALS; ++i)
+        //        pv_tmp[i] = pv[i]; // may just keep
 
         for (i = PROBEDATA_ARRAY_TIME, j=1; i <= PROBEDATA_ARRAY_SEC; ++i, ++j)
                 g_array_append_val (garray_probedata [i], pv_tmp[j]);
@@ -1360,11 +1360,17 @@ void RPSPMC_Control::add_probevector(){
 		case PROBEDATA_ARRAY_TIME:
 			val += dt;
 			break;
-		case PROBEDATA_ARRAY_AA:
+		case PROBEDATA_ARRAY_A:
 			val += program_vector_list[current_probe_section].f_da*multi;
 			break;
-		case PROBEDATA_ARRAY_BB:
+		case PROBEDATA_ARRAY_B:
 			val += program_vector_list[current_probe_section].f_db*multi;
+			break;
+		case PROBEDATA_ARRAY_AM:
+			val += program_vector_list[current_probe_section].f_dam*multi;
+			break;
+		case PROBEDATA_ARRAY_FM:
+			val += program_vector_list[current_probe_section].f_dfm*multi;
 			break;
 		case PROBEDATA_ARRAY_XS:
 			val += program_vector_list[current_probe_section].f_dx*multi;
@@ -1404,7 +1410,7 @@ void RPSPMC_Control::add_probevector(){
                 add_probe_hdr (pv);
                 // array add (set) section start reference position/values for vector signal generation
                 set_probevector (pv);
-                g_print ("===>>>> SET-VP  i[%d] sec=%d t=%g ms   #valid sec{%d}\n", current_probe_data_index, (int)pv[PROBEDATA_ARRAY_SEC], pv[PROBEDATA_ARRAY_TIME], nun_valid_data_sections);
+                //g_print ("===>>>> SET-VP  i[%d] sec=%d t=%g ms   #valid sec{%d}\n", current_probe_data_index, (int)pv[PROBEDATA_ARRAY_SEC], pv[PROBEDATA_ARRAY_TIME], nun_valid_data_sections);
 
         } else if (add_pv){
 
@@ -1414,8 +1420,10 @@ void RPSPMC_Control::add_probevector(){
         }
         
         // add data channels
-	for (i = PROBEDATA_ARRAY_S1, j=0; i <= PROBEDATA_ARRAY_END; ++i, ++j)
+	for (i = PROBEDATA_ARRAY_S1, j=0; i <= PROBEDATA_ARRAY_END; ++i, ++j){
+                //g_print ("g_array_append_val garray_probedata[%d] {%x} := %g",i, garray_probedata[i], data[j]);
 		g_array_append_val (garray_probedata[i], data[j]); // sorting header expanded data in units into garrays
+        }
         //g_print ("+++>>>> PUSH DATA i[%d] sec=%d  t=%g ms\n", current_probe_data_index, (int)pv[PROBEDATA_ARRAY_SEC],  data[14]);
 
         current_probe_data_index++;

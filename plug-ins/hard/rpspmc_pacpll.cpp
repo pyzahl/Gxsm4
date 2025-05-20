@@ -125,7 +125,7 @@ typedef union {
 
 // Masks MUST BE unique **** max # signal: 32  (graphs_matrix[][32] fix size! Unused=uninitialized.)
 SOURCE_SIGNAL_DEF rpspmc_source_signals[] = {
-        // -- 8 vector generated signals (outputs/mapping) ==> must match: #define NUM_VECTOR_SIGNALS 8
+        // -- 8 vector generated signals (outputs/mapping) ==> must match: #define NUM_VECTOR_SIGNALS 8 ** OBSOLET???
         //  xxxxSRCS
         // mask,       name/label,  descr, unit, sym, scale, garrindex, scanchpos
         //  ****SRCS lower 32 bits, upper GVP internal/generated
@@ -136,9 +136,11 @@ SOURCE_SIGNAL_DEF rpspmc_source_signals[] = {
         { 0x00200000, "Y-Scan",   " ", "AA", UTF8_ANGSTROEM, SPMC_AD5791_to_volts, PROBEDATA_ARRAY_YS, 0 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x00400000, "Z-Scan",   " ", "AA", UTF8_ANGSTROEM,-SPMC_AD5791_to_volts, PROBEDATA_ARRAY_ZS, 0 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x00800000, "Bias",     " ", "V",             "V", SPMC_AD5791_to_volts, PROBEDATA_ARRAY_U,  0 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
-        { 0x08000000, "AA",       " ", "V",             "V", SPMC_AD5791_to_volts, PROBEDATA_ARRAY_AA, -1 },
-        { 0x10000000, "BB",       " ", "V",             "V", SPMC_AD5791_to_volts, PROBEDATA_ARRAY_BB, -1 },
-        { 0x20000000, "PHI",      " ", "deg",         "deg",                  1.0, PROBEDATA_ARRAY_PHI, -1 },
+        { 0x08000000, "A",        " ", "V",             "V", SPMC_AD5791_to_volts, PROBEDATA_ARRAY_A,  0 },
+        { 0x10000000, "B",        " ", "V",             "V", SPMC_AD5791_to_volts, PROBEDATA_ARRAY_B,  0 },
+        { 0x20000000, "AM",       " ", "V",             "V", SPMC_AD5791_to_volts, PROBEDATA_ARRAY_AM, 0 },
+        { 0x40000000, "FM",       " ", "V",             "V", SPMC_AD5791_to_volts, PROBEDATA_ARRAY_FM, 0 },
+        //{ 0x40000000, "PHI",      " ", "deg",         "deg",                  1.0, PROBEDATA_ARRAY_PHI, -1 },
         // -- general measured signals from index [8]   // <=== to Volt conversion here -- unit sym and scale are custom auto adjusted in .._eventhandling lookup functions as of this mask 
         { 0x0000C000, "Time-Mon",     " ", "ms",           "ms",                                    1.0, PROBEDATA_ARRAY_S15, 15 }, // time in ms
         // === XS-Mon,.. at index [11, ..] ** SIGNAL_INDEX_ICH0 **
@@ -2576,7 +2578,7 @@ void RPSPMC_Control::create_folder (){
         bp->grid_add_widget (sep, 5);
         //bp->grid_add_label (" --- ", NULL, 5);
 
-#if 1 // if need more
+#if 0 // if need more
         bp->grid_add_label ("Source", "Check column to activate channel", 2, 0.);
         bp->set_input_width_chars (1);
         bp->grid_add_label ("X", "Check column to plot channel on X axis.", 1);
@@ -2690,11 +2692,11 @@ void RPSPMC_Control::create_folder (){
                 // bp->grid_add_check_button_graph_matrix(" ", (int) (P_SOURCE_MSK | rpspmc_source_signals[i].mask), -1, i, this);
                 // bp->grid_add_check_button_graph_matrix(" ", (int) (A_SOURCE_MSK | rpspmc_source_signals[i].mask), -1, i, this);
                 // bp->grid_add_check_button_graph_matrix(" ", (int) (S_SOURCE_MSK | rpspmc_source_signals[i].mask), -1, i, this);
-                if (c < 23){
-                        sep = gtk_separator_new (GTK_ORIENTATION_VERTICAL);
-                        gtk_widget_set_size_request (sep, 5, -1);
-                        bp->grid_add_widget (sep);
-                }
+                //if (c < 23){
+                sep = gtk_separator_new (GTK_ORIENTATION_VERTICAL);
+                gtk_widget_set_size_request (sep, 5, -1);
+                bp->grid_add_widget (sep);
+                        //}
 	}
         g_message ("GRAPHS MATRIX SELECTOR BUILD complete.");
 
