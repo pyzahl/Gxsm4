@@ -895,8 +895,8 @@ void RPSPMC_Control::GVP_store_vp (const gchar *key){
         GVariant *pc_array_dz = g_variant_new_fixed_array (g_variant_type_new ("d"), GVP_dz, n, sizeof (double));
         GVariant *pc_array_da = g_variant_new_fixed_array (g_variant_type_new ("d"), GVP_da, n, sizeof (double));
         GVariant *pc_array_db = g_variant_new_fixed_array (g_variant_type_new ("d"), GVP_db, n, sizeof (double));
-        GVariant *pc_array_dam = g_variant_new_fixed_array (g_variant_type_new ("d"), GVP_da, n, sizeof (double));
-        GVariant *pc_array_dfm = g_variant_new_fixed_array (g_variant_type_new ("d"), GVP_db, n, sizeof (double));
+        GVariant *pc_array_dam = g_variant_new_fixed_array (g_variant_type_new ("d"), GVP_dam, n, sizeof (double));
+        GVariant *pc_array_dfm = g_variant_new_fixed_array (g_variant_type_new ("d"), GVP_dfm, n, sizeof (double));
         GVariant *pc_array_ts = g_variant_new_fixed_array (g_variant_type_new ("d"), GVP_ts, n, sizeof (double));
         GVariant *pc_array_pn = g_variant_new_fixed_array (g_variant_type_new ("i"), GVP_points, n, sizeof (gint32));
         GVariant *pc_array_op = g_variant_new_fixed_array (g_variant_type_new ("i"), GVP_opt, n, sizeof (gint32));
