@@ -1370,7 +1370,7 @@ void RPSPMC_Control::add_probevector(){
 			val += program_vector_list[current_probe_section].f_dam*multi;
 			break;
 		case PROBEDATA_ARRAY_FM:
-			val += program_vector_list[current_probe_section].f_dfm*multi;
+			val += program_vector_list[current_probe_section].f_dfm*multi*spmc_parameters.sc_lck_fmscale;
 			break;
 		case PROBEDATA_ARRAY_XS:
 			val += program_vector_list[current_probe_section].f_dx*multi;

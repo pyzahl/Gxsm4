@@ -139,7 +139,7 @@ SOURCE_SIGNAL_DEF rpspmc_source_signals[] = {
         { 0x08000000, "A",        " ", "V",             "V", SPMC_AD5791_to_volts, PROBEDATA_ARRAY_A,  0 },
         { 0x10000000, "B",        " ", "V",             "V", SPMC_AD5791_to_volts, PROBEDATA_ARRAY_B,  0 },
         { 0x20000000, "AM",       " ", "V",             "V", SPMC_AD5791_to_volts, PROBEDATA_ARRAY_AM, 0 },
-        { 0x40000000, "FM",       " ", "V",             "V", SPMC_AD5791_to_volts, PROBEDATA_ARRAY_FM, 0 },
+        { 0x40000000, "FM",       " ", "Hz",           "Hz", SPMC_AD5791_to_volts, PROBEDATA_ARRAY_FM, 0 },
         //{ 0x40000000, "PHI",      " ", "deg",         "deg",                  1.0, PROBEDATA_ARRAY_PHI, -1 },
         // -- general measured signals from index [8]   // <=== to Volt conversion here -- unit sym and scale are custom auto adjusted in .._eventhandling lookup functions as of this mask 
         { 0x0000C000, "Time-Mon",     " ", "ms",           "ms",                                    1.0, PROBEDATA_ARRAY_S15, 15 }, // time in ms
@@ -2556,13 +2556,24 @@ void RPSPMC_Control::create_folder (){
 
  	bp->new_grid_with_frame ("Probe Sources & Graph Setup");
 
-        bp->grid_add_label ("Source", "Check column to activate channel", 2, 0.);
+        bp->grid_add_label ("Ref-Source", "Check column to activate channel", 2, 0.);
         bp->set_input_width_chars (1);
         bp->grid_add_label ("X", "Check column to plot channel on X axis.", 1);
         bp->grid_add_label ("Y", "Check column to plot channel on Y axis.", 1);
         bp->grid_add_label ("Avg", "Check column to plot average of all spectra", 1);
         bp->grid_add_label ("Sec", "Check column to show all sections.", 1);
         GtkWidget *sep = gtk_separator_new (GTK_ORIENTATION_VERTICAL);
+        gtk_widget_set_size_request (sep, 5, -1);
+        bp->grid_add_widget (sep, 5);
+        //bp->grid_add_label (" --- ", NULL, 5);
+
+        bp->grid_add_label ("Source", "Check column to activate channel", 2, 0.);
+        bp->set_input_width_chars (1);
+        bp->grid_add_label ("X", "Check column to plot channel on X axis.", 1);
+        bp->grid_add_label ("Y", "Check column to plot channel on Y axis.", 1);
+        bp->grid_add_label ("Avg", "Check column to plot average of all spectra", 1);
+        bp->grid_add_label ("Sec", "Check column to show all sections.", 1);
+        sep = gtk_separator_new (GTK_ORIENTATION_VERTICAL);
         gtk_widget_set_size_request (sep, 5, -1);
         bp->grid_add_widget (sep, 5);
         //bp->grid_add_label (" --- ", NULL, 5);
@@ -2585,6 +2596,9 @@ void RPSPMC_Control::create_folder (){
         bp->grid_add_label ("Y", "Check column to plot channel on Y axis.", 1);
         bp->grid_add_label ("Avg", "Check column to plot average of all spectra", 1);
         bp->grid_add_label ("Sec", "Check column to show all sections.", 1);
+        sep = gtk_separator_new (GTK_ORIENTATION_VERTICAL);
+        gtk_widget_set_size_request (sep, 5, -1);
+        bp->grid_add_widget (sep, 5);
 #endif
         bp->new_line ();
 
@@ -2598,12 +2612,17 @@ void RPSPMC_Control::create_folder (){
 
         int ii=0;
         for (int i=0; rpspmc_source_signals[i].mask; ++i) {
+                const int rows=11;
                 int k=-1;
+		int c=ii/rows; 
+                int r = y+ii%rows+1; // row
+                ii++;
+		c*=11; // col
+                c++;
+
                 if (rpspmc_source_signals[i].scan_source_pos < 0) continue; // skip
                 PI_DEBUG (DBG_L4, "GRAPHS*** i=" << i << " " << rpspmc_source_signals[i].label);
-		int c=ii/8; 
-		c*=11;
-                c++;
+
                 switch (rpspmc_source_signals[i].mask){
                 case 0x0100: k=0; break;
                 case 0x0200: k=1; break;
@@ -2614,6 +2633,7 @@ void RPSPMC_Control::create_folder (){
                 }
 
                 if (k >= 0 && k < 6){
+                        c=23; r=y+k+1;
                         if (!rpspmc_swappable_signals[k].label) { g_warning ("GVP SOURCE MUX/SWPS INIT ** i=%d k=%d SWPS invalid/NULL", i,k); break; }
                       //rpspmc_source_signals[i].name         = rpspmc_swappable_signals[k].name;
                         rpspmc_source_signals[i].label        = rpspmc_swappable_signals[k].label;
@@ -2624,8 +2644,6 @@ void RPSPMC_Control::create_folder (){
                         g_message ("GRAPHS*** SWPS init i=%d k=%d {%s} sfac=%g", i, k, rpspmc_source_signals[i].label,rpspmc_source_signals[i].scale_factor);
                 }
                 
-                int r = y+ii%8+1;
-                ii++;
 
                 bp->set_xy (c, r);
 
@@ -2692,11 +2710,10 @@ void RPSPMC_Control::create_folder (){
                 // bp->grid_add_check_button_graph_matrix(" ", (int) (P_SOURCE_MSK | rpspmc_source_signals[i].mask), -1, i, this);
                 // bp->grid_add_check_button_graph_matrix(" ", (int) (A_SOURCE_MSK | rpspmc_source_signals[i].mask), -1, i, this);
                 // bp->grid_add_check_button_graph_matrix(" ", (int) (S_SOURCE_MSK | rpspmc_source_signals[i].mask), -1, i, this);
-                //if (c < 23){
+
                 sep = gtk_separator_new (GTK_ORIENTATION_VERTICAL);
                 gtk_widget_set_size_request (sep, 5, -1);
                 bp->grid_add_widget (sep);
-                        //}
 	}
         g_message ("GRAPHS MATRIX SELECTOR BUILD complete.");
 
