@@ -2975,6 +2975,10 @@ void RPSPMC_Control::BiasChanged(Param_Control* pcs, RPSPMC_Control* self){
         spmc_parameters.bias_monitor = self->bias;
         if (rpspmc_pacpll)
                 rpspmc_pacpll->write_parameter ("SPMC_BIAS", self->bias);
+
+        // mirror basic parameters to GXSM4 main
+ 	main_get_gapp()->xsm->data.s.Bias = self->bias;
+
 }
 
 void RPSPMC_Control::Slope_dZX_Changed(Param_Control* pcs, RPSPMC_Control* self){
@@ -3017,6 +3021,9 @@ void RPSPMC_Control::ZPosSetChanged(Param_Control* pcs, RPSPMC_Control *self){
                 
                 rpspmc_pacpll->write_array (SPMC_SET_ZPOS_SERVO_COMPONENTS, 0, NULL,  3, jdata);
         }
+
+        // mirror basic parameters to GXSM4 main
+        main_get_gapp()->xsm->data.s.SetPoint = main_get_gapp()->xsm->Inst->ZA2Volt(self->zpos_ref * spmc_parameters.gxsm_z_polarity);
 }
 
 void RPSPMC_Control::ZServoParamChanged(Param_Control* pcs, RPSPMC_Control *self){
@@ -3056,6 +3063,9 @@ void RPSPMC_Control::ZServoParamChanged(Param_Control* pcs, RPSPMC_Control *self
                 
                 rpspmc_pacpll->write_array (SPMC_SET_Z_SERVO_COMPONENTS, 1, jdata_i,  6, jdata);
         }
+
+        // mirror basic parameters to GXSM4 main
+        main_get_gapp()->xsm->data.s.Current = self->mix_set_point[0];
 }
 
 
