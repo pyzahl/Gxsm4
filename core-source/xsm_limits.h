@@ -33,7 +33,7 @@
  */
 
 /* Anzahl Data Source Channels */
-#define MAX_SRCS_CHANNELS 11
+#define MAX_SRCS_CHANNELS 20 // max # scan data source channels transferred at once -- may be more too choose from been muxed
 
 /* Anzahl Channels */
 #define MAX_CHANNELS 30

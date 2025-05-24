@@ -283,9 +283,6 @@ gboolean rpspmc_hwi_dev::MovetoXY (double x, double y){
 
 
 
-
-
-
 // THREAD AND FIFO CONTROL STATES
 
 #define GVP_DEBUG_VERBOSE 0
@@ -504,7 +501,7 @@ gpointer ScanDataReadThread (void *ptr_hwi){
                                 g_message ("GVP Data Expanded Lookup table signal dir %02d, ch %02d, ssi %02d: checking for mask 0x%08x (%s) match in 0x%08x", dir, ch, i, rpspmc_source_signals[i].mask, rpspmc_source_signals[i].label, hwi->srcs_dir[dir]);
                                 if ((hwi->srcs_dir[dir] & rpspmc_source_signals[i].mask) == rpspmc_source_signals[i].mask){
                                         if (rpspmc_source_signals[i].garr_index == PROBEDATA_ARRAY_TIME)
-                                                pvlut[dir][ch] = 14;
+                                                pvlut[dir][ch] = 14; /// NOTE: GVP_vp_header_current.dataexpanded[14]; // is time in ms
                                         else
                                                 pvlut[dir][ch] = rpspmc_source_signals[i].garr_index - PROBEDATA_ARRAY_S1; // as ..._S1 .. _S14 are exactly incremental => 0..13 ; see (***) above
                                         g_message ("GVP Data Expanded Lookup table signal %02d: pvlut[%02d][%02d] = %02d for mask 0x%08x, garri %d", i,dir,ch,pvlut[dir][ch], rpspmc_source_signals[i].mask, rpspmc_source_signals[i].garr_index);
