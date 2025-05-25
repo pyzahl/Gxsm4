@@ -140,10 +140,9 @@ SOURCE_SIGNAL_DEF rpspmc_source_signals[] = {
         { 0x10000000, "B",        " ", "V",             "V", SPMC_AD5791_to_volts, PROBEDATA_ARRAY_B,  0 },
         { 0x20000000, "AM",       " ", "V",             "V", SPMC_AD5791_to_volts, PROBEDATA_ARRAY_AM, 0 },
         { 0x40000000, "FM",       " ", "Hz",           "Hz", SPMC_AD5791_to_volts, PROBEDATA_ARRAY_FM, 0 },
-        //{ 0x40000000, "PHI",      " ", "deg",         "deg",                  1.0, PROBEDATA_ARRAY_PHI, -1 },
-        // -- general measured signals from index [8]   // <=== to Volt conversion here -- unit sym and scale are custom auto adjusted in .._eventhandling lookup functions as of this mask
-        // IF SHIFTING/ADDING SIGNALS, ADJUST in rpspmc_hwi_structs.h: #define SIGNAL_INDEX_ICH0 12 // 11 before addin AM, FM and removed PHI
-        // === XS-Mon,.. at index [11, ..] ** SIGNAL_INDEX_ICH0 **
+        // -- GVP measured signals starting from here        <=== to Volt conversion here -- unit sym and scale are custom auto adjusted in .._eventhandling lookup functions as of this mask
+        // IF SHIFTING/ADDING SIGNALS, ADJUST in rpspmc_hwi_structs.h: ---->>>   #define SIGNAL_INDEX_ICH0 11   <<<------
+        // ===> XS-Mon,... *** SIGNAL_INDEX_ICH0=11 --> rpspmc_source_signals[SIGNAL_INDEX_ICH0] => PROBEDATA_ARRAY_S1 **
         { 0x00000001, "XS-Mon",       " ", "AA", UTF8_ANGSTROEM,                   SPMC_AD5791_to_volts, PROBEDATA_ARRAY_S1,  1 }, // ich= 0 see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x00000002, "YS-Mon",       " ", "AA", UTF8_ANGSTROEM,                   SPMC_AD5791_to_volts, PROBEDATA_ARRAY_S2,  2 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x00000004, "ZS-Topo",      " ", "AA", UTF8_ANGSTROEM,                  -SPMC_AD5791_to_volts, PROBEDATA_ARRAY_S3,  3 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!

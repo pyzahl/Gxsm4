@@ -104,7 +104,8 @@
 
 // NEW: generalized signals
 
-#define SIGNAL_INDEX_ICH0 12 // 11 before addin AM, FM and removed PHI
+// ===> "XS-Mon",... *** rpspmc_source_signals[SIGNAL_INDEX_ICH0] => PROBEDATA_ARRAY_S1 **
+#define SIGNAL_INDEX_ICH0 11 // 11 before addin AM, FM and removed PHI
 
 typedef struct {
         guint32     mask;   // signal source mask, or signal id for swappable
