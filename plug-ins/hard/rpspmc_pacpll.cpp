@@ -3224,10 +3224,10 @@ void RPSPMC_Control::update_GUI_from_FPGA (){ // after warm start or re-connect
 }
 
 void RPSPMC_Control::update_zpos_readings(){
-        double zp,a,b;
-        main_get_gapp()->xsm->hardware->RTQuery ("z", zp, a, b);
-        zpos_mon = main_get_gapp()->xsm->Inst->V2ZAng(zp);
-        gchar *info = g_strdup_printf (" (%g Ang)", zpos_mon);
+        //double zp,a,b;
+        //main_get_gapp()->xsm->hardware->RTQuery ("z", zp, a, b);
+        zpos_mon = main_get_gapp()->xsm->Inst->Volt2ZA(spmc_parameters.z_monitor-spmc_parameters.zs_monitor); // remove slope component
+        gchar *info = g_strdup_printf (" + %g"UTF8_ANGSTROEM" Slp", main_get_gapp()->xsm->Inst->Volt2ZA(spmc_parameters.zs_monitor));
         ZPos_ec->set_info (info);
         ZPos_ec->Put_Value ();
         g_free (info);

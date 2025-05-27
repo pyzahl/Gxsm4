@@ -1212,7 +1212,7 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2,
         if (*property == 'R'){ // Scan Pos ZS, XS, YS -- without offset in Angstroem
 		val1 =  main_get_gapp()->xsm->Inst->Volt2ZA (spmc_parameters.zs_monitor);
 		val2 =  main_get_gapp()->xsm->Inst->Volt2XA (spmc_parameters.xs_monitor);
-                val3 =  main_get_gapp()->xsm->Inst->Volt2YA (spmc_parameters.zs_monitor);
+                val3 =  main_get_gapp()->xsm->Inst->Volt2YA (spmc_parameters.ys_monitor);
 		return TRUE;
         }
 
