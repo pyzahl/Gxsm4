@@ -167,23 +167,23 @@ SOURCE_SIGNAL_DEF rpspmc_source_signals[] = {
 // so far fixed to swappable 4 signals as of GUI design!
 SOURCE_SIGNAL_DEF rpspmc_swappable_signals[] = {                                                                 // DEFAULT MUX MAP, 16 signals max 
         //  SIGNAL #  Name               Units.... Scale                                         DEFAULT ASSIGN
-        { 0x00000000, "dFrequency",  " ", "Hz",  "Hz", (125e6/((1L<<RP_FPGA_QFREQ)-1)),                0, -1 },   // dFREQ via PACPLL FIR_CH2 ** via transport / decimation selector 
-        { 0x00000001, "Excitation",  " ", "mV",   "mV", (1000.0/((1L<<RP_FPGA_QEXEC)-1)),               1, -1 },   // EXEC  via PACPLL FIR_CH4 ** via transport / decimation selector 
+        { 0x00000000, "dFrequency",  " ", "Hz",  "Hz", (125e6/((1L<<RP_FPGA_QFREQ)-1)),               0, -1 },   // dFREQ via PACPLL FIR_CH2 ** via transport / decimation selector 
+        { 0x00000001, "Excitation",  " ", "mV",   "mV", (1000.0/((1L<<RP_FPGA_QEXEC)-1)),             1, -1 },   // EXEC  via PACPLL FIR_CH4 ** via transport / decimation selector 
         { 0x00000002, "Phase",       " ", "deg", UTF8_DEGREE, (180.0/(M_PI*((1L<<RP_FPGA_QATAN)-1))), 2, -1 },   // PHASE via PACPLL FIR_CH1 ** via transport / decimation selector 
-        { 0x00000003, "Amplitude",   " ", "mV",   "mV", (1000.0/((1L<<RP_FPGA_QSQRT)-1)),               3, -1 },   // AMPL  via PACPLL FIR_CH3 ** via transport / decimation selector 
+        { 0x00000003, "Amplitude",   " ", "mV",   "mV", (1000.0/((1L<<RP_FPGA_QSQRT)-1)),             3, -1 },   // AMPL  via PACPLL FIR_CH3 ** via transport / decimation selector 
         { 0x00000004, "dFreq-Control", " ", "mV", "mV", (1000.0*SPMC_AD5791_to_volts),                4, -1 },   // IR_CH2_DFREQ_CTRL_VAL : can be added to Z-control for true Z AFM mode in freq regulation, or addded to Bias for SQDM mode
                                                                                                                  // *** still assuming +/-10V range in PAC Control mappted to 5V here
-        { 0x00000005, "05-IN1-RF-FBW",     " ", "mV", "mV", 1000*SPMC_RPIN12_to_volts,                         -1, -1 },   // IN1 FBW **** IN1 RP 125MSPS (Signal) -- PLL Signal (FBW)
-        { 0x00000006, "06-IN1-RF-FIR",     " ", "V", "V", SPMC_RPIN12_to_volts,                         -1, -1 },   // IN1 FIR **** IN1 RP 125MSPS (Signal) -- PLL Signal (FIR)
-        { 0x00000007, "07-IN2-RF-FBW",     " ", "V", "V", SPMC_RPIN12_to_volts,                         -1, -1 },   // IN2 FBW
-        { 0x00000008, "08-LockIn-Mag-BQ",  " ", "V", "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),        5, -1 },   // LCK-Mag/BiQuad/IIR
-        { 0x00000009, "09-LockIn-X",    " ", "V", "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),          -1, -1 },   // LCK-X -- needs filter, route to BiQuad?
-        { 0x0000000A, "10-LockIn-Y",    " ", "V", "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),          -1, -1 },   // LCK-Y -- need filter
+        { 0x00000005, "05-IN1-RF-FBW",     " ", "mV", "mV", 1000*SPMC_RPIN12_to_volts,               -1, -1 },   // IN1 FBW **** IN1 RP 125MSPS (Signal) -- PLL Signal (FBW)
+        { 0x00000006, "06-IN1-RF-FIR",     " ", "V", "V", SPMC_RPIN12_to_volts,                      -1, -1 },   // IN1 FIR **** IN1 RP 125MSPS (Signal) -- PLL Signal (FIR)
+        { 0x00000007, "07-IN2-RF-FBW",     " ", "V", "V", SPMC_RPIN12_to_volts,                      -1, -1 },   // IN2 FBW
+        { 0x00000008, "08-LockIn-Mag-BQ2", " ", "V", "V", SPMC_RPIN34_to_volts,                       5, -1 },   // LCK-Mag after BiQuad Stage 2
+        { 0x00000009, "09-LockIn-X",    " ", "V", "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),          -1, -1 },   // LCK-X -- raw (no filter)
+        { 0x0000000A, "10-LockIn-Y",    " ", "V", "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),          -1, -1 },   // LCK-Y -- raw (no filter)
         { 0x0000000B, "11-IN4-FIR",     " ", "V", "V", SPMC_RPIN34_to_volts,                         -1, -1 },   // IN4 FIR
         { 0x0000000C, "12-LCK-i",       " ", "V", "V", (1.0),                                        -1, -1 },   // ** Lck-i ** dbg
-        { 0x0000000D, "13-SineRef",     " ", "V",   "V", (SPMC_RPIN12_to_volts),                     -1, -1 },   // ** SD-Ref ** dbg
-        { 0x0000000E, "14-LockIn-Mag-pass", " ", "V",   "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),     -1, -1 },   // LCK-Mag-BiQuad-pass ** dbg
-        { 0x0000000F, "15-ZwSlope-OUT", " ", "V",   "V", (SPMC_AD5791_to_volts),                     -1, -1 },   // Z-with-slope
+        { 0x0000000D, "13-SineRef",     " ", "V", "V",     SPMC_RPIN34_to_volts,                     -1, -1 },   // ** SD-Ref ** dbg
+        { 0x0000000E, "14-LockIn-Mag-pass", " ", "V", "V", SPMC_RPIN34_to_volts,                     -1, -1 },   // LCK-Mag (sqrt(x^2+y^2)) raw (no filter)
+        { 0x0000000F, "15-LockIn-Mag-BQ1",  " ", "V", "V", SPMC_RPIN34_to_volts,                     -1, -1 },   // LCK-Mag after BiQuad Stage 1
         { 0x00000010, "X-TestSignal = 0", " ", "V",   "V", (1.0),                         -1, -1 },
         { 0x00000011, "X-TestSignal = 1", " ", "V",   "V", (1.0),                         -1, -1 },
         { 0x00000012, "X-TestSignal = -1", " ", "V",   "V", (1.0),                        -1, -1 },
