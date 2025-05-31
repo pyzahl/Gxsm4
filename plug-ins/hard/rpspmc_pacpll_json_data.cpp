@@ -241,9 +241,11 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         { "SPMC_SC_LCK_FREQUENCY", &spmc_parameters.sc_lck_frequency, false }, // manual/tune frequency
         { "SPMC_SC_LCK_VOLUME",    &spmc_parameters.sc_lck_volume, false },    // amplitude
         { "SPMC_SC_LCK_TARGET",    &spmc_parameters.sc_lck_target, false },    // mixing to target
-        { "SPMC_SC_LCK_GAIN",      &spmc_parameters.sc_lck_gain, false },      // digital Lck signal gain control
+        { "SPMC_SC_LCK_MODE",      &spmc_parameters.sc_lck_mode, false },      // digital Lck & RF Gen mode
+        { "SPMC_SC_LCK_AMSCALE",   &spmc_parameters.sc_lck_amscale, false },   // digital AM Mod scale control
         { "SPMC_SC_LCK_FMSCALE",   &spmc_parameters.sc_lck_fmscale, false },   // digital FM Mod scale control
         { "SPMC_SC_LCK_FILTER_MODE", &spmc_parameters.sc_lck_filter_mode, false },    // time const
+
         { "SPMC_SC_LCK_BQ_COEF_B0",  &spmc_parameters.sc_lck_bq_coef[0], false },    // BQCOEFS
         { "SPMC_SC_LCK_BQ_COEF_B1",  &spmc_parameters.sc_lck_bq_coef[1], false },    // BQCOEFS
         { "SPMC_SC_LCK_BQ_COEF_B2",  &spmc_parameters.sc_lck_bq_coef[2], false },    // BQCOEFS
@@ -254,6 +256,7 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         { "SPMC_SC_LCK_F0BQ_IIR",  &spmc_parameters.sc_lck_iir_tau, false },   // IIR time const
         { "SPMC_SC_LCK_F0BQ_Q",    &spmc_parameters.sc_lck_q, false },         // Q for IIR
 
+        
         { "SPMC_SC_LCK_RF_FREQUENCY", &spmc_parameters.sc_lck_rf_frequency, false }, // manual/tune RF Gen frequency
         { "SPMC_RF_GEN_OUT_MUX", &spmc_parameters.rf_gen_out_mux, false },
 

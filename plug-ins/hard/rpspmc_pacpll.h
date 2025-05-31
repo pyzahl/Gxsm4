@@ -486,6 +486,8 @@ public:
         static int Probing_RampFBoff_callback(GtkWidget *widget, RPSPMC_Control *self);
         static int Probing_multiIV_callback(GtkWidget *widget, RPSPMC_Control *self);
         
+        static int callback_change_LCK_mode (GtkWidget *widget, RPSPMC_Control *self);
+
         static int callback_change_GVP_vpc_option_flags (GtkWidget *widget, RPSPMC_Control *self);
 	static int callback_update_GVP_vpc_option_checkbox (GtkWidget *widget, RPSPMC_Control *self);
 	static int callback_change_GVP_option_flags (GtkWidget *widget, RPSPMC_Control *self);

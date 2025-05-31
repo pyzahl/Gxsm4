@@ -959,6 +959,11 @@
 	  <attribute name="target">lp-off</attribute>
 	</item>
 	<item>
+	  <attribute name="label" translatable="yes">Lowpass SINC DEC</attribute>
+	  <attribute name="action">profile.opt-Y-lowpass</attribute>
+	  <attribute name="target">lp-dec-sinc</attribute>
+	</item>
+	<item>
 	  <attribute name="label" translatable="yes">Lowpass 0.1%</attribute>
 	  <attribute name="action">profile.opt-Y-lowpass</attribute>
 	  <attribute name="target">lp0-1</attribute>

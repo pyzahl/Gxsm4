@@ -546,34 +546,58 @@
       <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-ModVolume-Bias-ARef', Default/U:     0 V    , Adjustment PCS Name: 'dsp-SPMC-LCK-ModVolume-Bias-ARef' </description>
     </key>
 
-    <key name="dsp-spmc-lck-bq-tau" type="d">
+    <key name="dsp-spmc-lck-bq1-tau" type="d">
       <default>0</default>
       <summary>PCS Remote-ID: 'dsp-SPMC-LCK-BQ-TAU', Default/U:     0 ms     </summary>
       <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-BQ-TAU', Default/U:     0 ms    , Adjustment PCS Name: 'dsp-SPMC-LCK-BQ-TAU' </description>
     </key>
 
-    <key name="dsp-spmc-lck-iir-tau" type="d">
+    <key name="dsp-spmc-lck-iir1-tau" type="d">
       <default>0</default>
       <summary>PCS Remote-ID: 'dsp-SPMC-LCK-IIR-TAU', Default/U:     0 ms     </summary>
       <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-IIR-TAU', Default/U:     0 ms    , Adjustment PCS Name: 'dsp-SPMC-LCK-IIR-TAU' </description>
     </key>
 
-    <key name="dsp-spmc-lck-q" type="d">
+    <key name="dsp-spmc-lck-q1" type="d">
       <default>0</default>
       <summary>PCS Remote-ID: 'dsp-SPMC-LCK-Q', Default/U:     0     </summary>
       <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-Q', Default/U:     0    , Adjustment PCS Name: 'dsp-SPMC-LCK-Q' </description>
     </key>
 
-    <key name="dsp-spmc-lck-bq-coef-ba00" type="ad">
+    <key name="dsp-spmc-lck-bq1-coef-ba00" type="ad">
       <default>[1,0,0, 0,0,0]</default>
       <summary>PCS Remote-ID: 'dsp-SPMC-LCK-BQ-COEF-BA6', Default/U:     0     </summary>
       <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-BQ-COEF-BA', Default/U:     0    , Adjustment PCS Name: 'dsp-SPMC-LCK-BQ-COEF-BA' </description>
     </key>
 
-    <key name="dsp-spmc-lck-gain" type="d">
+    <key name="dsp-spmc-lck-bq2-tau" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-BQ-TAU', Default/U:     0 ms     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-BQ-TAU', Default/U:     0 ms    , Adjustment PCS Name: 'dsp-SPMC-LCK-BQ-TAU' </description>
+    </key>
+
+    <key name="dsp-spmc-lck-iir2-tau" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-IIR-TAU', Default/U:     0 ms     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-IIR-TAU', Default/U:     0 ms    , Adjustment PCS Name: 'dsp-SPMC-LCK-IIR-TAU' </description>
+    </key>
+
+    <key name="dsp-spmc-lck-q2" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-Q', Default/U:     0     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-Q', Default/U:     0    , Adjustment PCS Name: 'dsp-SPMC-LCK-Q' </description>
+    </key>
+
+    <key name="dsp-spmc-lck-bq2-coef-ba00" type="ad">
+      <default>[1,0,0, 0,0,0]</default>
+      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-BQ-COEF-BA6', Default/U:     0     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-BQ-COEF-BA', Default/U:     0    , Adjustment PCS Name: 'dsp-SPMC-LCK-BQ-COEF-BA' </description>
+    </key>
+
+    <key name="dsp-spmc-lck-amscale" type="d">
       <default>1</default>
-      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-GAIN', Default/U:     1     </summary>
-      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-GAIN', Default/U:     1    , Adjustment PCS Name: 'dsp-SPMC-LCK-GAIN' </description>
+      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-AMSCALE', Default/U:     1     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-AMSCALE', Default/U:     1    , Adjustment PCS Name: 'dsp-SPMC-LCK-AMSCALE' </description>
     </key>
 
     <key name="dsp-spmc-lck-fmscale" type="d">

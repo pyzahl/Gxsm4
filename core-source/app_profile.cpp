@@ -274,24 +274,35 @@ double ProfileElement::calc(gint64 ymode, int id, int binary_mask, double y_offs
                         }
                 } else if(ymode & PROFILE_MODE_YLOWPASS){
                         ylocmin=ylocmax=0.;
-                        double vp = 0.;
-                        double v = s->data.Zunit->Base2Usr(s->mem2d->GetDataPkt(0,yy) * s->data.s.dz);
+                        double v = s->data.Zunit->Base2Usr(s->mem2d->GetDataPkt(ix_left,yy) * s->data.s.dz);
+                        double vp = v;
                         double lpn = pctrl->lp_gain;
                         double lpo = 1.0-lpn;
                         vp=v;
                         // for(int i=0, ix=0, iy=1; i < n; ix+=2, iy+=2, ++i){
-                        for(int k=0, i=ix_left; k < n_dec; ++k, i+=dec_len){
-                                int ii = i + dec_len/2;
-                                double y=s->data.Zunit->Base2Usr(s->mem2d->GetDataPkt(i,yy) * s->data.s.dz);
-                                for (int m=0; m<dec_len; ++m){
-                                        v = y =  lpo*v + lpn * s->data.Zunit->Base2Usr(s->mem2d->GetDataPkt(i+m,yy) * s->data.s.dz);
+                        if (lpn > 0)
+                                for(int k=0, i=ix_left; k < n_dec; ++k, i+=dec_len){
+                                        int ii = i + dec_len/2;
+                                        double y=s->data.Zunit->Base2Usr(s->mem2d->GetDataPkt(i,yy) * s->data.s.dz);
+                                        for (int m=0; m<dec_len; ++m){
+                                                v = y =  lpo*v + lpn * s->data.Zunit->Base2Usr(s->mem2d->GetDataPkt(i+m,yy) * s->data.s.dz);
+                                        }
+                                        if(ymode & PROFILE_MODE_YDIFF){
+                                                y  = v-vp;
+                                                vp = v;
+                                        }
+                                        pathitem[id]->set_xy_test (k, s->data.Xunit->Base2Usr(s->mem2d->data->GetXLookup(ii)), y);
                                 }
-                                if(ymode & PROFILE_MODE_YDIFF){
-                                        y  = v-vp;
-                                        vp = v;
+                        else // SINC in dec window
+                                for(int k=0, i=ix_left; k < n_dec; ++k, i+=dec_len){
+                                        int ii = i + dec_len/2;
+                                        double y=0.;
+                                        for (int m=0; m<dec_len; ++m){
+                                                y +=  s->data.Zunit->Base2Usr(s->mem2d->GetDataPkt(i+m,yy) * s->data.s.dz);
+                                        }
+                                        y /= dec_len;
+                                        pathitem[id]->set_xy_test (k, s->data.Xunit->Base2Usr(s->mem2d->data->GetXLookup(ii)), y);
                                 }
-                                pathitem[id]->set_xy_test (k, s->data.Xunit->Base2Usr(s->mem2d->data->GetXLookup(ii)), y);
-                        }
                 } else if(ymode & PROFILE_MODE_YDIFF){
                         for(int k=0, i=ix_left; k < n_dec; ++k, i+=dec_len){
                                 int ii = i + (rand() % dec_len);
@@ -3014,6 +3025,8 @@ void ProfileControl::ylowpass_callback (GSimpleAction *action, GVariant *paramet
         
         if (!strcmp (g_variant_get_string (new_state, NULL), "lp-off"))
 		pc->mode &= ~PROFILE_MODE_YLOWPASS, pc->lp_gain=1.0;
+        else if (!strcmp (g_variant_get_string (new_state, NULL), "lp-dec-sinc"))
+                pc->mode = (pc->mode & ~PROFILE_MODE_YLOWPASS) | PROFILE_MODE_YLOWPASS, pc->lp_gain = 0.0; // SINC of DEC LEN
         else if (!strcmp (g_variant_get_string (new_state, NULL), "lp0-1"))
                 pc->mode = (pc->mode & ~PROFILE_MODE_YLOWPASS) | PROFILE_MODE_YLOWPASS, pc->lp_gain = 0.001;
         else if (!strcmp (g_variant_get_string (new_state, NULL), "lp1"))
