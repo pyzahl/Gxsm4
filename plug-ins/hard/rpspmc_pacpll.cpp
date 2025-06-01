@@ -176,14 +176,14 @@ SOURCE_SIGNAL_DEF rpspmc_swappable_signals[] = {                                
         { 0x00000005, "05-IN1-RF-FBW",     " ", "mV", "mV", 1000*SPMC_RPIN12_to_volts,               -1, -1 },   // IN1 FBW **** IN1 RP 125MSPS (Signal) -- PLL Signal (FBW)
         { 0x00000006, "06-IN1-RF-FIR",     " ", "V", "V", SPMC_RPIN12_to_volts,                      -1, -1 },   // IN1 FIR **** IN1 RP 125MSPS (Signal) -- PLL Signal (FIR)
         { 0x00000007, "07-IN2-RF-FBW",     " ", "V", "V", SPMC_RPIN12_to_volts,                      -1, -1 },   // IN2 FBW
-        { 0x00000008, "08-LockIn-Mag-BQ2", " ", "V", "V", SPMC_RPIN34_to_volts,                       5, -1 },   // LCK-Mag after BiQuad Stage 2
-        { 0x00000009, "09-LockIn-X",    " ", "V", "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),          -1, -1 },   // LCK-X -- raw (no filter)
-        { 0x0000000A, "10-LockIn-Y",    " ", "V", "V", (1<<(32-24))*(SPMC_RPIN12_to_volts),          -1, -1 },   // LCK-Y -- raw (no filter)
+        { 0x00000008, "08-LockIn-Mag-BQ2", " ", "V", "V", (1<<(32-24))*SPMC_RPIN34_to_volts,          5, -1 },   // LCK-Mag after BiQuad Stage 2
+        { 0x00000009, "09-LockIn-X",    " ", "V", "V", (1<<(32-24))*SPMC_RPIN34_to_volts,            -1, -1 },   // LCK-X -- raw (no filter)
+        { 0x0000000A, "10-LockIn-Y",    " ", "V", "V", (1<<(32-24))*SPMC_RPIN34_to_volts,            -1, -1 },   // LCK-Y -- raw (no filter)
         { 0x0000000B, "11-IN4-FIR",     " ", "V", "V", SPMC_RPIN34_to_volts,                         -1, -1 },   // IN4 FIR
         { 0x0000000C, "12-LCK-i",       " ", "V", "V", (1.0),                                        -1, -1 },   // ** Lck-i ** dbg
         { 0x0000000D, "13-SineRef",     " ", "V", "V",     SPMC_RPIN34_to_volts,                     -1, -1 },   // ** SD-Ref ** dbg
-        { 0x0000000E, "14-LockIn-Mag-pass", " ", "V", "V", SPMC_RPIN34_to_volts,                     -1, -1 },   // LCK-Mag (sqrt(x^2+y^2)) raw (no filter)
-        { 0x0000000F, "15-LockIn-Mag-BQ1",  " ", "V", "V", SPMC_RPIN34_to_volts,                     -1, -1 },   // LCK-Mag after BiQuad Stage 1
+        { 0x0000000E, "14-LockIn-Mag-pass", " ", "V", "V", (1<<(32-24))*SPMC_RPIN34_to_volts,                     -1, -1 },   // LCK-Mag (sqrt(x^2+y^2)) raw (no filter)
+        { 0x0000000F, "15-LockIn-Mag-BQ1",  " ", "V", "V", (1<<(32-24))*SPMC_RPIN34_to_volts,                     -1, -1 },   // LCK-Mag after BiQuad Stage 1
         { 0x00000010, "X-TestSignal = 0", " ", "V",   "V", (1.0),                         -1, -1 },
         { 0x00000011, "X-TestSignal = 1", " ", "V",   "V", (1.0),                         -1, -1 },
         { 0x00000012, "X-TestSignal = -1", " ", "V",   "V", (1.0),                        -1, -1 },
