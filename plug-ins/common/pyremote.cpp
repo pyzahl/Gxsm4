@@ -857,7 +857,7 @@ public:
         static void kill (GtkToggleButton *btn, gpointer user_data);
 
         void create_gui(void);
-        void run();
+        void run(gchar *info=NULL);
 
         static void command_execute(GtkEntry *entry, gpointer user_data);
         static void clear_output(GtkButton *btn, gpointer user_data);
@@ -1057,9 +1057,10 @@ public:
                                 }
                         }
                 }
-                if (script_filename)
+                if (script_filename){
                         SetTitle (pyremote_pi.help, script_filename);
-                else
+                        g_settings_set_string (gsettings, "last-script-filename", script_filename);
+                } else
                         SetTitle (pyremote_pi.help, "no valid file name");
         };
         void write_example_file (void);
@@ -3630,7 +3631,7 @@ void py_gxsm_console::initialize(void)
                 // g_print ("pyremote Plugin :: initialize -- AddModule main\n");
 		py_gxsm_module.main_module = PyImport_AddModule("__main__");
                 
-                push_message_async ("\nPython ready.\n");
+                push_message_async ("\nPython 4 Gxsm is ready.\n");
 
         } else {
 		g_message ("Python interpreter already initialized.");
@@ -3826,8 +3827,7 @@ gpointer py_gxsm_console::PyRunConsoleThread(gpointer user_data)
         PyRunThreadData *s = (PyRunThreadData*) &pygc->user_script_data;
         PI_DEBUG_GM (DBG_L2, "pyremote Plugin :: py_gxsm_console::PyConsoleThreadFunc");
 
-        pygc->append("Welcome to the PyRemote Control for GXSM: Python Version is ");
-        pygc->append(Py_GetVersion());
+        pygc->append("Console Thread Startup...");
 
         // Start up the console!
         pygc->initialize();
@@ -4379,8 +4379,8 @@ void py_gxsm_console::AppWindowInit(const gchar *title, const gchar *sub_title){
 
         PI_DEBUG_GM (DBG_L2, "pyremote Plugin :: AppWindoInit() -- building Console AppWindow.");
 
-        //        SET_PCS_GROUP("plugin_libpyremote");
-        //        gsettings = g_settings_new (GXSM_RES_BASE_PATH_DOT".plugin.common.libpyremote");
+        //SET_PCS_GROUP("plugin_libpyremote");
+        gsettings = g_settings_new (GXSM_RES_BASE_PATH_DOT".pcs.plugin-libpyremote");
 
         app_window = gxsm4_app_window_new (GXSM4_APP (main_get_gapp()->get_application ()));
         window = GTK_WINDOW (app_window);
@@ -4635,7 +4635,7 @@ void  py_gxsm_console::write_example_file(void)
 	example_file.close();
 }
 
-void py_gxsm_console::run()
+void py_gxsm_console::run(gchar *info)
 {
 	PyObject *d;
 
@@ -4651,12 +4651,17 @@ void py_gxsm_console::run()
 
         append("Welcome to the PyRemote Control for GXSM: Python Version is ");
         append(Py_GetVersion());
+        if (info)
+                append(info);
               
 	script_filename = NULL;
         fail = false;
 
 	// try loading the default pyremote file
-	script_filename = g_strdup_printf("%s.py", xsmres.PyremoteFile);
+	// script_filename = g_strdup_printf("%s.py", xsmres.PyremoteFile);
+	script_filename = g_settings_get_string (gsettings, "last-script-filename");
+        SetTitle (pyremote_pi.help, script_filename);
+        
 	query_filename = false;
 
 	PI_DEBUG_GM(DBG_L1, "Pyremote console opening >%s< ", script_filename);
@@ -4672,11 +4677,7 @@ void py_gxsm_console::run()
 	}
 
         append("\n\n");
-        append("WARNING: ================================================================================\n");
-        append("WARNING: GXSM4 beta work in progress: embedded python running in it's own thread.\n");
-        append("WARNING: pending compete testing of a few less used python functions and thead save validation. \n");
-        append("WARNING: ================================================================================\n\n");
-        
+
         PI_DEBUG_GM(DBG_L2, "pyremote Plugin :: console_run() -- startup finished and ready. Standing by.");
 }
 
@@ -4726,7 +4727,7 @@ static void pyremote_init(void)
                 main_get_gapp()->ConnectPluginToRemoteAction (run_action_script_callback);
         }
 
-        py_gxsm_remote_console->run();
+        py_gxsm_remote_console->run("\nPy Remote Console Init...");
         g_thread_new (NULL, py_gxsm_console::PyRunConsoleThread, NULL);
 }
 
@@ -4752,5 +4753,5 @@ void pyremote_run( GtkWidget *w, void *data ){
 		py_gxsm_remote_console = new py_gxsm_console (main_get_gapp() -> get_app ());
 
 	PI_DEBUG_GM(DBG_L2, "pyremote Plugin Run: Console-Run");
-	py_gxsm_remote_console->run();
+	py_gxsm_remote_console->run("\nINIT FOR RUN TASK\n");
 }

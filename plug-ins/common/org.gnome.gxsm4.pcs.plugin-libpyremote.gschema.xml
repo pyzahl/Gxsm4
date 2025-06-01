@@ -56,6 +56,13 @@
       <summary>PCS Remote-ID: 'py-sc10', Default/U:   0     </summary>
       <description>pcs0000, PCS Remote-ID: 'py-sc10', Default/U:   0    , Adjustment PCS Name: 'py-sc10' </description>
     </key>
+    <key name="last-script-filename" type="s">
+      <default>'/.gxsm4/pyaction/remote.py'</default>
+      <summary>last user script file</summary>
+      <description>
+	last used script file name
+      </description>
+    </key>
   </schema>
 
 </schemalist>
