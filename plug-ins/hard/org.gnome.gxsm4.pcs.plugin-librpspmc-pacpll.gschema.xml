@@ -594,10 +594,10 @@
       <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-BQ-COEF-BA', Default/U:     0    , Adjustment PCS Name: 'dsp-SPMC-LCK-BQ-COEF-BA' </description>
     </key>
 
-    <key name="dsp-spmc-lck-amscale" type="d">
-      <default>1</default>
-      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-AMSCALE', Default/U:     1     </summary>
-      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-AMSCALE', Default/U:     1    , Adjustment PCS Name: 'dsp-SPMC-LCK-AMSCALE' </description>
+    <key name="dsp-spmc-lck-gain" type="i">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-GAIN', Default/U:     0     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-GAIN', Default/U:     0    , Adjustment PCS Name: 'dsp-SPMC-LCK-GAIN' </description>
     </key>
 
     <key name="dsp-spmc-lck-fmscale" type="d">

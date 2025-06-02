@@ -256,7 +256,8 @@ struct SPMC_parameters {
         double sc_lck_q2;
 
         double sc_lck_mode;
-        double sc_lck_amscale;
+        int    sc_lck_gainn2;
+        double sc_lck_gain;
         double sc_lck_fmscale;
         int    sc_lckrf_mode;
         

@@ -1912,6 +1912,8 @@ void RPSPMC_Control::create_folder (){
         }
 
         bp->new_line ();
+	bp->grid_add_ec ("Lck Gain", new UnitObj("^2","^2"), &spmc_parameters.sc_lck_gainn2, 0, 10, ".0f", "SPMC-LCK-GAIN");
+        bp->new_line ();
         bp->grid_add_check_button ("CorrS PH Aligned", bp->PYREMOTE_CHECK_HOOK_KEY_FUNC("Lock-In Corr Phase Aligned","dsp-lck-phaligned"), 1,
                                    GCallback (callback_change_LCK_mode), this,
                                    &spmc_parameters.sc_lckrf_mode, 4);
@@ -2009,8 +2011,8 @@ void RPSPMC_Control::create_folder (){
 
 	bp->grid_add_ec ("RF Center", new UnitObj("Hz","Hz"), &spmc_parameters.sc_lck_rf_frequency, 0.0, 30e6, "5g", 1.0, 100.0, "SPMC-LCK-RF-FREQ");
         bp->new_line ();
-	bp->grid_add_ec ("AM Mod Scale", new UnitObj(" x"," x"), &spmc_parameters.sc_lck_amscale, -1e9, 1e9, "6g", 0.1, 5.0, "SPMC-LCK-AMSCALE");
-        bp->grid_add_check_button ("En", bp->PYREMOTE_CHECK_HOOK_KEY_FUNC("Enable AM","dsp-gvp-RFAM"), 1,
+	bp->grid_add_label ("AM Modulation");
+        bp->grid_add_check_button ("En", bp->PYREMOTE_CHECK_HOOK_KEY_FUNC("Enable AM","dsp-gvp-LCKGAIN"), 1,
                                    GCallback (callback_change_LCK_mode), this,
                                    &spmc_parameters.sc_lckrf_mode, 1);
         bp->new_line ();
@@ -3757,6 +3759,7 @@ void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *
         if (rpspmc_pacpll){
                 const gchar *SPMC_SET_LCK_BQ_COMPONENTS[] = {
                         "SPMC_SC_LCK_MODE",
+                        "SPMC_SC_LCK_GAIN",
                         "SPMC_SC_LCK_FILTER_MODE",
                         "SPMC_SC_LCK_BQ_COEF_B0", //spmc_parameters.sc_lck_bq_coef[0,1,2]
                         "SPMC_SC_LCK_BQ_COEF_B1",
@@ -3769,17 +3772,17 @@ void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *
                         "SPMC_SC_LCK_F0BQ_TAU",
                         "SPMC_SC_LCK_F0BQ_IIR",
                         "SPMC_SC_LCK_F0BQ_Q",
-                        "SPMC_SC_LCK_AMSCALE",
                         "SPMC_SC_LCK_FMSCALE",
                         "SPMC_SC_LCK_RF_FREQUENCY",
                         NULL };
                 double jdata[6+8];
-                int jdata_i[2];
+                int jdata_i[3];
                 jdata_i[0] = spmc_parameters.sc_lckrf_mode;
+                jdata_i[1] = spmc_parameters.sc_lck_gainn2;
 
                 int i=0;
                 // Update BQ SECTION 1
-                jdata_i[1] = spmc_parameters.sc_lck_bq1mode;
+                jdata_i[2] = spmc_parameters.sc_lck_bq1mode;
                 for (;i<6; ++i)
                         jdata[i] = spmc_parameters.sc_lck_bq1_coef[i];
                 jdata[3] = 0;
@@ -3795,14 +3798,13 @@ void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *
                 jdata[i++] = spmc_parameters.sc_lck_iir1_tau;
                 jdata[i++] = spmc_parameters.sc_lck_q1;
                 
-                jdata[i++] = spmc_parameters.sc_lck_amscale;
                 jdata[i++] = spmc_parameters.sc_lck_fmscale;
                 jdata[i++] = spmc_parameters.sc_lck_rf_frequency;
 
-                rpspmc_pacpll->write_array (SPMC_SET_LCK_BQ_COMPONENTS, 2, jdata_i,  i, jdata);
+                rpspmc_pacpll->write_array (SPMC_SET_LCK_BQ_COMPONENTS, 3, jdata_i,  i, jdata);
 
                 // Update BQ SECTION 2
-                jdata_i[1] = spmc_parameters.sc_lck_bq2mode;
+                jdata_i[2] = spmc_parameters.sc_lck_bq2mode;
                 i=0;
                 for (;i<6; ++i)
                         jdata[i] = spmc_parameters.sc_lck_bq2_coef[i];
@@ -3819,11 +3821,10 @@ void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *
                 jdata[i++] = spmc_parameters.sc_lck_iir2_tau;
                 jdata[i++] = spmc_parameters.sc_lck_q2;
                 
-                jdata[i++] = spmc_parameters.sc_lck_amscale;
                 jdata[i++] = spmc_parameters.sc_lck_fmscale;
                 jdata[i++] = spmc_parameters.sc_lck_rf_frequency;
 
-                rpspmc_pacpll->write_array (SPMC_SET_LCK_BQ_COMPONENTS, 2, jdata_i,  i, jdata);
+                rpspmc_pacpll->write_array (SPMC_SET_LCK_BQ_COMPONENTS, 3, jdata_i,  i, jdata);
 
 #if 0                
 

@@ -242,7 +242,7 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         { "SPMC_SC_LCK_VOLUME",    &spmc_parameters.sc_lck_volume, false },    // amplitude
         { "SPMC_SC_LCK_TARGET",    &spmc_parameters.sc_lck_target, false },    // mixing to target
         { "SPMC_SC_LCK_MODE",      &spmc_parameters.sc_lck_mode, false },      // digital Lck & RF Gen mode
-        { "SPMC_SC_LCK_AMSCALE",   &spmc_parameters.sc_lck_amscale, false },   // digital AM Mod scale control
+        { "SPMC_SC_LCK_GAIN",      &spmc_parameters.sc_lck_gain, false },     // LCK gain
         { "SPMC_SC_LCK_FMSCALE",   &spmc_parameters.sc_lck_fmscale, false },   // digital FM Mod scale control
         { "SPMC_SC_LCK_FILTER_MODE", &spmc_parameters.sc_lck_filter_mode, false },    // time const
 
