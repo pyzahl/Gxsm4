@@ -517,7 +517,7 @@ public:
 
 		return FALSE;
 	};
-		
+
 	void Probing_graph_update_thread_safe (int finish_flag=0) {
                 static int timeout_count=0;
                 static int last_index=0;
@@ -1024,6 +1024,8 @@ public:
         static void dbg_l2 (GtkWidget *widget, RPspmc_pacpll *self);
         static void dbg_l4 (GtkWidget *widget, RPspmc_pacpll *self);
 
+        void set_stream_mux(int *mux_source);
+           
         static void scan_gvp_opt6 (GtkWidget *widget, RPspmc_pacpll *self);
         static void scan_gvp_opt7 (GtkWidget *widget, RPspmc_pacpll *self);
         

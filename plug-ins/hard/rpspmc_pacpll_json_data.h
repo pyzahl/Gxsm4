@@ -161,7 +161,8 @@ struct SPMC_parameters {
 // RP-SPMC module parameters
         double bias;
 
-        double gvp_stream_mux;
+        double gvp_stream_mux_0;
+        double gvp_stream_mux_1;
         
         double z_polarity;
         int gxsm_z_polarity;

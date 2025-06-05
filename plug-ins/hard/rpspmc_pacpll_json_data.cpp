@@ -135,7 +135,8 @@ JSON_parameter PACPLL_JSON_parameters[] = {
 
         { "SPMC_BIAS", &spmc_parameters.bias, false },
 
-        { "SPMC_GVP_STREAM_MUX", &spmc_parameters.gvp_stream_mux, false },
+        { "SPMC_GVP_STREAM_MUX_0", &spmc_parameters.gvp_stream_mux_0, false },
+        { "SPMC_GVP_STREAM_MUX_1", &spmc_parameters.gvp_stream_mux_1, false },
 
         { "SPMC_Z_POLARITY", &spmc_parameters.z_polarity, false },
 

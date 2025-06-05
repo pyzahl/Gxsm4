@@ -182,14 +182,30 @@ SOURCE_SIGNAL_DEF rpspmc_swappable_signals[] = {                                
         { 0x0000000B, "11-IN4-FIR",     " ", "V", "V", SPMC_RPIN34_to_volts,                         -1, -1 },   // IN4 FIR
         { 0x0000000C, "12-LCK-i",       " ", "V", "V", (1.0),                                        -1, -1 },   // ** Lck-i ** dbg
         { 0x0000000D, "13-SineRef",     " ", "V", "V",     SPMC_RPIN34_to_volts,                     -1, -1 },   // ** SD-Ref ** dbg
-        { 0x0000000E, "14-LockIn-Mag-pass", " ", "V", "V", (1<<(32-24))*SPMC_RPIN34_to_volts,                     -1, -1 },   // LCK-Mag (sqrt(x^2+y^2)) raw (no filter)
-        { 0x0000000F, "15-LockIn-Mag-BQ1",  " ", "V", "V", (1<<(32-24))*SPMC_RPIN34_to_volts,                     -1, -1 },   // LCK-Mag after BiQuad Stage 1
-        { 0x00000010, "X-TestSignal = 0", " ", "V",   "V", (1.0),                         -1, -1 },
-        { 0x00000011, "X-TestSignal = 1", " ", "V",   "V", (1.0),                         -1, -1 },
-        { 0x00000012, "X-TestSignal = -1", " ", "V",   "V", (1.0),                        -1, -1 },
-        { 0x00000013, "X-TestSignal = 99", " ", "V",   "V", (1.0),                        -1, -1 },
-        { 0x00000014, "X-TestSignal = -99", " ", "V",   "V", (1.0),                       -1, -1 },
-        { 0x00000015,  NULL, NULL, NULL, NULL, 0.0, 0, 0 }
+        { 0x0000000E, "14-LockIn-Mag-pass", " ", "V", "V", (1<<(32-24))*SPMC_RPIN34_to_volts,        -1, -1 },   // LCK-Mag (sqrt(x^2+y^2)) raw (no filter)
+        { 0x0000000F, "15-LockIn-Mag-BQ1",  " ", "V", "V", (1<<(32-24))*SPMC_RPIN34_to_volts,        -1, -1 },   // LCK-Mag after BiQuad Stage 1
+        { 0x00000010, "16-GVP-A",       " ", "V","V", SPMC_AD5791_to_volts,                          -1, -1 },   // GVP-A
+        { 0x00000011, "17-GVP-B",       " ", "V","V", SPMC_AD5791_to_volts,                          -1, -1 },   // GVP-B
+        { 0x00000012, "18-GVP-AM",      " ", "V","V", SPMC_AD5791_to_volts,                          -1, -1 },   // GVP-AM
+        { 0x00000013, "19-GVP-FM",      " ", "V","V", SPMC_AD5791_to_volts,                          -1, -1 },   // GVP-FM
+        //{ 0x00000010, "X-TestSignal = 0", " ", "V",   "V", (1.0),                         -1, -1 },
+        //{ 0x00000011, "X-TestSignal = 1", " ", "V",   "V", (1.0),                         -1, -1 },
+        //{ 0x00000012, "X-TestSignal = -1", " ", "V",   "V", (1.0),                        -1, -1 },
+        //{ 0x00000013, "X-TestSignal = 99", " ", "V",   "V", (1.0),                        -1, -1 },
+        //{ 0x00000014, "X-Test-Signal = -99", " ", "V",   "V", (1.0),                                 -1, -1 },   // TEST (Debug only, disabled on FPGA for production)
+        { 0x00000014,  NULL, NULL, NULL, NULL, 0.0, 0, 0 },
+        { 0x00000015,  NULL, NULL, NULL, NULL, 0.0, 0, 0 },
+        { 0x00000016,  NULL, NULL, NULL, NULL, 0.0, 0, 0 },
+        { 0x00000017,  NULL, NULL, NULL, NULL, 0.0, 0, 0 },
+        { 0x00000018,  NULL, NULL, NULL, NULL, 0.0, 0, 0 },
+        { 0x00000019,  NULL, NULL, NULL, NULL, 0.0, 0, 0 },
+        { 0x0000001a,  NULL, NULL, NULL, NULL, 0.0, 0, 0 },
+        { 0x0000001b,  NULL, NULL, NULL, NULL, 0.0, 0, 0 },
+        { 0x0000001c,  NULL, NULL, NULL, NULL, 0.0, 0, 0 },
+        { 0x0000001d,  NULL, NULL, NULL, NULL, 0.0, 0, 0 },
+        { 0x0000001e,  NULL, NULL, NULL, NULL, 0.0, 0, 0 },
+        { 0x0000001f,  NULL, NULL, NULL, NULL, 0.0, 0, 0 }, // #32 MAX
+        { 0x000000ff,  NULL, NULL, NULL, NULL, 0.0, 0, 0 }  // END
 };
 
 SOURCE_SIGNAL_DEF modulation_targets[] = {
@@ -227,12 +243,18 @@ SOURCE_SIGNAL_DEF rf_gen_out_dest[] = {
 
 
 // helper func to assemble mux value from selctions
-int __GVP_selection_muxval (int selection[6]) {
-        int mux=0;
+guint64 __GVP_selection_muxval (int selection[6]) {
+        guint64 mux=0;
         for (int i=0; i<6; i++)
-                if (selection[i] < 16)
-                        mux |= (selection[i] & 0x0f)<<(4*i); // regular MUX control
+                if (selection[i] < 32)
+                        mux |= (guint64)(selection[i] & 0x1f)<<(8*i); // regular MUX control
+        //g_message ("_GVP_selection_muxval: %016lx", mux);
         return mux;
+}
+
+// inverse mux helper, mux val to selection
+int __GVP_muxval_selection (guint64 mux, int k) {
+        return  (mux >> (8*k)) & 0x1f;
 }
 
 // make MUX HVAL for TEST
@@ -241,8 +263,8 @@ int __GVP_selection_muxHval (int selection[6]) {
         int axis_test=0;
         int axis_value=0;
         for (int i=0; i<6; i++)
-                if (selection[i] >= 16)
-                        switch (selection[i]-16){
+                if (selection[i] >= 32)
+                        switch (selection[i]-32){
                         case 0: axis_test = i+1; axis_value = 0; break;
                         case 1: axis_test = i+1; axis_value = 1; break;
                         case 2: axis_test = i+1; axis_value = -1; break;
@@ -530,8 +552,8 @@ GtkWidget*  GUI_Builder::grid_add_mixer_options (gint channel, gint preset, gpoi
         id = g_strdup_printf ("%d", MM_OFF);        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, "OFF"); g_free (id); 
         id = g_strdup_printf ("%d", MM_ON);         gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, "LIN"); g_free (id); 
         id = g_strdup_printf ("%d", MM_ON | MM_LOG);          gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, "LOG"); g_free (id); 
-        id = g_strdup_printf ("%d", MM_ON | MM_LOG | MM_FCZ); gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, "FCZ-LOG"); g_free (id); 
-        id = g_strdup_printf ("%d", MM_ON | MM_FCZ); gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, "FCZ-LIN"); g_free (id); 
+        //id = g_strdup_printf ("%d", MM_ON | MM_LOG | MM_FCZ); gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, "FCZ-LOG"); g_free (id); 
+        //id = g_strdup_printf ("%d", MM_ON | MM_FCZ); gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, "FCZ-LIN"); g_free (id); 
 
         gchar *preset_id = g_strdup_printf ("%d", preset); 
         gtk_combo_box_set_active_id (GTK_COMBO_BOX (cbtxt), preset_id);
@@ -1158,7 +1180,7 @@ void RPSPMC_Control::save_values (NcFile *ncf){
 
 	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"Bias", "V", "RPSPMC: (Sampel or Tip) Bias Voltage", "Bias", bias);
 	ncv->add_att ("label", "Bias");
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"Z_Servo_FCZ_Setpoint", "A", "RPSPMC: Z-Servo FCZ Setpoint", "FCZ Set Point", zpos_ref);
+	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"Z_Servo_CZ_Setpoint", "A", "RPSPMC: Z-Servo CZ Setpoint", "CZ Set Point", zpos_ref);
 	ncv->add_att ("label", "Z Setpoint");
 
 	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"Z_Servo_Set_Point", "nA", "RPSPMC: Z-Servo Current Set Point", "Current Setpt.", mix_set_point[0]);
@@ -1167,7 +1189,7 @@ void RPSPMC_Control::save_values (NcFile *ncf){
 	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"Z_Servo_FLevel", "1", "Z-Servo RPSPMC: FLevel", "Current level", mix_level[0]);
 
 	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"Z-Servo_Transfer_Mode", "BC", "RPSPMC: Z-Servo Transfer Mode", "Z-Servo Transfer Mode", (double)mix_transform_mode[0]);
-	ncv->add_att ("mode_bcoding", "0:Off, 1:On, 2:Log, 4:FCZ");
+	ncv->add_att ("mode_bcoding", "0:Off, 1:On, 2:Log");
 
 	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"scan_speed_x", "A/s", "RPSPMC: Scan speed X", "Xs Velocity", scan_speed_x);
 	ncv->add_att ("label", "Velocity Xm");
@@ -3204,6 +3226,20 @@ int RPSPMC_Control::choice_mixmode_callback (GtkWidget *widget, RPSPMC_Control *
         return 0;
 }
 
+void RPspmc_pacpll::set_stream_mux(int *mux_source_selections){
+        guint64 mux = __GVP_selection_muxval (mux_source_selections);
+        const gchar *SPMC_SET_SMUX_COMPONENTS[] = {
+                "SPMC_GVP_STREAM_MUX_0",
+                "SPMC_GVP_STREAM_MUX_1",
+                "SPMC_GVP_STREAM_MUXH",
+                NULL };
+        int jdata_i[3];
+        jdata_i[0] = (guint32)(mux&0xffffffff);
+        jdata_i[1] = (guint32)(mux>>32);
+        jdata_i[2] = __GVP_selection_muxHval (mux_source_selections);
+        write_array (SPMC_SET_SMUX_COMPONENTS, 3, jdata_i,  0, NULL);
+}
+
 int RPSPMC_Control::choice_scansource_callback (GtkWidget *widget, RPSPMC_Control *self){
         PI_DEBUG_GP (DBG_L4, "%s \n",__FUNCTION__);
 
@@ -3224,7 +3260,7 @@ int RPSPMC_Control::choice_scansource_callback (GtkWidget *widget, RPSPMC_Contro
         rpspmc_hwi->set_spmc_signal_mux (RPSPMC_ControlClass->scan_source);
 
         if (rpspmc_pacpll)
-                rpspmc_pacpll->write_parameter ("SPMC_GVP_STREAM_MUX", __GVP_selection_muxval (self->scan_source));
+                rpspmc_pacpll->set_stream_mux (self->scan_source);
 
         main_get_gapp()->channelselector->SetModeChannelSignal(13+channel,
                                                                rpspmc_swappable_signals[selection].label,
@@ -3329,18 +3365,11 @@ int RPSPMC_Control::choice_prbsource_callback (GtkWidget *widget, RPSPMC_Control
 
 	self->probe_source[channel] = selection;
 
-        rpspmc_hwi->set_spmc_signal_mux (RPSPMC_ControlClass->probe_source);
-        if (rpspmc_pacpll){
-                const gchar *SPMC_SET_MUX_COMPONENTS[] = {
-                        "SPMC_GVP_STREAM_MUX",
-                        "SPMC_GVP_STREAM_MUXH",
-                        NULL };
-                int jdata_i[2];
-                jdata_i[0] = __GVP_selection_muxval (self->probe_source);
-                jdata_i[1] = __GVP_selection_muxHval (self->probe_source);
-                rpspmc_pacpll->write_array (SPMC_SET_MUX_COMPONENTS, 2, jdata_i,  0, NULL);
+        if (RPSPMC_ControlClass && rpspmc_pacpll){
+                rpspmc_hwi->set_spmc_signal_mux (RPSPMC_ControlClass->probe_source);
+                rpspmc_pacpll->set_stream_mux (RPSPMC_ControlClass->probe_source);
         }
-        g_message ("RPSPMC_Control::choice_prbsource_callback: probe_source[%d] = %d [%s] MUX=%08x", channel, selection,
+        g_message ("RPSPMC_Control::choice_prbsource_callback: probe_source[%d] = %d [%s] MUX=%016lx", channel, selection,
                    rpspmc_swappable_signals[selection].label,
                    __GVP_selection_muxval (self->probe_source));
 
@@ -3415,7 +3444,7 @@ int RPSPMC_Control::Probing_exec_IV_callback( GtkWidget *widget, RPSPMC_Control 
 
         rpspmc_hwi->set_spmc_signal_mux (RPSPMC_ControlClass->probe_source);
         if (rpspmc_pacpll)
-                rpspmc_pacpll->write_parameter ("SPMC_GVP_STREAM_MUX", __GVP_selection_muxval (self->probe_source));
+                rpspmc_pacpll->set_stream_mux (self->probe_source);
 
         self->init_vp_signal_info_lookup_cache(); // update signal mapping cache
 
@@ -3635,7 +3664,7 @@ int RPSPMC_Control::Probing_exec_GVP_callback( GtkWidget *widget, RPSPMC_Control
 
         rpspmc_hwi->set_spmc_signal_mux (RPSPMC_ControlClass->probe_source);
         if (rpspmc_pacpll)
-                rpspmc_pacpll->write_parameter ("SPMC_GVP_STREAM_MUX", __GVP_selection_muxval (self->probe_source));
+                rpspmc_pacpll->set_stream_mux (self->probe_source);
 
         self->init_vp_signal_info_lookup_cache(); // update signal mapping cache
 
@@ -4952,7 +4981,7 @@ void RPspmc_pacpll::scan_start_callback (gpointer user_data){
 
         rpspmc_hwi->set_spmc_signal_mux (RPSPMC_ControlClass->scan_source);
         if (RPSPMC_ControlClass)
-                rpspmc_pacpll->write_parameter ("SPMC_GVP_STREAM_MUX", __GVP_selection_muxval (RPSPMC_ControlClass->scan_source));
+                rpspmc_pacpll->set_stream_mux (RPSPMC_ControlClass->scan_source);
 
 }
 
@@ -5952,19 +5981,29 @@ void RPspmc_pacpll::on_connect_actions(){
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO_LOR.: %g V\n", spmc_parameters.z_servo_lower); status_append (tmp); g_free (tmp); }
 
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO IN..: %08x MUX selection\n", i=(int)spmc_parameters.z_servo_src_mux); status_append (tmp);  rpspmc_hwi->info_append (tmp); g_free (tmp); }
-        i &= 1; // only bit 0
-        { gchar *tmp = g_strdup_printf (" *                                 ==> %s\n", i==0? "IN2-RF":"IN3-AD4630-24A"); status_append (tmp); g_free (tmp); }        
-        gtk_combo_box_set_active (GTK_COMBO_BOX (RPSPMC_ControlClass->z_servo_current_source_options_selector), i);
+        //i &= 3; // only bit 0,1,2
+        { gchar *tmp = g_strdup_printf (" *                                 ==> %s\n", i==0? "IN2-RF": i==1?"IN3-AD4630-24A":i==2?"IN3-AD4630-24A-FIR":"EEE"); status_append (tmp); g_free (tmp); }        
+
+        if (i >= 0 && i < 3)
+                gtk_combo_box_set_active (GTK_COMBO_BOX (RPSPMC_ControlClass->z_servo_current_source_options_selector), i);
         
-        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC GVP SRCS MUX: %08x MUX selection code\n", i=(int)spmc_parameters.gvp_stream_mux); status_append (tmp); g_free (tmp); }
-        int mux=i;
+        guint64 mux=0;
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC GVP SRCS MUX: %016lx MUX selection code\n", mux=(((guint64)spmc_parameters.gvp_stream_mux_1) << 32) | (guint64)spmc_parameters.gvp_stream_mux_0); status_append (tmp); g_free (tmp); }
         for (int k=0; k<6; ++k){
-                RPSPMC_ControlClass->probe_source[k] = (mux >> (4*k)) & 0x0f;
-                if (RPSPMC_ControlClass->probe_source[k] >= 0 && RPSPMC_ControlClass->probe_source[k] < 16){
-                        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC GVP SRCS MUX[%d]: %02d <=> %s\n", k, RPSPMC_ControlClass->probe_source[k], rpspmc_swappable_signals[RPSPMC_ControlClass->probe_source[k]].label); status_append (tmp); g_free (tmp); }
-                        gtk_combo_box_set_active (GTK_COMBO_BOX (RPSPMC_ControlClass->probe_source_signal_selector[k]), RPSPMC_ControlClass->probe_source[k]);
-                } else {
+
+                RPSPMC_ControlClass->probe_source[k] = __GVP_muxval_selection (mux, k);
+
+                int pass=0;
+                if (RPSPMC_ControlClass->probe_source[k] >= 0 && RPSPMC_ControlClass->probe_source[k] < 32){
+                        if (rpspmc_swappable_signals[RPSPMC_ControlClass->probe_source[k]].label){
+                                { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC GVP SRCS MUX[%d]: %02d <=> %s\n", k, RPSPMC_ControlClass->probe_source[k], rpspmc_swappable_signals[RPSPMC_ControlClass->probe_source[k]].label); status_append (tmp); g_free (tmp); }
+                                gtk_combo_box_set_active (GTK_COMBO_BOX (RPSPMC_ControlClass->probe_source_signal_selector[k]), RPSPMC_ControlClass->probe_source[k]);
+                                pass=1;
+                        }
+                }
+                if (!pass) {
                         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC GVP SRCS MUX[%d]: %02d <=> FPGA DATA ERROR: INVALID SIGNAL\n", k, RPSPMC_ControlClass->probe_source[k]); status_append (tmp); g_free (tmp); }
+                        RPSPMC_ControlClass->probe_source[k] = 0; // default to safety
                         gtk_combo_box_set_active (GTK_COMBO_BOX (RPSPMC_ControlClass->probe_source_signal_selector[k]), RPSPMC_ControlClass->probe_source[0]);
                 }
         }
