@@ -910,6 +910,35 @@ gint compare_user_entry_messageid (UserEntry *a, UserEntry *b) {
 	return g_strcmp0 (a->message_id, b->message_id);
 }
 
+GSList* Mem2d::ReportProbeEvents (){
+	GSList *ProbeEventsList=NULL;
+	int p_dim_sets=0;
+	int p_dim_samples=0;
+	// pre parse all scan and user events
+	GSList *sel = scan_event_list; // List of ScanEvents
+
+	XSM_DEBUG (DBG_L2, "NCF Write Scan Events -- pre-parsing");
+	while (sel){
+		ScanEvent *se = (ScanEvent*)sel->data; // Event (contains different EventEntry types)
+		GSList *eel = se->event_list; // List of all EventEnties @ ScanEvent (one Location)
+		while (eel){
+			EventEntry *ee = (EventEntry*)eel->data; // EventEntry (contains Data)
+			switch (ee->description_id ()){
+			case 'P': // "Probe" Event
+			  {
+				ProbeEntry *pe = (ProbeEntry*)eel->data; // it's a ProbeEntry
+				ProbeEventsList = g_slist_prepend (ProbeEventsList, pe);
+			  }
+			break;
+                        default: break;
+			}
+			eel = g_slist_next (eel);
+		}
+		sel = g_slist_next (sel);
+	}
+        return ProbeEventsList;
+}
+
 
 GSList* Mem2d::ReportScanEvents (GFunc report_obj_func, gpointer gp, double *xy, double distance, int number){
 	if (!scan_event_list)

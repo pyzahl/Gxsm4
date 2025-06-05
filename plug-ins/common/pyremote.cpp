@@ -1981,6 +1981,84 @@ static PyObject* remote_getslice(PyObject *self, PyObject *args)
 	return Py_BuildValue("i", 0);
 }
 
+//	{"get_probe_event", remote_getprobe_event, METH_VARARGS, "Get Probe Event Data from Scan in channel ch, nth: [nx,ny,array]=gxsm.get_probe_event (ch, nth)"},
+
+static PyObject* remote_getprobe_event(PyObject *self, PyObject *args)
+{
+	PI_DEBUG(DBG_L2, "pyremote: getprobe_events");
+	long ch, nth;
+        int sn=0;
+
+	//PyObject *obj;
+        
+	if (!PyArg_ParseTuple (args, "ll", &ch, &nth))
+		return Py_BuildValue("i", -1);
+
+	Scan *src =gapp->xsm->GetScanChannel (ch);
+        
+        if (src){
+
+                if (nth == -99){ //
+                        g_message ("remote_getprobe_events -- cleanup: removing probe events data from scan");
+                        src->mem2d->RemoveScanEvents ();
+                        return Py_BuildValue("i", 0);
+                }
+                
+                g_message ("remote_getprobe_events data from mem2d scan data, looking for PorbeEvent #%d", nth);
+
+                // PyObject* PyArray_SimpleNewFromData(int nd, npy_intp const* dims, int typenum, void* data);
+                // PyObject *PyArray_FromDimsAndData(int n_dimensions, int dimensions[n_dimensions], int item_type, char *data);
+                npy_intp dims[2]; 
+                                
+                GSList *probe_entry_list = src->mem2d->ReportProbeEvents ();
+                GSList *pel = probe_entry_list;
+                while (pel){
+                        ProbeEntry *pe = (ProbeEntry *)pel->data;
+                        if (sn == nth || (nth == -1 && !g_slist_next (pel))){
+                                dims[0] = pe->get_chunk_size ();  // # size of chunk (=#values/point) ** Note: a chunk is a set of values for one point in time (t,x,y,z....)_0, (t,x,y,z....)_1, ...
+                                dims[1] = pe->get_num_sets ();    // # number of chunks or points in probe event
+
+                                g_message ("Creating PyArray for probe data event #%d: shape %d , %d", sn, dims[0], dims[1]);
+                                double *darr2 = (double*) malloc(sizeof(double) * dims[0]*dims[1]);
+                                double *dp=darr2;
+
+                                //pe->print ();
+                                
+                                PyObject *ret    = PyTuple_New(3);
+                                PyObject *labels = PyTuple_New(dims[0]);
+                                PyObject *units  = PyTuple_New(dims[0]);
+                                for (int s=0; s<dims[0]; ++s){
+                                        std::cout << pe->get_label (s) << " in (" <<  pe->get_unit_symbol (s) << ") ";
+                                        PyTuple_SetItem(labels, s, PyUnicode_FromString( pe->get_label (s) ));
+                                        PyTuple_SetItem(units,  s, PyUnicode_FromString( pe->get_unit_symbol (s) ));
+                                        for (int i=0; i<dims[1]; ++i)
+                                                *dp++ = pe->get (i,s);
+                                }
+
+                        
+                                PyObject* pyarr = PyArray_SimpleNewFromData(2, dims, NPY_DOUBLE, (void*)darr2);
+                                PyArray_ENABLEFLAGS((PyArrayObject*) pyarr, NPY_ARRAY_OWNDATA);
+
+                                PyTuple_SetItem(ret, 0, pyarr );
+                                PyTuple_SetItem(ret, 1, labels );
+                                PyTuple_SetItem(ret, 2, units );
+
+                                return ret; // Python code will receive list (data_nparray, labels, units)
+                        }                        
+                        pel = g_slist_next (pel);
+                        sn++;
+                }
+        }
+        g_message ("remote_getprobe_events ProbeEvent #%d not found. # Events available: %d", nth, sn);
+        return Py_BuildValue("i", sn);
+
+}
+
+
+
+
+
+
 static PyObject* remote_get_x_lookup(PyObject *self, PyObject *args)
 {
 	PI_DEBUG(DBG_L2, "pyremote:get_x_lookup");
@@ -3410,6 +3488,7 @@ static PyMethodDef GxsmPyMethods[] = {
 	{"get_data_pkt", remote_getdatapkt, METH_VARARGS, "Get Data Value at point: value=gxsm.get_data_pkt (ch, x, y, v, t)"},
 	{"put_data_pkt", remote_putdatapkt, METH_VARARGS, "Put Data Value to point: gxsm.put_data_pkt (value, ch, x, y, v, t)"},
 	{"get_slice", remote_getslice, METH_VARARGS, "Get Image Data Slice (Lines) from Scan in channel ch, yi ... yi+yn: [nx,ny,array]=gxsm.get_slice (ch, v, t, yi, yn)"},
+	{"get_probe_event", remote_getprobe_event, METH_VARARGS, "Get Probe Event Data from Scan in channel ch, nth: [nx,ny,array]=gxsm.get_probe_event (ch, nth)"},
 	{"set_global_share_parameter", remote_set_global_share_parameter, METH_VARARGS, "Set Global Shared Parameter for Plugins, etc. in settings: gxsm.set_global_share_parameter (key, x)"},
 	{"get_x_lookup", remote_get_x_lookup, METH_VARARGS, "Get Scan Data index to world mapping: x=gxsm.get_x_lookup (ch, i)"},
 	{"get_y_lookup", remote_get_y_lookup, METH_VARARGS, "Get Scan Data index to world mapping: y=gxsm.get_y_lookup (ch, i)"},

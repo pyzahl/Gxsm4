@@ -141,12 +141,17 @@ public:
 
 	int write_nc_variable_set (NcFile* ncf, int p_index, NcVar* &evdata_var, NcVar* &evcoords_var, int total_count);
 	int write_nc_data (NcVar* evdata_var, NcVar* evcoords_var, ScanEvent *se, int count);
+
+        ScanEvent *get_parent_scan_event () { return parent_scan_event; }; 
+        
 private:
 	GPtrArray *labels;
 	GPtrArray *unitssymbols;
 	int chunk_size;
 	int num_sets;
 	GArray *data;
+
+        ScanEvent *parent_scan_event; 
 };
 
 typedef struct { double vp, vn; double coords[5]; } UE_set;

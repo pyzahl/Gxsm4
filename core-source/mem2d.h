@@ -399,6 +399,7 @@ public:
 	/* Scan Events Handling: */
 	static void evl_remove(gpointer entry, gpointer from);
 	void RemoveScanEvents ();
+        GSList* ReportProbeEvents ();
 	GSList* ReportScanEvents (GFunc report_obj_func, gpointer gp, double *xy=NULL, double distance=0., int number=0);
 	GSList* ReportScanEventsUnsort ();
 	GSList* ReportScanEventsXasc ();

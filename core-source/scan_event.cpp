@@ -69,6 +69,7 @@ ProbeEntry::ProbeEntry (const gchar *Name, time_t Time, GPtrArray *Labels, GPtrA
 	labels = Labels;
 	unitssymbols =Unitssymbols;
 	num_sets=0;
+        parent_scan_event = NULL;
 }
  
 ProbeEntry::ProbeEntry (const gchar *Name, NcFile *ncf, int p_index, NcVar* &evdata_var, NcVar* &evcoords_var, ScanEvent* &se, int num, int &count, ProbeEntry *pe) : EventEntry (Name, 0){ 
@@ -165,6 +166,8 @@ ProbeEntry::ProbeEntry (const gchar *Name, NcFile *ncf, int p_index, NcVar* &evd
  		}
 		g_array_append_vals (data, (gconstpointer)vals, chunk_size);
 	}
+
+        parent_scan_event = se;
 }
 
 ProbeEntry::~ProbeEntry (){ 
