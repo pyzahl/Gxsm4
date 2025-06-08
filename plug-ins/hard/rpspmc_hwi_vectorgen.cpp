@@ -334,7 +334,7 @@ vector = {32'd000032,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  3
         // may wait a sec to assumre monitors been up-to-date?
         // initial vector to start
         //?? Vec[ 0] XYZU: -0.005 0.005 0 0 V  [#100, R0 J0 SRCS_BUFFER=00003900] initial Msk=1000
-        int tcode = 0xc000;
+        const int tcode = 0; // 0xc000; // now added while vector write -- temporary solution for pending termination issue, shall not be needed
         make_dUZXYAB_vector (vector_index++,
                              0., 0., // GVP_du[k], GVP_dz[k],
                              xi, yi, 0., 0., 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k], am, fm

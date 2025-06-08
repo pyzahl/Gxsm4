@@ -1478,13 +1478,15 @@ int rpspmc_hwi_dev::GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v, PRO
 #define SPMC_GVP_VECTOR_EXTENSTION_BITMASK (1<<7)
         
         int vector_extension = vx && (v->options & SPMC_GVP_VECTOR_EXTENSTION_BITMASK) ? 1 : 0;
-        
+
+        const int src_time_msk = 0xc000; // 48bit time mon mask
         // Vector Program Code Setup
         gvp_vector_i [I_GVP_PC_INDEX] = i;
         gvp_vector_i [I_GVP_N       ] = v->n;
-        //gvp_vector_i [I_GVP_OPTIONS ] = ((v->srcs & 0xffffff) << 8) | (v->options & 0xff); // 0: FB, 7: XVEC  **   ((v->options & VP_FEEDBACK_HOLD) ? 0:1) | (1<<7) | (1<<6) | (1<<5);
+        //gvp_vector_i [I_GVP_OPTIONS ] = (((v->srcs | src_time_msk) & 0xffffff) << 8) | (v->options & 0xff); // 0: FB, 7: XVEC  **   ((v->options & VP_FEEDBACK_HOLD) ? 0:1) | (1<<7) | (1<<6) | (1<<5);
         gvp_vector_i [I_GVP_OPTIONS ] = v->options; // currently only lowest 8 bits
-        gvp_vector_i [I_GVP_SRCS    ] = v->srcs & 0xffffffff; // currently only 24 bits
+        // currently 24 bits, actaully 16 mapped used in stream serialization, with 6 been multiplexd from 32 = 42 possible different signals. May be expandd to 32 if needed.
+        gvp_vector_i [I_GVP_SRCS    ] = (src_time_msk | v->srcs) & 0xffffffff;
         // g_message ("GVP_write_program_vector[%d]: srcs = 0x%08x", i, gvp_vector_i [I_GVP_OPTIONS ] );
         gvp_vector_i [I_GVP_NREP    ] = v->repetitions > 1 ? v->repetitions-1 : 0;
         gvp_vector_i [I_GVP_NEXT    ] = v->ptr_next;
