@@ -334,12 +334,12 @@ vector = {32'd000032,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  3
         // may wait a sec to assumre monitors been up-to-date?
         // initial vector to start
         //?? Vec[ 0] XYZU: -0.005 0.005 0 0 V  [#100, R0 J0 SRCS_BUFFER=00003900] initial Msk=1000
-
+        int tcode = 0xc000;
         make_dUZXYAB_vector (vector_index++,
                              0., 0., // GVP_du[k], GVP_dz[k],
                              xi, yi, 0., 0., 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k], am, fm
                              100, 0, 0, ti, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
-                             srcs_buffer[0], VP_INITIAL_SET_VEC | gvp_options | (3 << 16));
+                             tcode | srcs_buffer[0], VP_INITIAL_SET_VEC | gvp_options | (3 << 16));
 
         //DEBUG_GVP_SCAN (PC,         DU, DX, DY, DZ, DA, DB,  TS, PTS, OPT,                VNR, VPCJ)
         //DEBUG_GVP_SCAN (vector_index, 0., xi, xi,  0., 0., 0., ti, 100, VP_INITIAL_SET_VEC,   0,   0);
@@ -350,7 +350,7 @@ vector = {32'd000032,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  3
                              0., 0., // GVP_du[k], GVP_dz[k],
                              dx, 0, 0., 0., 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k], am, fm
                              subscan_buffer[1], 0, 0, tfwd, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
-                             srcs_buffer[0], gvp_options); // vis_Source, GVP_opt[k]);
+                             tcode | srcs_buffer[0], gvp_options); // vis_Source, GVP_opt[k]);
 
         //DEBUG_GVP_SCAN (vector_index, 0., dx, 0.,  0., 0., 0., tfwd, subscan_buffer[1], VP_INITIAL_SET_VEC,   0,   0);
 
@@ -359,14 +359,14 @@ vector = {32'd000032,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  3
                              0., 0., // GVP_du[k], GVP_dz[k],
                              -dx, 0, 0., 0., 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k], am, fm
                              subscan_buffer[1], 0, 0, trev, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
-                             srcs_buffer[1], gvp_options); // vis_Source, GVP_opt[k]);
+                             tcode | srcs_buffer[1], gvp_options); // vis_Source, GVP_opt[k]);
 
         // next line with repeat for all lines from VPC-2 ny times
         make_dUZXYAB_vector (vector_index++,
                              0., 0., // GVP_du[k], GVP_dz[k],
                              0., -dy/(subscan_buffer[3]-1), 0., 0., 0., 0., // GVP_dx[k], GVP_dy[k], GVP_da[k], GVP_db[k], am, fm
                              10, subscan_buffer[3], -2, tfwd/ny, // GVP_points[k], GVP_vnrep[k], GVP_vpcjr[k], GVP_ts[k],
-                             srcs_buffer[0], gvp_options); // vis_Source, GVP_opt[k]);
+                             tcode | srcs_buffer[0], gvp_options); // vis_Source, GVP_opt[k]);
 
         append_null_vector (vector_index, gvp_options);
 }
@@ -927,7 +927,7 @@ void RPSPMC_Control::gvp_preview_draw_function (GtkDrawingArea *area, cairo_t *c
                                         if (txyp+35 > tlabposx) ++tlabposy%=4; // try to not overlap
                                         else tlabposy=0;
                                         txyp=tlabposx;
-                                        if (++Nsc > 200){
+                                        if (++Nsc > 50){
                                                 g_message ("Annotaions / Section Count Limit reached for meaningful visualization. #S=%d. Stopping plot here.", Nsc);
                                                 tms->set_stroke_rgba (CAIRO_COLOR_RED);
                                                 tms->set_font_face_size ("Ununtu", 18.);

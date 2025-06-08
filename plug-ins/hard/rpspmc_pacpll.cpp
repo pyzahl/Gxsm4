@@ -2389,7 +2389,7 @@ void RPSPMC_Control::create_folder (){
 		bp->grid_add_ec (NULL,      Time, &GVP_ts[k], 0., 147573952580.0,     "5.4g", 1., 10., "gvp-dt", k); // 1<<64 / 125e6 s max
                 if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
 
-		bp->grid_add_ec (NULL,      Unity, &GVP_points[k], 0, 1e10,  "5g", "gvp-n", k); // theroretically 1<<64, but that's a insane huge memory demand. Limitinig to 10G
+		bp->grid_add_ec (NULL,      Unity, &GVP_points[k], 0, (1<<16)-1,  "5g", "gvp-n", k); // FPGA GVP can do 1<<32-1, currently limited by 16bit GVP stream index.
                 if (k == (N_GVP_VECTORS-1)) bp->init_ec_array ();
 
 
@@ -3186,6 +3186,9 @@ void RPSPMC_Control::ZServoControlInv (GtkWidget *widget, RPSPMC_Control* self){
 void RPSPMC_Control::ChangedNotifyVP(Param_Control* pcs, RPSPMC_Control* self){
         g_message ("**ChangedNotifyVP**");
 
+	//gchar *id=pcs->get_refname();
+
+        
         for (int j=0; j<8; ++j)
                 if (pcs == self->GVP_V0Set_ec[j]){
                         const gchar *info=self->GVP_V0Set_ec[j]->get_info();

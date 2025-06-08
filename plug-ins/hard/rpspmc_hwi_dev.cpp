@@ -414,23 +414,6 @@ int rpspmc_hwi_dev::GVP_expect_point(double *pv, int &index_all){
 #endif
                         // copy vector data to expanded data array representation -- only active srcs will be updated between headers
                         pv[PROBEDATA_ARRAY_INDEX] = (double)index_all++;
-                        /* (***) obsolete/skipping as direct lookup
-                        pv[PROBEDATA_ARRAY_S1]    = GVP_vp_header_current.dataexpanded[0]; // Xs in Volts
-                        pv[PROBEDATA_ARRAY_S2]    = GVP_vp_header_current.dataexpanded[1]; // Ys in Volts
-                        pv[PROBEDATA_ARRAY_S3]    = GVP_vp_header_current.dataexpanded[2]; // Zs in Volts
-                        pv[PROBEDATA_ARRAY_S4]    = GVP_vp_header_current.dataexpanded[3]; // Bias in Volts
-                        pv[PROBEDATA_ARRAY_S5]    = GVP_vp_header_current.dataexpanded[4]; // IN1
-                        pv[PROBEDATA_ARRAY_S6]    = GVP_vp_header_current.dataexpanded[5]; // IN2
-                        pv[PROBEDATA_ARRAY_S7]    = GVP_vp_header_current.dataexpanded[6]; // IN3 **
-                        pv[PROBEDATA_ARRAY_S8]    = GVP_vp_header_current.dataexpanded[7]; // IN4 **
-                        pv[PROBEDATA_ARRAY_S9]    = GVP_vp_header_current.dataexpanded[8]; // DFREQ
-                        pv[PROBEDATA_ARRAY_S10]   = GVP_vp_header_current.dataexpanded[9]; // EXEC
-                        pv[PROBEDATA_ARRAY_S11]   = GVP_vp_header_current.dataexpanded[10]; // PHASE
-                        pv[PROBEDATA_ARRAY_S12]   = GVP_vp_header_current.dataexpanded[11]; // AMPL
-                        pv[PROBEDATA_ARRAY_S13]   = GVP_vp_header_current.dataexpanded[12]; // LCKInA
-                        pv[PROBEDATA_ARRAY_S14]   = GVP_vp_header_current.dataexpanded[13]; // dFreqCtrl
-                        pv[PROBEDATA_ARRAY_TIME]  = GVP_vp_header_current.dataexpanded[14]; // time in ms
-                        */
                         if (GVP_vp_header_current.i == 0){
 #if GVP_DEBUG_VERBOSE > 2
                                 g_message ("*** GVP: section complete ***");
@@ -563,7 +546,7 @@ gpointer ScanDataReadThread (void *ptr_hwi){
         g_message ("Fetch dummy points of move...");
 
         for (ret=-1; ret && hwi->ScanningFlg; ){
-                ret = hwi->GVP_expect_point (pv, index_all);
+                ret = hwi->GVP_expect_point (pv, index_all); // returns section points count down to zero
                 if (ret < 0) return NULL;
         }
 
@@ -589,21 +572,31 @@ gpointer ScanDataReadThread (void *ptr_hwi){
 #if GVP_DEBUG_VERBOSE > 2
                         g_message ("scan line %d, dir=%d -- expect header.", yi, dir);
 #endif
-                        if (hwi->GVP_expect_header (pv, index_all) != -1) return NULL;  // this get includes the first data point and full position
+                        // this GVP expect header data includes the first data point and full position.
+                        if (hwi->GVP_expect_header (pv, index_all) != -1) {
+                                g_warning ("GVP SCAN ERROR: Invalid Header or Scan Aborted.");
+                                return NULL;
+                        }
                         
 #if GVP_DEBUG_VERBOSE > 2
-                        g_message ("scan line %d, dir=%d -- expecting points now...", yi, dir);
+                        g_message ("Got header with 1st point of scan line %d, dir=%d -- expecting points now...", yi, dir);
                         g_message("FifoReadThread ny = %d, dir = %d, nsrcs = %d, srcs = 0x%04X", yi, dir, hwi->nsrcs_dir[dir], hwi->srcs_dir[dir]);
 #endif
                         if (hwi->nsrcs_dir[dir] == 0){ // direction pass active?
                                 // fetch points but discard
 #if GVP_DEBUG_VERBOSE > 2
-                                g_message ("discarding not selcted scan axis data...");
+                                g_message ("discarding data of not selcted scan direction axis data...");
 #endif
                                 for (ret=-1; ret && hwi->ScanningFlg; ){
                                         ret = hwi->GVP_expect_point (pv, index_all);
-                                        if (ret < 0) return NULL;
+                                        if (ret < 0) {
+                                                g_message ("GVP SCAN ERROR: waiting for empty package error: %d. Aborting Scan.", ret);
+                                                return NULL;
+                                        }
                                 }
+#if GVP_DEBUG_VERBOSE > 2
+                                g_message ("completed.");
+#endif
                                 continue; // not selected?
                         } else {
                                 // sanity check
@@ -615,13 +608,6 @@ gpointer ScanDataReadThread (void *ptr_hwi){
 #if GVP_DEBUG_VERBOSE > 2
                                         g_message ("Got point data [N-%d] for: xi=%d [x0=%d nx=%d] nsrcs[%d]=",  hwi->GVP_vp_header_current.i, xi, x0, nx, dir, hwi->nsrcs_dir[dir]);
 #endif
-                                        if (ret < 0){
-                                                g_message ("Got point data [N-%d] for: xi=%d [x0=%d nx=%d] nsrcs[%d]=",  hwi->GVP_vp_header_current.i, xi, x0, nx, dir, hwi->nsrcs_dir[dir]);
-                                                g_message("STREAM ERROR, FifoReadThread Aborting.");
-                                                hwi->GVP_abort_vector_program ();
-                                                RPSPMC_ControlClass->probe_ready = TRUE;
-                                                return NULL;
-                                        }
                                         hwi->RPSPMC_data_x_index = xi;
                                         for (int ch=0; ch<hwi->nsrcs_dir[dir] && ch<NUM_PV_DATA_SIGNALS; ++ch){
                                                 int k = pvlut[dir][ch];
@@ -636,15 +622,27 @@ gpointer ScanDataReadThread (void *ptr_hwi){
                                                         if (xi >=0 && yi >=0 && xi < hwi->Mob_dir[dir][ch]->GetNx ()  && yi < hwi->Mob_dir[dir][ch]->GetNy ())
                                                                 hwi->Mob_dir[dir][ch]->PutDataPkt (hwi->GVP_vp_header_current.dataexpanded [k], xi, yi); // direct use, skipping pv[] remapping ** data is coming in RP base unit Volts
                                                         else
-                                                                g_message ("EEEE xi, yi index out of range: [0..%d-1, 0..%d-1]", hwi->Mob_dir[dir][ch]->GetNx (), hwi->Mob_dir[dir][ch]->GetNy ());
+                                                                g_message ("EEEE (xi, yi) <= (%d, %d) index out of range: [0..%d-1, 0..%d-1]", xi, yi, hwi->Mob_dir[dir][ch]->GetNx (), hwi->Mob_dir[dir][ch]->GetNy ());
                                                 } else {
                                                         g_message("SCAN MOBJ[%d][%d] is NULL. SCAN SETUP ERROR?", dir,ch);
                                                         g_message("skipping MOBJ -> PutDataPkt (%g, %d, %d)", hwi->GVP_vp_header_current.dataexpanded [k], xi, yi);
                                                 }
                                         }
-                                        if ((ret=ret2)) // delay one
-                                                if (ret)
+                                        if ((ret=ret2)) // delay one, this fetches data for the next point, return 0 at last point.
+                                                if (ret){
+#if GVP_DEBUG_VERBOSE > 4
+                                                        g_message ("Awaiting point data [N-%d] for: xi=%d [x0=%d nx=%d] nsrcs[%d]=",  hwi->GVP_vp_header_current.i, xi, x0, nx, dir, hwi->nsrcs_dir[dir]);
+#endif
                                                         ret2 = hwi->GVP_expect_point (pv, index_all);
+                                                        //g_message ("ret2 = %d", ret2);
+                                                        if (ret2 < 0){
+                                                                g_message ("Awaiting point data [N-%d] for: xi=%d [x0=%d nx=%d] nsrcs[%d]=",  hwi->GVP_vp_header_current.i, xi, x0, nx, dir, hwi->nsrcs_dir[dir]);
+                                                                g_message("STREAM ERROR, FifoReadThread Aborting.");
+                                                                hwi->GVP_abort_vector_program ();
+                                                                RPSPMC_ControlClass->probe_ready = TRUE;
+                                                                return NULL;
+                                                        }
+                                                }
                                 }
 #if GVP_DEBUG_VERBOSE > 2
                                 g_print("\n");
@@ -1160,10 +1158,10 @@ gboolean rpspmc_hwi_dev::ScanLineM(int yindex, int xdir, int muxmode, //srcs_mas
                 }
 
                 // optional
-                if ((ydir > 0 && yindex > 1) || (ydir < 0 && yindex < Ny-1)){
-                        double x,y,z;
-                        RTQuery ("W", x,y,z); // run watch dog -- may stop scan in any faulty condition
-                }
+                //if ((ydir > 0 && yindex > 1) || (ydir < 0 && yindex < Ny-1)){
+                //        double x,y,z;
+                //        RTQuery ("W", x,y,z); // run watch dog -- may stop scan in any faulty condition
+                //}
                 
                 return TRUE;
         }
@@ -1736,11 +1734,19 @@ int rpspmc_hwi_dev::read_GVP_data_block_to_position_vector (int offset, gboolean
         }
 #endif                        
 
+        // check and process time code 
         if (ch_index+offset < GVP_stream_buffer_position){
                 if ((GVP_vp_header_current.srcs & 0xc000) == 0xc000){ // fetch 64 bit time
                         GVP_vp_header_current.gvp_time = (((guint64)((guint32)GVP_vp_header_current.chNs[15]))<<32) | (guint64)((guint32)GVP_vp_header_current.chNs[14]);
                         GVP_vp_header_current.dataexpanded[14] = (double)GVP_vp_header_current.gvp_time/125e3;
-                }
+                } else if ((GVP_vp_header_current.srcs & 0xc000) == 0x4000){ // fetch 32 bit time only
+                        GVP_vp_header_current.gvp_time = (guint64)((guint32)GVP_vp_header_current.chNs[14]);
+                        GVP_vp_header_current.dataexpanded[14] = (double)GVP_vp_header_current.gvp_time/125e3;
+                } else if  ((GVP_vp_header_current.srcs & 0xc000) == 0x8000){ // fetch upper 32 bit time only -- unusual but possible
+                        GVP_vp_header_current.gvp_time = ((guint64)((guint32)GVP_vp_header_current.chNs[15]))<<32;
+                        GVP_vp_header_current.dataexpanded[14] = (double)GVP_vp_header_current.gvp_time/125e3;
+                } // time stalls if not selected after header ref time
+                
                 retry=RECOVERY_RETRYS;
                 if (GVP_vp_header_current.srcs == 0xffff){
                         g_mutex_unlock (&GVP_stream_buffer_mutex);
@@ -1890,6 +1896,54 @@ ADR-----:  ENDMARK followed by full header and position vector (all sources) and
 000000ec: 00000010 0000000f 0000000e 0000000d 0000000c 0000000b 0000000a 00000009 00000008 00000007 00000006 00000005 00000004 00000003 00000002 00000001
 000000fc: eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee
 
+*******************
 
+** II: Auto calc init vector to absolute position [-0.2 0.2 0 0] V
+** II: XYZU-GVP readings are => [-0.0563332 0.197995 0 -0.943321] V, Bias (actual)=0 V
+** II: [PC=0,setMSK:1003] AUTO INIT **{dXYZU => [-0.143667 0.00200461 0 0]  dA 0 dB 0 dAM 0 dFM 0] V}
+  ** II: BEST DELTA PRECISION CALC: ddmin=2.02486e-05 => 0.00698492  nii=3
+  ** II: FINAL: decii=1178511 nii=3 t=0.0282843 s slew=35.3553 pts/s, dmin=0.00200461 V, dt=0.0282843 s, NII##=3.53553e+06, Nsteps=300 {ddmin=2.02486e-05 uV #8696.72 ddmax=0.00145118 uV #623277}
+
+Write Vector[PC=000] = [[0100], {0003}, Op04030000, Sr00000013, #0000, 0000, dX -478.8894432 uV, dY 6.682044519 uV, dZ        0 uV, dU        0 uV, dA        0 uV, dB        0 uV, dAMc        0 uV, dFMc        0 uV, 0,0,0, decii=1178511]
+** New Params **
+** adjusting rotation to 0
+  ** II: BEST DELTA PRECISION CALC: ddmin=0.00100251 => 0.00698492  nii=3
+  ** II: FINAL: decii=416667 nii=3 t=0.01 s slew=100 pts/s, dmin=0.4 V, dt=0.01 s, NII##=1.25e+06, Nsteps=1200 {ddmin=0.00100251 uV #430573 ddmax=0.00100251 uV #430573}
+
+Write Vector[PC=001] = [[0400], {0003}, Op00000000, Sr00000013, #0000, 0000, dX 333.3333333 uV, dY        0 uV, dZ        0 uV, dU        0 uV, dA        0 uV, dB        0 uV, dAMc        0 uV, dFMc        0 uV, 0,0,0, decii=416667]
+** New Params **
+** adjusting rotation to 0
+  ** II: BEST DELTA PRECISION CALC: ddmin=0.00100251 => 0.00698492  nii=3
+  ** II: FINAL: decii=416667 nii=3 t=0.01 s slew=100 pts/s, dmin=0.4 V, dt=0.01 s, NII##=1.25e+06, Nsteps=1200 {ddmin=0.00100251 uV #430573 ddmax=0.00100251 uV #430573}
+
+Write Vector[PC=002] = [[0400], {0003}, Op00000000, Sr00000000, #0000, 0000, dX -333.3333333 uV, dY        0 uV, dZ        0 uV, dU        0 uV, dA        0 uV, dB        0 uV, dAMc        0 uV, dFMc        0 uV, 0,0,0, decii=416667]
+** New Params **
+** adjusting rotation to 0
+  ** II: BEST DELTA PRECISION CALC: ddmin=0.00011139 => 0.00698492  nii=3
+  ** II: FINAL: decii=41667 nii=3 t=0.00100001 s slew=1000 pts/s, dmin=0.00100251 V, dt=0.001 s, NII##=125000, Nsteps=30 {ddmin=0.00011139 uV #47841.5 ddmax=0.00011139 uV #47841.5}
+
+Write Vector[PC=003] = [[0010], {0003}, Op00000000, Sr00000013, #0399, -002, dX        0 uV, dY -33.41687553 uV, dZ        0 uV, dU        0 uV, dA        0 uV, dB        0 uV, dAMc        0 uV, dFMc        0 uV, 0,0,0, decii=41667]
+** New Params **
+** adjusting rotation to 0
+** II: ALLOWING HIGH SPEED GVP recording as no DAC changes detected.
+
+Write Vector[PC=004] = [[0000], {0000}, Op00000000, Sr00000000, #0000, 0000, dX        0 uV, dY        0 uV, dZ        0 uV, dU        0 uV, dA        0 uV, dB        0 uV, dAMc        0 uV, dFMc        0 uV, 0,0,0, decii=2]
+** New Params **
+** adjusting rotation to 0
+##Configure GVP: Reset RO[-1]
+*** GVP Control Mode EXEC: set GVP to RESET
+*** GVP Control Mode EXEC: reset stream server, clear buffer)
+*** GVP Control Mode EXEC: START DMA+stream server
+
+SCAN 400x400
+
+** VECTOR:
+VectorDef{   Decii,        0,     dFM,    dAM,    dB,     dA,     dU,     dZ,     dY,         dX,          nxt,    reps,      opts,     srcs      nii,     n ,       pc}
+vector = {32'd1178511, 32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd418,   -32'd151798,  32'd0,  32'd000,   32'h1300, 32'h1300,  32'd2,  32'd99,   32'd0}; // Vector #0
+vector = {32'd416667,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,      32'd143166,  32'd0,  32'd000,   32'h1300, 32'h1300,  32'd2,  32'd399,  32'd1}; // Vector #1
+vector = {32'd416667,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,     -32'd143166,  32'd0,  32'd000,   32'h000,  32'h0,     32'd2,  32'd399,  32'd2}; // Vector #2
+vector = {32'd41667,   32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0, -32'd14352,  32'd0,      -32'd2,  32'd39900, 32'h1300, 32'h1300,  32'd2,  32'd9,    32'd3}; // Vector #3
+vector = {32'd2,       32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,      32'd0,       32'd0,  32'd000,   32'h000,  32'h0,     32'd0,  32'd0,    32'd4}; // Vector #4
+**
 
  */

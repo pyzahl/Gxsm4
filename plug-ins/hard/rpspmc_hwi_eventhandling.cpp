@@ -700,11 +700,18 @@ void RPSPMC_Control::probedata_visualize (GArray *probedata_x, GArray *probedata
 	gint spectra=0; // used to count spectra
 	gint spectra_section=0; // used to count spectra
 	gint spectra_index=0; // used to count data points within spectra
-	gdouble spectra_average[current_i][2]; // holds averaged spectra; ..[0] source ..[1] value
-	for(int i = 0; i < current_i; i++){
-		spectra_average[i][0]=0;
-		spectra_average[i][1]=0;
-	}
+//#define ENABLE_AVG_MODES
+#ifdef ENABLE_AVG_MODES
+        gdouble **spectra_average=NULL; // holds averaged spectra; ..[0] source ..[1] value
+        if (vis_PlotAvg & plot_msk || vis_PlotSec & plot_msk){
+                gdouble **sa[current_i][2]; // holds averaged spectra; ..[0] source ..[1] value
+                spectra_average = &sa;
+                for(int i = 0; i < current_i; i++){
+                        spectra_average[i][0]=0;
+                        spectra_average[i][1]=0;
+                }
+        }
+#endif
 	for(int i = 0; i < current_i; i++){
 		if (g_array_index (probedata_sec, double, i) < spectra_section)
 		{
@@ -720,6 +727,7 @@ void RPSPMC_Control::probedata_visualize (GArray *probedata_x, GArray *probedata
 			      xmult * g_array_index (probedata_x, double, i),
 			      ymult * g_array_index (probedata_y, double, i),
 			      join_same_x ? si:0);
+#ifdef ENABLE_AVG_MODES
 		if (vis_PlotAvg & plot_msk){
 			spectra_average[spectra_index][0] = spectra_average[spectra_index][0] + g_array_index (probedata_x, double, i);
 			spectra_average[spectra_index][1] = spectra_average[spectra_index][1] + g_array_index (probedata_y, double, i);
@@ -728,6 +736,7 @@ void RPSPMC_Control::probedata_visualize (GArray *probedata_x, GArray *probedata
 			spectra_average[spectra_index][0] = g_array_index (probedata_x, double, i);
 			spectra_average[spectra_index][1] = g_array_index (probedata_y, double, i);
 		}
+#endif
 	}
 	XSM_DEBUG_PG("DBG-M VIS avx");
 	XSM_DEBUG_PG ("**Update: #spectra:  " << spectra 
@@ -745,6 +754,7 @@ void RPSPMC_Control::probedata_visualize (GArray *probedata_x, GArray *probedata
 		pc->UpdateArea ();
 	}
 
+#ifdef ENABLE_AVG_MODES
 	// Create graph for averaged data; you will find them in the pc-array above 
 	if (spectra>0 && (vis_PlotAvg & plot_msk || vis_PlotSec & plot_msk)){
 		XSM_DEBUG_PG("DBG-M VIS avg1");
@@ -796,7 +806,8 @@ void RPSPMC_Control::probedata_visualize (GArray *probedata_x, GArray *probedata
 //			pc_av->show ();
 		}
 		XSM_DEBUG_PG("DBG-M VIS avgx");
-	} 
+	}
+#endif
 	delete UXaxis;
 	delete UYaxis;
 	XSM_DEBUG_PG ("RPSPMC_Control::probedata_visualize -- exit");
