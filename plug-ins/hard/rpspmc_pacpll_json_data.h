@@ -189,6 +189,10 @@ struct SPMC_parameters {
         double gvp_status;
         double gvp_data_position;
         
+        double rpspmc_gvp_raw_vector_write_mode;
+        double rpspmc_gvp_raw_nii;
+        double rpspmc_gvp_raw_decii;
+        
         double alpha;
         double slope_dzx;
         double slope_dzy;
@@ -215,6 +219,8 @@ struct SPMC_parameters {
         double bias_monitor;
         double bias_reg_monitor;
         double bias_set_monitor;
+
+
         double gvpu_monitor;
         double gvpa_monitor;
         double gvpb_monitor;
@@ -273,6 +279,12 @@ struct SPMC_parameters {
         double rpspmc_fpgastartupcnt;
         double uptime_seconds;
         double rpspmc_initial_transfer_ack;
+
+        double rpspmc_ad5791_glc_ch;
+        double rpspmc_ad5791_glc_bit;
+        double rpspmc_ad5791_glc_valpos;
+        double rpspmc_ad5791_glc_valneg;
+
 };
 
 #define MAX_GVP_VECTORS   32

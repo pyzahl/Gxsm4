@@ -1188,6 +1188,7 @@ gboolean rpspmc_hwi_dev::ScanLineM(int yindex, int xdir, int muxmode, //srcs_mas
  "G" :                GVP
  "F" :                GVP-AMC-FMC
  "V" :                ADC IN1, IN2 Voltages
+ "X {JSON-STRING}" :  X Extended RPSPMC control, send JSON string
 */
 
 gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2, double &val3){
@@ -1311,7 +1312,29 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2,
                 val3 = 0.;
 		return TRUE;
         }
-//	printf ("ZXY: %g %g %g\n", val1, val2, val3);
+
+        if (*property == 'X'){ // Send JSON
+                val1 = -2.;
+                val2 = 0.;
+                val3 = 0.;
+                if (property[1])
+                        if (property[2]=='{' && property[3] && rpspmc_pacpll) { // just checking for initial { of JSON string in property "X {..."
+                                g_message ("RTQuery: sending JSON: %s", &property[2]);
+                                val1 = (double) rpspmc_pacpll->write_json_string (&property[2]); // send JSON
+                                /* JSON FORMAT:
+                                  json_string = g_strdup_printf ("{ \"parameters\":{\"%s\":{\"value\":%.10g}}}", parameter_id, value);
+                                  json_string = g_strdup_printf ("{ \"parameters\":{ ...  }}", parameter_id, value);
+                                  ... is list of pairs:
+                                    g_string_append_printf (list, "\"%s\":{\"value\":%.10g}",  parameter_id[i], d_vec[j]);
+                                    g_string_append_printf (list, "\"%s\":{\"value\":%d}",  parameter_id[i], i_vec[i]);
+                                 */
+                                
+                                return TRUE;
+                        }
+                return TRUE;
+        }
+
+        //	printf ("ZXY: %g %g %g\n", val1, val2, val3);
 
 //	val1 =  (double)dsp_analog_out.z_scan;
 //	val2 =  (double)dsp_analog_out.x_scan;

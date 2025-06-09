@@ -271,6 +271,14 @@ JSON_parameter PACPLL_JSON_parameters[] = {
 
         { "RPSPMC_INITITAL_TRANSFER_ACK",  &spmc_parameters.rpspmc_initial_transfer_ack, false },
 
+        { "SPMC_AD5791_GLC_CH",  &spmc_parameters.rpspmc_ad5791_glc_ch, false },  // PMOD# / DAC Channel
+        { "SPMC_AD5791_GLC_BIT", &spmc_parameters.rpspmc_ad5791_glc_bit, false }, // Bit
+        { "SPMC_AD5791_GLC_VALPOS", &spmc_parameters.rpspmc_ad5791_glc_valpos, false }, // Value Pos 
+        { "SPMC_AD5791_GLC_VALNEG", &spmc_parameters.rpspmc_ad5791_glc_valneg, false }, // Value Neg
+
+        { "SPMC_GVP_RAW_VECTOR_WRITE", &spmc_parameters.rpspmc_gvp_raw_vector_write_mode, false }, // GVP raw write mode -- direct components write
+        { "SPMC_GVP_VECTOR_RAW_NII",   &spmc_parameters.rpspmc_gvp_raw_nii, false },   // GVP nii for raw write mode only
+        { "SPMC_GVP_VECTOR_RAW_DECII", &spmc_parameters.rpspmc_gvp_raw_decii, false }, // GVP Decii for raw write mode only
         
         { NULL, NULL, true }
 };

@@ -86,6 +86,11 @@ public:
         void write_signal (const gchar *parameter_id, int size, double *value, const gchar *fmt=NULL, gboolean dbg=FALSE);
         void write_signal (const gchar *parameter_id, int size, int *value, gboolean dbg=FALSE);
 
+        int write_json_string (const gchar *json_string){
+                if (client){ soup_websocket_connection_send_text (client, json_string); return 0; }
+                return -1;
+        };
+        
         virtual const gchar *get_rp_address (){ return NULL; };
         virtual int get_debug_level() { return 0; };
 
