@@ -264,10 +264,19 @@ gchar *ViewInfo::makeXYZinfo(double x, double y){
 				);
 		}
 	}
-        gchar *pxy = g_strconcat("(", px, ", ", py, showtime ? pt : ")=",
+        gchar *pxy=NULL;
+        if (pixelmode){
+                pxy = g_strconcat("(", px, ", ", py, showtime ? pt : ")=",
 				 (( ix >= 0 && iy >= 0
 				    && ix < sc->mem2d->GetNx() && iy < sc->mem2d->GetNy())
-				  ? us=Uz()->UsrString(sc->mem2d->GetDataPkt(ix,iy)*(pixelmode ? 1. : sc->data.s.dz))
+				  ? us=g_strdup_printf("%g %08x %020b", sc->mem2d->GetDataPkt(ix,iy),(int)sc->mem2d->GetDataPkt(ix,iy),(int)sc->mem2d->GetDataPkt(ix,iy))
+				  : "out of scan !"),
+				 pzh, NULL);
+        } else
+                pxy = g_strconcat("(", px, ", ", py, showtime ? pt : ")=",
+				 (( ix >= 0 && iy >= 0
+				    && ix < sc->mem2d->GetNx() && iy < sc->mem2d->GetNy())
+				  ? us=Uz()->UsrString(sc->mem2d->GetDataPkt(ix,iy)*sc->data.s.dz)
 				  : "out of scan !"),
 				 pzh, NULL);
 	if(us) g_free(us);

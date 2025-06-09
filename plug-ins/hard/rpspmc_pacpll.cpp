@@ -188,12 +188,12 @@ SOURCE_SIGNAL_DEF rpspmc_swappable_signals[] = {                                
         { 0x00000011, "17-GVP-B",       " ", "V","V", SPMC_AD5791_to_volts,                          -1, -1 },   // GVP-B
         { 0x00000012, "18-GVP-AM",      " ", "V","V", SPMC_AD5791_to_volts,                          -1, -1 },   // GVP-AM
         { 0x00000013, "19-GVP-FM",      " ", "V","V", SPMC_AD5791_to_volts,                          -1, -1 },   // GVP-FM
+        { 0x00000014, "Z-OUT",          " ", "B","B", 1.0/(1<<12),                          -1, -1 },   // Z-DAC out raw value signed 20bit coming top aligned in " 32 >> 12 "
         //{ 0x00000010, "X-TestSignal = 0", " ", "V",   "V", (1.0),                         -1, -1 },
         //{ 0x00000011, "X-TestSignal = 1", " ", "V",   "V", (1.0),                         -1, -1 },
         //{ 0x00000012, "X-TestSignal = -1", " ", "V",   "V", (1.0),                        -1, -1 },
         //{ 0x00000013, "X-TestSignal = 99", " ", "V",   "V", (1.0),                        -1, -1 },
         //{ 0x00000014, "X-Test-Signal = -99", " ", "V",   "V", (1.0),                                 -1, -1 },   // TEST (Debug only, disabled on FPGA for production)
-        { 0x00000014,  NULL, NULL, NULL, NULL, 0.0, 0, 0 },
         { 0x00000015,  NULL, NULL, NULL, NULL, 0.0, 0, 0 },
         { 0x00000016,  NULL, NULL, NULL, NULL, 0.0, 0, 0 },
         { 0x00000017,  NULL, NULL, NULL, NULL, 0.0, 0, 0 },
