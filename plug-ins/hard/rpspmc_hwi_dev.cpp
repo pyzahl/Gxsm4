@@ -1317,7 +1317,7 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2,
                 val1 = -2.;
                 val2 = 0.;
                 val3 = 0.;
-                if (property[1])
+                if (property[1]){
                         if (property[2]=='{' && property[3] && rpspmc_pacpll) { // just checking for initial { of JSON string in property "X {..."
                                 g_message ("RTQuery: sending JSON: %s", &property[2]);
                                 val1 = (double) rpspmc_pacpll->write_json_string (&property[2]); // send JSON
@@ -1331,6 +1331,28 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2,
                                 
                                 return TRUE;
                         }
+                        if (property[2]=='*' && property[3]){
+                                g_message ("RTQuery: query JSON parameter: %s", &property[3]);
+                                JSON_parameter *p = rpspmc_pacpll->check_parameter (&property[3], strlen(&property[3])); // query parameter
+                                if (p){
+                                        g_message ("RTQuery: query JSON parameter: %s  = %g", &property[3], *p->value);
+                                        val1 = *p->value;
+                                }
+                        }
+                        if (property[2]=='$' && property[3]){
+                                g_message ("RTQuery: query JSON signal: %s", &property[3]);
+                                JSON_signal *s = rpspmc_pacpll->check_signal (&property[3], strlen(&property[3])); // query signal
+                                if (s){
+                                        g_message ("RTQuery: query JSON parameter: %s [%d] = [%g, %g ... %g]", &property[3],
+                                                   s->size, s->value[0],s->value[1], s->value[s->size-1]);
+                                        val1 = s->value[0];
+                                        val2 = (int) s->size;
+                                        // sketchy trick
+                                        g_message ("Size of val2: %d", sizeof(val3));
+                                        memcpy (&val3, &s->value, sizeof(val3));
+                                }
+                        }
+                }
                 return TRUE;
         }
 
