@@ -755,6 +755,8 @@ typedef struct {
         double vec[4];
         gint64 i64;
         gchar  c;
+        double *arr;
+        int    n;
         remote_action_cb *ra_info;
 } IDLE_from_thread_data;
 
@@ -1401,7 +1403,13 @@ static gboolean main_context_rtquery_from_thread (gpointer user_data){
         idle_data->vec[2]=w;
         idle_data->i64=ret;
         idle_data->ret = 0;
-
+        if (strncmp(parameter, "X $", 3) == 0){
+                idle_data->n = (int)v;
+                if (idle_data->n > 0){
+                        g_message ("sketchy stuff: n=%d attempting to recreate *arr.", idle_data->n);
+                        memcpy (&idle_data->arr, &w, sizeof(idle_data->arr));
+                }
+        }
         UNSET_WAIT_JOIN_MAIN;
         return G_SOURCE_REMOVE;
 }
@@ -1413,6 +1421,9 @@ static PyObject* remote_rtquery(PyObject *self, PyObject *args)
         idle_data.self = self;
         idle_data.args = args;
         idle_data.wait_join = true;
+        idle_data.arr = NULL;
+        idle_data.n = -1;
+
         g_idle_add (main_context_rtquery_from_thread, (gpointer)&idle_data);
         WAIT_JOIN_MAIN;
 
@@ -1420,6 +1431,23 @@ static PyObject* remote_rtquery(PyObject *self, PyObject *args)
                 static char uu[10] = { 0,0,0,0, 0,0,0,0, 0,0};
                 strncpy ((char*) uu, (char*)&idle_data.i64, 8);
                 return Py_BuildValue("fffs", idle_data.vec[0], idle_data.vec[1], idle_data.vec[2], uu);
+        } else if (idle_data.c == 'X'){
+                gchar *js=NULL;
+
+                if (!PyArg_ParseTuple(args, "s", &js))
+                        return Py_BuildValue("fff",  idle_data.vec[0], idle_data.vec[1], idle_data.vec[2]);
+                if (strncmp(js, "X {", 3) == 0)
+                        return Py_BuildValue("fff",  idle_data.vec[0], idle_data.vec[1], idle_data.vec[2]);
+                if (strncmp(js, "X *", 3) == 0)
+                        return Py_BuildValue("fff",  idle_data.vec[0], idle_data.vec[1], idle_data.vec[2]);
+                if (strncmp(js, "X $", 3) == 0){
+                        npy_intp dims[1] = { idle_data.n };
+                        if (idle_data.n > 0){
+                                PyObject *signal_arr = PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (void*)idle_data.arr);
+                                return Py_BuildValue("fffO",  idle_data.vec[0], idle_data.vec[1], idle_data.vec[2], signal_arr);
+                        }
+                }
+                return Py_BuildValue("fff",  idle_data.vec[0], idle_data.vec[1], idle_data.vec[2]);
         } else
                 return Py_BuildValue("fff",  idle_data.vec[0], idle_data.vec[1], idle_data.vec[2]);
 }

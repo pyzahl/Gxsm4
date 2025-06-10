@@ -1347,7 +1347,7 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2,
                                                    s->size, s->value[0],s->value[1], s->value[s->size-1]);
                                         val1 = s->value[0];
                                         val2 = (int) s->size;
-                                        // sketchy trick
+                                        // sketchy trick to send pointer
                                         g_message ("Size of val2: %d", sizeof(val3));
                                         memcpy (&val3, &s->value, sizeof(val3));
                                 }
