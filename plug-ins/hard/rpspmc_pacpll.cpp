@@ -3666,6 +3666,9 @@ int RPSPMC_Control::callback_change_GVP_auto_flags (GtkWidget *widget, RPSPMC_Co
 int RPSPMC_Control::Probing_exec_GVP_callback( GtkWidget *widget, RPSPMC_Control *self){
 	self->current_auto_flags = self->GVP_auto_flags;
 
+        if (!self->check_GVP())
+                return -1;
+        
         if (rpspmc_hwi->is_scanning()){
                 g_message (" RPSCPM_Control::Probing_abort_callback ** RPSPMC is busy scanning. Please stop scanning for any GVP actions.");
                 //gapp->warning ("RPSPMC is busy scanning.\nPlease stop scanning and any GVP actions.", window);
@@ -3717,7 +3720,10 @@ int RPSPMC_Control::Probing_exec_GVP_callback( GtkWidget *widget, RPSPMC_Control
 
 
 int RPSPMC_Control::Probing_write_GVP_callback( GtkWidget *widget, RPSPMC_Control *self){
-         if (rpspmc_hwi->is_scanning()){
+
+        self->check_GVP();
+        
+        if (rpspmc_hwi->is_scanning()){
                 g_message (" RPSCPM_Control::Probing_abort_callback ** RPSPMC is busy scanning. Please stop scanning for any GVP actions.");
                 //gapp->warning ("RPSPMC is busy scanning.\nPlease stop scanning and any GVP actions.", window);
                 return -1;

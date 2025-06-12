@@ -581,6 +581,44 @@ public:
         // append PROBEDATA_ARRAY_INDEX, SEC, BLOCK and  "add" to (emulate GVP signal generation) TIME, X,Y,Z,U,A,B, and append
 	void add_probevector();
 
+        // simple sum check -- not looking at loops here
+        gboolean check_GVP(){
+                gboolean ret = true;
+                double du_total=0.;
+                double dz_total=0.;
+                double du_set=0.;
+                for (int i=0; i<(N_GVP_VECTORS-1) && GVP_points[i]>0; ++i){
+                        du_total += GVP_du[i];
+                        if (i==0){
+                                if (GVP_opt[i] & VP_INITIAL_SET_VEC){ // BIAS SET
+                                        const gchar *info=GVP_V0Set_ec[3]->get_info();
+                                        if (info)
+                                                if (info[0]=='S'){
+                                                        du_total = GVP_du[i]-bias; // calculate offset relative to bias
+                                                        du_set = GVP_du[i]-bias; // bias set offset
+                                                }
+                                }
+                        }
+                        dz_total += GVP_dz[i];
+                }
+                if (fabs (du_total) > 1e-3 || fabs (dz_total) > 1e-3){
+                        const gchar *tmp = g_strdup ("Proceed anyways?\nWARNING:\n");
+                        const gchar *tmpU = NULL;
+                        const gchar *tmpZ = NULL;
+                        if (fabs (du_total) > 1e-3){
+                                tmpU = g_strdup_printf ("%s GVP dU sum non Zero: %.3f V Bias Set Offset => %.3f V\n Bias %.3f V", tmp, du_total, du_set, bias );
+                                g_free (tmp); tmp=tmpU;
+                        }
+                        if (fabs (dz_total) > 1e-3){
+                                tmpZ = g_strdup_printf ("%s\n GVP dZ sum non Zero: %.3f " UTF8_ANGSTROEM, tmp, dz_total);
+                                g_free (tmp); tmp=tmpZ;
+                        }
+                        ret = gapp->question_yes_no (tmp, window);
+                        g_free (tmp);
+                }
+                return ret;
+        };
+        
         int next_section(int pc){
                  if (pc < 0)
                          return 0; // start
