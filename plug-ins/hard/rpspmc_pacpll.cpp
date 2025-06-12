@@ -2583,6 +2583,7 @@ void RPSPMC_Control::create_folder (){
         bp->new_line ();
 
 	bp->new_grid_with_frame ("GVP Wave Preview");
+        WavePreview=bp->frame;
 	//bp->new_grid_with_frame ("VP Status");
 	//GVP_status = bp->grid_add_probe_status ("Status");
 
@@ -3635,6 +3636,17 @@ int RPSPMC_Control::callback_GVP_preview_me (GtkWidget *widget, RPSPMC_Control *
                 } else
                         gtk_widget_set_name (widget, "normal");
         }
+
+        // auto hide/show
+        int num_previews=0;
+        for(int k=0; k < 8; ++k)
+                num_previews += self->GVP_preview_on[k];
+
+        if (num_previews > 0)
+                gtk_widget_show (self->WavePreview);
+        else
+                gtk_widget_hide (self->WavePreview);
+        
         return 0;
 }
 

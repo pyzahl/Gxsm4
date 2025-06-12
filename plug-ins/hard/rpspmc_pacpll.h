@@ -904,6 +904,7 @@ public:
 	GtkWidget *GVP_status;
         int mon_FB;
         //gtk_widget_queue_draw (gvp_preview_are); // update wave
+        GtkWidget *WavePreview;
         GtkWidget *gvp_preview_area;
         Gtk_EntryControl *gvp_monitor_fb_info_ec;
         double GVP_XYZ_mon_AA[3];

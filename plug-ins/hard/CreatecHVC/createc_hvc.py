@@ -798,27 +798,30 @@ class HV5App(Gtk.Application):
                                 DY=2
                                 axis = [0,1,2]
 
+                        lxyz = ['X','Y','Z']
                                 
                         es = [Gtk.Entry(), Gtk.Entry(), Gtk.Entry()] ## Entry Steps
                         ev = [Gtk.Entry(), Gtk.Entry(), Gtk.Entry()] ## Entry Volts
                         ep = [Gtk.Entry(), Gtk.Entry(), Gtk.Entry()] ## Entro Periods
-                        grid_chv5c.attach(Gtk.Label(label='# Steps'), 16, 3, 1, 1)
-                        grid_chv5c.attach(Gtk.Label(label='Amplitude in V'), 17, 3, 1, 1)
-                        grid_chv5c.attach(Gtk.Label(label='Period in µs'), 18, 3, 1, 1)
+                        grid_chv5c.attach(Gtk.Label(label='Ax'), 16, 3, 1, 1)
+                        grid_chv5c.attach(Gtk.Label(label='# Steps'), 17, 3, 1, 1)
+                        grid_chv5c.attach(Gtk.Label(label='Amplitude in V'), 18, 3, 1, 1)
+                        grid_chv5c.attach(Gtk.Label(label='Period in µs'), 19, 3, 1, 1)
                         for r in range(0,3):
                                 i = axis[r]
+                                grid_chv5c.attach(Gtk.Label(label=lxyz[i]), 16, 5+r, 1, 1)
                                 es[i].set_text("{}".format(CHV5_coarse['steps'][i]))
                                 es[i].set_width_chars(8)
                                 #control_list.append (eo[i])
-                                grid_chv5c.attach(es[i], 16, 5+r, 1, 1)
+                                grid_chv5c.attach(es[i], 17, 5+r, 1, 1)
                                 ev[i].set_text("{}".format(CHV5_coarse['volts'][i]))
                                 ev[i].set_width_chars(8)
                                 #control_list.append (evo[i])
-                                grid_chv5c.attach(ev[i], 17, 5+r, 1, 1)
+                                grid_chv5c.attach(ev[i], 18, 5+r, 1, 1)
                                 ep[i].set_text("{}".format(CHV5_coarse['period'][i]))
                                 ep[i].set_width_chars(8)
                                 #control_list.append (ep[i])
-                                grid_chv5c.attach(ep[i], 18, 5+r, 1, 1)
+                                grid_chv5c.attach(ep[i], 19, 5+r, 1, 1)
 
                         button = Gtk.Button.new_from_icon_name("media-playback-stop")
                         click_gesture = Gtk.GestureClick()
