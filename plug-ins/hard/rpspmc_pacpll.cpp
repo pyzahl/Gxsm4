@@ -3671,14 +3671,27 @@ int RPSPMC_Control::Probing_exec_GVP_callback( GtkWidget *widget, RPSPMC_Control
         
         if (rpspmc_hwi->is_scanning()){
                 g_message (" RPSCPM_Control::Probing_abort_callback ** RPSPMC is busy scanning. Please stop scanning for any GVP actions.");
-                //gapp->warning ("RPSPMC is busy scanning.\nPlease stop scanning and any GVP actions.", window);
+                if (gapp->question_yes_no ("WARNING: Scan in progress.\n"
+                                           "RPSPMC is currently streaming GVP data.\n"
+                                           "Abort current activity/scanning and start GVP?", self->window)){
+                        rpspmc_hwi->GVP_abort_vector_program ();
+                        usleep(200000);
+                }
                 return -1;
         }
 
 	if (self->check_vp_in_progress ()){ 
                 g_message (" RPSCPM_Control::Probing_abort_callback ** RPSPMC is streaming GVP data -- ABORT FIRST");
+                if (gapp->question_yes_no ("WARNING: Scan/Probe in progress.\n"
+                                           "RPSPMC is currently streaming GVP data.\n"
+                                           "Abort current activity and start GVP?",  self->window)){
+                        rpspmc_hwi->GVP_abort_vector_program ();
+                        usleep(200000);
+                }
                 return -1;
         }
+        rpspmc_hwi->GVP_abort_vector_program ();
+        usleep(100000);
 
         rpspmc_hwi->set_spmc_signal_mux (RPSPMC_ControlClass->probe_source);
         if (rpspmc_pacpll)
@@ -6987,6 +7000,9 @@ void RPspmc_pacpll::update_shm_monitors (int close_shm){
         // Monitors: Bias, reg, set,   GPVU,A,B,AM,FM, MUX, Signal (Current), AD463x[2], XYZ, XYZ0, XYZS
         memcpy  (shm_ptr+sizeof(spmc_signals.xyz_meter), &spmc_parameters.bias_monitor, 21*sizeof(double));
 
+        // PAC-PLL Monitors: dc-offset, exec_ampl_mon, dds_freq_mon, volume_mon, phase_mon, control_dfreq_mon
+        memcpy  (shm_ptr+sizeof(spmc_signals.xyz_meter)+21*sizeof(double), &pacpll_parameters.dc_offset, 6*sizeof(double));
+        
         /*
         sprintf (shm_ptr+512, "XYZ=[[%g %g %g] [%g %g %g] [%g %g %g]]\n",
                  spmc_signals.xyz_meter[0],spmc_signals.xyz_meter[1],spmc_signals.xyz_meter[2],
