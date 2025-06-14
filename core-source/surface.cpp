@@ -695,7 +695,7 @@ int Surface::save(AUTO_SAVE_MODE automode, char *rname, int chidx, int forceOver
 
         if (chidx == -99)
                 chidx = chidx_save_as;
-        
+
         // ADJUST PATH ONLY
 	if(!default_path || automode == CHANGE_PATH_ONLY){
 
@@ -758,7 +758,7 @@ int Surface::save(AUTO_SAVE_MODE automode, char *rname, int chidx, int forceOver
                 const gchar *defaultname = scan[chidx]->storage_manager.get_name();
 
                 if (rname) {
-                        ffname = rname;
+                        ffname = g_strdup(rname);
                 } else {
                         GtkWidget *chooser = gtk_file_chooser_dialog_new ("NC file to save", 
                                                                           NULL,

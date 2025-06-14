@@ -80,7 +80,7 @@ typedef void (*GappBrowseFunc)(gchar *fname, gpointer user_data);
 /* Example use:
 	GtkDialogFlags flags =  (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT);
 	GtkWidget *dialog = gtk_dialog_new_with_buttons (N_("Mein Prima Dialog"),
-							 GTK_WINDOW (main_get_gapp ()->get_app_window ()),
+							 main_get_gapp ()->get_window (),
 							 flags,
 							 _("_OK"),
 							 GTK_RESPONSE_ACCEPT,

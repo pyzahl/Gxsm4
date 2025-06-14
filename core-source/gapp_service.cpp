@@ -58,7 +58,7 @@ gint GnomeAppService::setup_multidimensional_data_copy (const gchar *title, Scan
 	UnitObj *Pixel = new UnitObj("Pix","Pix");
 	UnitObj *Unity = new UnitObj(" "," ");
 	GtkWidget *dialog = gtk_dialog_new_with_buttons (N_(title),
-							 NULL, 
+							 gapp->get_main_window  (), // default to main app window 
 							 (GtkDialogFlags)(GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
 							 _("_OK"), GTK_RESPONSE_ACCEPT,
 							 _("_CANCEL"), GTK_RESPONSE_CANCEL,
@@ -225,7 +225,7 @@ int GnomeAppService::dialog(const char *title, const char *content,
 	gtk_widget_show (label);
 	
 	GtkWidget *dialog = gtk_dialog_new_with_buttons (N_(title),
-							 NULL,
+                                                         gapp->get_main_window  (),
 							 (GtkDialogFlags)(GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
 							 N_(b1), 1,
 							 N_(b2), 2,
@@ -261,7 +261,7 @@ GtkWidget* GnomeAppService::progress_info_new (const gchar *title, gint levels, 
 	if (!progress_dialog){
                 new_dialog=true;
                 progress_dialog = gtk_dialog_new_with_buttons (N_(title?title:"Progress"),
-                                                               NULL,
+                                                               gapp->get_main_window  (),
                                                                (GtkDialogFlags)((modal ? GTK_DIALOG_MODAL:0) | GTK_DIALOG_DESTROY_WITH_PARENT),
                                                                NULL, NULL, NULL);
                 
@@ -392,7 +392,7 @@ gchar *GnomeAppService::file_dialog_save (const gchar *title,
                                           GtkFileFilter **filter
                                           ){
         GtkWidget *chooser = gtk_file_chooser_dialog_new (title,
-                                                          NULL,
+                                                          gapp->get_main_window  (),
                                                           GTK_FILE_CHOOSER_ACTION_SAVE,
                                                           N_("_Cancel"), GTK_RESPONSE_CANCEL,
                                                           N_("_Save"), GTK_RESPONSE_ACCEPT,
@@ -431,7 +431,7 @@ gchar *GnomeAppService::file_dialog_load (const gchar *title,
                                           GtkFileFilter **filter
                                           ){
         GtkWidget *chooser = gtk_file_chooser_dialog_new (title,
-                                                          NULL,
+                                                          gapp->get_main_window  (),
                                                           GTK_FILE_CHOOSER_ACTION_OPEN,
                                                           N_("_Cancel"), GTK_RESPONSE_CANCEL,
                                                           N_("_Load"), GTK_RESPONSE_ACCEPT,
@@ -483,8 +483,9 @@ int GnomeAppService::check_file(gchar *fn){
 void GnomeAppService::ValueRequest(const gchar *title, const gchar *label, const gchar *infotxt, 
 				   UnitObj *uobj, double minv, double maxv, const gchar *vfmt,
 				   double *value){
+        g_message ("GnomeAppService::ValueRequest >%s<", title);
 	GtkWidget *dialog = gtk_dialog_new_with_buttons (N_(title),
-							 NULL,
+                                                         gapp->get_main_window  (),
 							 (GtkDialogFlags)(GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
 							 _("_OK"), GTK_RESPONSE_ACCEPT,
 							 NULL);
@@ -503,6 +504,7 @@ void GnomeAppService::ValueRequest(const gchar *title, const gchar *label, const
 
         // FIX-ME GTK4 ??
         // wait here on response
+        g_message ("GnomeAppService::ValueRequest >%s< -- waiting for response", title);
         while (response == GTK_RESPONSE_NONE)
                 while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
 }
@@ -513,8 +515,9 @@ void GnomeAppService::ValueRequestList (const gchar *title,
                                         UnitObj *uobj[], double minv[], double maxv[], const gchar *vfmt[],
                                         double *value[]){
 
+        g_message ("GnomeAppService::ValueRequestList >%s<", title);
 	GtkWidget *dialog = gtk_dialog_new_with_buttons (N_(title),
-							 NULL,
+                                                         gapp->get_main_window (),
 							 (GtkDialogFlags)(GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
 							 _("_OK"), GTK_RESPONSE_ACCEPT,
 							 NULL);
@@ -538,6 +541,7 @@ void GnomeAppService::ValueRequestList (const gchar *title,
 
         // FIX-ME GTK4 ??
         // wait here on response
+        g_message ("GnomeAppService::ValueRequestList >%s< -- waiting for response", title);
         while (response == GTK_RESPONSE_NONE)
                 while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
 }
@@ -564,7 +568,7 @@ gint GnomeAppService::terminate_timeout_func (gpointer data){
 
 void GnomeAppService::alert(const gchar *s1, const gchar *s2, const gchar *s3, int c){
         if (is_thread_safe_no_gui_mode()) return;
-        GtkWidget *dialog = gtk_message_dialog_new_with_markup (NULL,
+        GtkWidget *dialog = gtk_message_dialog_new_with_markup (gapp->get_main_window  (),
                                                                 GTK_DIALOG_DESTROY_WITH_PARENT,
                                                                 GTK_MESSAGE_WARNING,
                                                                 GTK_BUTTONS_CLOSE,

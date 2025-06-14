@@ -205,12 +205,12 @@ static void smooth_init(void)
   GtkWidget *dummywidget = NULL; // gtk_menu_item_new();
 
   ra = g_new( remote_action_cb, 1);
-  ra -> cmd = g_strdup_printf("smooth_PI");
+  ra -> cmd = g_strdup_printf("MATH_FILTER2D_Smooth");
   ra -> RemoteCb = &smooth_non_interactive;
   ra -> widget = dummywidget;
   ra -> data = NULL;
   main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra );
-  PI_DEBUG (DBG_L2, "smooth-plugin: Adding new Remote Cmd: smooth_PI");
+  PI_DEBUG (DBG_L2, "smooth-plugin: Adding new Remote Cmd: MATH_FILTER2D_Smooth");
 // remote action stuff
 }
 

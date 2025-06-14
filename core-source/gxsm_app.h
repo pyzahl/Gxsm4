@@ -369,6 +369,7 @@ public:
         };
 
         Gxsm4app *get_application () { return gxsm4app; };
+        GtkWindow *get_main_window () { return GTK_WINDOW (app_window); };
         Gxsm4appWindow *get_app_window  () { return app_window; };
         gboolean gxsm_app_window_present () { return app_window ? true : false; };
 

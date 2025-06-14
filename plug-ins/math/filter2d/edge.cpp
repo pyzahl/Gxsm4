@@ -187,7 +187,9 @@ GxsmMathOneSrcPlugin *get_gxsm_math_one_src_for_all_vt_plugin_info( void ) {
 
 /* Here we go... */
 
+
 double       krn_sigma = 1.; // default: 1 * r/2
+double       edge_radius_set = 5.;
 double       edge_radius = 5.;
 double       adaptive_threashold = 0.;
 double       zero_replace_value = 0.;
@@ -206,13 +208,14 @@ static void edge_init(void)
   GtkWidget *dummywidget = NULL; // gtk_menu_item_new();
 
   ra = g_new( remote_action_cb, 1);
-  ra -> cmd = g_strdup_printf("edge_PI");
+  ra -> cmd = g_strdup_printf("MATH_FILTER2D_Edge");
   ra -> RemoteCb = &edge_non_interactive;
   ra -> widget = dummywidget;
   ra -> data = NULL;
-  main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra );
-  PI_DEBUG (DBG_L2, "edge-plugin: Adding new Remote Cmd: edge_PI");
-// remote action stuff
+  gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, ra );
+  PI_DEBUG (DBG_L2, "edge-plugin: Adding new Remote Cmd: MATH_FILTER2D_Edge");
+
+  // remote action stuff
 }
 
 static void edge_non_interactive( GtkWidget *widget , gpointer pc )
@@ -223,7 +226,7 @@ static void edge_non_interactive( GtkWidget *widget , gpointer pc )
 //  cout << "pc: " << ((gchar**)pc)[2] << endl;
 //  cout << "pc: " << atof(((gchar**)pc)[2]) << endl;
 
-  main_get_gapp()->xsm->MathOperation(&edge_run_radius);
+  main_get_gapp()->xsm->MathOperation(&edge_run);
   return;
 
 }
@@ -354,7 +357,7 @@ void setup_multidimensional_data_copy (const gchar *title, Scan *src, int &ti, i
 	UnitObj *Pixel = new UnitObj("Pix","Pix");
 	UnitObj *Unity = new UnitObj(" "," ");
 	GtkWidget *dialog = gtk_dialog_new_with_buttons (N_(title),
-							 NULL, 
+							 gapp->get_main_window  (), // main window
 							 (GtkDialogFlags)(GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
 							 _("_OK"), GTK_RESPONSE_ACCEPT,
 							 NULL); 
@@ -473,7 +476,125 @@ static gboolean edge_run___for_all_vt(Scan *Src, Scan *Dest)
 #endif
 
 
+
+// run-Function -- may gets called for all layers and time if multi dim scan data is present!
 static gboolean edge_run(Scan *Src, Scan *Dest)
+{
+  //	edge_run_radius(Src, Dest);
+  //	return MATH_OK;
+
+// check for multi dim calls, make sure not to ask user for paramters for every layer or time step!
+        static gboolean ask_configure = true;
+        static double ask_again = 1.0;
+
+        double gr;
+        GSettings *global_settings = g_settings_new (GXSM_RES_BASE_PATH_DOT ".global");
+        // looup radius in settings
+        gr = g_settings_get_double (global_settings, "math-global-share-variable-radius");
+        g_message ("math-global-share-variable-radius: %g", gr);
+        g_settings_set_double (global_settings, "math-global-share-variable-radius", -1.0); // invalide for next time
+        g_clear_object (&global_settings);
+        if (gr >= 0.0){ // valid, use it and no more questions
+                edge_radius = gr;
+        } else {
+                ask_again = ask_configure ? 1.0 : 0.0; 
+                if ((Src->mem2d->get_t_index () == 0 && Src->mem2d->GetLayer () == 0) || !edge_kernel || !ada_kernel || ask_configure) {
+
+                        edge_radius_set = edge_radius;
+                        g_message("edge_run for ti=%d, vi=%d", Src->mem2d->get_t_index (), Src->mem2d->GetLayer ());
+
+                        const gchar* config_label[7] = { "Radius", "Adaptive Threashold", "Background f0", "Zero Replace Mode", "Krn Sigma", "Ask Again", NULL };
+                        const gchar* config_info[6]  = { "Edge Kernel Radius. Convol Matrix[2R+2, 2R+1]", "Adaptive Threashold Value", "Replace Background (0) by f0", "Zero Replace none: 0, by value:1, auto:2", "Kernel Sigma x r/2", "Ask for filter setup again" };
+                        UnitObj *config_units[6] { gapp->xsm->Unity,  gapp->xsm->data.Zunit, gapp->xsm->data.Zunit, gapp->xsm->Unity, gapp->xsm->Unity, gapp->xsm->Unity};
+                        double config_minv[6] = { -1., -1e10, -1e10, 0., -10., -1};
+                        double config_maxv[6] = { Src->mem2d->GetNx()/10., 1e10, 1e10, 10., 10., 1 };
+                        const gchar* config_fmt[6]  = { ".0f", "g", "g", "g", "g", ".0f" };
+                        double *config_values[6] = { &edge_radius_set, &adaptive_threashold, &zero_replace_value, &zero_replace_mode, &krn_sigma, &ask_again };    // Radius, Adaptive Threashold, Mode
+
+                        gapp->ValueRequestList ("Edge Filter Configuration",
+                                                config_label, config_info, config_units,
+                                                config_minv, config_maxv, config_fmt,
+                                                config_values
+                                                );
+
+                        ask_configure = ask_again != 0.0 ? true : false; 
+                }
+                edge_radius = edge_radius_set;
+        }        
+        if (edge_kernel)
+                free (edge_kernel);
+
+        if (ada_kernel)
+                free (ada_kernel);
+
+        g_clear_object (&global_settings);
+                
+        g_message ("Setup MemAdaptiveTestKrn");
+        int    s = 1+(int)(edge_radius + .9); // calc. approx Matrix Radius
+        ada_kernel = new MemAdaptiveTestKrn (edge_radius,edge_radius, s,s); // calc. convol adaptive test kernel
+        ada_kernel->set_kname ("gxsm_edge_ada_kernel");
+        ada_kernel->InitializeKernel ();
+
+        g_message ("Setup MemAdaptiveCoreKrn");
+        edge_kernel = new MemEdgeKrn (edge_radius,edge_radius, s,s, ada_kernel, adaptive_threashold/Src->data.s.dz, krn_sigma); // calc. convol kernel
+        edge_kernel->set_kname ("gxsm_edge_edge_log_kernel");
+        edge_kernel->InitializeKernel ();
+ 
+        g_message ("Setup Kernel Completed, Executing Convolve");
+
+        if (!Src || !Dest)
+                return 0;
+
+        if (zero_replace_mode > 1.5)
+                Src->mem2d->data->replace (0., -2e8, 0.01);
+        if (zero_replace_mode > 0.5)
+                Src->mem2d->data->replace (0., zero_replace_value/Src->data.s.dz, 0.01);
+
+	MOUSERECT msr;
+	MkMausSelect (Src, &msr, Src->mem2d->GetNx(), Src->mem2d->GetNy());
+	if( msr.xSize  > edge_radius && msr.ySize >  edge_radius && msr.xSize  < Src->mem2d->GetNx() && msr.ySize < Src->mem2d->GetNy() && gapp->xsm->MausMode() == MRECTANGLE){
+                Dest->data.copy (Src->data);
+
+                Dest->mem2d->Resize (msr.xSize, msr.ySize);
+                Dest->data.s.nx = msr.xSize;
+                Dest->data.s.ny = msr.ySize;
+                Dest->data.s.x0 += (msr.xLeft + msr.xSize/2 - Src->data.s.nx/2)*Src->data.s.dx;
+                if (Src->data.orgmode == SCAN_ORG_CENTER)
+                        Dest->data.s.y0 -= (msr.yTop + msr.ySize/2 - Src->data.s.ny/2)*Src->data.s.dy;
+                else
+                        Dest->data.s.y0 -= msr.yTop*Src->data.s.dy;
+
+                // Adapt to next possible value  
+                Dest->data.s.rx = Dest->mem2d->GetNx () * Dest->data.s.dx;
+                Dest->data.s.ry = Dest->mem2d->GetNy () * Dest->data.s.dy;
+    
+
+                g_message ("CROP: SRC(%d,%d, %d, %d)",
+                           Src->data.s.nx, Src->data.s.ny, Src->data.s.nvalues, Src->data.s.ntimes);
+                g_message ("CROP: NEW(%d,%d) = from [(%d,%d) : (%d,%d)]",
+                           Dest->data.s.nx, Dest->data.s.ny,
+                           msr.xLeft, msr.yTop,
+                           msr.xRight, msr.yBottom);
+        
+                Mem2d tmp (Dest->mem2d);
+                tmp.CopyFrom (Src->mem2d, msr.xLeft,msr.yTop,
+                              0,0, tmp.GetNx (), tmp.GetNy ());
+                edge_kernel->Convolve (&tmp, Dest->mem2d); // do convolution
+        } else {
+                
+                edge_kernel->Convolve (Src->mem2d, Dest->mem2d); // do convolution
+        }
+
+        Dest->mem2d->data->CopyLookups (Src->mem2d->data, msr.xLeft,msr.yTop);
+        Dest->mem2d->copy_layer_information (Src->mem2d);
+        
+	return MATH_OK;
+}
+
+
+
+
+static gboolean edge_runXXX(Scan *Src, Scan *Dest)
 {
   //	edge_run_radius(Src, Dest);
   //	return MATH_OK;

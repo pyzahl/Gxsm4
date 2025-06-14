@@ -62,6 +62,7 @@ into a new created math channel.
 #include <gtk/gtk.h>
 #include "config.h"
 #include "plugin.h"
+#include "../../common/pyremote.h"
 #include "glbvars.h"
 #include "surface.h"
 
@@ -70,6 +71,8 @@ static void despike2d_init( void );
 static void despike2d_about( void );
 static void despike2d_configure( void );
 static void despike2d_cleanup( void );
+
+static void despike2d_non_interactive( GtkWidget *widget , gpointer pc );
 
 // Define Type of mat plugin here, only one line should be commented in!!
 #define GXSM_ONE_SRC_PLUGIN__DEF
@@ -191,6 +194,32 @@ GxsmMathTwoSrcPlugin *get_gxsm_math_two_src_plugin_info( void ) {
 static void despike2d_init(void)
 {
   PI_DEBUG (DBG_L2, "despike2d Plugin Init");
+
+// This is action remote stuff, stolen from the peak finder PI.
+  remote_action_cb *ra;
+  GtkWidget *dummywidget = NULL; //gtk_menu_item_new();
+
+  ra = g_new( remote_action_cb, 1);
+  ra -> cmd = g_strdup_printf("MATH_FILTER2D_Despike");
+  ra -> RemoteCb = &despike2d_non_interactive;
+  ra -> widget = dummywidget;
+  ra -> data = NULL;
+  main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra );
+  PI_DEBUG (DBG_L2, "normal_z-plugin: Adding new Remote Cmd: MATH_FILTER2D_Normal_Z");
+// remote action stuff
+}
+
+static void despike2d_non_interactive( GtkWidget *widget , gpointer pc )
+{
+  PI_DEBUG (DBG_L2, "despike2d-plugin: despike2d is called from script.");
+
+//  cout << "pc: " << ((gchar**)pc)[1] << endl;
+//  cout << "pc: " << ((gchar**)pc)[2] << endl;
+//  cout << "pc: " << atof(((gchar**)pc)[2]) << endl;
+
+  main_get_gapp()->xsm->MathOperation(&despike2d_run);
+  return;
+
 }
 
 // about-Function
@@ -256,7 +285,7 @@ public:
 
                 GtkDialogFlags flags =  (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT);
                 dialog = gtk_dialog_new_with_buttons (N_("Despike Filter Setup"),
-                                                      GTK_WINDOW (main_get_gapp()->get_app_window ()),
+                                                      gapp->get_main_window  (),
                                                       flags,
                                                       _("_OK"),
                                                       GTK_RESPONSE_ACCEPT,
