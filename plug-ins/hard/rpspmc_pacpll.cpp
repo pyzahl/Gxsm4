@@ -226,8 +226,9 @@ SOURCE_SIGNAL_DEF modulation_targets[] = {
 SOURCE_SIGNAL_DEF z_servo_current_source[] = {
         //  SIGNAL #  Name               Units.... Scale (not needed or used from here)
         { 0x00000000, "IN2-RF",          " ",  "nA",  "nA", 256.*SPMC_RPIN12_to_volts, 0, 0 }, // 24.8 Z-Servo internal signal '(32-8) -> x 256
-        { 0x00000001, "IN3-AD463-24-CHA"," ",  "nA",  "nA", 256.*SPMC_RPIN34_to_volts, 0, 0 }, // 24.8 Z-Servo internal signal '(32-8) -> x 256
-        { 0x00000002, "IN3-AD463-24-CHA-FIR"," ",  "nA",  "nA", 256.*SPMC_RPIN34_to_volts, 0, 0 }, // 24.8 Z-Servo internal signal '(32-8) -> x 256
+        { 0x00000001, "IN3-1MSPS"," ",  "nA",  "nA", 256.*SPMC_RPIN34_to_volts, 0, 0 }, // 24.8 Z-Servo internal signal '(32-8) -> x 256  ** IN3-AD463-24-CHA-1MSPS
+        { 0x00000002, "IN3-1M@FIR512"," ",  "nA",  "nA", 256.*SPMC_RPIN34_to_volts, 0, 0 }, // 24.8 Z-Servo internal signal '(32-8) -> x 256 ** IN3-AD463-24-CHA-1MSPS FIR 512x dec (SINC)
+        { 0x00000003, "IN3-1M@FIR128"," ",  "nA",  "nA", 256.*SPMC_RPIN34_to_volts, 0, 0 }, // 24.8 Z-Servo internal signal '(32-8) -> x 256 ** IN3-AD463-24-CHA-1MSPS FIRX 128x dec (SINC)
         { 0x00000016,  NULL, NULL, NULL, NULL, 0.0, 0 }
 };
 
@@ -3030,15 +3031,25 @@ void RPSPMC_Control::GVP_zero_all_smooth (){
                 return NULL;
         }
 
+        usleep(200000);
         rpspmc_hwi->GVP_execute_vector_program(); // non blocking
 }
 
 int RPSPMC_Control::GVP_AllZero (GtkWidget *widget, RPSPMC_Control *self){
         PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);
-        g_message ("RPSPMC_Control::GVP_AllZero: GVP STOP and set ALL ZERO   ** DANGER IF IN OPERATION ** -- No Action here in productioin version!");
-        //rpspmc_hwi->GVP_abort_vector_program ();
-        //self->GVP_zero_all_smooth ();
-        //rpspmc_hwi->GVP_reset_UAB ();
+        g_message ("RPSPMC_Control::GVP_AllZero: GVP STOP and set ALL ZERO   ** DANGER IF IN OPERATION ** -- No Action here in productioin version or confirm dialog.");
+
+        if (gapp->question_yes_no ("WARNING WARNING WARNING\n"
+                                   "RPSPMC will force all GVP componet to zero (smooth).\n"
+                                   "This does NOT effect the Z control/feedback Z value, only any GVP offsets.\n"
+                                   "This aborts any GVP (scan/probe) in progress.\n"
+                                   "Confirm to proceed with Set All GVP to Zero -- No: no action.", self->window)){
+                rpspmc_hwi->GVP_abort_vector_program ();
+                usleep(200000);
+                self->GVP_zero_all_smooth ();
+                usleep(200000);
+                rpspmc_hwi->GVP_reset_UAB ();
+        }
         return 0;
 }
 
@@ -3676,8 +3687,8 @@ int RPSPMC_Control::Probing_exec_GVP_callback( GtkWidget *widget, RPSPMC_Control
                                            "Abort current activity/scanning and start GVP?", self->window)){
                         rpspmc_hwi->GVP_abort_vector_program ();
                         usleep(200000);
-                }
-                return -1;
+                } else
+                        return -1;
         }
 
 	if (self->check_vp_in_progress ()){ 
@@ -3687,9 +3698,11 @@ int RPSPMC_Control::Probing_exec_GVP_callback( GtkWidget *widget, RPSPMC_Control
                                            "Abort current activity and start GVP?",  self->window)){
                         rpspmc_hwi->GVP_abort_vector_program ();
                         usleep(200000);
-                }
-                return -1;
+                } else
+                        return -1;
         }
+
+        // make sure all is sane and cleaned up
         rpspmc_hwi->GVP_abort_vector_program ();
         usleep(100000);
 
@@ -3997,11 +4010,18 @@ int RPSPMC_Control::choice_z_servo_current_source_callback (GtkWidget *widget, R
 
 	int id = gtk_combo_box_get_active (GTK_COMBO_BOX (widget));
 
-        if (id == 2){ // AD3-FIR
+        switch (id){
+        case 2: // AD3-FIR
                 id=1;
                 self->I_fir = 1;
-        } else {
+                break;
+        case 3: // AD3-FIRX
+                id=1;
+                self->I_fir = 2;
+                break;
+        default:
                 self->I_fir = 0;
+                break;
         }
         if (rpspmc_pacpll){
                 rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_MODE", self->mix_transform_mode[0] | (self->I_fir << 8)); // mapped to MM_LIN/LOG/FCZLOG (0,1,3) | FIR SELECTION

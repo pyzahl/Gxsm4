@@ -737,10 +737,8 @@ void RPSPMC_Control::write_spm_vector_program (int start, pv_mode pvm){
                                 int viset = 0;
                                 if (k==0){
                                         for (int jj=0; jj<8; ++jj){
-                                                const gchar *info=GVP_V0Set_ec[jj]->get_info();
-                                                if (info)
-                                                        if (info[0]=='S')
-                                                                viset |= 1<<jj;
+                                                if (check_GVP_initial_set (jj)) // check GUI options set
+                                                        viset |= 1<<jj;
                                         }
                                 }
 				vp_duration += make_dUZXYAB_vector (vector_index++,
@@ -811,28 +809,37 @@ void RPSPMC_Control::gvp_preview_draw_function (GtkDrawingArea *area, cairo_t *c
         PROBE_VECTOR_GENERIC vi = { 0,0.,0,0, 0,0,0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
         PROBE_VECTOR_GENERIC vp = { 0,0.,0,0, 0,0,0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
         PROBE_VECTOR_GENERIC v = { 0,0.,0,0, 0,0,0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+        double *gvp_yi[8] =  { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
         double *gvp_y[8] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
         double *gvp_yp[8] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
         const gchar *gvp_color[8] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
         cairo_item_path *gvp_wave[8] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 
         double dumy1, dumy2;
-        main_get_gapp()->xsm->hardware->RTQuery ("zxy",  vi.f_dz,  vi.f_dx,  vi.f_dy); // get tip position in volts
-        main_get_gapp()->xsm->hardware->RTQuery ("B", vi.f_du, dumy1, dumy2); // Bias, ...
+
+        // start all at zero, BUT correct labels by offset
+        //main_get_gapp()->xsm->hardware->RTQuery ("zxy",  vi.f_dz,  vi.f_dx,  vi.f_dy); // get tip position in volts
+        //main_get_gapp()->xsm->hardware->RTQuery ("B", vi.f_du, dumy1, dumy2); // Bias, ...
+
+        PROBE_VECTOR_GENERIC vi_actual = { 0,0.,0,0, 0,0,0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+        main_get_gapp()->xsm->hardware->RTQuery ("zxy", vi_actual.f_dz,  vi_actual.f_dx, vi_actual.f_dy); // get tip position in volts
+        main_get_gapp()->xsm->hardware->RTQuery ("B", vi_actual.f_du, dumy1, dumy2); // Bias, ...
+        main_get_gapp()->xsm->hardware->RTQuery ("G", dumy1, vi_actual.f_da, vi_actual.f_db); // GVP U,A,B
+        main_get_gapp()->xsm->hardware->RTQuery ("F", vi_actual.f_dam, vi_actual.f_dfm, dumy2); // GVP U,A,B
         
         int ns=0; // num selected channels
         for (int i=1; i<=8; ++i)
                 if (self->GVP_preview_on[i]){
                         gvp_color[ns] = gvpcolors[i];
                         switch (i){
-                        case 1: gvp_y[ns] = &v.f_dx; gvp_yp[ns] = &vp.f_dx; break;
-                        case 2: gvp_y[ns] = &v.f_dy; gvp_yp[ns] = &vp.f_dy; break;
-                        case 3: gvp_y[ns] = &v.f_dz; gvp_yp[ns] = &vp.f_dz; break;
-                        case 4: gvp_y[ns] = &v.f_du; gvp_yp[ns] = &vp.f_du; break;
-                        case 5: gvp_y[ns] = &v.f_da; gvp_yp[ns] = &vp.f_da; break;
-                        case 6: gvp_y[ns] = &v.f_db; gvp_yp[ns] = &vp.f_db; break;
-                        case 7: gvp_y[ns] = &v.f_dam; gvp_yp[ns] = &vp.f_dam; break;
-                        case 8: gvp_y[ns] = &v.f_dfm; gvp_yp[ns] = &vp.f_dfm; break;
+                        case 1: gvp_y[ns] = &v.f_dx; gvp_yp[ns] = &vp.f_dx; gvp_yi[ns] = &vi_actual.f_dx; break;
+                        case 2: gvp_y[ns] = &v.f_dy; gvp_yp[ns] = &vp.f_dy; gvp_yi[ns] = &vi_actual.f_dy; break;
+                        case 3: gvp_y[ns] = &v.f_dz; gvp_yp[ns] = &vp.f_dz; gvp_yi[ns] = &vi_actual.f_dz; break;
+                        case 4: gvp_y[ns] = &v.f_du; gvp_yp[ns] = &vp.f_du; gvp_yi[ns] = &vi_actual.f_du; break;
+                        case 5: gvp_y[ns] = &v.f_da; gvp_yp[ns] = &vp.f_da; gvp_yi[ns] = &vi_actual.f_da; break;
+                        case 6: gvp_y[ns] = &v.f_db; gvp_yp[ns] = &vp.f_db; gvp_yi[ns] = &vi_actual.f_db; break;
+                        case 7: gvp_y[ns] = &v.f_dam; gvp_yp[ns] = &vp.f_dam; gvp_yi[ns] = &vi_actual.f_dam; break;
+                        case 8: gvp_y[ns] = &v.f_dfm; gvp_yp[ns] = &vp.f_dfm; gvp_yi[ns] = &vi_actual.f_dfm; break;
                         }
                         ++ns;
                 }
@@ -972,7 +979,7 @@ void RPSPMC_Control::gvp_preview_draw_function (GtkDrawingArea *area, cairo_t *c
                         //tms->set_anchor (k&1 ? CAIRO_ANCHOR_E : CAIRO_ANCHOR_W);
                         tms->set_anchor (CAIRO_ANCHOR_E);
                         tms->set_stroke_rgba (gvp_color[k]);
-                        const gchar* lab=g_strdup_printf("%.3g V",gvpy_amax[k]);
+                        const gchar* lab=g_strdup_printf("%.3g V",gvpy_amax[k]+*gvp_yi[k]);
                         //tms->set_text (k&1 ? -2 : n+2, -55+(k/2)*8, lab);
                         tms->set_text (-2, -55+k*8, lab);
                         tms->draw (cr);
@@ -984,7 +991,7 @@ void RPSPMC_Control::gvp_preview_draw_function (GtkDrawingArea *area, cairo_t *c
                 for (int i=0; i<i_anno; ++i){
                         for (int k=0; k<ns; ++k){
                                 tms->set_stroke_rgba (gvp_color[k]);
-                                const gchar* lab=g_strdup_printf("%.3g V",anno_tyy [i][1+k]);
+                                const gchar* lab=g_strdup_printf("%.3g V",anno_tyy [i][1+k]+*gvp_yi[k]);
                                 tms->set_text (anno_tyy [i+k][0]+20, anno_tyy [i][1+k]/gvpy_amax[k]*skl, lab);
                                 tms->draw (cr);
                                 g_free (lab);

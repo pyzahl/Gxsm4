@@ -1133,8 +1133,13 @@ gboolean rpspmc_hwi_dev::ScanLineM(int yindex, int xdir, int muxmode, //srcs_mas
                 // may compute and set if available
 		// main_get_gapp()->xsm->data.s.pixeltime = (double)dsp_scan.dnx/SamplingFreq;
 
+                // assure clean GVP state
+                GVP_abort_vector_program ();
+                usleep(200000);
+
                 // setup hardware for scan here and
                 // start g-thread for data transfer now
+                // this is generating a GVP vector scan program, loading it and starting the data transfer thread in time of excuting it.
 		start_data_read (yindex, nsrcs_dir[0], nsrcs_dir[1], nsrcs_dir[2], nsrcs_dir[3], Mob_dir[0], Mob_dir[1], Mob_dir[2], Mob_dir[3]);
                 
 		running = TRUE; // and off we go....

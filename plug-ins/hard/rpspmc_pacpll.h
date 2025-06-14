@@ -582,6 +582,17 @@ public:
 	void add_probevector();
 
         // simple sum check -- not looking at loops here
+        gboolean check_GVP_initial_set(int i){
+                if (i>= 0 && i < 8)
+                        if (GVP_opt[0] & VP_INITIAL_SET_VEC){ // BIAS SET
+                                const gchar *info=GVP_V0Set_ec[i]->get_info();
+                                if (info)
+                                        if (info[0]=='S')
+                                                return true;
+                        }
+                return false;
+        };
+
         gboolean check_GVP(){
                 gboolean ret = true;
                 double du_total=0.;
@@ -589,16 +600,11 @@ public:
                 double du_set=0.;
                 for (int i=0; i<(N_GVP_VECTORS-1) && GVP_points[i]>0; ++i){
                         du_total += GVP_du[i];
-                        if (i==0){
-                                if (GVP_opt[i] & VP_INITIAL_SET_VEC){ // BIAS SET
-                                        const gchar *info=GVP_V0Set_ec[3]->get_info();
-                                        if (info)
-                                                if (info[0]=='S'){
-                                                        du_total = GVP_du[i]-bias; // calculate offset relative to bias
-                                                        du_set = GVP_du[i]-bias; // bias set offset
-                                                }
+                        if (i==0)
+                                if (check_GVP_initial_set(3)){ // BIAS SET
+                                        du_total = GVP_du[i]-bias; // calculate offset relative to bias
+                                        du_set = GVP_du[i]-bias; // bias set offset
                                 }
-                        }
                         dz_total += GVP_dz[i];
                 }
                 if (fabs (du_total) > 1e-3 || fabs (dz_total) > 1e-3){
@@ -666,19 +672,20 @@ public:
                 int x=0;
                 double t=0.;
                 PROBE_VECTOR_GENERIC vec_initial;
-
+                PROBE_VECTOR_GENERIC vec_at_plot_0;
+                
                 memcpy (&vec_initial, &program_vector_list[0], sizeof (vec_initial)); // backup
                 re_init_vector_program();
-                
+
                 if (program_vector_list[0].options & VP_INITIAL_SET_VEC){ // calculate diffs of initial vector been a set vector 
-                        program_vector_list[0].f_dx = program_vector_list[0].f_dx - v->f_dx;
-                        program_vector_list[0].f_dy = program_vector_list[0].f_dy - v->f_dy;
-                        program_vector_list[0].f_dz = program_vector_list[0].f_dz - v->f_dz;
-                        program_vector_list[0].f_du = program_vector_list[0].f_du - v->f_du;
-                        program_vector_list[0].f_da = program_vector_list[0].f_da - v->f_da;
-                        program_vector_list[0].f_db = program_vector_list[0].f_db - v->f_db;
-                        program_vector_list[0].f_dam = program_vector_list[0].f_dam - v->f_dam;
-                        program_vector_list[0].f_dfm = program_vector_list[0].f_dfm - v->f_dfm;
+                        if (check_GVP_initial_set (0)) program_vector_list[0].f_dx = program_vector_list[0].f_dx - v->f_dx;
+                        if (check_GVP_initial_set (1)) program_vector_list[0].f_dy = program_vector_list[0].f_dy - v->f_dy;
+                        if (check_GVP_initial_set (2)) program_vector_list[0].f_dz = program_vector_list[0].f_dz - v->f_dz;
+                        if (check_GVP_initial_set (3)) program_vector_list[0].f_du = program_vector_list[0].f_du - v->f_du;
+                        if (check_GVP_initial_set (4)) program_vector_list[0].f_da = program_vector_list[0].f_da - v->f_da;
+                        if (check_GVP_initial_set (5)) program_vector_list[0].f_db = program_vector_list[0].f_db - v->f_db;
+                        if (check_GVP_initial_set (6)) program_vector_list[0].f_dam = program_vector_list[0].f_dam - v->f_dam;
+                        if (check_GVP_initial_set (7)) program_vector_list[0].f_dfm = program_vector_list[0].f_dfm - v->f_dfm;
                 }
                 for (; program_vector_list[pc].n;){
                         int n = program_vector_list[pc].n;
