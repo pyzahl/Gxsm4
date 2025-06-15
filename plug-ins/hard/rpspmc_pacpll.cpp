@@ -1744,8 +1744,8 @@ void RPSPMC_Control::create_folder (){
 
 //#define ENABLE_ZSERVO_POLARITY_BUTTON  // only for development and testing
         // Z OUPUT POLARITY:
-        spmc_parameters.z_polarity      = xsmres.ScannerZPolarity ? 1 : -1; // 1: pos, 0: neg (bool) -- adjust zpos_ref accordingly!
-        spmc_parameters.gxsm_z_polarity = xsmres.ScannerZPolarity ? 1 : -1; // 1: pos, 0: neg (bool) -- adjust zpos_ref accordingly!
+        spmc_parameters.z_polarity      = xsmres.ScannerZPolarity ? 1 : -1;    // 1: pos, 0: neg (bool) -- adjust zpos_ref accordingly!
+        spmc_parameters.gxsm_z_polarity = -(xsmres.ScannerZPolarity ? 1 : -1); // Gxsm: negative internally required to have native Z positive or up = tip up or higher surface
 
 #ifdef  ENABLE_ZSERVO_POLARITY_BUTTON
         bp->grid_add_check_button ("Enable", "enable Z servo feedback controller." PYREMOTE_CHECK_HOOK_KEY("MainZservo"), 1,
@@ -3103,11 +3103,11 @@ void RPSPMC_Control::ZPosSetChanged(Param_Control* pcs, RPSPMC_Control *self){
                         "SPMC_Z_SERVO_UPPER", 
                         NULL };
                 double jdata[3];
-                jdata[0] = main_get_gapp()->xsm->Inst->ZA2Volt(self->zpos_ref * spmc_parameters.gxsm_z_polarity);
+                jdata[0] = main_get_gapp()->xsm->Inst->ZA2Volt(-self->zpos_ref); // FPGA  internal has pos Z feedback behavior, i.e. Z pos = tip down
                 jdata[1] = self->mix_level[0] > 0. ? main_get_gapp()->xsm->Inst->nAmpere2V(self->mix_level[0])
                                                    : main_get_gapp()->xsm->Inst->nAmpere2V(self->mix_set_point[0]);
                 jdata[2] = self->mix_level[0] > 0.  // Manual CZ-Control of Upper limit via Z-Position?
-                        ? main_get_gapp()->xsm->Inst->ZA2Volt(self->zpos_ref * spmc_parameters.gxsm_z_polarity)
+                        ? main_get_gapp()->xsm->Inst->ZA2Volt(-self->zpos_ref)  // FPGA  internal has pos Z feedback behavior, i.e. Z pos = tip down
                         : self->z_limit_upper_v; //5.; // UPPER
                 if (self->mix_level[0] > 0.)
                         self->ec_z_upper->Freeze();
@@ -3119,7 +3119,7 @@ void RPSPMC_Control::ZPosSetChanged(Param_Control* pcs, RPSPMC_Control *self){
         }
 
         // mirror basic parameters to GXSM4 main
-        main_get_gapp()->xsm->data.s.SetPoint = main_get_gapp()->xsm->Inst->ZA2Volt(self->zpos_ref * spmc_parameters.gxsm_z_polarity);
+        main_get_gapp()->xsm->data.s.SetPoint = main_get_gapp()->xsm->Inst->ZA2Volt(self->zpos_ref);
 }
 
 void RPSPMC_Control::ZServoParamChanged(Param_Control* pcs, RPSPMC_Control *self){
@@ -3148,7 +3148,7 @@ void RPSPMC_Control::ZServoParamChanged(Param_Control* pcs, RPSPMC_Control *self
                 jdata[2]   = self->z_servo[SERVO_CP];
                 jdata[3]   = self->z_servo[SERVO_CI];
                 jdata[4]   = self->mix_level[0] > 0.  // Manual CZ-Control of Upper limit via Z-Position?
-                        ? main_get_gapp()->xsm->Inst->ZA2Volt(self->zpos_ref * spmc_parameters.gxsm_z_polarity)
+                        ? main_get_gapp()->xsm->Inst->ZA2Volt(-self->zpos_ref)  // FPGA  internal has pos Z feedback behavior, i.e. Z pos = tip down
                         : self->z_limit_upper_v; //5.; // UPPER
                 jdata[5]   = spmc_parameters.z_servo_lower; // -5.; // LOWER
 
@@ -3338,8 +3338,12 @@ void RPSPMC_Control::update_GUI_from_FPGA (){ // after warm start or re-connect
 void RPSPMC_Control::update_zpos_readings(){
         //double zp,a,b;
         //main_get_gapp()->xsm->hardware->RTQuery ("z", zp, a, b);
-        zpos_mon = main_get_gapp()->xsm->Inst->Volt2ZA(spmc_parameters.z_monitor-spmc_parameters.zs_monitor); // remove slope component
-        gchar *info = g_strdup_printf (" + %g"UTF8_ANGSTROEM" Slp", main_get_gapp()->xsm->Inst->Volt2ZA(spmc_parameters.zs_monitor));
+        zpos_mon = main_get_gapp()->xsm->Inst->Volt2ZA(spmc_parameters.gxsm_z_polarity*spmc_parameters.z_monitor + spmc_parameters.zs_monitor); // remove slope component
+        gchar *info;
+        if (-spmc_parameters.zs_monitor >= 0.)
+                info = g_strdup_printf (" + %g "UTF8_ANGSTROEM" Slp",  main_get_gapp()->xsm->Inst->Volt2ZA(-spmc_parameters.zs_monitor));
+        else
+                info = g_strdup_printf (" %g "UTF8_ANGSTROEM" Slp",  main_get_gapp()->xsm->Inst->Volt2ZA(-spmc_parameters.zs_monitor));
         ZPos_ec->set_info (info);
         ZPos_ec->Put_Value ();
         g_free (info);
@@ -6024,8 +6028,14 @@ void RPspmc_pacpll::on_connect_actions(){
                                         i&MM_FCZ && i&MM_ON ? "-FCZ":"",
                                         i&MM_RESET          ? "RESET":"NORMAL"); status_append (tmp);  rpspmc_hwi->info_append (tmp); g_free (tmp); }        
 
-        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_POLARITY..: %s\n", ((int)spmc_parameters.gvp_status)&(1<<7) ? "NEG":"POS"); status_append (tmp);  rpspmc_hwi->info_append (tmp); g_free (tmp); }        
-        spmc_parameters.gxsm_z_polarity = ((int)spmc_parameters.gvp_status)&(1<<7) ? -1:1;
+        { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_POLARITY..: %s "
+                                        "** Positive Polarity := Z piezo aka tip extends towards the surface with positive voltage.\n"
+                                        " *                                        "
+                                        "** But Gxsm and we want logically Z been positive for higher up, thus inverting internally all Z values.\n",
+                                        ((int)spmc_parameters.gvp_status)&(1<<7) ? "NEG":"POS"); status_append (tmp);  rpspmc_hwi->info_append (tmp); g_free (tmp); }        
+
+        // ((int)spmc_parameters.gvp_status)&(1<<7) BIT=1 (true) := invert Z on FPGA after slope to DAC-Z, this effects Z-monitor. FPGA internal Z is inverted vs GXSM convetion of pos Z = tip up
+        spmc_parameters.gxsm_z_polarity = ((int)spmc_parameters.gvp_status)&(1<<7) ? 1:-1;
         int gxsm_preferences_polarity = xsmres.ScannerZPolarity ? 1 : -1; // 1: pos, 0: neg (bool) -- adjust zpos_ref accordingly!
                  
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Z_SERVO_SET.: %g Veq\n", spmc_parameters.z_servo_setpoint); status_append (tmp); g_free (tmp); }
@@ -6096,27 +6106,28 @@ void RPspmc_pacpll::on_connect_actions(){
         gapp->check_events ();
 
         // VERIFY IF CORRECT, ASK TO ADJUST IF MISMATCH
-        if (spmc_parameters.gxsm_z_polarity != gxsm_preferences_polarity &&  gxsm_preferences_polarity < 0)
+        if ((-spmc_parameters.gxsm_z_polarity) != gxsm_preferences_polarity &&  gxsm_preferences_polarity < 0)
                 if ( gapp->question_yes_no ("WARNING: Gxsm Preferences indicate NEGATIVE Z Polarity.\nPlease confirm to set Z-Polarity set to NEGATIVE.")){
-                        rpspmc_pacpll->write_parameter ("SPMC_Z_POLARITY", -1);
-                        spmc_parameters.gxsm_z_polarity = -1;
+                        rpspmc_pacpll->write_parameter ("SPMC_Z_POLARITY", -1); // inverted "pos" on hardware internal FPGA processing as of pos feedback behavior default
+                        spmc_parameters.gxsm_z_polarity = 1; // inverted to flip for Gxsm default Z-up = pos
                         for (int i=0; i<10; ++i) { usleep (100000); gapp->check_events (); }
                         { gchar *tmp = g_strdup_printf (" *** Adjusted (+=>-) SPM RPSPMC Z_POLARITY..: %s\n", ((int)spmc_parameters.gvp_status)&(1<<7) ? "NEG":"POS"); status_append (tmp);  rpspmc_hwi->info_append (tmp); g_free (tmp); }        
                 }
 
         gapp->check_events ();
 
-        if (spmc_parameters.gxsm_z_polarity != gxsm_preferences_polarity &&  gxsm_preferences_polarity > 0)
+        // most usual case w single Z piezo:
+        if ((-spmc_parameters.gxsm_z_polarity) != gxsm_preferences_polarity &&  gxsm_preferences_polarity > 0)
                 if ( gapp->question_yes_no ("WARNING: Gxsm Preferences indicate POSITIVE Z Polarity.\nPlease confirm to set Z-Polarity set to POSITIVE.")){
-                        rpspmc_pacpll->write_parameter ("SPMC_Z_POLARITY", 1);
-                        spmc_parameters.gxsm_z_polarity = 1;
+                        rpspmc_pacpll->write_parameter ("SPMC_Z_POLARITY", 1); // inverted "pos" on hardware internal FPGA processing as of pos feedback behavior default
+                        spmc_parameters.gxsm_z_polarity = -1; // inverted to flip for Gxsm default Z-up = pos
                         for (int i=0; i<10; ++i) { usleep (100000); gapp->check_events (); }
                         { gchar *tmp = g_strdup_printf (" *** Adjusted (-=>+) SPM RPSPMC Z_POLARITY..: %s\n", ((int)spmc_parameters.gvp_status)&(1<<7) ? "NEG":"POS"); status_append (tmp);  rpspmc_hwi->info_append (tmp); g_free (tmp); }        
                 }
 
         gapp->check_events ();
         
-        if (spmc_parameters.gxsm_z_polarity != gxsm_preferences_polarity){
+        if ((-spmc_parameters.gxsm_z_polarity) != gxsm_preferences_polarity){
                 g_warning (" Z-Polarity was not changed. ");
         }
         

@@ -218,7 +218,9 @@ extern "C++" {
                   ),
                 GNOME_RES_ENTRY_AUTO_PATH_OPTION
                 ( GNOME_RES_BOOL, "Instrument/ScannerZPolarity", "negative", &xsmres.ScannerZPolarity, InstrumentZPolarityList, N_("Inst-SPM"), 
-                  N_("MK3 only: select scanner Z polarity. Default is negative and means Z-Piezo Volatge +MaxV = fully retracted.")
+                  N_("select scanner Z polarity. Default is negative and means Z-Piezo Volatge +MaxV = fully retracted.\n"
+                     "** Positive Polarity := Z piezo aka tip extends towards the surface with positive voltage.\n"
+                     "** But Gxsm and we want logically Z been positive for higher up, thus inverting internally all Z values.")
                   ),
 
                 // Analog defaults, Piezodrive

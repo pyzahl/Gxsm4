@@ -124,7 +124,7 @@ void rpspmc_hwi_dev::update_hardware_mapping_to_rpspmc_source_signals (){
                         switch (rpspmc_source_signals[i].mask){
                         case 0x0001: volt_to_unit = XAngFac; break;
                         case 0x0002: volt_to_unit = YAngFac; break;
-                        case 0x0004: volt_to_unit = spmc_parameters.gxsm_z_polarity*ZAngFac; break;
+                        case 0x0004: volt_to_unit = ZAngFac; break;
                         case 0x0008: volt_to_unit = BiasFac; break;
                         case 0x0010: volt_to_unit = CurrFac; break;
                         }
@@ -1198,7 +1198,7 @@ gboolean rpspmc_hwi_dev::ScanLineM(int yindex, int xdir, int muxmode, //srcs_mas
 
 gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2, double &val3){
         if (*property == 'z'){ // Scan Coordinates: ZScan, XScan, YScan  with offset!! -- in volts with gains!
-		val1 = spmc_parameters.z_monitor*main_get_gapp()->xsm->Inst->VZ();
+		val1 = spmc_parameters.gxsm_z_polarity*spmc_parameters.z_monitor*main_get_gapp()->xsm->Inst->VZ(); // adjust for polarity as Z-Monitor is the actual DAC OUT Z
 		val2 = spmc_parameters.x_monitor*main_get_gapp()->xsm->Inst->VX();
                 val3 = spmc_parameters.y_monitor*main_get_gapp()->xsm->Inst->VY();
 		return TRUE;
@@ -1228,7 +1228,7 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2,
 	}
 
         if (*property == 'Z'){ // probe Z -- well total Z here again
-                val1 = rpspmc_pacpll_hwi_pi.app->xsm->Inst->Volt2ZA (spmc_parameters.z_monitor); // Z pos in Ang
+                val1 = rpspmc_pacpll_hwi_pi.app->xsm->Inst->Volt2ZA (spmc_parameters.gxsm_z_polarity*spmc_parameters.z_monitor); // Z pos in Ang,  adjust for polarity as Z-Monitor is the actual DAC OUT Z
 		return TRUE;
         }
 
