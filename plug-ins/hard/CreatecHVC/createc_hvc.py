@@ -62,7 +62,16 @@ TRUE  = -1
 SWAP_CXY=1
 
 # RPSPMC XYZ Monitors via GXSM4 
-global xyz_shm
+global gxsm_shm
+
+global rpspmc
+
+rpspmc = {
+        'bias': 0.0,
+        'current': 0.0,
+        'gvp' : { 'x':0.0, 'y':0.0, 'z': 0.0, 'u': 0.0, 'a': 0.0, 'b': 0.0, 'am':0.0, 'fm':0.0 },
+        'pac' : { 'dds_freq': 0.0, 'ampl': 0.0, 'exec':0.0, 'phase': 0.0, 'freq': 0.0, 'dfreq': 0.0, 'dfreq_ctrl': 0.0 }
+        }
 
 global CHV5_configuration
 global CHV5_driftcomp
@@ -113,11 +122,11 @@ control_list = []
 # open shared memort to gxsm4 to RPSPMC's monitors
 
 try:
-        xyz_shm = shared_memory.SharedMemory(name='gxsm4rpspmc_monitors')
-        unregister(xyz_shm._name, 'shared_memory')
+        gxsm_shm = shared_memory.SharedMemory(name='gxsm4rpspmc_monitors')
+        unregister(gxsm_shm._name, 'shared_memory')
 
-        print (xyz_shm)
-        xyz=np.ndarray((9,), dtype=np.double, buffer=xyz_shm.buf).reshape((3,3)).T  # X Mi Ma, Y Mi Ma, Z Mi Ma
+        print (gxsm_shm)
+        xyz=np.ndarray((9,), dtype=np.double, buffer=gxsm_shm.buf).reshape((3,3)).T  # X Mi Ma, Y Mi Ma, Z Mi Ma
         print (xyz)
 except FileNotFoundError:
         print ("SharedMemory(name='gxsm4rpspmc_monitors') not available. Please start gxsm4 and connect RPSPMC.")
@@ -224,7 +233,6 @@ class gxsm_link():
                         t = Timer(self.interval - (ticks-start-count*self.interval), self.offset_adjust, [start, count+1])
                         t.start()
                 v = [0.,0.,0.]
-                #self.offset_ctrl.adjust_gains (self.gains)
                 print ("Number of ticks since 12:00am, January 1, 1970:", ticks, " #", count, v)
             
         def start (self):
@@ -279,13 +287,25 @@ def _X_write_back_():
         global CHV5_configuration
 
 ## show only current
-def update_CHV5_monitor(_c1set, _c2set, _c3set):
+global QPAmpl
+QPAmpl = [0.,0.,0.]
+def update_CHV5_monitor(_c1set, _c2set, _c3set, _cqp):
         global CHV5_configuration
         global CHV5_monitor
+        global rpspmc
+        global QPAmpl
 
         _c1set (scaleM[0] * CHV5_monitor['monitor'][0], scaleM[0] * CHV5_monitor['monitor_min'][0], scaleM[0] * CHV5_monitor['monitor_max'][0])
         _c2set (scaleM[1] * CHV5_monitor['monitor'][1], scaleM[1] * CHV5_monitor['monitor_min'][1], scaleM[1] * CHV5_monitor['monitor_max'][1])
         _c3set (scaleM[2] * CHV5_monitor['monitor'][2], scaleM[2] * CHV5_monitor['monitor_min'][2], scaleM[2] * CHV5_monitor['monitor_max'][2])
+
+        ## print (rpspmc)
+        QPAmpl[0] = rpspmc['pac']['ampl']
+        #rpspmc['pac']['dfreq']
+        _cqp (rpspmc['pac']['ampl'], rpspmc['pac']['dfreq'], QPAmpl[2])
+        mu = 0.02
+        QPAmpl[2] = QPAmpl[0] if QPAmpl[2] < QPAmpl[0] else (1-mu)*QPAmpl[2]+mu*QPAmpl[0]
+        #QPAmpl[1] = QPAmpl[0] if QPAmpl[1] > QPAmpl[0] else (1-mu)*QPAmpl[2]+mu*QPAmpl[0]
         
         return 1
 
@@ -325,6 +345,7 @@ def hv1_adjust(_object, _value, _identifier):
 
         CHV5_gains[index] = CHV5_gain_list[value]
 
+        print ('HV-adjust: ', index, value, ', CHV5 Gains: ', CHV5_gains, ' ... may toggle to enforce up-to-now.')
 
         read_back ()
         return 1
@@ -374,16 +395,6 @@ class offset_vector():
         
         read_back ()
         GLib.idle_add (self.update_display)
-
-    def adjust_gains (self, gains):
-        gain = [3, 6, 12, 24]
-        for ci in range(0,3):
-            for i in range(0,5):
-                if gains[ci] == gain[i]:
-                    print ("setting gain[%d]"%ci+" to %dx"%gain[i])
-                    hv1_adjust (0, i, ci)
-                    self.gainselectmenuvec[ci](i)
-        return False
 
 class drift_compensation():
     def __init__(self, edv, oc):
@@ -521,25 +532,52 @@ def on_bw_changed(combo, ii):
                 g = model[tree_iter][0]
                 position = combo.get_active()
                 print("BW {}: {} [{}]".format(ii,g,position))
-                hv1_adjust (None, position, ii)
+                #hv1_adjust (None, position, ii)
 
 
 def get_status():
         global CHV5_monitor
-        global xyz_shm
+        global gxsm_shm
         global CHV5_gains
 
+        global rpspmc
+        
         try:
-                xyz=np.ndarray((9,), dtype=np.double, buffer=xyz_shm.buf).reshape((3,3)).T  # X Mi Ma, Y Mi Ma, Z Mi Ma
+
+                # XYZ MAX MIN (3x3)
+                #memcpy  (shm_ptr, spmc_signals.xyz_meter, sizeof(spmc_signals.xyz_meter));
+                #           0,1,2,  3,4,5,  6,7,8,
+                
+                # Monitors: Bias, reg, set,   GPVU,A,B,AM,FM, MUX, Signal (Current), AD463x[2], XYZ, XYZ0, XYZS
+                #           10,    11,  12,    13, 14,15,16,17, 18, 19,               20, 21,    22,  23,   24
+                #memcpy  (shm_ptr+sizeof(spmc_signals.xyz_meter), &spmc_parameters.bias_monitor, 21*sizeof(double));
+
+                # PAC-PLL Monitors: dc-offset, exec_ampl_mon, dds_freq_mon, dds_dfre, volume_mon, phase_mon, control_dfreq_mon
+                #memcpy  (shm_ptr+sizeof(spmc_signals.xyz_meter)+21*sizeof(double), &pacpll_parameters.dc_offset, 6*sizeof(double));
+                #                   40,        41,            42,           43,        44,          45,        46
+                
+                gxsm_shares=np.ndarray((50), dtype=np.double, buffer=gxsm_shm.buf) # flat array all shares 
+                xyz=np.ndarray((9,), dtype=np.double, buffer=gxsm_shm.buf).reshape((3,3)).T  # X Mi Ma, Y Mi Ma, Z Mi Ma
                 CHV5_monitor['monitor']=xyz[0] * CHV5_gains
                 CHV5_monitor['monitor_max']=xyz[1] * CHV5_gains
                 CHV5_monitor['monitor_min']=xyz[2] * CHV5_gains
+
+                #print ('CHV5 Gains: ', CHV5_gains, ' ... may toggle to enforce up-to-now.')
+                #print (CHV5_monitor)
+                
+                rpspmc['bias']      = gxsm_shares[10]
+                rpspmc['current']   = gxsm_shares[19]
+                rpspmc['gvp']['u']  = gxsm_shares[13]
+                rpspmc['pac']['ampl']   = gxsm_shares[44]
+                rpspmc['pac']['dfreq']   = gxsm_shares[43]
+                #print (rpspmc)
+                
         except NameError:
                 try:
-                        xyz_shm = shared_memory.SharedMemory(name='gxsm4rpspmc_monitors')
-                        unregister(xyz_shm._name, 'shared_memory')
-                        print (xyz_shm)
-                        xyz=np.ndarray((9,), dtype=np.double, buffer=xyz_shm.buf).reshape((3,3)).T  # X Mi Ma, Y Mi Ma, Z Mi Ma
+                        gxsm_shm = shared_memory.SharedMemory(name='gxsm4rpspmc_monitors')
+                        unregister(gxsm_shm._name, 'shared_memory')
+                        print (gxsm_shm)
+                        xyz=np.ndarray((9,), dtype=np.double, buffer=gxsm_shm.buf).reshape((3,3)).T  # X Mi Ma, Y Mi Ma, Z Mi Ma
                         print (xyz)
                 except FileNotFoundError:
                         print ("SharedMemory(name='gxsm4rpspmc_monitors') not available. Please start gxsm4 and connect RPSPMC.")
@@ -598,11 +636,13 @@ class HV5App(Gtk.Application):
         def do_activate(self):
                 global CHV5_configuration
                 global CHV5_monitor
+                global CHV5_gains
 
                 if not self.window:
                         self.window = Gtk.ApplicationWindow(application=self, title="CHV5")
-
                         name = "Createc HV Control"
+
+                        print ('do_activate: CHV5 Gains: ', CHV5_gains, ' ... may toggle to enforce up-to-now.')
                         
                         hb = Gtk.HeaderBar() 
                         #hb.set_show_close_button(True) 
@@ -612,8 +652,17 @@ class HV5App(Gtk.Application):
                         
                         grid = Gtk.Grid()
                         self.window.set_child (grid)
-                        
+
                         tr=1
+
+                        maxvqp = 10
+                        v = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+                        cqp = Instrument( Gtk.Label(), v, "Volt", "QP-Apm", unit[0], widget_scale=METER_SCALE)
+                        #cqp = Instrument( Gtk.Label(), v, "mVolt", "QP-Amp", 'mV', widget_scale=METER_SCALE)
+                        cqp.set_range(arange(0,maxvqp/10*11,maxvqp/10))
+                        grid.attach(v, 0,tr, 1,1)
+
+                        
                         maxv = 200
                         v = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
                         c1 = Instrument( Gtk.Label(), v, "Volt", "X-Axis", unit[0], widget_scale=METER_SCALE)
@@ -631,7 +680,7 @@ class HV5App(Gtk.Application):
                         grid.attach(v, 3,tr, 1,1)
                         tr=tr+1
                         
-                        GLib.timeout_add (updaterate, update_CHV5_monitor, c1.set_reading_lohi, c2.set_reading_lohi, c3.set_reading_lohi)
+                        GLib.timeout_add (updaterate, update_CHV5_monitor, c1.set_reading_lohi, c2.set_reading_lohi, c3.set_reading_lohi, cqp.set_reading_lohi)
                         separator = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
                         grid.attach(separator, 0, tr, 5, 1)
                         tr=tr+1
@@ -892,5 +941,5 @@ if __name__ == "__main__":
         app.run()
 
 
-#xyz_shm.close()
+#gxsm_shm.close()
 

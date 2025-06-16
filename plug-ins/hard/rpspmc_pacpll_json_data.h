@@ -50,6 +50,7 @@ struct PACPLL_parameters {
         double dc_offset;
         double exec_amplitude_monitor;
         double dds_frequency_monitor;
+        double dds_dfreq_computed;
         double volume_monitor;
         double phase_monitor;
         double control_dfreq_monitor;

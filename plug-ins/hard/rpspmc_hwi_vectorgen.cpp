@@ -99,7 +99,7 @@ double RPSPMC_Control::make_dUdz_vector (int index, double dU, double dZ, int n,
         program_vector.f_du = dU/main_get_gapp()->xsm->Inst->BiasGainV2V ();
         program_vector.f_dx = 0.0;
         program_vector.f_dy = 0.0;
-        program_vector.f_dz = main_get_gapp()->xsm->Inst->ZA2Volt (dZ);
+        program_vector.f_dz = main_get_gapp()->xsm->Inst->ZA2Volt (-dZ);
         program_vector.f_da = 0.0;
         program_vector.f_db = 0.0;
         program_vector.f_dam = 0.0;
@@ -125,7 +125,7 @@ double RPSPMC_Control::make_ZXYramp_vector (int index, double dZ, double dX, dou
         program_vector.f_du = 0.0;
         program_vector.f_dx = main_get_gapp()->xsm->Inst->XA2Volt (dX);
         program_vector.f_dy = main_get_gapp()->xsm->Inst->YA2Volt (dY);
-        program_vector.f_dz = main_get_gapp()->xsm->Inst->ZA2Volt (dZ);
+        program_vector.f_dz = main_get_gapp()->xsm->Inst->ZA2Volt (-dZ);
         program_vector.f_da = 0.0;
         program_vector.f_db = 0.0;
         program_vector.f_dam = 0.0;
@@ -156,7 +156,7 @@ double RPSPMC_Control::make_dUZXYAB_vector (int index, double dU, double dZ, dou
         program_vector.f_du = dU/main_get_gapp()->xsm->Inst->BiasGainV2V ();
         program_vector.f_dx = main_get_gapp()->xsm->Inst->XA2Volt (dX);
         program_vector.f_dy = main_get_gapp()->xsm->Inst->YA2Volt (dY);
-        program_vector.f_dz = main_get_gapp()->xsm->Inst->ZA2Volt (dZ);
+        program_vector.f_dz = main_get_gapp()->xsm->Inst->ZA2Volt (-dZ);
         program_vector.f_da = da;
         program_vector.f_db = db;
         program_vector.f_dam = dam;
@@ -192,7 +192,7 @@ double RPSPMC_Control::make_dUZXYAB_vector_all_volts (int index, double dU, doub
         program_vector.f_du = dU;
         program_vector.f_dx = dX;
         program_vector.f_dy = dY;
-        program_vector.f_dz = dZ;
+        program_vector.f_dz = dZ; // WARNING NOT INVERTED in Volts, only for Z in And
         program_vector.f_da = da;
         program_vector.f_db = db;
         program_vector.f_dam = dam;

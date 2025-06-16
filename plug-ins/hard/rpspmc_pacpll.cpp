@@ -5604,7 +5604,10 @@ void RPspmc_pacpll::update_monitoring_parameters(){
         parameters.free_ram = pacpll_parameters.free_ram;
         parameters.counter = pacpll_parameters.counter;
 
-        gchar *delta_freq_info = g_strdup_printf ("[%g]", parameters.dds_frequency_monitor - parameters.frequency_center);
+        pacpll_parameters.dds_dfreq_computed = parameters.dds_frequency_monitor - parameters.frequency_center;
+        gchar *delta_freq_info = g_strdup_printf ("[%g]", pacpll_parameters.dds_dfreq_computed);
+
+        
         input_ddsfreq->set_info (delta_freq_info);
         g_free (delta_freq_info);
         if (G_IS_OBJECT (window))
@@ -7000,7 +7003,7 @@ void RPspmc_pacpll::update_shm_monitors (int close_shm){
         static int shm_fd = -1;
         static void *shm_ptr = NULL;
         // Set the size of the shared memory region
-        static size_t shm_size = 1024;
+        static size_t shm_size = sizeof(double)*512;
          
         if (shm_fd == -1){
                 shm_fd = shm_open(rpspmc_monitors, O_CREAT | O_RDWR, 0666);
@@ -7025,14 +7028,14 @@ void RPspmc_pacpll::update_shm_monitors (int close_shm){
 
         // Write data to the shared memory
 
-        // XYZ MAX MIN (3x3)
+        // RPSPMC XYZ MAX MIN (3x3)
         memcpy  (shm_ptr, spmc_signals.xyz_meter, sizeof(spmc_signals.xyz_meter));
 
-        // Monitors: Bias, reg, set,   GPVU,A,B,AM,FM, MUX, Signal (Current), AD463x[2], XYZ, XYZ0, XYZS
-        memcpy  (shm_ptr+sizeof(spmc_signals.xyz_meter), &spmc_parameters.bias_monitor, 21*sizeof(double));
+        // RPSPMC Monitors: Bias, reg, set,   GPVU,A,B,AM,FM, MUX, Signal (Current), AD463x[2], XYZ, XYZ0, XYZS
+        memcpy  (shm_ptr+10*sizeof(double), &spmc_parameters.bias_monitor, 21*sizeof(double));
 
         // PAC-PLL Monitors: dc-offset, exec_ampl_mon, dds_freq_mon, volume_mon, phase_mon, control_dfreq_mon
-        memcpy  (shm_ptr+sizeof(spmc_signals.xyz_meter)+21*sizeof(double), &pacpll_parameters.dc_offset, 6*sizeof(double));
+        memcpy  (shm_ptr+40*sizeof(double), &pacpll_parameters.dc_offset, 7*sizeof(double));
         
         /*
         sprintf (shm_ptr+512, "XYZ=[[%g %g %g] [%g %g %g] [%g %g %g]]\n",
