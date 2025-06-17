@@ -243,11 +243,17 @@ class Meter(Gtk.DrawingArea):
             needle_len = 98.0
             needle_len2= 78.0
             needle_hub = 21.0
+            needle_xtra1 = 118.0
+            needle_xtra2 = 130.0
 
 #            lp = lp * 0.8 + env * bias * 0.2  # low pass!
 
-            theta = ((self.par.get_cur_value()-lowervalue) * angle_scale) - angle_offset
-
+            theta  = ((self.par.get_cur_value()-lowervalue) * angle_scale) - angle_offset
+            if self.par.get_cur_valuex() > -999:
+                thetax = ((self.par.get_cur_valuex()-lowervalue) * angle_scale) - angle_offset
+            else:
+                thetax = -999
+                
             flag = 3
             if theta < -0.7853975:
                 theta = -0.7853975
@@ -305,24 +311,46 @@ class Meter(Gtk.DrawingArea):
 
             cr.restore ()
 
+            if thetax > -999:
+                if thetax < -0.7853975:
+                    thetax = -0.7853975
+                if thetax > 0.7853975:
+                    thetax = 0.7853975
+
+                cr.save ()
+                cr.translate (108, 169)
+                cr.rotate (math.pi+thetax)
+
+                cr.set_source_rgb(0.8, 0.11, 0.1)
+                cr.set_line_width(3.8)
+                cr.move_to(0, needle_xtra1)
+                cr.line_to(0, needle_xtra2)
+                cr.stroke()
+
+                cr.restore ()
+
+            
             cr.set_source_rgb(0.35, 0.31, 0.24)
 
             # Unit, factor
             cr.set_font_size(11)
             cr.set_source_rgb(0.35, 0.31, 0.24)
-            reading = self.par.unitx
-            (x, y, width, height, dx, dy) = cr.text_extents(reading)
-            cr.move_to(108-width/2, 110)
-            cr.text_path(reading)
-            cr.stroke()
+            if self.vumeter==2 :
+                reading = self.par.unitx
+                (x, y, width, height, dx, dy) = cr.text_extents(reading)
+                cr.move_to(108-width/2, 110)
+                cr.text_path(reading)
+                cr.stroke()
 
             Ufactor = vrange/10.
             cr.set_font_size(10)
-            reading = "x %g"%Ufactor
-            (x, y, width, height, dx, dy) = cr.text_extents(reading)
-            cr.move_to(108-width/2, 120)
-            cr.text_path(reading)
-            cr.stroke()
+
+            if self.vumeter==2 :
+                reading = "x %g"%Ufactor
+                (x, y, width, height, dx, dy) = cr.text_extents(reading)
+                cr.move_to(108-width/2, 120)
+                cr.text_path(reading)
+                cr.stroke()
 
             # actual
             reading = self.par.format%(self.par.cur_value)
@@ -472,6 +500,7 @@ class Instrument(Gtk.Label):
         self.cur_value = 0
         self.cur_value_lo = 0
         self.cur_value_hi = 0
+        self.cur_xvalue = -999
         self.polarity="+"
         self.frametype=ft
         self.label = l
@@ -537,25 +566,23 @@ class Instrument(Gtk.Label):
 
     def set_reading_vu (self, value, hi, pol="+", lp=0.5):
         self.cur_value = (1.-lp)*self.cur_value + lp*value
-        self.cur_value_lo = 0.97*self.cur_value_lo + 0.03*value
-        if value < self.cur_value_lo:
-            self.cur_value_lo = value
-        
-        self.cur_value_hi = 0.97*self.cur_value_hi + 0.03*hi
-        if hi > self.cur_value_hi:
-            self.cur_value_hi = hi
-
+        self.cur_value_lo = self.cur_value_lo if value < self.cur_value_lo else 0.97*self.cur_value_lo + 0.03*value
+        self.cur_value_hi = hi if hi > self.cur_value_hi else 0.97*self.cur_value_hi + 0.03*hi
         self.polarity=pol
         self.meter.queue_draw()
         
     def set_reading_auto_vu (self, value, pol="+", lp=0.5):
         self.cur_value = (1.-lp)*self.cur_value + lp*value
-        self.cur_value_hi = 0.97*self.cur_value_hi + 0.03*value
-        if value > self.cur_value_hi:
-            self.cur_value_hi = value
-        self.cur_value_lo = 0.97*self.cur_value_lo + 0.03*value
-        if value < self.cur_value_lo:
-            self.cur_value_lo = value
+        self.cur_value_hi = value if value > self.cur_value_hi else 0.97*self.cur_value_hi + 0.03*value
+        self.cur_value_lo = value if value < self.cur_value_lo else 0.97*self.cur_value_lo + 0.03*value
+        self.polarity=pol
+        self.meter.queue_draw()
+        
+    def set_reading_auto_vu_extra (self, value, value_extra, pol="+", lp=0.5):
+        self.cur_xvalue = value_extra
+        self.cur_value = (1.-lp)*self.cur_value + lp*value
+        self.cur_value_hi = value if value > self.cur_value_hi else 0.97*self.cur_value_hi + 0.03*value
+        self.cur_value_lo = value if value < self.cur_value_lo else 0.97*self.cur_value_lo + 0.03*value
         self.polarity=pol
         self.meter.queue_draw()
         
@@ -563,6 +590,8 @@ class Instrument(Gtk.Label):
         return self.format
     def get_cur_value(self):
         return self.cur_value
+    def get_cur_valuex(self):
+        return self.cur_xvalue
     def get_lo_value(self):
         return self.cur_value_lo
     def get_hi_value(self):

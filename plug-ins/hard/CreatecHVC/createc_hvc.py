@@ -110,7 +110,7 @@ DIGVfacO = 1. #181.81818/32767.
 
 scaleM = [ DIGVfacM, DIGVfacM, DIGVfacM ]
 scaleO = [ DIGVfacO, DIGVfacO, DIGVfacO ]
-unit  = [ "V", "V", "V" ]
+unit  = [ "V", "V", "V", "dB" ]
 
 updaterate = 88        # update time watching the SRanger in ms
 
@@ -300,11 +300,14 @@ def update_CHV5_monitor(_c1set, _c2set, _c3set, _cqp):
         _c3set (scaleM[2] * CHV5_monitor['monitor'][2], scaleM[2] * CHV5_monitor['monitor_min'][2], scaleM[2] * CHV5_monitor['monitor_max'][2])
 
         ## print (rpspmc)
-        QPAmpl[0] = rpspmc['pac']['ampl']
-        #rpspmc['pac']['dfreq']
-        _cqp (rpspmc['pac']['ampl'], rpspmc['pac']['dfreq'], QPAmpl[2])
-        mu = 0.02
-        QPAmpl[2] = QPAmpl[0] if QPAmpl[2] < QPAmpl[0] else (1-mu)*QPAmpl[2]+mu*QPAmpl[0]
+        QPAmpl[0] = -100+10*rpspmc['pac']['ampl']
+        if QPAmpl[0] > 0.0:
+                QPAmpl[0] = 20*(math.log10(rpspmc['pac']['ampl'])-1)
+        #rpspmc['pac']['dfreq']rpspmc['pac']['dfreq']
+        _cqp (QPAmpl[0], 10*(rpspmc['pac']['dfreq']-1))
+        #_cqp (0, -10, -100)  # 0 -> 1dB   10 -> +20dB    -10 -> 0dB   -100 -> -20dB
+        #mu = 0.02
+        #QPAmpl[2] = QPAmpl[0] if QPAmpl[2] < QPAmpl[0] else (1-mu)*QPAmpl[2]+mu*QPAmpl[0]
         #QPAmpl[1] = QPAmpl[0] if QPAmpl[1] > QPAmpl[0] else (1-mu)*QPAmpl[2]+mu*QPAmpl[0]
         
         return 1
@@ -657,8 +660,7 @@ class HV5App(Gtk.Application):
 
                         maxvqp = 10
                         v = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-                        cqp = Instrument( Gtk.Label(), v, "Volt", "QP-Apm", unit[0], widget_scale=METER_SCALE)
-                        #cqp = Instrument( Gtk.Label(), v, "mVolt", "QP-Amp", 'mV', widget_scale=METER_SCALE)
+                        cqp = Instrument( Gtk.Label(), v, "VU", "QP", unit[3], widget_scale=METER_SCALE)
                         cqp.set_range(arange(0,maxvqp/10*11,maxvqp/10))
                         grid.attach(v, 0,tr, 1,1)
 
@@ -680,7 +682,7 @@ class HV5App(Gtk.Application):
                         grid.attach(v, 3,tr, 1,1)
                         tr=tr+1
                         
-                        GLib.timeout_add (updaterate, update_CHV5_monitor, c1.set_reading_lohi, c2.set_reading_lohi, c3.set_reading_lohi, cqp.set_reading_lohi)
+                        GLib.timeout_add (updaterate, update_CHV5_monitor, c1.set_reading_lohi, c2.set_reading_lohi, c3.set_reading_lohi, cqp.set_reading_auto_vu_extra)
                         separator = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
                         grid.attach(separator, 0, tr, 5, 1)
                         tr=tr+1
