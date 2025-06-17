@@ -304,7 +304,7 @@ def update_CHV5_monitor(_c1set, _c2set, _c3set, _cqp):
         if QPAmpl[0] > 0.0:
                 QPAmpl[0] = 20*(math.log10(rpspmc['pac']['ampl'])-1)
         #rpspmc['pac']['dfreq']rpspmc['pac']['dfreq']
-        _cqp (QPAmpl[0], 10*(rpspmc['pac']['dfreq']-1))
+        _cqp (QPAmpl[0], 5*(rpspmc['pac']['dfreq']-1))
         #_cqp (0, -10, -100)  # 0 -> 1dB   10 -> +20dB    -10 -> 0dB   -100 -> -20dB
         #mu = 0.02
         #QPAmpl[2] = QPAmpl[0] if QPAmpl[2] < QPAmpl[0] else (1-mu)*QPAmpl[2]+mu*QPAmpl[0]
