@@ -1023,13 +1023,59 @@ void ProfileControl::Init(const gchar *titlestring, int ChNo, const gchar *resid
                 widget_xr_ab=NULL;
         }
         if (!pc_in_window){
-                if (g_strrstr (title, "Red Line Ch")){ // manage 1st 8 channels for red line type profiles
+                if (g_strrstr (title, "Red Line Ch")){ // manage 1st 12 channels for red line type profiles
                         gint i = atoi (&title[11]);
                         if (i>=1 && i <= 8){
                                 gchar *id=g_strdup_printf ("view-profile-redline-%d", i);
                                 set_window_geometry (id, -1, false);
                                 show ();
                         }
+                } else if (g_strrstr (title, "GVP")){ // manage GVP plots
+                        static GSList *xl=NULL;
+                        static GSList *yl=NULL;
+                        static clock_t auto_renew=0;
+                        clock_t t=clock()+10*CLOCKS_PER_SEC;
+                        if (clock() > auto_renew){
+                                g_message ("GVP View Manager Auto Reset");
+                                auto_renew = t;
+                                if (xl) g_slist_free(xl);
+                                if (yl) g_slist_free(yl);
+                                xl=yl=NULL;
+                        }
+                        gchar *sx;
+                        gchar *sy = g_strdup(&title[4]); for (gchar *p=sy; *p; ++p) if (*p=='(') { *p=0; sx=p+1; break; }
+                        for (gchar *p=sx; *p; ++p) if (*p==')') { *p=0; break; } 
+
+                        int ix = g_slist_index(xl, GINT_TO_POINTER(g_str_hash(sx)));
+                        int iy = g_slist_index(yl, GINT_TO_POINTER(g_str_hash(sy)));
+                        
+                        g_message ("locating: %d %d", ix, iy);
+                        if (ix < 0){
+                                g_message ("adding X hash for %s => %x", sx, g_str_hash(sx));
+                                xl = g_slist_append(xl, GINT_TO_POINTER(g_str_hash(sx)));
+                        } else {
+                                g_message ("found X hash for %s => %x => %c", sx, g_str_hash(sx), 'a'+g_slist_index(xl, g_str_hash(sx)));
+                        }
+                        if (iy < 0){
+                                g_message ("adding Y hash for %s => %x", sy, g_str_hash(sy));
+                                yl = g_slist_append(yl, GINT_TO_POINTER(g_str_hash(sy)));
+                        } else {
+                                g_message ("found Y hash for %s => %x => %c", sy, g_str_hash(sy), 'a'+g_slist_index(yl, g_str_hash(sy)));
+                        }
+                        ix = 'a'+g_slist_index(xl, g_str_hash(sx));
+                        iy = 'a'+g_slist_index(yl, g_str_hash(sy));
+
+                        g_message ("GVP WINDOW %s ** %s(%s) => %x %x  => %c%c", title, sy, sx, g_str_hash(sx), g_str_hash(sy), ix, iy);
+
+                        if (ix >= 'a' && ix <= 'd' && iy >= 'a' && iy<='f'){
+                                gchar *id=g_strdup_printf ("view-gvp-%c%c", ix <= 'd'? ix:'d', iy<='f'?iy:'f'); // strip "GVP " from " GVP yyy(xxx)"
+                                set_window_geometry (id, -1, false);
+                        } else {
+                                gchar *id=g_strdup_printf ("view-gvp-%c%c", ix <= 'd'? ix:'d', iy<='f'?iy:'f'); // strip "GVP " from " GVP yyy(xxx)"
+                                g_message ("GVP WINDOW %s is not managed.", id);
+                                g_free (id);
+                        }
+                        g_free (sy);
                 }
         }
 

@@ -630,7 +630,7 @@ void RPSPMC_Control::probedata_visualize (GArray *probedata_x, GArray *probedata
 		XSM_DEBUG_PG("DBG-M VIS c1  ci=" << current_i);
 		XSM_DEBUG_PG ("Probing_graph_callback Visualization -- new pc" );
 		XSM_DEBUG_PG (ylab << " i:" << current_i);
-		gchar   *title  = g_strdup_printf ("Vector Probe, Channel: %s", ylab);
+		gchar   *title  = g_strdup_printf ("GVP %s(%s)", ylab, xlab);
 		XSM_DEBUG_PG("DBG-M VIS c2  " << title << " xr= " << xmin << " .. " << xmax << " " << ylab);
                 gchar *resid = g_strdelimit (g_strconcat (xlab,ylab,NULL), " ;:()[],./?!@#$%^&*()+-=<>", '_');
 
@@ -683,7 +683,7 @@ void RPSPMC_Control::probedata_visualize (GArray *probedata_x, GArray *probedata
 
                 { gchar *tmp = UXaxis->MakeLongLabel(); pc->SetXlabel (tmp); g_free (tmp); }
                 { gchar *tmp = UYaxis->MakeLongLabel(); pc->SetYlabel (tmp); g_free (tmp); }
-                { gchar *title = g_strdup_printf ("Vector Probe, Channel: %s", ylab); pc->SetTitle (title); g_free (title); }
+                { gchar *title = g_strdup_printf ("GVP %s(%s)", ylab, xlab); pc->SetTitle (title); g_free (title); }
 
 		if (join_same_x && si >= pc->get_scount ()){
 			pc->AddLine (si);

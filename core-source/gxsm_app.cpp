@@ -102,6 +102,7 @@ static GActionEntry app_gxsm_action_entries[] = {
         { "save-geometry", App::save_geometry_callback, NULL, NULL, NULL },
         { "load-geometry", App::load_geometry_callback, NULL, NULL, NULL },
         { "auto-scan-view-geometry", App::auto_scanview_geometry_callback, NULL, NULL, NULL },
+        { "auto-probe-view-geometry", App::auto_probeview_geometry_callback, NULL, NULL, NULL },
         { "about", App::help_about_callback, NULL, NULL, NULL },
         { "quit", App::file_quit_callback, NULL, NULL, NULL }
 };
@@ -591,6 +592,7 @@ void App::MAINAppWindowInit(Gxsm4appWindow* win, const gchar *title, const gchar
                                          this);
         // app.auto-scan-view-geometry
 	add_accelerator (G_APPLICATION (gxsm4app), "app.auto-scan-view-geometry", "F2");
+	add_accelerator (G_APPLICATION (gxsm4app), "app.auto-probe-view-geometry", "F3");
 
         // create window PopUp menu  ---------------------------------------------------------------------
         XSM_DEBUG_GM (DBG_L3,  "App::AppWindowInit main menu" );

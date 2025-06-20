@@ -1000,9 +1000,9 @@ void AppBase::LoadGeometryWRefAutoPlace(const gchar *wref_key, const gchar *wref
         int nth = 0;
         if (strncmp (window_key, wref_key, strlen(wref_key))) // only proceed if match (same window base key)
                 return;
-        if (strlen (window_key) > strlen(wref_key)+1)
+        if (strlen (window_key) > strlen(wref_key)+1){ // check for channel id
                 nth = atoi (window_key+strlen(wref_key)+1);
-        else
+        } else
                 return;
         if (nth <= 0 || nth > 16)
                 return;
@@ -1020,6 +1020,7 @@ void AppBase::LoadGeometryWRefAutoPlace(const gchar *wref_key, const gchar *wref
         double stack = 0.95;
         double href = 0.;
         gchar *wk=NULL;
+
         if (wref_key2nd){
                 GVariant *storage = g_settings_get_value (geometry_settings, window_key); // original geom
                 gint32 *tmp = (gint32*) g_variant_get_fixed_array (storage, &n_stores, sizeof (gint32));
@@ -1059,6 +1060,67 @@ void AppBase::LoadGeometryWRefAutoPlace(const gchar *wref_key, const gchar *wref
 
         if (href > 0)
                 window_geometry[WGEO_HEIGHT] = href;
+        
+        position_auto ();
+        resize_auto ();
+
+        if (strcmp (window_key, "main"))
+                show_auto ();
+        else
+                XSM_DEBUG_GM (DBG_L2, "AppBase::AutoLoadGeometry ... MAIN window: show=always");
+}
+
+void AppBase::LoadGeometryWRefAutoPlaceABmode(const gchar *wref_key){
+        int nth = 0;
+        int mth = 0;
+        double stackx = 0.95;
+        double stacky = 0.92;
+        gchar *wk=NULL;
+        gsize n_stores;
+
+        if (strncmp (window_key, wref_key, strlen(wref_key))) // only proceed if match (same window base key)
+                return;
+
+        // check for '-AB' style id presence
+        if (strlen(wref_key) + strlen(wref_key)+2)
+                if (*(window_key+strlen(wref_key)+1) >= 'a' &&
+                    *(window_key+strlen(wref_key)+2) >= 'a'){  // check for view-gvp-aa style indexing and eval 2d grid pos indexing
+                        nth = 1 + (*(window_key+strlen(wref_key)+1)-'a');
+                        mth = 1 + (*(window_key+strlen(wref_key)+2)-'a');
+                        g_message ("LGeoAuto %s %d %d",window_key, nth, mth);
+                }
+                        
+        if (!wref_key || mth < 1 || nth < 1){
+                XSM_DEBUG_ERROR (DBG_L1, "AppBase::LoadGeometry ... error, no window_ref_key given.");
+                return;
+        }
+        XSM_DEBUG_GM (DBG_L2, "AppBase::LoadGeometry *** Load Geometry from window  ** %s +==> #%d **", wref_key, nth );
+
+        if (nth == 1 && mth == 1) return; // do not move ref window
+
+        wk = g_strdup_printf("%s-aa", wref_key);
+
+        XSM_DEBUG_GM (DBG_L2, "AppBase::LoadGeometry *** Load Geometry relative to window  ** %s **", wk );
+
+        mth--;
+        nth--;
+
+        // get reference window geometry from '-aa'
+        GVariant *storage = g_settings_get_value (geometry_settings, wk);
+        g_free (wk);
+        gint32 *tmp = (gint32*) g_variant_get_fixed_array (storage, &n_stores, sizeof (gint32));
+
+        if (!window_geometry)
+                window_geometry = g_new (gint32, WGEO_SIZE);
+
+        memcpy (window_geometry, tmp, WGEO_SIZE*sizeof (gint32));
+
+        g_variant_unref (storage);
+        g_assert_cmpint (n_stores, ==, WGEO_SIZE);
+
+        // shift to grid according to 2d labels 'AA' style
+        window_geometry[WGEO_XPOS] += nth*window_geometry[WGEO_WIDTH]*stackx;
+        window_geometry[WGEO_YPOS] += mth*window_geometry[WGEO_HEIGHT]*stacky;
         
         position_auto ();
         resize_auto ();

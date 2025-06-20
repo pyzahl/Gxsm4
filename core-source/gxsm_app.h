@@ -136,6 +136,7 @@ public:
         static void save_geometry_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
         static void load_geometry_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
         static void auto_scanview_geometry_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
+        static void auto_probeview_geometry_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
         static void help_about_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
 
         /* Window Delete Events */ 
@@ -191,11 +192,18 @@ public:
                 a->LoadGeometryWRefAutoPlace ("view-scan2d");
                 a->LoadGeometryWRefAutoPlace ("view-profile-redline","view-scan2d-1");
         };
+        static void call_auto_probeview_geometry (AppBase* a, gpointer data){
+                a->LoadGeometryWRefAutoPlaceABmode ("view-gvp");
+        };
         void save_app_geometry () { g_slist_foreach (gxsm_app_windows_list, (GFunc) App::call_save_geometry, NULL); };
         void load_app_geometry () { g_slist_foreach (gxsm_app_windows_list, (GFunc) App::call_load_geometry, NULL); };
         void auto_scanview_geometry () {
                 save_app_geometry ();
                 g_slist_foreach (gxsm_app_windows_list, (GFunc) App::call_auto_scanview_geometry, NULL);
+        };
+        void auto_probeview_geometry () {
+                save_app_geometry ();
+                g_slist_foreach (gxsm_app_windows_list, (GFunc) App::call_auto_probeview_geometry, NULL);
         };
 
         /* Init Stuff */
