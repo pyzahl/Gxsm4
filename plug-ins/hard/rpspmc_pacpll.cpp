@@ -1935,7 +1935,7 @@ void RPSPMC_Control::create_folder (){
         }
 
         bp->new_line ();
-	bp->grid_add_ec ("Lck Gain", new UnitObj("^2","^2"), &spmc_parameters.sc_lck_gainn2, 0, 10, ".0f", "SPMC-LCK-GAIN");
+	bp->grid_add_ec ("Lck Sens.", new UnitObj("mV","mV"), &spmc_parameters.sc_lck_sens, 0, 1e6, "5g", 0.0, 5000.0, "SPMC-LCK-GAIN");
         bp->new_line ();
         bp->grid_add_check_button ("CorrS PH Aligned", bp->PYREMOTE_CHECK_HOOK_KEY_FUNC("Lock-In Corr Phase Aligned","dsp-lck-phaligned"), 1,
                                    GCallback (callback_change_LCK_mode), this,
@@ -3858,7 +3858,22 @@ void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *
                 double jdata[6+8];
                 int jdata_i[3];
                 jdata_i[0] = spmc_parameters.sc_lckrf_mode;
-                jdata_i[1] = spmc_parameters.sc_lck_gainn2;
+                //jdata_i[1] = spmc_parameters.sc_lck_gainn2;
+                if (spmc_parameters.sc_lck_sens <= 0.){
+                        g_message ("LCK Gain defaulting to 1x (0)");
+                        jdata_i[1] = 0;
+                } else {
+                        int decii2_max = 12;
+                        double s = 1e-3*spmc_parameters.sc_lck_sens; // mV to V
+                        double g = 5.0/s; // to gain
+                        if (g < 1.) g=1.;
+                        int  gl2 = int(log2(g));
+                        int  gin = gl2 <= decii2_max ? gl2 : decii2_max;
+                        int gout = gl2 > decii2_max && gl2 < 20 ? (gl2-decii2_max) : 0;
+                        int deci = 7;
+                        g_message ("LCK Gain request: %g -> shift %d [gin: %d, gout: %d, dec2: %d] ", g, gl2, gin, gout, deci);
+                        jdata_i[1] = (deci<<16) | (gout<<8) | gin;
+                }
 
                 int i=0;
                 // Update BQ SECTION 1
