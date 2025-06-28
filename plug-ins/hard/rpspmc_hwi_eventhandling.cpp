@@ -554,6 +554,8 @@ void RPSPMC_Control::probedata_visualize (GArray *probedata_x, GArray *probedata
         // force rebuild if view/window arrangement changed?
         if (pc){
                 if ((GrMatWin && !pc->is_external_window_set ()) || (!GrMatWin && pc->is_external_window_set ())){
+                        g_message ("PGCV remove pc from vpg_grid, delete.");
+                        gtk_grid_remove (GTK_GRID (vpg_grid), pc->get_pc_grid ());
                         delete pc;
                         pc = NULL;
                 }

@@ -806,7 +806,7 @@ void ProfileControl::Init(const gchar *titlestring, int ChNo, const gchar *resid
         else
                 title = g_strdup ("Profile");
 
-        AppWindowInit (title);
+        AppWindowInit (title); // setting up pc_grid
         
 	Cursor[0][0] = NULL;
 	Cursor[0][1] = NULL;
@@ -912,12 +912,12 @@ void ProfileControl::Init(const gchar *titlestring, int ChNo, const gchar *resid
                 statusbar = gtk_statusbar_new ();
                 statusid  = gtk_statusbar_get_context_id (GTK_STATUSBAR(statusbar), "drag");
                 gtk_grid_attach (GTK_GRID (pc_grid), statusbar, 1,100, 11,1);
+                gtk_widget_show (statusbar);
         } else {
                 // Get Statusbar
                 statusbar = (GtkWidget*) g_object_get_data (G_OBJECT (window), "statusbar");
                 statusid  = gtk_statusbar_get_context_id (GTK_STATUSBAR(statusbar), "drag");
         }
-        gtk_widget_show (statusbar);
 
         // hookup popup menu
         //gtk_popover_set_default_widget (GTK_POPOVER (p_popup_menu_cv), canvas);
@@ -1141,6 +1141,7 @@ ProfileControl::~ProfileControl ()
                 if (pc_grid){
                         // FIX-ME GTK4
                         XSM_DEBUG_GM (DBG_L3, "ProfileControl::~ProfileControl ** pc-in-window: FIX-ME-GTK4 ??unref grid??");
+                        // remove from container
                         pc_grid = NULL;
                 }
                 app_window = NULL;
@@ -1203,7 +1204,7 @@ void ProfileControl::AppWindowInit(const gchar *title, const gchar *sub_title){
         gtk_widget_show (pc_grid);
 
         // FIX-ME-GTK4 ?!?!
-        // g_signal_connect (G_OBJECT (pc_grid), "destroy", G_CALLBACK (gtk_window_destroy), &pc_grid);
+        g_signal_connect (G_OBJECT (pc_grid), "destroy", G_CALLBACK (gtk_window_destroy), &pc_grid);
 
         gtk_widget_show (GTK_WIDGET (pc_grid)); // FIX-ME GTK4 SHOWALL
 

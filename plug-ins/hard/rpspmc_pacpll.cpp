@@ -225,10 +225,10 @@ SOURCE_SIGNAL_DEF modulation_targets[] = {
 
 SOURCE_SIGNAL_DEF z_servo_current_source[] = {
         //  SIGNAL #  Name               Units.... Scale (not needed or used from here)
-        { 0x00000000, "IN2-RF",          " ",  "nA",  "nA", 256.*SPMC_RPIN12_to_volts, 0, 0 }, // 24.8 Z-Servo internal signal '(32-8) -> x 256
-        { 0x00000001, "IN3-1MSPS"," ",  "nA",  "nA", 256.*SPMC_RPIN34_to_volts, 0, 0 }, // 24.8 Z-Servo internal signal '(32-8) -> x 256  ** IN3-AD463-24-CHA-1MSPS
-        { 0x00000002, "IN3-1M@FIR512"," ",  "nA",  "nA", 256.*SPMC_RPIN34_to_volts, 0, 0 }, // 24.8 Z-Servo internal signal '(32-8) -> x 256 ** IN3-AD463-24-CHA-1MSPS FIR 512x dec (SINC)
-        { 0x00000003, "IN3-1M@FIR128"," ",  "nA",  "nA", 256.*SPMC_RPIN34_to_volts, 0, 0 }, // 24.8 Z-Servo internal signal '(32-8) -> x 256 ** IN3-AD463-24-CHA-1MSPS FIRX 128x dec (SINC)
+        { 0x00000000, "IN2-RF-FIR",    " ",  "nA",  "nA", 256.*SPMC_RPIN12_to_volts, 0, 0 }, // 24.8 Z-Servo internal signal '(32-8) -> x 256
+        { 0x00000001, "IN3-1MSPS",     " ",  "nA",  "nA", 256.*SPMC_RPIN34_to_volts, 0, 0 }, // 24.8 Z-Servo internal signal '(32-8) -> x 256  ** IN3-AD463-24-CHA-1MSPS
+        { 0x00000002, "IN3-1M@FIR1024"," ",  "nA",  "nA", 256.*SPMC_RPIN34_to_volts, 0, 0 }, // 24.8 Z-Servo internal signal '(32-8) -> x 256 ** IN3-AD463-24-CHA-1MSPS FIR 1024x dec (SINC) (~1.58 ms / 632 Hz)
+        { 0x00000003, "IN3-1M@FIR128" ," ",  "nA",  "nA", 256.*SPMC_RPIN34_to_volts, 0, 0 }, // 24.8 Z-Servo internal signal '(32-8) -> x 256 ** IN3-AD463-24-CHA-1MSPS FIRX 128x dec (SINC) (~0.217 ms / 4.6 kHz)
         { 0x00000016,  NULL, NULL, NULL, NULL, 0.0, 0 }
 };
 
@@ -3141,7 +3141,7 @@ void RPSPMC_Control::ZServoParamChanged(Param_Control* pcs, RPSPMC_Control *self
                 self->z_servo[SERVO_CP] = pow (10., spmc_parameters.z_servo_cp_db/20.); 
                 self->z_servo[SERVO_CI] = pow (10., spmc_parameters.z_servo_ci_db/20.);
 
-                jdata_i[0] = self->mix_transform_mode[0] | (self->I_fir << 8); // TRANSFORM MDOE | FIR SELECTION
+                jdata_i[0] = (self->mix_transform_mode[0] & 0xff) | ((self->I_fir & 0xff) << 8); // TRANSFORM MDOE | FIR SELECTION
                 jdata[0]   = self->mix_level[0] > 0. ? main_get_gapp()->xsm->Inst->nAmpere2V(self->mix_level[0])
                                                      : main_get_gapp()->xsm->Inst->nAmpere2V(self->mix_set_point[0]);
                 jdata[1]   = main_get_gapp()->xsm->Inst->nAmpere2V(self->mix_in_offsetcomp[0]);
@@ -3231,7 +3231,7 @@ int RPSPMC_Control::choice_mixmode_callback (GtkWidget *widget, RPSPMC_Control *
 	self->mix_transform_mode[channel] = selection;
         if (channel == 0){
                 g_print ("Choice MIX%d MT=%d\n", channel, selection);
-                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_MODE", selection | (self->I_fir << 8)); // mapped to MM_LIN/LOG/FCZLOG (0,1,3) | FIR SELECTION
+                rpspmc_pacpll->write_parameter ("SPMC_Z_SERVO_MODE", (selection & 0xff) | ((self->I_fir&0xff) << 8)); // mapped to MM_LIN/LOG (0,1) | FIR SELECTION
         }
         PI_DEBUG_GP (DBG_L4, "%s ** 2\n",__FUNCTION__);
 
@@ -4030,11 +4030,11 @@ int RPSPMC_Control::choice_z_servo_current_source_callback (GtkWidget *widget, R
 	int id = gtk_combo_box_get_active (GTK_COMBO_BOX (widget));
 
         switch (id){
-        case 2: // AD3-FIR
+        case 2: // AD3-FIR 512
                 id=1;
                 self->I_fir = 1;
                 break;
-        case 3: // AD3-FIRX
+        case 3: // AD3-FIRX 128
                 id=1;
                 self->I_fir = 2;
                 break;
