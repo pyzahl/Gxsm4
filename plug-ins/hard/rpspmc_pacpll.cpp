@@ -189,13 +189,13 @@ SOURCE_SIGNAL_DEF rpspmc_swappable_signals[] = {                                
         { 0x00000012, "18-GVP-AM",      " ", "V","V", SPMC_AD5791_to_volts,                          -1, -1 },   // GVP-AM
         { 0x00000013, "19-GVP-FM",      " ", "V","V", SPMC_AD5791_to_volts,                          -1, -1 },   // GVP-FM
         { 0x00000014, "Z-OUT",          " ", "B","B", 1.0/(1<<12),                          -1, -1 },   // Z-DAC out raw value signed 20bit coming top aligned in " 32 >> 12 "
+        { 0x00000015, "Current-AOV",          " ", "nA", "nA", 256.*SPMC_RPIN12_to_volts,   -1, -1 },   // Auto OverSampled -- processed tunnel current signal "Volts" here, to nA/pA later!!! ADJUST W MUX!!!
+        { 0x00000016, "IN4-AD463-24-CHB-AOV", " ", "V",  "V",  SPMC_RPIN34_to_volts,        -1, -1 },   // Auto OverSampled -- IN4 ADC4630-24-B 2MSPS
         //{ 0x00000010, "X-TestSignal = 0", " ", "V",   "V", (1.0),                         -1, -1 },
         //{ 0x00000011, "X-TestSignal = 1", " ", "V",   "V", (1.0),                         -1, -1 },
         //{ 0x00000012, "X-TestSignal = -1", " ", "V",   "V", (1.0),                        -1, -1 },
         //{ 0x00000013, "X-TestSignal = 99", " ", "V",   "V", (1.0),                        -1, -1 },
         //{ 0x00000014, "X-Test-Signal = -99", " ", "V",   "V", (1.0),                                 -1, -1 },   // TEST (Debug only, disabled on FPGA for production)
-        { 0x00000015,  NULL, NULL, NULL, NULL, 0.0, 0, 0 },
-        { 0x00000016,  NULL, NULL, NULL, NULL, 0.0, 0, 0 },
         { 0x00000017,  NULL, NULL, NULL, NULL, 0.0, 0, 0 },
         { 0x00000018,  NULL, NULL, NULL, NULL, 0.0, 0, 0 },
         { 0x00000019,  NULL, NULL, NULL, NULL, 0.0, 0, 0 },
