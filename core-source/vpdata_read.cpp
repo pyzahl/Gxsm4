@@ -78,7 +78,8 @@ int vpdata_read (Gxsm4app *app, const gchar *fname, Scan *active_scan){
 			f.getline(l, 1024);
 		else
 			return 1;
-		if (strncmp(l, "# GXSM Vector Probe Data :: VPVersion=00.02", 43) == 0){
+		if (strncmp(l, "# GXSM Vector Probe Data :: VPVersion=00.02", 43) == 0 ||
+                    strncmp(l, "# GXSM Vector Probe Data :: VPVersion=00.03", 43) == 0) {
 			double MainOffsetX0=0., MainOffsetY0=0.;
 			// vpdata file type/version double check OK :-)
 
@@ -113,6 +114,10 @@ int vpdata_read (Gxsm4app *app, const gchar *fname, Scan *active_scan){
 			int svindexi[64];
 			int i=0;
 			while (i < 64 && f.good()){
+                                if (i >= 63){
+                                        g_message ("WARNING: GVP MAX GVP POSITON VECTOR LIMIT of 64 FOR READ BACK EXCEEDED.");
+                                        return 1;
+                                }
 				svXS[i] = svYS[i] = svZS[i] = svtime[i] = 0.;
 				svindexi[0]=-1;
 				f.getline (sec_position_vector[i], 1024);
@@ -135,7 +140,7 @@ int vpdata_read (Gxsm4app *app, const gchar *fname, Scan *active_scan){
 					g_strfreev (secvec);
 					nvsec = ++i;
 				} else break;
-                                g_print ("SecVecTable: %d [#%d t=%g XYZ=(%g %g %g)\n]", nvsec, svindexi[i], svtime[i], svXS[i], svYS[i], svZS[i]);
+                                g_print ("SecVecTable[%d]: %d [#%d t=%g XYZ=(%g %g %g)\n]", i, nvsec, svindexi[i], svtime[i], svXS[i], svYS[i], svZS[i]);
 			}
 
 			std::cout << "VP DATA -- SECTAB OK: nvsec=" << nvsec << std::endl;
@@ -215,12 +220,14 @@ int vpdata_read (Gxsm4app *app, const gchar *fname, Scan *active_scan){
                         }
                         g_print("num_sets=%d\n", num_sets);
 
+                        g_message("** new app vpdata view");
                         if (!vpdata_graph_view)
                                 vpdata_graph_view = new app_vpdata_view (app, 1, num_sets-1);
                         else
                                 vpdata_graph_view->init_vpdata_view (1, num_sets-1);
 
 			for (j=0, token=Hrecord; *token && j < num_sets; ++token){
+                                g_message("** read token %d ** %s", j, token);
 				if (! strcmp (*token, "#C Index"))
 					continue;
 				if (! strcmp (*token, "Block-Start-Index"))

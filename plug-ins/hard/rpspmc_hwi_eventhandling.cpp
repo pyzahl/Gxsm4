@@ -992,11 +992,17 @@ int RPSPMC_Control::Probing_save_callback( GtkWidget *widget, RPSPMC_Control *ds
 
 	std::ofstream f;
 
-	gchar *fntmp = g_strdup_printf ("%s/%s%03d-VP%03d-%s.vpdata", 
-					// path, 
-					g_settings_get_string (main_get_gapp()->get_as_settings (), "auto-save-folder-probe"), 
-					main_get_gapp()->xsm->data.ui.basename, main_get_gapp()->xsm->GetFileCounter(), main_get_gapp()->xsm->GetNextVPFileCounter(), "VP");
-	// g_free (path);
+	gchar *fntmp = NULL;
+
+        do{
+                if (fntmp) g_free (fntmp);
+                fntmp = g_strdup_printf ("%s/%s%03d-VP%03d-%s.vpdata", 
+                                         // path, 
+                                         g_settings_get_string (main_get_gapp()->get_as_settings (), "auto-save-folder-probe"), 
+                                         main_get_gapp()->xsm->data.ui.basename, main_get_gapp()->xsm->GetFileCounter(), main_get_gapp()->xsm->GetNextVPFileCounter(), "VP");
+        } while (g_file_test (fntmp, G_FILE_TEST_EXISTS)); // auto skip forward vp file counter if exists
+
+        // g_free (path);
 
 	time_t t;
 	time(&t);

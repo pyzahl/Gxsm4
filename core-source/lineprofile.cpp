@@ -150,7 +150,8 @@ int LineProfile1D::load(const gchar *fname){
 			f.getline(l, 1024);
 		else
 			return 1;
-		if (strncmp(l, "# GXSM Vector Probe Data :: VPVersion=00.02", 43) == 0){
+		if (strncmp(l, "# GXSM Vector Probe Data :: VPVersion=00.02", 43) == 0 ||
+                    strncmp(l, "# GXSM Vector Probe Data :: VPVersion=00.03", 43) == 0){
 			// vpdata file type/version double check OK :-)
 			// skip fwd to Vector Position Table
 			while (f.good()){
