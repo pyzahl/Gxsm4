@@ -200,6 +200,8 @@ int vpdata_read (Gxsm4app *app, const gchar *fname, Scan *active_scan){
                         for (token=Hrecord; *token; ++token){
 				if (! strcmp (*token, "#C Index"))
 					continue;
+				if (! strcmp (*token, "#C Idx"))
+					continue;
 				if (! strcmp (*token, "Block-Start-Index"))
 					break;
 #ifdef VPDATA_SKIP_LAST_TWO
@@ -220,15 +222,19 @@ int vpdata_read (Gxsm4app *app, const gchar *fname, Scan *active_scan){
                         }
                         g_print("num_sets=%d\n", num_sets);
 
-                        g_message("** new app vpdata view");
-                        if (!vpdata_graph_view)
+                        if (!vpdata_graph_view){
+                                g_message("** new vpdata view, #%d sets", num_sets-1);
                                 vpdata_graph_view = new app_vpdata_view (app, 1, num_sets-1);
-                        else
+                        } else {
+                                g_message("** re-init vpdata view for #%d sets", num_sets-1);
                                 vpdata_graph_view->init_vpdata_view (1, num_sets-1);
-
+                        }
+                        
 			for (j=0, token=Hrecord; *token && j < num_sets; ++token){
                                 g_message("** read token %d ** %s", j, token);
 				if (! strcmp (*token, "#C Index"))
+					continue;
+				if (! strcmp (*token, "#C Idx"))
 					continue;
 				if (! strcmp (*token, "Block-Start-Index"))
 					break;

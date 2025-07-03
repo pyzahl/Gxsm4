@@ -995,7 +995,10 @@ int RPSPMC_Control::Probing_save_callback( GtkWidget *widget, RPSPMC_Control *ds
 	gchar *fntmp = NULL;
 
         do{
-                if (fntmp) g_free (fntmp);
+                if (fntmp){
+                        g_message ("RPSPMC_Control::Probing_save_callback: skipping existing %s", fntmp);
+                        g_free (fntmp);
+                }
                 fntmp = g_strdup_printf ("%s/%s%03d-VP%03d-%s.vpdata", 
                                          // path, 
                                          g_settings_get_string (main_get_gapp()->get_as_settings (), "auto-save-folder-probe"), 
@@ -1093,11 +1096,13 @@ int RPSPMC_Control::Probing_save_callback( GtkWidget *widget, RPSPMC_Control *ds
 	f << "#C " << std::endl;
 	f << "#C Full Position Vector List at Section boundaries follows :: PositionVectorList" << std::endl;
 	sec = 0; bi = -1;
+        int sec_prev=0;
 	for (int j=0; j<dspc->current_probe_data_index; ++j){
 		int bsi = g_array_index (dspc->garray_probedata [PROBEDATA_ARRAY_BLOCK], double, j);
 		int s = (int) g_array_index (dspc->garray_probedata [PROBEDATA_ARRAY_SEC], double, j);
-		if (bsi != bi){
+		if (bsi != bi && sec_prev != s){
 			bi = bsi;
+                        sec_prev = s;
 			f << "# S[" << s << "]  :: VP[" << j <<"]=(";
 		} else
 			continue;
@@ -1119,7 +1124,7 @@ int RPSPMC_Control::Probing_save_callback( GtkWidget *widget, RPSPMC_Control *ds
         f << std::scientific;
 	for (int i = -1; i < dspc->current_probe_data_index; i++){
 		if (i == -1)
-			f << "#C Idx" << separator;
+			f << "#C Index" << separator;
 		else
 			f << i << separator;
 

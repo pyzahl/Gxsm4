@@ -604,7 +604,7 @@ void GnomeAppService::alert(const gchar *s1, const gchar *s2, const gchar *s3, i
 AppBase::AppBase (Gxsm4app *app){ 
 	XSM_DEBUG_GM(DBG_L3, "AppBase::AppBase" ); 
 
-        gxsm4app = app;
+        gxsm4app = GXSM4_APP(app);
         main_title_buffer = g_strdup ("AppBase: Main Window title is not set.");
         sub_title_buffer = NULL;
 
@@ -640,12 +640,14 @@ AppBase::~AppBase(){
 }
 
 void AppBase::SetTitle(const gchar *title, const gchar *sub_title){
-	XSM_DEBUG_GM (DBG_L3, "AppBase::SetTitle >%s<_%s_", title, sub_title);
+        if (!title)
+                return;
+	XSM_DEBUG_GM (DBG_L3, "AppBase::SetTitle >%s<_%s_", title, sub_title?sub_title:"-/-");
 
-        if (title){
+        if (main_title_buffer)
                 g_free (main_title_buffer);
-                main_title_buffer = g_strdup (title);
-        }
+        main_title_buffer = g_strdup (title);
+
         if (sub_title){
                 g_free (sub_title_buffer);
                 sub_title_buffer = g_strdup (sub_title);
@@ -655,7 +657,8 @@ void AppBase::SetTitle(const gchar *title, const gchar *sub_title){
                         title_label = gtk_label_new (NULL);
                         gtk_label_set_single_line_mode (GTK_LABEL (title_label), false);
                         gtk_label_set_ellipsize (GTK_LABEL (title_label), PANGO_ELLIPSIZE_END);
-                        gtk_header_bar_set_title_widget( GTK_HEADER_BAR (header_bar), title_label);
+                        if (header_bar)
+                                gtk_header_bar_set_title_widget( GTK_HEADER_BAR (header_bar), title_label);
                         gtk_widget_show (title_label);
                 }
                 const char *format1 =

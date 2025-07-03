@@ -55,35 +55,36 @@ public:
                         vpdata_view_destroy (); 
 
                 if (!vpdata_graph_app_window){
-                        vpdata_graph_app_window =  gxsm4_app_window_new (gxsm4app);
+                        g_message ("** init_vpdata_view **");
+
+                        vpdata_graph_app_window = gxsm4_app_window_new (GXSM4_APP (main_get_gapp()->get_application ()));
+                        AppWindowInit("VP Data Viewer","Load");
+                        vpdata_graph_grid = v_grid;
+                        
+                        /*
+                        vpdata_graph_app_window =  gxsm4_app_window_new (GXSM4_APP (main_get_gapp()->get_application ()));
+
                         vpdata_graph_window = GTK_WINDOW (vpdata_graph_app_window);
                         GtkWidget *header_bar = gtk_header_bar_new ();
                         gtk_widget_show (header_bar);
-                        //gtk_header_bar_set_show_close_button (GTK_HEADER_BAR (header_bar), true);
-
-                        //gtk_header_bar_set_subtitle (GTK_HEADER_BAR  (header_bar), "last plot");
                         gtk_window_set_titlebar (GTK_WINDOW (vpdata_graph_window), header_bar);
-                        SetTitle ("VP Data Viewer", "last plot");
-
                         vpdata_graph_grid = gtk_grid_new ();
-                        g_object_set_data (G_OBJECT (vpdata_graph_window), "v_grid", vpdata_graph_grid);
                         gtk_window_set_child (GTK_WINDOW (vpdata_graph_window), vpdata_graph_grid);
-                        gtk_widget_show (GTK_WIDGET (vpdata_graph_window)); // FIX-ME GTK4 SHOWALL
-
+                        gtk_widget_show (GTK_WIDGET (vpdata_graph_window));
                         GtkWidget *statusbar = gtk_statusbar_new ();
                         g_object_set_data (G_OBJECT (vpdata_graph_window), "statusbar", statusbar);
                         gtk_grid_attach (GTK_GRID (vpdata_graph_grid), statusbar, 1,100, 100,1);
-                        gtk_widget_show (GTK_WIDGET (statusbar)); // FIX-ME GTK4 SHOWALL
+                        gtk_widget_show (GTK_WIDGET (statusbar));
+                        
+                        g_message ("** init_vpdata_view ** completed");
+                        */
                 }
-                // SetTitle (vp_exec_mode_name);
         };
 
         void vpdata_view_destroy (){
                 if (!vpdata_gr_matrix_view && vpdata_graph_app_window){
-                        //gtk_window_destroy (GTK_WINDOW (vpdata_graph_app_window)); // destoys with AppBase
-                        vpdata_graph_app_window = NULL;
+                        gtk_window_destroy (GTK_WINDOW (vpdata_graph_window));
                         vpdata_graph_window = NULL;
-                        vpdata_graph_grid = NULL;
                 }
         };
         
