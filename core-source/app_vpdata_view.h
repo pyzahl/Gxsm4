@@ -39,53 +39,55 @@ public:
         app_vpdata_view (Gxsm4app *app, gint num_active_xmaps, gint num_active_sources)
                 : AppBase(app){
                 for (int i=0; i<32; ++i) tmp_pc[i]=NULL;
-                vpdata_graph_app_window = NULL;
-                vpdata_graph_window = NULL;
-                vpdata_graph_grid = NULL;
-                vpdata_gr_matrix_view = true;
 
+                AppWindowInit (N_("GXSM VP Data Viewer"), N_("VP File Preview"));
+
+                vpdata_gr_matrix_view = true;
+                
                 init_vpdata_view (num_active_xmaps, num_active_sources);
         };
         virtual ~app_vpdata_view(){
                 vpdata_view_destroy ();
         };
 
+        virtual void AppWindowInit(const gchar *title, const gchar *sub_title){
+                XSM_DEBUG_GM (DBG_L1, "app_vpdata_view::AppWindowInit** <%s : %s> **", title, sub_title?sub_title:"N/A");
+                app_window = gxsm4_app_window_new (gxsm4app);
+                window = GTK_WINDOW (app_window);
+
+                header_bar = gtk_header_bar_new ();
+                gtk_widget_show (header_bar);
+
+                SetTitle (title, sub_title);
+                gtk_window_set_titlebar (GTK_WINDOW (window), header_bar);
+
+                v_grid = gtk_grid_new ();
+                gtk_window_set_child (GTK_WINDOW (window), v_grid);
+                g_object_set_data (G_OBJECT (window), "v_grid", v_grid);
+
+                gtk_widget_show (GTK_WIDGET (window)); // FIX-ME GTK4 SHOWALL
+
+        };
+
+
+        
         void init_vpdata_view (gint num_active_xmaps, gint num_active_sources){
-                if (vpdata_graph_app_window)
-                        vpdata_view_destroy (); 
-
-                if (!vpdata_graph_app_window){
-                        g_message ("** init_vpdata_view **");
-
-                        vpdata_graph_app_window = gxsm4_app_window_new (GXSM4_APP (main_get_gapp()->get_application ()));
-                        AppWindowInit("VP Data Viewer","Load");
-                        vpdata_graph_grid = v_grid;
-                        
-                        /*
-                        vpdata_graph_app_window =  gxsm4_app_window_new (GXSM4_APP (main_get_gapp()->get_application ()));
-
-                        vpdata_graph_window = GTK_WINDOW (vpdata_graph_app_window);
-                        GtkWidget *header_bar = gtk_header_bar_new ();
-                        gtk_widget_show (header_bar);
-                        gtk_window_set_titlebar (GTK_WINDOW (vpdata_graph_window), header_bar);
-                        vpdata_graph_grid = gtk_grid_new ();
-                        gtk_window_set_child (GTK_WINDOW (vpdata_graph_window), vpdata_graph_grid);
-                        gtk_widget_show (GTK_WIDGET (vpdata_graph_window));
-                        GtkWidget *statusbar = gtk_statusbar_new ();
-                        g_object_set_data (G_OBJECT (vpdata_graph_window), "statusbar", statusbar);
-                        gtk_grid_attach (GTK_GRID (vpdata_graph_grid), statusbar, 1,100, 100,1);
-                        gtk_widget_show (GTK_WIDGET (statusbar));
-                        
-                        g_message ("** init_vpdata_view ** completed");
-                        */
-                }
+#if 0
+                gtk_window_set_child (GTK_WINDOW (window), NULL); // remove and destroy ?? grid
+                
+                v_grid = gtk_grid_new ();
+                gtk_window_set_child (GTK_WINDOW (window), v_grid);
+                g_object_set_data (G_OBJECT (window), "v_grid", v_grid);
+#endif
         };
 
         void vpdata_view_destroy (){
+#if 0
                 if (!vpdata_gr_matrix_view && vpdata_graph_app_window){
-                        gtk_window_destroy (GTK_WINDOW (vpdata_graph_window));
-                        vpdata_graph_window = NULL;
+                        //gtk_window_destroy (GTK_WINDOW (vpdata_graph_window));
+                        //vpdata_graph_window = NULL;
                 }
+#endif
         };
         
 
@@ -106,13 +108,14 @@ public:
                                                  UXaxis, UYaxis, 
                                                  xmin, xmax,
                                                  resid,
-                                                 vpdata_gr_matrix_view ? vpdata_graph_app_window : NULL);
+                                                 vpdata_gr_matrix_view ? app_window : NULL);
 
                         SetTitle ("VP Data Viewer", title);
                         
                         if (vpdata_gr_matrix_view){
                                 pc->set_pc_matrix_size (num_active_xmaps, num_active_sources);
-                                gtk_grid_attach (GTK_GRID (vpdata_graph_grid), pc->get_pc_grid (), xmap,src, 1,1);
+                                gtk_grid_attach (GTK_GRID (v_grid), NULL, xmap,src, 1,1);
+                                gtk_grid_attach (GTK_GRID (v_grid), pc->get_pc_grid (), xmap,src, 1,1);
                         }
                 
                         g_free (resid);
@@ -151,9 +154,6 @@ public:
 
 
         ProfileControl *tmp_pc[32]; 
-        Gxsm4appWindow *vpdata_graph_app_window;
-        GtkWindow* vpdata_graph_window;
-        GtkWidget* vpdata_graph_grid;
         gboolean vpdata_gr_matrix_view;
 };
 
