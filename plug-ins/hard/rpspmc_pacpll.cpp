@@ -1571,9 +1571,9 @@ void RPSPMC_Control::create_folder (){
         bp->grid_add_ec_with_scale ("Bias", Volt, &bias, -10., 10., "4g", 0.001, 0.01, "fbs-bias");
         FPGA_readback_update_list = g_slist_prepend (FPGA_readback_update_list, bp->ec); // add to FPGA reconnect readback parameter list
         //        bp->ec->set_adjustment_mode (PARAM_CONTROL_ADJUSTMENT_LOG | PARAM_CONTROL_ADJUSTMENT_LOG_SYM | PARAM_CONTROL_ADJUSTMENT_DUAL_RANGE | PARAM_CONTROL_ADJUSTMENT_ADD_MARKS );
-        bp->ec->SetScaleWidget (bp->scale, 0);
         bp->ec->set_logscale_min (1e-3);
         gtk_scale_set_digits (GTK_SCALE (bp->scale), 5);
+        bp->ec->SetScaleWidget (bp->scale, 0);
         bp->new_line ();
 
         bp->set_default_ec_change_notice_fkt (RPSPMC_Control::ZPosSetChanged, this);
@@ -1676,9 +1676,9 @@ void RPSPMC_Control::create_folder (){
                 bp->grid_add_ec_with_scale (NULL, mixer_unit[ch], &mix_set_point[ch], ch==0? 0.0:-100.0, 100., "4g", 0.001, 0.01, mixer_remote_id_set[ch]);
                 FPGA_readback_update_list = g_slist_prepend (FPGA_readback_update_list, bp->ec); // add to FPGA reconnect readback parameter list
                 // bp->ec->set_adjustment_mode (PARAM_CONTROL_ADJUSTMENT_LOG | PARAM_CONTROL_ADJUSTMENT_ADD_MARKS );
-                bp->ec->SetScaleWidget (bp->scale, 0);
                 bp->ec->set_logscale_min (1e-4);
                 bp->ec->set_logscale_magshift (-3);
+                bp->ec->SetScaleWidget (bp->scale, 0);
                 gtk_scale_set_digits (GTK_SCALE (bp->scale), 5);
 
                 if (signal_select_widget)
@@ -1772,17 +1772,17 @@ void RPSPMC_Control::create_folder (){
 
         bp->set_default_ec_change_notice_fkt (RPSPMC_Control::ChangedNotifyMoveSpeed, this);
 	bp->grid_add_ec_with_scale ("MoveSpd", Speed, &move_speed_x, 0.1, 10000., "5g", 1., 10., "fbs-scan-speed-move");
-        bp->ec->SetScaleWidget (bp->scale, 0);
         bp->ec->set_logscale_min (1);
         gtk_scale_set_digits (GTK_SCALE (bp->scale), 5);
+        bp->ec->SetScaleWidget (bp->scale, 0);
         bp->new_line ();
         bp->set_configure_list_mode_off ();
 
         bp->set_default_ec_change_notice_fkt (RPSPMC_Control::ChangedNotifyScanSpeed, this);
 	bp->grid_add_ec_with_scale ("ScanSpd", Speed, &scan_speed_x_requested, 0.1, 100000., "5g", 1., 10., "fbs-scan-speed-scan");
-        bp->ec->SetScaleWidget (bp->scale, 0);
         bp->ec->set_logscale_min (1);
         gtk_scale_set_digits (GTK_SCALE (bp->scale), 5);
+        bp->ec->SetScaleWidget (bp->scale, 0);
         scan_speed_ec = bp->ec;
 
         bp->new_line ();

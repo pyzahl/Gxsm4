@@ -51,6 +51,7 @@ good starting point.
 
 #include "gxsm_conf.h"
 #include "unit.h"
+#include "util.h"
 #include "remoteargs.h"
 
 extern "C++" {
@@ -295,6 +296,125 @@ class Gtk_EntryControl : public Param_Control{
 
 	static void adjustment_callback (GtkAdjustment *adj, Gtk_EntryControl *gpcs);
 
+        static double pcs_mag_base (double v, const gchar** pfx, double fac=10., int magshift=0) {
+                int mi;
+                static const gchar  *prefix[]    = { "a",  "f",   "p",   "n", UTF8_MU,   "m", "", "k", "M", "G", "T"  };
+                //                            a:0    f:1    p:2    n:3    mu:4    m:5   1:6 k:7  M:8  G:9  T:10
+                const double magnitude[]  = { 1e-18, 1e-15, 1e-12, 1e-9,  1e-6,   1e-3, 1., 1e3, 1e6, 1e9, 1e12 };
+                double x = fac*v;
+                if (fabs (x) < 1e-22){
+                        mi=6;
+                } else {
+                        double m = fabs (x*1e-3);
+                        for (mi=0; mi<=10; ++mi)
+                                if (m < magnitude[mi])
+                                        break;
+                        if (mi>10)
+                                mi=10;
+                }
+                // g_print ("set_mag_get_base:: %g [x=%g]:[mi=%d]{%g}\n", v, x, mi, magnitude[mi]);
+                mi +=  magshift;
+                if (mi >= 0 && mi <= 10)
+                        *pfx = prefix[mi];
+                else
+                        *pfx = "?";
+        
+                return x/magnitude[mi-magshift]/fac;
+        };
+
+        static void adjustment_annotate (GtkAdjustment *adj, Gtk_EntryControl *gpcs){
+                if (!adj) return;
+
+                gpcs->get_pcs_configuartion ();
+                
+                if (gpcs->adj_mode & PARAM_CONTROL_ADJUSTMENT_LOG_MODE_MASK){
+                        // LOG ADJUSTMENT MODE
+
+                        if (gpcs->adj_mode & PARAM_CONTROL_ADJUSTMENT_ADD_MARKS){
+                                double l=gtk_adjustment_get_lower (adj);
+                                double r=gtk_adjustment_get_upper (adj);
+
+                                if (gpcs->adj_current_limits[0] != l || gpcs->adj_current_limits[1] != r){
+                                        gpcs->adj_current_limits[0] = l;
+                                        gpcs->adj_current_limits[1] = r;
+
+                                        gpcs->calc_adj_log_gain ();
+                                        if (gpcs->opt_scale)
+                                                update_log_tics (GTK_SCALE (gpcs->opt_scale), gpcs->adj_mode, gpcs->log_min, r, gpcs);
+                                }
+                        }
+                        gpcs->calc_adj_log_gain ();
+                        g_signal_handler_block (G_OBJECT (adj), gpcs->adjcb_handler_id);
+                        gtk_adjustment_set_value (GTK_ADJUSTMENT(adj), gpcs->value_to_adj (gpcs->unit->Usr2Base (gpcs->Get_dValue ())));
+                        g_signal_handler_unblock (G_OBJECT (adj), gpcs->adjcb_handler_id);
+                        
+                } else {
+                        // LINEAR ADJUSTMENT MODE
+
+                        if (gpcs->adj_mode & PARAM_CONTROL_ADJUSTMENT_ADD_MARKS){
+                                double l=gtk_adjustment_get_lower (adj);
+                                double r=gtk_adjustment_get_upper (adj);
+
+                                if (gpcs->adj_current_limits[0] != l ||  gpcs->adj_current_limits[1] != r){
+                                        gpcs->adj_current_limits[0] = l;
+                                        gpcs->adj_current_limits[1] = r;
+
+                                        if (gpcs->opt_scale)
+                                                update_lin_tics (GTK_SCALE (gpcs->opt_scale), l, r, gpcs);
+                                }
+                        }
+                }
+                gpcs->Put_Value ();
+        };
+        
+        static void update_log_tics (GtkScale *scale, int mode, double min, double max, Gtk_EntryControl *gpcs){
+                gtk_scale_clear_marks (scale);
+                gtk_scale_add_mark (scale, 0, GTK_POS_BOTTOM, "0");
+
+                double Lab0 = pow (10., floor (log10 (min)));
+                double MaxLab = fabs(max);
+                for (int s = (mode & PARAM_CONTROL_ADJUSTMENT_LOG_SYM) ? -1 : 1; s<=1; s+=2) {
+                        double l10 = Lab0;
+                        double Lab = l10;
+                        double signum = s;
+                        for (int i=1; Lab<MaxLab; Lab+=l10, ++i){
+                                if (Lab > 9.999*l10){ l10=Lab=10.*l10; i=1; }
+                                double v = gpcs->value_to_adj (signum * Lab);
+                                if (v>0 || v<0){
+                                        if (i!=5 && i!=1){ 
+                                                gtk_scale_add_mark (scale, v, GTK_POS_BOTTOM, NULL);
+                                        }
+                                        else{
+                                                const gchar *pfx=NULL;
+                                                double lp = pcs_mag_base (Lab, &pfx, 10., gpcs->log_mag_shift);
+                                                gchar *tmp = g_strdup_printf ("<span size=\"x-small\">%g%s</span>", signum*lp, pfx);
+                                                //g_message ("%d: %s %g %g @adv= %g", i, tmp, signum, Lab, v);
+                                                gtk_scale_add_mark (scale, v, GTK_POS_BOTTOM, tmp);
+                                                g_free (tmp);
+                                        }
+                                }
+                        }
+                }
+        };
+
+        static void update_lin_tics (GtkScale *scale, double min, double max, Gtk_EntryControl *gpcs){
+                gtk_scale_clear_marks (scale);
+                double tic_w = max-min;
+                double d_tic = AutoSkl(tic_w/11);
+                double tic_0 = min;
+                for(double x=AutoNext (tic_0, d_tic); x < max; x += d_tic){
+                        if (fabs(x/d_tic) < 1e-3)
+                                x=0.;
+                        const gchar *pfx=NULL;
+                        double lp = pcs_mag_base (x, &pfx, 10., gpcs->log_mag_shift);
+                        gchar *tmp = g_strdup_printf ("<span size=\"x-small\">%g%s</span>", lp, pfx);
+                        gtk_scale_add_mark (scale, x, GTK_POS_BOTTOM, tmp);
+                        g_free (tmp);
+                        if (x+d_tic/2 < max)
+                                gtk_scale_add_mark (scale, x+d_tic/2, GTK_POS_BOTTOM, NULL);
+                }
+        };
+        
         static void ec_pcs_adjustment_configure_callback (GSimpleAction *action, GVariant *parameter, Gtk_EntryControl *gpcs);
         
         static void pcs_adjustment_configure_response_callback (GtkDialog *dialog, int response, gpointer user_data);
@@ -342,7 +462,7 @@ class Gtk_EntryControl : public Param_Control{
 	GtkAdjustment* GetAdjustment(){ return adj; };
 	void SetExtraWidget(GtkWidget *e){ extra = e; };
 
-        void SetScaleWidget(GtkWidget *s, gint mode){ opt_scale=s; ticks_scale_mode=mode; };
+        void SetScaleWidget(GtkWidget *s, gint mode){ opt_scale=s; ticks_scale_mode=mode; adjustment_annotate (adj, this); };
         
 	void Show(gint flg){ 
 		if(flg){ gtk_widget_show(entry); enable_client=TRUE; }

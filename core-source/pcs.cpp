@@ -474,9 +474,6 @@ gboolean Param_Control::Set_FromValue(double nVal){
 		g_free (ref);
                 Put_Value(); // set managed value variable
 
-                // test
-                // pcs_adjustment_configure ();
-
                 return false;
 	}
 }
@@ -727,39 +724,13 @@ void  Gtk_EntryControl::init_pcs_via_list (){
        }
 }
 
-double pcs_mag_base (double v, const gchar** pfx, double fac=10., int magshift=0) {
-        int mi;
-        static const gchar  *prefix[]    = { "a",  "f",   "p",   "n", UTF8_MU,   "m", "", "k", "M", "G", "T"  };
-        //                            a:0    f:1    p:2    n:3    mu:4    m:5   1:6 k:7  M:8  G:9  T:10
-        const double magnitude[]  = { 1e-18, 1e-15, 1e-12, 1e-9,  1e-6,   1e-3, 1., 1e3, 1e6, 1e9, 1e12 };
-        double x = fac*v;
-        if (fabs (x) < 1e-22){
-                mi=6;
-        } else {
-                double m = fabs (x*1e-3);
-                for (mi=0; mi<=10; ++mi)
-                        if (m < magnitude[mi])
-                                break;
-                if (mi>10)
-                        mi=10;
-        }
-        // g_print ("set_mag_get_base:: %g [x=%g]:[mi=%d]{%g}\n", v, x, mi, magnitude[mi]);
-        mi +=  magshift;
-        if (mi >= 0 && mi <= 10)
-                *pfx = prefix[mi];
-        else
-                *pfx = "?";
-        
-        return x/magnitude[mi-magshift]/fac;
-}
-
 void Gtk_EntryControl::adjustment_callback(GtkAdjustment *adj, Gtk_EntryControl *gpcs){
 	if (!adj) return;
 
-
         double  v=gtk_adjustment_get_value (adj);
+        g_message ("PCS:adj-callback get_value (adj)  : %g --> v=%g", gtk_adjustment_get_value (adj), v);
 #ifdef DEBUG_PCS_LOG
-        g_message ("PCS:adj-callback get_vale (adj)  : %g --> v=%g", gtk_adjustment_get_value (adj), v);
+        g_message ("PCS:adj-callback get_value (adj)  : %g --> v=%g", gtk_adjustment_get_value (adj), v);
 #endif
         
         if (gpcs->adj_mode & PARAM_CONTROL_ADJUSTMENT_DUAL_RANGE){
@@ -792,36 +763,8 @@ void Gtk_EntryControl::adjustment_callback(GtkAdjustment *adj, Gtk_EntryControl 
                                 gpcs->adj_current_limits[0] = l;
                                 gpcs->adj_current_limits[1] = r;
 
-                                if (gpcs->opt_scale){
-                                        gtk_scale_clear_marks (GTK_SCALE (gpcs->opt_scale));
-                                        gtk_scale_add_mark (GTK_SCALE (gpcs->opt_scale), 0, GTK_POS_BOTTOM, "0");
-
-                                        double Lab0 = pow (10., floor (log10 (gpcs->log_min)));
-                                        double MaxLab = fabs(r);
-                                        for (int s = (gpcs->adj_mode & PARAM_CONTROL_ADJUSTMENT_LOG_SYM) ? -1 : 1; s<=1; s+=2) {
-                                                double l10 = Lab0;
-                                                double Lab = l10;
-                                                double signum = s;
-                                                for (int i=1; Lab<MaxLab; Lab+=l10, ++i){
-                                                        if (Lab > 9.999*l10){ l10=Lab=10.*l10; i=1; }
-                                                        double v = gpcs->value_to_adj (signum * Lab);
-                                                        if (v>0 || v<0){
-                                                                if (i!=5 && i!=1){ 
-                                                                        gtk_scale_add_mark (GTK_SCALE (gpcs->opt_scale), v, GTK_POS_BOTTOM, NULL);
-                                                                }
-                                                                else{
-                                                                        const gchar *pfx=NULL;
-                                                                        double lp = pcs_mag_base (Lab, &pfx, 10., gpcs->log_mag_shift);
-                                                                        gchar *tmp = g_strdup_printf ("<span size=\"x-small\">%g%s</span>", signum*lp, pfx);
-                                                                        //g_message ("%d: %s %g %g @adv= %g", i, tmp, signum, Lab, v);
-                                                                        gtk_scale_add_mark (GTK_SCALE (gpcs->opt_scale), v, GTK_POS_BOTTOM, tmp);
-                                                                        g_free (tmp);
-                                                                }
-                                                        }
-                                                }
-                                                MaxLab = fabs(r);
-                                        }
-                                }
+                                if (gpcs->opt_scale)
+                                        update_log_tics (GTK_SCALE (gpcs->opt_scale), gpcs->adj_mode, gpcs->log_min, r, gpcs);
                         }
                 }
         } else {
@@ -838,23 +781,8 @@ void Gtk_EntryControl::adjustment_callback(GtkAdjustment *adj, Gtk_EntryControl 
                                 gpcs->adj_current_limits[0] = l;
                                 gpcs->adj_current_limits[1] = r;
 
-                                if (gpcs->opt_scale){
-                                        gtk_scale_clear_marks (GTK_SCALE (gpcs->opt_scale));
-                                        double tic_w = r-l;
-                                        double d_tic = AutoSkl(tic_w/11);
-                                        double tic_0 = l;
-                                        for(double x=AutoNext (tic_0, d_tic); x < r; x += d_tic){
-                                                if (fabs(x/d_tic) < 1e-3)
-                                                        x=0.;
-                                                const gchar *pfx=NULL;
-                                                double lp = pcs_mag_base (x, &pfx, 10., gpcs->log_mag_shift);
-                                                gchar *tmp = g_strdup_printf ("<span size=\"x-small\">%g%s</span>", lp, pfx);
-                                                gtk_scale_add_mark (GTK_SCALE (gpcs->opt_scale), x, GTK_POS_BOTTOM, tmp);
-                                                g_free (tmp);
-                                                if (x+d_tic/2 < r)
-                                                        gtk_scale_add_mark (GTK_SCALE (gpcs->opt_scale), x+d_tic/2, GTK_POS_BOTTOM, NULL);
-                                        }
-                                }
+                                if (gpcs->opt_scale)
+                                        update_lin_tics (GTK_SCALE (gpcs->opt_scale), l, r, gpcs);
                         }
                 }
         }
@@ -954,6 +882,7 @@ void Gtk_EntryControl::Put_Value(){
 #endif
         
 	if(adj){
+
                 // skip self callbacks while reconfiguring
                 g_signal_handler_block (G_OBJECT (adj), adjcb_handler_id);
 
@@ -1676,6 +1605,7 @@ void Gtk_EntryControl::InitRegisterCb(double AdjStep, double AdjPage, double Adj
 
                 adjcb_handler_id = g_signal_connect (G_OBJECT (adj), "value_changed",
                                                      G_CALLBACK (Gtk_EntryControl::adjustment_callback), this);
+                
 		if (GTK_IS_SPIN_BUTTON (entry)){
 			ec_io_handler_id[0] = g_signal_connect (G_OBJECT (entry), "output",
                                                                 G_CALLBACK (&ec_gtk_spin_button_sci_output),
@@ -1686,6 +1616,7 @@ void Gtk_EntryControl::InitRegisterCb(double AdjStep, double AdjPage, double Adj
                         gtk_spin_button_configure (GTK_SPIN_BUTTON (entry), 
                                                    GTK_ADJUSTMENT (adj), progressive, step < 1.0 ? (int)(floor(-log(step))+1) : 1);
 		}
+
 	}
         
         if (GTK_IS_ENTRY (entry)){
