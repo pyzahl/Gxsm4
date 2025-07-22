@@ -1111,6 +1111,7 @@ public:
 	static void pulse_form_parameter_changed (Param_Control* pcs, gpointer user_data);
         static void pulse_form_enable (GtkWidget *widget, RPspmc_pacpll *self);
         static void pulse_form_fire (GtkWidget *widget, RPspmc_pacpll *self);
+        static void pulse_form_pf_ts (GtkWidget *widget, RPspmc_pacpll *self);
 
         static void choice_operation_callback (GtkWidget *widget, RPspmc_pacpll *self);
         static void choice_transport_ch12_callback (GtkWidget *widget, RPspmc_pacpll *self);

@@ -4549,12 +4549,24 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
         bp->new_line ();
         
         bp->set_input_nx (1);
-        bp->grid_add_check_button ( N_("Enable"),  bp->PYREMOTE_CHECK_HOOK_KEY_FUNC("Enable Pulse Forming","rp-pacpll-PF"), 2,
+        bp->grid_add_check_button ( N_("Enable"),  bp->PYREMOTE_CHECK_HOOK_KEY_FUNC("Enable Pulse Forming","rp-pacpll-PF"), 1,
                                     G_CALLBACK (RPspmc_pacpll::pulse_form_enable), this);
 
         bp->grid_add_exec_button ( N_("Single Shot"),
                                    G_CALLBACK (RPspmc_pacpll::pulse_form_fire), this, "FirePulse",
-                                   2);
+                                   1);
+
+        GtkWidget *pf_ts = gtk_combo_box_text_new (); // Pulse Form Trigger Source
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (pf_ts), "0", "QP");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (pf_ts), "1", "LCK");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (pf_ts), "2", "GVP");
+        g_signal_connect (G_OBJECT (pf_ts), "changed",
+                          G_CALLBACK (RPspmc_pacpll::pulse_form_pf_ts), 
+                          this);				
+        gtk_combo_box_set_active_id (GTK_COMBO_BOX (pf_ts), "0");
+        bp->grid_add_widget (pf_ts);
+        
+
         // =======================================
 
         bp->pop_grid ();
@@ -5217,6 +5229,10 @@ void RPspmc_pacpll::pulse_form_fire (GtkWidget *widget, RPspmc_pacpll *self){
         while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, false);
         usleep(300000);
         gtk_combo_box_set_active (GTK_COMBO_BOX (self->update_op_widget), 4); // SINGLE SHOT
+}
+
+void RPspmc_pacpll::pulse_form_pf_ts (GtkWidget *widget, RPspmc_pacpll *self){
+        self->write_parameter ("PULSE_FORM_TRIGGER_SOURCE", gtk_combo_box_get_active (GTK_COMBO_BOX (widget)));
 }
 
 void RPspmc_pacpll::save_scope_data (){
