@@ -130,6 +130,7 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         { "PULSE_FORM_SHAPEXWIF", &pacpll_parameters.pulse_form_shapexwif, false },
         { "PULSE_FORM_SHAPEX", &pacpll_parameters.pulse_form_shapex, false },
         { "PULSE_FORM_SHAPEXIF", &pacpll_parameters.pulse_form_shapexif, false },
+        { "PULSE_FORM_TRIGGER_SELECT", &pacpll_parameters.pulse_form_trigger_select, false },
 
         { "RPSPMC_DMA_PULL_INTERVAL", &spmc_parameters.rpspmc_dma_pull_interval, false },
 

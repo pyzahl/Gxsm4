@@ -139,7 +139,8 @@ struct PACPLL_parameters {
         double pulse_form_shapexw, pulse_form_shapexwif;
         double pulse_form_shapex, pulse_form_shapexif;
         gboolean pulse_form_enable;
- 
+        double pulse_form_trigger_select;
+
         // RP-PAC-PLL / DSP/McBSP level PLL signal transport controls
         double set_singleshot_transport_trigger;
         double transport_tau[4];
