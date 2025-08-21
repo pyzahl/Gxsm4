@@ -2028,6 +2028,47 @@ static PyObject* remote_getslice(PyObject *self, PyObject *args)
 	return Py_BuildValue("i", 0);
 }
 
+static PyObject* remote_getslice_v(PyObject *self, PyObject *args)
+{
+	PI_DEBUG(DBG_L2, "pyremote: getslice_v");
+	long ch,xl,t,yi,yn;
+
+	//PyObject *obj;
+        
+	if (!PyArg_ParseTuple (args, "lllll", &ch, &xl, &t, &yi, &yn))
+		return Py_BuildValue("i", -1);
+
+        int x = (int)xl;
+        
+	Scan *src =gapp->xsm->GetScanChannel (ch);
+        if (t >= 0) // select time element
+                src->retrieve_time_element (t);
+        if (src && (yi+yn) <= src->mem2d->GetNy()){
+                g_message ("remote_getslice_v from mem2d scan data in (dz scaled to unit) CH%d, Ys=%d Yf=%d", (int)ch, (int)yi, (int)(yi+yn));
+
+                // PyObject* PyArray_SimpleNewFromData(int nd, npy_intp const* dims, int typenum, void* data);
+                // PyObject *PyArray_FromDimsAndData(int n_dimensions, int dimensions[n_dimensions], int item_type, char *data);
+                npy_intp dims[2]; 
+                dims[0] = yn;
+                dims[1] = src->mem2d->GetNv ();
+                g_message ("Creating PyArray: shape %d , %d", dims[0], dims[1]);
+                double *darr2 = (double*) malloc(sizeof(double) * dims[0]*dims[1]);
+                double *dp=darr2;
+                int yf = yi+yn;
+
+                for (int y=yi; y<yf; ++y)
+                        for (int v=0; v<dims[1]; ++v)
+                                *dp++ = src->mem2d->data->Z(x,y,v)*src->data.s.dz;
+                
+                PyObject* pyarr = PyArray_SimpleNewFromData(2, dims, NPY_DOUBLE, (void*)darr2);
+                PyArray_ENABLEFLAGS((PyArrayObject*) pyarr, NPY_ARRAY_OWNDATA);
+                return Py_BuildValue("O", pyarr); // Python code will receive the array as numpy array.
+        } else
+		return Py_BuildValue("i", -1);
+
+	return Py_BuildValue("i", 0);
+}
+
 //	{"get_probe_event", remote_getprobe_event, METH_VARARGS, "Get Probe Event Data from Scan in channel ch, nth: [nx,ny,array]=gxsm.get_probe_event (ch, nth)"},
 
 static PyObject* remote_getprobe_event(PyObject *self, PyObject *args)
@@ -3536,6 +3577,7 @@ static PyMethodDef GxsmPyMethods[] = {
 	{"get_data_pkt", remote_getdatapkt, METH_VARARGS, "Get Data Value at point: value=gxsm.get_data_pkt (ch, x, y, v, t)"},
 	{"put_data_pkt", remote_putdatapkt, METH_VARARGS, "Put Data Value to point: gxsm.put_data_pkt (value, ch, x, y, v, t)"},
 	{"get_slice", remote_getslice, METH_VARARGS, "Get Image Data Slice (Lines) from Scan in channel ch, yi ... yi+yn: [nx,ny,array]=gxsm.get_slice (ch, v, t, yi, yn)"},
+	{"get_slice_v", remote_getslice_v, METH_VARARGS, "Get Image Data Slice in V at x (Lines) from Scan in channel ch, yi ... yi+yn: [nv,ny,array]=gxsm.get_slice_v (ch, x, t, yi, yn)"},
 	{"get_probe_event", remote_getprobe_event, METH_VARARGS, "Get Probe Event Data from Scan in channel ch, nth: [nx,ny,array]=gxsm.get_probe_event (ch, nth)"},
 	{"set_global_share_parameter", remote_set_global_share_parameter, METH_VARARGS, "Set Global Shared Parameter for Plugins, etc. in settings: gxsm.set_global_share_parameter (key, x)"},
 	{"get_x_lookup", remote_get_x_lookup, METH_VARARGS, "Get Scan Data index to world mapping: x=gxsm.get_x_lookup (ch, i)"},
