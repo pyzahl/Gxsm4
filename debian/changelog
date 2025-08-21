@@ -1,3 +1,10 @@
+gxsm4 (4.0.0-0ubuntu12) noble; urgency=medium
+
+  * keeping up with Percy's changes
+  * code improvements since April included
+
+ -- Thorsten Wagner <stm@users.sf.net>  Sat, 02 Aug 2025 21:02:28 +0200
+
 gxsm4 (4.0.0-0ubuntu11) noble; urgency=medium
 
   * included libwebsocketpp-dev and libboost-dev 
