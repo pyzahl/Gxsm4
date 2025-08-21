@@ -1709,7 +1709,7 @@ static gboolean main_context_createscanf_from_thread (gpointer user_data){
                 rf=true;
         }
 	if ( (long unsigned int)(view.len / sizeof(float)) != (long unsigned int)(sizex*sizey*sizev) ) {
-                g_message ("Create Scan: ERROR array len=%ld does not match nx x ny=%ld", view.len / sizeof(float), sizex*sizey);
+                g_message ("Create Scan: ERROR array len=%ld does not match nx x ny x v = %ld", view.len / sizeof(float), sizex*sizey*sizev);
                 UNSET_WAIT_JOIN_MAIN;
                 return G_SOURCE_REMOVE;
 	}
