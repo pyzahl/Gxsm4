@@ -3119,7 +3119,8 @@ void RPSPMC_Control::ZPosSetChanged(Param_Control* pcs, RPSPMC_Control *self){
         }
 
         // mirror basic parameters to GXSM4 main
-        main_get_gapp()->xsm->data.s.SetPoint = main_get_gapp()->xsm->Inst->ZA2Volt(self->zpos_ref);
+        main_get_gapp()->xsm->data.s.SetPoint  = self->zpos_ref;
+        main_get_gapp()->xsm->data.s.ZSetPoint = self->zpos_ref;
 }
 
 void RPSPMC_Control::ZServoParamChanged(Param_Control* pcs, RPSPMC_Control *self){
