@@ -5232,7 +5232,7 @@ void RPspmc_pacpll::pulse_form_fire (GtkWidget *widget, RPspmc_pacpll *self){
 }
 
 void RPspmc_pacpll::pulse_form_pf_ts (GtkWidget *widget, RPspmc_pacpll *self){
-        self->write_parameter ("PULSE_FORM_TRIGGER_SOURCE", gtk_combo_box_get_active (GTK_COMBO_BOX (widget)));
+        self->write_parameter ("PULSE_FORM_TRIGGER_SELECT", gtk_combo_box_get_active (GTK_COMBO_BOX (widget)));
 }
 
 void RPspmc_pacpll::save_scope_data (){
