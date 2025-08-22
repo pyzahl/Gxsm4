@@ -1937,7 +1937,7 @@ static PyObject* remote_getgains_xyz(PyObject *self, PyObject *args)
 {
 	PI_DEBUG(DBG_L2, "pyremote:get_instrument_gains_xyz");
 
-        return Py_BuildValue("lllddd",
+        return Py_BuildValue("dddddd",
                              main_get_gapp()->xsm->Inst->VX(), main_get_gapp()->xsm->Inst->VY(), main_get_gapp()->xsm->Inst->VZ(),
                              main_get_gapp()->xsm->Inst->Volt2XA(1.), main_get_gapp()->xsm->Inst->Volt2YA(1.), main_get_gapp()->xsm->Inst->Volt2ZA(1.));
 }
@@ -3573,7 +3573,7 @@ static PyMethodDef GxsmPyMethods[] = {
 	{"get_geometry", remote_getgeometry, METH_VARARGS, "Get Scan Geometry: [rx,ry,x0,y0,alpha]=gxsm.get_geometry (ch)"},
 	{"get_differentials", remote_getdifferentials, METH_VARARGS, "Get Scan Scaling: [dx,dy,dz,dl]=gxsm.get_differentials (ch)"},
 	{"get_dimensions", remote_getdimensions, METH_VARARGS, "Get Scan Dimensions: [nx,ny,nv,nt]=gxsm.get_dimensions (ch)"},
-	{"get_instrument_gains_xyz", remote_getgains_xyz, METH_VARARGS, "Get XYZ Gain Settings: [VX,VY,VZ, V2XA,V2YA,V2ZA]=gxsm.get_instrument_gains_xyz ()"},
+	{"get_instrument_gains_xyz", remote_getgains_xyz, METH_VARARGS, "Get XYZ Gain Settings: [VX,VY,VZ, V2XAV,V2YAV,V2ZAV]=gxsm.get_instrument_gains_xyz ()"},
 	{"get_data_pkt", remote_getdatapkt, METH_VARARGS, "Get Data Value at point: value=gxsm.get_data_pkt (ch, x, y, v, t)"},
 	{"put_data_pkt", remote_putdatapkt, METH_VARARGS, "Put Data Value to point: gxsm.put_data_pkt (value, ch, x, y, v, t)"},
 	{"get_slice", remote_getslice, METH_VARARGS, "Get Image Data Slice (Lines) from Scan in channel ch, yi ... yi+yn: [nx,ny,array]=gxsm.get_slice (ch, v, t, yi, yn)"},
