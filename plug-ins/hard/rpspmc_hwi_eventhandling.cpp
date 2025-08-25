@@ -1048,7 +1048,14 @@ int RPSPMC_Control::Probing_save_callback( GtkWidget *widget, RPSPMC_Control *ds
 	f << "# FileName               :: name=" << fntmp << std::endl;
 	f << "# GXSM-Main-Offset       :: X0=" <<  x0 << " Ang" <<  "  Y0=" << y0 << " Ang" 
 	  << ", iX0=" << ix << " Pix iX0=" << iy << " Pix"
-	  << std::endl;
+          << std::endl
+          << "# GVP-initial-XYZ-Scan   ::"
+          << " XS=" << g_array_index (dspc->garray_probe_hdrlist[PROBEDATA_ARRAY_XS], double, 0) << " Ang"
+          << " YS=" << g_array_index (dspc->garray_probe_hdrlist[PROBEDATA_ARRAY_YS], double, 0) << " Ang"
+          << " ZS=" << g_array_index (dspc->garray_probe_hdrlist[PROBEDATA_ARRAY_ZS], double, 0) << " Ang"
+
+          << std::endl;
+#if 0
         if (main_get_gapp()->xsm->MasterScan)
                 f << "# SCANCOORD POSITION :: RPSPMC-XSpos="  // FIXME!!!!
                   << (((int)g_array_index (dspc->garray_probe_hdrlist[PROBEDATA_ARRAY_XS], double, 0)<<16)/dspc->mirror_dsp_scan_dx32 + main_get_gapp()->xsm->MasterScan->data.s.nx/2 - 1)
@@ -1061,6 +1068,7 @@ int RPSPMC_Control::Probing_save_callback( GtkWidget *widget, RPSPMC_Control *ds
                   << std::endl;
         else
                 f << "# DSP SCANCOORD POSITION :: NO MASTERSCAN SCAN COORDINATES N/A" << std::endl;
+#endif
 	f << "# GXSM-DSP-Control-FB    :: Bias=" << dspc->bias << " V" <<  ", Current=" << dspc->mix_set_point[0]  << " nA" << std::endl; 
 	f << "# GXSM-DSP-Control-STS   :: #IV=" << dspc->IV_repetitions << " " << std::endl; 
         // FIXME ** ADD LCK INFO **
@@ -1107,9 +1115,9 @@ int RPSPMC_Control::Probing_save_callback( GtkWidget *widget, RPSPMC_Control *ds
 		} else
 			continue;
 
-		for (int i=13; dspc->msklookup[i]>=0; ++i){
+		for (int i=12; dspc->msklookup[i]>=0; ++i){
 			double ymult = dspc->vp_scale_lookup (i);
-			if (i>13) 
+			if (i>12) 
 				f << ", ";
 			f << " \"" << dspc->vp_label_lookup (i) << "\"="
 			  << (ymult * g_array_index (dspc->garray_probedata [dspc->expdi_lookup[i]], double, j))

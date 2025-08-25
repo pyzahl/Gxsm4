@@ -48,6 +48,10 @@ app_vpdata_view *vpdata_graph_view = NULL;
 int vpdata_read (Gxsm4app *app, const gchar *fname, Scan *active_scan){
 	gchar l[1100];
 	std::ifstream f;
+        gboolean got_rpspmc_GVP_initial=false;
+        double XSi=0.;
+        double YSi=0.;
+        double ZSi=0.;
 
 	if (fname == NULL){
 		//clean up PCs
@@ -58,7 +62,7 @@ int vpdata_read (Gxsm4app *app, const gchar *fname, Scan *active_scan){
 		}
 		return 1;
 	}
-	
+
 	f.open(fname, std::ios::in);
 	if(!f.good()){
 		//    fl_show_alert(ERR_SORRY, ERR_FILEREAD,fname,1);
@@ -89,6 +93,7 @@ int vpdata_read (Gxsm4app *app, const gchar *fname, Scan *active_scan){
 			// find GXSM Main info and skip fwd to Vector Position Table
 			while (f.good()){
 				f.getline(l, 1024);
+                                g_print ("HDR >%s<\n",l);
 				if (strncmp(l, "# GXSM-Main-Offset", 18) == 0){
 					gchar **GXSMmainData = g_strsplit (l, " ", 20);
 					gchar **toc = GXSMmainData;
@@ -99,9 +104,32 @@ int vpdata_read (Gxsm4app *app, const gchar *fname, Scan *active_scan){
 							MainOffsetY0 = atof (*toc+3);
 					}
 				}
-
-				if (strncmp(l, "#C Full Position Vector List", 28) == 0)
+                                if (strncmp(l, "# GVP-initial-XYZ-Scan", 22) == 0){ // read RPSPMC GVP intial XYZ
+					gchar **GXSMmainData = g_strsplit (l, " ", 20);
+					gchar **toc = GXSMmainData;
+					for (; *toc; toc++){
+						if (strncmp(*toc, "XS=", 3) == 0){
+							XSi = atof (*toc+3);
+                                                        continue;
+                                                }
+						if (strncmp(*toc, "YS=", 3) == 0){
+							YSi = atof (*toc+3);
+                                                        continue;
+                                                }
+						if (strncmp(*toc, "YZ=", 3) == 0){
+							ZSi = atof (*toc+3);
+                                                        got_rpspmc_GVP_initial=true;
+                                                        continue;
+                                                }
+					}
+                                        if (got_rpspmc_GVP_initial)
+                                                g_print ("** got_rpspmc_GVP_initial XYZ-Scan: %g %g %g\n", XSi, YSi, ZSi);
+				}
+                                
+				if (strncmp(l, "#C Full Position Vector List", 28) == 0){
+                                        g_print ("** Found: Full Position Vector List\n");
 					break;
+                                }
 			}
 
 
@@ -109,7 +137,7 @@ int vpdata_read (Gxsm4app *app, const gchar *fname, Scan *active_scan){
 
 			// scan vector table
 			int nvsec = 0;
-			gchar sec_position_vector[64][1024];
+			gchar sec_position_vector[64][1100];
 			double svXS[64], svYS[64], svZS[64], svtime[64];
 			int svindexi[64];
 			int i=0;
@@ -121,20 +149,32 @@ int vpdata_read (Gxsm4app *app, const gchar *fname, Scan *active_scan){
 				svXS[i] = svYS[i] = svZS[i] = svtime[i] = 0.;
 				svindexi[0]=-1;
 				f.getline (sec_position_vector[i], 1024);
+                                g_print ("SECPos[%d] >%s<\n",i,sec_position_vector[i]);
 				if (strncmp(sec_position_vector[i], "# S[", 4) == 0){
-					gchar **secvec = g_strsplit (sec_position_vector[i], " ", 30);
+					gchar **secvec = g_strsplit (sec_position_vector[i], " ", 64);
 					gchar **svtoc = secvec;
 					for (; *svtoc; svtoc++){
-						if (!strncmp (*svtoc, "VP[=", 4))
-							svindexi[i] = atoi (*svtoc+4);
-						if (!strncmp (*svtoc, "\"Time\"=", 7))
-							svtime[i] = atof (*svtoc+7);
-						if (!strncmp (*svtoc, "\"XS\"=", 5))
-							svXS[i] = atof (*svtoc+5);
-						if (!strncmp (*svtoc, "\"YS\"=", 5))
-							svYS[i] = atof (*svtoc+5);
-						if (!strncmp (*svtoc, "\"ZS\"=", 5))
-							svZS[i] = atof (*svtoc+5);
+                                                // g_print ("SVP token found: %s\n",*svtoc);
+                                                if (!strncmp (*svtoc, "VP[", 3)){
+							svindexi[i] = atoi (*svtoc+3); g_print ("*VP[*>%s<=> %d\n",*svtoc+3,svindexi[i]); continue; } 
+						if (!strncmp (*svtoc, "\"Time\"=", 7)){
+							svtime[i] = atof (*svtoc+7); continue; }
+						if (!strncmp (*svtoc, "\"Time-Mon\"=", 10)){
+							svtime[i] = atof (*svtoc+10); continue; }
+						if (!strncmp (*svtoc, "\"XS\"=", 5)){
+							svXS[i] = atof (*svtoc+5); continue; }
+						if (!strncmp (*svtoc, "\"XS-Mon\"=", 9)){
+							svXS[i] = atof (*svtoc+8); continue; }
+						if (!strncmp (*svtoc, "\"YS\"=", 5)){
+							svYS[i] = atof (*svtoc+5); continue; }
+						if (!strncmp (*svtoc, "\"YS-Mon\"=", 9)){
+							svYS[i] = atof (*svtoc+9); g_print ("*YS-Mon*>%s<=> %g\n",*svtoc+9, svYS[i]); continue; }
+						if (!strncmp (*svtoc, "\"ZS\"=", 5)){
+							svZS[i] = atof (*svtoc+5); continue; }
+						if (!strncmp (*svtoc, "\"ZS-Mon\"=", 9)){
+							svZS[i] = atof (*svtoc+9); continue; }
+						if (!strncmp (*svtoc, "\"ZS-Topo\"=", 10)){
+							svZS[i] = atof (*svtoc+10); continue; }
 					}
 					if (secvec)
 					g_strfreev (secvec);
@@ -143,6 +183,39 @@ int vpdata_read (Gxsm4app *app, const gchar *fname, Scan *active_scan){
                                 g_print ("SecVecTable[%d]: %d [#%d t=%g XYZ=(%g %g %g)\n]", i, nvsec, svindexi[i], svtime[i], svXS[i], svYS[i], svZS[i]);
 			}
 
+                        // may be missing YSi -- try VP Hdr List
+                        if (svXS[0] == 0.0 && !got_rpspmc_GVP_initial){
+                                g_print ("** may be missing YSi -- try VP Hdr List... ");
+                                char tmp[1100];
+                                std::ifstream ftmp;
+                                ftmp.open(fname, std::ios::in);
+                                while (ftmp.good()){
+                                        ftmp.getline(tmp, 1024);
+                                        if (strncmp(tmp, "#C Vector Probe Header List ---", 28) == 0){
+                                                ftmp.getline(tmp, 1024);
+                                                ftmp.getline(tmp, 1024);
+                                                g_print ("**>%s< ", tmp);
+                                                //int k;
+                                                //double arr[6];
+                                                //sscanf (tmp+1,"%d %f %f %f %f %f %f", &k, &arr[0], &arr[0], &arr[1], &arr[2], &arr[3], &arr[4], &arr[5]);
+                                                //g_print ("**> %d %f %f %f %f\n",k,arr[0],arr[1],arr[2],arr[3]);
+                                                //svXS[0] = arr[2];
+                                                gchar **svph = g_strsplit (tmp, " ", 64);
+                                                gchar **toc  = svph;
+                                                for (int k=0; *toc; ++toc,++k){
+                                                        g_print ("**[%d]> %s < ",k,*toc);
+                                                        if (k==10) svXS[0] = atof (*toc);
+                                                }
+                                                if (svph)
+                                                        g_strfreev (svph);
+                                        }
+                                }
+                                ftmp.close();
+                                g_print ("**\n");
+                        }
+        
+
+                        
 			std::cout << "VP DATA -- SECTAB OK: nvsec=" << nvsec << std::endl;
 
 			while (f.good()){
