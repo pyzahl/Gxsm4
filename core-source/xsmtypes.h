@@ -463,6 +463,7 @@ public:
   
 	int UnitsAlloc;
 	UnitObj *Xunit, *Yunit, *Zunit, *Vunit;
+	UnitObj *Xdt_unit, *Ydt_unit, *Zdt_unit;
 	UnitObj *CurrentUnit, *VoltUnit, *TimeUnit, *TimeUnitms;
 	UnitObj *CPSUnit, *EnergyUnit;
 

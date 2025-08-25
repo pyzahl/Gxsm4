@@ -155,7 +155,8 @@ lz    = dependency('zlib', method : 'system')
 icuuc = cc.find_library('icuuc')
 
 # inet-json... for fitting
-gsl   = dependency('gsl', required : false)
+# drift correct: higfher oirdre interpolation in zdata class
+gsl   = dependency('gsl', required : true)
 ##        dependency('gslcblas', required : false)
 
 if gsl.found()

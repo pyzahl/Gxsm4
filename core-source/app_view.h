@@ -241,9 +241,20 @@ public:
         };
 
         void view_file_save_drawing (const gchar* imgname); // save current view as png, pdf, svg auto detected by file name extension
+
+        static gboolean update_view_panel_idle_callback (ViewControl *self) {
+                g_slist_foreach (self->view_bp->get_ec_list_head (), (GFunc) ViewControl::update_ec, self->scan->data.Zunit);
+                return FALSE;
+        };
+
+
+        void update_XYpixshift() {
+                scan->mem2d->data->get_shift_px (XYpixshift[0], XYpixshift[1]);
+                g_message ("scan->mem2d->data->get_shift_px :  %g %g", XYpixshift[0], XYpixshift[1]);
+        };
         
         void update_view_panel (){
-                g_slist_foreach (view_bp->get_ec_list_head (), (GFunc) ViewControl::update_ec, scan->data.Zunit);
+                g_idle_add (GSourceFunc(update_view_panel_idle_callback), this);
         };
         
         void setup_side_pane (gboolean show);
@@ -407,6 +418,8 @@ private:
         VObject *tmp_object_op;
         gboolean obj_drag_start;
         gboolean pointer_coord_display;
+
+        double XYpixshift[2];
 };
 
 #endif

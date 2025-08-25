@@ -103,6 +103,15 @@ public:
                 sym=g_strdup(s); pssym=g_strdup(pss); 
         };
 
+        void addSuffixSym(const gchar *suffix){ 
+                gchar *snew = g_strconcat(sym, suffix, NULL);
+                g_free(sym);
+                sym=snew;
+                snew = g_strconcat(pssym, suffix, NULL);
+                g_free(pssym); 
+                pssym=snew; 
+        };
+
         void ChangePrec(const gchar *precc){ 
                 g_free(prec);
                 prec = g_strdup(precc);

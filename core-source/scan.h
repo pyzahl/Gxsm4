@@ -224,6 +224,15 @@ public:
 	int number_of_time_elements (); /* find and return number of time elements in list */
 	void reindex_time_elements (); /* reindex time elements in list */
 	double retrieve_time_element (int index); /* retrieve time element "index" and revert to it, returns time */
+        void update_tes(){
+                int index = mem2d->get_t_index();
+                TimeElementOfScan *tes = (TimeElementOfScan*) g_list_nth_data (TimeList, index);
+                if (tes){
+                        double sx,sy;
+                        mem2d->data->get_shift_px(sx,sy);
+                        tes->mem2d->data->set_shift_px (sx,sy);
+                }
+        };
 	Mem2d* mem2d_time_element (int index); /* retrieve mem2d ptr from time element "index" */
 	int get_current_time_element (); /* find index of current time element, -1 if not in list */
 	static void free_time_element (TimeElementOfScan *tes, Scan *s){ delete tes->mem2d; delete tes->sdata; delete tes; };

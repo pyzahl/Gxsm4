@@ -589,6 +589,7 @@ void ViewControl::display_changed_vr_callback (Param_Control *pc, gpointer vc){
 }
 
 void ViewControl::display_changed_sh_callback (Param_Control *pc, gpointer vc){
+        ((ViewControl*)vc)->scan->mem2d->data->set_shift_px (((ViewControl*)vc)->XYpixshift[0], ((ViewControl*)vc)->XYpixshift[1]);
         ((ViewControl*)vc)->scan->set_display_shift ();
         ((ViewControl*)vc)->update_view_panel ();
 }
@@ -678,6 +679,8 @@ ViewControl::ViewControl (Gxsm4app *app,
 	CursorXYVt[2]=0.;
 	CursorXYVt[3]=0.;
 
+        scan->mem2d->data->get_shift_px (XYpixshift[0], XYpixshift[1]);
+        
 	SetMarkerGroup ();
 
 	AppWindowInit (title, "--");
@@ -747,6 +750,7 @@ ViewControl::ViewControl (Gxsm4app *app,
 
         gtk_drawing_area_set_content_width  (GTK_DRAWING_AREA (canvas), 100);
         gtk_drawing_area_set_content_height (GTK_DRAWING_AREA (canvas), 100);
+
         gtk_drawing_area_set_draw_func      (GTK_DRAWING_AREA (canvas),
                                              GtkDrawingAreaDrawFunc (ViewControl::canvas_draw_function),
                                              this, NULL);
@@ -795,7 +799,6 @@ ViewControl::ViewControl (Gxsm4app *app,
         g_signal_connect (gesture, "released", G_CALLBACK (released_cb), this);
         gtk_widget_add_controller (canvas, GTK_EVENT_CONTROLLER (gesture));
 
-        
 	// ---------------------- Setup Information Sidepane ----------------------------
 	XSM_DEBUG (DBG_L2,  "VC::VC Side Pane Setup" );
 
@@ -862,10 +865,14 @@ ViewControl::ViewControl (Gxsm4app *app,
         // creepfactor = tau > 0. ? (1. - expf (-tau*dt)) : dt;
 
         view_bp->set_default_ec_change_notice_fkt  (display_changed_sh_callback, this);
-        view_bp->grid_add_ec ("Shift X", scan->data.Xunit, &scan->data.display.px_shift_xy[0], -5000000., 5000000., "8g", 1., 1., NULL); //  "ShiftX"); // requires gschema for scan windows(s)...
+        view_bp->grid_add_ec ("Shift X", scan->data.Xdt_unit, &scan->data.display.px_shift_xy[0], -5000000., 5000000., "8g", 1., 0.1, NULL); //  TC ShiftX
+        view_bp->grid_add_ec ("px", scan->data.Xunit, &XYpixshift[0], -1000., 1000., "8g", 1., 0.5, NULL); //  manual Pix Shift X
         view_bp->new_line ();
 
-        view_bp->grid_add_ec ("Shift Y", scan->data.Yunit, &scan->data.display.px_shift_xy[1], -5000000., 5000000., "8g", 1., 1., NULL); // "ShiftY");
+        //scan->mem2d->data->get_shift_px (XYpixshift[0], XYpixshift[1]);
+        
+        view_bp->grid_add_ec ("Shift Y", scan->data.Ydt_unit, &scan->data.display.px_shift_xy[1], -5000000., 5000000., "8g", 1., 0.1, NULL); // "ShiftY");
+        view_bp->grid_add_ec ("px", scan->data.Yunit, &XYpixshift[1], -1000., 1000., "8g", 1., 0.5, NULL); //  manual Pix Shift Y
         view_bp->new_line ();
         view_bp->grid_add_button ("Get Circle Coords", "get coords from selected Circle Object.\nSet Tau=-1 for manual and\n add a Point Object as Reference Pos.", 2,
                                   G_CALLBACK (ViewControl::obj_circle_get_center_coords_callback), this);
@@ -1580,6 +1587,7 @@ void ViewControl::canvas_draw_function (GtkDrawingArea *area,
                                         int             width,
                                         int             height,
                                         ViewControl *vc){
+        
         if (vc->destruction_in_progress)
                 return;
 

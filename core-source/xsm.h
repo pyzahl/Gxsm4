@@ -127,6 +127,11 @@ public:
         UnitObj *Y_Unit;
         UnitObj *Z_Unit;
 
+        UnitObj *Xdt_Unit;
+        UnitObj *Ydt_Unit;
+        UnitObj *Zdt_Unit;
+
+        
 
         xsm::open_mode file_open_mode;
 

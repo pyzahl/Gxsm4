@@ -30,6 +30,12 @@
 #ifndef __ZDATA_H
 #define __ZDATA_H
 
+#include <gsl/gsl_spline2d.h>
+#include <gsl/gsl_interp.h> // For gsl_interp_accel
+#include <stdio.h>
+#include <stdlib.h> // For malloc, free
+
+
 #include <netcdf.hh>
 //#include <netcdf>
 //using namespace netCDF;
@@ -224,8 +230,11 @@ public:
 	double zmin, zmax, zcenter, zrange;
 
         void set_shift (double cf_dt=0., double pixs_xdt=0., double pixs_ydt=0.);
-        gboolean is_shift () { return creepfactor != 0.0 ? true : false; };
+        void set_shift_px (double dxm=0., double dym = 0.);
+        void get_shift_px (double &dxm, double &dym) { dxm = XYpixshift_manual[0]; dym = XYpixshift_manual[1]; };
+        gboolean is_shift () { return creepfactor != 0.0 || XYpixshift_manual[0] != 0. ||  XYpixshift_manual[1] != 0. ? true : false; };
         double creepfactor, pixshift_dt[2];
+        gboolean enable_drift_correction;
         
         inline int clampx (int x) { return x < 0 ? 0 : x >= nx ? nx-1 : x; };
         inline int clampy (int y) { return y < 0 ? 0 : y >= ny ? ny-1 : y; };
@@ -237,6 +246,7 @@ protected:
 	int  vlayer, vlayerstore;
 	int  vlayer_put;
 	int  cp_ixy_sub[4];
+        double XYpixshift_manual[2];
 
 private:
 	double *Xlookup, *Ylookup, *Vlookup;
@@ -251,21 +261,93 @@ template <class ZTYP> class TZData : public ZData{
 public:
 	TZData(int Nx=1, int Ny=1, int Nv=1);
 	virtual ~TZData();
-
+       
 	size_t Zsize(){ return sizeof(ZTYP); };
-	inline double Z(int x, int y){
-                if (creepfactor == 0.)
+
+        inline double Z_interpol2d(double x, double y, int v){
+                // use GSL for qubic or bi-cubic! https://www.gnu.org/software/gsl/doc/html/interp.html
+
+                /*
+#include <gsl/gsl_spline2d.h>
+#include <gsl/gsl_interp.h> // For gsl_interp_accel
+#include <stdio.h>
+#include <stdlib.h> // For malloc, free
+
+int main() {
+    // Define grid dimensions
+    size_t nx = 5;
+    size_t ny = 5;
+
+    // Allocate memory for x, y, and z data
+    double *x = (double *) malloc(nx * sizeof(double));
+    double *y = (double *) malloc(ny * sizeof(double));
+    double *z = (double *) malloc(nx * ny * sizeof(double));
+
+    // Initialize x, y, and z data (example: a simple plane)
+    for (size_t i = 0; i < nx; ++i) {
+        x[i] = (double)i;
+    }
+    for (size_t j = 0; j < ny; ++j) {
+        y[j] = (double)j;
+    }
+    for (size_t i = 0; i < nx; ++i) {
+        for (size_t j = 0; j < ny; ++j) {
+            gsl_spline2d_set(z, i, j, nx, ny, x[i] + y[j]); // z = x + y
+        }
+    }
+
+    // Allocate interpolation objects
+    gsl_interp_accel *xacc = gsl_interp_accel_alloc();
+    gsl_interp_accel *yacc = gsl_interp_accel_alloc();
+    gsl_spline2d *spline = gsl_spline2d_alloc(gsl_interp2d_bicubic, nx, ny);
+
+    // Initialize the spline
+    gsl_spline2d_init(spline, x, y, z, nx, ny);
+
+    // Evaluate at a new point
+    double eval_x = 2.5;
+    double eval_y = 2.5;
+    double interpolated_z = gsl_spline2d_eval(spline, eval_x, eval_y, xacc, yacc);
+
+    printf("Interpolated value at (%g, %g): %g\n", eval_x, eval_y, interpolated_z);
+
+    // Free resources
+    gsl_spline2d_free(spline);
+    gsl_interp_accel_free(xacc);
+    gsl_interp_accel_free(yacc);
+    free(x);
+    free(y);
+    free(z);
+
+    return 0;
+}
+                */
+                
+                return (double)Zdat[clampy(int(round(y)))*nv+v][clampx(int(round(x)))];
+        };
+
+        inline double Z(int x, int y){
+                if (! enable_drift_correction)
                         return (double)Zdat[y*nv+vlayer][x];
-                if (creepfactor < 0.) 
-                        return (double)Zdat[clampy(y + round (pixshift_dt[1]))*nv+vlayer][clampx(x + round (pixshift_dt[0]))];
-                else return (double)Zdat[clampy(y + round (creepfactor*pixshift_dt[1]))*nv+vlayer][clampx(x + round (creepfactor*pixshift_dt[0]))];
+
+                if (creepfactor < 0.)
+                        return Z_interpol2d (x + pixshift_dt[0] + XYpixshift_manual[0], y + pixshift_dt[1] + XYpixshift_manual[1], vlayer);
+                else
+                        return Z_interpol2d (x + creepfactor*pixshift_dt[0] + XYpixshift_manual[0], y + creepfactor*pixshift_dt[1] + XYpixshift_manual[1], vlayer);
+                //return (double)Zdat[clampy(y + round (pixshift_dt[1]))*nv+vlayer][clampx(x + round (pixshift_dt[0]))];
+                //else return (double)Zdat[clampy(y + round (creepfactor*pixshift_dt[1]))*nv+vlayer][clampx(x + round (creepfactor*pixshift_dt[0]))];
         };
 	inline double Z(int x, int y, int v){
-                if (creepfactor == 0.)
+                if (! enable_drift_correction)
                         return (double)Zdat[y*nv+v][x];
-                if (creepfactor < 0.) 
-                        return (double)Zdat[clampy(y + round (pixshift_dt[1]))*nv+v][clampx(x + round (pixshift_dt[0]))];
-                else return (double)Zdat[clampy(y + round (creepfactor*pixshift_dt[1]))*nv+v][clampx(x + round (creepfactor*pixshift_dt[0]))];
+
+                if (creepfactor < 0.)
+                        return Z_interpol2d (x + pixshift_dt[0] + XYpixshift_manual[0], y + pixshift_dt[1] + XYpixshift_manual[1], v);
+                else
+                        return Z_interpol2d (x + pixshift_dt[0] + XYpixshift_manual[0], y + pixshift_dt[1] + XYpixshift_manual[1], v);
+                //if (creepfactor < 0.) 
+                //        return (double)Zdat[clampy(y + round (pixshift_dt[1]))*nv+v][clampx(x + round (pixshift_dt[0]))];
+                //else return (double)Zdat[clampy(y + round (creepfactor*pixshift_dt[1]))*nv+v][clampx(x + round (creepfactor*pixshift_dt[0]))];
         };
 	inline double Z(double z, int x, int y){ return (double)(Zdat[y*nv+vlayer][x]=(ZTYP)z); };
 	inline double ZSave(double z, int x, int y){  if (x>=0 && x < nx && y >= 0 && y < ny) return (double)(Zdat[y*nv+vlayer][x]=(ZTYP)z); else return 0.; };

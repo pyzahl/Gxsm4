@@ -279,6 +279,8 @@ double Scan::retrieve_time_element (int index){
 	if (! TimeList) 
 		return 0.;
 
+        update_tes ();
+        
 	TimeElementOfScan *tes = (TimeElementOfScan*) g_list_nth_data (TimeList, index);
 	if (tes){
 		int v=mem2d->data->GetLayer();

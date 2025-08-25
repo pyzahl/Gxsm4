@@ -66,13 +66,17 @@ ZData::ZData(int Nx, int Ny, int Nv){
         Li = new LineInfo[ny*nv]; 
         Xlookup=new double[nx]; 
         Ylookup=new double[ny]; 
-        Vlookup=new double[nv]; 
+        Vlookup=new double[nv];
+
         memset (Xlookup, 0, Nx);
         memset (Ylookup, 0, Ny);
         memset (Vlookup, 0, Nv);
         creepfactor    = 0.;
+        enable_drift_correction = false;
+
         pixshift_dt[0] = 0.;
         pixshift_dt[1] = 0.;
+        XYpixshift_manual[0]=XYpixshift_manual[1]=0.;
 }
  
 ZData::~ZData(){ 
@@ -160,6 +164,21 @@ void  ZData::set_shift (double cf_dt, double pixs_xdt, double pixs_ydt) {
                 pixshift_dt[1] = pixs_ydt;
         }
         creepfactor    = cf_dt;
+
+        if (pixshift_dt[0] == 0.0 && pixshift_dt[1] == 0.0 && XYpixshift_manual[0] == 0.0 && XYpixshift_manual[1] == 0.0)
+                enable_drift_correction = false;
+        else
+                enable_drift_correction = true;
+};
+
+void  ZData::set_shift_px (double dxm, double dym) {
+        XYpixshift_manual[0] = dxm;
+        XYpixshift_manual[1] = dym;
+
+        if (pixshift_dt[0] == 0.0 && pixshift_dt[1] == 0.0 && XYpixshift_manual[0] == 0.0 && XYpixshift_manual[1] == 0.0)
+                enable_drift_correction = false;
+        else
+                enable_drift_correction = true;
 };
 
 /*
@@ -435,6 +454,9 @@ void TZData<ZTYP>::NcPut(NcVar *ncfield, int time_index, gboolean update){
                         //                        main_get_gapp ()->progress_info_set_bar_fraction ((gdouble)v/nv, 2);
                 }
 	}
+
+        // nc_put_att_double (0, ncfield, "XYPixShift", NC_DOUBLE, 2, XYpixshift_manual);
+        
         if (update) XSM_DEBUG_GM (DBG_L1, "NcVar updated at %d lines x values", count);
 #endif
 }
@@ -854,6 +876,11 @@ void Mem2d::copy(Mem2d *m, int x0, int y0, int vi, int vf, int nx, int ny, gbool
                 }
 
 	m->data->SetLayer(ly);
+        
+        double sx,sy;
+        m->data->get_shift_px(sx,sy);
+        data->set_shift_px (sx,sy);
+                
 	SetLayer(ly-vi < lnum ? ly-vi > 0? ly-vi : 0 : lnum-1);
 	data->CopyLookups(m->data,  x0, y0, vi);
 	t_index = m->t_index; // keep it!

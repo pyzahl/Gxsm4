@@ -89,24 +89,40 @@ Xsm::Xsm(){
 
 	// do not delete those!!
 	X_Unit = Y_Unit = Z_Unit = NULL;
+	Xdt_Unit = Ydt_Unit = Zdt_Unit = NULL;
 
 	if( IS_SPALEED_CTRL ){
-		if(! strcmp(AktUnit->alias, "BZ") )
-			X_Unit = Y_Unit = BZ_Unit;
-		else
-			X_Unit = Y_Unit = VoltUnit;
+		if(! strcmp(AktUnit->alias, "BZ") ){
+			X_Unit = BZ_Unit->Copy();
+			Y_Unit = BZ_Unit->Copy();
+		} else {
+			X_Unit = VoltUnit->Copy();
+                        Y_Unit = VoltUnit->Copy();
+                }
 		Z_Unit = CPSUnit;
 		X_Unit->SetAlias (AktUnit->alias);
+		Y_Unit->SetAlias (AktUnit->alias);
 		Z_Unit->SetAlias ("Cps");
+		Zdt_Unit = CPSUnit->Copy();
+		Xdt_Unit = X_Unit->Copy();
+                Ydt_Unit = Y_Unit->Copy();
 	}else{
 		LenUnit  = new LinUnit(AktUnit->s, AktUnit->pss, "L",AktUnit->fac);
 		LenUnit->SetAlias (AktUnit->alias);
 		LenUnitZ = new LinUnit(AktUnit->s, AktUnit->pss, "H",AktUnit->fac);
 		LenUnitZ->SetAlias (AktUnit->alias);
-		Z_Unit   = LenUnitZ;
-		X_Unit = Y_Unit = LenUnit;
+		Z_Unit = LenUnitZ->Copy();
+		X_Unit = LenUnit->Copy();
+		Y_Unit = LenUnit->Copy();
+		Zdt_Unit = LenUnitZ->Copy();
+		Xdt_Unit = X_Unit->Copy();
+                Ydt_Unit = Y_Unit->Copy();
 	}
 
+        Xdt_Unit->addSuffixSym("/s");
+        Ydt_Unit->addSuffixSym("/s");
+        Zdt_Unit->addSuffixSym("/s");
+        
 	// Override Hardware Resource by CmdParam ??
 	if(xsmres.HardwareTypeCmd)
 		strcpy(xsmres.HardwareType, xsmres.HardwareTypeCmd);
@@ -166,10 +182,21 @@ Xsm::~Xsm(){
 	XSM_DEBUG (DBG_L2, "Xsm::~Xsm ** deleting unit objects");
         main_get_gapp ()->monitorcontrol->LogEvent("Xsm object", "destructor", 3);
         
-	if(LenUnit)
+        if(X_Unit)
+                delete X_Unit;
+        if(Y_Unit)
+                delete Y_Unit;
+        
+        if(LenUnit)
 		delete LenUnit;
 	if(LenUnitZ)
 		delete LenUnitZ;
+
+        if (Xdt_Unit)
+                delete Xdt_Unit;
+        if (Zdt_Unit)
+                delete Zdt_Unit;
+        
 	delete YSUnit;
 	delete BZ_Unit;
 	delete EnergyUnit;
@@ -428,6 +455,10 @@ SCAN_DATA::SCAN_DATA(){
         Xunit = UnityNA.Copy ();
         Yunit = UnityNA.Copy ();
         Vunit = UnityNA.Copy ();
+
+        Xdt_unit = UnityNA.Copy ();
+        Ydt_unit = UnityNA.Copy ();
+        Zdt_unit = UnityNA.Copy ();
         
         CurrentUnit = UnityNA.Copy ();
         VoltUnit = UnityNA.Copy ();
@@ -447,7 +478,7 @@ SCAN_DATA::~SCAN_DATA(){
         GXSM_LOG_DATAOBJ_ACTION (GXSM_GRC_SCANDATAOBJ, "destructor");
 	if(UnitsAlloc){
                 GXSM_LOG_DATAOBJ_ACTION (GXSM_GRC_SCANDATAOBJ, "destructor dealloc units");
-;
+                
 		if(Zunit) { 
 			delete Zunit; Zunit=NULL; 
 		}
@@ -457,6 +488,16 @@ SCAN_DATA::~SCAN_DATA(){
 		if(Yunit) { 
 			delete Yunit; Yunit=NULL; 
 		}
+		if(Zdt_unit) { 
+			delete Zdt_unit; Zdt_unit=NULL; 
+		}
+		if(Xdt_unit) { 
+			delete Xdt_unit; Xdt_unit=NULL; 
+		}
+		if(Ydt_unit) { 
+			delete Ydt_unit; Ydt_unit=NULL; 
+		}
+                
 		if(Vunit) { 
 			delete Vunit; Vunit=NULL; 
 		}
@@ -541,11 +582,17 @@ void SCAN_DATA::CpUnits(SCAN_DATA &src){
 void SCAN_DATA::SetXUnit(UnitObj *u){
 	if(Xunit) delete Xunit;
 	Xunit = u->Copy();
+	if(Xdt_unit) delete Xdt_unit;
+	Xdt_unit = u->Copy();
+        Xdt_unit->addSuffixSym("/s");
 }
 
 void SCAN_DATA::SetYUnit(UnitObj *u){
 	if(Yunit) delete Yunit;
 	Yunit = u->Copy();
+	if(Ydt_unit) delete Ydt_unit;
+	Ydt_unit = u->Copy();
+        Ydt_unit->addSuffixSym("/s");
 }
 
 void SCAN_DATA::SetVUnit(UnitObj *u){
@@ -556,6 +603,9 @@ void SCAN_DATA::SetVUnit(UnitObj *u){
 void SCAN_DATA::SetZUnit(UnitObj *u){
 	if(Zunit) delete Zunit;
 	Zunit = u->Copy();
+	if(Zdt_unit) delete Zdt_unit;
+	Zdt_unit = u->Copy();
+        Zdt_unit->addSuffixSym("/s");
 }
 
 void SCAN_DATA::SetTimeUnit(UnitObj *u){

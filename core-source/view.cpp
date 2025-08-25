@@ -256,7 +256,7 @@ Grey2D::~Grey2D(){
 int Grey2D::update(int y1, int y2){
 	if (!XImg) 
 		return 0;
-
+       
 	if (y2 < y1 && viewcontrol){
 		if (ChanNo == main_get_gapp ()->xsm->ActiveChannel)
 			viewcontrol->SetActive (TRUE);
@@ -423,11 +423,11 @@ int Grey2D::draw(int zoomoverride){
 
 	nx=scan->mem2d->GetNx();
 	ny=scan->mem2d->GetNy();
-
+      
 	XSM_DEBUG (DBG_L2, "NX: " << nx << " NY: " << ny);
 	if(nx<1 || ny<1) return 1;
 
-	if(!zoomoverride && !userzoom){
+        if(!zoomoverride && !userzoom){
 		ZoomFac = 1;
 		QuenchFac = 1;
 		if(main_get_gapp ()->xsm->ZoomFlg & VIEW_ZOOM){
@@ -501,6 +501,8 @@ int Grey2D::draw(int zoomoverride){
 		viewcontrol->show();
 		XImg = viewcontrol->GetXImg();
 	}
+
+        viewcontrol->update_XYpixshift();
 
 	if(ChanNo == main_get_gapp ()->xsm->ActiveChannel)
 		viewcontrol->SetActive(TRUE);
