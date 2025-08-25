@@ -21,7 +21,7 @@ mpl.use('Agg')
 from matplotlib import ticker
 mpl.pyplot.close('all')
 
-sc = dict(CH=2, A0=3,B0=32,D=0.1, dFmin=-5.0, Zmax=30, SZmax=10, SZmin=-0.5, slices=50, STOP=0)
+sc = dict(CH=2, A0=3,B0=32,Z0=0., dFmin=-5.0, Zmax=30, SZmax=10, SZmin=-0.5, F0off=-0.0, STOP=0)
 
 # Setup SCs
 def SetupSC():
@@ -49,19 +49,21 @@ def SetSC():
 
 ## MODEL FUNCTIONS used for fitting
 def LJ(z,d,s,e):
+	z = z-sc['Z0']
 	x = s/(z+d)
 	return 4*e/s*(12*np.power(x, 13) - 6*np.power(x, 7))
 
 def LJ_bgX(z,a,b,c,f0,z0):
+	z = z-sc['Z0']
 	return a*np.exp(-b*(z-z0))-f0
 
 def LJ_bg(z,a,d):
+	z = z-sc['Z0']
 	return a*np.power(1/(z+d), 5)
-#	return a*np.power(1/(z+sc['D']), 5)
 
 def LJ_bgref(z,a,d):
+	z = z-sc['Z0']
 	return a*np.power(1/(z+d), 5)
-#	return a*np.power(1/(z+sc['D']), 5)
 
 ## template
 def plot_vpdata(cols=[1,2,4]):
@@ -105,19 +107,6 @@ def run_bg_and_lj_fits(lj_z, xy, B0, A0,j):
 
 	return lj_curve, bg_fit_curve
 
-# old version (slow)
-def dFreqZM(ch, p,zmap,n, m):
-	w=3 # uneven. 1,3, ...
-	w2 = int((w-1)/2)
-	fz = np.zeros ((1+m,n))
-	for zi in range(0,n):
-		fz[0][zi] = zmap[zi]
-		for j in range (0,m):
-			#print (ch,p,zi,n,j)
-			dfl = gxsm.get_slice(ch, zi,0, p[j][1]-w2,w) # ch, v, t, yi, yn   ## AFM dFreq in CH3
-			fz[1+j][zi] = np.mean (dfl[0:2, p[j][0]-w2 : p[j][0]+w2])
-	return fz
-
 # get data from scan
 def dFreqZ(ch, p,zmap,n, m):
 	fz = np.zeros ((1+m,n))
@@ -127,7 +116,7 @@ def dFreqZ(ch, p,zmap,n, m):
 		dfl = gxsm.get_slice_v(ch, p[j][0],0, p[j][1],1) # ch, x, t, yi, yn   ## AFM dFreq in CH3
 		#print ('dfl:',dfl.shape)
 		#print(dfl)
-		fz[1+j] = np.array(dfl[0][0:n])
+		fz[1+j] = np.array(dfl[0][0:n])  - sc['F0off']
 	return fz
 
 # get data and average over rectangle area in 2d (in z-plane)
@@ -142,11 +131,11 @@ def dFreqZrectav(ch, p,zmap,n, m):
 			dfl = gxsm.get_slice_v(ch, x,0, p[j][1],yn) # ch, x, t, yi, yn   ## AFM dFreq in CH3
 			#print ('dfl:',dfl.shape)
 			#print(dfl)
-			fz[1] = fz[1] + np.array(dfl[0][0:n])
+			fz[1] = fz[1] + (np.array(dfl[0][0:n]) - sc['F0off'])
 			count=count+1
 	fz[1] = fz[1] / count
 	return fz
-
+	
 # run bg reference fit
 def run_bgref_fit(lj_z, xy, B0):
 	try:
@@ -166,7 +155,7 @@ def CalcBgF(ch, bgr, zlist, nz, num_bgrs, B0):
 
 # visualize, plot and refit curves
 # use feh to auto plot/updated resulting graph from /tmp/fz.png!
-def plot_xy(xy, m, A0, B0, sbg_fit, sbg_curve):
+def plot_xy(lj_z, xy, m, A0, B0, sbg_fit, sbg_curve):
 	plt.close ('all')
 	plt.figure(figsize=(12, 8))
 
@@ -175,8 +164,6 @@ def plot_xy(xy, m, A0, B0, sbg_fit, sbg_curve):
 
 	print ('Fit BG start Z: ', xy[0][B0])
 	plt.axvline(x=xy[0][B0])
-
-	lj_z   = np.linspace(-0.5, sc['Zmax'], 300)
 
 	print ('PLOTTING, FITTING')
 
@@ -212,9 +199,9 @@ def plot_xy(xy, m, A0, B0, sbg_fit, sbg_curve):
 				if l == 'dFrequency':
 					col_dF=i
 				i=i+1
-			z0 = columns[col_z][0]
+			z0 = 0 #columns[col_z][0]   ## SHIFT start to 0
 			cz = columns[col_z][600:1600]
-			cdf = columns[col_dF][600:1600]
+			cdf = columns[col_dF][600:1600] - sc['F0off']
 			plt.plot(cz-z0, cdf, alpha=0.3,label='FzProbe#{}'.format(j))
 
 	plt.ylim(sc['dFmin'],1.0)
@@ -296,7 +283,7 @@ def get_z_list_old():
 	zlist = np.append(zlist, 20.0)
 
 ## 2025082022xx
-def get_z_list():
+def get_z_list_last():
 	zlist = np.arange(0.0, 1.0, 0.1)
 	zlist = np.append(zlist, np.arange(1.0, 2.0, 0.2))
 	zlist = np.append(zlist, np.arange(2.0, 4.0, 0.25))
@@ -312,6 +299,24 @@ def get_z_list():
 
 	return zlist
 
+## from topo data
+def get_z_list(start=0, end=999):
+	ch=4-1
+	dx,dy,dz,dl  = gxsm.get_differentials (ch)
+	nx,ny,nv,nt  = gxsm.get_dimensions (ch)
+	if end < nt:
+		nt=end
+	if nt > 1000:
+		return
+	print ('Topo in CH ',ch+1, " #Z slices:",  nt)
+	zlist = np.zeros(0)
+	zi = dz*gxsm.get_data_pkt (ch, 10, 10, 0, start)
+	
+	for ti in range(start,nt):
+		z = dz*gxsm.get_data_pkt (ch, 10, 10, 0, ti)
+		print(ti,z)
+		zlist = np.append(zlist, z)
+	return zlist
 
 ##### MAIN  ######
 print('HELP to watch plot: Install: apt-get feh, run $feh /tmp/fz.png')
@@ -324,31 +329,33 @@ npp=0
 nrr =0
 
 # Get Z mapping
-zlist = get_z_list()
+zlist = get_z_list(1,39)
 print ('Z-List: ', zlist)
 print ('#Z:', zlist.size)
+sc['Z0'] = zlist[0]
+SetSC()
 
 # Watch Point Objects and update if changed
 while sc['STOP'] == 0.:
 	ch = int(sc['CH'])-1
 	A0 = int(sc['A0'])
 	B0 = int(sc['B0'])
-	D = sc['D']
 
 	p, bgr, num_points, num_bgrs = get_marker_pos(ch)
+	lj_z   = np.linspace(sc['Z0'] + sc['SZmin'], sc['Z0'] + sc['Zmax'], 300)
 	
 	# substrate background by rect areas
 	if ((not np.array_equal(bgr ,rr) ) or  num_bgrs != nrr):
 		rr =bgr
 		nrr = num_bgrs
-		print ('BG Rects: ', bgr)
+		#print ('BG Rects: ', bgr)
 		fbg = CalcBgF(ch, bgr, zlist, zlist.size, num_bgrs, B0)
-		print ('FBG:', fbg)
-		lj_z   = np.linspace(-0.5, sc['Zmax'], 300)
+		#print ('FBG:', fbg)
+
 		bg_fit, bg_curve =  run_bgref_fit(lj_z, fbg, B0)
 		
 		fz = dFreqZ(ch, p, zlist, zlist.size, num_points)
-		plot_xy(fz, num_points,A0,B0, fbg[1], bg_curve)
+		plot_xy( lj_z, fz, num_points,A0,B0, fbg[1], bg_curve)
 
 	# curves on points
 	if ((not np.array_equal(p , pp) ) or  num_points != npp):
@@ -357,7 +364,7 @@ while sc['STOP'] == 0.:
 		print ('Points: ', p)
 
 		fz = dFreqZ(ch, p, zlist, zlist.size, num_points)
-		plot_xy(fz, num_points,A0,B0, fbg[1], bg_curve)
+		plot_xy(lj_z, fz, num_points,A0,B0, fbg[1], bg_curve)
 
 	# get updated params
 	GetSC()
