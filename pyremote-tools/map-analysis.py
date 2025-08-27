@@ -319,6 +319,76 @@ def get_z_list(start=0, end=999):
 		zlist = np.append(zlist, z)
 	return zlist
 
+def get_z_list_from_dFz_curves(ch, start=0, end=999):
+	# start with topo Z and check/correct by average of all curves loaded
+	chz=4-1
+	dx,dy,dzz,dl  = gxsm.get_differentials (chz)
+	nx,ny,nv,nt  = gxsm.get_dimensions (chz)
+	dx,dy,df,dl  = gxsm.get_differentials (ch)
+	if end < nt:
+		nt=end
+	if nt > 1000:
+		return
+	print ('Topo in CH ',ch+1, " #Z slices:",  nt)
+	zlist = np.zeros(0)
+	zdflist = np.zeros(0)
+	zi = dz*gxsm.get_data_pkt (chz, 10, 10, 0, start)
+	
+	for ti in range(start,nt):
+		z = dz*gxsm.get_data_pkt (chz, 10, 10, 0, ti)
+		zdf = df*gxsm.get_data_pkt (ch, 10, 10, 0, ti)
+		print(ti,z)
+		zlist = np.append(zlist, z)
+		zdflist = np.append(zdflist, zdf)
+
+	print ('zlist', zlist)
+	print ('zdflist', zdflist)
+		
+	Np = gxsm.get_probe_event(ch,1000)  # get count
+	if Np > 0:
+		for j in range (0,Np):
+			#columns, labels, units = gxsm.get_probe_event(ch,-1)  # get last
+			columns, labels, units = gxsm.get_probe_event(ch,j)  # get i-th
+			#	print (columns, labels, units)
+			col_z=0
+			col_dF=0
+			i=0
+			for l in labels:
+				if l == '	ZS-Topo':
+					col_z=i
+				if l == 'dFrequency':
+					col_dF=i
+				i=i+1
+			z0 = 0 #columns[col_z][0]   ## SHIFT start to 0
+			cz = columns[col_z][600:1600]
+			cdf = columns[col_dF][600:1600] - sc['F0off']+rp_freq_dev
+			#plt.plot(cz-z0, cdf, alpha=0.3,label='FzProbe#{}'.format(j))
+			if j == 0:
+				z_probe = cz-z0
+				df_probe = cdf
+			else:
+				z_probe = np.append (z_probe, cz-z0)
+				df_probe = np.append (df_probe, cdf)
+
+		A0 = int(sc['A0']) ## !!! remap
+		B0 = int(sc['B0'])  ## !!! remap via zlist and 1000 in linespace below
+		lj_z   = np.linspace(sc['Z0'] + sc['SZmin'], sc['Z0'] + sc['Zmax'], 1000)
+		dzi = ( sc['SZmax'] - sc['SZmin'] ) / 1000
+		A0z = int (round (dzi * ( zlist[A0]-sc['Z0'] - sc['SZmin'] )))
+		B0z = int (round (dzi * ( zlist[B0]-sc['Z0'] - sc['SZmin'] )))
+		lj_curve, bg_curve = run_bg_and_lj_fits(lj_z, [z_probe,df_probe], B0z, A0z, 0) ## 
+		
+		
+		
+		# merge all curves
+		# fit
+		# find Z's for dF's
+		
+		#lj_curve, bg_curve = run_bg_and_lj_fits(lj_z, [xy[0],xy[1+j]], B0, A0, j)
+		
+		
+	return zlist
+
 ##### MAIN  ######
 print('HELP to watch plot: Install: apt-get feh, run $feh /tmp/fz.png')
 
