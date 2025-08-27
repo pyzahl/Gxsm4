@@ -21,7 +21,8 @@ mpl.use('Agg')
 from matplotlib import ticker
 mpl.pyplot.close('all')
 
-sc = dict(CH=2, A0=3,B0=32,Z0=0., dFmin=-5.0, Zmax=30, SZmax=10, SZmin=-0.5, F0off=-0.0, STOP=0)
+sc = dict(CH=2, A0=3,B0=32,Z0=0., dFmin=-5.0, Zmax=30, SZmax=10, SZmin=-0.5, F0off=-0.21, STOP=0)
+rp_freq_dev = -0.1  ### eventual Hz offset/thermal drift for later measured dF(z)
 
 # Setup SCs
 def SetupSC():
@@ -201,7 +202,7 @@ def plot_xy(lj_z, xy, m, A0, B0, sbg_fit, sbg_curve):
 				i=i+1
 			z0 = 0 #columns[col_z][0]   ## SHIFT start to 0
 			cz = columns[col_z][600:1600]
-			cdf = columns[col_dF][600:1600] - sc['F0off']
+			cdf = columns[col_dF][600:1600] - sc['F0off']+rp_freq_dev
 			plt.plot(cz-z0, cdf, alpha=0.3,label='FzProbe#{}'.format(j))
 
 	plt.ylim(sc['dFmin'],1.0)
