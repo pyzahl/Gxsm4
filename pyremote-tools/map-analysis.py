@@ -66,6 +66,8 @@ def LJ_bgref(z,a,d):
 	z = z-sc['Z0']
 	return a*np.power(1/(z+d), 5)
 
+
+
 ## template
 def plot_vpdata(cols=[1,2,4]):
     plt.close ('all')
@@ -104,7 +106,8 @@ def run_bg_and_lj_fits(lj_z, xy, B0, A0,j):
 		lj_curve = lj_fit + bg_fit_curve
 	except:
 		print ('Fit fail for LJfit#{}'.format(j+1))
-		lj_curve = np.zeros(0)
+		#print ('Data:', xy[0][A0:], fmol[A0:])
+		lj_curve = bg_fit_curve  #np.zeros(lj_z.size)
 
 	return lj_curve, bg_fit_curve
 
@@ -215,6 +218,50 @@ def plot_xy(lj_z, xy, m, A0, B0, sbg_fit, sbg_curve):
 	#plt.show()
 	plt.savefig('/tmp/fz.png')
 
+# visualize, plot and refit curves
+# use feh to auto plot/updated resulting graph from /tmp/fz.png!
+def plot_zreferencing(lj_z, lj_curve, z_probe, df_probe, z_maps, z_mapdfs):
+	plt.close ('all')
+	plt.figure(figsize=(12, 8))
+
+	plt.plot(lj_z, lj_curve, label='LJ Curve Fit')
+	plt.plot(z_probe, df_probe, '.', alpha=0.3, label='LJ Probes')
+	plt.plot(z_maps, z_mapdfs, 'x',  label='LJ Map Pointst')
+
+
+	# plot FZ probe(s) loaded
+	Np = gxsm.get_probe_event(ch,1000)  # get count
+	if Np > 0:
+		for j in range (0,Np):
+			#columns, labels, units = gxsm.get_probe_event(ch,-1)  # get last
+			columns, labels, units = gxsm.get_probe_event(ch,j)  # get i-th
+			#	print (columns, labels, units)
+			col_z=0
+			col_dF=0
+			i=0
+			for l in labels:
+				if l == '	ZS-Topo':
+					col_z=i
+				if l == 'dFrequency':
+					col_dF=i
+				i=i+1
+			z0 = 0 #columns[col_z][0]   ## SHIFT start to 0
+			cz = columns[col_z][600:1600]
+			cdf = columns[col_dF][600:1600] - sc['F0off']+rp_freq_dev
+			plt.plot(cz-z0, cdf, alpha=0.3,label='FzProbe#{}'.format(j))
+
+	plt.ylim(sc['dFmin'],1.0)
+
+	plt.title('FZAlign GXSM Force Volume Data Explorer * F(z)')
+	plt.xlabel('Z in Ang, 0 is closed approach possible or data set')
+	plt.ylabel('dFreq in Hz')
+	plt.legend()
+	plt.grid()
+	#plt.show()
+	plt.savefig('/tmp/fzalign.png')
+
+
+
 # Compute full interpolated map
 def calculate_interpolated_HRmap(ch, zlist, slices, zmin, zmax, A0, B0):
 	N,M,V,T=gxsm.get_dimensions(ch)
@@ -322,7 +369,7 @@ def get_z_list(start=0, end=999):
 def get_z_list_from_dFz_curves(ch, start=0, end=999):
 	# start with topo Z and check/correct by average of all curves loaded
 	chz=4-1
-	dx,dy,dzz,dl  = gxsm.get_differentials (chz)
+	dx,dy,dz,dl  = gxsm.get_differentials (chz)
 	nx,ny,nv,nt  = gxsm.get_dimensions (chz)
 	dx,dy,df,dl  = gxsm.get_differentials (ch)
 	if end < nt:
@@ -369,17 +416,27 @@ def get_z_list_from_dFz_curves(ch, start=0, end=999):
 			else:
 				z_probe = np.append (z_probe, cz-z0)
 				df_probe = np.append (df_probe, cdf)
+				
+			break
 
 		A0 = int(sc['A0']) ## !!! remap
 		B0 = int(sc['B0'])  ## !!! remap via zlist and 1000 in linespace below
+		print ('A0Z: ', zlist[A0])
+		print ('B0Z:', zlist[B0])
 		lj_z   = np.linspace(sc['Z0'] + sc['SZmin'], sc['Z0'] + sc['Zmax'], 1000)
-		dzi = ( sc['SZmax'] - sc['SZmin'] ) / 1000
+		dzi = 1000/( sc['Zmax'] - sc['SZmin'] )
 		A0z = int (round (dzi * ( zlist[A0]-sc['Z0'] - sc['SZmin'] )))
 		B0z = int (round (dzi * ( zlist[B0]-sc['Z0'] - sc['SZmin'] )))
-		lj_curve, bg_curve = run_bg_and_lj_fits(lj_z, [z_probe,df_probe], B0z, A0z, 0) ## 
-		
-		
-		
+		print (dzi, ' => ',A0z, B0z, '    arg', zlist[B0]-sc['Z0'] - sc['SZmin'])
+		#lj_curve, bg_curve = run_bg_and_lj_fits(lj_z, [z_probe,df_probe], B0z, A0z, 0) ## 
+		popt, pcov = curve_fit (LJ_bg, z_probe, df_probe)
+		lj_curve = LJ_bg(lj_z, *popt)
+
+	print ('LJ_Z:',  lj_curve)
+	z_maps = []
+	z_mapdfs = []
+	plot_zreferencing(lj_z, lj_curve, z_probe, df_probe, z_maps, z_mapdfs)
+	
 		# merge all curves
 		# fit
 		# find Z's for dF's
@@ -405,6 +462,10 @@ print ('Z-List: ', zlist)
 print ('#Z:', zlist.size)
 sc['Z0'] = zlist[0]
 SetSC()
+
+
+zlist_dum =  get_z_list_from_dFz_curves(ch, start=0, end=999)
+
 
 # Watch Point Objects and update if changed
 while sc['STOP'] == 0.:
