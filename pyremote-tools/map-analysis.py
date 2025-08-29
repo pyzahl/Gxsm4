@@ -24,8 +24,7 @@ mpl.pyplot.close('all')
 sc = dict(CH=3, A0=3,B0=32,Z0=0., dFmin=-5.0, Zmax=30, SZmax=10, SZmin=-0.5, F0off=0.21, STOP=0)
 rp_freq_dev = 0.0  ### eventual Hz offset/thermal drift for later measured dF(z)
 
-
-CHTopo=2-1
+CHTopo=1-1
 
 # Setup SCs
 def SetupSC():
@@ -135,10 +134,10 @@ def dFreqZrectav(ch, p,zmap,n, m):
 		yn = p[j][3] - p[j][1]
 		#print ('get dFreq for:',ch,j,n,m, ' P:',p)
 		for x in range (p[j][0], p[j][2]):
-			dfl = gxsm.get_slice_v(ch, x,0, p[j][1],yn) # ch, x, t, yi, yn   ## AFM dFreq in CH3
+			dfl = gxsm.get_slice_v(ch, x,0, p[j][1],yn) # ch, x, t, yi, yn   ## AFM dFreq
 			#print ('dfl:',dfl.shape)
 			#print(dfl)
-			fz[1] = fz[1] + (np.array(dfl[0][0:n]) - sc['F0off'])
+			fz[1] = fz[1] + (dfl[0][0:n] - sc['F0off'])
 			count=count+1
 	fz[1] = fz[1] / count
 	return fz
