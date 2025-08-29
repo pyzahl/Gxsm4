@@ -287,7 +287,7 @@ static void multi_dim_transpose_cleanup(void)
 				frame_time = m->get_frame_time ();
 			Dest->mem2d->SetLayer (time_index);
 			std::cout << "CopyFrom..." << std::endl;
-			Dest->mem2d->CopyFrom (m, 0,0, 0,0, Src->mem2d->GetNx (), Src->mem2d->GetNy ());
+			Dest->mem2d->CopyFrom (m, 0,0, 0,0, Src->mem2d->GetNx (), Src->mem2d->GetNy (), true);
 			std::cout << "SetVLookup..." << std::endl;
 			Dest->mem2d->data->SetVLookup (time_index, m->get_frame_time ());
 			std::cout << "OK..." << std::endl;

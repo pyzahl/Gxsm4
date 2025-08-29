@@ -232,7 +232,7 @@ public:
         void set_shift (double cf_dt=0., double pixs_xdt=0., double pixs_ydt=0.);
         void set_shift_px (double dxm=0., double dym = 0.);
         void get_shift_px (double &dxm, double &dym) { dxm = XYpixshift_manual[0]; dym = XYpixshift_manual[1]; };
-        gboolean is_shift () { return creepfactor != 0.0 || XYpixshift_manual[0] != 0. ||  XYpixshift_manual[1] != 0. ? true : false; };
+        gboolean is_shift () { return creepfactor != 0.0 || pixshift_dt[0] != 0. || pixshift_dt[1] != 0. || XYpixshift_manual[0] != 0. ||  XYpixshift_manual[1] != 0. ? true : false; };
         double creepfactor, pixshift_dt[2];
         gboolean enable_drift_correction;
         
