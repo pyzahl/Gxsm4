@@ -56,6 +56,56 @@
       <summary>PCS Remote-ID: 'py-sc10', Default/U:   0     </summary>
       <description>pcs0000, PCS Remote-ID: 'py-sc10', Default/U:   0    , Adjustment PCS Name: 'py-sc10' </description>
     </key>
+    <key name="py-sc11" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'py-sc11', Default/U:   0     </summary>
+      <description>pcs0000, PCS Remote-ID: 'py-sc11', Default/U:   0    , Adjustment PCS Name: 'py-sc11' </description>
+    </key>
+    <key name="py-sc12" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'py-sc12', Default/U:   0     </summary>
+      <description>pcs0000, PCS Remote-ID: 'py-sc12', Default/U:   0    , Adjustment PCS Name: 'py-sc12' </description>
+    </key>
+    <key name="py-sc13" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'py-sc13', Default/U:   0     </summary>
+      <description>pcs0000, PCS Remote-ID: 'py-sc13', Default/U:   0    , Adjustment PCS Name: 'py-sc13' </description>
+    </key>
+    <key name="py-sc14" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'py-sc14', Default/U:   0     </summary>
+      <description>pcs0000, PCS Remote-ID: 'py-sc14', Default/U:   0    , Adjustment PCS Name: 'py-sc14' </description>
+    </key>
+    <key name="py-sc15" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'py-sc15', Default/U:   0     </summary>
+      <description>pcs0000, PCS Remote-ID: 'py-sc15', Default/U:   0    , Adjustment PCS Name: 'py-sc15' </description>
+    </key>
+    <key name="py-sc16" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'py-sc16', Default/U:   0     </summary>
+      <description>pcs0000, PCS Remote-ID: 'py-sc16', Default/U:   0    , Adjustment PCS Name: 'py-sc16' </description>
+    </key>
+    <key name="py-sc17" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'py-sc17', Default/U:   0     </summary>
+      <description>pcs0000, PCS Remote-ID: 'py-sc17', Default/U:   0    , Adjustment PCS Name: 'py-sc17' </description>
+    </key>
+    <key name="py-sc18" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'py-sc18', Default/U:   0     </summary>
+      <description>pcs0000, PCS Remote-ID: 'py-sc18', Default/U:   0    , Adjustment PCS Name: 'py-sc18' </description>
+    </key>
+    <key name="py-sc19" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'py-sc19', Default/U:   0     </summary>
+      <description>pcs0000, PCS Remote-ID: 'py-sc19', Default/U:   0    , Adjustment PCS Name: 'py-sc19' </description>
+    </key>
+    <key name="py-sc20" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'py-sc20', Default/U:   0     </summary>
+      <description>pcs0000, PCS Remote-ID: 'py-sc10', Default/U:   0    , Adjustment PCS Name: 'py-sc20' </description>
+    </key>
     <key name="last-script-filename" type="s">
       <default>'/.gxsm4/pyaction/remote.py'</default>
       <summary>last user script file</summary>

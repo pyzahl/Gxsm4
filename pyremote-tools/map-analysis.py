@@ -21,10 +21,11 @@ mpl.use('Agg')
 from matplotlib import ticker
 mpl.pyplot.close('all')
 
-sc = dict(CH=2, A0=3,B0=32,Z0=0., dFmin=-5.0, Zmax=30, SZmax=10, SZmin=-0.5, F0off=-0.21, STOP=0)
-rp_freq_dev = -0.1  ### eventual Hz offset/thermal drift for later measured dF(z)
+sc = dict(CH=3, A0=3,B0=32,Z0=0., dFmin=-5.0, Zmax=30, SZmax=10, SZmin=-0.5, F0off=0.21, STOP=0)
+rp_freq_dev = 0.0  ### eventual Hz offset/thermal drift for later measured dF(z)
 
-CHTopo=1-1
+
+CHTopo=2-1
 
 # Setup SCs
 def SetupSC():
@@ -122,7 +123,7 @@ def dFreqZ(ch, p,zmap,n, m):
 		dfl = gxsm.get_slice_v(ch, p[j][0],0, p[j][1],1) # ch, x, t, yi, yn   ## AFM dFreq in CH3
 		#print ('dfl:',dfl.shape)
 		#print(dfl)
-		fz[1+j] = np.array(dfl[0][0:n])  - sc['F0off']
+		fz[1+j] = np.array(dfl[0][0:n]) - sc['F0off']
 	return fz
 
 # get data and average over rectangle area in 2d (in z-plane)
@@ -208,7 +209,7 @@ def plot_xy(lj_z, xy, m, A0, B0, sbg_fit, sbg_curve):
 			z0 = 0 #columns[col_z][0]   ## SHIFT start to 0
 			cz = columns[col_z][600:1600]
 			cdf = columns[col_dF][600:1600] - sc['F0off']+rp_freq_dev
-			plt.plot(cz-z0, cdf, alpha=0.3,label='FzProbe#{} {}'.format(j, str(xyij)))
+			plt.plot(cz-z0, cdf, alpha=0.3,label='FzProbe#{} @{:.1f} {:.1f}A, {:.1f} {:.1f}px'.format(j, xyij[0], xyij[1], xyij[2], xyij[3]))
 
 	plt.ylim(sc['dFmin'],1.0)
 
@@ -250,9 +251,9 @@ def plot_zreferencing(lj_z, lj_curve, z_probe, df_probe, z_topo, z_remaps, z_map
 				i=i+1
 			z0 = 0 #columns[col_z][0]   ## SHIFT start to 0
 			cz = columns[col_z][600:1600]
-			cdf = columns[col_dF][600:1600] - sc['F0off']+rp_freq_dev
-			plt.plot(cz-z0, cdf, alpha=0.3,label='FzProbe#{}'.format(j))
-
+			cdf = columns[col_dF][600:1600]
+			plt.plot(cz-z0, cdf, alpha=0.3,label='FzProbe#{} @{:.1f} {:.1f}A, {:.1f} {:.1f}px'.format(j, xyij[0], xyij[1], xyij[2], xyij[3]))
+			
 	plt.ylim(sc['dFmin'],1.0)
 
 	plt.title('FZAlign GXSM Force Volume Data Explorer * F(z)')
@@ -400,7 +401,7 @@ def get_z_list_from_dFz_curves(ch, start=0, end=999):
 		for j in range (0,Np):
 			#columns, labels, units, xyij = gxsm.get_probe_event(ch,-1)  # get last
 			columns, labels, units, xyij = gxsm.get_probe_event(ch,j)  # get i-th
-			#	print (columns, labels, units)
+			#	print (columns, labels, units, xyij)
 			col_z=0
 			col_dF=0
 			i=0
@@ -462,7 +463,7 @@ npp=0
 nrr =0
 
 # Get Z mapping
-zlist = get_z_list(1,39)
+zlist = get_z_list(1,38)
 print ('Z-List: ', zlist)
 print ('#Z:', zlist.size)
 sc['Z0'] = zlist[0]

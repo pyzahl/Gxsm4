@@ -37,3 +37,7 @@
 #entry-mono-text-start  { font-family: monospace;  background-color: #1be5e8; color: white; font-weight: bold; }
 #entry-mono-text-info   { font-family: monospace;  background-color: #e8e01b; color: white; font-weight: bold; }
 #entry-mono-text-health { font-family: monospace;  background-color: #69e81b; color: white; font-weight: bold; }
+
+#remote-source-view{
+    font-family: monospace; font: 16px;
+}

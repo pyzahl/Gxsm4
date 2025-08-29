@@ -607,7 +607,7 @@ to the community. The GXSM-Forums always welcome input.
 #include "pyscript_templates_script_libs.h"
 
 // number of script control EC's -- but must manually match schemata in .xml files!
-#define NUM_SCV 10
+#define NUM_SCV 20
 #define DEFAULT_SLEEP_USECS 10000
 
 // Plugin Prototypes
@@ -2132,9 +2132,12 @@ static PyObject* remote_getprobe_event(PyObject *self, PyObject *args)
                                                 *dp++ = pe->get (i,s);
                                 }
 
+                                double *darrxy = (double*) malloc(sizeof(double) * dimsxy[0]);
+                                dp=darrxy;
+                                for (int s=0; s<dimsxy[0]; ++s) *dp++=xy[s];
                         
                                 PyObject* pyarr = PyArray_SimpleNewFromData(2, dims, NPY_DOUBLE, (void*)darr2);
-                                PyObject* pyarrposxy = PyArray_SimpleNewFromData(1, dimsxy, NPY_DOUBLE, (void*)xy);
+                                PyObject* pyarrposxy = PyArray_SimpleNewFromData(1, dimsxy, NPY_DOUBLE, (void*)darrxy);
                                 PyArray_ENABLEFLAGS((PyArrayObject*) pyarr, NPY_ARRAY_OWNDATA);
 
                                 PyTuple_SetItem(ret, 0, pyarr );
@@ -4665,7 +4668,6 @@ void py_gxsm_console::create_gui ()
 	gtk_widget_show (vpaned);
 
 	gtk_paned_set_start_child (GTK_PANED(hpaned_scpane), vpaned);
-	gtk_paned_set_end_child (GTK_PANED(hpaned_scpane), sc_grid);
         
         bp->new_line ();
 
@@ -4716,6 +4718,8 @@ void py_gxsm_console::create_gui ()
 	gtk_source_buffer_set_language(sourcebuffer, language);
 	gtk_source_buffer_set_highlight_syntax(sourcebuffer, TRUE);
 
+        gtk_widget_set_name (GTK_WIDGET(console_file_content), "remote-source-view");
+        
 	// set font
 	//font_desc = pango_font_description_from_string ("Monospace 8");
 	//gtk_widget_override_font (console_file_content, font_desc);
@@ -4739,6 +4743,15 @@ void py_gxsm_console::create_gui ()
 	bp->grid_add_ec ("Script Control", null_unit, &exec_value, 0.0, 100.0, "4g", 1., 10., "script-control");
 
         main_get_gapp()->RemoteEntryList = bp->get_remote_list_head ();
+
+	GtkWidget *scsc = gtk_scrolled_window_new();
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scsc),
+				       GTK_POLICY_AUTOMATIC,
+				       GTK_POLICY_AUTOMATIC);
+
+	gtk_paned_set_end_child (GTK_PANED(hpaned_scpane), scsc);
+	gtk_widget_show (scsc);
+	gtk_scrolled_window_set_child (GTK_SCROLLED_WINDOW (scsc), sc_grid);
 
         bp_sc = new BuildParam (sc_grid, NULL, gapp->RemoteEntryList);
         for(int i=0; i<NUM_SCV; ++i){
