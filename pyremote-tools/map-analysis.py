@@ -21,10 +21,8 @@ mpl.use('Agg')
 from matplotlib import ticker
 mpl.pyplot.close('all')
 
-sc = dict(CH=3, A0=3,B0=32,Z0=0., dFmin=-5.0, Zmax=30, SZmax=10, SZmin=-0.5, F0off=0.21, STOP=0)
+sc = dict(CH=3, CHZ=1, A0=3,B0=32,Z0=0., dFmin=-5.0, Zmax=30, SZmax=10, SZmin=-0.5, F0off=0.21, STOP=0)
 rp_freq_dev = 0.0  ### eventual Hz offset/thermal drift for later measured dF(z)
-
-CHTopo=1-1
 
 # Setup SCs
 def SetupSC():
@@ -352,7 +350,7 @@ def get_z_list_last():
 
 ## from topo data
 def get_z_list(start=0, end=999):
-	ch=CHTopo
+	ch=int(sc['CHZ'])-1
 	dx,dy,dz,dl  = gxsm.get_differentials (ch)
 	nx,ny,nv,nt  = gxsm.get_dimensions (ch)
 	if end < nt:
@@ -371,7 +369,7 @@ def get_z_list(start=0, end=999):
 
 def get_z_list_from_dFz_curves(ch, start=0, end=999):
 	# start with topo Z and check/correct by average of all curves loaded
-	chz=CHTopo
+	chz=int(sc['CHZ'])-1
 	dx,dy,dz,dl  = gxsm.get_differentials (chz)
 	nx,ny,nv,nt  = gxsm.get_dimensions (chz)
 	dx,dy,df,dl  = gxsm.get_differentials (ch)

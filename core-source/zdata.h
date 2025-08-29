@@ -240,6 +240,10 @@ public:
         inline int clampy (int y) { return y < 0 ? 0 : y >= ny ? ny-1 : y; };
         inline int clampv (int v) { return v < 0 ? 0 : v >= nv ? nv-1 : v; };
 
+        inline int pbcx (int x) { while (x < 0) x+=nx; while (x >= nx) x-=nx; return x; };
+        inline int pbcy (int y) { while (y < 0) y+=ny; while (y >= ny) y-=ny; return y; };
+        inline int pbcv (int v) { while (v < 0) v+=nv; while (v >= nv) v-=nv; return v; };
+
 protected:
 	int  ZResize(int Nx, int Ny, int Nv=0);
 	int  nx, ny, nv;
@@ -264,66 +268,77 @@ public:
        
 	size_t Zsize(){ return sizeof(ZTYP); };
 
-        inline double Z_interpol2d(double x, double y, int v){
-                // use GSL for qubic or bi-cubic! https://www.gnu.org/software/gsl/doc/html/interp.html
+        inline void Z_M2x2(int x, int y, int v, double M[2][2]){
+                for (int i=0; i<2; ++i)
+                        for (int j=0; j<2; ++j)
+                                M[j][i] = (double)Zdat[pbcy(y+j)*nv+v][pbcx(x+i)];
 
-                /*
-#include <gsl/gsl_spline2d.h>
-#include <gsl/gsl_interp.h> // For gsl_interp_accel
-#include <stdio.h>
-#include <stdlib.h> // For malloc, free
+        };
+        inline void Z_M3x3(int x, int y, int v, double M[3][3]){
+                for (int i=0; i<3; ++i)
+                        for (int j=0; j<3; ++j)
+                                M[j][i] = (double)Zdat[pbcy(y+j-1)*nv+v][pbcx(x+i-1)];
 
-int main() {
-    // Define grid dimensions
-    size_t nx = 5;
-    size_t ny = 5;
+        };
+        inline void Z_M5x5(int x, int y, int v, double M[5][5]){
+                for (int i=0; i<5; ++i)
+                        for (int j=0; j<5; ++j)
+                                M[j][i] = (double)Zdat[pbcy(y+j-1)*nv+v][pbcx(x+i-1)];
 
-    // Allocate memory for x, y, and z data
-    double *x = (double *) malloc(nx * sizeof(double));
-    double *y = (double *) malloc(ny * sizeof(double));
-    double *z = (double *) malloc(nx * ny * sizeof(double));
+        };
+        inline double Z_interpol2d(double x, double y, int v, int order=1){
+                switch (order){
+                case 0: return (double)Zdat[pbcy(int(round(y)))*nv+v][pbcx(int(round(x)))];
+                case 1:
+                        {
+                                double M22[2][2];
+                                int x0=int(floor(x));
+                                int y0=int(floor(y));
+                                double dx=x-x0;
+                                double dy=y-y0;
+                                Z_M2x2 (x0, y0, v, M22);
+                                return (1.-dx)*(1.-dy)*M22[0][0] + dx*dy*M22[1][1] +  (1.-dx)*dy*M22[1][0] +  dx*(1.-dy)*M22[0][1];
+                        }
+                case 2:
+                        {
+                                // use GSL for qubic or bi-cubic! https://www.gnu.org/software/gsl/doc/html/interp.html
 
-    // Initialize x, y, and z data (example: a simple plane)
-    for (size_t i = 0; i < nx; ++i) {
-        x[i] = (double)i;
-    }
-    for (size_t j = 0; j < ny; ++j) {
-        y[j] = (double)j;
-    }
-    for (size_t i = 0; i < nx; ++i) {
-        for (size_t j = 0; j < ny; ++j) {
-            gsl_spline2d_set(z, i, j, nx, ny, x[i] + y[j]); // z = x + y
-        }
-    }
+                                const gsl_interp2d_type *T = gsl_interp2d_bilinear;
+                                const size_t N = 100;             /* number of points to interpolate */
+                                const double xa[] = { -1.0, 0.0, 1.0, 2.0 }; /* define unit squares */
+                                const double ya[] = { -1.0, 0.0, 1.0, 2.0 };
+                                const size_t nx = sizeof(xa) / sizeof(double); /* x grid points */
+                                const size_t ny = sizeof(ya) / sizeof(double); /* y grid points */
+                                double *za = malloc(nx * ny * sizeof(double));
+                                gsl_spline2d *spline = gsl_spline2d_alloc(T, nx, ny);
+                                gsl_interp_accel *xacc = gsl_interp_accel_alloc();
+                                gsl_interp_accel *yacc = gsl_interp_accel_alloc();
+                                size_t i, j;
 
-    // Allocate interpolation objects
-    gsl_interp_accel *xacc = gsl_interp_accel_alloc();
-    gsl_interp_accel *yacc = gsl_interp_accel_alloc();
-    gsl_spline2d *spline = gsl_spline2d_alloc(gsl_interp2d_bicubic, nx, ny);
+                                int x0=int(floor(x));
+                                int y0=int(floor(y));
 
-    // Initialize the spline
-    gsl_spline2d_init(spline, x, y, z, nx, ny);
+                                /* set z grid values */
+                                for (int i=-1; i<3; ++i)
+                                        for (int j=-1; j<3; ++j)
+                                                gsl_spline2d_set(spline, za, i, j, (double)Zdat[pbcy(y0+j)*nv+v][pbcx(x0+i)]);
 
-    // Evaluate at a new point
-    double eval_x = 2.5;
-    double eval_y = 2.5;
-    double interpolated_z = gsl_spline2d_eval(spline, eval_x, eval_y, xacc, yacc);
+                                /* initialize interpolation */
+                                gsl_spline2d_init(spline, xa, ya, za, nx, ny);
+                                                                 
+                                /* interpolate Z value */
+                                double interpolated_z = gsl_spline2d_eval(spline, x-x0, y-y0, xacc, yacc);
 
-    printf("Interpolated value at (%g, %g): %g\n", eval_x, eval_y, interpolated_z);
+                                gsl_spline2d_free(spline);
+                                gsl_interp_accel_free(xacc);
+                                gsl_interp_accel_free(yacc);
+                                free(za);
 
-    // Free resources
-    gsl_spline2d_free(spline);
-    gsl_interp_accel_free(xacc);
-    gsl_interp_accel_free(yacc);
-    free(x);
-    free(y);
-    free(z);
-
-    return 0;
-}
-                */
-                
-                return (double)Zdat[clampy(int(round(y)))*nv+v][clampx(int(round(x)))];
+                                return interpolated_z;
+                        }
+                default:
+                        return (double)Zdat[pbcy(int(round(y)))*nv+v][pbcx(int(round(x)))];
+                }
         };
 
         inline double Z(int x, int y){
