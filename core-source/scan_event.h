@@ -143,6 +143,7 @@ public:
 	int write_nc_data (NcVar* evdata_var, NcVar* evcoords_var, ScanEvent *se, int count);
 
         ScanEvent *get_parent_scan_event () { return parent_scan_event; }; 
+        void set_parent_scan_event (ScanEvent* se) { parent_scan_event=se; }; 
         
 private:
 	GPtrArray *labels;

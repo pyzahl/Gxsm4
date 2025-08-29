@@ -955,6 +955,8 @@ GSList* Mem2d::ReportProbeEvents (){
 			  {
 				ProbeEntry *pe = (ProbeEntry*)eel->data; // it's a ProbeEntry
 				ProbeEventsList = g_slist_prepend (ProbeEventsList, pe);
+                                if (!pe->get_parent_scan_event ())
+                                        pe->set_parent_scan_event (se);
 			  }
 			break;
                         default: break;
