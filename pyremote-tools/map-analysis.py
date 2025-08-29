@@ -211,7 +211,7 @@ def plot_xy(lj_z, xy, m, A0, B0, sbg_fit, sbg_curve):
 	plt.ylim(sc['dFmin'],1.0)
 
 	plt.title('GXSM Force Volume Data Explorer * F(z)')
-	plt.xlabel('Z in Ang, 0 is closed approach possible or data set')
+	plt.xlabel('Z in Ang')
 	plt.ylabel('dFreq in Hz')
 	plt.legend()
 	plt.grid()
@@ -228,33 +228,11 @@ def plot_zreferencing(lj_z, lj_curve, z_probe, df_probe, z_topo, z_remaps, z_map
 	plt.plot(z_probe, df_probe, '.', alpha=0.3, label='LJ Probes')
 	plt.plot(z_topo, z_mapdfs, 'x',  label='LJ Map Points, Z-Topo')
 	plt.plot(z_remaps, z_mapdfs, 'x',  label='LJ Map Pointst, Z-remapped')
-
-
-	# plot FZ probe(s) loaded
-	Np = gxsm.get_probe_event(ch,1000)  # get count
-	if Np > 0:
-		for j in range (0,Np):
-			#columns, labels, units, xyij = gxsm.get_probe_event(ch,-1)  # get last
-			columns, labels, units, xyij = gxsm.get_probe_event(ch,j)  # get i-th
-			#	print (columns, labels, units)
-			col_z=0
-			col_dF=0
-			i=0
-			for l in labels:
-				if l == '	ZS-Topo':
-					col_z=i
-				if l == 'dFrequency':
-					col_dF=i
-				i=i+1
-			z0 = 0 #columns[col_z][0]   ## SHIFT start to 0
-			cz = columns[col_z][600:1600]
-			cdf = columns[col_dF][600:1600]
-			plt.plot(cz-z0, cdf, alpha=0.3,label='FzProbe#{} @{:.1f} {:.1f}A, {:.1f} {:.1f}px'.format(j, xyij[0], xyij[1], xyij[2], xyij[3]))
-			
+		
 	plt.ylim(sc['dFmin'],1.0)
 
 	plt.title('FZAlign GXSM Force Volume Data Explorer * F(z)')
-	plt.xlabel('Z in Ang, 0 is closed approach possible or data set')
+	plt.xlabel('Z in Ang')
 	plt.ylabel('dFreq in Hz')
 	plt.legend()
 	plt.grid()
@@ -460,14 +438,14 @@ npp=0
 nrr =0
 
 # Get Z mapping
-zlist = get_z_list(1,38)
+zlist = get_z_list(0,38)
 print ('Z-List: ', zlist)
 print ('#Z:', zlist.size)
 sc['Z0'] = zlist[0]
 SetSC()
 
 
-zlist_dum =  get_z_list_from_dFz_curves(ch, start=1, end=39)
+zlist_dum =  get_z_list_from_dFz_curves(ch, start=1, end=37)
 
 
 # Watch Point Objects and update if changed
