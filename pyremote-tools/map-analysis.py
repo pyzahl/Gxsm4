@@ -21,7 +21,7 @@ mpl.use('Agg')
 from matplotlib import ticker
 mpl.pyplot.close('all')
 
-sc = dict(CH=3, CHZ=1, A0=3,B0=32,Z0=0., dFmin=-5.0, Zmax=30, SZmax=10, SZmin=-0.5, F0off=0.21, STOP=0)
+sc = dict(CH=2, CHZ=1, A0=3,B0=32,Z0=0., dFmin=-5.0, Zmax=30, SZmax=10, SZmin=-0.5, F0off=0.21, STOP=0)
 rp_freq_dev = 0.0  ### eventual Hz offset/thermal drift for later measured dF(z)
 
 # Setup SCs
@@ -438,7 +438,7 @@ npp=0
 nrr =0
 
 # Get Z mapping
-zlist = get_z_list(0,38)
+zlist = get_z_list(1,39)
 print ('Z-List: ', zlist)
 print ('#Z:', zlist.size)
 sc['Z0'] = zlist[0]
