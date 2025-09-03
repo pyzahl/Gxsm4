@@ -584,7 +584,7 @@ void SCAN_DATA::SetXUnit(UnitObj *u){
 	Xunit = u->Copy();
 	if(Xdt_unit) delete Xdt_unit;
 	Xdt_unit = u->Copy();
-        Xdt_unit->addSuffixSym("/s");
+        Xdt_unit->addSuffixSym("/s * (1-e^-(tau*dt))");
 }
 
 void SCAN_DATA::SetYUnit(UnitObj *u){
@@ -592,7 +592,7 @@ void SCAN_DATA::SetYUnit(UnitObj *u){
 	Yunit = u->Copy();
 	if(Ydt_unit) delete Ydt_unit;
 	Ydt_unit = u->Copy();
-        Ydt_unit->addSuffixSym("/s");
+        Ydt_unit->addSuffixSym("/s * (1-e^-(tau*dt))");
 }
 
 void SCAN_DATA::SetVUnit(UnitObj *u){

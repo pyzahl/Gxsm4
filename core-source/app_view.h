@@ -243,13 +243,18 @@ public:
         void view_file_save_drawing (const gchar* imgname); // save current view as png, pdf, svg auto detected by file name extension
 
         static gboolean update_view_panel_idle_callback (ViewControl *self) {
-                g_slist_foreach (self->view_bp->get_ec_list_head (), (GFunc) ViewControl::update_ec, self->scan->data.Zunit);
+                g_slist_foreach (self->view_ec_w_zunit_list, (GFunc) ViewControl::update_ec, self->scan->data.Zunit);
+                g_slist_foreach (self->view_ec_w_xunit_list, (GFunc) ViewControl::update_ec, self->scan->data.Xunit);
+                g_slist_foreach (self->view_ec_w_xdtunit_list, (GFunc) ViewControl::update_ec, self->scan->data.Xdt_unit);
                 return FALSE;
         };
 
 
         void update_XYpixshift() {
-                scan->mem2d->data->get_shift_px (XYpixshift[0], XYpixshift[1]);
+                double pdx,pdy;
+                scan->mem2d->data->get_shift_px (pdx, pdy);
+                XYpixshift[0] = pdx * scan->data.s.dx;
+                XYpixshift[1] = pdy * scan->data.s.dy;
                 g_message ("scan->mem2d->data->get_shift_px :  %g %g", XYpixshift[0], XYpixshift[1]);
         };
         
@@ -340,6 +345,9 @@ private:
 
         ViewInfo *vinfo;
         BuildParam *view_bp;
+        GSList     *view_ec_w_zunit_list;
+        GSList     *view_ec_w_xunit_list;
+        GSList     *view_ec_w_xdtunit_list;
         BuildParam *pe_bp;
         BuildParam *ue_bp;
         GSList  *gobjlist;

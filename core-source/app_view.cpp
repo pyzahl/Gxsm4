@@ -589,7 +589,9 @@ void ViewControl::display_changed_vr_callback (Param_Control *pc, gpointer vc){
 }
 
 void ViewControl::display_changed_sh_callback (Param_Control *pc, gpointer vc){
-        ((ViewControl*)vc)->scan->mem2d->data->set_shift_px (((ViewControl*)vc)->XYpixshift[0], ((ViewControl*)vc)->XYpixshift[1]);
+        ((ViewControl*)vc)->scan->mem2d->data->set_shift_px ( ((ViewControl*)vc)->XYpixshift[0] / ((ViewControl*)vc)->scan->data.s.dx,
+                                                              ((ViewControl*)vc)->XYpixshift[1] / ((ViewControl*)vc)->scan->data.s.dy
+                                                              );
         ((ViewControl*)vc)->scan->set_display_shift ();
         ((ViewControl*)vc)->update_view_panel ();
 }
@@ -820,12 +822,12 @@ ViewControl::ViewControl (Gxsm4app *app,
 
 	// -- View / Display Scaling Parameter Tab
         // ==================================================
+
         view_bp = new BuildParam ();
 	label = gtk_label_new (N_("View"));
 	gtk_notebook_append_page (GTK_NOTEBOOK (notebook), view_bp->grid, label);
-        // FIX-ME-GTK4 CSS crap now, many thans boys you suck big time again
-	//gtk_label_set_angle (GTK_LABEL (label), 90);
-
+        gtk_widget_add_css_class(label, "rotated-label");
+    
         // Display scaling controls
         view_bp->new_grid_with_frame ("Color View Ranges",1,1);
         
@@ -833,13 +835,13 @@ ViewControl::ViewControl (Gxsm4app *app,
         view_bp->set_default_ec_change_notice_fkt  (display_changed_hl_callback, this);
         gtk_widget_set_tooltip_text (
                                      view_bp->grid_add_ec ("High Limit", scan->data.Zunit, &scan->data.display.z_high,
-                                                           -5000000., 5000000., ".3f", 1., 100., NULL),
+                                                           -5000000., 5000000., ".3f", 1., 100.),
                                      N_("Lock View Range to high-low limits."));
         view_bp->new_line ();
                 
         gtk_widget_set_tooltip_text (
                                      view_bp->grid_add_ec ("Low Limit", scan->data.Zunit, &scan->data.display.z_low,
-                                                           -5000000., 5000000., ".3f", 1., 100., NULL),
+                                                           -5000000., 5000000., ".3f", 1., 100.),
                                      N_("Lock View Range to high-low limits."));
         view_bp->new_line ();
         
@@ -847,14 +849,19 @@ ViewControl::ViewControl (Gxsm4app *app,
         view_bp->set_default_ec_change_notice_fkt  (display_changed_vr_callback, this);
         gtk_widget_set_tooltip_text (
                                      view_bp->grid_add_ec ("Max. Range", scan->data.Zunit, &scan->data.display.vrange_z,
-                                                           -5000000., 5000000., ".3g", 0.1, 5., NULL),
+                                                           -5000000., 5000000., ".3g", 0.1, 5.),
                                      N_("Auto View Limits from Range and Offset."));
         view_bp->new_line ();
         gtk_widget_set_tooltip_text (
                                      view_bp->grid_add_ec ("rel. Offset", scan->data.Zunit, &scan->data.display.voffset_z,
-                                                           -5000000., 5000000., ".3g", 0.1, 5.,NULL),
+                                                           -5000000., 5000000., ".3g", 0.1, 5.),
                                      N_("Auto View Limits from Range and Offset."));
-        
+
+        view_ec_w_zunit_list = g_slist_copy (view_bp->get_ec_list_head ());
+       
+        view_ec_w_xunit_list   = NULL;
+        view_ec_w_xdtunit_list = NULL;
+ 
         view_bp->pop_grid ();
         view_bp->new_line ();
 
@@ -865,21 +872,25 @@ ViewControl::ViewControl (Gxsm4app *app,
         // creepfactor = tau > 0. ? (1. - expf (-tau*dt)) : dt;
 
         view_bp->set_default_ec_change_notice_fkt  (display_changed_sh_callback, this);
-        view_bp->grid_add_ec ("Shift X", scan->data.Xdt_unit, &scan->data.display.px_shift_xy[0], -5000000., 5000000., "8g", 1., 0.1, NULL); //  TC ShiftX
-        view_bp->grid_add_ec ("px", scan->data.Xunit, &XYpixshift[0], -1000., 1000., "8g", 1., 0.5, NULL); //  manual Pix Shift X
+
+        view_bp->grid_add_ec ("Shift X", scan->data.Xdt_unit, &scan->data.display.px_shift_xy[0], -5000000., 5000000., "8g", 0.05, 1.0);
+        view_ec_w_xdtunit_list = g_slist_prepend (view_ec_w_xdtunit_list, view_bp->ec);
+        view_bp->grid_add_ec ("px", scan->data.Xunit, &XYpixshift[0], -1000., 1000., "8g", 0.1, 1.0); //  manual Pix Shift X
+        view_ec_w_xunit_list = g_slist_prepend (view_ec_w_xunit_list, view_bp->ec);
         view_bp->new_line ();
 
         //scan->mem2d->data->get_shift_px (XYpixshift[0], XYpixshift[1]);
         
-        view_bp->grid_add_ec ("Shift Y", scan->data.Ydt_unit, &scan->data.display.px_shift_xy[1], -5000000., 5000000., "8g", 1., 0.1, NULL); // "ShiftY");
-        view_bp->grid_add_ec ("px", scan->data.Yunit, &XYpixshift[1], -1000., 1000., "8g", 1., 0.5, NULL); //  manual Pix Shift Y
+        view_bp->grid_add_ec ("Shift Y", scan->data.Ydt_unit, &scan->data.display.px_shift_xy[1], -5000000., 5000000., "8g", 0.05, 1.0);
+        view_ec_w_xdtunit_list = g_slist_prepend (view_ec_w_xdtunit_list, view_bp->ec);
+        view_bp->grid_add_ec ("px", scan->data.Yunit, &XYpixshift[1], -1000., 1000., "8g", 0.1, 1.0); //  manual Pix Shift Y
+        view_ec_w_xunit_list = g_slist_prepend (view_ec_w_xunit_list, view_bp->ec);
         view_bp->new_line ();
         view_bp->grid_add_button ("Get Circle Coords", "get coords from selected Circle Object.\nSet Tau=-1 for manual and\n add a Point Object as Reference Pos.", 2,
                                   G_CALLBACK (ViewControl::obj_circle_get_center_coords_callback), this);
         view_bp->new_line ();
 
-        view_bp->grid_add_ec ("Tau", main_get_gapp ()->xsm->Unity, &scan->data.display.px_shift_xy[2], -10., 10., "8g", 0.00001, 0.00001, NULL); // "ShiftTau");
-        
+        view_bp->grid_add_ec ("Tau", main_get_gapp ()->xsm->HzUnit, &scan->data.display.px_shift_xy[2], -10., 10., "8g", 0.00001, 0.00001);
 
         // -- Info Tab
         // ==================================================
@@ -893,9 +904,7 @@ ViewControl::ViewControl (Gxsm4app *app,
 	label = gtk_label_new (N_("Info"));
 	gtk_notebook_append_page (GTK_NOTEBOOK (notebook), scrolled_window, label);
 	gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_CENTER);
-
-        // FIX-ME-GTK4 arrgrrrr 
-	//gtk_label_set_angle (GTK_LABEL (label), 90);
+        gtk_widget_add_css_class(label, "rotated-label");
 
 	// -- NC raw Tab
         // ==================================================
@@ -913,9 +922,7 @@ ViewControl::ViewControl (Gxsm4app *app,
 	label = gtk_label_new (N_("NetCDF"));
 	gtk_notebook_append_page (GTK_NOTEBOOK (notebook), scrolled_window, label);
 	gtk_label_set_use_markup (GTK_LABEL (label), TRUE);
-
-        // FIX-ME-GTK4 angle css!!!
-        //gtk_label_set_angle (GTK_LABEL (label), 90);
+        gtk_widget_add_css_class(label, "rotated-label");
 
 	// -- Probe Events Tab
         // ==================================================
@@ -928,9 +935,7 @@ ViewControl::ViewControl (Gxsm4app *app,
 
 	label = gtk_label_new (N_("Probe Events"));
 	gtk_notebook_append_page (GTK_NOTEBOOK (notebook), scrolled_window, label);
-
-        // FIX-ME-GTK4 angle css!!!
-        //gtk_label_set_angle (GTK_LABEL (label), 90);
+        gtk_widget_add_css_class(label, "rotated-label");
 
         //     Events Control ----------------------------------------
 	XSM_DEBUG (DBG_L2,  "VC::VC EVCtrl-Tab" );
@@ -1083,9 +1088,7 @@ ViewControl::ViewControl (Gxsm4app *app,
 
 	label = gtk_label_new (N_("User Events"));
 	gtk_notebook_append_page (GTK_NOTEBOOK (notebook), scrolled_window, label);
-
-        // FIX-ME-GTK4 angle css!!!
-        //gtk_label_set_angle (GTK_LABEL (label), 90);
+        gtk_widget_add_css_class(label, "rotated-label");
 
         ue_bp->new_grid_with_frame (N_("User Events"), 1, 1);
         ue_bp->set_no_spin ();
@@ -1114,9 +1117,7 @@ ViewControl::ViewControl (Gxsm4app *app,
 
 	label = gtk_label_new (N_("Objects"));
 	gtk_notebook_append_page (GTK_NOTEBOOK (notebook), scrolled_window, label);
-
-        // FIX-ME-GTK4 angle css!!!
-        //gtk_label_set_angle (GTK_LABEL (label), 90);
+        gtk_widget_add_css_class(label, "rotated-label");
 
         side_pane_tab_objects = base_grid;
 
@@ -1139,9 +1140,7 @@ ViewControl::ViewControl (Gxsm4app *app,
 
 	label = gtk_label_new (N_("OSD"));
 	gtk_notebook_append_page (GTK_NOTEBOOK (notebook), scrollarea_sp, label);
-
-        // FIX-ME-GTK4 angle css!!!
-        //gtk_label_set_angle (GTK_LABEL (label), 90);
+        gtk_widget_add_css_class(label, "rotated-label");
         
         grid = gtk_grid_new ();
 	gtk_grid_attach (GTK_GRID (base_grid), grid, 1,1, 1,1);

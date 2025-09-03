@@ -38,6 +38,6 @@
 #entry-mono-text-info   { font-family: monospace;  background-color: #e8e01b; color: white; font-weight: bold; }
 #entry-mono-text-health { font-family: monospace;  background-color: #69e81b; color: white; font-weight: bold; }
 
-#remote-source-view{
-    font-family: monospace; font: 16px;
-}
+#remote-source-view{ font-family: monospace; font: 16px; }
+
+.rotated-label { transform: rotate(45deg); }
