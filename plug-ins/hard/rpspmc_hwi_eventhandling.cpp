@@ -833,14 +833,14 @@ int RPSPMC_Control::Probing_graph_callback( GtkWidget *widget, RPSPMC_Control *d
 		// find first section header and take this X,Y coordinates as reference -- start of probe event
 		XSM_DEBUG_PG ("Probing_graph_callback MasterScan: adding Ev." );
 		int sec = 0;
-                int j=0;
-                //g_message ("Creating SE *** %d %d %d", j, sec, dspc->current_probe_data_index);
+                //g_message ("Creating SE *** %d %d %d @ %g, %g Ang rel pos", j, sec, dspc->current_probe_data_index,
+                //           XAngFac * g_array_index (dspc->garray_probe_hdrlist [PROBEDATA_ARRAY_XS], double, 0),
+                //           YAngFac * g_array_index (dspc->garray_probe_hdrlist [PROBEDATA_ARRAY_YS], double, 0)
+                //           );
                 se = new ScanEvent (
-                                    main_get_gapp()->xsm->data.s.x0
-                                    + main_get_gapp()->xsm->Inst->Volt2XA (g_array_index (dspc->garray_probedata [PROBEDATA_ARRAY_XS], double, j)),
-                                    main_get_gapp()->xsm->data.s.y0
-                                    + main_get_gapp()->xsm->Inst->Volt2YA (g_array_index (dspc->garray_probedata [PROBEDATA_ARRAY_YS], double, j)),
-                                    main_get_gapp()->xsm->Inst->Volt2ZA (g_array_index (dspc->garray_probedata [PROBEDATA_ARRAY_ZS], double, j))
+                                    main_get_gapp()->xsm->data.s.x0 + XAngFac * g_array_index (dspc->garray_probe_hdrlist [PROBEDATA_ARRAY_XS], double, 0),
+                                    main_get_gapp()->xsm->data.s.y0 + YAngFac * g_array_index (dspc->garray_probe_hdrlist [PROBEDATA_ARRAY_YS], double, 0),
+                                    ZAngFac * g_array_index (dspc->garray_probe_hdrlist [PROBEDATA_ARRAY_ZS], double, 0)
                                     );
                 main_get_gapp()->xsm->MasterScan->mem2d->AttachScanEvent (se);
 
@@ -862,10 +862,8 @@ int RPSPMC_Control::Probing_graph_callback( GtkWidget *widget, RPSPMC_Control *d
 			
                 if (chunksize > 0 && chunksize < MAX_NUM_CHANNELS){
                         double dataset[MAX_NUM_CHANNELS];
-                        //g_message ("Creating PE j=%d", j);
                         ProbeEntry *pe = new ProbeEntry ("Probe", time(0), glabarray, gsymarray, chunksize);
                         for (int i = 0; i < dspc->current_probe_data_index; i++){
-                                //for (int i = j0; i < j; i++){
                                 int k=0;
                                 XSM_DEBUG_PG("DBG-Mb2");
                                 for (int src=0; dspc->msklookup[src]>=0 && src < MAX_NUM_CHANNELS; ++src){
@@ -1013,33 +1011,27 @@ int RPSPMC_Control::Probing_save_callback( GtkWidget *widget, RPSPMC_Control *ds
 	f.open (fntmp);
 
 	int ix=-999999, iy=-999999;
-	if (main_get_gapp()->xsm->MasterScan){
-		main_get_gapp()->xsm->MasterScan->World2Pixel (main_get_gapp()->xsm->data.s.x0, main_get_gapp()->xsm->data.s.y0, ix, iy, SCAN_COORD_ABSOLUTE);
-	}
-// better, get realtime DSP position readings for XY0 now if available:
-
+	int ixs=-999999, iys=-999999;
 	double x0=0.;
 	double y0=0.;
 	double z0=0.;
 	if (main_get_gapp()->xsm->hardware->RTQuery ("O", z0, x0, y0)){ // get HR Offset
-//		gchar *tmp = NULL;
-//		tmp = g_strdup_printf ("Offset Z0: %7.3f "UTF8_ANGSTROEM"\nXY0: %7.3f "UTF8_ANGSTROEM", %7.3f "UTF8_ANGSTROEM
-//				       "\nXYs: %7.3f "UTF8_ANGSTROEM", %7.3f "UTF8_ANGSTROEM,
-//				       main_get_gapp()->xsm->Inst->V2ZAng(z0),
-//				       main_get_gapp()->xsm->Inst->V2XAng(x0),
-//				       main_get_gapp()->xsm->Inst->V2YAng(y0),
-//				       main_get_gapp()->xsm->Inst->V2XAng(x),
-//				       main_get_gapp()->xsm->Inst->V2YAng(y));
 		x0 = main_get_gapp()->xsm->Inst->V2XAng(x0);
 		y0 = main_get_gapp()->xsm->Inst->V2YAng(y0);
-		if (main_get_gapp()->xsm->MasterScan){
-			main_get_gapp()->xsm->MasterScan->World2Pixel (x0, y0, ix, iy, SCAN_COORD_ABSOLUTE);
-		}
 	} else {
 		if (main_get_gapp()->xsm->MasterScan){
 			x0 = main_get_gapp()->xsm->data.s.x0;
 			y0 = main_get_gapp()->xsm->data.s.y0;
 		}
+	}
+	if (main_get_gapp()->xsm->MasterScan){
+		main_get_gapp()->xsm->MasterScan->World2Pixel (main_get_gapp()->xsm->data.s.x0, main_get_gapp()->xsm->data.s.y0, ix, iy, SCAN_COORD_ABSOLUTE);
+	}
+	if (main_get_gapp()->xsm->MasterScan){
+		main_get_gapp()->xsm->MasterScan->World2Pixel (main_get_gapp()->xsm->data.s.x0 + XAngFac * g_array_index (dspc->garray_probe_hdrlist [PROBEDATA_ARRAY_XS], double, 0),
+                                                               main_get_gapp()->xsm->data.s.y0 + YAngFac * g_array_index (dspc->garray_probe_hdrlist [PROBEDATA_ARRAY_YS], double, 0),
+                                                               ixs, iys,
+                                                               SCAN_COORD_ABSOLUTE);
 	}
         f.precision (12);
 	f << "# view via: xmgrace -graph 0 -pexec 'title \"GXSM Vector Probe Data: " << fntmp << "\"' -block " << fntmp  << " -bxy 2:4 ..." << std::endl;
@@ -1050,9 +1042,11 @@ int RPSPMC_Control::Probing_save_callback( GtkWidget *widget, RPSPMC_Control *ds
 	  << ", iX0=" << ix << " Pix iX0=" << iy << " Pix"
           << std::endl
           << "# GVP-initial-XYZ-Scan   ::"
-          << " XS=" << g_array_index (dspc->garray_probe_hdrlist[PROBEDATA_ARRAY_XS], double, 0) << " Ang"
-          << " YS=" << g_array_index (dspc->garray_probe_hdrlist[PROBEDATA_ARRAY_YS], double, 0) << " Ang"
-          << " ZS=" << g_array_index (dspc->garray_probe_hdrlist[PROBEDATA_ARRAY_ZS], double, 0) << " Ang"
+          << " XS=" << g_array_index (dspc->garray_probe_hdrlist[PROBEDATA_ARRAY_XS], double, 0) * XAngFac << " Ang"
+          << " YS=" << g_array_index (dspc->garray_probe_hdrlist[PROBEDATA_ARRAY_YS], double, 0) * YAngFac << " Ang"
+          << " ZS=" << g_array_index (dspc->garray_probe_hdrlist[PROBEDATA_ARRAY_ZS], double, 0) * ZAngFac << " Ang"
+          << " iXS=" << ixs << " Pix"
+          << " iYS=" << iys << " Pix"
 
           << std::endl;
 #if 0

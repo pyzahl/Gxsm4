@@ -4109,9 +4109,9 @@ void RPSPMC_Control::delayed_vector_update (){
         double slew[2];
         slew[0] = scan_speed_x = scan_speed_x_requested; // FIX ME -- recalc actual scan speed from vectors -> scan_speed_x!
         slew[1] = fast_return * scan_speed_x_requested;
-        scanpixelrate = slew[0]/main_get_gapp()->xsm->data.s.rx*main_get_gapp()->xsm->data.s.nx;
+        double scanpixelrate = main_get_gapp()->xsm->data.s.dx/slew[0];
         
-        gchar *info = g_strdup_printf (" (%g A/s, %g ms/pix)", scan_speed_x, scanpixelrate*1e3);
+        gchar *info = g_strdup_printf (" (%g ms/pix, %g Hz)", scanpixelrate*1e3, 1./scanpixelrate);
         scan_speed_ec->set_info (info);
         g_message ("Delayed Scan Speed Update: rewriting GVP Scan code for %s", info);
         g_free (info);

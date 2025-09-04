@@ -813,7 +813,6 @@ public:
         gint32 dsp_scan_dnx, dsp_scan_dny;
         gint32 dsp_scan_fs_dx, dsp_scan_fs_dy;
         gint32 dsp_scan_fast_return;
-        double scanpixelrate;
         
         // Scan Slope Compensation Parameters
         double area_slope_x;      //!< slope compensation in X, in scan coordinate system (possibly rotated) -- applied before, but by feedback

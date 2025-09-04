@@ -513,7 +513,6 @@ gpointer ScanDataReadThread (void *ptr_hwi){
 
         // center_return_flag,
         // update:
-        // scanpixelrate
 
         g_message ("last vector confirmed: %d, need %d", hwi->getVPCconfirmed (), hwi->last_vector_index);
 
@@ -1026,7 +1025,6 @@ int rpspmc_hwi_dev::start_data_read (int y_start,
                 double slew[2];
                 slew[0] = RPSPMC_ControlClass->scan_speed_x = RPSPMC_ControlClass->scan_speed_x_requested;
                 slew[1] = RPSPMC_ControlClass->fast_return * RPSPMC_ControlClass->scan_speed_x_requested;
-                RPSPMC_ControlClass->scanpixelrate = slew[0]/main_get_gapp()->xsm->data.s.rx*main_get_gapp()->xsm->data.s.nx;
                 // x2nd_Zoff
 
                 int subscan[4];

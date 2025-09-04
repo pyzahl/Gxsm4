@@ -268,9 +268,6 @@ void RPSPMC_Control::write_spm_scan_vector_program (double rx, double ry, int nx
         
         int vector_index=0;
 
-        double tfwd = rx/slew[0];
-        double trev = rx/slew[1];
-
         if (subscan == NULL && subscan_buffer[0] < 0)
                 return;
         
@@ -293,6 +290,9 @@ void RPSPMC_Control::write_spm_scan_vector_program (double rx, double ry, int nx
 
         double dx = rx*(double)subscan_buffer[1]/(double)nx; // scan X vector length
         double dy = ry*(double)subscan_buffer[3]/(double)ny; // scan Y vector length
+
+        double tfwd = dx/slew[0];
+        double trev = dx/slew[1];
 
         //g_message ("write spm scan GVP: dx,dy: %g, %g uV", dx*e16, dy*1e6);
 
