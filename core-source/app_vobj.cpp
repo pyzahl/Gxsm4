@@ -1320,8 +1320,8 @@ void VObject::show_label(gboolean flg){
 			object_label = new cairo_item_text ();
 
                 if (label_osd_style)
-                        object_label->set_text (xy[0] + label_offset_xy[0]*vinfo->sc->mem2d->GetNx()/2+vinfo->sc->mem2d->GetNx()/2,
-                                                xy[1] + label_offset_xy[1]*vinfo->sc->mem2d->GetNy()/2+vinfo->sc->mem2d->GetNy()/2,
+                        object_label->set_text (xy[0] + label_offset_xy[0]*vinfo->sc->mem2d->GetNx()/2/vinfo->GetQfac()+vinfo->sc->mem2d->GetNx()/2/vinfo->GetQfac(),
+                                                xy[1] + label_offset_xy[1]*vinfo->sc->mem2d->GetNy()/2/vinfo->GetQfac()+vinfo->sc->mem2d->GetNy()/2/vinfo->GetQfac(),
                                                 text);
                 else
                         object_label->set_text (xy[0] + label_offset_xy[0]*get_marker_scale (), 
