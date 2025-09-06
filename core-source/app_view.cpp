@@ -699,6 +699,8 @@ ViewControl::ViewControl (Gxsm4app *app,
 	// hpanned box
 	XSM_DEBUG (DBG_L2,  "VC::VC hpaned" );
 	hpaned = gtk_paned_new (GTK_ORIENTATION_HORIZONTAL);
+        //gtk_paned_set_position (GTK_PANED (hpaned), 20+(int)(scan->mem2d->GetNx ()/vinfo->GetQfac()));
+
 	gtk_grid_attach (GTK_GRID (v_grid), hpaned, 1,1, 3,3);
         gtk_widget_show (hpaned);
 
@@ -4391,6 +4393,8 @@ void ViewControl::obj_show_counter_callback (GSimpleAction *simple, GVariant *pa
 void ViewControl::side_pane_callback (GtkWidget *widget, gpointer user_data) {
         ViewControl *vc = (ViewControl *) user_data; 
         vc->setup_side_pane (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget)));
+        if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget)))
+                gtk_paned_set_position (GTK_PANED (vc->hpaned), 2*vc->border+(int)(vc->scan->mem2d->GetNx ()/vc->vinfo->GetQfac()));
 }
 
 void ViewControl::tip_follow_callback (GtkWidget *widget, gpointer user_data) {
