@@ -859,6 +859,8 @@ public:
         static void kill (GtkToggleButton *btn, gpointer user_data);
 
         void create_gui(void);
+        static gboolean preset_panes (gpointer user_data);
+
         void run(gchar *info=NULL);
 
         static void command_execute(GtkEntry *entry, gpointer user_data);
@@ -1079,8 +1081,9 @@ public:
                         return true;
                 } else return false;
         };
-        
+
 private:
+
         // Data linked to Python scripts
         PyRunThreadData user_script_data;
         bool reset_user_script_data;
@@ -1111,6 +1114,8 @@ private:
         gboolean fail;
         gdouble exec_value;
         gdouble sc_value[NUM_SCV];
+protected:
+	GtkWidget *vpaned, *hpaned_scpane, *scec;
         GtkWidget *sc_label[NUM_SCV];
 };
 
@@ -4624,6 +4629,8 @@ void py_gxsm_console::AppWindowInit(const gchar *title, const gchar *sub_title){
 
         set_window_geometry ("python-console");
 
+        g_idle_add (preset_panes, this);
+        
         PI_DEBUG_GM(DBG_L3, "pyremote Plugin :: AppWindoInit() -- done.");
 }
 
@@ -4632,7 +4639,7 @@ void py_gxsm_console::AppWindowInit(const gchar *title, const gchar *sub_title){
 
 void py_gxsm_console::create_gui ()
 {
-	GtkWidget *console_scrolledwin, *file_scrolledwin, *vpaned, *hpaned_scpane, *frame, *sc_grid;
+	GtkWidget *console_scrolledwin, *file_scrolledwin, *frame, *sc_grid;
 	GtkWidget *entry_input;
 
 	GtkTextView *file_textview, *output_textview;
@@ -4647,10 +4654,85 @@ void py_gxsm_console::create_gui ()
 	GtkSourceLanguage *language;
 
         PI_DEBUG_GM(DBG_L2, "pyremote Plugin :: create_gui() -- building GUI elements.");
-
+        
         sc_grid = gtk_grid_new ();
 
         bp = new BuildParam (v_grid, NULL, main_get_gapp()->RemoteEntryList);
+
+
+
+
+
+#if 0
+
+        bp->new_grid_with_frame ("ACTION Memos");
+
+	// MEMO BUTTONs
+        gtk_widget_set_hexpand (bp->grid, TRUE);
+	const gchar *keys[] = { "VPA", "VPB", "VPC", "VPD", "VPE", "VPF", "VPG", "VPH", "VPI", "VPJ", "V0", NULL };
+
+	for (int i=0; keys[i]; ++i) {
+                GdkRGBA rgba;
+		gchar *gckey  = g_strdup_printf ("GVP_set_%s", keys[i]);
+		gchar *stolab = g_strdup_printf ("STO %s", keys[i]);
+		gchar *rcllab = g_strdup_printf ("RCL %s", keys[i]);
+		gchar *memolab = g_strdup_printf ("M %s", keys[i]);             
+		gchar *memoid  = g_strdup_printf ("memo-vp%c", 'a'+i);             
+                remote_action_cb *ra = NULL;
+                gchar *help = NULL;
+
+                bp->set_xy (i+1, 10);
+                // add button with remote support for program recall
+                ra = g_new( remote_action_cb, 1);
+                ra -> cmd = g_strdup_printf("DSP_VP_STO_%s", keys[i]);
+                help = g_strconcat ("Remote example: action (", ra->cmd, ")", NULL); 
+                bp->grid_add_button (N_(stolab), help, 1,
+                                         G_CALLBACK (callback_GVP_store_vp), this,
+                                         "key", gckey);
+                g_free (help);
+                ra -> RemoteCb = (void (*)(GtkWidget*, void*))callback_GVP_store_vp;
+                ra -> widget = bp->button;
+                ra -> data = this;
+                main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra );
+                PI_DEBUG (DBG_L2, "Adding new Remote Cmd: " << ra->cmd ); 
+
+                // CSS
+                //                if (gdk_rgba_parse (&rgba, "tomato"))
+                //                        gtk_widget_override_background_color ( GTK_WIDGET (bp->button), GTK_STATE_FLAG_PRELIGHT, &rgba);
+
+                bp->set_xy (i+1, 11);
+
+                // add button with remote support for program recall
+                ra = g_new( remote_action_cb, 1);
+                ra -> cmd = g_strdup_printf("DSP_VP_RCL_%s", keys[i]);
+                help = g_strconcat ("Remote example: action (", ra->cmd, ")", NULL); 
+                bp->grid_add_button (N_(rcllab), help, 1,
+                                         G_CALLBACK (callback_GVP_restore_vp), this,
+                                         "key", gckey);
+                g_free (help);
+                ra -> RemoteCb = (void (*)(GtkWidget*, void*))callback_GVP_restore_vp;
+                ra -> widget = bp->button;
+                ra -> data = this;
+                main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra );
+                PI_DEBUG (DBG_L2, "Adding new Remote Cmd: " << ra->cmd ); 
+                
+                bp->set_xy (i+1, 12);
+                bp->grid_add_input (NULL);
+                bp->set_input_width_chars (10);
+                gtk_widget_set_hexpand (bp->input, TRUE);
+
+                g_settings_bind (hwi_settings, memoid,
+                                 G_OBJECT (bp->input), "text",
+                                 G_SETTINGS_BIND_DEFAULT);
+
+                //g_free (gckey);
+                //g_free (stolab);
+                //g_free (rcllab);
+                g_free (memolab);
+                g_free (memoid);
+	}
+
+#endif
         
 	// create static structure;
 	exec_value = 50.0; // mid value
@@ -4753,12 +4835,13 @@ void py_gxsm_console::create_gui ()
 	gtk_widget_show (scsc);
 	gtk_scrolled_window_set_child (GTK_SCROLLED_WINDOW (scsc), sc_grid);
 
+        
         bp_sc = new BuildParam (sc_grid, NULL, gapp->RemoteEntryList);
         for(int i=0; i<NUM_SCV; ++i){
                 sc_value[i] = 0.0;
                 gchar *l = g_strdup_printf ("SC%d",i+1);
                 gchar *id = g_strdup_printf ("py-sc%02d",i+1);
-                bp_sc->grid_add_ec (l, null_unit, &sc_value[i], -1e10, 1e10, "g", 1., 10., id);
+                scec = bp_sc->grid_add_ec (l, null_unit, &sc_value[i], -1e10, 1e10, "g", 1., 10., id);
                 sc_label[i] = bp_sc->label;
                 g_free (l);
                 g_free (id);
@@ -4773,13 +4856,27 @@ void py_gxsm_console::create_gui ()
 
         gtk_widget_show (v_grid);
 
-        //gtk_paned_set_position (GTK_PANED(vpaned), 50);
-	//gtk_paned_set_position (GTK_PANED(vpaned), -1); // 1:1 -- unset default
-	gtk_paned_set_position (GTK_PANED(hpaned_scpane), 300);
-
         PI_DEBUG_GM(DBG_L2, "pyremote Plugin :: console_create_gui() -- building GUI elements.... completed.");
 }
 
+gboolean py_gxsm_console::preset_panes (gpointer user_data)
+{
+        py_gxsm_console *pygc = (py_gxsm_console*) user_data;
+
+        int scwidth=0;
+        scwidth = gtk_widget_get_width (pygc->scec);
+        scwidth += gtk_widget_get_width (pygc->sc_label[0]);
+
+        int hwidth = gtk_widget_get_width (pygc->hpaned_scpane);
+        gtk_paned_set_position (GTK_PANED(pygc->hpaned_scpane), hwidth-scwidth);
+
+        int vheight = gtk_widget_get_height (pygc->vpaned);
+        gtk_paned_set_position (GTK_PANED(pygc->vpaned), (int)(vheight*0.67));
+
+        //g_message ("PYRemote: hw: %d, scw: %d, vh: %d *****************", hwidth, scwidth, vheight);
+
+        return G_SOURCE_REMOVE; // finish IDLE task
+}
 
 // Small idiotic function to create a file with some pyremote example commands if none is found.
 void  py_gxsm_console::write_example_file(void)
