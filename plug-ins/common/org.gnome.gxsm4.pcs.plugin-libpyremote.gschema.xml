@@ -113,6 +113,34 @@
 	last used script file name
       </description>
     </key>
+
+
+    <key name="tbmemo-sfa" type="s">
+      <default>'/.gxsm4/pyaction/sf1.py'</default>
+      <summary>script memo button A</summary>
+      <description>user script memo A</description>
+    </key>
+    <key name="tbmemo-sfb" type="s">
+      <default>'/.gxsm4/pyaction/sf2.py'</default>
+      <summary>script memo button B</summary>
+      <description>user script memo B</description>
+    </key>
+    <key name="tbmemo-sfc" type="s">
+      <default>'/.gxsm4/pyaction/sf3.py'</default>
+      <summary>script memo button C</summary>
+      <description>user script memo C</description>
+    </key>
+    <key name="tbmemo-sfd" type="s">
+      <default>'/.gxsm4/pyaction/sf4.py'</default>
+      <summary>script memo button D</summary>
+      <description>user script memo D</description>
+    </key>
+    <key name="tbmemo-sfe" type="s">
+      <default>'/.gxsm4/pyaction/sf5.py'</default>
+      <summary>script memo button E</summary>
+      <description>user script memo E</description>
+    </key>
+
   </schema>
 
 </schemalist>

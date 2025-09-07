@@ -765,6 +765,7 @@ class py_gxsm_console : public AppBase{
 public:
 	py_gxsm_console (Gxsm4app *app):AppBase(app){
                 script_filename = NULL;
+                script_memo_active = NULL;
                 gui_ready = false;
 
                 clear_run_data( &user_script_data );
@@ -845,6 +846,7 @@ public:
         void append (const gchar *msg);
 
         gchar *pre_parse_script (const gchar *script, int *n_lines=NULL, int r=0); // parse script for gxsm lib include statements
+        void py_gxsm_console::set_check_load_scriptfile ();
 
         static void open_file_callback_exec (GtkDialog *dialog,  int response, gpointer user_data);
         static void open_file_callback (GSimpleAction *action, GVariant *parameter, gpointer user_data);
@@ -854,6 +856,9 @@ public:
         static void save_file_as_callback (GSimpleAction *action, GVariant *parameter, gpointer user_data);
         static void configure_callback (GSimpleAction *action, GVariant *parameter, gpointer user_data);
         static void restart_interpreter_callback (GSimpleAction *action, GVariant *parameter, gpointer user_data);
+
+        static int callback_toolbar_script (GtkWidget *widget, py_gxsm_console *self);
+        static void callback_set_toolbar_script(GtkGestureClick *gesture, int n_press, double x, double y, py_gxsm_console *self);
 
         static void run_file (GtkButton *btn, gpointer user_data);
         static void kill (GtkToggleButton *btn, gpointer user_data);
@@ -1117,6 +1122,7 @@ private:
 protected:
 	GtkWidget *vpaned, *hpaned_scpane, *scec;
         GtkWidget *sc_label[NUM_SCV];
+        GtkWidget *script_memo_active;
 };
 
 
@@ -4318,12 +4324,43 @@ void py_gxsm_console::fix_eols_to_unix(gchar *text)
 	text[j] = '\0';
 }
 
+void py_gxsm_console::set_check_load_scriptfile (){
+        gchar *file_content;
+        GError *err = NULL;
+        
+        if (!g_file_get_contents (script_filename,
+                                  &file_content,
+                                  NULL,
+                                  &err)) {
+                gchar *message = g_strdup_printf("Cannot read content of file "
+                                                 "'%s': %s",
+                                                 script_filename,
+                                                 err->message);
+                g_clear_error(&err);
+                append(message);
+                fail = true;
+                g_free(message);
+                set_script_filename (NULL);
+        }
+        else {
+                GtkTextBuffer *console_file_buf;
+                GtkTextView *textview;
+                fix_eols_to_unix(file_content);
+
+                // read string which contain last command output
+                textview = GTK_TEXT_VIEW (console_file_content);
+                console_file_buf = gtk_text_view_get_buffer (textview);
+                // append input line
+                gtk_text_buffer_set_text(console_file_buf, file_content, -1);
+                g_free (file_content);
+                fail = false;
+        }
+}
+
 void py_gxsm_console::open_file_callback_exec (GtkDialog *dialog,  int response, gpointer user_data)
 {
 	py_gxsm_console *pygc = (py_gxsm_console *)user_data;
         if (!pygc-> query_filename || response == GTK_RESPONSE_ACCEPT){
-                gchar *file_content;
-                GError *err = NULL;
 
                 if (pygc->query_filename) {
                         GtkFileChooser *chooser = GTK_FILE_CHOOSER (dialog);
@@ -4338,33 +4375,9 @@ void py_gxsm_console::open_file_callback_exec (GtkDialog *dialog,  int response,
                            filename is chosen explicitly each time*/
                         pygc->query_filename = true;
                 }
-                if (!g_file_get_contents(pygc->script_filename,
-                                         &file_content,
-                                         NULL,
-                                         &err)) {
-                        gchar *message = g_strdup_printf("Cannot read content of file "
-                                                         "'%s': %s",
-                                                         pygc->script_filename,
-                                                         err->message);
-                        g_clear_error(&err);
-                        pygc->append(message);
-                        pygc->fail = true;
-                        g_free(message);
-                        pygc->set_script_filename (NULL);
-                }
-                else {
-                        GtkTextBuffer *console_file_buf;
-                        GtkTextView *textview;
-                        pygc->fix_eols_to_unix(file_content);
-
-                        // read string which contain last command output
-                        textview = GTK_TEXT_VIEW (pygc->console_file_content);
-                        console_file_buf = gtk_text_view_get_buffer (textview);
-                        // append input line
-                        gtk_text_buffer_set_text(console_file_buf, file_content, -1);
-                        g_free (file_content);
-                        pygc->fail = false;
-                }
+                pygc->set_check_load_scriptfile ();
+                if (pygc->script_memo_active)
+                gtk_widget_set_name (pygc->script_memo_active, "normal");
         }
 }
 
@@ -4635,7 +4648,41 @@ void py_gxsm_console::AppWindowInit(const gchar *title, const gchar *sub_title){
 }
 
 
+int py_gxsm_console::callback_toolbar_script (GtkWidget *widget, py_gxsm_console *self){
+        PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);
+        const gchar *fn = gtk_button_get_label (GTK_BUTTON (widget));
+        g_message ("py_gxsm_console::callback_toolbar_script: >%s< -> %s", (const gchar*)g_object_get_data(G_OBJECT(widget), "key"), fn);
 
+        self->set_script_filename (fn);
+        self->py_gxsm_console::set_check_load_scriptfile ();
+
+        if (self->script_memo_active)
+                gtk_widget_set_name (self->script_memo_active, "normal");
+
+        const gchar *color = g_strdup_printf("cyan");
+        gtk_widget_set_name (widget, color);
+        g_free (color);
+        self->script_memo_active = widget;
+
+        return 0;
+}
+
+void py_gxsm_console::callback_set_toolbar_script(GtkGestureClick *gesture, int n_press, double x, double y, py_gxsm_console *self) {
+        // Your right-click action goes here
+        g_message ("py_gxsm_console::callback_set_toolbar_script: >%s< to %s", (const gchar*)g_object_get_data(G_OBJECT(gesture), "key"), self->script_filename);
+
+        gtk_button_set_label (GTK_BUTTON (g_object_get_data(G_OBJECT(gesture), "button")), self->script_filename);
+
+        if (self->script_memo_active)
+                gtk_widget_set_name (self->script_memo_active, "normal");
+
+        const gchar *color = g_strdup_printf("cyan");
+        gtk_widget_set_name (GTK_WIDGET (g_object_get_data(G_OBJECT(gesture), "button")), color);
+        g_free (color);
+        self->script_memo_active = g_object_get_data(G_OBJECT(gesture), "button");
+
+        gtk_label_set_ellipsize (GTK_LABEL (gtk_button_get_child (GTK_BUTTON (g_object_get_data(G_OBJECT(gesture), "button")))), PANGO_ELLIPSIZE_START);
+}
 
 void py_gxsm_console::create_gui ()
 {
@@ -4661,79 +4708,37 @@ void py_gxsm_console::create_gui ()
 
 
 
-
-
-#if 0
-
-        bp->new_grid_with_frame ("ACTION Memos");
-
-	// MEMO BUTTONs
-        gtk_widget_set_hexpand (bp->grid, TRUE);
-	const gchar *keys[] = { "VPA", "VPB", "VPC", "VPD", "VPE", "VPF", "VPG", "VPH", "VPI", "VPJ", "V0", NULL };
+	// TOOLBAR SCRIPT LOAD MEMO BUTTONs
+	const gchar *keys[] = { "TMSA", "TMSB", "TMSC", "TMSD", "TMSE", NULL };
 
 	for (int i=0; keys[i]; ++i) {
-                GdkRGBA rgba;
+		gchar *tbmemoid  = g_strdup_printf ("tbmemo-sf%c", 'a'+i);             
 		gchar *gckey  = g_strdup_printf ("GVP_set_%s", keys[i]);
-		gchar *stolab = g_strdup_printf ("STO %s", keys[i]);
-		gchar *rcllab = g_strdup_printf ("RCL %s", keys[i]);
-		gchar *memolab = g_strdup_printf ("M %s", keys[i]);             
-		gchar *memoid  = g_strdup_printf ("memo-vp%c", 'a'+i);             
-                remote_action_cb *ra = NULL;
-                gchar *help = NULL;
+                bp->grid_add_button (N_(keys[i]), "Click to load, RMB: associate script", 1,
+                                     G_CALLBACK (callback_toolbar_script), this,
+                                     "key", gckey);
+                GtkGesture *gesture = gtk_gesture_click_new();
+                g_object_set_data(G_OBJECT(gesture), "key", gckey);
+                g_object_set_data(G_OBJECT(gesture), "button", bp->button);
 
-                bp->set_xy (i+1, 10);
-                // add button with remote support for program recall
-                ra = g_new( remote_action_cb, 1);
-                ra -> cmd = g_strdup_printf("DSP_VP_STO_%s", keys[i]);
-                help = g_strconcat ("Remote example: action (", ra->cmd, ")", NULL); 
-                bp->grid_add_button (N_(stolab), help, 1,
-                                         G_CALLBACK (callback_GVP_store_vp), this,
-                                         "key", gckey);
-                g_free (help);
-                ra -> RemoteCb = (void (*)(GtkWidget*, void*))callback_GVP_store_vp;
-                ra -> widget = bp->button;
-                ra -> data = this;
-                main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra );
-                PI_DEBUG (DBG_L2, "Adding new Remote Cmd: " << ra->cmd ); 
+                gtk_gesture_single_set_button (GTK_GESTURE_SINGLE(gesture), 3);
+                gtk_widget_add_controller (GTK_WIDGET(bp->button), GTK_EVENT_CONTROLLER(gesture));
+                g_signal_connect (gesture, "pressed", G_CALLBACK(callback_set_toolbar_script), this);
 
-                // CSS
-                //                if (gdk_rgba_parse (&rgba, "tomato"))
-                //                        gtk_widget_override_background_color ( GTK_WIDGET (bp->button), GTK_STATE_FLAG_PRELIGHT, &rgba);
+                gtk_button_set_can_shrink (GTK_BUTTON (bp->button), TRUE);              
 
-                bp->set_xy (i+1, 11);
-
-                // add button with remote support for program recall
-                ra = g_new( remote_action_cb, 1);
-                ra -> cmd = g_strdup_printf("DSP_VP_RCL_%s", keys[i]);
-                help = g_strconcat ("Remote example: action (", ra->cmd, ")", NULL); 
-                bp->grid_add_button (N_(rcllab), help, 1,
-                                         G_CALLBACK (callback_GVP_restore_vp), this,
-                                         "key", gckey);
-                g_free (help);
-                ra -> RemoteCb = (void (*)(GtkWidget*, void*))callback_GVP_restore_vp;
-                ra -> widget = bp->button;
-                ra -> data = this;
-                main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra );
-                PI_DEBUG (DBG_L2, "Adding new Remote Cmd: " << ra->cmd ); 
-                
-                bp->set_xy (i+1, 12);
-                bp->grid_add_input (NULL);
-                bp->set_input_width_chars (10);
-                gtk_widget_set_hexpand (bp->input, TRUE);
-
-                g_settings_bind (hwi_settings, memoid,
-                                 G_OBJECT (bp->input), "text",
+                g_settings_bind (gsettings, tbmemoid,
+                                 G_OBJECT (gtk_button_get_child (GTK_BUTTON (bp->button))), "label",
                                  G_SETTINGS_BIND_DEFAULT);
 
-                //g_free (gckey);
-                //g_free (stolab);
-                //g_free (rcllab);
-                g_free (memolab);
-                g_free (memoid);
-	}
+                gtk_label_set_ellipsize (GTK_LABEL (gtk_button_get_child (GTK_BUTTON (bp->button))), PANGO_ELLIPSIZE_START);
 
-#endif
-        
+                g_free (tbmemoid);
+
+                
+        }
+
+        bp->new_line();
 	// create static structure;
 	exec_value = 50.0; // mid value
 

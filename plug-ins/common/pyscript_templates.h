@@ -408,9 +408,6 @@ const gchar *template_watchdog = R"V0G0N(
 # Watch dog script. Watching via RTQuery system parameters:
 # for example dF and if abs(dF) > limit DSP_CMD_STOPALL is issued (cancel auto approch, etc.)
 
-# Watch dog script. Watching via RTQuery system parameters:
-# for example dF and if abs(dF) > limit DSP_CMD_STOPALL is issued (cancel auto approch, etc.)
-
 def z0_goto(set_z0=0, speed=400):
         gxsm.set ("dspmover-z0-goto","%g"%set_z0)
         gxsm.set ("dspmover-z0-speed","%g"%speed)
