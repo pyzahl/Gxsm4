@@ -3072,9 +3072,10 @@ void RPSPMC_Control::BiasChanged(Param_Control* pcs, RPSPMC_Control* self){
         if (rpspmc_pacpll)
                 rpspmc_pacpll->write_parameter ("SPMC_BIAS", self->bias);
 
-        // mirror basic parameters to GXSM4 main
+        // add user event, mirror basic parameters to GXSM4 main
+        if (rpspmc_hwi)
+                rpspmc_hwi->add_user_event_now ("Bias_adjust", "[V] (pre,now)", main_get_gapp()->xsm->data.s.Bias, self->bias);
  	main_get_gapp()->xsm->data.s.Bias = self->bias;
-
 }
 
 void RPSPMC_Control::Slope_dZX_Changed(Param_Control* pcs, RPSPMC_Control* self){
@@ -3118,6 +3119,11 @@ void RPSPMC_Control::ZPosSetChanged(Param_Control* pcs, RPSPMC_Control *self){
                 rpspmc_pacpll->write_array (SPMC_SET_ZPOS_SERVO_COMPONENTS, 0, NULL,  3, jdata);
         }
 
+        if (rpspmc_hwi){
+                rpspmc_hwi->add_user_event_now ("Z_Set_Point_adjust", "[A] (pre,now)", main_get_gapp()->xsm->data.s.ZSetPoint, self->zpos_ref);
+                rpspmc_hwi->add_user_event_now ("I_Set_Point_adjust", "[nA] (setpt, level)", self->mix_set_point[0], self->mix_level[0], true);
+        }
+        
         // mirror basic parameters to GXSM4 main
         main_get_gapp()->xsm->data.s.SetPoint  = self->zpos_ref;
         main_get_gapp()->xsm->data.s.ZSetPoint = self->zpos_ref;
@@ -3159,6 +3165,12 @@ void RPSPMC_Control::ZServoParamChanged(Param_Control* pcs, RPSPMC_Control *self
                         self->ec_z_upper->Thaw();
                 
                 rpspmc_pacpll->write_array (SPMC_SET_Z_SERVO_COMPONENTS, 1, jdata_i,  6, jdata);
+        }
+
+        if (rpspmc_hwi){
+                rpspmc_hwi->add_user_event_now ("Z_Servo_adjust", "[dB] (CP,CI)", spmc_parameters.z_servo_cp_db, spmc_parameters.z_servo_ci_db );
+                rpspmc_hwi->add_user_event_now ("Z_Set_Point_adjust", "[A] (pre,now)", main_get_gapp()->xsm->data.s.ZSetPoint, self->zpos_ref, true);
+                rpspmc_hwi->add_user_event_now ("I_Set_Point_adjust", "[nA] (setpt, level)", self->mix_set_point[0], self->mix_level[0], true);
         }
 
         // mirror basic parameters to GXSM4 main
@@ -4121,6 +4133,10 @@ void RPSPMC_Control::delayed_vector_update (){
                                                main_get_gapp()->xsm->data.s.nx, main_get_gapp()->xsm->data.s.ny,
                                                slew, NULL, NULL);
         delayed_vector_update_timer_id = 0; // done.
+
+        if (rpspmc_hwi)
+                rpspmc_hwi->add_user_event_now ("ScanSpeed_adjust", "[A/s] (speed,fast_ret_fac)", scan_speed_x, fast_return );
+        
 }
 
 guint RPSPMC_Control::delayed_vector_update_callback (RPSPMC_Control *self){
