@@ -21,7 +21,10 @@ mpl.use('Agg')
 from matplotlib import ticker
 mpl.pyplot.close('all')
 
-sc = dict(CH=2, CHZ=1, A0=3,B0=32,Z0=0., dFmin=-5.0, Zmax=30, SZmax=10, SZmin=-0.5, F0off=0.21, STOP=0)
+global metal_fit_points
+
+
+sc = dict(CH=3, CHZ=2, start_idx=2, end_idx=33, A0=0,B0=24, MB0=10, Z0=0., dFmin=-10.0, Zmax=30, SZmax=10, SZmin=-0.5, F0off=0.21, STOP=0)
 rp_freq_dev = 0.0  ### eventual Hz offset/thermal drift for later measured dF(z)
 
 # Setup SCs
@@ -89,21 +92,33 @@ def plot_vpdata(cols=[1,2,4]):
     plt.show()
 
 # run fits
-def run_bg_and_lj_fits(lj_z, xy, B0, A0,j):
+
+def run_bg_metal_fit(lj_z, z_list, xy, B0):
 	try:
 		popt, pcov = curve_fit(LJ_bg, xy[0][B0:], xy[1][B0:])
+		bg_fit_points = LJ_bg(z_list, *popt)
+		bg_fit_curve = LJ_bg(lj_z, *popt)
+		print ('Fit OK for BG metal fit')
+	except:		
+		print ('Fit fail for BG metal fit')
+		bg_fit_curve = np.zeros(0)
+	return bg_fit_curve, bg_fit_points
+
+def run_bg_and_lj_fits(lj_z, xy, B0, A0,j):
+	try:
+		popt, pcov = curve_fit(LJ_bg, xy[0][B0:], xy[1][B0:]-metal_fit_points[B0:])
 		bg_fit = LJ_bg(xy[0], *popt)
 		bg_fit_curve = LJ_bg(lj_z, *popt)
-		fmol = xy[1]-bg_fit
+		fmol = xy[1]-bg_fit-metal_fit_points
 	except:		
 		print ('Fit fail for BGfit#{}'.format(j+1))
 		bg_fit_curve = np.zeros(0)
-		fmol = xy[1]
+		fmol = xy[1]-metal_fit_points
 
 	try:
 		popt, pcov = curve_fit(LJ, xy[0][A0:], fmol[A0:])
 		lj_fit = LJ(lj_z, *popt)
-		lj_curve = lj_fit + bg_fit_curve
+		lj_curve = lj_fit + bg_fit_curve #+ metal_fit_points
 	except:
 		print ('Fit fail for LJfit#{}'.format(j+1))
 		#print ('Data:', xy[0][A0:], fmol[A0:])
@@ -171,18 +186,20 @@ def plot_xy(lj_z, xy, m, A0, B0, sbg_fit, sbg_curve):
 
 	print ('PLOTTING, FITTING')
 
-	plt.plot(xy[0][B0:], sbg_fit[B0:], 'o', label='FzSBg')
-	plt.plot(lj_z, sbg_curve, label='SBGfit')
+	plt.plot(xy[0][B0:], sbg_fit[B0:], 'o', label='Mol BG Points')
+	plt.plot(lj_z, sbg_curve, label='Mol BG Fit Curve')
+	plt.plot(xy[0], metal_fit_points, '+', label='Metal BG Fit Points')
 
 	for j in range (0,m):
 		print ('SET #', j)
 		plt.plot(xy[0], xy[1+j], 'x', label='Fz#{}'.format(j+1))
+		plt.plot(xy[0], xy[1+j]-metal_fit_points, 'x', label='Fz-MFP#{}'.format(j+1))
 		
 		print ('FITTING...#', j)
 		#lj_curve, bg_curve = run_bg_and_lj_fits(lj_z, [xy[0],xy[1+j]-sbg_fit], B0, A0, j)
 		lj_curve, bg_curve = run_bg_and_lj_fits(lj_z, [xy[0],xy[1+j]], B0, A0, j)
 		if bg_curve.size > 0:
-			plt.plot(lj_z, bg_curve, label='BGfit#{}'.format(j+1))
+			plt.plot(lj_z, bg_curve, label='LocBGfit#{}'.format(j+1))
 		if lj_curve.size > 0:
 			plt.plot(lj_z, lj_curve, label='LJfit#{}'.format(j+1))
 			#plt.plot(lj_z, lj_curve+sbg_curve, label='LJfit#{}'.format(j+1))
@@ -220,18 +237,18 @@ def plot_xy(lj_z, xy, m, A0, B0, sbg_fit, sbg_curve):
 
 # visualize, plot and refit curves
 # use feh to auto plot/updated resulting graph from /tmp/fz.png!
-def plot_zreferencing(lj_z, lj_curve, z_probe, df_probe, z_topo, z_remaps, z_mapdfs):
+def plot_zreferencing(lj_z, bg_metal_curve, z_probe, df_probe, z_topo, z_remaps, z_mapdfs):
 	plt.close ('all')
 	plt.figure(figsize=(12, 8))
 
-	plt.plot(lj_z, lj_curve, label='LJ Curve Fit')
+	plt.plot(lj_z, bg_metal_curve, label='BG Metal Fit Curve')
 	plt.plot(z_probe, df_probe, '.', alpha=0.3, label='LJ Probes')
 	plt.plot(z_topo, z_mapdfs, 'x',  label='LJ Map Points, Z-Topo')
 	plt.plot(z_remaps, z_mapdfs, 'x',  label='LJ Map Pointst, Z-remapped')
 		
 	plt.ylim(sc['dFmin'],1.0)
 
-	plt.title('FZAlign GXSM Force Volume Data Explorer * F(z)')
+	plt.title('FZAlign/BG Metal Fit **( GXSM Force Volume Data Explorer * F(z)')
 	plt.xlabel('Z in Ang')
 	plt.ylabel('dFreq in Hz')
 	plt.legend()
@@ -399,24 +416,23 @@ def get_z_list_from_dFz_curves(ch, start=0, end=999):
 				
 			break
 
-		A0 = int(sc['A0']) ## !!! remap
-		B0 = int(sc['B0'])  ## !!! remap via zlist and 1000 in linespace below
-		print ('A0Z: ', zlist[A0])
-		print ('B0Z:', zlist[B0])
+		z_probe = z_probe[::-1]
+		df_probe = df_probe[::-1]
 		lj_z   = np.linspace(sc['Z0'] + sc['SZmin'], sc['Z0'] + sc['Zmax'], 1000)
-		#dzi = 1000/( sc['Zmax'] - sc['SZmin'] )
-		#A0z = int (round (dzi * ( zlist[A0]-sc['Z0'] - sc['SZmin'] )))
-		#B0z = int (round (dzi * ( zlist[B0]-sc['Z0'] - sc['SZmin'] )))
-		#print (dzi, ' => ',A0z, B0z, '    arg', zlist[B0]-sc['Z0'] - sc['SZmin'])
-		lj_curve, bg_curve = run_bg_and_lj_fits(lj_z, [z_probe,df_probe], B0, A0, 0) ## 
-		#popt, pcov = curve_fit (LJ_bg, z_probe, df_probe)
-		#lj_curve = LJ_bg(lj_z, *popt)
-		#lj_curve = lj_z*0.01
 
-	#print ('LJ_Z:',  lj_curve)
+		B0 = int(sc['MB0'])  ## remap via zlist to linespace index
+		iB0=1
+		while zlist[B0] > lj_z[iB0] and iB0 < 900:
+			iB0 = iB0+1
+		print ('B0Z:', zlist[B0], ' (remapped) => iB0:', iB0)
+			
+		bg_metal_curve, bg_metal_fit_points = run_bg_metal_fit(lj_z, zlist, [z_probe,df_probe], iB0)
+
+	print ('bg_metal_fit_points: ', bg_metal_fit_points)
+
 	z_maps = zlist
 	z_mapdfs = zdflist
-	plot_zreferencing(lj_z, lj_curve, z_probe, df_probe, zlist, z_maps, z_mapdfs)
+	plot_zreferencing(lj_z, bg_metal_curve, z_probe, df_probe, zlist, z_maps, z_mapdfs)
 	
 		# merge all curves
 		# fit
@@ -425,7 +441,7 @@ def get_z_list_from_dFz_curves(ch, start=0, end=999):
 		#lj_curve, bg_curve = run_bg_and_lj_fits(lj_z, [xy[0],xy[1+j]], B0, A0, j)
 		
 		
-	return zlist
+	return zlist, bg_metal_fit_points
 
 ##### MAIN  ######
 print('HELP to watch plot: Install: apt-get feh, run $feh /tmp/fz.png')
@@ -438,14 +454,14 @@ npp=0
 nrr =0
 
 # Get Z mapping
-zlist = get_z_list(1,39)
+zlist = get_z_list(int(sc['start_idx']),int(sc['end_idx']))
 print ('Z-List: ', zlist)
 print ('#Z:', zlist.size)
 sc['Z0'] = zlist[0]
 SetSC()
 
 
-zlist_dum =  get_z_list_from_dFz_curves(ch, start=1, end=37)
+zlist_dum, metal_fit_points =  get_z_list_from_dFz_curves(ch, start=int(sc['start_idx']), end=int(sc['end_idx']))
 
 
 # Watch Point Objects and update if changed
