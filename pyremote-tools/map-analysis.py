@@ -106,10 +106,10 @@ def run_bg_metal_fit(lj_z, z_list, xy, B0):
 
 def run_bg_and_lj_fits(lj_z, xy, B0, A0,j):
 	try:
-		popt, pcov = curve_fit(LJ_bg, xy[0][B0:], xy[1][B0:]-metal_fit_points[B0:])
+		popt, pcov = curve_fit(LJ_bg, xy[0][B0:], xy[1][B0:])
 		bg_fit = LJ_bg(xy[0], *popt)
 		bg_fit_curve = LJ_bg(lj_z, *popt)
-		fmol = xy[1]-bg_fit-metal_fit_points
+		fmol = xy[1]-bg_fit
 	except:		
 		print ('Fit fail for BGfit#{}'.format(j+1))
 		bg_fit_curve = np.zeros(0)
@@ -118,7 +118,7 @@ def run_bg_and_lj_fits(lj_z, xy, B0, A0,j):
 	try:
 		popt, pcov = curve_fit(LJ, xy[0][A0:], fmol[A0:])
 		lj_fit = LJ(lj_z, *popt)
-		lj_curve = lj_fit + bg_fit_curve #+ metal_fit_points
+		lj_curve = lj_fit + bg_fit_curve
 	except:
 		print ('Fit fail for LJfit#{}'.format(j+1))
 		#print ('Data:', xy[0][A0:], fmol[A0:])
@@ -127,21 +127,16 @@ def run_bg_and_lj_fits(lj_z, xy, B0, A0,j):
 	return lj_curve, bg_fit_curve
 
 
-def run_lj_fit_use_molbg(lj_z, xy, B0, A0,j, molbgpoints, molbgcurve):
-	bg_fit = molbgpoints
-	bg_fit_curve = molbgcurve
-	fmol = xy[1]-bg_fit-metal_fit_points
-
+def run_lj_fit(lj_z, xy, A0,j):
 	try:
-		popt, pcov = curve_fit(LJ, xy[0][A0:], fmol[A0:])
+		popt, pcov = curve_fit(LJ, xy[0][A0:], xy[1][A0:])
 		lj_fit = LJ(lj_z, *popt)
-		lj_curve = lj_fit + bg_fit_curve #+ metal_fit_points
 	except:
 		print ('Fit fail for LJfit#{}'.format(j+1))
 		#print ('Data:', xy[0][A0:], fmol[A0:])
-		lj_curve = bg_fit_curve  #np.zeros(lj_z.size)
+		lj_fit = np.zeros(lj_z.size)
 
-	return lj_curve, bg_fit_curve
+	return lj_fit
 
 
 
@@ -207,23 +202,22 @@ def plot_xy(lj_z, xy, m, A0, B0, sbg_fit, sbg_curve):
 
 	plt.plot(xy[0][B0:], sbg_fit[B0:], 'o', label='Mol BG Points')
 	plt.plot(lj_z, sbg_curve, label='Mol BG Fit Curve')
-	plt.plot(xy[0], metal_fit_points, '+', label='Metal BG Fit Points')
+
+	plt.plot(xy[0], metal_fit_points, '+', label='Metal BG Fit Points (MFP)')
+
 
 	for j in range (0,m):
 		print ('SET #', j)
 		plt.plot(xy[0], xy[1+j], 'x', label='Fz#{}'.format(j+1))
-		plt.plot(xy[0], xy[1+j]-metal_fit_points, 'x', label='Fz-MFP#{}'.format(j+1))
+		plt.plot(xy[0], xy[1+j]-metal_fit_points-sbg_fit, 'x', label='Fz#{}-MFP'.format(j+1))
 		
 		print ('FITTING...#', j)
 		#lj_curve, bg_curve = run_bg_and_lj_fits(lj_z, [xy[0],xy[1+j]-sbg_fit], B0, A0, j)
 		#lj_curve, bg_curve = run_bg_and_lj_fits(lj_z, [xy[0],xy[1+j]], B0, A0, j)
-		lj_curve, bg_curve = run_lj_fit_use_molbg(lj_z, xy, B0, A0,j, sbg_fit, sbg_curve)
+		lj_curve = run_lj_fit(lj_z, [xy[0],xy[1+j]-metal_fit_points-sbg_fit], A0,j)
 
-		if bg_curve.size > 0:
-			plt.plot(lj_z, bg_curve, label='LocBGfit#{}'.format(j+1))
 		if lj_curve.size > 0:
 			plt.plot(lj_z, lj_curve, label='LJfit#{}'.format(j+1))
-			#plt.plot(lj_z, lj_curve+sbg_curve, label='LJfit#{}'.format(j+1))
 
 	# plot FZ probe(s) loaded
 	Np = gxsm.get_probe_event(ch,1000)  # get count
@@ -502,10 +496,10 @@ while sc['STOP'] == 0.:
 		fbg = CalcBgF (ch, bgr, zlist, zlist.size, num_bgrs, B0)
 		#print ('FBG:', fbg)
 
-		bg_fit, bg_curve =  run_bgref_fit(lj_z, fbg, B0)
+		bg_fit, bg_curve =  run_bgref_fit(lj_z, fbg - metal_fit_points, B0)
 		
 		fz = dFreqZ (ch, p, zlist, zlist.size, num_points)
-		plot_xy (lj_z, fz, num_points,A0,B0, fbg[1], bg_curve)
+		plot_xy (lj_z, fz, num_points,A0,B0, fbg[1] - metal_fit_points, bg_curve)
 
 	# curves on points
 	if ((not np.array_equal(p , pp) ) or  num_points != npp):
@@ -514,7 +508,7 @@ while sc['STOP'] == 0.:
 		print ('Points: ', p)
 
 		fz = dFreqZ (ch, p, zlist, zlist.size, num_points)
-		plot_xy (lj_z, fz, num_points,A0,B0, fbg[1], bg_curve)
+		plot_xy (lj_z, fz, num_points,A0,B0, fbg[1] - metal_fit_points, bg_curve)
 
 	# get updated params
 	GetSC()
