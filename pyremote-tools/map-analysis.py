@@ -24,7 +24,7 @@ mpl.pyplot.close('all')
 global metal_fit_points
 
 
-sc = dict(CH=3, CHZ=2, start_idx=2, end_idx=33, A0=0,B0=24, MB0=10, Z0=0., dFmin=-10.0, Zmax=30, SZmax=10, SZmin=-0.5, F0off=0.21, STOP=0)
+sc = dict(CH=3, CHZ=1, start_idx=1, end_idx=40, A0=0,B0=18, MB0=28, Z0=0., dFmin=-10.0, Zmax=30, SZmax=10, SZmin=-0.5, F0off=0.21, STOP=0)
 rp_freq_dev = 0.0  ### eventual Hz offset/thermal drift for later measured dF(z)
 
 # Setup SCs
@@ -65,8 +65,9 @@ def LJ_bg(z,a,d):
 	z = z-sc['Z0']
 	return a*np.power(1/(z+d), 5)
 
-def LJ_mol_bg(z,a,d):
+def LJ_mol_ref(z,a,d):
 	z = z-sc['Z0']
+	#return a*np.power(1/(z+d), 5)
 	return a*np.power(1/(z+d), 5)
 
 
@@ -93,6 +94,7 @@ def plot_vpdata(cols=[1,2,4]):
 
 # run fits
 
+# global meta bg fit [B0 ...]
 def run_bg_metal_fit(lj_z, z_list, xy, B0):
 	try:
 		popt, pcov = curve_fit(LJ_bg, xy[0][B0:], xy[1][B0:])
@@ -127,6 +129,24 @@ def run_bg_and_lj_fits(lj_z, xy, B0, A0,j):
 	return lj_curve, bg_fit_curve
 
 
+# run bg molecule reference fit, [B0 ...]
+def run_bg_mol_ref_fit(lj_z, xy, B0):
+	try:
+		print ("FFFF: LJ_mol_ref", xy[0][B0:], xy[1][B0:])
+		popt, pcov = curve_fit(LJ_mol_ref, xy[0][B0:], xy[1][B0:])
+		bg_fit = LJ_mol_ref(xy[0], *popt)
+		bg_fit_curve = LJ_mol_ref(lj_z, *popt)
+
+		plot_xy_fit_fail(lj_z, [xy[0][B0:], xy[1][B0:]], bg_fit_curve)
+
+	except:		
+		print ('Fit fail for mol BG ref fit')
+		bg_fit = np.zeros(xy[0].size)
+		bg_fit_curve = np.zeros(lj_z.size)
+		plot_xy_fit_fail(lj_z, [xy[0][B0:], xy[1][B0:]], bg_fit_curve)
+	return bg_fit, bg_fit_curve
+
+# final LJ molecule fit [A0 ...]
 def run_lj_fit(lj_z, xy, A0,j):
 	try:
 		popt, pcov = curve_fit(LJ, xy[0][A0:], xy[1][A0:])
@@ -169,18 +189,6 @@ def dFreqZrectav(ch, p,zmap,n, m):
 	fz[1] = fz[1] / count
 	return fz
 	
-# run bg reference fit
-def run_bgref_fit(lj_z, xy, B0):
-	try:
-		popt, pcov = curve_fit(LJ_mol_ref, xy[0][B0:], xy[1][B0:])
-		bg_fit = LJ_mol_bg(xy[0], *popt)
-		bg_fit_curve = LJ_mol_bg(lj_z, *popt)
-	except:		
-		print ('Fit fail for BGreffit')
-		bg_fit = np.zeros(xy[0].size)
-		bg_fit_curve = np.zeros(lj_z.size)
-	return bg_fit, bg_fit_curve
-
 def CalcBgF(ch, bgr, zlist, nz, num_bgrs, B0):
 	fz = dFreqZrectav(ch, bgr, zlist, nz, num_bgrs )
 	print ('FZBG:', fz)
@@ -188,6 +196,28 @@ def CalcBgF(ch, bgr, zlist, nz, num_bgrs, B0):
 
 # visualize, plot and refit curves
 # use feh to auto plot/updated resulting graph from /tmp/fz.png!
+
+# visualize, plot and refit curves
+# use feh to auto plot/updated resulting graph from /tmp/fz.png!
+def plot_xy_fit_fail(lj_z, xy, curve):
+	plt.close ('all')
+	plt.figure(figsize=(12, 8))
+
+	plt.plot(xy[0]-sc['Z0'], xy[1], 'x', label='XY data for fit')
+	plt.plot(lj_z-sc['Z0'], curve, label='fit curve')
+
+	plt.ylim(sc['dFmin'],1.0)
+
+	plt.title('Fit Fail Plot -- GXSM Force Volume Data Explorer')
+	plt.xlabel('Z in Ang')
+	plt.ylabel('dFreq in Hz')
+	plt.legend()
+	plt.grid()
+	#plt.show()
+	plt.savefig('/tmp/fz-fit-fail.png')
+
+
+
 def plot_xy(lj_z, xy, m, A0, B0, sbg_fit, sbg_curve):
 	plt.close ('all')
 	plt.figure(figsize=(12, 8))
@@ -198,9 +228,13 @@ def plot_xy(lj_z, xy, m, A0, B0, sbg_fit, sbg_curve):
 	print ('Fit BG start Z: ', xy[0][B0])
 	plt.axvline(x=xy[0][B0])
 
+	print ('Fit Metal BG start Z: ', xy[0][int(sc['MB0'])])
+	plt.axvline(x=xy[0][int(sc['MB0'])], color='#aa0000')
+
 	print ('PLOTTING, FITTING')
 
-	plt.plot(xy[0][B0:], sbg_fit[B0:], 'o', label='Mol BG Points')
+	plt.plot(xy[0][B0:], sbg_fit[B0:], 'o', label='Mol BG Points-MBG')
+	plt.plot(xy[0][B0:], sbg_fit[B0:]+metal_fit_points[B0:], 'o', label='Mol BG Points')
 	plt.plot(lj_z, sbg_curve, label='Mol BG Fit Curve')
 
 	plt.plot(xy[0], metal_fit_points, '+', label='Metal BG Fit Points (MFP)')
@@ -496,7 +530,7 @@ while sc['STOP'] == 0.:
 		fbg = CalcBgF (ch, bgr, zlist, zlist.size, num_bgrs, B0)
 		#print ('FBG:', fbg)
 
-		bg_fit, bg_curve =  run_bgref_fit(lj_z, fbg - metal_fit_points, B0)
+		bg_fit, bg_curve =  run_bg_mol_ref_fit(lj_z, fbg - metal_fit_points, B0)
 		
 		fz = dFreqZ (ch, p, zlist, zlist.size, num_points)
 		plot_xy (lj_z, fz, num_points,A0,B0, fbg[1] - metal_fit_points, bg_curve)
