@@ -140,6 +140,11 @@
       <summary>script memo button E</summary>
       <description>user script memo E</description>
     </key>
+    <key name="tbmemo-sff" type="s">
+      <default>'/.gxsm4/pyaction/sf6.py'</default>
+      <summary>script memo button E</summary>
+      <description>user script memo E</description>
+    </key>
 
   </schema>
 

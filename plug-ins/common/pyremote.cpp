@@ -4709,33 +4709,34 @@ void py_gxsm_console::create_gui ()
 
 
 	// TOOLBAR SCRIPT LOAD MEMO BUTTONs
-	const gchar *keys[] = { "TMSA", "TMSB", "TMSC", "TMSD", "TMSE", NULL };
+	const gchar *keys[] = { "TMSA", "TMSB", "TMSC", "TMSD", "TMSE", "TMSF", NULL };
 
+        GtkWidget *tbar = gtk_grid_new ();
+        bp->grid_add_widget (tbar, 82);
+        BuildParam *tbp = new BuildParam (tbar, NULL, main_get_gapp()->RemoteEntryList);
 	for (int i=0; keys[i]; ++i) {
 		gchar *tbmemoid  = g_strdup_printf ("tbmemo-sf%c", 'a'+i);             
 		gchar *gckey  = g_strdup_printf ("GVP_set_%s", keys[i]);
-                bp->grid_add_button (N_(keys[i]), "Click to load, RMB: associate script", 1,
+                tbp->grid_add_button (N_(keys[i]), "Click to load, RMB: associate script", 1,
                                      G_CALLBACK (callback_toolbar_script), this,
                                      "key", gckey);
                 GtkGesture *gesture = gtk_gesture_click_new();
                 g_object_set_data(G_OBJECT(gesture), "key", gckey);
-                g_object_set_data(G_OBJECT(gesture), "button", bp->button);
+                g_object_set_data(G_OBJECT(gesture), "button", tbp->button);
 
                 gtk_gesture_single_set_button (GTK_GESTURE_SINGLE(gesture), 3);
-                gtk_widget_add_controller (GTK_WIDGET(bp->button), GTK_EVENT_CONTROLLER(gesture));
+                gtk_widget_add_controller (GTK_WIDGET(tbp->button), GTK_EVENT_CONTROLLER(gesture));
                 g_signal_connect (gesture, "pressed", G_CALLBACK(callback_set_toolbar_script), this);
 
-                gtk_button_set_can_shrink (GTK_BUTTON (bp->button), TRUE);              
+                // gtk_button_set_can_shrink (GTK_BUTTON (tbp->button), TRUE); // new GTK4 function. But not really require with the below ellipsize setting.
 
                 g_settings_bind (gsettings, tbmemoid,
-                                 G_OBJECT (gtk_button_get_child (GTK_BUTTON (bp->button))), "label",
+                                 G_OBJECT (gtk_button_get_child (GTK_BUTTON (tbp->button))), "label",
                                  G_SETTINGS_BIND_DEFAULT);
 
-                gtk_label_set_ellipsize (GTK_LABEL (gtk_button_get_child (GTK_BUTTON (bp->button))), PANGO_ELLIPSIZE_START);
+                gtk_label_set_ellipsize (GTK_LABEL (gtk_button_get_child (GTK_BUTTON (tbp->button))), PANGO_ELLIPSIZE_START);
 
                 g_free (tbmemoid);
-
-                
         }
 
         bp->new_line();
