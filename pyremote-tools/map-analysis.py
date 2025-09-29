@@ -24,7 +24,7 @@ mpl.pyplot.close('all')
 global metal_fit_points
 
 
-sc = dict(CH=3, CHZ=1, start_idx=1, end_idx=40, A0=0,B0=18, MB0=28, Z0=0., dFmin=-10.0, Zmax=30, SZmax=10, SZmin=-0.5, F0off=0.21, STOP=0)
+sc = dict(CH=2, CHZ=4, start_idx=0, end_idx=54, A0=0,B0=18, MB0=28, Z0=0., dFmin=-10.0, dFmax=1.0, Zmax=30, SZmax=10, SZmin=-0.5, F0off=0.21, STOP=0)
 rp_freq_dev = 0.0  ### eventual Hz offset/thermal drift for later measured dF(z)
 
 # Setup SCs
@@ -274,7 +274,8 @@ def plot_xy(lj_z, xy, m, A0, B0, sbg_fit, sbg_curve):
 			cdf = columns[col_dF][600:1600] - sc['F0off']+rp_freq_dev
 			plt.plot(cz-z0, cdf, alpha=0.3,label='FzProbe#{} @{:.1f} {:.1f}A, {:.1f} {:.1f}px'.format(j, xyij[0], xyij[1], xyij[2], xyij[3]))
 
-	plt.ylim(sc['dFmin'],1.0)
+	plt.ylim(sc['dFmin'],sc['dFmax'])
+	plt.xlim(sc['Z0']-1, sc['Z0']+sc['Zmax'])
 
 	plt.title('GXSM Force Volume Data Explorer * F(z)')
 	plt.xlabel('Z in Ang')

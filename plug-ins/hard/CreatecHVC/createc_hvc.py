@@ -34,6 +34,8 @@ from gi.repository import Gtk, Gdk, GLib
 
 import cairo
 import os                # use os because python IO is bugy
+import serial
+
 import time
 import fcntl
 from threading import Timer
@@ -56,6 +58,151 @@ METER_SCALE = 0.66
 
 FALSE = 0
 TRUE  = -1
+
+
+
+
+
+##########################
+### ANDON CONTROL UTIL 
+##########################
+
+#stty -F /dev/tty 9600 cs8 -cstopb -parenb
+#echo -e '\xA0\x01\x00\xA1' >/dev/ttyUSB0
+#A0 01 01 A2 	Red light on
+#A0 01 01 B3 	Red light flashing
+#A0 01 00 A1 	Red light off
+#A0 03 01 A4 	Yellow light on
+#A0 03 01 B5 	Yellow light flashing
+#A0 03 00 A3 	Yellow light off
+#A0 02 01 A3 	Green light on
+#A0 02 01 B4 	Green light flashing
+#A0 02 00 A2 	Green light off
+#A0 04 01 A5 	Turn the beep louder
+#A0 04 01 B6 	The buzzer sounds loud and intermittently
+#A0 04 01 C7 	Turn on the buzzer sound
+#A0 04 01 D8 	The beeping sound is on and off
+#A0 04 00 A4 	Beep sound off
+
+class Andon():
+        def __init__(self, ip):
+                self.ready = False
+                self.andon = {
+                    'R1' : [bytes([ 0xA0, 0x01, 0x01, 0xA2 ]), 'Red light on' ],
+                    'RF' : [bytes([ 0xA0, 0x01, 0x01, 0xB3 ]), 'Red light flashing' ],
+                    'R0' : [bytes([ 0xA0, 0x01, 0x00, 0xA1 ]), 'Red light off' ],
+                    'Y1' : [bytes([ 0xA0, 0x03, 0x01, 0xA4 ]), 'Yellow light on' ],
+                    'YF' : [bytes([ 0xA0, 0x03, 0x01, 0xB5 ]), 'Yellow light flashing' ],
+                    'Y0' : [bytes([ 0xA0, 0x03, 0x00, 0xA3 ]), 'Yellow light off' ],
+                    'G1' : [bytes([ 0xA0, 0x02, 0x01, 0xA3 ]), 'Green light on' ],
+                    'GF' : [bytes([ 0xA0, 0x02, 0x01, 0xB4 ]), 'Green light flashing' ],
+                    'G0' : [bytes([ 0xA0, 0x02, 0x00, 0xA2 ]), 'Green light off' ],
+                    'B+' : [bytes([ 0xA0, 0x04, 0x01, 0xA5 ]), 'Turn the beep louder' ],
+                    'BB' : [bytes([ 0xA0, 0x04, 0x01, 0xB6 ]), 'The buzzer sounds loud and intermittently' ],
+                    'B1' : [bytes([ 0xA0, 0x04, 0x01, 0xC7 ]), 'Turn on the buzzer sound' ],
+                    'BF' : [bytes([ 0xA0, 0x04, 0x01, 0xD8 ]), 'The beeping sound is on and off' ],
+                    'B0' : [bytes([ 0xA0, 0x04, 0x00, 0xA4 ]), 'Beep sound off' ],
+                }
+
+        def set_andon(cmd):
+            try:
+                ser = serial.Serial('/dev/ttyUSB0', 9600, timeout=1)
+                print ('Sending: ', self.andon[cmd][1])
+                ser.write(self.andon[cmd][0])
+                time.sleep(0.5)
+                ser.close ()
+            except:
+                print ('USB/TTY Error')
+
+
+        def save():
+            set_andon ('BF')
+            time.sleep(1)
+            set_andon ('Y1')
+            time.sleep(1)
+            set_andon ('RF')
+            time.sleep(1)
+            set_andon ('R0')
+            time.sleep(1)
+            set_andon ('G1')
+            time.sleep(1)
+            set_andon ('R0')
+            time.sleep(1)
+            set_andon ('Y0')
+            time.sleep(1)
+            set_andon ('B0')
+
+
+        def engage():
+            set_andon ('BF')
+            time.sleep(1)
+            set_andon ('GF')
+            time.sleep(1)
+            set_andon ('Y1')
+            set_andon ('G0')
+            time.sleep(1)
+            set_andon ('R1')
+            time.sleep(1)
+            set_andon ('Y0')
+            time.sleep(1)
+            set_andon ('G0')
+            time.sleep(1)
+            set_andon ('B0')
+
+
+        def undefined():
+            set_andon ('BF')
+            time.sleep(1)
+            set_andon ('Y1')
+            time.sleep(1)
+            set_andon ('RF')
+            time.sleep(1)
+            set_andon ('R0')
+            time.sleep(1)
+            set_andon ('GF')
+            time.sleep(1)
+            set_andon ('R0')
+            time.sleep(1)
+            set_andon ('YF')
+            time.sleep(1)
+            set_andon ('B0')
+
+        def check_SPM_status():
+                try:
+                    gxsm_shm = shared_memory.SharedMemory(name='gxsm4rpspmc_monitors')
+                    unregister (gxsm_shm._name, 'shared_memory')
+                    print (gxsm_shm)
+                    xyz=np.ndarray((9,), dtype=np.double, buffer=gxsm_shm.buf).reshape((3,3)).T  # X Mi Ma, Y Mi Ma, Z Mi Ma
+                    print (xyz)
+                    ready = True
+                except FileNotFoundError:
+                    print ("SharedMemory(name='gxsm4rpspmc_monitors') not available. Please start gxsm4 and connect RPSPMC.")
+                    undefined()
+
+                status=0
+                while ready:
+                    time.sleep(5)
+                    xyz=np.ndarray((9,), dtype=np.double, buffer=gxsm_shm.buf).reshape((3,3)).T  # X Mi Ma, Y Mi Ma, Z Mi Ma
+                    print (xyz)
+
+                    # -5 all up
+                    if xyz[0][2] > -4 and status != 1:
+                        status = 1
+                        print ("STM tip in range")
+                        engage ()
+
+                    if xyz[0][2] < -4 and status != 2:
+                        status = 2
+                        print ("STM tip out of range")
+                        save ()        
+
+        
+#####################################
+
+
+
+
+
 
 # Createc HV Control
 

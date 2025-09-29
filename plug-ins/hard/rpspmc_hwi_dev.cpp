@@ -1370,6 +1370,60 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2,
 
 
 
+gint rpspmc_hwi_dev::RTQuery (const gchar *property, int n, gfloat *data){
+        const gint64 max_age = 20000; // 20ms
+        static gint64 time_of_last_reading1 = 0; // abs time in us
+        static gint64 time_of_last_reading2 = 0; // abs time in us
+        static gint64 time_of_last_reading3 = 0; // abs time in us
+        static gint64 time_of_last_reading4 = 0; // abs time in us
+        static gint64 time_of_last_trg = 0; // abs time in us
+        static gint s1ok=0, s2ok=0, s3ok=0, s4ok=0;
+
+        // Trigger
+        if ( property[0] == 'T' && (time_of_last_trg+max_age) < g_get_real_time () ){
+                time_of_last_trg = g_get_real_time ();
+                //set_blcklen (n);
+                s1ok=-1; s2ok=-1;
+        }
+        
+        // Signal1
+        if ( property[1] == '1' && ((time_of_last_reading1+max_age) < g_get_real_time () || s1ok)){
+                time_of_last_reading1 = g_get_real_time ();
+                get_history_vector_f (6, data, n); // Z
+
+                //double scale =  DSP32Qs23dot8TO_Volt; // assuming MIX_IN_0..3 withe 23Q8 scale for10V
+                //s1ok=read_pll_signal1 (data, n, scale, 0);
+        }
+        // Signal2
+        if ( property[1] == '2' && ((time_of_last_reading2+max_age) < g_get_real_time () || s2ok)){
+                time_of_last_reading2 = g_get_real_time ();
+                get_history_vector_f (19, data, n); // Current
+
+                //double scale =  DSP32Qs15dot16TO_Volt;
+                //s2ok=read_pll_signal2 (data, n, scale, 0);
+        }
+        // Signal1 deci 256
+        if ( property[1] == '3' && ((time_of_last_reading3+max_age) < g_get_real_time () || s3ok)){
+                time_of_last_reading3 = g_get_real_time ();
+                get_history_vector_f (6, data, n); // Z
+
+                //double scale =  DSP32Qs23dot8TO_Volt;
+                //s3ok=read_pll_signal1dec (data, n, scale, property[0] == 'R');
+        }
+        // Signal2 subsampled 256
+        if ( property[1] == '4' && ((time_of_last_reading4+max_age) < g_get_real_time () || s4ok)){
+                time_of_last_reading4 = g_get_real_time ();
+                get_history_vector_f (19, data, n); // Current
+
+                //double scale =  DSP32Qs15dot16TO_Volt;
+                //s4ok=read_pll_signal2dec (data, n, scale, property[0] == 'R');
+        }
+        return 0;
+}
+
+
+
+
 // template/dummy signal management
 
 void rpspmc_hwi_dev::set_spmc_signal_mux (int source[6]){

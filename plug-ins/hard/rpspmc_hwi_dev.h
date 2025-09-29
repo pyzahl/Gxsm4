@@ -114,10 +114,10 @@ public:
 	 * "U" -> current bias
          * "W" -> WatchDog
 	 */
-	virtual gint RTQuery (const gchar *property, double &val1, double &val2, double &val3);
-
 	virtual gint RTQuery () { return RPSPMC_data_y_index; }; // actual progress on scan -- y-index mirror from FIFO read
-
+	virtual gint RTQuery (const gchar *property, double &val1, double &val2, double &val3);
+	virtual gint RTQuery (const gchar *property, int n, gfloat *data);
+        
 	/* high level calls for instrument condition checks -- TODO */
 	virtual gint RTQuery_clear_to_start_scan (){ return 1; };
 	virtual gint RTQuery_clear_to_start_probe (){ return 1; };
@@ -215,7 +215,49 @@ private:
         
 public:
         gint last_vector_index;
- 
+
+        // system history buffer FIFO
+        GSList *rpspmc_history;
+        void push_history_vector (void *shm_mirror_block, int min_size){
+                static gboolean init=true;
+                int max_hist = 16384;
+                
+                if (init) { rpspmc_history=NULL; init=false; }
+                double *block = new double [min_size];
+                memcpy (block, shm_mirror_block, min_size * sizeof(double));
+                rpspmc_history = g_slist_prepend (rpspmc_history, block);
+                if (g_slist_length (rpspmc_history) > max_hist){
+                        GSList *last = g_slist_last (rpspmc_history);
+                        delete last->data;
+                        rpspmc_history = g_slist_delete_link (rpspmc_history, last);
+                }
+                
+                // RPSPMC HISTORY BLOCK:
+                // [0..9]:    RPSPMC  Meter Monitors: XYZ MAX MIN (3x3), gint64: NOW TIME as of g_get_real_time ()   X012, Y345, Z678, T9   ** time in number of microseconds since January 1, 1970 UTC.
+                // [10,..31]: RPSPMC  Monitors: Bias, reg, set,   GPVU,A,B,AM,FM, MUX, Signal (Current), AD463x[2], XYZ, XYZ0, XYZS
+                // [40,..47]: PAC-PLL Monitors: dc-offset, exec_ampl_mon, dds_freq_mon, volume_mon, phase_mon, control_dfreq_mon
+                
+        };
+        
+        guint get_history_len (){
+                return g_slist_length (rpspmc_history);
+        };
+        
+        void get_history_vector (int pos, double *histarr, int n){
+                double *arr = histarr;
+                GSList *iterator;
+                int i=0;
+                for (iterator = rpspmc_history; iterator, ++i<n; iterator = iterator->next)
+                        *arr++ = ((double*)iterator->data)[pos];
+        };
+        void get_history_vector_f (int pos, gfloat *histarr, int n){
+                gfloat *arr = histarr;
+                GSList *iterator;
+                int i=0;
+                for (iterator = rpspmc_history; iterator, ++i<n; iterator = iterator->next)
+                        *arr++ = (gfloat) ((double*)iterator->data)[pos];
+        };
+        
         //SPM_emulator *spm_emu; // DSP emulator for dummy data generation and minimal SPM behavior
         void GVP_execute_vector_program(); // non blocking, initializes and starts DMA <-> FPGA,stream server and then initiated GVP execution
 	void GVP_abort_vector_program (); // stops GVP and DMA streaming

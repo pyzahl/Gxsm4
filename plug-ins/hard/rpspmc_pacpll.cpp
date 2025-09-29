@@ -1570,8 +1570,9 @@ void RPSPMC_Control::create_folder (){
         bp->set_default_ec_change_notice_fkt (RPSPMC_Control::BiasChanged, this);
         bp->grid_add_ec_with_scale ("Bias", Volt, &bias, -10., 10., "4g", 0.001, 0.01, "fbs-bias");
         FPGA_readback_update_list = g_slist_prepend (FPGA_readback_update_list, bp->ec); // add to FPGA reconnect readback parameter list
-        //        bp->ec->set_adjustment_mode (PARAM_CONTROL_ADJUSTMENT_LOG | PARAM_CONTROL_ADJUSTMENT_LOG_SYM | PARAM_CONTROL_ADJUSTMENT_DUAL_RANGE | PARAM_CONTROL_ADJUSTMENT_ADD_MARKS );
+        //        bp->ec->set_adjustment_mode (PARAM_CONTROL_ADJUSTMENT_LOG | PARAM_CONTROL_ADJUSTMENT_LOG_SYM | PARAM_CONTROL_ADJUSTMENT_DUAL_RANGE | PARAM_CONTROL_ADJUSTMENT_ADD_MARKS ); // LIN:0, LOG:1, SYM:2, DR: 4, TICS:8
         bp->ec->set_logscale_min (1e-3);
+
         gtk_scale_set_digits (GTK_SCALE (bp->scale), 5);
         bp->ec->SetScaleWidget (bp->scale, 0);
         bp->new_line ();
@@ -7052,7 +7053,9 @@ void RPspmc_pacpll::update_shm_monitors (int close_shm){
         static void *shm_ptr = NULL;
         // Set the size of the shared memory region
         static size_t shm_size = sizeof(double)*512;
-         
+
+        spmc_signals.xyz_meter[9] = (double)g_get_real_time ();
+        
         if (shm_fd == -1){
                 shm_fd = shm_open(rpspmc_monitors, O_CREAT | O_RDWR, 0666);
                 if (shm_fd == -1) {
@@ -7077,13 +7080,17 @@ void RPspmc_pacpll::update_shm_monitors (int close_shm){
         // Write data to the shared memory
 
         // RPSPMC XYZ MAX MIN (3x3)
-        memcpy  (shm_ptr, spmc_signals.xyz_meter, sizeof(spmc_signals.xyz_meter));
+        memcpy  (shm_ptr, spmc_signals.xyz_meter, sizeof(gint64)+sizeof(spmc_signals.xyz_meter));
 
         // RPSPMC Monitors: Bias, reg, set,   GPVU,A,B,AM,FM, MUX, Signal (Current), AD463x[2], XYZ, XYZ0, XYZS
         memcpy  (shm_ptr+10*sizeof(double), &spmc_parameters.bias_monitor, 21*sizeof(double));
 
         // PAC-PLL Monitors: dc-offset, exec_ampl_mon, dds_freq_mon, volume_mon, phase_mon, control_dfreq_mon
         memcpy  (shm_ptr+40*sizeof(double), &pacpll_parameters.dc_offset, 7*sizeof(double));
+
+        // push history
+        rpspmc_hwi->push_history_vector (shm_ptr, 48); // currently used: 0..8, 10..31, 40..47 as size of double
+
         
         /*
         sprintf (shm_ptr+512, "XYZ=[[%g %g %g] [%g %g %g] [%g %g %g]]\n",
