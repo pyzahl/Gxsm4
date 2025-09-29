@@ -219,10 +219,8 @@ public:
         // system history buffer FIFO
         GSList *rpspmc_history;
         void push_history_vector (void *shm_mirror_block, int min_size){
-                static gboolean init=true;
                 int max_hist = 16384;
                 
-                if (init) { rpspmc_history=NULL; init=false; }
                 double *block = new double [min_size];
                 memcpy (block, shm_mirror_block, min_size * sizeof(double));
                 rpspmc_history = g_slist_prepend (rpspmc_history, block);
@@ -240,22 +238,32 @@ public:
         };
         
         guint get_history_len (){
-                return g_slist_length (rpspmc_history);
+                if (rpspmc_history)
+                        return g_slist_length (rpspmc_history);
+                else
+                        return 0;
         };
         
         void get_history_vector (int pos, double *histarr, int n){
                 double *arr = histarr;
                 GSList *iterator;
                 int i=0;
-                for (iterator = rpspmc_history; iterator, ++i<n; iterator = iterator->next)
-                        *arr++ = ((double*)iterator->data)[pos];
+                if (rpspmc_history)
+                        for (iterator = rpspmc_history; iterator, ++i<n; iterator = iterator->next)
+                                *arr++ = ((double*)iterator->data)[pos];
         };
         void get_history_vector_f (int pos, gfloat *histarr, int n){
                 gfloat *arr = histarr;
                 GSList *iterator;
                 int i=0;
-                for (iterator = rpspmc_history; iterator, ++i<n; iterator = iterator->next)
-                        *arr++ = (gfloat) ((double*)iterator->data)[pos];
+                static int k=0;
+                k++;
+                if (rpspmc_history)
+                        for (iterator = rpspmc_history; iterator, ++i<n; iterator = iterator->next)
+                                *arr++ = (gfloat) ((double*)iterator->data)[pos];
+                else
+                        for (i=0; i<n; i++)
+                                *arr++ = (gfloat) sin((i+k)*2*M_PI*10/n);
         };
         
         //SPM_emulator *spm_emu; // DSP emulator for dummy data generation and minimal SPM behavior

@@ -74,6 +74,7 @@ rpspmc_hwi_dev::rpspmc_hwi_dev():RP_stream(this){
         info_blob = NULL;
         
         delayed_tip_move_update_timer_id = 0;
+        rpspmc_history=NULL;
         
         // auto adjust and override preferences
         main_get_gapp()->xsm->Inst->override_dig_range (1<<20, xsmres);    // gxsm does precision sanity checks and trys to round to best fit grid
