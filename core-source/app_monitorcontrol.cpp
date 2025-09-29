@@ -65,7 +65,8 @@ MonitorControl::MonitorControl (Gxsm4app *app, gint loglevel, gint maxlines):App
         AppWindowInit (N_("GXSM Activity Monitor and Logbook"));
 
         log_view = gtk_text_view_new ();
-        gtk_text_view_set_editable (GTK_TEXT_VIEW (log_view), FALSE);
+        gtk_text_view_set_editable (GTK_TEXT_VIEW (log_view), false);
+        gtk_text_view_set_monospace (GTK_TEXT_VIEW (log_view), true);
         log_buf = gtk_text_view_get_buffer (GTK_TEXT_VIEW (log_view));
         GtkTextIter end_iter;
         gtk_text_buffer_get_end_iter (log_buf, &end_iter);

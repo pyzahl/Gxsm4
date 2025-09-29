@@ -47,6 +47,11 @@
 
 extern rpspmc_hwi_dev *rpspmc_hwi;
 
+extern SOURCE_SIGNAL_DEF rpspmc_source_signals[];
+extern SOURCE_SIGNAL_DEF rpspmc_swappable_signals[];
+extern SOURCE_SIGNAL_DEF z_servo_current_source[];
+
+
 extern "C++" {
         extern RPSPMC_Control *RPSPMC_ControlClass;
         extern GxsmPlugin rpspmc_hwi_pi;
@@ -1039,20 +1044,44 @@ void RPSPMC_Control::write_program_vector (int index){
         
         rpspmc_hwi->last_vector_index = index;
 
-	{ 
-		gchar *pvi = g_strdup_printf ("ProbeVector[pc%02d]", index);
-		gchar *pvd = g_strdup_printf ("(n:%05d, slew: %g pts/s, 0x%04x, 0x%04x, rep:%4d, jrvpc:%d),"
-					      "(dU:%6.4f V, dxzy:%6.4f, %6.4f, %6.4f V, da: %6.4f db: %6.4f V, dAMC: %6.4f dFMC: %6.4f Veq)", 
+	{
+                const gchar *OPCDcode[] = {"NOP", "XGE", "XLE", "", "", "JMP", NULL };
+                const gchar *OPCDsym[] = {"NOP", ">", "<", "", "", "JMP", NULL };
+                int iopcd = program_vectorX_list[index].opcd;
+                if (iopcd < 0 || iopcd > 5) iopcd = 0;
+                int rchi = program_vectorX_list[index].rchi;
+                if (rchi < 0 || rchi > 14) rchi = 0;
+		gchar *pvi = g_strdup_printf ("ProbeVector[pc%02d]%s", index, program_vector.n == 0? "END" : program_vector.repetitions>0 && program_vector.ptr_next ? "REP" : "   ");
+                gchar *vcode = NULL;
+                switch (iopcd){
+                case 1:
+                case 2: vcode = g_strdup_printf ("%s %s %+8.4f -> JMP PC%+d;",
+                                                 rpspmc_source_signals [rchi+SIGNAL_INDEX_ICH0].label, OPCDsym [iopcd], program_vectorX_list[index].cmpv, program_vectorX_list[index].jmpr
+                                                 ); break;
+                default: vcode = g_strdup_printf ("%s -> JMP PC%+d;",OPCDcode [iopcd], program_vectorX_list[index].jmpr); break;
+                }
+		gchar *pvx = g_strdup_printf (" VX:(OPCD: %02x [%s], CMPV: %+8.4f RCHI: %2d [%s] , Jr: %+2d)# %s",
+                                              program_vectorX_list[index].opcd, OPCDcode [iopcd],
+                                              program_vectorX_list[index].cmpv,
+                                              program_vectorX_list[index].rchi, rpspmc_source_signals [rchi+SIGNAL_INDEX_ICH0].label,
+                                              program_vectorX_list[index].jmpr, vcode
+                                              );
+		gchar *pvd = g_strdup_printf ("(n:%5d, slew: %8g pts/s, S:0x%08x, O:0x%08x, rep:%5d, jrvpc:%+2d),"
+					      "(dU:%+8.4f V, dxzy:%+8.4f, %+8.4f, %+8.4f V, da: %+8.4f db: %+8.4f V, dAMC: %+8.4f dFMC: %+8.4f Veq)%s", 
 					      program_vector.n, program_vector.slew,
 					      program_vector.srcs, program_vector.options,
 					      program_vector.repetitions, program_vector.ptr_next,
 					      program_vector.f_du, program_vector.f_dx, program_vector.f_dy, program_vector.f_dz,
-					      program_vector.f_da, program_vector.f_db, program_vector.f_dam, program_vector.f_dfm
-                                              );
+					      program_vector.f_da, program_vector.f_db, program_vector.f_dam, program_vector.f_dfm,
+                                              program_vectorX_list[index].opcd ? pvx : "");
 
+                if (index == 0) // add header
+                        main_get_gapp()->monitorcontrol->LogEvent ("ProbeVector Write **","(n: NNNN, slew:     SLEW pts/s, S: SRCS MASK, O:  VOPTIONS, rep: REPS, jrvpc:+N),(dU: +-.---- V, dxzy: +-.----,  +-.----,  +-.---- V, da:  +-.---- db:  +-.---- V, dAMC:  +-.---- dFMC:  +-.---- Veq) VX CODE", 2);
 		main_get_gapp()->monitorcontrol->LogEvent (pvi, pvd, 2);
 		g_free (pvi);
 		g_free (pvd);
+                g_free (pvx);
+                g_free (vcode);
 	}
 }
 
