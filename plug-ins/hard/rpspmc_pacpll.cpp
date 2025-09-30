@@ -1916,7 +1916,7 @@ void RPSPMC_Control::create_folder (){
  	bp->new_grid_with_frame ("Lock-In Control and Routing");
         
         bp->new_line ();
-	bp->grid_add_ec ("Modulation Frequency", new UnitObj("Hz","Hz"), &spmc_parameters.sc_lck_frequency, 0.0, 30e6, "5g", 1.0, 100.0, "SPMC-LCK-FREQ");
+	bp->grid_add_ec ("Modulation Frequency", new UnitObj("Hz","Hz"), &spmc_parameters.sc_lck_frequency, 0.0, 40e6, "5g", 1.0, 100.0, "SPMC-LCK-FREQ");
         LCK_ModFrq = bp->ec;
         
         bp->new_line ();
@@ -1936,7 +1936,7 @@ void RPSPMC_Control::create_folder (){
         }
 
         bp->new_line ();
-	bp->grid_add_ec ("Lck Sens.", new UnitObj("mV","mV"), &spmc_parameters.sc_lck_sens, 0, 1e6, "5g", 0.0, 5000.0, "SPMC-LCK-GAIN");
+	bp->grid_add_ec ("Lck Sens.", new UnitObj("mV","mV"), &spmc_parameters.sc_lck_sens, 0.001, 5000., "5g", 1.0, 10.0, "SPMC-LCK-SENS");
         bp->new_line ();
         bp->grid_add_check_button ("CorrS PH Aligned", bp->PYREMOTE_CHECK_HOOK_KEY_FUNC("Lock-In Corr Phase Aligned","dsp-lck-phaligned"), 1,
                                    GCallback (callback_change_LCK_mode), this,

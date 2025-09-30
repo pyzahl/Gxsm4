@@ -75,7 +75,8 @@ rpspmc_hwi_dev::rpspmc_hwi_dev():RP_stream(this){
         
         delayed_tip_move_update_timer_id = 0;
         rpspmc_history=NULL;
-        
+        history_block_size = 0;
+
         // auto adjust and override preferences
         main_get_gapp()->xsm->Inst->override_dig_range (1<<20, xsmres);    // gxsm does precision sanity checks and trys to round to best fit grid
         main_get_gapp()->xsm->Inst->override_volt_in_range (5.0, xsmres);  // FOR AD4630-24 24bit
@@ -1386,6 +1387,13 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, int n, gfloat *data){
                 //set_blcklen (n);
                 s1ok=-1; s2ok=-1;
         }
+
+        // Request History Vector n: "Hnn"
+        if ( property[0] == 'H'){
+                get_history_vector_f (atoi(&property[1]), data, n);
+                return 0;
+        }
+
         
         // Signal1
         if ( property[1] == '1' && ((time_of_last_reading1+max_age) < g_get_real_time () || s1ok)){

@@ -30,6 +30,11 @@
 #ifndef __GLBVARS_H
 #define __GLBVARS_H
 
+
+#ifndef WORDS_BIGENDIAN
+#define WORDS_BIGENDIAN 1   // if not defined for what ever reason, assume BIGENDIAN. Seams to be missing def. for ARM architecture.
+#endif
+
 /*
  * Resources
  */

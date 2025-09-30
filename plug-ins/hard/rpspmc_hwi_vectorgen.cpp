@@ -1051,12 +1051,18 @@ void RPSPMC_Control::write_program_vector (int index){
                 if (iopcd < 0 || iopcd > 5) iopcd = 0;
                 int rchi = program_vectorX_list[index].rchi;
                 if (rchi < 0 || rchi > 14) rchi = 0;
-		gchar *pvi = g_strdup_printf ("ProbeVector[pc%02d]%s", index, program_vector.n == 0? "END" : program_vector.repetitions>0 && program_vector.ptr_next ? "REP" : "   ");
+                
+		gchar *pvi = g_strdup_printf ("ProbeVector[pc%02d]%s", index,
+                                              (index == 0 && (program_vector.options & VP_INITIAL_SET_VEC)) ? "SET" :
+                                              program_vector.n == 0? "END" :
+                                              program_vector.repetitions > 0 && program_vector.ptr_next ? "REP" : "   ");
                 gchar *vcode = NULL;
                 switch (iopcd){
                 case 1:
-                case 2: vcode = g_strdup_printf ("%s %s %+8.4f -> JMP PC%+d;",
-                                                 rpspmc_source_signals [rchi+SIGNAL_INDEX_ICH0].label, OPCDsym [iopcd], program_vectorX_list[index].cmpv, program_vectorX_list[index].jmpr
+                case 2: vcode = g_strdup_printf ("%s %s %+8.4f -> JMP PC%+d  [goto PC%02d];",
+                                                 rpspmc_source_signals [rchi+SIGNAL_INDEX_ICH0].label, OPCDsym [iopcd], program_vectorX_list[index].cmpv,
+                                                 program_vectorX_list[index].jmpr,
+                                                 index+program_vectorX_list[index].jmpr
                                                  ); break;
                 default: vcode = g_strdup_printf ("%s -> JMP PC%+d;",OPCDcode [iopcd], program_vectorX_list[index].jmpr); break;
                 }
@@ -1066,11 +1072,11 @@ void RPSPMC_Control::write_program_vector (int index){
                                               program_vectorX_list[index].rchi, rpspmc_source_signals [rchi+SIGNAL_INDEX_ICH0].label,
                                               program_vectorX_list[index].jmpr, vcode
                                               );
-		gchar *pvd = g_strdup_printf ("(n:%5d, slew: %8g pts/s, S:0x%08x, O:0x%08x, rep:%5d, jrvpc:%+2d),"
+		gchar *pvd = g_strdup_printf ("(n:%5d, slew: %8g pts/s, S:0x%08x, O:0x%08x, rep:%5d, jrvpc:%+2d [@PC%02d]),"
 					      "(dU:%+8.4f V, dxzy:%+8.4f, %+8.4f, %+8.4f V, da: %+8.4f db: %+8.4f V, dAMC: %+8.4f dFMC: %+8.4f Veq)%s", 
 					      program_vector.n, program_vector.slew,
 					      program_vector.srcs, program_vector.options,
-					      program_vector.repetitions, program_vector.ptr_next,
+					      program_vector.repetitions, program_vector.ptr_next, index+program_vector.ptr_next,
 					      program_vector.f_du, program_vector.f_dx, program_vector.f_dy, program_vector.f_dz,
 					      program_vector.f_da, program_vector.f_db, program_vector.f_dam, program_vector.f_dfm,
                                               program_vectorX_list[index].opcd ? pvx : "");
