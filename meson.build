@@ -111,6 +111,7 @@ no_dep = dependency('', required: false)
 # Mandatory Dependencies
 math = cc.find_library('m')
 glib = dependency('glib-2.0', required : true)
+popt = dependency('popt', required : true)
 gio  = dependency('gio-2.0', required : true)
 gtk  = dependency('gtk4', version : '>= 4.1')
 soup = dependency('libsoup-2.4', version : '>= 2.24')
@@ -338,7 +339,7 @@ subdir('gl-400')
 subdir('palette')
 subdir('icons')
 
-#subdir('thumbnailers')
+subdir('thumbnailers')
 #subdir('tools')
 
 gnome.post_install(glib_compile_schemas: true, gtk_update_icon_cache: true, update_desktop_database: true)
