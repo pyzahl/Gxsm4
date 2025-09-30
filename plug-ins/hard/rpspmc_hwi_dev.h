@@ -218,9 +218,11 @@ public:
 
         // system history buffer FIFO
         GSList *rpspmc_history;
+        int    history_block_size;
         void push_history_vector (void *shm_mirror_block, int min_size){
                 int max_hist = 16384;
-                
+                history_block_size = min_size;
+
                 double *block = new double [min_size];
                 memcpy (block, shm_mirror_block, min_size * sizeof(double));
                 rpspmc_history = g_slist_prepend (rpspmc_history, block);
@@ -248,8 +250,9 @@ public:
                 double *arr = histarr;
                 GSList *iterator;
                 int i=0;
+                if (pos < 0 || pos >= history_block_size) return;
                 if (rpspmc_history)
-                        for (iterator = rpspmc_history; iterator, ++i<n; iterator = iterator->next)
+                        for (iterator = rpspmc_history; iterator && i++<n; iterator = iterator->next)
                                 *arr++ = ((double*)iterator->data)[pos];
         };
         void get_history_vector_f (int pos, gfloat *histarr, int n){
@@ -257,13 +260,15 @@ public:
                 GSList *iterator;
                 int i=0;
                 static int k=0;
-                k++;
+                if (pos < 0 || pos >= history_block_size) return;
                 if (rpspmc_history)
-                        for (iterator = rpspmc_history; iterator, ++i<n; iterator = iterator->next)
+                        for (iterator = rpspmc_history; iterator && i++<n; iterator = iterator->next)
                                 *arr++ = (gfloat) ((double*)iterator->data)[pos];
-                else
+                else{
+                        k++;
                         for (i=0; i<n; i++)
                                 *arr++ = (gfloat) sin((i+k)*2*M_PI*10/n);
+                }
         };
         
         //SPM_emulator *spm_emu; // DSP emulator for dummy data generation and minimal SPM behavior
