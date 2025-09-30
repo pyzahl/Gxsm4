@@ -10,10 +10,7 @@ from matplotlib import ticker
 mpl.pyplot.close('all')
 
 # Set Filter F-Cut to
-
-fref = 0.7*float(gxsm.get("dsp-SPMC-LCK-FREQ"))
-
-fc = fref # Hz
+fc = 0.95*float(gxsm.get("dsp-SPMC-LCK-FREQ"))
 
 # Ellip filter characteristics
 stop_attn_db = 50
