@@ -344,6 +344,12 @@ subdir('thumbnailers')
 
 gnome.post_install(glib_compile_schemas: true, gtk_update_icon_cache: true, update_desktop_database: true)
 
+install_data(
+  'data/gxsm4.desktop',
+  install_dir: join_paths(get_option('datadir'), 'applications')
+)
+
+
 message('**********************************************************************')
 message('* Gxsm4 Source Root Path is: ', rootpath)
 message('* External tool paths in use are: ************************************')

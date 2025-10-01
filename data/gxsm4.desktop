@@ -3,13 +3,13 @@
 [Desktop Entry]
 Name=Gxsm4
 GenericName=SPM data acquisition and processing
-Comment=Gnome X Scanning Microscopy and Data Analysis & Visualisation - normal mode
+Comment=Gnome X Scanning Microscopy and Data Analysis & Visualisation
 Exec=gxsm4 %F
 TryExec=gxsm4
 Icon=gxsm4-icon
 Terminal=false
 Type=Application
-Categories=X-Gxsm;GTK;GNOME;Science
+Categories=X-Gxsm;GTK;GNOME;Science;SPM;STM;AFM
 X-AppInstall-Package=GXSM4
 X-GNOME-Settings-Panel=GXSM4
 MimeType=application/x-netcdf
@@ -29,11 +29,7 @@ Exec=gxsm4 -h no
 Name=GXSM offline manual
 Exec=evince /usr/share/doc/gxsm4/gxsm4.pdf.gz
 
-[Desktop Action ventiotec]
-Name=www.ventiotec.com
-Exec=browse https://www.ventiotec.com
-
-[Desktop Action gxsm]
+[Desktop Action Gxsm@GitHub]
 Name=GXSM homepage 
-Exec=browse https://gxsm.sf.net
+Exec=browse https://github.com/pyzahl/Gxsm4
 
