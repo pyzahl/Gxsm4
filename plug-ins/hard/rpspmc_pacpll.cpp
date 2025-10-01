@@ -1624,8 +1624,8 @@ void RPSPMC_Control::create_folder (){
         bp->set_configure_list_mode_on ();
         bp->grid_add_label ("In-Offset");
         bp->set_configure_list_mode_off ();
-        
         bp->grid_add_label ("Fuzzy-Level");
+        bp->set_configure_list_mode_on ();
         bp->grid_add_label ("Transfer");
         bp->set_configure_list_mode_off ();
 
@@ -1692,8 +1692,9 @@ void RPSPMC_Control::create_folder (){
                 //bp->grid_add_ec (NULL, Unity, &mix_gain[ch], -1.0, 1.0, "5g", 0.001, 0.01, mixer_remote_id_gn[ch]);
                 //bp->set_configure_list_mode_on ();
                 bp->grid_add_ec (NULL, mixer_unit[ch], &mix_in_offsetcomp[ch], -1.0, 1.0, "5g", 0.001, 0.01, mixer_remote_id_oc[ch]);
-                //bp->set_configure_list_mode_off ();
+                bp->set_configure_list_mode_off ();
                 bp->grid_add_ec (NULL, mixer_unit[ch], &mix_level[ch], -100.0, 100.0, "5g", 0.001, 0.01, mixer_remote_id_fl[ch]);
+                bp->set_configure_list_mode_on ();
                 if (tmp) delete (tmp); // done setting unit -- if custom
                 
                 if (signal_select_widget)
@@ -1724,7 +1725,9 @@ void RPSPMC_Control::create_folder (){
         mix_level[2] = 5.;
         mix_level[3] = -5.;
         // *** spmc_parameters.z_servo_upper *** readback also, alt control via Z-Position, so must unlink here
+        bp->set_configure_list_mode_on ();
         bp->grid_add_ec ("Z Upper", Volt, &z_limit_upper_v, -5.0, 5.0, "5g", 0.001, 0.01,"fbs-upper");
+        bp->set_configure_list_mode_off ();
         FPGA_readback_update_list = g_slist_prepend (FPGA_readback_update_list, bp->ec); // add to FPGA reconnect readback parameter list
         ec_z_upper = bp->ec;
         
@@ -1737,7 +1740,9 @@ void RPSPMC_Control::create_folder (){
         g_object_set_data( G_OBJECT (ZServoCP), "HasMaster", ZServoCI);
         g_object_set_data( G_OBJECT (ZServoCI), "HasRatio", GINT_TO_POINTER((guint)round(1000.*spmc_parameters.z_servo_cp_db/spmc_parameters.z_servo_ci_db)));
         
+        bp->set_configure_list_mode_on ();
         bp->grid_add_ec ("Z Lower", Volt, &spmc_parameters.z_servo_lower, -5.0, 5.0, "5g", 0.001, 0.01,"fbs-lower");
+        bp->set_configure_list_mode_off ();
         FPGA_readback_update_list = g_slist_prepend (FPGA_readback_update_list, bp->ec); // add to FPGA reconnect readback parameter list
         
         bp->new_line ();
@@ -5015,6 +5020,8 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
         bp->set_input_width_chars (4);
   	bp->grid_add_ec ("SH", Unity, &scope_height_points, 128.0, 1024.0, ".0f", 128, 256., "SCOPE-HEIGHT");
 
+        gtk_widget_hide (dF_control_frame);
+        gtk_widget_hide (pulse_control_frame);
 
         // ========================================
         
