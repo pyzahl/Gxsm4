@@ -748,7 +748,8 @@ class HV5App(Gtk.Application):
         def __init__(self, *args, **kwargs):
                 super().__init__(*args, application_id="com.createc.hv5app", **kwargs)
 
-                self.thv = THV5('http://192.168.40.10/')
+                self.thv = THV5('http://192.168.0.195/')
+                #self.thv = THV5('http://192.168.40.10/')
                 get_status()
                 
                 self.window = None

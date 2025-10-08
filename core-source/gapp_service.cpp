@@ -648,6 +648,8 @@ void AppBase::SetTitle(const gchar *title, const gchar *sub_title){
                 g_free (main_title_buffer);
         main_title_buffer = g_strdup (title);
 
+        gtk_window_set_title (GTK_WINDOW (window), main_title_buffer);
+
         if (sub_title){
                 g_free (sub_title_buffer);
                 sub_title_buffer = g_strdup (sub_title);
