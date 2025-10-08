@@ -2,6 +2,10 @@
 
 # A script to generate windowrulev2 lines from hyprctl clients output related to Gxsm4 windows.
 
+## add this to your hyprland.conf and create/install the two new files
+#source= hypr-gxsm-static.conf # Gxsm4 tools window geometry and a few more
+#source= hypr-gxsm.conf # Gxsm4 window geometry
+## GXSM4
 
 #hyprctl clients -j | jq -r '.[] | select((.class | test("gxsm4")) and (.title | test("Multi"))) | "windowrulev2 = move " + (.at[0]|tostring) + " " + (.at[1]|tostring) + ", class:" + .class + ", initialTitle:" + .title'
 
