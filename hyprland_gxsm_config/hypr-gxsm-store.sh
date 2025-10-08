@@ -16,9 +16,9 @@ do
 	size=`hyprctl clients -j | jq -r '.[] | select((.class | test("gxsm4")) and (.title | test("'"$title_key"'"))) | "size " + (.size[0]|tostring) + " " + (.size[1]|tostring)'`
  
  	echo '# default geometry for GXSM4 WINDOW with title:' $title_key
-	echo windowrule2 = 'float, '$window_id
-	echo windowrule2 = $size', '$window_id
-	echo windowrule2 = $move', '$window_id
+	echo windowrulev2 = 'float, '$window_id
+	echo windowrulev2 = $size', '$window_id
+	echo windowrulev2 = $move', '$window_id
 	echo
 
 done
