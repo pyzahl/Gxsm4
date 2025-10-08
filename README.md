@@ -1,6 +1,20 @@
-# Get excited: RPSPMC for GXSM4 is here!
+# Gnome X Scanning Microscopy (GXSM)
 
-**Gxsm4 See also: gxsm.sf.net**
+GXSM -- Gnome X Scanning Microscopy: A multi-channel multi-dimension but usually image based data acquisition and visualization system designed for SPM techniques (STM,AFM..).
+Our General-Vector-Program/Probe engine allows for arbitrary complex multidimensional "imaging/probing/manipulations/..." of all kinds at a huge dynamic range of data and timescales down to a few Nanoseconds with out latest hardware platform.
+
+A plug-in interface allows any user add-on data-processing and special hardware and instrument support.
+
+# Get excited: RPSPMC for GXSM4 is here!
+**Historic note: See also: http://gxsm.sf.net**
+
+## Table of contents
+
+- [Gnome X Scanning Microscopy (GXSM)](#Gnome X Scanning Microscopy)
+  - [Table of contents](#table-of-contents)
+ 
+    
+## Introduction to GXSM
 
 This is port of Gxsm3 (gtk3) to gtk4. There are still minor gtk4 related issues and shortcomings at this time
 and this version is for evaluation and future migration readyness.
