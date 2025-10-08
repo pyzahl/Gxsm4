@@ -10,7 +10,7 @@
 #hyprctl clients -j | jq -r '.[] | select((.class | test("gxsm4")) and (.title | test("Multi"))) | "windowrulev2 = move " + (.at[0]|tostring) + " " + (.at[1]|tostring) + ", class:" + .class + ", initialTitle:" + .title'
 
 ## declare an array variable
-declare -a gxsm_windows=("Gxsm4" "Channel Selector" "RP-SPM Control Window" "RPSPMC PACPLL Control for RedPitaya" "GXSM Activity Monitor and Logbook" "Pan View and OSD" "HUD Probe Indicator" "SPM Scan Control" "Multi Dimensional Movie Control")
+declare -a gxsm_windows=("Gxsm4" "Channel Selector" "RP-SPM Control Window" "RPSPMC PACPLL Control for RedPitaya" "GXSM Activity Monitor and Logbook" "Pan View and OSD" "HUD Probe Indicator" "SPM Scan Control" "Multi Dimensional Movie Control" "Python Remote Control Console")
 
 ## loop through above array
 for title_key in "${gxsm_windows[@]}"
