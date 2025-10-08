@@ -5,26 +5,6 @@ Our General-Vector-Program/Probe engine allows for arbitrary complex multidimens
 
 A plug-in interface allows any user add-on data-processing and special hardware and instrument support.
 
-# Get excited: RPSPMC for GXSM4 is here!
-**Historic note: See also: http://gxsm.sf.net**
-
-## Table of contents
-
-- [Gnome X Scanning Microscopy (GXSM)](#Gnome X Scanning Microscopy)
-  - [Table of contents](#table-of-contents)
- 
-    
-## Introduction to GXSM
-
-This is port of Gxsm3 (gtk3) to gtk4. There are still minor gtk4 related issues and shortcomings at this time
-and this version is for evaluation and future migration readyness.
-See details of pending and know issues in section 3.
-(C) PyZahl 2025-04-07
-
-# 1. General Information
-
-GXSM -- Gnome X Scanning Microscopy: A multi-channel image and vector-probe data acquisition and visualization system designed for SPM techniques (STM,AFM..). A plug-in interface allows any user add-on data-processing and special hardware and instrument support.
-
 Based on several hardware options it supports a commercially available DSP hardware (see https://www.softdb.com/scanning-probe-microscopy/) and provided also open source code for all the low level signal processing tasks and instrument controls in a most flexible and adaptable manner.
 
 BIG NEWS: RPSPMC for GXSM4 arrived from a vision reality made happen! Still under heavy testing ad njust about been depoyed to lab duty these days!
@@ -32,7 +12,32 @@ Dive into it starting here: https://github.com/pyzahl/Gxsm4/tree/master/plug-ins
 
 The GXSM Web Site historically remains hosted on SF: http://gxsm.sf.net
 
-# 2. Installation
+## Latest
+### Get excited: RPSPMC for GXSM4 is here and fully functional!
+Currently deployed with a state of the art LT-STM/AFM system.
+We are working  hard on making the hardware availabe to our users community but it will take some time and for various complex reasons the RPSPMC GIT repository is set to private to procect our highly sophistiacted logic designs.
+
+## Table of contents
+
+- [Gnome X Scanning Microscopy (GXSM)](#gnome-x-scanning-microscopy-gxsm)
+  - [Latest](#latest)
+  - [Table of contents](#table-of-contents)
+  - [Introduction to GXSM](#introduction-to-gxsm)
+  - [Installation](#installation)
+    - [Requirements to build and install from GIT source](#requirements to build and install from git source) 
+ 
+    
+# Introduction to GXSM
+
+This is port of Gxsm3 (gtk3) to gtk4. There are still minor gtk4 related issues and shortcomings at this time
+and this version is for evaluation and future migration readyness.
+See details of pending and know issues in section 3.
+(C) PyZahl 2025-04-07
+
+
+# Installation
+
+## Requirements to build and install from GIT source
 
 Gxsm4 requires GTK4, GtkSourceView5, libfftw, libnetcdf, libquicktime, ... Therefore, please install a recent linux distribution like debian or ubuntu (>= 22.04 LTS). To run GXSM4 with Wayland as window manager, you have two alternative to tweak your linux: i) In Ubuntu 22.04 Wayland is the default window manager if you are not using an nvidia gpu. To deactivate Wayland support, please add/enalbe as root in /etc/gdm3/custom.conf the line. 
 
