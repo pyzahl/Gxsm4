@@ -30,10 +30,30 @@ The GXSM Web Site historically remains hosted on SF: http://gxsm.sf.net
   - [GXSM community](#gxsm-community)
     - [How to report bugs](#how-to-report-bugs)
     - [Patches and contributions](#patches-and-contributions)
+  - [About](#about)
+  - [References](#references)
     
 # Introduction to GXSM
 
 Gxsm4 was derived from porting of Gxsm3 (gtk3) to gtk4. But now is continuing out mission on providing the Scanning Probe Microscopy (SPM) community with a modern, visual and powerfull unrestricted tool for both, instrumnet control and data analysis. Gxsm is offering als a fully integrated Python interpreter for simple to most demanding automatization tasks including deploying AI of any kind.
+
+Gxsm is a powerful graphical interface for any kind of 2D and up to 4D (timed and multilayered 2D mode) data acquisition methods, but especially designed for SPM and SPA-LEED, which are used in surface science. It includes methods for 2D data (of various types: byte, short, long, double) visualization and manipulation. It can be used for STM, AFM, SNOM, SPA-LEED, but is by far not limited to those! Especially in standalone mode it can perform many SPM typical image manipulations and analysis tasks. Latest additions enables full support of handling and on-the-fly viewing image sequences and arbitrary profiling in 4 dimensions: 
+
+The GXSM project is a complete open source software solution for:
+
+- all SPM needs: STM, AFM, SNOM, SARLS... (and SPA-LEED**), new: PAC/PLL for direct tuning fork/qPlus (TM) sensor support.
+- complete SPM hardware: offering leading Digital Signal Processing (DSP+FPGA+Analog-IO) technology (real time multitask statemachine) for feedback, scanning, vector probing and multi channel data acquisition.
+- close but independent collaboration with a small Canadian company SoftdB, see SPM products making dedicated SPM hardware available worldwide to our open source SPM / GXSM community!
+- GXSM core independent Plug-in hardware interface "HwI" allows to add support for any hardware without touching the GXSM core.
+- 2d..4-dimensional data acquisition and visualization: Profile, Image and 3D rendered views.
+- On-the-fly, i.e. while scanning, Vector-Probe (any kind of spectroscopy or manipulation), automatic gridded probing.
+- Event management: User triggered events like bias change, probe, etc. are attached by coordinate and time to the scan data.
+- 2d, 3d or 4-dimensional image data processing, timed and layered data handling.
+- Plug-in interface for data processing, machine control and GXSM core independent hardware support and any kind of user extensions.
+- Im-/Export plug-ins for many commercial SPM software (and some other) data formats.
+- Python script language interface and console for advanced automatizing. Build in access to multidimension gxsm scan/probe data via numpy -- even live while scanning.
+
+
 
 
 # Installation
@@ -166,4 +186,32 @@ mailing list. See also the file 'HACKING' for more detailed information.
 
 ---
 
-  *The gxsm team.*
+
+# References
+
+Please cite those articlea if you are using GXSM -- for data acquisition or analysis:
+
+- P. Zahl, M. Bierkandt, S. Schröder, and A. Klust, Rev. Sci. Instr. 74 (2003) 1222.    DOI: https://doi.org/10.1063/1.1540718
+- P. Zahl, T. Wagner, R. Möller and A. Klust, "Open source scanning probe microscopy control software package Gxsm", J. Vac. Sci. Technol. B 28 (2010).  DOI: https://doi.org/10.1116/1.3374719
+- P. Zahl and T. Wagner, "GXSM - Smart & Customizable SPM Control", Wiley, https://analyticalscience.wiley.com/content/article-do/gxsm---smart-customizable-spm-control
+
+Related:
+ - P. Zahl et al.: GXSM software project homepage, http://gxsm.sourceforge.net, 2000-today
+ - SoftdB, developer and manufacturer of all Signal Ranger DSP boards, http://www.softdb.com/spm-products.php
+ - MK3-A810/PLL: Open Source SPM Controller & PLL, http://www.softdb.com/dsp-products-MK3-PLL.php
+ - UNIDATA, NetCDF Homepage: http://www.unidata.ucar.edu/
+ - Miguel de Icaza, the Gnome desktop environment, www.gnome.org
+
+---
+
+# About GXSM
+
+The GXSM program and project is originated at the Institut für Festkörperphysik (Solid State Physics) University of Hannover, Germany (Originally published under GPL in December 2000 at Source Forge) and is currently maintained by then GXSM developers team.
+
+GXSM is licensed under the terms of the GNU General Public License (GPL).
+
+We appreciate any help and sponsoring this non profit project.
+
+Thanks,
+
+  *The Gxsm team*
