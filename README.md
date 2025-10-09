@@ -1,21 +1,20 @@
-# Gnome X Scanning Microscopy (GXSM)     <img align="right" width="128" height="128" alt="gxsm4-icon128" src="https://github.com/user-attachments/assets/2a5863e2-8d5c-4d76-9812-4d5226c5149a" />
-
+# Gnome X Scanning Microscopy (GXSM)
+<img align="right" width="128" height="128" alt="gxsm4-icon128" src="https://github.com/user-attachments/assets/2a5863e2-8d5c-4d76-9812-4d5226c5149a" />
 GXSM -- Gnome X Scanning Microscopy: A multi-channel multi-dimension but usually image based data acquisition and visualization system designed for SPM techniques (STM,AFM..).
 Our General-Vector-Program/Probe engine allows for arbitrary complex multidimensional "imaging/probing/manipulations/..." of all kinds at a huge dynamic range of data and timescales down to a few Nanoseconds with out latest hardware platform.
 
 A plug-in interface allows any user add-on data-processing and special hardware and instrument support.
 
-Based on several hardware options it supports a commercially available DSP hardware (see https://www.softdb.com/scanning-probe-microscopy/) and provided also open source code for all the low level signal processing tasks and instrument controls in a most flexible and adaptable manner.
-
-BIG NEWS: RPSPMC for GXSM4 arrived from a vision reality made happen! Still under heavy testing ad njust about been depoyed to lab duty these days!
-Dive into it starting here: https://github.com/pyzahl/Gxsm4/tree/master/plug-ins/hard/RPSPMC
-
-The GXSM Web Site historically remains hosted on SF: http://gxsm.sf.net
+Based on several hardware options it supports a commercially available DSP hardware (getting outdated, but still fully supported by Gxsm3 (https://github.com/pyzahl/Gxsm3) and Gxsm4. No further developments planned.) "Signal Ranger MK2 and MK3" (see https://www.softdb.com/scanning-probe-microscopy/) and provided also open source code for all the low level signal processing tasks and instrument controls in a most flexible and adaptable manner.
 
 ## Latest
 ### Get excited: RPSPMC for GXSM4 is here and fully functional!
-Currently deployed with a state of the art LT-STM/AFM system.
-We are working  hard on making the hardware availabe to our users community but it will take some time and for various complex reasons the RPSPMC GIT repository is set to private to procect our highly sophistiacted logic designs.
+RPSPMC for GXSM4 arrived from a vision reality made happen now! This is an all new, very modular (analog in/out modules) and most importamt complete all on one FPGA level SPM control with all it needs for teh most advanced SPM including PAC-PLL, LockIn, etc. and at warp speed/data throughput up to 400 MB/s and control down to a few ns time scale allowing for arbitratry function generation, frequ. sweeps and more -- with ESR and more in mind.
+And it's been depoyed for production use in the laboratory already since April 2025!
+Dive into it starting here: https://github.com/pyzahl/Gxsm4/tree/master/plug-ins/hard/RPSPMC (*)
+We are working hard on making the hardware availabe to our users community but it will take some time and for various complex reasons the RPSPMC GIT repository is set to (*) private to procect our highly sophistiacted logic designs.
+
+The GXSM Web Site historically remains hosted on SF: http://gxsm.sf.net
 
 ## Table of contents
 
