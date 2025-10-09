@@ -35,6 +35,7 @@ The GXSM Web Site historically remains hosted on SF: http://gxsm.sf.net
     - [Patches and contributions](#patches-and-contributions)
   - [About](#about)
   - [References](#references)
+  - [Screenshots](#screenshots) 
     
 # Introduction to GXSM
 
@@ -218,3 +219,7 @@ We appreciate any help and sponsoring this non profit project.
 Thanks,
 
   *The Gxsm team*
+
+# Screenshots
+<img width="11518" height="2147" alt="Screenshot from 2025-10-09 15-10-14" src="https://github.com/user-attachments/assets/cbe8a5be-de9a-4e64-aa66-ceafe9ac3ddb" />
+
