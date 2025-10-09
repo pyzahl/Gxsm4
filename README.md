@@ -1,9 +1,12 @@
 # Gnome X Scanning Microscopy (GXSM)
 <img align="right" width="128" height="128" alt="gxsm4-icon128" src="https://github.com/user-attachments/assets/2a5863e2-8d5c-4d76-9812-4d5226c5149a" />
-GXSM -- Gnome X Scanning Microscopy: A multi-channel multi-dimension but usually image based data acquisition and visualization system designed for SPM techniques (STM,AFM..).
-Our General-Vector-Program/Probe engine allows for arbitrary complex multidimensional "imaging/probing/manipulations/..." of all kinds at a huge dynamic range of data and timescales down to a few Nanoseconds with out latest hardware platform.
+GXSM -- Gnome X Scanning Microscopy: A multi-channel multi-dimensional, but usually image based, data acquisition and visualization system designed for SPM techniques (STM,AFM..).
+Our General-Vector-Program/Probe engine allows for arbitrary complex multidimensional data acquisition tasks related to "imaging/probing/manipulations/...".
+The latest hardware gives access to a huge dynamic range of data and provides access to timescales down to a few Nanoseconds.
 
-A plug-in interface allows any user add-on data-processing and special hardware and instrument support.
+A plug-in interface makes user add-on data-processing/math or even special hardware and instrument support possible while using the Gxsm core for data management and visualization.
+
+A build in Python-Console can simply assist or fully automate complex tasks, including life data sccess and analysis.
 
 Based on several hardware options it supports a commercially available DSP hardware (getting outdated, but still fully supported by Gxsm3 (https://github.com/pyzahl/Gxsm3) and Gxsm4. No further developments planned.) "Signal Ranger MK2 and MK3" (see https://www.softdb.com/scanning-probe-microscopy/) and provided also open source code for all the low level signal processing tasks and instrument controls in a most flexible and adaptable manner.
 
@@ -189,7 +192,7 @@ mailing list. See also the file 'HACKING' for more detailed information.
 
 # References
 
-Please cite those articlea if you are using GXSM -- for data acquisition or analysis:
+Please cite those articles if you are using GXSM -- for data acquisition or analysis:
 
 - P. Zahl, M. Bierkandt, S. Schröder, and A. Klust, Rev. Sci. Instr. 74 (2003) 1222.    DOI: https://doi.org/10.1063/1.1540718
 - P. Zahl, T. Wagner, R. Möller and A. Klust, "Open source scanning probe microscopy control software package Gxsm", J. Vac. Sci. Technol. B 28 (2010).  DOI: https://doi.org/10.1116/1.3374719
