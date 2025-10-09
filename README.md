@@ -1,4 +1,4 @@
-# Gnome X Scanning Microscopy (GXSM)
+# Gnome X Scanning Microscopy (GXSM)     <img align="right" width="128" height="128" alt="gxsm4-icon128" src="https://github.com/user-attachments/assets/2a5863e2-8d5c-4d76-9812-4d5226c5149a" />
 
 GXSM -- Gnome X Scanning Microscopy: A multi-channel multi-dimension but usually image based data acquisition and visualization system designed for SPM techniques (STM,AFM..).
 Our General-Vector-Program/Probe engine allows for arbitrary complex multidimensional "imaging/probing/manipulations/..." of all kinds at a huge dynamic range of data and timescales down to a few Nanoseconds with out latest hardware platform.
@@ -104,9 +104,11 @@ ninja uninstall
 Manually hack config via dconf-editor, then further DnD is easy and as usual again:
 
   - Set for example
+```  
 /org/gnome/gxsm4/hwi/sranger-mk23/window-01-tabs = 'aclefghkmn------------------------------'
 and
 /org/gnome/gxsm4/hwi/sranger-mk23/window-02-tabs = 'dijo----------------------------'
+```
 Then start gxsm4 again.
 
  - Save Profile as Drawing=pdf -> crash
