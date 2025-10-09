@@ -25,10 +25,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
  */
 
-
 #include <config.h>
 #include <gtk/gtk.h>
 
+#include <json-glib/json-glib.h>
+   
 #ifdef ENABLE_GXSM_WINDOW_MANAGEMENT
 # ifdef GDK_WINDOWING_X11
 #  include <gdk/x11/gdkx.h>
@@ -897,7 +898,80 @@ void AppBase::position_auto (){
 # endif
 # ifdef GDK_WINDOWING_WAYLAND
                                 if (GDK_IS_WAYLAND_DISPLAY (gdk_display_get_default ())){
-                                        g_message ("SORRY WAYLAND DOES NOT GIVE ANY ACCESS TO WINDOW GEOMETRY.;");
+                                        const gchar *wayland_display = g_getenv("WAYLAND_DISPLAY");
+                                        const gchar *hyprland_signature = g_getenv("HYPRLAND_INSTANCE_SIGNATURE");
+
+                                        if (wayland_display != NULL && hyprland_signature != NULL) {
+                                                g_message ("Hyprland is likely running.\n");
+                                                g_message ("WAYLAND_DISPLAY: %s\n", wayland_display);
+                                                g_message ("HYPRLAND_INSTANCE_SIGNATURE: %s\n", hyprland_signature);
+                                                g_message ("Attempting hyprctrl... hang in there\n");
+
+                                                gchar *stdout_buf = NULL;
+                                                gchar *stderr_buf = NULL;
+                                                gint exit_status;
+                                                GError *error = NULL;
+
+                                                gchar *title = NULL;
+                                                if (strncmp(main_title_buffer, "Ch", 2) == 0){
+                                                        gchar *tmp = g_strndup (main_title_buffer,3);
+                                                        title = g_strdup_printf("^(%s.*)$", tmp); g_free (tmp);
+                                                } else  title = g_strdup (main_title_buffer);
+
+                                                // Execute shell command
+                                                gchar *hyprctl_cmdline = g_strdup_printf ("hyprctl 'dispatch setfloating title:%s'", title);
+                                                g_print("Attempting: %s\n", hyprctl_cmdline);
+                                                g_spawn_command_line_sync (hyprctl_cmdline, &stdout_buf, &stderr_buf, &exit_status, &error);
+                                                
+                                                if (error != NULL) {
+                                                        g_error ("Sorry I tried. Error executing command: %s E: %s\n", hyprctl_cmdline, error->message);
+                                                        g_free (hyprctl_cmdline);
+                                                        g_error_free (error);
+                                                        return;
+                                                }
+                                                
+                                                g_print ("Stdout: %s\n", stdout_buf);
+                                                g_print ("Stderr: %s\n", stderr_buf);
+                                                g_print ("Exit Status: %d\n", exit_status);
+                                                
+                                                g_free (hyprctl_cmdline);
+                                                g_free (stdout_buf);
+                                                g_free (stderr_buf);
+
+                                                
+                                                // Execute shell command
+                                                hyprctl_cmdline = g_strdup_printf ("hyprctl dispatch movewindowpixel exact %d %d, title:'%s'",
+                                                                                   (int)window_geometry[WGEO_XPOS],
+                                                                                   (int)window_geometry[WGEO_YPOS],
+                                                                                   title
+                                                                                   );
+                                                g_print("Attempting: %s\n", hyprctl_cmdline);
+                                                g_spawn_command_line_sync (hyprctl_cmdline, &stdout_buf, &stderr_buf, &exit_status, &error);
+                                                
+                                                if (error != NULL) {
+                                                        g_error ("Sorry I tried. Error executing command: %s E: %s\n", hyprctl_cmdline, error->message);
+                                                        g_free (hyprctl_cmdline);
+                                                        g_error_free (error);
+                                                        return;
+                                                }
+                                                
+                                                g_print ("Stdout: %s\n", stdout_buf);
+                                                g_print ("Stderr: %s\n", stderr_buf);
+                                                g_print ("Exit Status: %d\n", exit_status);
+                                                
+                                                g_free (hyprctl_cmdline);
+                                                g_free (stdout_buf);
+                                                g_free (stderr_buf);
+
+                                                g_free (title);
+                                                
+                                        } else if (wayland_display != NULL) {
+                                                g_message ("A Wayland compositor is running, but it might not be Hyprland.\n");
+                                                g_message ("WAYLAND_DISPLAY: %s\n", wayland_display);
+                                                g_message ("SORRY WAYLAND DOES NOT GIVE ANY ACCESS TO WINDOW GEOMETRY. Hint: try Hyprland!");
+                                        } else {
+                                                g_message ("Wayland some what, but No Wayland compositor detected.\n");
+                                        }
                                 } else
                                         g_error ("Unsupported GDK backend");
                 }
@@ -929,7 +1003,57 @@ void AppBase::resize_auto (){
 # endif
 # ifdef GDK_WINDOWING_WAYLAND
                                 if (GDK_IS_WAYLAND_DISPLAY (gdk_display_get_default ())){
-                                        g_message ("SORRY WAYLAND DOES NOT GIVE ANY ACCESS TO WINDOW GEOMETRY.;");
+                                        const gchar *wayland_display = g_getenv("WAYLAND_DISPLAY");
+                                        const gchar *hyprland_signature = g_getenv("HYPRLAND_INSTANCE_SIGNATURE");
+
+                                        if (wayland_display != NULL && hyprland_signature != NULL) {
+                                                g_message ("Hyprland is likely running.\n");
+                                                g_message ("WAYLAND_DISPLAY: %s\n", wayland_display);
+                                                g_message ("HYPRLAND_INSTANCE_SIGNATURE: %s\n", hyprland_signature);
+                                                g_message ("Attempting hyprctrl... hang in there\n");
+
+                                                gchar *stdout_buf = NULL;
+                                                gchar *stderr_buf = NULL;
+                                                gint exit_status;
+                                                GError *error = NULL;
+
+                                                gchar *title = NULL;
+                                                if (strncmp(main_title_buffer, "Ch", 2) == 0){
+                                                        gchar *tmp = g_strndup (main_title_buffer,3);
+                                                        title = g_strdup_printf("^(%s.*)$", tmp); g_free (tmp);
+                                                } else  title = g_strdup (main_title_buffer);
+
+                                                // Execute shell command
+                                                gchar *hyprctl_cmdline = g_strdup_printf ("hyprctl dispatch resizewindowpixel exact %d %d, title:%s",
+                                                                                          (int)window_geometry[WGEO_WIDTH],
+                                                                                          (int)window_geometry[WGEO_HEIGHT],
+                                                                                          title
+                                                                                          );
+                                                g_print("Attempting: %s\n", hyprctl_cmdline);
+                                                g_spawn_command_line_sync (hyprctl_cmdline, &stdout_buf, &stderr_buf, &exit_status, &error);
+                                                
+                                                if (error != NULL) {
+                                                        g_error ("Sorry I tried. Error executing command: %s E: %s\n", hyprctl_cmdline, error->message);
+                                                        g_free (hyprctl_cmdline);
+                                                        g_error_free (error);
+                                                        return;
+                                                }
+                                                
+                                                g_print ("Stdout: %s\n", stdout_buf);
+                                                g_print ("Stderr: %s\n", stderr_buf);
+                                                g_print ("Exit Status: %d\n", exit_status);
+                                                
+                                                g_free (hyprctl_cmdline);
+                                                g_free (stdout_buf);
+                                                g_free (stderr_buf);
+                                                g_free (title);
+                                        } else if (wayland_display != NULL) {
+                                                g_message ("A Wayland compositor is running, but it might not be Hyprland.\n");
+                                                g_message ("WAYLAND_DISPLAY: %s\n", wayland_display);
+                                                g_message ("SORRY WAYLAND DOES NOT GIVE ANY ACCESS TO WINDOW GEOMETRY. Hint: try Hyprland!");
+                                        } else {
+                                                g_message ("Wayland some what, but No Wayland compositor detected.\n");
+                                        }
                                 } else
 # endif
                                         g_error ("Unsupported GDK backend");
@@ -941,6 +1065,85 @@ void AppBase::resize_auto (){
 
 void AppBase::SaveGeometryCallback(AppBase *apb){
 	apb->SaveGeometry();
+}
+
+int read_xy_array (JsonReader *reader, int xy[2]){
+        if (json_reader_is_array(reader)) {
+                gint num_elements = json_reader_count_elements(reader);
+                //g_print("Reading array with #%d elements\n", num_elements);
+                for (gint i = 0; i < num_elements; i++) {
+                        if (json_reader_read_element(reader, i)) {
+                                // Now the reader is positioned on the i-th element of the array
+                                // You can retrieve its value based on its type
+                                if (json_reader_is_value(reader)) { // Check if it's a simple value
+                                        gint64 int_value = json_reader_get_int_value(reader);
+                                        g_print("Array element %d (integer): %lld\n", i, int_value);
+                                        if (i<2) xy[i] = int_value;
+                                }
+                                json_reader_end_element(reader); // Move cursor back to the array
+                        } else {
+                                g_warning("Failed to read array element at index %d\n", i);
+                        }
+                }
+        } else {
+                g_warning("Reader is not positioned on an array.\n");
+        }
+        return 0;
+}
+
+void json_filter_window (const char *json_string, const char *window_to_find, int at[2], int wh[2]) {
+        g_autoptr(JsonParser) parser = json_parser_new();
+        GError *error = NULL;
+
+        if (!json_parser_load_from_data (parser, json_string, -1, &error)) {
+                g_error("Unable to parse JSON: %s", error->message);
+                g_clear_error(&error);
+                return;
+        }
+
+        JsonReader *reader = json_reader_new (json_parser_get_root (parser));
+
+        // Enter the "users" array
+        json_reader_read_member(reader, "");
+        //json_reader_read_array(reader);
+
+        int num_elements = json_reader_count_elements(reader);
+        for (int i = 0; i < num_elements; i++) {
+                json_reader_read_element(reader, i);
+                json_reader_read_member(reader, "title");
+                const char *current_name = json_reader_get_string_value(reader);
+                json_reader_end_member(reader); // End "name"
+
+                if (g_strcmp0(current_name, window_to_find) == 0) {
+                        g_print("Found window with name '%s'\n", window_to_find);
+
+                        // You can now extract other properties of the found user
+                        g_print("Reading .at'\n");
+                        json_reader_read_member(reader, "at");
+                        //int id = json_reader_get_int_value(reader);
+                        read_xy_array (reader, at);
+           
+                        //g_print("At: %s\n", id);
+                        json_reader_end_member(reader); // End "id"
+
+                        g_print("Reading .size'\n");
+                        json_reader_read_member(reader, "size");
+                        //int id = json_reader_get_int_value(reader);
+                        read_xy_array (reader, wh);
+           
+                        //g_print("At: %s\n", id);
+                        json_reader_end_member(reader); // End "id"
+
+            
+                        // Exit early since we found our match
+                        break;
+                }
+
+                json_reader_end_element(reader); // End the object in the array
+        }
+
+        g_object_unref(reader);
+        g_object_unref(parser);
 }
 
 void AppBase::SaveGeometry(gboolean store_to_settings){
@@ -986,7 +1189,74 @@ void AppBase::SaveGeometry(gboolean store_to_settings){
 # endif
 # ifdef GDK_WINDOWING_WAYLAND
                 if (GDK_IS_WAYLAND_DISPLAY (gdk_display_get_default ())){
-                        g_message ("SORRY WAYLAND DOES NOT GIVE ANY ACCESS TO WINDOW GEOMETRY.;");
+                        const gchar *wayland_display = g_getenv("WAYLAND_DISPLAY");
+                        const gchar *hyprland_signature = g_getenv("HYPRLAND_INSTANCE_SIGNATURE");
+
+                        if (wayland_display != NULL && hyprland_signature != NULL) {
+                                g_message ("Hyprland is likely running.\n");
+                                g_message ("WAYLAND_DISPLAY: %s\n", wayland_display);
+                                g_message ("HYPRLAND_INSTANCE_SIGNATURE: %s\n", hyprland_signature);
+                                g_message ("Attempting hyprctrl... hang in there\n");
+
+                                static gint64 tlast=0;
+                                static gchar *stdout_buf = NULL; // auto-cached
+
+                                if (stdout_buf && g_get_real_time () - tlast > 3e6){ // last position reading older then 3s?
+                                        g_free (stdout_buf); 
+                                        stdout_buf = NULL;
+                                        tlast = g_get_real_time ();
+                                }
+
+                                if (!stdout_buf){
+                                        gchar *stderr_buf = NULL;
+                                        gint exit_status;
+                                        GError *error = NULL;
+
+                                        // Execute command
+                                        gchar *hyprctl_cmdline = g_strdup_printf ("hyprctl clients -j");
+                                        g_print("Attempting: %s\n", hyprctl_cmdline);
+                                        g_spawn_command_line_sync (hyprctl_cmdline, &stdout_buf, &stderr_buf, &exit_status, &error);
+                                        if (error != NULL) {
+                                                g_error ("Sorry I tried. Error executing command: %s E: %s\n", hyprctl_cmdline, error->message);
+                                                g_free (hyprctl_cmdline);
+                                                g_error_free (error);
+                                                return;
+                                        }
+                                
+                                        g_print ("Stdout: %s\n", stdout_buf);
+                                        g_print ("Stderr: %s\n", stderr_buf);
+                                        g_print ("Exit Status: %d\n", exit_status);
+                                        g_free (stderr_buf);
+                                        g_free (hyprctl_cmdline);
+                                }                                                
+
+                                int at[2]={-1,-1};
+                                int wh[2]={-1,-1};
+                                json_filter_window (stdout_buf, main_title_buffer, at, wh);
+
+                                if (at[0] >= 0 && at[1] >= 0){
+                                        window_geometry[WGEO_XPOS]=at[0];
+                                        window_geometry[WGEO_YPOS]=at[1];
+                                }
+                                if (wh[0] >= 0 && wh[1] >= 0){
+                                        window_geometry[WGEO_WIDTH]=wh[0];
+                                        window_geometry[WGEO_HEIGHT]=wh[1];
+                                }
+
+                                g_print ("Window at %d %d, WH %d %d\n",
+                                         window_geometry[WGEO_XPOS], window_geometry[WGEO_YPOS],
+                                         window_geometry[WGEO_WIDTH], window_geometry[WGEO_HEIGHT]
+                                         );
+                                
+                                //g_free (stdout_buf); // static, caching
+                                
+                        } else if (wayland_display != NULL) {
+                                g_message ("A Wayland compositor is running, but it might not be Hyprland.\n");
+                                g_message ("WAYLAND_DISPLAY: %s\n", wayland_display);
+                                g_message ("SORRY WAYLAND DOES NOT GIVE ANY ACCESS TO WINDOW GEOMETRY. Hint: try Hyprland!");
+                        } else {
+                                g_message ("Wayland some what, but No Wayland compositor detected.\n");
+                        }
                 } else
 # endif
                         g_error ("Unsupported GDK backend");
