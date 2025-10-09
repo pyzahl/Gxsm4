@@ -33,7 +33,7 @@ The GXSM Web Site historically remains hosted on SF: http://gxsm.sf.net
     
 # Introduction to GXSM
 
-Gxsm4 was derived from proting of Gxsm3 (gtk3) to gtk4. But now is continuing out mission on providing the Scanning Probe Microscopy (SPM) community with a modern, visual and powerfull unrestricted tool for both, instrumnet control and data analysis. Gxsm is offering als a fully integrated Python interpreter for simple to most demanding automatization tasks including deploying AI of any kind.
+Gxsm4 was derived from porting of Gxsm3 (gtk3) to gtk4. But now is continuing out mission on providing the Scanning Probe Microscopy (SPM) community with a modern, visual and powerfull unrestricted tool for both, instrumnet control and data analysis. Gxsm is offering als a fully integrated Python interpreter for simple to most demanding automatization tasks including deploying AI of any kind.
 
 
 # Installation
