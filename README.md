@@ -9,10 +9,10 @@ Based on several hardware options it supports a commercially available DSP hardw
 
 ## Latest
 ### Get excited: RPSPMC for GXSM4 is here and fully functional!
-RPSPMC for GXSM4 arrived from a vision reality made happen now! This is an all new, very modular (analog in/out modules) and most importamt complete all on one FPGA level SPM control with all it needs for teh most advanced SPM including PAC-PLL, LockIn, etc. and at warp speed/data throughput up to 400 MB/s and control down to a few ns time scale allowing for arbitratry function generation, frequ. sweeps and more -- with ESR and more in mind.
+RPSPMC for GXSM4 arrived from a vision reality made happen now! This is an all new, very modular (analog in/out modules) and most importamt complete all on one FPGA level SPM control with all it needs for teh most advanced SPM including PAC-PLL, LockIn, etc. and at warp speed/data throughput up to 400 MB/s and control down to a few ns time scale allowing for arbitratry function generation, frequency sweeps and more -- with ESR and more in mind.
 And it's been depoyed for production use in the laboratory already since April 2025!
-Dive into it starting here: https://github.com/pyzahl/Gxsm4/tree/master/plug-ins/hard/RPSPMC (*)
-We are working hard on making the hardware availabe to our users community but it will take some time and for various complex reasons the RPSPMC GIT repository is set to (*) private to procect our highly sophistiacted logic designs.
+Dive into it starting here: https://github.com/pyzahl/Gxsm4/tree/master/plug-ins/hard/RPSPMC (#)
+We are working hard on making the hardware availabe to our users community but it will take some time and for various complex reasons the RPSPMC GIT repository is currently set to (#) private to procect our highly sophistiacted logic designs.
 
 The GXSM Web Site historically remains hosted on SF: http://gxsm.sf.net
 
@@ -47,19 +47,23 @@ Gxsm4 requires GTK4, GtkSourceView5, libfftw, libnetcdf, libquicktime, ... There
 
 Native development system is currently Debain 12, 13 (Trixie) or Debian-testing:
 
+```
 apt-get install jed emacs meson cmake libgtk-4-dev libsoup-gnome2.4-dev gsettings-desktop-schemas-dev libglew-dev 
 apt-get install libnetcdf-c++4-dev ncview libnetcdf-dev libnetcdf-cxx-legacy-dev libglm-dev libjson-glib-dev
 apt-get install libfftw3-dev libgsl-dev libgtksourceview-5-dev python3-dev libpython3-all-dev python3-numpy
 apt-get install libopencv-*-dev libquicktime-dev
+```
 
-add local lib path below to /etc/ld.so.conf.d/local.conf
+may need to add local lib path below to /etc/ld.so.conf.d/local.conf
 
 /usr/local/lib/x86_64-linux-gnu
 
 and run ldconfig.
 
-Install
+Install also:
+```
 apt-get install dconf-editor
+```
 
 To obtain a copy of the source code, please run in a terminal:  
 ``` 
