@@ -24,8 +24,13 @@ We are working  hard on making the hardware availabe to our users community but 
   - [Table of contents](#table-of-contents)
   - [Introduction to GXSM](#introduction-to-gxsm)
   - [Installation](#installation)
-    - [Requirements to build and install from GIT source](#requirements to build and install from git source) 
- 
+    - [Requirements to build and install from GIT source](#requirements-to-build-and-install-from-git-source) 
+    - [New build tool: Meson buildsystem](#new-build-tool-meson-buildsystem)
+  - [Pending ports and known issues](#pending-ports-and-known-issues)
+    - [Odds and FYI](#odds-and-fyi)
+  - [GXSM community](#gxsm-community)
+    - [How to report bugs](#how-to-report-bugs)
+    - [Patches and contributions](#patches-and-contributions)
     
 # Introduction to GXSM
 
@@ -41,10 +46,10 @@ See details of pending and know issues in section 3.
 
 Gxsm4 requires GTK4, GtkSourceView5, libfftw, libnetcdf, libquicktime, ... Therefore, please install a recent linux distribution like debian or ubuntu (>= 22.04 LTS). To run GXSM4 with Wayland as window manager, you have two alternative to tweak your linux: i) In Ubuntu 22.04 Wayland is the default window manager if you are not using an nvidia gpu. To deactivate Wayland support, please add/enalbe as root in /etc/gdm3/custom.conf the line. 
 
-Native development system is currently Debain 12 or Debian-testing:
+Native development system is currently Debain 12, 13 (Trixie) or Debian-testing:
 
 apt-get install jed emacs meson cmake libgtk-4-dev libsoup-gnome2.4-dev gsettings-desktop-schemas-dev libglew-dev 
-apt-get install libnetcdf-c++4-dev ncview libnetcdf-dev libnetcdf-cxx-legacy-dev libglm-dev
+apt-get install libnetcdf-c++4-dev ncview libnetcdf-dev libnetcdf-cxx-legacy-dev libglm-dev libjson-glib-dev
 apt-get install libfftw3-dev libgsl-dev libgtksourceview-5-dev python3-dev libpython3-all-dev python3-numpy
 apt-get install libopencv-*-dev libquicktime-dev
 
@@ -57,18 +62,11 @@ and run ldconfig.
 Install
 apt-get install dconf-editor
 
-Disable /org/gnome/gxsm4 Splash if running Wayland! (Splan window can not be positioned/displayed and freezes gxsm4 at start)
-
-```
-WaylandEnable=false
-```
-ii) Alternatively, deactivate the splash screen during GXSM4 startup. Open the dconf-editor and navigate to org/gnome/gxsm4. Here change the entry "splash" to off.
-
 To obtain a copy of the source code, please run in a terminal:  
 ``` 
  $ git clone https://github.com/pyzahl/Gxsm4 gxsm4-git
 ``` 
-## a) New build tool: Meson buildsystem -- work in progress:
+## New build tool: Meson buildsystem
 
 First create your "builddir" in the project root folder.
 Then run in the folder Gxsm4-git
@@ -83,50 +81,26 @@ To uninstall call in the buildir
 ninja uninstall
 ```
 
-## (NOT RECOMENEDED ANY MORE AS GTK4 BECOMES MAIN STREAM) b) New package tool: Flatpak -- work in progress:
+# Pending ports and known issues
 
-Install flatpak and flathub
-``` 
- $ sudo apt install flatpak flatpak-builder -y
- $ sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-```
-Install the gnome sdk within your flatpak enviroment:
-``` 
- $ flatpak install flathub org.gnome.Sdk//41 org.gnome.Platform//41
-```
-
-Now install and run GXSM4 (assuming that the json-file/source is in the folder gxsm4-git
-``` 
- $ mkdir flatpak_builddir
- $ flatpak-builder --user --install --force-clean flatpak_builddir gxsm4-git/org.gnome.gxsm4.json
- $ flatpak run org.gnome.Gxsm4
-```
- 
-## 3. To-Do-List
-
-- Testing testing testing
-
-## 4. Pending and known issues:
-
-- Window Position Management....  gtk4 does not provide any hands on that any more -- big convenience and usability issue 🙁
-		- X11: works again via native X11 calls...
-		- Wayland: likely never a solution ever as Wayland dose not give access at all to window's positioning. But please educate me if I am wrong.
-		- 
+- Window Position Management....  gtk4 dropped native access to window geometry controls -- a big convenience and usability issue for diverse multi control window applications 🙁
+		- X11: works again via native X11 calls... (fully functional on X11)
+		- Wayland: likely never a solution ever as the default Wayland Compositor dose not give access at all to window's positioning. But please educate me if I am wrong.
+		  Gtk4 and Wayland Compositor does not allow Window Geometry managemnt from Gxsm.
+          Solution: For convenient efficient work used X11 display backend. Or, hang in in tight:
+  		- Hyprland (on Wayland): The more modern Wayland provides a better and snappier experience vs. aging X11. And there is hope: For those loving exploring experimental and cutting edge tools: the latest tweaks and developments of Gxsm4 provide now experimental support for Window Geometry managenemnt when using Hyprland on Wayland via hyprctl! See: https://hypr.land/ For Debian Tetsing/Trixie start your adventure here: https://github.com/JaKooLit/Debian-Hyprland
+		
 - GL3D Scan View Mode: currently disabled. Port pending.
 
-- All ENTRIES: added configuration menu option not yet attached and not accessible. Need to figure out how to add a custom menu entry to gtk_popovers.
-             It is possible to manually edit the properties via the dconf-editor to get started.
-	     Some thing seams slow here at build and update, or has post idel latency.
-
-- known GTK4 shortcomings so far noted: 
-  - Rendering in cairo fall back mode (when using X11 export via ssh -X for example) is very slow -- some where around a magnitude (10x) slow! What makes remote work nearly impossible. However, varies a lot by "fetaure" used. Menu pop ups are very slow, take long to appear. GUI initial  build (many entries, etc.) takes a long time.
+- known GTK4 shortcomings so far noted:
+  - on X11 onyl: Window focus to activiate keyboard accellerator is at random lagging. Requires expplicit Menu call to get attention?!?!
+  - Rendering in cairo fall back mode (when using X11 export via ssh -X for example) can be slow.
   - press/release signals not available for simple button widget. Work around assigning handlers does not work as expected. Work for a canvas "home made" button. Non perfec tbu tworkable workaround currently used: Arrow icons on button widget accept press and release events. (Needed for Mover Controls: "fire wave signal on DSP when pressed" direction buttons.
 
 - Pending back/forward sync or porting from gxsm3: idle callbacks for Tip Move and related vs. blocking or singel shot. Address pending minor random but rare move issue with initiating a scan.
-- Pending odd behavior for object move/edit in some situations. (Workaround: remove all, start over)
-- Pending: some hot keys are non functional
+- Pending odd behavior for object move/edit in some situations. (Workaround: remove all (F12), start over)
 
-- DSP-CONTROL windows A, B -- initial TAB Drag to empty secondary window impossible (or hard??) to find a hook area to drop off. Work around for now:
+- SRANGER-MK23/ MULIT TAB MANAGEMENT: DSP-CONTROL windows A, B -- initial TAB Drag to empty secondary window impossible (or hard??) to find a hook area to drop off. Work around for now:
 Manually hack config via dconf-editor, then further DnD is easy and as usual again:
 
   - Set for example
@@ -137,17 +111,16 @@ Then start gxsm4 again.
 
  - Save Profile as Drawing=pdf -> crash
 
+---
+## Odds and FYI
 
-## FYI:
-----
 I disabled warning messages in configure.ac (CFLAG -w) to not get flooded by a silly issue I cannot fix and added -fpermissive.
 This is needed as I get an error by the C++ compiler per default now when I xor  GTK_FLAGS  like A | B ... as this foces a typ conversion to int...
-Oh well some crap.
+Oh well some C stuff.
 
-much more ... to be figured out ans tested ....
+# GXSM Community
 
-
-## 4. How to report bugs
+## How to report bugs
 
 Bugs should be reported to the gitlab bug tracking system.
 (https://github.com/pyzahl/Gxsm4/issues). You will need to create an
@@ -174,7 +147,7 @@ In the bug report please include:
   program with the --sync command line option.
 
 
-## 5. Patches
+## Patches and contributions
 
 Patches should also be submitted to https://github.com/pyzahl/Gxsm4/. 
 If the patch fixes an existing bug, add the patch as an attachment to 
@@ -189,5 +162,6 @@ If you are interested in helping us to develop gedit, please see the
 file 'AUTHOR' for contact information and/or send a message to the gedit
 mailing list. See also the file 'HACKING' for more detailed information.
 
+---
 
   *The gxsm team.*
