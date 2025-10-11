@@ -1,14 +1,14 @@
 # Gnome X Scanning Microscopy (GXSM)
 <img align="right" width="128" height="128" alt="gxsm4-icon128" src="https://github.com/user-attachments/assets/2a5863e2-8d5c-4d76-9812-4d5226c5149a" />
 GXSM -- Gnome X Scanning Microscopy: A multi-channel multi-dimensional, but usually image based, data acquisition and visualization system designed for SPM techniques (STM,AFM..).
-Our General-Vector-Program/Probe engine allows for arbitrary complex multidimensional data acquisition tasks related to "imaging/probing/manipulations/...".
+Our General-Vector-Program/Probe (GVP) engine allows for arbitrary complex multidimensional data acquisition tasks related to "imaging/probing/manipulations/...".
 The latest hardware gives access to a huge dynamic range of data and provides access to timescales down to a few Nanoseconds.
 
 A plug-in interface makes user add-on data-processing/math or even special hardware and instrument support possible while using the Gxsm core for data management and visualization.
 
 A build in Python-Console can simply assist or fully automate complex tasks, including life data sccess and analysis.
 
-Based on several hardware options it supports a commercially available DSP hardware (getting outdated, but still fully supported by Gxsm3 (https://github.com/pyzahl/Gxsm3) and Gxsm4. No further developments planned.) "Signal Ranger MK2 and MK3" (see https://www.softdb.com/scanning-probe-microscopy/) and provided also open source code for all the low level signal processing tasks and instrument controls in a most flexible and adaptable manner.
+Based on several hardware options it supports a commercially available DSP hardware (this is getting outdated, but is still fully supported by Gxsm3 (https://github.com/pyzahl/Gxsm3) and Gxsm4. No further developments are planned for this generation as been replaced by the soon been available RPSPMC.) The older "Signal Ranger MK2 and MK3" (see https://www.softdb.com/scanning-probe-microscopy/) are all open source code for all the low level signal processing tasks and instrument controls in a most flexible and adaptable manner.
 
 ## Latest
 ### Get excited: RPSPMC for GXSM4 is here and fully functional!
