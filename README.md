@@ -16,9 +16,9 @@ The GXSM Web Site+Discussuion Forums historically remain hosted on SF: http://gx
 
 ## Latest
 ### Get excited: RPSPMC for GXSM4 is here and fully functional!
-<img align="right" width="256" alt="Screenshot From 2025-10-12 16-36-24" src="https://github.com/user-attachments/assets/4c4b2ea8-5e40-4d2e-bdf3-5326999469de" />
+<img align="right" width="256" alt="image" src="https://github.com/user-attachments/assets/72bef88c-89bb-4efa-ab17-8f3ac5252914" />
 
-RPSPMC for GXSM4 arrived from a vision reality made happen now! This is an all new, very modular (analog in/out modules) and most importamt complete all on one FPGA level SPM control with all it needs for teh most advanced SPM including PAC-PLL, LockIn, etc. and at warp speed/data throughput up to 400 MB/s and control down to a few ns time scale allowing for arbitratry function generation, frequency sweeps and more &mdash; with ESR and more in mind. First prototype shown on right.
+RPSPMC for GXSM4 arrived from a vision reality made happen now! This is an all new, very modular (analog in/out modules) and most importamt complete all on one FPGA level SPM control with all it needs for teh most advanced SPM including PAC-PLL, LockIn, etc. and at warp speed/data throughput up to 400 MB/s and control down to a few ns time scale allowing for arbitratry function generation, frequency sweeps and more -- with ESR and more in mind.
 And it's been depoyed for production use in the laboratory already since April 2025!
 
 Finest and state of the art AD/DA, quick overview:
