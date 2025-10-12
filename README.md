@@ -7,19 +7,43 @@ The latest hardware gives access to a huge dynamic range of data and provides ac
 A plug-in interface makes user add-on data-processing/math or even special hardware and instrument support possible while using the Gxsm core for data management and visualization.
 
 A build in Python-Console can simply assist or fully automate complex tasks, including life data sccess and analysis.
+<img align="right" width="256" alt="image" src="https://github.com/user-attachments/assets/70d40470-f3ba-4aa0-b58a-716df219b939" />
 
 Based on several hardware options it supports a commercially available DSP hardware (this is getting outdated, but is still fully supported by Gxsm3 (https://github.com/pyzahl/Gxsm3) and Gxsm4. No further developments are planned for this generation as been replaced by the soon been available RPSPMC.) The older "Signal Ranger MK2 and MK3" (see https://www.softdb.com/scanning-probe-microscopy/) are all open source code for all the low level signal processing tasks and instrument controls in a most flexible and adaptable manner.
+
+The GXSM Web Site+Discussuion Forums historically remain hosted on SF: http://gxsm.sf.net
+
 
 ## Latest
 ### Get excited: RPSPMC for GXSM4 is here and fully functional!
 <img align="right" width="256" alt="Screenshot From 2025-10-12 16-36-24" src="https://github.com/user-attachments/assets/4c4b2ea8-5e40-4d2e-bdf3-5326999469de" />
 
-RPSPMC for GXSM4 arrived from a vision reality made happen now! This is an all new, very modular (analog in/out modules) and most importamt complete all on one FPGA level SPM control with all it needs for teh most advanced SPM including PAC-PLL, LockIn, etc. and at warp speed/data throughput up to 400 MB/s and control down to a few ns time scale allowing for arbitratry function generation, frequency sweeps and more -- with ESR and more in mind.
+RPSPMC for GXSM4 arrived from a vision reality made happen now! This is an all new, very modular (analog in/out modules) and most importamt complete all on one FPGA level SPM control with all it needs for teh most advanced SPM including PAC-PLL, LockIn, etc. and at warp speed/data throughput up to 400 MB/s and control down to a few ns time scale allowing for arbitratry function generation, frequency sweeps and more &mdash; with ESR and more in mind. First prototype shown on right.
 And it's been depoyed for production use in the laboratory already since April 2025!
+
+Finest and state of the art AD/DA, quick overview:
+
+| #Ch  | Direction | Precision   | Sampling | Assignments | Descriptions/Notes |
+| ---- | ------- | ----------- | -------- | ----------- | ------------------ |
+| 2/2  | RF IN/OUT | 14 bit AD+DA | @ 125 MSPS | IN1,2, OUT1,2 | PAC-PLL, Arbitrary Signal Gen, Auxillary Use |
+| 4..8 | OUT | 20 bit DA | @ 1 MSPS $^1$ | X,Y,Z,U,[A,B,..] $^2$ | U: Bias, A,B: Auxillary use |
+| 2..4 | IN  | 24 bit DA | @ 2 MSPS $^3$ | IN3, IN4, .. $^4$ | IN3: Feedback Signal, IN4,..: auxillary use |
+
 Dive into it starting here: https://github.com/pyzahl/Gxsm4/tree/master/plug-ins/hard/RPSPMC (#)
 We are working hard on making the hardware availabe to our users community but it will take some time and for various complex reasons the RPSPMC GIT repository is currently set to (#) private to procect our highly sophistiacted logic designs.
 
-The GXSM Web Site historically remains hosted on SF: http://gxsm.sf.net
+---
+Notes:
+
+$^1$: 1 MSPS capable. Actually configured to 0.9 MSPS
+
+$^2$: minial configuration: 4 DA modules for XYZU, default 6 DA, XYZUAB, up to 8 DA modules possible per design but not yet available.
+
+$^3$: 2 MSPS capable, configured to max of 1.4881 MSPS (default, as logic design constraints)
+
+$^4$: default 2 differential inputs IN3, IN4. Expansion to 4 or more differentual inputs possible per design, but not yet available.
+
+---
 
 ## Table of contents
 
@@ -210,7 +234,7 @@ Related:
 
 ---
 
-# About GXSM
+# About
 
 The GXSM program and project is originated at the Institut für Festkörperphysik (Solid State Physics) University of Hannover, Germany (Originally published under GPL in December 2000 at Source Forge) and is currently maintained by then GXSM developers team.
 
