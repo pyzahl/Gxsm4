@@ -220,6 +220,10 @@ Thanks,
 
   *The Gxsm team*
 
+## A brief History: PMSTM (OS-2/Warp PM2 GUI), XXSM (Xforms GUI), Gxsm2 (Gtk-2.0 GUI), Gxsm3 (Gtk-3.0 GUI), Gxsm4 (aka Gtk-4.0 GUI)
+<img width="5598" height="593" alt="image" src="https://github.com/user-attachments/assets/7c563434-f6e9-4d27-bf20-ddae4a2cf0ba" />
+
+
 # Screenshots
 <img width="11518" height="2147" alt="Screenshot from 2025-10-09 15-10-14" src="https://github.com/user-attachments/assets/cbe8a5be-de9a-4e64-aa66-ceafe9ac3ddb" />
 
