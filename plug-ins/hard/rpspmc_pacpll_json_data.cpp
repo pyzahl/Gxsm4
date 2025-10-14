@@ -239,6 +239,9 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         
         { "SPMC_UPTIME_SECONDS", &spmc_parameters.uptime_seconds, true },
         
+        { "SPMC_LCK1_BQ2_MAG_MONITOR",  &spmc_parameters.lck1_bq2_mag_monitor, false },  // Monitor Lck1 magnitude
+        { "SPMC_LCK1_BQ2_PH_MONITOR",   &spmc_parameters.lck1_bq2_ph_monitor, false },  // Monitor Lck1 phase
+        
         // RP SPMC Lock-In
         { "SPMC_SC_LCK_FREQUENCY", &spmc_parameters.sc_lck_frequency, false }, // manual/tune frequency
         { "SPMC_SC_LCK_VOLUME",    &spmc_parameters.sc_lck_volume, false },    // amplitude
@@ -251,14 +254,13 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         { "SPMC_SC_LCK_BQ_COEF_B0",  &spmc_parameters.sc_lck_bq_coef[0], false },    // BQCOEFS
         { "SPMC_SC_LCK_BQ_COEF_B1",  &spmc_parameters.sc_lck_bq_coef[1], false },    // BQCOEFS
         { "SPMC_SC_LCK_BQ_COEF_B2",  &spmc_parameters.sc_lck_bq_coef[2], false },    // BQCOEFS
-        { "SPMC_SC_LCK_BQ_COEF_A0",  &spmc_parameters.sc_lck_bq_coef[3], false },    // BQCOEFS
+        { "SPMC_SC_LCK_BQ_COEF_A0",  &spmc_parameters.sc_lck_bq_coef[3], false },    // ** SECTION #ID
         { "SPMC_SC_LCK_BQ_COEF_A1",  &spmc_parameters.sc_lck_bq_coef[4], false },    // BQCOEFS
         { "SPMC_SC_LCK_BQ_COEF_A2",  &spmc_parameters.sc_lck_bq_coef[5], false },    // BQCOEFS
         { "SPMC_SC_LCK_F0BQ_TAU",  &spmc_parameters.sc_lck_bq_tau, false },    // time const
         { "SPMC_SC_LCK_F0BQ_IIR",  &spmc_parameters.sc_lck_iir_tau, false },   // IIR time const
         { "SPMC_SC_LCK_F0BQ_Q",    &spmc_parameters.sc_lck_q, false },         // Q for IIR
 
-        
         { "SPMC_SC_LCK_RF_FREQUENCY", &spmc_parameters.sc_lck_rf_frequency, false }, // manual/tune RF Gen frequency
         { "SPMC_RF_GEN_OUT_MUX", &spmc_parameters.rf_gen_out_mux, false },
 
@@ -299,6 +301,18 @@ JSON_signal PACPLL_JSON_signals[] = {
 
         { "SIGNAL_XYZ_METER", 9, spmc_signals.xyz_meter},
 
+        { "SIGNAL_MON_FIFO_T", 1024, spmc_signals.mon_fifo_t},
+        { "SIGNAL_MON_FIFO_X", 1024, spmc_signals.mon_fifo_x},
+        { "SIGNAL_MON_FIFO_Y", 1024, spmc_signals.mon_fifo_y},
+        { "SIGNAL_MON_FIFO_Z", 1024, spmc_signals.mon_fifo_z},
+        { "SIGNAL_MON_FIFO_U", 1024, spmc_signals.mon_fifo_u},
+        //{ "SIGNAL_MON_FIFO_A", 1024, spmc_signals.mon_fifo_a},
+        //{ "SIGNAL_MON_FIFO_B", 1024, spmc_signals.mon_fifo_b},
+        { "SIGNAL_MON_FIFO_IN3", 1024, spmc_signals.mon_fifo_in3},
+        { "SIGNAL_MON_FIFO_IN4", 1024, spmc_signals.mon_fifo_in4},
+        { "SIGNAL_MON_FIFO_DF", 1024, spmc_signals.mon_fifo_df},
+        //{ "SIGNAL_MON_FIFO_AMP", 1024, spmc_signals.mon_fifo_amp},
+        
         { NULL, 0, NULL }
 };
 

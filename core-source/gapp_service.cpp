@@ -637,7 +637,13 @@ AppBase::~AppBase(){
         if (window_geometry)
                 g_free (window_geometry);
 
-	XSM_DEBUG_GM (DBG_L3, "AppBase::~AppBase done." );
+        if (main_title_buffer)
+                g_free (main_title_buffer);
+        if (sub_title_buffer)
+                g_free (sub_title_buffer);
+        main_title_buffer = sub_title_buffer = NULL;
+
+        XSM_DEBUG_GM (DBG_L3, "AppBase::~AppBase done." );
 }
 
 void AppBase::SetTitle(const gchar *title, const gchar *sub_title){
