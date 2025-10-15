@@ -583,6 +583,19 @@
       <description>Configuration for GXSM Entry with ID 'fbs-scan-ldc-dz'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
     </key>
 
+
+    <key name="dsp-lck-mag-monitor" type="ad">
+      <default>[10, -10, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'dsp-lck-mag-monitor' </summary>
+      <description>Configuration for GXSM Entry with ID 'dsp-lck-mag-monitor'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="dsp-lck-ph-monitor" type="ad">
+      <default>[180, -180, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'dsp-lck-ph-monitor' </summary>
+      <description>Configuration for GXSM Entry with ID 'dsp-ph-mag-monitor'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+    
     <key name="dsp-spmc-lck-freq" type="ad">
       <default>[3e7, 0, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1.0, 1.0, 0,  0, 0      ]      </default>
       <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'dsp-lck-freq' </summary>

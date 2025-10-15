@@ -1536,7 +1536,7 @@ void RPSPMC_Control::create_folder (){
 
         GSList *FPGA_readback_update_list=NULL;
         GSList *EC_FPGA_SPMC_server_settings_list=NULL;
-        GSList *EC_GVP_MON_list = NULL;
+        GSList *EC_MONITORS_list = NULL;
         
         AppWindowInit ("RP-SPM Control Window");
 
@@ -1592,6 +1592,7 @@ void RPSPMC_Control::create_folder (){
         bp->set_input_width_chars (12);
         bp->set_input_nx ();
 
+        #if 0
 	bp->grid_add_check_button ("Z-Pos Monitor",
                                    "Z Position Monitor. Disable to set Z-Position Setpoint for const height mode. "
                                    "Switch Transfer to CZ-FUZZY-LOG for Z-CONTROL Constant Heigth Mode Operation with current compliance given by Fuzzy-Level. "
@@ -1601,6 +1602,7 @@ void RPSPMC_Control::create_folder (){
                                    G_CALLBACK (RPSPMC_Control::zpos_monitor_callback), this,
                                    0, 0);
         GtkWidget *zposmon_checkbutton = bp->button;
+        #endif
         bp->new_line ();
 
         bp->set_configure_list_mode_off ();
@@ -1919,6 +1921,15 @@ void RPSPMC_Control::create_folder (){
 
         bp->set_default_ec_change_notice_fkt (RPSPMC_Control::lockin_adjust_callback, this);
  	bp->new_grid_with_frame ("Lock-In Control and Routing");
+
+        bp->grid_add_ec ("Magnitude Reading", Volt, &spmc_parameters.lck1_bq2_mag_monitor, -10.0, 10.0, ".03g", 0.1, 1., "LCK-MAG-MONITOR");
+        EC_MONITORS_list = g_slist_prepend( EC_MONITORS_list, bp->ec);
+        bp->ec->Freeze ();
+        bp->new_line ();
+        bp->grid_add_ec ("Phase Reading", Deg, &spmc_parameters.lck1_bq2_ph_monitor, -180.0, 180.0, ".03g", 0.1, 1., "LCK-PH-MONITOR");
+        EC_MONITORS_list = g_slist_prepend( EC_MONITORS_list, bp->ec);
+        bp->ec->Freeze ();
+
         
         bp->new_line ();
 	bp->grid_add_ec ("Modulation Frequency", new UnitObj("Hz","Hz"), &spmc_parameters.sc_lck_frequency, 0.0, 40e6, "5g", 1.0, 100.0, "SPMC-LCK-FREQ");
@@ -2230,29 +2241,29 @@ void RPSPMC_Control::create_folder (){
 
         bp->grid_add_ec ("Mon", Volt, &spmc_parameters.bias_monitor, -10.0, 10.0, ".03g", 0.1, 1., "GVP-U-MONITOR");
         //bp->grid_add_ec ("Mon:", Volt, &spmc_parameters.gvpu_monitor, -10.0, 10.0, ".03g", 0.1, 1., "GVP-U-MONITOR");
-        EC_GVP_MON_list = g_slist_prepend( EC_GVP_MON_list, bp->ec);
+        EC_MONITORS_list = g_slist_prepend( EC_MONITORS_list, bp->ec);
         bp->ec->Freeze ();
         bp->grid_add_ec (NULL, Angstroem, &GVP_XYZ_mon_AA[0], -1e10, 1e10, ".03g", 0.1, 1., "GVP-XS-MONITOR");
-        EC_GVP_MON_list = g_slist_prepend( EC_GVP_MON_list, bp->ec);
+        EC_MONITORS_list = g_slist_prepend( EC_MONITORS_list, bp->ec);
         bp->ec->Freeze ();
         bp->grid_add_ec (NULL, Angstroem, &GVP_XYZ_mon_AA[1], -1e10, 1e10, ".03g", 0.1, 1., "GVP-YS-MONITOR");
-        EC_GVP_MON_list = g_slist_prepend( EC_GVP_MON_list, bp->ec);
+        EC_MONITORS_list = g_slist_prepend( EC_MONITORS_list, bp->ec);
         bp->ec->Freeze ();
         bp->grid_add_ec (NULL, Angstroem, &GVP_XYZ_mon_AA[2], -1e10, 1e10, ".03g", 0.1, 1., "GVP-ZS-MONITOR");
-        EC_GVP_MON_list = g_slist_prepend( EC_GVP_MON_list, bp->ec);
+        EC_MONITORS_list = g_slist_prepend( EC_MONITORS_list, bp->ec);
         bp->ec->Freeze ();
         bp->set_configure_list_mode_on ();
         bp->grid_add_ec (NULL, Volt, &spmc_parameters.gvpa_monitor, -10.0, 10.0, ".03g", 0.1, 1., "GVP-A-MONITOR");
-        EC_GVP_MON_list = g_slist_prepend( EC_GVP_MON_list, bp->ec);
+        EC_MONITORS_list = g_slist_prepend( EC_MONITORS_list, bp->ec);
         bp->ec->Freeze ();
         bp->grid_add_ec (NULL, Volt, &spmc_parameters.gvpb_monitor, -10.0, 10.0, ".03g", 0.1, 1., "GVP-B-MONITOR");
-        EC_GVP_MON_list = g_slist_prepend( EC_GVP_MON_list, bp->ec);
+        EC_MONITORS_list = g_slist_prepend( EC_MONITORS_list, bp->ec);
         bp->ec->Freeze ();
         bp->grid_add_ec (NULL, Volt, &spmc_parameters.gvpamc_monitor, -10.0, 10.0, ".03g", 0.1, 1., "GVP-AMC-MONITOR");
-        EC_GVP_MON_list = g_slist_prepend( EC_GVP_MON_list, bp->ec);
+        EC_MONITORS_list = g_slist_prepend( EC_MONITORS_list, bp->ec);
         bp->ec->Freeze ();
         bp->grid_add_ec (NULL, Volt, &spmc_parameters.gvpfmc_monitor, -10.0, 10.0, ".03g", 0.1, 1., "GVP-FMC-MONITOR");
-        EC_GVP_MON_list = g_slist_prepend( EC_GVP_MON_list, bp->ec);
+        EC_MONITORS_list = g_slist_prepend( EC_MONITORS_list, bp->ec);
         bp->ec->Freeze ();
         bp->set_configure_list_mode_off ();
         mon_FB = 0;
@@ -2261,11 +2272,11 @@ void RPSPMC_Control::create_folder (){
         gvp_monitor_fb_label = bp->label;
         gvp_monitor_fb_info_ec = bp->ec;
 
-        EC_GVP_MON_list = g_slist_prepend( EC_GVP_MON_list, bp->ec);
+        EC_MONITORS_list = g_slist_prepend( EC_MONITORS_list, bp->ec);
         bp->ec->Freeze ();
         bp->set_input_nx ();
         
-	g_object_set_data (G_OBJECT (window), "GVP_VEC_MONITOR_list", EC_GVP_MON_list);
+	g_object_set_data (G_OBJECT (window), "SPMC_MONITORS_list", EC_MONITORS_list);
 
         bp->new_line ();
         bp->grid_add_label ("VPC", "Vector Program Counter");
@@ -2963,7 +2974,7 @@ void RPSPMC_Control::create_folder (){
 	g_object_set_data( G_OBJECT (window), "DSP_EC_list", bp->get_ec_list_head ());
         if (multiIV_checkbutton)
                 g_object_set_data( G_OBJECT (multiIV_checkbutton), "DSP_multiIV_list", multi_IVsec_list);
-	g_object_set_data( G_OBJECT (zposmon_checkbutton), "DSP_zpos_control_list", zpos_control_list);
+	//g_object_set_data( G_OBJECT (zposmon_checkbutton), "DSP_zpos_control_list", zpos_control_list);
 
 
 	g_object_set_data( G_OBJECT (window), "FPGA_readback_update_list", FPGA_readback_update_list);
@@ -3368,6 +3379,7 @@ void RPSPMC_Control::update_zpos_readings(){
         g_free (info);
 }
 
+#if 0
 guint RPSPMC_Control::refresh_zpos_readings(RPSPMC_Control *self){ 
 	if (main_get_gapp()->xsm->hardware->IsSuspendWatches ())
 		return TRUE;
@@ -3390,7 +3402,7 @@ int RPSPMC_Control::zpos_monitor_callback( GtkWidget *widget, RPSPMC_Control *se
         }
         return 0;
 }
-
+#endif
 
 int RPSPMC_Control::choice_prbsource_callback (GtkWidget *widget, RPSPMC_Control *self){
         PI_DEBUG_GP (DBG_L4, "%s \n",__FUNCTION__);
@@ -4114,10 +4126,12 @@ void RPSPMC_Control::on_new_data (){
         GVP_XYZ_mon_AA[1] = main_get_gapp()->xsm->Inst->Volt2YA (spmc_parameters.ys_monitor);
         GVP_XYZ_mon_AA[2] = main_get_gapp()->xsm->Inst->Volt2ZA (spmc_parameters.z0_monitor);
                 
-        // RPSPM-GVP
+        // RPSPM-Monitors: Lck, GVP
         if (G_IS_OBJECT (window))
-                g_slist_foreach((GSList*)g_object_get_data( G_OBJECT (window), "GVP_VEC_MONITOR_list"),
+                g_slist_foreach((GSList*)g_object_get_data( G_OBJECT (window), "SPMC_MONITORS_list"),
                                 (GFunc) App::update_ec, NULL);
+
+        update_zpos_readings();
 }
 
 

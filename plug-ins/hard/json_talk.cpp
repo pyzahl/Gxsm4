@@ -247,7 +247,21 @@ void  RP_JSON_talk::on_message(SoupWebsocketConnection *ws,
                 inflateEnd( &zInfo );   // zlib function
                 if (self->get_debug_level () > 0){
                         if (json_buffer){
-                                self->status_append (json_buffer);
+                                if (strlen (json_buffer) < 1024)
+                                        self->status_append (json_buffer);
+                                else{
+                                        static int count=0;
+                                        gchar *fn = g_strdup_printf ("RPSPM-RINGBUFFER-DATA_%04d.json", count++);
+                                        FILE *pFile = fopen(fn, "wb");
+                                        g_free (fn);
+                                        fwrite(json_buffer, 1, strlen(json_buffer), pFile);
+                                        fclose(pFile);
+                                        
+                                        gchar *tmp = g_strndup(json_buffer, 512);
+                                        self->status_append (tmp);
+                                        g_free (tmp);
+                                        self->status_append ("...");
+                                }
                                 self->status_append ("\n");
                         }
                 }

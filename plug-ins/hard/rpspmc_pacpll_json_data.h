@@ -241,12 +241,14 @@ struct SPMC_parameters {
         double ys_monitor;
         double zs_monitor;
         //
+        double lck1_bq2_mag_monitor;
+        double lck1_bq2_ph_monitor;
         
         double sc_lck_filter_mode;
         double sc_lck_frequency;
         double sc_lck_volume;
         double sc_lck_target;
-        double sc_lck_bq_coef[6]; // b0,1,2, [a0 := 1],1,2
+        double sc_lck_bq_coef[6]; // b0,1,2, [a0 (per def. a0:=1), used for := section #id],1,2
         double sc_lck_bq_tau;
         double sc_lck_iir_tau;
         double sc_lck_q;
@@ -295,6 +297,18 @@ struct SPMC_parameters {
 struct SPMC_signals {
         double gvp_vector[GVP_VECTOR_SIZE];
         double xyz_meter[10]; // { X[3], Y[3], Z[3], NOW } [actual, max , min]
+
+        double mon_fifo_t[1024]; // SIGNAL_MON_FIFO_T
+        double mon_fifo_x[1024]; // SIGNAL_MON_FIFO_X
+        double mon_fifo_y[1024]; // SIGNAL_MON_FIFO_Y
+        double mon_fifo_z[1024]; // SIGNAL_MON_FIFO_Z
+        double mon_fifo_u[1024]; // SIGNAL_MON_FIFO_U
+        //double mon_fifo_a[1024]; // SIGNAL_MON_FIFO_A
+        //double mon_fifo_b[1024]; // SIGNAL_MON_FIFO_B
+        double mon_fifo_in3[1024]; // SIGNAL_MON_FIFO_IN3
+        double mon_fifo_in4[1024]; // SIGNAL_MON_FIFO_IN4
+        double mon_fifo_df[1024]; // SIGNAL_MON_FIFO_DF
+        //double mon_fifo_amp24]; // SIGNAL_MON_FIFO_AMP
 };
 
 #endif
