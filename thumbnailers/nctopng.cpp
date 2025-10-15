@@ -332,12 +332,13 @@ class raw_image_tmpl : public raw_image{
 public:
 		raw_image_tmpl(NcVar *img, int thumb=1, int new_x=0, int x_off=0, int y_off=0, int width=0){
 				x0 = x_off; y0 = y_off;
+				rowdata = NULL;
 
 				// Data->get_dim(0)->size(); // Time Dimension
 				// Data->get_dim(1)->size(); // Value Dimension (Layers)
 				ony = img->get_dim(2)->size(); // Y Dimenson
 				onx = img->get_dim(3)->size(); // X Dimenson
-
+			
 				if (width>0){
 						w0=width;
 						nx=new_x;
@@ -365,10 +366,16 @@ public:
 
 				if (x0+nx >= onx) x0=0; // fallback
 				if (y0+ny >= ony) y0=0; // fallback
-
+				
 				rowdata = new double* [ny];
 				for (int i=0; i<ny; rowdata[i++] = new double [nx]);
-				convert_from_nc(img);
+
+				if (onx > 10000 || ony > 10000){ // sanity check
+				        onx=ony=0;
+					generate_ov_thumb ();
+				}
+				else
+				        convert_from_nc(img);
 		};
 
 	virtual ~raw_image_tmpl(){
@@ -376,6 +383,12 @@ public:
 		delete [] rowdata;
 	};
 
+        void generate_ov_thumb(){
+	        for (int y=0; y<ny; y++)
+			for (int i=0; i<nx; ++i)
+   			        rowdata[y][i] = (y+i)/(ny+nx); // error thumb
+	};
+    
 	void convert_from_nc(NcVar *img, int v=0){ // v=0: use layer 0 by default
 		double scale = (double)nx/(double)w0;
 		NC_VAR_TYP *row = new NC_VAR_TYP[onx];
