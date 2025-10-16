@@ -553,13 +553,14 @@ GXSM_NETCDF_STATUS netcdf_read(std::string filename, raw_image **img,
                         double c=1.;
                         double b=1.;
         
-                        netCDF::NcVar var = dataFile.getVar ("viewmode");
-                        //var.Get (&vm);
+                        dataFile.getVar ("viewmode").getVar (&vm);
                         (*img)->SetViewMode (vm);
 
-                        //dataFile.getVar ("contrast").Get (&c);
-                        //dataFile.getVar ("bright").Get (&b);
+                        dataFile.getVar ("contrast").getVar (&c);
+                        dataFile.getVar ("bright").getVar (&b);
                         (*img)->SetTransfer (c,b);
+
+                        std::cout << "VM: " << vm << " Tr: " << c << b << std::endl;
                 }
 
                 return NC_READ_OK;
