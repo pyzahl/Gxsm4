@@ -71,6 +71,9 @@ typedef enum { NC_READ_OK, NC_OPEN_FAILED, NC_NOT_FROM_GXSM } GXSM_NETCDF_STATUS
 inline int min (int x, int y) { return x<y?x:y; }
 inline int max (int x, int y) { return x>y?x:y; }
 
+int verbose = 0;
+
+
 class raw_image{
 public:
 	raw_image(){ 
@@ -342,11 +345,14 @@ public:
 
                 // Get the dimensions of image data
                 std::vector<netCDF::NcDim> dims = img.getDims();
+
                 
-                // Print dimension information
-                std::cout << "Dimensions of image data:" << std::endl;
-                for (const auto& dim : dims) {
-                        std::cout << "  Name: " << dim.getName() << ", Length: " << dim.getSize() << std::endl;
+                if(verbose){
+                        // Print dimension information
+                        std::cout << "Dimensions of image data:" << std::endl;
+                        for (const auto& dim : dims) {
+                                std::cout << "  Name: " << dim.getName() << ", Length: " << dim.getSize() << std::endl;
+                        }
                 }
                 
                 // img.getDim(0).getSize(); // Time Dimension
@@ -560,7 +566,11 @@ GXSM_NETCDF_STATUS netcdf_read(std::string filename, raw_image **img,
                         dataFile.getVar ("bright").getVar (&b);
                         (*img)->SetTransfer (c,b);
 
-                        std::cout << "VM: " << vm << " Tr: " << c << b << std::endl;
+                        if(verbose){
+                                std::cout << "  VM: " << vm << "  TR Contrast, Bright: [" << c << b << "]" << std::endl;
+                                //dataFile.getVar ("JSON_RedPACPALL_SPMC_BIAS").getVar (&x);
+                                //dataFile.getVar ("JSON_RedPACPALL_SPMC_Z_SERVO_SETPOINT").getVar (&x);
+                        }
                 }
 
                 return NC_READ_OK;
@@ -619,7 +629,6 @@ int main(int argc, const char *argv[]) {
 	int thumb = 1;
 	int new_x = 0;
 	int x_off = 0, y_off = 0, width = 0;	
-	int verbose = 0;
 	int noquick = 0;
 	int minmax = 0;
 	int help = 0;

@@ -10,7 +10,7 @@ deps_nc4 = declare_dependency(
 )
 
 executable(
-    'nctopng',
+    'nctopng-old',
     'nctopng.cpp',
     'writepng.cpp',
     dependencies : deps,
@@ -18,7 +18,7 @@ executable(
 )
 
 executable(
-    'nc4topng',
+    'nctopng',
     'nc4topng.cpp',
     'writepng.cpp',
     dependencies : deps_nc4,
