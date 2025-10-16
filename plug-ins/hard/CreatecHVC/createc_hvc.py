@@ -313,6 +313,8 @@ class THV5():
                 print (self.ip + data)
                 return requests.get(self.ip + data)
 
+        def myip(self):
+                return self.ip
 
         def request_coarse(self, data):
                 #idhttp1.Get(ipstring + 'stmafm?' + command, ResponseStream);
@@ -746,12 +748,17 @@ def locate_spm_control_dsp():
 
 class HV5App(Gtk.Application):
         def __init__(self, *args, **kwargs):
+                print ("Init THV5 App...")
                 super().__init__(*args, application_id="com.createc.hv5app", **kwargs)
 
-                self.thv = THV5('http://192.168.0.195/')
-                #self.thv = THV5('http://192.168.40.10/')
+                print ("THV5 ...")
+                #self.thv = THV5('http://192.168.0.195/')
+                self.thv = THV5('http://192.168.40.10/')
+
+                print ("Get Status ...")
                 get_status()
                 
+                print ("Done.")
                 self.window = None
 
 
@@ -788,9 +795,10 @@ class HV5App(Gtk.Application):
                 global CHV5_configuration
                 global CHV5_monitor
                 global CHV5_gains
-
+                
                 if not self.window:
-                        self.window = Gtk.ApplicationWindow(application=self, title="CHV5")
+                        print ("Build GUI...")
+                        self.window = Gtk.ApplicationWindow(application=self, title="Createc THV5 @ "+self.thv.myip())
                         name = "Createc HV Control"
 
                         print ('do_activate: CHV5 Gains: ', CHV5_gains, ' ... may toggle to enforce up-to-now.')
@@ -1081,14 +1089,18 @@ class HV5App(Gtk.Application):
                         grid_chv5c.attach(button, 15, 7, 1, 1)
 
                         ###########
+                        print ("*** GUI complete ***")
 
                         self.window.present()
-                        
+                        print ("*** Show Window, Run ***")
                         
                         
 if __name__ == "__main__":
+        print ("*** MAIN ***")
         app = HV5App()
+        print ("*** READY ***")
         app.run()
+        print ("*** EXITING ***")
 
 
 #gxsm_shm.close()

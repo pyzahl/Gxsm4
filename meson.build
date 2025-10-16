@@ -144,6 +144,12 @@ netcdf = declare_dependency(
     ]
 )
 
+netcdf4 = declare_dependency(
+    dependencies: [
+        cc.find_library('netcdf_c++4'),  ## new NetCDF
+    ]
+)
+
 fontconfig = dependency('fontconfig')
 
 png   = dependency('libpng', required : true)

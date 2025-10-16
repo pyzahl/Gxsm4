@@ -33,7 +33,11 @@
 #include <cmath>
 
 #include <glib.h>
-#include <netcdf.hh>
+
+#include <netcdf>
+#include <iostream>
+#include <vector>
+
 #include <png.h>
 #include <popt.h>
 #include "thumbpal.h"
@@ -332,14 +336,23 @@ protected:
 template <class NC_VAR_TYP>
 class raw_image_tmpl : public raw_image{
 public:
-        raw_image_tmpl(NcVar *img, int thumb=1, int new_x=0, int x_off=0, int y_off=0, int width=0){
+        raw_image_tmpl(netCDF::NcVar img, int thumb=1, int new_x=0, int x_off=0, int y_off=0, int width=0){
                 x0 = x_off; y0 = y_off;
                 rowdata = NULL;
 
-                // Data->get_dim(0)->size(); // Time Dimension
-                // Data->get_dim(1)->size(); // Value Dimension (Layers)
-                ony = img->get_dim(2)->size(); // Y Dimenson
-                onx = img->get_dim(3)->size(); // X Dimenson
+                // Get the dimensions of image data
+                std::vector<netCDF::NcDim> dims = img.getDims();
+                
+                // Print dimension information
+                std::cout << "Dimensions of image data:" << std::endl;
+                for (const auto& dim : dims) {
+                        std::cout << "  Name: " << dim.getName() << ", Length: " << dim.getSize() << std::endl;
+                }
+                
+                // img.getDim(0).getSize(); // Time Dimension
+                // img.getDim(1).getSize(); // Value Dimension (Layers)
+                ony = dims[2].getSize(); // Y Dimenson
+                onx = dims[3].getSize(); // X Dimenson
 			
                 if (width>0){
                         w0=width;
@@ -377,7 +390,7 @@ public:
                         generate_ov_thumb ();
                 }
                 else
-                        convert_from_nc(img);
+                        convert_from_nc (img);
         };
 
 	virtual ~raw_image_tmpl(){
@@ -391,72 +404,170 @@ public:
    			        rowdata[y][i] = (y+i)/(ny+nx); // error thumb
 	};
     
-	void convert_from_nc(NcVar *img, int v=0){ // v=0: use layer 0 by default
+	void convert_from_nc(netCDF::NcVar img, int v=0){ // v=0: use layer 0 by default
 		double scale = (double)nx/(double)w0;
-		NC_VAR_TYP *row = new NC_VAR_TYP[onx];
+		//NC_VAR_TYP *row = new NC_VAR_TYP[onx];
 		
 		for (int y=0; y<ny; y++){
-			img->set_cur (0, v, y0+(int)((double)y/scale+.5));
-			img->get (row, 1,1, 1,onx);
+                        std::vector<size_t> startp = { 0,v, y0+(int)((double)y/scale+.5), 0 };
+                        std::vector<size_t> countp = { 1,1, 1,onx };
+                        std::vector<NC_VAR_TYP> row (onx);
+
+                        img.getVar(startp, countp, row.data());
 			for (int i=0; i<nx; ++i)
 				rowdata[y][i] = (double)row[x0+(int)((double)i/scale+.5)];
+
+			//img->set_cur (0, v, y0+(int)((double)y/scale+.5));
+			//img->get (row, 1,1, 1,onx);
+			//for (int i=0; i<nx; ++i)
+			//	rowdata[y][i] = (double)row[x0+(int)((double)i/scale+.5)];
 		}
 	};
 };
 
+#if 0
+// Define the starting corner (0-based) and count for the subset
+        std::vector<size_t> startp = {2, 2};
+        std::vector<size_t> countp = {4, 4};
 
-GXSM_NETCDF_STATUS netcdf_read(const gchar *file_name, raw_image **img, 
-			       int thumb, int new_x, int x_off, int y_off, int width){
-	NcError ncerr(NcError::verbose_nonfatal);
-	NcFile nc(file_name);
+        // Prepare a vector to hold the data
+        std::vector<int> subset_data(4 * 4);
 
-	// Check if the file was opened successfully
-	if (! nc.is_valid())
-		return NC_OPEN_FAILED;
+        // Read the subset of data
+        var.getVar(startp, countp, subset_data.data());
 
-	NcVar *Data = NULL;
+        // Print the read data to verify
+        std::cout << "Read subset data:" << std::endl;
+        for (size_t i = 0; i < countp[0]; ++i) {
+            for (size_t j = 0; j < countp[1]; ++j) {
+                std::cout << subset_data[i * countp[1] + j] << " ";
+            }
+            std::cout << std::endl;
+        }
+#endif
 
-	// try Topo Scan
-	if (! (Data = nc.get_var("H")))
+#if 0
+#include <netcdf>
+#include <iostream>
+#include <vector>
 
-		// try Diffract Scan
-		if (! (Data = nc.get_var("Intensity")))
+int main() {
+    // Define the filename of the NetCDF file to read
+    std::string filename = "example.nc"; // Replace with your NetCDF file name
 
-			// try Float data
-			if (! (Data = nc.get_var("FloatField")))
+    try {
+        // Open the NetCDF file in read mode
+        netCDF::NcFile dataFile(filename, netCDF::NcFile::read);
 
-				// try Double
-				if (! (Data = nc.get_var("DoubleField")))
+        // Get a variable by its name (e.g., "temperature")
+        netCDF::NcVar temperatureVar = dataFile.getVar("temperature"); 
 
-					// failed looking for Gxsm data!!
-					return NC_NOT_FROM_GXSM;
+        // Check if the variable exists
+        if (temperatureVar.isNull()) {
+            std::cerr << "Error: Variable 'temperature' not found in " << filename << std::endl;
+            return 1;
+        }
 
-	switch (Data->type()){
-	case ncShort: *img = new raw_image_tmpl<short> (Data, thumb, new_x, x_off, y_off, width); break;
-	case ncLong: *img = new raw_image_tmpl<long> (Data, thumb, new_x, x_off, y_off, width); break;
-	case ncFloat: *img = new raw_image_tmpl<float> (Data, thumb, new_x, x_off, y_off, width); break;
-	case ncDouble: *img = new raw_image_tmpl<double> (Data, thumb, new_x, x_off, y_off, width); break;
-	case ncByte: *img = new raw_image_tmpl<char> (Data, thumb, new_x, x_off, y_off, width); break;
-	case ncChar: *img = new raw_image_tmpl<char> (Data, thumb, new_x, x_off, y_off, width); break;
-	default: *img = NULL; return NC_NOT_FROM_GXSM; 
-	}
+        // Get the dimensions of the variable
+        std::vector<netCDF::NcDim> dims = temperatureVar.getDims();
+        std::vector<size_t> dimSizes;
+        for (const auto& dim : dims) {
+            dimSizes.push_back(dim.getSize());
+        }
 
-	if(nc.get_var("viewmode")){
-		int vm;
-		double c,b;
-		
-		nc.get_var("viewmode")->get(&vm);
-		(*img)->SetViewMode (vm);
+        // Calculate the total number of elements in the variable
+        size_t numElements = 1;
+        for (size_t size : dimSizes) {
+            numElements *= size;
+        }
 
-		nc.get_var("contrast")->get(&c);
-		nc.get_var("bright")->get(&b);
-		(*img)->SetTransfer (c,b);
-	}
+        // Create a vector to store the data
+        std::vector<float> temperatureData(numElements);
 
+        // Read the data from the variable
+        temperatureVar.getVar(temperatureData.data());
 
-	return NC_READ_OK;
+        // Print some of the read data (e.g., the first 10 elements)
+        std::cout << "Temperature data (first 10 elements):" << std::endl;
+        for (size_t i = 0; i < std::min((size_t)10, numElements); ++i) {
+            std::cout << temperatureData[i] << " ";
+        }
+        std::cout << std::endl;
+
+        // You can also read specific attributes
+        netCDF::NcAtt unitsAtt = temperatureVar.getAtt("units");
+        if (!unitsAtt.isNull()) {
+            std::string units;
+            unitsAtt.getValues(units);
+            std::cout << "Units of temperature: " << units << std::endl;
+        }
+
+        // The NcFile object automatically closes the file when it goes out of scope
+
+    } catch (const netCDF::exceptions::NcException& e) {
+        std::cerr << "NetCDF Error: " << e.what() << std::endl;
+        return 1;
+    }
+
+    return 0;
 }
+#endif
 
+
+GXSM_NETCDF_STATUS netcdf_read(std::string filename, raw_image **img, 
+			       int thumb, int new_x, int x_off, int y_off, int width){
+        try {
+                // Open the NetCDF file in read mode
+                netCDF::NcFile dataFile(filename, netCDF::NcFile::read);
+                
+                // try Topo Scan
+                netCDF::NcVar Data = dataFile.getVar("H"); 
+
+                if (Data.isNull ())
+                        // try Diffract Scan
+                        if ((Data = dataFile.getVar("Intensity")).isNull ())
+                                // try Float data (Topo, .... all new hardware uses Float)
+                                if ((Data = dataFile.getVar("FloatField")).isNull ())
+                                        // try Double
+                                        if ((Data = dataFile.getVar("DoubleField")).isNull ()){
+                                                // failed looking for Gxsm data!!
+                                                std::cerr << "NetCDF file does not contain any Gxsm SPM data fields named: H, Intensity, FloatField or DoubleField." << std::endl;
+                                                return NC_NOT_FROM_GXSM;
+                                        }
+                
+                switch (Data.getType().getId()){
+                case NC_SHORT:  *img = new raw_image_tmpl<short> (Data, thumb, new_x, x_off, y_off, width); break;
+                case NC_INT:    *img = new raw_image_tmpl<long> (Data, thumb, new_x, x_off, y_off, width); break;
+                case NC_INT64:  *img = new raw_image_tmpl<long> (Data, thumb, new_x, x_off, y_off, width); break;
+                case NC_FLOAT:  *img = new raw_image_tmpl<float> (Data, thumb, new_x, x_off, y_off, width); break;
+                case NC_DOUBLE: *img = new raw_image_tmpl<double> (Data, thumb, new_x, x_off, y_off, width); break;
+                case NC_BYTE:   *img = new raw_image_tmpl<char> (Data, thumb, new_x, x_off, y_off, width); break;
+                case NC_CHAR:   *img = new raw_image_tmpl<char> (Data, thumb, new_x, x_off, y_off, width); break;
+                default: *img = NULL;
+                        std::cerr << "NetCDF data field type is invald." << std::endl;
+                        return NC_NOT_FROM_GXSM; 
+                }
+
+                if (!dataFile.getVar("viewmode").isNull()){
+                        int vm=0;
+                        double c=1.;
+                        double b=1.;
+        
+                        netCDF::NcVar var = dataFile.getVar ("viewmode");
+                        //var.Get (&vm);
+                        (*img)->SetViewMode (vm);
+
+                        //dataFile.getVar ("contrast").Get (&c);
+                        //dataFile.getVar ("bright").Get (&b);
+                        (*img)->SetTransfer (c,b);
+                }
+
+                return NC_READ_OK;
+        } catch (const netCDF::exceptions::NcException& e) {
+                std::cerr << "NetCDF Error: " << e.what() << std::endl;
+                return NC_NOT_FROM_GXSM;
+        }
+}
 
 
 int write_png(gchar *file_name, raw_image *img){
@@ -511,7 +622,7 @@ int main(int argc, const char *argv[]) {
 	int noquick = 0;
 	int minmax = 0;
 	int help = 0;
-	gchar *filename;
+	std::string filename; //gchar *filename;
 	gchar *destinationfilename;
 	raw_image *img = NULL;
 	poptContext optCon; 
@@ -568,8 +679,8 @@ int main(int argc, const char *argv[]) {
 			std::cout << "Width set to: " << width << std::endl;
 		}
 	}
-		
-	switch (netcdf_read (filename, &img, thumb, new_x, x_off, y_off, width)){
+
+        switch (netcdf_read (filename, &img, thumb, new_x, x_off, y_off, width)){
         case NC_READ_OK: break;
         case NC_OPEN_FAILED: 
                 std::cerr << "Error opening NC file >" << filename << "<" << std::endl; 
@@ -603,7 +714,6 @@ int main(int argc, const char *argv[]) {
 	if(verbose)
 		std::cout << "Writing complete." << std::endl;
 		
-	g_free(filename);
 	g_free(destinationfilename);
 	poptFreeContext(optCon);
 	exit(0);
