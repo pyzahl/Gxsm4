@@ -391,8 +391,8 @@ public:
                 rowdata = new double* [ny];
                 for (int i=0; i<ny; rowdata[i++] = new double [nx]);
 
-                if (onx > 10000 || ony > 10000){ // sanity check
-                        onx=ony=0;
+                if (onx < 1 || ony < 1 || onx > 20000 || ony > 20000){ // sanity check
+                        onx=ony=1;
                         generate_ov_thumb ();
                 }
                 else
@@ -668,6 +668,8 @@ int main(int argc, const char *argv[]) {
 	}
 
 	if(verbose){
+                std::cout << "NetCDF to PNG Thumbnailer for Gxsm SPM Data." << std::endl
+                          << "Version 2, using  NetCDF4. (C) 2025 Gxsm Team" << std::endl;
 		if (new_x == 0)	
 			std::cout << "Thumbnail-size" << std::endl;
 		else
