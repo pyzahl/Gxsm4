@@ -30,8 +30,7 @@ Finest and state of the art AD/DA, quick overview:
 | 2..4 | IN  | 24 bit DA | @ 2 MSPS $^3$ | IN3, IN4, .. $^4$ | IN3: Feedback Signal, IN4,..: auxillary use |
 <img align="right" width="256" alt="Screenshot From 2025-10-12 16-36-24" src="https://github.com/user-attachments/assets/4c4b2ea8-5e40-4d2e-bdf3-5326999469de" />
 
-Dive into it starting here: https://github.com/pyzahl/Gxsm4/tree/master/plug-ins/hard/RPSPMC (#)
-We are working hard on making the hardware availabe to our users community but it will take some time and for various complex reasons the RPSPMC GIT repository is currently set to (#) private to procect our highly sophistiacted logic designs.
+We are working hard on making the hardware availabe to our users community but it will take some time and for various complex reasons the RPSPMC GIT repository is currently set to private to procect our highly sophistiacted logic designs.
 
 ---
 Notes:
