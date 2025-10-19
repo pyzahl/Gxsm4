@@ -35,11 +35,11 @@ We are working hard on making the hardware availabe to our users community but i
 ---
 Notes:
 
-$^1$: 1 MSPS capable. Actually configured to 0.9 MSPS
+$^1$: 1 MSPS nominally. (0.9 MSPS actual)
 
 $^2$: minial configuration: 4 DA modules for XYZU, default 6 DA, XYZUAB, up to 8 DA modules possible per design but not yet available.
 
-$^3$: 2 MSPS capable, configured to max of 1.4881 MSPS (default, as logic design constraints)
+$^3$: 2 MSPS nominally (2.0833 MSPS actual)
 
 $^4$: default 2 differential inputs IN3, IN4. Expansion to 4 or more differentual inputs possible per design, but not yet available.
 
