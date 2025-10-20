@@ -595,6 +595,8 @@ int main(int argc, const char *argv[]) {
 	while (poptGetNextOpt(optCon) >= 0) {;}	//Now parse until no more options.
 
 	if ((argc < 2 )||(help)) { 
+                std::cout << "NetCDF to PNG Thumbnailer for Gxsm SPM Data." << std::endl
+                          << "  Version 2, using  NetCDF4. (C) 2025 Gxsm Team" << std::endl;
 		poptPrintHelp(optCon, stderr, 0);
 		exit(1);
 	}
@@ -603,8 +605,10 @@ int main(int argc, const char *argv[]) {
 
         if (fn == NULL){
                 verbose = 1;
-                std::cout << "no input NetCDF filename specified." << std::endl;
-                std::cout << "Usage: nctopng datafilename.nc [iconname.png]" << std::endl;
+                std::cout << "EE: no input NetCDF filename specified." << std::endl;
+		poptPrintHelp(optCon, stderr, 0);
+		exit(1);
+                
         } else {
                 
                 filename = g_strdup (fn);
@@ -614,14 +618,18 @@ int main(int argc, const char *argv[]) {
                         destinationfilename = g_strjoin(NULL, filename, ".png", NULL);
                         // using simple join. if you need more sophisticated
                         // have a look at 'mmv' for suffix handling.
+                        //std::cout << "EE: no output icon filename specified." << std::endl;
+                        //poptPrintHelp(optCon, stderr, 0);
+                        //exit(1);
                 }
-                else
+                else {
                         destinationfilename = g_strdup(ficon);
+                }
         }
         
 	if(verbose){
                 std::cout << "NetCDF to PNG Thumbnailer for Gxsm SPM Data." << std::endl
-                          << "Version 2, using  NetCDF4. (C) 2025 Gxsm Team" << std::endl;
+                          << "  Version 2, using  NetCDF4. (C) 2025 Gxsm Team" << std::endl;
 		if (new_x == 0)	
 			std::cout << "Auto Thumbnail-size" << std::endl;
 		else

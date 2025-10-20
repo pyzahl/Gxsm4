@@ -24,7 +24,7 @@ mpl.pyplot.close('all')
 global metal_fit_points
 
 
-sc = dict(CH=2, CHZ=4, start_idx=0, end_idx=54, A0=0,B0=18, MB0=28, Z0=0., dFmin=-10.0, dFmax=1.0, Zmax=30, SZmax=10, SZmin=-0.5, F0off=0.21, STOP=0)
+sc = dict(CH=1, CHZ=2, start_idx=0, end_idx=54, A0=0,B0=18, MB0=28, Z0=0., dFmin=-10.0, dFmax=1.0, Zmax=30, SZmax=10, SZmin=-0.5, F0off=0.21, STOP=0, slices=200)
 rp_freq_dev = 0.0  ### eventual Hz offset/thermal drift for later measured dF(z)
 
 # Setup SCs
