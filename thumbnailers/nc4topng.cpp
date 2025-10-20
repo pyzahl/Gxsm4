@@ -101,6 +101,27 @@ public:
 		scan_bright = b;
 	};
 
+        void generate_ov_thumb(){
+                std::cout << "Writing EE dimOV Thumb, size: " << nx << " x " << ny << std::endl; 
+	        for (int y=0; y<ny; y++)
+			for (int i=0; i<nx; ++i)
+   			        rowdata[y][i] = (y+i)/(ny+nx); // error thumb
+	};
+
+        void generate_EE_thumb(){
+                std::cout << "Writing EE X Thumb, size: " << nx << " x " << ny << std::endl; 
+	        for (int y=0; y<ny; y++)
+			for (int i=0; i<nx; ++i){
+                                double d = fabs(fabs(y-ny/2) - fabs (i-nx/2));
+                                if (d < 8.)
+                                        rowdata[y][i] = 100.;
+                                else if (d < 16.)
+                                        rowdata[y][i] = 100.*(1.-(d-8)/8);
+                                else
+                                        rowdata[y][i] = 0;
+                        }
+	};
+        
 	void calc_line_regress(int y, double &slope, double &offset){
 		//
 		// OutputFeld[i] = InputFeld[i] - (slope * i + offset)
@@ -339,58 +360,65 @@ protected:
 template <class NC_VAR_TYP>
 class raw_image_tmpl : public raw_image{
 public:
-        raw_image_tmpl(netCDF::NcVar img, int thumb=1, int new_x=0, int x_off=0, int y_off=0, int width=0){
+        raw_image_tmpl(netCDF::NcVar img, int thumb=1, int new_x=0, int x_off=0, int y_off=0, int width=0, int dummy=0){
                 x0 = x_off; y0 = y_off;
                 rowdata = NULL;
 
-                // Get the dimensions of image data
-                std::vector<netCDF::NcDim> dims = img.getDims();
+                if (!img.isNull()){
+                        // Get the dimensions of image data
+                        std::vector<netCDF::NcDim> dims = img.getDims();
 
                 
-                if(verbose){
-                        // Print dimension information
-                        std::cout << "Dimensions of image data:" << std::endl;
-                        for (const auto& dim : dims) {
-                                std::cout << "  Name: " << dim.getName() << ", Length: " << dim.getSize() << std::endl;
+                        if(verbose){
+                                // Print dimension information
+                                std::cout << "Dimensions of image data:" << std::endl;
+                                for (const auto& dim : dims) {
+                                        std::cout << "  Name: " << dim.getName() << ", Length: " << dim.getSize() << std::endl;
+                                }
                         }
-                }
                 
-                // img.getDim(0).getSize(); // Time Dimension
-                // img.getDim(1).getSize(); // Value Dimension (Layers)
-                ony = dims[2].getSize(); // Y Dimenson
-                onx = dims[3].getSize(); // X Dimenson
+                        // img.getDim(0).getSize(); // Time Dimension
+                        // img.getDim(1).getSize(); // Value Dimension (Layers)
+                        ony = dims[2].getSize(); // Y Dimenson
+                        onx = dims[3].getSize(); // X Dimenson
 			
-                if (width>0){
-                        w0=width;
-                        nx=new_x;
-                        ny=new_x;
-                }else{
-                        w0=onx;
-                        if (thumb){
-                                if(onx < ony*THUMB_X/THUMB_Y){
-                                        ny=THUMB_Y;
-                                        nx=onx*ny/ony;
-                                }else{
-                                        nx=THUMB_X;
-                                        ny=ony*nx/onx;
-                                }
+                        if (width>0){
+                                w0=width;
+                                nx=new_x;
+                                ny=new_x;
                         }else{
-                                if (new_x){ // scale to new X w aspect
-                                        nx=new_x;
-                                        ny=ony*nx/onx;
+                                w0=onx;
+                                if (thumb){
+                                        if(onx < ony*THUMB_X/THUMB_Y){
+                                                ny=THUMB_Y;
+                                                nx=onx*ny/ony;
+                                        }else{
+                                                nx=THUMB_X;
+                                                ny=ony*nx/onx;
+                                        }
                                 }else{
-                                        nx=onx; 
-                                        ny=ony;
+                                        if (new_x){ // scale to new X w aspect
+                                                nx=new_x;
+                                                ny=ony*nx/onx;
+                                        }else{
+                                                nx=onx; 
+                                                ny=ony;
+                                        }
                                 }
                         }
-                }
 
-                if (x0+nx >= onx) x0=0; // fallback
-                if (y0+ny >= ony) y0=0; // fallback
-				
+                        if (x0+nx >= onx) x0=0; // fallback
+                        if (y0+ny >= ony) y0=0; // fallback
+                } else {
+                        x0=0; y0=0; nx=ny=THUMB_X;
+                }
+                
                 rowdata = new double* [ny];
                 for (int i=0; i<ny; rowdata[i++] = new double [nx]);
 
+                if (dummy)
+                        return;
+                
                 if (onx < 1 || ony < 1 || onx > 20000 || ony > 20000){ // sanity check
                         onx=ony=1;
                         generate_ov_thumb ();
@@ -404,12 +432,6 @@ public:
 		delete [] rowdata;
 	};
 
-        void generate_ov_thumb(){
-	        for (int y=0; y<ny; y++)
-			for (int i=0; i<nx; ++i)
-   			        rowdata[y][i] = (y+i)/(ny+nx); // error thumb
-	};
-    
 	void convert_from_nc(netCDF::NcVar img, int v=0){ // v=0: use layer 0 by default
 		double scale = (double)nx/(double)w0;
 		//NC_VAR_TYP *row = new NC_VAR_TYP[onx];
@@ -455,6 +477,9 @@ GXSM_NETCDF_STATUS netcdf_read(std::string filename, raw_image **img,
                                                 return NC_NOT_FROM_GXSM;
                                         }
                 
+                if(verbose)
+                        std::cerr << "NetCDF file: found Data Field." << std::endl;
+
                 switch (Data.getType().getId()){
                 case NC_SHORT:  *img = new raw_image_tmpl<short> (Data, thumb, new_x, x_off, y_off, width); break;
                 case NC_INT:    *img = new raw_image_tmpl<long> (Data, thumb, new_x, x_off, y_off, width); break;
@@ -489,6 +514,8 @@ GXSM_NETCDF_STATUS netcdf_read(std::string filename, raw_image **img,
 
                 return NC_READ_OK;
         } catch (const netCDF::exceptions::NcException& e) {
+                netCDF::NcVar dum;
+                *img = new raw_image_tmpl<short> (dum, thumb, new_x, x_off, y_off, width, 1);
                 std::cerr << "EE: NetCDF File Error: " << e.what() << std::endl;
                 return NC_FILE_INTERGITY_ERROR;
         }
@@ -641,6 +668,14 @@ int main(int argc, const char *argv[]) {
                                   << std::endl
                                   << "Potentially caused by failed/interrupted nc file write, please investigate using NetCDF ncdump utility."
                                   << std::endl; 
+                        if (img){
+                                img->generate_EE_thumb ();
+                                img->quick_rgb (TRUE, TRUE);
+                                if (verbose)
+                                        std::cout << "Writing EE Thumb >" << destinationfilename << "<" << std::endl; 
+		
+                                write_png(destinationfilename, img);
+                        }
                         g_free(destinationfilename);
                         poptFreeContext(optCon);
                         exit(-1);
