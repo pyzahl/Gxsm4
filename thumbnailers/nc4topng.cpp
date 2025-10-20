@@ -63,7 +63,7 @@
 //
 // ==============================================================
 
-typedef enum { NC_READ_OK, NC_OPEN_FAILED, NC_NOT_FROM_GXSM } GXSM_NETCDF_STATUS;
+typedef enum { NC_READ_OK, NC_OPEN_FAILED, NC_NOT_FROM_GXSM, NC_FILE_INTERGITY_ERROR } GXSM_NETCDF_STATUS;
 
 #define THUMB_X 96 // Thumbnail max X size
 #define THUMB_Y 91 // Thumbnail max Y size
@@ -413,111 +413,25 @@ public:
 	void convert_from_nc(netCDF::NcVar img, int v=0){ // v=0: use layer 0 by default
 		double scale = (double)nx/(double)w0;
 		//NC_VAR_TYP *row = new NC_VAR_TYP[onx];
-		
+                
+                //std::cout << "CONVERTING. ** scale=" << scale << std::endl;
+
+                
 		for (int y=0; y<ny; y++){
                         std::vector<size_t> startp = { 0,v, y0+(int)((double)y/scale+.5), 0 };
                         std::vector<size_t> countp = { 1,1, 1,onx };
+                        //std::cout << "            ** y=" << y << " start: [0," << v << "," << startp[2] << ",0] count: 1,1,1," << onx << std::endl;
                         std::vector<NC_VAR_TYP> row (onx);
 
                         img.getVar(startp, countp, row.data());
-			for (int i=0; i<nx; ++i)
+			for (int i=0; i<nx; ++i){
+                                //int k = x0+(int)((double)i/scale+.5);
+                                //std::cout << "            *** x=" << i << " from row: " << k << std::endl;
 				rowdata[y][i] = (double)row[x0+(int)((double)i/scale+.5)];
-
-			//img->set_cur (0, v, y0+(int)((double)y/scale+.5));
-			//img->get (row, 1,1, 1,onx);
-			//for (int i=0; i<nx; ++i)
-			//	rowdata[y][i] = (double)row[x0+(int)((double)i/scale+.5)];
+                        }
 		}
 	};
 };
-
-#if 0
-// Define the starting corner (0-based) and count for the subset
-        std::vector<size_t> startp = {2, 2};
-        std::vector<size_t> countp = {4, 4};
-
-        // Prepare a vector to hold the data
-        std::vector<int> subset_data(4 * 4);
-
-        // Read the subset of data
-        var.getVar(startp, countp, subset_data.data());
-
-        // Print the read data to verify
-        std::cout << "Read subset data:" << std::endl;
-        for (size_t i = 0; i < countp[0]; ++i) {
-            for (size_t j = 0; j < countp[1]; ++j) {
-                std::cout << subset_data[i * countp[1] + j] << " ";
-            }
-            std::cout << std::endl;
-        }
-#endif
-
-#if 0
-#include <netcdf>
-#include <iostream>
-#include <vector>
-
-int main() {
-    // Define the filename of the NetCDF file to read
-    std::string filename = "example.nc"; // Replace with your NetCDF file name
-
-    try {
-        // Open the NetCDF file in read mode
-        netCDF::NcFile dataFile(filename, netCDF::NcFile::read);
-
-        // Get a variable by its name (e.g., "temperature")
-        netCDF::NcVar temperatureVar = dataFile.getVar("temperature"); 
-
-        // Check if the variable exists
-        if (temperatureVar.isNull()) {
-            std::cerr << "Error: Variable 'temperature' not found in " << filename << std::endl;
-            return 1;
-        }
-
-        // Get the dimensions of the variable
-        std::vector<netCDF::NcDim> dims = temperatureVar.getDims();
-        std::vector<size_t> dimSizes;
-        for (const auto& dim : dims) {
-            dimSizes.push_back(dim.getSize());
-        }
-
-        // Calculate the total number of elements in the variable
-        size_t numElements = 1;
-        for (size_t size : dimSizes) {
-            numElements *= size;
-        }
-
-        // Create a vector to store the data
-        std::vector<float> temperatureData(numElements);
-
-        // Read the data from the variable
-        temperatureVar.getVar(temperatureData.data());
-
-        // Print some of the read data (e.g., the first 10 elements)
-        std::cout << "Temperature data (first 10 elements):" << std::endl;
-        for (size_t i = 0; i < std::min((size_t)10, numElements); ++i) {
-            std::cout << temperatureData[i] << " ";
-        }
-        std::cout << std::endl;
-
-        // You can also read specific attributes
-        netCDF::NcAtt unitsAtt = temperatureVar.getAtt("units");
-        if (!unitsAtt.isNull()) {
-            std::string units;
-            unitsAtt.getValues(units);
-            std::cout << "Units of temperature: " << units << std::endl;
-        }
-
-        // The NcFile object automatically closes the file when it goes out of scope
-
-    } catch (const netCDF::exceptions::NcException& e) {
-        std::cerr << "NetCDF Error: " << e.what() << std::endl;
-        return 1;
-    }
-
-    return 0;
-}
-#endif
 
 
 GXSM_NETCDF_STATUS netcdf_read(std::string filename, raw_image **img, 
@@ -575,8 +489,8 @@ GXSM_NETCDF_STATUS netcdf_read(std::string filename, raw_image **img,
 
                 return NC_READ_OK;
         } catch (const netCDF::exceptions::NcException& e) {
-                std::cerr << "NetCDF Error: " << e.what() << std::endl;
-                return NC_NOT_FROM_GXSM;
+                std::cerr << "EE: NetCDF File Error: " << e.what() << std::endl;
+                return NC_FILE_INTERGITY_ERROR;
         }
 }
 
@@ -710,17 +624,33 @@ int main(int argc, const char *argv[]) {
                 case NC_READ_OK: break;
                 case NC_OPEN_FAILED: 
                         std::cerr << "Error opening NC file >" << filename << "<" << std::endl; 
+                        g_free(destinationfilename);
+                        poptFreeContext(optCon);
                         exit(-1);
                         break;
                 case NC_NOT_FROM_GXSM:
                         std::cerr << "Sorry, can't use this NC file >" << filename << "<" << std::endl 
                                   << "Hint: doesn't look like a Gxsm nc data file!" << std::endl; 
+                        g_free(destinationfilename);
+                        poptFreeContext(optCon);
+                        exit(-1);
+                        break;
+                case NC_FILE_INTERGITY_ERROR:
+                        std::cerr << "Sorry, can't use this NC file >" << filename << "<" << std::endl 
+                                  << "Hint: NetCDF File Data Integrity Error."
+                                  << std::endl
+                                  << "Potentially caused by failed/interrupted nc file write, please investigate using NetCDF ncdump utility."
+                                  << std::endl; 
+                        g_free(destinationfilename);
+                        poptFreeContext(optCon);
                         exit(-1);
                         break;
                 }
 		
                 if  (!img){
                         std::cerr << "Error while creating image from NC file." << std::endl;
+                        g_free(destinationfilename);
+                        poptFreeContext(optCon);
                         exit(-1);
                 }
 		
