@@ -632,7 +632,7 @@ int main(int argc, const char *argv[]) {
 	int noquick = 0;
 	int minmax = 0;
 	int help = 0;
-	std::string filename; //gchar *filename;
+	std::string filename;
 	gchar *destinationfilename;
 	raw_image *img = NULL;
 	poptContext optCon; 
@@ -657,25 +657,38 @@ int main(int argc, const char *argv[]) {
 		poptPrintHelp(optCon, stderr, 0);
 		exit(1);
 	}
-		
-	filename = g_strdup(poptGetArg(optCon));
-	destinationfilename = g_strdup(poptGetArg(optCon));
 
-	if (destinationfilename == NULL){
-		destinationfilename = g_strjoin(NULL, filename, ".png", NULL);
-		// using simple join. if you need more sophisticated
-		// have a look at 'mmv' for suffix handling.
-	}
+        gchar *fn = poptGetArg(optCon);
 
+        if (fn == NULL){
+                verbose = 1;
+                std::cout << "no input NetCDF filename specified." << std::endl;
+                std::cout << "Usage: nctopng datafilename.nc [iconname.png]" << std::endl;
+        } else {
+                
+                filename = g_strdup (fn);
+                gchar *ficon = poptGetArg(optCon);
+
+                if (ficon == NULL){
+                        destinationfilename = g_strjoin(NULL, filename, ".png", NULL);
+                        // using simple join. if you need more sophisticated
+                        // have a look at 'mmv' for suffix handling.
+                }
+                else
+                        destinationfilename = g_strdup(ficon);
+        }
+        
 	if(verbose){
                 std::cout << "NetCDF to PNG Thumbnailer for Gxsm SPM Data." << std::endl
                           << "Version 2, using  NetCDF4. (C) 2025 Gxsm Team" << std::endl;
 		if (new_x == 0)	
-			std::cout << "Thumbnail-size" << std::endl;
+			std::cout << "Auto Thumbnail-size" << std::endl;
 		else
 			std::cout << "Rescaling to new x-size = " << new_x << std::endl;
-		std::cout << "Sourcefile: " << filename << std::endl;
-		std::cout << "Destinationfile: " << destinationfilename << std::endl;
+                if (fn){
+                        std::cout << "Sourcefile: " << filename << std::endl;
+                        std::cout << "Destinationfile: " << destinationfilename << std::endl;
+                }
 	}
 
 	if (new_x > 0)
@@ -692,40 +705,43 @@ int main(int argc, const char *argv[]) {
 		}
 	}
 
-        switch (netcdf_read (filename, &img, thumb, new_x, x_off, y_off, width)){
-        case NC_READ_OK: break;
-        case NC_OPEN_FAILED: 
-                std::cerr << "Error opening NC file >" << filename << "<" << std::endl; 
-                exit(-1);
-                break;
-        case NC_NOT_FROM_GXSM:
-                std::cerr << "Sorry, can't use this NC file >" << filename << "<" << std::endl 
-                          << "Hint: doesn't look like a Gxsm nc data file!" << std::endl; 
-                exit(-1);
-                break;
-	}
+        if (fn){
+                switch (netcdf_read (filename, &img, thumb, new_x, x_off, y_off, width)){
+                case NC_READ_OK: break;
+                case NC_OPEN_FAILED: 
+                        std::cerr << "Error opening NC file >" << filename << "<" << std::endl; 
+                        exit(-1);
+                        break;
+                case NC_NOT_FROM_GXSM:
+                        std::cerr << "Sorry, can't use this NC file >" << filename << "<" << std::endl 
+                                  << "Hint: doesn't look like a Gxsm nc data file!" << std::endl; 
+                        exit(-1);
+                        break;
+                }
 		
-	if  (!img){
-		std::cerr << "Error while creating image from NC file." << std::endl;
-		exit(-1);
-	}
+                if  (!img){
+                        std::cerr << "Error while creating image from NC file." << std::endl;
+                        exit(-1);
+                }
 		
-	if (verbose)
-		std::cout << "Converting ..." << std::endl; 
+                if (verbose)
+                        std::cout << "Converting ..." << std::endl; 
 		
-	if (noquick)
-		img->quick_rgb(FALSE, minmax?TRUE:FALSE);
-	else
-		img->quick_rgb(TRUE, minmax?TRUE:FALSE);
+                if (noquick)
+                        img->quick_rgb(FALSE, minmax?TRUE:FALSE);
+                else
+                        img->quick_rgb(TRUE, minmax?TRUE:FALSE);
 
-	if (verbose)
-		std::cout << "Writing >" << destinationfilename << "<" << std::endl; 
+                if (verbose)
+                        std::cout << "Writing >" << destinationfilename << "<" << std::endl; 
 		
-	write_png(destinationfilename, img);
+                write_png(destinationfilename, img);
 
-	if(verbose)
-		std::cout << "Writing complete." << std::endl;
-		
+                if(verbose)
+                        std::cout << "Writing complete." << std::endl;
+
+        }
+        
 	g_free(destinationfilename);
 	poptFreeContext(optCon);
 	exit(0);
