@@ -83,6 +83,82 @@ const char* Dataio::ioStatus(){
 #define NUM(array) (sizeof(array)/sizeof(array[0]))
 #define NC_GET_VARIABLE(VNAME, VAR) if( !nc.getVar(VNAME).isNull ()) nc.getVar(VNAME).getVar(VAR)
 
+// NetCDF helper
+
+const gchar *get_var_att_as_string (NcFile &nc, NcVar &var, const gchar *att_name){
+        netCDF::NcVarAtt att = var.getAtt (att_name);
+
+        if (att.isNull()) {
+                std::cerr << "Error: Attribute '" << att_name << "' not found." << std::endl;
+                return NULL;
+        }
+        
+        // Check if the attribute type is a string
+        netCDF::NcType att_type = att.getType();
+        if (att_type != netCDF::NcType::nc_CHAR && att_type != netCDF::NcType::nc_STRING) {
+                std::cerr << "Error: Attribute is not a string type." << std::endl;
+                return NULL;
+        }
+        
+        // Get the length of the attribute value
+        size_t len = att.getAttLength();
+        
+        // Read the attribute value into a character buffer
+        if (att_type == netCDF::NcType::nc_CHAR) {
+                char* att_value_c_str = new char[len + 1]; // +1 for null terminator
+                att.getValues(att_value_c_str);
+                att_value_c_str[len] = '\0'; // Ensure null-termination
+                std::string att_value_str(att_value_c_str);
+                delete[] att_value_c_str;
+            
+                std::cout << "Attribute '" << att_name << "' value: " << att_value_str << std::endl;
+                return (g_strdup (att_value_str.data ()));
+        } else if (att_type == netCDF::NcType::nc_STRING) {
+                // For NC_STRING, getValues returns an array of char*
+                char** str_array_c = new char*[len];
+                att.getValues(str_array_c);
+            
+                // Convert to a vector of std::string
+                std::vector<std::string> str_vector;
+                for (size_t i = 0; i < len; ++i) {
+                        str_vector.push_back(std::string(str_array_c[i]));
+                }
+            
+                // Print the values
+                gchar *att_as_string=g_strdup("");
+                std::cout << "Attribute '" << att_name << "' value (NC_STRING):" << std::endl;
+                for (const auto& s : str_vector) {
+                        std::cout << "  " << s << std::endl;
+                        gchar *tmp = g_strconcat (att_as_string, s.data(), NULL);
+                        g_free (att_as_string);
+                        att_as_string = tmp;
+                }
+                return (att_as_string);
+        }
+}
+
+const gchar *get_att_as_string (NcFile &nc, const gchar *var_id, const gchar *att_name){
+        netCDF::NcVar v=nc.getVar (var_id);
+        return *get_var_att_as_string (nc, v, att_name);
+}
+
+
+
+UnitObj *get_gxsm_unit_from_nc(NcFile &nc, const gchar *var_id) {
+        gchar *unit = get_att_as_string (nc, var_id, "unit");
+        if (unit){
+                gchar *label = get_att_as_string (nc, var_id, "label");
+                if (label){
+                        UnitObj *u =  main_get_gapp ()->xsm->MakeUnit (unit, label);
+                        g_free (unit);
+                        g_free (label);
+                        return u;
+                }
+                g_free (unit);
+        }
+        return NULL;
+}
+
 // NEW 20180430PY
 // =====================================================================================
 // set scaling, apply load time scale correction -- as set in preferences
@@ -92,6 +168,12 @@ const char* Dataio::ioStatus(){
 FIO_STATUS NetCDF::Read(xsm::open_mode mode){
 	int i;
 
+        main_get_gapp ()->progress_info_new ("NetCDF Read Progress", 2);
+        main_get_gapp ()->progress_info_set_bar_fraction (0., 1);
+        main_get_gapp ()->progress_info_set_bar_text (name, 1);
+        main_get_gapp ()->SetStatus (N_("Loading... "), name);
+        main_get_gapp ()->monitorcontrol->LogEvent(N_("Loading... "), name);
+        
         try {
                 std::string filename = name;
                 // Open the NetCDF file in read mode
@@ -100,11 +182,6 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
                 // try Topo Scan
                 netCDF::NcVar Data; 
 
-                main_get_gapp ()->progress_info_new ("NetCDF Read Progress", 2);
-                main_get_gapp ()->progress_info_set_bar_fraction (0., 1);
-                main_get_gapp ()->progress_info_set_bar_text (name, 1);
-                main_get_gapp ()->SetStatus (N_("Loading... "), name);
-                main_get_gapp ()->monitorcontrol->LogEvent(N_("Loading... "), name);
 
                 ZD_TYPE zdata_typ=ZD_SHORT; // used by "H" -- Topographic STM/AFM data, historic default
 
@@ -327,85 +404,26 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
                 main_get_gapp ()->progress_info_set_bar_text ("Variables", 2);
                 main_get_gapp ()->progress_info_set_bar_fraction (0.25, 1);
 
-                {
-                        NcVarAtt unit_att = nc.getVar("time").getAtt("unit");
-                        if (!unit_att.isNull()){
-                                NcVarAtt label_att = nc.getVar("time").getAtt("label");
-                                if (!label_att.isNull ()){
-                                        NcValues unit  = unit_att.values();
-                                        NcValues label = label_att.values();
-                                        UnitObj *u = main_get_gapp ()->xsm->MakeUnit (unit->as_string(0), label->as_string(0));
-                                        scan->data.SetTimeUnit(u);
-                                        delete u;
-                                }
-                        }
-                }
-
-                if ((unit_att = nc.getVar("value")->get_att("unit"))){
-                        if ((label_att = nc.getVar("value").getAtt("label"))){
-                                NcValues *unit  = unit_att->values();
-                                NcValues *label = label_att->values();
-                                UnitObj *u = main_get_gapp ()->xsm->MakeUnit (unit->as_string(0), label->as_string(0));
-                                scan->data.SetVUnit(u);
-                                delete unit;
-                                delete label;
-                                delete u;
-                                delete label_att;
-                                label_att = NULL;
-                        }
-                        delete unit_att;
-                        unit_att = NULL;
-                }
-
-                nc.getVar("rangex")->get(&scan->data.s.rx); scan->data.s.rx *= xsmres.LoadCorrectXYZ[0];
-                if ((unit_att = nc.getVar("rangex").getAtt("unit"))){
-                        if ((label_att = nc.getVar("rangex").getAtt("label"))){
-                                NcValues *unit  = unit_att->values();
-                                NcValues *label = label_att->values();
-                                UnitObj *u = main_get_gapp ()->xsm->MakeUnit (unit->as_string(0), label->as_string(0));
-                                scan->data.SetXUnit(u);
-                                delete unit;
-                                delete label;
-                                delete u;
-                                delete label_att;
-                                label_att = NULL;
-                        }
-                        delete unit_att;
-                        unit_att = NULL;
-                }
-                nc.getVar("rangey")->get(&scan->data.s.ry); scan->data.s.ry *= xsmres.LoadCorrectXYZ[1];
-                if ((unit_att = nc.getVar("rangey").getAtt("unit"))){
-                        if ((label_att = nc.getVar("rangey").getAtt("label"))){
-                                NcValues *unit  = unit_att->values();
-                                NcValues *label = label_att->values();
-                                UnitObj *u = main_get_gapp ()->xsm->MakeUnit (unit->as_string(0), label->as_string(0));
-                                scan->data.SetYUnit(u);
-                                delete unit;
-                                delete label;
-                                delete u;
-                                delete label_att;
-                                label_att = NULL;
-                        }
-                        delete unit_att;
-                        unit_att = NULL;
-                }
+                { UnitObj *u = get_gxsm_unit_from_nc(nc, "time"); if (u) { scan->data.SetTimeUnit(u); delete u; } }
+                { UnitObj *u = get_gxsm_unit_from_nc(nc, "value"); if (u) { scan->data.SetVUnit(u); delete u; } }
+                { UnitObj *u = get_gxsm_unit_from_nc(nc, "rangex"); if (u) { scan->data.SetXUnit(u); delete u; } }
+                { UnitObj *u = get_gxsm_unit_from_nc(nc, "rangey"); if (u) { scan->data.SetYUnit(u); delete u; } }
 
                 // Check Z daya type via Z label
                 double LoadCorrectZ = 1.0;
                 g_message ("NetCDF GXSM data type: %s", scan->data.ui.type);
-                if ((unit_att = Data.getAtt("ZLabel"))){
-                        NcValues *label = unit_att->values();
 
-                        g_message ("User NetCDF Load Correct Z scaling check type: Data is '%s'.", label->as_string(0));
+                gchar *zlabel = get_var_att_as_string (nc, Data, "ZLabel");
 
-                        if (!strcmp (label->as_string(0), "Z"))
+                if (zlabel){
+                        g_message ("User NetCDF Load Correct Z scaling check type: Data is '%s'.", zlabel);
+
+                        if (!strcmp (zlabel, "Z"))
                                 LoadCorrectZ = xsmres.LoadCorrectXYZ[2];
                         else
                                 LoadCorrectZ = xsmres.LoadCorrectXYZ[3];
                 
-                        delete label;
-                        delete unit_att;
-                        unit_att = NULL;
+                        delete zlabel;
                 }
 
 
@@ -416,32 +434,19 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
                 if (fabs (LoadCorrectZ - 1.0) > 0.001)
                         g_message ("User NetCDF Load Correct Z scaling is set to %g.", LoadCorrectZ);
         
-                nc.getVar("rangez")->get(&scan->data.s.rz); scan->data.s.rz *= LoadCorrectZ;
-                if ((unit_att = nc.getVar("rangez").getAtt("unit"))){
-                        if ((label_att = nc.getVar("rangez").getAtt("label"))){
-                                NcValues *unit  = unit_att->values();
-                                NcValues *label = label_att->values();
-                                UnitObj *u = main_get_gapp ()->xsm->MakeUnit (unit->as_string(0), label->as_string(0));
-                                scan->data.SetZUnit(u);
-                                delete unit;
-                                delete label;
-                                delete u;
-                                delete label_att;
-                                label_att = NULL;
-                        }
-                        delete unit_att;
-                        unit_att = NULL;
-                }
+                nc.getVar("rangez").getVar(&scan->data.s.rz); scan->data.s.rz *= LoadCorrectZ;
 
-                nc.getVar("dx")->get(&scan->data.s.dx); scan->data.s.dx *= xsmres.LoadCorrectXYZ[0];
-                nc.getVar("dy")->get(&scan->data.s.dy); scan->data.s.dy *= xsmres.LoadCorrectXYZ[1];
-                nc.getVar("dz")->get(&scan->data.s.dz); scan->data.s.dz *= LoadCorrectZ;
-                nc.getVar("offsetx")->get(&scan->data.s.x0); scan->data.s.x0 *= xsmres.LoadCorrectXYZ[0];
-                nc.getVar("offsety")->get(&scan->data.s.y0); scan->data.s.y0 *= xsmres.LoadCorrectXYZ[1];
-                nc.getVar("alpha")->get(&scan->data.s.alpha);
+                { UnitObj *u = get_gxsm_unit_from_nc(nc, "rangez"); if (u) { scan->data.SetZUnit(u); delete u; } }
 
-                nc.getVar("contrast")->get(&scan->data.display.contrast);
-                nc.getVar("bright")->get(&scan->data.display.bright);
+                nc.getVar("dx").getVar(&scan->data.s.dx); scan->data.s.dx *= xsmres.LoadCorrectXYZ[0];
+                nc.getVar("dy").getVar(&scan->data.s.dy); scan->data.s.dy *= xsmres.LoadCorrectXYZ[1];
+                nc.getVar("dz").getVar(&scan->data.s.dz); scan->data.s.dz *= LoadCorrectZ;
+                nc.getVar("offsetx").getVar(&scan->data.s.x0); scan->data.s.x0 *= xsmres.LoadCorrectXYZ[0];
+                nc.getVar("offsety").getVar(&scan->data.s.y0); scan->data.s.y0 *= xsmres.LoadCorrectXYZ[1];
+                nc.getVar("alpha").getVar(&scan->data.s.alpha);
+
+                nc.getVar("contrast").getVar(&scan->data.display.contrast);
+                nc.getVar("bright").getVar(&scan->data.display.bright);
 
                 scan->data.display.vrange_z = Contrast_to_VRangeZ (scan->data.display.contrast, scan->data.s.dz);
 
@@ -449,89 +454,81 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
 #ifndef MINIMAL_READ_NC
                 g_message ("NetCDF read optional informations");
 
-                NcVar *comment = nc.getVar("comment");
-                if (comment){
-                        G_NEWSIZE(scan->data.ui.comment, 1+comment->get_dim(0)->size());
-                        memset (scan->data.ui.comment, 0, 1+comment->get_dim(0)->size());
-                        comment->get(scan->data.ui.comment, comment->get_dim(0)->size());
+                NcVar comment = nc.getVar("comment");
+                if (!comment.isNull ()){
+                        int clen = comment.getDims ()[0].getSize();
+                        G_NEWSIZE(scan->data.ui.comment, 1+clen);
+                        memset (scan->data.ui.comment, 0, 1+clen);
+                        comment.getVar ({0},{clen}, scan->data.ui.comment);
                 }
 
-                NcVar *type = nc.getVar("type"); 
-                if (type){
-                        G_NEWSIZE(scan->data.ui.type, 1+type->get_dim(0)->size());
-                        memset (scan->data.ui.type, 0, 1+type->get_dim(0)->size());
-                        type->get(scan->data.ui.type, type->get_dim(0)->size());
-                }
-                NcVar *username = nc.getVar("username");
-                if (username){
-                        G_NEWSIZE(scan->data.ui.user, username->get_dim(0)->size());
-                        username->get(scan->data.ui.user, username->get_dim(0)->size());
-                }
-                NcVar *dateofscan = nc.getVar("dateofscan");
-                if(dateofscan){
-                        G_NEWSIZE(scan->data.ui.dateofscan, dateofscan->get_dim(0)->size());
-                        dateofscan->get(scan->data.ui.dateofscan, dateofscan->get_dim(0)->size());
-                }
-
-                if(nc.getVar("t_start")) nc.getVar("t_start")->get(&scan->data.s.tStart);
-                if(nc.getVar("t_end")) nc.getVar("t_end")->get(&scan->data.s.tEnd);
-                // restore last view mode
-                if(nc.getVar("viewmode")){ 
-                        nc.getVar("viewmode")->get(&scan->data.display.ViewFlg); 
-                        scan->SetVM(scan->data.display.ViewFlg);
-                } 
-                if(nc.getVar("vrange_z")) nc.getVar("vrange_z")->get(&scan->data.display.vrange_z);
-                if(nc.getVar("voffset_z")) nc.getVar("voffset_z")->get(&scan->data.display.voffset_z);
-
-                if(nc.getVar("basename")){
-                        int len;
-                        G_NEWSIZE(scan->data.ui.originalname, len=nc.getVar("basename")->get_dim(0)->size());
-                        nc.getVar("basename")->get(scan->data.ui.originalname, len);
+                NcVar basename = nc.getVar("basename");
+                if(!basename.isNull ()){
+                        int clen = basename.getDims ()[0].getSize();
+                        G_NEWSIZE(scan->data.ui.originalname, clen);
+                        basename.getVar ({0}, {clen}, scan->data.ui.originalname);
                         XSM_DEBUG (DBG_L2, "got original name:" << scan->data.ui.originalname);
                 }
                 else{
                         scan->data.ui.SetOriginalName ("original name is not available");
                         XSM_DEBUG (DBG_L2, "original name is not available");
                 }
-                if(nc.getVar("energy"  )) nc.getVar("energy"  )->get(&scan->data.s.Energy);
-                if(nc.getVar("gatetime")){
-                        nc.getVar("gatetime")->get(&scan->data.s.GateTime );
+
+                NcVar type = nc.getVar("type"); 
+                if (!type.isNull ()){
+                        int clen = type.getDims ()[0].getSize();
+                        G_NEWSIZE(scan->data.ui.type, 1+clen);
+                        memset (scan->data.ui.type, 0, 1+clen);
+                        type.getVar({0},{clen},scan->data.ui.type);
+                }
+                NcVar username = nc.getVar("username");
+                if (!username.isNull ()){
+                        int clen = username.getDims ()[0].getSize();
+                        G_NEWSIZE(scan->data.ui.user, 1+clen);
+                        memset (scan->data.ui.user, 0, 1+clen);
+                        username.getVar ({0}, {clen}, scan->data.ui.user);
+                }
+                NcVar dateofscan = nc.getVar("dateofscan");
+                if(!dateofscan.isNull ()){
+                        int clen = dateofscan.getDims ()[0].getSize();
+                        G_NEWSIZE(scan->data.ui.dateofscan, 1+clen);
+                        memset (scan->data.ui.dateofscan, 0, 1+clen);
+                        dateofscan.getVar ({0}, {clen}, scan->data.ui.dateofscan);
+                }
+
+                NC_GET_VARIABLE ("t_start", &scan->data.s.tStart);
+                NC_GET_VARIABLE ("t_end", &scan->data.s.tEnd);
+                NC_GET_VARIABLE ("viewmode", &scan->data.display.ViewFlg); scan->SetVM (scan->data.display.ViewFlg);
+                NC_GET_VARIABLE ("vrange_z", &scan->data.display.vrange_z);
+                NC_GET_VARIABLE ("voffset_z", &scan->data.display.voffset_z);
+
+                // Count Data, SPA-LEED, etc. only:
+                NC_GET_VARIABLE ("energy", &scan->data.s.Energy);
+                NC_GET_VARIABLE ("gatetime", &scan->data.s.GateTime);
+                NC_GET_VARIABLE ("cnttime", &scan->data.s.GateTime);
+                if (!nc.getVar("gatetime").isNull () || !nc.getVar("cnttime").isNull ())
                         scan->data.s.dz = 1./scan->data.s.GateTime;
-                }
-                if(nc.getVar("cnttime")){ // overrides above
-                        nc.getVar("cnttime")->get(&scan->data.s.GateTime);
-                        scan->data.s.dz = 1./scan->data.s.GateTime;
-                }
-                if(nc.getVar("cnt_high" )){
-                        nc.getVar("cnt_high" )->get(&scan->data.display.z_high);
-                }
-                if(nc.getVar("z_high" )){
-                        nc.getVar("z_high" )->get(&scan->data.display.z_high);
-                }
-                if(nc.getVar("cps_high" )) nc.getVar("cps_high" )->get(&scan->data.display.z_high);
+                
+                NC_GET_VARIABLE ("cnt_high", &scan->data.display.z_high);
+                NC_GET_VARIABLE ("z_high", &scan->data.display.z_high);
+                NC_GET_VARIABLE ("cps_high", &scan->data.display.z_high);
+                NC_GET_VARIABLE ("cnt_low", &scan->data.display.z_low);
+                NC_GET_VARIABLE ("z_low", &scan->data.display.z_low);
+                NC_GET_VARIABLE ("cps_low", &scan->data.display.z_low);
+                NC_GET_VARIABLE ("spa_orgx", &scan->data.s.SPA_OrgX);
+                NC_GET_VARIABLE ("spa_orgy", &scan->data.s.SPA_OrgY);
+                // NC_GET_VARIABLE ("", &scan->data.);
 
-                if(nc.getVar("cnt_low"  )){
-                        nc.getVar("cnt_low"  )->get(&scan->data.display.z_low);
-                }
-                if(nc.getVar("z_low"  )){
-                        nc.getVar("z_low"  )->get(&scan->data.display.z_low);
-                }
-                if(nc.getVar("cps_low" )) nc.getVar("cps_low" )->get(&scan->data.display.z_low);
-
-                if(nc.getVar("spa_orgx"  )) nc.getVar("spa_orgx"  )->get(&scan->data.s.SPA_OrgX);
-                if(nc.getVar("spa_orgy"  )) nc.getVar("spa_orgy"  )->get(&scan->data.s.SPA_OrgY);
-
-                //  if(nc.getVar("")) nc.getVar("")->get(&scan->data.hardpars.);
 
                 // load attached Events, if any
                 main_get_gapp ()->progress_info_set_bar_fraction (0.5, 1);
                 main_get_gapp ()->progress_info_set_bar_text ("Events", 2);
-                scan->mem2d->LoadScanEvents (&nc);
+                scan->mem2d->LoadScanEvents (nc);
 
                 // Signal PlugIns
                 main_get_gapp ()->progress_info_set_bar_fraction (0.75, 1);
                 main_get_gapp ()->progress_info_set_bar_text ("Plugin Data", 2);
-                main_get_gapp ()->SignalCDFLoadEventToPlugins (&nc);
+                main_get_gapp ()->SignalCDFLoadEventToPlugins (nc);
 	
                 // try to recover some common defaults data and add to OSD (old sranger)
                 NC_GET_VARIABLE ("sranger_hwi_bias", &scan->data.s.Bias);
@@ -556,11 +553,9 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
                 main_get_gapp ()->progress_info_close ();
                 return status = FIO_OK; 
 
-                
-
-                return NC_READ_OK;
         } catch (const netCDF::exceptions::NcException& e) {
-                std::cerr << "EE: NetCDF File Error: " << e.what() << std::endl;
+                std::cerr << "EE: NetCDF File Read Error: " << e.what() << std::endl;
+                main_get_gapp ()->progress_info_close ();
 		return status = FIO_OPEN_ERR;
         }
 }
@@ -572,9 +567,9 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
 		nv.putAtt("label", unit->Label());	\
 		nv.putAtt("var_unit", "Ang");		\
 		if (unit->Alias())			\
-			nv->putAtt("unit", unit->Alias());	\
+			nv.putAtt("unit", unit->Alias());	\
 		else						\
-			nv->putAtt("unitSymbol", unit->Symbol());	\
+			nv.putAtt("unitSymbol", unit->Symbol());	\
 	}while(0)
 
 
@@ -582,441 +577,441 @@ FIO_STATUS NetCDF::Write(){
 	XSM_DEBUG (DBG_L2, "NetCDF::Write");
 	// name convention NetCDF: *.nc
 
-	NcError ncerr(NcError::verbose_nonfatal);
-	NcFile nc(name, NcFile::Replace); // ,NULL,0,NcFile::Netcdf4); // Create, leave in define mode
-        // use 64 byte offset mode if(ntimes > 2) , FileFormat=NcFile::Offset64Bits
+        main_get_gapp ()->progress_info_new ("NetCDF Write Progress",2);
+        main_get_gapp ()->progress_info_set_bar_fraction (0., 1);
+        main_get_gapp ()->progress_info_set_bar_text (name, 1);
+        main_get_gapp ()->progress_info_set_bar_fraction (0., 2);
+        
+        try {
+                NcFile nc(name, NcFile::replace); // ,NULL,0,NcFile::Netcdf4); // Create, leave in define mode
+                // use 64 byte offset mode if(ntimes > 2) , FileFormat=NcFile::Offset64Bits
    
-	scan->data.ui.SetName(name);
+                scan->data.ui.SetName(name);
 
-	// Check if the file was opened successfully
-	if (! nc.is_valid())
-		return status = FIO_OPEN_ERR;
 
-	main_get_gapp ()->progress_info_new ("NetCDF Write Progress",2);
-	main_get_gapp ()->progress_info_set_bar_fraction (0., 1);
-	main_get_gapp ()->progress_info_set_bar_text (name, 1);
-	main_get_gapp ()->progress_info_set_bar_fraction (0., 2);
+                XSM_DEBUG (DBG_L2, "NetCDF::Write-> open OK");
 
-	XSM_DEBUG (DBG_L2, "NetCDF::Write-> open OK");
-
-	// Create dimensions
+                // Create dimensions
 #define NTIMES   1
 #define TIMELEN 40
 #define VALUEDIM 1
-	NcDim timed  = nc.addDim("time", scan->data.s.ntimes);        // Time of Scan
-	NcDim valued = nc.addDim("value", scan->data.s.nvalues);     // Value of Scan, eg. Volt / Force
-	NcDim dimxd  = nc.addDim("dimx", scan->mem2d->GetNx()); // Image Dim. in X (#Samples)
-	NcDim dimyd  = nc.addDim("dimy", scan->mem2d->GetNy()); // Image Dim. in Y (#Samples)
+                NcDim timed  = nc.addDim("time", scan->data.s.ntimes);        // Time of Scan
+                NcDim valued = nc.addDim("value", scan->data.s.nvalues);     // Value of Scan, eg. Volt / Force
+                NcDim dimxd  = nc.addDim("dimx", scan->mem2d->GetNx()); // Image Dim. in X (#Samples)
+                NcDim dimyd  = nc.addDim("dimy", scan->mem2d->GetNy()); // Image Dim. in Y (#Samples)
   
-	NcDim reftimed  = nc.addDim("reftime", TIMELEN);  // Starting time
+                NcDim reftimed  = nc.addDim("reftime", TIMELEN);  // Starting time
   
-	NcDim commentd    = nc.addDim("comment", strlen(scan->data.ui.comment)+1);       // Comment
-	NcDim titled      = nc.addDim("title", strlen(scan->data.ui.title)+1);           // Title
-	NcDim typed       = nc.addDim("type", strlen(scan->data.ui.type)+1);           // Type
-	NcDim usernamed   = nc.addDim("username", strlen(scan->data.ui.user)+1);         // Username
-	NcDim dateofscand = nc.addDim("dateofscan", strlen(scan->data.ui.dateofscan)+1); // Scandate
+                NcDim commentd    = nc.addDim("comment", strlen(scan->data.ui.comment)+1);       // Comment
+                NcDim titled      = nc.addDim("title", strlen(scan->data.ui.title)+1);           // Title
+                NcDim typed       = nc.addDim("type", strlen(scan->data.ui.type)+1);           // Type
+                NcDim usernamed   = nc.addDim("username", strlen(scan->data.ui.user)+1);         // Username
+                NcDim dateofscand = nc.addDim("dateofscan", strlen(scan->data.ui.dateofscan)+1); // Scandate
 
-	XSM_DEBUG (DBG_L2, "NetCDF::Write-> Creating Data Var");
-	// Create variables and their attributes
-	NcVar* Data;
-	switch(scan->mem2d->GetTyp()){
-	case ZD_BYTE:
-		Data = nc.addVar("ByteField", ncByte, timed, valued, dimyd, dimxd);
-		Data->putAtt("long_name", "BYTE: 8bit data field");
-		break;
-	case ZD_SHORT:
-		Data = nc.addVar("H", ncShort, timed, valued, dimyd, dimxd);
-		Data->putAtt("long_name", "SHORT: signed 16bit data field)");
-		break;
-	case ZD_LONG: 
-		Data = nc.addVar("Intensity", ncLong, timed, valued, dimyd, dimxd);
-		Data->putAtt("long_name", "LONG: signed 32bit data field");
-		break;
-	case ZD_FLOAT: 
-		Data = nc.addVar("FloatField", ncFloat, timed, valued, dimyd, dimxd);
-		Data->putAtt("long_name", "FLOAT: single precision floating point data field");
-		break;
-	case ZD_DOUBLE: 
-		Data = nc.addVar("DoubleField", ncDouble, timed, valued, dimyd, dimxd);
-		Data->putAtt("long_name", "DOUBLE: souble precision floating point data field");
-		break;
-	case ZD_COMPLEX: 
-		Data = nc.addVar("ComplexDoubleField", ncDouble, timed, valued, dimyd, dimxd);
-		Data->putAtt("long_name", "complex (abs,re,im) double data field");
-		break;
-	case ZD_RGBA: 
-		Data = nc.addVar("RGBA_ByteField", ncDouble, timed, valued, dimyd, dimxd);
-		Data->putAtt("long_name", "byte RGBA data field");
-		break;
-	default:
-		return status = FIO_NO_NETCDFXSMFILE;
-		break;
-	}
-	Data->putAtt("var_units_hint", "raw DAC/counter data. Unit is not defined here: multiply by dz-unit");
+                XSM_DEBUG (DBG_L2, "NetCDF::Write-> Creating Data Var");
+                // Create variables and their attributes
+                NcVar Data;
 
-	XSM_DEBUG (DBG_L2, "NetCDF::Write-> Adding Units ZLab");
+                std::vector<netCDF::NcDim>  data_dims;
+                data_dims.push_back (timed);
+                data_dims.push_back (valued);
+                data_dims.push_back (dimyd);
+                data_dims.push_back (dimxd);
+                
+                switch(scan->mem2d->GetTyp()){
+                case ZD_BYTE:
+                        Data = nc.addVar("ByteField", ncByte, data_dims); // timed, valued, dimyd, dimxd);
+                        Data.putAtt("long_name", "BYTE: 8bit data field");
+                        break;
+                case ZD_SHORT:
+                        Data = nc.addVar("H", ncShort, data_dims);
+                        Data.putAtt("long_name", "SHORT: signed 16bit data field)");
+                        break;
+                case ZD_LONG: 
+                        Data = nc.addVar("Intensity", ncInt64, data_dims);
+                        Data.putAtt("long_name", "LONG: signed 32bit data field");
+                        break;
+                case ZD_FLOAT: 
+                        Data = nc.addVar("FloatField", ncFloat, data_dims);
+                        Data.putAtt("long_name", "FLOAT: single precision floating point data field");
+                        break;
+                case ZD_DOUBLE: 
+                        Data = nc.addVar("DoubleField", ncDouble, data_dims);
+                        Data.putAtt("long_name", "DOUBLE: souble precision floating point data field");
+                        break;
+                case ZD_COMPLEX: 
+                        Data = nc.addVar("ComplexDoubleField", ncDouble, data_dims);
+                        Data.putAtt("long_name", "complex (abs,re,im) double data field");
+                        break;
+                case ZD_RGBA: 
+                        Data = nc.addVar("RGBA_ByteField", ncDouble, data_dims);
+                        Data.putAtt("long_name", "byte RGBA data field");
+                        break;
+                default:
+                        return status = FIO_NO_NETCDFXSMFILE;
+                        break;
+                }
+                Data.putAtt("var_units_hint", "raw DAC/counter data. Unit is not defined here: multiply by dz-unit");
 
-	Data->putAtt("ZLabel", scan->data.Zunit->Label());
-	Data->putAtt("unit", scan->data.Zunit->Symbol());
-	if (scan->data.Zunit->Alias())
-		Data->putAtt("ZSrcUnit", scan->data.Zunit->Alias());
-	else
-		XSM_DEBUG(DBG_L2, "NetCDF::Write-> Warning: No Alias for Z unit, cannot restore unit on load" );
+                XSM_DEBUG (DBG_L2, "NetCDF::Write-> Adding Units ZLab");
+
+                Data.putAtt("ZLabel", scan->data.Zunit->Label());
+                Data.putAtt("unit", scan->data.Zunit->Symbol());
+                if (scan->data.Zunit->Alias())
+                        Data.putAtt("ZSrcUnit", scan->data.Zunit->Alias());
+                else
+                        XSM_DEBUG(DBG_L2, "NetCDF::Write-> Warning: No Alias for Z unit, cannot restore unit on load" );
   
-	XSM_DEBUG (DBG_L2, "NetCDF::Write-> Adding time, att");
+                XSM_DEBUG (DBG_L2, "NetCDF::Write-> Adding time, att");
 
-	NcVar* time  = nc.addVar("time", ncDouble, timed);
-	time->putAtt("long_name", "Time since reftime (actual time scanning) or other virtual in time changeing parameter");
-	time->putAtt("short_name", "Scan Time");
-	//time->putAtt("var_unit", "s"); // 20170130-PYZ-added-actual-unit-info
-	time->putAtt("dimension_unit_info", "actual data dimension for SrcType in time element dimension");
-	if (scan->data.TimeUnit){
-		time->putAtt("label", scan->data.TimeUnit->Label());
-		time->putAtt("unit", scan->data.TimeUnit->Symbol());
-	}else{
-		time->putAtt("label", "time");
-		time->putAtt("unit", "s");
-	}
+                NcVar time  = nc.addVar("time", ncDouble, timed);
+                time.putAtt("long_name", "Time since reftime (actual time scanning) or other virtual in time changeing parameter");
+                time.putAtt("short_name", "Scan Time");
+                //time.putAtt("var_unit", "s"); // 20170130-PYZ-added-actual-unit-info
+                time.putAtt("dimension_unit_info", "actual data dimension for SrcType in time element dimension");
+                if (scan->data.TimeUnit){
+                        time.putAtt("label", scan->data.TimeUnit->Label());
+                        time.putAtt("unit", scan->data.TimeUnit->Symbol());
+                }else{
+                        time.putAtt("label", "time");
+                        time.putAtt("unit", "s");
+                }
   
   
-	XSM_DEBUG (DBG_L2, "NetCDF::Write-> Adding Units Value");
+                XSM_DEBUG (DBG_L2, "NetCDF::Write-> Adding Units Value");
 
-	NcVar* value = nc.addVar("value", ncFloat, valued);
-	value->putAtt("long_name", "Image Layers of SrcType at Values");
-	if (scan->data.Vunit){
-		value->putAtt("label", scan->data.Vunit->Label());
-		value->putAtt("unit", scan->data.Vunit->Symbol());
-	}else{
-		value->putAtt("label", "Value");
-		value->putAtt("unit", "A.U.");
-	}
+                NcVar value = nc.addVar("value", ncFloat, valued);
+                value.putAtt("long_name", "Image Layers of SrcType at Values");
+                if (scan->data.Vunit){
+                        value.putAtt("label", scan->data.Vunit->Label());
+                        value.putAtt("unit", scan->data.Vunit->Symbol());
+                }else{
+                        value.putAtt("label", "Value");
+                        value.putAtt("unit", "A.U.");
+                }
   
-	XSM_DEBUG (DBG_L2, "NetCDF::Write-> dim x y reft");
+                XSM_DEBUG (DBG_L2, "NetCDF::Write-> dim x y reft");
 
-	NcVar* dimx  = nc.addVar("dimx", ncFloat, dimxd);
-	dimx->putAtt("long_name", "# Pixels in X, contains X-Pos Lookup");
-	dimx->putAtt("extra_info", "X-Lookup without offset");
+                NcVar dimx  = nc.addVar("dimx", ncFloat, dimxd);
+                dimx.putAtt("long_name", "# Pixels in X, contains X-Pos Lookup");
+                dimx.putAtt("extra_info", "X-Lookup without offset");
   
-	NcVar* dimy  = nc.addVar("dimy", ncFloat, dimyd);
-	dimy->putAtt("long_name", "# Pixels in Y, contains Y-Pos Lookup");
-	dimy->putAtt("extra_info", "Y-Lookup without offset");
+                NcVar dimy  = nc.addVar("dimy", ncFloat, dimyd);
+                dimy.putAtt("long_name", "# Pixels in Y, contains Y-Pos Lookup");
+                dimy.putAtt("extra_info", "Y-Lookup without offset");
   
-	NcVar* reftime  = nc.addVar("reftime", ncChar, reftimed);
-	reftime->putAtt("long_name", "Reference time, i.e. Scan Start");
-	reftime->putAtt("unit", "date string");
+                NcVar reftime  = nc.addVar("reftime", ncChar, reftimed);
+                reftime.putAtt("long_name", "Reference time, i.e. Scan Start");
+                reftime.putAtt("unit", "date string");
   
 
-	XSM_DEBUG (DBG_L2, "NetCDF::Write-> Comment Title ...");
+                XSM_DEBUG (DBG_L2, "NetCDF::Write-> Comment Title ...");
 
-	NcVar* comment    = nc.addVar("comment", ncChar, commentd);
-	NcVar* title      = nc.addVar("title", ncChar, titled);
-	NcVar* type       = nc.addVar("type", ncChar, typed);
-	NcVar* username   = nc.addVar("username", ncChar, usernamed);
-	NcVar* dateofscan = nc.addVar("dateofscan", ncChar, dateofscand);
+                NcVar comment    = nc.addVar("comment", ncChar, commentd);
+                NcVar title      = nc.addVar("title", ncChar, titled);
+                NcVar type       = nc.addVar("type", ncChar, typed);
+                NcVar username   = nc.addVar("username", ncChar, usernamed);
+                NcVar dateofscan = nc.addVar("dateofscan", ncChar, dateofscand);
   
-// This unit and label entries are used to restore the correct unit later!
-	NcVar* rangex     = nc.addVar("rangex", ncDouble);
-	ADD_NC_ATTRIBUTE_ANG(rangex, scan->data.Xunit);
+                // This unit and label entries are used to restore the correct unit later!
+                NcVar rangex     = nc.addVar("rangex", ncDouble);
+                ADD_NC_ATTRIBUTE_ANG(rangex, scan->data.Xunit);
 
-	NcVar* rangey     = nc.addVar("rangey", ncDouble);
-	ADD_NC_ATTRIBUTE_ANG(rangey, scan->data.Yunit);
+                NcVar rangey     = nc.addVar("rangey", ncDouble);
+                ADD_NC_ATTRIBUTE_ANG(rangey, scan->data.Yunit);
 
-	NcVar* rangez     = nc.addVar("rangez", ncDouble);
-	ADD_NC_ATTRIBUTE_ANG(rangez, scan->data.Zunit);
+                NcVar rangez     = nc.addVar("rangez", ncDouble);
+                ADD_NC_ATTRIBUTE_ANG(rangez, scan->data.Zunit);
 
-	NcVar* dx         = nc.addVar("dx", ncDouble);
-	ADD_NC_ATTRIBUTE_ANG(dx, scan->data.Xunit);
+                NcVar dx         = nc.addVar("dx", ncDouble);
+                ADD_NC_ATTRIBUTE_ANG(dx, scan->data.Xunit);
 
-	NcVar* dy         = nc.addVar("dy", ncDouble);
-	ADD_NC_ATTRIBUTE_ANG(dy, scan->data.Yunit);
+                NcVar dy         = nc.addVar("dy", ncDouble);
+                ADD_NC_ATTRIBUTE_ANG(dy, scan->data.Yunit);
 
-	NcVar* dz         = nc.addVar("dz", ncDouble);
-	ADD_NC_ATTRIBUTE_ANG(dz, scan->data.Zunit);
+                NcVar dz         = nc.addVar("dz", ncDouble);
+                ADD_NC_ATTRIBUTE_ANG(dz, scan->data.Zunit);
 
-	NcVar* opt_xpiezo_AV = nc.addVar("opt_xpiezo_av", ncDouble);
-	opt_xpiezo_AV->putAtt("type", "pure optional information, not used by Gxsm for any scaling after the fact. For the records only");
-	opt_xpiezo_AV->putAtt("label", "Configured X Piezo Sensitivity");
-	opt_xpiezo_AV->putAtt("unit", "Ang/V");
+                NcVar opt_xpiezo_AV = nc.addVar("opt_xpiezo_av", ncDouble);
+                opt_xpiezo_AV.putAtt("type", "pure optional information, not used by Gxsm for any scaling after the fact. For the records only");
+                opt_xpiezo_AV.putAtt("label", "Configured X Piezo Sensitivity");
+                opt_xpiezo_AV.putAtt("unit", "Ang/V");
 
-	NcVar* opt_ypiezo_AV = nc.addVar("opt_ypiezo_av", ncDouble);
-	opt_ypiezo_AV->putAtt("type", "pure optional information, not used by Gxsm for any scaling after the fact. For the records only");
-	opt_ypiezo_AV->putAtt("label", "Configured Y Piezo Sensitivity");
-	opt_ypiezo_AV->putAtt("unit", "Ang/V");
+                NcVar opt_ypiezo_AV = nc.addVar("opt_ypiezo_av", ncDouble);
+                opt_ypiezo_AV.putAtt("type", "pure optional information, not used by Gxsm for any scaling after the fact. For the records only");
+                opt_ypiezo_AV.putAtt("label", "Configured Y Piezo Sensitivity");
+                opt_ypiezo_AV.putAtt("unit", "Ang/V");
 
-	NcVar* opt_zpiezo_AV = nc.addVar("opt_zpiezo_av", ncDouble);
-	opt_zpiezo_AV->putAtt("type", "pure optional information, not used by Gxsm for any scaling after the fact. For the records only");
-	opt_zpiezo_AV->putAtt("label", "Configured Z Piezo Sensitivity");
-	opt_zpiezo_AV->putAtt("unit", "Ang/V");
+                NcVar opt_zpiezo_AV = nc.addVar("opt_zpiezo_av", ncDouble);
+                opt_zpiezo_AV.putAtt("type", "pure optional information, not used by Gxsm for any scaling after the fact. For the records only");
+                opt_zpiezo_AV.putAtt("label", "Configured Z Piezo Sensitivity");
+                opt_zpiezo_AV.putAtt("unit", "Ang/V");
 
-	NcVar* offsetx    = nc.addVar("offsetx", ncDouble);
-	ADD_NC_ATTRIBUTE_ANG(offsetx, scan->data.Xunit);
+                NcVar offsetx    = nc.addVar("offsetx", ncDouble);
+                ADD_NC_ATTRIBUTE_ANG(offsetx, scan->data.Xunit);
 
-	NcVar* offsety    = nc.addVar("offsety", ncDouble);
-	ADD_NC_ATTRIBUTE_ANG(offsety, scan->data.Yunit);
+                NcVar offsety    = nc.addVar("offsety", ncDouble);
+                ADD_NC_ATTRIBUTE_ANG(offsety, scan->data.Yunit);
 
-	NcVar* alpha      = nc.addVar("alpha", ncDouble);
-	alpha->putAtt("unit", "Grad");
-	alpha->putAtt("label", "Rotation");
+                NcVar alpha      = nc.addVar("alpha", ncDouble);
+                alpha.putAtt("unit", "Grad");
+                alpha.putAtt("label", "Rotation");
   
-	NcVar* contrast   = nc.addVar("contrast", ncDouble);
-	NcVar* bright     = nc.addVar("bright", ncDouble);
+                NcVar contrast   = nc.addVar("contrast", ncDouble);
+                NcVar bright     = nc.addVar("bright", ncDouble);
 
-	XSM_DEBUG (DBG_L2, "NetCDF::Write-> Creating Options Vars");
-	// optional...
-	NcVar* display_vrange_z  = NULL;
-	NcVar* display_voffset_z = NULL;
+                XSM_DEBUG (DBG_L2, "NetCDF::Write-> Creating Options Vars");
+                // optional...
+                NcVar display_vrange_z;
+                NcVar display_voffset_z;
 
-	if(!(IS_SPALEED_CTRL)){
-		display_vrange_z = nc.addVar("vrange_z", ncDouble);
-		display_vrange_z->putAtt("long_name", "View Range Z");
-		ADD_NC_ATTRIBUTE_ANG(display_vrange_z, scan->data.Zunit);
+                if(!(IS_SPALEED_CTRL)){
+                        display_vrange_z = nc.addVar("vrange_z", ncDouble);
+                        display_vrange_z.putAtt("long_name", "View Range Z");
+                        ADD_NC_ATTRIBUTE_ANG(display_vrange_z, scan->data.Zunit);
 
-		display_voffset_z = nc.addVar("voffset_z", ncDouble);
-		display_voffset_z->putAtt("long_name", "View Offset Z");
-		ADD_NC_ATTRIBUTE_ANG(display_voffset_z, scan->data.Zunit);
-	}
+                        display_voffset_z = nc.addVar("voffset_z", ncDouble);
+                        display_voffset_z.putAtt("long_name", "View Offset Z");
+                        ADD_NC_ATTRIBUTE_ANG(display_voffset_z, scan->data.Zunit);
+                }
 
-	NcVar* t_start      = nc.addVar("t_start", ncLong);
-	NcVar* t_end        = nc.addVar("t_end", ncLong);
+                NcVar t_start      = nc.addVar("t_start", ncInt64);
+                NcVar t_end        = nc.addVar("t_end", ncInt64);
 
-	NcVar* viewmode     = nc.addVar("viewmode", ncLong);
-	viewmode->putAtt("long_name", "last viewmode flag");
+                NcVar viewmode     = nc.addVar("viewmode", ncInt64);
+                viewmode.putAtt("long_name", "last viewmode flag");
 
-	// data.ui.basename:
-	// filename with the original data (set once and never changed again)
-	if ( g_strrstr(scan->data.ui.originalname, "(not saved)") 
-             || g_strrstr(scan->data.ui.originalname, "(in progress)")
-             || g_strrstr(scan->data.ui.originalname, "(new)") ){
-		scan->data.ui.SetOriginalName( name ); // full path/name for storing original position once!
-		XSM_DEBUG (DBG_L2, "got original name:" << scan->data.ui.originalname);
-	}else{
-		XSM_DEBUG (DBG_L2, "original left untouched:" << name << " != " << scan->data.ui.originalname);
-	}
+                // data.ui.basename:
+                // filename with the original data (set once and never changed again)
+                if ( g_strrstr(scan->data.ui.originalname, "(not saved)") 
+                     || g_strrstr(scan->data.ui.originalname, "(in progress)")
+                     || g_strrstr(scan->data.ui.originalname, "(new)") ){
+                        scan->data.ui.SetOriginalName( name ); // full path/name for storing original position once!
+                        XSM_DEBUG (DBG_L2, "got original name:" << scan->data.ui.originalname);
+                }else{
+                        XSM_DEBUG (DBG_L2, "original left untouched:" << name << " != " << scan->data.ui.originalname);
+                }
 
-	// don´t confuse: NC basenase := originalname  --  program: ui.basename is only for automatic namegenerating
-	NcDim* basenamed   = nc.add_dim("basename", strlen(scan->data.ui.originalname)+1);
-	NcVar* basename    = nc.addVar("basename", ncChar, basenamed);
+                // don´t confuse: NC basenase := originalname  --  program: ui.basename is only for automatic namegenerating
+                NcDim basenamed   = nc.addDim("basename", strlen(scan->data.ui.originalname)+1);
+                NcVar basename    = nc.addVar("basename", ncChar, basenamed);
 
 
-	// only for LEED like Instruments
-	NcVar* energy   = NULL;
-	NcVar* gatetime = NULL;
-	NcVar* z_high  = NULL;
-	NcVar* z_low   = NULL;
-	NcVar* spaorgx  = NULL;
-	NcVar* spaorgy  = NULL;
+                // only for LEED like Instruments
+                NcVar energy;
+                NcVar gatetime;
+                NcVar z_high;
+                NcVar z_low;
+                NcVar spaorgx;
+                NcVar spaorgy;
   
-	if(IS_SPALEED_CTRL){
-		energy   = nc.addVar("energy", ncDouble);
-		energy->putAtt("unit", "eV");
+                if(IS_SPALEED_CTRL){
+                        energy   = nc.addVar("energy", ncDouble);
+                        energy.putAtt("unit", "eV");
 
-		gatetime = nc.addVar("gatetime", ncDouble);
-		gatetime->putAtt("unit", "s");
+                        gatetime = nc.addVar("gatetime", ncDouble);
+                        gatetime.putAtt("unit", "s");
 
-		z_high  = nc.addVar("cps_high", ncDouble);
-		z_high->putAtt("unit", "CPS or raw Z");
+                        z_high  = nc.addVar("cps_high", ncDouble);
+                        z_high.putAtt("unit", "CPS or raw Z");
 
-		z_low   = nc.addVar("cps_low", ncDouble);
-		z_low->putAtt("unit", "CPS or raw Z");
+                        z_low   = nc.addVar("cps_low", ncDouble);
+                        z_low.putAtt("unit", "CPS or raw Z");
 
-		spaorgx  = nc.addVar("spa_orgx", ncDouble);
-		spaorgx->putAtt("unit", "V");
+                        spaorgx  = nc.addVar("spa_orgx", ncDouble);
+                        spaorgx.putAtt("unit", "V");
 
-		spaorgy  = nc.addVar("spa_orgy", ncDouble);
-		spaorgy->putAtt("unit", "V");
-	}
+                        spaorgy  = nc.addVar("spa_orgy", ncDouble);
+                        spaorgy.putAtt("unit", "V");
+                }
 
-	// ....
+                // ....
   
-	// Global attributes
-	nc.putAtt("Creator", PACKAGE);
-	nc.putAtt("Version", VERSION);
-	nc.putAtt("build_from", COMPILEDBYNAME);
-	nc.putAtt("DataIOVer", 
-		   "$Header: /home/ventiotec/gxsm-cvs/Gxsm-2.0/src/dataio.C,v 1.46 2013-02-04 19:19:36 zahl Exp $"
-		);
-	nc.putAtt("HardwareCtrlType", xsmres.HardwareType);
-	nc.putAtt("HardwareConnectionDev", xsmres.DSPDev);
-	nc.putAtt("InstrumentType", xsmres.InstrumentType);
-	nc.putAtt("InstrumentName", xsmres.InstrumentName);
+                // Global attributes
+                nc.putAtt("Creator", PACKAGE);
+                nc.putAtt("Version", VERSION);
+                nc.putAtt("build_from", COMPILEDBYNAME);
+                nc.putAtt("DataIOVer", 
+                          "$Header: /home/ventiotec/gxsm-cvs/Gxsm-2.0/src/dataio.C,v 1.46 2013-02-04 19:19:36 zahl Exp $"
+                          );
+                nc.putAtt("HardwareCtrlType", xsmres.HardwareType);
+                nc.putAtt("HardwareConnectionDev", xsmres.DSPDev);
+                nc.putAtt("InstrumentType", xsmres.InstrumentType);
+                nc.putAtt("InstrumentName", xsmres.InstrumentName);
   
-	// Start writing data, implictly leaves define mode
+                // Start writing data, implictly leaves define mode
 
-	XSM_DEBUG (DBG_L2, "NetCDF::Write-> NcPut Data");
-	XSM_DEBUG (DBG_L2, "NC write: " << timed->size() << "x" << valued->size() << "x" << dimxd->size() << "x" << dimyd->size());
+                XSM_DEBUG (DBG_L2, "NetCDF::Write-> NcPut Data");
+                XSM_DEBUG (DBG_L2, "NC write: " << timed.getSize () << "x" << valued.getSize () << "x" << dimxd.getSize () << "x" << dimyd.getSize ());
   
-	main_get_gapp ()->progress_info_set_bar_text ("Image Data", 2);
-	main_get_gapp ()->progress_info_set_bar_fraction (0.25, 1);
-	main_get_gapp ()->progress_info_set_bar_fraction (0., 2);
-	if (scan->data.s.ntimes == 1){
-		double timearr[] = { (double)(scan->data.s.tEnd-scan->data.s.tStart) };
-		scan->mem2d->data->NcPut (Data);
-		time->put(timearr, NUM(timearr));
-	} else
-		for (int time_index=0; time_index<scan->data.s.ntimes; ++time_index){
-			scan->mem2d_time_element(time_index)->data->NcPut (Data, time_index);
-			time->set_cur (time_index);
-			double ref_time = scan->mem2d_time_element(time_index)->get_frame_time ();
-			time->put (&ref_time, 1);
-			main_get_gapp ()->progress_info_set_bar_fraction ((gdouble)time_index/(gdouble)scan->data.s.ntimes, 2);
-		}
+                main_get_gapp ()->progress_info_set_bar_text ("Image Data", 2);
+                main_get_gapp ()->progress_info_set_bar_fraction (0.25, 1);
+                main_get_gapp ()->progress_info_set_bar_fraction (0., 2);
+                if (scan->data.s.ntimes == 1){
+                        double timearr[] = { (double)(scan->data.s.tEnd-scan->data.s.tStart) };
+                        scan->mem2d->data->NcPut (Data);
+                        time.putVar ({0}, { NUM(timearr) }, timearr);
+                } else
+                        for (int time_index=0; time_index<scan->data.s.ntimes; ++time_index){
+                                scan->mem2d_time_element(time_index)->data->NcPut (Data, time_index);
+                                double ref_time = scan->mem2d_time_element(time_index)->get_frame_time ();
+                                time.putVar ({time_index}, {1}, &ref_time);
+                                main_get_gapp ()->progress_info_set_bar_fraction ((gdouble)time_index/(gdouble)scan->data.s.ntimes, 2);
+                        }
 
 
-	main_get_gapp ()->progress_info_set_bar_text ("Look-Ups", 2);
-	main_get_gapp ()->progress_info_set_bar_fraction (0.5, 1);
+                main_get_gapp ()->progress_info_set_bar_text ("Look-Ups", 2);
+                main_get_gapp ()->progress_info_set_bar_fraction (0.5, 1);
 
-	float *valuearr = new float[valued->size()];
-	if(!valuearr)
-		return status = FIO_NO_MEM;
+                float *valuearr = new float[valued.getSize ()];
+                if(!valuearr)
+                        return status = FIO_NO_MEM;
 
-	XSM_DEBUG (DBG_L2, "NetCDF::Write-> NcPut Lookups");
-	for(int i=0; i<valued->size(); i++)
-		valuearr[i] = scan->mem2d->data->GetVLookup(i);
+                XSM_DEBUG (DBG_L2, "NetCDF::Write-> NcPut Lookups");
+                for(int i=0; i < valued.getSize(); i++)
+                        valuearr[i] = scan->mem2d->data->GetVLookup(i);
 
-	value->put(valuearr, valued->size());
-	delete [] valuearr;
+                value.putVar ({0}, { valued.getSize ()}, valuearr);
+                delete [] valuearr;
 
-	int i;
-	//  float x0=scan->data.s.x0-scan->data.s.rx/2.;
-	float *dimsx = new float[dimxd->size()];
-	if(!dimsx)
-		return status = FIO_NO_MEM;
+                int i;
+                //  float x0=scan->data.s.x0-scan->data.s.rx/2.;
+                float *dimsx = new float[dimxd.getSize ()];
+                if(!dimsx)
+                        return status = FIO_NO_MEM;
 
-	for(i=0; i<dimxd->size(); i++)
-		dimsx[i] = scan->mem2d->data->GetXLookup(i);
+                for(i=0; i < dimxd.getSize (); i++)
+                        dimsx[i] = scan->mem2d->data->GetXLookup(i);
 
-	dimx->put(dimsx, dimxd->size());
-	delete [] dimsx;
+                dimx.putVar ({0}, { dimxd.getSize () }, dimsx);
+                delete [] dimsx;
 
-	//  float y0=scan->data.s.y0;
-	float *dimsy = new float[dimyd->size()];
-	if(!dimsy)
-		return status = FIO_NO_MEM;
+                //  float y0=scan->data.s.y0;
+                float *dimsy = new float[dimyd.getSize ()];
+                if(!dimsy)
+                        return status = FIO_NO_MEM;
 
-	for(i=0; i<dimyd->size(); i++)
-		dimsy[i] = scan->mem2d->data->GetYLookup(i);
+                for(i=0; i < dimyd.getSize (); i++)
+                        dimsy[i] = scan->mem2d->data->GetYLookup(i);
 
-	dimy->put(dimsy, dimyd->size());
-	delete [] dimsy;
+                dimy.putVar ({0}, { dimyd.getSize () }, dimsy);
+                delete [] dimsy;
 
-	main_get_gapp ()->progress_info_set_bar_text ("Scan-Parameter", 2);
-	main_get_gapp ()->progress_info_set_bar_fraction (0.6, 1);
+                main_get_gapp ()->progress_info_set_bar_text ("Scan-Parameter", 2);
+                main_get_gapp ()->progress_info_set_bar_fraction (0.6, 1);
 
-	XSM_DEBUG (DBG_L2, "NetCDF::Write-> NcPut Vars...");
-	char* s = ctime(&scan->data.s.tStart);
-	reftime->put(s, strlen(s));
-  
-	comment->put(scan->data.ui.comment, commentd->size());
+                XSM_DEBUG (DBG_L2, "NetCDF::Write-> NcPut Vars...");
+                char* s = ctime(&scan->data.s.tStart);
+                reftime.putVar    ({0}, {strlen(s)}, s);
+                comment.putVar    ({0}, {commentd.getSize ()}, scan->data.ui.comment);
+                title.putVar      ({0}, {titled.getSize()}, scan->data.ui.title);
+                type.putVar       ({0}, {typed.getSize ()}, scan->data.ui.type);
+                username.putVar   ({0}, {usernamed.getSize ()}, scan->data.ui.user);
+                dateofscan.putVar ({0}, {dateofscand.getSize ()}, scan->data.ui.dateofscan);
 
+                rangex .putVar( &scan->data.s.rx);
+                rangey .putVar( &scan->data.s.ry);
+                rangez .putVar( &scan->data.s.rz); 
+                dx     .putVar( &scan->data.s.dx); 
+                dy     .putVar( &scan->data.s.dy); 
+                dz     .putVar( &scan->data.s.dz); 
+                offsetx.putVar( &scan->data.s.x0); 
+                offsety.putVar( &scan->data.s.y0); 
+                alpha  .putVar( &scan->data.s.alpha);
 
-	title->put(scan->data.ui.title, titled->size());
-	type->put(scan->data.ui.type, typed->size());
-	username->put(scan->data.ui.user, usernamed->size());
-	dateofscan->put(scan->data.ui.dateofscan, dateofscand->size());
+                opt_xpiezo_AV.putVar( &xsmres.XPiezoAV );
+                opt_ypiezo_AV.putVar( &xsmres.YPiezoAV );
+                opt_zpiezo_AV.putVar( &xsmres.ZPiezoAV );
 
-	rangex ->put( &scan->data.s.rx);
-	rangey ->put( &scan->data.s.ry);
-	rangez ->put( &scan->data.s.rz); 
-	dx     ->put( &scan->data.s.dx); 
-	dy     ->put( &scan->data.s.dy); 
-	dz     ->put( &scan->data.s.dz); 
-	offsetx->put( &scan->data.s.x0); 
-	offsety->put( &scan->data.s.y0); 
-	alpha  ->put( &scan->data.s.alpha);
+                contrast.putVar( &scan->data.display.contrast); 
+                bright  .putVar( &scan->data.display.bright); 
 
-	opt_xpiezo_AV->put( &xsmres.XPiezoAV );
-	opt_ypiezo_AV->put( &xsmres.YPiezoAV );
-	opt_zpiezo_AV->put( &xsmres.ZPiezoAV );
+                // Minimalsatz Variablen endet hier =================================
 
-	contrast->put( &scan->data.display.contrast); 
-	bright  ->put( &scan->data.display.bright); 
+                // Additional Parameters are following ...
 
-	// Minimalsatz Variablen endet hier =================================
+                // Display...
+                if (!display_vrange_z.isNull ())  display_vrange_z.putVar( &scan->data.display.vrange_z);
+                if (!display_voffset_z.isNull ()) display_voffset_z.putVar( &scan->data.display.voffset_z);
 
-	// Additional Parameters are following ...
+                t_start.putVar( &scan->data.s.tStart );
+                t_end  .putVar( &scan->data.s.tEnd );
 
-	// Display...
-	if(display_vrange_z) display_vrange_z->put( &scan->data.display.vrange_z);
-	if(display_voffset_z) display_voffset_z->put( &scan->data.display.voffset_z);
+                viewmode.putVar( &scan->data.display.ViewFlg );
 
-	t_start->put( &scan->data.s.tStart );
-	t_end  ->put( &scan->data.s.tEnd );
+                basename.putVar ({0}, {basenamed.getSize ()}, scan->data.ui.originalname);
 
-	viewmode->put( &scan->data.display.ViewFlg );
+                // only if needed
+                if(!energy.isNull ())   energy  .putVar( &scan->data.s.Energy );
+                if(!gatetime.isNull ()) gatetime.putVar( &scan->data.s.GateTime );
+                if(!z_high.isNull ())   z_high  .putVar( &scan->data.display.z_high );
+                if(!z_low.isNull ())    z_low   .putVar( &scan->data.display.z_low );
+                if(!spaorgx.isNull ())  spaorgx .putVar( &scan->data.s.SPA_OrgX );
+                if(!spaorgy.isNull ())  spaorgy .putVar( &scan->data.s.SPA_OrgY );
 
-	basename->put(scan->data.ui.originalname, basenamed->size());
+                main_get_gapp ()->progress_info_set_bar_text ("Scan-Events", 2);
+                main_get_gapp ()->progress_info_set_bar_fraction (0.7, 1);
 
-	// only if needed
-	if(energy   ) energy  ->put( &scan->data.s.Energy );
-	if(gatetime ) gatetime->put( &scan->data.s.GateTime );
-	if(z_high  ) z_high ->put( &scan->data.display.z_high );
-	if(z_low   ) z_low  ->put( &scan->data.display.z_low );
-	if(spaorgx  ) spaorgx ->put( &scan->data.s.SPA_OrgX );
-	if(spaorgy  ) spaorgy ->put( &scan->data.s.SPA_OrgY );
+                // write attached Events, if any
+                scan->mem2d->WriteScanEvents (nc);
 
-	main_get_gapp ()->progress_info_set_bar_text ("Scan-Events", 2);
-	main_get_gapp ()->progress_info_set_bar_fraction (0.7, 1);
+                // store LayerInformation / OSD
+                {
+                        int mdd=1;
+                        int mdf=1;
+                        int mdfo=1;
+                        int mdli=1;
+                        int mdliv=1;
+                        int nt=1;
+                        main_get_gapp ()->progress_info_set_bar_text ("LayerInformation", 2);
+                        main_get_gapp ()->progress_info_set_bar_fraction (0.8, 1);
+                        main_get_gapp ()->progress_info_set_bar_fraction (0.1, 2);
+                        // pass one, eval max dimensions -- NetCDF requires rectangual shape over all dimensions
+                        if (scan->data.s.ntimes > 1){
+                                nt = scan->data.s.ntimes;
+                                for (int time_index=0; time_index<nt; ++time_index)
+                                        scan->mem2d_time_element(time_index)->eval_max_sizes_layer_information (&mdd, &mdf, &mdfo, &mdli, &mdliv);
+                        } else
+                                scan->mem2d->eval_max_sizes_layer_information (&mdd, &mdf, &mdfo, &mdli, &mdliv);
 
-	// write attached Events, if any
-	scan->mem2d->WriteScanEvents (&nc);
+                        main_get_gapp ()->progress_info_set_bar_fraction (0.2, 2);
+                        if (mdd>1){
+                                NcVar ncv_d;
+                                NcVar ncv_f;
+                                NcVar ncv_fo;
+                                NcVar ncv_v;
+                                scan->mem2d->start_store_layer_information (nc, ncv_d, ncv_f, ncv_fo, ncv_v,
+                                                                            nt, mdliv, mdli, mdd, mdf, mdfo);
+                                if (nt > 1)
+                                        for (int time_index=0; time_index<nt; ++time_index){
+                                                scan->mem2d_time_element(time_index)->store_layer_information (ncv_d, ncv_f, ncv_fo, ncv_v, time_index);
+                                                main_get_gapp ()->progress_info_set_bar_fraction (0.2+0.8*((double)time_index/nt), 2);
+                                        }
+                                else
+                                        scan->mem2d->store_layer_information (ncv_d, ncv_f, ncv_fo, ncv_v, 0);
+                        }
+                }
 
-	// store LayerInformation / OSD
-	{
-		int mdd=1;
-		int mdf=1;
-		int mdfo=1;
-		int mdli=1;
-		int mdliv=1;
-		int nt=1;
-		main_get_gapp ()->progress_info_set_bar_text ("LayerInformation", 2);
-		main_get_gapp ()->progress_info_set_bar_fraction (0.8, 1);
-		main_get_gapp ()->progress_info_set_bar_fraction (0.1, 2);
-		// pass one, eval max dimensions -- NetCDF requires rectangual shape over all dimensions
-		if (scan->data.s.ntimes > 1){
-			nt = scan->data.s.ntimes;
-			for (int time_index=0; time_index<nt; ++time_index)
-				scan->mem2d_time_element(time_index)->eval_max_sizes_layer_information (&mdd, &mdf, &mdfo, &mdli, &mdliv);
-		} else
-			scan->mem2d->eval_max_sizes_layer_information (&mdd, &mdf, &mdfo, &mdli, &mdliv);
+                // Signal PlugIns
+                main_get_gapp ()->progress_info_set_bar_text ("PlugIn-Data", 2);
+                main_get_gapp ()->progress_info_set_bar_fraction (0.9, 1);
+                main_get_gapp ()->progress_info_set_bar_fraction (0., 2);
 
-		main_get_gapp ()->progress_info_set_bar_fraction (0.2, 2);
-		if (mdd>1){
-			NcVar* ncv_d=NULL;
-			NcVar* ncv_f=NULL;
-			NcVar* ncv_fo=NULL;
-			NcVar* ncv_v=NULL;
-			scan->mem2d->start_store_layer_information (&nc, &ncv_d, &ncv_f, &ncv_fo, &ncv_v,
-								    nt, mdliv, mdli, mdd, mdf, mdfo);
-			if (nt > 1)
-				for (int time_index=0; time_index<nt; ++time_index){
-					scan->mem2d_time_element(time_index)->store_layer_information (ncv_d, ncv_f, ncv_fo, ncv_v, time_index);
-					main_get_gapp ()->progress_info_set_bar_fraction (0.2+0.8*((double)time_index/nt), 2);
-				}
-			else
-				scan->mem2d->store_layer_information (ncv_d, ncv_f, ncv_fo, ncv_v, 0);
-		}
-	}
+                main_get_gapp ()->SignalCDFSaveEventToPlugins (nc);
 
-	// Signal PlugIns
-	main_get_gapp ()->progress_info_set_bar_text ("PlugIn-Data", 2);
-	main_get_gapp ()->progress_info_set_bar_fraction (0.9, 1);
-	main_get_gapp ()->progress_info_set_bar_fraction (0., 2);
+                main_get_gapp ()->progress_info_set_bar_text ("Finishing", 2);
+                main_get_gapp ()->progress_info_set_bar_fraction (1.0, 1);
 
-	main_get_gapp ()->SignalCDFSaveEventToPlugins (&nc);
+                // close of nc takes place in destructor
+                scan->draw ();
 
-	main_get_gapp ()->progress_info_set_bar_text ("Finishing", 2);
-	main_get_gapp ()->progress_info_set_bar_fraction (1.0, 1);
+                main_get_gapp ()->progress_info_close ();
 
-	// close of nc takes place in destructor
-	scan->draw ();
-
-	// Check if the file was written successfully
-	if ( ncerr.get_err() )
-		return status = FIO_WRITE_ERR;
-
-
-	main_get_gapp ()->progress_info_close ();
-
-	return status = FIO_OK; 
+                return status = FIO_OK;
+        } catch (const netCDF::exceptions::NcException& e) {
+                std::cerr << "EE: NetCDF File Write Error: " << e.what() << std::endl;
+                main_get_gapp ()->progress_info_close ();
+                return status = FIO_WRITE_ERR;
+        }
 }
 

@@ -359,11 +359,11 @@ public:
         void SignalStopScanEventToPlugins(void){ 
                 SignalEventToPlugins( PluginNotifyOnStopScan, NULL ); 
         };
-        void SignalCDFLoadEventToPlugins(NcFile *ncf){ 
-                SignalEventToPlugins( PluginNotifyOnCDFLoad, (gpointer)ncf ); 
+        void SignalCDFLoadEventToPlugins(NcFile &ncf){ 
+                SignalEventToPlugins( PluginNotifyOnCDFLoad, (gpointer)&ncf ); 
         };
-        void SignalCDFSaveEventToPlugins(NcFile *ncf){ 
-                SignalEventToPlugins( PluginNotifyOnCDFSave, (gpointer)ncf ); 
+        void SignalCDFSaveEventToPlugins(NcFile &ncf){ 
+                SignalEventToPlugins( PluginNotifyOnCDFSave, (gpointer)&ncf ); 
         };
         void SignalLoadFileEventToPlugins(gchar **filename){ 
                 SignalEventToPlugins( PluginNotifyOnLoadFile, filename ); 
