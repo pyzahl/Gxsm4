@@ -402,7 +402,7 @@ void App::help_about_callback (GSimpleAction *simple, GVariant *parameter, gpoin
 		"Thorsten Wagener (stm@users.sourceforge.net)",
 		"Stefan Schroeder  (stefan_fkp@users.sourceforge.net)",
 		"Juan de la Figuera  (johnnybegood@users.sourceforge.net)",
-		"and others http://gxsm.sourceforge.net",
+		"and others https://gxsm.sourceforge.net, https://github.com/pyzahl/Gxsm4",
 		NULL
 	};
 	
@@ -451,6 +451,7 @@ void App::help_about_callback (GSimpleAction *simple, GVariant *parameter, gpoin
 	message = g_strconcat
 		(N_("GXSM is a Universal Scanning Probe Micoscopy Data Aquisitation and Visulaization System."
 		   "\nBuild for GTK4."
+		   "\nUsing NetCDF4."
 		   "\n\nHardware: "),
 		 hw_info_stripped, "\n[...] (see terminal for more)\n",
 		 dbg_lvl_tmp,
@@ -471,8 +472,8 @@ void App::help_about_callback (GSimpleAction *simple, GVariant *parameter, gpoin
 			       "authors", authors,
 			       "documenters", documenters,
 			       "translator-credits", "Juan de la Figuera",
-			       "copyright", "(C) PyZahl et al 2000-2022",
-			       "website", "http://gxsm.sf.net",
+			       "copyright", "(C) PyZahl et al 2000-2025",
+			       "website", "https://github.com/pyzahl/Gxsm4",
                                "comments", message,
                                "license-type", GTK_LICENSE_GPL_3_0,
                                "logo-icon-name", "gxsm4-icon", //"org.gtk.Demo4",

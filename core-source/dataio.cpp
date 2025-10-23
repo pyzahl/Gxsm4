@@ -82,6 +82,17 @@ const char* Dataio::ioStatus(){
 
 #define NUM(array) (sizeof(array)/sizeof(array[0]))
 #define NC_GET_VARIABLE(VNAME, VAR) if( !nc.getVar(VNAME).isNull ()) nc.getVar(VNAME).getVar(VAR)
+#define ADD_NC_ATTRIBUTE_ANG(nv, unit)\
+	do{\
+		nv.putAtt("Info", "This number is alwalys stored in Angstroem. Unit is used for user display only.");\
+		nv.putAtt("label", unit->Label());	\
+		nv.putAtt("var_unit", "Ang");		\
+		if (unit->Alias())			\
+			nv.putAtt("unit", unit->Alias());	\
+		else						\
+			nv.putAtt("unitSymbol", unit->Symbol());	\
+	}while(0)
+
 
 // NetCDF helper
 
@@ -609,17 +620,6 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
 }
 
 
-#define ADD_NC_ATTRIBUTE_ANG(nv, unit)\
-	do{\
-		nv.putAtt("Info", "This number is alwalys stored in Angstroem. Unit is used for user display only.");\
-		nv.putAtt("label", unit->Label());	\
-		nv.putAtt("var_unit", "Ang");		\
-		if (unit->Alias())			\
-			nv.putAtt("unit", unit->Alias());	\
-		else						\
-			nv.putAtt("unitSymbol", unit->Symbol());	\
-	}while(0)
-
 
 FIO_STATUS NetCDF::Write(){
 	XSM_DEBUG (DBG_L2, "NetCDF::Write");
@@ -1060,6 +1060,7 @@ FIO_STATUS NetCDF::Write(){
                 main_get_gapp ()->progress_info_close ();
 
                 return status = FIO_OK;
+                
         } catch (const netCDF::exceptions::NcException& e) {
                 std::cerr << "EE: NetCDF File Write Error. Catch " << e.what() << std::endl;
                 main_get_gapp ()->progress_info_close ();
