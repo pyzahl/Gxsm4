@@ -989,11 +989,11 @@ int Scan::Save(gboolean overwrite, gboolean check_file_exist){
                 delete Dio;
         } else
                 return -1;
+
         return 0;
 }
 
 int Scan::Update_ZData_NcFile(){
-	NcError ncerr(NcError::verbose_nonfatal);
 
         // check for file name
 	if (!storage_manager.get_filename()){
@@ -1001,11 +1001,47 @@ int Scan::Update_ZData_NcFile(){
                 return -1;
         }
         
-        // open in write mode
-        NcFile nc(storage_manager.get_filename(), NcFile::Write);
-   
-	// Check if the file was opened successfully
-	if (! nc.is_valid()){
+        try {
+                // open in write mode
+                std::string filename = storage_manager.get_filename();
+                NcFile nc(filename, netCDF::NcFile::write);
+                
+                // read Data variable
+                NcVar Data;
+                
+                switch (mem2d->GetTyp()){
+                case ZD_DOUBLE:  Data = nc.getVar("DoubleField"); break; // Double data field ?
+                case ZD_FLOAT:   Data = nc.getVar("FloatField"); break;  // Float data field ?
+                case ZD_SHORT:   Data = nc.getVar("H"); break;           // standart "SHORT" Topo Scan ?
+                case ZD_LONG:    Data = nc.getVar("Intensity"); break;   // used by "Intensity" -- diffraction counts
+                case ZD_BYTE:    Data = nc.getVar("ByteField"); break;   // Byte ?
+                case ZD_COMPLEX: Data = nc.getVar("ComplexDoubleField"); break; // Complex ?
+                case ZD_RGBA:    Data = nc.getVar("RGBA_ByteField"); break;     // RGBA Byte ?
+                default:    g_critical("Sorry, compatible NetCDF Data field variable not found."); return -1;
+                }
+                
+                if (!Data.isNull()){
+                        g_critical("Sorry, NetCDF file ZData type is incompatible. Please save this scan first to update later!");
+                        return -1;
+                }
+
+                data.ui.SetOriginalName (storage_manager.get_name ("(in progress)"));
+                
+                g_message("Data in NetCDF file >%s< is now updated!", storage_manager.get_filename());
+                main_get_gapp ()->monitorcontrol->LogEvent("*Update", storage_manager.get_filename());
+                main_get_gapp ()->SetStatus(N_("Update done "), storage_manager.get_name());
+
+                if (data.s.ntimes == 1){
+                        mem2d->data->NcPut (Data, 0, true);
+                } else {
+                        for (int time_index=0; time_index<data.s.ntimes; ++time_index)
+                                mem2d_time_element(time_index)->data->NcPut (Data, time_index, true);
+                }
+
+                return 0;
+                
+        } catch (const netCDF::exceptions::NcException& e) {
+                std::cerr << "EE: NetCDF File Error: " << e.what() << std::endl;
                 g_warning("NetCDF file is not valid, please save first to update later! Trying Auto Save now...");
                 if (Save ()){ // try auto save, do not overwrite automatically
                         GtkWidget *dialog = gtk_message_dialog_new (NULL,
@@ -1030,40 +1066,6 @@ int Scan::Update_ZData_NcFile(){
                 }
                 data.ui.SetOriginalName (storage_manager.get_name ("*(in progress)"));
 
-		return 0; // saved full
+                return 0; // saved full
         }
-        
-        // read Data variable
-        NcVar *Data = NULL;
-
-        switch (mem2d->GetTyp()){
-        case ZD_DOUBLE:  Data = nc.get_var("DoubleField"); break; // Double data field ?
-        case ZD_FLOAT:   Data = nc.get_var("FloatField"); break;  // Float data field ?
-        case ZD_SHORT:   Data = nc.get_var("H"); break;           // standart "SHORT" Topo Scan ?
-        case ZD_LONG:    Data = nc.get_var("Intensity"); break;   // used by "Intensity" -- diffraction counts
-	case ZD_BYTE:    Data = nc.get_var("ByteField"); break;   // Byte ?
-	case ZD_COMPLEX: Data = nc.get_var("ComplexDoubleField"); break; // Complex ?
-	case ZD_RGBA:    Data = nc.get_var("RGBA_ByteField"); break;     // RGBA Byte ?
-        default:    g_critical("Sorry, compatible NetCDF Data field variable not found."); return -1;
-        }
-                
-        if (!Data){
-                g_critical("Sorry, NetCDF file ZData type is incompatible. Please save this scan first to update later!");
-                return -1;
-        }
-
-        data.ui.SetOriginalName (storage_manager.get_name ("(in progress)"));
-        
-        g_message("Data in NetCDF file >%s< is now updated!", storage_manager.get_filename());
-        main_get_gapp ()->monitorcontrol->LogEvent("*Update", storage_manager.get_filename());
-        main_get_gapp ()->SetStatus(N_("Update done "), storage_manager.get_name());
-
-        if (data.s.ntimes == 1){
-                mem2d->data->NcPut (Data, 0, true);
-	} else {
-		for (int time_index=0; time_index<data.s.ntimes; ++time_index)
-			mem2d_time_element(time_index)->data->NcPut (Data, time_index, true);
-        }
-
-        return 0;
 }

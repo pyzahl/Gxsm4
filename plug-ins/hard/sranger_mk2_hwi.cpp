@@ -1987,13 +1987,13 @@ static void DSPControl_StartScan_callback( gpointer ){
 static void DSPControl_SaveValues_callback ( gpointer ncf ){
 	PI_DEBUG (DBG_L4, "SR-HwI::SPControl_SaveValues_callback");
 	if ( DSPControlClass )
-		DSPControlClass->save_values ((NcFile *) ncf);
+		DSPControlClass->save_values (*(NcFile *) ncf);
 }
 
 static void DSPControl_LoadValues_callback ( gpointer ncf ){
 	PI_DEBUG (DBG_L4, "SR-HwI::SPControl_LoadValues_callback");
 	if ( DSPControlClass )
-		DSPControlClass->load_values ((NcFile *) ncf);
+		DSPControlClass->load_values (*(NcFile *) ncf);
 }
 
 // cleanup-Function

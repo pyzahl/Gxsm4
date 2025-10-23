@@ -28,9 +28,10 @@
 #ifndef __DATAIO_H
 #define __DATAIO_H
 
-#include <netcdf.hh>
-// #include <netcdf>
-// using namespace netCDF;
+#include <netcdf>
+#include <iostream>
+#include <vector>
+
 #include "xsm.h"
 
 

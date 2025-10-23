@@ -45,9 +45,8 @@
 
 #include <fstream>
 
-#include <netcdf.hh>
-//#include <netcdf>
-//using namespace netCDF;
+#include <netcdf>
+using namespace netCDF;
 
 
 class Mem2d;
@@ -94,7 +93,7 @@ private:
 class ProbeEntry : public EventEntry{
 public:
 	ProbeEntry (const gchar *Name, time_t Time, GPtrArray *Labels, GPtrArray *Unitssymbols, int Chunk_size, const gchar *file_name=NULL);
-	ProbeEntry (const gchar *Name, NcFile *ncf, int p_index, NcVar* &evdata_var, NcVar* &evcoords_var, ScanEvent* &se, int num, int &count, ProbeEntry *pe=NULL);
+	ProbeEntry (const gchar *Name, NcFile &ncf, int p_index, NcVar &evdata_var, NcVar &evcoords_var, ScanEvent* &se, int num, int &count, ProbeEntry *pe=NULL);
 	virtual ~ProbeEntry ();
 	virtual void add (double *value){ g_array_append_vals (data, (gconstpointer)value, chunk_size); ++num_sets; };
 	virtual double get (int n, int j){ 
@@ -139,8 +138,10 @@ public:
 	const gchar *get_label (int j);
 	const gchar *get_unit_symbol (int j);
 
-	int write_nc_variable_set (NcFile* ncf, int p_index, NcVar* &evdata_var, NcVar* &evcoords_var, int total_count);
-	int write_nc_data (NcVar* evdata_var, NcVar* evcoords_var, ScanEvent *se, int count);
+        void find_and_reuse_or_auto_add (NcFile &ncf, const gchar *name, int p_index, int &dim_size, NcDim &nc_dim_x);
+
+	int write_nc_variable_set (NcFile &ncf, int p_index, NcVar &evdata_var, NcVar &evcoords_var, int total_count);
+	int write_nc_data (NcVar &evdata_var, NcVar &evcoords_var, ScanEvent *se, int count);
 
         ScanEvent *get_parent_scan_event () { return parent_scan_event; }; 
         void set_parent_scan_event (ScanEvent* se) { parent_scan_event=se; }; 
@@ -162,8 +163,8 @@ public:
 	UserEntry (UserEntry *u, int n, ScanEvent *s);
 	UserEntry (const gchar *Name, const gchar *Message_id, const gchar *Info, time_t Etime, GPtrArray *Messages=NULL, int num=0);
 	UserEntry (const gchar *Name, time_t Time, GPtrArray *Messages=NULL, int num=0);
-	UserEntry (const gchar *Name, NcFile *ncf, int u_index, ScanEvent* &se);
-	UserEntry (const gchar *Name, NcFile *ncf, const gchar *Message_id, ScanEvent* &se, gint count=0, Mem2d *m=NULL);
+	UserEntry (const gchar *Name, NcFile &ncf, int u_index, ScanEvent* &se);
+	UserEntry (const gchar *Name, NcFile &ncf, const gchar *Message_id, ScanEvent* &se, gint count=0, Mem2d *m=NULL);
 	~UserEntry ();
 	virtual void add (double val_pre, double val_now, double c[5]=NULL){ 
 		UE_set *ue = new (UE_set);
@@ -182,7 +183,7 @@ public:
 	int get_num_sets () { return num_sets; };
 	virtual void print ();
 
-	int store_event_to_nc (NcFile* ncf, GSList *uel, int count);
+	int store_event_to_nc (NcFile &ncf, GSList *uel, int count);
 
 	gchar *message_id;
 private:

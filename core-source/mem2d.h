@@ -41,6 +41,8 @@
 #endif
 
 #include <config.h>
+#include <netcdf>
+#include <vector>
 
 #if defined HAVE_FFTW3_H
 # include <complex>
@@ -51,9 +53,8 @@
 
 #include <glm/vec4.hpp>
 
-#include <netcdf.hh>
-//#include <netcdf>
-//using namespace netCDF;
+#include <netcdf>
+using namespace netCDF;
 
 #define MEM_SET    1
 #define MEM_ADDTO  2
@@ -116,7 +117,7 @@ public:
 	LayerInformation (const gchar *description, double x, double y, const gchar *format=NULL);
 	LayerInformation (LayerInformation *li);
 	// create layer info tuple from ncf file from specified coordinates ti (time-index), v (value-index), k (layer-info-index)
-	LayerInformation (NcVar* ncv_description, NcVar* ncv_format, NcVar* ncv_osd_format, NcVar* ncv_values, int ti, int v, int k);
+	LayerInformation (NcVar &ncv_description, NcVar &ncv_format, NcVar &ncv_osd_format, NcVar &ncv_values, int ti, int v, int k);
 	~LayerInformation ();
 	gchar *get (gboolean osd=FALSE);
 	double valule (int i=0){ return i==0?val[0]:val[1]; };
@@ -124,7 +125,7 @@ public:
 	int get_len_format () { return fmt?strlen (fmt):0; };
 	int get_len_osd_format () { return fmtosd?strlen (fmtosd):0; };
 	// write layer info tuple to ncf file at specified coordinates ti (time-index), v (value-index), k (layer-info-index)
-	void write_layer_information (NcVar* ncv_description, NcVar* ncv_format, NcVar* ncv_osd_format, NcVar* ncv_values, int ti, int v, int k);
+	void write_layer_information (NcVar &ncv_description, NcVar &ncv_format, NcVar &ncv_osd_format, NcVar &ncv_values, int ti, int v, int k);
 private:
 	gchar *desc;
 	double val[2];
@@ -405,8 +406,8 @@ public:
 	GSList* ReportScanEventsXasc ();
 	GSList* ReportScanEventsYasc ();
 	void AttachScanEvent (ScanEvent *se);
-	int WriteScanEvents (NcFile *ncf);
-	int LoadScanEvents (NcFile *ncf);
+	int WriteScanEvents (NcFile &ncf);
+	int LoadScanEvents (NcFile &ncf);
 
 	/* Layer Information handling */
 	static void free_layer_information (LayerInformation *li, Mem2d *m){ if (li) delete li; };
@@ -418,13 +419,13 @@ public:
 	gchar *get_layer_information (int lv, int nth);
 	void copy_layer_information (Mem2d *m, int vi=0);
 	void eval_max_sizes_layer_information (int* max_dim_description, int* max_dim_format, int* max_dim_format_osd, int* max_nlyi, int* max_nlyiv);
-	void start_store_layer_information (NcFile* ncf, 
-					    NcVar** ncv_description, NcVar** ncv_format, NcVar** ncv_osd_format, NcVar** ncv_values, 
+	void start_store_layer_information (NcFile &ncf, 
+					    NcVar &ncv_description, NcVar &ncv_format, NcVar &ncv_osd_format, NcVar &ncv_values, 
 					    int dim_ti, int dim_v, int dim_k, 
 					    int dim_description, int dim_format, int dim_format_osd);
-	void store_layer_information (NcVar* ncv_description, NcVar* ncv_format, NcVar* ncv_osd_format, NcVar* ncv_values, int ti);
-	void start_read_layer_information (NcFile* ncf, NcVar** ncv_description, NcVar** ncv_format, NcVar** ncv_osd_format, NcVar** ncv_values);
-	void add_layer_information (NcVar* ncv_description, NcVar* ncv_format, NcVar* ncv_osd_format, NcVar* ncv_values, int ti);
+	void store_layer_information (NcVar &ncv_description, NcVar &ncv_format, NcVar &ncv_osd_format, NcVar &ncv_values, int ti);
+	void start_read_layer_information (NcFile &ncf, NcVar &ncv_description, NcVar &ncv_format, NcVar &ncv_osd_format, NcVar &ncv_values);
+	void add_layer_information (NcVar &ncv_description, NcVar &ncv_format, NcVar &ncv_osd_format, NcVar &ncv_values, int ti);
 
 private:
 	void Init();

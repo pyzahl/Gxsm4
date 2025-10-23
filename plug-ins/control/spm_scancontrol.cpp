@@ -240,11 +240,54 @@ static void spm_scancontrol_SaveValues_callback ( gpointer gp_ncf ){
 		tmp = strdup ("N/A");
 
 	NcFile *ncf = (NcFile *) gp_ncf;
-	NcDim* spmscd  = ncf->add_dim("spm_scancontrol_dim", strlen(tmp));
-	NcVar* spmsc   = ncf->add_var("spm_scancontrol", ncChar, spmscd);
-	spmsc->add_att("long_name", "spm_scancontrol: scan direction");
-	spmsc->put(tmp, strlen(tmp));
-	g_free (tmp);
+
+        try {
+                NcDim spmscd  = ncf->addDim("spm_scancontrol_dim", strlen(tmp));
+                NcVar spmsc   = ncf->addVar("spm_scancontrol", ncChar, spmscd);
+                spmsc.putAtt ("long_name", "spm_scancontrol: scan direction");
+                spmsc.putVar (tmp); //, strlen(tmp));
+        } catch (const netCDF::exceptions::NcException& e) {
+                std::cerr << "Error NetCDF Save Values: " << e.what() << std::endl;
+        }
+        g_free (tmp);
+
+#if 0
+        // NC4 only:
+        // Add a variable of type NC_STRING
+        netCDF::NcVar stringVar = dataFile.addVar("my_string_data", netCDF::ncString);
+
+        // Prepare the string data
+        std::string myString = "Hello, NetCDF!";
+
+        // Write the string data to the variable
+        stringVar.put(&myString, 1); // 1 indicates a single string
+
+try {
+        // Create the NetCDF file in NC_NETCDF4 format
+        netCDF::NcFile ncFile(file_name, netCDF::NcFile::replace);
+
+        // Define an unlimited dimension for the string variable
+        netCDF::NcDim unlimitedDim = ncFile.addDim("unlimited", 0);
+
+        // Define a variable of type NC_STRING with the unlimited dimension
+        netCDF::NcVar ncVar = ncFile.addVar("my_string_variable", netCDF::NcType::nc_string, unlimitedDim);
+
+        // Prepare string data
+        std::vector<std::string> string_data = {"Hello", "NetCDF-4", "World!"};
+
+        // Write the string data to the variable
+        ncVar.putVar(string_data);
+
+        // Add a global string attribute to the file
+        ncFile.putAtt("file_description", "Demonstrates NC_STRING type.");
+
+        std::cout << "Successfully wrote NetCDF-4 strings to file." << std::endl;
+
+    } catch (const netCDF::exceptions::NcException& e) {
+        std::cerr << "Error with NetCDF: " << e.what() << std::endl;
+        return 1;
+    }
+#endif
 }
 
 

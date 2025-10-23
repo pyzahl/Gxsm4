@@ -3423,27 +3423,39 @@ void DSPControl::GVP_restore_vp (const gchar *key){
 
 
 // helper func
-NcVar* sranger_mk2_hwi_ncaddvar (NcFile *ncf, const gchar *varname, const gchar *varunit, const gchar *longname, const gchar *shortname, double value){
-	NcVar* ncv = ncf->add_var (varname, ncDouble);
-	ncv->add_att ("long_name", longname);
-	ncv->add_att ("short_name", shortname);
-	ncv->add_att ("var_unit", varunit);
-	ncv->put (&value);
-	return ncv;
+void sranger_mk2_hwi_ncaddvar (NcFile &ncf, const gchar *varname, const gchar *varunit, const gchar *longname, const gchar *shortname, double value, NcVar &ncv){
+	ncv = ncf.addVar (varname, ncDouble);
+	ncv.putAtt ("long_name", longname);
+	ncv.putAtt ("short_name", shortname);
+	ncv.putAtt ("var_unit", varunit);
+	ncv.putVar (&value);
 }
-NcVar* sranger_mk2_hwi_ncaddvar (NcFile *ncf, const gchar *varname, const gchar *varunit, const gchar *longname, const gchar *shortname, int value){
-	NcVar* ncv = ncf->add_var (varname, ncInt);
-	ncv->add_att ("long_name", longname);
-	ncv->add_att ("short_name", shortname);
-	ncv->add_att ("var_unit", varunit);
-	ncv->put (&value);
-	return ncv;
+void sranger_mk2_hwi_ncaddvar (NcFile &ncf, const gchar *varname, const gchar *varunit, const gchar *longname, const gchar *shortname, double value){
+	NcVar ncv = ncf.addVar (varname, ncDouble);
+	ncv.putAtt ("long_name", longname);
+	ncv.putAtt ("short_name", shortname);
+	ncv.putAtt ("var_unit", varunit);
+	ncv.putVar (&value);
+}
+void sranger_mk2_hwi_ncaddvar (NcFile &ncf, const gchar *varname, const gchar *varunit, const gchar *longname, const gchar *shortname, int value, NcVar &ncv){
+	ncv = ncf.addVar (varname, ncInt);
+	ncv.putAtt ("long_name", longname);
+	ncv.putAtt ("short_name", shortname);
+	ncv.putAtt ("var_unit", varunit);
+	ncv.putVar (&value);
+}
+void sranger_mk2_hwi_ncaddvar (NcFile &ncf, const gchar *varname, const gchar *varunit, const gchar *longname, const gchar *shortname, int value){
+	NcVar ncv = ncf.addVar (varname, ncInt);
+	ncv.putAtt ("long_name", longname);
+	ncv.putAtt ("short_name", shortname);
+	ncv.putAtt ("var_unit", varunit);
+	ncv.putVar (&value);
 }
 
 #define MK2ID "sranger_mk2_hwi_"
 
-void DSPControl::save_values (NcFile *ncf){
-	NcVar *ncv;
+void DSPControl::save_values (NcFile &ncf){
+	NcVar ncv;
 
 	PI_DEBUG (DBG_L4, "DSPControl::save_values");
 	gchar *i=NULL;
@@ -3453,62 +3465,62 @@ void DSPControl::save_values (NcFile *ncf){
 	else
 		i = g_strconcat ("SRanger HwI interface: STM mode selected.\nHardware-Info:\n", sranger_common_hwi->get_info (), NULL);
 
-	NcDim* infod  = ncf->add_dim("sranger_info_dim", strlen(i));
-	NcVar* info   = ncf->add_var("sranger_info", ncChar, infod);
-	info->add_att("long_name", "SRanger HwI plugin information");
-	info->put(i, strlen(i));
+	NcDim infod  = ncf.addDim("sranger_info_dim", strlen(i));
+	NcVar info   = ncf.addVar("sranger_info", ncChar, infod);
+	info.putAtt("long_name", "SRanger HwI plugin information");
+	info.putVar(i); //, strlen(i));
 	g_free (i);
 
 // Basic Feedback/Scan Parameter ============================================================
 
-	ncv=sranger_mk2_hwi_ncaddvar (ncf, MK2ID"bias", "V", "SRanger: (Sampel or Tip) Bias Voltage", "Bias", bias);
-	ncv->add_att ("label", "Bias");
+	sranger_mk2_hwi_ncaddvar (ncf, MK2ID"bias", "V", "SRanger: (Sampel or Tip) Bias Voltage", "Bias", bias, ncv);
+	ncv.putAtt ("label", "Bias");
 
-	ncv=sranger_mk2_hwi_ncaddvar (ncf, MK2ID"motor", "V", "SRanger: auxillary/motor control Voltage", "Motor", motor);
-	ncv->add_att ("label", "Motor");
+	sranger_mk2_hwi_ncaddvar (ncf, MK2ID"motor", "V", "SRanger: auxillary/motor control Voltage", "Motor", motor, ncv);
+	ncv.putAtt ("label", "Motor");
 
-	ncv=sranger_mk2_hwi_ncaddvar (ncf, MK2ID"z_setpoint", "A", "SRanger: auxillary/Z setpoint", "Z Set Point", zpos_ref);
-	ncv->add_att ("label", "Z Setpoint");
+	sranger_mk2_hwi_ncaddvar (ncf, MK2ID"z_setpoint", "A", "SRanger: auxillary/Z setpoint", "Z Set Point", zpos_ref, ncv);
+	ncv.putAtt ("label", "Z Setpoint");
 
 	if (DSPPACClass) { // MK3
-                ncv=sranger_mk2_hwi_ncaddvar (ncf, MK2ID"pll_reference", "Hz", "SRanger: PAC/PLL reference freq.", "PLL Reference", DSPPACClass->pll.Reference[0]);
-                ncv->add_att ("label", "PLL Reference");
+                sranger_mk2_hwi_ncaddvar (ncf, MK2ID"pll_reference", "Hz", "SRanger: PAC/PLL reference freq.", "PLL Reference", DSPPACClass->pll.Reference[0], ncv);
+                ncv.putAtt ("label", "PLL Reference");
         }
         
-	ncv=sranger_mk2_hwi_ncaddvar (ncf, MK2ID"mix0_set_point", "nA", "SRanger: Mix0: Current set point", "Current Setpt.", mix_set_point[0]);
-	ncv->add_att ("label", "Current");
-	ncv=sranger_mk2_hwi_ncaddvar (ncf, MK2ID"mix1_set_point", "Hz", "SRanger: Mix1: Voltage set point", "Voltage Setpt.", mix_set_point[1]);
-	ncv->add_att ("label", "VoltSetpt.");
-	ncv=sranger_mk2_hwi_ncaddvar (ncf, MK2ID"mix2_set_point", "V", "SRanger: Mix2: Aux2 set point", "Aux2 Setpt.", mix_set_point[2]);
-	ncv->add_att ("label", "Aux2 Setpt.");
-	ncv=sranger_mk2_hwi_ncaddvar (ncf, MK2ID"mix3_set_point", "V", "SRanger: Mix3: Aux3 set point", "Aux3 Setpt.", mix_set_point[3]);
-	ncv->add_att ("label", "Aux3 Setpt.");
+	sranger_mk2_hwi_ncaddvar (ncf, MK2ID"mix0_set_point", "nA", "SRanger: Mix0: Current set point", "Current Setpt.", mix_set_point[0], ncv);
+	ncv.putAtt ("label", "Current");
+	sranger_mk2_hwi_ncaddvar (ncf, MK2ID"mix1_set_point", "Hz", "SRanger: Mix1: Voltage set point", "Voltage Setpt.", mix_set_point[1], ncv);
+	ncv.putAtt ("label", "VoltSetpt.");
+	sranger_mk2_hwi_ncaddvar (ncf, MK2ID"mix2_set_point", "V", "SRanger: Mix2: Aux2 set point", "Aux2 Setpt.", mix_set_point[2], ncv);
+	ncv.putAtt ("label", "Aux2 Setpt.");
+	sranger_mk2_hwi_ncaddvar (ncf, MK2ID"mix3_set_point", "V", "SRanger: Mix3: Aux3 set point", "Aux3 Setpt.", mix_set_point[3], ncv);
+	ncv.putAtt ("label", "Aux3 Setpt.");
 
-	ncv=sranger_mk2_hwi_ncaddvar (ncf, MK2ID"mix0_mix_gain", "1", "SRanger: Mix0 gain", "Current gain", mix_gain[0]);
-	ncv=sranger_mk2_hwi_ncaddvar (ncf, MK2ID"mix1_mix_gain", "1", "SRanger: Mix1 gain", "Voltage gain", mix_gain[1]);
-	ncv=sranger_mk2_hwi_ncaddvar (ncf, MK2ID"mix2_mix_gain", "1", "SRanger: Mix2 gain", "Aux2 gain", mix_gain[2]);
-	ncv=sranger_mk2_hwi_ncaddvar (ncf, MK2ID"mix3_mix_gain", "1", "SRanger: Mix3 gain", "Aux3 gain", mix_gain[3]);
+	sranger_mk2_hwi_ncaddvar (ncf, MK2ID"mix0_mix_gain", "1", "SRanger: Mix0 gain", "Current gain", mix_gain[0], ncv);
+	sranger_mk2_hwi_ncaddvar (ncf, MK2ID"mix1_mix_gain", "1", "SRanger: Mix1 gain", "Voltage gain", mix_gain[1], ncv);
+	sranger_mk2_hwi_ncaddvar (ncf, MK2ID"mix2_mix_gain", "1", "SRanger: Mix2 gain", "Aux2 gain", mix_gain[2], ncv);
+	sranger_mk2_hwi_ncaddvar (ncf, MK2ID"mix3_mix_gain", "1", "SRanger: Mix3 gain", "Aux3 gain", mix_gain[3], ncv);
 
-	ncv=sranger_mk2_hwi_ncaddvar (ncf, MK2ID"mix0_mix_level", "1", "SRanger: Mix0 level", "Current level", mix_level[0]);
-	ncv=sranger_mk2_hwi_ncaddvar (ncf, MK2ID"mix1_mix_level", "1", "SRanger: Mix1 level", "Voltage level", mix_level[1]);
-	ncv=sranger_mk2_hwi_ncaddvar (ncf, MK2ID"mix2_mix_level", "1", "SRanger: Mix2 level", "Aux2 level", mix_level[2]);
-	ncv=sranger_mk2_hwi_ncaddvar (ncf, MK2ID"mix3_mix_level", "1", "SRanger: Mix3 level", "Aux3 level", mix_level[3]);
+	sranger_mk2_hwi_ncaddvar (ncf, MK2ID"mix0_mix_level", "1", "SRanger: Mix0 level", "Current level", mix_level[0], ncv);
+	sranger_mk2_hwi_ncaddvar (ncf, MK2ID"mix1_mix_level", "1", "SRanger: Mix1 level", "Voltage level", mix_level[1], ncv);
+	sranger_mk2_hwi_ncaddvar (ncf, MK2ID"mix2_mix_level", "1", "SRanger: Mix2 level", "Aux2 level", mix_level[2], ncv);
+	sranger_mk2_hwi_ncaddvar (ncf, MK2ID"mix3_mix_level", "1", "SRanger: Mix3 level", "Aux3 level", mix_level[3], ncv);
 
-	ncv=sranger_mk2_hwi_ncaddvar (ncf, MK2ID"mix0_current_mix_transform_mode", "BC", "SRanger: Mix0 transform_mode", "Current transform_mode", (double)mix_transform_mode[0]);
-	ncv->add_att ("mode_bcoding", "0:Off, 1:On, 2:Log, 4:IIR, 8:FUZZY");
-	ncv=sranger_mk2_hwi_ncaddvar (ncf, MK2ID"mix1_voltage_mix_transform_mode", "BC", "SRanger: Mix1 transform_mode", "Voltage transform_mode", (double)mix_transform_mode[1]);
-	ncv->add_att ("mode_bcoding", "0:Off, 1:On, 2:Log, 4:IIR, 8:FUZZY");
-	ncv=sranger_mk2_hwi_ncaddvar (ncf, MK2ID"mix2_aux2_mix_transform_mode", "BC", "SRanger: Mix2 transform_mode", "Aux2 transform_mode", (double)mix_transform_mode[2]);
-	ncv->add_att ("mode_bcoding", "0:Off, 1:On, 2:Log, 4:IIR, 8:FUZZY");
-	ncv=sranger_mk2_hwi_ncaddvar (ncf, MK2ID"mix3_aux3_mix_transform_mode", "BC", "SRanger: Mix3 transform_mode", "Aux3 transform_mode", (double)mix_transform_mode[3]);
-	ncv->add_att ("mode_bcoding", "0:Off, 1:On, 2:Log, 4:IIR, 8:FUZZY");
+	sranger_mk2_hwi_ncaddvar (ncf, MK2ID"mix0_current_mix_transform_mode", "BC", "SRanger: Mix0 transform_mode", "Current transform_mode", (double)mix_transform_mode[0], ncv);
+	ncv.putAtt ("mode_bcoding", "0:Off, 1:On, 2:Log, 4:IIR, 8:FUZZY");
+	sranger_mk2_hwi_ncaddvar (ncf, MK2ID"mix1_voltage_mix_transform_mode", "BC", "SRanger: Mix1 transform_mode", "Voltage transform_mode", (double)mix_transform_mode[1], ncv);
+	ncv.putAtt ("mode_bcoding", "0:Off, 1:On, 2:Log, 4:IIR, 8:FUZZY");
+	sranger_mk2_hwi_ncaddvar (ncf, MK2ID"mix2_aux2_mix_transform_mode", "BC", "SRanger: Mix2 transform_mode", "Aux2 transform_mode", (double)mix_transform_mode[2], ncv);
+	ncv.putAtt ("mode_bcoding", "0:Off, 1:On, 2:Log, 4:IIR, 8:FUZZY");
+	sranger_mk2_hwi_ncaddvar (ncf, MK2ID"mix3_aux3_mix_transform_mode", "BC", "SRanger: Mix3 transform_mode", "Aux3 transform_mode", (double)mix_transform_mode[3], ncv);
+	ncv.putAtt ("mode_bcoding", "0:Off, 1:On, 2:Log, 4:IIR, 8:FUZZY");
 
 
-	ncv=sranger_mk2_hwi_ncaddvar (ncf, MK2ID"move_speed_x", "A/s", "SRanger: Move speed X", "Xm Velocity", move_speed_x);
-	ncv->add_att ("label", "Velocity Xm");
+	sranger_mk2_hwi_ncaddvar (ncf, MK2ID"move_speed_x", "A/s", "SRanger: Move speed X", "Xm Velocity", move_speed_x, ncv);
+	ncv.putAtt ("label", "Velocity Xm");
 
-	ncv=sranger_mk2_hwi_ncaddvar (ncf, MK2ID"scan_speed_x",   gtk_check_button_get_active (GTK_CHECK_BUTTON(FastScan_status)) ? "Hz":"A/s", "SRanger: Scan speed X", "Xs Velocity", scan_speed_x);
-	ncv->add_att ("label", "Velocity Xs");
+	sranger_mk2_hwi_ncaddvar (ncf, MK2ID"scan_speed_x",   gtk_check_button_get_active (GTK_CHECK_BUTTON(FastScan_status)) ? "Hz":"A/s", "SRanger: Scan speed X", "Xs Velocity", scan_speed_x, ncv);
+	ncv.putAtt ("label", "Velocity Xs");
 
 	sranger_mk2_hwi_ncaddvar (ncf, MK2ID"fast_scan_flag", "On/Off", "SRanger: Fast-Scan mode (X=sine)", "ldcf", gtk_check_button_get_active (GTK_CHECK_BUTTON(FastScan_status)) ? 1:0);
 
@@ -3585,9 +3597,9 @@ void DSPControl::save_values (NcFile *ncf){
 }
 
 
-#define NC_GET_VARIABLE(VNAME, VAR) if(ncf->get_var(VNAME)) ncf->get_var(VNAME)->get(VAR)
+#define NC_GET_VARIABLE(VNAME, VAR) if(!ncf.getVar(VNAME).isNull ()) ncf.getVar(VNAME).getVar(VAR)
 
-void DSPControl::load_values (NcFile *ncf){
+void DSPControl::load_values (NcFile &ncf){
 	PI_DEBUG (DBG_L4, "DSPControl::load_values");
 	// Values will also be written in old style DSP Control window for the reason of backwards compatibility
 	// OK -- but will be obsoleted and removed at any later point -- PZ

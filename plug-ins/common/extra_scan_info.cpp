@@ -198,17 +198,25 @@ static void extra_scan_info_SaveValues_callback ( gpointer gp_ncf ){
 
 	f_info.close ();
 
-	NcDim* infod  = ncf->add_dim("extra_scan_info_dim", strlen(gs_info->str));
-	NcVar* info   = ncf->add_var("extra_scan_info", ncChar, infod);
-	info->add_att("long_name", "extra scan information");
-	info->put(gs_info->str, strlen(gs_info->str));
+	NcDim infod  = ncf->addDim ("extra_scan_info_dim", strlen(gs_info->str));
+	NcVar info   = ncf->addVar ("extra_scan_info", ncChar, infod);
+	info.putAtt ("long_name", "extra scan information");
+	info.putVar (gs_info->str); //, strlen(gs_info->str));
+               
 	g_string_free(gs_info, TRUE);
 }
 
- #define NC_GET_VARIABLE(VNAME, VAR) if(ncf->get_var(VNAME)) ncf->get_var(VNAME)->get(VAR)
+#define NC_GET_VARIABLE(VNAME, VAR) if(!ncf->getVar(VNAME).isNull ()) ncf->getVar(VNAME).getVar(VAR)
 
 static void extra_scan_info_LoadValues_callback ( gpointer gp_ncf ){
         //NcFile *ncf = (NcFile *) gp_ncf;
         PI_DEBUG (DBG_L4, "Extra Scan Info::LoadValues_callback\n");
         //load_values ((NcFile *) ncf);
 }
+
+/*
+NcVar::putAtt 	( 	const std::string &  	name,
+		size_t  	len,
+		const char **  	dataValues 
+	)
+*/

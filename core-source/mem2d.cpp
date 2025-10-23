@@ -414,8 +414,13 @@ gpointer TZData<ZTYP>::NcDataUpdate_thread (void *env){
                         if (!e.update || (e.update && (self->Li[liy].IsNew() && ! self->Li[liy].IsStored()))) {
                                 count++;
                                 //g_message ("NcVar update %d, %d", v,y);
-                                e.ncfield->set_cur(e.time_index,v,y);
-                                e.ncfield->put(self->Zdat[y*self->nv+v], 1,1, 1,self->nx);
+
+                                std::vector<size_t> startp = { e.time_index,v,y, 0 };
+                                std::vector<size_t> countp = { 1,1, 1,self->nx };
+                                e.ncfield->putVar(startp, countp, self->Zdat[y*self->nv+v]);
+
+                                //e.ncfield->set_cur(e.time_index,v,y);
+                                //e.ncfield->put(self->Zdat[y*self->nv+v], 1,1, 1,self->nx);
                                 self->Li[liy].SetStored();
                         }
                         //                if (y==0 && (v%10) == 0)
@@ -427,7 +432,7 @@ gpointer TZData<ZTYP>::NcDataUpdate_thread (void *env){
 }
 
 template <class ZTYP> 
-void TZData<ZTYP>::NcPut(NcVar *ncfield, int time_index, gboolean update){
+void TZData<ZTYP>::NcPut(NcVar &ncfield, int time_index, gboolean update){
 #if 0
         NcDataUpdate_Job_Env<ZTYP> job;
         job.self = this;
@@ -446,8 +451,13 @@ void TZData<ZTYP>::NcPut(NcVar *ncfield, int time_index, gboolean update){
                         if (!update || (update && (Li[liy].IsNew() && ! Li[liy].IsStored()))) {
                                 count++;
                                 //g_message ("NcVar update %d, %d", v,y);
-                                ncfield->set_cur(time_index,v,y);
-                                ncfield->put(Zdat[y*nv+v], 1,1, 1,nx);
+
+                                std::vector<size_t> startp = { time_index,v,y, 0 };
+                                std::vector<size_t> countp = { 1,1, 1,nx };
+                                ncfield.putVar(startp, countp, Zdat[y*nv+v]);
+
+                                //ncfield.set_cur(time_index,v,y);
+                                //ncfield.put(Zdat[y*nv+v], 1,1, 1,nx);
                                 Li[liy].SetStored();
                         }
                         //                if (y==0 && (v%10) == 0)
@@ -466,8 +476,8 @@ void TZData<ZTYP>::NcPut(NcVar *ncfield, int time_index, gboolean update){
 // #define SAVE_NEW_DATA_ONLY
 
 template <class ZTYP> 
-//void TZData<ZTYP>::NcPut(NcVar *ncfield, int time_index){
-void TZData<ZTYP>::NcPut(NcVar *ncfield, int time_index, gboolean update){
+//void TZData<ZTYP>::NcPut(NcVar &ncfield, int time_index){
+void TZData<ZTYP>::NcPut(NcVar &ncfield, int time_index, gboolean update){
 
         gdouble yy, yy2;
         yy = yy2 = 0.;
@@ -475,12 +485,19 @@ void TZData<ZTYP>::NcPut(NcVar *ncfield, int time_index, gboolean update){
                 for(int v=0; v<nv; ++v){
 #ifdef SAVE_NEW_DATA_ONLY
                         if (Li[y+ny*v].IsNew() > 0) {
-                                ncfield->set_cur(time_index,v,y);
-                                ncfield->put(Zdat[y*nv+v], 1,1, 1,nx);
+                                std::vector<size_t> startp = { time_index,v,y, 0 };
+                                std::vector<size_t> countp = { 1,1, 1,nx };
+                                ncfield.putVar(startp, countp, self->Zdat[y*nv+v]);
+
+                                //ncfield->set_cur(time_index,v,y);
+                                //ncfield->put(Zdat[y*nv+v], 1,1, 1,nx);
                         }
 #else
-                        ncfield->set_cur(time_index,v,y);
-                        ncfield->put(Zdat[y*nv+v], 1,1, 1,nx);
+                        std::vector<size_t> startp = { time_index,v,y, 0 };
+                        std::vector<size_t> countp = { 1,1, 1,nx };
+                        ncfield.putVar(startp, countp, self->Zdat[y*nv+v]);
+                        //ncfield->set_cur(time_index,v,y);
+                        //ncfield->put(Zdat[y*nv+v], 1,1, 1,nx);
 #endif
                 }
                 yy = (double)y/(double)ny;
@@ -491,13 +508,16 @@ void TZData<ZTYP>::NcPut(NcVar *ncfield, int time_index, gboolean update){
 #endif
 
 template <class ZTYP> 
-void TZData<ZTYP>::NcGet(NcVar *ncfield, int time_index){
+void TZData<ZTYP>::NcGet(NcVar &ncfield, int time_index){
 	gdouble yy, yy2;
 	yy = yy2 = 0.;
 	for(int y=0; y<ny; y++){
 		for(int v=0; v<nv; ++v){
-			ncfield->set_cur(time_index,v,y);
-			ncfield->get(Zdat[y*nv+v], 1,1, 1,nx);
+                        std::vector<size_t> startp = { time_index,v,y, 0 };
+                        std::vector<size_t> countp = { 1,1, 1,nx };
+                        ncfield.getVar(startp, countp, Zdat[y*nv+v]);
+			//ncfield.set_cur(time_index,v,y);
+			//ncfield.get(Zdat[y*nv+v], 1,1, 1,nx);
 			Li[y+ny*v].invalidate();
 		}
 		yy = (double)y/(double)ny;
@@ -651,7 +671,7 @@ LayerInformation::LayerInformation (LayerInformation *li){
 	num = li->num;
 }
 
-LayerInformation::LayerInformation (NcVar* ncv_description, NcVar* ncv_format, NcVar* ncv_osd_format, NcVar* ncv_values, int ti, int v, int k){
+LayerInformation::LayerInformation (NcVar &ncv_description, NcVar &ncv_format, NcVar &ncv_osd_format, NcVar &ncv_values, int ti, int v, int k){
         GXSM_REF_OBJECT (GXSM_GRC_LAYERINFO);
 	int n=0;
 	desc = NULL;
@@ -660,16 +680,19 @@ LayerInformation::LayerInformation (NcVar* ncv_description, NcVar* ncv_format, N
 	num = 0;
 	gchar *tmp=NULL;
 
-	tmp = g_new0 (gchar, (n=ncv_description->get_dim(3)->size())+1);
-	ncv_description->set_cur (ti, v, k);
-	ncv_description->get (tmp, 1,1,1, n);;
+	tmp = g_new0 (gchar, (n=ncv_description.getDims ()[3].getSize ())+1);
+        std::vector<size_t> startp = { ti,v,k };
+        std::vector<size_t> countp = { 1,1,1,n };
+	ncv_description.getVar (startp, countp, tmp);
 	desc = g_strdup (tmp);
 	g_free (tmp);
 	
-	if (ncv_format->get_dim(3)->size() > 0){
-		tmp = g_new0 (gchar, (n=ncv_format->get_dim(3)->size())+1);
-		ncv_format->set_cur (ti, v, k);
-		ncv_format->get (tmp, 1,1,1, n);;
+	if (ncv_format.getDims() [3].getSize() > 0){
+		tmp = g_new0 (gchar, (n=ncv_format.getDims()[3].getSize ())+1);
+
+                std::vector<size_t> startp = { ti,v,k };
+                std::vector<size_t> countp = { 1,1,1,n };
+                ncv_format.getVar(startp, countp, tmp);
 		fmt = g_strdup (tmp);
 		g_free (tmp);
 		gchar* p1=strchr (fmt, '%');
@@ -684,16 +707,20 @@ LayerInformation::LayerInformation (NcVar* ncv_description, NcVar* ncv_format, N
 		}
 	}
 
-	if (ncv_osd_format->get_dim(3)->size() > 0){
-		tmp = g_new0 (gchar, (n=ncv_osd_format->get_dim(3)->size())+1);
-		ncv_osd_format->set_cur (ti, v, k);
-		ncv_osd_format->get (tmp, 1,1,1, n);;
+	if (ncv_osd_format.getDims() [3].getSize() > 0){
+		tmp = g_new0 (gchar, (n=ncv_osd_format.getDims ()[3].getSize())+1);
+                std::vector<size_t> startp = { ti,v,k };
+                std::vector<size_t> countp = { 1,1,1,n };
+                ncv_osd_format.getVar(startp, countp, tmp);
 		fmtosd = g_strdup (tmp);
 		g_free (tmp);
 	}
 
-	ncv_values->set_cur (ti, v, k);
-	ncv_values->get (val, 1,1,1, 2);
+        {
+                std::vector<size_t> startp = { ti,v,k };
+                std::vector<size_t> countp = { 1,1,1,2 };
+                ncv_values.getVar(startp, countp, val);
+        }
 }
 
 LayerInformation::~LayerInformation (){
@@ -736,31 +763,31 @@ gchar *LayerInformation::get (gboolean osd){
 	return NULL;
 }
 
-void LayerInformation::write_layer_information (NcVar* ncv_description, NcVar* ncv_format, NcVar* ncv_osd_format, NcVar* ncv_values, int ti, int v, int k){
+void LayerInformation::write_layer_information (NcVar &ncv_description, NcVar &ncv_format, NcVar &ncv_osd_format, NcVar &ncv_values, int ti, int v, int k){
 	int n=0;
-	gchar* tmp = g_new0 (gchar, (n=ncv_description->get_dim(3)->size())+1);
+	gchar* tmp = g_new0 (gchar, (n=ncv_description.getDims()[3].getSize())+1);
 	if (desc)
 		memcpy (tmp, desc, strlen (desc));
-	ncv_description->set_cur (ti, v, k);
-	ncv_description->put (tmp, 1,1,1, n);
+
+        std::vector<size_t> startp = { ti,v,k };
+        std::vector<size_t> countp = { 1,1,1,n };
+        ncv_description.putVar(startp, countp, tmp);
 	g_free (tmp);
 
-	tmp = g_new0 (gchar, (n=ncv_format->get_dim(3)->size())+1);
+	tmp = g_new0 (gchar, (n=ncv_format.getDims()[3].getSize())+1);
 	if (fmt)
 		memcpy (tmp, fmt, strlen (fmt));
-	ncv_format->set_cur (ti, v, k);
-	ncv_format->put (tmp, 1,1,1, n);
+        ncv_format.putVar(startp, countp, tmp);
 	g_free (tmp);
 
-	tmp = g_new0 (gchar, (n=ncv_osd_format->get_dim(3)->size())+1);
+	tmp = g_new0 (gchar, (n=ncv_osd_format.getDims()[3].getSize())+1);
 	if (fmtosd)
 		memcpy (tmp, fmtosd, strlen (fmtosd));
-	ncv_osd_format->set_cur (ti, v, k);
-	ncv_osd_format->put (tmp, 1,1,1, n);
+        ncv_osd_format.putVar(startp, countp, val);
 	g_free (tmp);
 
-	ncv_values->set_cur (ti, v, k);
-	ncv_values->put (val, 1,1,1, 2);
+        countp = { 1,1,1,2 };
+        ncv_values.putVar(startp, countp, val);
 }
 
 /*
@@ -1012,14 +1039,14 @@ GSList* Mem2d::ReportScanEventsYasc (){
         return ev_sort;
 }
 
-int Mem2d::WriteScanEvents (NcFile *ncf){
+int Mem2d::WriteScanEvents (NcFile &ncf){
 	GSList *sel; // List of ScanEvents
 	int p_index; // Event_Probe_####_... NcVar name counter, grouping of similar (same dimensions) data sets
 	//int u_index;
 	int p_dim_sets=0;
 	int p_dim_samples=0;
-	NcVar* evdata_var=NULL;
-	NcVar* evcoords_var=NULL;
+	NcVar evdata_var;
+	NcVar evcoords_var;
 
 	class Event{
 	public:
@@ -1178,11 +1205,11 @@ int Mem2d::WriteScanEvents (NcFile *ncf){
 	return 0;
 }
 
-int Mem2d::LoadScanEvents (NcFile *ncf){
+int Mem2d::LoadScanEvents (NcFile &ncf){
 	ScanEvent *se=NULL;
 	ProbeEntry *pe=NULL;
-	NcVar* evdata_var=NULL;
-	NcVar* evcoords_var=NULL;
+	NcVar evdata_var;
+	NcVar evcoords_var;
 	
 	// scan NC-file for ScanEvents
 	XSM_DEBUG (DBG_L2, "NCF Load: Scan Events -- Probe Entry...");
@@ -1226,13 +1253,13 @@ int Mem2d::LoadScanEvents (NcFile *ncf){
 
 	// scan NC-file for User Event Dims, extract Names
 	XSM_DEBUG (DBG_L2, "NCF Load: Scan Events -- User Entry...");
-        // NcDim* data_dim=NULL;
-	for (int n=0; n < ncf->num_dims (); n++) {
+
+        std::multimap<std::string, netCDF::NcDim> dims = ncf.getDims ();
+        for (auto const& [name, dim] : dims) {
 		ue = NULL;
 		se = NULL;
-
-		NcDim* dim = ncf->get_dim(n);
-		gchar *dimname = g_strdup((gchar*)dim->name());
+                gchar *dimname = g_strdup(dim.getName().data());
+                //n=dim.getSize();
 //		XSM_DEBUG (DBG_L2, "[" << n << "] " << dimname);
 		if (!g_strcmp0 (dimname, "Event_User_Adjust_Data_Dim")){ // == shoudl be 20
 			// data_dim = dim;
@@ -1247,7 +1274,8 @@ int Mem2d::LoadScanEvents (NcFile *ncf){
 			}
 		}
 		g_free (dimname);
-	}
+        }                                
+
 	if (ue)
 		delete ue;
 
@@ -1477,34 +1505,55 @@ void Mem2d::eval_max_sizes_layer_information (int* max_dim_description, int* max
 	*max_nlyiv = len_max(*max_nlyiv, nlyi);
 }
 
-void Mem2d::start_store_layer_information (NcFile* ncf, 
-					   NcVar** ncv_description, NcVar** ncv_format, NcVar** ncv_osd_format, NcVar** ncv_values, 
+void Mem2d::start_store_layer_information (NcFile &ncf, 
+					   NcVar &ncv_description, NcVar &ncv_format, NcVar &ncv_osd_format, NcVar &ncv_values, 
 					   int dim_ti, int dim_v, int dim_k, 
 					   int dim_description, int dim_format, int dim_format_osd){
 
-	NcDim* ncdim_ti  = ncf->add_dim ("LInfo_dim_ti", dim_ti);
-	NcDim* ncdim_v   = ncf->add_dim ("LInfo_dim_v", dim_v);
-	NcDim* ncdim_k   = ncf->add_dim ("LInfo_dim_k", dim_k);
-	NcDim* ncdim_dsc = ncf->add_dim ("LInfo_dim_des", dim_description);
-	NcDim* ncdim_fmt = ncf->add_dim ("LInfo_dim_fmt", dim_format);
-	NcDim* ncdim_fmo = ncf->add_dim ("LInfo_dim_fmo", dim_format_osd);
-	NcDim* ncdim_val = ncf->add_dim ("LInfo_dim_val", 2);
+	NcDim ncdim_ti  = ncf.addDim ("LInfo_dim_ti", dim_ti);
+	NcDim ncdim_v   = ncf.addDim ("LInfo_dim_v", dim_v);
+	NcDim ncdim_k   = ncf.addDim ("LInfo_dim_k", dim_k);
+	NcDim ncdim_dsc = ncf.addDim ("LInfo_dim_des", dim_description);
+	NcDim ncdim_fmt = ncf.addDim ("LInfo_dim_fmt", dim_format);
+	NcDim ncdim_fmo = ncf.addDim ("LInfo_dim_fmo", dim_format_osd);
+	NcDim ncdim_val = ncf.addDim ("LInfo_dim_val", 2);
 
-	*ncv_description = ncf->add_var ("LInfo_dsc", ncChar, ncdim_ti, ncdim_v, ncdim_k, ncdim_dsc);
-	(*ncv_description)->add_att ("long_name", "Layer Information Description");
+        std::vector<netCDF::NcDim>  ncv_description_dims;
+        ncv_description_dims.push_back (ncdim_ti);
+        ncv_description_dims.push_back (ncdim_v);
+        ncv_description_dims.push_back (ncdim_k);
+        ncv_description_dims.push_back (ncdim_dsc);
 
-	*ncv_format = ncf->add_var ("LInfo_fmt", ncChar, ncdim_ti, ncdim_v, ncdim_k, ncdim_fmt);
-	(*ncv_format)->add_att ("long_name", "Layer Information full Format String");
+	ncv_description = ncf.addVar ("LInfo_dsc", ncChar, ncv_description_dims); //ncdim_ti, ncdim_v, ncdim_k, ncdim_dsc);
+	ncv_description.putAtt ("long_name", "Layer Information Description");
 
-	*ncv_osd_format = ncf->add_var ("LInfo_fmo", ncChar, ncdim_ti, ncdim_v, ncdim_k, ncdim_fmo);
-	(*ncv_osd_format)->add_att ("long_name", "Layer Information short (OSD) Format String");
+        std::vector<netCDF::NcDim>  ncv_format_dims;
+        ncv_format_dims.push_back (ncdim_ti);
+        ncv_format_dims.push_back (ncdim_v);
+        ncv_format_dims.push_back (ncdim_k);
+        ncv_format_dims.push_back (ncdim_fmt);
+	ncv_format = ncf.addVar ("LInfo_fmt", ncChar, ncv_format_dims); // ncdim_ti, ncdim_v, ncdim_k, ncdim_fmt);
+	ncv_format.putAtt ("long_name", "Layer Information full Format String");
 
-	*ncv_values = ncf->add_var ("LInfo_values", ncDouble, ncdim_ti, ncdim_v, ncdim_k, ncdim_val);
-	(*ncv_values)->add_att ("long_name", "Layer Information Values");
-	(*ncv_values)->add_att ("extra_info", "to be formated by fprint using LInfo_format or LInfo_format_osd");
+        std::vector<netCDF::NcDim>  ncv_osd_dims;
+        ncv_osd_dims.push_back (ncdim_ti);
+        ncv_osd_dims.push_back (ncdim_v);
+        ncv_osd_dims.push_back (ncdim_k);
+        ncv_osd_dims.push_back (ncdim_fmo);
+	ncv_osd_format = ncf.addVar ("LInfo_fmo", ncChar, ncv_osd_dims); // ncdim_ti, ncdim_v, ncdim_k, ncdim_fmo);
+	ncv_osd_format.putAtt ("long_name", "Layer Information short (OSD) Format String");
+
+        std::vector<netCDF::NcDim>  ncv_values_dims;
+        ncv_values_dims.push_back (ncdim_ti);
+        ncv_values_dims.push_back (ncdim_v);
+        ncv_values_dims.push_back (ncdim_k);
+        ncv_values_dims.push_back (ncdim_val);
+	ncv_values = ncf.addVar ("LInfo_values", ncDouble, ncv_values_dims); //, ncdim_ti, ncdim_v, ncdim_k, ncdim_val);
+	ncv_values.putAtt ("long_name", "Layer Information Values");
+	ncv_values.putAtt ("extra_info", "to be formated by fprint using LInfo_format or LInfo_format_osd");
 }
 
-void Mem2d::store_layer_information (NcVar* ncv_description, NcVar* ncv_format, NcVar* ncv_osd_format, NcVar* ncv_values, int ti){
+void Mem2d::store_layer_information (NcVar &ncv_description, NcVar &ncv_format, NcVar &ncv_osd_format, NcVar &ncv_values, int ti){
 	for (int v=0; v<nlyi; ++v){
 		int nj = g_list_length (layer_information_list[v]);
 		for (int k = 0; k<nj; ++k){
@@ -1514,19 +1563,19 @@ void Mem2d::store_layer_information (NcVar* ncv_description, NcVar* ncv_format, 
 	}
 }
 
-void Mem2d::start_read_layer_information (NcFile* ncf, NcVar** ncv_description, NcVar** ncv_format, NcVar** ncv_osd_format, NcVar** ncv_values){
-	*ncv_description = ncf->get_var("LInfo_dsc");
-	*ncv_format      = ncf->get_var("LInfo_fmt");
-	*ncv_osd_format  = ncf->get_var("LInfo_fmo");
-	*ncv_values      = ncf->get_var("LInfo_values");
+void Mem2d::start_read_layer_information (NcFile &ncf, NcVar &ncv_description, NcVar &ncv_format, NcVar &ncv_osd_format, NcVar &ncv_values){
+	ncv_description = ncf.getVar("LInfo_dsc");
+	ncv_format      = ncf.getVar("LInfo_fmt");
+	ncv_osd_format  = ncf.getVar("LInfo_fmo");
+	ncv_values      = ncf.getVar("LInfo_values");
 }
 
-void Mem2d::add_layer_information (NcVar* ncv_description, NcVar* ncv_format, NcVar* ncv_osd_format, NcVar* ncv_values, int ti){
+void Mem2d::add_layer_information (NcVar &ncv_description, NcVar &ncv_format, NcVar &ncv_osd_format, NcVar &ncv_values, int ti){
 	L_info_new ();
 	for (int v=0; v<nlyi; ++v){
-		if (v >= ncv_description->get_dim(1)->size())
+		if (v >= ncv_description.getDims()[1].getSize())
 			break;
-		int nj = ncv_description->get_dim(2)->size();
+		int nj = ncv_description.getDims()[2].getSize();
 		for (int k = 0; k<nj; ++k){
 			LayerInformation* li = new LayerInformation (ncv_description, ncv_format, ncv_osd_format, ncv_values, ti, v, k);
 			add_layer_information (v, li);

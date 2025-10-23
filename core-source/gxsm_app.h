@@ -30,9 +30,8 @@
 
 #include <config.h>
 
-#include <netcdf.hh>
-//#include <netcdf>
-//using namespace netCDF;
+#include <netcdf>
+using namespace netCDF;
 
 #include "gxsm_menu-extension.h"
 #include "gapp_service.h"

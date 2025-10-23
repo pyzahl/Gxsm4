@@ -56,9 +56,8 @@
 #include <sstream>
 using namespace std;
 
-#include <netcdf.hh>
-//#include <netcdf>
-//using namespace netCDF;
+#include <netcdf>
+using namespace netCDF;
 
 
 #define OUT_OF_RANGE N_("Value out of range!")
@@ -207,8 +206,8 @@ VObject *global_current_vobject = NULL;
 
 class NcDumpToWidget : public NcFile{
 public:
-	NcDumpToWidget (const char* path, NcFile::FileMode mode = ReadOnly) 
-		: NcFile(path, mode) { 
+	NcDumpToWidget (std::string filename, NcFile::FileMode mode = netCDF::NcFile::read) 
+		: NcFile (filename, mode) { 
 		maxvals = 10; 
 	} ;
 	~NcDumpToWidget (){ };
@@ -281,6 +280,7 @@ public:
 
 // General NC Formatting Dumpingutil, Output into GTK-Window
 void NcDumpToWidget::dump ( GtkWidget *box, GtkWidget *box_selected ){
+	GSList *infolist=NULL;
 	GtkWidget *sep;
 	GtkWidget *lab;
 	GtkWidget *grid, *grid_selected;
@@ -318,8 +318,23 @@ void NcDumpToWidget::dump ( GtkWidget *box, GtkWidget *box_selected ){
 	gtk_grid_attach (GTK_GRID (grid), sep=gtk_separator_new (GTK_ORIENTATION_HORIZONTAL), 0, grid_row++, 10, 1);
         gtk_widget_show (lab);
         gtk_widget_show (sep);
+        
+        netCDF::NcGroup rootGroup = getGroup("/");
+        multimap< std::string, NcGroupAtt > attributes = rootGroup.getAtts ();
+        for (auto const& [name, att] : attributes) {
+		VarName = gtk_label_new (name.data());
+		SETUP_LABEL (VarName);
+                gtk_grid_attach (GTK_GRID (grid), VarName, 0, grid_row, 2, 1);
+                gtk_widget_show (VarName);
 
-	NcAtt *ap;
+		variable = gtk_entry_new ();
+                //att.getValues()
+		SETUP_ENTRY(variable, "x");
+                gtk_grid_attach (GTK_GRID (grid), variable, 2, grid_row++, 1, 1);
+                gtk_widget_show (variable);
+        }
+#if 0 // later...
+        NcAtt *ap;
 	for(int n = 0; (ap = get_att(n)); n++) {
 
 		VarName = gtk_label_new (ap->name());
@@ -337,7 +352,6 @@ void NcDumpToWidget::dump ( GtkWidget *box, GtkWidget *box_selected ){
 		delete ap;
 	}
 
-	GSList *infolist=NULL;
 //	static gchar *types[] = {"","byte","char","short","long","float","double"};
 	NcVar *vp;
 
@@ -556,6 +570,7 @@ void NcDumpToWidget::dump ( GtkWidget *box, GtkWidget *box_selected ){
                         gtk_widget_show (variable_i);
 		}
 	}
+#endif
 
 	g_object_set_data (G_OBJECT (box), "info_list", infolist);
 

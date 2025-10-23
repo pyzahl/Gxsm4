@@ -327,8 +327,8 @@ class DSPControl : public AppBase{
 	void get_tab_settings (const gchar *tab_key, guint64 &option_flags, guint64 &AC_auto_flags, guint64 glock_data[6]);
         void set_tab_settings (const gchar *tab_key, guint64 option_flags, guint64 AC_auto_flags, guint64 glock_data[6]);
 
-	void save_values (NcFile *ncf);
-        void load_values (NcFile *ncf);
+	void save_values (NcFile &ncf);
+        void load_values (NcFile &ncf);
 
 	void recalculate_dsp_scan_speed_parameters (gint32 &dsp_scan_dnx, gint32 &dsp_scan_dny, 
 						    gint32 &dsp_scan_fs_dx, gint32 &dsp_scan_fs_dy, 
