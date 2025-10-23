@@ -173,32 +173,36 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
         main_get_gapp ()->progress_info_set_bar_text (name, 1);
         main_get_gapp ()->SetStatus (N_("Loading... "), name);
         main_get_gapp ()->monitorcontrol->LogEvent(N_("Loading... "), name);
-        
+
+        g_message ("NetCDF::Read <%s>", name);
+
         try {
-                std::string filename = name;
-                // Open the NetCDF file in read mode
-                netCDF::NcFile nc(filename, netCDF::NcFile::read);
-                
-                // try Topo Scan
-                netCDF::NcVar Data; 
-
-
                 ZD_TYPE zdata_typ=ZD_SHORT; // used by "H" -- Topographic STM/AFM data, historic default
 
-                if (! (Data = nc.getVar("H")).isNull ())
-                        main_get_gapp ()->progress_info_set_bar_text ("H: Historic SHORT type data", 2), zdata_typ=ZD_SHORT;
+                std::string filename(name);
+                
+                // Open the NetCDF file in read mode
+                netCDF::NcFile nc(filename, netCDF::NcFile::read);
+
+                g_message ("Looking for data field type...");
+
+                // try Topo Scan
+                netCDF::NcVar Data = nc.getVar("H"); // try origial historic image data var name
+
+                if (! Data.isNull ())
+                        main_get_gapp ()->progress_info_set_bar_text ("Historic SHORT type data", 2), g_message("DataVar: >H<"), zdata_typ=ZD_SHORT;
                 else if (! (Data = nc.getVar("Intensity")).isNull ()) // try Diffract Scan data, aka D2D
-                        main_get_gapp ()->progress_info_set_bar_text ("H: Type LONG", 2), zdata_typ=ZD_LONG; // used by "Intensity" -- diffraction counts
-                else if ((Data = nc.getVar("FloatField")).isNull ()) // try Float Data, all new hardware uses Float Type
-                 	main_get_gapp ()->progress_info_set_bar_text ("H: Type FLOAT", 2), zdata_typ=ZD_FLOAT;
-                else if ((Data = nc.getVar("DoubleField")).isNull ()) // try Double Data
-                 	main_get_gapp ()->progress_info_set_bar_text ("H: Type DOUBLE", 2), zdata_typ=ZD_DOUBLE;
-                else if ((Data = nc.getVar("ByteField")).isNull ())        // Try Byte
-                        main_get_gapp ()->progress_info_set_bar_text ("H: Type BYTE", 2), zdata_typ=ZD_BYTE;
-                else if ((Data = nc.getVar("ComplexDoubleField")).isNull ()) // Try Complex
-                        main_get_gapp ()->progress_info_set_bar_text ("H: Type COMPLEX", 2), zdata_typ=ZD_COMPLEX;
-                else if ((Data = nc.getVar("RGBA_ByteField")).isNull ()) // Try RGBA Byte / Color Image Type
-                        main_get_gapp ()->progress_info_set_bar_text ("H: Type RGBA", 2), zdata_typ=ZD_RGBA;
+                        main_get_gapp ()->progress_info_set_bar_text ("Type LONG", 2), g_message("DataVar: >Intensity<"), zdata_typ=ZD_LONG; // used by "Intensity" -- diffraction counts
+                else if (! (Data = nc.getVar("FloatField")).isNull ()) // try Float Data, all new hardware uses Float Type
+                 	main_get_gapp ()->progress_info_set_bar_text ("Type FLOAT", 2), g_message("DataVar: >FloatField<"), zdata_typ=ZD_FLOAT;
+                else if (! (Data = nc.getVar("DoubleField")).isNull ()) // try Double Data
+                 	main_get_gapp ()->progress_info_set_bar_text ("Type DOUBLE", 2), g_message("DataVar: >DoubleField<"), zdata_typ=ZD_DOUBLE;
+                else if (! (Data = nc.getVar("ByteField")).isNull ())        // Try Byte
+                        main_get_gapp ()->progress_info_set_bar_text ("Type BYTE", 2), g_message("DataVar: >ByteField<"), zdata_typ=ZD_BYTE;
+                else if (! (Data = nc.getVar("ComplexDoubleField")).isNull ()) // Try Complex
+                        main_get_gapp ()->progress_info_set_bar_text ("Type COMPLEX", 2), g_message("DataVar: >ComplexDoubleField<"), zdata_typ=ZD_COMPLEX;
+                else if (! (Data = nc.getVar("RGBA_ByteField")).isNull ()) // Try RGBA Byte / Color Image Type
+                        main_get_gapp ()->progress_info_set_bar_text ("Type RGBA", 2), g_message("DataVar: >RGBA ByteField<"), zdata_typ=ZD_RGBA;
                 else { // failed looking for Gxsm data!!
                         std::cerr << "NetCDF file does not contain any Gxsm SPM data fields named: H, Intensity, FloatField, DoubleField, Byte, Compelx nor RGBA."
                                   << std::endl;
@@ -242,7 +246,7 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
                         }
                         return FIO_OPEN_ERR;
                 }
-                
+
                 switch (mode){
                 case xsm::open_mode::replace: scan->free_time_elements (); break;
                 case xsm::open_mode::append_time: break;
@@ -251,16 +255,19 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
 	
                 scan->data.ui.SetName (name);
 
+                g_message ("--- Data Type Integrity Check for %s, NC-Type-ID: %d", Data.getName().data(), Data.getType().getId());
+
                 // check integrity
                 switch (Data.getType().getId()){
-                case NC_SHORT: if (zdata_typ != ZD_SHORT) { std::cerr << "EE: NetCDF data field type is not matching expected type NC_SHORT."   << std::endl; return FIO_OPEN_ERR; } else break;
-                case NC_INT:   std::cerr << "INFO: ?? NetCDF data field type is NC_INT." << std::endl; break;
-                case NC_INT64: if (zdata_typ != ZD_LONG)   { std::cerr << "EE: NetCDF data field type is not matching expected type NC_LONG."   << std::endl; return FIO_OPEN_ERR; } else break;
-                case NC_FLOAT: if (zdata_typ != ZD_FLOAT)  { std::cerr << "EE: NetCDF data field type is not matching expected type NC_FLOAT."  << std::endl; return FIO_OPEN_ERR; } else break;
-                case NC_DOUBLE:if (zdata_typ != ZD_DOUBLE) { std::cerr << "EE: NetCDF data field type is not matching expected type NC_DOUBLE." << std::endl; return FIO_OPEN_ERR; } else break;
-                case NC_BYTE:  if (zdata_typ != ZD_BYTE)   { std::cerr << "EE: NetCDF data field type is not matching expected type NC_BYTE."   << std::endl; return FIO_OPEN_ERR; } else break;
-                case NC_CHAR:  std::cerr << "INFO: ?? NetCDF data field type is NC_CHAR." << std::endl; break;
+                case NC_SHORT:  if (zdata_typ != ZD_SHORT) { std::cerr << "EE: NetCDF data field type is not matching expected type NC_SHORT."   << std::endl; return FIO_OPEN_ERR; } else break;
+                case NC_INT:    std::cerr << "INFO: ?? NetCDF data field type is NC_INT." << std::endl; break;
+                case NC_INT64:  if (zdata_typ != ZD_LONG)   { std::cerr << "EE: NetCDF data field type is not matching expected type NC_LONG."   << std::endl; return FIO_OPEN_ERR; } else break;
+                case NC_FLOAT:  if (zdata_typ != ZD_FLOAT)  { std::cerr << "EE: NetCDF data field type is not matching expected type NC_FLOAT."  << std::endl; return FIO_OPEN_ERR; } else break;
+                case NC_DOUBLE: if (zdata_typ != ZD_DOUBLE) { std::cerr << "EE: NetCDF data field type is not matching expected type NC_DOUBLE." << std::endl; return FIO_OPEN_ERR; } else break;
+                case NC_BYTE:   if (zdata_typ != ZD_BYTE)   { std::cerr << "EE: NetCDF data field type is not matching expected type NC_BYTE."   << std::endl; return FIO_OPEN_ERR; } else break;
+                case NC_CHAR:   std::cerr << "INFO: ?? NetCDF data field type is NC_CHAR." << std::endl; break;
                 default:
+                        g_message ("Data Type Integrity Check faild for %s ID=%d", Data.getName().data(), Data.getId());
                         std::cerr << "NetCDF data field type is invald/not supported." << std::endl;
                         return FIO_OPEN_ERR;
                 }
@@ -275,18 +282,20 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
                         std::cout << "  Name: " << dim.getName() << ", Length: " << dim.getSize() << std::endl;
                 }
                 
-                NcDim timed = dims[0];
+                NcDim timed = dims[0]; // g_message ("dim[0]: %s Size: %d", timed.getName().data(), timed.getSize());
                 scan->data.s.ntimes  = timed.getSize() > 0 ? dims[0].getSize() : 1; // timed
                 NcDim valued = dims[1];
                 scan->data.s.nvalues = valued.getSize() > 0 ? dims[1].getSize() : 1; // valued
                 NcDim dimyd = dims[2];
                 scan->data.s.ny      = dimyd.getSize() > 0 ? dims[2].getSize() : 1; // ny
-                NcDim dimxd = dims[3];
+                NcDim dimxd = dims[3]; // g_message ("dim[3]: %s Size: %d", dimxd.getName().data(), dimxd.getSize());
                 scan->data.s.nx      = dimxd.getSize() > 0 ? dims[3].getSize() : 1; // nx
 
                 main_get_gapp ()->progress_info_set_bar_fraction (0., 2);
 
-                scan->mem2d->Resize(scan->data.s.nx, scan->data.s.ny, scan->data.s.nvalues, zdata_typ);
+                g_message ("scan->mem2d->Resize [%d x %d, #l %d] x %d #te", scan->data.s.nx, scan->data.s.ny, scan->data.s.nvalues, scan->data.s.ntimes);
+                
+                scan->mem2d->Resize (scan->data.s.nx, scan->data.s.ny, scan->data.s.nvalues, zdata_typ);
 
                 int ntimes_tmp = scan->data.s.ntimes;
 
@@ -294,12 +303,15 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
                 NcVar ncv_f;
                 NcVar ncv_fo;
                 NcVar ncv_v;
+
+                g_message ("Reading Layer Information along with data slices");
                 
                 scan->mem2d->start_read_layer_information (nc, ncv_d, ncv_f, ncv_fo, ncv_v);
 
                 for (int time_index=0; time_index < ntimes_tmp; ++time_index){
                         main_get_gapp ()->progress_info_set_bar_fraction ((gdouble)time_index/(gdouble)scan->data.s.ntimes, 2);
 
+                        g_message ("Reading data slice for time index %d", time_index);
                         scan->mem2d->data->NcGet (Data, time_index);
                         scan->data.s.ntimes = ntimes_tmp;
 
@@ -400,6 +412,9 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
                                 scan->append_current_to_time_elements (time_index, ref_time); // need to add lut
                         }
                 }
+
+
+                g_message ("Reading Settings and Variables");
 
                 main_get_gapp ()->progress_info_set_bar_text ("Variables", 2);
                 main_get_gapp ()->progress_info_set_bar_fraction (0.25, 1);
@@ -551,10 +566,13 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
                 main_get_gapp ()->progress_info_set_bar_text ("Finishing", 2);
                 main_get_gapp ()->progress_info_set_bar_fraction (1., 1);
                 main_get_gapp ()->progress_info_close ();
+
+                g_message (" ** DONE READING NCDAT FILE **");
+
                 return status = FIO_OK; 
 
         } catch (const netCDF::exceptions::NcException& e) {
-                std::cerr << "EE: NetCDF File Read Error: " << e.what() << std::endl;
+                std::cerr << "EE: NetCDF File Read Error. Catch " << e.what() << std::endl;
                 main_get_gapp ()->progress_info_close ();
 		return status = FIO_OPEN_ERR;
         }
@@ -581,9 +599,13 @@ FIO_STATUS NetCDF::Write(){
         main_get_gapp ()->progress_info_set_bar_fraction (0., 1);
         main_get_gapp ()->progress_info_set_bar_text (name, 1);
         main_get_gapp ()->progress_info_set_bar_fraction (0., 2);
+
+        g_message ("NetCDF::Write <%s>", name);
         
         try {
-                NcFile nc(name, NcFile::replace); // ,NULL,0,NcFile::Netcdf4); // Create, leave in define mode
+                std::string filename(name);
+
+                NcFile nc(filename, NcFile::replace); // ,NULL,0,NcFile::Netcdf4); // Create, leave in define mode
                 // use 64 byte offset mode if(ntimes > 2) , FileFormat=NcFile::Offset64Bits
    
                 scan->data.ui.SetName(name);
@@ -1009,7 +1031,7 @@ FIO_STATUS NetCDF::Write(){
 
                 return status = FIO_OK;
         } catch (const netCDF::exceptions::NcException& e) {
-                std::cerr << "EE: NetCDF File Write Error: " << e.what() << std::endl;
+                std::cerr << "EE: NetCDF File Write Error. Catch " << e.what() << std::endl;
                 main_get_gapp ()->progress_info_close ();
                 return status = FIO_WRITE_ERR;
         }

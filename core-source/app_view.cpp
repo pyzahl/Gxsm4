@@ -585,8 +585,13 @@ void ViewControl::tip_follow_control (gboolean follow){
 void ViewControl::setup_side_pane (gboolean show){
 	if (show){
 		gtk_widget_show (sidepane);
-		NcDumpToWidget ncdump (scan->data.ui.name);
-		ncdump.dump (tab_ncraw, tab_info);
+                try {
+                        std::string fn (scan->data.ui.name);
+                        NcDumpToWidget ncdump (fn);
+                        ncdump.dump (tab_ncraw, tab_info);
+                } catch  (const netCDF::exceptions::NcException& e) {
+                        std::cerr << "EE: NetCDF File Read Error for NcDumpToWidget in Scan NC-View Tab: " << e.what() << std::endl;
+                }
 	}
 	else{
 		gtk_widget_hide (sidepane);
@@ -932,8 +937,7 @@ ViewControl::ViewControl (Gxsm4app *app,
 	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolled_window), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	tab_ncraw = scrolled_window;
 
-        NcDumpToWidget ncdump (scan->data.ui.name);
-        ncdump.dump (tab_ncraw, tab_info);
+        //setup_side_pane (show);
 
         // ==================================================
 	label = gtk_label_new (N_("NetCDF"));
@@ -1836,8 +1840,6 @@ void ViewControl::Resize (char *title, int nx, int ny,
         usy = MIN((int)(ny+rulewidth+2*border), 650);
 	
 	if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (side_pane_control))){
-                NcDumpToWidget ncdump (scan->data.ui.name);
-		ncdump.dump (tab_ncraw, tab_info);
                 setup_side_pane (true);
         } else {
                 setup_side_pane (false);

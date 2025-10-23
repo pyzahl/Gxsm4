@@ -513,6 +513,7 @@ void TZData<ZTYP>::NcGet(NcVar &ncfield, int time_index){
 	yy = yy2 = 0.;
 	for(int y=0; y<ny; y++){
 		for(int v=0; v<nv; ++v){
+                        //g_message ("NcGet: @ %d,%d,%d,0 #1,1,1,%d",time_index,v,y,nx);
                         std::vector<size_t> startp = { time_index,v,y, 0 };
                         std::vector<size_t> countp = { 1,1, 1,nx };
                         ncfield.getVar(startp, countp, Zdat[y*nv+v]);
