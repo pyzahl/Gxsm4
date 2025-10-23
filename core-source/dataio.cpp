@@ -85,7 +85,7 @@ const char* Dataio::ioStatus(){
 
 // NetCDF helper
 
-const gchar *get_var_att_as_string (NcFile &nc, NcVar &var, const gchar *att_name){
+gchar *get_var_att_as_string (NcFile &nc, NcVar &var, const gchar *att_name){
         netCDF::NcVarAtt att = var.getAtt (att_name);
 
         if (att.isNull()) {
@@ -108,11 +108,11 @@ const gchar *get_var_att_as_string (NcFile &nc, NcVar &var, const gchar *att_nam
                 char* att_value_c_str = new char[len + 1]; // +1 for null terminator
                 att.getValues(att_value_c_str);
                 att_value_c_str[len] = '\0'; // Ensure null-termination
-                std::string att_value_str(att_value_c_str);
+                gchar *ret = g_strdup (att_value_c_str);
                 delete[] att_value_c_str;
-            
-                std::cout << "Attribute '" << att_name << "' value: " << att_value_str << std::endl;
-                return (g_strdup (att_value_str.data ()));
+                //std::cout << "*** nc_CHAR Attribute '" << att_name << "' value: " << ret << " ***" << std::endl;
+                return ret;
+                
         } else if (att_type == netCDF::NcType::nc_STRING) {
                 // For NC_STRING, getValues returns an array of char*
                 char** str_array_c = new char*[len];
@@ -126,20 +126,21 @@ const gchar *get_var_att_as_string (NcFile &nc, NcVar &var, const gchar *att_nam
             
                 // Print the values
                 gchar *att_as_string=g_strdup("");
-                std::cout << "Attribute '" << att_name << "' value (NC_STRING):" << std::endl;
+                //std::cout << "*** string Attribute '" << att_name << "' value: ";
                 for (const auto& s : str_vector) {
-                        std::cout << "  " << s << std::endl;
+                        //std::cout << "  " << s << std::endl;
                         gchar *tmp = g_strconcat (att_as_string, s.data(), NULL);
                         g_free (att_as_string);
                         att_as_string = tmp;
                 }
+                //std::cout << " ***" << std::endl;
                 return (att_as_string);
         }
 }
 
-const gchar *get_att_as_string (NcFile &nc, const gchar *var_id, const gchar *att_name){
+gchar *get_att_as_string (NcFile &nc, const gchar *var_id, const gchar *att_name){
         netCDF::NcVar v=nc.getVar (var_id);
-        return *get_var_att_as_string (nc, v, att_name);
+        return get_var_att_as_string (nc, v, att_name);
 }
 
 
@@ -149,6 +150,7 @@ UnitObj *get_gxsm_unit_from_nc(NcFile &nc, const gchar *var_id) {
         if (unit){
                 gchar *label = get_att_as_string (nc, var_id, "label");
                 if (label){
+                        g_message ("get_gxsm_unit_from_nc for %s (%s) in %s.", var_id, label, unit);
                         UnitObj *u =  main_get_gapp ()->xsm->MakeUnit (unit, label);
                         g_free (unit);
                         g_free (label);
@@ -338,9 +340,7 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
                                 delete [] valuearr;
                         }
 
-                        float *dimsx = new float[dimxd.getSize ()];
-                        if(!dimsx)
-                                return status = FIO_NO_MEM;
+                        g_message ("Reading dimension lookups... and coordinates");
 
                         //--OffRotFix-- -> check for old version and fix offset (not any longer in Lookup)
 	
@@ -351,42 +351,71 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
                                 nc.getVar("offsety").getVar(&Yoff);
                         }
 
-                        nc.getVar("dimx").getVar({dimxd.getSize()}, dimsx);
-                        for(i=0; i<dimxd.getSize (); i++)
-                                scan->mem2d->data->SetXLookup(i, (dimsx[i]-Xoff) * xsmres.LoadCorrectXYZ[0]);
+                        g_message ("XY0: %g %g", Xoff, Yoff);
+                        
+                        g_message ("Lookups...");
 
-                        delete [] dimsx;
+                        g_message ("dimx: #%d", dimxd.getSize() );
 
-                        float *dimsy = new float[dimyd.getSize ()];
-                        if(!dimsy)
-                                return status = FIO_NO_MEM;
+                        if (!nc.getVar("dimx").isNull ()){
+                                float *dimsx = new float[dimxd.getSize ()];
+                                if(!dimsx)
+                                        return status = FIO_NO_MEM;
+                                nc.getVar("dimx").getVar ({0}, {dimxd.getSize()}, dimsx);
+                                g_message ("Updating X Lookup");
+                                for(i=0; i < dimxd.getSize (); i++)
+                                        scan->mem2d->data->SetXLookup(i, (dimsx[i]-Xoff) * xsmres.LoadCorrectXYZ[0]);
+                                delete [] dimsx;
+                        }else
+                                g_message ("Missing 'dimx' variable.");
 
-                        nc.getVar("dimy").getVar({dimyd.getSize ()}, dimsy);
-                        for(i=0; i<dimyd.getSize (); i++)
-                                scan->mem2d->data->SetYLookup(i, (dimsy[i]-Yoff) * xsmres.LoadCorrectXYZ[1]);
 
-                        delete [] dimsy;
+                        g_message ("dimy: #%d", dimyd.getSize() );
+
+                        if (!nc.getVar("dimy").isNull ()){
+                                float *dimsy = new float[dimyd.getSize ()];
+                                if(!dimsy)
+                                        return status = FIO_NO_MEM;
+                                nc.getVar("dimy").getVar ({0}, {dimyd.getSize ()}, dimsy);
+                                g_message ("Updating Y Lookup");
+                                for(i=0; i<dimyd.getSize (); i++)
+                                        scan->mem2d->data->SetYLookup(i, (dimsy[i]-Yoff) * xsmres.LoadCorrectXYZ[1]);
+                                delete [] dimsy;
+                        } else
+                                g_message ("Missing 'dimx' variable.");
+
+                        g_message ("Checking comming basic paramaters...");
 
                         // try sranger (old)
+                        g_message ("  ...checking for sranger_hwi Bias, Current");
                         NC_GET_VARIABLE ("sranger_hwi_bias", &scan->data.s.Bias);
                         NC_GET_VARIABLE ("sranger_hwi_voltage_set_point", &scan->data.s.SetPoint);
                         NC_GET_VARIABLE ("sranger_hwi_current_set_point", &scan->data.s.Current);
 
                         // read back layer informations
+                        g_message ("Readback Layer information... auto adding basic params");
                         scan->mem2d->remove_layer_information ();
 
-                        if (!ncv_d.isNull () && !ncv_f.isNull () && !ncv_fo.isNull () && !ncv_v.isNull ())
+                        if (ncv_d.isNull () && ncv_f.isNull () && ncv_fo.isNull () && ncv_v.isNull ()){
+                                g_message ("Readback Layer information again for time index %d", time_index);
                                 scan->mem2d->add_layer_information (ncv_d, ncv_f, ncv_fo, ncv_v, time_index);
-                        else {
+                        } else {
+                                g_message ("Readback Basic Info... RANGES");
                                 nc.getVar ("rangex").getVar (&scan->data.s.rx); scan->data.s.rx *= xsmres.LoadCorrectXYZ[0];
                                 nc.getVar ("rangey").getVar (&scan->data.s.ry); scan->data.s.ry *= xsmres.LoadCorrectXYZ[1];
+
+                                g_message ("Checking SR sranger_hwi_bias, ...");
                                 NC_GET_VARIABLE ("sranger_hwi_bias", &scan->data.s.Bias);
                                 NC_GET_VARIABLE ("sranger_hwi_voltage_set_point", &scan->data.s.SetPoint);
                                 NC_GET_VARIABLE ("sranger_hwi_current_set_point", &scan->data.s.Current);
+
                                 // mk2/3 try also
+                                g_message ("Checking MK2/3: sranger_mk2_hwi_bias, ...");
                                 NC_GET_VARIABLE ("sranger_mk2_hwi_bias", &scan->data.s.Bias);
                                 NC_GET_VARIABLE ("sranger_mk2_hwi_mix0_set_point", &scan->data.s.Current);
                                 NC_GET_VARIABLE ("sranger_mk2_hwi_z_setpoint", &scan->data.s.ZSetPoint);
+
+                                g_message ("AutoAdding LayerInfo for OSD...");
                                 scan->mem2d->add_layer_information (new LayerInformation ("Bias", scan->data.s.Bias, "%5.2f V"));
                                 scan->mem2d->add_layer_information (new LayerInformation (scan->data.ui.dateofscan));
                                 scan->mem2d->add_layer_information (new LayerInformation ("X-size", scan->data.s.rx, "Rx: %5.1f \303\205"));
@@ -400,6 +429,7 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
                         }
 
                         if (ntimes_tmp > 1){ // do not do this if only one time dim.
+                                g_message ("Looking up Time... for i#%d", time_index);
                                 double ref_time=(double)(time_index);
                                 if (!nc.getVar("time").isNull ()){
                                         NcVar rt = nc.getVar("time");
@@ -412,7 +442,6 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
                                 scan->append_current_to_time_elements (time_index, ref_time); // need to add lut
                         }
                 }
-
 
                 g_message ("Reading Settings and Variables");
 
@@ -467,6 +496,7 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
 
                 //#define MINIMAL_READ_NC
 #ifndef MINIMAL_READ_NC
+                
                 g_message ("NetCDF read optional informations");
 
                 NcVar comment = nc.getVar("comment");

@@ -4659,7 +4659,7 @@ void ViewControl::osd_check_callback (GtkWidget *widget, ViewControl *vc){
         GVariant *storage = g_variant_new_fixed_array (g_variant_type_new ("b"), array, n_stores, sizeof (guchar));
         g_settings_set_value (vc->view_settings, "osd-enable", storage);
 
-        // g_free array, storgae ????
+        // g_free array, storage ????
 }
 
 void ViewControl::set_osd (gchar *osd_text, int pos){
@@ -4685,12 +4685,11 @@ void ViewControl::set_osd (gchar *osd_text, int pos){
                                 xy[0] =  2.*((osd_item_active_count%2)-0.5) * 0.9; // left or right
                                 xy[1] = -2.*(((osd_item_active_count/2)%2)-0.5) * (0.9 - (0.1*((osd_item_active_count/4)%4)));
                                 int anchor  = xy[0] < 0.5 ? -1:1;
-                                g_message ("set OSD (new): OSD[%d] %s (%g, %g) = show",pos, ot,  xy[0],xy[1]);
+                                g_message ("set OSD[%d] %s (%g, %g) = show",pos, ot,  xy[0],xy[1]);
 				osd_item[pos] -> set_osd_style (true);
                                 osd_item[pos] -> set_custom_label_anchor (anchor < 0 ? CAIRO_ANCHOR_W : CAIRO_ANCHOR_E);
 				osd_item[pos] -> set_label_offset (xy);
 				osd_item[pos] -> show_label (true);
-
 			}
 		else{
 			if (osd_item[pos]){
