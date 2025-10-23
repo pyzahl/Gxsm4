@@ -33,7 +33,11 @@
 #include <cmath>
 
 #include <glib.h>
-#include <netcdf.hh>
+
+#include <netcdf>
+#include <iostream>
+#include <vector>
+
 #include <png.h>
 #include <popt.h>
 #include "thumbpal.h"
@@ -59,13 +63,16 @@
 //
 // ==============================================================
 
-typedef enum { NC_READ_OK, NC_OPEN_FAILED, NC_NOT_FROM_GXSM } GXSM_NETCDF_STATUS;
+typedef enum { NC_READ_OK, NC_OPEN_FAILED, NC_NOT_FROM_GXSM, NC_FILE_INTERGITY_ERROR } GXSM_NETCDF_STATUS;
 
 #define THUMB_X 96 // Thumbnail max X size
 #define THUMB_Y 91 // Thumbnail max Y size
 
 inline int min (int x, int y) { return x<y?x:y; }
 inline int max (int x, int y) { return x>y?x:y; }
+
+int verbose = 0;
+
 
 class raw_image{
 public:
@@ -94,6 +101,27 @@ public:
 		scan_bright = b;
 	};
 
+        void generate_ov_thumb(){
+                std::cout << "Writing EE dimOV Thumb, size: " << nx << " x " << ny << std::endl; 
+	        for (int y=0; y<ny; y++)
+			for (int i=0; i<nx; ++i)
+   			        rowdata[y][i] = (y+i)/(ny+nx); // error thumb
+	};
+
+        void generate_EE_thumb(){
+                std::cout << "Writing EE X Thumb, size: " << nx << " x " << ny << std::endl; 
+	        for (int y=0; y<ny; y++)
+			for (int i=0; i<nx; ++i){
+                                double d = fabs(fabs(y-ny/2) - fabs (i-nx/2));
+                                if (d < 8.)
+                                        rowdata[y][i] = 100.;
+                                else if (d < 16.)
+                                        rowdata[y][i] = 100.*(1.-(d-8)/8);
+                                else
+                                        rowdata[y][i] = 0;
+                        }
+	};
+        
 	void calc_line_regress(int y, double &slope, double &offset){
 		//
 		// OutputFeld[i] = InputFeld[i] - (slope * i + offset)
@@ -332,52 +360,71 @@ protected:
 template <class NC_VAR_TYP>
 class raw_image_tmpl : public raw_image{
 public:
-        raw_image_tmpl(NcVar *img, int thumb=1, int new_x=0, int x_off=0, int y_off=0, int width=0){
+        raw_image_tmpl(netCDF::NcVar img, int thumb=1, int new_x=0, int x_off=0, int y_off=0, int width=0, int dummy=0){
                 x0 = x_off; y0 = y_off;
                 rowdata = NULL;
 
-                // Data->get_dim(0)->size(); // Time Dimension
-                // Data->get_dim(1)->size(); // Value Dimension (Layers)
-                ony = img->get_dim(2)->size(); // Y Dimenson
-                onx = img->get_dim(3)->size(); // X Dimenson
-			
-                if (width>0){
-                        w0=width;
-                        nx=new_x;
-                        ny=new_x;
-                }else{
-                        w0=onx;
-                        if (thumb){
-                                if(onx < ony*THUMB_X/THUMB_Y){
-                                        ny=THUMB_Y;
-                                        nx=onx*ny/ony;
-                                }else{
-                                        nx=THUMB_X;
-                                        ny=ony*nx/onx;
-                                }
-                        }else{
-                                if (new_x){ // scale to new X w aspect
-                                        nx=new_x;
-                                        ny=ony*nx/onx;
-                                }else{
-                                        nx=onx; 
-                                        ny=ony;
+                if (!img.isNull()){
+                        // Get the dimensions of image data
+                        std::vector<netCDF::NcDim> dims = img.getDims();
+
+                
+                        if(verbose){
+                                // Print dimension information
+                                std::cout << "Dimensions of image data:" << std::endl;
+                                for (const auto& dim : dims) {
+                                        std::cout << "  Name: " << dim.getName() << ", Length: " << dim.getSize() << std::endl;
                                 }
                         }
-                }
+                
+                        // img.getDim(0).getSize(); // Time Dimension
+                        // img.getDim(1).getSize(); // Value Dimension (Layers)
+                        ony = dims[2].getSize(); // Y Dimenson
+                        onx = dims[3].getSize(); // X Dimenson
+			
+                        if (width>0){
+                                w0=width;
+                                nx=new_x;
+                                ny=new_x;
+                        }else{
+                                w0=onx;
+                                if (thumb){
+                                        if(onx < ony*THUMB_X/THUMB_Y){
+                                                ny=THUMB_Y;
+                                                nx=onx*ny/ony;
+                                        }else{
+                                                nx=THUMB_X;
+                                                ny=ony*nx/onx;
+                                        }
+                                }else{
+                                        if (new_x){ // scale to new X w aspect
+                                                nx=new_x;
+                                                ny=ony*nx/onx;
+                                        }else{
+                                                nx=onx; 
+                                                ny=ony;
+                                        }
+                                }
+                        }
 
-                if (x0+nx >= onx) x0=0; // fallback
-                if (y0+ny >= ony) y0=0; // fallback
-				
+                        if (x0+nx >= onx) x0=0; // fallback
+                        if (y0+ny >= ony) y0=0; // fallback
+                } else {
+                        x0=0; y0=0; nx=ny=THUMB_X;
+                }
+                
                 rowdata = new double* [ny];
                 for (int i=0; i<ny; rowdata[i++] = new double [nx]);
 
-                if (onx > 10000 || ony > 10000){ // sanity check
-                        onx=ony=0;
+                if (dummy)
+                        return;
+                
+                if (onx < 1 || ony < 1 || onx > 20000 || ony > 20000){ // sanity check
+                        onx=ony=1;
                         generate_ov_thumb ();
                 }
                 else
-                        convert_from_nc(img);
+                        convert_from_nc (img);
         };
 
 	virtual ~raw_image_tmpl(){
@@ -385,78 +432,94 @@ public:
 		delete [] rowdata;
 	};
 
-        void generate_ov_thumb(){
-	        for (int y=0; y<ny; y++)
-			for (int i=0; i<nx; ++i)
-   			        rowdata[y][i] = (y+i)/(ny+nx); // error thumb
-	};
-    
-	void convert_from_nc(NcVar *img, int v=0){ // v=0: use layer 0 by default
+	void convert_from_nc(netCDF::NcVar img, int v=0){ // v=0: use layer 0 by default
 		double scale = (double)nx/(double)w0;
-		NC_VAR_TYP *row = new NC_VAR_TYP[onx];
-		
+		//NC_VAR_TYP *row = new NC_VAR_TYP[onx];
+                
+                //std::cout << "CONVERTING. ** scale=" << scale << std::endl;
+
+                
 		for (int y=0; y<ny; y++){
-			img->set_cur (0, v, y0+(int)((double)y/scale+.5));
-			img->get (row, 1,1, 1,onx);
-			for (int i=0; i<nx; ++i)
+                        std::vector<size_t> startp = { 0,v, y0+(int)((double)y/scale+.5), 0 };
+                        std::vector<size_t> countp = { 1,1, 1,onx };
+                        //std::cout << "            ** y=" << y << " start: [0," << v << "," << startp[2] << ",0] count: 1,1,1," << onx << std::endl;
+                        std::vector<NC_VAR_TYP> row (onx);
+
+                        img.getVar(startp, countp, row.data());
+			for (int i=0; i<nx; ++i){
+                                //int k = x0+(int)((double)i/scale+.5);
+                                //std::cout << "            *** x=" << i << " from row: " << k << std::endl;
 				rowdata[y][i] = (double)row[x0+(int)((double)i/scale+.5)];
+                        }
 		}
 	};
 };
 
 
-GXSM_NETCDF_STATUS netcdf_read(const gchar *file_name, raw_image **img, 
+GXSM_NETCDF_STATUS netcdf_read(std::string filename, raw_image **img, 
 			       int thumb, int new_x, int x_off, int y_off, int width){
-	NcError ncerr(NcError::verbose_nonfatal);
-	NcFile nc(file_name);
+        try {
+                // Open the NetCDF file in read mode
+                netCDF::NcFile dataFile(filename, netCDF::NcFile::read);
+                
+                // try Topo Scan
+                netCDF::NcVar Data = dataFile.getVar("H"); 
 
-	// Check if the file was opened successfully
-	if (! nc.is_valid())
-		return NC_OPEN_FAILED;
+                if (Data.isNull ())
+                        // try Diffract Scan
+                        if ((Data = dataFile.getVar("Intensity")).isNull ())
+                                // try Float data (Topo, .... all new hardware uses Float)
+                                if ((Data = dataFile.getVar("FloatField")).isNull ())
+                                        // try Double
+                                        if ((Data = dataFile.getVar("DoubleField")).isNull ()){
+                                                // failed looking for Gxsm data!!
+                                                std::cerr << "NetCDF file does not contain any Gxsm SPM data fields named: H, Intensity, FloatField or DoubleField." << std::endl;
+                                                return NC_NOT_FROM_GXSM;
+                                        }
+                
+                if(verbose)
+                        std::cerr << "NetCDF file: found Data Field." << std::endl;
 
-	NcVar *Data = NULL;
+                switch (Data.getType().getId()){
+                case NC_SHORT:  *img = new raw_image_tmpl<short> (Data, thumb, new_x, x_off, y_off, width); break;
+                case NC_INT:    *img = new raw_image_tmpl<long> (Data, thumb, new_x, x_off, y_off, width); break;
+                case NC_INT64:  *img = new raw_image_tmpl<long> (Data, thumb, new_x, x_off, y_off, width); break;
+                case NC_FLOAT:  *img = new raw_image_tmpl<float> (Data, thumb, new_x, x_off, y_off, width); break;
+                case NC_DOUBLE: *img = new raw_image_tmpl<double> (Data, thumb, new_x, x_off, y_off, width); break;
+                case NC_BYTE:   *img = new raw_image_tmpl<char> (Data, thumb, new_x, x_off, y_off, width); break;
+                case NC_CHAR:   *img = new raw_image_tmpl<char> (Data, thumb, new_x, x_off, y_off, width); break;
+                default: *img = NULL;
+                        std::cerr << "NetCDF data field type is invald." << std::endl;
+                        return NC_NOT_FROM_GXSM; 
+                }
 
-	// try Topo Scan
-	if (! (Data = nc.get_var("H")))
+                if (!dataFile.getVar("viewmode").isNull()){
+                        int vm=0;
+                        double c=1.;
+                        double b=1.;
+        
+                        dataFile.getVar ("viewmode").getVar (&vm);
+                        (*img)->SetViewMode (vm);
 
-		// try Diffract Scan
-		if (! (Data = nc.get_var("Intensity")))
+                        dataFile.getVar ("contrast").getVar (&c);
+                        dataFile.getVar ("bright").getVar (&b);
+                        (*img)->SetTransfer (c,b);
 
-			// try Float data
-			if (! (Data = nc.get_var("FloatField")))
+                        if(verbose){
+                                std::cout << "  VM: " << vm << "  TR Contrast, Bright: [" << c << b << "]" << std::endl;
+                                //dataFile.getVar ("JSON_RedPACPALL_SPMC_BIAS").getVar (&x);
+                                //dataFile.getVar ("JSON_RedPACPALL_SPMC_Z_SERVO_SETPOINT").getVar (&x);
+                        }
+                }
 
-				// try Double
-				if (! (Data = nc.get_var("DoubleField")))
-
-					// failed looking for Gxsm data!!
-					return NC_NOT_FROM_GXSM;
-
-	switch (Data->type()){
-	case ncShort: *img = new raw_image_tmpl<short> (Data, thumb, new_x, x_off, y_off, width); break;
-	case ncLong: *img = new raw_image_tmpl<long> (Data, thumb, new_x, x_off, y_off, width); break;
-	case ncFloat: *img = new raw_image_tmpl<float> (Data, thumb, new_x, x_off, y_off, width); break;
-	case ncDouble: *img = new raw_image_tmpl<double> (Data, thumb, new_x, x_off, y_off, width); break;
-	case ncByte: *img = new raw_image_tmpl<char> (Data, thumb, new_x, x_off, y_off, width); break;
-	case ncChar: *img = new raw_image_tmpl<char> (Data, thumb, new_x, x_off, y_off, width); break;
-	default: *img = NULL; return NC_NOT_FROM_GXSM; 
-	}
-
-	if(nc.get_var("viewmode")){
-		int vm;
-		double c,b;
-		
-		nc.get_var("viewmode")->get(&vm);
-		(*img)->SetViewMode (vm);
-
-		nc.get_var("contrast")->get(&c);
-		nc.get_var("bright")->get(&b);
-		(*img)->SetTransfer (c,b);
-	}
-
-
-	return NC_READ_OK;
+                return NC_READ_OK;
+        } catch (const netCDF::exceptions::NcException& e) {
+                netCDF::NcVar dum;
+                *img = new raw_image_tmpl<short> (dum, thumb, new_x, x_off, y_off, width, 1);
+                std::cerr << "EE: NetCDF File Error: " << e.what() << std::endl;
+                return NC_FILE_INTERGITY_ERROR;
+        }
 }
-
 
 
 int write_png(gchar *file_name, raw_image *img){
@@ -507,11 +570,10 @@ int main(int argc, const char *argv[]) {
 	int thumb = 1;
 	int new_x = 0;
 	int x_off = 0, y_off = 0, width = 0;	
-	int verbose = 0;
 	int noquick = 0;
 	int minmax = 0;
 	int help = 0;
-	gchar *filename;
+	std::string filename;
 	gchar *destinationfilename;
 	raw_image *img = NULL;
 	poptContext optCon; 
@@ -533,26 +595,49 @@ int main(int argc, const char *argv[]) {
 	while (poptGetNextOpt(optCon) >= 0) {;}	//Now parse until no more options.
 
 	if ((argc < 2 )||(help)) { 
+                std::cout << "NetCDF to PNG Thumbnailer for Gxsm SPM Data." << std::endl
+                          << "  Version 2, using  NetCDF4. (C) 2025 Gxsm Team" << std::endl;
 		poptPrintHelp(optCon, stderr, 0);
 		exit(1);
 	}
-		
-	filename = g_strdup(poptGetArg(optCon));
-	destinationfilename = g_strdup(poptGetArg(optCon));
 
-	if (destinationfilename == NULL){
-		destinationfilename = g_strjoin(NULL, filename, ".png", NULL);
-		// using simple join. if you need more sophisticated
-		// have a look at 'mmv' for suffix handling.
-	}
+        gchar *fn = poptGetArg(optCon);
 
+        if (fn == NULL){
+                verbose = 1;
+                std::cout << "EE: no input NetCDF filename specified." << std::endl;
+		poptPrintHelp(optCon, stderr, 0);
+		exit(1);
+                
+        } else {
+                
+                filename = g_strdup (fn);
+                gchar *ficon = poptGetArg(optCon);
+
+                if (ficon == NULL){
+                        destinationfilename = g_strjoin(NULL, filename, ".png", NULL);
+                        // using simple join. if you need more sophisticated
+                        // have a look at 'mmv' for suffix handling.
+                        //std::cout << "EE: no output icon filename specified." << std::endl;
+                        //poptPrintHelp(optCon, stderr, 0);
+                        //exit(1);
+                }
+                else {
+                        destinationfilename = g_strdup(ficon);
+                }
+        }
+        
 	if(verbose){
+                std::cout << "NetCDF to PNG Thumbnailer for Gxsm SPM Data." << std::endl
+                          << "  Version 2, using  NetCDF4. (C) 2025 Gxsm Team" << std::endl;
 		if (new_x == 0)	
-			std::cout << "Thumbnail-size" << std::endl;
+			std::cout << "Auto Thumbnail-size" << std::endl;
 		else
 			std::cout << "Rescaling to new x-size = " << new_x << std::endl;
-		std::cout << "Sourcefile: " << filename << std::endl;
-		std::cout << "Destinationfile: " << destinationfilename << std::endl;
+                if (fn){
+                        std::cout << "Sourcefile: " << filename << std::endl;
+                        std::cout << "Destinationfile: " << destinationfilename << std::endl;
+                }
 	}
 
 	if (new_x > 0)
@@ -568,42 +653,68 @@ int main(int argc, const char *argv[]) {
 			std::cout << "Width set to: " << width << std::endl;
 		}
 	}
-		
-	switch (netcdf_read (filename, &img, thumb, new_x, x_off, y_off, width)){
-        case NC_READ_OK: break;
-        case NC_OPEN_FAILED: 
-                std::cerr << "Error opening NC file >" << filename << "<" << std::endl; 
-                exit(-1);
-                break;
-        case NC_NOT_FROM_GXSM:
-                std::cerr << "Sorry, can't use this NC file >" << filename << "<" << std::endl 
-                          << "Hint: doesn't look like a Gxsm nc data file!" << std::endl; 
-                exit(-1);
-                break;
-	}
-		
-	if  (!img){
-		std::cerr << "Error while creating image from NC file." << std::endl;
-		exit(-1);
-	}
-		
-	if (verbose)
-		std::cout << "Converting ..." << std::endl; 
-		
-	if (noquick)
-		img->quick_rgb(FALSE, minmax?TRUE:FALSE);
-	else
-		img->quick_rgb(TRUE, minmax?TRUE:FALSE);
 
-	if (verbose)
-		std::cout << "Writing >" << destinationfilename << "<" << std::endl; 
+        if (fn){
+                switch (netcdf_read (filename, &img, thumb, new_x, x_off, y_off, width)){
+                case NC_READ_OK: break;
+                case NC_OPEN_FAILED: 
+                        std::cerr << "Error opening NC file >" << filename << "<" << std::endl; 
+                        g_free(destinationfilename);
+                        poptFreeContext(optCon);
+                        exit(-1);
+                        break;
+                case NC_NOT_FROM_GXSM:
+                        std::cerr << "Sorry, can't use this NC file >" << filename << "<" << std::endl 
+                                  << "Hint: doesn't look like a Gxsm nc data file!" << std::endl; 
+                        g_free(destinationfilename);
+                        poptFreeContext(optCon);
+                        exit(-1);
+                        break;
+                case NC_FILE_INTERGITY_ERROR:
+                        std::cerr << "Sorry, can't use this NC file >" << filename << "<" << std::endl 
+                                  << "Hint: NetCDF File Data Integrity Error."
+                                  << std::endl
+                                  << "Potentially caused by failed/interrupted nc file write, please investigate using NetCDF ncdump utility."
+                                  << std::endl; 
+                        if (img){
+                                img->generate_EE_thumb ();
+                                img->quick_rgb (TRUE, TRUE);
+                                if (verbose)
+                                        std::cout << "Writing EE Thumb >" << destinationfilename << "<" << std::endl; 
 		
-	write_png(destinationfilename, img);
+                                write_png(destinationfilename, img);
+                        }
+                        g_free(destinationfilename);
+                        poptFreeContext(optCon);
+                        exit(-1);
+                        break;
+                }
+		
+                if  (!img){
+                        std::cerr << "Error while creating image from NC file." << std::endl;
+                        g_free(destinationfilename);
+                        poptFreeContext(optCon);
+                        exit(-1);
+                }
+		
+                if (verbose)
+                        std::cout << "Converting ..." << std::endl; 
+		
+                if (noquick)
+                        img->quick_rgb(FALSE, minmax?TRUE:FALSE);
+                else
+                        img->quick_rgb(TRUE, minmax?TRUE:FALSE);
 
-	if(verbose)
-		std::cout << "Writing complete." << std::endl;
+                if (verbose)
+                        std::cout << "Writing >" << destinationfilename << "<" << std::endl; 
 		
-	g_free(filename);
+                write_png(destinationfilename, img);
+
+                if(verbose)
+                        std::cout << "Writing complete." << std::endl;
+
+        }
+        
 	g_free(destinationfilename);
 	poptFreeContext(optCon);
 	exit(0);

@@ -6,7 +6,7 @@ deps_nc4 = declare_dependency(
 
 executable(
     'nctopng',
-    'nc4topng.cpp',
+    'nctopng.cpp',
     'writepng.cpp',
     dependencies : deps_nc4,
     install: true
