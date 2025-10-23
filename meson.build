@@ -134,16 +134,6 @@ else
     conf.set('ENABLE_3DVIEW_HAVE_GL_GLEW', 0)
 endif
 
-# netcdf = dependency('netcdf-cxx4')   # for the C/C++ NetCDF headers and libraries, new but incopatible w older version and gxsm
-# netcdfc = dependency('netcdf', language: 'c')   # for the C NetCDF headers and libraries
-# netcdfcpp = dependency('netcdf', language: 'cpp') # for the C++ NetCDF headers and libraries (need both!!)
-netcdf = declare_dependency(
-    dependencies: [
-        cc.find_library('netcdf'),      ## OK
-        cc.find_library('netcdf_c++'),  ## need this 3.2 legacy verion, use this local in Debain Testing
-    ]
-)
-
 netcdf4 = declare_dependency(
     dependencies: [
         cc.find_library('netcdf_c++4'),  ## new NetCDF
@@ -333,7 +323,7 @@ appInclude  = include_directories(gxsm_lib_includes)
 #all_cflags = ['-fpermissive', '-O3', '-w']
 all_cflags = ['-fpermissive', '-w', '-O3', '-g']
 all_plugin_cflags = ['-fpermissive', '-w']
-all_plugin_deps = [icuuc, gtk, cairo, freet, gset, netcdf, fftw, xml, png, gmod, gmodexp, dl]
+all_plugin_deps = [icuuc, gtk, cairo, freet, gset, netcdf4, fftw, xml, png, gmod, gmodexp, dl]
 all_plugin_link_args = ['-Mmodules', '-export-dynamic', '-fno-version']
 
 

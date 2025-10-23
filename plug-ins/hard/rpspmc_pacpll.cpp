@@ -462,9 +462,9 @@ static void rpspmc_pacpll_hwi_query(void)
 }
 
 static void rpspmc_pacpll_hwi_SaveValues_callback ( gpointer gp_ncf ){
-	NcFile *ncf = (NcFile *) gp_ncf;
+	NcFile *ncf = static_cast<NcFile *> (gp_ncf);
         if (rpspmc_pacpll)
-                rpspmc_pacpll->save_values (ncf);
+                rpspmc_pacpll->save_values (*ncf);
 }
 
 
@@ -1144,60 +1144,51 @@ int RPSPMC_Control::callback_edit_GVP (GtkWidget *widget, RPSPMC_Control *self){
 // NetCDF support for parameter storage to file
 
 // helper func
-NcVar* rpspmc_pacpll_hwi_ncaddvar (NcFile *ncf, const gchar *varname, const gchar *varunit, const gchar *longname, const gchar *shortname, double value){
-	NcVar* ncv = ncf->add_var (varname, ncDouble);
-	ncv->add_att ("long_name", longname);
-	ncv->add_att ("short_name", shortname);
-	ncv->add_att ("var_unit", varunit);
-	ncv->put (&value);
-	return ncv;
+void rpspmc_pacpll_hwi_ncaddvar (NcFile &ncf, const gchar *varname, const gchar *varunit, const gchar *longname, const gchar *shortname, const gchar *label, double value, NcVar &ncv){
+	ncv = ncf.addVar (varname, ncDouble);
+	ncv.putAtt ("long_name", longname);
+	ncv.putAtt ("short_name", shortname);
+	ncv.putAtt ("var_unit", varunit);
+	if (label) ncv.putAtt ("label", label);
+	ncv.putVar (&value);
 }
-NcVar* rpspmc_pacpll_hwi_ncaddvar (NcFile *ncf, const gchar *varname, const gchar *varunit, const gchar *longname, const gchar *shortname, int value){
-	NcVar* ncv = ncf->add_var (varname, ncInt);
-	ncv->add_att ("long_name", longname);
-	ncv->add_att ("short_name", shortname);
-	ncv->add_att ("var_unit", varunit);
-	ncv->put (&value);
-	return ncv;
+
+void* rpspmc_pacpll_hwi_ncaddvar (NcFile &ncf, const gchar *varname, const gchar *varunit, const gchar *longname, const gchar *shortname, const gchar *label, int value, NcVar &ncv){
+	ncv = ncf.addVar (varname, ncInt);
+	ncv.putAtt ("long_name", longname);
+	ncv.putAtt ("short_name", shortname);
+	ncv.putAtt ("var_unit", varunit);
+	if (label) ncv.putAtt ("label", label);
+	ncv.putVar (&value);
 }
 
 #define SPMTMPL_ID "rpspmc_hwi_"
 
-void RPSPMC_Control::save_values (NcFile *ncf){
-	NcVar *ncv;
+void RPSPMC_Control::save_values (NcFile &ncf){
+	NcVar ncv;
 
 	PI_DEBUG (DBG_L4, "RPSPMC_Control::save_values");
 	gchar *i=NULL;
 
         i = g_strconcat ("RP SPM Control HwI ** Hardware-Info:\n", rpspmc_hwi->get_info (), NULL);
 
-	NcDim* infod  = ncf->add_dim("rpspmc_info_dim", strlen(i));
-	NcVar* info   = ncf->add_var("rpspmc_info", ncChar, infod);
-	info->add_att("long_name", "RPSPMC_Control plugin information");
-	info->put(i, strlen(i));
+	NcDim infod  = ncf.addDim("rpspmc_info_dim", strlen(i));
+	NcVar info   = ncf.addVar("rpspmc_info", ncChar, infod);
+	info.putAtt ("long_name", "RPSPMC_Control plugin information");
+	info.putVar ({0}, {strlen(i)}, i);
 	g_free (i);
 
 // Basic Feedback/Scan Parameter ============================================================
 
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"Bias", "V", "RPSPMC: (Sampel or Tip) Bias Voltage", "Bias", bias);
-	ncv->add_att ("label", "Bias");
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"Z_Servo_CZ_Setpoint", "A", "RPSPMC: Z-Servo CZ Setpoint", "CZ Set Point", zpos_ref);
-	ncv->add_att ("label", "Z Setpoint");
+	rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"Bias", "V", "RPSPMC: (Sampel or Tip) Bias Voltage", "Bias", "Bias", bias, ncv);
+	rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"Z_Servo_CZ_Setpoint", "A", "RPSPMC: Z-Servo CZ Setpoint", "CZ Set Point", "Z Setpoint", zpos_ref, ncv);
+	rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"Z_Servo_Set_Point", "nA", "RPSPMC: Z-Servo Current Set Point", "Current Setpt.", "Current", mix_set_point[0], ncv);
+	rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"Z_Servo_FLevel", "1", "Z-Servo RPSPMC: FLevel", "Current level", "Level", mix_level[0], ncv);
+	rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"Z-Servo_Transfer_Mode", "BC", "RPSPMC: Z-Servo Transfer Mode", "Z-Servo Transfer Mode", NULL, (double)mix_transform_mode[0], ncv);
+	ncv.putAtt ("mode_bcoding", "0:Off, 1:On, 2:Log");
 
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"Z_Servo_Set_Point", "nA", "RPSPMC: Z-Servo Current Set Point", "Current Setpt.", mix_set_point[0]);
-	ncv->add_att ("label", "Current");
-
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"Z_Servo_FLevel", "1", "Z-Servo RPSPMC: FLevel", "Current level", mix_level[0]);
-
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"Z-Servo_Transfer_Mode", "BC", "RPSPMC: Z-Servo Transfer Mode", "Z-Servo Transfer Mode", (double)mix_transform_mode[0]);
-	ncv->add_att ("mode_bcoding", "0:Off, 1:On, 2:Log");
-
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"scan_speed_x", "A/s", "RPSPMC: Scan speed X", "Xs Velocity", scan_speed_x);
-	ncv->add_att ("label", "Velocity Xm");
-
-	ncv=rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"move_speed_x", "A/s", "RPSPMC: Move speed X", "Xm Velocity", move_speed_x);
-	ncv->add_att ("label", "Velocity Xm");
-
+	rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"scan_speed_x", "A/s", "RPSPMC: Scan speed X", "Xs Velocity", "Scan Speed", scan_speed_x, ncv);
+	rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"move_speed_x", "A/s", "RPSPMC: Move speed X", "Xm Velocity", "Move Speed", move_speed_x, ncv);
 
 
 // Vector Probe ============================================================
@@ -1205,9 +1196,9 @@ void RPSPMC_Control::save_values (NcFile *ncf){
 }
 
 
-#define NC_GET_VARIABLE(VNAME, VAR) if(ncf->get_var(VNAME)) ncf->get_var(VNAME)->get(VAR)
+#define NC_GET_VARIABLE(VNAME, VAR) if(!ncf.getVar(VNAME).isNull ()) ncf.getVar(VNAME).getVar(VAR)
 
-void RPSPMC_Control::load_values (NcFile *ncf){
+void RPSPMC_Control::load_values (NcFile &ncf){
 	PI_DEBUG (DBG_L4, "RPSPMC_Control::load_values");
 	// Values will also be written in old style DSP Control window for the reason of backwards compatibility
 	// OK -- but will be obsoleted and removed at any later point -- PZ
@@ -5369,82 +5360,82 @@ void RPspmc_pacpll::save_scope_data (){
         
 }
 
-void RPspmc_pacpll::save_values (NcFile *ncf){
+void RPspmc_pacpll::save_values (NcFile &ncf){
         // store all rpspmc_pacpll's control parameters for the RP PAC-PLL
         // if socket connection is up
         if (client){
                 // JSON READ BACK PARAMETERS! Loosing precison to float some where!! (PHASE_CI < -100dB => 0!!!)
                 for (JSON_parameter *p=PACPLL_JSON_parameters; p->js_varname; ++p){
                         gchar *vn = g_strdup_printf ("JSON_RedPACPALL_%s", p->js_varname);
-                        NcVar* ncv = ncf->add_var ( vn, ncDouble);
-                        ncv->add_att ("long_name", vn);
-                        ncv->add_att ("short_name", p->js_varname);
-                        ncv->put (p->value);
+                        NcVar ncv = ncf.addVar ( vn, ncDouble);
+                        ncv.putAtt ("long_name", vn);
+                        ncv.putAtt ("short_name", p->js_varname);
+                        ncv.putVar (p->value);
                 }
                 // ACTUAL PARAMETERS in "dB" DOUBLE PRECISION VALUES, getting OK to the FPGA...
                 {
                         gchar *vn = g_strdup_printf ("JSON_RedPACPALL_%s", "_PHASE_FB_CP");
-                        NcVar* ncv = ncf->add_var ( vn, ncDouble);
-                        ncv->add_att ("long_name", vn);
-                        ncv->add_att ("short_name", "_PHASE_FB_CP");
-                        ncv->add_att ("var_unit", "1");
-                        ncv->put (&parameters.phase_fb_cp); // OK!
+                        NcVar ncv = ncf.addVar ( vn, ncDouble);
+                        ncv.putAtt ("long_name", vn);
+                        ncv.putAtt ("short_name", "_PHASE_FB_CP");
+                        ncv.putAtt ("var_unit", "1");
+                        ncv.putVar (&parameters.phase_fb_cp); // OK!
                 }
                 {
                         gchar *vn = g_strdup_printf ("JSON_RedPACPALL_%s", "_PHASE_FB_CI");
-                        NcVar* ncv = ncf->add_var ( vn, ncDouble);
-                        ncv->add_att ("long_name", vn);
-                        ncv->add_att ("short_name", "_PHASE_FB_CI");
-                        ncv->add_att ("var_unit", "1");
-                        ncv->put (&parameters.phase_fb_ci); // OK!
+                        NcVar ncv = ncf.addVar ( vn, ncDouble);
+                        ncv.putAtt ("long_name", vn);
+                        ncv.putAtt ("short_name", "_PHASE_FB_CI");
+                        ncv.putAtt ("var_unit", "1");
+                        ncv.putVar (&parameters.phase_fb_ci); // OK!
                 }
                 {
                         gchar *vn = g_strdup_printf ("JSON_RedPACPALL_%s", "_AMPLITUDE_FB_CP");
-                        NcVar* ncv = ncf->add_var ( vn, ncDouble);
-                        ncv->add_att ("long_name", vn);
-                        ncv->add_att ("short_name", "_AMPLITUDE_FB_CP");
-                        ncv->add_att ("var_unit", "1");
-                        ncv->put (&parameters.amplitude_fb_cp); // OK!
+                        NcVar ncv = ncf.addVar ( vn, ncDouble);
+                        ncv.putAtt ("long_name", vn);
+                        ncv.putAtt ("short_name", "_AMPLITUDE_FB_CP");
+                        ncv.putAtt ("var_unit", "1");
+                        ncv.putVar (&parameters.amplitude_fb_cp); // OK!
                 }
                 {
                         gchar *vn = g_strdup_printf ("JSON_RedPACPALL_%s", "_AMPLITUDE_FB_CI");
-                        NcVar* ncv = ncf->add_var ( vn, ncDouble);
-                        ncv->add_att ("long_name", vn);
-                        ncv->add_att ("short_name", "_AMPLITUDE_FB_CI");
-                        ncv->add_att ("var_unit", "1");
-                        ncv->put (&parameters.amplitude_fb_ci); // OK!
+                        NcVar ncv = ncf.addVar ( vn, ncDouble);
+                        ncv.putAtt ("long_name", vn);
+                        ncv.putAtt ("short_name", "_AMPLITUDE_FB_CI");
+                        ncv.putAtt ("var_unit", "1");
+                        ncv.putVar (&parameters.amplitude_fb_ci); // OK!
                 }
                 {
                         gchar *vn = g_strdup_printf ("JSON_RedPACPALL_%s", "_PHASE_FB_CP_dB");
-                        NcVar* ncv = ncf->add_var ( vn, ncDouble);
-                        ncv->add_att ("long_name", vn);
-                        ncv->add_att ("short_name", "_PHASE_FB_CP_dB");
-                        ncv->add_att ("var_unit", "1");
-                        ncv->put (&parameters.phase_fb_cp_db); // OK!
+                        NcVar ncv = ncf.addVar ( vn, ncDouble);
+                        ncv.putAtt ("long_name", vn);
+                        ncv.putAtt ("short_name", "_PHASE_FB_CP_dB");
+                        ncv.putAtt ("var_unit", "1");
+                        ncv.putVar (&parameters.phase_fb_cp_db); // OK!
                 }
                 {
                         gchar *vn = g_strdup_printf ("JSON_RedPACPALL_%s", "_PHASE_FB_CI_dB");
-                        NcVar* ncv = ncf->add_var ( vn, ncDouble);
-                        ncv->add_att ("long_name", vn);
-                        ncv->add_att ("short_name", "_PHASE_FB_CI_dB");
-                        ncv->add_att ("var_unit", "dB");
-                        ncv->put (&parameters.phase_fb_ci_db); // OK!
+                        NcVar ncv = ncf.addVar ( vn, ncDouble);
+                        ncv.putAtt ("long_name", vn);
+                        ncv.putAtt ("short_name", "_PHASE_FB_CI_dB");
+                        ncv.putAtt ("var_unit", "dB");
+                        ncv.putVar (&parameters.phase_fb_ci_db); // OK!
                 }
                 {
                         gchar *vn = g_strdup_printf ("JSON_RedPACPALL_%s", "_AMPLITUDE_FB_CP_dB");
-                        NcVar* ncv = ncf->add_var ( vn, ncDouble);
-                        ncv->add_att ("long_name", vn);
-                        ncv->add_att ("short_name", "_AMPLITUDE_FB_CP_dB");
-                        ncv->add_att ("var_unit", "1");
-                        ncv->put (&parameters.amplitude_fb_cp_db); // OK!
+                        NcVar ncv = ncf.addVar ( vn, ncDouble);
+                        ncv.putAtt ("long_name", vn);
+                        ncv.putAtt ("short_name", "_AMPLITUDE_FB_CP_dB");
+                        ncv.putAtt ("var_unit", "1");
+                        ncv.putVar (&parameters.amplitude_fb_cp_db); // OK!
                 }
                 {
                         gchar *vn = g_strdup_printf ("JSON_RedPACPALL_%s", "_AMPLITUDE_FB_CI_dB");
-                        NcVar* ncv = ncf->add_var ( vn, ncDouble);
-                        ncv->add_att ("long_name", vn);
-                        ncv->add_att ("short_name", "_AMPLITUDE_FB_CI_dB");
-                        ncv->add_att ("var_unit", "dB");
-                        ncv->put (&parameters.amplitude_fb_ci_db); // OK!
+                        NcVar ncv = ncf.addVar ( vn, ncDouble);
+                        ncv.putAtt ("long_name", vn);
+                        ncv.putAtt ("short_name", "_AMPLITUDE_FB_CI_dB");
+                        ncv.putAtt ("var_unit", "dB");
+                        ncv.putVar (&parameters.amplitude_fb_ci_db); // OK!
                 }
         }
 }

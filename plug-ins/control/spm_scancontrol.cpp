@@ -239,11 +239,12 @@ static void spm_scancontrol_SaveValues_callback ( gpointer gp_ncf ){
 	else
 		tmp = strdup ("N/A");
 
-	NcFile *ncf = (NcFile *) gp_ncf;
+	//NcFile *ncf = (NcFile *) gp_ncf;
+        NcFile *ncf = static_cast<NcFile*>(gp_ncf);
 
         try {
-                NcDim spmscd  = ncf->addDim("spm_scancontrol_dim", strlen(tmp));
-                NcVar spmsc   = ncf->addVar("spm_scancontrol", ncChar, spmscd);
+                NcDim spmscd  = ncf->addDim ("spm_scancontrol_dim", strlen(tmp));
+                NcVar spmsc   = ncf->addVar ("spm_scancontrol", ncChar, spmscd);
                 spmsc.putAtt ("long_name", "spm_scancontrol: scan direction");
                 spmsc.putVar (tmp); //, strlen(tmp));
         } catch (const netCDF::exceptions::NcException& e) {

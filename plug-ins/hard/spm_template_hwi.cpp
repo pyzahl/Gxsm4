@@ -914,78 +914,71 @@ int SPM_Template_Control::callback_edit_GVP (GtkWidget *widget, SPM_Template_Con
 // NetCDF support for parameter storage to file
 
 // helper func
-NcVar* spm_template_hwi_ncaddvar (NcFile *ncf, const gchar *varname, const gchar *varunit, const gchar *longname, const gchar *shortname, double value){
-	NcVar* ncv = ncf->add_var (varname, ncDouble);
-	ncv->add_att ("long_name", longname);
-	ncv->add_att ("short_name", shortname);
-	ncv->add_att ("var_unit", varunit);
-	ncv->put (&value);
-	return ncv;
+void spm_template_hwi_ncaddvar (NcFile &ncf, const gchar *varname, const gchar *varunit, const gchar *longname, const gchar *shortname, gchar *label, double value, NcVar &ncv){
+	ncv = ncf.addVar (varname, ncDouble);
+	ncv.putAtt ("long_name", longname);
+	ncv.putAtt ("short_name", shortname);
+	ncv.putAtt ("var_unit", varunit);
+	if (label) ncv.putAtt ("label", label);
+	ncv.putVar (&value);
 }
-NcVar* spm_template_hwi_ncaddvar (NcFile *ncf, const gchar *varname, const gchar *varunit, const gchar *longname, const gchar *shortname, int value){
+
+void spm_template_hwi_ncaddvar (NcFile &ncf, const gchar *varname, const gchar *varunit, const gchar *longname, const gchar *shortname, gchar *label, int value, NcVar &ncv){
 	NcVar* ncv = ncf->add_var (varname, ncInt);
-	ncv->add_att ("long_name", longname);
-	ncv->add_att ("short_name", shortname);
-	ncv->add_att ("var_unit", varunit);
-	ncv->put (&value);
-	return ncv;
+	ncv.putAtt ("long_name", longname);
+	ncv.putAtt ("short_name", shortname);
+	ncv.putAtt ("var_unit", varunit);
+	if (label) ncv.putAtt ("label", label);
+	ncv.putVar (&value);
 }
 
 #define SPMTMPL_ID "spm_template_hwi_"
 
-void SPM_Template_Control::save_values (NcFile *ncf){
-	NcVar *ncv;
+void SPM_Template_Control::save_values (NcFile &ncf){
+	NcVar ncv;
 
 	PI_DEBUG (DBG_L4, "SPM_Template_Control::save_values");
 	gchar *i=NULL;
 
         i = g_strconcat ("SPM Template HwI ** Hardware-Info:\n", spm_template_hwi->get_info (), NULL);
 
-	NcDim* infod  = ncf->add_dim("sranger_info_dim", strlen(i));
-	NcVar* info   = ncf->add_var("sranger_info", ncChar, infod);
-	info->add_att("long_name", "SPM_Template_Control plugin information");
-	info->put(i, strlen(i));
+	NcDim* infod  = ncf.addDim("sranger_info_dim", strlen(i));
+	NcVar* info   = ncf.addVar("sranger_info", ncChar, infod);
+	info.putAtt("long_name", "SPM_Template_Control plugin information");
+	info.putVar({0}, {strlen(i)}, i);
 	g_free (i);
 
 // Basic Feedback/Scan Parameter ============================================================
 
-	ncv=spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"bias", "V", "SRanger: (Sampel or Tip) Bias Voltage", "Bias", bias);
-	ncv->add_att ("label", "Bias");
-	ncv=spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"z_setpoint", "A", "SRanger: auxillary/Z setpoint", "Z Set Point", zpos_ref);
-	ncv->add_att ("label", "Z Setpoint");
+	spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"bias", "V", "SRanger: (Sampel or Tip) Bias Voltage", "Bias", "Bias", bias, ncv);
+	spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"z_setpoint", "A", "SRanger: auxillary/Z setpoint", "Z Set Point", "Z Setpoint", zpos_ref, ncv);
+	spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix0_set_point", "nA", "SRanger: Mix0: Current set point", "Current Setpt.", "Current", mix_set_point[0], ncv);
+	spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix1_set_point", "Hz", "SRanger: Mix1: Voltage set point", "Voltage Setpt.", "VoltSetpt.", mix_set_point[1], ncv);
+	spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix2_set_point", "V", "SRanger: Mix2: Aux2 set point", "Aux2 Setpt.", "Aux2 Setpt.", mix_set_point[2], ncv);
+        spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix3_set_point", "V", "SRanger: Mix3: Aux3 set point", "Aux3 Setpt.", "Aux3 Setpt.", mix_set_point[3], ncv);
+                                   
+        spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix0_mix_gain", "1", "SRanger: Mix0 gain", "Current gain", NULL, mix_gain[0], ncv);
+	spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix1_mix_gain", "1", "SRanger: Mix1 gain", "Voltage gain", NULL, mix_gain[1], ncv);
+	spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix2_mix_gain", "1", "SRanger: Mix2 gain", "Aux2 gain", NULL, mix_gain[2], ncv);
+	spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix3_mix_gain", "1", "SRanger: Mix3 gain", "Aux3 gain", NULL, mix_gain[3], ncv);
 
-	ncv=spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix0_set_point", "nA", "SRanger: Mix0: Current set point", "Current Setpt.", mix_set_point[0]);
-	ncv->add_att ("label", "Current");
-	ncv=spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix1_set_point", "Hz", "SRanger: Mix1: Voltage set point", "Voltage Setpt.", mix_set_point[1]);
-	ncv->add_att ("label", "VoltSetpt.");
-	ncv=spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix2_set_point", "V", "SRanger: Mix2: Aux2 set point", "Aux2 Setpt.", mix_set_point[2]);
-	ncv->add_att ("label", "Aux2 Setpt.");
-	ncv=spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix3_set_point", "V", "SRanger: Mix3: Aux3 set point", "Aux3 Setpt.", mix_set_point[3]);
-	ncv->add_att ("label", "Aux3 Setpt.");
+	spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix0_mix_level", "1", "SRanger: Mix0 level", "Current level", NULL, mix_level[0], ncv);
+	spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix1_mix_level", "1", "SRanger: Mix1 level", "Voltage level", NULL, mix_level[1], ncv);
+	spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix2_mix_level", "1", "SRanger: Mix2 level", "Aux2 level", NULL, mix_level[2], ncv);
+	spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix3_mix_level", "1", "SRanger: Mix3 level", "Aux3 level", NULL, mix_level[3], ncv);
 
-	ncv=spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix0_mix_gain", "1", "SRanger: Mix0 gain", "Current gain", mix_gain[0]);
-	ncv=spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix1_mix_gain", "1", "SRanger: Mix1 gain", "Voltage gain", mix_gain[1]);
-	ncv=spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix2_mix_gain", "1", "SRanger: Mix2 gain", "Aux2 gain", mix_gain[2]);
-	ncv=spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix3_mix_gain", "1", "SRanger: Mix3 gain", "Aux3 gain", mix_gain[3]);
-
-	ncv=spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix0_mix_level", "1", "SRanger: Mix0 level", "Current level", mix_level[0]);
-	ncv=spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix1_mix_level", "1", "SRanger: Mix1 level", "Voltage level", mix_level[1]);
-	ncv=spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix2_mix_level", "1", "SRanger: Mix2 level", "Aux2 level", mix_level[2]);
-	ncv=spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix3_mix_level", "1", "SRanger: Mix3 level", "Aux3 level", mix_level[3]);
-
-	ncv=spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix0_current_mix_transform_mode", "BC", "SRanger: Mix0 transform_mode", "Current transform_mode", (double)mix_transform_mode[0]);
-	ncv->add_att ("mode_bcoding", "0:Off, 1:On, 2:Log, 4:IIR, 8:FUZZY");
-	ncv=spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix1_voltage_mix_transform_mode", "BC", "SRanger: Mix1 transform_mode", "Voltage transform_mode", (double)mix_transform_mode[1]);
-	ncv->add_att ("mode_bcoding", "0:Off, 1:On, 2:Log, 4:IIR, 8:FUZZY");
-	ncv=spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix2_aux2_mix_transform_mode", "BC", "SRanger: Mix2 transform_mode", "Aux2 transform_mode", (double)mix_transform_mode[2]);
-	ncv->add_att ("mode_bcoding", "0:Off, 1:On, 2:Log, 4:IIR, 8:FUZZY");
-	ncv=spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix3_aux3_mix_transform_mode", "BC", "SRanger: Mix3 transform_mode", "Aux3 transform_mode", (double)mix_transform_mode[3]);
-	ncv->add_att ("mode_bcoding", "0:Off, 1:On, 2:Log, 4:IIR, 8:FUZZY");
+	spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix0_current_mix_transform_mode", "BC", "SRanger: Mix0 transform_mode", "Current transform_mode", NULL, (double)mix_transform_mode[0], ncv);
+	ncv.putAtt ("mode_bcoding", "0:Off, 1:On, 2:Log, 4:IIR, 8:FUZZY");
+	spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix1_voltage_mix_transform_mode", "BC", "SRanger: Mix1 transform_mode", "Voltage transform_mode", NULL, (double)mix_transform_mode[1], ncv);
+	ncv.putAtt ("mode_bcoding", "0:Off, 1:On, 2:Log, 4:IIR, 8:FUZZY");
+	spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix2_aux2_mix_transform_mode", "BC", "SRanger: Mix2 transform_mode", "Aux2 transform_mode", NULL, (double)mix_transform_mode[2], ncv);
+	ncv.putAtt ("mode_bcoding", "0:Off, 1:On, 2:Log, 4:IIR, 8:FUZZY");
+	spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"mix3_aux3_mix_transform_mode", "BC", "SRanger: Mix3 transform_mode", "Aux3 transform_mode", NULL, (double)mix_transform_mode[3], ncv);
+	ncv.putAtt ("mode_bcoding", "0:Off, 1:On, 2:Log, 4:IIR, 8:FUZZY");
 
 
-	ncv=spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"move_speed_x", "A/s", "SRanger: Move speed X", "Xm Velocity", move_speed_x);
-	ncv->add_att ("label", "Velocity Xm");
-
+	ncv=spm_template_hwi_ncaddvar (ncf, SPMTMPL_ID"move_speed_x", "A/s", "SRanger: Move speed X", "Xm Velocity", NULL, move_speed_x);
+	ncv.putAtt ("label", "Velocity Xm");
 
 
 // Vector Probe ============================================================
@@ -993,9 +986,9 @@ void SPM_Template_Control::save_values (NcFile *ncf){
 }
 
 
-#define NC_GET_VARIABLE(VNAME, VAR) if(ncf->get_var(VNAME)) ncf->get_var(VNAME)->get(VAR)
+#define NC_GET_VARIABLE(VNAME, VAR) if(!ncf.getVar(VNAME).isNull ()) ncf.getVar(VNAME)->getVar(VAR)
 
-void SPM_Template_Control::load_values (NcFile *ncf){
+void SPM_Template_Control::load_values (NcFile &ncf){
 	PI_DEBUG (DBG_L4, "SPM_Template_Control::load_values");
 	// Values will also be written in old style DSP Control window for the reason of backwards compatibility
 	// OK -- but will be obsoleted and removed at any later point -- PZ

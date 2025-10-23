@@ -315,8 +315,8 @@ public:
 	void get_tab_settings (const gchar *tab_key, guint64 &option_flags, guint64 &AC_auto_flags, guint64 glock_data[6]);
         void set_tab_settings (const gchar *tab_key, guint64 option_flags, guint64 AC_auto_flags, guint64 glock_data[6]);
 
-	void save_values (NcFile *ncf);
-        void load_values (NcFile *ncf);
+	void save_values (NcFile &ncf);
+        void load_values (NcFile &ncf);
 
         void store_values ();
 

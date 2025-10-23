@@ -177,7 +177,8 @@ static void extra_scan_info_cleanup( void ){
 
 static void extra_scan_info_SaveValues_callback ( gpointer gp_ncf ){
 	GString *gs_info=NULL;
-	NcFile *ncf = (NcFile *) gp_ncf;
+	//NcFile *ncf = (NcFile *) gp_ncf;
+        NcFile *ncf = static_cast<NcFile*>(gp_ncf);
         PI_DEBUG (DBG_L4, "Extra Scan Info::SaveValues_callback\n");
 	ifstream f_info;
 	f_info.open("gxsm_extra_scan_info", ios::in);
