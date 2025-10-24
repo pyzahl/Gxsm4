@@ -270,6 +270,217 @@ public:
 		gtk_widget_show (tog);
 	};
 
+        gchar *get_gatt_as_string (netCDF::NcGroupAtt &att){
+                if (att.isNull()) {
+                        std::cerr << "Error: Attribute '" << att.getName() << "' not found." << std::endl;
+                        return NULL;
+                }
+        
+                // Check if the attribute type is a string
+                netCDF::NcType att_type = att.getType();
+                if (att_type != netCDF::NcType::nc_CHAR && att_type != netCDF::NcType::nc_STRING) {
+                        std::cerr << "Error: Attribute is not a string type." << std::endl;
+                        return NULL;
+                }
+        
+                // Get the length of the attribute value
+                size_t len = att.getAttLength();
+        
+                // Read the attribute value into a character buffer
+                if (att_type == netCDF::NcType::nc_CHAR) {
+                        char* att_value_c_str = new char[len + 1]; // +1 for null terminator
+                        att.getValues(att_value_c_str);
+                        att_value_c_str[len] = '\0'; // Ensure null-termination
+                        gchar *ret = g_strdup (att_value_c_str);
+                        delete[] att_value_c_str;
+                        //std::cout << "*** nc_CHAR Attribute '" << att_name << "' value: " << ret << " ***" << std::endl;
+                        return ret;
+                } else if (att_type == netCDF::NcType::nc_STRING) {
+                        // For NC_STRING, getValues returns an array of char*
+                        char** str_array_c = new char*[len];
+                        att.getValues(str_array_c);
+            
+                        // Convert to a vector of std::string
+                        std::vector<std::string> str_vector;
+                        for (size_t i = 0; i < len; ++i) {
+                                str_vector.push_back(std::string(str_array_c[i]));
+                        }
+            
+                        // Print the values
+                        gchar *att_as_string=g_strdup("");
+                        //std::cout << "*** string Attribute '" << att_name << "' value: ";
+                        for (const auto& s : str_vector) {
+                                //std::cout << "  " << s << std::endl;
+                                gchar *tmp = g_strconcat (att_as_string, s.data(), NULL);
+                                g_free (att_as_string);
+                                att_as_string = tmp;
+                        }
+                        //std::cout << " ***" << std::endl;
+                        return (att_as_string);
+                }
+        };
+        gchar *get_att_as_string (netCDF::NcVarAtt &att){
+                if (att.isNull()) {
+                        std::cerr << "Error: Attribute '" << att.getName() << "' not found." << std::endl;
+                        return NULL;
+                }
+        
+                // Check if the attribute type is a string
+                netCDF::NcType att_type = att.getType();
+                if (att_type != netCDF::NcType::nc_CHAR && att_type != netCDF::NcType::nc_STRING) {
+                        std::cerr << "Error: Attribute is not a string type." << std::endl;
+                        return NULL;
+                }
+        
+                // Get the length of the attribute value
+                size_t len = att.getAttLength();
+        
+                // Read the attribute value into a character buffer
+                if (att_type == netCDF::NcType::nc_CHAR) {
+                        char* att_value_c_str = new char[len + 1]; // +1 for null terminator
+                        att.getValues(att_value_c_str);
+                        att_value_c_str[len] = '\0'; // Ensure null-termination
+                        gchar *ret = g_strdup (att_value_c_str);
+                        delete[] att_value_c_str;
+                        //std::cout << "*** nc_CHAR Attribute '" << att_name << "' value: " << ret << " ***" << std::endl;
+                        return ret;
+                } else if (att_type == netCDF::NcType::nc_STRING) {
+                        // For NC_STRING, getValues returns an array of char*
+                        char** str_array_c = new char*[len];
+                        att.getValues(str_array_c);
+            
+                        // Convert to a vector of std::string
+                        std::vector<std::string> str_vector;
+                        for (size_t i = 0; i < len; ++i) {
+                                str_vector.push_back(std::string(str_array_c[i]));
+                        }
+            
+                        // Print the values
+                        gchar *att_as_string=g_strdup("");
+                        //std::cout << "*** string Attribute '" << att_name << "' value: ";
+                        for (const auto& s : str_vector) {
+                                //std::cout << "  " << s << std::endl;
+                                gchar *tmp = g_strconcat (att_as_string, s.data(), NULL);
+                                g_free (att_as_string);
+                                att_as_string = tmp;
+                        }
+                        //std::cout << " ***" << std::endl;
+                        return (att_as_string);
+                }
+        };
+
+        void findVariables(const NcGroup& group, std::multimap<std::string, NcVar>& variableMap) {
+                // Get all variables in the current group
+                std::multimap<std::string, NcVar> vars = group.getVars(NcGroup::Current);
+                for (auto const& pair : vars) {
+                        variableMap.insert(pair);
+                }
+
+                // Get all subgroups
+                std::multimap<std::string, NcGroup> subgroups = group.getGroups(NcGroup::ChildrenGrps);
+
+                // Recursively call for each subgroup
+                for (auto const& subgroup_pair : subgroups) {
+                        findVariables(subgroup_pair.second, variableMap);
+                }
+        };
+#if 0
+
+// A generic function to read and print data from a variable.
+// Because the data type is not known at compile time, we use a template and a pointer.
+template <typename T>
+void readAndStoreVariable(const NcVar& var, std::multimap<std::string, std::string>& dataMap) {
+    // Get the size of the variable.
+    std::vector<size_t> varShape = var.getShape();
+    size_t varSize = 1;
+    for (size_t dimSize : varShape) {
+        varSize *= dimSize;
+    }
+
+    // Read the data into a buffer.
+    std::vector<T> data(varSize);
+    var.getVar(data.data());
+
+    // Store and print the variable name and all its values.
+    for (size_t i = 0; i < varSize; ++i) {
+        dataMap.insert({var.getName(), std::to_string(data[i])});
+    }
+}
+
+// Overload for string type
+template <>
+void readAndStoreVariable<std::string>(const NcVar& var, std::multimap<std::string, std::string>& dataMap) {
+    std::vector<std::string> data = var.asString("");
+    for (const auto& s : data) {
+        dataMap.insert({var.getName(), s});
+    }
+}
+
+int run() {
+    // Specify the NetCDF file name.
+    const std::string FILE_NAME("mydata.nc");
+
+    try {
+        // Open the file.
+        NcFile dataFile(FILE_NAME, NcFile::read);
+
+        // A multimap to store variable names and their values as strings.
+        std::multimap<std::string, std::string> allVariableData;
+
+        // Get all variables in the file.
+        std::map<std::string, NcVar> varMap = dataFile.getVars();
+
+        // Iterate through all variables.
+        for (auto const& pair : varMap) {
+            NcVar var = pair.second;
+            NcType type = var.getType();
+
+            // Handle different NetCDF types.
+            if (type.getId() == nc_BYTE || type.getId() == nc_UBYTE) {
+                readAndStoreVariable<signed char>(var, allVariableData);
+            } else if (type.getId() == nc_SHORT || type.getId() == nc_USHORT) {
+                readAndStoreVariable<short>(var, allVariableData);
+            } else if (type.getId() == nc_INT || type.getId() == nc_UINT) {
+                readAndStoreVariable<int>(var, allVariableData);
+            } else if (type.getId() == nc_INT64 || type.getId() == nc_UINT64) {
+                readAndStoreVariable<long long>(var, allVariableData);
+            } else if (type.getId() == nc_FLOAT) {
+                readAndStoreVariable<float>(var, allVariableData);
+            } else if (type.getId() == nc_DOUBLE) {
+                readAndStoreVariable<double>(var, allVariableData);
+            } else if (type.getId() == nc_CHAR) {
+                readAndStoreVariable<char>(var, allVariableData);
+            } else if (type.getId() == nc_STRING) {
+                readAndStoreVariable<std::string>(var, allVariableData);
+            } else {
+                std::cerr << "Warning: Skipping variable '" << var.getName() << "' with unknown type." << std::endl;
+            }
+        }
+
+        // Now print all the data from the multimap.
+        std::cout << "Printing all variable data from the multimap:" << std::endl;
+        std::string currentKey = "";
+        for (const auto& entry : allVariableData) {
+            if (entry.first != currentKey) {
+                if (!currentKey.empty()) {
+                    std::cout << std::endl; // Add a newline for the next variable.
+                }
+                currentKey = entry.first;
+                std::cout << "Variable: " << currentKey << " -> ";
+            }
+            std::cout << entry.second << " ";
+        }
+        std::cout << std::endl;
+
+    } catch (const NcException& e) {
+        e.what();
+        return 1;
+    }
+
+    return 0;
+}
+#endif
+
 	static void free_info_elem(gpointer txt, gpointer data){ g_free((gchar*) txt); };
 
 	void dump ( GtkWidget *box, GtkWidget *box_selected );
@@ -320,40 +531,28 @@ void NcDumpToWidget::dump ( GtkWidget *box, GtkWidget *box_selected ){
         gtk_widget_show (sep);
         
         netCDF::NcGroup rootGroup = getGroup("/");
-        multimap< std::string, NcGroupAtt > attributes = rootGroup.getAtts ();
+        //multimap< std::string, NcGroupAtt > attributes = rootGroup.getAtts ();
+        multimap< std::string, NcGroupAtt > attributes = getAtts ();
         for (auto const& [name, att] : attributes) {
+                gchar *tmp;
 		VarName = gtk_label_new (name.data());
 		SETUP_LABEL (VarName);
                 gtk_grid_attach (GTK_GRID (grid), VarName, 0, grid_row, 2, 1);
                 gtk_widget_show (VarName);
 
 		variable = gtk_entry_new ();
-                //att.getValues()
-		SETUP_ENTRY(variable, "x");
+                //NcGroupAtt att = pair.second;
+
+                NcGroupAtt ga = att;
+                tmp=get_gatt_as_string (ga);
+		if (tmp) SETUP_ENTRY (variable, tmp);
+		else SETUP_ENTRY (variable, "*NULL*");
+                g_free (tmp);
                 gtk_grid_attach (GTK_GRID (grid), variable, 2, grid_row++, 1, 1);
                 gtk_widget_show (variable);
         }
-#if 0 // later...
-        NcAtt *ap;
-	for(int n = 0; (ap = get_att(n)); n++) {
-
-		VarName = gtk_label_new (ap->name());
-		SETUP_LABEL (VarName);
-                gtk_grid_attach (GTK_GRID (grid), VarName, 0, grid_row, 2, 1);
-                gtk_widget_show (VarName);
-
-		variable = gtk_entry_new ();
-		NcValues* vals;
-		SETUP_ENTRY(variable, (vals = ap->values())->as_string(0));
-                gtk_grid_attach (GTK_GRID (grid), variable, 2, grid_row++, 1, 1);
-                gtk_widget_show (variable);
-
-		delete vals;
-		delete ap;
-	}
 
 //	static gchar *types[] = {"","byte","char","short","long","float","double"};
-	NcVar *vp;
 
 	// ===============================================================================
 
@@ -371,31 +570,26 @@ void NcDumpToWidget::dump ( GtkWidget *box, GtkWidget *box_selected ){
 	gtk_grid_attach (GTK_GRID (grid), sep=gtk_separator_new (GTK_ORIENTATION_HORIZONTAL), 0, grid_row++, 10, 1);
         gtk_widget_show (sep);
 
-	for (int n=0; n < num_dims(); n++) {
-
-		NcDim* dim = get_dim(n);
-		gchar *dimname = g_strconcat("Dim_",(gchar*)dim->name(), NULL);
-
-                XSM_DEBUG_GM (DBG_L3, "NcDumpToWidge::dump ** dimvar: %s", dimname);
-
-		VarName = gtk_check_button_new_with_label (dimname);
-		setup_toggle (VarName, dimname);
+        std::multimap<std::string, netCDF::NcDim> dims = getDims();
+        for (auto const& [name, dim] : dims) {
+		VarName = gtk_check_button_new_with_label (name.data());
+		setup_toggle (VarName, name.data());
                 gtk_grid_attach (GTK_GRID (grid), VarName, 0, grid_row, 2, 1);
                 gtk_widget_show (VarName);
-      
+
 		variable = gtk_entry_new ();
-		gchar *dimval;
-		if (dim->is_unlimited())
-			dimval = g_strdup_printf("UNLIMITED, %d currently", (int)dim->size());
+                gchar *dimval=NULL;
+                if (dim.isUnlimited())
+			dimval = g_strdup_printf("UNLIMITED, %d currently", (int)dim.getSize ());
 		else
-			dimval = g_strdup_printf("%d", (int)dim->size());
+			dimval = g_strdup_printf("%d", (int)dim.getSize ());
     
 		SETUP_ENTRY(variable, dimval);
                 gtk_grid_attach (GTK_GRID (grid), variable, 2, grid_row++, 1, 1);
                 gtk_widget_show (variable);
 
 		if (gtk_check_button_get_active (GTK_CHECK_BUTTON (VarName))){
-			VarName_i = gtk_label_new (dimname);
+			VarName_i = gtk_label_new (name.data());
 			SETUP_LABEL(VarName_i);
 			variable_i = gtk_entry_new ();
 			SETUP_ENTRY(variable_i, dimval);
@@ -405,11 +599,8 @@ void NcDumpToWidget::dump ( GtkWidget *box, GtkWidget *box_selected ){
                         gtk_grid_attach (GTK_GRID (grid_selected), variable_i, 2, grid_row_s++, 1, 1);
                         gtk_widget_show (variable_i);
 		}
-		g_free(dimname);
-		g_free(dimval);
-
-	}
-
+        }
+        
 	// ===============================================================================
 
 	gtk_grid_attach (GTK_GRID (grid), sep=gtk_separator_new (GTK_ORIENTATION_HORIZONTAL), 0, grid_row++, 10, 1);
@@ -425,157 +616,167 @@ void NcDumpToWidget::dump ( GtkWidget *box, GtkWidget *box_selected ){
         gtk_widget_show (lab);
 	gtk_grid_attach (GTK_GRID (grid), sep=gtk_separator_new (GTK_ORIENTATION_HORIZONTAL), 0, grid_row++, 10, 1);
         gtk_widget_show (sep);
+        
+        // Define a multimap to hold the variable names and objects
+        std::multimap<std::string, NcVar> allVariables;
 
-	for (int n = 0; (vp = get_var(n)); n++) {
-		int unlimited_flag = FALSE;
-		gchar *vdims = g_strdup(" ");
-		if (vp->num_dims() > 0) {
-			g_free(vdims);
-			vdims = g_strdup("(");
-			for (int d = 0; d < vp->num_dims(); d++) {
-				gchar *tmp = g_strconcat(vdims, (gchar*)vp->get_dim(d)->name(), 
-							 ((d<vp->num_dims()-1)?", ":")"), NULL);
+        // Populate the multimap using the recursive function
+        findVariables (this, allVariables);
 
-				if (vp->get_dim(d)->is_unlimited())
-					unlimited_flag = TRUE;
+        // Print all variables from the multimap
+        if (allVariables.empty()) {
+            std::cout << "No variables found in the file." << std::endl;
+        } else {
+                for (const auto& pair : allVariables) {
+                        std::cout << "  - " << pair.first << std::endl;
+                        NcVar vp = pair.second;
+                        //for (int n = 0; (vp = get_var(n)); n++) {
+                        int unlimited_flag = FALSE;
+                        gchar *vdims = g_strdup(" ");
 
-				g_free(vdims);
-				vdims = g_strdup(tmp);
-				g_free(tmp);
-			}
-		}
-//		gchar *vardef = g_strconcat(types[vp->type()], " ", (gchar*)vp->name(), vdims, NULL);
-		gchar *vardef = g_strconcat((gchar*)vp->name(), vdims, NULL);
-		g_free(vdims);
+                        if (vp.getDims().size() > 0) {
+                                std::vector<netCDF::NcDim> dims = vp.getDims();
+                                std::cout << " Dims:" << std::endl;
+                                g_free(vdims);
+                                vdims = g_strdup("(");
+                                for (const auto& dim : dims) {
+                                        gchar *tmp = g_strconcat(vdims, (gchar*)dim.getName().data(), ", ", NULL);
+                                        if (dim.isUnlimited())
+                                                unlimited_flag = TRUE;
+                                        g_free(vdims);
+                                        vdims = g_strdup(tmp);
+                                        g_free(tmp);
+                                }
+                        }
+                        vdims[strlen(vdims)-1]=')';
+                        gchar *vardef = g_strconcat((gchar*)vp.getName().data(), vdims, NULL);
+                        g_free(vdims);
 
-                XSM_DEBUG_GM (DBG_L3, "NcDumpToWidge::dump ** variable: %s", vardef);
+                        XSM_DEBUG_GM (DBG_L3, "NcDumpToWidge::dump ** variable: %s", vardef);
 
-                VarName = gtk_check_button_new_with_label (vardef);
-		setup_toggle (VarName, (gchar*)vp->name());
-//		std::cout << vardef << std::endl;
-		g_free(vardef);
+                        VarName = gtk_check_button_new_with_label (vardef);
+                        setup_toggle (VarName, (gchar*)vp.getName().data());
+                        //		std::cout << vardef << std::endl;
+                        g_free(vardef);
 
-                gtk_grid_attach (GTK_GRID (grid), VarName, 0, grid_row, 2, 1);
-                gtk_widget_show (VarName);
+                        gtk_grid_attach (GTK_GRID (grid), VarName, 0, grid_row, 2, 1);
+                        gtk_widget_show (VarName);
 
-		variable = gtk_entry_new ();
-		ostringstream ostr_val;
+                        variable = gtk_entry_new ();
+                        ostringstream ostr_val;
 
-		if (unlimited_flag){
-			ostr_val << "** Unlimited Data Set, data suppressed **";
-		} else {
-			NcValues *v = vp->values();
-			if(vp->type() == ncChar){
-				ostr_val << v->as_string(0);
-			}else{
-				if(v){
-					if(v->num() > 1){
-						if(v->num() > maxvals)
-							ostr_val << "[#="<< vp->num_vals() << "] " << " ... (too many, suppressed) ";
-						else
-							ostr_val << "[#="<< vp->num_vals() << "] " << *v;
-					}else
-						ostr_val << *v;
-				} else
-					ostr_val << "** Empty **";
-			}
-			delete v;
-		}
-		SETUP_ENTRY(variable, (const gchar*)ostr_val.str().c_str());
-
-                gtk_grid_attach (GTK_GRID (grid), variable, 2, grid_row, 1, 1);
-                gtk_widget_show (variable);
-
-		NcToken vname = vp->name();
-		NcAtt *ap;
-      
-		ostringstream  ostr_att;
-		if((ap=vp->get_att(0))){
-			delete ap;
-			ostr_att << "Details and NetCDF Varibale Attributes:" << endl;
-
-			for(int n = 0; (ap = vp->get_att(n)); n++) {
-				NcValues *v = ap->values();
-				ostr_att << vname << ":" 
-					 << ap->name() << " = "
-					 << *v << endl;
-				delete ap;
-				delete v;
-			}
-		}
-		else
-			ostr_att << "Sorry, no info available for \"" << vname << "\" !";
-
-		ostr_att << "\nValue(s):\n" << ostr_val.str().c_str(); 
-		ostr_att << ends;
-		gchar *infotxt = g_strdup( (const gchar*)ostr_att.str().c_str() );
-		infolist = g_slist_prepend( infolist, infotxt);
-		info = gtk_button_new_with_label (" Details ");
-
-                gtk_grid_attach (GTK_GRID (grid), info, 3, grid_row++, 1, 1);
-                gtk_widget_show (info);
-
-		g_signal_connect (G_OBJECT (info), "clicked",
-				    G_CALLBACK (show_info_callback),
-				    infotxt);
-
-		if (gtk_check_button_get_active (GTK_CHECK_BUTTON (VarName))){
-			NcAtt *short_name = NULL;
-			if ((short_name = vp->get_att("short_name"))){
-				NcValues *tmp = short_name->values();
-				VarName_i = gtk_label_new (tmp->as_string(0));
-				delete tmp;
-			} else
-				VarName_i = gtk_label_new (vp->name());
-			SETUP_LABEL(VarName_i);
-
-			NcAtt *unit_att = NULL;
-			NcAtt *label_att = NULL;
-			gchar *value_str = NULL;
-			if ((unit_att = vp->get_att("unit"))){
-				if ((label_att = vp->get_att("label"))){
-					NcValues *unit  = unit_att->values();
-					NcValues *label = label_att->values();
-					UnitObj *u = main_get_gapp ()->xsm->MakeUnit (unit->as_string(0), label->as_string(0));
-					double tmp;
-					vp->get (&tmp);
-					value_str = u->UsrString (tmp);
-					delete unit;
-					delete label;
-					delete u;
-					delete label_att;
-					label_att = NULL;
-				}
-				delete unit_att;
-				unit_att = NULL;
-			}
-			variable_i = gtk_entry_new ();
-			if (value_str){
-				SETUP_ENTRY(variable_i, value_str);
-				g_free (value_str);
-			}else{
-				if ((unit_att = vp->get_att("var_unit"))){
-					NcValues *u = unit_att->values();
-					ostr_val << " [" << u->as_string(0) << "]"; // << " [vu]";
-				} else if ((unit_att = vp->get_att("unit"))){
-					NcValues *u = unit_att->values();
-					ostr_val << " [" << u->as_string(0) << "]"; // << " [u]";
-				} // else  ostr_val << " [??]";
-
-				SETUP_ENTRY(variable_i, (const gchar*)ostr_val.str().c_str());
-			}
-                        gtk_grid_attach (GTK_GRID (grid_selected), VarName_i, 0, grid_row_s, 2, 1);
-                        gtk_widget_show (VarName_i);
-                        gtk_grid_attach (GTK_GRID (grid_selected), variable_i, 2, grid_row_s++, 1, 1);
-                        gtk_widget_show (variable_i);
-		}
-	}
+                        if (unlimited_flag){
+                                ostr_val << "** Unlimited Data Set, data suppressed **";
+                        } else {
+                                if(vp.getType() == ncChar){
+                                        gchar* value_c_str = new gchar[vp.getDims()[0].getSize() + 1]; // +1 for null terminator
+                                        vp.getVar ({0}, {vp.getDims()[0].getSize()}, value_c_str);
+                                        ostr_val << value_c_str;
+                                }else{
+                                        if(vp.getType() == ncDouble){
+                                                double x;
+                                                vp.getVar(&x);
+                                                ostr_val << "ncDouble :" << x;
+                                        } else
+                                                ostr_val << "** work in progress **";
+#if 0
+                                        if(v){
+                                                if(v->num() > 1){
+                                                        if(v->num() > maxvals)
+                                                                ostr_val << "[#="<< vp->num_vals() << "] " << " ... (too many, suppressed) ";
+                                                        else
+                                                                ostr_val << "[#="<< vp->num_vals() << "] " << *v;
+                                                }else
+                                                        ostr_val << *v;
+                                        } else
+                                                ostr_val << "** Empty **";
 #endif
+                                }
+                        }
+                        SETUP_ENTRY(variable, (const gchar*)ostr_val.str().c_str());
 
-	g_object_set_data (G_OBJECT (box), "info_list", infolist);
+                        gtk_grid_attach (GTK_GRID (grid), variable, 2, grid_row, 1, 1);
+                        gtk_widget_show (variable);
 
-        gtk_widget_show (grid); // FIX-ME GTK4 SHOWALL
-        gtk_widget_show (grid_selected); // FIX-ME GTK4 SHOWALL
+                        //multimap<string, NcAtt> varAttributes = var.getAtts();
+        
+                        ostringstream  ostr_att;
+                        map< std::string, NcVarAtt > attributes = vp.getAtts ();
+                        //multimap< std::string, NcAtt > attributes = vp.getAtts ();
+                        for (auto const& [name, att] : attributes){
+                                NcVarAtt a = att;
+                                ostr_att << name << ":" << att.getName() << " = " << get_att_as_string (a) << endl;
+                        }
+                        //else
+                        //        ostr_att << "No attributes available for \"" << vname << "\" !";
+
+                        ostr_att << "\nValue(s):\n" << ostr_val.str().c_str(); 
+                        ostr_att << ends;
+                        gchar *infotxt = g_strdup( (const gchar*)ostr_att.str().c_str() );
+                        infolist = g_slist_prepend( infolist, infotxt);
+                        info = gtk_button_new_with_label (" Details ");
+
+                        gtk_grid_attach (GTK_GRID (grid), info, 3, grid_row++, 1, 1);
+                        gtk_widget_show (info);
+
+                        g_signal_connect (G_OBJECT (info), "clicked",
+                                          G_CALLBACK (show_info_callback),
+                                          infotxt);
+
+                        if (gtk_check_button_get_active (GTK_CHECK_BUTTON (VarName))){
+                                NcVarAtt a = vp.getAtt ("short_name");
+                                gchar *tmp=get_att_as_string (a);
+                                if (tmp) VarName_i = gtk_label_new (tmp);
+                                else	 VarName_i = gtk_label_new (vp.getName().data());
+                                delete tmp;
+                                SETUP_LABEL(VarName_i);
+
+                                a = vp.getAtt("unit");
+                                gchar *unit = get_att_as_string (a);
+                                gchar* value_str=NULL;
+                                if (unit){
+                                        NcVarAtt a = vp.getAtt("label");
+                                        gchar *label = get_att_as_string (a);
+                                        if (label){
+                                                UnitObj *u = main_get_gapp ()->xsm->MakeUnit (unit, label);
+                                                double tmp;
+                                                vp.getVar (&tmp);
+                                                value_str = u->UsrString (tmp);
+                                                delete unit;
+                                                delete label;
+                                                delete u;
+                                        }
+                                        delete unit;
+                                }
+                                variable_i = gtk_entry_new ();
+                                if (value_str){
+                                        SETUP_ENTRY(variable_i, value_str);
+                                        g_free (value_str);
+                                }else{
+                                        gchar *tmp=NULL;
+                                        NcVarAtt a = vp.getAtt("var_unit");
+                                        tmp = get_att_as_string (a);
+                                        if (tmp) ostr_val << " [" << tmp << "]"; // << " [vu]";
+                                        g_free (tmp);
+                                        a = vp.getAtt("unit");
+                                        tmp = get_att_as_string (a);
+                                        if (tmp) ostr_val << " [" << tmp << "]"; // << " [u]";
+                                        g_free (tmp);
+
+                                        SETUP_ENTRY(variable_i, (const gchar*)ostr_val.str().c_str());
+                                }
+                                gtk_grid_attach (GTK_GRID (grid_selected), VarName_i, 0, grid_row_s, 2, 1);
+                                gtk_widget_show (VarName_i);
+                                gtk_grid_attach (GTK_GRID (grid_selected), variable_i, 2, grid_row_s++, 1, 1);
+                                gtk_widget_show (variable_i);
+                        }
+                }
+
+                g_object_set_data (G_OBJECT (box), "info_list", infolist);
+                
+                gtk_widget_show (grid); // FIX-ME GTK4 SHOWALL
+                gtk_widget_show (grid_selected); // FIX-ME GTK4 SHOWALL
+        }
 }
 
 void ViewControl::tip_follow_control (gboolean follow){
@@ -583,8 +784,8 @@ void ViewControl::tip_follow_control (gboolean follow){
 }
 
 void ViewControl::setup_side_pane (gboolean show){
-	if (show){
-		gtk_widget_show (sidepane);
+        if (show){
+                gtk_widget_show (sidepane);
                 try {
                         std::string fn (scan->data.ui.name);
                         NcDumpToWidget ncdump (fn);
