@@ -296,13 +296,13 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
                         std::cout << "  Name: " << dim.getName() << ", Length: " << dim.getSize() << std::endl;
                 }
                 
-                NcDim timed = dims[0]; // g_message ("dim[0]: %s Size: %d", timed.getName().data(), timed.getSize());
+                NcDim timed = dims[0]; g_message ("dim[0]: %s Size: %d", timed.getName().data(), timed.getSize());
                 scan->data.s.ntimes  = timed.getSize() > 0 ? dims[0].getSize() : 1; // timed
-                NcDim valued = dims[1];
+                NcDim valued = dims[1]; g_message ("dim[1]: %s Size: %d", valued.getName().data(), valued.getSize());
                 scan->data.s.nvalues = valued.getSize() > 0 ? dims[1].getSize() : 1; // valued
-                NcDim dimyd = dims[2];
+                NcDim dimyd = dims[2]; g_message ("dim[2]: %s Size: %d", dimyd.getName().data(), dimyd.getSize());
                 scan->data.s.ny      = dimyd.getSize() > 0 ? dims[2].getSize() : 1; // ny
-                NcDim dimxd = dims[3]; // g_message ("dim[3]: %s Size: %d", dimxd.getName().data(), dimxd.getSize());
+                NcDim dimxd = dims[3]; g_message ("dim[3]: %s Size: %d", dimxd.getName().data(), dimxd.getSize());
                 scan->data.s.nx      = dimxd.getSize() > 0 ? dims[3].getSize() : 1; // nx
 
                 main_get_gapp ()->progress_info_set_bar_fraction (0., 2);
@@ -327,16 +327,18 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
 
                         g_message ("Reading data slice for time index %d", time_index);
                         scan->mem2d->data->NcGet (Data, time_index);
+                        g_message ("Reading data time slice completed.");
                         scan->data.s.ntimes = ntimes_tmp;
 
                         if (scan->data.s.nvalues > 1){
+                                g_message ("Reading Values...");
                                 XSM_DEBUG(DBG_L2, "reading valued arr... n=" << scan->data.s.nvalues );
                                 float *valuearr = new float[scan->data.s.nvalues];
                                 if(!valuearr)
                                         return status = FIO_NO_MEM;
 		  
                                 XSM_DEBUG(DBG_L2, "getting array..." );
-                                nc.getVar("value").getVar ({scan->data.s.nvalues}, valuearr );
+                                nc.getVar("value").getVar ({0},{scan->data.s.nvalues}, valuearr );
                                 //double va0=0.;
                                 //gboolean make_vai=false;
                                 for(i=0; i<scan->data.s.nvalues; i++){
@@ -651,10 +653,10 @@ FIO_STATUS NetCDF::Write(){
 #define NTIMES   1
 #define TIMELEN 40
 #define VALUEDIM 1
-                NcDim timed  = nc.addDim("time", scan->data.s.ntimes);        // Time of Scan
-                NcDim valued = nc.addDim("value", scan->data.s.nvalues);     // Value of Scan, eg. Volt / Force
-                NcDim dimxd  = nc.addDim("dimx", scan->mem2d->GetNx()); // Image Dim. in X (#Samples)
-                NcDim dimyd  = nc.addDim("dimy", scan->mem2d->GetNy()); // Image Dim. in Y (#Samples)
+                NcDim timed  = nc.addDim("time", scan->data.s.ntimes);   // Time of Scan
+                NcDim valued = nc.addDim("value", scan->data.s.nvalues); // Value of Scan, eg. Volt / Force
+                NcDim dimyd  = nc.addDim("dimy", scan->mem2d->GetNy());  // Image Dim. in Y (#Samples)
+                NcDim dimxd  = nc.addDim("dimx", scan->mem2d->GetNx());  // Image Dim. in X (#Samples)
   
                 NcDim reftimed  = nc.addDim("reftime", TIMELEN);  // Starting time
   

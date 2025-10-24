@@ -509,16 +509,21 @@ void TZData<ZTYP>::NcPut(NcVar &ncfield, int time_index, gboolean update){
 
 template <class ZTYP> 
 void TZData<ZTYP>::NcGet(NcVar &ncfield, int time_index){
+        std::vector<size_t> countp = { 1,1, 1,nx };
 	gdouble yy, yy2;
 	yy = yy2 = 0.;
-	for(int y=0; y<ny; y++){
-		for(int v=0; v<nv; ++v){
+
+        //g_message ("NcGet Field Dim: %d %d %d %d",
+        //           ncfield.getDims()[0].getSize(),
+        //           ncfield.getDims()[1].getSize(),
+        //           ncfield.getDims()[2].getSize(),
+        //           ncfield.getDims()[3].getSize());
+                
+        for(int y=0; y<ny; y++){
+                for(int v=0; v<nv; ++v){
                         //g_message ("NcGet: @ %d,%d,%d,0 #1,1,1,%d",time_index,v,y,nx);
-                        std::vector<size_t> startp = { time_index,v,y, 0 };
-                        std::vector<size_t> countp = { 1,1, 1,nx };
+                        std::vector<size_t> startp = { time_index,v, y,0 };
                         ncfield.getVar(startp, countp, Zdat[y*nv+v]);
-			//ncfield.set_cur(time_index,v,y);
-			//ncfield.get(Zdat[y*nv+v], 1,1, 1,nx);
 			Li[y+ny*v].invalidate();
 		}
 		yy = (double)y/(double)ny;
@@ -765,37 +770,37 @@ gchar *LayerInformation::get (gboolean osd){
 }
 
 void LayerInformation::write_layer_information (NcVar &ncv_description, NcVar &ncv_format, NcVar &ncv_osd_format, NcVar &ncv_values, int ti, int v, int k){
-        g_message ("-- LayerInformation::write_layer_information -- ti/v/k: %d %d %d", ti, v, k);
+        //g_message ("-- LayerInformation::write_layer_information -- ti/v/k: %d %d %d", ti, v, k);
 
         std::vector<size_t> startp = { ti,v,k,0 };
 	int n=0;
 	gchar* tmp = g_new0 (gchar, (n=ncv_description.getDims()[3].getSize())+1);
-        g_message ("-- ncv_description len %d [%d %d %d %d]", n,
-                   ncv_description.getDims()[0].getSize(),
-                   ncv_description.getDims()[1].getSize(),
-                   ncv_description.getDims()[2].getSize(),
-                   ncv_description.getDims()[3].getSize()
-                   );
+        //g_message ("-- ncv_description len %d [%d %d %d %d]", n,
+        //           ncv_description.getDims()[0].getSize(),
+        //           ncv_description.getDims()[1].getSize(),
+        //           ncv_description.getDims()[2].getSize(),
+        //           ncv_description.getDims()[3].getSize()
+        //          );
         if (desc)
 		memcpy (tmp, desc, strlen (desc));
         { std::vector<size_t> countp = { 1,1,1,n }; ncv_description.putVar(startp, countp, tmp); }
 	g_free (tmp);
 
 	tmp = g_new0 (gchar, (n=ncv_format.getDims()[3].getSize())+1);
-        g_message ("-- ncv_format len %d", n);
+        //g_message ("-- ncv_format len %d", n);
 	if (fmt)
 		memcpy (tmp, fmt, strlen (fmt));
         { std::vector<size_t> countp = { 1,1,1,n }; ncv_format.putVar(startp, countp, tmp); }
 	g_free (tmp);
 
 	tmp = g_new0 (gchar, (n=ncv_osd_format.getDims()[3].getSize())+1);
-        g_message ("-- ncv_osd_format len %d", n);
+        //g_message ("-- ncv_osd_format len %d", n);
 	if (fmtosd)
 		memcpy (tmp, fmtosd, strlen (fmtosd));
         { std::vector<size_t> countp = { 1,1,1,n }; ncv_osd_format.putVar(startp, countp, tmp); }
 	g_free (tmp);
 
-        g_message ("-- ncv_value len 2");
+        //g_message ("-- ncv_value len 2");
         { std::vector<size_t> countp = { 1,1,1,2 }; ncv_values.putVar(startp, countp, val); }
 }
 
@@ -1519,7 +1524,7 @@ void Mem2d::start_store_layer_information (NcFile &ncf,
 					   int dim_ti, int dim_v, int dim_k, 
 					   int dim_description, int dim_format, int dim_format_osd){
 
-        g_message ("Mem2d::start_store_layer_information Dims t,v,k: %d %d %d, desc/fmt/osd/val: %d %d %d 2", dim_ti, dim_v, dim_k, dim_description, dim_format, dim_format_osd);
+        //g_message ("Mem2d::start_store_layer_information Dims t,v,k: %d %d %d, desc/fmt/osd/val: %d %d %d 2", dim_ti, dim_v, dim_k, dim_description, dim_format, dim_format_osd);
         
 	NcDim ncdim_ti  = ncf.addDim ("LInfo_dim_ti", dim_ti);
 	NcDim ncdim_v   = ncf.addDim ("LInfo_dim_v", dim_v);
@@ -1529,7 +1534,7 @@ void Mem2d::start_store_layer_information (NcFile &ncf,
 	NcDim ncdim_fmo = ncf.addDim ("LInfo_dim_fmo", dim_format_osd);
 	NcDim ncdim_val = ncf.addDim ("LInfo_dim_val", 2);
 
-        g_message ("ncv_description_dims...");
+        //g_message ("ncv_description_dims...");
         std::vector<netCDF::NcDim>  ncv_description_dims;
         ncv_description_dims.push_back (ncdim_ti);
         ncv_description_dims.push_back (ncdim_v);
@@ -1539,7 +1544,7 @@ void Mem2d::start_store_layer_information (NcFile &ncf,
 	ncv_description = ncf.addVar ("LInfo_dsc", ncChar, ncv_description_dims); //ncdim_ti, ncdim_v, ncdim_k, ncdim_dsc);
 	ncv_description.putAtt ("long_name", "Layer Information Description");
 
-        g_message ("ncv_format_dims...");
+        //g_message ("ncv_format_dims...");
         std::vector<netCDF::NcDim>  ncv_format_dims;
         ncv_format_dims.push_back (ncdim_ti);
         ncv_format_dims.push_back (ncdim_v);
@@ -1548,7 +1553,7 @@ void Mem2d::start_store_layer_information (NcFile &ncf,
 	ncv_format = ncf.addVar ("LInfo_fmt", ncChar, ncv_format_dims); // ncdim_ti, ncdim_v, ncdim_k, ncdim_fmt);
 	ncv_format.putAtt ("long_name", "Layer Information full Format String");
 
-        g_message ("ncv_osd_dims...");
+        //g_message ("ncv_osd_dims...");
         std::vector<netCDF::NcDim>  ncv_osd_dims;
         ncv_osd_dims.push_back (ncdim_ti);
         ncv_osd_dims.push_back (ncdim_v);
@@ -1557,7 +1562,7 @@ void Mem2d::start_store_layer_information (NcFile &ncf,
 	ncv_osd_format = ncf.addVar ("LInfo_fmo", ncChar, ncv_osd_dims); // ncdim_ti, ncdim_v, ncdim_k, ncdim_fmo);
 	ncv_osd_format.putAtt ("long_name", "Layer Information short (OSD) Format String");
 
-        g_message ("ncv_values_dims...");
+        //g_message ("ncv_values_dims...");
         std::vector<netCDF::NcDim>  ncv_values_dims;
         ncv_values_dims.push_back (ncdim_ti);
         ncv_values_dims.push_back (ncdim_v);
