@@ -68,7 +68,8 @@ const char* Dataio::ioStatus(){
 	case FIO_NO_NETCDFXSMFILE: return "no valid NetCDF XSM file";
 	case FIO_NOT_RESPONSIBLE_FOR_THAT_FILE: return "Handler does not support this filetype";
 	case FIO_INVALID_FILE: return "invalid/inconsistent data file";
-	default: return "Dataio: unknown error";
+        case FIO_NETCDF_ERROR_CATCH: if (netcdf_error) return netcdf_error; else return "Internal NetCDF Error.";
+        default: return "Dataio: unknown error";
 	}
 	return 0;
 }
@@ -609,13 +610,16 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
                 main_get_gapp ()->progress_info_close ();
 
                 g_message (" ** DONE READING NCDAT FILE **");
+                if (netcdf_error) g_free (netcdf_error); netcdf_error=g_strdup("NetCDF Read OK."); // clear
 
                 return status = FIO_OK; 
 
         } catch (const netCDF::exceptions::NcException& e) {
                 std::cerr << "EE: NetCDF File Read Error. Catch " << e.what() << std::endl;
+                if (netcdf_error) g_free (netcdf_error);
+                netcdf_error = g_strdup_printf ("NetCDF File Read Error: %s", e.what());
                 main_get_gapp ()->progress_info_close ();
-		return status = FIO_OPEN_ERR;
+		return status = FIO_NETCDF_ERROR_CATCH;
         }
 }
 
@@ -640,8 +644,8 @@ FIO_STATUS NetCDF::Write(){
    
                 scan->data.ui.SetName(name);
 
-
                 XSM_DEBUG (DBG_L2, "NetCDF::Write-> open OK");
+                g_message ("Creating Dimensions.");
 
                 // Create dimensions
 #define NTIMES   1
@@ -669,6 +673,8 @@ FIO_STATUS NetCDF::Write(){
                 data_dims.push_back (valued);
                 data_dims.push_back (dimyd);
                 data_dims.push_back (dimxd);
+
+                g_message ("Preparing Data Field.");
                 
                 switch(scan->mem2d->GetTyp()){
                 case ZD_BYTE:
@@ -703,6 +709,9 @@ FIO_STATUS NetCDF::Write(){
                         return status = FIO_NO_NETCDFXSMFILE;
                         break;
                 }
+
+                g_message ("Adding Unit hints, time, ...");
+
                 Data.putAtt("var_units_hint", "raw DAC/counter data. Unit is not defined here: multiply by dz-unit");
 
                 XSM_DEBUG (DBG_L2, "NetCDF::Write-> Adding Units ZLab");
@@ -756,6 +765,7 @@ FIO_STATUS NetCDF::Write(){
                 reftime.putAtt("long_name", "Reference time, i.e. Scan Start");
                 reftime.putAtt("unit", "date string");
   
+                g_message ("Adding Using Infos, Original File Name, ranges, ...");
 
                 XSM_DEBUG (DBG_L2, "NetCDF::Write-> Comment Title ...");
 
@@ -811,6 +821,8 @@ FIO_STATUS NetCDF::Write(){
   
                 NcVar contrast   = nc.addVar("contrast", ncDouble);
                 NcVar bright     = nc.addVar("bright", ncDouble);
+
+                g_message ("Adding Optional Variables as needed ...");
 
                 XSM_DEBUG (DBG_L2, "NetCDF::Write-> Creating Options Vars");
                 // optional...
@@ -879,6 +891,8 @@ FIO_STATUS NetCDF::Write(){
 
                 // ....
   
+                g_message ("Adding System Attributes ...");
+
                 // Global attributes
                 nc.putAtt("Creator", PACKAGE);
                 nc.putAtt("Version", VERSION);
@@ -892,6 +906,7 @@ FIO_STATUS NetCDF::Write(){
                 nc.putAtt("InstrumentName", xsmres.InstrumentName);
   
                 // Start writing data, implictly leaves define mode
+                g_message ("Writing Data ...");
 
                 XSM_DEBUG (DBG_L2, "NetCDF::Write-> NcPut Data");
                 XSM_DEBUG (DBG_L2, "NC write: " << timed.getSize () << "x" << valued.getSize () << "x" << dimxd.getSize () << "x" << dimyd.getSize ());
@@ -911,6 +926,7 @@ FIO_STATUS NetCDF::Write(){
                                 main_get_gapp ()->progress_info_set_bar_fraction ((gdouble)time_index/(gdouble)scan->data.s.ntimes, 2);
                         }
 
+                g_message ("Writing Coordinate Lookups ...");
 
                 main_get_gapp ()->progress_info_set_bar_text ("Look-Ups", 2);
                 main_get_gapp ()->progress_info_set_bar_fraction (0.5, 1);
@@ -952,6 +968,8 @@ FIO_STATUS NetCDF::Write(){
                 main_get_gapp ()->progress_info_set_bar_text ("Scan-Parameter", 2);
                 main_get_gapp ()->progress_info_set_bar_fraction (0.6, 1);
 
+                g_message ("Writing User Info, Dates, Ranges...");
+
                 XSM_DEBUG (DBG_L2, "NetCDF::Write-> NcPut Vars...");
                 char* s = ctime(&scan->data.s.tStart);
                 reftime.putVar    ({0}, {strlen(s)}, s);
@@ -977,6 +995,8 @@ FIO_STATUS NetCDF::Write(){
 
                 contrast.putVar( &scan->data.display.contrast); 
                 bright  .putVar( &scan->data.display.bright); 
+
+                g_message ("Completed with minimal data set.");
 
                 // Minimalsatz Variablen endet hier =================================
 
@@ -1005,6 +1025,7 @@ FIO_STATUS NetCDF::Write(){
                 main_get_gapp ()->progress_info_set_bar_fraction (0.7, 1);
 
                 // write attached Events, if any
+                g_message ("Writing Scan, User & Probe Events.");
                 scan->mem2d->WriteScanEvents (nc);
 
                 // store LayerInformation / OSD
@@ -1021,17 +1042,21 @@ FIO_STATUS NetCDF::Write(){
                         // pass one, eval max dimensions -- NetCDF requires rectangual shape over all dimensions
                         if (scan->data.s.ntimes > 1){
                                 nt = scan->data.s.ntimes;
-                                for (int time_index=0; time_index<nt; ++time_index)
+                                for (int time_index=0; time_index<nt; ++time_index){
+                                        g_message ("Eval Max Dim for Writing Layer Info OSD #ti %d", time_index);
                                         scan->mem2d_time_element(time_index)->eval_max_sizes_layer_information (&mdd, &mdf, &mdfo, &mdli, &mdliv);
-                        } else
+                                }
+                        } else {
+                                g_message ("Eval Max Dim for Writing Layer Info OSD");
                                 scan->mem2d->eval_max_sizes_layer_information (&mdd, &mdf, &mdfo, &mdli, &mdliv);
-
+                        }
                         main_get_gapp ()->progress_info_set_bar_fraction (0.2, 2);
                         if (mdd>1){
                                 NcVar ncv_d;
                                 NcVar ncv_f;
                                 NcVar ncv_fo;
                                 NcVar ncv_v;
+                                g_message ("Storing Layer Info");
                                 scan->mem2d->start_store_layer_information (nc, ncv_d, ncv_f, ncv_fo, ncv_v,
                                                                             nt, mdliv, mdli, mdd, mdf, mdfo);
                                 if (nt > 1)
@@ -1045,6 +1070,8 @@ FIO_STATUS NetCDF::Write(){
                 }
 
                 // Signal PlugIns
+                g_message ("Signaling PlugIns to add Custom/HwI Data.");
+
                 main_get_gapp ()->progress_info_set_bar_text ("PlugIn-Data", 2);
                 main_get_gapp ()->progress_info_set_bar_fraction (0.9, 1);
                 main_get_gapp ()->progress_info_set_bar_fraction (0., 2);
@@ -1055,16 +1082,20 @@ FIO_STATUS NetCDF::Write(){
                 main_get_gapp ()->progress_info_set_bar_fraction (1.0, 1);
 
                 // close of nc takes place in destructor
+                g_message (" ** COMPLETED WRITING NETCDF DATA **");
                 scan->draw ();
 
                 main_get_gapp ()->progress_info_close ();
+                if (netcdf_error) g_free (netcdf_error); netcdf_error=g_strdup("NetCDF Write OK."); // clear
 
                 return status = FIO_OK;
                 
         } catch (const netCDF::exceptions::NcException& e) {
                 std::cerr << "EE: NetCDF File Write Error. Catch " << e.what() << std::endl;
+                if (netcdf_error) g_free (netcdf_error);
+                netcdf_error = g_strdup_printf ("NetCDF File Write Error: %s", e.what());
                 main_get_gapp ()->progress_info_close ();
-                return status = FIO_WRITE_ERR;
+		return status = FIO_NETCDF_ERROR_CATCH;
         }
 }
 

@@ -48,13 +48,14 @@ typedef enum {
               FIO_NSC_ERR,
               FIO_NOT_RESPONSIBLE_FOR_THAT_FILE,
               FIO_INVALID_FILE,
+              FIO_NETCDF_ERROR_CATCH,
               FIO_UNKNOWN_ERR
 } FIO_STATUS;
 
 class Dataio{
 public:
-        Dataio(){ scan=NULL; name=NULL; status=FIO_OK; };
-        Dataio(Scan *s, const char *n){ scan=s; name=strdup(n); status=FIO_OK; };
+        Dataio(){ scan=NULL; name=NULL; status=FIO_OK; netcdf_error=NULL; };
+        Dataio(Scan *s, const char *n){ scan=s; name=strdup(n); status=FIO_OK; netcdf_error=NULL; };
         virtual ~Dataio(){ if(name) free(name); };
 
         void SetName(const char *n){ if(name) free(name); name=strdup(n); }
@@ -68,6 +69,7 @@ public:
 
 protected:
         FIO_STATUS status;
+        gchar *netcdf_error;
         Scan *scan;
 };
 
