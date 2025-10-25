@@ -79,9 +79,17 @@ extern "C++" {
                 { "CPS","Cps", "Cps",     1e0, ".1f", ".2f" },
                 { "CNT","CNT", "CNT",     1e0, ".1f", ".2f" },
                 { "Int","Int", "Int",     1e0, ".1f", ".2f" },
-                { "A/s","A/s", "A/s",     1e0, ".2f", ".3f" },
+                { "A/s",UTF8_ANGSTROEM"/s", "A/s",     1e0, ".2f", ".3f" },
+                { "Ang/V",UTF8_ANGSTROEM"/V", "Ang/V", 1e0, ".3f", ".4f" },
                 { "s","s", "s",           1e0, ".2f", ".3f" },
                 { "ms","ms", "ms",        1e0, ".2f", ".3f" },
+                { "Grad",UTF8_DEGREE, "deg", 1e0, ".2f", ".3f" },
+                { "bool","B", "B", 1e0, ".0f", ".0f" },
+                { "On/Off","On/Off", "On/Off", 1e0, "g", "g" },
+                { "BC","BC", "BC", 1e0, "g", "g" },
+                { "bin","b", "b", 1e0, "b", "b" },
+                { "hex","h", "h", 1e0, "x", "x" },
+                { "A", UTF8_ANGSTROEM,   "Ang",    1e0, ".1f", ".3f" }, // fall back for some old def
                 { NULL, NULL, NULL,       0e0, NULL, NULL }
         };
         

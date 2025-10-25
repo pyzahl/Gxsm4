@@ -33,6 +33,10 @@
 #include "unit.h"
 
 #include <sstream>
+#include <iostream>
+#include <vector>
+#include <algorithm> // For std::copy
+#include <iterator>  // For std::ostream_iterator
 using namespace std;
 
 #include <netcdf>
@@ -227,157 +231,188 @@ public:
         void readVarWriteToStream(const NcVar& var, ostringstream &s) {
                 size_t varSize = 1;
 
-                g_message ("** %s **", var.getName().data());
+                g_message ("PRINT %s", var.getName().data());
+                
+                if (var.getDims().size() == 0){
+                        T x;
+                        var.getVar(&x);
+
+                        try {
+                                NcVarAtt a = var.getAtt("unit");
+                                gchar *unit = get_att_as_string (a);
+                                gchar *value_str=NULL;
+                                if (unit){
+                                        NcVarAtt a = var.getAtt("label");
+                                        gchar *label = get_att_as_string (a);
+                                        if (label){
+                                                UnitObj *u = main_get_gapp ()->xsm->MakeUnit (unit, label);
+                                                gchar *tmp = u->UsrString (x);
+                                                s << tmp;
+                                                g_free (tmp);
+                                                delete unit;
+                                                delete label;
+                                                delete u;
+                                                return;
+                                        }
+                                        delete unit;
+                                }
+                        } catch (const netCDF::exceptions::NcException& e) {;}
+                        try {
+                                NcVarAtt a = var.getAtt("var_unit");
+                                gchar *unit = get_att_as_string (a);
+                                gchar *value_str=NULL;
+                                if (unit){
+                                        UnitObj *u = main_get_gapp ()->xsm->MakeUnit (unit, "var.getName().data()");
+                                        gchar *tmp = u->UsrString (x);
+                                        s << tmp;
+                                        g_free (tmp);
+                                        delete unit;
+                                        delete u;
+                                        return;
+                                }
+                        } catch (const netCDF::exceptions::NcException& e) {;}
+                        s << x;
+                        return;
+                }
+
                 for (int d=0; d<var.getDims().size(); ++d){
                         varSize *= var.getDims()[d].getSize();
-                        g_message ("%s[%d]: %d => %d", var.getName().data(), d, var.getDims()[d].getSize(), varSize);
+                        s << "[" << var.getDims()[d].getSize() << "]";
+                        std::cout << "[" << var.getDims()[d].getSize() << "]";
+                        //g_message ("%s[%d]: %d => %d", var.getName().data(), d, var.getDims()[d].getSize(), varSize);
                 }
+
                 gboolean elips=false;
                 // limit for preview
-                if (varSize > 10){
-                        varSize = 10;
+                if (varSize > 100){
+                        varSize = 100;
                         elips=true;
                 }
 
-                std::vector<T> data(varSize);
-
-                switch (var.getDims().size()){
-                case 1: var.getVar( {0}, {varSize}, data.data ()); break;
-                case 2: var.getVar( {0,0}, {0,varSize}, data.data ()); break;
-                case 3: var.getVar( {0,0,0}, {0,0,varSize}, data.data ()); break;
-                case 4: var.getVar( {0,0,0,0}, {0,0,0,varSize}, data.data ()); break;
-                }
-                //s << var.getName() << ": ";
+                s << ':=';
                 
-                for (size_t i = 0; i < varSize; ++i)
-                        s << data[i] << ", ";
+                std::vector<size_t> startp(var.getDims().size());
+                std::vector<size_t> countp(var.getDims().size());
+                
+                for (int d=0; d<var.getDims().size(); ++d){
+                        startp[d] = 0;
+                        countp[d]  = 1;
+                        s << '[';
+                }
+                int d=var.getDims().size()-1;
+                for (size_t count=0; count < varSize && d >= 0; ){
+                        size_t dim_len = var.getDims()[d].getSize();
+                        size_t len = varSize <= dim_len ? varSize : dim_len;
+                        std::vector<T> data(len);
+                        countp[d] = len;
+                        count += len;
+                        //std::cout << "### S=[";
+                        //std::copy(startp.begin(), startp.end(), std::ostream_iterator<double>(std::cout, " "));
+                        //std::cout << "], C=[";
+                        //std::copy(countp.begin(), countp.end(), std::ostream_iterator<double>(std::cout, " "));
+                        //std::cout << "]###" << std::endl;
+                        var.getVar( startp, countp, data.data ());
+                        for (size_t i = 0; i < len; ++i){
+                                s << data[i] << ", ";
+                                std::cout << data[i] << ", ";
+                        }
+                        startp[d]+=len;
+                        if (startp[d] >= var.getDims()[d].getSize() && d > 1){
+                                startp[d] = 0;
+                                startp[d-1]++;
+                                if (startp[d-1] >= var.getDims()[d-1].getSize() && d > 2){
+                                        startp[d-1]=0;
+                                        startp[d-2]++;
+                                        if (startp[d-2] >= var.getDims()[d-2].getSize() && d > 3){
+                                                startp[d-2]=0;
+                                                startp[d-3]++;
+                                                if (startp[d-3] >= var.getDims()[d-3].getSize()){
+                                                        s << " ..";
+                                                        break;
+                                                }
+                                        } else break;
+                                        s << "],";
+                                } else break;
+                                s << "],[";
+                        }
+                }
 
                 if (elips) s << " ...";
         };
 
-#if 0
-        // Overload for string type
-        template <>
-        void readVarWriteToStream<std::string>(const NcVar& var, ostringstream &s) {
-                std::vector<std::string> data = var.asString("");
-                //s << var.getName() << ": ";
-                for (const auto& strdata : data)
-                        s << strdata;
-        };
-#endif
-
-
-#if 0
-        void findVariables(const NcGroup& group, std::multimap<std::string, NcVar>& variableMap) {
-                // Get all variables in the current group
-
-                std::multimap<std::string, NcVar> vars = group.getVars(NcGroup::Current);
-                for (auto const& pair : vars)
-                        variableMap.insert(pair);
-
-                // Get all subgroups
-                std::multimap<std::string, NcGroup> subgroups = group.getGroups(NcGroup::ChildrenGrps);
-
-                // Recursively call for each subgroup
-                for (auto const& subgroup_pair : subgroups) {
-                        findVariables(subgroup_pair.second, variableMap);
-                }
-        };
-
-        // A generic function to read and print data from a variable.
-        // Because the data type is not known at compile time, we use a template and a pointer.
-        template <typename T>
-        void readAndStoreVariable(const NcVar& var, std::multimap<std::string, std::string>& dataMap) {
-                // Get the size of the variable.
-                std::vector<size_t> varShape = var.getShape();
+        // Overload for char type
+        //template <char>
+        void readVarWriteToStreamC (const NcVar& var, ostringstream &s) {
                 size_t varSize = 1;
-                for (size_t dimSize : varShape) {
-                        varSize *= dimSize;
+
+                g_message ("PRINT <CHAR> %s", var.getName().data());
+                
+                if (var.getDims().size() == 0){
+                        char x;
+                        var.getVar(&x);
+                        s << x;
+                        return;
                 }
 
-                // Read the data into a buffer.
-                std::vector<T> data(varSize);
-                var.getVar(data.data());
-
-                // Store and print the variable name and all its values.
-                for (size_t i = 0; i < varSize; ++i) {
-                        dataMap.insert({var.getName(), std::to_string(data[i])});
-                }
-        }
-
-        // Overload for string type
-        template <>
-        void readAndStoreVariable<std::string>(const NcVar& var, std::multimap<std::string, std::string>& dataMap) {
-                std::vector<std::string> data = var.asString("");
-                for (const auto& s : data) {
-                        dataMap.insert({var.getName(), s});
-                }
-        }
-
-        int run() {
-                // Specify the NetCDF file name.
-                const std::string FILE_NAME("mydata.nc");
-
-                try {
-                        // Open the file.
-                        NcFile dataFile(FILE_NAME, NcFile::read);
-
-                        // A multimap to store variable names and their values as strings.
-                        std::multimap<std::string, std::string> allVariableData;
-
-                        // Get all variables in the file.
-                        std::map<std::string, NcVar> varMap = dataFile.getVars();
-
-                        // Iterate through all variables.
-                        for (auto const& pair : varMap) {
-                                NcVar var = pair.second;
-                                NcType type = var.getType();
-
-                                // Handle different NetCDF types.
-                                if (type.getId() == nc_BYTE || type.getId() == nc_UBYTE) {
-                                        readAndStoreVariable<signed char>(var, allVariableData);
-                                } else if (type.getId() == nc_SHORT || type.getId() == nc_USHORT) {
-                                        readAndStoreVariable<short>(var, allVariableData);
-                                } else if (type.getId() == nc_INT || type.getId() == nc_UINT) {
-                                        readAndStoreVariable<int>(var, allVariableData);
-                                } else if (type.getId() == nc_INT64 || type.getId() == nc_UINT64) {
-                                        readAndStoreVariable<long long>(var, allVariableData);
-                                } else if (type.getId() == nc_FLOAT) {
-                                        readAndStoreVariable<float>(var, allVariableData);
-                                } else if (type.getId() == nc_DOUBLE) {
-                                        readAndStoreVariable<double>(var, allVariableData);
-                                } else if (type.getId() == nc_CHAR) {
-                                        readAndStoreVariable<char>(var, allVariableData);
-                                } else if (type.getId() == nc_STRING) {
-                                        readAndStoreVariable<std::string>(var, allVariableData);
-                                } else {
-                                        std::cerr << "Warning: Skipping variable '" << var.getName() << "' with unknown type." << std::endl;
-                                }
-                        }
-
-                        // Now print all the data from the multimap.
-                        std::cout << "Printing all variable data from the multimap:" << std::endl;
-                        std::string currentKey = "";
-                        for (const auto& entry : allVariableData) {
-                                if (entry.first != currentKey) {
-                                        if (!currentKey.empty()) {
-                                                std::cout << std::endl; // Add a newline for the next variable.
-                                        }
-                                        currentKey = entry.first;
-                                        std::cout << "Variable: " << currentKey << " -> ";
-                                }
-                                std::cout << entry.second << " ";
-                        }
-                        std::cout << std::endl;
-
-                } catch (const NcException& e) {
-                        e.what();
-                        return 1;
+                for (int d=0; d<var.getDims().size(); ++d){
+                        varSize *= var.getDims()[d].getSize();
+                        //s << "[" << var.getDims()[d].getSize() << "]";
+                        //std::cout << "[" << var.getDims()[d].getSize() << "]";
+                        //g_message ("%s[%d]: %d => %d", var.getName().data(), d, var.getDims()[d].getSize(), varSize);
                 }
 
-                return 0;
-        }
-#endif
+                
+                gboolean elips=false;
+                // limit for preview
+                if (varSize > 100){
+                        varSize = 100;
+                        elips=true;
+                }
+
+                std::vector<size_t> startp(var.getDims().size());
+                std::vector<size_t> countp(var.getDims().size());
+                for (int d=0; d<var.getDims().size(); ++d){
+                        startp[d] = 0;
+                        countp[d]  = 1;
+                }
+                int d=var.getDims().size()-1;
+                for (size_t count=0; count < varSize && d >= 0; ){
+                        size_t dim_len = var.getDims()[d].getSize();
+                        size_t len = varSize <= dim_len ? varSize : dim_len;
+                        gchar data[len+1];
+                        countp[d] = len;
+                        count += len;
+                        //std::cout << "### S=[";
+                        //std::copy(startp.begin(), startp.end(), std::ostream_iterator<double>(std::cout, " "));
+                        //std::cout << "], C=[";
+                        //std::copy(countp.begin(), countp.end(), std::ostream_iterator<double>(std::cout, " "));
+                        //std::cout << "]###" << std::endl;
+                        var.getVar( startp, countp, data);
+                        data[len]=0;
+                        std::cout << data;
+                        s << data;
+                        startp[d]+=len;
+                        if (startp[d] >= var.getDims()[d].getSize() && d > 1){
+                                startp[d] = 0;
+                                startp[d-1]++;
+                                if (startp[d-1] >= var.getDims()[d-1].getSize() && d > 2){
+                                        startp[d-1]=0;
+                                        startp[d-2]++;
+                                        if (startp[d-2] >= var.getDims()[d-2].getSize() && d > 3){
+                                                startp[d-2]=0;
+                                                startp[d-3]++;
+                                                if (startp[d-3] >= var.getDims()[d-3].getSize()){
+                                                        s << "...";
+                                                        break;
+                                                }
+                                        } else break;
+                                        s << ", ";
+                                } else break;
+                                s << ", ";
+                        } else break;
+                }
+
+        };
 
 	static void free_info_elem(gpointer txt, gpointer data){ g_free((gchar*) txt); };
 
@@ -508,7 +543,7 @@ public:
                 // DUMP:  vartype varname(dims)   data
                 // ===============================================================================
 
-                gtk_grid_attach (GTK_GRID (grid), lab=gtk_label_new("NC Data"), 0, grid_row++, 10, 1);
+                gtk_grid_attach (GTK_GRID (grid), lab=gtk_label_new("NC Data, Variables"), 0, grid_row++, 10, 1);
                 gtk_widget_show (lab);
                 gtk_grid_attach (GTK_GRID (grid), sep=gtk_separator_new (GTK_ORIENTATION_HORIZONTAL), 0, grid_row++, 10, 1);
                 gtk_widget_show (sep);
@@ -523,14 +558,15 @@ public:
                         NcVar var = pair.second;
                         NcType type = var.getType();
 
-                        g_message ("NC DUMP: VARS %s", pair.first.data() );
+                        std::cout << "VAR: " << pair.first << std::endl;
 
                         int unlimited_flag = FALSE;
                         gchar *vdims = g_strdup(" ");
 
                         if (var.getDims().size() > 0) {
+                                //g_message ("VAR has dimensions > 0: #dims = %d", var.getDims().size());
                                 std::vector<netCDF::NcDim> dims = var.getDims();
-                                std::cout << " Dims:" << std::endl;
+                                //std::cout << " Dims:" << std::endl;
                                 g_free(vdims);
                                 vdims = g_strdup("(");
                                 for (const auto& dim : dims) {
@@ -541,8 +577,8 @@ public:
                                         vdims = g_strdup(tmp);
                                         g_free(tmp);
                                 }
+                                vdims[strlen(vdims)-2]=')';
                         }
-                        vdims[strlen(vdims)-1]=')';
                         gchar *vardef = g_strconcat((gchar*)var.getName().data(), vdims, NULL);
                         g_free(vdims);
 
@@ -550,7 +586,9 @@ public:
 
                         VarName = gtk_check_button_new_with_label (vardef);
                         setup_toggle (VarName, (gchar*)var.getName().data());
-                        //		std::cout << vardef << std::endl;
+
+                        std::cout << "VarDef: " << vardef << std::endl;
+
                         g_free(vardef);
 
                         gtk_grid_attach (GTK_GRID (grid), VarName, 0, grid_row, 2, 1);
@@ -560,53 +598,59 @@ public:
                         ostringstream ostr_val;
 
                         
-                        if (unlimited_flag){
-                                ostr_val << "** Unlimited Data Set, data suppressed **";
+                        std::cout << type.getName() << std::endl;
+                        //ostr_val << "<" << type.getName() << "> ";
+                                
+                        if (unlimited_flag)
+                                ostr_val << "** Unlimited Dim **";
+
+                        if (type == ncChar) {
+                                readVarWriteToStreamC(var, ostr_val);
+                        } else if (type == ncByte || type == ncUbyte) {
+                                readVarWriteToStream<signed char>(var, ostr_val);
+                        } else if (type == ncShort || type == ncUshort) {
+                                readVarWriteToStream<short>(var, ostr_val);
+                        } else if (type == ncInt || type == ncUint) {
+                                readVarWriteToStream<int>(var, ostr_val);
+                        } else if (type == ncInt64 || type == ncUint64) {
+                                readVarWriteToStream<long long>(var, ostr_val);
+                        } else if (type == ncFloat) {
+                                readVarWriteToStream<float>(var, ostr_val);
+                        } else if (type == ncDouble) {
+                                readVarWriteToStream<double>(var, ostr_val);
+                        } else if (type == ncString) {
+                                ostr_val << "** NEW STRING TYPE * work in progress **";
+                                // readVarWriteToStream<std::string>(var, ostr_val);
                         } else {
-                                if(type == ncChar){
-                                        gchar* value_c_str = new gchar[var.getDims()[0].getSize() + 1]; // +1 for null terminator
-                                        var.getVar ({0}, {var.getDims()[0].getSize()}, value_c_str);
-                                        ostr_val << value_c_str;
-                                } else if (type == ncByte || type == ncUbyte) {
-                                        readVarWriteToStream<signed char>(var, ostr_val);
-                                } else if (type == ncShort || type == ncUshort) {
-                                        readVarWriteToStream<short>(var, ostr_val);
-                                } else if (type == ncInt || type == ncUint) {
-                                        readVarWriteToStream<int>(var, ostr_val);
-                                } else if (type == ncInt64 || type == ncUint64) {
-                                        readVarWriteToStream<long long>(var, ostr_val);
-                                } else if (type == ncFloat) {
-                                        readVarWriteToStream<float>(var, ostr_val);
-                                } else if (type == ncDouble) {
-                                        readVarWriteToStream<double>(var, ostr_val);
-                                } else if (type == ncChar) {
-                                        readVarWriteToStream<char>(var, ostr_val);
-                                } else if (type == ncString) {
-                                        readVarWriteToStream<std::string>(var, ostr_val);
-                                } else {
-                                        std::cerr << "Warning: Skipping variable '" << var.getName() << "' with unknown type." << std::endl;
-                                        ostr_val << "** work in progress **";
-                                }
+                                std::cerr << "Warning: Skipping variable '" << var.getName() << "' with unknown type." << std::endl;
+                                ostr_val << "** work in progress **";
                         }
                         SETUP_ENTRY(variable, (const gchar*)ostr_val.str().c_str());
                         
                         gtk_grid_attach (GTK_GRID (grid), variable, 2, grid_row, 1, 1);
                         gtk_widget_show (variable);
+
+                        std::cout << "pre varAttributes info dlg data" << std::endl;
                         
                         //multimap<string, NcAtt> varAttributes = var.getAtts();
                         
                         ostringstream  ostr_att;
+                        ostr_att << "Variable '" << var.getName() << "'" << endl
+                                 << "  Var. Type <" << type.getName() << "> " << endl << endl
+                                 << "--- Attributes List ---" << endl;
                         map< std::string, NcVarAtt > attributes = var.getAtts ();
                         //multimap< std::string, NcAtt > attributes = var.getAtts ();
                         for (auto const& [name, att] : attributes){
                                 NcVarAtt a = att;
-                                ostr_att << name << ":" << att.getName() << " = " << get_att_as_string (a) << endl;
+                                ostr_att << name << "\t\t: " << get_att_as_string (a) << endl;
                         }
-                        //else
-                        //        ostr_att << "No attributes available for \"" << vname << "\" !";
                         
-                        ostr_att << "\nValue(s):\n" << ostr_val.str().c_str(); 
-                        ostr_att << ends;
+                        ostr_att << endl
+                                 << " --- Data ---" << endl
+                                 << " Value(s): "
+                                 << ostr_val.str().c_str()
+                                 << ends;
+                        
                         gchar *infotxt = g_strdup( (const gchar*)ostr_att.str().c_str() );
                         infolist = g_slist_prepend( infolist, infotxt);
                         info = gtk_button_new_with_label (" Details ");
@@ -620,7 +664,7 @@ public:
 
                         if (gtk_check_button_get_active (GTK_CHECK_BUTTON (VarName))){
                                 NcVarAtt a = var.getAtt ("short_name");
-                                gchar *tmp=get_att_as_string (a);
+                                gchar *tmp = get_att_as_string (a);
                                 if (tmp) VarName_i = gtk_label_new (tmp);
                                 else	 VarName_i = gtk_label_new (var.getName().data());
                                 delete tmp;
