@@ -205,14 +205,16 @@ void ProbeEntry::find_and_reuse_or_auto_add (NcFile &ncf, const gchar *name, int
 	for (int k=0; k<p_index; ++k){
                 // std::cout << " ProbeEntry::write_nc_variable_set dim -- looking for reusabel " << name << " with size " << dim_size << std::endl;
 		tmp = g_strdup_printf (name, k); 
-                nc_dim_x = ncf.getDim (tmp);
-		if (!nc_dim_x.isNull ()){
-			if (nc_dim_x.getSize () == dim_size){
-                                // std::cout << " ProbeEntry::write_nc_variable_set dim #" << p_index << " is dup, re-using #" << k << " is " << tmp << " = " << dim_size << std::endl;
-                                g_free (tmp);
-                                return;
-			}
-		}
+                try {
+                        if (!nc_dim_x.isNull()){
+                                nc_dim_x = ncf.getDim (tmp);
+                                if (nc_dim_x.getSize () == dim_size){
+                                        //std::cout << " ProbeEntry::write_nc_variable_set dim #" << p_index << " is dup, re-using #" << k << " is " << tmp << " = " << dim_size << std::endl;
+                                        g_free (tmp);
+                                        return;
+                                }
+                        }
+                } catch (const netCDF::exceptions::NcException& e) {;} // dim not existing most likely or other issue, try creating
 	}
 	
 	if (tmp) g_free (tmp);
@@ -319,10 +321,16 @@ int ProbeEntry::write_nc_data (NcVar &evdata_var, NcVar &evcoords_var, ScanEvent
 		std::cout << " ProbeEntry::write_nc_variable_set dim ** ERROR: num_sets = " << num_sets << " ** skipping this." << std::endl;
 		return -1;
 	}
-
+        // X,Y,Z,time
 	coord[2] = se->get_position (coord[0], coord[1]);
 	coord[3] = (double)time;
-//	std::cout << "Write, Coord, Data #" << count << " :XY" << coord[0] << "," << coord[1] << std::endl;
+	std::cout << "Write, Coord, Data #" << count << " :XY" << coord[0] << "," << coord[1]
+                  << " => " << evdata_var.getName()
+                  << evdata_var.getDims()[0].getName() << ": " << evdata_var.getDims()[0].getSize() << ", "
+                  << evdata_var.getDims()[1].getName() << ": " << evdata_var.getDims()[1].getSize() << ", "
+                  << evdata_var.getDims()[2].getName() << ": " << evdata_var.getDims()[2].getSize() << "]"
+                  << " DIMS required: " << chunk_size << ", " << num_sets
+                  << std::endl;
         std::vector<size_t> startp = { count,0 };
         std::vector<size_t> countp = { 1,4 };
         evcoords_var.putVar(startp, countp, coord);
@@ -452,7 +460,11 @@ UserEntry::UserEntry (const gchar *Name, NcFile &ncf, const gchar *Message_id, S
 
 	gchar *ue_data_dim_name = g_strdup_printf ("Event_User_Adjust_Data_Dim");
 //	std::cout << " UE NCF dim checking >" << ue_data_dim_name << std::endl;
-	NcDim ue_data_dim = ncf.getDim (ue_data_dim_name);
+
+        NcDim ue_data_dim;
+        try {
+                ue_data_dim = ncf.getDim (ue_data_dim_name);
+        } catch (const netCDF::exceptions::NcException& e) {;}
 	g_free (ue_data_dim_name);
 	if (ue_data_dim.isNull ())
 		return;
@@ -460,7 +472,10 @@ UserEntry::UserEntry (const gchar *Name, NcFile &ncf, const gchar *Message_id, S
 
 	gchar *ue_entities_dim_name = g_strdup_printf ("Event_User_%s_Dim", message_id);
 //	std::cout << " UE NCF dim entities checking >" << ue_entities_dim_name << std::endl;
-	NcDim ue_entities_dim = ncf.getDim (ue_entities_dim_name);
+        NcDim ue_entities_dim;
+        try {
+                ue_entities_dim = ncf.getDim (ue_entities_dim_name);
+        } catch (const netCDF::exceptions::NcException& e) {;}
 	g_free (ue_entities_dim_name);
 	if (ue_entities_dim.isNull ())
 		return;
@@ -540,7 +555,10 @@ int UserEntry::store_event_to_nc (NcFile &ncf, GSList *uel, int count){
 //	std::cout << " UE >" << ue->message_id << "< to NCF, count=" << count << std::endl;
 
 	gchar *ue_data_dim_name = g_strdup_printf ("Event_User_Adjust_Data_Dim");
-	NcDim ue_data_dim = ncf.getDim (ue_data_dim_name);
+        NcDim ue_data_dim;
+        try {
+                ue_data_dim = ncf.getDim (ue_data_dim_name);
+        } catch (const netCDF::exceptions::NcException& e) {;}
 //	std::cout << " UE NCF dim checking/creating >" << ue_data_dim_name << std::endl;
 	if (ue_data_dim.isNull ())
 		ue_data_dim = ncf.addDim (ue_data_dim_name, dim_coord_data);
@@ -595,7 +613,7 @@ int UserEntry::store_event_to_nc (NcFile &ncf, GSList *uel, int count){
 			  << data[19] << ", .."
 			  << "}" << std::endl;
 #endif
-                std::vector<size_t> startp = { i };
+                std::vector<size_t> startp = { i, 0 };
                 std::vector<size_t> countp = { 1,20 };
                 ue_data_var.putVar(startp, countp, data);
 		//ue_data_var->set_cur (i);

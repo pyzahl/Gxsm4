@@ -306,34 +306,35 @@ public:
                         std::vector<T> data(len);
                         countp[d] = len;
                         count += len;
-                        //std::cout << "### S=[";
-                        //std::copy(startp.begin(), startp.end(), std::ostream_iterator<double>(std::cout, " "));
-                        //std::cout << "], C=[";
-                        //std::copy(countp.begin(), countp.end(), std::ostream_iterator<double>(std::cout, " "));
-                        //std::cout << "]###" << std::endl;
+                        std::cout << "### S=[";
+                        std::copy(startp.begin(), startp.end(), std::ostream_iterator<double>(std::cout, " "));
+                        std::cout << "], C=[";
+                        std::copy(countp.begin(), countp.end(), std::ostream_iterator<double>(std::cout, " "));
+                        std::cout << "]###" << std::endl;
                         var.getVar( startp, countp, data.data ());
                         for (size_t i = 0; i < len; ++i){
                                 s << data[i] << ", ";
                                 std::cout << data[i] << ", ";
                         }
                         startp[d]+=len;
-                        if (startp[d] >= var.getDims()[d].getSize() && d > 1){
+                        if (startp[d] >= var.getDims()[d].getSize() && d >= 1){
                                 startp[d] = 0;
                                 startp[d-1]++;
-                                if (startp[d-1] >= var.getDims()[d-1].getSize() && d > 2){
+                                s << "],[";
+                                if (startp[d-1] >= var.getDims()[d-1].getSize() && d >= 2){
                                         startp[d-1]=0;
                                         startp[d-2]++;
-                                        if (startp[d-2] >= var.getDims()[d-2].getSize() && d > 3){
+                                        s << "[";
+                                        if (startp[d-2] >= var.getDims()[d-2].getSize() && d >= 3){
                                                 startp[d-2]=0;
                                                 startp[d-3]++;
+                                                s << "[";
                                                 if (startp[d-3] >= var.getDims()[d-3].getSize()){
-                                                        s << " ..";
+                                                        s << "E ..";
                                                         break;
                                                 }
-                                        } else break;
-                                        s << "],";
-                                } else break;
-                                s << "],[";
+                                        }
+                                }
                         }
                 }
 
@@ -670,37 +671,44 @@ public:
                                 delete tmp;
                                 SETUP_LABEL(VarName_i);
 
-                                a = var.getAtt("unit");
-                                gchar *unit = get_att_as_string (a);
-                                gchar* value_str=NULL;
-                                if (unit){
-                                        NcVarAtt a = var.getAtt("label");
-                                        gchar *label = get_att_as_string (a);
-                                        if (label){
-                                                UnitObj *u = main_get_gapp ()->xsm->MakeUnit (unit, label);
-                                                double tmp;
-                                                var.getVar (&tmp);
-                                                value_str = u->UsrString (tmp);
+                                gchar *unit = NULL;
+                                gchar *value_str = NULL;
+                                try {
+                                        a = var.getAtt ("unit");
+                                        unit = get_att_as_string (a);
+                                        if (unit){
+                                                NcVarAtt a = var.getAtt ("label");
+                                                gchar *label = get_att_as_string (a);
+                                                if (label){
+                                                        UnitObj *u = main_get_gapp ()->xsm->MakeUnit (unit, label);
+                                                        double tmp;
+                                                        var.getVar (&tmp);
+                                                        value_str = u->UsrString (tmp);
+                                                        delete unit;
+                                                        delete label;
+                                                        delete u;
+                                                }
                                                 delete unit;
-                                                delete label;
-                                                delete u;
                                         }
-                                        delete unit;
-                                }
+                                } catch (const netCDF::exceptions::NcException& e) { if (unit) delete unit; }
+
                                 variable_i = gtk_entry_new ();
+
                                 if (value_str){
                                         SETUP_ENTRY(variable_i, value_str);
                                         g_free (value_str);
                                 }else{
-                                        gchar *tmp=NULL;
-                                        NcVarAtt a = var.getAtt("var_unit");
-                                        tmp = get_att_as_string (a);
-                                        if (tmp) ostr_val << " [" << tmp << "]"; // << " [vu]";
-                                        g_free (tmp);
-                                        a = var.getAtt("unit");
-                                        tmp = get_att_as_string (a);
-                                        if (tmp) ostr_val << " [" << tmp << "]"; // << " [u]";
-                                        g_free (tmp);
+                                        try {
+                                                gchar *tmp=NULL;
+                                                NcVarAtt a = var.getAtt ("var_unit");
+                                                tmp = get_att_as_string (a);
+                                                if (tmp) ostr_val << " [" << tmp << "]"; // << " [vu]";
+                                                g_free (tmp);
+                                                a = var.getAtt("unit");
+                                                tmp = get_att_as_string (a);
+                                                if (tmp) ostr_val << " [" << tmp << "]"; // << " [u]";
+                                                g_free (tmp);
+                                        } catch (const netCDF::exceptions::NcException& e) {;}
 
                                         SETUP_ENTRY(variable_i, (const gchar*)ostr_val.str().c_str());
                                 }
