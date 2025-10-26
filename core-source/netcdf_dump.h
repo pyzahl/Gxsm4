@@ -25,6 +25,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
  */
 
+//
+// 20251025PY: major NC4 upgrade
+//
 
 #include <stdlib.h>
 #include <locale.h>
@@ -275,6 +278,7 @@ public:
                         return;
                 }
 
+                s << "S";
                 for (int d=0; d<var.getDims().size(); ++d){
                         varSize *= var.getDims()[d].getSize();
                         s << "[" << var.getDims()[d].getSize() << "]";
@@ -289,7 +293,7 @@ public:
                         elips=true;
                 }
 
-                s << ':=';
+                s << ":=";
                 
                 std::vector<size_t> startp(var.getDims().size());
                 std::vector<size_t> countp(var.getDims().size());
@@ -338,7 +342,8 @@ public:
                         }
                 }
 
-                if (elips) s << " ...";
+                if (elips) s << " ...]";
+                else s << "]";
         };
 
         // Overload for char type

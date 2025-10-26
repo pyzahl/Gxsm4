@@ -25,6 +25,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
  */
 
+//
+// 20251025PY: major NC4 upgrade
+//
+
 #include <locale.h>
 #include <libintl.h>
 
@@ -68,7 +72,10 @@ const char* Dataio::ioStatus(){
 	case FIO_NO_NETCDFXSMFILE: return "no valid NetCDF XSM file";
 	case FIO_NOT_RESPONSIBLE_FOR_THAT_FILE: return "Handler does not support this filetype";
 	case FIO_INVALID_FILE: return "invalid/inconsistent data file";
-        case FIO_NETCDF_ERROR_CATCH: if (netcdf_error) return netcdf_error; else return "Internal NetCDF Error.";
+        case FIO_ERROR_CATCH: return error_status.str().c_str();
+        case FIO_GET_ERROR_STATUS_STRING: return error_status.str().c_str();
+        case FIO_GET_PROGRESS_INFO_STRING: return progress_info.str().c_str();
+
         default: return "Dataio: unknown error";
 	}
 	return 0;
@@ -94,21 +101,32 @@ const char* Dataio::ioStatus(){
 			nv.putAtt("unitSymbol", unit->Symbol());	\
 	}while(0)
 
-
-// NetCDF helper
-
-gchar *get_var_att_as_string (NcFile &nc, NcVar &var, const gchar *att_name){
-        netCDF::NcVarAtt att = var.getAtt (att_name);
+gchar *NetCDF::get_var_att_as_string (NcFile &nc, NcVar &var, const gchar *att_name){
+        netCDF::NcVarAtt att;
+        progress_info  << "From " << var.getName()
+                       << " reading attribute '" << att_name << "'"
+                       << std::endl;
+        try {
+                att = var.getAtt (att_name);
+        } catch (const netCDF::exceptions::NcException& e) {
+                progress_info  << "Error: Attribute not found." << std::endl;
+                error_status << "Warning: " << var.getName()
+                             << " has no attribute '" << att_name << "'." << std::endl;
+                return NULL;
+        }
 
         if (att.isNull()) {
-                std::cerr << "Error: Attribute '" << att_name << "' not found." << std::endl;
+                error_status << "Warning: " << var.getName()
+                             << " has no attribute '" << att_name << "'." << std::endl;
                 return NULL;
         }
         
         // Check if the attribute type is a string
         netCDF::NcType att_type = att.getType();
         if (att_type != netCDF::NcType::nc_CHAR && att_type != netCDF::NcType::nc_STRING) {
-                std::cerr << "Error: Attribute is not a string type." << std::endl;
+                error_status << "Error: " << var.getName()
+                             << " has attribute '" << att_name
+                             << "' but is not a string type." << std::endl;
                 return NULL;
         }
         
@@ -150,19 +168,16 @@ gchar *get_var_att_as_string (NcFile &nc, NcVar &var, const gchar *att_name){
         }
 }
 
-gchar *get_att_as_string (NcFile &nc, const gchar *var_id, const gchar *att_name){
-        netCDF::NcVar v=nc.getVar (var_id);
-        return get_var_att_as_string (nc, v, att_name);
-}
-
-
-
-UnitObj *get_gxsm_unit_from_nc(NcFile &nc, const gchar *var_id) {
+// NetCDF helper
+UnitObj *NetCDF::get_gxsm_unit_from_nc(NcFile &nc, const gchar *var_id) {
         gchar *unit = get_att_as_string (nc, var_id, "unit");
         if (unit){
                 gchar *label = get_att_as_string (nc, var_id, "label");
                 if (label){
-                        g_message ("get_gxsm_unit_from_nc for %s (%s) in %s.", var_id, label, unit);
+                        progress_info  << "Getting unit info for '" << var_id
+                                       << "'. Label: '" << label
+                                       << "' Unit: " << unit
+                                       << std::endl;
                         UnitObj *u =  main_get_gapp ()->xsm->MakeUnit (unit, label);
                         g_free (unit);
                         g_free (label);
@@ -173,7 +188,7 @@ UnitObj *get_gxsm_unit_from_nc(NcFile &nc, const gchar *var_id) {
         return NULL;
 }
 
-// NEW 20180430PY
+// NEW 20180430PY, 20251025PY: major NC4 upgrade
 // =====================================================================================
 // set scaling, apply load time scale correction -- as set in preferences
 // make sure to set/keep this to 1.0,1.0,1.0 if NOT intending to adjust scan XYZ scale!
@@ -181,6 +196,8 @@ UnitObj *get_gxsm_unit_from_nc(NcFile &nc, const gchar *var_id) {
 
 FIO_STATUS NetCDF::Read(xsm::open_mode mode){
 	int i;
+        error_status.str("NetCDF Read Status: "); error_status.clear(); // start clean
+        progress_info.str("NetCDF Read Progress Info: "); progress_info.clear(); // start clean
 
         main_get_gapp ()->progress_info_new ("NetCDF Read Progress", 2);
         main_get_gapp ()->progress_info_set_bar_fraction (0., 1);
@@ -188,39 +205,40 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
         main_get_gapp ()->SetStatus (N_("Loading... "), name);
         main_get_gapp ()->monitorcontrol->LogEvent(N_("Loading... "), name);
 
-        g_message ("NetCDF::Read <%s>", name);
+        //g_message ("NetCDF::Read <%s>", name);
 
         try {
                 ZD_TYPE zdata_typ=ZD_SHORT; // used by "H" -- Topographic STM/AFM data, historic default
 
                 std::string filename(name);
                 
+                progress_info << "NcFile Open" << std::endl;
                 // Open the NetCDF file in read mode
                 netCDF::NcFile nc(filename, netCDF::NcFile::read);
-
-                g_message ("Looking for data field type...");
 
                 // try Topo Scan
                 netCDF::NcVar Data = nc.getVar("H"); // try origial historic image data var name
 
                 if (! Data.isNull ())
-                        main_get_gapp ()->progress_info_set_bar_text ("Historic SHORT type data", 2), g_message("DataVar: >H<"), zdata_typ=ZD_SHORT;
+                        main_get_gapp ()->progress_info_set_bar_text ("Historic SHORT type data", 2), progress_info << "DataVar: >H<" << std::endl, zdata_typ=ZD_SHORT;
                 else if (! (Data = nc.getVar("Intensity")).isNull ()) // try Diffract Scan data, aka D2D
-                        main_get_gapp ()->progress_info_set_bar_text ("Type LONG", 2), g_message("DataVar: >Intensity<"), zdata_typ=ZD_LONG; // used by "Intensity" -- diffraction counts
+                        main_get_gapp ()->progress_info_set_bar_text ("Type LONG", 2), progress_info << "DataVar: >Intensity<" << std::endl, zdata_typ=ZD_LONG; // used by "Intensity" -- diffraction counts
                 else if (! (Data = nc.getVar("FloatField")).isNull ()) // try Float Data, all new hardware uses Float Type
-                 	main_get_gapp ()->progress_info_set_bar_text ("Type FLOAT", 2), g_message("DataVar: >FloatField<"), zdata_typ=ZD_FLOAT;
+                 	main_get_gapp ()->progress_info_set_bar_text ("Type FLOAT", 2), progress_info << "DataVar: >FloatField<" << std::endl, zdata_typ=ZD_FLOAT;
                 else if (! (Data = nc.getVar("DoubleField")).isNull ()) // try Double Data
-                 	main_get_gapp ()->progress_info_set_bar_text ("Type DOUBLE", 2), g_message("DataVar: >DoubleField<"), zdata_typ=ZD_DOUBLE;
+                 	main_get_gapp ()->progress_info_set_bar_text ("Type DOUBLE", 2), progress_info << "DataVar: >DoubleField<" << std::endl, zdata_typ=ZD_DOUBLE;
                 else if (! (Data = nc.getVar("ByteField")).isNull ())        // Try Byte
-                        main_get_gapp ()->progress_info_set_bar_text ("Type BYTE", 2), g_message("DataVar: >ByteField<"), zdata_typ=ZD_BYTE;
+                        main_get_gapp ()->progress_info_set_bar_text ("Type BYTE", 2), progress_info << "DataVar: >ByteField<" << std::endl, zdata_typ=ZD_BYTE;
                 else if (! (Data = nc.getVar("ComplexDoubleField")).isNull ()) // Try Complex
-                        main_get_gapp ()->progress_info_set_bar_text ("Type COMPLEX", 2), g_message("DataVar: >ComplexDoubleField<"), zdata_typ=ZD_COMPLEX;
+                        main_get_gapp ()->progress_info_set_bar_text ("Type COMPLEX", 2), progress_info << "DataVar: >ComplexDoubleField<" << std::endl, zdata_typ=ZD_COMPLEX;
                 else if (! (Data = nc.getVar("RGBA_ByteField")).isNull ()) // Try RGBA Byte / Color Image Type
-                        main_get_gapp ()->progress_info_set_bar_text ("Type RGBA", 2), g_message("DataVar: >RGBA ByteField<"), zdata_typ=ZD_RGBA;
+                        main_get_gapp ()->progress_info_set_bar_text ("Type RGBA", 2), progress_info << "DataVar: >RGBA ByteField<" << std::endl, zdata_typ=ZD_RGBA;
                 else { // failed looking for Gxsm data!!
                         std::cerr << "NetCDF file does not contain any Gxsm SPM data fields named: H, Intensity, FloatField, DoubleField, Byte, Compelx nor RGBA."
                                   << std::endl;
-
+                        progress_info << "NetCDF file does not contain any Gxsm SPM data fields named: H, Intensity, FloatField, DoubleField, Byte, Compelx nor RGBA." << std::endl;
+                        progress_info << "Trying to find and read any 2d data." << std::endl;
+                        
                         netCDF::NcGroup rootGroup = nc.getGroup("/"); // Get the root group
                         std::multimap<std::string, netCDF::NcVar> vars = rootGroup.getVars();
                         std::cout << "Variables found in NetCDF file:" << std::endl;
@@ -268,8 +286,7 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
                 }
 	
                 scan->data.ui.SetName (name);
-
-                g_message ("--- Data Type Integrity Check for %s, NC-Type-ID: %d", Data.getName().data(), Data.getType().getId());
+                progress_info << "--- Data Type Integrity Check for " << Data.getName() << " NC-Type-ID: " << Data.getType().getId()<< std::endl;
 
                 // check integrity
                 switch (Data.getType().getId()){
@@ -281,34 +298,34 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
                 case NC_BYTE:   if (zdata_typ != ZD_BYTE)   { std::cerr << "EE: NetCDF data field type is not matching expected type NC_BYTE."   << std::endl; return FIO_OPEN_ERR; } else break;
                 case NC_CHAR:   std::cerr << "INFO: ?? NetCDF data field type is NC_CHAR." << std::endl; break;
                 default:
-                        g_message ("Data Type Integrity Check faild for %s ID=%d", Data.getName().data(), Data.getId());
-                        std::cerr << "NetCDF data field type is invald/not supported." << std::endl;
-                        return FIO_OPEN_ERR;
+                        progress_info << "EE: Data Type Integrity Check failed. Data type mismatch. STOP." << std::endl;
+                        return FIO_GET_PROGRESS_INFO_STRING;
                 }
 
                 main_get_gapp ()->progress_info_set_bar_text ("Image Data", 2);
                 main_get_gapp ()->progress_info_set_bar_fraction (0.25, 1);
 
                 std::vector<netCDF::NcDim> dims = Data.getDims();
-                std::cout << "Dimensions of data:" << std::endl;
-                std::cout << "  #Dims: " << dims.size() << std::endl;
+                progress_info << "Dimensions of data:" << std::endl;
+                progress_info << "  #Dims: " << dims.size()<< std::endl;
                 for (const auto& dim : dims) {
-                        std::cout << "  Name: " << dim.getName() << ", Length: " << dim.getSize() << std::endl;
+                        progress_info << "  Name: '" << dim.getName() << "', Length: " << dim.getSize()<< std::endl;
                 }
                 
-                NcDim timed = dims[0]; g_message ("dim[0]: %s Size: %d", timed.getName().data(), timed.getSize());
+                NcDim timed = dims[0];
                 scan->data.s.ntimes  = timed.getSize() > 0 ? dims[0].getSize() : 1; // timed
-                NcDim valued = dims[1]; g_message ("dim[1]: %s Size: %d", valued.getName().data(), valued.getSize());
+                NcDim valued = dims[1];
                 scan->data.s.nvalues = valued.getSize() > 0 ? dims[1].getSize() : 1; // valued
-                NcDim dimyd = dims[2]; g_message ("dim[2]: %s Size: %d", dimyd.getName().data(), dimyd.getSize());
+                NcDim dimyd = dims[2];
                 scan->data.s.ny      = dimyd.getSize() > 0 ? dims[2].getSize() : 1; // ny
-                NcDim dimxd = dims[3]; g_message ("dim[3]: %s Size: %d", dimxd.getName().data(), dimxd.getSize());
+                NcDim dimxd = dims[3];
                 scan->data.s.nx      = dimxd.getSize() > 0 ? dims[3].getSize() : 1; // nx
 
                 main_get_gapp ()->progress_info_set_bar_fraction (0., 2);
 
                 g_message ("scan->mem2d->Resize [%d x %d, #l %d] x %d #te", scan->data.s.nx, scan->data.s.ny, scan->data.s.nvalues, scan->data.s.ntimes);
-                
+                progress_info << "Scan Resize: [" << scan->data.s.nx << " x " << scan->data.s.ny << ", #l " << scan->data.s.nvalues << "] x #t " << scan->data.s.ntimes<< std::endl;
+
                 scan->mem2d->Resize (scan->data.s.nx, scan->data.s.ny, scan->data.s.nvalues, zdata_typ);
 
                 int ntimes_tmp = scan->data.s.ntimes;
@@ -318,20 +335,20 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
                 NcVar ncv_fo;
                 NcVar ncv_v;
 
-                g_message ("Reading Layer Information along with data slices");
+                progress_info << "Reading Layer Information along with data slices" << std::endl;
                 
                 scan->mem2d->start_read_layer_information (nc, ncv_d, ncv_f, ncv_fo, ncv_v);
 
                 for (int time_index=0; time_index < ntimes_tmp; ++time_index){
                         main_get_gapp ()->progress_info_set_bar_fraction ((gdouble)time_index/(gdouble)scan->data.s.ntimes, 2);
 
-                        g_message ("Reading data slice for time index %d", time_index);
+                        progress_info  << "Reading data slice for time index " << time_index<< std::endl;
                         scan->mem2d->data->NcGet (Data, time_index);
-                        g_message ("Reading data time slice completed.");
+                        progress_info  << "Reading data time slice completed." << std::endl;
                         scan->data.s.ntimes = ntimes_tmp;
 
                         if (scan->data.s.nvalues > 1){
-                                g_message ("Reading Values...");
+                                progress_info  << "Reading Values..." << std::endl;
                                 XSM_DEBUG(DBG_L2, "reading valued arr... n=" << scan->data.s.nvalues );
                                 float *valuearr = new float[scan->data.s.nvalues];
                                 if(!valuearr)
@@ -354,86 +371,88 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
                                 delete [] valuearr;
                         }
 
-                        g_message ("Reading dimension lookups... and coordinates");
+                        progress_info  << "Reading dimension lookups... and coordinates" << std::endl;
 
                         //--OffRotFix-- -> check for old version and fix offset (not any longer in Lookup)
 	
                         double Xoff = 0.;
                         double Yoff = 0.;
-                        if (!nc.getVar("dimx").getAtt("extra_info").isNull ()){ // if this attribut is present, then no offset correction!
-                                nc.getVar("offsetx").getVar(&Xoff);
-                                nc.getVar("offsety").getVar(&Yoff);
-                        }
+                        try {
+                                if (!nc.getVar("dimx").getAtt("extra_info").isNull ()){ // if this attribut is present, then no offset correction!
+                                        nc.getVar("offsetx").getVar(&Xoff);
+                                        nc.getVar("offsety").getVar(&Yoff);
+                                }
+                        } catch (const netCDF::exceptions::NcException& e) {;} // silent ignore as OK
 
-                        g_message ("XY0: %g %g", Xoff, Yoff);
-                        
-                        g_message ("Lookups...");
-
-                        g_message ("dimx: #%d", dimxd.getSize() );
+                        progress_info  << "XY0: " << Xoff << ", " << Yoff<< std::endl;
+                        progress_info  << "Lookups..." << std::endl;
+                        progress_info  << "dimx: #" << dimxd.getSize()<< std::endl;
 
                         if (!nc.getVar("dimx").isNull ()){
                                 float *dimsx = new float[dimxd.getSize ()];
                                 if(!dimsx)
                                         return status = FIO_NO_MEM;
                                 nc.getVar("dimx").getVar ({0}, {dimxd.getSize()}, dimsx);
-                                g_message ("Updating X Lookup");
+                                progress_info  << "Updating X Lookup" << std::endl;
                                 for(i=0; i < dimxd.getSize (); i++)
                                         scan->mem2d->data->SetXLookup(i, (dimsx[i]-Xoff) * xsmres.LoadCorrectXYZ[0]);
                                 delete [] dimsx;
                         }else
-                                g_message ("Missing 'dimx' variable.");
+                                progress_info  << "Missing 'dimx' variable." << std::endl;
 
 
-                        g_message ("dimy: #%d", dimyd.getSize() );
+                        progress_info  << "dimy: #" << dimyd.getSize()<< std::endl;
 
                         if (!nc.getVar("dimy").isNull ()){
                                 float *dimsy = new float[dimyd.getSize ()];
                                 if(!dimsy)
                                         return status = FIO_NO_MEM;
                                 nc.getVar("dimy").getVar ({0}, {dimyd.getSize ()}, dimsy);
-                                g_message ("Updating Y Lookup");
+                                progress_info  << "Updating Y Lookup" << std::endl;
                                 for(i=0; i<dimyd.getSize (); i++)
                                         scan->mem2d->data->SetYLookup(i, (dimsy[i]-Yoff) * xsmres.LoadCorrectXYZ[1]);
                                 delete [] dimsy;
                         } else
-                                g_message ("Missing 'dimx' variable.");
+                                progress_info  << "Missing 'dimx' variable." << std::endl;
 
-                        g_message ("Checking comming basic paramaters...");
+                        progress_info  << "Checking comming basic paramaters..." << std::endl;
 
                         // try sranger (old)
-                        g_message ("  ...checking for sranger_hwi Bias, Current");
+                        progress_info  << "  ...checking for sranger_hwi Bias, Current" << std::endl;
                         NC_GET_VARIABLE ("sranger_hwi_bias", &scan->data.s.Bias);
                         NC_GET_VARIABLE ("sranger_hwi_voltage_set_point", &scan->data.s.SetPoint);
                         NC_GET_VARIABLE ("sranger_hwi_current_set_point", &scan->data.s.Current);
 
                         // read back layer informations
-                        g_message ("Readback Layer information... auto adding basic params");
+                        progress_info  << "Readback Layer information... auto adding basic params" << std::endl;
                         scan->mem2d->remove_layer_information ();
 
                         if (ncv_d.isNull () && ncv_f.isNull () && ncv_fo.isNull () && ncv_v.isNull ()){
-                                g_message ("Readback Layer information again for time index %d", time_index);
+                                progress_info  << "Readback Layer information again for time index %d" << time_index
+                                               << std::endl;
                                 scan->mem2d->add_layer_information (ncv_d, ncv_f, ncv_fo, ncv_v, time_index);
                         } else {
-                                g_message ("Readback Basic Info... RANGES");
+                                progress_info  << "Readback Basic Info... Scan ranges: rx,ry." << std::endl;
                                 nc.getVar ("rangex").getVar (&scan->data.s.rx); scan->data.s.rx *= xsmres.LoadCorrectXYZ[0];
                                 nc.getVar ("rangey").getVar (&scan->data.s.ry); scan->data.s.ry *= xsmres.LoadCorrectXYZ[1];
 
-                                g_message ("Checking SR sranger_hwi_bias, ...");
+                                progress_info  << "Checking SR sranger_hwi_bias, ..." << std::endl;
                                 NC_GET_VARIABLE ("sranger_hwi_bias", &scan->data.s.Bias);
                                 NC_GET_VARIABLE ("sranger_hwi_voltage_set_point", &scan->data.s.SetPoint);
                                 NC_GET_VARIABLE ("sranger_hwi_current_set_point", &scan->data.s.Current);
 
                                 // mk2/3 try also
-                                g_message ("Checking MK2/3: sranger_mk2_hwi_bias, ...");
+                                progress_info  << "Checking MK2/3: sranger_mk2_hwi_bias, ..." << std::endl;
                                 NC_GET_VARIABLE ("sranger_mk2_hwi_bias", &scan->data.s.Bias);
                                 NC_GET_VARIABLE ("sranger_mk2_hwi_mix0_set_point", &scan->data.s.Current);
                                 NC_GET_VARIABLE ("sranger_mk2_hwi_z_setpoint", &scan->data.s.ZSetPoint);
 
-                                g_message ("AutoAdding LayerInfo for OSD...");
+                                progress_info  << "AutoAdding LayerInfo for OSD..." << std::endl;
                                 scan->mem2d->add_layer_information (new LayerInformation ("Bias", scan->data.s.Bias, "%5.2f V"));
                                 scan->mem2d->add_layer_information (new LayerInformation (scan->data.ui.dateofscan));
                                 scan->mem2d->add_layer_information (new LayerInformation ("X-size", scan->data.s.rx, "Rx: %5.1f \303\205"));
                                 scan->mem2d->add_layer_information (new LayerInformation ("Y-size", scan->data.s.ry, "Ry: %5.1f \303\205"));
+                                
                                 if (IS_AFM_CTRL)
                                         scan->mem2d->add_layer_information (new LayerInformation ("SetPoint", scan->data.s.SetPoint, "%5.2f V"));
                                 else{
@@ -443,7 +462,7 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
                         }
 
                         if (ntimes_tmp > 1){ // do not do this if only one time dim.
-                                g_message ("Looking up Time... for i#%d", time_index);
+                                progress_info  << "Looking up start times for frame # " << time_index<< std::endl;
                                 double ref_time=(double)(time_index);
                                 if (!nc.getVar("time").isNull ()){
                                         NcVar rt = nc.getVar("time");
@@ -453,11 +472,12 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
                                         //rt->get(&ref_time, 1);
                                         scan->mem2d->add_layer_information (new LayerInformation ("t", ref_time, "%.2f s"));
                                 }
+                                progress_info  << "Appending time element." << std::endl;
                                 scan->append_current_to_time_elements (time_index, ref_time); // need to add lut
                         }
                 }
 
-                g_message ("Reading Settings and Variables");
+                progress_info  << "Reading Settings and Variables" << std::endl;
 
                 main_get_gapp ()->progress_info_set_bar_text ("Variables", 2);
                 main_get_gapp ()->progress_info_set_bar_fraction (0.25, 1);
@@ -469,28 +489,29 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
 
                 // Check Z daya type via Z label
                 double LoadCorrectZ = 1.0;
-                g_message ("NetCDF GXSM data type: %s", scan->data.ui.type);
+                progress_info  << "NetCDF GXSM data type: " << scan->data.ui.type<< std::endl;
 
-                gchar *zlabel = get_var_att_as_string (nc, Data, "ZLabel");
+                try {
+                        gchar *zlabel = get_var_att_as_string (nc, Data, "ZLabel");
+                        if (zlabel){
+                                progress_info  << "User NetCDF Load Correct Z scaling check type: Data is '" << zlabel << "'" << std::endl;
 
-                if (zlabel){
-                        g_message ("User NetCDF Load Correct Z scaling check type: Data is '%s'.", zlabel);
-
-                        if (!strcmp (zlabel, "Z"))
-                                LoadCorrectZ = xsmres.LoadCorrectXYZ[2];
-                        else
-                                LoadCorrectZ = xsmres.LoadCorrectXYZ[3];
+                                if (!strcmp (zlabel, "Z"))
+                                        LoadCorrectZ = xsmres.LoadCorrectXYZ[2];
+                                else
+                                        LoadCorrectZ = xsmres.LoadCorrectXYZ[3];
                 
-                        delete zlabel;
-                }
+                                delete zlabel;
+                        }
+                } catch (const netCDF::exceptions::NcException& e) {;} // silent ignore as OK
 
 
                 if (fabs (xsmres.LoadCorrectXYZ[0] - 1.0) > 0.001)
-                        g_message ("User NetCDF Load Correct X scaling is set to %g.", xsmres.LoadCorrectXYZ[0]);
+                        progress_info  << "User NetCDF Load Correct X scaling is set to: " << xsmres.LoadCorrectXYZ[0]<< std::endl;
                 if (fabs (xsmres.LoadCorrectXYZ[1] - 1.0) > 0.001)
-                        g_message ("User NetCDF Load Correct Y scaling is set to %g.", xsmres.LoadCorrectXYZ[1]);
+                        progress_info  << "User NetCDF Load Correct Y scaling is set to: " << xsmres.LoadCorrectXYZ[1]<< std::endl;
                 if (fabs (LoadCorrectZ - 1.0) > 0.001)
-                        g_message ("User NetCDF Load Correct Z scaling is set to %g.", LoadCorrectZ);
+                        progress_info  << "User NetCDF Load Correct Z scaling is set to: " << LoadCorrectZ<< std::endl;
         
                 nc.getVar("rangez").getVar(&scan->data.s.rz); scan->data.s.rz *= LoadCorrectZ;
 
@@ -511,7 +532,7 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
                 //#define MINIMAL_READ_NC
 #ifndef MINIMAL_READ_NC
                 
-                g_message ("NetCDF read optional informations");
+                progress_info  << "NetCDF read optional informations..." << std::endl;
 
                 NcVar comment = nc.getVar("comment");
                 if (!comment.isNull ()){
@@ -611,17 +632,22 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
                 main_get_gapp ()->progress_info_set_bar_fraction (1., 1);
                 main_get_gapp ()->progress_info_close ();
 
-                g_message (" ** DONE READING NCDAT FILE **");
-                if (netcdf_error) g_free (netcdf_error); netcdf_error=g_strdup("NetCDF Read OK."); // clear
+                progress_info  << " ** DONE READING NCDAT FILE **" << std::endl;
+                error_status << "Read Completed." << std::endl;
 
                 return status = FIO_OK; 
 
         } catch (const netCDF::exceptions::NcException& e) {
                 std::cerr << "EE: NetCDF File Read Error. Catch " << e.what() << std::endl;
-                if (netcdf_error) g_free (netcdf_error);
-                netcdf_error = g_strdup_printf ("NetCDF File Read Error: %s", e.what());
+                error_status << "EE: NetCDF File Read Error. Catch " << e.what()<< std::endl;
+
+                error_status << "************************************************" << std::endl;
+                error_status << "PROGRESS REPORT" << std::endl;
+                error_status << "************************************************" << std::endl;
+                error_status << progress_info.str().c_str()<< std::endl;
+
                 main_get_gapp ()->progress_info_close ();
-		return status = FIO_NETCDF_ERROR_CATCH;
+		return status = FIO_ERROR_CATCH;
         }
 }
 
@@ -630,13 +656,15 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
 FIO_STATUS NetCDF::Write(){
 	XSM_DEBUG (DBG_L2, "NetCDF::Write");
 	// name convention NetCDF: *.nc
+        error_status.str("NetCDF Write Status: "); error_status.clear(); // start clear
+        progress_info.str("NetCDF Write Progress Info: "); progress_info.clear(); // start clean
 
         main_get_gapp ()->progress_info_new ("NetCDF Write Progress",2);
         main_get_gapp ()->progress_info_set_bar_fraction (0., 1);
         main_get_gapp ()->progress_info_set_bar_text (name, 1);
         main_get_gapp ()->progress_info_set_bar_fraction (0., 2);
 
-        g_message ("NetCDF::Write <%s>", name);
+        progress_info  << "NetCDF::Write <" << name << ">" << std::endl;
         
         try {
                 std::string filename(name);
@@ -647,7 +675,7 @@ FIO_STATUS NetCDF::Write(){
                 scan->data.ui.SetName(name);
 
                 XSM_DEBUG (DBG_L2, "NetCDF::Write-> open OK");
-                g_message ("Creating Dimensions.");
+                progress_info  << "Creating Dimensions." << std::endl;
 
                 // Create dimensions
 #define NTIMES   1
@@ -676,7 +704,7 @@ FIO_STATUS NetCDF::Write(){
                 data_dims.push_back (dimyd);
                 data_dims.push_back (dimxd);
 
-                g_message ("Preparing Data Field.");
+                progress_info  << "Preparing Data Field." << std::endl;
                 
                 switch(scan->mem2d->GetTyp()){
                 case ZD_BYTE:
@@ -712,7 +740,7 @@ FIO_STATUS NetCDF::Write(){
                         break;
                 }
 
-                g_message ("Adding Unit hints, time, ...");
+                progress_info  << "Adding Unit hints, time, ..." << std::endl;
 
                 Data.putAtt("var_units_hint", "raw DAC/counter data. Unit is not defined here: multiply by dz-unit");
 
@@ -767,7 +795,7 @@ FIO_STATUS NetCDF::Write(){
                 reftime.putAtt("long_name", "Reference time, i.e. Scan Start");
                 reftime.putAtt("unit", "date string");
   
-                g_message ("Adding Using Infos, Original File Name, ranges, ...");
+                progress_info  << "Adding Using Infos, Original File Name, ranges, ..." << std::endl;
 
                 XSM_DEBUG (DBG_L2, "NetCDF::Write-> Comment Title ...");
 
@@ -824,7 +852,7 @@ FIO_STATUS NetCDF::Write(){
                 NcVar contrast   = nc.addVar("contrast", ncDouble);
                 NcVar bright     = nc.addVar("bright", ncDouble);
 
-                g_message ("Adding Optional Variables as needed ...");
+                progress_info  << "Adding Optional Variables as needed ..." << std::endl;
 
                 XSM_DEBUG (DBG_L2, "NetCDF::Write-> Creating Options Vars");
                 // optional...
@@ -893,7 +921,7 @@ FIO_STATUS NetCDF::Write(){
 
                 // ....
   
-                g_message ("Adding System Attributes ...");
+                progress_info  << "Adding System Attributes ..." << std::endl;
 
                 // Global attributes
                 nc.putAtt("Creator", PACKAGE);
@@ -908,7 +936,7 @@ FIO_STATUS NetCDF::Write(){
                 nc.putAtt("InstrumentName", xsmres.InstrumentName);
   
                 // Start writing data, implictly leaves define mode
-                g_message ("Writing Data ...");
+                progress_info  << "Writing Data ..." << std::endl;
 
                 XSM_DEBUG (DBG_L2, "NetCDF::Write-> NcPut Data");
                 XSM_DEBUG (DBG_L2, "NC write: " << timed.getSize () << "x" << valued.getSize () << "x" << dimxd.getSize () << "x" << dimyd.getSize ());
@@ -928,7 +956,7 @@ FIO_STATUS NetCDF::Write(){
                                 main_get_gapp ()->progress_info_set_bar_fraction ((gdouble)time_index/(gdouble)scan->data.s.ntimes, 2);
                         }
 
-                g_message ("Writing Coordinate Lookups ...");
+                progress_info  << "Writing Coordinate Lookups ..." << std::endl;
 
                 main_get_gapp ()->progress_info_set_bar_text ("Look-Ups", 2);
                 main_get_gapp ()->progress_info_set_bar_fraction (0.5, 1);
@@ -970,7 +998,7 @@ FIO_STATUS NetCDF::Write(){
                 main_get_gapp ()->progress_info_set_bar_text ("Scan-Parameter", 2);
                 main_get_gapp ()->progress_info_set_bar_fraction (0.6, 1);
 
-                g_message ("Writing User Info, Dates, Ranges...");
+                progress_info  << "Writing User Info, Dates, Ranges..." << std::endl;
 
                 XSM_DEBUG (DBG_L2, "NetCDF::Write-> NcPut Vars...");
                 char* s = ctime(&scan->data.s.tStart);
@@ -998,7 +1026,7 @@ FIO_STATUS NetCDF::Write(){
                 contrast.putVar( &scan->data.display.contrast); 
                 bright  .putVar( &scan->data.display.bright); 
 
-                g_message ("Completed with minimal data set.");
+                progress_info  << "Completed with minimal data set." << std::endl;
 
                 // Minimalsatz Variablen endet hier =================================
 
@@ -1027,7 +1055,7 @@ FIO_STATUS NetCDF::Write(){
                 main_get_gapp ()->progress_info_set_bar_fraction (0.7, 1);
 
                 // write attached Events, if any
-                g_message ("Writing Scan, User & Probe Events.");
+                progress_info  << "Writing Scan, User & Probe Events." << std::endl;
                 scan->mem2d->WriteScanEvents (nc);
 
                 // store LayerInformation / OSD
@@ -1045,11 +1073,11 @@ FIO_STATUS NetCDF::Write(){
                         if (scan->data.s.ntimes > 1){
                                 nt = scan->data.s.ntimes;
                                 for (int time_index=0; time_index<nt; ++time_index){
-                                        g_message ("Eval Max Dim for Writing Layer Info OSD #ti %d", time_index);
+                                        progress_info  << "Eval Max Dim for Writing Layer Info OSD #ti " << time_index<< std::endl;
                                         scan->mem2d_time_element(time_index)->eval_max_sizes_layer_information (&mdd, &mdf, &mdfo, &mdli, &mdliv);
                                 }
                         } else {
-                                g_message ("Eval Max Dim for Writing Layer Info OSD");
+                                progress_info  << "Eval Max Dim for Writing Layer Info OSD" << std::endl;
                                 scan->mem2d->eval_max_sizes_layer_information (&mdd, &mdf, &mdfo, &mdli, &mdliv);
                         }
                         main_get_gapp ()->progress_info_set_bar_fraction (0.2, 2);
@@ -1058,7 +1086,7 @@ FIO_STATUS NetCDF::Write(){
                                 NcVar ncv_f;
                                 NcVar ncv_fo;
                                 NcVar ncv_v;
-                                g_message ("Storing Layer Info");
+                                progress_info  << "Storing Layer Info" << std::endl;
                                 scan->mem2d->start_store_layer_information (nc, ncv_d, ncv_f, ncv_fo, ncv_v,
                                                                             nt, mdliv, mdli, mdd, mdf, mdfo);
                                 if (nt > 1)
@@ -1072,7 +1100,7 @@ FIO_STATUS NetCDF::Write(){
                 }
 
                 // Signal PlugIns
-                g_message ("Signaling PlugIns to add Custom/HwI Data.");
+                progress_info  << "Signaling PlugIns to add Custom/HwI Data." << std::endl;
 
                 main_get_gapp ()->progress_info_set_bar_text ("PlugIn-Data", 2);
                 main_get_gapp ()->progress_info_set_bar_fraction (0.9, 1);
@@ -1084,20 +1112,25 @@ FIO_STATUS NetCDF::Write(){
                 main_get_gapp ()->progress_info_set_bar_fraction (1.0, 1);
 
                 // close of nc takes place in destructor
-                g_message (" ** COMPLETED WRITING NETCDF DATA **");
+                progress_info  << " ** COMPLETED WRITING NETCDF DATA **" << std::endl;
                 scan->draw ();
 
                 main_get_gapp ()->progress_info_close ();
-                if (netcdf_error) g_free (netcdf_error); netcdf_error=g_strdup("NetCDF Write OK."); // clear
+                error_status << "Write Completed." << std::endl;
 
                 return status = FIO_OK;
                 
         } catch (const netCDF::exceptions::NcException& e) {
                 std::cerr << "EE: NetCDF File Write Error. Catch " << e.what() << std::endl;
-                if (netcdf_error) g_free (netcdf_error);
-                netcdf_error = g_strdup_printf ("NetCDF File Write Error: %s", e.what());
+                error_status << "EE: NetCDF File Write Error. Catch " << e.what() << std::endl;
+
+                error_status << "************************************************" << std::endl;
+                error_status << "PROGRESS REPORT" << std::endl;
+                error_status << "************************************************" << std::endl;
+                error_status << progress_info.str().c_str() << std::endl;
+ 
                 main_get_gapp ()->progress_info_close ();
-		return status = FIO_NETCDF_ERROR_CATCH;
+		return status = FIO_ERROR_CATCH;
         }
 }
 

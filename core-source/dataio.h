@@ -30,10 +30,12 @@
 
 #include <netcdf>
 #include <iostream>
+#include <fstream>
 #include <vector>
+#include <sstream>
 
 #include "xsm.h"
-
+#include "unit.h"
 
 typedef enum { 
               FIO_OK, 
@@ -48,14 +50,16 @@ typedef enum {
               FIO_NSC_ERR,
               FIO_NOT_RESPONSIBLE_FOR_THAT_FILE,
               FIO_INVALID_FILE,
-              FIO_NETCDF_ERROR_CATCH,
+              FIO_ERROR_CATCH,
+              FIO_GET_ERROR_STATUS_STRING,
+              FIO_GET_PROGRESS_INFO_STRING,
               FIO_UNKNOWN_ERR
 } FIO_STATUS;
 
 class Dataio{
 public:
-        Dataio(){ scan=NULL; name=NULL; status=FIO_OK; netcdf_error=NULL; };
-        Dataio(Scan *s, const char *n){ scan=s; name=strdup(n); status=FIO_OK; netcdf_error=NULL; };
+        Dataio(){ scan=NULL; name=NULL; status=FIO_OK; error_status.str("NetCDF Status: OK"); error_status.clear(); };
+        Dataio(Scan *s, const char *n){ scan=s; name=strdup(n); status=FIO_OK; error_status.str("NetCDF Status: OK"); error_status.clear(); };
         virtual ~Dataio(){ if(name) free(name); };
 
         void SetName(const char *n){ if(name) free(name); name=strdup(n); }
@@ -69,7 +73,8 @@ public:
 
 protected:
         FIO_STATUS status;
-        gchar *netcdf_error;
+        std::ostringstream error_status;
+        std::ostringstream progress_info;
         Scan *scan;
 };
 
@@ -78,6 +83,15 @@ public:
         NetCDF(Scan *s, const char *n) : Dataio(s,n){ };
         virtual FIO_STATUS Read (xsm::open_mode mode=xsm::open_mode::replace);
         virtual FIO_STATUS Write ();
+
+        gchar *get_var_att_as_string (NcFile &nc, NcVar &var, const gchar *att_name);
+
+        gchar *get_att_as_string (NcFile &nc, const gchar *var_id, const gchar *att_name){
+                netCDF::NcVar v=nc.getVar (var_id);
+                return get_var_att_as_string (nc, v, att_name);
+        }
+
+        UnitObj *get_gxsm_unit_from_nc(NcFile &nc, const gchar *var_id);
 };
 
 
