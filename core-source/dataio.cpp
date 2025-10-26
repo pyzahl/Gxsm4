@@ -58,6 +58,10 @@ double VRangeZ_to_Contrast (double vrz, double dz){
   BaseClass Dataio
 */
 const char* Dataio::ioStatus(){
+        static gchar *tmpE=NULL;
+        g_free (tmpE); tmpE = g_strdup (error_status.str ().c_str ());
+        static gchar *tmpP=NULL;
+        
 	switch(status){
 	case FIO_OK: return 0;
 	case FIO_OPEN_ERR: return "file open failed";
@@ -72,9 +76,11 @@ const char* Dataio::ioStatus(){
 	case FIO_NO_NETCDFXSMFILE: return "no valid NetCDF XSM file";
 	case FIO_NOT_RESPONSIBLE_FOR_THAT_FILE: return "Handler does not support this filetype";
 	case FIO_INVALID_FILE: return "invalid/inconsistent data file";
-        case FIO_ERROR_CATCH: return error_status.str().c_str();
-        case FIO_GET_ERROR_STATUS_STRING: return error_status.str().c_str();
-        case FIO_GET_PROGRESS_INFO_STRING: return progress_info.str().c_str();
+        case FIO_ERROR_CATCH: return tmpE;
+        case FIO_GET_ERROR_STATUS_STRING: return tmpE;
+        case FIO_GET_PROGRESS_INFO_STRING:
+                g_free (tmpP); tmpP = g_strdup (progress_info.str ().c_str ());
+                return tmpP;
 
         default: return "Dataio: unknown error";
 	}
@@ -635,17 +641,22 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
                 progress_info  << " ** DONE READING NCDAT FILE **" << std::endl;
                 error_status << "Read Completed." << std::endl;
 
+                // TEST to force exception
+                //if (Data.getAtt("test_info").isNull ()){ progress_info  << " ** TEST getAtt is Null **" << std::endl; }
+                //else { progress_info  << " ** TEST getAtt is OK **" << std::endl; }
+               
                 return status = FIO_OK; 
 
         } catch (const netCDF::exceptions::NcException& e) {
-                std::cerr << "EE: NetCDF File Read Error. Catch " << e.what() << std::endl;
-                error_status << "EE: NetCDF File Read Error. Catch " << e.what()<< std::endl;
-
-                error_status << "************************************************" << std::endl;
-                error_status << "PROGRESS REPORT" << std::endl;
-                error_status << "************************************************" << std::endl;
-                error_status << progress_info.str().c_str()<< std::endl;
-
+                error_status << "EE: NetCDF File Read Error. Catch " << e.what() << std::endl
+                             << "************************************************" << std::endl
+                             << "PROGRESS REPORT" << std::endl
+                             << "************************************************" << std::endl
+                             << progress_info.str() << std::endl;
+                
+                std::cerr << "NetCDF Read Error Status: " << std::endl << error_status.str()
+                          << std::endl;
+                
                 main_get_gapp ()->progress_info_close ();
 		return status = FIO_ERROR_CATCH;
         }
