@@ -373,7 +373,7 @@ void GnomeAppService::progress_info_destroy_now(){
 void GnomeAppService::progress_info_close (){
 	if (progress_dialog){
 		progress_dialog_schedule_close = 2;
-		g_timeout_add (1000, (GSourceFunc)gas_close_progress, this);
+		g_timeout_add (2000, (GSourceFunc)gas_close_progress, this);
 	}
 }
 

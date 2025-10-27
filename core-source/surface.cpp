@@ -359,11 +359,10 @@ void Surface::load_exec (GtkDialog *dialog,  int response, gpointer user_data){
                 GtkFileChooser *chooser = GTK_FILE_CHOOSER (dialog);
                 g_autoptr(GFile) file = gtk_file_chooser_get_file (chooser);
                 gchar *tmp=g_file_get_parse_name (file);
+                gtk_window_destroy (GTK_WINDOW (dialog));
 		s->load (tmp);
                 g_free (tmp);
-                g_object_unref (file);
         }
-        gtk_window_destroy (GTK_WINDOW (dialog));
 }
 
 int Surface::load(const char *rname){

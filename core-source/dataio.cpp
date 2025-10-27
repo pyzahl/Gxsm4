@@ -634,9 +634,8 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
                 //g_message ("NetCDF read: sranger_mk2_hwi_pll_reference = %g Hz", scan->data.s.pllref);
         
 #endif
-                main_get_gapp ()->progress_info_set_bar_text ("Finishing", 2);
                 main_get_gapp ()->progress_info_set_bar_fraction (1., 1);
-                main_get_gapp ()->progress_info_close ();
+                main_get_gapp ()->progress_info_set_bar_text ("Finishing", 2);
 
                 progress_info  << " ** DONE READING NCDAT FILE **" << std::endl;
                 error_status << "Read Completed." << std::endl;
@@ -645,6 +644,7 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
                 //if (Data.getAtt("test_info").isNull ()){ progress_info  << " ** TEST getAtt is Null **" << std::endl; }
                 //else { progress_info  << " ** TEST getAtt is OK **" << std::endl; }
                
+                main_get_gapp ()->progress_info_close ();
                 return status = FIO_OK; 
 
         } catch (const netCDF::exceptions::NcException& e) {
@@ -1119,16 +1119,17 @@ FIO_STATUS NetCDF::Write(){
 
                 main_get_gapp ()->SignalCDFSaveEventToPlugins (nc);
 
-                main_get_gapp ()->progress_info_set_bar_text ("Finishing", 2);
                 main_get_gapp ()->progress_info_set_bar_fraction (1.0, 1);
 
                 // close of nc takes place in destructor
                 progress_info  << " ** COMPLETED WRITING NETCDF DATA **" << std::endl;
+                main_get_gapp ()->progress_info_set_bar_text ("Finishing", 2);
                 scan->draw ();
 
                 main_get_gapp ()->progress_info_close ();
                 error_status << "Write Completed." << std::endl;
 
+                main_get_gapp ()->progress_info_close ();
                 return status = FIO_OK;
                 
         } catch (const netCDF::exceptions::NcException& e) {
