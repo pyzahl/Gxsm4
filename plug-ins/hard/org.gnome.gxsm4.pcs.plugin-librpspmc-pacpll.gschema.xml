@@ -504,16 +504,40 @@
       <description>pcs0000, PCS Remote-ID: 'dsp-LCK-PH-MONITOR', Default/U: 0 V    , Adjustment PCS Name: 'dsp-LCK-PH-MONITOR' </description>
     </key>
 
-    <key name="dsp-spmc-lck-freq" type="d">
+    <key name="dsp-lck-aclk-monitor" type="d">
       <default>0</default>
-      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-FREQ', Default/U:     0 Hz     </summary>
+      <summary>PCS Remote-ID: 'dsp-LCK-ACLK-MONITOR', Default/U: 0 V     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-LCK-ACLK-MONITOR', Default/U: 0 V    , Adjustment PCS Name: 'dsp-LCK-ACLK-MONITOR' </description>
+    </key>
+
+    <key name="dsp-lck-decii-monitor" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'dsp-LCK-DECII-MONITOR', Default/U: 0 V     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-LCK-DECII-MONITOR', Default/U: 0 V    , Adjustment PCS Name: 'dsp-LCK-DECII-MONITOR' </description>
+    </key>
+
+    <key name="dsp-lck-ilen-monitor" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'dsp-LCK-ILEN-MONITOR', Default/U: 0 V     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-LCK-ILEN-MONITOR', Default/U: 0 V    , Adjustment PCS Name: 'dsp-LCK-ILEN-MONITOR' </description>
+    </key>
+
+    <key name="dsp-lck-bqdec-monitor" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'dsp-LCK-BQDEC-MONITOR', Default/U: 0 V     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-LCK-BQDEC-MONITOR', Default/U: 0 V    , Adjustment PCS Name: 'dsp-LCK-BQDEC-MONITOR' </description>
+    </key>
+
+    <key name="dsp-spmc-lck-freq" type="d">
+      <default>1234</default>
+      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-FREQ', Default/U: 1234 Hz     </summary>
       <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-FREQ', Default/U:     300 Hz    , Adjustment PCS Name: 'dsp-SPMC-LCK-FREQ' </description>
     </key>
 
-    <key name="dsp-spmc-lck-rf-freq" type="d">
+    <key name="dsp-spmc-rf-gen-freq" type="d">
       <default>1e6</default>
-      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-RF-FREQ', Default/U:     1e6 Hz     </summary>
-      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-RF-FREQ', Default/U:     300 Hz    , Adjustment PCS Name: 'dsp-SPMC-LCK-RF-FREQ' </description>
+      <summary>PCS Remote-ID: 'dsp-SPMC-RF-GEN-FREQ', Default/U:     1e6 Hz     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-RF-FREQ', Default/U:     300 Hz    , Adjustment PCS Name: 'dsp-SPMC-RF-GEN-FREQ' </description>
     </key>
 
     <key name="dsp-spmc-lck-mod-volume-x-scan" type="d">
@@ -606,16 +630,43 @@
       <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-BQ-COEF-BA', Default/U:     0    , Adjustment PCS Name: 'dsp-SPMC-LCK-BQ-COEF-BA' </description>
     </key>
 
+
+    <key name="dsp-spmc-zs-bq-tau" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-BQ-TAU', Default/U:     0 ms     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-BQ-TAU', Default/U:     0 ms    , Adjustment PCS Name: 'dsp-SPMC-LCK-BQ-TAU' </description>
+    </key>
+
+    <key name="dsp-spmc-zs-iir-tau" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-IIR-TAU', Default/U:     0 ms     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-IIR-TAU', Default/U:     0 ms    , Adjustment PCS Name: 'dsp-SPMC-LCK-IIR-TAU' </description>
+    </key>
+
+    <key name="dsp-spmc-zs-bq-q" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-Q', Default/U:     0     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-Q', Default/U:     0    , Adjustment PCS Name: 'dsp-SPMC-LCK-Q' </description>
+    </key>
+
+    <key name="dsp-spmc-zs-bq-coef-ba00" type="ad">
+      <default>[0,0,0, 0,0,0]</default>
+      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-BQ-COEF-BA6', Default/U:     0     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-BQ-COEF-BA', Default/U:     0    , Adjustment PCS Name: 'dsp-SPMC-LCK-BQ-COEF-BA' </description>
+    </key>
+
+
+    
     <key name="dsp-spmc-lck-sens" type="d">
       <default>10.0</default>
       <summary>PCS Remote-ID: 'dsp-SPMC-LCK-SENS', Default/U:     10     </summary>
       <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-SENS', Default/U:     10    , Adjustment PCS Name: 'dsp-SPMC-LCK-SENS' </description>
     </key>
 
-    <key name="dsp-spmc-lck-fmscale" type="d">
+    <key name="dsp-spmc-rf-gen-fmscale" type="d">
       <default>0</default>
-      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-FMSCALE', Default/U:     0     </summary>
-      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-FMSCALE', Default/U:     0    , Adjustment PCS Name: 'dsp-SPMC-LCK-FMSCALE' </description>
+      <summary>PCS Remote-ID: 'dsp-SPMC-RF-GEN-FMSCALE', Default/U:     0     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-RF-GEN-FMSCALE', Default/U:     0    , Adjustment PCS Name: 'dsp-SPMC-RF-GEN-FMSCALE' </description>
     </key>
 
     

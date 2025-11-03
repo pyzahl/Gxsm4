@@ -37,12 +37,14 @@ struct JSON_parameter {
         const gchar *js_varname;
         double *value;
         gboolean ro;
+        const gchar *unit_id;
 };
 
 struct JSON_signal {
         const gchar *js_varname;
         int size;
         double *value;
+        const gchar *unit_id;
 };
 
 struct PACPLL_parameters {
@@ -240,40 +242,46 @@ struct SPMC_parameters {
         double xs_monitor; // scan coords
         double ys_monitor;
         double zs_monitor;
-        //
+
+        // Lock-In
         double lck1_bq2_mag_monitor;
         double lck1_bq2_ph_monitor;
-        
-        double sc_lck_filter_mode;
-        double sc_lck_frequency;
-        double sc_lck_volume;
-        double sc_lck_target;
-        double sc_lck_bq_coef[6]; // b0,1,2, [a0 (per def. a0:=1), used for := section #id],1,2
-        double sc_lck_bq_tau;
-        double sc_lck_iir_tau;
-        double sc_lck_q;
+        double lck_aclocks_per_sample_monitor;
+        double lck_ilen_monitor;
+        double lck_decii_monitor;
+        double lck_bq_dec_monitor;
+        //
+        double lck_frequency;
+        double lck_volume;
+        double lck_target;
+        int    lck_mode;
+        double _lck_mode;
+        double lck_sens;
+        double lck_gain;
 
+        // tmp for BQ config
+        double sc_filter_mode;
+        double sc_filter_select;
+        double sc_bq_coef[6]; // b0,1,2, [a0 (per def. a0:=1), used for := section #id],1,2
         // SECTION 1
-        int    sc_lck_bq1mode;
-        double sc_lck_bq1_coef[6]; // b0,1,2, [a0 := 1],1,2
-        double sc_lck_bq1_tau;
-        double sc_lck_iir1_tau;
-        double sc_lck_q1;
-        // SECTION 2
-        int    sc_lck_bq2mode;
-        double sc_lck_bq2_coef[6]; // b0,1,2, [a0 := 1],1,2
-        double sc_lck_bq2_tau;
-        double sc_lck_iir2_tau;
-        double sc_lck_q2;
+        int    sc_bq1mode;
+        double sc_bq1_coef[6]; // b0,1,2, [a0 := 1],1,2
 
-        double sc_lck_mode;
-        double sc_lck_sens;
-        double sc_lck_gain;
-        double sc_lck_fmscale;
-        int    sc_lckrf_mode;
-        
-        double sc_lck_rf_frequency;
+        // SECTION 2
+        int    sc_bq2mode;
+        double sc_bq2_coef[6]; // b0,1,2, [a0 := 1],1,2
+
+        // ZS BQ ANTI FILTER "SECTION 10"
+        int    sc_zs_bqmode;
+        double sc_zs_bq_coef[6]; // b0,1,2, [a0 := 1],1,2
+
+        // RF-GEN
+        int    rf_gen_mode;
+        double _rf_gen_mode;
+        double rf_gen_frequency;
+        double rf_gen_fmscale;
         double rf_gen_out_mux;
+
         
         double rpspmc_version;
         double rpspmc_date;

@@ -593,7 +593,31 @@
     <key name="dsp-lck-ph-monitor" type="ad">
       <default>[180, -180, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
       <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'dsp-lck-ph-monitor' </summary>
-      <description>Configuration for GXSM Entry with ID 'dsp-ph-mag-monitor'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+      <description>Configuration for GXSM Entry with ID 'dsp-lck-ph-monitor'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+    
+    <key name="dsp-lck-aclk-monitor" type="ad">
+      <default>[1e6, 0, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'dsp-lck-aclk-monitor' </summary>
+      <description>Configuration for GXSM Entry with ID 'dsp-lck-aclk-monitor'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="dsp-lck-decii-monitor" type="ad">
+      <default>[1e6, 0, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'dsp-lck-decii-monitor' </summary>
+      <description>Configuration for GXSM Entry with ID 'dsp-lck-decii-monitor'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="dsp-lck-ilen-monitor" type="ad">
+      <default>[1e6, 0, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'dsp-lck-ilen-monitor' </summary>
+      <description>Configuration for GXSM Entry with ID 'dsp-lck-ilen-monitor'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="dsp-lck-bqdec-monitor" type="ad">
+      <default>[1e6, 0, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'dsp-lck-bqdec-monitor' </summary>
+      <description>Configuration for GXSM Entry with ID 'dsp-lck-bqdec-monitor'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
     </key>
     
     <key name="dsp-spmc-lck-freq" type="ad">
@@ -602,10 +626,10 @@
       <description>Configuration for GXSM Entry with ID 'dsp-lck-freq'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
     </key>
 
-    <key name="dsp-spmc-lck-rf-freq" type="ad">
+    <key name="dsp-spmc-rf-gen-freq" type="ad">
       <default>[62.5e7, 0, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1.0, 1.0, 0,  0, 0      ]      </default>
-      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'dsp-lck-rf-freq' </summary>
-      <description>Configuration for GXSM Entry with ID 'dsp-lck-rf-freq'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'dsp-rf-gen-freq' </summary>
+      <description>Configuration for GXSM Entry with ID 'dsp-rf-gen-freq'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
     </key>
 
     <key name="dsp-spmc-lck-modvolume-x-scan" type="ad">
@@ -696,16 +720,44 @@
       <description>Configuration for GXSM Entry with ID 'dsp-spmc-lck-bq-coef-ba'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
     </key>
     
+
+
+    <key name="dsp-spmc-zs-bq-tau" type="ad">
+      <default>[1e6, 0, 1e+111, -1e+111, 1e+111, 1e+111, 0.001, 0.01, 0.1, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'dsp-lck-bq-tau' </summary>
+      <description>Configuration for GXSM Entry with ID 'dsp-lck-bq-tau'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+    <key name="dsp-spmc-zs-iir-tau" type="ad">
+      <default>[1e6, 0, 1e+111, -1e+111, 1e+111, 1e+111, 0.001, 0.01, 0.1, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'dsp-lck-iir-tau' </summary>
+      <description>Configuration for GXSM Entry with ID 'dsp-lck-iir-tau'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="dsp-spmc-zs-bq-q" type="ad">
+      <default>[1e8, -1e8, 1e+111, -1e+111, 1e+111, 1e+111, 0.001, 0.01, 0.1, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'dsp-lck-a' </summary>
+      <description>Configuration for GXSM Entry with ID 'dsp-lck-q'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+    <key name="dsp-spmc-zs-bq-coef-ba00" type="ad">
+      <default>[1e8, -1e8, 1e+111, -1e+111, 1e+111, 1e+111, 0.001, 0.01, 0.1, 0,  0, 0      ]      </default>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'dsp-lck-bq-coef-a' </summary>
+      <description>Configuration for GXSM Entry with ID 'dsp-spmc-lck-bq-coef-ba'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+    </key>
+
+
+
+
     <key name="dsp-spmc-lck-sens" type="ad">
       <default>[5000, 0, 5000, 0, 5000, 0, 1, 1, 1, 0,  0, 0      ]      </default>
       <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'dsp-lck-amscale' </summary>
       <description>Configuration for GXSM Entry with ID 'dsp-lck-sens'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
     </key>
 
-    <key name="dsp-spmc-lck-fmscale" type="ad">
+    <key name="dsp-spmc-rf-gen-fmscale" type="ad">
       <default>[1e10, -1e10, 1e+111, -1e+111, 1e+111, 1e+111, 0.001, 0.01, 0.1, 0,  0, 0      ]      </default>
-      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'dsp-lck-fmscale' </summary>
-      <description>Configuration for GXSM Entry with ID 'dsp-lck-fmscale'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
+      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'dsp-rf-gen-fmscale' </summary>
+      <description>Configuration for GXSM Entry with ID 'dsp-rf-gen-fmscale'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
     </key>
 
     

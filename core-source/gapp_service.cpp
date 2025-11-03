@@ -888,6 +888,7 @@ void AppBase::show_auto (){
 }
 
 void AppBase::position_auto (){
+        static gboolean once=true;
 #ifdef ENABLE_GXSM_WINDOW_MANAGEMENT
         if (window_geometry)
                 if (window_geometry[WGEO_FLAG]){
@@ -908,11 +909,12 @@ void AppBase::position_auto (){
                                         const gchar *hyprland_signature = g_getenv("HYPRLAND_INSTANCE_SIGNATURE");
 
                                         if (wayland_display != NULL && hyprland_signature != NULL) {
-                                                g_message ("Hyprland is likely running.\n");
-                                                g_message ("WAYLAND_DISPLAY: %s\n", wayland_display);
-                                                g_message ("HYPRLAND_INSTANCE_SIGNATURE: %s\n", hyprland_signature);
-                                                g_message ("Attempting hyprctrl... hang in there\n");
-
+                                                if (once){
+                                                        g_message ("Hyprland is likely running.\n");
+                                                        g_message ("WAYLAND_DISPLAY: %s\n", wayland_display);
+                                                        g_message ("HYPRLAND_INSTANCE_SIGNATURE: %s\n", hyprland_signature);
+                                                        g_message ("Attempting hyprctrl... hang in there\n");
+                                                }
                                                 gchar *stdout_buf = NULL;
                                                 gchar *stderr_buf = NULL;
                                                 gint exit_status;
@@ -936,10 +938,11 @@ void AppBase::position_auto (){
                                                         return;
                                                 }
                                                 
-                                                g_print ("Stdout: %s\n", stdout_buf);
-                                                g_print ("Stderr: %s\n", stderr_buf);
-                                                g_print ("Exit Status: %d\n", exit_status);
-                                                
+                                                if (once || exit_status){
+                                                        g_print ("Stdout: %s\n", stdout_buf);
+                                                        g_print ("Stderr: %s\n", stderr_buf);
+                                                        g_print ("Exit Status: %d\n", exit_status);
+                                                }
                                                 g_free (hyprctl_cmdline);
                                                 g_free (stdout_buf);
                                                 g_free (stderr_buf);
@@ -960,11 +963,12 @@ void AppBase::position_auto (){
                                                         g_error_free (error);
                                                         return;
                                                 }
-                                                
-                                                g_print ("Stdout: %s\n", stdout_buf);
-                                                g_print ("Stderr: %s\n", stderr_buf);
-                                                g_print ("Exit Status: %d\n", exit_status);
-                                                
+                                                if (once || exit_status){
+                                                        g_print ("Stdout: %s\n", stdout_buf);
+                                                        g_print ("Stderr: %s\n", stderr_buf);
+                                                        g_print ("Exit Status: %d\n", exit_status);
+                                                        once = false;
+                                                }
                                                 g_free (hyprctl_cmdline);
                                                 g_free (stdout_buf);
                                                 g_free (stderr_buf);
@@ -972,8 +976,11 @@ void AppBase::position_auto (){
                                                 g_free (title);
                                                 
                                         } else if (wayland_display != NULL) {
-                                                g_message ("A Wayland compositor is running, but it might not be Hyprland.\n");
-                                                g_message ("WAYLAND_DISPLAY: %s\n", wayland_display);
+                                                if (once){
+                                                        g_message ("A Wayland compositor is running, but it might not be Hyprland.\n");
+                                                        g_message ("WAYLAND_DISPLAY: %s\n", wayland_display);
+                                                        once = false;
+                                                }
                                                 g_message ("SORRY WAYLAND DOES NOT GIVE ANY ACCESS TO WINDOW GEOMETRY. Hint: try Hyprland!");
                                         } else {
                                                 g_message ("Wayland some what, but No Wayland compositor detected.\n");
@@ -988,6 +995,7 @@ void AppBase::position_auto (){
 }
 
 void AppBase::resize_auto (){
+        static gboolean once=true;
 #ifdef ENABLE_GXSM_WINDOW_MANAGEMENT
         if (window_geometry)
                 if (window_geometry[WGEO_FLAG]){
@@ -1013,11 +1021,12 @@ void AppBase::resize_auto (){
                                         const gchar *hyprland_signature = g_getenv("HYPRLAND_INSTANCE_SIGNATURE");
 
                                         if (wayland_display != NULL && hyprland_signature != NULL) {
-                                                g_message ("Hyprland is likely running.\n");
-                                                g_message ("WAYLAND_DISPLAY: %s\n", wayland_display);
-                                                g_message ("HYPRLAND_INSTANCE_SIGNATURE: %s\n", hyprland_signature);
-                                                g_message ("Attempting hyprctrl... hang in there\n");
-
+                                                if (once){
+                                                        g_message ("Hyprland is likely running.\n");
+                                                        g_message ("WAYLAND_DISPLAY: %s\n", wayland_display);
+                                                        g_message ("HYPRLAND_INSTANCE_SIGNATURE: %s\n", hyprland_signature);
+                                                        g_message ("Attempting hyprctrl... hang in there\n");
+                                                }
                                                 gchar *stdout_buf = NULL;
                                                 gchar *stderr_buf = NULL;
                                                 gint exit_status;
@@ -1044,18 +1053,23 @@ void AppBase::resize_auto (){
                                                         g_error_free (error);
                                                         return;
                                                 }
-                                                
-                                                g_print ("Stdout: %s\n", stdout_buf);
-                                                g_print ("Stderr: %s\n", stderr_buf);
-                                                g_print ("Exit Status: %d\n", exit_status);
-                                                
+
+                                                if (once || exit_status){
+                                                        g_print ("Stdout: %s\n", stdout_buf);
+                                                        g_print ("Stderr: %s\n", stderr_buf);
+                                                        g_print ("Exit Status: %d\n", exit_status);
+                                                        once = false;
+                                                }
                                                 g_free (hyprctl_cmdline);
                                                 g_free (stdout_buf);
                                                 g_free (stderr_buf);
                                                 g_free (title);
                                         } else if (wayland_display != NULL) {
-                                                g_message ("A Wayland compositor is running, but it might not be Hyprland.\n");
-                                                g_message ("WAYLAND_DISPLAY: %s\n", wayland_display);
+                                                if (once){
+                                                        g_message ("A Wayland compositor is running, but it might not be Hyprland.\n");
+                                                        g_message ("WAYLAND_DISPLAY: %s\n", wayland_display);
+                                                        once = false;
+                                                }
                                                 g_message ("SORRY WAYLAND DOES NOT GIVE ANY ACCESS TO WINDOW GEOMETRY. Hint: try Hyprland!");
                                         } else {
                                                 g_message ("Wayland some what, but No Wayland compositor detected.\n");
@@ -1083,7 +1097,7 @@ int read_xy_array (JsonReader *reader, int xy[2]){
                                 // You can retrieve its value based on its type
                                 if (json_reader_is_value(reader)) { // Check if it's a simple value
                                         gint64 int_value = json_reader_get_int_value(reader);
-                                        g_print("Array element %d (integer): %lld\n", i, int_value);
+                                        //g_print("Array element %d (integer): %lld\n", i, int_value);
                                         if (i<2) xy[i] = int_value;
                                 }
                                 json_reader_end_element(reader); // Move cursor back to the array
@@ -1124,7 +1138,7 @@ void json_filter_window (const char *json_string, const char *window_to_find, in
                         g_print("Found window with name '%s'\n", window_to_find);
 
                         // You can now extract other properties of the found user
-                        g_print("Reading .at'\n");
+                        //g_print("Reading .at'\n");
                         json_reader_read_member(reader, "at");
                         //int id = json_reader_get_int_value(reader);
                         read_xy_array (reader, at);
@@ -1132,7 +1146,7 @@ void json_filter_window (const char *json_string, const char *window_to_find, in
                         //g_print("At: %s\n", id);
                         json_reader_end_member(reader); // End "id"
 
-                        g_print("Reading .size'\n");
+                        //g_print("Reading .size'\n");
                         json_reader_read_member(reader, "size");
                         //int id = json_reader_get_int_value(reader);
                         read_xy_array (reader, wh);
@@ -1149,10 +1163,11 @@ void json_filter_window (const char *json_string, const char *window_to_find, in
         }
 
         g_object_unref(reader);
-        g_object_unref(parser);
+        //g_object_unref(parser);
 }
 
 void AppBase::SaveGeometry(gboolean store_to_settings){
+        static gboolean once = true;
 	XSM_DEBUG_GM (DBG_L2, "AppBase::SaveGeometry *** for window ** %s **", window_key);
 #ifdef ENABLE_GXSM_WINDOW_MANAGEMENT
 
@@ -1199,11 +1214,12 @@ void AppBase::SaveGeometry(gboolean store_to_settings){
                         const gchar *hyprland_signature = g_getenv("HYPRLAND_INSTANCE_SIGNATURE");
 
                         if (wayland_display != NULL && hyprland_signature != NULL) {
-                                g_message ("Hyprland is likely running.\n");
-                                g_message ("WAYLAND_DISPLAY: %s\n", wayland_display);
-                                g_message ("HYPRLAND_INSTANCE_SIGNATURE: %s\n", hyprland_signature);
-                                g_message ("Attempting hyprctrl... hang in there\n");
-
+                                if (once){
+                                        g_message ("Hyprland is likely running.\n");
+                                        g_message ("WAYLAND_DISPLAY: %s\n", wayland_display);
+                                        g_message ("HYPRLAND_INSTANCE_SIGNATURE: %s\n", hyprland_signature);
+                                        g_message ("Attempting hyprctrl... hang in there\n");
+                                }
                                 static gint64 tlast=0;
                                 static gchar *stdout_buf = NULL; // auto-cached
 
@@ -1229,12 +1245,15 @@ void AppBase::SaveGeometry(gboolean store_to_settings){
                                                 return;
                                         }
                                 
-                                        g_print ("Stdout: %s\n", stdout_buf);
-                                        g_print ("Stderr: %s\n", stderr_buf);
-                                        g_print ("Exit Status: %d\n", exit_status);
+                                        if (once || exit_status){
+                                                g_print ("Stdout: %s\n", stdout_buf);
+                                                g_print ("Stderr: %s\n", stderr_buf);
+                                                g_print ("Exit Status: %d\n", exit_status);
+                                        }
                                         g_free (stderr_buf);
                                         g_free (hyprctl_cmdline);
                                 }                                                
+                                once = false;
 
                                 int at[2]={-1,-1};
                                 int wh[2]={-1,-1};
@@ -1249,7 +1268,8 @@ void AppBase::SaveGeometry(gboolean store_to_settings){
                                         window_geometry[WGEO_HEIGHT]=wh[1];
                                 }
 
-                                g_print ("Window at %d %d, WH %d %d\n",
+                                g_print ("Window '%s' at %d %d, WH %d %d\n",
+                                         main_title_buffer,
                                          window_geometry[WGEO_XPOS], window_geometry[WGEO_YPOS],
                                          window_geometry[WGEO_WIDTH], window_geometry[WGEO_HEIGHT]
                                          );
@@ -1257,8 +1277,11 @@ void AppBase::SaveGeometry(gboolean store_to_settings){
                                 //g_free (stdout_buf); // static, caching
                                 
                         } else if (wayland_display != NULL) {
-                                g_message ("A Wayland compositor is running, but it might not be Hyprland.\n");
-                                g_message ("WAYLAND_DISPLAY: %s\n", wayland_display);
+                                if (once){
+                                        g_message ("A Wayland compositor is running, but it might not be Hyprland.\n");
+                                        g_message ("WAYLAND_DISPLAY: %s\n", wayland_display);
+                                        once = false;
+                                }
                                 g_message ("SORRY WAYLAND DOES NOT GIVE ANY ACCESS TO WINDOW GEOMETRY. Hint: try Hyprland!");
                         } else {
                                 g_message ("Wayland some what, but No Wayland compositor detected.\n");

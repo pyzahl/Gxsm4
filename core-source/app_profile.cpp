@@ -192,7 +192,11 @@ double ProfileElement::calc(gint64 ymode, int id, int binary_mask, double y_offs
         } else if(ymode & PROFILE_MODE_XL1000){
                 ix_left  = MAX (0, ix_right-1000);
         } else if(ymode & PROFILE_MODE_XL4000){
-                ix_left  = MAX (0, ix_right-4000);
+                //ix_left  = MAX (0, ix_right-4000);
+                if (scan->mem2d->GetNx() > 50){
+                        ix_left  = 20;
+                        ix_right = ix_right-20;
+                }
         }
 
  

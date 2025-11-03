@@ -147,7 +147,7 @@ SOURCE_SIGNAL_DEF rpspmc_source_signals[] = {
         { 0x00000002, "YS-Mon",       " ", "AA", UTF8_ANGSTROEM,                   SPMC_AD5791_to_volts, PROBEDATA_ARRAY_S2,  2 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x00000004, "ZS-Topo",      " ", "AA", UTF8_ANGSTROEM,                  -SPMC_AD5791_to_volts, PROBEDATA_ARRAY_S3,  3 }, // see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
         { 0x00000008, "Bias-Mon",     " ", "V",             "V",                   SPMC_AD5791_to_volts, PROBEDATA_ARRAY_S4,  4 }, // BiasFac, see  RPSPMC_Control::vp_scale_lookup() Life Mapping!!
-        { 0x00000010, "Current",      " ", "nA",           "nA",              256.*SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S5,  5 }, // processed tunnel current signal "Volts" here, to nA/pA later!!! ADJUST W MUX!!!
+        { 0x00000010, "Current",      " ", "nA",           "nA",                   SPMC_RPIN34_to_volts, PROBEDATA_ARRAY_S5,  5 }, // processed tunnel current signal "Volts" here, to nA/pA later!!! ADJUST W MUX!!!
         { 0x00000020, "IN2-RF-FIR",   " ", "V",             "V",                   SPMC_RPIN12_to_volts, PROBEDATA_ARRAY_S6,  6 }, // IN2 RP 125MSPS (RF input, FIR, routable to Z-Servo Control as tunnel current signal)!
         { 0x00000040, "IN3-AD463-24-CHA", " ", "V",         "V",                   SPMC_RPIN34_to_volts, PROBEDATA_ARRAY_S7,  7 }, // IN3 ADC4630-24-A 2MSPS (routable to Z-Servo Control as tunnel current signal)
         { 0x00000080, "IN4-AD463-24-CHB", " ", "V",         "V",                   SPMC_RPIN34_to_volts, PROBEDATA_ARRAY_S8,  8 }, // IN4 ADC4630-24-B 2MSPS
@@ -176,21 +176,21 @@ SOURCE_SIGNAL_DEF rpspmc_swappable_signals[] = {                                
         { 0x00000005, "05-IN1-RF-FBW",     " ", "mV", "mV", 1000*SPMC_RPIN12_to_volts,               -1, -1 },   // IN1 FBW **** IN1 RP 125MSPS (Signal) -- PLL Signal (FBW)
         { 0x00000006, "06-IN1-RF-FIR",     " ", "V", "V", SPMC_RPIN12_to_volts,                      -1, -1 },   // IN1 FIR **** IN1 RP 125MSPS (Signal) -- PLL Signal (FIR)
         { 0x00000007, "07-IN2-RF-FBW",     " ", "V", "V", SPMC_RPIN12_to_volts,                      -1, -1 },   // IN2 FBW
-        { 0x00000008, "08-LockIn-Mag-BQ2", " ", "V", "V", (1<<(32-24))*SPMC_RPIN34_to_volts,          5, -1 },   // LCK-Mag after BiQuad Stage 2
-        { 0x00000009, "09-LockIn-X",    " ", "V", "V", (1<<(32-24))*SPMC_RPIN34_to_volts,            -1, -1 },   // LCK-X -- raw (no filter)
-        { 0x0000000A, "10-LockIn-Y",    " ", "V", "V", (1<<(32-24))*SPMC_RPIN34_to_volts,            -1, -1 },   // LCK-Y -- raw (no filter)
-        { 0x0000000B, "11-IN4-FIR",     " ", "V", "V", SPMC_RPIN34_to_volts,                         -1, -1 },   // IN4 FIR
-        { 0x0000000C, "12-LCK-i",       " ", "V", "V", (1.0),                                        -1, -1 },   // ** Lck-i ** dbg
-        { 0x0000000D, "13-SineRef",     " ", "V", "V",     SPMC_RPIN34_to_volts,                     -1, -1 },   // ** SD-Ref ** dbg
-        { 0x0000000E, "14-LockIn-Mag-pass", " ", "V", "V", (1<<(32-24))*SPMC_RPIN34_to_volts,        -1, -1 },   // LCK-Mag (sqrt(x^2+y^2)) raw (no filter)
-        { 0x0000000F, "15-LockIn-Mag-BQ1",  " ", "V", "V", (1<<(32-24))*SPMC_RPIN34_to_volts,        -1, -1 },   // LCK-Mag after BiQuad Stage 1
-        { 0x00000010, "16-GVP-A",       " ", "V","V", SPMC_AD5791_to_volts,                          -1, -1 },   // GVP-A
-        { 0x00000011, "17-GVP-B",       " ", "V","V", SPMC_AD5791_to_volts,                          -1, -1 },   // GVP-B
-        { 0x00000012, "18-GVP-AM",      " ", "V","V", SPMC_AD5791_to_volts,                          -1, -1 },   // GVP-AM
-        { 0x00000013, "19-GVP-FM",      " ", "V","V", SPMC_AD5791_to_volts,                          -1, -1 },   // GVP-FM
-        { 0x00000014, "Z-OUT",          " ", "B","B", 1.0/(1<<12),                          -1, -1 },   // Z-DAC out raw value signed 20bit coming top aligned in " 32 >> 12 "
-        { 0x00000015, "Current-AOV",          " ", "nA", "nA", 256.*SPMC_RPIN12_to_volts,   -1, -1 },   // Auto OverSampled -- processed tunnel current signal "Volts" here, to nA/pA later!!! ADJUST W MUX!!!
-        { 0x00000016, "IN4-AD463-24-CHB-AOV", " ", "V",  "V",  SPMC_RPIN34_to_volts,        -1, -1 },   // Auto OverSampled -- IN4 ADC4630-24-B 2MSPS
+        { 0x00000008, "08-LockIn-Mag",     " ", "V", "V", SPMC_RPIN34_to_volts,                       5, -1 },   // LCK-Mag after BiQuad Section 2
+        { 0x00000009, "09-LockIn-Phase",   " ", "deg", UTF8_DEGREE, (180.0/(M_PI*((1L<<RP_FPGA_QATAN)-1))), 6, -1 },   // LCK-Phase after BiQuand Section2 
+        { 0x0000000A, "10-LockIn-Y",       " ", "V", "V", SPMC_RPIN34_to_volts,                      -1, -1 },   // (TEST)
+        { 0x0000000B, "11-IN4-FIR",        " ", "V", "V", SPMC_RPIN34_to_volts,                      -1, -1 },   // IN4 FIR
+        { 0x0000000C, "12-LockIn-X",       " ", "V", "V", SPMC_RPIN34_to_volts,                      -1, -1 },   // (TEST)
+        { 0x0000000D, "13-LockIn-CosRef",  " ", "V", "V", SPMC_RPIN34_to_volts,                      -1, -1 },   // ** SD-Ref ** dbg
+        { 0x0000000E, "14-LockIn-Mag-pass"," ", "V", "V", SPMC_RPIN34_to_volts,                      -1, -1 },   // LCK-Mag (sqrt(x^2+y^2)) raw (no filter)
+        { 0x0000000F, "15-LockIn-S-AC",    " ", "V", "V", SPMC_RPIN34_to_volts,                      -1, -1 },   // LCK-Mag after BiQuad Stage 1
+        { 0x00000010, "16-GVP-A",          " ", "V", "V", SPMC_AD5791_to_volts,                      -1, -1 },   // GVP-A
+        { 0x00000011, "17-GVP-B",          " ", "V", "V", SPMC_AD5791_to_volts,                      -1, -1 },   // GVP-B
+        { 0x00000012, "18-GVP-AM",         " ", "V", "V", SPMC_AD5791_to_volts,                      -1, -1 },   // GVP-AM
+        { 0x00000013, "19-GVP-FM",         " ", "V", "V", SPMC_AD5791_to_volts,                      -1, -1 },   // GVP-FM
+        { 0x00000014, "20-Z-OUT",          " ", "B", "B", 1.0/(1<<12),                               -1, -1 },   // Z-DAC out raw value signed 20bit coming top aligned in " 32 >> 12 "
+        { 0x00000015, "21-ZS-BQ-Out",      " ", "nA", "nA", SPMC_RPIN34_to_volts,                    -1, -1 },   // Auto OverSampled -- processed tunnel current signal "Volts" here, to nA/pA later!!! ADJUST W MUX!!!
+        { 0x00000016, "22-LockIn-S-AC-DEC"," ", "V",  "V",  SPMC_RPIN34_to_volts,                    -1, -1 },   // Auto OverSampled -- IN4 ADC4630-24-B 2MSPS
         //{ 0x00000010, "X-TestSignal = 0", " ", "V",   "V", (1.0),                         -1, -1 },
         //{ 0x00000011, "X-TestSignal = 1", " ", "V",   "V", (1.0),                         -1, -1 },
         //{ 0x00000012, "X-TestSignal = -1", " ", "V",   "V", (1.0),                        -1, -1 },
@@ -225,10 +225,10 @@ SOURCE_SIGNAL_DEF modulation_targets[] = {
 
 SOURCE_SIGNAL_DEF z_servo_current_source[] = {
         //  SIGNAL #  Name               Units.... Scale (not needed or used from here)
-        { 0x00000000, "IN2-RF-FIR",    " ",  "nA",  "nA", 256.*SPMC_RPIN12_to_volts, 0, 0 }, // 24.8 Z-Servo internal signal '(32-8) -> x 256
-        { 0x00000001, "IN3-1MSPS",     " ",  "nA",  "nA", 256.*SPMC_RPIN34_to_volts, 0, 0 }, // 24.8 Z-Servo internal signal '(32-8) -> x 256  ** IN3-AD463-24-CHA-1MSPS
-        { 0x00000002, "IN3-1M@FIR1024"," ",  "nA",  "nA", 256.*SPMC_RPIN34_to_volts, 0, 0 }, // 24.8 Z-Servo internal signal '(32-8) -> x 256 ** IN3-AD463-24-CHA-1MSPS FIR 1024x dec (SINC) (~1.58 ms / 632 Hz)
-        { 0x00000003, "IN3-1M@FIR128" ," ",  "nA",  "nA", 256.*SPMC_RPIN34_to_volts, 0, 0 }, // 24.8 Z-Servo internal signal '(32-8) -> x 256 ** IN3-AD463-24-CHA-1MSPS FIRX 128x dec (SINC) (~0.217 ms / 4.6 kHz)
+        { 0x00000000, "IN2-RF-FIR",    " ",  "nA",  "nA", SPMC_RPIN12_to_volts, 0, 0 }, // 24.8 Z-Servo internal signal '(32-8) -> x 256
+        { 0x00000001, "IN3-1MSPS",     " ",  "nA",  "nA", SPMC_RPIN34_to_volts, 0, 0 }, // 24.8 Z-Servo internal signal '(32-8) -> x 256  ** IN3-AD463-24-CHA-1MSPS
+        { 0x00000002, "IN3-1M@FIR1024"," ",  "nA",  "nA", SPMC_RPIN34_to_volts, 0, 0 }, // 24.8 Z-Servo internal signal '(32-8) -> x 256 ** IN3-AD463-24-CHA-1MSPS FIR 1024x dec (SINC) (~1.58 ms / 632 Hz)
+        { 0x00000003, "IN3-1M@FIR128" ," ",  "nA",  "nA", SPMC_RPIN34_to_volts, 0, 0 }, // 24.8 Z-Servo internal signal '(32-8) -> x 256 ** IN3-AD463-24-CHA-1MSPS FIRX 128x dec (SINC) (~0.217 ms / 4.6 kHz)
         { 0x00000016,  NULL, NULL, NULL, NULL, 0.0, 0 }
 };
 
@@ -462,7 +462,7 @@ static void rpspmc_pacpll_hwi_query(void)
 }
 
 static void rpspmc_pacpll_hwi_SaveValues_callback ( gpointer gp_ncf ){
-	NcFile *ncf = static_cast<NcFile *> (gp_ncf);
+	NcFile *ncf = (NcFile *) gp_ncf;
         if (rpspmc_pacpll)
                 rpspmc_pacpll->save_values (*ncf);
 }
@@ -1212,9 +1212,6 @@ void RPSPMC_Control::load_values (NcFile &ncf){
 
 
 
-
-
-
 void RPSPMC_Control::get_tab_settings (const gchar *tab_key, guint64 &option_flags, guint64 &auto_flags, guint64 glock_data[6]) {
         PI_DEBUG_GP (DBG_L4, "RPSPMC_Control::get_tab_settings for tab '%s'\n", tab_key);
 
@@ -1917,19 +1914,40 @@ void RPSPMC_Control::create_folder (){
         EC_MONITORS_list = g_slist_prepend( EC_MONITORS_list, bp->ec);
         bp->ec->Freeze ();
         bp->new_line ();
+
         bp->grid_add_ec ("Phase Reading", Deg, &spmc_parameters.lck1_bq2_ph_monitor, -180.0, 180.0, ".03g", 0.1, 1., "LCK-PH-MONITOR");
         EC_MONITORS_list = g_slist_prepend( EC_MONITORS_list, bp->ec);
         bp->ec->Freeze ();
-
-        
         bp->new_line ();
-	bp->grid_add_ec ("Modulation Frequency", new UnitObj("Hz","Hz"), &spmc_parameters.sc_lck_frequency, 0.0, 40e6, "5g", 1.0, 100.0, "SPMC-LCK-FREQ");
+
+        bp->grid_add_ec ("aCLKs/S", Unity, &spmc_parameters.lck_aclocks_per_sample_monitor, 0.0, 1e6, "6.0f", 0.1, 1., "LCK-ACLK-MONITOR");
+        EC_MONITORS_list = g_slist_prepend( EC_MONITORS_list, bp->ec);
+        bp->ec->Freeze ();
+        bp->new_line ();
+
+        bp->grid_add_ec ("LCK-Decii", Unity, &spmc_parameters.lck_decii_monitor, 0.0, 1e6, "6.0f", 0.1, 1., "LCK-DECII-MONITOR");
+        EC_MONITORS_list = g_slist_prepend( EC_MONITORS_list, bp->ec);
+        bp->ec->Freeze ();
+        bp->new_line ();
+
+        bp->grid_add_ec ("LCK-ilen", Unity, &spmc_parameters.lck_ilen_monitor, 0.0, 1e6, "6.0f", 0.1, 1., "LCK-ILEN-MONITOR");
+        EC_MONITORS_list = g_slist_prepend( EC_MONITORS_list, bp->ec);
+        bp->ec->Freeze ();
+        bp->new_line ();
+
+        bp->grid_add_ec ("BQDec#", Unity, &spmc_parameters.lck_bq_dec_monitor, 0.0, 1e6, "6.0f", 0.1, 1., "LCK-BQDEC-MONITOR");
+        EC_MONITORS_list = g_slist_prepend( EC_MONITORS_list, bp->ec);
+        bp->ec->Freeze ();
+        bp->new_line ();
+
+	bp->grid_add_ec ("Modulation Frequency", new UnitObj("Hz","Hz"), &spmc_parameters.lck_frequency, 0.0, 10e6, "5g", 1.0, 100.0, "SPMC-LCK-FREQ");
         LCK_ModFrq = bp->ec;
         
         bp->new_line ();
         bp->grid_add_label ("Modulation on");
-        bp->grid_add_modulation_target_options (0, (int)spmc_parameters.sc_lck_target, this);
+        bp->grid_add_modulation_target_options (0, (int)spmc_parameters.lck_target, this);
 
+        LCK_Volume[0]=0.0; // #0 is not used
         for (int jj=1; modulation_targets[jj].label && jj < LCK_NUM_TARGETS; ++jj){
                 bp->new_line ();
                 gchar *lab = g_strdup_printf ("Volume for %s", modulation_targets[jj].label);
@@ -1943,26 +1961,29 @@ void RPSPMC_Control::create_folder (){
         }
 
         bp->new_line ();
-	bp->grid_add_ec ("Lck Sens.", new UnitObj("mV","mV"), &spmc_parameters.sc_lck_sens, 0.001, 5000., "5g", 1.0, 10.0, "SPMC-LCK-SENS");
+	bp->grid_add_ec ("Lck Sens.", new UnitObj("mV","mV"), &spmc_parameters.lck_sens, 0.001, 5000., "5g", 1.0, 10.0, "SPMC-LCK-SENS");
         bp->new_line ();
         bp->grid_add_check_button ("CorrS PH Aligned", bp->PYREMOTE_CHECK_HOOK_KEY_FUNC("Lock-In Corr Phase Aligned","dsp-lck-phaligned"), 1,
                                    GCallback (callback_change_LCK_mode), this,
-                                   &spmc_parameters.sc_lckrf_mode, 4);
+                                   &spmc_parameters.lck_mode, 4);
 
         // ***
         bp->pop_grid (); bp->set_xy (2,2);
  	bp->new_grid_with_frame ("Filter Section 1");
 
+        bp->set_default_ec_change_notice_fkt (RPSPMC_Control::bq_filter_adjust_callback, this);
 
         bp->grid_add_label ("Filter type");
-        const gchar *filter_types[] = { "None/Pass", "IIR", "BiQuad", "From AB", NULL };
+
+        const gchar *filter_types[] = { "None/Pass", "--", "--", "From AB", "Stop", "By-Pass", "Disable", NULL };
+
         GtkWidget *combo_bqfilter_type = gtk_combo_box_text_new ();
         for (int jj=0; filter_types[jj]; ++jj){
                 gchar *id = g_strdup_printf ("%d", jj);
                 gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (combo_bqfilter_type), id, filter_types[jj]);
                 g_free (id);
         }
-        gtk_combo_box_set_active (GTK_COMBO_BOX (combo_bqfilter_type), 1);
+        gtk_combo_box_set_active (GTK_COMBO_BOX (combo_bqfilter_type), 3);
         g_object_set_data (G_OBJECT (combo_bqfilter_type), "section", GINT_TO_POINTER (1)); 
         g_signal_connect (G_OBJECT (combo_bqfilter_type), "changed",
                           G_CALLBACK (RPSPMC_Control::choice_BQfilter_type_callback),
@@ -1970,23 +1991,13 @@ void RPSPMC_Control::create_folder (){
         bp->grid_add_widget (combo_bqfilter_type);
         bp->new_line ();
         
-        //bp->new_line ();
-	bp->grid_add_ec ("Time Const IIR", new UnitObj("ms","ms"), &spmc_parameters.sc_lck_iir1_tau, 0., 1e6, "5g", 1e-6, 10e3, "SPMC-LCK-IIR1-TAU");
-	g_object_set_data (G_OBJECT (combo_bqfilter_type), "IIR1-TC", bp->ec);
-        bp->new_line ();
-	bp->grid_add_ec ("Time Const BQ", new UnitObj("ms","ms"), &spmc_parameters.sc_lck_bq1_tau, 0., 1e6, "5g", 1e-6, 10e3, "SPMC-LCK-BQ1-TAU");
-	g_object_set_data (G_OBJECT (combo_bqfilter_type), "BQ1-TC", bp->ec);
-        bp->new_line ();
-	bp->grid_add_ec ("BiQaud Q", new UnitObj(" Q"," Q"), &spmc_parameters.sc_lck_q1, 0., 1e6, "5g", 0.1, 5.0, "SPMC-LCK-Q1");
-	g_object_set_data (G_OBJECT (combo_bqfilter_type), "BQ1-Q", bp->ec);
-        bp->new_line ();
         UnitObj *unity_unit = new UnitObj(" "," ");
         for(int jj=0; jj<6; ++jj){
-                spmc_parameters.sc_lck_bq_coef[jj]=0.;
-                spmc_parameters.sc_lck_bq_coef[0]=1.;
+                spmc_parameters.sc_bq_coef[jj]=0.;
+                spmc_parameters.sc_bq_coef[0]=1.;
                 gchar *l = g_strdup_printf ("BQ1 %s%d", jj<3?"b":"a", jj<3?jj:jj-3);
                 gchar *id = g_strdup_printf ("SPMC-LCK-BQ1-COEF-BA");
-                bp->grid_add_ec (l, unity_unit, &spmc_parameters.sc_lck_bq1_coef[jj], -1e10, 1e10, "g", 1., 10., id, jj);
+                bp->grid_add_ec (l, unity_unit, &spmc_parameters.sc_bq1_coef[jj], -1e10, 1e10, "g", 1., 10., id, jj);
                 if (jj==5) bp->init_ec_array ();
                 g_object_set_data (G_OBJECT (combo_bqfilter_type), id, bp->ec);
                 g_free (l);
@@ -2005,30 +2016,53 @@ void RPSPMC_Control::create_folder (){
                 gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (combo_bqfilter_type), id, filter_types[jj]);
                 g_free (id);
         }
-        gtk_combo_box_set_active (GTK_COMBO_BOX (combo_bqfilter_type), 1);
+        gtk_combo_box_set_active (GTK_COMBO_BOX (combo_bqfilter_type), 3);
         g_object_set_data (G_OBJECT (combo_bqfilter_type), "section", GINT_TO_POINTER (2)); 
         g_signal_connect (G_OBJECT (combo_bqfilter_type), "changed",
                           G_CALLBACK (RPSPMC_Control::choice_BQfilter_type_callback),
                           this);
         bp->grid_add_widget (combo_bqfilter_type);
         bp->new_line ();
-        
-        //bp->new_line ();
-	bp->grid_add_ec ("Time Const IIR", new UnitObj("ms","ms"), &spmc_parameters.sc_lck_iir2_tau, 0., 1e6, "5g", 1e-6, 10e3, "SPMC-LCK-IIR2-TAU");
-	g_object_set_data (G_OBJECT (combo_bqfilter_type), "IIR2-TC", bp->ec);
-        bp->new_line ();
-	bp->grid_add_ec ("Time Const BQ", new UnitObj("ms","ms"), &spmc_parameters.sc_lck_bq2_tau, 0., 1e6, "5g", 1e-6, 10e3, "SPMC-LCK-BQ2-TAU");
-	g_object_set_data (G_OBJECT (combo_bqfilter_type), "BQ2-TC", bp->ec);
-        bp->new_line ();
-	bp->grid_add_ec ("BiQaud Q", new UnitObj(" Q"," Q"), &spmc_parameters.sc_lck_q2, 0., 1e6, "5g", 0.1, 5.0, "SPMC-LCK-Q2");
-	g_object_set_data (G_OBJECT (combo_bqfilter_type), "BQ2-Q", bp->ec);
-        bp->new_line ();
+
         for(int jj=0; jj<6; ++jj){
-                spmc_parameters.sc_lck_bq_coef[jj]=0.;
-                spmc_parameters.sc_lck_bq_coef[0]=1.;
+                spmc_parameters.sc_bq_coef[jj]=0.;
+                spmc_parameters.sc_bq_coef[0]=1.;
                 gchar *l = g_strdup_printf ("BQ2 %s%d", jj<3?"b":"a", jj<3?jj:jj-3);
                 gchar *id = g_strdup_printf ("SPMC-LCK-BQ2-COEF-BA");
-                bp->grid_add_ec (l, unity_unit, &spmc_parameters.sc_lck_bq2_coef[jj], -1e10, 1e10, "g", 1., 10., id, jj);
+                bp->grid_add_ec (l, unity_unit, &spmc_parameters.sc_bq2_coef[jj], -1e10, 1e10, "g", 1., 10., id, jj);
+                if (jj==5) bp->init_ec_array ();
+                g_object_set_data (G_OBJECT (combo_bqfilter_type), id, bp->ec);
+                g_free (l);
+                g_free (id);
+                bp->new_line ();
+        }	
+        
+        //
+        bp->pop_grid (); bp->set_xy (4,2);
+ 	bp->new_grid_with_frame ("Z Servo Input BiQuad Filter");
+
+        bp->set_default_ec_change_notice_fkt (RPSPMC_Control::zs_input_filter_adjust_callback, this);
+       
+        bp->grid_add_label ("Filter type");
+        combo_bqfilter_type = gtk_combo_box_text_new ();
+        for (int jj=0; filter_types[jj]; ++jj){
+                gchar *id = g_strdup_printf ("%d", jj);
+                gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (combo_bqfilter_type), id, filter_types[jj]);
+                g_free (id);
+        }
+        gtk_combo_box_set_active (GTK_COMBO_BOX (combo_bqfilter_type), 5);
+        g_object_set_data (G_OBJECT (combo_bqfilter_type), "section", GINT_TO_POINTER (3)); 
+        g_signal_connect (G_OBJECT (combo_bqfilter_type), "changed",
+                          G_CALLBACK (RPSPMC_Control::choice_BQfilter_type_callback),
+                          this);
+        bp->grid_add_widget (combo_bqfilter_type);
+        bp->new_line ();
+        for(int jj=0; jj<6; ++jj){
+                spmc_parameters.sc_zs_bq_coef[jj]=0.;
+                spmc_parameters.sc_zs_bq_coef[0]=1.;
+                gchar *l = g_strdup_printf ("ZSBQ %s%d", jj<3?"b":"a", jj<3?jj:jj-3);
+                gchar *id = g_strdup_printf ("SPMC-ZS-BQ-COEF-BA");
+                bp->grid_add_ec (l, unity_unit, &spmc_parameters.sc_zs_bq_coef[jj], -1e10, 1e10, "g", 1., 10., id, jj);
                 if (jj==5) bp->init_ec_array ();
                 g_object_set_data (G_OBJECT (combo_bqfilter_type), id, bp->ec);
                 g_free (l);
@@ -2037,27 +2071,37 @@ void RPSPMC_Control::create_folder (){
         }	
         
         // ***
-        bp->pop_grid (); bp->set_xy (4,2);
+        bp->pop_grid (); bp->set_xy (5,2);
  	bp->new_grid_with_frame ("RF Generator and AM/FM Control Setup");
 
-	bp->grid_add_ec ("RF Center", new UnitObj("Hz","Hz"), &spmc_parameters.sc_lck_rf_frequency, 0.0, 30e6, "5g", 1.0, 100.0, "SPMC-LCK-RF-FREQ");
+        bp->set_default_ec_change_notice_fkt (RPSPMC_Control::rfgen_adjust_callback, this);
+
+	bp->grid_add_ec ("RF Center", new UnitObj("Hz","Hz"), &spmc_parameters.rf_gen_frequency, 0.0, 30e6, "5g", 1.0, 100.0, "SPMC-RF-GEN-FREQ");
         bp->new_line ();
 	bp->grid_add_label ("AM Modulation");
-        bp->grid_add_check_button ("En", bp->PYREMOTE_CHECK_HOOK_KEY_FUNC("Enable AM","dsp-gvp-LCKGAIN"), 1,
-                                   GCallback (callback_change_LCK_mode), this,
-                                   &spmc_parameters.sc_lckrf_mode, 1);
+        bp->grid_add_check_button ("En", bp->PYREMOTE_CHECK_HOOK_KEY_FUNC("Enable AM","dsp-gvp-RFAM"), 1,
+                                   GCallback (callback_change_RF_mode), this,
+                                   &spmc_parameters.rf_gen_mode, 1);
         bp->new_line ();
-	bp->grid_add_ec ("FM Mod Scale", new UnitObj("Hz/V","Hz/V"), &spmc_parameters.sc_lck_fmscale, -1e9, 1e9, "6g", 0.1, 5.0, "SPMC-LCK-FMSCALE");
+	bp->grid_add_ec ("FM Mod Scale", new UnitObj("Hz/V","Hz/V"), &spmc_parameters.rf_gen_fmscale, -1e9, 1e9, "6g", 0.1, 5.0, "SPMC-RF-GEN-FMSCALE");
         bp->grid_add_check_button ("En", bp->PYREMOTE_CHECK_HOOK_KEY_FUNC("Enable FM","dsp-gvp-RFFM"), 1,
-                                   GCallback (callback_change_LCK_mode), this,
-                                   &spmc_parameters.sc_lckrf_mode, 2);
+                                   GCallback (callback_change_RF_mode), this,
+                                   &spmc_parameters.rf_gen_mode, 2);
 
         bp->new_line ();
         bp->set_label_width_chars (10);
 	bp->grid_add_label ("RF Gen Output on");
         bp->grid_add_rf_gen_out_options (0, (int)spmc_parameters.rf_gen_out_mux, this);
         
+        //***
+        
+        bp->pop_grid ();
+        bp->new_line ();
+        bp->new_grid_with_frame ("... for convenience: extra Execute GVP button");
 
+	bp->grid_add_button ("Execute GVP");
+	g_signal_connect (G_OBJECT (bp->button), "clicked",
+                          GCallback (RPSPMC_Control::Probing_exec_GVP_callback), this);
         
         bp->notebook_tab_show_all ();
         bp->pop_grid ();
@@ -3566,12 +3610,24 @@ int RPSPMC_Control::callback_change_LCK_mode (GtkWidget *widget, RPSPMC_Control 
         //        PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);
 	guint64 msk = (guint64) GPOINTER_TO_UINT (g_object_get_data (G_OBJECT(widget), "Bit_Mask"));
 	if( gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)))
-                spmc_parameters.sc_lckrf_mode |= msk;
+                spmc_parameters.lck_mode |= msk;
         else
-                spmc_parameters.sc_lckrf_mode &= ~msk;
+                spmc_parameters.lck_mode &= ~msk;
 
+        g_message ("RPSPMC_Control::callback_change_LCK_mode %d", spmc_parameters.lck_mode);
+        
+        return 0;
+}
 
-        g_message ("RPSPMC_Control::callback_change_LCK_mode %d", spmc_parameters.sc_lckrf_mode);
+int RPSPMC_Control::callback_change_RF_mode (GtkWidget *widget, RPSPMC_Control *self){
+        //        PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);
+	guint64 msk = (guint64) GPOINTER_TO_UINT (g_object_get_data (G_OBJECT(widget), "Bit_Mask"));
+	if( gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)))
+                spmc_parameters.rf_gen_mode |= msk;
+        else
+                spmc_parameters.rf_gen_mode &= ~msk;
+
+        g_message ("RPSPMC_Control::callback_change_RF_mode %d", spmc_parameters.rf_gen_mode);
         
         return 0;
 }
@@ -3857,133 +3913,93 @@ double dds_phaseinc (double freq){
         return QQ44*freq/fclk;
 }
 
+
+void RPSPMC_Control::configure_filter(int id, int mode, double sos[6], int decimation=0){
+        const gchar *SPMC_SET_BQ_COMPONENTS[] = {
+                "SPMC_SC_FILTER_MODE",   // INT
+                "SPMC_SC_FILTER_SELECT", // INT ** SECTION / FILTER BLOCK SELECTION
+                "SPMC_SC_BQ_COEF_B0", //spmc_parameters.sc_lck_bq_coef[0,1,2]
+                "SPMC_SC_BQ_COEF_B1",
+                "SPMC_SC_BQ_COEF_B2",
+                "SPMC_SC_BQ_COEF_A0", //spmc_parameters.sc_lck_bq_coef[3,4,5] ** A0 == 1 per def, been ignored.
+                "SPMC_SC_BQ_COEF_A1",
+                "SPMC_SC_BQ_COEF_A2",
+                NULL };
+
+        int jdata_i[2] = { mode & 0xffff | (decimation << 16), id };
+                
+        g_message ("Config BQ Filter #%d (SOS AB coef)", id);
+        rpspmc_pacpll->write_array (SPMC_SET_BQ_COMPONENTS, 2, jdata_i,  6, sos);
+}
+
+
+void RPSPMC_Control::bq_filter_adjust_callback(Param_Control* pcs, RPSPMC_Control *self){
+        int decimation = 1 + (int)round(8 * 5000. / spmc_parameters.lck_frequency);
+        spmc_parameters.lck_bq_dec_monitor = decimation;
+        g_message ("BQ Filter Deciamtion: #%d",  decimation);
+        self->configure_filter (1, spmc_parameters.sc_bq1mode, spmc_parameters.sc_bq1_coef, decimation);
+        self->configure_filter (2, spmc_parameters.sc_bq2mode, spmc_parameters.sc_bq2_coef, decimation);
+}
+
+void RPSPMC_Control::zs_input_filter_adjust_callback(Param_Control* pcs, RPSPMC_Control *self){
+        // Update BQ SECTION ZS =10 (Z SERVO INPUT BiQuad) [can be used to program a NOTCH]
+        // Test-DECII=32 for NOTCH intended IIR @ ~2MSPS / 32
+        self->configure_filter (10, spmc_parameters.sc_zs_bqmode, spmc_parameters.sc_zs_bq_coef, 128);
+}
+
 void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *self){
         if (rpspmc_pacpll){
-                const gchar *SPMC_SET_LCK_BQ_COMPONENTS[] = {
-                        "SPMC_SC_LCK_MODE",
-                        "SPMC_SC_LCK_GAIN",
-                        "SPMC_SC_LCK_FILTER_MODE",
-                        "SPMC_SC_LCK_BQ_COEF_B0", //spmc_parameters.sc_lck_bq_coef[0,1,2]
-                        "SPMC_SC_LCK_BQ_COEF_B1",
-                        "SPMC_SC_LCK_BQ_COEF_B2",
-                        "SPMC_SC_LCK_BQ_COEF_A0", //spmc_parameters.sc_lck_bq_coef[3,4,5] *** SECTION
-                        "SPMC_SC_LCK_BQ_COEF_A1",
-                        "SPMC_SC_LCK_BQ_COEF_A2",
-                        "SPMC_SC_LCK_FREQUENCY",
-                        "SPMC_SC_LCK_VOLUME",
-                        "SPMC_SC_LCK_F0BQ_TAU",
-                        "SPMC_SC_LCK_F0BQ_IIR",
-                        "SPMC_SC_LCK_F0BQ_Q",
-                        "SPMC_SC_LCK_FMSCALE",
-                        "SPMC_SC_LCK_RF_FREQUENCY",
+                const gchar *SPMC_LCK_COMPONENTS[] = {
+                        "SPMC_LCK_MODE",      // INT
+                        "SPMC_LCK_GAIN",      // INT (SHIFT)
+                        "SPMC_LCK_FREQUENCY",
+                        "SPMC_LCK_VOLUME",
                         NULL };
-                double jdata[6+8];
-                int jdata_i[3];
-                jdata_i[0] = spmc_parameters.sc_lckrf_mode;
-                //jdata_i[1] = spmc_parameters.sc_lck_gainn2;
-                if (spmc_parameters.sc_lck_sens <= 0.){
+                int jdata_i[2];
+                double jdata[2];
+                jdata_i[0] = spmc_parameters.lck_mode;
+                if (spmc_parameters.lck_sens <= 0.){
                         g_message ("LCK Gain defaulting to 1x (0)");
                         jdata_i[1] = 0;
                 } else {
                         int decii2_max = 12;
-                        double s = 1e-3*spmc_parameters.sc_lck_sens; // mV to V
+                        double s = 1e-3*spmc_parameters.lck_sens; // mV to V
                         double g = 5.0/s; // to gain
                         if (g < 1.) g=1.;
                         int  gl2 = int(log2(g));
                         int  gin = gl2 <= decii2_max ? gl2 : decii2_max;
-                        int gout = gl2 > decii2_max && gl2 < 20 ? (gl2-decii2_max) : 0;
-                        int deci = 7;
-                        g_message ("LCK Gain request: %g -> shift %d [gin: %d, gout: %d, dec2: %d] ", g, gl2, gin, gout, deci);
+                        g_message ("LCK Gain request: %g -> shift#: %d ", g, gin);
+                        int deci=0;
+                        int gout=0;
                         jdata_i[1] = (deci<<16) | (gout<<8) | gin;
                 }
-
-                int i=0;
-                // Update BQ SECTION 1
-                jdata_i[2] = spmc_parameters.sc_lck_bq1mode;
-                for (;i<6; ++i)
-                        jdata[i] = spmc_parameters.sc_lck_bq1_coef[i];
-                jdata[3] = 0;
-                i=6;
-                jdata[i++] =  spmc_parameters.sc_lck_frequency;
+                jdata[0] =  spmc_parameters.lck_frequency;
 
                 if  (self->LCK_Target > 0 && self->LCK_Target < LCK_NUM_TARGETS)
-                        jdata[i++] = modulation_targets[self->LCK_Target].scale_factor * self->LCK_Volume[self->LCK_Target]; // => Volts
+                        jdata[1] = modulation_targets[self->LCK_Target].scale_factor * self->LCK_Volume[self->LCK_Target]; // => Volts
                 else
-                        jdata[i++] = 0.;
-                
-                jdata[i++] = spmc_parameters.sc_lck_bq1_tau;
-                jdata[i++] = spmc_parameters.sc_lck_iir1_tau;
-                jdata[i++] = spmc_parameters.sc_lck_q1;
-                
-                jdata[i++] = spmc_parameters.sc_lck_fmscale;
-                jdata[i++] = spmc_parameters.sc_lck_rf_frequency;
+                        jdata[1] = 0.;
 
-                rpspmc_pacpll->write_array (SPMC_SET_LCK_BQ_COMPONENTS, 3, jdata_i,  i, jdata);
+                g_message ("LCK Adjust SENDING UPDATE T#%d M:%d G:<<%d F:%g Hz V: %g {%g}", self->LCK_Target, jdata_i[0], jdata_i[1], jdata[0], self->LCK_Volume[self->LCK_Target], jdata[1]);
+                rpspmc_pacpll->write_array (SPMC_LCK_COMPONENTS, 2, jdata_i,  2, jdata);
+        }
+}
 
-                // Update BQ SECTION 2
-                jdata_i[2] = spmc_parameters.sc_lck_bq2mode;
-                i=0;
-                for (;i<6; ++i)
-                        jdata[i] = spmc_parameters.sc_lck_bq2_coef[i];
-                jdata[3] = 1;
-                i=6;
-                jdata[i++] =  spmc_parameters.sc_lck_frequency;
 
-                if  (self->LCK_Target > 0 && self->LCK_Target < LCK_NUM_TARGETS)
-                        jdata[i++] = modulation_targets[self->LCK_Target].scale_factor * self->LCK_Volume[self->LCK_Target]; // => Volts
-                else
-                        jdata[i++] = 0.;
-                
-                jdata[i++] = spmc_parameters.sc_lck_bq2_tau;
-                jdata[i++] = spmc_parameters.sc_lck_iir2_tau;
-                jdata[i++] = spmc_parameters.sc_lck_q2;
-                
-                jdata[i++] = spmc_parameters.sc_lck_fmscale;
-                jdata[i++] = spmc_parameters.sc_lck_rf_frequency;
-
-                rpspmc_pacpll->write_array (SPMC_SET_LCK_BQ_COMPONENTS, 3, jdata_i,  i, jdata);
-
-#if 0                
-
-                g_message ("ADJ LOCKIN FRQ %g Hz, target=%d vol=%g V, RF=%g Hz", spmc_parameters.sc_lck_frequency, self->LCK_Target, spmc_parameters.sc_lck_volume, spmc_parameters.sc_lck_rf_frequency);
-
-                unsigned int n2 = round (log2(dds_phaseinc (spmc_parameters.sc_lck_frequency)));
-                double lck_decimation_factor = (1 << (44 - 10 - n2)) - 1.;
-                double Fs = 125e6 / lck_decimation_factor;
-
-                gchar *info = g_strdup_printf ("Fs=%g Hz", Fs);
-                self->LCK_ModFrq->set_info (info);
-                g_free (info);
-
-                g_print ("BiQ Coef: BA = [");
-                for (int k=0;k<6; ++k)
-                        g_print ("%g%s ", spmc_parameters.sc_lck_bq_coef[k], k==2?"][":k<5?",":"]");
-                g_print (", Fs=%g Hz\n", Fs);
-                
-                if (spmc_parameters.sc_lck_q > 0. && spmc_parameters.sc_lck_bq_tau > 0.)
-                { // INFO
-                        double b0, b1, b2, a0, a1, a2;
-                        double f_cut = 1000./spmc_parameters.sc_lck_bq_tau;
-                        double Q  = spmc_parameters.sc_lck_q;
-                        // 2nd order BiQuad Low Pass parameters
-                        double w0 = 2.*M_PI*f_cut/Fs; // 125MHz -- decimate as needed!
-                        double c  = cos (w0);
-                        double xc = 1.0 - c;
-                        double a  = sin (w0) / (2.0 * Q);
-        
-                        b0 = 0.5*xc;
-                        b1 = xc;
-                        b2 = b0;
-                        a0 = 1.0+a;
-                        a1 = -2.0*c;
-                        a2 = 1.0-a;
-        
-                        g_message ("##Configure: BiQuad Fc=%g Hz  Q=%g, Fs=%g Hz:\n", f_cut, Q, Fs);
-                        g_message ("## b0=%g b1=%g b2=%g  a0=%g a1=%g a2=%g\n", b0, b1, b2, a0, a1, a2);
-                        g_message ("##NORM b0=%g b1=%g b2=%g  a0=%g a1=%g a2=%g\n", b0/a0, b1/a0, b2/a0, a0/a0, a1/a0, a2/a0);
-                }
-#endif
-                
+void RPSPMC_Control::rfgen_adjust_callback(Param_Control* pcs, RPSPMC_Control *self){
+        if (rpspmc_pacpll){
+                const gchar *SPMC_RFGEN_COMPONENTS[] = {
+                        "SPMC_RF_GEN_MODE",      // INT
+                        "SPMC_RF_GEN_FREQUENCY",
+                        "SPMC_RF_GEN_FMSCALE",
+                        NULL };
+                int jdata_i[1];
+                double jdata[2];
+                jdata_i[0] = spmc_parameters.rf_gen_mode;
+                jdata[0]   = spmc_parameters.rf_gen_frequency;
+                jdata[1]   = spmc_parameters.rf_gen_fmscale;
+                g_message ("RF-GEN Adjust SENDING MODE, RF-FREQ, FM-SCALE");
+                rpspmc_pacpll->write_array (SPMC_RFGEN_COMPONENTS, 1, jdata_i,  2, jdata);
         }
 }
 
@@ -3996,50 +4012,57 @@ int RPSPMC_Control::choice_mod_target_callback (GtkWidget *widget, RPSPMC_Contro
                 gtk_widget_set_sensitive (self->LCK_VolumeEntry[jj], jj == self->LCK_Target);
         
         if (rpspmc_pacpll){
-                rpspmc_pacpll->write_parameter ("SPMC_SC_LCK_TARGET", self->LCK_Target);
+                g_message ("Setting LCK TARGET: %d", self->LCK_Target);
+                rpspmc_pacpll->write_parameter ("SPMC_LCK_TARGET", self->LCK_Target);
                 self->lockin_adjust_callback (NULL, self); // update correct volume
         }
         return 0;
 }
 
 int RPSPMC_Control::choice_BQfilter_type_callback (GtkWidget *widget, RPSPMC_Control *self){
-	int id = gtk_combo_box_get_active (GTK_COMBO_BOX (widget));
+	int id = gtk_combo_box_get_active (GTK_COMBO_BOX (widget)); // filter type/config mode PASS, IIR, BQIIR, AB, STOP
 
         int BQsec = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (widget), "section"))-1;
 
-        if (BQsec == 0)
-                spmc_parameters.sc_lck_bq1mode = id;
-        else
-                spmc_parameters.sc_lck_bq2mode = id;
+        switch (BQsec){
+        case 0: spmc_parameters.sc_bq1mode = id;
+                bq_filter_adjust_callback (NULL, self);
+                break;
+        case 1: spmc_parameters.sc_bq2mode = id;
+                bq_filter_adjust_callback (NULL, self);
+                break;
+        case 2: spmc_parameters.sc_zs_bqmode = id;
+                zs_input_filter_adjust_callback (NULL, self);
+                break;
+        }
 
-        
-        gchar *wids[2][3] = {{ "IIR1-TC", "BQ1-TC", "BQ1-Q" }, { "IIR2-TC", "BQ2-TC", "BQ2-Q" }};
-        switch (id){
-        case 0:
-                g_message ("BQ: PASS");
-                gtk_widget_set_sensitive (GTK_WIDGET (g_object_get_data (G_OBJECT (widget), wids[BQsec][0])), false);
-                gtk_widget_set_sensitive (GTK_WIDGET (g_object_get_data (G_OBJECT (widget), wids[BQsec][1])), false);
-                gtk_widget_set_sensitive (GTK_WIDGET (g_object_get_data (G_OBJECT (widget), wids[BQsec][2])), false);
-                break;
-        case 1:
-                g_message ("BQ: IIR 1st");
-                gtk_widget_set_sensitive (GTK_WIDGET (g_object_get_data (G_OBJECT (widget), wids[BQsec][0])), true);
-                gtk_widget_set_sensitive (GTK_WIDGET (g_object_get_data (G_OBJECT (widget), wids[BQsec][1])), false);
-                gtk_widget_set_sensitive (GTK_WIDGET (g_object_get_data (G_OBJECT (widget), wids[BQsec][2])), false);
-                break;
-        case 2:
-                g_message ("BQ: BiQuad 2nd");
-                gtk_widget_set_sensitive (GTK_WIDGET (g_object_get_data (G_OBJECT (widget), wids[BQsec][0])), false);
-                gtk_widget_set_sensitive (GTK_WIDGET (g_object_get_data (G_OBJECT (widget), wids[BQsec][1])), true);
-                gtk_widget_set_sensitive (GTK_WIDGET (g_object_get_data (G_OBJECT (widget), wids[BQsec][2])), true);
-                break;
-        case 3:
-                g_message ("BQ: BiQuad BA -- from a,b params");
-                gtk_widget_set_sensitive (GTK_WIDGET (g_object_get_data (G_OBJECT (widget), wids[BQsec][0])), false);
-                gtk_widget_set_sensitive (GTK_WIDGET (g_object_get_data (G_OBJECT (widget), wids[BQsec][1])), false);
-                gtk_widget_set_sensitive (GTK_WIDGET (g_object_get_data (G_OBJECT (widget), wids[BQsec][2])), false);
-                break;
+        if (BQsec == 0 || BQsec == 1 || BQsec == 2){
 
+                gchar *bqid[] = {"LCK-SEC1", "LCK-SEC2", "ZS-Input" };
+                gchar *wids[3][3] = {{ "IIR1-TC", "BQ1-TC", "BQ1-Q" }, { "IIR2-TC", "BQ2-TC", "BQ2-Q" }, { "IIRZS-TC", "BQZS-TC", "BQZS-Q" }};
+                switch (id){
+                case 0:
+                        g_message ("Set %s BQ to ONE, PASS", bqid[BQsec]);
+                        break;
+                case 1:
+                        g_message ("BQ: N/A --- **IIR 1st");
+                        break;
+                case 2:
+                        g_message ("BQ: N/A --- **BiQuad 2nd");
+                        break;
+                case 3:
+                        g_message ("Set %s BiQuad SOS from AB-Coef", bqid[BQsec]);
+                        break;
+                case 4:
+                        g_message ("Set %s BiQuad SOS to NULL (STOP)", bqid[BQsec]); break;
+                        break;
+                case 5:
+                        g_message ("Set %s BiQuad SOS to By-Pass Mode", bqid[BQsec]); break;
+                        break;
+                case 6:
+                        g_message ("Set %s BiQuad SOS to STOP", bqid[BQsec]);
+                        break;
+                }
         }
         
         return 0;
@@ -5370,6 +5393,7 @@ void RPspmc_pacpll::save_values (NcFile &ncf){
                         NcVar ncv = ncf.addVar ( vn, ncDouble);
                         ncv.putAtt ("long_name", vn);
                         ncv.putAtt ("short_name", p->js_varname);
+                        ncv.putAtt ("var_unit", p->unit_id);
                         ncv.putVar (p->value);
                 }
                 // ACTUAL PARAMETERS in "dB" DOUBLE PRECISION VALUES, getting OK to the FPGA...
@@ -5378,7 +5402,7 @@ void RPspmc_pacpll::save_values (NcFile &ncf){
                         NcVar ncv = ncf.addVar ( vn, ncDouble);
                         ncv.putAtt ("long_name", vn);
                         ncv.putAtt ("short_name", "_PHASE_FB_CP");
-                        ncv.putAtt ("var_unit", "1");
+                        ncv.putAtt ("var_unit", "dB");
                         ncv.putVar (&parameters.phase_fb_cp); // OK!
                 }
                 {
@@ -5386,7 +5410,7 @@ void RPspmc_pacpll::save_values (NcFile &ncf){
                         NcVar ncv = ncf.addVar ( vn, ncDouble);
                         ncv.putAtt ("long_name", vn);
                         ncv.putAtt ("short_name", "_PHASE_FB_CI");
-                        ncv.putAtt ("var_unit", "1");
+                        ncv.putAtt ("var_unit", "dB");
                         ncv.putVar (&parameters.phase_fb_ci); // OK!
                 }
                 {
@@ -5394,7 +5418,7 @@ void RPspmc_pacpll::save_values (NcFile &ncf){
                         NcVar ncv = ncf.addVar ( vn, ncDouble);
                         ncv.putAtt ("long_name", vn);
                         ncv.putAtt ("short_name", "_AMPLITUDE_FB_CP");
-                        ncv.putAtt ("var_unit", "1");
+                        ncv.putAtt ("var_unit", "dB");
                         ncv.putVar (&parameters.amplitude_fb_cp); // OK!
                 }
                 {
@@ -5402,7 +5426,7 @@ void RPspmc_pacpll::save_values (NcFile &ncf){
                         NcVar ncv = ncf.addVar ( vn, ncDouble);
                         ncv.putAtt ("long_name", vn);
                         ncv.putAtt ("short_name", "_AMPLITUDE_FB_CI");
-                        ncv.putAtt ("var_unit", "1");
+                        ncv.putAtt ("var_unit", "dB");
                         ncv.putVar (&parameters.amplitude_fb_ci); // OK!
                 }
                 {
@@ -5410,7 +5434,7 @@ void RPspmc_pacpll::save_values (NcFile &ncf){
                         NcVar ncv = ncf.addVar ( vn, ncDouble);
                         ncv.putAtt ("long_name", vn);
                         ncv.putAtt ("short_name", "_PHASE_FB_CP_dB");
-                        ncv.putAtt ("var_unit", "1");
+                        ncv.putAtt ("var_unit", "dB");
                         ncv.putVar (&parameters.phase_fb_cp_db); // OK!
                 }
                 {
@@ -5426,7 +5450,7 @@ void RPspmc_pacpll::save_values (NcFile &ncf){
                         NcVar ncv = ncf.addVar ( vn, ncDouble);
                         ncv.putAtt ("long_name", vn);
                         ncv.putAtt ("short_name", "_AMPLITUDE_FB_CP_dB");
-                        ncv.putAtt ("var_unit", "1");
+                        ncv.putAtt ("var_unit", "dB");
                         ncv.putVar (&parameters.amplitude_fb_cp_db); // OK!
                 }
                 {

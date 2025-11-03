@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.signal import butter, freqz, ellip
+from scipy.signal import butter, freqz, ellip, iirnotch, tf2sos
 import math
 import time
 import matplotlib as mpl
@@ -10,16 +10,20 @@ from matplotlib import ticker
 mpl.pyplot.close('all')
 
 # Set Filter F-Cut to
-fc = 0.95*float(gxsm.get("dsp-SPMC-LCK-FREQ"))
+fc = 0.8*float(gxsm.get("dsp-SPMC-LCK-FREQ"))
+
+LCK_DEC = float(gxsm.get("dsp-LCK-BQDEC-MONITOR"))
+if LCK_DEC == 0:
+	LCK_DEC = 8
+AD463FS = 125e6/59
+
+##Configure Lock-In: FNorm: 529.661 DDS Freq= 2000 Hz DECII2=1 DCF_IIR2=11 Mode=0 *** Gains: gin: 1, gout: 0
+##Configure DC-FILTER: dc=-0.0142334, dc-tau=1 s
 
 # Ellip filter characteristics
 stop_attn_db = 50
 ripple_db=1
 
-
-# ******** Lck Settings internal
-FS = 1
-DECII=7
 
 def plot_vpdata(cols=[1,2,4]):
     plt.close ('all')
@@ -31,7 +35,7 @@ def plot_vpdata(cols=[1,2,4]):
                     yl = yl + ', ' + labels[c]
             else:
                     yl = labels[c]
-    plt.title('VPDATA  FS={:.2f} Hz'.format(FS))
+    plt.title('VPDATA')
     plt.xlabel(labels[cols[0]])
     plt.ylabel(yl)
     plt.legend()
@@ -47,10 +51,9 @@ def dds_phaseinc (freq):
 
 def Fs():
 	freq = float(gxsm.get("dsp-SPMC-LCK-FREQ"))
-	print ('Lck Freq: {} Hz'.format(freq))
-	n2 = round (math.log2(dds_phaseinc (freq)))
-	lck_decimation_factor = (1 << (44 - DECII - n2)) - 1.
-	return 125e6 / (lck_decimation_factor)  # pre-deciamtion to 1024 samples per lockin ref period
+	fss = AD463FS / LCK_DEC
+	print ('Lck Freq: {} Hz -- Lck internal subsampling: {} Hz'.format(freq, fss))
+	return fss
 
 print ('Fs LockIn is ', Fs (), ' Hz')
 
@@ -60,8 +63,8 @@ def run_sosfilt(sos, x):
     zx = np.zeros(n_sections)
     zy = np.zeros(n_sections)
 
-    print (n_samples, n_sections)
-    print (sos.shape)
+    #print (n_samples, n_sections)
+    #print (sos.shape)
 
     y = np.zeros(n_samples)
 
@@ -90,17 +93,17 @@ def run_sosfilt_Q24(sos, x):
     zx = np.zeros(n_sections)
     zy = np.zeros(n_sections)
 
-    print (n_samples, n_sections)
-    print (sos.shape)
+    #print (n_samples, n_sections)
+    #print (sos.shape)
 
     sos = sos*Q28
     sos = sos.astype(np.int64)
 
-    print ('SOS_Q28:', sos)
+    #print ('SOS_Q28:', sos)
     
     xi = (x*Q24).astype(np.int64)
 
-    print ('xQ24:', xi)
+    #print ('xQ24:', xi)
     
     y = np.zeros(n_samples, type(np.int64))
     
@@ -138,6 +141,13 @@ def butterworth_filter(order=2, cutoff=0.3, filter_type='low', fs=1.0):
     b, a = butter(order, normal_cutoff, btype=filter_type, analog=False)
     return b, a
 
+def notch_filter(w0, Q, fs):
+    b, a = iirnotch(w0, Q, fs=fs)
+    sos = tf2sos(b, a)
+    print ('a,b: ', a, b)
+    print ('sos: ', sos)
+    return sos, b, a
+
 # Compute and plot the frequency response
 def plot_frequency_response(b, a, cutoff):
     w, h = freqz(b, a, worN=1024)
@@ -148,7 +158,7 @@ def plot_frequency_response(b, a, cutoff):
     plt.xlabel('Normalized Frequency (×π rad/sample)')
     plt.ylabel('Magnitude (dB)')
     plt.grid()
-    plt.savefig('/tmp/filter.png')
+    plt.savefig('/tmp/fresponse.png')
     plt.show()
 
 # calc nomralize sampling freq
@@ -158,9 +168,13 @@ fc_norm = fc/Fs()
 
 sos, b, a = ellipt_filter(order=4, cutoff=fc_norm, sa=stop_attn_db, rp=ripple_db)
 
-print ('fCut_norm=', fc_norm, ' fc=', fc, ' Hz')
+#sos, b, a = notch_filter(2000, 30, Fs())
+
+print ('*****************************************')
+print ('fCut_norm=', fc_norm, ' fc=', fc, ' Hz',  ' FS:', Fs())
+print ('*****************************************')
 print (' b=',b,' a=',a)
-print (' sos=',sos)
+#print (' sos=',sos)
 
 bqv = "vector = {32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0  "
 
@@ -186,43 +200,43 @@ if 1: # SOS ellipt cascaded BiQ type
 			bqp = ", {}32'd{:d} {}".format('-' if sos[s][i] < 0 else ' ', int(round(cQ*abs(sos[s][i]))), bqp)
 			#bqp = ", {}32'd{:d} {}".format('-' if sos[s][i] < 0 else ' ', int(round(cQ*abs(sos[s][i])))-cQ, bqp) ## CHECK
 			
-		print ('SOS Bq [{:d}] Stage {}: '.format (cQ, s+1), bqv + bqp)
+		print ('SOS Bq [{:d}] Stage {}:\n'.format (cQ, s+1), bqv + bqp)
 
-#plot_frequency_response(b, a, fc_norm)
+plot_frequency_response(b, a, fc_norm)
 
-columns, labels, units = gxsm.get_probe_event(0,-1)  # get last
+print ('Getting last vpdata set from master scan DATA ********')
+columns, labels, units, xy = gxsm.get_probe_event(0,-1)  # get last
+vpdata  = dict (zip (labels, columns))
+vpunits = dict (zip (labels, units))
 
-print (labels)
-plot_vpdata([4,1,2,3])
-#plot_vpdata([4,0,1])
+print ('XY:', xy)
+print ('vpunits:', vpunits)
 
-FS_data = 1000/(columns[4][101]-columns[4][100])
+FS_data = 1000/(vpdata['Time-Mon'][101]-vpdata['Time-Mon'][100])
 
-print ('FS data:', FS_data)
 
 fc_norm = fc/FS_data
+print ('*** DATA ********************************')
+print ('FS data:', FS_data, ' Hz   Fc_norm:', fc_norm)
+print ('*****************************************')
 sos, b, a = ellipt_filter(order=4, cutoff=fc_norm, sa=stop_attn_db, rp=ripple_db)
 
 
 #filteredS = sosfilt(sos, columns[4])
-fsig, z0, z1 = run_sosfilt(sos, columns[1])
-print ('SOS:', fsig)
+fsig, z0, z1 = run_sosfilt(sos, vpdata['14-LockIn-Mag-pass'])
+#print ('SOS:', fsig)
 
-print (columns, labels)
+plt.figure(figsize=(12, 4))
+plt.title('Filter Sim and Data Fc {} (Normed: {} Hz)'.format(fc, fc_norm))
+plt.xlabel('time in ms')
+plt.ylabel('signal in V')
 
-plt.plot(columns[4], fsig, label='SOS')
-#plt.plot(columns[4], z0[0], label='SOSz00')
-#plt.plot(columns[4], z1[0], label='SOSz01')
-#plt.plot(columns[4], z0[1], label='SOSz10')
-#plt.plot(columns[4], z1[1], label='SOSz11')
+plt.plot (vpdata['Time-Mon'], fsig, label='Mag-SOS')
+plt.plot (vpdata['Time-Mon'], vpdata['14-LockIn-Mag-pass'], alpha=0.3, label='Mag-pass')
+#plt.plot (vpdata['Time-Mon'], vpdata['08-LockIn-Mag'], alpha=0.3, label='Mag-BQ')
+#plt.ylim (0.004, 0.005)
 plt.legend()
 plt.grid()
 plt.show()
 plt.savefig('/tmp/filter.png')
-
-
-#columns[5] = run_sosfilt_Q24(sos, columns[4])
-#labels[5]  = 'SOS[4] Q24'
-
-#plot_vpdata([5,1,2,3,4,6])
 

@@ -215,8 +215,11 @@ public:
                 double last_range = zrange;
                 if (!extend)
                         zmin=zmax=Z (0,0,iv);
-                for (int ix=0; ix<nx; ++ix)
-                        for (int iy=0; iy<ny; ++iy){
+
+                int marx = nx > 4 ? 2 : 0;
+                int mary = ny > 4 ? 2 : 0;
+                for (int ix=marx; ix<nx-marx; ++ix)
+                        for (int iy=mary; iy<ny-mary; ++iy){
                                 double z=Z (ix,iy,iv);
                                 if (zmin > z) zmin = z;
                                 if (zmax < z) zmax = z;

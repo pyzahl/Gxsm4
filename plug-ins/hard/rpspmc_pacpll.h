@@ -102,8 +102,6 @@ extern "C++" {
 #define SPMC_RPIN34_to_volts (SPMC_RPIN34_REFV / QN(31))
 
 
-
-
 // GUI builder helper
 class GUI_Builder : public BuildParam{
 public:
@@ -431,7 +429,11 @@ public:
 
         static int ldc_callback(GtkWidget *widget, RPSPMC_Control *self);
 
+        void configure_filter(int id, int mode, double sos[6], int decimation);
         static void lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *self);
+        static void bq_filter_adjust_callback(Param_Control* pcs, RPSPMC_Control *self);
+        static void zs_input_filter_adjust_callback(Param_Control* pcs, RPSPMC_Control *self);
+        static void rfgen_adjust_callback(Param_Control* pcs, RPSPMC_Control *self);
         static int choice_mod_target_callback (GtkWidget *widget, RPSPMC_Control *self);
         static int choice_z_servo_current_source_callback (GtkWidget *widget, RPSPMC_Control *self);
 
@@ -487,6 +489,7 @@ public:
         static int Probing_multiIV_callback(GtkWidget *widget, RPSPMC_Control *self);
         
         static int callback_change_LCK_mode (GtkWidget *widget, RPSPMC_Control *self);
+        static int callback_change_RF_mode (GtkWidget *widget, RPSPMC_Control *self);
 
         static int callback_change_GVP_vpc_option_flags (GtkWidget *widget, RPSPMC_Control *self);
 	static int callback_update_GVP_vpc_option_checkbox (GtkWidget *widget, RPSPMC_Control *self);
