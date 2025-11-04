@@ -3979,7 +3979,7 @@ void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *
         if (rpspmc_pacpll){
                 const gchar *SPMC_LCK_COMPONENTS[] = {
                         "SPMC_LCK_MODE",      // INT
-                        "SPMC_LCK_GAIN",      // INT (SHIFT)
+                        "SPMC_LCK_GAIN",      // INT (SHIFT) IN, OUT
                         "SPMC_LCK_FREQUENCY",
                         "SPMC_LCK_VOLUME",
                         NULL };
@@ -3990,16 +3990,48 @@ void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *
                         g_message ("LCK Gain defaulting to 1x (0)");
                         jdata_i[1] = 0;
                 } else {
+                        /* on RP:
+                          int decii2_max   = 12;
+                          int max_gain_out = 10;
+                          int gain_in  =  gain      & 0xff; // 1x : == decii2
+                          int gain_out = (gain>>8)  & 0xff; // 1x : == 
+                          
+                          gain_in  = gain_in  > decii2 ? 0 : decii2-gain_in;
+                          gain_out = gain_out > max_gain_out ? max_gain_out : gain_out;
+
+                          on FPGA:
+                          ampl2_norm_shr <= 2*LCK_CORRSUM_Q_WIDTH - AM2_DATA_WIDTH - gain_out[10-1:0];
+                          ... signal     <= signal_dec >>> gain_in[DECII2_MAX-1:0]; // custom reduced norm, MAX, full norm: decii2  ***** correleation producst/sums will overrun for large siganls if not at FULL NORM!!
+                          ... ampl2 <= ab2 >>> ampl2_norm_shr; // Q48 for SQRT:   Norm Square, reduce to AM2 WIDTH
+
+
+                        */
+                        
                         int decii2_max = 12;
                         double s = 1e-3*spmc_parameters.lck_sens; // mV to V
-                        double g = 5.0/s; // to gain
+                        double g = 5.0/s; // to gain. I.e. gain 1x for 5V (5000mV)
                         if (g < 1.) g=1.;
                         int  gl2 = int(log2(g));
-                        int  gin = gl2 <= decii2_max ? gl2 : decii2_max;
-                        g_message ("LCK Gain request: %g -> shift#: %d ", g, gin);
+                        int  gain_in = gl2 <= decii2_max ? gl2 : decii2_max;
+                        g_message ("LCK Gain request: %g -> shift#: %d ", g, gain_in);
                         int deci=0;
-                        int gout=0;
-                        jdata_i[1] = (deci<<16) | (gout<<8) | gin;
+                        int gain_out=0;
+                        
+                        double fs = 125e6/59; //naclks; // actual sampling freq
+
+                        int decii2=0;
+                        double fn = fs / spmc_parameters.lck_frequency;
+                        
+                        while (fn > 100. && decii2 <= 12){
+                                decii2++;
+                                fn /= 2.0;
+                        }
+        
+                        if (gain_out == 0 && gain_in > decii2)
+                                gain_out = gain_in - decii2;
+
+                        
+                        jdata_i[1] = (deci<<16) | (gain_out<<8) | gain_in;
                 }
                 jdata[0] =  spmc_parameters.lck_frequency;
 
@@ -4008,7 +4040,7 @@ void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *
                 else
                         jdata[1] = 0.;
 
-                g_message ("LCK Adjust SENDING UPDATE T#%d M:%d G:<<%d F:%g Hz V: %g {%g}", self->LCK_Target, jdata_i[0], jdata_i[1], jdata[0], self->LCK_Volume[self->LCK_Target], jdata[1]);
+                g_message ("LCK Adjust SENDING UPDATE T#%d M:%d G:<<%x F:%g Hz V: %g {%g}", self->LCK_Target, jdata_i[0], jdata_i[1], jdata[0], self->LCK_Volume[self->LCK_Target], jdata[1]);
                 rpspmc_pacpll->write_array (SPMC_LCK_COMPONENTS, 2, jdata_i,  2, jdata);
         }
 }

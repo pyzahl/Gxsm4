@@ -90,8 +90,8 @@ def run_sosfilt(sos, x):
 
 def run_sosfilt_Q24(sos, x):
     sens=100
-    QS = 1<<24 #24
-    QC = 1<<28 #28
+    QS = 1<<24  #24
+    QC = 1<<28 	#28
     QSC = float(QS) * QC
     n_samples = x.shape[0]
     n_sections = sos.shape[0]
@@ -117,7 +117,7 @@ def run_sosfilt_Q24(sos, x):
     for n in range(0,n_samples):
         x_cur=xi[n]
         for s in range(n_sections):
-            x_new          = int(sos[s, 0] * x_cur                  + zi_slice[s, 0]) >> 28
+            x_new          = int(sos[s, 0] * x_cur                  + zi_slice[s, 0]) >> QC
             zi_slice[s, 0] =  sos[s, 1] * x_cur - sos[s, 4] * x_new + zi_slice[s, 1]
             zi_slice[s, 1] =  sos[s, 2] * x_cur - sos[s, 5] * x_new
             x_cur = x_new
@@ -219,15 +219,24 @@ if 1:
 	vpdata  = dict (zip (labels, columns))
 	vpunits = dict (zip (labels, units))
 
+	#vpdata['08-LockIn-Mag'][0] = 0
+	#vpdata['14-LockIn-Mag-pass'][0] = 0
+
 	print ('XY:', xy)
 	print ('vpunits:', vpunits)
+
+	print(vpdata['08-LockIn-Mag'][0:20])
+	print(vpdata['14-LockIn-Mag-pass'][0:20])
+	print(vpdata['08-LockIn-Mag'][0:-20])
+	print(vpdata['14-LockIn-Mag-pass'][0:-20])
+
 
 	FS_data = 1000/(vpdata['Time-Mon'][101]-vpdata['Time-Mon'][100])
 
 
 	fc_norm = fc/FS_data
 	print ('*** DATA ********************************')
-	print ('FS data:', FS_data, ' Hz   Fc_norm:', fc_norm)
+	print ('FS data:', FS_data, ' Hz   Fc_norm:', fc_norm, ' actual sample dt=', vpdata['Time-Mon'][101]-vpdata['Time-Mon'][100],' ms')
 	print ('*****************************************')
 	sos, b, a = ellipt_filter(order=4, cutoff=fc_norm, sa=stop_attn_db, rp=ripple_db)
 
@@ -235,10 +244,10 @@ if 1:
 	#filteredS = sosfilt(sos, vpdata['14-LockIn-Mag-pass'])
 	
 	# Floatingpoint
-	#fsig, z0, z1 = run_sosfilt(sos, vpdata['14-LockIn-Mag-pass'])
+	fsig, zf0, zf1 = run_sosfilt(sos, vpdata['14-LockIn-Mag-pass'])
 
 	# Integer Q
-	fsig, z0, z1 = run_sosfilt_Q24(sos, vpdata['14-LockIn-Mag-pass'])
+	fsigQ, z0, z1 = run_sosfilt_Q24(sos, vpdata['14-LockIn-Mag-pass'])
 	#run_sosfilt_Q24(sos, x)
 	#print ('SOS:', fsig)
 
@@ -248,15 +257,17 @@ if 1:
 	plt.ylabel('signal in V')
 
 	plt.plot (vpdata['Time-Mon'], fsig, label='Mag-SOS')
+	plt.plot (vpdata['Time-Mon'], fsigQ, label='Mag-SOS-Q')
 	plt.plot (vpdata['Time-Mon'], z0[0], label='Z0S0')
 	plt.plot (vpdata['Time-Mon'], z1[0], label='Z1S0')
 	plt.plot (vpdata['Time-Mon'], z0[1], label='Z0S1')
 	plt.plot (vpdata['Time-Mon'], z1[1], label='Z1S1')
 	plt.plot (vpdata['Time-Mon'], vpdata['14-LockIn-Mag-pass'], alpha=0.3, label='Mag-pass')
-	#plt.plot (vpdata['Time-Mon'], vpdata['08-LockIn-Mag'], alpha=0.3, label='Mag-BQ')
-	#plt.ylim (0.0, 0.01)
+	plt.plot (vpdata['Time-Mon'], vpdata['08-LockIn-Mag'], alpha=0.3, label='Mag-BQ')
+	#plt.ylim (0.0, 1.)
+	plt.xlim (0.0, 100.)
 	plt.legend()
 	plt.grid()
-	plt.show()
+	#plt.show()
 	plt.savefig('/tmp/filter.png')
 
