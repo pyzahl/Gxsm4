@@ -190,7 +190,7 @@ SOURCE_SIGNAL_DEF rpspmc_swappable_signals[] = {                                
         { 0x00000013, "19-GVP-FM",         " ", "V", "V", SPMC_AD5791_to_volts,                      -1, -1 },   // GVP-FM
         { 0x00000014, "20-Z-OUT",          " ", "B", "B", 1.0/(1<<12),                               -1, -1 },   // Z-DAC out raw value signed 20bit coming top aligned in " 32 >> 12 "
         { 0x00000015, "21-ZS-BQ-Out",      " ", "nA", "nA", SPMC_RPIN34_to_volts,                    -1, -1 },   // Auto OverSampled -- processed tunnel current signal "Volts" here, to nA/pA later!!! ADJUST W MUX!!!
-        { 0x00000016, "22-LockIn-S-AC-DEC"," ", "V",  "V",  SPMC_RPIN34_to_volts,                    -1, -1 },   // Auto OverSampled -- IN4 ADC4630-24-B 2MSPS
+        { 0x00000016, "22-LockIn-S-DC",    " ", "V",  "V",  SPMC_RPIN34_to_volts,                    -1, -1 },   // Auto OverSampled -- IN4 ADC4630-24-B 2MSPS
         //{ 0x00000010, "X-TestSignal = 0", " ", "V",   "V", (1.0),                         -1, -1 },
         //{ 0x00000011, "X-TestSignal = 1", " ", "V",   "V", (1.0),                         -1, -1 },
         //{ 0x00000012, "X-TestSignal = -1", " ", "V",   "V", (1.0),                        -1, -1 },
@@ -3932,19 +3932,47 @@ void RPSPMC_Control::configure_filter(int id, int mode, double sos[6], int decim
         rpspmc_pacpll->write_array (SPMC_SET_BQ_COMPONENTS, 2, jdata_i,  6, sos);
 }
 
-
-void RPSPMC_Control::bq_filter_adjust_callback(Param_Control* pcs, RPSPMC_Control *self){
-        int decimation = 1 + (int)round(8 * 5000. / spmc_parameters.lck_frequency);
-        spmc_parameters.lck_bq_dec_monitor = decimation;
-        g_message ("BQ Filter Deciamtion: #%d",  decimation);
-        self->configure_filter (1, spmc_parameters.sc_bq1mode, spmc_parameters.sc_bq1_coef, decimation);
-        self->configure_filter (2, spmc_parameters.sc_bq2mode, spmc_parameters.sc_bq2_coef, decimation);
+void RPSPMC_Control::delayed_filter_update (){
+        configure_filter (1, spmc_parameters.sc_bq1mode, spmc_parameters.sc_bq1_coef, BQ_decimation);
+        usleep (100000);
+        configure_filter (2, spmc_parameters.sc_bq2mode, spmc_parameters.sc_bq2_coef, BQ_decimation);
+        delayed_filter_update_timer_id = 0; // done.
 }
 
+static guint RPSPMC_Control::delayed_filter_update_callback (RPSPMC_Control *self){
+        self->delayed_filter_update ();
+	return FALSE;
+}
+
+void RPSPMC_Control::bq_filter_adjust_callback(Param_Control* pcs, RPSPMC_Control *self){
+        self->BQ_decimation = 1 + (int)round(8 * 5000. / spmc_parameters.lck_frequency);
+        spmc_parameters.lck_bq_dec_monitor = self->BQ_decimation;
+        g_message ("BQ Filter Deciamtion: #%d",  self->BQ_decimation);
+        //self->configure_filter (1, spmc_parameters.sc_bq1mode, spmc_parameters.sc_bq1_coef, decimation);
+        //self->configure_filter (2, spmc_parameters.sc_bq2mode, spmc_parameters.sc_bq2_coef, decimation);
+
+        // if not already scheduled, schedule delayed scan speed vector update to avoid messageover load via many slider events
+        if (!self->delayed_filter_update_timer_id)
+                self->delayed_filter_update_timer_id = g_timeout_add (2000, (GSourceFunc)RPSPMC_Control::delayed_filter_update_callback, self);
+
+}
+
+void RPSPMC_Control::delayed_zsfilter_update (){
+        configure_filter (10, spmc_parameters.sc_zs_bqmode, spmc_parameters.sc_zs_bq_coef, 128);
+        delayed_zsfilter_update_timer_id = 0; // done.
+}
+
+static guint RPSPMC_Control::delayed_zsfilter_update_callback (RPSPMC_Control *self){
+        self->delayed_zsfilter_update ();
+	return FALSE;
+}
 void RPSPMC_Control::zs_input_filter_adjust_callback(Param_Control* pcs, RPSPMC_Control *self){
         // Update BQ SECTION ZS =10 (Z SERVO INPUT BiQuad) [can be used to program a NOTCH]
         // Test-DECII=32 for NOTCH intended IIR @ ~2MSPS / 32
-        self->configure_filter (10, spmc_parameters.sc_zs_bqmode, spmc_parameters.sc_zs_bq_coef, 128);
+        //self->configure_filter (10, spmc_parameters.sc_zs_bqmode, spmc_parameters.sc_zs_bq_coef, 128);
+        // if not already scheduled, schedule delayed scan speed vector update to avoid messageover load via many slider events
+        if (!self->delayed_zsfilter_update_timer_id)
+                self->delayed_zsfilter_update_timer_id = g_timeout_add (2000, (GSourceFunc)RPSPMC_Control::delayed_zsfilter_update_callback, self);
 }
 
 void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *self){

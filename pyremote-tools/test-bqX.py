@@ -9,21 +9,24 @@ mpl.use('Agg')
 from matplotlib import ticker
 mpl.pyplot.close('all')
 
-# Set Filter F-Cut to
+# Set Filter F-Cut for
+# Elliptical filter 4th order
 fc = 0.8*float(gxsm.get("dsp-SPMC-LCK-FREQ"))
+stop_attn_db = 50
+ripple_db=1
 
-LCK_DEC = float(gxsm.get("dsp-LCK-BQDEC-MONITOR"))
-if LCK_DEC == 0:
-	LCK_DEC = 8
-AD463FS = 125e6/59
+BQ_DEC = float(gxsm.get("dsp-LCK-BQDEC-MONITOR"))   # extra decimation within BQ filters
+LCK_DEC = float(gxsm.get("dsp-LCK-DECII-MONITOR"))  # LockIn signal decimation
+
+AD463FS = 125e6/LCK_DEC
+
+print ('DECII#', LCK_DEC, 'ADC-Fs', AD463FS, 'Hz', ' -> FS', AD463FS/LCK_DEC, ' Hz')
 
 ##Configure Lock-In: FNorm: 529.661 DDS Freq= 2000 Hz DECII2=1 DCF_IIR2=11 Mode=0 *** Gains: gin: 1, gout: 0
 ##Configure DC-FILTER: dc=-0.0142334, dc-tau=1 s
 
-# Ellip filter characteristics
-stop_attn_db = 50
-ripple_db=1
-
+#GVP: 0.02s 20000
+#GVP: 0.02s 20000
 
 def plot_vpdata(cols=[1,2,4]):
     plt.close ('all')
@@ -51,7 +54,7 @@ def dds_phaseinc (freq):
 
 def Fs():
 	freq = float(gxsm.get("dsp-SPMC-LCK-FREQ"))
-	fss = AD463FS / LCK_DEC
+	fss = AD463FS / BQ_DEC
 	print ('Lck Freq: {} Hz -- Lck internal subsampling: {} Hz'.format(freq, fss))
 	return fss
 
@@ -86,25 +89,28 @@ def run_sosfilt(sos, x):
 
 
 def run_sosfilt_Q24(sos, x):
-    Q24 = 1<<24
-    Q28 = 1<<28
+    sens=100
+    QS = 1<<24 #24
+    QC = 1<<28 #28
+    QSC = float(QS) * QC
     n_samples = x.shape[0]
     n_sections = sos.shape[0]
     zx = np.zeros(n_sections)
     zy = np.zeros(n_sections)
 
+    z0 = np.zeros((n_sections,n_samples))
+    z1 = np.zeros((n_sections,n_samples))
+
     #print (n_samples, n_sections)
     #print (sos.shape)
 
-    sos = sos*Q28
+    sos = sos*QC
     sos = sos.astype(np.int64)
 
-    #print ('SOS_Q28:', sos)
+    #print ('SOS_QS:', sos)
     
-    xi = (x*Q24).astype(np.int64)
+    xi = sens*(x*QS).astype(np.int64)
 
-    #print ('xQ24:', xi)
-    
     y = np.zeros(n_samples, type(np.int64))
     
     zi_slice = np.zeros((n_sections,2), type(np.int64))
@@ -115,10 +121,12 @@ def run_sosfilt_Q24(sos, x):
             zi_slice[s, 0] =  sos[s, 1] * x_cur - sos[s, 4] * x_new + zi_slice[s, 1]
             zi_slice[s, 1] =  sos[s, 2] * x_cur - sos[s, 5] * x_new
             x_cur = x_new
+            z0[s,n] = zi_slice[s, 0]
+            z1[s,n] = zi_slice[s, 1]
         y[n]=x_cur
 
-    print (y)
-    return y.astype(float)/Q24
+    #print ('Y:', y, y.astype(float)/QSC/sens)
+    return y.astype(float)/QS/sens, z0.astype(float)/QSC/100, z1.astype(float)/QSC/100
 
 
 
@@ -200,43 +208,55 @@ if 1: # SOS ellipt cascaded BiQ type
 			bqp = ", {}32'd{:d} {}".format('-' if sos[s][i] < 0 else ' ', int(round(cQ*abs(sos[s][i]))), bqp)
 			#bqp = ", {}32'd{:d} {}".format('-' if sos[s][i] < 0 else ' ', int(round(cQ*abs(sos[s][i])))-cQ, bqp) ## CHECK
 			
-		print ('SOS Bq [{:d}] Stage {}:\n'.format (cQ, s+1), bqv + bqp)
+		#print ('SOS Bq [{:d}] Stage {}:\n'.format (cQ, s+1), bqv + bqp)
 
 plot_frequency_response(b, a, fc_norm)
 
-print ('Getting last vpdata set from master scan DATA ********')
-columns, labels, units, xy = gxsm.get_probe_event(0,-1)  # get last
-vpdata  = dict (zip (labels, columns))
-vpunits = dict (zip (labels, units))
+if 1:
 
-print ('XY:', xy)
-print ('vpunits:', vpunits)
+	print ('Getting last vpdata set from master scan DATA ********')
+	columns, labels, units, xy = gxsm.get_probe_event(0,-1)  # get last
+	vpdata  = dict (zip (labels, columns))
+	vpunits = dict (zip (labels, units))
 
-FS_data = 1000/(vpdata['Time-Mon'][101]-vpdata['Time-Mon'][100])
+	print ('XY:', xy)
+	print ('vpunits:', vpunits)
 
-
-fc_norm = fc/FS_data
-print ('*** DATA ********************************')
-print ('FS data:', FS_data, ' Hz   Fc_norm:', fc_norm)
-print ('*****************************************')
-sos, b, a = ellipt_filter(order=4, cutoff=fc_norm, sa=stop_attn_db, rp=ripple_db)
+	FS_data = 1000/(vpdata['Time-Mon'][101]-vpdata['Time-Mon'][100])
 
 
-#filteredS = sosfilt(sos, columns[4])
-fsig, z0, z1 = run_sosfilt(sos, vpdata['14-LockIn-Mag-pass'])
-#print ('SOS:', fsig)
+	fc_norm = fc/FS_data
+	print ('*** DATA ********************************')
+	print ('FS data:', FS_data, ' Hz   Fc_norm:', fc_norm)
+	print ('*****************************************')
+	sos, b, a = ellipt_filter(order=4, cutoff=fc_norm, sa=stop_attn_db, rp=ripple_db)
 
-plt.figure(figsize=(12, 4))
-plt.title('Filter Sim and Data Fc {} (Normed: {} Hz)'.format(fc, fc_norm))
-plt.xlabel('time in ms')
-plt.ylabel('signal in V')
 
-plt.plot (vpdata['Time-Mon'], fsig, label='Mag-SOS')
-plt.plot (vpdata['Time-Mon'], vpdata['14-LockIn-Mag-pass'], alpha=0.3, label='Mag-pass')
-#plt.plot (vpdata['Time-Mon'], vpdata['08-LockIn-Mag'], alpha=0.3, label='Mag-BQ')
-#plt.ylim (0.004, 0.005)
-plt.legend()
-plt.grid()
-plt.show()
-plt.savefig('/tmp/filter.png')
+	#filteredS = sosfilt(sos, vpdata['14-LockIn-Mag-pass'])
+	
+	# Floatingpoint
+	#fsig, z0, z1 = run_sosfilt(sos, vpdata['14-LockIn-Mag-pass'])
+
+	# Integer Q
+	fsig, z0, z1 = run_sosfilt_Q24(sos, vpdata['14-LockIn-Mag-pass'])
+	#run_sosfilt_Q24(sos, x)
+	#print ('SOS:', fsig)
+
+	plt.figure(figsize=(12, 4))
+	plt.title('Filter Sim and Data Fc {} (Normed: {} Hz)'.format(fc, fc_norm))
+	plt.xlabel('time in ms')
+	plt.ylabel('signal in V')
+
+	plt.plot (vpdata['Time-Mon'], fsig, label='Mag-SOS')
+	plt.plot (vpdata['Time-Mon'], z0[0], label='Z0S0')
+	plt.plot (vpdata['Time-Mon'], z1[0], label='Z1S0')
+	plt.plot (vpdata['Time-Mon'], z0[1], label='Z0S1')
+	plt.plot (vpdata['Time-Mon'], z1[1], label='Z1S1')
+	plt.plot (vpdata['Time-Mon'], vpdata['14-LockIn-Mag-pass'], alpha=0.3, label='Mag-pass')
+	#plt.plot (vpdata['Time-Mon'], vpdata['08-LockIn-Mag'], alpha=0.3, label='Mag-BQ')
+	#plt.ylim (0.0, 0.01)
+	plt.legend()
+	plt.grid()
+	plt.show()
+	plt.savefig('/tmp/filter.png')
 

@@ -194,6 +194,8 @@ public:
 
                 zpos_refresh_timer_id = 0;
                 delayed_vector_update_timer_id = 0;
+                delayed_filter_update_timer_id = 0;
+                delayed_zsfilter_update_timer_id = 0;
 
                 // need to create according xml recource files for this to make work....
                 hwi_settings = g_settings_new (GXSM_RES_BASE_PATH_DOT".hwi.rpspmc-control");
@@ -428,6 +430,12 @@ public:
 	static int DSP_slope_callback (GtkWidget *widget, RPSPMC_Control *self);
 
         static int ldc_callback(GtkWidget *widget, RPSPMC_Control *self);
+
+
+	void delayed_filter_update ();
+	static guint delayed_filter_update_callback (RPSPMC_Control *self);
+	void delayed_zsfilter_update ();
+	static guint delayed_zsfilter_update_callback (RPSPMC_Control *self);
 
         void configure_filter(int id, int mode, double sos[6], int decimation);
         static void lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *self);
@@ -763,8 +771,11 @@ public:
 	};
 
 	void delayed_vector_update ();
-	static guint delayed_vector_update_callback (RPSPMC_Control *dspc);
+	static guint delayed_vector_update_callback (RPSPMC_Control *self);
         gint delayed_vector_update_timer_id;
+        gint delayed_filter_update_timer_id;
+        gint delayed_zsfilter_update_timer_id;
+       
         void update_scan_speed_vectors ();
         
         GUI_Builder *bp;
@@ -851,7 +862,9 @@ public:
         GtkWidget *LCK_VolumeEntry[LCK_NUM_TARGETS];
         Param_Control *LCK_ModFrq;
         
-	// Probing
+        int BQ_decimation;
+        
+        // Probing
 	int probe_trigger_raster_points_user;
 	int probe_trigger_raster_points;
 	int probe_trigger_raster_points_b;
