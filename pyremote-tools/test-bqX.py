@@ -16,10 +16,15 @@ stop_attn_db = 40
 ripple_db=1
 
 LCK_DEC = float(gxsm.get("dsp-LCK-DECII-MONITOR"))  # LockIn signal decimation
+ACLKS   = int(gxsm.get("dsp-LCK-ACLK-MONITOR")) % 1000  # AD463 ACLKs / sample (59)
 
-AD463FS = 125e6/59/LCK_DEC
+RPACLK  = 125e6
+AD463FS = RPACLK/ACLKS
+AD463FS_LCK = RPACLK/LCK_DEC
 
-print ('DECII#', LCK_DEC, 'ADC-Fs', AD463FS, 'Hz', ' -> FS', AD463FS/LCK_DEC, ' Hz')
+print ('*****************************************')
+print ('DECII#', LCK_DEC, 'ADC-Fs', AD463FS, 'Hz', ' LCK-Fs', AD463FS_LCK, ' Hz')
+print ('*****************************************')
 
 ##Configure Lock-In: FNorm: 529.661 DDS Freq= 2000 Hz DECII2=1 DCF_IIR2=11 Mode=0 *** Gains: gin: 1, gout: 0
 ##Configure DC-FILTER: dc=-0.0142334, dc-tau=1 s
@@ -52,10 +57,7 @@ def dds_phaseinc (freq):
 	return (1<<44)*freq/fclk
 
 def Fs():
-	freq = float(gxsm.get("dsp-SPMC-LCK-FREQ"))
-	fss = AD463FS
-	print ('Lck Freq: {} Hz -- Lck internal subsampling: {} Hz'.format(freq, fss))
-	return fss
+	return AD463FS_LCK
 
 print ('Fs LockIn is ', Fs (), ' Hz')
 

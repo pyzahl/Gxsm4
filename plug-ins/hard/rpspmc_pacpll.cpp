@@ -2097,11 +2097,15 @@ void RPSPMC_Control::create_folder (){
         
         bp->pop_grid ();
         bp->new_line ();
-        bp->new_grid_with_frame ("... for convenience: extra Execute GVP button");
+        bp->new_grid_with_frame ("... for convenience: Execute GVP, IV buttons");
 
 	bp->grid_add_button ("Execute GVP");
 	g_signal_connect (G_OBJECT (bp->button), "clicked",
                           GCallback (RPSPMC_Control::Probing_exec_GVP_callback), this);
+        
+	bp->grid_add_button ("Execute STS");
+	g_signal_connect (G_OBJECT (bp->button), "clicked",
+                          GCallback (RPSPMC_Control::Probing_exec_IV_callback), this);
         
         bp->notebook_tab_show_all ();
         bp->pop_grid ();
@@ -3978,11 +3982,24 @@ void RPSPMC_Control::zs_input_filter_adjust_callback(Param_Control* pcs, RPSPMC_
 void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *self){
         if (rpspmc_pacpll){
 
-                int naclks = (int)(spmc_parameters.lck_decii_monitor) % 1000;
-                double fs = 125e6/naclks; // actual sampling freq
-                int decii2=0;
-                double fn = fs / spmc_parameters.lck_frequency;
+                double rp_fs = 125e6; // actual sampling freq
+                int naclks   = (int)(spmc_parameters.lck_aclocks_per_sample_monitor) % 1000;
+                int decii_mon= (int)(spmc_parameters.lck_decii_monitor);
+                int decii2   = 0;
+                if (naclks < 1 || naclks > 512) naclks = 66; // backup, 59 nominally
+                double fn    = rp_fs / naclks / spmc_parameters.lck_frequency;
 
+                int decii2_max = 12;
+
+                // calculate decii2
+                while (fn > 20. && decii2 < decii2_max){
+                        decii2++;
+                        fn /= 2.0;
+                }
+
+                g_message ("LCK Adjust Calc: RP-Fs: %g Hz, AD-NACLKs: %d, Fnorm: %g @ decii2: %d", rp_fs, naclks, fn, decii2);
+
+                
                 const gchar *SPMC_LCK_COMPONENTS[] = {
                         "SPMC_LCK_MODE",      // INT
                         "SPMC_LCK_GAIN",      // INT (SHIFT) IN, OUT
@@ -4012,7 +4029,6 @@ void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *
 
 
                         */
-                        int decii2_max = 12;
                         
                         double s = 1e-3*spmc_parameters.lck_sens; // mV to V
                         double g = 5.0/s; // to gain. I.e. gain 1x for 5V (5000mV)
@@ -4022,11 +4038,6 @@ void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *
                         g_message ("LCK Gain request: %g -> shift#: %d ", g, gain_in);
                         int gain_out=0;
 
-                        // calculate decii2
-                        while (fn > 20. && decii2 <= decii2_max){
-                                decii2++;
-                                fn /= 2.0;
-                        }
         
                         if (gain_out == 0 && gain_in > decii2)
                                 gain_out = gain_in - decii2;
@@ -4041,7 +4052,7 @@ void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *
                 else
                         jdata[1] = 0.;
 
-                g_message ("LCK Adjust SENDING UPDATE T#%d M:%d G:<<%x F:%g Hz V: %g {%g} Decii2 requested: %d => fs=%g Hz, fn=%g Hz ", self->LCK_Target, jdata_i[0], jdata_i[1], jdata[0], self->LCK_Volume[self->LCK_Target], jdata[1], decii2, fs/(1<<decii2),fn);
+                g_message ("LCK Adjust SENDING UPDATE T#%d M:%d G:<<%x F:%g Hz V: %g {%g} Decii2 requested: %d => fs=%g Hz, fn=%g Hz ", self->LCK_Target, jdata_i[0], jdata_i[1], jdata[0], self->LCK_Volume[self->LCK_Target], jdata[1], decii2, rp_fs/(1<<decii2), fn);
                 rpspmc_pacpll->write_array (SPMC_LCK_COMPONENTS, 2, jdata_i,  2, jdata);
         }
 }
