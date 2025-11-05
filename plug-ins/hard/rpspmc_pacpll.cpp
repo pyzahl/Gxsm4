@@ -3945,7 +3945,7 @@ static guint RPSPMC_Control::delayed_filter_update_callback (RPSPMC_Control *sel
 }
 
 void RPSPMC_Control::bq_filter_adjust_callback(Param_Control* pcs, RPSPMC_Control *self){
-        self->BQ_decimation = 1 + (int)round(8 * 5000. / spmc_parameters.lck_frequency);
+        self->BQ_decimation = 0; //1 + (int)round(8 * 5000. / spmc_parameters.lck_frequency);
         spmc_parameters.lck_bq_dec_monitor = self->BQ_decimation;
         g_message ("BQ Filter Deciamtion: #%d",  self->BQ_decimation);
         //self->configure_filter (1, spmc_parameters.sc_bq1mode, spmc_parameters.sc_bq1_coef, decimation);
@@ -3977,6 +3977,12 @@ void RPSPMC_Control::zs_input_filter_adjust_callback(Param_Control* pcs, RPSPMC_
 
 void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *self){
         if (rpspmc_pacpll){
+
+                int naclks = (int)(spmc_parameters.lck_decii_monitor) % 1000;
+                double fs = 125e6/naclks; // actual sampling freq
+                int decii2=0;
+                double fn = fs / spmc_parameters.lck_frequency;
+
                 const gchar *SPMC_LCK_COMPONENTS[] = {
                         "SPMC_LCK_MODE",      // INT
                         "SPMC_LCK_GAIN",      // INT (SHIFT) IN, OUT
@@ -4006,23 +4012,18 @@ void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *
 
 
                         */
-                        
                         int decii2_max = 12;
+                        
                         double s = 1e-3*spmc_parameters.lck_sens; // mV to V
                         double g = 5.0/s; // to gain. I.e. gain 1x for 5V (5000mV)
                         if (g < 1.) g=1.;
                         int  gl2 = int(log2(g));
                         int  gain_in = gl2 <= decii2_max ? gl2 : decii2_max;
                         g_message ("LCK Gain request: %g -> shift#: %d ", g, gain_in);
-                        int deci=0;
                         int gain_out=0;
-                        
-                        double fs = 125e6/59; //naclks; // actual sampling freq
 
-                        int decii2=0;
-                        double fn = fs / spmc_parameters.lck_frequency;
-                        
-                        while (fn > 100. && decii2 <= 12){
+                        // calculate decii2
+                        while (fn > 20. && decii2 <= decii2_max){
                                 decii2++;
                                 fn /= 2.0;
                         }
@@ -4031,7 +4032,7 @@ void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *
                                 gain_out = gain_in - decii2;
 
                         
-                        jdata_i[1] = (deci<<16) | (gain_out<<8) | gain_in;
+                        jdata_i[1] = (decii2<<16) | (gain_out<<8) | gain_in;
                 }
                 jdata[0] =  spmc_parameters.lck_frequency;
 
@@ -4040,7 +4041,7 @@ void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *
                 else
                         jdata[1] = 0.;
 
-                g_message ("LCK Adjust SENDING UPDATE T#%d M:%d G:<<%x F:%g Hz V: %g {%g}", self->LCK_Target, jdata_i[0], jdata_i[1], jdata[0], self->LCK_Volume[self->LCK_Target], jdata[1]);
+                g_message ("LCK Adjust SENDING UPDATE T#%d M:%d G:<<%x F:%g Hz V: %g {%g} Decii2 requested: %d => fs=%g Hz, fn=%g Hz ", self->LCK_Target, jdata_i[0], jdata_i[1], jdata[0], self->LCK_Volume[self->LCK_Target], jdata[1], decii2, fs/(1<<decii2),fn);
                 rpspmc_pacpll->write_array (SPMC_LCK_COMPONENTS, 2, jdata_i,  2, jdata);
         }
 }

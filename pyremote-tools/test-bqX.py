@@ -11,14 +11,13 @@ mpl.pyplot.close('all')
 
 # Set Filter F-Cut for
 # Elliptical filter 4th order
-fc = 0.8*float(gxsm.get("dsp-SPMC-LCK-FREQ"))
-stop_attn_db = 50
+fc = 0.5*float(gxsm.get("dsp-SPMC-LCK-FREQ"))
+stop_attn_db = 40
 ripple_db=1
 
-BQ_DEC = float(gxsm.get("dsp-LCK-BQDEC-MONITOR"))   # extra decimation within BQ filters
 LCK_DEC = float(gxsm.get("dsp-LCK-DECII-MONITOR"))  # LockIn signal decimation
 
-AD463FS = 125e6/LCK_DEC
+AD463FS = 125e6/59/LCK_DEC
 
 print ('DECII#', LCK_DEC, 'ADC-Fs', AD463FS, 'Hz', ' -> FS', AD463FS/LCK_DEC, ' Hz')
 
@@ -54,7 +53,7 @@ def dds_phaseinc (freq):
 
 def Fs():
 	freq = float(gxsm.get("dsp-SPMC-LCK-FREQ"))
-	fss = AD463FS / BQ_DEC
+	fss = AD463FS
 	print ('Lck Freq: {} Hz -- Lck internal subsampling: {} Hz'.format(freq, fss))
 	return fss
 
@@ -71,6 +70,7 @@ def run_sosfilt(sos, x):
 
     y = np.zeros(n_samples)
 
+    ys = np.zeros((n_sections,n_samples))
     z0 = np.zeros((n_sections,n_samples))
     z1 = np.zeros((n_sections,n_samples))
     
@@ -82,14 +82,15 @@ def run_sosfilt(sos, x):
             zi_slice[s, 0] = sos[s, 1] * x_cur - sos[s, 4] * x_new + zi_slice[s, 1]
             zi_slice[s, 1] = sos[s, 2] * x_cur - sos[s, 5] * x_new
             x_cur = x_new
+            ys[s, n] = x_new
             z0[s,n] = zi_slice[s, 0]
             z1[s,n] = zi_slice[s, 1]
         y[n]=x_cur
-    return y, z0, z1
+    return y, z0, z1, ys
 
 
 def run_sosfilt_Q24(sos, x):
-    sens=100
+    sens=1
     QS = 1<<24  #24
     QC = 1<<28 	#28
     QSC = float(QS) * QC
@@ -98,6 +99,7 @@ def run_sosfilt_Q24(sos, x):
     zx = np.zeros(n_sections)
     zy = np.zeros(n_sections)
 
+    ys = np.zeros((n_sections,n_samples))
     z0 = np.zeros((n_sections,n_samples))
     z1 = np.zeros((n_sections,n_samples))
 
@@ -107,26 +109,30 @@ def run_sosfilt_Q24(sos, x):
     sos = sos*QC
     sos = sos.astype(np.int64)
 
-    #print ('SOS_QS:', sos)
+    print ('SOS_QS:', sos)
     
-    xi = sens*(x*QS).astype(np.int64)
+    xi = (x*QS*sens).astype(np.int64)
 
+    print ('X', xi[0:20])
+    
     y = np.zeros(n_samples, type(np.int64))
     
     zi_slice = np.zeros((n_sections,2), type(np.int64))
     for n in range(0,n_samples):
         x_cur=xi[n]
         for s in range(n_sections):
-            x_new          = int(sos[s, 0] * x_cur                  + zi_slice[s, 0]) >> QC
-            zi_slice[s, 0] =  sos[s, 1] * x_cur - sos[s, 4] * x_new + zi_slice[s, 1]
-            zi_slice[s, 1] =  sos[s, 2] * x_cur - sos[s, 5] * x_new
+            x_new          = int(sos[s, 0] * x_cur                     + zi_slice[s, 0]) / QC
+            zi_slice[s, 0] =     sos[s, 1] * x_cur - sos[s, 4] * x_new + zi_slice[s, 1]
+            zi_slice[s, 1] =     sos[s, 2] * x_cur - sos[s, 5] * x_new
             x_cur = x_new
+            ys[s, n] = x_new
             z0[s,n] = zi_slice[s, 0]
             z1[s,n] = zi_slice[s, 1]
         y[n]=x_cur
+        #y[n]=ys[0,n]
 
-    #print ('Y:', y, y.astype(float)/QSC/sens)
-    return y.astype(float)/QS/sens, z0.astype(float)/QSC/100, z1.astype(float)/QSC/100
+    print ('Y:', y[0:20], ' Yf:', y.astype(float)[0:20]/QS/sens)
+    return y.astype(float)/QS/sens, z0.astype(float)/QSC/sens, z1.astype(float)/QSC/sens, ys.astype(float)/QSC/sens
 
 
 
@@ -227,8 +233,15 @@ if 1:
 
 	print(vpdata['08-LockIn-Mag'][0:20])
 	print(vpdata['14-LockIn-Mag-pass'][0:20])
-	print(vpdata['08-LockIn-Mag'][0:-20])
-	print(vpdata['14-LockIn-Mag-pass'][0:-20])
+	print(vpdata['08-LockIn-Mag'][-20:])
+	print(vpdata['14-LockIn-Mag-pass'][-20:])
+
+	vpdata['Time-Mon'][-1] = vpdata['Time-Mon'][-3]
+	vpdata['Time-Mon'][-2] = vpdata['Time-Mon'][-3]
+
+	print(vpdata['Time-Mon'][0:20])
+	print(vpdata['Time-Mon'][-20:])
+
 
 
 	FS_data = 1000/(vpdata['Time-Mon'][101]-vpdata['Time-Mon'][100])
@@ -244,11 +257,10 @@ if 1:
 	#filteredS = sosfilt(sos, vpdata['14-LockIn-Mag-pass'])
 	
 	# Floatingpoint
-	fsig, zf0, zf1 = run_sosfilt(sos, vpdata['14-LockIn-Mag-pass'])
+	fsigf, zf0, zf1, ysf = run_sosfilt(sos, vpdata['14-LockIn-Mag-pass'])
 
 	# Integer Q
-	fsigQ, z0, z1 = run_sosfilt_Q24(sos, vpdata['14-LockIn-Mag-pass'])
-	#run_sosfilt_Q24(sos, x)
+	fsigQ, z0, z1, ys = run_sosfilt_Q24(sos, vpdata['14-LockIn-Mag-pass'])
 	#print ('SOS:', fsig)
 
 	plt.figure(figsize=(12, 4))
@@ -256,16 +268,24 @@ if 1:
 	plt.xlabel('time in ms')
 	plt.ylabel('signal in V')
 
-	plt.plot (vpdata['Time-Mon'], fsig, label='Mag-SOS')
-	plt.plot (vpdata['Time-Mon'], fsigQ, label='Mag-SOS-Q')
-	plt.plot (vpdata['Time-Mon'], z0[0], label='Z0S0')
-	plt.plot (vpdata['Time-Mon'], z1[0], label='Z1S0')
-	plt.plot (vpdata['Time-Mon'], z0[1], label='Z0S1')
-	plt.plot (vpdata['Time-Mon'], z1[1], label='Z1S1')
 	plt.plot (vpdata['Time-Mon'], vpdata['14-LockIn-Mag-pass'], alpha=0.3, label='Mag-pass')
 	plt.plot (vpdata['Time-Mon'], vpdata['08-LockIn-Mag'], alpha=0.3, label='Mag-BQ')
+	if 1: # Floating Point Calc
+		plt.plot (vpdata['Time-Mon'], fsigf, label='Mag-SOS')
+		plt.plot (vpdata['Time-Mon'], ysf[0], label='Mag-SOSs0')
+		plt.plot (vpdata['Time-Mon'], zf0[0], label='fZ0S0')
+		plt.plot (vpdata['Time-Mon'], zf1[0], label='fZ1S0')
+		plt.plot (vpdata['Time-Mon'], zf0[1], label='fZ0S1')
+		plt.plot (vpdata['Time-Mon'], zf1[1], label='fZ1S1')
+	if 1: # Int Calc
+		plt.plot (vpdata['Time-Mon'], fsigQ, alpha=0.4, linewidth=10, label='Mag-SOS-Q')
+		plt.plot (vpdata['Time-Mon'], ys[0], label='Mag-SOSs0-Q')
+		plt.plot (vpdata['Time-Mon'], z0[0], label='Z0S0')
+		plt.plot (vpdata['Time-Mon'], z1[0], label='Z1S0')
+		plt.plot (vpdata['Time-Mon'], z0[1], label='Z0S1')
+		plt.plot (vpdata['Time-Mon'], z1[1], label='Z1S1')
 	#plt.ylim (0.0, 1.)
-	plt.xlim (0.0, 100.)
+	#plt.xlim (0.0, 5.)
 	plt.legend()
 	plt.grid()
 	#plt.show()
