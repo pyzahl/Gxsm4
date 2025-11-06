@@ -3997,7 +3997,7 @@ void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *
                         fn /= 2.0;
                 }
 
-                g_message ("LCK Adjust Calc: RP-Fs: %g Hz, AD-NACLKs: %d, Fnorm: %g @ decii2: %d", rp_fs, naclks, fn, decii2);
+                g_message ("LCK Adjust Calc: RP-Fs: %g Hz, AD-NACLKs: %d, FLCK/BQ: %g Hz, Fnorm: %g @ decii2: %d", rp_fs, naclks, rp_fs/naclks/(1<<decii2), fn, decii2);
 
                 
                 const gchar *SPMC_LCK_COMPONENTS[] = {
@@ -4052,7 +4052,7 @@ void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *
                 else
                         jdata[1] = 0.;
 
-                g_message ("LCK Adjust SENDING UPDATE T#%d M:%d G:<<%x F:%g Hz V: %g {%g} Decii2 requested: %d => fs=%g Hz, fn=%g Hz ", self->LCK_Target, jdata_i[0], jdata_i[1], jdata[0], self->LCK_Volume[self->LCK_Target], jdata[1], decii2, rp_fs/(1<<decii2), fn);
+                g_message ("LCK Adjust SENDING UPDATE T#%d M:%d G:<<%x F:%g Hz V: %g {%g} Decii2 requested: %d => fs=%g Hz, fn=%g Hz ", self->LCK_Target, jdata_i[0], jdata_i[1], jdata[0], self->LCK_Volume[self->LCK_Target], jdata[1], decii2, rp_fs/naclks/(1<<decii2), fn);
                 rpspmc_pacpll->write_array (SPMC_LCK_COMPONENTS, 2, jdata_i,  2, jdata);
         }
 }

@@ -11,8 +11,8 @@ mpl.pyplot.close('all')
 
 # Set Filter F-Cut for
 # Elliptical filter 4th order
-fc = 0.5*float(gxsm.get("dsp-SPMC-LCK-FREQ"))
-stop_attn_db = 40
+fc = 1*float(gxsm.get("dsp-SPMC-LCK-FREQ"))
+stop_attn_db = 50
 ripple_db=1
 
 LCK_DEC = float(gxsm.get("dsp-LCK-DECII-MONITOR"))  # LockIn signal decimation
@@ -115,7 +115,7 @@ def run_sosfilt_Q24(sos, x):
     
     xi = (x*QS*sens).astype(np.int64)
 
-    print ('X', xi[0:20])
+    #print ('X', xi[0:20])
     
     y = np.zeros(n_samples, type(np.int64))
     
@@ -133,7 +133,7 @@ def run_sosfilt_Q24(sos, x):
         y[n]=x_cur
         #y[n]=ys[0,n]
 
-    print ('Y:', y[0:20], ' Yf:', y.astype(float)[0:20]/QS/sens)
+    #print ('Y:', y[0:20], ' Yf:', y.astype(float)[0:20]/QS/sens)
     return y.astype(float)/QS/sens, z0.astype(float)/QSC/sens, z1.astype(float)/QSC/sens, ys.astype(float)/QSC/sens
 
 
@@ -233,16 +233,16 @@ if 1:
 	print ('XY:', xy)
 	print ('vpunits:', vpunits)
 
-	print(vpdata['08-LockIn-Mag'][0:20])
-	print(vpdata['14-LockIn-Mag-pass'][0:20])
-	print(vpdata['08-LockIn-Mag'][-20:])
-	print(vpdata['14-LockIn-Mag-pass'][-20:])
+	#print(vpdata['08-LockIn-Mag'][0:20])
+	#print(vpdata['14-LockIn-Mag-pass'][0:20])
+	#print(vpdata['08-LockIn-Mag'][-20:])
+	#print(vpdata['14-LockIn-Mag-pass'][-20:])
 
 	vpdata['Time-Mon'][-1] = vpdata['Time-Mon'][-3]
 	vpdata['Time-Mon'][-2] = vpdata['Time-Mon'][-3]
 
-	print(vpdata['Time-Mon'][0:20])
-	print(vpdata['Time-Mon'][-20:])
+	#print(vpdata['Time-Mon'][0:20])
+	#print(vpdata['Time-Mon'][-20:])
 
 
 
@@ -271,7 +271,7 @@ if 1:
 	plt.ylabel('signal in V')
 
 	plt.plot (vpdata['Time-Mon'], vpdata['14-LockIn-Mag-pass'], alpha=0.3, label='Mag-pass')
-	plt.plot (vpdata['Time-Mon'], vpdata['08-LockIn-Mag'], alpha=0.3, label='Mag-BQ')
+	#plt.plot (vpdata['Time-Mon'], vpdata['08-LockIn-Mag'], alpha=0.3, label='Mag-BQ')
 	if 1: # Floating Point Calc
 		plt.plot (vpdata['Time-Mon'], fsigf, label='Mag-SOS')
 		plt.plot (vpdata['Time-Mon'], ysf[0], label='Mag-SOSs0')
