@@ -11,55 +11,32 @@ mpl.pyplot.close('all')
 
 # Set Filter F-Cut for
 # Elliptical filter 4th order
-fc = 1 #*float(gxsm.get("dsp-SPMC-LCK-FREQ"))
+fc = 1.0 * float(gxsm.get("dsp-SPMC-LCK-FREQ"))
 stop_attn_db = 50
 ripple_db=1
 
 LCK_DEC = float(gxsm.get("dsp-LCK-DECII-MONITOR"))  # LockIn signal decimation
-ACLKS   = 57#int(gxsm.get("dsp-LCK-ACLK-MONITOR")) % 1000  # AD463 ACLKs / sample (59)
+ACLKS   = int(gxsm.get("dsp-LCK-ACLK-MONITOR")) % 1000  # AD463 ACLKs / sample (59)
 
 RPACLK  = 125e6
 AD463FS = RPACLK/ACLKS
-AD463FS_LCK = 14 #RPACLK/LCK_DEC
+BQ_LCK_FS = RPACLK/LCK_DEC
+
+# calc nomralize sampling freq at BQ filter stage
+fc_norm = fc/BQ_LCK_FS
 
 print ('*****************************************')
-print ('DECII#', LCK_DEC, 'ADC-Fs', AD463FS, 'Hz', ' LCK-Fs', AD463FS_LCK, ' Hz')
+print ('DECII# ', LCK_DEC, 'ADC-Fs: ', AD463FS, 'Hz', ' BQ-LCK-Fs: ', BQ_LCK_FS, ' Hz')
+print ('f-norm: ', fc_norm)
 print ('*****************************************')
+
+
 
 ##Configure Lock-In: FNorm: 529.661 DDS Freq= 2000 Hz DECII2=1 DCF_IIR2=11 Mode=0 *** Gains: gin: 1, gout: 0
 ##Configure DC-FILTER: dc=-0.0142334, dc-tau=1 s
 
 #GVP: 0.02s 20000
 #GVP: 0.02s 20000
-
-def plot_vpdata(cols=[1,2,4]):
-    plt.close ('all')
-    plt.figure(figsize=(8, 4))
-    yl = ''
-    for c in cols[1:]:
-            plt.plot(columns[cols[0]], columns[c], label=labels[c])
-            if yl != '':
-                    yl = yl + ', ' + labels[c]
-            else:
-                    yl = labels[c]
-    plt.title('VPDATA')
-    plt.xlabel(labels[cols[0]])
-    plt.ylabel(yl)
-    plt.legend()
-    plt.grid()
-    plt.show()
-    plt.savefig('/tmp/gvp.png')
-    plt.show()
-
-
-def dds_phaseinc (freq):
-	fclk = 125e6
-	return (1<<44)*freq/fclk
-
-def Fs():
-	return AD463FS_LCK
-
-print ('Fs LockIn is ', Fs (), ' Hz')
 
 def run_sosfilt(sos, x):
     n_samples = x.shape[0]
@@ -134,7 +111,7 @@ def run_sosfilt_Q24(sos, x):
         #y[n]=ys[0,n]
 
     #print ('Y:', y[0:20], ' Yf:', y.astype(float)[0:20]/QS/sens)
-    return y.astype(float)/QS/sens, z0.astype(float)/QSC/sens, z1.astype(float)/QS/sens, ys.astype(float)/QS/sens
+    return y.astype(float)/QS/sens, z0.astype(float)/QSC/sens, z1.astype(float)/QSC/sens, ys.astype(float)/QS/sens
 
 
 
@@ -170,27 +147,24 @@ def plot_frequency_response(b, a, cutoff):
     plt.figure(figsize=(8, 4))
     plt.plot(w / np.pi, 20 * np.log10(abs(h)), 'b')
     plt.plot([cutoff, cutoff], [0, -20], 'r')
-    plt.title('Frequency Response of the IIR Filter, low {} ({} Hz)'.format(cutoff, cutoff*Fs()))
+    plt.title('Frequency Response of the IIR Filter, low {} ({} Hz)'.format(cutoff, cutoff*BQ_LCK_FS))
     plt.xlabel('Normalized Frequency (×π rad/sample)')
     plt.ylabel('Magnitude (dB)')
     plt.grid()
     plt.savefig('/tmp/fresponse.png')
     plt.show()
 
-# calc nomralize sampling freq
-fc_norm = fc/Fs()
 
 #b, a = butterworth_filter(order=1, cutoff=fc_norm)
 
 sos, b, a = ellipt_filter(order=4, cutoff=fc_norm, sa=stop_attn_db, rp=ripple_db)
 
-#sos, b, a = notch_filter(2000, 30, Fs())
+#sos, b, a = notch_filter(2000, 30, BQ_LCK_FS)
 
 print ('*****************************************')
-print ('fCut_norm=', fc_norm, ' fc=', fc, ' Hz',  ' FS:', Fs())
+#print (' b=',b,' a=',a)
+print (' SOS=',sos)
 print ('*****************************************')
-print (' b=',b,' a=',a)
-#print (' sos=',sos)
 
 bqv = "vector = {32'd0,  32'd0,  32'd0,  32'd0 "
 
@@ -222,7 +196,7 @@ plot_frequency_response(b, a, fc_norm)
 
 if 1:
 
-	if 1:
+	if 0:
 		labels  = ['Time-Mon', '14-LockIn-Mag-pass' ]
 		columns = [ np.linspace(start=0, stop=20*14, num=20*14), np.linspace(start=0, stop=1, num=20*14)]
 		tmp=np.linspace(start=0, stop=1, num=20*14)
@@ -260,7 +234,8 @@ if 1:
 
 	fc_norm = fc/FS_data
 	print ('*** DATA ********************************')
-	print ('FS data:', FS_data, ' Hz   Fc_norm:', fc_norm, ' actual sample dt=', vpdata['Time-Mon'][101]-vpdata['Time-Mon'][100],' ms')
+	print ('FS data:', FS_data, ' Hz')
+	print ('f-norm:', fc_norm, ' actual sample dt=', vpdata['Time-Mon'][101]-vpdata['Time-Mon'][100],' ms')
 	print ('*****************************************')
 	sos, b, a = ellipt_filter(order=4, cutoff=fc_norm, sa=stop_attn_db, rp=ripple_db)
 
@@ -268,9 +243,9 @@ if 1:
 	for s in range (0,2):
 		bqp = "};"
 		for i in range (0,6):
-			gxsm.set("dsp-SPMC-LCK-BQ{}-COEF-BA0{}".format(s+1,i), '0.1234')
-			gxsm.set("dsp-SPMC-LCK-BQ{}-COEF-BA0{}".format(s+1,i), '0')
-			gxsm.set("dsp-SPMC-LCK-BQ{}-COEF-BA0{}".format(s+1,i), str(sos[s][i]))
+			#gxsm.set("dsp-SPMC-LCK-BQ{}-COEF-BA0{}".format(s+1,i), '0.1234')
+			#gxsm.set("dsp-SPMC-LCK-BQ{}-COEF-BA0{}".format(s+1,i), '0')
+			#gxsm.set("dsp-SPMC-LCK-BQ{}-COEF-BA0{}".format(s+1,i), str(sos[s][i]))
 			bqp = ", 32'd0,  {}32'd{:d} {}".format('-' if sos[s][i] < 0 else ' ', int(round(cQ*abs(sos[s][i]))), bqp)
 			#bqp = ", {}32'd{:d} {}".format('-' if sos[s][i] < 0 else ' ', int(round(cQ*abs(sos[s][i])))-cQ, bqp) ## CHECK
 			
@@ -289,27 +264,27 @@ if 1:
 	#print ('SOS:', fsig)
 
 	plt.figure(figsize=(12, 4))
-	plt.title('Filter Sim and Data Fc {} (Normed: {} Hz)'.format(fc, fc_norm))
+	plt.title('Filter Sim and Data BQ-Fc {} (fc normed data: {:.5} LCK-BQ: {:.5})'.format(fc, fc_norm, fc/BQ_LCK_FS))
 	plt.xlabel('time in ms')
 	plt.ylabel('signal in V')
 
 	plt.plot (vpdata['Time-Mon'], vpdata['14-LockIn-Mag-pass'], alpha=0.3, label='Mag-pass')
-	#plt.plot (vpdata['Time-Mon'], vpdata['08-LockIn-Mag'], alpha=0.3, label='Mag-BQ')
-	if 0: # Floating Point Calc
-		plt.plot (vpdata['Time-Mon'], fsigf, label='Mag-SOS')
-		plt.plot (vpdata['Time-Mon'], ysf[0], label='Mag-SOSs0')
-		plt.plot (vpdata['Time-Mon'], zf0[0], label='fZ0S0')
-		plt.plot (vpdata['Time-Mon'], zf1[0], label='fZ1S0')
-		plt.plot (vpdata['Time-Mon'], zf0[1], label='fZ0S1')
-		plt.plot (vpdata['Time-Mon'], zf1[1], label='fZ1S1')
+	plt.plot (vpdata['Time-Mon'], vpdata['08-LockIn-Mag'], 'x',alpha=0.3, label='Mag-BQ')
+	if 1: # Floating Point Calc
+		plt.plot (vpdata['Time-Mon'], fsigf, label='SIMf-Mag-SOS')
+		#plt.plot (vpdata['Time-Mon'], ysf[0], label='simMag-SOSs0')
+		#plt.plot (vpdata['Time-Mon'], zf0[0], label='fZ0S0')
+		#plt.plot (vpdata['Time-Mon'], zf1[0], label='fZ1S0')
+		#plt.plot (vpdata['Time-Mon'], zf0[1], label='fZ0S1')
+		#plt.plot (vpdata['Time-Mon'], zf1[1], label='fZ1S1')
 	if 1: # Int Calc
-		plt.plot (vpdata['Time-Mon'], fsigQ, alpha=0.4, linewidth=10, label='Mag-SOS-Q')
-		plt.plot (vpdata['Time-Mon'], ys[0], label='y-S0-Q')
-		plt.plot (vpdata['Time-Mon'], ys[1], label='y-S1-Q')
-		plt.plot (vpdata['Time-Mon'], z0[0], label='Z0S0-Q')
-		plt.plot (vpdata['Time-Mon'], z1[0], label='Z1S0-Q')
-		plt.plot (vpdata['Time-Mon'], z0[1], label='Z0S1-Q')
-		plt.plot (vpdata['Time-Mon'], z1[1], label='Z1S1-Q')
+		plt.plot (vpdata['Time-Mon'], fsigQ, alpha=0.4, linewidth=10, label='SIMQ-Mag-SOS')
+		#plt.plot (vpdata['Time-Mon'], ys[0], label='y-S0-Q')
+		#plt.plot (vpdata['Time-Mon'], ys[1], label='y-S1-Q')
+		#plt.plot (vpdata['Time-Mon'], z0[0], label='Z0S0-Q')
+		#plt.plot (vpdata['Time-Mon'], z1[0], label='Z1S0-Q')
+		#plt.plot (vpdata['Time-Mon'], z0[1], label='Z0S1-Q')
+		#plt.plot (vpdata['Time-Mon'], z1[1], label='Z1S1-Q')
 	#plt.ylim (0.0, 1.)
 	#plt.xlim (0.0, 5.)
 	plt.legend()
