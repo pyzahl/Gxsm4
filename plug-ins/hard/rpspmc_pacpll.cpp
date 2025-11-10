@@ -3962,7 +3962,7 @@ void RPSPMC_Control::bq_filter_adjust_callback(Param_Control* pcs, RPSPMC_Contro
 }
 
 void RPSPMC_Control::delayed_zsfilter_update (){
-        configure_filter (10, spmc_parameters.sc_zs_bqmode, spmc_parameters.sc_zs_bq_coef, 128);
+        configure_filter (10, spmc_parameters.sc_zs_bqmode, spmc_parameters.sc_zs_bq_coef, 50); // ZS / Notch DECIMATION
         delayed_zsfilter_update_timer_id = 0; // done.
 }
 

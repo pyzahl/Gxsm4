@@ -11,16 +11,16 @@ mpl.pyplot.close('all')
 
 # Set Filter F-Cut for
 # Elliptical filter 4th order
-fc = 1 #*float(gxsm.get("dsp-SPMC-LCK-FREQ"))
+fc = 1*float(gxsm.get("dsp-SPMC-LCK-FREQ"))
 stop_attn_db = 50
-ripple_db=1
+ripple_db=2
 
 LCK_DEC = float(gxsm.get("dsp-LCK-DECII-MONITOR"))  # LockIn signal decimation
-ACLKS   = 57#int(gxsm.get("dsp-LCK-ACLK-MONITOR")) % 1000  # AD463 ACLKs / sample (59)
+ACLKS   = int(gxsm.get("dsp-LCK-ACLK-MONITOR")) % 1000  # AD463 ACLKs / sample (59)
 
 RPACLK  = 125e6
 AD463FS = RPACLK/ACLKS
-AD463FS_LCK = 14 #RPACLK/LCK_DEC
+AD463FS_LCK = RPACLK/LCK_DEC
 
 print ('*****************************************')
 print ('DECII#', LCK_DEC, 'ADC-Fs', AD463FS, 'Hz', ' LCK-Fs', AD463FS_LCK, ' Hz')
@@ -134,7 +134,7 @@ def run_sosfilt_Q24(sos, x):
         #y[n]=ys[0,n]
 
     #print ('Y:', y[0:20], ' Yf:', y.astype(float)[0:20]/QS/sens)
-    return y.astype(float)/QS/sens, z0.astype(float)/QSC/sens, z1.astype(float)/QS/sens, ys.astype(float)/QS/sens
+    return y.astype(float)/QS/sens, z0.astype(float)/QSC/sens, z1.astype(float)/QSC/sens, ys.astype(float)/QS/sens
 
 
 
@@ -190,7 +190,7 @@ print ('*****************************************')
 print ('fCut_norm=', fc_norm, ' fc=', fc, ' Hz',  ' FS:', Fs())
 print ('*****************************************')
 print (' b=',b,' a=',a)
-#print (' sos=',sos)
+print (' sos=',sos)
 
 bqv = "vector = {32'd0,  32'd0,  32'd0,  32'd0 "
 
@@ -213,6 +213,7 @@ if 1: # SOS ellipt cascaded BiQ type
 			gxsm.set("dsp-SPMC-LCK-BQ{}-COEF-BA0{}".format(s+1,i), '0.1234')
 			gxsm.set("dsp-SPMC-LCK-BQ{}-COEF-BA0{}".format(s+1,i), '0')
 			gxsm.set("dsp-SPMC-LCK-BQ{}-COEF-BA0{}".format(s+1,i), str(sos[s][i]))
+			print("dsp-SPMC-LCK-BQ{}-COEF-BA0{}".format(s+1,i), str(sos[s][i]))
 			bqp = ", 32'd0,  {}32'd{:d} {}".format('-' if sos[s][i] < 0 else ' ', int(round(cQ*abs(sos[s][i]))), bqp)
 			#bqp = ", {}32'd{:d} {}".format('-' if sos[s][i] < 0 else ' ', int(round(cQ*abs(sos[s][i])))-cQ, bqp) ## CHECK
 			
@@ -222,13 +223,15 @@ plot_frequency_response(b, a, fc_norm)
 
 if 1:
 
-	if 1:
+	if 0: ## SIM
 		labels  = ['Time-Mon', '14-LockIn-Mag-pass' ]
 		columns = [ np.linspace(start=0, stop=20*14, num=20*14), np.linspace(start=0, stop=1, num=20*14)]
 		tmp=np.linspace(start=0, stop=1, num=20*14)
 		vpdata  = dict (zip (labels, columns))
 		for i in range(10*14,20*14):
 			vpdata['14-LockIn-Mag-pass'][i] = vpdata['14-LockIn-Mag-pass'][i] + 0.25*math.sin (i/14*math.pi*2)
+		for i in range(15*14,20*14):
+			vpdata['14-LockIn-Mag-pass'][i] = vpdata['14-LockIn-Mag-pass'][i] - (i-15*14)/20/14
 		FS_data = 14
 	else:
 		print ('Getting last vpdata set from master scan DATA ********')
@@ -253,8 +256,6 @@ if 1:
 		#print(vpdata['Time-Mon'][0:20])
 		#print(vpdata['Time-Mon'][-20:])
 
-
-
 		FS_data = 1000/(vpdata['Time-Mon'][101]-vpdata['Time-Mon'][100])
 
 
@@ -268,9 +269,6 @@ if 1:
 	for s in range (0,2):
 		bqp = "};"
 		for i in range (0,6):
-			gxsm.set("dsp-SPMC-LCK-BQ{}-COEF-BA0{}".format(s+1,i), '0.1234')
-			gxsm.set("dsp-SPMC-LCK-BQ{}-COEF-BA0{}".format(s+1,i), '0')
-			gxsm.set("dsp-SPMC-LCK-BQ{}-COEF-BA0{}".format(s+1,i), str(sos[s][i]))
 			bqp = ", 32'd0,  {}32'd{:d} {}".format('-' if sos[s][i] < 0 else ' ', int(round(cQ*abs(sos[s][i]))), bqp)
 			#bqp = ", {}32'd{:d} {}".format('-' if sos[s][i] < 0 else ' ', int(round(cQ*abs(sos[s][i])))-cQ, bqp) ## CHECK
 			
@@ -294,7 +292,7 @@ if 1:
 	plt.ylabel('signal in V')
 
 	plt.plot (vpdata['Time-Mon'], vpdata['14-LockIn-Mag-pass'], alpha=0.3, label='Mag-pass')
-	#plt.plot (vpdata['Time-Mon'], vpdata['08-LockIn-Mag'], alpha=0.3, label='Mag-BQ')
+	plt.plot (vpdata['Time-Mon'], vpdata['08-LockIn-Mag'], 'x', alpha=0.3, label='Mag-BQ')
 	if 0: # Floating Point Calc
 		plt.plot (vpdata['Time-Mon'], fsigf, label='Mag-SOS')
 		plt.plot (vpdata['Time-Mon'], ysf[0], label='Mag-SOSs0')
@@ -304,10 +302,10 @@ if 1:
 		plt.plot (vpdata['Time-Mon'], zf1[1], label='fZ1S1')
 	if 1: # Int Calc
 		plt.plot (vpdata['Time-Mon'], fsigQ, alpha=0.4, linewidth=10, label='Mag-SOS-Q')
-		plt.plot (vpdata['Time-Mon'], ys[0], label='y-S0-Q')
-		plt.plot (vpdata['Time-Mon'], ys[1], label='y-S1-Q')
-		plt.plot (vpdata['Time-Mon'], z0[0], label='Z0S0-Q')
-		plt.plot (vpdata['Time-Mon'], z1[0], label='Z1S0-Q')
+		plt.plot (vpdata['Time-Mon'], ys[0], '+', label='y-S0-Q')
+		plt.plot (vpdata['Time-Mon'], ys[1], 'x', label='y-S1-Q')
+		plt.plot (vpdata['Time-Mon'], z0[0], 'o', alpha=0.4, label='Z0S0-Q')
+		plt.plot (vpdata['Time-Mon'], z1[0], 'o', alpha=0.4, label='Z1S0-Q')
 		plt.plot (vpdata['Time-Mon'], z0[1], label='Z0S1-Q')
 		plt.plot (vpdata['Time-Mon'], z1[1], label='Z1S1-Q')
 	#plt.ylim (0.0, 1.)
