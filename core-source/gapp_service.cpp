@@ -1358,9 +1358,9 @@ void AppBase::LoadGeometryWRefAutoPlace(const gchar *wref_key, const gchar *wref
 
         //if (nth > 6) stack = 0.5;
         
-        window_geometry[WGEO_XPOS] += (nth%6)*window_geometry[WGEO_WIDTH]*stack;
-        if (nth > 5)
-                window_geometry[WGEO_YPOS] += (nth/6)*window_geometry[WGEO_HEIGHT]*stack;
+        window_geometry[WGEO_XPOS] += (nth%8)*window_geometry[WGEO_WIDTH]*stack;
+        if (nth >= 8)
+                window_geometry[WGEO_YPOS] += (nth/8)*window_geometry[WGEO_HEIGHT]*stack;
 
         if (href > 0)
                 window_geometry[WGEO_HEIGHT] = href;

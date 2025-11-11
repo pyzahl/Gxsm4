@@ -168,15 +168,15 @@ SOURCE_SIGNAL_DEF rpspmc_source_signals[] = {
 SOURCE_SIGNAL_DEF rpspmc_swappable_signals[] = {                                                                 // DEFAULT MUX MAP, 16 signals max 
         //  SIGNAL #  Name               Units.... Scale                                         DEFAULT ASSIGN
         { 0x00000000, "dFrequency",  " ", "Hz",  "Hz", (125e6/((1L<<RP_FPGA_QFREQ)-1)),               0, -1 },   // dFREQ via PACPLL FIR_CH2 ** via transport / decimation selector 
-        { 0x00000001, "Excitation",  " ", "mV",   "mV", (1000.0/((1L<<RP_FPGA_QEXEC)-1)),             1, -1 },   // EXEC  via PACPLL FIR_CH4 ** via transport / decimation selector 
+        { 0x00000001, "Excitation",  " ", "mV1",   "mV", (1000.0/((1L<<RP_FPGA_QEXEC)-1)),             1, -1 },   // EXEC  via PACPLL FIR_CH4 ** via transport / decimation selector 
         { 0x00000002, "Phase",       " ", "deg", UTF8_DEGREE, (180.0/(M_PI*((1L<<RP_FPGA_QATAN)-1))), 2, -1 },   // PHASE via PACPLL FIR_CH1 ** via transport / decimation selector 
-        { 0x00000003, "Amplitude",   " ", "mV",   "mV", (1000.0/((1L<<RP_FPGA_QSQRT)-1)),             3, -1 },   // AMPL  via PACPLL FIR_CH3 ** via transport / decimation selector 
-        { 0x00000004, "dFreq-Control", " ", "mV", "mV", (1000.0*SPMC_AD5791_to_volts),                4, -1 },   // IR_CH2_DFREQ_CTRL_VAL : can be added to Z-control for true Z AFM mode in freq regulation, or addded to Bias for SQDM mode
+        { 0x00000003, "Amplitude",   " ", "mV1",   "mV", (1000.0/((1L<<RP_FPGA_QSQRT)-1)),             3, -1 },   // AMPL  via PACPLL FIR_CH3 ** via transport / decimation selector 
+        { 0x00000004, "dFreq-Control", " ", "mV1", "mV", (1000.0*SPMC_AD5791_to_volts),                4, -1 },   // IR_CH2_DFREQ_CTRL_VAL : can be added to Z-control for true Z AFM mode in freq regulation, or addded to Bias for SQDM mode
                                                                                                                  // *** still assuming +/-10V range in PAC Control mappted to 5V here
         { 0x00000005, "05-IN1-RF-FBW",     " ", "mV", "mV", 1000*SPMC_RPIN12_to_volts,               -1, -1 },   // IN1 FBW **** IN1 RP 125MSPS (Signal) -- PLL Signal (FBW)
         { 0x00000006, "06-IN1-RF-FIR",     " ", "V", "V", SPMC_RPIN12_to_volts,                      -1, -1 },   // IN1 FIR **** IN1 RP 125MSPS (Signal) -- PLL Signal (FIR)
         { 0x00000007, "07-IN2-RF-FBW",     " ", "V", "V", SPMC_RPIN12_to_volts,                      -1, -1 },   // IN2 FBW
-        { 0x00000008, "08-LockIn-Mag",     " ", "V", "V", SPMC_RPIN34_to_volts,                       5, -1 },   // LCK-Mag after BiQuad Section 2
+        { 0x00000008, "08-LockIn-Mag",     " ", "mV", "mV", SPMC_RPIN34_to_volts,                       5, -1 },   // LCK-Mag after BiQuad Section 2
         { 0x00000009, "09-LockIn-Phase",   " ", "deg", UTF8_DEGREE, (180.0/(M_PI*((1L<<(RP_FPGA_QATAN+(32-24)))))), 6, -1 },   // LCK-Phase after BiQuand Section2 
         { 0x0000000A, "10-LockIn-Y",       " ", "V", "V", SPMC_RPIN34_to_volts,                      -1, -1 },   // (TEST)
         { 0x0000000B, "11-IN4-FIR",        " ", "V", "V", SPMC_RPIN34_to_volts,                      -1, -1 },   // IN4 FIR
@@ -3350,7 +3350,7 @@ int RPSPMC_Control::choice_scansource_callback (GtkWidget *widget, RPSPMC_Contro
                                                                rpspmc_swappable_signals[selection].label,
                                                                rpspmc_swappable_signals[selection].label,
                                                                rpspmc_swappable_signals[selection].unit,
-                                                               rpspmc_swappable_signals[selection].scale_factor
+                                                               1.0 //rpspmc_swappable_signals[selection].scale_factor // ** data is scaled to unit at transfer time
                                                                );
 
         
