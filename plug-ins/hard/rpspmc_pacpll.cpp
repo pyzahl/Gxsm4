@@ -177,7 +177,7 @@ SOURCE_SIGNAL_DEF rpspmc_swappable_signals[] = {                                
         { 0x00000006, "06-IN1-RF-FIR",     " ", "V", "V", SPMC_RPIN12_to_volts,                      -1, -1 },   // IN1 FIR **** IN1 RP 125MSPS (Signal) -- PLL Signal (FIR)
         { 0x00000007, "07-IN2-RF-FBW",     " ", "V", "V", SPMC_RPIN12_to_volts,                      -1, -1 },   // IN2 FBW
         { 0x00000008, "08-LockIn-Mag",     " ", "V", "V", SPMC_RPIN34_to_volts,                       5, -1 },   // LCK-Mag after BiQuad Section 2
-        { 0x00000009, "09-LockIn-Phase",   " ", "deg", UTF8_DEGREE, (180.0/(M_PI*((1L<<RP_FPGA_QATAN)-1))), 6, -1 },   // LCK-Phase after BiQuand Section2 
+        { 0x00000009, "09-LockIn-Phase",   " ", "deg", UTF8_DEGREE, (180.0/(M_PI*((1L<<(RP_FPGA_QATAN+(32-24)))))), 6, -1 },   // LCK-Phase after BiQuand Section2 
         { 0x0000000A, "10-LockIn-Y",       " ", "V", "V", SPMC_RPIN34_to_volts,                      -1, -1 },   // (TEST)
         { 0x0000000B, "11-IN4-FIR",        " ", "V", "V", SPMC_RPIN34_to_volts,                      -1, -1 },   // IN4 FIR
         { 0x0000000C, "12-LockIn-X",       " ", "V", "V", SPMC_RPIN34_to_volts,                      -1, -1 },   // (TEST)
