@@ -1321,6 +1321,7 @@ void AppBase::LoadGeometryWRefAutoPlace(const gchar *wref_key, const gchar *wref
 
         gsize n_stores;
 
+        const int num_windows_per_row = 8;
         double stack = 0.95;
         double href = 0.;
         gchar *wk=NULL;
@@ -1337,7 +1338,7 @@ void AppBase::LoadGeometryWRefAutoPlace(const gchar *wref_key, const gchar *wref
 
                 wk = g_strdup_printf("%s", wref_key2nd);
                 XSM_DEBUG_GM (DBG_L2, "AppBase::LoadGeometry *** Load Geometry relative to window  ** %s **", wk );
-                nth += 6;
+                nth += num_windows_per_row;
         } else {
                 if (nth == 1) return;
                 wk = g_strdup_printf("%s-1", wref_key);
@@ -1356,10 +1357,9 @@ void AppBase::LoadGeometryWRefAutoPlace(const gchar *wref_key, const gchar *wref
 
         g_assert_cmpint (n_stores, ==, WGEO_SIZE);
 
-        //if (nth > 6) stack = 0.5;
         
-        window_geometry[WGEO_XPOS] += (nth%8)*window_geometry[WGEO_WIDTH]*stack;
-        if (nth >= 8)
+        window_geometry[WGEO_XPOS] += (nth%num_windows_per_row)*window_geometry[WGEO_WIDTH]*stack;
+        if (nth >= num_windows_per_row)
                 window_geometry[WGEO_YPOS] += (nth/8)*window_geometry[WGEO_HEIGHT]*stack;
 
         if (href > 0)
