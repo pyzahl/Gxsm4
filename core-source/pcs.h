@@ -111,11 +111,18 @@ class Param_Control{
         };
 
 	virtual void update_limits() {};
-	void changeUnit(UnitObj *U){ delete unit; unit = U->Copy(); Put_Value(); };
+	void changeUnit(UnitObj *U){
+                if (!unit->get_ref()){
+                        delete unit; unit = U->Copy();
+                } else unit = U;
+                Put_Value();
+        };
 	void changeUnit_hold_usr_value(UnitObj *U){ 
 		double valusr = unit->Base2Usr(Get_dValue());
-                delete unit;
-		unit = U->Copy();
+                if (!unit->get_ref()){
+                        delete unit;
+                        unit = U->Copy();
+                } else unit = U;
 		Set_FromUsrValue(valusr);
 	};
         const gchar* get_unit_symbol() { return unit->Symbol(); };

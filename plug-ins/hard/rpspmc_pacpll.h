@@ -201,6 +201,7 @@ public:
                 hwi_settings = g_settings_new (GXSM_RES_BASE_PATH_DOT".hwi.rpspmc-control");
                 Unity    = new UnitObj(" "," ");
                 Volt     = new UnitObj("V","V");
+                mVolt     = new UnitObj("mV","mV");
                 Velocity  = new UnitObj("px/s","px/s");
                 dB       = new UnitObj("dB","dB");
 
@@ -383,6 +384,7 @@ public:
 	virtual ~RPSPMC_Control() {
                 delete Unity;
                 delete Volt;
+                delete mVolt;
                 delete Velocity;
                 delete dB;
                 
@@ -861,6 +863,9 @@ public:
 	double    LCK_Volume[LCK_NUM_TARGETS];
         GtkWidget *LCK_VolumeEntry[LCK_NUM_TARGETS];
         Param_Control *LCK_ModFrq;
+        Param_Control *LCK_Sens;
+        Param_Control *LCK_Reading;
+        double lck_gain;
         
         int BQ_decimation;
         
@@ -1056,7 +1061,8 @@ private:
 	GtkWindow* vpg_window;
         GtkWidget* vpg_grid;
 
-	UnitObj *Unity, *Volt, *Velocity, *dB;
+	UnitObj *Unity, *Volt, *mVolt, *Velocity, *dB;
+        UnitAutoMag *LCK_unit;
         UnitObj *Angstroem, *Frq, *Time, *TimeUms, *msTime, *minTime, *Deg, *Current, *Current_pA, *Speed, *PhiSpeed, *Vslope, *Hex;
 };
 

@@ -51,6 +51,7 @@ typedef enum { UNIT_SM_NORMAL, UNIT_SM_PS } UNIT_MODES;
 class UnitObj{
 public:
         UnitObj(UnitObj &usrc){
+                refcount=0;
                 GXSM_REF_OBJECT (GXSM_GRC_UNITOBJ);
                 sym   = g_strdup(usrc.sym); 
                 pssym = g_strdup(usrc.pssym); 
@@ -62,6 +63,7 @@ public:
                         alias = NULL;
         };
         UnitObj(const gchar *s, const gchar *pss){ 
+                refcount=0;
                 GXSM_REF_OBJECT (GXSM_GRC_UNITOBJ);
                 sym   = g_strdup(s); 
                 pssym = g_strdup(pss); 
@@ -70,6 +72,7 @@ public:
                 alias = NULL;
         };
         UnitObj(const gchar *s, const gchar *pss, const gchar *precc){ 
+                refcount=0;
                 GXSM_REF_OBJECT (GXSM_GRC_UNITOBJ);
                 sym   = g_strdup(s); 
                 pssym = g_strdup(pss); 
@@ -78,6 +81,7 @@ public:
                 alias = NULL;
         };
         UnitObj(const gchar *s, const gchar *pss, const gchar *precc, const gchar *lab){ 
+                refcount=0;
                 GXSM_REF_OBJECT (GXSM_GRC_UNITOBJ);
                 sym   = g_strdup(s); 
                 pssym = g_strdup(pss); 
@@ -91,6 +95,10 @@ public:
                 GXSM_UNREF_OBJECT (GXSM_GRC_UNITOBJ);
         };
 
+        void add_ref() { refcount++; };
+        void del_ref() { --refcount; };
+        int get_ref() { return refcount; };
+        
         virtual UnitObj* Copy(){ return new UnitObj(*this); };
 
         void SetAlias(const gchar *a){ 
@@ -165,17 +173,18 @@ protected:
         gchar *label;
         gchar *alias;
 private:
+        int refcount;
 };
 
 class UnitAutoMag;
 class UnitAutoMag : public UnitObj{
 public:
         UnitAutoMag(UnitAutoMag &usrc)
-                :UnitObj(usrc){ fac=usrc.fac; mi=usrc.mi; };
+                :UnitObj(usrc){ fac=usrc.fac; mi=usrc.mi; gain=1.; };
         UnitAutoMag(const gchar *s, const gchar *pss)
-                :UnitObj(s, pss){ fac=1.; mi=6; };
+                :UnitObj(s, pss){ fac=1.; mi=6; gain=1.; };
         UnitAutoMag(const gchar *s, const gchar *pss, const gchar *lab)
-                :UnitObj(s, pss, "g", lab){ fac=1.; mi=6; };
+                :UnitObj(s, pss, "g", lab){ fac=1.; mi=6; gain=1.; };
 
         virtual UnitObj* Copy(){ return new UnitAutoMag(*this); };
 
@@ -184,6 +193,8 @@ public:
                 return g_strconcat(label, " in ",  prefix[mi], Symbol(um), NULL);
         };
 
+        void set_gain (double g) { gain = g; };
+        
         double set_mag_get_base (double v, double bf=0.) {
                 if (bf > 0.){
                         fac = bf;
@@ -201,13 +212,14 @@ public:
                         if (mi>10)
                                 mi=10;
                 }
-                g_print ("set_mag_get_base:: %g [x=%g]:[mi=%d]{%g}\n", v, x, mi, magnitude[mi]);
+                //const gchar  *prefix[]    = { "a",  "f",   "p",   "n", UTF8_MU, "m", " ", "k", "M", "G", "T", "u",   };
+                //g_print ("set_mag_get_base:: %g [x=%g]:[mi=%d]{%g %s }\n", v, x, mi, magnitude[mi], prefix[mi]);
                 return x/magnitude[mi];
         };
 
-        virtual gchar *UsrString(double b, UNIT_MODES um=UNIT_SM_NORMAL){
+        virtual gchar *UsrString(double b, UNIT_MODES um=UNIT_SM_NORMAL, const gchar *prec_override=NULL){
                 const gchar  *prefix[]    = { "a",  "f",   "p",   "n", UTF8_MU, "m", " ", "k", "M", "G", "T"  };
-                double x = set_mag_get_base (b);
+                double x = set_mag_get_base (b*gain);
                 gchar *fmt = g_strconcat("%",prec," ", prefix[mi], Symbol(um), NULL);
                 gchar *txt;
                 txt = g_strdup_printf(fmt, x);
@@ -235,7 +247,7 @@ public:
 
                 
                 // else assume same as before in case user deleted unit or messed with it...
-                return u*magnitude[mi]/fac;
+                return u*magnitude[mi]/fac/gain;
         }; /* Usr -> Base */
         /* should not be used for in this context -- fall back only */
         virtual double Usr2Base (double u){
@@ -248,6 +260,7 @@ public:
 private:
         int mi;
         double fac;
+        double gain;
 };
 
 class LinUnit;

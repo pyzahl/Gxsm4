@@ -1910,7 +1910,10 @@ void RPSPMC_Control::create_folder (){
         bp->set_default_ec_change_notice_fkt (RPSPMC_Control::lockin_adjust_callback, this);
  	bp->new_grid_with_frame ("Lock-In Control and Routing");
 
-        bp->grid_add_ec ("Magnitude Reading", Volt, &spmc_parameters.lck1_bq2_mag_monitor, -10.0, 10.0, ".03g", 0.1, 1., "LCK-MAG-MONITOR");
+        LCK_unit = new UnitAutoMag ("V","V");
+        LCK_unit->add_ref ();
+        bp->grid_add_ec ("Magnitude Reading", LCK_unit, &spmc_parameters.lck1_bq2_mag_monitor, -10.0, 10.0, ".03g", 0.1, 1., "LCK-MAG-MONITOR");
+        LCK_Reading = bp->ec;
         EC_MONITORS_list = g_slist_prepend( EC_MONITORS_list, bp->ec);
         bp->ec->Freeze ();
         bp->new_line ();
@@ -1961,7 +1964,9 @@ void RPSPMC_Control::create_folder (){
         }
 
         bp->new_line ();
+        lck_gain=1.;
 	bp->grid_add_ec ("Lck Sens.", new UnitObj("mV","mV"), &spmc_parameters.lck_sens, 0.001, 5000., "5g", 1.0, 10.0, "SPMC-LCK-SENS");
+        LCK_Sens = bp->ec;
         bp->new_line ();
         bp->grid_add_check_button ("CorrS PH Aligned", bp->PYREMOTE_CHECK_HOOK_KEY_FUNC("Lock-In Corr Phase Aligned","dsp-lck-phaligned"), 1,
                                    GCallback (callback_change_LCK_mode), this,
@@ -4042,6 +4047,12 @@ void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *
                         if (gain_out == 0 && gain_in > decii2)
                                 gain_out = gain_in - decii2;
 
+                        self->lck_gain = (1<<gain_in) * (1<<gain_out);
+                        self->LCK_unit->set_gain (1./(double)((1<<gain_in) * (1<<gain_out)));
+                        gchar *tmp = g_strdup_printf ("[%d x %d] %d", 1<<gain_in, 1<<gain_out, (1<<gain_in) * (1<<gain_out));
+                        self->LCK_Sens->set_info (tmp);
+                        self->LCK_Sens->Put_Value ();
+                        g_free (tmp);
                         
                         jdata_i[1] = (decii2<<16) | (gain_out<<8) | gain_in;
                 }

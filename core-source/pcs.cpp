@@ -100,7 +100,10 @@ void pcs_set_current_gschema_group (const gchar *group){
         
 Param_Control::Param_Control(UnitObj *U, const char *W, double *V, double VMi, double VMa, const char *p){
 	XSM_DEBUG (DBG_L8, "PCS-double:: " << *V << ", " << VMi << ", " << VMa << ", " << p);
-	unit = U->Copy ();
+        if (!U->get_ref ())
+                unit = U->Copy ();
+        else
+                unit = U;
 	warning = W ? g_strdup(W) : NULL;
 	Dval = V; Ival=0; ULval=0; Sval=0; StringVal=NULL;
 	Init();
@@ -111,7 +114,10 @@ Param_Control::Param_Control(UnitObj *U, const char *W, double *V, double VMi, d
 
 Param_Control::Param_Control(UnitObj *U, const char *W, unsigned long *V, double VMi, double VMa, const char *p){
 	XSM_DEBUG (DBG_L8, "PCS-ulong:: " << *V << ", " << VMi << ", " << VMa << ", " << p);
-	unit = U->Copy ();
+        if (!U->get_ref ())
+                unit = U->Copy ();
+        else
+                unit = U;
 	warning = W ? g_strdup(W) : NULL;
 	ULval = V; Ival=0; Dval=0; Sval=0; StringVal=NULL;
 	Init();
@@ -122,7 +128,10 @@ Param_Control::Param_Control(UnitObj *U, const char *W, unsigned long *V, double
 
 Param_Control::Param_Control(UnitObj *U, const char *W, int *V, double VMi, double VMa, const char *p){
 	XSM_DEBUG (DBG_L8, "PCS-int:: " << *V << ", " << VMi << ", " << VMa << ", " << p);
-	unit = U->Copy ();
+        if (!U->get_ref ())
+                unit = U->Copy ();
+        else
+                unit = U;
 	warning = W ? g_strdup(W) : NULL;
 	Ival = V; ULval=0; Dval=0; Sval=0; StringVal=NULL;
 	Init();
@@ -133,7 +142,10 @@ Param_Control::Param_Control(UnitObj *U, const char *W, int *V, double VMi, doub
 
 Param_Control::Param_Control(UnitObj *U, const char *W, short *V, double VMi, double VMa, const char *p){
 	XSM_DEBUG (DBG_L8, "PCS-short:: " << *V << ", " << VMi << ", " << VMa << ", " << p);
-	unit = U->Copy ();
+        if (!U->get_ref ())
+                unit = U->Copy ();
+        else
+                unit = U;
 	warning = W ? g_strdup(W) : NULL;
 	Sval = V; ULval=0; Ival=0; Dval=0; StringVal=NULL;
 	Init();
@@ -144,7 +156,10 @@ Param_Control::Param_Control(UnitObj *U, const char *W, short *V, double VMi, do
 
 Param_Control::Param_Control(UnitObj *U, const char *W, const gchar *SV){
 	XSM_DEBUG (DBG_L8, "PCS-string:: " << W);
-	unit = U->Copy ();
+        if (!U->get_ref ())
+                unit = U->Copy ();
+        else
+                unit = U;
 	warning = W ? g_strdup(W) : NULL;
 	Sval = 0; ULval=0; Ival=0; Dval=0; StringVal=W;
 	Init();
@@ -182,7 +197,8 @@ Param_Control::~Param_Control(){
         if (pcs_settings)
                 g_clear_object (&pcs_settings);
 
-        delete (unit);
+        if (!unit->get_ref())
+                delete (unit);
 }
 
 void Param_Control::Init(){
