@@ -195,7 +195,9 @@ public:
                 zpos_refresh_timer_id = 0;
                 delayed_vector_update_timer_id = 0;
                 delayed_filter_update_timer_id = 0;
+                delayed_filter_update_ref = 0;
                 delayed_zsfilter_update_timer_id = 0;
+                delayed_zsfilter_update_ref = 0;
 
                 // need to create according xml recource files for this to make work....
                 hwi_settings = g_settings_new (GXSM_RES_BASE_PATH_DOT".hwi.rpspmc-control");
@@ -776,7 +778,9 @@ public:
 	static guint delayed_vector_update_callback (RPSPMC_Control *self);
         gint delayed_vector_update_timer_id;
         gint delayed_filter_update_timer_id;
+        gint delayed_filter_update_ref;
         gint delayed_zsfilter_update_timer_id;
+        gint delayed_zsfilter_update_ref;
        
         void update_scan_speed_vectors ();
         

@@ -284,7 +284,7 @@ double ProfileElement::calc(gint64 ymode, int id, int binary_mask, double y_offs
                         double lpo = 1.0-lpn;
                         vp=v;
                         // for(int i=0, ix=0, iy=1; i < n; ix+=2, iy+=2, ++i){
-                        if (lpn > 0)
+                        if (lpn > 0){
                                 for(int k=0, i=ix_left; k < n_dec; ++k, i+=dec_len){
                                         int ii = i + dec_len/2;
                                         double y=s->data.Zunit->Base2Usr(s->mem2d->GetDataPkt(i,yy) * s->data.s.dz);
@@ -297,6 +297,7 @@ double ProfileElement::calc(gint64 ymode, int id, int binary_mask, double y_offs
                                         }
                                         pathitem[id]->set_xy_test (k, s->data.Xunit->Base2Usr(s->mem2d->data->GetXLookup(ii)), y);
                                 }
+                        }
                         else // SINC in dec window
                                 for(int k=0, i=ix_left; k < n_dec; ++k, i+=dec_len){
                                         int ii = i + dec_len/2;
@@ -353,9 +354,19 @@ double ProfileElement::calc(gint64 ymode, int id, int binary_mask, double y_offs
                         double lpo = 1.0-lpn;
                         vp=v;
                         // for(int i=0, ix=0, iy=1; i < n; ix+=2, iy+=2, ++i){
+
+                        // symmetric IIR, dual run <- + ->
+                        double *tmpY = new double[ix_right-ix_left];
+                        for(int k=0, i=ix_right-1; i >= ix_left; --i){ // run from right to tmp
+                                double y;
+                                tmpY[i] =  lpo*v + lpn * s->data.Zunit->Base2Usr(s->mem2d->GetDataPkt(i,yy) * s->data.s.dz);
+                        }
+
                         for(int k=0, i=ix_left; i <= ix_right; ++i,++k){
                                 double y;
-                                v = y =  lpo*v + lpn * s->data.Zunit->Base2Usr(s->mem2d->GetDataPkt(i,yy) * s->data.s.dz);
+                                // single path
+                                // v = y =  lpo*v + lpn * s->data.Zunit->Base2Usr(s->mem2d->GetDataPkt(i,yy) * s->data.s.dz);
+                                v = y =  lpo*v + lpn * tmpY[i]; // run from left from tmp
 
                                 if(ymode & PROFILE_MODE_YDIFF){
                                         y  = v-vp;
@@ -363,6 +374,7 @@ double ProfileElement::calc(gint64 ymode, int id, int binary_mask, double y_offs
                                 }
                                 pathitem[id]->set_xy_test (k, s->data.Xunit->Base2Usr(s->mem2d->data->GetXLookup(i)), y);
                         }
+                        delete tmpY;
                 } else if(ymode & PROFILE_MODE_YDIFF){
                         for(int k=0, i=ix_left; i <= ix_right; ++i,++k)
                                 pathitem[id]->set_xy_test (k,
