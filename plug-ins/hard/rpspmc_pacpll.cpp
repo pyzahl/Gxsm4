@@ -3943,7 +3943,7 @@ void RPSPMC_Control::configure_filter(int id, int mode, double sos[6], int decim
 
 void RPSPMC_Control::delayed_filter_update (){
         configure_filter (1, spmc_parameters.sc_bq1mode, spmc_parameters.sc_bq1_coef, BQ_decimation);
-        usleep (100000);
+        usleep (200000);
         configure_filter (2, spmc_parameters.sc_bq2mode, spmc_parameters.sc_bq2_coef, BQ_decimation);
         delayed_filter_update_timer_id = 0; // done.
 }
@@ -3954,15 +3954,18 @@ static guint RPSPMC_Control::delayed_filter_update_callback (RPSPMC_Control *sel
 }
 
 void RPSPMC_Control::bq_filter_adjust_callback(Param_Control* pcs, RPSPMC_Control *self){
-        self->BQ_decimation = 0; //1 + (int)round(8 * 5000. / spmc_parameters.lck_frequency);
+        self->BQ_decimation = 16; //1 + (int)round(8 * 5000. / spmc_parameters.lck_frequency);
         spmc_parameters.lck_bq_dec_monitor = self->BQ_decimation;
         g_message ("BQ Filter Deciamtion: #%d",  self->BQ_decimation);
         //self->configure_filter (1, spmc_parameters.sc_bq1mode, spmc_parameters.sc_bq1_coef, decimation);
         //self->configure_filter (2, spmc_parameters.sc_bq2mode, spmc_parameters.sc_bq2_coef, decimation);
 
         // if not already scheduled, schedule delayed scan speed vector update to avoid messageover load via many slider events
-        if (!self->delayed_filter_update_timer_id)
-                self->delayed_filter_update_timer_id = g_timeout_add (2000, (GSourceFunc)RPSPMC_Control::delayed_filter_update_callback, self);
+
+        if (!self->delayed_filter_update_timer_id) // if scheduled, remove and reset timeout next
+                g_source_remove (self->delayed_filter_update_timer_id);
+        
+        self->delayed_filter_update_timer_id = g_timeout_add (1000, (GSourceFunc)RPSPMC_Control::delayed_filter_update_callback, self);
 
 }
 
@@ -3980,8 +3983,11 @@ void RPSPMC_Control::zs_input_filter_adjust_callback(Param_Control* pcs, RPSPMC_
         // Test-DECII=32 for NOTCH intended IIR @ ~2MSPS / 32
         //self->configure_filter (10, spmc_parameters.sc_zs_bqmode, spmc_parameters.sc_zs_bq_coef, 128);
         // if not already scheduled, schedule delayed scan speed vector update to avoid messageover load via many slider events
+
         if (!self->delayed_zsfilter_update_timer_id)
-                self->delayed_zsfilter_update_timer_id = g_timeout_add (2000, (GSourceFunc)RPSPMC_Control::delayed_zsfilter_update_callback, self);
+                g_source_remove (self->delayed_zsfilter_update_timer_id);
+
+        self->delayed_zsfilter_update_timer_id = g_timeout_add (1000, (GSourceFunc)RPSPMC_Control::delayed_zsfilter_update_callback, self);
 }
 
 void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *self){
