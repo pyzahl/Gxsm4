@@ -349,7 +349,7 @@ double ProfileElement::calc(gint64 ymode, int id, int binary_mask, double y_offs
                 } else if(ymode & PROFILE_MODE_YLOWPASS){
                         ylocmin=ylocmax=0.;
                         double vp = 0.;
-                        double v = s->data.Zunit->Base2Usr(s->mem2d->GetDataPkt(0,yy) * s->data.s.dz);
+                        double v = 0.; //s->data.Zunit->Base2Usr(s->mem2d->GetDataPkt(0,yy) * s->data.s.dz);
                         double lpn = pctrl->lp_gain;
                         double lpo = 1.0-lpn;
                         vp=v;
@@ -357,11 +357,13 @@ double ProfileElement::calc(gint64 ymode, int id, int binary_mask, double y_offs
 
                         // symmetric IIR, dual run <- + ->
                         double *tmpY = new double[ix_right-ix_left];
+                        v = s->data.Zunit->Base2Usr(s->mem2d->GetDataPkt(ix_right-1,yy) * s->data.s.dz);
                         for(int k=0, i=ix_right-1; i >= ix_left; --i){ // run from right to tmp
                                 double y;
-                                tmpY[i] =  lpo*v + lpn * s->data.Zunit->Base2Usr(s->mem2d->GetDataPkt(i,yy) * s->data.s.dz);
+                                tmpY[i] = v =  lpo*v + lpn * s->data.Zunit->Base2Usr(s->mem2d->GetDataPkt(i,yy) * s->data.s.dz);
                         }
 
+                        v = tmpY[0];
                         for(int k=0, i=ix_left; i <= ix_right; ++i,++k){
                                 double y;
                                 // single path
