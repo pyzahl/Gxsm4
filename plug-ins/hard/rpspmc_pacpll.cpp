@@ -3955,7 +3955,7 @@ static guint RPSPMC_Control::delayed_filter_update_callback (RPSPMC_Control *sel
 }
 
 void RPSPMC_Control::bq_filter_adjust_callback(Param_Control* pcs, RPSPMC_Control *self){
-        self->BQ_decimation = 16; //1 + (int)round(8 * 5000. / spmc_parameters.lck_frequency);
+        self->BQ_decimation = 128; //1 + (int)round(8 * 5000. / spmc_parameters.lck_frequency);
         spmc_parameters.lck_bq_dec_monitor = self->BQ_decimation;
         g_message ("BQ Filter Deciamtion: #%d",  self->BQ_decimation);
         //self->configure_filter (1, spmc_parameters.sc_bq1mode, spmc_parameters.sc_bq1_coef, decimation);
