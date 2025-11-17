@@ -11,17 +11,18 @@ mpl.pyplot.close('all')
 
 # Set Filter F-Cut for
 # Elliptical filter 4th order
-fc = 0.1 * float(gxsm.get("dsp-SPMC-LCK-FREQ"))
+fc = 15 #0.02 * float(gxsm.get("dsp-SPMC-LCK-FREQ"))
 use_iir = -1 #0 #0.001 # set to -1 to use BQ
 stop_attn_db = 70
 ripple_db=1
 
 LCK_DEC = float(gxsm.get("dsp-LCK-DECII-MONITOR"))  # LockIn signal decimation
-ACLKS   = int(gxsm.get("dsp-LCK-ACLK-MONITOR")) % 1000  # AD463 ACLKs / sample (59)
+ACLKS   = int(gxsm.get("dsp-LCK-ACLK-MONITOR"))  % 1000  # AD463 ACLKs / sample (59)
+BQ_DEC  = int(gxsm.get("dsp-LCK-BQDEC-MONITOR")) # BQ Decimation
 
 RPACLK  = 125e6
 AD463FS = RPACLK/ACLKS
-BQ_LCK_FS = RPACLK/LCK_DEC/16
+BQ_LCK_FS = RPACLK/LCK_DEC/BQ_DEC
 
 # calc nomralize sampling freq at BQ filter stage
 fc_norm = fc/BQ_LCK_FS
@@ -58,20 +59,6 @@ def run_sosfilt(sos, x):
     z1 = np.zeros((n_sections,n_samples))
     
     zi_slice = np.zeros((n_sections,2))
-
-    # init dry dummy run	
-    for n in range(0,int(n_samples/3)):
-        x_cur=x[10]
-        for s in range(n_sections):
-            x_new          = sos[s, 0] * x_cur                     + zi_slice[s, 0]
-            zi_slice[s, 0] = sos[s, 1] * x_cur - sos[s, 4] * x_new + zi_slice[s, 1]
-            zi_slice[s, 1] = sos[s, 2] * x_cur - sos[s, 5] * x_new
-            x_cur = x_new
-            ys[s, n] = x_new
-            z0[s,n] = zi_slice[s, 0]
-            z1[s,n] = zi_slice[s, 1]
-
-
     for n in range(0,n_samples):
         x_cur=x[n]
         for s in range(n_sections):
@@ -301,13 +288,13 @@ if 1:
 	plt.plot (vpdata['Time-Mon'], vpdata['08-LockIn-Mag'], 'x',alpha=0.3, label='Mag-BQ')
 	if 1: # Floating Point Calc
 		plt.plot (vpdata['Time-Mon'], fsigf, label='SIMf-Mag-SOS')
-		if 0:
+		if 1:
 			#plt.plot (vpdata['Time-Mon'], ysf[0], label='simMag-SOSs0')
 			plt.plot (vpdata['Time-Mon'], zf0[0], label='fZ0S0')
 			#plt.plot (vpdata['Time-Mon'], zf1[0], label='fZ1S0')
 			#plt.plot (vpdata['Time-Mon'], zf0[1], label='fZ0S1')
 			#plt.plot (vpdata['Time-Mon'], zf1[1], label='fZ1S1')
-	if 0: # Int Calc
+	if 2: # Int Calc
 		plt.plot (vpdata['Time-Mon'], fsigQ, alpha=0.4, linewidth=10, label='SIMQ-Mag-SOS')
 		#plt.plot (vpdata['Time-Mon'], ys[0], alpha=0.4, linewidth=4, label='y-S0-Q')
 		#plt.plot (vpdata['Time-Mon'], ys[1], alpha=0.4, linewidth=4, label='y-S1-Q')
