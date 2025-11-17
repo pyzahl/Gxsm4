@@ -40,12 +40,14 @@ LineProfile1D::LineProfile1D(){
 	scan1d_2 = NULL;
 	private_scan1d = NULL;
 	private_scan1d_2 = NULL;
+        SectionIndexList = NULL;
 }
 
 LineProfile1D::LineProfile1D(int n, UnitObj *ux, UnitObj *uy, double xmin, double xmax, int ns){
         GXSM_REF_OBJECT (GXSM_GRC_PROFILEOBJ);
 	scan1d_2 = NULL;
 	private_scan1d_2 = NULL;
+        SectionIndexList = NULL;
 
 	private_scan1d   = new Scan(0, 0, -1, NULL, ZD_DOUBLE); // new private scan
 
@@ -85,6 +87,9 @@ LineProfile1D::~LineProfile1D(){
 		delete private_scan1d;
 	if(private_scan1d_2)
 		delete private_scan1d_2;
+
+        ClearSectionIndexList ();
+
         GXSM_UNREF_OBJECT (GXSM_GRC_PROFILEOBJ);
 }
 

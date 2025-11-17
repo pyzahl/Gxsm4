@@ -50,35 +50,41 @@ class VObject;
  */
 class LineProfile1D{
 public:
-  LineProfile1D();
-  LineProfile1D(int n, UnitObj *ux, UnitObj *uy, double xmin=0., double xmax=1., int ns=1);
-  virtual ~LineProfile1D();
+        LineProfile1D();
+        LineProfile1D(int n, UnitObj *ux, UnitObj *uy, double xmin=0., double xmax=1., int ns=1);
+        virtual ~LineProfile1D();
 
-  double GetPoint(int n, int s=0);
-  void SetPoint(int n, double y, int s=0);
-  void SetPoint(int n, double x, double y, int s=0);
-  void AddPoint(int n, double a, int s=0);
-  void MulPoint(int n, double f, int s=0);
+        double GetPoint(int n, int s=0);
+        void SetPoint(int n, double y, int s=0);
+        void SetPoint(int n, double x, double y, int s=0);
+        void AddPoint(int n, double a, int s=0);
+        void MulPoint(int n, double f, int s=0);
 
-  int SetData_redprofile(Scan *sc, int redblue='r');
-  int SetData(Scan *sc, int line=-1);
-  int SetData(Scan *sc, VObject *vo, gboolean append=FALSE);
-  int load(const gchar *fname);
-  int save(const gchar *fname);
+        void AddNextSectionIndex (int si) { SectionIndexList = g_slist_append (SectionIndexList, GINT_TO_POINTER(si)); };
+        int  GetNextSectionIndex (int i) { return GPOINTER_TO_INT (g_slist_nth_data (SectionIndexList, i)); };
+        void ClearSectionIndexList () { if (SectionIndexList) { g_slist_free (SectionIndexList); SectionIndexList = NULL; }};
+
+        int SetData_redprofile(Scan *sc, int redblue='r');
+        int SetData(Scan *sc, int line=-1);
+        int SetData(Scan *sc, VObject *vo, gboolean append=FALSE);
+        int load(const gchar *fname);
+        int save(const gchar *fname);
   
-  Scan *scan1d;
-  Scan *scan1d_2;
+        Scan *scan1d;
+        Scan *scan1d_2;
+
+        GSList *SectionIndexList;
 
 protected:
-  gchar **xcolors_list;
-  gchar **xcolors_list_2;
-  int   num_xcolors;
-  int   num_xcolors_2;
+        gchar **xcolors_list;
+        gchar **xcolors_list_2;
+        int   num_xcolors;
+        int   num_xcolors_2;
 
 private:
-  Scan *private_scan1d;
-  Scan *private_scan1d_2;
-  int ChanNo;
+        Scan *private_scan1d;
+        Scan *private_scan1d_2;
+        int ChanNo;
 };
 
 #endif

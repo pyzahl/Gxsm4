@@ -285,12 +285,30 @@ double ProfileElement::calc(gint64 ymode, int id, int binary_mask, double y_offs
                         vp=v;
                         // for(int i=0, ix=0, iy=1; i < n; ix+=2, iy+=2, ++i){
                         if (lpn > 0){
+
+                                // symmetric IIR, dual run <- + ->
+                                double *tmpY = new double[ix_right-ix_left];
+                                v = s->data.Zunit->Base2Usr(s->mem2d->GetDataPkt(ix_right-1,yy) * s->data.s.dz);
+                                for(int k=0, i=ix_right-1; i >= ix_left; --i){ // run from right to tmp
+                                        double y;
+                                        tmpY[i] = v =  lpo*v + lpn * s->data.Zunit->Base2Usr(s->mem2d->GetDataPkt(i,yy) * s->data.s.dz);
+                                }
+
+                                v = tmpY[0];
+                                for(int k=0, i=ix_left; i <= ix_right; ++i,++k){
+                                        double y;
+                                        // single path
+                                        // v = y =  lpo*v + lpn * s->data.Zunit->Base2Usr(s->mem2d->GetDataPkt(i,yy) * s->data.s.dz);
+                                        tmpY[i] = v =  lpo*v + lpn * tmpY[i]; // run from left from tmp, inplace update
+                                }
+                                
                                 for(int k=0, i=ix_left; k < n_dec; ++k, i+=dec_len){
                                         int ii = i + dec_len/2;
-                                        double y=s->data.Zunit->Base2Usr(s->mem2d->GetDataPkt(i,yy) * s->data.s.dz);
-                                        for (int m=0; m<dec_len; ++m){
-                                                v = y =  lpo*v + lpn * s->data.Zunit->Base2Usr(s->mem2d->GetDataPkt(i+m,yy) * s->data.s.dz);
-                                        }
+                                        //double y=s->data.Zunit->Base2Usr(s->mem2d->GetDataPkt(i,yy) * s->data.s.dz);
+                                        //for (int m=0; m<dec_len; ++m){
+                                        //        v = y =  lpo*v + lpn * s->data.Zunit->Base2Usr(s->mem2d->GetDataPkt(i+m,yy) * s->data.s.dz);
+                                        //}
+                                        double y = v = tmpY[i];
                                         if(ymode & PROFILE_MODE_YDIFF){
                                                 y  = v-vp;
                                                 vp = v;
@@ -406,11 +424,32 @@ double ProfileElement::calc(gint64 ymode, int id, int binary_mask, double y_offs
 void ProfileElement::draw(cairo_t* cr){
         // XSM_DEBUG (DBG_L5, "ProfileElement::draw ******************");
 
-        for (int id=0; id<NPI; ++id)
-                if (pathitem_draw[id])
-                        pathitem_draw[id]->draw (cr);
-                else
-                        return;
+        if (pctrl->GetNextSectionIndex (1) > 0 && pctrl->GetMode () & PROFILE_MODE_POINTS){
+                
+                int sec = 0; // section
+                int sf  = 0; // section index final
+                int si  = 0; // section index initial
+                int ci = 0;  // color index
+                while ((sf  = (int)(pctrl->GetNextSectionIndex (++sec)/dec_len)) > 0){
+                        //if (si == sf) continue;
+                        for (int id=0; id<NPI; ++id){
+                                if (pathitem_draw[id]){
+                                        if (sf >= pathitem_draw[id]->get_n_nodes())
+                                                sf = pathitem_draw[id]->get_n_nodes();
+                                        pathitem_draw[id]->draw_partial (cr, si, sf, ci); // override default color
+                                } else break;
+                        }
+                        //g_print ("PE draw S: %d .. %d #%d\n", si, sf, sec);
+                        si = sf; ci++;
+                        if (ci == 9 || ci == 3) ++ci; // skip yellow and white
+                        if (ci > 10) ci = 0;
+                }
+        } else
+                for (int id=0; id<NPI; ++id)
+                        if (pathitem_draw[id])
+                                pathitem_draw[id]->draw (cr);
+                        else
+                                return;
 }
 
 void ProfileElement::stream_set (std::ofstream &ofs, int id){

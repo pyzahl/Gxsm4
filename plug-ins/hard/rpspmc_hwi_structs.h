@@ -58,41 +58,41 @@
 #define PROBEDATA_ARRAY_TIME  1 // Array [1] holds the time -- SECTION HEADER REF
 #define PROBEDATA_ARRAY_A     2 // Array [2] holds          -- SECTION HEADER REF
 #define PROBEDATA_ARRAY_B     3 // Array [3] holds          -- SECTION HEADER REF
-#define PROBEDATA_ARRAY_AM    4 // Array [2] holds          -- SECTION HEADER REF
-#define PROBEDATA_ARRAY_FM    5 // Array [3] holds          -- SECTION HEADER REF
-#define PROBEDATA_ARRAY_PHI   6 // Array [4] holds          -- SECTION HEADER REF
-#define PROBEDATA_ARRAY_XS    7 // Array [5] holds X-Scan -- SECTION HEADER REF
-#define PROBEDATA_ARRAY_YS    8 // Array [6] holds Y-Scan -- SECTION HEADER REF
-#define PROBEDATA_ARRAY_ZS    9 // Array [7] holds Z-Scan -- SECTION HEADER REF
-#define PROBEDATA_ARRAY_U    10 // Array [8] holds U (Bias) -- SECTION HEADER REF
-#define PROBEDATA_ARRAY_SEC  11 // Array [9] holds Section Index
+#define PROBEDATA_ARRAY_AM    4 // Array [4] holds          -- SECTION HEADER REF
+#define PROBEDATA_ARRAY_FM    5 // Array [5] holds          -- SECTION HEADER REF
+#define PROBEDATA_ARRAY_PHI   6 // Array [6] holds          -- SECTION HEADER REF
+#define PROBEDATA_ARRAY_XS    7 // Array [7] holds X-Scan -- SECTION HEADER REF
+#define PROBEDATA_ARRAY_YS    8 // Array [8] holds Y-Scan -- SECTION HEADER REF
+#define PROBEDATA_ARRAY_ZS    9 // Array [9] holds Z-Scan -- SECTION HEADER REF
+#define PROBEDATA_ARRAY_U    10 // Array [10] holds U (Bias) -- SECTION HEADER REF
+#define PROBEDATA_ARRAY_SEC  11 // Array [11] holds Section Index
 
 #define NUM_PV_HEADER_SIGNALS (PROBEDATA_ARRAY_SEC+1)
 
 // DATA SIGNALS
-#define PROBEDATA_ARRAY_S1    12 // Array [10] holds XS
-#define PROBEDATA_ARRAY_S2    13 // Array [11] holds YS
-#define PROBEDATA_ARRAY_S3    14 // Array [12] holds ZS
-#define PROBEDATA_ARRAY_S4    15 // Array [13] holds U (Bias)
-#define PROBEDATA_ARRAY_S5    16 // Array [14] holds IN1
-#define PROBEDATA_ARRAY_S6    17 // Array [15] holds IN2
-#define PROBEDATA_ARRAY_S7    18 // Array [16] holds IN3
-#define PROBEDATA_ARRAY_S8    19 // Array [17] holds IN4
-#define PROBEDATA_ARRAY_S9    20 // Array [18] holds DFREQ/SWP signal
-#define PROBEDATA_ARRAY_S10   21 // Array [19] holds EXEC/SWP
-#define PROBEDATA_ARRAY_S11   22 // Array [20] holds PHASE/SWP
-#define PROBEDATA_ARRAY_S12   23 // Array [21] holds AMPL/SWP
-#define PROBEDATA_ARRAY_S13   24 // Array [22] holds LCK
-#define PROBEDATA_ARRAY_S14   25 // Array [23] holds dFreqCtrl
-#define PROBEDATA_ARRAY_S15   26 // Array [24] holds TIME in ms
+#define PROBEDATA_ARRAY_S1    12 // Array [12] holds XS
+#define PROBEDATA_ARRAY_S2    13 // Array [13] holds YS
+#define PROBEDATA_ARRAY_S3    14 // Array [14] holds ZS
+#define PROBEDATA_ARRAY_S4    15 // Array [15] holds U (Bias)
+#define PROBEDATA_ARRAY_S5    16 // Array [16] holds IN1
+#define PROBEDATA_ARRAY_S6    17 // Array [17] holds IN2
+#define PROBEDATA_ARRAY_S7    18 // Array [18] holds IN3
+#define PROBEDATA_ARRAY_S8    19 // Array [19] holds IN4
+#define PROBEDATA_ARRAY_S9    20 // Array [20] holds DFREQ/SWP signal
+#define PROBEDATA_ARRAY_S10   21 // Array [21] holds EXEC/SWP
+#define PROBEDATA_ARRAY_S11   22 // Array [22] holds PHASE/SWP
+#define PROBEDATA_ARRAY_S12   23 // Array [23] holds AMPL/SWP
+#define PROBEDATA_ARRAY_S13   24 // Array [24] holds LCK
+#define PROBEDATA_ARRAY_S14   25 // Array [25] holds dFreqCtrl
+#define PROBEDATA_ARRAY_S15   26 // Array [26] holds TIME in ms
 // Block Management
-#define PROBEDATA_ARRAY_COUNT 27 // Array [25] holds Count
-#define PROBEDATA_ARRAY_BLOCK 28 // Array [26] holds Block start index (hold start index for every section) 
-
-#define PROBEDATA_ARRAY_END   PROBEDATA_ARRAY_BLOCK // last element number
+#define PROBEDATA_ARRAY_COUNT 27 // Array [27] holds Count
+#define PROBEDATA_ARRAY_BLOCK 28 // Array [28] holds Block start index (hold start index for every section) 
+#define PROBEDATA_ARRAY_SRCS  29 // Array [29] hold SRCS mask
+#define PROBEDATA_ARRAY_END   PROBEDATA_ARRAY_SRCS // last element number
 
 // G_ARRAY EXPANDED PROBE DATA
-#define NUM_PROBEDATA_ARRAYS PROBEDATA_ARRAY_BLOCK+1
+#define NUM_PROBEDATA_ARRAYS PROBEDATA_ARRAY_SRCS+1
 
 #define MAX_NUM_CHANNELS (PROBEDATA_ARRAY_END-1)  // 26
 

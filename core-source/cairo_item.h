@@ -346,13 +346,21 @@ public:
                 }
         };
         
-        virtual void draw_partial (cairo_t* cr, int i0, int i1) {
+        virtual void draw_partial (cairo_t* cr, int i0, int i1, int ci=-1) {
                 if (show_flag){
                         cairo_save (cr);
                         cairo_translate (cr, v0.x, v0.y);
                         if (angle != 0.)
                                 cairo_rotate (cr, angle);
-                        cairo_set_source_rgba (cr, stroke_rgba[0], stroke_rgba[1], stroke_rgba[2], stroke_rgba[3]);
+
+                        if (ci >= 0)
+                                cairo_set_source_rgba (cr,
+                                                       BasicColors[ci % BASIC_COLORS][0],
+                                                       BasicColors[ci % BASIC_COLORS][1],
+                                                       BasicColors[ci % BASIC_COLORS][2],
+                                                       stroke_rgba[3]);
+                        else
+                                cairo_set_source_rgba (cr, stroke_rgba[0], stroke_rgba[1], stroke_rgba[2], stroke_rgba[3]);
                         cairo_set_line_width (cr, lw); 
                         switch (linemode){
                         case 0: // connect solid
@@ -426,11 +434,18 @@ public:
                         cairo_restore (cr);
                 }
         };
-        virtual void draw_partial (cairo_t* cr, int i0, int i1) {
+        virtual void draw_partial (cairo_t* cr, int i0, int i1, int ci=-1) {
                 if (show_flag){
                         cairo_save (cr);
                         cairo_translate (cr, v0.x, v0.y);
-                        cairo_set_source_rgba (cr, stroke_rgba[0], stroke_rgba[1], stroke_rgba[2], stroke_rgba[3]);
+                        if (ci >= 0)
+                                cairo_set_source_rgba (cr,
+                                                       BasicColors[ci % BASIC_COLORS][0],
+                                                       BasicColors[ci % BASIC_COLORS][1],
+                                                       BasicColors[ci % BASIC_COLORS][2],
+                                                       stroke_rgba[3]);
+                        else
+                                cairo_set_source_rgba (cr, stroke_rgba[0], stroke_rgba[1], stroke_rgba[2], stroke_rgba[3]);
                         cairo_set_line_width (cr, lw); 
                         for (int i=i0; i<i1; ){
                                 cairo_move_to (cr, xy[i].x, xy[i].y); ++i;
@@ -503,13 +518,20 @@ public:
                         cairo_restore (cr);
                 }
         };
-        virtual void draw_partial (cairo_t* cr, int i0, int i1) {
+        virtual void draw_partial (cairo_t* cr, int i0, int i1, int ci=-1) {
                 if (show_flag){
                         cairo_save (cr);
                         cairo_translate (cr, v0.x, v0.y);
                         if (angle != 0.)
                                 cairo_rotate (cr, angle);
-                        cairo_set_source_rgba (cr, stroke_rgba[0], stroke_rgba[1], stroke_rgba[2], stroke_rgba[3]);
+                        if (ci >= 0)
+                                cairo_set_source_rgba (cr,
+                                                       BasicColors[ci % BASIC_COLORS][0],
+                                                       BasicColors[ci % BASIC_COLORS][1],
+                                                       BasicColors[ci % BASIC_COLORS][2],
+                                                       stroke_rgba[3]);
+                        else
+                                cairo_set_source_rgba (cr, stroke_rgba[0], stroke_rgba[1], stroke_rgba[2], stroke_rgba[3]);
                         cairo_set_line_width (cr, lw); 
                         for (int i=i0; i<i1; ){
                                 cairo_move_to (cr, xy[i].x, xy[i].y); ++i;

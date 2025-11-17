@@ -908,6 +908,7 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
                                 // g_message (" *** OK, loading pv sec[%d] ***", GVP_vp_header_current.section);
 
                                 // copy header to pv[] as assigned below
+                                pv[PROBEDATA_ARRAY_SRCS]  = GVP_vp_header_current.srcs; // new
                                 pv[PROBEDATA_ARRAY_INDEX] = (double)index_all++;
                                 pv[PROBEDATA_ARRAY_PHI]   = (double)GVP_vp_header_current.index; // testing, point index in section
                                 pv[PROBEDATA_ARRAY_SEC]   = (double)GVP_vp_header_current.section;

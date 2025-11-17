@@ -546,6 +546,7 @@ void RPSPMC_Control::probedata_visualize (GArray *probedata_x, GArray *probedata
 				      int current_i, int si, int nas, gboolean join_same_x,
                                       gint xmap, gint src, gint num_active_xmaps, gint num_active_sources){
 
+        static gint last_section = -1;
         static gint last_current_i=0;
 	UnitObj *UXaxis = new UnitObj(xua, " ", "g", xlab);
 	UnitObj *UYaxis = new UnitObj(yua,  " ", "g", ylab);
@@ -714,6 +715,9 @@ void RPSPMC_Control::probedata_visualize (GArray *probedata_x, GArray *probedata
                 }
         }
 #endif
+
+        pc->ClearSectionIndexList ();
+
 	for(int i = 0; i < current_i; i++){
 		if (g_array_index (probedata_sec, double, i) < spectra_section)
 		{
@@ -729,6 +733,14 @@ void RPSPMC_Control::probedata_visualize (GArray *probedata_x, GArray *probedata
 			      xmult * g_array_index (probedata_x, double, i),
 			      ymult * g_array_index (probedata_y, double, i),
 			      join_same_x ? si:0);
+
+
+                if (last_section != (int) g_array_index (probedata_sec, double, i)){
+                        last_section = (int) g_array_index (probedata_sec, double, i);
+                        pc->AddNextSectionIndex (i);
+                }
+
+                
 #ifdef ENABLE_AVG_MODES
 		if (vis_PlotAvg & plot_msk){
 			spectra_average[spectra_index][0] = spectra_average[spectra_index][0] + g_array_index (probedata_x, double, i);
@@ -740,6 +752,8 @@ void RPSPMC_Control::probedata_visualize (GArray *probedata_x, GArray *probedata
 		}
 #endif
 	}
+        pc->AddNextSectionIndex (current_i-1);
+
 	XSM_DEBUG_PG("DBG-M VIS avx");
 	XSM_DEBUG_PG ("**Update: #spectra:  " << spectra 
 		      << " #points: " << spectra_index 
@@ -1428,7 +1442,9 @@ void RPSPMC_Control::add_probevector(){
         // initial H                                                               final H
         // set_pv  1    0    0       0    1    0    0       1    0    0       0    1
         // add_pv 0    1    1       1    0    1    1       0    1    1       1    0
-        
+
+        if (pv[PROBEDATA_ARRAY_SRCS] == 0) return; // skip as no data is selected (we will still get skeleton points as of full position headers, but ignore here
+
         pv_lock = TRUE;
         // create and add vector generated signals
         if (set_pv){

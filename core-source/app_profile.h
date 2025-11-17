@@ -431,7 +431,6 @@ private:
 	GtkWidget *linecounter;
 	gint statusid;
 
-        
 	GSList *ScanList;
 	ProfileElement *last_pe;
 	
