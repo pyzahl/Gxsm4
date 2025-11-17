@@ -302,7 +302,8 @@ double ProfileElement::calc(gint64 ymode, int id, int binary_mask, double y_offs
                                         tmpY[i] = v =  lpo*v + lpn * tmpY[i]; // run from left from tmp, inplace update
                                 }
                                 
-                                for(int k=0, i=ix_left; k < n_dec; ++k, i+=dec_len){
+                                //for(int k=0, i=ix_left; k < n_dec; ++k, i+=dec_len){
+                                for(int k=0, i=0; k < n_dec; ++k, i+=dec_len){
                                         int ii = i + dec_len/2;
                                         //double y=s->data.Zunit->Base2Usr(s->mem2d->GetDataPkt(i,yy) * s->data.s.dz);
                                         //for (int m=0; m<dec_len; ++m){
@@ -315,6 +316,7 @@ double ProfileElement::calc(gint64 ymode, int id, int binary_mask, double y_offs
                                         }
                                         pathitem[id]->set_xy_test (k, s->data.Xunit->Base2Usr(s->mem2d->data->GetXLookup(ii)), y);
                                 }
+                                delete tmpY;
                         }
                         else // SINC in dec window
                                 for(int k=0, i=ix_left; k < n_dec; ++k, i+=dec_len){
