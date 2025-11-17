@@ -529,9 +529,9 @@
     </key>
 
     <key name="dsp-spmc-lck-freq" type="d">
-      <default>1234</default>
+      <default>987</default>
       <summary>PCS Remote-ID: 'dsp-SPMC-LCK-FREQ', Default/U: 1234 Hz     </summary>
-      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-FREQ', Default/U:     300 Hz    , Adjustment PCS Name: 'dsp-SPMC-LCK-FREQ' </description>
+      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-FREQ', Default/U:     987 Hz    , Adjustment PCS Name: 'dsp-SPMC-LCK-FREQ' </description>
     </key>
 
     <key name="dsp-spmc-rf-gen-freq" type="d">
@@ -560,8 +560,8 @@
 
     <key name="dsp-spmc-lck-mod-volume-bias" type="d">
       <default>0</default>
-      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-ModVolume-Bias', Default/U:     0 V     </summary>
-      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-ModVolume-Bias', Default/U:     0 V    , Adjustment PCS Name: 'dsp-SPMC-LCK-ModVolume-Bias' </description>
+      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-ModVolume-Bias', Default/U:     1 mV     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-ModVolume-Bias', Default/U:     1 mV    , Adjustment PCS Name: 'dsp-SPMC-LCK-ModVolume-Bias' </description>
     </key>
 
     <key name="dsp-spmc-lck-mod-volume-a" type="d">
@@ -582,90 +582,35 @@
       <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-ModVolume-Bias-ARef', Default/U:     0 V    , Adjustment PCS Name: 'dsp-SPMC-LCK-ModVolume-Bias-ARef' </description>
     </key>
 
-    <key name="dsp-spmc-lck-bq1-tau" type="d">
-      <default>0</default>
-      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-BQ-TAU', Default/U:     0 ms     </summary>
-      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-BQ-TAU', Default/U:     0 ms    , Adjustment PCS Name: 'dsp-SPMC-LCK-BQ-TAU' </description>
-    </key>
-
-    <key name="dsp-spmc-lck-iir1-tau" type="d">
-      <default>0</default>
-      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-IIR-TAU', Default/U:     0 ms     </summary>
-      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-IIR-TAU', Default/U:     0 ms    , Adjustment PCS Name: 'dsp-SPMC-LCK-IIR-TAU' </description>
-    </key>
-
-    <key name="dsp-spmc-lck-q1" type="d">
-      <default>0</default>
-      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-Q', Default/U:     0     </summary>
-      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-Q', Default/U:     0    , Adjustment PCS Name: 'dsp-SPMC-LCK-Q' </description>
-    </key>
-
     <key name="dsp-spmc-lck-bq1-coef-ba00" type="ad">
-      <default>[1,0,0, 0,0,0]</default>
-      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-BQ-COEF-BA6', Default/U:     0     </summary>
-      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-BQ-COEF-BA', Default/U:     0    , Adjustment PCS Name: 'dsp-SPMC-LCK-BQ-COEF-BA' </description>
-    </key>
-
-    <key name="dsp-spmc-lck-bq2-tau" type="d">
-      <default>0</default>
-      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-BQ-TAU', Default/U:     0 ms     </summary>
-      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-BQ-TAU', Default/U:     0 ms    , Adjustment PCS Name: 'dsp-SPMC-LCK-BQ-TAU' </description>
-    </key>
-
-    <key name="dsp-spmc-lck-iir2-tau" type="d">
-      <default>0</default>
-      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-IIR-TAU', Default/U:     0 ms     </summary>
-      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-IIR-TAU', Default/U:     0 ms    , Adjustment PCS Name: 'dsp-SPMC-LCK-IIR-TAU' </description>
-    </key>
-
-    <key name="dsp-spmc-lck-q2" type="d">
-      <default>0</default>
-      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-Q', Default/U:     0     </summary>
-      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-Q', Default/U:     0    , Adjustment PCS Name: 'dsp-SPMC-LCK-Q' </description>
+      <default>[ 1.10598994e-03, -1.64650460e-03,  1.10598994e-03,  1.00000000e+00, -1.91355997e+00,  9.18013456e-01]</default>
+      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-BQ-COEF-BA6', Default/U:  5 Hz @ 987Hz/7679/128 -> SOS[0] := [ 1.10598994e-03 -1.64650460e-03  1.10598994e-03  1.00000000e+00  -1.91355997e+00  9.18013456e-01]  </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-BQ-COEF-BA', Default/U:  BQ ellip LP 4th SOS vector section 1 for 5 Hz @ 987Hz/7679/128 -> SOS[0] := [ 1.10598994e-03 -1.64650460e-03  1.10598994e-03  1.00000000e+00  -1.91355997e+00  9.18013456e-01]   , Adjustment PCS Name: 'dsp-SPMC-LCK-BQ-COEF-BA' </description>
     </key>
 
     <key name="dsp-spmc-lck-bq2-coef-ba00" type="ad">
-      <default>[1,0,0, 0,0,0]</default>
-      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-BQ-COEF-BA6', Default/U:     0     </summary>
-      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-BQ-COEF-BA', Default/U:     0    , Adjustment PCS Name: 'dsp-SPMC-LCK-BQ-COEF-BA' </description>
-    </key>
-
-
-    <key name="dsp-spmc-zs-bq-tau" type="d">
-      <default>0</default>
-      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-BQ-TAU', Default/U:     0 ms     </summary>
-      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-BQ-TAU', Default/U:     0 ms    , Adjustment PCS Name: 'dsp-SPMC-LCK-BQ-TAU' </description>
-    </key>
-
-    <key name="dsp-spmc-zs-iir-tau" type="d">
-      <default>0</default>
-      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-IIR-TAU', Default/U:     0 ms     </summary>
-      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-IIR-TAU', Default/U:     0 ms    , Adjustment PCS Name: 'dsp-SPMC-LCK-IIR-TAU' </description>
-    </key>
-
-    <key name="dsp-spmc-zs-bq-q" type="d">
-      <default>0</default>
-      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-Q', Default/U:     0     </summary>
-      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-Q', Default/U:     0    , Adjustment PCS Name: 'dsp-SPMC-LCK-Q' </description>
+      <default>[ 1.00000000e+00, -1.89566593e+00,  1.00000000e+00,  1.00000000e+00, -1.95408151e+00,  9.68945642e-01]</default>
+      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-BQ-COEF-BA6', Default/U: 5 Hz @ 987Hz/7679/128 -> SOS[1] := [ 1.00000000e+00 -1.89566593e+00  1.00000000e+00  1.00000000e+00 -1.95408151e+00  9.68945642e-01]  </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-BQ-COEF-BA', Default/U: BQ ellip LP 4th SOS vector section 2 for 5 Hz @ 987Hz/7679/128 -> SOS[1] := [ 1.00000000e+00 -1.89566593e+00  1.00000000e+00  1.00000000e+00 -1.95408151e+00  9.68945642e-01]    , Adjustment PCS Name: 'dsp-SPMC-LCK-BQ-COEF-BA' </description>
     </key>
 
     <key name="dsp-spmc-zs-bq-coef-ba00" type="ad">
-      <default>[0,0,0, 0,0,0]</default>
-      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-BQ-COEF-BA6', Default/U:     0     </summary>
-      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-BQ-COEF-BA', Default/U:     0    , Adjustment PCS Name: 'dsp-SPMC-LCK-BQ-COEF-BA' </description>
+      <default>[1,0,0, 1,0,0]</default>
+      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-BQ-COEF-BA6', Default/U: BQ ZS (notch, ... option) to pass [1,0,0,1,0,0]   </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-BQ-COEF-BA', Default/U:  BQ ZS (notch, ,,, option) to pass [1,0,0,1,0,0] , Adjustment PCS Name: 'dsp-SPMC-LCK-BQ-COEF-BA' </description>
     </key>
 
 
     
     <key name="dsp-spmc-lck-sens" type="d">
-      <default>10.0</default>
-      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-SENS', Default/U:     10     </summary>
-      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-SENS', Default/U:     10    , Adjustment PCS Name: 'dsp-SPMC-LCK-SENS' </description>
+      <default>100.0</default>
+      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-SENS', Default/U:     100 mV     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-SENS', Default/U:     100 mV    , Adjustment PCS Name: 'dsp-SPMC-LCK-SENS' </description>
     </key>
 
     <key name="dsp-spmc-rf-gen-fmscale" type="d">
       <default>0</default>
-      <summary>PCS Remote-ID: 'dsp-SPMC-RF-GEN-FMSCALE', Default/U:     0     </summary>
+      <summary>PCS Remote-ID: 'dsp-SPMC-RF-GEN-FMSCALE', Default/U:     1000     </summary>
       <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-RF-GEN-FMSCALE', Default/U:     0    , Adjustment PCS Name: 'dsp-SPMC-RF-GEN-FMSCALE' </description>
     </key>
 
