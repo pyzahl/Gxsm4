@@ -41,6 +41,7 @@ LineProfile1D::LineProfile1D(){
 	private_scan1d = NULL;
 	private_scan1d_2 = NULL;
         SectionIndexList = NULL;
+        last_si=-1;
 }
 
 LineProfile1D::LineProfile1D(int n, UnitObj *ux, UnitObj *uy, double xmin, double xmax, int ns){
@@ -48,6 +49,7 @@ LineProfile1D::LineProfile1D(int n, UnitObj *ux, UnitObj *uy, double xmin, doubl
 	scan1d_2 = NULL;
 	private_scan1d_2 = NULL;
         SectionIndexList = NULL;
+        last_si=-1;
 
 	private_scan1d   = new Scan(0, 0, -1, NULL, ZD_DOUBLE); // new private scan
 

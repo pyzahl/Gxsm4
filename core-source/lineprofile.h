@@ -60,9 +60,9 @@ public:
         void AddPoint(int n, double a, int s=0);
         void MulPoint(int n, double f, int s=0);
 
-        void AddNextSectionIndex (int si) { SectionIndexList = g_slist_append (SectionIndexList, GINT_TO_POINTER(si)); };
+        void AddNextSectionIndex (int si) { if (si == last_si) return; last_si=si; SectionIndexList = g_slist_append (SectionIndexList, GINT_TO_POINTER(si)); };
         int  GetNextSectionIndex (int i) { return GPOINTER_TO_INT (g_slist_nth_data (SectionIndexList, i)); };
-        void ClearSectionIndexList () { if (SectionIndexList) { g_slist_free (SectionIndexList); SectionIndexList = NULL; }};
+        void ClearSectionIndexList () { last_si=-1; if (SectionIndexList) { g_slist_free (SectionIndexList); SectionIndexList = NULL; }};
 
         int SetData_redprofile(Scan *sc, int redblue='r');
         int SetData(Scan *sc, int line=-1);
@@ -74,7 +74,8 @@ public:
         Scan *scan1d_2;
 
         GSList *SectionIndexList;
-
+        int last_si;
+        
 protected:
         gchar **xcolors_list;
         gchar **xcolors_list_2;

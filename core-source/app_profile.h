@@ -69,6 +69,7 @@ typedef struct{
 #define PROFILE_MODE_XR_AB    (1<<19)
 #define PROFILE_MODE_XL1000   (1<<20)
 #define PROFILE_MODE_XL4000   (1<<21)
+#define PROFILE_MODE_COLORSEC (1<<22)
 
 #define PROFILE_SCALE_XAUTO   (1<<0)
 #define PROFILE_SCALE_YAUTO   (1<<1)

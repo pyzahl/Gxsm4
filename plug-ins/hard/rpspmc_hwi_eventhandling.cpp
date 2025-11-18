@@ -735,10 +735,12 @@ void RPSPMC_Control::probedata_visualize (GArray *probedata_x, GArray *probedata
 			      join_same_x ? si:0);
 
 
-                if (last_section != (int) g_array_index (probedata_sec, double, i)){
-                        last_section = (int) g_array_index (probedata_sec, double, i);
-                        pc->AddNextSectionIndex (i);
-                }
+                if ((int) g_array_index (probedata_sec, double, i)>0)
+                        if (last_section != (int) g_array_index (probedata_sec, double, i)){
+                                //g_print ("AddNextSection: %d -> %d @%d\n",last_section, (int) g_array_index (probedata_sec, double, i), i);
+                                last_section = (int) g_array_index (probedata_sec, double, i);
+                                pc->AddNextSectionIndex (i);
+                        }
 
                 
 #ifdef ENABLE_AVG_MODES
