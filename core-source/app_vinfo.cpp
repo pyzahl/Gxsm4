@@ -155,6 +155,11 @@ gchar *ViewInfo::makeA2info(double xy1a[2], double xy2a[2]){
 gchar *ViewInfo::makeXYinfo(double x, double y){ 
 	double mx = x*Qfac, xx;
 	double my = y*Qfac, yy;
+
+        if (sc->x_linearize ())
+                if (sc->mem2d->data->GetXLookup (0) > sc->mem2d->data->GetXLookup (sc->mem2d->GetNx()-1))
+                        mx = sc->mem2d->GetNx()-1-mx;
+        
 	xx = R2INT(mx); xx=MIN(sc->mem2d->GetNx()-1, MAX(0,xx));
 	yy = R2INT(my); yy=MIN(sc->mem2d->GetNy()-1, MAX(0,yy));
 	
@@ -181,6 +186,11 @@ gchar *ViewInfo::makeZinfo(double data_z, const gchar *new_prec, double sub){
 double ViewInfo::getZ(double x, double y){ 
         double mx = x*Qfac, xx;
         double my = y*Qfac, yy;
+
+        if (sc->x_linearize ())
+                if (sc->mem2d->data->GetXLookup (0) > sc->mem2d->data->GetXLookup (sc->mem2d->GetNx()-1))
+                        mx = sc->mem2d->GetNx()-1-mx;
+        
         //double my = y*Qfac/as_pixy, yy;  // TDB -- only used in "score_bond" so far
         xx = R2INT(mx); xx=MIN(sc->mem2d->GetNx()-1, MAX(0,xx));
         yy = R2INT(my); yy=MIN(sc->mem2d->GetNy()-1, MAX(0,yy));
@@ -192,6 +202,11 @@ double ViewInfo::getZ(double x, double y){
 void ViewInfo::XYview2pixel(double x, double y, Point2D *p){
         double mx = x*Qfac, xx;
         double my = y*Qfac/as_pixy, yy;
+
+        if (sc->x_linearize ())
+                if (sc->mem2d->data->GetXLookup (0) > sc->mem2d->data->GetXLookup (sc->mem2d->GetNx()-1))
+                        mx = sc->mem2d->GetNx()-1-mx;
+
         xx = R2INT(mx); xx=MIN(sc->mem2d->GetNx()-1, MAX(0,xx));
         yy = R2INT(my); yy=MIN(sc->mem2d->GetNy()-1, MAX(0,yy));
         p->x = R2INT(xx);
@@ -236,6 +251,11 @@ gchar *ViewInfo::makeXYZinfo(double x, double y){
 	double my = y*Qfac, yy;
 	gchar *us = NULL;
 	gchar *pt = NULL;
+
+        if (sc->x_linearize ())
+                if (sc->mem2d->data->GetXLookup (0) > sc->mem2d->data->GetXLookup (sc->mem2d->GetNx()-1))
+                        mx = sc->mem2d->GetNx()-1-mx;
+        
 	xx = R2INT(mx); xx=MIN(sc->mem2d->GetNx()-1, MAX(0,xx));
 	yy = R2INT(my); yy=MIN(sc->mem2d->GetNy()-1, MAX(0,yy));
 
