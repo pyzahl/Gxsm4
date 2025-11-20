@@ -120,6 +120,18 @@ const char* Dataio::ioStatus(){
 			nv.putAtt("unitSymbol", unit->Symbol());	\
 	}while(0)
 
+#define ADD_NC_ATTRIBUTE_UNIT_INFO(nv, unit, val, info)      \
+	do{\
+                gchar *tmp=g_strdup_printf ("The value for %s is %g %s.\n%s", unit->Label(), unit->Base2Usr (val), unit->Symbol(), info); \
+		nv.putAtt("Info", tmp); g_free(tmp);   \
+		nv.putAtt("label", unit->Label());	\
+		nv.putAtt("var_unit", unit->Symbol());		\
+		if (unit->Alias())			\
+			nv.putAtt("unit", unit->Alias());	\
+		else						\
+			nv.putAtt("unitSymbol", unit->Symbol());	\
+	}while(0)
+
 
 gchar *NetCDF::get_var_att_as_string (NcFile &nc, NcVar &var, const gchar *att_name){
         netCDF::NcVarAtt att;
@@ -1000,6 +1012,7 @@ FIO_STATUS NetCDF::Write(){
 
                 value.putVar ({0}, { valued.getSize ()}, valuearr);
                 delete [] valuearr;
+                ADD_NC_ATTRIBUTE_UNIT_INFO(value, scan->data.Vunit, scan->mem2d->data->GetVLookup(0),"Lookup Value Dimension index to Value");
 
                 int i;
                 //  float x0=scan->data.s.x0-scan->data.s.rx/2.;
@@ -1012,6 +1025,7 @@ FIO_STATUS NetCDF::Write(){
 
                 dimx.putVar ({0}, { dimxd.getSize () }, dimsx);
                 delete [] dimsx;
+                ADD_NC_ATTRIBUTE_ANG(dimx, scan->data.Xunit, scan->mem2d->data->GetXLookup(0));
 
                 //  float y0=scan->data.s.y0;
                 float *dimsy = new float[dimyd.getSize ()];
@@ -1023,6 +1037,7 @@ FIO_STATUS NetCDF::Write(){
 
                 dimy.putVar ({0}, { dimyd.getSize () }, dimsy);
                 delete [] dimsy;
+                ADD_NC_ATTRIBUTE_ANG(dimy, scan->data.Yunit, scan->mem2d->data->GetYLookup(0));
 
                 main_get_gapp ()->progress_info_set_bar_text ("Scan-Parameter", 2);
                 main_get_gapp ()->progress_info_set_bar_fraction (0.6, 1);
