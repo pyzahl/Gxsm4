@@ -1,4 +1,4 @@
-project('gxsm4', ['c','cpp'], version : '4.2.1')
+project('gxsm4', ['c','cpp'], version : '4.3.0')
 version_name = 'Warp Speed Gxsm4RPSPMC'
 
 as_version = meson.project_version() # set in project() below

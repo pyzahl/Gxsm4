@@ -96,16 +96,30 @@ const char* Dataio::ioStatus(){
 
 #define NUM(array) (sizeof(array)/sizeof(array[0]))
 #define NC_GET_VARIABLE(VNAME, VAR) if( !nc.getVar(VNAME).isNull ()) nc.getVar(VNAME).getVar(VAR)
-#define ADD_NC_ATTRIBUTE_ANG(nv, unit)\
+#define ADD_NC_ATTRIBUTE_ANG(nv, unit, val)         \
 	do{\
-		nv.putAtt("Info", "This number is alwalys stored in Angstroem. Unit is used for user display only.");\
+                gchar *tmp=g_strdup_printf ("NOTE: This length value is alwalys stored in Angstroems.\nThe value for %s is %g %s in the user prefferred display unit.", unit->Label(), unit->Base2Usr (val), unit->Symbol()); \
+		nv.putAtt("Info", tmp); \
 		nv.putAtt("label", unit->Label());	\
-		nv.putAtt("var_unit", "Ang");		\
+		nv.putAtt("var_unit", unit->Symbol());		\
 		if (unit->Alias())			\
 			nv.putAtt("unit", unit->Alias());	\
 		else						\
 			nv.putAtt("unitSymbol", unit->Symbol());	\
 	}while(0)
+
+#define ADD_NC_ATTRIBUTE_UNIT(nv, unit, val)        \
+	do{\
+                gchar *tmp=g_strdup_printf ("The value for %s is %g %s.", unit->Label(), unit->Base2Usr (val), unit->Symbol()); \
+		nv.putAtt("Info", tmp); g_free(tmp);   \
+		nv.putAtt("label", unit->Label());	\
+		nv.putAtt("var_unit", unit->Symbol());		\
+		if (unit->Alias())			\
+			nv.putAtt("unit", unit->Alias());	\
+		else						\
+			nv.putAtt("unitSymbol", unit->Symbol());	\
+	}while(0)
+
 
 gchar *NetCDF::get_var_att_as_string (NcFile &nc, NcVar &var, const gchar *att_name){
         netCDF::NcVarAtt att;
@@ -818,22 +832,22 @@ FIO_STATUS NetCDF::Write(){
   
                 // This unit and label entries are used to restore the correct unit later!
                 NcVar rangex     = nc.addVar("rangex", ncDouble);
-                ADD_NC_ATTRIBUTE_ANG(rangex, scan->data.Xunit);
+                ADD_NC_ATTRIBUTE_ANG(rangex, scan->data.Xunit, scan->data.s.rx);
 
                 NcVar rangey     = nc.addVar("rangey", ncDouble);
-                ADD_NC_ATTRIBUTE_ANG(rangey, scan->data.Yunit);
+                ADD_NC_ATTRIBUTE_ANG(rangey, scan->data.Yunit, scan->data.s.ry);
 
                 NcVar rangez     = nc.addVar("rangez", ncDouble);
-                ADD_NC_ATTRIBUTE_ANG(rangez, scan->data.Zunit);
+                ADD_NC_ATTRIBUTE_UNIT(rangez, scan->data.Zunit, scan->data.s.rz);
 
                 NcVar dx         = nc.addVar("dx", ncDouble);
-                ADD_NC_ATTRIBUTE_ANG(dx, scan->data.Xunit);
+                ADD_NC_ATTRIBUTE_ANG(dx, scan->data.Xunit, scan->data.s.dz);
 
                 NcVar dy         = nc.addVar("dy", ncDouble);
-                ADD_NC_ATTRIBUTE_ANG(dy, scan->data.Yunit);
+                ADD_NC_ATTRIBUTE_ANG(dy, scan->data.Yunit, scan->data.s.dy);
 
                 NcVar dz         = nc.addVar("dz", ncDouble);
-                ADD_NC_ATTRIBUTE_ANG(dz, scan->data.Zunit);
+                ADD_NC_ATTRIBUTE_UNIT(dz, scan->data.Zunit, scan->data.s.dz);
 
                 NcVar opt_xpiezo_AV = nc.addVar("opt_xpiezo_av", ncDouble);
                 opt_xpiezo_AV.putAtt("type", "pure optional information, not used by Gxsm for any scaling after the fact. For the records only");
@@ -851,10 +865,10 @@ FIO_STATUS NetCDF::Write(){
                 opt_zpiezo_AV.putAtt("unit", "Ang/V");
 
                 NcVar offsetx    = nc.addVar("offsetx", ncDouble);
-                ADD_NC_ATTRIBUTE_ANG(offsetx, scan->data.Xunit);
+                ADD_NC_ATTRIBUTE_ANG(offsetx, scan->data.Xunit, scan->data.s.x0);
 
                 NcVar offsety    = nc.addVar("offsety", ncDouble);
-                ADD_NC_ATTRIBUTE_ANG(offsety, scan->data.Yunit);
+                ADD_NC_ATTRIBUTE_ANG(offsety, scan->data.Yunit, scan->data.s.y0);
 
                 NcVar alpha      = nc.addVar("alpha", ncDouble);
                 alpha.putAtt("unit", "Grad");
@@ -873,15 +887,19 @@ FIO_STATUS NetCDF::Write(){
                 if(!(IS_SPALEED_CTRL)){
                         display_vrange_z = nc.addVar("vrange_z", ncDouble);
                         display_vrange_z.putAtt("long_name", "View Range Z");
-                        ADD_NC_ATTRIBUTE_ANG(display_vrange_z, scan->data.Zunit);
+                        ADD_NC_ATTRIBUTE_UNIT(display_vrange_z, scan->data.Zunit, scan->data.display.vrange_z);
 
                         display_voffset_z = nc.addVar("voffset_z", ncDouble);
                         display_voffset_z.putAtt("long_name", "View Offset Z");
-                        ADD_NC_ATTRIBUTE_ANG(display_voffset_z, scan->data.Zunit);
+                        ADD_NC_ATTRIBUTE_UNIT(display_voffset_z, scan->data.Zunit, scan->data.display.voffset_z);
                 }
 
                 NcVar t_start      = nc.addVar("t_start", ncInt64);
+                t_start.putAtt("unit", "s");
+                t_start.putAtt("label", "Scan Start Time in Unix time (seconds sice 00:00:00 UTC on 1 January 1970)");
                 NcVar t_end        = nc.addVar("t_end", ncInt64);
+                t_end.putAtt("unit", "s");
+                t_end.putAtt("label", "Scan Stop/End Time in Unix time (seconds sice 00:00:00 UTC on 1 January 1970)");
 
                 NcVar viewmode     = nc.addVar("viewmode", ncInt64);
                 viewmode.putAtt("long_name", "last viewmode flag");
