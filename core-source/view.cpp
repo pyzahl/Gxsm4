@@ -299,9 +299,9 @@ int Grey2D::update(int y1, int y2){
 				double xl, xr, dx, x;
 				xl = m->data->GetXLookup (0);
 				xr = m->data->GetXLookup (nx-1);
-                                if (xl > xr) { xl = xr; xr = m->data->GetXLookup (0); } // make sure left is left!
+                                //if (xl > xr) { xl = xr; xr = m->data->GetXLookup (0); } // make sure left is left!
 				dx = (xr-xl)/((double)(nx-1)*QuenchFac);
-                                //g_message ("scan->x_linearize active xl0= %g A -> xrN= %g A dx=%g xl->i=%d", xl ,xr, dx,  m->data->i_from_XLookup(xl));
+                                // g_message ("scan->x_linearize active xl0= %g A -> xrN= %g A dx=%g xl->i=%d", xl ,xr, dx,  m->data->i_from_XLookup(xl));
 				for (x=xl, k=0; k<nx; k+=QuenchFac, x+=dx){
 					int kl = m->data->i_from_XLookup(x);
 					for (j=y1; j<y2; j+=QuenchFac)
@@ -309,7 +309,7 @@ int Grey2D::update(int y1, int y2){
 								m->GetDataVMode (kl, j));
 				}
 			} else {
-                                g_message ("scan->x_linearize not active");
+                                // g_message ("scan->x_linearize not active");
 				for (j=y1; j<y2; j+=QuenchFac)
 					for (k=0; k<nx; k+=QuenchFac)
 						XImg->PutPixel ((unsigned long)(k/QuenchFac),(unsigned long)(j/QuenchFac),

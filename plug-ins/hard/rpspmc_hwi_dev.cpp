@@ -611,6 +611,7 @@ gpointer ScanDataReadThread (void *ptr_hwi){
 #endif
                                         hwi->RPSPMC_data_x_index = xi;
                                         for (int ch=0; ch<hwi->nsrcs_dir[dir] && ch<NUM_PV_DATA_SIGNALS; ++ch){
+                                                int xi_mapped = dir == 0 ? xi : x0 + nx-1 - (xi-x0); // mirror xi to correctly put data into mem2d now matching the forward direction
                                                 int k = pvlut[dir][ch];
                                                 if (k < 0 || k >= NUM_PV_DATA_SIGNALS){
                                                         g_message ("EEEE expand channel lookup table corruption => pvlut[%d][%d]=%d ** => fallback k=2", dir, ch, k);
@@ -621,7 +622,7 @@ gpointer ScanDataReadThread (void *ptr_hwi){
 #endif
                                                 if (hwi->Mob_dir[dir][ch]){
                                                         if (xi >=0 && yi >=0 && xi < hwi->Mob_dir[dir][ch]->GetNx ()  && yi < hwi->Mob_dir[dir][ch]->GetNy ())
-                                                                hwi->Mob_dir[dir][ch]->PutDataPkt (hwi->GVP_vp_header_current.dataexpanded [k], xi, yi); // direct use, skipping pv[] remapping ** data is coming in RP base unit Volts
+                                                                hwi->Mob_dir[dir][ch]->PutDataPkt (hwi->GVP_vp_header_current.dataexpanded [k], xi_mapped, yi); // direct use, skipping pv[] remapping ** data is coming in RP base unit Volts
                                                         else
                                                                 g_message ("EEEE (xi, yi) <= (%d, %d) index out of range: [0..%d-1, 0..%d-1]", xi, yi, hwi->Mob_dir[dir][ch]->GetNx (), hwi->Mob_dir[dir][ch]->GetNy ());
                                                 } else {

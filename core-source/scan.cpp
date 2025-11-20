@@ -701,18 +701,19 @@ int Scan::create(gboolean RoundFlg, gboolean subgrid, gdouble direction, gint fa
         //mem2d->Resize(data.s.nx, data.s.ny, -1, ztype, keep_layer_info);
 
 	// check if non linear sine X scale (fast scan set) 
-	if (fast_scan){
+	if (fast_scan){ // obsoleted
 		double rx2 = data.s.rx/2.;
 		for (int i=0; i<data.s.nx; ++i)
 			mem2d->data->SetXLookup(i, -rx2 * direction * cos (M_PI*(double)i / (double)(data.s.nx)) );
 	} 
-	else
-		mem2d->data->MkXLookup (-direction*data.s.rx/2, direction*data.s.rx/2);
-
+	else{
+		//mem2d->data->MkXLookup (-direction*data.s.rx/2, direction*data.s.rx/2);
+		mem2d->data->MkXLookup (-data.s.rx/2, data.s.rx/2); // **** NEW, NO REV HERE ANY MORE, TOO MANY ISSUES
+        }
 	switch(data.orgmode){
 	case SCAN_ORG_MIDDLETOP:
 		mem2d->data->MkYLookup (0., -data.s.ry); break;
-	case SCAN_ORG_CENTER:
+	case SCAN_ORG_CENTER: // default
 		mem2d->data->MkYLookup (data.s.ry/2, -data.s.ry/2); break;
 	}
 	

@@ -914,19 +914,24 @@ static void spm_scancontrol_set_subscan_callback (GtkWidget *w, void *data){
                                 main_get_gapp()->xsm->GetActiveScan () -> World2Pixel (x0, y0, p[0].x, p[0].y);
                                 main_get_gapp()->xsm->GetActiveScan () -> World2Pixel (x1, y1, p[1].x, p[1].y);
 
-                                gint xm = main_get_gapp()->xsm->GetActiveScan ()->mem2d->GetNx ()-1;
-                                gint ym = main_get_gapp()->xsm->GetActiveScan ()->mem2d->GetNy ()-1;
+                                //g_message ("SET SLS: Rxyi[%g %g %g %g]", x0,y0, x1,y1);
+                                //g_message ("SET SLS: Rpxi[%d %d %d %d]", p[0].x,p[0].y, p[1].x,p[1].y);
+
+                                
+                                gint xm = main_get_gapp()->xsm->GetActiveScan ()->mem2d->GetNx ()-2;
+                                gint ym = main_get_gapp()->xsm->GetActiveScan ()->mem2d->GetNy ()-2;
                                 for (int i=0; i<1; ++i){
-                                        p[i].x = MAX (MIN (p[i].x, xm), 0);
-                                        p[i].y = MAX (MIN (p[i].y, ym), 0);
+                                        p[i].x = MAX (MIN (p[i].x, xm), 1);
+                                        p[i].y = MAX (MIN (p[i].y, ym), 1);
                                 }
                                 
+                                //g_message ("SET SLS: limited: Rpxi[%d %d %d %d]", p[0].x,p[0].y, p[1].x,p[1].y);
                                 PI_DEBUG (DBG_L1, "SSC::SET_SUBSCAN => [" << p[0].x << ", " << p[0].y << ", " << p[1].x << ", " << p[1].y << "]");
                                 
-                                ((SPM_ScanControl*)data) -> set_subscan ((double)(p[0].x < p[1].x ? p[0].x:p[1].x-1),
-                                                                         fabs ((double)p[1].x-(double)p[0].x)+1,
-                                                                         (double)(p[0].y < p[1].y ? p[0].y:p[1].y-1),
-                                                                         fabs ((double)p[1].y-(double)p[0].y)+1);
+                                ((SPM_ScanControl*)data) -> set_subscan ((double)(p[0].x < p[1].x ? p[0].x:p[1].x)-1,
+                                                                         fabs ((double)p[1].x-(double)p[0].x)+2,
+                                                                         (double)(p[0].y < p[1].y ? p[0].y:p[1].y)-1,
+                                                                         fabs ((double)p[1].y-(double)p[0].y)+2);
                         
                                 PI_DEBUG (DBG_L1, "SSC::SET_SUBSCAN done.");
                                	((Gtk_EntryControl*) g_object_get_data (G_OBJECT (w), "SLSC0")) -> Put_Value ();
