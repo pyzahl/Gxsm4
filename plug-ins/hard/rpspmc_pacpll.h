@@ -418,6 +418,7 @@ public:
         void restore_graphs_values ();
 
         void Init_SPMC_on_connect ();
+        void Init_SPMC_after_cold_start ();
 
         static void spmc_server_control_callback (GtkWidget *widget,  RPSPMC_Control *self);
 
@@ -872,6 +873,11 @@ public:
         double lck_gain;
         
         int BQ_decimation;
+
+        GtkWidget *update_bq_filterS1_widget;
+        GtkWidget *update_bq_filterS2_widget;
+        GtkWidget *update_bq_filterZS_widget;
+        
         
         // Probing
 	int probe_trigger_raster_points_user;
@@ -1165,6 +1171,7 @@ public:
 
 	void send_all_parameters ();
 	void update_SPMC_parameters ();
+	void SPMC_cold_start_init ();
 
         void save_values (NcFile &ncf);
         

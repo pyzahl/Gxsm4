@@ -779,12 +779,12 @@ FIO_STATUS NetCDF::Write(){
 
                 progress_info  << "Adding Unit hints, time, ..." << std::endl;
 
-                Data.putAtt("var_units_hint", "raw DAC/counter data. Unit is not defined here: multiply by dz-unit");
+                Data.putAtt("var_units_hint", "Please note: this is raw DAC/counter data. The value is in Unit units after multipling values by the dz.");
 
                 XSM_DEBUG (DBG_L2, "NetCDF::Write-> Adding Units ZLab");
 
                 Data.putAtt("ZLabel", scan->data.Zunit->Label());
-                Data.putAtt("unit", scan->data.Zunit->Symbol());
+                Data.putAtt("unit_x_dz", scan->data.Zunit->Symbol());
                 if (scan->data.Zunit->Alias())
                         Data.putAtt("ZSrcUnit", scan->data.Zunit->Alias());
                 else
@@ -969,7 +969,7 @@ FIO_STATUS NetCDF::Write(){
                 nc.putAtt("Version", VERSION);
                 nc.putAtt("build_from", COMPILEDBYNAME);
                 nc.putAtt("DataIOVer", 
-                          "$Header: /home/ventiotec/gxsm-cvs/Gxsm-2.0/src/dataio.C,v 1.46 2013-02-04 19:19:36 zahl Exp $"
+                          "Gxsm4-NetCDF4-V4.3.0ff"
                           );
                 nc.putAtt("HardwareCtrlType", xsmres.HardwareType);
                 nc.putAtt("HardwareConnectionDev", xsmres.DSPDev);

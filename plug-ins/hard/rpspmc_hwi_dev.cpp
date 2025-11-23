@@ -108,6 +108,9 @@ rpspmc_hwi_dev::rpspmc_hwi_dev():RP_stream(this){
                 Mob_dir[i] = NULL;
         }
 
+        g_free (AddStatusString);
+        AddStatusString = g_strdup_printf ("RPSPMC HwI initialized. Not connected.");
+        
         //gint32 *GVP_stream_buffer=new gint32[0x1000000]; // temporary
 }
 
@@ -148,6 +151,11 @@ void rpspmc_hwi_dev::spmc_stream_connect_cb (GtkWidget *widget, rpspmc_hwi_dev *
 }
 
 const gchar *rpspmc_hwi_dev::get_rp_address (){
+        // update global hardware info
+        g_free (AddStatusString);
+        AddStatusString = g_strdup_printf ("RPSPMC on %s connected.", rpspmc_pacpll->get_rp_address ());
+        strncpy(xsmres.DSPDev, AddStatusString, PATHSIZE);
+
         return rpspmc_pacpll->get_rp_address ();
 }
 

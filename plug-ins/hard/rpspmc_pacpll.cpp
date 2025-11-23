@@ -1989,6 +1989,8 @@ void RPSPMC_Control::create_folder (){
                 g_free (id);
         }
         gtk_combo_box_set_active (GTK_COMBO_BOX (combo_bqfilter_type), 3);
+        update_bq_filterS1_widget = combo_bqfilter_type;
+
         g_object_set_data (G_OBJECT (combo_bqfilter_type), "section", GINT_TO_POINTER (1)); 
         g_signal_connect (G_OBJECT (combo_bqfilter_type), "changed",
                           G_CALLBACK (RPSPMC_Control::choice_BQfilter_type_callback),
@@ -2022,6 +2024,7 @@ void RPSPMC_Control::create_folder (){
                 g_free (id);
         }
         gtk_combo_box_set_active (GTK_COMBO_BOX (combo_bqfilter_type), 3);
+        update_bq_filterS2_widget = combo_bqfilter_type;
         g_object_set_data (G_OBJECT (combo_bqfilter_type), "section", GINT_TO_POINTER (2)); 
         g_signal_connect (G_OBJECT (combo_bqfilter_type), "changed",
                           G_CALLBACK (RPSPMC_Control::choice_BQfilter_type_callback),
@@ -2056,6 +2059,7 @@ void RPSPMC_Control::create_folder (){
                 g_free (id);
         }
         gtk_combo_box_set_active (GTK_COMBO_BOX (combo_bqfilter_type), 5);
+        update_bq_filterZS_widget = combo_bqfilter_type;
         g_object_set_data (G_OBJECT (combo_bqfilter_type), "section", GINT_TO_POINTER (3)); 
         g_signal_connect (G_OBJECT (combo_bqfilter_type), "changed",
                           G_CALLBACK (RPSPMC_Control::choice_BQfilter_type_callback),
@@ -3039,6 +3043,7 @@ void RPSPMC_Control::create_folder (){
 
 void RPSPMC_Control::Init_SPMC_on_connect (){
         // fix-me -- need life readback once life re-connect works!
+        // update: mission critical readbacks done
         if (rpspmc_pacpll && rpspmc_hwi){
                 rpspmc_pacpll->write_parameter ("SPMC_GVP_RESET_OPTIONS", 0x0000); // default/reset GVP OPTIONS: Feedback ON! *** WATCH THIS ***
         
@@ -3050,6 +3055,24 @@ void RPSPMC_Control::Init_SPMC_on_connect (){
 
                 // reset and zero GVP
                 GVP_zero_all_smooth ();
+        }
+}
+
+void RPSPMC_Control::Init_SPMC_after_cold_start (){
+        // init filter sections
+        if (rpspmc_pacpll && rpspmc_hwi){
+                gtk_combo_box_set_active (GTK_COMBO_BOX (update_bq_filterS1_widget), 0);
+                rpspmc_hwi->status_append (" * INIT-BQS1...\n"); for (int i=0; i<10; ++i){ while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE); usleep(20000); }
+                gtk_combo_box_set_active (GTK_COMBO_BOX (update_bq_filterS1_widget), 3);
+                rpspmc_hwi->status_append (" * INIT-BQS1 to AB.\n"); for (int i=0; i<10; ++i){ while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE); usleep(20000); }
+                gtk_combo_box_set_active (GTK_COMBO_BOX (update_bq_filterS2_widget), 0);
+                rpspmc_hwi->status_append (" * INIT-BQS2...\n"); for (int i=0; i<10; ++i){ while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE); usleep(20000); }
+                gtk_combo_box_set_active (GTK_COMBO_BOX (update_bq_filterS2_widget), 3);
+                rpspmc_hwi->status_append (" * INIT-BQS2 to AB.\n"); for (int i=0; i<10; ++i){ while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE); usleep(20000); }
+                gtk_combo_box_set_active (GTK_COMBO_BOX (update_bq_filterZS_widget), 0);
+                rpspmc_hwi->status_append (" * INIT-BQZS...\n"); for (int i=0; i<10; ++i){ while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE); usleep(20000); }
+                gtk_combo_box_set_active (GTK_COMBO_BOX (update_bq_filterZS_widget), 5);
+                rpspmc_hwi->status_append (" * INIT-BQZS to ByPass.\n"); for (int i=0; i<10; ++i){ while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE); usleep(20000); }
         }
 }
 
@@ -5584,8 +5607,15 @@ void RPspmc_pacpll::send_all_parameters (){
         dfreq_gain_changed (NULL, this);
 }
 
+// AT COLD START AND RECONNECT
 void RPspmc_pacpll::update_SPMC_parameters (){
         RPSPMC_ControlClass->Init_SPMC_on_connect ();
+}
+
+
+// ONLY at COLD START
+void RPspmc_pacpll::SPMC_cold_start_init (){
+        RPSPMC_ControlClass->Init_SPMC_after_cold_start ();
 }
 
 
@@ -6263,6 +6293,7 @@ void RPspmc_pacpll::on_connect_actions(){
                 write_parameter ("RPSPMC_INITITAL_TRANSFER_ACK", 99); // Acknoledge inital parameters received, release server parameter updates
                 RPSPMC_ControlClass->update_FPGA_from_GUI ();
                 update_SPMC_parameters ();
+                SPMC_cold_start_init (); // ONLY at COLD START
         } else {
                 // update GUI! (mission critical: Z-SERVO mainly)
                 RPSPMC_ControlClass->update_GUI_from_FPGA ();
