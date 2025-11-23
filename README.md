@@ -251,6 +251,8 @@ Thanks,
 
 
 # Screenshots
+Here Gxsm4 is operating a Createc LT-SPM. Complete support for this instrument and Createc Piezo HV + Coarse control is available and required tools are included.
+
 <img width="11520" height="2146" alt="image" src="https://github.com/user-attachments/assets/8e119211-4074-46e0-898a-fb8dc0152466" />
 
 <img width="11518" height="2147" alt="Screenshot from 2025-10-09 15-10-14" src="https://github.com/user-attachments/assets/cbe8a5be-de9a-4e64-aa66-ceafe9ac3ddb" />
