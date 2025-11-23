@@ -779,7 +779,8 @@ FIO_STATUS NetCDF::Write(){
 
                 progress_info  << "Adding Unit hints, time, ..." << std::endl;
 
-                Data.putAtt("var_units_hint", "Please note: this is raw DAC/counter data. The value is in Unit units after multipling values by the dz.");
+                Data.putAtt("var_units_hint", "raw DAC/Volts/FPGA raw/counter/... values of multi dimensional data field. The data Unit is defined when multipling by dz and using the dz unit.");
+                ADD_NC_ATTRIBUTE_UNIT_INFO(Data, scan->data.Zunit, scan->data.s.dz * scan->mem2d->GetDataPkt(0,0), "NOTE: This is the final Unit after scaling by dz. Test/Reference value given here is at index (0,0,0,0) * dz.");
 
                 XSM_DEBUG (DBG_L2, "NetCDF::Write-> Adding Units ZLab");
 
