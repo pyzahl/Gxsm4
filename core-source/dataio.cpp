@@ -98,7 +98,7 @@ const char* Dataio::ioStatus(){
 #define NC_GET_VARIABLE(VNAME, VAR) if( !nc.getVar(VNAME).isNull ()) nc.getVar(VNAME).getVar(VAR)
 #define ADD_NC_ATTRIBUTE_ANG(nv, unit, val)         \
 	do{\
-                gchar *tmp=g_strdup_printf ("NOTE: This length value is alwalys stored in Angstroems.\nThe value for %s is %g %s in the user prefferred display unit.", unit->Label(), unit->Base2Usr (val), unit->Symbol()); \
+                gchar *tmp=g_strdup_printf ("NOTE: This length value is always stored in Angstroems.\nThe value for %s is %g %s in the user prefferred display unit.", unit->Label(), unit->Base2Usr (val), unit->Symbol()); \
 		nv.putAtt("Info", tmp); \
 		nv.putAtt("label", unit->Label());	\
 		nv.putAtt("var_unit", unit->Symbol());		\
