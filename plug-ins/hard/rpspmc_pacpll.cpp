@@ -465,6 +465,8 @@ static void rpspmc_pacpll_hwi_SaveValues_callback ( gpointer gp_ncf ){
 	NcFile *ncf = (NcFile *) gp_ncf;
         if (rpspmc_pacpll)
                 rpspmc_pacpll->save_values (*ncf);
+        if (RPSPMC_ControlClass)
+                RPSPMC_ControlClass->save_values (*ncf);
 }
 
 
@@ -1181,10 +1183,10 @@ void RPSPMC_Control::save_values (NcFile &ncf){
 // Basic Feedback/Scan Parameter ============================================================
 
 	rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"Bias", "V", "RPSPMC: (Sampel or Tip) Bias Voltage", "Bias", "Bias", bias, ncv);
-	rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"Z_Servo_CZ_Setpoint", "A", "RPSPMC: Z-Servo CZ Setpoint", "CZ Set Point", "Z Setpoint", zpos_ref, ncv);
-	rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"Z_Servo_Set_Point", "nA", "RPSPMC: Z-Servo Current Set Point", "Current Setpt.", "Current", mix_set_point[0], ncv);
-	rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"Z_Servo_FLevel", "1", "Z-Servo RPSPMC: FLevel", "Current level", "Level", mix_level[0], ncv);
-	rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"Z-Servo_Transfer_Mode", "BC", "RPSPMC: Z-Servo Transfer Mode", "Z-Servo Transfer Mode", NULL, (double)mix_transform_mode[0], ncv);
+	rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"Z_Servo_CZ_SetPoint", "A", "RPSPMC: Z-Servo CZ Setpoint", "CZ Set Point", "Z Setpoint", zpos_ref, ncv);
+	rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"Z_Servo_SetPoint", "nA", "RPSPMC: Z-Servo STM/Current/.. Set Point", "Current Setpt.", "Current", mix_set_point[0], ncv);
+	rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"Z_Servo_FLevel", "1", "Z-Servo RPSPMC: FLevel", "Current/.. level", "Level", mix_level[0], ncv);
+	rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"Z_Servo_Transfer_Mode", "BC", "RPSPMC: Z-Servo Transfer Mode", "Z-Servo Transfer Mode", NULL, (double)mix_transform_mode[0], ncv);
 	ncv.putAtt ("mode_bcoding", "0:Off, 1:On, 2:Log");
 
 	rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"scan_speed_x", "A/s", "RPSPMC: Scan speed X", "Xs Velocity", "Scan Speed", scan_speed_x, ncv);

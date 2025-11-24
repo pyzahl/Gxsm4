@@ -51,7 +51,8 @@ using namespace netCDF;
 	do {\
                 gtk_entry_buffer_set_text (GTK_ENTRY_BUFFER (gtk_entry_get_buffer (GTK_ENTRY (VAR))), TXT, -1); \
 		gtk_editable_set_editable (GTK_EDITABLE (VAR), FALSE); \
-		gtk_widget_set_sensitive (VAR, TRUE); \
+                gtk_editable_set_width_chars (GTK_EDITABLE (VAR), 15); \
+		gtk_widget_set_sensitive (VAR, TRUE);   \
 		gtk_widget_show (VAR); \
 	}while(0)
 

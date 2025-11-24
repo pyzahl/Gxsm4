@@ -479,17 +479,32 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
                                 NC_GET_VARIABLE ("sranger_mk2_hwi_mix0_set_point", &scan->data.s.Current);
                                 NC_GET_VARIABLE ("sranger_mk2_hwi_z_setpoint", &scan->data.s.ZSetPoint);
 
+                                // try RPSPMC
+                                progress_info  << "Checking RPSPM JSON VARS for Bias, ..." << std::endl;
+                                NC_GET_VARIABLE ("rpspmc_hwi_Bias", &scan->data.s.Bias); // V
+                                NC_GET_VARIABLE ("rpspmc_hwi_Z_Servo_SetPoint", &scan->data.s.Current); // nA
+                                NC_GET_VARIABLE ("rpspmc_hwi_Z_Servo_CZ_SetPoint", &scan->data.s.ZSetPoint); // Ang
+                                //NC_GET_VARIABLE ("rpspmc_hwi_Z_Servo_FLevel", xxxx); // nA
+
+                                
                                 progress_info  << "AutoAdding LayerInfo for OSD..." << std::endl;
-                                scan->mem2d->add_layer_information (new LayerInformation ("Bias", scan->data.s.Bias, "%5.2f V"));
+                                if (fabs(scan->data.s.Bias) >= 1.0)
+                                        scan->mem2d->add_layer_information (new LayerInformation ("Bias", scan->data.s.Bias, "%5.2f V"));
+                                else
+                                        scan->mem2d->add_layer_information (new LayerInformation ("Bias", scan->data.s.Bias*1000, "%5.2f mV"));
+                                
                                 scan->mem2d->add_layer_information (new LayerInformation (scan->data.ui.dateofscan));
                                 scan->mem2d->add_layer_information (new LayerInformation ("X-size", scan->data.s.rx, "Rx: %5.1f \303\205"));
                                 scan->mem2d->add_layer_information (new LayerInformation ("Y-size", scan->data.s.ry, "Ry: %5.1f \303\205"));
                                 
+                                scan->mem2d->add_layer_information (new LayerInformation ("Z-SetPoint", scan->data.s.ZSetPoint, "%5.2f \303\205"));
                                 if (IS_AFM_CTRL)
                                         scan->mem2d->add_layer_information (new LayerInformation ("SetPoint", scan->data.s.SetPoint, "%5.2f V"));
                                 else{
-                                        scan->mem2d->add_layer_information (new LayerInformation ("Current", scan->data.s.Current, "%5.2f nA"));
-                                        scan->mem2d->add_layer_information (new LayerInformation ("Current", main_get_gapp ()->xsm->data.s.Current*1000, "%5.1f pA"));
+                                        if (fabs(scan->data.s.Current) >= 0.1)
+                                                scan->mem2d->add_layer_information (new LayerInformation ("Current", scan->data.s.Current, "%5.2f nA"));
+                                        else
+                                                scan->mem2d->add_layer_information (new LayerInformation ("Current", scan->data.s.Current*1000, "%5.1f pA"));
                                 }
                         }
 
