@@ -6153,6 +6153,8 @@ void RPspmc_pacpll::status_append (const gchar *msg){
                                       end_mark, 0.0, FALSE, 0.0, 0.0);
         g_object_unref (end_mark);
 #endif
+        main_get_gapp()->monitorcontrol->LogEvent ("RPSPMC Stream Info", msg, 1); // add to main logfile with level 1       
+
 }
 
 void RPspmc_pacpll::on_connect_actions(){
