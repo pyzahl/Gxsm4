@@ -25,14 +25,72 @@
 # %%%
 import h5py
 import numpy as np
+import math
 import gwyfile
 from gwyfile.objects import GwyContainer, GwyDataField, GwySIUnit
 
 import glob2
 
 folder = '20251117-Au111-rad'
-base   = 'Au111-R1_'
+base   = 'Au111-'
 input_files  = glob2.glob(folder+"/"+base+"*"+".nc")
+
+## Gxsm Units
+
+UTF8_ANGSTROEM ="\303\205"
+UTF8_MU        ="\302\265"
+UTF8_DEGREE    ="\302\260"
+
+XsmUnitsTable = [
+                #// Id (used in preferences), Units Symbol, Units Symbol (ps-Version), scale factor, precision1, precision2
+                [ "AA", UTF8_ANGSTROEM,   "Ang",    1e0, ".1f", ".3f" ], #// UFT-8 Ang did not work // PS: "\305"
+                [ "nm", "nm",  "nm",     10e0, ".1f", ".3f" ],
+                [ "um", UTF8_MU+"m",  "um",     10e3, ".1f", ".3f" ], #// PS: "\265m"
+                [ "mm", "mm",  "mm",     10e6, ".1f", ".3f" ],
+                [ "BZ", "%BZ", "BZ",     1e0, ".1f", ".2f" ],
+                [ "sec","\"",  "\"",     1e0, ".1f", ".2f" ],
+                [ "V",  "V",   "V",      1e0, ".2f", ".3f" ],
+                [ "mV", "mV",  "mV",     1e-3, ".2f", ".3f" ],
+                [ "mV1", "mV",  "mV",    1e0, ".2f", ".3f" ],
+                [ "V",  "*V", "V",       1e0, ".2f", ".3f" ],
+                [ "*dV", "*dV","dV",     1e0, ".2f", ".3f" ],
+                [ "*ddV", "*ddV","ddV",  1e0, ".2f", ".3f" ],
+                [ "*V2", "V2", "V2",      1e0, ".2f", ".3f" ],
+                [ "1",  " ",   " ",       1e0, ".3f", ".4f" ],
+                [ "0",  " ",   " ",       1e0, ".3f", ".4f" ],
+                [ "B",  "Bool",   "Bool", 1e0, ".3f", ".4f" ],
+                [ "X",  "X",   "X",       1e0, ".3f", ".4f" ],
+                [ "xV",  "xV",   "xV",    1e0, ".3f", ".4f" ],
+                [ "deg", UTF8_DEGREE, "deg",       1e0, ".3f", ".4f" ],
+                [ "Amp", "A",  "A",       1e9, "g", "g" ],
+                [ "nA", "nA",  "nA",      1e0, ".2f", ".3f" ],
+                [ "pA", "pA",  "pA",      1e-3, ".1f", ".2f" ],
+                [ "nN", "nN",  "nN",      1e0, ".2f", ".3f" ],
+                [ "Hz", "Hz",  "Hz",      1e0, ".2f", ".3f" ],
+                [ "mHz", "mHz",  "mHz",   1e-3, ".2f", ".3f" ],
+                [ "K",  "K",   "K",       1e0, ".2f", ".3f" ],
+                [ "amu","amu", "amu",     1e0, ".1f", ".2f" ],
+                [ "CPS","Cps", "Cps",     1e0, ".1f", ".2f" ],
+                [ "CNT","CNT", "CNT",     1e0, ".1f", ".2f" ],
+                [ "Int","Int", "Int",     1e0, ".1f", ".2f" ],
+                [ "A/s",UTF8_ANGSTROEM+"/s", "A/s",     1e0, ".2f", ".3f" ],
+                [ "Ang/V",UTF8_ANGSTROEM+"/V", "Ang/V", 1e0, ".3f", ".4f" ],
+                [ "s","s", "s",           1e0, ".2f", ".3f" ],
+                [ "ptsps","pts/s", "pts/s",  1e0, ".2f", ".3f" ], #// points / s
+                [ "Vps","V/s", "V/s",  1e0, ".2f", ".3f" ],
+                [ "ms","ms", "ms",        1e0, ".2f", ".3f" ],
+                [ "us",UTF8_MU+"s", "us",   1e0, ".1f", ".2f" ],
+                [ "Grad",UTF8_DEGREE, "deg", 1e0, ".2f", ".3f" ],
+                [ "bool","B", "B", 1e0, ".0f", ".0f" ],
+                [ "PC","%", "%", 1e0, ".0f", ".1f" ],
+                [ "MB","MB", "MB", 1e0, ".1f", ".2f" ],
+                [ "dB","dB", "dB", 1e0, ".2f", ".3f" ],
+                [ "On/Off","On/Off", "On/Off", 1e0, "g", "g" ],
+                [ "BC","BC", "BC", 1e0, "g", "g" ],
+                [ "bin","b", "b", 1e0, "b", "b" ],
+                [ "hex","h", "h", 1e0, "x", "x" ],
+                [ "A", UTF8_ANGSTROEM,   "Ang",    1e0, ".1f", ".3f" ], #// fall back for some old def
+]
 
 ########## Some helper functions #################
 
@@ -94,30 +152,49 @@ def convert(input_file):
     # Note on units for 'z':
     # https://sourceforge.net/p/gwyddion/discussion/fileformats/thread/6c1ca39783/?limit=25
     dz = f['dz'][()]
-    unitz = ''
-    unitzfac = 1.0*dz
-    uzattr = get_attr_or_None(f['FloatField'], 'unit')
-    if uzattr:
-        unitz = uzattr.decode('utf-8')
-    else:
-        uzattr = get_attr_or_None(f['FloatField'], 'unitSymbol')
+    
+    # use rangez for "Z" data unit assignment
+    unitz_id  = get_attr_or_None(f['rangez'], 'unit').decode('utf-8')     ## contains Gxsm unit ID => see table above
+    unitz_sym = get_attr_or_None(f['rangez'], 'var_unit').decode('utf-8') ## contains Gxsm unit Symbol, may be UTF special characters like  contain 'Ang" and 'Å' for length or '°' for degree (angle) or 'μ' prefix
+    unitzfac  = dz
+    unitz     = unitz_sym
 
-    if uzattr:
-        unitz = uzattr.decode('utf-8')
-    else:
-        uzattr = get_attr_or_None(f['FloatField'], 'var_unit')
+    print ('NC-data Unit Z:', unitz_id, ', Symbol:', unitz_sym, ',  Scale by: ', unitzfac)
 
-    if uzattr:
-        unitz = uzattr.decode('utf-8')
-    else:
-        uzattr = ''
-
+    # Translate a few custom units
+    if unitz_id == 'AA': # Gxsm Unit ID for Angstroems
+        unitz = 'm'
+        unitzfac = 1e-10 * dz
+    elif unitz_id == 'mV1': # Gxsm Unit ID for mVolt
+        unitz = 'mV'
+        unitzfac = dz
+    elif unitz_id == 'sec': # Gxsm Unit ID for seconds
+        unitz = 's'
+        unitzfac = dz
+    elif unitz_id == 'us': # Gxsm Unit ID for micro-seconds
+        unitz = 's'
+        unitzfac = 1e-6 * dz
+    elif unitz_id == 'Amp': # Gxsm Unit ID for Ampere
+        unitz = 'A'
+        unitzfac = dz
+    elif unitz_id == 'deg': # Gxsm Unit ID for Degrees (angle 360 base)
+        unitz = 'rad'
+        unitzfac = math.pi/180 * dz
+  
     # GwySIUnit appears to not handle the prefix 'n' correctly
-    if unitz.startswith('n') and len(unitz) >= 2:
+    if unitz_id.startswith('n') and len(unitz) >= 2:
         unitz = unitz[1:]
-        unitzfac = 1e-9
+        unitzfac = unitzfac * 1e-9
+      
+    # make sure u-prefix, etc is correct
+    if unitz_id.startswith('u') and len(unitz) >= 2:
+        unitz = unitz[1:]
+        unitzfac = unitzfac * 1e-6
+      
+        
+    print ('=> NC-data Unit Z:', unitz, '  factor is: ', unitzfac)
 
-
+        
     gwytitle = read_string(f['title'])
 
     meta = GwyContainer()
