@@ -96,7 +96,7 @@ Native development system is currently Debain 12, 13 (Trixie) or Debian-testing:
 
 ```
 apt-get install jed emacs meson cmake libgtk-4-dev libsoup-gnome2.4-dev gsettings-desktop-schemas-dev libglew-dev 
-apt-get install libnetcdf-c++4-dev ncview libnetcdf-dev libnetcdf-cxx-legacy-dev libglm-dev libjson-glib-dev
+apt-get install libnetcdf-c++4-dev ncview ibglm-dev libjson-glib-dev
 apt-get install libfftw3-dev libgsl-dev libgtksourceview-5-dev python3-dev libpython3-all-dev python3-numpy
 apt-get install libopencv-*-dev libquicktime-dev
 ```
