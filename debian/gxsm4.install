@@ -2,3 +2,19 @@ debian/gxsm4.pdf usr/share/doc/gxsm4
 icons/*svg usr/share/gxsm4/icons
 icons/gxsm4-icon.svg usr/share/icons/hicolor/scalable/apps
 debian/*.desktop usr/share/gxsm4/menu
+
+### just needed in a multi binary control file ###
+usr/bin/gxsm4 usr/bin
+usr/share/glib-2.0/schemas/org.gnome.gxsm4*.xml usr/share/glib-2.0/schemas
+usr/share/gxsm4/gl-400/*.glsl usr/share/gxsm4/gl-400
+usr/share/gxsm4/icons/*.svg usr/share/gxsm4/icons
+usr/share/gxsm4/palette/* usr/share/gxsm4/palette
+usr/lib/x86_64-linux-gnu/gxsm4-plugins/control/*.so usr/lib/x86_64-linux-gnu/gxsm4-plugins/control/
+usr/lib/x86_64-linux-gnu/gxsm4-plugins/hard/*.so usr/lib/x86_64-linux-gnu/gxsm4-plugins/hard/
+usr/lib/x86_64-linux-gnu/gxsm4-plugins/math/*.so usr/lib/x86_64-linux-gnu/gxsm4-plugins/math/
+usr/lib/x86_64-linux-gnu/gxsm4-plugins/scan/*.so usr/lib/x86_64-linux-gnu/gxsm4-plugins/scan/
+usr/lib/x86_64-linux-gnu/liblib-*-gxsm4.so usr/lib/x86_64-linux-gnu/ 
+usr/share/applications/gxsm4.desktop usr/share/applications/
+usr/share/icons/hicolor/scalable/apps/*.svg usr/share/icons/hicolor/scalable/apps/
+usr/share/locale/de/LC_MESSAGES/gxsm4.mo usr/share/locale/de/LC_MESSAGES/ 
+usr/share/locale/es/LC_MESSAGES/gxsm4.mo usr/share/locale/es/LC_MESSAGES/ 
