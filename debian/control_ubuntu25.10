@@ -1,0 +1,139 @@
+Source: gxsm4
+Section: science
+Priority: optional
+Maintainer: Thorsten Wagner <stm@users.sf.net>
+Build-Depends: 	debhelper (>= 12~),
+		autotools-dev,
+		cmake,
+		desktop-file-utils,
+		freeglut3-dev,
+		git,
+		gsettings-desktop-schemas-dev,
+		gtk-doc-tools,
+		intltool,
+		libatk-bridge2.0-dev,
+		libboost-dev,
+		libcairo2-dev,
+		libopencv-dev,
+		libfftw3-dev,
+		libgail-3-dev,
+		libglew-dev,
+		libglib2.0-dev,
+		libglm-dev,
+		libglu1-mesa-dev,
+		libgsl-dev,
+		libgtk-4-dev,
+		libgtksourceview-5-dev,
+		libjson-glib-dev,
+		libnetcdf-dev,
+		libnetcdf-c++4-dev,
+		libnlopt-dev,
+		libopencv-dev,
+		libpopt-dev,
+		libpython3-dev,
+		libquicktime-dev,
+		libsoup2.4-dev,
+		libwebsocketpp-dev,
+		libxml2-dev,
+		mesa-common-dev,
+		meson,
+		python3,
+		python3-dev,
+		python3-gi,
+		python3-numpy,
+		yelp,
+		yelp-tools 
+Standards-Version: 3.9.7
+Homepage: http://gxsm.sf.net
+#Vcs-Git: https://github.com/pyzahl/Gxsm4.git
+#Vcs-Browser:  https://github.com/pyzahl/Gxsm4
+
+Package: gxsm4
+Architecture: any
+Multi-Arch: same
+Pre-Depends:	${misc:Pre-Depends}
+Depends: 	${shlibs:Depends}, 
+		${misc:Depends},
+		bash,
+		dbus-x11,
+		devscripts,
+		freeglut3-dev,
+		gsettings-desktop-schemas,
+		libatk-bridge2.0-0,
+		libcairo2,
+		libfftw3-bin,
+		libgail-3-0,
+		libglew2.2,
+		libglib2.0-0,
+		libglu1-mesa,
+		libgsl28,
+		libgtk-4-1,
+		libgtksourceview-5-0,
+		libjson-glib-1.0-0,
+		libnetcdf-c++4-1,
+		libnlopt0,
+		libopencv-contrib410,
+		libopencv-core410,
+		libopencv-highgui410,
+		libopencv-imgproc410,
+		libopencv-objdetect410,
+		libopencv-video410,
+		libpopt0,
+		libpython3.14,
+		libquicktime2,
+		libsoup2.4-1,
+		libxdot4,
+		libxml2-dev,
+		python3,
+		python3-gi,
+		python3-numpy,
+		python3-pydot,
+		python3-scipy,
+		sed,
+		xdg-utils,
+		xdot
+Suggests: sranger-modules-mk23-dkms, sranger-modules-std-dkms, gwyddion, gxsm-nc-thumbnailer
+Replaces: sranger (<< 0.0.2 )
+Breaks: sranger (<< 0.0.2 )
+Description: Multi-channel data acquisition via STM/AFM
+ GXSM -- Gnome X Scanning Microscopy.
+ .
+ Gxsm is a powerful graphical interface for any kind of 2D
+ and 3D (multilayered 2D mode) data acquisition methods, 
+ especially designed for SPM and SPA-LEED, which are used 
+ in surface science. It includes methods for 2D data (of 
+ various types: byte, short, long, double) visualization 
+ and manipulation. We are currently using it for STM, AFM, 
+ SARLS, and SPA-LEED.
+ .
+ Gxsm is powerful, it is easy to extend via plug-ins, it is
+ unlimited in data size... and it is a free and open source 
+ software hosted by SourceForge! It is based on the Linux 
+ Gtk+/Gnome development environment.
+ .
+ More details on http://gxsm.sf.net and 
+ http://sranger.sf.net or in 
+ J. Vac. Sci. Technol. B 28, C4E39 (2010) 
+ (doi:10.1116/1.3374719) 
+ 
+Package: gxsm-nc-thumbnailer
+Architecture: any
+Multi-Arch: same
+Pre-Depends:	${misc:Pre-Depends}
+Depends: 	${shlibs:Depends}, 
+		${misc:Depends}, 
+		libnetcdf-c++4-1,
+		libglib2.0-0t64,
+		libpng16-16t64,
+		libpopt0
+Suggests:	gxsm4 
+Replaces:	 
+Breaks: 	gxsm3 (<< 3.54.0-0ubuntu3),
+		gxsm4 (<< 4.2.1)
+Description: Multi-channel data acquisition via STM/AFM
+ GXSM -- Gnome X Scanning Microscopy.
+ --- netcdf thumbnailer ---
+ This small tool allows you to get a thumbnail 
+ of *.nc in your favorite file explorer
+ The thumbnailer works for netcdf files generated
+ with GXSM3 and GXSM4 
