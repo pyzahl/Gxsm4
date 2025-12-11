@@ -61,4 +61,4 @@ obj['/0/data'] = data_field
 
 # Save the container object to a Gwyddion file
 obj.tofile(fname+'.gwy')
-
+print('Save to gwy file: '+fname+'.gwy')
