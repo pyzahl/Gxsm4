@@ -1823,6 +1823,50 @@ static PyObject *remote_createscanf(PyObject * self, PyObject * args)
         return Py_BuildValue("i", idle_data.ret);
 }
 
+static PyObject* remote_get_scan_unit(PyObject *self, PyObject *args)
+{
+	PI_DEBUG(DBG_L2, "pyremote: set scan zunit ");
+	//remote_args ra;
+        int ch;
+	gchar *udim, *unitid, *ulabel;
+
+	if (!PyArg_ParseTuple(args, "ls", &ch, &udim))
+		return Py_BuildValue("i", -1);
+
+	Scan *dst = main_get_gapp()->xsm->GetScanChannel (ch);
+        if (dst){
+                UnitObj *u = NULL;
+                switch (udim[0]){
+                case 'x': case 'X':
+                        u=dst->data.Xunit; break;
+                case 'y': case 'Y':
+                        u=dst->data.Yunit; break;
+                case 'z': case 'Z':
+                        u=dst->data.Zunit; break;
+                case 'l': case 'L': case 'v': case 'V':
+                        u=dst->data.Vunit; break;
+                case 't': case 'T':
+                        u=dst->data.TimeUnit; break;
+                default:
+                        g_message ("Invalid axis Id given.");
+                        return Py_BuildValue("i", -1);
+                }
+                
+                if (u){
+                        g_message ("Get Scan Unit %c [%s] in %s", udim[0], u->Label(), u->Symbol());
+                        return Py_BuildValue("ss", u->Label(), u->Symbol());
+                } else {
+                        g_message ("Internal unit error.");
+                        return Py_BuildValue("i", -1);
+                }
+        }
+        else {
+                g_message ("Invalid channel %d given.", ch);
+                return Py_BuildValue("is", -1, "Invalid axis");
+        }
+	return Py_BuildValue("is", 0, "Not an active scan data channel");
+}
+
 static PyObject* remote_set_scan_unit(PyObject *self, PyObject *args)
 {
 	PI_DEBUG(DBG_L2, "pyremote: set scan zunit ");
@@ -3591,6 +3635,7 @@ static PyMethodDef GxsmPyMethods[] = {
 	// BLOCK II
 	{"createscan", remote_createscan, METH_VARARGS, "Create Scan int: gxsm.createscan (ch,nx,ny,nv pixels, rx,ry in A, array.array('l', [...]), append)"},
 	{"createscanf", remote_createscanf, METH_VARARGS, "Create Scan float: gxsm.createscan (ch,nx,ny,nv pixels, rx,ry in A, array.array('f', [...]), append)"},
+	{"get_scan_unit", remote_get_scan_unit, METH_VARARGS, "Get Scan Unit: gxsm.get_scan_unit (ch,'X|Y|Z|L|T','returns: UnitId string','Label string')"},
 	{"set_scan_unit", remote_set_scan_unit, METH_VARARGS, "Set Scan X,Y,Z,L Dim Unit: gxsm.set_scan_unit (ch,'X|Y|Z|L|T','UnitId string','Label string')"},
 	{"set_scan_lookup", remote_set_scan_lookup, METH_VARARGS, "Set Scan Lookup for Dim: gxsm.set_scan_lookup (ch,'X|Y|L',start,end)"},
 	//{"set_scan_lookup_i", remote_set_scan_llookup, METH_VARARGS, "Set Scan Lookup for Dim: gxsm.set_scan_lookup_i (ch,'X|Y|L',start,end)"},
