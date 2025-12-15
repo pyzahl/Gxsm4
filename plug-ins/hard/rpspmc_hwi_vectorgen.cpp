@@ -266,8 +266,8 @@ void RPSPMC_Control::append_null_vector (int index, int options){
 }
 
 
-
-void RPSPMC_Control::write_spm_scan_vector_program (double rx, double ry, int nx, int ny, double slew[2], int subscan[4], long int srcs[4], int gvp_options){
+// y_start: 0: top-down, else bottom-up
+void RPSPMC_Control::write_spm_scan_vector_program (double rx, double ry, int nx, int ny, double slew[2], int subscan[4], long int srcs[4], int gvp_options, int y_start){
         static int subscan_buffer[4] = {-1,-1,-1,-1};
         static int srcs_buffer[4] = {0,0,0,0};
         
@@ -289,12 +289,18 @@ void RPSPMC_Control::write_spm_scan_vector_program (double rx, double ry, int nx
         
         double xi = -rx/2.+rx*(double)subscan_buffer[0]/(double)nx;
         double yi =  ry/2.-ry*(double)subscan_buffer[2]/(double)ny;
-        double ti = sqrt(xi*xi+yi*yi)/slew[1];
 
         //g_message ("write spm scan GVP from: rx,y: %g V, %g V, slew: %g A/s, %g A/s -> tifr: %g, %g, %g", rx,ry, slew[0], slew[1], ti, tfwd, trev);
 
         double dx = rx*(double)subscan_buffer[1]/(double)nx; // scan X vector length
         double dy = ry*(double)subscan_buffer[3]/(double)ny; // scan Y vector length
+
+        if (y_start > 0){ // bottom up?
+                yi -= dy; // adjust initial point position
+                dy = -dy; // adjust dy to opposide
+        }
+        
+        double ti = sqrt(xi*xi+yi*yi)/slew[1];
 
         double tfwd = dx/slew[0];
         double trev = dx/slew[1];
@@ -326,15 +332,15 @@ vector = {32'd000032,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  3
 {Info: {RESET:{true}}}
         */
 
-        // ** Message: 23:34:25.068: write spm scan GVP: ti, fwd, rev= 0.0707107s, 0.1s, 0.1s;  xi,yi=(-1, 1)V, dx,dy=(2, 2)V nx,ny=(100, 100) subscan_buffer=[[0 100][0 100]], srcs_buffer=0x00000039, 0x00000000
+        // ** Message: 23:34:25.068: write spm scan GVP: ti, fwd, rev= 0.0707107s, 0.1s, 0.1s;  xi,yi=(-1, 1)A, dx,dy=(2, 2)V nx,ny=(100, 100) subscan_buffer=[[0 100][0 100]], srcs_buffer=0x00000039, 0x00000000
 
-        g_message ("write spm scan GVP: ti, fwd, rev= %gs, %gs, %gs;  xi,yi=(%g, %g)V, dx,dy=(%g, %g)V nx,ny=(%d, %d) subscan_buffer=[[%d %d][%d %d]], srcs_buffer=0x%08x, 0x%08x",
+        g_message ("write spm scan GVP: ti, fwd, rev= %gs, %gs, %gs;  xi,yi=(%g, %g)V, dx,dy=(%g, %g)A nx,ny=(%d, %d) subscan_buffer=[[%d %d][%d %d]], srcs_buffer=0x%08x, 0x%08x, Ystart_i=%d",
                    ti, tfwd, trev,
                    xi, yi,
                    dx, dy,
                    nx, ny,
                    subscan_buffer[0], subscan_buffer[1], subscan_buffer[2], subscan_buffer[3], 
-                   srcs_buffer[0],srcs_buffer[1]);
+                   srcs_buffer[0],srcs_buffer[1], y_start);
         
         // may wait a sec to assumre monitors been up-to-date?
         // initial vector to start

@@ -1052,10 +1052,10 @@ int rpspmc_hwi_dev::start_data_read (int y_start,
                 resetVPCconfirmed ();
                 RPSPMC_ControlClass->write_spm_scan_vector_program (main_get_gapp()->xsm->data.s.rx, main_get_gapp()->xsm->data.s.ry,
                                                                     main_get_gapp()->xsm->data.s.nx, main_get_gapp()->xsm->data.s.ny,
-                                                                    slew, subscan, srcs_dir);
+                                                                    slew, subscan, srcs_dir, 0, y_start);  // y_start: 0: top-down, else bottom-up
                 
 
-                g_message ("Scan GVP written and send. Preparing for start.");
+                g_message ("Scan GVP written and send. Preparing for start. y_start: %d", y_start);
 
                 ScanningFlg=1; // can be used to abort data read thread. (Scan Stop forced by user)
                 RPSPMC_data_y_count = y_start; // if > 0, scan dir is "bottom-up"

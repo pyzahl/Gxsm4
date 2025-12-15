@@ -993,7 +993,7 @@ public:
 	void GVP_store_vp (const gchar *key);
 	void GVP_restore_vp (const gchar *key);
 
-        void write_spm_scan_vector_program (double rx, double ry, int nx, int ny, double slew[2], int subscan[4], long int srcs[4], int gvp_options=0);
+        void write_spm_scan_vector_program (double rx, double ry, int nx, int ny, double slew[2], int subscan[4], long int srcs[4], int gvp_options=0, int y_start=0); // y_start: 0: top-down, else bottom-up
 
         void on_new_data ();
         

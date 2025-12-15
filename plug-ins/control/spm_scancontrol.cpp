@@ -445,11 +445,11 @@ SPM_ScanControl::SPM_ScanControl (Gxsm4app *app):AppBase(app)
                                          G_CALLBACK (cb_setscandir), this,
                                          true,
                                          "SCANDIR", (void*) SCAN_DIR_TOPDOWN);
-        spmsc_bp->grid_add_radio_button ("Up-Down", "Set top down <-> bottom up Scanning",
+        spmsc_bp->grid_add_radio_button ("Up-Down", "Set alternating top down <-> bottom up Scanning",
                                          G_CALLBACK (cb_setscandir), this,
                                          false,
                                          "SCANDIR", (void*) SCAN_DIR_TOPDOWN_BOTUP);
-        spmsc_bp->grid_add_radio_button ("Bot-!Up", "Set bottom up scanning",
+        spmsc_bp->grid_add_radio_button ("Bot-Up", "Set bottom up scanning",
                                          G_CALLBACK (cb_setscandir), this,
                                          false,
                                          "SCANDIR", (void*) SCAN_DIR_BOTUP);
