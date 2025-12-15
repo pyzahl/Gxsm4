@@ -10,7 +10,7 @@ ch = 0
 # Create the top-level container
 obj = GwyContainer()
 
-full_original_name = gxsm.chfname(0).split()[0]
+full_original_name = gxsm.chfname(ch).split()[0]
 print(full_original_name)
 
 folder = os.path.dirname(full_original_name)

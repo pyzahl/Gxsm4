@@ -895,8 +895,10 @@ public:
                 } else {
                         gchar *message = g_strdup_printf("Action script/library %s not yet defined.\nPlease define action script using the python console.", tmp_script_filename);
                         g_message ("%s", message);
-                        append(message);
-                        main_get_gapp()->warning (message);
+                        if (strncmp("tmp_script_filename", "auto-save-ch", 12)){ // do not pop up window for not defined aust-save-chNN.pu scripts, silently ignore
+                                append(message);
+                                main_get_gapp()->warning (message);
+                        }
                         g_free(message);
                 }
                 g_free (tmp_script_filename);

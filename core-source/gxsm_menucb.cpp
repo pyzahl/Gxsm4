@@ -140,6 +140,13 @@ void App::auto_save_scans (){ // auto save or update scan(s) in progress or comp
                                                         break; // skip
                                         }
                                 }
+                                // check my python auto save hook
+                                {
+                                        gchar *asch = g_strdup_printf ("auto-save-ch%02d", ((Scan*)tmp->data)->get_channel_id ());
+                                        g_message ("PyRemote Action Trigger: %s", asch);
+                                        main_get_gapp ()->SignalRemoteActionToPlugins (&asch);
+                                        g_free (asch);
+                                }
                         }
                 }
         }
