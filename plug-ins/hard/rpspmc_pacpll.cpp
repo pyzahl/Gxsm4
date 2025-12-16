@@ -210,7 +210,7 @@ SOURCE_SIGNAL_DEF rpspmc_swappable_signals[] = {                                
 
 SOURCE_SIGNAL_DEF modulation_targets[] = {
         //  SIGNAL #  Name               Units.... Scale
-        { 0x00000000, "None/OFF",    " ",  "-",  "-", 0.0,                          0, 0 },
+        { 0x00000000, "OFF",         " ",  "-",  "-", 0.0,                          0, 0 },
         { 0x00000001, "X-Scan",      " ", "AA", UTF8_ANGSTROEM, 1., 0, 0 }, // scale_factor to get "Volts" or RP base unit for signal
         { 0x00000002, "Y-Scan",      " ", "AA", UTF8_ANGSTROEM, 1., 0, 0 }, //
         { 0x00000003, "Z-Scan",      " ", "AA", UTF8_ANGSTROEM, 1., 0, 0 }, //
@@ -1164,7 +1164,7 @@ void* rpspmc_pacpll_hwi_ncaddvar (NcFile &ncf, const gchar *varname, const gchar
 	ncv.putVar (&value);
 }
 
-#define SPMTMPL_ID "rpspmc_hwi_"
+#define SPMHWI_ID "rpspmc_hwi_"
 
 void RPSPMC_Control::save_values (NcFile &ncf){
 	NcVar ncv;
@@ -1180,19 +1180,39 @@ void RPSPMC_Control::save_values (NcFile &ncf){
 	info.putVar ({0}, {strlen(i)}, i);
 	g_free (i);
 
-// Basic Feedback/Scan Parameter ============================================================
+// Feedback/Scan Parameters from GUI ============================================================
 
-	rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"Bias", "V", "RPSPMC: (Sampel or Tip) Bias Voltage", "Bias", "Bias", bias, ncv);
-	rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"Z_Servo_CZ_SetPoint", "A", "RPSPMC: Z-Servo CZ Setpoint", "CZ Set Point", "Z Setpoint", zpos_ref, ncv);
-	rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"Z_Servo_SetPoint", "nA", "RPSPMC: Z-Servo STM/Current/.. Set Point", "Current Setpt.", "Current", mix_set_point[0], ncv);
-	rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"Z_Servo_FLevel", "1", "Z-Servo RPSPMC: FLevel", "Current/.. level", "Level", mix_level[0], ncv);
-	rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"Z_Servo_Transfer_Mode", "BC", "RPSPMC: Z-Servo Transfer Mode", "Z-Servo Transfer Mode", NULL, (double)mix_transform_mode[0], ncv);
+	rpspmc_pacpll_hwi_ncaddvar (ncf, SPMHWI_ID"Bias", "V", "RPSPMC: (Sampel or Tip) Bias Voltage", "Bias", "Bias", bias, ncv);
+	rpspmc_pacpll_hwi_ncaddvar (ncf, SPMHWI_ID"Z_Servo_CZ_SetPoint", "A", "RPSPMC: Z-Servo CZ Setpoint", "CZ Set Point", "Z Setpoint", zpos_ref, ncv);
+	rpspmc_pacpll_hwi_ncaddvar (ncf, SPMHWI_ID"Z_Servo_CP_in_dB", "dB", "RPSPMC: Z-Servo CP in dB", "Z SERVO CP in dB", "Z Servo CP (dB)", spmc_parameters.z_servo_cp_db, ncv);
+	rpspmc_pacpll_hwi_ncaddvar (ncf, SPMHWI_ID"Z_Servo_CI_in_dB", "dB", "RPSPMC: Z-Servo CI in dB", "Z SERVO CI in dB", "Z Servo CI (dB)", spmc_parameters.z_servo_ci_db, ncv);
+	rpspmc_pacpll_hwi_ncaddvar (ncf, SPMHWI_ID"Z_Servo_SetPoint", "nA", "RPSPMC: Z-Servo STM/Current/.. Set Point", "Current Setpt.", "Current", mix_set_point[0], ncv);
+	rpspmc_pacpll_hwi_ncaddvar (ncf, SPMHWI_ID"Z_Servo_FLevel", "1", "Z-Servo RPSPMC: FLevel", "Current/.. level", "Level", mix_level[0], ncv);
+	rpspmc_pacpll_hwi_ncaddvar (ncf, SPMHWI_ID"Z_Servo_Transfer_Mode", "BC", "RPSPMC: Z-Servo Transfer Mode", "Z-Servo Transfer Mode", NULL, (double)mix_transform_mode[0], ncv);
 	ncv.putAtt ("mode_bcoding", "0:Off, 1:On, 2:Log");
 
-	rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"scan_speed_x", "A/s", "RPSPMC: Scan speed X", "Xs Velocity", "Scan Speed", scan_speed_x, ncv);
-	rpspmc_pacpll_hwi_ncaddvar (ncf, SPMTMPL_ID"move_speed_x", "A/s", "RPSPMC: Move speed X", "Xm Velocity", "Move Speed", move_speed_x, ncv);
+	rpspmc_pacpll_hwi_ncaddvar (ncf, SPMHWI_ID"scan_speed_x", "A/s", "RPSPMC: Scan speed X", "Xs Velocity", "Scan Speed", scan_speed_x, ncv);
+	rpspmc_pacpll_hwi_ncaddvar (ncf, SPMHWI_ID"move_speed_x", "A/s", "RPSPMC: Move speed X", "Xm Velocity", "Move Speed", move_speed_x, ncv);
 
+// LockIn Parameters from GUI ============================================================
+	rpspmc_pacpll_hwi_ncaddvar (ncf, SPMHWI_ID"LCK_Mod", "Hz", "RPSPMC: LockIn Mod Freq", "LockIn Mod Freq", "Lck Mod Freq", spmc_parameters.lck_frequency, ncv);
 
+        int jj = spmc_parameters.lck_target;
+        //for (int jj=1; modulation_targets[jj].label && jj < LCK_NUM_TARGETS; ++jj)
+        {
+                gchar *lab = g_strdup_printf ("Modulation Volume for %s", modulation_targets[jj].label);
+                gchar *id = g_strdup_printf ("%sLCK_ModVolume_%s", SPMHWI_ID, modulation_targets[jj].label);
+                for (gchar *c=id; *c; c++) if (*c == '-') *c='_'; // transcode '-' to '_'
+                rpspmc_pacpll_hwi_ncaddvar (ncf, id, modulation_targets[jj].unit, lab, lab, lab, LCK_Volume[jj], ncv);
+                g_free (lab); g_free(id);
+        }
+	rpspmc_pacpll_hwi_ncaddvar (ncf, SPMHWI_ID"LCK_Sens", "mV", "RPSPMC: LockIn Sensitivity", "LockIn Sens", "Lck Sens", spmc_parameters.lck_sens, ncv);
+
+        
+// Filter Parameters from GUI ============================================================
+
+        
+        
 // Vector Probe ============================================================
 
 }
@@ -5506,9 +5526,10 @@ void RPspmc_pacpll::save_values (NcFile &ncf){
         // store all rpspmc_pacpll's control parameters for the RP PAC-PLL
         // if socket connection is up
         if (client){
+                const gchar* pll_prefix = "rpspmc_hwi";
                 // JSON READ BACK PARAMETERS! Loosing precison to float some where!! (PHASE_CI < -100dB => 0!!!)
                 for (JSON_parameter *p=PACPLL_JSON_parameters; p->js_varname; ++p){
-                        gchar *vn = g_strdup_printf ("JSON_RedPACPALL_%s", p->js_varname);
+                        gchar *vn = g_strdup_printf ("%s_JSON_%s", pll_prefix, p->js_varname);
                         NcVar ncv = ncf.addVar ( vn, ncDouble);
                         ncv.putAtt ("long_name", vn);
                         ncv.putAtt ("short_name", p->js_varname);
@@ -5517,7 +5538,7 @@ void RPspmc_pacpll::save_values (NcFile &ncf){
                 }
                 // ACTUAL PARAMETERS in "dB" DOUBLE PRECISION VALUES, getting OK to the FPGA...
                 {
-                        gchar *vn = g_strdup_printf ("JSON_RedPACPALL_%s", "_PHASE_FB_CP");
+                        gchar *vn = g_strdup_printf ("%s_%s", pll_prefix, "_PHASE_FB_CP");
                         NcVar ncv = ncf.addVar ( vn, ncDouble);
                         ncv.putAtt ("long_name", vn);
                         ncv.putAtt ("short_name", "_PHASE_FB_CP");
@@ -5525,7 +5546,7 @@ void RPspmc_pacpll::save_values (NcFile &ncf){
                         ncv.putVar (&parameters.phase_fb_cp); // OK!
                 }
                 {
-                        gchar *vn = g_strdup_printf ("JSON_RedPACPALL_%s", "_PHASE_FB_CI");
+                        gchar *vn = g_strdup_printf ("%s_%s", pll_prefix, "_PHASE_FB_CI");
                         NcVar ncv = ncf.addVar ( vn, ncDouble);
                         ncv.putAtt ("long_name", vn);
                         ncv.putAtt ("short_name", "_PHASE_FB_CI");
@@ -5533,7 +5554,7 @@ void RPspmc_pacpll::save_values (NcFile &ncf){
                         ncv.putVar (&parameters.phase_fb_ci); // OK!
                 }
                 {
-                        gchar *vn = g_strdup_printf ("JSON_RedPACPALL_%s", "_AMPLITUDE_FB_CP");
+                        gchar *vn = g_strdup_printf ("%s_%s", pll_prefix, "_AMPLITUDE_FB_CP");
                         NcVar ncv = ncf.addVar ( vn, ncDouble);
                         ncv.putAtt ("long_name", vn);
                         ncv.putAtt ("short_name", "_AMPLITUDE_FB_CP");
@@ -5541,7 +5562,7 @@ void RPspmc_pacpll::save_values (NcFile &ncf){
                         ncv.putVar (&parameters.amplitude_fb_cp); // OK!
                 }
                 {
-                        gchar *vn = g_strdup_printf ("JSON_RedPACPALL_%s", "_AMPLITUDE_FB_CI");
+                        gchar *vn = g_strdup_printf ("%s_%s", pll_prefix, "_AMPLITUDE_FB_CI");
                         NcVar ncv = ncf.addVar ( vn, ncDouble);
                         ncv.putAtt ("long_name", vn);
                         ncv.putAtt ("short_name", "_AMPLITUDE_FB_CI");
@@ -5549,7 +5570,7 @@ void RPspmc_pacpll::save_values (NcFile &ncf){
                         ncv.putVar (&parameters.amplitude_fb_ci); // OK!
                 }
                 {
-                        gchar *vn = g_strdup_printf ("JSON_RedPACPALL_%s", "_PHASE_FB_CP_dB");
+                        gchar *vn = g_strdup_printf ("%s_%s", pll_prefix, "_PHASE_FB_CP_dB");
                         NcVar ncv = ncf.addVar ( vn, ncDouble);
                         ncv.putAtt ("long_name", vn);
                         ncv.putAtt ("short_name", "_PHASE_FB_CP_dB");
@@ -5557,7 +5578,7 @@ void RPspmc_pacpll::save_values (NcFile &ncf){
                         ncv.putVar (&parameters.phase_fb_cp_db); // OK!
                 }
                 {
-                        gchar *vn = g_strdup_printf ("JSON_RedPACPALL_%s", "_PHASE_FB_CI_dB");
+                        gchar *vn = g_strdup_printf ("%s_%s", pll_prefix, "_PHASE_FB_CI_dB");
                         NcVar ncv = ncf.addVar ( vn, ncDouble);
                         ncv.putAtt ("long_name", vn);
                         ncv.putAtt ("short_name", "_PHASE_FB_CI_dB");
@@ -5565,7 +5586,7 @@ void RPspmc_pacpll::save_values (NcFile &ncf){
                         ncv.putVar (&parameters.phase_fb_ci_db); // OK!
                 }
                 {
-                        gchar *vn = g_strdup_printf ("JSON_RedPACPALL_%s", "_AMPLITUDE_FB_CP_dB");
+                        gchar *vn = g_strdup_printf ("%s_%s", pll_prefix, "_AMPLITUDE_FB_CP_dB");
                         NcVar ncv = ncf.addVar ( vn, ncDouble);
                         ncv.putAtt ("long_name", vn);
                         ncv.putAtt ("short_name", "_AMPLITUDE_FB_CP_dB");
@@ -5573,7 +5594,7 @@ void RPspmc_pacpll::save_values (NcFile &ncf){
                         ncv.putVar (&parameters.amplitude_fb_cp_db); // OK!
                 }
                 {
-                        gchar *vn = g_strdup_printf ("JSON_RedPACPALL_%s", "_AMPLITUDE_FB_CI_dB");
+                        gchar *vn = g_strdup_printf ("%s_%s", pll_prefix, "_AMPLITUDE_FB_CI_dB");
                         NcVar ncv = ncf.addVar ( vn, ncDouble);
                         ncv.putAtt ("long_name", vn);
                         ncv.putAtt ("short_name", "_AMPLITUDE_FB_CI_dB");

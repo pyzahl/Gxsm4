@@ -149,16 +149,16 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         { "SPMC_Z_SERVO_LOWER", &spmc_parameters.z_servo_lower, false, "V" },
         { "SPMC_Z_SERVO_SETPOINT_CZ", &spmc_parameters.z_servo_setpoint_cz, false, "V" },
         { "SPMC_Z_SERVO_IN_OFFSETCOMP", &spmc_parameters.z_servo_in_offsetcomp, false, "V" },
-        { "SPMC_Z_SERVO_SRC_MUX", &spmc_parameters.z_servo_src_mux, false, "1" },
+        { "SPMC_Z_SERVO_SRC_MUX", &spmc_parameters.z_servo_src_mux, false, "X" },
 
 
-        { "SPMC_GVP_EXECUTE", &spmc_parameters.gvp_control, 0, "1" },
-        //{ "SPMC_GVP_EXECUTE", &spmc_parameters.gvp_execute, false, "V" },
-        //{ "SPMC_GVP_PAUSE", &spmc_parameters.gvp_pause, false, "V" },
-        //{ "SPMC_GVP_STOP", &spmc_parameters.gvp_stop, false, "V" },
-        //{ "SPMC_GVP_PROGRAM", &spmc_parameters.gvp_program, false, "V" },
-        { "SPMC_GVP_RESET_OPTIONS", &spmc_parameters.gvp_reset_options, false, "1" },
-        { "SPMC_GVP_STATUS", &spmc_parameters.gvp_status, true, "1" },
+        { "SPMC_GVP_EXECUTE", &spmc_parameters.gvp_control, 0, "X" },
+        //{ "SPMC_GVP_EXECUTE", &spmc_parameters.gvp_execute, false, "X" },
+        //{ "SPMC_GVP_PAUSE", &spmc_parameters.gvp_pause, false, "X" },
+        //{ "SPMC_GVP_STOP", &spmc_parameters.gvp_stop, false, "X" },
+        //{ "SPMC_GVP_PROGRAM", &spmc_parameters.gvp_program, false, "X" },
+        { "SPMC_GVP_RESET_OPTIONS", &spmc_parameters.gvp_reset_options, false, "X" },
+        { "SPMC_GVP_STATUS", &spmc_parameters.gvp_status, true, "X" },
 
         // NO READ BACK OF VECTORS
         { "SPMC_GVP_VECTOR_PC", &spmc_parameters.v[0], false, "1" }, // INT Vector[PC] to set
@@ -235,7 +235,7 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         { "SPMC_GVPAMC_MONITOR", &spmc_parameters.gvpamc_monitor, true, "V" },
         { "SPMC_GVPFMC_MONITOR", &spmc_parameters.gvpfmc_monitor, true, "V" },
 
-        { "SPMC_MUX_MONITOR", &spmc_parameters.mux_monitor, true, "1" },
+        { "SPMC_MUX_MONITOR", &spmc_parameters.mux_monitor, true, "X" },
         
         { "SPMC_UPTIME_SECONDS", &spmc_parameters.uptime_seconds, true, "s" },
         
@@ -251,15 +251,15 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         
 
         // RF-GEN
-        { "SPMC_RF_GEN_MODE",      &spmc_parameters._rf_gen_mode, false, "1" },      // digital Lck & RF Gen mode
+        { "SPMC_RF_GEN_MODE",      &spmc_parameters._rf_gen_mode, false, "X" },      // digital Lck & RF Gen mode
         { "SPMC_RF_GEN_FREQUENCY", &spmc_parameters.rf_gen_frequency, false, "Hz" }, // manual/tune RF Gen frequency
         { "SPMC_RF_GEN_FMSCALE",   &spmc_parameters.rf_gen_fmscale, false, "1" },   // digital FM Mod scale control
-        { "SPMC_RF_GEN_OUT_MUX",   &spmc_parameters.rf_gen_out_mux, false, "1" },
+        { "SPMC_RF_GEN_OUT_MUX",   &spmc_parameters.rf_gen_out_mux, false, "X" },
 
 
         // BQ's
-        { "SPMC_SC_FILTER_MODE",   &spmc_parameters.sc_filter_mode, false, "1" },    // time const
-        { "SPMC_SC_FILTER_SELECT", &spmc_parameters.sc_filter_mode, false, "1" },    // time const
+        { "SPMC_SC_FILTER_MODE",   &spmc_parameters.sc_filter_mode, false, "X" },    // time const
+        { "SPMC_SC_FILTER_SELECT", &spmc_parameters.sc_filter_mode, false, "X" },    // time const
         { "SPMC_SC_BQ_COEF_B0",  &spmc_parameters.sc_bq_coef[0], false, "1" },    // BQCOEFS
         { "SPMC_SC_BQ_COEF_B1",  &spmc_parameters.sc_bq_coef[1], false, "1" },    // BQCOEFS
         { "SPMC_SC_BQ_COEF_B2",  &spmc_parameters.sc_bq_coef[2], false, "1" },    // BQCOEFS
