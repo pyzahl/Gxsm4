@@ -780,12 +780,12 @@ void PanView :: tip_refresh()
 		if (main_get_gapp()->xsm->hardware->RTQuery ("O", z0, x0, y0)){ // get HR Offset
                         //g_print ("PanView O: %g %g %g\n", z0,x0,y0);
 			gchar *tmp = NULL;
-			tmp = g_strdup_printf ("Offset Z0: %7.3f " UTF8_ANGSTROEM
+			tmp = g_strdup_printf (//"Offset Z0: %7.3f " UTF8_ANGSTROEM // not used by RPSPMC
                                                "\nXY0: %7.3f " UTF8_ANGSTROEM
                                                ", %7.3f " UTF8_ANGSTROEM
 					       "\nXYs: %7.3f " UTF8_ANGSTROEM
                                                ", %7.3f " UTF8_ANGSTROEM,
-					       main_get_gapp()->xsm->Inst->V2ZAng(z0),
+					       //main_get_gapp()->xsm->Inst->V2ZAng(z0),
 					       main_get_gapp()->xsm->Inst->V2XAng(x0),
 					       main_get_gapp()->xsm->Inst->V2YAng(y0),
 					       main_get_gapp()->xsm->Inst->V2XAng(x),
@@ -825,7 +825,7 @@ void PanView :: tip_refresh()
                 double u,v,w;
 		main_get_gapp()->xsm->hardware->RTQuery ("B", u, v, w); // Bias Monitor, Bias Reg, Bias Set
                 double v1,v2,vdum;
-		main_get_gapp()->xsm->hardware->RTQuery ("V", v1, v2, vdum); // Volatges
+		main_get_gapp()->xsm->hardware->RTQuery ("V", v1, v2, vdum); // Volatges IN3, IN4
                 double gu,ga,gb;
 		main_get_gapp()->xsm->hardware->RTQuery ("G", gu, ga, gb); // GVP
                 double gamc,gfmc,gdum;
@@ -834,32 +834,34 @@ void PanView :: tip_refresh()
                 main_get_gapp()->xsm->hardware->RTQuery ("S", s1, s2, s3); // Status
                 if (fabs(y) < 0.25)
                         tmp = g_strdup_printf ("I: %8.1f pA\ndF: %8.1f Hz\nZ: %8.4f " UTF8_ANGSTROEM
-                                               "\nBias: %8.4f V %8.4f V %8.4f V"
+                                               "\nBias: %8.4f V"// %8.4f V %8.4f V"
                                                //"\n UMon: %g USet: %g"
                                                //"\nGVPU: %6.4f A: %6.4f B: %6.4f V"
                                                //"\nGVPAM: %6.4f FM: %6.4f Veq\n"
-                                               "\nV1: %8.4f V2: %8.4f"
-                                               "\nZSM: h%04x S%02x G%02x",
+                                               "\nIN3: %8.4f IN4: %8.4f",
+                                               //"\nZSM: h%04x S%02x G%02x",
                                                y*1000., x, main_get_gapp()->xsm->Inst->V2ZAng(z),
-                                               u,v,w,
-                                               v1,v2,
+                                               u,//v,w,
+                                               v1,v2//,
                                                //gu, ga, gb,
                                                //gamc, gfmc,
-                                               q, (int)s2, (int)s3);
+                                               //q, (int)s2, (int)s3
+                                               );
                 else
                         tmp = g_strdup_printf ("I: %8.4f nA\ndF: %8.1f Hz\nZ: %8.4f " UTF8_ANGSTROEM
-                                               "\nBias: %8.4f V %8.4f V %8.4f V"
+                                               "\nBias: %8.4f V"// %8.4f V %8.4f V"
                                                //"\n %g %g"
                                                //"\nGVPU: %6.4f A: %6.4f B: %6.4f V"
                                                //"\nGVPAM: %6.4f FM: %6.4f Veq\n"
-                                               "\nV1: %8.4f V2: %8.4f"
-                                               "\nZSM: h%04x %02x",
+                                               "\nIN3: %8.4f IN4: %8.4f",
+                                               //"\nZSM: h%04x %02x",
                                                y,       x, main_get_gapp()->xsm->Inst->V2ZAng(z),
-                                               u,v,w,
-                                               v1,v2,
+                                               u,//v,w,
+                                               v1,v2//,
                                                //gu, ga, gb,
                                                //gamc, gfmc,
-                                               q, (int)s2, (int)s3);
+                                               //q, (int)s2, (int)s3
+                                               );
 
                 info->set_text (tmp);
                 info->queue_update (canvas);
