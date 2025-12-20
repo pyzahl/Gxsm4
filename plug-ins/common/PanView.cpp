@@ -324,6 +324,8 @@ static gint PanView_tip_refresh_callback (PanView *pv){
 PanView::PanView (Gxsm4app *app):AppBase(app){
  	int i;
 
+        scan_org = NULL;
+        scan_org_zoom = NULL;
 	pan_area = NULL;
 	pan_area_extends = NULL;
     	current_view = NULL;
@@ -409,7 +411,8 @@ PanView::PanView (Gxsm4app *app):AppBase(app){
 	pan_area->set_fill_rgba (CAIRO_COLOR_WHITE);
 	pan_area->set_line_width (get_lw (1.0)); // fix me
 	pan_area->queue_update (canvas);
-
+        
+        
         // TEXTs are drawn in fixed pixel coordinate system
 	info = new cairo_item_text (WXS/2.-10, -WYS/2.+5., "I: --- nA");
 	//	info->set_text ("updated text")
@@ -441,6 +444,8 @@ PanView::~PanView (){
 
 	stop_tip_monitor ();
 
+        UNREF_DELETE_CAIRO_ITEM (scan_org, canvas);
+        UNREF_DELETE_CAIRO_ITEM (scan_org_zoom, canvas);
         UNREF_DELETE_CAIRO_ITEM (pan_area_extends, canvas);
         UNREF_DELETE_CAIRO_ITEM (pan_area, canvas);
         UNREF_DELETE_CAIRO_ITEM (info, canvas);
@@ -574,11 +579,17 @@ gboolean PanView::canvas_draw_function (GtkDrawingArea *area,
         if (pv->current_view)
                 pv->current_view->draw (cr);     // current set scan area
 
+        if (pv->scan_org)
+                pv->scan_org->draw (cr);     // current set scan origin (top left) mark
+
+        
         if (pv->Zratio > 2.){
                 cairo_save (cr);
                 cairo_scale (cr, 0.7*pv->Zratio, 0.7*pv->Zratio);
                 if (pv->current_view)
                         pv->current_view->draw (cr, 0.3, false);     // current set scan area zoomed
+                if (pv->scan_org)
+                        pv->scan_org->draw (cr, 0.3, false);     // current set scan origin (top left) mark
                 cairo_restore (cr);
                 if (pv->tip_marker_zoom)
                         pv->tip_marker_zoom->draw (cr); // tip on zoomed view scan area
@@ -1007,6 +1018,7 @@ void PanView :: refresh()
 		point[1][0] = -1*point[0][0];        point[1][1] = +1*point[0][1];
 		point[2][0] = -1*point[0][0];        point[2][1] = -1*point[0][1];
 		point[3][0] = +1*point[0][0];        point[3][1] = -1*point[0][1];
+
 	}
 	else{                                       // Origin is center of top line
 		point[0][0] =-0.5*main_get_gapp()->xsm->data.s.nx*main_get_gapp()->xsm->data.s.dx/xsmres.XPiezoAV;	point[0][1] = 0;
@@ -1014,7 +1026,15 @@ void PanView :: refresh()
 		point[2][0] = -1*point[0][0];        point[2][1] = -main_get_gapp()->xsm->data.s.ny*main_get_gapp()->xsm->data.s.dy/xsmres.YPiezoAV;
 		point[3][0] = +1*point[0][0];        point[3][1] = +1*point[2][1];
 	}
-	PI_DEBUG (DBG_L2, "Original coordinates: \t"<< 
+        
+        org_mark[0][0] = point[0][0];
+        org_mark[0][1] = point[0][1];
+        org_mark[1][0] = point[0][0]+0.5*main_get_gapp()->xsm->data.s.nx*main_get_gapp()->xsm->data.s.dx/xsmres.XPiezoAV;
+        org_mark[1][1] = point[0][1];
+        org_mark[2][0] = point[0][0];
+        org_mark[2][1] = point[0][1]-0.2*main_get_gapp()->xsm->data.s.ny*main_get_gapp()->xsm->data.s.dy/xsmres.XPiezoAV;
+        
+        PI_DEBUG (DBG_L2, "Original coordinates: \t"<< 
 		  point[0][0]<<","<<point[0][1]<<"\t"<<
 		  point[1][0]<<","<<point[1][1]<<"\t"<<
 		  point[2][0]<<","<<point[2][1]<<"\t"<<
@@ -1035,13 +1055,15 @@ void PanView :: refresh()
 #endif
 
 	/*Apply the current offset and rotation to prescan area*/
-	for(i=0;i<4;i++){
+	for(i=0; i<4; i++){
 		transform(max_corn[i], point[i], -alpha, y_offset,x_offset);
                 //		transform(max_corn[i], point[i], -alpha, y_offset, x_offset);
 #if PRE_AREA
 		transform(max_corn[i],pre_point[i],-alpha,y_offset,x_offset);
 #endif
 	}
+	for(i=0; i<3; i++)
+		transform(org_corn[i], org_mark[i], -alpha, y_offset,x_offset);
 	
 	/*check whether our scanning area (extended by the prescan) is within the limits*/	
         for (i=0; i < 4; i++){
@@ -1128,6 +1150,26 @@ void PanView :: refresh()
 		PI_DEBUG(DBG_L2, "Error: Scanning area is out of limits!" );
 	}
 	prev_error = error;
+
+
+	if (!scan_org)
+                scan_org = new cairo_item_path_closed (3);
+        scan_org->set_stroke_rgba (CAIRO_COLOR_MAGENTA);
+        scan_org->set_fill_rgba (1., 1., 0., 1.);
+
+        // scan origin mark
+	scan_org->set_position (x_offset, y_offset);
+	scan_org->set_xy (0, org_corn[0][0]-x_offset, org_corn[0][1]-y_offset);
+	scan_org->set_xy (1, org_corn[1][0]-x_offset, org_corn[1][1]-y_offset);
+	scan_org->set_xy (2, org_corn[2][0]-x_offset, org_corn[2][1]-y_offset);
+        scan_org->set_stroke_rgba (CAIRO_COLOR_MAGENTA);
+        scan_org->set_fill_rgba (1., 1., 0., 1.);
+        scan_org->set_line_width (get_lw (1.0));
+	scan_org->queue_update (canvas); // schedule update
+
+
+
+        
 }
 
 void PanView :: transform(double *dest, double *src, double rot, double y_off, double x_off)

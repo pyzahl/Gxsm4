@@ -100,6 +100,8 @@ private:
         cairo_item  *DSP_status_indicator[16]; // { FB, SCAN, PROBE, ... }
         cairo_item_text  *DSP_status_indicator_ID[16];
         cairo_item  *DSP_gpio_indicator[16]; // { IO bits }
+        cairo_item  *scan_org;
+        cairo_item  *scan_org_zoom;
         cairo_item  *pan_area;
         cairo_item  *pan_area_extends;  // extends offset + scan beyond "200V"/full gain -- possible from DSP point of view
         cairo_item  *pre_current_view;  // scan area with prescan
@@ -116,6 +118,7 @@ private:
                        double x_off = 0.);
 
         double point[4][2];       // edges of the scan area
+        double org_mark[3][2];    // scan origin marker
         double pre_point[4][2]; // only x coordinate only important for pre_current_view
         double Zratio, Zxs, Zys;
 	 	 
@@ -125,6 +128,7 @@ private:
         double corn_oo, corn_ii;
  
 	double max_corn[4][2];
+	double org_corn[3][2];
 	double x_offset;
 	double y_offset;
 	 

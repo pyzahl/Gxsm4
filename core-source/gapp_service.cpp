@@ -1298,6 +1298,8 @@ void AppBase::SaveGeometry(gboolean store_to_settings){
 #else
         XSM_DEBUG_GM (DBG_L2, "AppBase::save_geometry ** ENABLE_GXSM_WINDOW_MANAGEMENT is disabled.");
 #endif
+
+        SaveExtra();
 }
 
 void AppBase::LoadGeometryWRefAutoPlace(const gchar *wref_key, const gchar *wref_key2nd){
@@ -1465,6 +1467,8 @@ void AppBase::LoadGeometry(){
                 show_auto ();
         else
                 XSM_DEBUG_GM (DBG_L2, "AppBase::LoadGeometry ... MAIN window: show=always");
+
+        LoadExtra();
 }
 
 

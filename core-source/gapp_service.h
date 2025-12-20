@@ -906,11 +906,13 @@ public:
 	int set_window_geometry (const gchar *key, gint index=-1, gboolean add_to_menu=true);
 
 	static void SaveGeometryCallback(AppBase *apb);
-
+        virtual void SaveExtra(){ g_message ("AppBase::SaveExtra -- not overloaded"); };
+        
 	void SaveGeometry(gboolean store_to_settings=TRUE);
 	void LoadGeometry();
 	void LoadGeometryWRefAutoPlace(const gchar *wref_key, const gchar *wref_key2nd=NULL);
 	void LoadGeometryWRefAutoPlaceABmode(const gchar *wref_key);
+        virtual void LoadExtra(){ g_message ("AppBase::LoadExtra -- not overloaded"); };
 
 	/* action callbacks */
         static gboolean window_close_callback (GtkWidget *widget, AppBase *self);
