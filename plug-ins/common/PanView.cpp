@@ -325,7 +325,6 @@ PanView::PanView (Gxsm4app *app):AppBase(app){
  	int i;
 
         scan_org = NULL;
-        scan_org_zoom = NULL;
 	pan_area = NULL;
 	pan_area_extends = NULL;
     	current_view = NULL;
@@ -445,7 +444,6 @@ PanView::~PanView (){
 	stop_tip_monitor ();
 
         UNREF_DELETE_CAIRO_ITEM (scan_org, canvas);
-        UNREF_DELETE_CAIRO_ITEM (scan_org_zoom, canvas);
         UNREF_DELETE_CAIRO_ITEM (pan_area_extends, canvas);
         UNREF_DELETE_CAIRO_ITEM (pan_area, canvas);
         UNREF_DELETE_CAIRO_ITEM (info, canvas);
@@ -1151,24 +1149,18 @@ void PanView :: refresh()
 	}
 	prev_error = error;
 
-
+        // scan origin mark
 	if (!scan_org)
                 scan_org = new cairo_item_path_closed (3);
-        scan_org->set_stroke_rgba (CAIRO_COLOR_MAGENTA);
-        scan_org->set_fill_rgba (1., 1., 0., 1.);
 
-        // scan origin mark
 	scan_org->set_position (x_offset, y_offset);
 	scan_org->set_xy (0, org_corn[0][0]-x_offset, org_corn[0][1]-y_offset);
 	scan_org->set_xy (1, org_corn[1][0]-x_offset, org_corn[1][1]-y_offset);
 	scan_org->set_xy (2, org_corn[2][0]-x_offset, org_corn[2][1]-y_offset);
-        scan_org->set_stroke_rgba (CAIRO_COLOR_MAGENTA);
-        scan_org->set_fill_rgba (1., 1., 0., 1.);
+        scan_org->set_stroke_rgba (0.7, 0.7, 0., 1.); //CAIRO_COLOR_MAGENTA);
+        scan_org->set_fill_rgba (0.7, 0.7, 0., 1.);
         scan_org->set_line_width (get_lw (1.0));
 	scan_org->queue_update (canvas); // schedule update
-
-
-
         
 }
 
