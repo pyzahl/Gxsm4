@@ -148,6 +148,9 @@ int main (int argc, char **argv)
 {
         GError *error = NULL;
 
+        // init rand
+        srand (time(0));
+        
         //GXSM_STARTUP_MESSAGE_VERBOSE00 ("GXSM4 main: argc=%d", argc);
 
 #ifdef GXSM_GLOBAL_MEMCHECK

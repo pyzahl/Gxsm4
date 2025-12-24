@@ -558,6 +558,7 @@ gboolean PanView::canvas_draw_function (GtkDrawingArea *area,
                                         int             height,
                                         PanView *pv){
         // translate origin to window center
+        cairo_save (cr);
 	cairo_translate (cr, 12.+pv->WXS/2., 12.+pv->WYS/2.);
         cairo_save (cr);
 
@@ -623,6 +624,47 @@ gboolean PanView::canvas_draw_function (GtkDrawingArea *area,
         if (pv->tip_marker_z)
                 pv->tip_marker_z->draw (cr);
 
+        cairo_restore (cr);
+
+
+        if (1){
+                std::time_t now = std::time(nullptr);
+                std::tm* local_time = std::localtime(&now);
+                static cairo_item_circle *sf=NULL;
+                if (local_time->tm_mon == 11 && ( local_time->tm_mday >= 24  && local_time->tm_mday <= 31)){
+                        const int SN=100;
+                        if (!sf){
+                                sf = new cairo_item_circle (SN, 3.);
+                                double c1[] = { 1.0, 1.0, 1.0, 0.9 }; // White center
+                                double c2[] = { 0.5, 0.5, 0.5, 0.0 }; // Grey outer edge
+                                sf->set_gradient_fill (c1, c2, 2.);
+                                for (int i=0; i<SN; ++i)
+                                        sf->set_xy_fast (i, 2*(double)(rand()%width)-0.86*width, (double)(-rand()%height));
+                        }
+                        // make particle system evolve
+                        for (int i=0; i<SN; ++i){
+                                double x,y;
+                                sf->get_xy (i, x,y);
+                                static double w=0.3;
+                                w = 0.9*w + 0.1 * 0.3*((rand()%20)-7);
+                                if (y > height - 6)
+                                        y += 0.2;
+                                else{
+                                        x += w;
+                                        y += 1;
+                                }
+                                if (y > height || x < -0.5*width || x > 1.5*width)
+                                        sf->set_xy_fast (i, 2*(double)(rand()%width)-0.66*width, (double)(-rand()%height));
+                                else
+                                        sf->set_xy_fast (i, x,y);
+                        }
+                        sf->draw (cr);
+                } else {
+                        if (sf) { delete sf; sf=NULL; }   
+                }
+        }
+
+        
         return TRUE;
 }
  
@@ -987,8 +1029,6 @@ void PanView :: tip_refresh()
                                                                ( (gpio_in  & (1<<i)) ? CAIRO_COLOR_GREEN : CAIRO_COLOR_WHITE));
                 }
 	}
-	else 
-		return;
 
 	return;
 }

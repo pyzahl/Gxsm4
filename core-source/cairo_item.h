@@ -625,16 +625,19 @@ private:
 
 class cairo_item_circle : public cairo_item{
 public:
-	cairo_item_circle (int n_circels=1) {
+	cairo_item_circle (int n_circels=1, double r=1.) {
                 // GXSM_LOG_DATAOBJ_ACTION (GXSM_GRC_CAIRO_ITEM, "circle new");
-                xy = g_new (cairo_point, n_circels); n=n_circels; radius=1.;
+                xy = g_new (cairo_point, n_circels); n=n_circels; radius=r;
+                radial_gradient = NULL;
         };
 	cairo_item_circle (double x, double y, double r) {
                 // GXSM_LOG_DATAOBJ_ACTION (GXSM_GRC_CAIRO_ITEM, "circle new");
                 xy = g_new (cairo_point, 1); n=1; xy[0].x=x, xy[0].y=y; radius=r;
+                radial_gradient = NULL;
         };
 	virtual ~cairo_item_circle () {
                 g_free (xy);
+                if (radial_gradient) cairo_pattern_destroy (radial_gradient);
                 // GXSM_LOG_DATAOBJ_ACTION (GXSM_GRC_CAIRO_ITEM, "circle delete");
         };
         void set_radius (double r) { radius = r; };
@@ -650,20 +653,44 @@ public:
                         cairo_save (cr);
                         cairo_translate (cr, v0.x, v0.y);
                         cairo_set_line_width (cr, lw);
-                        for (int i=0; i<n; ++i){
-                                cairo_arc (cr,  xy[i].x, xy[i].y,  radius, 0., 2.*M_PI);
-                                cairo_set_source_rgba (cr, fill_rgba[0], fill_rgba[1], fill_rgba[2], fill_rgba[3]);
-                                cairo_fill (cr);
-                                cairo_set_source_rgba (cr, stroke_rgba[0], stroke_rgba[1], stroke_rgba[2], stroke_rgba[3]);
-                                cairo_arc (cr,  xy[i].x, xy[i].y,  radius, 0., 2.*M_PI);
-                                cairo_stroke (cr);
+                        if (radial_gradient){
+                                for (int i=0; i<n; ++i){
+                                        cairo_save (cr);
+                                        cairo_translate (cr, xy[i].x, xy[i].y);
+                                        double r = radius - (rand()%((int)(rrand)));
+                                        cairo_arc (cr,  0., 0.,  r, 0., 2.*M_PI);
+                                        cairo_set_source(cr, radial_gradient);
+                                        cairo_fill (cr);
+                                        cairo_restore (cr);
+                                }
+                        } else {
+                                for (int i=0; i<n; ++i){
+                                        cairo_arc (cr,  xy[i].x, xy[i].y,  radius, 0., 2.*M_PI);
+                                        cairo_set_source_rgba (cr, fill_rgba[0], fill_rgba[1], fill_rgba[2], fill_rgba[3]);
+                                        cairo_fill (cr);
+                                        cairo_set_source_rgba (cr, stroke_rgba[0], stroke_rgba[1], stroke_rgba[2], stroke_rgba[3]);
+                                        cairo_arc (cr,  xy[i].x, xy[i].y,  radius, 0., 2.*M_PI);
+                                        cairo_stroke (cr);
+                                }
                         }
                         cairo_restore (cr);
                 }
         };
 
+        void set_gradient_fill (double c1[4], double c2[4], double rnd=0.0){
+                rrand = rnd; // modulation option
+                // (cx0, cy0, r0, cx1, cy1, r1)
+                radial_gradient = cairo_pattern_create_radial (0., 0., 0.0, 0., 0., radius);
+                // color stops (offset from 0.0 to 1.0, Red, Green, Blue, Alpha)
+                cairo_pattern_add_color_stop_rgba (radial_gradient, 0, c1[0], c1[1], c1[2], c1[3]);
+                cairo_pattern_add_color_stop_rgba (radial_gradient, 1, c2[0], c2[1], c2[2], c2[3]);
+        };
+
+        
 private:
+        double rrand;
         double radius;
+        cairo_pattern_t *radial_gradient;
 };
 
 class cairo_item_arc : public cairo_item{
