@@ -10,6 +10,7 @@ A build in Python-Console can simply assist or fully automate complex tasks, inc
 <img align="right" width="256" alt="image" src="https://github.com/user-attachments/assets/70d40470-f3ba-4aa0-b58a-716df219b939" />
 
 Based on several hardware options it supports a commercially available DSP hardware (this is getting outdated, but is still fully supported by Gxsm3 (https://github.com/pyzahl/Gxsm3) and Gxsm4. No further developments are planned for this generation as been replaced by the soon been available RPSPMC.) The older "Signal Ranger MK2 and MK3" (see https://www.softdb.com/scanning-probe-microscopy/) are all open source code for all the low level signal processing tasks and instrument controls in a most flexible and adaptable manner. USB Support (kernel modules) for Linux for the SR, SR-MK2 and SR-MK3 can be found here: https://github.com/pyzahl/SRanger
+Please consider Gxsm3 as the most stable platform for the SRanger generation and Gxsm4 been less testet at this time as moving on to the next generation hardware RPSPMC.
 
 The GXSM Web Site+Discussuion Forums historically remain hosted on SF: http://gxsm.sf.net
 
