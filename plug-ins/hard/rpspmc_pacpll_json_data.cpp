@@ -131,6 +131,14 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         { "PULSE_FORM_SHAPEX", &pacpll_parameters.pulse_form_shapex, false, "1" },
         { "PULSE_FORM_SHAPEXIF", &pacpll_parameters.pulse_form_shapexif, false, "1" },
         { "PULSE_FORM_TRIGGER_SELECT", &pacpll_parameters.pulse_form_trigger_select, false, "1" },
+        { "PULSE_FORM_DPOS0", &pacpll_parameters.pulse_form_dpt[0], false, "1" },
+        { "PULSE_FORM_DPOS1", &pacpll_parameters.pulse_form_dpt[1], false, "1" },
+        { "PULSE_FORM_DPOS2", &pacpll_parameters.pulse_form_dpt[2], false, "1" },
+        { "PULSE_FORM_DPOS3", &pacpll_parameters.pulse_form_dpt[3], false, "1" },
+        { "PULSE_FORM_DPVAL0",&pacpll_parameters.pulse_form_dpv[0], false, "1" },
+        { "PULSE_FORM_DPVAL1",&pacpll_parameters.pulse_form_dpv[1], false, "1" },
+        { "PULSE_FORM_DPVAL2",&pacpll_parameters.pulse_form_dpv[2], false, "1" },
+        { "PULSE_FORM_DPVAL3",&pacpll_parameters.pulse_form_dpv[3], false, "1" },
 
         { "RPSPMC_DMA_PULL_INTERVAL", &spmc_parameters.rpspmc_dma_pull_interval, false, "ms" },
 

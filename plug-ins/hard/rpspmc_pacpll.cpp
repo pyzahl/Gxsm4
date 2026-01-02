@@ -4736,8 +4736,23 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
         GtkWidget *inputXW  = bp->grid_add_ec ("ShapeW", Unity, &parameters.pulse_form_shapexw, 0.0, 1.0, "4g", 0.1, 1.0, "PULSE-FORM-SHAPEXW");
         GtkWidget *inputXWI = bp->grid_add_ec (NULL,    Unity, &parameters.pulse_form_shapexwif, 0.0, 1.0, "4g", 0.1, 1.0, "PULSE-FORM-SHAPEXWIF");
         g_object_set_data( G_OBJECT (inputXW), "HasClient", inputXWI);
+
+#if 1
         bp->new_line ();
+        GtkWidget *inputDPt0 = bp->grid_add_ec ("DPt0v0", uTime, &parameters.pulse_form_dpt[0], 0.0, 10000.0, "5g", 0.1, 1.0, "PULSE-FORM-DPT0");
+        GtkWidget *inputDPv0 = bp->grid_add_ec (NULL,     Unity, &parameters.pulse_form_dpv[0], 0.0, 3.0, "5g", 1.0, 1.0, "PULSE-FORM-DPV0");
+        bp->new_line ();
+        GtkWidget *inputDPt1 = bp->grid_add_ec ("DPt1v1", uTime, &parameters.pulse_form_dpt[1], 0.0, 10000.0, "5g", 0.1, 1.0, "PULSE-FORM-DPT1");
+        GtkWidget *inputDPv1 = bp->grid_add_ec (NULL,     Unity, &parameters.pulse_form_dpv[1], 0.0, 3.0, "5g", 1.0, 1.0, "PULSE-FORM-DPV1");
+        bp->new_line ();
+        GtkWidget *inputDPt2 = bp->grid_add_ec ("DPt2v2", uTime, &parameters.pulse_form_dpt[2], 0.0, 10000.0, "5g", 0.1, 1.0, "PULSE-FORM-DPT2");
+        GtkWidget *inputDPv2 = bp->grid_add_ec (NULL,     Unity, &parameters.pulse_form_dpv[2], 0.0, 3.0, "5g", 1.0, 1.0, "PULSE-FORM-DPV2");
+        bp->new_line ();
+        GtkWidget *inputDPt3 = bp->grid_add_ec ("DPt3v3", uTime, &parameters.pulse_form_dpt[3], 0.0, 10000.0, "5g", 0.1, 1.0, "PULSE-FORM-DPT3");
+        GtkWidget *inputDPv3 = bp->grid_add_ec (NULL,     Unity, &parameters.pulse_form_dpv[3], 0.0, 3.0, "5g", 1.0, 1.0, "PULSE-FORM-DPV3");
+#endif
         
+        bp->new_line ();
         bp->set_input_nx (1);
         bp->grid_add_check_button ( N_("Enable"),  bp->PYREMOTE_CHECK_HOOK_KEY_FUNC("Enable Pulse Forming","rp-pacpll-PF"), 1,
                                     G_CALLBACK (RPspmc_pacpll::pulse_form_enable), this);

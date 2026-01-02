@@ -300,7 +300,50 @@
       <summary>PCS Remote-ID: 'rp-pacpll-PULSE-FORM-SHAPEXWIF', Default/U:    0       </summary>
       <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PULSE-FORM-SHAPEXWIF', Default/U:    0      , Adjustment PCS Name: 'rp-pacpll-PULSE-FORM-SHAPEXWIF' </description>
     </key>
- 
+
+    <key name="rp-pacpll-pulse-form-dpt0" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'rp-pacpll-PULSE-FORM-DPT0', Default/U:     0 µs     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PULSE-FORM-DPT0', Default/U:     0 µs    , Adjustment PCS Name: 'rp-pacpll-PULSE-FORM-DPT0' </description>
+    </key>
+    <key name="rp-pacpll-pulse-form-dpt1" type="d">
+      <default>1</default>
+      <summary>PCS Remote-ID: 'rp-pacpll-PULSE-FORM-DPT1', Default/U:     1 µs     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PULSE-FORM-DPT1', Default/U:     1 µs    , Adjustment PCS Name: 'rp-pacpll-PULSE-FORM-DPT1' </description>
+    </key>
+    <key name="rp-pacpll-pulse-form-dpt2" type="d">
+      <default>2</default>
+      <summary>PCS Remote-ID: 'rp-pacpll-PULSE-FORM-DPT2', Default/U:     2 µs     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PULSE-FORM-DPT2', Default/U:     2 µs    , Adjustment PCS Name: 'rp-pacpll-PULSE-FORM-DPT2' </description>
+    </key>
+    <key name="rp-pacpll-pulse-form-dpt3" type="d">
+      <default>3</default>
+      <summary>PCS Remote-ID: 'rp-pacpll-PULSE-FORM-DPT3', Default/U:     3 µs     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PULSE-FORM-DPT3', Default/U:     3 µs    , Adjustment PCS Name: 'rp-pacpll-PULSE-FORM-DPT3' </description>
+    </key>
+    <key name="rp-pacpll-pulse-form-dpv0" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'rp-pacpll-PULSE-FORM-DPV0', Default/U:     0.5 µs     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PULSE-FORM-DPV0', Default/U:     0    , Adjustment PCS Name: 'rp-pacpll-PULSE-FORM-DPV0' </description>
+    </key>
+    <key name="rp-pacpll-pulse-form-dpv1" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'rp-pacpll-PULSE-FORM-DPV1', Default/U:     0.5 µs     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PULSE-FORM-DPV1', Default/U:     0    , Adjustment PCS Name: 'rp-pacpll-PULSE-FORM-DPV1' </description>
+    </key>
+    <key name="rp-pacpll-pulse-form-dpv2" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'rp-pacpll-PULSE-FORM-DPV2', Default/U:     0.5 µs     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PULSE-FORM-DPV2', Default/U:     0    , Adjustment PCS Name: 'rp-pacpll-PULSE-FORM-DPV2' </description>
+    </key>
+    <key name="rp-pacpll-pulse-form-dpv3" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'rp-pacpll-PULSE-FORM-DPV3, Default/U:     0.5 µs     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-PULSE-FORM-DPV3', Default/U:     0    , Adjustment PCS Name: 'rp-pacpll-PULSE-FORM-DPV3' </description>
+    </key>
+
+
+    
 
     <key name="rp-pacpll-scope-width" type="d">
       <default>512</default>
