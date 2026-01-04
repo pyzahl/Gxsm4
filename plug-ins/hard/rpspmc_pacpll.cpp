@@ -5413,16 +5413,29 @@ void RPspmc_pacpll::pulse_form_parameter_changed (Param_Control* pcs, gpointer u
         self->write_parameter ("PULSE_FORM_SHAPEX", self->parameters.pulse_form_shapex);
         self->write_parameter ("PULSE_FORM_SHAPEXIF", self->parameters.pulse_form_shapexif);
 
+        self->write_parameter ("PULSE_FORM_DPOS0", self->parameters.pulse_form_dpt[0]);
+        self->write_parameter ("PULSE_FORM_DPOS1", self->parameters.pulse_form_dpt[1]);
+        self->write_parameter ("PULSE_FORM_DPOS2", self->parameters.pulse_form_dpt[2]);
+        self->write_parameter ("PULSE_FORM_DPOS3", self->parameters.pulse_form_dpt[3]);
+        
         if (self->parameters.pulse_form_enable){
                 self->write_parameter ("PULSE_FORM_HEIGHT0", self->parameters.pulse_form_height0);
                 self->write_parameter ("PULSE_FORM_HEIGHT1", self->parameters.pulse_form_height1);
                 self->write_parameter ("PULSE_FORM_HEIGHT0IF", self->parameters.pulse_form_height0if);
                 self->write_parameter ("PULSE_FORM_HEIGHT1IF", self->parameters.pulse_form_height1if);
+                self->write_parameter ("PULSE_FORM_DPVAL0", self->parameters.pulse_form_dpv[0]);
+                self->write_parameter ("PULSE_FORM_DPVAL1", self->parameters.pulse_form_dpv[1]);
+                self->write_parameter ("PULSE_FORM_DPVAL2", self->parameters.pulse_form_dpv[2]);
+                self->write_parameter ("PULSE_FORM_DPVAL3", self->parameters.pulse_form_dpv[3]);
         } else {
                 self->write_parameter ("PULSE_FORM_HEIGHT0", 0.0);
                 self->write_parameter ("PULSE_FORM_HEIGHT1", 0.0);
                 self->write_parameter ("PULSE_FORM_HEIGHT0IF", 0.0);
                 self->write_parameter ("PULSE_FORM_HEIGHT1IF", 0.0);
+                self->write_parameter ("PULSE_FORM_DPVAL0", 0.0);
+                self->write_parameter ("PULSE_FORM_DPVAL1", 0.0);
+                self->write_parameter ("PULSE_FORM_DPVAL2", 0.0);
+                self->write_parameter ("PULSE_FORM_DPVAL3", 0.0);
         }
 }
 
