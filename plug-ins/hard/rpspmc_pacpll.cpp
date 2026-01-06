@@ -83,6 +83,9 @@ RP data streaming
 #include "plug-ins/control/resonance_fit.h"
 
 
+// define to enable SHARED MEMOY BLOCK ACTIONS and GXSM.SET/GET functionality
+#define ENABLE_SHM_ACTIONS
+
 // Define HwI PlugIn reference name here, this is what is listed later within "Preferenced Dialog"
 // i.e. the string selected for "Hardware/Card"!
 #define THIS_HWI_PLUGIN_NAME "RPSPMC:SPM"
@@ -96,7 +99,6 @@ typedef union {
         struct { unsigned char ch, x, y, z; } s;
         unsigned long   l;
 } AmpIndex;
-
 
 /*
   // DATA SIGNAL MAPPING DEFINED in FPGA STREAM_SRCS RTL module:
@@ -4333,6 +4335,9 @@ void RPSPMC_Control::ChangedNotifyScanSpeed(Param_Control* pcs, RPSPMC_Control *
 
 void RPSPMC_Control::ChangedNotifyMoveSpeed(Param_Control* pcs, RPSPMC_Control *self){
         // obsolete, always done together with XY Offset adjustments
+
+        // TESTING ONLY
+        //rpspmc_pacpll->update_shm_monitors ();
 }
 
 
@@ -7261,6 +7266,47 @@ print (xyz)
  *  
  */
 
+
+
+/* stolen from app_remote.C */
+static void Check_ec(Gtk_EntryControl* ec, remote_args* ra){
+	ec->CheckRemoteCmd (ra); // only reading PCS is thread safe!
+};
+
+static void Check_conf(GnomeResPreferences* grp, remote_args* ra){
+        if (grp && ra)
+                gnome_res_check_remote_command (grp, ra);
+};
+
+
+void remote_set_ra (const gchar* id, const gchar* value)
+{
+        remote_args ra; 
+	gchar *list[] = { (char *)"set", id, value, NULL };
+	ra.arglist = list;
+
+        // check PCS entries
+	g_slist_foreach (main_get_gapp()->RemoteEntryList, (GFunc) Check_ec, (gpointer)&ra);
+
+        // check current active/open CONFIGURE elements
+	g_slist_foreach (main_get_gapp()->RemoteConfigureList, (GFunc) Check_conf, (gpointer)&ra);
+}
+
+double remote_get_ra (const gchar *id){
+	remote_args ra;
+	ra.qvalue = 0.;
+	gchar *list[] = {(gchar *)"get", id, NULL};
+	ra.arglist = list;
+
+	g_slist_foreach(main_get_gapp()->RemoteEntryList, (GFunc) Check_ec, (gpointer)&ra);
+	PI_DEBUG(DBG_L2, " query result: " << ra.qvalue << ra.qstr);
+
+        if (ra.qstr)
+                return atof (ra.qstr);
+        else
+                return ra.qvalue;
+}
+
 void RPspmc_pacpll::update_shm_monitors (int close_shm){
         const char *rpspmc_monitors = "/gxsm4rpspmc_monitors";
         static int shm_fd = -1;
@@ -7302,6 +7348,52 @@ void RPspmc_pacpll::update_shm_monitors (int close_shm){
         // PAC-PLL Monitors: dc-offset, exec_ampl_mon, dds_freq_mon, volume_mon, phase_mon, control_dfreq_mon
         memcpy  (shm_ptr+40*sizeof(double), &pacpll_parameters.dc_offset, 7*sizeof(double));
 
+#ifdef ENABLE_SHM_ACTIONS
+        // SHM GET/SET hack tests
+        // TEST READ / ACTION
+        double ctrl_test = *(double*)(shm_ptr+128*sizeof(double));
+        if (ctrl_test > 0){
+                g_message ("SHM CONTROL VALUE SHM[128]: %g", ctrl_test);
+                gchar *id_cl="dsp-fbs-mx0-current-level";
+                gchar *id_cs="dsp-fbs-mx0-current-set";
+                gchar *sval_0="0";
+                double cs=remote_get_ra (id_cs);
+                gchar *sval_cs0="0";
+                gchar *sval_cs=g_strdup_printf("%g", cs);
+                switch ((int)ctrl_test){
+                case 1: remote_set_ra (id_cl, sval_cs0); break; // set level to 0
+                case 2: remote_set_ra (id_cl, sval_cs); break;  // copy current to level
+                default: break;
+                }
+                g_free (sval_cs);
+                *(double*)(shm_ptr+128*sizeof(double)) = 0.0; // clear action control
+        }
+        // GXSM.SET function
+        double ctrl_set = *(double*)(shm_ptr+129*sizeof(double));
+        if (ctrl_set > 0){
+                gchar id_set[64]; memset (id_set, 0, sizeof(id_set));
+                memcpy (id_set, shm_ptr+132*sizeof(double), sizeof(id_set));
+                id_set[63]=0; // safety termination
+                double v = *(double*)(shm_ptr+131*sizeof(double));
+                g_message ("SHM CONTROL SET VALUE via SHM[129]: %g ** id=%s := %g", ctrl_set, id_set, v);
+                gchar *sval_cs=g_strdup_printf("%g", v);
+                remote_set_ra (id_set, sval_cs);
+                g_free (sval_cs);
+                *(double*)(shm_ptr+129*sizeof(double)) = 0.0; // clear action control
+        }
+        // GXSM.GET function
+        double ctrl_get = *(double*)(shm_ptr+130*sizeof(double));
+        if (ctrl_get > 0){
+                gchar id_get[64]; memset (id_get, 0, sizeof(id_get));
+                memcpy (id_get, shm_ptr+132*sizeof(double), sizeof(id_get));
+                id_get[63]=0; // safety termination
+                double v=remote_get_ra (id_get);
+                g_message ("SHM CONTROL GET VALUE via SHM[130]: %g ** id=%s => %g", ctrl_get, id_get, v);
+                *(double*)(shm_ptr+130*sizeof(double)) = 0.0; // clear action control
+                *(double*)(shm_ptr+131*sizeof(double)) = v; // return val
+        }
+#endif
+        
         // push history
         rpspmc_hwi->push_history_vector (shm_ptr, 48); // currently used: 0..8, 10..31, 40..47 as size of double
 
