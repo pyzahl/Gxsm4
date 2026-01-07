@@ -753,8 +753,8 @@ class HV5App(Gtk.Application):
 
                 print ("THV5 ...")
                 #self.thv = THV5('http://192.168.0.195/')
-                self.thv = THV5('http://130.199.243.191/') # self test
-                #self.thv = THV5('http://192.168.40.10/')
+                #self.thv = THV5('http://130.199.243.191/') # self test
+                self.thv = THV5('http://192.168.40.10/') ## Createc HV5 default in lab local network
 
                 print ("Get Status ...")
                 get_status()
@@ -779,38 +779,39 @@ class HV5App(Gtk.Application):
                 print ('do coarse START', dir, steps, volts, period)
                 self.thv.SetTHVCoarseMove(axis, d, steps, period, volts, True)
 
-                #### TEST
-                if dir > 1:
-                        control_shm = np.ndarray((129,), dtype=np.double, buffer=gxsm_shm.buf)
-                        print ('TEST COPY CURRENT to LEVEL: SHM[128]=', control_shm[128])
-                        control_shm[128] = 2
-                if dir < 1:
-                        control_shm = np.ndarray((129,), dtype=np.double, buffer=gxsm_shm.buf)
-                        print ('TEST SET LEVEL to 0: SHM[128]=', control_shm[128])
-                        control_shm[128] = 1
-                if dir == 1:
-                        control_shm = np.ndarray((132,), dtype=np.double, buffer=gxsm_shm.buf)
-                        if control_shm[129] == 0: # check process ready
-                                id = 'dsp-fbs-bias' ### LENGTH MUST BE < 64
-                                control_shm_id = gxsm_shm.buf[8*132:8*132+len(id)]
-                                id_bytes = id.encode('utf-8')
-                                control_shm_id[:] = id_bytes
-                                control_shm[131] = 1.234
-                                control_shm[129] = 1
-                                print ('TEST GXSM.SET: SHM[129]=', control_shm[129], id)
-                if dir == -1:
-                        control_shm = np.ndarray((132,), dtype=np.double, buffer=gxsm_shm.buf)
-                        if control_shm[130] == 0: # check process ready
-                                id = 'dsp-fbs-bias' ### LENGTH MUST BE < 64
-                                control_shm_id = gxsm_shm.buf[8*132:8*132+len(id)]
-                                id_bytes = id.encode('utf-8')
-                                control_shm_id[:] = id_bytes
-                                control_shm[130] = 1
-                                while control_shm[130] == 1:
-                                        print ('waiting')
-                                        time.sleep(0.1)
-                                print ('TEST GXSM.GET: SHM[130]=', control_shm[130], id, ' value=', control_shm[131])
-
+                if 0:
+                        #### TEST SHM ACTIONS
+                        if dir > 1:
+                                control_shm = np.ndarray((129,), dtype=np.double, buffer=gxsm_shm.buf)
+                                print ('TEST _2_ COPY CURRENT to LEVEL: SHM[128]=', control_shm[128])
+                                control_shm[128] = 2 ## initiate action "_2_"
+                        if dir < 1:
+                                control_shm = np.ndarray((129,), dtype=np.double, buffer=gxsm_shm.buf)
+                                print ('TEST _1_ SET LEVEL to 0: SHM[128]=', control_shm[128])
+                                control_shm[128] = 1 ## initiate action "_1_"
+                        if dir == 1:
+                                control_shm = np.ndarray((132,), dtype=np.double, buffer=gxsm_shm.buf)
+                                if control_shm[129] == 0: # check process ready
+                                        id = 'dsp-fbs-bias' ### LENGTH MUST BE < 64
+                                        control_shm_id = gxsm_shm.buf[8*132:8*132+len(id)]
+                                        id_bytes = id.encode('utf-8')
+                                        control_shm_id[:] = id_bytes ## set id
+                                        control_shm[131] = 1.234  ## set value
+                                        control_shm[129] = 1 ## initiate GXSM.SET action
+                                        print ('TEST GXSM.SET: SHM[129]=', control_shm[129], id)
+                        if dir == -1:
+                                control_shm = np.ndarray((132,), dtype=np.double, buffer=gxsm_shm.buf)
+                                if control_shm[130] == 0: # check process ready
+                                        id = 'dsp-fbs-bias' ### LENGTH MUST BE < 64
+                                        control_shm_id = gxsm_shm.buf[8*132:8*132+len(id)]
+                                        id_bytes = id.encode('utf-8')
+                                        control_shm_id[:] = id_bytes ## get id
+                                        control_shm[131] = 0 ## clear, just for sanity -- not required
+                                        control_shm[130] = 1 ## initiate GXSM.GET action
+                                        while control_shm[130] == 1: ## wait for completion and data been returned (control_shm[130] must be reading as 0 / ready again)
+                                                print ('waiting')
+                                                time.sleep(0.1)
+                                        print ('TEST GXSM.GET: SHM[130]=', control_shm[130], id, ' value=', control_shm[131])  # return value in control_shm[131]
                 
         def stop_coarse(self, button, a, dir, es, ev, ep):
                 print ('do coarse STOP', dir)

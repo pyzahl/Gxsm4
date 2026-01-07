@@ -4337,7 +4337,7 @@ void RPSPMC_Control::ChangedNotifyMoveSpeed(Param_Control* pcs, RPSPMC_Control *
         // obsolete, always done together with XY Offset adjustments
 
         // TESTING ONLY
-        //rpspmc_pacpll->update_shm_monitors ();
+        rpspmc_pacpll->update_shm_monitors ();
 }
 
 
@@ -7351,9 +7351,13 @@ void RPspmc_pacpll::update_shm_monitors (int close_shm){
 #ifdef ENABLE_SHM_ACTIONS
         // SHM GET/SET hack tests
         // TEST READ / ACTION
-        double ctrl_test = *(double*)(shm_ptr+128*sizeof(double));
-        if (ctrl_test > 0){
-                g_message ("SHM CONTROL VALUE SHM[128]: %g", ctrl_test);
+
+        // ACTION FUZZY LEVEL Z CONTROL:
+        // SHM[128] := 1 ---> Level=0 (Auto/Regular Feedback); completed when SHM[128] := 0
+        // SHM[128] := 2 ---> Level=Current-Setpoint (Adjust Z to Z-Setpoint if Current Set Point is not exceeded, i.e. const Z mode); completed when SHM[128] := 0
+        double ctrl_z = *(double*)(shm_ptr+128*sizeof(double));
+        if (ctrl_z > 0){
+                g_message ("SHM CONTROL VALUE SHM[128]: %g", ctrl_z);
                 gchar *id_cl="dsp-fbs-mx0-current-level";
                 gchar *id_cs="dsp-fbs-mx0-current-set";
                 gchar *sval_0="0";
@@ -7369,6 +7373,7 @@ void RPspmc_pacpll::update_shm_monitors (int close_shm){
                 *(double*)(shm_ptr+128*sizeof(double)) = 0.0; // clear action control
         }
         // GXSM.SET function
+        // SHM[129] := 1 ---> GXSM.SET (id=SHM[132...+64b max], SHM[131]); set entry completed when SHM[130] := 0
         double ctrl_set = *(double*)(shm_ptr+129*sizeof(double));
         if (ctrl_set > 0){
                 gchar id_set[64]; memset (id_set, 0, sizeof(id_set));
@@ -7382,6 +7387,7 @@ void RPspmc_pacpll::update_shm_monitors (int close_shm){
                 *(double*)(shm_ptr+129*sizeof(double)) = 0.0; // clear action control
         }
         // GXSM.GET function
+        // SHM[130] := 1 ---> SHM[131] := GXSM.GET (id=SHM[132...+64b max]); result is valid when SHM[130] := 0
         double ctrl_get = *(double*)(shm_ptr+130*sizeof(double));
         if (ctrl_get > 0){
                 gchar id_get[64]; memset (id_get, 0, sizeof(id_get));

@@ -147,14 +147,15 @@ class PZXX():
 
         def request(self, data):
                 print (self.ip + data)
-                return requests.get(self.ip + data)
+                #return requests.get(self.ip + data)
 
         def myip(self):
                 return self.ip
 
         def request_coarse(self, data):
                 print (self.ip + 'coarse?' + data)
-                #return requests.get(self.ip + 'stmafm?' + data)
+                return
+                return requests.get(self.ip + 'stmafm?' + data)
 
                 
         # gain: 3,6,12,24  filters: 'ON','OFF' 
@@ -163,12 +164,14 @@ class PZXX():
 
         def SetTHVCoarseMove(self, channel, direction, burstcount, period, voltage, start):
                 c=['X','Y','Z']
+                return
                 if start:
                         return self.request ('coarse?v={}&p0={}&a0={}&c0={}&bs=0'.format(int(voltage), int(period), c[channel], burstcount*direction))
                 else:
                         return self.request ('coarse?v={}&p0={}&a0={}&c0={}&bs=0'.format(0, 0, c[channel], 0))
 
         def THVReset (self):
+                return
                 return self.request ('fd=1')
 
 
