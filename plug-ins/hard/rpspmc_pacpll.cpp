@@ -7364,7 +7364,7 @@ void RPspmc_pacpll::update_shm_monitors (int close_shm){
                 double cs=remote_get_ra (id_cs);
                 gchar *sval_cs0="0";
                 gchar *sval_cs=g_strdup_printf("%g", cs);
-                switch ((int)ctrl_test){
+                switch ((int)ctrl_z){
                 case 1: remote_set_ra (id_cl, sval_cs0); break; // set level to 0
                 case 2: remote_set_ra (id_cl, sval_cs); break;  // copy current to level
                 default: break;
