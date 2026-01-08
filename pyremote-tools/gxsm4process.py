@@ -26,7 +26,7 @@ import faulthandler; faulthandler.enable()
 
 version = "1.0.0"
 
-#import time
+import time
 #import fcntl
 #from threading import Timer
 
@@ -41,7 +41,7 @@ from multiprocessing.resource_tracker import unregister
 
 
 class gxsm_process():
-        def __init__(self, ip):
+        def __init__(self):
                 # try open shared memory created by gxsm4 to access RPSPMC's monitors and more
 
                 # RPSPMC XYZ Monitors via GXSM4 
@@ -101,7 +101,7 @@ class gxsm_process():
                         self.rpspmc['pac']['dfreq'] = gxsm_shares[43]
                         print (rpspmc)
                 
-                except NameError:
+                except AttributeError:
                         # just try open again
                         self.get_gxsm4rpspmc_shm_block()
 
@@ -113,7 +113,7 @@ class gxsm_process():
                         self.XYZ_monitor['monitor_max']=xyz[1]
                         self.XYZ_monitor['monitor_min']=xyz[2]
 
-                except NameError:
+                except AttributeError:
                         # just try open again
                         self.get_gxsm4rpspmc_shm_block()
 
@@ -128,7 +128,7 @@ class gxsm_process():
                         self.rpspmc['pac']['ampl']  = gxsm_shares[44]
                         self.rpspmc['pac']['dfreq'] = gxsm_shares[43]
                 
-                except NameError:
+                except AttributeError:
                         # just try open again
                         self.get_gxsm4rpspmc_shm_block()
 
@@ -144,7 +144,7 @@ class gxsm_process():
                                 control_shm[128] = 2
                         else:
                                 print ('BUSY')
-                except NameError:
+                except AttributeError:
                         # just try open again
                         self.get_gxsm4rpspmc_shm_block()
                     
@@ -157,31 +157,31 @@ class gxsm_process():
                                 control_shm[128] = 1
                         else:
                                 print ('BUSY')
-                except NameError:
+                except AttributeError:
                         # just try open again
                         self.get_gxsm4rpspmc_shm_block()
 
-        def gxsm_set (self, id, value):
+        def set (self, id, value):
                 try:
                         control_shm = np.ndarray((132,), dtype=np.double, buffer=self.gxsm_shm.buf)
                         if control_shm[129] == 0: # check process ready
                                 #id = 'dsp-fbs-bias' ### LENGTH MUST BE < 64
-                                control_shm_id = gxsm_shm.buf[8*132:8*132+len(id)+1]
+                                control_shm_id = self.gxsm_shm.buf[8*132:8*132+len(id)+1]
                                 id_bytes = id.encode('utf-8') + b'\x00'
                                 control_shm_id[:] = id_bytes # set id
                                 control_shm[131] = value # value
                                 control_shm[129] = 1 # request action set
                                 print ('TEST GXSM.SET: SHM[129]=', control_shm[129], id, ' set to ', value)
-                except NameError:
+                except AttributeError:
                         # just try open again
                         self.get_gxsm4rpspmc_shm_block()
 
-        def gxsm_get (self, id):
+        def get (self, id):
                 try:
                         control_shm = np.ndarray((132,), dtype=np.double, buffer=self.gxsm_shm.buf)
                         if control_shm[130] == 0: # check process ready
                                 #id = 'dsp-fbs-bias' ### LENGTH MUST BE < 64
-                                control_shm_id = gxsm_shm.buf[8*132:8*132+len(id)+1]
+                                control_shm_id = self.gxsm_shm.buf[8*132:8*132+len(id)+1]
                                 id_bytes = id.encode('utf-8') + b'\x00'
                                 control_shm_id[:] = id_bytes # get id
                                 control_shm[131] = 0 # sanity cleanup -- not required
@@ -193,7 +193,7 @@ class gxsm_process():
                                 return control_shm[131]
                         else:
                                 return -1e999
-                except NameError:
+                except AttributeError:
                         # just try open again
                         self.get_gxsm4rpspmc_shm_block()
                         return -2e999

@@ -23,8 +23,6 @@
 ## * along with this program; if not, write to the Free Software
 ## * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 
-import faulthandler; faulthandler.enable()
-
 version = "1.0.0"
 
 import gi
@@ -49,10 +47,9 @@ import math
 import requests
 import numpy as np
 
-from multiprocessing import shared_memory
-from multiprocessing.resource_tracker import unregister
-
 from meterwidget import *
+
+import gxsm4process as gxsm4
 
 METER_SCALE = 0.66
 
@@ -64,8 +61,6 @@ TRUE  = -1
 
 SWAP_CXY=1
 
-# RPSPMC XYZ Monitors via GXSM4 
-global gxsm_shm
 
 global rpspmc
 
@@ -122,18 +117,7 @@ GXSM_Link_status = FALSE
 setup_list = []
 control_list = []
 
-# open shared memort to gxsm4 to RPSPMC's monitors
-
-try:
-        gxsm_shm = shared_memory.SharedMemory(name='gxsm4rpspmc_monitors')
-        unregister(gxsm_shm._name, 'shared_memory')
-
-        print (gxsm_shm)
-        xyz=np.ndarray((9,), dtype=np.double, buffer=gxsm_shm.buf).reshape((3,3)).T  # X Mi Ma, Y Mi Ma, Z Mi Ma
-        print (xyz)
-except FileNotFoundError:
-        print ("SharedMemory(name='gxsm4rpspmc_monitors') not available. Please start gxsm4 and connect RPSPMC.")
-
+gxsm = gxsm4.gxsm_process()
 
 class PZXX():
         def __init__(self, ip):
@@ -499,51 +483,13 @@ def on_bw_changed(combo, ii):
 
 def get_status():
         global PZHV_QXYZ_monitor
-        global gxsm_shm
         global PZHV_QXYZ_gains
 
         global rpspmc
         
-        try:
-
-                # XYZ MAX MIN (3x3)
-                #memcpy  (shm_ptr, spmc_signals.xyz_meter, sizeof(spmc_signals.xyz_meter));
-                #           0,1,2,  3,4,5,  6,7,8,
+        PZHV_QXYZ_monitor = gxsm.rt_query_xyz()
+        rpspmc            = gxsm.rt_query_rpspmc()
                 
-                # Monitors: Bias, reg, set,   GPVU,A,B,AM,FM, MUX, Signal (Current), AD463x[2], XYZ, XYZ0, XYZS
-                #           10,    11,  12,    13, 14,15,16,17, 18, 19,               20, 21,    22,  23,   24
-                #memcpy  (shm_ptr+sizeof(spmc_signals.xyz_meter), &spmc_parameters.bias_monitor, 21*sizeof(double));
-
-                # PAC-PLL Monitors: dc-offset, exec_ampl_mon, dds_freq_mon, dds_dfre, volume_mon, phase_mon, control_dfreq_mon
-                #memcpy  (shm_ptr+sizeof(spmc_signals.xyz_meter)+21*sizeof(double), &pacpll_parameters.dc_offset, 6*sizeof(double));
-                #                   40,        41,            42,           43,        44,          45,        46
-                
-                gxsm_shares=np.ndarray((50), dtype=np.double, buffer=gxsm_shm.buf) # flat array all shares 
-                xyz=np.ndarray((9,), dtype=np.double, buffer=gxsm_shm.buf).reshape((3,3)).T  # X Mi Ma, Y Mi Ma, Z Mi Ma
-                PZHV_QXYZ_monitor['monitor']=xyz[0] * PZHV_QXYZ_gains
-                PZHV_QXYZ_monitor['monitor_max']=xyz[1] * PZHV_QXYZ_gains
-                PZHV_QXYZ_monitor['monitor_min']=xyz[2] * PZHV_QXYZ_gains
-
-                #print ('PZHVXX Gains: ', PZHV_QXYZ_gains, ' ... may toggle to enforce up-to-now.')
-                #print (PZHV_QXYZ_monitor)
-                
-                rpspmc['bias']      = gxsm_shares[10]
-                rpspmc['current']   = gxsm_shares[19]
-                rpspmc['gvp']['u']  = gxsm_shares[13]
-                rpspmc['pac']['ampl']   = gxsm_shares[44]
-                rpspmc['pac']['dfreq']   = gxsm_shares[43]
-                #print (rpspmc)
-                
-        except NameError:
-                try:
-                        gxsm_shm = shared_memory.SharedMemory(name='gxsm4rpspmc_monitors')
-                        unregister(gxsm_shm._name, 'shared_memory')
-                        print (gxsm_shm)
-                        xyz=np.ndarray((9,), dtype=np.double, buffer=gxsm_shm.buf).reshape((3,3)).T  # X Mi Ma, Y Mi Ma, Z Mi Ma
-                        print (xyz)
-                except FileNotFoundError:
-                        print ("SharedMemory(name='gxsm4rpspmc_monitors') not available. Please start gxsm4 and connect RPSPMC.")
-        
         return 1
 
 def do_exit(button):
@@ -589,51 +535,6 @@ class PZHVXYZ_App(Gtk.Application):
                 print ('do coarse START', dir, steps, volts, period)
                 self.thv.SetTHVCoarseMove(axis, d, steps, period, volts, True)
 
-        #### TEST SHM GXSM4/RPSPMC ACTIONS
-        def set_current_level_zcontrol (self):
-                control_shm = np.ndarray((129,), dtype=np.double, buffer=gxsm_shm.buf)
-                if control_shm[128] == 0:
-                        print ('TEST COPY CURRENT to LEVEL: SHM[128]=', control_shm[128])
-                        control_shm[128] = 2
-                else:
-                        print ('BUSY')
-                    
-        def set_current_level_0 (self):
-                control_shm = np.ndarray((129,), dtype=np.double, buffer=gxsm_shm.buf)
-                if control_shm[128] == 0:
-                        control_shm = np.ndarray((129,), dtype=np.double, buffer=gxsm_shm.buf)
-                        print ('TEST SET LEVEL to 0: SHM[128]=', control_shm[128])
-                        control_shm[128] = 1
-                else:
-                        print ('BUSY')
-
-        def gxsm_set (self, id, v):
-                control_shm = np.ndarray((132,), dtype=np.double, buffer=gxsm_shm.buf)
-                if control_shm[129] == 0: # check process ready
-                        #id = 'dsp-fbs-bias' ### LENGTH MUST BE < 64
-                        control_shm_id = gxsm_shm.buf[8*132:8*132+len(id)+1]
-                        id_bytes = id.encode('utf-8') + b'\x00'
-                        control_shm_id[:] = id_bytes # set id
-                        control_shm[131] = v # value
-                        control_shm[129] = 1 # request action set
-                        print ('TEST GXSM.SET: SHM[129]=', control_shm[129], id, ' set to ', v)
-
-        def gxsm_get (self, id):
-                control_shm = np.ndarray((132,), dtype=np.double, buffer=gxsm_shm.buf)
-                if control_shm[130] == 0: # check process ready
-                        #id = 'dsp-fbs-bias' ### LENGTH MUST BE < 64
-                        control_shm_id = gxsm_shm.buf[8*132:8*132+len(id)+1]
-                        id_bytes = id.encode('utf-8') + b'\x00'
-                        control_shm_id[:] = id_bytes # get id
-                        control_shm[131] = 0 # sanity cleanup -- not required
-                        control_shm[130] = 1 # request action get
-                        while control_shm[130] == 1:
-                                print ('waiting')
-                                time.sleep(0.1)
-                        print ('TEST GXSM.GET: SHM[130]=', control_shm[130], id, ' value=', control_shm[131])
-                        return control_shm[131]
-                else:
-                        return -1e999
                 
         def stop_coarse(self, button, a, dir, es, ev, ep):
                 print ('do coarse STOP', dir)
@@ -651,24 +552,23 @@ class PZHVXYZ_App(Gtk.Application):
 
         ## GXSM4 / RPSPM communication set/get + control demos
         def on_button_set_bias(self, w, bias):
-                self.gxsm_set ('dsp-fbs-bias', float( bias.get_text () ))
+                gxsm.set ('dsp-fbs-bias', float( bias.get_text () ))
                 
         def on_button_get_bias(self, w, bias):
-                bias.set_text('{}'.format(self.gxsm_get ('dsp-fbs-bias')))
+                bias.set_text('{}'.format(gxsm.get ('dsp-fbs-bias')))
 
         def on_button_zcontrol(self, w):
-                self.set_current_level_zcontrol ()
+                gxsm.set_current_level_zcontrol ()
                 
         def on_button_znormal(self, w):
-                self.set_current_level_0 () ## normal Z control
+                gxsm.set_current_level_0 () ## normal Z control
                 
         def on_button_set(self, w, eid, val):
-                self.gxsm_set (eid.get_text(), float( val.get_text () ))
+                gxsm.set (eid.get_text(), float( val.get_text () ))
                 
         def on_button_get(self, w, eid, val):
-                print (eid.get_text(), self.gxsm_get (eid.get_text()))
-                val.set_text('{}'.format(self.gxsm_get (eid.get_text())))
-
+                print (eid.get_text(), gxsm.get (eid.get_text()))
+                val.set_text('{}'.format(gxsm.get (eid.get_text())))
 
                 
         def do_activate(self):
