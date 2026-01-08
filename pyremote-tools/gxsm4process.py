@@ -161,7 +161,7 @@ class gxsm_process():
                         # just try open again
                         self.get_gxsm4rpspmc_shm_block()
 
-        def gxsm_set (self, id, v):
+        def gxsm_set (self, id, value):
                 try:
                         control_shm = np.ndarray((132,), dtype=np.double, buffer=self.gxsm_shm.buf)
                         if control_shm[129] == 0: # check process ready
@@ -169,9 +169,9 @@ class gxsm_process():
                                 control_shm_id = gxsm_shm.buf[8*132:8*132+len(id)+1]
                                 id_bytes = id.encode('utf-8') + b'\x00'
                                 control_shm_id[:] = id_bytes # set id
-                                control_shm[131] = v # value
+                                control_shm[131] = value # value
                                 control_shm[129] = 1 # request action set
-                                print ('TEST GXSM.SET: SHM[129]=', control_shm[129], id, ' set to ', v)
+                                print ('TEST GXSM.SET: SHM[129]=', control_shm[129], id, ' set to ', value)
                 except NameError:
                         # just try open again
                         self.get_gxsm4rpspmc_shm_block()
