@@ -1522,7 +1522,7 @@ void rpspmc_hwi_dev::GVP_vp_init (){
         GVP_stream_buffer_position = 0;
         GVP_stream_buffer_offset = 0; // 0x100   //  =0x00 **** TESTING BRAM ISSUE -- FIX ME !!! *****
         GVP_stream_status=0;
-        on_new_data (NULL, 0, true);
+        on_new_data (NULL, 0, true); // GVP stream
 
         GVP_vp_header_current.endmark = 0;
         GVP_vp_header_current.n    = 0;

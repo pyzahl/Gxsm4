@@ -7399,7 +7399,8 @@ gboolean RPspmc_pacpll::update_shm_monitors (int ctrl, int close_shm){
                 // push history
                 rpspmc_hwi->push_history_vector (shm_ptr, 48); // currently used: 0..8, 10..31, 40..47 as size of double
 
-                g_message ("SHM MONITOR UPDATE @RPSPMC TIME: %.9fs", spmc_parameters.uptime_seconds);
+                PI_DEBUG (DBG_L2, "SHM MONITOR UPDATE @RPSPMC TIME: " << spmc_parameters.uptime_seconds << " s");
+                //g_message ("SHM MONITOR UPDATE @RPSPMC TIME: %.9fs", spmc_parameters.uptime_seconds);
                 
                 /*
                 sprintf (shm_ptr+512, "XYZ=[[%g %g %g] [%g %g %g] [%g %g %g]]\n",

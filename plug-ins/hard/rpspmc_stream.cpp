@@ -304,7 +304,7 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
                         position=0;
                         count = 0;
                         // TESTing:
-                        self->on_new_data (NULL, 0, true);
+                        self->on_new_data (NULL, 0, true); // WS-PP data stream
                 }
                 
                 if ((p=g_strrstr(contents, "Position:{0x"))){ // SIMPLE JSON BLOCK
@@ -350,7 +350,7 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
 		contents = g_bytes_get_data (message, &len);
 #endif
                 if (len)
-                        self->on_new_data (contents, len);
+                        self->on_new_data (contents, len); // WS-PP data stream
         }
 }
 

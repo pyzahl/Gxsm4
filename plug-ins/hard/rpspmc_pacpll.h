@@ -1207,7 +1207,7 @@ public:
 
         virtual int get_debug_level() { return debug_level; };
         
-        virtual void on_new_data (){
+        virtual void on_new_data (){ // Class: RPspmc_pacpll : public AppBase, public RP_JSON_talk{
                 update_monitoring_parameters();
 
                 update_shm_monitors ();
@@ -1217,7 +1217,7 @@ public:
                 //self->stream_data ();
                 update_health ();
 
-                RPSPMC_ControlClass->on_new_data ();
+                RPSPMC_ControlClass->on_new_data (); // run follow up updates on GUI
         };
 
         gboolean update_shm_monitors (int ctrl=0, int close=0);

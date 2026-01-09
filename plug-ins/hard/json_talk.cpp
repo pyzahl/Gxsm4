@@ -270,7 +270,7 @@ void  RP_JSON_talk::on_message(SoupWebsocketConnection *ws,
 
                 g_free (json_buffer);
 
-                self->on_new_data ();
+                self->on_new_data (); // run on JSON data update push
         }
 	//g_bytes_unref (message); // OK, no unref by ourself!!!!
                        
