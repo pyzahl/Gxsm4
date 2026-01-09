@@ -40,10 +40,35 @@ from multiprocessing import shared_memory
 from multiprocessing.resource_tracker import unregister
 
 
-class gxsm_process():
-        def __init__(self):
-                # try open shared memory created by gxsm4 to access RPSPMC's monitors and more
+# ACTIONS
+SHM_ACTION_IDLE       = 0x0000000
+SHM_ACTION_CTRL_Z_SET = 0x0000010
+SHM_ACTION_CTRL_Z_FB  = 0x0000011
+SHM_ACTION_GET        = 0x0000020
+SHM_ACTION_SET        = 0x0000021
 
+# SHM MEMORY LOCATION ASIGNMENTS
+SHM_SIZE_ACTION_MAP        = 256
+
+SHM_ACTION_OFFSET          = 128
+SHM_ACTION_VPAR_64_START   = 130
+SHM_ACTION_FRET_64_START   = 140
+
+SHM_ACTION_FP_ID_STRING_64 = 150 # max length 64
+
+SHM_NUM_VPAR = 9
+SHM_NUM_FRET = 9
+
+SHM_OK       = 0  ## SHM idle/ok
+SHM_E_BUSY   = -1 ## SHM action busy
+SHM_E_NA     = -3 ## SHM not available
+
+
+class gxsm_process():
+        def __init__(self, blocking=True):
+                # try open shared memory created by gxsm4 to access RPSPMC's monitors and more
+                self.blocking_requests = blocking
+                
                 # RPSPMC XYZ Monitors via GXSM4 
                 self.XYZ_monitor = {
                         'monitor': [0.0,0.0,0.0], # Volts
@@ -54,7 +79,8 @@ class gxsm_process():
                         'bias': 0.0,    # Volts
                         'current': 0.0, # nA
                         'gvp' : { 'x':0.0, 'y':0.0, 'z': 0.0, 'u': 0.0, 'a': 0.0, 'b': 0.0, 'am':0.0, 'fm':0.0 },
-                        'pac' : { 'dds_freq': 0.0, 'ampl': 0.0, 'exec':0.0, 'phase': 0.0, 'freq': 0.0, 'dfreq': 0.0, 'dfreq_ctrl': 0.0 }
+                        'pac' : { 'dds_freq': 0.0, 'ampl': 0.0, 'exec':0.0, 'phase': 0.0, 'freq': 0.0, 'dfreq': 0.0, 'dfreq_ctrl': 0.0 },
+                        'time' : 0.0  # exact FPGA uptime. This is the FPGA time of last reading in seconds, 8ns resolution
                 }
 
                 self.get_gxsm4rpspmc_shm_block()
@@ -87,7 +113,10 @@ class gxsm_process():
                         #memcpy  (shm_ptr+sizeof(spmc_signals.xyz_meter)+21*sizeof(double), &pacpll_parameters.dc_offset, 6*sizeof(double));
                         #                   40,        41,            42,           43,        44,          45,        46
 
-                        gxsm_shares=np.ndarray((50), dtype=np.double, buffer=self.gxsm_shm.buf) # flat array all shares 
+                        # FPGA RPSPMC uptime in sec, 8ns resolution -- i.e. exact time of last reading
+                        #memcpy  (shm_ptr+100*sizeof(double), &spmc_parameters.uptime_seconds, sizeof(double));
+
+                        gxsm_shares=np.ndarray((101), dtype=np.double, buffer=self.gxsm_shm.buf) # flat array all shares 
                         xyz=np.ndarray((9,), dtype=np.double, buffer=self.gxsm_shm.buf).reshape((3,3)).T  # X Mi Ma, Y Mi Ma, Z Mi Ma
                         self.XYZ_monitor['monitor']=xyz[0]
                         self.XYZ_monitor['monitor_max']=xyz[1]
@@ -99,6 +128,7 @@ class gxsm_process():
                         self.rpspmc['gvp']['u']     = gxsm_shares[13]
                         self.rpspmc['pac']['ampl']  = gxsm_shares[44]
                         self.rpspmc['pac']['dfreq'] = gxsm_shares[43]
+                        self.rpspmc['time']         = gxsm_shares[100]
                         print (rpspmc)
                 
                 except AttributeError:
@@ -107,7 +137,7 @@ class gxsm_process():
 
         def rt_query_xyz(self):
                 try:
-                        gxsm_shares=np.ndarray((50), dtype=np.double, buffer=self.gxsm_shm.buf) # flat array all shares 
+                        gxsm_shares=np.ndarray((101), dtype=np.double, buffer=self.gxsm_shm.buf) # flat array all shares 
                         xyz=np.ndarray((9,), dtype=np.double, buffer=self.gxsm_shm.buf).reshape((3,3)).T  # X Mi Ma, Y Mi Ma, Z Mi Ma
                         self.XYZ_monitor['monitor']=xyz[0]
                         self.XYZ_monitor['monitor_max']=xyz[1]
@@ -121,12 +151,13 @@ class gxsm_process():
 
         def rt_query_rpspmc(self):
                 try:
-                        gxsm_shares=np.ndarray((50), dtype=np.double, buffer=self.gxsm_shm.buf) # flat array all shares 
+                        gxsm_shares=np.ndarray((101), dtype=np.double, buffer=self.gxsm_shm.buf) # flat array all shares 
                         self.rpspmc['bias']         = gxsm_shares[10]
                         self.rpspmc['current']      = gxsm_shares[19]
                         self.rpspmc['gvp']['u']     = gxsm_shares[13]
                         self.rpspmc['pac']['ampl']  = gxsm_shares[44]
                         self.rpspmc['pac']['dfreq'] = gxsm_shares[43]
+                        self.rpspmc['time']         = gxsm_shares[100]
                 
                 except AttributeError:
                         # just try open again
@@ -135,62 +166,70 @@ class gxsm_process():
                 return self.rpspmc
 
 
-        #### TEST SHM GXSM4/RPSPMC ACTIONS
-        def set_current_level_zcontrol (self):
+        def action(self, code=-1):
                 try:
-                        control_shm = np.ndarray((129,), dtype=np.double, buffer=self.gxsm_shm.buf)
-                        if control_shm[128] == 0:
-                                print ('TEST COPY CURRENT to LEVEL: SHM[128]=', control_shm[128])
-                                control_shm[128] = 2
+                        self.rt_query_rpspmc()
+                        shm_action_control = np.frombuffer(self.gxsm_shm.buf, dtype=np.uint64, count=2, offset=8*SHM_ACTION_OFFSET)
+                        print ('action ** ', shm_action_control[0], code, ' ** RPSPMC time: {}s'.format(self.rpspmc['time']))
+                        if shm_action_control[0] == 0:
+                                if code > 0:
+                                        shm_action_control[0] = code
+                                        return SHM_OK
+                                else:
+                                        return shm_action_control[0]
                         else:
                                 print ('BUSY')
+                                return SHM_E_BUSY
+                                
                 except AttributeError:
                         # just try open again
                         self.get_gxsm4rpspmc_shm_block()
+                        return SHM_E_NA
+                        
+        
+        ## SHM GXSM4/RPSPMC ACTIONS
+        def set_current_level_zcontrol (self):
+                return self.action(SHM_ACTION_CTRL_Z_SET)
+               
                     
         def set_current_level_0 (self):
-                try:
-                        control_shm = np.ndarray((129,), dtype=np.double, buffer=self.gxsm_shm.buf)
-                        if control_shm[128] == 0:
-                                control_shm = np.ndarray((129,), dtype=np.double, buffer=self.gxsm_shm.buf)
-                                print ('TEST SET LEVEL to 0: SHM[128]=', control_shm[128])
-                                control_shm[128] = 1
-                        else:
-                                print ('BUSY')
-                except AttributeError:
-                        # just try open again
-                        self.get_gxsm4rpspmc_shm_block()
+                return self.action(SHM_ACTION_CTRL_Z_FB)
 
         def set (self, id, value):
                 try:
-                        control_shm = np.ndarray((132,), dtype=np.double, buffer=self.gxsm_shm.buf)
-                        if control_shm[129] == 0: # check process ready
-                                #id = 'dsp-fbs-bias' ### LENGTH MUST BE < 64
-                                control_shm_id = self.gxsm_shm.buf[8*132:8*132+len(id)+1]
+                        if self.action() == SHM_ACTION_IDLE:
+                                control_shm_vpar = np.frombuffer(self.gxsm_shm.buf, dtype=np.double, count=SHM_NUM_VPAR, offset=8*SHM_ACTION_VPAR_64_START)
+                                control_shm_id   = self.gxsm_shm.buf[8*SHM_ACTION_FP_ID_STRING_64 : 8*SHM_ACTION_FP_ID_STRING_64+len(id)+1]
                                 id_bytes = id.encode('utf-8') + b'\x00'
                                 control_shm_id[:] = id_bytes # set id
-                                control_shm[131] = value # value
-                                control_shm[129] = 1 # request action set
-                                print ('TEST GXSM.SET: SHM[129]=', control_shm[129], id, ' set to ', value)
+                                control_shm_vpar[0] = value # value
+                                ret = self.action (SHM_ACTION_SET)
+                                if self.blocking_requests:
+                                        while self.action() == SHM_E_BUSY:
+                                                self.rt_query_rpspmc()
+                                                print ('waiting, RPSPMC time: {}s'.format(self.rpspmc['time']))
+                                                time.sleep(0.02)
+                                print ('ACTION GXSM.SET: ', id, ' set to ', value)
                 except AttributeError:
                         # just try open again
                         self.get_gxsm4rpspmc_shm_block()
 
         def get (self, id):
                 try:
-                        control_shm = np.ndarray((132,), dtype=np.double, buffer=self.gxsm_shm.buf)
-                        if control_shm[130] == 0: # check process ready
-                                #id = 'dsp-fbs-bias' ### LENGTH MUST BE < 64
-                                control_shm_id = self.gxsm_shm.buf[8*132:8*132+len(id)+1]
+                        if self.action() == SHM_ACTION_IDLE:
+                                control_shm_vpar = np.frombuffer(self.gxsm_shm.buf, dtype=np.double, count=SHM_NUM_VPAR, offset=8*SHM_ACTION_VPAR_64_START)
+                                control_shm_fret = np.frombuffer(self.gxsm_shm.buf, dtype=np.double, count=SHM_NUM_FRET, offset=8*SHM_ACTION_FRET_64_START)
+                                control_shm_id   = self.gxsm_shm.buf[8*SHM_ACTION_FP_ID_STRING_64 : 8*SHM_ACTION_FP_ID_STRING_64+len(id)+1]
                                 id_bytes = id.encode('utf-8') + b'\x00'
                                 control_shm_id[:] = id_bytes # get id
-                                control_shm[131] = 0 # sanity cleanup -- not required
-                                control_shm[130] = 1 # request action get
-                                while control_shm[130] == 1:
-                                        print ('waiting')
-                                        time.sleep(0.1)
-                                print ('TEST GXSM.GET: SHM[130]=', control_shm[130], id, ' value=', control_shm[131])
-                                return control_shm[131]
+                                control_shm_fret[0] = 0 # sanity cleanup -- not required
+                                ret = self.action (SHM_ACTION_GET)
+                                while self.action() == SHM_E_BUSY:
+                                        self.rt_query_rpspmc()
+                                        print ('waiting, RPSPMC time: {}s'.format(self.rpspmc['time']))
+                                        time.sleep(0.02)
+                                print ('ACTION GXSM.GET: ', id, ' value=', control_shm_fret[0])
+                                return control_shm_fret[0]
                         else:
                                 return -1e999
                 except AttributeError:

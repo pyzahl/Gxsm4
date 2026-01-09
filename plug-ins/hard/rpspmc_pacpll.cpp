@@ -7348,6 +7348,9 @@ void RPspmc_pacpll::update_shm_monitors (int close_shm){
         // PAC-PLL Monitors: dc-offset, exec_ampl_mon, dds_freq_mon, volume_mon, phase_mon, control_dfreq_mon
         memcpy  (shm_ptr+40*sizeof(double), &pacpll_parameters.dc_offset, 7*sizeof(double));
 
+        // FPGA RPSPMC uptime in sec, 8ns resolution -- i.e. exact time of last reading
+        memcpy  (shm_ptr+100*sizeof(double), &spmc_parameters.uptime_seconds, sizeof(double));
+        
 #ifdef ENABLE_SHM_ACTIONS
         // SHM GET/SET hack tests
         // TEST READ / ACTION
@@ -7355,49 +7358,82 @@ void RPspmc_pacpll::update_shm_monitors (int close_shm){
         // ACTION FUZZY LEVEL Z CONTROL:
         // SHM[128] := 1 ---> Level=0 (Auto/Regular Feedback); completed when SHM[128] := 0
         // SHM[128] := 2 ---> Level=Current-Setpoint (Adjust Z to Z-Setpoint if Current Set Point is not exceeded, i.e. const Z mode); completed when SHM[128] := 0
-        double ctrl_z = *(double*)(shm_ptr+128*sizeof(double));
-        if (ctrl_z > 0){
-                g_message ("SHM CONTROL VALUE SHM[128]: %g", ctrl_z);
+
+        // ACTIONS
+#define SHM_ACTION_IDLE        0x0000000
+#define SHM_ACTION_CTRL_Z_SET  0x0000010
+#define SHM_ACTION_CTRL_Z_FB   0x0000011
+#define SHM_ACTION_GET         0x0000020
+#define SHM_ACTION_SET         0x0000021
+
+        // SHM MEMORY LOCATION ASIGNMENTS
+#define SHM_ACTION_OFFSET           128
+#define SHM_ACTION_VPAR_64_START    130
+#define SHM_ACTION_FPN(N)           (SHM_ACTION_VPAR_64_START+N) // max 10
+#define SHM_ACTION_FRET_64_START    140
+#define SHM_ACTION_FRETN(N)         (SHM_ACTION_FRET_64_START+N) // max 10
+
+#define SHM_ACTION_FP_ID_STRING_64  150 // max 64
+
+#define SHM_ADR(OFFSET) (shm_ptr+(OFFSET)*sizeof(double))
+        
+        guint64 action_request = *(guint64*)(shm_ptr+SHM_ACTION_OFFSET*sizeof(guint64));
+
+        gchar *sval=NULL;
+        switch ((int)action_request){
+        case SHM_ACTION_IDLE:
+                break;  // NOP
+
+        case SHM_ACTION_CTRL_Z_FB:    // void CTRL_Z_FB(void)
+                sval = g_strdup_printf("0");
+                *(double*)SHM_ADR(SHM_ACTION_FRETN(9)) = 0.0; // OK
+                g_message ("SHM-ACTION-CTRL-Z-FB {%08x}", (int)action_request);
+                // ... this continues below intentional no "break;" here!
+        case SHM_ACTION_CTRL_Z_SET: { // void CTRL_Z_SET(void)
                 gchar *id_cl="dsp-fbs-mx0-current-level";
                 gchar *id_cs="dsp-fbs-mx0-current-set";
-                gchar *sval_0="0";
-                double cs=remote_get_ra (id_cs);
-                gchar *sval_cs0="0";
-                gchar *sval_cs=g_strdup_printf("%g", cs);
-                switch ((int)ctrl_z){
-                case 1: remote_set_ra (id_cl, sval_cs0); break; // set level to 0
-                case 2: remote_set_ra (id_cl, sval_cs); break;  // copy current to level
-                default: break;
+                if (!sval){
+                        sval=g_strdup_printf("%g", remote_get_ra (id_cs));
+                        g_message ("SHM-ACTION-CTRL-Z-SET {%08x}", (int)action_request);
                 }
-                g_free (sval_cs);
-                *(double*)(shm_ptr+128*sizeof(double)) = 0.0; // clear action control
+                remote_set_ra (id_cl, sval); // set level to 0 or current setpoint as of action request
+                g_free (sval);
+                *(double*)SHM_ADR(SHM_ACTION_FRETN(9)) = 0.0; // OK
+                break;
         }
-        // GXSM.SET function
-        // SHM[129] := 1 ---> GXSM.SET (id=SHM[132...+64b max], SHM[131]); set entry completed when SHM[130] := 0
-        double ctrl_set = *(double*)(shm_ptr+129*sizeof(double));
-        if (ctrl_set > 0){
+        case SHM_ACTION_SET: {       // void SET (SHM_ACTION_FP_ID_STRING_64 ID, SHM_ACTION_FPN(0) Value)
+                // GXSM.SET function
                 gchar id_set[64]; memset (id_set, 0, sizeof(id_set));
-                memcpy (id_set, shm_ptr+132*sizeof(double), sizeof(id_set));
+                memcpy (id_set, SHM_ADR(SHM_ACTION_FP_ID_STRING_64), sizeof(id_set));
                 id_set[63]=0; // safety termination
-                double v = *(double*)(shm_ptr+131*sizeof(double));
-                g_message ("SHM CONTROL SET VALUE via SHM[129]: %g ** id=%s := %g", ctrl_set, id_set, v);
+                double v = *(double*)SHM_ADR(SHM_ACTION_FPN(0));
+                g_message ("SHM-ACTION-SET VALUE {%08x} ** id=%s := %g", (int)action_request, id_set, v);
                 gchar *sval_cs=g_strdup_printf("%g", v);
                 remote_set_ra (id_set, sval_cs);
                 g_free (sval_cs);
-                *(double*)(shm_ptr+129*sizeof(double)) = 0.0; // clear action control
+                *(double*)SHM_ADR(SHM_ACTION_FRETN(9)) = 0.0; // OK
+                break;
         }
-        // GXSM.GET function
-        // SHM[130] := 1 ---> SHM[131] := GXSM.GET (id=SHM[132...+64b max]); result is valid when SHM[130] := 0
-        double ctrl_get = *(double*)(shm_ptr+130*sizeof(double));
-        if (ctrl_get > 0){
+        case SHM_ACTION_GET: {       // (SHM_ADR(SHM_ACTION_FRETN(0))) GET (SHM_ACTION_FP_ID_STRING_64 ID)
+                // GXSM.GET function
                 gchar id_get[64]; memset (id_get, 0, sizeof(id_get));
-                memcpy (id_get, shm_ptr+132*sizeof(double), sizeof(id_get));
+                memcpy (id_get, SHM_ADR(SHM_ACTION_FP_ID_STRING_64), sizeof(id_get));
                 id_get[63]=0; // safety termination
                 double v=remote_get_ra (id_get);
-                g_message ("SHM CONTROL GET VALUE via SHM[130]: %g ** id=%s => %g", ctrl_get, id_get, v);
-                *(double*)(shm_ptr+130*sizeof(double)) = 0.0; // clear action control
-                *(double*)(shm_ptr+131*sizeof(double)) = v; // return val
+                g_message ("SHM-ACTION-GET VALUE {%08x} ** id=%s => %g", (int)action_request, id_get, v);
+                *(double*)SHM_ADR(SHM_ACTION_FRETN(0)) = v; // return value
+                *(double*)SHM_ADR(SHM_ACTION_FRETN(9)) = 0.0; // OK
+                break;
         }
+
+        default:
+                *(double*)SHM_ADR(SHM_ACTION_FRETN(9)) = -1; // return ERROR in RET9
+                g_message ("SHM-ACTION* INVALID REQUEST {%08x}", (int)action_request);
+                break;
+        }
+
+        *(guint64*)(shm_ptr+SHM_ACTION_OFFSET*sizeof(guint64)) = 0L; // clear action control
+        
 #endif
         
         // push history
