@@ -552,10 +552,14 @@ class PZHVXYZ_App(Gtk.Application):
 
         ## GXSM4 / RPSPM communication set/get + control demos
         def on_button_set_bias(self, w, bias):
+                #for i in range (0,100):
+                #        gxsm.set ('dsp-fbs-bias',i/100)
                 gxsm.set ('dsp-fbs-bias', float( bias.get_text () ))
                 
         def on_button_get_bias(self, w, bias):
                 bias.set_text('{}'.format(gxsm.get ('dsp-fbs-bias')))
+                #for i in range (0,500):
+                #        bias.set_text('{}'.format(gxsm.get ('dsp-fbs-bias')))
 
         def on_button_zcontrol(self, w):
                 gxsm.set_current_level_zcontrol ()

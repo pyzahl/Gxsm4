@@ -269,6 +269,15 @@ void App::file_quit_callback (GSimpleAction *simple, GVariant *parameter, gpoint
                 if (r)
                         main_get_gapp ()->save_app_geometry ();
 
+                // Unload and cleanup Plugins
+                g_message ("Unloading Gxsm Plugins");
+                delete gapp->GxsmPlugins;
+		gapp->GxsmPlugins = NULL;
+
+                g_message ("Unloading Gxsm HwI Plugin");
+                gapp->xsm->reload_hardware_interface (NULL); // unload only
+                // ---
+                
                 GApplication *application = (GApplication *) user_data;
                 delete gapp;
                 gapp=NULL;
