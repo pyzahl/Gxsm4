@@ -1073,21 +1073,21 @@ class HV5App(Gtk.Application):
                         button.connect("clicked", self.on_button_znormal)
                         grid_chv5c.attach(button, 18, 9, 1, 1)
 
-                        gxsm_eid = Gtk.Entry ()
-                        grid_chv5c.attach(gxsm_eid, 13, 10, 4, 1)
-                        gxsm_eid.set_text('dsp-adv-dsp-zpos-ref')
-                        val = Gtk.Entry ()
-                        grid_chv5c.attach(val, 19, 10, 1, 1)
+                        #gxsm_eid = Gtk.Entry ()
+                        #grid_chv5c.attach(gxsm_eid, 13, 10, 4, 1)
+                        #gxsm_eid.set_text('dsp-adv-dsp-zpos-ref')
+                        #val = Gtk.Entry ()
+                        #grid_chv5c.attach(val, 19, 10, 1, 1)
 
-                        button = Gtk.Button(label="Set")
-                        button.connect("clicked", self.on_button_set, gxsm_eid, val)
-                        grid_chv5c.attach(button, 17, 10, 1, 1)
+                        #button = Gtk.Button(label="Set")
+                        #button.connect("clicked", self.on_button_set, gxsm_eid, val)
+                        #grid_chv5c.attach(button, 17, 10, 1, 1)
                                                 
-                        button = Gtk.Button(label="Get")
-                        button.connect("clicked", self.on_button_get, gxsm_eid, val)
-                        grid_chv5c.attach(button, 18, 10, 1, 1)
+                        #button = Gtk.Button(label="Get")
+                        #button.connect("clicked", self.on_button_get, gxsm_eid, val)
+                        #grid_chv5c.attach(button, 18, 10, 1, 1)
                         
-                        print (gxsm_eid.get_text())
+                        #print (gxsm_eid.get_text())
 
 
                         print ("*** GUI complete ***")
