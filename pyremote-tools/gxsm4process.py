@@ -44,10 +44,6 @@ from multiprocessing.resource_tracker import unregister
 import os
 import psutil
 import signal
-import cython
-import array
-#from cpython.memoryview cimport PyMemoryView_FromMemory
-#from cpython cimport buffer
 
 # ACTIONS
 SHM_ACTION_IDLE       = 0x0000000
@@ -136,25 +132,35 @@ class gxsm_process():
                         print ("SharedMemory(name='gxsm4_py_shm_data_block') is not available. Please start gxsm4.")
                         
         def init_pyshm_mappings(self):
+                pyshm_status = np.frombuffer(self.gxsm_pyshm.buf, dtype=np.int64, count=1, offset=100)
+                pyshm_status[0] = 0 # clear BUSY
+                
                 #methods = self.exec_pyshm_method('help', ())
                 methods = self.exec_pyshm_method('help', ('M',))
                 print (methods)
                 for m in methods:
                         print (m)
+
+                if 0: ## tests
+                        v = self.exec_pyshm_method('get', ('dsp-fbs-bias',))
+                        print ('Return:', v)
                         
-                v = self.exec_pyshm_method('get', ('dsp-fbs-bias',))
-                print ('Return:', v)
+                        v = self.exec_pyshm_method('xxxxget', ('dsp-fbs-bias',4))
+                        print ('Return:', v)
                 
-                #v = self.exec_pyshm_method('xxxxget', ('dsp-fbs-bias',4))
-                #print ('Return:', v)
-                
-                v = self.exec_pyshm_method('set', ('dsp-fbs-bias','1.234',))
-                print ('Return:', v)
-                
+                        v = self.exec_pyshm_method('set', ('dsp-fbs-bias','1.234',))
+                        print ('Return:', v)
+
                 return methods
                 
         def exec_pyshm_method(self, method, args):
                 print ('exec_pyshm_method ', method, args)
+                pyshm_status = np.frombuffer(self.gxsm_pyshm.buf, dtype=np.int64, count=1, offset=100)
+                #while pyshm_status[0] == 1:
+                #        time.sleep(0.01)
+                #        print ('** waiting, busy. ',  pyshm_status[0])
+                print ('Status: ',  pyshm_status[0])
+                        
                 pyshm_method = self.gxsm_pyshm.buf[0:len(method)+1]
                 pyshm_object_len = np.frombuffer(self.gxsm_pyshm.buf, dtype=np.uint64, count=1, offset=128)
                 method_bytes = method.encode('utf-8') + b'\x00'
@@ -166,7 +172,6 @@ class gxsm_process():
                 pyshm_object_len[0] = len(args_data) # object size
                 self.gxsm_pyshm.buf[128+8 : 128+8+len(args_data)] = args_data
                 
-                pyshm_status = np.frombuffer(self.gxsm_pyshm.buf, dtype=np.int64, count=1, offset=100)
                 pyshm_status[0] = 1 # mark BUSY
                 
                 print ('signaling gxsm')
@@ -278,14 +283,29 @@ class gxsm_process():
         
         ## SHM GXSM4/RPSPMC ACTIONS
         def set_current_level_zcontrol (self):
+                if self.blocking_requests:
+                        while self.action() == SHM_E_BUSY:
+                                self.rt_query_rpspmc()
+                                print ('BUSY, waiting, RPSPMC time: {}s'.format(self.rpspmc['time']))
+                                time.sleep(0.02)
                 return self.action(SHM_ACTION_CTRL_Z_SET)
                
                     
         def set_current_level_0 (self):
+                if self.blocking_requests:
+                        while self.action() == SHM_E_BUSY:
+                                self.rt_query_rpspmc()
+                                print ('BUSY, waiting, RPSPMC time: {}s'.format(self.rpspmc['time']))
+                                time.sleep(0.02)
                 return self.action(SHM_ACTION_CTRL_Z_FB)
 
         def set (self, id, value):
                 try:
+                        if self.blocking_requests:
+                                while self.action() == SHM_E_BUSY:
+                                        self.rt_query_rpspmc()
+                                        print ('BUSY, waiting, RPSPMC time: {}s'.format(self.rpspmc['time']))
+                                        time.sleep(0.02)
                         if self.action() == SHM_ACTION_IDLE:
                                 control_shm_vpar = np.frombuffer(self.gxsm_shm.buf, dtype=np.double, count=SHM_NUM_VPAR, offset=8*SHM_ACTION_VPAR_64_START)
                                 control_shm_id   = self.gxsm_shm.buf[8*SHM_ACTION_FP_ID_STRING_64 : 8*SHM_ACTION_FP_ID_STRING_64+len(id)+1]
@@ -299,12 +319,20 @@ class gxsm_process():
                                                 print ('waiting, RPSPMC time: {}s'.format(self.rpspmc['time']))
                                                 time.sleep(0.02)
                                 print ('ACTION GXSM.SET: ', id, ' set to ', value)
+                                return -1
+                        else:
+                                return 0
                 except AttributeError:
                         # just try open again
                         self.get_gxsm4rpspmc_shm_block()
 
         def get (self, id):
                 try:
+                        if self.blocking_requests:
+                                while self.action() == SHM_E_BUSY:
+                                        self.rt_query_rpspmc()
+                                        print ('BUSY, waiting, RPSPMC time: {}s'.format(self.rpspmc['time']))
+                                        time.sleep(0.02)
                         if self.action() == SHM_ACTION_IDLE:
                                 control_shm_vpar = np.frombuffer(self.gxsm_shm.buf, dtype=np.double, count=SHM_NUM_VPAR, offset=8*SHM_ACTION_VPAR_64_START)
                                 control_shm_fret = np.frombuffer(self.gxsm_shm.buf, dtype=np.double, count=SHM_NUM_FRET, offset=8*SHM_ACTION_FRET_64_START)

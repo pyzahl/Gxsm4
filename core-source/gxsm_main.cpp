@@ -150,6 +150,14 @@ int main (int argc, char **argv)
 
         // init rand
         srand (time(0));
+
+        sigset_t block_mask;
+
+        // Block SIGUSR1 for all
+        sigemptyset(&block_mask);
+        sigaddset(&block_mask, SIGUSR1);
+        pthread_sigmask(SIG_BLOCK, &block_mask, NULL);
+
         
         //GXSM_STARTUP_MESSAGE_VERBOSE00 ("GXSM4 main: argc=%d", argc);
 

@@ -3748,31 +3748,14 @@ static PyObject* remote_help(PyObject *self, PyObject *args)
         gint entries;
 	for (entries=0; GxsmPyMethods[entries].ml_name != NULL; entries++);
       
-        const char *string=NULL;
         PyObject *ret = PyTuple_New(entries);
 
-        if (!PyTuple_Check(args)) {
-                for (int n=0; n < entries; n++){
-                        gchar *tmp = g_strdup_printf ("gxsm.%s : %s", GxsmPyMethods[n].ml_name, GxsmPyMethods[n].ml_doc);
-                        PyTuple_SetItem(ret, n, PyUnicode_FromString (tmp)); // Add Refname and Doc to Return-list
-                        g_free (tmp);
-                }
-                return ret;
+        for (int n=0; n < entries; n++){
+                gchar *tmp = g_strdup_printf ("gxsm.%s : %s", GxsmPyMethods[n].ml_name, GxsmPyMethods[n].ml_doc);
+                PyTuple_SetItem(ret, n, PyUnicode_FromString (tmp)); // Add Refname and Doc to Return-list
+                g_free (tmp);
         }
-        if(!PyArg_ParseTuple(args, "s", &string)){
-                for (int n=0; n < entries; n++){
-                        gchar *tmp = g_strdup_printf ("gxsm.%s : %s", GxsmPyMethods[n].ml_name, GxsmPyMethods[n].ml_doc);
-                        PyTuple_SetItem(ret, n, PyUnicode_FromString (tmp)); // Add Refname and Doc to Return-list
-                        g_free (tmp);
-                }
-        } else {
-                for (int n=0; n < entries; n++){
-                        gchar *tmp = g_strdup_printf ("%s", GxsmPyMethods[n].ml_name);
-                        PyTuple_SetItem(ret, n, PyUnicode_FromString (tmp)); // Add Method Refname only to Return-list
-                        g_free (tmp);
-                }
-        }
-	return ret;
+        return ret;
 }
 
 
@@ -5203,13 +5186,17 @@ PyObject* unpickle_from_buffer(const char* buffer) {
 
 // SHM Server for external python process interfacing to Gxsm
 gpointer PySHMServer_Run(gpointer data){
+        sigset_t wait_set;
+
         // tmp SHM data exchange block created and reused/resized as needed
         const char *gxsm_shm_data = "/gxsm4_py_shm_data_block";
         static int shm_data_fd = -1;
         static void *shm_data_ptr = NULL;
         static size_t shm_data_size = 1048576+128; // make it a PyObject! -- fixed 1MB block + header for methode name and actual data size, fixed for a start.
-                                                   // separate for huge return data blocks????
-        
+
+        g_message("PySHM: Init PySHM Server startup.");
+
+        // separate for huge return data blocks????
         if (shm_data_fd == -1){
                 g_message ("PySHM: Init and open of %s.", gxsm_shm_data);
                 shm_data_fd = shm_open(gxsm_shm_data, O_CREAT | O_RDWR, 0666);
@@ -5232,8 +5219,8 @@ gpointer PySHMServer_Run(gpointer data){
                 }
         }
 
-        // init/exit only
-        if (data){
+        // exit and cleanup only
+        if (data == NULL){
                 if (GPOINTER_TO_INT(data) == 99){
                         if (shm_data_fd > 0){
                                 if (munmap(shm_data_ptr, shm_data_size) == -1) {
@@ -5262,93 +5249,112 @@ gpointer PySHMServer_Run(gpointer data){
                 }
                 return NULL;
         }
+
+        g_message ("PySHM Server: Setting up Signal Wait for SIGUSR1.\n");
+        sigemptyset (&wait_set);
+        sigaddset   (&wait_set, SIGUSR1);
+        //sigaddset   (&wait_set, SIGTERM);
         
+        g_message("PySHM: Init PySHM Server ready and waiting for signal.");
+
+        for (int sig;;){
+                // sigwait() blocks until a our SIGUSR1 signal in the signal_set is received
+                if (sigwait (&wait_set, &sig)) // waiting here for signal
+                        g_warning ("PhSHM thread: sigwait error");
+                if (sig != SIGUSR1){
+                        g_warning ("PhSHM thread: unexpected signal received. Ignoring.");
+                        continue;
+                }
         
-        // lookup GxsmPyMethods[]
-        PyMethodDef *ml=GxsmPyMethods;
-        for (; ml->ml_name; ml++)
-                if (!strncmp (ml->ml_name, (char*)shm_data_ptr, 64)){ // first 64 bytes holding the method name
-                        g_message("PySHM: executing Method %s. Doc: %s", ml->ml_name, ml->ml_doc);
-                        switch (ml->ml_flags){
-                        case METH_VARARGS: {
-                                if (Py_IsInitialized()) {
+                for (PyMethodDef *ml=GxsmPyMethods; ml->ml_name; ml++){
+                        g_message ("PySHM searching method %s in %s", (char*)shm_data_ptr, ml->ml_name);
+                        if (!strncmp (ml->ml_name, (char*)shm_data_ptr, 64)){ // first 64 bytes holding the method name
+                                g_message("PySHM: executing Method %s. Doc: %s", ml->ml_name, ml->ml_doc);
+                                switch (ml->ml_flags){
+                                case METH_VARARGS: {
+                                        if (Py_IsInitialized()) {
 
-                                        PyGILState_STATE gstate;
-                                        gstate = PyGILState_Ensure();
+                                                PyGILState_STATE gstate;
+                                                gstate = PyGILState_Ensure();
 
-                                        // convert SHM block to PyObject
-                                        PyObject* py_args = unpickle_from_buffer(shm_data_ptr+128);
+                                                // convert SHM block to PyObject
+                                                PyObject* py_args = unpickle_from_buffer(shm_data_ptr+128);
 
-                                        PyObject *pstr = PyObject_Str(py_args);
-                                        if (pstr != NULL) {
-                                                const char *cstr = PyUnicode_AsUTF8(pstr);
-                                                if (cstr != NULL) {
-                                                        g_message("Object representation: %s", cstr);
+                                                PyObject *pstr = PyObject_Str(py_args);
+                                                if (pstr != NULL) {
+                                                        const char *cstr = PyUnicode_AsUTF8(pstr);
+                                                        if (cstr != NULL) {
+                                                                g_message("Object representation: %s", cstr);
+                                                        }
+                                                        Py_DECREF(pstr);
                                                 }
-                                                Py_DECREF(pstr);
-                                        }
 
-                                        if (!PyTuple_Check(py_args))
-                                                g_message("PyTuple_Check failed");
-                                        else
-                                                g_message("PyTuple_Check OK");
+                                                if (!PyTuple_Check(py_args))
+                                                        g_message("PyTuple_Check for args failed");
+                                                else
+                                                        g_message("PyTuple_Check for args OK");
 
-                                        memset(shm_data_ptr+128, 0, sizeof(shm_data_ptr)-128);
+                                                //g_message("PySHM clear return data");
+                                                //memset (shm_data_ptr+128, 0, sizeof(shm_data_ptr)-128);
                                         
-                                        g_message("Calling PyC function %x", (unsigned int)ml->ml_meth); 
-                                        PyObject* ret = (*ml->ml_meth)(NULL, py_args);
+                                                g_message("Calling PyC function %x", (unsigned int)ml->ml_meth); 
+                                                PyObject* ret = (*ml->ml_meth)(NULL, py_args);
 
-                                        g_message("Result is ");
-                                        pstr = PyObject_Str(ret);
-                                        if (pstr != NULL) {
-                                                const char *cstr = PyUnicode_AsUTF8(pstr);
-                                                if (cstr != NULL) {
-                                                        g_message("Object representation: %s", cstr);
+                                                g_message("Result is ");
+                                                pstr = PyObject_Str(ret);
+                                                if (pstr != NULL) {
+                                                        const char *cstr = PyUnicode_AsUTF8(pstr);
+                                                        if (cstr != NULL) {
+                                                                g_message("Object representation: %s", cstr);
+                                                        }
+                                                        Py_DECREF(pstr);
                                                 }
-                                                Py_DECREF(pstr);
-                                        }
 
-                                        //if (assemble_buffer_from_tuple_element (ret, (char*)(shm_data_ptr+128), shm_data_size-128)){
+                                                //if (assemble_buffer_from_tuple_element (ret, (char*)(shm_data_ptr+128), shm_data_size-128)){
 
-                                        if (pickle_pyobject_to_buffer(ret, (char*)(shm_data_ptr+128), shm_data_size-128)){
-                                                *(gint64*)(shm_data_ptr+100) = -1; // RETURN code Error. Return data block is invalid.
-                                                g_message("PySHM: Error return data exceeds max SHM size or bad return data.");
+                                                if (pickle_pyobject_to_buffer(ret, (char*)(shm_data_ptr+128), shm_data_size-128)){
+                                                        *(gint64*)(shm_data_ptr+100) = -1; // RETURN code Error. Return data block is invalid.
+                                                        g_message("PySHM: Error return data exceeds max SHM size or bad return data.");
+                                                } else {
+                                                        g_message("OK");
+                                                        *(gint64*)(shm_data_ptr+100) = 0; // RETURN code ok. Return data is ready.
+                                                }
+
+                                                PyGILState_Release(gstate);
                                         } else {
-                                                g_message("OK");
-                                                *(gint64*)(shm_data_ptr+100) = 0; // RETURN code ok. Return data is ready.
+                                                *(gint64*)(shm_data_ptr+100) = -2; // RETURN code Error.
+                                                g_message("PySHM: Python is not initiailize.");
                                         }
-
-                                        PyGILState_Release(gstate);
-                                } else {
-                                        *(gint64*)(shm_data_ptr+100) = -2; // RETURN code Error.
-                                        g_message("PySHM: Python is not initiailize.");
+                                        break;
+                                }
+                                default:
+                                        *(gint64*)(shm_data_ptr+100) = -3; // RETURN code Error.
+                                        g_warning("PySHM: Method FLAGS are not supported. Ignoring");
+                                        break;
                                 }
                                 break;
+                        } else if (!(ml+1)->ml_name){ // at end?
+                                *(gint64*)(shm_data_ptr+100) = -4; // RETURN code Error.
+                                g_warning("PySHM: Unknown PyRemote Method or Action Request. Ignoring >gxsm.%s(..)<", (char*)shm_data_ptr);
                         }
-                        default:
-                                *(gint64*)(shm_data_ptr+100) = -3; // RETURN code Error.
-                                g_warning("PySHM: Method FLAGS are not supported. Ignoring");
-                                break;
-                        }
-                        return NULL;
                 }
-
-        g_warning("PySHM: Unknown PyRemote Method or Action Request. Ignoring.");
+        }
+        
         return NULL;
 }
-
 
 // SHM Action Request Signal handler function
 void PySHM_signal_handler(int signum) {
         if (signum == SIGUSR1) {
-                g_message ("PySHM: Received SIGUSR1 signal from external Python,...! Initiating PySHM action.");
+                printf ("SIGUSR1\n");
+                //g_message ("PySHM: Received SIGUSR1 signal from external Python,...! Initiating PySHM action.");
                 // Add your custom logic here (e.g., gracefully shut down, reload config)
 
-                if (!py_gxsm_remote_console){
-                        g_warning ("PySHM: Error: py_gxsm_remote_console class not initalized");
-                        return;
-                }
-                PySHMServer_Run(NULL);
+                //if (!py_gxsm_remote_console){
+                //        g_warning ("PySHM: Error: py_gxsm_remote_console class not initalized");
+                //        return;
+                //}
+                //PySHMServer_Run(NULL);
                 //g_thread_new (NULL, PySHMServer_Run, NULL);
         }
 }
@@ -5370,20 +5376,18 @@ static void pyremote_init(void)
 	
                 main_get_gapp()->ConnectPluginToRemoteAction (run_action_script_callback);
         }
-
+        
 
         // Init PySHM external interface
 	PI_DEBUG_GM(DBG_L2, "pyremote PySHM Init");
-        PySHMServer_Run (GINT_TO_POINTER(1)); // init only
+
+        // catch
+        //if (signal(SIGUSR1, PySHM_signal_handler) == SIG_ERR)
+        //        g_warning ("Can't catch SIGUSR1");
+
+        static int dummy;
+        g_thread_new (NULL, PySHMServer_Run, &dummy);
         
-        // Register the signal handler for SIGUSR1 for PySHM external interface
-        if (signal(SIGUSR1, PySHM_signal_handler) == SIG_ERR) {
-                g_warning("PySHM: Can't catch SIGUSR1");
-        } else {
-                PI_DEBUG_GM(DBG_L2, "PySHM: connected PySHM to Gxsm pyremote, using SIGUSR1 and SHM");
-        }
-
-
         py_gxsm_remote_console->run("\nPy Remote Console Init...");
         g_thread_new (NULL, py_gxsm_console::PyRunConsoleThread, NULL);
 }
@@ -5415,6 +5419,6 @@ static void pyremote_cleanup(void)
         py_gxsm_remote_console = NULL;
 
         // Cleanup PySHM external interface
-        PySHMServer_Run (GINT_TO_POINTER(99)); // cleanup and exit PySHM server (close SHM)
+        PySHMServer_Run (NULL); // cleanup and exit PySHM server (close SHM)
 }
 
