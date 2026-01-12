@@ -22,6 +22,7 @@
 ## * along with this program; if not, write to the Free Software
 ## * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 
+import types
 import faulthandler; faulthandler.enable()
 
 version = "1.0.0"
@@ -33,12 +34,20 @@ import time
 import struct
 import array
 import math
+import pickle
 
 import numpy as np
 
 from multiprocessing import shared_memory
 from multiprocessing.resource_tracker import unregister
 
+import os
+import psutil
+import signal
+import cython
+import array
+#from cpython.memoryview cimport PyMemoryView_FromMemory
+#from cpython cimport buffer
 
 # ACTIONS
 SHM_ACTION_IDLE       = 0x0000000
@@ -83,6 +92,24 @@ class gxsm_process():
                         'time' : 0.0  # exact FPGA uptime. This is the FPGA time of last reading in seconds, 8ns resolution
                 }
 
+                self.gxsm4pid = 0
+
+                for proc in psutil.process_iter(['pid', 'name']):
+                        try:
+                                # Check if process name matches the desired name
+                                if proc.info['name'] == 'gxsm4':
+                                        self.gxsm4pid = proc.info['pid']
+                        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                                # Handle potential exceptions for processes that might terminate
+                                # or be inaccessible during iteration
+                                pass
+                        
+                #if self.gxsm4pid > 0:
+                if 0:
+                        print ('Gxsm4 PID found: ', self.gxsm4pid)
+                        self.noargs = "".encode('utf-8') # Empty PyObject
+                        self.get_gxsm4pyshm_shm_block()
+
                 self.get_gxsm4rpspmc_shm_block()
                         
         # Open SHM block from Gxsm4
@@ -95,8 +122,70 @@ class gxsm_process():
                         xyz=np.ndarray((9,), dtype=np.double, buffer=self.gxsm_shm.buf).reshape((3,3)).T  # X Mi Ma, Y Mi Ma, Z Mi Ma
                         print (xyz)
                 except FileNotFoundError:
-                        print ("SharedMemory(name='gxsm4rpspmc_monitors') not available. Please start gxsm4 and connect RPSPMC.")
+                        print ("SharedMemory(name='gxsm4rpspmc_monitors') is not available. Please start gxsm4 and connect RPSPMC.")
 
+        def get_gxsm4pyshm_shm_block(self):
+                try:
+                        self.gxsm_pyshm = shared_memory.SharedMemory(name='gxsm4_py_shm_data_block')
+                        unregister(self.gxsm_pyshm._name, 'shared_memory')
+                        #### do not close externally!!! gxsm4 manages: gxsm_pyshm.close()
+                        print (self.gxsm_pyshm)
+                        self.init_pyshm_mappings()
+                        
+                except FileNotFoundError:
+                        print ("SharedMemory(name='gxsm4_py_shm_data_block') is not available. Please start gxsm4.")
+                        
+        def init_pyshm_mappings(self):
+                #methods = self.exec_pyshm_method('help', ())
+                methods = self.exec_pyshm_method('help', ('M',))
+                print (methods)
+                for m in methods:
+                        print (m)
+                        
+                v = self.exec_pyshm_method('get', ('dsp-fbs-bias',))
+                print ('Return:', v)
+                
+                #v = self.exec_pyshm_method('xxxxget', ('dsp-fbs-bias',4))
+                #print ('Return:', v)
+                
+                v = self.exec_pyshm_method('set', ('dsp-fbs-bias','1.234',))
+                print ('Return:', v)
+                
+                return methods
+                
+        def exec_pyshm_method(self, method, args):
+                print ('exec_pyshm_method ', method, args)
+                pyshm_method = self.gxsm_pyshm.buf[0:len(method)+1]
+                pyshm_object_len = np.frombuffer(self.gxsm_pyshm.buf, dtype=np.uint64, count=1, offset=128)
+                method_bytes = method.encode('utf-8') + b'\x00'
+                pyshm_method[:] = method_bytes # set method name
+
+                args_data =  pickle.dumps(args)
+                print ('args: ', args_data)
+                print ('args.len:', len(args_data))
+                pyshm_object_len[0] = len(args_data) # object size
+                self.gxsm_pyshm.buf[128+8 : 128+8+len(args_data)] = args_data
+                
+                pyshm_status = np.frombuffer(self.gxsm_pyshm.buf, dtype=np.int64, count=1, offset=100)
+                pyshm_status[0] = 1 # mark BUSY
+                
+                print ('signaling gxsm')
+                os.kill(self.gxsm4pid, signal.SIGUSR1) # signal Gxsm4.PySHM...
+
+                # wait
+                while pyshm_status[0] == 1:
+                        time.sleep(0.1)
+                        print ('waiting')
+                if pyshm_status[0] == -1:
+                        print ('SHM Method Result: Error = ', pyshm_status[0])
+                        return
+                else:
+                        print ('SHM Method Result Code = ', pyshm_status[0])
+
+                pyshm_pickles_bytes_len = int(np.frombuffer(self.gxsm_pyshm.buf, dtype=np.uint64, count=1, offset=128))
+                print ('data len:', pyshm_pickles_bytes_len)
+                return pickle.loads(self.gxsm_pyshm.buf[128+8 : 128+8+pyshm_pickles_bytes_len])
+                        
         # Read complete Monitoring Block
         def read_status(self):
                 try:
@@ -239,3 +328,6 @@ class gxsm_process():
                 
 
 
+
+
+                

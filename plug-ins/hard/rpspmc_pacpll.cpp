@@ -7283,6 +7283,17 @@ static void Check_conf(GnomeResPreferences* grp, remote_args* ra){
                 gnome_res_check_remote_command (grp, ra);
 };
 
+static void CbAction_ra(remote_action_cb* ra, gpointer arglist){
+	if(ra->cmd && ((gchar**)arglist)[1])
+		if(! strcmp(((gchar**)arglist)[1], ra->cmd)){
+			if (ra->data)
+				(*ra->RemoteCb) (ra->widget, ra->data);
+			else
+				(*ra->RemoteCb) (ra->widget, arglist);
+                        ((gchar**)arglist)[3] = (gchar*)ra;
+			// see above and pcs.h
+		}
+};
 
 void remote_set_ra (const gchar* id, const gchar* value)
 {
@@ -7312,7 +7323,6 @@ double remote_get_ra (const gchar *id){
                 return ra.qvalue;
 }
 
-
 gboolean RPSPMC_Control::check_shm_action_idle_callback(gpointer self){
         if (rpspmc_pacpll->update_shm_monitors (1)) // manage SHM ACTIONS only
                 return G_SOURCE_CONTINUE;
@@ -7327,6 +7337,13 @@ gboolean RPspmc_pacpll::update_shm_monitors (int ctrl, int close_shm){
         // Set the size of the shared memory region
         static size_t shm_size = sizeof(double)*512;
         static gboolean keep_alife=true;
+
+        // tmp SHM data exchange block created and reused/resized as needed
+        const char *gxsm_shm_data = "/gxsm4tmp_data_block";
+        static int shm_data_fd = -1;
+        static void *shm_data_ptr = NULL;
+        static size_t shm_data_size = 0;
+        
         
         if (!keep_alife)
                 return true;
@@ -7375,6 +7392,30 @@ gboolean RPspmc_pacpll::update_shm_monitors (int ctrl, int close_shm){
                 }
                 shm_ptr = NULL;
                 shm_fd = -1;
+                shm_size = 0;
+
+                // Unmap the shared tmp data memory object if been created
+                if (shm_data_fd > 0){
+                        if (munmap(shm_data_ptr, shm_data_size) == -1) {
+                                g_error("Error data block munmap");
+                                return;
+                        }
+                        // Close the shared memory file descriptor
+                        if (close(shm_data_fd) == -1) {
+                                g_error("Error close data block shm fd");
+                                return 1;
+                        }
+                
+                        // Unlink the shared memory object
+                        if (shm_unlink(gxsm_shm_data) == -1) {
+                                g_error("Error shm_unlink data block shm");
+                                return 1;
+                        }
+                        shm_data_ptr = NULL;
+                        shm_data_fd = -1;
+                        shm_data_size = 0;
+                }
+                
                 return false;
         }
 
@@ -7420,12 +7461,23 @@ gboolean RPspmc_pacpll::update_shm_monitors (int ctrl, int close_shm){
                 // SHM[128] := 2 ---> Level=Current-Setpoint (Adjust Z to Z-Setpoint if Current Set Point is not exceeded, i.e. const Z mode); completed when SHM[128] := 0
 
                 // ACTIONS
-#define SHM_ACTION_IDLE        0x0000000
-#define SHM_ACTION_CTRL_Z_SET  0x0000010
-#define SHM_ACTION_CTRL_Z_FB   0x0000011
-#define SHM_ACTION_GET         0x0000020
-#define SHM_ACTION_SET         0x0000021
+#define SHM_ACTION_IDLE                    0x0000000 // ---
+#define SHM_ACTION_CTRL_Z_SET              0x0000010 // gxsm.XXX
+#define SHM_ACTION_CTRL_Z_FB               0x0000011 // gxsm.XXX
+#define SHM_ACTION_GET                     0x0000020 // gxsm.get
+#define SHM_ACTION_SET                     0x0000021 // gxsm.set
+#define SHM_ACTION_ACTION                  0x0000030 // gxsm.action
+#define SHM_ACTION_MOVETO_SCAN_XY          0x0000031 // gxsm.moveto_scan_xy
+#define SHM_ACTION_START_SCAN              0x0000035 // gxsm.startscan
+#define SHM_ACTION_STOP_SCAN               0x0000036 // gxsm.stopscan
 
+#define SHM_ACTION_GET_SLICE               0x0000050 // gxsm.get_slice (ch, v, t, yi, yn)
+#define SHM_ACTION_GET_SLICE_V             0x0000051 // gxsm.get_slice_v (ch, x, t, yi, yn)
+                
+#define SHM_ACTION_GET_PROBE_EVENT         0x0000055 // gxsm.get_probe_event (ch, nth)
+#define SHM_ACTION_GET_MARKER_OBJECT       0x0000056 // gxsm.marker_getobject_action (ch, objnameid, action='REMOVE'|'REMOVE-ALL'|'GET_COORDS'|'SET-OFFSET')
+          
+                
                 // SHM MEMORY LOCATION ASIGNMENTS
 #define SHM_ACTION_OFFSET           128
 #define SHM_ACTION_VPAR_64_START    130
@@ -7434,6 +7486,7 @@ gboolean RPspmc_pacpll::update_shm_monitors (int ctrl, int close_shm){
 #define SHM_ACTION_FRETN(N)         (SHM_ACTION_FRET_64_START+N) // max 10
 
 #define SHM_ACTION_FP_ID_STRING_64  150 // max 64
+#define SHM_ACTION_FP_02_STRING_64  220 // max 64
 
 #define SHM_ADR(OFFSET) (shm_ptr+(OFFSET)*sizeof(double))
         
@@ -7485,7 +7538,106 @@ gboolean RPspmc_pacpll::update_shm_monitors (int ctrl, int close_shm){
                         *(double*)SHM_ADR(SHM_ACTION_FRETN(9)) = 0.0; // OK
                         break;
                 }
+                case SHM_ACTION_ACTION: {       // (SHM_ADR(SHM_ACTION_FRETN(0))) ACTION (SHM_ACTION_FP_ID_STRING_64 ACTION_ID)
+                        // GXSM.ACTION function
+                        gchar id_action[64]; memset (id_action, 0, sizeof(id_action));
+                        memcpy (id_action, SHM_ADR(SHM_ACTION_FP_ID_STRING_64), sizeof(id_action));
+                        id_action[63]=0; // safety termination
+                        gchar str_arg[64]; memset (str_arg, 0, sizeof(str_arg));
+                        memcpy (str_arg, SHM_ADR(SHM_ACTION_FP_02_STRING_64), sizeof(str_arg));
+                        str_arg[63]=0; // safety termination
 
+                        gchar *list[] = {(char *)"action", id_action, str_arg, NULL, NULL};
+                        g_slist_foreach(gapp->RemoteActionList, (GFunc) CbAction_ra, (gpointer)list);
+#if 0
+                        idle_data->ra_info = (remote_action_cb*)(list[3]);
+                        if ( idle_data.ra_info )
+                                if ( idle_data.ra_info->data_length > 0){
+                                        npy_intp dims[2];
+                                        dims[0] = 3; // max 5
+                                        dims[1] = idle_data.ra_info->data_length;
+                                        PyObject* pyarr = PyArray_SimpleNewFromData(2, dims, NPY_DOUBLE, (void*)idle_data.ra_info->data_vector[0]);
+                                        PyArray_ENABLEFLAGS((PyArrayObject*) pyarr, NPY_ARRAY_OWNDATA);
+                                        return Py_BuildValue("O", pyarr); // Python code will receive the array as numpy array.
+                                }
+#endif
+                        *(double*)SHM_ADR(SHM_ACTION_FRETN(9)) = 0.0; // OK
+                        break;
+                }
+                        
+                case SHM_ACTION_START_SCAN: {       //
+                        GSettings *global_settings = g_settings_new (GXSM_RES_BASE_PATH_DOT ".global");
+                        g_settings_set_int (global_settings, "math-global-share-variable-repeatmode-override", 1);
+                        g_clear_object (&global_settings);
+                        main_get_gapp()->signal_emit_toolbar_action ("Toolbar_Scan_Start");
+                       *(double*)SHM_ADR(SHM_ACTION_FRETN(9)) = 0.0; // OK
+                        break;
+                }
+                case SHM_ACTION_STOP_SCAN: {       //
+                        main_get_gapp()->signal_emit_toolbar_action ("Toolbar_Scan_Stop");
+                        *(double*)SHM_ADR(SHM_ACTION_FRETN(9)) = 0.0; // OK
+                        break;
+                }
+
+                case SHM_ACTION_GET_SLICE: {      // void GET_SLICE (SHM_ACTION_FPN(0) ch, ...)
+
+                        int ch = (int)(*(double*)SHM_ADR(SHM_ACTION_FPN(0)));
+                        int v  = (int)(*(double*)SHM_ADR(SHM_ACTION_FPN(1)));
+                        int t  = (int)(*(double*)SHM_ADR(SHM_ACTION_FPN(2)));
+                        int yi = (int)(*(double*)SHM_ADR(SHM_ACTION_FPN(3)));
+                        int yn = (int)(*(double*)SHM_ADR(SHM_ACTION_FPN(4)));
+                        
+                        Scan *src =gapp->xsm->GetScanChannel (ch);
+                        if (t >= 0) // select time element
+                                src->retrieve_time_element (t);
+                        
+                        if (src && (yi+yn) <= src->mem2d->GetNy()){
+                                g_message ("SHM remote_getslice from mem2d scan data in (dz scaled to unit) CH%d, Ys=%d Yf=%d", (int)ch, (int)yi, (int)(yi+yn));
+
+                                shm_data_size = sizeof(double) * yn * src->mem2d->GetNx ();// + sizeof(int); // make it a PyObject!
+                                
+                                if (shm_data_fd == -1){
+                                        shm_data_fd = shm_open(gxsm_shm_data, O_CREAT | O_RDWR, 0666);
+                                        if (shm_data_fd == -1) {
+                                                g_error ("Error shm_open of %s.", rpspmc_monitors);
+                                                *(double*)SHM_ADR(SHM_ACTION_FRETN(9)) = -1; // E
+                                                break; //return false;
+                                        }
+                                }
+                
+                                // Resize the shared memory object to the desired size
+                                if (ftruncate (shm_data_fd, shm_data_size) == -1) {
+                                        g_error ("Error ftruncate of %s.", rpspmc_monitors);
+                                        *(double*)SHM_ADR(SHM_ACTION_FRETN(9)) = -2; // E
+                                        break; //return false;
+                                }
+
+                                // Map the shared memory object into the process address space
+                                shm_data_ptr = mmap(NULL, shm_data_size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_data_fd, 0);
+                                if (shm_data_ptr == MAP_FAILED) {
+                                        g_error("Error mmap");
+                                        *(double*)SHM_ADR(SHM_ACTION_FRETN(9)) = -3; // E
+                                        break; //return false;
+                                }
+                                double *darr2 = (double*) shm_data_ptr;
+                                double *dp=darr2;
+                                int yf = yi+yn;
+
+                                if (v >= 0) // use v value
+                                        for (int y=yi; y<yf; ++y)
+                                                for (int x=0; x<src->mem2d->GetNx (); ++x)
+                                                        *dp++ = src->mem2d->data->Z(x,y,v)*src->data.s.dz;
+                                else // current
+                                        for (int y=yi; y<yf; ++y)
+                                                for (int x=0; x<src->mem2d->GetNx (); ++x)
+                                                        *dp++ = src->mem2d->data->Z(x,y)*src->data.s.dz;
+                        }
+                        
+                        *(double*)SHM_ADR(SHM_ACTION_FRETN(9)) = 0.0; // OK
+                        break;
+                }
+                        
+                // ******************************
                 default:
                         *(double*)SHM_ADR(SHM_ACTION_FRETN(9)) = -1; // return ERROR in RET9
                         g_message ("SHM-ACTION* INVALID REQUEST {%08x}", (int)action_request);
