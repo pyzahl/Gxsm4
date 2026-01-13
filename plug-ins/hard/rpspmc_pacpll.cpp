@@ -7434,6 +7434,12 @@ gboolean RPspmc_pacpll::update_shm_monitors (int ctrl, int close_shm){
                 // PAC-PLL Monitors: dc-offset, exec_ampl_mon, dds_freq_mon, volume_mon, phase_mon, control_dfreq_mon
                 memcpy  (shm_ptr+40*sizeof(double), &pacpll_parameters.dc_offset, 7*sizeof(double));
 
+                // Z-Servo Info: mode, setpoint, cp, ci, cp_db, ci_db, upper, lower, setpoint_cz, level, in_offcomp, src_mux
+                memcpy  (shm_ptr+50*sizeof(double), &spmc_parameters.z_servo_mode, 12*sizeof(double));
+
+                // Scan Info: alpha, slope-dzx,dzy,slew, scanpos-x,y,slew,opts, offset-x,y,z
+                memcpy  (shm_ptr+70*sizeof(double), &spmc_parameters.alpha, 13*sizeof(double));
+
                 // FPGA RPSPMC uptime in sec, 8ns resolution -- i.e. exact time of last reading
                 memcpy  (shm_ptr+100*sizeof(double), &spmc_parameters.uptime_seconds, sizeof(double));
 

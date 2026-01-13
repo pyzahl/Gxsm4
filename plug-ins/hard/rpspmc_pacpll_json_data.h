@@ -49,6 +49,7 @@ struct JSON_signal {
 
 struct PACPLL_parameters {
         // RP-PAC-PLL module parameters
+        // ---> DO NOT REORDER from here
         double dc_offset;
         double exec_amplitude_monitor;
         double dds_frequency_monitor;
@@ -56,6 +57,7 @@ struct PACPLL_parameters {
         double volume_monitor;
         double phase_monitor;
         double control_dfreq_monitor;
+        // <--- to here
         double cpu_load;
         double free_ram;
         double counter;
@@ -173,6 +175,7 @@ struct SPMC_parameters {
         double z_polarity;
         int gxsm_z_polarity;
 
+        // ---> DO NOT REORDER from here
         double z_servo_mode;
         double z_servo_setpoint;
         double z_servo_cp;
@@ -185,6 +188,7 @@ struct SPMC_parameters {
         double z_servo_level;
         double z_servo_in_offsetcomp;
         double z_servo_src_mux;
+        // <-- to here
         
         double gvp_control;
         //double gvp_execute;
@@ -199,6 +203,7 @@ struct SPMC_parameters {
         double rpspmc_gvp_raw_nii;
         double rpspmc_gvp_raw_decii;
         
+        // ---> DO NOT REORDER from here
         double alpha;
         double slope_dzx;
         double slope_dzy;
@@ -215,6 +220,7 @@ struct SPMC_parameters {
 
         double set_offset_xy_slew;
         double set_offset_z_slew;
+        // <-- to here
 
         double v[24];
 
@@ -222,6 +228,7 @@ struct SPMC_parameters {
         double rpspmc_dma_pull_interval;
         
         // RP SPMC Monitors
+        // ---> DO NOT REORDER from here
         double bias_monitor;
         double bias_reg_monitor;
         double bias_set_monitor;
@@ -244,6 +251,7 @@ struct SPMC_parameters {
         double xs_monitor; // scan coords
         double ys_monitor;
         double zs_monitor;
+        // <--- to here
 
         // Lock-In
         double lck1_bq2_mag_monitor;
