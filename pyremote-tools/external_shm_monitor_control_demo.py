@@ -568,6 +568,13 @@ class PZHVXYZ_App(Gtk.Application):
         def on_button_znormal(self, w):
                 gxsm.set_current_level_0 () ## normal Z control
                 
+        def on_test_button(self, w):
+                x = gxsm.list_refnames()
+                print (x)
+                for eid in x:
+                        print ('ENTRY {} = {}'.format(eid, gxsm.get(eid)))
+                               
+                        
         def on_button_set(self, w, eid, val):
                 gxsm.set (eid.get_text(), float( val.get_text () ))
                 
@@ -896,6 +903,10 @@ class PZHVXYZ_App(Gtk.Application):
                         button = Gtk.Button(label="Z Normal")
                         button.connect("clicked", self.on_button_znormal)
                         grid_chv5c.attach(button, 18, 9, 1, 1)
+
+                        button = Gtk.Button(label="Test Button")
+                        button.connect("clicked", self.on_test_button)
+                        grid_chv5c.attach(button, 19, 9, 1, 1)
 
                         gxsm_eid = Gtk.Entry ()
                         grid_chv5c.attach(gxsm_eid, 13, 10, 4, 1)
