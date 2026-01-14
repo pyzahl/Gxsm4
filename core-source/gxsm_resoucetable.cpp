@@ -286,6 +286,7 @@ extern "C++" {
                 ( GNOME_RES_FLOAT,  "Analog/V9", "0.5", &xsmres.V[8], N_("Inst-SPM"),
                   N_("External Amplifier Gain in Position 8")
                   ),
+                //
 #if 1
                 GNOME_RES_ENTRY_ASK_PATH_OPTION_FMT_DEPEND
                 ( GNOME_RES_INT, "Analog/VX-default","1", &xsmres.VXdefault, AnalogVXYZIndexList, 
@@ -331,6 +332,46 @@ extern "C++" {
                   ask_if_instrument_is_spm_and_hard
                   ),
 #endif
+
+                /* Variable IVC Gain Settings */
+                GNOME_RES_ENTRY_AUTO_PATH
+                ( GNOME_RES_FLOAT,  "Analog/VG1",  "1.0", &xsmres.VG[0], N_("Inst-SPM"),
+                  N_("IVC Gain Option for Position 0")
+                  ),
+                GNOME_RES_ENTRY_AUTO_PATH
+                ( GNOME_RES_FLOAT,  "Analog/VG2",  "0.0", &xsmres.VG[1], N_("Inst-SPM"),
+                  N_("IVC Gain Option for Position 1")
+                  ),
+                GNOME_RES_ENTRY_AUTO_PATH
+                ( GNOME_RES_FLOAT,  "Analog/VG3",  "0.0", &xsmres.VG[2], N_("Inst-SPM"),
+                  N_("IVC Gain Option for Position 2")
+                  ),
+                GNOME_RES_ENTRY_AUTO_PATH
+                ( GNOME_RES_FLOAT,  "Analog/VG4", "0.0", &xsmres.VG[3], N_("Inst-SPM"),
+                  N_("IVC Gain Option for Position 3")
+                  ),
+                GNOME_RES_ENTRY_AUTO_PATH
+                ( GNOME_RES_FLOAT,  "Analog/VG5", "0.0", &xsmres.VG[4], N_("Inst-SPM"),
+                  N_("IVC Gain Option for Position 4")
+                  ),
+                GNOME_RES_ENTRY_AUTO_PATH
+                ( GNOME_RES_FLOAT,  "Analog/VG6", "0.0", &xsmres.VG[5], N_("Inst-SPM"),
+                  N_("IVC Gain Option for Position 5")
+                  ),
+                GNOME_RES_ENTRY_AUTO_PATH
+                ( GNOME_RES_FLOAT,  "Analog/VG7", "0.0", &xsmres.VG[6], N_("Inst-SPM"),
+                  N_("IVC Gain Option for Position 6")
+                  ),
+                GNOME_RES_ENTRY_AUTO_PATH
+                ( GNOME_RES_FLOAT,  "Analog/VG8", "0.0", &xsmres.VG[7], N_("Inst-SPM"),
+                  N_("IVC Gain Option for Position 7")
+                  ),
+                GNOME_RES_ENTRY_AUTO_PATH
+                ( GNOME_RES_FLOAT,  "Analog/VG9", "0.0", &xsmres.VG[8], N_("Inst-SPM"),
+                  N_("IVC Gain Option for Position 8")
+                  ),
+                // ----------
+
                 GNOME_RES_ENTRY_AUTO_PATH_OPTION
                 ( GNOME_RES_BOOL, "Analog/Analog-Offset-Adding", "false", &xsmres.AnalogOffsetAdding, TrueFalseList, N_("Inst-SPM"), 
                   N_("Offset adding modus for piezo amplifier:\nchoose from:\n 'DSP offset adding': false\n 'Analog offset adding': true")

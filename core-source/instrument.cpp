@@ -38,7 +38,7 @@ XSM_Instrument::XSM_Instrument(XSMRESOURCES &xsmres){
 	AnalogVMaxIn = xsmres.AnalogVMaxIn;
 	DigRangeOut = (long)xsmres.DigRangeOut;
 	AnalogVMaxOut = xsmres.AnalogVMaxOut;
-	current_gain_multiplier = 1.0;
+	current_gain_multiplier = xsmres.current_gain_modifier;
   
 	for( int i=0; i<GAIN_POSITIONS; ++i)
 		VList[i] = xsmres.V[i];
@@ -59,7 +59,7 @@ XSM_Instrument::XSM_Instrument(XSMRESOURCES &xsmres){
 	Vym = xsmres.XYZ_modulation_gains[1];
 	Vzm = xsmres.XYZ_modulation_gains[2];
 
-	update_piezosensitivity (xsmres);
+	update (xsmres);
 
 	type=NULL;
 	name=NULL;
@@ -68,28 +68,35 @@ XSM_Instrument::XSM_Instrument(XSMRESOURCES &xsmres){
 	zunitname=NULL;
 }
 
+double XSM_Instrument::set_current_gain_modifier (XSMRESOURCES &xsmres, int pos ) {
+	if (pos >= 0 && pos < 9)
+		if (xsmres.VG[pos] > 0.0)
+			return set_current_gain_modifier ((double)xsmres.VG[pos]);
+	return current_gain_multiplier;
+}
+
 // may call from HwI to custom adjust and override preferences
 void XSM_Instrument::override_dig_range (long digital_range, XSMRESOURCES &xsmres){ // always symmetric +/-
 	DigRangeIn  = digital_range;
 	DigRangeOut = digital_range;
-	update_piezosensitivity (xsmres);
+	update (xsmres);
 }
 
 void XSM_Instrument::override_volt_in_range (double vrange, XSMRESOURCES &xsmres){ // always symmetric +/-
 	AnalogVMaxIn = vrange;
-	update_piezosensitivity (xsmres);
+	update (xsmres);
 }
 
 void XSM_Instrument::override_volt_out_range (double vrange, XSMRESOURCES &xsmres){ // always symmetric +/-
 	AnalogVMaxOut = vrange;
-	update_piezosensitivity (xsmres);
+	update (xsmres);
 }	
 
 OFFSET_MODE XSM_Instrument::OffsetMode (OFFSET_MODE ofm){ 
 	return offset_mode;
 }
 
-void XSM_Instrument::update_piezosensitivity (XSMRESOURCES &xsmres, double temp){
+void XSM_Instrument::update (XSMRESOURCES &xsmres, double temp){
 	if (temp > 0.){ // use var temp sensitivity computation
 		xPsens = xsmres.XPiezoAV;
 		yPsens = xsmres.YPiezoAV;
@@ -100,8 +107,8 @@ void XSM_Instrument::update_piezosensitivity (XSMRESOURCES &xsmres, double temp)
 		zPsens = xsmres.ZPiezoAV;
 	}
 
-	XSM_DEBUG_GM (DBG_L1, "XSM_Instrument::update_piezosensitivity ** xsmres.X/Y/ZPiezoAV = %g, %g, %g Ang/V", xPsens, yPsens, zPsens);
-	XSM_DEBUG_GM (DBG_L1, "XSM_Instrument::update_piezosensitivity ** xsmres.DigRangeOut  = %ld", DigRangeOut);
+	XSM_DEBUG_GM (DBG_L1, "XSM_Instrument::update ** xsmres.X/Y/ZPiezoAV = %g, %g, %g Ang/V", xPsens, yPsens, zPsens);
+	XSM_DEBUG_GM (DBG_L1, "XSM_Instrument::update ** xsmres.DigRangeOut  = %ld", DigRangeOut);
 
 	xR = AnalogVMaxOut*xPsens;
 	yR = AnalogVMaxOut*yPsens;
@@ -114,14 +121,15 @@ void XSM_Instrument::update_piezosensitivity (XSMRESOURCES &xsmres, double temp)
 	BiasGain     = (double)xsmres.BiasGain;
 	BiasOffset   = (double)xsmres.BiasOffset;
 
-	set_current_gain_modifier ((double)xsmres.current_gain_modifier);
+	if (xsmres.current_gain_modifier != 1.0)
+		set_current_gain_modifier ((double)xsmres.current_gain_modifier);
 	nAmpere2Volt = (double)xsmres.nAmpere2Volt * current_gain_multiplier;
 	nNewton2Volt = (double)xsmres.nNewton2Volt;
 	dHertz2Volt  = (double)xsmres.dHertz2Volt;
 	eV2Volt      = (double)xsmres.EnergyCalibVeV;
 
    
-	XSM_DEBUG_GM (DBG_L1, "XSM_Instrument::update_piezosensitivity ** xsmres.BiasGain     = %g", BiasGain);
+	XSM_DEBUG_GM (DBG_L1, "XSM_Instrument::update ** xsmres.BiasGain     = %g", BiasGain);
 }
 
 double XSM_Instrument::temperature (double diode_volts){

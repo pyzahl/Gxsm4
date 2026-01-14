@@ -429,6 +429,7 @@ public:
 	//static int config_waveform (GtkWidget *widget, RPSPMC_Control *spmsc);
 	static void configure_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
         static int choice_Ampl_callback(GtkWidget *widget, RPSPMC_Control *self);
+        static int choice_VGain_callback(GtkWidget *widget, RPSPMC_Control *self);
         static int choice_scansource_callback (GtkWidget *widget, RPSPMC_Control *self);
 
 	static int DSP_cret_callback (GtkWidget *widget, RPSPMC_Control *self);

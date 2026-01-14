@@ -113,7 +113,8 @@ typedef struct{
 	gchar LogFilePath[PATHSIZE];
 	float DigRangeIn, AnalogVMaxIn;
 	float DigRangeOut, AnalogVMaxOut;
-	float V[GAIN_POSITIONS];
+	float V[GAIN_POSITIONS];  // Piezo Amplifier common Variable Gains for V-XYZ, V-XYZ0
+	float VG[GAIN_POSITIONS]; // Variable Gains for IVC
 	int   VXdefault, VYdefault, VZdefault;
 	int   VX0default, VY0default, VZ0default;
 	int   AnalogOffsetAdding;

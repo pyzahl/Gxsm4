@@ -1533,6 +1533,21 @@ int RPSPMC_Control::choice_Ampl_callback (GtkWidget *widget, RPSPMC_Control *spm
 	return 0;
 }
 
+int RPSPMC_Control::choice_VGain_callback (GtkWidget *widget, RPSPMC_Control *spmsc){
+        PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);
+	gint i = gtk_combo_box_get_active (GTK_COMBO_BOX (widget));
+	gint j = GPOINTER_TO_INT (g_object_get_data( G_OBJECT (widget), "VGindex"));
+	switch(j){
+	case 0: double g = rpspmc_pacpll_hwi_pi.app->xsm->Inst->set_current_gain_modifier(xsmres, i);
+                g_message ("Adjusting IVC VGain: %f nA/V x pos[%d] %f => %f nA/V", xsmres.nAmpere2Volt, i, xsmres.VG[i], g);
+		break;
+	}
+
+        rpspmc_hwi->update_hardware_mapping_to_rpspmc_source_signals ();
+        
+	return 0;
+}
+
 // No-op to prevent w from propagating "scroll" events it receives.
 
 void disable_scroll_cb( GtkWidget *w ) {}
@@ -1567,7 +1582,7 @@ void RPSPMC_Control::create_folder (){
 // ==== Folder: Feedback & Scan ========================================
         bp->start_notebook_tab (notebook, "Feedback & Scan", "rpspmc-tab-feedback-scan", hwi_settings);
 
-	bp->new_grid_with_frame ("SPM Controls");
+	bp->new_grid_with_frame ("SPM Controls",2);
         
         // ------- FB Characteristics
         bp->start (); // start on grid top and use widget grid attach nx=4
@@ -1721,7 +1736,7 @@ void RPSPMC_Control::create_folder (){
         // ========== Z-Servo
         // bp->pop_grid ();
         //bp->new_line ();
-        //bp->new_grid_with_frame ("Z-Servo");
+        //bp->new_grid_with_frame ("Z-Servo",2);
 
         bp->set_label_width_chars (7);
         bp->set_input_width_chars (12);
@@ -1779,7 +1794,7 @@ void RPSPMC_Control::create_folder (){
         PI_DEBUG (DBG_L4, "SPMC----SCAN ------------------------------- ");
         bp->pop_grid ();
         bp->new_line ();
-        bp->new_grid_with_frame ("Scan Characteristics");
+        bp->new_grid_with_frame ("Scan Characteristics",2);
 
         bp->start (4); // wx=4
         bp->set_label_width_chars (7);
@@ -1836,7 +1851,7 @@ void RPSPMC_Control::create_folder (){
 	// ========== SCAN CHANNEL INPUT SOURCE CONFIGURATION MENUS
         bp->pop_grid ();
         bp->new_line ();
-        bp->new_grid_with_frame ("Configure Scan Source GVP MUX Selectors (Swappable Signals)");
+        bp->new_grid_with_frame ("Configure Scan Source GVP MUX Selectors (Swappable Signals)",2);
 
         bp->set_configure_list_mode_on ();
         bp->add_to_configure_list (bp->frame); // manage en block
@@ -1853,7 +1868,7 @@ void RPSPMC_Control::create_folder (){
         // ========== LDC -- Enable Linear Drift Correction -- Controls
         bp->pop_grid ();
         bp->new_line ();
-        bp->new_grid_with_frame ("Enable Linear Drift Correction (LDC) -- N/A on RPSPMC at this time");
+        bp->new_grid_with_frame ("Enable Linear Drift Correction (LDC) -- N/A on RPSPMC at this time",2);
         bp->set_configure_list_mode_on ();
 
 	LDC_status = bp->grid_add_check_button ("Enable Linear Drift Correction","Enable Linear Drift Correction" PYREMOTE_CHECK_HOOK_KEY("MainLDC"), 3);
@@ -1876,7 +1891,7 @@ void RPSPMC_Control::create_folder (){
         bp->set_input_width_chars (8);
         bp->pop_grid ();
         bp->new_line ();
-        bp->new_grid_with_frame ("Piezo Drive Settings");
+        bp->new_grid_with_frame ("Piezo Drive Settings",1);
 
         const gchar *PDR_gain_label[6] = { "VX", "VY", "VZ", "VX0", "VY0", "VZ0" };
         const gchar *PDR_gain_key[6] = { "vx", "vy", "vz", "vx0", "vy0", "vz0" };
@@ -1918,6 +1933,48 @@ void RPSPMC_Control::create_folder (){
                 bp->add_to_scan_freeze_widget_list (wid);
         }
         bp->pop_grid ();
+
+
+	// ========== Various Gain Settings
+        bp->set_input_width_chars (8); // bp->set_xy (2,4);
+        bp->new_grid_with_frame ("Gain Settings",1);
+
+        const gchar *V_gain_label[] = { "VG-IVC", NULL };
+        const gchar *V_gain_unit[]  = { "V/nA", NULL };
+        const gchar *V_gain_key[]   = { "vgivc", NULL };
+        for(int j=0; V_gain_label[j]; j++) {
+                gtk_label_set_width_chars (GTK_LABEL (bp->grid_add_label (V_gain_label[j])), 6);
+        
+                GtkWidget *wid = gtk_combo_box_text_new ();
+                g_object_set_data  (G_OBJECT (wid), "VGindex", GINT_TO_POINTER (j));
+
+                // Init gain-choicelist
+                for(int ig=0; xsmres.VG[ig] > 0.0; ig++){
+                        gchar *V_gain_value = g_strdup_printf ("%.2E A/V [%.2E]", 1e9/xsmres.nAmpere2Volt*xsmres.VG[ig], xsmres.VG[ig]);
+                        gchar *id = g_strdup_printf ("%02d:%02d",j,ig);
+                        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (wid), id, V_gain_value);
+                        g_free (id);
+                        g_free (V_gain_value);
+                }
+
+                g_signal_connect (G_OBJECT (wid), "changed",
+                                  G_CALLBACK (RPSPMC_Control::choice_VGain_callback),
+                                  this);
+
+                gchar *tmpkey = g_strconcat ("spm-rpspmc-", V_gain_key[j], NULL); 
+                // get last setting, will call callback connected above to update gains!
+                g_settings_bind (hwi_settings, tmpkey,
+                                 G_OBJECT (GTK_COMBO_BOX (wid)), "active",
+                                 G_SETTINGS_BIND_DEFAULT);
+                g_free (tmpkey);
+
+                //VXYZS0Gain[j] = wid; // store for remote access/manipulation
+                bp->grid_add_widget (wid);
+                bp->add_to_scan_freeze_widget_list (wid);
+        }
+        bp->pop_grid ();
+
+
         bp->new_line ();
 
         bp->notebook_tab_show_all ();

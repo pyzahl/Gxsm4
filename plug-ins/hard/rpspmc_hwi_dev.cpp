@@ -77,10 +77,6 @@ rpspmc_hwi_dev::rpspmc_hwi_dev():RP_stream(this){
         rpspmc_history=NULL;
         history_block_size = 0;
 
-        // auto adjust and override preferences
-        main_get_gapp()->xsm->Inst->override_dig_range (1<<20, xsmres);    // gxsm does precision sanity checks and trys to round to best fit grid
-        main_get_gapp()->xsm->Inst->override_volt_in_range (5.0, xsmres);  // FOR AD4630-24 24bit
-        main_get_gapp()->xsm->Inst->override_volt_out_range (5.0, xsmres); // PMODs AD5791-20 20bit
 
         // SRCS Mapping for Scan Channels as set via Channelselector (independing from Graphs/GVP) in Gxsm, but here same masks as same GVP is used
 
@@ -97,7 +93,8 @@ rpspmc_hwi_dev::rpspmc_hwi_dev():RP_stream(this){
                 set_spmc_signal_mux (defaults);
         }
         
-        update_hardware_mapping_to_rpspmc_source_signals ();
+        // auto adjust and override preferences
+        hwi_init_overrides(); // !!!! Note: must re-overrride after life Gxsm Preferences Adjustments
 
         subscan_data_y_index_offset = 0;
         ScanningFlg=0;
@@ -117,6 +114,14 @@ rpspmc_hwi_dev::rpspmc_hwi_dev():RP_stream(this){
 rpspmc_hwi_dev::~rpspmc_hwi_dev(){
 }
 
+void rpspmc_hwi_dev::hwi_init_overrides(){ // auto adjust and override preferences
+        g_message ("Reconfiguring HwI ** rpspmc_hwi_dev : public XSM_Hardware :: hwi_init_overrides()");
+        main_get_gapp()->xsm->Inst->override_dig_range (1<<20, xsmres);    // gxsm does precision sanity checks and trys to round to best fit grid
+        main_get_gapp()->xsm->Inst->override_volt_in_range (5.0, xsmres);  // FOR AD4630-24 24bit
+        main_get_gapp()->xsm->Inst->override_volt_out_range (5.0, xsmres); // PMODs AD5791-20 20bit
+        
+        update_hardware_mapping_to_rpspmc_source_signals ();
+}
 
 // use SOURCE_SIGNAL_DEF rpspmc_source_signals[] table to auto configure (Scan Sources Configurations mapping)
 void rpspmc_hwi_dev::update_hardware_mapping_to_rpspmc_source_signals (){

@@ -377,6 +377,72 @@
         Default Amplifier Positionindex [0,1,2,..8] used by Z-Offset-Channel
       </description>
     </key>
+
+
+    <key name="vg1" type="d">
+      <default>1.0</default>
+      <summary>Variable IVC Gain for Position 0</summary>
+      <description>
+        Variable IVC Gain for Position 0
+      </description>
+    </key>
+    <key name="vg2" type="d">
+      <default>0.0</default>
+      <summary>Variable IVC Gain for Position 1</summary>
+      <description>
+        Variable IVC Gain for Position 1
+      </description>
+    </key>
+    <key name="vg3" type="d">
+      <default>0.0</default>
+      <summary>Variable IVC Gain for Position 2</summary>
+      <description>
+        Variable IVC Gain for Position 2
+      </description>
+    </key>
+    <key name="vg4" type="d">
+      <default>0.0</default>
+      <summary>Variable IVC Gain for Position 3</summary>
+      <description>
+        Variable IVC Gain for Position 3
+      </description>
+    </key>
+    <key name="vg5" type="d">
+      <default>0.0</default>
+      <summary>Variable IVC Gain for Position 4</summary>
+      <description>
+        Variable IVC Gain for Position 4
+      </description>
+    </key>
+    <key name="vg6" type="d">
+      <default>0.0</default>
+      <summary>Variable IVC Gain for Position 5</summary>
+      <description>
+        Variable IVC Gain for Position 5
+      </description>
+    </key>
+    <key name="vg7" type="d">
+      <default>0.0</default>
+      <summary>Variable IVC Gain for Position 6</summary>
+      <description>
+        Variable IVC Gain for Position 6
+      </description>
+    </key>
+    <key name="vg8" type="d">
+      <default>0.0</default>
+      <summary>Variable IVC Gain for Position 7</summary>
+      <description>
+        Variable IVC Gain for Position 7
+      </description>
+    </key>
+    <key name="vg9" type="d">
+      <default>0.0</default>
+      <summary>Variable IVC Gain for Position 8</summary>
+      <description>
+        Variable IVC Gain for Position 8
+      </description>
+    </key>
+
     <key name="analog-offset-adding" type="b">
       <default>false</default>
       <summary>Offset adding modus for piezo amplifier:

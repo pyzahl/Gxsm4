@@ -868,7 +868,7 @@ void App::spm_update_all(int Vflg){
         if(!spm_control) return;
         XSM_DEBUG(DBG_L3, "------ App::spm_update_all -------");
         if(gapp){
-                main_get_gapp ()->xsm->Inst->update_piezosensitivity (xsmres); // piezo, current, ... conversion are buffered, must update
+                main_get_gapp ()->xsm->Inst->update (xsmres); // piezo, current, ... conversion are buffered, must update
 
                 main_get_gapp ()->xsm->SetRedraw(FALSE); // suppress redraw on each displayrelevat field, do redraw only once at end !
 		

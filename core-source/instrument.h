@@ -51,13 +51,12 @@ public:
 	XSM_Instrument(XSMRESOURCES &xsmres);
 	virtual ~XSM_Instrument(){};
 
-	virtual void update_piezosensitivity (XSMRESOURCES &xsmres, double temp = -1.);
+	virtual void update (XSMRESOURCES &xsmres, double temp = -1.);
 	virtual double temperature (double diode_volts);
 
-	
-	
-	double set_current_gain_modifier (double f) { if (f > 0.) current_gain_multiplier = f; return f; };
-  
+	double set_current_gain_modifier (double f) { if (f > 0.) current_gain_multiplier = f; return current_gain_multiplier; };
+  	double set_current_gain_modifier (XSMRESOURCES &xsmres, int pos );
+        
 	double UOutLimit(double u){
 		if(u>AnalogVMaxOut) { u=AnalogVMaxOut; }
 		if(u<-AnalogVMaxOut) { u=-AnalogVMaxOut; }

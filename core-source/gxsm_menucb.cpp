@@ -388,6 +388,9 @@ void App::options_preferences_callback (GSimpleAction *simple, GVariant *paramet
         gnome_res_read_user_config (pref);
 	gnome_res_run_change_user_config (pref, N_("Gxsm Preferences")); 
 // on Dlg close pref is destroyed!
+
+        main_get_gapp ()->xsm->hardware->hwi_init_overrides ();
+        
 	return;
 }
 

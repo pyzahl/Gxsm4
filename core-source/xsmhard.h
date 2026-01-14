@@ -56,7 +56,8 @@ class XSM_Hardware{
 	virtual ~XSM_Hardware();
 
 	virtual int update_gxsm_configurations (){ return 0; }; /* called after GUI build complete */
-
+	virtual void hwi_init_overrides(){ }; /* if any xsmres... preferences need to be re-read or overriden, called after init and preferences changed */
+        
 	/* query Hardware description and features */
 	const gchar* Info (int data){ return get_info(); }; /* Info on Hardware Class */
 	virtual const gchar* GetStatusInfo () { return AddStatusString; }; /* Status */
