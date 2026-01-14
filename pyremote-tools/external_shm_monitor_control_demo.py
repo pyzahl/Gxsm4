@@ -573,6 +573,7 @@ class PZHVXYZ_App(Gtk.Application):
                 print (x)
                 for eid in x:
                         print ('ENTRY {} = {}'.format(eid, gxsm.get(eid)))
+                print(gxsm.get_instrument_gains())
                                
                         
         def on_button_set(self, w, eid, val):

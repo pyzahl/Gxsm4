@@ -94,6 +94,7 @@ rpspmc_hwi_dev::rpspmc_hwi_dev():RP_stream(this){
         }
         
         // auto adjust and override preferences
+
         hwi_init_overrides(); // !!!! Note: must re-overrride after life Gxsm Preferences Adjustments
 
         subscan_data_y_index_offset = 0;
