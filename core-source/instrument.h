@@ -54,7 +54,12 @@ public:
 	virtual void update (XSMRESOURCES &xsmres, double temp = -1.);
 	virtual double temperature (double diode_volts);
 
-	double set_current_gain_modifier (double f) { if (f > 0.) current_gain_multiplier = f; return current_gain_multiplier; };
+	double set_current_gain_modifier (double f=-1.0) {
+                if (f > 0.) current_gain_multiplier = f;
+                nAmpere2Volt = current_gain_multiplier * global_nAmpere2Volt;
+                
+                return current_gain_multiplier;
+        };
   	double set_current_gain_modifier (XSMRESOURCES &xsmres, int pos );
         
 	double UOutLimit(double u){
@@ -217,6 +222,7 @@ protected:
 	double xd, yd, zd; /* Resolution (min dx,y,z) für V=1 */
 
 private:
+	double global_nAmpere2Volt; /* nA (Tunnelcurrent) to Volt Factor from Preferences, scaled by multiplier */
 	OFFSET_MODE offset_mode;
 };
 

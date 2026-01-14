@@ -200,7 +200,7 @@ extern "C++" {
                   ),
                 GNOME_RES_ENTRY_ASK_PATH_DEPEND_UNIT
                 ( GNOME_RES_FLOAT_W_UNIT,  "Instrument/CurrentGainModifier", "1.0", &xsmres.current_gain_modifier, Unit1, N_("Inst-SPM"),
-                  N_("STM/AFM: (temporary) Tunnel Current Scaling"),
+                  N_("STM/AFM: default Tunnel Current Scaling relative to nAmpere2Volt (keep at 1.0 if unsure) -- if not managed by HwI"),
                   ask_if_instrument_is_afm_and_hard
                   ),
                 GNOME_RES_ENTRY_ASK_PATH_DEPEND_UNIT

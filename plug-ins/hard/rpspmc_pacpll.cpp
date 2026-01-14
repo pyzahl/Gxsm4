@@ -1950,7 +1950,7 @@ void RPSPMC_Control::create_folder (){
 
                 // Init gain-choicelist
                 for(int ig=0; xsmres.VG[ig] > 0.0; ig++){
-                        gchar *V_gain_value = g_strdup_printf ("%.2E A/V [%.2E]", 1e9/xsmres.nAmpere2Volt*xsmres.VG[ig], xsmres.VG[ig]);
+                        gchar *V_gain_value = g_strdup_printf ("%.2E A/V [x%g]", 1e9*xsmres.nAmpere2Volt*xsmres.VG[ig], xsmres.VG[ig]);
                         gchar *id = g_strdup_printf ("%02d:%02d",j,ig);
                         gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (wid), id, V_gain_value);
                         g_free (id);

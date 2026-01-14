@@ -308,9 +308,9 @@ class gxsm_process():
         def get_dimensions(self, ch):
                 return self.exec_pyshm_method ('get_dimensions', (ch,))
 
-        #  [VX,VY,VZ, V2XAV,V2YAV,V2ZAV]=gxsm.get_instrument_gains_xyz ()
-        def get_instrument_gains_xyz(self):
-                return self.exec_pyshm_method ('get_instrument_gains_xyz', ())
+        #  [VX,VY,VZ, V2XAV,V2YAV,V2ZAV]=gxsm.get_instrument_gains ()
+        def get_instrument_gains(self):
+                return self.exec_pyshm_method ('get_instrument_gains', ())
 
         #  value=gxsm.get_data_pkt (ch, x, y, v, t)
         def get_data_pkt(self, ch, x, y, v, t):

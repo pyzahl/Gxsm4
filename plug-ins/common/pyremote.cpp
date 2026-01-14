@@ -2018,13 +2018,33 @@ static PyObject* remote_getdimensions(PyObject *self, PyObject *args)
 }
 
 // {"get_instrument_gains_xyz", remote_getgains_xyz, METH_VARARGS, "Get XYZ Gain Settings: [VX,VY,VZ, V2XA,V2YA,V2ZA]=gxsm.get_instrument_gains_xyz ()"},
-static PyObject* remote_getgains_xyz(PyObject *self, PyObject *args)
+static PyObject* remote_get_instrument_gains(PyObject *self, PyObject *args)
 {
 	PI_DEBUG(DBG_L2, "pyremote:get_instrument_gains_xyz");
+        PyObject *Vxyz  = Py_BuildValue("[ddd]", main_get_gapp()->xsm->Inst->VX(), main_get_gapp()->xsm->Inst->VY(), main_get_gapp()->xsm->Inst->VZ());
+        PyObject *AVxyz = Py_BuildValue("[ddd]", main_get_gapp()->xsm->Inst->Volt2XA(1.), main_get_gapp()->xsm->Inst->Volt2YA(1.), main_get_gapp()->xsm->Inst->Volt2ZA(1.));
+        PyObject *Vxyz0 = Py_BuildValue("[ddd]", main_get_gapp()->xsm->Inst->VX0(), main_get_gapp()->xsm->Inst->VY0(), main_get_gapp()->xsm->Inst->VZ0());
+        PyObject *AVxyz0= Py_BuildValue("[ddd]", main_get_gapp()->xsm->Inst->Volt2X0A(1.), main_get_gapp()->xsm->Inst->Volt2Y0A(1.), main_get_gapp()->xsm->Inst->Volt2Z0A(1.));
+ 
+        PyObject *dict = Py_BuildValue("{s:O, s:O, s:O, s:O, s:d, s:d, s:d, s:d, s:d, s:d}",
+                                       "Vxyz",    Vxyz,
+                                       "AVxyz",  AVxyz,
+                                       "Vxyz0",   Vxyz0,
+                                       "AVxyz0", AVxyz0,
+                                       "BiasGain", main_get_gapp()->xsm->Inst->BiasGainV2V(),
+                                       "IVC-nAmpere2V", main_get_gapp()->xsm->Inst->nAmpere2V(1.0),
+                                       "IVC-A/V", 1e9*main_get_gapp()->xsm->Inst->nAmpere2V(1.0),
+                                       "nNewton2V", main_get_gapp()->xsm->Inst->nNewton2V(1.0),
+                                       "dHertz2V", main_get_gapp()->xsm->Inst->dHertz2V(1.0),
+                                       "eV2V", main_get_gapp()->xsm->Inst->eV2V(1.0)
+                                       );
+        // Decrement reference count for the earlier PyObjects as Py_BuildValue increments it
+        Py_XDECREF(Vxyz);
+        Py_XDECREF(AVxyz);
+        Py_XDECREF(Vxyz0);
+        Py_XDECREF(AVxyz0);
 
-        return Py_BuildValue("dddddd",
-                             main_get_gapp()->xsm->Inst->VX(), main_get_gapp()->xsm->Inst->VY(), main_get_gapp()->xsm->Inst->VZ(),
-                             main_get_gapp()->xsm->Inst->Volt2XA(1.), main_get_gapp()->xsm->Inst->Volt2YA(1.), main_get_gapp()->xsm->Inst->Volt2ZA(1.));
+        return dict;
 }
 
 
@@ -3673,7 +3693,7 @@ static PyMethodDef GxsmPyMethods[] = {
 	{"get_geometry", remote_getgeometry, METH_VARARGS, "Get Scan Geometry: [rx,ry,x0,y0,alpha]=gxsm.get_geometry (ch)"},
 	{"get_differentials", remote_getdifferentials, METH_VARARGS, "Get Scan Scaling: [dx,dy,dz,dl]=gxsm.get_differentials (ch)"},
 	{"get_dimensions", remote_getdimensions, METH_VARARGS, "Get Scan Dimensions: [nx,ny,nv,nt]=gxsm.get_dimensions (ch)"},
-	{"get_instrument_gains_xyz", remote_getgains_xyz, METH_VARARGS, "Get XYZ Gain Settings: [VX,VY,VZ, V2XAV,V2YAV,V2ZAV]=gxsm.get_instrument_gains_xyz ()"},
+	{"get_instrument_gains", remote_get_instrument_gains, METH_VARARGS, "Get all current instrument gain settings: [{VX:, ...}]=gxsm.get_instrument_gains ()"},
 	{"get_data_pkt", remote_getdatapkt, METH_VARARGS, "Get Data Value at point: value=gxsm.get_data_pkt (ch, x, y, v, t)"},
 	{"put_data_pkt", remote_putdatapkt, METH_VARARGS, "Put Data Value to point: gxsm.put_data_pkt (value, ch, x, y, v, t)"},
 	{"get_slice", remote_getslice, METH_VARARGS, "Get Image Data Slice (Lines) from Scan in channel ch, yi ... yi+yn: [nx,ny,array]=gxsm.get_slice (ch, v, t, yi, yn)"},
