@@ -50,7 +50,7 @@ import signal
 
 METH_ERR_CODE = ['OK', 'E:RESULT EXCEEDS SHM SIZE', 'E:PySHM Init Error', 'E:PySHM unsupported method flags', 'E:PySHM invalid method name', 'E:PySHM Unknow Error Code']
 
-PYSHM_GXSM_PROCESS_VERSION = '1.0.0'
+PYSHM_GXSM_PROCESS_VERSION = '1.0.1'
 
 class gxsm_process():
         # verbose = 0: no messages but startup
@@ -198,7 +198,7 @@ class gxsm_process():
 
                 end_time = time.perf_counter()
                 elapsed_time = 1e3*(end_time - start_time)
-                self.debug_print (1, 'Method >gxsm.{}< completed in ~{} ms. Elapsed time from signal: {:6.1} ms'.format(method, wms, elapsed_time))
+                self.debug_print (1, 'Method >gxsm.{}< completed in ~{} ms. Elapsed time from signal: {:.1f} ms'.format(method, wms, elapsed_time))
                                 
                 if pyshm_status[0] < 0: # -1 ... -4: valid Error Codes
                         self.debug_print (0, 'SHM Method Result Error Code: {} => {}'.format(pyshm_status[0], METH_ERR_CODE[int(min(5,-pyshm_status[0]))]))

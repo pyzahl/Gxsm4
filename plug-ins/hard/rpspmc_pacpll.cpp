@@ -82,10 +82,6 @@ RP data streaming
 
 #include "plug-ins/control/resonance_fit.h"
 
-
-// define to enable SHARED MEMOY BLOCK ACTIONS and GXSM.SET/GET functionality
-#define ENABLE_SHM_ACTIONS
-
 // Define HwI PlugIn reference name here, this is what is listed later within "Preferenced Dialog"
 // i.e. the string selected for "Hardware/Card"!
 #define THIS_HWI_PLUGIN_NAME "RPSPMC:SPM"
@@ -3053,20 +3049,14 @@ void RPSPMC_Control::create_folder (){
         g_object_set_data( G_OBJECT (window), "EC_FPGA_SPMC_server_settings_list", EC_FPGA_SPMC_server_settings_list);
         
 	GUI_ready = TRUE;
+
+        rpspmc_pacpll->update_shm_monitors (); // init SHM monitor block
         
         AppWindowInit (NULL); // stage two
         set_window_geometry ("rpspmc-main-control"); // must add key to xml file: core-sources/org.gnome.gxsm4.window-geometry.gschema.xml
 
         g_message ("RPSPMC CONTROL READY -- updating");
        
-#ifdef ENABLE_SHM_ACTIONS
-        g_message ("RPSPMC CONTROL STARTING SHM ACTION IDLE-CALLBACK");
-        check_shm_action_idle_id = 0;
-        //check_shm_action_idle_id = g_idle_add (check_shm_action_idle_callback, this);
-        check_shm_action_idle_id = g_timeout_add (50, check_shm_action_idle_callback, this);
-#else
-        check_shm_action_idle_id = 0;
-#endif
         //Probing_RampFBoff_callback (multiIV_checkbutton, this); // update
         //Probing_multiIV_callback (multiIV_checkbutton, this); // update
 
@@ -5241,7 +5231,7 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
 
 RPspmc_pacpll::~RPspmc_pacpll (){
 
-        update_shm_monitors (0,1); // close SHM
+        update_shm_monitors (1); // close SHM
 
         delete mTime;
 	delete uTime;
@@ -7272,71 +7262,12 @@ print (xyz)
  */
 
 
-
-/* stolen from app_remote.C */
-static void Check_ec(Gtk_EntryControl* ec, remote_args* ra){
-	ec->CheckRemoteCmd (ra); // only reading PCS is thread safe!
-};
-
-static void Check_conf(GnomeResPreferences* grp, remote_args* ra){
-        if (grp && ra)
-                gnome_res_check_remote_command (grp, ra);
-};
-
-static void CbAction_ra(remote_action_cb* ra, gpointer arglist){
-	if(ra->cmd && ((gchar**)arglist)[1])
-		if(! strcmp(((gchar**)arglist)[1], ra->cmd)){
-			if (ra->data)
-				(*ra->RemoteCb) (ra->widget, ra->data);
-			else
-				(*ra->RemoteCb) (ra->widget, arglist);
-                        ((gchar**)arglist)[3] = (gchar*)ra;
-			// see above and pcs.h
-		}
-};
-
-void remote_set_ra (const gchar* id, const gchar* value)
-{
-        remote_args ra; 
-	gchar *list[] = { (char *)"set", id, value, NULL };
-	ra.arglist = list;
-
-        // check PCS entries
-	g_slist_foreach (main_get_gapp()->RemoteEntryList, (GFunc) Check_ec, (gpointer)&ra);
-
-        // check current active/open CONFIGURE elements
-	g_slist_foreach (main_get_gapp()->RemoteConfigureList, (GFunc) Check_conf, (gpointer)&ra);
-}
-
-double remote_get_ra (const gchar *id){
-	remote_args ra;
-	ra.qvalue = 0.;
-	gchar *list[] = {(gchar *)"get", id, NULL};
-	ra.arglist = list;
-
-	g_slist_foreach(main_get_gapp()->RemoteEntryList, (GFunc) Check_ec, (gpointer)&ra);
-	PI_DEBUG(DBG_L2, " query result: " << ra.qvalue << ra.qstr);
-
-        if (ra.qstr)
-                return atof (ra.qstr);
-        else
-                return ra.qvalue;
-}
-
-gboolean RPSPMC_Control::check_shm_action_idle_callback(gpointer self){
-        if (rpspmc_pacpll->update_shm_monitors (1)) // manage SHM ACTIONS only
-                return G_SOURCE_CONTINUE;
-        else
-                return G_SOURCE_REMOVE;
-}
-
-gboolean RPspmc_pacpll::update_shm_monitors (int ctrl, int close_shm){
+gboolean RPspmc_pacpll::update_shm_monitors (int close_shm){
         const char *rpspmc_monitors = "/gxsm4rpspmc_monitors";
         static int shm_fd = -1;
         static void *shm_ptr = NULL;
         // Set the size of the shared memory region
         static size_t shm_size = sizeof(double)*512;
-        static gboolean keep_alife=true;
 
         // tmp SHM data exchange block created and reused/resized as needed
         const char *gxsm_shm_data = "/gxsm4tmp_data_block";
@@ -7344,11 +7275,8 @@ gboolean RPspmc_pacpll::update_shm_monitors (int ctrl, int close_shm){
         static void *shm_data_ptr = NULL;
         static size_t shm_data_size = 0;
         
-        
-        if (!keep_alife)
-                return true;
-        
         if (shm_fd == -1){
+                // create SHM monitor memory block
                 shm_fd = shm_open(rpspmc_monitors, O_CREAT | O_RDWR, 0666);
                 if (shm_fd == -1) {
                         g_error ("Error shm_open of %s.", rpspmc_monitors);
@@ -7370,8 +7298,6 @@ gboolean RPspmc_pacpll::update_shm_monitors (int ctrl, int close_shm){
         }
 
         if (close_shm){
-                keep_alife=false;
-
                 g_message ("Closing SHM. End of Serving actions.");
                 
                 // Unmap the shared memory object
@@ -7419,241 +7345,41 @@ gboolean RPspmc_pacpll::update_shm_monitors (int ctrl, int close_shm){
                 return false;
         }
 
-        
-        if (ctrl == 0){
-                spmc_signals.xyz_meter[9] = (double)g_get_real_time ();
+        spmc_signals.xyz_meter[9] = (double)g_get_real_time ();
                 
-                // Write data to the shared memory
+        // Write data to the shared memory
 
-                // RPSPMC XYZ MAX MIN (3x3)
-                memcpy  (shm_ptr, spmc_signals.xyz_meter, sizeof(gint64)+sizeof(spmc_signals.xyz_meter));
+        // RPSPMC XYZ MAX MIN (3x3)
+        memcpy  (shm_ptr, spmc_signals.xyz_meter, sizeof(gint64)+sizeof(spmc_signals.xyz_meter));
 
-                // RPSPMC Monitors: Bias, reg, set,   GPVU,A,B,AM,FM, MUX, Signal (Current), AD463x[2], XYZ, XYZ0, XYZS
-                memcpy  (shm_ptr+10*sizeof(double), &spmc_parameters.bias_monitor, 21*sizeof(double));
+        // RPSPMC Monitors: Bias, reg, set,   GPVU,A,B,AM,FM, MUX, Signal (Current), AD463x[2], XYZ, XYZ0, XYZS
+        memcpy  (shm_ptr+10*sizeof(double), &spmc_parameters.bias_monitor, 21*sizeof(double));
 
-                // PAC-PLL Monitors: dc-offset, exec_ampl_mon, dds_freq_mon, volume_mon, phase_mon, control_dfreq_mon
-                memcpy  (shm_ptr+40*sizeof(double), &pacpll_parameters.dc_offset, 7*sizeof(double));
+        // PAC-PLL Monitors: dc-offset, exec_ampl_mon, dds_freq_mon, volume_mon, phase_mon, control_dfreq_mon
+        memcpy  (shm_ptr+40*sizeof(double), &pacpll_parameters.dc_offset, 7*sizeof(double));
 
-                // Z-Servo Info: mode, setpoint, cp, ci, cp_db, ci_db, upper, lower, setpoint_cz, level, in_offcomp, src_mux
-                memcpy  (shm_ptr+50*sizeof(double), &spmc_parameters.z_servo_mode, 12*sizeof(double));
+        // Z-Servo Info: mode, setpoint, cp, ci, cp_db, ci_db, upper, lower, setpoint_cz, level, in_offcomp, src_mux
+        memcpy  (shm_ptr+50*sizeof(double), &spmc_parameters.z_servo_mode, 12*sizeof(double));
 
-                // Scan Info: alpha, slope-dzx,dzy,slew, scanpos-x,y,slew,opts, offset-x,y,z
-                memcpy  (shm_ptr+70*sizeof(double), &spmc_parameters.alpha, 13*sizeof(double));
+        // Scan Info: alpha, slope-dzx,dzy,slew, scanpos-x,y,slew,opts, offset-x,y,z
+        memcpy  (shm_ptr+70*sizeof(double), &spmc_parameters.alpha, 13*sizeof(double));
 
-                // FPGA RPSPMC uptime in sec, 8ns resolution -- i.e. exact time of last reading
-                memcpy  (shm_ptr+100*sizeof(double), &spmc_parameters.uptime_seconds, sizeof(double));
+        // FPGA RPSPMC uptime in sec, 8ns resolution -- i.e. exact time of last reading
+        memcpy  (shm_ptr+100*sizeof(double), &spmc_parameters.uptime_seconds, sizeof(double));
 
-                // push history
-                rpspmc_hwi->push_history_vector (shm_ptr, 48); // currently used: 0..8, 10..31, 40..47 as size of double
+        // push history
+        rpspmc_hwi->push_history_vector (shm_ptr, 48); // currently used: 0..8, 10..31, 40..47 as size of double
 
-                PI_DEBUG (DBG_L2, "SHM MONITOR UPDATE @RPSPMC TIME: " << spmc_parameters.uptime_seconds << " s");
-                //g_message ("SHM MONITOR UPDATE @RPSPMC TIME: %.9fs", spmc_parameters.uptime_seconds);
+        PI_DEBUG (DBG_L2, "SHM MONITOR UPDATE @RPSPMC TIME: " << spmc_parameters.uptime_seconds << " s");
+        //g_message ("SHM MONITOR UPDATE @RPSPMC TIME: %.9fs", spmc_parameters.uptime_seconds);
                 
-                /*
-                sprintf (shm_ptr+512, "XYZ=[[%g %g %g] [%g %g %g] [%g %g %g]]\n",
-                         spmc_signals.xyz_meter[0],spmc_signals.xyz_meter[1],spmc_signals.xyz_meter[2],
-                         spmc_signals.xyz_meter[3],spmc_signals.xyz_meter[4],spmc_signals.xyz_meter[5],
-                         spmc_signals.xyz_meter[6],spmc_signals.xyz_meter[7],spmc_signals.xyz_meter[8]
-                         );
-                */
-        } else {
-        
-#ifdef ENABLE_SHM_ACTIONS
-                // SHM GET/SET hack tests
-                // TEST READ / ACTION
-
-                // ACTION FUZZY LEVEL Z CONTROL:
-                // SHM[128] := 1 ---> Level=0 (Auto/Regular Feedback); completed when SHM[128] := 0
-                // SHM[128] := 2 ---> Level=Current-Setpoint (Adjust Z to Z-Setpoint if Current Set Point is not exceeded, i.e. const Z mode); completed when SHM[128] := 0
-
-                // ACTIONS
-#define SHM_ACTION_IDLE                    0x0000000 // ---
-#define SHM_ACTION_CTRL_Z_SET              0x0000010 // gxsm.XXX
-#define SHM_ACTION_CTRL_Z_FB               0x0000011 // gxsm.XXX
-#define SHM_ACTION_GET                     0x0000020 // gxsm.get
-#define SHM_ACTION_SET                     0x0000021 // gxsm.set
-#define SHM_ACTION_ACTION                  0x0000030 // gxsm.action
-#define SHM_ACTION_MOVETO_SCAN_XY          0x0000031 // gxsm.moveto_scan_xy
-#define SHM_ACTION_START_SCAN              0x0000035 // gxsm.startscan
-#define SHM_ACTION_STOP_SCAN               0x0000036 // gxsm.stopscan
-
-#define SHM_ACTION_GET_SLICE               0x0000050 // gxsm.get_slice (ch, v, t, yi, yn)
-#define SHM_ACTION_GET_SLICE_V             0x0000051 // gxsm.get_slice_v (ch, x, t, yi, yn)
-                
-#define SHM_ACTION_GET_PROBE_EVENT         0x0000055 // gxsm.get_probe_event (ch, nth)
-#define SHM_ACTION_GET_MARKER_OBJECT       0x0000056 // gxsm.marker_getobject_action (ch, objnameid, action='REMOVE'|'REMOVE-ALL'|'GET_COORDS'|'SET-OFFSET')
-          
-                
-                // SHM MEMORY LOCATION ASIGNMENTS
-#define SHM_ACTION_OFFSET           128
-#define SHM_ACTION_VPAR_64_START    130
-#define SHM_ACTION_FPN(N)           (SHM_ACTION_VPAR_64_START+N) // max 10
-#define SHM_ACTION_FRET_64_START    140
-#define SHM_ACTION_FRETN(N)         (SHM_ACTION_FRET_64_START+N) // max 10
-
-#define SHM_ACTION_FP_ID_STRING_64  150 // max 64
-#define SHM_ACTION_FP_02_STRING_64  220 // max 64
-
-#define SHM_ADR(OFFSET) (shm_ptr+(OFFSET)*sizeof(double))
-        
-                guint64 action_request = *(guint64*)(shm_ptr+SHM_ACTION_OFFSET*sizeof(guint64));
-
-                gchar *sval=NULL;
-                switch ((int)action_request){
-                case SHM_ACTION_IDLE:
-                        break;  // NOP
-
-                case SHM_ACTION_CTRL_Z_FB:    // void CTRL_Z_FB(void)
-                        sval = g_strdup_printf("0");
-                        *(double*)SHM_ADR(SHM_ACTION_FRETN(9)) = 0.0; // OK
-                        g_message ("SHM-ACTION-CTRL-Z-FB {%08x}", (int)action_request);
-                        // ... this continues below intentional no "break;" here!
-                case SHM_ACTION_CTRL_Z_SET: { // void CTRL_Z_SET(void)
-                        gchar *id_cl="dsp-fbs-mx0-current-level";
-                        gchar *id_cs="dsp-fbs-mx0-current-set";
-                        if (!sval){
-                                sval=g_strdup_printf("%g", remote_get_ra (id_cs));
-                                g_message ("SHM-ACTION-CTRL-Z-SET {%08x}", (int)action_request);
-                        }
-                        remote_set_ra (id_cl, sval); // set level to 0 or current setpoint as of action request
-                        g_free (sval);
-                        *(double*)SHM_ADR(SHM_ACTION_FRETN(9)) = 0.0; // OK
-                        break;
-                }
-                case SHM_ACTION_SET: {       // void SET (SHM_ACTION_FP_ID_STRING_64 ID, SHM_ACTION_FPN(0) Value)
-                        // GXSM.SET function
-                        gchar id_set[64]; memset (id_set, 0, sizeof(id_set));
-                        memcpy (id_set, SHM_ADR(SHM_ACTION_FP_ID_STRING_64), sizeof(id_set));
-                        id_set[63]=0; // safety termination
-                        double v = *(double*)SHM_ADR(SHM_ACTION_FPN(0));
-                        g_message ("SHM-ACTION-SET VALUE {%08x} ** id=%s := %g", (int)action_request, id_set, v);
-                        gchar *sval_cs=g_strdup_printf("%g", v);
-                        remote_set_ra (id_set, sval_cs);
-                        g_free (sval_cs);
-                        *(double*)SHM_ADR(SHM_ACTION_FRETN(9)) = 0.0; // OK
-                        break;
-                }
-                case SHM_ACTION_GET: {       // (SHM_ADR(SHM_ACTION_FRETN(0))) GET (SHM_ACTION_FP_ID_STRING_64 ID)
-                        // GXSM.GET function
-                        gchar id_get[64]; memset (id_get, 0, sizeof(id_get));
-                        memcpy (id_get, SHM_ADR(SHM_ACTION_FP_ID_STRING_64), sizeof(id_get));
-                        id_get[63]=0; // safety termination
-                        double v=remote_get_ra (id_get);
-                        g_message ("SHM-ACTION-GET VALUE {%08x} ** id=%s => %g", (int)action_request, id_get, v);
-                        *(double*)SHM_ADR(SHM_ACTION_FRETN(0)) = v; // return value
-                        *(double*)SHM_ADR(SHM_ACTION_FRETN(9)) = 0.0; // OK
-                        break;
-                }
-                case SHM_ACTION_ACTION: {       // (SHM_ADR(SHM_ACTION_FRETN(0))) ACTION (SHM_ACTION_FP_ID_STRING_64 ACTION_ID)
-                        // GXSM.ACTION function
-                        gchar id_action[64]; memset (id_action, 0, sizeof(id_action));
-                        memcpy (id_action, SHM_ADR(SHM_ACTION_FP_ID_STRING_64), sizeof(id_action));
-                        id_action[63]=0; // safety termination
-                        gchar str_arg[64]; memset (str_arg, 0, sizeof(str_arg));
-                        memcpy (str_arg, SHM_ADR(SHM_ACTION_FP_02_STRING_64), sizeof(str_arg));
-                        str_arg[63]=0; // safety termination
-
-                        gchar *list[] = {(char *)"action", id_action, str_arg, NULL, NULL};
-                        g_slist_foreach(gapp->RemoteActionList, (GFunc) CbAction_ra, (gpointer)list);
-#if 0
-                        idle_data->ra_info = (remote_action_cb*)(list[3]);
-                        if ( idle_data.ra_info )
-                                if ( idle_data.ra_info->data_length > 0){
-                                        npy_intp dims[2];
-                                        dims[0] = 3; // max 5
-                                        dims[1] = idle_data.ra_info->data_length;
-                                        PyObject* pyarr = PyArray_SimpleNewFromData(2, dims, NPY_DOUBLE, (void*)idle_data.ra_info->data_vector[0]);
-                                        PyArray_ENABLEFLAGS((PyArrayObject*) pyarr, NPY_ARRAY_OWNDATA);
-                                        return Py_BuildValue("O", pyarr); // Python code will receive the array as numpy array.
-                                }
-#endif
-                        *(double*)SHM_ADR(SHM_ACTION_FRETN(9)) = 0.0; // OK
-                        break;
-                }
-                        
-                case SHM_ACTION_START_SCAN: {       //
-                        GSettings *global_settings = g_settings_new (GXSM_RES_BASE_PATH_DOT ".global");
-                        g_settings_set_int (global_settings, "math-global-share-variable-repeatmode-override", 1);
-                        g_clear_object (&global_settings);
-                        main_get_gapp()->signal_emit_toolbar_action ("Toolbar_Scan_Start");
-                       *(double*)SHM_ADR(SHM_ACTION_FRETN(9)) = 0.0; // OK
-                        break;
-                }
-                case SHM_ACTION_STOP_SCAN: {       //
-                        main_get_gapp()->signal_emit_toolbar_action ("Toolbar_Scan_Stop");
-                        *(double*)SHM_ADR(SHM_ACTION_FRETN(9)) = 0.0; // OK
-                        break;
-                }
-
-                case SHM_ACTION_GET_SLICE: {      // void GET_SLICE (SHM_ACTION_FPN(0) ch, ...)
-
-                        int ch = (int)(*(double*)SHM_ADR(SHM_ACTION_FPN(0)));
-                        int v  = (int)(*(double*)SHM_ADR(SHM_ACTION_FPN(1)));
-                        int t  = (int)(*(double*)SHM_ADR(SHM_ACTION_FPN(2)));
-                        int yi = (int)(*(double*)SHM_ADR(SHM_ACTION_FPN(3)));
-                        int yn = (int)(*(double*)SHM_ADR(SHM_ACTION_FPN(4)));
-                        
-                        Scan *src =gapp->xsm->GetScanChannel (ch);
-                        if (t >= 0) // select time element
-                                src->retrieve_time_element (t);
-                        
-                        if (src && (yi+yn) <= src->mem2d->GetNy()){
-                                g_message ("SHM remote_getslice from mem2d scan data in (dz scaled to unit) CH%d, Ys=%d Yf=%d", (int)ch, (int)yi, (int)(yi+yn));
-
-                                shm_data_size = sizeof(double) * yn * src->mem2d->GetNx ();// + sizeof(int); // make it a PyObject!
-                                
-                                if (shm_data_fd == -1){
-                                        shm_data_fd = shm_open(gxsm_shm_data, O_CREAT | O_RDWR, 0666);
-                                        if (shm_data_fd == -1) {
-                                                g_error ("Error shm_open of %s.", rpspmc_monitors);
-                                                *(double*)SHM_ADR(SHM_ACTION_FRETN(9)) = -1; // E
-                                                break; //return false;
-                                        }
-                                }
-                
-                                // Resize the shared memory object to the desired size
-                                if (ftruncate (shm_data_fd, shm_data_size) == -1) {
-                                        g_error ("Error ftruncate of %s.", rpspmc_monitors);
-                                        *(double*)SHM_ADR(SHM_ACTION_FRETN(9)) = -2; // E
-                                        break; //return false;
-                                }
-
-                                // Map the shared memory object into the process address space
-                                shm_data_ptr = mmap(NULL, shm_data_size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_data_fd, 0);
-                                if (shm_data_ptr == MAP_FAILED) {
-                                        g_error("Error mmap");
-                                        *(double*)SHM_ADR(SHM_ACTION_FRETN(9)) = -3; // E
-                                        break; //return false;
-                                }
-                                double *darr2 = (double*) shm_data_ptr;
-                                double *dp=darr2;
-                                int yf = yi+yn;
-
-                                if (v >= 0) // use v value
-                                        for (int y=yi; y<yf; ++y)
-                                                for (int x=0; x<src->mem2d->GetNx (); ++x)
-                                                        *dp++ = src->mem2d->data->Z(x,y,v)*src->data.s.dz;
-                                else // current
-                                        for (int y=yi; y<yf; ++y)
-                                                for (int x=0; x<src->mem2d->GetNx (); ++x)
-                                                        *dp++ = src->mem2d->data->Z(x,y)*src->data.s.dz;
-                        }
-                        
-                        *(double*)SHM_ADR(SHM_ACTION_FRETN(9)) = 0.0; // OK
-                        break;
-                }
-                        
-                // ******************************
-                default:
-                        *(double*)SHM_ADR(SHM_ACTION_FRETN(9)) = -1; // return ERROR in RET9
-                        g_message ("SHM-ACTION* INVALID REQUEST {%08x}", (int)action_request);
-                        break;
-                }
-
-                *(guint64*)(shm_ptr+SHM_ACTION_OFFSET*sizeof(guint64)) = 0L; // clear action control
-        
-#endif
-        }        
+        /*
+          sprintf (shm_ptr+512, "XYZ=[[%g %g %g] [%g %g %g] [%g %g %g]]\n",
+          spmc_signals.xyz_meter[0],spmc_signals.xyz_meter[1],spmc_signals.xyz_meter[2],
+          spmc_signals.xyz_meter[3],spmc_signals.xyz_meter[4],spmc_signals.xyz_meter[5],
+          spmc_signals.xyz_meter[6],spmc_signals.xyz_meter[7],spmc_signals.xyz_meter[8]
+          );
+        */
         
         return true;
 }

@@ -30,6 +30,7 @@
 
 #define DBG_NEVER 0   /* disable all debug output -- do not use this level in a dbg macro!! */
 #define DBG_EVER -1   /* print for sure! */
+#define DBG_L0   -1   /* always */
 #define DBG_L1    1   /* normal debug infos */
 #define DBG_L2    2   /* more verbose/detailed */
 #define DBG_L3    3   /* low level hardware dbg */

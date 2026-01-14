@@ -384,11 +384,6 @@ public:
                 create_folder ();
         };
 	virtual ~RPSPMC_Control() {
-                if (check_shm_action_idle_id){
-                        g_source_remove (check_shm_action_idle_id);
-                        check_shm_action_idle_id = 0;
-                }
-        
                 delete Unity;
                 delete Volt;
                 delete mVolt;
@@ -780,9 +775,6 @@ public:
                 }
 	};
 
-        unsigned int check_shm_action_idle_id;
-        static gboolean check_shm_action_idle_callback(gpointer self); // SHM ACTION CHECK
-     
 	void delayed_vector_update ();
 	static guint delayed_vector_update_callback (RPSPMC_Control *self);
         gint delayed_vector_update_timer_id;
@@ -1220,7 +1212,7 @@ public:
                 RPSPMC_ControlClass->on_new_data (); // run follow up updates on GUI
         };
 
-        gboolean update_shm_monitors (int ctrl=0, int close=0);
+        gboolean update_shm_monitors (int close=0);
 
         
         double unwrap (int k, double phi);
