@@ -4416,6 +4416,7 @@ int RPSPMC_Control::check_vp_in_progress (const gchar *extra_info=NULL) {
 /* **************************************** END SPM Control GUI **************************************** */
 
 /* **************************************** PAC-PLL GUI **************************************** */
+static void dummy_func_wd (GtkWidget* w, void* d){}
 
 #define dB_min_from_Q(Q) (20.*log10(1./((1L<<(Q))-1)))
 #define dB_max_from_Q(Q) (20.*log10(1L<<((32-(Q))-1)))
@@ -5285,6 +5286,23 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
         // hookup to scan start and stop
         rpspmc_pacpll_hwi_pi.app->ConnectPluginToStartScanEvent (RPspmc_pacpll::scan_start_callback);
         rpspmc_pacpll_hwi_pi.app->ConnectPluginToStopScanEvent (RPspmc_pacpll::scan_stop_callback);
+
+
+        // Setup Scope data hook
+        remote_action_cb *ra = g_new( remote_action_cb, 1);     
+        ra -> cmd = g_strdup_printf("GET_RPDATA_VECTOR"); 
+        ra -> RemoteCb = (void (*)(GtkWidget*, void*))dummy_func_wd;  
+        ra -> widget = NULL;
+        ra -> data = NULL;                                      
+        ra -> return_data = g_strdup_printf("VECTOR");
+        ra -> data_length    = 4096;
+        ra -> data_vector[0] = &bram_saved_buffer[0][0];
+        ra -> data_vector[1] = &bram_saved_buffer[1][0];
+        ra -> data_vector[2] = &bram_saved_buffer[2][0];
+        ra -> data_vector[3] = &bram_saved_buffer[3][0];
+        ra -> data_vector[4] = &bram_saved_buffer[4][0];
+        gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, ra );
+        
 }
 
 RPspmc_pacpll::~RPspmc_pacpll (){

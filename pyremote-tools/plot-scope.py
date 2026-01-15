@@ -7,13 +7,27 @@ import math
 
 # connect to gxsm4 process and start wrapper class
 import gxsm4process as gxsm4
-gxsm = gxsm4.gxsm_process()
+gxsm = gxsm4.gxsm_process(1)
+	
+for h in gxsm.list_actions ():
+	print (h)
+        
+print ('Scope Data:')
+#gxsm.action('DSP_VP_VP_EXECUTE')
+scope = gxsm.action('EXECUTE_ScopeSaveData')
+#EXECUTE_ScopeSaveData
+#EXECUTE_FirePulse
+
+print (scope)
 
 # fetch vpdata of last probe -- if exists, else error
 print ('*** Getting last vpdata set from master scan in ch=0 ***')
 columns, labels, units, xy = gxsm.get_probe_event(0,-1)  # ch=1, get last VPdata set
+
+#columns, labels, units, xy = [scope, ['y1','y2'],['V','V'],[0,0]]
+
 # zip together for convenient data access
-vpdata  = dict (zip (labels, columns[:,100:])) ## cut off points 0..100 (initial ramp points)
+vpdata  = dict (zip (labels, columns[:])) ## cut off points 0..100 (initial ramp points)
 vpunits = dict (zip (labels, units))
 
 # we got:
@@ -25,8 +39,11 @@ print ('Set Size       :', vpdata[labels[0]].shape)
 
 # setup what to print
 x='Time-Mon'
-y='ZS-Topo'
+#y='ZS-Topo'
 #y='dFrequency'
+y='Current'
+
+
 
 # Create VPDATA plot
 plt.figure(figsize=(6, 4))
