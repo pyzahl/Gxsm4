@@ -1533,15 +1533,17 @@ int RPSPMC_Control::choice_Ampl_callback (GtkWidget *widget, RPSPMC_Control *spm
 	return 0;
 }
 
-int RPSPMC_Control::choice_VGain_callback (GtkWidget *widget, RPSPMC_Control *spmsc){
+int RPSPMC_Control::choice_VGain_callback (GtkWidget *widget, RPSPMC_Control *self){
         PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);
 	gint i = gtk_combo_box_get_active (GTK_COMBO_BOX (widget));
 	gint j = GPOINTER_TO_INT (g_object_get_data( G_OBJECT (widget), "VGindex"));
 	switch(j){
-	case 0: double g = rpspmc_pacpll_hwi_pi.app->xsm->Inst->set_current_gain_modifier(xsmres, i);
+	case 0: double g = rpspmc_pacpll_hwi_pi.app->xsm->Inst->set_current_gain_modifier (i);
                 g_message ("Adjusting IVC VGain: %f nA/V x pos[%d] %f => %f nA/V", xsmres.nAmpere2Volt, i, xsmres.VG[i], g);
 		break;
 	}
+        
+        self->ZServoParamChanged(NULL, self);
 
         rpspmc_hwi->update_hardware_mapping_to_rpspmc_source_signals ();
         

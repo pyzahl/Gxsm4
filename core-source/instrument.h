@@ -51,7 +51,7 @@ public:
 	XSM_Instrument(XSMRESOURCES &xsmres);
 	virtual ~XSM_Instrument(){};
 
-	virtual void update (XSMRESOURCES &xsmres, double temp = -1.);
+	virtual void update (double temp = -1.);
 	virtual double temperature (double diode_volts);
 
 	double set_current_gain_modifier (double f=-1.0) {
@@ -60,7 +60,9 @@ public:
                 
                 return current_gain_multiplier;
         };
-  	double set_current_gain_modifier (XSMRESOURCES &xsmres, int pos );
+  	double set_current_gain_modifier (int pos );
+  	double get_gain_setting (int pos) { return (double)xsmres_ptr->VG[pos] * global_nAmpere2Volt; };
+  	double get_gain_modifier (int pos) { return (double)xsmres_ptr->VG[pos]; };
         
 	double UOutLimit(double u){
 		if(u>AnalogVMaxOut) { u=AnalogVMaxOut; }
@@ -75,9 +77,9 @@ public:
 	};
 
 	// may call from HwI to custom adjust and override preferences
-	void override_dig_range (long digital_range, XSMRESOURCES &xsmres);
-	void override_volt_in_range (double vrange, XSMRESOURCES &xsmres);
-	void override_volt_out_range (double vrange, XSMRESOURCES &xsmres);
+	void override_dig_range (long digital_range);
+	void override_volt_in_range (double vrange);
+	void override_volt_out_range (double vrange);
 	
 	/* resultierende Grenzwerte */
 	virtual double XRangeMax(){ return(xR*Vx); };
@@ -193,6 +195,12 @@ public:
 	virtual double V2YAng(double U){ return U*yR/AnalogVMaxOut; }; // convert volts (piezo) to Ang (Y)
 	virtual double V2ZAng(double U){ return U*zR/AnalogVMaxOut; }; // convert volts (piezo) to Ang (Z)
 
+        const gchar* IVC_Ampere2Volt_Setting() {
+                static gchar *tmp=NULL;
+                if(tmp) g_free (tmp);
+                return tmp=g_strdup_printf ("%.0E A/V", 1e9*nAmpere2Volt);
+        };
+        
 	gchar *type;
 	gchar *name;
 	gchar *xunitname;
@@ -224,6 +232,8 @@ protected:
 private:
 	double global_nAmpere2Volt; /* nA (Tunnelcurrent) to Volt Factor from Preferences, scaled by multiplier */
 	OFFSET_MODE offset_mode;
+
+        XSMRESOURCES *xsmres_ptr;
 };
 
 class STM_Instrument : public XSM_Instrument{

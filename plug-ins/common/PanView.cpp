@@ -413,7 +413,7 @@ PanView::PanView (Gxsm4app *app):AppBase(app){
         
         
         // TEXTs are drawn in fixed pixel coordinate system
-	info = new cairo_item_text (WXS/2.-10, -WYS/2.+5., "I: --- nA");
+	info = new cairo_item_text (WXS/2.-8, -WYS/2.+10., "I: --- nA");
 	//	info->set_text ("updated text")
 	info->set_stroke_rgba (CAIRO_COLOR_BLUE);
 	info->set_font_face_size ("Ununtu", 12.);
@@ -421,7 +421,7 @@ PanView::PanView (Gxsm4app *app):AppBase(app){
 	info->set_anchor (CAIRO_ANCHOR_E);
 	info->queue_update (canvas);
 
-	infoXY0 = new cairo_item_text (WXS/2.-10, +WYS/2.-8., "XY0: --,--");
+	infoXY0 = new cairo_item_text (WXS/2.-8, +WYS/2.-8., "XY0: --,--");
 	infoXY0->set_stroke_rgba (CAIRO_COLOR_BLUE);
 	infoXY0->set_font_face_size ("Ununtu", 12.);
 	infoXY0->set_spacing (.1);
@@ -883,31 +883,51 @@ void PanView :: tip_refresh()
 		main_get_gapp()->xsm->hardware->RTQuery ("F", gamc, gfmc, gdum); // GVP-AMC, FMC
                 double s1,s2,s3;
                 main_get_gapp()->xsm->hardware->RTQuery ("S", s1, s2, s3); // Status
-                if (fabs(y) < 0.25)
-                        tmp = g_strdup_printf ("I: %8.1f pA\ndF: %8.1f Hz\nZ: %8.4f " UTF8_ANGSTROEM
-                                               "\nBias: %8.4f V"// %8.4f V %8.4f V"
+                double mv=1.; gchar *mvp="";
+                if (fabs(u) < 0.1) { mv=1e3; mvp="m"; }
+                if (fabs(y) < 0.00025) // I display in atto amp
+                        tmp = g_strdup_printf ("I@%s: %6.3f aA\ndF: %8.2f Hz\nZ: %8.4f " UTF8_ANGSTROEM
+                                               "\nBias: %8.3f %sV"// %8.4f V %8.4f V"
                                                //"\n UMon: %g USet: %g"
                                                //"\nGVPU: %6.4f A: %6.4f B: %6.4f V"
                                                //"\nGVPAM: %6.4f FM: %6.4f Veq\n"
                                                "\nIN3: %8.4f IN4: %8.4f",
                                                //"\nZSM: h%04x S%02x G%02x",
-                                               y*1000., x, main_get_gapp()->xsm->Inst->V2ZAng(z),
-                                               u,//v,w,
+                                               main_get_gapp()->xsm->Inst->IVC_Ampere2Volt_Setting(),
+                                               y*1e6, x, main_get_gapp()->xsm->Inst->V2ZAng(z),
+                                               mv*u, mvp, //v,w,
                                                v1,v2//,
                                                //gu, ga, gb,
                                                //gamc, gfmc,
                                                //q, (int)s2, (int)s3
                                                );
-                else
-                        tmp = g_strdup_printf ("I: %8.4f nA\ndF: %8.1f Hz\nZ: %8.4f " UTF8_ANGSTROEM
-                                               "\nBias: %8.4f V"// %8.4f V %8.4f V"
+                else if (fabs(y) < 0.25) // I display in pA
+                        tmp = g_strdup_printf ("I@%s: %6.3f pA\ndF: %8.2f Hz\nZ: %8.4f " UTF8_ANGSTROEM
+                                               "\nBias: %8.3f %sV"// %8.4f V %8.4f V"
+                                               //"\n UMon: %g USet: %g"
+                                               //"\nGVPU: %6.4f A: %6.4f B: %6.4f V"
+                                               //"\nGVPAM: %6.4f FM: %6.4f Veq\n"
+                                               "\nIN3: %8.4f IN4: %8.4f",
+                                               //"\nZSM: h%04x S%02x G%02x",
+                                               main_get_gapp()->xsm->Inst->IVC_Ampere2Volt_Setting(),
+                                               y*1e3, x, main_get_gapp()->xsm->Inst->V2ZAng(z),
+                                               mv*u, mvp, //v,w,
+                                               v1,v2//,
+                                               //gu, ga, gb,
+                                               //gamc, gfmc,
+                                               //q, (int)s2, (int)s3
+                                               );
+                else // I display in nA (base)
+                        tmp = g_strdup_printf ("I@%s: %6.3f nA\ndF: %8.2f Hz\nZ: %8.4f " UTF8_ANGSTROEM
+                                               "\nBias: %8.3f %sV"// %8.4f V %8.4f V"
                                                //"\n %g %g"
                                                //"\nGVPU: %6.4f A: %6.4f B: %6.4f V"
                                                //"\nGVPAM: %6.4f FM: %6.4f Veq\n"
                                                "\nIN3: %8.4f IN4: %8.4f",
                                                //"\nZSM: h%04x %02x",
-                                               y,       x, main_get_gapp()->xsm->Inst->V2ZAng(z),
-                                               u,//v,w,
+                                               main_get_gapp()->xsm->Inst->IVC_Ampere2Volt_Setting(),
+                                               y, x, main_get_gapp()->xsm->Inst->V2ZAng(z),
+                                               mv*u, mvp, //v,w,
                                                v1,v2//,
                                                //gu, ga, gb,
                                                //gamc, gfmc,

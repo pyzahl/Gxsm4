@@ -1,3 +1,5 @@
+/* -*- Mode: C++; indent-tabs-mode: nil; c-basic-offset: 8 c-style: "K&R" -*- */
+
 /* Gxsm - Gnome X Scanning Microscopy
  * universal STM/AFM/SARLS/SPALEED/... controlling and
  * data analysis software
@@ -23,8 +25,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
  */
 
-/* -*- Mode: C++; indent-tabs-mode: nil; c-basic-offset: 8 c-style: "K&R" -*- */
-
 #include "instrument.h"
 
 #include "dt400curve10.h"
@@ -34,7 +34,8 @@
 */
 
 XSM_Instrument::XSM_Instrument(XSMRESOURCES &xsmres){
-	DigRangeIn = (long)xsmres.DigRangeIn;
+        xsmres_ptr = &xsmres;  // keep a internal ref top global rescources
+        DigRangeIn = (long)xsmres.DigRangeIn;
 	AnalogVMaxIn = xsmres.AnalogVMaxIn;
 	DigRangeOut = (long)xsmres.DigRangeOut;
 	AnalogVMaxOut = xsmres.AnalogVMaxOut;
@@ -62,7 +63,7 @@ XSM_Instrument::XSM_Instrument(XSMRESOURCES &xsmres){
 	Vym = xsmres.XYZ_modulation_gains[1];
 	Vzm = xsmres.XYZ_modulation_gains[2];
 
-	update (xsmres);
+	update ();
 
 	type=NULL;
 	name=NULL;
@@ -71,47 +72,47 @@ XSM_Instrument::XSM_Instrument(XSMRESOURCES &xsmres){
 	zunitname=NULL;
 }
 
-double XSM_Instrument::set_current_gain_modifier (XSMRESOURCES &xsmres, int pos ) {
+double XSM_Instrument::set_current_gain_modifier (int pos ) {
 	if (pos >= 0 && pos < 9)
-		if (xsmres.VG[pos] > 0.0)
-			return set_current_gain_modifier ((double)xsmres.VG[pos]);
+		if (xsmres_ptr->VG[pos] > 0.0)
+			return set_current_gain_modifier ((double)xsmres_ptr->VG[pos]);
 	return current_gain_multiplier;
 }
 
 // may call from HwI to custom adjust and override preferences
-void XSM_Instrument::override_dig_range (long digital_range, XSMRESOURCES &xsmres){ // always symmetric +/-
+void XSM_Instrument::override_dig_range (long digital_range){ // always symmetric +/-
 	DigRangeIn  = digital_range;
 	DigRangeOut = digital_range;
-	update (xsmres);
+	update ();
 }
 
-void XSM_Instrument::override_volt_in_range (double vrange, XSMRESOURCES &xsmres){ // always symmetric +/-
+void XSM_Instrument::override_volt_in_range (double vrange){ // always symmetric +/-
 	AnalogVMaxIn = vrange;
-	update (xsmres);
+	update ();
 }
 
-void XSM_Instrument::override_volt_out_range (double vrange, XSMRESOURCES &xsmres){ // always symmetric +/-
+void XSM_Instrument::override_volt_out_range (double vrange){ // always symmetric +/-
 	AnalogVMaxOut = vrange;
-	update (xsmres);
+	update ();
 }	
 
 OFFSET_MODE XSM_Instrument::OffsetMode (OFFSET_MODE ofm){ 
 	return offset_mode;
 }
 
-void XSM_Instrument::update (XSMRESOURCES &xsmres, double temp){
+void XSM_Instrument::update (double temp){
 	if (temp > 0.){ // use var temp sensitivity computation
-		xPsens = xsmres.XPiezoAV;
-		yPsens = xsmres.YPiezoAV;
-		zPsens = xsmres.ZPiezoAV;
+		xPsens = xsmres_ptr->XPiezoAV;
+		yPsens = xsmres_ptr->YPiezoAV;
+		zPsens = xsmres_ptr->ZPiezoAV;
 	} else { // use fixed default sensitivity
-		xPsens = xsmres.XPiezoAV;
-		yPsens = xsmres.YPiezoAV;
-		zPsens = xsmres.ZPiezoAV;
+		xPsens = xsmres_ptr->XPiezoAV;
+		yPsens = xsmres_ptr->YPiezoAV;
+		zPsens = xsmres_ptr->ZPiezoAV;
 	}
 
-	XSM_DEBUG_GM (DBG_L1, "XSM_Instrument::update ** xsmres.X/Y/ZPiezoAV = %g, %g, %g Ang/V", xPsens, yPsens, zPsens);
-	XSM_DEBUG_GM (DBG_L1, "XSM_Instrument::update ** xsmres.DigRangeOut  = %ld", DigRangeOut);
+	XSM_DEBUG_GM (DBG_L1, "XSM_Instrument::update ** xsmres->X/Y/ZPiezoAV = %g, %g, %g Ang/V", xPsens, yPsens, zPsens);
+	XSM_DEBUG_GM (DBG_L1, "XSM_Instrument::update ** xsmres->DigRangeOut  = %ld", DigRangeOut);
 
 	xR = AnalogVMaxOut*xPsens;
 	yR = AnalogVMaxOut*yPsens;
@@ -121,19 +122,19 @@ void XSM_Instrument::update (XSMRESOURCES &xsmres, double temp){
 	yd = yR/(double)DigRangeOut;
 	zd = zR/(double)DigRangeOut;
 
-	BiasGain     = (double)xsmres.BiasGain;
-	BiasOffset   = (double)xsmres.BiasOffset;
+	BiasGain     = (double)xsmres_ptr->BiasGain;
+	BiasOffset   = (double)xsmres_ptr->BiasOffset;
 
-	global_nAmpere2Volt = (double)xsmres.nAmpere2Volt;
+	global_nAmpere2Volt = (double)xsmres_ptr->nAmpere2Volt;
 	
-	set_current_gain_modifier (); // update with eventually new xsmres.nAmpere2Volt
+	set_current_gain_modifier (); // update with eventually new xsmres_ptr->nAmpere2Volt
 	
-	nNewton2Volt = (double)xsmres.nNewton2Volt;
-	dHertz2Volt  = (double)xsmres.dHertz2Volt;
-	eV2Volt      = (double)xsmres.EnergyCalibVeV;
+	nNewton2Volt = (double)xsmres_ptr->nNewton2Volt;
+	dHertz2Volt  = (double)xsmres_ptr->dHertz2Volt;
+	eV2Volt      = (double)xsmres_ptr->EnergyCalibVeV;
 
    
-	XSM_DEBUG_GM (DBG_L1, "XSM_Instrument::update ** xsmres.BiasGain     = %g", BiasGain);
+	XSM_DEBUG_GM (DBG_L1, "XSM_Instrument::update ** xsmres->BiasGain     = %g", BiasGain);
 }
 
 double XSM_Instrument::temperature (double diode_volts){
