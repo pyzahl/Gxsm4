@@ -1894,6 +1894,7 @@ void RPSPMC_Control::create_folder (){
         bp->pop_grid ();
         bp->new_line ();
         bp->new_grid_with_frame ("Piezo Drive Settings",1);
+        bp->add_to_scan_freeze_widget_list (bp->frame);
 
         const gchar *PDR_gain_label[6] = { "VX", "VY", "VZ", "VX0", "VY0", "VZ0" };
         const gchar *PDR_gain_key[6] = { "vx", "vy", "vz", "vx0", "vy0", "vz0" };
@@ -1937,9 +1938,10 @@ void RPSPMC_Control::create_folder (){
         bp->pop_grid ();
 
 
-	// ========== Various Gain Settings
+	// ========== Various Variable Gain Settings
         bp->set_input_width_chars (8); // bp->set_xy (2,4);
         bp->new_grid_with_frame ("Gain Settings",1);
+        bp->add_to_scan_freeze_widget_list (bp->frame);
 
         const gchar *V_gain_label[] = { "VG-IVC", NULL };
         const gchar *V_gain_unit[]  = { "V/nA", NULL };
@@ -5283,9 +5285,6 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
         // hookup to scan start and stop
         rpspmc_pacpll_hwi_pi.app->ConnectPluginToStartScanEvent (RPspmc_pacpll::scan_start_callback);
         rpspmc_pacpll_hwi_pi.app->ConnectPluginToStopScanEvent (RPspmc_pacpll::scan_stop_callback);
-
-        
-        
 }
 
 RPspmc_pacpll::~RPspmc_pacpll (){
@@ -5329,16 +5328,24 @@ void RPspmc_pacpll::scan_start_callback (gpointer user_data){
         rpspmc_pacpll->ch_ampl = -1;
         rpspmc_pacpll->streaming = 1;
 
-
         rpspmc_hwi->set_spmc_signal_mux (RPSPMC_ControlClass->scan_source);
-        if (RPSPMC_ControlClass)
-                rpspmc_pacpll->set_stream_mux (RPSPMC_ControlClass->scan_source);
 
+        if (RPSPMC_ControlClass){
+                rpspmc_pacpll->set_stream_mux (RPSPMC_ControlClass->scan_source);
+                RPSPMC_ControlClass->bp->scan_start_gui_actions ();
+        }
+        
 }
 
 void RPspmc_pacpll::scan_stop_callback (gpointer user_data){
-         if (! rpspmc_hwi->is_scanning()){
-                g_message ("RPspmc_pacpll::scan_stopt_callback ** RPSPMC is no scanning.");
+        g_message ("RPspmc_pacpll::scan_stop_callback");
+
+        if (RPSPMC_ControlClass){
+                RPSPMC_ControlClass->bp->scan_end_gui_actions ();
+        }
+
+        if (! rpspmc_hwi->is_scanning()){
+                g_message ("RPspmc_pacpll::scan_stop_callback ** RPSPMC is not scanning.");
                 return -1;
         }
 
@@ -5346,7 +5353,6 @@ void RPspmc_pacpll::scan_stop_callback (gpointer user_data){
         rpspmc_pacpll->ch_ampl = -1;
         rpspmc_pacpll->streaming = 0;
 
-        g_message ("RPspmc_pacpll::scan_stop_callback");
 }
 
 int RPspmc_pacpll::setup_scan (int ch, 

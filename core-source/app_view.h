@@ -255,7 +255,7 @@ public:
                 scan->mem2d->data->get_shift_px (pdx, pdy);
                 XYpixshift[0] = pdx * scan->data.s.dx;
                 XYpixshift[1] = pdy * scan->data.s.dy;
-                g_message ("scan->mem2d->data->get_shift_px :  %g %g", XYpixshift[0], XYpixshift[1]);
+                //g_message ("scan->mem2d->data->get_shift_px :  %g %g", XYpixshift[0], XYpixshift[1]);
         };
         
         void update_view_panel (){
