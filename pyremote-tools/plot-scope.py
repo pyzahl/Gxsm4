@@ -14,17 +14,21 @@ for h in gxsm.list_actions ():
         
 print ('Scope Data:')
 #gxsm.action('DSP_VP_VP_EXECUTE')
-scope = gxsm.action('EXECUTE_ScopeSaveData')
-#EXECUTE_ScopeSaveData
-#EXECUTE_FirePulse
+
+#gxsm.action('EXECUTE_ScopeSaveData')
+#gxsm.action('EXECUTE_FirePulse')
+#gxsm.action('EXECUTE_ScopeSaveData')
+scope = gxsm.action('GET_RPDATA_VECTOR')
 
 print (scope)
 
 # fetch vpdata of last probe -- if exists, else error
-print ('*** Getting last vpdata set from master scan in ch=0 ***')
-columns, labels, units, xy = gxsm.get_probe_event(0,-1)  # ch=1, get last VPdata set
+#print ('*** Getting last vpdata set from master scan in ch=0 ***')
+#columns, labels, units, xy = gxsm.get_probe_event(0,-1)  # ch=0, get last VPdata set
 
-#columns, labels, units, xy = [scope, ['y1','y2'],['V','V'],[0,0]]
+## Grab RP Scope Data
+print ('*** Getting last RP Scope data ***')
+columns, labels, units, xy = (scope, ['Time-Mon', 'Y1','Y2'],['ms', 'V','V'],[0,0,0])
 
 # zip together for convenient data access
 vpdata  = dict (zip (labels, columns[:])) ## cut off points 0..100 (initial ramp points)
@@ -42,8 +46,7 @@ x='Time-Mon'
 #y='ZS-Topo'
 #y='dFrequency'
 y='Current'
-
-
+y='Y1'
 
 # Create VPDATA plot
 plt.figure(figsize=(6, 4))
