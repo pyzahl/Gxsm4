@@ -5638,8 +5638,8 @@ void RPspmc_pacpll::save_scope_data (){
 
                 for (i=0; i<1024; ++i){
                         bram_saved_buffer[0][i+k*1024] = ((i+k*1024)*tw1024);                   // time; buffer for later access via pyremote
-                        bram_saved_buffer[1][i+k*1024] = pacpll_signals.signal_ch1[(i+1)%1024]; // CH1; buffer for later access via pyremote
-                        bram_saved_buffer[2][i+k*1024] = pacpll_signals.signal_ch2[(i+1)%1024]; // CH2; buffer for later access via pyremote
+                        bram_saved_buffer[1][i+k*1024] = pacpll_signals.signal_ch1[i]; // CH1; buffer for later access via pyremote
+                        bram_saved_buffer[2][i+k*1024] = pacpll_signals.signal_ch2[i]; // CH2; buffer for later access via pyremote
                         f << (i+k*1024) << " \t"
                           << ((i+k*1024)*tw1024) << " \t"
                           << pacpll_signals.signal_ch1[(i+1)%1024] << " \t"
