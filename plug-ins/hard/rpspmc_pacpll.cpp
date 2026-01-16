@@ -4416,7 +4416,11 @@ int RPSPMC_Control::check_vp_in_progress (const gchar *extra_info=NULL) {
 /* **************************************** END SPM Control GUI **************************************** */
 
 /* **************************************** PAC-PLL GUI **************************************** */
-static void dummy_func_wd (GtkWidget* w, void* d){}
+
+static void get_rpdata_vector (GtkWidget* w, void *data){
+        RPspmc_pacpll* self= (RPspmc_pacpll*) data;
+        self->get_transport ();
+}
 
 #define dB_min_from_Q(Q) (20.*log10(1./((1L<<(Q))-1)))
 #define dB_max_from_Q(Q) (20.*log10(1L<<((32-(Q))-1)))
@@ -4425,7 +4429,21 @@ static void dummy_func_wd (GtkWidget* w, void* d){}
 RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
         GtkWidget *tmp;
         GtkWidget *wid;
-	
+
+
+        static const gchar* Y1Y2_tm[] = {
+                "IN1, IN2 ",             // [0] SCOPE
+                "IN1-AC, IN1-DC ",          // [1] MON
+                "Ampl, Exec ",      // [2] AMC Adjust
+                "dPhase, dFreq ",   // [3] PHC Adjust
+                "Phase, Ampl ",          // [4] TUNE
+                "Phase, dFreq ", // [5] SCAN
+                "dFreq, dFControl ", // [6] DFC Adjust
+                "DDR-IN1, DDR-IN2 ",          // [7] SCOPE with DEC=1,SHR=0 Double(max) Data Rate config
+                "DEBUG-McBP1, DEBUG-McBSP2 ",          // [8]
+                NULL };
+        Y1Y2_transport_mode = Y1Y2_tm;
+        
 	GSList *EC_R_list=NULL;
 	GSList *EC_QC_list=NULL;
 	GSList *EC_FP_list=NULL;
@@ -5291,10 +5309,11 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
         // Setup Scope data hook
         remote_action_cb *ra = g_new( remote_action_cb, 1);     
         ra -> cmd = g_strdup_printf("GET_RPDATA_VECTOR"); 
-        ra -> RemoteCb = (void (*)(GtkWidget*, void*))dummy_func_wd;  
+        ra -> RemoteCb = (void (*)(GtkWidget*, void*))get_rpdata_vector;  
         ra -> widget = NULL;
-        ra -> data = NULL;                                      
-        ra -> return_data = g_strdup_printf("VECTOR");
+        ra -> data = this;
+        
+        ra -> return_data    = bram_info;
         ra -> data_length    = 4096;
         ra -> data_vector[0] = &bram_saved_buffer[0][0];
         ra -> data_vector[1] = &bram_saved_buffer[1][0];

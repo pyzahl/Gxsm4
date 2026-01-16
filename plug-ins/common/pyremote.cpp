@@ -1372,7 +1372,7 @@ static PyObject* remote_action(PyObject *self, PyObject *args)
                         dims[1] = idle_data.ra_info->data_length;
                         PyObject* pyarr = PyArray_SimpleNewFromData(2, dims, NPY_DOUBLE, (void*)idle_data.ra_info->data_vector[0]);
                         PyArray_ENABLEFLAGS((PyArrayObject*) pyarr, NPY_ARRAY_OWNDATA);
-                        return Py_BuildValue("O", pyarr); // Python code will receive the array as numpy array.
+                        return Py_BuildValue("Os", pyarr, idle_data.ra_info->return_data); // Python code will receive the array as numpy array.
                 }
         return Py_BuildValue("i", idle_data.ret);
 }

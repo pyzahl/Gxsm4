@@ -1274,10 +1274,12 @@ private:
         gboolean scope_ac[5];
         double scope_z[2];
         double scope_dc_level[5];
+        const gchar** Y1Y2_transport_mode;
         int transport;
         int bram_shift;
         int trigger_mode;
         double trigger_post_time;
+        gchar bram_info[100];
         double bram_saved_buffer[5][4096];
         double gain_scale[5];
         double time_scale[5];
@@ -1301,6 +1303,7 @@ private:
 	GMutex mutex;
        
 public:
+        const gchar* get_transport () { memset(bram_info,0,sizeof(bram_info)); strncpy(bram_info, Y1Y2_transport_mode[transport], sizeof(bram_info)); return Y1Y2_transport_mode[transport]; };
         // moved controls to main tab
         GtkWidget *input_rpaddress;
         GtkWidget *text_status;
