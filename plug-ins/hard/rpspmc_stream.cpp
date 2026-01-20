@@ -244,6 +244,7 @@ void Z85_decode_double(const char* source, unsigned int size, double* dest)
 void  RP_stream::on_message(RP_stream* self, websocketpp::connection_hdl hdl, wsppclient::message_ptr msg)
 {
 	gconstpointer contents;
+	gconstpointer contents_next;
 	gsize len;
         gchar *tmp;
 
@@ -263,12 +264,14 @@ void  RP_stream::on_message(RP_stream* self, websocketpp::connection_hdl hdl, ws
                 len = msg->get_payload().size();
 
                 //puts(contents);
-                
+
+                contents_next = contents;
                 gchar *p;
-                if (p=g_strrstr (contents, "{Z85DVector[")){
-                        gsize size = atoi (p+12);
+                // NOTE: ADDED UNIQUE "_" to string IDs, what is NOT part if Gxsm's Z85 encode characters, as Z85 theoretically could genertate any key as part of data
+                if (p=g_strrstr (contents_next, "{_Z85DVector[")){
+                        gsize size = atoi (p+13);
                         // ENCODED Z85 SIZE IS: unsigned int sizeZ85 = vec.size()*2*5; // Z85 encoding is 2x5 bytes by 8 bytes as of double
-                        if ((p=g_strrstr (p+12, "]: {")) && (len-(gsize)(p-(gchar*)contents)) > (4+size*2*5)){
+                        if ((p=g_strrstr (p+13, "]: {")) && (len-(gsize)(p-(gchar*)contents)) > (4+size*2*5)){
 #define VEC_VNUM 20  // vectors/block
 
 #define VEC___T  0     
@@ -284,7 +287,7 @@ void  RP_stream::on_message(RP_stream* self, websocketpp::connection_hdl hdl, ws
 #define VEC__EXEC 16
 #define VEC_DFREQ 17
 #define VEC_PHASE 18
-#define VEC______ 19
+#define VEC_ZSSIG 19
         
 #define VEC_LEN  20 // num components
                                 double vec[size];
@@ -302,18 +305,25 @@ void  RP_stream::on_message(RP_stream* self, websocketpp::connection_hdl hdl, ws
                                 //self->on_new_Z85Vector_message (vec, size); // process vector message ** badly broken
 #endif
                                 if (self->shm_memory){
-                                        if (size == 400){
+                                        if (size == 400){ // Enforce Verify Length to current setup of 20 x 20 vectors
                                                 memcpy  (self->shm_memory, &vec[VEC_LEN*(VEC_VNUM-1)], 10*sizeof(double));
                                                 memcpy  (self->shm_memory+100*sizeof(double), &vec[0], size*sizeof(double));
-                                        }
-                                }
+                                                // advance
+                                                contents_next += 13+4+size*sizeof(double);
+                                                if (p=g_strrstr (contents_next, "{_Z85DVector[")){
+                                                        g_message ("MORE Z85DVectors in message! ... skipping"); // TDB situation, unlikely?
+                                                }
 
-                                
+                                        } else
+                                                g_warning ("Z85DVector Error. Size Mismatch Config <%s>", g_strrstr (contents, "{Z85Vector["));
+                                } else
+                                        g_warning ("Z85DVector Push SHM Invalid Error. Message=<%s>", g_strrstr (contents, "{Z85Vector["));
                         } else
-                                g_warning ("Z85DVector Error. Message=<%s>", g_strrstr (contents, "{Z85Vector["));
+                                g_warning ("Z85DVector Format Data Error. Message=<%s>", g_strrstr (contents, "{Z85Vector["));
+
                 }
 
-                if (g_strrstr (contents, "#***")){
+                if (g_strrstr (contents, "#_***")){
                         tmp = g_strdup_printf ("** WS TEXT MESSAGE **\n%s", (gchar*)contents);
                         self->status_append (tmp, true);
                         g_message (tmp);
@@ -321,7 +331,7 @@ void  RP_stream::on_message(RP_stream* self, websocketpp::connection_hdl hdl, ws
                 }
                 //g_message ("WS Message: %s", (gchar*)contents);
 
-                if (g_strrstr (contents, "RESET")){
+                if (g_strrstr (contents, "_RESET")){
                         self->status_append ("** WEBSOCKET STREAM TAG: RESET (GVP Start) Received.\n", true);
                         g_message ("** WEBSOCKET STREAM TAG: RESET (GVP Start) Received.");
                         finished=false;
@@ -331,28 +341,28 @@ void  RP_stream::on_message(RP_stream* self, websocketpp::connection_hdl hdl, ws
                         self->on_new_data (NULL, 0, true); // WS-PP data stream
                 }
                 
-                if ((p=g_strrstr(contents, "Position:{0x"))){ // SIMPLE JSON BLOCK
-                        position = strtoul (p+10, NULL, 16);
-                        if ((p=g_strrstr (contents, "Count:{")))
-                                count = atoi (p+7);
+                if ((p=g_strrstr(contents, "_Position:{0x"))){ // SIMPLE JSON BLOCK
+                        position = strtoul (p+11, NULL, 16);
+                        if ((p=g_strrstr (contents, "_Count:{")))
+                                count = atoi (p+8);
                         //g_message("*** ==> pos: 0x%06x #%d", position, count);
                         //g_message ("** POS: %s **", contents);
                         //puts(contents);
                         //{ gchar *tmp; self->status_append (tmp=g_strdup_printf("*** ==> pos: 0x%06x #%d\n", position, count), true); g_free(tmp); }
                 }
 
-                if (g_strrstr (contents, "FinishedNext:{true}")){
+                if (g_strrstr (contents, "_FinishedNext:{true}")){
                         self->status_append ("** WEBSOCKET STREAM TAG: FINISHED NEXT (GVP completed, last package update is been send) Received\n", true);
                         g_message ("** WEBSOCKET STREAM TAG: FINISHED NEXT (GVP completed, last package update is been send) Received");
                         finished=true;
                 }
                 
-                if ((p=g_strrstr(contents, "BRAMoffset:{0x"))){ // SIMPLE JSON BLOCK
-                        bram_offset = strtoul(p+12, NULL, 16);
+                if ((p=g_strrstr(contents, "_BRAMoffset:{0x"))){ // SIMPLE JSON BLOCK
+                        bram_offset = strtoul(p+13, NULL, 16);
                 }
                 
-                if (g_strrstr (contents, "vector = {")){
-                        if ((p = g_strrstr (contents, "// Vector #"))){
+                if (p=g_strrstr (contents, "_vector = {")){
+                        if ((p = g_strrstr (p, "// Vector #"))){
                                 self->last_vector_pc_confirmed = atoi (p+11);
                                 g_message ("** VECTOR #%02d confirmed.", self->last_vector_pc_confirmed);
                                 g_message ("** VECTOR: %s **", contents);
@@ -360,10 +370,6 @@ void  RP_stream::on_message(RP_stream* self, websocketpp::connection_hdl hdl, ws
                         }
                 }
 
-                //if (g_strrstr (contents, "{XYZInfo: {")){
-                //        self->status_append (contents, true);
-                //        g_message (contents);
-                //}
                 
         } else {
                 contents = msg->get_payload().c_str();

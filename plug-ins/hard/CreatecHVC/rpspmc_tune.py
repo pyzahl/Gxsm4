@@ -81,7 +81,7 @@ mon = gxsm.rt_query_rpspmc()
 tf=mon['time']
 ti=tf
 si=jsquery_var ('SPMC_UPTIME_SECONDS', False)
-for i in range(0,3):
+for i in range(0,30):
     start_time = time.perf_counter()
     while ti >= tf:
         mon = gxsm.rt_query_rpspmc()
