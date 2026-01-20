@@ -33,7 +33,7 @@ PACPLL_parameters pacpll_parameters;
 PACPLL_signals pacpll_signals;
 
 SPMC_parameters spmc_parameters;
-SPMC_signals spmc_signals;
+//SPMC_signals spmc_signals;
 
 
 JSON_parameter PACPLL_JSON_parameters[] = {
@@ -311,22 +311,22 @@ JSON_signal PACPLL_JSON_signals[] = {
         { "SIGNAL_TUNE_AMPL",  1024, pacpll_signals.signal_ampl, "mV1" },
         { "SIGNAL_GPIOX",  16, pacpll_signals.signal_gpiox, "1" },
 
-        { "SPMC_GVP_VECTOR", GVP_VECTOR_SIZE, spmc_signals.gvp_vector, "1" },
+        //{ "SPMC_GVP_VECTOR", GVP_VECTOR_SIZE, spmc_signals.gvp_vector, "1" },
 
-        { "SIGNAL_XYZ_METER", 9, spmc_signals.xyz_meter, "V" },
+        //{ "SIGNAL_XYZ_METER", 9, spmc_signals.xyz_meter, "V" },
 
-        { "SIGNAL_MON_FIFO_T", 1024, spmc_signals.mon_fifo_t, "s" },
-        { "SIGNAL_MON_FIFO_X", 1024, spmc_signals.mon_fifo_x, "V" },
-        { "SIGNAL_MON_FIFO_Y", 1024, spmc_signals.mon_fifo_y, "V" },
-        { "SIGNAL_MON_FIFO_Z", 1024, spmc_signals.mon_fifo_z, "V" },
-        { "SIGNAL_MON_FIFO_U", 1024, spmc_signals.mon_fifo_u, "V" },
-        //{ "SIGNAL_MON_FIFO_A", 1024, spmc_signals.mon_fifo_a, "V" },
-        //{ "SIGNAL_MON_FIFO_B", 1024, spmc_signals.mon_fifo_b, "V" },
-        { "SIGNAL_MON_FIFO_IN3", 1024, spmc_signals.mon_fifo_in3, "V" },
-        { "SIGNAL_MON_FIFO_IN4", 1024, spmc_signals.mon_fifo_in4, "V" },
-        { "SIGNAL_MON_FIFO_DF", 1024, spmc_signals.mon_fifo_df, "Hz" },
-        //{ "SIGNAL_MON_FIFO_AMP", 1024, spmc_signals.mon_fifo_amp, "V" },
-        
+        //{ "SIGNAL_MON_FIFO_T", 1024, spmc_signals.mon_fifo_t, "s" },
+        //{ "SIGNAL_MON_FIFO_X", 1024, spmc_signals.mon_fifo_x, "V" },
+        //{ "SIGNAL_MON_FIFO_Y", 1024, spmc_signals.mon_fifo_y, "V" },
+        //{ "SIGNAL_MON_FIFO_Z", 1024, spmc_signals.mon_fifo_z, "V" },
+        //{ "SIGNAL_MON_FIFO_U", 1024, spmc_signals.mon_fifo_u, "V" },
+        // //{ "SIGNAL_MON_FIFO_A", 1024, spmc_signals.mon_fifo_a, "V" },
+        // //{ "SIGNAL_MON_FIFO_B", 1024, spmc_signals.mon_fifo_b, "V" },
+        //{ "SIGNAL_MON_FIFO_IN3", 1024, spmc_signals.mon_fifo_in3, "V" },
+        //{ "SIGNAL_MON_FIFO_IN4", 1024, spmc_signals.mon_fifo_in4, "V" },
+        //{ "SIGNAL_MON_FIFO_DF", 1024, spmc_signals.mon_fifo_df, "Hz" },
+        // //{ "SIGNAL_MON_FIFO_AMP", 1024, spmc_signals.mon_fifo_amp, "V" },
+   
         { NULL, 0, NULL, "" }
 };
 

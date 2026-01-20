@@ -309,9 +309,10 @@ struct SPMC_parameters {
 
 };
 
-#define MAX_GVP_VECTORS   32
-#define GVP_VECTOR_SIZE   16 // 10 components used (1st is index, then: N, nii, Options, Nrep, Next, dx, dy, dz, du, fill w zero to 16)
+//#define MAX_GVP_VECTORS   32
+//#define GVP_VECTOR_SIZE   16 // 10 components used (1st is index, then: N, nii, Options, Nrep, Next, dx, dy, dz, du, fill w zero to 16)
 
+#if 0
 struct SPMC_signals {
         double gvp_vector[GVP_VECTOR_SIZE];
         double xyz_meter[10]; // { X[3], Y[3], Z[3], NOW } [actual, max , min]
@@ -328,5 +329,6 @@ struct SPMC_signals {
         double mon_fifo_df[1024]; // SIGNAL_MON_FIFO_DF
         //double mon_fifo_amp24]; // SIGNAL_MON_FIFO_AMP
 };
+#endif
 
 #endif

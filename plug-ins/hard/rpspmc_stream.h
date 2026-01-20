@@ -30,9 +30,6 @@
 #ifndef __RPSPMC_STREAM_H
 #define __RPSPMC_STREAM_H
 
-#define USE_WEBSOCKETPP // libsoup otherwise
-
-
 #include <config.h>
 #include "../control/jsmn.h"
 
@@ -48,32 +45,27 @@
 
 #include "rpspmc_hwi_structs.h"
 
-#ifdef USE_WEBSOCKETPP
-# include <websocketpp/config/asio_no_tls_client.hpp>
-# include <websocketpp/client.hpp>
-# include <iostream>
-#else
-# include <libsoup/soup.h>
-#endif
+#include <websocketpp/config/asio_no_tls_client.hpp>
+#include <websocketpp/client.hpp>
+#include <iostream>
 
 
-#ifdef USE_WEBSOCKETPP
-        typedef websocketpp::client<websocketpp::config::asio_client> wsppclient;
-        typedef websocketpp::lib::lock_guard<websocketpp::lib::mutex> scoped_lock;
-#endif
+typedef websocketpp::client<websocketpp::config::asio_client> wsppclient;
+typedef websocketpp::lib::lock_guard<websocketpp::lib::mutex> scoped_lock;
 
-class rpspmc_hwi_dev;
+typedef void (*message_func)(const gchar*, bool);
+
 
 class RP_stream{
 public:
-        RP_stream (rpspmc_hwi_dev *rp){
+        RP_stream (){ //rpspmc_hwi_dev *rp){
                 /* create a new connection, init */
 
-                rpspmc = rp;
+                send_msg_func=NULL;
+                shm_memory=NULL;
                 
                 port=9003;
 
-#ifdef USE_WEBSOCKETPP
                 client = new wsppclient;
 
                 // Set logging to be pretty verbose (everything except message payloads)
@@ -96,37 +88,32 @@ public:
                 });
     
                 con=NULL;
-#else                
-                listener=NULL;
-                session=NULL;
-                msg=NULL;
-                client=NULL;
-#endif
                 client_error=NULL;
                 error=NULL;
                 last_vector_pc_confirmed = -1;
         };
         ~RP_stream (){};
+
+        void set_message_func (message_func msg_func){
+                send_msg_func=msg_func;
+        };
+
+        void set_shm_ref (void *mptr){
+                shm_memory=mptr;
+        };
+
         void stream_connect_cb (gboolean connect); // connect/dissconnect
 
-#ifdef USE_WEBSOCKETPP
         static void got_client_connection (GObject *object, gpointer user_data);
         static void on_message(RP_stream* self, websocketpp::connection_hdl hdl, wsppclient::message_ptr msg);
         static void on_closed (GObject *object, gpointer user_data);
-#else
-        static void got_client_connection (GObject *object, GAsyncResult *result, gpointer user_data);
-        static void on_message(SoupWebsocketConnection *ws,
-                               SoupWebsocketDataType type,
-                               GBytes *message,
-                               gpointer user_data);
-        static void on_closed (SoupWebsocketConnection *ws, gpointer user_data);
-#endif
 
         virtual const gchar *get_rp_address (){ return NULL; };
         virtual int get_debug_level() { return 0; };
 
-        virtual int on_new_data (gconstpointer contents, gsize len, bool init=false) {}; // template RP_stream class
-
+        virtual int on_new_data (gconstpointer contents, gsize len, bool init=false) { return 0; }; // pur virt template RP_stream class
+        //virtual int on_new_Z85Vector_message (double *dvector, gsize len) { return 0; }; // pure virt template RP_stream class
+        
         void status_append (const gchar *msg, bool schedule_from_thread=false);
 
         virtual void update_health (const gchar *msg=NULL){
@@ -239,7 +226,7 @@ public:
 
 #define SPMC_AD5791_REFV 5.0 // DAC AD5791 Reference Volatge is 5.000000V (+/-5V Range)
         double rpspmc_to_volts (int value){ return SPMC_AD5791_REFV*(double)value / QN(31); }
-#define SPMC_RPIN12_REFV 1.0 // RP FAT DACs Reference Voltage is 1.0V (+/-1V Range)
+#define SPMC_RPIN12_REFV 1.0 // RP FAST DACs Reference Voltage is 1.0V (+/-1V Range)
         double rpIN12_to_volts (int value){ return SPMC_RPIN12_REFV*(double)value / QN(31); } // +/-1 <=> 32bit signed
 
         void status_append_int32(const guint32 *data, size_t data_length, bool format = true, int offset=0, bool also_gprint = false) {
@@ -293,25 +280,18 @@ public:
         /* Socket Connection */
 	gushort port;
 
-#ifdef USE_WEBSOCKETPP
         wsppclient *client;
         wsppclient::connection_ptr con;
         websocketpp::lib::thread asio_thread;
         GThread *wspp_asio_gthread;
         static gpointer wspp_asio_thread (void *ptr_rp_stream);
 
-#else
-	GSocket *listener;
-	SoupSession *session;
-	SoupSocket *socket;
-	SoupMessage *msg;
-	SoupWebsocketConnection *client;
-#endif
         GIOStream *JSON_raw_input_stream;
 	GError *client_error;
 	GError *error;
 
-        rpspmc_hwi_dev *rpspmc;
+        message_func send_msg_func;
+        void *shm_memory;
 };
 
 

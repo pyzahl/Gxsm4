@@ -38,7 +38,9 @@ plugin_list = [
 if gsl.found() and soup.found() and websocketpp.found()
     plugin_list += [
     { 'name': 'rpspmc_pacpll',
-      'sources' : ['rpspmc_pacpll.cpp',
+      'sources' : ['rpspmc.cpp',
+       		   'rpspmc_control.cpp',
+      		   'rpspmc_pacpll.cpp',
       		   'rpspmc_pacpll_json_data.cpp',
 		   'json_talk.cpp',
       		   '../control/jsmn.cpp',

@@ -557,6 +557,23 @@ class gxsm_process():
         def read_status(self):
                 try:
 
+                        ### NEW FAST SHM XYZ.. postions:
+                        #define VEC___T  0 // Sec FPGA
+                        #define VEC___X  1 // 1,2: MAX, MIN peal readings, slow
+                        #define VEC___Y  4 // 5,6: MAX, MIN
+                        #define VEC___Z  7 // 8,9: MAX, MIN
+                        #define VEC___U  10// Bias
+                        #define VEC_IN1  11
+                        #define VEC_IN2  12
+                        #define VEC_IN3  13
+                        #define VEC_IN4  14
+                        #define VEC__AMPL 15
+                        #define VEC__EXEC 16
+                        #define VEC_DFREQ 17
+                        #define VEC_PHASE 18
+                        #define VEC______ 19
+        
+                        
                         # XYZ MAX MIN (3x3)
                         #memcpy  (shm_ptr, spmc_signals.xyz_meter, sizeof(spmc_signals.xyz_meter));
                         #           0,1,2,  3,4,5,  6,7,8,
@@ -579,7 +596,7 @@ class gxsm_process():
                         #memcpy  (shm_ptr+100*sizeof(double), &spmc_parameters.uptime_seconds, sizeof(double));
 
                         gxsm_shares=np.ndarray((101), dtype=np.double, buffer=self.gxsm_shm.buf) # flat array all shares 
-                        xyz=np.ndarray((9,), dtype=np.double, buffer=self.gxsm_shm.buf).reshape((3,3)).T  # X Mi Ma, Y Mi Ma, Z Mi Ma
+                        xyz=np.ndarray((9,), dtype=np.double, buffer=self.gxsm_shm.buf[8:],).reshape((3,3)).T  # X Mi Ma, Y Mi Ma, Z Mi Ma
                         self.XYZ_monitor['monitor']=xyz[0]
                         self.XYZ_monitor['monitor_max']=xyz[1]
                         self.XYZ_monitor['monitor_min']=xyz[2]
@@ -639,10 +656,11 @@ class gxsm_process():
         def rt_query_xyz(self):
                 try:
                         gxsm_shares=np.ndarray((101), dtype=np.double, buffer=self.gxsm_shm.buf) # flat array all shares 
-                        xyz=np.ndarray((9,), dtype=np.double, buffer=self.gxsm_shm.buf).reshape((3,3)).T  # X Mi Ma, Y Mi Ma, Z Mi Ma
-                        self.XYZ_monitor['monitor']=xyz[0]
-                        self.XYZ_monitor['monitor_max']=xyz[1]
-                        self.XYZ_monitor['monitor_min']=xyz[2]
+                        xyz=np.ndarray((9,), dtype=np.double, buffer=self.gxsm_shm.buf[8:],).reshape((3,3)).T  # X Mi Ma, Y Mi Ma, Z Mi Ma
+                        #xyz=np.ndarray((9,), dtype=np.double, buffer=self.gxsm_shm.buf).reshape((3,3)).T  # X Mi Ma, Y Mi Ma, Z Mi Ma
+                        self.XYZ_monitor['monitor']=xyz[0]*20
+                        self.XYZ_monitor['monitor_max']=xyz[1]*20
+                        self.XYZ_monitor['monitor_min']=xyz[2]*20
 
                 except AttributeError:
                         # just try open again

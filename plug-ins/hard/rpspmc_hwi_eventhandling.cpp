@@ -48,7 +48,9 @@
 
 #include "surface.h"
 
+#include "rpspmc_hwi_dev.h"
 #include "rpspmc_hwi_structs.h"
+#include "rpspmc_control.h"
 #include "rpspmc_pacpll.h"
 
 #define UTF8_DEGREE    "\302\260"
@@ -57,6 +59,18 @@
 
 extern GxsmPlugin rpspmc_pacpll_hwi_pi;
 extern rpspmc_hwi_dev *rpspmc_hwi; // instance of the HwI derived XSM_Hardware class
+
+
+
+//FIXME WARNING WARNING WARNING.. not working life if table is initialized with this
+#define BiasFac    (main_get_gapp()->xsm->Inst->BiasGainV2V ())
+#define CurrFac    (1./main_get_gapp()->xsm->Inst->nAmpere2V (1.))
+#define ZAngFac    (main_get_gapp()->xsm->Inst->Volt2ZA (1.))
+#define XAngFac    (main_get_gapp()->xsm->Inst->Volt2XA (1.))
+#define YAngFac    (main_get_gapp()->xsm->Inst->Volt2YA (1.))
+
+
+
 
 gfloat color_gray[4]    = { .3, .3, .3, 0.8 };
 gfloat color_red[4]     = { 1., 0., 0., 1.0 };

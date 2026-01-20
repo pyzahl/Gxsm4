@@ -4,7 +4,7 @@
  * universal STM/AFM/SARLS/SPALEED/... controlling and
  * data analysis software
  *
- * Gxsm Plugin Name: rpspmc_pacpll.C
+ * Gxsm Plugin Name: rpspmc_stream.cpp
  * ========================================
  * 
  * Copyright (C) 1999 The Free Software Foundation
@@ -34,15 +34,15 @@
 
 #include "config.h"
 
-#include "rpspmc_pacpll.h"
-
-extern SPMC_parameters spmc_parameters;
-
 /* *** RP_stream module *** */
+#include "rpspmc_stream.h"
 
+// ONLY USE OF HwI global rpspmc here TO ADD STATUS INFO
 void RP_stream::status_append (const gchar *msg, bool schedule_from_thread=false){
-        rpspmc->status_append (msg, schedule_from_thread);
+        if (send_msg_func)
+                send_msg_func (msg, schedule_from_thread);
 }
+// ***
 
 gchar* get_ip_from_hostname(const gchar *host){
         struct addrinfo* result;
@@ -147,28 +147,8 @@ void RP_stream::stream_connect_cb (gboolean connect){
 
                 update_health ("Connecting stream...");
                 
-#ifdef USE_WEBSOCKETPP
                 wspp_asio_gthread = g_thread_new ("wspp_asio_gthread", wspp_asio_thread, this);
-#else
-                // new soup session
-                session = soup_session_new ();
-
-                // then connect to Stream Socket on RP
-                gchar *url = g_strdup_printf ("ws://%s:%u", get_rp_address (), port);
-                status_append (url);
-                status_append ("\n");
-                // g_message ("Connecting to: %s", url);
-
-                msg = soup_message_new ("GET", url);
-                g_free (url);
-                // g_message ("soup_message_new - OK");
-                soup_session_websocket_connect_async (session, msg, // SoupSession *session, SoupMessage *msg,
-                                                      NULL, NULL, // const char *origin, char **protocols,
-                                                      NULL,  RP_stream::got_client_connection, this); // GCancellable *cancellable, GAsyncReadyCallback callback, gpointer user_data
-                //g_message ("soup_session_websocket_connect_async - OK");
-#endif
         } else {
-#ifdef USE_WEBSOCKETPP
                 if (con){
                         status_append ("Dissconnecting...\n ", true);
                         std::error_code ec;
@@ -179,87 +159,89 @@ void RP_stream::stream_connect_cb (gboolean connect){
                         update_health ("Dissconnected RP stream.\n");
                         con = NULL;
                 }
-#else
-                // tear down connection
-                status_append ("Dissconnecting...\n ", true);
-
-                rpspmc_hwi->info_append (NULL); // clear
-                
-                //g_clear_object (&listener);
-                g_clear_object (&client);
-                g_clear_error (&client_error);
-                g_clear_error (&error);
-
-                update_health ("Dissconnected.\n");
-#endif
         }
 }
 
 
-#ifdef USE_WEBSOCKETPP
-#if 0
-//https://docs.websocketpp.org/md_tutorials_utility_client_utility_client.html
-void RP_stream::on_close(client * c, websocketpp::connection_hdl hdl) {
-    m_status = "Closed";
-    client::connection_ptr con = c->get_con_from_hdl(hdl);
-    std::stringstream s;
-    s << "close code: " << con->get_remote_close_code() << " (" 
-      << websocketpp::close::status::get_string(con->get_remote_close_code()) 
-      << "), close reason: " << con->get_remote_close_reason();
-    m_error_reason = s.str();
-}
-
-void RP_stream::close(int id, websocketpp::close::status::value code) {
-    websocketpp::lib::error_code ec;
-    
-    con_list::iterator metadata_it = m_connection_list.find(id);
-    if (metadata_it == m_connection_list.end()) {
-        std::cout << "> No connection found with id " << id << std::endl;
-        return;
-    }
-    
-    m_endpoint.close(metadata_it->second->get_hdl(), code, "", ec);
-    if (ec) {
-        std::cout << "> Error initiating close: " << ec.message() << std::endl;
-    }
-}
-
-#endif
 
 void  RP_stream::got_client_connection (GObject *object, gpointer user_data){
         RP_stream *self = ( RP_stream *)user_data;
         g_message ("got_client_connection");
 }
-#else
-void  RP_stream::got_client_connection (GObject *object, GAsyncResult *result, gpointer user_data){
-        RP_stream *self = ( RP_stream *)user_data;
-        g_message ("got_client_connection");
 
-	self->client = soup_session_websocket_connect_finish (SOUP_SESSION (object), result, &self->client_error);
-        if (self->client_error != NULL) {
-                self->status_append ("Connection failed: ");
-                self->status_append (self->client_error->message);
-                self->status_append ("\n");
-                g_message ("%s", self->client_error->message);
-        } else {
-                self->status_append ("RedPitaya SPMC Stream Socket Connected!\n ");
-		g_signal_connect(self->client, "closed",  G_CALLBACK( RP_stream::on_closed),  self);
-		g_signal_connect(self->client, "message", G_CALLBACK( RP_stream::on_message), self);
-		//g_signal_connect(connection, "closing", G_CALLBACK(on_closing_send_message), message);
 
-                self->on_connect_actions (); // setup instrument, send all params, ...
+void Z85_decode_double(const char* source, unsigned int size, double* dest)
+{
+        char* src = (char*)source;
+        unsigned int count = size; // (sizeof (double)=8) => 2x5 =: 10 bytes in Z85
+        union { double d; struct { uint32_t u,v; } ii; } u;
+        double* dst = dest;
+        uint32_t num;
+
+	// BASE85 REVERSE LOOKUP TABLE FROM BASE256:
+	static char base256[] = {
+                0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, // 07
+                0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, // 0f
+                0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, // 17
+                0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, // 1f
+                0x00,0x44,0x00,0x54,0x53,0x52,0x48,0x00, // 27
+                0x4b,0x4c,0x46,0x41,0x00,0x3f,0x3e,0x45, // 2f
+                0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07, // 37
+                0x08,0x09,0x40,0x00,0x49,0x42,0x4a,0x47, // 3f
+                0x51,0x24,0x25,0x26,0x27,0x28,0x29,0x2a, // 47
+                0x2b,0x2c,0x2d,0x2e,0x2f,0x30,0x31,0x32, // 4f
+                0x33,0x34,0x35,0x36,0x37,0x38,0x39,0x3a, // 57
+                0x3b,0x3c,0x3d,0x4d,0x00,0x4e,0x43,0x00, // 5f
+                0x00,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,0x10, // 67
+                0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18, // 6f
+                0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20, // 77
+                0x21,0x22,0x23,0x4f,0x00,0x50,0x00,0x00, // 7f
+                0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, // 87 *** for safety sake up to 0xff ***
+                0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, // 8f
+                0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, // 97
+                0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, // 9f
+                0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, // a7
+                0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, // af
+                0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, // b7
+                0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, // bf
+                0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, // c7
+                0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, // cf
+                0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, // d7
+                0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, // df
+                0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, // e7
+                0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, // ef
+                0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, // f7
+                0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00  // ff
+	};
+	
+        for (; count--; src += 10, dst++){
+                // decode Z85
+                num =            base256[src[0]];
+                num = num * 85 + base256[src[1]];
+                num = num * 85 + base256[src[2]];
+                num = num * 85 + base256[src[3]];
+                num = num * 85 + base256[src[4]];
+                // unpack frame, low 32
+                num = u.ii.u = num;
+                // decode Z85
+                num =            base256[src[5]];
+                num = num * 85 + base256[src[6]];
+                num = num * 85 + base256[src[7]];
+                num = num * 85 + base256[src[8]];
+                num = num * 85 + base256[src[9]];
+                // unpack frame, high 32
+                num = u.ii.v = num;
+                // store resulting double
+                *dst = u.d;
+                
+                //std::cout << u.d << " <= "
+                //          << u.ii.u << ", "
+                //          << u.ii.v
+                //          << std::endl;
         }
 }
-#endif
 
-#ifdef USE_WEBSOCKETPP
 void  RP_stream::on_message(RP_stream* self, websocketpp::connection_hdl hdl, wsppclient::message_ptr msg)
-#else
-void  RP_stream::on_message(SoupWebsocketConnection *ws,
-                               SoupWebsocketDataType type,
-                               GBytes *message,
-                               gpointer user_data)
-#endif
 {
 	gconstpointer contents;
 	gsize len;
@@ -274,21 +256,63 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
         //self->debug_log ("WebSocket SPMC message received.");
 	//self->status_append ("WebSocket SPMC message received.\n", true);
 
-#ifdef USE_WEBSOCKETPP
         //RP_stream *self = (RP_stream*)(*c)->get_user_data(hdl);
 
         if (msg->get_opcode() == websocketpp::frame::opcode::text) {
                 contents = msg->get_payload().c_str();
                 len = msg->get_payload().size();
-#else 
-        RP_stream *self = ( RP_stream *)user_data;
-	if (type == SOUP_WEBSOCKET_DATA_TEXT) {
-		contents = g_bytes_get_data (message, &len);
-#endif
 
                 //puts(contents);
                 
                 gchar *p;
+                if (p=g_strrstr (contents, "{Z85DVector[")){
+                        gsize size = atoi (p+12);
+                        // ENCODED Z85 SIZE IS: unsigned int sizeZ85 = vec.size()*2*5; // Z85 encoding is 2x5 bytes by 8 bytes as of double
+                        if ((p=g_strrstr (p+12, "]: {")) && (len-(gsize)(p-(gchar*)contents)) > (4+size*2*5)){
+#define VEC_VNUM 20  // vectors/block
+
+#define VEC___T  0     
+#define VEC___X  1 // 1,2: MAX, MIN peal readings, slow
+#define VEC___Y  4 // 5,6: MAX, MIN
+#define VEC___Z  7 // 8,9: MAX, MIN
+#define VEC___U  10
+#define VEC_IN1  11
+#define VEC_IN2  12
+#define VEC_IN3  13
+#define VEC_IN4  14
+#define VEC__AMPL 15
+#define VEC__EXEC 16
+#define VEC_DFREQ 17
+#define VEC_PHASE 18
+#define VEC______ 19
+        
+#define VEC_LEN  20 // num components
+                                double vec[size];
+                                //g_message ("Z85DVector=%s", p+4);
+                                Z85_decode_double(p+4, size, vec);
+                                //self->on_new_Z85Vector_message (vec, size); // process vector message
+#if 0
+                                for (int k=0; k<size; k+=VEC_LEN){
+                                        printf ("Z85DVector [%d] #%03d [@ %.3f s, XYZ: %g %g %g V, U: %g V "
+                                                "IN34: %g %g V DF %g Hz AMEX: %g %g V]\n",
+                                                size, k,
+                                                vec[k+VEC___T],  vec[k+VEC___X],vec[k+VEC___Y],vec[k+VEC___Z],  vec[k+VEC___U],
+                                                vec[k+VEC_IN3], vec[k+VEC_IN3],  vec[k+VEC_DFREQ],  vec[k+VEC__AMPL],vec[k+VEC__EXEC]);
+                                }
+                                //self->on_new_Z85Vector_message (vec, size); // process vector message ** badly broken
+#endif
+                                if (self->shm_memory){
+                                        if (size == 400){
+                                                memcpy  (self->shm_memory, &vec[VEC_LEN*(VEC_VNUM-1)], 10*sizeof(double));
+                                                memcpy  (self->shm_memory+100*sizeof(double), &vec[0], size*sizeof(double));
+                                        }
+                                }
+
+                                
+                        } else
+                                g_warning ("Z85DVector Error. Message=<%s>", g_strrstr (contents, "{Z85Vector["));
+                }
+
                 if (g_strrstr (contents, "#***")){
                         tmp = g_strdup_printf ("** WS TEXT MESSAGE **\n%s", (gchar*)contents);
                         self->status_append (tmp, true);
@@ -341,34 +365,20 @@ void  RP_stream::on_message(SoupWebsocketConnection *ws,
                 //        g_message (contents);
                 //}
                 
-#ifdef USE_WEBSOCKETPP
         } else {
                 contents = msg->get_payload().c_str();
                 len = msg->get_payload().size();
-#else
-	} else if (type == SOUP_WEBSOCKET_DATA_BINARY) {
-		contents = g_bytes_get_data (message, &len);
-#endif
                 if (len)
                         self->on_new_data (contents, len); // WS-PP data stream
         }
 }
 
-#ifdef USE_WEBSOCKETPP
 void  RP_stream::on_closed (GObject *object, gpointer user_data){
         RP_stream *self = ( RP_stream *)user_data;
         self->status_append ("WebSocket stream connection externally closed.\n", true);
         self->status_append ("--> auto reconnecting...\n", true);
         self->stream_connect_cb (TRUE);
 }
-#else
-void  RP_stream::on_closed (SoupWebsocketConnection *ws, gpointer user_data){
-        RP_stream *self = ( RP_stream *)user_data;
-        self->status_append ("WebSocket stream connection externally closed.\n", true);
-        self->status_append ("--> auto reconnecting...\n", true);
-        self->stream_connect_cb (TRUE);
-}
-#endif
 
 
 

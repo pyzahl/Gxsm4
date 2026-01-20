@@ -40,8 +40,13 @@
 
 #include "../common/pyremote.h"
 #include "rpspmc_hwi_structs.h"
+#include "rpspmc_hwi_dev.h"
+#include "rpspmc_control.h"
 #include "rpspmc_pacpll.h"
 #include "rpspmc_stream.h"
+
+#include "rpspmc_conversions.h"
+
 
 // Define HwI PlugIn reference name here, this is what is listed later within "Preferenced Dialog"
 // i.e. the string selected for "Hardware/Card"!
@@ -53,21 +58,20 @@ extern SOURCE_SIGNAL_DEF rpspmc_source_signals[];
 extern SOURCE_SIGNAL_DEF rpspmc_swappable_signals[];
 extern SOURCE_SIGNAL_DEF z_servo_current_source[];
 
-extern "C++" {
-        extern RPspmc_pacpll *rpspmc_pacpll;
-        extern GxsmPlugin rpspmc_pacpll_hwi_pi;
-}
+extern RPspmc_pacpll *rpspmc_pacpll;
+extern GxsmPlugin rpspmc_pacpll_hwi_pi;
+extern RPSPMC_Control *RPSPMC_ControlClass;
+extern GxsmPlugin rpspmc_hwi_pi;
 
-extern "C++" {
-        extern RPSPMC_Control *RPSPMC_ControlClass;
-        extern GxsmPlugin rpspmc_hwi_pi;
-}
-
+extern rpspmc_hwi_dev  *rpspmc_hwi;
 
 // HwI Implementation
 // ================================================================================
+void ext_message_func(const gchar* msg, bool sched){
+        rpspmc_hwi -> status_append (msg, sched);
+}
 
-rpspmc_hwi_dev::rpspmc_hwi_dev():RP_stream(this){
+rpspmc_hwi_dev::rpspmc_hwi_dev():RP_stream(){
         g_mutex_init (&RTQmutex);
         
         z_offset_internal = 0.;
@@ -108,6 +112,9 @@ rpspmc_hwi_dev::rpspmc_hwi_dev():RP_stream(this){
 
         g_free (AddStatusString);
         AddStatusString = g_strdup_printf ("RPSPMC HwI initialized. Not connected.");
+
+        //set_message_func (&rpspmc_hwi_dev::status_append); // not effin possible w/o static?!?!
+        set_message_func (ext_message_func);
         
         //gint32 *GVP_stream_buffer=new gint32[0x1000000]; // temporary
 }
@@ -814,6 +821,8 @@ int rpspmc_hwi_dev::on_new_data (gconstpointer contents, gsize len, bool init){
         return 0;
 }
 
+
+
 // ReadProbeData:
 // read from probe data FIFO, this engine needs to be called several times from master thread/function
 int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
@@ -1213,13 +1222,29 @@ gboolean rpspmc_hwi_dev::ScanLineM(int yindex, int xdir, int muxmode, //srcs_mas
 */
 
 gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2, double &val3){
-        if (*property == 'z'){ // Scan Coordinates: ZScan, XScan, YScan  with offset!! -- in volts with gains!
-		val1 = spmc_parameters.gxsm_z_polarity*spmc_parameters.z_monitor*main_get_gapp()->xsm->Inst->VZ(); // adjust for polarity as Z-Monitor is the actual DAC OUT Z
-		val2 = spmc_parameters.x_monitor*main_get_gapp()->xsm->Inst->VX();
+        if (*property == '!'){ // Scan Coordinates: ZScan, XScan, YScan  with offset!! -- in volts with gains!
+                val1 = spmc_parameters.gxsm_z_polarity*spmc_parameters.z_monitor*main_get_gapp()->xsm->Inst->VZ(); // adjust for polarity as Z-Monitor is the actual DAC OUT Z
+                val2 = spmc_parameters.x_monitor*main_get_gapp()->xsm->Inst->VX();
                 val3 = spmc_parameters.y_monitor*main_get_gapp()->xsm->Inst->VY();
 		return TRUE;
 	}
-
+        if (*property == 'z'){ // Scan Coordinates: ZScan, XScan, YScan  with offset!! -- in volts with gains!
+                double dvec[20];
+                int rt=0;
+                if (rpspmc_pacpll) // TEST
+                        //rt = rpspmc_pacpll->memcpy_from_rt_monitors (dvec, 20, 100);
+                        rt = rpspmc_pacpll->memcpy_from_rt_monitors (dvec, 10, 0);
+                if (rt) {
+                        val1 = dvec[7]*spmc_parameters.gxsm_z_polarity*main_get_gapp()->xsm->Inst->VZ(); // adjust for polarity as Z-Monitor is the actual DAC OUT Z
+                        val2 = dvec[1]*main_get_gapp()->xsm->Inst->VX();
+                        val3 = dvec[4]*main_get_gapp()->xsm->Inst->VY();
+                } else {
+                        val1 = spmc_parameters.gxsm_z_polarity*spmc_parameters.z_monitor*main_get_gapp()->xsm->Inst->VZ(); // adjust for polarity as Z-Monitor is the actual DAC OUT Z
+                        val2 = spmc_parameters.x_monitor*main_get_gapp()->xsm->Inst->VX();
+                        val3 = spmc_parameters.y_monitor*main_get_gapp()->xsm->Inst->VY();
+                }
+		return TRUE;
+        }
 	if (*property == 'o' || *property == 'O'){ // Offsets: Z0, X0, Y0  offset -- in volts after piezo amplifier
                 val1 =  spmc_parameters.z0_monitor * main_get_gapp()->xsm->Inst->VZ();
                 val2 =  spmc_parameters.x0_monitor * main_get_gapp()->xsm->Inst->VX();

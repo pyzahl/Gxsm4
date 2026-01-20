@@ -77,6 +77,8 @@ Mover/Slider analog signal/wave generation via GVP.
 #include "../common/pyremote.h"
 
 #include "rpspmc_hwi_structs.h"
+#include "rpspmc_hwi_dev.h"
+#include "rpspmc_control.h"
 #include "rpspmc_pacpll.h"
 #include "rpspmc_gvpmover.h"
 
@@ -85,13 +87,12 @@ extern int debug_level;
 extern int force_gxsm_defaults;
 
 
-extern "C++" {
-        extern RPSPMC_Control *RPSPMC_ControlClass;
-        extern RPspmc_pacpll *rpspmc_pacpll;
-        extern GxsmPlugin rpspmc_pacpll_hwi_pi;
-	extern GVPMoverControl *rpspmc_gvpmover;
-        extern rpspmc_hwi_dev *rpspmc_hwi;
-}
+extern RPSPMC_Control *RPSPMC_ControlClass;
+//extern RPspmc_pacpll *rpspmc_pacpll;
+extern GxsmPlugin rpspmc_pacpll_hwi_pi;
+extern GVPMoverControl *rpspmc_gvpmover;
+extern rpspmc_hwi_dev *rpspmc_hwi;
+
 
 GVPMoverControl *this_mover_control=NULL;	 
 

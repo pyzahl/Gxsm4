@@ -43,6 +43,8 @@
 
 #include "surface.h"
 
+#include "rpspmc_hwi_dev.h"
+#include "rpspmc_control.h"
 #include "rpspmc_pacpll.h"
 
 extern rpspmc_hwi_dev *rpspmc_hwi;
@@ -55,10 +57,6 @@ extern SOURCE_SIGNAL_DEF z_servo_current_source[];
 extern "C++" {
         extern RPSPMC_Control *RPSPMC_ControlClass;
         extern GxsmPlugin rpspmc_hwi_pi;
-}
-
-void RPSPMC_Control::read_spm_vector_program (){
-	if (!rpspmc_hwi) return; 
 }
 
 

@@ -45,32 +45,15 @@
 #include "json_talk.h"
 #include "rpspmc_stream.h"
 
-
-#define MAX_PROGRAM_VECTORS 32
-#define i_X 0
-#define i_Y 1
-#define i_Z 2
+#include "rpspmc_conversions.h"
 
 // forward defs
-extern PACPLL_parameters pacpll_parameters;
-extern PACPLL_signals pacpll_signals;
-extern SPMC_parameters spmc_parameters;
-extern SPMC_signals spmc_signals;
-extern JSON_parameter PACPLL_JSON_parameters[];
-extern JSON_signal PACPLL_JSON_signals[];
+//extern PACPLL_parameters pacpll_parameters;
+//extern PACPLL_signals pacpll_signals;
+//extern SPMC_parameters spmc_parameters;
+//extern JSON_parameter PACPLL_JSON_parameters[];
+//extern JSON_signal PACPLL_JSON_signals[];
 
-class RPSPMC_Control;
-class RPspmc_pacpll;
-
-extern RPSPMC_Control *RPSPMC_ControlClass;
-
-extern "C++" {
-        extern RPspmc_pacpll *rpspmc_pacpll;
-        extern GxsmPlugin rpspmc_pacpll_hwi_pi;
-}
-
-#define DMA_SIZE         0x40000            // 20bit count of 32bit words ==> 1MB DMA Block:  2 x 0x80000 bytes
-#define EXPAND_MULTIPLES 32
 
 /*
  * RPSPMC hardware interface class -- derived from GXSM XSM_hardware abstraction class
@@ -96,7 +79,8 @@ public:
         virtual void status_append (const gchar *msg, bool schedule_from_thread=false);
         virtual void on_connect_actions();
         virtual int on_new_data (gconstpointer contents, gsize len, bool init=false);
-        
+        //virtual int on_new_Z85Vector_message (double *dvector, gsize len); // called RP_stream class on vector message
+
 	/* Parameter  */
 	virtual long GetMaxLines(){ return 32000; };
         

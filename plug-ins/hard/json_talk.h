@@ -50,7 +50,7 @@
 extern PACPLL_parameters pacpll_parameters;
 extern PACPLL_signals pacpll_signals;
 extern SPMC_parameters spmc_parameters;
-extern SPMC_signals spmc_signals;
+//extern SPMC_signals spmc_signals;
 extern JSON_parameter PACPLL_JSON_parameters[];
 extern JSON_signal PACPLL_JSON_signals[];
 
