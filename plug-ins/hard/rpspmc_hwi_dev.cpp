@@ -1222,6 +1222,11 @@ gboolean rpspmc_hwi_dev::ScanLineM(int yindex, int xdir, int muxmode, //srcs_mas
 */
 
 gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2, double &val3){
+        double dvec[20];
+        int rt=0;
+        if (rpspmc_pacpll) // try fetch SHM monitor data
+                rt = rpspmc_pacpll->memcpy_from_rt_monitors (dvec, 20, 100+400-20); // last
+        
         if (*property == '!'){ // Scan Coordinates: ZScan, XScan, YScan  with offset!! -- in volts with gains!
                 val1 = spmc_parameters.gxsm_z_polarity*spmc_parameters.z_monitor*main_get_gapp()->xsm->Inst->VZ(); // adjust for polarity as Z-Monitor is the actual DAC OUT Z
                 val2 = spmc_parameters.x_monitor*main_get_gapp()->xsm->Inst->VX();
@@ -1229,11 +1234,6 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2,
 		return TRUE;
 	}
         if (*property == 'z'){ // Scan Coordinates: ZScan, XScan, YScan  with offset!! -- in volts with gains!
-                double dvec[20];
-                int rt=0;
-                if (rpspmc_pacpll) // TEST
-                        //rt = rpspmc_pacpll->memcpy_from_rt_monitors (dvec, 20, 100);
-                        rt = rpspmc_pacpll->memcpy_from_rt_monitors (dvec, 10, 0);
                 if (rt) {
                         val1 = dvec[7]*spmc_parameters.gxsm_z_polarity*main_get_gapp()->xsm->Inst->VZ(); // adjust for polarity as Z-Monitor is the actual DAC OUT Z
                         val2 = dvec[1]*main_get_gapp()->xsm->Inst->VX();
@@ -1262,9 +1262,15 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2,
         }
 
         if (*property == 'f'){
-                val1 = pacpll_parameters.dfreq_monitor; // Freq Shift
-                val2 = spmc_parameters.signal_monitor / main_get_gapp()->xsm->Inst->nAmpere2V (1.0); // Reading converted to nA
-		val3 = spmc_parameters.signal_monitor; // Current Input reading in Volts (+/-1 V for RF-IN2, +/-5V for AD24-IN3
+                if (rt) {
+                        val1 = dvec[17];
+                        val2 = dvec[19] / main_get_gapp()->xsm->Inst->nAmpere2V (1.0); // Reading converted to nA
+                        val3 = dvec[19]; // Current Input reading in Volts (+/-1 V for RF-IN2, +/-5V for AD24-IN3
+                } else {
+                        val1 = pacpll_parameters.dfreq_monitor; // Freq Shift
+                        val2 = spmc_parameters.signal_monitor / main_get_gapp()->xsm->Inst->nAmpere2V (1.0); // Reading converted to nA
+                        val3 = spmc_parameters.signal_monitor; // Current Input reading in Volts (+/-1 V for RF-IN2, +/-5V for AD24-IN3
+                }
 		return TRUE;
 	}
 
@@ -1439,7 +1445,7 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, int n, gfloat *data){
         // Signal1
         if ( property[1] == '1' && ((time_of_last_reading1+max_age) < g_get_real_time () || s1ok)){
                 time_of_last_reading1 = g_get_real_time ();
-                get_history_vector_f (6, data, n); // Z
+                get_history_vector_f (7, data, n); // Z
 
                 //double scale =  DSP32Qs23dot8TO_Volt; // assuming MIX_IN_0..3 withe 23Q8 scale for10V
                 //s1ok=read_pll_signal1 (data, n, scale, 0);
@@ -1455,7 +1461,7 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, int n, gfloat *data){
         // Signal1 deci 256
         if ( property[1] == '3' && ((time_of_last_reading3+max_age) < g_get_real_time () || s3ok)){
                 time_of_last_reading3 = g_get_real_time ();
-                get_history_vector_f (6, data, n); // Z
+                get_history_vector_f (7, data, n); // Z
 
                 //double scale =  DSP32Qs23dot8TO_Volt;
                 //s3ok=read_pll_signal1dec (data, n, scale, property[0] == 'R');

@@ -3127,7 +3127,7 @@ gboolean RPspmc_pacpll::update_shm_monitors (int close_shm){
 
         // ================================================================================
         // push history -- move this to stream server for vect r block
-        rpspmc_hwi->push_history_vector (shm_ptr, 48); // currently used: 0..8, 10..31, 40..47 as size of double
+        //rpspmc_hwi->push_history_vector (shm_ptr, 48); // currently used: 0..8, 10..31, 40..47 as size of double
 
         PI_DEBUG (DBG_L2, "SHM MONITOR UPDATE @RPSPMC TIME: " << spmc_parameters.uptime_seconds << " s");
         //g_message ("SHM MONITOR UPDATE @RPSPMC TIME: %.9fs", spmc_parameters.uptime_seconds);

@@ -37,6 +37,9 @@
 /* *** RP_stream module *** */
 #include "rpspmc_stream.h"
 
+#include "rpspmc_hwi_dev.h"
+extern rpspmc_hwi_dev *rpspmc_hwi;
+
 // ONLY USE OF HwI global rpspmc here TO ADD STATUS INFO
 void RP_stream::status_append (const gchar *msg, bool schedule_from_thread=false){
         if (send_msg_func)
@@ -267,11 +270,12 @@ void  RP_stream::on_message(RP_stream* self, websocketpp::connection_hdl hdl, ws
 
                 contents_next = contents;
                 gchar *p;
+                do {
                 // NOTE: ADDED UNIQUE "_" to string IDs, what is NOT part if Gxsm's Z85 encode characters, as Z85 theoretically could genertate any key as part of data
-                if (p=g_strrstr (contents_next, "{_Z85DVector[")){
-                        gsize size = atoi (p+13);
-                        // ENCODED Z85 SIZE IS: unsigned int sizeZ85 = vec.size()*2*5; // Z85 encoding is 2x5 bytes by 8 bytes as of double
-                        if ((p=g_strrstr (p+13, "]: {")) && (len-(gsize)(p-(gchar*)contents)) > (4+size*2*5)){
+                        if (p=g_strrstr (contents_next, "{_Z85DVector[")){
+                                gsize size = atoi (p+13);
+                                // ENCODED Z85 SIZE IS: unsigned int sizeZ85 = vec.size()*2*5; // Z85 encoding is 2x5 bytes by 8 bytes as of double
+                                if ((p=g_strrstr (p+13, "]: {")) && (len-(gsize)(p-(gchar*)contents)) > (4+size*2*5)){
 #define VEC_VNUM 20  // vectors/block
 
 #define VEC___T  0     
@@ -290,44 +294,63 @@ void  RP_stream::on_message(RP_stream* self, websocketpp::connection_hdl hdl, ws
 #define VEC_ZSSIG 19
         
 #define VEC_LEN  20 // num components
-                                double vec[size];
-                                //g_message ("Z85DVector=%s", p+4);
-                                Z85_decode_double(p+4, size, vec);
-                                //self->on_new_Z85Vector_message (vec, size); // process vector message
+                                        double vec[size];
+                                        //g_message ("Z85DVector=%s", p+4);
+                                        Z85_decode_double(p+4, size, vec);
+                                        //self->on_new_Z85Vector_message (vec, size); // process vector message
 #if 0
-                                for (int k=0; k<size; k+=VEC_LEN){
-                                        printf ("Z85DVector [%d] #%03d [@ %.3f s, XYZ: %g %g %g V, U: %g V "
-                                                "IN34: %g %g V DF %g Hz AMEX: %g %g V]\n",
-                                                size, k,
-                                                vec[k+VEC___T],  vec[k+VEC___X],vec[k+VEC___Y],vec[k+VEC___Z],  vec[k+VEC___U],
-                                                vec[k+VEC_IN3], vec[k+VEC_IN3],  vec[k+VEC_DFREQ],  vec[k+VEC__AMPL],vec[k+VEC__EXEC]);
-                                }
-                                //self->on_new_Z85Vector_message (vec, size); // process vector message ** badly broken
+                                        for (int k=0; k<size; k+=VEC_LEN){
+                                                printf ("Z85DVector [%d] #%03d [@ %.3f s, XYZ: %g %g %g V, U: %g V "
+                                                        "IN34: %g %g V DF %g Hz AMEX: %g %g V]\n",
+                                                        size, k,
+                                                        vec[k+VEC___T],  vec[k+VEC___X],vec[k+VEC___Y],vec[k+VEC___Z],  vec[k+VEC___U],
+                                                        vec[k+VEC_IN3], vec[k+VEC_IN3],  vec[k+VEC_DFREQ],  vec[k+VEC__AMPL],vec[k+VEC__EXEC]);
+                                        }
+                                        //self->on_new_Z85Vector_message (vec, size); // process vector message ** badly broken
 #endif
-                                if (self->shm_memory){
-                                        if (size == 400){ // Enforce Verify Length to current setup of 20 x 20 vectors
-                                                memcpy  (self->shm_memory, &vec[VEC_LEN*(VEC_VNUM-1)], 10*sizeof(double));
-                                                memcpy  (self->shm_memory+100*sizeof(double), &vec[0], size*sizeof(double));
-                                                // advance
-                                                contents_next += 13+4+size*sizeof(double);
-                                                if (p=g_strrstr (contents_next, "{_Z85DVector[")){
-                                                        g_message ("MORE Z85DVectors in message! ... skipping"); // TDB situation, unlikely?
+                                        if (self->shm_memory){
+                                                if (size == 400){ // Enforce Verify Length to current setup of 20 x 20 vectors
+                                                        memcpy  (self->shm_memory, &vec[VEC_LEN*(VEC_VNUM-1)], 10*sizeof(double));
+                                                        memcpy  (self->shm_memory+100*sizeof(double), &vec[0], size*sizeof(double));
+                                                        for (int k=0; k<size; k+=20)
+                                                                rpspmc_hwi->push_history_vector (self->shm_memory+(100+k)*sizeof(double), 20);
+                                                        // advance
+                                                        contents_next += 13+4+size*sizeof(double);
+                                                } else {
+                                                        g_warning ("Z85DVector Error. Size Mismatch Config <%s>", g_strrstr (contents, "{Z85Vector[")); break;
                                                 }
+                                        } else {
+                                                g_warning ("Z85DVector Push SHM Invalid Error. Message=<%s>", g_strrstr (contents, "{Z85Vector[")); break;
+                                        }
+                                } else {
+                                        g_warning ("Z85DVector Format Data Error. Message=<%s>", g_strrstr (contents, "{Z85Vector[")); break;
+                                }
 
-                                        } else
-                                                g_warning ("Z85DVector Error. Size Mismatch Config <%s>", g_strrstr (contents, "{Z85Vector["));
-                                } else
-                                        g_warning ("Z85DVector Push SHM Invalid Error. Message=<%s>", g_strrstr (contents, "{Z85Vector["));
-                        } else
-                                g_warning ("Z85DVector Format Data Error. Message=<%s>", g_strrstr (contents, "{Z85Vector["));
+                        }
+                } while (p=g_strrstr (contents_next, "{_Z85DVector["));
 
+                
+                gchar *pe=contents;
+                while (pe && (p=g_strrstr (pe, "#_***"))){
+                        p+=2;
+                        pe=g_strrstr (p, "}");
+                        if (pe){
+                                tmp = g_strdup_printf ("%.*s", (int)(pe-p), p);
+                                self->status_append (tmp, true);
+                                g_message (tmp);
+                                g_free (tmp);
+                        }
                 }
-
-                if (g_strrstr (contents, "#_***")){
-                        tmp = g_strdup_printf ("** WS TEXT MESSAGE **\n%s", (gchar*)contents);
-                        self->status_append (tmp, true);
-                        g_message (tmp);
-                        g_free (tmp);
+                pe=contents;
+                while (pe && (p=g_strrstr (pe, "_Info: {"))){
+                        p+=8;
+                        pe=g_strrstr (p, "}");
+                        if (pe){
+                                tmp = g_strdup_printf ("II: %.*s", (int)(pe-p), p);
+                                self->status_append (tmp, true);
+                                g_message (tmp);
+                                g_free (tmp);
+                        }
                 }
                 //g_message ("WS Message: %s", (gchar*)contents);
 
