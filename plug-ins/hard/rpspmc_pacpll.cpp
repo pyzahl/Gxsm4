@@ -3081,14 +3081,32 @@ gboolean RPspmc_pacpll::update_shm_monitors (int close_shm){
                 return false;
         }
 
-        double rtm = (double)g_get_real_time ();
+        //double rtm = (double)g_get_real_time ();
+
+        // RTime, XYZUGains, VA Unit conversion:
+        double VG_XYZUI[6] = {
+                (double)g_get_real_time (),
+                main_get_gapp()->xsm->Inst->VX(), main_get_gapp()->xsm->Inst->VY(), main_get_gapp()->xsm->Inst->VZ(),
+                main_get_gapp()->xsm->Inst->BiasGainV2V(),
+                main_get_gapp()->xsm->Inst->nAmpere2V(1.0)
+        };
+        //main_get_gapp()->xsm->Inst->Volt2XA(1.), main_get_gapp()->xsm->Inst->Volt2YA(1.), main_get_gapp()->xsm->Inst->Volt2ZA(1.);
+        //main_get_gapp()->xsm->Inst->VX0(), main_get_gapp()->xsm->Inst->VY0(), main_get_gapp()->xsm->Inst->VZ0();
+        //main_get_gapp()->xsm->Inst->Volt2X0A(1.), main_get_gapp()->xsm->Inst->Volt2Y0A(1.), main_get_gapp()->xsm->Inst->Volt2Z0A(1.);
+        //
+        //main_get_gapp()->xsm->Inst->BiasGainV2V()
+        //main_get_gapp()->xsm->Inst->nAmpere2V(1.0)
+        //1e9*main_get_gapp()->xsm->Inst->nAmpere2V(1.0) // IVC-A/V"
+        //main_get_gapp()->xsm->Inst->nNewton2V(1.0)
+        //main_get_gapp()->xsm->Inst->dHertz2V(1.0)
+        //main_get_gapp()->xsm->Inst->eV2V(1.0)
                 
         // Write data to the shared memory
         // void memcpy_to_rt_monitors (double *dvec, gsize count, int start_pos);
 
-        // RPSPMC XYZ MAX MIN (3x3)
-        //memcpy  (shm_ptr, spmc_signals.xyz_meter, sizeof(gint64)+sizeof(spmc_signals.xyz_meter));
-
+        // RPSPMC T XYZ MAX MIN (3x3) *** now updated at much faster rate by RPSPMC streaming server Z85 data messages, plus 20x20 block at [100..500] ~ 1kSPS or 20..30ms @ 20 deep vectors
+        // shm_ptr[0..10] = RPSPMC [T XYZ MAX MIN (3x3)]
+        
         // RPSPMC Monitors: Bias, reg, set,   GPVU,A,B,AM,FM, MUX, Signal (Current), AD463x[2], XYZ, XYZ0, XYZS
         memcpy  (shm_ptr+10*sizeof(double), &spmc_parameters.bias_monitor, 21*sizeof(double));
 
@@ -3104,21 +3122,16 @@ gboolean RPspmc_pacpll::update_shm_monitors (int close_shm){
         // FPGA RPSPMC uptime in sec, 8ns resolution -- i.e. exact time of last reading
         //memcpy  (shm_ptr+100*sizeof(double), &spmc_parameters.uptime_seconds, sizeof(double));
         // Unix Real Time (Gxsm)
-        memcpy  (shm_ptr+99*sizeof(double), &rtm, sizeof(double));
+        //memcpy  (shm_ptr+99*sizeof(double), &rtm, sizeof(double));
+        memcpy  (shm_ptr+90*sizeof(double), &VG_XYZUI, 6*sizeof(double));
 
-        // push history
+        // ================================================================================
+        // push history -- move this to stream server for vect r block
         rpspmc_hwi->push_history_vector (shm_ptr, 48); // currently used: 0..8, 10..31, 40..47 as size of double
 
         PI_DEBUG (DBG_L2, "SHM MONITOR UPDATE @RPSPMC TIME: " << spmc_parameters.uptime_seconds << " s");
         //g_message ("SHM MONITOR UPDATE @RPSPMC TIME: %.9fs", spmc_parameters.uptime_seconds);
-                
-        /*
-          sprintf (shm_ptr+512, "XYZ=[[%g %g %g] [%g %g %g] [%g %g %g]]\n",
-          spmc_signals.xyz_meter[0],spmc_signals.xyz_meter[1],spmc_signals.xyz_meter[2],
-          spmc_signals.xyz_meter[3],spmc_signals.xyz_meter[4],spmc_signals.xyz_meter[5],
-          spmc_signals.xyz_meter[6],spmc_signals.xyz_meter[7],spmc_signals.xyz_meter[8]
-          );
-        */
+
         
         return true;
 }
