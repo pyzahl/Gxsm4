@@ -244,38 +244,8 @@ void Z85_decode_double(const char* source, unsigned int size, double* dest)
         }
 }
 
-void  RP_stream::on_message(RP_stream* self, websocketpp::connection_hdl hdl, wsppclient::message_ptr msg)
-{
-	gconstpointer contents;
-	gconstpointer contents_next;
-	gsize len;
-        gchar *tmp;
 
-        static int position=0;
-        static int count=0;
-        static bool finished=false;
-
-        static size_t bram_offset=0;
-
-        //self->debug_log ("WebSocket SPMC message received.");
-	//self->status_append ("WebSocket SPMC message received.\n", true);
-
-        //RP_stream *self = (RP_stream*)(*c)->get_user_data(hdl);
-
-        if (msg->get_opcode() == websocketpp::frame::opcode::text) {
-                contents = msg->get_payload().c_str();
-                len = msg->get_payload().size();
-
-                //puts(contents);
-
-                contents_next = contents;
-                gchar *p;
-                do {
-                // NOTE: ADDED UNIQUE "_" to string IDs, what is NOT part if Gxsm's Z85 encode characters, as Z85 theoretically could genertate any key as part of data
-                        if (p=g_strrstr (contents_next, "{_Z85DVector[")){
-                                gsize size = atoi (p+13);
-                                // ENCODED Z85 SIZE IS: unsigned int sizeZ85 = vec.size()*2*5; // Z85 encoding is 2x5 bytes by 8 bytes as of double
-                                if ((p=g_strrstr (p+13, "]: {")) && (len-(gsize)(p-(gchar*)contents)) > (4+size*2*5)){
+// SHM VECTOR COMPONENTS, SIZES
 #define VEC_VNUM 20  // vectors/block
 
 #define VEC___T  0     
@@ -294,6 +264,39 @@ void  RP_stream::on_message(RP_stream* self, websocketpp::connection_hdl hdl, ws
 #define VEC_ZSSIG 19
         
 #define VEC_LEN  20 // num components
+
+void  RP_stream::on_message(RP_stream* self, websocketpp::connection_hdl hdl, wsppclient::message_ptr msg)
+{
+	gconstpointer contents;
+	gconstpointer contents_next;
+	gsize len;
+        gchar *tmp;
+
+        static int position=0;
+        static int count=0;
+        static bool finished=false;
+
+        static size_t bram_offset=0;
+
+        //self->debug_log ("WebSocket SPMC message received.");
+	//self->status_append ("WebSocket SPMC message received.\n", true);
+
+        //RP_stream *self = (RP_stream*)(*c)->get_user_data(hdl);
+
+        if (msg->get_opcode() == websocketpp::frame::opcode::text) { // TEXT MESSAGE RECEIVED
+                contents = msg->get_payload().c_str();
+                len = msg->get_payload().size();
+
+                //puts(contents);
+
+                contents_next = contents;
+                gchar *p;
+                do {
+                // NOTE: ADDED UNIQUE "_" to string IDs, what is NOT part if Gxsm's Z85 encode characters, as Z85 theoretically could genertate any key as part of data
+                        if (p=g_strrstr (contents_next, "{_Z85DVector[")){
+                                gsize size = atoi (p+13);
+                                // ENCODED Z85 SIZE IS: unsigned int sizeZ85 = vec.size()*2*5; // Z85 encoding is 2x5 bytes by 8 bytes as of double
+                                if ((p=g_strrstr (p+13, "]: {")) && (len-(gsize)(p-(gchar*)contents)) > (4+size*2*5)){
                                         double vec[size];
                                         //g_message ("Z85DVector=%s", p+4);
                                         Z85_decode_double(p+4, size, vec);
@@ -329,16 +332,23 @@ void  RP_stream::on_message(RP_stream* self, websocketpp::connection_hdl hdl, ws
                         }
                 } while (p=g_strrstr (contents_next, "{_Z85DVector["));
 
+                /* why or from where is this printed to stdout???
+_SPMC_GVP_CONTROL_MODE: {_EXECUTE: RESET, start stream server, out of RESET * _ROpt=0}}}
+{_Z85DVector[400]: {p>JgWk/:]=00000kK:>c00000kLeB[00000kK:>c00000kHzSY00000kHzSYkMy=:kGe/&Fb/MHZ.u:oFb/MHZ.u:oZYjumZ.u:-00000ZWW)50000000000000000000000000kD:m^00000Zt={ddaU4?kzi/Gp^94)kAs(Jq?44jkQ0Qqf6>>LkTtTN06O-5kD:j%H$Ru-k/:]=00000kK:>caohxwkLey%00000kK:>c00000kHzSY00000kHzSYaohxwkGe{!Fb/MHZ.u:oFb/MHZ.u:oZYjumZ.u:-00000ZWW/E0000000000000000000000000kD+Hh00000kiS4EdhZ#vkzj#m[&9w>kFbuRX:A&9kQmOP9VYVekTO=H06S4EkD+(VZ%xbGk/:]=00000kK:>cPA1@(kLew200000kK:>c00000kHzSY00000kHzSYaohxwkGf4-Fb/MHZ.u:oFb/MHZ.u:oZYjumZ.u:-00000ZWW-00000000000000000000000000kD={&00000kh%uTde](qkzjI.@3HBOkEkuAk)9hGkQAP!LSss>kT:lL06UtpkD^37{/.O{k/:]=00000kK:>cu&QfbkLet800000kK:>c00000kHzSY00000kHzSYkMy=:kGfeVFb/MHZ.u:oFb/MHZ.u:oPA1@(Z.u:-00000ZWWUJ0000000000000000000000000kD!r.00000kl0>FdgCcjkzj=g{8}ULkD[=}!W-D}kQq]0IwNwSkTS{V06XtukD!JQm*m={k/:]^00000kK:>ckMy=:kLeqe00000kK:>c00000kHzSY00000kHzSYPA1@(kGfoOFb/MHZ.u:oFb/MHZ.u:oPA1@(Z.u:-00000ZWWLu0000000000000000000000000kD*or00000ZtIlRde!V]kzjH3@590FkF3b>5BefNkP@.A7eP5LkTp]E06-HkkD*QLE!f.ek/:]^00000kK:>cFb/MHkLenk00000kK:>c00000kHzSY00000kHzSYaohxwkGfyHFb/MHZ.u:oFb/MHZ.u:oPA1@(Z.u:-00000ZWWE+0000000000000000000000000kD?:200000kjp-pde=zekzjGU{=r(/kDNd>wN(5DkP[D)4bR+*kTl/#06=aukD?]QWui@uk/:]^00000kK:>c00000kLekr00000kK:>c00000kHzSY00000kHzSYZYjumkGfIyFb/MHZ.u:oFb/MHZ.u:oFb/MHZ.u:-00000ZWWyz0000000000000000000000000kD<6G00000kloahddeiQkzjj(0W?wRkEmNA4(*=[kQfQxR{VWUkTI6m06!*EkD<nV)3FUMk/:]^00000kK:>cPA1@(kLehx00000kK:>c00000kHzSY00000kHzSYPA1@(kGfSpFb/MHZ.u:oFb/MHZ.u:oFb/MHZ.u:-00000ZWWr}0000000000000000000000000kD>sx00000kky&KdeK0xkzjDn@3)02kEAScM5-uOkQv#a^UZO>kTX/703zS0kD>qRbO>v=k/:]!00000kK:>cPA1@(kLeeE00000kK:>c00000kHzSY00000kHzSYFb/MHkGf:fFb/MHZ.u:oFb/MHZ.u:oFb/MHZ.u:-00000ZWWlu0000000000000000000000000kD>$]00000kj!*Pdft2$kzjOM]D&rEkCEOj42zy[kQwD8UjJL5kTYmH03Bl(kD(aMtCPYnk/:]!00000kK:>cZYjumkLebL00000kK:>c00000kHzSY00000kHzSYPA1@(kGf>4Fb/MHZ.u:oFb/MHZ.u:ou&QfbZ.u:-00000ZWWe(0000000000000000000000000kD(.i00000klfQwdc=sXkzjeA0Z2E$kFuRP?L2-9kQj5FxJrHBkTLx103CMfkD(=iLqwXik/:]!00000kK:>ckMy=:kLe8T00000kK:>c00000kHzSY00000kHzSY00000kGf$]Fb/MHZ.u:oFb/MHZ.u:ou&QfbZ.u:-00000ZWW8p0000000000000000000000000kD)B800000ZrMYUdej].kzjy}@3@atkC:5Q-lQWGkP#RdUE{^jkTsXW03D[JkD)Cx+j<jNk/:]!00000kK:>c?#A-SkLe5.00000kK:>c00000kHzSY00000kHzSYu&QfbkGg8+Fb/MHZ.u:oFb/MHZ.u:ou&QfbZ.u:-00000ZWW1Y0000000000000000000000000kD[dd00000kh?1(dc0M<kzj3HFg&wOkuB9J:+NwakP}4u/Y>E+kTop}03FDJkD[jx0^<)rk/:]/00000kK:>c?#A-SkLe2*00000kK:>c00000kHzSY00000kHzSY00000kGgiQFb/MHZ.u:oFb/MHZ.u:okMy=:Z.u:-00000ZWV}a0000000000000000000000000kD[*]00000kj-dZdbd0+kzi)D2S3o(kE[iIMWzQfkQ9OfRCw(7kTCn)03G(0kD[{RiHQjek/:]/00000kK:>c00000kLd#{00000kK:>c00000kHzSY00000kHzSYZYjumkGgsBFb/MHZ.u:oFb/MHZ.u:okMy=:Z.u:-00000ZWV<T0000000000000000000000000kD]C<00000ke40%deUh=kzjE%@3B8TkEhf@*Pe9&kQq@H1IbF9kTS$403I4+kD]IHAvQW&k/:]/00000kK:>cFb/MHkLd%200000kK:>c00000kHzSY00000kHzSYZYjumkGgCmFb/MHZ.u:oFb/MHZ.u:okMy=:Z.u:-00000ZWV^50000000000000000000000000kD{m800000kk6HbddgFvkzjkm0X?A&kE+93bJMumkQy:3(HciJkT.D)03JXJkD{txSh$c{k/:]/00000kK:>caohxwkLd{b00000kK:>c00000kHzSY00000kHzSYZYjumkGgM6Fb/MHZ.u:oFb/MHZ.u:oaohxwZ.u:-00000ZWVYO0000000000000000000000000kD{{x00000klt^7dfj@%kzjN5}xJOIkE63yi?hMqkQrb{P[:Y6kTTc<03Lg*kD}83&h]%/k/:]/00000kK=Sm?#A-SkLd)wZYjumkK:>o00000kHQo+00000kHQo+PA1@(kGgYY00000Z.u:700000Z.u:7aohxwZ.u:-00000ZWVR(0000000000000000000000000kD}Q<00000Zs-F^dg6xWkzjY]{-JNEkD(SxT8>=JkP@QO4e2}ZkTp/203MOTkD}^C8w{Phk/:]*00000kL0qrPA1@(kLd(ju&QfbkK:)200000kJs>Z00000kJs>ZZYjumkGhik00000Z.u..00000Z.u..00000Z.u:-00000ZWVLf0000000000000000000000000kD@sC00000kkVJ6dc%h%kzjh51uj2&kDAU?!ZijOkP{KOVD2%IkTn/?03O2+kD@HHq-GZ@k/:]*00000kLiZ%00000kLiZ%00000kK:{s00000kKp2b00000kKp2bFb/MHkGi3rFb/MHZ.uZIFb/MHZ.uZIPA1@(Z.u:.00000ZWVEu0000000000000000000000000kD%5C00000Zr3uPdd/=5kzjt903X!wkE1x/n[.33kQ7#clTe9dkTA-b03PCEkD%i<I*ig1k/:]*00000kLx@B00000kLx@Bu&QfbkK:$]00000kKcaAZYjumkKp12kMy=:kGi!}00000Z.uZ.Fb/MHZ.uZIu&QfbZ.u:.00000ZWVx+0000000000000000000000000kD%=x00000kk}hPdcGI^kzjaE2Sg?tkDn<50aR8<kQwlLwsD1+kTY5T03Q*(kD%[M}
+                */
                 
                 gchar *pe=contents;
                 while (pe && (p=g_strrstr (pe, "#_***"))){
                         p+=2;
                         pe=g_strrstr (p, "}");
                         if (pe){
-                                tmp = g_strdup_printf ("%.*s", (int)(pe-p), p);
-                                self->status_append (tmp, true);
-                                g_message (tmp);
-                                g_free (tmp);
+                                std::string info = std::string(p, pe);
+                                std::cout << info << std::endl; 
+                                self->status_append (info.c_str(), true);
+                                //tmp = g_strdup_printf ("%.*s", (int)(pe-p), p);
+                                //self->status_append (tmp, true);
+                                //g_message (tmp);
+                                //g_free (tmp);
                         }
                 }
                 pe=contents;
@@ -346,17 +356,21 @@ void  RP_stream::on_message(RP_stream* self, websocketpp::connection_hdl hdl, ws
                         p+=8;
                         pe=g_strrstr (p, "}");
                         if (pe){
-                                tmp = g_strdup_printf ("II: %.*s", (int)(pe-p), p);
-                                self->status_append (tmp, true);
-                                g_message (tmp);
-                                g_free (tmp);
+                                std::string info = std::string(p, pe);
+                                std::cout << info << std::endl; 
+                                self->status_append (info.c_str(), true);
+                                //tmp = g_strdup_printf ("II: %.*s", (int)(pe-p), p);
+                                //self->status_append (tmp, true);
+                                //g_message (tmp);
+                                //g_free (tmp);
                         }
                 }
                 //g_message ("WS Message: %s", (gchar*)contents);
 
                 if (g_strrstr (contents, "_RESET")){
-                        self->status_append ("** WEBSOCKET STREAM TAG: RESET (GVP Start) Received.\n", true);
-                        g_message ("** WEBSOCKET STREAM TAG: RESET (GVP Start) Received.");
+                        std::cout << "** WEBSOCKET STREAM TAG: RESET (GVP Start) Received. **" << std::endl; 
+                        //self->status_append ("** WEBSOCKET STREAM TAG: RESET (GVP Start) Received.\n", true);
+                        //g_message ("** WEBSOCKET STREAM TAG: RESET (GVP Start) Received.");
                         finished=false;
                         position=0;
                         count = 0;
@@ -375,30 +389,31 @@ void  RP_stream::on_message(RP_stream* self, websocketpp::connection_hdl hdl, ws
                 }
 
                 if (g_strrstr (contents, "_FinishedNext:{true}")){
-                        self->status_append ("** WEBSOCKET STREAM TAG: FINISHED NEXT (GVP completed, last package update is been send) Received\n", true);
-                        g_message ("** WEBSOCKET STREAM TAG: FINISHED NEXT (GVP completed, last package update is been send) Received");
+                        std::cout << "** WEBSOCKET STREAM TAG: FINISHED NEXT (GVP completed, last package update is been send) Received" << std::endl;
+                        //self->status_append ("** WEBSOCKET STREAM TAG: FINISHED NEXT (GVP completed, last package update is been send) Received\n", true);
+                        //g_message ("** WEBSOCKET STREAM TAG: FINISHED NEXT (GVP completed, last package update is been send) Received");
                         finished=true;
                 }
                 
                 if ((p=g_strrstr(contents, "_BRAMoffset:{0x"))){ // SIMPLE JSON BLOCK
                         bram_offset = strtoul(p+13, NULL, 16);
                 }
-                
-                if (p=g_strrstr (contents, "_vector = {")){
+
+                pe = contents;
+                while (p=g_strrstr (pe, "_vector = {")){
                         p+=11;
-                        pe=g_strrstr (p, "}");
-                        if (pe){
-                                gchar *pvn;
-                                if ((pvn = g_strrstr (p, "// Vector #"))){
-                                        self->last_vector_pc_confirmed = atoi (pvn+11);
-                                        g_message ("** VECTOR #%02d confirmed.", self->last_vector_pc_confirmed);
-                                        g_message ("** VECTOR: %.*s **", (int)(pe-p), p);
-                                        { gchar *tmp; self->status_append (tmp=g_strdup_printf("VECTOR: %.*s", (int)(pe-p), p), true); g_free(tmp); }
-                                }
+                        if ((pe = g_strrstr (p, "// Vector #"))){
+                                self->last_vector_pc_confirmed = atoi (pe+11);
+                                std::cout << "** VECTOR #" << self->last_vector_pc_confirmed << " confirmed. V := {" << std::string(p, pe+13) << std::endl;
+                                //g_message ("** VECTOR #%02d confirmed. V := [%.*s]", self->last_vector_pc_confirmed, (int)(pe-p), p);
+                                //{ gchar *tmp; self->status_append (tmp=g_strdup_printf("VECTOR: %.*s", (int)(pe-p), p), true); g_free(tmp); } // ASIO danger here!
+                        } else {
+                                g_warning ("No Vector # found, last confirmed: %d. %s", self->last_vector_pc_confirmed, contents);
+                                break;
                         }
                 }
                 
-        } else {
+        } else { // BINARY DATA RECEIVED
                 contents = msg->get_payload().c_str();
                 len = msg->get_payload().size();
                 if (len)

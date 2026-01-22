@@ -484,14 +484,6 @@ ProbeIndicator::ProbeIndicator (Gxsm4app *app):AppBase(app){
                           G_CALLBACK (ProbeIndicator::run_scope_callback), this);
 	gtk_grid_attach (GTK_GRID (v_grid), tb, 1,1, 1,1);
 
-
-        tb = gtk_toggle_button_new ();
-        gtk_button_set_icon_name (GTK_BUTTON (tb), "system-search-symbolic");
-        gtk_widget_show (tb);
-        gtk_grid_attach (GTK_GRID (v_grid), tb, 40,40, 1,1);
-
-        
-
         tb = gtk_toggle_button_new ();
         gtk_button_set_icon_name (GTK_BUTTON (tb), "system-search-symbolic");
         gtk_widget_show (tb);
