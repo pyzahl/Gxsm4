@@ -303,6 +303,10 @@ public:
         static void info_callback (GtkWidget *widget, gpointer user_data);
         static void more_info_callback (GtkWidget *widget, gpointer user_data);
         static void less_info_callback (GtkWidget *widget, gpointer user_data);
+
+        static void signal1_callback (GtkWidget *widget, gpointer user_data);
+        static void signal2_callback (GtkWidget *widget, gpointer user_data);
+
         
         void show() {
                 // gtk_widget_show_all (window);
@@ -394,6 +398,9 @@ private:
 
         GtkWidget  *canvas;
 
+
+        gint signal[2];
+        
         // remplaced with: cairo_item_rectangle / text / path
         cairo_item_circle *background;
         cairo_item_text   *info;

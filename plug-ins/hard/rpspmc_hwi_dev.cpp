@@ -1428,6 +1428,9 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, int n, gfloat *data){
         static gint64 time_of_last_trg = 0; // abs time in us
         static gint s1ok=0, s2ok=0, s3ok=0, s4ok=0;
 
+        static int Signal1 =  7; // Z per default
+        static int Signal2 = 19; // Current per default
+        
         // Trigger
         if ( property[0] == 'T' && (time_of_last_trg+max_age) < g_get_real_time () ){
                 time_of_last_trg = g_get_real_time ();
@@ -1437,42 +1440,57 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, int n, gfloat *data){
 
         // Request History Vector n: "Hnn"
         if ( property[0] == 'H'){
-                get_history_vector_f (atoi(&property[1]), data, n);
+                int pos = atoi(&property[1]);
+                if (pos < 0 || pos >= 20) pos=0;
+                get_history_vector_f (pos, data, n);
                 return 0;
         }
 
+        // Request Signal1 = Vector n: from Channel "C1xxxx"
+        // Request Signal2 = Vector n: from Channel "C2xxxx"
+        //                         0  1          4          7          10  11  12  13  14  15  16   17    18    19
+        // xxxx is vector component [T  X xma xmi  Y yma ymi  Z zma zmi  U   IN1 IN2 IN3 IN4 AMP EXEC DFREQ PHASE ZSSIG ] 0 ... 19 are valid
+        if ( property[0] == 'C'){
+                static gchar *VCmap[] = { "T", "X", "xma", "xmi",  "Y", "yma", "ymi",  "Z", "zma", "zmi",  "BIAS",
+                                          "IN1", "IN2", "IN3", "IN4", "AMP", "EXEC", "DFREQ", "PHASE", "ZSSIG", NULL };
+                int pos=0;
+                for (; VCmap[pos]; ++pos) if (!strcmp(&property[2], VCmap[pos])) break;
+                if (pos < 0 || pos >= 20) pos=7; // Z as fallback
+                if ( property[1] == '1'){
+                        Signal1 = pos;
+                        return pos;
+                }
+                if ( property[1] == '2'){
+                        Signal2 = pos;
+                        return pos;
+                }
+                return -1;
+        }
         
-        // Signal1
-        if ( property[1] == '1' && ((time_of_last_reading1+max_age) < g_get_real_time () || s1ok)){
-                time_of_last_reading1 = g_get_real_time ();
-                get_history_vector_f (7, data, n); // Z
-
-                //double scale =  DSP32Qs23dot8TO_Volt; // assuming MIX_IN_0..3 withe 23Q8 scale for10V
-                //s1ok=read_pll_signal1 (data, n, scale, 0);
-        }
-        // Signal2
-        if ( property[1] == '2' && ((time_of_last_reading2+max_age) < g_get_real_time () || s2ok)){
-                time_of_last_reading2 = g_get_real_time ();
-                get_history_vector_f (19, data, n); // Current
-
-                //double scale =  DSP32Qs15dot16TO_Volt;
-                //s2ok=read_pll_signal2 (data, n, scale, 0);
-        }
-        // Signal1 deci 256
-        if ( property[1] == '3' && ((time_of_last_reading3+max_age) < g_get_real_time () || s3ok)){
-                time_of_last_reading3 = g_get_real_time ();
-                get_history_vector_f (7, data, n); // Z
-
-                //double scale =  DSP32Qs23dot8TO_Volt;
-                //s3ok=read_pll_signal1dec (data, n, scale, property[0] == 'R');
-        }
-        // Signal2 subsampled 256
-        if ( property[1] == '4' && ((time_of_last_reading4+max_age) < g_get_real_time () || s4ok)){
-                time_of_last_reading4 = g_get_real_time ();
-                get_history_vector_f (19, data, n); // Current
-
-                //double scale =  DSP32Qs15dot16TO_Volt;
-                //s4ok=read_pll_signal2dec (data, n, scale, property[0] == 'R');
+        
+        // Request Signal1 = Vector n: "S1"
+        // Request Signal2 = Vector n: "S2"
+        if ( property[0] == 'S'){
+                // Signal1
+                if ( property[1] == '1' && ((time_of_last_reading1+max_age) < g_get_real_time () || s1ok)){
+                        time_of_last_reading1 = g_get_real_time ();
+                        get_history_vector_f (Signal1, data, n); // Z
+                }
+                // Signal2
+                if ( property[1] == '2' && ((time_of_last_reading2+max_age) < g_get_real_time () || s2ok)){
+                        time_of_last_reading2 = g_get_real_time ();
+                        get_history_vector_f (Signal2, data, n); // Current
+                }
+                // Signal1 deci 256
+                if ( property[1] == '3' && ((time_of_last_reading3+max_age) < g_get_real_time () || s3ok)){
+                        time_of_last_reading3 = g_get_real_time ();
+                        get_history_vector_f (Signal1, data, n); // Z
+                }
+                // Signal2 subsampled 256
+                if ( property[1] == '4' && ((time_of_last_reading4+max_age) < g_get_real_time () || s4ok)){
+                        time_of_last_reading4 = g_get_real_time ();
+                        get_history_vector_f (Signal2, data, n); // Current
+                }
         }
         return 0;
 }

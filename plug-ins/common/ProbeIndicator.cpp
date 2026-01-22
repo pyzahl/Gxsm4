@@ -330,6 +330,38 @@ static gint ProbeIndicator_tip_refresh_callback (ProbeIndicator *pv){
 }
 
 
+void ProbeIndicator::signal1_callback (GtkWidget *widget, gpointer user_data) {
+        int si=0;
+        ProbeIndicator *pv = (ProbeIndicator *) user_data; 
+        static gchar *VCmap[] = { "T", "X", "Y", "Z", "BIAS", "ZSSIG", "IN1", "IN2", "IN3", "IN4", "AMP", "EXEC", "DFREQ", "PHASE", NULL };
+
+        if (!VCmap[++pv->signal[si]]) pv->signal[si]=0;
+        gchar *tmp = g_strdup_printf ("C1%s", VCmap[pv->signal[1]]);
+        if (main_get_gapp()->xsm->hardware->RTQuery (tmp, 0, NULL) < 0) // Request Signal1
+                pv->signal[si] = 3;
+        gtk_button_set_label (GTK_BUTTON (widget), VCmap[pv->signal[si]]);
+        g_free (tmp);
+
+        //g_message ("ProbeIndicator::signal%d_callback: %d => %s\n", si, pv->signal[si], VCmap[++pv->signal[si]]);
+}
+
+void ProbeIndicator::signal2_callback (GtkWidget *widget, gpointer user_data) {
+        int si=1;
+        ProbeIndicator *pv = (ProbeIndicator *) user_data; 
+        static gchar *VCmap[] = { "T", "X", "Y", "Z", "BIAS", "ZSSIG", "IN1", "IN2", "IN3", "IN4", "AMP", "EXEC", "DFREQ", "PHASE", NULL };
+
+        if (!VCmap[++pv->signal[si]]) pv->signal[si]=0;
+        gchar *tmp = g_strdup_printf ("C2%s", VCmap[pv->signal[1]]);
+        if (main_get_gapp()->xsm->hardware->RTQuery (tmp, 0, NULL) < 0) // Request Signal1
+                pv->signal[si] = 5;
+        gtk_button_set_label (GTK_BUTTON (widget), VCmap[pv->signal[si]]);
+        g_free (tmp);
+
+        //g_message ("ProbeIndicator::signal%d_callback: %d => %s\n", si, pv->signal[si], VCmap[++pv->signal[si]]);
+}
+
+
+
 void ProbeIndicator::close_callback (GtkWidget *widget, gpointer user_data) {
         ProbeIndicator *pv = (ProbeIndicator *) user_data; 
         g_print ("ProbeIndicator::close_callback TB: %d\n", gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget)));
@@ -455,6 +487,9 @@ ProbeIndicator::ProbeIndicator (Gxsm4app *app):AppBase(app){
 	probe = NULL;
         modes = SCOPE_NONE;
 
+        signal[0]=3;
+        signal[1]=5;
+        
 	AppWindowInit (N_("HUD Probe Indicator"));
 
 	canvas = gtk_drawing_area_new(); // make a drawing area
@@ -537,6 +572,15 @@ ProbeIndicator::ProbeIndicator (Gxsm4app *app):AppBase(app){
         g_signal_connect (G_OBJECT (tb), "toggled",
                           G_CALLBACK (ProbeIndicator::pause_callback), this);
 	gtk_grid_attach (GTK_GRID (v_grid), tb, 3,1, 1,1);
+#if 0
+        tb = gtk_toggle_button_new ();
+        gtk_button_set_icon_name (GTK_BUTTON (tb), "window-close-symbolic");
+        gtk_widget_show (tb);
+        gtk_widget_set_name (tb, "probe-indicator-button"); // name used by CSS to apply custom color scheme
+	gtk_widget_set_tooltip_text (tb, N_("N/A"));
+        g_signal_connect (G_OBJECT (tb), "toggled",
+                          G_CALLBACK (ProbeIndicator::close_callback), this);
+	gtk_grid_attach (GTK_GRID (v_grid), tb, 40,1, 1,1);
 
         tb = gtk_toggle_button_new ();
         gtk_button_set_icon_name (GTK_BUTTON (tb), "system-shutdown-symbolic");
@@ -546,15 +590,29 @@ ProbeIndicator::ProbeIndicator (Gxsm4app *app):AppBase(app){
         g_signal_connect (G_OBJECT (tb), "toggled",
                           G_CALLBACK (ProbeIndicator::shutdown_callback), this);
 	gtk_grid_attach (GTK_GRID (v_grid), tb, 40,2, 1,1);
+#endif   
 
-        tb = gtk_toggle_button_new ();
-        gtk_button_set_icon_name (GTK_BUTTON (tb), "window-close-symbolic");
+        
+        // Signal Selectors
+        tb = gtk_button_new_with_label ("Z");
         gtk_widget_show (tb);
-        gtk_widget_set_name (tb, "probe-indicator-button"); // name used by CSS to apply custom color scheme
+        gtk_widget_set_name (tb, "probe-indicator-s1_button"); // name used by CSS to apply custom color scheme
 	gtk_widget_set_tooltip_text (tb, N_("N/A"));
-        g_signal_connect (G_OBJECT (tb), "toggled",
-                          G_CALLBACK (ProbeIndicator::close_callback), this);
-	gtk_grid_attach (GTK_GRID (v_grid), tb, 40,1, 1,1);
+        g_signal_connect (G_OBJECT (tb), "clicked",
+                          G_CALLBACK (ProbeIndicator::signal1_callback), this);
+	gtk_grid_attach (GTK_GRID (v_grid), tb, 1,40, 2,1);
+
+        tb = gtk_button_new_with_label ("ZSSIG");
+        gtk_widget_show (tb);
+        gtk_widget_set_name (tb, "probe-indicator-s2_button"); // name used by CSS to apply custom color scheme
+	gtk_widget_set_tooltip_text (tb, N_("N/A"));
+        g_signal_connect (G_OBJECT (tb), "clicked",
+                          G_CALLBACK (ProbeIndicator::signal2_callback), this);
+	gtk_grid_attach (GTK_GRID (v_grid), tb, 39,40, 2,1);
+
+
+
+
         
         probe = new hud_object();
         probe->add_tics ("T1", 0, 1., 9, 25.);

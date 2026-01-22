@@ -1173,7 +1173,7 @@ int RPSPMC_Control::choice_VGain_callback (GtkWidget *widget, RPSPMC_Control *se
 	gint j = GPOINTER_TO_INT (g_object_get_data( G_OBJECT (widget), "VGindex"));
 	switch(j){
 	case 0: double g = rpspmc_pacpll_hwi_pi.app->xsm->Inst->set_current_gain_modifier (i);
-                g_message ("Adjusting IVC VGain: %f nA/V x pos[%d] %f => %f nA/V", xsmres.nAmpere2Volt, i, xsmres.VG[i], g);
+                g_message ("Adjusting IVC VGain: %f nV/A x pos[%d] %f => %f nV/A", xsmres.nAmpere2Volt, i, xsmres.VG[i], g);
 		break;
 	}
         
@@ -1588,7 +1588,7 @@ void RPSPMC_Control::create_folder (){
 
                 // Init gain-choicelist
                 for(int ig=0; xsmres.VG[ig] > 0.0; ig++){
-                        gchar *V_gain_value = g_strdup_printf ("%.2E A/V [x%g]", 1e9*xsmres.nAmpere2Volt*xsmres.VG[ig], xsmres.VG[ig]);
+                        gchar *V_gain_value = g_strdup_printf ("%.2E V/A [x%g]", 1e9*xsmres.nAmpere2Volt*xsmres.VG[ig], xsmres.VG[ig]);
                         gchar *id = g_strdup_printf ("%02d:%02d",j,ig);
                         gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (wid), id, V_gain_value);
                         g_free (id);

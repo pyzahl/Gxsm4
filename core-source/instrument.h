@@ -198,7 +198,7 @@ public:
         const gchar* IVC_Ampere2Volt_Setting() {
                 static gchar *tmp=NULL;
                 if(tmp) g_free (tmp);
-                return tmp=g_strdup_printf ("%.0E A/V", 1e9*nAmpere2Volt);
+                return tmp=g_strdup_printf ("%.0E V/A", 1e9*nAmpere2Volt);
         };
         
 	gchar *type;
