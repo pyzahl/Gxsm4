@@ -385,14 +385,18 @@ void  RP_stream::on_message(RP_stream* self, websocketpp::connection_hdl hdl, ws
                 }
                 
                 if (p=g_strrstr (contents, "_vector = {")){
-                        if ((p = g_strrstr (p, "// Vector #"))){
-                                self->last_vector_pc_confirmed = atoi (p+11);
-                                g_message ("** VECTOR #%02d confirmed.", self->last_vector_pc_confirmed);
-                                g_message ("** VECTOR: %s **", contents);
-                                //{ gchar *tmp; self->status_append (tmp=g_strdup_printf("%s\n", contents)); g_free(tmp); }
+                        p+=11;
+                        pe=g_strrstr (p, "}");
+                        if (pe){
+                                gchar *pvn;
+                                if ((pvn = g_strrstr (p, "// Vector #"))){
+                                        self->last_vector_pc_confirmed = atoi (pvn+11);
+                                        g_message ("** VECTOR #%02d confirmed.", self->last_vector_pc_confirmed);
+                                        g_message ("** VECTOR: %.*s **", (int)(pe-p), p);
+                                        { gchar *tmp; self->status_append (tmp=g_strdup_printf("VECTOR: %.*s", (int)(pe-p), p), true); g_free(tmp); }
+                                }
                         }
                 }
-
                 
         } else {
                 contents = msg->get_payload().c_str();

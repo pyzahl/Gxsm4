@@ -459,21 +459,15 @@ ProbeIndicator::ProbeIndicator (Gxsm4app *app):AppBase(app){
 
 	canvas = gtk_drawing_area_new(); // make a drawing area
 
-#if 0
-        gtk_widget_add_events (canvas,
-                               GDK_BUTTON_PRESS_MASK
-                               | GDK_ENTER_NOTIFY_MASK      
-                               | GDK_LEAVE_NOTIFY_MASK  
-                               | GDK_POINTER_MOTION_MASK
-                               );
-        /* Event signals */
-        g_signal_connect (G_OBJECT (canvas), "event",
-                          G_CALLBACK (ProbeIndicator::canvas_event_cb), this);
-#endif
-
         gtk_drawing_area_set_content_width  (GTK_DRAWING_AREA (canvas), 2*hud_size);
         gtk_drawing_area_set_content_height (GTK_DRAWING_AREA (canvas), 2*hud_size);
 
+        gtk_widget_set_hexpand(GTK_WIDGET (canvas), true);
+        gtk_widget_set_vexpand(GTK_WIDGET (canvas), true);
+
+        gtk_widget_set_halign(v_grid, GTK_ALIGN_FILL); // Make grid fill horizontally
+        gtk_widget_set_valign(v_grid, GTK_ALIGN_FILL); // Make grid fill vertically
+        
         gtk_drawing_area_set_draw_func (GTK_DRAWING_AREA (canvas),
                                         G_CALLBACK (ProbeIndicator::canvas_draw_function),
                                         this, NULL);
@@ -489,8 +483,14 @@ ProbeIndicator::ProbeIndicator (Gxsm4app *app):AppBase(app){
         g_signal_connect (G_OBJECT (tb), "toggled",
                           G_CALLBACK (ProbeIndicator::run_scope_callback), this);
 	gtk_grid_attach (GTK_GRID (v_grid), tb, 1,1, 1,1);
-	gtk_widget_show (tb);
 
+
+        tb = gtk_toggle_button_new ();
+        gtk_button_set_icon_name (GTK_BUTTON (tb), "system-search-symbolic");
+        gtk_widget_show (tb);
+        gtk_grid_attach (GTK_GRID (v_grid), tb, 40,40, 1,1);
+
+        
 
         tb = gtk_toggle_button_new ();
         gtk_button_set_icon_name (GTK_BUTTON (tb), "system-search-symbolic");
@@ -500,7 +500,6 @@ ProbeIndicator::ProbeIndicator (Gxsm4app *app):AppBase(app){
         g_signal_connect (G_OBJECT (tb), "toggled",
                           G_CALLBACK (ProbeIndicator::zoom_scope_callback), this);
 	gtk_grid_attach (GTK_GRID (v_grid), tb, 1,2, 1,1);
-	gtk_widget_show (tb);
 
         tb = gtk_toggle_button_new ();
         gtk_button_set_icon_name (GTK_BUTTON (tb), "edit-delete-symbolic");
@@ -510,7 +509,6 @@ ProbeIndicator::ProbeIndicator (Gxsm4app *app):AppBase(app){
         g_signal_connect (G_OBJECT (tb), "toggled",
                           G_CALLBACK (ProbeIndicator::scope_ftfast_callback), this);
 	gtk_grid_attach (GTK_GRID (v_grid), tb, 1,3, 1,1);
-	gtk_widget_show (tb);
         
         tb = gtk_toggle_button_new ();
         gtk_button_set_icon_name (GTK_BUTTON (tb), "media-record-symbolic");
@@ -520,7 +518,6 @@ ProbeIndicator::ProbeIndicator (Gxsm4app *app):AppBase(app){
         g_signal_connect (G_OBJECT (tb), "toggled",
                           G_CALLBACK (ProbeIndicator::record_callback), this);
 	gtk_grid_attach (GTK_GRID (v_grid), tb, 1,4, 1,1);
-	gtk_widget_show (tb);
 
         tb = gtk_toggle_button_new ();
         gtk_button_set_icon_name (GTK_BUTTON (tb), "preferences-system-details-symbolic");
@@ -530,7 +527,6 @@ ProbeIndicator::ProbeIndicator (Gxsm4app *app):AppBase(app){
         g_signal_connect (G_OBJECT (tb), "toggled",
                           G_CALLBACK (ProbeIndicator::info_callback), this);
 	gtk_grid_attach (GTK_GRID (v_grid), tb, 2,1, 1,1);
-	gtk_widget_show (tb);
 
         tb = gtk_toggle_button_new ();
         gtk_button_set_icon_name (GTK_BUTTON (tb), "list-add-symbolic");
@@ -540,7 +536,6 @@ ProbeIndicator::ProbeIndicator (Gxsm4app *app):AppBase(app){
         g_signal_connect (G_OBJECT (tb), "toggled",
                           G_CALLBACK (ProbeIndicator::more_info_callback), this);
 	gtk_grid_attach (GTK_GRID (v_grid), tb, 2,2, 1,1);
-	gtk_widget_show (tb);
 
         tb = gtk_toggle_button_new ();
         gtk_button_set_icon_name (GTK_BUTTON (tb), "media-playback-pause-symbolic");
@@ -550,8 +545,6 @@ ProbeIndicator::ProbeIndicator (Gxsm4app *app):AppBase(app){
         g_signal_connect (G_OBJECT (tb), "toggled",
                           G_CALLBACK (ProbeIndicator::pause_callback), this);
 	gtk_grid_attach (GTK_GRID (v_grid), tb, 3,1, 1,1);
-	gtk_widget_show (tb);
-
 
         tb = gtk_toggle_button_new ();
         gtk_button_set_icon_name (GTK_BUTTON (tb), "system-shutdown-symbolic");
@@ -561,7 +554,6 @@ ProbeIndicator::ProbeIndicator (Gxsm4app *app):AppBase(app){
         g_signal_connect (G_OBJECT (tb), "toggled",
                           G_CALLBACK (ProbeIndicator::shutdown_callback), this);
 	gtk_grid_attach (GTK_GRID (v_grid), tb, 40,2, 1,1);
-	gtk_widget_show (tb);
 
         tb = gtk_toggle_button_new ();
         gtk_button_set_icon_name (GTK_BUTTON (tb), "window-close-symbolic");
@@ -571,8 +563,6 @@ ProbeIndicator::ProbeIndicator (Gxsm4app *app):AppBase(app){
         g_signal_connect (G_OBJECT (tb), "toggled",
                           G_CALLBACK (ProbeIndicator::close_callback), this);
 	gtk_grid_attach (GTK_GRID (v_grid), tb, 40,1, 1,1);
-	gtk_widget_show (tb);
-
         
         probe = new hud_object();
         probe->add_tics ("T1", 0, 1., 9, 25.);
@@ -656,7 +646,7 @@ void ProbeIndicator::AppWindowInit(const gchar *title, const gchar *subtitle){
 	gtk_window_set_default_size (GTK_WINDOW(window), 2*hud_size, 2*hud_size);
 	gtk_window_set_title (GTK_WINDOW(window), title);
 	gtk_widget_set_opacity (GTK_WIDGET(window), 1.0);
-	gtk_window_set_resizable (GTK_WINDOW(window), FALSE);
+	gtk_window_set_resizable (GTK_WINDOW(window), TRUE);
 	gtk_window_set_decorated (GTK_WINDOW(window), FALSE);
         
 	v_grid = gtk_grid_new ();
@@ -719,7 +709,12 @@ gboolean  ProbeIndicator::canvas_draw_function (GtkDrawingArea *area,
                                                 int             width,
                                                 int             height,
                                                 ProbeIndicator *pv){
-        // translate origin to window center
+        
+        double actual_size = (width < height ? width : height)/2;
+        double scale = actual_size / pv->hud_size;
+        
+        // scale and translate origin to window center
+	cairo_scale (cr, scale, scale);
 	cairo_translate (cr, pv->hud_size, pv->hud_size);
         cairo_save (cr);
 
@@ -1009,14 +1004,23 @@ gint ProbeIndicator::refresh(){
                                 yy = xrms/main_get_gapp()->xsm->Inst->nAmpere2V(1.);
                         }
                         if (modes & SCOPE_INFOPLUS){
-                                if (fabs(y) < 0.25)
-                                        tmp = g_strdup_printf ("I: %8.1f (%.2f) pA\ndF: %8.1f Hz\nZ: %8.4f" UTF8_ANGSTROEM "\nI: %.2f : %.2f pA\nZ: %.2f : %.2f " UTF8_ANGSTROEM,
-                                                               y*1000., yy*1000., x, main_get_gapp()->xsm->Inst->V2ZAng(z),
+                                if (fabs(y) < 0.00025) // I display in atto amp
+                                        tmp = g_strdup_printf ("I@%s: %6.3f [%.2f] aA\ndF: %8.2f Hz\nZ: %8.4f " UTF8_ANGSTROEM" \nI: %.2f : %.2f pA\nZ: %.2f : %.2f " UTF8_ANGSTROEM,
+                                                               main_get_gapp()->xsm->Inst->IVC_Ampere2Volt_Setting(),
+                                                               y*1e6, yy*1e6, x, main_get_gapp()->xsm->Inst->V2ZAng(z),
+                                                               scope_min[0]/dec/main_get_gapp()->xsm->Inst->nAmpere2V(1.)*1000., scope_max[0]/dec/main_get_gapp()->xsm->Inst->nAmpere2V(1.)*1000.,
+                                                               scope_min[1], scope_max[1]
+                                                               );
+                                else if (fabs(y) < 0.25)
+                                        tmp = g_strdup_printf ("I@%s: %8.1f [%.2f] pA\ndF: %8.2f Hz\nZ: %8.4f" UTF8_ANGSTROEM "\nI: %.2f : %.2f pA\nZ: %.2f : %.2f " UTF8_ANGSTROEM,
+                                                               main_get_gapp()->xsm->Inst->IVC_Ampere2Volt_Setting(),
+                                                               y*1e3, yy*1e3, x, main_get_gapp()->xsm->Inst->V2ZAng(z),
                                                                scope_min[0]/dec/main_get_gapp()->xsm->Inst->nAmpere2V(1.)*1000., scope_max[0]/dec/main_get_gapp()->xsm->Inst->nAmpere2V(1.)*1000.,
                                                                scope_min[1], scope_max[1]
                                                                );
                                 else
-                                        tmp = g_strdup_printf ("I: %8.1f (%.2f) nA\ndF: %8.1f Hz\nZ: %8.4f" UTF8_ANGSTROEM "\nI: %.2f : %.2f nA\nZ: %.2f : %.2f " UTF8_ANGSTROEM,
+                                        tmp = g_strdup_printf ("I@%s: %8.1f [%.2f] nA\ndF: %8.2f Hz\nZ: %8.4f" UTF8_ANGSTROEM "\nI: %.2f : %.2f nA\nZ: %.2f : %.2f " UTF8_ANGSTROEM,
+                                                               main_get_gapp()->xsm->Inst->IVC_Ampere2Volt_Setting(),
                                                                y, yy, x, main_get_gapp()->xsm->Inst->V2ZAng(z),
                                                                scope_min[0]/dec/main_get_gapp()->xsm->Inst->nAmpere2V(1.), scope_max[0]/dec/main_get_gapp()->xsm->Inst->nAmpere2V(1.),
                                                                scope_min[1], scope_max[1]
@@ -1029,10 +1033,18 @@ gint ProbeIndicator::refresh(){
                                 main_get_gapp()->xsm->hardware->RTQuery ("S", a, b, c); // get DST RT statemachine status info, with termial process list dump option on
 
                         } else {
-                                if (fabs(y) < 0.25)
-                                        tmp = g_strdup_printf ("I: %8.1f pA\ndF: %8.1f Hz\nZ: %8.4f" UTF8_ANGSTROEM, y*1000., x, main_get_gapp()->xsm->Inst->V2ZAng(z));
+                                if (fabs(y) < 0.00025)
+                                        tmp = g_strdup_printf ("I@%s: %8.1f aA\ndF: %8.2f Hz\nZ: %8.4f" UTF8_ANGSTROEM,
+                                                               main_get_gapp()->xsm->Inst->IVC_Ampere2Volt_Setting(),
+                                                               y*1e6, x, main_get_gapp()->xsm->Inst->V2ZAng(z));
+                                else if (fabs(y) < 0.25)
+                                        tmp = g_strdup_printf ("I@%s: %8.1f pA\ndF: %8.2f Hz\nZ: %8.4f" UTF8_ANGSTROEM,
+                                                               main_get_gapp()->xsm->Inst->IVC_Ampere2Volt_Setting(),
+                                                               y*1e3, x, main_get_gapp()->xsm->Inst->V2ZAng(z));
                                 else
-                                        tmp = g_strdup_printf ("I: %8.4f nA\ndF: %8.1f Hz\nZ: %8.4f" UTF8_ANGSTROEM, y, x, main_get_gapp()->xsm->Inst->V2ZAng(z));
+                                        tmp = g_strdup_printf ("I@%s: %8.4f nA\ndF: %8.2f Hz\nZ: %8.4f" UTF8_ANGSTROEM,
+                                                               main_get_gapp()->xsm->Inst->IVC_Ampere2Volt_Setting(),
+                                                               y, x, main_get_gapp()->xsm->Inst->V2ZAng(z));
                         }
                         info->set_text (tmp);
                         g_free (tmp);
