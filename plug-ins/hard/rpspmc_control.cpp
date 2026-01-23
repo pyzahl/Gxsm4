@@ -157,7 +157,7 @@ extern GVPMoverControl *rpspmc_gvpmover;
 
 //FIXME WARNING WARNING WARNING.. not working life if table is initialized with this
 #define BiasFac    (main_get_gapp()->xsm->Inst->BiasGainV2V ())
-#define CurrFac    (1./main_get_gapp()->xsm->Inst->nAmpere2V (1.))
+#define CurrFac    (main_get_gapp()->xsm->Inst->V2nAmpere (1.))
 #define ZAngFac    (main_get_gapp()->xsm->Inst->Volt2ZA (1.))
 #define XAngFac    (main_get_gapp()->xsm->Inst->Volt2XA (1.))
 #define YAngFac    (main_get_gapp()->xsm->Inst->Volt2YA (1.))
@@ -3106,7 +3106,7 @@ void RPSPMC_Control::update_FPGA_from_GUI (){ // after cold start
         g_slist_foreach ((GSList*)g_object_get_data (G_OBJECT (window), "FPGA_readback_update_list"), (GFunc) App::update_parameter, NULL); // UPDATE PARAMETRE form GUI!
 
         bias = spmc_parameters.bias_monitor; // Volts direct
-        mix_set_point[0] = spmc_parameters.z_servo_setpoint / main_get_gapp()->xsm->Inst->nAmpere2V(1.0); // convert nA!!
+        mix_set_point[0] = main_get_gapp()->xsm->Inst->V2nAmpere (spmc_parameters.z_servo_setpoint); // convert nA!!
 
         if (spmc_parameters.z_servo_cp > 0.0)
                 spmc_parameters.z_servo_cp_db = 20.* log10(spmc_parameters.z_servo_cp); // convert to dB *** pow (10., spmc_parameters.z_servo_cp_db/20.);
@@ -3125,7 +3125,7 @@ void RPSPMC_Control::update_FPGA_from_GUI (){ // after cold start
 void RPSPMC_Control::update_GUI_from_FPGA (){ // after warm start or re-connect
         //zpos_ref = 0.; // ** via limits
         bias = spmc_parameters.bias_monitor; // Volts direct
-        mix_set_point[0] = spmc_parameters.z_servo_setpoint / main_get_gapp()->xsm->Inst->nAmpere2V(1.0); // convert nA!!
+        mix_set_point[0] = main_get_gapp()->xsm->Inst->V2nAmpere (spmc_parameters.z_servo_setpoint); // convert nA!!
 
         if (spmc_parameters.z_servo_cp > 0.0)
                 spmc_parameters.z_servo_cp_db = 20.* log10(spmc_parameters.z_servo_cp); // convert to dB *** pow (10., spmc_parameters.z_servo_cp_db/20.);

@@ -60,6 +60,8 @@ public:
                 irad = 100.; orad = irad*1.2; delta = irad*0.05;
                 rsz = irad/5.; asp=1.67; 
 
+                kao_zoom=1.0;
+                
                 // empty elements
                 marks = NULL;
                 indicators = NULL;
@@ -149,6 +151,9 @@ public:
                 marks = g_slist_prepend (marks, m);
                 return m;
         };
+
+        void set_kao_zoom(double z) { kao_zoom = z; };
+
         void set_mark_color(cairo_item_path_closed* m, int id){
                 float cc_tmp[4];
                 if (id >=0)
@@ -247,16 +252,20 @@ public:
                 g_slist_foreach (horizon, (GFunc)hud_object::show_cairo_item, this);
         };
         virtual void draw (cairo_t* cr, double alpha=0.0, gboolean tr=true){
+                cairo_save (cr);
+                cairo_scale (cr, kao_zoom, kao_zoom);
                 grid->draw(cr);
+                g_slist_foreach (horizon, (GFunc)hud_object::draw_cairo_item, cr);
+                cairo_restore (cr);
+
                 ic->draw(cr);
                 oc->draw(cr);
                 g_slist_foreach (marks, (GFunc)hud_object::draw_cairo_item, cr);
                 g_slist_foreach (indicators, (GFunc)hud_object::draw_cairo_item, cr);
                 g_slist_foreach (tics, (GFunc)hud_object::draw_cairo_item, cr);
-                g_slist_foreach (horizon, (GFunc)hud_object::draw_cairo_item, cr);
         }
 private:
-        double rsz, asp;
+        double rsz, asp, kao_zoom;
         double irad, orad, delta;
        	cairo_item *ic, *oc;
         GSList *indicators;
@@ -304,8 +313,10 @@ public:
         static void more_info_callback (GtkWidget *widget, gpointer user_data);
         static void less_info_callback (GtkWidget *widget, gpointer user_data);
 
-        static void signal1_callback (GtkWidget *widget, gpointer user_data);
-        static void signal2_callback (GtkWidget *widget, gpointer user_data);
+        static void KAO_skl_callback (GtkWidget *widget, gpointer user_data);
+        static void KAO_mode_callback (GtkWidget *widget, gpointer user_data);
+        static void KAO_signal_callback (GtkWidget *widget, gpointer user_data);
+        static void KAO_dc_set_callback (GtkWidget *widget, gpointer user_data);
 
         
         void show() {
@@ -391,15 +402,14 @@ public:
         
 private:  
         gint       modes;
-        
         gint       hud_size;
-
         guint      timer_id;
-
         GtkWidget  *canvas;
 
-
-        gint signal[2];
+        double     kao_scale[2];
+        int        kao_mode[2];
+        GtkWidget  *kao_dc[2];
+        double     kao_dc_set[2];
         
         // remplaced with: cairo_item_rectangle / text / path
         cairo_item_circle *background;

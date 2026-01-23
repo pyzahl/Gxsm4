@@ -187,6 +187,8 @@ public:
 	virtual double BiasV2V(double U){ return (U-BiasOffset)/BiasGain; }; // correct Bias gain  DAC(0)=B0 DAC(V)=V*BG+B0 -> V=(DAC(V)-B0)/BG
 	virtual double BiasGainV2V(){ return BiasGain; }; // correct Bias gain
 	virtual double nAmpere2V(double I){ return UInLimit(I*nAmpere2Volt); };
+	virtual double nAmpere2V(){ return nAmpere2Volt; };
+	virtual double V2nAmpere(double V){ return V/nAmpere2Volt; };
 	virtual double nNewton2V(double F){ return UInLimit(F*nNewton2Volt); };
 	virtual double dHertz2V(double v){ return UInLimit(v*dHertz2Volt); };
 	virtual double eV2V(double eV){ return UOutLimit(eV/eV2Volt); };

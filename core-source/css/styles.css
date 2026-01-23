@@ -42,3 +42,5 @@
 
 .rotated-label { transform: rotate(0deg); }
 
+#kao-ch1-label { font-family: monospace;  background-color: #e81b1b; color: white; font-weight: bold; }
+#kao-ch2-label { font-family: monospace;  background-color: #e8e01b; color: white; font-weight: bold; }

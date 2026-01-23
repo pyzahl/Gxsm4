@@ -261,7 +261,7 @@ void Z85_decode_double(const char* source, unsigned int size, double* dest)
 #define VEC__EXEC 16
 #define VEC_DFREQ 17
 #define VEC_PHASE 18
-#define VEC_ZSSIG 19
+#define VEC_ZSSIG 19 // ==> CURR
         
 #define VEC_LEN  20 // num components
 

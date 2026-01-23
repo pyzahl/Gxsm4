@@ -1264,11 +1264,11 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2,
         if (*property == 'f'){
                 if (rt) {
                         val1 = dvec[17];
-                        val2 = dvec[19] / main_get_gapp()->xsm->Inst->nAmpere2V (1.0); // Reading converted to nA
+                        val2 = main_get_gapp()->xsm->Inst->V2nAmpere (dvec[19]); // Reading converted to nA
                         val3 = dvec[19]; // Current Input reading in Volts (+/-1 V for RF-IN2, +/-5V for AD24-IN3
                 } else {
                         val1 = pacpll_parameters.dfreq_monitor; // Freq Shift
-                        val2 = spmc_parameters.signal_monitor / main_get_gapp()->xsm->Inst->nAmpere2V (1.0); // Reading converted to nA
+                        val2 = main_get_gapp()->xsm->Inst->V2nAmpere (spmc_parameters.signal_monitor); // Reading converted to nA
                         val3 = spmc_parameters.signal_monitor; // Current Input reading in Volts (+/-1 V for RF-IN2, +/-5V for AD24-IN3
                 }
 		return TRUE;
@@ -1449,10 +1449,10 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, int n, gfloat *data){
         // Request Signal1 = Vector n: from Channel "C1xxxx"
         // Request Signal2 = Vector n: from Channel "C2xxxx"
         //                         0  1          4          7          10  11  12  13  14  15  16   17    18    19
-        // xxxx is vector component [T  X xma xmi  Y yma ymi  Z zma zmi  U   IN1 IN2 IN3 IN4 AMP EXEC DFREQ PHASE ZSSIG ] 0 ... 19 are valid
+        // xxxx is vector component [T  X xma xmi  Y yma ymi  Z zma zmi  U   IN1 IN2 IN3 IN4 AMP EXEC DFREQ PHASE CURR ] 0 ... 19 are valid
         if ( property[0] == 'C'){
                 static gchar *VCmap[] = { "T", "X", "xma", "xmi",  "Y", "yma", "ymi",  "Z", "zma", "zmi",  "BIAS",
-                                          "IN1", "IN2", "IN3", "IN4", "AMP", "EXEC", "DFREQ", "PHASE", "ZSSIG", NULL };
+                                          "IN1", "IN2", "IN3", "IN4", "AMP", "EXEC", "DFREQ", "PHASE", "CURR", NULL };
                 int pos=0;
                 for (; VCmap[pos]; ++pos) if (!strcmp(&property[2], VCmap[pos])) break;
                 if (pos < 0 || pos >= 20) pos=7; // Z as fallback
