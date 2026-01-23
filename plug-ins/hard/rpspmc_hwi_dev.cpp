@@ -1448,20 +1448,27 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, int n, gfloat *data){
 
         // Request Signal1 = Vector n: from Channel "C1xxxx"
         // Request Signal2 = Vector n: from Channel "C2xxxx"
-        //                         0  1          4          7          10  11  12  13  14  15  16   17    18    19
+        //                           0  1          4          7          10  11  12  13  14  15  16   17    18    19
         // xxxx is vector component [T  X xma xmi  Y yma ymi  Z zma zmi  U   IN1 IN2 IN3 IN4 AMP EXEC DFREQ PHASE CURR ] 0 ... 19 are valid
         if ( property[0] == 'C'){
                 static gchar *VCmap[] = { "T", "X", "xma", "xmi",  "Y", "yma", "ymi",  "Z", "zma", "zmi",  "BIAS",
                                           "IN1", "IN2", "IN3", "IN4", "AMP", "EXEC", "DFREQ", "PHASE", "CURR", NULL };
+                static gchar *Umap[]  = { " s\0\0", " Å\0\0", " Å\0\0", " Å\0\0", " Å\0\0", " Å\0\0", " Å\0\0", " Å\0\0", " Å\0\0", " Å\0\0",  " V\0\0",
+                                          " V\0\0", " V\0\0", " V\0\0", " V\0\0", "mV\0\0", "mV\0\0", "Hz\0\0", "° \0\0", "nA\0\0", NULL };
                 int pos=0;
                 for (; VCmap[pos]; ++pos) if (!strcmp(&property[2], VCmap[pos])) break;
-                if (pos < 0 || pos >= 20) pos=7; // Z as fallback
                 if ( property[1] == '1'){
+                        if (pos < 0 || pos >= 20) pos=19; // CURR as fallback
                         Signal1 = pos;
+                        if (data)
+                                memcpy ((void*)data, Umap[pos], 4);
                         return pos;
                 }
                 if ( property[1] == '2'){
+                        if (pos < 0 || pos >= 20) pos=7; // Z as fallback
                         Signal2 = pos;
+                        if (data)
+                                memcpy ((void*)data, Umap[pos], 4);
                         return pos;
                 }
                 return -1;
@@ -1490,6 +1497,11 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, int n, gfloat *data){
                 if ( property[1] == '4' && ((time_of_last_reading4+max_age) < g_get_real_time () || s4ok)){
                         time_of_last_reading4 = g_get_real_time ();
                         get_history_vector_f (Signal2, data, n); // Current
+                }
+                // Time
+                if ( property[1] == 'T' && ((time_of_last_reading2+max_age) < g_get_real_time () || s2ok)){
+                        time_of_last_reading2 = g_get_real_time ();
+                        get_history_vector_f (0, data, n); // FPGA Time
                 }
         }
         return 0;

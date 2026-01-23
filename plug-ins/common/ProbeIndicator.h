@@ -409,7 +409,9 @@ private:
         double     kao_scale[2];
         int        kao_mode[2];
         GtkWidget  *kao_dc[2];
+        GtkWidget  *kao_tdiv;
         double     kao_dc_set[2];
+        const gchar* kao_ch_unit[2][4];
         
         // remplaced with: cairo_item_rectangle / text / path
         cairo_item_circle *background;

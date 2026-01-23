@@ -1249,10 +1249,7 @@ static PyObject* remote_get(PyObject *self, PyObject *args)
 {
 	PI_DEBUG(DBG_L2, "pyremote: Getting ");
 	gchar *parameter;
-	remote_args ra;
-	ra.qvalue = 0.;
 
-        
 	if (!PyArg_ParseTuple(args, "s", &parameter)){
                 PyErr_Print();
 
@@ -1278,9 +1275,11 @@ static PyObject* remote_get(PyObject *self, PyObject *args)
         
 	PI_DEBUG(DBG_L2, parameter << " query" );
 
-	ra.qvalue = 0.;
 	gchar *list[] = {(gchar *)"get", parameter, NULL};
+	remote_args ra;
 	ra.arglist = list;
+	ra.qvalue  = -1e999;
+	ra.qstr    = NULL;
 
 	g_slist_foreach(main_get_gapp()->RemoteEntryList, (GFunc) Check_ec, (gpointer)&ra);
 	PI_DEBUG(DBG_L2, parameter << " query result: " << ra.qvalue );

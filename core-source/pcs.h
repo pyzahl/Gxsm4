@@ -500,7 +500,7 @@ class Gtk_EntryControl : public Param_Control{
 	GSList *AddEntry2RemoteList(const gchar *RefName, GSList *remotelist);
 
 	int CheckRemoteCmd(remote_args* data){
-		if (data) 
+		if (data) {
 			if (data->arglist[0] && data->arglist[1]){
 				if(! strcmp(data->arglist[0], "get")){ // query entry value, return in data->qvalue
 					if(refname && data->arglist[1])
@@ -520,6 +520,7 @@ class Gtk_EntryControl : public Param_Control{
 						return TRUE;
 					}
 			}
+                }
 		return FALSE;
 	};
 
