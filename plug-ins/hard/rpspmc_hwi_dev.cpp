@@ -1226,7 +1226,7 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2,
         int rt=0;
         if (rpspmc_pacpll) // try fetch SHM monitor data
                 rt = rpspmc_pacpll->memcpy_from_rt_monitors (dvec, 20, 100+400-20); // last
-        
+
         if (*property == '!'){ // Scan Coordinates: ZScan, XScan, YScan  with offset!! -- in volts with gains!
                 val1 = spmc_parameters.gxsm_z_polarity*spmc_parameters.z_monitor*main_get_gapp()->xsm->Inst->VZ(); // adjust for polarity as Z-Monitor is the actual DAC OUT Z
                 val2 = spmc_parameters.x_monitor*main_get_gapp()->xsm->Inst->VX();
@@ -1420,24 +1420,9 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2,
 
 
 gint rpspmc_hwi_dev::RTQuery (const gchar *property, int n, gfloat *data){
-        const gint64 max_age = 20000; // 20ms
-        static gint64 time_of_last_reading1 = 0; // abs time in us
-        static gint64 time_of_last_reading2 = 0; // abs time in us
-        static gint64 time_of_last_reading3 = 0; // abs time in us
-        static gint64 time_of_last_reading4 = 0; // abs time in us
-        static gint64 time_of_last_trg = 0; // abs time in us
-        static gint s1ok=0, s2ok=0, s3ok=0, s4ok=0;
-
-        static int Signal1 =  7; // Z per default
-        static int Signal2 = 19; // Current per default
+        static int signal[4] = { 7, 19, 15, 17 }; // Z, Current per default
+        static double scale[4] = { 1.0, 1.0, 1.0, 1.0 };
         
-        // Trigger
-        if ( property[0] == 'T' && (time_of_last_trg+max_age) < g_get_real_time () ){
-                time_of_last_trg = g_get_real_time ();
-                //set_blcklen (n);
-                s1ok=-1; s2ok=-1;
-        }
-
         // Request History Vector n: "Hnn"
         if ( property[0] == 'H'){
                 int pos = atoi(&property[1]);
@@ -1446,8 +1431,10 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, int n, gfloat *data){
                 return 0;
         }
 
-        // Request Signal1 = Vector n: from Channel "C1xxxx"
-        // Request Signal2 = Vector n: from Channel "C2xxxx"
+        // Request signal[0] = Vector n: from Channel "C1xxxx"
+        // Request signal[1] = Vector n: from Channel "C2xxxx"
+        // ...
+        // Request signal[3] = Vector n: from Channel "C4xxxx"
         //                           0  1          4          7          10  11  12  13  14  15  16   17    18    19
         // xxxx is vector component [T  X xma xmi  Y yma ymi  Z zma zmi  U   IN1 IN2 IN3 IN4 AMP EXEC DFREQ PHASE CURR ] 0 ... 19 are valid
         if ( property[0] == 'C'){
@@ -1456,54 +1443,56 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, int n, gfloat *data){
                 static gchar *Umap[]  = { " s\0\0", " Å\0\0", " Å\0\0", " Å\0\0", " Å\0\0", " Å\0\0", " Å\0\0", " Å\0\0", " Å\0\0", " Å\0\0",  " V\0\0",
                                           " V\0\0", " V\0\0", " V\0\0", " V\0\0", "mV\0\0", "mV\0\0", "Hz\0\0", "° \0\0", "nA\0\0", NULL };
                 int pos=0;
-                for (; VCmap[pos]; ++pos) if (!strcmp(&property[2], VCmap[pos])) break;
-                if ( property[1] == '1'){
-                        if (pos < 0 || pos >= 20) pos=19; // CURR as fallback
-                        Signal1 = pos;
+                for (pos=0; VCmap[pos]; ++pos) if (!strcmp(&property[2], VCmap[pos])) break;
+                if (pos < 0 || pos >= 20) pos=19; // CURR as fallback
+
+                int ch=-1;
+                switch (property[1]){
+                case '1': ch=0; break;
+                case '2': ch=1; break;
+                case '3': ch=2; break;
+                case '4': ch=3; break;
+                }
+                if (ch>=0){
+                        signal[ch] = pos;
                         if (data)
                                 memcpy ((void*)data, Umap[pos], 4);
-                        return pos;
+                } else return -1;
+
+                // update scale to World Units if non native
+                scale[ch] = 1.; // default native, no scale
+                switch (signal[ch]){
+                case 1: case 2: case 3: scale[ch] = main_get_gapp()->xsm->Inst->Volt2XA(1.); break;
+                case 4: case 5: case 6: scale[ch] = main_get_gapp()->xsm->Inst->Volt2YA(1.); break;
+                case 7: case 8: case 9: scale[ch] = main_get_gapp()->xsm->Inst->Volt2ZA(1.); break;
+                case 10: scale[ch] = main_get_gapp()->xsm->Inst->BiasGainV2V(); break;
+                case 19: scale[ch] = main_get_gapp()->xsm->Inst->nAmpere2V(); break;
                 }
-                if ( property[1] == '2'){
-                        if (pos < 0 || pos >= 20) pos=7; // Z as fallback
-                        Signal2 = pos;
-                        if (data)
-                                memcpy ((void*)data, Umap[pos], 4);
-                        return pos;
-                }
-                return -1;
+
+                return pos;
         }
         
-        
-        // Request Signal1 = Vector n: "S1"
-        // Request Signal2 = Vector n: "S2"
+        // Request signal[0] = Vector n: "S1", ... "S4", "ST"
         if ( property[0] == 'S'){
-                // Signal1
-                if ( property[1] == '1' && ((time_of_last_reading1+max_age) < g_get_real_time () || s1ok)){
-                        time_of_last_reading1 = g_get_real_time ();
-                        get_history_vector_f (Signal1, data, n); // Z
+                int ch = -1;
+                // signal[0]
+                switch (property[1]){
+                case '1': ch = 0; break;
+                case '2': ch = 1; break;
+                case '3': ch = 2; break;
+                case '4': ch = 3; break;
+                case 'T': get_history_vector_f (0, data, n); return 0; break; // FPGA Time
                 }
-                // Signal2
-                if ( property[1] == '2' && ((time_of_last_reading2+max_age) < g_get_real_time () || s2ok)){
-                        time_of_last_reading2 = g_get_real_time ();
-                        get_history_vector_f (Signal2, data, n); // Current
-                }
-                // Signal1 deci 256
-                if ( property[1] == '3' && ((time_of_last_reading3+max_age) < g_get_real_time () || s3ok)){
-                        time_of_last_reading3 = g_get_real_time ();
-                        get_history_vector_f (Signal1, data, n); // Z
-                }
-                // Signal2 subsampled 256
-                if ( property[1] == '4' && ((time_of_last_reading4+max_age) < g_get_real_time () || s4ok)){
-                        time_of_last_reading4 = g_get_real_time ();
-                        get_history_vector_f (Signal2, data, n); // Current
-                }
-                // Time
-                if ( property[1] == 'T' && ((time_of_last_reading2+max_age) < g_get_real_time () || s2ok)){
-                        time_of_last_reading2 = g_get_real_time ();
-                        get_history_vector_f (0, data, n); // FPGA Time
+                if (ch >= 0){
+                        if (signal[ch] >= 0 && signal[ch] < 20){
+                                get_history_vector_f (signal[ch], data, n);
+                                if (scale[ch] != 1.0) // if required
+                                        for (int k=0; k<n; ++k) data[k] *= scale[ch];
+                        }
+                        return 0;
                 }
         }
+
         return 0;
 }
 

@@ -285,7 +285,7 @@ private:
         float cc_marks[4];
 };
 
-
+#define KAO_CHANNEL_NUMBER 4
 class ProbeIndicator : public AppBase{
 public:
         ProbeIndicator (Gxsm4app *app);
@@ -406,20 +406,22 @@ private:
         guint      timer_id;
         GtkWidget  *canvas;
 
-        double     kao_scale[2];
-        int        kao_mode[2];
-        GtkWidget  *kao_dc[2];
+        double     kao_scale[KAO_CHANNEL_NUMBER];
+        int        kao_mode[KAO_CHANNEL_NUMBER];
+        GtkWidget  *kao_dc[KAO_CHANNEL_NUMBER];
         GtkWidget  *kao_tdiv;
-        double     kao_dc_set[2];
-        const gchar* kao_ch_unit[2][4];
+        double     kao_dc_set[KAO_CHANNEL_NUMBER];
+        const gchar* kao_ch_unit[KAO_CHANNEL_NUMBER][4];
         
         // remplaced with: cairo_item_rectangle / text / path
         cairo_item_circle *background;
         cairo_item_text   *info;
+        cairo_item_text   *ch_info[KAO_CHANNEL_NUMBER];
         hud_object *probe;
         cairo_item_arc *ipos, *ineg, *ipos2, *ineg2;
         cairo_item_arc *fpos, *fneg, *fpos2, *fneg2;
         cairo_item_path_closed *tip;
         cairo_item_path_closed *m1, *m2;
-        cairo_item_path *horizon[6];
+        cairo_item_path *trace[KAO_CHANNEL_NUMBER];
+        cairo_item_path *trace_psd[KAO_CHANNEL_NUMBER];
 };

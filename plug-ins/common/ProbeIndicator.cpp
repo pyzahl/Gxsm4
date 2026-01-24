@@ -329,7 +329,7 @@ static gint ProbeIndicator_tip_refresh_callback (ProbeIndicator *pv){
 	return FALSE;
 }
 
-
+// set CH mode
 void ProbeIndicator::KAO_mode_callback (GtkWidget *widget, gpointer user_data) {
         ProbeIndicator *pv = (ProbeIndicator *) user_data; 
         int ch= GPOINTER_TO_INT (g_object_get_data(G_OBJECT (widget), "SN"));
@@ -338,36 +338,43 @@ void ProbeIndicator::KAO_mode_callback (GtkWidget *widget, gpointer user_data) {
                                       gtk_combo_box_get_active(GTK_COMBO_BOX(widget))
                                       );
         pv->kao_mode[ch] = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
-        g_message ("ProbeIndicator::KAO_mode_callback: %s\n", tmp);
+        g_message ("ProbeIndicator::KAO_mode_callback: %s", tmp);
         g_free (tmp);
 }
 
+// set scale
 void ProbeIndicator::KAO_skl_callback (GtkWidget *widget, gpointer user_data) {
         ProbeIndicator *pv = (ProbeIndicator *) user_data; 
         int ch= GPOINTER_TO_INT (g_object_get_data(G_OBJECT (widget), "SN"));
         int s = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
         if (s==0)
-                pv->kao_scale[ch] = -1;
+                pv->kao_scale[ch] = -1; // Auto
         else
-                pv->kao_scale[ch] = 1e-6*pow (10., (double)s-1);
+                pv->kao_scale[ch] = 1./(1e-6*pow (10., (double)s-1));
         gchar *tmp = g_strdup_printf ("skl%d %s %d x %g", ch+1, 
                                       gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(widget)),
                                       s,
                                       pv->kao_scale[ch]
                                       );
-        g_message ("ProbeIndicator::KAO_skl_callback: %s\n", tmp);
+        g_message ("ProbeIndicator::KAO_skl_callback: %s", tmp);
         g_free (tmp);
 }
 
+// Request signal
 void ProbeIndicator::KAO_signal_callback (GtkWidget *widget, gpointer user_data) {
         ProbeIndicator *pv = (ProbeIndicator *) user_data; 
-        int ch= GPOINTER_TO_INT (g_object_get_data(G_OBJECT (widget), "SN"));
-        gchar *tmp = g_strdup_printf ("C%d%s", ch+1,
-                                      gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(widget))
-                                      );
-        int sn = main_get_gapp()->xsm->hardware->RTQuery (tmp, 0, (float*)pv->kao_ch_unit[ch]); // Request Signal, Copy unit sym into unit
-        g_message ("ProbeIndicator::KAO_signal_callback: %s  in %d\n", tmp, pv->kao_ch_unit[ch]);
-        g_free (tmp);
+        if (main_get_gapp()->xsm->hardware){
+                int ch= GPOINTER_TO_INT (g_object_get_data(G_OBJECT (widget), "SN"));
+                pv->kao_ch_unit[ch][0] = '*';
+                pv->kao_ch_unit[ch][1] = '\0';
+                gchar *tmp = g_strdup_printf ("C%d%s", ch+1,
+                                              gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(widget))
+                                              );
+                int sn = main_get_gapp()->xsm->hardware->RTQuery (tmp, 0, (float*)pv->kao_ch_unit[ch]); // Request Signal, Copy unit sym into unit
+                g_message ("ProbeIndicator::KAO_signal_callback: %s  in %d", tmp, pv->kao_ch_unit[ch]);
+                g_free (tmp);
+        }
+        g_message ("ProbeIndicator::KAO_signal_callback OK");
 }
 
 void ProbeIndicator::KAO_dc_set_callback (GtkWidget *widget, gpointer user_data) {
@@ -578,13 +585,34 @@ ProbeIndicator::ProbeIndicator (Gxsm4app *app):AppBase(app){
 
         // Mini KAO Controls
         // ********************************************************************************
+#if 0
+        // KAO Zoom
+        static gchar *CMzoom[] = { "1", "1.25", "1.5", NULL };
+        GtkWidget *CMzoomcb = gtk_combo_box_text_new (); 
+        for (int j=0; CMzoom[j]; ++j){ gchar *id = g_strdup_printf ("%d", j);  gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (CMzoomcb), id, CMzoom[j]); g_free (id); }
+        gtk_widget_show (CMzoomcb);
+        g_signal_connect (G_OBJECT (CMzoomcb), "changed",
+                          G_CALLBACK (ProbeIndicator::KAO_zoom_callback), this);
+        gtk_combo_box_set_active (GTK_COMBO_BOX (CMzoomcb), 1); 
+	gtk_grid_attach (GTK_GRID (v_grid), CMzoomcb, 19,1, 2,1);
+#endif
+
+        // KAO time/div
+        kao_tdiv = gtk_button_new_with_label ("T/DIV");
+        gtk_widget_show (kao_tdiv);
+        //g_signal_connect (G_OBJECT (kao_tdiv), "clicked",
+        //                  G_CALLBACK (ProbeIndicator::KAO_tdiv_set_callback), this);
+	gtk_grid_attach (GTK_GRID (v_grid), kao_tdiv, 19,1, 2,1);
+        
+        int kao_row=18; // start CH controls at this grid row
         GtkWidget *l;
 	gtk_grid_attach (GTK_GRID (v_grid), l=gtk_label_new ("CH1"), 1,  17, 2,1);
         gtk_widget_set_name (l, "kao-ch1-label"); // name used by CSS to apply custom color scheme
 	gtk_grid_attach (GTK_GRID (v_grid), l=gtk_label_new ("CH2"), 19, 17, 2,1);
         gtk_widget_set_name (l, "kao-ch2-label"); // name used by CSS to apply custom color scheme
 
-        // CH Modes
+        // CH Controls ****************************************
+        // CH Mode
         static gchar *CHmod[] = { "AC", "DC", "GND", NULL };
         GtkWidget *CHmodcb = gtk_combo_box_text_new (); 
         g_object_set_data(G_OBJECT (CHmodcb), "SN", GINT_TO_POINTER (0)); 
@@ -593,7 +621,7 @@ ProbeIndicator::ProbeIndicator (Gxsm4app *app):AppBase(app){
         gtk_widget_show (CHmodcb);
         g_signal_connect (G_OBJECT (CHmodcb), "changed",
                           G_CALLBACK (ProbeIndicator::KAO_mode_callback), this);
-	gtk_grid_attach (GTK_GRID (v_grid), CHmodcb, 1,18, 2,1);
+	gtk_grid_attach (GTK_GRID (v_grid), CHmodcb, 1,kao_row, 2,1);
 
         CHmodcb = gtk_combo_box_text_new (); 
         g_object_set_data(G_OBJECT (CHmodcb), "SN", GINT_TO_POINTER (1)); 
@@ -602,82 +630,65 @@ ProbeIndicator::ProbeIndicator (Gxsm4app *app):AppBase(app){
         gtk_widget_show (CHmodcb);
         g_signal_connect (G_OBJECT (CHmodcb), "changed",
                           G_CALLBACK (ProbeIndicator::KAO_mode_callback), this);
-	gtk_grid_attach (GTK_GRID (v_grid), CHmodcb, 19,18, 2,1);
+	gtk_grid_attach (GTK_GRID (v_grid), CHmodcb, 19,kao_row++, 2,1);
 
-#if 0
-        // KAO Zoom
-        static gchar *CMzoom[] = { "1", "1.25", "1.5", NULL };
-        GtkWidget *CMzoomcb = gtk_combo_box_text_new (); 
-        for (int j=0; CMzoom[j]; ++j){ gchar *id = g_strdup_printf ("%d", j);  gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (CMzoomcb), id, CMzoom[j]); g_free (id); }
-        gtk_combo_box_set_active (GTK_COMBO_BOX (CMzoomcb), 0); 
-        gtk_widget_show (CMzoomcb);
-        g_signal_connect (G_OBJECT (CMzoomcb), "changed",
-                          G_CALLBACK (ProbeIndicator::KAO_zoom_callback), this);
-	gtk_grid_attach (GTK_GRID (v_grid), CMzoomcb, 19,1, 2,1);
-#endif
-        // KAO time
-        kao_tdiv = gtk_button_new_with_label ("T/DIV");
-        gtk_widget_show (kao_tdiv);
-        //g_signal_connect (G_OBJECT (kao_tdiv), "clicked",
-        //                  G_CALLBACK (ProbeIndicator::KAO_tdiv_set_callback), this);
-	gtk_grid_attach (GTK_GRID (v_grid), kao_tdiv, 19,1, 2,1);
-        
         // CH Scale
         static gchar *CMskl[] = { "Auto", "1M", "100k", "10k", "1k", "100", "10", "1", "100m", "10m",  "1m", "100μ", "10μ", "1μ", NULL };
         GtkWidget *CMsklcb = gtk_combo_box_text_new (); 
         g_object_set_data(G_OBJECT (CMsklcb), "SN", GINT_TO_POINTER (0)); 
         for (int j=0; CMskl[j]; ++j){ gchar *id = g_strdup_printf ("%d", j);  gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (CMsklcb), id, CMskl[j]); g_free (id); }
-        gtk_combo_box_set_active (GTK_COMBO_BOX (CMsklcb), 0); 
         gtk_widget_show (CMsklcb);
         g_signal_connect (G_OBJECT (CMsklcb), "changed",
                           G_CALLBACK (ProbeIndicator::KAO_skl_callback), this);
-	gtk_grid_attach (GTK_GRID (v_grid), CMsklcb, 1,19, 2,1);
+        gtk_combo_box_set_active (GTK_COMBO_BOX (CMsklcb), 0); 
+	gtk_grid_attach (GTK_GRID (v_grid), CMsklcb, 1,kao_row, 2,1);
 
         CMsklcb = gtk_combo_box_text_new (); 
         g_object_set_data(G_OBJECT (CMsklcb), "SN", GINT_TO_POINTER (1)); 
         for (int j=0; CMskl[j]; ++j){ gchar *id = g_strdup_printf ("%d", j);  gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (CMsklcb), id, CMskl[j]); g_free (id); }
-        gtk_combo_box_set_active (GTK_COMBO_BOX (CMsklcb), 0); 
         gtk_widget_show (CMsklcb);
         g_signal_connect (G_OBJECT (CMsklcb), "changed",
                           G_CALLBACK (ProbeIndicator::KAO_skl_callback), this);
-	gtk_grid_attach (GTK_GRID (v_grid), CMsklcb, 19,19, 2,1);
+        gtk_combo_box_set_active (GTK_COMBO_BOX (CMsklcb), 0); 
+	gtk_grid_attach (GTK_GRID (v_grid), CMsklcb, 19,kao_row++, 2,1);
         
         // Signal Selectors *** RPSPMC ***
         static gchar *VCmap[] = { "X", "Y", "Z", "BIAS", "CURR", "IN1", "IN2", "IN3", "IN4", "AMP", "EXEC", "DFREQ", "PHASE", NULL };
         GtkWidget *CHScb = gtk_combo_box_text_new (); 
         g_object_set_data(G_OBJECT (CHScb), "SN", GINT_TO_POINTER (0)); 
         for (int j=0; VCmap[j]; ++j){ gchar *id = g_strdup_printf ("%d", j);  gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (CHScb), id, VCmap[j]); g_free (id); }
-        gtk_combo_box_set_active (GTK_COMBO_BOX (CHScb), 4);  // default: Current (ZSSIG)
         gtk_widget_show (CHScb);
         g_signal_connect (G_OBJECT (CHScb), "changed",
                           G_CALLBACK (ProbeIndicator::KAO_signal_callback), this);
-	gtk_grid_attach (GTK_GRID (v_grid), CHScb, 1,20, 2,1);
+        gtk_combo_box_set_active (GTK_COMBO_BOX (CHScb), 4);  // default: Current (ZSSIG)
+	gtk_grid_attach (GTK_GRID (v_grid), CHScb, 1,kao_row, 2,1);
 
         CHScb = gtk_combo_box_text_new (); 
         g_object_set_data(G_OBJECT (CHScb), "SN", GINT_TO_POINTER (1)); 
         for (int j=0; VCmap[j]; ++j){ gchar *id = g_strdup_printf ("%d", j);  gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (CHScb), id, VCmap[j]); g_free (id); }
-        gtk_combo_box_set_active (GTK_COMBO_BOX (CHScb), 2); // default: Z
         gtk_widget_show (CHScb);
         g_signal_connect (G_OBJECT (CHScb), "changed",
                           G_CALLBACK (ProbeIndicator::KAO_signal_callback), this);
-	gtk_grid_attach (GTK_GRID (v_grid), CHScb, 19,20, 2,1);
+        gtk_combo_box_set_active (GTK_COMBO_BOX (CHScb), 2); // default: Z
+	gtk_grid_attach (GTK_GRID (v_grid), CHScb, 19,kao_row++, 2,1);
         
-        // Auto DC Button/Reading
+        // Auto AC pos or fixed DC reading and DC set to auto center on click
         kao_dc[0] = gtk_button_new_with_label ("AC");
         g_object_set_data(G_OBJECT (kao_dc[0]), "SN", GINT_TO_POINTER (0)); 
         gtk_widget_show (kao_dc[0]);
         g_signal_connect (G_OBJECT (kao_dc[0]), "clicked",
                           G_CALLBACK (ProbeIndicator::KAO_dc_set_callback), this);
-	gtk_grid_attach (GTK_GRID (v_grid), kao_dc[0], 3,20, 2,1);
+	gtk_grid_attach (GTK_GRID (v_grid), kao_dc[0], 1,kao_row, 2,1);
 
         kao_dc[1] = gtk_button_new_with_label ("AC");
         g_object_set_data(G_OBJECT (kao_dc[1]), "SN", GINT_TO_POINTER (1)); 
         gtk_widget_show (kao_dc[1]);
         g_signal_connect (G_OBJECT (kao_dc[1]), "clicked",
                           G_CALLBACK (ProbeIndicator::KAO_dc_set_callback), this);
-	gtk_grid_attach (GTK_GRID (v_grid), kao_dc[1], 17,20, 2,1);
+	gtk_grid_attach (GTK_GRID (v_grid), kao_dc[1], 19,kao_row++, 2,1);
 
-
+        g_message ("Probe Indicator HUD Object Init");
+        
         probe = new hud_object();
 
         probe->set_kao_zoom(1.27);
@@ -704,23 +715,29 @@ ProbeIndicator::ProbeIndicator (Gxsm4app *app):AppBase(app){
         fneg2=probe->add_indicator ("INeg", 300.0, -5., 1, 2);
 
 
-        horizon[0]=probe->add_horizon ("Ifast", 0.0, 0.0, 128);
-        probe->set_horizon_color(horizon[0], CAIRO_COLOR_RED_ID);
+        trace[0]=probe->add_horizon ("CH1", 0.0, 0.0, 128);
+        probe->set_horizon_color(trace[0], CAIRO_COLOR_RED_ID);
 
-        horizon[1]=probe->add_horizon ("Zfast", 0.0, 0.0, 128);
-        probe->set_horizon_color(horizon[1], CAIRO_COLOR_WHITE_ID);
+        trace[1]=probe->add_horizon ("CH2", 0.0, 0.0, 128);
+        probe->set_horizon_color(trace[1], CAIRO_COLOR_WHITE_ID);
 
-        horizon[2]=probe->add_horizon ("IPSD", 0.0, 0.0, 128);
-        probe->set_horizon_color(horizon[2], CAIRO_COLOR_GREEN_ID);
+        trace[2]=probe->add_horizon ("CH3", 0.0, 0.0, 128);
+        probe->set_horizon_color(trace[2], CAIRO_COLOR_GREEN_ID);
 
-        horizon[3]=probe->add_horizon ("IdecHi", 0.0, 0.0, 128);
-        probe->set_horizon_color(horizon[3], CAIRO_COLOR_ORANGE_ID);
+        trace[3]=probe->add_horizon ("CH4", 0.0, 0.0, 128);
+        probe->set_horizon_color(trace[3], CAIRO_COLOR_ORANGE_ID);
 
-        horizon[4]=probe->add_horizon ("IdecLo", 0.0, 0.0, 128);
-        probe->set_horizon_color(horizon[4], CAIRO_COLOR_ORANGE_ID);
+        trace_psd[0]=probe->add_horizon ("CH1PSD", 0.0, 0.0, 128);
+        probe->set_horizon_color(trace_psd[0], CAIRO_COLOR_RED_ID);
 
-        horizon[5]=probe->add_horizon ("Zdec", 0.0, 0.0, 128);
-        probe->set_horizon_color(horizon[5], CAIRO_COLOR_WHITE_ID);
+        trace_psd[1]=probe->add_horizon ("CH2PSD", 0.0, 0.0, 128);
+        probe->set_horizon_color(trace_psd[1], CAIRO_COLOR_WHITE_ID);
+
+        trace_psd[2]=probe->add_horizon ("CH3PSD", 0.0, 0.0, 128);
+        probe->set_horizon_color(trace_psd[2], CAIRO_COLOR_GREEN_ID);
+
+        trace_psd[3]=probe->add_horizon ("CH4PSD", 0.0, 0.0, 128);
+        probe->set_horizon_color(trace_psd[3], CAIRO_COLOR_ORANGE_ID);
 
         
 	//probe->queue_update (canvas);
@@ -737,6 +754,17 @@ ProbeIndicator::ProbeIndicator (Gxsm4app *app):AppBase(app){
 	info->set_anchor (CAIRO_ANCHOR_E);
 	//info->queue_update (canvas);
 
+        for (int ch=0; ch<KAO_CHANNEL_NUMBER; ++ch){
+                ch_info[ch]= new cairo_item_text (-78.0, -78.0+10*ch, "CH Info");
+                //ch_info[ch]->set_text ("CH Info")
+                ch_info[ch]->set_stroke_rgba (CAIRO_COLOR_WHITE);
+                ch_info[ch]->set_font_face_size ("Ununtu", 10.);
+                ch_info[ch]->set_spacing (-.1);
+                ch_info[ch]->set_anchor (CAIRO_ANCHOR_W);
+        }
+
+        g_message ("Probe Indicator GUI build complete.");
+        
 	refresh ();
 }
 
@@ -843,6 +871,11 @@ gboolean  ProbeIndicator::canvas_draw_function (GtkDrawingArea *area,
 	pv->probe->draw (cr);         // probe indicator
 	pv->info->draw (cr);          // info text
 
+        pv->ch_info[0]->draw (cr);    // CH info text
+        pv->ch_info[1]->draw (cr);    // CH info text
+        //pv->ch_info[2]->draw (cr);    // CH info text
+        //pv->ch_info[3]->draw (cr);    // CH info text
+
         cairo_restore (cr);
         return TRUE;
 }
@@ -868,19 +901,21 @@ gint ProbeIndicator::refresh(){
         #define SCOPE_N 4096
         #define SCOPE_VIEW_DEC 4096/128
         static gfloat scope_t[SCOPE_N+1];
-        static gfloat scope[4][SCOPE_N+1];
-        static gfloat scopedec[2][SCOPE_N+1];
-        static gfloat scope_min[4] = {0,0,0,0};
-        static gfloat scope_max[4] = {0,0,0,0};
-        static double xrms = 0.;
-        static double xavg[2] = { 0., 0. };
+        static gfloat scope[KAO_CHANNEL_NUMBER][SCOPE_N+1];
+        static gfloat scope_psd[KAO_CHANNEL_NUMBER][SCOPE_N+1];
+        static gfloat scope_min[KAO_CHANNEL_NUMBER] = {0,0,0,0};
+        static gfloat scope_max[KAO_CHANNEL_NUMBER] = {0,0,0,0};
+        static double xrms[KAO_CHANNEL_NUMBER];
+        static double xavg[KAO_CHANNEL_NUMBER] = { 0., 0., 0., 0. };
         static gint busy=FALSE;
         static gint infoflag=1;
+        static gint chinfoflag=1;
         static gint scopeflag=1;
         gint dec=SCOPE_N/128;
-        
-        if (busy) return FALSE; // skip this one, busy
 
+        if (busy) return FALSE; // skip this one, busy
+        if (!probe) return FALSE;
+        
 	double x,y,z,q,Ilg, Ilgmp, Ilgmi;
         double max_z = xsmres.AnalogVMaxOut*main_get_gapp()->xsm->Inst->VZ();
 
@@ -893,7 +928,7 @@ gint ProbeIndicator::refresh(){
                 busy = FALSE;
                 return FALSE;
         }
-        
+
         probe->set_mark_len (tip, z/max_z);
         if (fabs(z/max_z) < 0.8)
                 probe->set_mark_color (tip, -1);
@@ -901,44 +936,6 @@ gint ProbeIndicator::refresh(){
                 probe->set_mark_color (tip, CAIRO_COLOR_RED_ID);
 
 	if (main_get_gapp()->xsm->hardware){
-		//double x0,y0,z0;
-#if 0
-		if (main_get_gapp()->xsm->hardware->RTQuery ("O", z0, x0, y0)){ // get HR Offset
-			gchar *tmp = NULL;
-			tmp = g_strdup_printf ("Offset Z0: %7.3f " UTF8_ANGSTROEM
-                                               "\nXY0: %7.3f " UTF8_ANGSTROEM
-                                               ", %7.3f " UTF8_ANGSTROEM
-					       "\nXYs: %7.3f " UTF8_ANGSTROEM
-                                               ", %7.3f " UTF8_ANGSTROEM,
-					       main_get_gapp()->xsm->Inst->V2ZAng(z0),
-					       main_get_gapp()->xsm->Inst->V2XAng(x0),
-					       main_get_gapp()->xsm->Inst->V2YAng(y0),
-					       main_get_gapp()->xsm->Inst->V2XAng(x),
-					       main_get_gapp()->xsm->Inst->V2YAng(y));
-                        infoXY0->set_text (tmp);
-                        //infoXY0->queue_update (canvas);
-			g_free (tmp);
-
-			// Z0 position marker
-			rsz = WXS/2./10.;
-                        if (tip_marker_z0 == NULL){
-                                tip_marker_z0 = new cairo_item_path (2);
-                                tip_marker_z0->set_xy (0, +rsz, 0.);
-                                tip_marker_z0->set_xy (1, -rsz, 0.);
-                                tip_marker_z0->set_fill_rgba (CAIRO_COLOR_BLUE_ID, 0.8);
-                                tip_marker_z0->set_stroke_rgba (CAIRO_COLOR_BLUE_ID, 0.8);
-                                tip_marker_z0->set_line_width (get_lw (3.0));
-                        }
-                        // XY Scan&Offset position marker
-                        tip_marker_z0->set_position (WXS/2., WYS/2.*z0/z0r);
-                        tip_marker_z0->set_line_width ( WYS/2.*0.03);
-                        if (fabs(z/z0r) < 0.75)
-                                tip_marker_z0->set_stroke_rgba (CAIRO_COLOR_BLUE_ID, 0.8);
-                        else
-                                tip_marker_z0->set_stroke_rgba (CAIRO_COLOR_RED);
-                        //tip_marker_z0->queue_update (canvas); // schedule update
-		}
-#endif
 
                 // Life Paramater Info
 		main_get_gapp()->xsm->hardware->RTQuery ("f0I", x, y, q); // get f0, I -- val1,2,3=[fo,Iav,Irms]
@@ -967,14 +964,7 @@ gint ProbeIndicator::refresh(){
                         main_get_gapp()->xsm->hardware->RTQuery ("ST", SCOPE_N+1, &scope_t[0]);  // RT Query STime
                         main_get_gapp()->xsm->hardware->RTQuery ("S1", SCOPE_N+1, &scope[0][0]); // RT Query S1
                         main_get_gapp()->xsm->hardware->RTQuery ("S2", SCOPE_N+1, &scope[1][0]); // RT Query S2
-                        if (modes & SCOPE_RECORD){
-                                main_get_gapp()->xsm->hardware->RTQuery ("R3", SCOPE_N+1, &scopedec[0][0]); // RT Query S1 dec, record
-                                main_get_gapp()->xsm->hardware->RTQuery ("R4", SCOPE_N+1, &scopedec[1][0]); // RT Query S2 dec, record
-                        } else {
-                                main_get_gapp()->xsm->hardware->RTQuery ("D3", SCOPE_N+1, &scopedec[0][0]); // RT Query S1 dec
-                                main_get_gapp()->xsm->hardware->RTQuery ("D4", SCOPE_N+1, &scopedec[1][0]); // RT Query S2 dec
-                        }
-                        main_get_gapp()->xsm->hardware->RTQuery ("T",  SCOPE_N+1, NULL); // RT Query, Trigger next
+                        //main_get_gapp()->xsm->hardware->RTQuery ("T",  SCOPE_N+1, NULL); // RT Query, Trigger next
                 
                         gfloat xmax, xmin;
                         dec=SCOPE_N/128;
@@ -983,36 +973,46 @@ gint ProbeIndicator::refresh(){
 
                         // Signal1 (designed for Current (or may use dFreq) or MIX-IN-0, full BW 4096->128
                         
-                        // process KOA channels and prepare traces (horizons)
+                        // process KOA channels and prepare traces (traces)
+                        //for (int ch=0; ch<KAO_CHANNEL_NUMBER; ++ch){
                         for (int ch=0; ch<2; ++ch){
 
                                 // process auto scaleing and manual overrides
-                                xmax=xmin=scope[ch][0]*dec;
-                                xrms = 0.;
+                                xmax=xmin=scope[ch][0];
+                                xrms[ch] = 0.;
                                 gfloat xr,xc;
 
                                 // kao_scale[]: -1: -> Auto
                                 if (kao_scale[ch] > 0.)
-                                        xr = (1./kao_scale[ch])*16.; // +/-8 DIV Full Scale
+                                        xr = kao_scale[ch]*32.; // +/-8 DIV Full Scale  ( 1DIV = 2U )
                                 else
-                                        xr = scope_max[ch]-scope_min[ch]; // Auto Scale to fit
+                                        xr = (scope_max[ch]-scope_min[ch])*12; // Auto Scale to fit in 6 DIV
                                                
                                 //kao_mode[]: AC DC GND
                                 switch (kao_mode[ch]){
                                 case 0: // AC Auto
                                         kao_dc_set[ch] = xavg[ch];
                                         break;
-                                case 1:
+                                case 1: // DC
                                         if (kao_dc_set[ch] > 1e98) // auto set to avg on button
                                                 kao_dc_set[ch] = xavg[ch];
-                                        scope_max[ch]=kao_dc_set[ch]+0.5*xr; scope_min[ch]=kao_dc_set[ch]-0.5*xr;
                                         break; // DC
-                                case 2: kao_dc_set[ch] = 0.0;
-                                        break; // GND
+                                case 2: kao_dc_set[ch] = 0.0; // GND = center
+                                        break;
                                 }
 
                                 { gchar *tmp=g_strdup_printf ("%5.3f%s", kao_dc_set[ch], kao_ch_unit[ch]); gtk_button_set_label (GTK_BUTTON(kao_dc[ch]), tmp); g_free (tmp); }
 
+                                if (modes & SCOPE_INFOPLUS){
+                                        chinfoflag=1;
+                                        gchar *tmp=g_strdup_printf ("CH%d %5.3f %s/DIV", ch, xr/16., kao_ch_unit[ch]); ch_info[ch]->set_text (tmp); g_free (tmp); ch_info[ch]->queue_update (canvas);
+                                } else {
+                                        if (chinfoflag){
+                                                chinfoflag=ch==1?0:1;
+                                                ch_info[ch]->set_text (""); ch_info[ch]->queue_update (canvas);
+                                        }
+                                }
+                                
                                 xc = kao_dc_set[ch]; // Signal Center Value
                                 
                                 int i,k;
@@ -1023,7 +1023,7 @@ gint ProbeIndicator::refresh(){
                                         gfloat x=0.;
                                         for (int j=0; j<dec; ++j, ++k){
                                                 x += scope[ch][k];
-                                                xrms += scope[ch][k]*scope[ch][k];
+                                                xrms[ch] += scope[ch][k]*scope[ch][k];
                                         }
                                         xav += x;
                                         x /= dec; // native Units
@@ -1032,196 +1032,74 @@ gint ProbeIndicator::refresh(){
                                         if (x<xmin)
                                                 xmin = x;
                       
-                                        horizon[ch]->set_xy (i, i-64., -32.*(x-xc)/xr);
+                                        trace[ch]->set_xy (i, i-64., -32.*(x-xc)/xr);
                                 }
-                                xrms /= SCOPE_N;
+                                xrms[ch] /= SCOPE_N;
                                 xav /= SCOPE_N;
                                 xavg[ch] = xavg[ch]*0.9 + xav*0.1;
-                                xrms = sqrt(xrms);
+                                xrms[ch] = sqrt(xrms[ch]);
                                 
                                 // process IIR LP for ranges/limts for smooth visials
                                 scope_max[ch] = 0.9*scope_max[ch] + 0.1*xmax;
                                 scope_min[ch] = 0.9*scope_min[ch] + 0.1*xmin;
-                                Ilgmp = log10 (fabs(1000.*scope_max[ch]/dec / main_get_gapp()->xsm->Inst->nAmpere2V(1.)) + 1.0);
-                                Ilgmi = log10 (fabs(1000.*scope_min[ch]/dec / main_get_gapp()->xsm->Inst->nAmpere2V(1.)) + 1.0);
-                                double upper=25.*(scope_max[ch] > 0.? Ilgmp : -Ilgmp);
-                                double lower=25.*(scope_min[ch] > 0.? Ilgmi : -Ilgmi);
-                                probe->set_indicator_val (ipos2, 100.+upper, lower-upper);
-                                probe->set_mark_pos (m1,  upper);
-                                probe->set_mark_pos (m2,  lower);
-
-                                // Plot Signal1 (designed for Current (or may use dFreq) or MIX-IN-0, decimated DSP reat time scrolled view FULL-BW:256 @ 4096->128
-                                // slow dec signal
-                                xmax=xmin=scopedec[ch][0];
-                                xc = 0.5*(scope_max[2]+scope_min[2]);
-                                xr = scope_max[2]-scope_min[2];
-                                k = SCOPE_N-dec*128;
-                                for(i=0; i<128; ++i){
-                                        gfloat x=scopedec[ch][k];
-                                        gfloat x2=scopedec[ch][k];
-                                        for (int j=0; j<dec; ++j, ++k){
-                                                if (x <= scopedec[ch][k])
-                                                        x = scopedec[ch][k];
-                                                if (x2 >= scopedec[ch][k])
-                                                        x2 = scopedec[ch][k];
-                                                if (scopedec[ch][k] > xmax)
-                                                        xmax = scopedec[ch][k];
-                                                if (scopedec[ch][k] < xmin)
-                                                        xmin = scopedec[ch][k];
-                                        }
-                                        horizon[3]->set_xy (i, i-64., -32.*(x-xc)/xr);
-                                        horizon[4]->set_xy (i, i-64., -32.*(x2-xc)/xr);
+                                
+                                if (kao_ch_unit[ch][0]=='n' && kao_ch_unit[ch][1]=='A'){ // test for CURR signal as only one in 'nA' 
+                                        Ilgmp = log10 (fabs(1000.*scope_max[ch] / main_get_gapp()->xsm->Inst->nAmpere2V(1.)) + 1.0);
+                                        Ilgmi = log10 (fabs(1000.*scope_min[ch] / main_get_gapp()->xsm->Inst->nAmpere2V(1.)) + 1.0);
+                                        double upper=25.*(scope_max[ch] > 0.? Ilgmp : -Ilgmp);
+                                        double lower=25.*(scope_min[ch] > 0.? Ilgmi : -Ilgmi);
+                                        probe->set_indicator_val (ipos2, 100.+upper, lower-upper);
+                                        probe->set_mark_pos (m1,  upper);
+                                        probe->set_mark_pos (m2,  lower);
                                 }
-                                scope_max[2] = 0.7*scope_max[2] + 0.3*xmax;
-                                scope_min[2] = 0.7*scope_min[2] + 0.3*xmin;
 
-                                // decimated fs: 150000 Hz / 256 = 585.9375 Hz
+                                run_fft (SCOPE_N, &scope[ch][0], &scope_psd[ch][0], 1e-7, 10.,0.1); // on full BW signal1
 
-                                if (ch == 0){ // Calculate FFT
-                                        if (modes & SCOPE_FTFAST)
-                                                run_fft (SCOPE_N, &scope[ch][0], &scope[2][0], 1e-7, 10.,0.1); // on full BW signal1
-                                        else
-                                                run_fft (SCOPE_N, &scopedec[ch][0], &scope[2][0], 1e-7, 10.,0.1); // on decimated signal1
+                                gint right=SCOPE_N/2;
+                                if (modes & SCOPE_ZOOM)
+                                        right = SCOPE_N/8;
 
-                                        gint right=SCOPE_N/2;
-                                        if (modes & SCOPE_ZOOM)
-                                                right = SCOPE_N/8;
-
-                                        // Plot FFT
-                                        for(k=i=0; i<128; ++i){
-                                                gfloat x=100.;
-                                                gint next=(int)(log(i+1.0)/log(128.0)*right);
-                                                for (; k<=next && k<right; ++k){
-                                                        if (modes & SCOPE_DBG){
-                                                                x = scope[2][k];
-                                                                continue;
-                                                        }
-                                                        //g_print ("%d %g\n",k,scope[2][k]);
-                                                        if (x > scope[2][k]) // peak decimated 0 ... -NN db
-                                                                x = scope[2][k];
+                                // Plot FFT (PSD) on dB
+                                for(k=i=0; i<128; ++i){
+                                        gfloat x=100.;
+                                        gint next=(int)(log(i+1.0)/log(128.0)*right);
+                                        for (; k<=next && k<right; ++k){
+                                                if (modes & SCOPE_DBG){
+                                                        x = scope_psd[ch][k];
+                                                        continue;
                                                 }
-                                                horizon[2]->set_xy (i, i-64., -32.*x/96.); // x: 0..-96db
+                                                //g_print ("%d %g\n",k,scope_psd[ch][k]);
+                                                if (x > scope_psd[ch][k]) // peak decimated 0 ... -NN db
+                                                        x = scope_psd[ch][k];
                                         }
+                                        trace_psd[ch]->set_xy (i, i-64., -32.*x/96.); // x: 0..-96db
                                 }
                         }
-#if 0
-                        // Plot Signal2 (designed for Z (Ang) ** (or may use dFreq) or MIX-IN-0, decimated DSP reat time scrolled view FULL-BW and :256 @ 4096->128
-                        xmax=xmin = main_get_gapp()->xsm->Inst->V2ZAng (scope[1][0]); // in Ang
-                        xc = xavg[1]; //0.5*(scope_max[1]+scope_min[1]); // center
-                        if (kao_scale[1]>0.)
-                                xr = (1./kao_scale[1])*16.; // +/-8 DIV full scale
-                        else
-                                xr = scope_max[1]-scope_min[1]; // range
-
-                        if (kao_dc_set[1] == 0.0)
-                                kao_dc_set[1] = xc;
-                        
-                        switch (kao_mode[1]){
-                        case 0: // AC Auto
-                                { gchar *tmp=g_strdup_printf ("%5.3f", xc); gtk_button_set_label (GTK_BUTTON(kao_dc[1]), tmp); g_free (tmp); }
-                                break;
-                        case 1: scope_max[1]=kao_dc_set[1]+0.5*xr; scope_min[1]=kao_dc_set[1]-0.5*xr;
-                                { gchar *tmp=g_strdup_printf ("%5.3f", kao_dc_set[1]); gtk_button_set_label (GTK_BUTTON(kao_dc[1]), tmp); g_free (tmp); }
-                                xc = kao_dc_set[1];
-                                break; // DC
-                        case 2: kao_dc_set[1] = 0.0;
-                                gtk_button_set_label (GTK_BUTTON(kao_dc[1]), "0.0");
-                                break; // GND
-                        }
-
-                        xav = 0.0;
-                        for(i=k=0; i<128; ++i){
-                                gfloat x=0.;
-                                gfloat xdec=0.;
-                                for (int j=0; j<dec; ++j, ++k)
-                                        x += scope[1][k];
-                                xav += x;
-                                x /= dec;
-                                x = main_get_gapp()->xsm->Inst->V2ZAng(x); // Z in Ang
-
-                                if (i <= 64) // shift so center is current (where the tip is), lhs = now to -T1/2, rhs: older (-T1/2..-T)
-                                        xdec = scopedec[1][(i+64)*SCOPE_VIEW_DEC-1]; // simple decimated data stream, in V
-                                else
-                                        xdec = scopedec[1][(i-64)*SCOPE_VIEW_DEC-1]; // simple decimated data stream, in V
-                        
-                                if (x>xmax)
-                                        xmax = x;
-                                if (x<xmin)
-                                        xmin = x;
-
-                                horizon[1]->set_xy (i, i-64., 32.*(x-xc)/xr); // autorange
-                                //horizon[1]->set_xy (i, i-64., 64.*(x-xc)/16.); // xr is too jumpy ... fixed 2A/div (+/-16A on grid)
-                                horizon[5]->set_xy (i, i-64, 100.*xdec/max_z); // decimated rolling signal, full scale (max z range matching tip marker)
-                                //g_print ("decZ %d %g  fBW: %g   xc: %g xdec: %g V, max_z: %g V\n",i,
-                                //         main_get_gapp()->xsm->Inst->V2ZAng(scopedec[1][k]), main_get_gapp()->xsm->Inst->V2ZAng(scope[1][k]), xc, xdec, max_z);
-
-                        }
-                        xav /= SCOPE_N;
-                        xavg[1] = xavg[1]*0.9 + xav*0.1;
-                        
-                        // update smoothly
-                        scope_max[1] = 0.9*scope_max[1] + 0.1*xmax;
-                        scope_min[1] = 0.9*scope_min[1] + 0.1*xmin;
-#endif
                         scopeflag=1;
                 } else {
                         if (scopeflag){
                                 for(int i=0; i<128; ++i)
-                                        for(int k=0; k<=5; ++k)
-                                                horizon[k]->set_xy (i, i-64., 0.);
+                                        for(int ch=0; ch<KAO_CHANNEL_NUMBER; ++ch){
+                                                trace[ch]->set_xy (i, i-64., 0.);
+                                                trace_psd[ch]->set_xy (i, i-64., 0.);
+                                        }
                                 scopeflag=0;
                         }
                 }
                 if (modes & SCOPE_INFO){
                         gchar *tmp = NULL;
-                        double yy = 0.;
-                        if (modes & SCOPE_ON){
-                                y  = xavg[0]/main_get_gapp()->xsm->Inst->nAmpere2V(1.);
-                                yy = xrms/main_get_gapp()->xsm->Inst->nAmpere2V(1.);
-                        }
-                        if (modes & SCOPE_INFOPLUS){
-                                if (fabs(y) < 0.00025) // I display in atto amp
-                                        tmp = g_strdup_printf ("I@%s: %6.3f [%.2f] aA\ndF: %8.2f Hz\nZ: %8.4f " UTF8_ANGSTROEM" \nI: %.2f : %.2f pA\nZ: %.2f : %.2f " UTF8_ANGSTROEM,
-                                                               main_get_gapp()->xsm->Inst->IVC_Ampere2Volt_Setting(),
-                                                               y*1e6, yy*1e6, x, main_get_gapp()->xsm->Inst->V2ZAng(z),
-                                                               scope_min[0]/dec/main_get_gapp()->xsm->Inst->nAmpere2V(1.)*1000., scope_max[0]/dec/main_get_gapp()->xsm->Inst->nAmpere2V(1.)*1000.,
-                                                               scope_min[1], scope_max[1]
-                                                               );
-                                else if (fabs(y) < 0.25)
-                                        tmp = g_strdup_printf ("I@%s: %8.1f [%.2f] pA\ndF: %8.2f Hz\nZ: %8.4f" UTF8_ANGSTROEM "\nI: %.2f : %.2f pA\nZ: %.2f : %.2f " UTF8_ANGSTROEM,
-                                                               main_get_gapp()->xsm->Inst->IVC_Ampere2Volt_Setting(),
-                                                               y*1e3, yy*1e3, x, main_get_gapp()->xsm->Inst->V2ZAng(z),
-                                                               scope_min[0]/dec/main_get_gapp()->xsm->Inst->nAmpere2V(1.)*1000., scope_max[0]/dec/main_get_gapp()->xsm->Inst->nAmpere2V(1.)*1000.,
-                                                               scope_min[1], scope_max[1]
-                                                               );
-                                else
-                                        tmp = g_strdup_printf ("I@%s: %8.1f [%.2f] nA\ndF: %8.2f Hz\nZ: %8.4f" UTF8_ANGSTROEM "\nI: %.2f : %.2f nA\nZ: %.2f : %.2f " UTF8_ANGSTROEM,
-                                                               main_get_gapp()->xsm->Inst->IVC_Ampere2Volt_Setting(),
-                                                               y, yy, x, main_get_gapp()->xsm->Inst->V2ZAng(z),
-                                                               scope_min[0]/dec/main_get_gapp()->xsm->Inst->nAmpere2V(1.), scope_max[0]/dec/main_get_gapp()->xsm->Inst->nAmpere2V(1.),
-                                                               scope_min[1], scope_max[1]
-                                                               );
-                                //tmp = g_strdup_printf ("I: %8.4f nA\ndF: %8.1f Hz\nZ: %8.4f" UTF8_ANGSTROEM,
-                                //                               y, x); //  "\n%g:%g", main_get_gapp()->xsm->Inst->V2ZAng(z), scope_min[0]/dec,scope_max[0]/dec);
-
-                                // query and print to terminal DSP task list
-                                double a,b,c;
-                                main_get_gapp()->xsm->hardware->RTQuery ("S", a, b, c); // get DST RT statemachine status info, with termial process list dump option on
-
-                        } else {
-                                if (fabs(y) < 0.00025)
-                                        tmp = g_strdup_printf ("I@%s: %8.1f aA\ndF: %8.2f Hz\nZ: %8.4f" UTF8_ANGSTROEM,
-                                                               main_get_gapp()->xsm->Inst->IVC_Ampere2Volt_Setting(),
-                                                               y*1e6, x, main_get_gapp()->xsm->Inst->V2ZAng(z));
-                                else if (fabs(y) < 0.25)
-                                        tmp = g_strdup_printf ("I@%s: %8.1f pA\ndF: %8.2f Hz\nZ: %8.4f" UTF8_ANGSTROEM,
-                                                               main_get_gapp()->xsm->Inst->IVC_Ampere2Volt_Setting(),
-                                                               y*1e3, x, main_get_gapp()->xsm->Inst->V2ZAng(z));
-                                else
-                                        tmp = g_strdup_printf ("I@%s: %8.4f nA\ndF: %8.2f Hz\nZ: %8.4f" UTF8_ANGSTROEM,
-                                                               main_get_gapp()->xsm->Inst->IVC_Ampere2Volt_Setting(),
-                                                               y, x, main_get_gapp()->xsm->Inst->V2ZAng(z));
-                        }
+                        if (fabs(y) < 0.00025)
+                                tmp = g_strdup_printf ("I@%s: %8.1f aA\ndF: %8.2f Hz\nZ: %8.4f" UTF8_ANGSTROEM,
+                                                       main_get_gapp()->xsm->Inst->IVC_Ampere2Volt_Setting(),
+                                                       y*1e6, x, main_get_gapp()->xsm->Inst->V2ZAng(z));
+                        else if (fabs(y) < 0.25)
+                                tmp = g_strdup_printf ("I@%s: %8.1f pA\ndF: %8.2f Hz\nZ: %8.4f" UTF8_ANGSTROEM,
+                                                       main_get_gapp()->xsm->Inst->IVC_Ampere2Volt_Setting(),
+                                                       y*1e3, x, main_get_gapp()->xsm->Inst->V2ZAng(z));
+                        else
+                                tmp = g_strdup_printf ("I@%s: %8.4f nA\ndF: %8.2f Hz\nZ: %8.4f" UTF8_ANGSTROEM,
+                                                       main_get_gapp()->xsm->Inst->IVC_Ampere2Volt_Setting(),
+                                                       y, x, main_get_gapp()->xsm->Inst->V2ZAng(z));
                         info->set_text (tmp);
                         g_free (tmp);
                         info->queue_update (canvas);
@@ -1239,7 +1117,7 @@ gint ProbeIndicator::refresh(){
         
         busy = FALSE;
 
-	if (timer_id)
+        if (timer_id)
                 return TRUE; // keep repeating
         else
                 return FALSE; // cancel g_timeout calls
