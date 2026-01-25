@@ -400,14 +400,19 @@ void ProbeIndicator::KAO_skl_callback (GtkWidget *widget, gpointer user_data) {
         int ch= GPOINTER_TO_INT (g_object_get_data(G_OBJECT (widget), "SN"));
         int s = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
         if (s==0)
-                pv->kao_scale[ch] = -1; // Auto
+                pv->kao_scale[ch] = 0.; // Auto
         else if (ch < 4){
                 pv->kao_scale_M[ch] = 1./(1e-6*pow (10., (double)s-1));
                 pv->kao_scale[ch] = pv->kao_scale_M[ch] * pv->kao_scale_m[ch];
         } else {
                 ch -= 10;
                 if (ch < 4 && ch >= 0){
-                        pv->kao_scale_m[ch] = s == 0? 1. : s == 1? 2. : 5.;
+                        if (s < 3)
+                                pv->kao_scale_m[ch] = s == 0? 1. : s == 1? 2. : 5.;
+                        else{
+                                s-= 3;
+                                pv->kao_scale_m[ch] = s == 0? -1. : s == 1? -2. : -5.;
+                        }
                         pv->kao_scale[ch] = pv->kao_scale_M[ch] / pv->kao_scale_m[ch];
                 }
         }
@@ -718,7 +723,7 @@ ProbeIndicator::ProbeIndicator (Gxsm4app *app):AppBase(app){
                 gtk_grid_attach (GTK_GRID (v_grid), CMsklcb, col[ch],kao_row, 2,1);
                 if (ch >= 2) kao_ch34_widget_list = g_slist_prepend( kao_ch34_widget_list, CMsklcb);
 
-                static gchar *CMsklm[] = { "x1", "x2", "x5", NULL };
+                static gchar *CMsklm[] = { "x1", "x2", "x5", "x-1", "x-2", "x-5", NULL };
                 CMsklcb = gtk_combo_box_text_new (); 
                 g_object_set_data(G_OBJECT (CMsklcb), "SN", GINT_TO_POINTER (10+ch)); 
                 for (int j=0; CMsklm[j]; ++j){ gchar *id = g_strdup_printf ("%d", j);  gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (CMsklcb), id, CMsklm[j]); g_free (id); }
@@ -1100,8 +1105,8 @@ gint ProbeIndicator::refresh(){
                                 xrms[ch] = 0.;
                                 gfloat xr,xc;
 
-                                // kao_scale[]: -1: -> Auto
-                                if (kao_scale[ch] > 0.)
+                                // kao_scale[]: 0.: -> Auto
+                                if (kao_scale[ch] != 0.)
                                         xr = kao_scale[ch]*10.; // +/-8 DIV Full Scale  10px grid spacing
                                 else
                                         xr = (scope_max[ch]-scope_min[ch])*5.*0.5; // Auto Scale to fit in +/-2 DIV
@@ -1145,7 +1150,7 @@ gint ProbeIndicator::refresh(){
                                                 const gchar *mV = "mV";
                                                 //if (!strcmp(*kao_ch_unit[ch],nA) || !strcmp(*kao_ch_unit[ch],mV) || !strcmp(*kao_ch_unit[ch],AA)){ // do not do auto prefixing
                                                 if (kao_ch_unit[ch][0] == nA[0] || kao_ch_unit[ch][0] == mV[0] || kao_ch_unit[ch][0] == AA[0]){ // faster trick does. do not do auto prefixing
-                                                        gchar *tmp=g_strdup_printf ("CH%d %5.3f %s/DIV", ch+1, s, kao_ch_unit[ch]); ch_info[ch]->set_text (tmp); g_free (tmp); ch_info[ch]->queue_update (canvas);
+                                                        gchar *tmp=g_strdup_printf ("CH%d %.4g %s/DIV", ch+1, s, kao_ch_unit[ch]); ch_info[ch]->set_text (tmp); g_free (tmp); ch_info[ch]->queue_update (canvas);
                                                 } else {
                                                         int M=6;
                                                         //                                                            6                  10
