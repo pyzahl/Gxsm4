@@ -1424,7 +1424,7 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, int n, gfloat *data){
         static double scale[4] = { 1.0, 1.0, 1.0, 1.0 };
         
         // Request History Vector n: "Hnn"
-        if ( property[0] == 'H'){
+        if (property[0] == 'H'){
                 int pos = atoi(&property[1]);
                 if (pos < 0 || pos >= 20) pos=0;
                 get_history_vector_f (pos, data, n);
@@ -1437,11 +1437,11 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, int n, gfloat *data){
         // Request signal[3] = Vector n: from Channel "C4xxxx"
         //                           0  1          4          7          10  11  12  13  14  15  16   17    18    19
         // xxxx is vector component [T  X xma xmi  Y yma ymi  Z zma zmi  U   IN1 IN2 IN3 IN4 AMP EXEC DFREQ PHASE CURR ] 0 ... 19 are valid
-        if ( property[0] == 'C'){
+        if (property[0] == 'C'){
                 static gchar *VCmap[] = { "T", "X", "xma", "xmi",  "Y", "yma", "ymi",  "Z", "zma", "zmi",  "BIAS",
                                           "IN1", "IN2", "IN3", "IN4", "AMP", "EXEC", "DFREQ", "PHASE", "CURR", NULL };
-                static gchar *Umap[]  = { " s\0\0", " Å\0\0", " Å\0\0", " Å\0\0", " Å\0\0", " Å\0\0", " Å\0\0", " Å\0\0", " Å\0\0", " Å\0\0",  " V\0\0",
-                                          " V\0\0", " V\0\0", " V\0\0", " V\0\0", "mV\0\0", "mV\0\0", "Hz\0\0", "° \0\0", "nA\0\0", NULL };
+                static gchar *Umap[]   = { "s\0\0\0", "Å\0\0\0", "Å\0\0\0", "Å\0\0\0", "Å\0\0\0", "Å\0\0\0", "Å\0\0\0", "Å\0\0\0", "Å\0\0\0", "Å\0\0\0",  "V\0\0\0", // NOTE UTF Å is 2 chars
+                                           "V\0\0\0", "V\0\0\0", "V\0\0\0", "V\0\0\0",  "mV\0\0",  "mV\0\0",  "Hz\0\0", "°\0\0\0",  "nA\0\0", NULL };
                 int pos=0;
                 for (pos=0; VCmap[pos]; ++pos) if (!strcmp(&property[2], VCmap[pos])) break;
                 if (pos < 0 || pos >= 20) pos=19; // CURR as fallback
@@ -1473,7 +1473,7 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, int n, gfloat *data){
         }
         
         // Request signal[0] = Vector n: "S1", ... "S4", "ST"
-        if ( property[0] == 'S'){
+        if (property[0] == 'S'){
                 int ch = -1;
                 // signal[0]
                 switch (property[1]){
@@ -1493,6 +1493,9 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, int n, gfloat *data){
                 }
         }
 
+        if (property[0] == 'L')
+                return (gint)get_history_len ();
+        
         return 0;
 }
 

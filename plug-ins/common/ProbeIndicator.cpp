@@ -329,6 +329,58 @@ static gint ProbeIndicator_tip_refresh_callback (ProbeIndicator *pv){
 	return FALSE;
 }
 
+// set KAO zoom
+void ProbeIndicator::KAO_zoom_callback (GtkWidget *widget, gpointer user_data) {
+        ProbeIndicator *pv = (ProbeIndicator *) user_data; 
+        gchar *tmp = g_strdup_printf ("zoom %s %d",
+                                      gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(widget)),
+                                      gtk_combo_box_get_active(GTK_COMBO_BOX(widget))
+                                      );
+        double KAO_zf[] = { 1, 1.27, 1.5 };
+        if (pv->probe)
+                pv->probe->set_kao_zoom (KAO_zf[gtk_combo_box_get_active(GTK_COMBO_BOX(widget))]);
+        g_message ("ProbeIndicator::KAO_zoom_callback: %s", tmp);
+        g_free (tmp);
+}
+
+// set #CH
+void ProbeIndicator::KAO_kaoch_callback (GtkWidget *widget, gpointer user_data) {
+        ProbeIndicator *pv = (ProbeIndicator *) user_data; 
+        gchar *tmp = g_strdup_printf ("kaoch %s %d",
+                                      gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(widget)),
+                                      gtk_combo_box_get_active(GTK_COMBO_BOX(widget))
+                                      );
+        
+        if (gtk_combo_box_get_active(GTK_COMBO_BOX(widget)) == 0)
+                g_slist_foreach (pv->kao_ch34_widget_list, (GFunc) App::hide_w, NULL), pv->kao_num_ch = 2;
+        else
+                g_slist_foreach (pv->kao_ch34_widget_list, (GFunc) App::show_w, NULL), pv->kao_num_ch = 4;
+
+        g_message ("ProbeIndicator::KAO_zoom_callback: %s", tmp);
+        g_free (tmp);
+}
+
+// set TDIV i.e. # samples from history, power of two
+void ProbeIndicator::KAO_tdiv_callback (GtkWidget *widget, gpointer user_data) {
+        ProbeIndicator *pv = (ProbeIndicator *) user_data; 
+        gchar *tmp = g_strdup_printf ("tdiv %s %d",
+                                      gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(widget)),
+                                      gtk_combo_box_get_active(GTK_COMBO_BOX(widget))
+                                      );
+        //int KAO_hlen[] = { 128, 256, 512, 1024, 2048, 4096, 8192, 16384 };
+        int KAO_hlen[] = { 256, 512, 1024, 2048, 4096, 8192, 16384 };
+        int hlen=0;
+        if (main_get_gapp()->xsm->hardware){
+                hlen = main_get_gapp()->xsm->hardware->RTQuery ("L", 0, NULL); // query actual historty len available
+                if (hlen >= KAO_hlen[gtk_combo_box_get_active(GTK_COMBO_BOX(widget))])
+                        pv->kao_samples = KAO_hlen[gtk_combo_box_get_active(GTK_COMBO_BOX(widget))];
+                else
+                        g_warning ("ProbeIndicator::KAO_tdiv_callback current history len too short.");
+        }
+        g_message ("ProbeIndicator::KAO_tdiv_callback: %s => HLN is %d, selected %d", tmp, hlen, pv->kao_samples);
+        g_free (tmp);
+}
+
 // set CH mode
 void ProbeIndicator::KAO_mode_callback (GtkWidget *widget, gpointer user_data) {
         ProbeIndicator *pv = (ProbeIndicator *) user_data; 
@@ -349,12 +401,20 @@ void ProbeIndicator::KAO_skl_callback (GtkWidget *widget, gpointer user_data) {
         int s = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
         if (s==0)
                 pv->kao_scale[ch] = -1; // Auto
-        else
-                pv->kao_scale[ch] = 1./(1e-6*pow (10., (double)s-1));
-        gchar *tmp = g_strdup_printf ("skl%d %s %d x %g", ch+1, 
+        else if (ch < 4){
+                pv->kao_scale_M[ch] = 1./(1e-6*pow (10., (double)s-1));
+                pv->kao_scale[ch] = pv->kao_scale_M[ch] * pv->kao_scale_m[ch];
+        } else {
+                ch -= 10;
+                if (ch < 4 && ch >= 0){
+                        pv->kao_scale_m[ch] = s == 0? 1. : s == 1? 2. : 5.;
+                        pv->kao_scale[ch] = pv->kao_scale_M[ch] / pv->kao_scale_m[ch];
+                }
+        }
+        gchar *tmp = g_strdup_printf ("skl%d %s %d x (%g x %g) = %g", ch+1, 
                                       gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(widget)),
                                       s,
-                                      pv->kao_scale[ch]
+                                      pv->kao_scale_M[ch], pv->kao_scale_m[ch], pv->kao_scale[ch]
                                       );
         g_message ("ProbeIndicator::KAO_skl_callback: %s", tmp);
         g_free (tmp);
@@ -426,6 +486,15 @@ void ProbeIndicator::scope_ftfast_callback (GtkWidget *widget, gpointer user_dat
                 pv->modes &= ~SCOPE_FTFAST;
 }
 
+void ProbeIndicator::scope_fft_callback (GtkWidget *widget, gpointer user_data) {
+        ProbeIndicator *pv = (ProbeIndicator *) user_data; 
+        //g_print ("ProbeIndicator::zoom_scope_callback TB: %d\n", gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget)));
+        if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget)))
+                pv->modes = (pv->modes & ~SCOPE_FFT) | SCOPE_FFT;
+        else
+                pv->modes &= ~SCOPE_FFT;
+}
+
 void ProbeIndicator::record_callback (GtkWidget *widget, gpointer user_data) {
         ProbeIndicator *pv = (ProbeIndicator *) user_data; 
         //g_print ("ProbeIndicator:record_:scope_callback TB: %d\n", gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget)));
@@ -480,7 +549,7 @@ ProbeIndicator::ProbeIndicator (Gxsm4app *app):AppBase(app){
 	timer_id = 0;
 	probe = NULL;
         modes = SCOPE_NONE;
-
+        
 	AppWindowInit (N_("HUD Probe Indicator"));
 
 	canvas = gtk_drawing_area_new(); // make a drawing area
@@ -511,49 +580,40 @@ ProbeIndicator::ProbeIndicator (Gxsm4app *app):AppBase(app){
 	gtk_grid_attach (GTK_GRID (v_grid), tb, 1,1, 1,1);
 
         tb = gtk_toggle_button_new ();
-        gtk_button_set_icon_name (GTK_BUTTON (tb), "system-search-symbolic");
+        gtk_button_set_icon_name (GTK_BUTTON (tb), "emblem-music-symbolic");
         gtk_widget_show (tb);
         gtk_widget_set_name (tb, "probe-indicator-button"); // name used by CSS to apply custom color scheme
-	gtk_widget_set_tooltip_text (tb, N_("Zoom Scope"));
+	gtk_widget_set_tooltip_text (tb, N_("Calculate FFT. log (dB) vs. log (freq) plot."));
         g_signal_connect (G_OBJECT (tb), "toggled",
-                          G_CALLBACK (ProbeIndicator::zoom_scope_callback), this);
+                          G_CALLBACK (ProbeIndicator::scope_fft_callback), this);
 	gtk_grid_attach (GTK_GRID (v_grid), tb, 1,2, 1,1);
 
         tb = gtk_toggle_button_new ();
-        gtk_button_set_icon_name (GTK_BUTTON (tb), "edit-delete-symbolic");
+        gtk_button_set_icon_name (GTK_BUTTON (tb), "system-search-symbolic");
         gtk_widget_show (tb);
         gtk_widget_set_name (tb, "probe-indicator-button"); // name used by CSS to apply custom color scheme
-	gtk_widget_set_tooltip_text (tb, N_("Full BW FFT/decimated 256 FFT"));
+	gtk_widget_set_tooltip_text (tb, N_("Zoom into FFT low freq"));
+        g_signal_connect (G_OBJECT (tb), "toggled",
+                          G_CALLBACK (ProbeIndicator::zoom_scope_callback), this);
+	gtk_grid_attach (GTK_GRID (v_grid), tb, 1,3, 1,1);
+
+        tb = gtk_toggle_button_new ();
+        gtk_button_set_icon_name (GTK_BUTTON (tb), "starred-symbolic");
+        gtk_widget_show (tb);
+        gtk_widget_set_name (tb, "probe-indicator-button"); // name used by CSS to apply custom color scheme
+	gtk_widget_set_tooltip_text (tb, N_("FFT peak detect"));
         g_signal_connect (G_OBJECT (tb), "toggled",
                           G_CALLBACK (ProbeIndicator::scope_ftfast_callback), this);
-	gtk_grid_attach (GTK_GRID (v_grid), tb, 1,3, 1,1);
-        
+	gtk_grid_attach (GTK_GRID (v_grid), tb, 1,4, 1,1);
+
         tb = gtk_toggle_button_new ();
         gtk_button_set_icon_name (GTK_BUTTON (tb), "media-record-symbolic");
         gtk_widget_show (tb);
         gtk_widget_set_name (tb, "probe-indicator-button"); // name used by CSS to apply custom color scheme
-	gtk_widget_set_tooltip_text (tb, N_("Enable Record Signal 1 and 2 Streams, decimated 256, realt time"));
+	gtk_widget_set_tooltip_text (tb, N_("TEST MODE *** Enable Recording"));
         g_signal_connect (G_OBJECT (tb), "toggled",
                           G_CALLBACK (ProbeIndicator::record_callback), this);
-	gtk_grid_attach (GTK_GRID (v_grid), tb, 1,4, 1,1);
-
-        tb = gtk_toggle_button_new ();
-        gtk_button_set_icon_name (GTK_BUTTON (tb), "preferences-system-details-symbolic");
-        gtk_widget_show (tb);
-        gtk_widget_set_name (tb, "probe-indicator-button"); // name used by CSS to apply custom color scheme
-	gtk_widget_set_tooltip_text (tb, N_("Enable Basic Info"));
-        g_signal_connect (G_OBJECT (tb), "toggled",
-                          G_CALLBACK (ProbeIndicator::info_callback), this);
-	gtk_grid_attach (GTK_GRID (v_grid), tb, 2,1, 1,1);
-
-        tb = gtk_toggle_button_new ();
-        gtk_button_set_icon_name (GTK_BUTTON (tb), "list-add-symbolic");
-        gtk_widget_show (tb);
-        gtk_widget_set_name (tb, "probe-indicator-button"); // name used by CSS to apply custom color scheme
-	gtk_widget_set_tooltip_text (tb, N_("More details for Info"));
-        g_signal_connect (G_OBJECT (tb), "toggled",
-                          G_CALLBACK (ProbeIndicator::more_info_callback), this);
-	gtk_grid_attach (GTK_GRID (v_grid), tb, 2,2, 1,1);
+	gtk_grid_attach (GTK_GRID (v_grid), tb, 1,5, 1,1);
 
         tb = gtk_toggle_button_new ();
         gtk_button_set_icon_name (GTK_BUTTON (tb), "media-playback-pause-symbolic");
@@ -562,7 +622,28 @@ ProbeIndicator::ProbeIndicator (Gxsm4app *app):AppBase(app){
 	gtk_widget_set_tooltip_text (tb, N_("Pause all udpates, scope, recordings"));
         g_signal_connect (G_OBJECT (tb), "toggled",
                           G_CALLBACK (ProbeIndicator::pause_callback), this);
-	gtk_grid_attach (GTK_GRID (v_grid), tb, 3,1, 1,1);
+	gtk_grid_attach (GTK_GRID (v_grid), tb, 1,6, 1,1);
+
+        // ==== 2nd
+        tb = gtk_toggle_button_new ();
+        gtk_button_set_icon_name (GTK_BUTTON (tb), "preferences-system-details-symbolic");
+        gtk_widget_show (tb);
+        gtk_widget_set_name (tb, "probe-indicator-button"); // name used by CSS to apply custom color scheme
+	gtk_widget_set_tooltip_text (tb, N_("Enable SPM Info"));
+        g_signal_connect (G_OBJECT (tb), "toggled",
+                          G_CALLBACK (ProbeIndicator::info_callback), this);
+	gtk_grid_attach (GTK_GRID (v_grid), tb, 2,1, 2,1);
+
+        tb = gtk_toggle_button_new ();
+        gtk_button_set_icon_name (GTK_BUTTON (tb), "list-add-symbolic");
+        gtk_widget_show (tb);
+        gtk_widget_set_name (tb, "probe-indicator-button"); // name used by CSS to apply custom color scheme
+	gtk_widget_set_tooltip_text (tb, N_("Channel scale/DIV info"));
+        g_signal_connect (G_OBJECT (tb), "toggled",
+                          G_CALLBACK (ProbeIndicator::more_info_callback), this);
+	gtk_grid_attach (GTK_GRID (v_grid), tb, 2,2, 2,1);
+
+        
 #if 0
         tb = gtk_toggle_button_new ();
         gtk_button_set_icon_name (GTK_BUTTON (tb), "window-close-symbolic");
@@ -585,108 +666,93 @@ ProbeIndicator::ProbeIndicator (Gxsm4app *app):AppBase(app){
 
         // Mini KAO Controls
         // ********************************************************************************
-#if 0
-        // KAO Zoom
-        static gchar *CMzoom[] = { "1", "1.25", "1.5", NULL };
-        GtkWidget *CMzoomcb = gtk_combo_box_text_new (); 
-        for (int j=0; CMzoom[j]; ++j){ gchar *id = g_strdup_printf ("%d", j);  gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (CMzoomcb), id, CMzoom[j]); g_free (id); }
-        gtk_widget_show (CMzoomcb);
-        g_signal_connect (G_OBJECT (CMzoomcb), "changed",
-                          G_CALLBACK (ProbeIndicator::KAO_zoom_callback), this);
-        gtk_combo_box_set_active (GTK_COMBO_BOX (CMzoomcb), 1); 
-	gtk_grid_attach (GTK_GRID (v_grid), CMzoomcb, 19,1, 2,1);
-#endif
 
-        // KAO time/div
-        kao_tdiv = gtk_button_new_with_label ("T/DIV");
-        gtk_widget_show (kao_tdiv);
-        //g_signal_connect (G_OBJECT (kao_tdiv), "clicked",
-        //                  G_CALLBACK (ProbeIndicator::KAO_tdiv_set_callback), this);
-	gtk_grid_attach (GTK_GRID (v_grid), kao_tdiv, 19,1, 2,1);
+        // KAO time/div -- approx, exact time/DIV is measured and displayed
+        //static gchar *KAO_TDIV[] = { "~10ms/DIV [128]", "~25ms/DIV [256]", "~50ms/DIV [512]", "~100ms/DIV [1024]", "~200ms/DIV [2048]", "~0.5s/DIV [4096]", "~1s/DIV [8192]", "~2s/DIV [16384]", NULL };
+        static gchar *KAO_TDIV[] = { "~25ms/DIV [256]", "~50ms/DIV [512]", "~100ms/DIV [1024]", "~200ms/DIV [2048]", "~0.5s/DIV [4096]", "~1s/DIV [8192]", "~2s/DIV [16384]", NULL };
+        GtkWidget *kao_tdivcb = gtk_combo_box_text_new (); 
+        for (int j=0; KAO_TDIV[j]; ++j){ gchar *id = g_strdup_printf ("%d", j);  gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (kao_tdivcb), id, KAO_TDIV[j]); g_free (id); }
+        gtk_widget_show (kao_tdivcb);
+        g_signal_connect (G_OBJECT (kao_tdivcb), "changed",
+                          G_CALLBACK (ProbeIndicator::KAO_tdiv_callback), this);
+        gtk_combo_box_set_active (GTK_COMBO_BOX (kao_tdivcb), 5); 
+	gtk_grid_attach (GTK_GRID (v_grid), kao_tdivcb, 16,1, 5,1);
+
+        kao_ch34_widget_list = NULL;
         
-        int kao_row=18; // start CH controls at this grid row
-        GtkWidget *l;
-	gtk_grid_attach (GTK_GRID (v_grid), l=gtk_label_new ("CH1"), 1,  17, 2,1);
-        gtk_widget_set_name (l, "kao-ch1-label"); // name used by CSS to apply custom color scheme
-	gtk_grid_attach (GTK_GRID (v_grid), l=gtk_label_new ("CH2"), 19, 17, 2,1);
-        gtk_widget_set_name (l, "kao-ch2-label"); // name used by CSS to apply custom color scheme
-
         // CH Controls ****************************************
-        // CH Mode
-        static gchar *CHmod[] = { "AC", "DC", "GND", NULL };
-        GtkWidget *CHmodcb = gtk_combo_box_text_new (); 
-        g_object_set_data(G_OBJECT (CHmodcb), "SN", GINT_TO_POINTER (0)); 
-        for (int j=0; CHmod[j]; ++j){ gchar *id = g_strdup_printf ("%d", j);  gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (CHmodcb), id, CHmod[j]); g_free (id); }
-        gtk_combo_box_set_active (GTK_COMBO_BOX (CHmodcb), 0); 
-        gtk_widget_show (CHmodcb);
-        g_signal_connect (G_OBJECT (CHmodcb), "changed",
-                          G_CALLBACK (ProbeIndicator::KAO_mode_callback), this);
-	gtk_grid_attach (GTK_GRID (v_grid), CHmodcb, 1,kao_row, 2,1);
+        for (int ch=0; ch<4; ++ch){
+                int kao_row=18; // start CH controls at this grid row
+                static int col[] = { 1,17,5,13 };
 
-        CHmodcb = gtk_combo_box_text_new (); 
-        g_object_set_data(G_OBJECT (CHmodcb), "SN", GINT_TO_POINTER (1)); 
-        for (int j=0; CHmod[j]; ++j){ gchar *id = g_strdup_printf ("%d", j);  gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (CHmodcb), id, CHmod[j]); g_free (id); }
-        gtk_combo_box_set_active (GTK_COMBO_BOX (CHmodcb), 0); 
-        gtk_widget_show (CHmodcb);
-        g_signal_connect (G_OBJECT (CHmodcb), "changed",
-                          G_CALLBACK (ProbeIndicator::KAO_mode_callback), this);
-	gtk_grid_attach (GTK_GRID (v_grid), CHmodcb, 19,kao_row++, 2,1);
+                // CH Label
+                GtkWidget *l;
+                static gchar *CH[] = { "CH1", "CH2", "CH3", "CH4", NULL };
+                static gchar *CHname[] = { "kao-ch1-label", "kao-ch2-label", "kao-ch3-label", "kao-ch4-label", NULL };
+                gtk_grid_attach (GTK_GRID (v_grid), l=gtk_label_new (CH[ch]), col[ch],kao_row++, 4,1);
+                gtk_widget_set_name (l, CHname[ch]); // name used by CSS to apply custom color scheme
+                gtk_label_set_width_chars (GTK_LABEL(l), 12);
+                if (ch >=2) kao_ch34_widget_list = g_slist_prepend( kao_ch34_widget_list, l);
 
-        // CH Scale
-        static gchar *CMskl[] = { "Auto", "1M", "100k", "10k", "1k", "100", "10", "1", "100m", "10m",  "1m", "100μ", "10μ", "1μ", NULL };
-        GtkWidget *CMsklcb = gtk_combo_box_text_new (); 
-        g_object_set_data(G_OBJECT (CMsklcb), "SN", GINT_TO_POINTER (0)); 
-        for (int j=0; CMskl[j]; ++j){ gchar *id = g_strdup_printf ("%d", j);  gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (CMsklcb), id, CMskl[j]); g_free (id); }
-        gtk_widget_show (CMsklcb);
-        g_signal_connect (G_OBJECT (CMsklcb), "changed",
-                          G_CALLBACK (ProbeIndicator::KAO_skl_callback), this);
-        gtk_combo_box_set_active (GTK_COMBO_BOX (CMsklcb), 0); 
-	gtk_grid_attach (GTK_GRID (v_grid), CMsklcb, 1,kao_row, 2,1);
+                // CH Mode
+                static gchar *CHmod[] = { "AC", "DC", "GND", "OFF", NULL };
+                GtkWidget *CHmodcb = gtk_combo_box_text_new (); 
+                g_object_set_data(G_OBJECT (CHmodcb), "SN", GINT_TO_POINTER (ch)); 
+                for (int j=0; CHmod[j]; ++j){ gchar *id = g_strdup_printf ("%d", j);  gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (CHmodcb), id, CHmod[j]); g_free (id); }
+                g_signal_connect (G_OBJECT (CHmodcb), "changed",
+                                  G_CALLBACK (ProbeIndicator::KAO_mode_callback), this);
+                gtk_combo_box_set_active (GTK_COMBO_BOX (CHmodcb), 0); 
+                gtk_widget_show (CHmodcb);
+                gtk_grid_attach (GTK_GRID (v_grid), CHmodcb, col[ch],kao_row++, 4,1);
+                if (ch >= 2) kao_ch34_widget_list = g_slist_prepend( kao_ch34_widget_list, CHmodcb);
+       
+                // CH Scale
+                static gchar *CMskl[] = { "Auto", "1M", "100k", "10k", "1k", "100", "10", "1", "100m", "10m",  "1m", "100μ", "10μ", "1μ", NULL };
+                GtkWidget *CMsklcb = gtk_combo_box_text_new (); 
+                g_object_set_data(G_OBJECT (CMsklcb), "SN", GINT_TO_POINTER (ch)); 
+                for (int j=0; CMskl[j]; ++j){ gchar *id = g_strdup_printf ("%d", j);  gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (CMsklcb), id, CMskl[j]); g_free (id); }
+                gtk_widget_show (CMsklcb);
+                g_signal_connect (G_OBJECT (CMsklcb), "changed",
+                                  G_CALLBACK (ProbeIndicator::KAO_skl_callback), this);
+                gtk_combo_box_set_active (GTK_COMBO_BOX (CMsklcb), 0); 
+                gtk_grid_attach (GTK_GRID (v_grid), CMsklcb, col[ch],kao_row, 2,1);
+                if (ch >= 2) kao_ch34_widget_list = g_slist_prepend( kao_ch34_widget_list, CMsklcb);
 
-        CMsklcb = gtk_combo_box_text_new (); 
-        g_object_set_data(G_OBJECT (CMsklcb), "SN", GINT_TO_POINTER (1)); 
-        for (int j=0; CMskl[j]; ++j){ gchar *id = g_strdup_printf ("%d", j);  gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (CMsklcb), id, CMskl[j]); g_free (id); }
-        gtk_widget_show (CMsklcb);
-        g_signal_connect (G_OBJECT (CMsklcb), "changed",
-                          G_CALLBACK (ProbeIndicator::KAO_skl_callback), this);
-        gtk_combo_box_set_active (GTK_COMBO_BOX (CMsklcb), 0); 
-	gtk_grid_attach (GTK_GRID (v_grid), CMsklcb, 19,kao_row++, 2,1);
+                static gchar *CMsklm[] = { "x1", "x2", "x5", NULL };
+                CMsklcb = gtk_combo_box_text_new (); 
+                g_object_set_data(G_OBJECT (CMsklcb), "SN", GINT_TO_POINTER (10+ch)); 
+                for (int j=0; CMsklm[j]; ++j){ gchar *id = g_strdup_printf ("%d", j);  gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (CMsklcb), id, CMsklm[j]); g_free (id); }
+                gtk_widget_show (CMsklcb);
+                g_signal_connect (G_OBJECT (CMsklcb), "changed",
+                                  G_CALLBACK (ProbeIndicator::KAO_skl_callback), this);
+                gtk_combo_box_set_active (GTK_COMBO_BOX (CMsklcb), 0);
+                gtk_grid_attach (GTK_GRID (v_grid), CMsklcb, col[ch]+2,kao_row++, 2,1);
+                if (ch >= 2) kao_ch34_widget_list = g_slist_prepend( kao_ch34_widget_list, CMsklcb);
         
-        // Signal Selectors *** RPSPMC ***
-        static gchar *VCmap[] = { "X", "Y", "Z", "BIAS", "CURR", "IN1", "IN2", "IN3", "IN4", "AMP", "EXEC", "DFREQ", "PHASE", NULL };
-        GtkWidget *CHScb = gtk_combo_box_text_new (); 
-        g_object_set_data(G_OBJECT (CHScb), "SN", GINT_TO_POINTER (0)); 
-        for (int j=0; VCmap[j]; ++j){ gchar *id = g_strdup_printf ("%d", j);  gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (CHScb), id, VCmap[j]); g_free (id); }
-        gtk_widget_show (CHScb);
-        g_signal_connect (G_OBJECT (CHScb), "changed",
-                          G_CALLBACK (ProbeIndicator::KAO_signal_callback), this);
-        gtk_combo_box_set_active (GTK_COMBO_BOX (CHScb), 4);  // default: Current (ZSSIG)
-	gtk_grid_attach (GTK_GRID (v_grid), CHScb, 1,kao_row, 2,1);
-
-        CHScb = gtk_combo_box_text_new (); 
-        g_object_set_data(G_OBJECT (CHScb), "SN", GINT_TO_POINTER (1)); 
-        for (int j=0; VCmap[j]; ++j){ gchar *id = g_strdup_printf ("%d", j);  gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (CHScb), id, VCmap[j]); g_free (id); }
-        gtk_widget_show (CHScb);
-        g_signal_connect (G_OBJECT (CHScb), "changed",
-                          G_CALLBACK (ProbeIndicator::KAO_signal_callback), this);
-        gtk_combo_box_set_active (GTK_COMBO_BOX (CHScb), 2); // default: Z
-	gtk_grid_attach (GTK_GRID (v_grid), CHScb, 19,kao_row++, 2,1);
+                // Signal Selectors *** RPSPMC ***
+                static gchar *VCmap[] = { "X", "Y", "Z", "BIAS", "CURR", "IN1", "IN2", "IN3", "IN4", "AMP", "EXEC", "DFREQ", "PHASE", NULL };
+                static int Sdefault[] = { 4,2,9,11 };
+                GtkWidget *CHScb = gtk_combo_box_text_new (); 
+                g_object_set_data(G_OBJECT (CHScb), "SN", GINT_TO_POINTER (ch)); 
+                for (int j=0; VCmap[j]; ++j){ gchar *id = g_strdup_printf ("%d", j);  gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (CHScb), id, VCmap[j]); g_free (id); }
+                gtk_widget_show (CHScb);
+                g_signal_connect (G_OBJECT (CHScb), "changed",
+                                  G_CALLBACK (ProbeIndicator::KAO_signal_callback), this);
+                gtk_combo_box_set_active (GTK_COMBO_BOX (CHScb),  Sdefault[ch]);  // default: Current (ZSSIG)
+                gtk_grid_attach (GTK_GRID (v_grid), CHScb, col[ch],kao_row++, 4,1);
+                if (ch >= 2) kao_ch34_widget_list = g_slist_prepend( kao_ch34_widget_list, CHScb);
         
-        // Auto AC pos or fixed DC reading and DC set to auto center on click
-        kao_dc[0] = gtk_button_new_with_label ("AC");
-        g_object_set_data(G_OBJECT (kao_dc[0]), "SN", GINT_TO_POINTER (0)); 
-        gtk_widget_show (kao_dc[0]);
-        g_signal_connect (G_OBJECT (kao_dc[0]), "clicked",
-                          G_CALLBACK (ProbeIndicator::KAO_dc_set_callback), this);
-	gtk_grid_attach (GTK_GRID (v_grid), kao_dc[0], 1,kao_row, 2,1);
+                // Auto AC pos or fixed DC reading and DC set to auto center on click
+                kao_dc[ch] = gtk_button_new_with_label ("AC");
+                g_object_set_data(G_OBJECT (kao_dc[ch]), "SN", GINT_TO_POINTER (ch)); 
+                gtk_widget_show (kao_dc[ch]);
+                g_signal_connect (G_OBJECT (kao_dc[ch]), "clicked",
+                                  G_CALLBACK (ProbeIndicator::KAO_dc_set_callback), this);
+                gtk_grid_attach (GTK_GRID (v_grid), kao_dc[ch], col[ch],kao_row++, 4,1);
+                if (ch >= 2) kao_ch34_widget_list = g_slist_prepend( kao_ch34_widget_list, kao_dc[ch]);
+        }
 
-        kao_dc[1] = gtk_button_new_with_label ("AC");
-        g_object_set_data(G_OBJECT (kao_dc[1]), "SN", GINT_TO_POINTER (1)); 
-        gtk_widget_show (kao_dc[1]);
-        g_signal_connect (G_OBJECT (kao_dc[1]), "clicked",
-                          G_CALLBACK (ProbeIndicator::KAO_dc_set_callback), this);
-	gtk_grid_attach (GTK_GRID (v_grid), kao_dc[1], 19,kao_row++, 2,1);
-
+        
         g_message ("Probe Indicator HUD Object Init");
         
         probe = new hud_object();
@@ -714,57 +780,68 @@ ProbeIndicator::ProbeIndicator (Gxsm4app *app):AppBase(app){
         fneg=probe->add_indicator ("INeg", 300.0, -12., 0, 2);
         fneg2=probe->add_indicator ("INeg", 300.0, -5., 1, 2);
 
+        CAIRO_BASIC_COLOR_IDS chc[KAO_CHANNEL_NUMBER] = { CAIRO_COLOR_RED_ID, CAIRO_COLOR_YELLOW_ID, CAIRO_COLOR_GREEN_ID, CAIRO_COLOR_CYAN_ID };
+        //CAIRO_BASIC_COLOR_IDS chc[KAO_CHANNEL_NUMBER] = { CAIRO_COLOR_CSS_LRED_ID, CAIRO_COLOR_CSS_DYELLOW_ID, CAIRO_COLOR_CSS_LGREEN_ID, CAIRO_COLOR_CSS_CYANBLUE_ID };
+        //const gchar* chc[KAO_CHANNEL_NUMBER] = { "#e81b1b", "#e8e01b", "#69e81b", "#1be5e8" };
+        const gchar *chl[KAO_CHANNEL_NUMBER]  = { "CH1", "CH2", "CH3", "CH4" }; 
+        const gchar *chpl[KAO_CHANNEL_NUMBER] = { "CH1PSD", "CH2PSD", "CH3PSD", "CH4PSD" }; 
 
-        trace[0]=probe->add_horizon ("CH1", 0.0, 0.0, 128);
-        probe->set_horizon_color(trace[0], CAIRO_COLOR_RED_ID);
+        kao_num_ch = 2;
+        kao_trace_len = 256;
+        kao_samples = 4096;
 
-        trace[1]=probe->add_horizon ("CH2", 0.0, 0.0, 128);
-        probe->set_horizon_color(trace[1], CAIRO_COLOR_WHITE_ID);
-
-        trace[2]=probe->add_horizon ("CH3", 0.0, 0.0, 128);
-        probe->set_horizon_color(trace[2], CAIRO_COLOR_GREEN_ID);
-
-        trace[3]=probe->add_horizon ("CH4", 0.0, 0.0, 128);
-        probe->set_horizon_color(trace[3], CAIRO_COLOR_ORANGE_ID);
-
-        trace_psd[0]=probe->add_horizon ("CH1PSD", 0.0, 0.0, 128);
-        probe->set_horizon_color(trace_psd[0], CAIRO_COLOR_RED_ID);
-
-        trace_psd[1]=probe->add_horizon ("CH2PSD", 0.0, 0.0, 128);
-        probe->set_horizon_color(trace_psd[1], CAIRO_COLOR_WHITE_ID);
-
-        trace_psd[2]=probe->add_horizon ("CH3PSD", 0.0, 0.0, 128);
-        probe->set_horizon_color(trace_psd[2], CAIRO_COLOR_GREEN_ID);
-
-        trace_psd[3]=probe->add_horizon ("CH4PSD", 0.0, 0.0, 128);
-        probe->set_horizon_color(trace_psd[3], CAIRO_COLOR_ORANGE_ID);
-
+	kao_tinfo = new cairo_item_text (62.0, -62.0, "--s/DIV");
+	kao_tinfo->set_stroke_rgba (CAIRO_COLOR_WHITE);
+	kao_tinfo->set_font_face_size ("Ununtu", 8.);
+	kao_tinfo->set_spacing (-.1);
+	kao_tinfo->set_anchor (CAIRO_ANCHOR_E);
         
-	//probe->queue_update (canvas);
+        for (int ch=0; ch<KAO_CHANNEL_NUMBER; ch++){
+                trace[ch]=probe->add_horizon (chl[ch], 0.0, 0.0, kao_trace_len);
+                probe->set_horizon_color(trace[ch], chc[ch]);
+                trace_psd[ch]=probe->add_horizon (chpl[ch], 0.0, 0.0, kao_trace_len);
+                probe->set_horizon_color(trace_psd[ch], chc[ch], 1.2);
+
+                ch_info[ch]= new cairo_item_text (-62.0, -62.0+10*ch, "");
+                ch_info[ch]->set_stroke_rgba (chc[ch]);
+                ch_info[ch]->set_font_face_size ("Ununtu", 8.);
+                ch_info[ch]->set_spacing (-.1);
+                ch_info[ch]->set_anchor (CAIRO_ANCHOR_W);
+        }
+        
         background = new cairo_item_circle (0.,0., 100.);
 	background->set_line_width (2.);
 	background->set_stroke_rgba (CAIRO_COLOR_GRAY5_ID);
 	background->set_fill_rgba (CAIRO_COLOR_BLACK_ID);
         
 	info = new cairo_item_text (60.0, 35.0, "Probe HUD");
-        //info->set_text ("Probe HUD")
 	info->set_stroke_rgba (CAIRO_COLOR_WHITE);
 	info->set_font_face_size ("Ununtu", 10.);
 	info->set_spacing (-.1);
 	info->set_anchor (CAIRO_ANCHOR_E);
-	//info->queue_update (canvas);
-
-        for (int ch=0; ch<KAO_CHANNEL_NUMBER; ++ch){
-                ch_info[ch]= new cairo_item_text (-78.0, -78.0+10*ch, "CH Info");
-                //ch_info[ch]->set_text ("CH Info")
-                ch_info[ch]->set_stroke_rgba (CAIRO_COLOR_WHITE);
-                ch_info[ch]->set_font_face_size ("Ununtu", 10.);
-                ch_info[ch]->set_spacing (-.1);
-                ch_info[ch]->set_anchor (CAIRO_ANCHOR_W);
-        }
 
         g_message ("Probe Indicator GUI build complete.");
+
+
+        // KAO Zoom -- init requires probe object (above) been build!
+        static gchar *CMzoom[] = { "NORMAL", "OVER", "MAX", NULL };
+        GtkWidget *CMzoomcb = gtk_combo_box_text_new (); 
+        for (int j=0; CMzoom[j]; ++j){ gchar *id = g_strdup_printf ("%d", j);  gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (CMzoomcb), id, CMzoom[j]); g_free (id); }
+        gtk_widget_show (CMzoomcb);
+        g_signal_connect (G_OBJECT (CMzoomcb), "changed",
+                          G_CALLBACK (ProbeIndicator::KAO_zoom_callback), this);
+        gtk_combo_box_set_active (GTK_COMBO_BOX (CMzoomcb), 1); 
+	gtk_grid_attach (GTK_GRID (v_grid), CMzoomcb, 18,2, 3,1);
         
+        static gchar *CMkaoch[] = { "2CH", "4CH", NULL };
+        GtkWidget *CMkaochcb = gtk_combo_box_text_new (); 
+        for (int j=0; CMkaoch[j]; ++j){ gchar *id = g_strdup_printf ("%d", j);  gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (CMkaochcb), id, CMkaoch[j]); g_free (id); }
+        gtk_widget_show (CMkaochcb);
+        g_signal_connect (G_OBJECT (CMkaochcb), "changed",
+                          G_CALLBACK (ProbeIndicator::KAO_kaoch_callback), this);
+        gtk_combo_box_set_active (GTK_COMBO_BOX (CMkaochcb), 0); 
+	gtk_grid_attach (GTK_GRID (v_grid), CMkaochcb, 18,3, 3,1);
+                
 	refresh ();
 }
 
@@ -871,10 +948,15 @@ gboolean  ProbeIndicator::canvas_draw_function (GtkDrawingArea *area,
 	pv->probe->draw (cr);         // probe indicator
 	pv->info->draw (cr);          // info text
 
+
+        cairo_save (cr);
+        cairo_scale (cr, pv->probe->get_kao_zoom(), pv->probe->get_kao_zoom());
+        pv->kao_tinfo->draw (cr);     // T/DIV info text
         pv->ch_info[0]->draw (cr);    // CH info text
         pv->ch_info[1]->draw (cr);    // CH info text
-        //pv->ch_info[2]->draw (cr);    // CH info text
-        //pv->ch_info[3]->draw (cr);    // CH info text
+        pv->ch_info[2]->draw (cr);    // CH info text
+        pv->ch_info[3]->draw (cr);    // CH info text
+        cairo_restore (cr);
 
         cairo_restore (cr);
         return TRUE;
@@ -898,20 +980,20 @@ void ProbeIndicator::stop (){
 
 
 gint ProbeIndicator::refresh(){
-        #define SCOPE_N 4096
-        #define SCOPE_VIEW_DEC 4096/128
-        static gfloat scope_t[SCOPE_N+1];
-        static gfloat scope[KAO_CHANNEL_NUMBER][SCOPE_N+1];
-        static gfloat scope_psd[KAO_CHANNEL_NUMBER][SCOPE_N+1];
+        #define SCOPE_N_MAX 16384
+        int SCOPE_N=kao_samples;
+        static gfloat scope_t[SCOPE_N_MAX+1];
+        static gfloat scope[KAO_CHANNEL_NUMBER][SCOPE_N_MAX+1];
+        static gfloat scope_psd[KAO_CHANNEL_NUMBER][SCOPE_N_MAX+1];
         static gfloat scope_min[KAO_CHANNEL_NUMBER] = {0,0,0,0};
         static gfloat scope_max[KAO_CHANNEL_NUMBER] = {0,0,0,0};
         static double xrms[KAO_CHANNEL_NUMBER];
         static double xavg[KAO_CHANNEL_NUMBER] = { 0., 0., 0., 0. };
         static gint busy=FALSE;
+        static gint ch34flag=1;
         static gint infoflag=1;
         static gint chinfoflag=1;
         static gint scopeflag=1;
-        gint dec=SCOPE_N/128;
 
         if (busy) return FALSE; // skip this one, busy
         if (!probe) return FALSE;
@@ -961,21 +1043,57 @@ gint ProbeIndicator::refresh(){
                 probe->set_indicator_val (ineg,  100.0, y < 0.? -25.*Ilg : 0.);
 
                 if (modes & SCOPE_ON){
-                        main_get_gapp()->xsm->hardware->RTQuery ("ST", SCOPE_N+1, &scope_t[0]);  // RT Query STime
-                        main_get_gapp()->xsm->hardware->RTQuery ("S1", SCOPE_N+1, &scope[0][0]); // RT Query S1
-                        main_get_gapp()->xsm->hardware->RTQuery ("S2", SCOPE_N+1, &scope[1][0]); // RT Query S2
+                        main_get_gapp()->xsm->hardware->RTQuery ("ST", SCOPE_N_MAX+1, &scope_t[0]);  // RT Query STime
+                        main_get_gapp()->xsm->hardware->RTQuery ("S1", SCOPE_N_MAX+1, &scope[0][0]); // RT Query S1
+                        main_get_gapp()->xsm->hardware->RTQuery ("S2", SCOPE_N_MAX+1, &scope[1][0]); // RT Query S2
+                        if (kao_num_ch==4){
+                                main_get_gapp()->xsm->hardware->RTQuery ("S3", SCOPE_N_MAX+1, &scope[2][0]); // RT Query S3
+                                main_get_gapp()->xsm->hardware->RTQuery ("S4", SCOPE_N_MAX+1, &scope[3][0]); // RT Query S4
+                        }
+                        //main_get_gapp()->xsm->hardware->RTQuery ("S4", SCOPE_N_MAX+1, &scope[3][0]); // RT Query S4
                         //main_get_gapp()->xsm->hardware->RTQuery ("T",  SCOPE_N+1, NULL); // RT Query, Trigger next
-                
+                        
+                        // TEST / DEMO MODE
+                        if(modes & SCOPE_RECORD){
+                                double w = 4./SCOPE_N;
+                                static double phi=0;
+                                for (int i=0; i<SCOPE_N+1; ++i){
+                                        scope_t[SCOPE_N-i] = 0.33*w*i*2*M_PI+phi;
+                                        scope[0][i] = sin (w*i*2*M_PI+phi);
+                                        scope[1][i] = cos (w*i*2*M_PI+phi) > 0. ? 1:-1;
+                                }
+                                phi += 2*M_PI/360.;
+                        }
+                        
                         gfloat xmax, xmin;
-                        dec=SCOPE_N/128;
-                        if (modes & SCOPE_ZOOM)
-                                dec=1;
+                        gint dec=SCOPE_N/kao_trace_len;
+                        double td = (scope_t[0] - scope_t[SCOPE_N-1])/16.;
+                        double dxdt = 128./(scope_t[0] - scope_t[SCOPE_N-1]); // fixed canvas x width is 128.0
+                        
+                        if (td < 0.6) {
+                                gchar *tmp=g_strdup_printf ("%5.1f ms/DIV", 1e3*td); kao_tinfo->set_text (tmp); g_free (tmp); kao_tinfo->queue_update (canvas);
+                        } else {
+                                gchar *tmp=g_strdup_printf ("%5.3f s/DIV", td); kao_tinfo->set_text (tmp); g_free (tmp); kao_tinfo->queue_update (canvas);
+                        }
 
                         // Signal1 (designed for Current (or may use dFreq) or MIX-IN-0, full BW 4096->128
                         
                         // process KOA channels and prepare traces (traces)
                         //for (int ch=0; ch<KAO_CHANNEL_NUMBER; ++ch){
-                        for (int ch=0; ch<2; ++ch){
+
+                        if (kao_num_ch < 4 && ch34flag){
+                                ch34flag=0;
+                                for(int i=0; i<kao_trace_len; ++i){
+                                        trace[2]->set_xy (i, 0., 0.);
+                                        trace[3]->set_xy (i, 0., 0.);
+                                        trace_psd[2]->set_xy (i, 0., 0.);
+                                        trace_psd[3]->set_xy (i, 0., 0.);
+                                }
+                                ch_info[2]->set_text (""); ch_info[2]->queue_update (canvas);
+                                ch_info[3]->set_text (""); ch_info[3]->queue_update (canvas);
+                        } else ch34flag=1;
+                        
+                        for (int ch=0; ch<kao_num_ch; ++ch){
 
                                 // process auto scaleing and manual overrides
                                 xmax=xmin=scope[ch][0];
@@ -984,10 +1102,12 @@ gint ProbeIndicator::refresh(){
 
                                 // kao_scale[]: -1: -> Auto
                                 if (kao_scale[ch] > 0.)
-                                        xr = kao_scale[ch]*32.; // +/-8 DIV Full Scale  ( 1DIV = 2U )
+                                        xr = kao_scale[ch]*10.; // +/-8 DIV Full Scale  10px grid spacing
                                 else
-                                        xr = (scope_max[ch]-scope_min[ch])*12; // Auto Scale to fit in 6 DIV
-                                               
+                                        xr = (scope_max[ch]-scope_min[ch])*5.*0.5; // Auto Scale to fit in +/-2 DIV
+
+                                //if (xr < 1e-9) xr=1e-9;
+                                
                                 //kao_mode[]: AC DC GND
                                 switch (kao_mode[ch]){
                                 case 0: // AC Auto
@@ -999,17 +1119,49 @@ gint ProbeIndicator::refresh(){
                                         break; // DC
                                 case 2: kao_dc_set[ch] = 0.0; // GND = center
                                         break;
+                                default: kao_dc_set[ch] = 0.0; // OFF
+                                        ch_info[ch]->set_text (""); ch_info[ch]->queue_update (canvas);
+                                        gtk_button_set_label (GTK_BUTTON(kao_dc[ch]), "--");
+                                        for(int i=0; i<kao_trace_len; ++i){
+                                                trace[ch]->set_xy (i, 0., 0.);
+                                                trace_psd[ch]->set_xy (i, 0., 0.);
+                                        }
+                                        continue;
+                                        break;
                                 }
 
-                                { gchar *tmp=g_strdup_printf ("%5.3f%s", kao_dc_set[ch], kao_ch_unit[ch]); gtk_button_set_label (GTK_BUTTON(kao_dc[ch]), tmp); g_free (tmp); }
+                                // Signal Level DC "@=0"
+                                { gchar *tmp=g_strdup_printf ("%.4g %s", kao_dc_set[ch], kao_ch_unit[ch]); gtk_button_set_label (GTK_BUTTON(kao_dc[ch]), tmp); g_free (tmp); }
 
+                                // CH Scale Info
                                 if (modes & SCOPE_INFOPLUS){
+                                        static double lasts=0.;
                                         chinfoflag=1;
-                                        gchar *tmp=g_strdup_printf ("CH%d %5.3f %s/DIV", ch, xr/16., kao_ch_unit[ch]); ch_info[ch]->set_text (tmp); g_free (tmp); ch_info[ch]->queue_update (canvas);
+                                        double s=xr/10.0; // scale / DIV
+                                        if (lasts != s){
+                                                lasts=s;
+                                                const gchar *AA = "Å";
+                                                const gchar *nA = "nA";
+                                                const gchar *mV = "mV";
+                                                //if (!strcmp(*kao_ch_unit[ch],nA) || !strcmp(*kao_ch_unit[ch],mV) || !strcmp(*kao_ch_unit[ch],AA)){ // do not do auto prefixing
+                                                if (kao_ch_unit[ch][0] == nA[0] || kao_ch_unit[ch][0] == mV[0] || kao_ch_unit[ch][0] == AA[0]){ // faster trick does. do not do auto prefixing
+                                                        gchar *tmp=g_strdup_printf ("CH%d %5.3f %s/DIV", ch+1, s, kao_ch_unit[ch]); ch_info[ch]->set_text (tmp); g_free (tmp); ch_info[ch]->queue_update (canvas);
+                                                } else {
+                                                        int M=6;
+                                                        //                                                            6                  10
+                                                        static gchar *prefix[]    = { "a",  "f", "p", "n", "μ", "m", " ", "k", "M", "G", "T", NULL };
+                                                        while (s > 999. && M < 10) { s*=1e-3; M++; }
+                                                        while (s < 0.999 && M > 0) { s*=1e3; M--; }
+                                                        gchar *tmp=g_strdup_printf ("CH%d %5.1f %s%s/DIV", ch+1, s, prefix[M], kao_ch_unit[ch]); ch_info[ch]->set_text (tmp); g_free (tmp); ch_info[ch]->queue_update (canvas);
+                                                }
+                                        }
                                 } else {
                                         if (chinfoflag){
-                                                chinfoflag=ch==1?0:1;
-                                                ch_info[ch]->set_text (""); ch_info[ch]->queue_update (canvas);
+                                                chinfoflag=0;
+                                                ch_info[0]->set_text (""); ch_info[0]->queue_update (canvas);
+                                                ch_info[1]->set_text (""); ch_info[1]->queue_update (canvas);
+                                                ch_info[2]->set_text (""); ch_info[2]->queue_update (canvas);
+                                                ch_info[3]->set_text (""); ch_info[3]->queue_update (canvas);
                                         }
                                 }
                                 
@@ -1019,7 +1171,8 @@ gint ProbeIndicator::refresh(){
                                 double xav=0.;
 
                                 // process, scale, prepare trace horizon object(s)
-                                for(i=k=0; i<128; ++i){
+                                double tcenter = scope_t[SCOPE_N>>1];
+                                for(i=k=0; i<kao_trace_len; ++i){
                                         gfloat x=0.;
                                         for (int j=0; j<dec; ++j, ++k){
                                                 x += scope[ch][k];
@@ -1032,8 +1185,10 @@ gint ProbeIndicator::refresh(){
                                         if (x<xmin)
                                                 xmin = x;
                       
-                                        trace[ch]->set_xy (i, i-64., -32.*(x-xc)/xr);
+                                        trace[ch]->set_xy (i, dxdt*(scope_t[k]-tcenter), -80*(x-xc)/xr); // X=i-64
                                 }
+                                
+                                // signal filters for smooth auto scaling
                                 xrms[ch] /= SCOPE_N;
                                 xav /= SCOPE_N;
                                 xavg[ch] = xavg[ch]*0.9 + xav*0.1;
@@ -1053,35 +1208,52 @@ gint ProbeIndicator::refresh(){
                                         probe->set_mark_pos (m2,  lower);
                                 }
 
-                                run_fft (SCOPE_N, &scope[ch][0], &scope_psd[ch][0], 1e-7, 10.,0.1); // on full BW signal1
+                                // compute FFTs
+                                if (modes & SCOPE_FFT){
+                                        run_fft (SCOPE_N_MAX, &scope[ch][0], &scope_psd[ch][0], 1e-7, 10.,0.1); // on full BW signal1
 
-                                gint right=SCOPE_N/2;
-                                if (modes & SCOPE_ZOOM)
-                                        right = SCOPE_N/8;
+                                        gint C=SCOPE_N_MAX>>1;
+                                        gint right=C;
+                                        if (modes & SCOPE_ZOOM)
+                                                right = C>>2;
 
-                                // Plot FFT (PSD) on dB
-                                for(k=i=0; i<128; ++i){
-                                        gfloat x=100.;
-                                        gint next=(int)(log(i+1.0)/log(128.0)*right);
-                                        for (; k<=next && k<right; ++k){
-                                                if (modes & SCOPE_DBG){
-                                                        x = scope_psd[ch][k];
-                                                        continue;
+                                        // Plot FFT (PSD) on dB
+                                        double xs = 128./kao_trace_len;
+                                        int i0 = kao_trace_len>>1;
+                                        for(k=i=0; i<kao_trace_len; ++i){
+                                                gfloat x=0.;
+                                                gint next=(int)(log(i+1.0)/log((double)kao_trace_len)*right);
+                                                int cnt;
+                                                for (cnt=0; k<=next && k<right; ++k,++cnt){
+                                                        if (modes & SCOPE_DBG){
+                                                                x = scope_psd[ch][k];
+                                                                continue;
+                                                        }
+                                                        if (modes & SCOPE_FTFAST){
+                                                                x += scope_psd[ch][C-k]; // avg in window
+                                                        } else {
+                                                                if (cnt==0) x = scope_psd[ch][C-k];
+                                                                else if (x > scope_psd[ch][C-k]) // peak decimated 0 ... -NN db
+                                                                        x = scope_psd[ch][C-k];
+                                                        }
+                                                        //g_print ("%d %g\n",k,scope_psd[ch][k]);
                                                 }
-                                                //g_print ("%d %g\n",k,scope_psd[ch][k]);
-                                                if (x > scope_psd[ch][k]) // peak decimated 0 ... -NN db
-                                                        x = scope_psd[ch][k];
+                                                if (modes & SCOPE_FTFAST)
+                                                        x /= cnt;
+                                                trace_psd[ch]->set_xy (i, -xs*(i-i0), 64-32.*x/96.); // x: 0..-96db
                                         }
-                                        trace_psd[ch]->set_xy (i, i-64., -32.*x/96.); // x: 0..-96db
+                                } else {
+                                        for(i=0; i<kao_trace_len; ++i)
+                                                trace_psd[ch]->set_xy (i, 0., 0.);
                                 }
                         }
                         scopeflag=1;
                 } else {
                         if (scopeflag){
-                                for(int i=0; i<128; ++i)
+                                for(int i=0; i<kao_trace_len; ++i)
                                         for(int ch=0; ch<KAO_CHANNEL_NUMBER; ++ch){
-                                                trace[ch]->set_xy (i, i-64., 0.);
-                                                trace_psd[ch]->set_xy (i, i-64., 0.);
+                                                trace[ch]->set_xy (i, 0., 0.);
+                                                trace_psd[ch]->set_xy (i, 0., 0.);
                                         }
                                 scopeflag=0;
                         }

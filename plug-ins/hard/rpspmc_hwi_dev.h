@@ -206,7 +206,7 @@ public:
         GSList *rpspmc_history;
         int    history_block_size;
         void push_history_vector (void *shm_mirror_block, int min_size){
-                int max_hist = 16384;
+                int max_hist = 2*16384+1;
                 history_block_size = min_size;
 
                 double *block = new double [min_size];

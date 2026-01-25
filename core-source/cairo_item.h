@@ -63,7 +63,12 @@ typedef enum {
         CAIRO_COLOR_GRAY6_ID,
         CAIRO_COLOR_GRAY7_ID,
         CAIRO_COLOR_GRAY8_ID,
-        CAIRO_COLOR_GRAY9_ID
+        CAIRO_COLOR_GRAY9_ID,
+        CAIRO_COLOR_CSS_LRED_ID,
+        CAIRO_COLOR_CSS_DYELLOW_ID,
+        CAIRO_COLOR_CSS_LGREEN_ID,
+        CAIRO_COLOR_CSS_CYANBLUE_ID,
+        CAIRO_COLOR_CSS_LBLUE_ID
 } CAIRO_BASIC_COLOR_IDS;
 
 #define CAIRO_COLOR_WHITE        BasicColors[CAIRO_COLOR_WHITE_ID]
@@ -78,6 +83,11 @@ typedef enum {
 #define CAIRO_COLOR_ORANGE       BasicColors[CAIRO_COLOR_ORANGE_ID]
 #define CAIRO_COLOR_BLACK        BasicColors[CAIRO_COLOR_BLACK_ID]
 #define CAIRO_COLOR_GRAY(N)      BasicColors[CAIRO_COLOR_BLACK_ID+N] // N=1..9 -- NO CHECK!
+#define CAIRO_COLOR_CSS_LRED     BasicColors[CAIRO_COLOR_CSS_LRED_ID]
+#define CAIRO_COLOR_CSS_DYELLOW  BasicColors[CAIRO_COLOR_CSS_DYELLOW_ID]
+#define CAIRO_COLOR_CSS_LGREEN   BasicColors[CAIRO_COLOR_CSS_LGREEN_ID]
+#define CAIRO_COLOR_CSS_CYANBLUE BasicColors[CAIRO_COLOR_CSS_CYANBLUE_ID]
+#define CAIRO_COLOR_CSS_LBLUE    BasicColors[CAIRO_COLOR_CSS_LBLUE_ID]
 
 #define CAIRO_LINE_SOLID       0
 #define CAIRO_LINE_DASHED      1
@@ -214,13 +224,22 @@ public:
                 for (int i=0; i<4; ++i)
                         stroke_rgba[i]=c[i];
         };
+        void scale_stroke_rgba (float c[4]) {
+                for (int i=0; i<4; ++i)
+                        stroke_rgba[i] *= c[i];
+                for (int i=0; i<4; ++i)
+                        if (stroke_rgba[i] >= 1.) stroke_rgba[i] = 1.; // saturate
+        };
         void set_stroke_rgba (GdkRGBA *rgba) {
                 stroke_rgba[0]=rgba->red; stroke_rgba[1]=rgba->green; stroke_rgba[2]=rgba->blue; stroke_rgba[3]=rgba->alpha;
         };
-        void set_stroke_rgba (const gchar *color) {
+        void set_stroke_rgba (const gchar *color, float alpha=1.) {
                 GdkRGBA rgba;
-                if (gdk_rgba_parse (&rgba, color))
-                        set_stroke_rgba (&rgba); 
+                if (gdk_rgba_parse (&rgba, color)){
+                        if (alpha != 1.)
+                                rgba.alpha=alpha;
+                        set_stroke_rgba (&rgba);
+                }
         };
         void set_stroke_rgba (double r, double g, double b, double a=0.) {
                 stroke_rgba[0]=r; stroke_rgba[1]=g; stroke_rgba[2]=b; stroke_rgba[3]=a;
@@ -231,6 +250,12 @@ public:
         void set_fill_rgba (float c[4]) {
                 for (int i=0; i<4; ++i)
                         fill_rgba[i]=c[i];
+        };
+        void scale_fill_rgb (float c[4]) {
+                for (int i=0; i<4; ++i)
+                        fill_rgba[i] *= c[i];
+                for (int i=0; i<4; ++i)
+                        if (fill_rgba[i] >= 1.) fill_rgba[i] = 1.; // saturate
         };
         void set_fill_rgba (GdkRGBA *rgba) {
                 fill_rgba[0]=rgba->red; fill_rgba[1]=rgba->green; fill_rgba[2]=rgba->blue; fill_rgba[3]=rgba->alpha;

@@ -21,7 +21,6 @@
 #purple { background-image: none; background-color: #c61be8; color: white; font-weight: bold; border-radius: 6px; margin-left: 4px; }
 #bgrey { background-image: none; background-color: #bbd0e6; color: white; font-weight: bold; border-radius: 6px; margin-left: 4px; }
 #grey { background-image: none; background-color: #9b9b9b; color: white; font-weight: bold; border-radius: 6px; margin-left: 4px; }
-
 #orange { background-image: none; background-color: #f85b5b; color: white; font-weight: bold; border-radius: 6px; margin-left: 4px; }
 
 #gvpcolor3 { background-image: none; background-color: #e81b1b; color: white; font-weight: bold; border-radius: 6px; margin-left: 4px; }
@@ -38,9 +37,11 @@
 #entry-mono-text-info   { font-family: monospace;  background-color: #e8e01b; color: white; font-weight: bold; }
 #entry-mono-text-health { font-family: monospace;  background-color: #69e81b; color: white; font-weight: bold; }
 
-#remote-source-view{ font-family: monospace; font: 16px; }
+#remote-source-view{ font-family: monospace; font-size: 16px; }
 
 .rotated-label { transform: rotate(0deg); }
 
 #kao-ch1-label { font-family: monospace;  background-color: #e81b1b; color: white; font-weight: bold; }
 #kao-ch2-label { font-family: monospace;  background-color: #e8e01b; color: white; font-weight: bold; }
+#kao-ch3-label { font-family: monospace;  background-color: #69e81b; color: white; font-weight: bold; }
+#kao-ch4-label { font-family: monospace;  background-color: #1be5e8; color: white; font-weight: bold; }

@@ -55,7 +55,12 @@ gfloat BasicColors[][4] = {
         { 0.7, 0.7, 0.7, 1.0 }, // gray7
         { 0.8, 0.8, 0.8, 1.0 }, // gray8
         { 0.9, 0.9, 0.9, 1.0 },  // gray9
-        { 0.95, 0.95, 0.95, 1.0 }  // gray95
+        { 0.95, 0.95, 0.95, 1.0 },  // gray95
+        { 0.91, 0.11, 0.11, 1.0 },  // custom1 CSS Lighter Red    #e81b1b
+        { 0.91, 0.004, 0.11, 1.0 },  // custom1 CSS Dirty Yellow  #e8e01b
+        { 0.41, 0.91, 0.11, 1.0 },  // custom1 CSS Light Green    #69e81b
+        { 0.11, 0.898, 0.91, 1.0 },  // custom1 CSS CyanBlue      #1be5e8
+        { 0.11, 0.51, 0.886, 1.0 }  // custom1 CSS Lightlue      #1b82e2
 };
 
 int cairo_basic_color_lookup (const gchar *color){

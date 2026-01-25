@@ -153,6 +153,7 @@ public:
         };
 
         void set_kao_zoom(double z) { kao_zoom = z; };
+        double get_kao_zoom() { return kao_zoom; };
 
         void set_mark_color(cairo_item_path_closed* m, int id){
                 float cc_tmp[4];
@@ -218,11 +219,16 @@ public:
                 horizon = g_slist_prepend (horizon, h);
                 return h;
         };
-        void set_horizon_color(cairo_item_path* p, int id){
+        void set_horizon_color(cairo_item_path* p, int id, gfloat s=1.0){
                 float cc_tmp[4];
                 set_color (cc_tmp, id, transparency);
                 p->set_stroke_rgba (cc_tmp);
+                if (s!=1.0) { float c[4] = {s,s,s,1.}; p->scale_stroke_rgba (c); }
                 p->set_fill_rgba (cc_tmp);
+        };
+        void set_horizon_color(cairo_item_path* p, const gchar *cspec){
+                p->set_stroke_rgba (cspec, transparency);
+                p->set_fill_rgba (cspec, transparency);
         };
 
 
@@ -305,6 +311,7 @@ public:
         static void close_callback (GtkWidget *widget, gpointer user_data);
         static void run_scope_callback (GtkWidget *widget, gpointer user_data);
         static void zoom_scope_callback (GtkWidget *widget, gpointer user_data);
+        static void scope_fft_callback (GtkWidget *widget, gpointer user_data);
         static void scope_ftfast_callback (GtkWidget *widget, gpointer user_data);
         static void record_callback (GtkWidget *widget, gpointer user_data);
         static void pause_callback (GtkWidget *widget, gpointer user_data);
@@ -313,6 +320,9 @@ public:
         static void more_info_callback (GtkWidget *widget, gpointer user_data);
         static void less_info_callback (GtkWidget *widget, gpointer user_data);
 
+        static void KAO_tdiv_callback (GtkWidget *widget, gpointer user_data);
+        static void KAO_kaoch_callback (GtkWidget *widget, gpointer user_data);
+        static void KAO_zoom_callback (GtkWidget *widget, gpointer user_data);
         static void KAO_skl_callback (GtkWidget *widget, gpointer user_data);
         static void KAO_mode_callback (GtkWidget *widget, gpointer user_data);
         static void KAO_signal_callback (GtkWidget *widget, gpointer user_data);
@@ -327,7 +337,7 @@ public:
         void start ();
         void stop ();
 
-        gint run_fft (gint len, gfloat *data, gfloat *psd_db, double min, double max, double mu=1.){
+        gint run_fft (gint len, gfloat *data, gfloat *psd_db, double min, double max, double mu=1., gboolean db=true){
                 static gint n=0;
                 static double *in=NULL;
                 //static double *out=NULL;
@@ -388,12 +398,15 @@ public:
                         mag = scale * sqrt(c_re(out[i])*c_re(out[i]) + c_im(out[i])*c_im(out[i]));
                         //mag = scale * out[i];
                         //psd_db[i] = mag;
-                        if (mag > min)
-                                psd_db[i] = gfloat((1.-mu)*(double)psd_db[i] + mu*20.*log(mag));
-                        //psd_db[i] = gfloat(20.*log(mag));
-                        else
-                                psd_db[i] = gfloat((1.-mu)*(double)psd_db[i] + mu*20.*log(min));
-
+                        if (db){
+                                if (mag > min)
+                                        psd_db[i] = gfloat((1.-mu)*(double)psd_db[i] + mu*20.*log(mag));
+                                //psd_db[i] = gfloat(20.*log(mag));
+                                else
+                                        psd_db[i] = gfloat((1.-mu)*(double)psd_db[i] + mu*20.*log(min));
+                        } else {
+                                psd_db[i] = gfloat(mag);
+                        }
                         //g_print("%d %g %g %g %g\n",i,data[i],in[i], mag, psd_db[i]);
 
                 }
@@ -406,17 +419,26 @@ private:
         guint      timer_id;
         GtkWidget  *canvas;
 
+        int        kao_num_ch;
         double     kao_scale[KAO_CHANNEL_NUMBER];
+        double     kao_scale_M[KAO_CHANNEL_NUMBER];
+        double     kao_scale_m[KAO_CHANNEL_NUMBER];
         int        kao_mode[KAO_CHANNEL_NUMBER];
         GtkWidget  *kao_dc[KAO_CHANNEL_NUMBER];
         GtkWidget  *kao_tdiv;
         double     kao_dc_set[KAO_CHANNEL_NUMBER];
-        const gchar* kao_ch_unit[KAO_CHANNEL_NUMBER][4];
+        gchar      kao_ch_unit[KAO_CHANNEL_NUMBER][4];
+
+        GSList     *kao_ch34_widget_list;
+
+        int        kao_samples;
+        int        kao_trace_len;
         
         // remplaced with: cairo_item_rectangle / text / path
         cairo_item_circle *background;
         cairo_item_text   *info;
         cairo_item_text   *ch_info[KAO_CHANNEL_NUMBER];
+        cairo_item_text   *kao_tinfo;
         hud_object *probe;
         cairo_item_arc *ipos, *ineg, *ipos2, *ineg2;
         cairo_item_arc *fpos, *fneg, *fpos2, *fneg2;
