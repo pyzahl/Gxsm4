@@ -1279,14 +1279,13 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2,
 		return TRUE;
         }
 
+        if (*property == 'W'){
+                val2=val3=val1 = ScanningFlg ? 1.:0.;               
+                return ScanningFlg ? TRUE : FALSE;
+        }
+
 	// DSP Status Indicators
-	if (*property == 's' || *property == 'S' || *property == 'W'){
-		if (*property == 'W'){
-                        if (ScanningFlg){
-                                if (0) EndScan2D(); // if any error detected
-                                return TRUE;
-                        }
-                }
+	if (*property == 's' || *property == 'S'){
                 // build status flags
                 int statusbits = round(spmc_parameters.gvp_status);
                 int Sgvp = (statusbits>>8) & 0xf;  // assign GVP_status = { sec[32-4:0], setvec, reset, pause, ~finished };

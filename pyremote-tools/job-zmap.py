@@ -28,7 +28,97 @@ def SetSC():
 		id='py-sc{:02d}'.format(i+1)
 		gxsm.set(id, '{:.4f}'.format(e[1]))
 
+def run_multi_sls_on_rects(ch):
+	# marks in scan channel ch
+	ch_ref=ch-1
+	# scan first 100 objects
+	i=0
+	s = gxsm.rtquery('s') # check RPSPMC GVP status. 5=Reset/completed
+	print ('Start on all Rects, Status: ', s)
+	while i<10:
+		# Cancel job when SC set to 0
+		o=gxsm.get_object(ch_ref, i)
+		#print (i,o)
+		i=i+1
+		if gxsm.get('script-control') < 1:
+			print('Script Control: Stop job noted')
+			break
+		if o[0] == 'Rectangle':
+			print (i,o)
+			while s[2] != 0 and gxsm.get('script-control') > 0:
+				time.sleep(1)
+				s = gxsm.rtquery('s') # check RPSPMC GVP status. 5=Reset/completed
+				print ('Status: ', s)
+			gxsm.set('SPMC-sls-xs', '{}'.format(o[1]))
+			gxsm.set('SPMC-sls-ys', '{}'.format(o[2]))
+			gxsm.set('SPMC-sls-xn', '{}'.format(abs(o[3]-o[1])))
+			gxsm.set('SPMC-sls-yn', '{}'.format(abs(o[4]-o[2])))
+			time.sleep(1.0)
+			print ('Starting Scan')
+			gxsm.startscan ()
+			s = gxsm.rtquery('s') # check RPSPMC GVP status. 5=Reset/completed
+			print ('Status: ', s)
+			print ('waiting for SLS scan to complete')
+			time.sleep(10.0)
+			s = gxsm.rtquery('s') # check RPSPMC GVP status. 5=Reset/completed
+			print ('Status: ', s)
+			while 1:
+				time.sleep(2)
+				s = gxsm.rtquery('s') # check RPSPMC GVP status. 5=Reset/completed
+				#print (s)
+				if int(s[2]) == 1:
+					continue
+				else: ## 5 = done
+							break
+			print ('Next. Status:', s)
+			time.sleep(10)
 
+
+def run_gvp_on_points(ch, wait_move=5):
+	# marks in scan channel ch
+	ch_ref=ch-1
+
+	# set to 1 for dummy run
+	# set to 2 for IV execute at points
+	#gxsm.set('script-control','1')
+
+	dims=gxsm.get_dimensions(ch_ref)
+	diffs=gxsm.get_differentials(ch_ref)
+	geo=gxsm.get_geometry(ch_ref)
+	print (diffs)
+	print (geo)
+	print (dims)
+
+	# scan first 100 objects
+	i=0
+	while i<99:
+		# Cancel job when SC set to 0
+		if gxsm.get('script-control') < 1:
+			time.sleep(1)
+			print('Script Control: Stop job noted')
+			break
+		o=gxsm.get_object(ch_ref, i)
+		#print (i,o)
+		i=i+1
+		if o[0] == 'Point':
+			print (i,o)
+			print ('Action @', (o[1]-dims[0]/2)*diffs[0], ',', (o[2]-dims[1]/2)*diffs[1])
+			gxsm.moveto_scan_xy ((o[1]-dims[0]/2)*diffs[0], -(o[2]-dims[1]/2)*diffs[1])
+			print ('Moving, waiting...')
+			time.sleep(wait_move)
+			print ('Execute')
+			#gxsm.action ("DSP_VP_IV_EXECUTE")
+			gxsm.action ("DSP_VP_VP_EXECUTE")
+			print ('waiting...')
+			while 1:
+				time.sleep(1)
+				s = gxsm.rtquery('s') # check RPSPMC GVP status. 5=Reset/completed
+				print (s)
+				if int(s[2]) == 5:
+					print ('done.')
+					break
+				print ('waiting for GVP to complete')
+			time.sleep(1)
 
 
 
@@ -88,9 +178,9 @@ z0=gxsm.get ("dsp-adv-dsp-zpos-ref")
 ####z0=7.6
 
 zlist = np.arange(0.0, 1.0, 0.1)
-zlist = np.append(zlist, np.arange(1.0, 2.0, 0.2))
-zlist = np.append(zlist, np.arange(2.0, 4.0, 0.25))
-zlist = np.append(zlist, np.arange(4.0, 8.0, 0.5))
+zlist = np.append(zlist, np.arange(1.0, 2.6, 0.1))
+zlist = np.append(zlist, np.arange(2.6, 4.0, 0.2))
+zlist = np.append(zlist, np.arange(4.0, 9.0, 0.5))
 zlist = np.append(zlist, 9.0)
 zlist = np.append(zlist, 10.0)
 zlist = np.append(zlist, 11.0)
@@ -104,6 +194,13 @@ zlist = np.append(zlist, 1.0)
 zlist = np.append(zlist, 0.5)
 zlist = np.append(zlist, 0.2)
 zlist = np.append(zlist, 0.0)
+zlist = np.append(zlist, 10.0)
+zlist = np.append(zlist, 20.0)
+zlist = np.append(zlist, 30.0)
+zlist = np.append(zlist, 50.0)
+zlist = np.append(zlist, 1.0)
+zlist = np.append(zlist, 10.0)
+zlist = np.append(zlist, 200.0)
 zlist = np.append(zlist, 10.0)
 
 
@@ -134,50 +231,73 @@ sc['ScanSpeed'] = user_speed
 SetSC()
 
 
-for z in zlist:
-	if  z>15:
-		gxsm.set ("dsp-fbs-scan-speed-scan","30")
-	elif  z>8:
-		gxsm.set ("dsp-fbs-scan-speed-scan","25")
-	elif  z>5:
-		gxsm.set ("dsp-fbs-scan-speed-scan","15")
-	else:
-		GetSC()
-		gxsm.set ("dsp-fbs-scan-speed-scan",'{}'.format(sc['ScanSpeed']))
-	zz=z0+z
-	#zz=z0-z
-	sc['Z_now'] = z
-	SetSC()
-	print(str(datetime.now()) + "Setting Z-Pos/Setpoint = {:8.2f} A".format( zz))
-	gxsm.set ("dsp-adv-dsp-zpos-ref", "{:8.2f}".format( zz))
-	time.sleep(1)
-	print("Start")
-	gxsm.startscan()
-	time.sleep(15)
-	sc0=gxsm.get('script-control')
-	l =gxsm.waitscan(False)
-	#print ('Line=',l, ', z0=', z0, ', z=',z, ', zz=', zz)
-	print("Waiting")
-	time.sleep(15)
-	lp=1
-	while l >= 0 and sc0 > 1 : 
-		sc0=gxsm.get('script-control')
-		l =gxsm.waitscan(False)
-		#print ('Line=',l,lp)
-		if l == lp or l == 0: # stopped/completed
-			break
-		time.sleep(7)
-		#print (l)
-		if l > lp:
-			lp=l
+if 0:
+	run_multi_sls_on_rects(3)
+
+if 0:
+	run_gvp_on_points(3)
+
+if 1:
+	count = 0
+	for z in zlist:
+		count = count + 1
+		if  z>15:
+			gxsm.set ("dsp-fbs-scan-speed-scan",'{}'.format(20+int(sc['ScanSpeed'])))
+		elif  z>8:
+			gxsm.set ("dsp-fbs-scan-speed-scan",'{}'.format(10+int(sc['ScanSpeed'])))
+		elif  z>5:
+			gxsm.set ("dsp-fbs-scan-speed-scan",'{}'.format(5+int(sc['ScanSpeed'])))
+		else:
 			GetSC()
-			if sc['ASC'] > 0:
-				auto_afm_scanspeed(l)
-	if sc0 < 2:
-		break		
-	print("Z next in 5s")
-	time.sleep(5)
-	print("Z next")
+			gxsm.set ("dsp-fbs-scan-speed-scan",'{}'.format(sc['ScanSpeed']))
+		zz=z0+z
+		#zz=z0-z
+		sc['Z_now'] = z
+		SetSC()
+		print(str(datetime.now()) + " #" + str(count) + " Setting Z-Pos/Setpoint = {:8.2f} A".format( zz))
+		gxsm.set ("dsp-adv-dsp-zpos-ref", "{:8.2f}".format( zz))
+		time.sleep(1)
+		
+		# disabled
+		if 1 and count > 2 and z == 0.0:
+			print("Starting Fz on points in 10s")
+			time.sleep(10)
+			run_gvp_on_points(3)
+
+		if 1:
+			print ('Multi SLS on CH3 rects, z=',z)
+			run_multi_sls_on_rects(3)
+		else:
+			print("Start")
+			gxsm.startscan()
+			time.sleep(15)
+			sc0=gxsm.get('script-control')
+			l =gxsm.waitscan(False)
+			#print ('Line=',l, ', z0=', z0, ', z=',z, ', zz=', zz)
+			print("Waiting")
+			time.sleep(15)
+			lp=1
+			while l >= 0 and sc0 > 1 : 
+				sc0=gxsm.get('script-control')
+				l =gxsm.waitscan(False)
+				#print ('Line=',l,lp)
+				if l == lp or l == 0: # stopped/completed
+					break
+				time.sleep(30)
+				#print (l)
+				if l > lp:
+					lp=l
+					GetSC()
+					if sc['ASC'] > 0:
+						auto_afm_scanspeed(l)
+		if sc0 < 2:
+			break		
+		print("Z next in 5s")
+		time.sleep(5)
+		print("Z next")
+
+
+
 
 #if sc0 <1: 
 #	exit_force_map()
