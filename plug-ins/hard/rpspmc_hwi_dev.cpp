@@ -1499,6 +1499,86 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, int n, gfloat *data){
         return 0;
 }
 
+gint rpspmc_hwi_dev::RTQuery (const gchar *property, int n, double *data){
+        static int signal[4] = { 7, 19, 15, 17 }; // Z, Current per default
+        static double scale[4] = { 1.0, 1.0, 1.0, 1.0 };
+        
+        // Request History Vector n: "Hnn"
+        if (property[0] == 'H'){
+                int pos = atoi(&property[1]);
+                if (pos < 0 || pos >= 20) pos=0;
+                get_history_vector (pos, data, n);
+                return 0;
+        }
+
+        // Request signal[0] = Vector n: from Channel "C1xxxx"
+        // Request signal[1] = Vector n: from Channel "C2xxxx"
+        // ...
+        // Request signal[3] = Vector n: from Channel "C4xxxx"
+        //                           0  1          4          7          10  11  12  13  14  15  16   17    18    19
+        // xxxx is vector component [T  X xma xmi  Y yma ymi  Z zma zmi  U   IN1 IN2 IN3 IN4 AMP EXEC DFREQ PHASE CURR ] 0 ... 19 are valid
+        if (property[0] == 'C'){
+                static gchar *VCmap[] = { "T", "X", "xma", "xmi",  "Y", "yma", "ymi",  "Z", "zma", "zmi",  "BIAS",
+                                          "IN1", "IN2", "IN3", "IN4", "AMP", "EXEC", "DFREQ", "PHASE", "CURR", NULL };
+                static gchar *Umap[]   = { "s\0\0\0", "Å\0\0\0", "Å\0\0\0", "Å\0\0\0", "Å\0\0\0", "Å\0\0\0", "Å\0\0\0", "Å\0\0\0", "Å\0\0\0", "Å\0\0\0",  "V\0\0\0", // NOTE UTF Å is 2 chars
+                                           "V\0\0\0", "V\0\0\0", "V\0\0\0", "V\0\0\0",  "mV\0\0",  "mV\0\0",  "Hz\0\0", "°\0\0\0",  "nA\0\0", NULL };
+                int pos=0;
+                for (pos=0; VCmap[pos]; ++pos) if (!strcmp(&property[2], VCmap[pos])) break;
+                if (pos < 0 || pos >= 20) pos=19; // CURR as fallback
+
+                int ch=-1;
+                switch (property[1]){
+                case '1': ch=0; break;
+                case '2': ch=1; break;
+                case '3': ch=2; break;
+                case '4': ch=3; break;
+                }
+                if (ch>=0){
+                        signal[ch] = pos;
+                        if (data)
+                                memcpy ((void*)data, Umap[pos], 4);
+                } else return -1;
+
+                // update scale to World Units if non native
+                scale[ch] = 1.; // default native, no scale
+                switch (signal[ch]){
+                case 1: case 2: case 3: scale[ch] = main_get_gapp()->xsm->Inst->Volt2XA(1.); break;
+                case 4: case 5: case 6: scale[ch] = main_get_gapp()->xsm->Inst->Volt2YA(1.); break;
+                case 7: case 8: case 9: scale[ch] = main_get_gapp()->xsm->Inst->Volt2ZA(1.); break;
+                case 10: scale[ch] = main_get_gapp()->xsm->Inst->BiasGainV2V(); break;
+                case 19: scale[ch] = main_get_gapp()->xsm->Inst->nAmpere2V(); break;
+                }
+
+                return pos;
+        }
+        
+        // Request signal[0] = Vector n: "S1", ... "S4", "ST"
+        if (property[0] == 'S'){
+                int ch = -1;
+                // signal[0]
+                switch (property[1]){
+                case '1': ch = 0; break;
+                case '2': ch = 1; break;
+                case '3': ch = 2; break;
+                case '4': ch = 3; break;
+                case 'T': get_history_vector (0, data, n); return 0; break; // FPGA Time
+                }
+                if (ch >= 0){
+                        if (signal[ch] >= 0 && signal[ch] < 20){
+                                get_history_vector (signal[ch], data, n);
+                                if (scale[ch] != 1.0) // if required
+                                        for (int k=0; k<n; ++k) data[k] *= scale[ch];
+                        }
+                        return 0;
+                }
+        }
+
+        if (property[0] == 'L')
+                return (gint)get_history_len ();
+        
+        return 0;
+}
+
 
 
 

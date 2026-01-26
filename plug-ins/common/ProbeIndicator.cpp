@@ -371,7 +371,8 @@ void ProbeIndicator::KAO_tdiv_callback (GtkWidget *widget, gpointer user_data) {
         int KAO_hlen[] = { 256, 512, 1024, 2048, 4096, 8192, 16384 };
         int hlen=0;
         if (main_get_gapp()->xsm->hardware){
-                hlen = main_get_gapp()->xsm->hardware->RTQuery ("L", 0, NULL); // query actual historty len available
+                double *dummy=NULL;
+                hlen = main_get_gapp()->xsm->hardware->RTQuery ("L", 0, dummy); // query actual historty len available
                 if (hlen >= KAO_hlen[gtk_combo_box_get_active(GTK_COMBO_BOX(widget))])
                         pv->kao_samples = KAO_hlen[gtk_combo_box_get_active(GTK_COMBO_BOX(widget))];
                 else
@@ -401,21 +402,32 @@ void ProbeIndicator::KAO_skl_callback (GtkWidget *widget, gpointer user_data) {
         int s = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
         if (s==0)
                 pv->kao_scale[ch] = 0.; // Auto
-        else if (ch < 4){
+        else {
                 pv->kao_scale_M[ch] = 1./(1e-6*pow (10., (double)s-1));
                 pv->kao_scale[ch] = pv->kao_scale_M[ch] * pv->kao_scale_m[ch];
-        } else {
-                ch -= 10;
-                if (ch < 4 && ch >= 0){
-                        if (s < 3)
-                                pv->kao_scale_m[ch] = s == 0? 1. : s == 1? 2. : 5.;
-                        else{
-                                s-= 3;
-                                pv->kao_scale_m[ch] = s == 0? -1. : s == 1? -2. : -5.;
-                        }
-                        pv->kao_scale[ch] = pv->kao_scale_M[ch] / pv->kao_scale_m[ch];
-                }
         }
+        gchar *tmp = g_strdup_printf ("skl%d %s %d x (%g x %g) = %g", ch+1, 
+                                      gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(widget)),
+                                      s,
+                                      pv->kao_scale_M[ch], pv->kao_scale_m[ch], pv->kao_scale[ch]
+                                      );
+        g_message ("ProbeIndicator::KAO_skl_callback: %s", tmp);
+        g_free (tmp);
+}
+
+// set scale multiplier
+void ProbeIndicator::KAO_sklX_callback (GtkWidget *widget, gpointer user_data) {
+        ProbeIndicator *pv = (ProbeIndicator *) user_data; 
+        int ch= GPOINTER_TO_INT (g_object_get_data(G_OBJECT (widget), "SN"));
+        int s = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
+        if (s < 3)
+                pv->kao_scale_m[ch] = s == 0? 1. : s == 1? 2. : 5.;
+        else{
+                s-= 3;
+                pv->kao_scale_m[ch] = s == 0? -1. : s == 1? -2. : -5.;
+        }
+        pv->kao_scale[ch] = pv->kao_scale_M[ch] * pv->kao_scale_m[ch];
+
         gchar *tmp = g_strdup_printf ("skl%d %s %d x (%g x %g) = %g", ch+1, 
                                       gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(widget)),
                                       s,
@@ -435,7 +447,7 @@ void ProbeIndicator::KAO_signal_callback (GtkWidget *widget, gpointer user_data)
                 gchar *tmp = g_strdup_printf ("C%d%s", ch+1,
                                               gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(widget))
                                               );
-                int sn = main_get_gapp()->xsm->hardware->RTQuery (tmp, 0, (float*)pv->kao_ch_unit[ch]); // Request Signal, Copy unit sym into unit
+                int sn = main_get_gapp()->xsm->hardware->RTQuery (tmp, 0, (double*)pv->kao_ch_unit[ch]); // Request Signal, Copy unit sym into unit
                 g_message ("ProbeIndicator::KAO_signal_callback: %s  in %d", tmp, pv->kao_ch_unit[ch]);
                 g_free (tmp);
         }
@@ -554,7 +566,8 @@ ProbeIndicator::ProbeIndicator (Gxsm4app *app):AppBase(app){
 	timer_id = 0;
 	probe = NULL;
         modes = SCOPE_NONE;
-        
+        kao_scale[0]=kao_scale[1]=kao_scale[2]=kao_scale[3]=0.; // Auto
+ 
 	AppWindowInit (N_("HUD Probe Indicator"));
 
 	canvas = gtk_drawing_area_new(); // make a drawing area
@@ -674,7 +687,7 @@ ProbeIndicator::ProbeIndicator (Gxsm4app *app):AppBase(app){
 
         // KAO time/div -- approx, exact time/DIV is measured and displayed
         //static gchar *KAO_TDIV[] = { "~10ms/DIV [128]", "~25ms/DIV [256]", "~50ms/DIV [512]", "~100ms/DIV [1024]", "~200ms/DIV [2048]", "~0.5s/DIV [4096]", "~1s/DIV [8192]", "~2s/DIV [16384]", NULL };
-        static gchar *KAO_TDIV[] = { "~25ms/DIV [256]", "~50ms/DIV [512]", "~100ms/DIV [1024]", "~200ms/DIV [2048]", "~0.5s/DIV [4096]", "~1s/DIV [8192]", "~2s/DIV [16384]", NULL };
+        static gchar *KAO_TDIV[] = { "~50ms/DIV [256]", "~100ms/DIV [512]", "~200ms/DIV [1024]", "~0.5s/DIV [2048]", "~1s/DIV [4096]", "~2s/DIV [8192]", "~4s/DIV [16384]", NULL };
         GtkWidget *kao_tdivcb = gtk_combo_box_text_new (); 
         for (int j=0; KAO_TDIV[j]; ++j){ gchar *id = g_strdup_printf ("%d", j);  gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (kao_tdivcb), id, KAO_TDIV[j]); g_free (id); }
         gtk_widget_show (kao_tdivcb);
@@ -725,11 +738,11 @@ ProbeIndicator::ProbeIndicator (Gxsm4app *app):AppBase(app){
 
                 static gchar *CMsklm[] = { "x1", "x2", "x5", "x-1", "x-2", "x-5", NULL };
                 CMsklcb = gtk_combo_box_text_new (); 
-                g_object_set_data(G_OBJECT (CMsklcb), "SN", GINT_TO_POINTER (10+ch)); 
+                g_object_set_data(G_OBJECT (CMsklcb), "SN", GINT_TO_POINTER (ch)); 
                 for (int j=0; CMsklm[j]; ++j){ gchar *id = g_strdup_printf ("%d", j);  gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (CMsklcb), id, CMsklm[j]); g_free (id); }
                 gtk_widget_show (CMsklcb);
                 g_signal_connect (G_OBJECT (CMsklcb), "changed",
-                                  G_CALLBACK (ProbeIndicator::KAO_skl_callback), this);
+                                  G_CALLBACK (ProbeIndicator::KAO_sklX_callback), this);
                 gtk_combo_box_set_active (GTK_COMBO_BOX (CMsklcb), 0);
                 gtk_grid_attach (GTK_GRID (v_grid), CMsklcb, col[ch]+2,kao_row++, 2,1);
                 if (ch >= 2) kao_ch34_widget_list = g_slist_prepend( kao_ch34_widget_list, CMsklcb);
@@ -987,11 +1000,11 @@ void ProbeIndicator::stop (){
 gint ProbeIndicator::refresh(){
         #define SCOPE_N_MAX 16384
         int SCOPE_N=kao_samples;
-        static gfloat scope_t[SCOPE_N_MAX+1];
-        static gfloat scope[KAO_CHANNEL_NUMBER][SCOPE_N_MAX+1];
-        static gfloat scope_psd[KAO_CHANNEL_NUMBER][SCOPE_N_MAX+1];
-        static gfloat scope_min[KAO_CHANNEL_NUMBER] = {0,0,0,0};
-        static gfloat scope_max[KAO_CHANNEL_NUMBER] = {0,0,0,0};
+        static double scope_t[SCOPE_N_MAX+1];
+        static double scope[KAO_CHANNEL_NUMBER][SCOPE_N_MAX+1];
+        static double scope_psd[KAO_CHANNEL_NUMBER][SCOPE_N_MAX+1];
+        static double scope_min[KAO_CHANNEL_NUMBER] = {0,0,0,0};
+        static double scope_max[KAO_CHANNEL_NUMBER] = {0,0,0,0};
         static double xrms[KAO_CHANNEL_NUMBER];
         static double xavg[KAO_CHANNEL_NUMBER] = { 0., 0., 0., 0. };
         static gint busy=FALSE;
@@ -1070,9 +1083,9 @@ gint ProbeIndicator::refresh(){
                                 phi += 2*M_PI/360.;
                         }
                         
-                        gfloat xmax, xmin;
+                        double xmax, xmin;
                         gint dec=SCOPE_N/kao_trace_len;
-                        double td = (scope_t[0] - scope_t[SCOPE_N-1])/16.;
+                        double td = (scope_t[0] - scope_t[SCOPE_N-1])/8.; // DIV SZIE IS: 8 DIV over full scale screen
                         double dxdt = 128./(scope_t[0] - scope_t[SCOPE_N-1]); // fixed canvas x width is 128.0
                         
                         if (td < 0.6) {
@@ -1100,18 +1113,18 @@ gint ProbeIndicator::refresh(){
                         
                         for (int ch=0; ch<kao_num_ch; ++ch){
 
+                                double av_range = scope_max[ch]-scope_min[ch];
+                                
                                 // process auto scaleing and manual overrides
                                 xmax=xmin=scope[ch][0];
                                 xrms[ch] = 0.;
-                                gfloat xr,xc;
+                                double xr,xc;
 
                                 // kao_scale[]: 0.: -> Auto
                                 if (kao_scale[ch] != 0.)
-                                        xr = kao_scale[ch]*10.; // +/-8 DIV Full Scale  10px grid spacing
+                                        xr = kao_scale[ch]*8.; // Full Scale Screen is 8 DIV
                                 else
-                                        xr = (scope_max[ch]-scope_min[ch])*5.*0.5; // Auto Scale to fit in +/-2 DIV
-
-                                //if (xr < 1e-9) xr=1e-9;
+                                        xr = av_range*4.; // Auto Scale to fit in +/-2 DIV
                                 
                                 //kao_mode[]: AC DC GND
                                 switch (kao_mode[ch]){
@@ -1142,7 +1155,7 @@ gint ProbeIndicator::refresh(){
                                 if (modes & SCOPE_INFOPLUS){
                                         static double lasts=0.;
                                         chinfoflag=1;
-                                        double s=xr/10.0; // scale / DIV
+                                        double s=xr/8.0; // scale / DIV   // 8 DIV is full scale screen
                                         if (lasts != s){
                                                 lasts=s;
                                                 const gchar *AA = "Å";
@@ -1150,14 +1163,16 @@ gint ProbeIndicator::refresh(){
                                                 const gchar *mV = "mV";
                                                 //if (!strcmp(*kao_ch_unit[ch],nA) || !strcmp(*kao_ch_unit[ch],mV) || !strcmp(*kao_ch_unit[ch],AA)){ // do not do auto prefixing
                                                 if (kao_ch_unit[ch][0] == nA[0] || kao_ch_unit[ch][0] == mV[0] || kao_ch_unit[ch][0] == AA[0]){ // faster trick does. do not do auto prefixing
-                                                        gchar *tmp=g_strdup_printf ("CH%d %.4g %s/DIV", ch+1, s, kao_ch_unit[ch]); ch_info[ch]->set_text (tmp); g_free (tmp); ch_info[ch]->queue_update (canvas);
+                                                        gchar *tmp=g_strdup_printf ("CH%d %.4g %s/DIV %s", ch+1, s, kao_ch_unit[ch], av_range > xr ? "OV":"");
+                                                        ch_info[ch]->set_text (tmp); g_free (tmp); ch_info[ch]->queue_update (canvas);
                                                 } else {
                                                         int M=6;
                                                         //                                                            6                  10
                                                         static gchar *prefix[]    = { "a",  "f", "p", "n", "μ", "m", " ", "k", "M", "G", "T", NULL };
                                                         while (s > 999. && M < 10) { s*=1e-3; M++; }
                                                         while (s < 0.999 && M > 0) { s*=1e3; M--; }
-                                                        gchar *tmp=g_strdup_printf ("CH%d %5.1f %s%s/DIV", ch+1, s, prefix[M], kao_ch_unit[ch]); ch_info[ch]->set_text (tmp); g_free (tmp); ch_info[ch]->queue_update (canvas);
+                                                        gchar *tmp=g_strdup_printf ("CH%d %5.1f %s%s/DIV %s", ch+1, s, prefix[M], kao_ch_unit[ch], av_range > xr ? "OV":"");
+                                                        ch_info[ch]->set_text (tmp); g_free (tmp); ch_info[ch]->queue_update (canvas);
                                                 }
                                         }
                                 } else {
@@ -1178,7 +1193,7 @@ gint ProbeIndicator::refresh(){
                                 // process, scale, prepare trace horizon object(s)
                                 double tcenter = scope_t[SCOPE_N>>1];
                                 for(i=k=0; i<kao_trace_len; ++i){
-                                        gfloat x=0.;
+                                        double x=0.;
                                         for (int j=0; j<dec; ++j, ++k){
                                                 x += scope[ch][k];
                                                 xrms[ch] += scope[ch][k]*scope[ch][k];
@@ -1190,7 +1205,7 @@ gint ProbeIndicator::refresh(){
                                         if (x<xmin)
                                                 xmin = x;
                       
-                                        trace[ch]->set_xy (i, dxdt*(scope_t[k]-tcenter), -80*(x-xc)/xr); // X=i-64
+                                        trace[ch]->set_xy (i, dxdt*(scope_t[k]-tcenter), -64*(x-xc)/xr); // X=i-64
                                 }
                                 
                                 // signal filters for smooth auto scaling
@@ -1226,7 +1241,7 @@ gint ProbeIndicator::refresh(){
                                         double xs = 128./kao_trace_len;
                                         int i0 = kao_trace_len>>1;
                                         for(k=i=0; i<kao_trace_len; ++i){
-                                                gfloat x=0.;
+                                                double x=0.;
                                                 gint next=(int)(log(i+1.0)/log((double)kao_trace_len)*right);
                                                 int cnt;
                                                 for (cnt=0; k<=next && k<right; ++k,++cnt){

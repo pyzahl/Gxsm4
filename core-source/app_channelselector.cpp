@@ -177,7 +177,8 @@ ChannelSelector::ChannelSelector (Gxsm4app *app, int ChAnz):AppBase(app){
 
         // create channels and add to grid
         // GType types[1] = { G_TYPE_FILE };
-        GType types[] = { GDK_TYPE_FILE_LIST };
+        // GType types[] = { GDK_TYPE_FILE_LIST };
+        GType types[] = { G_TYPE_FILE, G_TYPE_STRING, GDK_TYPE_FILE_LIST }; // file type only
         GtkDropTarget *target;
         for(i=1; i<=ChAnz; i++){
 		sprintf(txt,"% 2d", i);

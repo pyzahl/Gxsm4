@@ -103,6 +103,7 @@ public:
 	virtual gint RTQuery () { return RPSPMC_data_y_index; }; // actual progress on scan -- y-index mirror from FIFO read
 	virtual gint RTQuery (const gchar *property, double &val1, double &val2, double &val3);
 	virtual gint RTQuery (const gchar *property, int n, gfloat *data);
+	virtual gint RTQuery (const gchar *property, int n, double *data);
         
 	/* high level calls for instrument condition checks -- TODO */
 	virtual gint RTQuery_clear_to_start_scan (){ return 1; };

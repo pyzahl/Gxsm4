@@ -68,26 +68,44 @@ public:
                 tics = NULL;
                 horizon = NULL;
 
-                gint gnx=2*8+1;
-                gint gny=2*8+1;
+#define KAO_GNX 4
+#define KAO_GNY 4
+#define KAO_GMX (64/KAO_GNX)
+#define KAO_GMY (64/KAO_GNY)
+                gint gnx=2*KAO_GNY+1;
+                gint gny=2*KAO_GNX+1;
                 grid = new cairo_item_segments (2*(gnx+gny));
+                // KOA grid
                 gint k=0;
                 for (int i=0; i<gnx; ++i){
-                        grid->set_xy(k++, -64.0+i*8, -64.0);
-                        grid->set_xy(k++, -64.0+i*8,  64.0);
+                        grid->set_xy(k++, -64.0+i*KAO_GMX, -64.0);
+                        grid->set_xy(k++, -64.0+i*KAO_GMX,  64.0);
                 }
                 for (int i=0; i<gny; ++i){
-                        grid->set_xy(k++, -64.0, -64.0+i*8);
-                        grid->set_xy(k++,  64.0, -64.0+i*8);
+                        grid->set_xy(k++, -64.0, -64.0+i*KAO_GMY);
+                        grid->set_xy(k++,  64.0, -64.0+i*KAO_GMY);
                 }
 
                 // default setup
                 transparency = 0.5;
 
-                set_color (cc_grid, CAIRO_COLOR_GREEN_ID, 0.4);
+                set_color (cc_grid, CAIRO_COLOR_GREEN_ID, 0.3);
                 grid->set_stroke_rgba (cc_grid);
                 grid->set_line_width (0.5);
 
+                center_lines = new cairo_item_segments (6);
+                // KOA centerlines
+                k=0;
+                for (int i=0; i<3; ++i){
+                        center_lines->set_xy(k++, -64, -32.0+i*32);
+                        center_lines->set_xy(k++,  64, -32.0+i*32);
+                }
+                set_color (cc_center_lines, CAIRO_COLOR_WHITE_ID, 0.4);
+                center_lines->set_stroke_rgba (cc_center_lines);
+                center_lines->set_line_width (0.75);
+
+
+                
                 set_color (cc_tics, CAIRO_COLOR_BLACK_ID, transparency);
                 set_color (cc_gauge, CAIRO_COLOR_CYAN_ID, transparency);
                 set_color (cc_marks, CAIRO_COLOR_CYAN_ID, transparency);
@@ -110,6 +128,7 @@ public:
         };
         virtual ~hud_object(){
                 delete grid;
+                delete center_lines;
                 delete ic;
                 delete oc;
                 g_slist_free_full (indicators, (GDestroyNotify)hud_object::remove_cairo_item);
@@ -234,6 +253,7 @@ public:
 
         void queue_update (GtkWidget* imgarea) {
                 grid->queue_update (imgarea);
+                center_lines->queue_update (imgarea);
                 ic->queue_update (imgarea);
                 oc->queue_update (imgarea);
                 g_slist_foreach (marks, (GFunc)hud_object::q_update_cairo_item, imgarea);
@@ -261,6 +281,7 @@ public:
                 cairo_save (cr);
                 cairo_scale (cr, kao_zoom, kao_zoom);
                 grid->draw(cr);
+                center_lines->draw(cr);
                 g_slist_foreach (horizon, (GFunc)hud_object::draw_cairo_item, cr);
                 cairo_restore (cr);
 
@@ -280,9 +301,11 @@ private:
         GSList *horizon;
 
         cairo_item *grid;
+        cairo_item *center_lines;
  
         float transparency;
         float cc_grid[4];
+        float cc_center_lines[4];
         float cc_tics[4];
         float cc_gauge[4];
         float cc_indpos[4];
@@ -324,6 +347,7 @@ public:
         static void KAO_kaoch_callback (GtkWidget *widget, gpointer user_data);
         static void KAO_zoom_callback (GtkWidget *widget, gpointer user_data);
         static void KAO_skl_callback (GtkWidget *widget, gpointer user_data);
+        static void KAO_sklX_callback (GtkWidget *widget, gpointer user_data);
         static void KAO_mode_callback (GtkWidget *widget, gpointer user_data);
         static void KAO_signal_callback (GtkWidget *widget, gpointer user_data);
         static void KAO_dc_set_callback (GtkWidget *widget, gpointer user_data);
@@ -337,7 +361,7 @@ public:
         void start ();
         void stop ();
 
-        gint run_fft (gint len, gfloat *data, gfloat *psd_db, double min, double max, double mu=1., gboolean db=true){
+        gint run_fft (gint len, double *data, double *psd_db, double min, double max, double mu=1., gboolean db=true){
                 static gint n=0;
                 static double *in=NULL;
                 //static double *out=NULL;

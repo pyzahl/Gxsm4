@@ -84,6 +84,7 @@ class XSM_Hardware{
 	virtual gint RTQuery (const gchar *property, double &val1, double &val2, double &val3);
 	virtual gint RTQuery (const gchar *property, gchar **val) { return FALSE; };
 	virtual gint RTQuery (const gchar *property, int n, gfloat *data) { return FALSE; };
+	virtual gint RTQuery (const gchar *property, int n, double *data) { return FALSE; };
 	virtual gint RTQuery () { return y_current; }; // actual progress on scan -- y-index mirror from FIFO read, etc. -- returns -1 if not available
 
 	/* high level calls for instrtument condition checks */
