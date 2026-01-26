@@ -37,7 +37,7 @@ def run_scan_at_offset(x,y):
 	time.sleep(sc['FinishWait']) ## tweak as required -- give post scan time to save all data
 
 	# Set Scan Offset
-	#gxsm.moveto_scan_xy (x,y) ### Note -- need to check this dedicated one for RPSPMC
+	###gxsm.moveto_scan_xy (x,y) ### Note -- need to check this dedicated one for RPSPMC
 	gxsm.set('OffsetX','{}'.format(x))
 	gxsm.set('OffsetY','{}'.format(y))
 	time.sleep(sc['MoveWait']) ## tweak as require
@@ -76,6 +76,7 @@ for x in np.arange (-1000, 1500, 500):
 	for y in np.arange (-1000, 1500, 500):
 		count=count+1
 		print (x,y)
+		GetSC()
 		sc['X']=x
 		sc['Y']=y
 		sc['P']=100*count/9
