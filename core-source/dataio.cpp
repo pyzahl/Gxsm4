@@ -681,7 +681,7 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
                 progress_info  << " ** DONE READING NCDAT FILE **" << std::endl;
                 error_status << "Read Completed." << std::endl;
 
-                nc.close();
+                //nc.close();
                 
                 // TEST to force exception
                 //if (Data.getAtt("test_info").isNull ()){ progress_info  << " ** TEST getAtt is Null **" << std::endl; }

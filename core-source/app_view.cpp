@@ -415,7 +415,7 @@ ViewControl::ViewControl (Gxsm4app *app,
                 GtkDropTarget *target = gtk_drop_target_new (G_TYPE_INVALID, GDK_ACTION_COPY);
                 // This widget accepts two types of drop types: GFile objects
                 //GType types[] = { GDK_TYPE_FILE_LIST }; // appect multiple file to add as movie
-                GType types[] = { G_TYPE_FILE, G_TYPE_STRING, GDK_TYPE_FILE_LIST }; // file type only
+                GType types[1] = { G_TYPE_FILE }; //, GDK_TYPE_FILE_LIST }; // file type only
                 gtk_drop_target_set_gtypes (target, types, G_N_ELEMENTS (types));
                 g_signal_connect (target, "drop", G_CALLBACK (AppBase::gapp_load_on_drop_files), GINT_TO_POINTER (ChNo));
                 gtk_widget_add_controller (canvas, GTK_EVENT_CONTROLLER (target));

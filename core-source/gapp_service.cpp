@@ -1501,14 +1501,7 @@ gboolean AppBase::gapp_load_on_drop_files (GtkDropTarget *target, const GValue  
                 g_message ("FILE DROPPED %s", fn);
                 main_get_gapp () -> xsm->load (fn);
                 g_free (fn);
-        }
-        else if (G_VALUE_HOLDS (value, G_TYPE_STRING)){
-                gchar *fn = g_file_get_parse_name (g_value_get_object (value));
-                g_message ("STRING DROPPED %s -- trying to open", fn);
-                main_get_gapp () -> xsm->load (fn);
-                g_free (fn);
-        }
-        else{
+        } else{
                 GType type = G_VALUE_TYPE(value);
                 g_message ("UNSUPPORTED GValue OBJECT RECEIVED: %s ", g_type_name (type));
                 return FALSE;

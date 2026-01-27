@@ -24,7 +24,7 @@ mpl.pyplot.close('all')
 global metal_fit_points
 
 
-sc = dict(CH=1, CHZ=2, start_idx=0, end_idx=54, A0=0,B0=18, MB0=28, Z0=0., dFmin=-10.0, dFmax=1.0, Zmax=30, SZmax=10, SZmin=-0.5, F0off=0.21, STOP=0, slices=200)
+sc = dict(CH=3, CHZ=1, start_idx=0, end_idx=208, A0=0,B0=18, MB0=28, Z0=0., dFmin=-10.0, dFmax=1.0, Zmax=30, SZmax=10, SZmin=-0.5, F0off=0.21, STOP=0, slices=200)
 rp_freq_dev = 0.0  ### eventual Hz offset/thermal drift for later measured dF(z)
 
 # Setup SCs
@@ -393,6 +393,8 @@ def get_z_list_last():
 
 	return zlist
 
+
+
 ## from topo data
 def get_z_list(start=0, end=999):
 	ch=int(sc['CHZ'])-1
@@ -404,10 +406,10 @@ def get_z_list(start=0, end=999):
 		return
 	print ('Topo in CH ',ch+1, " #Z slices:",  nt)
 	zlist = np.zeros(0)
-	zi = dz*gxsm.get_data_pkt (ch, 10, 10, 0, start)
+	zi = dz*gxsm.get_data_pkt (ch, 114, 60, 0, start)
 	
 	for ti in range(start,nt):
-		z = dz*gxsm.get_data_pkt (ch, 10, 10, 0, ti)
+		z = dz*gxsm.get_data_pkt (ch, 114, 60, 0, ti)
 		print(ti,z)
 		zlist = np.append(zlist, z)
 	return zlist
@@ -425,11 +427,11 @@ def get_z_list_from_dFz_curves(ch, start=0, end=999):
 	print ('Topo in CH ',ch+1, " #Z slices:",  nt)
 	zlist = np.zeros(0)
 	zdflist = np.zeros(0)
-	zi = dz*gxsm.get_data_pkt (chz, 10, 10, 0, start)
+	zi = dz*gxsm.get_data_pkt (chz, 114, 60, 0, start)
 	
 	for ti in range(start,nt):
-		z = dz*gxsm.get_data_pkt (chz, 10, 10, 0, ti)
-		zdf = df*gxsm.get_data_pkt (ch, 10, 10, ti, 0) # average areas
+		z = dz*gxsm.get_data_pkt (chz, 114, 60, 0, ti)
+		zdf = df*gxsm.get_data_pkt (ch, 114, 60, ti, 0) # average areas
 		print(ti,z, zdf)
 		zlist = np.append(zlist, z)
 		zdflist = np.append(zdflist, zdf)
