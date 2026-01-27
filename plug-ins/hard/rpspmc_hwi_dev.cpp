@@ -1263,9 +1263,9 @@ gint rpspmc_hwi_dev::RTQuery (const gchar *property, double &val1, double &val2,
 
         if (*property == 'f'){
                 if (rt) {
-                        val1 = dvec[17];
+                        val1 = dvec[17]; // dFreq: **VEC_DFREQ 17
                         val2 = main_get_gapp()->xsm->Inst->V2nAmpere (dvec[19]); // Reading converted to nA
-                        val3 = dvec[19]; // Current Input reading in Volts (+/-1 V for RF-IN2, +/-5V for AD24-IN3
+                        val3 = dvec[19]; // Current Input reading in Volts (+/-1 V for RF-IN2, +/-5V for AD24-IN3 **VEC_ZSSIG 19
                 } else {
                         val1 = pacpll_parameters.dfreq_monitor; // Freq Shift
                         val2 = main_get_gapp()->xsm->Inst->V2nAmpere (spmc_parameters.signal_monitor); // Reading converted to nA
