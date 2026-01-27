@@ -354,7 +354,7 @@ PanView::PanView (Gxsm4app *app):AppBase(app){
 
 	finish (FALSE);
 
-	AppWindowInit (N_("Pan View and OSD"));
+	AppWindowInit ("Pan View and OSD");
 
 	// ========================================
 	/* set up the system relevant Parameters */

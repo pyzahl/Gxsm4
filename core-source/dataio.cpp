@@ -681,6 +681,8 @@ FIO_STATUS NetCDF::Read(xsm::open_mode mode){
                 progress_info  << " ** DONE READING NCDAT FILE **" << std::endl;
                 error_status << "Read Completed." << std::endl;
 
+                nc.close();
+                
                 // TEST to force exception
                 //if (Data.getAtt("test_info").isNull ()){ progress_info  << " ** TEST getAtt is Null **" << std::endl; }
                 //else { progress_info  << " ** TEST getAtt is OK **" << std::endl; }
@@ -772,6 +774,7 @@ FIO_STATUS NetCDF::Write(){
                         Data.putAtt("long_name", "LONG: signed 32bit data field");
                         break;
                 case ZD_FLOAT: 
+                        // Data = nc.addVar(scan->mem2d->GetTypName(), ncFloat, data_dims); // NEW TEST LATER
                         Data = nc.addVar("FloatField", ncFloat, data_dims);
                         Data.putAtt("long_name", "FLOAT: single precision floating point data field");
                         break;
@@ -1171,6 +1174,9 @@ FIO_STATUS NetCDF::Write(){
                 main_get_gapp ()->progress_info_set_bar_fraction (1.0, 1);
 
                 // close of nc takes place in destructor
+
+                nc.close (); // try
+                
                 progress_info  << " ** COMPLETED WRITING NETCDF DATA **" << std::endl;
                 main_get_gapp ()->progress_info_set_bar_text ("Finishing", 2);
                 scan->draw ();
@@ -1182,8 +1188,8 @@ FIO_STATUS NetCDF::Write(){
                 return status = FIO_OK;
                 
         } catch (const netCDF::exceptions::NcException& e) {
-                std::cerr << "EE: NetCDF File Write Error. Catch " << e.what() << std::endl;
-                error_status << "EE: NetCDF File Write Error. Catch " << e.what() << std::endl;
+                std::cerr    << "EE: Datio NetCDF File Write Error. Catch " << e.what() << " for > " << name << "<" << std::endl;
+                error_status << "EE: Datio NetCDF File Write Error. Catch " << e.what() << " for > " << name << "<" << std::endl;
 
                 error_status << "************************************************" << std::endl;
                 error_status << "PROGRESS REPORT" << std::endl;

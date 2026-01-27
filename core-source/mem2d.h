@@ -153,6 +153,18 @@ public:
 
 	size_t      GetEsz(){return data->Zsize();};
 	ZD_TYPE     GetTyp(){return zdtyp;};
+        const char* GetTypName(){
+                switch (GetTyp()){
+                case ZD_DOUBLE:  return "DoubleField"; break; // Double data field ?
+                case ZD_FLOAT:   return "FloatField"; break;  // Float data field ?
+                case ZD_SHORT:   return "H"; break;           // standart "SHORT" Topo Scan ?
+                case ZD_LONG:    return "Intensity"; break;   // used by "Intensity" -- diffraction counts
+                case ZD_BYTE:    return "ByteField"; break;   // Byte ?
+                case ZD_COMPLEX: return "ComplexDoubleField"; break; // Complex ?
+                case ZD_RGBA:    return "RGBA_ByteField"; break;     // RGBA Byte ?
+                default:    return "GXSM TYP ERROR"; break;
+                }
+        };
 	const char* GetEname();
 
         inline int  GetNx(){return data->nx;};

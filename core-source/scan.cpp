@@ -998,75 +998,76 @@ int Scan::Update_ZData_NcFile(){
 
         // check for file name
 	if (!storage_manager.get_filename()){
-                g_warning("No file name yet, please save first to update later!");
+                g_warning(" Scan::Update_ZData_NcFile(): No file name yet, please save first to update later!");
                 return -1;
         }
         
-        try {
-                // open in write mode
-                std::string filename = storage_manager.get_filename();
-                NcFile nc(filename, netCDF::NcFile::write);
+        if (g_file_test(storage_manager.get_filename(), G_FILE_TEST_EXISTS)){
+                try {
+                        // open in write mode
+                        std::string filename = storage_manager.get_filename();
+                        NcFile nc(filename, netCDF::NcFile::write);
                 
-                // read Data variable
-                NcVar Data;
+                        // read Data variable
+                        NcVar Data = nc.getVar(mem2d->GetTypName());
                 
-                switch (mem2d->GetTyp()){
-                case ZD_DOUBLE:  Data = nc.getVar("DoubleField"); break; // Double data field ?
-                case ZD_FLOAT:   Data = nc.getVar("FloatField"); break;  // Float data field ?
-                case ZD_SHORT:   Data = nc.getVar("H"); break;           // standart "SHORT" Topo Scan ?
-                case ZD_LONG:    Data = nc.getVar("Intensity"); break;   // used by "Intensity" -- diffraction counts
-                case ZD_BYTE:    Data = nc.getVar("ByteField"); break;   // Byte ?
-                case ZD_COMPLEX: Data = nc.getVar("ComplexDoubleField"); break; // Complex ?
-                case ZD_RGBA:    Data = nc.getVar("RGBA_ByteField"); break;     // RGBA Byte ?
-                default:    g_critical("Sorry, compatible NetCDF Data field variable not found."); return -1;
-                }
-                
-                if (!Data.isNull()){
-                        g_critical("Sorry, NetCDF file ZData type is incompatible. Please save this scan first to update later!");
-                        return -1;
-                }
-
-                data.ui.SetOriginalName (storage_manager.get_name ("(in progress)"));
-                
-                g_message("Data in NetCDF file >%s< is now updated!", storage_manager.get_filename());
-                main_get_gapp ()->monitorcontrol->LogEvent("*Update", storage_manager.get_filename());
-                main_get_gapp ()->SetStatus(N_("Update done "), storage_manager.get_name());
-
-                if (data.s.ntimes == 1){
-                        mem2d->data->NcPut (Data, 0, true);
-                } else {
-                        for (int time_index=0; time_index<data.s.ntimes; ++time_index)
-                                mem2d_time_element(time_index)->data->NcPut (Data, time_index, true);
-                }
-
-                return 0;
-                
-        } catch (const netCDF::exceptions::NcException& e) {
-                std::cerr << "EE: NetCDF File Error: " << e.what() << std::endl;
-                g_warning("NetCDF file is not valid, please save first to update later! Trying Auto Save now...");
-                if (Save ()){ // try auto save, do not overwrite automatically
-                        GtkWidget *dialog = gtk_message_dialog_new (NULL,
-                                                                    GTK_DIALOG_DESTROY_WITH_PARENT,
-                                                                    GTK_MESSAGE_WARNING,
-                                                                    GTK_BUTTONS_YES_NO,
-                                                                    N_("File '%s' exists or can't be written, try overwrite?"),
-                                                                    storage_manager.get_filename());
-                        // FIX-ME-GTK4
-                        int overwrite = GTK_RESPONSE_YES;
-                        g_signal_connect (dialog, "response", G_CALLBACK (gtk_window_destroy), NULL);
-                        gtk_widget_show (dialog);
-                        //int overwrite = gtk_dialog_run (GTK_DIALOG (dialog));
-                        //gtk_widget_destroy (dialog);
-                        if (overwrite != GTK_RESPONSE_YES){
-                                main_get_gapp ()->SetStatus(N_("File exists, save aborted by user."));
-                                return -1; // abort
-                        } else {
-                                Save (true); // force overwrite as requested
-                                return 0;
+                        if (Data.isNull()){
+                                g_critical(" Scan::Update_ZData_NcFile(): Sorry, NetCDF file ZData type is incompatible. Please save this scan first to update later! ** GXSM SCAN DATA TYPE ID: %s",
+                                           mem2d->GetTypName());
+                                return -1;
                         }
-                }
-                data.ui.SetOriginalName (storage_manager.get_name ("*(in progress)"));
 
-                return 0; // saved full
+                        data.ui.SetOriginalName (storage_manager.get_name ("(in progress)"));
+                
+                        g_message("Data in NetCDF file >%s< is now updated!", storage_manager.get_filename());
+                        main_get_gapp ()->monitorcontrol->LogEvent("*Update", storage_manager.get_filename());
+
+                        if (data.s.ntimes == 1){
+                                mem2d->data->NcPut (Data, 0, true);
+                        } else {
+                                for (int time_index=0; time_index<data.s.ntimes; ++time_index)
+                                        mem2d_time_element(time_index)->data->NcPut (Data, time_index, true);
+                        }
+                        main_get_gapp ()->SetStatus(N_("Update done "), storage_manager.get_name());
+                        g_message("Update of >%s< completed.", storage_manager.get_filename());
+
+                        nc.close();
+                        
+                        return 0; // done!
+                
+                } catch (const netCDF::exceptions::NcException& e) {
+                        std::cerr << "EE: NetCDF NcExeption in Scan::Update_ZData_NcFile(): " << e.what() << std::endl
+                                  << " Gxsm SM filename: >" << storage_manager.get_filename() << "<" << std::endl;
+                        g_warning("NetCDF file is not valid, please save first to update later! Trying Auto Save now...");
+                }
         }
+                
+        g_message("NetCDF file is not yet exiting or bogus. Initiating full save of >%s<.", storage_manager.get_filename());
+
+        if (Save ()){ // try auto save, do not overwrite automatically
+                GtkWidget *dialog = gtk_message_dialog_new (NULL,
+                                                            GTK_DIALOG_DESTROY_WITH_PARENT,
+                                                            GTK_MESSAGE_WARNING,
+                                                            GTK_BUTTONS_YES_NO,
+                                                            N_("File '%s' exists or can't be written, try overwrite?"),
+                                                            storage_manager.get_filename());
+                // FIX-ME-GTK4
+                int overwrite = GTK_RESPONSE_YES;
+                g_signal_connect (dialog, "response", G_CALLBACK (gtk_window_destroy), NULL);
+                gtk_widget_show (dialog);
+                //int overwrite = gtk_dialog_run (GTK_DIALOG (dialog));
+                //gtk_widget_destroy (dialog);
+                if (overwrite != GTK_RESPONSE_YES){
+                        main_get_gapp ()->SetStatus(N_("File exists, save aborted by user."));
+                        return -1; // abort
+                } else {
+                        Save (true); // force overwrite as requested
+                        return 0;
+                }
+        }
+        data.ui.SetOriginalName (storage_manager.get_name ("*(in progress)"));
+
+        g_message("Initial save of >%s< completed.", storage_manager.get_filename());
+
+        return 0; // saved full
 }

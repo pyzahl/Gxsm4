@@ -568,7 +568,7 @@ ProbeIndicator::ProbeIndicator (Gxsm4app *app):AppBase(app){
         modes = SCOPE_NONE;
         kao_scale[0]=kao_scale[1]=kao_scale[2]=kao_scale[3]=0.; // Auto
  
-	AppWindowInit (N_("HUD Probe Indicator"));
+	AppWindowInit ("HUD Probe Indicator");
 
 	canvas = gtk_drawing_area_new(); // make a drawing area
 
@@ -1155,7 +1155,7 @@ gint ProbeIndicator::refresh(){
                                 if (modes & SCOPE_INFOPLUS){
                                         static double lasts=0.;
                                         chinfoflag=1;
-                                        double s=xr/8.0; // scale / DIV   // 8 DIV is full scale screen
+                                        double s=fabs(xr/8.0); // scale / DIV   // 8 DIV is full scale screen
                                         if (lasts != s){
                                                 lasts=s;
                                                 const gchar *AA = "Å";
@@ -1171,7 +1171,7 @@ gint ProbeIndicator::refresh(){
                                                         static gchar *prefix[]    = { "a",  "f", "p", "n", "μ", "m", " ", "k", "M", "G", "T", NULL };
                                                         while (s > 999. && M < 10) { s*=1e-3; M++; }
                                                         while (s < 0.999 && M > 0) { s*=1e3; M--; }
-                                                        gchar *tmp=g_strdup_printf ("CH%d %5.1f %s%s/DIV %s", ch+1, s, prefix[M], kao_ch_unit[ch], av_range > xr ? "OV":"");
+                                                        gchar *tmp=g_strdup_printf ("CH%d %.2g %s%s/DIV %s", ch+1, s, prefix[M], kao_ch_unit[ch], av_range > xr ? "OV":"");
                                                         ch_info[ch]->set_text (tmp); g_free (tmp); ch_info[ch]->queue_update (canvas);
                                                 }
                                         }
