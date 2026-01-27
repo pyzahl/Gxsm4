@@ -658,9 +658,9 @@ class gxsm_process():
                         gxsm_shares=np.ndarray((101), dtype=np.double, buffer=self.gxsm_shm.buf) # flat array all shares 
                         xyz=np.ndarray((9,), dtype=np.double, buffer=self.gxsm_shm.buf[8:],).reshape((3,3)).T  # X Mi Ma, Y Mi Ma, Z Mi Ma
                         #xyz=np.ndarray((9,), dtype=np.double, buffer=self.gxsm_shm.buf).reshape((3,3)).T  # X Mi Ma, Y Mi Ma, Z Mi Ma
-                        self.XYZ_monitor['monitor']=xyz[0]*20
-                        self.XYZ_monitor['monitor_max']=xyz[1]*20
-                        self.XYZ_monitor['monitor_min']=xyz[2]*20
+                        self.XYZ_monitor['monitor']=xyz[0]
+                        self.XYZ_monitor['monitor_max']=xyz[1]
+                        self.XYZ_monitor['monitor_min']=xyz[2]
 
                 except AttributeError:
                         # just try open again
