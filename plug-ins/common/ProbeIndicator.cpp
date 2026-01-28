@@ -505,11 +505,18 @@ void ProbeIndicator::scope_ftfast_callback (GtkWidget *widget, gpointer user_dat
 
 void ProbeIndicator::scope_fft_callback (GtkWidget *widget, gpointer user_data) {
         ProbeIndicator *pv = (ProbeIndicator *) user_data; 
-        //g_print ("ProbeIndicator::zoom_scope_callback TB: %d\n", gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget)));
         if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget)))
                 pv->modes = (pv->modes & ~SCOPE_FFT) | SCOPE_FFT;
         else
                 pv->modes &= ~SCOPE_FFT;
+}
+
+void ProbeIndicator::scope_envelop_callback (GtkWidget *widget, gpointer user_data) {
+        ProbeIndicator *pv = (ProbeIndicator *) user_data; 
+        if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget)))
+                pv->modes = (pv->modes & ~SCOPE_ENVELOP) | SCOPE_ENVELOP;
+        else
+                pv->modes &= ~SCOPE_ENVELOP;
 }
 
 void ProbeIndicator::record_callback (GtkWidget *widget, gpointer user_data) {
@@ -642,6 +649,17 @@ ProbeIndicator::ProbeIndicator (Gxsm4app *app):AppBase(app){
                           G_CALLBACK (ProbeIndicator::pause_callback), this);
 	gtk_grid_attach (GTK_GRID (v_grid), tb, 1,6, 1,1);
 
+        tb = gtk_toggle_button_new ();
+        gtk_button_set_icon_name (GTK_BUTTON (tb), "mail-unread-symbolic"); // "envelop"
+        gtk_widget_show (tb);
+        gtk_widget_set_name (tb, "probe-indicator-button"); // name used by CSS to apply custom color scheme
+	gtk_widget_set_tooltip_text (tb, N_("Envelop Trace Mode"));
+        g_signal_connect (G_OBJECT (tb), "toggled",
+                          G_CALLBACK (ProbeIndicator::scope_envelop_callback), this);
+	gtk_grid_attach (GTK_GRID (v_grid), tb, 1,7, 1,1);
+
+
+        
         // ==== 2nd
         tb = gtk_toggle_button_new ();
         gtk_button_set_icon_name (GTK_BUTTON (tb), "preferences-system-details-symbolic");
@@ -1192,21 +1210,45 @@ gint ProbeIndicator::refresh(){
 
                                 // process, scale, prepare trace horizon object(s)
                                 double tcenter = scope_t[SCOPE_N>>1];
-                                for(i=k=0; i<kao_trace_len; ++i){
-                                        double x=0.;
-                                        for (int j=0; j<dec; ++j, ++k){
-                                                x += scope[ch][k];
-                                                xrms[ch] += scope[ch][k]*scope[ch][k];
+                                if (modes & SCOPE_ENVELOP)
+                                        for(i=k=0; i<kao_trace_len; ++i){
+                                                double x=0.;
+                                                double locxmax=scope[ch][k];
+                                                double locxmin=scope[ch][k];
+                                                for (int j=0; j<dec; ++j, ++k){
+                                                        x = scope[ch][k];
+                                                        if (x>locxmax)
+                                                                locxmax = x;
+                                                        if (x<locxmin)
+                                                                locxmin = x;
+                                                        xrms[ch] += scope[ch][k]*scope[ch][k];
+                                                        xav += x;
+                                                }
+                                                if (locxmax>xmax)
+                                                        xmax = locxmax;
+                                                if (x<locxmin)
+                                                        xmin = locxmin;
+                                                
+                                                x = i&1 ? locxmin:locxmax; // envelop, via alternating min max
+
+                                                trace[ch]->set_xy (i, dxdt*(scope_t[k]-tcenter), -64*(x-xc)/xr); // X=i-64
                                         }
-                                        xav += x;
-                                        x /= dec; // native Units
-                                        if (x>xmax)
-                                                xmax = x;
-                                        if (x<xmin)
-                                                xmin = x;
+                                else
+                                        for(i=k=0; i<kao_trace_len; ++i){
+                                                double x=0.;
+                                                for (int j=0; j<dec; ++j, ++k){
+                                                        x += scope[ch][k];
+                                                        xrms[ch] += scope[ch][k]*scope[ch][k];
+                                                }
+                                                xav += x;
+                                                x /= dec; // native Units
+                                                if (x>xmax)
+                                                        xmax = x;
+                                                if (x<xmin)
+                                                        xmin = x;
                       
-                                        trace[ch]->set_xy (i, dxdt*(scope_t[k]-tcenter), -64*(x-xc)/xr); // X=i-64
-                                }
+                                                trace[ch]->set_xy (i, dxdt*(scope_t[k]-tcenter), -64*(x-xc)/xr); // X=i-64
+                                        }
                                 
                                 // signal filters for smooth auto scaling
                                 xrms[ch] /= SCOPE_N;

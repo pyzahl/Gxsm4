@@ -44,7 +44,8 @@
 #define SCOPE_INFOPLUS  0x40
 #define SCOPE_INFOMINUS 0x80
 #define SCOPE_PAUSE     0x100
-#define SCOPE_DBG       0x200
+#define SCOPE_ENVELOP   0x200
+#define SCOPE_DBG       0x2000
 
 
 class cairo_item_switch {
@@ -333,6 +334,7 @@ public:
 
         static void close_callback (GtkWidget *widget, gpointer user_data);
         static void run_scope_callback (GtkWidget *widget, gpointer user_data);
+        static void scope_envelop_callback (GtkWidget *widget, gpointer user_data);
         static void zoom_scope_callback (GtkWidget *widget, gpointer user_data);
         static void scope_fft_callback (GtkWidget *widget, gpointer user_data);
         static void scope_ftfast_callback (GtkWidget *widget, gpointer user_data);
