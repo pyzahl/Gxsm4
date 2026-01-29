@@ -370,7 +370,9 @@ void ProbeIndicator::KAO_tdiv_callback (GtkWidget *widget, gpointer user_data) {
         //int KAO_hlen[] = { 128, 256, 512, 1024, 2048, 4096, 8192, 16384 };
         int KAO_hlen[] = { 256, 512, 1024, 2048, 4096, 8192, 16384 };
         int hlen=0;
-        if (main_get_gapp()->xsm->hardware){
+        if (pv->modes & SCOPE_DEMO)
+                pv->kao_samples = KAO_hlen[gtk_combo_box_get_active(GTK_COMBO_BOX(widget))];
+        else if (main_get_gapp()->xsm->hardware){
                 double *dummy=NULL;
                 hlen = main_get_gapp()->xsm->hardware->RTQuery ("L", 0, dummy); // query actual historty len available
                 if (hlen >= KAO_hlen[gtk_combo_box_get_active(GTK_COMBO_BOX(widget))])
@@ -522,10 +524,13 @@ void ProbeIndicator::scope_envelop_callback (GtkWidget *widget, gpointer user_da
 void ProbeIndicator::record_callback (GtkWidget *widget, gpointer user_data) {
         ProbeIndicator *pv = (ProbeIndicator *) user_data; 
         //g_print ("ProbeIndicator:record_:scope_callback TB: %d\n", gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget)));
-        if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget)))
+        if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget))){
                 pv->modes = (pv->modes & ~SCOPE_RECORD) | SCOPE_RECORD;
-        else
+                pv->modes = (pv->modes & ~SCOPE_DEMO) | SCOPE_DEMO;
+        } else {
                 pv->modes &= ~SCOPE_RECORD;
+                pv->modes &= ~SCOPE_DEMO;
+        }
 }
 
 void ProbeIndicator::pause_callback (GtkWidget *widget, gpointer user_data) {
@@ -835,6 +840,8 @@ ProbeIndicator::ProbeIndicator (Gxsm4app *app):AppBase(app){
         for (int ch=0; ch<KAO_CHANNEL_NUMBER; ch++){
                 trace[ch]=probe->add_horizon (chl[ch], 0.0, 0.0, kao_trace_len);
                 probe->set_horizon_color(trace[ch], chc[ch]);
+                trace_env[ch]=probe->add_horizon_segments (chl[ch], 0.0, 0.0, kao_trace_len);
+                probe->set_horizon_color(trace_env[ch], chc[ch]);
                 trace_psd[ch]=probe->add_horizon (chpl[ch], 0.0, 0.0, kao_trace_len);
                 probe->set_horizon_color(trace_psd[ch], chc[ch], 1.2);
 
@@ -1030,7 +1037,7 @@ gint ProbeIndicator::refresh(){
         static gint infoflag=1;
         static gint chinfoflag=1;
         static gint scopeflag=1;
-
+        
         if (busy) return FALSE; // skip this one, busy
         if (!probe) return FALSE;
         
@@ -1090,11 +1097,11 @@ gint ProbeIndicator::refresh(){
                         //main_get_gapp()->xsm->hardware->RTQuery ("T",  SCOPE_N+1, NULL); // RT Query, Trigger next
                         
                         // TEST / DEMO MODE
-                        if(modes & SCOPE_RECORD){
-                                double w = 4./SCOPE_N;
+                        if(modes & SCOPE_DEMO){
+                                double w = 4./SCOPE_N_MAX;
                                 static double phi=0;
-                                for (int i=0; i<SCOPE_N+1; ++i){
-                                        scope_t[SCOPE_N-i] = 0.33*w*i*2*M_PI+phi;
+                                for (int i=0; i<SCOPE_N_MAX+1; ++i){
+                                        scope_t[SCOPE_N_MAX-i] = 0.33*w*i*2*M_PI+phi;
                                         scope[0][i] = sin (w*i*2*M_PI+phi);
                                         scope[1][i] = cos (w*i*2*M_PI+phi) > 0. ? 1:-1;
                                 }
@@ -1119,12 +1126,12 @@ gint ProbeIndicator::refresh(){
 
                         if (kao_num_ch < 4 && ch34flag){
                                 ch34flag=0;
-                                for(int i=0; i<kao_trace_len; ++i){
-                                        trace[2]->set_xy (i, 0., 0.);
-                                        trace[3]->set_xy (i, 0., 0.);
-                                        trace_psd[2]->set_xy (i, 0., 0.);
-                                        trace_psd[3]->set_xy (i, 0., 0.);
-                                }
+                                trace[2]->hide ();
+                                trace[3]->hide ();
+                                trace_env[2]->hide ();
+                                trace_env[3]->hide ();
+                                trace_psd[2]->hide ();
+                                trace_psd[3]->hide ();
                                 ch_info[2]->set_text (""); ch_info[2]->queue_update (canvas);
                                 ch_info[3]->set_text (""); ch_info[3]->queue_update (canvas);
                         } else ch34flag=1;
@@ -1154,18 +1161,19 @@ gint ProbeIndicator::refresh(){
                                                 kao_dc_set[ch] = xavg[ch];
                                         break; // DC
                                 case 2: kao_dc_set[ch] = 0.0; // GND = center
+                                        xavg[ch] = 0.0; // Reset
                                         break;
                                 default: kao_dc_set[ch] = 0.0; // OFF
+                                        xavg[ch] = 0.0; // Reset
                                         ch_info[ch]->set_text (""); ch_info[ch]->queue_update (canvas);
                                         gtk_button_set_label (GTK_BUTTON(kao_dc[ch]), "--");
-                                        for(int i=0; i<kao_trace_len; ++i){
-                                                trace[ch]->set_xy (i, 0., 0.);
-                                                trace_psd[ch]->set_xy (i, 0., 0.);
-                                        }
+                                        trace[ch]->hide ();
+                                        trace_env[ch]->hide ();
+                                        trace_psd[ch]->hide ();
                                         continue;
                                         break;
                                 }
-
+                                              
                                 // Signal Level DC "@=0"
                                 { gchar *tmp=g_strdup_printf ("%.4g %s", kao_dc_set[ch], kao_ch_unit[ch]); gtk_button_set_label (GTK_BUTTON(kao_dc[ch]), tmp); g_free (tmp); }
 
@@ -1210,7 +1218,7 @@ gint ProbeIndicator::refresh(){
 
                                 // process, scale, prepare trace horizon object(s)
                                 double tcenter = scope_t[SCOPE_N>>1];
-                                if (modes & SCOPE_ENVELOP)
+                                if (modes & SCOPE_ENVELOP){
                                         for(i=k=0; i<kao_trace_len; ++i){
                                                 double x=0.;
                                                 double locxmax=scope[ch][k];
@@ -1224,16 +1232,23 @@ gint ProbeIndicator::refresh(){
                                                         xrms[ch] += scope[ch][k]*scope[ch][k];
                                                         xav += x;
                                                 }
-                                                if (locxmax>xmax)
+                                                if (locxmax > xmax)
                                                         xmax = locxmax;
-                                                if (x<locxmin)
+                                                if (locxmin < xmin)
                                                         xmin = locxmin;
-                                                
-                                                x = i&1 ? locxmin:locxmax; // envelop, via alternating min max
 
-                                                trace[ch]->set_xy (i, dxdt*(scope_t[k]-tcenter), -64*(x-xc)/xr); // X=i-64
+                                                if (64*fabs(locxmin-locxmax)/xr < 1.25){
+                                                        x = locxmin;
+                                                        trace_env[ch]->set_xy (2*i,   dxdt*(scope_t[k]-tcenter), -64*(x-xc)/xr+0.65);
+                                                        trace_env[ch]->set_xy (2*i+1, dxdt*(scope_t[k]-tcenter), -64*(x-xc)/xr-0.65);
+                                                } else {
+                                                        trace_env[ch]->set_xy (2*i,   dxdt*(scope_t[k]-tcenter), -64*(locxmin-xc)/xr);
+                                                        trace_env[ch]->set_xy (2*i+1, dxdt*(scope_t[k]-tcenter), -64*(locxmax-xc)/xr);
+                                                }
                                         }
-                                else
+                                        trace_env[ch]->show();
+                                        trace[ch]->hide();
+                                } else {
                                         for(i=k=0; i<kao_trace_len; ++i){
                                                 double x=0.;
                                                 for (int j=0; j<dec; ++j, ++k){
@@ -1249,6 +1264,10 @@ gint ProbeIndicator::refresh(){
                       
                                                 trace[ch]->set_xy (i, dxdt*(scope_t[k]-tcenter), -64*(x-xc)/xr); // X=i-64
                                         }
+                                        trace[ch]->show();
+                                        trace_env[ch]->hide();
+                                }
+
                                 
                                 // signal filters for smooth auto scaling
                                 xrms[ch] /= SCOPE_N;
@@ -1304,20 +1323,15 @@ gint ProbeIndicator::refresh(){
                                                         x /= cnt;
                                                 trace_psd[ch]->set_xy (i, -xs*(i-i0), 64-32.*x/96.); // x: 0..-96db
                                         }
-                                } else {
-                                        for(i=0; i<kao_trace_len; ++i)
-                                                trace_psd[ch]->set_xy (i, 0., 0.);
-                                }
+                                        trace_psd[ch]->show();
+                                } else 
+                                        trace_psd[ch]->hide();
                         }
-                        scopeflag=1;
                 } else {
-                        if (scopeflag){
-                                for(int i=0; i<kao_trace_len; ++i)
-                                        for(int ch=0; ch<KAO_CHANNEL_NUMBER; ++ch){
-                                                trace[ch]->set_xy (i, 0., 0.);
-                                                trace_psd[ch]->set_xy (i, 0., 0.);
-                                        }
-                                scopeflag=0;
+                        for(int ch=0; ch<KAO_CHANNEL_NUMBER; ++ch){
+                                trace[ch]->hide();
+                                trace_env[ch]->hide();
+                                trace_psd[ch]->hide();
                         }
                 }
                 if (modes & SCOPE_INFO){

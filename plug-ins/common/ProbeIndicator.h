@@ -45,6 +45,7 @@
 #define SCOPE_INFOMINUS 0x80
 #define SCOPE_PAUSE     0x100
 #define SCOPE_ENVELOP   0x200
+#define SCOPE_DEMO      0x1000
 #define SCOPE_DBG       0x2000
 
 
@@ -235,11 +236,22 @@ public:
                 h->set_angle(pos/400.*2.*M_PI);
                 h->set_stroke_rgba (cc_horizon);
                 h->set_position (0., y);
-                h->set_line_width (2.0);
+                h->set_line_width (1.25);
                 horizon = g_slist_prepend (horizon, h);
                 return h;
         };
-        void set_horizon_color(cairo_item_path* p, int id, gfloat s=1.0){
+        cairo_item_segments* add_horizon_segments (const gchar *id, double pos, double z, gint n){
+                double y=irad*z;
+                cairo_item_segments *h = new cairo_item_segments (2*n);
+                h->set_id(id);
+                h->set_angle(pos/400.*2.*M_PI);
+                h->set_stroke_rgba (cc_horizon);
+                h->set_position (0., y);
+                h->set_line_width (0.6);
+                horizon = g_slist_prepend (horizon, h);
+                return h;
+        };
+        void set_horizon_color(cairo_item* p, int id, gfloat s=1.0){
                 float cc_tmp[4];
                 set_color (cc_tmp, id, transparency);
                 p->set_stroke_rgba (cc_tmp);
@@ -471,5 +483,6 @@ private:
         cairo_item_path_closed *tip;
         cairo_item_path_closed *m1, *m2;
         cairo_item_path *trace[KAO_CHANNEL_NUMBER];
+        cairo_item_segments *trace_env[KAO_CHANNEL_NUMBER];
         cairo_item_path *trace_psd[KAO_CHANNEL_NUMBER];
 };

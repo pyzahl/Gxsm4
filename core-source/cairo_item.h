@@ -367,7 +367,8 @@ public:
                         cairo_stroke (cr);
                         cairo_restore (cr);
                 } else {
-                        g_warning ("cairo_item_path::draw called with insufficent node number.");
+                        if (show_flag)
+                                g_warning ("cairo_item_path::draw called with insufficent node number. n: %d", n);
                 }
         };
         
