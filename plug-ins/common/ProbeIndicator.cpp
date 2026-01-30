@@ -402,11 +402,13 @@ void ProbeIndicator::KAO_skl_callback (GtkWidget *widget, gpointer user_data) {
         ProbeIndicator *pv = (ProbeIndicator *) user_data; 
         int ch= GPOINTER_TO_INT (g_object_get_data(G_OBJECT (widget), "SN"));
         int s = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
-        if (s==0)
+        if (s==0){
                 pv->kao_scale[ch] = 0.; // Auto
-        else {
+                gtk_widget_set_sensitive (GTK_WIDGET (g_object_get_data(G_OBJECT (widget), "MULTI")), false);
+        } else {
                 pv->kao_scale_M[ch] = 1./(1e-6*pow (10., (double)s-1));
                 pv->kao_scale[ch] = pv->kao_scale_M[ch] * pv->kao_scale_m[ch];
+                gtk_widget_set_sensitive (GTK_WIDGET (g_object_get_data(G_OBJECT (widget), "MULTI")), true);
         }
         gchar *tmp = g_strdup_printf ("skl%d %s %d x (%g x %g) = %g", ch+1, 
                                       gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(widget)),
@@ -422,6 +424,7 @@ void ProbeIndicator::KAO_sklX_callback (GtkWidget *widget, gpointer user_data) {
         ProbeIndicator *pv = (ProbeIndicator *) user_data; 
         int ch= GPOINTER_TO_INT (g_object_get_data(G_OBJECT (widget), "SN"));
         int s = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
+
         if (s < 3)
                 pv->kao_scale_m[ch] = s == 0? 1. : s == 1? 2. : 5.;
         else{
@@ -584,8 +587,8 @@ ProbeIndicator::ProbeIndicator (Gxsm4app *app):AppBase(app){
 
 	canvas = gtk_drawing_area_new(); // make a drawing area
 
-        gtk_drawing_area_set_content_width  (GTK_DRAWING_AREA (canvas), 2*hud_size);
-        gtk_drawing_area_set_content_height (GTK_DRAWING_AREA (canvas), 2.4*hud_size);
+        gtk_drawing_area_set_content_width  (GTK_DRAWING_AREA (canvas), 450); //2*hud_size);
+        gtk_drawing_area_set_content_height (GTK_DRAWING_AREA (canvas), 550); //2.4*hud_size);
 
         gtk_widget_set_hexpand(GTK_WIDGET (canvas), true);
         gtk_widget_set_vexpand(GTK_WIDGET (canvas), true);
@@ -755,20 +758,21 @@ ProbeIndicator::ProbeIndicator (Gxsm4app *app):AppBase(app){
                 gtk_widget_show (CMsklcb);
                 g_signal_connect (G_OBJECT (CMsklcb), "changed",
                                   G_CALLBACK (ProbeIndicator::KAO_skl_callback), this);
-                gtk_combo_box_set_active (GTK_COMBO_BOX (CMsklcb), 0); 
                 gtk_grid_attach (GTK_GRID (v_grid), CMsklcb, col[ch],kao_row, 2,1);
                 if (ch >= 2) kao_ch34_widget_list = g_slist_prepend( kao_ch34_widget_list, CMsklcb);
 
                 static gchar *CMsklm[] = { "x1", "x2", "x5", "x-1", "x-2", "x-5", NULL };
-                CMsklcb = gtk_combo_box_text_new (); 
-                g_object_set_data(G_OBJECT (CMsklcb), "SN", GINT_TO_POINTER (ch)); 
-                for (int j=0; CMsklm[j]; ++j){ gchar *id = g_strdup_printf ("%d", j);  gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (CMsklcb), id, CMsklm[j]); g_free (id); }
-                gtk_widget_show (CMsklcb);
-                g_signal_connect (G_OBJECT (CMsklcb), "changed",
+                GtkWidget *CMsklMcb = gtk_combo_box_text_new (); 
+                g_object_set_data(G_OBJECT (CMsklMcb), "SN", GINT_TO_POINTER (ch)); 
+                for (int j=0; CMsklm[j]; ++j){ gchar *id = g_strdup_printf ("%d", j);  gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (CMsklMcb), id, CMsklm[j]); g_free (id); }
+                gtk_widget_show (CMsklMcb);
+                g_signal_connect (G_OBJECT (CMsklMcb), "changed",
                                   G_CALLBACK (ProbeIndicator::KAO_sklX_callback), this);
-                gtk_combo_box_set_active (GTK_COMBO_BOX (CMsklcb), 0);
-                gtk_grid_attach (GTK_GRID (v_grid), CMsklcb, col[ch]+2,kao_row++, 2,1);
-                if (ch >= 2) kao_ch34_widget_list = g_slist_prepend( kao_ch34_widget_list, CMsklcb);
+                g_object_set_data(G_OBJECT (CMsklcb), "MULTI", GTK_WIDGET (CMsklMcb)); 
+                gtk_combo_box_set_active (GTK_COMBO_BOX (CMsklcb), 0); 
+                gtk_combo_box_set_active (GTK_COMBO_BOX (CMsklMcb), 0);
+                gtk_grid_attach (GTK_GRID (v_grid), CMsklMcb, col[ch]+2,kao_row++, 2,1);
+                if (ch >= 2) kao_ch34_widget_list = g_slist_prepend( kao_ch34_widget_list, CMsklMcb);
         
                 // Signal Selectors *** RPSPMC ***
                 static gchar *VCmap[] = { "X", "Y", "Z", "BIAS", "CURR", "IN1", "IN2", "IN3", "IN4", "AMP", "EXEC", "DFREQ", "PHASE", NULL };

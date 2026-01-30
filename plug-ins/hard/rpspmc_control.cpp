@@ -3152,7 +3152,7 @@ void RPSPMC_Control::update_zpos_readings(){
         ZPos_ec->Put_Value ();
         g_free (info);
 
-        g_message ("update_zpos_readings() -- manage CSS warnings Z");
+        //g_message ("update_zpos_readings() -- manage CSS warnings Z");
         
         static gint64 t=0;
         static gboolean GVP_Z_flagged=false;
