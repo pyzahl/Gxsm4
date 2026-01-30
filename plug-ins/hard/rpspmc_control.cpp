@@ -1228,6 +1228,7 @@ void RPSPMC_Control::create_folder (){
 
         bp->set_default_ec_change_notice_fkt (RPSPMC_Control::BiasChanged, this);
         bp->grid_add_ec_with_scale ("Bias", Volt, &bias, -10., 10., "4g", 0.001, 0.01, "fbs-bias");
+        Bias_Set = bp->ec;
         FPGA_readback_update_list = g_slist_prepend (FPGA_readback_update_list, bp->ec); // add to FPGA reconnect readback parameter list
         //        bp->ec->set_adjustment_mode (PARAM_CONTROL_ADJUSTMENT_LOG | PARAM_CONTROL_ADJUSTMENT_LOG_SYM | PARAM_CONTROL_ADJUSTMENT_DUAL_RANGE | PARAM_CONTROL_ADJUSTMENT_ADD_MARKS ); // LIN:0, LOG:1, SYM:2, DR: 4, TICS:8
         bp->ec->set_logscale_min (1e-3);
@@ -1240,6 +1241,7 @@ void RPSPMC_Control::create_folder (){
         //bp->set_input_width_chars (20);
         //bp->set_input_nx (2);
         bp->grid_add_ec_with_scale ("Z-Pos/Setpoint", Angstroem, &zpos_ref, -1000., 1000., "6g", 0.01, 0.1, "adv-dsp-zpos-ref");
+        ZPos_Set=bp->ec;
         FPGA_readback_update_list = g_slist_prepend (FPGA_readback_update_list, bp->ec); // add to FPGA reconnect readback parameter list
         bp->ec->SetScaleWidget (bp->scale, 0);
         gtk_scale_set_digits (GTK_SCALE (bp->scale), 5);
@@ -2003,6 +2005,7 @@ void RPSPMC_Control::create_folder (){
         bp->set_label_width_chars (3);
 
         bp->grid_add_ec ("Mon", Volt, &spmc_parameters.bias_monitor, -10.0, 10.0, ".03g", 0.1, 1., "GVP-U-MONITOR");
+        GVP_Mon_U=bp->ec;
         //bp->grid_add_ec ("Mon:", Volt, &spmc_parameters.gvpu_monitor, -10.0, 10.0, ".03g", 0.1, 1., "GVP-U-MONITOR");
         EC_MONITORS_list = g_slist_prepend( EC_MONITORS_list, bp->ec);
         bp->ec->Freeze ();
@@ -2013,6 +2016,7 @@ void RPSPMC_Control::create_folder (){
         EC_MONITORS_list = g_slist_prepend( EC_MONITORS_list, bp->ec);
         bp->ec->Freeze ();
         bp->grid_add_ec (NULL, Angstroem, &GVP_XYZ_mon_AA[2], -1e10, 1e10, ".03g", 0.1, 1., "GVP-ZS-MONITOR");
+        GVP_Mon_Z=bp->ec;
         EC_MONITORS_list = g_slist_prepend( EC_MONITORS_list, bp->ec);
         bp->ec->Freeze ();
         bp->set_configure_list_mode_on ();
@@ -3147,6 +3151,35 @@ void RPSPMC_Control::update_zpos_readings(){
         ZPos_ec->set_info (info);
         ZPos_ec->Put_Value ();
         g_free (info);
+
+        g_message ("update_zpos_readings() -- manage CSS warnings Z");
+        
+        static gint64 t=0;
+        static gboolean GVP_Z_flagged=false;
+        static gboolean GVP_U_flagged=false;
+
+        if (g_get_real_time ()-t > 0){
+                if (fabs(GVP_XYZ_mon_AA[2]) > 0.02 && !GVP_Z_flagged){
+                        ZPos_Set->set_css_name("red");
+                        GVP_Mon_Z->set_css_name("red");
+                        GVP_Z_flagged = true;
+                } else if (GVP_Z_flagged) {
+                        ZPos_Set->set_css_name("normal");
+                        GVP_Mon_Z->set_css_name("normal");
+                        GVP_Z_flagged = false;
+                }
+
+                if (fabs(spmc_parameters.bias_monitor - bias) > 0.001 && !GVP_U_flagged){
+                        Bias_Set->set_css_name("red");
+                        GVP_Mon_U->set_css_name("red");
+                        GVP_U_flagged = true;
+                } else if (GVP_U_flagged) {
+                        Bias_Set->set_css_name("normal");
+                        GVP_Mon_U->set_css_name("normal");
+                        GVP_U_flagged = false;
+                }
+                t = g_get_real_time () + 1e6;
+        }
 }
 
 #if 0

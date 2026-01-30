@@ -902,7 +902,8 @@ public:
 	GtkWidget *IV_status;
 	guint64 IV_glock_data[6];
 
-
+        Gtk_EntryControl *GVP_Mon_U, *GVP_Mon_Z, *Bias_Set, *ZPos_Set; // spmc_parameters.bias_monitor,  &GVP_XYZ_mon_AA[2], bias, zpos_ref
+        
 	// GVP (General Vector Probe)
 #define N_GVP_VECTORS MAX_PROGRAM_VECTORS
         Gtk_EntryControl *GVP_V0Set_ec[8];
