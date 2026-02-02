@@ -86,7 +86,7 @@ static int NumCh = 0;
 
 static int alife = 0;
 
-ChannelSelector::ChannelSelector (Gxsm4app *app, int ChAnz):AppBase(app){
+ChannelSelector::ChannelSelector (Gxsm4app *app, int ChAnz):AppBase(app, "CHS"){
 	GtkWidget* wid;
 	GtkWidget* dropDownMenu;
 	char txt[32];

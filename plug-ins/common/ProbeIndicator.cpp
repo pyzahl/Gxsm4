@@ -889,6 +889,8 @@ ProbeIndicator::ProbeIndicator (Gxsm4app *app):AppBase(app){
         gtk_combo_box_set_active (GTK_COMBO_BOX (CMkaochcb), 0); 
 	gtk_grid_attach (GTK_GRID (v_grid), CMkaochcb, 18,3, 3,1);
                 
+	set_window_geometry ("probe-hud");
+
 	refresh ();
 }
 
@@ -917,6 +919,7 @@ void ProbeIndicator::AppWindowInit(const gchar *title, const gchar *subtitle){
 	gtk_widget_set_opacity (GTK_WIDGET(window), 1.0);
 	//gtk_window_set_resizable (GTK_WINDOW(window), TRUE);
 	//gtk_window_set_decorated (GTK_WINDOW(window), FALSE);
+	//gtk_window_set_decorated (GTK_WINDOW(window), TRUE);
         
 	v_grid = gtk_grid_new ();
         gtk_window_set_child (GTK_WINDOW (window), v_grid);
@@ -924,7 +927,6 @@ void ProbeIndicator::AppWindowInit(const gchar *title, const gchar *subtitle){
 	gtk_widget_show (GTK_WIDGET (v_grid));
 	gtk_widget_show (GTK_WIDGET (window));
 
-	set_window_geometry ("probe-hud");
 }
 
 #if 0

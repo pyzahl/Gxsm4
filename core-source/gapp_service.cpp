@@ -602,11 +602,11 @@ void GnomeAppService::alert(const gchar *s1, const gchar *s2, const gchar *s3, i
 // AppBase
 // ============================================================
 
-AppBase::AppBase (Gxsm4app *app){ 
+AppBase::AppBase (Gxsm4app *app, const gchar *title){ 
 	XSM_DEBUG_GM(DBG_L3, "AppBase::AppBase" ); 
 
         gxsm4app = GXSM4_APP(app);
-        main_title_buffer = g_strdup ("AppBase: Main Window title is not set.");
+        main_title_buffer = g_strdup (title ? title : "AppBase: Main Window title is not set.");
         sub_title_buffer = NULL;
 
         app_window = NULL;
@@ -927,7 +927,7 @@ void AppBase::position_auto (){
                                                 } else  title = g_strdup (main_title_buffer);
 
                                                 // Execute shell command
-                                                gchar *hyprctl_cmdline = g_strdup_printf ("hyprctl 'dispatch setfloating title:%s'", title);
+                                                gchar *hyprctl_cmdline = g_strdup_printf ("hyprctl dispatch setfloating title:'%s'", title);
                                                 g_print("Attempting: %s\n", hyprctl_cmdline);
                                                 g_spawn_command_line_sync (hyprctl_cmdline, &stdout_buf, &stderr_buf, &exit_status, &error);
                                                 
@@ -954,7 +954,7 @@ void AppBase::position_auto (){
                                                                                    (int)window_geometry[WGEO_YPOS],
                                                                                    title
                                                                                    );
-                                                g_print("Attempting: %s\n", hyprctl_cmdline);
+                                                if (once) g_print("Attempting: %s\n", hyprctl_cmdline);
                                                 g_spawn_command_line_sync (hyprctl_cmdline, &stdout_buf, &stderr_buf, &exit_status, &error);
                                                 
                                                 if (error != NULL) {
@@ -1039,7 +1039,7 @@ void AppBase::resize_auto (){
                                                 } else  title = g_strdup (main_title_buffer);
 
                                                 // Execute shell command
-                                                gchar *hyprctl_cmdline = g_strdup_printf ("hyprctl dispatch resizewindowpixel exact %d %d, title:%s",
+                                                gchar *hyprctl_cmdline = g_strdup_printf ("hyprctl dispatch resizewindowpixel exact %d %d, title:'%s'",
                                                                                           (int)window_geometry[WGEO_WIDTH],
                                                                                           (int)window_geometry[WGEO_HEIGHT],
                                                                                           title
@@ -1236,7 +1236,7 @@ void AppBase::SaveGeometry(gboolean store_to_settings){
 
                                         // Execute command
                                         gchar *hyprctl_cmdline = g_strdup_printf ("hyprctl clients -j");
-                                        g_print("Attempting: %s\n", hyprctl_cmdline);
+                                        if (once) g_print("Attempting: %s\n", hyprctl_cmdline);
                                         g_spawn_command_line_sync (hyprctl_cmdline, &stdout_buf, &stderr_buf, &exit_status, &error);
                                         if (error != NULL) {
                                                 g_error ("Sorry I tried. Error executing command: %s E: %s\n", hyprctl_cmdline, error->message);

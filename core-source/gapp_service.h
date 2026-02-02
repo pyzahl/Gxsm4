@@ -892,7 +892,7 @@ typedef struct _Gxsm4app       Gxsm4app;
 
 class AppBase{
 public:
-	AppBase (Gxsm4app *app);
+	AppBase (Gxsm4app *app, const gchar *title=NULL);
 	virtual ~AppBase();
   
 	// Basic Setup Window/Widget

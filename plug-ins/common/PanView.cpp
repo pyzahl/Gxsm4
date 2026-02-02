@@ -321,7 +321,7 @@ static gint PanView_tip_refresh_callback (PanView *pv){
 }
 
 
-PanView::PanView (Gxsm4app *app):AppBase(app){
+PanView::PanView (Gxsm4app *app):AppBase(app,"PANV"){
  	int i;
 
         scan_org = NULL;
@@ -431,6 +431,8 @@ PanView::PanView (Gxsm4app *app):AppBase(app){
 
 	PanView_valid = TRUE;
 
+	set_window_geometry ("pan-view");
+
 	refresh ();
 	tip_refresh ();
 
@@ -488,7 +490,6 @@ void PanView::AppWindowInit(const gchar *title, const gchar *sub_title){
 	g_object_set_data (G_OBJECT (window), "v_grid", v_grid);
 	gtk_widget_show (GTK_WIDGET (window));
 
-	set_window_geometry ("pan-view");
 }
 
 void PanView::determine_ij_patch (gdouble x, gdouble y, int &i, int &j){
