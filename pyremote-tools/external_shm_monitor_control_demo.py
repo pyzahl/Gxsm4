@@ -583,6 +583,15 @@ class PZHVXYZ_App(Gtk.Application):
                 print (eid.get_text(), gxsm.get (eid.get_text()))
                 val.set_text('{}'.format(gxsm.get (eid.get_text())))
 
+                id = eid.get_text()
+                vr = gxsm.get (id)
+                print ('FLOOD TEST', id, vr)
+                for i in range (0, 10000):
+                        v = gxsm.get (id)
+                        if v != vr:
+                                print ('EE:',i,v,vr)
+                print ('FLOOD TEST completed')
+                
                 
         def do_activate(self):
                 global PZHV_QXYZ_configuration

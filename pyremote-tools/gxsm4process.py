@@ -677,7 +677,34 @@ class gxsm_process():
                         self.rpspmc['pac']['ampl']  = gxsm_shares[44]
                         self.rpspmc['pac']['dfreq'] = gxsm_shares[43]
                         self.rpspmc['time']         = gxsm_shares[100]
-                
+                        self.rpspmc['zservo']['mode']        = gxsm_shares[50]
+                        self.rpspmc['zservo']['setpoint']    = gxsm_shares[51]
+                        self.rpspmc['zservo']['cp']          = gxsm_shares[52]
+                        self.rpspmc['zservo']['ci']          = gxsm_shares[53]
+                        self.rpspmc['zservo']['cp_db']       = gxsm_shares[54]
+                        self.rpspmc['zservo']['ci_db']       = gxsm_shares[55]
+                        self.rpspmc['zservo']['upper']       = gxsm_shares[56]
+                        self.rpspmc['zservo']['lower']       = gxsm_shares[57]
+                        self.rpspmc['zservo']['setpoint_cz'] = gxsm_shares[58]
+                        self.rpspmc['zservo']['level']       = gxsm_shares[59]
+                        self.rpspmc['zservo']['in_offcomp']  = gxsm_shares[60]
+                        self.rpspmc['zservo']['src_mux']     = gxsm_shares[61]
+                        
+                        self.rpspmc['scan']['alpha']         = gxsm_shares[70]
+                        self.rpspmc['scan']['slope']['dzx']  = gxsm_shares[71]
+                        self.rpspmc['scan']['slope']['dzy']  = gxsm_shares[72]
+                        self.rpspmc['scan']['slope']['slew'] = gxsm_shares[73]
+                        self.rpspmc['scan']['x']             = gxsm_shares[74]
+                        self.rpspmc['scan']['y']             = gxsm_shares[75]
+                        self.rpspmc['scan']['slew']          = gxsm_shares[76]
+                        self.rpspmc['scan']['opts']          = gxsm_shares[77]
+                        self.rpspmc['scan']['offset']['x']   = gxsm_shares[78]
+                        self.rpspmc['scan']['offset']['y']   = gxsm_shares[79]
+                        self.rpspmc['scan']['offset']['z']   = gxsm_shares[80]
+                        #self.rpspmc['scan']['offset']['xy_slew'] = gxsm_shares[81]
+                        #self.rpspmc['scan']['offset']['z_slew']  = gxsm_shares[82]
+                        self.rpspmc['zservo']['setpoint']    = gxsm_shares[51]
+
                 except AttributeError:
                         # just try open again
                         self.get_gxsm4rpspmc_shm_block()
