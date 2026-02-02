@@ -48,6 +48,9 @@ import os
 import psutil
 import signal
 
+import threading
+import asyncio
+
 METH_ERR_CODE = ['OK', 'E:RESULT EXCEEDS SHM SIZE', 'E:PySHM Init Error', 'E:PySHM unsupported method flags', 'E:PySHM invalid method name', 'E:PySHM Unknow Error Code']
 
 PYSHM_GXSM_PROCESS_VERSION = '1.0.1'
@@ -56,9 +59,10 @@ class gxsm_process():
         # verbose = 0: no messages but startup
         # verbose = 1: basic messages, timing perf info
         # verbose = 2: all messages
-        def __init__(self, verbose=0):
+        def __init__(self, verbose=0, use_asyncio=False):
 
-                self.verbose = verbose
+                self.verbose  = verbose
+                #self.Masyncio = use_asyncio
                 
                 print ('Gxsm4 Process Class Init. PySHM + RPSPMC Monitors. V {}'.format(self.version()))
                 print ('External Gxsm4 pyremote extension and compatibility wrapper')
@@ -80,6 +84,13 @@ class gxsm_process():
                         'scan':    { 'alpha': 0.0, 'slope' : { 'dzx': 0.0, 'dzy': 0.0, 'slew': 0.0, }, 'x': 0.0, 'y': 0.0, 'slew': 0.0, 'opts': 0.0, 'offset' : { 'x': 0.0, 'y': 0.0, 'z': 0.0 }}, # RPSPMC Units (i.e. Volt)
                         'time' :   0.0  # exact FPGA uptime. This is the FPGA time of last reading in seconds, 8ns resolution
                 }
+
+                #if self.Masyncio:
+                #        # Acquire a asyncio lock
+                #        self.mutex = asyncio.Lock()
+                #else:
+                # Acquire a thread lock
+                self.mutex = threading.Lock()
 
                 # look for gxsm4 process and open PySHM -- external pyremote interface
                 self.set_gxsm4_PID()
@@ -157,61 +168,64 @@ class gxsm_process():
                 
         def exec_pyshm_method(self, method, args):
                 self.debug_print (1, 'exec_pyshm_method: {} ({}) '.format(method, args))
-                pyshm_status = np.frombuffer(self.gxsm_pyshm.buf, dtype=np.int64, count=1, offset=100)
-                #while pyshm_status[0] == 1:
-                #        time.sleep(0.01)
-                #        self.debug_print (1, '** waiting, busy. ',  pyshm_status[0])
-                self.debug_print (2, 'Status: {}'.format(pyshm_status[0]))
+                #async with self.mutex:
+                with self.mutex:
+                        pyshm_status = np.frombuffer(self.gxsm_pyshm.buf, dtype=np.int64, count=1, offset=100)
+                        #while pyshm_status[0] == 1:
+                        #        time.sleep(0.01)
+                        #        self.debug_print (1, '** waiting, busy. ',  pyshm_status[0])
+                        self.debug_print (2, 'Status: {}'.format(pyshm_status[0]))
 
-                # setup method name and pickled function arguments
-                pyshm_method = self.gxsm_pyshm.buf[0:len(method)+1]
-                pyshm_object_len = np.frombuffer(self.gxsm_pyshm.buf, dtype=np.uint64, count=1, offset=128)
-                method_bytes = method.encode('utf-8') + b'\x00'
-                pyshm_method[:] = method_bytes # set method name
+                        # setup method name and pickled function arguments
+                        pyshm_method = self.gxsm_pyshm.buf[0:len(method)+1]
+                        pyshm_object_len = np.frombuffer(self.gxsm_pyshm.buf, dtype=np.uint64, count=1, offset=128)
+                        method_bytes = method.encode('utf-8') + b'\x00'
+                        pyshm_method[:] = method_bytes # set method name
 
-                # pickle arguments and copy to SHM
-                args_data =  pickle.dumps(args)
-                self.debug_print (2, 'args.len: {}'.format(len(args_data)))
-                pyshm_object_len[0] = len(args_data) # object size
-                self.gxsm_pyshm.buf[128+8 : 128+8+len(args_data)] = args_data
+                        # pickle arguments and copy to SHM
+                        args_data =  pickle.dumps(args)
+                        self.debug_print (2, 'args.len: {}'.format(len(args_data)))
+                        pyshm_object_len[0] = len(args_data) # object size
+                        self.gxsm_pyshm.buf[128+8 : 128+8+len(args_data)] = args_data
 
-                # mark status as BUSY: this is reset to =0 on the gxsm4 process side to acknlowedge task completion and valid return data in SHM
-                pyshm_status[0] = 1
+                        # mark status as BUSY: this is reset to =0 on the gxsm4 process side to acknlowedge task completion and valid return data in SHM
+                        pyshm_status[0] = 1
 
-                # signal Gxsm4.PySHM using async kernel signal SIGUSR1
-                self.debug_print (2, 'signaling gxsm')
-                start_time = time.perf_counter()
-                os.kill(self.gxsm4pid, signal.SIGUSR1)
+                        # signal Gxsm4.PySHM using async kernel signal SIGUSR1
+                        self.debug_print (2, 'signaling gxsm')
+                        start_time = time.perf_counter()
+                        os.kill(self.gxsm4pid, signal.SIGUSR1)
 
-                # wait for gxsm4 acknoleged completion and valid return pickle data in SHM
-                wms=0.0
-                n=100
-                while pyshm_status[0] == 1:
-                        if wms > 100:
-                                n+=1
-                                if n > 100:
-                                        n=0
-                                        self.debug_print (1, 'waiting {} ** {}'.format(wms, pyshm_status[0]))
-                        if pyshm_status[0] == 1:
-                                time.sleep (0.0005)
-                                wms+=0.5
+                        # wait for gxsm4 acknoleged completion and valid return pickle data in SHM
+                        wms=0.0
+                        n=100
+                        while pyshm_status[0] == 1:
+                                if wms > 100:
+                                        n+=1
+                                        if n > 100:
+                                                n=0
+                                                self.debug_print (1, 'waiting {} ** {}'.format(wms, pyshm_status[0]))
+                                if pyshm_status[0] == 1:
+                                        time.sleep (0.0005)
+                                        wms+=0.5
 
-                end_time = time.perf_counter()
-                elapsed_time = 1e3*(end_time - start_time)
-                self.debug_print (1, 'Method >gxsm.{}< completed in ~{} ms. Elapsed time from signal: {:.1f} ms'.format(method, wms, elapsed_time))
-                                
-                if pyshm_status[0] < 0: # -1 ... -4: valid Error Codes
-                        self.debug_print (0, 'SHM Method Result Error Code: {} => {}'.format(pyshm_status[0], METH_ERR_CODE[int(min(5,-pyshm_status[0]))]))
-                        return
-                else:
-                        if pyshm_status[0] == 0: # OK
-                                self.debug_print (2, 'SHM Method Result is Ready.')
-                        else: # ???
-                                self.debug_print (0, 'SHM Method Result: Unexpected Completion Code: {}'.format(pyshm_status[0]))
+                        end_time = time.perf_counter()
+                        elapsed_time = 1e3*(end_time - start_time)
+                        self.debug_print (1, 'Method >gxsm.{}< completed in ~{} ms. Elapsed time from signal: {:.1f} ms'.format(method, wms, elapsed_time))
 
-                pyshm_pickles_bytes_len = int(np.frombuffer(self.gxsm_pyshm.buf, dtype=np.uint64, count=1, offset=128))
-                self.debug_print (1, 'return data len: {}'.format(pyshm_pickles_bytes_len))
-                return pickle.loads(self.gxsm_pyshm.buf[128+8 : 128+8+pyshm_pickles_bytes_len])
+                        if pyshm_status[0] < 0: # -1 ... -4: valid Error Codes
+                                self.debug_print (0, 'SHM Method Result Error Code: {} => {}'.format(pyshm_status[0], METH_ERR_CODE[int(min(5,-pyshm_status[0]))]))
+                                return
+                        else:
+                                if pyshm_status[0] == 0: # OK
+                                        self.debug_print (2, 'SHM Method Result is Ready.')
+                                else: # ???
+                                        self.debug_print (0, 'SHM Method Result: Unexpected Completion Code: {}'.format(pyshm_status[0]))
+
+                        pyshm_pickles_bytes_len = int(np.frombuffer(self.gxsm_pyshm.buf, dtype=np.uint64, count=1, offset=128))
+                        self.debug_print (1, 'return data len: {}'.format(pyshm_pickles_bytes_len))
+                        ret = pickle.loads(self.gxsm_pyshm.buf[128+8 : 128+8+pyshm_pickles_bytes_len])
+                return ret
 
         ### PySHM wrapper functions for full PyRemote Gxsm4 level embedded python compatibility
 
