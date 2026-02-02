@@ -254,6 +254,10 @@ Thanks,
 # Screenshots
 Here Gxsm4 is operating a Createc LT-SPM. Complete support for this instrument and Createc Piezo HV + Coarse control is available and required tools are included.
 
+Exploring/Testing Gxsm4 on Hyprland:
+<img width="3866" height="2161" alt="Screenshot_31-Jan_22-23-59_16383" src="https://github.com/user-attachments/assets/588e1bd7-7a0d-47bb-bfcf-46a851c8b204" />
+
+In operation:
 <img width="11520" height="2146" alt="image" src="https://github.com/user-attachments/assets/8e119211-4074-46e0-898a-fb8dc0152466" />
 
 <img width="11518" height="2147" alt="Screenshot from 2025-10-09 15-10-14" src="https://github.com/user-attachments/assets/cbe8a5be-de9a-4e64-aa66-ceafe9ac3ddb" />
