@@ -12,17 +12,18 @@ import gxsm4process as gxsm4
 gxsm = gxsm4.gxsm_process()
 
 
-def find_teensy():
+def find_teensy(dummymode=False):
     ports = serial.tools.list_ports.comports()
     for p in ports:
-        print (p)
-        return p.device ### BLIND TESTING
+        if dummymode:
+            print ('Blind Test with: ', p)
+            return p.device ### BLIND TESTING
         if "Teensy" in p.description or "16C0" in p.hwid or "0483" in p.hwid:
             print(f"Found Teensy on {p.device}")
             return p.device
     raise IOError("No Teensy device found!")
 
-SERIAL_PORT = find_teensy()
+SERIAL_PORT = find_teensy(True)
 BAUD_RATE = 9600
 
 class SignalController:
@@ -239,9 +240,14 @@ class SignalController:
     def gxsm_updater(self):
         while self.running:
             try:
-                self._I = abs(gxsm.rtquery("f")[1])
+
+                gxsm.rt_query_rpspmc() ## update RT readings buffer "gxsm.rpspmc" from SHM:
+
+                print ('Setpoint: ', gxsm.rpspmc['zservo']['setpoint']) ## in I Setpoint in Volt
+
+                self._I = abs(gxsm.rpspmc['current'])
                 self.I_setpoint = gxsm.get("dsp-fbs-mx0-current-set") #### THIS IS A THREADDING CONFLICT!!! WITH ABOVE. BUT WITH MY LATEST THEAD SAFE PATCH/MUTEX THIS SHOULD BE OK NOW!
-                self._VZ = gxsm.rtquery("z")[0]
+                self._VZ = gxsm.XYZ_monitor['monitor'][2] ## double check this!
 
                 zmax_state = 1 if self._VZ <= -68.0 else -1 if self._VZ >= 68.0 else 0
                 if zmax_state != self.old_zmax:
