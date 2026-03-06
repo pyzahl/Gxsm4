@@ -5,9 +5,18 @@ import matplotlib.pyplot as plt
 #from scipy.interpolate import BSpline, make_interp_spline, make_smoothing_spline
 import math
 
+import time
+
 # connect to gxsm4 process and start wrapper class
 import gxsm4process as gxsm4
 gxsm = gxsm4.gxsm_process()
+
+# MAKE SURE TO HAVE A SCAN COMPLETED BEFORE AND OPEN AS MASTER DATA TARGET
+
+gxsm.action('DSP_VP_VP_EXECUTE')
+
+# wait to complete
+time.sleep(4) 
 
 ch = 0
 # fetch vpdata of last probe -- if exists, else error
@@ -27,9 +36,10 @@ print ('Set Size       :', vpdata[labels[0]].shape)
 #VP Units[Sets] : {'ZS-Topo': 'Å', 'Current': 'nA', 'dFrequency': 'Hz', 'Time-Mon': 'ms'}
 
 # setup what to print
-#x='Time-Mon'
-x='ZS-Topo'
-y='dFrequency'
+x='Time-Mon'
+#x='ZS-Topo'
+#y='dFrequency'
+y='Current'
 
 # Create VPDATA plot
 plt.figure(figsize=(6, 4))
