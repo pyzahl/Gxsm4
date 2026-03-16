@@ -1153,7 +1153,7 @@ static void CbAction_ra(remote_action_cb* ra, gpointer arglist){
 				(*ra->RemoteCb) (ra->widget, ra->data);
 			else
 				(*ra->RemoteCb) (ra->widget, arglist);
-                        ((gchar**)arglist)[3] = (gchar*)ra;
+                        ((gchar**)arglist)[3] = (gchar*)ra; // return action entry
 			// see above and pcs.h
 		}
 };

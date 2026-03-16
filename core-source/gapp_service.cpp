@@ -1527,6 +1527,8 @@ GtkWidget* BuildParam::grid_add_exec_button (const gchar* labeltxt,
         ra -> RemoteCb = (void (*)(GtkWidget*, void*))exec_cb;  
         ra -> widget = button;                                  
         ra -> data = cb_data;                                      
+        ra -> ret = 0;
+        ra -> data_length = 0;
         ra -> return_data = NULL;
         
         if (data_key)
@@ -1575,6 +1577,8 @@ GtkWidget* BuildParam::grid_add_check_button_remote_enabled (const gchar* labelt
                 raC -> RemoteCb = (void (*)(GtkWidget*, void*))remote_cb_check;  
                 raC -> widget = button;                                  
                 raC -> data = cb_data;                                      
+                raC -> ret = 0;
+                raC -> data_length = 0;
                 raC -> return_data = NULL;
                 gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, raC ); 
 
@@ -1583,6 +1587,8 @@ GtkWidget* BuildParam::grid_add_check_button_remote_enabled (const gchar* labelt
                 raUC -> RemoteCb = (void (*)(GtkWidget*, void*))remote_cb_uncheck;  
                 raUC -> widget = button;                                  
                 raUC -> data = cb_data;                                      
+                raUC -> ret = 0;
+                raUC -> data_length = 0;
                 raUC -> return_data = NULL;
                 gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, raUC ); 
         } else
