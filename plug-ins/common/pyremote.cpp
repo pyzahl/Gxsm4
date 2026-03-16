@@ -1149,11 +1149,18 @@ static void Check_conf(GnomeResPreferences* grp, remote_args* ra){
 static void CbAction_ra(remote_action_cb* ra, gpointer arglist){
 	if(ra->cmd && ((gchar**)arglist)[1])
 		if(! strcmp(((gchar**)arglist)[1], ra->cmd)){
+                        g_message ("CbAction_ra FOUND: %s == %s cb-data=%x, data_length=%d dp=%x",
+                                   ra->cmd, ((gchar**)arglist)[1],
+                                   ra->data, ra->data_length, ra->return_data);
 			if (ra->data)
 				(*ra->RemoteCb) (ra->widget, ra->data);
 			else
 				(*ra->RemoteCb) (ra->widget, arglist);
                         ((gchar**)arglist)[3] = (gchar*)ra; // return action entry
+
+                        g_message ("CbAction_ra RESULT: %s, %s, cb-data=%x, data_length=%d dp=%x",
+                                   ra->cmd, ((gchar**)arglist)[3],
+                                   ra->data, ra->data_length, ra->return_data);
 			// see above and pcs.h
 		}
 };
@@ -1347,12 +1354,20 @@ static gboolean main_context_action_from_thread (gpointer user_data){
 
 	PI_DEBUG(DBG_L2, "pyremote Action ** idle cb: PyObjArgs: " << parameter << ", " << value );
 
-	gchar *list[] = {(char *)"action", parameter, value, NULL, NULL};
-	g_slist_foreach(gapp->RemoteActionList, (GFunc) CbAction_ra, (gpointer)list);
+	gpointer *list[] = {(gpointer)"action", (gpointer)parameter, (gpointer)value, NULL, NULL};
+        g_message ("main_context_action_from_thread with [%s %s %s NULL]", (gchar*)list[0], (gchar*)list[1], (gchar*)list[2]);
+	g_slist_foreach(gapp->RemoteActionList, (GFunc) CbAction_ra, list);
         idle_data->ra_info = (remote_action_cb*)(list[3]);
         idle_data->ret = 0;
 
         UNSET_WAIT_JOIN_MAIN;
+        if (list[3]){
+                if (((remote_action_cb*)list[3]) -> data_length > 0)
+                        g_message ("main_context_action_from_thread res [%s %s %s %d %s]", (gchar*)list[0], (gchar*)list[1], (gchar*)list[2], ((remote_action_cb*)list[3]) -> data_length, ((remote_action_cb*)list[3]) -> return_data);
+                else
+                        g_message ("main_context_action_from_thread res [%s %s %s %d N/A]", (gchar*)list[0], (gchar*)list[1], (gchar*)list[2], ((remote_action_cb*)list[3]) -> data_length);
+        }else
+                g_message ("main_context_action_from_thread res [%s %s %s NULL]", (gchar*)list[0], (gchar*)list[1], (gchar*)list[2]);
         return G_SOURCE_REMOVE;
 }
 
@@ -1367,6 +1382,7 @@ static PyObject* remote_action(PyObject *self, PyObject *args)
         WAIT_JOIN_MAIN;
         if ( idle_data.ra_info )
                 if ( idle_data.ra_info->data_length > 0){
+                        g_message ("remote_action: returned with data_length=%d ", idle_data.ra_info->data_length);
                         npy_intp dims[2];
                         dims[0] = 3; // max 5
                         dims[1] = idle_data.ra_info->data_length;
@@ -1374,6 +1390,7 @@ static PyObject* remote_action(PyObject *self, PyObject *args)
                         PyArray_ENABLEFLAGS((PyArrayObject*) pyarr, NPY_ARRAY_OWNDATA);
                         return Py_BuildValue("Os", pyarr, idle_data.ra_info->return_data); // Python code will receive the array as numpy array.
                 }
+        g_message ("remote_action: completed with ret=%d ", idle_data.ret);
         return Py_BuildValue("i", idle_data.ret);
 }
 

@@ -677,12 +677,14 @@ void App::MAINAppWindowInit(Gxsm4appWindow* win, const gchar *title, const gchar
         gtk_grid_attach (GTK_GRID (grid), appbar, 0, 10, 1, 1);
         gtk_widget_show (appbar); // FIX-ME GTK4 SHOWALL
 
+        XSM_DEBUG (DBG_L2,  "App GXSM main window status: " << (GTK_IS_WIDGET (window) ? "OK":"NOT A WIDGET"));
+
+        // What is this about??? (gxsm4:1156915): Gtk-WARNING **: 16:26:15.840: A window is shown after it has been destroyed. This will leave the window in an inconsistent state.
        	gtk_widget_show (GTK_WIDGET (window)); // FIX-ME GTK4 SHOWALL
 }
 
 void App::build_gxsm (Gxsm4appWindow *win){
         //        const gchar *quit_accels[2] = { "<Ctrl>Q", NULL };
-
 	xsmres.gxsm4_ready = false;
         XSM_DEBUG(DBG_L2, "App::build_gxsm ================================================================" );
 

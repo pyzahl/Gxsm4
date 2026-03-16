@@ -68,7 +68,7 @@ gxsm4_app_window_init (Gxsm4appWindow *window)
 
         priv = (Gxsm4appWindowPrivate *) gxsm4_app_window_get_instance_private (window);
         priv->self = window;
-        
+
         // no template in use currently
         // gtk_widget_init_template (GTK_WIDGET (win));
         // NEW**REMOVED FROM HERE to gxsm_main.C
