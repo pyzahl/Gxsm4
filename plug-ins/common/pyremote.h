@@ -32,17 +32,7 @@
 #define PYREMOTE__H
 
 #include <gtk/gtk.h>
-
-typedef struct remote_action_cb {
-        const gchar  *cmd;
-        void (*RemoteCb)(GtkWidget *widget , void* data);
-        GtkWidget *widget;
-        gpointer data;
-        const gchar *return_data;
-        int ret;
-        int data_length;
-        double *data_vector[5];
-};
+#include "remote.h"
 
 #endif
 

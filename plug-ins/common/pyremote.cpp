@@ -601,7 +601,6 @@ to the community. The GXSM-Forums always welcome input.
 #include "surface.h"
 
 #include "pyremote.h"
-// #include "remote.h" -- clash, stupid. copy of "typedef struct remote_action_cb" in own file.
 
 #include "pyscript_templates.h"
 #include "pyscript_templates_script_libs.h"
@@ -1146,8 +1145,13 @@ static void Check_conf(GnomeResPreferences* grp, remote_args* ra){
                 gnome_res_check_remote_command (grp, ra);
 };
 
-static void CbAction_ra(remote_action_cb* ra, gpointer arglist){
+static void CbAction_ra(remote_action_cb* ra, gpointer* arglist){
 	if(ra->cmd && ((gchar**)arglist)[1])
+                if (ra->check (arglist)){
+                        arglist[3] = ra; // return action entry
+                        ra->print ();
+                }
+#if 0
 		if(! strcmp(((gchar**)arglist)[1], ra->cmd)){
                         g_message ("CbAction_ra FOUND: %s == %s cb-data=%x, data_length=%d dp=%x",
                                    ra->cmd, ((gchar**)arglist)[1],
@@ -1163,6 +1167,7 @@ static void CbAction_ra(remote_action_cb* ra, gpointer arglist){
                                    ra->data, ra->data_length, ra->return_data);
 			// see above and pcs.h
 		}
+#endif
 };
 
 static PyObject* remote_help(PyObject *self, PyObject *args);

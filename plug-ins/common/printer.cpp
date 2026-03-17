@@ -527,12 +527,18 @@ static void printer_init(void)
  // This is action remote stuff, stolen from the peak finder PI.
    remote_action_cb *ra;
    GtkWidget *dummywidget = gtk_menu_item_new();
- 
+
+   ra = new remote_action_cb ("print_PI", &printer_run_non_interactive, dummywidget);
+
+   #if 0
    ra = g_new( remote_action_cb, 1);
    ra -> cmd = g_strdup_printf("print_PI");
    ra -> RemoteCb = &printer_run_non_interactive;
    ra -> widget = dummywidget;
    ra -> data = NULL;
+   ra -> data_length = 0;
+   ra -> data = NULL;
+   #endif
    main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra );
    PI_DEBUG (DBG_L2, "printer-plugin: Adding new Remote Cmd: print_PI");
  // remote action stuff

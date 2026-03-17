@@ -40,7 +40,38 @@
 
 enum REMOTE_TYP { REMO_ACTION, REMO_MENUACTION, REMO_SETENTRY, REMO_CBACTION, REMO_ENDLIST };
 
-typedef struct remote_action_cb {
+class remote_action_cb {
+public:
+        remote_action_cb (const gchar *action, GCallback cb, GtkWidget *w=NULL, gpointer cbdata=NULL) {
+                cmd = g_strdup_printf (action);
+                RemoteCb = cb;
+                widget=w;
+                data = cbdata;
+                return_data = NULL;
+                ret = 0;
+                data_length = -1;
+                memset (data_vector, 0, sizeof(data_vector));
+        };
+        ~remote_action_cb () {
+                g_free (cmd);
+        }
+        gboolean check (gpointer args){
+		if(! strcmp(((gchar**)args)[1], cmd)){
+                        g_message ("remote action match for %s", cmd);
+			if (data)
+				(*RemoteCb) (widget, data);
+			else
+				(*RemoteCb) (widget, args);
+                        return true;
+		}
+                return false;
+        };
+        void print (){
+                g_message ("remote_action_cb entry for gxsm.action('%s'). ret=%d, data_length=%d", cmd, ret, data_length);
+                if (return_data && data_length > 0)
+                        g_message ("... data_length=%d, data: %s", data_length, data);
+        };
+public:
         const gchar  *cmd;
         void (*RemoteCb)(GtkWidget *widget , void* data);
         GtkWidget *widget;
