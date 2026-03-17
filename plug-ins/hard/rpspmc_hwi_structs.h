@@ -85,14 +85,19 @@
 #define PROBEDATA_ARRAY_S13   24 // Array [24] holds LCK
 #define PROBEDATA_ARRAY_S14   25 // Array [25] holds dFreqCtrl
 #define PROBEDATA_ARRAY_S15   26 // Array [26] holds TIME in ms
+#define PROBEDATA_ARRAY_SIGNAL_LAST PROBEDATA_ARRAY_S15 // last signal element number
+// HS DATA ARRAYS (longer with expanded time resoluition
+#define PROBEDATA_ARRAY_HS_TIME   27 // Array [27] holds high resolution expanded time for super fast channels
+#define PROBEDATA_ARRAY_HS_DATA_A 28 // Array [28] holds high resolution expanded data of super fast channel-A (digital, ...)
+#define PROBEDATA_ARRAY_HS_DATA_B 29 // Array [29] holds high resolution expanded data of super fast channel-B (digital, ...)
 // Block Management
-#define PROBEDATA_ARRAY_COUNT 27 // Array [27] holds Count
-#define PROBEDATA_ARRAY_BLOCK 28 // Array [28] holds Block start index (hold start index for every section) 
-#define PROBEDATA_ARRAY_SRCS  29 // Array [29] hold SRCS mask
+#define PROBEDATA_ARRAY_COUNT 30 // Array [30] holds Count
+#define PROBEDATA_ARRAY_BLOCK 31 // Array [31] holds Block start index (hold start index for every section) 
+#define PROBEDATA_ARRAY_SRCS  32 // Array [32] hold SRCS mask
 #define PROBEDATA_ARRAY_END   PROBEDATA_ARRAY_SRCS // last element number
 
 // G_ARRAY EXPANDED PROBE DATA
-#define NUM_PROBEDATA_ARRAYS PROBEDATA_ARRAY_SRCS+1
+#define NUM_PROBEDATA_ARRAYS PROBEDATA_ARRAY_END+1
 
 #define MAX_NUM_CHANNELS (PROBEDATA_ARRAY_END-1)  // 26
 
@@ -323,6 +328,9 @@ typedef struct{
 } PROBE_VECTOR_EXTENSION;
 
 
+#define NUM_PV_HS   2
+#define HS_LEN_MAX  256
+
 /**
  * Vector Probe Vector
  */
@@ -337,6 +345,8 @@ typedef struct{
         int       ch_lut[16];
         // ======================
         double    dataexpanded[NUM_PV_DATA_SIGNALS];
+        double    fss_data[NUM_PV_HS][HS_LEN_MAX]; 
+        gint32    fss_len;
         gint32    i;             /* GVP i: N-1, ... 0 */
         gint32    ilast;
 	gint32    n;             /* number data vectors following in section */

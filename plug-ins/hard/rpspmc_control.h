@@ -313,6 +313,7 @@ public:
 
                 probe_trigger_single_shot = 0;
                 current_probe_data_index = 0;
+                current_probe_data_hsindex = 0;
                 current_probe_section = 0;
                 
                 for (int i=0; i<NUM_PROBEDATA_ARRAYS; ++i)
@@ -537,7 +538,7 @@ public:
 
 	int check_vp_in_progress (const gchar *extra_info=NULL); // GVP active?
 
-	void add_probedata(double data[NUM_PV_DATA_SIGNALS], double pv[NUM_PV_HEADER_SIGNALS], gboolean set_pv=false, gboolean add_pv=true);
+	void add_probedata(double data[NUM_PV_DATA_SIGNALS], double pv[NUM_PV_HEADER_SIGNALS], double pv_hs[NUM_PV_HS][HS_LEN_MAX]=NULL, int hs_len=0, gboolean set_pv=false, gboolean add_pv=true);
         // "set" and append PROBEDATA_ARRAY_INDEX, BLOCK, HEADER:[X,Y,Z,U,A,B]
 	void set_probevector(double pv[NUM_PV_HEADER_SIGNALS]);
         // append PROBEDATA_ARRAY_INDEX, SEC, BLOCK and  "add" to (emulate GVP signal generation) TIME, X,Y,Z,U,A,B, and append
@@ -957,6 +958,7 @@ public:
 	GArray *garray_probe_hdrlist[NUM_PROBEDATA_ARRAYS];
 	GArray *garray_probedata[NUM_PROBEDATA_ARRAYS];
 	int current_probe_data_index;
+	int current_probe_data_hsindex;
         int current_probe_block_index;
         int current_probe_section;
 	int nun_valid_data_sections;

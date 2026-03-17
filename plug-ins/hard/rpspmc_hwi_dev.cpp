@@ -885,7 +885,9 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
 		return RET_FR_OK; // init OK.
 
 	case FR_FINISH:
-                RPSPMC_ControlClass->add_probedata (GVP_vp_header_current.dataexpanded, pv, true, true);
+                RPSPMC_ControlClass->add_probedata (GVP_vp_header_current.dataexpanded, pv,
+                                                    GVP_vp_header_current.fss_data,  GVP_vp_header_current.fss_len,
+                                                    true, true);
                 --recursion_level;
                 LOGMSGS ( "FR::FINISH-OK." << std::endl);
                 g_message ( "FR::FINISH-OK");
@@ -951,7 +953,9 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
                         } else {
                                 if (GVP_vp_header_current.endmark){ // checking -- finished?
                                         // add last point
-                                        RPSPMC_ControlClass->add_probedata (GVP_vp_header_current.dataexpanded, pv, false, true);
+                                        RPSPMC_ControlClass->add_probedata (GVP_vp_header_current.dataexpanded, pv,
+                                                                            GVP_vp_header_current.fss_data,  GVP_vp_header_current.fss_len,
+                                                                            false, true);
                                         g_message ("*** GVP: finished ***");
                                         return ReadProbeData (0, FR_FINISH); // finish
                                 }
@@ -980,7 +984,9 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
                         return ReadProbeData (0, FR_FINISH);
                 }
                 
-                RPSPMC_ControlClass->add_probedata (GVP_vp_header_current.dataexpanded, pv, true, true);
+                RPSPMC_ControlClass->add_probedata (GVP_vp_header_current.dataexpanded, pv,
+                                                    GVP_vp_header_current.fss_data,  GVP_vp_header_current.fss_len,
+                                                    true, true);
 
                 point_index = 0;
 
@@ -1000,7 +1006,9 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
 
                         // add vector and data to expanded data array representation
                         pv[PROBEDATA_ARRAY_INDEX] = (double)index_all++;
-                        RPSPMC_ControlClass->add_probedata (GVP_vp_header_current.dataexpanded, pv, false, true); // using diect mapping from expanded header //(GVP_vp_header_current.i < (GVP_vp_header_current.n-1)) ? true:false);
+                        RPSPMC_ControlClass->add_probedata (GVP_vp_header_current.dataexpanded, pv,
+                                                            GVP_vp_header_current.fss_data,  GVP_vp_header_current.fss_len,
+                                                            false, true); // using diect mapping from expanded header //(GVP_vp_header_current.i < (GVP_vp_header_current.n-1)) ? true:false);
 
                 } else {
                         if (GVP_vp_header_current.endmark){ // finished?
@@ -1997,14 +2005,17 @@ int rpspmc_hwi_dev::read_GVP_data_block_to_position_vector (int offset, gboolean
 
         // check and process time code 
         if (ch_index+offset < GVP_stream_buffer_position){
+                // stream_buffer[14] <= S_AXIS_gvp_time_tdata[32-1:0]; // TIME lower 32
+                // stream_buffer[15] <= { fss_len, fss_n, S_AXIS_gvp_time_tdata[48-1:32] }; // TIME upper
+                                                    
                 if ((GVP_vp_header_current.srcs & 0xc000) == 0xc000){ // fetch 64 bit time
-                        GVP_vp_header_current.gvp_time = (((guint64)((guint32)GVP_vp_header_current.chNs[15]))<<32) | (guint64)((guint32)GVP_vp_header_current.chNs[14]);
-                        GVP_vp_header_current.dataexpanded[14] = (double)GVP_vp_header_current.gvp_time/125e3;
+                        GVP_vp_header_current.gvp_time = (((guint64)((guint32)(GVP_vp_header_current.chNs[15]&0x0000ffff)))<<32) | (guint64)((guint32)GVP_vp_header_current.chNs[14]);
+                        GVP_vp_header_current.dataexpanded[14] = (double)GVP_vp_header_current.gvp_time/125e3; // time in ms
                 } else if ((GVP_vp_header_current.srcs & 0xc000) == 0x4000){ // fetch 32 bit time only
                         GVP_vp_header_current.gvp_time = (guint64)((guint32)GVP_vp_header_current.chNs[14]);
                         GVP_vp_header_current.dataexpanded[14] = (double)GVP_vp_header_current.gvp_time/125e3;
                 } else if  ((GVP_vp_header_current.srcs & 0xc000) == 0x8000){ // fetch upper 32 bit time only -- unusual but possible
-                        GVP_vp_header_current.gvp_time = ((guint64)((guint32)GVP_vp_header_current.chNs[15]))<<32;
+                        GVP_vp_header_current.gvp_time = ((guint64)((guint32)(GVP_vp_header_current.chNs[15]&0x0000ffff)))<<32;
                         GVP_vp_header_current.dataexpanded[14] = (double)GVP_vp_header_current.gvp_time/125e3;
                 } // time stalls if not selected after header ref time
                 
@@ -2021,7 +2032,20 @@ int rpspmc_hwi_dev::read_GVP_data_block_to_position_vector (int offset, gboolean
                 hdr = ch_index+offset+1; // next hdr
 #endif
 
-                
+                int     fss      = (guint32)(GVP_vp_header_current.chNs[15]) >> 16;
+                if (fss){
+                        guint64 fss_data = (((guint64)GVP_vp_header_current.chNs[1]) << 32) | GVP_vp_header_current.chNs[0]; // Y,X
+                        int     fss_n    = fss & 0xff;
+                        int     fss_len  = (fss>>8) & 0xff;
+                        GVP_vp_header_current.fss_len = fss_len;
+                        for (int k=0; k<fss_len; ++k){
+                                GVP_vp_header_current.fss_data[0][k] = fss_data & (1LL<<((fss_n+k)&0x3f)) ? 1.:0.;
+                                GVP_vp_header_current.fss_data[1][k] = fss_len; // dbg
+                        }
+                        //g_message ("[%08x] *** FSS DATA: %d %d %d", offset, fss_len, fss_n, fss_data);
+                } else
+                        GVP_vp_header_current.fss_len = 0; // no FSS DATA
+
                 g_mutex_unlock (&GVP_stream_buffer_mutex);
                 return ch_index;
 

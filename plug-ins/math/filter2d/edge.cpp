@@ -204,14 +204,7 @@ static void edge_init(void)
   PI_DEBUG (DBG_L2, "edge Plugin Init");
 
 // This is action remote stuff, stolen from the peak finder PI.
-  remote_action_cb *ra;
-  GtkWidget *dummywidget = NULL; // gtk_menu_item_new();
-
-  ra = g_new( remote_action_cb, 1);
-  ra -> cmd = g_strdup_printf("MATH_FILTER2D_Edge");
-  ra -> RemoteCb = &edge_non_interactive;
-  ra -> widget = dummywidget;
-  ra -> data = NULL;
+  remote_action_cb *ra = new remote_action_cb ("MATH_FILTER2D_Edge", &edge_non_interactive);
   gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, ra );
   PI_DEBUG (DBG_L2, "edge-plugin: Adding new Remote Cmd: MATH_FILTER2D_Edge");
 

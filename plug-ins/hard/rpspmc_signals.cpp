@@ -99,8 +99,8 @@ SOURCE_SIGNAL_DEF rpspmc_source_signals[] = {
         { 0x00001000, "SWP*04",       " ",  "V",            "V",                                    1.0, PROBEDATA_ARRAY_S13, 13 }, // ich=12 ** swappable via GVP-SRC-MUX5 ** -- been replaced as set from rpspmc_swappable_signals[]
         { 0x00002000, "SWP*05",       " ",  "V",            "V",                                    1.0, PROBEDATA_ARRAY_S14, 14 }, // ich=13 ** swappable via GVP-SRC-MUX6 ** -- been replaced as set from rpspmc_swappable_signals[]
         { 0x0000C000, "Time-Mon",     " ", "ms",           "ms",                                    1.0, PROBEDATA_ARRAY_S15, 15 }, // time in ms [11]
-        //{ 0x00000000, "--",           " ", "V",             "V",                                    1.0, PROBEDATA_ARRAY_S15,   -1 }, // -- DUMMY SO FAR
-        //{ 0x00000000, "--",           " ", "V",             "V",                                    1.0, PROBEDATA_ARRAY_COUNT, -1 }, // -- DUMMY SO FAR
+        { 0x00010000, "HS-Ch-A",      " ", "V",             "V",                                    1.0, PROBEDATA_ARRAY_HS_DATA_A, 16 }, // High Speed Channel A @125MSPS fixed -- **special requirements for vector, Experimental
+        { 0x00020000, "HS-Ch-B",      " ", "V",             "V",                                    1.0, PROBEDATA_ARRAY_HS_DATA_B, 17 }, // High Speed Channel B @125MSPS fixed -- **special requirements for vector, Experimental
         { 0x80000000, "BlockI",       " ", "i#",           "i#",                                    1.0, PROBEDATA_ARRAY_BLOCK, -1 }, // MUST BE ALWAYS LAST AND IN HERE!! END MARK.
         { 0x00000000, NULL, NULL, NULL, NULL, 0.0, 0 }
 };

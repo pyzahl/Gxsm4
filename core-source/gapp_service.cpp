@@ -1513,35 +1513,23 @@ gboolean AppBase::gapp_load_on_drop_files (GtkDropTarget *target, const GValue  
 
 
 GtkWidget* BuildParam::grid_add_exec_button (const gchar* labeltxt,
-                                                  GCallback exec_cb, gpointer cb_data, const gchar *control_id,
-                                                  int bwx,
-                                                  const gchar *data_key, gpointer key_data){
-        const gchar *acid=g_strdup_printf("EXECUTE_%s", control_id);
-        gchar *tooltip = g_strconcat ("Remote example: action (", acid, ")", NULL); 
+                                             GCallback exec_cb, gpointer cb_data, const gchar *control_id,
+                                             int bwx,
+                                             const gchar *data_key, gpointer key_data){
+        const gchar *acid;
+        if (strstr(control_id, "EXEC"))
+                acid=g_strdup(control_id);
+        else
+                acid=g_strdup_printf("EXECUTE_%s", control_id);
+
         button = gtk_button_new_with_label (N_(labeltxt));
         g_signal_connect(G_OBJECT (button), "clicked", G_CALLBACK(exec_cb), cb_data);
         remote_action_cb *ra = new remote_action_cb (acid, exec_cb, button, cb_data);
         g_free(acid);
         
-#if 0
-        remote_action_cb *ra = g_new( remote_action_cb, 1);     
-        ra -> cmd = g_strdup_printf("EXECUTE_%s", control_id); 
-        gchar *tooltip = g_strconcat ("Remote example: action (", ra->cmd, ")", NULL); 
-
-        button = gtk_button_new_with_label (N_(labeltxt));
-        g_signal_connect(G_OBJECT (button), "clicked", G_CALLBACK(exec_cb), cb_data);
-
-        ra -> RemoteCb = (void (*)(GtkWidget*, void*))exec_cb;  
-        ra -> widget = button;                                  
-        ra -> data = cb_data;                                      
-        ra -> ret = 0;
-        ra -> data_length = 0;
-        ra -> return_data = NULL;
-#endif
         if (data_key)
                 g_object_set_data (G_OBJECT (button), data_key, key_data);
-        gtk_widget_set_tooltip_text (button, tooltip);
-        g_free (tooltip);
+        const gchar*tmp; gtk_widget_set_tooltip_text (button, tmp=ra->get_help()); g_free (tmp);
                 
         grid_add_widget (button, bwx);
 
@@ -1580,36 +1568,11 @@ GtkWidget* BuildParam::grid_add_check_button_remote_enabled (const gchar* labelt
                 gchar *tooltip = g_strconcat ("Remote example: action ([UN]", acidC, ")", NULL); 
                 remote_action_cb *raC = new remote_action_cb (acidC, remote_cb_check, button, cb_data);
                 g_free(acidC);
-
-#if 0
-                remote_action_cb *raC = g_new ( remote_action_cb, 1);     
-                raC -> cmd = g_strdup_printf("CHECK-%s", control_id);
-                gchar *autotooltip = g_strconcat ("Remote example: action ([UN]", raC->cmd, ")", NULL); 
-                gtk_widget_set_tooltip_text (button, autotooltip);
-                g_free (autotooltip);
-                raC -> RemoteCb = (void (*)(GtkWidget*, void*))remote_cb_check;  
-                raC -> widget = button;                                  
-                raC -> data = cb_data;                                      
-                raC -> ret = 0;
-                raC -> data_length = 0;
-                raC -> return_data = NULL;
-#endif
                 gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, raC ); 
 
                 const gchar *acidUC=g_strdup_printf("UNCHECK-%s", control_id);
                 remote_action_cb *raUC = new remote_action_cb (acidUC, remote_cb_uncheck, button, cb_data);
                 g_free(acidUC);
-
-#if 0
-                remote_action_cb *raUC = g_new( remote_action_cb, 1);     
-                raUC -> cmd = g_strdup_printf("UNCHECK-%s", control_id);
-                raUC -> RemoteCb = (void (*)(GtkWidget*, void*))remote_cb_uncheck;  
-                raUC -> widget = button;                                  
-                raUC -> data = cb_data;                                      
-                raUC -> ret = 0;
-                raUC -> data_length = 0;
-                raUC -> return_data = NULL;
-#endif
                 gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, raUC ); 
         } else
                 if (tooltip)

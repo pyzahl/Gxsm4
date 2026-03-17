@@ -733,15 +733,20 @@ void RPSPMC_Control::probedata_visualize (GArray *probedata_x, GArray *probedata
         pc->ClearSectionIndexList ();
 
 	for(int i = 0; i < current_i; i++){
-		if (g_array_index (probedata_sec, double, i) < spectra_section)
-		{
-			spectra++;	
-			spectra_section = 0;
-			spectra_index = 0;
-		} else {
-			spectra_index++;
-			spectra_section = (int) g_array_index (probedata_sec, double, i);
-		}
+                if (probedata_sec){
+                        if (g_array_index (probedata_sec, double, i) < spectra_section){
+                                spectra++;	
+                                spectra_section = 0;
+                                spectra_index = 0;
+                        } else {
+                                spectra_index++;
+                                spectra_section = (int) g_array_index (probedata_sec, double, i);
+                        }
+                } else {
+                        spectra++;	
+                        spectra_section = 0;
+                        spectra_index = 0;
+                }
                 //g_print ("Ptk[%04d] %g %g\n",i, g_array_index (probedata_x, double, i), g_array_index (probedata_y, double, i));
 		pc->SetPoint (i,
 			      xmult * g_array_index (probedata_x, double, i),
@@ -749,13 +754,14 @@ void RPSPMC_Control::probedata_visualize (GArray *probedata_x, GArray *probedata
 			      join_same_x ? si:0);
 
 
-                if ((int) g_array_index (probedata_sec, double, i)>0)
-                        if (last_section != (int) g_array_index (probedata_sec, double, i)){
-                                //g_print ("AddNextSection: %d -> %d @%d\n",last_section, (int) g_array_index (probedata_sec, double, i), i);
-                                last_section = (int) g_array_index (probedata_sec, double, i);
-                                pc->AddNextSectionIndex (i);
-                        }
-
+                if (probedata_sec){
+                        if ((int) g_array_index (probedata_sec, double, i)>0)
+                                if (last_section != (int) g_array_index (probedata_sec, double, i)){
+                                        //g_print ("AddNextSection: %d -> %d @%d\n",last_section, (int) g_array_index (probedata_sec, double, i), i);
+                                        last_section = (int) g_array_index (probedata_sec, double, i);
+                                        pc->AddNextSectionIndex (i);
+                                }
+                }
                 
 #ifdef ENABLE_AVG_MODES
 		if (vis_PlotAvg & plot_msk){
@@ -943,17 +949,30 @@ int RPSPMC_Control::Probing_graph_callback( GtkWidget *widget, RPSPMC_Control *d
 				if ((dspc->vis_PSource & dspc->msklookup[src]) && (dspc->vis_Source & dspc->msklookup[src])){
 					XSM_DEBUG_PG("DBG-Mbb1 " << dspc->vp_label_lookup (src));
 					XSM_DEBUG_PG ("Probing_graph_callback Visualisation xmap=" << xmap << " src=" << src << " ** " << dspc->vp_label_lookup (src) << " ( " << dspc->vp_label_lookup (xmap) << " )");
-					dspc->probedata_visualize (
-						dspc->garray_probedata [dspc->expdi_lookup[xmap]], 
-						dspc->garray_probedata [dspc->expdi_lookup[src]], 
-						dspc->garray_probedata [PROBEDATA_ARRAY_SEC], 
-						dspc->probe_pc_matrix[xmap][dspc->vis_XJoin ? src0:src], 
-						dspc->probe_pc_matrix[MAX_NUM_CHANNELS+xmap][MAX_NUM_CHANNELS+dspc->vis_XJoin ? src0:src],
-						dspc->msklookup[src],
-						dspc->vp_label_lookup (xmap), dspc->vp_unit_lookup (xmap), dspc->vp_scale_lookup (xmap),
-						dspc->vp_label_lookup (src), dspc->vp_unit_lookup (src), dspc->vp_scale_lookup (src),
-						dspc->current_probe_data_index, source_index++, num_active_sources, dspc->vis_XJoin,
-                                                xmap, src, num_active_xmaps, dspc->vis_XJoin ? 1 : num_active_sources);
+                                        if (dspc->msklookup[src] & 0x00030000)
+                                                dspc->probedata_visualize (
+                                                                           dspc->garray_probedata [PROBEDATA_ARRAY_HS_TIME], 
+                                                                           dspc->garray_probedata [dspc->expdi_lookup[src]], 
+                                                                           NULL, // **** no HS sections 
+                                                                           dspc->probe_pc_matrix[xmap][dspc->vis_XJoin ? src0:src], 
+                                                                           dspc->probe_pc_matrix[MAX_NUM_CHANNELS+xmap][MAX_NUM_CHANNELS+dspc->vis_XJoin ? src0:src],
+                                                                           dspc->msklookup[src],
+                                                                           "FPGA HS time", "ns", 1e6, // ms to ns
+                                                                           dspc->vp_label_lookup (src), dspc->vp_unit_lookup (src), dspc->vp_scale_lookup (src),
+                                                                           dspc->current_probe_data_hsindex, source_index++, num_active_sources, dspc->vis_XJoin,
+                                                                           xmap, src, num_active_xmaps, dspc->vis_XJoin ? 1 : num_active_sources);
+                                        else
+                                                dspc->probedata_visualize (
+                                                                           dspc->garray_probedata [dspc->expdi_lookup[xmap]], 
+                                                                           dspc->garray_probedata [dspc->expdi_lookup[src]], 
+                                                                           dspc->garray_probedata [PROBEDATA_ARRAY_SEC], 
+                                                                           dspc->probe_pc_matrix[xmap][dspc->vis_XJoin ? src0:src], 
+                                                                           dspc->probe_pc_matrix[MAX_NUM_CHANNELS+xmap][MAX_NUM_CHANNELS+dspc->vis_XJoin ? src0:src],
+                                                                           dspc->msklookup[src],
+                                                                           dspc->vp_label_lookup (xmap), dspc->vp_unit_lookup (xmap), dspc->vp_scale_lookup (xmap),
+                                                                           dspc->vp_label_lookup (src), dspc->vp_unit_lookup (src), dspc->vp_scale_lookup (src),
+                                                                           dspc->current_probe_data_index, source_index++, num_active_sources, dspc->vis_XJoin,
+                                                                           xmap, src, num_active_xmaps, dspc->vis_XJoin ? 1 : num_active_sources);
 					XSM_DEBUG_PG("DBG-Mbb1x");
 				} else { // clean up unused windows...
 					XSM_DEBUG_PG("DBG-Mbb1e cleanup xmap=" << xmap << " src=" << src << " ** " << dspc->vp_label_lookup (src));
@@ -1340,6 +1359,7 @@ void RPSPMC_Control::init_probedata_arrays (){
                 pv_tmp[i] = 0.0;
         
 	current_probe_data_index = 0;
+	current_probe_data_hsindex = 0;
         current_probe_section = 0;
 	nun_valid_data_sections = 0;
 	nun_valid_hdr = 0;
@@ -1450,8 +1470,8 @@ void RPSPMC_Control::add_probevector(){
 }
 
 // CALL ONLY THIS EXTERNALLY TO ADD DATA
- void RPSPMC_Control::add_probedata(double data[NUM_PV_DATA_SIGNALS], double pv[NUM_PV_HEADER_SIGNALS], gboolean set_pv, gboolean add_pv){ 
-	int i,j;
+ void RPSPMC_Control::add_probedata(double data[NUM_PV_DATA_SIGNALS], double pv[NUM_PV_HEADER_SIGNALS], double pv_hs[NUM_PV_HS][HS_LEN_MAX], int hs_len, gboolean set_pv, gboolean add_pv){ 
+         int i,j;
 
         // Data Stream:
         //         H -> D -> D ->... D -> H -> D -> D ->... H -> D -> D ->... D -> H
@@ -1478,13 +1498,28 @@ void RPSPMC_Control::add_probevector(){
         }
         
         // add data channels
-	for (i = PROBEDATA_ARRAY_S1, j=0; i <= PROBEDATA_ARRAY_END; ++i, ++j){
+	for (i = PROBEDATA_ARRAY_S1, j=0; i <= PROBEDATA_ARRAY_SIGNAL_LAST; ++i, ++j){ //PROBEDATA_ARRAY_END;
                 //g_print ("g_array_append_val garray_probedata[%d] {%x} := %g",i, garray_probedata[i], data[j]);
 		g_array_append_val (garray_probedata[i], data[j]); // sorting header expanded data in units into garrays
         }
         //g_print ("+++>>>> PUSH DATA i[%d] sec=%d  t=%g ms\n", current_probe_data_index, (int)pv[PROBEDATA_ARRAY_SEC],  data[14]);
-
         current_probe_data_index++;
+
+        if (hs_len){ // add FSS DATA (high speed) burst if available
+                for (i=0; i<hs_len; ++i){
+                        double hs_time = data[14] + (-hs_len + i)*8e-6; //  8ns spaced data (125MHz) in ms
+                        g_print ("g_array_append_val HS_TIME %d:%d ts=%g ms t=%g ns [%d] = %g\n",current_probe_data_hsindex, i, data[14], hs_time*1e6, hs_len, pv_hs[0][i]);
+                        g_array_append_val (garray_probedata[PROBEDATA_ARRAY_HS_TIME], hs_time);
+                        g_array_append_val (garray_probedata[PROBEDATA_ARRAY_HS_DATA_A], pv_hs[0][i]);
+                        g_array_append_val (garray_probedata[PROBEDATA_ARRAY_HS_DATA_B], pv_hs[1][i]);
+                        current_probe_data_hsindex++;
+                }
+
+                if (current_probe_data_hsindex < 100)
+                        for (i=0; i<current_probe_data_hsindex; ++i)
+                                g_print ("g_array_hst[%d] t=%g ns\n", i, g_array_index (garray_probedata[PROBEDATA_ARRAY_HS_TIME], double, i));
+        }
+        
 
 #ifdef TTY_DEBUG
 	std::cout << "###ADD_PDATA[" << current_probe_data_index << "]: ";

@@ -1146,28 +1146,11 @@ static void Check_conf(GnomeResPreferences* grp, remote_args* ra){
 };
 
 static void CbAction_ra(remote_action_cb* ra, gpointer* arglist){
-	if(ra->cmd && ((gchar**)arglist)[1])
+	if(((gchar**)arglist)[1])
                 if (ra->check (arglist)){
                         arglist[3] = ra; // return action entry
                         ra->print ();
                 }
-#if 0
-		if(! strcmp(((gchar**)arglist)[1], ra->cmd)){
-                        g_message ("CbAction_ra FOUND: %s == %s cb-data=%x, data_length=%d dp=%x",
-                                   ra->cmd, ((gchar**)arglist)[1],
-                                   ra->data, ra->data_length, ra->return_data);
-			if (ra->data)
-				(*ra->RemoteCb) (ra->widget, ra->data);
-			else
-				(*ra->RemoteCb) (ra->widget, arglist);
-                        ((gchar**)arglist)[3] = (gchar*)ra; // return action entry
-
-                        g_message ("CbAction_ra RESULT: %s, %s, cb-data=%x, data_length=%d dp=%x",
-                                   ra->cmd, ((gchar**)arglist)[3],
-                                   ra->data, ra->data_length, ra->return_data);
-			// see above and pcs.h
-		}
-#endif
 };
 
 static PyObject* remote_help(PyObject *self, PyObject *args);
@@ -1211,7 +1194,7 @@ static PyObject* remote_lista(PyObject *self, PyObject *args)
 	GSList* tmp = main_get_gapp()->RemoteActionList;
 	for (int n=0; n<slen; n++){
                 remote_action_cb* ra = (remote_action_cb*)tmp->data; // Look at data item in GSList.
-                PyTuple_SetItem(ret, n, PyUnicode_FromString(ra->cmd)); // Add Refname to Return-list
+                PyTuple_SetItem(ret, n, PyUnicode_FromString(ra->get_cmd ())); // Add Refname to Return-list
                 tmp = g_slist_next(tmp);
         }
 

@@ -571,18 +571,7 @@ void GUI_Builder::grid_add_probe_controls (gboolean have_dual,
         gtk_grid_set_column_homogeneous (GTK_GRID (grid), TRUE);
         gtk_widget_set_hexpand (grid, TRUE);
                 
-        remote_action_cb *ra = g_new( remote_action_cb, 1);     
-        ra -> cmd = g_strdup_printf("DSP_VP_%s_EXECUTE", control_id); 
-        gchar *help = g_strconcat ("Remote example: action (", ra->cmd, ")", NULL); 
-        grid_add_button ("Execute", help, 2,
-                         GCallback (exec_cb), cb_data);
-        g_free (help);
-        ra -> RemoteCb = (void (*)(GtkWidget*, void*))exec_cb;  
-        ra -> widget = button;                                  
-        ra -> data = cb_data;                                      
-
-                
-        main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra ); 
+        grid_add_exec_button ("Execute", GCallback (exec_cb), cb_data, g_strdup_printf("DSP_VP_%s_EXECUTE", control_id), 2);
         PI_DEBUG (DBG_L2, "Adding new Remote Cmd: " << ra->cmd ); 
                                                                         
         // ==================================================

@@ -377,20 +377,10 @@ void GUI_Builder::grid_add_probe_controls (gboolean have_dual,
         gtk_grid_set_column_homogeneous (GTK_GRID (grid), TRUE);
         gtk_widget_set_hexpand (grid, TRUE);
                 
-        remote_action_cb *ra = g_new( remote_action_cb, 1);     
-        ra -> cmd = g_strdup_printf("DSP_VP_%s_EXECUTE", control_id); 
-        gchar *help = g_strconcat ("Remote example: action (", ra->cmd, ")", NULL); 
-        grid_add_button ("Execute", help, 2,
-                         GCallback (exec_cb), cb_data);
-        g_free (help);
-        ra -> RemoteCb = (void (*)(GtkWidget*, void*))exec_cb;  
-        ra -> widget = button;                                  
-        ra -> data = cb_data;                                      
-
-                
-        main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra ); 
-        PI_DEBUG (DBG_L2, "Adding new Remote Cmd: " << ra->cmd ); 
-                                                                        
+        gchar *acid = g_strdup_printf("DSP_VP_%s_EXECUTE", control_id);
+        grid_add_exec_button ("Execute", GCallback (exec_cb), cb_data, acid, 2);
+        g_free (acid);
+                                                                                        
         // ==================================================
         set_configure_list_mode_on ();
         grid_add_button ("Write Vectors",
@@ -2300,22 +2290,14 @@ void RPSPMC_Control::create_folder (){
 		gchar *memolab = g_strdup_printf ("M %s", keys[i]);             
 		gchar *memoid  = g_strdup_printf ("memo-vp%c", 'a'+i);             
                 remote_action_cb *ra = NULL;
-                gchar *help = NULL;
 
                 bp->set_xy (i+1, 10);
                 // add button with remote support for program recall
-                ra = g_new( remote_action_cb, 1);
-                ra -> cmd = g_strdup_printf("DSP_VP_STO_%s", keys[i]);
-                help = g_strconcat ("Remote example: action (", ra->cmd, ")", NULL); 
-                bp->grid_add_button (N_(stolab), help, 1,
-                                         G_CALLBACK (callback_GVP_store_vp), this,
+                gchar *acid = g_strdup_printf("DSP_VP_STO_%s", keys[i]);
+                bp->grid_add_exec_button (N_(stolab), G_CALLBACK (callback_GVP_store_vp), this,
+                                          acid, 1,
                                          "key", gckey);
-                g_free (help);
-                ra -> RemoteCb = (void (*)(GtkWidget*, void*))callback_GVP_store_vp;
-                ra -> widget = bp->button;
-                ra -> data = this;
-                main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra );
-                PI_DEBUG (DBG_L2, "Adding new Remote Cmd: " << ra->cmd ); 
+                g_free (acid);
 
                 // CSS
                 //                if (gdk_rgba_parse (&rgba, "tomato"))
@@ -2324,28 +2306,15 @@ void RPSPMC_Control::create_folder (){
                 bp->set_xy (i+1, 11);
 
                 // add button with remote support for program recall
-                ra = g_new( remote_action_cb, 1);
-                ra -> cmd = g_strdup_printf("DSP_VP_RCL_%s", keys[i]);
-                help = g_strconcat ("Remote example: action (", ra->cmd, ")", NULL); 
-                bp->grid_add_button (N_(rcllab), help, 1,
-                                         G_CALLBACK (callback_GVP_restore_vp), this,
+                acid = g_strdup_printf("DSP_VP_RCL_%s", keys[i]);
+                bp->grid_add_exec_button (N_(rcllab), G_CALLBACK (callback_GVP_restore_vp), this,
+                                          acid, 1,
                                          "key", gckey);
-                g_free (help);
-                ra -> RemoteCb = (void (*)(GtkWidget*, void*))callback_GVP_restore_vp;
-                ra -> widget = bp->button;
-                ra -> data = this;
-                main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra );
-                PI_DEBUG (DBG_L2, "Adding new Remote Cmd: " << ra->cmd ); 
+                g_free (acid);
                 
                 // CSS
                 //                if (gdk_rgba_parse (&rgba, "SeaGreen3"))
                 //                        gtk_widget_override_background_color ( GTK_WIDGET (bp->button), GTK_STATE_FLAG_PRELIGHT, &rgba);
-#if 0 // may adda memo/info button
-                bp->set_xy (i+1, 12);
-                bp->grid_add_button (N_(memolab), memolab, 1,
-                                         G_CALLBACK (callback_GVP_memo_vp), this,
-                                         "key", gckey);
-#endif
                 bp->set_xy (i+1, 12);
                 bp->grid_add_input (NULL);
                 bp->set_input_width_chars (10);
@@ -2481,6 +2450,7 @@ void RPSPMC_Control::create_folder (){
 
         int ii=0;
         for (int i=0; rpspmc_source_signals[i].mask; ++i) {
+                int hs_flag=0;
                 const int rows=11;
                 int k=-1;
 		int c=ii/rows; 
@@ -2515,6 +2485,14 @@ void RPSPMC_Control::create_folder (){
                 if (rpspmc_source_signals[i].mask == 0xc000){ // Time-Mon
                         c=23; r=y+7+1;
                 }
+                else if (rpspmc_source_signals[i].mask == 0x10000){ // HS-Ch-A
+                        c=23; r=y+7+2;
+                        hs_flag=1;
+                }
+                else if (rpspmc_source_signals[i].mask == 0x20000){ // HS-Ch-B
+                        c=23; r=y+7+3;
+                        hs_flag=1;
+                }
 
                 bp->set_xy (c, r);
 
@@ -2539,16 +2517,19 @@ void RPSPMC_Control::create_folder (){
                 }
                 //fixed assignment:
                 // bp->grid_add_label (lablookup[i], NULL, 1, 0.);
-                
-                // use as X-Source
-                graphs_matrix[1][i] = bp->grid_add_check_button ("", NULL, 1,
-                                                                 GCallback (change_source_callback), this,
-                                                                 XSource, X_SOURCE_MSK | rpspmc_source_signals[i].mask
-                                                                 );
-                g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER (rpspmc_source_signals[i].mask)); 
-                g_object_set_data (G_OBJECT(bp->button), "Source_Mapping", GINT_TO_POINTER (MAP_SOURCE_X)); 
-                g_object_set_data (G_OBJECT(bp->button), "VPC", GINT_TO_POINTER (i)); 
 
+                if (!hs_flag){
+                        // use as X-Source
+                        graphs_matrix[1][i] = bp->grid_add_check_button ("", NULL, 1,
+                                                                         GCallback (change_source_callback), this,
+                                                                         XSource, X_SOURCE_MSK | rpspmc_source_signals[i].mask
+                                                                         );
+                        g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER (rpspmc_source_signals[i].mask)); 
+                        g_object_set_data (G_OBJECT(bp->button), "Source_Mapping", GINT_TO_POINTER (MAP_SOURCE_X)); 
+                        g_object_set_data (G_OBJECT(bp->button), "VPC", GINT_TO_POINTER (i)); 
+                } else
+                        bp->grid_add_label (" T ");
+                
                 // use as Plot (Y)-Source
                 graphs_matrix[2][i] = bp->grid_add_check_button ("", NULL, 1,
                                                                  G_CALLBACK (change_source_callback), this,
@@ -2558,24 +2539,28 @@ void RPSPMC_Control::create_folder (){
                 g_object_set_data (G_OBJECT(bp->button), "Source_Mapping", GINT_TO_POINTER (MAP_SOURCE_PLOTY));
                 g_object_set_data (G_OBJECT(bp->button), "VPC", GINT_TO_POINTER (i)); 
                 
-                // use as A-Source (Average)
-                graphs_matrix[3][i] = bp->grid_add_check_button ("", NULL, 1,
-                                                                 G_CALLBACK (change_source_callback), this,
-                                                                 PlotAvg, A_SOURCE_MSK | rpspmc_source_signals[i].mask
-                                                                 );
-                g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER (rpspmc_source_signals[i].mask)); 
-                g_object_set_data (G_OBJECT(bp->button), "Source_Mapping", GINT_TO_POINTER (MAP_SOURCE_AVG));
-                g_object_set_data (G_OBJECT(bp->button), "VPC", GINT_TO_POINTER (i)); 
+                if (!hs_flag){
+                        // use as A-Source (Average)
+                        graphs_matrix[3][i] = bp->grid_add_check_button ("", NULL, 1,
+                                                                         G_CALLBACK (change_source_callback), this,
+                                                                         PlotAvg, A_SOURCE_MSK | rpspmc_source_signals[i].mask
+                                                                         );
+                        g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER (rpspmc_source_signals[i].mask)); 
+                        g_object_set_data (G_OBJECT(bp->button), "Source_Mapping", GINT_TO_POINTER (MAP_SOURCE_AVG));
+                        g_object_set_data (G_OBJECT(bp->button), "VPC", GINT_TO_POINTER (i)); 
                 
-                // use as S-Source (Section)
-                graphs_matrix[4][i] = bp->grid_add_check_button ("", NULL, 1,
-                                                                 G_CALLBACK (change_source_callback), this,
-                                                                 PlotSec, S_SOURCE_MSK | rpspmc_source_signals[i].mask
-                                                                 );
-                g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER (rpspmc_source_signals[i].mask)); 
-                g_object_set_data (G_OBJECT(bp->button), "Source_Mapping", GINT_TO_POINTER (MAP_SOURCE_SEC));
-                g_object_set_data (G_OBJECT(bp->button), "VPC", GINT_TO_POINTER (i)); 
-                
+                        // use as S-Source (Section)
+                        graphs_matrix[4][i] = bp->grid_add_check_button ("", NULL, 1,
+                                                                         G_CALLBACK (change_source_callback), this,
+                                                                         PlotSec, S_SOURCE_MSK | rpspmc_source_signals[i].mask
+                                                                         );
+                        g_object_set_data (G_OBJECT(bp->button), "Source_Channel", GINT_TO_POINTER (rpspmc_source_signals[i].mask)); 
+                        g_object_set_data (G_OBJECT(bp->button), "Source_Mapping", GINT_TO_POINTER (MAP_SOURCE_SEC));
+                        g_object_set_data (G_OBJECT(bp->button), "VPC", GINT_TO_POINTER (i)); 
+                } else {
+                        bp->grid_add_label (" ");
+                        bp->grid_add_label (" ");
+                }
                 // bp->grid_add_check_button_graph_matrix(lablookup[i], (int) rpspmc_source_signals[i].mask, m, probe_source[m], i, this);
                 // bp->grid_add_check_button_graph_matrix(" ", (int) (X_SOURCE_MSK | rpspmc_source_signals[i].mask), -1, i, this);
                 // bp->grid_add_check_button_graph_matrix(" ", (int) (P_SOURCE_MSK | rpspmc_source_signals[i].mask), -1, i, this);

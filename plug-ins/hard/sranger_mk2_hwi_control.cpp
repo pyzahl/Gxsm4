@@ -402,19 +402,9 @@ public:
                 gtk_grid_set_column_homogeneous (GTK_GRID (grid), TRUE);
                 gtk_widget_set_hexpand (grid, TRUE);
                 
-                remote_action_cb *ra = g_new( remote_action_cb, 1);     
-                ra -> cmd = g_strdup_printf("DSP_VP_%s_EXECUTE", control_id); 
-                gchar *help = g_strconcat ("Remote example: action (", ra->cmd, ")", NULL); 
-                grid_add_button ("Execute", help, 2,
-                                 GCallback (exec_cb), cb_data);
-                g_free (help);
-                ra -> RemoteCb = (void (*)(GtkWidget*, void*))exec_cb;  
-                ra -> widget = button;                                  
-                ra -> data = cb_data;                                      
-
-                
-                main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra ); 
-                PI_DEBUG (DBG_L2, "Adding new Remote Cmd: " << ra->cmd ); 
+                gchar *acid = g_strdup_printf("DSP_VP_%s_EXECUTE", control_id);
+                grid_add_exec_button ("Execute", GCallback (exec_cb), cb_data, acid, 2);
+                g_free (acid);
                                                                         
                 // ==================================================
                 set_configure_list_mode_on ();
@@ -2627,22 +2617,14 @@ DSPControl::DSPControl (Gxsm4app *app):AppBase(app) {
 		gchar *memolab = g_strdup_printf ("M %s", keys[i]);             
 		gchar *memoid  = g_strdup_printf ("memo-vp%c", 'a'+i);             
                 remote_action_cb *ra = NULL;
-                gchar *help = NULL;
 
                 dsp_bp->set_xy (i+1, 10);
                 // add button with remote support for program recall
-                ra = g_new( remote_action_cb, 1);
-                ra -> cmd = g_strdup_printf("DSP_VP_STO_%s", keys[i]);
-                help = g_strconcat ("Remote example: action (", ra->cmd, ")", NULL); 
-                dsp_bp->grid_add_button (N_(stolab), help, 1,
-                                         G_CALLBACK (callback_GVP_store_vp), this,
+                gchar *acid = g_strdup_printf("DSP_VP_STO_%s", keys[i]);
+                dsp_bp->grid_add_exec_button (N_(stolab), G_CALLBACK (callback_GVP_store_vp), this,
+                                          acid, 1,
                                          "key", gckey);
-                g_free (help);
-                ra -> RemoteCb = (void (*)(GtkWidget*, void*))callback_GVP_store_vp;
-                ra -> widget = dsp_bp->button;
-                ra -> data = this;
-                main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra );
-                PI_DEBUG (DBG_L2, "Adding new Remote Cmd: " << ra->cmd ); 
+                g_free (acid);
 
                 // CSS
                 //                if (gdk_rgba_parse (&rgba, "tomato"))
@@ -2651,28 +2633,15 @@ DSPControl::DSPControl (Gxsm4app *app):AppBase(app) {
                 dsp_bp->set_xy (i+1, 11);
 
                 // add button with remote support for program recall
-                ra = g_new( remote_action_cb, 1);
-                ra -> cmd = g_strdup_printf("DSP_VP_RCL_%s", keys[i]);
-                help = g_strconcat ("Remote example: action (", ra->cmd, ")", NULL); 
-                dsp_bp->grid_add_button (N_(rcllab), help, 1,
-                                         G_CALLBACK (callback_GVP_restore_vp), this,
+                acid = g_strdup_printf("DSP_VP_RCL_%s", keys[i]);
+                dsp_bp->grid_add_exec_button (N_(rcllab), G_CALLBACK (callback_GVP_restore_vp), this,
+                                          acid, 1,
                                          "key", gckey);
-                g_free (help);
-                ra -> RemoteCb = (void (*)(GtkWidget*, void*))callback_GVP_restore_vp;
-                ra -> widget = dsp_bp->button;
-                ra -> data = this;
-                main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra );
-                PI_DEBUG (DBG_L2, "Adding new Remote Cmd: " << ra->cmd ); 
+                g_free (acid);
                 
                 // CSS
                 //                if (gdk_rgba_parse (&rgba, "SeaGreen3"))
                 //                        gtk_widget_override_background_color ( GTK_WIDGET (dsp_bp->button), GTK_STATE_FLAG_PRELIGHT, &rgba);
-#if 0 // may adda memo/info button
-                dsp_bp->set_xy (i+1, 12);
-                dsp_bp->grid_add_button (N_(memolab), memolab, 1,
-                                         G_CALLBACK (callback_GVP_memo_vp), this,
-                                         "key", gckey);
-#endif
                 dsp_bp->set_xy (i+1, 12);
                 dsp_bp->grid_add_input (NULL);
                 dsp_bp->set_input_width_chars (10);

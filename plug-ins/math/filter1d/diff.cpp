@@ -1,3 +1,5 @@
+/* -*- Mode: C++; indent-tabs-mode: nil; c-basic-offset: 8 c-style: "K&R" -*- */
+
 /* Gnome gxsm - Gnome X Scanning Microscopy
  * universal STM/AFM/SARLS/SPALEED/... controlling and
  * data analysis software
@@ -209,14 +211,7 @@ static void diff_init(void)
 {
   PI_DEBUG (DBG_L2, "diff Plugin Init");
  // This is action remote stuff, stolen from the peak finder PI.
-   remote_action_cb *ra;
-   //GtkWidget *dummywidget = gtk_menu_item_new();
- 
-   ra = g_new( remote_action_cb, 1);
-   ra -> cmd = g_strdup_printf("diff_PI");
-   ra -> RemoteCb = &diff_non_interactive;
-   ra -> widget = NULL; // dummywidget;
-   ra -> data = NULL;
+   remote_action_cb *ra = new remote_action_cb ("diff_PI", &diff_non_interactive);
    main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra );
    PI_DEBUG (DBG_L2, "diff-plugin: Adding new Remote Cmd: diff_PI");
  // remote action stuff

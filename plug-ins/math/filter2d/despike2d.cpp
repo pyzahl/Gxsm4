@@ -193,20 +193,13 @@ GxsmMathTwoSrcPlugin *get_gxsm_math_two_src_plugin_info( void ) {
 // init-Function
 static void despike2d_init(void)
 {
-  PI_DEBUG (DBG_L2, "despike2d Plugin Init");
+        PI_DEBUG (DBG_L2, "despike2d Plugin Init");
 
-// This is action remote stuff, stolen from the peak finder PI.
-  remote_action_cb *ra;
-  GtkWidget *dummywidget = NULL; //gtk_menu_item_new();
-
-  ra = g_new( remote_action_cb, 1);
-  ra -> cmd = g_strdup_printf("MATH_FILTER2D_Despike");
-  ra -> RemoteCb = &despike2d_non_interactive;
-  ra -> widget = dummywidget;
-  ra -> data = NULL;
-  main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra );
-  PI_DEBUG (DBG_L2, "normal_z-plugin: Adding new Remote Cmd: MATH_FILTER2D_Normal_Z");
-// remote action stuff
+        // This is action remote stuff, stolen from the peak finder PI.
+        remote_action_cb *ra = new remote_action_cb ("MATH_FILTER2D_Despike", &despike2d_non_interactive);
+        main_get_gapp()->RemoteActionList = g_slist_prepend ( main_get_gapp()->RemoteActionList, ra );
+        PI_DEBUG (DBG_L2, "normal_z-plugin: Adding new Remote Cmd: MATH_FILTER2D_Normal_Z");
+        // remote action stuff
 }
 
 static void despike2d_non_interactive( GtkWidget *widget , gpointer pc )

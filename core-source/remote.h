@@ -66,16 +66,19 @@ public:
 		}
                 return false;
         };
+        const gchar* get_help () { return g_strconcat ("Remote example: gxsm.action (\"", cmd, "\"", NULL); };
+        const gchar* get_cmd () { return cmd; };
         void print (){
                 g_message ("remote_action_cb entry for gxsm.action('%s'). ret=%d, data_length=%d", cmd, ret, data_length);
                 if (return_data && data_length > 0)
                         g_message ("... data_length=%d, data: %s", data_length, data);
         };
-public:
+private:
         const gchar  *cmd;
         void (*RemoteCb)(GtkWidget *widget , void* data);
         GtkWidget *widget;
         gpointer data;
+public:
         const gchar *return_data;
         int ret;
         int data_length;

@@ -152,6 +152,9 @@ public:
         static void pulse_form_enable (GtkWidget *widget, RPspmc_pacpll *self);
         static void pulse_form_fire (GtkWidget *widget, RPspmc_pacpll *self);
         static void pulse_form_pf_ts (GtkWidget *widget, RPspmc_pacpll *self);
+        static void pulse_form_ABmanual (GtkWidget *widget, RPspmc_pacpll *self);
+        static void pulse_form_write_A (GtkWidget *widget, RPspmc_pacpll *self);
+        static void pulse_form_write_B (GtkWidget *widget, RPspmc_pacpll *self);
 
         static void choice_operation_callback (GtkWidget *widget, RPspmc_pacpll *self);
         static void choice_transport_ch12_callback (GtkWidget *widget, RPspmc_pacpll *self);
@@ -178,6 +181,8 @@ public:
         static void choice_trigger_mode_callback (GtkWidget *widget, RPspmc_pacpll *self);
         static void choice_auto_set_callback (GtkWidget *widget, RPspmc_pacpll *self);
 
+        void pulse_form_write_AB (int ab);
+        
 	void send_all_parameters ();
 	void update_SPMC_parameters ();
 	void SPMC_cold_start_init ();

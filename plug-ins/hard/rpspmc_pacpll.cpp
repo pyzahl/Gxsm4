@@ -463,6 +463,7 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
         parameters.pulse_form_shapexw = 0.;
         parameters.pulse_form_shapexwif = 0.;
         parameters.pulse_form_enable = false;
+        parameters.pulse_form_ABmanual = false;
         bp->set_no_spin (false);
         bp->set_input_width_chars (6);
         bp->set_default_ec_change_notice_fkt (RPspmc_pacpll::pulse_form_parameter_changed, this);
@@ -501,17 +502,19 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
 
 #if 1
         bp->new_line ();
-        GtkWidget *inputDPt0 = bp->grid_add_ec ("DPt0v0", uTime, &parameters.pulse_form_dpt[0], 0.0, 10000.0, "5g", 0.1, 1.0, "PULSE-FORM-DPT0");
+        GtkWidget *inputDPt0 = bp->grid_add_ec ("DPt0v0", uTime, &parameters.pulse_form_dpt[0], 0.0, 520.0, "5g", 0.1, 1.0, "PULSE-FORM-DPT0");
         GtkWidget *inputDPv0 = bp->grid_add_ec (NULL,     Unity, &parameters.pulse_form_dpv[0], 0.0, 3.0, "5g", 1.0, 1.0, "PULSE-FORM-DPV0");
         bp->new_line ();
-        GtkWidget *inputDPt1 = bp->grid_add_ec ("DPt1v1", uTime, &parameters.pulse_form_dpt[1], 0.0, 10000.0, "5g", 0.1, 1.0, "PULSE-FORM-DPT1");
+        GtkWidget *inputDPt1 = bp->grid_add_ec ("DPt1v1", uTime, &parameters.pulse_form_dpt[1], 0.0, 520.0, "5g", 0.1, 1.0, "PULSE-FORM-DPT1");
         GtkWidget *inputDPv1 = bp->grid_add_ec (NULL,     Unity, &parameters.pulse_form_dpv[1], 0.0, 3.0, "5g", 1.0, 1.0, "PULSE-FORM-DPV1");
         bp->new_line ();
-        GtkWidget *inputDPt2 = bp->grid_add_ec ("DPt2v2", uTime, &parameters.pulse_form_dpt[2], 0.0, 10000.0, "5g", 0.1, 1.0, "PULSE-FORM-DPT2");
+        GtkWidget *inputDPt2 = bp->grid_add_ec ("DPt2v2", uTime, &parameters.pulse_form_dpt[2], 0.0, 520.0, "5g", 0.1, 1.0, "PULSE-FORM-DPT2");
         GtkWidget *inputDPv2 = bp->grid_add_ec (NULL,     Unity, &parameters.pulse_form_dpv[2], 0.0, 3.0, "5g", 1.0, 1.0, "PULSE-FORM-DPV2");
         bp->new_line ();
-        GtkWidget *inputDPt3 = bp->grid_add_ec ("DPt3v3", uTime, &parameters.pulse_form_dpt[3], 0.0, 10000.0, "5g", 0.1, 1.0, "PULSE-FORM-DPT3");
+        GtkWidget *inputDPt3 = bp->grid_add_ec ("DPt3v3", uTime, &parameters.pulse_form_dpt[3], 0.0, 520.0, "5g", 0.1, 1.0, "PULSE-FORM-DPT3");
         GtkWidget *inputDPv3 = bp->grid_add_ec (NULL,     Unity, &parameters.pulse_form_dpv[3], 0.0, 3.0, "5g", 1.0, 1.0, "PULSE-FORM-DPV3");
+        bp->new_line ();
+        GtkWidget *inputDPtR = bp->grid_add_ec ("RepPer", uTime, &parameters.pulse_form_dpt[4], 0.0, 1000000.0, "5g", 0.1, 1.0, "PULSE-FORM-DPT3");
 #endif
         
         bp->new_line ();
@@ -532,6 +535,18 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
                           this);				
         gtk_combo_box_set_active_id (GTK_COMBO_BOX (pf_ts), "0");
         bp->grid_add_widget (pf_ts);
+
+        bp->new_line ();
+        bp->set_input_nx (1);
+        bp->grid_add_check_button ( N_("Manual AB"),  bp->PYREMOTE_CHECK_HOOK_KEY_FUNC("Enable Manual AB Pulse Parameter Write","rp-pacpll-manual-PF-config"), 1,
+                                    G_CALLBACK (RPspmc_pacpll::pulse_form_ABmanual), this);
+        bp->grid_add_exec_button ( N_("Write A"),
+                                   G_CALLBACK (RPspmc_pacpll::pulse_form_write_A), this, "PulseWriteA",
+                                   1);
+        bp->grid_add_exec_button ( N_("Write B"),
+                                   G_CALLBACK (RPspmc_pacpll::pulse_form_write_B), this, "PulseWriteB",
+                                   1);
+
         
 
         // =======================================
@@ -989,12 +1004,7 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
 
 
         // Setup Scope data hook
-        remote_action_cb *ra = g_new( remote_action_cb, 1);     
-        ra -> cmd = g_strdup_printf("GET_RPDATA_VECTOR"); 
-        ra -> RemoteCb = (void (*)(GtkWidget*, void*))get_rpdata_vector;  
-        ra -> widget = NULL;
-        ra -> data = this;
-        
+        remote_action_cb *ra = new remote_action_cb("GET_RPDATA_VECTOR", get_rpdata_vector, NULL, this);
         ra -> return_data    = bram_info;
         ra -> data_length    = 4096;
         ra -> data_vector[0] = &bram_saved_buffer[0][0];
@@ -1182,49 +1192,81 @@ void RPspmc_pacpll::dfreq_ctrl_parameter_changed (Param_Control* pcs, gpointer u
         self->write_parameter ("DFREQ_FB_LOWER", self->parameters.control_dfreq_fb_lower);
 }
 
-void RPspmc_pacpll::pulse_form_parameter_changed (Param_Control* pcs, gpointer user_data){
-        RPspmc_pacpll *self = (RPspmc_pacpll *)user_data;
-        self->write_parameter ("PULSE_FORM_BIAS0", self->parameters.pulse_form_bias0);
-        self->write_parameter ("PULSE_FORM_BIAS1", self->parameters.pulse_form_bias1);
-        self->write_parameter ("PULSE_FORM_PHASE0", self->parameters.pulse_form_phase0);
-        self->write_parameter ("PULSE_FORM_PHASE1", self->parameters.pulse_form_phase1);
-        self->write_parameter ("PULSE_FORM_WIDTH0", self->parameters.pulse_form_width0);
-        self->write_parameter ("PULSE_FORM_WIDTH1", self->parameters.pulse_form_width1);
-        self->write_parameter ("PULSE_FORM_WIDTH0IF", self->parameters.pulse_form_width0if);
-        self->write_parameter ("PULSE_FORM_WIDTH1IF", self->parameters.pulse_form_width1if);
-        self->write_parameter ("PULSE_FORM_SHAPEXW", self->parameters.pulse_form_shapexw);
-        self->write_parameter ("PULSE_FORM_SHAPEXWIF", self->parameters.pulse_form_shapexwif);
-        self->write_parameter ("PULSE_FORM_SHAPEX", self->parameters.pulse_form_shapex);
-        self->write_parameter ("PULSE_FORM_SHAPEXIF", self->parameters.pulse_form_shapexif);
+void  RPspmc_pacpll::pulse_form_write_AB (int ab){
 
-        self->write_parameter ("PULSE_FORM_DPOS0", self->parameters.pulse_form_dpt[0]);
-        self->write_parameter ("PULSE_FORM_DPOS1", self->parameters.pulse_form_dpt[1]);
-        self->write_parameter ("PULSE_FORM_DPOS2", self->parameters.pulse_form_dpt[2]);
-        self->write_parameter ("PULSE_FORM_DPOS3", self->parameters.pulse_form_dpt[3]);
+        g_message ("RPspmc_pacpll::pulse_form_write_AB (%d)", ab);
         
-        if (self->parameters.pulse_form_enable){
-                self->write_parameter ("PULSE_FORM_HEIGHT0", self->parameters.pulse_form_height0);
-                self->write_parameter ("PULSE_FORM_HEIGHT1", self->parameters.pulse_form_height1);
-                self->write_parameter ("PULSE_FORM_HEIGHT0IF", self->parameters.pulse_form_height0if);
-                self->write_parameter ("PULSE_FORM_HEIGHT1IF", self->parameters.pulse_form_height1if);
-                self->write_parameter ("PULSE_FORM_DPVAL0", self->parameters.pulse_form_dpv[0]);
-                self->write_parameter ("PULSE_FORM_DPVAL1", self->parameters.pulse_form_dpv[1]);
-                self->write_parameter ("PULSE_FORM_DPVAL2", self->parameters.pulse_form_dpv[2]);
-                self->write_parameter ("PULSE_FORM_DPVAL3", self->parameters.pulse_form_dpv[3]);
+        write_parameter ("PULSE_FORM_AB_SELECT", ab);
+
+        write_parameter ("PULSE_FORM_BIAS0", parameters.pulse_form_bias0);
+        write_parameter ("PULSE_FORM_BIAS1", parameters.pulse_form_bias1);
+        write_parameter ("PULSE_FORM_PHASE0", parameters.pulse_form_phase0);
+        write_parameter ("PULSE_FORM_PHASE1", parameters.pulse_form_phase1);
+        write_parameter ("PULSE_FORM_WIDTH0", parameters.pulse_form_width0);
+        write_parameter ("PULSE_FORM_WIDTH1", parameters.pulse_form_width1);
+        write_parameter ("PULSE_FORM_WIDTH0IF", parameters.pulse_form_width0if);
+        write_parameter ("PULSE_FORM_WIDTH1IF", parameters.pulse_form_width1if);
+        write_parameter ("PULSE_FORM_SHAPEXW", parameters.pulse_form_shapexw);
+        write_parameter ("PULSE_FORM_SHAPEXWIF", parameters.pulse_form_shapexwif);
+        write_parameter ("PULSE_FORM_SHAPEX", parameters.pulse_form_shapex);
+        write_parameter ("PULSE_FORM_SHAPEXIF", parameters.pulse_form_shapexif);
+
+        write_parameter ("PULSE_FORM_DPOS0", parameters.pulse_form_dpt[0]);
+        write_parameter ("PULSE_FORM_DPOS1", parameters.pulse_form_dpt[1]);
+        write_parameter ("PULSE_FORM_DPOS2", parameters.pulse_form_dpt[2]);
+        write_parameter ("PULSE_FORM_DPOS3", parameters.pulse_form_dpt[3]);
+        write_parameter ("PULSE_FORM_DPOS4", parameters.pulse_form_dpt[4]);
+        
+        if (parameters.pulse_form_enable){
+                write_parameter ("PULSE_FORM_HEIGHT0", parameters.pulse_form_height0);
+                write_parameter ("PULSE_FORM_HEIGHT1", parameters.pulse_form_height1);
+                write_parameter ("PULSE_FORM_HEIGHT0IF", parameters.pulse_form_height0if);
+                write_parameter ("PULSE_FORM_HEIGHT1IF", parameters.pulse_form_height1if);
+                write_parameter ("PULSE_FORM_DPVAL0", (int)parameters.pulse_form_dpv[0]);
+                write_parameter ("PULSE_FORM_DPVAL1", (int)parameters.pulse_form_dpv[1]);
+                write_parameter ("PULSE_FORM_DPVAL2", (int)parameters.pulse_form_dpv[2]);
+                write_parameter ("PULSE_FORM_DPVAL3", (int)parameters.pulse_form_dpv[3]);
         } else {
-                self->write_parameter ("PULSE_FORM_HEIGHT0", 0.0);
-                self->write_parameter ("PULSE_FORM_HEIGHT1", 0.0);
-                self->write_parameter ("PULSE_FORM_HEIGHT0IF", 0.0);
-                self->write_parameter ("PULSE_FORM_HEIGHT1IF", 0.0);
-                self->write_parameter ("PULSE_FORM_DPVAL0", 0.0);
-                self->write_parameter ("PULSE_FORM_DPVAL1", 0.0);
-                self->write_parameter ("PULSE_FORM_DPVAL2", 0.0);
-                self->write_parameter ("PULSE_FORM_DPVAL3", 0.0);
+                write_parameter ("PULSE_FORM_HEIGHT0", 0.0);
+                write_parameter ("PULSE_FORM_HEIGHT1", 0.0);
+                write_parameter ("PULSE_FORM_HEIGHT0IF", 0.0);
+                write_parameter ("PULSE_FORM_HEIGHT1IF", 0.0);
+                write_parameter ("PULSE_FORM_DPVAL0", 0);
+                write_parameter ("PULSE_FORM_DPVAL1", 0);
+                write_parameter ("PULSE_FORM_DPVAL2", 0);
+                write_parameter ("PULSE_FORM_DPVAL3", 0);
         }
 }
 
+
+void RPspmc_pacpll::pulse_form_parameter_changed (Param_Control* pcs, gpointer user_data){
+        RPspmc_pacpll *self = (RPspmc_pacpll *)user_data;
+
+        if (self->parameters.pulse_form_ABmanual) return;
+
+        self->pulse_form_write_AB (0);
+}
+
+void  RPspmc_pacpll::pulse_form_write_A (GtkWidget *widget, RPspmc_pacpll *_self){
+        RPspmc_pacpll *self = (RPspmc_pacpll *)_self;
+
+        self->pulse_form_write_AB (0);
+}
+
+void  RPspmc_pacpll::pulse_form_write_B (GtkWidget *widget, RPspmc_pacpll *_self){
+        RPspmc_pacpll *self = (RPspmc_pacpll *)_self;
+
+        self->pulse_form_write_AB (1);
+}
+
+
 void RPspmc_pacpll::pulse_form_enable (GtkWidget *widget, RPspmc_pacpll *self){
         self->parameters.pulse_form_enable = gtk_check_button_get_active (GTK_CHECK_BUTTON (widget));
+        self->pulse_form_parameter_changed (NULL, self);
+}
+
+void RPspmc_pacpll::pulse_form_ABmanual (GtkWidget *widget, RPspmc_pacpll *self){
+        self->parameters.pulse_form_ABmanual = gtk_check_button_get_active (GTK_CHECK_BUTTON (widget));
         self->pulse_form_parameter_changed (NULL, self);
 }
 

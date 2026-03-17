@@ -1073,11 +1073,7 @@ Inet_Json_External_Scandata::Inet_Json_External_Scandata (Gxsm4app *app):AppBase
         inet_json_external_scandata_pi.app->ConnectPluginToStopScanEvent (Inet_Json_External_Scandata::scan_stop_callback);
 
         // Get data hook
-        remote_action_cb *ra = g_new( remote_action_cb, 1);     
-        ra -> cmd = g_strdup_printf("GET_RPDATA_VECTOR"); 
-        ra -> RemoteCb = (void (*)(GtkWidget*, void*))dummy_func_wd;  
-        ra -> widget = NULL;
-        ra -> data = NULL;                                      
+        remote_action_cb *ra = new remote_action_cb ("GET_RPDATA_VECTOR", dummy_func_wd);  
         ra -> return_data = g_strdup_printf("VECTOR");
         ra -> data_length    = 4096;
         ra -> data_vector[0] = &bram_saved_buffer[0][0];
@@ -1086,7 +1082,6 @@ Inet_Json_External_Scandata::Inet_Json_External_Scandata (Gxsm4app *app):AppBase
         ra -> data_vector[3] = &bram_saved_buffer[3][0];
         ra -> data_vector[4] = &bram_saved_buffer[4][0];
         gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, ra );
-
 
 }
 
