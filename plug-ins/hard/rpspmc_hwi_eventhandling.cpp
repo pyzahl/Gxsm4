@@ -1357,6 +1357,9 @@ void RPSPMC_Control::init_probedata_arrays (){
 
 	for (int i=0; i<NUM_PV_HEADER_SIGNALS; ++i)
                 pv_tmp[i] = 0.0;
+
+        pv_tmp [PROBEDATA_ARRAY_U]  = bias;
+        pv_tmp [PROBEDATA_ARRAY_ZS] = zpos_mon;
         
 	current_probe_data_index = 0;
 	current_probe_data_hsindex = 0;
@@ -1430,7 +1433,13 @@ void RPSPMC_Control::add_probevector(){
 #endif
         double multi = 1./(program_vector_list[current_probe_section].n);
         double dt    = 1./program_vector_list[current_probe_section].slew*1e03; // slew = npoints / time in ms (sec x 1e3)
-	for (i = PROBEDATA_ARRAY_TIME; i < PROBEDATA_ARRAY_SEC; ++i){
+
+        static double dus = 0.0;
+        if (current_probe_data_index == 0)
+                if (program_vector_list[current_probe_section].options & VP_INITIAL_SET_VEC)
+                        dus = (program_vector_list[current_probe_section].f_du - pv_tmp[PROBEDATA_ARRAY_U]) * multi;
+
+        for (i = PROBEDATA_ARRAY_TIME; i < PROBEDATA_ARRAY_SEC; ++i){
                 val = pv_tmp[i];
 		switch (i){
 		case PROBEDATA_ARRAY_TIME:
@@ -1458,7 +1467,10 @@ void RPSPMC_Control::add_probevector(){
 			val += program_vector_list[current_probe_section].f_dz*multi;
 			break;
 		case PROBEDATA_ARRAY_U:
-			val += program_vector_list[current_probe_section].f_du*multi;
+                        if (current_probe_data_index < program_vector_list[0].n && program_vector_list[current_probe_section].options & VP_INITIAL_SET_VEC)
+                                val += dus;
+                        else
+                                val += program_vector_list[current_probe_section].f_du*multi;
 			break;
 		default:
 			break; // error!!!!
