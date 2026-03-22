@@ -467,7 +467,7 @@ void RPSPMC_Control::write_spm_vector_program (int start, pv_mode pvm){
                                 // run also reverse probe ramp in dual mode
                                 vp_duration += make_dUZXYAB_vector (vector_index++,
                                                                     -uf, IV_dz,   0.0, 0.0, 0.0, 0.0, 0., 0.,
-                                                                    n0f, 0, 0, (1e-6+fabs(ui))/IV_slope,
+                                                                    n0f, 0, 0, (1e-6+fabs(uf))/IV_slope,
                                                                     vis_sources,     // ramp sources
                                                                     options);  // invert FB flag in bit0, FPGA GVP FB=1 => FB-hold
                                 vp_duration += make_dUZXYAB_vector (vector_index++,

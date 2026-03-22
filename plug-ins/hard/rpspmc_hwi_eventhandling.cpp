@@ -1385,9 +1385,15 @@ void RPSPMC_Control::add_probe_hdr(double pv[NUM_PV_HEADER_SIGNALS]){
 void RPSPMC_Control::set_probevector(double pv[NUM_PV_HEADER_SIGNALS]){ 
 	int i,j;
 
+#if 1
+        //for (int i=0; i<NUM_PV_HEADER_SIGNALS; ++i)
+        //        pv_tmp[i] = pv[i]; // update from actual pv
+        add_probevector();
         current_probe_section = (int)pv[PROBEDATA_ARRAY_SEC];
         current_probe_block_index = current_probe_data_index;
+#else
 
+        
         double dsec = (double)current_probe_section;
         double dind = (double)current_probe_data_index;
         g_array_append_val (garray_probedata [PROBEDATA_ARRAY_SEC], dsec);
@@ -1399,9 +1405,9 @@ void RPSPMC_Control::set_probevector(double pv[NUM_PV_HEADER_SIGNALS]){
 
         for (i = PROBEDATA_ARRAY_TIME, j=1; i <= PROBEDATA_ARRAY_SEC; ++i, ++j)
                 g_array_append_val (garray_probedata [i], pv_tmp[j]);
-
+       
         ++nun_valid_data_sections;
-
+#endif
 #ifdef TTY_DEBUG
 	g_print ("### SET_PV [%04d] {sec=%d}#s[%d]= (", current_probe_data_index, current_probe_section, nun_valid_data_sections);
 	for (i = PROBEDATA_ARRAY_INDEX, j=0; i <= PROBEDATA_ARRAY_SEC; ++i, ++j)
@@ -1436,45 +1442,46 @@ void RPSPMC_Control::add_probevector(){
 
         static double dus = 0.0;
         if (current_probe_data_index == 0)
-                if (program_vector_list[current_probe_section].options & VP_INITIAL_SET_VEC)
+                if (program_vector_list[current_probe_section].options & VP_INITIAL_SET_VEC) // FIX-ME -- add other FB-SET components and adhere to selectors! (Bias only right now)
                         dus = (program_vector_list[current_probe_section].f_du - pv_tmp[PROBEDATA_ARRAY_U]) * multi;
 
         for (i = PROBEDATA_ARRAY_TIME; i < PROBEDATA_ARRAY_SEC; ++i){
                 val = pv_tmp[i];
-		switch (i){
-		case PROBEDATA_ARRAY_TIME:
-			val += dt;
-			break;
-		case PROBEDATA_ARRAY_A:
-			val += program_vector_list[current_probe_section].f_da*multi;
-			break;
-		case PROBEDATA_ARRAY_B:
-			val += program_vector_list[current_probe_section].f_db*multi;
-			break;
-		case PROBEDATA_ARRAY_AM:
-			val += program_vector_list[current_probe_section].f_dam*multi;
-			break;
-		case PROBEDATA_ARRAY_FM:
-			val += program_vector_list[current_probe_section].f_dfm*multi*spmc_parameters.rf_gen_fmscale;
-			break;
-		case PROBEDATA_ARRAY_XS:
-			val += program_vector_list[current_probe_section].f_dx*multi;
-			break;
-		case PROBEDATA_ARRAY_YS:
-			val += program_vector_list[current_probe_section].f_dy*multi;
-			break;
-		case PROBEDATA_ARRAY_ZS:
-			val += program_vector_list[current_probe_section].f_dz*multi;
-			break;
-		case PROBEDATA_ARRAY_U:
-                        if (current_probe_data_index < program_vector_list[0].n && program_vector_list[current_probe_section].options & VP_INITIAL_SET_VEC)
-                                val += dus;
-                        else
-                                val += program_vector_list[current_probe_section].f_du*multi;
-			break;
-		default:
-			break; // error!!!!
-		}
+                if (current_probe_data_index > 0)
+                        switch (i){
+                        case PROBEDATA_ARRAY_TIME:
+                                val += dt;
+                                break;
+                        case PROBEDATA_ARRAY_A:
+                                val += program_vector_list[current_probe_section].f_da*multi;
+                                break;
+                        case PROBEDATA_ARRAY_B:
+                                val += program_vector_list[current_probe_section].f_db*multi;
+                                break;
+                        case PROBEDATA_ARRAY_AM:
+                                val += program_vector_list[current_probe_section].f_dam*multi;
+                                break;
+                        case PROBEDATA_ARRAY_FM:
+                                val += program_vector_list[current_probe_section].f_dfm*multi*spmc_parameters.rf_gen_fmscale;
+                                break;
+                        case PROBEDATA_ARRAY_XS:
+                                val += program_vector_list[current_probe_section].f_dx*multi;
+                                break;
+                        case PROBEDATA_ARRAY_YS:
+                                val += program_vector_list[current_probe_section].f_dy*multi;
+                                break;
+                        case PROBEDATA_ARRAY_ZS:
+                                val += program_vector_list[current_probe_section].f_dz*multi;
+                                break;
+                        case PROBEDATA_ARRAY_U:
+                                if (current_probe_data_index < program_vector_list[0].n && program_vector_list[current_probe_section].options & VP_INITIAL_SET_VEC)
+                                        val += dus;
+                                else
+                                        val += program_vector_list[current_probe_section].f_du*multi;
+                                break;
+                        default:
+                                break; // error!!!!
+                        }
                 pv_tmp[i] = val;
 		g_array_append_val (garray_probedata[i], val);
 	}
