@@ -212,6 +212,7 @@ class ProfileControl : public AppBase, public LineProfile1D{
 	static void yhold_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
 	static void yexpand_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
 	static void skl_Yauto_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
+	static void skl_Yauto_extra_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
 	static void skl_Yupperup_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
 	static void skl_Yupperdn_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);
 	static void skl_Ylowerup_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data);

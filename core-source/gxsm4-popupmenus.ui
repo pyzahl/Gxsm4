@@ -1015,6 +1015,10 @@
 	  <attribute name="label" translatable="yes">Y expand</attribute>
 	  <attribute name="action">profile.skl-Y-expand</attribute>
 	</item>
+	<item>
+	  <attribute name="label" translatable="yes">Y auto extra</attribute>
+	  <attribute name="action">profile.skl-Y-auto-extra</attribute>
+	</item>
       </section>
     </submenu>
     <submenu>

@@ -64,6 +64,7 @@ static GActionEntry win_profile_popup_entries[] = {
         { "skl-Y-log",  ProfileControl::logy_callback, NULL, "false", NULL },
         { "skl-Y-hold",  ProfileControl::yhold_callback, NULL, "false", NULL },
         { "skl-Y-expand",  ProfileControl::yexpand_callback, NULL, "false", NULL },
+        { "skl-Y-auto-extra", ProfileControl::skl_Yauto_extra_callback, NULL, "true", NULL },
 
         { "opt-X-last1000",  ProfileControl::last1000_callback, NULL, "false", NULL },
         { "opt-X-last4000",  ProfileControl::last4000_callback, NULL, "false", NULL },
@@ -3203,6 +3204,21 @@ void ProfileControl::skl_Yauto_callback (GSimpleAction *action, GVariant *parame
 	pc->scaleing &= ~PROFILE_SCALE_YHOLD;
         pc->updateFrame ();
 	pc->scaleing = (pc->scaleing & ~PROFILE_SCALE_YHOLD) | PROFILE_SCALE_YHOLD;
+	pc->UpdateArea ();
+}
+
+void ProfileControl::skl_Yauto_extra_callback (GSimpleAction *action, GVariant *parameter, 
+                                 gpointer user_data){
+        ProfileControl *pc = (ProfileControl *) user_data;
+	pc->scaleing = (pc->scaleing & ~PROFILE_SCALE_YHOLD) | PROFILE_SCALE_YHOLD;
+	if(pc->mode & PROFILE_MODE_YLOG)
+		pc->SetYrange(pc->ymin*0.5, pc->ymax*2.);
+	else{
+		double yrange = pc->ymax - pc->ymin;
+		pc->SetYrange(pc->ymin-0.1*yrange, pc->ymax+0.1*yrange);
+	}
+
+        pc->updateFrame ();
 	pc->UpdateArea ();
 }
 
