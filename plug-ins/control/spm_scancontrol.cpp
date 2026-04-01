@@ -1422,7 +1422,7 @@ int SPM_ScanControl::prepare_to_start_scan (SCAN_DT_TYPE st){
 	// count channels and check if total data amount fits into hardware/transferbuffer/etc. hard limits
 	int ns_xp=0;
 	int ns_xm=0;
-	for (int i=0; i<16; ++i){
+	for (int i=0; i<32; ++i){ // !! was 16
 		if (xp_srcs&(1<<i)) ++ns_xp;
 		if (xm_srcs&(1<<i)) ++ns_xm;
 	}
@@ -1756,9 +1756,9 @@ gboolean SPM_ScanControl::scanning_control_init (){
 
 #ifdef XSM_DEBUG_OPTION
 	PI_DEBUG (DBG_L3,  "xp_srcs: " << xp_srcs );
-	for(int i=0; i<16; i++) PI_DEBUG_PLAIN (DBG_L2, (int)((xp_srcs&(1<<i))?1:0)); PI_DEBUG_PLAIN (DBG_L2, std::endl);
+	for(int i=0; i<32; i++) PI_DEBUG_PLAIN (DBG_L2, (int)((xp_srcs&(1<<i))?1:0)); PI_DEBUG_PLAIN (DBG_L2, std::endl);
 	PI_DEBUG (DBG_L3,  "xm_srcs: " << xm_srcs );
-	for(int i=0; i<16; i++) PI_DEBUG_PLAIN (DBG_L2, (int)((xm_srcs&(1<<i))?1:0)); PI_DEBUG_PLAIN (DBG_L2, std::endl);
+	for(int i=0; i<32; i++) PI_DEBUG_PLAIN (DBG_L2, (int)((xm_srcs&(1<<i))?1:0)); PI_DEBUG_PLAIN (DBG_L2, std::endl);
 #endif
     
 	PI_DEBUG (DBG_L3, "DoScan: Start Scan now");

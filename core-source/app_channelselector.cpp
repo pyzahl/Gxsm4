@@ -502,7 +502,7 @@ void ChannelSelector::SetModeChannelSignal(int mode_id, const gchar* signal_name
                 return;
         }
 
-	if (mode_id < 0 || mode_id > 20){
+	if (mode_id < 0 || mode_id > DAQCHMAX+4+ID_CH_M_LAST-1){
 		XSM_DEBUG(DBG_EVER, "GXSM FATAL: SetModeChannelSignal :: index out of range. Signal: " << signal_name << " mode_id=" << mode_id);
 		return;
 	}

@@ -82,7 +82,7 @@ typedef struct { int x,y; } Point2D;
  */
 
 #define PIDCHMAX 4
-#define DAQCHMAX 12
+#define DAQCHMAX 16
 #define EXTCHMAX 8
 #define CHLABELLEN 32
 

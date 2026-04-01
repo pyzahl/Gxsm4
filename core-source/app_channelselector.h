@@ -66,7 +66,7 @@ public:
                         SetModeChannelSignal(position+ID_CH_M_LAST-1, signal_name, signal_label, signal_unit, d2unit);
                         return;
                 }
-                if (position >= 4 && position < 16){
+                if (position >= 4 && position < DAQCHMAX+4){
                         xsmres.daq_msk[position-4] = msk;
                         SetModeChannelSignal(position+ID_CH_M_LAST-1, signal_name, signal_label, signal_unit, d2unit);
                         return;

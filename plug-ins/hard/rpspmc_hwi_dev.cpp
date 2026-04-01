@@ -48,6 +48,12 @@
 #include "rpspmc_conversions.h"
 
 
+
+#define TEST_DMA128 1        
+
+
+
+
 // Define HwI PlugIn reference name here, this is what is listed later within "Preferenced Dialog"
 // i.e. the string selected for "Hardware/Card"!
 #define THIS_HWI_PLUGIN_NAME "SPM-TEMPL:SPM"
@@ -328,6 +334,16 @@ gpointer ScanDataReadThread (void *ptr_sr);
 gpointer ProbeDataReadThread (void *ptr_sr);
 gpointer ProbeDataReadFunction (void *ptr_sr, int dspdev);
 
+void rpspmc_hwi_dev::skip_to_next_header (){
+        //g_message ("rpspmc_hwi_dev::skip_to_next_header from 0x%08x   #CH: %d", GVP_stream_buffer_offset, GVP_vp_header_current.number_channels);
+#if TEST_DMA128
+        GVP_stream_buffer_offset += 4 + ((((GVP_vp_header_current.number_channels-1)>>2)+1)<<2); // skip forward by read number of entries
+#else
+        GVP_stream_buffer_offset += 1 + GVP_vp_header_current.number_channels; // skip forward on success by read number of entries
+#endif
+        //g_message ("rpspmc_hwi_dev::skip_to_next_header to   0x%08x", GVP_stream_buffer_offset);
+}
+
 // ScanDataReadThread:
 // Image Data read thread -- actual scan/pixel data transfer
 
@@ -338,14 +354,13 @@ int rpspmc_hwi_dev::GVP_expect_header(double *pv, int &index_all){
                         ret = read_GVP_data_block_to_position_vector (GVP_stream_buffer_offset, true); // NEED FULL HEADER
 
                         if (ret == -1){ // GOT FULL HEADER
-
-                                GVP_stream_buffer_offset += 1 + GVP_vp_header_current.number_channels; // skip forward by read number of entries
+                                skip_to_next_header ();
                                 
                                 // next section, load header, manage pc
                                 GVP_vp_header_current.section = RPSPMC_ControlClass->next_section (GVP_vp_header_current.section);
                                         
 #if GVP_DEBUG_VERBOSE > 2
-                                g_message (" *** OK, loading pv sec[%d] ***", GVP_vp_header_current.section);
+                                g_message (" *** OK, loading pv sec[%d] *** timestamp: %g ms", GVP_vp_header_current.section, GVP_vp_header_current.gvp_time_ms);
 #endif
                                 // copy header to pv[] as assigned below
                                 pv[PROBEDATA_ARRAY_INDEX] = (double)index_all++;
@@ -356,6 +371,9 @@ int rpspmc_hwi_dev::GVP_expect_header(double *pv, int &index_all){
                                 pv[PROBEDATA_ARRAY_YS]    = GVP_vp_header_current.dataexpanded[1]; // Ys in Volts
                                 pv[PROBEDATA_ARRAY_ZS]    = GVP_vp_header_current.dataexpanded[2]; // Zs in Volts
                                 pv[PROBEDATA_ARRAY_U]     = GVP_vp_header_current.dataexpanded[3]; // Bias in Volts
+                                // header, data point FPGA time stamp
+                                pv[PROBEDATA_ARRAY_TIME]  = GVP_vp_header_current.gvp_time_ms;     // == dataexpanded[PROBEDATA_ARRAY_MS_TIME];     // time in ms
+                                pv[PROBEDATA_ARRAY_MS_TIME] = GVP_vp_header_current.gvp_time_ms;     // == dataexpanded[PROBEDATA_ARRAY_MS_TIME];     // time in ms
                                 // data
                                 pv[PROBEDATA_ARRAY_S1]    = GVP_vp_header_current.dataexpanded[0]; // Xs in Volts
                                 pv[PROBEDATA_ARRAY_S2]    = GVP_vp_header_current.dataexpanded[1]; // Ys in Volts
@@ -371,7 +389,8 @@ int rpspmc_hwi_dev::GVP_expect_header(double *pv, int &index_all){
                                 pv[PROBEDATA_ARRAY_S12]   = GVP_vp_header_current.dataexpanded[11]; // AMPL*  (MUX3)
                                 pv[PROBEDATA_ARRAY_S13]   = GVP_vp_header_current.dataexpanded[12]; // LCKInA* (MUX4)
                                 pv[PROBEDATA_ARRAY_S14]   = GVP_vp_header_current.dataexpanded[13]; // dFreqCtrl* (MUX5)
-                                pv[PROBEDATA_ARRAY_TIME]  = GVP_vp_header_current.dataexpanded[14]; // time in ms
+                                pv[PROBEDATA_ARRAY_S15]   = GVP_vp_header_current.dataexpanded[14]; // **
+                                pv[PROBEDATA_ARRAY_S16]   = GVP_vp_header_current.dataexpanded[15]; // **
 
 #if GVP_DEBUG_VERBOSE > 2
                                 g_message ("PVh sec[%g] i=%g t=%g ms U=%g V IN1: %g V IN2: %g V",
@@ -424,14 +443,15 @@ int rpspmc_hwi_dev::GVP_expect_header(double *pv, int &index_all){
         return 0;
 }
 
+
 int rpspmc_hwi_dev::GVP_expect_point(double *pv, int &index_all){
         int ret = -100;
 
         do {
                 ret = read_GVP_data_block_to_position_vector (GVP_stream_buffer_offset);
                 if (ret == GVP_vp_header_current.number_channels){
-                        GVP_stream_buffer_offset += 1 + GVP_vp_header_current.number_channels; // skip forward on success by read number of entries
-
+                        skip_to_next_header ();
+                        
 #if GVP_DEBUG_VERBOSE > 2
                         g_message ("GVP point [%04d] ret (N#ch) = %d\n", GVP_vp_header_current.i, ret);
 #endif
@@ -507,10 +527,10 @@ gpointer ScanDataReadThread (void *ptr_hwi){
                                 g_message ("GVP Data Expanded Lookup table signal dir %02d, ch %02d, ssi %02d: checking for mask 0x%08x (%s) match in 0x%08x", dir, ch, i, rpspmc_source_signals[i].mask, rpspmc_source_signals[i].label, hwi->srcs_dir[dir]);
                                 if ((hwi->srcs_dir[dir] & rpspmc_source_signals[i].mask) == rpspmc_source_signals[i].mask){
                                         if (rpspmc_source_signals[i].garr_index == PROBEDATA_ARRAY_TIME)
-                                                pvlut[dir][ch] = 14; /// NOTE: GVP_vp_header_current.dataexpanded[14]; // is time in ms
+                                                pvlut[dir][ch] = PROBEDATA_ARRAY_MS_TIME - PROBEDATA_ARRAY_S1;   //14; /// NOTE: GVP_vp_header_current.dataexpanded[14]; // is time in ms
                                         else
                                                 pvlut[dir][ch] = rpspmc_source_signals[i].garr_index - PROBEDATA_ARRAY_S1; // as ..._S1 .. _S14 are exactly incremental => 0..13 ; see (***) above
-                                        g_message ("GVP Data Expanded Lookup table signal %02d: pvlut[%02d][%02d] = %02d for mask 0x%08x, garri %d", i,dir,ch,pvlut[dir][ch], rpspmc_source_signals[i].mask, rpspmc_source_signals[i].garr_index);
+                                        g_message ("GVP Data Expanded Lookup table signal %02d is selected: pvlut[%02d][%02d] = %02d for mask 0x%08x (%s), garri %d", i,dir,ch,pvlut[dir][ch], rpspmc_source_signals[i].mask, rpspmc_source_signals[i].label, rpspmc_source_signals[i].garr_index);
                                         ++i; break;
                                 }
                         }
@@ -919,30 +939,30 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
 	if (need_hdr){ // we have enough data if control gets here!
 		LOGMSGS ( "FR::NEED_HDR" << std::endl);
                 // READ FULL SECTION HEADER
-                g_message ("VP: Waiting for Section Header [%d] StreamPos=0x%08x", GVP_stream_buffer_AB, GVP_stream_buffer_position);
+                g_message ("VP: Waiting for Section Header [%d] StreamPos=0x%08x  Next expected @ 0x%08x", GVP_stream_buffer_AB, GVP_stream_buffer_position, GVP_stream_buffer_offset);
                 if (GVP_stream_buffer_AB >= 0){
                         g_message ("VP: section header ** reading pos[%04x] off[%04x] #AB=%d", GVP_stream_buffer_position, GVP_stream_buffer_offset, GVP_stream_buffer_AB);
                         g_message ("Reading VP section header...");
                         ret = read_GVP_data_block_to_position_vector (GVP_stream_buffer_offset, true); // NEED FULL HEADER
                         if (ret == -1){ // GOT FULL HEADER
+                                skip_to_next_header ();
 
-                                GVP_stream_buffer_offset += 1 + GVP_vp_header_current.number_channels; // skip forward by read number of entries
-                                
                                 // next section, load header, manage pc
                                 GVP_vp_header_current.section = RPSPMC_ControlClass->next_section (GVP_vp_header_current.section);
                                         
                                 // g_message (" *** OK, loading pv sec[%d] ***", GVP_vp_header_current.section);
 
                                 // copy header to pv[] as assigned below
-                                pv[PROBEDATA_ARRAY_SRCS]  = GVP_vp_header_current.srcs; // new
-                                pv[PROBEDATA_ARRAY_INDEX] = (double)index_all++;
-                                pv[PROBEDATA_ARRAY_PHI]   = (double)GVP_vp_header_current.index; // testing, point index in section
-                                pv[PROBEDATA_ARRAY_SEC]   = (double)GVP_vp_header_current.section;
-                                pv[PROBEDATA_ARRAY_TIME]  = GVP_vp_header_current.dataexpanded[14]; // time in ms
-                                pv[PROBEDATA_ARRAY_XS]    = GVP_vp_header_current.dataexpanded[0]; // Xs in Volts
-                                pv[PROBEDATA_ARRAY_YS]    = GVP_vp_header_current.dataexpanded[1]; // Ys in Volts
-                                pv[PROBEDATA_ARRAY_ZS]    = GVP_vp_header_current.dataexpanded[2]; // Zs in Volts
-                                pv[PROBEDATA_ARRAY_U ]    = GVP_vp_header_current.dataexpanded[3]; // Bias in Volts
+                                pv[PROBEDATA_ARRAY_SRCS]    = GVP_vp_header_current.srcs; // new
+                                pv[PROBEDATA_ARRAY_INDEX]   = (double)index_all++;
+                                pv[PROBEDATA_ARRAY_PHI]     = (double)GVP_vp_header_current.index; // testing, point index in section
+                                pv[PROBEDATA_ARRAY_SEC]     = (double)GVP_vp_header_current.section;
+                                pv[PROBEDATA_ARRAY_TIME]    = GVP_vp_header_current.gvp_time_ms;     // time in ms
+                                pv[PROBEDATA_ARRAY_MS_TIME] = GVP_vp_header_current.gvp_time_ms;     // time in ms
+                                pv[PROBEDATA_ARRAY_XS]      = GVP_vp_header_current.dataexpanded[0]; // Xs in Volts
+                                pv[PROBEDATA_ARRAY_YS]      = GVP_vp_header_current.dataexpanded[1]; // Ys in Volts
+                                pv[PROBEDATA_ARRAY_ZS]      = GVP_vp_header_current.dataexpanded[2]; // Zs in Volts
+                                pv[PROBEDATA_ARRAY_U ]      = GVP_vp_header_current.dataexpanded[3]; // Bias in Volts
 
 #if GVP_DEBUG_VERBOSE > 2
                                 g_message ("PVh sec[%g] i=%g t=%g ms U=%g V",
@@ -1000,7 +1020,7 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
         for (; GVP_vp_header_current.i < GVP_vp_header_current.n; ){
                 ret = read_GVP_data_block_to_position_vector (GVP_stream_buffer_offset);
                 if (ret == GVP_vp_header_current.number_channels){
-                        GVP_stream_buffer_offset += 1 + GVP_vp_header_current.number_channels; // skip forward on success by read number of entries
+                        skip_to_next_header ();
 
                         //g_message ("VP [%04d] of %d\n", GVP_vp_header_current.i, GVP_vp_header_current.n);
 
@@ -1113,7 +1133,9 @@ gboolean rpspmc_hwi_dev::ScanLineM(int yindex, int xdir, int muxmode, //srcs_mas
                 int num_srcs = 0;
                 running      = FALSE;
 
+                g_message ("Assigning SRCS 0x%08x", srcs_mask);
                 for (int i=0; rpspmc_source_signals[i].mask; ++i){
+                        //g_message ("Checking [%d] for 0x%08x (%s)", i, rpspmc_source_signals[i].mask, rpspmc_source_signals[i].label);
                         if ((srcs_mask & rpspmc_source_signals[i].mask) == rpspmc_source_signals[i].mask){
                                 num_srcs++;
                                 g_message ("Match [%d] for 0x%08x <==> %s  #%d", i, rpspmc_source_signals[i].mask, rpspmc_source_signals[i].label, num_srcs);
@@ -1690,6 +1712,7 @@ void rpspmc_hwi_dev::GVP_vp_init (){
 void rpspmc_hwi_dev::rpspmc_hwi_dev::GVP_start_data_read(){
 }
 
+
 int rpspmc_hwi_dev::GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v, PROBE_VECTOR_EXTENSION *vx){
         if (i >= MAX_PROGRAM_VECTORS || i < 0)
                 return 0;
@@ -1698,11 +1721,12 @@ int rpspmc_hwi_dev::GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v, PRO
 #define I_GVP_N         1
 #define I_GVP_OPTIONS   2
 #define I_GVP_SRCS      3
-#define I_GVP_NREP      4
-#define I_GVP_NEXT      5
-#define I_GVPX_OPCD     6
-#define I_GVPX_RCHI     7
-#define I_GVPX_JMPR     8
+#define I_GVP_SRCSB     4
+#define I_GVP_NREP      5
+#define I_GVP_NEXT      6
+#define I_GVPX_OPCD     7
+#define I_GVPX_RCHI     8
+#define I_GVPX_JMPR     9
 #define I_GVP_SIZE (I_GVPX_JMPR+1)
         
 #define D_GVP_DX        0
@@ -1721,7 +1745,8 @@ int rpspmc_hwi_dev::GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v, PRO
                 "SPMC_GVP_VECTOR_PC", 
                 "SPMC_GVP_VECTOR__N", 
                 "SPMC_GVP_VECTOR__O", 
-                "SPMC_GVP_VECTORSRC", 
+                "SPMC_GVP_VECTORSRC",
+                "SPMC_GVP_VECTORSRCB",
                 "SPMC_GVP_VECTORNRP", 
                 "SPMC_GVP_VECTORNXT", 
                 "SPMC_GVP_XVECTOR_OPCD",
@@ -1746,15 +1771,38 @@ int rpspmc_hwi_dev::GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v, PRO
         
         int vector_extension = vx && (v->options & SPMC_GVP_VECTOR_EXTENSTION_BITMASK) ? 1 : 0;
 
-        const int src_time_msk = 0xc000; // 48bit time mon mask
+#if TEST_DMA128
+        unsigned int srcs_indices_list_A = 0;
+        unsigned int srcs_indices_list_B = 0;
+        int channel=-1;
+        int last=-1;
+        //g_message ("*** TEST DMA 128 CHANNEL INDICES for SRCS in vec #%d code %08x: ", i ,v->srcs);
+        for (int k=0; k<16; ++k){
+                for (int q=channel+1; q < 16; q++) // 16 max so far, excluding time now
+                        if (v->srcs & (1<<q)) { channel = q; break; }
+                if (channel < 0)
+                        break;
+                g_print ("%d=>%d, ", k,channel);
+                if (k<8)
+                        srcs_indices_list_A |= channel << (4*k);
+                else
+                        srcs_indices_list_B |= channel << (4*(k-8));
+        }
+        //g_print ("=> BA: %08x %08x \n****\n", srcs_indices_list_B, srcs_indices_list_A);
+        gvp_vector_i [I_GVP_SRCS ] = srcs_indices_list_A;
+        gvp_vector_i [I_GVP_SRCSB] = srcs_indices_list_B; // =0 if not using more than 8 channels total
+#else
+        // currently 24 bits, actaully 16 mapped used in stream serialization, with 6 been multiplexd from 32 = 42 possible different signals. May be expandd to 32 if needed.
+        gvp_vector_i [I_GVP_SRCS    ] = (src_time_msk | v->srcs) & 0xffffffff;
+        // g_message ("GVP_write_program_vector[%d]: srcs = 0x%08x", i, gvp_vector_i [I_GVP_OPTIONS ] );
+#endif
+        
+        //const int src_time_msk = 0xc000; // 48bit time mon mask
         // Vector Program Code Setup
         gvp_vector_i [I_GVP_PC_INDEX] = i;
         gvp_vector_i [I_GVP_N       ] = v->n;
         //gvp_vector_i [I_GVP_OPTIONS ] = (((v->srcs | src_time_msk) & 0xffffff) << 8) | (v->options & 0xff); // 0: FB, 7: XVEC  **   ((v->options & VP_FEEDBACK_HOLD) ? 0:1) | (1<<7) | (1<<6) | (1<<5);
         gvp_vector_i [I_GVP_OPTIONS ] = v->options; // currently only lowest 8 bits
-        // currently 24 bits, actaully 16 mapped used in stream serialization, with 6 been multiplexd from 32 = 42 possible different signals. May be expandd to 32 if needed.
-        gvp_vector_i [I_GVP_SRCS    ] = (src_time_msk | v->srcs) & 0xffffffff;
-        // g_message ("GVP_write_program_vector[%d]: srcs = 0x%08x", i, gvp_vector_i [I_GVP_OPTIONS ] );
         gvp_vector_i [I_GVP_NREP    ] = v->repetitions > 1 ? v->repetitions-1 : 0;
         gvp_vector_i [I_GVP_NEXT    ] = v->ptr_next;
         gvp_vector_i [I_GVPX_OPCD   ] = vector_extension ? vx->opcd : 0;
@@ -1792,6 +1840,472 @@ int rpspmc_hwi_dev::GVP_write_program_vector(int i, PROBE_VECTOR_GENERIC *v, PRO
 }
 
 //#define BBB_DBG
+
+#if TEST_DMA128
+/*
+NEW STRUCTURE/HDR/SRCS
+          SRCS-ALL      N-1     TTTTTTTTTTTTT        0        1        2        3        4        5        6        7        8        9       10      11
+00000000: 0000ffff 0000000f 00000005 00000000 00000000 00000000 c0000000 00000000 0009a758 b56e18d5 0009a753 00016348 00000000 33320000 00006c0f 0031205e
+                12       13       14       15     SRCS      N-2     TTTTTTTTTTTTT        0        1        2        3     SRCS      N-3     TTTTTTTTTTTTT
+00000010: 00000094 000163e7 b4b4b4b4 ed2efbfe 00000059 0000000e 0000049a 00000000 00000000 017f69c4 00377df6 0037ecff 00000059 0000000d 0000092f 00000000
+                 0        1        2        3     SRCS      N-3     TTTTTTTTTTTTT ....
+00000020: 00000000 0311aec4 01710728 0171f440 00000059 0000000c 00000dc4 00000000 00000000 04a3f3c4 03066604 03076f50 00000059 0000000b 00001259 00000000
+00000030: 00000000 064c388a 049bbc2d 049d09cf 00000059 0000000a 000016ee 00000000 00000000 07de7d8a 062fe388 0630d0e3 00000059 00000009 00001b83 00000000
+00000040: 00000000 0970c28a 07c6dab8 07c8087d 00000059 00000008 00002018 00000000 00000000 0b1a137e 095922ec 095a3014 00000059 00000007 000024ad 00000000
+00000050: 00000000 0cac587e 0af1b10d 0af2ac47 00000059 00000006 00002942 00000000 00000000 0e3e9d7e 0c867ef4 0c877cec 00000059 00000005 00002dd7 00000000
+00000060: 00000000 0fe6e244 0e1a260b 0e1b19e3 00000059 00000004 0000326c 00000000 00000000 11792744 0fb11db4 0fb2210b 00000059 00000003 00003701 00000000
+00000070: 00000000 130b6c44 11442dc4 11454055 00000059 00000002 00003b96 00000000 00000000 14b3b10a 12db7d25 12dc7c26 00000059 00000001 0000402b 00000000
+00000080: 00000000 1645f60a 1470ee14 1471e9b3 00000059 00000000 000044c0 00000000 00000000 17d83b0a 160458e4 16059a18 0000ffff 0000000f 00004955 00000000
+00000090: 00000000 00000000 c0000000 19818bfe 179ce4f6 b2b7fefe 179df2ac 00016825 00000000 33320000 00006c0f 0031205e 17679169 00015a0a b2b2b2b2 ecb401f0
+>>>>
+** (gxsm4:197927): WARNING **: 00:19:39.678: read_GVP_data_block_to_position_vector: Stream ERROR at Reading offset 00000011, write position 000000c9.
+SRCS/index mismatch detected: 0x0000 vs 0x63e7 or missing data/index jump: i 0 -> -1263225676
+
+
+?????
+
+** (gxsm4:78905): WARNING **: 21:45:21.790: read_GVP_data_block_to_position_vector: Reading offset 000001f8 is beyond stream write position 000001f9. Awaiting data.
+
+000001b8: fbe10a31 fbe10a31 fbe10a31 fbe10a31 0000c058 0000000c 00008814 00000000 14e81219 166733e9 16662f1a efefefef fbe402a7 fbe402a7 fbe402a7 fbe402a7
+000001c8: 0000c058 0000000b 00008ca9 00000000 1355cd19 14cfd8d6 14cec440 efefefef fbdff3d4 fbdff3d4 fbdff3d4 fbdff3d4 0000c058 0000000a 0000913e 00000000
+000001d8: 11c38819 133af03d 1339ef9f efefefef fbe605da fbe605da fbe605da fbe605da 0000c058 00000009 000095d3 00000000 101a3725 11a62737 11a5304a efefefef
+000001e8: fbe807d7 fbe807d7 fbe807d7 fbe807d7 0000c058 00000008 00009a68 00000000 0e87f225 1010dde4 100fe757 efefefef fbcdf3f8 fbcdf3f8 fbcdf3f8 fbcdf3f8
+**>>      ********
+000001f8: 0000c058 eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee
+00000208: eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee
+00000218: eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee
+00000228: eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee
+00000238: eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee
+00000248: eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee eeeeeeee
+
+RP:
+...
+B[00000600] W[00000180] D 000384: dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd
+B[00000640] W[00000190] D 000400: dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd
+B[00000680] W[000001a0] D 000416: dddddddd dddddddd dddddddd dddddddd 0000c058 0000000e 00007eea 00000000 18229bdf 18d5e8e4 18d5f652 efefefef fbcff5ed fbcff5ed fbcff5ed fbcff5ed
+B[000006c0] W[000001b0] D 000432: 0000c058 0000000d 0000837f 00000000 169056df 17f2c704 17f1dd62 efefeff0 fbe10a31 fbe10a31 fbe10a31 fbe10a31 0000c058 0000000c 00008814 00000000
+B[00000700] W[000001c0] D 000448: 14e81219 166733e9 16662f1a efefefef fbe402a7 fbe402a7 fbe402a7 fbe402a7 0000c058 0000000b 00008ca9 00000000 1355cd19 14cfd8d6 14cec440 efefefef
+B[00000740] W[000001d0] D 000464: fbdff3d4 fbdff3d4 fbdff3d4 fbdff3d4 0000c058 0000000a 0000913e 00000000 11c38819 133af03d 1339ef9f efefefef fbe605da fbe605da fbe605da fbe605da
+B[00000780] W[000001e0] D 000480: 0000c058 00000009 000095d3 00000000 101a3725 11a62737 11a5304a efefefef fbe807d7 fbe807d7 fbe807d7 fbe807d7 0000c058 00000008 00009a68 00000000
+**>>                              0        1        2        3        4        5        6        7        8******* 9        a        b        c        d       e         f
+B[000007c0] W[000001f0] D 000496: 0e87f225 1010dde4 100fe757 efefefef fbcdf3f8 fbcdf3f8 fbcdf3f8 fbcdf3f8 0000c058 00000007 00009efd 00000000 0cf5ad25 0e7bdd26 0e7ad1c3 efefefef
+B[00000800] W[00000200] D 000512: fbea0014 fbea0014 fbea0014 fbea0014 0000c058 00000006 0000a392 00000000 0b4d685f 0ce454df 0ce30740 efefefef fbf00b24 fbf00b24 fbf00b24 fbf00b24
+B[00000840] W[00000210] D 000528: 0000c058 00000005 0000a827 00000000 09bb235f 0b5077cb 0b4f88b5 efefefef fbd4f79e fbd4f79e fbd4f79e fbd4f79e 0000c058 00000004 0000acbc 00000000
+B[00000880] W[00000220] D 000544: 0828de5f 09bace80 09b9b81b efefefef fbdafa89 fbdafa89 fbdafa89 fbdafa89 0000c058 00000003 0000b151 00000000 06809999 0825a43e 082492e2 efefefef
+B[000008c0] W[00000230] D 000560: fbdb0c18 fbdb0c18 fbdb0c18 fbdb0c18 0000c058 00000002 0000b5e6 00000000 04ee5499 06908ab1 068f8bfc efefefef fbddfcc5 fbddfcc5 fbddfcc5 fbddfcc5
+B[00000900] W[00000240] D 000576: 0000c058 00000001 0000ba7b 00000000 035c0f99 04f961ea 04f8607a efefefef fbeef5bc fbeef5bc fbeef5bc fbeef5bc 0000c058 00000000 0000bf10 00000000
+B[00000940] W[00000250] D 000592: 01b2bea5 0365ed97 0364ec38 efefefef fbe509f4 fbe509f4 fbe509f4 fbe509f4 fefefefe fefefefe fefefefe fefefefe 0a02be64 0cc332bc c0000000 002079a5
+B[00000980] W[00000260] D 000608: 01491500 ef7da700 01491500 ffff4400 00000000 00000000 00000000 00000000 00000000 00000000 efefefef fbce0275 ffffeeee ffffeeee ffffeeee ffffeeee
+B[000009c0] W[00000270] D 000624: ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee
+B[00000a00] W[00000280] D 000640: ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee
+B[00000a40] W[00000290] D 000656: ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee
+B[00000a80] W[000002a0] D 000672: ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee ffffeeee 00000010 00000000 00000000 00000000
+B[00000ac0] W[000002b0] D 000688: 0000000f 00000000 00000000 00000000 0000000e 00000000 00000000 00000000 0000000d 00000000 00000000 00000000 0000000c 00000000 00000000 00000000
+B[00000b00] W[000002c0] D 000704: 0000000b 00000000 00000000 00000000 0000000a 00000000 00000000 00000000 00000009 00000000 00000000 00000000 00000008 00000000 00000000 00000000
+B[00000b40] W[000002d0] D 000720: 00000007 00000000 00000000 00000000 00000006 00000000 00000000 00000000 00000005 00000000 00000000 00000000 00000004 00000000 00000000 00000000
+B[00000b80] W[000002e0] D 000736: 00000003 00000000 00000000 00000000 00000002 00000000 00000000 00000000 00000001 00000000 00000000 00000000 dddddddd dddddddd dddddddd dddddddd
+B[00000bc0] W[000002f0] D 000752: dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd
+B[00000c00] W[00000300] D 000768: dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd
+B[00000c40] W[00000310] D 000784: dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd dddddddd
+
+
+LOOP ISSUE:
+
+0003fec0: 00000114 00000162 0e6a9ba5 00000000 c0000000 0009e309 00000000 00000000 00000114 00000161 0e6acc7d 00000000 c0000000 000a010c 00000000 00000000
+0003fed0: 00000114 00000160 0e6afd55 00000000 c0000000 0009f514 00000000 00000000 00000114 0000015f 0e6b2e2d 00000000 c0000000 0009e9ee 00000000 00000000
+0003fee0: 00000114 0000015e 0e6b5f05 00000000 c0000000 0009e4e4 00000000 00000000 00000114 0000015d 0e6b8fdd 00000000 c0000000 0009ee41 00000000 00000000
+0003fef0: 00000114 0000015c 0e6bc0b5 00000000 c0000000 0009eab1 00000000 00000000 00000114 0000015b 0e6bf18d 00000000 c0000000 0009e1e4 00000000 00000000
+0003ff00: 00000114 0000015a 0e6c2265 00000000 c0000000 0009e1e0 00000000 00000000 00000114 00000159 0e6c533d 00000000 c0000000 0009e91f 00000000 00000000
+0003ff10: 00000114 00000158 0e6c8415 00000000 c0000000 0009ea01 00000000 00000000 00000114 00000157 0e6cb4ed 00000000 c0000000 0009c8f3 00000000 00000000
+0003ff20: 00000114 00000156 0e6ce5c5 00000000 c0000000 0009e263 00000000 00000000 00000114 00000155 0e6d169d 00000000 c0000000 0009d0c3 00000000 00000000
+0003ff30: 00000114 00000154 0e6d4775 00000000 c0000000 0009ec0f 00000000 00000000 00000114 00000153 0e6d784d 00000000 c0000000 0009d734 00000000 00000000
+0003ff40: 00000114 00000152 0e6da925 00000000 c0000000 0009d7d6 00000000 00000000 00000114 00000151 0e6dd9fd 00000000 c0000000 0009e9f2 00000000 00000000
+0003ff50: 00000114 00000150 0e6e0ad5 00000000 c0000000 0009e6bf 00000000 00000000 00000114 0000014f 0e6e3bad 00000000 c0000000 000a0be8 00000000 00000000
+0003ff60: 00000114 0000014e 0e6e6c85 00000000 c0000000 0009e4ab 00000000 00000000 00000114 0000014d 0e6e9d5d 00000000 c0000000 0009ec43 00000000 00000000
+0003ff70: 00000114 0000014c 0e6ece35 00000000 c0000000 0009d954 00000000 00000000 00000114 0000014b 0e6eff0d 00000000 c0000000 0009ee95 00000000 00000000
+0003ff80: 00000114 0000014a 0e6f2fe5 00000000 c0000000 0009f3d0 00000000 00000000 00000114 00000149 0e6f60bd 00000000 c0000000 0009ed05 00000000 00000000
+0003ff90: 00000114 00000148 0e6f9195 00000000 c0000000 000a0010 00000000 00000000 00000114 00000147 0e6fc26d 00000000 c0000000 0009f50e 00000000 00000000
+0003ffa0: 00000114 00000146 0e6ff345 00000000 c0000000 0009e86c 00000000 00000000 00000114 00000145 0e70241d 00000000 c0000000 0009f3ef 00000000 00000000
+0003ffb0: 00000114 00000144 0e7054f5 00000000 c0000000 0009f269 00000000 00000000 00000114 00000143 0e7085cd 00000000 c0000000 0009ecd3 00000000 00000000
+0003ffc0: 00000114 00000142 0e70b6a5 00000000 c0000000 0009e0a6 00000000 00000000 00000114 00000141 0e70e77d 00000000 c0000000 0009e812 00000000 00000000
+0003ffd0: 00000114 00000140 0e711855 00000000 c0000000 0009ef5a 00000000 00000000 00000114 0000013f 0e71492d 00000000 c0000000 0009efe9 00000000 00000000
+0003ffe0: 00000114 0000013e 0e717a05 00000000 c0000000 0009ebfe 00000000 00000000 00000114 0000013d 0e71aadd 00000000 c0000000 0009f175 00000000 00000000
+0003fff0: 00000114 0000013c 0e71dbb5 00000000 c0000000 0009e284 00000000 00000000 00000114 0000013b 0e720c8d 00000000 c0000000 0009ec6b 00000000 00000000
+00040000: 0000013a 0e723d65 00000000 c0000000 0009e1d8 00000000 00000000 00000114 00000139 0e726e3d 00000000 c0000000 0009e021 00000000 00000000 00000114
+00040010: 00000138 0e729f15 00000000 c0000000 0009edfb 00000000 00000000 00000114 00000137 0e72cfed 00000000 c0000000 0009f438 00000000 00000000 00000114
+00040020: 00000136 0e7300c5 00000000 c0000000 0009d5b9 00000000 00000000 00000114 00000135 0e73319d 00000000 c0000000 0009fa85 00000000 00000000 00000114
+00040030: 00000134 0e736275 00000000 c0000000 0009e73f 00000000 00000000 00000114 00000133 0e73934d 00000000 c0000000 0009e2c0 00000000 00000000 00000114
+00040040: 00000132 0e73c425 00000000 c0000000 0009e17e 00000000 00000000 00000114 00000131 0e73f4fd 00000000 c0000000 0009f6af 00000000 00000000 00000114
+00040050: 00000130 0e7425d5 00000000 c0000000 0009e616 00000000 00000000 00000114 0000012f 0e7456ad 00000000 c0000000 000a0434 00000000 00000000 00000114
+00040060: 0000012e 0e748785 00000000 c0000000 0009e7b3 00000000 00000000 00000114 0000012d 0e74b85d 00000000 c0000000 0009f106 00000000 00000000 00000114
+00040070: 0000012c 0e74e935 00000000 c0000000 0009f6e3 00000000 00000000 00000114 0000012b 0e751a0d 00000000 c0000000 0009f304 00000000 00000000 00000114
+00040080: 0000012a 0e754ae5 00000000 c0000000 0009d36b 00000000 00000000 00000114 00000129 0e757bbd 00000000 c0000000 0009f18a 00000000 00000000 00000114
+00040090: 00000128 0e75ac95 00000000 c0000000 0009e475 00000000 00000000 00000114 00000127 0e75dd6d 00000000 c0000000 0009da2d 00000000 00000000 00000114
+000400a0: 00000126 0e760e45 00000000 c0000000 0009ea5a 00000000 00000000 00000114 00000125 0e763f1d 00000000 c0000000 0009da34 00000000 00000000 00000114
+000400b0: 00000124 0e766ff5 00000000 c0000000 0009e6e7 00000000 00000000 00000114 00000123 0e76a0cd 00000000 c0000000 0009ed2f 00000000 00000000 00000114
+000400c0: 00000122 0e76d1a5 00000000 c0000000 0009de17 00000000 00000000 00000114 00000121 0e77027d 00000000 c0000000 0009de0b 00000000 00000000 00000114
+000400d0: 00000120 0e773355 00000000 c0000000 0009fda3 00000000 00000000 00000114 0000011f 0e77642d 00000000 c0000000 0009e1cc 00000000 00000000 00000114
+000400e0: 0000011e 0e779505 00000000 c0000000 0009e705 00000000 00000000 00000114 0000011d 0e77c5dd 00000000 c0000000 0009e4a6 00000000 00000000 00000114
+000400f0: 0000011c 0e77f6b5 00000000 c0000000 0009d7fe 00000000 00000000 00000114 0000011b 0e78278d 00000000 c0000000 0009e87c 00000000 00000000 00000114
+00040100: 0000011a 0e785865 00000000 c0000000 0009e699 00000000 00000000 00000114 00000119 0e78893d 00000000 c0000000 0009d83d 00000000 00000000 00000114
+00040110: 00000118 0e78ba15 00000000 c0000000 0009ebd4 00000000 00000000 00000114 00000117 0e78eaed 00000000 c0000000 0009d2d1 00000000 00000000 00000114
+00040120: 00000116 0e791bc5 00000000 c0000000 0009df60 00000000 00000000 00000114 00000115 0e794c9d 00000000 c0000000 0009e643 00000000 00000000 00000114
+00040130: 00000114 0e797d75 00000000 c0000000 0009dcda 00000000 00000000 00000114 00000113 0e79ae4d 00000000 c0000000 0009e30d 00000000 00000000 00000114
+
+
+
+NO FIX DMA128 LOOPING -- missing 0x00040000 @ 0x40000 -- TEST DATA := ADDR (except HDRs)
+
+0003fec0: 3ec000ff 000009b1 06b12fe9 19e80000 0003fec4 0003fec5 0003fec6 0003fec7 0003fec8 0003fec9 0003feca 0003fecb 3ecc00ff 000009b0 06b14403 19020000
+0003fed0: 0003fed0 0003fed1 0003fed2 0003fed3 0003fed4 0003fed5 0003fed6 0003fed7 3ed800ff 000009af 06b1581d 191c0000 0003fedc 0003fedd 0003fede 0003fedf
+0003fee0: 0003fee0 0003fee1 0003fee2 0003fee3 3ee400ff 000009ae 06b16c37 19360000 0003fee8 0003fee9 0003feea 0003feeb 0003feec 0003feed 0003feee 0003feef
+0003fef0: 3ef000ff 000009ad 06b18051 19500000 0003fef4 0003fef5 0003fef6 0003fef7 0003fef8 0003fef9 0003fefa 0003fefb 3efc00ff 000009ac 06b1946b 196a0000
+0003ff00: 0003ff00 0003ff01 0003ff02 0003ff03 0003ff04 0003ff05 0003ff06 0003ff07 3f0800ff 000009ab 06b1a885 19840000 0003ff0c 0003ff0d 0003ff0e 0003ff0f
+0003ff10: 0003ff10 0003ff11 0003ff12 0003ff13 3f1400ff 000009aa 06b1bc9f 199e0000 0003ff18 0003ff19 0003ff1a 0003ff1b 0003ff1c 0003ff1d 0003ff1e 0003ff1f
+0003ff20: 3f2000ff 000009a9 06b1d0b9 19b80000 0003ff24 0003ff25 0003ff26 0003ff27 0003ff28 0003ff29 0003ff2a 0003ff2b 3f2c00ff 000009a8 06b1e4d3 19d20000
+0003ff30: 0003ff30 0003ff31 0003ff32 0003ff33 0003ff34 0003ff35 0003ff36 0003ff37 3f3800ff 000009a7 06b1f8ed 19ec0000 0003ff3c 0003ff3d 0003ff3e 0003ff3f
+0003ff40: 0003ff40 0003ff41 0003ff42 0003ff43 3f4400ff 000009a6 06b20d07 19060000 0003ff48 0003ff49 0003ff4a 0003ff4b 0003ff4c 0003ff4d 0003ff4e 0003ff4f
+0003ff50: 3f5000ff 000009a5 06b22121 19200000 0003ff54 0003ff55 0003ff56 0003ff57 0003ff58 0003ff59 0003ff5a 0003ff5b 3f5c00ff 000009a4 06b2353b 193a0000
+0003ff60: 0003ff60 0003ff61 0003ff62 0003ff63 0003ff64 0003ff65 0003ff66 0003ff67 3f6800ff 000009a3 06b24955 19540000 0003ff6c 0003ff6d 0003ff6e 0003ff6f
+0003ff70: 0003ff70 0003ff71 0003ff72 0003ff73 3f7400ff 000009a2 06b25d6f 196e0000 0003ff78 0003ff79 0003ff7a 0003ff7b 0003ff7c 0003ff7d 0003ff7e 0003ff7f
+0003ff80: 3f8000ff 000009a1 06b27189 19880000 0003ff84 0003ff85 0003ff86 0003ff87 0003ff88 0003ff89 0003ff8a 0003ff8b 3f8c00ff 000009a0 06b285a3 19a20000
+0003ff90: 0003ff90 0003ff91 0003ff92 0003ff93 0003ff94 0003ff95 0003ff96 0003ff97 3f9800ff 0000099f 06b299bd 19bc0000 0003ff9c 0003ff9d 0003ff9e 0003ff9f
+0003ffa0: 0003ffa0 0003ffa1 0003ffa2 0003ffa3 3fa400ff 0000099e 06b2add7 19d60000 0003ffa8 0003ffa9 0003ffaa 0003ffab 0003ffac 0003ffad 0003ffae 0003ffaf
+0003ffb0: 3fb000ff 0000099d 06b2c1f1 19f00000 0003ffb4 0003ffb5 0003ffb6 0003ffb7 0003ffb8 0003ffb9 0003ffba 0003ffbb 3fbc00ff 0000099c 06b2d60b 190a0000
+0003ffc0: 0003ffc0 0003ffc1 0003ffc2 0003ffc3 0003ffc4 0003ffc5 0003ffc6 0003ffc7 3fc800ff 0000099b 06b2ea25 19240000 0003ffcc 0003ffcd 0003ffce 0003ffcf
+0003ffd0: 0003ffd0 0003ffd1 0003ffd2 0003ffd3 3fd400ff 0000099a 06b2fe3f 193e0000 0003ffd8 0003ffd9 0003ffda 0003ffdb 0003ffdc 0003ffdd 0003ffde 0003ffdf
+0003ffe0: 3fe000ff 00000999 06b31259 19580000 0003ffe4 0003ffe5 0003ffe6 0003ffe7 0003ffe8 0003ffe9 0003ffea 0003ffeb 3fec00ff 00000998 06b32673 19720000
+0003fff0: 0003fff0 0003fff1 0003fff2 0003fff3 0003fff4 0003fff5 0003fff6 0003fff7 3ff800ff 00000997 06b33a8d 198c0000 0003fffc 0003fffd 0003fffe 0003ffff
+00040000: 00040001 00040002 00040003 000400ff 00000996 06b34ea7 19a60000 00040008 00040009 0004000a 0004000b 0004000c 0004000d 0004000e 0004000f 001000ff
+00040010: 00000995 06b362c1 19c00000 00040014 00040015 00040016 00040017 00040018 00040019 0004001a 0004001b 001c00ff 00000994 06b376db 19da0000 00040020
+00040020: 00040021 00040022 00040023 00040024 00040025 00040026 00040027 002800ff 00000993 06b38af5 19f40000 0004002c 0004002d 0004002e 0004002f 00040030
+00040030: 00040031 00040032 00040033 003400ff 00000992 06b39f0f 190e0000 00040038 00040039 0004003a 0004003b 0004003c 0004003d 0004003e 0004003f 004000ff
+00040040: 00000991 06b3b329 19280000 00040044 00040045 00040046 00040047 00040048 00040049 0004004a 0004004b 004c00ff 00000990 06b3c743 19420000 00040050
+00040050: 00040051 00040052 00040053 00040054 00040055 00040056 00040057 005800ff 0000098f 06b3db5d 195c0000 0004005c 0004005d 0004005e 0004005f 00040060
+00040060: 00040061 00040062 00040063 006400ff 0000098e 06b3ef77 19760000 00040068 00040069 0004006a 0004006b 0004006c 0004006d 0004006e 0004006f 007000ff
+00040070: 0000098d 06b40391 19900000 00040074 00040075 00040076 00040077 00040078 00040079 0004007a 0004007b 007c00ff 0000098c 06b417ab 19aa0000 00040080
+00040080: 00040081 00040082 00040083 00040084 00040085 00040086 00040087 008800ff 0000098b 06b42bc5 19c40000 0004008c 0004008d 0004008e 0004008f 00040090
+00040090: 00040091 00040092 00040093 009400ff 0000098a 06b43fdf 19de0000 00040098 00040099 0004009a 0004009b 0004009c 0004009d 0004009e 0004009f 00a000ff
+000400a0: 00000989 06b453f9 19f80000 000400a4 000400a5 000400a6 000400a7 000400a8 000400a9 000400aa 000400ab 00ac00ff 00000988 06b46813 19120000 000400b0
+000400b0: 000400b1 000400b2 000400b3 000400b4 000400b5 000400b6 000400b7 00b800ff 00000987 06b47c2d 192c0000 000400bc 000400bd 000400be 000400bf 000400c0
+000400c0: 000400c1 000400c2 000400c3 00c400ff 00000986 06b49047 19460000 000400c8 000400c9 000400ca 000400cb 000400cc 000400cd 000400ce 000400cf 00d000ff
+000400d0: 00000985 06b4a461 19600000 000400d4 000400d5 000400d6 000400d7 000400d8 000400d9 000400da 000400db 00dc00ff 00000984 06b4b87b 197a0000 000400e0
+000400e0: 000400e1 000400e2 000400e3 000400e4 000400e5 000400e6 000400e7 00e800ff 00000983 06b4cc95 19940000 000400ec 000400ed 000400ee 000400ef 000400f0
+000400f0: 000400f1 000400f2 000400f3 00f400ff 00000982 06b4e0af 19ae0000 000400f8 000400f9 000400fa 000400fb 000400fc 000400fd 000400fe 000400ff 010000ff
+00040100: 00000981 06b4f4c9 19c80000 00040104 00040105 00040106 00040107 00040108 00040109 0004010a 0004010b 010c00ff 00000980 06b508e3 19e20000 00040110
+00040110: 00040111 00040112 00040113 00040114 00040115 00040116 00040117 011800ff 0000097f 06b51cfd 19fc0000 0004011c 0004011d 0004011e 0004011f 00040120
+00040120: 00040121 00040122 00040123 012400ff 0000097e 06b53117 19160000 00040128 00040129 0004012a 0004012b 0004012c 0004012d 0004012e 0004012f 013000ff
+00040130: 0000097d 06b54531 19300000 00040134 00040135 00040136 00040137 00040138 00040139 0004013a 0004013b 013c00ff 0000097c 06b5594b 194a0000 00040140
+
+TEST COUNTS WITH ADDR_NEXT from 3FFF0:
+
+0003ff50: fffef498 9b9b9c9c e70307ba e70307ba 3f54c0f8 00004ae2 0881cf31 00000000 1890431f 1858ce65 9b87460f 1858ce29 fffeeb1f 9b9b9b9b e6def33f e6def33f
+0003ff60: 3f60c0f8 00004ae1 0881e79d 00000000 188fef3d 18588255 9b23dd71 1858819d fffed4c1 9b9b9b9b e6c507f0 e6c507f0 3f6cc0f8 00004ae0 08820009 00000000
+0003ff70: 188f9b5b 18581daa 9ab5cdc8 18581f76 fffed4f0 9a9a9a9a e6ac01a6 e6ac01a6 3f78c0f8 00004adf 08821875 00000000 188f4779 1857ecdb 9a3c775c 1857ee1a
+0003ff80: fffedddd 9a9a999a e67af5aa e67af5aa 3f84c0f8 00004ade 088230e1 00000000 188ef397 185794fc 99e0fc38 185795f1 fffea3e9 99999999 e67f0b47 e67f0b47
+0003ff90: 3f90c0f8 00004add 0882494d 00000000 188e9fb5 18571bb1 996e149d 18571a55 fffec6a7 99999999 e65afba6 e65afba6 3f9cc0f8 00004adc 088261b9 00000000
+0003ffa0: 188e4bd3 1856d461 99003d24 1856d331 fffeab4a 98989899 e63df99a e63df99a 3fa8c0f8 00004adb 08827a25 00000000 188df7f1 18569c33 98ab3df6 18569afb
+0003ffb0: fffe9c60 98989898 e6220c2c e6220c2c 3fb4c0f8 00004ada 08829291 00000000 188da40f 18565c33 9839bb13 18565c89 fffe8aa6 98989898 e603f655 e603f655
+0003ffc0: 3fc0c0f8 00004ad9 0882aafd 00000000 188d502d 1855eddb 97dcd6fb 1855edf8 fffe8bd6 97979797 e5f6002b e5f6002b 3fccc0f8 00004ad8 0882c369 00000000
+0003ffd0: 188cfc4b 1855a284 9787bb8d 1855a39b fffe8b0e 97979797 e5e808e5 e5e808e5 3fd8c0f8 00004ad7 0882dbd5 00000000 188ca869 18553ce7 9718d61d 18553a8e
+0003ffe0: fffe796b 97969797 e5bff3d6 e5bff3d6 3fe4c0f8 00004ad6 0882f441 00000000 188c5487 1854e426 96c9f9a1 1854e5be fffe8b73 96969696 e5ab05f5 e5ab05f5
+0003fff0: 0003fff4 0003fff5 0003fff6 0003fff7 0003fff8 0003fff9 0003fffa 0003fffb 0003fffc 0003fffd 0003fffe 0003ffff 00040000 00040001 00040002 00040003
+00040000: 00040005 00040006 00040007 00040008 00040009 0004000a 0004000b 0004000c 0004000d 0004000e 0004000f 00040010 00040011 00040012 00040013 00040014
+00040010: 00040015 00040016 00040017 00040018 00040019 0004001a 0004001b 0004001c 0004001d 0004001e 0004001f 00040020 00040021 00040022 00040023 00040024
+00040020: 00040025 00040026 00040027 00040028 00040029 0004002a 0004002b 0004002c 0004002d 0004002e 0004002f 00040030 00040031 00040032 00040033 00040034
+00040030: 00040035 00040036 00040037 00040038 00040039 0004003a 0004003b 0004003c 0004003d 0004003e 0004003f 00040040 00040041 00040042 00040043 00040044
+00040040: 00040045 00040046 00040047 00040048 00040049 0004004a 0004004b 0004004c 0004004d 0004004e 0004004f 00040050 00040051 00040052 00040053 00040054
+00040050: 00040055 00040056 00040057 00040058 00040059 0004005a 0004005b 0004005c 0004005d 0004005e 0004005f 00040060 00040061 00040062 00040063 00040064
+00040060: 00040065 00040066 00040067 00040068 00040069 0004006a 0004006b 0004006c 0004006d 0004006e 0004006f 00040070 00040071 00040072 00040073 00040074
+00040070: 00040075 00040076 00040077 00040078 00040079 0004007a 0004007b 0004007c 0004007d 0004007e 0004007f 00040080 00040081 00040082 00040083 00040084
+00040080: 00040085 00040086 00040087 00040088 00040089 0004008a 0004008b 0004008c 0004008d 0004008e 0004008f 00040090 00040091 00040092 00040093 00040094
+00040090: 00040095 00040096 00040097 00040098 00040099 0004009a 0004009b 0004009c 0004009d 0004009e 0004009f 000400a0 000400a1 000400a2 000400a3 000400a4
+000400a0: 000400a5 000400a6 000400a7 000400a8 000400a9 000400aa 000400ab 000400ac 000400ad 000400ae 000400af 000400b0 000400b1 000400b2 000400b3 000400b4
+000400b0: 000400b5 000400b6 000400b7 000400b8 000400b9 000400ba 000400bb 000400bc 000400bd 000400be 000400bf 000400c0 000400c1 000400c2 000400c3 000400c4
+000400c0: 000400c5 000400c6 000400c7 000400c8 000400c9 000400ca 000400cb 000400cc 000400cd 000400ce 000400cf 000400d0 000400d1 000400d2 000400d3 000400d4
+000400d0: 000400d5 000400d6 000400d7 000400d8 000400d9 000400da 000400db 000400dc 000400dd 000400de 000400df 000400e0 000400e1 000400e2 000400e3 000400e4
+000400e0: 000400e5 000400e6 000400e7 000400e8 000400e9 000400ea 000400eb 000400ec 000400ed 000400ee 000400ef 000400f0 000400f1 000400f2 000400f3 000400f4
+000400f0: 000400f5 000400f6 000400f7 000400f8 000400f9 000400fa 000400fb 000400fc 000400fd 000400fe 000400ff 00040100 00040101 00040102 00040103 00040104
+00040100: 00040105 00040106 00040107 00040108 00040109 0004010a 0004010b 0004010c 0004010d 0004010e 0004010f 00040110 00040111 00040112 00040113 00040114
+00040110: 00040115 00040116 00040117 00040118 00040119 0004011a 0004011b 0004011c 0004011d 0004011e 0004011f 00040120 00040121 00040122 00040123 00040124
+00040120: 00040125 00040126 00040127 00040128 00040129 0004012a 0004012b 0004012c 0004012d 0004012e 0004012f 00040130 00040131 00040132 00040133 00040134
+00040130: 00040135 00040136 00040137 00040138 00040139 0004013a 0004013b 0004013c 0004013d 0004013e 0004013f 00040140 00040141 00040142 00040143 00040144
+
+
+*/
+        
+#define RECOVERY_RETRYS 1
+int rpspmc_hwi_dev::read_GVP_data_block_to_position_vector (int offset, gboolean expect_full_header){
+        static int hdr_i=0;
+        static int hdr_hist[16];
+        static int retry = RECOVERY_RETRYS;
+        size_t ch_index;
+        
+#ifdef BBB_DBG
+        static int sec_hdr=0;
+        static int hdr=0;
+#endif
+        g_mutex_lock (&GVP_stream_buffer_mutex);
+
+#ifdef BBB_DBG
+        if (offset == 0) sec_hdr=hdr=0;
+#endif
+
+        
+#if 0
+        if (expect_full_header || offset==0)
+                status_append_int32 (&GVP_stream_buffer[offset], 10*16, true, offset, true);
+#endif
+                
+#if 0
+        if (offset < 0 || offset > (EXPAND_MULTIPLES*DMA_SIZE-20)){
+                gchar *tmp = g_strdup_printf ("read_GVP_data_block_to_position_vector: Reading offset %08x out of range ERROR.",
+                                              offset);
+                status_append (tmp, true);
+                g_warning (tmp);
+                g_free (tmp);
+                g_mutex_unlock (&GVP_stream_buffer_mutex);
+                return -999;
+        }
+#endif
+                
+        if (offset+3 >= GVP_stream_buffer_position){ // Buffer is huge now all pages concat
+
+#if GVP_DEBUG_VERBOSE > 3
+                gchar *tmp = g_strdup_printf ("read_GVP_data_block_to_position_vector: Reading offset %08x is beyond stream write position %08x. Awaiting data.\n",
+                                              offset, GVP_stream_buffer_position);
+                status_append (tmp, true);
+                if (offset > 64)
+                        status_append_int32 (&GVP_stream_buffer[offset-64], 10*16, true, offset-64, true);
+                else
+                        status_append_int32 (&GVP_stream_buffer[0], 10*16, true, 0, true);
+                g_warning (tmp);
+                g_free (tmp);
+#endif
+                g_mutex_unlock (&GVP_stream_buffer_mutex);
+                return -99; // OK -- but have wait and reprocess when data package is completed
+        }
+                
+        // srcs_bit_mask = GVP_stream_buffer[0+offset]; // reconstructed bit mask for CH00..CH15 as of Channel Indices Selections of actual data been send (may be more as of 128bit DMA chuncs on FPGA)
+        // sample_index  = GVP_stream_buffer[1+offset]; // current sample index, down counting from N-1 to 0
+        // timecode31_0  = GVP_stream_buffer[2+offset]; // FPGA 48 bit timecode [31: 0]
+        // timecode48_32 = GVP_stream_buffer[3+offset]; // FPGA 48 bit timecode [47:32]
+        // ... channel data in 32bit words
+#define GVP_STREAM_HDR_SRCS_MASK       0 // 0x0000MMMM
+#define GVP_STREAM_HDR_SAMPLE_INDEX    1 // 0xNNNNNNNN
+#define GVP_STREAM_HDR_TIME_CODE_31_0  2 // 0xTTTTTTTT
+#define GVP_STREAM_HDR_TIME_CODE_47_32 3 // 0x0000TTTT
+#define GVP_STREAM_DATA_CH0            4 // 0xVVVVVVVV
+
+        GVP_vp_header_current.srcs      = GVP_stream_buffer[offset+GVP_STREAM_HDR_SRCS_MASK] & 0x0000ffff;
+        GVP_vp_header_current.i         = GVP_stream_buffer[offset+GVP_STREAM_HDR_SAMPLE_INDEX];           // data point index within GVP section (N points)
+        GVP_vp_header_current.gvp_time = ((((guint64)GVP_stream_buffer[offset+GVP_STREAM_HDR_TIME_CODE_47_32]) & 0x0000ffff)<<32) | (guint64)GVP_stream_buffer[offset+GVP_STREAM_HDR_TIME_CODE_31_0];
+        GVP_vp_header_current.dataexpanded[PROBEDATA_ARRAY_MS_TIME] = GVP_vp_header_current.gvp_time_ms = (double)GVP_vp_header_current.gvp_time/125e3; // time in ms
+        //GVP_vp_header_current.dataexpanded[14] = (double)GVP_vp_header_current.gvp_time/125e3; // time in ms
+
+	//g_print ("GVP HDR[%08x]: S:%08x i=%d t=%12.6f ms {%08x %08x}\n", offset, GVP_vp_header_current.srcs, GVP_vp_header_current.i, (double)GVP_vp_header_current.gvp_time_ms, GVP_stream_buffer[offset+GVP_STREAM_HDR_TIME_CODE_47_32], GVP_stream_buffer[offset+GVP_STREAM_HDR_TIME_CODE_31_0]);
+	
+        if (GVP_vp_header_current.srcs == 0xffff){
+                GVP_vp_header_current.n     = GVP_vp_header_current.i + 1; // this full vector of first point, index=N-1 ... counts down to 0
+                GVP_vp_header_current.endmark = 0;
+                retry=RECOVERY_RETRYS;
+        } else {
+                if (GVP_stream_buffer[offset] == 0xfefefefe){
+                        GVP_vp_header_current.endmark = 1;
+                        GVP_vp_header_current.n = 0;
+                        GVP_vp_header_current.i = 0;
+                        GVP_vp_header_current.srcs = 0xffff;
+                        status_append ("GVP END MARK DETECTED", true);
+                        g_message ("** GVP END MARK DETECTED **");
+                        g_mutex_unlock (&GVP_stream_buffer_mutex);
+#ifdef BBB_DBG
+                        status_append_int32 (&GVP_stream_buffer[offset], 64, true, offset, true);
+#endif
+                        return 0; // END OF GVP -- anywas a full position vector still follows, discarding now
+                } else {
+                        if (GVP_vp_header_current.n == GVP_vp_header_current.i+2) // 2nd point, store srcs mask for verify
+                                GVP_vp_header_current.srcs_mask_vector = GVP_vp_header_current.srcs; // store ref mask
+                        else { // normal GVP data stream, verify continuity
+                                if ((GVP_vp_header_current.i != (GVP_vp_header_current.ilast-1) && GVP_vp_header_current.i != 0) // ** == 0 OK: as GVP VEC-X Until Abort Section OpCode induced
+                                    ||
+                                    GVP_vp_header_current.srcs_mask_vector != GVP_vp_header_current.srcs){
+                                        // stream ERROR detected
+                                        {
+                                                gchar *tmp = g_strdup_printf ("read_GVP_data_block_to_position_vector: Stream ERROR at Reading offset %08x, write position %08x.\n"
+                                                                              "SRCS/index mismatch detected: 0x%04x vs 0x%04x or missing data/index jump: i %d -> %d\n",
+                                                                              offset, GVP_stream_buffer_position,
+                                                                              GVP_vp_header_current.srcs_mask_vector, GVP_vp_header_current.srcs,
+                                                                              GVP_vp_header_current.ilast, GVP_vp_header_current.i);
+#ifdef BBB_DBG
+                        status_append_int32 (&GVP_stream_buffer[offset], 256, true, offset, true);
+#endif
+#if GVP_DEBUG_VERBOSE > 3
+                                                status_append (tmp, true); // this is effn out gtk shit even in idle callback
+                                                int hl[6] = { GVP_vp_header_current.n-1, GVP_vp_header_current.srcs, -1, GVP_vp_header_current.srcs_mask_vector, -1 , -1 };
+                                                if (offset > 64)
+                                                        status_append_int32 (&GVP_stream_buffer[offset-64], 10*16, true, offset-64, true, hl, offset, hdr_hist);
+                                                else
+                                                        status_append_int32 (&GVP_stream_buffer[0], 10*16, true, 0, true, hl, offset, hdr_hist);
+#endif
+                                                g_warning (tmp);
+                                                g_free (tmp);
+                                        }
+                                        if (--retry > 0){ //  try to recover
+                                                gchar *tmp = g_strdup_printf ("Trying to recover stream from missing/bogus data. retry=%d\n", retry);
+                                                //status_append (tmp, true);
+                                                g_warning (tmp);
+                                                g_free (tmp);
+                                                if (GVP_vp_header_current.i >= 0 && GVP_vp_header_current.i < GVP_vp_header_current.n)
+                                                        GVP_vp_header_current.ilast = GVP_vp_header_current.i+1; // adjust for skip ***
+                                                g_mutex_unlock (&GVP_stream_buffer_mutex);
+                                                return -99;  // OK -- but retry -- **have wait and reprocess when data package is completed
+                                        }else {
+                                                g_mutex_unlock (&GVP_stream_buffer_mutex);
+
+#if 1
+                                                int hl[6] = { GVP_vp_header_current.n-1, GVP_vp_header_current.srcs, -1, GVP_vp_header_current.srcs_mask_vector, -1 , -1 };
+                                                if (offset > 64)
+                                                        status_append_int32 (&GVP_stream_buffer[offset-64], 10*16, true, offset-64, true, hl, offset, hdr_hist);
+                                                else
+                                                        status_append_int32 (&GVP_stream_buffer[0], 10*16, true, 0, true, hl, offset, hdr_hist);
+
+                                                if (GVP_stream_buffer_position >= 40000){
+                                                        status_append_int32 (&GVP_stream_buffer[0], 40*16, true, 0, true, hl, offset, hdr_hist);
+                                                        status_append_int32 (&GVP_stream_buffer[0x40000-20*16], 40*16, true, 0x40000-20*16, true, hl, offset, hdr_hist);
+                                                }
+#endif
+
+                                                return -98;
+                                        }
+                                }
+                        }
+                }
+        }
+
+#ifdef BBB_DBG
+        if ((GVP_vp_header_current.ilast-1) > 0 && GVP_vp_header_current.i == 0)
+                g_message ("Vec-X Until/Jmp Section Abort Condition detected. i=0: END of SECTION.");
+#endif
+        
+        GVP_vp_header_current.index = GVP_vp_header_current.n - GVP_vp_header_current.i;
+        if (GVP_vp_header_current.index < 0){
+                gchar *tmp = g_strdup_printf ("read_GVP_data_block_to_position_vector: Stream ERROR at Reading offset %08x, write position %08x.\n"
+                                              "SRCS/index mismatch detected. %04x vs %04x, i %d -> %d  => n=%d (<0 is illegal)\n",
+                                              offset, GVP_stream_buffer_position,
+                                              GVP_vp_header_current.srcs_mask_vector, GVP_vp_header_current.srcs,
+                                              GVP_vp_header_current.ilast, GVP_vp_header_current.i, GVP_vp_header_current.index);
+#if GVP_DEBUG_VERBOSE > 3
+                status_append (tmp, true); // this is effn out gtk shit even in idle callback
+                if (offset > 64)
+                        status_append_int32 (&GVP_stream_buffer[offset-64], 10*16, true, offset-64, true);
+                else
+                        status_append_int32 (&GVP_stream_buffer[0], 10*16, true, 0, true);
+#endif
+                g_warning (tmp);
+                g_free (tmp);
+                GVP_vp_header_current.index = 0; // to prevent issues
+                g_mutex_unlock (&GVP_stream_buffer_mutex);
+                return (-95);
+        }
+
+        // decode SCRS to lookup
+        GVP_vp_header_current.number_channels=0;
+        for (int i=0; i<16; i++){
+                GVP_vp_header_current.ch_lut[i]=-1;
+                if (GVP_vp_header_current.srcs & (1<<i))
+                        GVP_vp_header_current.ch_lut[GVP_vp_header_current.number_channels++] = i;
+        }
+                
+        // expand data stream and sort into channels
+        for (ch_index=0; ch_index < GVP_vp_header_current.number_channels && GVP_STREAM_DATA_CH0 + ch_index + offset < GVP_stream_buffer_position; ++ch_index){
+                int ich = GVP_vp_header_current.ch_lut[ch_index];
+                GVP_vp_header_current.chNs[ich] = GVP_stream_buffer[GVP_STREAM_DATA_CH0 + ch_index + offset];
+                if (ich < 16) // 0..15 are assigned DATA CHANNELS
+                        GVP_vp_header_current.dataexpanded[ich] = rpspmc_source_signals[ich+SIGNAL_INDEX_ICH0].scale_factor*GVP_vp_header_current.chNs[ich]; // in units, base units Volts used for XYZ. etc.
+        }
+
+        // ###### TEST 
+        GVP_vp_header_current.dataexpanded[15] = GVP_vp_header_current.gvp_time_ms; // TEST ONLY
+        // ######
+        
+        if (expect_full_header && GVP_vp_header_current.srcs != 0xffff){
+                gchar *tmp = g_strdup_printf ("ERROR: read_GVP_data_block_to_position_vector: Reading offset %08x, write position %08x. Expecting full header but found srcs=%04x, i=%d rty=%d\n",
+                                              offset, GVP_stream_buffer_position,  GVP_vp_header_current.srcs, GVP_vp_header_current.i, retry);
+                status_append (tmp, true);
+                if (offset>64)
+                        status_append_int32 (&GVP_stream_buffer[offset-64], 10*16, true, offset-64, true);
+                else
+                        status_append_int32 (&GVP_stream_buffer[0], 10*16, true, 0, true);
+                g_warning (tmp);
+                g_free (tmp);
+                if (--retry > 0){
+                        gchar *tmp = g_strdup_printf ("Trying to recover stream from missing/bogus data. retry=%d\n", retry);
+                        //status_append (tmp, true);  // this is effn out gtk shit even in idle callback
+                        g_warning (tmp);
+                        g_free (tmp);
+                        g_mutex_unlock (&GVP_stream_buffer_mutex);
+                        return -99;  // OK -- but have wait and reprocess when data package is completed
+                } else {
+                        g_mutex_unlock (&GVP_stream_buffer_mutex);
+                        return (-97);
+                }
+        }
+                
+        // check for all channels fetched
+        if (GVP_STREAM_DATA_CH0 + ch_index + offset < GVP_stream_buffer_position){
+
+                retry=RECOVERY_RETRYS;
+                if (GVP_vp_header_current.srcs == 0xffff){
+                        g_mutex_unlock (&GVP_stream_buffer_mutex);
+                        return -1; // true for full position header update
+                }
+                
+                GVP_vp_header_current.ilast = GVP_vp_header_current.i; // next point should be this - 1
+
+#ifdef BBB_DBG
+                status_append_int32 (&GVP_stream_buffer[hdr], ch_index+offset+GVP_STREAM_DATA_CH0-hdr, true, hdr, true);
+                hdr = ch_index+offset+GVP_STREAM_DATA_CH0; // next hdr
+#endif
+
+                // fix-me...
+                int     fss      = (guint32)(GVP_stream_buffer[offset + GVP_STREAM_HDR_TIME_CODE_47_32]) >> 16;
+                if (fss){
+                        guint64 fss_data = (((guint64)GVP_vp_header_current.chNs[1]) << 32) | GVP_vp_header_current.chNs[0]; // Y,X
+                        int     fss_n    = fss & 0xff;
+                        int     fss_len  = (fss>>8) & 0xff;
+                        GVP_vp_header_current.fss_len = fss_len;
+                        for (int k=0; k<fss_len; ++k){
+                                GVP_vp_header_current.fss_data[0][k] = fss_data & (1LL<<((fss_n+k)&0x3f)) ? 1.:0.;
+                                if (k<5 && GVP_vp_header_current.srcs & (1<<14)){
+                                        if (k==0)
+                                                GVP_vp_header_current.fss_data[1][k] = GVP_vp_header_current.chNs[15]>>16;  // RF
+                                        else
+                                                GVP_vp_header_current.fss_data[1][k] = ((GVP_vp_header_current.chNs[14]>>(8*(k-1)))&0xff) << 6;  // RF
+                                } else
+                                        GVP_vp_header_current.fss_data[1][k] = 0; // 
+                        }
+                        //g_message ("[%08x] *** FSS DATA: %d %d %d", offset, fss_len, fss_n, fss_data);
+                } else
+                        GVP_vp_header_current.fss_len = 0; // no FSS DATA
+
+                g_mutex_unlock (&GVP_stream_buffer_mutex);
+
+                hdr_hist[(hdr_i++)&0xf]=offset;
+                
+                return ch_index;
+
+        } else {
+                // g_message ("[%08x] *** end of new data at ch=%d ** Must wait for next page/update send and retry.", offset, ch_index);
+                g_mutex_unlock (&GVP_stream_buffer_mutex);
+                return -99;   // OK -- but have wait and reprocess when data package is completed
+                // return ch_index; // number channels read until position
+        }
+};
+
+
+
+#else // original DMA32 ---
+
 
 #define RECOVERY_RETRYS 1
 int rpspmc_hwi_dev::read_GVP_data_block_to_position_vector (int offset, gboolean expect_full_header){
@@ -1984,7 +2498,7 @@ int rpspmc_hwi_dev::read_GVP_data_block_to_position_vector (int offset, gboolean
 #if 1
         if (GVP_vp_header_current.srcs == 0xffff){
                 GVP_vp_header_current.gvp_time = (((guint64)((guint32)GVP_vp_header_current.chNs[15]))<<32) | (guint64)((guint32)GVP_vp_header_current.chNs[14]);
-                GVP_vp_header_current.dataexpanded[14] = (double)GVP_vp_header_current.gvp_time/125e3;
+                GVP_vp_header_current.dataexpanded[PROBEDATA_ARRAY_MS_TIME] = GVP_vp_header_current.gvp_time_ms = GVP_vp_header_current.dataexpanded[14] = (double)GVP_vp_header_current.gvp_time/125e3; // time in ms
 
 #if GVP_DEBUG_VERBOSE > 2
                 if (GVP_vp_header_current.endmark)
@@ -2057,7 +2571,7 @@ int rpspmc_hwi_dev::read_GVP_data_block_to_position_vector (int offset, gboolean
         }
 };
 
-
+#endif // DMA32
 
 /*
 
@@ -2232,3 +2746,7 @@ vector = {32'd2,       32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  32'd0,  3
 **
 
  */
+
+
+
+

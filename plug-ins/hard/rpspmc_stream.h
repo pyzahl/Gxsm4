@@ -229,29 +229,64 @@ public:
 #define SPMC_RPIN12_REFV 1.0 // RP FAST DACs Reference Voltage is 1.0V (+/-1V Range)
         double rpIN12_to_volts (int value){ return SPMC_RPIN12_REFV*(double)value / QN(31); } // +/-1 <=> 32bit signed
 
-        void status_append_int32(const guint32 *data, size_t data_length, bool format = true, int offset=0, bool also_gprint = false) {
+        void status_append_int32(const guint32 *data, size_t data_length, bool format = true, int offset=0, bool also_gprint = false, int *hl=NULL, int ha=-1, int *hdr=NULL) {
                 if (data_length < 1)
                         return;
+                const gchar *ansicolor[6]   = { "\033[31m", "\033[31m", "\033[32m", "\033[32m", "\033[33m", "\033[33m" };
+                const gchar *ansicolorhl[6] = { "\033[31;43m", "\033[31;43m", "\033[32;43m", "\033[32;43m", "\033[33;43m", "\033[33;43m" };
+                const gchar *ansihl         = "\033[30;43m";
+                const gchar *ansihlh        = "\033[30;44m";
+                const gchar *ansireset      = "\033[39m";
+                const gchar *ansiresetall   = "\033[0m";
                 std::ostringstream stream;
                 stream << std::setfill('0');
 
+                // ANSI CODE  \033[<style_code>;<foreground_color_code>;<background_color_code>m
+                
                 int wpl=16;
+                gchar *H=" ";
                 for (size_t data_index = 0; data_index < data_length; ++data_index) {
                         if (data_index % wpl == 0)
-                                stream << std::hex << std::setw(8) << (data_index+offset) << ": ";
-                        stream << std::hex << std::setw(8) << data[data_index];
+                                stream << std::hex << std::setw(8) << (data_index+offset) << ":" << H;
+                        H=" ";
+                        gboolean flg=true;
+                        if (hl){
+                                for (int i=0; i<6; ++i){
+                                        if (hl[i] >= 0 && (i&1 ? data[data_index]&0xffff : data[data_index]>>16) == hl[i]){
+                                                if (ha >= 0 && ha == offset+data_index)
+                                                        stream << ansicolorhl[i] << std::hex << std::setw(8) << data[data_index] << ansiresetall;
+                                                else
+                                                        stream << ansicolor[i] << std::hex << std::setw(8) << data[data_index] << ansireset;
+                                                flg=false;
+                                                break;
+                                        }
+                                }
+                        } else if (ha >= 0 && ha == offset+data_index){
+                                stream << ansihl << std::hex << std::setw(8) << data[data_index] << ansireset;
+                                flg=false;
+                        }
+                        if (flg)
+                                stream << std::hex << std::setw(8) << data[data_index];
                         if (format) {
-                                stream << (((data_index + 1) % wpl == 0) ? "\n": " ");
+                                if (hdr)
+                                        for (int i=0; i<16; ++i){
+                                                if (hdr[i] == offset+data_index+1)
+                                                        H="\033[30;44m>";
+                                                else if (hdr[i] == offset+data_index-3)
+                                                        H="<\033[0m";
+                                        }
+                                if ((data_index + 1) % wpl == 0) if (H[0] == '<') { stream << H << "\n"; H=" "; } else stream << "\n";
+                                else stream << H;
                         }
                 }
                 stream << std::endl;
 
                 std::string str =  stream.str();
 
-                if (also_gprint){
+                if (also_gprint)
                         g_print (str.c_str());
+                else
                         status_append (str.c_str(), true);
-                }                
         };
 
         void test_compression() {

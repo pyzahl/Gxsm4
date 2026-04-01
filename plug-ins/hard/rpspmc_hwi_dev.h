@@ -152,9 +152,9 @@ public:
 
 	virtual int ReadProbeData (int dspdev=0, int control=0);
 
+        inline void skip_to_next_header ();
         int GVP_expect_header(double *pv, int &index_all);
         int GVP_expect_point(double *pv, int &index_all);
-
 
         
 	int probe_fifo_thread_active;

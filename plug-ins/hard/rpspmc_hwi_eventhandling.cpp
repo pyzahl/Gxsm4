@@ -1511,7 +1511,7 @@ void RPSPMC_Control::add_probevector(){
 
         } else if (add_pv){
 
-                // array add (increment add) from previous/ reference position vector: signal generation emulation
+                // array add
                 add_probevector();
                 //g_print ("+++>>>> ADD-PV  i[%d] sec=%d t=%g ms\n", current_probe_data_index,  (int)pv[PROBEDATA_ARRAY_SEC], pv[PROBEDATA_ARRAY_TIME]);
         }
@@ -1521,13 +1521,13 @@ void RPSPMC_Control::add_probevector(){
                 //g_print ("g_array_append_val garray_probedata[%d] {%x} := %g",i, garray_probedata[i], data[j]);
 		g_array_append_val (garray_probedata[i], data[j]); // sorting header expanded data in units into garrays
         }
-        //g_print ("+++>>>> PUSH DATA i[%d] sec=%d  t=%g ms\n", current_probe_data_index, (int)pv[PROBEDATA_ARRAY_SEC],  data[14]);
+        //g_print ("+++>>>> PUSH DATA i[%d] sec=%d  t=%g ms\n", current_probe_data_index, (int)pv[PROBEDATA_ARRAY_SEC], pv[PROBEDATA_ARRAY_TIME], pv[PROBEDATA_ARRAY_MS_TIME]);
         current_probe_data_index++;
 
         if (hs_len){ // add FSS DATA (high speed) burst if available
                 for (i=0; i<hs_len; ++i){
-                        double hs_time = data[14] + (-hs_len + i)*8e-6; //  8ns spaced data (125MHz) in ms
-                        g_print ("g_array_append_val HS_TIME %d:%d ts=%g ms t=%g ns [%d] = %g\n",current_probe_data_hsindex, i, data[14], hs_time*1e6, hs_len, pv_hs[0][i]);
+                        double hs_time = pv[PROBEDATA_ARRAY_MS_TIME] + (-hs_len + i)*8e-6; //  8ns spaced data (125MHz) in ms
+                        //g_print ("g_array_append_val HS_TIME %d:%d ts=%g ms t=%g ns [%d] = %g\n",current_probe_data_hsindex, i, pv[PROBEDATA_ARRAY_MS_TIME], hs_time*1e6, hs_len, pv_hs[0][i]);
                         g_array_append_val (garray_probedata[PROBEDATA_ARRAY_HS_TIME], hs_time);
                         g_array_append_val (garray_probedata[PROBEDATA_ARRAY_HS_DATA_A], pv_hs[0][i]);
                         g_array_append_val (garray_probedata[PROBEDATA_ARRAY_HS_DATA_B], pv_hs[1][i]);
