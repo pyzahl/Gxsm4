@@ -528,7 +528,7 @@ gpointer ScanDataReadThread (void *ptr_hwi){
                                 g_message ("GVP Data Expanded Lookup table signal dir %02d, ch %02d, ssi %02d: checking for mask 0x%08x (%s) match in 0x%08x", dir, ch, i, rpspmc_source_signals[i].mask, rpspmc_source_signals[i].label, hwi->srcs_dir[dir]);
                                 if ((hwi->srcs_dir[dir] & rpspmc_source_signals[i].mask) == rpspmc_source_signals[i].mask){
                                         if (rpspmc_source_signals[i].garr_index == PROBEDATA_ARRAY_TIME)
-                                                pvlut[dir][ch] = PROBEDATA_ARRAY_MS_TIME - PROBEDATA_ARRAY_S1;   //14; /// NOTE: GVP_vp_header_current.dataexpanded[14]; // is time in ms
+                                                pvlut[dir][ch] = PROBEDATA_ARRAY_MS_TIME - PROBEDATA_ARRAY_S1;  //17 //14; /// NOTE: GVP_vp_header_current.dataexpanded[14]; // is time in ms
                                         else
                                                 pvlut[dir][ch] = rpspmc_source_signals[i].garr_index - PROBEDATA_ARRAY_S1; // as ..._S1 .. _S14 are exactly incremental => 0..13 ; see (***) above
                                         g_message ("GVP Data Expanded Lookup table signal %02d is selected: pvlut[%02d][%02d] = %02d for mask 0x%08x (%s), garri %d", i,dir,ch,pvlut[dir][ch], rpspmc_source_signals[i].mask, rpspmc_source_signals[i].label, rpspmc_source_signals[i].garr_index);
@@ -2101,7 +2101,7 @@ int rpspmc_hwi_dev::read_GVP_data_block_to_position_vector (int offset, gboolean
         GVP_vp_header_current.srcs      = GVP_stream_buffer[offset+GVP_STREAM_HDR_SRCS_MASK] & 0x0000ffff;
         GVP_vp_header_current.i         = GVP_stream_buffer[offset+GVP_STREAM_HDR_SAMPLE_INDEX];           // data point index within GVP section (N points)
         GVP_vp_header_current.gvp_time = ((((guint64)GVP_stream_buffer[offset+GVP_STREAM_HDR_TIME_CODE_47_32]) & 0x0000ffff)<<32) | (guint64)GVP_stream_buffer[offset+GVP_STREAM_HDR_TIME_CODE_31_0];
-        GVP_vp_header_current.dataexpanded[PROBEDATA_ARRAY_MS_TIME] = GVP_vp_header_current.gvp_time_ms = (double)GVP_vp_header_current.gvp_time/125e3; // time in ms
+        GVP_vp_header_current.dataexpanded[PROBEDATA_ARRAY_MS_TIME-PROBEDATA_ARRAY_S1] = GVP_vp_header_current.gvp_time_ms = (double)GVP_vp_header_current.gvp_time/125e3; // time in ms
         //GVP_vp_header_current.dataexpanded[14] = (double)GVP_vp_header_current.gvp_time/125e3; // time in ms
 
 	//g_print ("GVP HDR[%08x]: S:%08x i=%d t=%12.6f ms {%08x %08x}\n", offset, GVP_vp_header_current.srcs, GVP_vp_header_current.i, (double)GVP_vp_header_current.gvp_time_ms, GVP_stream_buffer[offset+GVP_STREAM_HDR_TIME_CODE_47_32], GVP_stream_buffer[offset+GVP_STREAM_HDR_TIME_CODE_31_0]);
@@ -2224,10 +2224,6 @@ int rpspmc_hwi_dev::read_GVP_data_block_to_position_vector (int offset, gboolean
                 if (ich < 16) // 0..15 are assigned DATA CHANNELS
                         GVP_vp_header_current.dataexpanded[ich] = rpspmc_source_signals[ich+SIGNAL_INDEX_ICH0].scale_factor*GVP_vp_header_current.chNs[ich]; // in units, base units Volts used for XYZ. etc.
         }
-
-        // ###### TEST 
-        GVP_vp_header_current.dataexpanded[15] = GVP_vp_header_current.gvp_time_ms; // TEST ONLY
-        // ######
         
         if (expect_full_header && GVP_vp_header_current.srcs != 0xffff){
                 gchar *tmp = g_strdup_printf ("ERROR: read_GVP_data_block_to_position_vector: Reading offset %08x, write position %08x. Expecting full header but found srcs=%04x, i=%d rty=%d\n",

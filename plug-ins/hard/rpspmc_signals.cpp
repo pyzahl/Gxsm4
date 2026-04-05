@@ -99,7 +99,7 @@ SOURCE_SIGNAL_DEF rpspmc_source_signals[] = {
         { 0x00001000, "SWP*04",       " ",  "V",            "V",                                    1.0, PROBEDATA_ARRAY_S13, 13 }, // ich=12 ** swappable via GVP-SRC-MUX5 ** -- been replaced as set from rpspmc_swappable_signals[]
         { 0x00002000, "SWP*05",       " ",  "V",            "V",                                    1.0, PROBEDATA_ARRAY_S14, 14 }, // ich=13 ** swappable via GVP-SRC-MUX6 ** -- been replaced as set from rpspmc_swappable_signals[]
         { 0x00004000, "S15",          " ",  "V",            "V",                                    1.0, PROBEDATA_ARRAY_S15, 15 }, // ich=14
-        { 0x00008000, "FPGA Time",    " ", "ms",           "ms",                                    1.0, PROBEDATA_ARRAY_S16, 16 }, // ich=15
+        { 0x00008000, "S16",          " ",  "V",            "V",                                    1.0, PROBEDATA_ARRAY_S16, 16 }, // ich=15
         { 0x00010000, "Time-Mon",     " ", "ms",           "ms",                                    1.0, PROBEDATA_ARRAY_MS_TIME, 17 }, // time in ms [11]
         { 0x00020000, "HS-Ch-A",      " ", "V",             "V",                                    1.0, PROBEDATA_ARRAY_HS_DATA_A, 18 }, // High Speed Channel A @125MSPS fixed -- **special requirements for vector, Experimental
         { 0x00040000, "HS-Ch-B",      " ", "V",             "V",                                    1.0, PROBEDATA_ARRAY_HS_DATA_B, 19 }, // High Speed Channel B @125MSPS fixed -- **special requirements for vector, Experimental
