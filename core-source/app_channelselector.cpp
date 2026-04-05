@@ -60,19 +60,6 @@ static const char* choice_ChMode[] =
 		0
 	};
 
-static const char* choice_ChModeExternalData[EXTCHMAX+1] =
-	{ 
-		"DataMap0",
-		"DataMap1",
-		"DataMap2",
-		"DataMap3",
-		"DataMap4",
-		"DataMap5",
-		"DataMap6",
-		"DataMap7",
-		0
-	};
-
 static const char* choice_ChSDir[] =
 	{ 
 		"->",
@@ -81,8 +68,6 @@ static const char* choice_ChSDir[] =
 		"<2",
 		0
 	};
-
-static int NumCh = 0;
 
 static int alife = 0;
 
@@ -93,6 +78,10 @@ ChannelSelector::ChannelSelector (Gxsm4app *app, int ChAnz):AppBase(app, "CHS"){
 	int i,j,k,l;
 	NumCh = ChAnz;
 
+        DataSourceList = NULL;
+        set_source_mask_info_on ();
+        set_default_source_mode ();
+        
         XSM_DEBUG(DBG_L2, "ChannelSelector::ChannelSelector");
 
 	ChSDirWidget = new GtkWidget*[ChAnz];
@@ -231,6 +220,7 @@ ChannelSelector::ChannelSelector (Gxsm4app *app, int ChAnz):AppBase(app, "CHS"){
                         gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (wid), NULL, choice_ChMode[j]);
 		gtk_combo_box_set_active (GTK_COMBO_BOX (wid), 0);
 
+                /*
 		// Add PID Srcs
 		for(l=ID_CH_M_LAST-1, k=0; k<PIDCHMAX; k++, j++){
 			if(strcmp(xsmres.pidsrc[k], "-")){
@@ -277,7 +267,8 @@ ChannelSelector::ChannelSelector (Gxsm4app *app, int ChAnz):AppBase(app, "CHS"){
                         ++l;
                         xsmres.extchno[j]=l;
                 }
-
+                */
+                
                 g_signal_connect (G_OBJECT (wid), "changed",
                                   G_CALLBACK (ChannelSelector::choice_ChMode_callback),
                                   NULL);
@@ -336,7 +327,7 @@ void ChannelSelector::restore_callback (GtkWidget *widget, ChannelSelector *cs){
         array = (gint32*) g_variant_get_fixed_array (storage, &n_stores, 3*sizeof (gint32));
 	// XSM_DEBUG_GP(DBG_L2, "CannelSelector::restore_callback:  n_stores: %d\n", n_stores);
 
-	for (int channel=0; channel < (gint)n_stores && channel < NumCh; ++channel){
+	for (int channel=0; channel < (gint)n_stores && channel < cs->get_number_of_channels(); ++channel){
                 XSM_DEBUG_GP(DBG_L2,
                              "CannelSelector::restore_callback:  ch[%d] : V%d, M%d, D%d\n",
                              channel,
@@ -348,6 +339,8 @@ void ChannelSelector::restore_callback (GtkWidget *widget, ChannelSelector *cs){
 		main_get_gapp ()->xsm->SetView (channel, array[3*channel+0]);
 		main_get_gapp ()->xsm->SetMode (channel, 1+array[3*channel+1]);
 		main_get_gapp ()->xsm->SetSDir (channel, array[3*channel+2]);
+                if (1+array[3*channel+1] > ID_CH_M_LAST)
+                        cs->SetInfo (channel, "Restored");
         }
         
         return;
@@ -355,7 +348,7 @@ void ChannelSelector::restore_callback (GtkWidget *widget, ChannelSelector *cs){
 
 void ChannelSelector::store_callback (GtkWidget *widget, ChannelSelector *cs){
 	gint32 *array;
-        gsize n_stores = NumCh;
+        gsize n_stores = cs->get_number_of_channels();
 
 	// setup the storage compartement key
 	gchar *store_key = g_strdup_printf ("channel-setup-%c",'a'+atoi (gtk_combo_box_get_active_id (GTK_COMBO_BOX (cs->RestoreWidget[0]))));
@@ -384,6 +377,8 @@ void ChannelSelector::store_callback (GtkWidget *widget, ChannelSelector *cs){
         
         g_settings_set_value (cs->ch_settings, store_key, storage);
 
+        cs->ReportHardwareMappings();
+        
         // g_free array, storage ????
         
 	return;
@@ -468,29 +463,17 @@ void ChannelSelector::SetView(int Channel, int View){
 }
 
 void ChannelSelector::SetInfo(int Channel, const gchar *info){
-#define SRCS_INFO_ON
-#ifdef SRCS_INFO_ON
-        gchar *infox = NULL;
-        gint mode_pos  = (gtk_combo_box_get_active (GTK_COMBO_BOX (ChModeWidget[Channel])));
-        int k = mode_pos - (ID_CH_M_LAST - 1);
-        if (k >= 0){
-                if (k < PIDCHMAX){
-                        infox = g_strdup_printf("%s [%08x]", info, xsmres.pidsrc_msk[k]);
-                } else {
-                        k -= PIDCHMAX;
-                        if (k < DAQCHMAX) {
-                                infox = g_strdup_printf("%s [%08x]", info, xsmres.daq_msk[k]);
-                        } else {
-                                k -= DAQCHMAX;
-                                infox = g_strdup_printf("%s [EXT%d]", info, k);
-                        }
-                }
-        } else infox = g_strdup_printf("%s [--]", info);
-        gtk_label_set_text (GTK_LABEL(ChInfoWidget[Channel]), infox);
-        g_free (infox);
-#else
-        gtk_label_set_text (GTK_LABEL(ChInfoWidget[Channel]), info);
-#endif
+        if (source_mask_info_on){
+                gchar *infox = NULL;
+                Data_Source *dsrc = find_data_source_by_position (gtk_combo_box_get_active (GTK_COMBO_BOX (ChModeWidget[Channel])) - (ID_CH_M_LAST - 1));
+                if (dsrc)
+                        infox = g_strdup_printf("%s [%d:%s:%016x]", info?info:dsrc->Sname, dsrc->position, dsrc->Sname, dsrc->source_mask);
+                else
+                        infox = g_strdup_printf("%s [--]", info);
+                gtk_label_set_text (GTK_LABEL(ChInfoWidget[Channel]), infox);
+                g_free (infox);
+        } else
+                gtk_label_set_text (GTK_LABEL(ChInfoWidget[Channel]), info);
 }
 
 // mode_id: combobox item position index
@@ -502,14 +485,14 @@ void ChannelSelector::SetModeChannelSignal(int mode_id, const gchar* signal_name
                 return;
         }
 
-	if (mode_id < 0 || mode_id > DAQCHMAX+4+ID_CH_M_LAST-1){
+	if (mode_id < 0 || mode_id > get_number_of_modes ()){
 		XSM_DEBUG(DBG_EVER, "GXSM FATAL: SetModeChannelSignal :: index out of range. Signal: " << signal_name << " mode_id=" << mode_id);
 		return;
 	}
 
         XSM_DEBUG(DBG_L2, "Signal: " << signal_name << " mode_id=" << mode_id << " label=" << signal_label);
 
-	for (int i=0; i<MAX_CHANNELS; ++i){
+	for (int i=0; i<NumCh; ++i){
                 int current_id=-1;
 
                 if (ChModeWidget[i]){
@@ -525,22 +508,48 @@ void ChannelSelector::SetModeChannelSignal(int mode_id, const gchar* signal_name
                                 gtk_combo_box_set_active (GTK_COMBO_BOX (ChModeWidget[i]), current_id);
                 }
 	}
-	for(l=ID_CH_M_LAST-1, k=0; k<PIDCHMAX; k++, l++){
-		if (l == mode_id){
-		        strncpy (xsmres.pidsrc[k], signal_name, CHLABELLEN);
-			strncpy (xsmres.pidsrcZlabel[k], signal_name, CHLABELLEN);
-			strncpy (xsmres.pidsrcZunit[k], signal_unit, 8);
-			xsmres.pidsrcZd2u[k] = d2unit;
-		}
-                //		std::cout << l << "=> " << xsmres.pidsrc[k] << std::endl;
-	}
-	for(int k=0; k<DAQCHMAX; k++, l++){
-		if (l == mode_id){
-			strncpy (xsmres.daqsrc[k], signal_name, CHLABELLEN);
-			strncpy (xsmres.daqZlabel[k], signal_name, CHLABELLEN);
-			strncpy (xsmres.daqZunit[k], signal_unit, 8);
-			xsmres.daqZd2u[k] = d2unit;
-		}
-                //		std::cout << l << "=> " << xsmres.daqsrc[k] << std::endl;
-	}
 }
+
+// position is a running nummer of data sources from 0 ..
+
+void ChannelSelector::ConfigureHardwareMapping(int position, const gchar* signal_name, guint64 msk, const gchar* signal_label, const gchar *signal_unit, double d2unit = 1.0){
+        g_message ("ChannelSelector::ConfigureHardwareMapping for %32s, 0x%08x at scale %g for %s", signal_name, msk, d2unit, signal_unit);
+
+        Data_Source *ch_data_src=find_data_source_by_name (signal_name);
+        
+        if (!ch_data_src){ // if not existing, append a new source
+                ch_data_src = new Data_Source (signal_name, signal_label, signal_unit, msk, d2unit);
+                DataSourceList = g_slist_append (DataSourceList, ch_data_src);
+        } else // adjust source
+                ch_data_src -> update (signal_label, signal_unit, msk, d2unit);
+
+        ch_data_src -> set_position (position);
+        SetModeChannelSignal (position+ID_CH_M_LAST-1, signal_name, signal_label, signal_unit, d2unit);
+        
+}
+
+void ChannelSelector::ReportHardwareMappings(){
+        g_print ("ChannelSelector::ReportHardwareMappings:\n");
+        g_print ("##  %20s  %20s  %5s  %10s  %16s x %s %s\n", "name", "label", "unit" , "type", "Mask", "Scale", "Lock");
+        for (GSList *iterator = DataSourceList; iterator != NULL; iterator = iterator->next){
+                Data_Source *ds = iterator->data;
+                g_print ("%02d  %20s  %20s  %5s  %10s  %016X x %g %s\n", ds->position, ds->Sname, ds->Slabel, ds->SunitID, ds->Stype, ds->source_mask, ds->scale_to_unit, ds->lock?"Locked":"Open");
+        }
+}
+
+
+Data_Source* ChannelSelector::find_data_source_by_name (const gchar *name){
+        for (GSList *iterator = DataSourceList; iterator != NULL; iterator = iterator->next){
+                if (!strcmp(((Data_Source *)iterator->data)->Sname, name))
+                        return (Data_Source *)iterator->data;
+        }
+        return NULL;
+}
+        
+Data_Source* ChannelSelector::find_data_source_by_position (gint pos){
+        for (GSList *iterator = DataSourceList; iterator != NULL; iterator = iterator->next)
+                if (((Data_Source *)iterator->data)->position  == pos)
+                        return (Data_Source *)iterator->data;
+        return NULL;
+}
+      

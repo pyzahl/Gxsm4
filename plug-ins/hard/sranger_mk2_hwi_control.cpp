@@ -1348,7 +1348,12 @@ DSPControl::DSPControl (Gxsm4app *app):AppBase(app) {
 	PhiSpeed = new UnitObj(UTF8_DEGREE"/s","Deg/s");
 	Vslope   = new UnitObj("V/s","V/s");
 	Hex      = new UnitObj("h","h");
-	SetPtUnit = sranger_mk2_hwi_pi.app->xsm->MakeUnit (xsmres.daqZunit[0], xsmres.daqZlabel[0]);
+
+        Data_Source *ds=main_get_gapp()->channelselector->find_data_source_by_position (0);
+        if (ds)
+                SetPtUnit = sranger_mk2_hwi_pi.app->xsm->MakeUnit (ds->SunitID, ds->Slabel);
+        else
+                SetPtUnit = sranger_mk2_hwi_pi.app->xsm->MakeUnit ("nA", "Tunnel Current");
 
 	probe_fname = g_strdup ("probe_test.data");
 	probe_findex = 0;

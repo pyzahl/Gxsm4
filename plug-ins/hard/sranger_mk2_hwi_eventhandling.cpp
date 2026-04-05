@@ -270,13 +270,21 @@ int DSPControl::Probing_eventcheck_callback( GtkWidget *widget, DSPControl *dspc
 	GArray **garr_hdr;
         int xip=-1, yip=-1;
 	XSM_DEBUG_PG ("DSPControl::Probing_eventcheck_callback -- enter");
-        
+
+        // int gapp->channelselector->get_channel_pos (i);
+        // DataSource* gapp->channelselector->find_data_source_by_name ("name");
+        // DataSource* gapp->channelselector->find_data_source_by_position (pos);
+                
 	// pop off all available data from stack
 	while ((garr = dspc->pop_probedata_arrays ()) != NULL){
                 garr_hdr = dspc->pop_probehdr_arrays ();
                 ++popped;
-                
-                if (main_get_gapp()->xsm->FindChan(xsmres.extchno[0], ID_CH_D_P) >= 0){ // mapi=0 must be selected!
+
+                Data_Source *ds=main_get_gapp()->channelselector->find_data_source_by_name ("DataMap0");
+                int DataMapPos0 = ds->position;
+                if (main_get_gapp()->xsm->FindChan (main_get_gapp()->channelselector->get_channel_pos (DataMapPos0), ID_CH_D_P) >= 0){
+
+                //if (main_get_gapp()->xsm->FindChan(xsmres.extchno[0], ID_CH_D_P) >= 0){ // mapi=0 must be selected!
                         // find chunksize (total # data sources)
                         int chunksize = 0;
                         GPtrArray *glabarray = g_ptr_array_new ();
@@ -284,7 +292,7 @@ int DSPControl::Probing_eventcheck_callback( GtkWidget *widget, DSPControl *dspc
 
                         int Xsrc=-1;
                         
-                        for (int src=0; msklookup[src]>=0 && src < MAX_NUM_CHANNELS; ++src){
+                        for (int src=0; msklookup[src]>=0 && src < main_get_gapp()->channelselector->get_number_of_channels(); ++src){
                                 if (dspc->vis_PSource & msklookup[src] || dspc->vis_XSource & msklookup[src]){
                                         g_ptr_array_add (glabarray, (gpointer) dspc->vp_label_lookup (src));
                                         g_ptr_array_add (gsymarray, (gpointer) dspc->vp_unit_lookup (src));
@@ -305,9 +313,12 @@ int DSPControl::Probing_eventcheck_callback( GtkWidget *widget, DSPControl *dspc
                         // *****************************************************************************************************************
                         int src=-1;
                         int xiD=-1, yiD=-1;
+                        int EXTCHMAX=8;
                         for(int mapi=0; mapi < EXTCHMAX; ++mapi){
                                 int map=0;
-                                int chmap=main_get_gapp()->xsm->FindChan(xsmres.extchno[mapi], ID_CH_D_P);
+                                //int chmap=main_get_gapp()->xsm->FindChan(xsmres.extchno[mapi], ID_CH_D_P);
+                                int chmap=main_get_gapp()->xsm->FindChan (main_get_gapp()->channelselector->get_channel_pos (DataMapPos0+mapi), ID_CH_D_P);
+
                                 if (chmap < 0) // check if any DataMap channel is setup
                                         continue;
                         
@@ -318,7 +329,7 @@ int DSPControl::Probing_eventcheck_callback( GtkWidget *widget, DSPControl *dspc
                                 ++src;
                                 // look for mapping sources and assign
                                 while (map == 0){
-                                        if (src < MAX_NUM_CHANNELS){
+                                        if (src < main_get_gapp()->channelselector->get_number_of_channels()){
                                                 if (dspc->vis_PSource & msklookup[src] || dspc->vis_XSource & msklookup[src])
                                                         if (dspc->vis_PSource & msklookup[src]){
                                                                 map = 1;

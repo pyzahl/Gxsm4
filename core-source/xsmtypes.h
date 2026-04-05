@@ -81,9 +81,10 @@ typedef struct { int x,y; } Point2D;
  * für Geräteparameter, etc.
  */
 
-#define PIDCHMAX 4
-#define DAQCHMAX 16
-#define EXTCHMAX 8
+//#define PIDCHMAX 4
+//#define DAQCHMAX 16
+
+//#define EXTCHMAX 8
 #define CHLABELLEN 32
 
 #define GRIMAX 6
@@ -93,6 +94,70 @@ typedef struct { int x,y; } Point2D;
 #define PATHSIZE 256
 #define STRSIZE  256
 #define MAXPALANZ 32
+
+// New Data Generic HwI Data Source Class
+
+class Data_Source{
+public:
+        Data_Source (const gchar *name, const gchar *label, const gchar *unitID, guint64 msk, double s=1.0){
+                Sname   = g_strdup (name);
+                SunitID = g_strdup (unitID);
+                Slabel  = g_strdup (label);
+                Stype   = g_strdup("FLOAT");
+                lock = false;
+                source_mask = msk;
+                scale_to_unit = s;
+                position=0;
+
+                g_message ("New Data_Source: %s %s X%016x in x%g %s", Sname, Slabel, source_mask, scale_to_unit, SunitID);
+        };
+        ~Data_Source (){
+                g_free (Sname);
+                g_free (SunitID);
+                g_free (Slabel);
+                g_free (Stype);
+        };
+
+        void update (gchar *label, const gchar *unitID=NULL, guint64 msk=0, double s=0.){
+                if (unitID){
+                        g_free (SunitID);
+                        SunitID = g_strdup (unitID);
+                }
+                if (label){
+                        g_free (Slabel);
+                        Slabel  = g_strdup (label);
+                }
+                if (msk)
+                        source_mask = msk;
+                if (fabs(s) > 1e-99)
+                        scale_to_unit = s;
+                g_message ("Updated Data_Source: %s %s X%016x in x%g %s", Sname, Slabel, source_mask, scale_to_unit, SunitID);
+        };
+
+        void set_type (gchar *Styp){
+                g_free(Stype);
+                Stype = g_strdup(Styp);
+        };
+
+        void set_label (gchar *lab){
+                g_free(Slabel);
+                Slabel = g_strdup(lab);
+        };
+
+        void set_position (int pos) { position=pos; };
+        
+        gint    position;
+        gchar   *Sname;  // fixed and unique data source name
+	gchar   *SunitID; // SI unit for presentation
+	gchar   *Stype;
+        //ZD_TYPE Stype;  // ZType used for mem2d data storage, default: ZD_FLOAT
+	gchar   *Slabel; // User configurable label unles locked
+        gboolean lock;  // lock editing
+	double  scale_to_unit; // scale from meme2d data to unit 1 or as required so scale_to_unit * value is in Sunit
+	guint64 source_mask;   // unique source mask as required/assigned by HwI
+};
+
+
 
 // Gxsm rescources -- all set via Preferences, Name/Paths are similar to var name! See help there!
 typedef struct{
@@ -139,6 +204,8 @@ typedef struct{
 	float SmartHistEpsilon;
 	// Adjustment: Limits, Step (Min,Max,Step,Page)
 	float ProfileLogLimit;
+
+        /*
 	gchar pidsrc[PIDCHMAX][CHLABELLEN];
 	gchar pidsrcZunit[PIDCHMAX][8];
 	gchar pidsrcZtype[PIDCHMAX][8];
@@ -156,6 +223,8 @@ typedef struct{
 	guint64 daq_msk[DAQCHMAX];
 	int  daqdefault;
 	gchar extchno[EXTCHMAX];
+        */
+        
 	//
 	gchar *UnitCmd;
 	gchar Unit[8];

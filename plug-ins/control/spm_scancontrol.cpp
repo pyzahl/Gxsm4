@@ -1007,11 +1007,12 @@ static void spm_scancontrol_set_subscan_callback (GtkWidget *w, void *data){
 
 // now via rescources. Defaults as of above's match are now auto setup in core gxsm_rescourcetable.cpp: void gxsm_init_dynamic_res()
 // and may be ovreridden at run time or via HwI at init/auto configuration time!
+#if 0
 #define MSK_PID(X)  xsmres.pidsrc_msk[(X)&3]
 #define MSK_MUXA(X) xsmres.daq_msk[(X)]
 #define MSK_MUXB(X) xsmres.daq_msk[(X)+4]
 #define MSK_AUX(X)  xsmres.daq_msk[(X)+8]
-
+#endif
 
 int SPM_ScanControl::free_scan_lists (){
 
@@ -1051,7 +1052,7 @@ int SPM_ScanControl::free_scan_lists (){
 
 // analyse channelselections and setup scanlists and scans
 int SPM_ScanControl::initialize_scan_lists (){
-	int i,ipid,idaq,i2nddaq,iprb,ch,sok,checks;
+	int i,ich,ch,sok,checks;
 
 	main_get_gapp()->xsm->SetActiveScanList ();
         
@@ -1070,27 +1071,25 @@ int SPM_ScanControl::initialize_scan_lists (){
 	xp_srcs = xm_srcs = 0; // reset srcs, take care of PID default, to do!!!!
 	xp_2nd_srcs = xm_2nd_srcs = 0; // reset srcs, take care of PID default, to do!!!!
 
+        int num_sources = main_get_gapp()->channelselector->get_number_of_sources  ();
 	// analyze channel settings and create scan lists, and setup this scans
 	do {
-		PI_DEBUG (DBG_L3, "SPM_SCANCONTROL::initialize_scan_lists : do");
-
+		PI_DEBUG (DBG_L3, "SPM_SCANCONTROL::initialize_scan_lists : do -- looking for Xp Scans");
 		// Find and init Xp-Scans
-		for (ipid=idaq=i2nddaq=iprb=i=0; i < MAXSCANS; i++){
-			// PID src?  Find the first/next "Topo like" scan... 
-			// (ipid counts until all PID type scans are checked)
-			for (ch = -1; (ipid < PIDCHMAX) && ((ch=main_get_gapp()->xsm->FindChan(xsmres.pidchno[ipid++], ID_CH_D_P)) < 0););
-
-			if(ch >= 0){ // got one!
-				PI_DEBUG (DBG_L3, "SPM_SCANCONTROL::initialize_scan_lists : Setting up XpScan - PID src found");
+		for (i=ich=0; i < main_get_gapp()->channelselector->get_number_of_channels (); i++){
+                        Data_Source *ds=NULL;
+			for (ch = -1; ich < num_sources && (ch=main_get_gapp()->xsm->FindChan(main_get_gapp()->channelselector->get_channel_pos(ich++, ds), ID_CH_D_P)) < 0;);
+			if(ch >= 0 && ds){ // got one!
+				PI_DEBUG (DBG_L3, "SPM_SCANCONTROL::initialize_scan_lists : Setting up XpScan for " << ds->Sname);
 				// add bit to xp_srcs mask
-				xp_srcs |= MSK_PID(ipid-1);
+				xp_srcs |= ds->source_mask;
 				// setup this scan
 				setup_scan (ch, "X+", 
-					    xsmres.pidsrc[ipid-1], 
-					    xsmres.pidsrcZunit[ipid-1], 
-					    xsmres.pidsrcZtype[ipid-1], 
-					    xsmres.pidsrcZlabel[ipid-1],
-					    xsmres.pidsrcZd2u[ipid-1]
+					    ds->Sname, 
+					    ds->SunitID, 
+					    ds->Stype, 
+					    ds->Slabel,
+					    ds->scale_to_unit
 					);
 				// and add to list
 				xp_scan_list = g_slist_prepend (xp_scan_list, main_get_gapp()->xsm->scan[ch]);
@@ -1098,167 +1097,76 @@ int SPM_ScanControl::initialize_scan_lists (){
 
 				// got one valid scan, so we could finish if no more... "Scan-OK"
 				sok=TRUE;
-			}
-			else{
-				// DAQ src? Find additional scans/channels to aquire...
-				// (idaq counts until all checked)
-				for(ch = -1; (idaq < DAQCHMAX) && ((ch=main_get_gapp()->xsm->FindChan(xsmres.daqchno[idaq++], ID_CH_D_P)) < 0););
-				if(ch >= 0){ // got one!
-					// add to xp_srcs mask... use "MUXA" (DA0..3)
-					if(idaq <= 4)
-						xp_srcs |= MSK_MUXA(idaq-1);
-					else{
-						// add to xp_srcs mask... use "MUXB" (DA4..7)
-						if(idaq <= 8)
-							xp_srcs |= MSK_MUXB(idaq-5);
-						else{
-							if(idaq <= 12){
-								// add to xp_srcs mask... use "AUX" (Auxillary DSP-Data)
-								xp_srcs |= MSK_AUX(idaq-9);
-							}
-						}
-					}
-					PI_DEBUG (DBG_L3, "SPM_SCANCONTROL::initialize_scan_lists : Setting up XpScan - DAQ src found");
-					// setup this scan
-					setup_scan (ch, "X+",
-						    xsmres.daqsrc[idaq-1], 
-						    xsmres.daqZunit[idaq-1], 
-						    xsmres.daqZtype[idaq-1], 
-						    xsmres.daqZlabel[idaq-1],
-						    xsmres.daqZd2u[idaq-1]
-						);
-					// add to list...
-					xp_scan_list = g_slist_prepend (xp_scan_list, main_get_gapp()->xsm->scan[ch]);
-					all_scan_list = g_slist_prepend (all_scan_list, main_get_gapp()->xsm->scan[ch]);
-					sok=TRUE;
-				}
-				else{
-					// 2nd DAQ src? Find additional scans/channels to aquire...
-					// (idaq counts until all checked)
-					for(ch = -1; (i2nddaq < DAQCHMAX) && ((ch=main_get_gapp()->xsm->FindChan(xsmres.daqchno[i2nddaq++], ID_CH_D_2ND_P)) < 0););
-					if(ch >= 0){ // got one!
-						// add to xp_srcs mask... use "MUXA" (DA0..3)
-						if(i2nddaq <= 4)
-							xp_2nd_srcs |= MSK_MUXA(i2nddaq-1);
-						else{
-							// add to xp_srcs mask... use "MUXB" (DA4..7)
-							if(i2nddaq <= 8)
-								xp_2nd_srcs |= MSK_MUXB(i2nddaq-5);
-							else{
-								if(idaq <= 12){
-									// add to xp_srcs mask... use "AUX" (Auxillary DSP-Data)
-									xp_2nd_srcs |= MSK_AUX(i2nddaq-9);
-								}
-							}
-						}
-						PI_DEBUG (DBG_L3, "SPM_SCANCONTROL::initialize_scan_lists : Setting up 2nd XpScan - DAQ src found");
-						// setup this scan
-						setup_scan (ch, "X2+",
-							    xsmres.daqsrc[i2nddaq-1], 
-							    xsmres.daqZunit[i2nddaq-1], 
-							    xsmres.daqZtype[i2nddaq-1], 
-							    xsmres.daqZlabel[i2nddaq-1],
-							    xsmres.daqZd2u[i2nddaq-1]
-							);
-						// add to list...
-						xp_2nd_scan_list = g_slist_prepend (xp_2nd_scan_list, main_get_gapp()->xsm->scan[ch]);
-						all_scan_list = g_slist_prepend (all_scan_list, main_get_gapp()->xsm->scan[ch]);
-						sok=TRUE;
-					}
-				}
-			}
-		}
-    
-		// Find and init Xm-Scans
-		// similar channel analysis for all XM (<-) scans... -- no probing in this direction!
-		for (ipid=i2nddaq=idaq=i=0; i<MAXSCANS; i++){
-			// new PID src?
-			for(ch = -1; (ipid < PIDCHMAX) && ((ch=main_get_gapp()->xsm->FindChan(xsmres.pidchno[ipid++], ID_CH_D_M)) < 0););
+			} else {
+                                for(ch = -1; ich < num_sources && (ch=main_get_gapp()->xsm->FindChan(main_get_gapp()->channelselector->get_channel_pos(ich++, ds), ID_CH_D_2ND_P) < 0););
+                                if(ch >= 0){ // got one!
+                                        // add to xp_srcs mask... use "MUXA" (DA0..3)
+                                        xp_2nd_srcs |= ds->source_mask;
 
-			if(ch >= 0){
-				PI_DEBUG (DBG_L3, "SPM_SCANCONTROL::initialize_scan_lists : Setting up XmScan - PID src found");
-				xm_srcs |= MSK_PID(ipid-1);
-
-				setup_scan (ch, "X-", 
-					    xsmres.pidsrc[ipid-1], 
-					    xsmres.pidsrcZunit[ipid-1], 
-					    xsmres.pidsrcZtype[ipid-1], 
-					    xsmres.pidsrcZlabel[ipid-1],
-					    xsmres.pidsrcZd2u[ipid-1]
-					);
-				xm_scan_list = g_slist_prepend (xm_scan_list, main_get_gapp()->xsm->scan[ch]);
-				all_scan_list = g_slist_prepend (all_scan_list, main_get_gapp()->xsm->scan[ch]);
-				sok=TRUE;
-			}
-			else{
-				for(ch = -1; (idaq < DAQCHMAX) && ((ch=main_get_gapp()->xsm->FindChan(xsmres.daqchno[idaq++], ID_CH_D_M)) < 0););
-				if(ch >= 0){
-					if(idaq <= 4)
-						xm_srcs |= MSK_MUXA(idaq-1);
-					else{
-						if(idaq <= 8)
-							xm_srcs |= MSK_MUXB(idaq-5);
-						else{
-							if(idaq <= 12){
-								xm_srcs |= MSK_AUX(idaq-9);
-							}
-						}
-					}
-					
-					PI_DEBUG (DBG_L3, "SPM_SCANCONTROL::initialize_scan_lists : Setting up XmScan - DAQ src found");
-					setup_scan (ch, "X-",
-						    xsmres.daqsrc[idaq-1], 
-						    xsmres.daqZunit[idaq-1], 
-						    xsmres.daqZtype[idaq-1], 
-						    xsmres.daqZlabel[idaq-1],
-						    xsmres.daqZd2u[idaq-1]
-						);
-					xm_scan_list = g_slist_prepend (xm_scan_list, main_get_gapp()->xsm->scan[ch]);
-					all_scan_list = g_slist_prepend (all_scan_list, main_get_gapp()->xsm->scan[ch]);
-					sok=TRUE;
-				}
-				else{
-					for(ch = -1; (i2nddaq < DAQCHMAX) && ((ch=main_get_gapp()->xsm->FindChan(xsmres.daqchno[i2nddaq++], ID_CH_D_2ND_M)) < 0););
-					if(ch >= 0){
-						if(i2nddaq <= 4)
-							xm_2nd_srcs |= MSK_MUXA(i2nddaq-1);
-						else{
-							if(i2nddaq <= 8)
-								xm_2nd_srcs |= MSK_MUXB(i2nddaq-5);
-							else{
-								if(idaq <= 12){
-									xm_2nd_srcs |= MSK_AUX(i2nddaq-9);
-								}
-							}
-						}
-					
-						PI_DEBUG (DBG_L3, "SPM_SCANCONTROL::initialize_scan_lists : Setting up 2nd XmScan - DAQ src found");
-						setup_scan (ch, "X2-",
-							    xsmres.daqsrc[i2nddaq-1], 
-							    xsmres.daqZunit[i2nddaq-1], 
-							    xsmres.daqZtype[i2nddaq-1], 
-							    xsmres.daqZlabel[i2nddaq-1],
-							    xsmres.daqZd2u[i2nddaq-1]
-							);
-						xm_2nd_scan_list = g_slist_prepend (xm_2nd_scan_list, main_get_gapp()->xsm->scan[ch]);
-						all_scan_list = g_slist_prepend (all_scan_list, main_get_gapp()->xsm->scan[ch]);
-						sok=TRUE;
-					}
-				}
-			}
-		}
-
-		master_scan = main_get_gapp()->xsm->GetMasterScan ();
-
-                // reset Ext/Map Channels
-                for(int i=0; i < EXTCHMAX; ++i){
-                        if ((ch = main_get_gapp()->xsm->FindChan(xsmres.extchno[i], ID_CH_D_P)) >= 0){
-                                setup_scan (ch, "X+", "Map-PrbSrc#", "Xu", "DOUBLE", "EXTMAP", -1.0); // needs further setup!
-                                all_scan_list = g_slist_prepend (all_scan_list, main_get_gapp()->xsm->scan[ch]);
+                                        PI_DEBUG (DBG_L3, "SPM_SCANCONTROL::initialize_scan_lists : Setting up 2nd XpScan for " << ds->Sname);
+                                        // setup this scan
+                                        setup_scan (ch, "X2+",
+                                                    ds->Sname, 
+                                                    ds->SunitID, 
+                                                    ds->Stype, 
+                                                    ds->Slabel,
+                                                    ds->scale_to_unit
+                                                    );
+                                        // add to list...
+                                        xp_2nd_scan_list = g_slist_prepend (xp_2nd_scan_list, main_get_gapp()->xsm->scan[ch]);
+                                        all_scan_list = g_slist_prepend (all_scan_list, main_get_gapp()->xsm->scan[ch]);
+                                        sok=TRUE;
+                                }
                         }
                 }
 
-                
+                // Find and init Xm-Scans
+		for (i=ich=0; i < main_get_gapp()->channelselector->get_number_of_channels (); i++){
+                        Data_Source *ds=NULL;
+			for (ch = -1; ich < num_sources && (ch=main_get_gapp()->xsm->FindChan(main_get_gapp()->channelselector->get_channel_pos(ich++, ds), ID_CH_D_M)) < 0;);
+			if(ch >= 0 && ds){ // got one!
+				PI_DEBUG (DBG_L3, "SPM_SCANCONTROL::initialize_scan_lists : Setting up XmScan for " << ds->Sname);
+				// add bit to xp_srcs mask
+				xm_srcs |= ds->source_mask;
+				// setup this scan
+				setup_scan (ch, "X-", 
+					    ds->Sname, 
+					    ds->SunitID, 
+					    ds->Stype, 
+					    ds->Slabel,
+					    ds->scale_to_unit
+					);
+				// and add to list
+				xm_scan_list = g_slist_prepend (xm_scan_list, main_get_gapp()->xsm->scan[ch]);
+				all_scan_list = g_slist_prepend (all_scan_list, main_get_gapp()->xsm->scan[ch]);
+
+				// got one valid scan, so we could finish if no more... "Scan-OK"
+				sok=TRUE;
+			} else {
+                                for(ch = -1; ich < num_sources && (ch=main_get_gapp()->xsm->FindChan(main_get_gapp()->channelselector->get_channel_pos(ich++, ds), ID_CH_D_2ND_M) < 0););
+                                if(ch >= 0){ // got one!
+                                        // add to xp_srcs mask... use "MUXA" (DA0..3)
+                                        xm_2nd_srcs |= ds->source_mask;
+
+                                        PI_DEBUG (DBG_L3, "SPM_SCANCONTROL::initialize_scan_lists : Setting up 2nd XmScan for " << ds->Sname);
+                                        // setup this scan
+                                        setup_scan (ch, "X2-",
+                                                    ds->Sname, 
+                                                    ds->SunitID, 
+                                                    ds->Stype, 
+                                                    ds->Slabel,
+                                                    ds->scale_to_unit
+                                                    );
+                                        // add to list...
+                                        xm_2nd_scan_list = g_slist_prepend (xm_2nd_scan_list, main_get_gapp()->xsm->scan[ch]);
+                                        all_scan_list = g_slist_prepend (all_scan_list, main_get_gapp()->xsm->scan[ch]);
+                                        sok=TRUE;
+                                }
+                        }
+                }
+
+		master_scan = main_get_gapp()->xsm->GetMasterScan ();
+
 		// Automatic mode:
 		// if no Scansrc specified -- find free channel and use pid-default ("Topo")
 		if(! sok){
@@ -1274,9 +1182,11 @@ int SPM_ScanControl::initialize_scan_lists (){
 					return FALSE;
 				}
 			}
-			main_get_gapp()->channelselector->SetMode(ch, xsmres.piddefault);
-			main_get_gapp()->xsm->ChannelMode[ch] =  xsmres.piddefault;
-			main_get_gapp()->xsm->ChannelScanMode[ch] = main_get_gapp()->xsm->ChannelScanMode[ch] < 0 ? -xsmres.piddefault : xsmres.piddefault;
+			main_get_gapp()->channelselector->SetMode(ch, main_get_gapp()->channelselector->get_default_source_mode  ());
+			main_get_gapp()->xsm->ChannelMode[ch] = main_get_gapp()->channelselector->get_default_source_mode  ();
+			main_get_gapp()->xsm->ChannelScanMode[ch] = main_get_gapp()->xsm->ChannelScanMode[ch] < 0
+                                ? -main_get_gapp()->channelselector->get_default_source_mode  ()
+                                :  main_get_gapp()->channelselector->get_default_source_mode  ();
 		}
 	}while (! sok && --checks);
 
@@ -1286,7 +1196,6 @@ int SPM_ScanControl::initialize_scan_lists (){
 
 
 	main_get_gapp()->xsm->SetActiveScanList (all_scan_list); // EXPORT SCAN LIST
-
 
         return 0;
 }
@@ -1301,6 +1210,8 @@ int SPM_ScanControl::setup_scan (int ch,
 	){
 	PI_DEBUG (DBG_L2, "setup_scan");
 
+        g_message ("**** SPM_ScanControl::setup_scan CH%d %s :: %s in %s as %s l=%s x %g", ch, titleprefix, name, unit, type, label, d2u);
+        
         // check for exisiting scan, reusing, remapping data
 	if ( ! main_get_gapp()->xsm->scan[ch]){ // create scan object if not exisiting
 		main_get_gapp()->xsm->scan[ch] = main_get_gapp()->xsm->NewScan (main_get_gapp()->xsm->ChannelView[ch], 

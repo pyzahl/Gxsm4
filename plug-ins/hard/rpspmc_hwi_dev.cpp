@@ -139,6 +139,7 @@ void rpspmc_hwi_dev::hwi_init_overrides(){ // auto adjust and override preferenc
 
 // use SOURCE_SIGNAL_DEF rpspmc_source_signals[] table to auto configure (Scan Sources Configurations mapping)
 void rpspmc_hwi_dev::update_hardware_mapping_to_rpspmc_source_signals (){
+
         for (int i=0; rpspmc_source_signals[i].label; ++i){ // name
                 g_message ("Reading SOURCE_SIGNALS[%d]",i);
                 g_message ("Reading SOURCE_SIGNALS[%d].mask %x",i,rpspmc_source_signals[i].mask);

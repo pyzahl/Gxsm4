@@ -47,11 +47,6 @@
 
 #include "app_view.h"
 
-//moved to pi
-//#include "xsm_mkicons.h"
-//#include "app_mkicons.h"
-
-#define CHMAX (1+4*PIDCHMAX+4*DAQCHMAX+2*EXTCHMAX)
 
 const gchar *MathErrString[] = {
 	"Math OK",
@@ -890,9 +885,9 @@ int Surface::save(AUTO_SAVE_MODE automode, char *rname, int chidx, int forceOver
 int Surface::auto_append_in_time (double t){
 	int n=1;
 	int si,i;
-	int Ch[CHMAX];
+	int Ch[gapp->channelselector->get_number_of_channels()];
 
-	for(si=0; si<CHMAX; si++)
+	for(si=0; si < gapp->channelselector->get_number_of_channels(); si++)
 		Ch[si] = -1;
 
 	si=0;
@@ -901,7 +896,8 @@ int Surface::auto_append_in_time (double t){
 
 	// Active scan
 //	Ch[si++] = FindChan(ID_CH_M_ACTIVE);
-	
+
+#if 0
 	// Auto check for all dataaq scans to save
 	for(i=0; i<PIDCHMAX; ++i){
 		Ch[si++] = FindChan(xsmres.pidchno[i], ID_CH_D_P);
@@ -912,13 +908,20 @@ int Surface::auto_append_in_time (double t){
 		Ch[si++] = FindChan(xsmres.daqchno[i], ID_CH_D_P);
 		Ch[si++] = FindChan(xsmres.daqchno[i], ID_CH_D_M);
 	}
-	
+#endif
+        
+        int nsrcs = gapp->channelselector->get_number_of_sources ();
+        for(i=0; i<nsrcs; ++i){
+		Ch[si++] = FindChan (gapp->channelselector->get_channel_pos (i), ID_CH_D_P);
+		Ch[si++] = FindChan (gapp->channelselector->get_channel_pos (i), ID_CH_D_M);
+	}
+        
 //	for(i=1; i<si; i++) // remove duplicates if any
 //		for(int j=i; j<si; j++)
 //			if(Ch[ij-1] == Ch[si]) 
 //				Ch[si] = -1;
 
-	for(si=0; si<CHMAX; si++){
+	for(si=0; si < gapp->channelselector->get_number_of_channels(); si++){
 		if(Ch[si] == -1) continue;
 //		std::cout << "auto_append_in_time Ch[" << si << "]" << std::endl;
 		if(t < 0.){

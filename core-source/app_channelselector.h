@@ -39,6 +39,7 @@ extern "C++" {
         extern XSMRESOURCES xsmres; // in xsmtypes.h
 }
 
+
 class ChannelSelector : public AppBase{
 public:
         ChannelSelector(Gxsm4app *app, int ChAnz=MAX_CHANNELS);
@@ -58,22 +59,27 @@ public:
 
         void SetModeChannelSignal(int mode_id, const gchar* signal_name, const gchar* signal_label, const gchar *signal_unit, double d2unit = 1.0);
 
-        // position is a running nummer of data sources from 0 .. 15 0..3 => PIDSRC, 4..11 => DAQSRC (historic grouping)
-        void ConfigureHardwareMapping(int position, const gchar* signal_name, guint64 msk, const gchar* signal_label, const gchar *signal_unit, double d2unit = 1.0){
-                g_message ("ChannelSelector::ConfigureHardwareMapping: %02d for %32s, 0x%08x at scale %g for %s", position, signal_name, msk, d2unit, signal_unit);
-                if (position >= 0 && position < 4){
-                        xsmres.pidsrc_msk[position] = msk;
-                        SetModeChannelSignal(position+ID_CH_M_LAST-1, signal_name, signal_label, signal_unit, d2unit);
-                        return;
-                }
-                if (position >= 4 && position < DAQCHMAX+4){
-                        xsmres.daq_msk[position-4] = msk;
-                        SetModeChannelSignal(position+ID_CH_M_LAST-1, signal_name, signal_label, signal_unit, d2unit);
-                        return;
-                }
-                g_warning ("ChannelSelector::ConfigureHardwareMapping: EEE invalid positon %d for %s, 0x%08x", position, signal_name, msk);
-        };
+        // position is a running nummer of data sources from 0 .. //*** 15 0..3 => PIDSRC, 4..11 => DAQSRC (historic grouping)
+        void ConfigureHardwareMapping(int position, const gchar* signal_name, guint64 msk, const gchar* signal_label, const gchar *signal_unit, double d2unit);
+        void ReportHardwareMappings();
+        void set_default_source_mode  (int pos=0) { default_source_pos = pos; };
 
+        Data_Source *find_data_source_by_name (const gchar *name);
+        Data_Source *find_data_source_by_position (gint pos);
+
+        int get_channel_pos (int i, Data_Source* &ds) {
+                ds=find_data_source_by_position (i);
+                if (ds)
+                        return i + ID_CH_M_LAST; // combo-box list position of data source
+                else
+                        return 999;
+        };
+        int get_channel_pos (int i) {
+                if (i < get_number_of_sources  ())
+                        return i + ID_CH_M_LAST; // combo-box list position of data source
+                else
+                        return 999;
+        };
         
         static void choice_ChView_callback (GtkWidget *widget, void *data);
         static void choice_ChMode_callback (GtkWidget *widget, void *data);
@@ -82,7 +88,19 @@ public:
         static void restore_callback (GtkWidget *widget, ChannelSelector *cs);
         static void store_callback (GtkWidget *widget, ChannelSelector *cs); 
 
+        int get_number_of_channels () { return NumCh; }; // Number of created channels
+        int get_number_of_sources  () { return g_slist_length (DataSourceList); }; // Number of DataSources added
+        int get_number_of_modes  () { return g_slist_length (DataSourceList) + ID_CH_M_LAST-1; }; // Number of all modes/positions
+        int get_default_source_mode  () { return default_source_pos + ID_CH_M_LAST-1; };
+        void set_source_mask_info_on (gboolean x=true) { source_mask_info_on = x; };
+        
 private:
+        int NumCh;
+        gboolean source_mask_info_on;
+        int default_source_pos;
+        
+        GSList*   DataSourceList;
+        
         GtkWidget **ChSDirWidget;
         GtkWidget **ChModeWidget;
         GtkWidget **ChViewWidget;

@@ -912,7 +912,7 @@ public:
 	void LoadGeometry();
 	void LoadGeometryWRefAutoPlace(const gchar *wref_key, const gchar *wref_key2nd=NULL);
 	void LoadGeometryWRefAutoPlaceABmode(const gchar *wref_key);
-        virtual void LoadExtra(){ g_message ("AppBase::LoadExtra -- not overloaded"); };
+        virtual void LoadExtra(){ g_message ("AppBase::LoadExtra <%s> -- not overloaded", window_key); };
 
 	/* action callbacks */
         static gboolean window_close_callback (GtkWidget *widget, AppBase *self);

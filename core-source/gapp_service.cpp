@@ -887,6 +887,8 @@ void AppBase::show_auto (){
                 hide ();
 }
 
+//#define HYPR_VERBOSE
+
 void AppBase::position_auto (){
         static gboolean once=true;
 #ifdef ENABLE_GXSM_WINDOW_MANAGEMENT
@@ -928,7 +930,9 @@ void AppBase::position_auto (){
 
                                                 // Execute shell command
                                                 gchar *hyprctl_cmdline = g_strdup_printf ("hyprctl dispatch setfloating title:'%s'", title);
+#ifdef HYPR_VERBOSE
                                                 g_print("Attempting: %s\n", hyprctl_cmdline);
+#endif
                                                 g_spawn_command_line_sync (hyprctl_cmdline, &stdout_buf, &stderr_buf, &exit_status, &error);
                                                 
                                                 if (error != NULL) {
@@ -954,7 +958,9 @@ void AppBase::position_auto (){
                                                                                    (int)window_geometry[WGEO_YPOS],
                                                                                    title
                                                                                    );
+#ifdef HYPR_VERBOSE
                                                 if (once) g_print("Attempting: %s\n", hyprctl_cmdline);
+#endif
                                                 g_spawn_command_line_sync (hyprctl_cmdline, &stdout_buf, &stderr_buf, &exit_status, &error);
                                                 
                                                 if (error != NULL) {
@@ -1044,7 +1050,9 @@ void AppBase::resize_auto (){
                                                                                           (int)window_geometry[WGEO_HEIGHT],
                                                                                           title
                                                                                           );
+#ifdef HYPR_VERBOSE
                                                 g_print("Attempting: %s\n", hyprctl_cmdline);
+#endif
                                                 g_spawn_command_line_sync (hyprctl_cmdline, &stdout_buf, &stderr_buf, &exit_status, &error);
                                                 
                                                 if (error != NULL) {
@@ -1236,7 +1244,9 @@ void AppBase::SaveGeometry(gboolean store_to_settings){
 
                                         // Execute command
                                         gchar *hyprctl_cmdline = g_strdup_printf ("hyprctl clients -j");
+#ifdef HYPR_VERBOSE
                                         if (once) g_print("Attempting: %s\n", hyprctl_cmdline);
+#endif
                                         g_spawn_command_line_sync (hyprctl_cmdline, &stdout_buf, &stderr_buf, &exit_status, &error);
                                         if (error != NULL) {
                                                 g_error ("Sorry I tried. Error executing command: %s E: %s\n", hyprctl_cmdline, error->message);

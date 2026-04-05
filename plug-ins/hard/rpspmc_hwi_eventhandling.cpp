@@ -278,6 +278,7 @@ int RPSPMC_Control::Probing_eventcheck_callback( GtkWidget *widget, RPSPMC_Contr
                 garr_hdr = dspc->pop_probehdr_arrays ();
                 ++popped;
                 
+#if 0  //** DATAMAP0...7 to scan image disabled
                 if (main_get_gapp()->xsm->FindChan(xsmres.extchno[0], ID_CH_D_P) >= 0){ // mapi=0 must be selected!
                         // find chunksize (total # data sources)
                         int chunksize = 0;
@@ -300,7 +301,6 @@ int RPSPMC_Control::Probing_eventcheck_callback( GtkWidget *widget, RPSPMC_Contr
                                 }
                         }
 
-#if 0  //** DATAMAP0...7 to scan image disabled
                         
                         // auto decide on mapping mode -- direct data map to Scan-Channel or to Scan-Event
                 
@@ -475,13 +475,13 @@ int RPSPMC_Control::Probing_eventcheck_callback( GtkWidget *widget, RPSPMC_Contr
                                         main_get_gapp()->xsm->scan[chmap]->draw ();
                                 } // endif map                              
                         } // for mappi
-#endif //** DATAMAP0...7 to scan image disabled
                         
                         // unref lable and symbols
                         g_ptr_array_free (glabarray, TRUE);
                         g_ptr_array_free (gsymarray, TRUE);
                         
                 } // endif DataMap Scan Channel mapping
+#endif //** DATAMAP0...7 to scan image disabled
 
                 // *****************************************************************************************************************
                 // attach event to active channel, if one exists -- not for DSP raster mode only manual/script mode ----------------
