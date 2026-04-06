@@ -949,7 +949,7 @@ int RPSPMC_Control::Probing_graph_callback( GtkWidget *widget, RPSPMC_Control *d
 				if ((dspc->vis_PSource & dspc->msklookup[src]) && (dspc->vis_Source & dspc->msklookup[src])){
 					XSM_DEBUG_PG("DBG-Mbb1 " << dspc->vp_label_lookup (src));
 					XSM_DEBUG_PG ("Probing_graph_callback Visualisation xmap=" << xmap << " src=" << src << " ** " << dspc->vp_label_lookup (src) << " ( " << dspc->vp_label_lookup (xmap) << " )");
-                                        if (dspc->msklookup[src] & 0x00030000)
+                                        if (dspc->msklookup[src] & 0x00060000)
                                                 dspc->probedata_visualize (
                                                                            dspc->garray_probedata [PROBEDATA_ARRAY_HS_TIME], 
                                                                            dspc->garray_probedata [dspc->expdi_lookup[src]], 
@@ -1424,8 +1424,8 @@ void RPSPMC_Control::add_probevector(){
         double dsec = (double)current_probe_section;
         double dind = (double)current_probe_data_index;
         double dblk = (double)current_probe_block_index;
-	g_array_append_val (garray_probedata [PROBEDATA_ARRAY_SEC], dsec);
 	g_array_append_val (garray_probedata [PROBEDATA_ARRAY_INDEX], dind);
+	g_array_append_val (garray_probedata [PROBEDATA_ARRAY_SEC], dsec);
 	g_array_append_val (garray_probedata [PROBEDATA_ARRAY_BLOCK], dblk);
 
         //g_print ("add-pv: dsec=%g\n", dsec);
@@ -1489,7 +1489,7 @@ void RPSPMC_Control::add_probevector(){
 }
 
 // CALL ONLY THIS EXTERNALLY TO ADD DATA
- void RPSPMC_Control::add_probedata(double data[NUM_PV_DATA_SIGNALS], double pv[NUM_PV_HEADER_SIGNALS], double pv_hs[NUM_PV_HS][HS_LEN_MAX], int hs_len, gboolean set_pv, gboolean add_pv){ 
+ void RPSPMC_Control::add_probedata(double data[NUM_PV_DATA_SIGNALS], double pv[NUM_PV_HEADER_SIGNALS], double data_hs[NUM_PV_HS][HS_LEN_MAX], int hs_len, gboolean set_pv, gboolean add_pv){ 
          int i,j;
 
         // Data Stream:
@@ -1517,26 +1517,35 @@ void RPSPMC_Control::add_probevector(){
         }
         
         // add data channels
-	for (i = PROBEDATA_ARRAY_S1, j=0; i <= PROBEDATA_ARRAY_SIGNAL_LAST; ++i, ++j){ //PROBEDATA_ARRAY_END;
+	for (i = PROBEDATA_ARRAY_S1, j=0; i <= PROBEDATA_ARRAY_MS_TIME; ++i, ++j){ //PROBEDATA_ARRAY_END;
                 //g_print ("g_array_append_val garray_probedata[%d] {%x} := %g",i, garray_probedata[i], data[j]);
 		g_array_append_val (garray_probedata[i], data[j]); // sorting header expanded data in units into garrays
         }
         //g_print ("+++>>>> PUSH DATA i[%d] sec=%d  t=%g ms\n", current_probe_data_index, (int)pv[PROBEDATA_ARRAY_SEC], pv[PROBEDATA_ARRAY_TIME], pv[PROBEDATA_ARRAY_MS_TIME]);
         current_probe_data_index++;
 
-        if (hs_len){ // add FSS DATA (high speed) burst if available
+        if (hs_len){
+                // add FSS DATA (high speed) burst if available
                 for (i=0; i<hs_len; ++i){
-                        double hs_time = pv[PROBEDATA_ARRAY_MS_TIME] + (-hs_len + i)*8e-6; //  8ns spaced data (125MHz) in ms
-                        //g_print ("g_array_append_val HS_TIME %d:%d ts=%g ms t=%g ns [%d] = %g\n",current_probe_data_hsindex, i, pv[PROBEDATA_ARRAY_MS_TIME], hs_time*1e6, hs_len, pv_hs[0][i]);
-                        g_array_append_val (garray_probedata[PROBEDATA_ARRAY_HS_TIME], hs_time);
-                        g_array_append_val (garray_probedata[PROBEDATA_ARRAY_HS_DATA_A], pv_hs[0][i]);
-                        g_array_append_val (garray_probedata[PROBEDATA_ARRAY_HS_DATA_B], pv_hs[1][i]);
+                        if (current_probe_data_hsindex < 100)
+                                g_print ("g_array_append_val HS_TIME %d:%d t_GVP=%g ns t_HS=%g ns [hslen:%d] = %g, %g\n",
+                                         current_probe_data_hsindex, (-hs_len+i),
+                                         data [PROBEDATA_ARRAY_MS_TIME-PROBEDATA_ARRAY_S1]*1e6,
+                                         data_hs[HS_FSS_TIME][i]*1e6,
+                                         hs_len, data_hs[HS_FSS_DIGITAL][i], data_hs[HS_FSS_RFIN2][i]);
+                        
+                        g_array_append_val (garray_probedata[PROBEDATA_ARRAY_HS_TIME],   data_hs[HS_FSS_TIME   ][i]); // HS_TIME
+                        g_array_append_val (garray_probedata[PROBEDATA_ARRAY_HS_DATA_A], data_hs[HS_FSS_DIGITAL][i]);
+                        g_array_append_val (garray_probedata[PROBEDATA_ARRAY_HS_DATA_B], data_hs[HS_FSS_RFIN2  ][i]);
                         current_probe_data_hsindex++;
                 }
 
                 if (current_probe_data_hsindex < 100)
-                        for (i=0; i<current_probe_data_hsindex; ++i)
-                                g_print ("g_array_hst[%d] t=%g ns\n", i, g_array_index (garray_probedata[PROBEDATA_ARRAY_HS_TIME], double, i));
+                        for (i=0; i<current_probe_data_hsindex-1; ++i)
+                                g_print ("g_array_hst[%d] @ t =%g ns ==> %g, %g\n", i,
+                                         1e6*g_array_index (garray_probedata[PROBEDATA_ARRAY_HS_TIME], double, i),
+                                         g_array_index (garray_probedata[PROBEDATA_ARRAY_HS_DATA_A], double, i),
+                                         g_array_index (garray_probedata[PROBEDATA_ARRAY_HS_DATA_B], double, i));
         }
         
 

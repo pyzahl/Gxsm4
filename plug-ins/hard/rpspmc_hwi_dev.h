@@ -182,7 +182,6 @@ public:
 
 protected:
 	int thread_sim; // connection to SRanger used by thread
-        DSP_SIG_UNIVERSAL dsp_signal_lookup_managed[NUM_SIGNALS_UNIVERSAL]; // signals, generic version
 
 private:
 	GThread *data_read_thread;

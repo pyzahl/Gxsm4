@@ -2101,12 +2101,12 @@ void RPSPMC_Control::create_folder (){
         bp->grid_add_label ("JR", "X-JMPR"); EC_vpc_exthdr_list = g_slist_prepend( EC_vpc_exthdr_list, bp->label); gtk_widget_hide (bp->label);
 
         bp->grid_add_label ("VX", "Enable VecEXtension OPCodes. Option bit 7");
-        bp->grid_add_label ("HS", "Enable Max Sampling. Option bit 6");
-        bp->grid_add_label ("5", "Option bit 5");
+        bp->grid_add_label ("RF", "RF Enable Max Sampling 16bit IN1|IN2 on S15, IN2 8bit 4x on S14, else IN2 8bit x 8FSS in S14,15. Option bit 6");
+        bp->grid_add_label ("FS", "Full Speed Sampling. Option bit 5");
         bp->grid_add_label ("4", "Option bit 4");
-        bp->grid_add_label ("3", "Option bit 3");
-        bp->grid_add_label ("2", "Option bit 2");
-        bp->grid_add_label ("1", "Option bit 1");
+        bp->grid_add_label ("R", "Digital Lock-In Reset. Option bit 3");
+        bp->grid_add_label ("B", "Pulse B. Option bit 2");
+        bp->grid_add_label ("A", "Pulse A. Option bit 1");
 
         bp->set_input_width_chars (4);
         bp->set_label_width_chars (4);

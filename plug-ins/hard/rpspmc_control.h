@@ -538,7 +538,7 @@ public:
 
 	int check_vp_in_progress (const gchar *extra_info=NULL); // GVP active?
 
-	void add_probedata(double data[NUM_PV_DATA_SIGNALS], double pv[NUM_PV_HEADER_SIGNALS], double pv_hs[NUM_PV_HS][HS_LEN_MAX]=NULL, int hs_len=0, gboolean set_pv=false, gboolean add_pv=true);
+	void add_probedata(double data[NUM_PV_DATA_SIGNALS], double pv[NUM_PV_HEADER_SIGNALS], double data_hs[NUM_PV_HS][HS_LEN_MAX]=NULL, int hs_len=0, gboolean set_pv=false, gboolean add_pv=true);
         // "set" and append PROBEDATA_ARRAY_INDEX, BLOCK, HEADER:[X,Y,Z,U,A,B]
 	void set_probevector(double pv[NUM_PV_HEADER_SIGNALS]);
         // append PROBEDATA_ARRAY_INDEX, SEC, BLOCK and  "add" to (emulate GVP signal generation) TIME, X,Y,Z,U,A,B, and append

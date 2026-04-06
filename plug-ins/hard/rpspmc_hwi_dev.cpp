@@ -1004,7 +1004,8 @@ int rpspmc_hwi_dev::ReadProbeData (int dspdev, int control){
                 if (GVP_vp_header_current.endmark){ // finished?
                         return ReadProbeData (0, FR_FINISH);
                 }
-                
+
+                // Add data
                 RPSPMC_ControlClass->add_probedata (GVP_vp_header_current.dataexpanded, pv,
                                                     GVP_vp_header_current.fss_data,  GVP_vp_header_current.fss_len,
                                                     true, true);
@@ -2096,14 +2097,18 @@ int rpspmc_hwi_dev::read_GVP_data_block_to_position_vector (int offset, gboolean
 #define GVP_STREAM_HDR_SAMPLE_INDEX    1 // 0xNNNNNNNN
 #define GVP_STREAM_HDR_TIME_CODE_31_0  2 // 0xTTTTTTTT
 #define GVP_STREAM_HDR_TIME_CODE_47_32 3 // 0x0000TTTT
+#define GVP_STREAM_HDR_FSS_BLOCK_16    3 // 0xFSSBXXXX
 #define GVP_STREAM_DATA_CH0            4 // 0xVVVVVVVV
 
         GVP_vp_header_current.srcs      = GVP_stream_buffer[offset+GVP_STREAM_HDR_SRCS_MASK] & 0x0000ffff;
         GVP_vp_header_current.i         = GVP_stream_buffer[offset+GVP_STREAM_HDR_SAMPLE_INDEX];           // data point index within GVP section (N points)
-        GVP_vp_header_current.gvp_time = ((((guint64)GVP_stream_buffer[offset+GVP_STREAM_HDR_TIME_CODE_47_32]) & 0x0000ffff)<<32) | (guint64)GVP_stream_buffer[offset+GVP_STREAM_HDR_TIME_CODE_31_0];
+        GVP_vp_header_current.gvp_time  = ((((guint64)GVP_stream_buffer[offset+GVP_STREAM_HDR_TIME_CODE_47_32]) & 0x0000ffff)<<32) | (guint64)GVP_stream_buffer[offset+GVP_STREAM_HDR_TIME_CODE_31_0];
         GVP_vp_header_current.dataexpanded[PROBEDATA_ARRAY_MS_TIME-PROBEDATA_ARRAY_S1] = GVP_vp_header_current.gvp_time_ms = (double)GVP_vp_header_current.gvp_time/125e3; // time in ms
         //GVP_vp_header_current.dataexpanded[14] = (double)GVP_vp_header_current.gvp_time/125e3; // time in ms
 
+        unsigned int fss                = (guint32)(GVP_stream_buffer[offset + GVP_STREAM_HDR_FSS_BLOCK_16]) >> 16;
+
+        
 	//g_print ("GVP HDR[%08x]: S:%08x i=%d t=%12.6f ms {%08x %08x}\n", offset, GVP_vp_header_current.srcs, GVP_vp_header_current.i, (double)GVP_vp_header_current.gvp_time_ms, GVP_stream_buffer[offset+GVP_STREAM_HDR_TIME_CODE_47_32], GVP_stream_buffer[offset+GVP_STREAM_HDR_TIME_CODE_31_0]);
 	
         if (GVP_vp_header_current.srcs == 0xffff){
@@ -2264,24 +2269,37 @@ int rpspmc_hwi_dev::read_GVP_data_block_to_position_vector (int offset, gboolean
                 hdr = ch_index+offset+GVP_STREAM_DATA_CH0; // next hdr
 #endif
 
-                // fix-me...
-                int     fss      = (guint32)(GVP_stream_buffer[offset + GVP_STREAM_HDR_TIME_CODE_47_32]) >> 16;
+                // decode/expand FSS data
                 if (fss){
                         guint64 fss_data = (((guint64)GVP_vp_header_current.chNs[1]) << 32) | GVP_vp_header_current.chNs[0]; // Y,X
                         int     fss_n    = fss & 0xff;
                         int     fss_len  = (fss>>8) & 0xff;
                         GVP_vp_header_current.fss_len = fss_len;
+                        guint32 IN12 = (guint32)GVP_vp_header_current.chNs[3];
                         for (int k=0; k<fss_len; ++k){
-                                GVP_vp_header_current.fss_data[0][k] = fss_data & (1LL<<((fss_n+k)&0x3f)) ? 1.:0.;
-                                if (k<5 && GVP_vp_header_current.srcs & (1<<14)){
-                                        if (k==0)
-                                                GVP_vp_header_current.fss_data[1][k] = GVP_vp_header_current.chNs[15]>>16;  // RF
-                                        else
-                                                GVP_vp_header_current.fss_data[1][k] = ((GVP_vp_header_current.chNs[14]>>(8*(k-1)))&0xff) << 6;  // RF
-                                } else
-                                        GVP_vp_header_current.fss_data[1][k] = 0; // 
+                                // reconstruct HS time matching FPGA register delay line storage
+                                GVP_vp_header_current.fss_data[HS_FSS_TIME   ][k] = GVP_vp_header_current.gvp_time_ms + (-fss_len + k)*8e-6; //  8ns spaced data (125MHz) in ms = x 8e-9ns*1e3ms
+                                GVP_vp_header_current.fss_data[HS_FSS_DIGITAL][k] = fss_data & (1LL<<((fss_n+k)&0x3f)) ? 1.:0.;
+                                // GVP_vp_header_current.fss_data[1][k] = ((GVP_vp_header_current.chNs[14]>>(8*(k-1)))&0xff) << 6;  // RF
+                                // stream_buffer[14] <= { RFdata[3][29:22], RFdata[2][29:22], RFdata[1][29:22], RFdata[0][29:22] }; // RF CH2 upper 8 bits -- ...,most recent
+                                // stream_buffer[15] <= { RFdata[7][29:22], RFdata[6][29:22], RFdata[5][29:22], RFdata[4][29:22] }; // RF CH2 upper 8 bits
+                                //if (k==0)
+                                        //GVP_vp_header_current.fss_data[HS_FSS_RFIN2][k] = (gint16)((((guint32)GVP_vp_header_current.chNs[5]>>(8*(4-1)))&0xff) << 8);  // RF MS 8bits of 14 to 16
+                                                //(gint16)((guint32)IN12>>16);  // RF14 dec to 16
+                                //else if (k < 5)
+                                if (k < 4)
+                                        GVP_vp_header_current.fss_data[HS_FSS_RFIN2][k] = (gint16)((((guint32)GVP_vp_header_current.chNs[5]>>(8*(3-k)))&0xff) << 8);  // RF MS 8bits of 14 to 16
+                                else if (k < 8)
+                                        GVP_vp_header_current.fss_data[HS_FSS_RFIN2][k] = (gint16)((((guint32)GVP_vp_header_current.chNs[4]>>(8*(7-k)))&0xff) << 8);  // RF
+                                else if (k < 12)
+                                        GVP_vp_header_current.fss_data[HS_FSS_RFIN2][k] = (gint16)((((guint32)GVP_vp_header_current.chNs[15]>>(8*(11-k)))&0xff) << 8);  // RF
+                                else if (k < 16)
+                                        GVP_vp_header_current.fss_data[HS_FSS_RFIN2][k] = (gint16)((((guint32)GVP_vp_header_current.chNs[14]>>(8*(15-k)))&0xff) << 8);  // RF
+                                else    GVP_vp_header_current.fss_data[HS_FSS_RFIN2][k] = GVP_vp_header_current.fss_data[HS_FSS_RFIN2][15]; // hold
                         }
-                        //g_message ("[%08x] *** FSS DATA: %d %d %d", offset, fss_len, fss_n, fss_data);
+                        GVP_vp_header_current.chNs[3] = (gint16)(IN12&0xffff);
+                        GVP_vp_header_current.chNs[4] = (gint16)(IN12>>16);
+                        //g_message ("[%08x] *** FSS DATA: %d %d %d %08x %08x", offset, fss_len, fss_n, fss_data, GVP_vp_header_current.chNs[14],GVP_vp_header_current.chNs[15]);
                 } else
                         GVP_vp_header_current.fss_len = 0; // no FSS DATA
 
