@@ -579,6 +579,8 @@ spm_simulator_hwi_dev::spm_simulator_hwi_dev(){
 	subscan_data_y_index_offset = 0;
         ScanningFlg=0;
         KillFlg=FALSE;
+
+        hwi_init_overrides();
         
         for (int i=0; i<4; ++i){
                 srcs_dir[i] = nsrcs_dir[i] = 0;
@@ -765,10 +767,20 @@ double spm_simulator_hwi_dev::simulate_value (int xi, int yi, int ch){
 
         //g_print ("XYR0: %g %g",x,y);
 
-        // use template landscape is scan loaded to CH11 !!
-        if (main_get_gapp()->xsm->scan[10]){
+        // use template landscape is scan loaded to CH11/12/13 -> CH0,1,2 !!
+        if (main_get_gapp()->xsm->scan[10] && ch == 0){
                 double ix,iy;
                 main_get_gapp()->xsm->scan[10]->World2Pixel  (x, y, ix,iy);
+                return main_get_gapp()->xsm->scan[10]->data.s.dz * main_get_gapp()->xsm->scan[10]->mem2d->GetDataPktInterpol (ix,iy);
+        }
+        if (main_get_gapp()->xsm->scan[11] && ch == 1){
+                double ix,iy;
+                main_get_gapp()->xsm->scan[11]->World2Pixel  (x, y, ix,iy);
+                return main_get_gapp()->xsm->scan[10]->data.s.dz * main_get_gapp()->xsm->scan[10]->mem2d->GetDataPktInterpol (ix,iy);
+        }
+        if (main_get_gapp()->xsm->scan[12] && ch == 2){
+                double ix,iy;
+                main_get_gapp()->xsm->scan[11]->World2Pixel  (x, y, ix,iy);
                 return main_get_gapp()->xsm->scan[10]->data.s.dz * main_get_gapp()->xsm->scan[10]->mem2d->GetDataPktInterpol (ix,iy);
         }
 
