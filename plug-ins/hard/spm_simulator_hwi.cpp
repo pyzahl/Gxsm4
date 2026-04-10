@@ -815,6 +815,13 @@ gpointer DataReadThread (void *ptr_sr){
 
         } else return NULL; // error, no reference
 
+        // ControlClass->write_spm_scan_vector_program (main_get_gapp()->xsm->data.s.rx, main_get_gapp()->xsm->data.s.ry,
+        //                                                    main_get_gapp()->xsm->data.s.nx, main_get_gapp()->xsm->data.s.ny,
+        //                                                    slew, subscan, srcs_dir, 0, y_start);  // y_start: 0: top-down, else bottom-up
+        
+        //sr->MovetoXY (-main_get_gapp()->xsm->data.s.rx/2, main_get_gapp()->xsm->data.s.ry/2);
+
+        
 	if (sr->data_y_count == 0){ // top-down
                 g_message("FifoReadThread Scanning Top-Down... %d", sr->ScanningFlg);
 		for (int yi=y0; yi < y0+ny; ++yi){ // for all lines
