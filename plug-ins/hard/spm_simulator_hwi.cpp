@@ -776,12 +776,12 @@ double spm_simulator_hwi_dev::simulate_value (int xi, int yi, int ch){
         if (main_get_gapp()->xsm->scan[11] && ch == 1){
                 double ix,iy;
                 main_get_gapp()->xsm->scan[11]->World2Pixel  (x, y, ix,iy);
-                return main_get_gapp()->xsm->scan[10]->data.s.dz * main_get_gapp()->xsm->scan[10]->mem2d->GetDataPktInterpol (ix,iy);
+                return main_get_gapp()->xsm->scan[11]->data.s.dz * main_get_gapp()->xsm->scan[11]->mem2d->GetDataPktInterpol (ix,iy);
         }
         if (main_get_gapp()->xsm->scan[12] && ch == 2){
                 double ix,iy;
-                main_get_gapp()->xsm->scan[11]->World2Pixel  (x, y, ix,iy);
-                return main_get_gapp()->xsm->scan[10]->data.s.dz * main_get_gapp()->xsm->scan[10]->mem2d->GetDataPktInterpol (ix,iy);
+                main_get_gapp()->xsm->scan[12]->World2Pixel  (x, y, ix,iy);
+                return main_get_gapp()->xsm->scan[12]->data.s.dz * main_get_gapp()->xsm->scan[12]->mem2d->GetDataPktInterpol (ix,iy);
         }
 
         double z=0.0;
