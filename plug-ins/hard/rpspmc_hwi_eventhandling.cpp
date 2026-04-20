@@ -1527,25 +1527,28 @@ void RPSPMC_Control::add_probevector(){
         if (hs_len){
                 // add FSS DATA (high speed) burst if available
                 for (i=0; i<hs_len; ++i){
+#if 0
                         if (current_probe_data_hsindex < 100)
                                 g_print ("g_array_append_val HS_TIME %d:%d t_GVP=%g ns t_HS=%g ns [hslen:%d] = %g, %g\n",
                                          current_probe_data_hsindex, (-hs_len+i),
                                          data [PROBEDATA_ARRAY_MS_TIME-PROBEDATA_ARRAY_S1]*1e6,
                                          data_hs[HS_FSS_TIME][i]*1e6,
                                          hs_len, data_hs[HS_FSS_DIGITAL][i], data_hs[HS_FSS_RFIN2][i]);
-                        
+#endif                   
                         g_array_append_val (garray_probedata[PROBEDATA_ARRAY_HS_TIME],   data_hs[HS_FSS_TIME   ][i]); // HS_TIME
                         g_array_append_val (garray_probedata[PROBEDATA_ARRAY_HS_DATA_A], data_hs[HS_FSS_DIGITAL][i]);
                         g_array_append_val (garray_probedata[PROBEDATA_ARRAY_HS_DATA_B], data_hs[HS_FSS_RFIN2  ][i]);
                         current_probe_data_hsindex++;
                 }
 
+#if 0
                 if (current_probe_data_hsindex < 100)
                         for (i=0; i<current_probe_data_hsindex-1; ++i)
                                 g_print ("g_array_hst[%d] @ t =%g ns ==> %g, %g\n", i,
                                          1e6*g_array_index (garray_probedata[PROBEDATA_ARRAY_HS_TIME], double, i),
                                          g_array_index (garray_probedata[PROBEDATA_ARRAY_HS_DATA_A], double, i),
                                          g_array_index (garray_probedata[PROBEDATA_ARRAY_HS_DATA_B], double, i));
+#endif
         }
         
 
