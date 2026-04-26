@@ -1,3 +1,9 @@
+gxsm4 (4.3.0-0ubuntu0) noble; urgency=medium
+
+  * uptodate release on Ubuntu 24.04 LTS (before migration to Ubuntu 26.04 LTS)
+
+ -- Thorsten Wagner <stm@users.sf.net>  Sun, 26 Apr 2026 15:41:49 +0200
+
 gxsm4 (4.2.1-0ubuntu1) noble; urgency=medium
 
   * fixed missing dependency to libjson 
