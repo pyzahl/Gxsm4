@@ -5,6 +5,7 @@ Maintainer: Thorsten Wagner <stm@users.sf.net>
 Build-Depends: 	debhelper (>= 12~),
 		devscripts,
 		cmake,
+		desktop-file-utils,
 		git,
 		gsettings-desktop-schemas-dev,
 		libboost-dev,
