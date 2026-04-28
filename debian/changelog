@@ -1,3 +1,9 @@
+gxsm4 (4.3.0-0ubuntu2) resolute; urgency=medium
+
+  * added desktop-file-utils to dependendies
+
+ -- Thorsten Wagner <stm@users.sf.net>  Tue, 28 Apr 2026 10:26:40 +0200
+
 gxsm4 (4.3.0-0ubuntu1) resolute; urgency=medium
 
   * first realese on Ubuntu 26.04 LTS
