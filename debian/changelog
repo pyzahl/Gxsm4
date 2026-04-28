@@ -1,3 +1,9 @@
+gxsm4 (4.3.0-0ubuntu1) resolute; urgency=medium
+
+  * first realese on Ubuntu 26.04 LTS
+
+ -- Thorsten Wagner <stm@users.sf.net>  Mon, 27 Apr 2026 21:16:05 +0200
+
 gxsm4 (4.3.0-0ubuntu0) noble; urgency=medium
 
   * uptodate release on Ubuntu 24.04 LTS (before migration to Ubuntu 26.04 LTS)
