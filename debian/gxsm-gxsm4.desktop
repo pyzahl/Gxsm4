@@ -9,31 +9,31 @@ TryExec=gxsm4
 Icon=gxsm4-icon
 Terminal=false
 Type=Application
-Categories=X-Gxsm;GTK;GNOME;Science
+Categories=X-Gxsm;GTK;GNOME;Science;SPM;STM;AFM
 X-AppInstall-Package=GXSM4
 X-GNOME-Settings-Panel=GXSM4
 MimeType=application/x-netcdf
-Actions=New;NoHardware;Gxsm4Manual;ventiotec;gxsm
+Actions=New;NoHardware;Gxsm4Manual;Gxsm4GitHub;Gxsmsfnet
 
 X-Desktop-File-Install-Version=0.26
 
 [Desktop Action New]
-Name=GXSM normal startup
+Name=GXSM4 normal startup
 Exec=gxsm4
 
 [Desktop Action NoHardware]
-Name=GXSM no hardware
+Name=GXSM4 no hardware
 Exec=gxsm4 -h no
 
 [Desktop Action Gxsm4Manual]
-Name=GXSM offline manual
-Exec=evince /usr/share/doc/gxsm4/gxsm4.pdf.gz
+Name=GXSM4 offline manual
+Exec=papers /usr/share/doc/gxsm4/gxsm4.pdf.gz
 
-[Desktop Action ventiotec]
-Name=www.ventiotec.com
-Exec=browse https://www.ventiotec.com
+[Desktop Action Gxsm4GitHub]
+Name=GXSM4 source code
+Exec=xdg-open https://github.com/pyzahl/Gxsm4
 
-[Desktop Action gxsm]
+[Desktop Action Gxsmsfnet]
 Name=GXSM homepage 
-Exec=browse https://gxsm.sf.net
+Exec=xdg-open https://gxsm.sourceforge.net
 
