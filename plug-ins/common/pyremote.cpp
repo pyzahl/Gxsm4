@@ -2128,7 +2128,8 @@ static PyObject* remote_getslice(PyObject *self, PyObject *args)
                         for (int y=yi; y<yf; ++y)
                                 for (int x=0; x<dims[1]; ++x)
                                         *dp++ = src->mem2d->data->Z(x,y)*src->data.s.dz;
-                
+
+                g_message ("TEST POINT: if a segfault happens past this point, there is a clash between python+numpy running vs. gxsm4 is been compiled/linked with. A custom Python Venv can cause that. Please align versions.");
                 PyObject* pyarr = PyArray_SimpleNewFromData(2, dims, NPY_DOUBLE, (void*)darr2);
                 PyArray_ENABLEFLAGS((PyArrayObject*) pyarr, NPY_ARRAY_OWNDATA);
                 return Py_BuildValue("O", pyarr); // Python code will receive the array as numpy array.
@@ -2170,6 +2171,7 @@ static PyObject* remote_getslice_v(PyObject *self, PyObject *args)
                         for (int v=0; v<dims[1]; ++v)
                                 *dp++ = src->mem2d->data->Z(x,y,v)*src->data.s.dz;
                 
+                g_message ("TEST POINT: if a segfault happens past this point, there is a clash between python+numpy running vs. gxsm4 is been compiled/linked with. A custom Python Venv can cause that. Please align versions.");
                 PyObject* pyarr = PyArray_SimpleNewFromData(2, dims, NPY_DOUBLE, (void*)darr2);
                 PyArray_ENABLEFLAGS((PyArrayObject*) pyarr, NPY_ARRAY_OWNDATA);
                 return Py_BuildValue("O", pyarr); // Python code will receive the array as numpy array.
