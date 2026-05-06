@@ -412,9 +412,9 @@ ViewControl::ViewControl (Gxsm4app *app,
 
         if (ChNo >= 0){
                 // DnD Files
-                GtkDropTarget *target = gtk_drop_target_new (G_TYPE_INVALID, GDK_ACTION_COPY);
+                GtkDropTarget *target = gtk_drop_target_new (G_TYPE_INVALID, GDK_ACTION_COPY | GDK_ACTION_MOVE);
                 // This widget accepts two types of drop types: GFile objects
-                GType types[] = { GDK_TYPE_FILE_LIST, G_TYPE_FILE}; // appect multiple file to add as movie
+                GType types[] = { GDK_TYPE_FILE_LIST }; //, G_TYPE_FILE}; // appect multiple file to add as movie
                 //GType types[1] = { G_TYPE_FILE }; //, GDK_TYPE_FILE_LIST }; // file type only
                 gtk_drop_target_set_gtypes (target, types, G_N_ELEMENTS (types));
                 g_signal_connect (target, "drop", G_CALLBACK (AppBase::gapp_load_on_drop_files), GINT_TO_POINTER (ChNo));
@@ -438,7 +438,7 @@ ViewControl::ViewControl (Gxsm4app *app,
         g_signal_connect (source, "drag-end", G_CALLBACK (drag_end), this);
         g_signal_connect (source, "drag-cancel", G_CALLBACK (drag_cancel), this);
         gtk_widget_add_controller (canvas, GTK_EVENT_CONTROLLER (source));
-        GtkDropTarget *dest = gtk_drop_target_new (GTK_TYPE_WIDGET, GDK_ACTION_MOVE);
+        GtkDropTarget *dest = gtk_drop_target_new (GTK_TYPE_WIDGET, GDK_ACTION_MOVE | GDK_ACTION_MOVE);
         g_signal_connect (dest, "drop", G_CALLBACK (drag_drop), this);
         gtk_widget_add_controller (canvas, GTK_EVENT_CONTROLLER (dest));
 #endif

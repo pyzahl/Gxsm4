@@ -176,7 +176,7 @@ ChannelSelector::ChannelSelector (Gxsm4app *app, int ChAnz):AppBase(app, "CHS"){
 		g_object_set_data  (G_OBJECT (wid), "ChNo", GINT_TO_POINTER (i));
 		gtk_grid_attach (GTK_GRID (v_grid), wid, 0, i, 1, 1);
                 gtk_widget_show (wid); // FIX-ME GTK4 SHOWALL
-                target = gtk_drop_target_new (G_TYPE_INVALID, GDK_ACTION_COPY);
+                target = gtk_drop_target_new (G_TYPE_INVALID, GDK_ACTION_COPY | GDK_ACTION_MOVE);
                 gtk_drop_target_set_gtypes (target, types, G_N_ELEMENTS (types));
                 g_signal_connect (target, "drop", G_CALLBACK (AppBase::gapp_load_on_drop_files), GINT_TO_POINTER (i-1));
                 gtk_widget_add_controller (GTK_WIDGET (wid), GTK_EVENT_CONTROLLER (target));
@@ -187,7 +187,7 @@ ChannelSelector::ChannelSelector (Gxsm4app *app, int ChAnz):AppBase(app, "CHS"){
 		g_object_set_data  (G_OBJECT (wid), "ChNo", GINT_TO_POINTER (i));
 		gtk_grid_attach (GTK_GRID (v_grid), wid, 1, i, 1, 1);
                 gtk_widget_show (wid); // FIX-ME GTK4 SHOWALL
-                target = gtk_drop_target_new (G_TYPE_INVALID, GDK_ACTION_COPY);
+                target = gtk_drop_target_new (G_TYPE_INVALID, GDK_ACTION_COPY | GDK_ACTION_MOVE);
                 gtk_drop_target_set_gtypes (target, types, G_N_ELEMENTS (types));
                 g_signal_connect (target, "drop", G_CALLBACK (AppBase::gapp_load_on_drop_files), GINT_TO_POINTER (i-1));
                 gtk_widget_add_controller (GTK_WIDGET (wid), GTK_EVENT_CONTROLLER (target));
@@ -208,7 +208,7 @@ ChannelSelector::ChannelSelector (Gxsm4app *app, int ChAnz):AppBase(app, "CHS"){
 		g_object_set_data  (G_OBJECT (wid), "ChNo", GINT_TO_POINTER (i));
 		gtk_grid_attach (GTK_GRID (v_grid), wid, 2, i, 1, 1);
                 gtk_widget_show (wid); // FIX-ME GTK4 SHOWALL
-                target = gtk_drop_target_new (G_TYPE_INVALID, GDK_ACTION_COPY);
+                target = gtk_drop_target_new (G_TYPE_INVALID, GDK_ACTION_COPY | GDK_ACTION_MOVE); // Hyprland only sends MOVE
                 gtk_drop_target_set_gtypes (target, types, G_N_ELEMENTS (types));
                 g_signal_connect (target, "drop", G_CALLBACK (AppBase::gapp_load_on_drop_files), GINT_TO_POINTER (i-1));
                 gtk_widget_add_controller (GTK_WIDGET (wid), GTK_EVENT_CONTROLLER (target));
