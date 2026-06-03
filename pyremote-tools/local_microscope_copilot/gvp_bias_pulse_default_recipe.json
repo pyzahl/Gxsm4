@@ -1,0 +1,71 @@
+{
+  "name": "default_gvp_bias_pulse",
+  "description": "Default GVP Bias Pulse action captured from live program on 2026-05-28. Keep row structure fixed; tune pulse amplitude through du values.",
+  "program_file": "gvp_bias_pulse_default_program.json",
+  "source_file": "gvp_vector_program_current_20260528-141047.json",
+  "format": "compatible with gvp_save_restore.py list-of-single-key-dicts",
+  "action": "DSP_VP_VP_EXECUTE",
+  "tunable_parameters": {
+    "pulse_bias_du_V": {
+      "description": "Bias pulse step amplitude in Volts. Current default has row 01 du=-3 V and row 03 du=+3 V return/opposite step.",
+      "primary_keys": [
+        "dsp-gvp-du01",
+        "dsp-gvp-du03"
+      ],
+      "default_values": {
+        "dsp-gvp-du01": -3.0,
+        "dsp-gvp-du03": 3.0
+      },
+      "hard_limit_abs_V": 4.0,
+      "allowed_range_V": [
+        -4.0,
+        4.0
+      ],
+      "operator_note": "Very max +/-4 V allowed. Start gentle and change amplitude incrementally."
+    }
+  },
+  "nonzero_row_summary": {
+    "00": {
+      "dt": 0.5,
+      "n": 5000.0,
+      "nrep": 1.0
+    },
+    "01": {
+      "dt": 0.02,
+      "du": -3.0,
+      "dz": -0.4,
+      "n": 200.0,
+      "nrep": 1.0
+    },
+    "02": {
+      "dt": 0.02,
+      "n": 200.0,
+      "nrep": 1.0,
+      "xcmpv": 1.0,
+      "xopcd": 1.0,
+      "xrchi": 4.0
+    },
+    "03": {
+      "dt": 0.02,
+      "du": 3.0,
+      "dz": 0.4,
+      "n": 200.0,
+      "nrep": 1.0
+    },
+    "04": {
+      "dt": 0.5,
+      "n": 5000.0,
+      "nrep": 1.0
+    },
+    "05": {
+      "nrep": 1.0
+    }
+  },
+  "safety": {
+    "requires_operator_approval_to_execute": true,
+    "requires_dry_run_preview_before_program_write": true,
+    "max_abs_du_V": 4.0,
+    "current_units": "nA",
+    "bias_units": "V"
+  }
+}

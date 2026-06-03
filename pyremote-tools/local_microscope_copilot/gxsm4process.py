@@ -222,7 +222,7 @@ class gxsm_process():
                                 else: # ???
                                         self.debug_print (0, 'SHM Method Result: Unexpected Completion Code: {}'.format(pyshm_status[0]))
 
-                        pyshm_pickles_bytes_len = int(np.frombuffer(self.gxsm_pyshm.buf, dtype=np.uint64, count=1, offset=128))
+                        pyshm_pickles_bytes_len = int(np.frombuffer(self.gxsm_pyshm.buf, dtype=np.uint64, count=1, offset=128)[0])
                         self.debug_print (1, 'return data len: {}'.format(pyshm_pickles_bytes_len))
                         ret = pickle.loads(self.gxsm_pyshm.buf[128+8 : 128+8+pyshm_pickles_bytes_len])
                 return ret

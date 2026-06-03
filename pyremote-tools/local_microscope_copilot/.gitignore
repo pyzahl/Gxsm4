@@ -1,2 +1,6 @@
 __pycache__/
 *.py[cod]
+.venv/
+gui_outputs/
+.run/
+logs/

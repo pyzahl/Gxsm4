@@ -3,15 +3,56 @@
 This repo now includes a local LLM wrapper:
 
 - `local_microscope_copilot.py`
+- `microscope_gradio_gui.py`
 - `microscope_actions.py`
 - `gxsm4process.py`
 - `local_microscope_copilot_config.json`
+- `requirements-gui.txt`
+- `copilot_services.sh`
 - `install_ollama.sh`
 - `docs/`
 
 The wrapper uses a local Ollama chat model and exposes a safety-gated set of
 microscope tools from its local `microscope_actions.py`. That controller imports
 the bundled `gxsm4process.py` transport copy for GXSM pyremote communication.
+
+## Optional Gradio GUI
+
+The Gradio GUI is the easiest place to display Matplotlib scan plots, JSON
+reports, dFrequency samples, live monitor values, and future analysis images.
+Install the optional dependencies:
+
+```bash
+cd local_microscope_copilot
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements-gui.txt
+```
+
+Start in dry-run mode:
+
+```bash
+.venv/bin/python microscope_gradio_gui.py --host 127.0.0.1 --port 7870
+```
+
+Start in live mode only when intentionally connected to GXSM4:
+
+```bash
+.venv/bin/python microscope_gradio_gui.py --live --host 127.0.0.1 --port 7870
+```
+
+If another web service already uses the chosen port, use another local port.
+
+Manage Ollama and Gradio together:
+
+```bash
+./copilot_services.sh start all --live
+./copilot_services.sh status
+./copilot_services.sh restart gradio --live
+./copilot_services.sh stop all
+```
+
+The service helper stores pid files under `.run/` and logs under `logs/`. It
+stops only the processes it started itself.
 
 ## Recommended Models
 
