@@ -1,0 +1,137 @@
+# Local Microscope Copilot Setup
+
+This repo now includes a local LLM wrapper:
+
+- `local_microscope_copilot.py`
+- `microscope_actions.py`
+- `gxsm4process.py`
+- `local_microscope_copilot_config.json`
+- `install_ollama.sh`
+- `docs/`
+
+The wrapper uses a local Ollama chat model and exposes a safety-gated set of
+microscope tools from its local `microscope_actions.py`. That controller imports
+the bundled `gxsm4process.py` transport copy for GXSM pyremote communication.
+
+## Recommended Models
+
+Current machine, CPU-only:
+
+```bash
+cd local_microscope_copilot
+ollama pull qwen3:4b
+./local_microscope_copilot.py --model qwen3:4b
+```
+
+With a 16 GB AMD Radeon RX 9070:
+
+```bash
+ollama pull qwen3:8b
+./local_microscope_copilot.py --model qwen3:8b
+```
+
+If the GPU path is fast and stable, try:
+
+```bash
+ollama pull qwen3:14b
+./local_microscope_copilot.py --model qwen3:14b
+```
+
+Practical recommendation:
+
+- `qwen3:4b`: responsive CPU fallback, adequate command parser.
+- `qwen3:8b`: recommended operator copilot on 16 GB GPU.
+- `qwen3:14b`: better reasoning, may be slower/tighter on 16 GB.
+
+## Install Ollama
+
+If Ollama is not installed:
+
+```bash
+cd local_microscope_copilot
+sh install_ollama.sh
+```
+
+Start Ollama:
+
+```bash
+ollama serve
+```
+
+In another terminal:
+
+```bash
+cd local_microscope_copilot
+ollama pull qwen3:4b
+./local_microscope_copilot.py
+```
+
+## AMD Radeon RX 9070 Notes
+
+The RX 9070 class is supported by recent ROCm/Ollama stacks, but Linux
+distribution details matter. This current machine is Debian 13, while AMD's
+official ROCm compatibility matrix is primarily Ubuntu/RHEL/Oracle Linux.
+
+After installing the GPU, check:
+
+```bash
+rocminfo
+ollama ps
+```
+
+Then run a model and watch GPU use:
+
+```bash
+ollama run qwen3:8b
+```
+
+If Ollama falls back to CPU, keep using `qwen3:4b` until ROCm/Ollama GPU
+support is confirmed on this OS.
+
+## Safety Model
+
+The local LLM never calls GXSM directly. It asks this wrapper for tools.
+
+Read-only tools include:
+
+- live X/Y/Z/U monitor readback
+- dFrequency sampling
+- scan analysis
+- recent-line slope measurement
+
+Hardware-changing tools require terminal confirmation:
+
+- scan speed
+- bias
+- current setpoint
+- offset moves
+- stop/start scan
+- GVP program load
+
+GVP execution requires an additional explicit confirmation phrase:
+
+```text
+EXECUTE GVP
+```
+
+Do not run the wrapper with `--assume-yes` on the live microscope unless you are
+intentionally testing in a controlled setting.
+
+## Example Session
+
+```bash
+cd local_microscope_copilot
+./local_microscope_copilot.py --model qwen3:4b
+```
+
+Example prompts:
+
+```text
+read the live monitors
+sample dFreq 20 times
+analyze the current scan and mark hazards
+measure recent residual slope over 64 lines
+set scan speed to 800 A/s for an 800 A scan
+```
+
+The wrapper prints confirmation prompts before any live-changing action.
