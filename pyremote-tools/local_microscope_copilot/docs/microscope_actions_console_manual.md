@@ -1,7 +1,11 @@
 # Microscope Actions Console Manual
 
 This note shows how to use `microscope_actions.py` manually from an external
-Python console or script.
+Python console or script. The file now lives in:
+
+```text
+/home/percy/VS/Gxsm4/pyremote-tools/local_microscope_copilot/microscope_actions.py
+```
 
 The live system is an LT-STM/AFM microscope. Start in dry-run mode unless you
 are intentionally connected to GXSM4 and know whether the call is read-only or
@@ -9,10 +13,10 @@ hardware-changing.
 
 ## Start A Console
 
-From this directory:
+From the copilot/controller directory:
 
 ```bash
-cd /home/percy/VS/Gxsm4/pyremote-tools
+cd /home/percy/VS/Gxsm4/pyremote-tools/local_microscope_copilot
 python3
 ```
 
@@ -39,8 +43,8 @@ runner = MicroscopeActionRunner(dry_run=False, verbose=0)
 runner.connect()
 ```
 
-The first live call attaches to the running GXSM4 process through
-`gxsm4process.py`.
+The first live call attaches to the running GXSM4 process through the bundled
+`gxsm4process.py` copy in this same folder.
 
 ## Safety Categories
 
@@ -792,6 +796,7 @@ print("Stepped regions:", len(report["stepped_regions"]))
 Run it:
 
 ```bash
+cd /home/percy/VS/Gxsm4/pyremote-tools/local_microscope_copilot
 python3 manual_landscape_check.py
 ```
 

@@ -38,3 +38,13 @@ ollama pull qwen3:8b
 ```
 
 See `local_microscope_copilot_setup.md` for details and safety notes.
+
+## Documentation Map
+
+- `docs/microscope_actions_console_manual.md`: full manual for the controller
+  classes, scan/actions API, GVP handling, landscape navigation, slope leveling,
+  tip assessment, and manual console/script usage.
+- `docs/gvp_tip_improvement_plan.md`: working tip-improvement procedure notes,
+  GVP pulse/dip recipes, and operator-taught safety conventions.
+- `docs/codebase-overview.md`: compact overview of the pyremote/GXSM context
+  used while developing this controller layer.
