@@ -29,9 +29,6 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent
 DEFAULT_SSL_CERTFILE = "/etc/grafana/ltncafm_cfn_bnl_gov.pem"
 DEFAULT_SSL_KEYFILE = "/etc/grafana/ltncafm_cfn_bnl_gov_privkey.key"
-DEFAULT_AUTH_USER = "microscope"
-DEFAULT_AUTH_PASSWORD_ENV = "MICROSCOPE_COPILOT_PASSWORD"
-DEFAULT_AUTH_PASSWORD_FILE = SCRIPT_DIR / ".microscope_gui_password"
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 if str(PROJECT_ROOT) not in sys.path:
@@ -43,225 +40,26 @@ from microscope_actions import (
     MicroscopeActionRunner,
     TipImprovementActivityController,
 )
-
-
-CONTROL_LEVELS = {
-    0: "Level 0: Hardware connected, monitoring only",
-    1: "Level 1: Basic operation within default safety margins",
-    2: "Level 2: Advanced GVP and more aggressive tip tuning",
-    3: "Level 3: Extreme GVP, coarse motion, hyper jumps, auto approach",
-}
-
-CONTROL_LEVEL_HELP = """
-Control levels:
-- Level 0: monitoring/read-only. No live-changing actions.
-- Level 1: basic operation inside default safety margins: start/stop scan,
-  bias <= +/-1 V, current <= 0.05 nA, scan speed in the normal range,
-  feedback CP/CI changes, load/execute already-loaded safe GVP.
-- Level 2: reserved for advanced GVP and more aggressive tip tuning.
-- Level 3: reserved for extreme GVP, coarse motion/hyper jumps, and auto
-  approach workflows.
-"""
-
-DEFAULT_SYSTEM_PROMPT = """You are a local microscope operator copilot for GXSM4.
-Help interpret observations, propose cautious next steps, and explain controller
-readouts. The GUI has operator-selected control levels:
-Level 0 is read-only monitoring; Level 1 permits basic bounded operations;
-Level 2 and Level 3 are reserved for future advanced/extreme operations.
-Chat responses from the language model are advisory only and must not claim
-hardware actions. A narrow deterministic pre-parser may execute safe Level-1
-commands before the model is called, but only through GUI control-level and
-arm gates. Bias targets above +/-1 V are outside Level 1 and must be described
-as blocked/not available unless a future higher-level workflow is implemented."""
-
-ACTION_CLAIM_RE = re.compile(
-    r"\b("
-    r"I (have )?(set|changed|adjusted|started|stopped|executed|loaded)|"
-    r"(bias|current|scan|gvp|feedback).{0,40}\b(has been|is now|was set|changed)"
-    r")\b",
-    re.IGNORECASE,
+from microscope_gradio_auth import (
+    DEFAULT_AUTH_PASSWORD_ENV,
+    DEFAULT_AUTH_PASSWORD_FILE,
+    DEFAULT_AUTH_USER,
+    resolve_gradio_auth,
 )
-
-HARDWARE_WORD_RE = re.compile(
-    r"\b(bias|current|scan|gvp|feedback|cp|ci|setpoint|start|stop|execute)\b",
-    re.IGNORECASE,
+from microscope_gradio_gvp import GvpGuiMixin
+from microscope_gradio_policy import (
+    ACTION_CLAIM_RE,
+    CHAT_ROUTER_HELP,
+    CONTROL_LEVEL_HELP,
+    CONTROL_LEVELS,
+    DEFAULT_SYSTEM_PROMPT,
+    HARDWARE_WORD_RE,
+    KNOWN_READBACK_REFS,
+    PARAM_ALIASES,
+    PARAM_SPECS,
 )
-
-KNOWN_READBACK_REFS = [
-    ("bias_V", "dsp-fbs-bias"),
-    ("current_setpoint_nA", "dsp-fbs-mx0-current-set"),
-    ("current_limit_nA", "dsp-fbs-mx0-current-level"),
-    ("scan_speed_A_per_s", "dsp-fbs-scan-speed-scan"),
-    ("move_speed_A_per_s", "dsp-fbs-scan-speed-move"),
-    ("feedback_cp_dB", "dsp-fbs-cp"),
-    ("feedback_ci_dB", "dsp-fbs-ci"),
-    ("range_x_A", "RangeX"),
-    ("range_y_A", "RangeY"),
-    ("points_x", "PointsX"),
-    ("points_y", "PointsY"),
-    ("scan_x_A", "ScanX"),
-    ("scan_y_A", "ScanY"),
-    ("offset_x_A", "OffsetX"),
-    ("offset_y_A", "OffsetY"),
-    ("rotation_deg", "Rotation"),
-    ("scan_slope_x_A_per_A", "dsp-adv-scan-slope-x"),
-    ("scan_slope_y_A_per_A", "dsp-adv-scan-slope-y"),
-    ("zpos_ref_A", "dsp-adv-dsp-zpos-ref"),
-    ("gvp_xs_monitor_A", "dsp-GVP-XS-MONITOR"),
-    ("gvp_ys_monitor_A", "dsp-GVP-YS-MONITOR"),
-    ("gvp_zs_monitor_A", "dsp-GVP-ZS-MONITOR"),
-    ("gvp_u_monitor_V", "dsp-GVP-U-MONITOR"),
-]
-
-PARAM_ALIASES = [
-    ("bias", "bias_V", "dsp-fbs-bias"),
-    ("current setpoint", "current_setpoint_nA", "dsp-fbs-mx0-current-set"),
-    ("current", "current_setpoint_nA", "dsp-fbs-mx0-current-set"),
-    ("current limit", "current_limit_nA", "dsp-fbs-mx0-current-level"),
-    ("scan speed", "scan_speed_A_per_s", "dsp-fbs-scan-speed-scan"),
-    ("move speed", "move_speed_A_per_s", "dsp-fbs-scan-speed-move"),
-    ("feedback cp", "feedback_cp_dB", "dsp-fbs-cp"),
-    ("feedback ci", "feedback_ci_dB", "dsp-fbs-ci"),
-    ("cp", "feedback_cp_dB", "dsp-fbs-cp"),
-    ("ci", "feedback_ci_dB", "dsp-fbs-ci"),
-    ("scan size", "scan_geometry", None),
-    ("scan range", "scan_geometry", None),
-    ("range", "scan_geometry", None),
-    ("points", "scan_geometry", None),
-    ("scan geometry", "scan_geometry", None),
-    ("rotation", "rotation_deg", "Rotation"),
-    ("offset", "scan_geometry", None),
-    ("scan x", "scan_x_A", "ScanX"),
-    ("scan y", "scan_y_A", "ScanY"),
-    ("slope x", "scan_slope_x_A_per_A", "dsp-adv-scan-slope-x"),
-    ("slope y", "scan_slope_y_A_per_A", "dsp-adv-scan-slope-y"),
-    ("scan slope x", "scan_slope_x_A_per_A", "dsp-adv-scan-slope-x"),
-    ("scan slope y", "scan_slope_y_A_per_A", "dsp-adv-scan-slope-y"),
-    ("zpos ref", "zpos_ref_A", "dsp-adv-dsp-zpos-ref"),
-    ("gvp x", "gvp_xs_monitor_A", "dsp-GVP-XS-MONITOR"),
-    ("gvp y", "gvp_ys_monitor_A", "dsp-GVP-YS-MONITOR"),
-    ("gvp z", "gvp_zs_monitor_A", "dsp-GVP-ZS-MONITOR"),
-    ("gvp bias", "gvp_u_monitor_V", "dsp-GVP-U-MONITOR"),
-]
-
-PARAM_SPECS = {
-    "bias": {
-        "label": "bias_V",
-        "refname": "dsp-fbs-bias",
-        "unit": "V",
-        "aliases": ("bias", "sample bias", "tunnel bias", "voltage"),
-        "write": "bias",
-    },
-    "current_setpoint": {
-        "label": "current_setpoint_nA",
-        "refname": "dsp-fbs-mx0-current-set",
-        "unit": "nA",
-        "aliases": (
-            "current setpoint",
-            "current set point",
-            "setpoint current",
-            "tunnel current",
-            "current",
-        ),
-        "write": "current",
-    },
-    "current_limit": {
-        "label": "current_limit_nA",
-        "refname": "dsp-fbs-mx0-current-level",
-        "unit": "nA",
-        "aliases": ("current limit", "z mode current limit"),
-        "write": None,
-    },
-    "scan_speed": {
-        "label": "scan_speed_A_per_s",
-        "refname": "dsp-fbs-scan-speed-scan",
-        "unit": "A/s",
-        "aliases": ("scan speed", "scan velocity", "speed"),
-        "write": "scan_speed",
-    },
-    "move_speed": {
-        "label": "move_speed_A_per_s",
-        "refname": "dsp-fbs-scan-speed-move",
-        "unit": "A/s",
-        "aliases": ("move speed", "tip move speed", "offset move speed"),
-        "write": None,
-    },
-    "feedback_cp": {
-        "label": "feedback_cp_dB",
-        "refname": "dsp-fbs-cp",
-        "unit": "dB",
-        "aliases": ("feedback cp", "cp"),
-        "write": "feedback_cp",
-    },
-    "feedback_ci": {
-        "label": "feedback_ci_dB",
-        "refname": "dsp-fbs-ci",
-        "unit": "dB",
-        "aliases": ("feedback ci", "ci"),
-        "write": "feedback_ci",
-    },
-    "rotation": {
-        "label": "rotation_deg",
-        "refname": "Rotation",
-        "unit": "deg",
-        "aliases": ("rotation", "scan rotation", "angle"),
-        "write": None,
-    },
-    "slope_x": {
-        "label": "scan_slope_x_A_per_A",
-        "refname": "dsp-adv-scan-slope-x",
-        "unit": "A/A",
-        "aliases": ("scan slope x", "slope x", "x slope"),
-        "write": "slope_x",
-    },
-    "slope_y": {
-        "label": "scan_slope_y_A_per_A",
-        "refname": "dsp-adv-scan-slope-y",
-        "unit": "A/A",
-        "aliases": ("scan slope y", "slope y", "y slope"),
-        "write": "slope_y",
-    },
-    "gvp_x": {
-        "label": "gvp_xs_monitor_A",
-        "refname": "dsp-GVP-XS-MONITOR",
-        "unit": "A",
-        "aliases": ("gvp x", "gvp xs", "tip x monitor"),
-        "write": None,
-    },
-    "gvp_y": {
-        "label": "gvp_ys_monitor_A",
-        "refname": "dsp-GVP-YS-MONITOR",
-        "unit": "A",
-        "aliases": ("gvp y", "gvp ys", "tip y monitor"),
-        "write": None,
-    },
-    "gvp_z": {
-        "label": "gvp_zs_monitor_A",
-        "refname": "dsp-GVP-ZS-MONITOR",
-        "unit": "A",
-        "aliases": ("gvp z", "gvp zs", "tip z monitor"),
-        "write": None,
-    },
-    "gvp_u": {
-        "label": "gvp_u_monitor_V",
-        "refname": "dsp-GVP-U-MONITOR",
-        "unit": "V",
-        "aliases": ("gvp u", "gvp bias", "gvp voltage"),
-        "write": None,
-    },
-}
-
-CHAT_ROUTER_HELP = """
-Deterministic chat router:
-- Reads known GXSM parameters by alias, including bias, current setpoint,
-  scan speed, feedback CP/CI, scan geometry, slopes, and GVP monitors.
-- Executes Level-1 scan start/stop and bounded parameter changes only when
-  Control Level is 1+ and the chat arm checkbox is checked.
-- Understands relative requests like "increase bias by 0.05 V", "make scan
-  speed 20% faster", and context pronouns like "set it to ..." after a read.
-- Routes tip/scan analysis to deterministic image analysis rather than asking
-  the language model to invent a report.
-"""
+from microscope_gradio_scan import ScanGuiMixin
+from microscope_gradio_tip_planner import TipPlannerGuiMixin
 
 
 def load_config(path):
@@ -269,54 +67,7 @@ def load_config(path):
         return json.load(file)
 
 
-def resolve_gradio_auth(
-    username=DEFAULT_AUTH_USER,
-    password_env=DEFAULT_AUTH_PASSWORD_ENV,
-    password_file=DEFAULT_AUTH_PASSWORD_FILE,
-    require_auth=False,
-):
-    """
-    Resolve optional Gradio basic login credentials.
-
-    Password precedence:
-    1. environment variable, default MICROSCOPE_COPILOT_PASSWORD
-    2. local password file, default .microscope_gui_password
-
-    The password is intentionally not stored in config JSON or source files.
-    """
-    username = str(username or DEFAULT_AUTH_USER)
-    password_env = str(password_env or DEFAULT_AUTH_PASSWORD_ENV)
-    password_file = Path(password_file or DEFAULT_AUTH_PASSWORD_FILE)
-    password = os.environ.get(password_env, "")
-    source = ""
-    if password:
-        source = "environment:{}".format(password_env)
-    elif password_file.exists():
-        password = password_file.read_text().splitlines()[0].strip()
-        source = "file:{}".format(password_file)
-    if not password:
-        if require_auth:
-            raise SystemExit(
-                "Microscope GUI auth is required, but no password was found. "
-                "Set {} or create {}.".format(password_env, password_file)
-            )
-        return None, {
-            "enabled": False,
-            "username": username,
-            "password_source": "",
-            "note": (
-                "Authentication disabled. Set {} or create {} to enable it."
-            ).format(password_env, password_file),
-        }
-    return (username, password), {
-        "enabled": True,
-        "username": username,
-        "password_source": source,
-        "note": "Gradio login enabled for user '{}'.".format(username),
-    }
-
-
-class MicroscopeGradioBackend:
+class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
     def __init__(self, config, live=False, output_dir=None):
         self.config = dict(config)
         self.live = bool(live)
@@ -346,6 +97,8 @@ class MicroscopeGradioBackend:
             "last_readback": {},
             "last_intent": None,
         }
+        self.scan_view_state = {}
+        self.init_tip_planner_state()
         self.chat_messages = [{"role": "system", "content": DEFAULT_SYSTEM_PROMPT}]
 
     def status_text(self):
@@ -453,6 +206,9 @@ class MicroscopeGradioBackend:
         if self.looks_like_tip_or_scan_analysis(text_l):
             self.chat_context["last_action_domain"] = "analysis"
             return self.try_chat_scan_analysis(text)
+        compound_reply = self.route_compound_level1_intent(text, chat_arm=chat_arm)
+        if compound_reply is not None:
+            return compound_reply
         scan_action = self.infer_scan_action(text_l)
         if scan_action:
             self.chat_context["last_action_domain"] = "scan"
@@ -488,6 +244,173 @@ class MicroscopeGradioBackend:
                     self.context_parameter_key(),
                     chat_arm=chat_arm,
                 )
+        return None
+
+    def route_compound_level1_intent(self, text, chat_arm=False):
+        text_l = text.lower().strip()
+        scan_action = self.infer_scan_action(text_l)
+        if not scan_action:
+            return None
+        keys = [
+            key for key in self.infer_parameter_keys(text_l, allow_context=False)
+            if PARAM_SPECS.get(key, {}).get("write")
+        ]
+        has_geometry = self.looks_like_scan_geometry_request(text_l)
+        if not keys and not has_geometry:
+            return None
+        plan = []
+        if has_geometry:
+            parsed = self.parse_scan_geometry_request(text)
+            if parsed is None:
+                return None
+            range_A, points = parsed
+            plan.append(
+                {
+                    "action_name": "scan geometry",
+                    "target": "{} A, {} points".format(range_A, points),
+                    "callback": lambda range_A=range_A, points=points: self.set_scan_geometry(
+                        range_A,
+                        points,
+                        arm=True,
+                    ),
+                }
+            )
+        for key in keys:
+            entry = self.build_parameter_write_plan_entry(text, key)
+            if isinstance(entry, str):
+                return entry
+            if entry:
+                plan.append(entry)
+        if not plan:
+            return None
+        if scan_action == "start":
+            plan.append(
+                {
+                    "action_name": "start scan",
+                    "target": "startscan",
+                    "callback": lambda: self.start_scan(arm=True),
+                }
+            )
+        else:
+            plan.append(
+                {
+                    "action_name": "stop scan",
+                    "target": "stopscan",
+                    "callback": lambda: self.stop_scan(arm=True),
+                }
+            )
+        self.chat_context["last_action_domain"] = "scan"
+        return self.execute_chat_level1_plan(plan, chat_arm=chat_arm)
+
+    def build_parameter_write_plan_entry(self, text, key):
+        spec = PARAM_SPECS.get(key)
+        if not spec or not spec.get("write"):
+            return None
+        write_kind = spec["write"]
+        if write_kind == "bias":
+            target = self.resolve_numeric_target(
+                text,
+                current_refname=spec["refname"],
+                percent_ok=True,
+            )
+            if target is None:
+                if self.is_relative_request(text):
+                    return "I did not change the bias. A relative bias change needs a valid current bias readback first."
+                return None
+            if abs(target) > self.safety_limits()["level1_max_abs_bias_V"]:
+                return (
+                    "I did not change the bias. A target of {:.6g} V is outside "
+                    "the Level 1 automatic limit of +/-1 V."
+                ).format(target)
+            return {
+                "action_name": "bias",
+                "target": "{} V".format(self.fmt6(target)),
+                "callback": lambda target=target: self.set_bias(target, arm=True),
+            }
+        if write_kind == "current":
+            target_nA = self.resolve_current_target_nA(text, spec["refname"])
+            if target_nA is None:
+                if self.is_relative_request(text):
+                    return "I did not change the current setpoint. A relative current change needs a valid current setpoint readback first."
+                return None
+            if target_nA > self.safety_limits()["level1_max_current_nA"]:
+                return (
+                    "I did not change the current setpoint. The requested value "
+                    "is {:.6g} nA, above the Level 1 automatic limit of {:.6g} nA."
+                ).format(target_nA, self.safety_limits()["level1_max_current_nA"])
+            return {
+                "action_name": "current setpoint",
+                "target": "{} nA".format(self.fmt6(target_nA)),
+                "callback": lambda target_nA=target_nA: self.set_current(
+                    target_nA,
+                    "nA",
+                    arm=True,
+                ),
+            }
+        if write_kind == "scan_speed":
+            target = self.resolve_numeric_target(
+                text,
+                current_refname=spec["refname"],
+                percent_ok=True,
+                relative_words={"faster": 1.2, "slower": 0.8},
+            )
+            if target is None:
+                if self.is_relative_request(text) or re.search(r"\b(faster|slower)\b", text.lower()):
+                    return "I did not change the scan speed. A relative speed change needs a valid current scan-speed readback first."
+                return None
+            range_A = self.read_float_parameter("RangeX", fallback=700.0)
+            return {
+                "action_name": "scan speed",
+                "target": "{} A/s".format(self.fmt6(target)),
+                "callback": lambda target=target, range_A=range_A: self.set_scan_speed(
+                    target,
+                    range_A,
+                    arm=True,
+                ),
+            }
+        if write_kind in ("slope_x", "slope_y"):
+            target = self.resolve_numeric_target(text, current_refname=spec["refname"])
+            if target is None:
+                if self.is_relative_request(text):
+                    return "I did not change {}. A relative change needs a valid current readback first.".format(
+                        spec["label"]
+                    )
+                return None
+            if abs(target) > self.safety_limits()["level1_max_abs_scan_slope"]:
+                return "I did not change {}. Level 1 allows abs(slope) <= 0.1.".format(
+                    spec["label"]
+                )
+            return {
+                "action_name": spec["label"],
+                "target": target,
+                "callback": lambda target=target, write_kind=write_kind: self.set_scan_slope(
+                    slope_x=target if write_kind == "slope_x" else None,
+                    slope_y=target if write_kind == "slope_y" else None,
+                    arm=True,
+                ),
+            }
+        if write_kind in ("feedback_cp", "feedback_ci"):
+            target = self.resolve_numeric_target(text, current_refname=spec["refname"])
+            if target is None:
+                if self.is_relative_request(text):
+                    return "I did not change {}. A relative change needs a valid current readback first.".format(
+                        spec["label"]
+                    )
+                return None
+            limits = self.safety_limits()["level1_feedback_cp_ci_range_dB"]
+            if not (limits[0] <= target <= limits[1]):
+                return (
+                    "I did not change {}. Level 1 allows {}..{} dB."
+                ).format(spec["label"], limits[0], limits[1])
+            other_key = "feedback_ci" if write_kind == "feedback_cp" else "feedback_cp"
+            other = self.read_float_parameter(PARAM_SPECS[other_key]["refname"], fallback=-90.0)
+            cp = target if write_kind == "feedback_cp" else other
+            ci = target if write_kind == "feedback_ci" else other
+            return {
+                "action_name": "feedback CP/CI",
+                "target": "CP {}, CI {}".format(self.fmt6(cp), self.fmt6(ci)),
+                "callback": lambda cp=cp, ci=ci: self.set_feedback_cp_ci(cp, ci, arm=True),
+            }
         return None
 
     def chat_router_capabilities(self):
@@ -1157,6 +1080,44 @@ class MicroscopeGradioBackend:
             "```json\n{}\n```"
         ).format(success_prefix, target, json.dumps(result, indent=2))
 
+    def execute_chat_level1_plan(self, plan, chat_arm=False):
+        names = [step["action_name"] for step in plan]
+        if self.control_level < 1:
+            return (
+                "I did not execute the requested action plan ({}). Chat Level 1 "
+                "actions require Control Level 1 or higher, plus the chat arm checkbox."
+            ).format(" -> ".join(names))
+        if not chat_arm:
+            return (
+                "I did not execute the requested action plan ({}). To allow this "
+                "Level 1 chat action, check 'Arm Level 1 chat actions' in the "
+                "Chat tab and submit the request again."
+            ).format(" -> ".join(names))
+        results = []
+        for index, step in enumerate(plan, start=1):
+            action_name = step["action_name"]
+            target = step["target"]
+            result = step["callback"]()
+            entry = {
+                "index": index,
+                "action_name": action_name,
+                "target": target,
+                "result": result,
+            }
+            results.append(entry)
+            if isinstance(result, dict) and (result.get("error") or result.get("blocked") or result.get("cancelled")):
+                return (
+                    "I stopped the Level 1 action plan at step {} ({}). "
+                    "No later steps were executed.\n\n```json\n{}\n```"
+                ).format(index, action_name, json.dumps(self.jsonable({"steps": results}), indent=2))
+        return (
+            "Level 1 action plan executed through the chat gate: {}.\n\n"
+            "```json\n{}\n```"
+        ).format(
+            " -> ".join(names),
+            json.dumps(self.jsonable({"steps": results}), indent=2),
+        )
+
     def last_number(self, text):
         nums = re.findall(r"[-+]?\d+(?:\.\d+)?", str(text))
         return None if not nums else float(nums[-1])
@@ -1535,214 +1496,6 @@ class MicroscopeGradioBackend:
         except Exception as exc:
             return {"error": str(exc), "traceback": traceback.format_exc()}
 
-    def scan_extent_A(self, image, meta, channel):
-        """Return imshow extent in local scan Angstroms, preserving aspect."""
-        ny, nx = image.shape
-        try:
-            settings = self.runner._scan_settings(int(channel))
-            range_x = float(settings.get("RangeX"))
-            range_y = float(settings.get("RangeY"))
-            points_y = float(settings.get("PointsY") or meta.get("dimensions", [nx, ny])[1])
-        except Exception:
-            dims = meta.get("dimensions", [nx, ny])
-            range_x = float(dims[0] or nx)
-            range_y = float(dims[1] or ny)
-            points_y = float(dims[1] or ny)
-        fetched_y = float(meta.get("fetched_y_count", ny) or ny)
-        x_left = -0.5 * range_x
-        x_right = 0.5 * range_x
-        y_top = -0.5 * range_y
-        y_bottom = y_top + range_y * fetched_y / max(points_y, 1.0)
-        return (x_left, x_right, y_bottom, y_top)
-
-    def pixel_to_local_A(self, px, py, image, extent):
-        ny, nx = image.shape
-        x_left, x_right, y_bottom, y_top = extent
-        x_A = x_left + (float(px) + 0.5) * (x_right - x_left) / max(nx, 1)
-        y_A = y_top + (float(py) + 0.5) * (y_bottom - y_top) / max(ny, 1)
-        return x_A, y_A
-
-    def plot_scan_image_A(
-        self,
-        image,
-        meta,
-        channel,
-        title,
-        colorbar_label,
-        quality=None,
-        landscape=None,
-    ):
-        fig, ax = plt.subplots(figsize=(6, 5), constrained_layout=True)
-        extent = self.scan_extent_A(image, meta, channel)
-        im = ax.imshow(
-            image,
-            origin="upper",
-            extent=extent,
-            cmap="viridis",
-            aspect="equal",
-        )
-        ax.set_title(title)
-        ax.set_xlabel("Scan X (A)")
-        ax.set_ylabel("Scan Y (A), line 0 at top")
-        fig.colorbar(im, ax=ax, label=colorbar_label)
-        if quality or landscape:
-            self.annotate_analysis_plot(ax, image, extent, quality, landscape)
-        return fig, extent
-
-    def annotate_analysis_plot(self, ax, image, extent, quality=None, landscape=None):
-        quality = quality or {}
-        landscape = landscape or {}
-
-        hazards = (
-            landscape.get("hazards")
-            or landscape.get("major_bumps")
-            or []
-        )
-        for hazard in hazards[:12]:
-            if "px" not in hazard or "py" not in hazard:
-                continue
-            x_A, y_A = self.pixel_to_local_A(hazard["px"], hazard["py"], image, extent)
-            ax.plot(x_A, y_A, "rx", ms=7, mew=1.5)
-
-        candidates = (
-            landscape.get("candidates")
-            or landscape.get("flat_candidates")
-            or []
-        )
-        for idx, candidate in enumerate(candidates[:6], start=1):
-            px = candidate.get("px")
-            py = candidate.get("py")
-            if px is None or py is None:
-                continue
-            x_A, y_A = self.pixel_to_local_A(px, py, image, extent)
-            ax.plot(x_A, y_A, "wo", ms=7, mec="k", mew=1.0)
-            ax.text(
-                x_A,
-                y_A,
-                str(idx),
-                color="black",
-                ha="center",
-                va="center",
-                fontsize=7,
-            )
-
-        best = landscape.get("best_candidate") or {}
-        if best.get("px") is not None and best.get("py") is not None:
-            x_A, y_A = self.pixel_to_local_A(best["px"], best["py"], image, extent)
-            ax.plot(x_A, y_A, "c*", ms=12, mec="k", mew=0.8, label="best flat")
-
-        peaks = [
-            peak for peak in quality.get("autocorrelation_secondary_peaks", [])
-            if peak.get("used_for_tip_verdict")
-        ]
-        summary_lines = [
-            "Tip: {} ({})".format(
-                quality.get("verdict", "n/a"),
-                quality.get("confidence", "n/a"),
-            ),
-        ]
-        rough = quality.get("flattened_stats", {}).get("roughness_std")
-        if rough is not None:
-            summary_lines.append("rough std: {:.4g} A".format(float(rough)))
-        if peaks:
-            peak = peaks[0]
-            summary_lines.append(
-                "peak: corr={:.3g}, d~{:.1f} A, angle={:.0f} deg".format(
-                    float(peak.get("corr", 0.0)),
-                    float(peak.get("dist_A_approx", 0.0)),
-                    float(peak.get("angle_deg", 0.0)),
-                )
-            )
-        if hazards:
-            summary_lines.append("hazards: {}".format(len(hazards)))
-        if candidates:
-            summary_lines.append("flat candidates: {}".format(len(candidates)))
-
-        ax.text(
-            0.01,
-            0.99,
-            "\n".join(summary_lines),
-            transform=ax.transAxes,
-            va="top",
-            ha="left",
-            fontsize=8,
-            color="white",
-            bbox={"facecolor": "black", "alpha": 0.62, "pad": 4},
-        )
-        if hazards or candidates or best:
-            ax.legend(loc="lower right", fontsize=7)
-
-    def fetch_scan_plot(self, channel, chunk_lines):
-        try:
-            image, meta = self.runner.fetch_scan_image_to_line(
-                channel=int(channel),
-                chunk_lines=int(chunk_lines),
-            )
-            fig, extent = self.plot_scan_image_A(
-                image,
-                meta,
-                channel,
-                "Channel {} scan data, line 0 at top".format(channel),
-                "signal",
-            )
-            report = {
-                "meta": self.jsonable(meta),
-                "extent_A": list(extent),
-                "shape": list(image.shape),
-                "min": float(image.min()),
-                "max": float(image.max()),
-                "mean": float(image.mean()),
-                "std": float(image.std()),
-            }
-            return fig, report
-        except Exception as exc:
-            fig, ax = plt.subplots(figsize=(6, 4), constrained_layout=True)
-            ax.text(0.5, 0.5, str(exc), ha="center", va="center", wrap=True)
-            ax.set_axis_off()
-            return fig, {"error": str(exc), "traceback": traceback.format_exc()}
-
-    def analyze_current_scan(self, channel, chunk_lines, output_prefix):
-        try:
-            image, meta = self.runner.fetch_scan_image_to_line(
-                channel=int(channel),
-                chunk_lines=int(chunk_lines),
-            )
-            pixel = self.runner._pixel_size_A(int(channel))
-            quality = self.runner.assess_tip_quality(
-                image,
-                pixel_size_A=pixel,
-                output_prefix=str(self.output_dir / output_prefix),
-            )
-            landscape = self.nav.analyze_current_scan_landscape_map(
-                channel=int(channel),
-                output_prefix=str(self.output_dir / (output_prefix + "_landscape")),
-            )
-            fig, extent = self.plot_scan_image_A(
-                image,
-                meta,
-                channel,
-                "Scan image used for analysis",
-                "topography / signal",
-                quality=quality,
-                landscape=landscape,
-            )
-            report = {
-                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
-                "fetch_meta": self.jsonable(meta),
-                "extent_A": list(extent),
-                "pixel_size_A": pixel,
-                "tip_quality": quality,
-                "landscape": landscape,
-            }
-            report_path = self.output_dir / (output_prefix + "_gui_report.json")
-            report_path.write_text(json.dumps(self.jsonable(report), indent=2))
-            return fig, self.jsonable(report), str(report_path)
-        except Exception as exc:
-            fig, ax = plt.subplots(figsize=(6, 4), constrained_layout=True)
-            ax.text(0.5, 0.5, str(exc), ha="center", va="center", wrap=True)
-            ax.set_axis_off()
-            return fig, {"error": str(exc), "traceback": traceback.format_exc()}, ""
-
     def require_level3_confirmation(self, confirm_text, arm, action_name):
         blocked = self.require_control_level(3, action_name)
         if blocked:
@@ -1935,19 +1688,6 @@ class MicroscopeGradioBackend:
         except Exception as exc:
             return {"error": str(exc), "traceback": traceback.format_exc()}
 
-    def load_bias_pulse(self, pulse_du_V, arm):
-        blocked = self.require_control_level(1, "load bias-pulse GVP")
-        if blocked:
-            return blocked
-        cancelled = self.require_arm(arm, "load a GVP program")
-        if cancelled:
-            return cancelled
-        try:
-            rec = self.runner.load_gvp_bias_pulse(float(pulse_du_V))
-            return self.jsonable(rec.__dict__)
-        except Exception as exc:
-            return {"error": str(exc), "traceback": traceback.format_exc()}
-
     def start_scan(self, arm):
         blocked = self.require_control_level(1, "start scan")
         if blocked:
@@ -2088,6 +1828,35 @@ class MicroscopeGradioBackend:
         except Exception as exc:
             return {"error": str(exc), "traceback": traceback.format_exc()}
 
+    def set_rotation(self, rotation_deg, arm):
+        blocked = self.require_control_level(1, "set scan rotation")
+        if blocked:
+            return blocked
+        cancelled = self.require_arm(arm, "set scan rotation")
+        if cancelled:
+            return cancelled
+        try:
+            rotation = float(rotation_deg)
+            if not (-360.0 <= rotation <= 360.0):
+                raise ValueError("Rotation must be within -360..360 degrees for Level 1.")
+            rec = self.runner.set_parameter("Rotation", rotation)
+            return self.jsonable(rec.__dict__)
+        except Exception as exc:
+            return {"error": str(exc), "traceback": traceback.format_exc()}
+
+    def set_scan_geometry_and_rotation(self, range_A, points, rotation_deg, arm):
+        blocked = self.require_control_level(1, "set scan geometry and rotation")
+        if blocked:
+            return blocked
+        cancelled = self.require_arm(arm, "set scan geometry and rotation")
+        if cancelled:
+            return cancelled
+        geometry = self.set_scan_geometry(range_A, points, arm=True)
+        if isinstance(geometry, dict) and (geometry.get("error") or geometry.get("blocked") or geometry.get("cancelled")):
+            return {"geometry": geometry, "rotation": None}
+        rotation = self.set_rotation(rotation_deg, arm=True)
+        return {"geometry": geometry, "rotation": rotation}
+
     def set_scan_slope(self, slope_x=None, slope_y=None, arm=False):
         blocked = self.require_control_level(1, "set scan slope")
         if blocked:
@@ -2101,22 +1870,6 @@ class MicroscopeGradioBackend:
                 slope_y=slope_y,
                 max_abs_slope=self.safety_limits()["level1_max_abs_scan_slope"],
             )
-            return self.jsonable(rec.__dict__)
-        except Exception as exc:
-            return {"error": str(exc), "traceback": traceback.format_exc()}
-
-    def execute_loaded_gvp(self, confirm_text, arm):
-        blocked = self.require_control_level(1, "execute loaded GVP")
-        if blocked:
-            return blocked
-        cancelled = self.require_arm(arm, "execute loaded GVP")
-        if cancelled:
-            return cancelled
-        phrase = self.safety_limits()["gvp_execute_extra_confirmation"]
-        if str(confirm_text).strip() != phrase:
-            return {"cancelled": "Type '{}' to execute loaded GVP.".format(phrase)}
-        try:
-            rec = self.runner.execute_loaded_gvp(precheck=True, wait_after_execute_s=8.0)
             return self.jsonable(rec.__dict__)
         except Exception as exc:
             return {"error": str(exc), "traceback": traceback.format_exc()}
@@ -2310,10 +2063,22 @@ def build_ui(backend):
             with gr.Row():
                 scan_channel = gr.Number(value=0, label="Channel", precision=0)
                 scan_lines = gr.Number(value=120, label="Recent/full lines to fetch", precision=0)
+                scan_auto = gr.Checkbox(value=False, label="Auto refresh")
                 fetch_btn = gr.Button("Fetch And Plot")
             scan_plot = gr.Plot(label="Scan image")
+            scan_profile = gr.Plot(label="Last scan-line profile")
             scan_meta = gr.JSON(label="Scan metadata")
-            fetch_btn.click(backend.fetch_scan_plot, [scan_channel, scan_lines], [scan_plot, scan_meta])
+            scan_refresh_timer = gr.Timer(value=1.0, active=True)
+            fetch_btn.click(
+                backend.fetch_scan_plot_with_profile,
+                [scan_channel, scan_lines],
+                [scan_plot, scan_profile, scan_meta],
+            )
+            scan_refresh_timer.tick(
+                backend.auto_refresh_scan_plot,
+                [scan_auto, scan_channel, scan_lines],
+                [scan_plot, scan_profile, scan_meta],
+            )
 
         with gr.Tab("Tip / Landscape Analysis"):
             with gr.Row():
@@ -2329,6 +2094,134 @@ def build_ui(backend):
                 [ana_channel, ana_lines, ana_prefix],
                 [ana_plot, ana_report, ana_path],
             )
+
+        with gr.Tab("Tip Tune Planner"):
+            gr.Markdown(
+                "Planner workflow: analyze the current scan, mark flat work-site "
+                "candidates and blobs, optionally move the stopped tip to a "
+                "candidate, then run bounded scan/action/reassess cycles. "
+                "ScanX/Y moves are refused while scanning."
+            )
+            planner_arm = gr.Checkbox(value=False, label="Arm one planner live action")
+            planner_report = gr.JSON(label="Planner report")
+            planner_plot = gr.Plot(label="Planner annotated image")
+            planner_progress = gr.Plot(label="Planner progress")
+            with gr.Accordion("Analyze And Select Work Site", open=True):
+                with gr.Row():
+                    planner_channel = gr.Number(value=0, label="Channel", precision=0)
+                    planner_lines = gr.Number(value=180, label="Lines to fetch", precision=0)
+                    planner_patch = gr.Number(value=80.0, label="Flat patch size (A)")
+                    planner_candidates = gr.Number(value=12, label="Max candidates", precision=0)
+                with gr.Row():
+                    planner_max_blobs = gr.Number(value=8, label="Stop/search if blobs >=", precision=0)
+                    planner_prefix = gr.Textbox(value="gui_tip_planner", label="Output prefix")
+                    planner_analyze_btn = gr.Button("Analyze Tip And Flat Candidates")
+                planner_analyze_btn.click(
+                    backend.tip_planner_analyze_current_scan,
+                    [
+                        planner_channel,
+                        planner_lines,
+                        planner_patch,
+                        planner_candidates,
+                        planner_max_blobs,
+                        planner_prefix,
+                    ],
+                    [planner_plot, planner_progress, planner_report],
+                )
+                with gr.Row():
+                    planner_candidate_index = gr.Number(value=1, label="Candidate #", precision=0)
+                    planner_move_btn = gr.Button("Move Tip To Candidate")
+                planner_move_btn.click(
+                    backend.tip_planner_move_to_candidate,
+                    [planner_candidate_index, planner_arm],
+                    planner_report,
+                )
+
+            with gr.Accordion("Offset Search For Cleaner Area", open=False):
+                gr.Markdown(
+                    "Plan or apply a partially overlapping OffsetX/Y shift if the "
+                    "current frame contains too many large blobs. Offset moves "
+                    "use non-rotated world coordinates and stop the scan first."
+                )
+                with gr.Row():
+                    shift_direction = gr.Dropdown(
+                        choices=[
+                            "image_left",
+                            "image_right",
+                            "image_up",
+                            "image_down",
+                            "image_left_below",
+                            "image_right_below",
+                            "image_left_above",
+                            "image_right_above",
+                        ],
+                        value="image_left_below",
+                        label="Search direction",
+                    )
+                    shift_range = gr.Number(value=800.0, label="New scan range (A)")
+                    shift_overlap = gr.Number(value=250.0, label="Overlap (A)")
+                    shift_points = gr.Number(value=400, label="Points", precision=0)
+                with gr.Row():
+                    plan_shift_btn = gr.Button("Plan Offset Shift")
+                    start_after_shift = gr.Checkbox(value=True, label="Start scan after shift")
+                    apply_shift_btn = gr.Button("Apply Offset Shift")
+                plan_shift_btn.click(
+                    backend.tip_planner_plan_offset_shift,
+                    [shift_direction, shift_range, shift_overlap],
+                    planner_report,
+                )
+                apply_shift_btn.click(
+                    backend.tip_planner_apply_offset_shift,
+                    [
+                        shift_direction,
+                        shift_range,
+                        shift_overlap,
+                        shift_points,
+                        start_after_shift,
+                        planner_arm,
+                    ],
+                    planner_report,
+                )
+
+            with gr.Accordion("Automated Tip-Improvement Loop", open=False):
+                gr.Markdown(
+                    "Runs scan, waits for enough lines, assesses tip and dFreq, "
+                    "moves to a clean candidate after stopping the scan, executes "
+                    "a gentle pulse/tune action, and repeats. Stops when quality "
+                    "and dFreq are satisfactory, when blob count is too high, or "
+                    "when max cycles is reached. Requires exact confirmation."
+                )
+                with gr.Row():
+                    loop_cycles = gr.Number(value=2, label="Max cycles", precision=0)
+                    loop_min_lines = gr.Number(value=140, label="Minimum evidence lines", precision=0)
+                    loop_range = gr.Number(value=700.0, label="Diagnostic range (A)")
+                    loop_points = gr.Number(value=400, label="Points", precision=0)
+                with gr.Row():
+                    loop_max_blobs = gr.Number(value=8, label="Stop/search if blobs >=", precision=0)
+                    loop_df_ok = gr.Number(value=4.0, label="Max |dFreq| OK (Hz)")
+                    loop_auto_shift = gr.Checkbox(value=False, label="Auto shift on too many blobs")
+                loop_confirm = gr.Textbox(
+                    label="Loop confirmation",
+                    placeholder="Type EXECUTE TIP LOOP",
+                )
+                loop_btn = gr.Button("Run Tip Tune Planner Loop")
+                loop_btn.click(
+                    backend.run_tip_planner_loop,
+                    [
+                        loop_cycles,
+                        planner_channel,
+                        loop_min_lines,
+                        loop_range,
+                        loop_points,
+                        loop_max_blobs,
+                        loop_df_ok,
+                        loop_auto_shift,
+                        shift_direction,
+                        loop_confirm,
+                        planner_arm,
+                    ],
+                    [planner_plot, planner_progress, planner_report],
+                )
 
         with gr.Tab("Scan Leveling"):
             gr.Markdown(
@@ -2376,6 +2269,54 @@ def build_ui(backend):
                 ],
                 [level_plot, level_report],
             )
+
+        with gr.Tab("GVP"):
+            gr.Markdown(
+                "GVP load actions are Level 1 and arm-gated. Execution additionally "
+                "requires typing `EXECUTE GVP`. Tip-tune Z-dip uses the captured "
+                "`gvp_tip_tune_template_current_latest.json` template and rewrites "
+                "all vector values/FB flags before loading."
+            )
+            gvp_arm = gr.Checkbox(value=False, label="Arm one GVP action")
+            gvp_report = gr.JSON(label="GVP result")
+            with gr.Accordion("Bias Pulse GVP", open=True):
+                with gr.Row():
+                    pulse_du = gr.Number(value=2.0, label="Bias pulse du (V)")
+                    load_pulse_btn = gr.Button("Load Bias Pulse GVP Only")
+                load_pulse_btn.click(
+                    backend.load_bias_pulse,
+                    [pulse_du, gvp_arm],
+                    gvp_report,
+                )
+            with gr.Accordion("Tip Tune GVP: Z Dip", open=True):
+                gr.Markdown(
+                    "Gentle starting point: contact bias 0 V, dip depth 5 A. "
+                    "Dip depth is entered as a positive magnitude; the GVP program "
+                    "uses a negative Z step for indentation and a positive pull-out. "
+                    "Vec 1 removes the actual scan bias, vec 3 applies the contact "
+                    "bias, vec 6 removes contact bias, and vec 7 restores scan bias."
+                )
+                with gr.Row():
+                    tip_contact_bias = gr.Number(value=0.0, label="Contact bias (V)")
+                    tip_dip_depth = gr.Number(value=5.0, label="Dip depth magnitude (A)")
+                    load_tip_tune_btn = gr.Button("Load Tip Tune Z-Dip GVP")
+                load_tip_tune_btn.click(
+                    backend.load_tip_tune_gvp,
+                    [tip_contact_bias, tip_dip_depth, gvp_arm],
+                    gvp_report,
+                )
+            with gr.Accordion("Execute Loaded GVP", open=True):
+                gvp_confirm = gr.Textbox(
+                    label="GVP execute confirmation",
+                    placeholder="Type EXECUTE GVP to run loaded GVP",
+                )
+                execute_gvp_btn = gr.Button("Execute Loaded GVP And Plot")
+                gvp_plot = gr.Plot(label="GVP VP data: ZS, current, dFreq")
+                execute_gvp_btn.click(
+                    backend.execute_loaded_gvp_with_plot,
+                    [gvp_confirm, gvp_arm],
+                    [gvp_plot, gvp_report],
+                )
 
         with gr.Tab("Level 3 Protected"):
             gr.Markdown(
@@ -2528,17 +2469,24 @@ def build_ui(backend):
                 scan_speed = gr.Number(value=700.0, label="Scan speed (A/s)")
                 scan_range = gr.Number(value=700.0, label="Current scan range (A)")
                 set_speed_btn = gr.Button("Set Scan Speed")
+            with gr.Accordion("Scan Geometry", open=True):
+                gr.Markdown(
+                    "Sets square RangeX/RangeY and PointsX/PointsY. "
+                    "StepsX/Y are informational only: Range/(Points-1). "
+                    "Rotation is in degrees and may be changed live with caution."
+                )
+                with gr.Row():
+                    geometry_range = gr.Number(value=700.0, label="Scan range X/Y (A)")
+                    geometry_points = gr.Number(value=400, label="Scan points X/Y", precision=0)
+                    geometry_rotation = gr.Number(value=90.0, label="Rotation (deg)")
+                with gr.Row():
+                    set_geometry_btn = gr.Button("Set Range And Points")
+                    set_rotation_btn = gr.Button("Set Rotation")
+                    set_geometry_rotation_btn = gr.Button("Set Geometry And Rotation")
             with gr.Row():
                 cp_dB = gr.Number(value=-90.0, label="Feedback CP (dB)")
                 ci_dB = gr.Number(value=-90.0, label="Feedback CI (dB)")
                 set_feedback_btn = gr.Button("Set Feedback CP/CI")
-            pulse_du = gr.Number(value=2.0, label="Bias pulse du (V)")
-            load_pulse_btn = gr.Button("Load Bias Pulse GVP Only")
-            gvp_confirm = gr.Textbox(
-                label="GVP execute confirmation",
-                placeholder="Type EXECUTE GVP to run loaded GVP",
-            )
-            execute_gvp_btn = gr.Button("Execute Loaded GVP")
             action_report = gr.JSON(label="Action result")
             stop_btn.click(backend.stop_scan, arm, action_report)
             start_btn.click(backend.start_scan, arm, action_report)
@@ -2553,15 +2501,24 @@ def build_ui(backend):
                 [scan_speed, scan_range, arm],
                 action_report,
             )
+            set_geometry_btn.click(
+                backend.set_scan_geometry,
+                [geometry_range, geometry_points, arm],
+                action_report,
+            )
+            set_rotation_btn.click(
+                backend.set_rotation,
+                [geometry_rotation, arm],
+                action_report,
+            )
+            set_geometry_rotation_btn.click(
+                backend.set_scan_geometry_and_rotation,
+                [geometry_range, geometry_points, geometry_rotation, arm],
+                action_report,
+            )
             set_feedback_btn.click(
                 backend.set_feedback_cp_ci,
                 [cp_dB, ci_dB, arm],
-                action_report,
-            )
-            load_pulse_btn.click(backend.load_bias_pulse, [pulse_du, arm], action_report)
-            execute_gvp_btn.click(
-                backend.execute_loaded_gvp,
-                [gvp_confirm, arm],
                 action_report,
             )
 

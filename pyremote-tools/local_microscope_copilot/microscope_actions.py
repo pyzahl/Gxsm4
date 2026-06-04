@@ -2304,17 +2304,19 @@ class MicroscopeActionRunner:
         Build a controlled tip-tune Z-dip GVP program from the captured template.
 
         This follows the operator-provided tip-tune pattern:
-        - row 01: initial bias removal while approaching, default du=-0.1 V
+        - row 01: remove the actual scan bias while approaching
         - row 02: main indentation, default dz=-5 A
-        - row 03: bias restore/paired contact-bias step, default du=+0.1 V
+        - row 03: apply the requested contact bias while in contact
         - row 04: main pull-out, default dz=+5 A
+        - row 06: remove the requested contact bias
+        - row 07: restore the actual scan bias
         - rows 05..09: preserve the loaded template's recovery/tune pattern,
           with row 05/08 scaled from recovery_depth_A when supplied.
 
         dip_depth_A should be negative for downward indentation.  The main
-        return row restores Z by the opposite amount.  bias_remove_V and
-        bias_restore_V are explicit tunable parameters; the initial negative
-        step removes the current scan bias while approaching.
+        return row restores Z by the opposite amount.  If scan_bias_V is given,
+        row 01/07 use `-scan_bias_V` and `+scan_bias_V`.  If contact_bias_V is
+        given, row 03/06 use `+contact_bias_V` and `-contact_bias_V`.
         """
         if abs(dip_depth_A) > max_abs_dip_A:
             raise ValueError(
@@ -2325,9 +2327,18 @@ class MicroscopeActionRunner:
             )
         if dip_depth_A > 0:
             dip_depth_A = -float(dip_depth_A)
-        if contact_bias_V is not None and scan_bias_V is not None:
-            bias_remove_V = float(contact_bias_V) - float(scan_bias_V)
-            bias_restore_V = -bias_remove_V
+        actual_scan_bias_V = (
+            float(scan_bias_V)
+            if scan_bias_V is not None
+            else float(bias_restore_V)
+        )
+        requested_contact_bias_V = (
+            float(contact_bias_V)
+            if contact_bias_V is not None
+            else 0.0
+        )
+        bias_remove_V = -actual_scan_bias_V
+        bias_restore_V = actual_scan_bias_V
         if recovery_depth_A is None:
             recovery_depth_A = 2.0 * abs(float(dip_depth_A))
         if abs(recovery_depth_A) > 2.0 * max_abs_dip_A:
@@ -2341,12 +2352,12 @@ class MicroscopeActionRunner:
         flat = self._load_gvp_template_flat(template_file)
         flat["dsp-gvp-du01"] = float(bias_remove_V)
         flat["dsp-gvp-dz02"] = float(dip_depth_A)
-        flat["dsp-gvp-du03"] = float(bias_restore_V)
+        flat["dsp-gvp-du03"] = float(requested_contact_bias_V)
         flat["dsp-gvp-dz04"] = -float(dip_depth_A)
         if "dsp-gvp-dz05" in flat:
             flat["dsp-gvp-dz05"] = float(recovery_depth_A)
         if "dsp-gvp-du06" in flat:
-            flat["dsp-gvp-du06"] = float(bias_remove_V)
+            flat["dsp-gvp-du06"] = -float(requested_contact_bias_V)
         if "dsp-gvp-du07" in flat:
             flat["dsp-gvp-du07"] = float(bias_restore_V)
         if "dsp-gvp-dz08" in flat:
@@ -2390,6 +2401,12 @@ class MicroscopeActionRunner:
                         "recovery_depth_A": recovery_depth_A,
                         "contact_bias_V": contact_bias_V,
                         "scan_bias_V": scan_bias_V,
+                        "du_mapping": {
+                            "dsp-gvp-du01": "-actual_scan_bias_V",
+                            "dsp-gvp-du03": "+requested_contact_bias_V",
+                            "dsp-gvp-du06": "-requested_contact_bias_V",
+                            "dsp-gvp-du07": "+actual_scan_bias_V",
+                        },
                         "executed": False,
                         "template_file": template_file,
                     },

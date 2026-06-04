@@ -232,10 +232,12 @@ Implemented controller entry points in `microscope_actions.py`:
 - `load_gvp_tip_dip(dip_depth_A=-5.0, contact_bias_V=0.0)`: parameterized
   controlled dip/contact load only. The current authoritative template is
   `gvp_tip_tune_template_current_latest.json`. Its pattern is:
-  row `01` applies the initial bias-removal step, default `du=-0.1 V`;
+  row `01` removes the actual scan bias, `du=-scan_bias_V`;
   row `02` applies the main indentation, default `dz=-5 A`;
-  row `03` applies the paired bias-restore/contact-bias step, default
-  `du=+0.1 V`; row `04` applies the main pull-out, default `dz=+5 A`.
+  row `03` applies the requested contact bias, `du=+contact_bias_V`;
+  row `04` applies the main pull-out, default `dz=+5 A`;
+  row `06` removes the requested contact bias, `du=-contact_bias_V`;
+  row `07` restores the actual scan bias, `du=+scan_bias_V`.
   Rows `05..09` preserve the template's recovery/tune pattern. `FB00` and
   `FB08` are set checked by the controller for this tip-tune recipe; `FB04`
   must remain unchecked.

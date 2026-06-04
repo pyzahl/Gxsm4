@@ -620,6 +620,11 @@ runner.load_gvp_tip_dip(
 print(runner.data["last_loaded_gvp"])
 ```
 
+For this Z-dip template, dU rows are intentionally separated:
+`du01=-scan_bias_V` removes the actual scan bias first, `du03=+contact_bias_V`
+applies the requested contact bias at contact, `du06=-contact_bias_V` removes
+that contact bias, and `du07=+scan_bias_V` restores the scan bias.
+
 Execute the currently loaded GVP:
 
 ```python
@@ -799,6 +804,47 @@ Run it:
 cd /home/percy/VS/Gxsm4/pyremote-tools/local_microscope_copilot
 python3 manual_landscape_check.py
 ```
+
+## GUI Tip Tune Planner Tab
+
+The Gradio `Tip Tune Planner` tab collects the learned tip-improvement workflow
+in one place:
+
+- `Analyze Tip And Flat Candidates`: fetches current scan data, runs tip
+  quality analysis, dFrequency interpretation, blob/hazard detection, stepped
+  region marking, and flat work-site ranking. The plot marks hazards with red
+  crosses and flat candidates with numbered markers.
+- `Move Tip To Candidate`: writes local `ScanX`/`ScanY` for the selected flat
+  candidate and verifies with the live GVP X/Y monitor. This is Level 1 and
+  arm-gated. It refuses to run while the scan status is busy because GXSM
+  prohibits local tip moves during scanning. The GUI uses a narrower move-busy
+  mask than the GVP/DSP-ready check: it ignores status bit 4 because
+  `rtquery("s") == 5` is a known reset/completed state and should not block
+  a stopped local tip move.
+- `Plan Offset Shift`: proposes a partially overlapping `OffsetX`/`OffsetY`
+  world-coordinate shift for finding a cleaner area if the current image has
+  too many large blobs.
+- `Apply Offset Shift`: Level 1 and arm-gated. It stops the scan first when
+  needed, applies `OffsetX/Y`, scan range, points, and optionally starts a new
+  scan.
+- `Run Tip Tune Planner Loop`: Level 1, arm-gated, and requires typing
+  `EXECUTE TIP LOOP`. It repeats a bounded cycle:
+  scan/setup, wait until enough lines exist, assess image and dFreq, stop if
+  satisfactory, stop/search if too many blobs, otherwise stop scanning, move to
+  the best clean candidate, execute a gentle planned GVP pulse or Z-dip, and
+  repeat up to the requested max cycles.
+
+Planner progress is appended to:
+
+```text
+gui_outputs/tip_planner_progress.jsonl
+```
+
+The automatic planner currently uses a deterministic conservative policy:
+start with a gentle 2 V bias pulse, escalate to 3 V if needed, then consider a
+very gentle 5 A-class Z-dip with 0 V contact bias. The policy is structured so
+an LLM planner can later propose the same action schema, but hardware execution
+still goes through GUI control level, arm, and typed confirmation gates.
 
 ## Public Function Reference
 
